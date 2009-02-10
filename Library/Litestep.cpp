@@ -1,0 +1,580 @@
+/*
+  Copyright (C) 2002 Kimmo Pekkola + few lsapi developers
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+/*
+  $Header: /home/cvsroot/Rainmeter/Library/Litestep.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
+
+  $Log: Litestep.cpp,v $
+  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
+  no message
+
+  Revision 1.4  2004/07/11 17:10:01  rainy
+  Added ResetLoggingFlag.
+
+  Revision 1.3  2004/06/05 10:55:54  rainy
+  Too much changes to be listed in here...
+
+  Revision 1.6  2004/01/28 18:05:29  rainy
+  Todo is shown/hidden with OK.
+
+  Revision 1.5  2003/12/20 22:16:06  rainy
+  Added DebugLog
+
+  Revision 1.4  2002/09/08 14:14:54  rainy
+  The name of the log file is the same as the module's name.
+
+  Revision 1.3  2002/09/06 21:44:51  rainy
+  Added logging functions.
+
+  Revision 1.2  2002/08/24 11:10:07  rainy
+  Added support for logging.
+
+  Revision 1.1  2002/05/30 18:27:42  rainy
+  Initial version
+
+*/
+#pragma warning(disable: 4996)
+
+#include "Litestep.h"
+#include "Error.h"
+#include <shellapi.h>
+#include <crtdbg.h>
+#include <stdio.h>
+#include <stdarg.h>
+
+typedef BOOL (*FPADDBANGCOMMAND)(LPCSTR command, BangCommand f);
+FPADDBANGCOMMAND fpAddBangCommand = NULL;
+
+typedef HRGN (*FPBITMAPTOREGION)(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF cTolerance, int xoffset, int yoffset);
+FPBITMAPTOREGION fpBitmapToRegion = NULL;
+
+typedef HWND (*FPGETLITESTEPWND)(void);
+FPGETLITESTEPWND fpGetLitestepWnd = NULL;
+
+typedef BOOL (*FPGETRCSTRING)(LPCSTR lpKeyName, LPSTR value, LPCSTR defStr, int maxLen);
+FPGETRCSTRING fpGetRCString = NULL;
+
+typedef int (*FPGETRCINT)(LPCSTR lpKeyName, int nDefault);
+FPGETRCINT fpGetRCInt = NULL;
+
+typedef HINSTANCE (*FPLSEXECUTE)(HWND Owner, LPCSTR szCommand, int nShowCmd);
+FPLSEXECUTE fpLSExecute = NULL;
+
+typedef BOOL (*FPREMOVEBANGCOMMAND)(LPCSTR command);
+FPREMOVEBANGCOMMAND fpRemoveBangCommand = NULL;
+
+typedef void (*FPTRANSPARENTBLTLS)(HDC dc, int nXDest, int nYDest, int nWidth, int nHeight, HDC tempDC, int nXSrc, int nYSrc, COLORREF colorTransparent);
+FPTRANSPARENTBLTLS fpTransparentBltLS = NULL;
+
+typedef void (*FPVAREXPANSION)(LPSTR buffer, LPCSTR value);
+FPVAREXPANSION fpVarExpansion = NULL;
+
+typedef BOOL (WINAPI *FPLSLOG)(int nLevel, LPCSTR pszModule, LPCSTR pszMessage);
+FPLSLOG fpLSLog = NULL;
+
+static int logFound = 0;
+
+void ResetLoggingFlag()
+{
+	logFound = 0;
+}
+
+void InitalizeLitestep()
+{
+	// Use lsapi's methods instead of the stubs
+	HINSTANCE h = LoadLibrary(L"lsapi.dll");
+	if (h != NULL)
+	{
+		fpAddBangCommand = (FPADDBANGCOMMAND)GetProcAddress(h, "AddBangCommand");
+		fpBitmapToRegion = (FPBITMAPTOREGION)GetProcAddress(h, "BitmapToRegion");
+		fpGetLitestepWnd = (FPGETLITESTEPWND)GetProcAddress(h, "GetLitestepWnd");
+		fpGetRCString = (FPGETRCSTRING)GetProcAddress(h, "GetRCString");
+		fpGetRCInt = (FPGETRCINT)GetProcAddress(h, "GetRCInt");
+		fpLSExecute = (FPLSEXECUTE)GetProcAddress(h, "LSExecute");
+		fpRemoveBangCommand = (FPREMOVEBANGCOMMAND)GetProcAddress(h, "RemoveBangCommand");
+		fpTransparentBltLS = (FPTRANSPARENTBLTLS)GetProcAddress(h, "TransparentBltLS");
+		fpVarExpansion = (FPVAREXPANSION)GetProcAddress(h, "VarExpansion");
+		fpLSLog = (FPLSLOG)GetProcAddress(h, "_LSLog@12");
+	}
+}
+
+BOOL AddBangCommand(LPCSTR command, BangCommand f)
+{
+	// Use the lsapi.dll version of the method if possible
+	if (fpAddBangCommand) return fpAddBangCommand(command, f);
+
+	// The stub implementation
+	return true;
+}
+
+HWND GetLitestepWnd(void)
+{
+	// Use the lsapi.dll version of the method if possible
+	if (fpGetLitestepWnd) return fpGetLitestepWnd();
+
+	// The stub implementation
+	return NULL;
+}
+
+BOOL RemoveBangCommand(LPCSTR command)
+{
+	// Use the lsapi.dll version of the method if possible
+	if (fpRemoveBangCommand) return fpRemoveBangCommand(command);
+
+	// The stub implementation
+	return true;
+}
+
+BOOL GetRCString(LPCSTR lpKeyName, LPSTR value, LPCSTR defStr, int maxLen)
+{
+	// Use the lsapi.dll version of the method if possible
+	if (fpGetRCString) return fpGetRCString(lpKeyName, value, defStr, maxLen);
+
+	// The stub implementation
+	return false;
+}
+
+int GetRCInt(LPCSTR lpKeyName, int nDefault)
+{
+	// Use the lsapi.dll version of the method if possible
+	if (fpGetRCInt) return fpGetRCInt(lpKeyName, nDefault);
+
+	// The stub implementation
+	return nDefault;
+}
+
+void VarExpansion(LPSTR buffer, LPCSTR value)
+{
+	// Use the lsapi.dll version of the method if possible
+	if (fpVarExpansion) 
+	{
+		fpVarExpansion(buffer, value);
+	}
+	else
+	{
+		// The stub implementation
+		if (buffer != value)
+		{
+			strcpy(buffer, value);
+		}
+	}
+}
+
+HRGN BitmapToRegion(HBITMAP hbm, COLORREF clrTransp, COLORREF clrTolerance, int xoffset, int yoffset)
+{
+	// Use the lsapi.dll version of the method if possible
+	if (fpBitmapToRegion) return fpBitmapToRegion(hbm, clrTransp, clrTolerance, xoffset, yoffset);
+
+	// start with a completely transparent rgn
+	// this is more correct as no bmp, should render a transparent background
+	HRGN hRgn = CreateRectRgn(0, 0, 0, 0);
+
+	if (hbm)
+	{
+		// create a dc for the 32 bit dib
+		HDC hdcMem = CreateCompatibleDC(NULL);
+		if (hdcMem)
+		{
+			VOID *pbits32;
+			HBITMAP hbm32;
+			BITMAP bm;
+			// get the size
+			GetObject(hbm, sizeof(BITMAP), &bm);
+
+			BITMAPINFOHEADER bmpInfo32;
+			bmpInfo32.biSize	= sizeof(BITMAPINFOHEADER);
+			bmpInfo32.biWidth	= bm.bmWidth;
+			bmpInfo32.biHeight	= bm.bmHeight;
+			bmpInfo32.biPlanes	= 1;
+			bmpInfo32.biBitCount	= 32;
+			bmpInfo32.biCompression	= BI_RGB;
+			bmpInfo32.biSizeImage	= 0;
+			bmpInfo32.biXPelsPerMeter	= 0;
+			bmpInfo32.biYPelsPerMeter	= 0;
+			bmpInfo32.biClrUsed	= 0;
+			bmpInfo32.biClrImportant	= 0;
+
+			hbm32 = CreateDIBSection(hdcMem, (BITMAPINFO *) & bmpInfo32, DIB_RGB_COLORS, &pbits32, NULL, 0);
+			if (hbm32)
+			{
+				HBITMAP hbmOld32 = (HBITMAP)SelectObject(hdcMem, hbm32);
+
+				// Create a DC just to copy the bitmap into the memory D
+				HDC hdcTmp = CreateCompatibleDC(hdcMem);
+				if (hdcTmp)
+				{
+					// Get how many bytes per row we have for the bitmap bits (rounded up to 32 bits
+					int y = 0;
+					BITMAP bm32;
+					GetObject(hbm32, sizeof(bm32), &bm32);
+					while (bm32.bmWidthBytes % 4)
+						bm32.bmWidthBytes++;
+
+					// get the limits for the colors
+					BYTE clrHiR = ( 0xff - GetRValue( clrTolerance ) > GetRValue( clrTransp ) ) ? GetRValue( clrTransp ) + GetRValue( clrTolerance ) : 0xff;
+					BYTE clrHiG = ( 0xff - GetGValue( clrTolerance ) > GetGValue( clrTransp ) ) ? GetGValue( clrTransp ) + GetGValue( clrTolerance ) : 0xff;
+					BYTE clrHiB = ( 0xff - GetBValue( clrTolerance ) > GetBValue( clrTransp ) ) ? GetBValue( clrTransp ) + GetBValue( clrTolerance ) : 0xff;
+					BYTE clrLoR = ( GetRValue( clrTolerance ) < GetRValue( clrTransp ) ) ? GetRValue( clrTransp ) - GetRValue( clrTolerance ) : 0x00;
+					BYTE clrLoG = ( GetGValue( clrTolerance ) < GetGValue( clrTransp ) ) ? GetGValue( clrTransp ) - GetGValue( clrTolerance ) : 0x00;
+					BYTE clrLoB = ( GetBValue( clrTolerance ) < GetBValue( clrTransp ) ) ? GetBValue( clrTransp ) - GetBValue( clrTolerance ) : 0x00;
+
+					// Copy the bitmap into the memory D
+					HBITMAP hbmOld = (HBITMAP)SelectObject(hdcTmp, hbm);
+
+					BitBlt(hdcMem, 0, 0, bm.bmWidth, bm.bmHeight, hdcTmp, 0, 0, SRCCOPY);
+
+					// Scan each bitmap row from bottom to top (the bitmap is inverted vertically
+					BYTE *p;
+					BYTE *p32 = (BYTE *)bm32.bmBits + (bm32.bmHeight - 1) * bm32.bmWidthBytes;
+					while (y < bm.bmHeight)
+					{
+						int x = 0;
+						while ( x < bm.bmWidth )
+						{
+							int x0 = 0;
+							// loop through all transparent pixels...
+							while ( x < bm.bmWidth )
+							{
+								p = p32 + 4 * x;
+
+								// if the pixel is non-transparent
+								{
+									bool isOpaque = *p < clrLoB || *p > clrHiB;
+									p++;
+									isOpaque |= *p < clrLoG || *p > clrHiG;
+									p++;
+									isOpaque |= *p < clrLoR || *p > clrHiR;
+									if (isOpaque)
+										break;
+								}
+
+								x++;
+							}
+							// set first non transparent pixel
+							x0 = x;
+							// loop through all non transparent pixels
+							while ( x < bm.bmWidth )
+							{
+								p = p32 + 4 * x;
+								// if the pixel is transparent, then break
+								if (*p >= clrLoB && *p <= clrHiB)
+								{
+									p++;
+									if (*p >= clrLoG && *p <= clrHiG)
+									{
+										p++;
+										if (*p >= clrLoR && *p <= clrHiR)
+											break;
+									}
+								}
+								x++;
+							}
+							// if found one or more non-transparent pixels in a row, add them to the rgn...
+							if ((x - x0) > 0)
+							{
+								HRGN hTempRgn = CreateRectRgn(x0 + xoffset, y + yoffset, x + xoffset, y + 1 + yoffset);
+								CombineRgn(hRgn, hRgn, hTempRgn, RGN_OR);
+								DeleteObject(hTempRgn);
+							}
+							x++;
+						}
+						y++;
+						p32 -= bm32.bmWidthBytes;
+					}
+					// Clean up
+					SelectObject(hdcTmp, hbmOld);
+					DeleteDC(hdcTmp);
+				}
+				SelectObject(hdcMem, hbmOld32);
+				DeleteObject(hbm32);
+			}
+			DeleteDC(hdcMem);
+		}
+	}
+	return hRgn;
+}
+
+HINSTANCE LSExecute(HWND Owner, LPCTSTR szCommand, int nShowCmd)
+{
+	// Use the lsapi.dll version of the method if possible
+    if (fpLSExecute) 
+	{
+		std::string asc = ConvertToAscii(szCommand);
+		return fpLSExecute(Owner, asc.c_str(), nShowCmd);
+	}
+
+	// The stub implementation (some of this code is taken from lsapi.cpp)
+	if (szCommand == NULL || wcslen(szCommand) == 0) return NULL;
+
+	std::wstring args;
+	std::wstring command = szCommand;
+
+	size_t notwhite = command.find_first_not_of(L" \t\n");
+	command.erase(0, notwhite);
+
+	size_t quotePos = command.find(L"\"");
+	if (quotePos == 0)
+	{
+		size_t quotePos2 = command.find(L"\"", quotePos + 1);
+		if (quotePos2 != std::wstring::npos)
+		{
+			args = command.substr(quotePos2 + 1);
+			command = command.substr(quotePos + 1, quotePos2 - quotePos - 1);
+		}
+		else
+		{
+			command.erase(0, quotePos + 1);
+		}
+	}
+	else
+	{
+		size_t spacePos = command.find(L" ");
+		if (spacePos != std::wstring::npos)
+		{
+			args = command.substr(spacePos + 1);
+			command = command.substr(0, spacePos);
+		}
+	}
+
+	DWORD type = GetFileAttributes(command.c_str());
+	if (type & FILE_ATTRIBUTE_DIRECTORY && type != 0xFFFFFFFF)
+	{
+		HINSTANCE instance = ShellExecute(Owner, L"open", command.c_str(), NULL, NULL, nShowCmd ? nShowCmd : SW_SHOWNORMAL);
+		return instance;
+	}
+
+	std::wstring dir;
+	size_t dirPos = command.rfind(L"\\");
+	if (dirPos != std::wstring::npos)
+	{
+		dir = command.substr(0, dirPos);
+	}
+
+	SHELLEXECUTEINFO si;
+	memset(&si, 0, sizeof(si));
+	si.cbSize = sizeof(SHELLEXECUTEINFO);
+	si.hwnd = Owner;
+	si.lpVerb = L"open";
+	si.lpFile = command.c_str();
+	si.lpParameters = args.c_str();
+	si.lpDirectory = dir.c_str();
+	si.nShow = nShowCmd ? nShowCmd : SW_SHOWNORMAL;
+	si.fMask = SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI;
+	ShellExecuteEx(&si);
+	return si.hInstApp;
+}
+
+void TransparentBltLS(HDC hdcDst, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, COLORREF colorTransparent)
+{
+	// Use the lsapi.dll version of the method if possible
+	if (fpTransparentBltLS) 
+	{
+		fpTransparentBltLS(hdcDst, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, colorTransparent);
+	}
+	else
+	{
+		HDC hdcMem, hdcMask, hdcDstCpy;
+		HBITMAP hbmMask, hbmMem, hbmDstCpy;
+		HBITMAP hbmOldMem, hbmOldMask, hbmOldDstCpy;
+
+		// create a destination compatble dc containing
+		// a copy of the destination dc
+		hdcDstCpy	= CreateCompatibleDC(hdcDst);
+		hbmDstCpy	= CreateCompatibleBitmap(hdcDst, nWidth, nHeight);
+		hbmOldDstCpy = (HBITMAP)SelectObject(hdcDstCpy, hbmDstCpy);
+
+		BitBlt(hdcDstCpy, 0, 0, nWidth, nHeight, hdcDst, nXDest, nYDest, SRCCOPY);
+
+		// create a destination compatble dc containing
+		// a copy of the source dc
+		hdcMem	= CreateCompatibleDC(hdcDst);
+		hbmMem	= CreateCompatibleBitmap(hdcDst, nWidth, nHeight);
+		hbmOldMem = (HBITMAP)SelectObject(hdcMem, hbmMem);
+
+		BitBlt(hdcMem, 0, 0, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, SRCCOPY);
+
+		// the transparent color should be selected as
+		// bkcolor into the memory dc
+		SetBkColor(hdcMem, colorTransparent);
+
+		// Create monochrome bitmap for the mask
+		hdcMask	= CreateCompatibleDC(hdcDst);
+		hbmMask = CreateBitmap(nWidth, nHeight, 1, 1, NULL);
+		hbmOldMask = (HBITMAP)SelectObject(hdcMask, hbmMask);
+
+		// Create the mask from the memory dc
+		BitBlt(hdcMask, 0, 0, nWidth, nHeight, hdcMem, 0, 0, SRCCOPY);
+
+		// Set the background in hdcMem to black. Using SRCPAINT with black
+		// and any other color results in the other color, thus making
+		// black the transparent color
+		SetBkColor(hdcMem, RGB(0, 0, 0));
+		SetTextColor(hdcMem, RGB(255, 255, 255));
+
+		BitBlt(hdcMem, 0, 0, nWidth, nHeight, hdcMask, 0, 0, SRCAND);
+
+		// Set the foreground to black. See comment above.
+		SetBkColor(hdcDst, RGB(255, 255, 255));
+		SetTextColor(hdcDst, RGB(0, 0, 0));
+
+		BitBlt(hdcDstCpy, 0, 0, nWidth, nHeight, hdcMask, 0, 0, SRCAND);
+
+		// Combine the foreground with the background
+		BitBlt(hdcDstCpy, 0, 0, nWidth, nHeight, hdcMem, 0, 0, SRCPAINT);
+
+		// now we have created the image we want to blt
+		// in the destination copy dc
+		BitBlt(hdcDst, nXDest, nYDest, nWidth, nHeight, hdcDstCpy, 0, 0, SRCCOPY);
+
+		SelectObject(hdcMask, hbmOldMask);
+		DeleteObject(hbmMask);
+		DeleteDC(hdcMask);
+
+		SelectObject(hdcMem, hbmOldMem);
+		DeleteObject(hbmMem);
+		DeleteDC(hdcMem);
+
+		SelectObject(hdcDstCpy, hbmOldDstCpy);
+		DeleteObject(hbmDstCpy);
+		DeleteDC(hdcDstCpy);
+	}
+}
+
+std::string ConvertToAscii(LPCTSTR str)
+{
+	std::string szAscii;
+
+	if (str)
+	{
+		size_t len = (wcslen(str) + 1);
+		char* tmpSz = new char[len * 2];
+		WideCharToMultiByte(CP_ACP, 0, str, -1, tmpSz, (int)len * 2, NULL, FALSE);
+		szAscii = tmpSz;
+		delete tmpSz;
+	}
+	return szAscii;
+}
+
+std::wstring ConvertToWide(LPCSTR str)
+{
+	std::wstring szWide;
+
+	if (str)
+	{
+		size_t len = strlen(str) + 1;
+		WCHAR* wideSz = new WCHAR[len * 2];
+		MultiByteToWideChar(CP_ACP, 0, str, (int)len, wideSz, (int)len * 2);
+		szWide = wideSz;
+		delete wideSz;
+	}
+	return szWide;
+}
+
+BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
+{
+	// Add timestamp
+	static DWORD startTime = 0;
+	
+	if (startTime == 0) 
+	{
+		startTime = GetTickCount();
+	}
+	DWORD time = GetTickCount();
+	WCHAR buffer[MAX_PATH];
+	swprintf(buffer, L"(%02i:%02i:%02i.%03i) ", (time - startTime) / (1000 * 60* 60), ((time - startTime) / (1000 * 60)) % 60, ((time - startTime) / 1000) % 60, (time - startTime) % 1000);
+
+	std::wstring message(buffer);
+	message += pszMessage;
+
+#ifdef _DEBUG
+	_RPT0(_CRT_WARN, ConvertToAscii(message.c_str()).c_str());
+	_RPT0(_CRT_WARN, "\n");
+#endif
+
+	// Use the lsapi.dll version of the method if possible
+	if (fpLSLog) 
+	{
+		std::string asc = ConvertToAscii(message.c_str());
+		std::string mod = ConvertToAscii(pszModule);
+		return fpLSLog(nLevel, mod.c_str(), asc.c_str());
+	}
+
+	// The stub implementation
+	FILE* logFile;
+	GetModuleFileName(NULL, buffer, MAX_PATH);
+
+	std::wstring logfile(buffer);
+	logfile.replace(logfile.length() - 4, 4, L".log");
+
+	if (logFound == 0)
+	{
+		// Check if the file exists
+		logFile = _wfopen(logfile.c_str(), L"r");
+		if (logFile)
+		{
+			logFound = 1;
+			fclose(logFile);
+
+			// Clear the file
+			logFile = _wfopen(logfile.c_str(), L"w");
+			fputwc(0xFEFF, logFile);
+			fclose(logFile);
+		}
+		else
+		{
+			logFound = 2;
+		}
+	}
+
+	if (logFound == 1)
+	{
+		logFile = _wfopen(logfile.c_str(), L"a+");
+		if (logFile)
+		{
+			switch(nLevel)
+			{
+			case 1:
+				fputws(L"ERROR: ", logFile);
+				break;
+			case 2:
+				fputws(L"WARNING: ", logFile);
+				break;
+			case 3:
+				fputws(L"NOTICE: ", logFile);
+				break;
+			case 4:
+				fputws(L"DEBUG: ", logFile);
+				break;
+			}
+			fputws(message.c_str(), logFile);
+			fputws(L"\n", logFile);
+			fclose(logFile);
+		}
+	}
+
+	return TRUE;
+}
+
+void DebugLog(const WCHAR* format, ... )
+{
+	WCHAR buffer[4096];
+    va_list args;
+    va_start( args, format );
+    _vsnwprintf( buffer, 4096, format, args );
+	LSLog(LOG_DEBUG, L"Rainmeter", buffer);
+	va_end(args);
+};

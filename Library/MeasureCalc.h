@@ -1,0 +1,55 @@
+/*
+  Copyright (C) 2004 Kimmo Pekkola
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+/*
+  $Header: /home/cvsroot/Rainmeter/Library/MeasureCalc.h,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
+
+  $Log: MeasureCalc.h,v $
+  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
+  no message
+
+  Revision 1.1  2004/06/05 10:55:54  rainy
+  Too much changes to be listed in here...
+
+*/
+
+#ifndef __MEASURECALC_H__
+#define __MEASURECALC_H__
+
+#include "Measure.h"
+#include "ccalc-0.5.1/mparser.h"
+
+class CMeasureCalc : public CMeasure
+{
+public:
+	CMeasureCalc(CMeterWindow* meterWindow);
+	virtual ~CMeasureCalc();
+
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual bool Update();
+
+	static void UpdateVariableMap(CMeterWindow& meterWindow);
+	
+private:
+	std::wstring m_Formula;
+	hqMathParser* m_Parser;
+
+	static hqStrMap* c_VarMap;
+	static int m_Loop;
+};
+
+#endif
