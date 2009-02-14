@@ -15,39 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Application/Application.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: Application.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.8  2004/06/05 10:50:40  rainy
-  Fixed exports.
-
-  Revision 1.7  2002/07/01 15:22:29  rainy
-  The existance of Litestep is not checked anymore.
-
-  Revision 1.6  2002/05/04 08:08:47  rainy
-  !Bangs can be executed from the exe.
-
-  Revision 1.5  2002/03/31 09:50:56  rainy
-  Added some comments
-
-  Revision 1.4  2002/01/16 16:03:52  rainy
-  The quotes are removed from the commandline.
-
-  Revision 1.3  2001/09/01 12:55:42  rainy
-  Added RainmeterRefresh declaration.
-
-  Revision 1.2  2001/08/25 17:04:45  rainy
-  Removed all Tray stuff.
-  The correct instance is now given to the DLL.
-
-  Revision 1.1.1.1  2001/08/11 10:58:19  Rainy
-  Added to CVS.
-
-*/
 
 #pragma warning(disable : 4996)
 
@@ -104,7 +71,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPCTSTR lpCm
 	int Pos = 0;
 	if(lpCmdLine)
 	{
-		for(int i = 0; i <= wcslen(lpCmdLine); i++) 
+		for(size_t i = 0; i <= wcslen(lpCmdLine); i++) 
 		{
 			if(lpCmdLine[i] != L'\"') Path[Pos++] = lpCmdLine[i];
 		}

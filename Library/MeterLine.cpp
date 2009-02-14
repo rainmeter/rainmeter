@@ -15,30 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeterLine.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: MeterLine.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.5  2004/07/11 17:18:07  rainy
-  Relative coordinate support.
-
-  Revision 1.4  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.3  2004/03/13 16:18:16  rainy
-  Limits negative coords
-
-  Revision 1.2  2003/02/10 18:12:44  rainy
-  Now uses GDI+
-
-  Revision 1.1  2002/07/01 15:35:54  rainy
-  Intial version
-
-
-*/
 
 #pragma warning(disable: 4786)
 #pragma warning(disable: 4996)
@@ -167,7 +143,7 @@ bool CMeterLine::Update()
 		{
 			double value = m_Measure->GetValue();
 
-			if (m_AllValues[0].size() < m_W)
+			if ((int)m_AllValues[0].size() < m_W)
 			{
 				m_AllValues[0].push_back(value);
 			}
@@ -183,7 +159,7 @@ bool CMeterLine::Update()
 		{
 			double value = (*i)->GetValue();
 
-			if (m_AllValues[counter].size() < m_W)
+			if ((int)m_AllValues[counter].size() < m_W)
 			{
 				m_AllValues[counter].push_back(value);
 			}
@@ -311,7 +287,7 @@ bool CMeterLine::Draw()
 
 		for (int j = 0; j < m_W; j++)
 		{
-			if (pos < (*i).size())
+			if (pos < (int)(*i).size())
 			{
 				Y = (REAL)((*i)[pos] * m_ScaleValues[counter] * (m_H - 1) / maxValue);
 				Y = min(Y, m_H - 1);

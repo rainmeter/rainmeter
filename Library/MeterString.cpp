@@ -15,47 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeterString.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: MeterString.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.11  2004/07/11 17:18:32  rainy
-  Fixed width calculation.
-
-  Revision 1.10  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.9  2003/02/10 18:12:44  rainy
-  Now uses GDI+
-
-  Revision 1.8  2002/07/01 15:32:20  rainy
-  Added NumOfDecimals
-
-  Revision 1.7  2002/04/26 18:22:02  rainy
-  Added possibility to hide the meter.
-
-  Revision 1.6  2002/03/31 09:58:53  rainy
-  Added some comments
-
-  Revision 1.5  2001/12/23 10:14:33  rainy
-  Hex color values are now also supported.
-
-  Revision 1.4  2001/10/14 07:32:32  rainy
-  In error situations CError is thrown instead just a boolean value.
-
-  Revision 1.3  2001/09/26 16:26:23  rainy
-  Small adjustement to the interfaces.
-
-  Revision 1.2  2001/09/01 12:57:33  rainy
-  Added support for percentual measuring.
-
-  Revision 1.1  2001/08/12 15:35:08  Rainy
-  Inital Version
-
-*/
 
 #pragma warning(disable: 4786)
 #pragma warning(disable: 4996)
@@ -176,7 +135,7 @@ void CMeterString::Initialize()
 	int dpi = GetDeviceCaps(dc, LOGPIXELSX);
 	ReleaseDC(GetDesktopWindow(), dc);
 
-	REAL size = (REAL)m_FontSize * (96.0 / (REAL)dpi);
+	REAL size = (REAL)m_FontSize * (96.0f / (REAL)dpi);
 
 	if (m_FontFamily)
 	{
@@ -241,7 +200,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	m_FontSize = parser.ReadInt(section, L"FontSize", 10);
 	m_NumOfDecimals = parser.ReadInt(section, L"NumOfDecimals", -1);
 
-	m_Angle = parser.ReadFloat(section, L"Angle", 0.0);
+	m_Angle = parser.ReadFloat(section, L"Angle", 0.0f);
 
 	std::wstring scale;
 	scale = parser.ReadString(section, L"Scale", L"1");
@@ -326,7 +285,7 @@ bool CMeterString::Update()
 		if (m_Measure) stringValues.push_back(m_Measure->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
 
 		// Get the values for the other measures
-		for (int i = 0; i < m_Measures.size(); i++)
+		for (size_t i = 0; i < m_Measures.size(); i++)
 		{
 			stringValues.push_back(m_Measures[i]->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
 		}
@@ -346,7 +305,7 @@ bool CMeterString::Update()
 			// Create the actual text (i.e. replace %1, %2, .. with the measure texts)
 			std::wstring tmpText = m_Text;
 
-			for (int i = 0; i < stringValues.size(); i++)
+			for (size_t i = 0; i < stringValues.size(); i++)
 			{
 				wsprintf(buffer, L"%%%i", i + 1);
 
@@ -430,8 +389,8 @@ bool CMeterString::DrawString(RectF* rect)
 		break;
 	}
 
-	int x = GetX();
-	int y = GetY();
+	REAL x = (REAL)GetX();
+	REAL y = (REAL)GetY();
 
 	if (rect)
 	{
@@ -453,7 +412,7 @@ bool CMeterString::DrawString(RectF* rect)
 			stringFormat.SetFormatFlags(StringFormatFlagsNoClip | StringFormatFlagsNoWrap);
 		}
 
-		double angle = m_Angle * 180.0f / 3.14159265f;		// Convert to degrees
+		REAL angle = m_Angle * 180.0f / 3.14159265f;		// Convert to degrees
 		graphics.TranslateTransform(CMeter::GetX(), y);
 		graphics.RotateTransform(angle);
 		graphics.TranslateTransform(-CMeter::GetX(), -y);

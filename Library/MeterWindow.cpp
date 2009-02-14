@@ -15,113 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeterWindow.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: MeterWindow.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.26  2004/08/13 15:47:45  rainy
-  Fixed z-position changing.
-  Mouse move events work for non-movable windows too.
-
-  Revision 1.25  2004/07/11 17:19:29  rainy
-  Changed messageboxes to logs.
-  Mouse leave checks transparent pixels.
-  Added !RainmeterToggleConfig.
-
-  Revision 1.24  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.23  2004/03/13 16:19:17  rainy
-  Added support for multiple configs
-
-  Revision 1.22  2003/12/05 15:50:10  Rainy
-  Multi-instance changes.
-
-  Revision 1.21  2003/02/10 18:11:33  rainy
-  Too much changes to mention :-)
-
-  Revision 1.20  2002/12/23 14:25:21  rainy
-  Separated skin and other settings.
-  Stats are now written in ini file.
-
-  Revision 1.19  2002/07/01 15:27:36  rainy
-  AlwaysOnTop gets now three values.
-  Added Toggle().
-  Added RainmeterCurrentConfig and RainmeterCurrentConfigIni.
-  The ini file's timestamp is checked before it is overwritten.
-  AboutBox is now in separate source file.
-  Added SnapEdges.
-
-  Revision 1.18  2002/05/05 10:48:56  rainy
-  Fixed few bugs.
-
-  Revision 1.17  2002/05/04 08:16:35  rainy
-  There can be any number of ini files in the config folders.
-  WM_COPYDATA can be used to deliver the bangs.
-  Added support for per meter actions.
-
-  Revision 1.16  2002/04/27 10:27:42  rainy
-  Added hide/show to meters and enable/disable to measures
-
-  Revision 1.15  2002/04/01 15:36:10  rainy
-  Added PLAY, PLAYSTOP and PLAYLOOP build-in commands.
-
-  Revision 1.14  2002/03/31 09:58:53  rainy
-  Added some comments
-
-  Revision 1.13  2002/03/29 16:32:58  rainy
-  Fixed a typo
-
-  Revision 1.12  2002/01/16 16:06:29  rainy
-  The file doesn't need to be named Rainmeter.ini anymore.
-  If the old config doesn't exist, we'll yse the first one instead.
-
-  Revision 1.11  2001/12/23 10:14:09  rainy
-  Added support for different configs.
-  The position of the window is now remembered.
-
-  Revision 1.10  2001/10/28 10:15:21  rainy
-  Added left and right mouse up actions.
-  IsNT() can now identify different OS more precisely.
-
-  Revision 1.9  2001/10/14 07:27:58  rainy
-  Changed the errorhandling.
-  Stats now include the date when they were started to collect.
-
-  Revision 1.8  2001/09/26 16:25:44  rainy
-  Added support for statistics.
-  Meters and Measures are now stored here.
-
-  Revision 1.7  2001/09/01 12:57:13  rainy
-  Added support for Bar and Bitmap meters.
-
-  Revision 1.6  2001/08/25 18:08:34  rainy
-  Added mousebutton actions.
-  The About dialog has now the build date.
-
-  Revision 1.5  2001/08/25 17:15:52  rainy
-  Added context menu, which can show the about dialog, refresh the configuration or quit the program.
-  The ini-file can be defined in the step.rc also.
-
-  Revision 1.4  2001/08/19 09:43:29  rainy
-  Mouse over hid the window even if it was not wanted.
-
-  Revision 1.3  2001/08/19 09:12:12  rainy
-  Added support for GetRevID.
-  Added StartHidden.
-
-  Revision 1.2  2001/08/12 15:36:55  Rainy
-  The ini-file's exsistance is checked.
-  Added String meter.
-  Improved mouse over hiding.
-
-  Revision 1.1.1.1  2001/08/11 10:58:19  Rainy
-  Added to CVS.
-
-*/
 
 #pragma warning(disable: 4786)
 #pragma warning(disable: 4996)
@@ -2160,7 +2053,7 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			const std::vector<CRainmeter::CONFIG>& configs = m_Rainmeter->GetAllConfigs();
 
-			for (int i = 0; i < configs.size(); i++)
+			for (size_t i = 0; i < configs.size(); i++)
 			{
 				if (configs[i].config == m_SkinName)
 				{

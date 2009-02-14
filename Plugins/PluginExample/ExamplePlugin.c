@@ -15,24 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Plugins/PluginExample/ExamplePlugin.c,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: ExamplePlugin.c,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.3  2004/06/05 10:49:50  rainy
-  Added new interface.
-  Uses config parser.
-
-  Revision 1.2  2001/12/23 10:04:51  rainy
-  Added ID to the interface.
-
-  Revision 1.1  2001/10/28 09:05:05  rainy
-  Inital version
-
-*/
 
 #pragma warning(disable: 4996)
 

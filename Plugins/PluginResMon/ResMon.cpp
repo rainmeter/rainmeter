@@ -17,22 +17,6 @@
 */
 
 /*
-	$Header: /home/cvsroot/Rainmeter/Plugins/PluginResMon/ResMon.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-    $Log: ResMon.cpp,v $
-    Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-    no message
-
-    Revision 1.2  2004/07/11 17:10:42  rainy
-    The plugin is cleaned up correctly.
-
-    Revision 1.1  2004/06/05 10:56:56  rainy
-    Added new interfaces for plugin version and author.
-    Added possibility to measure a single process.
-
-*/
-
-/*
   Requires Win2k or later.  Sorry to anyone still using 9x or ME.
   All my results seem to agree with Task Manager (it gets tedious adding up
   the different process values).  Already proved useful in identifying

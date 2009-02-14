@@ -15,45 +15,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeasureNet.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
 
-  $Log: MeasureNet.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.10  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.9  2003/12/05 15:50:09  Rainy
-  Multi-instance changes.
-
-  Revision 1.8  2003/02/10 18:13:34  rainy
-  Changed the way stats are gathered.
-
-  Revision 1.7  2002/12/23 14:26:07  rainy
-  Added cumulative statistics measuring.
-
-  Revision 1.6  2002/07/01 15:34:23  rainy
-  Now it is possible to select the NIC.
-
-  Revision 1.5  2002/04/26 18:24:16  rainy
-  Modified the Update method to support disabled measures.
-
-  Revision 1.4  2002/04/01 15:38:25  rainy
-  Some on the implementation from NetIn/Out is moved here.
-  Added TrafficAction and TrafficValue.
-
-  Revision 1.3  2002/03/31 09:58:54  rainy
-  Added some comments
-
-  Revision 1.2  2001/08/12 15:45:34  Rainy
-  Changed UpdateTable() to be a class method.
-
-  Revision 1.1.1.1  2001/08/11 10:58:19  Rainy
-  Added to CVS.
-
-*/
 #pragma warning(disable: 4996)
 
 #include "MeasureNet.h"
@@ -237,7 +199,7 @@ LARGE_INTEGER CMeasureNet::GetNetStatsValue(NET net)
 	if (m_Interface == 0)
 	{
 		// Get all interfaces
-		for(int i = 0; i < c_StatValues.size() / 2; i++)
+		for(size_t i = 0; i < c_StatValues.size() / 2; i++)
 		{
 			switch (net)
 			{
@@ -395,7 +357,7 @@ void CMeasureNet::ResetStats()
 {
 	if (c_Table)
 	{
-		for (int i = 0; i < c_StatValues.size(); i++)
+		for (size_t i = 0; i < c_StatValues.size(); i++)
 		{
 			LARGE_INTEGER value;
 			value.QuadPart = 0;
@@ -449,7 +411,7 @@ void CMeasureNet::WriteStats(const std::wstring& iniFile)
 	wsprintf(buffer, L"%i", c_StatValues.size() / 2);
 	WritePrivateProfileString(L"Statistics", L"NetStatsCount", buffer, iniFile.c_str());
 
-	for (int i = 0; i < c_StatValues.size() / 2; i++)
+	for (size_t i = 0; i < c_StatValues.size() / 2; i++)
 	{
 		wsprintf(buffer2, L"NetStatsInHigh%i", i + 1);
 		wsprintf(buffer, L"%u", c_StatValues[i * 2].HighPart);

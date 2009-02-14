@@ -15,77 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/Measure.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: Measure.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.19  2004/07/11 17:14:20  rainy
-  Fixed string generation when num of decimals is 0.
-
-  Revision 1.18  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.17  2004/03/13 16:15:01  rainy
-  GetStats returns only the value
-
-  Revision 1.16  2003/12/05 15:50:09  Rainy
-  Multi-instance changes.
-
-  Revision 1.15  2003/02/10 18:13:49  rainy
-  Added median filter to max value.
-
-  Revision 1.14  2002/12/23 14:26:21  rainy
-  Stats are gathered a bit different way now.
-
-  Revision 1.13  2002/05/05 10:49:16  rainy
-  Disabled measures return 0.
-
-  Revision 1.12  2002/05/04 08:12:33  rainy
-  Measure update is not tied to the update rate directly anymore.
-
-  Revision 1.11  2002/04/26 18:24:16  rainy
-  Modified the Update method to support disabled measures.
-
-  Revision 1.10  2002/04/01 15:39:09  rainy
-  Fixed IfBelow and IfAbove actions.
-  Added NetTotal measure.
-
-  Revision 1.9  2002/03/31 09:58:54  rainy
-  Added some comments
-
-  Revision 1.8  2001/12/23 10:18:52  rainy
-  Added Time and removed Perfmon.
-
-  Revision 1.7  2001/10/28 10:23:59  rainy
-  GetStringValue uses consts.
-  Added IfAbove/Below actions.
-  Added Plugin and Registry Measures.
-
-  Revision 1.6  2001/10/14 07:32:03  rainy
-  Minor monifications to remove few warnings with VC.NET.
-  In error situations CError is thrown instead just a boolean value.
-
-  Revision 1.5  2001/09/26 16:27:15  rainy
-  Changed the interfaces a bit.
-
-  Revision 1.4  2001/09/01 13:00:41  rainy
-  Slight changes in the interface. The value is now measured only once if possible.
-  Added support for logging the max value.
-
-  Revision 1.3  2001/08/19 09:15:41  rainy
-  Invert was moved here from the meter.
-
-  Revision 1.2  2001/08/12 15:47:00  Rainy
-  Adjusted Update()'s interface.
-  Added GetStringValue() method.
-
-  Revision 1.1.1.1  2001/08/11 10:58:19  Rainy
-  Added to CVS.
-
-*/
 
 #pragma warning(disable: 4996)
 
@@ -201,7 +130,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 	{
 		str = buffer;
 
-		for (int i = 0; i < m_Substitute.size(); i = i + 2)
+		for (size_t i = 0; i < m_Substitute.size(); i = i + 2)
 		{
 			if (str.empty() && m_Substitute[i].empty())
 			{
@@ -452,7 +381,7 @@ bool CMeasure::PostUpdate()
 
 		// Calculate the average value
 		m_Value = 0;
-		for (int i = 0; i < m_AverageValues.size(); i++)
+		for (size_t i = 0; i < m_AverageValues.size(); i++)
 		{
 			m_Value += m_AverageValues[i];
 		}

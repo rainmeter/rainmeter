@@ -15,30 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeasurePlugin.h,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: MeasurePlugin.h,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.5  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.4  2002/07/01 15:34:57  rainy
-  Added GetStringValue.
-
-  Revision 1.3  2002/04/26 18:24:15  rainy
-  Modified the Update method to support disabled measures.
-
-  Revision 1.2  2001/12/23 10:17:02  rainy
-  The plugins get unique ID automatically.
-  The plugins are also loaded from the Rainmeter's folder.
-
-  Revision 1.1  2001/10/28 09:07:19  rainy
-  Inital version
-
-*/
 
 #ifndef __MEASUREPLUGIN_H__
 #define __MEASUREPLUGIN_H__

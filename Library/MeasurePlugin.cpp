@@ -15,36 +15,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeasurePlugin.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
 
-  $Log: MeasurePlugin.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.7  2004/07/11 17:15:14  rainy
-  no message
-
-  Revision 1.6  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.5  2002/07/01 15:34:57  rainy
-  Added GetStringValue.
-
-  Revision 1.4  2002/04/26 18:24:15  rainy
-  Modified the Update method to support disabled measures.
-
-  Revision 1.3  2002/03/31 09:58:54  rainy
-  Added some comments
-
-  Revision 1.2  2001/12/23 10:17:02  rainy
-  The plugins get unique ID automatically.
-  The plugins are also loaded from the Rainmeter's folder.
-
-  Revision 1.1  2001/10/28 09:07:19  rainy
-  Inital version
-
-*/
 #pragma warning(disable: 4996)
 
 #include "MeasurePlugin.h"

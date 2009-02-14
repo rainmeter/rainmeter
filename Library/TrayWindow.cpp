@@ -15,20 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/TrayWindow.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: TrayWindow.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.2  2004/07/11 17:19:57  rainy
-  Whole skin folder is recursively scanned.
-
-  Revision 1.1  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-*/
 
 #define _WIN32_IE 0x0600
 
@@ -106,7 +92,7 @@ CTrayWindow::~CTrayWindow()
 	if (m_Bitmap) delete m_Bitmap;
 	if (m_Measure) delete m_Measure;
 
-	for (int i = 0; i < m_TrayIcons.size(); i++) 
+	for (size_t i = 0; i < m_TrayIcons.size(); i++) 
 	{
 		DestroyIcon(m_TrayIcons[i]);
 	}
@@ -312,7 +298,7 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 
 void CTrayWindow::ReadConfig(CConfigParser& parser)
 {
-	for (int i = 0; i < m_TrayIcons.size(); i++) 
+	for (size_t i = 0; i < m_TrayIcons.size(); i++) 
 	{
 		DestroyIcon(m_TrayIcons[i]);
 	}
@@ -496,9 +482,9 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				// Check which config was selected
 				const std::vector<CRainmeter::CONFIG>& configs = Rainmeter->GetAllConfigs();
 
-				for (int i = 0; i < configs.size(); i++)
+				for (size_t i = 0; i < configs.size(); i++)
 				{
-					for (int j = 0; j < configs[i].commands.size(); j++)
+					for (size_t j = 0; j < configs[i].commands.size(); j++)
 					{
 						if (configs[i].commands[j] == wParam)
 						{
@@ -530,7 +516,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				int index = (int)(wParam >> 16);
 				std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 
-				if (index < windows.size())
+				if (index < (int)windows.size())
 				{
 					std::map<std::wstring, CMeterWindow*>::iterator iter = windows.begin();
 					for( ; iter != windows.end(); iter++)

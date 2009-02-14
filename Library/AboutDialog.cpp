@@ -15,32 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/AboutDialog.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: AboutDialog.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.6  2004/08/13 15:43:19  rainy
-  Added update check.
-
-  Revision 1.5  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.4  2004/03/13 16:13:50  rainy
-  Added support for multiple configs.
-
-  Revision 1.3  2003/12/05 15:50:09  Rainy
-  Multi-instance changes.
-
-  Revision 1.2  2002/12/23 14:26:33  rainy
-  Made the dialog resizable.
-
-  Revision 1.1  2002/07/01 15:35:55  rainy
-  Intial version
-
-*/
 
 #pragma warning(disable: 4786)
 #pragma warning(disable: 4996)

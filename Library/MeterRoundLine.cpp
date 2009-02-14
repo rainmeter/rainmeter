@@ -15,29 +15,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeterRoundLine.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
 
-  $Log: MeterRoundLine.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.5  2004/08/13 15:46:50  rainy
-  Reminder->Remainder.
-
-  Revision 1.4  2004/07/11 17:18:07  rainy
-  Relative coordinate support.
-
-  Revision 1.3  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.2  2003/02/10 18:12:44  rainy
-  Now uses GDI+
-
-  Revision 1.1  2002/12/26 18:15:41  rainy
-  Initial version
-
-*/
 #pragma warning(disable: 4996)
 
 #include "MeterRoundLine.h"
@@ -117,8 +95,8 @@ bool CMeterRoundLine::Update()
 		if (m_ValueRemainder > 0)
 		{
 			LARGE_INTEGER time;
-			time.QuadPart = m_Measure->GetValue();
-			m_Value = time.QuadPart % m_ValueRemainder;
+			time.QuadPart = (LONGLONG)m_Measure->GetValue();
+			m_Value = (double)(time.QuadPart % m_ValueRemainder);
 			m_Value /= (double)m_ValueRemainder;
 		}
 		else

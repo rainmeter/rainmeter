@@ -15,17 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/TrayWindow.h,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: TrayWindow.h,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.1  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-*/
 
 #ifndef __TRAYWINDOW_H__
 #define __TRAYWINDOW_H__

@@ -117,7 +117,9 @@
 				TypeLibraryName=".\x32/Debug/Application.tlb"
 				HeaderFileName=""/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCPostBuildEventTool"
+				CommandLine="if not exist ..\testbench\x32\debug\skins (mkdir ..\testbench\x32\debug\skins)
+xcopy /S /Y ..\Install\Skins ..\testbench\x32\debug\skins"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -180,7 +182,9 @@
 				TypeLibraryName=".\x32/Release/Application.tlb"
 				HeaderFileName=""/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCPostBuildEventTool"
+				CommandLine="if not exist ..\testbench\x32\release\skins (mkdir ..\testbench\x32\release\skins)
+xcopy /S /Y ..\Install\Skins ..\testbench\x32\release\skins"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool
@@ -270,9 +274,6 @@
 		</Filter>
 		<File
 			RelativePath="..\Help\History.htm">
-		</File>
-		<File
-			RelativePath="..\Todo.txt">
 		</File>
 	</Files>
 	<Globals>

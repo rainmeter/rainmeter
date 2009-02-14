@@ -15,35 +15,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeasureUptime.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
 
-  $Log: MeasureUptime.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.7  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.6  2002/04/26 18:24:15  rainy
-  Modified the Update method to support disabled measures.
-
-  Revision 1.5  2002/03/31 09:58:54  rainy
-  Added some comments
-
-  Revision 1.4  2001/12/23 10:16:10  rainy
-  The static variable is set to zero in destructor.
-
-  Revision 1.3  2001/10/28 10:20:49  rainy
-  GetStringValue uses consts
-
-  Revision 1.2  2001/09/26 16:27:14  rainy
-  Changed the interfaces a bit.
-
-  Revision 1.1  2001/09/01 12:56:25  rainy
-  Initial version.
-
-*/
 #pragma warning(disable: 4996)
 
 #include "MeasureUptime.h"

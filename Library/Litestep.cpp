@@ -15,38 +15,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/Litestep.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
 
-  $Log: Litestep.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.4  2004/07/11 17:10:01  rainy
-  Added ResetLoggingFlag.
-
-  Revision 1.3  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.6  2004/01/28 18:05:29  rainy
-  Todo is shown/hidden with OK.
-
-  Revision 1.5  2003/12/20 22:16:06  rainy
-  Added DebugLog
-
-  Revision 1.4  2002/09/08 14:14:54  rainy
-  The name of the log file is the same as the module's name.
-
-  Revision 1.3  2002/09/06 21:44:51  rainy
-  Added logging functions.
-
-  Revision 1.2  2002/08/24 11:10:07  rainy
-  Added support for logging.
-
-  Revision 1.1  2002/05/30 18:27:42  rainy
-  Initial version
-
-*/
 #pragma warning(disable: 4996)
 
 #include "Litestep.h"

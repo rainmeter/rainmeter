@@ -16,28 +16,6 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-/*
-  $Header: /home/cvsroot/Rainmeter/Plugins/PluginSysInfo/SysInfo.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: SysInfo.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.4  2004/07/11 17:10:42  rainy
-  The plugin is cleaned up correctly.
-
-  Revision 1.3  2004/06/05 10:57:05  rainy
-  Added new interface.
-  Uses config parser.
-
-  Revision 1.2  2002/12/23 14:24:46  rainy
-  Added secondary dns server return value.
-
-  Revision 1.1  2002/07/01 15:36:03  rainy
-  Intial version
-
-*/
-
 #pragma warning(disable: 4786)
 #pragma warning(disable: 4996)
 

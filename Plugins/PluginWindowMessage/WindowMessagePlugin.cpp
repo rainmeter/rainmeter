@@ -15,14 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Plugins/PluginWindowMessage/WindowMessagePlugin.cpp,v 1.1.1.1 2005/07/10 18:51:07 rainy Exp $
-
-  $Log: WindowMessagePlugin.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:07  rainy
-  no message
-
-*/
 
 #pragma warning(disable: 4786)
 #pragma warning(disable: 4996)

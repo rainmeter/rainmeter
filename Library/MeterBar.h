@@ -15,33 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeterBar.h,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: MeterBar.h,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.6  2004/07/11 17:16:11  rainy
-  Added BarBorder.
-
-  Revision 1.5  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.4  2003/02/10 18:12:45  rainy
-  Now uses GDI+
-
-  Revision 1.3  2002/03/31 09:58:54  rainy
-  Added some comments
-
-  Revision 1.2  2001/09/26 16:26:23  rainy
-  Small adjustement to the interfaces.
-
-  Revision 1.1  2001/09/01 12:56:25  rainy
-  Initial version.
-
-
-*/
 
 #ifndef __METERBAR_H__
 #define __METERBAR_H__

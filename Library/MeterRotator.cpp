@@ -15,30 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeterRotator.cpp,v 1.2 2005/07/12 16:31:49 rainy Exp $
-
-  $Log: MeterRotator.cpp,v $
-  Revision 1.2  2005/07/12 16:31:49  rainy
-  *** empty log message ***
-
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.4  2004/08/13 15:46:43  rainy
-  Added LineStart.
-  Reminder->Remainder.
-
-  Revision 1.3  2004/07/11 17:18:07  rainy
-  Relative coordinate support.
-
-  Revision 1.2  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.1  2004/03/13 16:18:43  rainy
-  Initial version
-
-*/
 
 #pragma warning(disable: 4786)
 #pragma warning(disable: 4996)
@@ -136,8 +112,8 @@ bool CMeterRotator::Update()
 		if (m_ValueRemainder > 0)
 		{
 			LARGE_INTEGER time;
-			time.QuadPart = m_Measure->GetValue();
-			m_Value = time.QuadPart % m_ValueRemainder;
+			time.QuadPart = (LONGLONG)m_Measure->GetValue();
+			m_Value = (double)(time.QuadPart % m_ValueRemainder);
 			m_Value /= (double)m_ValueRemainder;
 		}
 		else

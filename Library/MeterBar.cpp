@@ -15,48 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeterBar.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: MeterBar.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.11  2004/07/11 17:16:11  rainy
-  Added BarBorder.
-
-  Revision 1.10  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.9  2003/02/10 18:12:45  rainy
-  Now uses GDI+
-
-  Revision 1.8  2002/07/01 15:32:51  rainy
-  Removed include to lsapi.h
-
-  Revision 1.7  2002/05/04 08:13:41  rainy
-  Fixed vertical bar drawing.
-
-  Revision 1.6  2002/04/26 18:22:03  rainy
-  Added possibility to hide the meter.
-
-  Revision 1.5  2002/03/31 09:58:54  rainy
-  Added some comments
-
-  Revision 1.4  2001/12/23 10:14:51  rainy
-  Hex color values are now also supported.
-
-  Revision 1.3  2001/10/14 07:32:33  rainy
-  In error situations CError is thrown instead just a boolean value.
-
-  Revision 1.2  2001/09/26 16:26:24  rainy
-  Small adjustement to the interfaces.
-
-  Revision 1.1  2001/09/01 12:56:25  rainy
-  Initial version.
-
-
-*/
 
 #pragma warning(disable: 4786)
 #pragma warning(disable: 4996)

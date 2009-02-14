@@ -15,35 +15,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeasureTime.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
 
-  $Log: MeasureTime.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.7  2004/07/11 17:15:36  rainy
-  Fixed localtime calculation.
-
-  Revision 1.6  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.5  2004/03/13 16:17:42  rainy
-  Added timezones
-
-  Revision 1.4  2003/02/10 18:13:14  rainy
-  Returns the time in secs as value.
-
-  Revision 1.3  2002/04/26 18:24:15  rainy
-  Modified the Update method to support disabled measures.
-
-  Revision 1.2  2002/03/31 09:58:54  rainy
-  Added some comments
-
-  Revision 1.1  2001/12/23 10:11:08  rainy
-  Initial version.
-
-*/
 #pragma warning(disable: 4996)
 
 #include "MeasureTime.h"
@@ -263,11 +235,11 @@ void CMeasureTime::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			TIME_ZONE_INFORMATION tzi;
 			GetTimeZoneInformation(&tzi);
 
-			m_DeltaTime.QuadPart = ((zone * 3600) - tzi.DaylightBias * 60) * 10000000.0;
+			m_DeltaTime.QuadPart = (LONGLONG)((zone * 3600) - tzi.DaylightBias * 60) * 10000000.0;
 		}
 		else
 		{
-			m_DeltaTime.QuadPart = (zone * 3600) * 10000000.0;
+			m_DeltaTime.QuadPart = (LONGLONG)(zone * 3600) * 10000000.0;
 		}
 	}
 }

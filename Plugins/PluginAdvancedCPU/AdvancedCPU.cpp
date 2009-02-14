@@ -112,7 +112,7 @@ bool CheckProcess(CPUMeasure* measure, const std::wstring& name)
 {
 	if (measure->includes.empty()) 
 	{
-		for (int i = 0; i < measure->excludes.size(); i++)
+		for (size_t i = 0; i < measure->excludes.size(); i++)
 		{
 			if (wcsicmp(measure->excludes[i].c_str(), name.c_str()) == 0)
 			{
@@ -123,7 +123,7 @@ bool CheckProcess(CPUMeasure* measure, const std::wstring& name)
 	}
 	else
 	{
-		for (int i = 0; i < measure->includes.size(); i++)
+		for (size_t i = 0; i < measure->includes.size(); i++)
 		{
 			if (wcsicmp(measure->includes[i].c_str(), name.c_str()) == 0)
 			{
@@ -159,7 +159,7 @@ double Update2(UINT id)
 
 		if(measure)
 		{
-			for (int i = 0; i < g_Processes.size(); i++) 
+			for (size_t i = 0; i < g_Processes.size(); i++) 
 			{
 				// Check process include/exclude
 				if (CheckProcess(measure, g_Processes[i].name)) 
@@ -320,7 +320,7 @@ void UpdateProcesses()
 							values.oldValue = 0;
 
 							// Check if we can find the old value
-							for (int i = 0; i < g_Processes.size(); i++) 
+							for (size_t i = 0; i < g_Processes.size(); i++) 
 							{
 								if (!g_Processes[i].found && g_Processes[i].name == name) 
 								{

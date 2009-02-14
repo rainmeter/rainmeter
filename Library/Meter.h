@@ -15,51 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/Meter.h,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: Meter.h,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.12  2004/07/11 17:15:56  rainy
-  Added relative coordinates.
-
-  Revision 1.11  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.10  2003/02/10 18:12:45  rainy
-  Now uses GDI+
-
-  Revision 1.9  2002/07/01 15:33:00  rainy
-  Added LINE meter.
-
-  Revision 1.8  2002/05/04 08:12:51  rainy
-  Actions can be defined per meter.
-
-  Revision 1.7  2002/04/26 18:22:03  rainy
-  Added possibility to hide the meter.
-
-  Revision 1.6  2002/03/31 09:58:54  rainy
-  Added some comments
-
-  Revision 1.5  2001/12/23 10:15:25  rainy
-  Added ParseColor().
-
-  Revision 1.4  2001/09/26 16:26:53  rainy
-  Changed the interfaces a bit.
-
-  Revision 1.3  2001/08/19 09:13:25  rainy
-  Invert moved to the measures.
-
-  Revision 1.2  2001/08/12 15:41:41  Rainy
-  Adjusted Update()'s interface.
-  Added invert measure.
-
-  Revision 1.1.1.1  2001/08/11 10:58:19  Rainy
-  Added to CVS.
-
-*/
 
 #ifndef __METER_H__
 #define __METER_H__

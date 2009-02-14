@@ -15,68 +15,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/Rainmeter.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
 
-  $Log: Rainmeter.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.17  2004/08/13 15:48:23  rainy
-  Added check update.
-  Fixed LSHook
-
-  Revision 1.16  2004/07/11 17:19:57  rainy
-  Whole skin folder is recursively scanned.
-
-  Revision 1.15  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.14  2004/03/13 16:20:41  rainy
-  Improved multiconfig support
-
-  Revision 1.13  2003/12/05 15:50:10  Rainy
-  Multi-instance changes.
-
-  Revision 1.12  2003/02/10 18:10:48  rainy
-  Added support for the new bangs.
-
-  Revision 1.11  2002/07/01 15:01:18  rainy
-  Wharfdata is not used anymore.
-  Added Toggle.
-
-  Revision 1.10  2002/05/05 10:47:50  rainy
-  Fixed the Regresh and ChangeConfig bangs
-
-  Revision 1.9  2002/05/04 08:10:46  rainy
-  Added the new bangs.
-
-  Revision 1.8  2002/04/27 10:27:13  rainy
-  Added bangs to hide/show meters and measures
-
-  Revision 1.7  2002/03/31 09:58:53  rainy
-  Added some comments
-
-  Revision 1.6  2001/10/14 07:32:32  rainy
-  In error situations CError is thrown instead just a boolean value.
-
-  Revision 1.5  2001/09/26 16:24:57  rainy
-  Cleaned up the code
-
-  Revision 1.4  2001/09/01 12:56:44  rainy
-  Added refresh bang.
-
-  Revision 1.3  2001/08/25 17:06:38  rainy
-  Changed few methods to inlines.
-  Now the wharf data is stored fully.
-
-  Revision 1.2  2001/08/19 09:03:50  rainy
-  Added support for Litestep's GetRevID.
-
-  Revision 1.1.1.1  2001/08/11 10:58:19  Rainy
-  Added to CVS.
-
-*/
 #pragma warning(disable: 4996)
 #pragma warning(disable: 4786)
 
@@ -155,7 +94,7 @@ std::vector<std::wstring> ParseString(LPCTSTR str)
 		}
 
 		// Strip the quotes from all strings
-		for (int i = 0; i < result.size(); i++)
+		for (size_t i = 0; i < result.size(); i++)
 		{
 			size_t pos = result[i].find(L"\"");
 			while (pos != std::wstring::npos)
@@ -251,7 +190,7 @@ LPCTSTR ReadConfigString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue)
 ** Parses Bang args
 **
 */
-void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, int numOfArgs)
+void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 {
 	if(Rainmeter) 
 	{
@@ -260,7 +199,7 @@ void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, int numOfArgs)
 		std::wstring argument;
 
 		// Don't include the config name from the arg if there is one
-		for (int i = 0; i < numOfArgs; i++)
+		for (size_t i = 0; i < numOfArgs; i++)
 		{
 			if (i != 0) argument += L" ";
 			if (i < subStrings.size())
@@ -456,11 +395,11 @@ void RainmeterActivateConfig(HWND, const char* arg)
 		{
 			const std::vector<CRainmeter::CONFIG>& configs = Rainmeter->GetAllConfigs();
 
-			for (int i = 0; i < configs.size(); i++)
+			for (size_t i = 0; i < configs.size(); i++)
 			{
 				if (wcsnicmp(configs[i].config.c_str(), subStrings[0].c_str(), configs[i].config.length()) == 0)
 				{
-					for (int j = 0; j < configs[i].iniFiles.size(); j++)
+					for (size_t j = 0; j < configs[i].iniFiles.size(); j++)
 					{
 						if (wcsnicmp(configs[i].iniFiles[j].c_str(), subStrings[1].c_str(), configs[i].iniFiles[j].length()) == 0)
 						{
@@ -824,7 +763,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	}
 
 	// Create meter windows for active configs
-	for (int i = 0; i < m_ConfigStrings.size(); i++)
+	for (size_t i = 0; i < m_ConfigStrings.size(); i++)
 	{
 		if (m_ConfigStrings[i].active > 0 && m_ConfigStrings[i].active <= m_ConfigStrings[i].iniFiles.size())
 		{
@@ -843,7 +782,7 @@ void CRainmeter::ReloadSettings()
 
 void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 {
-	if (configIndex >= 0 && configIndex < m_ConfigStrings.size())
+	if (configIndex >= 0 && configIndex < (int)m_ConfigStrings.size())
 	{
 		WCHAR buffer[256];
 		std::wstring skinIniFile = m_ConfigStrings[configIndex].iniFiles[iniIndex];
@@ -883,14 +822,14 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 
 bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex)
 {
-	if (configIndex >= 0 && configIndex < m_ConfigStrings.size())
+	if (configIndex >= 0 && configIndex < (int)m_ConfigStrings.size())
 	{
 		m_ConfigStrings[configIndex].active = 0;	// Deactivate the config
 	}
 	else
 	{
 		// Deactive all
-		for(int i = 0; i < m_ConfigStrings.size(); i++)
+		for(size_t i = 0; i < m_ConfigStrings.size(); i++)
 		{
 			m_ConfigStrings[i].active = 0;
 		}
@@ -1187,7 +1126,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 		std::wstring::size_type start = std::wstring::npos;
 		std::wstring::size_type end = std::wstring::npos;
 		int count = 0;
-		for (int i = 0; i < arg.size(); i++)
+		for (size_t i = 0; i < arg.size(); i++)
 		{
 			if (arg[i] == L'[')
 			{
@@ -1425,7 +1364,7 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 		}
 	}
 
-	for (int i = 0; i < m_ConfigStrings.size(); i++)
+	for (size_t i = 0; i < m_ConfigStrings.size(); i++)
 	{
 		int active  = parser.ReadInt(m_ConfigStrings[i].config.c_str(), L"Active", 0);
 
@@ -1444,13 +1383,13 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 */
 bool CRainmeter::SetActiveConfig(std::wstring& skinName, std::wstring& skinIni)
 {
-	for (int i = 0; i < m_ConfigStrings.size(); i++)
+	for (size_t i = 0; i < m_ConfigStrings.size(); i++)
 	{
 		m_ConfigStrings[i].active = 0;	// Disable all other configs
 
 		if (skinName == m_ConfigStrings[i].config)
 		{
-			for (int j = 0; j < m_ConfigStrings[i].iniFiles.size(); j++)
+			for (size_t j = 0; j < m_ConfigStrings[i].iniFiles.size(); j++)
 			{
 				if (skinIni == m_ConfigStrings[i].iniFiles[j])
 				{
@@ -1663,7 +1602,7 @@ HMENU CRainmeter::CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData)
 	{
 		configMenu = CreatePopupMenu();
 
-		for (int i = 0; i < configMenuData.size(); i++)
+		for (size_t i = 0; i < configMenuData.size(); i++)
 		{
 			if (configMenuData[i].index == -1)
 			{

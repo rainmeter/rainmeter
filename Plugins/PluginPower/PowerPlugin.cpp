@@ -15,27 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Plugins/PluginPower/PowerPlugin.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: PowerPlugin.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.4  2004/07/11 17:10:42  rainy
-  The plugin is cleaned up correctly.
-
-  Revision 1.3  2004/06/05 10:56:07  rainy
-  Added new interface.
-  Uses config parser.
-
-  Revision 1.2  2003/03/22 20:39:42  rainy
-  The max value for status is now correct.
-
-  Revision 1.1  2002/09/07 08:17:11  rainy
-  Intial version
-
-*/
 
 #pragma warning(disable: 4786)
 #pragma warning(disable: 4996)

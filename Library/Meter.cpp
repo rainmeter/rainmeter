@@ -15,69 +15,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/Meter.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
 
-  $Log: Meter.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.17  2004/07/11 17:15:56  rainy
-  Added relative coordinates.
-
-  Revision 1.16  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.15  2004/03/13 16:17:56  rainy
-  Added rotator
-
-  Revision 1.14  2003/02/10 18:12:45  rainy
-  Now uses GDI+
-
-  Revision 1.13  2002/12/23 14:25:45  rainy
-  Fixed color reading.
-
-  Revision 1.12  2002/07/01 15:33:00  rainy
-  Added LINE meter.
-
-  Revision 1.11  2002/05/04 08:12:51  rainy
-  Actions can be defined per meter.
-
-  Revision 1.10  2002/04/27 10:28:14  rainy
-  Added an error message if the meter is not bound to anything.
-
-  Revision 1.9  2002/04/26 18:22:38  rainy
-  Added possibility to hide the meter.
-  Added support for Image meter.
-
-  Revision 1.8  2002/03/31 09:58:54  rainy
-  Added some comments
-
-  Revision 1.7  2001/12/23 10:15:25  rainy
-  Added ParseColor().
-
-  Revision 1.6  2001/10/14 07:32:15  rainy
-  In error situations CError is thrown instead just a boolean value.
-
-  Revision 1.5  2001/09/26 16:26:53  rainy
-  Changed the interfaces a bit.
-
-  Revision 1.4  2001/09/01 12:59:16  rainy
-  Added support for Uptime measure.
-  W and H default to 1.
-
-  Revision 1.3  2001/08/19 09:13:38  rainy
-  Invert moved to the measures.
-  Added PerfMon measure.
-
-  Revision 1.2  2001/08/12 15:41:41  Rainy
-  Adjusted Update()'s interface.
-  Added invert measure.
-
-  Revision 1.1.1.1  2001/08/11 10:58:19  Rainy
-  Added to CVS.
-
-*/
 #pragma warning(disable: 4996)
 
 #include "Error.h"

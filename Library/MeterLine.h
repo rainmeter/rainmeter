@@ -15,23 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeterLine.h,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: MeterLine.h,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.3  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.2  2003/02/10 18:12:44  rainy
-  Now uses GDI+
-
-  Revision 1.1  2002/07/01 15:35:54  rainy
-  Intial version
-
-*/
 
 #ifndef __METERLINE_H__
 #define __METERLINE_H__

@@ -15,32 +15,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeasureRegistry.cpp,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
 
-  $Log: MeasureRegistry.cpp,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.6  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.5  2002/05/04 08:13:06  rainy
-  Added support for multi_sz
-
-  Revision 1.4  2002/04/27 10:28:57  rainy
-  Added possibility to use other HKEYs also.
-
-  Revision 1.3  2002/04/26 18:24:15  rainy
-  Modified the Update method to support disabled measures.
-
-  Revision 1.2  2002/03/31 09:58:54  rainy
-  Added some comments
-
-  Revision 1.1  2001/10/28 09:07:18  rainy
-  Inital version
-
-*/
 #pragma warning(disable: 4996)
 
 #include "MeasureRegistry.h"

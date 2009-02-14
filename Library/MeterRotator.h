@@ -15,24 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/MeterRotator.h,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: MeterRotator.h,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.3  2004/08/13 15:46:43  rainy
-  Added LineStart.
-  Reminder->Remainder.
-
-  Revision 1.2  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.1  2004/03/13 16:18:43  rainy
-  Initial version
-
-*/
 
 #ifndef __METERROTATOR_H__
 #define __METERROTATOR_H__

@@ -15,74 +15,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-/*
-  $Header: /home/cvsroot/Rainmeter/Library/Rainmeter.h,v 1.1.1.1 2005/07/10 18:51:06 rainy Exp $
-
-  $Log: Rainmeter.h,v $
-  Revision 1.1.1.1  2005/07/10 18:51:06  rainy
-  no message
-
-  Revision 1.19  2004/08/13 15:48:34  rainy
-  no message
-
-  Revision 1.18  2004/07/11 17:19:57  rainy
-  Whole skin folder is recursively scanned.
-
-  Revision 1.17  2004/06/05 10:55:54  rainy
-  Too much changes to be listed in here...
-
-  Revision 1.16  2004/03/13 16:20:41  rainy
-  Improved multiconfig support
-
-  Revision 1.15  2003/12/05 15:50:10  Rainy
-  Multi-instance changes.
-
-  Revision 1.14  2003/02/10 18:10:48  rainy
-  Added support for the new bangs.
-
-  Revision 1.13  2002/07/01 15:01:18  rainy
-  Wharfdata is not used anymore.
-  Added Toggle.
-
-  Revision 1.12  2002/05/04 08:10:25  rainy
-  Added interfaces for the new bangs.
-  commandline is now stored in stl string.
-
-  Revision 1.11  2002/04/27 10:27:13  rainy
-  Added bangs to hide/show meters and measures
-
-  Revision 1.10  2002/04/26 18:22:02  rainy
-  Added possibility to hide the meter.
-
-  Revision 1.9  2002/03/31 09:58:53  rainy
-  Added some comments
-
-  Revision 1.8  2002/01/16 16:05:25  rainy
-  Version 0.6
-
-  Revision 1.7  2001/12/23 10:11:32  rainy
-  Refresh gets another parameter.
-
-  Revision 1.6  2001/09/26 16:23:23  rainy
-  Changed the version number
-
-  Revision 1.5  2001/09/01 12:56:44  rainy
-  Added refresh bang.
-
-  Revision 1.4  2001/08/25 18:07:57  rainy
-  Version is now 0.4.
-
-  Revision 1.3  2001/08/25 17:06:24  rainy
-  Changed few methods to inlines.
-  Now the wharf data is stored fully.
-
-  Revision 1.2  2001/08/19 09:03:28  rainy
-  Added VERSION string.
-
-  Revision 1.1.1.1  2001/08/11 10:58:19  Rainy
-  Added to CVS.
-
-*/
 
 #ifndef __RAINMETER_H__
 #define __RAINMETER_H__
@@ -137,7 +69,7 @@ void RainmeterResetStats(HWND, const char* arg);
 void RainmeterMoveMeter(HWND, const char* arg);
 void RainmeterPluginBang(HWND, const char* arg);
 
-void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, int numOfArgs);
+void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
 
 struct GlobalConfig
 {
