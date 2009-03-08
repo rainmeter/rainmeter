@@ -73,6 +73,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginWirelessInfo", "Plugi
 		{BE3325E4-475C-40D0-9745-EE20BA3D8443} = {BE3325E4-475C-40D0-9745-EE20BA3D8443}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginRecycleManager", "Plugins\PluginRecycleManager\PluginRecycleManager.vcproj", "{4F8C4C09-431C-45C4-830B-32006E783C3A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BE3325E4-475C-40D0-9745-EE20BA3D8443} = {BE3325E4-475C-40D0-9745-EE20BA3D8443}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -170,6 +175,12 @@ Global
 		{F6803AC5-272F-402B-9CA0-DEF8A3D83D30}.Release.Build.0 = Release|Win32
 		{F6803AC5-272F-402B-9CA0-DEF8A3D83D30}.Release 64.ActiveCfg = Release 64|Win32
 		{F6803AC5-272F-402B-9CA0-DEF8A3D83D30}.Release 64.Build.0 = Release 64|Win32
+		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Debug.ActiveCfg = Debug|Win32
+		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Debug.Build.0 = Debug|Win32
+		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Release.ActiveCfg = Release|Win32
+		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Release.Build.0 = Release|Win32
+		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Release 64.ActiveCfg = Release 64|Win32
+		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Release 64.Build.0 = Release 64|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection
