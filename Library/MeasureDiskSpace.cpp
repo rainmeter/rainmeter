@@ -30,6 +30,8 @@
 CMeasureDiskSpace::CMeasureDiskSpace(CMeterWindow* meterWindow) : CMeasure(meterWindow)
 {
 	m_Total = false;
+	m_Label = false;
+	m_IgnoreRemovable = false;
 }
 
 /*
@@ -55,7 +57,7 @@ bool CMeasureDiskSpace::Update()
 	ULARGE_INTEGER i64FreeBytesToCaller, i64TotalBytes, i64FreeBytes;
 
 	UINT type = GetDriveType(m_Drive.c_str());
-	if (type != DRIVE_CDROM && type != DRIVE_REMOVABLE)	// Ignore CD-ROMS and removable drives
+	if (type != DRIVE_CDROM && (!m_IgnoreRemovable || type != DRIVE_REMOVABLE))	// Ignore CD-ROMS and removable drives
 	{
 		if(GetDiskFreeSpaceEx(m_Drive.c_str(), &i64FreeBytesToCaller, &i64TotalBytes, &i64FreeBytes))
 		{
@@ -115,12 +117,13 @@ void CMeasureDiskSpace::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_Drive = parser.ReadString(section, L"Drive", L"C:\\");
 	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
 	m_Label = (1 == parser.ReadInt(section, L"Label", 0));
+	m_IgnoreRemovable = (1 == parser.ReadInt(section, L"IgnoreRemovable", 0));
 
 	// Set the m_MaxValue
 	ULARGE_INTEGER i64FreeBytesToCaller, i64TotalBytes, i64FreeBytes;
 
 	UINT type = GetDriveType(m_Drive.c_str());
-	if (type != DRIVE_CDROM && type != DRIVE_REMOVABLE)	// Ignore CD-ROMS and removable drives
+	if (type != DRIVE_CDROM && (!m_IgnoreRemovable || type != DRIVE_REMOVABLE))	// Ignore CD-ROMS and removable drives
 	{
 		if(GetDiskFreeSpaceEx(m_Drive.c_str(), &i64FreeBytesToCaller, &i64TotalBytes, &i64FreeBytes))
 		{

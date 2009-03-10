@@ -36,6 +36,7 @@ private:
 	std::wstring m_LabelName;
 	bool m_Total;
 	bool m_Label;
+	bool m_IgnoreRemovable;
 };
 
 #endif

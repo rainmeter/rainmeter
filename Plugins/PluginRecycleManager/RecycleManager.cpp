@@ -97,11 +97,11 @@ double Update2(UINT id)
 	RecycleBinInfo.cbSize = sizeof( RecycleBinInfo ); // Tell size of structure  
 	SHQueryRecycleBin( L"C:", &RecycleBinInfo ); // Get recycle bin info  
 
-	if (dataType == NUMRECYCLE)
+	if (dataType == SIZERECYCLE)
 	{
 		return (double)RecycleBinInfo.i64Size; // size in bytes
 	}
-	else if (dataType == SIZERECYCLE)
+	else if (dataType == NUMRECYCLE)
 	{
 		return (double)RecycleBinInfo.i64NumItems; // number of items in bin
 	}
