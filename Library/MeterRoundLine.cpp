@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2002 Kimmo Pekkola
+  Copyright (C) 2009 Kimmo Pekkola, Brian Todoroff
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -137,14 +137,25 @@ bool CMeterRoundLine::Draw()
 		if (m_LineStart > 0.0)
 		{
 			// Create clipping region
-			GraphicsPath path;
-			path.AddEllipse(REAL(cx - m_LineStart), REAL(cy - m_LineStart), REAL(m_LineStart * 2), REAL(m_LineStart * 2));
-			graphics.SetClip(&path, CombineModeExclude);
-		}
+			//GraphicsPath path;
+			//path.AddEllipse(REAL(cx - m_LineStart), REAL(cy - m_LineStart), REAL(m_LineStart * 2), REAL(m_LineStart * 2));
+			//graphics.SetClip(&path, CombineModeExclude);
 
-		// Calculate the center of for the line
-		SolidBrush solidBrush(m_LineColor);
-		graphics.FillPie(&solidBrush, (REAL)(cx - m_LineLength), (REAL)(cy - m_LineLength), (REAL)(m_LineLength * 2.0), (REAL)(m_LineLength * 2.0), (REAL)(m_StartAngle * 180.0 / PI), (REAL)(m_RotationAngle * m_Value * 180.0 / PI));
+			//Draw an arc with a pen m_Width wide
+			REAL lineWidth = (REAL)m_LineLength - (REAL)m_LineStart;
+			Pen pen(m_LineColor, lineWidth);
+			// Calculate the end point of the line
+			double angle = m_RotationAngle * m_Value + m_StartAngle;
+			
+			REAL adjLineLength = m_LineLength - (lineWidth/2);
+			graphics.DrawArc(&pen,(REAL)(cx - adjLineLength), (REAL)(cy - adjLineLength), (REAL)(adjLineLength * 2.0), (REAL)(adjLineLength * 2.0), (REAL)(m_StartAngle * 180.0 / PI), (REAL)(m_RotationAngle * m_Value * 180.0 / PI));
+		}
+		else
+		{
+			// Calculate the center of for the line
+			SolidBrush solidBrush(m_LineColor);
+			graphics.FillPie(&solidBrush, (REAL)(cx - m_LineLength), (REAL)(cy - m_LineLength), (REAL)(m_LineLength * 2.0), (REAL)(m_LineLength * 2.0), (REAL)(m_StartAngle * 180.0 / PI), (REAL)(m_RotationAngle * m_Value * 180.0 / PI));
+		}
 	}
 	else
 	{
