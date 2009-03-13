@@ -141,14 +141,19 @@ bool CMeterRoundLine::Draw()
 			//path.AddEllipse(REAL(cx - m_LineStart), REAL(cy - m_LineStart), REAL(m_LineStart * 2), REAL(m_LineStart * 2));
 			//graphics.SetClip(&path, CombineModeExclude);
 
-			//Draw an arc with a pen m_Width wide
-			REAL lineWidth = (REAL)m_LineLength - (REAL)m_LineStart;
-			Pen pen(m_LineColor, lineWidth);
 			// Calculate the end point of the line
 			double angle = m_RotationAngle * m_Value + m_StartAngle;
 			
-			REAL adjLineLength = m_LineLength - (lineWidth/2);
-			graphics.DrawArc(&pen,(REAL)(cx - adjLineLength), (REAL)(cy - adjLineLength), (REAL)(adjLineLength * 2.0), (REAL)(adjLineLength * 2.0), (REAL)(m_StartAngle * 180.0 / PI), (REAL)(m_RotationAngle * m_Value * 180.0 / PI));
+			SolidBrush solidBrush(m_LineColor);
+
+			//Create a path to surround the arc
+			GraphicsPath path;
+			path.AddArc((REAL)(cx - m_LineStart), (REAL)(cy - m_LineStart), (REAL)(m_LineStart * 2.0), (REAL)(m_LineStart * 2.0), (REAL)(m_StartAngle * 180.0 / PI), (REAL)(m_RotationAngle * m_Value * 180.0 / PI));
+			path.AddLine((REAL)m_LineStart*(REAL)cos(m_StartAngle)+cx,(REAL)m_LineStart*(REAL)sin(m_StartAngle)+cy,(REAL)m_LineLength*(REAL)cos(m_StartAngle)+cx,(REAL)m_LineLength*(REAL)sin(m_StartAngle)+cy);
+			path.AddArc((REAL)(cx - m_LineLength), (REAL)(cy - m_LineLength), (REAL)(m_LineLength * 2.0), (REAL)(m_LineLength * 2.0), (REAL)(m_StartAngle * 180.0 / PI), (REAL)(m_RotationAngle * m_Value * 180.0 / PI));
+			path.AddLine((REAL)m_LineLength*(REAL)cos(angle)+cx,(REAL)m_LineLength*(REAL)sin(angle)+cy,(REAL)m_LineStart*(REAL)cos(angle)+cx,(REAL)m_LineStart*(REAL)sin(angle)+cy);
+	
+			graphics.FillPath(&solidBrush,&path);
 		}
 		else
 		{
