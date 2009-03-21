@@ -43,7 +43,7 @@ extern "C++" CRainmeter* Rainmeter;
 ** The Main-function
 **
 */
-int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPCTSTR lpCmdLine, int nCmdShow)
+int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
 	MSG msg;
 	WCHAR* WinClass = L"DummyRainWClass";
