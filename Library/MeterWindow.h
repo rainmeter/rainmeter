@@ -107,6 +107,16 @@ enum PATH_FOLDER
 	PATH_FOLDER_PLUGIN
 };
 
+typedef struct 
+{
+	int count;						//Number of monitors
+	HMONITOR m_Monitors[32];		//Monitor info
+	RECT m_MonitorRect[32];		//Monitor rect on virtual screen
+	MONITORINFO m_MonitorInfo[32];	//Monitor information
+	//int index;					//Utility for enumeration
+	int vsT, vsL, vsH, vsW;
+} MULTIMONITOR_INFO;
+
 class CRainmeter;
 class CMeasure;
 class CMeter;
@@ -147,6 +157,11 @@ public:
 	std::list<CMeter*>& GetMeters() { return m_Meters; };
 
 	ZPOSITION GetWindowZPosition() { return m_WindowZPosition; }
+	bool GetXPercentage() { return m_WindowXPercentage; }
+	bool GetYPercentage() { return m_WindowYPercentage; }
+	bool GetXFromRight() { return m_WindowXFromRight; }
+	bool GetYFromBottom() { return m_WindowYFromBottom; }
+
 	bool GetNativeTransparency() { return m_NativeTransparency; }
 	bool GetClickThrough() { return m_ClickThrough; }
 	bool GetKeepOnScreen() { return m_KeepOnScreen; }
@@ -187,7 +202,8 @@ private:
 	Gdiplus::Bitmap* GrabDesktop(int x, int y, int w, int h);
 	void SnapToWindow(CMeterWindow* window, LPWINDOWPOS wp);
 	void MapCoordsToScreen(int& x, int& y, int w, int h);
-
+	void WindowToScreen();
+	void ScreenToWindow();
 	void Update(bool nodraw);
 	void UpdateTransparency(int alpha, bool reset);
 	void ReadConfig();
@@ -209,7 +225,7 @@ private:
 	HINSTANCE m_User32Library;
 	BOOL m_ChildWindow;
 
-	std::wstring m_RightMouseDownAction;			// Action to run when right mouse is pressed
+	std::wstring m_RightMouseDownAction;		// Action to run when right mouse is pressed
 	std::wstring m_LeftMouseDownAction;			// Action to run when left mouse is pressed
 	std::wstring m_RightMouseUpAction;			// Action to run when right mouse is released
 	std::wstring m_LeftMouseUpAction;			// Action to run when left mouse is released
@@ -223,13 +239,24 @@ private:
 	std::wstring m_BackgroundName;				// Name of the background image
 	Gdiplus::Rect m_BackgroundMargins;
 	Gdiplus::Rect m_DragMargins;
-	int m_WindowX;								// Window's X-position
-	int m_WindowY;								// Window's Y-position
-	int m_WindowW;								// Window's width
+	std::wstring m_WindowX;						// Window's X-position in config file
+	std::wstring m_WindowY;						// Window's Y-position in config file
+	int m_WindowXScreen;
+	int m_WindowYScreen;
+	bool m_WindowXFromRight;
+	bool m_WindowYFromBottom;
+	bool m_WindowXPercentage;
+	bool m_WindowYPercentage;
+	float m_WindowXNumber;						// Store the number portion from the config
+	float m_WindowYNumber;						// Store the number portion from the config
+	int m_WindowW;								// Window's Width
 	int m_WindowH;								// Window's Height
+	int m_ScreenX;								// Window's X-postion on the virtual screen 
+	int m_ScreenY;								// Window's Y-postion on the virtual screen
+	static MULTIMONITOR_INFO m_Monitors;		// Multi-Monitor info
 	bool m_WindowDraggable;						// True, if window can be moved
 	int m_WindowUpdate;							// Measure update frequency
-	HIDEMODE m_WindowHide;							// If true, the window is hidden when mouse is over it
+	HIDEMODE m_WindowHide;						// If true, the window is hidden when mouse is over it
 	bool m_WindowStartHidden;					// If true, the window is hidden at startup
 	bool m_SavePosition;						// If true, the window's position is saved
 	bool m_SnapEdges;							// If true, the window snaps to the edges of the screen when moved
@@ -242,7 +269,7 @@ private:
 	bool m_DynamicWindowSize;					// 
 	bool m_ClickThrough;						// 
 	bool m_KeepOnScreen;						// 
-
+	bool m_Dragging;							//
 	BGMODE m_BackgroundMode;					// The background mode
 	Gdiplus::Color m_SolidColor;				// Color of the solid background
 	Gdiplus::Color m_SolidColor2;				// Color of the solid background
