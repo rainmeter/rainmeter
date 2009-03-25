@@ -2379,6 +2379,19 @@ LRESULT CMeterWindow::OnNcHitTest(WPARAM wParam, LPARAM lParam)
 }
 
 /*
+** OnSettingChange
+**
+** Called when resolution changes
+**
+*/
+LRESULT CMeterWindow::OnSettingChange(WPARAM wParam, LPARAM lParam) 
+{
+	Refresh(false);
+	m_Monitors.count = 0;
+	return DefWindowProc(m_Window, m_Message, wParam, lParam);
+}
+
+/*
 ** OnWindowPosChanging
 **
 ** Called when windows position is about to change
@@ -2912,6 +2925,7 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnWindowPosChanging, WM_WINDOWPOSCHANGING)
 	MESSAGE(OnCopyData, WM_COPYDATA)
 	MESSAGE(OnDelayedExecute, WM_DELAYED_EXECUTE)
+	MESSAGE(OnSettingChange, WM_SETTINGCHANGE)
 	END_MESSAGEPROC
 }
 

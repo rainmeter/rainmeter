@@ -195,6 +195,8 @@ protected:
 	LRESULT OnLeftButtonUp(WPARAM wParam, LPARAM lParam);
 	LRESULT OnRightButtonUp(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedExecute(WPARAM wParam, LPARAM lParam);
+	LRESULT OnSettingChange(WPARAM wParam, LPARAM lParam); 
+
 
 private:
 	void CreateRegion(bool clear);
