@@ -243,6 +243,8 @@ private:
 	Gdiplus::Rect m_DragMargins;
 	std::wstring m_WindowX;						// Window's X-position in config file
 	std::wstring m_WindowY;						// Window's Y-position in config file
+	std::wstring m_AnchorX;						// Anchor's X-position in config file
+	std::wstring m_AnchorY;						// Anchor's Y-position in config file
 	int m_WindowXScreen;
 	int m_WindowYScreen;
 	bool m_WindowXFromRight;
@@ -255,6 +257,14 @@ private:
 	int m_WindowH;								// Window's Height
 	int m_ScreenX;								// Window's X-postion on the virtual screen 
 	int m_ScreenY;								// Window's Y-postion on the virtual screen
+	bool m_AnchorXFromRight;
+	bool m_AnchorYFromBottom;
+	bool m_AnchorXPercentage;
+	bool m_AnchorYPercentage;
+	float m_AnchorXNumber;						// Store the number portion from the config
+	float m_AnchorYNumber;						// Store the number portion from the config
+	int m_AnchorScreenX;						// Window's anchor X-postion 
+	int m_AnchorScreenY;						// Window's anchor Y-postion
 	static MULTIMONITOR_INFO m_Monitors;		// Multi-Monitor info
 	bool m_WindowDraggable;						// True, if window can be moved
 	int m_WindowUpdate;							// Measure update frequency

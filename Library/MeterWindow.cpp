@@ -80,7 +80,14 @@ CMeterWindow::CMeterWindow(std::wstring& config, std::wstring& iniFile)
 	m_WindowYFromBottom = false;
 	m_WindowXScreen = 1;
 	m_WindowYScreen = 1;
-	//m_Monitors.count = 0;
+	m_AnchorXFromRight = false;
+	m_AnchorYFromBottom = false;
+	m_AnchorXPercentage = false;
+	m_AnchorYPercentage = false;
+	m_AnchorXNumber = 0;
+	m_AnchorYNumber = 0;
+	m_AnchorScreenX = 0; 
+	m_AnchorScreenY = 0;
 	m_WindowZPosition = ZPOSITION_NORMAL;
 	m_WindowDraggable = true;
 	m_WindowUpdate = 1000;
@@ -268,7 +275,7 @@ void CMeterWindow::Refresh(bool init)
 	if(!init)
 	{
 		// First destroy everything
-		WriteConfig();
+		// WriteConfig(); //Not clear why this is needed and it messes up resolution changes
 
 		KillTimer(m_Window, METERTIMER);	// Kill the timer
 		KillTimer(m_Window, MOUSETIMER);	// Kill the timer
@@ -296,7 +303,8 @@ void CMeterWindow::Refresh(bool init)
 		m_BackgroundName.erase();
 	}
 
-	ReadConfig();	// Read the general settings
+	//TODO: Should these be moved to a Reload command instead of hitting the disk on every refresh
+	ReadConfig();	// Read the general settings 
 	ReadSkin();
 
 	InitializeMeters();
@@ -887,6 +895,56 @@ void CMeterWindow::WindowToScreen()
 		m_Monitors.vsW = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 	}
 
+	index = m_AnchorX.find_first_not_of(L"0123456789.");
+	m_AnchorXNumber = _wtof(m_AnchorX.substr(0,index).c_str());
+	index = m_AnchorX.find(L'%');
+	if(index != std::wstring::npos) m_AnchorXPercentage = true;
+	index = m_AnchorX.find(L'R');
+	if(index != std::wstring::npos) m_AnchorXFromRight = true;
+	if(m_AnchorXPercentage) //is a percentage
+	{
+		float p = m_AnchorXNumber;
+		pixel = (float)m_WindowW*p/100;
+	}
+	else
+	{
+		pixel = m_AnchorXNumber;
+	}
+	if(m_AnchorXFromRight) //measure from right
+	{
+		pixel = m_WindowW-pixel;
+	}
+	else
+	{
+		//pixel = pixel;
+	}
+	m_AnchorScreenX = pixel;
+
+	index = m_AnchorY.find_first_not_of(L"0123456789.");
+	m_AnchorYNumber = _wtof(m_AnchorY.substr(0,index).c_str());
+	index = m_AnchorY.find(L'%');
+	if(index != std::wstring::npos) m_AnchorYPercentage = true;
+	index = m_AnchorY.find(L'R');
+	if(index != std::wstring::npos) m_AnchorYFromBottom = true;
+	if(m_AnchorYPercentage) //is a percentage
+	{
+		float p = m_AnchorYNumber;
+		pixel = (float)m_WindowH*p/100;
+	}
+	else
+	{
+		pixel = m_AnchorYNumber;
+	}
+	if(m_AnchorYFromBottom) //measure from bottom
+	{
+		pixel = m_WindowH-pixel;
+	}
+	else
+	{
+		//pixel = pixel;
+	}
+	m_AnchorScreenY = pixel;
+
 	index = m_WindowX.find_first_not_of(L"0123456789.");
 	m_WindowXNumber = _wtof(m_WindowX.substr(0,index).c_str());
 	index = m_WindowX.find(L'%');
@@ -932,7 +990,7 @@ void CMeterWindow::WindowToScreen()
 	{
 		pixel = screenx + pixel;
 	}
-	m_ScreenX = pixel;
+	m_ScreenX = pixel-m_AnchorScreenX;
 
 	index = m_WindowY.find_first_not_of(L"0123456789.");
 	m_WindowYNumber = _wtof(m_WindowY.substr(0,index).c_str());
@@ -978,7 +1036,7 @@ void CMeterWindow::WindowToScreen()
 	{
 		pixel = screeny + pixel;
 	}
-    m_ScreenY = pixel;
+    m_ScreenY = pixel-m_AnchorScreenY;
 }
 
 /* ScreenToWindow
@@ -1009,10 +1067,12 @@ void CMeterWindow::ScreenToWindow()
 	if(m_WindowXFromRight == true)
 	{
 		pixel = (screenx + screenw) - m_ScreenX;
+		pixel -= m_AnchorScreenX;
 	}
 	else
 	{
 		pixel = m_ScreenX - screenx;
+		pixel += m_AnchorScreenX;
 	}
 	if(m_WindowXPercentage == true)
 	{
@@ -1051,10 +1111,12 @@ void CMeterWindow::ScreenToWindow()
 	if(m_WindowYFromBottom == true)
 	{
 		pixel = (screeny + screenh) - m_ScreenY;
+		pixel -= m_AnchorScreenY;
 	}
 	else
 	{
 		pixel = m_ScreenY - screeny;
+		pixel += m_AnchorScreenY;
 	}
 	if(m_WindowYPercentage == true)
 	{
@@ -1097,6 +1159,8 @@ void CMeterWindow::ReadConfig()
 	{
 		m_WindowX = parser.ReadString(section, _T("WindowX"), m_WindowX.c_str());
 		m_WindowY = parser.ReadString(section, _T("WindowY"), m_WindowY.c_str());
+		m_AnchorX = parser.ReadString(section, _T("AnchorX"), m_AnchorX.c_str());
+		m_AnchorY = parser.ReadString(section, _T("AnchorY"), m_AnchorY.c_str());
 
 		if (!m_Rainmeter->GetDummyLitestep())
 		{
@@ -1107,19 +1171,7 @@ void CMeterWindow::ReadConfig()
 			m_WindowY = GetRCString("RainmeterWindowY", tmpSz, ConvertToAscii(m_WindowY.c_str()).c_str(), MAX_LINE_LENGTH-1);
 			m_WindowY = ConvertToWide(tmpSz);
 		}
-
-		//if(m_WindowX != 0 || m_WindowY != 0)
-		//{
-		//	// TODO: check that pt is somewhere on screen
-		//}		
 		
-		WindowToScreen();
-
-		//m_ScreenX=m_WindowX;
-		//m_ScreenY=m_WindowY;
-
-
-
 		int zPos = parser.ReadInt(section, L"AlwaysOnTop", m_WindowZPosition);
 		if (zPos == -1)
 		{
@@ -1414,7 +1466,6 @@ void CMeterWindow::InitializeMeters()
 	//}
 
 	Update(true);
-
 	ResizeWindow(true);
 }
 
@@ -1444,6 +1495,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 
 	if (!reset && m_WindowW == w && m_WindowH == h)
 	{
+		WindowToScreen();
 		return false;		// The window is already correct size
 	}
 
@@ -1554,6 +1606,8 @@ bool CMeterWindow::ResizeWindow(bool reset)
 			// Get the size form the background bitmap
 			m_WindowW = m_Background->GetWidth();
 			m_WindowH = m_Background->GetHeight();
+			//Calculate the window position from the config parameters
+			WindowToScreen();
 
 			if (!m_NativeTransparency)
 			{
@@ -1571,6 +1625,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 	{
 		m_WindowW = w;
 		m_WindowH = h;
+		WindowToScreen();
 	}
 
 	// If Background is not set, take a copy from the desktop
@@ -1616,7 +1671,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 			}
 		}
 	}
-
+    
 	return true;
 }
 
@@ -1875,16 +1930,16 @@ LRESULT CMeterWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 		Update(false);
 		UpdateAboutStatistics();
 
-		if (m_KeepOnScreen) 
-		{
-			int x = m_ScreenX;
-			int y = m_ScreenY;
-			MapCoordsToScreen(x, y, m_WindowW, m_WindowH);
-			if (x != m_ScreenX || y != m_ScreenY)
-			{
-				MoveWindow(x, y);
-			}
-		}
+		//if (m_KeepOnScreen) 
+		//{
+		//	int x = m_ScreenX;
+		//	int y = m_ScreenY;
+		//	MapCoordsToScreen(x, y, m_WindowW, m_WindowH);
+		//	if (x != m_ScreenX || y != m_ScreenY)
+		//	{
+		//		MoveWindow(x, y);
+		//	}
+		//}
 	}
 	else if(wParam == MOUSETIMER)
 	{
@@ -2386,8 +2441,8 @@ LRESULT CMeterWindow::OnNcHitTest(WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnSettingChange(WPARAM wParam, LPARAM lParam) 
 {
-	Refresh(false);
 	m_Monitors.count = 0;
+	Refresh(false);
 	return DefWindowProc(m_Window, m_Message, wParam, lParam);
 }
 
