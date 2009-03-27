@@ -99,7 +99,7 @@ CMeterWindow::CMeterWindow(std::wstring& config, std::wstring& iniFile)
 	m_Refreshing = false;
 	m_NativeTransparency = true;
 	m_MeasuresToVariables = false;
-	m_AllowNegativeCoordinates = true;
+	//m_AllowNegativeCoordinates = true;
 	m_SavePosition = false;			// Must be false
 	m_AlphaValue = 255;
 	m_FadeDuration = 250;
@@ -422,13 +422,13 @@ void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 */
 void CMeterWindow::MoveWindow(int x, int y)
 {
-	if (!m_AllowNegativeCoordinates)
-	{
-		RECT r;
-		GetClientRect(GetDesktopWindow(), &r); 
-		if(x < 0) x += r.right;
-		if(y < 0) y += r.bottom;
-	}
+	//if (!m_AllowNegativeCoordinates)
+	//{
+	//	RECT r;
+	//	GetClientRect(GetDesktopWindow(), &r); 
+	//	if(x < 0) x += r.right;
+	//	if(y < 0) y += r.bottom;
+	//}
 
 	SetWindowPos(m_Window, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
@@ -1200,7 +1200,6 @@ void CMeterWindow::ReadConfig()
 		m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", m_SavePosition);
 		m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", m_SnapEdges);
 		m_MeasuresToVariables = 0!=parser.ReadInt(section, L"MeasuresToVariables", m_MeasuresToVariables);
-		m_AllowNegativeCoordinates = 0!=parser.ReadInt(section, L"AllowNegativeCoordinates", m_AllowNegativeCoordinates);
 		m_NativeTransparency = 0!=parser.ReadInt(section, L"NativeTransparency", m_NativeTransparency);
 		m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", m_ClickThrough);
 		m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", m_KeepOnScreen);

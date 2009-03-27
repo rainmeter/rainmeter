@@ -276,7 +276,6 @@ private:
 	int m_AlphaValue;							// The 'from' transparency value 0 - 255
 	int m_FadeDuration;							// Time it takes to fade the window
 	bool m_MeasuresToVariables;					// If true, Measured values are transformed to Litestep's eVars
-	bool m_AllowNegativeCoordinates;			// If true, Negative coordinates are OK
 	ZPOSITION m_WindowZPosition;				// Window's Z-position
 	bool m_DynamicWindowSize;					// 
 	bool m_ClickThrough;						// 
