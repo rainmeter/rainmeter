@@ -2380,7 +2380,7 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_YPERCENTAGE)
 		{
-			m_WindowXPercentage = !m_WindowXPercentage;
+			m_WindowYPercentage = !m_WindowYPercentage;
 		}
 		else
 		{
