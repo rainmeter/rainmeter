@@ -32,13 +32,25 @@ extern "C"
 {
 __declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
 __declspec( dllexport ) LPCTSTR GetString(UINT id, UINT flags);
+__declspec( dllexport ) double Update2(UINT id);
 __declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
 __declspec( dllexport ) UINT GetPluginVersion();
 __declspec( dllexport ) LPCTSTR GetPluginAuthor();
 }
 
+typedef struct 
+{
+	int count;						//Number of monitors
+	HMONITOR m_Monitors[32];		//Monitor info
+	RECT m_MonitorRect[32];			//Monitor rect on virtual screen
+	MONITORINFO m_MonitorInfo[32];	//Monitor information
+} MULTIMONITOR_INFO;
+
+MULTIMONITOR_INFO m_Monitors = { 0 };
+
 BOOL CheckConnection();
 void GetOSVersion(WCHAR* buffer);
+BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
 
 enum TYPE
 {
@@ -55,6 +67,18 @@ enum TYPE
 	HOST_NAME,
 	DOMAIN_NAME,
 	DNS_SERVER,
+
+	WORK_AREA_TOP,
+	WORK_AREA_LEFT,
+	WORK_AREA_WIDTH,
+	WORK_AREA_HEIGHT,
+	SCREEN_WIDTH,
+	SCREEN_HEIGHT,
+	NUM_MONITORS,
+	VIRTUAL_SCREEN_TOP,
+	VIRTUAL_SCREEN_LEFT,
+	VIRTUAL_SCREEN_WIDTH,
+	VIRTUAL_SCREEN_HEIGHT,
 };
 
 static std::map<UINT, TYPE> g_Types;
@@ -129,6 +153,51 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		else if (wcsicmp(L"DNS_SERVER", type) == 0)
 		{
 			g_Types[id] = DNS_SERVER;
+		} 
+
+		else if (wcsicmp(L"WORK_AREA_TOP", type) == 0)
+		{
+			g_Types[id] = WORK_AREA_TOP;
+		} 
+		else if (wcsicmp(L"WORK_AREA_LEFT", type) == 0)
+		{
+			g_Types[id] = WORK_AREA_LEFT;
+		} 
+		else if (wcsicmp(L"WORK_AREA_WIDTH", type) == 0)
+		{
+			g_Types[id] = WORK_AREA_WIDTH;
+		} 
+		else if (wcsicmp(L"WORK_AREA_HEIGHT", type) == 0)
+		{
+			g_Types[id] = WORK_AREA_HEIGHT;
+		} 
+		else if (wcsicmp(L"SCREEN_WIDTH", type) == 0)
+		{
+			g_Types[id] = SCREEN_WIDTH;
+		} 
+		else if (wcsicmp(L"SCREEN_HEIGHT", type) == 0)
+		{
+			g_Types[id] = SCREEN_HEIGHT;
+		} 
+		else if (wcsicmp(L"NUM_MONITORS", type) == 0)
+		{
+			g_Types[id] = NUM_MONITORS;
+		} 
+		else if (wcsicmp(L"VIRTUAL_SCREEN_TOP", type) == 0)
+		{
+			g_Types[id] = VIRTUAL_SCREEN_TOP;
+		} 
+		else if (wcsicmp(L"VIRTUAL_SCREEN_LEFT", type) == 0)
+		{
+			g_Types[id] = VIRTUAL_SCREEN_LEFT;
+		} 
+		else if (wcsicmp(L"VIRTUAL_SCREEN_WIDTH", type) == 0)
+		{
+			g_Types[id] = VIRTUAL_SCREEN_WIDTH;
+		} 
+		else if (wcsicmp(L"VIRTUAL_SCREEN_HEIGHT", type) == 0)
+		{
+			g_Types[id] = VIRTUAL_SCREEN_HEIGHT;
 		} 
 		else
 		{
@@ -311,6 +380,106 @@ LPCTSTR GetString(UINT id, UINT flags)
 }
 
 /*
+  This function is called when new value should be measured.
+  The function returns the new value.
+*/
+double Update2(UINT id)
+{
+	UINT data;
+	std::map<UINT, TYPE>::iterator typeIter = g_Types.find(id);
+	std::map<UINT, UINT>::iterator dataIter = g_Datas.find(id);
+
+	if(typeIter == g_Types.end()) return NULL;
+	if(dataIter == g_Datas.end())
+	{
+		data = 0;
+	}
+	else
+	{
+		data = (*dataIter).second;
+	}
+
+	if(data) //For speed purposes, only check if they specify a non-primary monitor.
+	{
+		if(GetSystemMetrics(SM_CMONITORS)>32) 
+		{
+			std::wstring error = L"That's alot of monitors! 32 is the max. ";
+			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
+			exit(-1);
+		}
+		m_Monitors.count = 0;
+		EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)(&m_Monitors)); 
+	}
+
+
+	switch((*typeIter).second)
+	{
+	case WORK_AREA_WIDTH:
+		if (data)
+			return m_Monitors.m_MonitorInfo[data-1].rcWork.right-m_Monitors.m_MonitorInfo[data-1].rcWork.left;
+		else
+			return GetSystemMetrics(SM_CXFULLSCREEN);
+	case WORK_AREA_HEIGHT:
+		if (data)
+			return m_Monitors.m_MonitorInfo[data-1].rcWork.bottom-m_Monitors.m_MonitorInfo[data-1].rcWork.top;
+		else
+			return GetSystemMetrics(SM_CYFULLSCREEN);
+	case SCREEN_WIDTH:
+		if (data)
+			return m_Monitors.m_MonitorInfo[data-1].rcMonitor.right-m_Monitors.m_MonitorInfo[data-1].rcMonitor.left;
+		else
+			GetSystemMetrics(SM_CXSCREEN);
+	case SCREEN_HEIGHT:
+		if (data)
+			return m_Monitors.m_MonitorInfo[data-1].rcMonitor.bottom-m_Monitors.m_MonitorInfo[data-1].rcMonitor.top;
+		else
+			GetSystemMetrics(SM_CYSCREEN);
+	case VIRTUAL_SCREEN_WIDTH:
+		return GetSystemMetrics(SM_CXVIRTUALSCREEN);
+	case VIRTUAL_SCREEN_HEIGHT:
+		return GetSystemMetrics(SM_CYVIRTUALSCREEN);
+	case NUM_MONITORS:
+		return GetSystemMetrics(SM_CMONITORS);
+
+	/* can be negative */
+	case WORK_AREA_TOP:
+		if (data)
+			return m_Monitors.m_MonitorInfo[data-1].rcWork.top;
+		else
+			return m_Monitors.m_MonitorInfo[0].rcWork.top;			// guessing that this is the primary monitor
+	case WORK_AREA_LEFT:
+		if (data)
+			return m_Monitors.m_MonitorInfo[data-1].rcWork.left;
+		else
+			return m_Monitors.m_MonitorInfo[0].rcWork.left;			// guessing that this is the primary monitor
+	case VIRTUAL_SCREEN_TOP:	// virtual coords
+		if (data)
+			return m_Monitors.m_MonitorInfo[data-1].rcMonitor.top;
+		else
+			return GetSystemMetrics(SM_YVIRTUALSCREEN);				// seems reasonable to return this if they don't specify a monitor
+	case VIRTUAL_SCREEN_LEFT:	// virtual coords
+		if (data)
+			return m_Monitors.m_MonitorInfo[data-1].rcMonitor.left;
+		else
+			return GetSystemMetrics(SM_XVIRTUALSCREEN);				// seems reasonable to return this if they don't specify a monitor
+
+	}
+
+	return NULL;
+}
+
+BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+{
+	MULTIMONITOR_INFO *m = (MULTIMONITOR_INFO *)dwData;
+	m->m_Monitors[m->count] = hMonitor;
+	memcpy(&(m->m_MonitorRect[m->count]),lprcMonitor,sizeof RECT);
+	m->m_MonitorInfo[m->count].cbSize = sizeof ( MONITORINFO );
+	GetMonitorInfo(hMonitor,&(m->m_MonitorInfo[m->count]));
+	m->count++;
+	return true;
+}
+
+/*
   If the measure needs to free resources before quitting.
   The plugin can export Finalize function, which is called
   when Rainmeter quits (or refreshes).
@@ -427,10 +596,10 @@ BOOL CheckConnection()
 
 UINT GetPluginVersion()
 {
-	return 1003;
+	return 1004;
 }
 
 LPCTSTR GetPluginAuthor()
 {
-	return L"Rainy (rainy@iki.fi)";
+	return L"Rainy (rainy@iki.fi) - Additions by Mordred (kbuffington@gmail.com)";
 }
