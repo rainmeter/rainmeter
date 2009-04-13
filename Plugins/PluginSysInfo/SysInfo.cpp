@@ -301,13 +301,30 @@ LPCTSTR GetString(UINT id, UINT flags)
 		if (NO_ERROR == GetIpAddrTable((PMIB_IPADDRTABLE)buffer, &len, FALSE))
 		{
 			PMIB_IPADDRTABLE ipTable = (PMIB_IPADDRTABLE)buffer;
-			if (data < ipTable->dwNumEntries)
+			if (data >= 1000)
+			{
+				data = data-999;
+				for(UINT i=0; i<ipTable->dwNumEntries; i++)
+				{
+					if((ipTable->table[i].wType)&MIB_IPADDR_DISCONNECTED) continue;
+					data--;
+					if(data==0)
+					{
+						DWORD ip = ipTable->table[i].dwAddr;
+						wsprintf(buffer, L"%i.%i.%i.%i", ip%256, (ip>>8)%256, (ip>>16)%256, (ip>>24)%256);
+						return buffer;
+					}
+				}
+			}
+			else if (data < ipTable->dwNumEntries)
 			{
 				DWORD ip = ipTable->table[data].dwAddr;
 				wsprintf(buffer, L"%i.%i.%i.%i", ip%256, (ip>>8)%256, (ip>>16)%256, (ip>>24)%256);
 				return buffer;
 			}
 		}
+		wsprintf(buffer, L"");
+		return buffer;
 		break;
 
 	case NET_MASK:
