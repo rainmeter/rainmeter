@@ -410,7 +410,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			else if(wParam == ID_CONTEXT_SHOW_HELP)
 			{
 				std::wstring help = Rainmeter->GetPath();
-				help += L"Rainmeter.chm";
+				help = L"\"" + help + L"Rainmeter.chm\"";
 				LSExecute(NULL, help.c_str(), SW_SHOWNORMAL);
 			}
 			else if(wParam == ID_CONTEXT_REFRESH)
