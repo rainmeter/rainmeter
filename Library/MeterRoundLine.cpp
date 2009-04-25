@@ -45,6 +45,11 @@ CMeterRoundLine::CMeterRoundLine(CMeterWindow* meterWindow) : CMeter(meterWindow
 	m_ValueRemainder = 0;
 	m_Solid = false;
 	m_Value = 0.0;
+	m_CntrlAngle = true;
+	m_CntrlLineStart = false;
+	m_CntrlLineLength = false;
+	m_LineStartShift = 0;
+	m_LineLengthShift = 0;
 }
 
 /*
@@ -80,6 +85,11 @@ void CMeterRoundLine::ReadConfig(const WCHAR* section)
 	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", m_ValueRemainder);
 	m_LineColor = parser.ReadColor(section, L"LineColor", Color::Black);
 	m_Solid = 0!=parser.ReadInt(section, L"Solid", 0);
+	m_CntrlAngle = 0!=parser.ReadInt(section, L"ControlAngle", 1);
+	m_CntrlLineStart = 0!=parser.ReadInt(section, L"ControlStart", 0);
+	m_CntrlLineLength = 0!=parser.ReadInt(section, L"ControlLength", 0);
+	m_LineStartShift = parser.ReadFloat(section, L"StartShift", 0);
+	m_LineLengthShift = parser.ReadFloat(section, L"LengthShift", 0);
 }
 
 /*
@@ -134,7 +144,7 @@ bool CMeterRoundLine::Draw()
 
 	if (m_Solid)
 	{
-		if (m_LineStart > 0.0)
+		if (1) //m_LineStart > 0.0)
 		{
 			// Create clipping region
 			//GraphicsPath path;
@@ -142,16 +152,32 @@ bool CMeterRoundLine::Draw()
 			//graphics.SetClip(&path, CombineModeExclude);
 
 			// Calculate the end point of the line
-			double angle = m_RotationAngle * m_Value + m_StartAngle;
+			//double angle = m_RotationAngle * m_Value + m_StartAngle;
+			double angle = m_RotationAngle + m_StartAngle;
+			if(m_CntrlAngle)
+				angle = m_RotationAngle * m_Value + m_StartAngle;
+			double lineStart = m_LineStart;
+			if(m_CntrlLineStart)
+			{
+				lineStart = m_LineStartShift * m_Value + m_LineStart;
+			}
+			double lineLength = m_LineLength;
+			if(m_CntrlLineLength)
+			{
+				lineLength = m_LineLengthShift * m_Value + m_LineLength;
+			}
+
+			
+
 			
 			SolidBrush solidBrush(m_LineColor);
 
 			//Create a path to surround the arc
 			GraphicsPath path;
-			path.AddArc((REAL)(cx - m_LineStart), (REAL)(cy - m_LineStart), (REAL)(m_LineStart * 2.0), (REAL)(m_LineStart * 2.0), (REAL)(m_StartAngle * 180.0 / PI), (REAL)(m_RotationAngle * m_Value * 180.0 / PI));
-			path.AddLine((REAL)m_LineStart*(REAL)cos(m_StartAngle)+cx,(REAL)m_LineStart*(REAL)sin(m_StartAngle)+cy,(REAL)m_LineLength*(REAL)cos(m_StartAngle)+cx,(REAL)m_LineLength*(REAL)sin(m_StartAngle)+cy);
-			path.AddArc((REAL)(cx - m_LineLength), (REAL)(cy - m_LineLength), (REAL)(m_LineLength * 2.0), (REAL)(m_LineLength * 2.0), (REAL)(m_StartAngle * 180.0 / PI), (REAL)(m_RotationAngle * m_Value * 180.0 / PI));
-			path.AddLine((REAL)m_LineLength*(REAL)cos(angle)+cx,(REAL)m_LineLength*(REAL)sin(angle)+cy,(REAL)m_LineStart*(REAL)cos(angle)+cx,(REAL)m_LineStart*(REAL)sin(angle)+cy);
+			path.AddArc((REAL)(cx - lineStart), (REAL)(cy - lineStart), (REAL)(lineStart * 2.0), (REAL)(lineStart * 2.0), (REAL)(m_StartAngle * 180.0 / PI), (REAL)(m_RotationAngle * m_Value * 180.0 / PI));
+			path.AddLine((REAL)lineStart*(REAL)cos(m_StartAngle)+cx,(REAL)lineStart*(REAL)sin(m_StartAngle)+cy,(REAL)lineLength*(REAL)cos(m_StartAngle)+cx,(REAL)lineLength*(REAL)sin(m_StartAngle)+cy);
+			path.AddArc((REAL)(cx - lineLength), (REAL)(cy - lineLength), (REAL)(lineLength * 2.0), (REAL)(lineLength * 2.0), (REAL)(m_StartAngle * 180.0 / PI), (REAL)(m_RotationAngle * m_Value * 180.0 / PI));
+			path.AddLine((REAL)lineLength*(REAL)cos(angle)+cx,(REAL)lineLength*(REAL)sin(angle)+cy,(REAL)lineStart*(REAL)cos(angle)+cx,(REAL)lineStart*(REAL)sin(angle)+cy);
 	
 			graphics.FillPath(&solidBrush,&path);
 		}
