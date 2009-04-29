@@ -445,12 +445,12 @@ double Update2(UINT id)
 		if (data)
 			return m_Monitors.m_MonitorInfo[data-1].rcMonitor.right-m_Monitors.m_MonitorInfo[data-1].rcMonitor.left;
 		else
-			GetSystemMetrics(SM_CXSCREEN);
+			return GetSystemMetrics(SM_CXSCREEN);
 	case SCREEN_HEIGHT:
 		if (data)
 			return m_Monitors.m_MonitorInfo[data-1].rcMonitor.bottom-m_Monitors.m_MonitorInfo[data-1].rcMonitor.top;
 		else
-			GetSystemMetrics(SM_CYSCREEN);
+			return GetSystemMetrics(SM_CYSCREEN);
 	case VIRTUAL_SCREEN_WIDTH:
 		return GetSystemMetrics(SM_CXVIRTUALSCREEN);
 	case VIRTUAL_SCREEN_HEIGHT:
