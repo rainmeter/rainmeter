@@ -14,15 +14,28 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+------------
+
+Usage:
+
+[MeasureBin1]
+Measure=Plugin
+Plugin=RecycleManager.dll
+Drives=C:                     (for total system bin, use Drives=ALL  ::  for multiple drives use | as a delimiter e.g. Drives=A:|C:|D: will give the sum of these drives)
+RecycleType=COUNT             (type can be COUNT for nomber of items or SIZE, for size in bytes)
+Update=1000
+UpdateDivider=10
+
+
 */
 
 #pragma warning(disable: 4786)
 #pragma warning(disable: 4996)
 
 #include <windows.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <math.h>
-#include <string>
 #include <map>
 #include <vector>
 #include <time.h>
@@ -36,13 +49,26 @@ extern "C"
 	__declspec( dllexport ) double Update2(UINT id);
 	__declspec( dllexport ) UINT GetPluginVersion();
 	__declspec( dllexport ) LPCTSTR GetPluginAuthor();
-	__declspec( dllexport ) void BinBang(LPCTSTR args, UINT id);
+	__declspec( dllexport ) void ExecuteBang(LPCTSTR args, UINT id);
 }
 
-const int NUMRECYCLE  = 1;
-const int SIZERECYCLE = 2;
+//const int NUMRECYCLE  = 1;
+//const int SIZERECYCLE = 2;
 
-static std::map<UINT, int> g_Values;
+//static std::map<UINT, int> g_Values;
+
+// system resources that can be counted
+enum MEASURETYPE
+{
+	NUMRECYCLE,
+	SIZERECYCLE
+};
+
+// list of counter types corresponding to gauges
+static std::map<UINT, MEASURETYPE> g_Values;
+static std::map<UINT, std::wstring> g_DriveList;
+
+
 
 /*
 This function is called when the measure is initialized.
@@ -58,8 +84,8 @@ id        The identifier for the measure. This is used to identify the measures 
 */
 UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
-	int dataType = 0;  // 1 for numRecycled, 2 for sizeRecycled
-
+	MEASURETYPE dataType = NUMRECYCLE;  // 1 for numRecycled, 2 for sizeRecycled
+	
 	/* Read our own settings from the ini-file */
 	LPCTSTR type = ReadConfigString(section, L"RecycleType", L"COUNT");
 	if (type)
@@ -79,10 +105,39 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
 		}
 	}
-
+	
 	g_Values[id] = dataType;
-
+	
+	LPCTSTR drives = ReadConfigString(section, L"Drives", L"ALL");
+	if (drives && wcslen(drives) > 0)
+	{
+		g_DriveList[id] = drives;
+	}
+	else
+	{
+		g_DriveList[id] = L"ALL";
+	}
+	
 	return 0;
+}
+
+
+void Tokenize(const std::wstring& str, std::vector<std::wstring>& tokens, const std::wstring& delimiters = L"|")
+{
+	// Skip delimiters at beginning.
+	std::wstring::size_type lastPos = str.find_first_not_of(delimiters, 0);
+	// Find first "non-delimiter".
+	std::wstring::size_type pos     = str.find_first_of(delimiters, lastPos);
+	
+	while (std::wstring::npos != pos || std::wstring::npos != lastPos)
+	{
+		// Found a token, add it to the vector.
+		tokens.push_back(str.substr(lastPos, pos - lastPos));
+		// Skip delimiters.  Note the "not_of"
+		lastPos = str.find_first_not_of(delimiters, pos);
+		// Find next "non-delimiter"
+		pos = str.find_first_of(delimiters, lastPos);
+	}
 }
 
 /*
@@ -91,21 +146,53 @@ The function returns the new value.
 */
 double Update2(UINT id)
 {
-	int dataType = g_Values[id];
-
+	MEASURETYPE dataType = g_Values[id];
+	std::wstring driveSet = g_DriveList[id];
+	
 	SHQUERYRBINFO RecycleBinInfo = { 0 };  
 	RecycleBinInfo.cbSize = sizeof( RecycleBinInfo ); // Tell size of structure  
-	SHQueryRecycleBin( L"C:", &RecycleBinInfo ); // Get recycle bin info  
-
-	if (dataType == SIZERECYCLE)
+	
+	if(wcsicmp(driveSet.c_str(), L"ALL") == 0)
 	{
-		return (double)RecycleBinInfo.i64Size; // size in bytes
+		if(SHQueryRecycleBin( NULL, &RecycleBinInfo ) == S_OK)
+		{
+			if (dataType == SIZERECYCLE)
+			{
+				return (double)RecycleBinInfo.i64Size; // size in bytes
+			}
+			else if (dataType == NUMRECYCLE)
+			{
+				return (double)RecycleBinInfo.i64NumItems; // number of items in bin
+			}
+			return 0;
+		}
+		else
+		{
+			driveSet = L"A:|B:|C:|D:|E:|F:|G:|H:|I:|J:|K:|L:|M:|N:|O:|P:|Q:|R:|S:|T:|U:|V:|W:|X:|Y:|Z:";
+		}
 	}
-	else if (dataType == NUMRECYCLE)
+	std::vector<std::wstring> tokens;
+	std::wstring toSplit(driveSet.begin(), driveSet.end()); 
+	double retVal = 0;
+	Tokenize(toSplit, tokens, L"|");
+	
+	for(int i=0;i < tokens.size(); i++)
 	{
-		return (double)RecycleBinInfo.i64NumItems; // number of items in bin
+		double tempVal;
+		std::wstring strd = tokens.at(i);
+		SHQueryRecycleBin( strd.c_str(), &RecycleBinInfo ); // Get recycle bin info  
+		if (dataType == SIZERECYCLE)
+		{
+			tempVal = (double)RecycleBinInfo.i64Size; // size in bytes
+		}
+		else if (dataType == NUMRECYCLE)
+		{
+			tempVal = (double)RecycleBinInfo.i64NumItems; // number of items in bin
+		}
+		retVal += tempVal;
 	}
-	return 0;
+	
+	return (retVal);
 }
 
 /*
@@ -115,7 +202,7 @@ when Rainmeter quits (or refreshes).
 */
 void Finalize(HMODULE instance, UINT id)
 {
-	std::map<UINT, int>::iterator i1 = g_Values.find(id);
+	std::map<UINT, MEASURETYPE>::iterator i1 = g_Values.find(id);
 	if (i1 != g_Values.end())
 	{
 		g_Values.erase(i1);
@@ -132,26 +219,69 @@ LPCTSTR GetPluginAuthor()
 	return L"gschoppe (gschoppe@gmail.com)";
 }
 
-void BinBang(LPCTSTR args, UINT id)
+void ExecuteBang(LPCTSTR args, UINT id)
 {
-	std::wstring bang = args;
+    std::wstring bang     = args;
+	std::wstring driveSet = g_DriveList[id];
 
-	if (wcsicmp(bang.c_str(), L"EmptyBin") == 0)
-	{ //Empty the Recycle Bin
-		SHEmptyRecycleBin( NULL, NULL, NULL );
-	}
-	else
-	{
+    if (wcsicmp(bang.c_str(), L"EmptyBin") == 0)
+    { //Empty the Recycle Bin
+		if(wcsicmp(driveSet.c_str(), L"ALL") == 0)
+		{
+			if(SHEmptyRecycleBin( NULL, NULL, NULL ) == S_OK)
+			{
+				return;
+			}
+			else
+			{
+				driveSet = L"A:|B:|C:|D:|E:|F:|G:|H:|I:|J:|K:|L:|M:|N:|O:|P:|Q:|R:|S:|T:|U:|V:|W:|X:|Y:|Z:";
+			}
+		}
+		std::vector<std::wstring> tokens;
+		std::wstring toSplit(driveSet.begin(), driveSet.end()); 
+		Tokenize(toSplit, tokens, L"|");
+		
+		for(int i=0;i < tokens.size(); i++)
+		{
+			std::wstring strd = tokens.at(i);
+			SHEmptyRecycleBin( NULL, strd.c_str(), NULL ); // empty bin
+		}
+		return;
+    }
+    else
+    {
 		if (wcsicmp(bang.c_str(), L"EmptyBinSilent") == 0)
-		{ //Empty the Recycle Bin (no prompt)
-			SHEmptyRecycleBin( NULL, NULL,
-				SHERB_NOCONFIRMATION |
-				SHERB_NOPROGRESSUI   |
-				SHERB_NOSOUND );
-		}
-		else
-		{ //Open the Recycle Bin folder
-			system("explorer.exe /N,::{645FF040-5081-101B-9F08-00AA002F954E}");
-		}
-	}
+        { //Empty the Recycle Bin (no prompt)
+			if(wcsicmp(driveSet.c_str(), L"ALL") == 0)
+			{
+				if(SHEmptyRecycleBin( NULL, NULL, NULL ) == S_OK)
+				{
+					return;
+				}
+				else
+				{
+					driveSet = L"A:|B:|C:|D:|E:|F:|G:|H:|I:|J:|K:|L:|M:|N:|O:|P:|Q:|R:|S:|T:|U:|V:|W:|X:|Y:|Z:";
+				}
+			}
+			std::vector<std::wstring> tokens;
+			std::wstring toSplit(driveSet.begin(), driveSet.end()); 
+			Tokenize(toSplit, tokens, L"|");
+
+			for(int i=0;i < tokens.size(); i++)
+			{
+				std::wstring strd = tokens.at(i);
+				SHEmptyRecycleBin( NULL, strd.c_str(), NULL ); // empty bin
+			}
+			return;
+        }
+        else if (wcsicmp(bang.c_str(), L"OpenBin") == 0)
+        { //Open the Recycle Bin folder
+            //system("explorer.exe /N,::{645FF040-5081-101B-9F08-00AA002F954E}");
+			std::wstring szCmd = L"explorer.exe";
+			std::wstring szParm= L"/N,::{645FF040-5081-101B-9F08-00AA002F954E}";
+			ShellExecute(NULL,L"open",szCmd.c_str(),szParm.c_str(),NULL,SW_SHOW);
+			return;
+        }
+    }
 }
+
