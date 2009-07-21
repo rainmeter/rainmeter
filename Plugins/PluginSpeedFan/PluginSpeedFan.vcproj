@@ -81,7 +81,7 @@
 				OutputFile="../../TestBench/x32/Release/Plugins/SpeedFanPlugin.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\Library\x32\Release"
+				AdditionalLibraryDirectories="..\..\Library\x32\Release"
 				ProgramDatabaseFile=".\x32/Release/SpeedFanPlugin.pdb"
 				ImportLibrary=".\x32/Release/SpeedFanPlugin.lib"
 				TargetMachine="1"

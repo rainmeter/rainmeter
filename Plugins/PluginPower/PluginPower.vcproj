@@ -259,7 +259,7 @@
 				OutputFile="../../TestBench/x32/Release/Plugins/PowerPlugin.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\Library\x32\Release"
+				AdditionalLibraryDirectories="..\..\Library\x32\Release"
 				ProgramDatabaseFile=".\x32/Release/PowerPlugin.pdb"
 				ImportLibrary=".\x32/Release/PowerPlugin.lib"
 				TargetMachine="1"

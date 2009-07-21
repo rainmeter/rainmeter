@@ -263,7 +263,7 @@
 				OutputFile="../../TestBench/x32/Release/Plugins/QuotePlugin.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\Library\x32\Release"
+				AdditionalLibraryDirectories="..\..\Library\x32\Release"
 				ProgramDatabaseFile=".\x32/Release/QuotePlugin.pdb"
 				ImportLibrary=".\x32/Release/QuotePlugin.lib"
 				TargetMachine="1"

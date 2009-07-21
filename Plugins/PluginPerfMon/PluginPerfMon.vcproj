@@ -441,7 +441,7 @@
 				OutputFile="../../TestBench/x32/Release/Plugins/PerfMon.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\Library\x32\Release"
+				AdditionalLibraryDirectories="..\..\Library\x32\Release"
 				ProgramDatabaseFile=".\x32/Release/PerfMon.pdb"
 				ImportLibrary=".\x32/Release/PerfMon.lib"
 				TargetMachine="1"
