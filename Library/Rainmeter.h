@@ -116,6 +116,7 @@ public:
 
 	const std::wstring& GetPath() { return m_Path; };
 	const std::wstring& GetIniFile() { return m_IniFile; };
+	const std::wstring& GetLogFile() { return m_LogFile; };
 	const std::wstring& GetSkinPath() { return m_SkinPath; };
 	const std::wstring& GetPluginPath() { return m_PluginPath; };
 
@@ -168,6 +169,7 @@ private:
 	void ChangeSkinIndex(HMENU subMenu, int index);
 	int ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu);
 	HMENU CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData);
+	void CreateDefaultConfigFile(std::wstring strFile);
 
 	CTrayWindow* m_TrayWindow;
 
@@ -177,6 +179,7 @@ private:
 
 	std::wstring m_Path;			    // Path to the main folder
 	std::wstring m_IniFile;				// The main ini file
+	std::wstring m_LogFile;				// The log file
 	std::wstring m_SkinPath;			// Path to the folder where the skins are
 	std::wstring m_PluginPath;			// Path to the folder where the plugins are
 

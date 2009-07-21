@@ -171,6 +171,7 @@ public:
 	HIDEMODE GetWindowHide() { return m_WindowHide; }
 	int GetAlphaValue() { return m_AlphaValue; }
 	int GetUpdateCounter() { return m_UpdateCounter; }
+	int GetTransitionUpdate() { return m_TransitionUpdate; }
 
 	void AddMeasureBang(const WCHAR* bang, int index, CMeasure* measure);
 
@@ -268,6 +269,8 @@ private:
 	static MULTIMONITOR_INFO m_Monitors;		// Multi-Monitor info
 	bool m_WindowDraggable;						// True, if window can be moved
 	int m_WindowUpdate;							// Measure update frequency
+	int m_TransitionUpdate;						// Transition redraw frequency
+	bool m_ActiveTransition;
 	HIDEMODE m_WindowHide;						// If true, the window is hidden when mouse is over it
 	bool m_WindowStartHidden;					// If true, the window is hidden at startup
 	bool m_SavePosition;						// If true, the window's position is saved

@@ -424,8 +424,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			else if(wParam == ID_CONTEXT_SHOWLOGFILE)
 			{
 				// Check if the file exists
-				std::wstring log = Rainmeter->GetPath();
-				log += L"Rainmeter.log";
+				std::wstring log = Rainmeter->GetLogFile();
 				if (_waccess(log.c_str(), 0) != -1)
 				{
 					std::wstring command = L"Notepad.exe ";

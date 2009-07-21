@@ -46,6 +46,7 @@ using namespace Gdiplus;
 #define METERTIMER 1
 #define MOUSETIMER 2
 #define FADETIMER 3
+#define TRANSITIONTIMER 4
 
 #define SNAPDISTANCE 10
 
@@ -91,6 +92,8 @@ CMeterWindow::CMeterWindow(std::wstring& config, std::wstring& iniFile)
 	m_WindowZPosition = ZPOSITION_NORMAL;
 	m_WindowDraggable = true;
 	m_WindowUpdate = 1000;
+	m_TransitionUpdate = 100;
+	m_ActiveTransition = false;
 	m_WindowHide = HIDEMODE_NONE;
 	m_WindowStartHidden = false;
 	m_SnapEdges = true;
@@ -1341,6 +1344,7 @@ void CMeterWindow::ReadSkin()
 	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"");
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", m_WindowUpdate);
+	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", m_TransitionUpdate);
 
 	// Create the meters and measures
 
@@ -1830,6 +1834,28 @@ void CMeterWindow::Update(bool nodraw)
 		Redraw();
 	}
 
+	// Check for transitions and start the timer if necessary
+	bool bActiveTransition = false;
+	j = m_Meters.begin();
+	for( ; j != m_Meters.end(); j++)
+	{
+		if ((*j)->HasActiveTransition())
+		{
+			bActiveTransition = true;
+			break;
+		}
+	}
+
+	// Start/stop the transition timer if necessary
+	if (!m_ActiveTransition && bActiveTransition)
+	{
+		SetTimer(m_Window, TRANSITIONTIMER, m_TransitionUpdate, NULL);
+	}
+	else if (m_ActiveTransition && !bActiveTransition)
+	{
+		KillTimer(m_Window, TRANSITIONTIMER);
+	}
+
 //	if (m_MeasuresToVariables)	// BUG: LSSetVariable doens't seem to work for some reason.
 //	{
 //		std::list<CMeasure*>::iterator i = m_Measures.begin();
@@ -1939,6 +1965,25 @@ LRESULT CMeterWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 		//		MoveWindow(x, y);
 		//	}
 		//}
+	}
+	else if(wParam == TRANSITIONTIMER)
+	{
+		// Redraw only if there is active transition still going
+		bool bActiveTransition = false;
+		std::list<CMeter*>::iterator j = m_Meters.begin();
+		for( ; j != m_Meters.end(); j++)
+		{
+			if ((*j)->HasActiveTransition())
+			{
+				bActiveTransition = true;
+				break;
+			}
+		}
+
+		if (bActiveTransition)
+		{
+			Redraw();
+		}
 	}
 	else if(wParam == MOUSETIMER)
 	{
@@ -2248,10 +2293,10 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 		if(wParam == ID_CONTEXT_SKINMENU_EDITSKIN)
 		{
-			std::wstring command = m_Rainmeter->GetConfigEditor();
+			std::wstring command = Rainmeter->GetConfigEditor();
 			command += L" \"";
 			command += m_Rainmeter->GetSkinPath() + L"\\" + m_SkinName + L"\\" + m_SkinIniFile + L"\"";
-			m_Rainmeter->ExecuteCommand(command.c_str(), this);
+			LSExecuteAsAdmin(NULL, command.c_str(), SW_SHOWNORMAL);
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_REFRESH)
 		{
@@ -2612,7 +2657,7 @@ LRESULT CMeterWindow::OnLeftButtonUp(WPARAM wParam, LPARAM lParam)
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
 	m_Dragging = false;
-	OutputDebugString(_T("Left up\n"));
+	// OutputDebugString(_T("Left up\n"));
 	if (m_Message == WM_NCLBUTTONUP)
 	{
 		// Transform the point to client rect
@@ -2907,6 +2952,7 @@ LRESULT CMeterWindow::OnMove(WPARAM wParam, LPARAM lParam)
 	// Store the new window position
 	m_ScreenX = (SHORT)LOWORD(lParam);
 	m_ScreenY = (SHORT)HIWORD(lParam);
+/*
 	if(m_Dragging)
 	{
 		OutputDebugString (_T("OnMove Dragging\n"));
@@ -2915,7 +2961,7 @@ LRESULT CMeterWindow::OnMove(WPARAM wParam, LPARAM lParam)
 	{
 		OutputDebugString(_T("OnMove No Dragging\n"));
 	}
-
+*/
 
 	if (m_SavePosition && m_Dragging)
 	{

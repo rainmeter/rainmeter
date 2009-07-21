@@ -38,6 +38,7 @@ public:
 	virtual bool Update();
 	virtual bool Draw();
 	virtual void BindMeasure(std::list<CMeasure*>& measures);
+	virtual bool HasActiveTransition() { return false; }
 
 	virtual int GetH() { return m_Hidden ? 0 : m_H; };
 	virtual int GetW() { return m_Hidden ? 0 : m_W; };

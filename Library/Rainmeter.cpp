@@ -29,6 +29,7 @@
 #include <time.h>
 #include <commctrl.h>
 #include <gdiplus.h>
+#include <fstream>
 
 using namespace Gdiplus;
 
@@ -673,6 +674,37 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	m_IniFile = m_Path + L"Rainmeter.ini";
 	m_SkinPath = m_Path + L"Skins\\";
 
+	// If the ini file doesn't exist in the program folder store it to the %APPDATA% instead so that things work better in Vista/Win7
+	if (_waccess(m_IniFile.c_str(), 0) == -1)
+	{
+		WCHAR buffer[4096];	// lets hope the buffer is large enough...
+
+		// Expand the environment variables
+		DWORD ret = ExpandEnvironmentStrings(L"%APPDATA%\\Rainmeter\\rainmeter.ini", buffer, 4096);
+		if (ret != 0 && ret < 4096)
+		{
+			m_IniFile = buffer;
+
+			// If the ini file doesn't exist in the %APPDATA% either, create a default rainmeter.ini file.
+			if (_waccess(m_IniFile.c_str(), 0) == -1)
+			{
+				CreateDefaultConfigFile(m_IniFile);
+			}
+		}
+	}
+
+	// Set the log file location
+	m_LogFile = m_IniFile;
+	size_t posExt = m_LogFile.find(L".ini");
+	if (posExt != std::wstring::npos)
+	{
+		m_LogFile.replace(posExt, 4, L".log");
+	}
+	else
+	{
+		m_LogFile += L".log";	// Append the extension so that we don't accidentally overwrite the ini file
+	}
+
 	if (!c_DummyLitestep)
 	{
 		char tmpSz[MAX_LINE_LENGTH];
@@ -772,6 +804,30 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	}
 
 	return Result;	// Alles OK
+}
+
+/* 
+** CreateDefaultConfigFile
+**
+** Creates the default Rainmeter.ini file. The CPU tray meter and Tranquil/System-C config
+** are enabled.
+**
+*/
+void CRainmeter::CreateDefaultConfigFile(std::wstring strFile)
+{
+	size_t pos = strFile.find_last_of(L'\\');
+	if (pos != std::wstring::npos)
+	{
+		std::wstring strPath(strFile.begin(), strFile.begin() + pos);
+		CreateDirectory(strPath.c_str(), NULL);
+	}
+
+	std::ofstream out(strFile.c_str(), std::ios::out);
+	if (out) 
+	{
+		out << std::string("[Rainmeter]\n\n[TrayMeasure]\nMeasure=CPU\n\n[Tranquil\\System]\nActive=1\n");
+		out.close();
+	}
 }
 
 void CRainmeter::ReloadSettings()

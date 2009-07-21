@@ -59,4 +59,7 @@ void ResetLoggingFlag();
 std::string ConvertToAscii(LPCTSTR str);
 std::wstring ConvertToWide(LPCSTR str);
 
+HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd);
+HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR szVerb);
+
 #endif

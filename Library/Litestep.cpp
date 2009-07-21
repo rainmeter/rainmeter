@@ -20,10 +20,13 @@
 
 #include "Litestep.h"
 #include "Error.h"
+#include "Rainmeter.h"
 #include <shellapi.h>
 #include <crtdbg.h>
 #include <stdio.h>
 #include <stdarg.h>
+
+extern CRainmeter* Rainmeter;
 
 typedef BOOL (*FPADDBANGCOMMAND)(LPCSTR command, BangCommand f);
 FPADDBANGCOMMAND fpAddBangCommand = NULL;
@@ -277,6 +280,47 @@ HRGN BitmapToRegion(HBITMAP hbm, COLORREF clrTransp, COLORREF clrTolerance, int 
 	return hRgn;
 }
 
+HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd)
+{
+	BOOL IsInAdminGroup = FALSE;
+
+	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+	PSID AdministratorsGroup;
+	// Initialize SID.
+	if( !AllocateAndInitializeSid( &NtAuthority,
+		2,
+		SECURITY_BUILTIN_DOMAIN_RID,
+		DOMAIN_ALIAS_RID_ADMINS,
+		0, 0, 0, 0, 0, 0,
+		&AdministratorsGroup))
+	{
+		// Initializing SID Failed.
+		IsInAdminGroup = FALSE;
+	}
+	else
+	{
+		// Check whether the token is present in admin group.
+		if( !CheckTokenMembership( NULL,
+			AdministratorsGroup,
+			&IsInAdminGroup ))
+		{
+			// Error occurred.
+			IsInAdminGroup = FALSE;
+		}
+		// Free SID and return.
+		FreeSid(AdministratorsGroup);
+	}
+
+	if (IsInAdminGroup)
+	{
+		return ExecuteCommand(Owner, szCommand, nShowCmd, L"open");
+	}
+	else
+	{
+		return ExecuteCommand(Owner, szCommand, nShowCmd, L"runas");
+	}
+}
+
 HINSTANCE LSExecute(HWND Owner, LPCTSTR szCommand, int nShowCmd)
 {
 	// Use the lsapi.dll version of the method if possible
@@ -286,6 +330,11 @@ HINSTANCE LSExecute(HWND Owner, LPCTSTR szCommand, int nShowCmd)
 		return fpLSExecute(Owner, asc.c_str(), nShowCmd);
 	}
 
+	return ExecuteCommand(Owner, szCommand, nShowCmd, L"open");
+}
+
+HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR szVerb)
+{
 	// The stub implementation (some of this code is taken from lsapi.cpp)
 	if (szCommand == NULL || wcslen(szCommand) == 0) return NULL;
 
@@ -322,7 +371,7 @@ HINSTANCE LSExecute(HWND Owner, LPCTSTR szCommand, int nShowCmd)
 	DWORD type = GetFileAttributes(command.c_str());
 	if (type & FILE_ATTRIBUTE_DIRECTORY && type != 0xFFFFFFFF)
 	{
-		HINSTANCE instance = ShellExecute(Owner, L"open", command.c_str(), NULL, NULL, nShowCmd ? nShowCmd : SW_SHOWNORMAL);
+		HINSTANCE instance = ShellExecute(Owner, szVerb, command.c_str(), NULL, NULL, nShowCmd ? nShowCmd : SW_SHOWNORMAL);
 		return instance;
 	}
 
@@ -337,7 +386,7 @@ HINSTANCE LSExecute(HWND Owner, LPCTSTR szCommand, int nShowCmd)
 	memset(&si, 0, sizeof(si));
 	si.cbSize = sizeof(SHELLEXECUTEINFO);
 	si.hwnd = Owner;
-	si.lpVerb = L"open";
+	si.lpVerb = szVerb;
 	si.lpFile = command.c_str();
 	si.lpParameters = args.c_str();
 	si.lpDirectory = dir.c_str();
@@ -483,55 +532,54 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 	}
 
 	// The stub implementation
-	FILE* logFile;
-	GetModuleFileName(NULL, buffer, MAX_PATH);
-
-	std::wstring logfile(buffer);
-	logfile.replace(logfile.length() - 4, 4, L".log");
-
-	if (logFound == 0)
+	if (Rainmeter)
 	{
-		// Check if the file exists
-		logFile = _wfopen(logfile.c_str(), L"r");
-		if (logFile)
+		FILE* logFile;
+		std::wstring logfile = Rainmeter->GetLogFile();
+		if (logFound == 0)
 		{
-			logFound = 1;
-			fclose(logFile);
-
-			// Clear the file
-			logFile = _wfopen(logfile.c_str(), L"w");
-			fputwc(0xFEFF, logFile);
-			fclose(logFile);
-		}
-		else
-		{
-			logFound = 2;
-		}
-	}
-
-	if (logFound == 1)
-	{
-		logFile = _wfopen(logfile.c_str(), L"a+");
-		if (logFile)
-		{
-			switch(nLevel)
+			// Check if the file exists
+			logFile = _wfopen(logfile.c_str(), L"r");
+			if (logFile)
 			{
-			case 1:
-				fputws(L"ERROR: ", logFile);
-				break;
-			case 2:
-				fputws(L"WARNING: ", logFile);
-				break;
-			case 3:
-				fputws(L"NOTICE: ", logFile);
-				break;
-			case 4:
-				fputws(L"DEBUG: ", logFile);
-				break;
+				logFound = 1;
+				fclose(logFile);
+
+				// Clear the file
+				logFile = _wfopen(logfile.c_str(), L"w");
+				fputwc(0xFEFF, logFile);
+				fclose(logFile);
 			}
-			fputws(message.c_str(), logFile);
-			fputws(L"\n", logFile);
-			fclose(logFile);
+			else
+			{
+				logFound = 2;
+			}
+		}
+
+		if (logFound == 1)
+		{
+			logFile = _wfopen(logfile.c_str(), L"a+");
+			if (logFile)
+			{
+				switch(nLevel)
+				{
+				case 1:
+					fputws(L"ERROR: ", logFile);
+					break;
+				case 2:
+					fputws(L"WARNING: ", logFile);
+					break;
+				case 3:
+					fputws(L"NOTICE: ", logFile);
+					break;
+				case 4:
+					fputws(L"DEBUG: ", logFile);
+					break;
+				}
+				fputws(message.c_str(), logFile);
+				fputws(L"\n", logFile);
+				fclose(logFile);
+			}
 		}
 	}
 

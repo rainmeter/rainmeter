@@ -157,7 +157,7 @@ BEGIN
     CONTROL         "List1",IDC_STATISTICS,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_NOSORTHEADER | WS_BORDER | 
                     WS_TABSTOP,14,98,206,98
-    CTEXT           "Get the latest version at: http://www.iki.fi/rainy",
+    CTEXT           "Get the latest version at: http://www.rainmeter.net",
                     IDC_URL_STRING,19,43,201,8
     CTEXT           "Rainmeter version 0.0",IDC_VERSION_STRING,19,17,201,8
     CONTROL         "Tab1",IDC_CONFIG_TAB,"SysTabControl32",0x0,7,81,220,120

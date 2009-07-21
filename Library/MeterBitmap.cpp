@@ -44,6 +44,8 @@ CMeterBitmap::CMeterBitmap(CMeterWindow* meterWindow) : CMeter(meterWindow)
 	m_Separation = 0;
 	m_Digits = 0;
 	m_Value = 0;
+	m_TransitionFrameCount = 0;
+	m_TransitionStartTicks = 0;
 }
 
 /*
@@ -115,16 +117,17 @@ bool CMeterBitmap::HitTest(int x, int y)
 		}
 		else
 		{
+			int realFrames = (m_FrameCount / (m_TransitionFrameCount + 1));
 			do
 			{
 				numOfNums ++;
-				if (m_FrameCount == 1)
+				if (realFrames == 1)
 				{
 					tmpValue /= 2;
 				}
 				else
 				{
-					tmpValue /= m_FrameCount;
+					tmpValue /= realFrames;
 				}
 			} while (tmpValue > 0);
 		}
@@ -175,6 +178,8 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
 	m_Extend = 0!=parser.ReadInt(section, L"BitmapExtend", 0);
 	m_Digits = parser.ReadInt(section, L"BitmapDigits", 0);
 
+	m_TransitionFrameCount = parser.ReadInt(section, L"BitmapTransitionFrames", 0);
+
 	std::wstring align;
 	align = parser.ReadString(section, L"BitmapAlign", L"LEFT");
 	
@@ -206,14 +211,47 @@ bool CMeterBitmap::Update()
 {
 	if (CMeter::Update() && m_Measure)
 	{
+		double value = 0.0;
 		if (m_Extend)
 		{
-			m_Value = m_Measure->GetValue();
+			value = m_Measure->GetValue();
 		}
 		else
 		{
-			m_Value = m_Measure->GetRelativeValue();
+			value = m_Measure->GetRelativeValue();
 		}
+
+		if (m_TransitionFrameCount > 0)
+		{
+			int realFrames = m_FrameCount / (m_TransitionFrameCount + 1);
+			if ((int)(value * realFrames) != (int)(m_Value * realFrames))
+			{
+				m_TransitionStartValue = m_Value;
+				m_TransitionStartTicks = GetTickCount();
+			}
+			else
+			{
+				m_TransitionStartTicks = 0;
+			}
+		}
+
+		m_Value = value;
+
+		return true;
+	}
+	return false;
+}
+
+/*
+** HasActiveTransition
+**
+** Returns true if the meter has active transition animation.
+**
+*/
+bool CMeterBitmap::HasActiveTransition()
+{
+	if (m_TransitionStartTicks > 0)
+	{
 		return true;
 	}
 	return false;
@@ -236,10 +274,14 @@ bool CMeterBitmap::Draw()
 	int x = GetX();
 	int y = GetY();
 
+	DWORD diffTicks = GetTickCount() - m_TransitionStartTicks;
 	if (m_Extend)
 	{
 		int value = (int)m_Value;
 		value = max(0, value);		// Only positive integers are supported
+
+		int transitionValue = (int)m_TransitionStartValue;
+		transitionValue = max(0, transitionValue);		// Only positive integers are supported
 
 		int tmpValue = value;
 		// Calc the number of numbers
@@ -288,14 +330,41 @@ bool CMeterBitmap::Draw()
 
 			Rect r(x + offset, y, m_W, m_H);
 
+			int realFrames = (m_FrameCount / (m_TransitionFrameCount + 1));
+			int frame = (value % realFrames) * (m_TransitionFrameCount + 1);
+
+			// If transition is ongoing the pick the correct frame
+			if (m_TransitionStartTicks > 0)
+			{
+				int range = ((value % realFrames) - ((int)transitionValue % realFrames)) * (m_TransitionFrameCount + 1);
+				if (range < 0)
+				{
+					range += m_FrameCount;
+				}
+				int frameAdjustment = 0;
+				frameAdjustment = range * diffTicks / ((m_TransitionFrameCount + 1) * m_MeterWindow->GetTransitionUpdate());
+				if (frameAdjustment > range)
+				{
+					m_TransitionStartTicks = 0;		// The transition is over. Draw with the real value.
+				}
+				else
+				{
+					frame = ((int)transitionValue % realFrames) * (m_TransitionFrameCount + 1);
+					frame += frameAdjustment;
+					frame %= m_FrameCount;
+				}
+			}
+
+//			DebugLog(L"[%i] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
+
 			if(m_Bitmap->GetHeight() > m_Bitmap->GetWidth())
 			{
 				newX = 0;
-				newY = m_H * (value % m_FrameCount);
+				newY = m_H * frame;
 			}
 			else
 			{
-				newX = m_W * (value % m_FrameCount);
+				newX = m_W * frame;
 				newY = 0;
 			}
 
@@ -303,10 +372,12 @@ bool CMeterBitmap::Draw()
 			if (m_FrameCount == 1)
 			{
 				value /= 2;
+				transitionValue /= 2;
 			}
 			else
 			{
-				value /= m_FrameCount;
+				value /= realFrames;
+				transitionValue /= realFrames;
 			}
 			numOfNums--;
 		} while (numOfNums > 0);
@@ -314,20 +385,43 @@ bool CMeterBitmap::Draw()
 	else
 	{
 		int frame = 0;
+		int realFrames = (m_FrameCount / (m_TransitionFrameCount + 1));
 
 		if (m_ZeroFrame)
 		{
 			// Use the first frame only if the value is zero
 			if (m_Value > 0)
 			{
-				frame = (int)(m_Value * (m_FrameCount - 1));
+				frame = (int)(m_Value * (realFrames - 1)) * (m_TransitionFrameCount + 1);
 			}
 		}
 		else
 		{
 			// Select the correct frame linearly
-			frame = (int)(m_Value * m_FrameCount);
+			frame = (int)(m_Value * realFrames) * (m_TransitionFrameCount + 1);
 		}
+
+		// If transition is ongoing the pick the correct frame
+		if (m_TransitionStartTicks > 0)
+		{
+			if ((int)diffTicks > ((m_TransitionFrameCount + 1) * m_MeterWindow->GetTransitionUpdate()))
+			{
+				m_TransitionStartTicks = 0;		// The transition is over. Draw with the real value.
+			}
+			else
+			{
+				double range = (m_Value - m_TransitionStartValue);
+				double adjustment = range * diffTicks / ((m_TransitionFrameCount + 1) * m_MeterWindow->GetTransitionUpdate());
+				double frameAdjustment = adjustment * m_FrameCount;
+
+				frame = (int)(m_TransitionStartValue * realFrames) * (m_TransitionFrameCount + 1);
+				frame += (int)frameAdjustment;
+				frame %= m_FrameCount;
+				frame = max(0, frame);
+			}
+		}
+
+//		DebugLog(L"[%i] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
 		if(m_Bitmap->GetHeight() > m_Bitmap->GetWidth())
 		{

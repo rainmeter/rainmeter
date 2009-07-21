@@ -200,7 +200,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	m_FontSize = parser.ReadInt(section, L"FontSize", 10);
 	m_NumOfDecimals = parser.ReadInt(section, L"NumOfDecimals", -1);
 
-	m_Angle = parser.ReadFloat(section, L"Angle", 0.0f);
+	m_Angle = (Gdiplus::REAL)parser.ReadFloat(section, L"Angle", 0.0);
 
 	std::wstring scale;
 	scale = parser.ReadString(section, L"Scale", L"1");
@@ -413,9 +413,9 @@ bool CMeterString::DrawString(RectF* rect)
 		}
 
 		REAL angle = m_Angle * 180.0f / 3.14159265f;		// Convert to degrees
-		graphics.TranslateTransform(CMeter::GetX(), y);
+		graphics.TranslateTransform((Gdiplus::REAL)CMeter::GetX(), y);
 		graphics.RotateTransform(angle);
-		graphics.TranslateTransform(-CMeter::GetX(), -y);
+		graphics.TranslateTransform(-(Gdiplus::REAL)CMeter::GetX(), -y);
 
 		graphics.DrawString(m_String.c_str(), -1, m_Font, rc, &stringFormat, &solidBrush);
 	}
