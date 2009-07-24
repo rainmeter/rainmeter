@@ -169,7 +169,7 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
 	m_ImageName = parser.ReadString(section, L"BitmapImage", L"");
-	m_ImageName = Rainmeter->FixPath(m_ImageName, PATH_FOLDER_CURRENT_SKIN, m_MeterWindow->GetSkinName());
+	m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
 
 	m_FrameCount = parser.ReadInt(section, L"BitmapFrames", 1);
 	m_ZeroFrame = 0!=parser.ReadInt(section, L"BitmapZeroFrame", 0);

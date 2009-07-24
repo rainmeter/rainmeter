@@ -88,7 +88,7 @@ void CMeterRotator::ReadConfig(const WCHAR* section)
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
 	m_ImageName = parser.ReadString(section, L"ImageName", L"");
-	m_ImageName = Rainmeter->FixPath(m_ImageName, PATH_FOLDER_CURRENT_SKIN, m_MeterWindow->GetSkinName());
+	m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
 
 	m_OffsetX = parser.ReadFloat(section, L"OffsetX", 0.0);
 	m_OffsetY = parser.ReadFloat(section, L"OffsetY", 0.0);

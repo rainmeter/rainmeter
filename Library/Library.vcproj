@@ -246,6 +246,7 @@
 				ProgramDataBaseFileName=".\x32/Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -264,6 +265,7 @@
 				OutputFile="../TestBench/x32/Release/Rainmeter.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\x32/Release/Rainmeter.pdb"
 				ImportLibrary=".\x32/Release/Rainmeter.lib"
 				TargetMachine="1"
@@ -520,6 +522,7 @@
 				ProgramDataBaseFileName=".\x64/Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"

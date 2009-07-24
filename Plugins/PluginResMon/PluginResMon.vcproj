@@ -153,6 +153,7 @@
 				ProgramDataBaseFileName=".\x64/Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -245,6 +246,7 @@
 				ProgramDataBaseFileName=".\x32/Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -264,6 +266,7 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\Library\x32\Release"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\x32/Release/ResMon.pdb"
 				ImportLibrary=".\x32/Release/ResMon.lib"
 				TargetMachine="1"

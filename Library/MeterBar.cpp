@@ -97,7 +97,7 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 	m_Color = parser.ReadColor(section, L"BarColor", Color::Green);
 
 	m_ImageName = parser.ReadString(section, L"BarImage", L"");
-	m_ImageName = Rainmeter->FixPath(m_ImageName, PATH_FOLDER_CURRENT_SKIN, m_MeterWindow->GetSkinName());
+	m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
 
 	m_Border = parser.ReadInt(section, L"BarBorder", 0);
 

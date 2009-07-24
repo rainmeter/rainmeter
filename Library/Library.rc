@@ -107,13 +107,14 @@ BEGIN
 
         MENUITEM "Click Through",               ID_CONTEXT_SKINMENU_CLICKTHROUGH
 
-        MENUITEM "Keep on screen",              ID_CONTEXT_SKINMENU_KEEPONSCREEN
+        MENUITEM "Keep on Screen",              ID_CONTEXT_SKINMENU_KEEPONSCREEN
 
         MENUITEM SEPARATOR
         MENUITEM "Edit Skin...",                ID_CONTEXT_SKINMENU_EDITSKIN
+		MENUITEM "Open Skin's folder",          ID_CONTEXT_SKINMENU_OPENSKINSFOLDER
         MENUITEM "Refresh Skin",                ID_CONTEXT_SKINMENU_REFRESH
         MENUITEM SEPARATOR
-        MENUITEM "Close skin",                  ID_CONTEXT_CLOSESKIN
+        MENUITEM "Close Skin",                  ID_CONTEXT_CLOSESKIN
     END
 END
 

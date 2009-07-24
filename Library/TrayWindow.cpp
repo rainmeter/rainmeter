@@ -334,8 +334,7 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 		// Load the bitmaps if defined
 		if (!imageName.empty())
 		{
-			imageName = Rainmeter->FixPath(imageName, PATH_FOLDER_SKINS, L"");
-
+			imageName = Rainmeter->GetSkinPath() + imageName;
 			if (imageName.size() > 3) 
 			{
 				std::wstring extension = imageName.substr(imageName.size() - 3);
@@ -473,6 +472,14 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{
 				if (Rainmeter->GetDummyLitestep()) PostQuitMessage(0);
 				quitModule(Rainmeter->GetInstance());
+			}
+			else if(wParam == ID_CONTEXT_OPENSKINSFOLDER)
+			{
+				std::wstring command;
+				command += L"\"";
+				command += Rainmeter->GetSkinPath();
+				command += L"\"";
+				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 			}
 			else if((wParam & 0x0ffff) >= ID_CONFIG_FIRST)
 			{

@@ -32,10 +32,11 @@
 #define MAKE_VER(major, minor) major * 1000 + minor
 
 #define APPNAME L"Rainmeter"
+#define APPVERSION L"0.14.1"
 #ifdef _WIN64
-#define APPVERSION L"0.14.1 (64-bit)"
+#define APPBITS L"(64-bit)"
 #else
-#define APPVERSION L"0.14.1 (32-bit)"
+#define APPBITS L"(32-bit)"
 #endif
 #define RAINMETER_VERSION MAKE_VER(14, 1)
 
@@ -82,6 +83,7 @@ class CRainmeter
 public:
 	struct CONFIG 
 	{
+		std::wstring path;
 		std::wstring config;
 		std::vector<std::wstring> iniFiles;
 		std::vector<UINT> commands;
@@ -154,12 +156,11 @@ public:
 	BOOL ExecuteBang(const std::wstring& bang, const std::wstring& arg, CMeterWindow* meterWindow);
 	std::wstring ParseCommand(const WCHAR* command, CMeterWindow* meterWindow);
 	void ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow);
-	static std::wstring FixPath(const std::wstring& path, PATH_FOLDER folder, const std::wstring& currentSkin);
 
 	static PLATFORM IsNT();
 
 private:
-	void CreateMeterWindow(std::wstring config, std::wstring iniFile);
+	void CreateMeterWindow(std::wstring path, std::wstring config, std::wstring iniFile);
 	bool DeleteMeterWindow(CMeterWindow* meterWindow);
 	void ScanForConfigs(std::wstring& path);
 	void ReadGeneralSettings(std::wstring& path);
@@ -170,6 +171,7 @@ private:
 	int ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu);
 	HMENU CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData);
 	void CreateDefaultConfigFile(std::wstring strFile);
+	void TestSettingsFile(bool bDefaultIniLocation);
 
 	CTrayWindow* m_TrayWindow;
 

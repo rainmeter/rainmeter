@@ -24,6 +24,7 @@
 #include "Measure.h"
 #include "resource.h"
 #include "AboutDialog.h"
+#include "../revision-number.h"
 #include <commctrl.h>
 
 extern CRainmeter* Rainmeter;
@@ -201,7 +202,7 @@ void ScanPlugins()
     WIN32_FIND_DATA fileData;      // Data structure describes the file found
     HANDLE hSearch;                // Search handle returned by FindFirstFile
 
-	std::wstring files = CRainmeter::FixPath(L"*.dll", PATH_FOLDER_PLUGIN, L"");
+	std::wstring files = Rainmeter->GetPluginPath() + L"*.dll";
 
 	g_Plugins.clear();
 
@@ -216,7 +217,7 @@ void ScanPlugins()
 		info.version = 0;
 
 		// Try to get the version and author
-		std::wstring tmpSz = CRainmeter::FixPath(fileData.cFileName, PATH_FOLDER_PLUGIN, L"");
+		std::wstring tmpSz = Rainmeter->GetPluginPath() + fileData.cFileName;
 		HMODULE dll = LoadLibrary(tmpSz.c_str());
 		if (dll)
 		{
@@ -284,7 +285,7 @@ BOOL OnInitAboutDialog(HWND window)
 	HWND widget;
 
 	widget = GetDlgItem(window, IDC_VERSION_STRING);
-	swprintf(tmpSz, L"%s version %s", APPNAME, APPVERSION);
+	swprintf(tmpSz, L"%s version %s rev %i %s", APPNAME, APPVERSION, revision_number, APPBITS);
 	SetWindowText(widget, tmpSz);
 
 	widget = GetDlgItem(window, IDC_BUILD_STRING);

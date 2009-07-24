@@ -155,6 +155,7 @@
 				ProgramDataBaseFileName=".\x64/Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -249,6 +250,7 @@
 				ProgramDataBaseFileName=".\x32/Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -268,6 +270,7 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\Library\x32\Release"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\x32/Release/RecycleManager.pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"

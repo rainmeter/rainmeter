@@ -72,7 +72,7 @@ bool CMeasurePlugin::Update()
 	WCHAR buffer[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, buffer);
 
-	SetCurrentDirectory(Rainmeter->FixPath(L"", PATH_FOLDER_CURRENT_SKIN, m_MeterWindow->GetSkinName()).c_str());
+	SetCurrentDirectory(m_MeterWindow->MakePathAbsolute(L"").c_str());
 
 	if(UpdateFunc)
 	{
@@ -115,7 +115,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	{
 		m_PluginName = L"..\\" + m_PluginName;
 	}
-	m_PluginName = Rainmeter->FixPath(m_PluginName, PATH_FOLDER_PLUGIN, L"");
+	m_PluginName = Rainmeter->GetPluginPath() + m_PluginName;
 
 	m_Plugin = LoadLibrary(m_PluginName.c_str());
 	
@@ -155,7 +155,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		WCHAR buffer[MAX_PATH];
 		GetCurrentDirectory(MAX_PATH, buffer);
 
-		SetCurrentDirectory(Rainmeter->FixPath(L"", PATH_FOLDER_CURRENT_SKIN, m_MeterWindow->GetSkinName()).c_str());
+		SetCurrentDirectory(m_MeterWindow->MakePathAbsolute(L"").c_str());
 
 		double maxValue;
 		maxValue = InitializeFunc(m_Plugin, parser.GetFilename().c_str(), section, m_ID);

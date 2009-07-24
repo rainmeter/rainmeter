@@ -99,14 +99,6 @@ enum BANGCOMMAND
 	BANG_PLUGIN
 };
 
-enum PATH_FOLDER
-{
-	PATH_FOLDER_INI,
-	PATH_FOLDER_SKINS,
-	PATH_FOLDER_CURRENT_SKIN,
-	PATH_FOLDER_PLUGIN
-};
-
 typedef struct 
 {
 	int count;						//Number of monitors
@@ -124,7 +116,7 @@ class CMeter;
 class CMeterWindow
 {
 public:
-	CMeterWindow(std::wstring& config, std::wstring& iniFile);
+	CMeterWindow(std::wstring& path, std::wstring& config, std::wstring& iniFile);
 	~CMeterWindow();
 
 	int Initialize(CRainmeter& Rainmeter);
@@ -176,6 +168,8 @@ public:
 	void AddMeasureBang(const WCHAR* bang, int index, CMeasure* measure);
 
 	LRESULT OnCopyData(WPARAM wParam, LPARAM lParam);
+
+	std::wstring MakePathAbsolute(std::wstring path);
 
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -303,7 +297,8 @@ private:
 	std::list<CMeasure*> m_Measures;			// All the measures
 	std::list<CMeter*> m_Meters;				// All the meters
 
-	std::wstring m_SkinName;						// Name of the current skin folder
+	std::wstring m_SkinPath;					// Path of the skin folder
+	std::wstring m_SkinName;					// Name of the current skin folder
 	std::wstring m_SkinIniFile;					// Name of the current skin iniFile
 
 	std::wstring m_ConfigEditor;

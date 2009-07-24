@@ -150,13 +150,13 @@ void CMeterHistogram::ReadConfig(const WCHAR* section)
 	m_SecondaryMeasureName = parser.ReadString(section, L"SecondaryMeasureName", L"");
 
 	m_PrimaryImageName = parser.ReadString(section, L"PrimaryImage", L"");
-	m_PrimaryImageName = Rainmeter->FixPath(m_PrimaryImageName, PATH_FOLDER_CURRENT_SKIN, m_MeterWindow->GetSkinName());
+	m_PrimaryImageName = m_MeterWindow->MakePathAbsolute(m_PrimaryImageName);
 
 	m_SecondaryImageName = parser.ReadString(section, L"SecondaryImage", L"");
-	m_SecondaryImageName = Rainmeter->FixPath(m_SecondaryImageName, PATH_FOLDER_CURRENT_SKIN, m_MeterWindow->GetSkinName());
+	m_SecondaryImageName = m_MeterWindow->MakePathAbsolute(m_SecondaryImageName);
 
 	m_BothImageName = parser.ReadString(section, L"BothImage", L"");
-	m_BothImageName = Rainmeter->FixPath(m_BothImageName, PATH_FOLDER_CURRENT_SKIN, m_MeterWindow->GetSkinName());
+	m_BothImageName = m_MeterWindow->MakePathAbsolute(m_BothImageName);
 
 	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0);
 	m_Flip = 0!=parser.ReadInt(section, L"Flip", 0);

@@ -30,6 +30,7 @@
 #include <commctrl.h>
 #include <gdiplus.h>
 #include <fstream>
+#include <shlobj.h>
 
 using namespace Gdiplus;
 
@@ -674,16 +675,20 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	m_IniFile = m_Path + L"Rainmeter.ini";
 	m_SkinPath = m_Path + L"Skins\\";
 
+	bool bDefaultIniLocation = false;
+
 	// If the ini file doesn't exist in the program folder store it to the %APPDATA% instead so that things work better in Vista/Win7
 	if (_waccess(m_IniFile.c_str(), 0) == -1)
 	{
 		WCHAR buffer[4096];	// lets hope the buffer is large enough...
 
 		// Expand the environment variables
-		DWORD ret = ExpandEnvironmentStrings(L"%APPDATA%\\Rainmeter\\rainmeter.ini", buffer, 4096);
+		DWORD ret = ExpandEnvironmentStrings(L"%APPDATA%\\Rainmeter\\", buffer, 4096);
 		if (ret != 0 && ret < 4096)
 		{
 			m_IniFile = buffer;
+			m_IniFile += L"rainmeter.ini";
+			bDefaultIniLocation = true;
 
 			// If the ini file doesn't exist in the %APPDATA% either, create a default rainmeter.ini file.
 			if (_waccess(m_IniFile.c_str(), 0) == -1)
@@ -692,6 +697,59 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 			}
 		}
 	}
+
+	// Read the skin folder from the ini file
+	WCHAR tmpSz[MAX_LINE_LENGTH];
+	if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", tmpSz, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0) 
+	{
+ 		m_SkinPath = tmpSz;
+	}
+	else if (bDefaultIniLocation)
+	{
+		// If the skin path is not defined in the rainmeter.ini file use My Documents/Rainmeter/Skins
+		TCHAR szPath[MAX_PATH] = {0};
+		HRESULT hr = SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, szPath);
+		if (SUCCEEDED(hr))
+		{
+			// Make the folders if they don't exist yet
+			m_SkinPath = szPath;
+			m_SkinPath += L"\\Rainmeter";
+			CreateDirectory(m_SkinPath.c_str(), NULL);
+			m_SkinPath += L"\\Skins";
+			DWORD result = CreateDirectory(m_SkinPath.c_str(), NULL);
+			m_SkinPath += L"\\";
+			if (result != 0)
+			{
+				// The folder was created successfully which means that it wasn't available yet.
+				// Copy the default skin to the Skins folder
+				std::wstring strFrom(m_Path + L"Skins\\" + L"*.*");
+				std::wstring strTo(m_SkinPath);
+
+				// The strings must end with double nul
+				strFrom.append(L"0");
+				strFrom[strFrom.size() - 1] = L'\0';
+				strTo.append(L"0");
+				strTo[strTo.size() - 1] = L'\0';
+
+				SHFILEOPSTRUCT fo = {0};
+				fo.wFunc = FO_COPY;
+				fo.pFrom = strFrom.c_str();
+				fo.pTo = strTo.c_str();
+				fo.fFlags = FOF_NO_UI;
+
+				int result = SHFileOperation(&fo);
+				if (result != 0)
+				{
+					DebugLog(L"Unable to copy the default skin %i", result);
+				}
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to get the My Documents location.");
+		}
+	}
+	WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), m_IniFile.c_str());
 
 	// Set the log file location
 	m_LogFile = m_IniFile;
@@ -736,10 +794,20 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	DebugLog(L"SkinPath: %s", m_SkinPath.c_str());
 	DebugLog(L"PluginPath: %s", m_PluginPath.c_str());
 
+	// Test that the Rainmeter.ini file is writable
+	TestSettingsFile(bDefaultIniLocation);
+
 	// Tray must exist before configs are read
 	m_TrayWindow = new CTrayWindow(m_Instance);
 
 	ScanForConfigs(m_SkinPath);
+
+	if(m_ConfigStrings.empty())
+	{
+		std::wstring error = L"There are no available skins at:\n" + m_SkinPath;
+		MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_ICONERROR);
+	}
+
 	ReadGeneralSettings(m_IniFile);
 
 	if (m_CheckUpdate)
@@ -797,7 +865,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	// Create meter windows for active configs
 	for (size_t i = 0; i < m_ConfigStrings.size(); i++)
 	{
-		if (m_ConfigStrings[i].active > 0 && m_ConfigStrings[i].active <= m_ConfigStrings[i].iniFiles.size())
+		if (m_ConfigStrings[i].active > 0 && m_ConfigStrings[i].active <= (int)m_ConfigStrings[i].iniFiles.size())
 		{
 			ActivateConfig(i, m_ConfigStrings[i].active - 1);
 		}
@@ -843,6 +911,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		WCHAR buffer[256];
 		std::wstring skinIniFile = m_ConfigStrings[configIndex].iniFiles[iniIndex];
 		std::wstring skinConfig = m_ConfigStrings[configIndex].config;
+		std::wstring skinPath = m_ConfigStrings[configIndex].path;
 
 		// Verify that the config is not already active
 		std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.find(skinConfig);
@@ -864,7 +933,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		{
 			m_ConfigStrings[configIndex].active = iniIndex + 1;
 
-			CreateMeterWindow(skinConfig, skinIniFile);
+			CreateMeterWindow(skinPath, skinConfig, skinIniFile);
 
 			wsprintf(buffer, L"%i", iniIndex + 1);
 			WritePrivateProfileString(skinConfig.c_str(), L"Active", buffer, m_IniFile.c_str());
@@ -901,9 +970,9 @@ bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex)
 	return false;
 }
 
-void CRainmeter::CreateMeterWindow(std::wstring config, std::wstring iniFile)
+void CRainmeter::CreateMeterWindow(std::wstring path, std::wstring config, std::wstring iniFile)
 {
-	CMeterWindow* mw = new CMeterWindow(config, iniFile);
+	CMeterWindow* mw = new CMeterWindow(path, config, iniFile);
 
 	if (mw)
 	{
@@ -1001,14 +1070,8 @@ void CRainmeter::ScanForConfigs(std::wstring& path)
 {
 	m_ConfigStrings.clear();
 	m_ConfigMenu.clear();
-	
-	ScanForConfigsRecursive(path, L"", 0, m_ConfigMenu);
 
-	if(m_ConfigStrings.empty())
-	{
-		std::wstring error = L"There are no skins available in folder\n" + path;
-		MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
-	}
+	ScanForConfigsRecursive(path, L"", 0, m_ConfigMenu);
 }
 
 int CRainmeter::ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu)
@@ -1022,6 +1085,7 @@ int CRainmeter::ScanForConfigsRecursive(std::wstring& path, std::wstring base, i
 	{
 		// Scan for ini-files
 		CONFIG config;
+		config.path = path;
 		config.config = base;
 		config.active = false;
 
@@ -1425,7 +1489,7 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 		int active  = parser.ReadInt(m_ConfigStrings[i].config.c_str(), L"Active", 0);
 
 		// Make sure there is a ini file available
-		if (active > 0 && active <= m_ConfigStrings[i].iniFiles.size())
+		if (active > 0 && active <= (int)m_ConfigStrings[i].iniFiles.size())
 		{
 			m_ConfigStrings[i].active = active;
 		}
@@ -1610,6 +1674,9 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 			HMENU configMenu = CreateConfigMenu(m_ConfigMenu);
 			if (configMenu)
 			{
+				AppendMenu(configMenu, MF_SEPARATOR, 0, NULL);
+				AppendMenu(configMenu, 0, ID_CONTEXT_OPENSKINSFOLDER, L"Open Skins\' Folder");
+
 				InsertMenu(subMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configMenu, L"Configs");
 			}
 
@@ -1837,44 +1904,53 @@ void CRainmeter::ChangeSkinIndex(HMENU menu, int index)
 	}
 }
 
-/*
-** FixPath
-**
-** Converts relative path to absolute.
-**
-*/
-std::wstring CRainmeter::FixPath(const std::wstring& path, PATH_FOLDER folder, const std::wstring& currentSkin)
+void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 {
-	if (path.empty() || path.find(L':') != std::wstring::npos)
+	WritePrivateProfileString(L"Rainmeter", L"WriteTest", L"TRUE", m_IniFile.c_str());
+	WritePrivateProfileString(NULL, NULL, NULL, m_IniFile.c_str());	// FLUSH
+
+	WCHAR tmpSz[5];
+	bool bSuccess = (GetPrivateProfileString(L"Rainmeter", L"WriteTest", L"", tmpSz, 5, m_IniFile.c_str()) > 0);
+	if (bSuccess)
 	{
-		return path;	// It's already absolute path (or it's empty)
+		bSuccess = (wcscmp(L"TRUE", tmpSz) == 0);
+		WritePrivateProfileString(L"Rainmeter", L"WriteTest", NULL, m_IniFile.c_str());	
 	}
-
-	std::wstring root;
-
-	switch(folder) 
+	if (!bSuccess)
 	{
-	case PATH_FOLDER_INI:
-		root = Rainmeter->GetPath();
-		break;
+		DebugLog(L"The rainmeter.ini file is NOT writable.");
 
-	case PATH_FOLDER_SKINS:
-		root = Rainmeter->GetSkinPath();
-		break;
+		std::wstring error;
+		error += L"The Rainmeter.ini file is not writable. This means that the\n";
+		error += L"application will not be able to save any settings permanently.\n\n";
 
-	case PATH_FOLDER_CURRENT_SKIN:
-		root = Rainmeter->GetSkinPath() + currentSkin;
-		break;
+		if (!bDefaultIniLocation)
+		{
+			WCHAR buffer[4096] = {0};	// lets hope the buffer is large enough...
+			// Expand the environment variables
+			ExpandEnvironmentStrings(L"%APPDATA%\\Rainmeter\\", buffer, 4096);
 
-	case PATH_FOLDER_PLUGIN:
-		root = Rainmeter->GetPluginPath();
-		break;
+			error += L"You should quit Rainmeter and move the settings file from\n\n";
+			error += m_IniFile;
+			error += L"\n\nto\n\n";
+			error += buffer;
+			error += L"\n\nAlternatively you can also just remove the file and\n";
+			error += L"it will be automatically recreated to the correct location\n";
+			error += L"when Rainmeter is restarted the next time (you\'ll lose your\n";
+			error += L"current settings though).\n";
+		}
+		else
+		{
+			error += L"Make sure that the settings file is not set as read-only and\n";
+			error += L"it is located in a folder where you have write permissions.\n\n";
+			error += L"The settings file is located at:\n";
+			error += m_IniFile;
+		}
+
+		MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_ICONERROR);
 	}
-
-	if (root[root.length() - 1] != L'\\')
+	else
 	{
-		root += L"\\";
+		DebugLog(L"The rainmeter.ini file is writable.");
 	}
-
-	return root + path;
 }

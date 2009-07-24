@@ -136,7 +136,7 @@ void CMeterButton::ReadConfig(const WCHAR* section)
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
 	m_ImageName = parser.ReadString(section, L"ButtonImage", L"");
-	m_ImageName = Rainmeter->FixPath(m_ImageName, PATH_FOLDER_CURRENT_SKIN, m_MeterWindow->GetSkinName());
+	m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
 
 	m_Command = parser.ReadString(section, L"ButtonCommand", L"");
 }

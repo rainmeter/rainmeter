@@ -178,7 +178,7 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
 	m_ImageName = parser.ReadString(section, L"ImageName", L"");
-	m_ImageName = Rainmeter->FixPath(m_ImageName, PATH_FOLDER_CURRENT_SKIN, m_MeterWindow->GetSkinName());
+	m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
 
 	if (-1 != parser.ReadInt(section, L"W", -1) && -1 != parser.ReadInt(section, L"H", -1))
 	{
@@ -200,7 +200,7 @@ bool CMeterImage::Update()
 		if (!val.empty())
 		{
 			// Load the new image
-			val = Rainmeter->FixPath(val, PATH_FOLDER_CURRENT_SKIN, m_MeterWindow->GetSkinName());
+			val = m_MeterWindow->MakePathAbsolute(val);
 			if (val != m_ImageName) 
 			{
 				m_ImageName = val;

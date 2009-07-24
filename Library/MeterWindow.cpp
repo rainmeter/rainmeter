@@ -61,7 +61,7 @@ MULTIMONITOR_INFO CMeterWindow::m_Monitors = { 0 };
 ** Constructor
 **
 */
-CMeterWindow::CMeterWindow(std::wstring& config, std::wstring& iniFile)
+CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstring& iniFile)
 {
 	m_Background = NULL;
 	m_Window = NULL;
@@ -124,6 +124,7 @@ CMeterWindow::CMeterWindow(std::wstring& config, std::wstring& iniFile)
 	m_BackgroundMode = BGMODE_IMAGE;
 	m_SolidBevel = BEVELTYPE_NONE;
 
+	m_SkinPath = path;
 	m_SkinName = config;
 	m_SkinIniFile = iniFile;
 
@@ -1279,7 +1280,7 @@ void CMeterWindow::WriteConfig()
 */
 void CMeterWindow::ReadSkin()
 {
-	std::wstring iniFile = m_Rainmeter->GetSkinPath();
+	std::wstring iniFile = m_SkinPath;
 	iniFile += m_SkinName;
 	iniFile += L"\\";
 	iniFile += m_SkinIniFile;
@@ -1303,7 +1304,7 @@ void CMeterWindow::ReadSkin()
 
 	m_Author = m_Parser.ReadString(L"Rainmeter", L"Author", L"");
 	m_BackgroundName = m_Parser.ReadString(L"Rainmeter", L"Background", L"");
-	m_BackgroundName = Rainmeter->FixPath(m_BackgroundName, PATH_FOLDER_CURRENT_SKIN, m_SkinName);
+	m_BackgroundName = MakePathAbsolute(m_BackgroundName);
 
 	std::wstring margins = m_Parser.ReadString(L"Rainmeter", L"BackgroundMargins", L"0, 0, 0, 0");
 	int left = 0, top = 0, right = 0, bottom = 0;
@@ -2295,9 +2296,25 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			std::wstring command = Rainmeter->GetConfigEditor();
 			command += L" \"";
-			command += m_Rainmeter->GetSkinPath() + L"\\" + m_SkinName + L"\\" + m_SkinIniFile + L"\"";
-			LSExecuteAsAdmin(NULL, command.c_str(), SW_SHOWNORMAL);
+			command += m_SkinPath + L"\\" + m_SkinName + L"\\" + m_SkinIniFile + L"\"";
+
+			if (m_SkinPath == Rainmeter->GetSkinPath())
+			{
+				LSExecuteAsAdmin(NULL, command.c_str(), SW_SHOWNORMAL);
+			}
+			else
+			{
+				LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
+			}
 		}
+		else if(wParam == ID_CONTEXT_SKINMENU_OPENSKINSFOLDER)
+		{
+			std::wstring command;
+			command += L"\"";
+			command += m_SkinPath + L"\\" + m_SkinName;
+			command += L"\"";
+			LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
+		} 
 		else if(wParam == ID_CONTEXT_SKINMENU_REFRESH)
 		{
 			Refresh(false);
@@ -3115,3 +3132,25 @@ LRESULT CMeterWindow::OnCopyData(WPARAM wParam, LPARAM lParam)
 	}
 }
 
+/*
+** MakePathAbsolute
+**
+** Converts the path to absolute bu adding the skin's path to it (unless it already is absolute).
+**
+*/
+std::wstring CMeterWindow::MakePathAbsolute(std::wstring path)
+{
+	if (path.empty() || path.find(L':') != std::wstring::npos)
+	{
+		return path;	// It's already absolute path (or it's empty)
+	}
+
+	std::wstring root = m_SkinPath + m_SkinName;
+
+	if (root[root.length() - 1] != L'\\')
+	{
+		root += L"\\";
+	}
+
+	return root + path;
+}
