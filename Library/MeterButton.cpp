@@ -242,18 +242,15 @@ bool CMeterButton::Draw()
 /*
 ** BindMeasure
 **
-** Overridden method. The Image meters need not to be bound on anything
+** Overridden method. The meters need not to be bound on anything
 **
 */
 void CMeterButton::BindMeasure(std::list<CMeasure*>& measures)
 {
-	try
+	// It's ok not to bind meter to anything
+	if (!m_MeasureName.empty())
 	{
 		CMeter::BindMeasure(measures);
-	}
-	catch(CError)
-	{
-		// Do nothing (ignore errors)
 	}
 }
 

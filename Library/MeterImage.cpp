@@ -257,13 +257,10 @@ bool CMeterImage::Draw()
 */
 void CMeterImage::BindMeasure(std::list<CMeasure*>& measures)
 {
-	try
+	// It's ok not to bind image meter to anything
+	if (!m_MeasureName.empty())
 	{
 		CMeter::BindMeasure(measures);
-	}
-	catch(CError)
-	{
-		// Do nothing (ignore errors)
 	}
 }
 
