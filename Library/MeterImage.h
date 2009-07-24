@@ -44,6 +44,7 @@ private:
 
 	Gdiplus::Bitmap* m_Bitmap;			// The bitmap
 	std::wstring m_ImageName;			// Name of the image
+	std::wstring m_Path;
 	bool m_DimensionsDefined;
 	HGLOBAL m_hBuffer;
 	FILETIME m_Modified;

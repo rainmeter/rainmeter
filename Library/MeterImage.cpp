@@ -178,7 +178,16 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
 	m_ImageName = parser.ReadString(section, L"ImageName", L"");
-	m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
+	
+	m_Path = parser.ReadString(section, L"Path", L"");
+	if (!m_Path.empty())
+	{
+		if (m_Path[m_Path.length() - 1] != L'\\')
+		{
+			m_Path += L"\\";
+		}
+	}
+	m_ImageName = m_MeterWindow->MakePathAbsolute(m_Path + m_ImageName);
 
 	if (-1 != parser.ReadInt(section, L"W", -1) && -1 != parser.ReadInt(section, L"H", -1))
 	{
@@ -200,7 +209,7 @@ bool CMeterImage::Update()
 		if (!val.empty())
 		{
 			// Load the new image
-			val = m_MeterWindow->MakePathAbsolute(val);
+			val = m_MeterWindow->MakePathAbsolute(m_Path + val);
 			if (val != m_ImageName) 
 			{
 				m_ImageName = val;
