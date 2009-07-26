@@ -121,6 +121,7 @@ public:
 	const std::wstring& GetLogFile() { return m_LogFile; };
 	const std::wstring& GetSkinPath() { return m_SkinPath; };
 	const std::wstring& GetPluginPath() { return m_PluginPath; };
+	std::wstring GetSettingsPath() { return ExtractPath(m_IniFile); };
 
 	const std::wstring& GetConfigEditor() { return m_ConfigEditor; };
 	const std::wstring& GetStatsDate() { return m_StatsDate; };
@@ -158,6 +159,8 @@ public:
 	void ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow);
 
 	static PLATFORM IsNT();
+	static std::wstring ExtractPath(const std::wstring& strFilePath);
+	static std::wstring ExpandEnvironmentVariables(const std::wstring strPath);
 
 private:
 	void CreateMeterWindow(std::wstring path, std::wstring config, std::wstring iniFile);

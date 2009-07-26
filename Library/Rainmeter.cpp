@@ -669,25 +669,17 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	if(!c_DummyLitestep) InitalizeLitestep();
 
-	m_Path = tmpName;
-	m_PluginPath = tmpName;
-	m_PluginPath += L"Plugins\\";
-	m_IniFile = m_Path + L"Rainmeter.ini";
-	m_SkinPath = m_Path + L"Skins\\";
-
 	bool bDefaultIniLocation = false;
 
-	// If the ini file doesn't exist in the program folder store it to the %APPDATA% instead so that things work better in Vista/Win7
-	if (_waccess(m_IniFile.c_str(), 0) == -1)
+	if (c_CmdLine.empty())
 	{
-		WCHAR buffer[4096];	// lets hope the buffer is large enough...
+		m_Path = tmpName;
+		m_IniFile = m_Path + L"Rainmeter.ini";
 
-		// Expand the environment variables
-		DWORD ret = ExpandEnvironmentStrings(L"%APPDATA%\\Rainmeter\\", buffer, 4096);
-		if (ret != 0 && ret < 4096)
+		// If the ini file doesn't exist in the program folder store it to the %APPDATA% instead so that things work better in Vista/Win7
+		if (_waccess(m_IniFile.c_str(), 0) == -1)
 		{
-			m_IniFile = buffer;
-			m_IniFile += L"rainmeter.ini";
+			m_IniFile = ExpandEnvironmentVariables(L"%APPDATA%\\Rainmeter\\Rainmeter.ini");
 			bDefaultIniLocation = true;
 
 			// If the ini file doesn't exist in the %APPDATA% either, create a default rainmeter.ini file.
@@ -697,12 +689,46 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 			}
 		}
 	}
+	else
+	{
+		// The command line defines the location of Rainmeter.ini (or whatever it calls it).
+		std::wstring iniFile = c_CmdLine;
+		if (iniFile[0] == L'\"' && iniFile[iniFile.length() - 1] == L'\"')
+		{
+			iniFile = iniFile.substr(1, iniFile.length() - 2);
+		}
+
+		iniFile = ExpandEnvironmentVariables(iniFile);
+
+		if (iniFile[iniFile.length() - 1] == L'\\')
+		{
+			iniFile += L"Rainmeter.ini";
+		}
+		else if (iniFile.substr(iniFile.length() - 4) != L".ini")
+		{
+			iniFile += L"\\Rainmeter.ini";
+		}
+
+		m_Path = ExtractPath(iniFile);
+		m_IniFile = iniFile;
+
+		// If the ini file doesn't exist in the %APPDATA% either, create a default rainmeter.ini file.
+		if (_waccess(m_IniFile.c_str(), 0) == -1)
+		{
+			CreateDefaultConfigFile(m_IniFile);
+		}
+		bDefaultIniLocation = true;
+	}
+
+	m_PluginPath = tmpName;
+	m_PluginPath += L"Plugins\\";
+	m_SkinPath = m_Path + L"Skins\\";
 
 	// Read the skin folder from the ini file
 	WCHAR tmpSz[MAX_LINE_LENGTH];
 	if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", tmpSz, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0) 
 	{
- 		m_SkinPath = tmpSz;
+		m_SkinPath = ExpandEnvironmentVariables(tmpSz);
 	}
 	else if (bDefaultIniLocation)
 	{
@@ -890,11 +916,41 @@ void CRainmeter::CreateDefaultConfigFile(std::wstring strFile)
 		CreateDirectory(strPath.c_str(), NULL);
 	}
 
-	std::ofstream out(strFile.c_str(), std::ios::out);
-	if (out) 
+	std::wstring defaultIni = GetPath() + L"Default.ini";
+	if (_waccess(defaultIni.c_str(), 0) == -1)
 	{
-		out << std::string("[Rainmeter]\n\n[TrayMeasure]\nMeasure=CPU\n\n[Tranquil\\System]\nActive=1\n");
-		out.close();
+		// The default.ini wasn't found -> create new
+		std::ofstream out(strFile.c_str(), std::ios::out);
+		if (out) 
+		{
+			out << std::string("[Rainmeter]\n\n[TrayMeasure]\nMeasure=CPU\n\n[Tranquil\\System]\nActive=1\n");
+			out.close();
+		}
+	}
+	else
+	{
+		// The folder was created successfully which means that it wasn't available yet.
+		// Copy the default skin to the Skins folder
+		std::wstring strFrom(defaultIni);
+		std::wstring strTo(GetIniFile());
+
+		// The strings must end with double nul
+		strFrom.append(L"0");
+		strFrom[strFrom.size() - 1] = L'\0';
+		strTo.append(L"0");
+		strTo[strTo.size() - 1] = L'\0';
+
+		SHFILEOPSTRUCT fo = {0};
+		fo.wFunc = FO_COPY;
+		fo.pFrom = strFrom.c_str();
+		fo.pTo = strTo.c_str();
+		fo.fFlags = FOF_NO_UI;
+
+		int result = SHFileOperation(&fo);
+		if (result != 0)
+		{
+			DebugLog(L"Unable to copy the default settings file %i", result);
+		}
 	}
 }
 
@@ -1425,7 +1481,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 {
 	CConfigParser parser;
-	parser.Initialize(iniFile.c_str());
+	parser.Initialize(iniFile.c_str(), this);
 
 	if (m_TrayWindow)
 	{
@@ -1926,14 +1982,12 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 
 		if (!bDefaultIniLocation)
 		{
-			WCHAR buffer[4096] = {0};	// lets hope the buffer is large enough...
-			// Expand the environment variables
-			ExpandEnvironmentStrings(L"%APPDATA%\\Rainmeter\\", buffer, 4096);
+			std::wstring strTarget = ExpandEnvironmentVariables(L"%APPDATA%\\Rainmeter\\");
 
 			error += L"You should quit Rainmeter and move the settings file from\n\n";
 			error += m_IniFile;
 			error += L"\n\nto\n\n";
-			error += buffer;
+			error += strTarget;
 			error += L"\n\nAlternatively you can also just remove the file and\n";
 			error += L"it will be automatically recreated to the correct location\n";
 			error += L"when Rainmeter is restarted the next time (you\'ll lose your\n";
@@ -1953,4 +2007,34 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	{
 		DebugLog(L"The rainmeter.ini file is writable.");
 	}
+}
+
+std::wstring CRainmeter::ExtractPath(const std::wstring& strFilePath)
+{
+	size_t pos = strFilePath.rfind(L"\\");
+	if (pos != std::wstring::npos)
+	{
+		return strFilePath.substr(0, pos + 1);
+	}
+	return L".";
+}
+
+std::wstring CRainmeter::ExpandEnvironmentVariables(const std::wstring strPath)
+{
+	if (strPath.find(L'%') != std::wstring::npos) 
+	{
+		WCHAR buffer[4096];	// lets hope the buffer is large enough...
+
+		// Expand the environment variables
+		DWORD ret = ExpandEnvironmentStrings(strPath.c_str(), buffer, 4096);
+		if (ret != 0 && ret < 4096)
+		{
+			return buffer;
+		}
+		else
+		{
+			DebugLog(L"Unable to expand the environment strings for string: %s", strPath.c_str());
+		}
+	}
+	return strPath;
 }

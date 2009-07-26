@@ -53,9 +53,23 @@ CConfigParser::~CConfigParser()
 **
 **
 */
-void CConfigParser::Initialize(LPCTSTR filename)
+void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 {
 	m_Filename = filename;
+
+	m_Variables.clear();
+
+	// Set the paths as default variables
+	if (pRainmeter)
+	{
+		m_Variables[L"PROGRAMPATH"] = pRainmeter->GetPath();
+		m_Variables[L"SETTINGSPATH"] = pRainmeter->GetSettingsPath();
+		m_Variables[L"SKINSPATH"] = pRainmeter->GetSkinPath();
+		m_Variables[L"PLUGINSPATH"] = pRainmeter->GetPluginPath();
+		m_Variables[L"CURRENTPATH"] = CRainmeter::ExtractPath(filename);
+		m_Variables[L"ADDONSPATH"] = pRainmeter->GetPath() + L"Addons\\";
+	}
+
 	ReadVariables();
 }
 
@@ -72,7 +86,6 @@ void CConfigParser::ReadVariables()
 	int bufferSize = 4096;
 	bool loop;
 
-	m_Variables.clear();
 	do 
 	{
 		loop = false;
@@ -175,21 +188,7 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		}
 	}
 
-	if (result.find(L'%') != std::wstring::npos) 
-	{
-		WCHAR buffer[4096];	// lets hope the buffer is large enough...
-
-		// Expand the environment variables
-		DWORD ret = ExpandEnvironmentStrings(result.c_str(), buffer, 4096);
-		if (ret != 0 && ret < 4096)
-		{
-			result = buffer;
-		}
-		else
-		{
-			DebugLog(L"Unable to expand the environment strings.");
-		}
-	}
+	result = CRainmeter::ExpandEnvironmentVariables(result);
 
 	// Check for variables (#VAR#)
 	size_t start = 0;

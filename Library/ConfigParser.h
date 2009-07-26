@@ -24,13 +24,15 @@
 #include <string>
 #include <gdiplus.h>
 
+class CRainmeter;
+
 class CConfigParser
 {
 public:
 	CConfigParser();
 	~CConfigParser();
 
-	void Initialize(LPCTSTR filename);
+	void Initialize(LPCTSTR filename, CRainmeter* pRainmeter);
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue);
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);

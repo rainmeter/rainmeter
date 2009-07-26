@@ -1157,7 +1157,7 @@ void CMeterWindow::ReadConfig()
 	m_SavePosition = true;		// Default value
 
 	CConfigParser parser;
-	parser.Initialize(iniFile.c_str());
+	parser.Initialize(iniFile.c_str(), m_Rainmeter);
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -1285,7 +1285,7 @@ void CMeterWindow::ReadSkin()
 	iniFile += L"\\";
 	iniFile += m_SkinIniFile;
 
-	m_Parser.Initialize(iniFile.c_str());
+	m_Parser.Initialize(iniFile.c_str(), m_Rainmeter);
 
 	// Global settings
 

@@ -375,12 +375,7 @@ HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR sz
 		return instance;
 	}
 
-	std::wstring dir;
-	size_t dirPos = command.rfind(L"\\");
-	if (dirPos != std::wstring::npos)
-	{
-		dir = command.substr(0, dirPos);
-	}
+	std::wstring dir = CRainmeter::ExtractPath(command);
 
 	SHELLEXECUTEINFO si;
 	memset(&si, 0, sizeof(si));
