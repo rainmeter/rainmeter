@@ -139,7 +139,7 @@ public:
 
 	void UpdateStats();
 	void ReadStats();
-	void WriteStats();
+	void WriteStats(bool bForce);
 	void ResetStats();
 
 	BOOL GetCheckUpdate() { return m_CheckUpdate; };

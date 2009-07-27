@@ -631,7 +631,7 @@ CRainmeter::~CRainmeter()
 
 	if (m_TrayWindow) delete m_TrayWindow;
 
-	WriteStats();
+	WriteStats(true);
 
 	GdiplusShutdown(m_GDIplusToken);
 }
@@ -1636,18 +1636,25 @@ void CRainmeter::ReadStats()
 /*
 ** WriteStats
 **
-** Writes the statistics to the ini-file
+** Writes the statistics to the ini-file. If bForce is false the stats are written only once per minute.
 **
 */
-void CRainmeter::WriteStats()
+void CRainmeter::WriteStats(bool bForce)
 {
-	// Write the date for statistics
-	WritePrivateProfileString(L"Statistics", L"Since", m_StatsDate.c_str(), m_IniFile.c_str());
+	static DWORD lastWrite = 0;
 
-	// Only Net measure has stats at the moment
-	CMeasureNet::WriteStats(m_IniFile);
+	if (bForce || (lastWrite + 1000 * 60 < GetTickCount()))
+	{
+		lastWrite = GetTickCount();
 
-	WritePrivateProfileString(NULL, NULL, NULL, m_IniFile.c_str());
+		// Write the date for statistics
+		WritePrivateProfileString(L"Statistics", L"Since", m_StatsDate.c_str(), m_IniFile.c_str());
+
+		// Only Net measure has stats at the moment
+		CMeasureNet::WriteStats(m_IniFile);
+
+		WritePrivateProfileString(NULL, NULL, NULL, m_IniFile.c_str());
+	}
 }
 
 /*

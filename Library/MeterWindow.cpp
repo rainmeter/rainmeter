@@ -1837,6 +1837,7 @@ void CMeterWindow::Update(bool nodraw)
 
 	// Statistics
 	CMeasureNet::UpdateStats();
+	Rainmeter->WriteStats(false);
 
 	if (!nodraw)
 	{
