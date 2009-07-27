@@ -50,6 +50,7 @@ MULTIMONITOR_INFO m_Monitors = { 0 };
 
 BOOL CheckConnection();
 void GetOSVersion(WCHAR* buffer);
+void GetOSBits(WCHAR* buffer);
 BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
 
 enum TYPE
@@ -60,6 +61,7 @@ enum TYPE
 	SCREEN_SIZE,
 	RAS_STATUS,
 	OS_VERSION,
+	OS_BITS,
 	ADAPTER_DESCRIPTION,
 	NET_MASK,
 	IP_ADDRESS,
@@ -125,6 +127,10 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		else if (wcsicmp(L"OS_VERSION", type) == 0)
 		{
 			g_Types[id] = OS_VERSION;
+		} 
+		else if (wcsicmp(L"OS_BITS", type) == 0)
+		{
+			g_Types[id] = OS_BITS;
 		} 
 		else if (wcsicmp(L"ADAPTER_DESCRIPTION", type) == 0)
 		{
@@ -277,6 +283,10 @@ LPCTSTR GetString(UINT id, UINT flags)
 
 	case OS_VERSION:
 		GetOSVersion(buffer);
+		return buffer;
+
+	case OS_BITS:
+		GetOSBits(buffer);
 		return buffer;
 
 	case ADAPTER_DESCRIPTION:
@@ -521,9 +531,9 @@ void Finalize(HMODULE instance, UINT id)
 */
 void GetOSVersion(WCHAR* buffer)
 {
-	OSVERSIONINFO version;
-	version.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	GetVersionEx(&version);
+	OSVERSIONINFOEX version;
+	version.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+	GetVersionEx((OSVERSIONINFO*)&version);
 
 	if (version.dwPlatformId == VER_PLATFORM_WIN32_NT)
 	{
@@ -531,7 +541,7 @@ void GetOSVersion(WCHAR* buffer)
 		{
 			wcscpy(buffer, L"Windows NT");
 		}
-		else
+		else if (version.dwMajorVersion == 5)
 		{
 			if (version.dwMinorVersion == 2)
 			{
@@ -544,6 +554,29 @@ void GetOSVersion(WCHAR* buffer)
 			else if (version.dwMinorVersion == 0)
 			{
 				wcscpy(buffer, L"Windows 2000");
+			}
+			else
+			{
+				wcscpy(buffer, L"Unknown");
+			}
+		}
+		else
+		{
+			if (version.dwMinorVersion == 1 && version.wProductType == VER_NT_WORKSTATION)
+			{
+				wcscpy(buffer, L"Windows 7");
+			}
+			else if (version.dwMinorVersion == 1 && version.wProductType != VER_NT_WORKSTATION)
+			{
+				wcscpy(buffer, L"Windows Server 2008 R2");
+			}
+			else if (version.dwMinorVersion == 0 && version.wProductType == VER_NT_WORKSTATION)
+			{
+				wcscpy(buffer, L"Windows Vista");
+			}
+			else if (version.dwMinorVersion == 0 && version.wProductType != VER_NT_WORKSTATION)
+			{
+				wcscpy(buffer, L"Windows Server 2008");
 			}
 			else
 			{
@@ -568,6 +601,21 @@ void GetOSVersion(WCHAR* buffer)
 	}
 }
 
+void GetOSBits(WCHAR* buffer)
+{
+	SYSTEM_INFO systemInfo = {0};
+	GetNativeSystemInfo(&systemInfo);
+
+	if (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ||
+		systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_IA64)
+	{
+		wcscpy(buffer, L"64");
+	}
+	else
+	{
+		wcscpy(buffer, L"32");
+	}
+}
 
 /*
   Tests if there is a RAS connection or not. Don't know
