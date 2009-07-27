@@ -245,154 +245,157 @@ double Update2(UINT id)
 				fseek(file, 0, SEEK_END);
 				int size = ftell(file);
 
-				// Go to a random place
-				int pos = rand() % size;
-				fseek(file, (pos / 2) * 2, SEEK_SET);
-
-				qData.value.erase();
-
-				if (0xFEFF == *(WCHAR*)buffer) 
+				if (size > 0)
 				{
-					// It's unicode
-					WCHAR* wBuffer = (WCHAR*)buffer;
+					// Go to a random place
+					int pos = rand() % size;
+					fseek(file, (pos / 2) * 2, SEEK_SET);
 
-					// Read until we find the first separator
-					WCHAR* sepPos1 = NULL;
-					WCHAR* sepPos2 = NULL;
-					do 
+					qData.value.erase();
+
+					if (0xFEFF == *(WCHAR*)buffer) 
 					{
-						size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-						buffer[len] = 0;
-						buffer[len + 1] = 0;
+						// It's unicode
+						WCHAR* wBuffer = (WCHAR*)buffer;
 
-						sepPos1 = wcsstr(wBuffer, qData.separator.c_str());
-						if (sepPos1 == NULL)
+						// Read until we find the first separator
+						WCHAR* sepPos1 = NULL;
+						WCHAR* sepPos2 = NULL;
+						do 
 						{
-							// The separator wasn't found
-							if (feof(file))
-							{
-								// End of file reached -> read from start
-								fseek(file, 2, SEEK_SET);
-								len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-								buffer[len] = 0;
-								buffer[len + 1] = 0;
-								sepPos1 = wBuffer;
-							}
-							// else continue reading
-						}
-						else
-						{
-							sepPos1 += qData.separator.size();
-						}
-					}
-					while (sepPos1 == NULL);
+							size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
+							buffer[len] = 0;
+							buffer[len + 1] = 0;
 
-					// Find the second separator
-					do 
-					{
-						sepPos2 = wcsstr(sepPos1, qData.separator.c_str());
-						if (sepPos2 == NULL)
-						{
-							// The separator wasn't found
-							if (feof(file))
+							sepPos1 = wcsstr(wBuffer, qData.separator.c_str());
+							if (sepPos1 == NULL)
 							{
-								// End of file reached -> read the rest
-								qData.value += sepPos1;
-								break;
+								// The separator wasn't found
+								if (feof(file))
+								{
+									// End of file reached -> read from start
+									fseek(file, 2, SEEK_SET);
+									len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
+									buffer[len] = 0;
+									buffer[len + 1] = 0;
+									sepPos1 = wBuffer;
+								}
+								// else continue reading
 							}
 							else
 							{
-								qData.value += sepPos1;
-
-								// else continue reading
-								size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-								buffer[len] = 0;
-								buffer[len + 1] = 0;
-								sepPos1 = wBuffer;
+								sepPos1 += qData.separator.size();
 							}
 						}
-						else
+						while (sepPos1 == NULL);
+
+						// Find the second separator
+						do 
 						{
-							if (sepPos2)
+							sepPos2 = wcsstr(sepPos1, qData.separator.c_str());
+							if (sepPos2 == NULL)
 							{
-								*sepPos2 = 0;
-							}
+								// The separator wasn't found
+								if (feof(file))
+								{
+									// End of file reached -> read the rest
+									qData.value += sepPos1;
+									break;
+								}
+								else
+								{
+									qData.value += sepPos1;
 
-							// Read until we find the second separator
-							qData.value += sepPos1;
-						}
-					}
-					while (sepPos2 == NULL);
-				}
-				else
-				{
-					// It's ascii
-					char* aBuffer = (char*)buffer;
-
-					// Read until we find the first separator
-					char* sepPos1 = NULL;
-					char* sepPos2 = NULL;
-					do 
-					{
-						size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-						aBuffer[len] = 0;
-
-						sepPos1 = strstr(aBuffer, ConvertToAscii(qData.separator.c_str()).c_str());
-						if (sepPos1 == NULL)
-						{
-							// The separator wasn't found
-							if (feof(file))
-							{
-								// End of file reached -> read from start
-								fseek(file, 0, SEEK_SET);
-								len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-								aBuffer[len] = 0;
-								sepPos1 = aBuffer;
-							}
-							// else continue reading
-						}
-						else
-						{
-							sepPos1 += qData.separator.size();
-						}
-					}
-					while (sepPos1 == NULL);
-
-					// Find the second separator
-					do 
-					{
-						sepPos2 = strstr(sepPos1, ConvertToAscii(qData.separator.c_str()).c_str());
-						if (sepPos2 == NULL)
-						{
-							// The separator wasn't found
-							if (feof(file))
-							{
-								// End of file reached -> read the rest
-								qData.value += ConvertToWide(sepPos1);
-								break;
+									// else continue reading
+									size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
+									buffer[len] = 0;
+									buffer[len + 1] = 0;
+									sepPos1 = wBuffer;
+								}
 							}
 							else
 							{
-								qData.value += ConvertToWide(sepPos1);
+								if (sepPos2)
+								{
+									*sepPos2 = 0;
+								}
 
-								// else continue reading
-								size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-								aBuffer[len] = 0;
-								sepPos1 = aBuffer;
+								// Read until we find the second separator
+								qData.value += sepPos1;
 							}
 						}
-						else
-						{
-							if (sepPos2)
-							{
-								*sepPos2 = 0;
-							}
-
-							// Read until we find the second separator
-							qData.value += ConvertToWide(sepPos1);
-						}
+						while (sepPos2 == NULL);
 					}
-					while (sepPos2 == NULL);
+					else
+					{
+						// It's ascii
+						char* aBuffer = (char*)buffer;
+
+						// Read until we find the first separator
+						char* sepPos1 = NULL;
+						char* sepPos2 = NULL;
+						do 
+						{
+							size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+							aBuffer[len] = 0;
+
+							sepPos1 = strstr(aBuffer, ConvertToAscii(qData.separator.c_str()).c_str());
+							if (sepPos1 == NULL)
+							{
+								// The separator wasn't found
+								if (feof(file))
+								{
+									// End of file reached -> read from start
+									fseek(file, 0, SEEK_SET);
+									len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+									aBuffer[len] = 0;
+									sepPos1 = aBuffer;
+								}
+								// else continue reading
+							}
+							else
+							{
+								sepPos1 += qData.separator.size();
+							}
+						}
+						while (sepPos1 == NULL);
+
+						// Find the second separator
+						do 
+						{
+							sepPos2 = strstr(sepPos1, ConvertToAscii(qData.separator.c_str()).c_str());
+							if (sepPos2 == NULL)
+							{
+								// The separator wasn't found
+								if (feof(file))
+								{
+									// End of file reached -> read the rest
+									qData.value += ConvertToWide(sepPos1);
+									break;
+								}
+								else
+								{
+									qData.value += ConvertToWide(sepPos1);
+
+									// else continue reading
+									size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+									aBuffer[len] = 0;
+									sepPos1 = aBuffer;
+								}
+							}
+							else
+							{
+								if (sepPos2)
+								{
+									*sepPos2 = 0;
+								}
+
+								// Read until we find the second separator
+								qData.value += ConvertToWide(sepPos1);
+							}
+						}
+						while (sepPos2 == NULL);
+					}
 				}
 
 				fclose(file);
