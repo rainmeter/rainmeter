@@ -41,15 +41,13 @@ void CheckVersion(void* dummy)
 		return;
 	}
 
-	HINTERNET hUrlDump = InternetOpenUrl(hRootHandle, L"http://www.ipi.fi/~rainy/Rainmeter/version", NULL, NULL, INTERNET_FLAG_RESYNCHRONIZE, 0);
+	HINTERNET hUrlDump = InternetOpenUrl(hRootHandle, L"http://rainmeter.googlecode.com/svn/version", NULL, NULL, INTERNET_FLAG_RESYNCHRONIZE, 0);
 	if (hUrlDump)
 	{
 		DWORD dwSize;
-		char buffer[16];	// 16 should be enough for the version number
-		buffer[0] = 0;
-		if (InternetReadFile(hUrlDump, (LPVOID)buffer, 16, &dwSize))
+		char buffer[16] = {0};	// 16 should be enough for the version number
+		if (InternetReadFile(hUrlDump, (LPVOID)buffer, 15, &dwSize))
 		{
-			// Add a null terminator to the end of the buffer (just in case...). 
 			std::string verStr = buffer;
 			size_t pos = verStr.find('.');
 			if (pos != std::wstring::npos)
@@ -66,9 +64,9 @@ void CheckVersion(void* dummy)
 
 			if (version > RAINMETER_VERSION)
 			{
-				if (IDYES == MessageBox(NULL, L"A new version of Rainmeter is available at http://www.iki.fi/rainy.\nDo you want to go there now?", APPNAME, MB_YESNO | MB_ICONQUESTION))
+				if (IDYES == MessageBox(NULL, L"A new version of Rainmeter is available.\nDo you want to open the web page now?", APPNAME, MB_YESNO | MB_ICONQUESTION))
 				{
-					LSExecute(NULL, L"http://www.iki.fi/rainy/Rainmeter.html", SW_SHOWNORMAL);
+					LSExecute(NULL, L"http://code.google.com/p/rainmeter/", SW_SHOWNORMAL);
 				}
 			}
 			else
