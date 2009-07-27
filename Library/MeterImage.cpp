@@ -231,14 +231,12 @@ bool CMeterImage::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterImage::Draw()
+bool CMeterImage::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw()) return false;
+	if(!CMeter::Draw(graphics)) return false;
 
 	if (m_Bitmap != NULL)
 	{
-		Graphics graphics(m_MeterWindow->GetDoubleBuffer());
-
 		// Copy the image over the doublebuffer
 		int x = GetX();
 		int y = GetY();

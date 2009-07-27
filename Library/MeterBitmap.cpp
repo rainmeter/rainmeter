@@ -263,9 +263,9 @@ bool CMeterBitmap::HasActiveTransition()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterBitmap::Draw()
+bool CMeterBitmap::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw()) return false;
+	if(!CMeter::Draw(graphics)) return false;
 
 	int newY, newX;
 
@@ -309,8 +309,6 @@ bool CMeterBitmap::Draw()
 
 		// Blit the images
 		int offset;
-		Graphics graphics(m_MeterWindow->GetDoubleBuffer());
-		
 		if (m_Align == ALIGN_RIGHT)
 		{
 			offset = 0;
@@ -435,7 +433,6 @@ bool CMeterBitmap::Draw()
 		}
 
 		// Blit the image
-		Graphics graphics(m_MeterWindow->GetDoubleBuffer());
 		Rect r(x, y, m_W, m_H);
 		graphics.DrawImage(m_Bitmap, r, newX, newY, m_W, m_H, UnitPixel);
 	}

@@ -1745,10 +1745,11 @@ void CMeterWindow::Redraw()
 		CreateRegion(true);
 	}
 
+	Graphics graphics(GetDoubleBuffer());
+
 	if (m_Background)
 	{
 		// Copy the background over the doublebuffer
-		Graphics graphics(GetDoubleBuffer());
 		Rect r(0, 0, m_WindowW, m_WindowH);
 		graphics.DrawImage(m_Background, r, 0, 0, m_Background->GetWidth(), m_Background->GetHeight(), UnitPixel);
 	}
@@ -1759,7 +1760,20 @@ void CMeterWindow::Redraw()
 	{
 		try
 		{
-			(*j)->Draw();
+			if (!(*j)->GetTransformationMatrix().IsIdentity())
+			{
+				// Change the world matrix
+				graphics.SetTransform(&((*j)->GetTransformationMatrix()));
+
+				(*j)->Draw(graphics);
+
+				// Set back to identity matrix
+				graphics.ResetTransform();
+			}
+			else
+			{
+				(*j)->Draw(graphics);
+			}
 		}
 		catch (CError& error)
 		{

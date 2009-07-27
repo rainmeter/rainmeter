@@ -30,7 +30,7 @@ public:
 
 	virtual void ReadConfig(const WCHAR* section);
 	virtual bool Update();
-	virtual bool Draw();
+	virtual bool Draw(Gdiplus::Graphics& graphics);
 
 private:
 	bool m_AntiAlias;								// If true, the line is antialiased

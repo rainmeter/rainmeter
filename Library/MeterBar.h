@@ -31,7 +31,7 @@ public:
 	virtual void ReadConfig(const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
-	virtual bool Draw();
+	virtual bool Draw(Gdiplus::Graphics& graphics);
 
 private:
 	enum ORIENTATION

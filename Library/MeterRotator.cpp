@@ -132,9 +132,9 @@ bool CMeterRotator::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterRotator::Draw()
+bool CMeterRotator::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw()) return false;
+	if(!CMeter::Draw(graphics)) return false;
 
 	// Calculate the center for rotation
 	int x = GetX();
@@ -145,8 +145,6 @@ bool CMeterRotator::Draw()
 
 	// Calculate the rotation
 	REAL angle = (REAL)(m_RotationAngle * m_Value + m_StartAngle);
-
-	Graphics graphics(m_MeterWindow->GetDoubleBuffer());
 
 	angle = angle * 180.0f / 3.14159265f;		// Convert to degrees
 
@@ -162,6 +160,7 @@ bool CMeterRotator::Draw()
 		// Blit the image
 		graphics.DrawImage(m_Bitmap, 0, 0, width, height);
 	}
+	graphics.ResetTransform();
 
 	return true;
 }

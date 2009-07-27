@@ -243,6 +243,24 @@ double CConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 	return wcstod(result.c_str(), NULL);
 }
 
+std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
+{
+	std::vector<Gdiplus::REAL> result;
+	std::wstring tmp = ReadString(section, key, L"");
+	if (!tmp.empty() && tmp[tmp.length() - 1] != L';')
+	{
+		tmp += L";";
+	}
+
+	// Tokenize and parse the floats
+	std::vector<std::wstring> tokens = Tokenize(tmp, L";");
+	for (size_t i = 0; i < tokens.size(); i++)
+	{
+		result.push_back((Gdiplus::REAL)wcstod(tokens[i].c_str(), NULL));
+	}
+	return result;
+}
+
 int CConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 {
 	TCHAR buffer[256];
@@ -261,6 +279,30 @@ Color CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, Color defValue)
 	const std::wstring& result = ReadString(section, key, buffer);
 
 	return ParseColor(result.c_str());
+}
+
+/*
+** Tokenize
+**
+** Splits the string from the delimiters
+**
+** http://www.digitalpeer.com/id/simple
+*/
+std::vector<std::wstring> CConfigParser::Tokenize(const std::wstring& str, const std::wstring delimiters)
+{
+	std::vector<std::wstring> tokens;
+    	
+	std::wstring::size_type lastPos = str.find_first_not_of(L";", 0);	// skip delimiters at beginning.
+	std::wstring::size_type pos = str.find_first_of(delimiters, lastPos);	// find first "non-delimiter".
+
+	while (std::wstring::npos != pos || std::wstring::npos != lastPos)
+	{
+    	tokens.push_back(str.substr(lastPos, pos - lastPos));    	// found a token, add it to the vector.
+    	lastPos = str.find_first_not_of(delimiters, pos);    	// skip delimiters.  Note the "not_of"
+    	pos = str.find_first_of(delimiters, lastPos);    	// find next "non-delimiter"
+	}
+
+	return tokens;
 }
 
 /*

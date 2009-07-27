@@ -36,7 +36,7 @@ public:
 	virtual void ReadConfig(const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
-	virtual bool Draw();
+	virtual bool Draw(Gdiplus::Graphics& graphics);
 	virtual void BindMeasure(std::list<CMeasure*>& measures);
 	virtual bool HasActiveTransition() { return false; }
 
@@ -58,6 +58,8 @@ public:
 	void Hide() { m_Hidden = true; };
 	void Show() { m_Hidden = false; };
 	bool IsHidden() { return m_Hidden; };
+
+	const Gdiplus::Matrix& GetTransformationMatrix() { return m_Transformation; }
 
 	virtual bool HitTest(int x, int y);
 
@@ -88,6 +90,7 @@ protected:
 		POSITION_RELATIVE_BR
 	};
 
+	Gdiplus::Matrix m_Transformation;	// The transformation matrix
 	std::wstring m_Name;			// Name of the meter
 	std::wstring m_MeasureName;	// Name of the measure this is bound to
 	CMeasure* m_Measure;		// Pointer to the measure this meter is bound to

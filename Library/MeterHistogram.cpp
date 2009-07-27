@@ -237,11 +237,10 @@ bool CMeterHistogram::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterHistogram::Draw()
+bool CMeterHistogram::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw()) return false;
+	if(!CMeter::Draw(graphics)) return false;
 
-	Graphics graphics(m_MeterWindow->GetDoubleBuffer());
 	Pen primaryPen(m_PrimaryColor);
 	Pen secondaryPen(m_SecondaryColor);
 	Pen bothPen(m_BothColor);

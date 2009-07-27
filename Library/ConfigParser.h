@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <map>
 #include <string>
+#include <vector>
 #include <gdiplus.h>
 
 class CRainmeter;
@@ -38,12 +39,14 @@ public:
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
 	int ReadInt(LPCTSTR section, LPCTSTR key, int defValue);
 	Gdiplus::Color ReadColor(LPCTSTR section, LPCTSTR key, Gdiplus::Color defValue);
+	std::vector<Gdiplus::REAL> ReadFloats(LPCTSTR section, LPCTSTR key);
 
 	std::wstring& GetFilename() { return m_Filename; }
 
 private:
 	void ReadVariables();
 	Gdiplus::Color ParseColor(LPCTSTR string);
+	std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring delimiters);
 
 	std::map<std::wstring, std::wstring> m_Variables;
 	std::wstring m_Filename;

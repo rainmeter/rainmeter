@@ -331,7 +331,8 @@ bool CMeterString::Update()
 		{
 			// Calculate the text size
 			RectF rect;
-			DrawString(&rect);
+			Graphics graphics(m_MeterWindow->GetDoubleBuffer());
+			DrawString(graphics, &rect);
 			m_W = (int)rect.Width;
 			m_H = (int)rect.Height;
 		}
@@ -347,11 +348,11 @@ bool CMeterString::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterString::Draw()
+bool CMeterString::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw()) return false;
+	if(!CMeter::Draw(graphics)) return false;
 
-	return DrawString(NULL);
+	return DrawString(graphics, NULL);
 }
 
 /*
@@ -360,9 +361,8 @@ bool CMeterString::Draw()
 ** Draws the string or calculates it's size
 **
 */
-bool CMeterString::DrawString(RectF* rect)
+bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 {
-	Graphics graphics(m_MeterWindow->GetDoubleBuffer());
 	StringFormat stringFormat;
 	
 	if (m_AntiAlias)
@@ -418,6 +418,8 @@ bool CMeterString::DrawString(RectF* rect)
 		graphics.TranslateTransform(-(Gdiplus::REAL)CMeter::GetX(), -y);
 
 		graphics.DrawString(m_String.c_str(), -1, m_Font, rc, &stringFormat, &solidBrush);
+
+		graphics.ResetTransform();
 	}
 
 	return true;

@@ -36,7 +36,7 @@ public:
 	virtual void ReadConfig(const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
-	virtual bool Draw();
+	virtual bool Draw(Gdiplus::Graphics& graphics);
 	virtual void BindMeasure(std::list<CMeasure*>& measures);
 
 private:

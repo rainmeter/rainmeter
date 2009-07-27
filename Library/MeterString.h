@@ -37,7 +37,7 @@ public:
 	virtual void ReadConfig(const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
-	virtual bool Draw();
+	virtual bool Draw(Gdiplus::Graphics& graphics);
 	virtual void BindMeasure(std::list<CMeasure*>& measures);
 
 private:
@@ -49,7 +49,7 @@ private:
 		BOLDITALIC
 	};
 
-	bool DrawString(Gdiplus::RectF* rect);
+	bool DrawString(Gdiplus::Graphics& graphics, Gdiplus::RectF* rect);
 
 	Gdiplus::Color m_Color;		// The color of the text
 	std::wstring m_Postfix;		// The postfix of the text

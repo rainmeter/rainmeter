@@ -186,9 +186,9 @@ bool CMeterLine::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterLine::Draw()
+bool CMeterLine::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw()) return false;
+	if(!CMeter::Draw(graphics)) return false;
 
 	double maxValue = 0.0;
 	int counter = 0;
@@ -235,7 +235,7 @@ bool CMeterLine::Draw()
 		maxValue = 1.0;
 	}
 
-	Graphics graphics(m_MeterWindow->GetDoubleBuffer());		//GDI+
+	SmoothingMode mode = graphics.GetSmoothingMode();
 	if (m_AntiAlias)
 	{
 		graphics.SetSmoothingMode(SmoothingModeAntiAlias);
@@ -319,6 +319,11 @@ bool CMeterLine::Draw()
 		}
 
 		counter++;
+	}
+
+	if (m_AntiAlias)
+	{
+		graphics.SetSmoothingMode(mode);
 	}
 
 	return true;

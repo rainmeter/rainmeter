@@ -158,9 +158,9 @@ bool CMeterButton::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterButton::Draw()
+bool CMeterButton::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw()) return false;
+	if(!CMeter::Draw(graphics)) return false;
 
 	if (m_Bitmaps[m_State] == NULL) return false;	// Unable to continue
 
@@ -168,7 +168,6 @@ bool CMeterButton::Draw()
 	int y = GetY();
 
 	// Blit the image
-	Graphics graphics(m_MeterWindow->GetDoubleBuffer());
 	graphics.DrawCachedBitmap(m_Bitmaps[m_State], x, y);
 
 	// TEST

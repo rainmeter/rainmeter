@@ -142,14 +142,12 @@ bool CMeterBar::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterBar::Draw()
+bool CMeterBar::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw()) return false;
+	if(!CMeter::Draw(graphics)) return false;
 
 	int x = GetX();
 	int y = GetY();
-
-	Graphics graphics(m_MeterWindow->GetDoubleBuffer());
 
 	if(m_Orientation == VERTICAL)
 	{

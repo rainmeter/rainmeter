@@ -258,6 +258,17 @@ void CMeter::ReadConfig(const WCHAR* section)
 	m_UpdateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
 	m_UpdateCounter = m_UpdateDivider;
 
+	std::vector<Gdiplus::REAL> matrix = parser.ReadFloats(section, L"TransformationMatrix");
+	if (matrix.size() == 6)
+	{
+		m_Transformation.SetElements(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+	}
+	else if (!matrix.empty())
+	{
+		DebugLog(L"The transformation matrix has incorrect number of values:", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
+	}
+
+
 	if (m_W == 0 || m_H == 0)
 	{
         throw CError(std::wstring(L"The meter ") + section + L" has zero dimensions.", __LINE__, __FILE__);
@@ -367,14 +378,12 @@ bool CMeter::Update()
 **
 ** Draws the solid background & bevel if such are defined
 */
-bool CMeter::Draw()
+bool CMeter::Draw(Graphics& graphics)
 {
 	if (IsHidden()) return false;
 
 	if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
 	{
-		Graphics graphics(m_MeterWindow->GetDoubleBuffer());
-
 		int x = GetX();
 		int y = GetY();
 
@@ -393,8 +402,6 @@ bool CMeter::Draw()
 
 	if (m_SolidBevel != BEVELTYPE_NONE)
 	{
-		Graphics graphics(m_MeterWindow->GetDoubleBuffer());
-
 		int x = GetX();
 		int y = GetY();
 

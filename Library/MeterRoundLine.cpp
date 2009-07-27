@@ -126,11 +126,11 @@ bool CMeterRoundLine::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterRoundLine::Draw()
+bool CMeterRoundLine::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw()) return false;
+	if(!CMeter::Draw(graphics)) return false;
 
-	Graphics graphics(m_MeterWindow->GetDoubleBuffer());		//GDI+
+	SmoothingMode mode = graphics.GetSmoothingMode();
 	if (m_AntiAlias)
 	{
 		graphics.SetSmoothingMode(SmoothingModeAntiAlias);
@@ -211,6 +211,11 @@ bool CMeterRoundLine::Draw()
 		}
 
 		graphics.DrawLine(&pen, cx, cy, x, y);
+	}
+
+	if (m_AntiAlias)
+	{
+		graphics.SetSmoothingMode(mode);
 	}
 
 	return true;
