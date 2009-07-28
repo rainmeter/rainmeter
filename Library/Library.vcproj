@@ -241,6 +241,7 @@
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\x32/Release/Library.pch"
+				AssemblerOutput="2"
 				AssemblerListingLocation=".\x32/Release/"
 				ObjectFile=".\x32/Release/"
 				ProgramDataBaseFileName=".\x32/Release/"

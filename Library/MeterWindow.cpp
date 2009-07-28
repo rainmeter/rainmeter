@@ -2519,7 +2519,9 @@ LRESULT CMeterWindow::OnSettingChange(WPARAM wParam, LPARAM lParam)
 {
 	m_Monitors.count = 0;
 	Refresh(false);
-	return DefWindowProc(m_Window, m_Message, wParam, lParam);
+
+	// Commented: Calling DefWindowProc seems to cause crash sometimes
+	return 0;  // DefWindowProc(m_Window, m_Message, wParam, lParam);
 }
 
 /*
