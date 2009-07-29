@@ -44,7 +44,6 @@ CMeterString::CMeterString(CMeterWindow* meterWindow) : CMeter(meterWindow)
 	m_Scale = 1.0;
 	m_NoDecimals = true;
 	m_Percentual = true;
-	m_AntiAlias = false;
 	m_ClipString = false;
 	m_NumOfDecimals = -1;
 	m_DimensionsDefined = false;
@@ -192,7 +191,6 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	m_Postfix = parser.ReadString(section, L"Postfix", L"");
 	m_Text = parser.ReadString(section, L"Text", L"");
 
-	m_AntiAlias = 0!=parser.ReadInt(section, L"AntiAlias", 0);
 	m_Percentual = 0!=parser.ReadInt(section, L"Percentual", 0);
 	m_AutoScale = 0!=parser.ReadInt(section, L"AutoScale", 0);
 	m_ClipString = 0!=parser.ReadInt(section, L"ClipString", 0);

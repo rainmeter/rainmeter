@@ -42,7 +42,6 @@ private:
 	std::vector<double> m_ScaleValues;				// The scale values for the measures
 
 	bool m_Autoscale;								// If true, the meter is automatically adjusted to show all values
-	bool m_AntiAlias;								// If true, the line is antialiased
 	bool m_HorizontalLines;							// If true, horizontal lines will ba drawn on the meter
 	bool m_Flip;
 	double m_LineWidth;

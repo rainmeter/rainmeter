@@ -36,7 +36,6 @@ using namespace Gdiplus;
 CMeterLine::CMeterLine(CMeterWindow* meterWindow) : CMeter(meterWindow)
 {
 	m_Autoscale = false;
-	m_AntiAlias = false;
 	m_HorizontalLines = false;
 	m_HorizontalColor = 0;
 	m_CurrentPos = 0;
@@ -122,7 +121,6 @@ void CMeterLine::ReadConfig(const WCHAR* section)
 
 	m_Flip = 0!=parser.ReadInt(section, L"Flip", 0);
 	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0);
-	m_AntiAlias = 0!=parser.ReadInt(section, L"AntiAlias", 0);
 	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
 	m_HorizontalLines = 0!=parser.ReadInt(section, L"HorizontalLines", 0);
 	m_HorizontalColor = parser.ReadColor(section, L"HorizontalColor", Color::Black);			// This is left here for backwards compatibility
@@ -235,12 +233,6 @@ bool CMeterLine::Draw(Graphics& graphics)
 	{
 		maxValue = 1.0;
 	}
-
-	SmoothingMode mode = graphics.GetSmoothingMode();
-	if (m_AntiAlias)
-	{
-		graphics.SetSmoothingMode(SmoothingModeAntiAlias);
-	}
 	
 	int x = GetX();
 	int y = GetY();
@@ -320,11 +312,6 @@ bool CMeterLine::Draw(Graphics& graphics)
 		}
 
 		counter++;
-	}
-
-	if (m_AntiAlias)
-	{
-		graphics.SetSmoothingMode(mode);
 	}
 
 	return true;

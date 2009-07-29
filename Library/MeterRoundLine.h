@@ -33,7 +33,6 @@ public:
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 
 private:
-	bool m_AntiAlias;								// If true, the line is antialiased
 	bool m_Solid;
 	double m_LineWidth;
 	double m_LineLength;

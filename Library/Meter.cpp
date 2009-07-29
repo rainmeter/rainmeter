@@ -61,6 +61,7 @@ CMeter::CMeter(CMeterWindow* meterWindow)
 	m_MeterWindow = NULL;
 	m_SolidAngle = 0.0;
 	m_MeterWindow = meterWindow;
+	m_AntiAlias = false;
 }
 
 /*
@@ -257,6 +258,7 @@ void CMeter::ReadConfig(const WCHAR* section)
 
 	m_UpdateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
 	m_UpdateCounter = m_UpdateDivider;
+	m_AntiAlias = 0!=parser.ReadInt(section, L"AntiAlias", 0);
 
 	std::vector<Gdiplus::REAL> matrix = parser.ReadFloats(section, L"TransformationMatrix");
 	if (matrix.size() == 6)
@@ -381,6 +383,17 @@ bool CMeter::Update()
 bool CMeter::Draw(Graphics& graphics)
 {
 	if (IsHidden()) return false;
+
+	if (m_AntiAlias)
+	{
+		graphics.SetInterpolationMode(InterpolationModeBicubic);
+		graphics.SetSmoothingMode(SmoothingModeAntiAlias);
+	}
+	else
+	{
+		graphics.SetInterpolationMode(InterpolationModeDefault);
+		graphics.SetSmoothingMode(SmoothingModeNone);
+	}
 
 	if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
 	{

@@ -36,7 +36,6 @@ using namespace Gdiplus;
 */
 CMeterRoundLine::CMeterRoundLine(CMeterWindow* meterWindow) : CMeter(meterWindow)
 {
-	m_AntiAlias = false;
 	m_LineWidth = 1.0;
 	m_LineLength = 20;
 	m_LineStart = -1.0;
@@ -80,7 +79,6 @@ void CMeterRoundLine::ReadConfig(const WCHAR* section)
 	m_LineStart = parser.ReadFloat(section, L"LineStart", -1.0);
 	m_StartAngle = parser.ReadFloat(section, L"StartAngle", 0.0);
 	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 6.2832);
-	m_AntiAlias = 0!=parser.ReadInt(section, L"AntiAlias", 0);
 	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", 0);		// Typo
 	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", m_ValueRemainder);
 	m_LineColor = parser.ReadColor(section, L"LineColor", Color::Black);
@@ -130,12 +128,6 @@ bool CMeterRoundLine::Draw(Graphics& graphics)
 {
 	if(!CMeter::Draw(graphics)) return false;
 
-	SmoothingMode mode = graphics.GetSmoothingMode();
-	if (m_AntiAlias)
-	{
-		graphics.SetSmoothingMode(SmoothingModeAntiAlias);
-	}
-
 	// Calculate the center of for the line
 	int x = GetX();
 	int y = GetY();
@@ -166,9 +158,6 @@ bool CMeterRoundLine::Draw(Graphics& graphics)
 			{
 				lineLength = m_LineLengthShift * m_Value + m_LineLength;
 			}
-
-			
-
 			
 			SolidBrush solidBrush(m_LineColor);
 
@@ -211,11 +200,6 @@ bool CMeterRoundLine::Draw(Graphics& graphics)
 		}
 
 		graphics.DrawLine(&pen, cx, cy, x, y);
-	}
-
-	if (m_AntiAlias)
-	{
-		graphics.SetSmoothingMode(mode);
 	}
 
 	return true;

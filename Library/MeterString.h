@@ -63,7 +63,6 @@ private:
 	double m_Scale;				// Scaling if autoscale is not used
 	bool m_NoDecimals;			// Number of decimals to use
 	bool m_Percentual;			// True, if the value should be given as %
-	bool m_AntiAlias;			// True, the text is antialiased
 	bool m_ClipString;			// True, the text is clipped in borders (adds ellipsis to the end of the string)
 	Gdiplus::Font* m_Font;		// The font
 	Gdiplus::FontFamily* m_FontFamily;		// The font family
