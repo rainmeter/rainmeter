@@ -35,6 +35,8 @@ using namespace Gdiplus;
 CMeterString::CMeterString(CMeterWindow* meterWindow) : CMeter(meterWindow)
 {
 	m_Color = RGB(255, 255, 255);
+	m_EffectColor = RGB(0, 0, 0);
+	m_Effect = EFFECT_NONE;
 	m_AutoScale = true;
 	m_Align = ALIGN_LEFT;
 	m_Font = NULL;
@@ -186,6 +188,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	} while(loop);
 
 	m_Color = parser.ReadColor(section, L"FontColor", Color::Black);
+	m_EffectColor = parser.ReadColor(section, L"FontEffectColor", Color::Black);
 
 	m_Prefix = parser.ReadString(section, L"Prefix", L"");
 	m_Postfix = parser.ReadString(section, L"Postfix", L"");
@@ -257,6 +260,26 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	else
 	{
         throw CError(std::wstring(L"No such StringStyle: ") + style, __LINE__, __FILE__);
+	}
+
+	std::wstring effect;
+	effect = parser.ReadString(section, L"StringEffect", L"NONE");
+
+	if(_wcsicmp(effect.c_str(), L"NONE") == 0)
+	{
+		m_Effect = EFFECT_NONE;
+	}
+	else if(_wcsicmp(effect.c_str(), L"SHADOW") == 0)
+	{
+		m_Effect = EFFECT_SHADOW;
+	}
+	else if(_wcsicmp(effect.c_str(), L"BORDER") == 0)
+	{
+		m_Effect = EFFECT_BORDER;
+	}
+	else
+	{
+        throw CError(std::wstring(L"No such StringEffect: ") + effect, __LINE__, __FILE__);
 	}
 
 	if (-1 != parser.ReadInt(section, L"W", -1) && -1 != parser.ReadInt(section, L"H", -1))
@@ -398,7 +421,6 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 	else
 	{
 		RectF rc((REAL)x, (REAL)y, (REAL)m_W, (REAL)m_H);
-		SolidBrush solidBrush(m_Color);
 
 		if (m_ClipString)
 		{
@@ -415,6 +437,28 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 		graphics.RotateTransform(angle);
 		graphics.TranslateTransform(-(Gdiplus::REAL)CMeter::GetX(), -y);
 
+		if (m_Effect == EFFECT_SHADOW)
+		{
+			SolidBrush solidBrush(m_EffectColor);
+			RectF rcEffect(rc);
+			rcEffect.Offset(1, 1);
+			graphics.DrawString(m_String.c_str(), -1, m_Font, rcEffect, &stringFormat, &solidBrush);
+		}
+		else if (m_Effect == EFFECT_BORDER)
+		{
+			SolidBrush solidBrush(m_EffectColor);
+			RectF rcEffect(rc);
+			rcEffect.Offset(0, 1);
+			graphics.DrawString(m_String.c_str(), -1, m_Font, rcEffect, &stringFormat, &solidBrush);
+			rcEffect.Offset(1, -1);
+			graphics.DrawString(m_String.c_str(), -1, m_Font, rcEffect, &stringFormat, &solidBrush);
+			rcEffect.Offset(-1, -1);
+			graphics.DrawString(m_String.c_str(), -1, m_Font, rcEffect, &stringFormat, &solidBrush);
+			rcEffect.Offset(-1, 1);
+			graphics.DrawString(m_String.c_str(), -1, m_Font, rcEffect, &stringFormat, &solidBrush);
+		}
+		
+		SolidBrush solidBrush(m_Color);
 		graphics.DrawString(m_String.c_str(), -1, m_Font, rc, &stringFormat, &solidBrush);
 
 		graphics.ResetTransform();

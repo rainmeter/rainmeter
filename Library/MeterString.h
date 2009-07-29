@@ -49,9 +49,17 @@ private:
 		BOLDITALIC
 	};
 
+	enum TEXTEFFECT
+	{
+		EFFECT_NONE,
+		EFFECT_SHADOW,
+		EFFECT_BORDER
+	};
+
 	bool DrawString(Gdiplus::Graphics& graphics, Gdiplus::RectF* rect);
 
 	Gdiplus::Color m_Color;		// The color of the text
+	Gdiplus::Color m_EffectColor;		// The color of the text effect
 	std::wstring m_Postfix;		// The postfix of the text
 	std::wstring m_Prefix;		// The prefix of the text
 	std::wstring m_Text;			// The text
@@ -59,6 +67,7 @@ private:
 	bool m_AutoScale;			// true, if the value should be autoscaled
 	METER_ALIGNMENT m_Align;	// Alignment of the text
 	TEXTSTYLE m_Style;			// Style of the text
+	TEXTEFFECT m_Effect;		// Text effect
 	int m_FontSize;				// Size of the fonts
 	double m_Scale;				// Scaling if autoscale is not used
 	bool m_NoDecimals;			// Number of decimals to use
