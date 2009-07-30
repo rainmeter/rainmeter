@@ -294,7 +294,8 @@ static bool updateCurrentTrack()
     if (0 == lastClock || currentClock - lastClock > CLOCKS_PER_SEC)
     {
         wsprintf(CurrentTrackArtworkPath, L"%s%s", BaseDir, DefaultTrackArtworkPath);
-        CurrentTrack.Release();
+		if (CurrentTrack != NULL)
+	        CurrentTrack.Release();
         if (FAILED(iTunes->get_CurrentTrack(&CurrentTrack)) || !CurrentTrack)
             return false;
 
@@ -362,11 +363,22 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
         CoInitialized = true;
     }
 
-    if (CoInitialized && !InstanceCreated && ::FindWindow(L"iTunes", L"iTunes") &&
-        SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
+    if (CoInitialized && !InstanceCreated /*&& ::FindWindow(L"iTunes", L"iTunes") */)	// rainy: Removed the FindWindow since it fails in 64-bit OS
     {
-        InstanceCreated = true;
+		if (SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
+		{
+	        InstanceCreated = true;
+			LSLog(LOG_DEBUG, L"Rainmeter", L"iTunesApp initialized successfully.");
+		}
+		else
+		{
+			LSLog(LOG_DEBUG, L"Rainmeter", L"Unable to create the iTunesApp instance.");
+		}
     }
+	else
+	{
+		LSLog(LOG_DEBUG, L"Rainmeter", L"Unable to find the iTunes window.");
+	}
 
     const wchar_t* type = ReadConfigString(section, L"Command", L"");
     for(int i = 0; i < COMMAND_COUNT; i++)
