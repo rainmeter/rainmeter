@@ -1176,6 +1176,22 @@ void CMeterWindow::ReadConfig()
 			m_WindowY = ConvertToWide(tmpSz);
 		}
 		
+		// Check if the window position should be read as a formula
+		if (!m_WindowX.empty() && m_WindowX[0] == L'(' && m_WindowX[m_WindowX.size() - 1] == L')')
+		{
+			double value = parser.ReadFormula(section, _T("WindowX"), 0.0);
+			TCHAR buffer[256];
+			swprintf(buffer, L"%i", (int)value);
+			m_WindowX = buffer;
+		}
+		if (!m_WindowY.empty() && m_WindowY[0] == L'(' && m_WindowY[m_WindowY.size() - 1] == L')')
+		{
+			double value = parser.ReadFormula(section, _T("WindowY"), 0.0);
+			TCHAR buffer[256];
+			swprintf(buffer, L"%i", (int)value);
+			m_WindowY = buffer;
+		}
+
 		int zPos = parser.ReadInt(section, L"AlwaysOnTop", m_WindowZPosition);
 		if (zPos == -1)
 		{

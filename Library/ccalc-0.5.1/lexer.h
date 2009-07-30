@@ -1,3 +1,5 @@
+#pragma once
+
 /*
     Universal lexical analiser by hq_software
 */

@@ -1,3 +1,5 @@
+#pragma once
+
 /*
     Math parser for CCalc library.
 */

@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <gdiplus.h>
+#include "ccalc-0.5.1/mparser.h"
 
 class CRainmeter;
 
@@ -37,6 +38,7 @@ public:
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue);
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
+	double ReadFormula(LPCTSTR section, LPCTSTR key, double defValue);
 	int ReadInt(LPCTSTR section, LPCTSTR key, int defValue);
 	Gdiplus::Color ReadColor(LPCTSTR section, LPCTSTR key, Gdiplus::Color defValue);
 	std::vector<Gdiplus::REAL> ReadFloats(LPCTSTR section, LPCTSTR key);
@@ -50,6 +52,8 @@ private:
 
 	std::map<std::wstring, std::wstring> m_Variables;
 	std::wstring m_Filename;
+
+	hqMathParser* m_Parser;
 };
 
 #endif

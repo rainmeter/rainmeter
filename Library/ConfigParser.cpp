@@ -36,6 +36,7 @@ using namespace Gdiplus;
 */
 CConfigParser::CConfigParser()
 {
+	m_Parser = MathParser_Create(NULL);
 }
 
 /*
@@ -46,6 +47,7 @@ CConfigParser::CConfigParser()
 */
 CConfigParser::~CConfigParser()
 {
+	MathParser_Destroy(m_Parser);
 }
 
 /*
@@ -59,7 +61,7 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 
 	m_Variables.clear();
 
-	// Set the paths as default variables
+	// Set the default variables
 	if (pRainmeter)
 	{
 		m_Variables[L"PROGRAMPATH"] = pRainmeter->GetPath();
@@ -68,6 +70,16 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 		m_Variables[L"PLUGINSPATH"] = pRainmeter->GetPluginPath();
 		m_Variables[L"CURRENTPATH"] = CRainmeter::ExtractPath(filename);
 		m_Variables[L"ADDONSPATH"] = pRainmeter->GetPath() + L"Addons\\";
+
+		TCHAR buffer[256];
+		swprintf(buffer, L"%i", GetSystemMetrics(SM_CXFULLSCREEN));
+		m_Variables[L"WORKAREAWIDTH"] = buffer;
+		swprintf(buffer, L"%i", GetSystemMetrics(SM_CYFULLSCREEN));
+		m_Variables[L"WORKAREAHEIGHT"] = buffer;
+		swprintf(buffer, L"%i", GetSystemMetrics(SM_CXSCREEN));
+		m_Variables[L"SCREENAREAWIDTH"] = buffer;
+		swprintf(buffer, L"%i", GetSystemMetrics(SM_CYSCREEN));
+		m_Variables[L"SCREENAREAHEIGHT"] = buffer;
 	}
 
 	ReadVariables();
@@ -269,6 +281,29 @@ int CConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 	const std::wstring& result = ReadString(section, key, buffer);
 
 	return _wtoi(result.c_str());
+}
+
+// Works as ReadFloat except if the value is surrounded by parenthesis in which case it tries to evaluate the formula
+double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
+{
+	TCHAR buffer[256];
+	swprintf(buffer, L"%f", defValue);
+
+	const std::wstring& result = ReadString(section, key, buffer);
+
+	// Formulas must be surrounded by parenthesis
+	if (!result.empty() && result[0] == L'(' && result[result.size() - 1] == L')')
+	{
+		double resultValue = defValue;
+		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.substr(1, result.size() - 2).c_str()).c_str(), &resultValue);
+		if (errMsg != NULL)
+		{
+			DebugLog(ConvertToWide(errMsg).c_str());
+		}
+
+		return resultValue;
+	}
+	return wcstod(result.c_str(), NULL);
 }
 
 Color CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, Color defValue)

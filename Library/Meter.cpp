@@ -221,6 +221,10 @@ void CMeter::ReadConfig(const WCHAR* section)
 		{
 			m_RelativeX = POSITION_RELATIVE_BR;
 		}
+		else
+		{
+			m_X = (int)parser.ReadFormula(section, L"X", 0.0);
+		}
 	}
 
 	const std::wstring& y = parser.ReadString(section, L"Y", L"0");
@@ -235,10 +239,14 @@ void CMeter::ReadConfig(const WCHAR* section)
 		{
 			m_RelativeY = POSITION_RELATIVE_BR;
 		}
+		else
+		{
+			m_Y = (int)parser.ReadFormula(section, L"Y", 0.0);
+		}
 	}
 
-	m_W = parser.ReadInt(section, L"W", 1);
-	m_H = parser.ReadInt(section, L"H", 1);
+	m_W = (int)parser.ReadFormula(section, L"W", 1.0);
+	m_H = (int)parser.ReadFormula(section, L"H", 1.0);
 
 	m_Hidden = 0!=parser.ReadInt(section, L"Hidden", 0);
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", m_SolidBevel);
