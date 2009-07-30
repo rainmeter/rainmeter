@@ -254,7 +254,7 @@ void ExecuteBang(LPCTSTR args, UINT id)
         { //Empty the Recycle Bin (no prompt)
 			if(wcsicmp(driveSet.c_str(), L"ALL") == 0)
 			{
-				if(SHEmptyRecycleBin( NULL, NULL, NULL ) == S_OK)
+				if(SHEmptyRecycleBin( NULL, NULL, SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND ) == S_OK)
 				{
 					return;
 				}
@@ -270,7 +270,7 @@ void ExecuteBang(LPCTSTR args, UINT id)
 			for(int i=0;i < tokens.size(); i++)
 			{
 				std::wstring strd = tokens.at(i);
-				SHEmptyRecycleBin( NULL, strd.c_str(), NULL ); // empty bin
+				SHEmptyRecycleBin( NULL, strd.c_str(), SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND ); // empty bin
 			}
 			return;
         }
