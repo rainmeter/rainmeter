@@ -71,10 +71,13 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 		m_Variables[L"CURRENTPATH"] = CRainmeter::ExtractPath(filename);
 		m_Variables[L"ADDONSPATH"] = pRainmeter->GetPath() + L"Addons\\";
 
+		RECT workArea;
+		SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
+
 		TCHAR buffer[256];
-		swprintf(buffer, L"%i", GetSystemMetrics(SM_CXFULLSCREEN));
+		swprintf(buffer, L"%i", workArea.right - workArea.left);
 		m_Variables[L"WORKAREAWIDTH"] = buffer;
-		swprintf(buffer, L"%i", GetSystemMetrics(SM_CYFULLSCREEN));
+		swprintf(buffer, L"%i", workArea.bottom - workArea.top);
 		m_Variables[L"WORKAREAHEIGHT"] = buffer;
 		swprintf(buffer, L"%i", GetSystemMetrics(SM_CXSCREEN));
 		m_Variables[L"SCREENAREAWIDTH"] = buffer;
