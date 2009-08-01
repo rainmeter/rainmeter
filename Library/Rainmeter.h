@@ -175,6 +175,7 @@ private:
 	HMENU CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData);
 	void CreateDefaultConfigFile(std::wstring strFile);
 	void TestSettingsFile(bool bDefaultIniLocation);
+	void CopyFiles(std::wstring strFrom, std::wstring strTo);
 
 	CTrayWindow* m_TrayWindow;
 

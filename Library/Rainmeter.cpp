@@ -750,24 +750,18 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 				// Copy the default skin to the Skins folder
 				std::wstring strFrom(m_Path + L"Skins\\" + L"*.*");
 				std::wstring strTo(m_SkinPath);
+				CopyFiles(strFrom, strTo);
 
-				// The strings must end with double nul
-				strFrom.append(L"0");
-				strFrom[strFrom.size() - 1] = L'\0';
-				strTo.append(L"0");
-				strTo[strTo.size() - 1] = L'\0';
+				// This shouldn't be copied
+				std::wstring strNote = strTo + L"Read me before copying skins to here.txt";
+				DeleteFile(strNote.c_str());
 
-				SHFILEOPSTRUCT fo = {0};
-				fo.wFunc = FO_COPY;
-				fo.pFrom = strFrom.c_str();
-				fo.pTo = strTo.c_str();
-				fo.fFlags = FOF_NO_UI;
-
-				int result = SHFileOperation(&fo);
-				if (result != 0)
-				{
-					DebugLog(L"Unable to copy the default skin %i", result);
-				}
+				// Copy also the themes to the %APPDATA%
+				strFrom = std::wstring(m_Path + L"Themes\\" + L"*.*");
+				strTo = std::wstring(GetSettingsPath() + L"Themes");
+				CreateDirectory(strTo.c_str(), NULL);
+				strTo += L"\\";
+				CopyFiles(strFrom, strTo);
 			}
 		}
 		else
@@ -898,6 +892,34 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	}
 
 	return Result;	// Alles OK
+}
+
+
+/* 
+** CopyFiles
+**
+** Copies files and folders from one location to another.
+**
+*/
+void CRainmeter::CopyFiles(std::wstring strFrom, std::wstring strTo)
+{
+	// The strings must end with double nul
+	strFrom.append(L"0");
+	strFrom[strFrom.size() - 1] = L'\0';
+	strTo.append(L"0");
+	strTo[strTo.size() - 1] = L'\0';
+
+	SHFILEOPSTRUCT fo = {0};
+	fo.wFunc = FO_COPY;
+	fo.pFrom = strFrom.c_str();
+	fo.pTo = strTo.c_str();
+	fo.fFlags = FOF_NO_UI;
+
+	int result = SHFileOperation(&fo);
+	if (result != 0)
+	{
+		DebugLog(L"Unable to copy files from %s to %s (%i)", strFrom.c_str(), strTo.c_str(), result);
+	}
 }
 
 /* 
