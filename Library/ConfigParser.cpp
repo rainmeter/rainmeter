@@ -75,6 +75,10 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 		SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
 
 		TCHAR buffer[256];
+		swprintf(buffer, L"%i", workArea.left);
+		m_Variables[L"WORKAREAX"] = buffer;
+		swprintf(buffer, L"%i", workArea.top);
+		m_Variables[L"WORKAREAY"] = buffer;
 		swprintf(buffer, L"%i", workArea.right - workArea.left);
 		m_Variables[L"WORKAREAWIDTH"] = buffer;
 		swprintf(buffer, L"%i", workArea.bottom - workArea.top);
