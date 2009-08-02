@@ -52,13 +52,23 @@ void CheckVersion(void* dummy)
 			size_t pos = verStr.find('.');
 			if (pos != std::wstring::npos)
 			{
-				std::string verStr1 = verStr.substr(pos + 1);
-				version = atoi(verStr1.c_str()) * 1000;
-				pos = verStr.find('.', pos + 1);
+				std::string verMajor = verStr.substr(0, pos);
+				std::string verMinor = verStr.substr(pos + 1);
+
+				version = atoi(verMajor.c_str()) * 1000000;
+
+				pos = verMinor.find('.');
 				if (pos != std::wstring::npos)
 				{
-					std::string verStr1 = verStr.substr(pos + 1);
-					version += atoi(verStr1.c_str());
+					std::string verMinor1 = verMinor.substr(0, pos);
+					std::string verMinor2 = verMinor.substr(pos + 1);
+
+					version += atoi(verMinor1.c_str()) * 1000;
+					version += atoi(verMinor2.c_str());
+				}
+				else
+				{
+					version += atoi(verMinor.c_str()) * 1000;
 				}
 			}
 

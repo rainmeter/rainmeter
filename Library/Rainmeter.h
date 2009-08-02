@@ -29,16 +29,16 @@
 
 #define MAX_LINE_LENGTH 4096
 
-#define MAKE_VER(major, minor) major * 1000 + minor
+#define MAKE_VER(major, minor1, minor2) major * 1000000 + minor1 * 1000 + minor2
 
 #define APPNAME L"Rainmeter"
-#define APPVERSION L"0.14.1"
+#define APPVERSION L"1.0"
 #ifdef _WIN64
 #define APPBITS L"(64-bit)"
 #else
 #define APPBITS L"(32-bit)"
 #endif
-#define RAINMETER_VERSION MAKE_VER(14, 1)
+#define RAINMETER_VERSION MAKE_VER(1, 0, 0)
 
 enum PLATFORM
 {

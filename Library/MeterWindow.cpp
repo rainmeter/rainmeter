@@ -1311,8 +1311,15 @@ void CMeterWindow::ReadSkin()
 	{
 		WCHAR buffer[256];
 		std::wstring text;
-		wsprintf(buffer, L"%i.%i", appVersion / 1000, appVersion % 1000);
-		text = L"This skin needs Rainmeter version 0.";
+		if (appVersion % 1000 != 0)
+		{
+			wsprintf(buffer, L"%i.%i.%i", appVersion / 1000000, (appVersion / 1000) % 1000, appVersion % 1000);
+		}
+		else
+		{
+			wsprintf(buffer, L"%i.%i", appVersion / 1000000, appVersion / 1000);
+		}
+		text = L"This skin needs Rainmeter version ";
 		text += buffer;
 		text += L" or newer.\nIt might not function as well as it should.\nYou should get an updated version or Rainmeter\nfrom http://www.rainmeter.net";
 		MessageBox(m_Window, text.c_str(), L"Rainmeter", MB_OK);
