@@ -363,7 +363,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
         CoInitialized = true;
     }
 
-    if (CoInitialized && !InstanceCreated /*&& ::FindWindow(L"iTunes", L"iTunes") */)	// rainy: Removed the FindWindow since it fails in 64-bit OS
+    if (CoInitialized && !InstanceCreated && ::FindWindow(L"iTunes", L"iTunes"))
     {
 		if (SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
 		{
@@ -404,7 +404,24 @@ UINT Update(UINT id)
 {
     if (!CoInitialized || !InstanceCreated)
     {
-        return 0;
+		// Check if the iTunes window has appeared
+		if (::FindWindow(L"iTunes", L"iTunes"))
+		{
+			if (SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
+			{
+				InstanceCreated = true;
+				LSLog(LOG_DEBUG, L"Rainmeter", L"iTunesApp initialized successfully.");
+			}
+			else
+			{
+				LSLog(LOG_DEBUG, L"Rainmeter", L"Unable to create the iTunesApp instance.");
+				return 0;
+			}
+		}
+		else
+		{
+			return 0;
+		}
     }
 
     CCommandIdMap::const_iterator it = CommandIdMap.find(id);
