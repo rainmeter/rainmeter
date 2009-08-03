@@ -671,9 +671,9 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	bool bDefaultIniLocation = false;
 
+	m_Path = tmpName;
 	if (c_CmdLine.empty())
 	{
-		m_Path = tmpName;
 		m_IniFile = m_Path + L"Rainmeter.ini";
 
 		// If the ini file doesn't exist in the program folder store it to the %APPDATA% instead so that things work better in Vista/Win7
@@ -709,7 +709,6 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 			iniFile += L"\\Rainmeter.ini";
 		}
 
-		m_Path = ExtractPath(iniFile);
 		m_IniFile = iniFile;
 
 		// If the ini file doesn't exist in the %APPDATA% either, create a default rainmeter.ini file.
