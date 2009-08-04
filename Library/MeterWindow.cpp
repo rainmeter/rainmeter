@@ -668,6 +668,11 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			}
 		}
 		break;
+
+	case BANG_QUIT:
+		if (Rainmeter->GetDummyLitestep()) PostQuitMessage(0);
+		quitModule(Rainmeter->GetInstance());
+		break;
 	}
 }
 

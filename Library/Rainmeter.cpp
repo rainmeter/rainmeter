@@ -569,6 +569,17 @@ void RainmeterPluginBang(HWND, const char* arg)
 	BangWithArgs(BANG_PLUGIN, ConvertToWide(arg).c_str(), 1);
 }
 
+/*
+** RainmeterQuit
+**
+** Callback for the !RainmeterQuit bang
+**
+*/
+void RainmeterQuit(HWND, const char* arg)
+{
+	BangWithArgs(BANG_QUIT, ConvertToWide(arg).c_str(), 0);
+}
+
 // -----------------------------------------------------------------------------------------------
 //
 //                                The class starts here
@@ -879,6 +890,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterResetStats", RainmeterResetStats);
 		AddBangCommand("!RainmeterMoveMeter", RainmeterMoveMeter);
 		AddBangCommand("!RainmeterPluginBang", RainmeterPluginBang);
+		AddBangCommand("!RainmeterQuit", RainmeterQuit);
 	}
 
 	// Create meter windows for active configs
@@ -1135,6 +1147,7 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainmeterResetStats");
 		RemoveBangCommand("!RainmeterMoveMeter");
 		RemoveBangCommand("!RainmeterPluginBang");
+		RemoveBangCommand("!RainmeterQuit");
 	}
 }
 
@@ -1289,7 +1302,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_MOVE, arg.c_str(), 2);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterChangeZPos") == 0)	// For backwards combatibility
+	else if (wcsicmp(bang.c_str(), L"!RainmeterChangeZPos") == 0)	// For backwards compatibility
 	{
 		BangWithArgs(BANG_ZPOS, arg.c_str(), 1);
 	}
@@ -1316,6 +1329,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	else if (wcsicmp(bang.c_str(), L"!RainmeterLsBoxHook") == 0)
 	{
 		// Nothing to do here (this works only with Litestep)
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterQuit") == 0)
+	{
+		BangWithArgs(BANG_QUIT, arg.c_str(), 0);
 	}
 	else if (wcsicmp(bang.c_str(), L"!Execute") == 0)
 	{

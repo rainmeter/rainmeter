@@ -69,6 +69,7 @@ void RainmeterAbout(HWND, const char* arg);
 void RainmeterResetStats(HWND, const char* arg);
 void RainmeterMoveMeter(HWND, const char* arg);
 void RainmeterPluginBang(HWND, const char* arg);
+void RainmeterQuit(HWND, const char* arg);
 
 void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
 
