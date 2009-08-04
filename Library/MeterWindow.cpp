@@ -2336,7 +2336,8 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 			command += L" \"";
 			command += m_SkinPath + L"\\" + m_SkinName + L"\\" + m_SkinIniFile + L"\"";
 
-			if (m_SkinPath == Rainmeter->GetSkinPath())
+			// If the skins are in the program folder start the editor as admin
+			if (Rainmeter->GetPath() + L"Skins\\" == Rainmeter->GetSkinPath())
 			{
 				LSExecuteAsAdmin(NULL, command.c_str(), SW_SHOWNORMAL);
 			}
