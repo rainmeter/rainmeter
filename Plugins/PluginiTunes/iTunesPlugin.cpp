@@ -314,16 +314,20 @@ static bool updateCurrentTrack()
                 SUCCEEDED(artwork->get_Format(&artworkFormat)))
             {
 				_bstr_t path;
-                switch (artworkFormat)
+
+                wsprintf(CurrentTrackArtworkPath, L"%s\\iTunesArtwork", BaseDir);
+				CreateDirectory(CurrentTrackArtworkPath, NULL);
+
+				switch (artworkFormat)
                 {
                 case ITArtworkFormatJPEG:
-                    wsprintf(CurrentTrackArtworkPath, L"%s\\Skins\\iTunes\\img\\artwork.jpg", BaseDir);
+                    wcscat(CurrentTrackArtworkPath, L"\\artwork.jpg");
                     break;
                 case ITArtworkFormatPNG :
-                    wsprintf(CurrentTrackArtworkPath, L"%s\\Skins\\iTunes\\img\\artwork.png", BaseDir);
+                    wcscat(CurrentTrackArtworkPath, L"\\artwork.png");
                     break;
                 case ITArtworkFormatBMP:
-                    wsprintf(CurrentTrackArtworkPath, L"%s\\Skins\\iTunes\\img\\artwork.bmp", BaseDir);
+                    wcscat(CurrentTrackArtworkPath, L"\\artwork.bmp");
                     break;
                 }
                 path = CurrentTrackArtworkPath;
@@ -354,8 +358,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
     if (!CoInitialized)
     {
         ::CoInitialize(NULL);
-        ::GetCurrentDirectory(MAX_PATH - 1, BaseDir);
-        ::GetModuleFileName(NULL, BaseDir, MAX_PATH);
+		wcsncpy(BaseDir, iniFile, MAX_PATH);
         BaseDir[MAX_PATH - 1] = 0;
         wchar_t* lastBackslash = wcsrchr(BaseDir, L'\\');
         if (lastBackslash)
