@@ -395,12 +395,14 @@ bool CMeter::Draw(Graphics& graphics)
 	if (m_AntiAlias)
 	{
 		graphics.SetInterpolationMode(InterpolationModeBicubic);
-		graphics.SetSmoothingMode(SmoothingModeAntiAlias);
+		graphics.SetSmoothingMode(SmoothingModeHighQuality);
+		graphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
 	}
 	else
 	{
 		graphics.SetInterpolationMode(InterpolationModeDefault);
 		graphics.SetSmoothingMode(SmoothingModeNone);
+		graphics.SetPixelOffsetMode(PixelOffsetModeDefault);
 	}
 
 	if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
