@@ -177,7 +177,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		data->stringIndex2 = _wtoi(tmpSz);
 	}
 
-	tmpSz = ReadConfigString(section, L"UpdateRate", L"1");
+	tmpSz = ReadConfigString(section, L"UpdateRate", L"600");
 	if (tmpSz)
 	{
 		data->updateRate = _wtoi(tmpSz);
