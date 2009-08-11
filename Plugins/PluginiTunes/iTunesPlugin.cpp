@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma warning(disable: 4996)
 
 #include <windows.h>
-#include <comdef.h>
+#include <atlbase.h>
 #include "iTunesCOMInterface.h"
 #include "..\..\Library\Export.h"	// Rainmeter's exported functions
 #include <map>
@@ -270,12 +270,7 @@ const static wchar_t* CommandName[COMMAND_COUNT] =
     //TODO: ITObjectPersistentIDLow
 };
 
-_COM_SMARTPTR_TYPEDEF(IiTunes, __uuidof(IiTunes));
-_COM_SMARTPTR_TYPEDEF(IITTrack, __uuidof(IITTrack));
-_COM_SMARTPTR_TYPEDEF(IITArtworkCollection, __uuidof(IITArtworkCollection));
-_COM_SMARTPTR_TYPEDEF(IITArtwork, __uuidof(IITArtwork));
-
-static IiTunesPtr iTunes;
+static CComPtr<IiTunes> iTunes;
 static bool CoInitialized = false;
 static bool InstanceCreated = false;
 
@@ -284,7 +279,7 @@ static CCommandIdMap CommandIdMap;
 
 static wchar_t BaseDir[MAX_PATH];
 
-static IITTrackPtr CurrentTrack;
+static CComPtr<IITTrack> CurrentTrack;
 static wchar_t CurrentTrackArtworkPath[MAX_PATH];
 static wchar_t DefaultTrackArtworkPath[MAX_PATH];
 static bool updateCurrentTrack()
@@ -294,43 +289,38 @@ static bool updateCurrentTrack()
     if (0 == lastClock || currentClock - lastClock > CLOCKS_PER_SEC)
     {
         wsprintf(CurrentTrackArtworkPath, L"%s%s", BaseDir, DefaultTrackArtworkPath);
-		if (CurrentTrack != NULL)
-	        CurrentTrack.Release();
+        CurrentTrack.Release();
         if (FAILED(iTunes->get_CurrentTrack(&CurrentTrack)) || !CurrentTrack)
             return false;
 
         lastClock = currentClock;
 
-        IITArtworkCollectionPtr artworkCollection;
+        CComPtr<IITArtworkCollection> artworkCollection;
         if (SUCCEEDED(CurrentTrack->get_Artwork(&artworkCollection)))
         {
             long count;
             artworkCollection->get_Count(&count);
 
-            IITArtworkPtr artwork;
+            CComPtr<IITArtwork> artwork;
             ITArtworkFormat artworkFormat;
             if (count > 0 &&
                 SUCCEEDED(artworkCollection->get_Item(1, &artwork)) && 
                 SUCCEEDED(artwork->get_Format(&artworkFormat)))
             {
-				_bstr_t path;
-
-                wsprintf(CurrentTrackArtworkPath, L"%s\\iTunesArtwork", BaseDir);
-				CreateDirectory(CurrentTrackArtworkPath, NULL);
-
-				switch (artworkFormat)
+                CComBSTR path;
+                switch (artworkFormat)
                 {
                 case ITArtworkFormatJPEG:
-                    wcscat(CurrentTrackArtworkPath, L"\\artwork.jpg");
+                    wsprintf(CurrentTrackArtworkPath, L"%s\\Skins\\iTunes\\img\\artwork.jpg", BaseDir);
                     break;
                 case ITArtworkFormatPNG :
-                    wcscat(CurrentTrackArtworkPath, L"\\artwork.png");
+                    wsprintf(CurrentTrackArtworkPath, L"%s\\Skins\\iTunes\\img\\artwork.png", BaseDir);
                     break;
                 case ITArtworkFormatBMP:
-                    wcscat(CurrentTrackArtworkPath, L"\\artwork.bmp");
+                    wsprintf(CurrentTrackArtworkPath, L"%s\\Skins\\iTunes\\img\\artwork.bmp", BaseDir);
                     break;
                 }
-                path = CurrentTrackArtworkPath;
+                path = T2OLE(CurrentTrackArtworkPath);
                 if (FAILED(artwork->SaveArtworkToFile(path)))
                 {
                     wsprintf(CurrentTrackArtworkPath, L"%s%s", BaseDir, DefaultTrackArtworkPath);
@@ -358,7 +348,8 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
     if (!CoInitialized)
     {
         ::CoInitialize(NULL);
-		wcsncpy(BaseDir, iniFile, MAX_PATH);
+        ::GetCurrentDirectory(MAX_PATH - 1, BaseDir);
+        ::GetModuleFileName(NULL, BaseDir, MAX_PATH);
         BaseDir[MAX_PATH - 1] = 0;
         wchar_t* lastBackslash = wcsrchr(BaseDir, L'\\');
         if (lastBackslash)
@@ -366,22 +357,11 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
         CoInitialized = true;
     }
 
-    if (CoInitialized && !InstanceCreated && ::FindWindow(L"iTunes", L"iTunes"))
+    if (CoInitialized && !InstanceCreated && ::FindWindow(L"iTunes", L"iTunes") &&
+        SUCCEEDED(iTunes.CoCreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
     {
-		if (SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
-		{
-	        InstanceCreated = true;
-			LSLog(LOG_DEBUG, L"Rainmeter", L"iTunesApp initialized successfully.");
-		}
-		else
-		{
-			LSLog(LOG_DEBUG, L"Rainmeter", L"Unable to create the iTunesApp instance.");
-		}
+        InstanceCreated = true;
     }
-	else
-	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"Unable to find the iTunes window.");
-	}
 
     const wchar_t* type = ReadConfigString(section, L"Command", L"");
     for(int i = 0; i < COMMAND_COUNT; i++)
@@ -407,24 +387,7 @@ UINT Update(UINT id)
 {
     if (!CoInitialized || !InstanceCreated)
     {
-		// Check if the iTunes window has appeared
-		if (::FindWindow(L"iTunes", L"iTunes"))
-		{
-			if (SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
-			{
-				InstanceCreated = true;
-				LSLog(LOG_DEBUG, L"Rainmeter", L"iTunesApp initialized successfully.");
-			}
-			else
-			{
-				LSLog(LOG_DEBUG, L"Rainmeter", L"Unable to create the iTunesApp instance.");
-				return 0;
-			}
-		}
-		else
-		{
-			return 0;
-		}
+        return 0;
     }
 
     CCommandIdMap::const_iterator it = CommandIdMap.find(id);
@@ -608,10 +571,13 @@ void ExecuteBang(LPCTSTR args, UINT id)
 
     if (!InstanceCreated)
     {
-        if (COMMAND_POWER == command && CoInitialized && SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
+        if (COMMAND_POWER == command && CoInitialized && SUCCEEDED(iTunes.CoCreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
         {
-            HWND iTunesHandle = ::FindWindow(L"iTunes", L"iTunes");
-            ::PostMessage(iTunesHandle, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+            CComPtr<IITBrowserWindow> browserWindow;
+            if (SUCCEEDED(iTunes->get_BrowserWindow(&browserWindow)))
+            {
+                browserWindow->put_Minimized(VARIANT_TRUE);
+            }
             InstanceCreated = true;
         }
         return;
@@ -626,28 +592,25 @@ void ExecuteBang(LPCTSTR args, UINT id)
             break;
         case COMMAND_TOGGLEITUNES:
         {
-            HWND iTunesHandle = ::FindWindow(L"iTunes", L"iTunes");
-            WINDOWPLACEMENT placement;
-            memset(&placement, 0, sizeof(placement));
-            placement.length = sizeof(placement);
-            if (iTunesHandle && SUCCEEDED(::GetWindowPlacement(iTunesHandle, &placement)))
-            {
-                ::PostMessage(iTunesHandle, WM_SYSCOMMAND, (SW_SHOWMINIMIZED == placement.showCmd) ? SC_RESTORE : SC_MINIMIZE, 0);
-            }
+            CComPtr<IITBrowserWindow> browserWindow;
+            if (FAILED(iTunes->get_BrowserWindow(&browserWindow)))
+                {
+                break;
+                }
+            VARIANT_BOOL minimized;
+            if (SUCCEEDED(browserWindow->get_Minimized(&minimized)))
+                {
+                browserWindow->put_Minimized((VARIANT_TRUE == minimized) ? VARIANT_FALSE : VARIANT_TRUE);
+                }
             break;
         }
         case COMMAND_TOGGLEVISUALS:
         {
             VARIANT_BOOL visualsEnabled;
-            iTunes->get_VisualsEnabled(&visualsEnabled);
-            if(visualsEnabled == VARIANT_TRUE)
-            {
-                iTunes->put_VisualsEnabled(VARIANT_FALSE);
-            }
-            else
-            {
-                iTunes->put_VisualsEnabled(VARIANT_TRUE);
-            }
+            if (SUCCEEDED(iTunes->get_VisualsEnabled(&visualsEnabled)))
+                {
+                iTunes->put_VisualsEnabled((VARIANT_TRUE == visualsEnabled) ? VARIANT_FALSE : VARIANT_TRUE);
+                }
             break;
         }
         case COMMAND_SOUNDVOLUMEUP:
