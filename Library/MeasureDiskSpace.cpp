@@ -31,7 +31,7 @@ CMeasureDiskSpace::CMeasureDiskSpace(CMeterWindow* meterWindow) : CMeasure(meter
 {
 	m_Total = false;
 	m_Label = false;
-	m_IgnoreRemovable = false;
+	m_IgnoreRemovable = true;
 }
 
 /*
@@ -117,7 +117,7 @@ void CMeasureDiskSpace::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_Drive = parser.ReadString(section, L"Drive", L"C:\\");
 	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
 	m_Label = (1 == parser.ReadInt(section, L"Label", 0));
-	m_IgnoreRemovable = (1 == parser.ReadInt(section, L"IgnoreRemovable", 0));
+	m_IgnoreRemovable = (1 == parser.ReadInt(section, L"IgnoreRemovable", 1));
 
 	// Set the m_MaxValue
 	ULARGE_INTEGER i64FreeBytesToCaller, i64TotalBytes, i64FreeBytes;
