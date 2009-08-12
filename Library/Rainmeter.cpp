@@ -963,28 +963,7 @@ void CRainmeter::CreateDefaultConfigFile(std::wstring strFile)
 	}
 	else
 	{
-		// The folder was created successfully which means that it wasn't available yet.
-		// Copy the default skin to the Skins folder
-		std::wstring strFrom(defaultIni);
-		std::wstring strTo(GetIniFile());
-
-		// The strings must end with double nul
-		strFrom.append(L"0");
-		strFrom[strFrom.size() - 1] = L'\0';
-		strTo.append(L"0");
-		strTo[strTo.size() - 1] = L'\0';
-
-		SHFILEOPSTRUCT fo = {0};
-		fo.wFunc = FO_COPY;
-		fo.pFrom = strFrom.c_str();
-		fo.pTo = strTo.c_str();
-		fo.fFlags = FOF_NO_UI;
-
-		int result = SHFileOperation(&fo);
-		if (result != 0)
-		{
-			DebugLog(L"Unable to copy the default settings file %i", result);
-		}
+		CopyFiles(defaultIni, GetIniFile());
 	}
 }
 
