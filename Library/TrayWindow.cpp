@@ -466,6 +466,13 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				std::wstring command = Rainmeter->GetConfigEditor();
 				command += L" \"";
 				command += Rainmeter->GetIniFile();
+				command += L"\"";
+				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
+			}
+			else if(wParam == ID_CONTEXT_MANAGETHEMES)
+			{
+				std::wstring command = Rainmeter->GetPath();
+				command += L"\\Addons\\RainThemes\\RainThemes.exe";
 				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 			}
 			else if(wParam == ID_CONTEXT_QUIT)
@@ -480,6 +487,20 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				command += Rainmeter->GetSkinPath();
 				command += L"\"";
 				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
+			}
+			else if((wParam & 0x0ffff) >= ID_THEME_FIRST)
+			{
+				int pos = (wParam & 0x0ffff) - ID_THEME_FIRST;
+
+				const std::vector<std::wstring>& themes = Rainmeter->GetAllThemes();
+				if (pos >= 0 && pos < themes.size())
+				{
+					std::wstring command = Rainmeter->GetPath();
+					command += L"\\Addons\\RainThemes\\RainThemes.exe /load \"";
+					command += themes[pos];
+					command += L"\"";
+					LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
+				}
 			}
 			else if((wParam & 0x0ffff) >= ID_CONFIG_FIRST)
 			{

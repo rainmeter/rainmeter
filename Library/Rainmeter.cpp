@@ -831,6 +831,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	m_TrayWindow = new CTrayWindow(m_Instance);
 
 	ScanForConfigs(m_SkinPath);
+	ScanForThemes(GetSettingsPath() + L"Themes");
 
 	if(m_ConfigStrings.empty())
 	{
@@ -990,6 +991,7 @@ void CRainmeter::CreateDefaultConfigFile(std::wstring strFile)
 void CRainmeter::ReloadSettings()
 {
 	ScanForConfigs(m_SkinPath);
+	ScanForThemes(GetSettingsPath() + L"Themes");
 	ReadGeneralSettings(m_IniFile);
 }
 
@@ -1232,6 +1234,36 @@ int CRainmeter::ScanForConfigsRecursive(std::wstring& path, std::wstring base, i
     FindClose(hSearch);
 
 	return index;
+}
+
+/* 
+** ScanForThemes
+**
+** Scans the given folder for themes
+*/
+void CRainmeter::ScanForThemes(std::wstring& path)
+{
+	m_Themes.clear();
+
+	WIN32_FIND_DATA fileData;      // Data structure describes the file found
+    HANDLE hSearch;                // Search handle returned by FindFirstFile
+
+	// Scan for folders
+	std::wstring folders = path + L"\\*";
+    hSearch = FindFirstFile(folders.c_str(), &fileData);
+	do
+	{
+		if(hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
+
+		if(fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && 
+			wcscmp(L".", fileData.cFileName) != 0 &&
+			wcscmp(L"..", fileData.cFileName) != 0)
+		{
+			m_Themes.push_back(fileData.cFileName);
+		}
+	} while(FindNextFile(hSearch, &fileData));
+
+    FindClose(hSearch);
 }
 
 void CRainmeter::SaveSettings()
@@ -1781,10 +1813,17 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				InsertMenu(subMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configMenu, L"Configs");
 			}
 
+			HMENU themeMenu = CreateThemeMenu();
+			if (themeMenu)
+			{
+				InsertMenu(subMenu, 4, MF_BYPOSITION | MF_POPUP, (UINT_PTR)themeMenu, L"Themes");
+				InsertMenu(subMenu, 5, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+			}
+
 			if (meterWindow)
 			{
 				HMENU skinMenu = CreateSkinMenu(meterWindow, 0);
-				InsertMenu(subMenu, 8, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, L"Skin menu");
+				InsertMenu(subMenu, 10, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, L"Skin Menu");
 			}
 			else
 			{
@@ -1796,7 +1835,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				{
 					CMeterWindow* mw = ((*iter).second);
 					HMENU skinMenu = CreateSkinMenu(mw, index);
-					InsertMenu(subMenu, 8, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
+					InsertMenu(subMenu, 10, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
 					index++;
 				}
 			}
@@ -1849,6 +1888,25 @@ HMENU CRainmeter::CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData)
 		}
 	}
 	return configMenu;
+}
+
+HMENU CRainmeter::CreateThemeMenu()
+{
+	HMENU themeMenu = CreatePopupMenu();
+
+	for (size_t i = 0; i < m_Themes.size(); i++)
+	{
+		AppendMenu(themeMenu, 0, ID_THEME_FIRST + i, m_Themes[i].c_str());
+	}
+
+	if (!m_Themes.empty())
+	{
+		AppendMenu(themeMenu, MF_SEPARATOR, 0, NULL);
+	}
+
+	AppendMenu(themeMenu, 0, ID_CONTEXT_MANAGETHEMES, L"Manage Themes...");
+
+	return themeMenu;
 }
 
 HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index)

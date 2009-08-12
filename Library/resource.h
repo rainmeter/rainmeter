@@ -54,9 +54,11 @@
 #define ID_CONTEXT_SKINMENU_YPERCENTAGE  4043
 #define ID_CONTEXT_OPENSKINSFOLDER       4044
 #define ID_CONTEXT_SKINMENU_OPENSKINSFOLDER        4045
+#define ID_CONTEXT_MANAGETHEMES          4046
 
 #define ID_CONFIG_EDIT                  30000
 #define ID_CONFIG_FIRST                 30001
+#define ID_THEME_FIRST                  31001
 
 // Next default values for new objects
 // 

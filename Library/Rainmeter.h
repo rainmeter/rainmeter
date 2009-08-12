@@ -113,6 +113,7 @@ public:
 	CMeterWindow* GetMeterWindow(const std::wstring& config);
 	std::map<std::wstring, CMeterWindow*>& GetAllMeterWindows() { return m_Meters; };
 	const std::vector<CONFIG>& GetAllConfigs() { return m_ConfigStrings; };
+	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; };
 
 	void ActivateConfig(int configIndex, int iniIndex);
 	bool DeactivateConfig(CMeterWindow* meterWindow, int configIndex);
@@ -167,6 +168,7 @@ private:
 	void CreateMeterWindow(std::wstring path, std::wstring config, std::wstring iniFile);
 	bool DeleteMeterWindow(CMeterWindow* meterWindow);
 	void ScanForConfigs(std::wstring& path);
+	void ScanForThemes(std::wstring& path);
 	void ReadGeneralSettings(std::wstring& path);
 	bool SetActiveConfig(std::wstring& skinName, std::wstring& skinIni);
 	void Refresh(const WCHAR* arg);
@@ -174,6 +176,7 @@ private:
 	void ChangeSkinIndex(HMENU subMenu, int index);
 	int ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu);
 	HMENU CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData);
+	HMENU CreateThemeMenu();
 	void CreateDefaultConfigFile(std::wstring strFile);
 	void TestSettingsFile(bool bDefaultIniLocation);
 	void CopyFiles(std::wstring strFrom, std::wstring strTo);
@@ -183,6 +186,7 @@ private:
 	std::vector<CONFIG> m_ConfigStrings;	    // All configs found in the given folder
 	std::vector<CONFIGMENU> m_ConfigMenu;
 	std::map<std::wstring, CMeterWindow*> m_Meters;			// The meter windows
+	std::vector<std::wstring> m_Themes;
 
 	std::wstring m_Path;			    // Path to the main folder
 	std::wstring m_IniFile;				// The main ini file
