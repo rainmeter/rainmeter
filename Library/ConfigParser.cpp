@@ -124,37 +124,18 @@ void CConfigParser::ReadVariables()
 
 	if (size > 0)
 	{
-		variable = new TCHAR[bufferSize];
-
 		// Read all variables
 		WCHAR* pos = buffer;
 		while(wcslen(pos) > 0)
 		{
-			do 
-			{
-				loop = false;
-				size = GetPrivateProfileString(L"Variables", pos, L"", variable, bufferSize, m_Filename.c_str());
-
-				if (size == bufferSize - 1)
-				{
-					// Buffer too small, increase it and retry
-					delete [] variable;
-					bufferSize *= 2;
-					variable = new TCHAR[bufferSize];
-					loop = true;
-				}
-
-			} while(loop);
-
-			if (wcslen(variable) > 0)
+			std::wstring variable = ReadString(L"Variables", pos, L"");
+			if (!variable.empty())
 			{
 				m_Variables[pos] = variable;
 			}
 
 			pos = pos + wcslen(pos) + 1;
 		}
-
-		delete [] variable;
 	}
 	delete [] buffer;
 }
