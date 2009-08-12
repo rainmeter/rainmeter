@@ -290,7 +290,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\testbench\x32\debug\skins (mkdir ..\testbench\x32\debug\skins)&#x0D;&#x0A;if not exist ..\testbench\x32\debug\themes (mkdir ..\testbench\x32\debug\themes)&#x0D;&#x0A;echo &quot;Copying the skins...&quot;&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Skins ..\testbench\x32\debug\skins&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Themes ..\testbench\x32\debug\themes&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32\debug\"
+				CommandLine="if not exist ..\testbench\x32\debug\skins (mkdir ..\testbench\x32\debug\skins)&#x0D;&#x0A;if not exist ..\testbench\x32\debug\themes (mkdir ..\testbench\x32\debug\themes)&#x0D;&#x0A;echo &quot;Copying the skins...&quot;&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Skins ..\testbench\x32\debug\skins&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Themes ..\testbench\x32\debug\themes&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32\debug\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -476,7 +476,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\testbench\x32\release\skins (mkdir ..\testbench\x32\release\skins)&#x0D;&#x0A;if not exist ..\testbench\x32\release\themes (mkdir ..\testbench\x32\release\themes)&#x0D;&#x0A;echo &quot;Copying the skins...&quot;&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Skins ..\testbench\x32\release\skins&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Themes ..\testbench\x32\release\themes&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32release\"
+				CommandLine="if not exist ..\testbench\x32\release\skins (mkdir ..\testbench\x32\release\skins)&#x0D;&#x0A;if not exist ..\testbench\x32\release\themes (mkdir ..\testbench\x32\release\themes)&#x0D;&#x0A;echo &quot;Copying the skins...&quot;&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Skins ..\testbench\x32\release\skins&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Themes ..\testbench\x32\release\themes&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32\release\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
