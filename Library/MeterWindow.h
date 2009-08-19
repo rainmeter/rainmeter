@@ -34,7 +34,9 @@
 #define REJECT_MESSAGE(msg) case msg: return 0;
 #define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
-#define WM_DELAYED_EXECUTE WM_APP
+#define WM_DELAYED_EXECUTE WM_APP + 0
+#define WM_DELAYED_REFRESH WM_APP + 1
+#define WM_DELAYED_QUIT    WM_APP + 2
 
 enum MOUSE
 {
@@ -191,6 +193,8 @@ protected:
 	LRESULT OnLeftButtonUp(WPARAM wParam, LPARAM lParam);
 	LRESULT OnRightButtonUp(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedExecute(WPARAM wParam, LPARAM lParam);
+	LRESULT OnDelayedRefresh(WPARAM wParam, LPARAM lParam);
+	LRESULT OnDelayedQuit(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSettingChange(WPARAM wParam, LPARAM lParam); 
 
 

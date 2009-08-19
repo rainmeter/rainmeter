@@ -509,7 +509,8 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 	switch(bang) 
 	{
 	case BANG_REFRESH:
-		Refresh(false);
+		// Refresh needs to be delayed since it crashes if done during Update()
+		PostMessage(m_Window, WM_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
 		break;
 
 	case BANG_REDRAW:
@@ -670,8 +671,8 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		break;
 
 	case BANG_QUIT:
-		if (Rainmeter->GetDummyLitestep()) PostQuitMessage(0);
-		quitModule(Rainmeter->GetInstance());
+		// Quit needs to be delayed since it crashes if done during Update()
+		PostMessage(m_Window, WM_DELAYED_QUIT, (WPARAM)NULL, (LPARAM)NULL);
 		break;
 	}
 }
@@ -3088,6 +3089,8 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnWindowPosChanging, WM_WINDOWPOSCHANGING)
 	MESSAGE(OnCopyData, WM_COPYDATA)
 	MESSAGE(OnDelayedExecute, WM_DELAYED_EXECUTE)
+	MESSAGE(OnDelayedRefresh, WM_DELAYED_REFRESH)
+	MESSAGE(OnDelayedQuit, WM_DELAYED_QUIT)
 	MESSAGE(OnSettingChange, WM_SETTINGCHANGE)
 	END_MESSAGEPROC
 }
@@ -3114,6 +3117,30 @@ LRESULT CMeterWindow::OnDelayedExecute(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+/*
+** OnDelayedRefresh
+**
+** Handles delayed refresh
+**
+*/
+LRESULT CMeterWindow::OnDelayedRefresh(WPARAM wParam, LPARAM lParam)
+{
+	Refresh(false);
+	return 0;
+}
+
+/*
+** OnDelayedQuit
+**
+** Handles delayed quit
+**
+*/
+LRESULT CMeterWindow::OnDelayedQuit(WPARAM wParam, LPARAM lParam)
+{
+	if (Rainmeter->GetDummyLitestep()) PostQuitMessage(0);
+	quitModule(Rainmeter->GetInstance());
+	return 0;
+}
 
 /*
 ** OnCopyData
