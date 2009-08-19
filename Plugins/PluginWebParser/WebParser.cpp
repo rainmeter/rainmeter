@@ -57,6 +57,7 @@ struct UrlData
 	std::wstring section;
 	std::wstring finishAction;
 	bool download;
+	bool forceReload;
 	std::wstring downloadedFile;
 	std::wstring iniFile;
 	int debug;
@@ -64,7 +65,7 @@ struct UrlData
 	HANDLE dlThreadHandle;
 };
 
-BYTE* DownloadUrl(std::wstring& url, DWORD* dwSize);
+BYTE* DownloadUrl(std::wstring& url, DWORD* dwSize, bool forceReload);
 void ShowError(int lineNumber, WCHAR* errorMsg = NULL);
 DWORD WINAPI NetworkThreadProc(LPVOID pParam);
 DWORD WINAPI NetworkDownloadThreadProc(LPVOID pParam);
@@ -187,6 +188,12 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	if (tmpSz)
 	{
 		data->download = 1 == _wtoi(tmpSz);
+	}
+
+	tmpSz = ReadConfigString(section, L"ForceReload", L"0");
+	if (tmpSz)
+	{
+		data->forceReload = 1 == _wtoi(tmpSz);
 	}
 
 	tmpSz = ReadConfigString(section, L"Debug", L"0");
@@ -322,7 +329,7 @@ DWORD WINAPI NetworkThreadProc(LPVOID pParam)
 	UrlData* urlData = (UrlData*)pParam;
 	DWORD dwSize = 0;
 
-	BYTE* data = DownloadUrl(urlData->url, &dwSize);
+	BYTE* data = DownloadUrl(urlData->url, &dwSize, urlData->forceReload);
 
 	if (data)
 	{
@@ -767,7 +774,7 @@ void Finalize(HMODULE instance, UINT id)
 	Downloads the given url and returns the webpage as dynamically allocated string.
 	You need to delete the returned string after use!
 */
-BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize)
+BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 {
 	HINTERNET hUrlDump;
 	DWORD dwSize;
@@ -782,7 +789,13 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize)
 	err += url;
 	Log(err.c_str());
 	
-	hUrlDump = InternetOpenUrl(hRootHandle, url.c_str(), NULL, NULL, INTERNET_FLAG_RELOAD, 0);
+	DWORD flags = INTERNET_FLAG_RESYNCHRONIZE;
+	if (forceReload)
+	{
+		flags = INTERNET_FLAG_RELOAD;
+	}
+
+	hUrlDump = InternetOpenUrl(hRootHandle, url.c_str(), NULL, NULL, flags, 0);
 	if (hUrlDump == NULL)
 	{
 		ShowError(__LINE__); 
