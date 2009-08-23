@@ -236,6 +236,21 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 
 	setlocale(LC_NUMERIC, "C");
 
+	// Mark the window to ignore the Aero peek
+	typedef HRESULT (WINAPI * FPDWMSETWINDOWATTRIBUTE)(HWND hwnd, DWORD dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
+	#define DWMWA_EXCLUDED_FROM_PEEK 12
+	HINSTANCE h = LoadLibrary(L"dwmapi.dll");
+	if (h)
+	{
+		FPDWMSETWINDOWATTRIBUTE DwmSetWindowAttribute = (FPDWMSETWINDOWATTRIBUTE)GetProcAddress(h, "DwmSetWindowAttribute");
+		BOOL bValue = TRUE;
+		if (DwmSetWindowAttribute)
+		{
+			DwmSetWindowAttribute(m_Window, DWMWA_EXCLUDED_FROM_PEEK, &bValue, sizeof(bValue));
+		}
+		FreeLibrary(h);
+	}
+
 	// Gotta have some kind of buffer during initialization
 	m_DoubleBuffer = new Bitmap(1, 1, PixelFormat32bppARGB);
 
