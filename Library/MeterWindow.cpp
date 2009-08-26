@@ -1426,7 +1426,9 @@ void CMeterWindow::ReadSkin()
 	WCHAR* pos = items;
 	while(wcslen(pos) > 0)
 	{
-		if(wcsicmp(L"Rainmeter", pos) != 0 && wcsicmp(L"Variables", pos) != 0)
+		if(wcsicmp(L"Rainmeter", pos) != 0 && 
+			wcsicmp(L"Variables", pos) != 0 &&
+			wcsicmp(L"Metadata", pos) != 0)
 		{
 			std::wstring meterName, measureName;
 
@@ -2587,7 +2589,15 @@ LRESULT CMeterWindow::OnNcHitTest(WPARAM wParam, LPARAM lParam)
 LRESULT CMeterWindow::OnSettingChange(WPARAM wParam, LPARAM lParam) 
 {
 	m_Monitors.count = 0;
-	Refresh(false);
+
+	try
+	{
+		Refresh(false);
+	}
+	catch (CError& error)
+	{
+		MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+	}
 
 	// Commented: Calling DefWindowProc seems to cause crash sometimes
 	return 0;  // DefWindowProc(m_Window, m_Message, wParam, lParam);
@@ -3164,7 +3174,14 @@ LRESULT CMeterWindow::OnDelayedExecute(WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnDelayedRefresh(WPARAM wParam, LPARAM lParam)
 {
-	Refresh(false);
+	try
+	{
+		Refresh(false);
+	}
+	catch (CError& error)
+	{
+		MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+	}
 	return 0;
 }
 
