@@ -129,7 +129,7 @@ void CConfigParser::SetVariable(const std::wstring& strVariable, const std::wstr
 **
 **
 */
-const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue)
+const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures)
 {
 	static std::wstring result;
 
@@ -194,7 +194,7 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 	} while(loop);
 
 	// Check for measures ([Measure])
-	if (!m_Measures.empty())
+	if (!m_Measures.empty() && bReplaceMeasures)
 	{
 		start = 0;
 		end = std::wstring::npos;

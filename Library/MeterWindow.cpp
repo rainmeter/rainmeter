@@ -36,6 +36,7 @@
 #include <tchar.h>
 #include "MeasureCalc.h"
 #include "MeasureNet.h"
+#include "MeasurePlugin.h"
 #include "MeterButton.h"
 
 using namespace Gdiplus;
@@ -1875,7 +1876,7 @@ void CMeterWindow::Update(bool nodraw)
 	{
 		try
 		{
-			if ((*i)->HasDynamicVariables())
+			if ((*i)->HasDynamicVariables() && dynamic_cast<CMeasurePlugin*>((*i)) == NULL)		// Plugins are not meant to be reinitialized
 			{
 				(*i)->ReadConfig(m_Parser, (*i)->GetName());
 			}
