@@ -23,10 +23,12 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <hash_map>
 #include <gdiplus.h>
 #include "ccalc-0.5.1/mparser.h"
 
 class CRainmeter;
+class CMeasure;
 
 class CConfigParser
 {
@@ -35,6 +37,8 @@ public:
 	~CConfigParser();
 
 	void Initialize(LPCTSTR filename, CRainmeter* pRainmeter);
+	void AddMeasure(CMeasure* pMeasure);
+	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue);
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue);
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
@@ -50,10 +54,20 @@ private:
 	Gdiplus::Color ParseColor(LPCTSTR string);
 	std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring delimiters);
 
+	void ReadIniFile(const std::wstring& strFileName);
+	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
+	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
+	std::vector<std::wstring> GetSections();
+	std::vector<std::wstring> GetKeys(const std::wstring& strSection);
+
 	std::map<std::wstring, std::wstring> m_Variables;
 	std::wstring m_Filename;
 
 	hqMathParser* m_Parser;
+	std::map<std::wstring, CMeasure*> m_Measures;
+
+	stdext::hash_map<std::wstring, std::vector<std::wstring> > m_Keys;
+	stdext::hash_map<std::wstring, std::wstring> m_Values;
 };
 
 #endif

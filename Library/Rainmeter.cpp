@@ -580,6 +580,17 @@ void RainmeterQuit(HWND, const char* arg)
 	BangWithArgs(BANG_QUIT, ConvertToWide(arg).c_str(), 0);
 }
 
+/*
+** RainmeterSetVariable
+**
+** Callback for the !RainmeterSetVariable bang
+**
+*/
+void RainmeterSetVariable(HWND, const char* arg)
+{
+	BangWithArgs(BANG_SETVARIABLE, ConvertToWide(arg).c_str(), 2);
+}
+
 // -----------------------------------------------------------------------------------------------
 //
 //                                The class starts here
@@ -690,7 +701,8 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		// If the ini file doesn't exist in the program folder store it to the %APPDATA% instead so that things work better in Vista/Win7
 		if (_waccess(m_IniFile.c_str(), 0) == -1)
 		{
-			m_IniFile = ExpandEnvironmentVariables(L"%APPDATA%\\Rainmeter\\Rainmeter.ini");
+			m_IniFile = L"%APPDATA%\\Rainmeter\\Rainmeter.ini";
+			ExpandEnvironmentVariables(m_IniFile);
 			bDefaultIniLocation = true;
 
 			// If the ini file doesn't exist in the %APPDATA% either, create a default rainmeter.ini file.
@@ -709,7 +721,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 			iniFile = iniFile.substr(1, iniFile.length() - 2);
 		}
 
-		iniFile = ExpandEnvironmentVariables(iniFile);
+		ExpandEnvironmentVariables(iniFile);
 
 		if (iniFile[iniFile.length() - 1] == L'\\')
 		{
@@ -738,7 +750,8 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	WCHAR tmpSz[MAX_LINE_LENGTH];
 	if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", tmpSz, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0) 
 	{
-		m_SkinPath = ExpandEnvironmentVariables(tmpSz);
+		m_SkinPath = tmpSz;
+		ExpandEnvironmentVariables(m_SkinPath);
 	}
 	else if (bDefaultIniLocation)
 	{
@@ -892,6 +905,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterMoveMeter", RainmeterMoveMeter);
 		AddBangCommand("!RainmeterPluginBang", RainmeterPluginBang);
 		AddBangCommand("!RainmeterQuit", RainmeterQuit);
+		AddBangCommand("!RainmeterSetVariable", RainmeterSetVariable);
 	}
 
 	// Create meter windows for active configs
@@ -1129,6 +1143,7 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainmeterMoveMeter");
 		RemoveBangCommand("!RainmeterPluginBang");
 		RemoveBangCommand("!RainmeterQuit");
+		RemoveBangCommand("!RainmeterSetVariable");
 	}
 }
 
@@ -1336,6 +1351,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	else if (wcsicmp(bang.c_str(), L"!RainmeterPluginBang") == 0)
 	{
 		BangWithArgs(BANG_PLUGIN, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterSetVariable") == 0)
+	{
+		BangWithArgs(BANG_SETVARIABLE, arg.c_str(), 2);
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterLsBoxHook") == 0)
 	{
@@ -2064,7 +2083,8 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 
 		if (!bDefaultIniLocation)
 		{
-			std::wstring strTarget = ExpandEnvironmentVariables(L"%APPDATA%\\Rainmeter\\");
+			std::wstring strTarget = L"%APPDATA%\\Rainmeter\\";
+			ExpandEnvironmentVariables(strTarget);
 
 			error += L"You should quit Rainmeter and move the settings file from\n\n";
 			error += m_IniFile;
@@ -2101,7 +2121,7 @@ std::wstring CRainmeter::ExtractPath(const std::wstring& strFilePath)
 	return L".";
 }
 
-std::wstring CRainmeter::ExpandEnvironmentVariables(const std::wstring strPath)
+void CRainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
 {
 	if (strPath.find(L'%') != std::wstring::npos) 
 	{
@@ -2111,12 +2131,11 @@ std::wstring CRainmeter::ExpandEnvironmentVariables(const std::wstring strPath)
 		DWORD ret = ExpandEnvironmentStrings(strPath.c_str(), buffer, 4096);
 		if (ret != 0 && ret < 4096)
 		{
-			return buffer;
+			strPath = buffer;
 		}
 		else
 		{
 			DebugLog(L"Unable to expand the environment strings for string: %s", strPath.c_str());
 		}
 	}
-	return strPath;
 }

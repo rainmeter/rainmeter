@@ -39,6 +39,8 @@ public:
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 	virtual void BindMeasure(std::list<CMeasure*>& measures);
 	virtual bool HasActiveTransition() { return false; }
+	
+	bool HasDynamicVariables() { return m_DynamicVariables; }
 
 	virtual int GetH() { return m_Hidden ? 0 : m_H; };
 	virtual int GetW() { return m_Hidden ? 0 : m_W; };
@@ -100,6 +102,7 @@ protected:
 	int	m_H;					// Height of the meter
 	bool m_Hidden;				// Status of the meter
 	CMeter*	m_RelativeMeter;
+	bool m_DynamicVariables;		// If true, the measure contains dynamic variables
 
 	static int c_OldX;
 	static int c_OldY;

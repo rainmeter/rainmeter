@@ -43,6 +43,8 @@ public:
 	void Enable() { m_Disabled = false; };
 	bool IsDisabled() { return m_Disabled; };
 
+	bool HasDynamicVariables() { return m_DynamicVariables; }
+
 	virtual void ExecuteBang(const WCHAR* args);
 
 	double GetValue();
@@ -64,6 +66,7 @@ protected:
 	std::wstring ExtractWord(std::wstring& buffer);
 	const WCHAR* CheckSubstitute(const WCHAR* buffer);
 
+	bool m_DynamicVariables;		// If true, the measure contains dynamic variables
 	bool m_Invert;					// If true, the value should be inverted
 	bool m_LogMaxValue;				// If true, The maximum & minimum values are logged
 	double m_MinValue;				// The minimum value (so far)

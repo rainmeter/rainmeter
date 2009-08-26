@@ -67,6 +67,7 @@ CMeasure::CMeasure(CMeterWindow* meterWindow)
 	m_AveragePos = 0;
 	m_AverageSize = 0;
 	m_MeterWindow = meterWindow;
+	m_DynamicVariables = false;
 }
 
 /*
@@ -108,7 +109,9 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_IfEqualAction = parser.ReadString(section, L"IfEqualAction", L"");
 
 	m_AverageSize = parser.ReadInt(section, L"AverageSize", 0);
-	
+
+	m_DynamicVariables = 0!=parser.ReadInt(section, L"DynamicVariables", 0);
+
 	std::wstring subs;
 	subs = parser.ReadString(section, L"Substitute", L"");
 	if (!ParseSubstitute(subs))

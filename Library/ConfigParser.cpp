@@ -60,6 +60,9 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 	m_Filename = filename;
 
 	m_Variables.clear();
+	m_Measures.clear();
+
+	ReadIniFile(m_Filename);
 
 	// Set the default variables
 	if (pRainmeter)
@@ -99,45 +102,26 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 */
 void CConfigParser::ReadVariables()
 {
-	DWORD size;
-	TCHAR* buffer;
-	TCHAR* variable;
-	int bufferSize = 4096;
-	bool loop;
+	std::vector<std::wstring> listVariables = GetKeys(L"Variables");
 
-	do 
+	for (size_t i = 0; i < listVariables.size(); i++)
 	{
-		loop = false;
-		buffer = new TCHAR[bufferSize];
-		
-		size = GetPrivateProfileString(L"Variables", NULL, L"", buffer, bufferSize, m_Filename.c_str());
-
-		if (size == bufferSize - 1)
-		{
-			// Buffer too small, increase it and retry
-			delete [] buffer;
-			bufferSize *= 2;
-			loop = true;
-		}
-
-	} while(loop);
-
-	if (size > 0)
-	{
-		// Read all variables
-		WCHAR* pos = buffer;
-		while(wcslen(pos) > 0)
-		{
-			std::wstring variable = ReadString(L"Variables", pos, L"");
-			if (!variable.empty())
-			{
-				m_Variables[pos] = variable;
-			}
-
-			pos = pos + wcslen(pos) + 1;
-		}
+		m_Variables[listVariables[i]] = GetValue(L"Variables", listVariables[i], L"");
 	}
-	delete [] buffer;
+}
+
+//==============================================================================
+/**
+** Sets a new value for the variable. The DynamicVariables must be set to 1 in the
+** meter/measure for the changes to be applied.
+** 
+** \param strVariable
+** \param strValue
+** \return void
+*/
+void CConfigParser::SetVariable(const std::wstring& strVariable, const std::wstring& strValue)
+{
+	m_Variables[strVariable] = strValue;
 }
 
 /*
@@ -148,32 +132,12 @@ void CConfigParser::ReadVariables()
 const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue)
 {
 	static std::wstring result;
-	DWORD size;
-	TCHAR* buffer;
-	int bufferSize = 4096;
-	bool loop;
 
-	do 
+	result = GetValue(section, key, defValue);
+	if (result == defValue)
 	{
-		loop = false;
-		buffer = new TCHAR[bufferSize];
-		buffer[0] = 0;
-		
-		size = GetPrivateProfileString(section, key, defValue, buffer, bufferSize, m_Filename.c_str());
-
-		if (size == bufferSize - 1)
-		{
-			// Buffer too small, increase it and retry
-			delete [] buffer;
-			bufferSize *= 2;
-			loop = true;
-		}
-
-	} while(loop);
-
-	result = buffer;
-
-	delete [] buffer;
+		return result;
+	}
 
 	// Check Litestep vars
 	if (Rainmeter && !Rainmeter->GetDummyLitestep())
@@ -188,13 +152,13 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		}
 	}
 
-	result = CRainmeter::ExpandEnvironmentVariables(result);
+	CRainmeter::ExpandEnvironmentVariables(result);
 
 	// Check for variables (#VAR#)
 	size_t start = 0;
 	size_t end = std::wstring::npos;
 	size_t pos = std::wstring::npos;
-	loop = true;
+	bool loop = true;
 
 	do 
 	{
@@ -229,9 +193,59 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		}
 	} while(loop);
 
+	// Check for measures ([Measure])
+	if (!m_Measures.empty())
+	{
+		start = 0;
+		end = std::wstring::npos;
+		pos = std::wstring::npos;
+		loop = true;
+		do 
+		{
+			pos = result.find(L'[', start);
+			if (pos != std::wstring::npos)
+			{
+				size_t end = result.find(L']', pos + 1);
+				if (end != std::wstring::npos)
+				{
+					std::wstring var(result.begin() + pos + 1, result.begin() + end);
+
+					std::map<std::wstring, CMeasure*>::iterator iter = m_Measures.find(var);
+					if (iter != m_Measures.end())
+					{
+						std::wstring value = (*iter).second->GetStringValue(true, 1, 1, false);
+
+						// Measure found, replace it with the value
+						result.replace(result.begin() + pos, result.begin() + end + 1, value);
+						start = pos + value.length();
+					}
+					else
+					{
+						start = end;
+					}
+				}
+				else
+				{
+					loop = false;
+				}
+			}
+			else
+			{
+				loop = false;
+			}
+		} while(loop);
+	}
+
 	return result;
 }
 
+void CConfigParser::AddMeasure(CMeasure* pMeasure)
+{
+	if (pMeasure)
+	{
+		m_Measures[pMeasure->GetName()] = pMeasure;
+	}
+}
 
 double CConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 {
@@ -405,3 +419,159 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 
 	return Color(A, R, G, B);
 }
+
+//==============================================================================
+/**
+** Reads the given ini file and fills the m_Values and m_Keys maps.
+** 
+** \param iniFile The ini file to be read.
+*/
+void CConfigParser::ReadIniFile(const std::wstring& iniFile)
+{
+	m_Keys.clear();
+	m_Values.clear();
+
+	// Get all the sections (i.e. different meters)
+	WCHAR* items = new WCHAR[MAX_LINE_LENGTH];
+	int size = MAX_LINE_LENGTH;
+
+	// Get all the sections
+	while(true)
+	{
+		items[0] = 0;
+		int res = GetPrivateProfileString( NULL, NULL, NULL, items, size, iniFile.c_str());
+		if (res == 0) return;		// File not found
+		if (res != size - 2) break;		// Fits in the buffer
+
+		delete [] items;
+		size *= 2;
+		items = new WCHAR[size];
+	};
+
+	// Read the sections
+	WCHAR* pos = items;
+	while(wcslen(pos) > 0)
+	{
+		m_Keys[pos] = std::vector<std::wstring>();
+		pos = pos + wcslen(pos) + 1;
+	}
+
+	// Read the keys and values
+	int bufferSize = MAX_LINE_LENGTH;
+	TCHAR* buffer = new TCHAR[bufferSize];
+
+	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.begin();
+	for ( ; iter != m_Keys.end(); iter++)
+	{
+		while(true)
+		{
+			items[0] = 0;
+			int res = GetPrivateProfileString((*iter).first.c_str(), NULL, NULL, items, size, iniFile.c_str());
+			if (res != size - 2) break;		// Fits in the buffer
+
+			delete [] items;
+			size *= 2;
+			items = new WCHAR[size];
+		};
+
+		WCHAR* pos = items;
+		while(wcslen(pos) > 0)
+		{
+			std::wstring strKey = pos;
+
+			while(true)
+			{
+				buffer[0] = 0;
+				int res = GetPrivateProfileString((*iter).first.c_str(), strKey.c_str(), L"", buffer, bufferSize, iniFile.c_str());
+				if (res != size - 2) break;		// Fits in the buffer
+
+				delete [] buffer;
+				bufferSize *= 2;
+				buffer = new WCHAR[size];
+			};
+
+			SetValue((*iter).first, strKey, buffer);
+
+			pos = pos + wcslen(pos) + 1;
+		}
+	}
+	delete [] buffer;
+	delete [] items;
+}
+
+//==============================================================================
+/**
+** Sets the value for the key under the given section.
+** 
+** \param strSection The name of the section.
+** \param strKey The name of the key.
+** \param strValue The value for the key.
+*/
+void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue)
+{
+	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.find(strSection);
+	if (iter != m_Keys.end())
+	{
+		std::vector<std::wstring>& array = (*iter).second;
+		array.push_back(strKey);
+	}
+	m_Values[strSection + L"::" + strKey] = strValue;
+}
+
+//==============================================================================
+/**
+** Returns the value for the key under the given section.
+** 
+** \param strSection The name of the section.
+** \param strKey The name of the key.
+** \param strDefault The default value for the key.
+** \return The value for the key.
+*/
+const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault)
+{
+	stdext::hash_map<std::wstring, std::wstring>::iterator iter = m_Values.find(strSection + L"::" + strKey);
+	if (iter != m_Values.end())
+	{
+		return (*iter).second;
+	}
+
+	return strDefault;
+}
+
+//==============================================================================
+/**
+** Returns the list of sections in the ini file.
+** 
+** \return A list of sections in the ini file.
+*/
+std::vector<std::wstring> CConfigParser::GetSections()
+{
+	std::vector<std::wstring> listSections;
+
+	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.begin();
+	for ( ; iter != m_Keys.end(); iter++)
+	{
+		listSections.push_back((*iter).first);
+	}
+
+	return listSections;
+}
+
+//==============================================================================
+/**
+** Returns a list of keys under the given section.
+** 
+** \param strSection The name of the section.
+** \return A list of keys under the given section.
+*/
+std::vector<std::wstring> CConfigParser::GetKeys(const std::wstring& strSection)
+{
+	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.find(strSection);
+	if (iter != m_Keys.end())
+	{
+		return (*iter).second;
+	}
+
+	return std::vector<std::wstring>();
+}
+

@@ -689,6 +689,20 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		// Quit needs to be delayed since it crashes if done during Update()
 		PostMessage(m_Window, WM_DELAYED_QUIT, (WPARAM)NULL, (LPARAM)NULL);
 		break;
+
+	case BANG_SETVARIABLE:
+		pos = wcschr(arg, ' ');
+		if (pos != NULL)
+		{
+			std::wstring strVariable(arg, pos - arg);
+			std::wstring strValue(pos + 1);
+			m_Parser.SetVariable(strVariable, strValue);
+		}
+		else
+		{
+			DebugLog(L"Cannot parse parameters for !RainmeterSetVariable");
+		}
+		break;
 	}
 }
 
@@ -1338,7 +1352,7 @@ void CMeterWindow::ReadSkin()
 		}
 		else
 		{
-			wsprintf(buffer, L"%i.%i", appVersion / 1000000, appVersion / 1000);
+			wsprintf(buffer, L"%i.%i", appVersion / 1000000, (appVersion / 1000) % 1000);
 		}
 		text = L"This skin needs Rainmeter version ";
 		text += buffer;
@@ -1428,6 +1442,8 @@ void CMeterWindow::ReadSkin()
 					measure->SetName(pos);
 					measure->ReadConfig(m_Parser, pos);
 					m_Measures.push_back(measure);
+
+					m_Parser.AddMeasure(measure);
 				}
 				catch (CError& error)
 				{
@@ -1857,6 +1873,10 @@ void CMeterWindow::Update(bool nodraw)
 	{
 		try
 		{
+			if ((*i)->HasDynamicVariables())
+			{
+				(*i)->ReadConfig(m_Parser, (*i)->GetName());
+			}
 			(*i)->Update();
 		}
 		catch (CError& error)
@@ -1871,6 +1891,10 @@ void CMeterWindow::Update(bool nodraw)
 	{
 		try
 		{
+			if ((*j)->HasDynamicVariables())
+			{
+				(*j)->ReadConfig((*j)->GetName());
+			}
 			(*j)->Update();
 		}
 		catch (CError& error)
