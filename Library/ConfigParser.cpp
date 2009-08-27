@@ -107,7 +107,7 @@ void CConfigParser::ReadVariables()
 
 	for (size_t i = 0; i < listVariables.size(); i++)
 	{
-		SetVariable(listVariables[i], GetValue(L"Variables", listVariables[i], L""));
+		SetVariable(listVariables[i], ReadString(L"Variables", listVariables[i].c_str(), L"", false));
 	}
 }
 
@@ -217,7 +217,7 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 					std::map<std::wstring, CMeasure*>::iterator iter = m_Measures.find(var);
 					if (iter != m_Measures.end())
 					{
-						std::wstring value = (*iter).second->GetStringValue(true, 1, 1, false);
+						std::wstring value = (*iter).second->GetStringValue(true, 1, 5, false);
 
 						// Measure found, replace it with the value
 						result.replace(result.begin() + pos, result.begin() + end + 1, value);
