@@ -198,7 +198,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	m_AutoScale = 0!=parser.ReadInt(section, L"AutoScale", 0);
 	m_ClipString = 0!=parser.ReadInt(section, L"ClipString", 0);
 
-	m_FontSize = parser.ReadInt(section, L"FontSize", 10);
+	m_FontSize = parser.ReadFormula(section, L"FontSize", 10);
 	m_NumOfDecimals = parser.ReadInt(section, L"NumOfDecimals", -1);
 
 	m_Angle = (Gdiplus::REAL)parser.ReadFloat(section, L"Angle", 0.0);

@@ -23,6 +23,7 @@
 #include "Litestep.h"
 #include "Rainmeter.h"
 #include <TCHAR.H>
+#include <algorithm>
 
 extern CRainmeter* Rainmeter;
 
@@ -67,29 +68,29 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 	// Set the default variables
 	if (pRainmeter)
 	{
-		m_Variables[L"PROGRAMPATH"] = pRainmeter->GetPath();
-		m_Variables[L"SETTINGSPATH"] = pRainmeter->GetSettingsPath();
-		m_Variables[L"SKINSPATH"] = pRainmeter->GetSkinPath();
-		m_Variables[L"PLUGINSPATH"] = pRainmeter->GetPluginPath();
-		m_Variables[L"CURRENTPATH"] = CRainmeter::ExtractPath(filename);
-		m_Variables[L"ADDONSPATH"] = pRainmeter->GetPath() + L"Addons\\";
+		SetVariable(L"PROGRAMPATH", pRainmeter->GetPath());
+		SetVariable(L"SETTINGSPATH", pRainmeter->GetSettingsPath());
+		SetVariable(L"SKINSPATH", pRainmeter->GetSkinPath());
+		SetVariable(L"PLUGINSPATH", pRainmeter->GetPluginPath());
+		SetVariable(L"CURRENTPATH", CRainmeter::ExtractPath(filename));
+		SetVariable(L"ADDONSPATH", pRainmeter->GetPath() + L"Addons\\");
 
 		RECT workArea;
 		SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
 
 		TCHAR buffer[256];
 		swprintf(buffer, L"%i", workArea.left);
-		m_Variables[L"WORKAREAX"] = buffer;
+		SetVariable(L"WORKAREAX", buffer);
 		swprintf(buffer, L"%i", workArea.top);
-		m_Variables[L"WORKAREAY"] = buffer;
+		SetVariable(L"WORKAREAY", buffer);
 		swprintf(buffer, L"%i", workArea.right - workArea.left);
-		m_Variables[L"WORKAREAWIDTH"] = buffer;
+		SetVariable(L"WORKAREAWIDTH", buffer);
 		swprintf(buffer, L"%i", workArea.bottom - workArea.top);
-		m_Variables[L"WORKAREAHEIGHT"] = buffer;
+		SetVariable(L"WORKAREAHEIGHT", buffer);
 		swprintf(buffer, L"%i", GetSystemMetrics(SM_CXSCREEN));
-		m_Variables[L"SCREENAREAWIDTH"] = buffer;
+		SetVariable(L"SCREENAREAWIDTH", buffer);
 		swprintf(buffer, L"%i", GetSystemMetrics(SM_CYSCREEN));
-		m_Variables[L"SCREENAREAHEIGHT"] = buffer;
+		SetVariable(L"SCREENAREAHEIGHT", buffer);
 	}
 
 	ReadVariables();
@@ -106,7 +107,7 @@ void CConfigParser::ReadVariables()
 
 	for (size_t i = 0; i < listVariables.size(); i++)
 	{
-		m_Variables[listVariables[i]] = GetValue(L"Variables", listVariables[i], L"");
+		SetVariable(listVariables[i], GetValue(L"Variables", listVariables[i], L""));
 	}
 }
 
@@ -121,7 +122,9 @@ void CConfigParser::ReadVariables()
 */
 void CConfigParser::SetVariable(const std::wstring& strVariable, const std::wstring& strValue)
 {
-	m_Variables[strVariable] = strValue;
+	std::wstring strTmp(strVariable);
+	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
+	m_Variables[strTmp] = strValue;
 }
 
 /*
@@ -168,9 +171,10 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 			size_t end = result.find(L'#', pos + 1);
 			if (end != std::wstring::npos)
 			{
-				std::wstring var(result.begin() + pos + 1, result.begin() + end);
+				std::wstring strTmp(result.begin() + pos + 1, result.begin() + end);
+				std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
 				
-				std::map<std::wstring, std::wstring>::iterator iter = m_Variables.find(var);
+				std::map<std::wstring, std::wstring>::iterator iter = m_Variables.find(strTmp);
 				if (iter != m_Variables.end())
 				{
 					// Variable found, replace it with the value
@@ -452,7 +456,10 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile)
 	WCHAR* pos = items;
 	while(wcslen(pos) > 0)
 	{
-		m_Keys[pos] = std::vector<std::wstring>();
+		std::wstring strTmp(pos);
+		std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
+		m_Keys[strTmp] = std::vector<std::wstring>();
+
 		pos = pos + wcslen(pos) + 1;
 	}
 
@@ -509,13 +516,18 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile)
 */
 void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue)
 {
-	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.find(strSection);
+	std::wstring strTmpSection(strSection);
+	std::wstring strTmpKey(strKey);
+	std::transform(strTmpSection.begin(), strTmpSection.end(), strTmpSection.begin(), ::tolower);
+	std::transform(strTmpKey.begin(), strTmpKey.end(), strTmpKey.begin(), ::tolower);
+
+	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.find(strTmpSection);
 	if (iter != m_Keys.end())
 	{
 		std::vector<std::wstring>& array = (*iter).second;
-		array.push_back(strKey);
+		array.push_back(strTmpKey);
 	}
-	m_Values[strSection + L"::" + strKey] = strValue;
+	m_Values[strTmpSection + L"::" + strTmpKey] = strValue;
 }
 
 //==============================================================================
@@ -529,7 +541,10 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 */
 const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault)
 {
-	stdext::hash_map<std::wstring, std::wstring>::iterator iter = m_Values.find(strSection + L"::" + strKey);
+	std::wstring strTmp(strSection + L"::" + strKey);
+	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
+
+	stdext::hash_map<std::wstring, std::wstring>::iterator iter = m_Values.find(strTmp);
 	if (iter != m_Values.end())
 	{
 		return (*iter).second;
@@ -566,7 +581,10 @@ std::vector<std::wstring> CConfigParser::GetSections()
 */
 std::vector<std::wstring> CConfigParser::GetKeys(const std::wstring& strSection)
 {
-	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.find(strSection);
+	std::wstring strTmp(strSection);
+	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
+
+	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.find(strTmp);
 	if (iter != m_Keys.end())
 	{
 		return (*iter).second;
