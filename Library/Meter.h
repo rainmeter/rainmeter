@@ -126,6 +126,7 @@ protected:
 	Gdiplus::Color m_SolidColor2;
 	Gdiplus::REAL m_SolidAngle;
 	bool m_AntiAlias;								// If true, the line is antialiased
+	bool m_Initialized;
 
 	CMeterWindow* m_MeterWindow;
 };

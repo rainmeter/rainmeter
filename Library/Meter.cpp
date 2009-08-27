@@ -63,6 +63,7 @@ CMeter::CMeter(CMeterWindow* meterWindow)
 	m_MeterWindow = meterWindow;
 	m_AntiAlias = false;
 	m_DynamicVariables = false;
+	m_Initialized = false;
 }
 
 /*
@@ -85,6 +86,7 @@ CMeter::~CMeter()
 */
 void CMeter::Initialize()
 {
+	m_Initialized = true;
 }
 
 /*
@@ -280,11 +282,12 @@ void CMeter::ReadConfig(const WCHAR* section)
 		DebugLog(L"The transformation matrix has incorrect number of values:", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
 	}
 
-
+/* Are these necessary?
 	if (m_W == 0 || m_H == 0)
 	{
         throw CError(std::wstring(L"The meter ") + section + L" has zero dimensions.", __LINE__, __FILE__);
 	}
+*/
 }
 
 /*

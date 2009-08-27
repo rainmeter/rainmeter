@@ -2590,15 +2590,7 @@ LRESULT CMeterWindow::OnNcHitTest(WPARAM wParam, LPARAM lParam)
 LRESULT CMeterWindow::OnSettingChange(WPARAM wParam, LPARAM lParam) 
 {
 	m_Monitors.count = 0;
-
-	try
-	{
-		Refresh(false);
-	}
-	catch (CError& error)
-	{
-		MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-	}
+	PostMessage(m_Window, WM_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
 
 	// Commented: Calling DefWindowProc seems to cause crash sometimes
 	return 0;  // DefWindowProc(m_Window, m_Message, wParam, lParam);

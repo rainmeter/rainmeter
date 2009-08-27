@@ -164,6 +164,11 @@ void CMeterString::ReadConfig(const WCHAR* section)
 {
 	WCHAR tmpName[256];
 
+	// Store the current font values so we know if the font needs to be updated
+	std::wstring oldFontFace = m_FontFace;
+	int oldFontSize = m_FontSize;
+	TEXTSTYLE oldStyle = m_Style;
+
 	// Read common configs
 	CMeter::ReadConfig(section);
 
@@ -285,6 +290,14 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	if (-1 != parser.ReadInt(section, L"W", -1) && -1 != parser.ReadInt(section, L"H", -1))
 	{
 		m_DimensionsDefined = true;
+	}
+
+	if (m_Initialized &&
+		(oldFontFace != m_FontFace ||
+		oldFontSize != m_FontSize ||
+		oldStyle != m_Style))
+	{
+		Initialize();	// Recreate the font
 	}
 }
 
