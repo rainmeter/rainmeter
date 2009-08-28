@@ -37,7 +37,9 @@ using namespace Gdiplus;
 CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow)
 {
 	m_Bitmap = NULL;
-	m_DimensionsDefined = false;
+	m_WidthDefined = false;
+	m_HeightDefined = false;
+	m_PreserveAspectRatio = false;
 	m_hBuffer = NULL;
 	m_Modified.dwHighDateTime = 0;
 	m_Modified.dwLowDateTime = 0;
@@ -155,10 +157,28 @@ void CMeterImage::LoadImage(bool bLoadAlways)
 
 		if (m_Bitmap)
 		{
-			if (!m_DimensionsDefined)
+			// Calculate size of the meter
+			int imageW = m_Bitmap->GetWidth();
+			int imageH = m_Bitmap->GetHeight();
+
+			if (m_WidthDefined)
 			{
-				m_W = m_Bitmap->GetWidth();
-				m_H = m_Bitmap->GetHeight();
+				if (!m_HeightDefined)
+				{
+					m_H = (imageW == 0) ? 0 : m_W * imageH / imageW;
+				}
+			}
+			else
+			{
+				if (m_HeightDefined)
+				{
+					m_W = (imageH == 0) ? 0 : m_H * imageW / imageH;
+				}
+				else
+				{
+					m_W = imageW;
+					m_H = imageH;
+				}
 			}
 		}
 	}
@@ -189,9 +209,15 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 	}
 	m_ImageName = m_MeterWindow->MakePathAbsolute(m_Path + m_ImageName);
 
-	if (-1 != parser.ReadInt(section, L"W", -1) && -1 != parser.ReadInt(section, L"H", -1))
+	m_PreserveAspectRatio = 0!=parser.ReadInt(section, L"PreserveAspectRatio", 0);
+
+	if (-1 != parser.ReadInt(section, L"W", -1))
 	{
-		m_DimensionsDefined = true;
+		m_WidthDefined = true;
+	}
+	if (-1 != parser.ReadInt(section, L"H", -1))
+	{
+		m_HeightDefined = true;
 	}
 }
 
@@ -240,8 +266,41 @@ bool CMeterImage::Draw(Graphics& graphics)
 		// Copy the image over the doublebuffer
 		int x = GetX();
 		int y = GetY();
-		Rect r(x, y, m_W, m_H);
-		graphics.DrawImage(m_Bitmap, r, 0, 0, m_Bitmap->GetWidth(), m_Bitmap->GetHeight(), UnitPixel);
+		int imageW = m_Bitmap->GetWidth();
+		int imageH = m_Bitmap->GetHeight();
+
+		int drawW, drawH;
+
+		if (m_PreserveAspectRatio)
+		{
+			if (imageW == 0 || imageH == 0 || m_W == 0 || m_H == 0) return true;
+
+			REAL imageRatio = imageW / (REAL)imageH;
+			REAL meterRatio = m_W / (REAL)m_H;
+
+			if (imageRatio >= meterRatio)
+			{
+				drawW = m_W;
+				drawH = m_W * imageH / imageW;
+			}
+			else
+			{
+				drawW = m_H * imageW / imageH;
+				drawH = m_H;
+			}
+
+			// Centering
+			x += (m_W - drawW) / 2;
+			y += (m_H - drawH) / 2;
+		}
+		else
+		{
+			drawW = m_W;
+			drawH = m_H;
+		}
+
+		Rect r(x, y, drawW, drawH);
+		graphics.DrawImage(m_Bitmap, r, 0, 0, imageW, imageH, UnitPixel);
 	}
 
 	return true;

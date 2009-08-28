@@ -45,7 +45,9 @@ private:
 	Gdiplus::Bitmap* m_Bitmap;			// The bitmap
 	std::wstring m_ImageName;			// Name of the image
 	std::wstring m_Path;
-	bool m_DimensionsDefined;
+	bool m_WidthDefined;
+	bool m_HeightDefined;
+	bool m_PreserveAspectRatio;			// If true, aspect ratio of the image is preserved when the image is scaled
 	HGLOBAL m_hBuffer;
 	FILETIME m_Modified;
 };
