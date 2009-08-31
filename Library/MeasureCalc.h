@@ -39,6 +39,13 @@ private:
 
 	static hqStrMap* c_VarMap;
 	static int m_Loop;
+
+	//======================================
+	//MattKing Code Edit :: Start
+	static double m_Random; 
+	static double m_LowBound;
+	static double m_HighBound;
+	//MattKing Code Edit :: End
 };
 
 #endif

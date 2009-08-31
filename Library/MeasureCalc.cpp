@@ -20,9 +20,18 @@
 
 #include "MeasureCalc.h"
 #include "Rainmeter.h"
+#include <cstdlib> 
+#include <ctime> 
 
 hqStrMap* CMeasureCalc::c_VarMap = NULL;
 int CMeasureCalc::m_Loop = 0;
+
+//======================================
+//MattKing Code Edit :: Start
+double CMeasureCalc::m_Random = 0;
+double CMeasureCalc::m_LowBound = 0;
+double CMeasureCalc::m_HighBound = 0;
+//MattKing Code Edit :: End
 
 /*
 ** CMeasureCalc
@@ -33,6 +42,12 @@ int CMeasureCalc::m_Loop = 0;
 CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow) : CMeasure(meterWindow)
 {
 	m_Parser = MathParser_Create(NULL);
+
+	//======================================
+	//MattKing Code Edit :: Start
+	srand((unsigned)time(0)); 
+	//MattKing Code Edit :: End
+
 }
 
 /*
@@ -99,6 +114,7 @@ void CMeasureCalc::UpdateVariableMap(CMeterWindow& meterWindow)
 	// Add the counter
 	double counter = meterWindow.GetUpdateCounter();
 	StrMap_AddString(c_VarMap, "Counter", &counter);
+	StrMap_AddString(c_VarMap, "Random", &m_Random);
 }
 
 /*
@@ -112,4 +128,17 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	CMeasure::ReadConfig(parser, section);
 
 	m_Formula = parser.ReadString(section, L"Formula", L"");
+
+	//MattKing Code Edit :: Start
+	m_LowBound = parser.ReadFloat(section, L"LowBound", 95);
+	m_HighBound = parser.ReadFloat(section, L"HighBound", 400);
+
+    int range = (m_HighBound - m_LowBound); 
+
+    m_Random = m_LowBound + int(range * rand()/(RAND_MAX + 1.0));
+	m_Random = m_LowBound + int(range * rand()/(RAND_MAX + 1.0)); 
+	// For some reason I need two calls to really randomize the number
+	// I don't have a fix as I dont know much about random numbers
+
+	//MattKing Code Edit :: End
 }
