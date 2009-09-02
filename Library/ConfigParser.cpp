@@ -136,6 +136,19 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 {
 	static std::wstring result;
 
+	if (section == NULL)
+	{
+		section = L"";
+	}
+	if (key == NULL)
+	{
+		key = L"";
+	}
+	if (defValue == NULL)
+	{
+		defValue = L"";
+	}
+
 	result = GetValue(section, key, defValue);
 	if (result == defValue)
 	{

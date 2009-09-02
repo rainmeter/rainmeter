@@ -154,6 +154,7 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 
 	// Try to open the key
+	if(m_RegKey) RegCloseKey(m_RegKey);
     RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey); 
 }
 

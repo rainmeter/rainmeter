@@ -106,6 +106,7 @@ void CMeterString::Initialize()
 {
 	CMeter::Initialize();
 
+	if(m_FontFamily) delete m_FontFamily;
 	m_FontFamily = new FontFamily(m_FontFace.c_str());
 	Status status = m_FontFamily->GetLastStatus();
 	if(Ok != status)
@@ -140,10 +141,12 @@ void CMeterString::Initialize()
 
 	if (m_FontFamily)
 	{
+		if(m_Font) delete m_Font;
 		m_Font = new Gdiplus::Font(m_FontFamily, size, style);
 	}
 	else
 	{
+		if(m_Font) delete m_Font;
 		m_Font = new Gdiplus::Font(FontFamily::GenericSansSerif(), size, style);
 	}
 
