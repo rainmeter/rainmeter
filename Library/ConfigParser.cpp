@@ -458,7 +458,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile)
 		items[0] = 0;
 		int res = GetPrivateProfileString( NULL, NULL, NULL, items, size, iniFile.c_str());
 		if (res == 0) return;		// File not found
-		if (res != size - 2) break;		// Fits in the buffer
+		if (res < size - 2) break;		// Fits in the buffer
 
 		delete [] items;
 		size *= 2;
@@ -487,7 +487,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile)
 		{
 			items[0] = 0;
 			int res = GetPrivateProfileString((*iter).first.c_str(), NULL, NULL, items, size, iniFile.c_str());
-			if (res != size - 2) break;		// Fits in the buffer
+			if (res < size - 2) break;		// Fits in the buffer
 
 			delete [] items;
 			size *= 2;
@@ -503,11 +503,11 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile)
 			{
 				buffer[0] = 0;
 				int res = GetPrivateProfileString((*iter).first.c_str(), strKey.c_str(), L"", buffer, bufferSize, iniFile.c_str());
-				if (res != size - 2) break;		// Fits in the buffer
+				if (res < bufferSize - 2) break;		// Fits in the buffer
 
 				delete [] buffer;
 				bufferSize *= 2;
-				buffer = new WCHAR[size];
+				buffer = new WCHAR[bufferSize];
 			};
 
 			SetValue((*iter).first, strKey, buffer);
