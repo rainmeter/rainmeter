@@ -34,18 +34,18 @@ public:
 	static void UpdateVariableMap(CMeterWindow& meterWindow);
 	
 private:
+	void RandomFormulaReplace();
 	std::wstring m_Formula;
+	std::wstring m_FormulaHolder;
 	hqMathParser* m_Parser;
 
 	static hqStrMap* c_VarMap;
 	static int m_Loop;
 
-	//======================================
-	//MattKing Code Edit :: Start
-	static double m_Random; 
-	static double m_LowBound;
-	static double m_HighBound;
-	//MattKing Code Edit :: End
+	int m_UpdateRandom;
+	int m_LowBound;
+	int m_HighBound;
+
 };
 
 #endif

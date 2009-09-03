@@ -165,6 +165,13 @@ CMeterWindow::~CMeterWindow()
 
 	if(m_Window) DestroyWindow(m_Window);
 
+	//===================================================
+	// Matt King Code
+	if(m_FontCollection) delete m_FontCollection;
+	// Matt King Code End
+	//===================================================
+
+
 	FreeLibrary(m_User32Library);
 
 	m_InstanceCount--;
@@ -1405,6 +1412,103 @@ void CMeterWindow::ReadSkin()
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", m_WindowUpdate);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", m_TransitionUpdate);
+
+	//=====================================================
+	//Matt King Code
+	// Checking for localfonts
+	std::wstring localFont1 = m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"");
+	// If there is a local font we want to load it
+	if(!localFont1.empty())
+	{
+		// We want to check the fonts folder first
+		// !!!!!!! - We may want to fix the method in which I get the path to
+		// Rainmeter/fonts
+		std::wstring szFontFile = m_Rainmeter->GetPath().c_str();
+		
+		m_FontCollection = new Gdiplus::PrivateFontCollection();
+		int nResults = 0;
+		nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
+		
+		// It wasn't found in the fonts folder, check the local folder
+		if(nResults != Ok)
+		{
+			szFontFile = m_SkinPath; // Get the local path	
+			szFontFile += m_SkinName;
+			szFontFile += L"\\";
+			szFontFile += localFont1;
+
+			nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
+			
+			// The font wasn't found, check full path.
+			if(nResults != Ok)
+			{
+				szFontFile = localFont1.c_str();
+				nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
+				if(nResults != Ok)
+				{
+					std::wstring error = L"Error: Couldn't load font file: ";
+					error += localFont1;
+					DebugLog(error.c_str());
+				}
+			}
+
+		}
+		// Here we are checking to see if there are more than one local font
+		// to be loaded. They will be named LocalFont2, LocalFont 3, etc.
+		WCHAR tmpName[256];
+		int i = 2;
+		bool loop = true;
+		do 
+		{
+			swprintf(tmpName, L"LocalFont%i", i);
+			std::wstring LocalFont = m_Parser.ReadString(L"Rainmeter", tmpName, L"");
+			// There is a key called LocalFont%i
+			if (!LocalFont.empty())
+			{
+				// We want to check the fonts folder first
+				// !!!!!!! - We may want to fix the method in which I get the path to
+				// Rainmeter/fonts
+				std::wstring szFontFile = m_Rainmeter->GetPath().c_str();
+				szFontFile  += L"Fonts\\";
+				szFontFile  += LocalFont;
+				
+				int nResults = 0;
+				nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
+				
+				// It wasn't found in the fonts folder, check the local folder
+				if(nResults != Ok)
+				{
+					szFontFile = m_SkinPath; // Get the local path
+					szFontFile += m_SkinName;
+					szFontFile += LocalFont;
+					nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
+					
+					// The font wasn't found, check full path.
+					if(nResults != Ok)
+					{
+						szFontFile = LocalFont.c_str();
+						nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
+						// The font file wasn't found anywhere, log the error
+						if(nResults != Ok)
+						{
+							std::wstring error = L"Error: Couldn't load font file: ";
+							error += LocalFont;
+							DebugLog(error.c_str());
+						}
+					} 
+				}
+			}
+			// There were no extra Local Fonts found: exit loop.
+			else
+			{
+				loop = false;
+			}
+			i++;
+		} while(loop);
+	}
+	//Matt King code end
+	//=====================================================
+
 
 	// Create the meters and measures
 

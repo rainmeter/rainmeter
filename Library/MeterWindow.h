@@ -175,6 +175,11 @@ public:
 
 	std::wstring MakePathAbsolute(std::wstring path);
 
+	//========================================================
+	//MattKing Code
+	Gdiplus::PrivateFontCollection* GetPrivateFontCollection(){ return m_FontCollection; }
+	//MattKing Code End
+
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -316,6 +321,11 @@ private:
 	CRainmeter* m_Rainmeter;					// Pointer to the main object
 
 	static int m_InstanceCount;
+
+	//==========================================================
+	//MattKing code
+	Gdiplus::PrivateFontCollection* m_FontCollection;
+	//MattKing end
 };
 
 #endif

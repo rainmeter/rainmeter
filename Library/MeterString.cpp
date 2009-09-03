@@ -109,11 +109,29 @@ void CMeterString::Initialize()
 	if(m_FontFamily) delete m_FontFamily;
 	m_FontFamily = new FontFamily(m_FontFace.c_str());
 	Status status = m_FontFamily->GetLastStatus();
+	//===================================================
+	/* Matt King Code */
+	// It couldn't find the font family
+	// Therefore we look in the privatefontcollection of this meters MeterWindow
 	if(Ok != status)
 	{
-		delete m_FontFamily;
-		m_FontFamily = NULL;
+		m_FontFamily = new FontFamily(m_FontFace.c_str(), m_MeterWindow->GetPrivateFontCollection());
+		status = m_FontFamily->GetLastStatus();
+
+		// It couldn't find the font family: Log it.
+		if(Ok != status)
+		{	
+			std::wstring error = L"Error: Couldn't load font family: ";
+			error += m_FontFace;
+			DebugLog(error.c_str());
+			
+			delete m_FontFamily;
+			m_FontFamily = NULL;
+		}
+		
 	}
+	/* Matt King  end */
+	//===================================================
 
 	FontStyle style = FontStyleRegular;
 

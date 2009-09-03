@@ -22,16 +22,11 @@
 #include "Rainmeter.h"
 #include <cstdlib> 
 #include <ctime> 
+#include <sstream>  
+using namespace std;
 
 hqStrMap* CMeasureCalc::c_VarMap = NULL;
 int CMeasureCalc::m_Loop = 0;
-
-//======================================
-//MattKing Code Edit :: Start
-double CMeasureCalc::m_Random = 0;
-double CMeasureCalc::m_LowBound = 0;
-double CMeasureCalc::m_HighBound = 0;
-//MattKing Code Edit :: End
 
 /*
 ** CMeasureCalc
@@ -42,11 +37,8 @@ double CMeasureCalc::m_HighBound = 0;
 CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow) : CMeasure(meterWindow)
 {
 	m_Parser = MathParser_Create(NULL);
-
-	//======================================
-	//MattKing Code Edit :: Start
 	srand((unsigned)time(0)); 
-	//MattKing Code Edit :: End
+	rand();
 
 }
 
@@ -78,6 +70,10 @@ bool CMeasureCalc::Update()
 	if (!CMeasure::PreUpdate()) return false;
 
 	m_Parser->Parameters = c_VarMap;
+	if(m_UpdateRandom > 0)
+	{
+		RandomFormulaReplace();
+	}
 
 	char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(m_Formula.c_str()).c_str(), &m_Value);
 	if (errMsg != NULL)
@@ -114,7 +110,6 @@ void CMeasureCalc::UpdateVariableMap(CMeterWindow& meterWindow)
 	// Add the counter
 	double counter = meterWindow.GetUpdateCounter();
 	StrMap_AddString(c_VarMap, "Counter", &counter);
-	StrMap_AddString(c_VarMap, "Random", &m_Random);
 }
 
 /*
@@ -128,17 +123,40 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	CMeasure::ReadConfig(parser, section);
 
 	m_Formula = parser.ReadString(section, L"Formula", L"");
+	// Hold onto the formula, we are going to change it
+	m_FormulaHolder = m_Formula;
 
-	//MattKing Code Edit :: Start
-	m_LowBound = parser.ReadFloat(section, L"LowBound", 95);
-	m_HighBound = parser.ReadFloat(section, L"HighBound", 400);
+	m_LowBound = parser.ReadFloat(section, L"LowBound", 0);
+	m_HighBound = parser.ReadFloat(section, L"HighBound", 100);
+	m_UpdateRandom = parser.ReadInt(section, L"UpdateRandom", 0);
 
-    int range = (m_HighBound - m_LowBound); 
+	RandomFormulaReplace();
+}
 
-    m_Random = m_LowBound + int(range * rand()/(RAND_MAX + 1.0));
-	m_Random = m_LowBound + int(range * rand()/(RAND_MAX + 1.0)); 
-	// For some reason I need two calls to really randomize the number
-	// I don't have a fix as I dont know much about random numbers
+/*
+** RandomFormulaReplace
+**
+** This replaces the word Random in m_Formula with a random number
+**
+*/
+void CMeasureCalc::RandomFormulaReplace()
+{
+	//To implement random numbers the word "Random" in the string
+	//formula is being replaced by the random number value
+	m_Formula = m_FormulaHolder;
+	int loc = m_Formula.find(L"Random");
 
-	//MattKing Code Edit :: End
+	while(loc > -1)
+	{
+		int range = (m_HighBound - m_LowBound); 
+		int randNumber = m_LowBound + (range * rand()/(RAND_MAX + 1.0)); 
+
+		std::wstring randomNumberString= (L"");
+		wchar_t buf[8];
+		_itow(randNumber,buf,10);
+		randomNumberString.append(buf);
+
+		m_Formula.replace(loc, 6, randomNumberString);
+		loc = m_Formula.find(L"Random");
+	}
 }
