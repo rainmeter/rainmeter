@@ -197,9 +197,9 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
-	m_ImageName = parser.ReadString(section, L"ImageName", parser.ReadString(m_StyleName.c_str(), L"ImageName", L"").c_str(),true,true);
+	m_ImageName = parser.ReadString(section, L"ImageName", L"");
 	
-	m_Path = parser.ReadString(section, L"Path", parser.ReadString(m_StyleName.c_str(), L"Path", L"").c_str(),true,true);
+	m_Path = parser.ReadString(section, L"Path", L"");
 	if (!m_Path.empty())
 	{
 		if (m_Path[m_Path.length() - 1] != L'\\')
@@ -209,7 +209,7 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 	}
 	m_ImageName = m_MeterWindow->MakePathAbsolute(m_Path + m_ImageName);
 
-	m_PreserveAspectRatio = 0!=parser.ReadInt(section, L"PreserveAspectRatio", 0!=parser.ReadInt(m_StyleName.c_str(), L"PreserveAspectRatio", 0));
+	m_PreserveAspectRatio = 0!=parser.ReadInt(section, L"PreserveAspectRatio", 0);
 
 	if (-1 != parser.ReadInt(section, L"W", -1))
 	{

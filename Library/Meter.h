@@ -128,8 +128,6 @@ protected:
 	bool m_AntiAlias;								// If true, the line is antialiased
 	bool m_Initialized;
 
-	std::wstring m_StyleName;
-
 	CMeterWindow* m_MeterWindow;
 };
 

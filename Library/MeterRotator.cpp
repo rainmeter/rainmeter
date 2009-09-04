@@ -87,16 +87,16 @@ void CMeterRotator::ReadConfig(const WCHAR* section)
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
-	m_ImageName = parser.ReadString(section, L"ImageName", parser.ReadString(m_StyleName.c_str(), L"ImageName", L"").c_str(),true,true);
+	m_ImageName = parser.ReadString(section, L"ImageName", L"");
 	m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
 
-	m_OffsetX = parser.ReadFloat(section, L"OffsetX", parser.ReadFloat(m_StyleName.c_str(), L"OffsetX", 0.0));
-	m_OffsetY = parser.ReadFloat(section, L"OffsetY", parser.ReadFloat(m_StyleName.c_str(), L"OffsetY", 0.0));
-	m_StartAngle = parser.ReadFloat(section, L"StartAngle", parser.ReadFloat(m_StyleName.c_str(), L"StartAngle", 0.0));
-	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", parser.ReadFloat(m_StyleName.c_str(), L"RotationAngle", 6.2832));
+	m_OffsetX = parser.ReadFloat(section, L"OffsetX", 0.0);
+	m_OffsetY = parser.ReadFloat(section, L"OffsetY", 0.0);
+	m_StartAngle = parser.ReadFloat(section, L"StartAngle", 0.0);
+	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 6.2832);
 
-	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", parser.ReadInt(m_StyleName.c_str(), L"ValueReminder", 0));		// Typo
-	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", parser.ReadInt(m_StyleName.c_str(), L"ValueRemainder", m_ValueRemainder));
+	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", 0);		// Typo
+	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", m_ValueRemainder);
 }
 
 /*

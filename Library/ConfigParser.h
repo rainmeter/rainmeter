@@ -40,7 +40,7 @@ public:
 	void AddMeasure(CMeasure* pMeasure);
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue);
 
-	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true, bool bReplaceDefValue = false);
+	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
 	double ReadFormula(LPCTSTR section, LPCTSTR key, double defValue);
 	int ReadInt(LPCTSTR section, LPCTSTR key, int defValue);

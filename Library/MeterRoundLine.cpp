@@ -73,24 +73,21 @@ void CMeterRoundLine::ReadConfig(const WCHAR* section)
 	CMeter::ReadConfig(section);
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
-	
 
-	parser.ReadString(section, L"Prefix", parser.ReadString(m_StyleName.c_str(), L"Prefix", L"").c_str(),true,true);
-
-	m_LineWidth = parser.ReadFloat(section, L"LineWidth", parser.ReadFloat(m_StyleName.c_str(), L"LineWidth", 1.0));
-	m_LineLength = parser.ReadFloat(section, L"LineLength", parser.ReadFloat(m_StyleName.c_str(), L"LineLength", 20.0));
-	m_LineStart = parser.ReadFloat(section, L"LineStart", parser.ReadFloat(m_StyleName.c_str(), L"LineStart", -1.0));
-	m_StartAngle = parser.ReadFloat(section, L"StartAngle", parser.ReadFloat(m_StyleName.c_str(), L"StartAngle", 0.0));
-	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", parser.ReadFloat(m_StyleName.c_str(), L"RotationAngle", 6.2832));
-	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", parser.ReadInt(m_StyleName.c_str(), L"ValueReminder", 0));		// Typo
-	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", parser.ReadInt(m_StyleName.c_str(), L"ValueRemainder", m_ValueRemainder));
-	m_LineColor = parser.ReadColor(section, L"LineColor", parser.ReadColor(m_StyleName.c_str(), L"LineColor", Color::Black));
-	m_Solid = 0!=parser.ReadInt(section, L"Solid", 0!=parser.ReadInt(m_StyleName.c_str(), L"Solid", 0));
-	m_CntrlAngle = 0!=parser.ReadInt(section, L"ControlAngle", 0!=parser.ReadInt(m_StyleName.c_str(), L"ControlAngle", 1));
-	m_CntrlLineStart = 0!=parser.ReadInt(section, L"ControlStart", 0!=parser.ReadInt(m_StyleName.c_str(), L"ControlStart", 0));
-	m_CntrlLineLength = 0!=parser.ReadInt(section, L"ControlLength", 0!=parser.ReadInt(m_StyleName.c_str(), L"ControlLength", 0));
-	m_LineStartShift = parser.ReadFloat(section, L"StartShift", parser.ReadFloat(m_StyleName.c_str(), L"StartShift", 0));
-	m_LineLengthShift = parser.ReadFloat(section, L"LengthShift", parser.ReadFloat(m_StyleName.c_str(), L"LengthShift", 0));
+	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
+	m_LineLength = parser.ReadFloat(section, L"LineLength", 20.0);
+	m_LineStart = parser.ReadFloat(section, L"LineStart", -1.0);
+	m_StartAngle = parser.ReadFloat(section, L"StartAngle", 0.0);
+	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 6.2832);
+	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", 0);		// Typo
+	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", m_ValueRemainder);
+	m_LineColor = parser.ReadColor(section, L"LineColor", Color::Black);
+	m_Solid = 0!=parser.ReadInt(section, L"Solid", 0);
+	m_CntrlAngle = 0!=parser.ReadInt(section, L"ControlAngle", 1);
+	m_CntrlLineStart = 0!=parser.ReadInt(section, L"ControlStart", 0);
+	m_CntrlLineLength = 0!=parser.ReadInt(section, L"ControlLength", 0);
+	m_LineStartShift = parser.ReadFloat(section, L"StartShift", 0);
+	m_LineLengthShift = parser.ReadFloat(section, L"LengthShift", 0);
 }
 
 /*

@@ -38,7 +38,6 @@
 #include "MeasureNet.h"
 #include "MeasurePlugin.h"
 #include "MeterButton.h"
-#include <algorithm>
 
 using namespace Gdiplus;
 
@@ -1522,7 +1521,7 @@ void CMeterWindow::ReadSkin()
 	{
 		int res = GetPrivateProfileString( NULL, NULL, NULL, items, size, iniFile.c_str());
 		if (res == 0) return;		// File not found
-		if (res != size - 2) break;		// Fits in the buffer
+		if (res < size - 2) break;		// Fits in the buffer
 
 		delete [] items;
 		size *= 2;
@@ -1536,12 +1535,11 @@ void CMeterWindow::ReadSkin()
 			wcsicmp(L"Variables", pos) != 0 &&
 			wcsicmp(L"Metadata", pos) != 0)
 		{
-			std::wstring meterName, measureName, styleName;
+			std::wstring meterName, measureName;
 
 			// Check if the item is a meter or a measure (or perhaps something else)
 			measureName = m_Parser.ReadString(pos, L"Measure", L"");
 			meterName = m_Parser.ReadString(pos, L"Meter", L"");
-			styleName = m_Parser.ReadString(pos, L"Style", L"");
 			if (measureName.length() > 0)
 			{
 				try
@@ -1574,10 +1572,6 @@ void CMeterWindow::ReadSkin()
 					MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 				}
 			} 
-			else if (styleName.length() > 0)
-			{
-				//ignore sections with Style= in them.
-			}
 			else
 			{
 				// It's something else
@@ -3386,4 +3380,3 @@ std::wstring CMeterWindow::MakePathAbsolute(std::wstring path)
 
 	return root + path;
 }
-

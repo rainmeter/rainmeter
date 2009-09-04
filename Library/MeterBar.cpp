@@ -94,17 +94,17 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
-	m_Color = parser.ReadColor(section, L"BarColor", parser.ReadColor(m_StyleName.c_str(), L"BarColor", Color::Green));
+	m_Color = parser.ReadColor(section, L"BarColor", Color::Green);
 
-	m_ImageName = parser.ReadString(section, L"BarImage", parser.ReadString(m_StyleName.c_str(), L"BarImage", L"").c_str(),true,true);
+	m_ImageName = parser.ReadString(section, L"BarImage", L"");
 	m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
 
-	m_Border = parser.ReadInt(section, L"BarBorder", parser.ReadInt(m_StyleName.c_str(), L"BarBorder", 0));
+	m_Border = parser.ReadInt(section, L"BarBorder", 0);
 
 	m_Flip = parser.ReadInt(section, L"Flip", 0) == 1;
 
 	std::wstring orientation;
-	orientation = parser.ReadString(section, L"BarOrientation", parser.ReadString(m_StyleName.c_str(), L"BarOrientation", L"VERTICAL").c_str(),true,true);
+	orientation = parser.ReadString(section, L"BarOrientation", L"VERTICAL");
 
 	if(_wcsicmp(L"VERTICAL", orientation.c_str()) == 0)
 	{
