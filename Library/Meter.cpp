@@ -212,6 +212,10 @@ void CMeter::ReadConfig(const WCHAR* section)
 {
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
+	// The MeterStyle defines a template where the values are read if the meter doesn't have it itself
+	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
+	parser.SetStyleTemplate(style);
+
 	const std::wstring& x = parser.ReadString(section, L"X", L"0");
 	if (x.size() > 0)
 	{

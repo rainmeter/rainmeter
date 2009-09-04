@@ -44,7 +44,6 @@ private:
 	int m_UpdateRandom;
 	int m_LowBound;
 	int m_HighBound;
-
 };
 
 #endif

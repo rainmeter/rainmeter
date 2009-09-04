@@ -149,7 +149,15 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		defValue = L"";
 	}
 
-	result = GetValue(section, key, defValue);
+	std::wstring strDefault = defValue;
+
+	// If the template is defined read the value first from there.
+	if (!m_StyleTemplate.empty())
+	{
+		strDefault = GetValue(m_StyleTemplate, key, strDefault);
+	}
+
+	result = GetValue(section, key, strDefault);
 	if (result == defValue)
 	{
 		return result;

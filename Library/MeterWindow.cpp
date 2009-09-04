@@ -1563,12 +1563,8 @@ void CMeterWindow::ReadSkin()
 				{
 					MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 				}
-			} 
-			else
-			{
-				// It's something else
-                throw CError(std::wstring(L"Section [") + pos + L"] is not a meter or a measure!", __LINE__, __FILE__);
-            }
+			}
+			// If it's not a meter or measure it will be ignored
 		}
 		pos = pos + wcslen(pos) + 1;
 	}

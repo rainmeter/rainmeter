@@ -39,6 +39,7 @@ public:
 	void Initialize(LPCTSTR filename, CRainmeter* pRainmeter);
 	void AddMeasure(CMeasure* pMeasure);
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue);
+	void SetStyleTemplate(const std::wstring& strStyle) { m_StyleTemplate = strStyle; }
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
@@ -65,6 +66,8 @@ private:
 
 	hqMathParser* m_Parser;
 	std::map<std::wstring, CMeasure*> m_Measures;
+
+	std::wstring m_StyleTemplate;
 
 	stdext::hash_map<std::wstring, std::vector<std::wstring> > m_Keys;
 	stdext::hash_map<std::wstring, std::wstring> m_Values;
