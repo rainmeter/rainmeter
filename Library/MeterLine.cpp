@@ -86,7 +86,7 @@ void CMeterLine::ReadConfig(const WCHAR* section)
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
-	int lineCount = parser.ReadInt(section, L"LineCount", 1);
+	int lineCount = parser.ReadInt(section, L"LineCount", parser.ReadInt(m_StyleName.c_str(), L"LineCount", 1));
 
 	for (i = 0; i < lineCount; i++)
 	{
@@ -99,7 +99,7 @@ void CMeterLine::ReadConfig(const WCHAR* section)
 			swprintf(tmpName, L"LineColor%i", i + 1);
 		}
 
-		m_Colors.push_back(parser.ReadColor(section, tmpName, Color::White));
+		m_Colors.push_back(parser.ReadColor(section, tmpName, parser.ReadColor(m_StyleName.c_str(), tmpName, Color::White)));
 
 		if (i == 0)
 		{
@@ -110,21 +110,21 @@ void CMeterLine::ReadConfig(const WCHAR* section)
 			swprintf(tmpName, L"Scale%i", i + 1);
 		}
 
-		m_ScaleValues.push_back(parser.ReadFloat(section, tmpName, 1.0));
+		m_ScaleValues.push_back(parser.ReadFloat(section, tmpName, parser.ReadFloat(m_StyleName.c_str(), tmpName, 1.0)));
 
 		if (i != 0)
 		{
 			swprintf(tmpName, L"MeasureName%i", i + 1);
-			m_MeasureNames.push_back(parser.ReadString(section, tmpName, L""));
+			m_MeasureNames.push_back(parser.ReadString(section, tmpName, parser.ReadString(m_StyleName.c_str(), tmpName, L"").c_str(),true,true));
 		}
 	}
 
-	m_Flip = 0!=parser.ReadInt(section, L"Flip", 0);
-	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0);
-	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
-	m_HorizontalLines = 0!=parser.ReadInt(section, L"HorizontalLines", 0);
-	m_HorizontalColor = parser.ReadColor(section, L"HorizontalColor", Color::Black);			// This is left here for backwards compatibility
-	m_HorizontalColor = parser.ReadColor(section, L"HorizontalLineColor", m_HorizontalColor);	// This is what it should be
+	m_Flip = 0!=parser.ReadInt(section, L"Flip", 0!=parser.ReadInt(m_StyleName.c_str(), L"Flip", 0));
+	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0!=parser.ReadInt(m_StyleName.c_str(), L"AutoScale", 0));
+	m_LineWidth = parser.ReadFloat(section, L"LineWidth", parser.ReadFloat(m_StyleName.c_str(), L"LineWidth", 1.0));
+	m_HorizontalLines = 0!=parser.ReadInt(section, L"HorizontalLines",  0!=parser.ReadInt(m_StyleName.c_str(), L"HorizontalLines", 0));
+	m_HorizontalColor = parser.ReadColor(section, L"HorizontalColor", parser.ReadColor(m_StyleName.c_str(), L"HorizontalColor", Color::Black));			// This is left here for backwards compatibility
+	m_HorizontalColor = parser.ReadColor(section, L"HorizontalLineColor", parser.ReadColor(m_StyleName.c_str(), L"HorizontalLineColor", m_HorizontalColor));	// This is what it should be
 }
 
 /*

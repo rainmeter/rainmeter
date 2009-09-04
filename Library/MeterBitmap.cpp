@@ -168,20 +168,20 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
-	m_ImageName = parser.ReadString(section, L"BitmapImage", L"");
+	m_ImageName = parser.ReadString(section, L"BitmapImage", parser.ReadString(m_StyleName.c_str(), L"BitmapImage", L"").c_str(),true,true);
 	m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
 
-	m_FrameCount = parser.ReadInt(section, L"BitmapFrames", 1);
-	m_ZeroFrame = 0!=parser.ReadInt(section, L"BitmapZeroFrame", 0);
+	m_FrameCount = parser.ReadInt(section, L"BitmapFrames", parser.ReadInt(m_StyleName.c_str(), L"BitmapFrames", 1));
+	m_ZeroFrame = 0!=parser.ReadInt(section, L"BitmapZeroFrame", 0!=parser.ReadInt(m_StyleName.c_str(), L"BitmapZeroFrame", 0));
 
-	m_Separation = parser.ReadInt(section, L"BitmapSeparation", 0);
-	m_Extend = 0!=parser.ReadInt(section, L"BitmapExtend", 0);
-	m_Digits = parser.ReadInt(section, L"BitmapDigits", 0);
+	m_Separation = parser.ReadInt(section, L"BitmapSeparation", parser.ReadInt(m_StyleName.c_str(), L"BitmapSeparation", 0));
+	m_Extend = 0!=parser.ReadInt(section, L"BitmapExtend", 0!=parser.ReadInt(m_StyleName.c_str(), L"BitmapExtend", 0));
+	m_Digits = parser.ReadInt(section, L"BitmapDigits", parser.ReadInt(m_StyleName.c_str(), L"BitmapDigits", 0));
 
-	m_TransitionFrameCount = parser.ReadInt(section, L"BitmapTransitionFrames", 0);
+	m_TransitionFrameCount = parser.ReadInt(section, L"BitmapTransitionFrames", parser.ReadInt(m_StyleName.c_str(), L"BitmapTransitionFrames", 0));
 
 	std::wstring align;
-	align = parser.ReadString(section, L"BitmapAlign", L"LEFT");
+	align = parser.ReadString(section, L"BitmapAlign", parser.ReadString(m_StyleName.c_str(), L"BitmapAlign", L"LEFT").c_str(),true,true);
 	
 	if(_wcsicmp(align.c_str(), L"LEFT") == 0)
 	{

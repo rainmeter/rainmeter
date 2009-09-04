@@ -143,22 +143,22 @@ void CMeterHistogram::ReadConfig(const WCHAR* section)
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
-	m_PrimaryColor = parser.ReadColor(section, L"PrimaryColor", Color::Green);
-	m_SecondaryColor = parser.ReadColor(section, L"SecondaryColor", Color::Red);
-	m_BothColor = parser.ReadColor(section, L"BothColor", Color::Yellow);
+	m_PrimaryColor = parser.ReadColor(section, L"PrimaryColor", parser.ReadColor(m_StyleName.c_str(), L"PrimaryColor", Color::Green));
+	m_SecondaryColor = parser.ReadColor(section, L"SecondaryColor", parser.ReadColor(m_StyleName.c_str(), L"SecondaryColor", Color::Red));
+	m_BothColor = parser.ReadColor(section, L"BothColor", parser.ReadColor(m_StyleName.c_str(), L"BothColor", Color::Yellow));
 
-	m_SecondaryMeasureName = parser.ReadString(section, L"SecondaryMeasureName", L"");
+	m_SecondaryMeasureName = parser.ReadString(section, L"SecondaryMeasureName", parser.ReadString(m_StyleName.c_str(), L"SecondaryMeasureName", L"").c_str(),true,true);
 
-	m_PrimaryImageName = parser.ReadString(section, L"PrimaryImage", L"");
+	m_PrimaryImageName = parser.ReadString(section, L"PrimaryImage", parser.ReadString(m_StyleName.c_str(), L"PrimaryImage", L"").c_str(),true,true);
 	m_PrimaryImageName = m_MeterWindow->MakePathAbsolute(m_PrimaryImageName);
 
-	m_SecondaryImageName = parser.ReadString(section, L"SecondaryImage", L"");
+	m_SecondaryImageName = parser.ReadString(section, L"SecondaryImage", parser.ReadString(m_StyleName.c_str(), L"SecondaryImage", L"").c_str(),true,true);
 	m_SecondaryImageName = m_MeterWindow->MakePathAbsolute(m_SecondaryImageName);
 
-	m_BothImageName = parser.ReadString(section, L"BothImage", L"");
+	m_BothImageName = parser.ReadString(section, L"BothImage", parser.ReadString(m_StyleName.c_str(), L"BothImage", L"").c_str(),true,true);
 	m_BothImageName = m_MeterWindow->MakePathAbsolute(m_BothImageName);
 
-	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0);
+	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0!=parser.ReadInt(m_StyleName.c_str(), L"AutoScale", 0));
 	m_Flip = 0!=parser.ReadInt(section, L"Flip", 0);
 }
 

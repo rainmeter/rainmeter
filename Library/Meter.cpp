@@ -212,6 +212,8 @@ void CMeter::ReadConfig(const WCHAR* section)
 {
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
+	m_StyleName = parser.ReadString(section, L"MeterStyle", L"");
+
 	const std::wstring& x = parser.ReadString(section, L"X", L"0");
 	if (x.size() > 0)
 	{
@@ -248,29 +250,30 @@ void CMeter::ReadConfig(const WCHAR* section)
 		}
 	}
 
-	m_W = (int)parser.ReadFormula(section, L"W", 1.0);
-	m_H = (int)parser.ReadFormula(section, L"H", 1.0);
 
-	m_Hidden = 0!=parser.ReadInt(section, L"Hidden", 0);
-	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", m_SolidBevel);
+	m_W = (int)parser.ReadFormula(section, L"W", (int)parser.ReadFormula(m_StyleName.c_str(), L"W", 1.0));
+	m_H = (int)parser.ReadFormula(section, L"H", (int)parser.ReadFormula(m_StyleName.c_str(), L"H", 1.0));
 
-	m_SolidColor = parser.ReadColor(section, L"SolidColor", Color(0, 0, 0, 0));
-	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor);
-	m_SolidAngle = (Gdiplus::REAL)parser.ReadFloat(section, L"GradientAngle", 0.0);
+	m_Hidden = 0!=parser.ReadInt(section, L"Hidden", 0!=parser.ReadInt(m_StyleName.c_str(), L"Hidden", 0));
+	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", (BEVELTYPE)parser.ReadInt(m_StyleName.c_str(), L"BevelType", m_SolidBevel));
 
-	m_RightMouseDownAction = parser.ReadString(section, L"RightMouseDownAction", L"");
-	m_LeftMouseDownAction = parser.ReadString(section, L"LeftMouseDownAction", L"");
-	m_RightMouseUpAction = parser.ReadString(section, L"RightMouseUpAction", L"");
-	m_LeftMouseUpAction = parser.ReadString(section, L"LeftMouseUpAction", L"");
-	m_MouseOverAction = parser.ReadString(section, L"MouseOverAction", L"");
-	m_MouseLeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"");
+	m_SolidColor = parser.ReadColor(section, L"SolidColor", parser.ReadColor(m_StyleName.c_str(), L"SolidColor", Color(0, 0, 0, 0)));
+	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", parser.ReadColor(m_StyleName.c_str(), L"SolidColor2", m_SolidColor));
+	m_SolidAngle = (Gdiplus::REAL)parser.ReadFloat(section, L"GradientAngle", (Gdiplus::REAL)parser.ReadFloat(m_StyleName.c_str(), L"GradientAngle", 0.0));
 
-	m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
+	m_RightMouseDownAction = parser.ReadString(section, L"RightMouseDownAction", parser.ReadString(m_StyleName.c_str(), L"RightMouseDownAction", L"").c_str(),true,true);
+	m_LeftMouseDownAction = parser.ReadString(section, L"LeftMouseDownAction", parser.ReadString(m_StyleName.c_str(), L"LeftMouseDownAction", L"").c_str(),true,true);
+	m_RightMouseUpAction = parser.ReadString(section, L"RightMouseUpAction", parser.ReadString(m_StyleName.c_str(), L"RightMouseUpAction", L"").c_str(),true,true);
+	m_LeftMouseUpAction = parser.ReadString(section, L"LeftMouseUpAction", parser.ReadString(m_StyleName.c_str(), L"LeftMouseUpAction", L"").c_str(),true,true);
+	m_MouseOverAction = parser.ReadString(section, L"MouseOverAction", parser.ReadString(m_StyleName.c_str(), L"MouseOverAction", L"").c_str(),true,true);
+	m_MouseLeaveAction = parser.ReadString(section, L"MouseLeaveAction", parser.ReadString(m_StyleName.c_str(), L"MouseLeaveAction", L"").c_str(),true,true);
 
-	m_UpdateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
+	m_MeasureName = parser.ReadString(section, L"MeasureName", parser.ReadString(m_StyleName.c_str(), L"MeasureName", L"").c_str(),true,true);
+
+	m_UpdateDivider = parser.ReadInt(section, L"UpdateDivider", parser.ReadInt(m_StyleName.c_str(), L"UpdateDivider", 1));
 	m_UpdateCounter = m_UpdateDivider;
-	m_AntiAlias = 0!=parser.ReadInt(section, L"AntiAlias", 0);
-	m_DynamicVariables = 0!=parser.ReadInt(section, L"DynamicVariables", 0);
+	m_AntiAlias = 0!=parser.ReadInt(section, L"AntiAlias", 0!=parser.ReadInt(m_StyleName.c_str(), L"AntiAlias", 0));
+	m_DynamicVariables = 0!=parser.ReadInt(section, L"DynamicVariables", 0!=parser.ReadInt(m_StyleName.c_str(), L"DynamicVariables", 0));
 
 	std::vector<Gdiplus::REAL> matrix = parser.ReadFloats(section, L"TransformationMatrix");
 	if (matrix.size() == 6)

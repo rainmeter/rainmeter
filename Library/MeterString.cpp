@@ -109,6 +109,7 @@ void CMeterString::Initialize()
 	if(m_FontFamily) delete m_FontFamily;
 	m_FontFamily = new FontFamily(m_FontFace.c_str());
 	Status status = m_FontFamily->GetLastStatus();
+
 	//===================================================
 	/* Matt King Code */
 	// It couldn't find the font family
@@ -212,25 +213,27 @@ void CMeterString::ReadConfig(const WCHAR* section)
 		}
 		i++;
 	} while(loop);
+	
+	
+	m_Color = parser.ReadColor(section, L"FontColor", parser.ReadColor(m_StyleName.c_str(), L"FontColor", Color::Black));
+	m_EffectColor = parser.ReadColor(section, L"FontEffectColor", parser.ReadColor(m_StyleName.c_str(), L"FontEffectColor", Color::Black));
 
-	m_Color = parser.ReadColor(section, L"FontColor", Color::Black);
-	m_EffectColor = parser.ReadColor(section, L"FontEffectColor", Color::Black);
+	m_Prefix = parser.ReadString(section, L"Prefix", parser.ReadString(m_StyleName.c_str(), L"Prefix", L"").c_str(),true,true);
+	m_Postfix = parser.ReadString(section, L"Postfix", parser.ReadString(m_StyleName.c_str(), L"Postfix", L"").c_str(),true,true);
+	m_Text = parser.ReadString(section, L"Text", parser.ReadString(m_StyleName.c_str(), L"Text", L"").c_str(),true,true);
 
-	m_Prefix = parser.ReadString(section, L"Prefix", L"");
-	m_Postfix = parser.ReadString(section, L"Postfix", L"");
-	m_Text = parser.ReadString(section, L"Text", L"");
+	m_Percentual = 0!=parser.ReadInt(section, L"Percentual", 0!=parser.ReadInt(m_StyleName.c_str(), L"Percentual", 0));
+	m_AutoScale = 0!=parser.ReadInt(section, L"AutoScale", 0!=parser.ReadInt(m_StyleName.c_str(), L"AutoScale", 0));
+	m_ClipString = 0!=parser.ReadInt(section, L"ClipString", 0!=parser.ReadInt(m_StyleName.c_str(), L"ClipString", 0));
 
-	m_Percentual = 0!=parser.ReadInt(section, L"Percentual", 0);
-	m_AutoScale = 0!=parser.ReadInt(section, L"AutoScale", 0);
-	m_ClipString = 0!=parser.ReadInt(section, L"ClipString", 0);
+	m_FontSize = parser.ReadFormula(section, L"FontSize", parser.ReadFormula(m_StyleName.c_str(), L"FontSize", 10));
 
-	m_FontSize = parser.ReadFormula(section, L"FontSize", 10);
-	m_NumOfDecimals = parser.ReadInt(section, L"NumOfDecimals", -1);
+	m_NumOfDecimals = parser.ReadInt(section, L"NumOfDecimals", parser.ReadInt(m_StyleName.c_str(), L"NumOfDecimals", -1));
 
-	m_Angle = (Gdiplus::REAL)parser.ReadFloat(section, L"Angle", 0.0);
+	m_Angle = (Gdiplus::REAL)parser.ReadFloat(section, L"Angle", (Gdiplus::REAL)parser.ReadFloat(m_StyleName.c_str(), L"Angle",0.0));
 
 	std::wstring scale;
-	scale = parser.ReadString(section, L"Scale", L"1");
+	scale = parser.ReadString(section, L"Scale", parser.ReadString(m_StyleName.c_str(), L"Scale", L"1").c_str(),true,true);
 
 	if (wcschr(scale.c_str(), '.') == NULL)
 	{
@@ -242,10 +245,11 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	}
 	m_Scale = wcstod(scale.c_str(), NULL);
 
-	m_FontFace = parser.ReadString(section, L"FontFace", L"Arial");
+	m_FontFace = parser.ReadString(section, L"FontFace", parser.ReadString(m_StyleName.c_str(), L"FontFace", L"Arial").c_str(),true,true);
+
 
 	std::wstring align;
-	align = parser.ReadString(section, L"StringAlign", L"LEFT");
+	align = parser.ReadString(section, L"StringAlign", parser.ReadString(m_StyleName.c_str(), L"StringAlign", L"LEFT").c_str(),true,true);
 
 	if(_wcsicmp(align.c_str(), L"LEFT") == 0)
 	{
@@ -265,8 +269,8 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	}
 
 	std::wstring style;
-	style = parser.ReadString(section, L"StringStyle", L"NORMAL");
-
+	style = parser.ReadString(section, L"StringStyle", parser.ReadString(m_StyleName.c_str(), L"StringStyle", L"NORMAL").c_str(),true,true);
+	
 	if(_wcsicmp(style.c_str(), L"NORMAL") == 0)
 	{
 		m_Style = NORMAL;
@@ -289,8 +293,8 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	}
 
 	std::wstring effect;
-	effect = parser.ReadString(section, L"StringEffect", L"NONE");
-
+	effect = parser.ReadString(section, L"StringEffect", parser.ReadString(m_StyleName.c_str(), L"StringEffect", L"NONE").c_str(),true,true);
+	
 	if(_wcsicmp(effect.c_str(), L"NONE") == 0)
 	{
 		m_Effect = EFFECT_NONE;
@@ -321,6 +325,15 @@ void CMeterString::ReadConfig(const WCHAR* section)
 		Initialize();	// Recreate the font
 	}
 }
+
+/*
+** Update
+**
+** Updates the value(s) from the measures.
+**
+*/
+
+
 
 /*
 ** Update

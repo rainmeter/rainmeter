@@ -28,6 +28,8 @@
 #include <vector>
 #include "ConfigParser.h"
 #include "Export.h"
+#include <map>
+#include <utility> 
 
 #define BEGIN_MESSAGEPROC switch(uMsg) {
 #define MESSAGE(handler, msg) case msg: return Window?Window->handler(wParam, lParam):DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -112,6 +114,7 @@ typedef struct
 	//int index;					//Utility for enumeration
 	int vsT, vsL, vsH, vsW;
 } MULTIMONITOR_INFO;
+
 
 class CRainmeter;
 class CMeasure;
