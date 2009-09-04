@@ -26,7 +26,6 @@
 using namespace std;
 
 hqStrMap* CMeasureCalc::c_VarMap = NULL;
-int CMeasureCalc::m_Loop = 0;
 
 /*
 ** CMeasureCalc

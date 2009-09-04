@@ -109,8 +109,7 @@ void CMeterString::Initialize()
 	if(m_FontFamily) delete m_FontFamily;
 	m_FontFamily = new FontFamily(m_FontFace.c_str());
 	Status status = m_FontFamily->GetLastStatus();
-	//===================================================
-	/* Matt King Code */
+
 	// It couldn't find the font family
 	// Therefore we look in the privatefontcollection of this meters MeterWindow
 	if(Ok != status)
@@ -130,8 +129,6 @@ void CMeterString::Initialize()
 		}
 		
 	}
-	/* Matt King  end */
-	//===================================================
 
 	FontStyle style = FontStyleRegular;
 

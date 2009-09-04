@@ -51,11 +51,12 @@ using namespace Gdiplus;
 
 #define SNAPDISTANCE 10
 
-int CMeterWindow::m_InstanceCount = 0;
+int CMeterWindow::c_InstanceCount = 0;
 
 extern CRainmeter* Rainmeter;
 
 MULTIMONITOR_INFO CMeterWindow::m_Monitors = { 0 };
+
 /* 
 ** CMeterWindow
 **
@@ -132,8 +133,9 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 	m_User32Library = LoadLibrary(L"user32.dll");
 
 	m_UpdateCounter = 0;
+	m_FontCollection = NULL;
 
-	m_InstanceCount++;
+	c_InstanceCount++;
 }
 
 /* 
@@ -165,18 +167,13 @@ CMeterWindow::~CMeterWindow()
 
 	if(m_Window) DestroyWindow(m_Window);
 
-	//===================================================
-	// Matt King Code
 	if(m_FontCollection) delete m_FontCollection;
-	// Matt King Code End
-	//===================================================
-
 
 	FreeLibrary(m_User32Library);
 
-	m_InstanceCount--;
+	c_InstanceCount--;
 
-	if (m_InstanceCount == 0)
+	if (c_InstanceCount == 0)
 	{
 		BOOL Result;
 		int counter = 0;
@@ -1413,8 +1410,6 @@ void CMeterWindow::ReadSkin()
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", m_WindowUpdate);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", m_TransitionUpdate);
 
-	//=====================================================
-	//Matt King Code
 	// Checking for localfonts
 	std::wstring localFont1 = m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"");
 	// If there is a local font we want to load it
@@ -1506,9 +1501,6 @@ void CMeterWindow::ReadSkin()
 			i++;
 		} while(loop);
 	}
-	//Matt King code end
-	//=====================================================
-
 
 	// Create the meters and measures
 
