@@ -72,10 +72,14 @@ void CMeterBitmap::Initialize()
 	// Load the bitmaps if defined
 	if(!m_ImageName.empty())
 	{
+		if (m_Bitmap != NULL) delete m_Bitmap;
 		m_Bitmap = new Bitmap(m_ImageName.c_str());
 		Status status = m_Bitmap->GetLastStatus();
 		if(Ok != status)
 		{
+ 			delete m_Bitmap;
+			m_Bitmap = NULL;
+
             throw CError(std::wstring(L"Bitmap image not found: ") + m_ImageName, __LINE__, __FILE__);
 		}
 
@@ -163,6 +167,9 @@ bool CMeterBitmap::HitTest(int x, int y)
 */
 void CMeterBitmap::ReadConfig(const WCHAR* section)
 {
+	// Store the current values so we know if the image needs to be updated
+	std::wstring oldImageName = m_ImageName;
+
 	// Read common configs
 	CMeter::ReadConfig(section);
 
@@ -198,6 +205,12 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
 	else
 	{
         throw CError(std::wstring(L"No such BitmapAlign: ") + align, __LINE__, __FILE__);
+	}
+
+	if (m_Initialized &&
+		oldImageName != m_ImageName)
+	{
+		Initialize();  // Reload the image
 	}
 }
 

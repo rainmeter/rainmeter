@@ -81,10 +81,23 @@ void CMeterButton::Initialize()
 	// Load the bitmaps if defined
 	if(!m_ImageName.empty())
 	{
+		for (int i = 0; i < BUTTON_FRAMES; ++i)
+		{
+			if (m_Bitmaps[i] != NULL)
+			{
+				delete m_Bitmaps[i];
+				m_Bitmaps[i] = NULL;
+			}
+		}
+		if (m_Bitmap != NULL) delete m_Bitmap;
+
 		m_Bitmap = new Bitmap(m_ImageName.c_str());
 		Status status = m_Bitmap->GetLastStatus();
 		if(Ok != status)
 		{
+			delete m_Bitmap;
+			m_Bitmap = NULL;
+
             throw CError(std::wstring(L"Bitmap image not found: ") + m_ImageName, __LINE__, __FILE__);
 		}
 
@@ -130,6 +143,11 @@ void CMeterButton::Initialize()
 */
 void CMeterButton::ReadConfig(const WCHAR* section)
 {
+	// Store the current values so we know if the image needs to be updated
+	std::wstring oldImageName = m_ImageName;
+	int oldW = m_W;
+	int oldH = m_H;
+
 	// Read common configs
 	CMeter::ReadConfig(section);
 
@@ -139,6 +157,20 @@ void CMeterButton::ReadConfig(const WCHAR* section)
 	m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
 
 	m_Command = parser.ReadString(section, L"ButtonCommand", L"");
+
+	if (m_Initialized)
+	{
+		if (oldImageName != m_ImageName)
+		{
+			Initialize();  // Reload the image
+		}
+		else
+		{
+			// Reset to old dimensions
+			m_W = oldW;
+			m_H = oldH;
+		}
+	}
 }
 
 /*

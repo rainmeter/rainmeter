@@ -65,10 +65,14 @@ void CMeterRotator::Initialize()
 	// Load the bitmaps if defined
 	if(!m_ImageName.empty())
 	{
+		if (m_Bitmap != NULL) delete m_Bitmap;
 		m_Bitmap = new Bitmap(m_ImageName.c_str());
 		Status status = m_Bitmap->GetLastStatus();
 		if(Ok != status)
 		{
+			delete m_Bitmap;
+			m_Bitmap = NULL;
+
             throw CError(std::wstring(L"Bitmap image not found: ") + m_ImageName, __LINE__, __FILE__);
 		}
 	}
@@ -82,6 +86,9 @@ void CMeterRotator::Initialize()
 */
 void CMeterRotator::ReadConfig(const WCHAR* section)
 {
+	// Store the current values so we know if the image needs to be updated
+	std::wstring oldImageName = m_ImageName;
+
 	// Read common configs
 	CMeter::ReadConfig(section);
 
@@ -97,6 +104,12 @@ void CMeterRotator::ReadConfig(const WCHAR* section)
 
 	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", 0);		// Typo
 	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", m_ValueRemainder);
+
+	if (m_Initialized &&
+		oldImageName != m_ImageName)
+	{
+		Initialize();  // Reload the image
+	}
 }
 
 /*
