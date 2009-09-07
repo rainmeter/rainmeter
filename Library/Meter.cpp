@@ -264,8 +264,10 @@ void CMeter::ReadConfig(const WCHAR* section)
 
 	m_RightMouseDownAction = parser.ReadString(section, L"RightMouseDownAction", L"");
 	m_LeftMouseDownAction = parser.ReadString(section, L"LeftMouseDownAction", L"");
+	m_MiddleMouseDownAction = parser.ReadString(section, L"MiddleMouseDownAction", L"");
 	m_RightMouseUpAction = parser.ReadString(section, L"RightMouseUpAction", L"");
 	m_LeftMouseUpAction = parser.ReadString(section, L"LeftMouseUpAction", L"");
+	m_MiddleMouseUpAction = parser.ReadString(section, L"MiddleMouseUpAction", L"");
 	m_MouseOverAction = parser.ReadString(section, L"MouseOverAction", L"");
 	m_MouseLeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"");
 

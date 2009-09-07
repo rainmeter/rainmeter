@@ -1401,8 +1401,10 @@ void CMeterWindow::ReadSkin()
 
 	m_RightMouseDownAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseDownAction", L"");
 	m_LeftMouseDownAction = m_Parser.ReadString(L"Rainmeter", L"LeftMouseDownAction", L"");
+	m_MiddleMouseDownAction = m_Parser.ReadString(L"Rainmeter", L"MiddleMouseDownAction", L"");
 	m_RightMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseUpAction", L"");
 	m_LeftMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"LeftMouseUpAction", L"");
+	m_MiddleMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"MiddleMouseUpAction", L"");
 	m_MouseOverAction = m_Parser.ReadString(L"Rainmeter", L"MouseOverAction", L"");
 	m_MouseLeaveAction = m_Parser.ReadString(L"Rainmeter", L"MouseLeaveAction", L"");
 	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"");
@@ -2932,6 +2934,56 @@ LRESULT CMeterWindow::OnRightButtonUp(WPARAM wParam, LPARAM lParam)
 }
 
 /*
+** OnMiddleButtonDown
+**
+** Runs the action when middle mouse button is down
+**
+*/
+LRESULT CMeterWindow::OnMiddleButtonDown(WPARAM wParam, LPARAM lParam) 
+{
+	POINT pos;
+	pos.x = (SHORT)LOWORD(lParam); 
+	pos.y = (SHORT)HIWORD(lParam); 
+	if (m_Message == WM_NCMBUTTONDOWN)
+	{
+		// Transform the point to client rect
+		RECT rect;
+		GetWindowRect(m_Window, &rect);
+		pos.x = pos.x - rect.left;
+		pos.y = pos.y - rect.top;
+	}
+
+	DoAction(pos.x, pos.y, MOUSE_MMB_DOWN, false);
+
+	return 0;
+}
+
+/*
+** OnMiddleButtonUp
+**
+** Runs the action when middle mouse button is up
+**
+*/
+LRESULT CMeterWindow::OnMiddleButtonUp(WPARAM wParam, LPARAM lParam) 
+{
+	POINT pos;
+	pos.x = (SHORT)LOWORD(lParam); 
+	pos.y = (SHORT)HIWORD(lParam); 
+	if (m_Message == WM_NCMBUTTONUP)
+	{
+		// Transform the point to client rect
+		RECT rect;
+		GetWindowRect(m_Window, &rect);
+		pos.x = pos.x - rect.left;
+		pos.y = pos.y - rect.top;
+	}
+
+	DoAction(pos.x, pos.y, MOUSE_MMB_UP, false);
+
+	return 0;
+}
+
+/*
 ** OnContextMenu
 **
 ** Handles the context menu. The menu is recreated every time it is shown.
@@ -3012,6 +3064,24 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 				if (!((*j)->GetRightMouseUpAction().empty()))
 				{
 					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetRightMouseUpAction().c_str(), this);
+					return true;
+				}
+				break;
+
+			case MOUSE_MMB_DOWN:
+				
+				if (!((*j)->GetMiddleMouseDownAction().empty()))
+				{
+					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetMiddleMouseDownAction().c_str(), this);
+					return true;
+				}
+				break;
+
+			case MOUSE_MMB_UP:
+				
+				if (!((*j)->GetMiddleMouseUpAction().empty()))
+				{
+					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetMiddleMouseUpAction().c_str(), this);
 					return true;
 				}
 				break;
@@ -3220,6 +3290,10 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnLeftButtonDown, WM_LBUTTONDOWN)
 	MESSAGE(OnLeftButtonUp, WM_LBUTTONUP)
 	MESSAGE(OnLeftButtonUp, WM_NCLBUTTONUP)
+	MESSAGE(OnMiddleButtonDown, WM_NCMBUTTONDOWN)
+	MESSAGE(OnMiddleButtonDown, WM_MBUTTONDOWN)
+	MESSAGE(OnMiddleButtonUp, WM_MBUTTONUP)
+	MESSAGE(OnMiddleButtonUp, WM_NCMBUTTONUP)
 	MESSAGE(OnWindowPosChanging, WM_WINDOWPOSCHANGING)
 	MESSAGE(OnCopyData, WM_COPYDATA)
 	MESSAGE(OnDelayedExecute, WM_DELAYED_EXECUTE)

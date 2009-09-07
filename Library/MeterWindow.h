@@ -44,6 +44,8 @@ enum MOUSE
 	MOUSE_LMB_UP,
 	MOUSE_RMB_DOWN,
 	MOUSE_RMB_UP,
+	MOUSE_MMB_DOWN,
+	MOUSE_MMB_UP,
 	MOUSE_OVER,
 	MOUSE_LEAVE
 };
@@ -193,12 +195,14 @@ protected:
 	LRESULT OnContextMenu(WPARAM wParam, LPARAM lParam);
 	LRESULT OnLeftButtonDown(WPARAM wParam, LPARAM lParam);
 	LRESULT OnRightButtonDown(WPARAM wParam, LPARAM lParam);
+	LRESULT OnMiddleButtonDown(WPARAM wParam, LPARAM lParam);
 	LRESULT OnLeftButtonUp(WPARAM wParam, LPARAM lParam);
 	LRESULT OnRightButtonUp(WPARAM wParam, LPARAM lParam);
+	LRESULT OnMiddleButtonUp(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedExecute(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedRefresh(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedQuit(WPARAM wParam, LPARAM lParam);
-	LRESULT OnSettingChange(WPARAM wParam, LPARAM lParam); 
+	LRESULT OnSettingChange(WPARAM wParam, LPARAM lParam);  
 
 
 private:
@@ -232,8 +236,10 @@ private:
 
 	std::wstring m_RightMouseDownAction;		// Action to run when right mouse is pressed
 	std::wstring m_LeftMouseDownAction;			// Action to run when left mouse is pressed
+	std::wstring m_MiddleMouseDownAction;		// Action to run when middle mouse is pressed
 	std::wstring m_RightMouseUpAction;			// Action to run when right mouse is released
 	std::wstring m_LeftMouseUpAction;			// Action to run when left mouse is released
+	std::wstring m_MiddleMouseUpAction;			// Action to run when middle mouse is released
 	std::wstring m_MouseOverAction;				// Action to run when mouse goes over the window
 	std::wstring m_MouseLeaveAction;			// Action to run when mouse leaves the window
 	std::wstring m_OnRefreshAction;				// Action to run when window is initialized

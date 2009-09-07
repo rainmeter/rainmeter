@@ -37,6 +37,7 @@ using namespace Gdiplus;
 CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow)
 {
 	m_Bitmap = NULL;
+	m_NeedsUpdate = false;
 	m_WidthDefined = false;
 	m_HeightDefined = false;
 	m_PreserveAspectRatio = false;
@@ -71,7 +72,7 @@ void CMeterImage::Initialize()
 {
 	CMeter::Initialize();
 
-	LoadImage(true);
+	if (!m_DynamicVariables) LoadImage(true);
 }
 
 /*
@@ -197,8 +198,6 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
-	m_ImageName = parser.ReadString(section, L"ImageName", L"");
-	
 	m_Path = parser.ReadString(section, L"Path", L"");
 	if (!m_Path.empty())
 	{
@@ -207,7 +206,19 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 			m_Path += L"\\";
 		}
 	}
-	m_ImageName = m_MeterWindow->MakePathAbsolute(m_Path + m_ImageName);
+
+	if (!m_Measure)
+	{
+		std::wstring oldImageName = m_ImageName;
+
+		m_ImageName = parser.ReadString(section, L"ImageName", L"");
+		m_ImageName = m_MeterWindow->MakePathAbsolute(m_Path + m_ImageName);
+
+		if (m_DynamicVariables)
+		{
+			m_NeedsUpdate = (oldImageName != m_ImageName);
+		}
+	}
 
 	m_PreserveAspectRatio = 0!=parser.ReadInt(section, L"PreserveAspectRatio", 0);
 
@@ -229,24 +240,31 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 */
 bool CMeterImage::Update()
 {
-	if (CMeter::Update() && m_Measure)
+	if (CMeter::Update())
 	{
-		std::wstring val = m_Measure->GetStringValue(false, 1, 0, false);
-		if (!val.empty())
+		if (m_Measure)  //read from the measure
 		{
-			// Load the new image
-			val = m_MeterWindow->MakePathAbsolute(m_Path + val);
-			if (val != m_ImageName) 
+			std::wstring val = m_Measure->GetStringValue(false, 1, 0, false);
+			if (!val.empty())
 			{
-				m_ImageName = val;
-				LoadImage(true);
+				val = m_MeterWindow->MakePathAbsolute(m_Path + val);
+				if (val != m_ImageName)
+				{
+					m_ImageName = val;
+					LoadImage(true);
+				}
+				else
+				{
+					LoadImage(false);
+				}
 			}
-			else
-			{
-				LoadImage(false);
-			}
+			return true;
 		}
-		return true;
+		else if (m_DynamicVariables)  //read from the skin
+		{
+			LoadImage(m_NeedsUpdate);
+			return true;
+		}
 	}
 	return false;
 }

@@ -54,6 +54,8 @@ public:
 	std::wstring& GetRightMouseUpAction() { return m_RightMouseUpAction; };
 	std::wstring& GetLeftMouseDownAction() { return m_LeftMouseDownAction; };
 	std::wstring& GetLeftMouseUpAction() { return m_LeftMouseUpAction; };
+	std::wstring& GetMiddleMouseDownAction() { return m_MiddleMouseDownAction; };
+	std::wstring& GetMiddleMouseUpAction() { return m_MiddleMouseUpAction; };
 	std::wstring& GetMouseOverAction() { return m_MouseOverAction; };
 	std::wstring& GetMouseLeaveAction() { return m_MouseLeaveAction; };
 
@@ -111,6 +113,8 @@ protected:
 	std::wstring m_RightMouseUpAction;
 	std::wstring m_LeftMouseDownAction;
 	std::wstring m_LeftMouseUpAction;
+	std::wstring m_MiddleMouseDownAction;
+	std::wstring m_MiddleMouseUpAction;
 	std::wstring m_MouseOverAction;
 	std::wstring m_MouseLeaveAction;
 
