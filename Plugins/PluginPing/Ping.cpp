@@ -82,13 +82,18 @@ std::string ConvertToAscii(LPCTSTR str)
 {
 	std::string szAscii;
 
-	if (str)
+	if (str && *str)
 	{
-		size_t len = (wcslen(str) + 1);
-		char* tmpSz = new char[len * 2];
-		WideCharToMultiByte(CP_ACP, 0, str, -1, tmpSz, (int)len * 2, NULL, FALSE);
-		szAscii = tmpSz;
-		delete tmpSz;
+		int strLen = (int)wcslen(str) + 1;
+		int bufLen = WideCharToMultiByte(CP_ACP, 0, str, strLen, NULL, 0, NULL, NULL);
+		if (bufLen > 0)
+		{
+			char* tmpSz = new char[bufLen];
+			tmpSz[0] = 0;
+			WideCharToMultiByte(CP_ACP, 0, str, strLen, tmpSz, bufLen, NULL, NULL);
+			szAscii = tmpSz;
+			delete [] tmpSz;
+		}
 	}
 	return szAscii;
 }

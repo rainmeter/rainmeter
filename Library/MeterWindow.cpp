@@ -1514,7 +1514,7 @@ void CMeterWindow::ReadSkin()
 	while(true)
 	{
 		int res = GetPrivateProfileString( NULL, NULL, NULL, items, size, iniFile.c_str());
-		if (res == 0) return;		// File not found
+		if (res == 0) { delete [] items; return; }	// File not found
 		if (res < size - 2) break;		// Fits in the buffer
 
 		delete [] items;

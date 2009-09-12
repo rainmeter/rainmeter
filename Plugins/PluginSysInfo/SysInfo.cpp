@@ -226,13 +226,18 @@ std::wstring ConvertToWide(LPCSTR str)
 {
 	std::wstring szWide;
 
-	if (str)
+	if (str && *str)
 	{
-		size_t len = strlen(str) + 1;
-		WCHAR* wideSz = new WCHAR[len * 2];
-		MultiByteToWideChar(CP_ACP, 0, str, (int)len, wideSz, (int)len * 2);
-		szWide = wideSz;
-		delete wideSz;
+		int strLen = (int)strlen(str) + 1;
+		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
+		if (bufLen > 0)
+		{
+			WCHAR* wideSz = new WCHAR[bufLen];
+			wideSz[0] = 0;
+			MultiByteToWideChar(CP_ACP, 0, str, strLen, wideSz, bufLen);
+			szWide = wideSz;
+			delete [] wideSz;
+		}
 	}
 	return szWide;
 }

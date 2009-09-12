@@ -682,11 +682,11 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	WCHAR* pos = wcsrchr(tmpName, L'\\');
 	if(pos) 
 	{
-		*(pos + 1)='\0';
+		*(pos + 1) = L'\0';
 	} 
 	else 
 	{
-		tmpName[0]='\0';
+		tmpName[0] = L'\0';
 	}
 
 	if(!c_DummyLitestep) InitalizeLitestep();
@@ -1770,7 +1770,7 @@ PLATFORM CRainmeter::IsNT()
 	{
 		// You got NT
 		if(osvi.dwMajorVersion <= 4) return PLATFORM_NT4;
-		if(osvi.dwMajorVersion == 5) return PLATFORM_2K;
+		if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 0) return PLATFORM_2K;
 		return PLATFORM_XP;
 	}
 	

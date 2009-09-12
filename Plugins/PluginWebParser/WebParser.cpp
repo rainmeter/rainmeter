@@ -86,14 +86,18 @@ std::string ConvertToUTF8(LPCWSTR str)
 {
 	std::string szAscii;
 
-	if (str)
+	if (str && *str)
 	{
-		size_t len = (wcslen(str) + 1);
-		char* tmpSz = new char[len * 2];
-		tmpSz[0] = 0;
-		WideCharToMultiByte(CP_UTF8, 0, str, -1, tmpSz, (int)len * 2, NULL, FALSE);
-		szAscii = tmpSz;
-		delete tmpSz;
+		int strLen = (int)wcslen(str) + 1;
+		int bufLen = WideCharToMultiByte(CP_UTF8, 0, str, strLen, NULL, 0, NULL, NULL);
+		if (bufLen > 0)
+		{
+			char* tmpSz = new char[bufLen];
+			tmpSz[0] = 0;
+			WideCharToMultiByte(CP_UTF8, 0, str, strLen, tmpSz, bufLen, NULL, NULL);
+			szAscii = tmpSz;
+			delete [] tmpSz;
+		}
 	}
 	return szAscii;
 }
@@ -102,14 +106,18 @@ std::string ConvertToUTF8(LPCSTR str, int codepage)
 {
 	std::string szUTF8;
 
-	if (str)
+	if (str && *str)
 	{
-		size_t len = strlen(str) + 1;
-		WCHAR* wideSz = new WCHAR[len * 2];
-		wideSz[0] = 0;
-		MultiByteToWideChar(codepage, 0, str, (int)len, wideSz, (int)len * 2);
-		szUTF8 = ConvertToUTF8(wideSz);
-		delete wideSz;
+		int strLen = (int)strlen(str) + 1;
+		int bufLen = MultiByteToWideChar(codepage, 0, str, strLen, NULL, 0);
+		if (bufLen > 0)
+		{
+			WCHAR* wideSz = new WCHAR[bufLen];
+			wideSz[0] = 0;
+			MultiByteToWideChar(codepage, 0, str, strLen, wideSz, bufLen);
+			szUTF8 = ConvertToUTF8(wideSz);
+			delete [] wideSz;
+		}
 	}
 	return szUTF8;
 }
@@ -118,16 +126,35 @@ std::wstring ConvertToWide(LPCSTR str)
 {
 	std::wstring szWide;
 
-	if (str)
+	if (str && *str)
 	{
-		size_t len = strlen(str) + 1;
-		WCHAR* wideSz = new WCHAR[len * 2];
-		wideSz[0] = 0;
-		MultiByteToWideChar(CP_UTF8, 0, str, (int)len, wideSz, (int)len * 2);
-		szWide = wideSz;
-		delete wideSz;
+		int strLen = (int)strlen(str) + 1;
+		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
+		if (bufLen > 0)
+		{
+			WCHAR* wideSz = new WCHAR[bufLen];
+			wideSz[0] = 0;
+			MultiByteToWideChar(CP_ACP, 0, str, strLen, wideSz, bufLen);
+			szWide = wideSz;
+			delete [] wideSz;
+		}
 	}
 	return szWide;
+}
+
+HWND FindMeterWindow()
+{
+	HWND wnd = FindWindow(L"RainmeterMeterWindow", NULL);
+	if (wnd == NULL)
+	{
+		// Check if all windows are "On Desktop"
+		HWND ProgmanHwnd = FindWindow(L"Progman", L"Program Manager");
+		if (ProgmanHwnd)
+		{
+			wnd = FindWindowEx(ProgmanHwnd, NULL, L"RainmeterMeterWindow", NULL);
+		}
+	}
+	return wnd;
 }
 
 /*
@@ -540,7 +567,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 	{
 		if (!urlData->finishAction.empty()) 
 		{
-			HWND wnd = FindWindow(L"RainmeterMeterWindow", NULL);
+			HWND wnd = FindMeterWindow();
 
 			if (wnd != NULL)
 			{
@@ -641,7 +668,7 @@ DWORD WINAPI NetworkDownloadThreadProc(LPVOID pParam)
 	
 				if (!urlData->finishAction.empty()) 
 				{
-					HWND wnd = FindWindow(L"RainmeterMeterWindow", NULL);
+					HWND wnd = FindMeterWindow();
 
 					if (wnd != NULL)
 					{

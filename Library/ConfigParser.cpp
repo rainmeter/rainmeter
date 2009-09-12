@@ -22,7 +22,6 @@
 #include "ConfigParser.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
-#include <TCHAR.H>
 #include <algorithm>
 
 extern CRainmeter* Rainmeter;
@@ -189,7 +188,7 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		pos = result.find(L'#', start);
 		if (pos != std::wstring::npos)
 		{
-			size_t end = result.find(L'#', pos + 1);
+			end = result.find(L'#', pos + 1);
 			if (end != std::wstring::npos)
 			{
 				std::wstring strTmp(result.begin() + pos + 1, result.begin() + end);
@@ -224,29 +223,38 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		start = 0;
 		end = std::wstring::npos;
 		pos = std::wstring::npos;
+		size_t pos2 = std::wstring::npos;
 		loop = true;
 		do 
 		{
 			pos = result.find(L'[', start);
 			if (pos != std::wstring::npos)
 			{
-				size_t end = result.find(L']', pos + 1);
+				end = result.find(L']', pos + 1);
 				if (end != std::wstring::npos)
 				{
-					std::wstring var(result.begin() + pos + 1, result.begin() + end);
-
-					std::map<std::wstring, CMeasure*>::iterator iter = m_Measures.find(var);
-					if (iter != m_Measures.end())
+					pos2 = result.find(L'[', pos + 1);
+					if (pos2 == std::wstring::npos || end < pos2)
 					{
-						std::wstring value = (*iter).second->GetStringValue(true, 1, 5, false);
-
-						// Measure found, replace it with the value
-						result.replace(result.begin() + pos, result.begin() + end + 1, value);
-						start = pos + value.length();
+						std::wstring var(result.begin() + pos + 1, result.begin() + end);
+	
+						std::map<std::wstring, CMeasure*>::iterator iter = m_Measures.find(var);
+						if (iter != m_Measures.end())
+						{
+							std::wstring value = (*iter).second->GetStringValue(true, 1, 5, false);
+	
+							// Measure found, replace it with the value
+							result.replace(result.begin() + pos, result.begin() + end + 1, value);
+							start = pos + value.length();
+						}
+						else
+						{
+							start = end;
+						}
 					}
 					else
 					{
-						start = end;
+						start = pos2;
 					}
 				}
 				else
@@ -465,7 +473,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile)
 	{
 		items[0] = 0;
 		int res = GetPrivateProfileString( NULL, NULL, NULL, items, size, iniFile.c_str());
-		if (res == 0) return;		// File not found
+		if (res == 0) { delete [] items; return; }		// File not found
 		if (res < size - 2) break;		// Fits in the buffer
 
 		delete [] items;
@@ -486,7 +494,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile)
 
 	// Read the keys and values
 	int bufferSize = MAX_LINE_LENGTH;
-	TCHAR* buffer = new TCHAR[bufferSize];
+	WCHAR* buffer = new WCHAR[bufferSize];
 
 	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.begin();
 	for ( ; iter != m_Keys.end(); iter++)

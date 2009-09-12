@@ -58,7 +58,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	hWnd=InitInstance(hInstance, WinClass, WinName);
 	if(!hWnd) return FALSE;
 
-	if (lpCmdLine[0] == '!')
+	if (lpCmdLine && lpCmdLine[0] == L'!')
 	{
 		// It's a !bang
 		Bang(hWnd, lpCmdLine);
@@ -158,8 +158,17 @@ HWND InitInstance(HINSTANCE hInstance, const WCHAR* WinClass, const WCHAR* WinNa
 */
 void Bang(HWND hWnd, const WCHAR* command)
 {
-	// Check if Rainlendar is running
+	// Check if Rainmeter is running
 	HWND wnd = FindWindow(L"RainmeterMeterWindow", NULL);
+	if (wnd == NULL)
+	{
+		// Check if all windows are "On Desktop"
+		HWND ProgmanHwnd = FindWindow(L"Progman", L"Program Manager");
+		if (ProgmanHwnd)
+		{
+			wnd = FindWindowEx(ProgmanHwnd, NULL, L"RainmeterMeterWindow", NULL);
+		}
+	}
 
 	if (wnd != NULL)
 	{
@@ -169,7 +178,7 @@ void Bang(HWND hWnd, const WCHAR* command)
 		copyData.cbData = (DWORD)((wcslen(command) + 1) * sizeof(WCHAR));
 		copyData.lpData = (void*)command;
 
-		// Send the bang to the Rainlendar window
+		// Send the bang to the Rainmeter window
 		SendMessage(wnd, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&copyData);
 	}
 	else

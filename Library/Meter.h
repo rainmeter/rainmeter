@@ -74,7 +74,6 @@ public:
 	const WCHAR* GetName() { return m_Name.c_str(); };
 
 	static CMeter* Create(const WCHAR* meter, CMeterWindow* meterWindow);
-	static WCHAR* ConvertToWide(const char* string);
 
 	static void DrawBevel(Gdiplus::Graphics& graphics, Gdiplus::Rect& rect, Gdiplus::Pen& light, Gdiplus::Pen& dark);
 
