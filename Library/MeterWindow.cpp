@@ -104,7 +104,6 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 	m_Refreshing = false;
 	m_NativeTransparency = true;
 	m_MeasuresToVariables = false;
-	//m_AllowNegativeCoordinates = true;
 	m_SavePosition = false;			// Must be false
 	m_AlphaValue = 255;
 	m_FadeDuration = 250;
@@ -446,14 +445,6 @@ void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 */
 void CMeterWindow::MoveWindow(int x, int y)
 {
-	//if (!m_AllowNegativeCoordinates)
-	//{
-	//	RECT r;
-	//	GetClientRect(GetDesktopWindow(), &r); 
-	//	if(x < 0) x += r.right;
-	//	if(y < 0) y += r.bottom;
-	//}
-
 	SetWindowPos(m_Window, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
 	if (m_SavePosition)
@@ -1602,15 +1593,6 @@ void CMeterWindow::InitializeMeters()
 		}
 	}
 
-	// Handle negative coordinates
-	//if (!m_AllowNegativeCoordinates)
-	//{
-	//	RECT r;
-	//	GetClientRect(GetDesktopWindow(), &r); 
-	//	if(m_WindowX < 0) m_ScreenX = m_WindowX + r.right;
-	//	if(m_WindowY < 0) m_ScreenY = m_WindowY + r.bottom;
-	//}
-
 	Update(true);
 	ResizeWindow(true);
 }
@@ -2661,15 +2643,42 @@ LRESULT CMeterWindow::OnNcHitTest(WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnSettingChange
+** OnDisplayChange
 **
 ** Called when resolution changes
 **
 */
+LRESULT CMeterWindow::OnDisplayChange(WPARAM wParam, LPARAM lParam) 
+{
+	return OnSettingChange(wParam, lParam);
+}
+
+/*
+** OnSettingChange
+**
+** Called when settings (e.g. new monitor is connected) change.
+**
+*/
 LRESULT CMeterWindow::OnSettingChange(WPARAM wParam, LPARAM lParam) 
 {
-	m_Monitors.count = 0;
-	PostMessage(m_Window, WM_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
+	if (m_NativeTransparency)
+	{
+		// Move the window to correct position
+		m_Monitors.count = 0;
+		ResizeWindow(true);
+
+		if (m_KeepOnScreen) 
+		{
+			MapCoordsToScreen(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
+		}
+
+		SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, m_WindowW, m_WindowH, SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+	else
+	{
+		// With copy transparency we'll do a full refresh
+		PostMessage(m_Window, WM_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
+	}
 
 	// Commented: Calling DefWindowProc seems to cause crash sometimes
 	return 0;  // DefWindowProc(m_Window, m_Message, wParam, lParam);
@@ -3285,6 +3294,7 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnDelayedRefresh, WM_DELAYED_REFRESH)
 	MESSAGE(OnDelayedQuit, WM_DELAYED_QUIT)
 	MESSAGE(OnSettingChange, WM_SETTINGCHANGE)
+	MESSAGE(OnDisplayChange, WM_DISPLAYCHANGE)
 	END_MESSAGEPROC
 }
 

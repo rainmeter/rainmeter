@@ -203,7 +203,7 @@ protected:
 	LRESULT OnDelayedRefresh(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedQuit(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSettingChange(WPARAM wParam, LPARAM lParam);  
-
+	LRESULT OnDisplayChange(WPARAM wParam, LPARAM lParam);  
 
 private:
 	void CreateRegion(bool clear);

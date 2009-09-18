@@ -58,6 +58,8 @@ BEGIN
 
             MENUITEM "On Desktop",                  ID_CONTEXT_SKINMENU_ONDESKTOP
 
+            MENUITEM SEPARATOR
+
             MENUITEM "From Right",                  ID_CONTEXT_SKINMENU_FROMRIGHT
 
             MENUITEM "From Bottom",                 ID_CONTEXT_SKINMENU_FROMBOTTOM
