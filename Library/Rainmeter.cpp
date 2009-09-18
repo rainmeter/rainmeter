@@ -30,6 +30,7 @@
 #include <commctrl.h>
 #include <gdiplus.h>
 #include <fstream>
+#include <iostream>
 #include <shlobj.h>
 
 using namespace Gdiplus;
@@ -840,6 +841,12 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	// Test that the Rainmeter.ini file is writable
 	TestSettingsFile(bDefaultIniLocation);
 
+	// If the skin folder is somewhere else than in the program path
+	if (wcsnicmp(m_Path.c_str(), m_SkinPath.c_str(), m_Path.size()) != 0)
+	{
+		CheckSkinVersions();
+	}
+
 	// Tray must exist before configs are read
 	m_TrayWindow = new CTrayWindow(m_Instance);
 
@@ -920,6 +927,115 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	return Result;	// Alles OK
 }
 
+/* 
+** CheckSkinVersions
+**
+** Checks if any of the skins in the program folder are newer than in the skin folder.
+**
+*/
+void CRainmeter::CheckSkinVersions()
+{
+	// List all skins in the program folder
+	std::wstring strMainSkinsPath = m_Path + L"Skins\\";
+	std::vector<CONFIGMENU> menu;
+	ScanForConfigsRecursive(strMainSkinsPath, L"", 0, menu, true);
+
+	for (size_t i = 0; i < menu.size(); i++)
+	{
+		// DebugLog(L"%s", menu[i].name.c_str());
+
+		// Read the version files
+		std::wstring strNewVersionFile = strMainSkinsPath + menu[i].name + L"\\version";
+		std::wstring strCurrentVersionFile = m_SkinPath + menu[i].name + L"\\version";
+
+		std::string strVersion;
+		std::wstring strVersionNew;
+		std::wstring strVersionCurrent;
+		std::wstring strVersionInIni;
+
+		std::ifstream newFile(strNewVersionFile.c_str(), std::ios_base::in);
+		if (getline(newFile, strVersion))
+		{
+			strVersionNew = ConvertToWide(strVersion.c_str());
+			// DebugLog(L"New: %s", strVersionNew.c_str());
+
+			// Compare with the version entry in the Rainmeter.ini
+			WCHAR tmpSz[MAX_LINE_LENGTH] = {0};
+			GetPrivateProfileString(menu[i].name.c_str(), L"Version", L"", tmpSz, MAX_LINE_LENGTH, m_IniFile.c_str());
+			strVersionInIni = tmpSz;
+
+			// DebugLog(L"In Ini: %s", strVersionInIni.c_str());
+
+			// Compare with the version file in the skin folder
+			std::ifstream currentFile(strCurrentVersionFile.c_str(), std::ios_base::in);
+			if (getline(currentFile, strVersion))
+			{
+				strVersionCurrent = ConvertToWide(strVersion.c_str());
+				// DebugLog(L"Current: %s", strVersionCurrent.c_str());
+			}
+		}
+
+		// If the skin doesn't define a version file no need to do anything
+		if (!strVersionNew.empty())
+		{
+			// Compare the version files
+			if (CompareVersions(strVersionNew, strVersionInIni) == 1 &&
+				CompareVersions(strVersionNew, strVersionCurrent) == 1)
+			{
+				std::wstring strMessage = L"The config called \"" + menu[i].name + L"\" is newer\nthan the one you are currently using.\n\n";
+				strMessage += L"New config: " + (strVersionNew.empty() ? L"Unknown" : strVersionNew) + L"\n";
+				strMessage += L"Current config: " + (strVersionCurrent.empty() ? L"Unknown" : strVersionCurrent) + L"\n";
+				strMessage += L"\n";
+				strMessage += L"Do you want to upgrade it?";
+
+				if (IDYES == MessageBox(NULL, strMessage.c_str(), APPNAME, MB_YESNO | MB_ICONQUESTION))
+				{
+					// Upgrade the skin by overwriting the existing skin.
+					CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
+				}
+
+				// Even if the user doesn't want to upgrade mark it to the Rainmeter.ini so we don't ask the upgrade question again
+				WritePrivateProfileString(menu[i].name.c_str(), L"Version", strVersionNew.c_str(), m_IniFile.c_str());
+			}
+		}
+	}
+}
+
+/*	
+** CompareVersions
+**
+** Compares two version strings. Returns 0 if they are equal, 1 if A > B and -1 if A < B.
+**
+*/
+int CRainmeter::CompareVersions(std::wstring strA, std::wstring strB)
+{
+	if (strA.empty() && strB.empty()) return 0;
+	if (strA.empty()) return -1;
+	if (strB.empty()) return 1;
+
+	std::vector<std::wstring> arrayA = CConfigParser::Tokenize(strA, L".");
+	std::vector<std::wstring> arrayB = CConfigParser::Tokenize(strB, L".");
+	
+	size_t len = max(arrayA.size(), arrayB.size());
+	for (size_t i = 0; i < len; i++)
+	{
+		int a = 0;
+		int b = 0;
+
+		if (i < arrayA.size())
+		{
+			a = _wtoi(arrayA[i].c_str());
+		}
+		if (i < arrayB.size())
+		{
+			b = _wtoi(arrayB[i].c_str());
+		}
+
+		if (a > b) return 1;
+		if (a < b) return -1;
+	}
+	return 0;
+}
 
 /* 
 ** CopyFiles
@@ -939,7 +1055,7 @@ void CRainmeter::CopyFiles(std::wstring strFrom, std::wstring strTo)
 	fo.wFunc = FO_COPY;
 	fo.pFrom = strFrom.c_str();
 	fo.pTo = strTo.c_str();
-	fo.fFlags = FOF_NO_UI;
+	fo.fFlags = FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO;
 
 	int result = SHFileOperation(&fo);
 	if (result != 0)
@@ -1157,10 +1273,10 @@ void CRainmeter::ScanForConfigs(std::wstring& path)
 	m_ConfigStrings.clear();
 	m_ConfigMenu.clear();
 
-	ScanForConfigsRecursive(path, L"", 0, m_ConfigMenu);
+	ScanForConfigsRecursive(path, L"", 0, m_ConfigMenu, false);
 }
 
-int CRainmeter::ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu)
+int CRainmeter::ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse)
 {
     WIN32_FIND_DATA fileData;      // Data structure describes the file found
     WIN32_FIND_DATA fileDataIni;   // Data structure describes the file found
@@ -1220,8 +1336,11 @@ int CRainmeter::ScanForConfigsRecursive(std::wstring& path, std::wstring base, i
 			menuItem.index = -1;
 			menu.push_back(menuItem);
 
-			std::vector<CONFIGMENU>::iterator iter = menu.end() - 1;
-			index = ScanForConfigsRecursive(path, base + fileData.cFileName, index, (*iter).children);
+			if (!DontRecurse)
+			{
+				std::vector<CONFIGMENU>::iterator iter = menu.end() - 1;
+				index = ScanForConfigsRecursive(path, base + fileData.cFileName, index, (*iter).children, false);
+			}
 		}
 	} while(FindNextFile(hSearch, &fileData));
 

@@ -51,11 +51,12 @@ public:
 	std::wstring& GetFilename() { return m_Filename; }
 	std::vector<std::wstring> GetSections();
 
+	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring delimiters);
+
 private:
 	void ReadVariables();
 	void ReplaceVariables(std::wstring& result);
 	Gdiplus::Color ParseColor(LPCTSTR string);
-	std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring delimiters);
 
 	void ReadIniFile(const std::wstring& strFileName, int depth = 0);
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);

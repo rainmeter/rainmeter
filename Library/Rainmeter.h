@@ -175,12 +175,14 @@ private:
 	void Refresh(const WCHAR* arg);
 	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index);
 	void ChangeSkinIndex(HMENU subMenu, int index);
-	int ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu);
+	int ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse);
 	HMENU CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData);
 	HMENU CreateThemeMenu();
 	void CreateDefaultConfigFile(std::wstring strFile);
 	void TestSettingsFile(bool bDefaultIniLocation);
 	void CopyFiles(std::wstring strFrom, std::wstring strTo);
+	void CheckSkinVersions();
+	int CompareVersions(std::wstring strA, std::wstring strB);
 
 	CTrayWindow* m_TrayWindow;
 
