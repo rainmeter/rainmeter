@@ -1506,42 +1506,30 @@ void CMeterWindow::ReadSkin()
 
 	// Create the meters and measures
 
-	// Get all the sections (i.e. different meters)
-	WCHAR* items = new WCHAR[MAX_LINE_LENGTH];
-	int size = MAX_LINE_LENGTH;
+	// Get all the sections (i.e. different meters, measures and the other stuff)
+	std::vector<std::wstring> arraySections = m_Parser.GetSections();
 
-	// Get all the sections
-	while(true)
+	for (size_t i = 0; i < arraySections.size(); i++)
 	{
-		int res = GetPrivateProfileString( NULL, NULL, NULL, items, size, iniFile.c_str());
-		if (res == 0) { delete [] items; return; }	// File not found
-		if (res < size - 2) break;		// Fits in the buffer
+		std::wstring strSection = arraySections[i];
 
-		delete [] items;
-		size *= 2;
-		items = new WCHAR[size];
-	};
-
-	WCHAR* pos = items;
-	while(wcslen(pos) > 0)
-	{
-		if(wcsicmp(L"Rainmeter", pos) != 0 && 
-			wcsicmp(L"Variables", pos) != 0 &&
-			wcsicmp(L"Metadata", pos) != 0)
+		if(wcsicmp(L"Rainmeter", strSection.c_str()) != 0 && 
+			wcsicmp(L"Variables", strSection.c_str()) != 0 &&
+			wcsicmp(L"Metadata", strSection.c_str()) != 0)
 		{
 			std::wstring meterName, measureName;
 
 			// Check if the item is a meter or a measure (or perhaps something else)
-			measureName = m_Parser.ReadString(pos, L"Measure", L"");
-			meterName = m_Parser.ReadString(pos, L"Meter", L"");
+			measureName = m_Parser.ReadString(strSection.c_str(), L"Measure", L"");
+			meterName = m_Parser.ReadString(strSection.c_str(), L"Meter", L"");
 			if (measureName.length() > 0)
 			{
 				try
 				{
 					// It's a measure
 					CMeasure* measure = CMeasure::Create(measureName.c_str(), this);
-					measure->SetName(pos);
-					measure->ReadConfig(m_Parser, pos);
+					measure->SetName(strSection.c_str());
+					measure->ReadConfig(m_Parser, strSection.c_str());
 					m_Measures.push_back(measure);
 
 					m_Parser.AddMeasure(measure);
@@ -1557,8 +1545,8 @@ void CMeterWindow::ReadSkin()
 				{
 					// It's a meter
 					CMeter* meter = CMeter::Create(meterName.c_str(), this);
-					meter->SetName(pos);
-					meter->ReadConfig(pos);
+					meter->SetName(strSection.c_str());
+					meter->ReadConfig(strSection.c_str());
 					m_Meters.push_back(meter);
 				}
 				catch (CError& error)
@@ -1568,10 +1556,7 @@ void CMeterWindow::ReadSkin()
 			}
 			// If it's not a meter or measure it will be ignored
 		}
-		pos = pos + wcslen(pos) + 1;
 	}
-
-	delete [] items;
 
 	if (m_Meters.empty())
 	{

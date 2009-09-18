@@ -49,16 +49,17 @@ public:
 	std::vector<Gdiplus::REAL> ReadFloats(LPCTSTR section, LPCTSTR key);
 
 	std::wstring& GetFilename() { return m_Filename; }
+	std::vector<std::wstring> GetSections();
 
 private:
 	void ReadVariables();
+	void ReplaceVariables(std::wstring& result);
 	Gdiplus::Color ParseColor(LPCTSTR string);
 	std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring delimiters);
 
-	void ReadIniFile(const std::wstring& strFileName);
+	void ReadIniFile(const std::wstring& strFileName, int depth = 0);
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
 	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
-	std::vector<std::wstring> GetSections();
 	std::vector<std::wstring> GetKeys(const std::wstring& strSection);
 
 	std::map<std::wstring, std::wstring> m_Variables;

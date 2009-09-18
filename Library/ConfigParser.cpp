@@ -61,10 +61,10 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 
 	m_Variables.clear();
 	m_Measures.clear();
+	m_Keys.clear();
+	m_Values.clear();
 
-	ReadIniFile(m_Filename);
-
-	// Set the default variables
+	// Set the default variables. Do this before the ini file is read so that the paths can be used with @include
 	if (pRainmeter)
 	{
 		SetVariable(L"PROGRAMPATH", pRainmeter->GetPath());
@@ -92,6 +92,7 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 		SetVariable(L"SCREENAREAHEIGHT", buffer);
 	}
 
+	ReadIniFile(m_Filename);
 	ReadVariables();
 }
 
@@ -110,20 +111,70 @@ void CConfigParser::ReadVariables()
 	}
 }
 
-//==============================================================================
 /**
 ** Sets a new value for the variable. The DynamicVariables must be set to 1 in the
 ** meter/measure for the changes to be applied.
 ** 
 ** \param strVariable
 ** \param strValue
-** \return void
 */
 void CConfigParser::SetVariable(const std::wstring& strVariable, const std::wstring& strValue)
 {
+	// DebugLog(L"Variable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), m_Variables.size());
+
 	std::wstring strTmp(strVariable);
 	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
 	m_Variables[strTmp] = strValue;
+}
+
+/**
+** Replaces environment and internal variables in the given string.
+** 
+** \param result The string where the variables are returned. The string is modified.
+*/
+void CConfigParser::ReplaceVariables(std::wstring& result)
+{
+	CRainmeter::ExpandEnvironmentVariables(result);
+
+	// Check for variables (#VAR#)
+	size_t start = 0;
+	size_t end = std::wstring::npos;
+	size_t pos = std::wstring::npos;
+	bool loop = true;
+
+	do 
+	{
+		pos = result.find(L'#', start);
+		if (pos != std::wstring::npos)
+		{
+			end = result.find(L'#', pos + 1);
+			if (end != std::wstring::npos)
+			{
+				std::wstring strTmp(result.begin() + pos + 1, result.begin() + end);
+				std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
+				
+				std::map<std::wstring, std::wstring>::iterator iter = m_Variables.find(strTmp);
+				if (iter != m_Variables.end())
+				{
+					// Variable found, replace it with the value
+					result.replace(result.begin() + pos, result.begin() + end + 1, (*iter).second);
+					start = pos + (*iter).second.length();
+				}
+				else
+				{
+					start = end;
+				}
+			}
+			else
+			{
+				loop = false;
+			}
+		}
+		else
+		{
+			loop = false;
+		}
+	} while(loop);
 }
 
 /*
@@ -175,56 +226,16 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		}
 	}
 
-	CRainmeter::ExpandEnvironmentVariables(result);
-
-	// Check for variables (#VAR#)
-	size_t start = 0;
-	size_t end = std::wstring::npos;
-	size_t pos = std::wstring::npos;
-	bool loop = true;
-
-	do 
-	{
-		pos = result.find(L'#', start);
-		if (pos != std::wstring::npos)
-		{
-			end = result.find(L'#', pos + 1);
-			if (end != std::wstring::npos)
-			{
-				std::wstring strTmp(result.begin() + pos + 1, result.begin() + end);
-				std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
-				
-				std::map<std::wstring, std::wstring>::iterator iter = m_Variables.find(strTmp);
-				if (iter != m_Variables.end())
-				{
-					// Variable found, replace it with the value
-					result.replace(result.begin() + pos, result.begin() + end + 1, (*iter).second);
-					start = pos + (*iter).second.length();
-				}
-				else
-				{
-					start = end;
-				}
-			}
-			else
-			{
-				loop = false;
-			}
-		}
-		else
-		{
-			loop = false;
-		}
-	} while(loop);
+	ReplaceVariables(result);
 
 	// Check for measures ([Measure])
 	if (!m_Measures.empty() && bReplaceMeasures)
 	{
-		start = 0;
-		end = std::wstring::npos;
-		pos = std::wstring::npos;
+		size_t start = 0;
+		size_t end = std::wstring::npos;
+		size_t pos = std::wstring::npos;
 		size_t pos2 = std::wstring::npos;
-		loop = true;
+		bool loop = true;
 		do 
 		{
 			pos = result.find(L'[', start);
@@ -459,10 +470,15 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 ** 
 ** \param iniFile The ini file to be read.
 */
-void CConfigParser::ReadIniFile(const std::wstring& iniFile)
+void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 {
-	m_Keys.clear();
-	m_Values.clear();
+	// DebugLog(L"Reading file: %s", iniFile.c_str());
+
+	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
+	{
+		MessageBox(NULL, L"It looks like you've made an infinite\nloop with the @include statements.\nPlease check your skin.", L"Rainmeter", MB_OK | MB_ICONERROR);
+		return;
+	}
 
 	// Get all the sections (i.e. different meters)
 	WCHAR* items = new WCHAR[MAX_LINE_LENGTH];
@@ -487,8 +503,10 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile)
 	{
 		std::wstring strTmp(pos);
 		std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
-		m_Keys[strTmp] = std::vector<std::wstring>();
-
+		if (m_Keys.find(strTmp) == m_Keys.end())
+		{
+			m_Keys[strTmp] = std::vector<std::wstring>();
+		}
 		pos = pos + wcslen(pos) + 1;
 	}
 
@@ -526,7 +544,21 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile)
 				buffer = new WCHAR[bufferSize];
 			};
 
-			SetValue((*iter).first, strKey, buffer);
+			if (wcsnicmp(strKey.c_str(), L"@include", 8) == 0)
+			{
+				std::wstring strIncludeFile = buffer;
+				ReplaceVariables(strIncludeFile);
+				if (strIncludeFile.find(L':') == std::wstring::npos)
+				{
+					// It's a relative path so add the current path as a prefix
+					strIncludeFile = CRainmeter::ExtractPath(iniFile) + strIncludeFile;
+				}
+				ReadIniFile(strIncludeFile, depth + 1);
+			}
+			else
+			{
+				SetValue((*iter).first, strKey, buffer);
+			}
 
 			pos = pos + wcslen(pos) + 1;
 		}
@@ -545,6 +577,8 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile)
 */
 void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue)
 {
+	// DebugLog(L"[%s] %s=%s (size: %i)", strSection.c_str(), strKey.c_str(), strValue.c_str(), m_Values.size());
+
 	std::wstring strTmpSection(strSection);
 	std::wstring strTmpKey(strKey);
 	std::transform(strTmpSection.begin(), strTmpSection.end(), strTmpSection.begin(), ::tolower);
