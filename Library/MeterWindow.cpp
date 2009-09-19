@@ -715,7 +715,7 @@ void CMeterWindow::ShowMeter(const WCHAR* name)
 	std::list<CMeter*>::iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); j++)
 	{
-		if (wcscmp((*j)->GetName(), name) == 0)
+		if (wcsicmp((*j)->GetName(), name) == 0)
 		{
 			(*j)->Show();
 			m_ResetRegion = true;	// Need to recalculate the window region
@@ -739,7 +739,7 @@ void CMeterWindow::HideMeter(const WCHAR* name)
 	std::list<CMeter*>::iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); j++)
 	{
-		if (wcscmp((*j)->GetName(), name) == 0)
+		if (wcsicmp((*j)->GetName(), name) == 0)
 		{
 			(*j)->Hide();
 			m_ResetRegion = true;	// Need to recalculate the windowregion
@@ -763,7 +763,7 @@ void CMeterWindow::ToggleMeter(const WCHAR* name)
 	std::list<CMeter*>::iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); j++)
 	{
-		if (wcscmp((*j)->GetName(), name) == 0)
+		if (wcsicmp((*j)->GetName(), name) == 0)
 		{
 			if ((*j)->IsHidden())
 			{
@@ -794,7 +794,7 @@ void CMeterWindow::MoveMeter(int x, int y, const WCHAR* name)
 	std::list<CMeter*>::iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); j++)
 	{
-		if (wcscmp((*j)->GetName(), name) == 0)
+		if (wcsicmp((*j)->GetName(), name) == 0)
 		{
 			(*j)->SetX(x);
 				(*j)->SetY(y);
@@ -818,7 +818,7 @@ void CMeterWindow::EnableMeasure(const WCHAR* name)
 	std::list<CMeasure*>::iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); i++)
 	{
-		if (wcscmp((*i)->GetName(), name) == 0)
+		if (wcsicmp((*i)->GetName(), name) == 0)
 		{
 			(*i)->Enable();
 			return;
@@ -842,7 +842,7 @@ void CMeterWindow::DisableMeasure(const WCHAR* name)
 	std::list<CMeasure*>::iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); i++)
 	{
-		if (wcscmp((*i)->GetName(), name) == 0)
+		if (wcsicmp((*i)->GetName(), name) == 0)
 		{
 			(*i)->Disable();
 			return;
@@ -866,7 +866,7 @@ void CMeterWindow::ToggleMeasure(const WCHAR* name)
 	std::list<CMeasure*>::iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); i++)
 	{
-		if (wcscmp((*i)->GetName(), name) == 0)
+		if (wcsicmp((*i)->GetName(), name) == 0)
 		{
 			if ((*i)->IsDisabled())
 			{
@@ -2650,7 +2650,7 @@ LRESULT CMeterWindow::OnNcHitTest(WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnDisplayChange(WPARAM wParam, LPARAM lParam) 
 {
-	return OnSettingChange(wParam, lParam);
+	return OnSettingChange(0, 0);
 }
 
 /*
@@ -2680,8 +2680,7 @@ LRESULT CMeterWindow::OnSettingChange(WPARAM wParam, LPARAM lParam)
 		PostMessage(m_Window, WM_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
 	}
 
-	// Commented: Calling DefWindowProc seems to cause crash sometimes
-	return 0;  // DefWindowProc(m_Window, m_Message, wParam, lParam);
+	return 0;
 }
 
 /*

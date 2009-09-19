@@ -63,6 +63,7 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 	m_Measures.clear();
 	m_Keys.clear();
 	m_Values.clear();
+	m_Sections.clear();
 
 	// Set the default variables. Do this before the ini file is read so that the paths can be used with @include
 	if (pRainmeter)
@@ -506,6 +507,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 		if (m_Keys.find(strTmp) == m_Keys.end())
 		{
 			m_Keys[strTmp] = std::vector<std::wstring>();
+			m_Sections.push_back(pos);
 		}
 		pos = pos + wcslen(pos) + 1;
 	}
@@ -622,17 +624,9 @@ const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, cons
 ** 
 ** \return A list of sections in the ini file.
 */
-std::vector<std::wstring> CConfigParser::GetSections()
+const std::vector<std::wstring>& CConfigParser::GetSections()
 {
-	std::vector<std::wstring> listSections;
-
-	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.begin();
-	for ( ; iter != m_Keys.end(); iter++)
-	{
-		listSections.push_back((*iter).first);
-	}
-
-	return listSections;
+	return m_Sections;
 }
 
 //==============================================================================

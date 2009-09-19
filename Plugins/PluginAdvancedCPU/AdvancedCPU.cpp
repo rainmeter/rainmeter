@@ -303,7 +303,7 @@ void UpdateProcesses()
 			{
 				if(pObjInst->GetObjectInstanceName(name, 256))
 				{
-					if (wcscmp(name, L"_Total") == 0)
+					if (wcsicmp(name, L"_Total") == 0)
 					{
 						continue;
 					}

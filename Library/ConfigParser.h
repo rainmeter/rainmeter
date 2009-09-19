@@ -49,7 +49,7 @@ public:
 	std::vector<Gdiplus::REAL> ReadFloats(LPCTSTR section, LPCTSTR key);
 
 	std::wstring& GetFilename() { return m_Filename; }
-	std::vector<std::wstring> GetSections();
+	const std::vector<std::wstring>& GetSections();
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring delimiters);
 
@@ -71,6 +71,7 @@ private:
 
 	std::wstring m_StyleTemplate;
 
+	std::vector<std::wstring> m_Sections;		// The sections must be an ordered array
 	stdext::hash_map<std::wstring, std::vector<std::wstring> > m_Keys;
 	stdext::hash_map<std::wstring, std::wstring> m_Values;
 };
