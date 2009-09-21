@@ -61,6 +61,7 @@ struct UrlData
 	std::wstring downloadedFile;
 	std::wstring iniFile;
 	int debug;
+	std::wstring debugFileLocation;
 	HANDLE threadHandle;
 	HANDLE dlThreadHandle;
 };
@@ -192,6 +193,15 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	data->finishAction = ReadConfigString(section, L"FinishAction", L"");
 	data->errorString = ReadConfigString(section, L"ErrorString", L"");
 	data->proxy = ReadConfigString(section, L"ProxyServer", L"");
+	data->debugFileLocation = ReadConfigString(section, L"Debug2File", L"c:\\WebParserDump.txt");
+	
+	if(data->debugFileLocation.find(L"\\") == -1)
+	{
+		std::wstring str = data->iniFile.substr(0,data->iniFile.find_last_of(L"\\")+1); 
+		str += data->debugFileLocation;
+		Log(str.c_str());
+		data->debugFileLocation = str;
+	}
 
 	tmpSz = ReadConfigString(section, L"StringIndex", L"0");
 	if (tmpSz)
@@ -363,7 +373,11 @@ DWORD WINAPI NetworkThreadProc(LPVOID pParam)
 		if (urlData->debug == 2)
 		{
 			// Dump to a file
-			FILE* file = fopen("C:\\WebParserDump.txt", "wb");
+
+			// Convert to a narrow string
+			std::string path(urlData->debugFileLocation.begin(), urlData->debugFileLocation.end());
+
+			FILE* file = fopen(path.c_str(), "wb");
 			fwrite(data, sizeof(BYTE), dwSize, file);
 			fclose(file);
 		}
