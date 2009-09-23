@@ -3168,6 +3168,22 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 			}
 			break;
 
+		case MOUSE_MMB_DOWN:
+			if (!m_MiddleMouseDownAction.empty())
+			{
+				if (!test) m_Rainmeter->ExecuteCommand(m_MiddleMouseDownAction.c_str(), this);
+				return true;
+			}
+			break;
+
+		case MOUSE_MMB_UP:
+			if (!m_MiddleMouseUpAction.empty())
+			{
+				if (!test) m_Rainmeter->ExecuteCommand(m_MiddleMouseUpAction.c_str(), this);
+				return true;
+			}
+			break;
+
 		case MOUSE_OVER:
 			if (!m_MouseOver)
 			{
