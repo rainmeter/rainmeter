@@ -2430,6 +2430,7 @@ LRESULT CMeterWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 
 	// Handle buttons
 	bool redraw = false;
+	bool drawCursor = false;
 	std::list<CMeter*>::iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); j++)
 	{
@@ -2441,7 +2442,18 @@ LRESULT CMeterWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 		{
 			redraw |= button->MouseMove(pos);
 		}
+
+		if((*j)->HitTest(pos.x, pos.y) && (*j)->HasMouseActionCursor())
+		{
+			drawCursor = ((*j)->HasMouseAction() || button);	
+		}	
 	}
+
+	if(drawCursor)
+		SetCursor(LoadCursor(NULL, IDC_HAND));
+	else
+		SetCursor(LoadCursor(NULL, IDC_ARROW));
+
 	if (redraw)
 	{
 		Redraw();
@@ -2856,6 +2868,7 @@ LRESULT CMeterWindow::OnLeftButtonDown(WPARAM wParam, LPARAM lParam)
 		{
 			redraw |= button->MouseDown(pos);
 		}
+
 	}
 	if (redraw)
 	{

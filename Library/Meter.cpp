@@ -64,6 +64,8 @@ CMeter::CMeter(CMeterWindow* meterWindow)
 	m_AntiAlias = false;
 	m_DynamicVariables = false;
 	m_Initialized = false;
+	m_HasMouseAction = false;
+	m_MouseActionCursor = true;
 }
 
 /*
@@ -270,6 +272,15 @@ void CMeter::ReadConfig(const WCHAR* section)
 	m_MiddleMouseUpAction = parser.ReadString(section, L"MiddleMouseUpAction", L"");
 	m_MouseOverAction = parser.ReadString(section, L"MouseOverAction", L"");
 	m_MouseLeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"");
+
+	m_MouseActionCursor = 0!= parser.ReadInt(section, L"MouseActionCursor", 1);
+
+	if(!m_MiddleMouseUpAction.empty() || !m_MiddleMouseDownAction.empty() 
+		|| !m_LeftMouseUpAction.empty() || !m_LeftMouseDownAction.empty() 
+		|| !m_RightMouseUpAction.empty() || !m_RightMouseDownAction.empty() )
+	{
+		m_HasMouseAction = true;
+	}
 
 	m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
 

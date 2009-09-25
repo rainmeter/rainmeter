@@ -59,6 +59,9 @@ public:
 	std::wstring& GetMouseOverAction() { return m_MouseOverAction; };
 	std::wstring& GetMouseLeaveAction() { return m_MouseLeaveAction; };
 
+	bool HasMouseAction() { return m_HasMouseAction; };
+	bool HasMouseActionCursor() { return m_MouseActionCursor; };
+
 	void Hide() { m_Hidden = true; };
 	void Show() { m_Hidden = false; };
 	bool IsHidden() { return m_Hidden; };
@@ -74,7 +77,7 @@ public:
 	const WCHAR* GetName() { return m_Name.c_str(); };
 
 	static CMeter* Create(const WCHAR* meter, CMeterWindow* meterWindow);
-
+	
 	static void DrawBevel(Gdiplus::Graphics& graphics, Gdiplus::Rect& rect, Gdiplus::Pen& light, Gdiplus::Pen& dark);
 
 protected:
@@ -116,6 +119,9 @@ protected:
 	std::wstring m_MiddleMouseUpAction;
 	std::wstring m_MouseOverAction;
 	std::wstring m_MouseLeaveAction;
+	
+	bool m_HasMouseAction;
+	bool m_MouseActionCursor;
 
 	bool m_MouseOver;
 	METER_POSITION m_RelativeX;
