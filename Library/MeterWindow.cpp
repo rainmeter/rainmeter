@@ -324,6 +324,9 @@ void CMeterWindow::Refresh(bool init)
 		m_BackgroundSize.cx = m_BackgroundSize.cy = 0;
 
 		m_BackgroundName.erase();
+
+		if (m_FontCollection) delete m_FontCollection;
+		m_FontCollection = NULL;
 	}
 
 	//TODO: Should these be moved to a Reload command instead of hitting the disk on every refresh
@@ -900,7 +903,6 @@ BOOL CALLBACK MyInfoEnumProc(
 	return true;
 }
 
-
 /* WindowToScreen
 **
 ** Calculates the screen cordinates from the WindowX/Y config
@@ -989,8 +991,21 @@ void CMeterWindow::WindowToScreen()
 	index = m_WindowX.find(L'@');
 	if(index != std::wstring::npos) 
 	{
-		index2 = m_WindowX.find_first_not_of(L"0123456789.");
-		m_WindowXScreen = _wtoi(m_WindowX.substr(index+1,index2).c_str());
+		index++;
+		index2 = m_WindowX.find_first_not_of(L"0123456789", index);
+		std::wstring xscreen;
+		if (index2 != std::wstring::npos)
+		{
+			xscreen = m_WindowX.substr(index, index2-index);
+		}
+		else
+		{
+			xscreen = m_WindowX.substr(index);
+		}
+		if (!xscreen.empty())
+		{
+			m_WindowXScreen = _wtoi(xscreen.c_str());
+		}
 		if(m_WindowXScreen > m_Monitors.count) m_WindowXScreen = 1; //TODO: Decide how best to handle this
 		m_WindowYScreen = m_WindowXScreen; //Default to X and Y on same screen if not overridden on WindowY
 	}
@@ -1036,8 +1051,21 @@ void CMeterWindow::WindowToScreen()
 	index = m_WindowY.find(L'@');
 	if(index != std::wstring::npos) 
 	{
-		index2 = m_WindowY.find_first_not_of(L"0123456789");
-		m_WindowYScreen = _wtoi(m_WindowY.substr(index+1,index2).c_str());
+		index++;
+		index2 = m_WindowY.find_first_not_of(L"0123456789", index);
+		std::wstring yscreen;
+		if (index2 != std::wstring::npos)
+		{
+			yscreen = m_WindowY.substr(index, index2-index);
+		}
+		else
+		{
+			yscreen = m_WindowY.substr(index);
+		}
+		if (!yscreen.empty())
+		{
+			m_WindowYScreen = _wtoi(yscreen.c_str());
+		}
 		if(m_WindowYScreen > m_Monitors.count) m_WindowYScreen = 1; //TODO: Decide how best to handle this
 	}
 	if(m_WindowYScreen == 0)
@@ -1201,10 +1229,14 @@ void CMeterWindow::ReadConfig()
 		{
 			char tmpSz[MAX_LINE_LENGTH];
 			// Check if step.rc has overrides these values
-			m_WindowX = GetRCString("RainmeterWindowX", tmpSz, ConvertToAscii(m_WindowX.c_str()).c_str(), MAX_LINE_LENGTH-1);
-			m_WindowX = ConvertToWide(tmpSz);
-			m_WindowY = GetRCString("RainmeterWindowY", tmpSz, ConvertToAscii(m_WindowY.c_str()).c_str(), MAX_LINE_LENGTH-1);
-			m_WindowY = ConvertToWide(tmpSz);
+			if (GetRCString("RainmeterWindowX", tmpSz, ConvertToAscii(m_WindowX.c_str()).c_str(), MAX_LINE_LENGTH - 1))
+			{
+				m_WindowX = ConvertToWide(tmpSz);
+			}
+			if (GetRCString("RainmeterWindowY", tmpSz, ConvertToAscii(m_WindowY.c_str()).c_str(), MAX_LINE_LENGTH - 1))
+			{
+				m_WindowY = ConvertToWide(tmpSz);
+			}
 		}
 		
 		// Check if the window position should be read as a formula
@@ -3248,6 +3280,7 @@ LRESULT CMeterWindow::OnMove(WPARAM wParam, LPARAM lParam)
 		ScreenToWindow();
 		WriteConfig();
 	}
+	m_Dragging = false;
 
 	return 0;
 }
