@@ -3297,7 +3297,6 @@ LRESULT CMeterWindow::OnMove(WPARAM wParam, LPARAM lParam)
 		ScreenToWindow();
 		WriteConfig();
 	}
-	m_Dragging = false;
 
 	return 0;
 }
