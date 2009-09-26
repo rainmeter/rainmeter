@@ -2445,14 +2445,18 @@ LRESULT CMeterWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 
 		if((*j)->HitTest(pos.x, pos.y) && (*j)->HasMouseActionCursor())
 		{
-			drawCursor = ((*j)->HasMouseAction() || button);	
+			drawCursor |= ((*j)->HasMouseAction() || button);	
 		}	
 	}
 
 	if(drawCursor)
+	{
 		SetCursor(LoadCursor(NULL, IDC_HAND));
+	}
 	else
+	{
 		SetCursor(LoadCursor(NULL, IDC_ARROW));
+	}
 
 	if (redraw)
 	{
