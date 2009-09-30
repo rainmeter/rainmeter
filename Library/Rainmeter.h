@@ -180,7 +180,7 @@ private:
 	HMENU CreateThemeMenu();
 	void CreateDefaultConfigFile(std::wstring strFile);
 	void TestSettingsFile(bool bDefaultIniLocation);
-	void CopyFiles(std::wstring strFrom, std::wstring strTo);
+	bool CopyFiles(std::wstring strFrom, std::wstring strTo, bool bMove = false);
 	void CheckSkinVersions();
 	int CompareVersions(std::wstring strA, std::wstring strB);
 

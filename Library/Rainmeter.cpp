@@ -987,11 +987,34 @@ void CRainmeter::CheckSkinVersions()
 				strMessage += L"Current config: " + (strVersionCurrent.empty() ? L"Unknown" : strVersionCurrent) + L"\n";
 				strMessage += L"\n";
 				strMessage += L"Do you want to upgrade it?";
+				strMessage += L"\n\n";
+				strMessage += L"(If you select 'Yes' your old config\nwill be moved to the 'Backup' folder)";
 
 				if (IDYES == MessageBox(NULL, strMessage.c_str(), APPNAME, MB_YESNO | MB_ICONQUESTION))
 				{
-					// Upgrade the skin by overwriting the existing skin.
-					CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
+					// Make sure that the folder exists
+					CreateDirectory(std::wstring(m_SkinPath + L"Backup").c_str(), NULL);
+
+					// Check for illegal characters from the version number
+					if (strVersionCurrent.find_first_of(L"\\/\"*:?<>|") == std::wstring::npos)
+					{
+						std::wstring strTarget = m_SkinPath + L"Backup\\" + menu[i].name + L"-" + strVersionCurrent;
+						if (CopyFiles(m_SkinPath + menu[i].name, strTarget, true))	// Move the folder to "backup"
+						{
+							// Upgrade the skin
+							CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
+						}
+						else
+						{
+							std::wstring strMessage = L"Failed to upgrade the config.\nUnable to backup the current config.";
+							MessageBox(NULL, strMessage.c_str(), APPNAME, MB_OK | MB_ICONERROR);
+						}
+					}
+					else
+					{
+						std::wstring strMessage = L"Failed to upgrade the config.\nThe version number contains illegal characters.";
+						MessageBox(NULL, strMessage.c_str(), APPNAME, MB_OK | MB_ICONERROR);
+					}
 				}
 
 				// Even if the user doesn't want to upgrade mark it to the Rainmeter.ini so we don't ask the upgrade question again
@@ -1043,7 +1066,7 @@ int CRainmeter::CompareVersions(std::wstring strA, std::wstring strB)
 ** Copies files and folders from one location to another.
 **
 */
-void CRainmeter::CopyFiles(std::wstring strFrom, std::wstring strTo)
+bool CRainmeter::CopyFiles(std::wstring strFrom, std::wstring strTo, bool bMove)
 {
 	// The strings must end with double nul
 	strFrom.append(L"0");
@@ -1052,7 +1075,7 @@ void CRainmeter::CopyFiles(std::wstring strFrom, std::wstring strTo)
 	strTo[strTo.size() - 1] = L'\0';
 
 	SHFILEOPSTRUCT fo = {0};
-	fo.wFunc = FO_COPY;
+	fo.wFunc = bMove ? FO_MOVE : FO_COPY;
 	fo.pFrom = strFrom.c_str();
 	fo.pTo = strTo.c_str();
 	fo.fFlags = FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO;
@@ -1061,7 +1084,9 @@ void CRainmeter::CopyFiles(std::wstring strFrom, std::wstring strTo)
 	if (result != 0)
 	{
 		DebugLog(L"Unable to copy files from %s to %s (%i)", strFrom.c_str(), strTo.c_str(), result);
+		return false;
 	}
+	return true;
 }
 
 /* 
@@ -1328,6 +1353,7 @@ int CRainmeter::ScanForConfigsRecursive(std::wstring& path, std::wstring base, i
 		if(hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
 
 		if(fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && 
+			!(wcscmp(L"Backup", fileData.cFileName) == 0 && base.empty()) &&		// Skip the backup folder
 			wcscmp(L".", fileData.cFileName) != 0 &&
 			wcscmp(L"..", fileData.cFileName) != 0)
 		{
