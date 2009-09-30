@@ -1677,9 +1677,14 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 
 	c_GlobalConfig.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", c_GlobalConfig.netInSpeed);
 	c_GlobalConfig.netOutSpeed = parser.ReadFloat(L"Rainmeter", L"NetOutSpeed", c_GlobalConfig.netOutSpeed);
-
 	m_ConfigEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", m_ConfigEditor.c_str());
 
+	if(m_ConfigEditor.substr(0,1) != L"\"")
+	{
+		m_ConfigEditor.insert(0,L"\"");
+		m_ConfigEditor.append(L"\"");
+	}
+	
 	m_TrayExecuteL = parser.ReadString(L"Rainmeter", L"TrayExecuteL", m_TrayExecuteL.c_str());
 	m_TrayExecuteR = parser.ReadString(L"Rainmeter", L"TrayExecuteR", m_TrayExecuteR.c_str());
 	m_TrayExecuteM = parser.ReadString(L"Rainmeter", L"TrayExecuteM", m_TrayExecuteM.c_str());
