@@ -286,7 +286,7 @@ void CMeasureNet::ReadConfig(CConfigParser& parser, const WCHAR* section, NET ne
 	m_Cumulative = 0!=parser.ReadInt(section, L"Cumulative", 0);
 
 	m_TrafficValue = parser.ReadFloat(section, L"TrafficValue", 0.0);
-	m_TrafficAction = parser.ReadString(section, L"TrafficAction", L"");
+	m_TrafficAction = parser.ReadString(section, L"TrafficAction", L"", false);
 
 	if (maxValue == 0)
 	{

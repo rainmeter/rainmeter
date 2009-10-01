@@ -100,13 +100,13 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	// The ifabove/ifbelow define actions that are ran when the value goes above/below the given number.
 
 	m_IfAboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0);
-	m_IfAboveAction = parser.ReadString(section, L"IfAboveAction", L"");
+	m_IfAboveAction = parser.ReadString(section, L"IfAboveAction", L"", false);
 
 	m_IfBelowValue = parser.ReadFloat(section, L"IfBelowValue", 0.0);
-	m_IfBelowAction = parser.ReadString(section, L"IfBelowAction", L"");
+	m_IfBelowAction = parser.ReadString(section, L"IfBelowAction", L"", false);
 
 	m_IfEqualValue = parser.ReadFloat(section, L"IfEqualValue", 0.0);
-	m_IfEqualAction = parser.ReadString(section, L"IfEqualAction", L"");
+	m_IfEqualAction = parser.ReadString(section, L"IfEqualAction", L"", false);
 
 	m_AverageSize = parser.ReadInt(section, L"AverageSize", 0);
 
