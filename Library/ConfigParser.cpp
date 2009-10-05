@@ -73,6 +73,12 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 		SetVariable(L"SKINSPATH", pRainmeter->GetSkinPath());
 		SetVariable(L"PLUGINSPATH", pRainmeter->GetPluginPath());
 		SetVariable(L"CURRENTPATH", CRainmeter::ExtractPath(filename));
+		
+		std::wstring cPath = CRainmeter::ExtractPath(filename);
+		cPath = cPath.substr(pRainmeter->GetSkinPath().length(),
+						cPath.length()-pRainmeter->GetSkinPath().length()-1);
+		SetVariable(L"CURRENTCONFIG", cPath);
+		
 		SetVariable(L"ADDONSPATH", pRainmeter->GetPath() + L"Addons\\");
 
 		RECT workArea;
