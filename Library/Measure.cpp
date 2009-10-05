@@ -89,6 +89,12 @@ CMeasure::~CMeasure()
 */
 void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
+	// Clear substitutes to prevent from being added more than once.
+	if (!m_Substitute.empty())
+	{
+		m_Substitute.clear();
+	}
+
 	m_Invert = 0!=parser.ReadInt(section, L"InvertMeasure", 0);
 	m_Disabled = 0!=parser.ReadInt(section, L"Disabled", 0);
 	m_UpdateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
@@ -116,7 +122,7 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	subs = parser.ReadString(section, L"Substitute", L"");
 	if (!ParseSubstitute(subs))
 	{
-		DebugLog(L"WebParser: Incorrect substitute string: %s", subs.c_str());
+		DebugLog(L"Incorrect substitute string: %s", subs.c_str());
 	}
 }
 
