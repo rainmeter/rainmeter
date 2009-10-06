@@ -73,6 +73,16 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 		SetVariable(L"SKINSPATH", pRainmeter->GetSkinPath());
 		SetVariable(L"PLUGINSPATH", pRainmeter->GetPluginPath());
 		SetVariable(L"CURRENTPATH", CRainmeter::ExtractPath(filename));
+
+   		// Set "CURRENTCONFIG" if the path to \Skins is contained in "filename", so it is not set by reading Rainmeter.ini
+		if (_wcsnicmp(filename, pRainmeter->GetSkinPath().c_str(), pRainmeter->GetSkinPath().length()) == 0)
+		{
+			std::wstring cPath = CRainmeter::ExtractPath(filename);
+			cPath = cPath.substr(pRainmeter->GetSkinPath().length(),
+							cPath.length()-pRainmeter->GetSkinPath().length()-1);
+			SetVariable(L"CURRENTCONFIG", cPath);
+		}
+
 		SetVariable(L"ADDONSPATH", pRainmeter->GetPath() + L"Addons\\");
 
 		RECT workArea;
