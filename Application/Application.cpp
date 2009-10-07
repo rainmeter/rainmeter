@@ -18,6 +18,9 @@
 
 #pragma warning(disable : 4996)
 
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
 #include "resource.h"
 #include "..\Library\Rainmeter.h"
 
@@ -49,6 +52,9 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	WCHAR* WinClass = L"DummyRainWClass";
 	WCHAR* WinName = L"Rainmeter control window";
 	HWND hWnd;
+
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+//	_CrtSetBreakAlloc(5055);
 
 	if(!hPrevInstance) 
 	{

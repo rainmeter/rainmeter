@@ -16,9 +16,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#pragma warning(disable: 4786)
-#pragma warning(disable: 4996)
-
+#include "StdAfx.h"
 #include "MeterHistogram.h"
 #include "Measure.h"
 #include "Error.h"
@@ -83,6 +81,7 @@ void CMeterHistogram::Initialize()
 	// Load the bitmaps if defined
 	if(!m_PrimaryImageName.empty())
 	{
+		if (m_PrimaryBitmap) delete m_PrimaryBitmap;
 		m_PrimaryBitmap = new Bitmap(m_PrimaryImageName.c_str());
 		Status status = m_PrimaryBitmap->GetLastStatus();
 		if(Ok != status)
@@ -96,6 +95,7 @@ void CMeterHistogram::Initialize()
 
 	if(!m_SecondaryImageName.empty())
 	{
+		if (m_SecondaryBitmap) delete m_SecondaryBitmap;
 		m_SecondaryBitmap = new Bitmap(m_SecondaryImageName.c_str());
 		Status status = m_SecondaryBitmap->GetLastStatus();
 		if(Ok != status)
@@ -106,6 +106,7 @@ void CMeterHistogram::Initialize()
 
 	if(!m_BothImageName.empty())
 	{
+		if (m_BothBitmap) delete m_BothBitmap;
 		m_BothBitmap = new Bitmap(m_BothImageName.c_str());
 		Status status = m_BothBitmap->GetLastStatus();
 		if(Ok != status)
@@ -121,10 +122,12 @@ void CMeterHistogram::Initialize()
 	}
 
 	// Create buffers for values
+	if (m_PrimaryValues) delete [] m_PrimaryValues;
 	m_PrimaryValues = new double[m_W];
 	memset(m_PrimaryValues, 0, sizeof(double) * m_W);
 	if (m_SecondaryMeasure)
 	{
+		if (m_SecondaryValues) delete [] m_SecondaryValues;
 		m_SecondaryValues = new double[m_W];
 		memset(m_SecondaryValues, 0, sizeof(double) * m_W);
 	}

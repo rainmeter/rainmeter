@@ -16,15 +16,16 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#pragma warning(disable: 4786)
-#pragma warning(disable: 4996)
-
+#include "StdAfx.h"
 #include "MeterString.h"
 #include "Rainmeter.h"
 #include "Measure.h"
 #include "Error.h"
 
 using namespace Gdiplus;
+
+std::map<std::wstring, Gdiplus::FontFamily*> CMeterString::c_FontFamilies;
+std::map<std::wstring, Gdiplus::Font*> CMeterString::c_Fonts;
 
 /*
 ** CMeterString
@@ -60,8 +61,6 @@ CMeterString::CMeterString(CMeterWindow* meterWindow) : CMeter(meterWindow)
 */
 CMeterString::~CMeterString()
 {
-	if(m_Font) delete m_Font;
-	if(m_FontFamily) delete m_FontFamily;
 }
 
 /*
@@ -106,28 +105,39 @@ void CMeterString::Initialize()
 {
 	CMeter::Initialize();
 
-	if(m_FontFamily) delete m_FontFamily;
-	m_FontFamily = new FontFamily(m_FontFace.c_str());
-	Status status = m_FontFamily->GetLastStatus();
-
-	// It couldn't find the font family
-	// Therefore we look in the privatefontcollection of this meters MeterWindow
-	if(Ok != status)
+	// Check if the font family is in the cache and use it
+	std::map<std::wstring, Gdiplus::FontFamily*>::iterator iter = c_FontFamilies.find(m_FontFace);
+	if (iter != c_FontFamilies.end())
 	{
-		m_FontFamily = new FontFamily(m_FontFace.c_str(), m_MeterWindow->GetPrivateFontCollection());
-		status = m_FontFamily->GetLastStatus();
+		m_FontFamily = (*iter).second;
+	}
+	else
+	{
+		m_FontFamily = new FontFamily(m_FontFace.c_str());
+		Status status = m_FontFamily->GetLastStatus();
 
-		// It couldn't find the font family: Log it.
+		// It couldn't find the font family
+		// Therefore we look in the privatefontcollection of this meters MeterWindow
 		if(Ok != status)
-		{	
-			std::wstring error = L"Error: Couldn't load font family: ";
-			error += m_FontFace;
-			DebugLog(error.c_str());
-			
+		{
 			delete m_FontFamily;
-			m_FontFamily = NULL;
+			m_FontFamily = new FontFamily(m_FontFace.c_str(), m_MeterWindow->GetPrivateFontCollection());
+			status = m_FontFamily->GetLastStatus();
+
+			// It couldn't find the font family: Log it.
+			if(Ok != status)
+			{	
+				std::wstring error = L"Error: Couldn't load font family: ";
+				error += m_FontFace;
+				DebugLog(error.c_str());
+				
+				delete m_FontFamily;
+				m_FontFamily = NULL;
+			}
+			
 		}
-		
+
+		c_FontFamilies[m_FontFace] = m_FontFamily;
 	}
 
 	FontStyle style = FontStyleRegular;
@@ -154,18 +164,25 @@ void CMeterString::Initialize()
 
 	REAL size = (REAL)m_FontSize * (96.0f / (REAL)dpi);
 
-	if (m_FontFamily)
+	std::map<std::wstring, Gdiplus::Font*>::iterator iter2 = c_Fonts.find(FontPropertiesToString(size, style));
+	if (iter2 != c_Fonts.end())
 	{
-		if(m_Font) delete m_Font;
-		m_Font = new Gdiplus::Font(m_FontFamily, size, style);
+		m_Font = (*iter2).second;
 	}
 	else
 	{
-		if(m_Font) delete m_Font;
-		m_Font = new Gdiplus::Font(FontFamily::GenericSansSerif(), size, style);
+		if (m_FontFamily)
+		{
+			m_Font = new Gdiplus::Font(m_FontFamily, size, style);
+		}
+		else
+		{
+			m_Font = new Gdiplus::Font(FontFamily::GenericSansSerif(), size, style);
+		}
+		c_Fonts[FontPropertiesToString(size, style)] = m_Font;
 	}
 
-	status = m_Font->GetLastStatus();
+	Status status = m_Font->GetLastStatus();
 	if(Ok != status)
 	{
 	    throw CError(std::wstring(L"Unable to create font: ") + m_FontFace, __LINE__, __FILE__);
@@ -191,6 +208,8 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	CMeter::ReadConfig(section);
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
+
+	m_MeasureNames.clear();
 
 	// Check for extra measures
 	int i = 2;
@@ -530,3 +549,41 @@ void CMeterString::BindMeasure(std::list<CMeasure*>& measures)
 		}
 	}
 }
+
+/*
+** FreeFontCache
+**
+** Static function which frees the font cache.
+**
+*/
+void CMeterString::FreeFontCache()
+{
+	std::map<std::wstring, Gdiplus::FontFamily*>::iterator iter = c_FontFamilies.begin();
+	for ( ; iter != c_FontFamilies.end(); iter++)
+	{
+		delete (*iter).second;
+	}
+	c_FontFamilies.clear();
+
+	std::map<std::wstring, Gdiplus::Font*>::iterator iter2 = c_Fonts.begin();
+	for ( ; iter2 != c_Fonts.end(); iter2++)
+	{
+		delete (*iter2).second;
+	}
+	c_Fonts.clear();
+}
+
+/*
+** FontPropertiesToString
+**
+** Static helper to convert font properties to a string so it can be used as a key for the cache map.
+**
+*/
+std::wstring CMeterString::FontPropertiesToString(REAL size, FontStyle style)
+{
+	std::wstringstream stream;
+	stream << size << L"-" << (int)style;
+	return stream.str();
+}
+
+// EOF

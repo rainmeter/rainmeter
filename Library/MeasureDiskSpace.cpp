@@ -18,6 +18,7 @@
 
 #pragma warning(disable: 4996)
 
+#include "StdAfx.h"
 #include "MeasureDiskSpace.h"
 #include "Rainmeter.h"
 

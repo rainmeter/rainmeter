@@ -16,13 +16,12 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#pragma warning(disable: 4996)
-#pragma warning(disable: 4786)
-
+#include "StdAfx.h"
 #include "Rainmeter.h"
 #include "Error.h"
 #include "AboutDialog.h"
 #include "MeasureNet.h"
+#include "MeterString.h"
 #include "Resource.h"
 #include "UpdateCheck.h"
 #include <assert.h>
@@ -655,6 +654,8 @@ CRainmeter::~CRainmeter()
 	if (m_TrayWindow) delete m_TrayWindow;
 
 	WriteStats(true);
+
+	CMeterString::FreeFontCache();
 
 	GdiplusShutdown(m_GDIplusToken);
 }

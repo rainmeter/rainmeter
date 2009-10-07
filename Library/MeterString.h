@@ -40,6 +40,8 @@ public:
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 	virtual void BindMeasure(std::list<CMeasure*>& measures);
 
+	static void FreeFontCache();
+
 private:
 	enum TEXTSTYLE
 	{
@@ -83,6 +85,10 @@ private:
 
 	std::vector<std::wstring> m_MeasureNames;
 	std::vector<CMeasure*> m_Measures;
+
+	static std::wstring FontPropertiesToString(Gdiplus::REAL size, Gdiplus::FontStyle style);
+	static std::map<std::wstring, Gdiplus::FontFamily*> c_FontFamilies;		// Cache for the font families
+	static std::map<std::wstring, Gdiplus::Font*> c_Fonts;					// Cache for the fonts
 };
 
 #endif

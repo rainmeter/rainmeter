@@ -18,6 +18,7 @@
 
 #pragma warning(disable: 4996)
 
+#include "StdAfx.h"
 #include "MeasureTime.h"
 #include "Rainmeter.h"
 #include <time.h>

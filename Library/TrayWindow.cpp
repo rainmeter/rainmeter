@@ -16,10 +16,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#define _WIN32_IE 0x0600
-
-#pragma warning(disable: 4996)
-
+#include "StdAfx.h"
 #include "TrayWindow.h"
 #include "Resource.h"
 #include "Litestep.h"

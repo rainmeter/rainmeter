@@ -16,9 +16,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#pragma warning(disable: 4786)
-#pragma warning(disable: 4996)
-
+#include "StdAfx.h"
 #include <windows.h>
 #include <gdiplus.h>
 #include "MeterWindow.h"
@@ -1551,11 +1549,14 @@ void CMeterWindow::ReadSkin()
 				{
 					// It's a measure
 					CMeasure* measure = CMeasure::Create(measureName.c_str(), this);
-					measure->SetName(strSection.c_str());
-					measure->ReadConfig(m_Parser, strSection.c_str());
-					m_Measures.push_back(measure);
+					if (measure)
+					{
+						measure->SetName(strSection.c_str());
+						measure->ReadConfig(m_Parser, strSection.c_str());
+						m_Measures.push_back(measure);
 
-					m_Parser.AddMeasure(measure);
+						m_Parser.AddMeasure(measure);
+					}
 				}
 				catch (CError& error)
 				{
@@ -1568,9 +1569,12 @@ void CMeterWindow::ReadSkin()
 				{
 					// It's a meter
 					CMeter* meter = CMeter::Create(meterName.c_str(), this);
-					meter->SetName(strSection.c_str());
-					meter->ReadConfig(strSection.c_str());
-					m_Meters.push_back(meter);
+					if (meter)
+					{
+						meter->SetName(strSection.c_str());
+						meter->ReadConfig(strSection.c_str());
+						m_Meters.push_back(meter);
+					}
 				}
 				catch (CError& error)
 				{
