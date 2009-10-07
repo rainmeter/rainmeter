@@ -154,7 +154,7 @@ void CMeterButton::ReadConfig(const WCHAR* section)
 	m_ImageName = parser.ReadString(section, L"ButtonImage", L"");
 	m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
 
-	m_Command = parser.ReadString(section, L"ButtonCommand", L"");
+	m_Command = parser.ReadString(section, L"ButtonCommand", L"", false);
 
 	if (m_Initialized)
 	{
