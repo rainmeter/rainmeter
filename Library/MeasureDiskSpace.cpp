@@ -55,35 +55,38 @@ bool CMeasureDiskSpace::Update()
 {
 	if (!CMeasure::PreUpdate()) return false;
 
-	ULARGE_INTEGER i64FreeBytesToCaller, i64TotalBytes, i64FreeBytes;
-
-	UINT type = GetDriveType(m_Drive.c_str());
-	if (type != DRIVE_CDROM && (!m_IgnoreRemovable || type != DRIVE_REMOVABLE))	// Ignore CD-ROMS and removable drives
+	if (!m_Drive.empty())
 	{
-		if(GetDiskFreeSpaceEx(m_Drive.c_str(), &i64FreeBytesToCaller, &i64TotalBytes, &i64FreeBytes))
+		UINT type = GetDriveType(m_Drive.c_str());
+		if (type != DRIVE_CDROM && (!m_IgnoreRemovable || type != DRIVE_REMOVABLE))	// Ignore CD-ROMS and removable drives
 		{
-			LARGE_INTEGER tmpInt;
-			if (m_Total)
-			{
-				tmpInt.QuadPart = i64TotalBytes.QuadPart;
-			}
-			else
-			{
-				tmpInt.QuadPart = i64FreeBytes.QuadPart;
-			}
-			m_Value = (double)tmpInt.QuadPart;
-		}
-	}
-	else
-	{
-		m_Value = 0;
-	}
+			ULARGE_INTEGER i64FreeBytesToCaller, i64TotalBytes, i64FreeBytes;
 
-	if (m_Label) 
-	{
-		WCHAR volumeName[MAX_PATH];
-		GetVolumeInformation(m_Drive.c_str(), volumeName, MAX_PATH, NULL, NULL, NULL, NULL, 0);
-		m_LabelName = volumeName;
+			if(GetDiskFreeSpaceEx(m_Drive.c_str(), &i64FreeBytesToCaller, &i64TotalBytes, &i64FreeBytes))
+			{
+				LARGE_INTEGER tmpInt;
+				if (m_Total)
+				{
+					tmpInt.QuadPart = i64TotalBytes.QuadPart;
+				}
+				else
+				{
+					tmpInt.QuadPart = i64FreeBytes.QuadPart;
+				}
+				m_Value = (double)tmpInt.QuadPart;
+			}
+		}
+		else
+		{
+			m_Value = 0;
+		}
+
+		if (m_Label) 
+		{
+			WCHAR volumeName[MAX_PATH] = {0};
+			GetVolumeInformation(m_Drive.c_str(), volumeName, MAX_PATH, NULL, NULL, NULL, NULL, 0);
+			m_LabelName = volumeName;
+		}
 	}
 
 	return PostUpdate();
@@ -116,21 +119,35 @@ void CMeasureDiskSpace::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	CMeasure::ReadConfig(parser, section);
 
 	m_Drive = parser.ReadString(section, L"Drive", L"C:\\");
+	if (m_Drive.empty())
+	{
+		DebugLog(L"Drive letter is not given.");
+		m_Value = 0;
+		m_LabelName = L"";
+	}
+	else if (m_Drive[m_Drive.length() - 1] != L'\\')  // E.g. "C:"
+	{
+		m_Drive += L"\\";  // A trailing backslash is required.
+	}
+
 	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
 	m_Label = (1 == parser.ReadInt(section, L"Label", 0));
 	m_IgnoreRemovable = (1 == parser.ReadInt(section, L"IgnoreRemovable", 1));
 
 	// Set the m_MaxValue
-	ULARGE_INTEGER i64FreeBytesToCaller, i64TotalBytes, i64FreeBytes;
-
-	UINT type = GetDriveType(m_Drive.c_str());
-	if (type != DRIVE_CDROM && (!m_IgnoreRemovable || type != DRIVE_REMOVABLE))	// Ignore CD-ROMS and removable drives
+	if (!m_Drive.empty())
 	{
-		if(GetDiskFreeSpaceEx(m_Drive.c_str(), &i64FreeBytesToCaller, &i64TotalBytes, &i64FreeBytes))
+		UINT type = GetDriveType(m_Drive.c_str());
+		if (type != DRIVE_CDROM && (!m_IgnoreRemovable || type != DRIVE_REMOVABLE))	// Ignore CD-ROMS and removable drives
 		{
-			LARGE_INTEGER tmpInt;
-			tmpInt.QuadPart = i64TotalBytes.QuadPart;
-			m_MaxValue = (double)tmpInt.QuadPart;
+			ULARGE_INTEGER i64FreeBytesToCaller, i64TotalBytes, i64FreeBytes;
+	
+			if(GetDiskFreeSpaceEx(m_Drive.c_str(), &i64FreeBytesToCaller, &i64TotalBytes, &i64FreeBytes))
+			{
+				LARGE_INTEGER tmpInt;
+				tmpInt.QuadPart = i64TotalBytes.QuadPart;
+				m_MaxValue = (double)tmpInt.QuadPart;
+			}
 		}
 	}
 }
