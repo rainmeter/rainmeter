@@ -40,6 +40,8 @@ __declspec( dllexport ) LPCTSTR GetPluginAuthor();
 }
 //Function that translates DOT11 ENUMs to output strings
 LPCTSTR getDot11str(int,int);
+//Wrapper function for writing to log file
+void Log(const WCHAR* string);
 
 enum MEASURETYPE
 {
@@ -52,9 +54,17 @@ enum MEASURETYPE
 	PHY,
 };
 
+//Struct for storing current meter's settings
+typedef struct meas_data {
+	MEASURETYPE type;
+	UINT listStyle;
+	UINT listMax;
+	WCHAR * netlist;
+	bool listInit;
+} meas_data_t;
 
-std::map<UINT, MEASURETYPE> g_Types;
-std::map<UINT, UINT> g_ListStyle;
+
+std::map<UINT, meas_data_t> g_meas_data;
 /* Globals that store system's wifi interface/adapter structs */
 /* These are initialized in Initialize(), used during each update*/
 HANDLE hClient = NULL;
@@ -77,26 +87,23 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
 	/* initialize interface/adapter structs */
 	DWORD dwNegotiatedVersion = 0;
-	PWLAN_INTERFACE_CAPABILITY pCapability = NULL;
-	PWLAN_INTERFACE_INFO_LIST pIntfList = NULL;
 	DWORD dwErr;
 	//Create WINLAN API Handle
 	if(hClient == NULL){
 		dwErr = WlanOpenHandle( WLAN_API_VERSION, NULL, &dwNegotiatedVersion, &hClient );
 		if( ERROR_SUCCESS != dwErr ){
-			std::wstring error = L"Unable to open WLAN API Handle! (err code: "; 
-			error+= getDot11str(dwErr,5);
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
-			//return 0;
+			WCHAR buffer[256];
+			wsprintf(buffer, L"WifiStatus.dll: Unable to open WLAN API Handle. Error code (%d): %s",(int)dwErr,getDot11str(dwErr,5));
+			Log(buffer);
+			return 0;
 		}
 	}
 	//Query list of WLAN interfaces
 	if(pIntfList == NULL){
 		dwErr= WlanEnumInterfaces(hClient, NULL, &pIntfList);
 		if(( ERROR_SUCCESS != dwErr) || (&pIntfList->dwNumberOfItems <= 0)){
-			std::wstring error = L"Unable to find a valid WLAN interface/adapter! (err code: ";
-			error+=(int) dwErr + L")";
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
+			WCHAR buffer[256];
+			wsprintf(buffer, L"WifiStatus.dll: Unable to find any WLAN interfaces/adapters. Error code %d",(int) dwErr);
 			return 0;
 		}
 	}
@@ -107,9 +114,9 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		if(_wtoi(data) < (int)pIntfList->dwNumberOfItems){
 			pInterface = &pIntfList->InterfaceInfo[_wtoi(data)];
 		} else {
-			std::wstring error = L"Invalid WifiIntfID given (defaulting to 0). WifiIntfID=";
-			error+=data;
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
+			WCHAR buffer[256];
+			wsprintf(buffer, L"WifiStatus.dll: Adapter is disabled or invalid (WifiIntfID=%s), fix INTF ID(default=0) or enable the adapter.",data);
+			Log(buffer);
 			pInterface = &pIntfList->InterfaceInfo[0]; 
 		}		
 	} else {
@@ -120,15 +127,31 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	
 	if ((data != NULL) && (wcsicmp(L"", data) != 0)){
 		if ( (_wtoi(data) >= 0) && (_wtoi(data) <= 3)){
-			g_ListStyle[id] = _wtoi(data);
+			g_meas_data[id].listStyle = _wtoi(data);
 		} else {
-			std::wstring error = L"Invalid WifiListStyle given (defaulting to 0). WifiListStyle=";
-			error+=data;
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
-			g_ListStyle[id] = 0;
+			WCHAR buffer[256];
+			wsprintf(buffer, L"WifiStatus.dll: Invalid List Style given (WifiListStyle=%s), defaulting to 0.",data);
+			Log(buffer);
+			g_meas_data[id].listStyle = 0;
 		}		
 	} else {
-		g_ListStyle[id] = 0;
+		g_meas_data[id].listStyle = 0;
+	}
+
+	//Set maxmimum number of list items
+	data = ReadConfigString(section, L"WifiListLimit", L"");
+	g_meas_data[id].listInit = false;
+	if ((data != NULL) && (wcsicmp(L"", data) != 0)){
+		if (_wtoi(data) > 0){
+			g_meas_data[id].listMax = _wtoi(data);
+		} else {
+			WCHAR buffer[256];
+			wsprintf(buffer, L"WifiStatus.dll: Invalid List Limit given (WifiListLimit=%s), defaulting to 5.",data);
+			Log(buffer);
+			g_meas_data[id].listMax = 5;
+		}		
+	} else {
+		g_meas_data[id].listMax = 5;
 	}
 	//Select type of measure
 	MEASURETYPE infoType = UNKNOWN;
@@ -152,11 +175,11 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		else if (wcsicmp(L"PHY", type) == 0){
 			infoType=PHY;
 		} else {
-			std::wstring error = L"No such WifiInfoType: ";
-			error += type;
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
+			WCHAR buffer[256];
+			wsprintf(buffer, L"WifiStatus.dll: Invalid type given, WifiInfoType=%d.",type);
+			Log(buffer);
 		}
-		g_Types[id] = infoType;
+		g_meas_data[id].type = infoType;
 	}
 
 	switch(infoType){
@@ -180,9 +203,10 @@ UINT Update(UINT id)
 	if(pInterface == NULL) return NULL;
 
 	//Get measure id, and identify type
-	std::map<UINT, MEASURETYPE>::iterator typeIter = g_Types.find(id);
-	if(typeIter == g_Types.end()) return NULL;
-	switch((*typeIter).second)
+	//std::map<UINT, MEASURETYPE>::iterator typeIter = g_Types.find(id);
+	//if(typeIter == g_Types.end()) return NULL;
+	MEASURETYPE current_type = g_meas_data[id].type;
+	switch(current_type)
 	{
 		case QUALITY:
 			//Set up variables for WLAN query
@@ -191,7 +215,6 @@ UINT Update(UINT id)
 			DWORD dwErr;
 			GUID& intfGUID = pInterface->InterfaceGuid;
 			dwErr = WlanQueryInterface( hClient, &intfGUID, wlan_intf_opcode_current_connection, NULL, &outsize, (PVOID*)&wlan_cattr, NULL );
-			
 			if( ERROR_SUCCESS != dwErr){
 				return 0;
 			}
@@ -209,20 +232,16 @@ LPCTSTR GetString(UINT id, UINT flags)
 {
 	if(pInterface == NULL) return NULL;
 	
-	//@TODO - Netlist needs to be dynamically allocated + renewed
-	static WCHAR buffer[256];
-	static WCHAR netlist[1024];//stores current list of available networks
+	//Some variables for data manipulation in this function
+	static WCHAR buffer[128];
 	bool bNetList = false; //whether to return buffer or netlist
-	bool invalidType= false;
+	bool bInvalidType = false;
+	bool bIntfError = false;
 	unsigned int listStyle = 0;
-	memset(buffer,'\0',256);
-	
-	std::map<UINT, MEASURETYPE>::iterator typeIter = g_Types.find(id);
-	if(typeIter == g_Types.end()) return NULL;
-	
-	std::map<UINT, UINT>::iterator verboseIter = g_ListStyle.find(id);
-	if(verboseIter == g_ListStyle.end()) return NULL;
-	listStyle = (*verboseIter).second;
+	memset(buffer,'\0',128);
+	listStyle = g_meas_data[id].listStyle;
+	int printed = 0; //count of how many networks have been printed already
+
 	//Set up variables for WLAN queries
 	ULONG outsize = 0;
 	PWLAN_CONNECTION_ATTRIBUTES wlan_cattr=NULL;
@@ -230,56 +249,71 @@ LPCTSTR GetString(UINT id, UINT flags)
 	DWORD dwCErr, dwLErr;
 	GUID& intfGUID = pInterface->InterfaceGuid;
 
-	//Initialize WLAN structs with queries
+	//Initialize WLAN structs with queries, break if no interface found
 	dwCErr= WlanQueryInterface( hClient, &intfGUID, wlan_intf_opcode_current_connection, NULL, &outsize, (PVOID*)&wlan_cattr, NULL );
 	dwLErr= WlanGetAvailableNetworkList(hClient,&intfGUID,NULL,NULL,&pwnl);
+	MEASURETYPE current_type = g_meas_data[id].type;
+	UINT listMax = g_meas_data[id].listMax;
 
-	switch((*typeIter).second)
+	switch(current_type)
 	{   
 		case LIST:
-			if(ERROR_SUCCESS != dwLErr){return NULL;}
-			memset(netlist,'\0',1024);
-			memset(buffer,'\0',256);
+			if(ERROR_SUCCESS != dwLErr){return L"Error";}
+			
+			if (!g_meas_data[id].listInit){//Check if netlist has memory allocated already
+				//Size of network name can be up to 64 chars, set to 80 to add room for  delimiters
+				g_meas_data[id].netlist = (WCHAR*)malloc( 80 * sizeof(WCHAR) * g_meas_data[id].listMax);
+				if(g_meas_data[id].netlist == NULL){
+					WCHAR debug[256];
+					wsprintf(debug, L"WifiStatus.dll: Unable to allocate memory for network list.");
+					Log(buffer);
+					g_meas_data[id].listInit = false;
+					free(g_meas_data[id].netlist);
+					return NULL;
+				}
+				g_meas_data[id].listInit = true;
+			}
+			
+			memset(g_meas_data[id].netlist,'\0', (80 * sizeof(WCHAR) * g_meas_data[id].listMax));
+			memset(buffer,'\0',128);
+			
 			//Check all items in WLAN NETWORK LIST
 			for(int i=0; i < (int)pwnl->dwNumberOfItems ; i++){
+				if(printed == g_meas_data[id].listMax)
+					break;
+				
 				//SSID is in UCHAR, convert to WCHAR
 				mbstowcs(buffer,(char*)pwnl->Network[i].dot11Ssid.ucSSID,pwnl->Network[i].dot11Ssid.uSSIDLength);
-				//Prevent duplicats that result from profiles
-				if((wcsstr(netlist,buffer)== NULL)&&(wcsicmp(L"", buffer) != 0)){
-					//Add an SSID to list
-					wcscat(netlist,buffer);
-					//Add PHY type
-					memset(buffer,'\0',256);
+				
+				//Prevent duplicates that result from profiles, check using SSID
+				if((wcsstr(g_meas_data[id].netlist,buffer)== NULL)&&(wcsicmp(L"", buffer) != 0)){
+					printed++;
 					if(listStyle > 0){
+						wsprintf(g_meas_data[id].netlist,L"%s%s",g_meas_data[id].netlist,buffer);
+						memset(buffer,'\0',128);
 						if(listStyle == 1 || listStyle == 3){
-							wcscat(netlist,L" @ ");
-							wcscpy(buffer,getDot11str(pwnl->Network[i].dot11PhyTypes[0],4));
-							wcscat(netlist,buffer);
-							//Add Cipher type
-							memset(buffer,'\0',256);
+							//ADD PHY type
+							wsprintf(buffer,L" @%s", getDot11str(pwnl->Network[i].dot11PhyTypes[0],4)); 
 						}
 						if(listStyle == 2 || listStyle == 3){
-							wcscat(netlist,L" (");
-							wcscpy(buffer,getDot11str(pwnl->Network[i].dot11DefaultCipherAlgorithm,1));
-							wcscat(netlist,buffer);
-							memset(buffer,'\0',256);
-							//Add Auth type
-							wcscat(netlist,L":");
-							wcscpy(buffer,getDot11str(pwnl->Network[i].dot11DefaultAuthAlgorithm,2));
-							wcscat(netlist,buffer);
-							wcscat(netlist,L")");
+							//ADD cipher and authentication
+							wsprintf(buffer,L"%s (%s:%s)",buffer,getDot11str(pwnl->Network[i].dot11DefaultCipherAlgorithm,1)
+																,getDot11str(pwnl->Network[i].dot11DefaultAuthAlgorithm,2)); 							
 						}
 					}
-					wcscat(netlist,L"\n");
+					wsprintf(g_meas_data[id].netlist,L"%s%s\n",g_meas_data[id].netlist,buffer);
 				}
-				memset(buffer,'\0',256);
+				memset(buffer,'\0',128);
 
 			}//end for
-			bNetList=TRUE;
+			bNetList=true;
 			break;
 		
 		case SSID:
-			if(ERROR_SUCCESS != dwCErr){return NULL;}
+			if(ERROR_SUCCESS != dwCErr){
+				bIntfError = true;
+				break;
+			}
 			//Need to convert ucSSID to wchar from uchar
 			mbstowcs(buffer,(char *)wlan_cattr->wlanAssociationAttributes.dot11Ssid.ucSSID,wlan_cattr->wlanAssociationAttributes.dot11Ssid.uSSIDLength);
 			//If not connected yet add current status
@@ -287,38 +321,53 @@ LPCTSTR GetString(UINT id, UINT flags)
 			break;
 		
 		case PHY:
-			if(ERROR_SUCCESS != dwCErr){return NULL;}
+			if(ERROR_SUCCESS != dwCErr){
+				bIntfError = true;
+				break;
+			}
 			wcscpy(buffer,getDot11str(wlan_cattr->wlanAssociationAttributes.dot11PhyType,4));
 			break;
 
 		case ENCRYPTION:
-			if(ERROR_SUCCESS != dwCErr){return NULL;}
+			if(ERROR_SUCCESS != dwCErr){
+				bIntfError = true;
+				break;
+			}
 			wcscpy(buffer,getDot11str(wlan_cattr->wlanSecurityAttributes.dot11CipherAlgorithm,1));
 			break;
 
 		case AUTH:
-			if(ERROR_SUCCESS != dwCErr){return NULL;}
+			if(ERROR_SUCCESS != dwCErr){
+				bIntfError = true;
+				break;
+			}
 			wcscpy(buffer,getDot11str(wlan_cattr->wlanSecurityAttributes.dot11AuthAlgorithm,2));					
 			break;
 
 		default: //InfoType does not refer to a string measure
-			invalidType= true;
+			bInvalidType= true;
 			break;
 			
 	}
 	if(wlan_cattr!=NULL)WlanFreeMemory(wlan_cattr);
 	if(pwnl!=NULL)WlanFreeMemory(pwnl);
-	if(bNetList)return netlist;
-	if(invalidType)
-		return NULL;
-	else
-		return buffer;
+	
+	if(bNetList)
+		return g_meas_data[id].netlist;
+	if(bIntfError)
+		return L"-1";
+	else {
+		if(bInvalidType)
+			return NULL;
+		else
+			return buffer;
+	}
 }
 
 /*
 	switches from winlanapi.h + SDK 
 	in: -DOT11 ENUM (converted to int)
-	    -type of ENUM (cipher=1, auth=2, status=3, phy=4)
+	    -type of ENUM (cipher=1, auth=2, status=3, phy=4, otherwise=error strings)
 	out: String to be returned by measure
 */
 LPCTSTR getDot11str(int dot11enum,int type){
@@ -391,7 +440,7 @@ LPCTSTR getDot11str(int dot11enum,int type){
 				//Case below appears as dot11_phy_type_ht on MSDN
 				//However its not supported in winlanapi.h ???
 				case 7:
-					return L"n";
+					return L"802.11n";
 				default:
 					return L"???";
 		}
@@ -399,13 +448,13 @@ LPCTSTR getDot11str(int dot11enum,int type){
 	else{
 		switch(dot11enum){
 				case ERROR_INVALID_PARAMETER:
-					return L"Invalid parameters";
+					return L"Invalid parameters.";
 				case ERROR_NOT_ENOUGH_MEMORY:
-					return L"Not enough memory";
+					return L"Not enough memory.";
 				case ERROR_REMOTE_SESSION_LIMIT_EXCEEDED:
-					return L"Too many handles already issued";
+					return L"Too many handles already issued.";
 				default:
-					return L"Windows just hates you";
+					return L"Unknown error code.";
 		}
 	}
 }
@@ -417,10 +466,12 @@ LPCTSTR getDot11str(int dot11enum,int type){
 */
 void Finalize(HMODULE instance, UINT id)
 {
-	std::map<UINT, MEASURETYPE>::iterator i1 = g_Types.find(id);
-	if (i1 != g_Types.end())
+	std::map<UINT, meas_data_t>::iterator i1 = g_meas_data.find(id);
+	if (i1 != g_meas_data.end())
 	{
-		g_Types.erase(i1);
+		free(g_meas_data[id].netlist);
+		g_meas_data[id].listInit = false;
+		g_meas_data.erase(i1);
 	}
 	if(hClient != NULL){
 		WlanCloseHandle(hClient, NULL);
@@ -428,8 +479,17 @@ void Finalize(HMODULE instance, UINT id)
 	}
 	if(pIntfList != NULL){
 		WlanFreeMemory(pIntfList);
-		hClient = NULL;
+		pIntfList = NULL;
 	}
+}
+
+/*
+  Wrapper function grabbed from the WebParser plugin
+*/
+void Log(const WCHAR* string)
+{
+	// @TODO: put logging into critical section
+	LSLog(LOG_DEBUG, L"Rainmeter", string);
 }
 
 /*
@@ -439,7 +499,7 @@ void Finalize(HMODULE instance, UINT id)
 */
 UINT GetPluginVersion()
 {
-	return 1008;
+	return 1009;
 }
 
 /*
