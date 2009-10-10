@@ -472,6 +472,12 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				command += L"\\Addons\\RainThemes\\RainThemes.exe\"";
 				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 			}
+			else if(wParam == ID_CONTEXT_MANAGESKINS)
+			{
+				std::wstring command = L"\"" + Rainmeter->GetPath();
+				command += L"\\Addons\\RainBrowser\\RainBrowser.exe\"";
+				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
+			}
 			else if(wParam == ID_CONTEXT_QUIT)
 			{
 				if (Rainmeter->GetDummyLitestep()) PostQuitMessage(0);

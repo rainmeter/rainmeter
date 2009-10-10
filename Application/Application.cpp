@@ -30,7 +30,7 @@
 BOOL InitApplication(HINSTANCE hInstance, const WCHAR* WinClass);
 HWND InitInstance(HINSTANCE hInstance, const WCHAR* WinClass, const WCHAR* WinName);
 LONG APIENTRY MainWndProc(HWND, UINT, UINT, LONG);
-void Bang(HWND hWnd, const WCHAR* command);
+void Bang(const WCHAR* command);
 
 /*
 ** Stuff from the DLL
@@ -38,7 +38,10 @@ void Bang(HWND hWnd, const WCHAR* command);
 extern "C" EXPORT_PLUGIN int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR);
 extern "C" EXPORT_PLUGIN void quitModule(HINSTANCE dllInst);
 extern "C" EXPORT_PLUGIN void Initialize(bool DummyLS, LPCTSTR CmdLine);
-extern "C++" CRainmeter* Rainmeter;
+extern "C" EXPORT_PLUGIN void ExecuteBang(LPCTSTR szBang);
+
+const WCHAR* WinClass = L"DummyRainWClass";
+const WCHAR* WinName = L"Rainmeter control window";
 
 /* 
 ** WinMain
@@ -49,12 +52,17 @@ extern "C++" CRainmeter* Rainmeter;
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
 	MSG msg;
-	WCHAR* WinClass = L"DummyRainWClass";
-	WCHAR* WinName = L"Rainmeter control window";
 	HWND hWnd;
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 //	_CrtSetBreakAlloc(5055);
+
+	if (lpCmdLine && lpCmdLine[0] == L'!')
+	{
+		// It's a !bang
+		Bang(lpCmdLine);
+		return 0;
+	}
 
 	if(!hPrevInstance) 
 	{
@@ -63,13 +71,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
 	hWnd=InitInstance(hInstance, WinClass, WinName);
 	if(!hWnd) return FALSE;
-
-	if (lpCmdLine && lpCmdLine[0] == L'!')
-	{
-		// It's a !bang
-		Bang(hWnd, lpCmdLine);
-		return 0;
-	}
 
 	// Remove quotes from the commandline
 	WCHAR Path[256];
@@ -162,20 +163,10 @@ HWND InitInstance(HINSTANCE hInstance, const WCHAR* WinClass, const WCHAR* WinNa
 ** Sends bangs to the DLL
 **
 */
-void Bang(HWND hWnd, const WCHAR* command)
+void Bang(const WCHAR* command)
 {
 	// Check if Rainmeter is running
-	HWND wnd = FindWindow(L"RainmeterMeterWindow", NULL);
-	if (wnd == NULL)
-	{
-		// Check if all windows are "On Desktop"
-		HWND ProgmanHwnd = FindWindow(L"Progman", L"Program Manager");
-		if (ProgmanHwnd)
-		{
-			wnd = FindWindowEx(ProgmanHwnd, NULL, L"RainmeterMeterWindow", NULL);
-		}
-	}
-
+	HWND wnd = FindWindow(WinClass, WinName);
 	if (wnd != NULL)
 	{
 		COPYDATASTRUCT copyData;
@@ -185,13 +176,13 @@ void Bang(HWND hWnd, const WCHAR* command)
 		copyData.lpData = (void*)command;
 
 		// Send the bang to the Rainmeter window
-		SendMessage(wnd, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&copyData);
+		SendMessage(wnd, WM_COPYDATA, (WPARAM)NULL, (LPARAM)&copyData);
 	}
 	else
 	{
 		if (wcsicmp(L"!rainmeterquit", command) != 0)
 		{
-			MessageBox(hWnd, L"Rainmeter is not running.\nUnable to send the !bang to it.", L"Rainmeter", MB_OK);
+			MessageBox(NULL, L"Rainmeter is not running.\nUnable to send the !bang to it.", L"Rainmeter", MB_OK);
 		}
 	}
 }
@@ -210,6 +201,16 @@ LONG APIENTRY MainWndProc(HWND hWnd, UINT message, UINT wParam, LONG lParam)
 		{
 			quitModule(NULL);
 			PostQuitMessage(0);
+		}
+		break;
+
+	case WM_COPYDATA:
+		{
+			COPYDATASTRUCT* pCopyDataStruct = (COPYDATASTRUCT*) lParam;
+			if (pCopyDataStruct && (pCopyDataStruct->dwData == 1) && (pCopyDataStruct->cbData > 0))
+			{
+				ExecuteBang((const WCHAR*)pCopyDataStruct->lpData);
+			}
 		}
 		break;
 

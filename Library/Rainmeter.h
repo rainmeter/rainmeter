@@ -235,6 +235,7 @@ extern "C"
 	EXPORT_PLUGIN int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath);
 	EXPORT_PLUGIN void quitModule(HINSTANCE dllInst);
 	EXPORT_PLUGIN void Initialize(bool DummyLS, LPCTSTR CmdLine);
+	EXPORT_PLUGIN void ExecuteBang(LPCTSTR szBang);
 }
 
 #endif

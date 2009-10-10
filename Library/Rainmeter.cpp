@@ -661,6 +661,18 @@ CRainmeter::~CRainmeter()
 }
 
 /* 
+** ExecuteBang
+**
+** Runs a bang command. This is called from the main application
+** when a command is given as a command line argument.
+**
+*/
+void ExecuteBang(LPCTSTR szBang)
+{
+	if (Rainmeter) Rainmeter->ExecuteCommand(szBang, NULL);
+}
+
+/* 
 ** Initialize
 **
 ** The main initialization function for the module.
@@ -1958,6 +1970,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 			{
 				AppendMenu(configMenu, MF_SEPARATOR, 0, NULL);
 				AppendMenu(configMenu, 0, ID_CONTEXT_OPENSKINSFOLDER, L"Open Skins\' Folder");
+				AppendMenu(configMenu, 0, ID_CONTEXT_MANAGESKINS, L"Manage Skins...");
 
 				InsertMenu(subMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configMenu, L"Configs");
 			}
