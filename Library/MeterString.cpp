@@ -164,7 +164,8 @@ void CMeterString::Initialize()
 
 	REAL size = (REAL)m_FontSize * (96.0f / (REAL)dpi);
 
-	std::map<std::wstring, Gdiplus::Font*>::iterator iter2 = c_Fonts.find(FontPropertiesToString(size, style));
+	std::wstring properties = FontPropertiesToString(m_FontFamily, size, style);
+	std::map<std::wstring, Gdiplus::Font*>::iterator iter2 = c_Fonts.find(properties);
 	if (iter2 != c_Fonts.end())
 	{
 		m_Font = (*iter2).second;
@@ -179,13 +180,13 @@ void CMeterString::Initialize()
 		{
 			m_Font = new Gdiplus::Font(FontFamily::GenericSansSerif(), size, style);
 		}
-		c_Fonts[FontPropertiesToString(size, style)] = m_Font;
-	}
+		c_Fonts[properties] = m_Font;
 
-	Status status = m_Font->GetLastStatus();
-	if(Ok != status)
-	{
-	    throw CError(std::wstring(L"Unable to create font: ") + m_FontFace, __LINE__, __FILE__);
+		Status status = m_Font->GetLastStatus();
+		if(Ok != status)
+		{
+		    throw CError(std::wstring(L"Unable to create font: ") + m_FontFace, __LINE__, __FILE__);
+		}
 	}
 }
 
@@ -579,10 +580,19 @@ void CMeterString::FreeFontCache()
 ** Static helper to convert font properties to a string so it can be used as a key for the cache map.
 **
 */
-std::wstring CMeterString::FontPropertiesToString(REAL size, FontStyle style)
+std::wstring CMeterString::FontPropertiesToString(FontFamily* fontFamily, REAL size, FontStyle style)
 {
 	std::wstringstream stream;
 	stream << size << L"-" << (int)style;
+
+	if (fontFamily)
+	{
+		WCHAR familyName[LF_FACESIZE];
+		if (Ok == fontFamily->GetFamilyName(familyName))
+		{
+			return std::wstring(familyName) + L"-" + stream.str();
+		}
+	}
 	return stream.str();
 }
 
