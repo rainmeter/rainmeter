@@ -37,6 +37,8 @@ private:
 	bool m_Total;
 	bool m_Label;
 	bool m_IgnoreRemovable;
+
+	ULONGLONG m_OldTotalBytes;
 };
 
 #endif
