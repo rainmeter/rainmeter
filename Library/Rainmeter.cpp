@@ -1016,6 +1016,15 @@ void CRainmeter::CheckSkinVersions()
 						{
 							// Upgrade the skin
 							CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
+
+							// TODO: Temporary 'fix': If this was Enigma upgrade the themes too
+							if (menu[i].name == L"Enigma")
+							{
+								std::wstring strMainThemes = m_Path + L"Themes";
+								std::wstring strCurrentThemes = GetSettingsPath();
+								CopyFiles(strMainThemes, strCurrentThemes);
+							}
+							// End of temporary 'fix'
 						}
 						else
 						{
