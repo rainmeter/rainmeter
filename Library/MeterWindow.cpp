@@ -2149,6 +2149,8 @@ LRESULT CMeterWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 		//		MoveWindow(x, y);
 		//	}
 		//}
+
+		Rainmeter->ClearDeleteLaterList();
 	}
 	else if(wParam == TRANSITIONTIMER)
 	{

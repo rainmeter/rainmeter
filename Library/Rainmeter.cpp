@@ -648,7 +648,7 @@ CRainmeter::~CRainmeter()
 
 	while (m_Meters.size() > 0)
 	{
-		DeleteMeterWindow((*m_Meters.begin()).second);	// This removes the window from the vector
+		DeleteMeterWindow((*m_Meters.begin()).second, false);	// This removes the window from the vector
 	}
 
 	if (m_TrayWindow) delete m_TrayWindow;
@@ -1203,7 +1203,7 @@ bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex)
 		// Disable the config in the ini-file
 		WritePrivateProfileString(meterWindow->GetSkinName().c_str(), L"Active", L"0", m_IniFile.c_str());
 
-		return DeleteMeterWindow(meterWindow);
+		return DeleteMeterWindow(meterWindow, true);
 	}
 	return false;
 }
@@ -1219,28 +1219,45 @@ void CRainmeter::CreateMeterWindow(std::wstring path, std::wstring config, std::
 	}
 }
 
-bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow)
+void CRainmeter::ClearDeleteLaterList()
 {
-	std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
-
-	for (; iter != m_Meters.end(); iter++)
+	while (!m_DelayDeleteList.empty())
 	{
+		DeleteMeterWindow(m_DelayDeleteList.front(), false);
+	}
+}
+
+bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
+{
+	if (bLater)
+	{
+		m_DelayDeleteList.push_back(meterWindow);
+	}
+	else
+	{
+		m_DelayDeleteList.remove(meterWindow);	// Remove the window from the delete later list if it is there
+
+		std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
+
+		for (; iter != m_Meters.end(); iter++)
+		{
+			if (meterWindow == NULL)
+			{
+				// Delete all meter windows
+				delete (*iter).second;
+			} 
+			else if ((*iter).second == meterWindow)
+			{
+				delete meterWindow;
+				m_Meters.erase(iter);
+				return true;
+			}
+		}
+
 		if (meterWindow == NULL)
 		{
-			// Delete all meter windows
-			delete (*iter).second;
-		} 
-		else if ((*iter).second == meterWindow)
-		{
-			delete meterWindow;
-			m_Meters.erase(iter);
-			return true;
+			m_Meters.clear();
 		}
-	}
-
-	if (meterWindow == NULL)
-	{
-		m_Meters.clear();
 	}
 
 	return false;

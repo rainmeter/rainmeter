@@ -161,13 +161,15 @@ public:
 	std::wstring ParseCommand(const WCHAR* command, CMeterWindow* meterWindow);
 	void ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow);
 
+	void ClearDeleteLaterList();
+
 	static PLATFORM IsNT();
 	static std::wstring ExtractPath(const std::wstring& strFilePath);
 	static void ExpandEnvironmentVariables(std::wstring& strPath);
 
 private:
 	void CreateMeterWindow(std::wstring path, std::wstring config, std::wstring iniFile);
-	bool DeleteMeterWindow(CMeterWindow* meterWindow);
+	bool DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater);
 	void ScanForConfigs(std::wstring& path);
 	void ScanForThemes(std::wstring& path);
 	void ReadGeneralSettings(std::wstring& path);
@@ -218,6 +220,8 @@ private:
 	HINSTANCE m_Instance;
 
 	ULONG_PTR m_GDIplusToken;
+
+	std::list<CMeterWindow*> m_DelayDeleteList;
 
 	static bool c_DummyLitestep;	// true, if not a Litestep plugin
 	static std::wstring c_CmdLine;	// The command line arguments
