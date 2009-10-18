@@ -141,6 +141,7 @@ public:
 
 	void MoveWindow(int x, int y);
 	void ChangeZPos(ZPOSITION zPos);
+	void FadeWindow(int from, int to);
 	
 	Gdiplus::Bitmap* GetDoubleBuffer() { return m_DoubleBuffer; };
 	HWND GetWindow() { return m_Window; };
@@ -222,7 +223,6 @@ private:
 	void ShowWindowIfAppropriate();
 	bool DoAction(int x, int y, MOUSE mouse, bool test);
 	bool ResizeWindow(bool reset);
-	void FadeWindow(int from, int to);
 
 	CConfigParser m_Parser;
 

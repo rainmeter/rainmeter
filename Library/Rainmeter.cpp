@@ -1180,10 +1180,10 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		{
 			m_ConfigStrings[configIndex].active = iniIndex + 1;
 
-			CreateMeterWindow(skinPath, skinConfig, skinIniFile);
-
 			wsprintf(buffer, L"%i", iniIndex + 1);
 			WritePrivateProfileString(skinConfig.c_str(), L"Active", buffer, m_IniFile.c_str());
+
+			CreateMeterWindow(skinPath, skinConfig, skinIniFile);
 		} 
 		catch(CError& error) 
 		{
@@ -1232,7 +1232,22 @@ void CRainmeter::ClearDeleteLaterList()
 {
 	while (!m_DelayDeleteList.empty())
 	{
-		DeleteMeterWindow(m_DelayDeleteList.front(), false);
+		CMeterWindow* meterWindow = m_DelayDeleteList.front();
+		delete meterWindow;
+
+		// Remove from the delete later list
+		m_DelayDeleteList.remove(meterWindow);
+
+		// Remove from the meter window list if it is still there
+		std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
+		for (; iter != m_Meters.end(); iter++)
+		{
+			if ((*iter).second == meterWindow)
+			{
+				m_Meters.erase(iter);
+				break;
+			}
+		}
 	}
 }
 
@@ -1241,6 +1256,7 @@ bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
 	if (bLater)
 	{
 		m_DelayDeleteList.push_back(meterWindow);
+		meterWindow->FadeWindow(meterWindow->GetAlphaValue(), 0);	// Fade out the window
 	}
 	else
 	{
