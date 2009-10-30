@@ -195,11 +195,7 @@ BOOL CTrayWindow::ShowBalloonHelp()
 
 HICON CTrayWindow::CreateTrayIcon(double value)
 {
-	if (m_Measure == NULL)
-	{
-		return LoadIcon(m_Instance, MAKEINTRESOURCE(IDI_TRAY));
-	}
-	else
+	if (m_Measure != NULL)
 	{
 		if (m_MeterType == TRAY_METER_TYPE_HISTOGRAM) 
 		{
@@ -290,7 +286,8 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 		}
 	}
 
-	return NULL;
+	// Return the default icon if there is no valid measure
+	return LoadIcon(m_Instance, MAKEINTRESOURCE(IDI_TRAY));
 }
 
 void CTrayWindow::ReadConfig(CConfigParser& parser)

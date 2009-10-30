@@ -995,47 +995,62 @@ void CRainmeter::CheckSkinVersions()
 			if (CompareVersions(strVersionNew, strVersionInIni) == 1 &&
 				CompareVersions(strVersionNew, strVersionCurrent) == 1)
 			{
-				std::wstring strMessage = L"The config called \"" + menu[i].name + L"\" is newer\nthan the one you are currently using.\n\n";
-				strMessage += L"New config: " + (strVersionNew.empty() ? L"Unknown" : strVersionNew) + L"\n";
-				strMessage += L"Current config: " + (strVersionCurrent.empty() ? L"Unknown" : strVersionCurrent) + L"\n";
-				strMessage += L"\n";
-				strMessage += L"Do you want to upgrade it?";
-				strMessage += L"\n\n";
-				strMessage += L"(If you select 'Yes' your old config\nwill be moved to the 'Backup' folder)";
-
-				if (IDYES == MessageBox(NULL, strMessage.c_str(), APPNAME, MB_YESNO | MB_ICONQUESTION))
+				// Check if the old skin exists at all
+				struct _stat64i32 s;
+				std::wstring strSkinPath = m_SkinPath + menu[i].name;
+				if (_wstat(strSkinPath.c_str(), &s) == 0)
 				{
-					// Make sure that the folder exists
-					CreateDirectory(std::wstring(m_SkinPath + L"Backup").c_str(), NULL);
+					std::wstring strMessage = L"The config called \"" + menu[i].name + L"\" is newer\nthan the one you are currently using.\n\n";
+					strMessage += L"New config: " + (strVersionNew.empty() ? L"Unknown" : strVersionNew) + L"\n";
+					strMessage += L"Current config: " + (strVersionCurrent.empty() ? L"Unknown" : strVersionCurrent) + L"\n";
+					strMessage += L"\n";
+					strMessage += L"Do you want to upgrade it?";
+					strMessage += L"\n\n";
+					strMessage += L"(If you select 'Yes' your old config\nwill be moved to the 'Backup' folder)";
 
-					// Check for illegal characters from the version number
-					if (strVersionCurrent.find_first_of(L"\\/\"*:?<>|") == std::wstring::npos)
+					if (IDYES == MessageBox(NULL, strMessage.c_str(), APPNAME, MB_YESNO | MB_ICONQUESTION))
 					{
-						std::wstring strTarget = m_SkinPath + L"Backup\\" + menu[i].name + L"-" + strVersionCurrent;
-						if (CopyFiles(m_SkinPath + menu[i].name, strTarget, true))	// Move the folder to "backup"
-						{
-							// Upgrade the skin
-							CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
+						// Make sure that the folder exists
+						CreateDirectory(std::wstring(m_SkinPath + L"Backup").c_str(), NULL);
 
-							// TODO: Temporary 'fix': If this was Enigma upgrade the themes too
-							if (menu[i].name == L"Enigma")
+						// Check for illegal characters from the version number
+						if (strVersionCurrent.find_first_of(L"\\/\"*:?<>|") == std::wstring::npos)
+						{
+							std::wstring strTarget = m_SkinPath + L"Backup\\" + menu[i].name + L"-" + strVersionCurrent;
+							if (CopyFiles(m_SkinPath + menu[i].name, strTarget, true))	// Move the folder to "backup"
 							{
-								std::wstring strMainThemes = m_Path + L"Themes";
-								std::wstring strCurrentThemes = GetSettingsPath();
-								CopyFiles(strMainThemes, strCurrentThemes);
+								// Upgrade the skin
+								CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
+
+								// TODO: Temporary 'fix': If this was Enigma upgrade the themes too
+								if (menu[i].name == L"Enigma")
+								{
+									std::wstring strMainThemes = m_Path + L"Themes";
+									std::wstring strCurrentThemes = GetSettingsPath();
+									CopyFiles(strMainThemes, strCurrentThemes);
+								}
+								// End of temporary 'fix'
 							}
-							// End of temporary 'fix'
+							else
+							{
+								std::wstring strMessage = L"Failed to upgrade the config.\nUnable to backup the current config.";
+								MessageBox(NULL, strMessage.c_str(), APPNAME, MB_OK | MB_ICONERROR);
+							}
 						}
 						else
 						{
-							std::wstring strMessage = L"Failed to upgrade the config.\nUnable to backup the current config.";
+							std::wstring strMessage = L"Failed to upgrade the config.\nThe version number contains illegal characters.";
 							MessageBox(NULL, strMessage.c_str(), APPNAME, MB_OK | MB_ICONERROR);
 						}
 					}
-					else
+				}
+				else
+				{
+					std::wstring strMessage = L"A new version of config called \"" + menu[i].name + L"\" is available\n";
+					strMessage += L"Do you want to add it to your skin library?";
+					if (IDYES == MessageBox(NULL, strMessage.c_str(), APPNAME, MB_YESNO | MB_ICONQUESTION))
 					{
-						std::wstring strMessage = L"Failed to upgrade the config.\nThe version number contains illegal characters.";
-						MessageBox(NULL, strMessage.c_str(), APPNAME, MB_OK | MB_ICONERROR);
+						CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
 					}
 				}
 
