@@ -326,6 +326,8 @@ private:
 	static int c_InstanceCount;
 
 	Gdiplus::PrivateFontCollection* m_FontCollection;
+
+	bool m_MouseActionCursor;
 };
 
 #endif

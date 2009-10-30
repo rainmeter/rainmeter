@@ -61,6 +61,7 @@ public:
 
 	bool HasMouseAction() { return m_HasMouseAction; };
 	bool HasMouseActionCursor() { return m_MouseActionCursor; };
+	void SetMouseActionCursor(bool b) { m_MouseActionCursor = b; };
 
 	void Hide() { m_Hidden = true; };
 	void Show() { m_Hidden = false; };

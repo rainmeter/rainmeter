@@ -1432,6 +1432,7 @@ void CMeterWindow::ReadSkin()
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", m_WindowUpdate);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", m_TransitionUpdate);
+	m_MouseActionCursor = 0 != m_Parser.ReadInt(L"Rainmeter", L"MouseActionCursor", 1);
 
 	// Checking for localfonts
 	std::wstring localFont1 = m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"");
@@ -1572,6 +1573,12 @@ void CMeterWindow::ReadSkin()
 					if (meter)
 					{
 						meter->SetName(strSection.c_str());
+						
+						if(m_MouseActionCursor == false)
+						{
+							meter->SetMouseActionCursor(false);
+						}
+
 						meter->ReadConfig(strSection.c_str());
 						m_Meters.push_back(meter);
 					}

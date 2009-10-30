@@ -272,7 +272,10 @@ void CMeter::ReadConfig(const WCHAR* section)
 	m_MouseOverAction = parser.ReadString(section, L"MouseOverAction", L"", false);
 	m_MouseLeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);
 
-	m_MouseActionCursor = 0!= parser.ReadInt(section, L"MouseActionCursor", 1);
+	if(m_MouseActionCursor == false)
+		m_MouseActionCursor = 0!= parser.ReadInt(section, L"MouseActionCursor", 0);
+	else
+		m_MouseActionCursor = 0!= parser.ReadInt(section, L"MouseActionCursor", 1);
 
 	m_HasMouseAction =
 		( !m_MiddleMouseUpAction.empty() || !m_MiddleMouseDownAction.empty() 
