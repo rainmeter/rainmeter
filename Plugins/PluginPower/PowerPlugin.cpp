@@ -64,6 +64,7 @@ enum POWER_STATE
 std::map<UINT, POWER_STATE> g_States;
 std::map<UINT, std::wstring> g_Formats;
 HINSTANCE hDLL = NULL;
+int g_Instances = 0;
 FPCALLNTPOWERINFORMATION fpCallNtPowerInformation = NULL;
 
 /*
@@ -80,14 +81,15 @@ FPCALLNTPOWERINFORMATION fpCallNtPowerInformation = NULL;
 */
 UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
-	 if (hDLL == NULL)
-     {
-         hDLL = LoadLibrary(L"powrprof.dll");
-         if (hDLL)
-         {
-             fpCallNtPowerInformation = (FPCALLNTPOWERINFORMATION)GetProcAddress(hDLL, "CallNtPowerInformation");
-         }
-     }
+	g_Instances++;
+	if (hDLL == NULL)
+    {
+        hDLL = LoadLibrary(L"powrprof.dll");
+        if (hDLL)
+        {
+            fpCallNtPowerInformation = (FPCALLNTPOWERINFORMATION)GetProcAddress(hDLL, "CallNtPowerInformation");
+        }
+    }
 
     POWER_STATE powerState = POWER_UNKNOWN;
 
@@ -285,10 +287,12 @@ void Finalize(HMODULE instance, UINT id)
 		g_Formats.erase(i2);
 	}
 
-    if (hDLL != NULL)
+	g_Instances--;
+    if (hDLL != NULL && g_Instances == 0)
     {
         FreeLibrary(hDLL);
         hDLL = NULL;
+		fpCallNtPowerInformation = NULL;
     }
 }
 
