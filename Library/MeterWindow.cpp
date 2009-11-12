@@ -980,7 +980,7 @@ void CMeterWindow::WindowToScreen()
 	}
 	m_AnchorScreenY = pixel;
 
-	index = m_WindowX.find_first_not_of(L"0123456789.");
+	index = m_WindowX.find_first_not_of(L"-0123456789.");
 	m_WindowXNumber = _wtof(m_WindowX.substr(0,index).c_str());
 	index = m_WindowX.find(L'%');
 	if(index != std::wstring::npos) m_WindowXPercentage = true;
@@ -1040,7 +1040,7 @@ void CMeterWindow::WindowToScreen()
 	}
 	m_ScreenX = pixel-m_AnchorScreenX;
 
-	index = m_WindowY.find_first_not_of(L"0123456789.");
+	index = m_WindowY.find_first_not_of(L"-0123456789.");
 	m_WindowYNumber = _wtof(m_WindowY.substr(0,index).c_str());
 	index = m_WindowY.find(L'%');
 	if(index != std::wstring::npos) m_WindowYPercentage = true;
@@ -3302,12 +3302,13 @@ LRESULT CMeterWindow::OnMove(WPARAM wParam, LPARAM lParam)
 	}
 */
 
+	//TODO: Recaculate WindowX/Y based on position flags
+	//m_WindowX = m_ScreenX;
+	//m_WindowY = m_ScreenY;
+	ScreenToWindow();
+
 	if (m_SavePosition && m_Dragging)
 	{
-		//TODO: Recaculate WindowX/Y based on position flags
-		//m_WindowX = m_ScreenX;
-		//m_WindowY = m_ScreenY;
-		ScreenToWindow();
 		WriteConfig();
 	}
 
