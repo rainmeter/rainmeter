@@ -448,6 +448,8 @@ void CMeterWindow::MoveWindow(int x, int y)
 {
 	SetWindowPos(m_Window, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
+	ScreenToWindow();
+
 	if (m_SavePosition)
 	{
 		WriteConfig();
@@ -3302,14 +3304,17 @@ LRESULT CMeterWindow::OnMove(WPARAM wParam, LPARAM lParam)
 	}
 */
 
-	//TODO: Recaculate WindowX/Y based on position flags
-	//m_WindowX = m_ScreenX;
-	//m_WindowY = m_ScreenY;
-	ScreenToWindow();
-
-	if (m_SavePosition && m_Dragging)
+	if (m_Dragging)
 	{
-		WriteConfig();
+		//TODO: Recaculate WindowX/Y based on position flags
+		//m_WindowX = m_ScreenX;
+		//m_WindowY = m_ScreenY;
+		ScreenToWindow();
+
+		if (m_SavePosition)
+		{
+			WriteConfig();
+		}
 	}
 
 	return 0;
