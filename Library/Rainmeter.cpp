@@ -1487,6 +1487,14 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_REFRESH, arg.c_str(), 0);
 	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterRefreshApp") == 0)
+	{
+		// Read skins and settings
+		Rainmeter->ReloadSettings();
+		// Refresh all
+		RainmeterRefresh(m_TrayWindow->GetWindow(), NULL);
+
+	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterRedraw") == 0)
 	{
 		BangWithArgs(BANG_REDRAW, arg.c_str(), 0);
