@@ -51,9 +51,9 @@ using namespace Gdiplus;
 
 int CMeterWindow::c_InstanceCount = 0;
 
-extern CRainmeter* Rainmeter;
+MULTIMONITOR_INFO CMeterWindow::c_Monitors = { 0 };
 
-MULTIMONITOR_INFO CMeterWindow::m_Monitors = { 0 };
+extern CRainmeter* Rainmeter;
 
 /* 
 ** CMeterWindow
@@ -81,12 +81,12 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 	m_WindowYFromBottom = false;
 	m_WindowXScreen = 1;
 	m_WindowYScreen = 1;
+	m_WindowXScreenDefined = false;
+	m_WindowYScreenDefined = false;
 	m_AnchorXFromRight = false;
 	m_AnchorYFromBottom = false;
 	m_AnchorXPercentage = false;
 	m_AnchorYPercentage = false;
-	m_AnchorXNumber = 0;
-	m_AnchorYNumber = 0;
 	m_AnchorScreenX = 0; 
 	m_AnchorScreenY = 0;
 	m_WindowZPosition = ZPOSITION_NORMAL;
@@ -108,7 +108,10 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 	m_ClickThrough = false;
 	m_DynamicWindowSize = false;
 	m_KeepOnScreen = true;
+	m_AutoSelectScreen = false;
 	m_Dragging = false;
+	m_Dragged = false;
+	m_PreventMoving = false;
 
 	m_BackgroundSize.cx = 0;
 	m_BackgroundSize.cy = 0;
@@ -197,7 +200,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 
 	// Register the windowclass
 	memset(&wc, 0, sizeof(WNDCLASSEX));
-	wc.style = CS_NOCLOSE;
+	wc.style = CS_NOCLOSE | CS_DBLCLKS;
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.lpfnWndProc = WndProc;
@@ -302,6 +305,13 @@ void CMeterWindow::Refresh(bool init)
 		KillTimer(m_Window, MOUSETIMER);	// Kill the timer
 		KillTimer(m_Window, FADETIMER);	// Kill the timer
 
+		if (!m_ChildWindow && GetAncestor(m_Window, GA_PARENT) != GetDesktopWindow())
+		{
+			// Reset to the top-level window
+			m_PreventMoving = true;  // Prevent moving the window by SetParent
+			SetParent(m_Window, NULL);
+		}
+
 		std::list<CMeasure*>::iterator i = m_Measures.begin();
 		for( ; i != m_Measures.end(); i++)
 		{
@@ -345,7 +355,10 @@ void CMeterWindow::Refresh(bool init)
 		MapCoordsToScreen(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
 	}
 
+	ZPOSITION zPos = m_WindowZPosition;
+	m_WindowZPosition = ZPOSITION_NORMAL;  // Handles as the normal window temporarily
 	SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, m_WindowW, m_WindowH, SWP_NOZORDER | SWP_NOACTIVATE);
+	m_WindowZPosition = zPos;
 
 	// Set the window region
 	CreateRegion(true);	// Clear the region
@@ -441,14 +454,27 @@ void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 /*
 ** MoveWindow
 **
-** Moves the window to a new place
+** Moves the window to a new place (on the virtual screen)
 **
 */
 void CMeterWindow::MoveWindow(int x, int y)
 {
+	// Convert the screen coordinates to the client coordinates of the shell window
+	if (!m_ChildWindow && !m_NativeTransparency && m_WindowZPosition == ZPOSITION_ONDESKTOP)
+	{
+		POINT pos = {x, y};
+		if (ScreenToClient(GetAncestor(m_Window, GA_PARENT), &pos))
+		{
+			x = pos.x;
+			y = pos.y;
+		}
+	}
+
 	SetWindowPos(m_Window, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
 	ScreenToWindow();
+
+	DebugLog(L"Move: to (%i, %i)(%s, %s)", m_ScreenX, m_ScreenY, m_WindowX.c_str(), m_WindowY.c_str());
 
 	if (m_SavePosition)
 	{
@@ -483,9 +509,19 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos)
 
 		case ZPOSITION_ONDESKTOP:
 			// Set the window's parent to progman, so it stays always on desktop
-			HWND ProgmanHwnd = FindWindow(L"Progman", L"Program Manager");
+			HWND ProgmanHwnd = FindWindowEx(FindWindowEx(FindWindow(L"Progman", L"Program Manager"), NULL, L"SHELLDLL_DefView", L""), NULL, L"SysListView32", L"FolderView");
+			if (!ProgmanHwnd)
+			{
+				HWND WorkerWHwnd = NULL;
+				while ((WorkerWHwnd = FindWindowEx(NULL, WorkerWHwnd, L"WorkerW", L"")) != NULL)
+				{
+					ProgmanHwnd = FindWindowEx(FindWindowEx(WorkerWHwnd, NULL, L"SHELLDLL_DefView", L""), NULL, L"SysListView32", L"FolderView");
+					if (ProgmanHwnd) break;
+				}
+			}
 			if (ProgmanHwnd && (parent != ProgmanHwnd))
 			{
+				m_PreventMoving = true;  // Prevent moving the window by SetParent
 				SetParent(m_Window, ProgmanHwnd);
 			}
 			else
@@ -497,6 +533,7 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos)
 
 		if (zPos != ZPOSITION_ONDESKTOP && (parent != GetDesktopWindow()))
 		{
+			m_PreventMoving = true;  // Prevent moving the window by SetParent
 			SetParent(m_Window, NULL);
 		}
 
@@ -886,21 +923,354 @@ void CMeterWindow::ToggleMeasure(const WCHAR* name)
 	DebugLog(L"Unable to toggle the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
-
-BOOL CALLBACK MyInfoEnumProc(
-  HMONITOR hMonitor,
-  HDC hdcMonitor,
-  LPRECT lprcMonitor,
-  LPARAM dwData
-)
+/* MyInfoEnumProc
+**
+** Retrieves the multi-monitor information
+**
+*/
+BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
-	MULTIMONITOR_INFO *m = (MULTIMONITOR_INFO *)dwData;
-	m->m_Monitors[m->count] = hMonitor;
-	memcpy(&(m->m_MonitorRect[m->count]),lprcMonitor,sizeof RECT);
-	m->m_MonitorInfo[m->count].cbSize = sizeof ( MONITORINFO );
-	GetMonitorInfo(hMonitor,&(m->m_MonitorInfo[m->count]));
-	m->count++;
-	return true;
+	MULTIMONITOR_INFO* m = (MULTIMONITOR_INFO*)dwData;
+
+	MONITORINFOEX info;
+	info.cbSize = sizeof(MONITORINFOEX);
+	GetMonitorInfo(hMonitor, &info);
+
+	// for debug
+	DebugLog(info.szDevice);
+	DebugLog(L"  Flags    : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
+	DebugLog(L"  Handle   : 0x%08X", hMonitor);
+	DebugLog(L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+		lprcMonitor->left, lprcMonitor->top, lprcMonitor->right, lprcMonitor->bottom,
+		lprcMonitor->right - lprcMonitor->left, lprcMonitor->bottom - lprcMonitor->top);
+	DebugLog(L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+		info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
+		info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
+	if (m == NULL) return TRUE;
+
+	if (m->useEnumDisplayDevices)
+	{
+		for (size_t i = 0; i < m->monitors.size(); i++)
+		{
+			if (m->monitors[i].handle == NULL && _wcsnicmp(info.szDevice, m->monitors[i].deviceName, 32) == 0)
+			{
+				m->monitors[i].handle = hMonitor;
+				m->monitors[i].screen = *lprcMonitor;
+				m->monitors[i].work = info.rcWork;
+				break;
+			}
+		}
+	}
+	else  // use only EnumDisplayMonitors
+	{
+		MONITOR_INFO monitor = {0};
+		monitor.active = true;
+
+		monitor.handle = hMonitor;
+		monitor.screen = *lprcMonitor;
+		monitor.work = info.rcWork;
+
+		wcsncpy(monitor.deviceName, info.szDevice, 32);  // E.g. "\\.\DISPLAY1"
+
+		// Get the monitor name (E.g. "Generic Non-PnP Monitor")
+		DISPLAY_DEVICE ddm = {0};
+		ddm.cb = sizeof(DISPLAY_DEVICE);
+		DWORD dwMon = 0;
+		while (EnumDisplayDevices(info.szDevice, dwMon++, &ddm, 0))
+		{
+			if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
+			{
+				wcsncpy(monitor.monitorName, ddm.DeviceString, 128);
+				break;
+			}
+		}
+
+		m->monitors.push_back(monitor);
+
+		if (info.dwFlags & MONITORINFOF_PRIMARY)
+		{
+			// It's primary monitor!
+			m->primary = (int)m->monitors.size();
+		}
+	}
+
+	return TRUE;
+}
+
+/* GetMonitorCount
+**
+** Returns the number of monitors
+**
+*/
+size_t CMeterWindow::GetMonitorCount()
+{
+	if (c_Monitors.monitors.size() == 0)
+	{
+		SetMultiMonitorInfo();
+	}
+	return c_Monitors.monitors.size();
+}
+
+/* SetMultiMonitorInfo
+**
+** Sets the multi-monitor information
+**
+*/
+void CMeterWindow::SetMultiMonitorInfo()
+{
+	std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
+
+	if (monitors.capacity() < 16) { monitors.reserve(16); }
+
+	c_Monitors.vsT = GetSystemMetrics(SM_YVIRTUALSCREEN);
+	c_Monitors.vsL = GetSystemMetrics(SM_XVIRTUALSCREEN);
+	c_Monitors.vsH = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+	c_Monitors.vsW = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+
+	c_Monitors.primary = 1;  // If primary screen is not found, 1st screen is assumed as primary screen.
+
+	c_Monitors.useEnumDisplayDevices = true;
+	c_Monitors.useEnumDisplayMonitors = false;
+
+	DebugLog(L"------------------------------");
+	DebugLog(L"* EnumDisplayDevices / EnumDisplaySettings API");
+
+	DISPLAY_DEVICE dd = {0};
+	dd.cb = sizeof(DISPLAY_DEVICE);
+
+	if (EnumDisplayDevices(NULL, 0, &dd, 0))
+	{
+		DWORD dwDevice = 0;
+
+		do
+		{
+			DebugLog(dd.DeviceName);
+
+			std::wstring msg;
+			if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
+			{
+				msg += L"ACTIVE ";
+			}
+			if (dd.StateFlags & DISPLAY_DEVICE_MULTI_DRIVER)
+			{
+				msg += L"MULTI ";
+			}
+			if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+			{
+				msg += L"PRIMARY ";
+			}
+			if (dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER)
+			{
+				msg += L"MIRROR ";
+			}
+			if (dd.StateFlags & DISPLAY_DEVICE_VGA_COMPATIBLE)
+			{
+				msg += L"VGA ";
+			}
+			if (dd.StateFlags & DISPLAY_DEVICE_REMOVABLE)
+			{
+				msg += L"REMOVABLE ";
+			}
+			if (dd.StateFlags & DISPLAY_DEVICE_MODESPRUNED)
+			{
+				msg += L"PRUNED ";
+			}
+			if (dd.StateFlags & DISPLAY_DEVICE_REMOTE)
+			{
+				msg += L"REMOTE ";
+			}
+			if (dd.StateFlags & DISPLAY_DEVICE_DISCONNECT)
+			{
+				msg += L"DISCONNECT ";
+			}
+
+			if ((dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) == 0)
+			{
+				MONITOR_INFO monitor = {0};
+
+				monitor.handle = NULL;
+				wcsncpy(monitor.deviceName, dd.DeviceName, 32);  // E.g. "\\.\DISPLAY1"
+
+				// Get the monitor name (E.g. "Generic Non-PnP Monitor")
+				DISPLAY_DEVICE ddm = {0};
+				ddm.cb = sizeof(DISPLAY_DEVICE);
+				DWORD dwMon = 0;
+				while (EnumDisplayDevices(dd.DeviceName, dwMon++, &ddm, 0))
+				{
+					if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
+					{
+						wcsncpy(monitor.monitorName, ddm.DeviceString, 128);
+						DebugLog(L"  Name     : %s", ddm.DeviceString);
+						break;
+					}
+				}
+				DebugLog(L"  Adapter  : %s", dd.DeviceString);
+				DebugLog(L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
+
+				if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
+				{
+					monitor.active = true;
+
+					DEVMODE dm = {0};
+					dm.dmSize = sizeof(DEVMODE);
+
+					if (EnumDisplaySettings(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm))
+					{
+						POINT pos = {dm.dmPosition.x, dm.dmPosition.y};
+						monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTONULL);
+						DebugLog(L"  Handle   : 0x%08X", monitor.handle);
+					}
+
+					if (monitor.handle != NULL)
+					{
+						MONITORINFO info = {0};
+						info.cbSize = sizeof(MONITORINFO);
+						GetMonitorInfo(monitor.handle, &info);
+
+						monitor.screen = info.rcMonitor;
+						monitor.work = info.rcWork;
+
+						DebugLog(L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+							info.rcMonitor.left, info.rcMonitor.top, info.rcMonitor.right, info.rcMonitor.bottom,
+							info.rcMonitor.right - info.rcMonitor.left, info.rcMonitor.bottom - info.rcMonitor.top);
+						DebugLog(L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+							info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
+							info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
+					}
+					else  // monitor not found
+					{
+						c_Monitors.useEnumDisplayMonitors = true;
+					}
+				}
+				else
+				{
+					monitor.active = false;
+				}
+
+				monitors.push_back(monitor);
+
+				if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+				{
+					// It's primary monitor!
+					c_Monitors.primary = (int)monitors.size();
+				}
+			}
+			else
+			{
+				DebugLog(L"  Adapter  : %s", dd.DeviceString);
+				DebugLog(L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
+			}
+			dwDevice++;
+		} while (EnumDisplayDevices(NULL, dwDevice, &dd, 0));
+	}
+
+	if (monitors.empty())  // Failed to enumerate the non-mirroring monitors
+	{
+		DebugLog(L"Failed to enumerate the non-mirroring monitors. Only EnumDisplayMonitors is used instead.");
+		c_Monitors.useEnumDisplayDevices = false;
+		c_Monitors.useEnumDisplayMonitors = true;
+	}
+
+	DebugLog(L"------------------------------");
+	DebugLog(L"* EnumDisplayMonitors API");
+
+	if (c_Monitors.useEnumDisplayMonitors)
+	{
+		EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)(&c_Monitors));
+
+		if (monitors.empty())  // Failed to enumerate the monitors
+		{
+			DebugLog(L"Failed to enumerate the monitors. Prepares the dummy monitor information.");
+			c_Monitors.useEnumDisplayMonitors = false;
+
+			MONITOR_INFO monitor = {0};
+			wcscpy(monitor.deviceName, L"DUMMY");
+			POINT pos = {0, 0};
+			monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTOPRIMARY);
+			monitor.screen.left = 0;
+			monitor.screen.top = 0;
+			monitor.screen.right = GetSystemMetrics(SM_CXSCREEN);
+			monitor.screen.bottom = GetSystemMetrics(SM_CYSCREEN);
+			SystemParametersInfo(SPI_GETWORKAREA, 0, &(monitor.work), 0);
+			monitor.active = true;
+
+			monitors.push_back(monitor);
+
+			c_Monitors.primary = 1;
+		}
+	}
+	else
+	{
+		EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)NULL);  // Only logging
+	}
+
+	DebugLog(L"------------------------------");
+	std::wstring method = L"* METHOD: ";
+	if (c_Monitors.useEnumDisplayDevices)
+	{
+		method += L"EnumDisplayDevices + ";
+		method += c_Monitors.useEnumDisplayMonitors ? L"EnumDisplayMonitors Mode" : L"EnumDisplaySettings Mode";
+	}
+	else
+	{
+		method += c_Monitors.useEnumDisplayMonitors ? L"EnumDisplayMonitors Mode" : L"Dummy Mode";
+	}
+	DebugLog(method.c_str());
+
+	DebugLog(L"* MONITORS: Count=%i, Primary=@%i", monitors.size(), c_Monitors.primary);
+	DebugLog(L"@0: Virtual screen");
+	DebugLog(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+		c_Monitors.vsL, c_Monitors.vsT, c_Monitors.vsL + c_Monitors.vsW, c_Monitors.vsT + c_Monitors.vsH,
+		c_Monitors.vsW, c_Monitors.vsH);
+
+	for (size_t i = 0; i < monitors.size(); i++)
+	{
+		if (monitors[i].active)
+		{
+			DebugLog(L"@%i: %s (active), MonitorName: %s", i + 1, monitors[i].deviceName, monitors[i].monitorName);
+			DebugLog(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+				monitors[i].screen.left, monitors[i].screen.top, monitors[i].screen.right, monitors[i].screen.bottom,
+				monitors[i].screen.right - monitors[i].screen.left, monitors[i].screen.bottom - monitors[i].screen.top);
+		}
+		else
+		{
+			DebugLog(L"@%i: %s (inactive), MonitorName: %s", i + 1, monitors[i].deviceName, monitors[i].monitorName);
+		}
+	}
+	DebugLog(L"------------------------------");
+}
+
+/* UpdateWorkareaInfo
+**
+** Updates the workarea information
+**
+*/
+void CMeterWindow::UpdateWorkareaInfo()
+{
+	std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
+
+	if (monitors.empty())
+	{
+		SetMultiMonitorInfo();
+		return;
+	}
+
+	for (size_t i = 0; i < monitors.size(); i++)
+	{
+		if (monitors[i].active && monitors[i].handle != NULL)
+		{
+			MONITORINFO info = {0};
+			info.cbSize = sizeof(MONITORINFO);
+			GetMonitorInfo(monitors[i].handle, &info);
+
+			monitors[i].work = info.rcWork;
+
+			DebugLog(L"WorkArea @%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+				i + 1,
+				info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
+				info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
+		}
+	}
 }
 
 /* WindowToScreen
@@ -912,44 +1282,50 @@ void CMeterWindow::WindowToScreen()
 {
 	std::wstring::size_type index, index2;
 	int pixel = 0;
+	float num;
 	int screenx, screeny, screenh, screenw;
-	m_WindowXScreen = 1; // Default to primary screen
-	m_WindowXFromRight = false; // Default to from left
-	m_WindowXPercentage = false; // Default to pixels
 
-	if(m_Monitors.count == 0) //Do this here so that if resolution changes, just set count to 0.
+	std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
+
+	if (monitors.empty())
 	{
-		if(GetSystemMetrics(SM_CMONITORS)>32) 
+		// Retrieve the multi-monitor information
+		SetMultiMonitorInfo();
+
+		if (monitors.empty())
 		{
-			MessageBox(m_Window, L"That's alot of monitors! 32 is the max.", L"Rainmeter", MB_OK);
-			exit(-1);
+			DebugLog(L"There are no monitors. WindowToScreen function fails.");
+			return;
 		}
-		m_Monitors.count = 0;
-		EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)(&m_Monitors)); 
-		m_Monitors.vsT = GetSystemMetrics(SM_YVIRTUALSCREEN);
-		m_Monitors.vsL = GetSystemMetrics(SM_XVIRTUALSCREEN);
-		m_Monitors.vsH = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-		m_Monitors.vsW = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 	}
 
+	// Clear position flags
+	m_WindowXScreen = m_WindowYScreen = c_Monitors.primary; // Default to primary screen
+	m_WindowXScreenDefined = m_WindowYScreenDefined = false;
+	m_WindowXFromRight = m_WindowYFromBottom = false; // Default to from left/top
+	m_WindowXPercentage = m_WindowYPercentage = false; // Default to pixels
+	m_AnchorXFromRight = m_AnchorYFromBottom = false;
+	m_AnchorXPercentage = m_AnchorYPercentage = false;
+
+	// --- Calculate AnchorScreenX ---
+
 	index = m_AnchorX.find_first_not_of(L"0123456789.");
-	m_AnchorXNumber = _wtof(m_AnchorX.substr(0,index).c_str());
-	index = m_AnchorX.find(L'%');
-	if(index != std::wstring::npos) m_AnchorXPercentage = true;
-	index = m_AnchorX.find(L'R');
-	if(index != std::wstring::npos) m_AnchorXFromRight = true;
-	if(m_AnchorXPercentage) //is a percentage
+	num = (float)_wtof(m_AnchorX.substr(0,index).c_str());
+	index = m_AnchorX.find_last_of(L'%');
+	if (index != std::wstring::npos) m_AnchorXPercentage = true;
+	index = m_AnchorX.find_last_of(L'R');
+	if (index != std::wstring::npos) m_AnchorXFromRight = true;
+	if (m_AnchorXPercentage) //is a percentage
 	{
-		float p = m_AnchorXNumber;
-		pixel = (float)m_WindowW*p/100;
+		pixel = (int)(m_WindowW * num / 100.0f);
 	}
 	else
 	{
-		pixel = m_AnchorXNumber;
+		pixel = (int)num;
 	}
-	if(m_AnchorXFromRight) //measure from right
+	if (m_AnchorXFromRight) //measure from right
 	{
-		pixel = m_WindowW-pixel;
+		pixel = m_WindowW - pixel;
 	}
 	else
 	{
@@ -957,24 +1333,25 @@ void CMeterWindow::WindowToScreen()
 	}
 	m_AnchorScreenX = pixel;
 
+	// --- Calculate AnchorScreenY ---
+
 	index = m_AnchorY.find_first_not_of(L"0123456789.");
-	m_AnchorYNumber = _wtof(m_AnchorY.substr(0,index).c_str());
-	index = m_AnchorY.find(L'%');
-	if(index != std::wstring::npos) m_AnchorYPercentage = true;
-	index = m_AnchorY.find(L'R');
-	if(index != std::wstring::npos) m_AnchorYFromBottom = true;
-	if(m_AnchorYPercentage) //is a percentage
+	num = (float)_wtof(m_AnchorY.substr(0,index).c_str());
+	index = m_AnchorY.find_last_of(L'%');
+	if (index != std::wstring::npos) m_AnchorYPercentage = true;
+	index = m_AnchorY.find_last_of(L'R');
+	if (index != std::wstring::npos) m_AnchorYFromBottom = true;
+	if (m_AnchorYPercentage) //is a percentage
 	{
-		float p = m_AnchorYNumber;
-		pixel = (float)m_WindowH*p/100;
+		pixel = (int)(m_WindowH * num / 100.0f);
 	}
 	else
 	{
-		pixel = m_AnchorYNumber;
+		pixel = (int)num;
 	}
-	if(m_AnchorYFromBottom) //measure from bottom
+	if (m_AnchorYFromBottom) //measure from bottom
 	{
-		pixel = m_WindowH-pixel;
+		pixel = m_WindowH - pixel;
 	}
 	else
 	{
@@ -982,124 +1359,141 @@ void CMeterWindow::WindowToScreen()
 	}
 	m_AnchorScreenY = pixel;
 
+	// --- Calculate ScreenX ---
+
 	index = m_WindowX.find_first_not_of(L"-0123456789.");
-	m_WindowXNumber = _wtof(m_WindowX.substr(0,index).c_str());
-	index = m_WindowX.find(L'%');
-	if(index != std::wstring::npos) m_WindowXPercentage = true;
-	index = m_WindowX.find(L'R');
-	if(index != std::wstring::npos) m_WindowXFromRight = true;
-	index = m_WindowX.find(L'@');
-	if(index != std::wstring::npos) 
+	num = (float)_wtof(m_WindowX.substr(0,index).c_str());
+	index = m_WindowX.find_last_of(L'%');
+	index2 = m_WindowX.find_last_of(L'#');  // for ignoring the non-replaced variables such as "#WORKAREAX@n#"
+	if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
 	{
-		index++;
+		m_WindowXPercentage = true;
+	}
+	index = m_WindowX.find_last_of(L'R');
+	if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
+	{
+		m_WindowXFromRight = true;
+	}
+	index = m_WindowX.find_last_of(L'@');
+	if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index)) 
+	{
+		index = index + 1;
 		index2 = m_WindowX.find_first_not_of(L"0123456789", index);
-		std::wstring xscreen;
+		std::wstring screenStr;
 		if (index2 != std::wstring::npos)
 		{
-			xscreen = m_WindowX.substr(index, index2-index);
+			screenStr = m_WindowX.substr(index, index2 - index);
 		}
 		else
 		{
-			xscreen = m_WindowX.substr(index);
+			screenStr = m_WindowX.substr(index);
 		}
-		if (!xscreen.empty())
+		if (!screenStr.empty())
 		{
-			m_WindowXScreen = _wtoi(xscreen.c_str());
+			int screenIndex = _wtoi(screenStr.c_str());
+			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() && monitors[screenIndex-1].active))
+			{
+				m_WindowXScreen = screenIndex;
+				m_WindowXScreenDefined = true;
+				m_WindowYScreen = m_WindowXScreen; //Default to X and Y on same screen if not overridden on WindowY
+				m_WindowYScreenDefined = true;
+			}
 		}
-		if(m_WindowXScreen > m_Monitors.count) m_WindowXScreen = 1; //TODO: Decide how best to handle this
-		m_WindowYScreen = m_WindowXScreen; //Default to X and Y on same screen if not overridden on WindowY
 	}
-	if(m_WindowXScreen == 0)
+	if (m_WindowXScreen == 0)
 	{
-		screenx = m_Monitors.vsL;
-		screeny = m_Monitors.vsT;
-		screenh = m_Monitors.vsH;
-		screenw = m_Monitors.vsW;
+		screenx = c_Monitors.vsL;
+		screenw = c_Monitors.vsW;
 	}
 	else
 	{
-		screenx = m_Monitors.m_MonitorRect[m_WindowXScreen-1].left;
-		screeny = m_Monitors.m_MonitorRect[m_WindowXScreen-1].top;
-		screenh = m_Monitors.m_MonitorRect[m_WindowXScreen-1].bottom - m_Monitors.m_MonitorRect[m_WindowXScreen-1].top;
-		screenw = m_Monitors.m_MonitorRect[m_WindowXScreen-1].right - m_Monitors.m_MonitorRect[m_WindowXScreen-1].left;
+		screenx = monitors[m_WindowXScreen-1].screen.left;
+		screenw = monitors[m_WindowXScreen-1].screen.right - monitors[m_WindowXScreen-1].screen.left;
 	}
-	if(m_WindowXPercentage) //is a percentage
+	if (m_WindowXPercentage) //is a percentage
 	{
-		float p = m_WindowXNumber;
-		pixel = ((float)screenw*p/100)+screenx;
+		pixel = (int)(screenw * num / 100.0f);
 	}
 	else
 	{
-		pixel = m_WindowXNumber;
+		pixel = (int)num;
 	}
-	if(m_WindowXFromRight) //measure from right
+	if (m_WindowXFromRight) //measure from right
 	{
-		pixel = screenx + (screenw-pixel);
+		pixel = screenx + (screenw - pixel);
 	}
 	else
 	{
 		pixel = screenx + pixel;
 	}
-	m_ScreenX = pixel-m_AnchorScreenX;
+	m_ScreenX = pixel - m_AnchorScreenX;
+
+	// --- Calculate ScreenY ---
 
 	index = m_WindowY.find_first_not_of(L"-0123456789.");
-	m_WindowYNumber = _wtof(m_WindowY.substr(0,index).c_str());
-	index = m_WindowY.find(L'%');
-	if(index != std::wstring::npos) m_WindowYPercentage = true;
-	index = m_WindowY.find(L'B');
-	if(index != std::wstring::npos) m_WindowYFromBottom = true;
-	index = m_WindowY.find(L'@');
-	if(index != std::wstring::npos) 
+	num = (float)_wtof(m_WindowY.substr(0,index).c_str());
+	index = m_WindowY.find_last_of(L'%');
+	index2 = m_WindowX.find_last_of(L'#');  // for ignoring the non-replaced variables such as "#WORKAREAY@n#"
+	if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
 	{
-		index++;
+		m_WindowYPercentage = true;
+	}
+	index = m_WindowY.find_last_of(L'B');
+	if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
+	{
+		m_WindowYFromBottom = true;
+	}
+	index = m_WindowY.find_last_of(L'@');
+	if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
+	{
+		index = index + 1;
 		index2 = m_WindowY.find_first_not_of(L"0123456789", index);
-		std::wstring yscreen;
+		std::wstring screenStr;
 		if (index2 != std::wstring::npos)
 		{
-			yscreen = m_WindowY.substr(index, index2-index);
+			screenStr = m_WindowY.substr(index, index2 - index);
 		}
 		else
 		{
-			yscreen = m_WindowY.substr(index);
+			screenStr = m_WindowY.substr(index);
 		}
-		if (!yscreen.empty())
+		if (!screenStr.empty())
 		{
-			m_WindowYScreen = _wtoi(yscreen.c_str());
+			int screenIndex = _wtoi(screenStr.c_str());
+			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() && monitors[screenIndex-1].active))
+			{
+				m_WindowYScreen = screenIndex;
+				m_WindowYScreenDefined = true;
+			}
 		}
-		if(m_WindowYScreen > m_Monitors.count) m_WindowYScreen = 1; //TODO: Decide how best to handle this
 	}
-	if(m_WindowYScreen == 0)
+	if (m_WindowYScreen == 0)
 	{
-		screenx = m_Monitors.vsL;
-		screeny = m_Monitors.vsT;
-		screenh = m_Monitors.vsH;
-		screenw = m_Monitors.vsW;
+		screeny = c_Monitors.vsT;
+		screenh = c_Monitors.vsH;
 	}
 	else
 	{
-		screenx = m_Monitors.m_MonitorRect[m_WindowYScreen-1].left;
-		screeny = m_Monitors.m_MonitorRect[m_WindowYScreen-1].top;
-		screenh = m_Monitors.m_MonitorRect[m_WindowYScreen-1].bottom - m_Monitors.m_MonitorRect[m_WindowYScreen-1].top;
-		screenw = m_Monitors.m_MonitorRect[m_WindowYScreen-1].right - m_Monitors.m_MonitorRect[m_WindowYScreen-1].left;
+		screeny = monitors[m_WindowYScreen-1].screen.top;
+		screenh = monitors[m_WindowYScreen-1].screen.bottom - monitors[m_WindowYScreen-1].screen.top;
 	}
-	if(m_WindowYPercentage) //is a percentage
+	if (m_WindowYPercentage) //is a percentage
 	{
-		float p = m_WindowYNumber;
-		pixel = ((float)screenh*p/100)+screeny;
+		pixel = (int)(screenh * num / 100.0f);
 	}
 	else
 	{
-		pixel = m_WindowYNumber;
+		pixel = (int)num;
 	}
-	if(m_WindowYFromBottom) //measure from right
+	if (m_WindowYFromBottom) //measure from right
 	{
-		pixel = screeny + (screenh-pixel);
+		pixel = screeny + (screenh - pixel);
 	}
 	else
 	{
 		pixel = screeny + pixel;
 	}
-    m_ScreenY = pixel-m_AnchorScreenY;
+    m_ScreenY = pixel - m_AnchorScreenY;
 }
 
 /* ScreenToWindow
@@ -1111,23 +1505,59 @@ void CMeterWindow::ScreenToWindow()
 {
 	WCHAR buffer[256];
 	int pixel = 0;
+	float num;
 	int screenx, screeny, screenh, screenw;
 
-	if(m_WindowXScreen == 0)
+	std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
+
+	if (monitors.empty())
 	{
-		screenx = m_Monitors.vsL;
-		screeny = m_Monitors.vsT;
-		screenh = m_Monitors.vsH;
-		screenw = m_Monitors.vsW;
+		DebugLog(L"There are no monitors. ScreenToWindow function fails.");
+		return;
+	}
+
+	// Correct to auto-selected screen
+	if (m_AutoSelectScreen)
+	{
+		RECT rect = {m_ScreenX, m_ScreenY, m_ScreenX + m_WindowW, m_ScreenY + m_WindowH};
+		HMONITOR hMonitor = MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST);
+
+		if (hMonitor != NULL)
+		{
+			for (size_t i = 0; i < monitors.size(); i++)
+			{
+				if (monitors[i].active && monitors[i].handle == hMonitor)
+				{
+					int screenIndex = (int)i + 1;
+					bool reset = (!m_WindowXScreenDefined || !m_WindowYScreenDefined ||
+						m_WindowXScreen != screenIndex || m_WindowYScreen != screenIndex);
+
+					m_WindowXScreen = m_WindowYScreen = screenIndex;
+					m_WindowXScreenDefined = m_WindowYScreenDefined = true;
+
+					if (reset)
+					{
+						m_Parser.ResetVariables(m_Rainmeter, this);  // Set present monitor variables
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	// --- Calculate WindowX ---
+
+	if (m_WindowXScreen == 0)
+	{
+		screenx = c_Monitors.vsL;
+		screenw = c_Monitors.vsW;
 	}
 	else
 	{
-		screenx = m_Monitors.m_MonitorRect[m_WindowXScreen-1].left;
-		screeny = m_Monitors.m_MonitorRect[m_WindowXScreen-1].top;
-		screenh = m_Monitors.m_MonitorRect[m_WindowXScreen-1].bottom - m_Monitors.m_MonitorRect[m_WindowXScreen-1].top;
-		screenw = m_Monitors.m_MonitorRect[m_WindowXScreen-1].right - m_Monitors.m_MonitorRect[m_WindowXScreen-1].left;
+		screenx = monitors[m_WindowXScreen-1].screen.left;
+		screenw = monitors[m_WindowXScreen-1].screen.right - monitors[m_WindowXScreen-1].screen.left;
 	}
-	if(m_WindowXFromRight == true)
+	if (m_WindowXFromRight == true)
 	{
 		pixel = (screenx + screenw) - m_ScreenX;
 		pixel -= m_AnchorScreenX;
@@ -1137,41 +1567,38 @@ void CMeterWindow::ScreenToWindow()
 		pixel = m_ScreenX - screenx;
 		pixel += m_AnchorScreenX;
 	}
-	if(m_WindowXPercentage == true)
+	if (m_WindowXPercentage == true)
 	{
-		m_WindowXNumber = 100.0*(float)pixel/(float)screenw;
-		swprintf(buffer,L"%f%%",m_WindowXNumber);
+		num = 100.0f * (float)pixel / (float)screenw;
+		swprintf(buffer, L"%.5f%%", num);
 	}
 	else
 	{
-		m_WindowXNumber = pixel;
-		wsprintf(buffer,L"%i",pixel);
+		wsprintf(buffer, L"%i", pixel);
 	}
-	if(m_WindowXFromRight == true)
+	if (m_WindowXFromRight == true)
 	{
-		wsprintf(buffer,L"%sR",buffer);
+		wsprintf(buffer, L"%sR", buffer);
 	}
-	if(m_WindowXScreen != 1)
+	if (m_WindowXScreenDefined == true)
 	{
-		wsprintf(buffer,L"%s@%i",buffer,m_WindowXScreen);
+		wsprintf(buffer, L"%s@%i", buffer, m_WindowXScreen);
 	}
-	m_WindowX=buffer;
+	m_WindowX = buffer;
 
-	if(m_WindowYScreen == 0)
+	// --- Calculate WindowY ---
+
+	if (m_WindowYScreen == 0)
 	{
-		screenx = m_Monitors.vsL;
-		screeny = m_Monitors.vsT;
-		screenh = m_Monitors.vsH;
-		screenw = m_Monitors.vsW;
+		screeny = c_Monitors.vsT;
+		screenh = c_Monitors.vsH;
 	}
 	else
 	{
-		screenx = m_Monitors.m_MonitorRect[m_WindowYScreen-1].left;
-		screeny = m_Monitors.m_MonitorRect[m_WindowYScreen-1].top;
-		screenh = m_Monitors.m_MonitorRect[m_WindowYScreen-1].bottom - m_Monitors.m_MonitorRect[m_WindowYScreen-1].top;
-		screenw = m_Monitors.m_MonitorRect[m_WindowYScreen-1].right - m_Monitors.m_MonitorRect[m_WindowYScreen-1].left;
+		screeny = monitors[m_WindowYScreen-1].screen.top;
+		screenh = monitors[m_WindowYScreen-1].screen.bottom - monitors[m_WindowYScreen-1].screen.top;
 	}
-	if(m_WindowYFromBottom == true)
+	if (m_WindowYFromBottom == true)
 	{
 		pixel = (screeny + screenh) - m_ScreenY;
 		pixel -= m_AnchorScreenY;
@@ -1181,25 +1608,24 @@ void CMeterWindow::ScreenToWindow()
 		pixel = m_ScreenY - screeny;
 		pixel += m_AnchorScreenY;
 	}
-	if(m_WindowYPercentage == true)
+	if (m_WindowYPercentage == true)
 	{
-		m_WindowYNumber = 100.0*(float)pixel/(float)screenh;
-		swprintf(buffer,L"%f%%",m_WindowYNumber);
+		num = 100.0f * (float)pixel / (float)screenh;
+		swprintf(buffer, L"%.5f%%", num);
 	}
 	else
 	{
-		m_WindowYNumber = pixel;
-		wsprintf(buffer,L"%i",pixel);
+		wsprintf(buffer, L"%i", pixel);
 	}
-	if(m_WindowYFromBottom == true)
+	if (m_WindowYFromBottom == true)
 	{
-		wsprintf(buffer,L"%sB",buffer);
+		wsprintf(buffer, L"%sB", buffer);
 	}
-	if(m_WindowYScreen != 1)
+	if (m_WindowYScreenDefined == true)
 	{
-		wsprintf(buffer,L"%s@%i",buffer,m_WindowYScreen);
+		wsprintf(buffer, L"%s@%i", buffer, m_WindowYScreen);
 	}
-	m_WindowY=buffer;
+	m_WindowY = buffer;
 }
 
 /*
@@ -1286,6 +1712,7 @@ void CMeterWindow::ReadConfig()
 		m_NativeTransparency = 0!=parser.ReadInt(section, L"NativeTransparency", m_NativeTransparency);
 		m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", m_ClickThrough);
 		m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", m_KeepOnScreen);
+		m_AutoSelectScreen = 0!=parser.ReadInt(section, L"AutoSelectScreen", m_AutoSelectScreen);
 
 		m_AlphaValue = parser.ReadInt(section, L"AlphaValue", m_AlphaValue);
 		m_AlphaValue = min(255, m_AlphaValue);
@@ -1302,6 +1729,9 @@ void CMeterWindow::ReadConfig()
 		// On the second loop override settings from the skin's section
 		section = m_SkinName.c_str();
 	}
+
+	// Set WindowXScreen/WindowYScreen temporarily
+	WindowToScreen();
 }
 
 /*
@@ -1344,6 +1774,8 @@ void CMeterWindow::WriteConfig()
 		WritePrivateProfileString(section, L"SnapEdges", buffer, iniFile.c_str());
 		wsprintf(buffer, L"%i", m_KeepOnScreen);
 		WritePrivateProfileString(section, L"KeepOnScreen", buffer, iniFile.c_str());
+		wsprintf(buffer, L"%i", m_AutoSelectScreen);
+		WritePrivateProfileString(section, L"AutoSelectScreen", buffer, iniFile.c_str());
 
 		wsprintf(buffer, L"%i", m_WindowZPosition);
 		WritePrivateProfileString(section, L"AlwaysOnTop", buffer, iniFile.c_str());
@@ -1364,7 +1796,7 @@ void CMeterWindow::ReadSkin()
 	iniFile += L"\\";
 	iniFile += m_SkinIniFile;
 
-	m_Parser.Initialize(iniFile.c_str(), m_Rainmeter);
+	m_Parser.Initialize(iniFile.c_str(), m_Rainmeter, this);
 
 	// Global settings
 
@@ -1428,6 +1860,9 @@ void CMeterWindow::ReadSkin()
 	m_RightMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseUpAction", L"");
 	m_LeftMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"LeftMouseUpAction", L"");
 	m_MiddleMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"MiddleMouseUpAction", L"");
+	m_RightMouseDoubleClickAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseDoubleClickAction", L"");
+	m_LeftMouseDoubleClickAction = m_Parser.ReadString(L"Rainmeter", L"LeftMouseDoubleClickAction", L"");
+	m_MiddleMouseDoubleClickAction = m_Parser.ReadString(L"Rainmeter", L"MiddleMouseDoubleClickAction", L"");
 	m_MouseOverAction = m_Parser.ReadString(L"Rainmeter", L"MouseOverAction", L"");
 	m_MouseLeaveAction = m_Parser.ReadString(L"Rainmeter", L"MouseLeaveAction", L"");
 	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"");
@@ -2319,8 +2754,8 @@ void CMeterWindow::ShowWindowIfAppropriate()
 	GetWindowRect(m_Window, &rect);
 	GetCursorPos(&pos);
 
-	if(rect.left <= pos.x && rect.right >= pos.x &&
-	   rect.top <= pos.y && rect.bottom >= pos.y) 
+	if(rect.left <= pos.x && rect.right > pos.x &&
+	   rect.top <= pos.y && rect.bottom > pos.y) 
 	{
 		// Check transparent pixels
 		if (m_DoubleBuffer)
@@ -2642,18 +3077,87 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		else if(wParam == ID_CONTEXT_SKINMENU_FROMRIGHT)
 		{
 			m_WindowXFromRight = !m_WindowXFromRight;
+
+			ScreenToWindow();
+
+			if (m_SavePosition)
+			{
+				WriteConfig();
+			}
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_FROMBOTTOM)
 		{
 			m_WindowYFromBottom = !m_WindowYFromBottom;
+
+			ScreenToWindow();
+
+			if (m_SavePosition)
+			{
+				WriteConfig();
+			}
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_XPERCENTAGE)
 		{
 			m_WindowXPercentage = !m_WindowXPercentage;
+
+			ScreenToWindow();
+
+			if (m_SavePosition)
+			{
+				WriteConfig();
+			}
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_YPERCENTAGE)
 		{
 			m_WindowYPercentage = !m_WindowYPercentage;
+
+			ScreenToWindow();
+
+			if (m_SavePosition)
+			{
+				WriteConfig();
+			}
+		}
+		else if (wParam == ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT)
+		{
+			m_AutoSelectScreen = !m_AutoSelectScreen;
+
+			ScreenToWindow();
+
+			WriteConfig();
+		}
+		else if (wParam == ID_CONTEXT_SKINMENU_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
+		{
+			std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
+
+			int screenIndex;
+			bool screenDefined;
+			if (wParam == ID_CONTEXT_SKINMENU_MONITOR_PRIMARY)
+			{
+				screenIndex = c_Monitors.primary;
+				screenDefined = false;
+			}
+			else
+			{
+				screenIndex = (wParam & 0x0ffff) - ID_MONITOR_FIRST;
+				screenDefined = true;
+			}
+
+			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() && monitors[screenIndex-1].active))
+			{
+				if (m_AutoSelectScreen)
+				{
+					m_AutoSelectScreen = false;
+				}
+
+				m_WindowXScreen = m_WindowYScreen = screenIndex;
+				m_WindowXScreenDefined = m_WindowYScreenDefined = screenDefined;
+
+				m_Parser.ResetVariables(m_Rainmeter, this);  // Set present monitor variables
+				ScreenToWindow();
+
+				WriteConfig();
+			}
 		}
 		else
 		{
@@ -2664,6 +3168,94 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
     catch(CError& error) 
     {
 		MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+	}
+
+	return 0;
+}
+
+/*
+** OnSysCommand
+**
+** Handle dragging the window
+**
+*/
+LRESULT CMeterWindow::OnSysCommand(WPARAM wParam, LPARAM lParam) 
+{
+	if ((wParam & 0xFFF0) != SC_MOVE)
+	{
+		return DefWindowProc(m_Window, m_Message, wParam, lParam);
+	}
+
+	// --- SC_MOVE ---
+
+	// Prepare the dragging flags
+	m_Dragging = true;
+	m_Dragged = false;
+
+	int startScreenX = m_ScreenX;
+	int startScreenY = m_ScreenY;
+	std::wstring startWindowX = m_WindowX;
+	std::wstring startWindowY = m_WindowY;
+
+	// Run the DefWindowProc so the dragging works
+	LRESULT result = DefWindowProc(m_Window, m_Message, wParam, lParam);
+
+	if (m_Dragged)
+	{
+		DebugLog(L"Dragging: (%i, %i)(%s, %s) to (%i, %i)(%s, %s)", startScreenX, startScreenY, startWindowX.c_str(), startWindowY.c_str(), m_ScreenX, m_ScreenY, m_WindowX.c_str(), m_WindowY.c_str());
+
+		ScreenToWindow();
+
+		// Write the new place of the window to config file
+		if (m_SavePosition)
+		{
+			WriteConfig();
+		}
+	}
+	else  // not dragged
+	{
+		if ((wParam & 0x000F) == 2)  // triggered by mouse
+		{
+			// Post the WM_NCLBUTTONUP message so the LeftMouseUpAction works
+			PostMessage(m_Window, WM_NCLBUTTONUP, (WPARAM)HTCAPTION, lParam);
+		}
+	}
+
+	// Clear the dragging flags
+	m_Dragging = false;
+	m_Dragged = false;
+
+	return result;
+}
+
+/*
+** OnEnterSizeMove
+**
+** Starts dragging
+**
+*/
+LRESULT CMeterWindow::OnEnterSizeMove(WPARAM wParam, LPARAM lParam) 
+{
+	if (m_Dragging)
+	{
+		//DebugLog(L"Dragging: start");
+		m_Dragged = true;  // Don't post the WM_NCLBUTTONUP message!
+	}
+
+	return 0;
+}
+
+/*
+** OnExitSizeMove
+**
+** Ends dragging
+**
+*/
+LRESULT CMeterWindow::OnExitSizeMove(WPARAM wParam, LPARAM lParam) 
+{
+	if (m_Dragging)
+	{
+		//DebugLog(L"Dragging: end");
 	}
 
 	return 0;
@@ -2706,47 +3298,6 @@ LRESULT CMeterWindow::OnNcHitTest(WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnDisplayChange
-**
-** Called when resolution changes
-**
-*/
-LRESULT CMeterWindow::OnDisplayChange(WPARAM wParam, LPARAM lParam) 
-{
-	return OnSettingChange(0, 0);
-}
-
-/*
-** OnSettingChange
-**
-** Called when settings (e.g. new monitor is connected) change.
-**
-*/
-LRESULT CMeterWindow::OnSettingChange(WPARAM wParam, LPARAM lParam) 
-{
-	if (m_NativeTransparency)
-	{
-		// Move the window to correct position
-		m_Monitors.count = 0;
-		ResizeWindow(true);
-
-		if (m_KeepOnScreen) 
-		{
-			MapCoordsToScreen(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
-		}
-
-		SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, m_WindowW, m_WindowH, SWP_NOZORDER | SWP_NOACTIVATE);
-	}
-	else
-	{
-		// With copy transparency we'll do a full refresh
-		PostMessage(m_Window, WM_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
-	}
-
-	return 0;
-}
-
-/*
 ** OnWindowPosChanging
 **
 ** Called when windows position is about to change
@@ -2764,24 +3315,62 @@ LRESULT CMeterWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 
 	if ((wp->flags & SWP_NOMOVE) == 0) 
 	{
+		if (m_PreventMoving)
+		{
+			wp->flags |= SWP_NOMOVE;
+			m_PreventMoving = false;
+
+			return DefWindowProc(m_Window, m_Message, wParam, lParam);
+		}
+
+		if (m_Dragging)
+		{
+			// Convert the client coordinates of the shell window to the screen coordinates
+			if (!m_ChildWindow && m_WindowZPosition == ZPOSITION_ONDESKTOP)
+			{
+				POINT pos = {wp->x, wp->y};
+				if (ClientToScreen(GetAncestor(m_Window, GA_PARENT), &pos))
+				{
+					wp->x = pos.x;
+					wp->y = pos.y;
+				}
+			}
+		}
+		else
+		{
+			// Convert the client coordinates of the shell window to the screen coordinates
+			if (!m_ChildWindow && !m_NativeTransparency && m_WindowZPosition == ZPOSITION_ONDESKTOP)
+			{
+				POINT pos = {wp->x, wp->y};
+				if (ClientToScreen(GetAncestor(m_Window, GA_PARENT), &pos))
+				{
+					wp->x = pos.x;
+					wp->y = pos.y;
+				}
+			}
+		}
+
 		if (m_SnapEdges && !(GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000))
 		{
-			RECT workArea;
-			GetClientRect(GetDesktopWindow(), &workArea);
-
 			// only process movement (ignore anything without winpos values)
 			if(wp->cx != 0 && wp->cy != 0)
 			{
-				HMONITOR hMonitor;
-				MONITORINFO mi;
+				RECT workArea;
 
-				hMonitor = MonitorFromWindow(m_Window, MONITOR_DEFAULTTONULL);
+				//HMONITOR hMonitor = MonitorFromWindow(m_Window, MONITOR_DEFAULTTONULL);  // returns incorrect monitor when the window is "On Desktop"
+				RECT windowRect = {wp->x, wp->y, (wp->x + m_WindowW), (wp->y + m_WindowH)};
+				HMONITOR hMonitor = MonitorFromRect(&windowRect, MONITOR_DEFAULTTONULL);
 
 				if(hMonitor != NULL)
 				{
+					MONITORINFO mi;
 					mi.cbSize = sizeof(mi);
 					GetMonitorInfo(hMonitor, &mi);
 					workArea = mi.rcWork;
+				}
+				else
+				{
+					GetClientRect(GetDesktopWindow(), &workArea);
 				}
 
 				// Snap to other windows
@@ -2808,6 +3397,17 @@ LRESULT CMeterWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 		if (m_KeepOnScreen) 
 		{
 			MapCoordsToScreen(wp->x, wp->y, m_WindowW, m_WindowH);
+		}
+
+		// Convert the screen coordinates to the client coordinates of the shell window
+		if (!m_ChildWindow && !m_NativeTransparency && m_WindowZPosition == ZPOSITION_ONDESKTOP)
+		{
+			POINT pos = {wp->x, wp->y};
+			if (ScreenToClient(GetAncestor(m_Window, GA_PARENT), &pos))
+			{
+				wp->x = pos.x;
+				wp->y = pos.y;
+			}
 		}
 	}
 
@@ -2851,6 +3451,29 @@ LRESULT CMeterWindow::OnDestroy(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+/*
+** OnDisplayChange
+**
+** During resolution changes do nothing.
+** (OnDelayedMove function is used instead.)
+**
+*/
+LRESULT CMeterWindow::OnDisplayChange(WPARAM wParam, LPARAM lParam) 
+{
+	return 0;
+}
+
+/*
+** OnSettingChange
+**
+** During setting changes do nothing.
+** (OnDelayedMove function is used instead.)
+**
+*/
+LRESULT CMeterWindow::OnSettingChange(WPARAM wParam, LPARAM lParam) 
+{
+	return 0;
+}
 
 /*
 ** OnLeftButtonDown
@@ -2863,7 +3486,6 @@ LRESULT CMeterWindow::OnLeftButtonDown(WPARAM wParam, LPARAM lParam)
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
-	m_Dragging = true;
 
 	if (m_Message == WM_NCLBUTTONDOWN)
 	{
@@ -2893,7 +3515,7 @@ LRESULT CMeterWindow::OnLeftButtonDown(WPARAM wParam, LPARAM lParam)
 	{
 		Redraw();
 	}
-	else if(!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false))
+	else if(!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable)
 	{
 		// Run the DefWindowProc so the dragging works
 		return DefWindowProc(m_Window, m_Message, wParam, lParam);
@@ -2913,8 +3535,7 @@ LRESULT CMeterWindow::OnLeftButtonUp(WPARAM wParam, LPARAM lParam)
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
-	m_Dragging = false;
-	// OutputDebugString(_T("Left up\n"));
+
 	if (m_Message == WM_NCLBUTTONUP)
 	{
 		// Transform the point to client rect
@@ -2949,6 +3570,54 @@ LRESULT CMeterWindow::OnLeftButtonUp(WPARAM wParam, LPARAM lParam)
 }
 
 /*
+** OnLeftButtonDoubleClick
+**
+** Runs the action when left mouse button is double-clicked
+**
+*/
+LRESULT CMeterWindow::OnLeftButtonDoubleClick(WPARAM wParam, LPARAM lParam) 
+{
+	POINT pos;
+	pos.x = (SHORT)LOWORD(lParam); 
+	pos.y = (SHORT)HIWORD(lParam); 
+
+	if (m_Message == WM_NCLBUTTONDBLCLK)
+	{
+		// Transform the point to client rect
+		RECT rect;
+		GetWindowRect(m_Window, &rect);
+		pos.x = pos.x - rect.left;
+		pos.y = pos.y - rect.top;
+	}
+
+	// Handle buttons
+	bool redraw = false;
+	std::list<CMeter*>::iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); j++)
+	{
+		// Hidden meters are ignored
+		if ((*j)->IsHidden()) continue;
+
+		CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
+		if (button)
+		{
+			redraw |= button->MouseDown(pos);
+		}
+
+	}
+	if (redraw)
+	{
+		Redraw();
+	}
+	else if (!DoAction(pos.x, pos.y, MOUSE_LMB_DBLCLK, false))
+	{
+		DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false);
+	}
+
+	return 0;
+}
+
+/*
 ** OnRightButtonDown
 **
 ** Runs the action when right mouse button is down
@@ -2959,6 +3628,7 @@ LRESULT CMeterWindow::OnRightButtonDown(WPARAM wParam, LPARAM lParam)
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
+
 	if (m_Message == WM_NCRBUTTONDOWN)
 	{
 		// Transform the point to client rect
@@ -2991,6 +3661,35 @@ LRESULT CMeterWindow::OnRightButtonUp(WPARAM wParam, LPARAM lParam)
 }
 
 /*
+** OnRightButtonDoubleClick
+**
+** Runs the action when right mouse button is double-clicked
+**
+*/
+LRESULT CMeterWindow::OnRightButtonDoubleClick(WPARAM wParam, LPARAM lParam) 
+{
+	POINT pos;
+	pos.x = (SHORT)LOWORD(lParam); 
+	pos.y = (SHORT)HIWORD(lParam); 
+
+	if (m_Message == WM_NCRBUTTONDBLCLK)
+	{
+		// Transform the point to client rect
+		RECT rect;
+		GetWindowRect(m_Window, &rect);
+		pos.x = pos.x - rect.left;
+		pos.y = pos.y - rect.top;
+	}
+
+	if (!DoAction(pos.x, pos.y, MOUSE_RMB_DBLCLK, false))
+	{
+		DoAction(pos.x, pos.y, MOUSE_RMB_DOWN, false);
+	}
+
+	return 0;
+}
+
+/*
 ** OnMiddleButtonDown
 **
 ** Runs the action when middle mouse button is down
@@ -3001,6 +3700,7 @@ LRESULT CMeterWindow::OnMiddleButtonDown(WPARAM wParam, LPARAM lParam)
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
+
 	if (m_Message == WM_NCMBUTTONDOWN)
 	{
 		// Transform the point to client rect
@@ -3026,6 +3726,7 @@ LRESULT CMeterWindow::OnMiddleButtonUp(WPARAM wParam, LPARAM lParam)
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
+
 	if (m_Message == WM_NCMBUTTONUP)
 	{
 		// Transform the point to client rect
@@ -3036,6 +3737,35 @@ LRESULT CMeterWindow::OnMiddleButtonUp(WPARAM wParam, LPARAM lParam)
 	}
 
 	DoAction(pos.x, pos.y, MOUSE_MMB_UP, false);
+
+	return 0;
+}
+
+/*
+** OnMiddleButtonDoubleClick
+**
+** Runs the action when middle mouse button is double-clicked
+**
+*/
+LRESULT CMeterWindow::OnMiddleButtonDoubleClick(WPARAM wParam, LPARAM lParam) 
+{
+	POINT pos;
+	pos.x = (SHORT)LOWORD(lParam); 
+	pos.y = (SHORT)HIWORD(lParam); 
+
+	if (m_Message == WM_NCMBUTTONDBLCLK)
+	{
+		// Transform the point to client rect
+		RECT rect;
+		GetWindowRect(m_Window, &rect);
+		pos.x = pos.x - rect.left;
+		pos.y = pos.y - rect.top;
+	}
+
+	if (!DoAction(pos.x, pos.y, MOUSE_MMB_DBLCLK, false))
+	{
+		DoAction(pos.x, pos.y, MOUSE_MMB_DOWN, false);
+	}
 
 	return 0;
 }
@@ -3059,8 +3789,8 @@ LRESULT CMeterWindow::OnContextMenu(WPARAM wParam, LPARAM lParam)
 	x = x - rect.left;
 	y = y - rect.top;
 
-	// If RMB up or RMB down cause actions, do not show the menu!
-	if (DoAction(x, y, MOUSE_RMB_UP, false) || DoAction(x, y, MOUSE_RMB_DOWN, true))
+	// If RMB up or RMB down or double-click cause actions, do not show the menu!
+	if (DoAction(x, y, MOUSE_RMB_UP, false) || DoAction(x, y, MOUSE_RMB_DOWN, true) || DoAction(x, y, MOUSE_RMB_DBLCLK, true))
 	{
 		return 0;
 	}
@@ -3109,6 +3839,14 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 				}
 				break;
 
+			case MOUSE_LMB_DBLCLK:
+				if (!((*j)->GetLeftMouseDoubleClickAction().empty()))
+				{
+					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetLeftMouseDoubleClickAction().c_str(), this);
+					return true;
+				}
+				break;
+
 			case MOUSE_RMB_DOWN:
 				if (!((*j)->GetRightMouseDownAction().empty()))
 				{
@@ -3125,8 +3863,15 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 				}
 				break;
 
+			case MOUSE_RMB_DBLCLK:
+				if (!((*j)->GetRightMouseDoubleClickAction().empty()))
+				{
+					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetRightMouseDoubleClickAction().c_str(), this);
+					return true;
+				}
+				break;
+
 			case MOUSE_MMB_DOWN:
-				
 				if (!((*j)->GetMiddleMouseDownAction().empty()))
 				{
 					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetMiddleMouseDownAction().c_str(), this);
@@ -3135,10 +3880,17 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 				break;
 
 			case MOUSE_MMB_UP:
-				
 				if (!((*j)->GetMiddleMouseUpAction().empty()))
 				{
 					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetMiddleMouseUpAction().c_str(), this);
+					return true;
+				}
+				break;
+
+			case MOUSE_MMB_DBLCLK:
+				if (!((*j)->GetMiddleMouseDoubleClickAction().empty()))
+				{
+					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetMiddleMouseDoubleClickAction().c_str(), this);
 					return true;
 				}
 				break;
@@ -3216,6 +3968,14 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 			}
 			break;
 
+		case MOUSE_LMB_DBLCLK:
+			if (!m_LeftMouseDoubleClickAction.empty())
+			{
+				if (!test) m_Rainmeter->ExecuteCommand(m_LeftMouseDoubleClickAction.c_str(), this);
+				return true;
+			}
+			break;
+
 		case MOUSE_RMB_DOWN:
 			if (!m_RightMouseDownAction.empty())
 			{
@@ -3232,6 +3992,14 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 			}
 			break;
 
+		case MOUSE_RMB_DBLCLK:
+			if (!m_RightMouseDoubleClickAction.empty())
+			{
+				if (!test) m_Rainmeter->ExecuteCommand(m_RightMouseDoubleClickAction.c_str(), this);
+				return true;
+			}
+			break;
+
 		case MOUSE_MMB_DOWN:
 			if (!m_MiddleMouseDownAction.empty())
 			{
@@ -3244,6 +4012,14 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 			if (!m_MiddleMouseUpAction.empty())
 			{
 				if (!test) m_Rainmeter->ExecuteCommand(m_MiddleMouseUpAction.c_str(), this);
+				return true;
+			}
+			break;
+
+		case MOUSE_MMB_DBLCLK:
+			if (!m_MiddleMouseDoubleClickAction.empty())
+			{
+				if (!test) m_Rainmeter->ExecuteCommand(m_MiddleMouseDoubleClickAction.c_str(), this);
 				return true;
 			}
 			break;
@@ -3285,36 +4061,38 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 /*
 ** OnMove
 **
-** Stores the new place of the window so that it can be written in the config file.
+** Stores the new place of the window, in screen coordinates.
 **
 */
 LRESULT CMeterWindow::OnMove(WPARAM wParam, LPARAM lParam) 
 {
+	// The lParam's x/y parameters are given in screen coordinates for overlapped and pop-up windows
+	// and in parent-client coordinates for child windows.
+
 	// Store the new window position
 	m_ScreenX = (SHORT)LOWORD(lParam);
 	m_ScreenY = (SHORT)HIWORD(lParam);
-/*
-	if(m_Dragging)
+
+	// Convert the client coordinates of the shell window to the screen coordinates
+	if (!m_ChildWindow && !m_NativeTransparency && m_WindowZPosition == ZPOSITION_ONDESKTOP)
 	{
-		OutputDebugString (_T("OnMove Dragging\n"));
+		POINT pos = {m_ScreenX, m_ScreenY};
+		if (ClientToScreen(GetAncestor(m_Window, GA_PARENT), &pos))
+		{
+			m_ScreenX = pos.x;
+			m_ScreenY = pos.y;
+		}
 	}
-	else
-	{
-		OutputDebugString(_T("OnMove No Dragging\n"));
-	}
-*/
 
 	if (m_Dragging)
 	{
-		//TODO: Recaculate WindowX/Y based on position flags
-		//m_WindowX = m_ScreenX;
-		//m_WindowY = m_ScreenY;
 		ScreenToWindow();
+	}
 
-		if (m_SavePosition)
-		{
-			WriteConfig();
-		}
+	// Redraw itself if the window is "On Desktop"
+	if (m_WindowZPosition == ZPOSITION_ONDESKTOP)
+	{
+		UpdateTransparency(m_TransparencyValue, false);
 	}
 
 	return 0;
@@ -3355,6 +4133,9 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnDestroy, WM_DESTROY)
 	MESSAGE(OnTimer, WM_TIMER)
 	MESSAGE(OnCommand, WM_COMMAND)
+	MESSAGE(OnSysCommand, WM_SYSCOMMAND)
+	MESSAGE(OnEnterSizeMove, WM_ENTERSIZEMOVE)
+	MESSAGE(OnExitSizeMove, WM_EXITSIZEMOVE)
 	MESSAGE(OnNcHitTest, WM_NCHITTEST)
 	MESSAGE(OnMouseMove, WM_MOUSEMOVE)
 	MESSAGE(OnMouseMove, WM_NCMOUSEMOVE)
@@ -3363,18 +4144,25 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnRightButtonDown, WM_RBUTTONDOWN)
 	MESSAGE(OnRightButtonUp, WM_RBUTTONUP)
 	MESSAGE(OnContextMenu, WM_NCRBUTTONUP)
+	MESSAGE(OnRightButtonDoubleClick, WM_RBUTTONDBLCLK)
+	MESSAGE(OnRightButtonDoubleClick, WM_NCRBUTTONDBLCLK)
 	MESSAGE(OnLeftButtonDown, WM_NCLBUTTONDOWN)
 	MESSAGE(OnLeftButtonDown, WM_LBUTTONDOWN)
 	MESSAGE(OnLeftButtonUp, WM_LBUTTONUP)
 	MESSAGE(OnLeftButtonUp, WM_NCLBUTTONUP)
+	MESSAGE(OnLeftButtonDoubleClick, WM_LBUTTONDBLCLK)
+	MESSAGE(OnLeftButtonDoubleClick, WM_NCLBUTTONDBLCLK)
 	MESSAGE(OnMiddleButtonDown, WM_NCMBUTTONDOWN)
 	MESSAGE(OnMiddleButtonDown, WM_MBUTTONDOWN)
 	MESSAGE(OnMiddleButtonUp, WM_MBUTTONUP)
 	MESSAGE(OnMiddleButtonUp, WM_NCMBUTTONUP)
+	MESSAGE(OnMiddleButtonDoubleClick, WM_MBUTTONDBLCLK)
+	MESSAGE(OnMiddleButtonDoubleClick, WM_NCMBUTTONDBLCLK)
 	MESSAGE(OnWindowPosChanging, WM_WINDOWPOSCHANGING)
 	MESSAGE(OnCopyData, WM_COPYDATA)
 	MESSAGE(OnDelayedExecute, WM_DELAYED_EXECUTE)
 	MESSAGE(OnDelayedRefresh, WM_DELAYED_REFRESH)
+	MESSAGE(OnDelayedMove, WM_DELAYED_MOVE)
 	MESSAGE(OnDelayedQuit, WM_DELAYED_QUIT)
 	MESSAGE(OnSettingChange, WM_SETTINGCHANGE)
 	MESSAGE(OnDisplayChange, WM_DISPLAYCHANGE)
@@ -3419,6 +4207,37 @@ LRESULT CMeterWindow::OnDelayedRefresh(WPARAM wParam, LPARAM lParam)
 	{
 		MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 	}
+	return 0;
+}
+
+/*
+** OnDelayedMove
+**
+** Handles delayed move
+**
+*/
+LRESULT CMeterWindow::OnDelayedMove(WPARAM wParam, LPARAM lParam) 
+{
+	if (m_NativeTransparency)
+	{
+		m_Parser.ResetVariables(m_Rainmeter, this);
+
+		// Move the window to correct position
+		ResizeWindow(true);
+
+		if (m_KeepOnScreen) 
+		{
+			MapCoordsToScreen(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
+		}
+
+		SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, m_WindowW, m_WindowH, SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+	else
+	{
+		// With copy transparency we'll do a full refresh
+		PostMessage(m_Window, WM_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
+	}
+
 	return 0;
 }
 

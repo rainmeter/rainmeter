@@ -56,10 +56,16 @@
 #define ID_CONTEXT_SKINMENU_OPENSKINSFOLDER        4045
 #define ID_CONTEXT_MANAGETHEMES          4046
 #define ID_CONTEXT_MANAGESKINS          4047
+#define ID_CONTEXT_SKINMENU_MONITOR_PRIMARY	4048
+#define ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT	4049
 
 #define ID_CONFIG_EDIT                  30000
 #define ID_CONFIG_FIRST                 30001
-#define ID_THEME_FIRST                  31001
+#define ID_CONFIG_LAST					33000
+#define ID_THEME_FIRST                  33001
+#define ID_THEME_LAST					36000
+#define ID_MONITOR_FIRST				36001
+#define ID_MONITOR_LAST					37000
 
 // Next default values for new objects
 // 

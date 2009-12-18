@@ -1781,9 +1781,9 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 
 	c_GlobalConfig.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", c_GlobalConfig.netInSpeed);
 	c_GlobalConfig.netOutSpeed = parser.ReadFloat(L"Rainmeter", L"NetOutSpeed", c_GlobalConfig.netOutSpeed);
-	m_ConfigEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", m_ConfigEditor.c_str());
 
-	if(m_ConfigEditor.substr(0,1) != L"\"")
+	m_ConfigEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", m_ConfigEditor.c_str());
+	if (!m_ConfigEditor.empty() && m_ConfigEditor[0] != L'\"')
 	{
 		m_ConfigEditor.insert(0,L"\"");
 		m_ConfigEditor.append(L"\"");
@@ -2185,6 +2185,13 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index)
 			{
 				EnableMenuItem(posMenu, ID_CONTEXT_SKINMENU_ONDESKTOP, MF_BYCOMMAND | MF_GRAYED);
 			}
+
+			HMENU monitorMenu = CreateMonitorMenu(meterWindow);
+			if (monitorMenu)
+			{
+				InsertMenu(posMenu, 0, MF_BYPOSITION | MF_POPUP, (UINT_PTR)monitorMenu, L"Display Monitor");
+				InsertMenu(posMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+			}
 		}
 
 		// Tick the transparency
@@ -2266,6 +2273,84 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index)
 	}
 
 	return skinMenu;
+}
+
+HMENU CRainmeter::CreateMonitorMenu(CMeterWindow* meterWindow)
+{
+	WCHAR buffer[256];
+	std::wstring item;
+	UINT flags;
+
+	HMENU monitorMenu = CreatePopupMenu();
+
+	bool screenDefined = meterWindow->GetXScreenDefined();
+	int screenIndex = meterWindow->GetXScreen();
+
+	// for the "Primary monitor"
+	flags = 0;
+	if (!screenDefined)
+	{
+		flags |= MF_CHECKED;
+	}
+	AppendMenu(monitorMenu, flags, ID_CONTEXT_SKINMENU_MONITOR_PRIMARY, L"Use default: Primary monitor");
+
+	// for the "Virtual screen" (@0)
+	flags = 0;
+	if (screenDefined && screenIndex == 0)
+	{
+		flags |= MF_CHECKED;
+	}
+	AppendMenu(monitorMenu, flags, ID_MONITOR_FIRST, L"@0: Virtual screen");
+
+	// for the "Specified monitor" (@n)
+	if (CMeterWindow::GetMonitorCount() > 0)
+	{
+		AppendMenu(monitorMenu, MF_SEPARATOR, 0, NULL);
+
+		const MULTIMONITOR_INFO& multimonInfo = CMeterWindow::GetMultiMonitorInfo();
+		const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
+
+		for (size_t i = 0; i < monitors.size(); i++)
+		{
+			wsprintf(buffer, L"@%i: ", i + 1);
+			item = buffer;
+
+			flags = 0;
+			if (screenDefined && screenIndex == (int)i + 1)
+			{
+				flags |= MF_CHECKED;
+			}
+
+			size_t len = wcslen(monitors[i].monitorName);
+			if (len > 32)
+			{
+				item += std::wstring(monitors[i].monitorName, 32);
+				item += L"...";
+			}
+			else
+			{
+				item += monitors[i].monitorName;
+			}
+
+			if (!monitors[i].active)
+			{
+				flags |= MF_GRAYED;
+			}
+
+			AppendMenu(monitorMenu, flags, ID_MONITOR_FIRST + i + 1, item.c_str());
+		}
+	}
+
+	AppendMenu(monitorMenu, MF_SEPARATOR, 0, NULL);
+
+	flags = 0;
+	if (meterWindow->GetAutoSelectScreen())
+	{
+		flags |= MF_CHECKED;
+	}
+	AppendMenu(monitorMenu, flags, ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT, L"Auto-select based on window position");
+
+	return monitorMenu;
 }
 
 void CRainmeter::ChangeSkinIndex(HMENU menu, int index)

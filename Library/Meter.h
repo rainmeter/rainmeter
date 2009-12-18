@@ -52,10 +52,13 @@ public:
 
 	std::wstring& GetRightMouseDownAction() { return m_RightMouseDownAction; };
 	std::wstring& GetRightMouseUpAction() { return m_RightMouseUpAction; };
+	std::wstring& GetRightMouseDoubleClickAction() { return m_RightMouseDoubleClickAction; };
 	std::wstring& GetLeftMouseDownAction() { return m_LeftMouseDownAction; };
 	std::wstring& GetLeftMouseUpAction() { return m_LeftMouseUpAction; };
+	std::wstring& GetLeftMouseDoubleClickAction() { return m_LeftMouseDoubleClickAction; };
 	std::wstring& GetMiddleMouseDownAction() { return m_MiddleMouseDownAction; };
 	std::wstring& GetMiddleMouseUpAction() { return m_MiddleMouseUpAction; };
+	std::wstring& GetMiddleMouseDoubleClickAction() { return m_MiddleMouseDoubleClickAction; };
 	std::wstring& GetMouseOverAction() { return m_MouseOverAction; };
 	std::wstring& GetMouseLeaveAction() { return m_MouseLeaveAction; };
 
@@ -112,12 +115,15 @@ protected:
 	static int c_OldX;
 	static int c_OldY;
 
-	std::wstring m_RightMouseDownAction;	// Actions for left and right mouse buttons
+	std::wstring m_RightMouseDownAction;	// Actions for left and right and middle mouse buttons
 	std::wstring m_RightMouseUpAction;
+	std::wstring m_RightMouseDoubleClickAction;
 	std::wstring m_LeftMouseDownAction;
 	std::wstring m_LeftMouseUpAction;
+	std::wstring m_LeftMouseDoubleClickAction;
 	std::wstring m_MiddleMouseDownAction;
 	std::wstring m_MiddleMouseUpAction;
+	std::wstring m_MiddleMouseDoubleClickAction;
 	std::wstring m_MouseOverAction;
 	std::wstring m_MouseLeaveAction;
 	

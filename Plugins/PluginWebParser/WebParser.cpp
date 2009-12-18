@@ -153,6 +153,28 @@ HWND FindMeterWindow()
 		if (ProgmanHwnd)
 		{
 			wnd = FindWindowEx(ProgmanHwnd, NULL, L"RainmeterMeterWindow", NULL);
+			if (wnd == NULL)
+			{
+				ProgmanHwnd = FindWindowEx(FindWindowEx(ProgmanHwnd, NULL, L"SHELLDLL_DefView", L""), NULL, L"SysListView32", L"FolderView");
+				if (ProgmanHwnd)
+				{
+					wnd = FindWindowEx(ProgmanHwnd, NULL, L"RainmeterMeterWindow", NULL);
+				}
+			}
+		}
+
+		if (wnd == NULL)
+		{
+			HWND WorkerWHwnd = NULL;
+			while ((WorkerWHwnd = FindWindowEx(NULL, WorkerWHwnd, L"WorkerW", L"")) != NULL)
+			{
+				ProgmanHwnd = FindWindowEx(FindWindowEx(WorkerWHwnd, NULL, L"SHELLDLL_DefView", L""), NULL, L"SysListView32", L"FolderView");
+				if (ProgmanHwnd)
+				{
+					wnd = FindWindowEx(ProgmanHwnd, NULL, L"RainmeterMeterWindow", NULL);
+					break;
+				}
+			}
 		}
 	}
 	return wnd;

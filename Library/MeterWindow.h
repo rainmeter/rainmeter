@@ -37,15 +37,19 @@
 #define WM_DELAYED_EXECUTE WM_APP + 0
 #define WM_DELAYED_REFRESH WM_APP + 1
 #define WM_DELAYED_QUIT    WM_APP + 2
+#define WM_DELAYED_MOVE    WM_APP + 3
 
 enum MOUSE
 {
 	MOUSE_LMB_DOWN,
 	MOUSE_LMB_UP,
+	MOUSE_LMB_DBLCLK,
 	MOUSE_RMB_DOWN,
 	MOUSE_RMB_UP,
+	MOUSE_RMB_DBLCLK,
 	MOUSE_MMB_DOWN,
 	MOUSE_MMB_UP,
+	MOUSE_MMB_DBLCLK,
 	MOUSE_OVER,
 	MOUSE_LEAVE
 };
@@ -105,15 +109,25 @@ enum BANGCOMMAND
 	BANG_SETVARIABLE
 };
 
-typedef struct 
+struct MONITOR_INFO
 {
-	int count;						//Number of monitors
-	HMONITOR m_Monitors[32];		//Monitor info
-	RECT m_MonitorRect[32];		//Monitor rect on virtual screen
-	MONITORINFO m_MonitorInfo[32];	//Monitor information
-	//int index;					//Utility for enumeration
-	int vsT, vsL, vsH, vsW;
-} MULTIMONITOR_INFO;
+	bool active;
+	HMONITOR handle;
+	RECT screen;
+	RECT work;
+	WCHAR deviceName[32];					//Device name (E.g. "\\.\DISPLAY1")
+	WCHAR monitorName[128];					//Monitor name (E.g. "Generic Non-PnP Monitor")
+};
+
+struct MULTIMONITOR_INFO
+{
+	bool useEnumDisplayDevices;				//If true, use EnumDisplayDevices function to obtain the multi-monitor information
+	bool useEnumDisplayMonitors;			//If true, use EnumDisplayMonitors function to obtain the multi-monitor information
+
+	int vsT, vsL, vsH, vsW;					//Coordinates of the top-left corner (vsT,vsL) and size (vsH,vsW) of the virtual screen
+	int primary;							//Index of the primary monitor
+	std::vector<MONITOR_INFO> monitors;		//Monitor information
+};
 
 class CRainmeter;
 class CMeasure;
@@ -161,9 +175,15 @@ public:
 	bool GetXFromRight() { return m_WindowXFromRight; }
 	bool GetYFromBottom() { return m_WindowYFromBottom; }
 
+	bool GetXScreenDefined() { return m_WindowXScreenDefined; }
+	bool GetYScreenDefined() { return m_WindowYScreenDefined; }
+	int GetXScreen() { return m_WindowXScreen; }
+	int GetYScreen() { return m_WindowYScreen; }
+
 	bool GetNativeTransparency() { return m_NativeTransparency; }
 	bool GetClickThrough() { return m_ClickThrough; }
 	bool GetKeepOnScreen() { return m_KeepOnScreen; }
+	bool GetAutoSelectScreen() { return m_AutoSelectScreen; }
 	bool GetWindowDraggable() { return m_WindowDraggable; }
 	bool GetSavePosition() { return m_SavePosition; }
 	bool GetSnapEdges() { return m_SnapEdges; }
@@ -180,6 +200,11 @@ public:
 
 	Gdiplus::PrivateFontCollection* GetPrivateFontCollection(){ return m_FontCollection; }
 
+	static const MULTIMONITOR_INFO& GetMultiMonitorInfo() { return c_Monitors; }
+	static void ClearMultiMonitorInfo() { c_Monitors.monitors.clear(); }
+	static size_t GetMonitorCount();
+	static void UpdateWorkareaInfo();
+
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -189,6 +214,9 @@ protected:
 	LRESULT OnDestroy(WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
 	LRESULT OnCommand(WPARAM wParam, LPARAM lParam);
+	LRESULT OnSysCommand(WPARAM wParam, LPARAM lParam);
+	LRESULT OnEnterSizeMove(WPARAM wParam, LPARAM lParam);
+	LRESULT OnExitSizeMove(WPARAM wParam, LPARAM lParam);
 	LRESULT OnNcHitTest(WPARAM wParam, LPARAM lParam);
 	LRESULT OnWindowPosChanging(WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseMove(WPARAM wParam, LPARAM lParam);
@@ -200,8 +228,12 @@ protected:
 	LRESULT OnLeftButtonUp(WPARAM wParam, LPARAM lParam);
 	LRESULT OnRightButtonUp(WPARAM wParam, LPARAM lParam);
 	LRESULT OnMiddleButtonUp(WPARAM wParam, LPARAM lParam);
+	LRESULT OnLeftButtonDoubleClick(WPARAM wParam, LPARAM lParam);
+	LRESULT OnRightButtonDoubleClick(WPARAM wParam, LPARAM lParam);
+	LRESULT OnMiddleButtonDoubleClick(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedExecute(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedRefresh(WPARAM wParam, LPARAM lParam);
+	LRESULT OnDelayedMove(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedQuit(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSettingChange(WPARAM wParam, LPARAM lParam);  
 	LRESULT OnDisplayChange(WPARAM wParam, LPARAM lParam);  
@@ -224,6 +256,8 @@ private:
 	bool DoAction(int x, int y, MOUSE mouse, bool test);
 	bool ResizeWindow(bool reset);
 
+	static void SetMultiMonitorInfo();
+
 	CConfigParser m_Parser;
 
 	Gdiplus::Bitmap* m_DoubleBuffer;
@@ -240,6 +274,9 @@ private:
 	std::wstring m_RightMouseUpAction;			// Action to run when right mouse is released
 	std::wstring m_LeftMouseUpAction;			// Action to run when left mouse is released
 	std::wstring m_MiddleMouseUpAction;			// Action to run when middle mouse is released
+	std::wstring m_RightMouseDoubleClickAction;	// Action to run when right mouse is double-clicked
+	std::wstring m_LeftMouseDoubleClickAction;	// Action to run when left mouse is double-clicked
+	std::wstring m_MiddleMouseDoubleClickAction;	// Action to run when middle mouse is double-clicked
 	std::wstring m_MouseOverAction;				// Action to run when mouse goes over the window
 	std::wstring m_MouseLeaveAction;			// Action to run when mouse leaves the window
 	std::wstring m_OnRefreshAction;				// Action to run when window is initialized
@@ -256,12 +293,12 @@ private:
 	std::wstring m_AnchorY;						// Anchor's Y-position in config file
 	int m_WindowXScreen;
 	int m_WindowYScreen;
+	bool m_WindowXScreenDefined;
+	bool m_WindowYScreenDefined;
 	bool m_WindowXFromRight;
 	bool m_WindowYFromBottom;
 	bool m_WindowXPercentage;
 	bool m_WindowYPercentage;
-	float m_WindowXNumber;						// Store the number portion from the config
-	float m_WindowYNumber;						// Store the number portion from the config
 	int m_WindowW;								// Window's Width
 	int m_WindowH;								// Window's Height
 	int m_ScreenX;								// Window's X-postion on the virtual screen 
@@ -270,11 +307,8 @@ private:
 	bool m_AnchorYFromBottom;
 	bool m_AnchorXPercentage;
 	bool m_AnchorYPercentage;
-	float m_AnchorXNumber;						// Store the number portion from the config
-	float m_AnchorYNumber;						// Store the number portion from the config
 	int m_AnchorScreenX;						// Window's anchor X-postion 
 	int m_AnchorScreenY;						// Window's anchor Y-postion
-	static MULTIMONITOR_INFO m_Monitors;		// Multi-Monitor info
 	bool m_WindowDraggable;						// True, if window can be moved
 	int m_WindowUpdate;							// Measure update frequency
 	int m_TransitionUpdate;						// Transition redraw frequency
@@ -291,7 +325,10 @@ private:
 	bool m_DynamicWindowSize;					// 
 	bool m_ClickThrough;						// 
 	bool m_KeepOnScreen;						// 
+	bool m_AutoSelectScreen;					//
 	bool m_Dragging;							//
+	bool m_Dragged;								//
+	bool m_PreventMoving;						//
 	BGMODE m_BackgroundMode;					// The background mode
 	Gdiplus::Color m_SolidColor;				// Color of the solid background
 	Gdiplus::Color m_SolidColor2;				// Color of the solid background
@@ -324,6 +361,8 @@ private:
 	CRainmeter* m_Rainmeter;					// Pointer to the main object
 
 	static int c_InstanceCount;
+
+	static MULTIMONITOR_INFO c_Monitors;		// Multi-Monitor info
 
 	Gdiplus::PrivateFontCollection* m_FontCollection;
 

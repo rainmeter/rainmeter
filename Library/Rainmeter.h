@@ -180,6 +180,7 @@ private:
 	int ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse);
 	HMENU CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData);
 	HMENU CreateThemeMenu();
+	HMENU CreateMonitorMenu(CMeterWindow* meterWindow);
 	void CreateDefaultConfigFile(std::wstring strFile);
 	void TestSettingsFile(bool bDefaultIniLocation);
 	bool CopyFiles(std::wstring strFrom, std::wstring strTo, bool bMove = false);

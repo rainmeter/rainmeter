@@ -488,7 +488,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				command += L"\"";
 				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 			}
-			else if((wParam & 0x0ffff) >= ID_THEME_FIRST)
+			else if((wParam & 0x0ffff) >= ID_THEME_FIRST && (wParam & 0x0ffff) <= ID_THEME_LAST)
 			{
 				int pos = (wParam & 0x0ffff) - ID_THEME_FIRST;
 
@@ -502,7 +502,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 					LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 				}
 			}
-			else if((wParam & 0x0ffff) >= ID_CONFIG_FIRST)
+			else if((wParam & 0x0ffff) >= ID_CONFIG_FIRST && (wParam & 0x0ffff) <= ID_CONFIG_LAST)
 			{
 				wParam = wParam & 0x0ffff;
 
@@ -650,6 +650,31 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 		return 0;
 
+	// --- for CMeterWindow ---
+
+	case WM_DISPLAYCHANGE:
+		DebugLog(L"* Display setting has been changed.");
+		CMeterWindow::ClearMultiMonitorInfo();
+		CConfigParser::ClearMultiMonitorVariables();
+	case WM_SETTINGCHANGE:
+		if (uMsg == WM_DISPLAYCHANGE || (uMsg == WM_SETTINGCHANGE && wParam == SPI_SETWORKAREA))
+		{
+			if (uMsg == WM_SETTINGCHANGE)  // SPI_SETWORKAREA
+			{
+				DebugLog(L"* Work area has been changed.");
+				CMeterWindow::UpdateWorkareaInfo();
+				CConfigParser::UpdateWorkareaVariables();
+			}
+
+			// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
+			std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+			std::map<std::wstring, CMeterWindow*>::iterator iter = windows.begin();
+			for( ; iter != windows.end(); iter++)
+			{
+				PostMessage((*iter).second->GetWindow(), WM_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
+			}
+		}
+		return 0;
 	}
 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);

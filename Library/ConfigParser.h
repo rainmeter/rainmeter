@@ -28,6 +28,7 @@
 #include "ccalc-0.5.1/mparser.h"
 
 class CRainmeter;
+class CMeterWindow;
 class CMeasure;
 
 class CConfigParser
@@ -36,10 +37,12 @@ public:
 	CConfigParser();
 	~CConfigParser();
 
-	void Initialize(LPCTSTR filename, CRainmeter* pRainmeter);
+	void Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterWindow* meterWindow = NULL);
 	void AddMeasure(CMeasure* pMeasure);
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue);
 	void SetStyleTemplate(const std::wstring& strStyle) { m_StyleTemplate = strStyle; }
+
+	void ResetVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow = NULL);
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
@@ -53,7 +56,11 @@ public:
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring delimiters);
 
+	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }
+	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
+
 private:
+	void SetDefaultVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow);
 	void ReadVariables();
 	void ReplaceVariables(std::wstring& result);
 	Gdiplus::Color ParseColor(LPCTSTR string);
@@ -62,6 +69,11 @@ private:
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
 	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
 	std::vector<std::wstring> GetKeys(const std::wstring& strSection);
+
+	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
+
+	static void SetMultiMonitorVariables(bool reset);
+	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue);
 
 	std::map<std::wstring, std::wstring> m_Variables;
 	std::wstring m_Filename;
@@ -74,6 +86,8 @@ private:
 	std::vector<std::wstring> m_Sections;		// The sections must be an ordered array
 	stdext::hash_map<std::wstring, std::vector<std::wstring> > m_Keys;
 	stdext::hash_map<std::wstring, std::wstring> m_Values;
+
+	static std::map<std::wstring, std::wstring> c_MonitorVariables;
 };
 
 #endif

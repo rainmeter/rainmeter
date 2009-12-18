@@ -194,7 +194,7 @@ int CMeter::GetY(bool abs)
 */
 bool CMeter::HitTest(int x, int y)
 {
-	if (x >= GetX() && x <= GetX() + GetW() && y >= GetY() && y <= GetY() + GetH())
+	if (x >= GetX() && x < GetX() + GetW() && y >= GetY() && y < GetY() + GetH())
 	{
 		return true;
 	}
@@ -269,6 +269,9 @@ void CMeter::ReadConfig(const WCHAR* section)
 	m_RightMouseUpAction = parser.ReadString(section, L"RightMouseUpAction", L"", false);
 	m_LeftMouseUpAction = parser.ReadString(section, L"LeftMouseUpAction", L"", false);
 	m_MiddleMouseUpAction = parser.ReadString(section, L"MiddleMouseUpAction", L"", false);
+	m_RightMouseDoubleClickAction = parser.ReadString(section, L"RightMouseDoubleClickAction", L"", false);
+	m_LeftMouseDoubleClickAction = parser.ReadString(section, L"LeftMouseDoubleClickAction", L"", false);
+	m_MiddleMouseDoubleClickAction = parser.ReadString(section, L"MiddleMouseDoubleClickAction", L"", false);
 	m_MouseOverAction = parser.ReadString(section, L"MouseOverAction", L"", false);
 	m_MouseLeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);
 
@@ -278,9 +281,9 @@ void CMeter::ReadConfig(const WCHAR* section)
 		m_MouseActionCursor = 0!= parser.ReadInt(section, L"MouseActionCursor", 1);
 
 	m_HasMouseAction =
-		( !m_MiddleMouseUpAction.empty() || !m_MiddleMouseDownAction.empty() 
-		|| !m_LeftMouseUpAction.empty() || !m_LeftMouseDownAction.empty() 
-		|| !m_RightMouseUpAction.empty() || !m_RightMouseDownAction.empty() );
+		( !m_LeftMouseUpAction.empty() || !m_LeftMouseDownAction.empty() || !m_LeftMouseDoubleClickAction.empty()
+		|| !m_MiddleMouseUpAction.empty() || !m_MiddleMouseDownAction.empty() || !m_MiddleMouseDoubleClickAction.empty()
+		|| !m_RightMouseUpAction.empty() || !m_RightMouseDownAction.empty() || !m_RightMouseDoubleClickAction.empty() );
 
 	m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
 

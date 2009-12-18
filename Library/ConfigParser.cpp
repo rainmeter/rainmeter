@@ -26,6 +26,8 @@ extern CRainmeter* Rainmeter;
 
 using namespace Gdiplus;
 
+std::map<std::wstring, std::wstring> CConfigParser::c_MonitorVariables;
+
 /*
 ** CConfigParser
 **
@@ -53,7 +55,7 @@ CConfigParser::~CConfigParser()
 **
 **
 */
-void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
+void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterWindow* meterWindow)
 {
 	m_Filename = filename;
 
@@ -64,45 +66,41 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter)
 	m_Sections.clear();
 
 	// Set the default variables. Do this before the ini file is read so that the paths can be used with @include
+	SetDefaultVariables(pRainmeter, meterWindow);
+
+	// Set the SCREENAREA/WORKAREA variables
+	if (c_MonitorVariables.empty())
+	{
+		SetMultiMonitorVariables(true);
+	}
+
+	// Set the SCREENAREA/WORKAREA variables for present monitor
+	SetAutoSelectedMonitorVariables(meterWindow);
+
+	ReadIniFile(m_Filename);
+	ReadVariables();
+}
+
+/*
+** SetDefaultVariables
+**
+**
+*/
+void CConfigParser::SetDefaultVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow)
+{
 	if (pRainmeter)
 	{
 		SetVariable(L"PROGRAMPATH", pRainmeter->GetPath());
 		SetVariable(L"SETTINGSPATH", pRainmeter->GetSettingsPath());
 		SetVariable(L"SKINSPATH", pRainmeter->GetSkinPath());
 		SetVariable(L"PLUGINSPATH", pRainmeter->GetPluginPath());
-		SetVariable(L"CURRENTPATH", CRainmeter::ExtractPath(filename));
-
-   		// Set "CURRENTCONFIG" if the path to \Skins is contained in "filename", so it is not set by reading Rainmeter.ini
-		if (_wcsnicmp(filename, pRainmeter->GetSkinPath().c_str(), pRainmeter->GetSkinPath().length()) == 0)
-		{
-			std::wstring cPath = CRainmeter::ExtractPath(filename);
-			cPath = cPath.substr(pRainmeter->GetSkinPath().length(),
-							cPath.length()-pRainmeter->GetSkinPath().length()-1);
-			SetVariable(L"CURRENTCONFIG", cPath);
-		}
-
+		SetVariable(L"CURRENTPATH", CRainmeter::ExtractPath(m_Filename));
 		SetVariable(L"ADDONSPATH", pRainmeter->GetPath() + L"Addons\\");
-
-		RECT workArea;
-		SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
-
-		TCHAR buffer[256];
-		swprintf(buffer, L"%i", workArea.left);
-		SetVariable(L"WORKAREAX", buffer);
-		swprintf(buffer, L"%i", workArea.top);
-		SetVariable(L"WORKAREAY", buffer);
-		swprintf(buffer, L"%i", workArea.right - workArea.left);
-		SetVariable(L"WORKAREAWIDTH", buffer);
-		swprintf(buffer, L"%i", workArea.bottom - workArea.top);
-		SetVariable(L"WORKAREAHEIGHT", buffer);
-		swprintf(buffer, L"%i", GetSystemMetrics(SM_CXSCREEN));
-		SetVariable(L"SCREENAREAWIDTH", buffer);
-		swprintf(buffer, L"%i", GetSystemMetrics(SM_CYSCREEN));
-		SetVariable(L"SCREENAREAHEIGHT", buffer);
 	}
-
-	ReadIniFile(m_Filename);
-	ReadVariables();
+	if (meterWindow)
+	{
+		SetVariable(L"CURRENTCONFIG", meterWindow->GetSkinName());
+	}
 }
 
 /*
@@ -136,6 +134,235 @@ void CConfigParser::SetVariable(const std::wstring& strVariable, const std::wstr
 	m_Variables[strTmp] = strValue;
 }
 
+/*
+** ResetVariables
+**
+**
+*/
+void CConfigParser::ResetVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow)
+{
+	m_Variables.clear();
+
+	// Set the default variables. Do this before the ini file is read so that the paths can be used with @include
+	SetDefaultVariables(pRainmeter, meterWindow);
+
+	// Set the SCREENAREA/WORKAREA variables
+	if (c_MonitorVariables.empty())
+	{
+		SetMultiMonitorVariables(true);
+	}
+
+	// Set the SCREENAREA/WORKAREA variables for present monitor
+	SetAutoSelectedMonitorVariables(meterWindow);
+
+	ReadVariables();
+}
+
+/*
+** SetMultiMonitorVariables
+**
+** Sets new values for the SCREENAREA/WORKAREA variables.
+** 
+*/
+void CConfigParser::SetMultiMonitorVariables(bool reset)
+{
+	TCHAR buffer[256];
+	RECT workArea, scrArea;
+
+	if (!reset && c_MonitorVariables.empty())
+	{
+		reset = true;  // Set all variables
+	}
+
+	SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
+
+	swprintf(buffer, L"%i", workArea.left);
+	SetMonitorVariable(L"WORKAREAX", buffer);
+	SetMonitorVariable(L"PWORKAREAX", buffer);
+	swprintf(buffer, L"%i", workArea.top);
+	SetMonitorVariable(L"WORKAREAY", buffer);
+	SetMonitorVariable(L"PWORKAREAY", buffer);
+	swprintf(buffer, L"%i", workArea.right - workArea.left);
+	SetMonitorVariable(L"WORKAREAWIDTH", buffer);
+	SetMonitorVariable(L"PWORKAREAWIDTH", buffer);
+	swprintf(buffer, L"%i", workArea.bottom - workArea.top);
+	SetMonitorVariable(L"WORKAREAHEIGHT", buffer);
+	SetMonitorVariable(L"PWORKAREAHEIGHT", buffer);
+
+	if (reset)
+	{
+		scrArea.left = 0;
+		scrArea.top = 0;
+		scrArea.right = GetSystemMetrics(SM_CXSCREEN);
+		scrArea.bottom = GetSystemMetrics(SM_CYSCREEN);
+
+		swprintf(buffer, L"%i", scrArea.left);
+		SetMonitorVariable(L"SCREENAREAX", buffer);
+		SetMonitorVariable(L"PSCREENAREAX", buffer);
+		swprintf(buffer, L"%i", scrArea.top);
+		SetMonitorVariable(L"SCREENAREAY", buffer);
+		SetMonitorVariable(L"PSCREENAREAY", buffer);
+		swprintf(buffer, L"%i", scrArea.right - scrArea.left);
+		SetMonitorVariable(L"SCREENAREAWIDTH", buffer);
+		SetMonitorVariable(L"PSCREENAREAWIDTH", buffer);
+		swprintf(buffer, L"%i", scrArea.bottom - scrArea.top);
+		SetMonitorVariable(L"SCREENAREAHEIGHT", buffer);
+		SetMonitorVariable(L"PSCREENAREAHEIGHT", buffer);
+
+		swprintf(buffer, L"%i", GetSystemMetrics(SM_XVIRTUALSCREEN));
+		SetMonitorVariable(L"VSCREENAREAX", buffer);
+		swprintf(buffer, L"%i", GetSystemMetrics(SM_YVIRTUALSCREEN));
+		SetMonitorVariable(L"VSCREENAREAY", buffer);
+		swprintf(buffer, L"%i", GetSystemMetrics(SM_CXVIRTUALSCREEN));
+		SetMonitorVariable(L"VSCREENAREAWIDTH", buffer);
+		swprintf(buffer, L"%i", GetSystemMetrics(SM_CYVIRTUALSCREEN));
+		SetMonitorVariable(L"VSCREENAREAHEIGHT", buffer);
+	}
+
+	if (CMeterWindow::GetMonitorCount() > 0)
+	{
+		const MULTIMONITOR_INFO& multimonInfo = CMeterWindow::GetMultiMonitorInfo();
+		const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
+
+		for (size_t i = 0; i < monitors.size(); i++)
+		{
+			TCHAR buffer2[256];
+
+			const RECT work = (monitors[i].active) ? monitors[i].work : workArea;
+
+			swprintf(buffer, L"%i", work.left);
+			swprintf(buffer2, L"WORKAREAX@%i", i + 1);
+			SetMonitorVariable(buffer2, buffer);
+			swprintf(buffer, L"%i", work.top);
+			swprintf(buffer2, L"WORKAREAY@%i", i + 1);
+			SetMonitorVariable(buffer2, buffer);
+			swprintf(buffer, L"%i", work.right - work.left);
+			swprintf(buffer2, L"WORKAREAWIDTH@%i", i + 1);
+			SetMonitorVariable(buffer2, buffer);
+			swprintf(buffer, L"%i", work.bottom - work.top);
+			swprintf(buffer2, L"WORKAREAHEIGHT@%i", i + 1);
+			SetMonitorVariable(buffer2, buffer);
+
+			if (reset)
+			{
+				const RECT screen = (monitors[i].active) ? monitors[i].screen : scrArea;
+
+				swprintf(buffer, L"%i", screen.left);
+				swprintf(buffer2, L"SCREENAREAX@%i", i + 1);
+				SetMonitorVariable(buffer2, buffer);
+				swprintf(buffer, L"%i", screen.top);
+				swprintf(buffer2, L"SCREENAREAY@%i", i + 1);
+				SetMonitorVariable(buffer2, buffer);
+				swprintf(buffer, L"%i", screen.right - screen.left);
+				swprintf(buffer2, L"SCREENAREAWIDTH@%i", i + 1);
+				SetMonitorVariable(buffer2, buffer);
+				swprintf(buffer, L"%i", screen.bottom - screen.top);
+				swprintf(buffer2, L"SCREENAREAHEIGHT@%i", i + 1);
+				SetMonitorVariable(buffer2, buffer);
+			}
+		}
+	}
+}
+
+/**
+** Sets a new value for the SCREENAREA/WORKAREA variable.
+** 
+** \param strVariable
+** \param strValue
+*/
+void CConfigParser::SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue)
+{
+	// DebugLog(L"MonitorVariable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), c_MonitorVariables.size());
+
+	std::wstring strTmp(strVariable);
+	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
+	c_MonitorVariables[strTmp] = strValue;
+}
+
+/*
+** SetAutoSelectedMonitorVariables
+**
+** Sets new SCREENAREA/WORKAREA variables for present monitor.
+** 
+*/
+void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
+{
+
+	if (meterWindow)
+	{
+		if (CMeterWindow::GetMonitorCount() > 0)
+		{
+			TCHAR buffer[256];
+			int w1, w2, s1, s2;
+
+			const MULTIMONITOR_INFO& multimonInfo = CMeterWindow::GetMultiMonitorInfo();
+			const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
+
+			if (meterWindow->GetXScreenDefined())
+			{
+				int screenIndex = meterWindow->GetXScreen();
+
+				if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() &&
+					screenIndex != multimonInfo.primary && monitors[screenIndex-1].active))
+				{
+					if (screenIndex == 0)
+					{
+						s1 = w1 = multimonInfo.vsL;
+						s2 = w2 = multimonInfo.vsW;
+					}
+					else
+					{
+						w1 = monitors[screenIndex-1].work.left;
+						w2 = monitors[screenIndex-1].work.right - monitors[screenIndex-1].work.left;
+						s1 = monitors[screenIndex-1].screen.left;
+						s2 = monitors[screenIndex-1].screen.right - monitors[screenIndex-1].screen.left;
+					}
+
+					swprintf(buffer, L"%i", w1);
+					SetVariable(L"WORKAREAX", buffer);
+					swprintf(buffer, L"%i", w2);
+					SetVariable(L"WORKAREAWIDTH", buffer);
+					swprintf(buffer, L"%i", s1);
+					SetVariable(L"SCREENAREAX", buffer);
+					swprintf(buffer, L"%i", s2);
+					SetVariable(L"SCREENAREAWIDTH", buffer);
+				}
+			}
+
+			if (meterWindow->GetYScreenDefined())
+			{
+				int screenIndex = meterWindow->GetYScreen();
+
+				if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() &&
+					screenIndex != multimonInfo.primary && monitors[screenIndex-1].active))
+				{
+					if (screenIndex == 0)
+					{
+						s1 = w1 = multimonInfo.vsL;
+						s2 = w2 = multimonInfo.vsW;
+					}
+					else
+					{
+						w1 = monitors[screenIndex-1].work.top;
+						w2 = monitors[screenIndex-1].work.bottom - monitors[screenIndex-1].work.top;
+						s1 = monitors[screenIndex-1].screen.top;
+						s2 = monitors[screenIndex-1].screen.bottom - monitors[screenIndex-1].screen.top;
+					}
+
+					swprintf(buffer, L"%i", w1);
+					SetVariable(L"WORKAREAY", buffer);
+					swprintf(buffer, L"%i", w2);
+					SetVariable(L"WORKAREAHEIGHT", buffer);
+					swprintf(buffer, L"%i", s1);
+					SetVariable(L"SCREENAREAY", buffer);
+					swprintf(buffer, L"%i", s2);
+					SetVariable(L"SCREENAREAHEIGHT", buffer);
+				}
+			}
+		}
+	}
+}
+
 /**
 ** Replaces environment and internal variables in the given string.
 ** 
@@ -144,6 +371,11 @@ void CConfigParser::SetVariable(const std::wstring& strVariable, const std::wstr
 void CConfigParser::ReplaceVariables(std::wstring& result)
 {
 	CRainmeter::ExpandEnvironmentVariables(result);
+
+	if (c_MonitorVariables.empty())
+	{
+		SetMultiMonitorVariables(true);
+	}
 
 	// Check for variables (#VAR#)
 	size_t start = 0;
@@ -171,7 +403,17 @@ void CConfigParser::ReplaceVariables(std::wstring& result)
 				}
 				else
 				{
-					start = end;
+					std::map<std::wstring, std::wstring>::iterator iter2 = c_MonitorVariables.find(strTmp);
+					if (iter2 != c_MonitorVariables.end())
+					{
+						// SCREENAREA/WORKAREA variable found, replace it with the value
+						result.replace(result.begin() + pos, result.begin() + end + 1, (*iter2).second);
+						start = pos + (*iter2).second.length();
+					}
+					else
+					{
+						start = end;
+					}
 				}
 			}
 			else

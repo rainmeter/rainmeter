@@ -226,8 +226,8 @@ bool CMeterButton::MouseUp(POINT pos, CMeterWindow* window)
 	if (m_State == BUTTON_STATE_DOWN)
 	{
 		if (m_Clicked &&
-			pos.x >= x && pos.x <= x + m_W &&
-			pos.y >= y && pos.y <= y + m_H)
+			pos.x >= x && pos.x < x + m_W &&
+			pos.y >= y && pos.y < y + m_H)
 		{
 			Color color;
 			m_Bitmap->GetPixel(pos.x - x + m_W * m_State, pos.y - y, &color);
@@ -252,8 +252,8 @@ bool CMeterButton::MouseDown(POINT pos)
 	int x = GetX();
 	int y = GetY();
 
-	if (pos.x >= x && pos.x <= x + m_W &&
-		pos.y >= y && pos.y <= y + m_H)
+	if (pos.x >= x && pos.x < x + m_W &&
+		pos.y >= y && pos.y < y + m_H)
 	{
 		Color color;
 		m_Bitmap->GetPixel(pos.x - x + m_W * m_State, pos.y - y, &color);
@@ -275,8 +275,8 @@ bool CMeterButton::MouseMove(POINT pos)
 
 	if (m_Clicked == true)
 	{
-		if (pos.x >= x && pos.x <= x + m_W &&
-			pos.y >= y && pos.y <= y + m_H)
+		if (pos.x >= x && pos.x < x + m_W &&
+			pos.y >= y && pos.y < y + m_H)
 		{
 			Color color;
 			m_Bitmap->GetPixel(pos.x - x + m_W * m_State, pos.y - y, &color);
@@ -307,8 +307,8 @@ bool CMeterButton::MouseMove(POINT pos)
 	}
 	else
 	{
-		if (pos.x >= x && pos.x <= x + m_W &&
-			pos.y >= y && pos.y <= y + m_H)
+		if (pos.x >= x && pos.x < x + m_W &&
+			pos.y >= y && pos.y < y + m_H)
 		{
 			if (m_State == BUTTON_STATE_NORMAL)
 			{
