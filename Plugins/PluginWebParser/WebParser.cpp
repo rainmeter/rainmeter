@@ -28,6 +28,7 @@
 #include <map>
 #include <vector>
 #include <Wininet.h>
+#include <shlwapi.h>
 #include "pcre-6.4/pcre.h"
 #include "..\..\Library\Export.h"	// Rainmeter's exported functions
 
@@ -58,6 +59,7 @@ struct UrlData
 	std::wstring finishAction;
 	bool download;
 	bool forceReload;
+	std::wstring downloadFile;
 	std::wstring downloadedFile;
 	std::wstring iniFile;
 	int debug;
@@ -215,9 +217,10 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	data->finishAction = ReadConfigString(section, L"FinishAction", L"");
 	data->errorString = ReadConfigString(section, L"ErrorString", L"");
 	data->proxy = ReadConfigString(section, L"ProxyServer", L"");
+	data->downloadFile = ReadConfigString(section, L"DownloadFile", L"");
 	data->debugFileLocation = ReadConfigString(section, L"Debug2File", L"c:\\WebParserDump.txt");
 	
-	if(data->debugFileLocation.find(L"\\") == -1)
+	if(data->debugFileLocation.find(L"\\") == std::wstring::npos)
 	{
 		std::wstring str = data->iniFile.substr(0,data->iniFile.find_last_of(L"\\")+1); 
 		str += data->debugFileLocation;
@@ -487,7 +490,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 							int substring_length = ovector[2 * i + 1] - ovector[2 * i];
 							substring_length = min(substring_length, 256);
 							std::string tmpStr(substring_start, substring_length);
-							wsprintf(buffer, L"WebParser: (Index %2d) %hs", i, tmpStr.c_str());
+							wsprintf(buffer, L"WebParser: (Index %2d) %s", i, ConvertToWide(tmpStr.c_str()).c_str());
 							Log(buffer);
 						}
 					}
@@ -613,7 +616,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 				copyData.cbData = (DWORD)(urlData->finishAction.size() + 1) * sizeof(WCHAR);
 				copyData.lpData = (void*)urlData->finishAction.c_str();
 
-				// Send the bang to the Rainlendar window
+				// Send the bang to the Rainmeter window
 				SendMessage(wnd, WM_COPYDATA, (WPARAM)NULL, (LPARAM)&copyData);
 			}
 		}
@@ -639,15 +642,15 @@ DWORD WINAPI NetworkDownloadThreadProc(LPVOID pParam)
 		url = urlData->resultString;
 		LeaveCriticalSection(&g_CriticalSection);
 	
-		size_t pos = url.find(':');
-		if (pos == -1 && !url.empty())	// No protocol
+		std::wstring::size_type pos = url.find(L':');
+		if (pos == std::wstring::npos && !url.empty())	// No protocol
 		{
 			// Add the base url to the string
-			if (url[0] == '/')
+			if (url[0] == L'/')
 			{
 				// Absolute path
-				pos = urlData->url.find('/', 7);	// Assume "http://" (=7)
-				if (pos != -1)
+				pos = urlData->url.find(L'/', 7);	// Assume "http://" (=7)
+				if (pos != std::wstring::npos)
 				{
 					std::wstring path(urlData->url.substr(0, pos));
 					url = path + url;
@@ -657,8 +660,8 @@ DWORD WINAPI NetworkDownloadThreadProc(LPVOID pParam)
 			{
 				// Relative path
 
-				pos = urlData->url.rfind('/');
-				if (pos != -1)
+				pos = urlData->url.rfind(L'/');
+				if (pos != std::wstring::npos)
 				{
 					std::wstring path(urlData->url.substr(0, pos + 1));
 					url = path + url;
@@ -669,37 +672,236 @@ DWORD WINAPI NetworkDownloadThreadProc(LPVOID pParam)
 
 	if (!url.empty())
 	{
+		bool download = !urlData->downloadFile.empty();
+
 		// Create the filename
-		WCHAR buffer[MAX_PATH];
-		GetTempPath(MAX_PATH, buffer);
-		wcscat(buffer, L"Rainmeter-Cache\\");
-		CreateDirectory(buffer, NULL);	// Make sure that the folder exists
+		WCHAR buffer[MAX_PATH] = {0};
+		std::wstring fullpath, directory;
 
-		size_t pos = url.rfind('/');
-		if (pos != -1)
+		if (download)  // download mode
 		{
-			std::wstring filename(url.substr(pos + 1));
-			wcscat(buffer, filename.c_str());
+			PathCanonicalize(buffer, urlData->downloadFile.c_str());
 
-			// Write some log info
-			std::wstring info;
-			info = L"WebParser: Downloading url ";
-			info += url;
-			info += L" to ";
-			info += buffer;
-			info += L"\n";
-			Log(info.c_str());
+			std::wstring path = buffer;
+			std::wstring::size_type pos = path.find_first_not_of(L'\\');
+			if (pos != std::wstring::npos)
+			{
+				path = path.substr(pos);
+			}
 
+			PathCanonicalize(buffer, urlData->iniFile.substr(0, urlData->iniFile.find_last_of(L'\\') + 1).c_str());  // "#CURRENTPATH#"
+			wcscat(buffer, L"DownloadFile\\");  // "#CURRENTPATH#DownloadFile\"
+			CreateDirectory(buffer, NULL);	// Make sure that the folder exists
+
+			wcscat(buffer, path.c_str());
+
+			if (buffer[wcslen(buffer)-1] != L'\\')  // path is a file
+			{
+				fullpath = buffer;
+				PathRemoveFileSpec(buffer);
+			}
+			PathAddBackslash(buffer);
+		}
+		else  // cache mode
+		{
+			GetTempPath(MAX_PATH, buffer);
+			wcscat(buffer, L"Rainmeter-Cache\\");  // "%TEMP%\Rainmeter-Cache\"
+		}
+		CreateDirectory(buffer, NULL);	// Make sure that the folder exists
+		directory = buffer;
+
+		if (fullpath.empty())
+		{
+			fullpath = directory;
+
+			std::wstring::size_type pos2 = url.find_first_of(L"?#");
+			std::wstring::size_type pos1 = url.find_last_of(L'/', pos2);
+			pos1 = (pos1 != std::wstring::npos) ? pos1 + 1 : 0;
+
+			std::wstring name;
+			if (pos2 != std::wstring::npos)
+			{
+				name = url.substr(pos1, pos2 - pos1);
+			}
+			else
+			{
+				name = url.substr(pos1);
+			}
+
+			if (!name.empty())
+			{
+				// Replace reserved characters to "_"
+				pos1 = 0;
+				while ((pos1 = name.find_first_of(L"\\/:*?\"<>|", pos1)) != std::wstring::npos)
+				{
+					name[pos1] = L'_';
+				}
+				fullpath += name;
+			}
+			else
+			{
+				fullpath += L"index";
+			}
+		}
+
+		bool ready = true;
+		if (download)  // download mode
+		{
+			std::wstring error;
+
+			if (!PathFileExists(directory.c_str()) || !PathIsDirectory(directory.c_str()))
+			{
+				ready = false;
+
+				error = L"WebParser: Directory not exists: ";
+				error += directory;
+				error += L"\n";
+				Log(error.c_str());
+			}
+			else if (PathIsDirectory(fullpath.c_str()))
+			{
+				ready = false;
+
+				error = L"WebParser: Path is a directory, not a file: ";
+				error += fullpath;
+				error += L"\n";
+				Log(error.c_str());
+			}
+			else
+			{
+				DeleteFile(fullpath.c_str());
+
+				if (PathFileExists(fullpath.c_str()))
+				{
+					ready = false;
+
+					DWORD attr = GetFileAttributes(fullpath.c_str());
+					if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_READONLY))
+					{
+						error = L"WebParser: File is READ-ONLY: ";
+					}
+					else
+					{
+						error = L"WebParser: Failed to delete file: ";
+					}
+					error += fullpath;
+					error += L"\n";
+					Log(error.c_str());
+				}
+			}
+		}
+		else  // cache mode
+		{
 			if (!urlData->downloadedFile.empty())
 			{
 				DeleteFile(urlData->downloadedFile.c_str());
 			}
 
+			EnterCriticalSection(&g_CriticalSection);
+
+			if (PathFileExists(fullpath.c_str()))
+			{
+				std::wstring::size_type pos = fullpath.find_last_of(L'.');
+
+				std::wstring path, ext;
+				if (pos != std::wstring::npos)
+				{
+					path = fullpath.substr(0, pos);
+					ext = fullpath.substr(pos);
+				}
+				else
+				{
+					path = fullpath;
+				}
+
+				// Assign a serial number
+				size_t i = 1;
+				do
+				{
+					wsprintf(buffer, L"_%i", i++);
+
+					fullpath = path;
+					fullpath += buffer;
+					if (!ext.empty())
+					{
+						fullpath += ext;
+					}
+				} while (PathFileExists(fullpath.c_str()));
+			}
+
+			// Create empty file
+			HANDLE hFile = CreateFile(fullpath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+			if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
+
+			LeaveCriticalSection(&g_CriticalSection);
+		}
+
+		if (ready)
+		{
+			// Delete IE cache before download if "SyncMode5" is not 3 (every visit to the page)
+			{
+				// Check "Temporary Internet Files" sync mode (SyncMode5)
+				// Values:
+				//   Every visit to the page                 3
+				//   Every time you start Internet Explorer  2
+				//   Automatically (default)                 4
+				//   Never                                   0
+				// http://support.microsoft.com/kb/263070/en
+
+				HKEY hKey;
+				LONG ret;
+				DWORD mode;
+
+				ret = RegOpenKeyEx(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", 0, KEY_QUERY_VALUE, &hKey);
+				if (ret == ERROR_SUCCESS)
+				{
+					DWORD size = sizeof(mode);
+					ret = RegQueryValueEx(hKey, L"SyncMode5", NULL, NULL, (LPBYTE)&mode, &size);
+					RegCloseKey(hKey);
+				}
+
+				if (ret != ERROR_SUCCESS || mode != 3)
+				{
+					std::wstring::size_type pos = url.find_first_of(L'#');
+
+					if (pos != std::wstring::npos)
+					{
+						DeleteUrlCacheEntry(url.substr(0, pos).c_str());
+					}
+					else
+					{
+						DeleteUrlCacheEntry(url.c_str());
+					}
+				}
+			}
+
+			// Write some log info
+			std::wstring info = L"WebParser: Downloading url ";
+			info += url;
+			info += L" to ";
+			info += fullpath;
+			info += L"\n";
+			Log(info.c_str());
+
+			HRESULT resultCoInitialize = CoInitialize(NULL);  // requires before calling URLDownloadToFile function
+
 			// Download the file
-			if (S_OK == URLDownloadToFile(NULL, url.c_str(), buffer, NULL, NULL))
+			HRESULT result = URLDownloadToFile(NULL, url.c_str(), fullpath.c_str(), NULL, NULL);
+			if (result == S_OK)
 			{
 				EnterCriticalSection(&g_CriticalSection);
-				urlData->downloadedFile = buffer;
+
+				// Convert LFN to 8.3 filename if the path contains blank character
+				if (fullpath.find_first_of(L' ') != std::wstring::npos)
+				{
+					DWORD size = GetShortPathName(fullpath.c_str(), buffer, MAX_PATH);
+					if (size > 0 && size <= MAX_PATH)
+					{
+						fullpath = buffer;
+					}
+				}
+				urlData->downloadedFile = fullpath;
+
 				LeaveCriticalSection(&g_CriticalSection);
 	
 				if (!urlData->finishAction.empty()) 
@@ -714,21 +916,35 @@ DWORD WINAPI NetworkDownloadThreadProc(LPVOID pParam)
 						copyData.cbData = (DWORD)(urlData->finishAction.size() + 1) * sizeof(WCHAR);
 						copyData.lpData = (void*)urlData->finishAction.c_str();
 
-						// Send the bang to the Rainlendar window
+						// Send the bang to the Rainmeter window
 						SendMessage(wnd, WM_COPYDATA, (WPARAM)NULL, (LPARAM)&copyData);
 					}
 				}
 			}
 			else
 			{
-				std::wstring error = L"WebParser: Download failed: ";
+				if (!download)  // cache mode
+				{
+					// Delete empty file
+					DeleteFile(fullpath.c_str());
+				}
+
+				wsprintf(buffer, L"result=0x%08X, COM=0x%08X", result, resultCoInitialize);
+				std::wstring error = L"WebParser: Download failed (";
+				error += buffer;
+				error += L"): ";
 				error += url;
 				Log(error.c_str());
+			}
+
+			if (SUCCEEDED(resultCoInitialize))
+			{
+				CoUninitialize();
 			}
 		}
 		else
 		{
-			std::wstring error = L"WebParser: No filename in the url: ";
+			std::wstring error = L"WebParser: Download failed: ";
 			error += url;
 			Log(error.c_str());
 		}
@@ -808,10 +1024,13 @@ void Finalize(HMODULE instance, UINT id)
 			LeaveCriticalSection(&g_CriticalSection);
 		}
 
-		if (!((*urlIter).second)->downloadedFile.empty())
+		if (((*urlIter).second)->downloadFile.empty())  // cache mode
 		{
-			// Delete the file
-			DeleteFile(((*urlIter).second)->downloadedFile.c_str());
+			if (!((*urlIter).second)->downloadedFile.empty())
+			{
+				// Delete the file
+				DeleteFile(((*urlIter).second)->downloadedFile.c_str());
+			}
 		}
 
 		delete (*urlIter).second;
@@ -1015,7 +1234,7 @@ void Log(const WCHAR* string)
 
 UINT GetPluginVersion()
 {
-	return 1010;
+	return 1012;
 }
 
 LPCTSTR GetPluginAuthor()
