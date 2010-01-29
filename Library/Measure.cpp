@@ -63,7 +63,7 @@ CMeasure::CMeasure(CMeterWindow* meterWindow)
 	m_IfEqualCommited = false;
 	m_Disabled = false;
 	m_UpdateDivider = 1;
-	m_UpdateCounter = 0;
+	m_UpdateCounter = 1;
 	m_MedianPos = 0;
 	m_AveragePos = 0;
 	m_AverageSize = 0;
@@ -98,8 +98,12 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_Invert = 0!=parser.ReadInt(section, L"InvertMeasure", 0);
 	m_Disabled = 0!=parser.ReadInt(section, L"Disabled", 0);
-	m_UpdateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
-	m_UpdateCounter = m_UpdateDivider;
+
+	UINT updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
+	if (updateDivider != m_UpdateDivider)
+	{
+		m_UpdateCounter = m_UpdateDivider = updateDivider;
+	}
 
 	m_MinValue = parser.ReadFloat(section, L"MinValue", m_MinValue);
 	m_MaxValue = parser.ReadFloat(section, L"MaxValue", m_MaxValue);

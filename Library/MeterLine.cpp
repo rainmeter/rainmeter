@@ -61,10 +61,26 @@ void CMeterLine::Initialize()
 {
 	CMeter::Initialize();
 
-	std::vector<Color>::iterator i = m_Colors.begin();
-	for ( ; i != m_Colors.end(); i++)
+	if (m_Colors.size() != m_AllValues.size())
 	{
-		m_AllValues.push_back(std::vector<double>());
+		if (m_Colors.size() > m_AllValues.size())
+		{
+			size_t num = (!m_AllValues.empty()) ? m_AllValues[0].size() : 0;
+
+			for (size_t i = m_AllValues.size(), end = m_Colors.size(); i < end; i++)
+			{
+				m_AllValues.push_back(std::vector<double>());
+
+				if (num > 0)
+				{
+					m_AllValues.back().assign(num, 0);
+				}
+			}
+		}
+		else
+		{
+			m_AllValues.resize(m_Colors.size());
+		}
 	}
 }
 
@@ -79,12 +95,19 @@ void CMeterLine::ReadConfig(const WCHAR* section)
 	int i;
 	WCHAR tmpName[256];
 
+	// Store the current number of lines so we know if the buffer needs to be updated
+	int oldLineCount = (int)m_Colors.size();
+
 	// Read common configs
 	CMeter::ReadConfig(section);
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
 	int lineCount = parser.ReadInt(section, L"LineCount", 1);
+
+	m_Colors.clear();
+	m_ScaleValues.clear();
+	m_MeasureNames.clear();
 
 	for (i = 0; i < lineCount; i++)
 	{
@@ -123,6 +146,12 @@ void CMeterLine::ReadConfig(const WCHAR* section)
 	m_HorizontalLines = 0!=parser.ReadInt(section, L"HorizontalLines", 0);
 	m_HorizontalColor = parser.ReadColor(section, L"HorizontalColor", Color::Black);			// This is left here for backwards compatibility
 	m_HorizontalColor = parser.ReadColor(section, L"HorizontalLineColor", m_HorizontalColor);	// This is what it should be
+
+	if (m_Initialized &&
+		oldLineCount != lineCount)
+	{
+		Initialize();
+	}
 }
 
 /*
