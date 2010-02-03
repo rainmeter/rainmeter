@@ -35,7 +35,6 @@
 #include <Iphlpapi.h>
 #include <commctrl.h>
 #include <shellapi.h>
-#include <algorithm>
 #include <Mmsystem.h>
 #include <tchar.h>
 #include <shlobj.h>
@@ -55,6 +54,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 
 // RUNTIME
 #include <stdio.h>

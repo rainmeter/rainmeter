@@ -145,6 +145,26 @@ std::wstring ConvertToWide(LPCSTR str)
 	return szWide;
 }
 
+std::string ConvertToACP(LPCWSTR str)
+{
+	std::string szAscii;
+
+	if (str && *str)
+	{
+		int strLen = (int)wcslen(str) + 1;
+		int bufLen = WideCharToMultiByte(CP_ACP, 0, str, strLen, NULL, 0, NULL, NULL);
+		if (bufLen > 0)
+		{
+			char* tmpSz = new char[bufLen];
+			tmpSz[0] = 0;
+			WideCharToMultiByte(CP_ACP, 0, str, strLen, tmpSz, bufLen, NULL, NULL);
+			szAscii = tmpSz;
+			delete [] tmpSz;
+		}
+	}
+	return szAscii;
+}
+
 HWND FindMeterWindow()
 {
 	HWND wnd = FindWindow(L"RainmeterMeterWindow", NULL);
@@ -206,7 +226,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 
 	UrlData* data = new UrlData;
 	data->section = section;
-	data->updateRate = 1;
+	data->updateRate = 600;
 	data->updateCounter = 0;
 	data->iniFile = iniFile;
 
@@ -399,12 +419,18 @@ DWORD WINAPI NetworkThreadProc(LPVOID pParam)
 		{
 			// Dump to a file
 
-			// Convert to a narrow string
-			std::string path(urlData->debugFileLocation.begin(), urlData->debugFileLocation.end());
-
-			FILE* file = fopen(path.c_str(), "wb");
-			fwrite(data, sizeof(BYTE), dwSize, file);
-			fclose(file);
+			FILE* file = _wfopen(urlData->debugFileLocation.c_str(), L"wb");
+			if (file)
+			{
+				fwrite(data, sizeof(BYTE), dwSize, file);
+				fclose(file);
+			}
+			else
+			{
+				std::wstring error = L"WebParser: Failed to dump debug data: ";
+				error += urlData->debugFileLocation;
+				Log(error.c_str());
+			}
 		}
 
 		ParseData(urlData, (LPCSTR)data);
@@ -486,7 +512,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 						for (int i = 0; i < rc; i++)
 						{
 							WCHAR buffer[1024];
-							char* substring_start = (char*)(parseData + ovector[2 * i]);
+							const char* substring_start = parseData + ovector[2 * i];
 							int substring_length = ovector[2 * i + 1] - ovector[2 * i];
 							substring_length = min(substring_length, 256);
 							std::string tmpStr(substring_start, substring_length);
@@ -499,7 +525,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 					int substring_length = ovector[2 * urlData->stringIndex + 1] - ovector[2 * urlData->stringIndex];
 
 					EnterCriticalSection(&g_CriticalSection);
-					std::string szResult((char*)substring_start, substring_length);
+					std::string szResult(substring_start, substring_length);
 					urlData->resultString = ConvertToWide(szResult.c_str());
 					LeaveCriticalSection(&g_CriticalSection);
 				}
@@ -522,7 +548,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 							const char* substring_start = parseData + ovector[2 * ((*i).second)->stringIndex];
 							int substring_length = ovector[2 * ((*i).second)->stringIndex + 1] - ovector[2 * ((*i).second)->stringIndex];
 
-							std::string szResult((char*)substring_start, substring_length);
+							std::string szResult(substring_start, substring_length);
 
 							if (!((*i).second)->regExp.empty()) 
 							{
@@ -1080,8 +1106,17 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 	hUrlDump = InternetOpenUrl(hRootHandle, url.c_str(), NULL, NULL, flags, 0);
 	if (hUrlDump == NULL)
 	{
-		ShowError(__LINE__); 
-		return NULL;
+		if (wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
+		{
+			std::string urlACP = ConvertToACP(url.c_str());
+			hUrlDump = InternetOpenUrlA(hRootHandle, urlACP.c_str(), NULL, NULL, flags, 0);
+		}
+
+		if (hUrlDump == NULL)
+		{
+			ShowError(__LINE__);
+			return NULL;
+		}
 	}
 
 	*dwDataSize = 0;
@@ -1167,7 +1202,8 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 void ShowError(int lineNumber, WCHAR* errorMsg)
 {
 	WCHAR szBuffer[4096];
-	LPVOID lpMsgBuf = NULL;
+
+	DWORD dwErr = GetLastError();
 
 	WCHAR buffer[16];
 	wsprintf(buffer, L"%i", lineNumber);
@@ -1178,22 +1214,33 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 
 	if (errorMsg == NULL)
 	{
-		if (GetLastError() == ERROR_INTERNET_EXTENDED_ERROR) 
+		if (dwErr == ERROR_INTERNET_EXTENDED_ERROR) 
 		{
 			DWORD dwError, dwLen = 4096;
 			if (InternetGetLastResponseInfo(&dwError, szBuffer, &dwLen))
 			{
 				err += szBuffer;
+				wsprintf(buffer, L"%i", dwError);
 			}
+			else
+			{
+				err += L"Unknown error";
+				wsprintf(buffer, L"%i", dwErr);
+			}
+
+			err += L" (ErrorCode=";
+			err += buffer;
+			err += L")";
 		}
 		else
 		{
-			DWORD dwErr = GetLastError();
+			LPVOID lpMsgBuf = NULL;
 
 			FormatMessage( 
 				FORMAT_MESSAGE_ALLOCATE_BUFFER | 
 				FORMAT_MESSAGE_FROM_SYSTEM | 
-				FORMAT_MESSAGE_IGNORE_INSERTS,
+				FORMAT_MESSAGE_IGNORE_INSERTS |
+				FORMAT_MESSAGE_MAX_WIDTH_MASK,
 				NULL,
 				dwErr,
 				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
@@ -1204,15 +1251,18 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 
 			if (lpMsgBuf == NULL) 
 			{
-				err += L"Unknown error: ";
-				wsprintf(buffer, L"%i", dwErr);
-				err += buffer;
+				err += L"Unknown error";
 			}
 			else
 			{
 				err += (LPTSTR)lpMsgBuf;
 				LocalFree(lpMsgBuf);
 			}
+
+			wsprintf(buffer, L"%i", dwErr);
+			err += L" (ErrorCode=";
+			err += buffer;
+			err += L")";
 		}
 	}
 	else

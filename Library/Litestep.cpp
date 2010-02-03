@@ -551,7 +551,6 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 
 				// Clear the file
 				logFile = _wfopen(logfile.c_str(), L"w");
-				fputwc(0xFEFF, logFile);
 				fclose(logFile);
 			}
 			else
@@ -562,7 +561,7 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 
 		if (logFound == 1)
 		{
-			logFile = _wfopen(logfile.c_str(), L"a+");
+			logFile = _wfopen(logfile.c_str(), L"a+, ccs=UTF-8");
 			if (logFile)
 			{
 				switch(nLevel)
