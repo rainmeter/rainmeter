@@ -100,9 +100,9 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
   This function is called when new value should be measured.
   The function returns the new value.
 */
-UINT Update(UINT id)
+double Update2(UINT id)
 {
-	UINT value = 0;
+	double value = 0;
 
 	std::map<UINT, PerfMeasure*>::iterator i = g_Measures.find(id);
 	if(i != g_Measures.end())
@@ -127,14 +127,14 @@ UINT Update(UINT id)
 					// Compare with the old value
 					if(!measure->FirstTime) 
 					{
-						value = (UINT)(longvalue - measure->OldValue);
+						value = (double)(longvalue - measure->OldValue);
 					}
 					measure->OldValue = longvalue;
 					measure->FirstTime = false;
 				}
 				else
 				{
-					value = (UINT)longvalue;
+					value = (double)longvalue;
 				}
 			}
 			else

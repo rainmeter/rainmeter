@@ -216,7 +216,12 @@ void ScanPlugins()
 
 		// Try to get the version and author
 		std::wstring tmpSz = Rainmeter->GetPluginPath() + fileData.cFileName;
+		UINT oldMode = SetErrorMode(0);
+		SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
+		SetLastError(ERROR_SUCCESS);
 		HMODULE dll = LoadLibrary(tmpSz.c_str());
+		DWORD err = GetLastError();
+		SetErrorMode(oldMode);  // Reset
 		if (dll)
 		{
 			GETPLUGINAUTHOR GetAuthorFunc = (GETPLUGINAUTHOR)GetProcAddress(dll, "GetPluginAuthor");
@@ -235,6 +240,10 @@ void ScanPlugins()
 				info.version = GetVersionFunc();
 			}
 			FreeLibrary(dll);
+		}
+		else
+		{
+			DebugLog(L"Unable to load library: \"%s\", ErrorCode=%i", tmpSz.c_str(), err);
 		}
 
 		g_Plugins.push_back(info);

@@ -481,7 +481,7 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 		{
 			double val = theValue * (1.0 / scale);
 		    val = (val + ( (val >= 0) ? 0.5 : -0.5 ) );
-			swprintf(buffer, L"%i", (UINT)val);
+			swprintf(buffer, L"%lli", (LONGLONG)val);
 		}
 		else
 		{

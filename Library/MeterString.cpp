@@ -137,7 +137,10 @@ void CMeterString::Initialize()
 			
 		}
 
-		c_FontFamilies[m_FontFace] = m_FontFamily;
+		if(m_FontFamily)
+		{
+			c_FontFamilies[m_FontFace] = m_FontFamily;
+		}
 	}
 
 	FontStyle style = FontStyleRegular;
@@ -180,12 +183,21 @@ void CMeterString::Initialize()
 		{
 			m_Font = new Gdiplus::Font(FontFamily::GenericSansSerif(), size, style);
 		}
-		c_Fonts[properties] = m_Font;
 
 		Status status = m_Font->GetLastStatus();
-		if(Ok != status)
+		if (Ok == status)
 		{
-		    throw CError(std::wstring(L"Unable to create font: ") + m_FontFace, __LINE__, __FILE__);
+			c_Fonts[properties] = m_Font;
+		}
+		else
+		{
+			delete m_Font;
+			m_Font = NULL;
+
+			if (!m_DynamicVariables || m_FontSize != 0)
+			{
+			    throw CError(std::wstring(L"Unable to create font: ") + m_FontFace, __LINE__, __FILE__);
+			}
 		}
 	}
 }
@@ -241,7 +253,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	m_AutoScale = 0!=parser.ReadInt(section, L"AutoScale", 0);
 	m_ClipString = 0!=parser.ReadInt(section, L"ClipString", 0);
 
-	m_FontSize = parser.ReadFormula(section, L"FontSize", 10);
+	m_FontSize = (int)parser.ReadFormula(section, L"FontSize", 10);
 	m_NumOfDecimals = parser.ReadInt(section, L"NumOfDecimals", -1);
 
 	m_Angle = (Gdiplus::REAL)parser.ReadFloat(section, L"Angle", 0.0);
@@ -347,7 +359,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 */
 bool CMeterString::Update()
 {
-	if (CMeter::Update())
+	if (CMeter::Update() && m_Font)
 	{
 		std::vector<std::wstring> stringValues;
 
@@ -422,7 +434,7 @@ bool CMeterString::Update()
 */
 bool CMeterString::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw(graphics)) return false;
+	if(!CMeter::Draw(graphics) || m_Font == NULL) return false;
 
 	return DrawString(graphics, NULL);
 }
