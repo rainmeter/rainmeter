@@ -350,6 +350,11 @@ void CMeterWindow::Refresh(bool init)
 		SetWindowLong(m_Window, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
 	}
 
+	// Set the window region
+	CreateRegion(true);	// Clear the region
+	Update(false);
+	CreateRegion(false);
+
 	if (m_KeepOnScreen) 
 	{
 		MapCoordsToScreen(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
@@ -360,10 +365,7 @@ void CMeterWindow::Refresh(bool init)
 	SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, m_WindowW, m_WindowH, SWP_NOZORDER | SWP_NOACTIVATE);
 	m_WindowZPosition = zPos;
 
-	// Set the window region
-	CreateRegion(true);	// Clear the region
-	Update(false);
-	CreateRegion(false);
+	ScreenToWindow();
 
 	// Start the timers
 	if(0 == SetTimer(m_Window, METERTIMER, m_WindowUpdate, NULL))
@@ -473,8 +475,6 @@ void CMeterWindow::MoveWindow(int x, int y)
 	SetWindowPos(m_Window, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
 	ScreenToWindow();
-
-	DebugLog(L"Move: to (%i, %i)(%s, %s)", m_ScreenX, m_ScreenY, m_WindowX.c_str(), m_WindowY.c_str());
 
 	if (m_SavePosition)
 	{
@@ -2340,14 +2340,14 @@ void CMeterWindow::CreateRegion(bool clear)
 */
 void CMeterWindow::Redraw() 
 {
-	if (m_DoubleBuffer) delete m_DoubleBuffer;
-	m_DoubleBuffer = new Bitmap(m_WindowW, m_WindowH, PixelFormat32bppARGB);
-
 	if (m_ResetRegion)
 	{
 		ResizeWindow(false);
 		CreateRegion(true);
 	}
+
+	if (m_DoubleBuffer) delete m_DoubleBuffer;
+	m_DoubleBuffer = new Bitmap(m_WindowW, m_WindowH, PixelFormat32bppARGB);
 
 	Graphics graphics(GetDoubleBuffer());
 
@@ -2994,6 +2994,17 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			m_KeepOnScreen = !m_KeepOnScreen;
 			WriteConfig();
+
+			if (m_KeepOnScreen) 
+			{
+				int x = m_ScreenX;
+				int y = m_ScreenY;
+				MapCoordsToScreen(x, y, m_WindowW, m_WindowH);
+				if (x != m_ScreenX || y != m_ScreenY)
+				{
+					MoveWindow(x, y);
+				}
+			}
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_CLICKTHROUGH)
 		{
@@ -3192,8 +3203,6 @@ LRESULT CMeterWindow::OnSysCommand(WPARAM wParam, LPARAM lParam)
 	m_Dragging = true;
 	m_Dragged = false;
 
-	int startScreenX = m_ScreenX;
-	int startScreenY = m_ScreenY;
 	std::wstring startWindowX = m_WindowX;
 	std::wstring startWindowY = m_WindowY;
 
@@ -3202,8 +3211,6 @@ LRESULT CMeterWindow::OnSysCommand(WPARAM wParam, LPARAM lParam)
 
 	if (m_Dragged)
 	{
-		DebugLog(L"Dragging: (%i, %i)(%s, %s) to (%i, %i)(%s, %s)", startScreenX, startScreenY, startWindowX.c_str(), startWindowY.c_str(), m_ScreenX, m_ScreenY, m_WindowX.c_str(), m_WindowY.c_str());
-
 		ScreenToWindow();
 
 		// Write the new place of the window to config file
@@ -3238,7 +3245,6 @@ LRESULT CMeterWindow::OnEnterSizeMove(WPARAM wParam, LPARAM lParam)
 {
 	if (m_Dragging)
 	{
-		//DebugLog(L"Dragging: start");
 		m_Dragged = true;  // Don't post the WM_NCLBUTTONUP message!
 	}
 
@@ -3253,11 +3259,6 @@ LRESULT CMeterWindow::OnEnterSizeMove(WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnExitSizeMove(WPARAM wParam, LPARAM lParam) 
 {
-	if (m_Dragging)
-	{
-		//DebugLog(L"Dragging: end");
-	}
-
 	return 0;
 }
 

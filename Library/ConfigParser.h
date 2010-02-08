@@ -63,6 +63,8 @@ private:
 	void SetDefaultVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow);
 	void ReadVariables();
 	void ReplaceVariables(std::wstring& result);
+
+	double ParseDouble(const std::wstring& string, double defValue, bool rejectExp = false);
 	Gdiplus::Color ParseColor(LPCTSTR string);
 
 	void ReadIniFile(const std::wstring& strFileName, int depth = 0);

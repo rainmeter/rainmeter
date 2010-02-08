@@ -194,7 +194,7 @@ void CMeterString::Initialize()
 			delete m_Font;
 			m_Font = NULL;
 
-			if (!m_DynamicVariables || m_FontSize != 0)
+			if (m_FontSize != 0)
 			{
 			    throw CError(std::wstring(L"Unable to create font: ") + m_FontFace, __LINE__, __FILE__);
 			}
@@ -254,6 +254,12 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	m_ClipString = 0!=parser.ReadInt(section, L"ClipString", 0);
 
 	m_FontSize = (int)parser.ReadFormula(section, L"FontSize", 10);
+
+	if (m_FontSize < 0)
+	{
+		m_FontSize = 10;
+	}
+
 	m_NumOfDecimals = parser.ReadInt(section, L"NumOfDecimals", -1);
 
 	m_Angle = (Gdiplus::REAL)parser.ReadFloat(section, L"Angle", 0.0);
@@ -359,7 +365,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 */
 bool CMeterString::Update()
 {
-	if (CMeter::Update() && m_Font)
+	if (CMeter::Update())
 	{
 		std::vector<std::wstring> stringValues;
 
@@ -416,9 +422,16 @@ bool CMeterString::Update()
 			// Calculate the text size
 			RectF rect;
 			Graphics graphics(m_MeterWindow->GetDoubleBuffer());
-			DrawString(graphics, &rect);
-			m_W = (int)rect.Width;
-			m_H = (int)rect.Height;
+			if (DrawString(graphics, &rect))
+			{
+				m_W = (int)rect.Width;
+				m_H = (int)rect.Height;
+			}
+			else
+			{
+				m_W = 1;
+				m_H = 1;
+			}
 		}
 
 		return true;
@@ -434,7 +447,7 @@ bool CMeterString::Update()
 */
 bool CMeterString::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw(graphics) || m_Font == NULL) return false;
+	if(!CMeter::Draw(graphics)) return false;
 
 	return DrawString(graphics, NULL);
 }
@@ -447,6 +460,8 @@ bool CMeterString::Draw(Graphics& graphics)
 */
 bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 {
+	if (m_Font == NULL) return false;
+
 	StringFormat stringFormat;
 	
 	if (m_AntiAlias)

@@ -352,8 +352,6 @@ private:
 	std::wstring m_SkinName;					// Name of the current skin folder
 	std::wstring m_SkinIniFile;					// Name of the current skin iniFile
 
-	std::wstring m_ConfigEditor;
-
 	UINT m_Message;								// The current window message
 
 	int m_UpdateCounter;

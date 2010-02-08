@@ -549,7 +549,7 @@ double CConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 
 	const std::wstring& result = ReadString(section, key, buffer);
 
-	return wcstod(result.c_str(), NULL);
+	return ParseDouble(result, defValue);
 }
 
 std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
@@ -565,7 +565,7 @@ std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR ke
 	std::vector<std::wstring> tokens = Tokenize(tmp, L";");
 	for (size_t i = 0; i < tokens.size(); i++)
 	{
-		result.push_back((Gdiplus::REAL)wcstod(tokens[i].c_str(), NULL));
+		result.push_back((Gdiplus::REAL)ParseDouble(tokens[i], 0));
 	}
 	return result;
 }
@@ -577,7 +577,7 @@ int CConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 
 	const std::wstring& result = ReadString(section, key, buffer);
 
-	return _wtoi(result.c_str());
+	return (int)ParseDouble(result, defValue, true);
 }
 
 // Works as ReadFloat except if the value is surrounded by parenthesis in which case it tries to evaluate the formula
@@ -600,7 +600,8 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 
 		return resultValue;
 	}
-	return wcstod(result.c_str(), NULL);
+
+	return ParseDouble(result, defValue);
 }
 
 Color CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, Color defValue)
@@ -638,6 +639,41 @@ std::vector<std::wstring> CConfigParser::Tokenize(const std::wstring& str, const
 }
 
 /*
+** ParseDouble
+**
+** This is a helper method that parses the floating-point value from the given string.
+** If the given string is invalid format or causes overflow/underflow, returns given default value.
+**
+*/
+double CConfigParser::ParseDouble(const std::wstring& string, double defValue, bool rejectExp)
+{
+	if (rejectExp)
+	{
+		if (string.find_last_of(L"dDeE") != std::wstring::npos)  // contains exponent part
+		{
+			return defValue;
+		}
+	}
+
+	std::wstring::size_type pos1 = string.find_first_not_of(L" \t\r\n");
+	if (pos1 != std::wstring::npos)
+	{
+		// Trim white-space
+		std::wstring temp(string, pos1, string.find_last_not_of(L" \t\r\n") - pos1 + 1);
+
+		WCHAR* end = NULL;
+		errno = 0;
+		double resultValue = wcstod(temp.c_str(), &end);
+		if (end && *end == L'\0' && errno != ERANGE)
+		{
+			return resultValue;
+		}
+	}
+
+	return defValue;
+}
+
+/*
 ** ParseColor
 **
 ** This is a helper method that parses the color values from the given string.
@@ -658,6 +694,8 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 		if (token != NULL)
 		{
 			R = _wtoi(token);
+			R = max(R, 0);
+			R = min(R, 255);
 		}
 		else
 		{
@@ -667,6 +705,8 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 		if (token != NULL)
 		{
 			G = _wtoi(token);
+			G = max(G, 0);
+			G = min(G, 255);
 		}
 		else
 		{
@@ -676,6 +716,8 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 		if (token != NULL)
 		{
 			B = _wtoi(token);
+			B = max(B, 0);
+			B = min(B, 255);
 		}
 		else
 		{
@@ -685,6 +727,8 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 		if (token != NULL)
 		{
 			A = _wtoi(token);
+			A = max(A, 0);
+			A = min(A, 255);
 		}
 		else
 		{
@@ -701,7 +745,7 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 			start = string + 2;
 		}
 
-		if (wcslen(string) > 6 && !isspace(string[6]))
+		if (wcslen(string) > 6 && !iswspace(string[6]))
 		{
 			swscanf(string, L"%02x%02x%02x%02x", &R, &G, &B, &A);
 		} 
