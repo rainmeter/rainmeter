@@ -220,11 +220,11 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 
 	m_PreserveAspectRatio = 0!=parser.ReadInt(section, L"PreserveAspectRatio", 0);
 
-	if (-1 != parser.ReadInt(section, L"W", -1))
+	if (-1 != (int)parser.ReadFormula(section, L"W", -1))
 	{
 		m_WidthDefined = true;
 	}
-	if (-1 != parser.ReadInt(section, L"H", -1))
+	if (-1 != (int)parser.ReadFormula(section, L"H", -1))
 	{
 		m_HeightDefined = true;
 	}

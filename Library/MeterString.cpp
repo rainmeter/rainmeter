@@ -343,7 +343,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
         throw CError(std::wstring(L"No such StringEffect: ") + effect, __LINE__, __FILE__);
 	}
 
-	if (-1 != parser.ReadInt(section, L"W", -1) && -1 != parser.ReadInt(section, L"H", -1))
+	if (-1 != (int)parser.ReadFormula(section, L"W", -1) && -1 != (int)parser.ReadFormula(section, L"H", -1))
 	{
 		m_DimensionsDefined = true;
 	}
