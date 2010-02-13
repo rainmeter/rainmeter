@@ -767,7 +767,10 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 */
 void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 {
-	// DebugLog(L"Reading file: %s", iniFile.c_str());
+	if (CRainmeter::GetDebug())
+	{
+		DebugLog(L"Reading file: %s", iniFile.c_str());
+	}
 
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{

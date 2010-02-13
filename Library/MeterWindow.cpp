@@ -936,16 +936,18 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 	info.cbSize = sizeof(MONITORINFOEX);
 	GetMonitorInfo(hMonitor, &info);
 
-	// for debug
-	DebugLog(info.szDevice);
-	DebugLog(L"  Flags    : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
-	DebugLog(L"  Handle   : 0x%08X", hMonitor);
-	DebugLog(L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-		lprcMonitor->left, lprcMonitor->top, lprcMonitor->right, lprcMonitor->bottom,
-		lprcMonitor->right - lprcMonitor->left, lprcMonitor->bottom - lprcMonitor->top);
-	DebugLog(L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-		info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
-		info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
+	if (CRainmeter::GetDebug())
+	{
+		DebugLog(info.szDevice);
+		DebugLog(L"  Flags    : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
+		DebugLog(L"  Handle   : 0x%08X", hMonitor);
+		DebugLog(L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+			lprcMonitor->left, lprcMonitor->top, lprcMonitor->right, lprcMonitor->bottom,
+			lprcMonitor->right - lprcMonitor->left, lprcMonitor->bottom - lprcMonitor->top);
+		DebugLog(L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+			info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
+			info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
+	}
 	if (m == NULL) return TRUE;
 
 	if (m->useEnumDisplayDevices)
@@ -1019,6 +1021,7 @@ size_t CMeterWindow::GetMonitorCount()
 void CMeterWindow::SetMultiMonitorInfo()
 {
 	std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
+	bool logging = CRainmeter::GetDebug();
 
 	if (monitors.capacity() < 16) { monitors.reserve(16); }
 
@@ -1032,8 +1035,11 @@ void CMeterWindow::SetMultiMonitorInfo()
 	c_Monitors.useEnumDisplayDevices = true;
 	c_Monitors.useEnumDisplayMonitors = false;
 
-	DebugLog(L"------------------------------");
-	DebugLog(L"* EnumDisplayDevices / EnumDisplaySettings API");
+	if (logging)
+	{
+		DebugLog(L"------------------------------");
+		DebugLog(L"* EnumDisplayDevices / EnumDisplaySettings API");
+	}
 
 	DISPLAY_DEVICE dd = {0};
 	dd.cb = sizeof(DISPLAY_DEVICE);
@@ -1044,44 +1050,48 @@ void CMeterWindow::SetMultiMonitorInfo()
 
 		do
 		{
-			DebugLog(dd.DeviceName);
-
 			std::wstring msg;
-			if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
+
+			if (logging)
 			{
-				msg += L"ACTIVE ";
-			}
-			if (dd.StateFlags & DISPLAY_DEVICE_MULTI_DRIVER)
-			{
-				msg += L"MULTI ";
-			}
-			if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
-			{
-				msg += L"PRIMARY ";
-			}
-			if (dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER)
-			{
-				msg += L"MIRROR ";
-			}
-			if (dd.StateFlags & DISPLAY_DEVICE_VGA_COMPATIBLE)
-			{
-				msg += L"VGA ";
-			}
-			if (dd.StateFlags & DISPLAY_DEVICE_REMOVABLE)
-			{
-				msg += L"REMOVABLE ";
-			}
-			if (dd.StateFlags & DISPLAY_DEVICE_MODESPRUNED)
-			{
-				msg += L"PRUNED ";
-			}
-			if (dd.StateFlags & DISPLAY_DEVICE_REMOTE)
-			{
-				msg += L"REMOTE ";
-			}
-			if (dd.StateFlags & DISPLAY_DEVICE_DISCONNECT)
-			{
-				msg += L"DISCONNECT ";
+				DebugLog(dd.DeviceName);
+
+				if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
+				{
+					msg += L"ACTIVE ";
+				}
+				if (dd.StateFlags & DISPLAY_DEVICE_MULTI_DRIVER)
+				{
+					msg += L"MULTI ";
+				}
+				if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+				{
+					msg += L"PRIMARY ";
+				}
+				if (dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER)
+				{
+					msg += L"MIRROR ";
+				}
+				if (dd.StateFlags & DISPLAY_DEVICE_VGA_COMPATIBLE)
+				{
+					msg += L"VGA ";
+				}
+				if (dd.StateFlags & DISPLAY_DEVICE_REMOVABLE)
+				{
+					msg += L"REMOVABLE ";
+				}
+				if (dd.StateFlags & DISPLAY_DEVICE_MODESPRUNED)
+				{
+					msg += L"PRUNED ";
+				}
+				if (dd.StateFlags & DISPLAY_DEVICE_REMOTE)
+				{
+					msg += L"REMOTE ";
+				}
+				if (dd.StateFlags & DISPLAY_DEVICE_DISCONNECT)
+				{
+					msg += L"DISCONNECT ";
+				}
 			}
 
 			if ((dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) == 0)
@@ -1100,12 +1110,20 @@ void CMeterWindow::SetMultiMonitorInfo()
 					if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
 					{
 						wcsncpy(monitor.monitorName, ddm.DeviceString, 128);
-						DebugLog(L"  Name     : %s", ddm.DeviceString);
+
+						if (logging)
+						{
+							DebugLog(L"  Name     : %s", ddm.DeviceString);
+						}
 						break;
 					}
 				}
-				DebugLog(L"  Adapter  : %s", dd.DeviceString);
-				DebugLog(L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
+
+				if (logging)
+				{
+					DebugLog(L"  Adapter  : %s", dd.DeviceString);
+					DebugLog(L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
+				}
 
 				if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
 				{
@@ -1118,7 +1136,11 @@ void CMeterWindow::SetMultiMonitorInfo()
 					{
 						POINT pos = {dm.dmPosition.x, dm.dmPosition.y};
 						monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTONULL);
-						DebugLog(L"  Handle   : 0x%08X", monitor.handle);
+
+						if (logging)
+						{
+							DebugLog(L"  Handle   : 0x%08X", monitor.handle);
+						}
 					}
 
 					if (monitor.handle != NULL)
@@ -1130,12 +1152,15 @@ void CMeterWindow::SetMultiMonitorInfo()
 						monitor.screen = info.rcMonitor;
 						monitor.work = info.rcWork;
 
-						DebugLog(L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-							info.rcMonitor.left, info.rcMonitor.top, info.rcMonitor.right, info.rcMonitor.bottom,
-							info.rcMonitor.right - info.rcMonitor.left, info.rcMonitor.bottom - info.rcMonitor.top);
-						DebugLog(L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-							info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
-							info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
+						if (logging)
+						{
+							DebugLog(L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+								info.rcMonitor.left, info.rcMonitor.top, info.rcMonitor.right, info.rcMonitor.bottom,
+								info.rcMonitor.right - info.rcMonitor.left, info.rcMonitor.bottom - info.rcMonitor.top);
+							DebugLog(L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+								info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
+								info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
+						}
 					}
 					else  // monitor not found
 					{
@@ -1157,8 +1182,11 @@ void CMeterWindow::SetMultiMonitorInfo()
 			}
 			else
 			{
-				DebugLog(L"  Adapter  : %s", dd.DeviceString);
-				DebugLog(L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
+				if (logging)
+				{
+					DebugLog(L"  Adapter  : %s", dd.DeviceString);
+					DebugLog(L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
+				}
 			}
 			dwDevice++;
 		} while (EnumDisplayDevices(NULL, dwDevice, &dd, 0));
@@ -1171,8 +1199,11 @@ void CMeterWindow::SetMultiMonitorInfo()
 		c_Monitors.useEnumDisplayMonitors = true;
 	}
 
-	DebugLog(L"------------------------------");
-	DebugLog(L"* EnumDisplayMonitors API");
+	if (logging)
+	{
+		DebugLog(L"------------------------------");
+		DebugLog(L"* EnumDisplayMonitors API");
+	}
 
 	if (c_Monitors.useEnumDisplayMonitors)
 	{
@@ -1201,43 +1232,50 @@ void CMeterWindow::SetMultiMonitorInfo()
 	}
 	else
 	{
-		EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)NULL);  // Only logging
-	}
-
-	DebugLog(L"------------------------------");
-	std::wstring method = L"* METHOD: ";
-	if (c_Monitors.useEnumDisplayDevices)
-	{
-		method += L"EnumDisplayDevices + ";
-		method += c_Monitors.useEnumDisplayMonitors ? L"EnumDisplayMonitors Mode" : L"EnumDisplaySettings Mode";
-	}
-	else
-	{
-		method += c_Monitors.useEnumDisplayMonitors ? L"EnumDisplayMonitors Mode" : L"Dummy Mode";
-	}
-	DebugLog(method.c_str());
-
-	DebugLog(L"* MONITORS: Count=%i, Primary=@%i", monitors.size(), c_Monitors.primary);
-	DebugLog(L"@0: Virtual screen");
-	DebugLog(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-		c_Monitors.vsL, c_Monitors.vsT, c_Monitors.vsL + c_Monitors.vsW, c_Monitors.vsT + c_Monitors.vsH,
-		c_Monitors.vsW, c_Monitors.vsH);
-
-	for (size_t i = 0; i < monitors.size(); i++)
-	{
-		if (monitors[i].active)
+		if (logging)
 		{
-			DebugLog(L"@%i: %s (active), MonitorName: %s", i + 1, monitors[i].deviceName, monitors[i].monitorName);
-			DebugLog(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-				monitors[i].screen.left, monitors[i].screen.top, monitors[i].screen.right, monitors[i].screen.bottom,
-				monitors[i].screen.right - monitors[i].screen.left, monitors[i].screen.bottom - monitors[i].screen.top);
+			EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)NULL);  // Only logging
+		}
+	}
+
+	if (logging)
+	{
+		DebugLog(L"------------------------------");
+
+		std::wstring method = L"* METHOD: ";
+		if (c_Monitors.useEnumDisplayDevices)
+		{
+			method += L"EnumDisplayDevices + ";
+			method += c_Monitors.useEnumDisplayMonitors ? L"EnumDisplayMonitors Mode" : L"EnumDisplaySettings Mode";
 		}
 		else
 		{
-			DebugLog(L"@%i: %s (inactive), MonitorName: %s", i + 1, monitors[i].deviceName, monitors[i].monitorName);
+			method += c_Monitors.useEnumDisplayMonitors ? L"EnumDisplayMonitors Mode" : L"Dummy Mode";
 		}
+		DebugLog(method.c_str());
+
+		DebugLog(L"* MONITORS: Count=%i, Primary=@%i", monitors.size(), c_Monitors.primary);
+		DebugLog(L"@0: Virtual screen");
+		DebugLog(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+			c_Monitors.vsL, c_Monitors.vsT, c_Monitors.vsL + c_Monitors.vsW, c_Monitors.vsT + c_Monitors.vsH,
+			c_Monitors.vsW, c_Monitors.vsH);
+
+		for (size_t i = 0; i < monitors.size(); i++)
+		{
+			if (monitors[i].active)
+			{
+				DebugLog(L"@%i: %s (active), MonitorName: %s", i + 1, monitors[i].deviceName, monitors[i].monitorName);
+				DebugLog(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+					monitors[i].screen.left, monitors[i].screen.top, monitors[i].screen.right, monitors[i].screen.bottom,
+					monitors[i].screen.right - monitors[i].screen.left, monitors[i].screen.bottom - monitors[i].screen.top);
+			}
+			else
+			{
+				DebugLog(L"@%i: %s (inactive), MonitorName: %s", i + 1, monitors[i].deviceName, monitors[i].monitorName);
+			}
+		}
+		DebugLog(L"------------------------------");
 	}
-	DebugLog(L"------------------------------");
 }
 
 /* UpdateWorkareaInfo
@@ -1265,10 +1303,13 @@ void CMeterWindow::UpdateWorkareaInfo()
 
 			monitors[i].work = info.rcWork;
 
-			DebugLog(L"WorkArea @%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-				i + 1,
-				info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
-				info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
+			if (CRainmeter::GetDebug())
+			{
+				DebugLog(L"WorkArea @%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+					i + 1,
+					info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
+					info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
+			}
 		}
 	}
 }

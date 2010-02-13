@@ -55,18 +55,18 @@ bool CMeasureNetIn::Update()
 
 	if (m_Cumulative)
 	{
-		m_Value = (double)GetNetStatsValue(NET_IN).QuadPart;
+		m_Value = (double)GetNetStatsValue(NET_IN);
 	}
 	else
 	{
-		DWORD value = 0;
+		ULONG64 value = 0;
 
 		if (!m_FirstTime) 
 		{
 			value = GetNetOctets(NET_IN);
 			if (value > m_InOctets)
 			{
-				DWORD tmpValue = value;
+				ULONG64 tmpValue = value;
 				value -= m_InOctets;
 				m_InOctets = tmpValue;
 			}
@@ -82,7 +82,7 @@ bool CMeasureNetIn::Update()
 			m_FirstTime = false;
 		}
 
-		m_Value = value;
+		m_Value = (double)value;
 	}
 
 	return PostUpdate();

@@ -29,7 +29,7 @@
 */
 BOOL InitApplication(HINSTANCE hInstance, const WCHAR* WinClass);
 HWND InitInstance(HINSTANCE hInstance, const WCHAR* WinClass, const WCHAR* WinName);
-LONG APIENTRY MainWndProc(HWND, UINT, UINT, LONG);
+LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 void Bang(const WCHAR* command);
 
 /*
@@ -193,7 +193,7 @@ void Bang(const WCHAR* command)
 ** The main window procedure
 **
 */
-LONG APIENTRY MainWndProc(HWND hWnd, UINT message, UINT wParam, LONG lParam)
+LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch(message) {
 
@@ -215,7 +215,7 @@ LONG APIENTRY MainWndProc(HWND hWnd, UINT message, UINT wParam, LONG lParam)
 		break;
 
 	default:
-		return (LONG)DefWindowProc(hWnd, message, wParam, lParam);
+		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
 	return 0;

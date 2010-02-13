@@ -598,6 +598,7 @@ void RainmeterSetVariable(HWND, const char* arg)
 // -----------------------------------------------------------------------------------------------
 
 GlobalConfig CRainmeter::c_GlobalConfig;
+bool CRainmeter::c_Debug = false;
 
 /* 
 ** CRainmeter
@@ -609,6 +610,8 @@ CRainmeter::CRainmeter()
 {
 	c_GlobalConfig.netInSpeed = 0;
 	c_GlobalConfig.netOutSpeed = 0;
+
+	c_Debug = false;
 
 	m_DesktopWorkAreaChanged = false;
 	m_DesktopWorkArea.left = m_DesktopWorkArea.top = m_DesktopWorkArea.right = m_DesktopWorkArea.bottom = 0;
@@ -654,6 +657,8 @@ CRainmeter::~CRainmeter()
 	if (m_TrayWindow) delete m_TrayWindow;
 
 	WriteStats(true);
+
+	CMeasureNet::FinalizeNewApi();
 
 	CMeterString::FreeFontCache();
 
@@ -878,6 +883,8 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	{
 		CheckUpdate();
 	}
+
+	CMeasureNet::InitializeNewApi();
 
 	ResetStats();
 	ReadStats();
@@ -1771,6 +1778,9 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 */
 void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 {
+	// Read Debug first
+	c_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, iniFile.c_str());
+
 	CConfigParser parser;
 	parser.Initialize(iniFile.c_str(), this);
 

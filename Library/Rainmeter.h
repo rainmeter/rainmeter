@@ -136,6 +136,7 @@ public:
 	static void SetCommandLine(LPCTSTR CmdLine) { c_CmdLine = CmdLine;};
 	static LPCTSTR GetCommandLine() { return c_CmdLine.c_str(); };
 	static GlobalConfig& GetGlobalConfig() { return c_GlobalConfig; };
+	static bool GetDebug() { return c_Debug; }
 
 	void ReloadSettings();
 	void SaveSettings();
@@ -227,6 +228,7 @@ private:
 	static bool c_DummyLitestep;	// true, if not a Litestep plugin
 	static std::wstring c_CmdLine;	// The command line arguments
 	static GlobalConfig c_GlobalConfig;
+	static bool c_Debug;
 };
 
 #ifdef LIBRARY_EXPORTS

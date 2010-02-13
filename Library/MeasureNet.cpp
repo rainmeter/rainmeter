@@ -20,10 +20,15 @@
 #include "MeasureNet.h"
 #include "Rainmeter.h"
 
-MIB_IFTABLE* CMeasureNet::c_Table = NULL;
+BYTE* CMeasureNet::c_Table = NULL;
 UINT CMeasureNet::c_NumOfTables = 0;
-std::vector<LARGE_INTEGER> CMeasureNet::c_StatValues;
-std::vector<DWORD> CMeasureNet::c_OldStatValues;
+std::vector<ULONG64> CMeasureNet::c_StatValues;
+std::vector<ULONG64> CMeasureNet::c_OldStatValues;
+
+HINSTANCE CMeasureNet::c_IpHlpApiLibrary = NULL;
+FPGETIFTABLE2EX CMeasureNet::c_GetIfTable2Ex = NULL;
+FPFREEMIBTABLE CMeasureNet::c_FreeMibTable = NULL;
+bool CMeasureNet::c_UseNewApi = false;
 
 extern CRainmeter* Rainmeter;
 
@@ -49,8 +54,6 @@ CMeasureNet::CMeasureNet(CMeterWindow* meterWindow) : CMeasure(meterWindow)
 */
 CMeasureNet::~CMeasureNet()
 {
-	delete [] c_Table;
-	c_Table = NULL;
 }
 
 /*
@@ -88,34 +91,169 @@ bool CMeasureNet::Update()
 */
 void CMeasureNet::UpdateIFTable()
 {
-	if(c_Table == NULL)
-	{
-		// Gotta reserve few bytes for the tables
-		DWORD value;
-		if(GetNumberOfInterfaces(&value) == NO_ERROR)
-		{
-			c_NumOfTables = value;
+	bool logging = false;
 
-			if(c_NumOfTables > 0)
+	if (c_UseNewApi)
+	{
+		if (c_Table)
+		{
+			c_FreeMibTable(c_Table);
+			c_Table = NULL;
+		}
+
+		if (c_GetIfTable2Ex(MibIfTableRaw, (MIB_IF_TABLE2**)&c_Table) == NO_ERROR)
+		{
+			MIB_IF_TABLE2* ifTable = (MIB_IF_TABLE2*)c_Table;
+
+			if (c_NumOfTables != ifTable->NumEntries)
 			{
-				DWORD size = sizeof(MIB_IFTABLE) + sizeof(MIB_IFROW) * c_NumOfTables;
-				c_Table = (MIB_IFTABLE*)new char[size];
+				c_NumOfTables = ifTable->NumEntries;
+				logging = true;
+			}
+
+			if (CRainmeter::GetDebug() && logging)
+			{
+				DebugLog(L"------------------------------");
+				DebugLog(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
+
+				for (size_t i = 0; i < c_NumOfTables; i++)
+				{
+					std::wstring type;
+					switch (ifTable->Table[i].Type)
+					{
+					case IF_TYPE_ETHERNET_CSMACD:
+						type += L"Ethernet";
+						break;
+					case IF_TYPE_PPP:
+						type += L"PPP";
+						break;
+					case IF_TYPE_SOFTWARE_LOOPBACK:
+						type += L"Loopback";
+						break;
+					case IF_TYPE_IEEE80211:
+						type += L"IEEE802.11";
+						break;
+					case IF_TYPE_TUNNEL:
+						type += L"Tunnel";
+						break;
+					case IF_TYPE_IEEE1394:
+						type += L"IEEE1394";
+						break;
+					default:
+						type += L"Other";
+						break;
+					}
+
+					DebugLog(L"%i: %s", i + 1, ifTable->Table[i].Description);
+					DebugLog(L"  Type=%s(%i), Hardware=%s, Filter=%s",
+						type.c_str(), ifTable->Table[i].Type,
+						(ifTable->Table[i].InterfaceAndOperStatusFlags.HardwareInterface == 1) ? L"Yes" : L"No",
+						(ifTable->Table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) ? L"Yes" : L"No");
+				}
+				DebugLog(L"------------------------------");
 			}
 		}
-	}
-
-	if(c_Table)
-	{
-		DWORD size = sizeof(MIB_IFTABLE) + sizeof(MIB_IFROW) * c_NumOfTables;
-		if(GetIfTable(c_Table, &size, false) != NO_ERROR)
+		else
 		{
-			delete [] c_Table;
-			c_Table = (MIB_IFTABLE*)new char[size];
-			if(GetIfTable(c_Table, &size, false) != NO_ERROR)
+			// Something's wrong. Unable to get the table.
+			c_Table = NULL;
+			c_NumOfTables = 0;
+		}
+	}
+	else
+	{
+		if (c_Table == NULL)
+		{
+			// Gotta reserve few bytes for the tables
+			DWORD value = 0;
+			if (GetNumberOfInterfaces(&value) == NO_ERROR)
+			{
+				if (c_NumOfTables != value)
+				{
+					c_NumOfTables = value;
+					logging = true;
+				}
+
+				if (c_NumOfTables > 0)
+				{
+					DWORD size = sizeof(MIB_IFTABLE) + sizeof(MIB_IFROW) * c_NumOfTables;
+					c_Table = new BYTE[size];
+				}
+			}
+		}
+
+		if (c_Table)
+		{
+			DWORD ret, size = 0;
+
+			MIB_IFTABLE* ifTable = (MIB_IFTABLE*)c_Table;
+
+			if ((ret = GetIfTable(ifTable, &size, FALSE)) == ERROR_INSUFFICIENT_BUFFER)
+			{
+				delete [] c_Table;
+				c_Table = new BYTE[size];
+
+				ifTable = (MIB_IFTABLE*)c_Table;
+
+				ret = GetIfTable(ifTable, &size, FALSE);
+			}
+
+			if (ret == NO_ERROR)
+			{
+				if (c_NumOfTables != ifTable->dwNumEntries)
+				{
+					c_NumOfTables = ifTable->dwNumEntries;
+					logging = true;
+				}
+
+				if (CRainmeter::GetDebug() && logging)
+				{
+					DebugLog(L"------------------------------");
+					DebugLog(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
+
+					for (size_t i = 0; i < c_NumOfTables; i++)
+					{
+						std::string desc((char*)ifTable->table[i].bDescr, ifTable->table[i].dwDescrLen);
+
+						std::wstring type;
+						switch (ifTable->table[i].dwType)
+						{
+						case IF_TYPE_ETHERNET_CSMACD:
+							type += L"Ethernet";
+							break;
+						case IF_TYPE_PPP:
+							type += L"PPP";
+							break;
+						case IF_TYPE_SOFTWARE_LOOPBACK:
+							type += L"Loopback";
+							break;
+						case IF_TYPE_IEEE80211:
+							type += L"IEEE802.11";
+							break;
+						case IF_TYPE_TUNNEL:
+							type += L"Tunnel";
+							break;
+						case IF_TYPE_IEEE1394:
+							type += L"IEEE1394";
+							break;
+						default:
+							type += L"Other";
+							break;
+						}
+
+						DebugLog(L"%i: %s", i + 1, ConvertToWide(desc.c_str()).c_str());
+						DebugLog(L"  Type=%s(%i)",
+							type.c_str(), ifTable->table[i].dwType);
+					}
+					DebugLog(L"------------------------------");
+				}
+			}
+			else
 			{
 				// Something's wrong. Unable to get the table.
 				delete [] c_Table;
 				c_Table = NULL;
+				c_NumOfTables = 0;
 			}
 		}
 	}
@@ -128,31 +266,58 @@ void CMeasureNet::UpdateIFTable()
 ** the net-parameter informs which inherited class called this method.
 **
 */
-DWORD CMeasureNet::GetNetOctets(NET net)
+ULONG64 CMeasureNet::GetNetOctets(NET net)
 {
-	DWORD value = 0;
+	ULONG64 value = 0;
 
-	if (m_Interface == 0)
+	if (c_UseNewApi)
 	{
-		// Get all interfaces
-		for(UINT i = 0; i < c_NumOfTables; i++)
+		MIB_IF_ROW2* table = (MIB_IF_ROW2*)((MIB_IF_TABLE2*)c_Table)->Table;
+
+		if (m_Interface == 0)
 		{
-			// Ignore the loopback
-			if(strcmp((char*)c_Table->table[i].bDescr, "MS TCP Loopback interface") != 0)
+			// Get all interfaces
+			for (UINT i = 0; i < c_NumOfTables; i++)
+			{
+				// Ignore the loopback and non-hardware interfaces
+				if (table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK ||
+					table[i].InterfaceAndOperStatusFlags.HardwareInterface == 0) continue;
+
+				switch (net)
+				{
+				case NET_IN:
+					value += table[i].InOctets;
+					break;
+
+				case NET_OUT:
+					value += table[i].OutOctets;
+					break;
+
+				case NET_TOTAL:
+					value += table[i].InOctets;
+					value += table[i].OutOctets;
+					break;
+				}
+			}
+		}
+		else
+		{
+			// Get the selected interface
+			if (m_Interface <= c_NumOfTables)
 			{
 				switch (net)
 				{
 				case NET_IN:
-					value += c_Table->table[i].dwInOctets;
+					value += table[m_Interface - 1].InOctets;
 					break;
 
 				case NET_OUT:
-					value += c_Table->table[i].dwOutOctets;
+					value += table[m_Interface - 1].OutOctets;
 					break;
 
 				case NET_TOTAL:
-					value += c_Table->table[i].dwInOctets;
-					value += c_Table->table[i].dwOutOctets;
+					value += table[m_Interface - 1].InOctets;
+					value += table[m_Interface - 1].OutOctets;
 					break;
 				}
 			}
@@ -160,23 +325,53 @@ DWORD CMeasureNet::GetNetOctets(NET net)
 	}
 	else
 	{
-		// Get the selected interface
-		if (m_Interface <= c_NumOfTables)
+		MIB_IFROW* table = (MIB_IFROW*)((MIB_IFTABLE*)c_Table)->table;
+
+		if (m_Interface == 0)
 		{
-			switch (net)
+			// Get all interfaces
+			for (UINT i = 0; i < c_NumOfTables; i++)
 			{
-			case NET_IN:
-				value += c_Table->table[m_Interface - 1].dwInOctets;
-				break;
+				// Ignore the loopback
+				if (table[i].dwType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
 
-			case NET_OUT:
-				value += c_Table->table[m_Interface - 1].dwOutOctets;
-				break;
+				switch (net)
+				{
+				case NET_IN:
+					value += table[i].dwInOctets;
+					break;
 
-			case NET_TOTAL:
-				value += c_Table->table[m_Interface - 1].dwInOctets;
-				value += c_Table->table[m_Interface - 1].dwOutOctets;
-				break;
+				case NET_OUT:
+					value += table[i].dwOutOctets;
+					break;
+
+				case NET_TOTAL:
+					value += table[i].dwInOctets;
+					value += table[i].dwOutOctets;
+					break;
+				}
+			}
+		}
+		else
+		{
+			// Get the selected interface
+			if (m_Interface <= c_NumOfTables)
+			{
+				switch (net)
+				{
+				case NET_IN:
+					value += table[m_Interface - 1].dwInOctets;
+					break;
+
+				case NET_OUT:
+					value += table[m_Interface - 1].dwOutOctets;
+					break;
+
+				case NET_TOTAL:
+					value += table[m_Interface - 1].dwInOctets;
+					value += table[m_Interface - 1].dwOutOctets;
+					break;
+				}
 			}
 		}
 	}
@@ -190,29 +385,42 @@ DWORD CMeasureNet::GetNetOctets(NET net)
 ** Returns the stats value of the interface
 **
 */
-LARGE_INTEGER CMeasureNet::GetNetStatsValue(NET net)
+ULONG64 CMeasureNet::GetNetStatsValue(NET net)
 {
-	LARGE_INTEGER value;
-	value.QuadPart = 0;
+	ULONG64 value = 0;
 
 	if (m_Interface == 0)
 	{
 		// Get all interfaces
 		for(size_t i = 0; i < c_StatValues.size() / 2; i++)
 		{
+			// Ignore the loopback and non-hardware interfaces
+			if (c_NumOfTables == c_StatValues.size() / 2)
+			{
+				if (c_UseNewApi)
+				{
+					if (((MIB_IF_TABLE2*)c_Table)->Table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK ||
+						((MIB_IF_TABLE2*)c_Table)->Table[i].InterfaceAndOperStatusFlags.HardwareInterface == 0) continue;
+				}
+				else
+				{
+					if (((MIB_IFTABLE*)c_Table)->table[i].dwType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
+				}
+			}
+
 			switch (net)
 			{
 			case NET_IN:
-				value.QuadPart += c_StatValues[i * 2 + 0].QuadPart;
+				value += c_StatValues[i * 2 + 0];
 				break;
 
 			case NET_OUT:
-				value.QuadPart += c_StatValues[i * 2 + 1].QuadPart;
+				value += c_StatValues[i * 2 + 1];
 				break;
 
 			case NET_TOTAL:
-				value.QuadPart += c_StatValues[i * 2 + 0].QuadPart;
-				value.QuadPart += c_StatValues[i * 2 + 1].QuadPart;
+				value += c_StatValues[i * 2 + 0];
+				value += c_StatValues[i * 2 + 1];
 				break;
 			}
 		}
@@ -225,16 +433,16 @@ LARGE_INTEGER CMeasureNet::GetNetStatsValue(NET net)
 			switch (net)
 			{
 			case NET_IN:
-				value.QuadPart += c_StatValues[m_Interface * 2 + 0].QuadPart;
+				value += c_StatValues[(m_Interface - 1) * 2 + 0];
 				break;
 
 			case NET_OUT:
-				value.QuadPart += c_StatValues[m_Interface * 2 + 1].QuadPart;
+				value += c_StatValues[(m_Interface - 1) * 2 + 1];
 				break;
 
 			case NET_TOTAL:
-				value.QuadPart += c_StatValues[m_Interface * 2 + 0].QuadPart;
-				value.QuadPart += c_StatValues[m_Interface * 2 + 1].QuadPart;
+				value += c_StatValues[(m_Interface - 1) * 2 + 0];
+				value += c_StatValues[(m_Interface - 1) * 2 + 1];
 				break;
 			}
 		}
@@ -309,34 +517,40 @@ void CMeasureNet::UpdateStats()
 	if (c_Table)
 	{
 		// Fill the vectors
-		while (c_StatValues.size() < c_Table->dwNumEntries * 2)
+		while (c_StatValues.size() < c_NumOfTables * 2)
 		{
-			LARGE_INTEGER value;
-			value.QuadPart = 0;
-			c_StatValues.push_back(value);
+			c_StatValues.push_back(0);
 		}
 
-		while (c_OldStatValues.size() < c_Table->dwNumEntries * 2)
+		while (c_OldStatValues.size() < c_NumOfTables * 2)
 		{ 
 			c_OldStatValues.push_back(0);
 		}
 
-		for (UINT i = 0; i < c_Table->dwNumEntries; i++)
+		for (UINT i = 0; i < c_NumOfTables; i++)
 		{
-			DWORD in, out;
+			ULONG64 in, out;
 
-			in = c_Table->table[i].dwInOctets;
-			out = c_Table->table[i].dwOutOctets;
+			if (c_UseNewApi)
+			{
+				in = (DWORD)((MIB_IF_TABLE2*)c_Table)->Table[i].InOctets;
+				out = (DWORD)((MIB_IF_TABLE2*)c_Table)->Table[i].OutOctets;
+			}
+			else
+			{
+				in = ((MIB_IFTABLE*)c_Table)->table[i].dwInOctets;
+				out = ((MIB_IFTABLE*)c_Table)->table[i].dwOutOctets;
+			}
 
 			if (c_OldStatValues[i * 2 + 0] != 0 && c_OldStatValues[i * 2 + 1] != 0)
 			{
 				if (in > c_OldStatValues[i * 2 + 0])
 				{
-					c_StatValues[i * 2 + 0].QuadPart += in - c_OldStatValues[i * 2 + 0];
+					c_StatValues[i * 2 + 0] += in - c_OldStatValues[i * 2 + 0];
 				}
 				if (out > c_OldStatValues[i * 2 + 1])
 				{
-					c_StatValues[i * 2 + 1].QuadPart += out - c_OldStatValues[i * 2 + 1];
+					c_StatValues[i * 2 + 1] += out - c_OldStatValues[i * 2 + 1];
 				}
 			}
 
@@ -358,9 +572,7 @@ void CMeasureNet::ResetStats()
 	{
 		for (size_t i = 0; i < c_StatValues.size(); i++)
 		{
-			LARGE_INTEGER value;
-			value.QuadPart = 0;
-			c_StatValues[i] = value;
+			c_StatValues[i] = 0;
 		}
 	}
 }
@@ -380,19 +592,23 @@ void CMeasureNet::ReadStats(const std::wstring& iniFile)
 
 	for (int i = 0; i < count; i++)
 	{
-		LARGE_INTEGER value;
+		ULARGE_INTEGER value;
 
 		wsprintf(buffer, L"NetStatsInHigh%i", i + 1);
 		value.HighPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile.c_str());
+
 		wsprintf(buffer, L"NetStatsInLow%i", i + 1);
 		value.LowPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile.c_str());
-		c_StatValues.push_back(value);
+
+		c_StatValues.push_back(value.QuadPart);
 
 		wsprintf(buffer, L"NetStatsOutHigh%i", i + 1);
 		value.HighPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile.c_str());
+
 		wsprintf(buffer, L"NetStatsOutLow%i", i + 1);
 		value.LowPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile.c_str());
-		c_StatValues.push_back(value);
+
+		c_StatValues.push_back(value.QuadPart);
 	}
 }
 
@@ -412,21 +628,85 @@ void CMeasureNet::WriteStats(const std::wstring& iniFile)
 
 	for (size_t i = 0; i < c_StatValues.size() / 2; i++)
 	{
+		ULARGE_INTEGER value;
+
+		value.QuadPart = c_StatValues[i * 2];
+
 		wsprintf(buffer2, L"NetStatsInHigh%i", i + 1);
-		wsprintf(buffer, L"%u", c_StatValues[i * 2].HighPart);
+		wsprintf(buffer, L"%u", value.HighPart);
 		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile.c_str());
 
 		wsprintf(buffer2, L"NetStatsInLow%i", i + 1);
-		wsprintf(buffer, L"%u", c_StatValues[i * 2].LowPart);
+		wsprintf(buffer, L"%u", value.LowPart);
 		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile.c_str());
 
+		value.QuadPart = c_StatValues[i * 2 + 1];
+
 		wsprintf(buffer2, L"NetStatsOutHigh%i", i + 1);
-		wsprintf(buffer, L"%u", c_StatValues[i * 2 + 1].HighPart);
+		wsprintf(buffer, L"%u", value.HighPart);
 		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile.c_str());
 
 		wsprintf(buffer2, L"NetStatsOutLow%i", i + 1);
-		wsprintf(buffer, L"%u", c_StatValues[i * 2 + 1].LowPart);
+		wsprintf(buffer, L"%u", value.LowPart);
 		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile.c_str());
 	}
 }
 
+/*
+** InitializeNewApi
+**
+** Prepares in order to use the new APIs which are available on Vista or newer.
+**
+*/
+void CMeasureNet::InitializeNewApi()
+{
+	if (c_IpHlpApiLibrary == NULL)
+	{
+		c_IpHlpApiLibrary = LoadLibrary(L"IpHlpApi.dll");
+		if (c_IpHlpApiLibrary)
+		{
+			c_GetIfTable2Ex = (FPGETIFTABLE2EX)GetProcAddress(c_IpHlpApiLibrary, "GetIfTable2Ex");
+			c_FreeMibTable = (FPFREEMIBTABLE)GetProcAddress(c_IpHlpApiLibrary, "FreeMibTable");
+		}
+
+		c_UseNewApi = (c_IpHlpApiLibrary && c_GetIfTable2Ex && c_FreeMibTable);
+
+		if (!c_UseNewApi)
+		{
+			if (c_IpHlpApiLibrary)
+			{
+				FreeLibrary(c_IpHlpApiLibrary);
+				c_IpHlpApiLibrary = NULL;
+			}
+			c_GetIfTable2Ex = NULL;
+			c_FreeMibTable = NULL;
+		}
+	}
+}
+
+/*
+** FinalizeNewApi
+**
+** Frees the resources.
+**
+*/
+void CMeasureNet::FinalizeNewApi()
+{
+	if (c_UseNewApi)
+	{
+		c_FreeMibTable(c_Table);
+
+		FreeLibrary(c_IpHlpApiLibrary);
+		c_IpHlpApiLibrary = NULL;
+		c_GetIfTable2Ex = NULL;
+		c_FreeMibTable = NULL;
+	}
+	else
+	{
+		delete [] c_Table;
+	}
+	c_Table = NULL;
+	c_NumOfTables = 0;
+
+	c_UseNewApi = false;
+}

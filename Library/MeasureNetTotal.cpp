@@ -55,18 +55,18 @@ bool CMeasureNetTotal::Update()
 
 	if (m_Cumulative)
 	{
-		m_Value = (double)GetNetStatsValue(NET_TOTAL).QuadPart;
+		m_Value = (double)GetNetStatsValue(NET_TOTAL);
 	}
 	else
 	{
-		DWORD value = 0;
+		ULONG64 value = 0;
 
 		if (!m_FirstTime) 
 		{
 			value = GetNetOctets(NET_TOTAL);
 			if (value > m_TotalOctets)
 			{
-				DWORD tmpValue = value;
+				ULONG64 tmpValue = value;
 				value -= m_TotalOctets;
 				m_TotalOctets = tmpValue;
 			}
@@ -82,7 +82,7 @@ bool CMeasureNetTotal::Update()
 			m_FirstTime = false;
 		}
 
-		m_Value = value;
+		m_Value = (double)value;
 	}
 
 	return PostUpdate();

@@ -55,18 +55,18 @@ bool CMeasureNetOut::Update()
 
 	if (m_Cumulative)
 	{
-		m_Value = (double)GetNetStatsValue(NET_OUT).QuadPart;
+		m_Value = (double)GetNetStatsValue(NET_OUT);
 	}
 	else
 	{
-		DWORD value = 0;
+		ULONG64 value = 0;
 
 		if (!m_FirstTime) 
 		{
 			value = GetNetOctets(NET_OUT);
 			if (value > m_OutOctets)
 			{
-				DWORD tmpValue = value;
+				ULONG64 tmpValue = value;
 				value -= m_OutOctets;
 				m_OutOctets = tmpValue;
 			}
@@ -82,7 +82,7 @@ bool CMeasureNetOut::Update()
 			m_FirstTime = false;
 		}
 
-		m_Value = value;
+		m_Value = (double)value;
 	}
 
 	return PostUpdate();

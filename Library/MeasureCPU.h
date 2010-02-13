@@ -21,22 +21,16 @@
 
 #include "Measure.h"
 
-typedef struct
-{
-    LARGE_INTEGER   liIdleTime;
-    DWORD           dwSpare[76];
-} SYSTEM_PERFORMANCE_INFORMATION;
-
-typedef struct
-{
-    LARGE_INTEGER liKeBootTime;
-    LARGE_INTEGER liKeSystemTime;
-    LARGE_INTEGER liExpTimeZoneBias;
-    ULONG         uCurrentTimeZoneId;
-    DWORD         dwReserved;
-} SYSTEM_TIME_INFORMATION;
+typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
+    LARGE_INTEGER IdleTime;
+    LARGE_INTEGER KernelTime;
+    LARGE_INTEGER UserTime;
+    LARGE_INTEGER Reserved1[2];
+    ULONG Reserved2;
+} SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION, *PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
 
 typedef LONG (WINAPI *PROCNTQSI)(UINT,PVOID,ULONG,PULONG);
+typedef BOOL (WINAPI *PROCGST)(LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, LPFILETIME lpUserTime);
 
 class CMeasureCPU : public CMeasure
 {
@@ -44,19 +38,23 @@ public:
 	CMeasureCPU(CMeterWindow* meterWindow);
 	virtual ~CMeasureCPU();
 
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual bool Update();
 
 protected:
+	void CalcUsage(double idleTime, double systemTime);
+	void CalcAverageUsage(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* systemPerfInfo);
+
 	bool m_CPUFromRegistry;
 	bool m_FirstTime;
 
-	PROCNTQSI m_NtQuerySystemInformation;
+	int m_Processor;
+	int m_NumOfProcessors;
 
-	SYSTEM_PERFORMANCE_INFORMATION m_SysPerfInfo;
-	SYSTEM_TIME_INFORMATION        m_SysTimeInfo;
-	SYSTEM_INFO                    m_SystemInfo;
-	LARGE_INTEGER                  m_OldIdleTime;
-	LARGE_INTEGER                  m_OldSystemTime;
+	PROCNTQSI m_NtQuerySystemInformation;
+	PROCGST   m_GetSystemTimes;
+
+	std::vector<double> m_OldTime;
 };
 
 #endif

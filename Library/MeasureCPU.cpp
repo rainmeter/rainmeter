@@ -19,12 +19,15 @@
 #include "StdAfx.h"
 #include "MeasureCPU.h"
 #include "Rainmeter.h"
+#include "Error.h"
 
-#define SystemBasicInformation       0
-#define SystemPerformanceInformation 2
-#define SystemTimeInformation        3
+#define STATUS_SUCCESS					0
+#define STATUS_INFO_LENGTH_MISMATCH		0xC0000004
+
+#define SystemProcessorPerformanceInformation	8
 
 #define Li2Double(x) ((double)((x).HighPart) * 4.294967296E9 + (double)((x).LowPart))
+#define Ft2Double(x) ((double)((x).dwHighDateTime) * 4.294967296E9 + (double)((x).dwLowDateTime))
 
 // ntdll!NtQuerySystemInformation (NT specific!)
 //
@@ -57,16 +60,20 @@ CMeasureCPU::CMeasureCPU(CMeterWindow* meterWindow) : CMeasure(meterWindow)
 	m_MinValue = 0.0;
 	m_FirstTime = true;
 
-	m_NtQuerySystemInformation = NULL;
-	m_OldIdleTime.QuadPart = 0;
-	m_OldSystemTime.QuadPart = 0;
+	m_Processor = 0;
 
 	m_NtQuerySystemInformation = (PROCNTQSI)GetProcAddress(
 										  GetModuleHandle(L"ntdll"),
 										 "NtQuerySystemInformation"
 										 );
+	m_GetSystemTimes = (PROCGST)GetProcAddress(
+								GetModuleHandle(L"kernel32"),
+								"GetSystemTimes"
+								);
 
-	GetSystemInfo(&m_SystemInfo);
+	SYSTEM_INFO systemInfo = {0};
+	GetSystemInfo(&systemInfo);
+	m_NumOfProcessors = (int)systemInfo.dwNumberOfProcessors;
 }
 
 /*
@@ -93,6 +100,44 @@ CMeasureCPU::~CMeasureCPU()
 }
 
 /*
+** ReadConfig
+**
+** Reads the measure specific configs.
+**
+*/
+void CMeasureCPU::ReadConfig(CConfigParser& parser, const WCHAR* section)
+{
+	CMeasure::ReadConfig(parser, section);
+
+	int processor = parser.ReadInt(section, L"Processor", 0);
+
+	if (processor < 0 || processor > m_NumOfProcessors)
+	{
+		DebugLog(L"[%s] Invalid Processor: %i", section, processor);
+
+		processor = 0;
+	}
+
+	if (processor != m_Processor)
+	{
+		m_Processor = processor;
+		m_FirstTime = true;
+	}
+
+	if (m_FirstTime)
+	{
+		if (m_Processor == 0 && m_GetSystemTimes == NULL)
+		{
+			m_OldTime.assign(m_NumOfProcessors * 2, 0.0);
+		}
+		else
+		{
+			m_OldTime.assign(2, 0.0);
+		}
+	}
+}
+
+/*
 ** Update
 **
 ** Updates the current CPU utilization value. On NT the value is taken
@@ -105,41 +150,95 @@ bool CMeasureCPU::Update()
 
 	if (CRainmeter::IsNT() != PLATFORM_9X)
 	{
-		if (m_NtQuerySystemInformation)
+		if (m_Processor == 0 && m_GetSystemTimes)
 		{
-			// This code is 'borrowed' from http://www.codepile.com/tric21.shtml
-			double dbIdleTime;
-			double dbSystemTime;
+			BOOL status;
+			FILETIME ftIdleTime, ftKernelTime, ftUserTime;
+
+			// get new CPU's idle/kernel/user time
+			status = m_GetSystemTimes(&ftIdleTime, &ftKernelTime, &ftUserTime);
+			if (status == 0) return false;
+
+			CalcUsage(Ft2Double(ftIdleTime),
+				Ft2Double(ftKernelTime) + Ft2Double(ftUserTime));
+		}
+		else if (m_NtQuerySystemInformation)
+		{
 			LONG status;
+			BYTE* buf = NULL;
+			ULONG bufSize = 0;
 
-			// get new system time
-			status = m_NtQuerySystemInformation(SystemTimeInformation, &m_SysTimeInfo, sizeof(m_SysTimeInfo), 0);
-			if (status != NO_ERROR) return false;
+			int loop = 0;
 
-			// get new CPU's idle time
-			status = m_NtQuerySystemInformation(SystemPerformanceInformation, &m_SysPerfInfo, sizeof(m_SysPerfInfo),NULL);
-			if (status != NO_ERROR) return false;
-
-			// if it's a first call - skip it
-			if(!m_FirstTime)
+			do
 			{
-				// CurrentValue = NewValue - OldValue
-				dbIdleTime = Li2Double(m_SysPerfInfo.liIdleTime) - Li2Double(m_OldIdleTime);
-				dbSystemTime = Li2Double(m_SysTimeInfo.liKeSystemTime) - Li2Double(m_OldSystemTime);
+				ULONG size = 0;
 
-				// CurrentCpuIdle = IdleTime / SystemTime
-				dbIdleTime = dbIdleTime / dbSystemTime;
+				status = m_NtQuerySystemInformation(SystemProcessorPerformanceInformation, buf, bufSize, &size);
+				if (status == STATUS_SUCCESS) break;
 
-				// CurrentCpuUsage% = 100 - (CurrentCpuIdle * 100) / NumberOfProcessors
-				dbIdleTime = 100.0 - dbIdleTime * 100.0 / (double)m_SystemInfo.dwNumberOfProcessors + 0.5;
+				if (status == STATUS_INFO_LENGTH_MISMATCH)
+				{
+					if (size == 0)  // Returned required buffer size is always 0 on Windows 2000/XP.
+					{
+						if (bufSize == 0)
+						{
+							bufSize = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * m_NumOfProcessors;
+						}
+						else
+						{
+							bufSize += sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+						}
+					}
+					else
+					{
+						if (size != bufSize)
+						{
+							bufSize = size;
+						}
+						else  // ??
+						{
+							bufSize += sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+						}
+					}
 
-				m_Value = min(dbIdleTime, 100.0);
-				m_Value = max(m_Value, 0.0);
-		   }
+					if (buf) delete [] buf;
+					buf = new BYTE[bufSize];
+				}
+				else  // failed
+				{
+					if (buf) delete [] buf;
+					return false;
+				}
 
-			// store new CPU's idle and system time
-			m_OldIdleTime = m_SysPerfInfo.liIdleTime;
-			m_OldSystemTime = m_SysTimeInfo.liKeSystemTime;
+				loop++;
+			} while (loop < 10);
+
+			if (status != STATUS_SUCCESS)  // failed
+			{
+				if (buf) delete [] buf;
+				return false;
+			}
+
+			SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* systemPerfInfo = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION*)buf;
+
+			if (m_Processor == 0)
+			{
+				CalcAverageUsage(systemPerfInfo);
+			}
+			else
+			{
+				int processor = m_Processor - 1;
+
+				CalcUsage(Li2Double(systemPerfInfo[processor].IdleTime),
+					Li2Double(systemPerfInfo[processor].KernelTime) + Li2Double(systemPerfInfo[processor].UserTime));
+			}
+
+			delete [] buf;
+		}
+		else
+		{
+			return false;
 		}
 	}
 	else
@@ -155,7 +254,9 @@ bool CMeasureCPU::Update()
 			RegOpenKeyEx(HKEY_DYN_DATA, L"PerfStats\\StartStat", 0, KEY_ALL_ACCESS, &hkey); 
 			dwDataSize = sizeof(dwCpuUsage); 
 			RegQueryValueEx(hkey, L"KERNEL\\CPUUsage", NULL, &dwType, (LPBYTE)&dwCpuUsage, &dwDataSize); 
-			RegCloseKey(hkey); 
+			RegCloseKey(hkey);
+
+			m_FirstTime = false;
 		}
 
 		RegOpenKeyEx(HKEY_DYN_DATA, L"PerfStats\\StatData", 0, KEY_ALL_ACCESS, &hkey); 
@@ -167,7 +268,81 @@ bool CMeasureCPU::Update()
 		m_CPUFromRegistry = true;
 	}
 
-	m_FirstTime = false;
-
 	return PostUpdate();
+}
+
+/*
+** CalcUsage
+**
+** Calculates the current CPU utilization value.
+**
+*/
+void CMeasureCPU::CalcUsage(double idleTime, double systemTime)
+{
+	if (!m_FirstTime)
+	{
+		double dbCpuUsage;
+
+		// CurrentCpuUsage% = 100 - ((IdleTime / SystemTime) * 100)
+		dbCpuUsage = 100.0 - ((idleTime - m_OldTime[0]) / (systemTime - m_OldTime[1])) * 100.0;
+
+		dbCpuUsage = min(dbCpuUsage, 100.0);
+		m_Value    = max(dbCpuUsage, 0.0);
+	}
+	else
+	{
+		m_FirstTime = false;
+	}
+
+	// store new CPU's idle and system time
+	m_OldTime[0] = idleTime;
+	m_OldTime[1] = systemTime;
+}
+
+/*
+** CalcAverageUsage
+**
+** Calculates the current CPU average utilization value.
+** This function is used if GetSystemTimes function is not available.
+**
+*/
+void CMeasureCPU::CalcAverageUsage(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* systemPerfInfo)
+{
+	if(!m_FirstTime)
+	{
+		double dbIdleTimeDiff = 0, dbSystemTimeDiff = 0;
+		double dbCpuUsage;
+
+		for (int i = 0; i < m_NumOfProcessors; i++)
+		{
+			double dbIdleTime, dbSystemTime;
+
+			dbIdleTime = Li2Double(systemPerfInfo[i].IdleTime);
+			dbSystemTime = Li2Double(systemPerfInfo[i].KernelTime) + Li2Double(systemPerfInfo[i].UserTime);
+
+			dbIdleTimeDiff += dbIdleTime - m_OldTime[i * 2 + 0];
+			dbSystemTimeDiff += dbSystemTime - m_OldTime[i * 2 + 1];
+
+			// store new CPU's idle and system time
+			m_OldTime[i * 2 + 0] = dbIdleTime;
+			m_OldTime[i * 2 + 1] = dbSystemTime;
+		}
+
+		// CurrentCpuUsage% = 100 - ((IdleTime / SystemTime) * 100)
+		dbCpuUsage = 100.0 - (dbIdleTimeDiff / dbSystemTimeDiff) * 100.0;
+
+		dbCpuUsage = min(dbCpuUsage, 100.0);
+		m_Value    = max(dbCpuUsage, 0.0);
+	}
+	else
+	{
+		// store new CPU's idle and system time
+		for (int i = 0; i < m_NumOfProcessors; i++)
+		{
+			m_OldTime[i * 2 + 0] = Li2Double(systemPerfInfo[i].IdleTime);
+			m_OldTime[i * 2 + 1] = Li2Double(systemPerfInfo[i].KernelTime) + Li2Double(systemPerfInfo[i].UserTime);
+		}
+
+		m_FirstTime = false;
+	}
 }

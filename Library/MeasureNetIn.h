@@ -32,7 +32,7 @@ public:
 
 private:
 	bool m_FirstTime;
-	DWORD m_InOctets;
+	ULONG64 m_InOctets;
 };
 
 #endif
