@@ -419,7 +419,8 @@ bool CMeter::Draw(Graphics& graphics)
 
 	if (m_AntiAlias)
 	{
-		graphics.SetInterpolationMode(InterpolationModeBicubic);
+		//graphics.SetInterpolationMode(InterpolationModeBicubic);  // Bicubic is not suitable for shrinking an image.
+		graphics.SetInterpolationMode(InterpolationModeDefault);
 		graphics.SetSmoothingMode(SmoothingModeHighQuality);
 		graphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
 	}

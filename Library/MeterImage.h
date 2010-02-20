@@ -49,6 +49,7 @@ private:
 	bool m_WidthDefined;
 	bool m_HeightDefined;
 	bool m_PreserveAspectRatio;			// If true, aspect ratio of the image is preserved when the image is scaled
+	int m_ImageAlpha;					// Transparency value 0 - 255
 	HGLOBAL m_hBuffer;
 	FILETIME m_Modified;
 };

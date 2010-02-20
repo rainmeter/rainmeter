@@ -39,6 +39,7 @@ CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow)
 	m_WidthDefined = false;
 	m_HeightDefined = false;
 	m_PreserveAspectRatio = false;
+	m_ImageAlpha = 255;
 	m_hBuffer = NULL;
 	m_Modified.dwHighDateTime = 0;
 	m_Modified.dwLowDateTime = 0;
@@ -205,7 +206,7 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 		}
 	}
 
-	if (!m_Measure)
+	if (!m_Initialized || !m_Measure)
 	{
 		std::wstring oldImageName = m_ImageName;
 
@@ -219,6 +220,10 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 	}
 
 	m_PreserveAspectRatio = 0!=parser.ReadInt(section, L"PreserveAspectRatio", 0);
+
+	m_ImageAlpha = parser.ReadInt(section, L"ImageAlpha", 255);
+	m_ImageAlpha = min(255, m_ImageAlpha);
+	m_ImageAlpha = max(0, m_ImageAlpha);
 
 	if (-1 != (int)parser.ReadFormula(section, L"W", -1))
 	{
@@ -316,7 +321,29 @@ bool CMeterImage::Draw(Graphics& graphics)
 		}
 
 		Rect r(x, y, drawW, drawH);
-		graphics.DrawImage(m_Bitmap, r, 0, 0, imageW, imageH, UnitPixel);
+
+		if (m_ImageAlpha == 255)
+		{
+			graphics.DrawImage(m_Bitmap, r, 0, 0, imageW, imageH, UnitPixel);
+		}
+		else if (m_ImageAlpha > 0)
+		{
+			REAL alp = m_ImageAlpha / 255.0f;
+
+			// Initialize the color matrix
+			ColorMatrix colorMatrix = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+			                            0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+			                            0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+			                            0.0f, 0.0f, 0.0f, alp,  0.0f,
+			                            0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
+
+			// Create an ImageAttributes object and set its color matrix
+			ImageAttributes imageAtt;
+			imageAtt.SetColorMatrix(&colorMatrix, ColorMatrixFlagsDefault, ColorAdjustTypeBitmap);
+
+			// Draw the semi-transparent bitmap image
+			graphics.DrawImage(m_Bitmap, r, 0, 0, imageW, imageH, UnitPixel, &imageAtt);
+		}
 	}
 
 	return true;
