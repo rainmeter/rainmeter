@@ -417,16 +417,17 @@ bool CMeter::Draw(Graphics& graphics)
 {
 	if (IsHidden()) return false;
 
+	graphics.SetInterpolationMode(InterpolationModeDefault);
+	graphics.SetCompositingQuality(CompositingQualityDefault);
+
 	if (m_AntiAlias)
 	{
 		//graphics.SetInterpolationMode(InterpolationModeBicubic);  // Bicubic is not suitable for shrinking an image.
-		graphics.SetInterpolationMode(InterpolationModeDefault);
 		graphics.SetSmoothingMode(SmoothingModeHighQuality);
 		graphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
 	}
 	else
 	{
-		graphics.SetInterpolationMode(InterpolationModeDefault);
 		graphics.SetSmoothingMode(SmoothingModeNone);
 		graphics.SetPixelOffsetMode(PixelOffsetModeDefault);
 	}

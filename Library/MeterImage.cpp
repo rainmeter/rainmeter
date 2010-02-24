@@ -21,10 +21,30 @@
 #include "Measure.h"
 #include "Error.h"
 #include "Rainmeter.h"
+#include <math.h>
 
 extern CRainmeter* Rainmeter;
 
 using namespace Gdiplus;
+
+#define PI 3.14159265f
+
+// GrayScale Matrix
+const Gdiplus::ColorMatrix CMeterImage::c_GreyScaleMatrix = {
+	0.299f, 0.299f, 0.299f, 0.0f, 0.0f,
+	0.587f, 0.587f, 0.587f, 0.0f, 0.0f,
+	0.114f, 0.114f, 0.114f, 0.0f, 0.0f,
+	  0.0f,   0.0f,   0.0f, 1.0f, 0.0f,
+	  0.0f,   0.0f,   0.0f, 0.0f, 1.0f
+};
+
+const Gdiplus::ColorMatrix CMeterImage::c_IdentifyMatrix = {
+	1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+	0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+	0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+	0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+	0.0f, 0.0f, 0.0f, 0.0f, 1.0f
+};
 
 /*
 ** CMeterImage
@@ -35,14 +55,21 @@ using namespace Gdiplus;
 CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow)
 {
 	m_Bitmap = NULL;
-	m_NeedsUpdate = false;
+	m_BitmapTint = NULL;
+	m_NeedsReload = false;
+	m_NeedsTinting = false;
+	m_NeedsTransform = false;
 	m_WidthDefined = false;
 	m_HeightDefined = false;
 	m_PreserveAspectRatio = false;
-	m_ImageAlpha = 255;
 	m_hBuffer = NULL;
 	m_Modified.dwHighDateTime = 0;
 	m_Modified.dwLowDateTime = 0;
+
+	m_GreyScale = false;
+	m_ColorMatrix = c_IdentifyMatrix;
+	m_Flip = RotateNoneFlipNone;
+	m_Rotate = 0.0f;
 }
 
 /*
@@ -54,6 +81,7 @@ CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow)
 CMeterImage::~CMeterImage()
 {
 	if(m_Bitmap != NULL) delete m_Bitmap;
+	if(m_BitmapTint != NULL) delete m_BitmapTint;
 
 	if (m_hBuffer)
 	{
@@ -130,6 +158,12 @@ void CMeterImage::LoadImage(bool bLoadAlways)
 							{
 								if (m_Bitmap) delete m_Bitmap;
 
+								if (m_BitmapTint)
+								{
+									delete m_BitmapTint;
+									m_BitmapTint = NULL;
+								}
+
 								m_Bitmap = Bitmap::FromStream(pStream);
 								if (m_Bitmap)
 								{
@@ -140,11 +174,33 @@ void CMeterImage::LoadImage(bool bLoadAlways)
 										delete m_Bitmap;
 										m_Bitmap = NULL;
 									}
+									else
+									{
+										// Check whether the new image needs tinting (or flipping, rotating)
+										if (!m_NeedsTinting)
+										{
+											if (m_GreyScale || !CompareColorMatrix(m_ColorMatrix, c_IdentifyMatrix))
+											{
+												m_NeedsTinting = true;
+											}
+										}
+										if (!m_NeedsTransform)
+										{
+											if (m_Flip != RotateNoneFlipNone || m_Rotate != 0.0f)
+											{
+												m_NeedsTransform = true;
+											}
+										}
+									}
 								}
 
 								pStream->Release();
 							}
 						}
+					}
+					else
+					{
+						DebugLog(L"Failed to allocate memory: %i bytes", imageSize);
 					}
 				}
 			}
@@ -157,9 +213,21 @@ void CMeterImage::LoadImage(bool bLoadAlways)
 
 		if (m_Bitmap)
 		{
+			// We need a copy of the image if has tinting (or flipping, rotating)
+			if (m_NeedsTinting || m_NeedsTransform)
+			{
+				ApplyTint();
+				m_NeedsTinting = false;
+
+				ApplyTransform();
+				m_NeedsTransform = false;
+			}
+
+			Bitmap* bitmap = (m_BitmapTint) ? m_BitmapTint : m_Bitmap;
+
 			// Calculate size of the meter
-			int imageW = m_Bitmap->GetWidth();
-			int imageH = m_Bitmap->GetHeight();
+			int imageW = bitmap->GetWidth();
+			int imageH = bitmap->GetHeight();
 
 			if (m_WidthDefined)
 			{
@@ -185,6 +253,131 @@ void CMeterImage::LoadImage(bool bLoadAlways)
 }
 
 /*
+** ApplyTint
+**
+** This will apply the Greyscale matrix and the color tinting.
+**
+*/
+void CMeterImage::ApplyTint()
+{
+	ImageAttributes ImgAttr;
+	ImgAttr.SetColorMatrix(&m_ColorMatrix, ColorMatrixFlagsDefault, ColorAdjustTypeBitmap);
+
+	if (m_BitmapTint) delete m_BitmapTint;
+
+	Rect r(0, 0, m_Bitmap->GetWidth(), m_Bitmap->GetHeight());
+	m_BitmapTint = new Bitmap(r.Width, r.Height, PixelFormat32bppARGB);
+
+	Graphics graphics(m_BitmapTint);
+
+	if (m_GreyScale)
+	{
+		Bitmap* gray = TurnGreyscale();
+		graphics.DrawImage(gray, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
+		delete gray;
+	}
+	else
+	{
+		graphics.DrawImage(m_Bitmap, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
+	}
+}
+
+/*
+** TurnGreyscale
+**
+** Turns the image greyscale by applying a greyscale color matrix.
+** Note that the returned bitmap image must be freed by caller.
+**
+*/
+Bitmap* CMeterImage::TurnGreyscale()
+{
+	ImageAttributes ImgAttr;
+	ImgAttr.SetColorMatrix(&c_GreyScaleMatrix, ColorMatrixFlagsDefault, ColorAdjustTypeBitmap);
+
+	// We need a blank bitmap to paint our greyscale to in case of alpha
+	Rect r(0, 0, m_Bitmap->GetWidth(), m_Bitmap->GetHeight());
+	Bitmap* bitmap = new Bitmap(r.Width, r.Height, PixelFormat32bppARGB);
+
+	Graphics graphics(bitmap);
+	graphics.DrawImage(m_Bitmap, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
+
+	return bitmap;
+}
+
+/*
+** ApplyTransform
+**
+** This will apply the flipping and rotating.
+**
+*/
+void CMeterImage::ApplyTransform()
+{
+	if (m_Rotate != 0.0f)
+	{
+		Bitmap* original = (m_BitmapTint) ? m_BitmapTint : m_Bitmap;
+
+		REAL originalW = (REAL)original->GetWidth();
+		REAL originalH = (REAL)original->GetHeight();
+
+		REAL cos_f = cos(m_Rotate * PI / 180.0f), sin_f = sin(m_Rotate * PI / 180.0f);
+
+		REAL transformW = fabs(originalW * cos_f) + fabs(originalH * sin_f);
+		REAL transformH = fabs(originalW * sin_f) + fabs(originalH * cos_f);
+		REAL cx = transformW / 2.0f;
+		REAL cy = transformH / 2.0f;
+
+		Bitmap* transform = new Bitmap((int)(transformW + 0.5f), (int)(transformH + 0.5f), PixelFormat32bppARGB);
+
+		Graphics graphics(transform);
+		graphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
+
+		if (m_AntiAlias)
+		{
+			graphics.SetInterpolationMode(InterpolationModeHighQuality);
+		}
+
+		Matrix rotateMatrix;
+		rotateMatrix.RotateAt(m_Rotate, PointF(cx, cy));
+
+		graphics.SetTransform(&rotateMatrix);
+
+		if (m_Flip != RotateNoneFlipNone)
+		{
+			original->RotateFlip(m_Flip);
+		}
+
+		RectF r(cx - originalW / 2.0f, cy - originalH / 2.0f, originalW, originalH);
+		graphics.DrawImage(original, r, 0.0f, 0.0f, r.Width, r.Height, UnitPixel);
+
+		if (m_Flip != RotateNoneFlipNone)
+		{
+			original->RotateFlip(RotateNoneFlipNone);
+		}
+
+		if (m_BitmapTint) delete m_BitmapTint;
+		m_BitmapTint = transform;
+	}
+	else if (m_Flip != RotateNoneFlipNone)
+	{
+		Bitmap* original = (m_BitmapTint) ? m_BitmapTint : m_Bitmap;
+
+		Rect r(0, 0, original->GetWidth(), original->GetHeight());
+		Bitmap* transform = new Bitmap(r.Width, r.Height, PixelFormat32bppARGB);
+
+		Graphics graphics(transform);
+
+		original->RotateFlip(m_Flip);
+
+		graphics.DrawImage(original, r, 0, 0, r.Width, r.Height, UnitPixel);
+
+		original->RotateFlip(RotateNoneFlipNone);
+
+		if (m_BitmapTint) delete m_BitmapTint;
+		m_BitmapTint = transform;
+	}
+}
+
+/*
 ** ReadConfig
 **
 ** Read the meter-specific configs from the ini-file.
@@ -192,6 +385,12 @@ void CMeterImage::LoadImage(bool bLoadAlways)
 */
 void CMeterImage::ReadConfig(const WCHAR* section)
 {
+	// Store the current values so we know if the image needs to be tinted or transformed
+	bool oldGreyScale = m_GreyScale;
+	ColorMatrix oldColorMatrix = m_ColorMatrix;
+	RotateFlipType oldFlip = m_Flip;
+	REAL oldRotate = m_Rotate;
+
 	// Read common configs
 	CMeter::ReadConfig(section);
 
@@ -215,15 +414,11 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 
 		if (m_DynamicVariables)
 		{
-			m_NeedsUpdate = (oldImageName != m_ImageName);
+			m_NeedsReload = (oldImageName != m_ImageName);
 		}
 	}
 
 	m_PreserveAspectRatio = 0!=parser.ReadInt(section, L"PreserveAspectRatio", 0);
-
-	m_ImageAlpha = parser.ReadInt(section, L"ImageAlpha", 255);
-	m_ImageAlpha = min(255, m_ImageAlpha);
-	m_ImageAlpha = max(0, m_ImageAlpha);
 
 	if (-1 != (int)parser.ReadFormula(section, L"W", -1))
 	{
@@ -233,6 +428,136 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 	{
 		m_HeightDefined = true;
 	}
+
+	m_GreyScale = 0!=parser.ReadInt(section, L"Greyscale", 0);
+
+	Color tint = parser.ReadColor(section, L"ImageTint", Color::White);
+	int alpha = parser.ReadInt(section, L"ImageAlpha", tint.GetAlpha());  // for backwards compatibility
+	alpha = min(255, alpha);
+	alpha = max(0, alpha);
+
+	if (alpha != tint.GetAlpha())
+	{
+		tint = Color(alpha, tint.GetRed(), tint.GetGreen(), tint.GetBlue());
+	}
+
+	m_ColorMatrix = c_IdentifyMatrix;
+
+	// Read in the Color Matrix
+	// It has to be read in like this because it crashes when reading over 17 floats
+	// at one time. The parser does it fine, but after putting the returned values
+	// into the Color Matrix the next time the parser is used it crashes.
+	std::vector<Gdiplus::REAL> matrix = parser.ReadFloats(section, L"ColorMatrix1");
+	if (matrix.size() == 5)
+	{
+		for (int i = 0; i < 5; ++i)
+		{
+			m_ColorMatrix.m[0][i] = matrix[i];
+		}
+	}
+	else
+	{
+		m_ColorMatrix.m[0][0] = (REAL)tint.GetRed() / 255.0f;
+	}
+
+	matrix = parser.ReadFloats(section, L"ColorMatrix2");
+	if (matrix.size() == 5)
+	{
+		for(int i = 0; i < 5; ++i)
+		{
+			m_ColorMatrix.m[1][i] = matrix[i];
+		}
+	}
+	else
+	{
+		m_ColorMatrix.m[1][1] = (REAL)tint.GetGreen() / 255.0f;
+	}
+
+	matrix = parser.ReadFloats(section, L"ColorMatrix3");
+	if (matrix.size() == 5)
+	{
+		for(int i = 0; i < 5; ++i)
+		{
+			m_ColorMatrix.m[2][i] = matrix[i];
+		}
+	}
+	else
+	{
+		m_ColorMatrix.m[2][2] = (REAL)tint.GetBlue() / 255.0f;
+	}
+
+	matrix = parser.ReadFloats(section, L"ColorMatrix4");
+	if (matrix.size() == 5)
+	{
+		for(int i = 0; i < 5; ++i)
+		{
+			m_ColorMatrix.m[3][i] = matrix[i];
+		}
+	}
+	else
+	{
+		m_ColorMatrix.m[3][3] = (REAL)tint.GetAlpha() / 255.0f;
+	}
+
+	matrix = parser.ReadFloats(section, L"ColorMatrix5");
+	if (matrix.size() == 5)
+	{
+		for(int i = 0; i < 5; ++i)
+		{
+			m_ColorMatrix.m[4][i] = matrix[i];
+		}
+	}
+
+	m_NeedsTinting = (oldGreyScale != m_GreyScale || !CompareColorMatrix(oldColorMatrix, m_ColorMatrix));
+
+	std::wstring flip;
+	flip = parser.ReadString(section, L"ImageFlip", L"NONE");
+
+	if(_wcsicmp(flip.c_str(), L"NONE") == 0)
+	{
+		m_Flip = RotateNoneFlipNone;
+	}
+	else if(_wcsicmp(flip.c_str(), L"HORIZONTAL") == 0)
+	{
+		m_Flip = RotateNoneFlipX;
+	}
+	else if(_wcsicmp(flip.c_str(), L"VERTICAL") == 0)
+	{
+		m_Flip = RotateNoneFlipY;
+	}
+	else if(_wcsicmp(flip.c_str(), L"BOTH") == 0)
+	{
+		m_Flip = RotateNoneFlipXY;
+	}
+	else
+	{
+        throw CError(std::wstring(L"No such ImageFlip: ") + flip, __LINE__, __FILE__);
+	}
+
+	m_Rotate = (REAL)parser.ReadFloat(section, L"ImageRotate", 0.0);
+
+	m_NeedsTransform = (oldFlip != m_Flip || oldRotate != m_Rotate);
+}
+
+/*
+** CompareColorMatrix
+**
+** Compares the two given color matrices.
+**
+*/
+bool CMeterImage::CompareColorMatrix(const Gdiplus::ColorMatrix& a, const Gdiplus::ColorMatrix& b)
+{
+	for (int i = 0; i < 5; ++i)
+	{
+		for (int j = 0; j < 5; ++j)
+		{
+			if (a.m[i][j] != b.m[i][j])
+			{
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 /*
@@ -265,7 +590,7 @@ bool CMeterImage::Update()
 		}
 		else if (m_DynamicVariables)  //read from the skin
 		{
-			LoadImage(m_NeedsUpdate);
+			LoadImage(m_NeedsReload);
 			return true;
 		}
 	}
@@ -284,11 +609,13 @@ bool CMeterImage::Draw(Graphics& graphics)
 
 	if (m_Bitmap != NULL)
 	{
+		Bitmap* drawBitmap = (m_BitmapTint) ? m_BitmapTint : m_Bitmap;
+
 		// Copy the image over the doublebuffer
 		int x = GetX();
 		int y = GetY();
-		int imageW = m_Bitmap->GetWidth();
-		int imageH = m_Bitmap->GetHeight();
+		int imageW = drawBitmap->GetWidth();
+		int imageH = drawBitmap->GetHeight();
 
 		int drawW, drawH;
 
@@ -320,30 +647,13 @@ bool CMeterImage::Draw(Graphics& graphics)
 			drawH = m_H;
 		}
 
+		//if (m_AntiAlias && m_Rotate != 0.0f)
+		//{
+		//	graphics.SetCompositingQuality(CompositingQualityHighQuality);
+		//}
+
 		Rect r(x, y, drawW, drawH);
-
-		if (m_ImageAlpha == 255)
-		{
-			graphics.DrawImage(m_Bitmap, r, 0, 0, imageW, imageH, UnitPixel);
-		}
-		else if (m_ImageAlpha > 0)
-		{
-			REAL alp = m_ImageAlpha / 255.0f;
-
-			// Initialize the color matrix
-			ColorMatrix colorMatrix = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-			                            0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-			                            0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-			                            0.0f, 0.0f, 0.0f, alp,  0.0f,
-			                            0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
-
-			// Create an ImageAttributes object and set its color matrix
-			ImageAttributes imageAtt;
-			imageAtt.SetColorMatrix(&colorMatrix, ColorMatrixFlagsDefault, ColorAdjustTypeBitmap);
-
-			// Draw the semi-transparent bitmap image
-			graphics.DrawImage(m_Bitmap, r, 0, 0, imageW, imageH, UnitPixel, &imageAtt);
-		}
+		graphics.DrawImage(drawBitmap, r, 0, 0, imageW, imageH, UnitPixel);
 	}
 
 	return true;
@@ -363,4 +673,3 @@ void CMeterImage::BindMeasure(std::list<CMeasure*>& measures)
 		CMeter::BindMeasure(measures);
 	}
 }
-

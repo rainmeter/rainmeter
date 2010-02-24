@@ -81,6 +81,11 @@ void CMeterBar::Initialize()
 		m_W = m_Bitmap->GetWidth();
 		m_H = m_Bitmap->GetHeight();
 	}
+	else
+	{
+		if (m_Bitmap != NULL) delete m_Bitmap;
+		m_Bitmap = NULL;
+	}
 }
 
 /*
@@ -93,6 +98,8 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
+	int oldW = m_W;
+	int oldH = m_H;
 
 	// Read common configs
 	CMeter::ReadConfig(section);
@@ -124,10 +131,18 @@ void CMeterBar::ReadConfig(const WCHAR* section)
         throw CError(std::wstring(L"No such BarOrientation: ") + orientation, __LINE__, __FILE__);
 	}
 
-	if (m_Initialized &&
-		oldImageName != m_ImageName)
+	if (m_Initialized)
 	{
-		Initialize();  // Reload the image
+		if (oldImageName != m_ImageName)
+		{
+			Initialize();  // Reload the image
+		}
+		else if (!m_ImageName.empty())
+		{
+			// Reset to old dimensions
+			m_W = oldW;
+			m_H = oldH;
+		}
 	}
 }
 

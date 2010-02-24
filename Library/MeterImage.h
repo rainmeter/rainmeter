@@ -41,17 +41,31 @@ public:
 
 private:
 	void LoadImage(bool bLoadAlways);
+	bool CompareColorMatrix(const Gdiplus::ColorMatrix& a, const Gdiplus::ColorMatrix& b);
+	void ApplyTint();
+	Gdiplus::Bitmap* TurnGreyscale();
+	void ApplyTransform();
 
 	Gdiplus::Bitmap* m_Bitmap;			// The bitmap
+	Gdiplus::Bitmap* m_BitmapTint;		// The bitmap
 	std::wstring m_ImageName;			// Name of the image
 	std::wstring m_Path;
-	bool m_NeedsUpdate;
+	bool m_NeedsReload;
+	bool m_NeedsTinting;
+	bool m_NeedsTransform;
 	bool m_WidthDefined;
 	bool m_HeightDefined;
 	bool m_PreserveAspectRatio;			// If true, aspect ratio of the image is preserved when the image is scaled
-	int m_ImageAlpha;					// Transparency value 0 - 255
 	HGLOBAL m_hBuffer;
 	FILETIME m_Modified;
+
+	bool m_GreyScale;
+	Gdiplus::ColorMatrix m_ColorMatrix;
+	Gdiplus::RotateFlipType m_Flip;
+	Gdiplus::REAL m_Rotate;
+
+	static const Gdiplus::ColorMatrix c_GreyScaleMatrix;
+	static const Gdiplus::ColorMatrix c_IdentifyMatrix;
 };
 
 #endif
