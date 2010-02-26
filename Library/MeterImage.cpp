@@ -323,18 +323,14 @@ void CMeterImage::ApplyTransform()
 
 		REAL transformW = fabs(originalW * cos_f) + fabs(originalH * sin_f);
 		REAL transformH = fabs(originalW * sin_f) + fabs(originalH * cos_f);
-		REAL cx = transformW / 2.0f;
-		REAL cy = transformH / 2.0f;
 
 		Bitmap* transform = new Bitmap((int)(transformW + 0.5f), (int)(transformH + 0.5f), PixelFormat32bppARGB);
 
 		Graphics graphics(transform);
 		graphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
 
-		if (m_AntiAlias)
-		{
-			graphics.SetInterpolationMode(InterpolationModeHighQuality);
-		}
+		REAL cx = transformW / 2.0f;
+		REAL cy = transformH / 2.0f;
 
 		Matrix rotateMatrix;
 		rotateMatrix.RotateAt(m_Rotate, PointF(cx, cy));
@@ -347,7 +343,7 @@ void CMeterImage::ApplyTransform()
 		}
 
 		RectF r(cx - originalW / 2.0f, cy - originalH / 2.0f, originalW, originalH);
-		graphics.DrawImage(original, r, 0.0f, 0.0f, r.Width, r.Height, UnitPixel);
+		graphics.DrawImage(original, r, -0.5f, -0.5f, originalW + 1.0f, originalH + 1.0f, UnitPixel);  // Makes the anti-aliased edge
 
 		if (m_Flip != RotateNoneFlipNone)
 		{
