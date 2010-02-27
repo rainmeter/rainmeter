@@ -647,19 +647,28 @@ std::vector<std::wstring> CConfigParser::Tokenize(const std::wstring& str, const
 */
 double CConfigParser::ParseDouble(const std::wstring& string, double defValue, bool rejectExp)
 {
+	std::wstring::size_type pos;
+	
+	// Ignore inline comments which start with ';'
+	if ((pos = string.find_first_of(L';')) != std::wstring::npos)
+	{
+		std::wstring temp(string, 0, pos);
+		return ParseDouble(temp, defValue, rejectExp);
+	}
+
 	if (rejectExp)
 	{
-		if (string.find_last_of(L"dDeE") != std::wstring::npos)  // contains exponent part
+		// Reject if the given string includes the exponential part
+		if (string.find_last_of(L"dDeE") != std::wstring::npos)
 		{
 			return defValue;
 		}
 	}
 
-	std::wstring::size_type pos1 = string.find_first_not_of(L" \t\r\n");
-	if (pos1 != std::wstring::npos)
+	if ((pos = string.find_first_not_of(L" \t\r\n")) != std::wstring::npos)
 	{
 		// Trim white-space
-		std::wstring temp(string, pos1, string.find_last_not_of(L" \t\r\n") - pos1 + 1);
+		std::wstring temp(string, pos, string.find_last_not_of(L" \t\r\n") - pos + 1);
 
 		WCHAR* end = NULL;
 		errno = 0;
