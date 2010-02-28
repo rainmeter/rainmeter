@@ -25,6 +25,7 @@
 using namespace std;
 
 hqStrMap* CMeasureCalc::c_VarMap = NULL;
+bool CMeasureCalc::c_RandSeeded = false;
 
 /*
 ** CMeasureCalc
@@ -34,10 +35,15 @@ hqStrMap* CMeasureCalc::c_VarMap = NULL;
 */
 CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow) : CMeasure(meterWindow)
 {
-	m_Parser = MathParser_Create(NULL);
-	srand((unsigned)time(0)); 
-	rand();
+	if(!c_RandSeeded)
+	{
+		c_RandSeeded = true;
+		srand((unsigned)time(0)); 
+	}
 
+	m_Parser = MathParser_Create(NULL);
+
+	rand();
 }
 
 /*
@@ -147,6 +153,7 @@ void CMeasureCalc::RandomFormulaReplace()
 	while(loc > -1)
 	{
 		int range = (m_HighBound - m_LowBound); 
+		srand((unsigned) rand()); 
 		int randNumber = m_LowBound + (range * rand()/(RAND_MAX + 1.0)); 
 
 		std::wstring randomNumberString= (L"");

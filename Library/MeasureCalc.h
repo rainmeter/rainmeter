@@ -40,6 +40,7 @@ private:
 	hqMathParser* m_Parser;
 
 	static hqStrMap* c_VarMap;
+	static bool c_RandSeeded;
 
 	int m_UpdateRandom;
 	int m_LowBound;
