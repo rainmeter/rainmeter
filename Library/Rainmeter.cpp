@@ -1719,7 +1719,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 		// Check for build-ins
 		if (wcsncmp(L"PLAY ", strCommand.c_str(), 5) == 0)
 		{
-			BOOL ret = PlaySound(strCommand.c_str() + 5, NULL, SND_FILENAME);
+			BOOL ret = PlaySound(strCommand.c_str() + 5, NULL, SND_FILENAME | SND_ASYNC);
 			return;
 		}
 		else if (wcsncmp(L"PLAYSTOP", strCommand.c_str(), 8) == 0)
