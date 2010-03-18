@@ -54,6 +54,10 @@ public:
 	std::wstring& GetFilename() { return m_Filename; }
 	const std::vector<std::wstring>& GetSections();
 
+
+	// Returns an int if the formula was read successfully, -1 for failure.
+	int ReadFormula(std::wstring& result, double* number);
+
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring delimiters);
 
 	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }

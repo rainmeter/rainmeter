@@ -58,26 +58,35 @@ private:
 		EFFECT_BORDER
 	};
 
+	enum TEXTCASE
+	{
+		TEXTCASE_NONE,
+		TEXTCASE_UPPER,
+		TEXTCASE_LOWER,
+		TEXTCASE_PROPER,
+	};
+
 	bool DrawString(Gdiplus::Graphics& graphics, Gdiplus::RectF* rect);
 
-	Gdiplus::Color m_Color;		// The color of the text
+	Gdiplus::Color m_Color;				// The color of the text
 	Gdiplus::Color m_EffectColor;		// The color of the text effect
-	std::wstring m_Postfix;		// The postfix of the text
-	std::wstring m_Prefix;		// The prefix of the text
-	std::wstring m_Text;			// The text
-	std::wstring m_FontFace;		// name of the font face
-	bool m_AutoScale;			// true, if the value should be autoscaled
-	METER_ALIGNMENT m_Align;	// Alignment of the text
-	TEXTSTYLE m_Style;			// Style of the text
-	TEXTEFFECT m_Effect;		// Text effect
-	int m_FontSize;				// Size of the fonts
-	double m_Scale;				// Scaling if autoscale is not used
-	bool m_NoDecimals;			// Number of decimals to use
-	bool m_Percentual;			// True, if the value should be given as %
-	bool m_ClipString;			// True, the text is clipped in borders (adds ellipsis to the end of the string)
-	Gdiplus::Font* m_Font;		// The font
-	Gdiplus::FontFamily* m_FontFamily;		// The font family
-	int m_NumOfDecimals;		// Number of decimals to be displayed
+	std::wstring m_Postfix;				// The postfix of the text
+	std::wstring m_Prefix;				// The prefix of the text
+	std::wstring m_Text;				// The text
+	std::wstring m_FontFace;			// name of the font face
+	bool m_AutoScale;					// true, if the value should be autoscaled
+	METER_ALIGNMENT m_Align;			// Alignment of the text
+	TEXTSTYLE m_Style;					// Style of the text
+	TEXTEFFECT m_Effect;				// Text effect
+	TEXTCASE m_textCase;				// Case of the text
+	int m_FontSize;						// Size of the fonts
+	double m_Scale;						// Scaling if autoscale is not used
+	bool m_NoDecimals;					// Number of decimals to use
+	bool m_Percentual;					// True, if the value should be given as %
+	bool m_ClipString;					// True, the text is clipped in borders (adds ellipsis to the end of the string)
+	Gdiplus::Font* m_Font;				// The font
+	Gdiplus::FontFamily* m_FontFamily;	// The font family
+	int m_NumOfDecimals;				// Number of decimals to be displayed
 	bool m_DimensionsDefined;
 	Gdiplus::REAL m_Angle;
 

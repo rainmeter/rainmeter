@@ -27,6 +27,10 @@ using namespace Gdiplus;
 std::map<std::wstring, Gdiplus::FontFamily*> CMeterString::c_FontFamilies;
 std::map<std::wstring, Gdiplus::Font*> CMeterString::c_Fonts;
 
+std::wstring StringToUpper(std::wstring str);
+std::wstring StringToLower(std::wstring str);
+std::wstring StringToProper(std::wstring str);
+
 /*
 ** CMeterString
 **
@@ -51,6 +55,7 @@ CMeterString::CMeterString(CMeterWindow* meterWindow) : CMeter(meterWindow)
 	m_NumOfDecimals = -1;
 	m_DimensionsDefined = false;
 	m_Angle = 0.0;
+	m_textCase = TEXTCASE_NONE;
 }
 
 /*
@@ -299,6 +304,28 @@ void CMeterString::ReadConfig(const WCHAR* section)
         throw CError(std::wstring(L"No such StringAlign: ") + align, __LINE__, __FILE__);
 	}
 
+	std::wstring stringCase;
+	stringCase = parser.ReadString(section, L"StringCase", L"NONE");
+	
+	if(_wcsicmp(stringCase.c_str(), L"NONE") == 0)
+	{
+		m_textCase = TEXTCASE_NONE;
+	}
+	else if(_wcsicmp(stringCase.c_str(), L"UPPER") == 0)
+	{
+		m_textCase = TEXTCASE_UPPER;
+	}
+	else if(_wcsicmp(stringCase.c_str(), L"LOWER") == 0)
+	{
+		m_textCase = TEXTCASE_LOWER;
+	}
+	else if(_wcsicmp(stringCase.c_str(), L"PROPER") == 0)
+	{
+		m_textCase = TEXTCASE_PROPER;
+	}
+
+	
+
 	std::wstring style;
 	style = parser.ReadString(section, L"StringStyle", L"NORMAL");
 
@@ -416,6 +443,20 @@ bool CMeterString::Update()
 			m_String += tmpText;
 		}
 		m_String += m_Postfix;
+
+		switch(m_textCase)
+		{
+		case TEXTCASE_UPPER:
+			m_String = StringToUpper(m_String);
+			break;
+		case TEXTCASE_LOWER:
+			m_String = StringToLower(m_String);
+			break;
+		case TEXTCASE_PROPER:
+			m_String = StringToProper(m_String);
+			break;
+		}
+		
 
 		if (!m_DimensionsDefined)
 		{
@@ -621,6 +662,59 @@ std::wstring CMeterString::FontPropertiesToString(FontFamily* fontFamily, REAL s
 		}
 	}
 	return stream.str();
+}
+
+/*
+** FontPropertiesToString
+**
+** Static helper to convert font properties to a string so it can be used as a key for the cache map.
+**
+*/
+std::wstring StringToUpper(std::wstring str)
+{
+	//change each element of the string to upper case
+	for(unsigned int i = 0; i < str.length(); i++)
+	{
+		str[i] = toupper( str[i] );
+	}
+
+	return str; //return the converted string
+}
+
+std::wstring StringToLower(std::wstring str)
+{
+	//change each element of the string to lower case
+	for(unsigned int i = 0; i < str.length(); i++)
+	{
+		str[i] = tolower(str[i]);
+	}
+
+	return str;//return the converted string
+}
+
+std::wstring StringToProper(std::wstring str)
+{
+	//change each element of the string to lower case
+	for(unsigned int i = 0; i < str.length(); i++)
+	{
+		if(i == 0)
+		{
+			str[i] = toupper( str[i] );
+		}
+		else
+		{
+			if(str[i-1] == ' ')
+			{
+				str[i] = toupper(str[i]);
+			}
+			else
+			{
+				str[i] = tolower(str[i]);
+			}
+		}
+	}
+
+	return str;//return the converted string
 }
 
 // EOF

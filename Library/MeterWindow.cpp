@@ -732,7 +732,23 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		{
 			std::wstring strVariable(arg, pos - arg);
 			std::wstring strValue(pos + 1);
-			m_Parser.SetVariable(strVariable, strValue);
+			double value;
+			int result = m_Parser.ReadFormula(strValue, &value);
+			
+			// Formula read fine
+			if(result != -1)
+			{
+				TCHAR buffer[256];
+				swprintf(buffer, L"%f", value);
+
+				const std::wstring& resultString = buffer;
+
+				m_Parser.SetVariable(strVariable, resultString);
+			}
+			else
+			{
+				m_Parser.SetVariable(strVariable, strValue);
+			}
 		}
 		else
 		{
@@ -2437,7 +2453,6 @@ void CMeterWindow::Redraw()
 	}
 }
 
-
 /*
 ** Update
 **
@@ -2454,6 +2469,7 @@ void CMeterWindow::Update(bool nodraw)
 
 	// Update all measures
 	std::list<CMeasure*>::iterator i = m_Measures.begin();
+
 	for( ; i != m_Measures.end(); i++)
 	{
 		try
@@ -2490,6 +2506,7 @@ void CMeterWindow::Update(bool nodraw)
 
 	// Statistics
 	CMeasureNet::UpdateStats();
+	OutputDebugString(L"Butts");
 	Rainmeter->WriteStats(false);
 
 	if (!nodraw)

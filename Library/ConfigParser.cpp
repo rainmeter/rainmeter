@@ -604,6 +604,27 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 	return ParseDouble(result, defValue);
 }
 
+// Returns an int if the formula was read successfully, -1 for failure.
+// Pass a pointer to a double.
+int CConfigParser::ReadFormula(std::wstring& result, double* resultValue)
+{
+	// Formulas must be surrounded by parenthesis
+	if (!result.empty() && result[0] == L'(' && result[result.size() - 1] == L')')
+	{
+		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.substr(1, result.size() - 2).c_str()).c_str(), resultValue);
+		
+		if (errMsg != NULL)
+		{
+			DebugLog(ConvertToWide(errMsg).c_str());
+			return -1;
+		}
+
+		return 1;
+	}
+
+	return -1;
+}
+
 Color CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, Color defValue)
 {
 	TCHAR buffer[256];
