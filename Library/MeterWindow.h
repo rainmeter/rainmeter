@@ -99,34 +99,18 @@ enum BANGCOMMAND
 	BANG_SHOW,
 	BANG_HIDE,
 	BANG_TOGGLE,
+	BANG_SHOWFADE,
+	BANG_HIDEFADE,
+	BANG_TOGGLEFADE,
 	BANG_MOVE,
 	BANG_ZPOS,
+	BANG_SETTRANSPARENCY,
 	BANG_LSHOOK,
 	BANG_ABOUT,
 	BANG_MOVEMETER,
 	BANG_PLUGIN,
 	BANG_QUIT,
 	BANG_SETVARIABLE
-};
-
-struct MONITOR_INFO
-{
-	bool active;
-	HMONITOR handle;
-	RECT screen;
-	RECT work;
-	WCHAR deviceName[32];					//Device name (E.g. "\\.\DISPLAY1")
-	WCHAR monitorName[128];					//Monitor name (E.g. "Generic Non-PnP Monitor")
-};
-
-struct MULTIMONITOR_INFO
-{
-	bool useEnumDisplayDevices;				//If true, use EnumDisplayDevices function to obtain the multi-monitor information
-	bool useEnumDisplayMonitors;			//If true, use EnumDisplayMonitors function to obtain the multi-monitor information
-
-	int vsT, vsL, vsH, vsW;					//Coordinates of the top-left corner (vsT,vsL) and size (vsH,vsW) of the virtual screen
-	int primary;							//Index of the primary monitor
-	std::vector<MONITOR_INFO> monitors;		//Monitor information
 };
 
 class CRainmeter;
@@ -200,11 +184,6 @@ public:
 
 	Gdiplus::PrivateFontCollection* GetPrivateFontCollection(){ return m_FontCollection; }
 
-	static const MULTIMONITOR_INFO& GetMultiMonitorInfo() { return c_Monitors; }
-	static void ClearMultiMonitorInfo() { c_Monitors.monitors.clear(); }
-	static size_t GetMonitorCount();
-	static void UpdateWorkareaInfo();
-
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -255,8 +234,7 @@ private:
 	void ShowWindowIfAppropriate();
 	bool DoAction(int x, int y, MOUSE mouse, bool test);
 	bool ResizeWindow(bool reset);
-
-	static void SetMultiMonitorInfo();
+	void IgnoreAeroPeek();
 
 	CConfigParser m_Parser;
 
@@ -359,8 +337,6 @@ private:
 	CRainmeter* m_Rainmeter;					// Pointer to the main object
 
 	static int c_InstanceCount;
-
-	static MULTIMONITOR_INFO c_Monitors;		// Multi-Monitor info
 
 	Gdiplus::PrivateFontCollection* m_FontCollection;
 

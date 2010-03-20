@@ -682,6 +682,11 @@ void CMeasureNet::InitializeNewApi()
 			c_FreeMibTable = NULL;
 		}
 	}
+
+	if (CRainmeter::GetDebug())
+	{
+		UpdateIFTable();
+	}
 }
 
 /*

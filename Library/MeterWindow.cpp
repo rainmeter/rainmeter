@@ -21,6 +21,7 @@
 #include <gdiplus.h>
 #include "MeterWindow.h"
 #include "Rainmeter.h"
+#include "System.h"
 #include "Error.h"
 #include <math.h>
 #include <time.h>
@@ -50,8 +51,6 @@ using namespace Gdiplus;
 #define SNAPDISTANCE 10
 
 int CMeterWindow::c_InstanceCount = 0;
-
-MULTIMONITOR_INFO CMeterWindow::c_Monitors = { 0 };
 
 extern CRainmeter* Rainmeter;
 
@@ -98,6 +97,7 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 	m_WindowStartHidden = false;
 	m_SnapEdges = true;
 	m_Rainmeter = NULL;
+	m_Hidden = false;
 	m_ResetRegion = false;
 	m_Refreshing = false;
 	m_NativeTransparency = true;
@@ -242,19 +242,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 	setlocale(LC_NUMERIC, "C");
 
 	// Mark the window to ignore the Aero peek
-	typedef HRESULT (WINAPI * FPDWMSETWINDOWATTRIBUTE)(HWND hwnd, DWORD dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
-	#define DWMWA_EXCLUDED_FROM_PEEK 12
-	HINSTANCE h = LoadLibrary(L"dwmapi.dll");
-	if (h)
-	{
-		FPDWMSETWINDOWATTRIBUTE DwmSetWindowAttribute = (FPDWMSETWINDOWATTRIBUTE)GetProcAddress(h, "DwmSetWindowAttribute");
-		BOOL bValue = TRUE;
-		if (DwmSetWindowAttribute)
-		{
-			DwmSetWindowAttribute(m_Window, DWMWA_EXCLUDED_FROM_PEEK, &bValue, sizeof(bValue));
-		}
-		FreeLibrary(h);
-	}
+	IgnoreAeroPeek();
 
 	// Gotta have some kind of buffer during initialization
 	m_DoubleBuffer = new Bitmap(1, 1, PixelFormat32bppARGB);
@@ -275,6 +263,29 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 	LSLog(LOG_DEBUG, L"Rainmeter", L"Initialization successful.");
 
 	return 0;
+}
+
+/*
+** IgnoreAeroPeek
+**
+** Excludes this window from the Aero Peek.
+**
+*/
+void CMeterWindow::IgnoreAeroPeek()
+{
+	typedef HRESULT (WINAPI * FPDWMSETWINDOWATTRIBUTE)(HWND hwnd, DWORD dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
+	#define DWMWA_EXCLUDED_FROM_PEEK 12
+	HINSTANCE h = LoadLibrary(L"dwmapi.dll");
+	if (h)
+	{
+		FPDWMSETWINDOWATTRIBUTE DwmSetWindowAttribute = (FPDWMSETWINDOWATTRIBUTE)GetProcAddress(h, "DwmSetWindowAttribute");
+		if (DwmSetWindowAttribute)
+		{
+			BOOL bValue = TRUE;
+			DwmSetWindowAttribute(m_Window, DWMWA_EXCLUDED_FROM_PEEK, &bValue, sizeof(bValue));
+		}
+		FreeLibrary(h);
+	}
 }
 
 /*
@@ -349,6 +360,8 @@ void CMeterWindow::Refresh(bool init)
 	{
 		SetWindowLong(m_Window, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
 	}
+
+	m_Hidden = m_WindowStartHidden;
 
 	// Set the window region
 	CreateRegion(true);	// Clear the region
@@ -436,10 +449,10 @@ void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 			mi.cbSize = sizeof(mi);
 			GetMonitorInfo(hMonitor, &mi);
 
-			x = max(x, mi.rcMonitor.left);
 			x = min(x, mi.rcMonitor.right - m_WindowW);
-			y = max(y, mi.rcMonitor.top);
+			x = max(x, mi.rcMonitor.left);
 			y = min(y, mi.rcMonitor.bottom - m_WindowH);
+			y = max(y, mi.rcMonitor.top);
 			return;
 		}
 	}
@@ -447,10 +460,10 @@ void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 	// No monitor found for the window -> Use the default work area
 	RECT workArea;
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);	// Store the old value
-	x = max(x, workArea.left);
 	x = min(x, workArea.right - m_WindowW);
-	y = max(y, workArea.top);
+	x = max(x, workArea.left);
 	y = min(y, workArea.bottom - m_WindowH);
+	y = max(y, workArea.top);
 }
 
 /*
@@ -462,7 +475,7 @@ void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 void CMeterWindow::MoveWindow(int x, int y)
 {
 	// Convert the screen coordinates to the client coordinates of the shell window
-	if (!m_ChildWindow && !m_NativeTransparency && m_WindowZPosition == ZPOSITION_ONDESKTOP)
+	if (!m_ChildWindow && m_WindowZPosition == ZPOSITION_ONDESKTOP && GetAncestor(m_Window, GA_PARENT) != GetDesktopWindow())
 	{
 		POINT pos = {x, y};
 		if (ScreenToClient(GetAncestor(m_Window, GA_PARENT), &pos))
@@ -508,25 +521,105 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos)
 			 break;
 
 		case ZPOSITION_ONDESKTOP:
-			// Set the window's parent to progman, so it stays always on desktop
-			HWND ProgmanHwnd = FindWindowEx(FindWindowEx(FindWindow(L"Progman", L"Program Manager"), NULL, L"SHELLDLL_DefView", L""), NULL, L"SysListView32", L"FolderView");
-			if (!ProgmanHwnd)
+			if (!m_NativeTransparency || !CSystem::GetDwmCompositionEnabled())
 			{
-				HWND WorkerWHwnd = NULL;
-				while ((WorkerWHwnd = FindWindowEx(NULL, WorkerWHwnd, L"WorkerW", L"")) != NULL)
+				winPos = HWND_BOTTOM;
+
+				// Set the window's parent to progman, so it stays always on desktop
+				HWND ProgmanHwnd = CSystem::GetShellDesktopWindow();
+
+				if (ProgmanHwnd && (parent != ProgmanHwnd))
 				{
-					ProgmanHwnd = FindWindowEx(FindWindowEx(WorkerWHwnd, NULL, L"SHELLDLL_DefView", L""), NULL, L"SysListView32", L"FolderView");
-					if (ProgmanHwnd) break;
+					m_PreventMoving = true;  // Prevent moving the window by SetParent
+					SetParent(m_Window, ProgmanHwnd);
 				}
-			}
-			if (ProgmanHwnd && (parent != ProgmanHwnd))
-			{
-				m_PreventMoving = true;  // Prevent moving the window by SetParent
-				SetParent(m_Window, ProgmanHwnd);
+				//else
+				//{
+				//	return;		// The window is already on desktop
+				//}
 			}
 			else
 			{
-				return;		// The window is already on desktop
+				if (parent != GetDesktopWindow())
+				{
+					m_PreventMoving = true;  // Prevent moving the window by SetParent
+					SetParent(m_Window, NULL);
+
+					IgnoreAeroPeek();
+				}
+
+				if (CSystem::GetShowDesktop())
+				{
+					bool logging = false;  // Set true if you need verbose logging.
+					std::wstring msg;
+
+					if (logging) 
+					{
+						msg += (GetWindowLong(m_Window, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL";
+					}
+
+					// Set WS_EX_TOPMOST flag
+					SetWindowPos(m_Window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+
+					if (logging)
+					{
+						msg += L" - ";
+						msg += (GetWindowLong(m_Window, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL";
+					}
+
+					// Get WorkerW window
+					HWND WorkerW = CSystem::GetWorkerW();
+
+					// Find the "backmost" topmost window
+					if (WorkerW)
+					{
+						HWND hwnd = WorkerW;
+						while (hwnd = ::GetNextWindow(hwnd, GW_HWNDPREV))
+						{
+							if (GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
+							{
+								WCHAR className[128], windowText[128];
+
+								if (logging)
+								{
+									GetClassName(hwnd, className, 128);
+									GetWindowText(hwnd, windowText, 128);
+								}
+
+								if (0 == SetWindowPos(m_Window, hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING))
+								{
+									if (logging)
+									{
+										DebugLog(L" %s: hwnd=0x%08X (WorkerW=0x%08X), hwndInsertAfter=0x%08X (\"%s\" %s) - FAILED",
+											m_SkinName.c_str(), m_Window, WorkerW, hwnd, windowText, className);
+									}
+									continue;
+								}
+
+								if (logging)
+								{
+									msg += L" - ";
+									msg += (GetWindowLong(m_Window, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL";
+
+									DebugLog(L" %s: hwnd=0x%08X (WorkerW=0x%08X), hwndInsertAfter=0x%08X (\"%s\" %s) - %s",
+										m_SkinName.c_str(), m_Window, WorkerW, hwnd, windowText, className, msg.c_str());
+								}
+								return;
+							}
+						}
+					}
+
+					if (logging)
+					{
+						DebugLog(L" %s: hwnd=0x%08X (WorkerW=0x%08X), hwndInsertAfter=HWND_TOPMOST - %s",
+							m_SkinName.c_str(), m_Window, WorkerW, msg.c_str());
+					}
+					return;
+				}
+				else
+				{
+					winPos = HWND_BOTTOM;
+				}
 			}
 			break;
 		}
@@ -535,6 +628,8 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos)
 		{
 			m_PreventMoving = true;  // Prevent moving the window by SetParent
 			SetParent(m_Window, NULL);
+
+			IgnoreAeroPeek();
 		}
 
 		bool refresh = m_Refreshing;
@@ -593,22 +688,52 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		break;
 
 	case BANG_SHOW:
+		m_Hidden = false;
 		ShowWindow(m_Window, SW_SHOWNOACTIVATE);
+		if (m_WindowHide == HIDEMODE_FADEOUT)
+		{
+			UpdateTransparency(255, false);
+		}
+		else
+		{
+			UpdateTransparency(m_AlphaValue, false);
+		}
 		break;
 
 	case BANG_HIDE:
+		m_Hidden = true;
 		ShowWindow(m_Window, SW_HIDE);
 		break;
 
 	case BANG_TOGGLE:
+		RunBang(m_Hidden ? BANG_SHOW : BANG_HIDE, arg);
+		break;
+
+	case BANG_SHOWFADE:
+		m_Hidden = false;
+		if (!IsWindowVisible(m_Window))
+		{
+			if (m_WindowHide == HIDEMODE_FADEOUT) 
+			{
+				FadeWindow(0, 255);
+			}
+			else
+			{
+				FadeWindow(0, m_AlphaValue);
+			}
+		}
+		break;
+
+	case BANG_HIDEFADE:
+		m_Hidden = true;
 		if (IsWindowVisible(m_Window))
 		{
-			ShowWindow(m_Window, SW_HIDE);
+			FadeWindow(m_AlphaValue, 0);
 		}
-		else
-		{
-			ShowWindow(m_Window, SW_SHOWNOACTIVATE);
-		}
+		break;
+
+	case BANG_TOGGLEFADE:
+		RunBang(m_Hidden ? BANG_SHOWFADE : BANG_HIDEFADE, arg);
 		break;
 
 	case BANG_MOVE:
@@ -625,6 +750,16 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 
 	case BANG_ZPOS:
 		ChangeZPos((ZPOSITION)_wtoi(arg));
+		break;
+
+	case BANG_SETTRANSPARENCY:
+		if (arg != NULL)
+		{
+			int alpha = (int)CConfigParser::ParseDouble(arg, 255, true);
+			alpha = max(alpha, 0);
+			m_AlphaValue = min(alpha, 255);
+			UpdateTransparency(m_AlphaValue, false);
+		}
 		break;
 
 	case BANG_LSHOOK:
@@ -939,397 +1074,6 @@ void CMeterWindow::ToggleMeasure(const WCHAR* name)
 	DebugLog(L"Unable to toggle the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
-/* MyInfoEnumProc
-**
-** Retrieves the multi-monitor information
-**
-*/
-BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
-{
-	MULTIMONITOR_INFO* m = (MULTIMONITOR_INFO*)dwData;
-
-	MONITORINFOEX info;
-	info.cbSize = sizeof(MONITORINFOEX);
-	GetMonitorInfo(hMonitor, &info);
-
-	if (CRainmeter::GetDebug())
-	{
-		DebugLog(info.szDevice);
-		DebugLog(L"  Flags    : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
-		DebugLog(L"  Handle   : 0x%08X", hMonitor);
-		DebugLog(L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-			lprcMonitor->left, lprcMonitor->top, lprcMonitor->right, lprcMonitor->bottom,
-			lprcMonitor->right - lprcMonitor->left, lprcMonitor->bottom - lprcMonitor->top);
-		DebugLog(L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-			info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
-			info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
-	}
-	if (m == NULL) return TRUE;
-
-	if (m->useEnumDisplayDevices)
-	{
-		for (size_t i = 0; i < m->monitors.size(); i++)
-		{
-			if (m->monitors[i].handle == NULL && _wcsnicmp(info.szDevice, m->monitors[i].deviceName, 32) == 0)
-			{
-				m->monitors[i].handle = hMonitor;
-				m->monitors[i].screen = *lprcMonitor;
-				m->monitors[i].work = info.rcWork;
-				break;
-			}
-		}
-	}
-	else  // use only EnumDisplayMonitors
-	{
-		MONITOR_INFO monitor = {0};
-		monitor.active = true;
-
-		monitor.handle = hMonitor;
-		monitor.screen = *lprcMonitor;
-		monitor.work = info.rcWork;
-
-		wcsncpy(monitor.deviceName, info.szDevice, 32);  // E.g. "\\.\DISPLAY1"
-
-		// Get the monitor name (E.g. "Generic Non-PnP Monitor")
-		DISPLAY_DEVICE ddm = {0};
-		ddm.cb = sizeof(DISPLAY_DEVICE);
-		DWORD dwMon = 0;
-		while (EnumDisplayDevices(info.szDevice, dwMon++, &ddm, 0))
-		{
-			if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
-			{
-				wcsncpy(monitor.monitorName, ddm.DeviceString, 128);
-				break;
-			}
-		}
-
-		m->monitors.push_back(monitor);
-
-		if (info.dwFlags & MONITORINFOF_PRIMARY)
-		{
-			// It's primary monitor!
-			m->primary = (int)m->monitors.size();
-		}
-	}
-
-	return TRUE;
-}
-
-/* GetMonitorCount
-**
-** Returns the number of monitors
-**
-*/
-size_t CMeterWindow::GetMonitorCount()
-{
-	if (c_Monitors.monitors.size() == 0)
-	{
-		SetMultiMonitorInfo();
-	}
-	return c_Monitors.monitors.size();
-}
-
-/* SetMultiMonitorInfo
-**
-** Sets the multi-monitor information
-**
-*/
-void CMeterWindow::SetMultiMonitorInfo()
-{
-	std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
-	bool logging = CRainmeter::GetDebug();
-
-	if (monitors.capacity() < 16) { monitors.reserve(16); }
-
-	c_Monitors.vsT = GetSystemMetrics(SM_YVIRTUALSCREEN);
-	c_Monitors.vsL = GetSystemMetrics(SM_XVIRTUALSCREEN);
-	c_Monitors.vsH = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-	c_Monitors.vsW = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-
-	c_Monitors.primary = 1;  // If primary screen is not found, 1st screen is assumed as primary screen.
-
-	c_Monitors.useEnumDisplayDevices = true;
-	c_Monitors.useEnumDisplayMonitors = false;
-
-	if (logging)
-	{
-		DebugLog(L"------------------------------");
-		DebugLog(L"* EnumDisplayDevices / EnumDisplaySettings API");
-	}
-
-	DISPLAY_DEVICE dd = {0};
-	dd.cb = sizeof(DISPLAY_DEVICE);
-
-	if (EnumDisplayDevices(NULL, 0, &dd, 0))
-	{
-		DWORD dwDevice = 0;
-
-		do
-		{
-			std::wstring msg;
-
-			if (logging)
-			{
-				DebugLog(dd.DeviceName);
-
-				if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
-				{
-					msg += L"ACTIVE ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_MULTI_DRIVER)
-				{
-					msg += L"MULTI ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
-				{
-					msg += L"PRIMARY ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER)
-				{
-					msg += L"MIRROR ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_VGA_COMPATIBLE)
-				{
-					msg += L"VGA ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_REMOVABLE)
-				{
-					msg += L"REMOVABLE ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_MODESPRUNED)
-				{
-					msg += L"PRUNED ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_REMOTE)
-				{
-					msg += L"REMOTE ";
-				}
-				if (dd.StateFlags & DISPLAY_DEVICE_DISCONNECT)
-				{
-					msg += L"DISCONNECT ";
-				}
-			}
-
-			if ((dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) == 0)
-			{
-				MONITOR_INFO monitor = {0};
-
-				monitor.handle = NULL;
-				wcsncpy(monitor.deviceName, dd.DeviceName, 32);  // E.g. "\\.\DISPLAY1"
-
-				// Get the monitor name (E.g. "Generic Non-PnP Monitor")
-				DISPLAY_DEVICE ddm = {0};
-				ddm.cb = sizeof(DISPLAY_DEVICE);
-				DWORD dwMon = 0;
-				while (EnumDisplayDevices(dd.DeviceName, dwMon++, &ddm, 0))
-				{
-					if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
-					{
-						wcsncpy(monitor.monitorName, ddm.DeviceString, 128);
-
-						if (logging)
-						{
-							DebugLog(L"  Name     : %s", ddm.DeviceString);
-						}
-						break;
-					}
-				}
-
-				if (logging)
-				{
-					DebugLog(L"  Adapter  : %s", dd.DeviceString);
-					DebugLog(L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
-				}
-
-				if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
-				{
-					monitor.active = true;
-
-					DEVMODE dm = {0};
-					dm.dmSize = sizeof(DEVMODE);
-
-					if (EnumDisplaySettings(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm))
-					{
-						POINT pos = {dm.dmPosition.x, dm.dmPosition.y};
-						monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTONULL);
-
-						if (logging)
-						{
-							DebugLog(L"  Handle   : 0x%08X", monitor.handle);
-						}
-					}
-
-					if (monitor.handle != NULL)
-					{
-						MONITORINFO info = {0};
-						info.cbSize = sizeof(MONITORINFO);
-						GetMonitorInfo(monitor.handle, &info);
-
-						monitor.screen = info.rcMonitor;
-						monitor.work = info.rcWork;
-
-						if (logging)
-						{
-							DebugLog(L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-								info.rcMonitor.left, info.rcMonitor.top, info.rcMonitor.right, info.rcMonitor.bottom,
-								info.rcMonitor.right - info.rcMonitor.left, info.rcMonitor.bottom - info.rcMonitor.top);
-							DebugLog(L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-								info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
-								info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
-						}
-					}
-					else  // monitor not found
-					{
-						c_Monitors.useEnumDisplayMonitors = true;
-					}
-				}
-				else
-				{
-					monitor.active = false;
-				}
-
-				monitors.push_back(monitor);
-
-				if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
-				{
-					// It's primary monitor!
-					c_Monitors.primary = (int)monitors.size();
-				}
-			}
-			else
-			{
-				if (logging)
-				{
-					DebugLog(L"  Adapter  : %s", dd.DeviceString);
-					DebugLog(L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
-				}
-			}
-			dwDevice++;
-		} while (EnumDisplayDevices(NULL, dwDevice, &dd, 0));
-	}
-
-	if (monitors.empty())  // Failed to enumerate the non-mirroring monitors
-	{
-		DebugLog(L"Failed to enumerate the non-mirroring monitors. Only EnumDisplayMonitors is used instead.");
-		c_Monitors.useEnumDisplayDevices = false;
-		c_Monitors.useEnumDisplayMonitors = true;
-	}
-
-	if (logging)
-	{
-		DebugLog(L"------------------------------");
-		DebugLog(L"* EnumDisplayMonitors API");
-	}
-
-	if (c_Monitors.useEnumDisplayMonitors)
-	{
-		EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)(&c_Monitors));
-
-		if (monitors.empty())  // Failed to enumerate the monitors
-		{
-			DebugLog(L"Failed to enumerate the monitors. Prepares the dummy monitor information.");
-			c_Monitors.useEnumDisplayMonitors = false;
-
-			MONITOR_INFO monitor = {0};
-			wcscpy(monitor.deviceName, L"DUMMY");
-			POINT pos = {0, 0};
-			monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTOPRIMARY);
-			monitor.screen.left = 0;
-			monitor.screen.top = 0;
-			monitor.screen.right = GetSystemMetrics(SM_CXSCREEN);
-			monitor.screen.bottom = GetSystemMetrics(SM_CYSCREEN);
-			SystemParametersInfo(SPI_GETWORKAREA, 0, &(monitor.work), 0);
-			monitor.active = true;
-
-			monitors.push_back(monitor);
-
-			c_Monitors.primary = 1;
-		}
-	}
-	else
-	{
-		if (logging)
-		{
-			EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)NULL);  // Only logging
-		}
-	}
-
-	if (logging)
-	{
-		DebugLog(L"------------------------------");
-
-		std::wstring method = L"* METHOD: ";
-		if (c_Monitors.useEnumDisplayDevices)
-		{
-			method += L"EnumDisplayDevices + ";
-			method += c_Monitors.useEnumDisplayMonitors ? L"EnumDisplayMonitors Mode" : L"EnumDisplaySettings Mode";
-		}
-		else
-		{
-			method += c_Monitors.useEnumDisplayMonitors ? L"EnumDisplayMonitors Mode" : L"Dummy Mode";
-		}
-		DebugLog(method.c_str());
-
-		DebugLog(L"* MONITORS: Count=%i, Primary=@%i", monitors.size(), c_Monitors.primary);
-		DebugLog(L"@0: Virtual screen");
-		DebugLog(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-			c_Monitors.vsL, c_Monitors.vsT, c_Monitors.vsL + c_Monitors.vsW, c_Monitors.vsT + c_Monitors.vsH,
-			c_Monitors.vsW, c_Monitors.vsH);
-
-		for (size_t i = 0; i < monitors.size(); i++)
-		{
-			if (monitors[i].active)
-			{
-				DebugLog(L"@%i: %s (active), MonitorName: %s", i + 1, monitors[i].deviceName, monitors[i].monitorName);
-				DebugLog(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-					monitors[i].screen.left, monitors[i].screen.top, monitors[i].screen.right, monitors[i].screen.bottom,
-					monitors[i].screen.right - monitors[i].screen.left, monitors[i].screen.bottom - monitors[i].screen.top);
-			}
-			else
-			{
-				DebugLog(L"@%i: %s (inactive), MonitorName: %s", i + 1, monitors[i].deviceName, monitors[i].monitorName);
-			}
-		}
-		DebugLog(L"------------------------------");
-	}
-}
-
-/* UpdateWorkareaInfo
-**
-** Updates the workarea information
-**
-*/
-void CMeterWindow::UpdateWorkareaInfo()
-{
-	std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
-
-	if (monitors.empty())
-	{
-		SetMultiMonitorInfo();
-		return;
-	}
-
-	for (size_t i = 0; i < monitors.size(); i++)
-	{
-		if (monitors[i].active && monitors[i].handle != NULL)
-		{
-			MONITORINFO info = {0};
-			info.cbSize = sizeof(MONITORINFO);
-			GetMonitorInfo(monitors[i].handle, &info);
-
-			monitors[i].work = info.rcWork;
-
-			if (CRainmeter::GetDebug())
-			{
-				DebugLog(L"WorkArea @%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-					i + 1,
-					info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
-					info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
-			}
-		}
-	}
-}
-
 /* WindowToScreen
 **
 ** Calculates the screen cordinates from the WindowX/Y config
@@ -1337,27 +1081,22 @@ void CMeterWindow::UpdateWorkareaInfo()
 */
 void CMeterWindow::WindowToScreen()
 {
+	if (CSystem::GetMonitorCount() == 0)
+	{
+		DebugLog(L"There are no monitors. WindowToScreen function fails.");
+		return;
+	}
+
 	std::wstring::size_type index, index2;
 	int pixel = 0;
 	float num;
 	int screenx, screeny, screenh, screenw;
 
-	std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
-
-	if (monitors.empty())
-	{
-		// Retrieve the multi-monitor information
-		SetMultiMonitorInfo();
-
-		if (monitors.empty())
-		{
-			DebugLog(L"There are no monitors. WindowToScreen function fails.");
-			return;
-		}
-	}
+	const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
+	const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
 
 	// Clear position flags
-	m_WindowXScreen = m_WindowYScreen = c_Monitors.primary; // Default to primary screen
+	m_WindowXScreen = m_WindowYScreen = multimonInfo.primary; // Default to primary screen
 	m_WindowXScreenDefined = m_WindowYScreenDefined = false;
 	m_WindowXFromRight = m_WindowYFromBottom = false; // Default to from left/top
 	m_WindowXPercentage = m_WindowYPercentage = false; // Default to pixels
@@ -1459,8 +1198,8 @@ void CMeterWindow::WindowToScreen()
 	}
 	if (m_WindowXScreen == 0)
 	{
-		screenx = c_Monitors.vsL;
-		screenw = c_Monitors.vsW;
+		screenx = multimonInfo.vsL;
+		screenw = multimonInfo.vsW;
 	}
 	else
 	{
@@ -1526,8 +1265,8 @@ void CMeterWindow::WindowToScreen()
 	}
 	if (m_WindowYScreen == 0)
 	{
-		screeny = c_Monitors.vsT;
-		screenh = c_Monitors.vsH;
+		screeny = multimonInfo.vsT;
+		screenh = multimonInfo.vsH;
 	}
 	else
 	{
@@ -1565,7 +1304,8 @@ void CMeterWindow::ScreenToWindow()
 	float num;
 	int screenx, screeny, screenh, screenw;
 
-	std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
+	const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
+	const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
 
 	if (monitors.empty())
 	{
@@ -1606,8 +1346,8 @@ void CMeterWindow::ScreenToWindow()
 
 	if (m_WindowXScreen == 0)
 	{
-		screenx = c_Monitors.vsL;
-		screenw = c_Monitors.vsW;
+		screenx = multimonInfo.vsL;
+		screenw = multimonInfo.vsW;
 	}
 	else
 	{
@@ -1647,8 +1387,8 @@ void CMeterWindow::ScreenToWindow()
 
 	if (m_WindowYScreen == 0)
 	{
-		screeny = c_Monitors.vsT;
-		screenh = c_Monitors.vsH;
+		screeny = multimonInfo.vsT;
+		screenh = multimonInfo.vsH;
 	}
 	else
 	{
@@ -2506,7 +2246,6 @@ void CMeterWindow::Update(bool nodraw)
 
 	// Statistics
 	CMeasureNet::UpdateStats();
-	OutputDebugString(L"Butts");
 	Rainmeter->WriteStats(false);
 
 	if (!nodraw)
@@ -2778,7 +2517,10 @@ void CMeterWindow::FadeWindow(int from, int to)
 			}
 			if (from == 0) 
 			{
-				ShowWindow(m_Window, SW_SHOWNOACTIVATE);
+				if (!m_Hidden)
+				{
+					ShowWindow(m_Window, SW_SHOWNOACTIVATE);
+				}
 			}
 		}
 	}
@@ -2789,7 +2531,10 @@ void CMeterWindow::FadeWindow(int from, int to)
 		UpdateTransparency(from, false);
 		if (from == 0) 
 		{
-			ShowWindow(m_Window, SW_SHOWNOACTIVATE);
+			if (!m_Hidden)
+			{
+				ShowWindow(m_Window, SW_SHOWNOACTIVATE);
+			}
 		}
 
 		SetTimer(m_Window, FADETIMER, 10, NULL);
@@ -2846,7 +2591,7 @@ void CMeterWindow::ShowWindowIfAppropriate()
 
 	if(m_WindowHide)
 	{
-		if (!inside && !keyDown)
+		if (!m_Hidden && !inside && !keyDown)
 		{
 			switch(m_WindowHide) 
 			{
@@ -2859,18 +2604,29 @@ void CMeterWindow::ShowWindowIfAppropriate()
 				break;
 
 			case HIDEMODE_FADEIN:
-				if (m_TransparencyValue == 255)
+				if (m_AlphaValue != 255 && m_TransparencyValue == 255)
 				{
 					FadeWindow(255, m_AlphaValue);
 				}
 				break;
 
 			case HIDEMODE_FADEOUT:
-				if (m_TransparencyValue == m_AlphaValue)
+				if (m_AlphaValue != 255 && m_TransparencyValue == m_AlphaValue)
 				{
 					FadeWindow(m_AlphaValue, 255);
 				}
 				break;
+			}
+		}
+	}
+	else
+	{
+		if (!m_Hidden)
+		{
+			if (m_TransparencyValue == 0 || !IsWindowVisible(m_Window))
+			{
+				ShowWindow(m_Window, SW_SHOWNOACTIVATE);
+				FadeWindow(0, m_AlphaValue);
 			}
 		}
 	}
@@ -2898,29 +2654,32 @@ LRESULT CMeterWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 			}
 		}
 
-		// If Alt, shift or control is down, do not hide the window
-		switch(m_WindowHide) 
+		if (!m_Hidden)
 		{
-		case HIDEMODE_HIDE:
-			if (m_TransparencyValue == m_AlphaValue)
+			// If Alt, shift or control is down, do not hide the window
+			switch(m_WindowHide) 
 			{
-				FadeWindow(m_AlphaValue, 0);
-			}
-			break;
+			case HIDEMODE_HIDE:
+				if (!m_NativeTransparency || m_TransparencyValue == m_AlphaValue)
+				{
+					FadeWindow(m_AlphaValue, 0);
+				}
+				break;
 
-		case HIDEMODE_FADEIN:
-			if (m_TransparencyValue == m_AlphaValue)
-			{
-				FadeWindow(m_AlphaValue, 255);
-			}
-			break;
+			case HIDEMODE_FADEIN:
+				if (m_AlphaValue != 255 && m_TransparencyValue == m_AlphaValue)
+				{
+					FadeWindow(m_AlphaValue, 255);
+				}
+				break;
 
-		case HIDEMODE_FADEOUT:
-			if (m_TransparencyValue == 255)
-			{
-				FadeWindow(255, m_AlphaValue);
+			case HIDEMODE_FADEOUT:
+				if (m_AlphaValue != 255 && m_TransparencyValue == 255)
+				{
+					FadeWindow(255, m_AlphaValue);
+				}
+				break;
 			}
-			break;
 		}
 	}
 
@@ -3068,7 +2827,16 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			m_ClickThrough = !m_ClickThrough;
 			WriteConfig();
-			Refresh(false);
+
+			if (!m_ClickThrough)
+			{
+				// Remove transparent flag
+				LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
+				if ((style & WS_EX_TRANSPARENT) != 0)
+				{
+					SetWindowLong(m_Window, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
+				}
+			}
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_DRAGGABLE)
 		{
@@ -3086,8 +2854,8 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 				m_WindowHide = HIDEMODE_NONE;
 			}
 			WriteConfig();
-			Refresh(false);
-		}		
+			UpdateTransparency(m_AlphaValue, false);
+		}
 		else if(wParam == ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN)
 		{
 			if (m_WindowHide == HIDEMODE_NONE)
@@ -3099,7 +2867,7 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 				m_WindowHide = HIDEMODE_NONE;
 			}
 			WriteConfig();
-			Refresh(false);
+			UpdateTransparency(m_AlphaValue, false);
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT)
 		{
@@ -3112,7 +2880,7 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 				m_WindowHide = HIDEMODE_NONE;
 			}
 			WriteConfig();
-			Refresh(false);
+			UpdateTransparency(m_AlphaValue, false);
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_REMEMBERPOSITION)
 		{
@@ -3128,7 +2896,7 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			m_AlphaValue = (int)(255.0 - 230.0 * (double)(wParam - ID_CONTEXT_SKINMENU_TRANSPARENCY_0) / (double)(ID_CONTEXT_SKINMENU_TRANSPARENCY_90 - ID_CONTEXT_SKINMENU_TRANSPARENCY_0));
 			WriteConfig();
-			Refresh(false);
+			UpdateTransparency(m_AlphaValue, false);
 		}
 		else if(wParam == ID_CONTEXT_CLOSESKIN)
 		{
@@ -3197,13 +2965,14 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
 		{
-			std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
+			const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
+			const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
 
 			int screenIndex;
 			bool screenDefined;
 			if (wParam == ID_CONTEXT_SKINMENU_MONITOR_PRIMARY)
 			{
-				screenIndex = c_Monitors.primary;
+				screenIndex = multimonInfo.primary;
 				screenDefined = false;
 			}
 			else
@@ -3366,10 +3135,13 @@ LRESULT CMeterWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 {
 	LPWINDOWPOS wp=(LPWINDOWPOS)lParam;
 
-	if(m_WindowZPosition == ZPOSITION_ONBOTTOM && !m_Refreshing)
+	if (!m_Refreshing)
 	{
-		// do not change the z-order. This keeps the window on bottom.
-		wp->flags|=SWP_NOZORDER;
+		if (m_WindowZPosition == ZPOSITION_ONBOTTOM || m_WindowZPosition == ZPOSITION_ONDESKTOP)
+		{
+			// do not change the z-order. This keeps the window on bottom.
+			wp->flags|=SWP_NOZORDER;
+		}
 	}
 
 	if ((wp->flags & SWP_NOMOVE) == 0) 
@@ -3382,30 +3154,14 @@ LRESULT CMeterWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 			return DefWindowProc(m_Window, m_Message, wParam, lParam);
 		}
 
-		if (m_Dragging)
+		// Convert the client coordinates of the shell window to the screen coordinates
+		if (!m_ChildWindow && m_WindowZPosition == ZPOSITION_ONDESKTOP && (m_Dragging || !m_NativeTransparency) && GetAncestor(m_Window, GA_PARENT) != GetDesktopWindow())
 		{
-			// Convert the client coordinates of the shell window to the screen coordinates
-			if (!m_ChildWindow && m_WindowZPosition == ZPOSITION_ONDESKTOP)
+			POINT pos = {wp->x, wp->y};
+			if (ClientToScreen(GetAncestor(m_Window, GA_PARENT), &pos))
 			{
-				POINT pos = {wp->x, wp->y};
-				if (ClientToScreen(GetAncestor(m_Window, GA_PARENT), &pos))
-				{
-					wp->x = pos.x;
-					wp->y = pos.y;
-				}
-			}
-		}
-		else
-		{
-			// Convert the client coordinates of the shell window to the screen coordinates
-			if (!m_ChildWindow && !m_NativeTransparency && m_WindowZPosition == ZPOSITION_ONDESKTOP)
-			{
-				POINT pos = {wp->x, wp->y};
-				if (ClientToScreen(GetAncestor(m_Window, GA_PARENT), &pos))
-				{
-					wp->x = pos.x;
-					wp->y = pos.y;
-				}
+				wp->x = pos.x;
+				wp->y = pos.y;
 			}
 		}
 
@@ -3459,7 +3215,7 @@ LRESULT CMeterWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 		}
 
 		// Convert the screen coordinates to the client coordinates of the shell window
-		if (!m_ChildWindow && !m_NativeTransparency && m_WindowZPosition == ZPOSITION_ONDESKTOP)
+		if (!m_ChildWindow && m_WindowZPosition == ZPOSITION_ONDESKTOP && GetAncestor(m_Window, GA_PARENT) != GetDesktopWindow())
 		{
 			POINT pos = {wp->x, wp->y};
 			if (ScreenToClient(GetAncestor(m_Window, GA_PARENT), &pos))
@@ -3994,8 +3750,8 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 		if (m_DoubleBuffer)
 		{
 			Color color;
-			m_DoubleBuffer->GetPixel(x, y, &color);
-			if (color.GetA() != 0)
+			Status status = m_DoubleBuffer->GetPixel(x, y, &color);
+			if (status != Ok || color.GetA() > 0)
 			{
 				inside = true;
 			}
@@ -4133,7 +3889,7 @@ LRESULT CMeterWindow::OnMove(WPARAM wParam, LPARAM lParam)
 	m_ScreenY = (SHORT)HIWORD(lParam);
 
 	// Convert the client coordinates of the shell window to the screen coordinates
-	if (!m_ChildWindow && !m_NativeTransparency && m_WindowZPosition == ZPOSITION_ONDESKTOP)
+	if (!m_ChildWindow && m_WindowZPosition == ZPOSITION_ONDESKTOP && GetAncestor(m_Window, GA_PARENT) != GetDesktopWindow())
 	{
 		POINT pos = {m_ScreenX, m_ScreenY};
 		if (ClientToScreen(GetAncestor(m_Window, GA_PARENT), &pos))
@@ -4149,7 +3905,7 @@ LRESULT CMeterWindow::OnMove(WPARAM wParam, LPARAM lParam)
 	}
 
 	// Redraw itself if the window is "On Desktop"
-	if (m_WindowZPosition == ZPOSITION_ONDESKTOP)
+	if (!m_ChildWindow && m_WindowZPosition == ZPOSITION_ONDESKTOP && m_NativeTransparency && GetAncestor(m_Window, GA_PARENT) != GetDesktopWindow())
 	{
 		UpdateTransparency(m_TransparencyValue, false);
 	}

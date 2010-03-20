@@ -643,10 +643,11 @@ bool CMeterImage::Draw(Graphics& graphics)
 			drawH = m_H;
 		}
 
-		//if (m_AntiAlias && m_Rotate != 0.0f)
-		//{
-		//	graphics.SetCompositingQuality(CompositingQualityHighQuality);
-		//}
+		if (!m_AntiAlias)
+		{
+			//graphics.SetInterpolationMode(InterpolationModeNearestNeighbor);
+			graphics.SetPixelOffsetMode(PixelOffsetModeHalf);
+		}
 
 		Rect r(x, y, drawW, drawH);
 		graphics.DrawImage(drawBitmap, r, 0, 0, imageW, imageH, UnitPixel);

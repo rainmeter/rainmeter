@@ -20,6 +20,7 @@
 #include "ConfigParser.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
+#include "System.h"
 #include <algorithm>
 
 extern CRainmeter* Rainmeter;
@@ -219,9 +220,9 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 		SetMonitorVariable(L"VSCREENAREAHEIGHT", buffer);
 	}
 
-	if (CMeterWindow::GetMonitorCount() > 0)
+	if (CSystem::GetMonitorCount() > 0)
 	{
-		const MULTIMONITOR_INFO& multimonInfo = CMeterWindow::GetMultiMonitorInfo();
+		const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
 		const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
 
 		for (size_t i = 0; i < monitors.size(); i++)
@@ -290,12 +291,12 @@ void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 
 	if (meterWindow)
 	{
-		if (CMeterWindow::GetMonitorCount() > 0)
+		if (CSystem::GetMonitorCount() > 0)
 		{
 			TCHAR buffer[256];
 			int w1, w2, s1, s2;
 
-			const MULTIMONITOR_INFO& multimonInfo = CMeterWindow::GetMultiMonitorInfo();
+			const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
 			const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
 
 			if (meterWindow->GetXScreenDefined())

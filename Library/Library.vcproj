@@ -2611,6 +2611,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\System.cpp"
+				>
+			</File>
+			<File
 				RelativePath="TrayWindow.cpp"
 				>
 				<FileConfiguration
@@ -2875,6 +2879,10 @@
 			</File>
 			<File
 				RelativePath=".\StdAfx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\System.h"
 				>
 			</File>
 			<File

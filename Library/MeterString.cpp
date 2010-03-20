@@ -717,4 +717,60 @@ std::wstring StringToProper(std::wstring str)
 	return str;//return the converted string
 }
 
+/*
+** EnumerateInstalledFontFamilies
+**
+** Static helper to log all installed font families.
+**
+*/
+void CMeterString::EnumerateInstalledFontFamilies()
+{
+	INT fontCount;
+	InstalledFontCollection fontCollection;
+
+	if (Ok == fontCollection.GetLastStatus())
+	{
+		fontCount = fontCollection.GetFamilyCount();
+		if (fontCount > 0)
+		{
+			INT fontFound;
+
+			FontFamily* fontFamilies = new FontFamily[fontCount];
+
+			if (Ok == fontCollection.GetFamilies(fontCount, fontFamilies, &fontFound))
+			{
+				std::wstring fonts;
+				for (INT i = 0; i < fontCount; i++)
+				{
+					WCHAR familyName[LF_FACESIZE];
+					if (Ok == fontFamilies[i].GetFamilyName(familyName))
+					{
+						fonts += familyName;
+					}
+					else
+					{
+						fonts += L"***";
+					}
+					fonts += L", ";
+				}
+				LSLog(LOG_DEBUG, L"Rainmeter", fonts.c_str());
+			}
+			else
+			{
+				LSLog(LOG_DEBUG, L"Rainmeter", L"Failed to enumerate installed font families: GetFamilies() failed.");
+			}
+
+			delete [] fontFamilies;
+		}
+		else
+		{
+			LSLog(LOG_DEBUG, L"Rainmeter", L"There are no installed font families!");
+		}
+	}
+	else
+	{
+		LSLog(LOG_DEBUG, L"Rainmeter", L"Failed to enumerate installed font families: InstalledFontCollection() failed.");
+	}
+}
+
 // EOF

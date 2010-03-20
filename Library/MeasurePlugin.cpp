@@ -116,16 +116,34 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	m_PluginName = Rainmeter->GetPluginPath() + m_PluginName;
 
+	SetLastError(ERROR_SUCCESS);
 	m_Plugin = LoadLibrary(m_PluginName.c_str());
 	
 	if(m_Plugin == NULL)
 	{
+		if (CRainmeter::GetDebug())
+		{
+			DWORD err = GetLastError();
+			DebugLog(L"Plugin: Unable to load plugin: \"%s\", ErrorCode=%i", m_PluginName.c_str(), err);
+		}
+
 		// Try to load from Rainmeter's folder
 		pos = m_PluginName.rfind(L'\\');
 		if (pos != std::wstring::npos) 
 		{
 			std::wstring pluginName = Rainmeter->GetPath() + m_PluginName.substr(pos + 1);
+
+			SetLastError(ERROR_SUCCESS);
 			m_Plugin = LoadLibrary(pluginName.c_str());
+
+			if (m_Plugin == NULL)
+			{
+				if (CRainmeter::GetDebug())
+				{
+					DWORD err = GetLastError();
+					DebugLog(L"Plugin: Unable to load plugin: \"%s\", ErrorCode=%i", pluginName.c_str(), err);
+				}
+			}
 		}
 
 		if (m_Plugin == NULL)

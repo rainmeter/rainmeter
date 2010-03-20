@@ -54,11 +54,12 @@ public:
 	std::wstring& GetFilename() { return m_Filename; }
 	const std::vector<std::wstring>& GetSections();
 
-
 	// Returns an int if the formula was read successfully, -1 for failure.
 	int ReadFormula(std::wstring& result, double* number);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring delimiters);
+	static double ParseDouble(const std::wstring& string, double defValue, bool rejectExp = false);
+	static Gdiplus::Color ParseColor(LPCTSTR string);
 
 	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
@@ -67,9 +68,6 @@ private:
 	void SetDefaultVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow);
 	void ReadVariables();
 	void ReplaceVariables(std::wstring& result);
-
-	double ParseDouble(const std::wstring& string, double defValue, bool rejectExp = false);
-	Gdiplus::Color ParseColor(LPCTSTR string);
 
 	void ReadIniFile(const std::wstring& strFileName, int depth = 0);
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);

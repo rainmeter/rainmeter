@@ -41,6 +41,7 @@ public:
 	virtual void BindMeasure(std::list<CMeasure*>& measures);
 
 	static void FreeFontCache();
+	static void EnumerateInstalledFontFamilies();
 
 private:
 	enum TEXTSTYLE

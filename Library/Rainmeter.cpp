@@ -18,6 +18,7 @@
 
 #include "StdAfx.h"
 #include "Rainmeter.h"
+#include "System.h"
 #include "Error.h"
 #include "AboutDialog.h"
 #include "MeasureNet.h"
@@ -244,11 +245,55 @@ void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 			else
 			{
 				// No config defined -> apply to all.
+
+				// Make the sending order by using order of the config sections
+				std::vector<std::wstring> sections;
+				{
+					CConfigParser parser;
+					parser.Initialize(Rainmeter->GetIniFile().c_str(), Rainmeter);
+					sections = parser.GetSections();
+				}
+				std::vector<CMeterWindow*> windows(sections.size(), NULL);
+				std::vector<CMeterWindow*> windowsMissing;
+
 				std::map<std::wstring, CMeterWindow*>::iterator iter = Rainmeter->GetAllMeterWindows().begin();
 
 				for (; iter != Rainmeter->GetAllMeterWindows().end(); iter++)
 				{
-					((*iter).second)->RunBang(bang, argument.c_str());
+					CMeterWindow* window = (*iter).second;
+					bool find = false;
+
+					for (size_t i = 0; i < windows.size(); i++)
+					{
+						if (windows[i] == NULL && wcsicmp(sections[i].c_str(), window->GetSkinName().c_str()) == 0)
+						{
+							windows[i] = window;
+							find = true;
+							break;
+						}
+					}
+
+					if (!find)  // Not found for some reasons
+					{
+						windowsMissing.push_back(window);
+					}
+				}
+
+				// Apply to all
+				std::vector<CMeterWindow*>::const_reverse_iterator iter2 = windows.rbegin();
+				for ( ; iter2 != windows.rend(); iter2++)
+				{
+					if (*iter2)
+					{
+						(*iter2)->RunBang(bang, argument.c_str());
+					}
+				}
+				for (size_t i = 0; i < windowsMissing.size(); i++)
+				{
+					if (windowsMissing[i])
+					{
+						windowsMissing[i]->RunBang(bang, argument.c_str());
+					}
 				}
 			}
 		}
@@ -291,6 +336,39 @@ void RainmeterShow(HWND, const char* arg)
 void RainmeterToggle(HWND, const char* arg)
 {
 	BangWithArgs(BANG_TOGGLE, ConvertToWide(arg).c_str(), 0);
+}
+
+/*
+** RainmeterHideFade
+**
+** Callback for the !RainmeterHideFade bang
+**
+*/
+void RainmeterHideFade(HWND, const char* arg)
+{
+	BangWithArgs(BANG_HIDEFADE, ConvertToWide(arg).c_str(), 0);
+}
+
+/*
+** RainmeterShowFade
+**
+** Callback for the !RainmeterShowFade bang
+**
+*/
+void RainmeterShowFade(HWND, const char* arg)
+{
+	BangWithArgs(BANG_SHOWFADE, ConvertToWide(arg).c_str(), 0);
+}
+
+/*
+** RainmeterToggleFade
+**
+** Callback for the !RainmeterToggleFade bang
+**
+*/
+void RainmeterToggleFade(HWND, const char* arg)
+{
+	BangWithArgs(BANG_TOGGLEFADE, ConvertToWide(arg).c_str(), 0);
 }
 
 /*
@@ -512,6 +590,17 @@ void RainmeterZPos(HWND, const char* arg)
 }
 
 /*
+** RainmeterSetTransparency
+**
+** Callback for the !RainmeterSetTransparency bang
+**
+*/
+void RainmeterSetTransparency(HWND, const char* arg)
+{
+	BangWithArgs(BANG_SETTRANSPARENCY, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
 ** RainmeterLsHook
 **
 ** Callback for the !RainmeterLsHook bang
@@ -661,6 +750,8 @@ CRainmeter::~CRainmeter()
 	CMeasureNet::FinalizeNewApi();
 
 	CMeterString::FreeFontCache();
+
+	CSystem::Finalize();
 
 	GdiplusShutdown(m_GDIplusToken);
 }
@@ -865,6 +956,18 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		CheckSkinVersions();
 	}
 
+	// Read Debug first
+	c_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, m_IniFile.c_str());
+
+	CSystem::Initialize(Instance);
+	CMeasureNet::InitializeNewApi();
+
+	if (c_Debug)
+	{
+		LSLog(LOG_DEBUG, L"Rainmeter", L"Enumerating installed font families ...");
+		CMeterString::EnumerateInstalledFontFamilies();
+	}
+
 	// Tray must exist before configs are read
 	m_TrayWindow = new CTrayWindow(m_Instance);
 
@@ -883,8 +986,6 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	{
 		CheckUpdate();
 	}
-
-	CMeasureNet::InitializeNewApi();
 
 	ResetStats();
 	ReadStats();
@@ -915,6 +1016,9 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterHide", RainmeterHide);
 		AddBangCommand("!RainmeterShow", RainmeterShow);
 		AddBangCommand("!RainmeterToggle", RainmeterToggle);
+		AddBangCommand("!RainmeterHideFade", RainmeterHideFade);
+		AddBangCommand("!RainmeterShowFade", RainmeterShowFade);
+		AddBangCommand("!RainmeterToggleFade", RainmeterToggleFade);
 		AddBangCommand("!RainmeterHideMeter", RainmeterHideMeter);
 		AddBangCommand("!RainmeterShowMeter", RainmeterShowMeter);
 		AddBangCommand("!RainmeterToggleMeter", RainmeterToggleMeter);
@@ -926,6 +1030,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterDeactivateConfig", RainmeterDeactivateConfig);
 		AddBangCommand("!RainmeterMove", RainmeterMove);
 		AddBangCommand("!RainmeterZPos", RainmeterZPos);
+		AddBangCommand("!RainmeterSetTransparency", RainmeterSetTransparency);
 		AddBangCommand("!RainmeterLsBoxHook", RainmeterLsHook);
 		AddBangCommand("!RainmeterAbout", RainmeterAbout);
 		AddBangCommand("!RainmeterResetStats", RainmeterResetStats);
@@ -935,12 +1040,54 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterSetVariable", RainmeterSetVariable);
 	}
 
-	// Create meter windows for active configs
+	// Make the starting order by using order of the config sections
+	std::vector<std::wstring> sections;
+	{
+		CConfigParser parser;
+		parser.Initialize(m_IniFile.c_str(), this);
+		sections = parser.GetSections();
+	}
+	std::vector<std::pair<int, int> > startup(sections.size(), std::pair<int, int>(0, 0));
+	std::vector<std::pair<int, int> > startupMissing;
+
 	for (size_t i = 0; i < m_ConfigStrings.size(); i++)
 	{
 		if (m_ConfigStrings[i].active > 0 && m_ConfigStrings[i].active <= (int)m_ConfigStrings[i].iniFiles.size())
 		{
-			ActivateConfig(i, m_ConfigStrings[i].active - 1);
+			bool find = false;
+
+			for (size_t j = 0; j < startup.size(); j++)
+			{
+				if (startup[j].second == 0 && wcsicmp(sections[j].c_str(), m_ConfigStrings[i].config.c_str()) == 0)
+				{
+					startup[j].first = i;
+					startup[j].second = m_ConfigStrings[i].active;
+					find = true;
+					break;
+				}
+			}
+
+			if (!find)  // Not found for some reasons
+			{
+				startupMissing.push_back(std::pair<int, int>(i, m_ConfigStrings[i].active));
+			}
+		}
+	}
+
+	// Create meter windows for active configs
+	std::vector<std::pair<int, int> >::const_reverse_iterator iter = startup.rbegin();
+	for ( ; iter != startup.rend(); iter++)
+	{
+		if ((*iter).second > 0)
+		{
+			ActivateConfig((*iter).first, (*iter).second - 1);
+		}
+	}
+	for (size_t i = 0; i < startupMissing.size(); i++)
+	{
+		if (startupMissing[i].second > 0)
+		{
+			ActivateConfig(startupMissing[i].first, startupMissing[i].second - 1);
 		}
 	}
 
@@ -1278,7 +1425,8 @@ bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
 	if (bLater)
 	{
 		m_DelayDeleteList.push_back(meterWindow);
-		meterWindow->FadeWindow(meterWindow->GetAlphaValue(), 0);	// Fade out the window
+		meterWindow->RunBang(BANG_HIDEFADE, NULL);	// Fade out the window
+		//meterWindow->FadeWindow(meterWindow->GetAlphaValue(), 0);	// Fade out the window
 	}
 	else
 	{
@@ -1344,6 +1492,9 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainmeterHide");
 		RemoveBangCommand("!RainmeterShow");
 		RemoveBangCommand("!RainmeterToggle");
+		RemoveBangCommand("!RainmeterHideFade");
+		RemoveBangCommand("!RainmeterShowFade");
+		RemoveBangCommand("!RainmeterToggleFade");
 		RemoveBangCommand("!RainmeterHideMeter");
 		RemoveBangCommand("!RainmeterShowMeter");
 		RemoveBangCommand("!RainmeterToggleMeter");
@@ -1355,6 +1506,7 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainmeterToggleConfig");
 		RemoveBangCommand("!RainmeterMove");
 		RemoveBangCommand("!RainmeterZPos");
+		RemoveBangCommand("!RainmeterSetTransparency");
 		RemoveBangCommand("!RainmeterLsBoxHook");
 		RemoveBangCommand("!RainmeterAbout");
 		RemoveBangCommand("!RainmeterResetStats");
@@ -1518,6 +1670,18 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_TOGGLE, arg.c_str(), 0);
 	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterHideFade") == 0)
+	{
+		BangWithArgs(BANG_HIDEFADE, arg.c_str(), 0);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterShowFade") == 0)
+	{
+		BangWithArgs(BANG_SHOWFADE, arg.c_str(), 0);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleFade") == 0)
+	{
+		BangWithArgs(BANG_TOGGLEFADE, arg.c_str(), 0);
+	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterHideMeter") == 0)
 	{
 		BangWithArgs(BANG_HIDEMETER, arg.c_str(), 1);
@@ -1565,6 +1729,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	else if (wcsicmp(bang.c_str(), L"!RainmeterZPos") == 0)
 	{
 		BangWithArgs(BANG_ZPOS, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterSetTransparency") == 0)
+	{
+		BangWithArgs(BANG_SETTRANSPARENCY, arg.c_str(), 1);
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterAbout") == 0)
 	{
@@ -1778,9 +1946,6 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 */
 void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 {
-	// Read Debug first
-	c_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, iniFile.c_str());
-
 	CConfigParser parser;
 	parser.Initialize(iniFile.c_str(), this);
 
@@ -1891,34 +2056,34 @@ bool CRainmeter::SetActiveConfig(std::wstring& skinName, std::wstring& skinIni)
 ** Refreshes Rainmeter. If argument is given the config is refreshed
 ** otherwise all active meters are refreshed
 */
-void CRainmeter::Refresh(const WCHAR* arg)
-{
-	std::wstring config, iniFile;
-
-	try 
-	{
-		if (arg != NULL && wcslen(arg) > 0) 
-		{
-			std::wstring config = arg;
-			CMeterWindow* meterWindow = GetMeterWindow(config);
-			meterWindow->Refresh(false);
-		}
-		else
-		{
-			std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
-
-			// Refresh all
-			for (; iter != m_Meters.end(); iter++)
-			{
-				(*iter).second->Refresh(false);
-			}
-		}
-	} 
-	catch(CError& error) 
-	{
-		MessageBox(NULL, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-	}
-}
+//void CRainmeter::Refresh(const WCHAR* arg)
+//{
+//	std::wstring config, iniFile;
+//
+//	try 
+//	{
+//		if (arg != NULL && wcslen(arg) > 0) 
+//		{
+//			std::wstring config = arg;
+//			CMeterWindow* meterWindow = GetMeterWindow(config);
+//			meterWindow->Refresh(false);
+//		}
+//		else
+//		{
+//			std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
+//
+//			// Refresh all
+//			for (; iter != m_Meters.end(); iter++)
+//			{
+//				(*iter).second->Refresh(false);
+//			}
+//		}
+//	} 
+//	catch(CError& error) 
+//	{
+//		MessageBox(NULL, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+//	}
+//}
 
 /*
 ** ReadStats
@@ -2313,11 +2478,11 @@ HMENU CRainmeter::CreateMonitorMenu(CMeterWindow* meterWindow)
 	AppendMenu(monitorMenu, flags, ID_MONITOR_FIRST, L"@0: Virtual screen");
 
 	// for the "Specified monitor" (@n)
-	if (CMeterWindow::GetMonitorCount() > 0)
+	if (CSystem::GetMonitorCount() > 0)
 	{
 		AppendMenu(monitorMenu, MF_SEPARATOR, 0, NULL);
 
-		const MULTIMONITOR_INFO& multimonInfo = CMeterWindow::GetMultiMonitorInfo();
+		const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
 		const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
 
 		for (size_t i = 0; i < monitors.size(); i++)
