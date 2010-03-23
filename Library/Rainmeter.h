@@ -112,6 +112,7 @@ public:
 	CTrayWindow* GetTrayWindow() { return m_TrayWindow; };
 
 	CMeterWindow* GetMeterWindow(const std::wstring& config);
+	CMeterWindow* GetMeterWindow(HWND hwnd);
 	std::map<std::wstring, CMeterWindow*>& GetAllMeterWindows() { return m_Meters; };
 	const std::vector<CONFIG>& GetAllConfigs() { return m_ConfigStrings; };
 	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; };

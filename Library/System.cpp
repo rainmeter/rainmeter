@@ -581,7 +581,8 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 
 	if (GetClassName(hwnd, className, 128) > 0 &&
 		wcscmp(className, L"RainmeterMeterWindow") == 0 &&
-		(Window = (CMeterWindow*)GetProp(hwnd, L"RAINMETER")))
+		Rainmeter &&
+		(Window = Rainmeter->GetMeterWindow(hwnd)))
 	{
 		if (Window->GetWindowZPosition() == ZPOSITION_ONDESKTOP)
 		{

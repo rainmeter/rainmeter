@@ -1472,6 +1472,22 @@ CMeterWindow* CRainmeter::GetMeterWindow(const std::wstring& config)
 
 	return NULL;
 }
+
+CMeterWindow* CRainmeter::GetMeterWindow(HWND hwnd)
+{
+	std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
+
+	for (; iter != m_Meters.end(); iter++)
+	{
+		if ((*iter).second->GetWindow() == hwnd)
+		{
+			return (*iter).second;
+		}
+	}
+
+	return NULL;
+}
+
 /* 
 ** Quit
 **
