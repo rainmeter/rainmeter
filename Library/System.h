@@ -56,10 +56,14 @@ public:
 	static bool GetDwmCompositionEnabled() { return c_DwmCompositionEnabled; }
 	static bool GetShowDesktop() { return c_ShowDesktop; }
 
-	static HWND GetShellDesktopWindow();
-	static HWND GetWorkerW();
+	static HWND GetShellDesktopWindow(bool findWorkerW = false);
+	static HWND GetWorkerW() { return GetShellDesktopWindow(true); }
+
+	static HWND GetHelperWindow() { return c_HelperWindow; }
+	static void PrepareHelperWindow(HWND WorkerW);
 
 private:
+	static void CALLBACK MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static BOOL DwmIsCompositionEnabled();
 
@@ -67,9 +71,16 @@ private:
 	static void ClearMultiMonitorInfo() { c_Monitors.monitors.clear(); }
 	static void UpdateWorkareaInfo();
 
+	static HWND GetDefaultShellWindow();
 	static void ChangeZPosInOrder();
 
+	static void CheckDesktopState(HWND WorkerW);
+	static bool BelongToSameProcess(HWND hwndA, HWND hwndB);
+
 	static HWND c_Window;
+	static HWND c_HelperWindow;
+
+	static HWINEVENTHOOK c_WinEventHook;
 
 	static MULTIMONITOR_INFO c_Monitors;		// Multi-Monitor info
 

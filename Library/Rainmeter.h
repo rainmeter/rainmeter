@@ -52,6 +52,7 @@ void RainmeterActivateConfig(HWND, const char* arg);
 void RainmeterDeactivateConfig(HWND, const char* arg);
 void RainmeterToggleConfig(HWND, const char* arg);
 void RainmeterRefresh(HWND, const char* arg);
+void RainmeterRefreshApp(HWND, const char* arg);
 void RainmeterRedraw(HWND, const char* arg);
 void RainmeterToggleMeasure(HWND, const char* arg);
 void RainmeterEnableMeasure(HWND, const char* arg);
@@ -92,6 +93,13 @@ public:
 		int active;
 	};
 
+	struct CONFIGORDER
+	{
+		std::wstring config;
+		int id;
+		int active;
+	};
+
 	struct CONFIGMENU
 	{
 		std::wstring name;
@@ -115,6 +123,7 @@ public:
 	CMeterWindow* GetMeterWindow(HWND hwnd);
 	std::map<std::wstring, CMeterWindow*>& GetAllMeterWindows() { return m_Meters; };
 	const std::vector<CONFIG>& GetAllConfigs() { return m_ConfigStrings; };
+	const std::multimap<int, CONFIGORDER>& GetAllConfigOrders() { return m_ConfigOrders; }
 	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; };
 
 	void ActivateConfig(int configIndex, int iniIndex);
@@ -163,6 +172,8 @@ public:
 	std::wstring ParseCommand(const WCHAR* command, CMeterWindow* meterWindow);
 	void ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow);
 
+	void RefreshAll();
+
 	void ClearDeleteLaterList();
 
 	static PLATFORM IsNT();
@@ -175,8 +186,9 @@ private:
 	void ScanForConfigs(std::wstring& path);
 	void ScanForThemes(std::wstring& path);
 	void ReadGeneralSettings(std::wstring& path);
+	void SetConfigOrder(const std::wstring& config, int index, int active);
+	int GetLoadOrder(const std::wstring& config);
 	bool SetActiveConfig(std::wstring& skinName, std::wstring& skinIni);
-	//void Refresh(const WCHAR* arg);
 	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index);
 	void ChangeSkinIndex(HMENU subMenu, int index);
 	int ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse);
@@ -193,6 +205,7 @@ private:
 
 	std::vector<CONFIG> m_ConfigStrings;	    // All configs found in the given folder
 	std::vector<CONFIGMENU> m_ConfigMenu;
+	std::multimap<int, CONFIGORDER> m_ConfigOrders;
 	std::map<std::wstring, CMeterWindow*> m_Meters;			// The meter windows
 	std::vector<std::wstring> m_Themes;
 

@@ -77,6 +77,8 @@ CTrayWindow::CTrayWindow(HINSTANCE instance)
 	SetWindowLong(m_Window, GWL_USERDATA, magicDWord);
 #endif
 
+	SetWindowPos(m_Window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+
 	m_TrayPos = 0;
 	memset(m_TrayValues, 0, sizeof(double) * TRAYICON_SIZE);
 }
@@ -408,11 +410,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if(wParam == ID_CONTEXT_REFRESH)
 			{
-				// Read skins and settings
-				Rainmeter->ReloadSettings();
-
-				// Refresh all
-				RainmeterRefresh(tray->GetWindow(), NULL);
+				PostMessage(tray->GetWindow(), WM_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
 			} 
 			else if(wParam == ID_CONTEXT_SHOWLOGFILE)
 			{
@@ -624,6 +622,14 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			tray->ModifyTrayIcon(tray->m_Measure->GetRelativeValue());
 		}
 		break;
+
+	case WM_DELAYED_REFRESH_ALL:
+		if (Rainmeter)
+		{
+			// Refresh all
+			Rainmeter->RefreshAll();
+		}
+		return 0;
 
 	case WM_DESTROY:
 		if (Rainmeter->GetDummyLitestep()) PostQuitMessage(0);

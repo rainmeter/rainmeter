@@ -20,22 +20,31 @@
 #include "System.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
+#include "MeasureNet.h"
 #include "Error.h"
+
+#define DEBUG_VERBOSE  (0)  // Set 1 if you need verbose logging.
 
 enum TIMER
 {
 	TIMER_SHOWDESKTOP = 1,
-	TIMER_COMPOSITION = 2
+	TIMER_COMPOSITION = 2,
+	TIMER_NETSTATS    = 3
 };
 enum INTERVAL
 {
 	INTERVAL_SHOWDESKTOP = 250,
-	INTERVAL_COMPOSITION = 250
+	INTERVAL_COMPOSITION = 250,
+	INTERVAL_NETSTATS    = 10000
 };
 
 MULTIMONITOR_INFO CSystem::c_Monitors = { 0 };
 
 HWND CSystem::c_Window = NULL;
+HWND CSystem::c_HelperWindow = NULL;
+
+HWINEVENTHOOK CSystem::c_WinEventHook = NULL;
+
 bool CSystem::c_DwmCompositionEnabled = false;
 bool CSystem::c_ShowDesktop = false;
 
@@ -44,7 +53,7 @@ extern CRainmeter* Rainmeter;
 /*
 ** Initialize
 **
-** Creates a window to detect changes in the system.
+** Creates a helper window to detect changes in the system.
 **
 */
 void CSystem::Initialize(HINSTANCE instance)
@@ -59,7 +68,7 @@ void CSystem::Initialize(HINSTANCE instance)
 	c_Window = CreateWindowEx(
 		WS_EX_TOOLWINDOW,
 		L"RainmeterSystemClass",
-		NULL,
+		L"SystemWindow",
 		WS_POPUP,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -70,19 +79,43 @@ void CSystem::Initialize(HINSTANCE instance)
 		instance,
 		NULL);
 
-	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	c_HelperWindow = CreateWindowEx(
+		WS_EX_TOOLWINDOW,
+		L"RainmeterSystemClass",
+		L"PositioningHelperWindow",
+		WS_POPUP,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		NULL,
+		NULL,
+		instance,
+		NULL);
 
 #ifndef _WIN64
 	SetWindowLong(c_Window, GWL_USERDATA, magicDWord);
+	SetWindowLong(c_HelperWindow, GWL_USERDATA, magicDWord);
 #endif
+
+	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
 	SetMultiMonitorInfo();
 
 	c_DwmCompositionEnabled = (DwmIsCompositionEnabled() == TRUE);
-	if (c_DwmCompositionEnabled)
-	{
-		SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
-	}
+
+	c_WinEventHook = SetWinEventHook(
+		EVENT_SYSTEM_FOREGROUND,
+		EVENT_SYSTEM_FOREGROUND,
+		NULL,
+		MyWinEventProc,
+		0,
+		0,
+		WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+
+	SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
+	SetTimer(c_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, NULL);
 }
 
 /*
@@ -95,7 +128,11 @@ void CSystem::Finalize()
 {
 	KillTimer(c_Window, TIMER_SHOWDESKTOP);
 	KillTimer(c_Window, TIMER_COMPOSITION);
+	KillTimer(c_Window, TIMER_NETSTATS);
 
+	if (c_WinEventHook) UnhookWinEvent(c_WinEventHook);
+
+	if (c_HelperWindow) DestroyWindow(c_HelperWindow);
 	if (c_Window) DestroyWindow(c_Window);
 }
 
@@ -491,102 +528,143 @@ void CSystem::UpdateWorkareaInfo()
 }
 
 /*
-** GetShellDesktopWindow
+** GetDefaultShellWindow
 **
-** Finds the Shell's desktop window.
+** Finds the Default Shell's window.
 **
 */
-HWND CSystem::GetShellDesktopWindow()
+HWND CSystem::GetDefaultShellWindow()
 {
-	HWND DesktopW = NULL;
+	HWND ShellW = GetShellWindow();
 
-	HWND hwnd = FindWindow(L"Progman", L"Program Manager");
-	if (!hwnd) return NULL;  // Default Shell (Explorer) not started
-
-	if (!(hwnd = FindWindowEx(hwnd, NULL, L"SHELLDLL_DefView", L"")) ||
-		!(DesktopW = FindWindowEx(hwnd, NULL, L"SysListView32", L"FolderView")))  // for Windows 7 (with Aero)
+	if (ShellW)
 	{
-		HWND WorkerW = NULL;
-		while (WorkerW = FindWindowEx(NULL, WorkerW, L"WorkerW", L""))
+		HWND hwnd = NULL;
+		while (hwnd = FindWindowEx(NULL, hwnd, L"Progman", NULL))
 		{
-			if ((hwnd = FindWindowEx(WorkerW, NULL, L"SHELLDLL_DefView", L"")) &&
-				(DesktopW = FindWindowEx(hwnd, NULL, L"SysListView32", L"FolderView"))) break;
+			if (hwnd == ShellW) return ShellW;
 		}
 	}
 
-	return DesktopW;
+	return NULL;
 }
 
 /*
-** GetWorkerW
+** GetShellDesktopWindow
 **
-** Finds the WorkerW window.
-** If the Progman or WorkerW window is not found, this function returns NULL.
+** Finds the Shell's desktop window or WorkerW window.
+** If the window is not found, this function returns NULL.
 ** 
-** In Windows Vista / 7 (without Aero):
+** Note for WorkerW:
+**
+** In Earlier Windows / 7 (without Aero):
 ** This function returns a topmost window handle which is visible.
 **
 ** In Windows 7 (with Aero):
 ** This function returns a window handle which has the "SHELLDLL_DefView".
 **
 */
-HWND CSystem::GetWorkerW()
+HWND CSystem::GetShellDesktopWindow(bool findWorkerW)
 {
-	HWND WorkerW = NULL;
+	HWND DesktopW = NULL, hwnd;
 
-	HWND hwnd = FindWindow(L"Progman", L"Program Manager");
-	if (!hwnd) return NULL;  // Default Shell (Explorer) not started
+	HWND ShellW = GetDefaultShellWindow();
+	if (!ShellW) return NULL;  // Default Shell (Explorer) not running
 
-	if ((hwnd = FindWindowEx(hwnd, NULL, L"SHELLDLL_DefView", L"")) &&
-		(hwnd = FindWindowEx(hwnd, NULL, L"SysListView32", L"FolderView")))  // for Windows Vista / 7 (without Aero)
+	if ((hwnd = FindWindowEx(ShellW, NULL, L"SHELLDLL_DefView", L"")) &&
+		(DesktopW = FindWindowEx(hwnd, NULL, L"SysListView32", NULL)))  // In Earlier Windows / 7 (without Aero)
 	{
-		while (WorkerW = FindWindowEx(NULL, WorkerW, L"WorkerW", L""))
+		if (findWorkerW)
 		{
-			if (IsWindowVisible(WorkerW))
+			HWND WorkerW = NULL;
+			while (WorkerW = FindWindowEx(NULL, WorkerW, L"WorkerW", L""))
 			{
-				// Check whether WorkerW covers whole of the screens
-				WINDOWPLACEMENT wp = {sizeof(WINDOWPLACEMENT)};
-				GetWindowPlacement(WorkerW, &wp);
+				if (IsWindowVisible(WorkerW) && BelongToSameProcess(ShellW, WorkerW))
+				{
+					// Check whether WorkerW covers whole of the screens
+					WINDOWPLACEMENT wp = {sizeof(WINDOWPLACEMENT)};
+					GetWindowPlacement(WorkerW, &wp);
 
-				if (wp.rcNormalPosition.left == c_Monitors.vsL &&
-					wp.rcNormalPosition.top == c_Monitors.vsT &&
-					(wp.rcNormalPosition.right - wp.rcNormalPosition.left) == c_Monitors.vsW &&
-					(wp.rcNormalPosition.bottom - wp.rcNormalPosition.top) == c_Monitors.vsH) break;
+					if (wp.rcNormalPosition.left == c_Monitors.vsL &&
+						wp.rcNormalPosition.top == c_Monitors.vsT &&
+						(wp.rcNormalPosition.right - wp.rcNormalPosition.left) == c_Monitors.vsW &&
+						(wp.rcNormalPosition.bottom - wp.rcNormalPosition.top) == c_Monitors.vsH)
+					{
+						return WorkerW;
+					}
+				}
+			}
+		}
+		else
+		{
+			if (BelongToSameProcess(ShellW, DesktopW))
+			{
+				return DesktopW;
 			}
 		}
 	}
-	else  // for Windows 7 (with Aero)
+	else  // In Windows 7 (with Aero)
 	{
+		HWND WorkerW = NULL;
 		while (WorkerW = FindWindowEx(NULL, WorkerW, L"WorkerW", L""))
 		{
-			if ((hwnd = FindWindowEx(WorkerW, NULL, L"SHELLDLL_DefView", L"")) &&
-				FindWindowEx(hwnd, NULL, L"SysListView32", L"FolderView")) break;
+			if (BelongToSameProcess(ShellW, WorkerW))
+			{
+				if ((hwnd = FindWindowEx(WorkerW, NULL, L"SHELLDLL_DefView", L"")) &&
+					(DesktopW = FindWindowEx(hwnd, NULL, L"SysListView32", NULL)))
+				{
+					if (findWorkerW)
+					{
+						return WorkerW;
+					}
+					else
+					{
+						return DesktopW;
+					}
+				}
+			}
 		}
 	}
 
-	return WorkerW;
+	return NULL;
+}
+
+/*
+** BelongToSameProcess
+**
+** Checks whether the given windows belong to the same process.
+**
+*/
+bool CSystem::BelongToSameProcess(HWND hwndA, HWND hwndB)
+{
+	DWORD procAId = 0, procBId = 0;
+
+	GetWindowThreadProcessId(hwndA, &procAId);
+	GetWindowThreadProcessId(hwndB, &procBId);
+
+	return (procAId == procBId);
 }
 
 /*
 ** MyEnumWindowsProc
 **
-** Retrieves the Rainmeter meter window pinned on desktop in Z-order.
+** Retrieves the Rainmeter's meter windows in Z-order.
 **
 */
 BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
-	bool logging = false;  // Set true if you need verbose logging.
+	bool logging = CRainmeter::GetDebug() && DEBUG_VERBOSE;
 	WCHAR className[128] = {0};
 	CMeterWindow* Window;
 
 	if (GetClassName(hwnd, className, 128) > 0 &&
 		wcscmp(className, L"RainmeterMeterWindow") == 0 &&
-		Rainmeter &&
-		(Window = Rainmeter->GetMeterWindow(hwnd)))
+		Rainmeter && (Window = Rainmeter->GetMeterWindow(hwnd)))
 	{
-		if (Window->GetWindowZPosition() == ZPOSITION_ONDESKTOP)
+		ZPOSITION zPos = Window->GetWindowZPosition();
+		if (zPos == ZPOSITION_ONDESKTOP)
 		{
-			if (logging) DebugLog(L"+ [%c] 0x%08X : %s (Name: \"%s\")", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetSkinName().c_str());
+			if (logging) DebugLog(L"+ [%c] 0x%08X : %s (Name: \"%s\", zPos=%i)", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetSkinName().c_str(), (int)zPos);
 
 			if (lParam)
 			{
@@ -595,7 +673,7 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 		}
 		else
 		{
-			if (logging) DebugLog(L"- [%c] 0x%08X : %s (Name: \"%s\")", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetSkinName().c_str());
+			if (logging) DebugLog(L"- [%c] 0x%08X : %s (Name: \"%s\", zPos=%i)", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetSkinName().c_str(), (int)zPos);
 		}
 	}
 	else
@@ -616,42 +694,146 @@ void CSystem::ChangeZPosInOrder()
 {
 	if (Rainmeter)
 	{
-		bool logging = false;  // Set true if you need verbose logging.
+		bool logging = CRainmeter::GetDebug() && DEBUG_VERBOSE;
 		std::vector<CMeterWindow*> windowsInZOrder;
 
-		if (logging) LSLog(LOG_DEBUG, L"Rainmeter", L"1: -----");
+		if (logging) LSLog(LOG_DEBUG, L"Rainmeter", L"1: ----- BEFORE -----");
 
-		// Retrieve the Rainmeter meter window in Z-order
-		if (logging) LSLog(LOG_DEBUG, L"Rainmeter", L" [Top-level window]");
+		// Retrieve the Rainmeter's meter windows in Z-order
 		EnumWindows(MyEnumWindowsProc, (LPARAM)(&windowsInZOrder));
-
-		HWND DesktopW = GetShellDesktopWindow();
-		if (DesktopW)
-		{
-			if (logging) LSLog(LOG_DEBUG, L"Rainmeter", L" [Child of Shell's desktop window]");
-			EnumChildWindows(DesktopW, MyEnumWindowsProc, (LPARAM)(&windowsInZOrder));
-		}
-
-		if (logging) LSLog(LOG_DEBUG, L"Rainmeter", L"2: -----");
 
 		// Reset ZPos in Z-order
 		for (size_t i = 0; i < windowsInZOrder.size(); i++)
 		{
-			windowsInZOrder[i]->ChangeZPos(ZPOSITION_ONDESKTOP);  // reset
+			windowsInZOrder[i]->ChangeZPos(windowsInZOrder[i]->GetWindowZPosition());  // reset
 		}
 
 		if (logging)
 		{
-			LSLog(LOG_DEBUG, L"Rainmeter", L"3: -----");
-			LSLog(LOG_DEBUG, L"Rainmeter", L" [Top-level window]");
+			LSLog(LOG_DEBUG, L"Rainmeter", L"2: ----- AFTER -----");
 
 			// Log all windows in Z-order
 			EnumWindows(MyEnumWindowsProc, (LPARAM)NULL);
+		}
+	}
+}
 
-			if (DesktopW)
+/*
+** PrepareHelperWindow
+**
+** Moves the helper window to the reference position.
+**
+*/
+void CSystem::PrepareHelperWindow(HWND WorkerW)
+{
+	bool logging = CRainmeter::GetDebug();
+
+	if (c_ShowDesktop && WorkerW)
+	{
+		// Set WS_EX_TOPMOST flag
+		SetWindowPos(c_HelperWindow, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+
+		// Find the "backmost" topmost window
+		HWND hwnd = WorkerW;
+		while (hwnd = ::GetNextWindow(hwnd, GW_HWNDPREV))
+		{
+			if (GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
 			{
-				LSLog(LOG_DEBUG, L"Rainmeter", L" [Child of Shell's desktop window]");
-				EnumChildWindows(DesktopW, MyEnumWindowsProc, (LPARAM)NULL);
+				WCHAR className[128], windowText[128];
+
+				if (logging)
+				{
+					GetClassName(hwnd, className, 128);
+					GetWindowText(hwnd, windowText, 128);
+				}
+
+				// Insert the helper window after the found window
+				if (0 != SetWindowPos(c_HelperWindow, hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING))
+				{
+					if (logging)
+					{
+						DebugLog(L"System: HelperWindow: hwnd=0x%08X (WorkerW=0x%08X), hwndInsertAfter=0x%08X (\"%s\" %s) - %s",
+							c_HelperWindow, WorkerW, hwnd, windowText, className, (GetWindowLong(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
+					}
+					return;
+				}
+
+				if (logging)
+				{
+					DebugLog(L"System: HelperWindow: hwnd=0x%08X (WorkerW=0x%08X), hwndInsertAfter=0x%08X (\"%s\" %s) - FAILED",
+						c_HelperWindow, WorkerW, hwnd, windowText, className);
+				}
+			}
+		}
+
+		if (logging)
+		{
+			DebugLog(L"System: HelperWindow: hwnd=0x%08X (WorkerW=0x%08X), hwndInsertAfter=HWND_TOPMOST - %s",
+				c_HelperWindow, WorkerW, (GetWindowLong(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
+		}
+	}
+	else
+	{
+		// Insert the helper window to the bottom
+		SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+
+		if (logging)
+		{
+			DebugLog(L"System: HelperWindow: hwnd=0x%08X (WorkerW=0x%08X), hwndInsertAfter=HWND_BOTTOM - %s",
+				c_HelperWindow, WorkerW, (GetWindowLong(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
+		}
+	}
+}
+
+/*
+** CheckDesktopState
+**
+** Changes the "Show Desktop" state.
+**
+*/
+void CSystem::CheckDesktopState(HWND WorkerW)
+{
+	HWND hwnd = NULL;
+
+	if (WorkerW)
+	{
+		hwnd = FindWindowEx(NULL, WorkerW, L"RainmeterSystemClass", L"SystemWindow");
+	}
+
+	if ((hwnd && !c_ShowDesktop) || (!hwnd && c_ShowDesktop))  // State changed
+	{
+		c_ShowDesktop = !c_ShowDesktop;
+
+		if (CRainmeter::GetDebug())
+		{
+			DebugLog(L"System: %s",
+				c_ShowDesktop ? L"\"Show the desktop\" has been detected." : L"\"Show open windows\" has been detected.");
+		}
+
+		PrepareHelperWindow(WorkerW);
+
+		ChangeZPosInOrder();
+	}
+}
+
+/*
+** MyWinEventHook
+**
+** The event hook procedure
+**
+*/
+void CALLBACK CSystem::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+{
+	if (event == EVENT_SYSTEM_FOREGROUND)
+	{
+		if (!c_ShowDesktop)
+		{
+			WCHAR className[128];
+			if (GetClassName(hwnd, className, 128) > 0 &&
+				wcscmp(className, L"WorkerW") == 0 &&
+				hwnd == GetWorkerW())
+			{
+				CheckDesktopState(hwnd);
 			}
 		}
 	}
@@ -667,6 +849,11 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 {
 	static int DesktopCompositionCheckCount = 0;
 
+	if (uMsg == WM_CREATE || hWnd != c_Window)
+	{
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+
 	switch (uMsg)
 	{
 	case WM_WINDOWPOSCHANGING:
@@ -677,27 +864,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		switch (wParam)
 		{
 		case TIMER_SHOWDESKTOP:
-			{
-				HWND WorkerW = GetWorkerW(), hwnd = NULL;
-
-				if (WorkerW)
-				{
-					hwnd = FindWindowEx(NULL, WorkerW, L"RainmeterSystemClass", L"");
-				}
-
-				if ((hwnd && !c_ShowDesktop) || (!hwnd && c_ShowDesktop))
-				{
-					c_ShowDesktop = !c_ShowDesktop;
-
-					if (CRainmeter::GetDebug())
-					{
-						DebugLog(L"System: %s",
-							c_ShowDesktop ? L"\"Show the desktop\" has been detected." : L"\"Show open windows\" has been detected.");
-					}
-
-					ChangeZPosInOrder();
-				}
-			}
+			CheckDesktopState(GetWorkerW());
 			return 0;
 
 		case TIMER_COMPOSITION:
@@ -706,18 +873,31 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				{
 					KillTimer(c_Window, TIMER_COMPOSITION);
 
-					ChangeZPosInOrder();
+					c_WinEventHook = SetWinEventHook(
+						EVENT_SYSTEM_FOREGROUND,
+						EVENT_SYSTEM_FOREGROUND,
+						NULL,
+						MyWinEventProc,
+						0,
+						0,
+						WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
 
-					if (c_DwmCompositionEnabled)
-					{
-						SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
-					}
+					SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
 				}
 				else
 				{
 					DesktopCompositionCheckCount++;
 				}
 			}
+			return 0;
+
+		case TIMER_NETSTATS:
+			CMeasureNet::UpdateIFTable();
+
+			// Statistics
+			CMeasureNet::UpdateStats();
+			Rainmeter->WriteStats(false);
+
 			return 0;
 		}
 		break;
@@ -727,6 +907,12 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
 		KillTimer(c_Window, TIMER_SHOWDESKTOP);
 		KillTimer(c_Window, TIMER_COMPOSITION);
+
+		if (c_WinEventHook)
+		{
+			UnhookWinEvent(c_WinEventHook);
+			c_WinEventHook = NULL;
+		}
 
 		c_DwmCompositionEnabled = (DwmIsCompositionEnabled() == TRUE);
 

@@ -245,55 +245,11 @@ void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 			else
 			{
 				// No config defined -> apply to all.
-
-				// Make the sending order by using order of the config sections
-				std::vector<std::wstring> sections;
-				{
-					CConfigParser parser;
-					parser.Initialize(Rainmeter->GetIniFile().c_str(), Rainmeter);
-					sections = parser.GetSections();
-				}
-				std::vector<CMeterWindow*> windows(sections.size(), NULL);
-				std::vector<CMeterWindow*> windowsMissing;
-
 				std::map<std::wstring, CMeterWindow*>::iterator iter = Rainmeter->GetAllMeterWindows().begin();
 
 				for (; iter != Rainmeter->GetAllMeterWindows().end(); iter++)
 				{
-					CMeterWindow* window = (*iter).second;
-					bool find = false;
-
-					for (size_t i = 0; i < windows.size(); i++)
-					{
-						if (windows[i] == NULL && wcsicmp(sections[i].c_str(), window->GetSkinName().c_str()) == 0)
-						{
-							windows[i] = window;
-							find = true;
-							break;
-						}
-					}
-
-					if (!find)  // Not found for some reasons
-					{
-						windowsMissing.push_back(window);
-					}
-				}
-
-				// Apply to all
-				std::vector<CMeterWindow*>::const_reverse_iterator iter2 = windows.rbegin();
-				for ( ; iter2 != windows.rend(); iter2++)
-				{
-					if (*iter2)
-					{
-						(*iter2)->RunBang(bang, argument.c_str());
-					}
-				}
-				for (size_t i = 0; i < windowsMissing.size(); i++)
-				{
-					if (windowsMissing[i])
-					{
-						windowsMissing[i]->RunBang(bang, argument.c_str());
-					}
+					((*iter).second)->RunBang(bang, argument.c_str());
 				}
 			}
 		}
@@ -446,6 +402,21 @@ void RainmeterToggleMeasure(HWND, const char* arg)
 void RainmeterRefresh(HWND, const char* arg)
 {
 	BangWithArgs(BANG_REFRESH, ConvertToWide(arg).c_str(), 0);
+}
+
+/*
+** RainmeterRefreshApp
+**
+** Callback for the !RainmeterRefreshApp bang
+**
+*/
+void RainmeterRefreshApp(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		// Refresh needs to be delayed since it crashes if done during Update()
+		PostMessage(Rainmeter->GetTrayWindow()->GetWindow(), WM_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
+	}
 }
 
 /*
@@ -745,13 +716,15 @@ CRainmeter::~CRainmeter()
 
 	if (m_TrayWindow) delete m_TrayWindow;
 
+	CSystem::Finalize();
+
+	CMeasureNet::UpdateIFTable();
+	CMeasureNet::UpdateStats();
 	WriteStats(true);
 
 	CMeasureNet::FinalizeNewApi();
 
 	CMeterString::FreeFontCache();
-
-	CSystem::Finalize();
 
 	GdiplusShutdown(m_GDIplusToken);
 }
@@ -1012,6 +985,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		if (m_TrayWindow && m_TrayWindow->GetWindow()) ::SendMessage(GetLitestepWnd(), LM_REGISTERMESSAGE, (WPARAM)m_TrayWindow->GetWindow(), (LPARAM)Msgs);
 
 		AddBangCommand("!RainmeterRefresh", RainmeterRefresh);
+		AddBangCommand("!RainmeterRefreshApp", RainmeterRefreshApp);
 		AddBangCommand("!RainmeterRedraw", RainmeterRedraw);
 		AddBangCommand("!RainmeterHide", RainmeterHide);
 		AddBangCommand("!RainmeterShow", RainmeterShow);
@@ -1040,56 +1014,15 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterSetVariable", RainmeterSetVariable);
 	}
 
-	// Make the starting order by using order of the config sections
-	std::vector<std::wstring> sections;
-	{
-		CConfigParser parser;
-		parser.Initialize(m_IniFile.c_str(), this);
-		sections = parser.GetSections();
-	}
-	std::vector<std::pair<int, int> > startup(sections.size(), std::pair<int, int>(0, 0));
-	std::vector<std::pair<int, int> > startupMissing;
-
-	for (size_t i = 0; i < m_ConfigStrings.size(); i++)
-	{
-		if (m_ConfigStrings[i].active > 0 && m_ConfigStrings[i].active <= (int)m_ConfigStrings[i].iniFiles.size())
-		{
-			bool find = false;
-
-			for (size_t j = 0; j < startup.size(); j++)
-			{
-				if (startup[j].second == 0 && wcsicmp(sections[j].c_str(), m_ConfigStrings[i].config.c_str()) == 0)
-				{
-					startup[j].first = i;
-					startup[j].second = m_ConfigStrings[i].active;
-					find = true;
-					break;
-				}
-			}
-
-			if (!find)  // Not found for some reasons
-			{
-				startupMissing.push_back(std::pair<int, int>(i, m_ConfigStrings[i].active));
-			}
-		}
-	}
-
 	// Create meter windows for active configs
-	std::vector<std::pair<int, int> >::const_reverse_iterator iter = startup.rbegin();
-	for ( ; iter != startup.rend(); iter++)
+	std::multimap<int, CONFIGORDER>::const_iterator iter = m_ConfigOrders.begin();
+	for ( ; iter != m_ConfigOrders.end(); iter++)
 	{
-		if ((*iter).second > 0)
-		{
-			ActivateConfig((*iter).first, (*iter).second - 1);
-		}
+		ActivateConfig((*iter).second.id, (*iter).second.active - 1);
 	}
-	for (size_t i = 0; i < startupMissing.size(); i++)
-	{
-		if (startupMissing[i].second > 0)
-		{
-			ActivateConfig(startupMissing[i].first, startupMissing[i].second - 1);
-		}
-	}
+
+	//Clear order
+	m_ConfigOrders.clear();
 
 	return Result;	// Alles OK
 }
@@ -1488,6 +1421,72 @@ CMeterWindow* CRainmeter::GetMeterWindow(HWND hwnd)
 	return NULL;
 }
 
+void CRainmeter::SetConfigOrder(const std::wstring& config, int index, int active)
+{
+	WCHAR buffer[256];
+	int order;
+
+	if (GetPrivateProfileString(config.c_str(), L"LoadOrder", L"", buffer, 256, m_IniFile.c_str()) > 0)
+	{
+		if (wcsicmp(buffer, L"LAST") == 0)
+		{
+			order = INT_MAX;
+		}
+		else if (wcsicmp(buffer, L"FIRST") == 0)
+		{
+			order = INT_MIN;
+		}
+		else
+		{
+			order = _wtoi(buffer);
+		}
+	}
+	else  // LoadOrder not exists
+	{
+		//WritePrivateProfileString(config.c_str(), L"LoadOrder", L"0", m_IniFile.c_str());
+		order = 0;
+	}
+
+	std::multimap<int, CONFIGORDER>::iterator iter = m_ConfigOrders.begin();
+	for ( ; iter != m_ConfigOrders.end(); iter++)
+	{
+		if ((*iter).second.config == config)  // already exists
+		{
+			if ((*iter).first != order || (*iter).second.id != index || (*iter).second.active != active)
+			{
+				m_ConfigOrders.erase(iter);
+				break;
+			}
+			else
+			{
+				return;
+			}
+		}
+	}
+
+	// Add CONFIGORDER
+	CONFIGORDER configOrder;
+	configOrder.config = config;
+	configOrder.id = index;
+	configOrder.active = active;
+
+	m_ConfigOrders.insert(std::pair<int, CONFIGORDER>(order, configOrder));
+}
+
+int CRainmeter::GetLoadOrder(const std::wstring& config)
+{
+	std::multimap<int, CONFIGORDER>::const_iterator iter = m_ConfigOrders.begin();
+	for ( ; iter != m_ConfigOrders.end(); iter++)
+	{
+		if ((*iter).second.config == config)
+		{
+			return (*iter).first;
+		}
+	}
+
+	return 0;
+}
+
 /* 
 ** Quit
 **
@@ -1504,6 +1503,7 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		if (m_TrayWindow && m_TrayWindow->GetWindow()) ::SendMessage(GetLitestepWnd(), LM_UNREGISTERMESSAGE, (WPARAM)m_TrayWindow->GetWindow(), (LPARAM)Msgs);
 
 		RemoveBangCommand("!RainmeterRefresh");
+		RemoveBangCommand("!RainmeterRefreshApp");
 		RemoveBangCommand("!RainmeterRedraw");
 		RemoveBangCommand("!RainmeterHide");
 		RemoveBangCommand("!RainmeterShow");
@@ -1542,6 +1542,7 @@ void CRainmeter::ScanForConfigs(std::wstring& path)
 {
 	m_ConfigStrings.clear();
 	m_ConfigMenu.clear();
+	m_ConfigOrders.clear();
 
 	ScanForConfigsRecursive(path, L"", 0, m_ConfigMenu, false);
 }
@@ -1664,11 +1665,8 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterRefreshApp") == 0)
 	{
-		// Read skins and settings
-		Rainmeter->ReloadSettings();
-		// Refresh all
-		RainmeterRefresh(m_TrayWindow->GetWindow(), NULL);
-
+		// Refresh needs to be delayed since it crashes if done during Update()
+		PostMessage(m_TrayWindow->GetWindow(), WM_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterRedraw") == 0)
 	{
@@ -2035,6 +2033,8 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 		if (active > 0 && active <= (int)m_ConfigStrings[i].iniFiles.size())
 		{
 			m_ConfigStrings[i].active = active;
+
+			SetConfigOrder(m_ConfigStrings[i].config, i, active);
 		}
 	}
 }
@@ -2067,39 +2067,52 @@ bool CRainmeter::SetActiveConfig(std::wstring& skinName, std::wstring& skinIni)
 }
 
 /* 
-** Refresh
+** RefreshAll
 **
-** Refreshes Rainmeter. If argument is given the config is refreshed
-** otherwise all active meters are refreshed
+** Refreshes all active meter windows.
+** Note: This function calls CMeterWindow::Refresh() directly for synchronization. Be careful about crash.
+**
 */
-//void CRainmeter::Refresh(const WCHAR* arg)
-//{
-//	std::wstring config, iniFile;
-//
-//	try 
-//	{
-//		if (arg != NULL && wcslen(arg) > 0) 
-//		{
-//			std::wstring config = arg;
-//			CMeterWindow* meterWindow = GetMeterWindow(config);
-//			meterWindow->Refresh(false);
-//		}
-//		else
-//		{
-//			std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
-//
-//			// Refresh all
-//			for (; iter != m_Meters.end(); iter++)
-//			{
-//				(*iter).second->Refresh(false);
-//			}
-//		}
-//	} 
-//	catch(CError& error) 
-//	{
-//		MessageBox(NULL, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-//	}
-//}
+void CRainmeter::RefreshAll()
+{
+	// Read skins and settings
+	ReloadSettings();
+
+	// Make the sending order by using LoadOrder
+	std::multimap<int, CMeterWindow*> windows;
+
+	std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
+	for (; iter != m_Meters.end(); iter++)
+	{
+		if ((*iter).second)
+		{
+			windows.insert(std::pair<int, CMeterWindow*>(GetLoadOrder((*iter).first), (*iter).second));
+		}
+	}
+
+	// Prepare the helper window
+	CSystem::PrepareHelperWindow(CSystem::GetWorkerW());
+
+	// Refresh all
+	std::multimap<int, CMeterWindow*>::const_iterator iter2 = windows.begin();
+	for ( ; iter2 != windows.end(); iter2++)
+	{
+		if ((*iter2).second)
+		{
+			try
+			{
+				(*iter2).second->Refresh(false, true);
+			}
+			catch (CError& error)
+			{
+				MessageBox((*iter2).second->GetWindow(), error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			}
+		}
+	}
+
+	// Clear order
+	m_ConfigOrders.clear();
+}
 
 /*
 ** ReadStats

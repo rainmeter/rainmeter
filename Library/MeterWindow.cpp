@@ -93,6 +93,7 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 	m_WindowUpdate = 1000;
 	m_TransitionUpdate = 100;
 	m_ActiveTransition = false;
+	m_HasNetMeasures = false;
 	m_WindowHide = HIDEMODE_NONE;
 	m_WindowStartHidden = false;
 	m_SnapEdges = true;
@@ -294,7 +295,7 @@ void CMeterWindow::IgnoreAeroPeek()
 ** This deletes everything and rebuilds the config again.
 **
 */
-void CMeterWindow::Refresh(bool init)
+void CMeterWindow::Refresh(bool init, bool all)
 {
 	assert(m_Rainmeter != NULL);
 
@@ -315,13 +316,6 @@ void CMeterWindow::Refresh(bool init)
 		KillTimer(m_Window, METERTIMER);	// Kill the timer
 		KillTimer(m_Window, MOUSETIMER);	// Kill the timer
 		KillTimer(m_Window, FADETIMER);	// Kill the timer
-
-		if (!m_ChildWindow && GetAncestor(m_Window, GA_PARENT) != GetDesktopWindow())
-		{
-			// Reset to the top-level window
-			m_PreventMoving = true;  // Prevent moving the window by SetParent
-			SetParent(m_Window, NULL);
-		}
 
 		std::list<CMeasure*>::iterator i = m_Measures.begin();
 		for( ; i != m_Measures.end(); i++)
@@ -348,6 +342,8 @@ void CMeterWindow::Refresh(bool init)
 		m_FontCollection = NULL;
 	}
 
+	ZPOSITION oldZPos = m_WindowZPosition;
+
 	//TODO: Should these be moved to a Reload command instead of hitting the disk on every refresh
 	ReadConfig();	// Read the general settings 
 	ReadSkin();
@@ -373,10 +369,7 @@ void CMeterWindow::Refresh(bool init)
 		MapCoordsToScreen(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
 	}
 
-	ZPOSITION zPos = m_WindowZPosition;
-	m_WindowZPosition = ZPOSITION_NORMAL;  // Handles as the normal window temporarily
-	SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, m_WindowW, m_WindowH, SWP_NOZORDER | SWP_NOACTIVATE);
-	m_WindowZPosition = zPos;
+	SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, m_WindowW, m_WindowH, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
 	ScreenToWindow();
 
@@ -393,7 +386,10 @@ void CMeterWindow::Refresh(bool init)
 
 	UpdateTransparency(m_AlphaValue, true);
 
-	ChangeZPos(m_WindowZPosition);
+	if (init || all || oldZPos != m_WindowZPosition)
+	{
+		ChangeZPos(m_WindowZPosition, init || all);
+	}
 
 	m_Rainmeter->SetCurrentParser(NULL);
 
@@ -474,17 +470,6 @@ void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 */
 void CMeterWindow::MoveWindow(int x, int y)
 {
-	// Convert the screen coordinates to the client coordinates of the shell window
-	if (!m_ChildWindow && m_WindowZPosition == ZPOSITION_ONDESKTOP && GetAncestor(m_Window, GA_PARENT) != GetDesktopWindow())
-	{
-		POINT pos = {x, y};
-		if (ScreenToClient(GetAncestor(m_Window, GA_PARENT), &pos))
-		{
-			x = pos.x;
-			y = pos.y;
-		}
-	}
-
 	SetWindowPos(m_Window, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
 	ScreenToWindow();
@@ -501,7 +486,7 @@ void CMeterWindow::MoveWindow(int x, int y)
 ** Sets the window's z-position
 **
 */
-void CMeterWindow::ChangeZPos(ZPOSITION zPos)
+void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 {
 	if(!m_ChildWindow)
 	{
@@ -517,104 +502,60 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos)
  			break;
 
 		case ZPOSITION_ONBOTTOM:
-			 winPos = HWND_BOTTOM;
-			 break;
-
-		case ZPOSITION_ONDESKTOP:
-			if (!m_NativeTransparency || !CSystem::GetDwmCompositionEnabled())
+			if (all)
 			{
-				winPos = HWND_BOTTOM;
-
-				// Set the window's parent to progman, so it stays always on desktop
-				HWND ProgmanHwnd = CSystem::GetShellDesktopWindow();
-
-				if (ProgmanHwnd && (parent != ProgmanHwnd))
+				if (CSystem::GetShowDesktop())
 				{
-					m_PreventMoving = true;  // Prevent moving the window by SetParent
-					SetParent(m_Window, ProgmanHwnd);
+					// Insert after the tray window temporarily to keep order
+					winPos = Rainmeter->GetTrayWindow()->GetWindow();
 				}
-				//else
-				//{
-				//	return;		// The window is already on desktop
-				//}
+				else
+				{
+					// Insert after the helper window
+					winPos = CSystem::GetHelperWindow();
+				}
 			}
 			else
 			{
-				if (parent != GetDesktopWindow())
-				{
-					m_PreventMoving = true;  // Prevent moving the window by SetParent
-					SetParent(m_Window, NULL);
+				winPos = HWND_BOTTOM;
+			}
+			break;
 
-					IgnoreAeroPeek();
+		case ZPOSITION_ONDESKTOP:
+			if (CSystem::GetShowDesktop())
+			{
+				// Set WS_EX_TOPMOST flag
+				SetWindowPos(m_Window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+
+				if (all)
+				{
+					// Insert after the helper window
+					SetWindowPos(m_Window, CSystem::GetHelperWindow(), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 				}
-
-				if (CSystem::GetShowDesktop())
+				else
 				{
-					bool logging = false;  // Set true if you need verbose logging.
-					std::wstring msg;
-
-					if (logging) 
-					{
-						msg += (GetWindowLong(m_Window, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL";
-					}
-
-					// Set WS_EX_TOPMOST flag
-					SetWindowPos(m_Window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
-
-					if (logging)
-					{
-						msg += L" - ";
-						msg += (GetWindowLong(m_Window, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL";
-					}
-
-					// Get WorkerW window
-					HWND WorkerW = CSystem::GetWorkerW();
-
 					// Find the "backmost" topmost window
-					if (WorkerW)
+					HWND hwnd = CSystem::GetHelperWindow();
+					while (hwnd = ::GetNextWindow(hwnd, GW_HWNDPREV))
 					{
-						HWND hwnd = WorkerW;
-						while (hwnd = ::GetNextWindow(hwnd, GW_HWNDPREV))
+						if (GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
 						{
-							if (GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
+							// Insert after the found window
+							if (0 != SetWindowPos(m_Window, hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING))
 							{
-								WCHAR className[128], windowText[128];
-
-								if (logging)
-								{
-									GetClassName(hwnd, className, 128);
-									GetWindowText(hwnd, windowText, 128);
-								}
-
-								if (0 == SetWindowPos(m_Window, hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING))
-								{
-									if (logging)
-									{
-										DebugLog(L" %s: hwnd=0x%08X (WorkerW=0x%08X), hwndInsertAfter=0x%08X (\"%s\" %s) - FAILED",
-											m_SkinName.c_str(), m_Window, WorkerW, hwnd, windowText, className);
-									}
-									continue;
-								}
-
-								if (logging)
-								{
-									msg += L" - ";
-									msg += (GetWindowLong(m_Window, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL";
-
-									DebugLog(L" %s: hwnd=0x%08X (WorkerW=0x%08X), hwndInsertAfter=0x%08X (\"%s\" %s) - %s",
-										m_SkinName.c_str(), m_Window, WorkerW, hwnd, windowText, className, msg.c_str());
-								}
-								return;
+								break;
 							}
 						}
 					}
-
-					if (logging)
-					{
-						DebugLog(L" %s: hwnd=0x%08X (WorkerW=0x%08X), hwndInsertAfter=HWND_TOPMOST - %s",
-							m_SkinName.c_str(), m_Window, WorkerW, msg.c_str());
-					}
-					return;
+				}
+				return;
+			}
+			else
+			{
+				if (all)
+				{
+					// Insert after the helper window
+					winPos = CSystem::GetHelperWindow();
 				}
 				else
 				{
@@ -624,18 +565,7 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos)
 			break;
 		}
 
-		if (zPos != ZPOSITION_ONDESKTOP && (parent != GetDesktopWindow()))
-		{
-			m_PreventMoving = true;  // Prevent moving the window by SetParent
-			SetParent(m_Window, NULL);
-
-			IgnoreAeroPeek();
-		}
-
-		bool refresh = m_Refreshing;
-		m_Refreshing = true;	// Fake refreshing so that the z-position can be changed
-		SetWindowPos(m_Window, winPos, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-		m_Refreshing = refresh;
+		SetWindowPos(m_Window, winPos, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 	}
 }
 
@@ -1762,6 +1692,8 @@ void CMeterWindow::ReadSkin()
 
 	// Create the meters and measures
 
+	m_HasNetMeasures = false;
+
 	// Get all the sections (i.e. different meters, measures and the other stuff)
 	std::vector<std::wstring> arraySections = m_Parser.GetSections();
 
@@ -1791,6 +1723,11 @@ void CMeterWindow::ReadSkin()
 						m_Measures.push_back(measure);
 
 						m_Parser.AddMeasure(measure);
+
+						if (!m_HasNetMeasures && dynamic_cast<CMeasureNet*>((measure)))
+						{
+							m_HasNetMeasures = true;
+						}
 					}
 				}
 				catch (CError& error)
@@ -2204,7 +2141,7 @@ void CMeterWindow::Update(bool nodraw)
 	m_UpdateCounter++;
 
 	// Pre-updates
-	CMeasureNet::UpdateIFTable();
+	if (m_HasNetMeasures) CMeasureNet::UpdateIFTable();
 	CMeasureCalc::UpdateVariableMap(*this);
 
 	// Update all measures
@@ -2243,10 +2180,6 @@ void CMeterWindow::Update(bool nodraw)
 			MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		}
 	}
-
-	// Statistics
-	CMeasureNet::UpdateStats();
-	Rainmeter->WriteStats(false);
 
 	if (!nodraw)
 	{
@@ -3154,17 +3087,6 @@ LRESULT CMeterWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 			return DefWindowProc(m_Window, m_Message, wParam, lParam);
 		}
 
-		// Convert the client coordinates of the shell window to the screen coordinates
-		if (!m_ChildWindow && m_WindowZPosition == ZPOSITION_ONDESKTOP && (m_Dragging || !m_NativeTransparency) && GetAncestor(m_Window, GA_PARENT) != GetDesktopWindow())
-		{
-			POINT pos = {wp->x, wp->y};
-			if (ClientToScreen(GetAncestor(m_Window, GA_PARENT), &pos))
-			{
-				wp->x = pos.x;
-				wp->y = pos.y;
-			}
-		}
-
 		if (m_SnapEdges && !(GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000))
 		{
 			// only process movement (ignore anything without winpos values)
@@ -3212,17 +3134,6 @@ LRESULT CMeterWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 		if (m_KeepOnScreen) 
 		{
 			MapCoordsToScreen(wp->x, wp->y, m_WindowW, m_WindowH);
-		}
-
-		// Convert the screen coordinates to the client coordinates of the shell window
-		if (!m_ChildWindow && m_WindowZPosition == ZPOSITION_ONDESKTOP && GetAncestor(m_Window, GA_PARENT) != GetDesktopWindow())
-		{
-			POINT pos = {wp->x, wp->y};
-			if (ScreenToClient(GetAncestor(m_Window, GA_PARENT), &pos))
-			{
-				wp->x = pos.x;
-				wp->y = pos.y;
-			}
 		}
 	}
 
@@ -3888,26 +3799,9 @@ LRESULT CMeterWindow::OnMove(WPARAM wParam, LPARAM lParam)
 	m_ScreenX = (SHORT)LOWORD(lParam);
 	m_ScreenY = (SHORT)HIWORD(lParam);
 
-	// Convert the client coordinates of the shell window to the screen coordinates
-	if (!m_ChildWindow && m_WindowZPosition == ZPOSITION_ONDESKTOP && GetAncestor(m_Window, GA_PARENT) != GetDesktopWindow())
-	{
-		POINT pos = {m_ScreenX, m_ScreenY};
-		if (ClientToScreen(GetAncestor(m_Window, GA_PARENT), &pos))
-		{
-			m_ScreenX = pos.x;
-			m_ScreenY = pos.y;
-		}
-	}
-
 	if (m_Dragging)
 	{
 		ScreenToWindow();
-	}
-
-	// Redraw itself if the window is "On Desktop"
-	if (!m_ChildWindow && m_WindowZPosition == ZPOSITION_ONDESKTOP && m_NativeTransparency && GetAncestor(m_Window, GA_PARENT) != GetDesktopWindow())
-	{
-		UpdateTransparency(m_TransparencyValue, false);
 	}
 
 	return 0;

@@ -134,11 +134,11 @@ public:
 	void DisableMeasure(const WCHAR* name);
 	void EnableMeasure(const WCHAR* name);
 	void ToggleMeasure(const WCHAR* name);
-	void Refresh(bool init);
+	void Refresh(bool init, bool all = false);
 	void Redraw();
 
 	void MoveWindow(int x, int y);
-	void ChangeZPos(ZPOSITION zPos);
+	void ChangeZPos(ZPOSITION zPos, bool all = false);
 	void FadeWindow(int from, int to);
 	
 	Gdiplus::Bitmap* GetDoubleBuffer() { return m_DoubleBuffer; };
@@ -291,6 +291,7 @@ private:
 	int m_WindowUpdate;							// Measure update frequency
 	int m_TransitionUpdate;						// Transition redraw frequency
 	bool m_ActiveTransition;
+	bool m_HasNetMeasures;
 	HIDEMODE m_WindowHide;						// If true, the window is hidden when mouse is over it
 	bool m_WindowStartHidden;					// If true, the window is hidden at startup
 	bool m_SavePosition;						// If true, the window's position is saved
