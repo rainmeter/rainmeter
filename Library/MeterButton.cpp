@@ -41,7 +41,7 @@ enum BUTTON_STATE
 */
 CMeterButton::CMeterButton(CMeterWindow* meterWindow) : CMeter(meterWindow)
 {
-	for (int i = 0; i < BUTTON_FRAMES; i++)
+	for (int i = 0; i < BUTTON_FRAMES; ++i)
 	{
 		m_Bitmaps[i] = NULL;;
 	}
@@ -58,7 +58,7 @@ CMeterButton::CMeterButton(CMeterWindow* meterWindow) : CMeter(meterWindow)
 */
 CMeterButton::~CMeterButton()
 {
-	for (int i = 0; i < BUTTON_FRAMES; i++)
+	for (int i = 0; i < BUTTON_FRAMES; ++i)
 	{
 		if (m_Bitmaps[i] != NULL) delete m_Bitmaps[i];
 	}
@@ -114,7 +114,7 @@ void CMeterButton::Initialize()
 		// Separate the frames
 		Graphics desktopGraphics(GetDesktopWindow());
 
-		for (int i = 0; i < BUTTON_FRAMES; i++)
+		for (int i = 0; i < BUTTON_FRAMES; ++i)
 		{
 			Bitmap bitmapPart(m_W, m_H, PixelFormat32bppARGB);
 			Graphics graphics(&bitmapPart);

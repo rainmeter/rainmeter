@@ -113,7 +113,7 @@ void CConfigParser::ReadVariables()
 {
 	std::vector<std::wstring> listVariables = GetKeys(L"Variables");
 
-	for (size_t i = 0; i < listVariables.size(); i++)
+	for (size_t i = 0; i < listVariables.size(); ++i)
 	{
 		SetVariable(listVariables[i], ReadString(L"Variables", listVariables[i].c_str(), L"", false));
 	}
@@ -225,7 +225,7 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 		const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
 		const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
 
-		for (size_t i = 0; i < monitors.size(); i++)
+		for (size_t i = 0; i < monitors.size(); ++i)
 		{
 			TCHAR buffer2[256];
 
@@ -395,7 +395,7 @@ void CConfigParser::ReplaceVariables(std::wstring& result)
 				std::wstring strTmp(result.begin() + pos + 1, result.begin() + end);
 				std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
 				
-				std::map<std::wstring, std::wstring>::iterator iter = m_Variables.find(strTmp);
+				std::map<std::wstring, std::wstring>::const_iterator iter = m_Variables.find(strTmp);
 				if (iter != m_Variables.end())
 				{
 					// Variable found, replace it with the value
@@ -404,7 +404,7 @@ void CConfigParser::ReplaceVariables(std::wstring& result)
 				}
 				else
 				{
-					std::map<std::wstring, std::wstring>::iterator iter2 = c_MonitorVariables.find(strTmp);
+					std::map<std::wstring, std::wstring>::const_iterator iter2 = c_MonitorVariables.find(strTmp);
 					if (iter2 != c_MonitorVariables.end())
 					{
 						// SCREENAREA/WORKAREA variable found, replace it with the value
@@ -501,7 +501,7 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 					{
 						std::wstring var(result.begin() + pos + 1, result.begin() + end);
 	
-						std::map<std::wstring, CMeasure*>::iterator iter = m_Measures.find(var);
+						std::map<std::wstring, CMeasure*>::const_iterator iter = m_Measures.find(var);
 						if (iter != m_Measures.end())
 						{
 							std::wstring value = (*iter).second->GetStringValue(false, 1, 5, false);
@@ -564,7 +564,7 @@ std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR ke
 
 	// Tokenize and parse the floats
 	std::vector<std::wstring> tokens = Tokenize(tmp, L";");
-	for (size_t i = 0; i < tokens.size(); i++)
+	for (size_t i = 0; i < tokens.size(); ++i)
 	{
 		result.push_back((Gdiplus::REAL)ParseDouble(tokens[i], 0));
 	}
@@ -844,8 +844,8 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 	int bufferSize = MAX_LINE_LENGTH;
 	WCHAR* buffer = new WCHAR[bufferSize];
 
-	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.begin();
-	for ( ; iter != m_Keys.end(); iter++)
+	stdext::hash_map<std::wstring, std::vector<std::wstring> >::const_iterator iter = m_Keys.begin();
+	for ( ; iter != m_Keys.end(); ++iter)
 	{
 		while(true)
 		{
@@ -937,7 +937,7 @@ const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, cons
 	std::wstring strTmp(strSection + L"::" + strKey);
 	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
 
-	stdext::hash_map<std::wstring, std::wstring>::iterator iter = m_Values.find(strTmp);
+	stdext::hash_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(strTmp);
 	if (iter != m_Values.end())
 	{
 		return (*iter).second;
@@ -969,7 +969,7 @@ std::vector<std::wstring> CConfigParser::GetKeys(const std::wstring& strSection)
 	std::wstring strTmp(strSection);
 	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
 
-	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.find(strTmp);
+	stdext::hash_map<std::wstring, std::vector<std::wstring> >::const_iterator iter = m_Keys.find(strTmp);
 	if (iter != m_Keys.end())
 	{
 		return (*iter).second;

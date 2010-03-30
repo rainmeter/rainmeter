@@ -64,8 +64,8 @@ void UpdateAboutStatistics()
 
 		std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 
-		std::map<std::wstring, CMeterWindow*>::iterator iter = windows.begin();
-		for( ; iter != windows.end(); iter++)
+		std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
+		for( ; iter != windows.end(); ++iter)
 		{
 			if (current == selected)
 			{
@@ -75,8 +75,8 @@ void UpdateAboutStatistics()
 				std::list<CMeasure*>& measures = meterWindow->GetMeasures();
 
 				int index = 0;
-				std::list<CMeasure*>::iterator i = measures.begin();
-				for( ; i != measures.end(); i++)
+				std::list<CMeasure*>::const_iterator i = measures.begin();
+				for( ; i != measures.end(); ++i)
 				{
 					const WCHAR* name = (*i)->GetName();
 					const WCHAR* val = (*i)->GetStats();
@@ -112,13 +112,13 @@ void UpdateAboutStatistics()
 							ListView_SetItemText(widget, index, 1, (WCHAR*)val);
 						}
 						ListView_SetItemText(widget, index, 2, (WCHAR*)range.c_str());
-						index++;
+						++index;
 					}
 				}
 
 				break;
 			}
-			current++;
+			++current;
 		}
 
 		SendMessage(widget, WM_SETREDRAW, 1, 0);
@@ -147,12 +147,12 @@ void UpdateWidgets(HWND window)
 		ListView_SetColumn(widget, 2, &lvc);
 
 		// Update the list of plugins
-		std::vector<PLUGIN_INFO>::iterator iter = g_Plugins.begin();
+		std::vector<PLUGIN_INFO>::const_iterator iter = g_Plugins.begin();
 		LVITEM vitem;
 		vitem.mask = LVIF_TEXT;
 
 		int i = 0;
-		for ( ; iter != g_Plugins.end(); iter++)
+		for ( ; iter != g_Plugins.end(); ++iter)
 		{
 			if (!(*iter).name.empty())
 			{
@@ -171,7 +171,7 @@ void UpdateWidgets(HWND window)
 
 			ListView_SetItemText(widget, i, 2, (WCHAR*)(*iter).author.c_str());
 
-			i++;
+			++i;
 		}
 
 		if (g_Plugins.size() > 0)
@@ -304,9 +304,9 @@ BOOL OnInitAboutDialog(HWND window)
 	TCITEM tie; 
 	tie.mask = TCIF_TEXT; 
 	std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
-	std::map<std::wstring, CMeterWindow*>::iterator iter = windows.begin();
+	std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
 	int i = 0;
-	for( ; iter != windows.end(); iter++)
+	for( ; iter != windows.end(); ++iter)
 	{
 		CMeterWindow* meterWindow = (*iter).second;
 

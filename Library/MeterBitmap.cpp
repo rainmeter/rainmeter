@@ -122,7 +122,7 @@ bool CMeterBitmap::HitTest(int x, int y)
 			int realFrames = (m_FrameCount / (m_TransitionFrameCount + 1));
 			do
 			{
-				numOfNums ++;
+				++numOfNums;
 				if (realFrames == 1)
 				{
 					tmpValue /= 2;
@@ -306,7 +306,7 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 		{
 			do
 			{
-				numOfNums ++;
+				++numOfNums;
 				if (m_FrameCount == 1)
 				{
 					tmpValue /= 2;
@@ -388,7 +388,7 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 				value /= realFrames;
 				transitionValue /= realFrames;
 			}
-			numOfNums--;
+			--numOfNums;
 		} while (numOfNums > 0);
 	}
 	else

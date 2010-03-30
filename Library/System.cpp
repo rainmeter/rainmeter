@@ -165,7 +165,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 
 	if (m->useEnumDisplayDevices)
 	{
-		for (size_t i = 0; i < m->monitors.size(); i++)
+		for (size_t i = 0; i < m->monitors.size(); ++i)
 		{
 			if (m->monitors[i].handle == NULL && _wcsnicmp(info.szDevice, m->monitors[i].deviceName, 32) == 0)
 			{
@@ -401,7 +401,7 @@ void CSystem::SetMultiMonitorInfo()
 					DebugLog(L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
 				}
 			}
-			dwDevice++;
+			++dwDevice;
 		} while (EnumDisplayDevices(NULL, dwDevice, &dd, 0));
 	}
 
@@ -473,7 +473,7 @@ void CSystem::SetMultiMonitorInfo()
 			c_Monitors.vsL, c_Monitors.vsT, c_Monitors.vsL + c_Monitors.vsW, c_Monitors.vsT + c_Monitors.vsH,
 			c_Monitors.vsW, c_Monitors.vsH);
 
-		for (size_t i = 0; i < monitors.size(); i++)
+		for (size_t i = 0; i < monitors.size(); ++i)
 		{
 			if (monitors[i].active)
 			{
@@ -506,7 +506,7 @@ void CSystem::UpdateWorkareaInfo()
 		return;
 	}
 
-	for (size_t i = 0; i < monitors.size(); i++)
+	for (size_t i = 0; i < monitors.size(); ++i)
 	{
 		if (monitors[i].active && monitors[i].handle != NULL)
 		{
@@ -703,7 +703,7 @@ void CSystem::ChangeZPosInOrder()
 		EnumWindows(MyEnumWindowsProc, (LPARAM)(&windowsInZOrder));
 
 		// Reset ZPos in Z-order
-		for (size_t i = 0; i < windowsInZOrder.size(); i++)
+		for (size_t i = 0; i < windowsInZOrder.size(); ++i)
 		{
 			windowsInZOrder[i]->ChangeZPos(windowsInZOrder[i]->GetWindowZPosition());  // reset
 		}
@@ -886,7 +886,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				}
 				else
 				{
-					DesktopCompositionCheckCount++;
+					++DesktopCompositionCheckCount;
 				}
 			}
 			return 0;
@@ -940,7 +940,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
 				std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-				for( ; iter != windows.end(); iter++)
+				for( ; iter != windows.end(); ++iter)
 				{
 					PostMessage((*iter).second->GetWindow(), WM_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
 				}

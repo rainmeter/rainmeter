@@ -144,7 +144,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 	{
 		str = buffer;
 
-		for (size_t i = 0; i < m_Substitute.size(); i = i + 2)
+		for (size_t i = 0; i < m_Substitute.size(); i += 2)
 		{
 			if (str.empty() && m_Substitute[i].empty())
 			{
@@ -232,7 +232,7 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 	{
 		end = 1;	// Skip the '"'
 		// Quotes around the word
-		while (buffer[end] != L'\"' && end < buffer.size()) end++;
+		while (buffer[end] != L'\"' && end < buffer.size()) ++end;
 
 		if (buffer[end] == L'\"')
 		{
@@ -249,7 +249,7 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 	else
 	{
 		end = 0;
-		while ((buffer[end] != L',') && (buffer[end] != L':') && (buffer[end] != L' ') && (buffer[end] != L'\t') && end < buffer.size()) end++;
+		while ((buffer[end] != L',') && (buffer[end] != L':') && (buffer[end] != L' ') && (buffer[end] != L'\t') && end < buffer.size()) ++end;
 
 		if (end == buffer.size())
 		{
@@ -286,7 +286,7 @@ bool CMeasure::PreUpdate()
 	}
 	
 	// Only update the counter if the divider 
-	m_UpdateCounter++;
+	++m_UpdateCounter;
 	if (m_UpdateCounter < m_UpdateDivider) return false;
 	m_UpdateCounter = 0;
 
@@ -302,7 +302,7 @@ bool CMeasure::PreUpdate()
 
 		m_MedianMaxValues[m_MedianPos] = m_Value;
 		m_MedianMinValues[m_MedianPos] = m_Value;
-		m_MedianPos++;
+		++m_MedianPos;
 		m_MedianPos %= MEDIAN_SIZE;
 
 		std::vector<double> medianArray;
@@ -390,12 +390,12 @@ bool CMeasure::PostUpdate()
 		}
 		m_AverageValues[m_AveragePos] = m_Value;
 
-		m_AveragePos++;
+		++m_AveragePos;
 		m_AveragePos %= m_AverageValues.size();
 
 		// Calculate the average value
 		m_Value = 0;
-		for (size_t i = 0; i < m_AverageValues.size(); i++)
+		for (size_t i = 0; i < m_AverageValues.size(); ++i)
 		{
 			m_Value += m_AverageValues[i];
 		}

@@ -103,14 +103,14 @@ int CMeter::GetX(bool abs)
 		if (m_RelativeMeter == NULL)
 		{
 			std::list<CMeter*>& meters = m_MeterWindow->GetMeters();
-			std::list<CMeter*>::iterator iter = meters.begin();
+			std::list<CMeter*>::const_iterator iter = meters.begin();
 
 			// Find this meter
-			for ( ; iter != meters.end(); iter++)
+			for ( ; iter != meters.end(); ++iter)
 			{
 				if (*iter == this && iter != meters.begin())
 				{
-					iter--;
+					--iter;
 					m_RelativeMeter = (*iter);
 					if (m_RelativeX == POSITION_RELATIVE_TL)
 					{
@@ -151,14 +151,14 @@ int CMeter::GetY(bool abs)
 		if (m_RelativeMeter == NULL)
 		{
 			std::list<CMeter*>& meters = m_MeterWindow->GetMeters();
-			std::list<CMeter*>::iterator iter = meters.begin();
+			std::list<CMeter*>::const_iterator iter = meters.begin();
 
 			// Find this meter
-			for ( ; iter != meters.end(); iter++)
+			for ( ; iter != meters.end(); ++iter)
 			{
 				if (*iter == this && iter != meters.begin())
 				{
-					iter--;
+					--iter;
 					m_RelativeMeter = (*iter);
 					if (m_RelativeY == POSITION_RELATIVE_TL)
 					{
@@ -326,8 +326,8 @@ void CMeter::BindMeasure(std::list<CMeasure*>& measures)
 	}
 
 	// Go through the list and check it there is a measure for us
-	std::list<CMeasure*>::iterator i = measures.begin();
-	for( ; i != measures.end(); i++)
+	std::list<CMeasure*>::const_iterator i = measures.begin();
+	for( ; i != measures.end(); ++i)
 	{
 		if(_wcsicmp((*i)->GetName(), m_MeasureName.c_str()) == 0)
 		{
@@ -401,7 +401,7 @@ CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow)
 bool CMeter::Update()
 {
 	// Only update the meter's value when the divider is equal to the counter
-	m_UpdateCounter++;
+	++m_UpdateCounter;
 	if (m_UpdateCounter < m_UpdateDivider) return false;
 	m_UpdateCounter = 0;
 

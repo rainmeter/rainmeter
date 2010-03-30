@@ -111,7 +111,7 @@ void CMeterString::Initialize()
 	CMeter::Initialize();
 
 	// Check if the font family is in the cache and use it
-	std::map<std::wstring, Gdiplus::FontFamily*>::iterator iter = c_FontFamilies.find(m_FontFace);
+	std::map<std::wstring, Gdiplus::FontFamily*>::const_iterator iter = c_FontFamilies.find(m_FontFace);
 	if (iter != c_FontFamilies.end())
 	{
 		m_FontFamily = (*iter).second;
@@ -173,7 +173,7 @@ void CMeterString::Initialize()
 	REAL size = (REAL)m_FontSize * (96.0f / (REAL)dpi);
 
 	std::wstring properties = FontPropertiesToString(m_FontFamily, size, style);
-	std::map<std::wstring, Gdiplus::Font*>::iterator iter2 = c_Fonts.find(properties);
+	std::map<std::wstring, Gdiplus::Font*>::const_iterator iter2 = c_Fonts.find(properties);
 	if (iter2 != c_Fonts.end())
 	{
 		m_Font = (*iter2).second;
@@ -244,7 +244,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 		{
 			loop = false;
 		}
-		i++;
+		++i;
 	} while(loop);
 
 	m_Color = parser.ReadColor(section, L"FontColor", Color::Black);
@@ -402,7 +402,7 @@ bool CMeterString::Update()
 		if (m_Measure) stringValues.push_back(m_Measure->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
 
 		// Get the values for the other measures
-		for (size_t i = 0; i < m_Measures.size(); i++)
+		for (size_t i = 0; i < m_Measures.size(); ++i)
 		{
 			stringValues.push_back(m_Measures[i]->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
 		}
@@ -422,7 +422,7 @@ bool CMeterString::Update()
 			// Create the actual text (i.e. replace %1, %2, .. with the measure texts)
 			std::wstring tmpText = m_Text;
 
-			for (size_t i = 0; i < stringValues.size(); i++)
+			for (size_t i = 0; i < stringValues.size(); ++i)
 			{
 				wsprintf(buffer, L"%%%i", i + 1);
 
@@ -598,12 +598,12 @@ void CMeterString::BindMeasure(std::list<CMeasure*>& measures)
 
 	CMeter::BindMeasure(measures);
 
-	std::vector<std::wstring>::iterator j = m_MeasureNames.begin();
-	for (; j != m_MeasureNames.end(); j++)
+	std::vector<std::wstring>::const_iterator j = m_MeasureNames.begin();
+	for (; j != m_MeasureNames.end(); ++j)
 	{
 		// Go through the list and check it there is a secondary measures for us
-		std::list<CMeasure*>::iterator i = measures.begin();
-		for( ; i != measures.end(); i++)
+		std::list<CMeasure*>::const_iterator i = measures.begin();
+		for( ; i != measures.end(); ++i)
 		{
 			if(_wcsicmp((*i)->GetName(), (*j).c_str()) == 0)
 			{
@@ -628,14 +628,14 @@ void CMeterString::BindMeasure(std::list<CMeasure*>& measures)
 void CMeterString::FreeFontCache()
 {
 	std::map<std::wstring, Gdiplus::FontFamily*>::iterator iter = c_FontFamilies.begin();
-	for ( ; iter != c_FontFamilies.end(); iter++)
+	for ( ; iter != c_FontFamilies.end(); ++iter)
 	{
 		delete (*iter).second;
 	}
 	c_FontFamilies.clear();
 
 	std::map<std::wstring, Gdiplus::Font*>::iterator iter2 = c_Fonts.begin();
-	for ( ; iter2 != c_Fonts.end(); iter2++)
+	for ( ; iter2 != c_Fonts.end(); ++iter2)
 	{
 		delete (*iter2).second;
 	}
@@ -673,7 +673,7 @@ std::wstring CMeterString::FontPropertiesToString(FontFamily* fontFamily, REAL s
 std::wstring StringToUpper(std::wstring str)
 {
 	//change each element of the string to upper case
-	for(unsigned int i = 0; i < str.length(); i++)
+	for(unsigned int i = 0; i < str.length(); ++i)
 	{
 		str[i] = toupper( str[i] );
 	}
@@ -684,7 +684,7 @@ std::wstring StringToUpper(std::wstring str)
 std::wstring StringToLower(std::wstring str)
 {
 	//change each element of the string to lower case
-	for(unsigned int i = 0; i < str.length(); i++)
+	for(unsigned int i = 0; i < str.length(); ++i)
 	{
 		str[i] = tolower(str[i]);
 	}
@@ -695,7 +695,7 @@ std::wstring StringToLower(std::wstring str)
 std::wstring StringToProper(std::wstring str)
 {
 	//change each element of the string to lower case
-	for(unsigned int i = 0; i < str.length(); i++)
+	for(unsigned int i = 0; i < str.length(); ++i)
 	{
 		if(i == 0)
 		{
@@ -740,7 +740,7 @@ void CMeterString::EnumerateInstalledFontFamilies()
 			if (Ok == fontCollection.GetFamilies(fontCount, fontFamilies, &fontFound))
 			{
 				std::wstring fonts;
-				for (INT i = 0; i < fontCount; i++)
+				for (INT i = 0; i < fontCount; ++i)
 				{
 					WCHAR familyName[LF_FACESIZE];
 					if (Ok == fontFamilies[i].GetFamilyName(familyName))

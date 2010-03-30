@@ -28,14 +28,14 @@ int GetYearDay(int year, int month, int day)
 	int yearDay = 0;
 	UINT dates[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
-	for (int i = 0; i < month - 1; i++) 
+	for (int i = 0; i < month - 1; ++i) 
 	{
 		yearDay += dates[i];
 	}
 
 	if (month > 2 && ((((year % 4) == 0) && ((year % 100) != 0)) || (year  % 400) == 0))
 	{
-		yearDay++;
+		++yearDay;
 	}
 
 	yearDay += day;

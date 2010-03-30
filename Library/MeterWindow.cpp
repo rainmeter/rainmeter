@@ -136,7 +136,7 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 	m_UpdateCounter = 0;
 	m_FontCollection = NULL;
 
-	c_InstanceCount++;
+	++c_InstanceCount;
 }
 
 /* 
@@ -151,14 +151,14 @@ CMeterWindow::~CMeterWindow()
 
 	// Destroy the meters
 	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	for( ; j != m_Meters.end(); ++j)
 	{
 		delete (*j);
 	}
 
 	// Destroy the measures
 	std::list<CMeasure*>::iterator i = m_Measures.begin();
-	for( ; i != m_Measures.end(); i++)
+	for( ; i != m_Measures.end(); ++i)
 	{
 		delete (*i);
 	}
@@ -172,7 +172,7 @@ CMeterWindow::~CMeterWindow()
 
 	FreeLibrary(m_User32Library);
 
-	c_InstanceCount--;
+	--c_InstanceCount;
 
 	if (c_InstanceCount == 0)
 	{
@@ -182,7 +182,7 @@ CMeterWindow::~CMeterWindow()
 			// Wait for the window to die
 			Result = UnregisterClass(L"RainmeterMeterWindow", m_Rainmeter->GetInstance());
 			Sleep(100);
-			counter += 1;
+			++counter;
 		} while(!Result && counter < 10);
 	}
 }
@@ -318,14 +318,14 @@ void CMeterWindow::Refresh(bool init, bool all)
 		KillTimer(m_Window, FADETIMER);	// Kill the timer
 
 		std::list<CMeasure*>::iterator i = m_Measures.begin();
-		for( ; i != m_Measures.end(); i++)
+		for( ; i != m_Measures.end(); ++i)
 		{
 			delete (*i);
 		}
 		m_Measures.clear();
 
 		std::list<CMeter*>::iterator j = m_Meters.begin();
-		for( ; j != m_Meters.end(); j++)
+		for( ; j != m_Meters.end(); ++j)
 		{
 			delete (*j);
 		}
@@ -408,7 +408,7 @@ void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 	MONITORINFO mi;
 
 	POINT pt = {x, y};
-	for (int i = 0; i < 5; i++) 
+	for (int i = 0; i < 5; ++i) 
 	{
 		switch(i) 
 		{
@@ -767,8 +767,8 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 
 			if (!measure.empty())
 			{
-				std::list<CMeasure*>::iterator iter = m_Measures.begin();
-				for( ; iter != m_Measures.end(); iter++)
+				std::list<CMeasure*>::const_iterator iter = m_Measures.begin();
+				for( ; iter != m_Measures.end(); ++iter)
 				{
 					if (wcsicmp((*iter)->GetName(), measure.c_str()) == 0)
 					{
@@ -833,8 +833,8 @@ void CMeterWindow::ShowMeter(const WCHAR* name)
 {
 	if (name == NULL || wcslen(name) == 0) return;
 
-	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
 	{
 		if (wcsicmp((*j)->GetName(), name) == 0)
 		{
@@ -857,8 +857,8 @@ void CMeterWindow::HideMeter(const WCHAR* name)
 {
 	if (name == NULL || wcslen(name) == 0) return;
 
-	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
 	{
 		if (wcsicmp((*j)->GetName(), name) == 0)
 		{
@@ -881,8 +881,8 @@ void CMeterWindow::ToggleMeter(const WCHAR* name)
 {
 	if (name == NULL || wcslen(name) == 0) return;
 
-	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
 	{
 		if (wcsicmp((*j)->GetName(), name) == 0)
 		{
@@ -912,8 +912,8 @@ void CMeterWindow::MoveMeter(int x, int y, const WCHAR* name)
 {
 	if (name == NULL || wcslen(name) == 0) return;
 
-	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
 	{
 		if (wcsicmp((*j)->GetName(), name) == 0)
 		{
@@ -936,8 +936,8 @@ void CMeterWindow::EnableMeasure(const WCHAR* name)
 {
 	if (name == NULL || wcslen(name) == 0) return;
 
-	std::list<CMeasure*>::iterator i = m_Measures.begin();
-	for( ; i != m_Measures.end(); i++)
+	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+	for( ; i != m_Measures.end(); ++i)
 	{
 		if (wcsicmp((*i)->GetName(), name) == 0)
 		{
@@ -960,8 +960,8 @@ void CMeterWindow::DisableMeasure(const WCHAR* name)
 {
 	if (name == NULL || wcslen(name) == 0) return;
 
-	std::list<CMeasure*>::iterator i = m_Measures.begin();
-	for( ; i != m_Measures.end(); i++)
+	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+	for( ; i != m_Measures.end(); ++i)
 	{
 		if (wcsicmp((*i)->GetName(), name) == 0)
 		{
@@ -984,8 +984,8 @@ void CMeterWindow::ToggleMeasure(const WCHAR* name)
 {
 	if (name == NULL || wcslen(name) == 0) return;
 
-	std::list<CMeasure*>::iterator i = m_Measures.begin();
-	for( ; i != m_Measures.end(); i++)
+	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+	for( ; i != m_Measures.end(); ++i)
 	{
 		if (wcsicmp((*i)->GetName(), name) == 0)
 		{
@@ -1251,7 +1251,7 @@ void CMeterWindow::ScreenToWindow()
 
 		if (hMonitor != NULL)
 		{
-			for (size_t i = 0; i < monitors.size(); i++)
+			for (size_t i = 0; i < monitors.size(); ++i)
 			{
 				if (monitors[i].active && monitors[i].handle == hMonitor)
 				{
@@ -1371,7 +1371,7 @@ void CMeterWindow::ReadConfig()
 	CConfigParser parser;
 	parser.Initialize(iniFile.c_str(), m_Rainmeter);
 
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < 2; ++i)
 	{
 		m_WindowX = parser.ReadString(section, _T("WindowX"), m_WindowX.c_str());
 		m_WindowY = parser.ReadString(section, _T("WindowY"), m_WindowY.c_str());
@@ -1599,9 +1599,9 @@ void CMeterWindow::ReadSkin()
 	m_MouseActionCursor = 0 != m_Parser.ReadInt(L"Rainmeter", L"MouseActionCursor", 1);
 
 	// Checking for localfonts
-	std::wstring localFont1 = m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"");
+	std::wstring localFont = m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"");
 	// If there is a local font we want to load it
-	if(!localFont1.empty())
+	if(!localFont.empty())
 	{
 		// We want to check the fonts folder first
 		// !!!!!!! - We may want to fix the method in which I get the path to
@@ -1609,8 +1609,8 @@ void CMeterWindow::ReadSkin()
 		std::wstring szFontFile = m_Rainmeter->GetPath().c_str();
 		
 		m_FontCollection = new Gdiplus::PrivateFontCollection();
-		int nResults = 0;
-		nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
+
+		Status nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 		
 		// It wasn't found in the fonts folder, check the local folder
 		if(nResults != Ok)
@@ -1618,19 +1618,19 @@ void CMeterWindow::ReadSkin()
 			szFontFile = m_SkinPath; // Get the local path	
 			szFontFile += m_SkinName;
 			szFontFile += L"\\";
-			szFontFile += localFont1;
+			szFontFile += localFont;
 
 			nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 			
 			// The font wasn't found, check full path.
 			if(nResults != Ok)
 			{
-				szFontFile = localFont1.c_str();
+				szFontFile = localFont.c_str();
 				nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 				if(nResults != Ok)
 				{
 					std::wstring error = L"Error: Couldn't load font file: ";
-					error += localFont1;
+					error += localFont;
 					DebugLog(error.c_str());
 				}
 			}
@@ -1644,18 +1644,17 @@ void CMeterWindow::ReadSkin()
 		do 
 		{
 			swprintf(tmpName, L"LocalFont%i", i);
-			std::wstring LocalFont = m_Parser.ReadString(L"Rainmeter", tmpName, L"");
+			localFont = m_Parser.ReadString(L"Rainmeter", tmpName, L"");
 			// There is a key called LocalFont%i
-			if (!LocalFont.empty())
+			if (!localFont.empty())
 			{
 				// We want to check the fonts folder first
 				// !!!!!!! - We may want to fix the method in which I get the path to
 				// Rainmeter/fonts
 				std::wstring szFontFile = m_Rainmeter->GetPath().c_str();
 				szFontFile  += L"Fonts\\";
-				szFontFile  += LocalFont;
+				szFontFile  += localFont;
 				
-				int nResults = 0;
 				nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 				
 				// It wasn't found in the fonts folder, check the local folder
@@ -1663,19 +1662,19 @@ void CMeterWindow::ReadSkin()
 				{
 					szFontFile = m_SkinPath; // Get the local path
 					szFontFile += m_SkinName;
-					szFontFile += LocalFont;
+					szFontFile += localFont;
 					nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 					
 					// The font wasn't found, check full path.
 					if(nResults != Ok)
 					{
-						szFontFile = LocalFont.c_str();
+						szFontFile = localFont.c_str();
 						nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 						// The font file wasn't found anywhere, log the error
 						if(nResults != Ok)
 						{
 							std::wstring error = L"Error: Couldn't load font file: ";
-							error += LocalFont;
+							error += localFont;
 							DebugLog(error.c_str());
 						}
 					} 
@@ -1686,7 +1685,7 @@ void CMeterWindow::ReadSkin()
 			{
 				loop = false;
 			}
-			i++;
+			++i;
 		} while(loop);
 	}
 
@@ -1697,7 +1696,7 @@ void CMeterWindow::ReadSkin()
 	// Get all the sections (i.e. different meters, measures and the other stuff)
 	std::vector<std::wstring> arraySections = m_Parser.GetSections();
 
-	for (size_t i = 0; i < arraySections.size(); i++)
+	for (size_t i = 0; i < arraySections.size(); ++i)
 	{
 		std::wstring strSection = arraySections[i];
 
@@ -1770,8 +1769,8 @@ void CMeterWindow::ReadSkin()
 	else
 	{
 		// Bind the meters to the measures
-		std::list<CMeter*>::iterator j = m_Meters.begin();
-		for( ; j != m_Meters.end(); j++)
+		std::list<CMeter*>::const_iterator j = m_Meters.begin();
+		for( ; j != m_Meters.end(); ++j)
 		{
 			try
 			{
@@ -1794,8 +1793,8 @@ void CMeterWindow::ReadSkin()
 void CMeterWindow::InitializeMeters()
 {
 	// Initalize all meters
-	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
 	{
 		try
 		{
@@ -1822,8 +1821,8 @@ bool CMeterWindow::ResizeWindow(bool reset)
 	int h = m_BackgroundMargins.GetTop();
 
 	// Get the largest meter point
-	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
 	{
 		w = max(w, (*j)->GetX() + (*j)->GetW());
 		h = max(h, (*j)->GetY() + (*j)->GetH());
@@ -2093,8 +2092,8 @@ void CMeterWindow::Redraw()
 	}
 
 	// Draw the meters
-	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
 	{
 		try
 		{
@@ -2138,16 +2137,16 @@ void CMeterWindow::Redraw()
 */
 void CMeterWindow::Update(bool nodraw)
 {
-	m_UpdateCounter++;
+	++m_UpdateCounter;
 
 	// Pre-updates
 	if (m_HasNetMeasures) CMeasureNet::UpdateIFTable();
 	CMeasureCalc::UpdateVariableMap(*this);
 
 	// Update all measures
-	std::list<CMeasure*>::iterator i = m_Measures.begin();
+	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 
-	for( ; i != m_Measures.end(); i++)
+	for( ; i != m_Measures.end(); ++i)
 	{
 		try
 		{
@@ -2164,8 +2163,8 @@ void CMeterWindow::Update(bool nodraw)
 	}
 
 	// Update the meters
-	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
 	{
 		try
 		{
@@ -2195,7 +2194,7 @@ void CMeterWindow::Update(bool nodraw)
 	// Check for transitions and start the timer if necessary
 	bool bActiveTransition = false;
 	j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	for( ; j != m_Meters.end(); ++j)
 	{
 		if ((*j)->HasActiveTransition())
 		{
@@ -2330,8 +2329,8 @@ LRESULT CMeterWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 	{
 		// Redraw only if there is active transition still going
 		bool bActiveTransition = false;
-		std::list<CMeter*>::iterator j = m_Meters.begin();
-		for( ; j != m_Meters.end(); j++)
+		std::list<CMeter*>::const_iterator j = m_Meters.begin();
+		for( ; j != m_Meters.end(); ++j)
 		{
 			if ((*j)->HasActiveTransition())
 			{
@@ -2366,8 +2365,8 @@ LRESULT CMeterWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 
 		// Handle buttons
 		bool redraw = false;
-		std::list<CMeter*>::iterator j = m_Meters.begin();
-		for( ; j != m_Meters.end(); j++)
+		std::list<CMeter*>::const_iterator j = m_Meters.begin();
+		for( ; j != m_Meters.end(); ++j)
 		{
 			// Hidden meters are ignored
 			if ((*j)->IsHidden()) continue;
@@ -2631,8 +2630,8 @@ LRESULT CMeterWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	bool redraw = false;
 	bool drawCursor = false;
-	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
 	{
 		// Hidden meters are ignored
 		if ((*j)->IsHidden()) continue;
@@ -2835,7 +2834,7 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			const std::vector<CRainmeter::CONFIG>& configs = m_Rainmeter->GetAllConfigs();
 
-			for (size_t i = 0; i < configs.size(); i++)
+			for (size_t i = 0; i < configs.size(); ++i)
 			{
 				if (configs[i].config == m_SkinName)
 				{
@@ -3112,8 +3111,8 @@ LRESULT CMeterWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 
 				// Snap to other windows
 				std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
-				std::map<std::wstring, CMeterWindow*>::iterator iter = windows.begin();
-				for( ; iter != windows.end(); iter++)
+				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
+				for( ; iter != windows.end(); ++iter)
 				{
 					if ((*iter).second != this)
 					{
@@ -3224,8 +3223,8 @@ LRESULT CMeterWindow::OnLeftButtonDown(WPARAM wParam, LPARAM lParam)
 
 	// Handle buttons
 	bool redraw = false;
-	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
 	{
 		// Hidden meters are ignored
 		if ((*j)->IsHidden()) continue;
@@ -3273,8 +3272,8 @@ LRESULT CMeterWindow::OnLeftButtonUp(WPARAM wParam, LPARAM lParam)
 
 	// Handle buttons
 	bool redraw = false;
-	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
 	{
 		// Hidden meters are ignored
 		if ((*j)->IsHidden()) continue;
@@ -3319,7 +3318,7 @@ LRESULT CMeterWindow::OnLeftButtonDoubleClick(WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	bool redraw = false;
 	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	for( ; j != m_Meters.end(); ++j)
 	{
 		// Hidden meters are ignored
 		if ((*j)->IsHidden()) continue;
@@ -3539,8 +3538,8 @@ LRESULT CMeterWindow::OnContextMenu(WPARAM wParam, LPARAM lParam)
 bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test) 
 {
 	// Check if the hitpoint was over some meter
-	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); j++)
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
 	{
 		// Hidden meters are ignored
 		if ((*j)->IsHidden()) continue;
@@ -3978,9 +3977,9 @@ LRESULT CMeterWindow::OnCopyData(WPARAM wParam, LPARAM lParam)
 		// Check that we're still alive
 		bool found = false;
 		std::map<std::wstring, CMeterWindow*>& meters = Rainmeter->GetAllMeterWindows();
-		std::map<std::wstring, CMeterWindow*>::iterator iter = meters.begin();
+		std::map<std::wstring, CMeterWindow*>::const_iterator iter = meters.begin();
 
-		for ( ; iter != meters.end(); iter++)
+		for ( ; iter != meters.end(); ++iter)
 		{
 			if ((*iter).second == this)
 			{

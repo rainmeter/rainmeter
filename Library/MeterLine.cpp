@@ -67,7 +67,7 @@ void CMeterLine::Initialize()
 		{
 			size_t num = (!m_AllValues.empty()) ? m_AllValues[0].size() : 0;
 
-			for (size_t i = m_AllValues.size(), end = m_Colors.size(); i < end; i++)
+			for (size_t i = m_AllValues.size(), end = m_Colors.size(); i < end; ++i)
 			{
 				m_AllValues.push_back(std::vector<double>());
 
@@ -109,7 +109,7 @@ void CMeterLine::ReadConfig(const WCHAR* section)
 	m_ScaleValues.clear();
 	m_MeasureNames.clear();
 
-	for (i = 0; i < lineCount; i++)
+	for (i = 0; i < lineCount; ++i)
 	{
 		if (i == 0)
 		{
@@ -180,8 +180,8 @@ bool CMeterLine::Update()
 		}
 
 		int counter = 1;
-		std::vector<CMeasure*>::iterator i = m_Measures.begin();
-		for ( ; i != m_Measures.end(); i++)
+		std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
+		for ( ; i != m_Measures.end(); ++i)
 		{
 			double value = (*i)->GetValue();
 
@@ -193,10 +193,10 @@ bool CMeterLine::Update()
 			{
 				m_AllValues[counter][m_CurrentPos] = value;
 			}
-			counter++;
+			++counter;
 		}
 
-		m_CurrentPos++;
+		++m_CurrentPos;
 		if (m_CurrentPos >= m_W)
 		{
 			m_CurrentPos = 0;
@@ -223,16 +223,16 @@ bool CMeterLine::Draw(Graphics& graphics)
 	if (m_Autoscale)
 	{
 		double newValue = 0;
-		std::vector< std::vector<double> >::iterator i = m_AllValues.begin();
+		std::vector< std::vector<double> >::const_iterator i = m_AllValues.begin();
 		counter = 0;
-		for (; i != m_AllValues.end(); i++)
+		for (; i != m_AllValues.end(); ++i)
 		{
-			std::vector<double>::iterator j = (*i).begin();
-			for (; j != (*i).end(); j++)
+			std::vector<double>::const_iterator j = (*i).begin();
+			for (; j != (*i).end(); ++j)
 			{
 				newValue = max(newValue, (*j) * m_ScaleValues[counter]);
 			}
-			counter++;
+			++counter;
 		}
 
 		// Scale the value up to nearest power of 2
@@ -248,8 +248,8 @@ bool CMeterLine::Draw(Graphics& graphics)
 		{
 			maxValue = m_Measure->GetMaxValue();
 
-			std::vector<CMeasure*>::iterator i = m_Measures.begin();
-			for (; i != m_Measures.end(); i++)
+			std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
+			for (; i != m_Measures.end(); ++i)
 			{
 				maxValue = max(maxValue, (*i)->GetMaxValue());
 			}
@@ -283,7 +283,7 @@ bool CMeterLine::Draw(Graphics& graphics)
 		Pen pen(m_HorizontalColor);
 
 		REAL Y;
-		for (int j = 0; j < numOfLines; j++)
+		for (int j = 0; j < numOfLines; ++j)
 		{
 			Y = (REAL)((j + 1) * m_H / (numOfLines + 1));
 			Y = y + m_H - Y - 1;
@@ -293,8 +293,8 @@ bool CMeterLine::Draw(Graphics& graphics)
 
 	// Draw all the lines
 	counter = 0;
-	std::vector< std::vector<double> >::iterator i = m_AllValues.begin();
-	for (; i != m_AllValues.end(); i++)
+	std::vector< std::vector<double> >::const_iterator i = m_AllValues.begin();
+	for (; i != m_AllValues.end(); ++i)
 	{
 		// Draw a line
 		int X = x;
@@ -302,12 +302,14 @@ bool CMeterLine::Draw(Graphics& graphics)
 		REAL oldY = 0;
 		int pos = m_CurrentPos;
 		if (pos >= m_W) pos = 0;
+
+		int size = (int)(*i).size();
 		
 		Pen pen(m_Colors[counter], (REAL)m_LineWidth);
 
-		for (int j = 0; j < m_W; j++)
+		for (int j = 0; j < m_W; ++j)
 		{
-			if (pos < (int)(*i).size())
+			if (pos < size)
 			{
 				Y = (REAL)((*i)[pos] * m_ScaleValues[counter] * (m_H - 1) / maxValue);
 				Y = min(Y, m_H - 1);
@@ -333,12 +335,12 @@ bool CMeterLine::Draw(Graphics& graphics)
 			}
 			oldY = Y;
 
-			X++;
-			pos++;
+			++X;
+			++pos;
 			if (pos >= m_W) pos = 0;
 		}
 
-		counter++;
+		++counter;
 	}
 
 	return true;
@@ -354,12 +356,12 @@ void CMeterLine::BindMeasure(std::list<CMeasure*>& measures)
 {
 	CMeter::BindMeasure(measures);
 
-	std::vector<std::wstring>::iterator j = m_MeasureNames.begin();
-	for (; j != m_MeasureNames.end(); j++)
+	std::vector<std::wstring>::const_iterator j = m_MeasureNames.begin();
+	for (; j != m_MeasureNames.end(); ++j)
 	{
 		// Go through the list and check it there is a secondary measure for us
-		std::list<CMeasure*>::iterator i = measures.begin();
-		for( ; i != measures.end(); i++)
+		std::list<CMeasure*>::const_iterator i = measures.begin();
+		for( ; i != measures.end(); ++i)
 		{
 			if(_wcsicmp((*i)->GetName(), (*j).c_str()) == 0)
 			{

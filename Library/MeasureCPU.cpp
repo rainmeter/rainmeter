@@ -211,7 +211,7 @@ bool CMeasureCPU::Update()
 					return false;
 				}
 
-				loop++;
+				++loop;
 			} while (loop < 10);
 
 			if (status != STATUS_SUCCESS)  // failed
@@ -313,7 +313,7 @@ void CMeasureCPU::CalcAverageUsage(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* sys
 		double dbIdleTimeDiff = 0, dbSystemTimeDiff = 0;
 		double dbCpuUsage;
 
-		for (int i = 0; i < m_NumOfProcessors; i++)
+		for (int i = 0; i < m_NumOfProcessors; ++i)
 		{
 			double dbIdleTime, dbSystemTime;
 
@@ -337,7 +337,7 @@ void CMeasureCPU::CalcAverageUsage(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* sys
 	else
 	{
 		// store new CPU's idle and system time
-		for (int i = 0; i < m_NumOfProcessors; i++)
+		for (int i = 0; i < m_NumOfProcessors; ++i)
 		{
 			m_OldTime[i * 2 + 0] = Li2Double(systemPerfInfo[i].IdleTime);
 			m_OldTime[i * 2 + 1] = Li2Double(systemPerfInfo[i].KernelTime) + Li2Double(systemPerfInfo[i].UserTime);

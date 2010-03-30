@@ -183,7 +183,7 @@ bool CMeterHistogram::Update()
 			m_SecondaryValues[m_MeterPos] = m_SecondaryMeasure->GetValue();
 		}
 
-		m_MeterPos++;
+		++m_MeterPos;
 		m_MeterPos %= m_W;
 
 		m_MaxPrimaryValue = m_Measure->GetMaxValue();
@@ -200,9 +200,8 @@ bool CMeterHistogram::Update()
 		{
 			// Go through all values and find the max
 
-			int i;
 			double newValue = 0;
-			for (i = 0; i != m_W; i++)
+			for (int i = 0; i != m_W; ++i)
 			{
 				newValue = max(newValue, m_PrimaryValues[i]);
 			}
@@ -216,7 +215,7 @@ bool CMeterHistogram::Update()
 
 			if (m_SecondaryMeasure)
 			{
-				for (i = 0; i != m_W; i++)
+				for (int i = 0; i != m_W; ++i)
 				{
 					newValue = max(newValue, m_SecondaryValues[i]);
 				}
@@ -251,7 +250,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 	int x = GetX();
 	int y = GetY();
 
-	for (int i = 0; i < m_W; i++)
+	for (int i = 0; i < m_W; ++i)
 	{
 		double value;
 		
@@ -421,8 +420,8 @@ void CMeterHistogram::BindMeasure(std::list<CMeasure*>& measures)
 	if(!m_SecondaryMeasureName.empty())
 	{
 		// Go through the list and check it there is a secondary measure for us
-		std::list<CMeasure*>::iterator i = measures.begin();
-		for( ; i != measures.end(); i++)
+		std::list<CMeasure*>::const_iterator i = measures.begin();
+		for( ; i != measures.end(); ++i)
 		{
 			if(_wcsicmp((*i)->GetName(), m_SecondaryMeasureName.c_str()) == 0)
 			{

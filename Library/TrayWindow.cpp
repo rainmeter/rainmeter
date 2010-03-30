@@ -91,7 +91,7 @@ CTrayWindow::~CTrayWindow()
 	if (m_Bitmap) delete m_Bitmap;
 	if (m_Measure) delete m_Measure;
 
-	for (size_t i = 0; i < m_TrayIcons.size(); i++) 
+	for (size_t i = 0; i < m_TrayIcons.size(); ++i) 
 	{
 		DestroyIcon(m_TrayIcons[i]);
 	}
@@ -214,7 +214,7 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 			points[TRAYICON_SIZE + 1].X = TRAYICON_SIZE - 1;
 			points[TRAYICON_SIZE + 1].Y = TRAYICON_SIZE;
 
-			for (int i = 0; i < TRAYICON_SIZE; i++)
+			for (int i = 0; i < TRAYICON_SIZE; ++i)
 			{
 				points[i + 1].X = i;
 				points[i + 1].Y = (int)(TRAYICON_SIZE * (1.0 - m_TrayValues[(m_TrayPos + i) % TRAYICON_SIZE]));
@@ -294,7 +294,7 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 
 void CTrayWindow::ReadConfig(CConfigParser& parser)
 {
-	for (size_t i = 0; i < m_TrayIcons.size(); i++) 
+	for (size_t i = 0; i < m_TrayIcons.size(); ++i) 
 	{
 		DestroyIcon(m_TrayIcons[i]);
 	}
@@ -507,9 +507,9 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				// Check which config was selected
 				const std::vector<CRainmeter::CONFIG>& configs = Rainmeter->GetAllConfigs();
 
-				for (size_t i = 0; i < configs.size(); i++)
+				for (size_t i = 0; i < configs.size(); ++i)
 				{
-					for (size_t j = 0; j < configs[i].commands.size(); j++)
+					for (size_t j = 0; j < configs[i].commands.size(); ++j)
 					{
 						if (configs[i].commands[j] == wParam)
 						{
@@ -543,10 +543,10 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 				if (index < (int)windows.size())
 				{
-					std::map<std::wstring, CMeterWindow*>::iterator iter = windows.begin();
-					for( ; iter != windows.end(); iter++)
+					std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
+					for( ; iter != windows.end(); ++iter)
 					{
-						index--;
+						--index;
 						if (index < 0)
 						{
 							CMeterWindow* meterWindow = (*iter).second;

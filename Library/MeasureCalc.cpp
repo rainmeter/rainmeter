@@ -102,8 +102,8 @@ void CMeasureCalc::UpdateVariableMap(CMeterWindow& meterWindow)
 
 	std::list<CMeasure*>& measures = meterWindow.GetMeasures();
 
-	std::list<CMeasure*>::iterator iter = measures.begin();
-	for( ; iter != measures.end(); iter++)
+	std::list<CMeasure*>::const_iterator iter = measures.begin();
+	for( ; iter != measures.end(); ++iter)
 	{
 		const char* name = (*iter)->GetANSIName();
 		double val = (*iter)->GetValue();
@@ -130,8 +130,8 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	// Hold onto the formula, we are going to change it
 	m_FormulaHolder = m_Formula;
 
-	m_LowBound = parser.ReadFloat(section, L"LowBound", 0);
-	m_HighBound = parser.ReadFloat(section, L"HighBound", 100);
+	m_LowBound = parser.ReadInt(section, L"LowBound", 0);
+	m_HighBound = parser.ReadInt(section, L"HighBound", 100);
 	m_UpdateRandom = parser.ReadInt(section, L"UpdateRandom", 0);
 
 	RandomFormulaReplace();

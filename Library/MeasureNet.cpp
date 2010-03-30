@@ -116,7 +116,7 @@ void CMeasureNet::UpdateIFTable()
 				DebugLog(L"------------------------------");
 				DebugLog(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
 
-				for (size_t i = 0; i < c_NumOfTables; i++)
+				for (size_t i = 0; i < c_NumOfTables; ++i)
 				{
 					std::wstring type;
 					switch (ifTable->Table[i].Type)
@@ -211,7 +211,7 @@ void CMeasureNet::UpdateIFTable()
 					DebugLog(L"------------------------------");
 					DebugLog(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
 
-					for (size_t i = 0; i < c_NumOfTables; i++)
+					for (size_t i = 0; i < c_NumOfTables; ++i)
 					{
 						std::string desc((char*)ifTable->table[i].bDescr, ifTable->table[i].dwDescrLen);
 
@@ -277,7 +277,7 @@ ULONG64 CMeasureNet::GetNetOctets(NET net)
 		if (m_Interface == 0)
 		{
 			// Get all interfaces
-			for (UINT i = 0; i < c_NumOfTables; i++)
+			for (UINT i = 0; i < c_NumOfTables; ++i)
 			{
 				// Ignore the loopback and non-hardware interfaces
 				if (table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK ||
@@ -330,7 +330,7 @@ ULONG64 CMeasureNet::GetNetOctets(NET net)
 		if (m_Interface == 0)
 		{
 			// Get all interfaces
-			for (UINT i = 0; i < c_NumOfTables; i++)
+			for (UINT i = 0; i < c_NumOfTables; ++i)
 			{
 				// Ignore the loopback
 				if (table[i].dwType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
@@ -392,7 +392,7 @@ ULONG64 CMeasureNet::GetNetStatsValue(NET net)
 	if (m_Interface == 0)
 	{
 		// Get all interfaces
-		for(size_t i = 0; i < c_StatValues.size() / 2; i++)
+		for(size_t i = 0; i < c_StatValues.size() / 2; ++i)
 		{
 			// Ignore the loopback and non-hardware interfaces
 			if (c_NumOfTables == c_StatValues.size() / 2)
@@ -527,7 +527,7 @@ void CMeasureNet::UpdateStats()
 			c_OldStatValues.push_back(0);
 		}
 
-		for (UINT i = 0; i < c_NumOfTables; i++)
+		for (UINT i = 0; i < c_NumOfTables; ++i)
 		{
 			ULONG64 in, out;
 
@@ -570,7 +570,7 @@ void CMeasureNet::ResetStats()
 {
 	if (c_Table)
 	{
-		for (size_t i = 0; i < c_StatValues.size(); i++)
+		for (size_t i = 0; i < c_StatValues.size(); ++i)
 		{
 			c_StatValues[i] = 0;
 		}
@@ -590,7 +590,7 @@ void CMeasureNet::ReadStats(const std::wstring& iniFile)
 
 	c_StatValues.clear();
 
-	for (int i = 0; i < count; i++)
+	for (int i = 0; i < count; ++i)
 	{
 		ULARGE_INTEGER value;
 
@@ -626,7 +626,7 @@ void CMeasureNet::WriteStats(const std::wstring& iniFile)
 	wsprintf(buffer, L"%i", c_StatValues.size() / 2);
 	WritePrivateProfileString(L"Statistics", L"NetStatsCount", buffer, iniFile.c_str());
 
-	for (size_t i = 0; i < c_StatValues.size() / 2; i++)
+	for (size_t i = 0; i < c_StatValues.size() / 2; ++i)
 	{
 		ULARGE_INTEGER value;
 
