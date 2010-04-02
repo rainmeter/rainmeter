@@ -640,7 +640,7 @@ void RainmeterQuit(HWND, const char* arg)
 	if (Rainmeter)
 	{
 		// Quit needs to be delayed since it crashes if done during Update()
-		PostMessage(Rainmeter->GetTrayWindow()->GetWindow(), WM_DELAYED_QUIT, (WPARAM)NULL, (LPARAM)NULL);
+		PostMessage(Rainmeter->GetTrayWindow()->GetWindow(), WM_COMMAND, MAKEWPARAM(ID_CONTEXT_QUIT, 0), (LPARAM)NULL);
 	}
 }
 
@@ -1781,7 +1781,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	else if (wcsicmp(bang.c_str(), L"!RainmeterQuit") == 0)
 	{
 		// Quit needs to be delayed since it crashes if done during Update()
-		PostMessage(m_TrayWindow->GetWindow(), WM_DELAYED_QUIT, (WPARAM)NULL, (LPARAM)NULL);
+		PostMessage(m_TrayWindow->GetWindow(), WM_COMMAND, MAKEWPARAM(ID_CONTEXT_QUIT, 0), (LPARAM)NULL);
 	}
 	else if (wcsicmp(bang.c_str(), L"!Execute") == 0)
 	{

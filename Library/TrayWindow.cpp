@@ -631,14 +631,6 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 		return 0;
 
-	case WM_DELAYED_QUIT:
-		if (Rainmeter)
-		{
-			if (Rainmeter->GetDummyLitestep()) PostQuitMessage(0);
-			quitModule(Rainmeter->GetInstance());
-		}
-		return 0;
-
 	case WM_DESTROY:
 		if (Rainmeter->GetDummyLitestep()) PostQuitMessage(0);
 		break;
