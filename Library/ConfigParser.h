@@ -41,6 +41,7 @@ public:
 	void AddMeasure(CMeasure* pMeasure);
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue);
 	void SetStyleTemplate(const std::wstring& strStyle) { m_StyleTemplate = strStyle; }
+	void ResetStyleTemplate() { m_StyleTemplate.clear(); }
 
 	void ResetVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow = NULL);
 
@@ -76,6 +77,9 @@ private:
 
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
 
+	void GetIniFileMappingList();
+	std::wstring GetAlternateFileName(const std::wstring& iniFile);
+
 	static void SetMultiMonitorVariables(bool reset);
 	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue);
 
@@ -90,6 +94,8 @@ private:
 	std::vector<std::wstring> m_Sections;		// The sections must be an ordered array
 	stdext::hash_map<std::wstring, std::vector<std::wstring> > m_Keys;
 	stdext::hash_map<std::wstring, std::wstring> m_Values;
+
+	std::vector<std::wstring> m_IniFileMappings;
 
 	static std::map<std::wstring, std::wstring> c_MonitorVariables;
 };

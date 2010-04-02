@@ -637,7 +637,11 @@ void RainmeterPluginBang(HWND, const char* arg)
 */
 void RainmeterQuit(HWND, const char* arg)
 {
-	BangWithArgs(BANG_QUIT, ConvertToWide(arg).c_str(), 0);
+	if (Rainmeter)
+	{
+		// Quit needs to be delayed since it crashes if done during Update()
+		PostMessage(Rainmeter->GetTrayWindow()->GetWindow(), WM_DELAYED_QUIT, (WPARAM)NULL, (LPARAM)NULL);
+	}
 }
 
 /*
@@ -1190,18 +1194,20 @@ int CRainmeter::CompareVersions(std::wstring strA, std::wstring strB)
 ** Copies files and folders from one location to another.
 **
 */
-bool CRainmeter::CopyFiles(std::wstring strFrom, std::wstring strTo, bool bMove)
+bool CRainmeter::CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove)
 {
+	std::wstring tmpFrom(strFrom), tmpTo(strTo);
+
 	// The strings must end with double nul
-	strFrom.append(L"0");
-	strFrom[strFrom.size() - 1] = L'\0';
-	strTo.append(L"0");
-	strTo[strTo.size() - 1] = L'\0';
+	tmpFrom.append(L"0");
+	tmpFrom[tmpFrom.size() - 1] = L'\0';
+	tmpTo.append(L"0");
+	tmpTo[tmpTo.size() - 1] = L'\0';
 
 	SHFILEOPSTRUCT fo = {0};
 	fo.wFunc = bMove ? FO_MOVE : FO_COPY;
-	fo.pFrom = strFrom.c_str();
-	fo.pTo = strTo.c_str();
+	fo.pFrom = tmpFrom.c_str();
+	fo.pTo = tmpTo.c_str();
 	fo.fFlags = FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO;
 
 	int result = SHFileOperation(&fo);
@@ -1774,7 +1780,8 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterQuit") == 0)
 	{
-		BangWithArgs(BANG_QUIT, arg.c_str(), 0);
+		// Quit needs to be delayed since it crashes if done during Update()
+		PostMessage(m_TrayWindow->GetWindow(), WM_DELAYED_QUIT, (WPARAM)NULL, (LPARAM)NULL);
 	}
 	else if (wcsicmp(bang.c_str(), L"!Execute") == 0)
 	{

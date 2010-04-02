@@ -36,7 +36,6 @@
 
 #define WM_DELAYED_EXECUTE WM_APP + 0
 #define WM_DELAYED_REFRESH WM_APP + 1
-#define WM_DELAYED_QUIT    WM_APP + 2
 #define WM_DELAYED_MOVE    WM_APP + 3
 
 enum MOUSE
@@ -109,7 +108,6 @@ enum BANGCOMMAND
 	BANG_ABOUT,
 	BANG_MOVEMETER,
 	BANG_PLUGIN,
-	BANG_QUIT,
 	BANG_SETVARIABLE
 };
 
@@ -213,7 +211,6 @@ protected:
 	LRESULT OnDelayedExecute(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedRefresh(WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedMove(WPARAM wParam, LPARAM lParam);
-	LRESULT OnDelayedQuit(WPARAM wParam, LPARAM lParam);
 	LRESULT OnSettingChange(WPARAM wParam, LPARAM lParam);  
 	LRESULT OnDisplayChange(WPARAM wParam, LPARAM lParam);  
 

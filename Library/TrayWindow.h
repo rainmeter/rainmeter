@@ -25,6 +25,7 @@
 #include "Measure.h"
 
 #define WM_DELAYED_REFRESH_ALL WM_APP + 0
+#define WM_DELAYED_QUIT        WM_APP + 1
 
 #define WM_NOTIFYICON WM_USER + 101
 #define TRAYICON_SIZE 16

@@ -179,6 +179,7 @@ public:
 	static PLATFORM IsNT();
 	static std::wstring ExtractPath(const std::wstring& strFilePath);
 	static void ExpandEnvironmentVariables(std::wstring& strPath);
+	static bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove = false);
 
 private:
 	void CreateMeterWindow(std::wstring path, std::wstring config, std::wstring iniFile);
@@ -197,7 +198,6 @@ private:
 	HMENU CreateMonitorMenu(CMeterWindow* meterWindow);
 	void CreateDefaultConfigFile(std::wstring strFile);
 	void TestSettingsFile(bool bDefaultIniLocation);
-	bool CopyFiles(std::wstring strFrom, std::wstring strTo, bool bMove = false);
 	void CheckSkinVersions();
 	int CompareVersions(std::wstring strA, std::wstring strB);
 

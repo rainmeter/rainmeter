@@ -78,8 +78,15 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 	// Set the SCREENAREA/WORKAREA variables for present monitor
 	SetAutoSelectedMonitorVariables(meterWindow);
 
+	if (meterWindow)
+	{
+		GetIniFileMappingList();
+	}
+
 	ReadIniFile(m_Filename);
 	ReadVariables();
+
+	m_IniFileMappings.clear();
 }
 
 /*
@@ -288,7 +295,6 @@ void CConfigParser::SetMonitorVariable(const std::wstring& strVariable, const st
 */
 void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 {
-
 	if (meterWindow)
 	{
 		if (CSystem::GetMonitorCount() > 0)
@@ -798,15 +804,34 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 */
 void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 {
-	if (CRainmeter::GetDebug())
-	{
-		DebugLog(L"Reading file: %s", iniFile.c_str());
-	}
-
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
 		MessageBox(NULL, L"It looks like you've made an infinite\nloop with the @include statements.\nPlease check your skin.", L"Rainmeter", MB_OK | MB_ICONERROR);
 		return;
+	}
+
+	// Avoid "IniFileMapping"
+	std::wstring iniRead = GetAlternateFileName(iniFile);
+	bool alternate = false;
+
+	if (!iniRead.empty())
+	{
+		// Copy iniFile to temporary directory
+		if (CRainmeter::CopyFiles(iniFile, iniRead))
+		{
+			if (CRainmeter::GetDebug()) DebugLog(L"Reading file: %s (Alternate: %s)", iniFile.c_str(), iniRead.c_str());
+			alternate = true;
+		}
+		else  // copy failed
+		{
+			DeleteFile(iniRead.c_str());
+		}
+	}
+
+	if (!alternate)
+	{
+		if (CRainmeter::GetDebug()) DebugLog(L"Reading file: %s", iniFile.c_str());
+		iniRead = iniFile;
 	}
 
 	// Get all the sections (i.e. different meters)
@@ -817,8 +842,13 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 	while(true)
 	{
 		items[0] = 0;
-		int res = GetPrivateProfileString( NULL, NULL, NULL, items, size, iniFile.c_str());
-		if (res == 0) { delete [] items; return; }		// File not found
+		int res = GetPrivateProfileString( NULL, NULL, NULL, items, size, iniRead.c_str());
+		if (res == 0)		// File not found
+		{
+			delete [] items;
+			if (alternate) DeleteFile(iniRead.c_str());
+			return;
+		}
 		if (res < size - 2) break;		// Fits in the buffer
 
 		delete [] items;
@@ -850,7 +880,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 		while(true)
 		{
 			items[0] = 0;
-			int res = GetPrivateProfileString((*iter).first.c_str(), NULL, NULL, items, size, iniFile.c_str());
+			int res = GetPrivateProfileString((*iter).first.c_str(), NULL, NULL, items, size, iniRead.c_str());
 			if (res < size - 2) break;		// Fits in the buffer
 
 			delete [] items;
@@ -866,7 +896,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 			while(true)
 			{
 				buffer[0] = 0;
-				int res = GetPrivateProfileString((*iter).first.c_str(), strKey.c_str(), L"", buffer, bufferSize, iniFile.c_str());
+				int res = GetPrivateProfileString((*iter).first.c_str(), strKey.c_str(), L"", buffer, bufferSize, iniRead.c_str());
 				if (res < bufferSize - 2) break;		// Fits in the buffer
 
 				delete [] buffer;
@@ -895,6 +925,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 	}
 	delete [] buffer;
 	delete [] items;
+	if (alternate) DeleteFile(iniRead.c_str());
 }
 
 //==============================================================================
@@ -978,3 +1009,82 @@ std::vector<std::wstring> CConfigParser::GetKeys(const std::wstring& strSection)
 	return std::vector<std::wstring>();
 }
 
+void CConfigParser::GetIniFileMappingList()
+{
+	HKEY hKey;
+	LONG ret;
+
+	ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\IniFileMapping", 0, KEY_ENUMERATE_SUB_KEYS, &hKey);
+	if (ret == ERROR_SUCCESS)
+	{
+		WCHAR buffer[MAX_PATH];
+		DWORD index = 0, cch = MAX_PATH;
+
+		while (true)
+		{
+			ret = RegEnumKeyEx(hKey, index++, buffer, &cch, NULL, NULL, NULL, NULL);
+			if (ret == ERROR_NO_MORE_ITEMS) break;
+
+			if (ret == ERROR_SUCCESS)
+			{
+				m_IniFileMappings.push_back(buffer);
+			}
+			cch = MAX_PATH;
+		}
+		RegCloseKey(hKey);
+	}
+}
+
+std::wstring CConfigParser::GetAlternateFileName(const std::wstring &iniFile)
+{
+	std::wstring alternate;
+
+	if (!m_IniFileMappings.empty())
+	{
+		std::wstring::size_type pos = iniFile.find_last_of(L'\\');
+		std::wstring filename;
+
+		if (pos != std::wstring::npos)
+		{
+			filename = iniFile.substr(pos + 1);
+		}
+		else
+		{
+			filename = iniFile;
+		}
+
+		for (size_t i = 0; i < m_IniFileMappings.size(); ++i)
+		{
+			if (wcsicmp(m_IniFileMappings[i].c_str(), filename.c_str()) == 0)
+			{
+				WCHAR buffer[4096];
+
+				GetTempPath(4096, buffer);
+				alternate = buffer;
+				if (GetTempFileName(alternate.c_str(), L"cfg", 0, buffer) != 0)
+				{
+					alternate = buffer;
+
+					std::wstring tmp = GetAlternateFileName(alternate);
+					if (tmp.empty())
+					{
+						return alternate;
+					}
+					else  // alternate is reserved
+					{
+						DeleteFile(alternate.c_str());
+						return tmp;
+					}
+				}
+				else  // failed
+				{
+					DebugLog(L"Unable to create a temporary file to: %s", alternate.c_str());
+					alternate.clear();
+					break;
+				}
+			}
+		}
+	}
+
+	return alternate;
+}

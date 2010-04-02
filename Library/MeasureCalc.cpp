@@ -148,9 +148,9 @@ void CMeasureCalc::RandomFormulaReplace()
 	//To implement random numbers the word "Random" in the string
 	//formula is being replaced by the random number value
 	m_Formula = m_FormulaHolder;
-	int loc = m_Formula.find(L"Random");
+	std::wstring::size_type loc = m_Formula.find(L"Random");
 
-	while(loc > -1)
+	while(loc != std::wstring::npos)
 	{
 		int range = (m_HighBound - m_LowBound); 
 		srand((unsigned) rand()); 

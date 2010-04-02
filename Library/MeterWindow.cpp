@@ -786,11 +786,6 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		}
 		break;
 
-	case BANG_QUIT:
-		// Quit needs to be delayed since it crashes if done during Update()
-		PostMessage(m_Window, WM_DELAYED_QUIT, (WPARAM)NULL, (LPARAM)NULL);
-		break;
-
 	case BANG_SETVARIABLE:
 		pos = wcschr(arg, ' ');
 		if (pos != NULL)
@@ -1751,6 +1746,8 @@ void CMeterWindow::ReadSkin()
 
 						meter->ReadConfig(strSection.c_str());
 						m_Meters.push_back(meter);
+
+						m_Parser.ResetStyleTemplate();
 					}
 				}
 				catch (CError& error)
@@ -2171,6 +2168,7 @@ void CMeterWindow::Update(bool nodraw)
 			if ((*j)->HasDynamicVariables())
 			{
 				(*j)->ReadConfig((*j)->GetName());
+				m_Parser.ResetStyleTemplate();
 			}
 			(*j)->Update();
 		}
@@ -3871,7 +3869,6 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnDelayedExecute, WM_DELAYED_EXECUTE)
 	MESSAGE(OnDelayedRefresh, WM_DELAYED_REFRESH)
 	MESSAGE(OnDelayedMove, WM_DELAYED_MOVE)
-	MESSAGE(OnDelayedQuit, WM_DELAYED_QUIT)
 	MESSAGE(OnSettingChange, WM_SETTINGCHANGE)
 	MESSAGE(OnDisplayChange, WM_DISPLAYCHANGE)
 	END_MESSAGEPROC
@@ -3946,19 +3943,6 @@ LRESULT CMeterWindow::OnDelayedMove(WPARAM wParam, LPARAM lParam)
 		PostMessage(m_Window, WM_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
 	}
 
-	return 0;
-}
-
-/*
-** OnDelayedQuit
-**
-** Handles delayed quit
-**
-*/
-LRESULT CMeterWindow::OnDelayedQuit(WPARAM wParam, LPARAM lParam)
-{
-	if (Rainmeter->GetDummyLitestep()) PostQuitMessage(0);
-	quitModule(Rainmeter->GetInstance());
 	return 0;
 }
 
