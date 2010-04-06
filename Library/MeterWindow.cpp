@@ -4017,7 +4017,9 @@ LRESULT CMeterWindow::OnCopyData(WPARAM wParam, LPARAM lParam)
 */
 std::wstring CMeterWindow::MakePathAbsolute(std::wstring path)
 {
-	if (path.empty() || path.find(L':') != std::wstring::npos)
+	if (path.empty() ||
+		path.find(L":\\") != std::wstring::npos || path.find(L":/") != std::wstring::npos ||
+		(path.length() >= 2 && (path[0] == L'\\' || path[0] == L'/') && (path[1] == L'\\' || path[1] == L'/')))  // UNC
 	{
 		return path;	// It's already absolute path (or it's empty)
 	}
