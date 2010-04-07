@@ -854,9 +854,10 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 		delete [] items;
 		size *= 2;
 		items = new WCHAR[size];
-	};
+	}
 
 	// Read the sections
+	std::list<std::wstring> sections;
 	WCHAR* pos = items;
 	while(wcslen(pos) > 0)
 	{
@@ -867,6 +868,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 			m_Keys[strTmp] = std::vector<std::wstring>();
 			m_Sections.push_back(pos);
 		}
+		sections.push_back(pos);
 		pos = pos + wcslen(pos) + 1;
 	}
 
@@ -874,19 +876,19 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 	int bufferSize = MAX_LINE_LENGTH;
 	WCHAR* buffer = new WCHAR[bufferSize];
 
-	stdext::hash_map<std::wstring, std::vector<std::wstring> >::const_iterator iter = m_Keys.begin();
-	for ( ; iter != m_Keys.end(); ++iter)
+	std::list<std::wstring>::const_iterator iter = sections.begin();
+	for ( ; iter != sections.end(); ++iter)
 	{
 		while(true)
 		{
 			items[0] = 0;
-			int res = GetPrivateProfileString((*iter).first.c_str(), NULL, NULL, items, size, iniRead.c_str());
+			int res = GetPrivateProfileString((*iter).c_str(), NULL, NULL, items, size, iniRead.c_str());
 			if (res < size - 2) break;		// Fits in the buffer
 
 			delete [] items;
 			size *= 2;
 			items = new WCHAR[size];
-		};
+		}
 
 		WCHAR* pos = items;
 		while(wcslen(pos) > 0)
@@ -896,13 +898,13 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 			while(true)
 			{
 				buffer[0] = 0;
-				int res = GetPrivateProfileString((*iter).first.c_str(), strKey.c_str(), L"", buffer, bufferSize, iniRead.c_str());
+				int res = GetPrivateProfileString((*iter).c_str(), strKey.c_str(), L"", buffer, bufferSize, iniRead.c_str());
 				if (res < bufferSize - 2) break;		// Fits in the buffer
 
 				delete [] buffer;
 				bufferSize *= 2;
 				buffer = new WCHAR[bufferSize];
-			};
+			}
 
 			if (wcsnicmp(strKey.c_str(), L"@include", 8) == 0)
 			{
@@ -917,7 +919,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 			}
 			else
 			{
-				SetValue((*iter).first, strKey, buffer);
+				SetValue((*iter), strKey, buffer);
 			}
 
 			pos = pos + wcslen(pos) + 1;
