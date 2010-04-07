@@ -112,7 +112,6 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 	m_AutoSelectScreen = false;
 	m_Dragging = false;
 	m_Dragged = false;
-	m_PreventMoving = false;
 
 	m_BackgroundSize.cx = 0;
 	m_BackgroundSize.cy = 0;
@@ -1706,35 +1705,45 @@ void CMeterWindow::ReadSkin()
 			meterName = m_Parser.ReadString(strSection.c_str(), L"Meter", L"");
 			if (measureName.length() > 0)
 			{
+				// It's a measure
+				CMeasure* measure = NULL;
+
 				try
 				{
-					// It's a measure
-					CMeasure* measure = CMeasure::Create(measureName.c_str(), this);
+					measure = CMeasure::Create(measureName.c_str(), this);
 					if (measure)
 					{
 						measure->SetName(strSection.c_str());
 						measure->ReadConfig(m_Parser, strSection.c_str());
-						m_Measures.push_back(measure);
-
-						m_Parser.AddMeasure(measure);
-
-						if (!m_HasNetMeasures && dynamic_cast<CMeasureNet*>((measure)))
-						{
-							m_HasNetMeasures = true;
-						}
 					}
 				}
 				catch (CError& error)
 				{
+					delete measure;
+					measure = NULL;
 					MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+				}
+
+				if (measure)
+				{
+					m_Measures.push_back(measure);
+
+					m_Parser.AddMeasure(measure);
+
+					if (!m_HasNetMeasures && dynamic_cast<CMeasureNet*>((measure)))
+					{
+						m_HasNetMeasures = true;
+					}
 				}
 			}
 			else if (meterName.length() > 0)
 			{
+				// It's a meter
+				CMeter* meter = NULL;
+
 				try
 				{
-					// It's a meter
-					CMeter* meter = CMeter::Create(meterName.c_str(), this);
+					meter = CMeter::Create(meterName.c_str(), this);
 					if (meter)
 					{
 						meter->SetName(strSection.c_str());
@@ -1745,14 +1754,20 @@ void CMeterWindow::ReadSkin()
 						}
 
 						meter->ReadConfig(strSection.c_str());
-						m_Meters.push_back(meter);
-
-						m_Parser.ResetStyleTemplate();
 					}
 				}
 				catch (CError& error)
 				{
+					delete meter;
+					meter = NULL;
 					MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+				}
+
+				if (meter)
+				{
+					m_Meters.push_back(meter);
+
+					m_Parser.ResetStyleTemplate();
 				}
 			}
 			// If it's not a meter or measure it will be ignored
@@ -3076,14 +3091,6 @@ LRESULT CMeterWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 
 	if ((wp->flags & SWP_NOMOVE) == 0) 
 	{
-		if (m_PreventMoving)
-		{
-			wp->flags |= SWP_NOMOVE;
-			m_PreventMoving = false;
-
-			return DefWindowProc(m_Window, m_Message, wParam, lParam);
-		}
-
 		if (m_SnapEdges && !(GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000))
 		{
 			// only process movement (ignore anything without winpos values)

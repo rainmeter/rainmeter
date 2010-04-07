@@ -304,7 +304,6 @@ private:
 	bool m_AutoSelectScreen;					//
 	bool m_Dragging;							//
 	bool m_Dragged;								//
-	bool m_PreventMoving;						//
 	BGMODE m_BackgroundMode;					// The background mode
 	Gdiplus::Color m_SolidColor;				// Color of the solid background
 	Gdiplus::Color m_SolidColor2;				// Color of the solid background
