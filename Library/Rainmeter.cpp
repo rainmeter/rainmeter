@@ -1341,7 +1341,6 @@ void CRainmeter::ClearDeleteLaterList()
 	while (!m_DelayDeleteList.empty())
 	{
 		CMeterWindow* meterWindow = m_DelayDeleteList.front();
-		delete meterWindow;
 
 		// Remove from the delete later list
 		m_DelayDeleteList.remove(meterWindow);
@@ -1356,6 +1355,8 @@ void CRainmeter::ClearDeleteLaterList()
 				break;
 			}
 		}
+
+		delete meterWindow;
 	}
 }
 
@@ -1382,8 +1383,8 @@ bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
 			} 
 			else if ((*iter).second == meterWindow)
 			{
-				delete meterWindow;
 				m_Meters.erase(iter);
+				delete meterWindow;
 				return true;
 			}
 		}

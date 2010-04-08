@@ -148,6 +148,12 @@ CMeterWindow::~CMeterWindow()
 {
 	WriteConfig();
 
+	// Kill the timer
+	KillTimer(m_Window, METERTIMER);
+	KillTimer(m_Window, MOUSETIMER);
+	KillTimer(m_Window, FADETIMER);
+	KillTimer(m_Window, TRANSITIONTIMER);
+
 	// Destroy the meters
 	std::list<CMeter*>::iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
@@ -312,9 +318,11 @@ void CMeterWindow::Refresh(bool init, bool all)
 		// First destroy everything
 		// WriteConfig(); //Not clear why this is needed and it messes up resolution changes
 
-		KillTimer(m_Window, METERTIMER);	// Kill the timer
-		KillTimer(m_Window, MOUSETIMER);	// Kill the timer
-		KillTimer(m_Window, FADETIMER);	// Kill the timer
+		// Kill the timer
+		KillTimer(m_Window, METERTIMER);
+		KillTimer(m_Window, MOUSETIMER);
+		KillTimer(m_Window, FADETIMER);
+		KillTimer(m_Window, TRANSITIONTIMER);
 
 		std::list<CMeasure*>::iterator i = m_Measures.begin();
 		for( ; i != m_Measures.end(); ++i)
@@ -2157,7 +2165,6 @@ void CMeterWindow::Update(bool nodraw)
 
 	// Update all measures
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
-
 	for( ; i != m_Measures.end(); ++i)
 	{
 		try
@@ -2335,8 +2342,6 @@ LRESULT CMeterWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 		//		MoveWindow(x, y);
 		//	}
 		//}
-
-		Rainmeter->ClearDeleteLaterList();
 	}
 	else if(wParam == TRANSITIONTIMER)
 	{

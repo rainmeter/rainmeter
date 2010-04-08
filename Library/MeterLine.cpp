@@ -92,7 +92,6 @@ void CMeterLine::Initialize()
 */
 void CMeterLine::ReadConfig(const WCHAR* section)
 {
-	int i;
 	WCHAR tmpName[256];
 
 	// Store the current number of lines so we know if the buffer needs to be updated
@@ -109,7 +108,7 @@ void CMeterLine::ReadConfig(const WCHAR* section)
 	m_ScaleValues.clear();
 	m_MeasureNames.clear();
 
-	for (i = 0; i < lineCount; ++i)
+	for (int i = 0; i < lineCount; ++i)
 	{
 		if (i == 0)
 		{
