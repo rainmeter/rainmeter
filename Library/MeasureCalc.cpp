@@ -154,7 +154,7 @@ void CMeasureCalc::RandomFormulaReplace()
 	{
 		if (wcsnicmp(L"Random", m_Formula.c_str() + loc, 6) == 0)
 		{
-			int range = (m_HighBound - m_LowBound); 
+			int range = (m_HighBound - m_LowBound) + 1; 
 			srand((unsigned) rand()); 
 			int randNumber = m_LowBound + (range * rand()/(RAND_MAX + 1.0)); 
 
