@@ -104,6 +104,7 @@ void CConfigParser::SetDefaultVariables(CRainmeter* pRainmeter, CMeterWindow* me
 		SetVariable(L"PLUGINSPATH", pRainmeter->GetPluginPath());
 		SetVariable(L"CURRENTPATH", CRainmeter::ExtractPath(m_Filename));
 		SetVariable(L"ADDONSPATH", pRainmeter->GetPath() + L"Addons\\");
+		SetVariable(L"CRLF", L"\n");		
 	}
 	if (meterWindow)
 	{
