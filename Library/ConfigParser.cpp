@@ -99,6 +99,30 @@ void CConfigParser::SetDefaultVariables(CRainmeter* pRainmeter, CMeterWindow* me
 	if (pRainmeter)
 	{
 		SetVariable(L"PROGRAMPATH", pRainmeter->GetPath());
+
+		// Extract volume path from program path
+		// E.g.:
+		//  "C:\path\" to "C:"
+		//  "\\server\share\" to "\\server\share"
+		//  "\\server\C:\path\" to "\\server\C:"
+		const std::wstring& path = pRainmeter->GetPath();
+		std::wstring::size_type loc, loc2;
+		if ((loc = path.find_first_of(L':')) != std::wstring::npos)
+		{
+			SetVariable(L"PROGRAMDRIVE", path.substr(0, loc + 1));
+		}
+		else if (path.length() >= 2 && (path[0] == L'\\' || path[0] == L'/') && (path[1] == L'\\' || path[1] == L'/'))
+		{
+			if ((loc = path.find_first_of(L"\\/", 2)) != std::wstring::npos)
+			{
+				if ((loc2 = path.find_first_of(L"\\/", loc + 1)) != std::wstring::npos || loc != (path.length() - 1))
+				{
+					loc = loc2;
+				}
+			}
+			SetVariable(L"PROGRAMDRIVE", path.substr(0, loc));
+		}
+
 		SetVariable(L"SETTINGSPATH", pRainmeter->GetSettingsPath());
 		SetVariable(L"SKINSPATH", pRainmeter->GetSkinPath());
 		SetVariable(L"PLUGINSPATH", pRainmeter->GetPluginPath());
@@ -614,7 +638,7 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 
 // Returns an int if the formula was read successfully, -1 for failure.
 // Pass a pointer to a double.
-int CConfigParser::ReadFormula(std::wstring& result, double* resultValue)
+int CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
 {
 	// Formulas must be surrounded by parenthesis
 	if (!result.empty() && result[0] == L'(' && result[result.size() - 1] == L')')

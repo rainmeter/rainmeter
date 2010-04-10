@@ -101,7 +101,7 @@ void CMeasureNet::UpdateIFTable()
 			c_Table = NULL;
 		}
 
-		if (c_GetIfTable2Ex(MibIfTableRaw, (MIB_IF_TABLE2**)&c_Table) == NO_ERROR)
+		if (c_GetIfTable2Ex(MibIfTableNormal, (MIB_IF_TABLE2**)&c_Table) == NO_ERROR)
 		{
 			MIB_IF_TABLE2* ifTable = (MIB_IF_TABLE2*)c_Table;
 
@@ -279,9 +279,9 @@ ULONG64 CMeasureNet::GetNetOctets(NET net)
 			// Get all interfaces
 			for (UINT i = 0; i < c_NumOfTables; ++i)
 			{
-				// Ignore the loopback and non-hardware interfaces
+				// Ignore the loopback and filter interfaces
 				if (table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK ||
-					table[i].InterfaceAndOperStatusFlags.HardwareInterface == 0) continue;
+					table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) continue;
 
 				switch (net)
 				{
@@ -394,13 +394,13 @@ ULONG64 CMeasureNet::GetNetStatsValue(NET net)
 		// Get all interfaces
 		for(size_t i = 0; i < c_StatValues.size() / 2; ++i)
 		{
-			// Ignore the loopback and non-hardware interfaces
+			// Ignore the loopback and filter interfaces
 			if (c_NumOfTables == c_StatValues.size() / 2)
 			{
 				if (c_UseNewApi)
 				{
 					if (((MIB_IF_TABLE2*)c_Table)->Table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK ||
-						((MIB_IF_TABLE2*)c_Table)->Table[i].InterfaceAndOperStatusFlags.HardwareInterface == 0) continue;
+						((MIB_IF_TABLE2*)c_Table)->Table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) continue;
 				}
 				else
 				{

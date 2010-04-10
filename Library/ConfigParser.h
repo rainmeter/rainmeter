@@ -56,7 +56,7 @@ public:
 	const std::vector<std::wstring>& GetSections();
 
 	// Returns an int if the formula was read successfully, -1 for failure.
-	int ReadFormula(std::wstring& result, double* number);
+	int ReadFormula(const std::wstring& result, double* number);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring delimiters);
 	static double ParseDouble(const std::wstring& string, double defValue, bool rejectExp = false);

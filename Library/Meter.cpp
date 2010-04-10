@@ -217,39 +217,55 @@ void CMeter::ReadConfig(const WCHAR* section)
 	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
 	parser.SetStyleTemplate(style);
 
-	const std::wstring& x = parser.ReadString(section, L"X", L"0");
-	if (x.size() > 0)
+	std::wstring coord = parser.ReadString(section, L"X", L"0");
+	if (coord.size() > 0)
 	{
-		m_X = _wtoi(x.c_str());
-		if (x[x.size() - 1] == L'r')
+		size_t len = coord.size();
+		if (coord[len - 1] == L'r')
 		{
 			m_RelativeX = POSITION_RELATIVE_TL;
+			coord.erase(--len);
 		}
-		else if (x[x.size() - 1] == L'R')
+		else if (coord[len - 1] == L'R')
 		{
 			m_RelativeX = POSITION_RELATIVE_BR;
+			coord.erase(--len);
+		}
+
+		double val;
+		if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && -1 != parser.ReadFormula(coord, &val))
+		{
+			m_X = (int)val;
 		}
 		else
 		{
-			m_X = (int)parser.ReadFormula(section, L"X", 0.0);
+			m_X = (int)parser.ParseDouble(coord, 0.0);
 		}
 	}
 
-	const std::wstring& y = parser.ReadString(section, L"Y", L"0");
-	if (y.size() > 0)
+	coord = parser.ReadString(section, L"Y", L"0");
+	if (coord.size() > 0)
 	{
-		m_Y = _wtoi(y.c_str());
-		if (y[y.size() - 1] == L'r')
+		size_t len = coord.size();
+		if (coord[len - 1] == L'r')
 		{
 			m_RelativeY = POSITION_RELATIVE_TL;
+			coord.erase(--len);
 		}
-		else if (y[y.size() - 1] == L'R')
+		else if (coord[len - 1] == L'R')
 		{
 			m_RelativeY = POSITION_RELATIVE_BR;
+			coord.erase(--len);
+		}
+
+		double val;
+		if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && -1 != parser.ReadFormula(coord, &val))
+		{
+			m_Y = (int)val;
 		}
 		else
 		{
-			m_Y = (int)parser.ReadFormula(section, L"Y", 0.0);
+			m_Y = (int)parser.ParseDouble(coord, 0.0);;
 		}
 	}
 
