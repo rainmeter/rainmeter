@@ -935,7 +935,8 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 			{
 				std::wstring strIncludeFile = buffer;
 				ReplaceVariables(strIncludeFile);
-				if (strIncludeFile.find(L':') == std::wstring::npos)
+				if (strIncludeFile.find(L':') == std::wstring::npos &&
+					(strIncludeFile.length() < 2 || (strIncludeFile[0] != L'\\' && strIncludeFile[0] != L'/') || (strIncludeFile[1] != L'\\' && strIncludeFile[1] != L'/')))
 				{
 					// It's a relative path so add the current path as a prefix
 					strIncludeFile = CRainmeter::ExtractPath(iniFile) + strIncludeFile;
