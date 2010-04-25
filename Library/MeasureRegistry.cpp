@@ -53,48 +53,58 @@ CMeasureRegistry::~CMeasureRegistry()
 */
 bool CMeasureRegistry::Update()
 {
-	if (!CMeasure::PreUpdate()) return false;
+        if (!CMeasure::PreUpdate()) return false;
 
-	if(m_RegKey != NULL)
-	{
-		DWORD size = 4096;
-		WCHAR data[4096];
-		DWORD type = 0;
+        if(m_RegKey != NULL)
+        {
+                DWORD size = 4096;
+                WCHAR data[4096];
+                DWORD type = 0;
 
-		if(RegQueryValueEx(m_RegKey,
-						m_RegValueName.c_str(),
-						NULL,
-						(LPDWORD)&type,
-						(LPBYTE)&data,
-						(LPDWORD)&size) == ERROR_SUCCESS)
-		{
-			switch(type)
-			{
-			case REG_DWORD:
-				m_Value = *((LPDWORD)&data);
-				m_StringValue.erase();
-				break;
+                if(RegQueryValueEx(m_RegKey,
+                                                m_RegValueName.c_str(),
+                                                NULL,
+                                                (LPDWORD)&type,
+                                                (LPBYTE)&data,
+                                                (LPDWORD)&size) == ERROR_SUCCESS)
+                {
+                        switch(type)
+                        {
+                        case REG_DWORD:
+                                m_Value = *((LPDWORD)&data);
+                                m_StringValue.erase();
+                                break;
 
-			case REG_SZ:
-			case REG_EXPAND_SZ:
-			case REG_MULTI_SZ:
-				m_Value = 0.0;
-				m_StringValue = data;
-				break;
+                        case REG_SZ:
+                        case REG_EXPAND_SZ:
+                        case REG_MULTI_SZ:
+                                m_Value = 0.0;
+                                m_StringValue = data;
+                                break;
 
-			case REG_QWORD:
-				m_Value = (double)((LARGE_INTEGER*)&data)->QuadPart;
-				m_StringValue.erase();
-				break;
+                        case REG_QWORD:
+                                m_Value = (double)((LARGE_INTEGER*)&data)->QuadPart;
+                                m_StringValue.erase();
+                                break;
 
-			default:	// Other types are not supported
-				m_Value = 0.0;
-				m_StringValue.erase();
-			}
-		}
-	}
+                        default:        // Other types are not supported
+                                m_Value = 0.0;
+                                m_StringValue.erase();
+                        }
+                }
+                else
+                {
+                        m_Value = 0.0;
+                        m_StringValue.erase();
+                        RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
+                }
+        }
+        else
+        {
+                RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
+        }
 
-	return PostUpdate();
+        return PostUpdate();
 }
 
 /*
