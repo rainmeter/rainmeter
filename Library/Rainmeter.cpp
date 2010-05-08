@@ -1114,7 +1114,7 @@ void CRainmeter::CheckSkinVersions()
 								CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
 
 								// TODO: Temporary 'fix': If this was Enigma upgrade the themes too
-								if (menu[i].name == L"Enigma")
+								if (menu[i].name == L"Enigma" || L"Gnometer")
 								{
 									std::wstring strMainThemes = m_Path + L"Themes";
 									std::wstring strCurrentThemes = GetSettingsPath();
@@ -1138,10 +1138,13 @@ void CRainmeter::CheckSkinVersions()
 				else
 				{
 					std::wstring strMessage = L"A new version of config called \"" + menu[i].name + L"\" is available\n";
-					strMessage += L"Do you want to add it to your skin library?";
+					strMessage += L"Do you want to add it to your skin and themes libraries?";
 					if (IDYES == MessageBox(NULL, strMessage.c_str(), APPNAME, MB_YESNO | MB_ICONQUESTION))
 					{
 						CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
+						std::wstring strMainThemes = m_Path + L"Themes";
+						std::wstring strCurrentThemes = GetSettingsPath();
+						CopyFiles(strMainThemes, strCurrentThemes);
 					}
 				}
 
