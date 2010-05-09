@@ -1114,7 +1114,7 @@ void CRainmeter::CheckSkinVersions()
 								CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
 
 								// TODO: Temporary 'fix': If this was Enigma upgrade the themes too
-								if (menu[i].name == L"Enigma" || L"Gnometer")
+								if (menu[i].name == L"Enigma" || menu[i].name == L"Gnometer")
 								{
 									std::wstring strMainThemes = m_Path + L"Themes";
 									std::wstring strCurrentThemes = GetSettingsPath();
@@ -1225,7 +1225,7 @@ bool CRainmeter::CopyFiles(const std::wstring& strFrom, const std::wstring& strT
 /* 
 ** CreateDefaultConfigFile
 **
-** Creates the default Rainmeter.ini file. The CPU tray meter and Tranquil/System-C config
+** Creates the default Rainmeter.ini file. Gnometer\Bars and Gnometer\Clock configs
 ** are enabled.
 **
 */
@@ -1245,7 +1245,7 @@ void CRainmeter::CreateDefaultConfigFile(std::wstring strFile)
 		std::ofstream out(strFile.c_str(), std::ios::out);
 		if (out) 
 		{
-			out << std::string("[Rainmeter]\n\n[TrayMeasure]\nMeasure=CPU\n\n[Tranquil\\System]\nActive=1\n");
+			out << std::string("[Rainmeter]\n\n[Gnometer\\Bars]\nActive=1\n\n[Gnometer\\Clock]\nActive=1\n");
 			out.close();
 		}
 	}
