@@ -58,9 +58,17 @@ enum SensorType
 	TYPE_VOLT
 };
 
-bool ReadSharedData(SensorType type, UINT number, double* value);
+enum TempScale
+{
+	SCALE_CENTIGRADE,
+	SCALE_FARENHEIT,
+	SCALE_KELVIN
+};
+
+bool ReadSharedData(SensorType type, TempScale scale, UINT number, double* value);
 
 static std::map<UINT, SensorType> g_Types;
+static std::map<UINT, TempScale> g_Scales;
 static std::map<UINT, UINT> g_Numbers;
 
 /*
@@ -84,6 +92,29 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		if (wcsicmp(L"TEMPERATURE", type) == 0)
 		{
 			g_Types[id] = TYPE_TEMP;
+
+			LPCTSTR scale = ReadConfigString(section, L"SpeedFanScale", L"C");
+			if (scale)
+			{
+				if (wcsicmp(L"C", scale) == 0)
+				{
+					g_Scales[id] = SCALE_CENTIGRADE;
+				} 
+				else if (wcsicmp(L"F", scale) == 0)
+				{
+					g_Scales[id] = SCALE_FARENHEIT;
+				} 
+				else if (wcsicmp(L"K", scale) == 0)
+				{
+					g_Scales[id] = SCALE_KELVIN;
+				} 
+				else
+				{
+					std::wstring error = L"No such SpeedFanScale: ";
+					error += scale;
+					MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
+				}
+			}
 		} 
 		else if (wcsicmp(L"FAN", type) == 0)
 		{
@@ -116,22 +147,23 @@ The function returns the new value.
 */
 double Update2(UINT id)
 {
-	double value = 0; 
+	double value = 0.0; 
 	
-	std::map<UINT, SensorType>::iterator type = g_Types.find(id);
-	std::map<UINT, UINT>::iterator number = g_Numbers.find(id);
+	std::map<UINT, SensorType>::const_iterator type = g_Types.find(id);
+	std::map<UINT, TempScale>::const_iterator scale = g_Scales.find(id);
+	std::map<UINT, UINT>::const_iterator number = g_Numbers.find(id);
 	
-	if(type == g_Types.end() || number == g_Numbers.end())
+	if(type == g_Types.end() || number == g_Numbers.end() || ((*type).second == TYPE_TEMP && scale == g_Scales.end()))
 	{
-		return 0;		// No id in the map. How this can be ????
+		return 0.0;		// No id in the map. How this can be ????
 	}
 	
-	if (ReadSharedData((*type).second, (*number).second, &value))
+	if (ReadSharedData((*type).second, (*scale).second, (*number).second, &value))
 	{
 		return value;
 	}
 	
-	return 0;
+	return 0.0;
 }
 
 /*
@@ -152,12 +184,18 @@ void Finalize(HMODULE instance, UINT id)
 	{
 		g_Numbers.erase(i2);
 	}
+
+	std::map<UINT, TempScale>::iterator i3 = g_Scales.find(id);
+	if (i3 != g_Scales.end())
+	{
+		g_Scales.erase(i3);
+	}
 }
 
 /*
   Get the data from shared memory.
 */
-bool ReadSharedData(SensorType type, UINT number, double* value)
+bool ReadSharedData(SensorType type, TempScale scale, UINT number, double* value)
 {
 	SpeedFanData* ptr;
 	HANDLE hData;
@@ -181,6 +219,16 @@ bool ReadSharedData(SensorType type, UINT number, double* value)
 			{
 				*value = ptr->temps[number];
 				*value /= 100.0;
+
+				if (scale == SCALE_FARENHEIT)
+				{
+					*value *= 1.8;
+					*value += 32.0;
+				}
+				else if (scale == SCALE_KELVIN)
+				{
+					*value += 273.15;
+				}
 			}
 			break;
 
@@ -213,7 +261,7 @@ bool ReadSharedData(SensorType type, UINT number, double* value)
 
 UINT GetPluginVersion()
 {
-	return 1001;
+	return 1002;
 }
 
 LPCTSTR GetPluginAuthor()
