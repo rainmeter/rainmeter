@@ -88,7 +88,7 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 	m_AnchorYPercentage = false;
 	m_AnchorScreenX = 0; 
 	m_AnchorScreenY = 0;
-	m_WindowZPosition = ZPOSITION_ONDESKTOP;
+	m_WindowZPosition = ZPOSITION_NORMAL;
 	m_WindowDraggable = true;
 	m_WindowUpdate = 1000;
 	m_TransitionUpdate = 100;
@@ -1410,7 +1410,6 @@ void CMeterWindow::ReadConfig()
 			m_WindowY = buffer;
 		}
 		
-		// Changed to make the default "On Desktop" - JSMorley : May 11, 2010
 		int zPos = parser.ReadInt(section, L"AlwaysOnTop", m_WindowZPosition);
 		if (zPos == -1)
 		{
@@ -1420,10 +1419,6 @@ void CMeterWindow::ReadConfig()
 		{
 			m_WindowZPosition = ZPOSITION_ONDESKTOP;
 		}
-		else if (zPos == 0)
-		{
-			m_WindowZPosition = ZPOSITION_NORMAL;
-		}		
 		else if (zPos == 1)
 		{
 			m_WindowZPosition = ZPOSITION_ONTOP;
@@ -1434,7 +1429,7 @@ void CMeterWindow::ReadConfig()
 		}
 		else
 		{
-			m_WindowZPosition = ZPOSITION_ONDESKTOP;
+			m_WindowZPosition = ZPOSITION_NORMAL;
 		}
 
 		m_WindowDraggable = 0!=parser.ReadInt(section, L"Draggable", m_WindowDraggable);
