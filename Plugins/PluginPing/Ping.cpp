@@ -200,7 +200,7 @@ DWORD WINAPI NetworkThreadProc(LPVOID pParam)
 	{
 		pingData* pData = (pingData*)pParam;
 
-		BYTE reply[sizeof(ICMP_ECHO_REPLY) + 12];
+		BYTE reply[sizeof(ICMP_ECHO_REPLY) + 32];
 
 		HANDLE hIcmpFile;
 		hIcmpFile = g_IcmpCreateFile();
