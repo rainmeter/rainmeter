@@ -2100,7 +2100,15 @@ void CMeterWindow::Redraw()
 	}
 
 	if (m_DoubleBuffer) delete m_DoubleBuffer;
-	m_DoubleBuffer = new Bitmap(m_WindowW, m_WindowH, PixelFormat32bppARGB);
+	if (m_WindowW == 0 && m_WindowH == 0)
+	{
+		// Create a dummy bitmap to avoid invalid state
+		m_DoubleBuffer = new Bitmap(1, 1, PixelFormat32bppARGB);
+	}
+	else
+	{
+		m_DoubleBuffer = new Bitmap(m_WindowW, m_WindowH, PixelFormat32bppARGB);
+	}
 
 	Graphics graphics(GetDoubleBuffer());
 
@@ -2270,22 +2278,30 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 		typedef BOOL (WINAPI * FPUPDATELAYEREDWINDOW)(HWND hWnd, HDC hdcDst, POINT *pptDst, SIZE *psize, HDC hdcSrc, POINT *pptSrc, COLORREF crKey, BLENDFUNCTION *pblend, DWORD dwFlags);
 		FPUPDATELAYEREDWINDOW UpdateLayeredWindow = (FPUPDATELAYEREDWINDOW)GetProcAddress(m_User32Library, "UpdateLayeredWindow");
 
-		BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
-		POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
-		POINT ptSrc = {0, 0};
-		SIZE szWindow = {m_WindowW, m_WindowH};
+		if (m_WindowW == 0 && m_WindowH == 0)
+		{
+			// Reset window to avoid invalid state
+			UpdateLayeredWindow(m_Window, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0);
+		}
+		else
+		{
+			BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
+			POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
+			POINT ptSrc = {0, 0};
+			SIZE szWindow = {m_WindowW, m_WindowH};
 
-		HDC dcScreen = GetDC(GetDesktopWindow());
-		HDC dcMemory = CreateCompatibleDC(dcScreen);
+			HDC dcScreen = GetDC(GetDesktopWindow());
+			HDC dcMemory = CreateCompatibleDC(dcScreen);
 
-		HBITMAP dbBitmap;
-		m_DoubleBuffer->GetHBITMAP(Color(0, 0, 0, 0), &dbBitmap);
-		HBITMAP oldBitmap = (HBITMAP)SelectObject(dcMemory, dbBitmap);
-		UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
-		ReleaseDC(GetDesktopWindow(), dcScreen);
-		SelectObject(dcMemory, oldBitmap);
-		DeleteDC(dcMemory);
-		DeleteObject(dbBitmap);
+			HBITMAP dbBitmap;
+			m_DoubleBuffer->GetHBITMAP(Color(0, 0, 0, 0), &dbBitmap);
+			HBITMAP oldBitmap = (HBITMAP)SelectObject(dcMemory, dbBitmap);
+			UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+			ReleaseDC(GetDesktopWindow(), dcScreen);
+			SelectObject(dcMemory, oldBitmap);
+			DeleteDC(dcMemory);
+			DeleteObject(dbBitmap);
+		}
 
 		m_TransparencyValue = alpha;
 	}

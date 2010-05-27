@@ -934,6 +934,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 			if (wcsnicmp(strKey.c_str(), L"@include", 8) == 0)
 			{
 				std::wstring strIncludeFile = buffer;
+				ReadVariables();
 				ReplaceVariables(strIncludeFile);
 				if (strIncludeFile.find(L':') == std::wstring::npos &&
 					(strIncludeFile.length() < 2 || (strIncludeFile[0] != L'\\' && strIncludeFile[0] != L'/') || (strIncludeFile[1] != L'\\' && strIncludeFile[1] != L'/')))
