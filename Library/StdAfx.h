@@ -36,7 +36,6 @@
 #include <commctrl.h>
 #include <shellapi.h>
 #include <Mmsystem.h>
-#include <tchar.h>
 #include <shlobj.h>
 #include <winperf.h>
 #include <Windns.h>

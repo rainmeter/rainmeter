@@ -32,7 +32,6 @@
 #include "Litestep.h"
 #include <Mmsystem.h>
 #include <assert.h>
-#include <tchar.h>
 #include "MeasureCalc.h"
 #include "MeasureNet.h"
 #include "MeasurePlugin.h"
@@ -1375,20 +1374,20 @@ void CMeterWindow::ReadConfig()
 
 	for (int i = 0; i < 2; ++i)
 	{
-		m_WindowX = parser.ReadString(section, _T("WindowX"), m_WindowX.c_str());
-		m_WindowY = parser.ReadString(section, _T("WindowY"), m_WindowY.c_str());
-		m_AnchorX = parser.ReadString(section, _T("AnchorX"), m_AnchorX.c_str());
-		m_AnchorY = parser.ReadString(section, _T("AnchorY"), m_AnchorY.c_str());
+		m_WindowX = parser.ReadString(section, L"WindowX", L"0");
+		m_WindowY = parser.ReadString(section, L"WindowY", L"0");
+		m_AnchorX = parser.ReadString(section, L"AnchorX", L"0");
+		m_AnchorY = parser.ReadString(section, L"AnchorY", L"0");
 
 		if (!m_Rainmeter->GetDummyLitestep())
 		{
 			char tmpSz[MAX_LINE_LENGTH];
 			// Check if step.rc has overrides these values
-			if (GetRCString("RainmeterWindowX", tmpSz, ConvertToAscii(m_WindowX.c_str()).c_str(), MAX_LINE_LENGTH - 1))
+			if (GetRCString("RainmeterWindowX", tmpSz, "0", MAX_LINE_LENGTH - 1))
 			{
 				m_WindowX = ConvertToWide(tmpSz);
 			}
-			if (GetRCString("RainmeterWindowY", tmpSz, ConvertToAscii(m_WindowY.c_str()).c_str(), MAX_LINE_LENGTH - 1))
+			if (GetRCString("RainmeterWindowY", tmpSz, "0", MAX_LINE_LENGTH - 1))
 			{
 				m_WindowY = ConvertToWide(tmpSz);
 			}
@@ -1397,20 +1396,20 @@ void CMeterWindow::ReadConfig()
 		// Check if the window position should be read as a formula
 		if (!m_WindowX.empty() && m_WindowX[0] == L'(' && m_WindowX[m_WindowX.size() - 1] == L')')
 		{
-			double value = parser.ReadFormula(section, _T("WindowX"), 0.0);
-			TCHAR buffer[256];
+			double value = parser.ReadFormula(section, L"WindowX", 0.0);
+			WCHAR buffer[256];
 			swprintf(buffer, L"%i", (int)value);
 			m_WindowX = buffer;
 		}
 		if (!m_WindowY.empty() && m_WindowY[0] == L'(' && m_WindowY[m_WindowY.size() - 1] == L')')
 		{
-			double value = parser.ReadFormula(section, _T("WindowY"), 0.0);
-			TCHAR buffer[256];
+			double value = parser.ReadFormula(section, L"WindowY", 0.0);
+			WCHAR buffer[256];
 			swprintf(buffer, L"%i", (int)value);
 			m_WindowY = buffer;
 		}
-		
-		int zPos = parser.ReadInt(section, L"AlwaysOnTop", m_WindowZPosition);
+
+		int zPos = parser.ReadInt(section, L"AlwaysOnTop", ZPOSITION_NORMAL);
 		if (zPos == -1)
 		{
 			m_WindowZPosition = ZPOSITION_ONBOTTOM;
@@ -1432,22 +1431,22 @@ void CMeterWindow::ReadConfig()
 			m_WindowZPosition = ZPOSITION_NORMAL;
 		}
 
-		m_WindowDraggable = 0!=parser.ReadInt(section, L"Draggable", m_WindowDraggable);
-		m_WindowHide = (HIDEMODE)parser.ReadInt(section, L"HideOnMouseOver", m_WindowHide);
-		m_WindowStartHidden = 0!=parser.ReadInt(section, L"StartHidden", m_WindowStartHidden);
-		m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", m_SavePosition);
-		m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", m_SnapEdges);
-		m_MeasuresToVariables = 0!=parser.ReadInt(section, L"MeasuresToVariables", m_MeasuresToVariables);
-		m_NativeTransparency = 0!=parser.ReadInt(section, L"NativeTransparency", m_NativeTransparency);
-		m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", m_ClickThrough);
-		m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", m_KeepOnScreen);
-		m_AutoSelectScreen = 0!=parser.ReadInt(section, L"AutoSelectScreen", m_AutoSelectScreen);
+		m_WindowDraggable = 0!=parser.ReadInt(section, L"Draggable", 1);
+		m_WindowHide = (HIDEMODE)parser.ReadInt(section, L"HideOnMouseOver", HIDEMODE_NONE);
+		m_WindowStartHidden = 0!=parser.ReadInt(section, L"StartHidden", 0);
+		m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", 1);
+		m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", 1);
+		m_MeasuresToVariables = 0!=parser.ReadInt(section, L"MeasuresToVariables", 0);
+		m_NativeTransparency = 0!=parser.ReadInt(section, L"NativeTransparency", 1);
+		m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", 0);
+		m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", 1);
+		m_AutoSelectScreen = 0!=parser.ReadInt(section, L"AutoSelectScreen", 0);
 
-		m_AlphaValue = parser.ReadInt(section, L"AlphaValue", m_AlphaValue);
+		m_AlphaValue = parser.ReadInt(section, L"AlphaValue", 255);
 		m_AlphaValue = min(255, m_AlphaValue);
 		m_AlphaValue = max(0, m_AlphaValue);
 
-		m_FadeDuration = parser.ReadInt(section, L"FadeDuration", m_FadeDuration);
+		m_FadeDuration = parser.ReadInt(section, L"FadeDuration", 250);
 
 		// Disable native transparency if not 2K/XP
 		if(CRainmeter::IsNT() == PLATFORM_9X || CRainmeter::IsNT() == PLATFORM_NT4)
@@ -1570,34 +1569,34 @@ void CMeterWindow::ReadSkin()
 	m_DragMargins.Height = bottom - top;
 
 	m_BackgroundMode = (BGMODE)m_Parser.ReadInt(L"Rainmeter", L"BackgroundMode", 0);
-	m_SolidBevel = (BEVELTYPE)m_Parser.ReadInt(L"Rainmeter", L"BevelType", m_SolidBevel);
+	m_SolidBevel = (BEVELTYPE)m_Parser.ReadInt(L"Rainmeter", L"BevelType", 0);
 
 	m_SolidColor = m_Parser.ReadColor(L"Rainmeter", L"SolidColor", Color::Gray);
 	m_SolidColor2 = m_Parser.ReadColor(L"Rainmeter", L"SolidColor2", m_SolidColor);
 	m_SolidAngle = (Gdiplus::REAL)m_Parser.ReadFloat(L"Rainmeter", L"GradientAngle", 0.0);
 
-	m_DynamicWindowSize = 0!=m_Parser.ReadInt(L"Rainmeter", L"DynamicWindowSize", m_DynamicWindowSize);
+	m_DynamicWindowSize = 0!=m_Parser.ReadInt(L"Rainmeter", L"DynamicWindowSize", 0);
 
 	if ((m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE) && m_BackgroundName.empty())
 	{
 		m_BackgroundMode = BGMODE_COPY;
 	}
 
-	m_RightMouseDownAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseDownAction", L"");
-	m_LeftMouseDownAction = m_Parser.ReadString(L"Rainmeter", L"LeftMouseDownAction", L"");
-	m_MiddleMouseDownAction = m_Parser.ReadString(L"Rainmeter", L"MiddleMouseDownAction", L"");
-	m_RightMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseUpAction", L"");
-	m_LeftMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"LeftMouseUpAction", L"");
-	m_MiddleMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"MiddleMouseUpAction", L"");
-	m_RightMouseDoubleClickAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseDoubleClickAction", L"");
-	m_LeftMouseDoubleClickAction = m_Parser.ReadString(L"Rainmeter", L"LeftMouseDoubleClickAction", L"");
-	m_MiddleMouseDoubleClickAction = m_Parser.ReadString(L"Rainmeter", L"MiddleMouseDoubleClickAction", L"");
-	m_MouseOverAction = m_Parser.ReadString(L"Rainmeter", L"MouseOverAction", L"");
-	m_MouseLeaveAction = m_Parser.ReadString(L"Rainmeter", L"MouseLeaveAction", L"");
-	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"");
+	m_RightMouseDownAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseDownAction", L"", false);
+	m_LeftMouseDownAction = m_Parser.ReadString(L"Rainmeter", L"LeftMouseDownAction", L"", false);
+	m_MiddleMouseDownAction = m_Parser.ReadString(L"Rainmeter", L"MiddleMouseDownAction", L"", false);
+	m_RightMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseUpAction", L"", false);
+	m_LeftMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"LeftMouseUpAction", L"", false);
+	m_MiddleMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"MiddleMouseUpAction", L"", false);
+	m_RightMouseDoubleClickAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseDoubleClickAction", L"", false);
+	m_LeftMouseDoubleClickAction = m_Parser.ReadString(L"Rainmeter", L"LeftMouseDoubleClickAction", L"", false);
+	m_MiddleMouseDoubleClickAction = m_Parser.ReadString(L"Rainmeter", L"MiddleMouseDoubleClickAction", L"", false);
+	m_MouseOverAction = m_Parser.ReadString(L"Rainmeter", L"MouseOverAction", L"", false);
+	m_MouseLeaveAction = m_Parser.ReadString(L"Rainmeter", L"MouseLeaveAction", L"", false);
+	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"", false);
 
-	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", m_WindowUpdate);
-	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", m_TransitionUpdate);
+	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", 1000);
+	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", 100);
 	m_MouseActionCursor = 0 != m_Parser.ReadInt(L"Rainmeter", L"MouseActionCursor", 1);
 
 	// Checking for localfonts

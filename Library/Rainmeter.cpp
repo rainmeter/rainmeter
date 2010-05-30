@@ -1979,24 +1979,24 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 		m_TrayWindow->ReadConfig(parser);
 	}
 
-	c_GlobalConfig.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", c_GlobalConfig.netInSpeed);
-	c_GlobalConfig.netOutSpeed = parser.ReadFloat(L"Rainmeter", L"NetOutSpeed", c_GlobalConfig.netOutSpeed);
+	c_GlobalConfig.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", 0.0);
+	c_GlobalConfig.netOutSpeed = parser.ReadFloat(L"Rainmeter", L"NetOutSpeed", 0.0);
 
-	m_ConfigEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", m_ConfigEditor.c_str());
+	m_ConfigEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"Notepad");
 	if (!m_ConfigEditor.empty() && m_ConfigEditor[0] != L'\"')
 	{
 		m_ConfigEditor.insert(0,L"\"");
 		m_ConfigEditor.append(L"\"");
 	}
 	
-	m_TrayExecuteL = parser.ReadString(L"Rainmeter", L"TrayExecuteL", m_TrayExecuteL.c_str());
-	m_TrayExecuteR = parser.ReadString(L"Rainmeter", L"TrayExecuteR", m_TrayExecuteR.c_str());
-	m_TrayExecuteM = parser.ReadString(L"Rainmeter", L"TrayExecuteM", m_TrayExecuteM.c_str());
-	m_TrayExecuteDL = parser.ReadString(L"Rainmeter", L"TrayExecuteDL", m_TrayExecuteDL.c_str());
-	m_TrayExecuteDR = parser.ReadString(L"Rainmeter", L"TrayExecuteDR", m_TrayExecuteDR.c_str());
-	m_TrayExecuteDM = parser.ReadString(L"Rainmeter", L"TrayExecuteDM", m_TrayExecuteDM.c_str());
+	m_TrayExecuteL = parser.ReadString(L"Rainmeter", L"TrayExecuteL", L"", false);
+	m_TrayExecuteR = parser.ReadString(L"Rainmeter", L"TrayExecuteR", L"", false);
+	m_TrayExecuteM = parser.ReadString(L"Rainmeter", L"TrayExecuteM", L"", false);
+	m_TrayExecuteDL = parser.ReadString(L"Rainmeter", L"TrayExecuteDL", L"", false);
+	m_TrayExecuteDR = parser.ReadString(L"Rainmeter", L"TrayExecuteDR", L"", false);
+	m_TrayExecuteDM = parser.ReadString(L"Rainmeter", L"TrayExecuteDM", L"", false);
 
-	m_CheckUpdate = parser.ReadInt(L"Rainmeter", L"CheckUpdate", m_CheckUpdate);
+	m_CheckUpdate = parser.ReadInt(L"Rainmeter", L"CheckUpdate", 0);
 
 	std::wstring area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
 	if (!area.empty())
