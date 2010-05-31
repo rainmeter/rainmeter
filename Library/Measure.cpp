@@ -67,8 +67,9 @@ CMeasure::CMeasure(CMeterWindow* meterWindow)
 	m_MedianPos = 0;
 	m_AveragePos = 0;
 	m_AverageSize = 0;
-	m_MeterWindow = meterWindow;
 	m_DynamicVariables = false;
+
+	m_MeterWindow = meterWindow;
 }
 
 /*
@@ -97,7 +98,7 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 
 	m_Invert = 0!=parser.ReadInt(section, L"InvertMeasure", 0);
-	m_Disabled = 0!=parser.ReadInt(section, L"Disabled", 0);
+	m_Disabled = 0!=parser.ReadInt(section, L"Disabled", m_Disabled);
 
 	UINT updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
 	if (updateDivider != m_UpdateDivider)

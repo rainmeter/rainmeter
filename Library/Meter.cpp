@@ -33,9 +33,6 @@
 
 using namespace Gdiplus;
 
-int CMeter::c_OldX = 0;
-int CMeter::c_OldY = 0;
-
 /*
 ** CMeter
 **
@@ -45,6 +42,7 @@ int CMeter::c_OldY = 0;
 CMeter::CMeter(CMeterWindow* meterWindow)
 {
 	m_Measure = NULL;
+
 	m_X = 0;
 	m_Y = 0;
 	m_W = 0;
@@ -57,14 +55,14 @@ CMeter::CMeter(CMeterWindow* meterWindow)
 	m_UpdateCounter = 0;
 	m_RelativeX = POSITION_ABSOLUTE;
 	m_RelativeY = POSITION_ABSOLUTE;
-	m_MeterWindow = NULL;
-	m_SolidAngle = 0.0;
-	m_MeterWindow = meterWindow;
+	m_SolidAngle = 0.0f;
 	m_AntiAlias = false;
 	m_DynamicVariables = false;
 	m_Initialized = false;
 	m_HasMouseAction = false;
 	m_MouseActionCursor = true;
+
+	m_MeterWindow = meterWindow;
 }
 
 /*
@@ -211,14 +209,19 @@ bool CMeter::HitTest(int x, int y)
 */
 void CMeter::ReadConfig(const WCHAR* section)
 {
+	WCHAR buffer[256];
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
 	// The MeterStyle defines a template where the values are read if the meter doesn't have it itself
 	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
-	parser.SetStyleTemplate(style);
+	if (!style.empty())
+	{
+		parser.SetStyleTemplate(style);
+	}
 
-	std::wstring coord = parser.ReadString(section, L"X", L"0");
-	if (coord.size() > 0)
+	wsprintf(buffer, L"%i%c", m_X, (m_RelativeX == POSITION_RELATIVE_TL) ? L'r' : (m_RelativeX == POSITION_RELATIVE_BR) ? L'R' : L'');
+	std::wstring coord = parser.ReadString(section, L"X", buffer);
+	if (!coord.empty())
 	{
 		size_t len = coord.size();
 		if (coord[len - 1] == L'r')
@@ -231,6 +234,10 @@ void CMeter::ReadConfig(const WCHAR* section)
 			m_RelativeX = POSITION_RELATIVE_BR;
 			coord.erase(--len);
 		}
+		else
+		{
+			m_RelativeX = POSITION_ABSOLUTE;
+		}
 
 		double val;
 		if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && -1 != parser.ReadFormula(coord, &val))
@@ -242,9 +249,15 @@ void CMeter::ReadConfig(const WCHAR* section)
 			m_X = (int)parser.ParseDouble(coord, 0.0);
 		}
 	}
+	else
+	{
+		m_X = 0;
+		m_RelativeX = POSITION_ABSOLUTE;
+	}
 
-	coord = parser.ReadString(section, L"Y", L"0");
-	if (coord.size() > 0)
+	wsprintf(buffer, L"%i%c", m_Y, (m_RelativeY == POSITION_RELATIVE_TL) ? L'r' : (m_RelativeY == POSITION_RELATIVE_BR) ? L'R' : L'');
+	coord = parser.ReadString(section, L"Y", buffer);
+	if (!coord.empty())
 	{
 		size_t len = coord.size();
 		if (coord[len - 1] == L'r')
@@ -257,6 +270,10 @@ void CMeter::ReadConfig(const WCHAR* section)
 			m_RelativeY = POSITION_RELATIVE_BR;
 			coord.erase(--len);
 		}
+		else
+		{
+			m_RelativeY = POSITION_ABSOLUTE;
+		}
 
 		double val;
 		if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && -1 != parser.ReadFormula(coord, &val))
@@ -265,15 +282,20 @@ void CMeter::ReadConfig(const WCHAR* section)
 		}
 		else
 		{
-			m_Y = (int)parser.ParseDouble(coord, 0.0);;
+			m_Y = (int)parser.ParseDouble(coord, 0.0);
 		}
+	}
+	else
+	{
+		m_Y = 0;
+		m_RelativeY = POSITION_ABSOLUTE;
 	}
 
 	m_W = (int)parser.ReadFormula(section, L"W", 1.0);
 	m_H = (int)parser.ReadFormula(section, L"H", 1.0);
 
-	m_Hidden = 0!=parser.ReadInt(section, L"Hidden", 0);
-	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", m_SolidBevel);
+	m_Hidden = 0!=parser.ReadInt(section, L"Hidden", m_Hidden);
+	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
 
 	m_SolidColor = parser.ReadColor(section, L"SolidColor", Color(0, 0, 0, 0));
 	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor);
@@ -291,10 +313,7 @@ void CMeter::ReadConfig(const WCHAR* section)
 	m_MouseOverAction = parser.ReadString(section, L"MouseOverAction", L"", false);
 	m_MouseLeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);
 
-	if(m_MouseActionCursor == false)
-		m_MouseActionCursor = 0!= parser.ReadInt(section, L"MouseActionCursor", 0);
-	else
-		m_MouseActionCursor = 0!= parser.ReadInt(section, L"MouseActionCursor", 1);
+	m_MouseActionCursor = 0!=parser.ReadInt(section, L"MouseActionCursor", m_MouseActionCursor);
 
 	m_HasMouseAction =
 		( !m_LeftMouseUpAction.empty() || !m_LeftMouseDownAction.empty() || !m_LeftMouseDoubleClickAction.empty()

@@ -1367,27 +1367,44 @@ void CMeterWindow::ReadConfig()
 	std::wstring iniFile = m_Rainmeter->GetIniFile();
 	const WCHAR* section = L"Rainmeter";
 
-	m_SavePosition = true;		// Default value
+	// Reset settings to the default value
+	m_WindowX = L"0";
+	m_WindowY = L"0";
+	m_AnchorX = L"0";
+	m_AnchorY = L"0";
+	m_WindowZPosition = ZPOSITION_NORMAL;
+	m_WindowDraggable = true;
+	m_WindowHide = HIDEMODE_NONE;
+	m_WindowStartHidden = false;
+	m_SavePosition = true;
+	m_SnapEdges = true;
+	m_MeasuresToVariables = false;
+	m_NativeTransparency = true;
+	m_ClickThrough = false;
+	m_KeepOnScreen = true;
+	m_AutoSelectScreen = false;
+	m_AlphaValue = 255;
+	m_FadeDuration = 250;
 
 	CConfigParser parser;
 	parser.Initialize(iniFile.c_str(), m_Rainmeter);
 
 	for (int i = 0; i < 2; ++i)
 	{
-		m_WindowX = parser.ReadString(section, L"WindowX", L"0");
-		m_WindowY = parser.ReadString(section, L"WindowY", L"0");
-		m_AnchorX = parser.ReadString(section, L"AnchorX", L"0");
-		m_AnchorY = parser.ReadString(section, L"AnchorY", L"0");
+		m_WindowX = parser.ReadString(section, L"WindowX", m_WindowX.c_str());
+		m_WindowY = parser.ReadString(section, L"WindowY", m_WindowY.c_str());
+		m_AnchorX = parser.ReadString(section, L"AnchorX", m_AnchorX.c_str());
+		m_AnchorY = parser.ReadString(section, L"AnchorY", m_AnchorY.c_str());
 
 		if (!m_Rainmeter->GetDummyLitestep())
 		{
 			char tmpSz[MAX_LINE_LENGTH];
 			// Check if step.rc has overrides these values
-			if (GetRCString("RainmeterWindowX", tmpSz, "0", MAX_LINE_LENGTH - 1))
+			if (GetRCString("RainmeterWindowX", tmpSz, ConvertToAscii(m_WindowX.c_str()).c_str(), MAX_LINE_LENGTH - 1))
 			{
 				m_WindowX = ConvertToWide(tmpSz);
 			}
-			if (GetRCString("RainmeterWindowY", tmpSz, "0", MAX_LINE_LENGTH - 1))
+			if (GetRCString("RainmeterWindowY", tmpSz, ConvertToAscii(m_WindowY.c_str()).c_str(), MAX_LINE_LENGTH - 1))
 			{
 				m_WindowY = ConvertToWide(tmpSz);
 			}
@@ -1409,7 +1426,7 @@ void CMeterWindow::ReadConfig()
 			m_WindowY = buffer;
 		}
 
-		int zPos = parser.ReadInt(section, L"AlwaysOnTop", ZPOSITION_NORMAL);
+		int zPos = parser.ReadInt(section, L"AlwaysOnTop", m_WindowZPosition);
 		if (zPos == -1)
 		{
 			m_WindowZPosition = ZPOSITION_ONBOTTOM;
@@ -1431,31 +1448,31 @@ void CMeterWindow::ReadConfig()
 			m_WindowZPosition = ZPOSITION_NORMAL;
 		}
 
-		m_WindowDraggable = 0!=parser.ReadInt(section, L"Draggable", 1);
-		m_WindowHide = (HIDEMODE)parser.ReadInt(section, L"HideOnMouseOver", HIDEMODE_NONE);
-		m_WindowStartHidden = 0!=parser.ReadInt(section, L"StartHidden", 0);
-		m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", 1);
-		m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", 1);
-		m_MeasuresToVariables = 0!=parser.ReadInt(section, L"MeasuresToVariables", 0);
-		m_NativeTransparency = 0!=parser.ReadInt(section, L"NativeTransparency", 1);
-		m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", 0);
-		m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", 1);
-		m_AutoSelectScreen = 0!=parser.ReadInt(section, L"AutoSelectScreen", 0);
+		m_WindowDraggable = 0!=parser.ReadInt(section, L"Draggable", m_WindowDraggable);
+		m_WindowHide = (HIDEMODE)parser.ReadInt(section, L"HideOnMouseOver", m_WindowHide);
+		m_WindowStartHidden = 0!=parser.ReadInt(section, L"StartHidden", m_WindowStartHidden);
+		m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", m_SavePosition);
+		m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", m_SnapEdges);
+		m_MeasuresToVariables = 0!=parser.ReadInt(section, L"MeasuresToVariables", m_MeasuresToVariables);
+		m_NativeTransparency = 0!=parser.ReadInt(section, L"NativeTransparency", m_NativeTransparency);
+		m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", m_ClickThrough);
+		m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", m_KeepOnScreen);
+		m_AutoSelectScreen = 0!=parser.ReadInt(section, L"AutoSelectScreen", m_AutoSelectScreen);
 
-		m_AlphaValue = parser.ReadInt(section, L"AlphaValue", 255);
+		m_AlphaValue = parser.ReadInt(section, L"AlphaValue", m_AlphaValue);
 		m_AlphaValue = min(255, m_AlphaValue);
 		m_AlphaValue = max(0, m_AlphaValue);
 
-		m_FadeDuration = parser.ReadInt(section, L"FadeDuration", 250);
-
-		// Disable native transparency if not 2K/XP
-		if(CRainmeter::IsNT() == PLATFORM_9X || CRainmeter::IsNT() == PLATFORM_NT4)
-		{
-			m_NativeTransparency = 0;
-		}
+		m_FadeDuration = parser.ReadInt(section, L"FadeDuration", m_FadeDuration);
 
 		// On the second loop override settings from the skin's section
 		section = m_SkinName.c_str();
+	}
+
+	// Disable native transparency if not 2K/XP
+	if(CRainmeter::IsNT() == PLATFORM_9X || CRainmeter::IsNT() == PLATFORM_NT4)
+	{
+		m_NativeTransparency = 0;
 	}
 
 	// Set WindowXScreen/WindowYScreen temporarily
@@ -1568,8 +1585,8 @@ void CMeterWindow::ReadSkin()
 	m_DragMargins.Y = top;
 	m_DragMargins.Height = bottom - top;
 
-	m_BackgroundMode = (BGMODE)m_Parser.ReadInt(L"Rainmeter", L"BackgroundMode", 0);
-	m_SolidBevel = (BEVELTYPE)m_Parser.ReadInt(L"Rainmeter", L"BevelType", 0);
+	m_BackgroundMode = (BGMODE)m_Parser.ReadInt(L"Rainmeter", L"BackgroundMode", BGMODE_IMAGE);
+	m_SolidBevel = (BEVELTYPE)m_Parser.ReadInt(L"Rainmeter", L"BevelType", BEVELTYPE_NONE);
 
 	m_SolidColor = m_Parser.ReadColor(L"Rainmeter", L"SolidColor", Color::Gray);
 	m_SolidColor2 = m_Parser.ReadColor(L"Rainmeter", L"SolidColor2", m_SolidColor);
@@ -2277,30 +2294,34 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 		typedef BOOL (WINAPI * FPUPDATELAYEREDWINDOW)(HWND hWnd, HDC hdcDst, POINT *pptDst, SIZE *psize, HDC hdcSrc, POINT *pptSrc, COLORREF crKey, BLENDFUNCTION *pblend, DWORD dwFlags);
 		FPUPDATELAYEREDWINDOW UpdateLayeredWindow = (FPUPDATELAYEREDWINDOW)GetProcAddress(m_User32Library, "UpdateLayeredWindow");
 
+		BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
+		POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
+		POINT ptSrc = {0, 0};
+		SIZE szWindow;
+
 		if (m_WindowW == 0 && m_WindowH == 0)
 		{
-			// Reset window to avoid invalid state
-			UpdateLayeredWindow(m_Window, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0);
+			// Set dummy size to avoid invalid state
+			szWindow.cx = 1;
+			szWindow.cy = 1;
 		}
 		else
 		{
-			BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
-			POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
-			POINT ptSrc = {0, 0};
-			SIZE szWindow = {m_WindowW, m_WindowH};
-
-			HDC dcScreen = GetDC(GetDesktopWindow());
-			HDC dcMemory = CreateCompatibleDC(dcScreen);
-
-			HBITMAP dbBitmap;
-			m_DoubleBuffer->GetHBITMAP(Color(0, 0, 0, 0), &dbBitmap);
-			HBITMAP oldBitmap = (HBITMAP)SelectObject(dcMemory, dbBitmap);
-			UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
-			ReleaseDC(GetDesktopWindow(), dcScreen);
-			SelectObject(dcMemory, oldBitmap);
-			DeleteDC(dcMemory);
-			DeleteObject(dbBitmap);
+			szWindow.cx = m_WindowW;
+			szWindow.cy = m_WindowH;
 		}
+
+		HDC dcScreen = GetDC(GetDesktopWindow());
+		HDC dcMemory = CreateCompatibleDC(dcScreen);
+
+		HBITMAP dbBitmap;
+		m_DoubleBuffer->GetHBITMAP(Color(0, 0, 0, 0), &dbBitmap);
+		HBITMAP oldBitmap = (HBITMAP)SelectObject(dcMemory, dbBitmap);
+		UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+		ReleaseDC(GetDesktopWindow(), dcScreen);
+		SelectObject(dcMemory, oldBitmap);
+		DeleteDC(dcMemory);
+		DeleteObject(dbBitmap);
 
 		m_TransparencyValue = alpha;
 	}

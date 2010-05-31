@@ -112,9 +112,6 @@ protected:
 	CMeter*	m_RelativeMeter;
 	bool m_DynamicVariables;		// If true, the measure contains dynamic variables
 
-	static int c_OldX;
-	static int c_OldY;
-
 	std::wstring m_RightMouseDownAction;	// Actions for left and right and middle mouse buttons
 	std::wstring m_RightMouseUpAction;
 	std::wstring m_RightMouseDoubleClickAction;

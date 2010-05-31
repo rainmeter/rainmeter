@@ -49,7 +49,7 @@ public:
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
 	double ReadFormula(LPCTSTR section, LPCTSTR key, double defValue);
 	int ReadInt(LPCTSTR section, LPCTSTR key, int defValue);
-	Gdiplus::Color ReadColor(LPCTSTR section, LPCTSTR key, Gdiplus::Color defValue);
+	Gdiplus::Color ReadColor(LPCTSTR section, LPCTSTR key, const Gdiplus::Color& defValue);
 	std::vector<Gdiplus::REAL> ReadFloats(LPCTSTR section, LPCTSTR key);
 
 	std::wstring& GetFilename() { return m_Filename; }

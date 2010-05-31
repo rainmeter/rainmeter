@@ -657,7 +657,7 @@ int CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
 	return -1;
 }
 
-Color CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, Color defValue)
+Color CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, const Color& defValue)
 {
 	TCHAR buffer[256];
 	swprintf(buffer, L"%i, %i, %i, %i", defValue.GetR(), defValue.GetG(), defValue.GetB(), defValue.GetA());
