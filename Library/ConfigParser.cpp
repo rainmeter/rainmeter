@@ -400,8 +400,10 @@ void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 ** 
 ** \param result The string where the variables are returned. The string is modified.
 */
-void CConfigParser::ReplaceVariables(std::wstring& result)
+bool CConfigParser::ReplaceVariables(std::wstring& result)
 {
+	bool replaced = false;
+
 	CRainmeter::ExpandEnvironmentVariables(result);
 
 	if (c_MonitorVariables.empty())
@@ -432,6 +434,7 @@ void CConfigParser::ReplaceVariables(std::wstring& result)
 					// Variable found, replace it with the value
 					result.replace(result.begin() + pos, result.begin() + end + 1, (*iter).second);
 					start = pos + (*iter).second.length();
+					replaced = true;
 				}
 				else
 				{
@@ -441,6 +444,7 @@ void CConfigParser::ReplaceVariables(std::wstring& result)
 						// SCREENAREA/WORKAREA variable found, replace it with the value
 						result.replace(result.begin() + pos, result.begin() + end + 1, (*iter2).second);
 						start = pos + (*iter2).second.length();
+						replaced = true;
 					}
 					else
 					{
@@ -458,6 +462,73 @@ void CConfigParser::ReplaceVariables(std::wstring& result)
 			loop = false;
 		}
 	} while(loop);
+
+	return replaced;
+}
+
+/**
+** Replaces measures in the given string.
+** 
+** \param result The string where the measure values are returned. The string is modified.
+*/
+bool CConfigParser::ReplaceMeasures(std::wstring& result)
+{
+	bool replaced = false;
+
+	// Check for measures ([Measure])
+	if (!m_Measures.empty())
+	{
+		size_t start = 0;
+		size_t end = std::wstring::npos;
+		size_t pos = std::wstring::npos;
+		size_t pos2 = std::wstring::npos;
+		bool loop = true;
+		do 
+		{
+			pos = result.find(L'[', start);
+			if (pos != std::wstring::npos)
+			{
+				end = result.find(L']', pos + 1);
+				if (end != std::wstring::npos)
+				{
+					pos2 = result.find(L'[', pos + 1);
+					if (pos2 == std::wstring::npos || end < pos2)
+					{
+						std::wstring var(result.begin() + pos + 1, result.begin() + end);
+	
+						std::map<std::wstring, CMeasure*>::const_iterator iter = m_Measures.find(var);
+						if (iter != m_Measures.end())
+						{
+							std::wstring value = (*iter).second->GetStringValue(false, 1, 5, false);
+	
+							// Measure found, replace it with the value
+							result.replace(result.begin() + pos, result.begin() + end + 1, value);
+							start = pos + value.length();
+							replaced = true;
+						}
+						else
+						{
+							start = end;
+						}
+					}
+					else
+					{
+						start = pos2;
+					}
+				}
+				else
+				{
+					loop = false;
+				}
+			}
+			else
+			{
+				loop = false;
+			}
+		} while(loop);
+	}
+
+	return replaced;
 }
 
 /*
@@ -465,7 +536,7 @@ void CConfigParser::ReplaceVariables(std::wstring& result)
 **
 **
 */
-const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures)
+const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures, bool* bReplaced)
 {
 	static std::wstring result;
 
@@ -509,58 +580,16 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		}
 	}
 
-	ReplaceVariables(result);
+	bool replaced = ReplaceVariables(result);
 
-	// Check for measures ([Measure])
-	if (!m_Measures.empty() && bReplaceMeasures)
+	if (bReplaceMeasures)
 	{
-		size_t start = 0;
-		size_t end = std::wstring::npos;
-		size_t pos = std::wstring::npos;
-		size_t pos2 = std::wstring::npos;
-		bool loop = true;
-		do 
-		{
-			pos = result.find(L'[', start);
-			if (pos != std::wstring::npos)
-			{
-				end = result.find(L']', pos + 1);
-				if (end != std::wstring::npos)
-				{
-					pos2 = result.find(L'[', pos + 1);
-					if (pos2 == std::wstring::npos || end < pos2)
-					{
-						std::wstring var(result.begin() + pos + 1, result.begin() + end);
-	
-						std::map<std::wstring, CMeasure*>::const_iterator iter = m_Measures.find(var);
-						if (iter != m_Measures.end())
-						{
-							std::wstring value = (*iter).second->GetStringValue(false, 1, 5, false);
-	
-							// Measure found, replace it with the value
-							result.replace(result.begin() + pos, result.begin() + end + 1, value);
-							start = pos + value.length();
-						}
-						else
-						{
-							start = end;
-						}
-					}
-					else
-					{
-						start = pos2;
-					}
-				}
-				else
-				{
-					loop = false;
-				}
-			}
-			else
-			{
-				loop = false;
-			}
-		} while(loop);
+		replaced |= ReplaceMeasures(result);
+	}
+
+	if (bReplaced)
+	{
+		*bReplaced = replaced;
 	}
 
 	return result;

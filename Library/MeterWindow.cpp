@@ -354,6 +354,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 	ReadConfig();	// Read the general settings 
 	ReadSkin();
 
+	InitializeMeasures();
 	InitializeMeters();
 
 	// Remove transparent flag
@@ -1816,6 +1817,29 @@ void CMeterWindow::ReadSkin()
 			{
 				MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 			}
+		}
+	}
+}
+
+/*
+** InitializeMeasures
+**
+** Initializes all the measures
+**
+*/
+void CMeterWindow::InitializeMeasures()
+{
+	// Initalize all measures
+	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+	for( ; i != m_Measures.end(); ++i)
+	{
+		try
+		{
+			(*i)->Initialize();
+		}
+		catch (CError& error)
+		{
+			MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		}
 	}
 }

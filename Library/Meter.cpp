@@ -209,7 +209,8 @@ bool CMeter::HitTest(int x, int y)
 */
 void CMeter::ReadConfig(const WCHAR* section)
 {
-	WCHAR buffer[256];
+	bool replaced;
+
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
 	// The MeterStyle defines a template where the values are read if the meter doesn't have it itself
@@ -219,82 +220,101 @@ void CMeter::ReadConfig(const WCHAR* section)
 		parser.SetStyleTemplate(style);
 	}
 
-	wsprintf(buffer, L"%i%c", m_X, (m_RelativeX == POSITION_RELATIVE_TL) ? L'r' : (m_RelativeX == POSITION_RELATIVE_BR) ? L'R' : L'');
-	std::wstring coord = parser.ReadString(section, L"X", buffer);
-	if (!coord.empty())
+	replaced = false;
+	std::wstring coord = parser.ReadString(section, L"X", L"0", true, &replaced);
+	if (!m_Initialized || replaced)
 	{
-		size_t len = coord.size();
-		if (coord[len - 1] == L'r')
+		if (!coord.empty())
 		{
-			m_RelativeX = POSITION_RELATIVE_TL;
-			coord.erase(--len);
-		}
-		else if (coord[len - 1] == L'R')
-		{
-			m_RelativeX = POSITION_RELATIVE_BR;
-			coord.erase(--len);
+			size_t len = coord.size();
+			if (coord[len - 1] == L'r')
+			{
+				m_RelativeX = POSITION_RELATIVE_TL;
+				coord.erase(--len);
+			}
+			else if (coord[len - 1] == L'R')
+			{
+				m_RelativeX = POSITION_RELATIVE_BR;
+				coord.erase(--len);
+			}
+			else
+			{
+				m_RelativeX = POSITION_ABSOLUTE;
+			}
+
+			double val;
+			if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && -1 != parser.ReadFormula(coord, &val))
+			{
+				m_X = (int)val;
+			}
+			else
+			{
+				m_X = (int)parser.ParseDouble(coord, 0.0);
+			}
 		}
 		else
 		{
+			m_X = 0;
 			m_RelativeX = POSITION_ABSOLUTE;
 		}
+	}
 
-		double val;
-		if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && -1 != parser.ReadFormula(coord, &val))
+	replaced = false;
+	coord = parser.ReadString(section, L"Y", L"0", true, &replaced);
+	if (!m_Initialized || replaced)
+	{
+		if (!coord.empty())
 		{
-			m_X = (int)val;
+			size_t len = coord.size();
+			if (coord[len - 1] == L'r')
+			{
+				m_RelativeY = POSITION_RELATIVE_TL;
+				coord.erase(--len);
+			}
+			else if (coord[len - 1] == L'R')
+			{
+				m_RelativeY = POSITION_RELATIVE_BR;
+				coord.erase(--len);
+			}
+			else
+			{
+				m_RelativeY = POSITION_ABSOLUTE;
+			}
+
+			double val;
+			if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && -1 != parser.ReadFormula(coord, &val))
+			{
+				m_Y = (int)val;
+			}
+			else
+			{
+				m_Y = (int)parser.ParseDouble(coord, 0.0);
+			}
 		}
 		else
 		{
-			m_X = (int)parser.ParseDouble(coord, 0.0);
-		}
-	}
-	else
-	{
-		m_X = 0;
-		m_RelativeX = POSITION_ABSOLUTE;
-	}
-
-	wsprintf(buffer, L"%i%c", m_Y, (m_RelativeY == POSITION_RELATIVE_TL) ? L'r' : (m_RelativeY == POSITION_RELATIVE_BR) ? L'R' : L'');
-	coord = parser.ReadString(section, L"Y", buffer);
-	if (!coord.empty())
-	{
-		size_t len = coord.size();
-		if (coord[len - 1] == L'r')
-		{
-			m_RelativeY = POSITION_RELATIVE_TL;
-			coord.erase(--len);
-		}
-		else if (coord[len - 1] == L'R')
-		{
-			m_RelativeY = POSITION_RELATIVE_BR;
-			coord.erase(--len);
-		}
-		else
-		{
+			m_Y = 0;
 			m_RelativeY = POSITION_ABSOLUTE;
 		}
-
-		double val;
-		if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && -1 != parser.ReadFormula(coord, &val))
-		{
-			m_Y = (int)val;
-		}
-		else
-		{
-			m_Y = (int)parser.ParseDouble(coord, 0.0);
-		}
-	}
-	else
-	{
-		m_Y = 0;
-		m_RelativeY = POSITION_ABSOLUTE;
 	}
 
 	m_W = (int)parser.ReadFormula(section, L"W", 1.0);
 	m_H = (int)parser.ReadFormula(section, L"H", 1.0);
 
-	m_Hidden = 0!=parser.ReadInt(section, L"Hidden", m_Hidden);
+	if (!m_Initialized)
+	{
+		m_Hidden = 0!=parser.ReadInt(section, L"Hidden", 0);
+	}
+	else
+	{
+		replaced = false;
+		const std::wstring& result = parser.ReadString(section, L"Hidden", L"0", true, &replaced);
+		if (replaced)
+		{
+			m_Hidden = 0!=(int)parser.ParseDouble(result, 0.0, true);
+		}
+	}
+
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
 
 	m_SolidColor = parser.ReadColor(section, L"SolidColor", Color(0, 0, 0, 0));

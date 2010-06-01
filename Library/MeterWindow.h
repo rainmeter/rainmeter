@@ -227,6 +227,7 @@ private:
 	void ReadConfig();
 	void WriteConfig();
 	void ReadSkin();
+	void InitializeMeasures();
 	void InitializeMeters();
 	void ShowWindowIfAppropriate();
 	bool DoAction(int x, int y, MOUSE mouse, bool test);

@@ -45,7 +45,7 @@ public:
 
 	void ResetVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow = NULL);
 
-	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
+	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true, bool* bReplaced = NULL);
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
 	double ReadFormula(LPCTSTR section, LPCTSTR key, double defValue);
 	int ReadInt(LPCTSTR section, LPCTSTR key, int defValue);
@@ -68,7 +68,8 @@ public:
 private:
 	void SetDefaultVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow);
 	void ReadVariables();
-	void ReplaceVariables(std::wstring& result);
+	bool ReplaceVariables(std::wstring& result);
+	bool ReplaceMeasures(std::wstring& result);
 
 	void ReadIniFile(const std::wstring& strFileName, int depth = 0);
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);

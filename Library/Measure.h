@@ -31,6 +31,7 @@ public:
 	virtual ~CMeasure();
 	
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void Initialize();
 	virtual bool Update() = 0;
 
 	virtual const WCHAR* GetStats();
@@ -97,6 +98,7 @@ protected:
 	bool m_Disabled;				// Status of the measure
 	UINT m_UpdateDivider;			// Divider for the update
 	UINT m_UpdateCounter;			// Current update counter
+	bool m_Initialized;
 
 	CMeterWindow* m_MeterWindow;
 };

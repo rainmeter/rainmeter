@@ -68,6 +68,7 @@ CMeasure::CMeasure(CMeterWindow* meterWindow)
 	m_AveragePos = 0;
 	m_AverageSize = 0;
 	m_DynamicVariables = false;
+	m_Initialized = false;
 
 	m_MeterWindow = meterWindow;
 }
@@ -83,6 +84,17 @@ CMeasure::~CMeasure()
 }
 
 /*
+** Initialize
+**
+** Initializes the measure.
+**
+*/
+void CMeasure::Initialize()
+{
+	m_Initialized = true;
+}
+
+/*
 ** ReadConfig
 **
 ** Reads the common configs for all Measures. The inherited classes
@@ -91,6 +103,8 @@ CMeasure::~CMeasure()
 */
 void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
+	bool replaced;
+
 	// Clear substitutes to prevent from being added more than once.
 	if (!m_Substitute.empty())
 	{
@@ -98,7 +112,20 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 
 	m_Invert = 0!=parser.ReadInt(section, L"InvertMeasure", 0);
-	m_Disabled = 0!=parser.ReadInt(section, L"Disabled", m_Disabled);
+
+	if (!m_Initialized)
+	{
+		m_Disabled = 0!=parser.ReadInt(section, L"Disabled", 0);
+	}
+	else
+	{
+		replaced = false;
+		const std::wstring& result = parser.ReadString(section, L"Disabled", L"0", true, &replaced);
+		if (replaced)
+		{
+			m_Disabled = 0!=(int)parser.ParseDouble(result, 0.0, true);
+		}
+	}
 
 	UINT updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
 	if (updateDivider != m_UpdateDivider)
