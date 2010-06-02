@@ -60,6 +60,7 @@ enum SensorType
 
 enum TempScale
 {
+	SCALE_SOURCE,
 	SCALE_CENTIGRADE,
 	SCALE_FARENHEIT,
 	SCALE_KELVIN
@@ -153,14 +154,25 @@ double Update2(UINT id)
 	std::map<UINT, TempScale>::const_iterator scale = g_Scales.find(id);
 	std::map<UINT, UINT>::const_iterator number = g_Numbers.find(id);
 	
-	if(type == g_Types.end() || number == g_Numbers.end() || ((*type).second == TYPE_TEMP && scale == g_Scales.end()))
+	if(type == g_Types.end() || number == g_Numbers.end())
 	{
 		return 0.0;		// No id in the map. How this can be ????
 	}
-	
-	if (ReadSharedData((*type).second, (*scale).second, (*number).second, &value))
+
+	if ((*type).second == TYPE_TEMP)
 	{
-		return value;
+		if (scale != g_Scales.end() &&
+			ReadSharedData((*type).second, (*scale).second, (*number).second, &value))
+		{
+			return value;
+		}
+	}
+	else
+	{
+		if (ReadSharedData((*type).second, SCALE_SOURCE, (*number).second, &value))
+		{
+			return value;
+		}
 	}
 	
 	return 0.0;
