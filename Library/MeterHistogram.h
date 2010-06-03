@@ -60,6 +60,8 @@ private:
 	double m_MinPrimaryValue;
 	double m_MaxSecondaryValue;
 	double m_MinSecondaryValue;
+
+	bool m_WidthChanged;
 };
 
 #endif

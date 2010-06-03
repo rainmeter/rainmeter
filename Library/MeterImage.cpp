@@ -250,6 +250,19 @@ void CMeterImage::LoadImage(bool bLoadAlways)
 			}
 		}
 	}
+	else
+	{
+		if (m_Bitmap)
+		{
+			delete m_Bitmap;
+			m_Bitmap = NULL;
+		}
+		if (m_BitmapTint)
+		{
+			delete m_BitmapTint;
+			m_BitmapTint = NULL;
+		}
+	}
 }
 
 /*

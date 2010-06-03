@@ -72,19 +72,24 @@ void CMeterBar::Initialize()
 		Status status = m_Bitmap->GetLastStatus();
 		if(Ok != status)
 		{
+			DebugLog(L"Bitmap image not found: %s", m_ImageName.c_str());
+
 			delete m_Bitmap;
 			m_Bitmap = NULL;
-
-            throw CError(std::wstring(L"Bitmap image not found: ") + m_ImageName, __LINE__, __FILE__);
 		}
-
-		m_W = m_Bitmap->GetWidth();
-		m_H = m_Bitmap->GetHeight();
+		else
+		{
+			m_W = m_Bitmap->GetWidth();
+			m_H = m_Bitmap->GetHeight();
+		}
 	}
 	else
 	{
-		if (m_Bitmap != NULL) delete m_Bitmap;
-		m_Bitmap = NULL;
+		if (m_Bitmap)
+		{
+			delete m_Bitmap;
+			m_Bitmap = NULL;
+		}
 	}
 }
 

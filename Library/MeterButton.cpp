@@ -88,47 +88,64 @@ void CMeterButton::Initialize()
 			}
 		}
 		if (m_Bitmap != NULL) delete m_Bitmap;
-
 		m_Bitmap = new Bitmap(m_ImageName.c_str());
 		Status status = m_Bitmap->GetLastStatus();
 		if(Ok != status)
 		{
+			DebugLog(L"Bitmap image not found: %s", m_ImageName.c_str());
+
 			delete m_Bitmap;
 			m_Bitmap = NULL;
-
-            throw CError(std::wstring(L"Bitmap image not found: ") + m_ImageName, __LINE__, __FILE__);
-		}
-
-		m_W = m_Bitmap->GetWidth();
-		m_H = m_Bitmap->GetHeight();
-
-		if(m_H > m_W)
-		{
-			m_H = m_H / BUTTON_FRAMES;
 		}
 		else
 		{
-			m_W = m_W / BUTTON_FRAMES;
-		}
+			m_W = m_Bitmap->GetWidth();
+			m_H = m_Bitmap->GetHeight();
 
-		// Separate the frames
-		Graphics desktopGraphics(GetDesktopWindow());
-
-		for (int i = 0; i < BUTTON_FRAMES; ++i)
-		{
-			Bitmap bitmapPart(m_W, m_H, PixelFormat32bppARGB);
-			Graphics graphics(&bitmapPart);
-			Rect r(0, 0, m_W, m_H);
-
-			if(m_Bitmap->GetHeight() > m_Bitmap->GetWidth())
+			if(m_H > m_W)
 			{
-				graphics.DrawImage(m_Bitmap, r, 0, m_H * i, m_W, m_H, UnitPixel);
+				m_H = m_H / BUTTON_FRAMES;
 			}
 			else
 			{
-				graphics.DrawImage(m_Bitmap, r, m_W * i, 0, m_W, m_H, UnitPixel);
+				m_W = m_W / BUTTON_FRAMES;
 			}
-			m_Bitmaps[i] = new CachedBitmap(&bitmapPart, &graphics);
+
+			// Separate the frames
+			Graphics desktopGraphics(GetDesktopWindow());
+
+			for (int i = 0; i < BUTTON_FRAMES; ++i)
+			{
+				Bitmap bitmapPart(m_W, m_H, PixelFormat32bppARGB);
+				Graphics graphics(&bitmapPart);
+				Rect r(0, 0, m_W, m_H);
+
+				if(m_Bitmap->GetHeight() > m_Bitmap->GetWidth())
+				{
+					graphics.DrawImage(m_Bitmap, r, 0, m_H * i, m_W, m_H, UnitPixel);
+				}
+				else
+				{
+					graphics.DrawImage(m_Bitmap, r, m_W * i, 0, m_W, m_H, UnitPixel);
+				}
+				m_Bitmaps[i] = new CachedBitmap(&bitmapPart, &graphics);
+			}
+		}
+	}
+	else
+	{
+		for (int i = 0; i < BUTTON_FRAMES; ++i)
+		{
+			if (m_Bitmaps[i])
+			{
+				delete m_Bitmaps[i];
+				m_Bitmaps[i] = NULL;
+			}
+		}
+		if (m_Bitmap)
+		{
+			delete m_Bitmap;
+			m_Bitmap = NULL;
 		}
 	}
 }

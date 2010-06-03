@@ -75,22 +75,32 @@ void CMeterBitmap::Initialize()
 		Status status = m_Bitmap->GetLastStatus();
 		if(Ok != status)
 		{
- 			delete m_Bitmap;
+			DebugLog(L"Bitmap image not found: %s", m_ImageName.c_str());
+
+			delete m_Bitmap;
 			m_Bitmap = NULL;
-
-            throw CError(std::wstring(L"Bitmap image not found: ") + m_ImageName, __LINE__, __FILE__);
-		}
-
-		m_W = m_Bitmap->GetWidth();
-		m_H = m_Bitmap->GetHeight();
-
-		if(m_H > m_W)
-		{
-			m_H = m_H / m_FrameCount;
 		}
 		else
 		{
-			m_W = m_W / m_FrameCount;
+			m_W = m_Bitmap->GetWidth();
+			m_H = m_Bitmap->GetHeight();
+
+			if(m_H > m_W)
+			{
+				m_H = m_H / m_FrameCount;
+			}
+			else
+			{
+				m_W = m_W / m_FrameCount;
+			}
+		}
+	}
+	else
+	{
+		if (m_Bitmap)
+		{
+			delete m_Bitmap;
+			m_Bitmap = NULL;
 		}
 	}
 }
@@ -167,6 +177,8 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
+	int oldW = m_W;
+	int oldH = m_H;
 
 	// Read common configs
 	CMeter::ReadConfig(section);
@@ -205,10 +217,18 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
         throw CError(std::wstring(L"No such BitmapAlign: ") + align, __LINE__, __FILE__);
 	}
 
-	if (m_Initialized &&
-		oldImageName != m_ImageName)
+	if (m_Initialized)
 	{
-		Initialize();  // Reload the image
+		if (oldImageName != m_ImageName)
+		{
+			Initialize();  // Reload the image
+		}
+		else
+		{
+			// Reset to old dimensions
+			m_W = oldW;
+			m_H = oldH;
+		}
 	}
 }
 

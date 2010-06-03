@@ -50,6 +50,7 @@ CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow) : CMeter(meterWindow
 	m_MinPrimaryValue = 0.0;
 	m_MaxSecondaryValue = 1.0;
 	m_MinSecondaryValue = 0.0;
+	m_WidthChanged = false;
 }
 
 /*
@@ -86,11 +87,31 @@ void CMeterHistogram::Initialize()
 		Status status = m_PrimaryBitmap->GetLastStatus();
 		if(Ok != status)
 		{
-            throw CError(std::wstring(L"PrimaryImage not found: ") + m_PrimaryImageName, __LINE__, __FILE__);
-		}
+			DebugLog(L"PrimaryImage not found: %s", m_PrimaryImageName.c_str());
 
-		m_W = m_PrimaryBitmap->GetWidth();
-		m_H = m_PrimaryBitmap->GetHeight();
+			delete m_PrimaryBitmap;
+			m_PrimaryBitmap = NULL;
+		}
+		else
+		{
+			int oldW = m_W;
+
+			m_W = m_PrimaryBitmap->GetWidth();
+			m_H = m_PrimaryBitmap->GetHeight();
+
+			if (oldW != m_W)
+			{
+				m_WidthChanged = true;
+			}
+		}
+	}
+	else
+	{
+		if (m_PrimaryBitmap)
+		{
+			delete m_PrimaryBitmap;
+			m_PrimaryBitmap = NULL;
+		}
 	}
 
 	if(!m_SecondaryImageName.empty())
@@ -100,7 +121,18 @@ void CMeterHistogram::Initialize()
 		Status status = m_SecondaryBitmap->GetLastStatus();
 		if(Ok != status)
 		{
-            throw CError(std::wstring(L"SecondaryImage not found: ") + m_SecondaryImageName, __LINE__, __FILE__);
+			DebugLog(L"SecondaryImage not found: %s", m_SecondaryImageName.c_str());
+
+			delete m_SecondaryBitmap;
+			m_SecondaryBitmap = NULL;
+		}
+	}
+	else
+	{
+		if (m_SecondaryBitmap)
+		{
+			delete m_SecondaryBitmap;
+			m_SecondaryBitmap = NULL;
 		}
 	}
 
@@ -111,25 +143,81 @@ void CMeterHistogram::Initialize()
 		Status status = m_BothBitmap->GetLastStatus();
 		if(Ok != status)
 		{
-            throw CError(std::wstring(L"BothImage not found: ") + m_BothImageName, __LINE__, __FILE__);
+			DebugLog(L"BothImage not found: %s", m_BothImageName.c_str());
+
+			delete m_BothBitmap;
+			m_BothBitmap = NULL;
+		}
+	}
+	else
+	{
+		if (m_BothBitmap)
+		{
+			delete m_BothBitmap;
+			m_BothBitmap = NULL;
 		}
 	}
 
 	// A sanity check
 	if (m_SecondaryMeasure && !m_PrimaryImageName.empty() && (m_BothImageName.empty() || m_SecondaryImageName.empty()))
 	{
-        throw CError(std::wstring(L"You need to define SecondaryImage and BothImage also!"), __LINE__, __FILE__);
+        LSLog(LOG_DEBUG, L"Rainmeter", L"You need to define SecondaryImage and BothImage also!");
+
+		if (m_PrimaryBitmap)
+		{
+			delete m_PrimaryBitmap;
+			m_PrimaryBitmap = NULL;
+		}
+		if (m_SecondaryBitmap)
+		{
+			delete m_SecondaryBitmap;
+			m_SecondaryBitmap = NULL;
+		}
+		if (m_BothBitmap)
+		{
+			delete m_BothBitmap;
+			m_BothBitmap = NULL;
+		}
 	}
 
-	// Create buffers for values
-	if (m_PrimaryValues) delete [] m_PrimaryValues;
-	m_PrimaryValues = new double[m_W];
-	memset(m_PrimaryValues, 0, sizeof(double) * m_W);
-	if (m_SecondaryMeasure)
+	if ((!m_PrimaryImageName.empty() && !m_PrimaryBitmap) ||
+		(!m_SecondaryImageName.empty() && !m_SecondaryBitmap) ||
+		(!m_BothImageName.empty() && !m_BothBitmap))
 	{
-		if (m_SecondaryValues) delete [] m_SecondaryValues;
-		m_SecondaryValues = new double[m_W];
-		memset(m_SecondaryValues, 0, sizeof(double) * m_W);
+		// Reset current position
+		m_MeterPos = 0;
+
+		// Delete buffers
+		if (m_PrimaryValues)
+		{
+			delete [] m_PrimaryValues;
+			m_PrimaryValues = NULL;
+		}
+		if (m_SecondaryValues)
+		{
+			delete [] m_SecondaryValues;
+			m_SecondaryValues = NULL;
+		}
+
+		m_WidthChanged = false;
+	}
+	else if (m_WidthChanged)
+	{
+		// Reset current position
+		m_MeterPos = 0;
+
+		// Create buffers for values
+		if (m_PrimaryValues) delete [] m_PrimaryValues;
+		m_PrimaryValues = new double[m_W];
+		memset(m_PrimaryValues, 0, sizeof(double) * m_W);
+		if (m_SecondaryMeasure)
+		{
+			if (m_SecondaryValues) delete [] m_SecondaryValues;
+			m_SecondaryValues = new double[m_W];
+			memset(m_SecondaryValues, 0, sizeof(double) * m_W);
+		}
+
+		m_WidthChanged = false;
 	}
 }
 
@@ -141,6 +229,13 @@ void CMeterHistogram::Initialize()
 */
 void CMeterHistogram::ReadConfig(const WCHAR* section)
 {
+	// Store the current values so we know if the image needs to be updated
+	std::wstring oldPrimaryImageName = m_PrimaryImageName;
+	std::wstring oldSecondaryImageName = m_SecondaryImageName;
+	std::wstring oldBothImageName = m_BothImageName;
+	int oldW = m_W;
+	int oldH = m_H;
+
 	// Read common configs
 	CMeter::ReadConfig(section);
 
@@ -163,6 +258,31 @@ void CMeterHistogram::ReadConfig(const WCHAR* section)
 
 	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0);
 	m_Flip = 0!=parser.ReadInt(section, L"Flip", 0);
+
+	if (m_Initialized)
+	{
+		if (m_PrimaryImageName.empty())
+		{
+			if (oldW != m_W)
+			{
+				m_WidthChanged = true;
+				Initialize();  // Reload the image
+			}
+		}
+		else
+		{
+			// Reset to old dimensions
+			m_W = oldW;
+			m_H = oldH;
+
+			if (oldPrimaryImageName != m_PrimaryImageName ||
+				oldSecondaryImageName != m_SecondaryImageName ||
+				oldBothImageName != m_BothImageName)
+			{
+				Initialize();  // Reload the image
+			}
+		}
+	}
 }
 
 /*
@@ -173,12 +293,12 @@ void CMeterHistogram::ReadConfig(const WCHAR* section)
 */
 bool CMeterHistogram::Update()
 {
-	if (CMeter::Update() && m_Measure)
+	if (CMeter::Update() && m_Measure && m_PrimaryValues)
 	{
 		// Gather values
 		m_PrimaryValues[m_MeterPos] = m_Measure->GetValue();
 
-		if (m_SecondaryMeasure != NULL)
+		if (m_SecondaryMeasure && m_SecondaryValues)
 		{
 			m_SecondaryValues[m_MeterPos] = m_SecondaryMeasure->GetValue();
 		}
@@ -213,7 +333,7 @@ bool CMeterHistogram::Update()
 				m_MaxPrimaryValue *= 2;
 			}
 
-			if (m_SecondaryMeasure)
+			if (m_SecondaryMeasure && m_SecondaryValues)
 			{
 				for (int i = 0; i != m_W; ++i)
 				{
@@ -241,7 +361,9 @@ bool CMeterHistogram::Update()
 */
 bool CMeterHistogram::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw(graphics)) return false;
+	if(!CMeter::Draw(graphics) ||
+		(m_Measure && !m_PrimaryValues) ||
+		(m_SecondaryMeasure && !m_SecondaryValues)) return false;
 
 	Pen primaryPen(m_PrimaryColor);
 	Pen secondaryPen(m_SecondaryColor);
