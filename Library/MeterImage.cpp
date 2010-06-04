@@ -124,7 +124,7 @@ void CMeterImage::LoadImage(bool bLoadAlways)
 		}
 
 		// Read the bitmap to memory so that it's not locked by GDI+
-		HANDLE fileHandle = CreateFile(filename.c_str(), GENERIC_READ, NULL, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE fileHandle = CreateFile(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 		if (fileHandle != INVALID_HANDLE_VALUE)
 		{
 			// Compare the timestamp and filename to check if the file has been changed (don't load if it's not)
