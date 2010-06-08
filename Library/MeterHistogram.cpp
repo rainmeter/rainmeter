@@ -206,15 +206,28 @@ void CMeterHistogram::Initialize()
 		// Reset current position
 		m_MeterPos = 0;
 
-		// Create buffers for values
-		if (m_PrimaryValues) delete [] m_PrimaryValues;
-		m_PrimaryValues = new double[m_W];
-		memset(m_PrimaryValues, 0, sizeof(double) * m_W);
-		if (m_SecondaryMeasure)
+		// Delete buffers
+		if (m_PrimaryValues)
 		{
-			if (m_SecondaryValues) delete [] m_SecondaryValues;
-			m_SecondaryValues = new double[m_W];
-			memset(m_SecondaryValues, 0, sizeof(double) * m_W);
+			delete [] m_PrimaryValues;
+			m_PrimaryValues = NULL;
+		}
+		if (m_SecondaryValues)
+		{
+			delete [] m_SecondaryValues;
+			m_SecondaryValues = NULL;
+		}
+
+		// Create buffers for values
+		if (m_W > 0)
+		{
+			m_PrimaryValues = new double[m_W];
+			memset(m_PrimaryValues, 0, sizeof(double) * m_W);
+			if (m_SecondaryMeasure)
+			{
+				m_SecondaryValues = new double[m_W];
+				memset(m_SecondaryValues, 0, sizeof(double) * m_W);
+			}
 		}
 
 		m_WidthChanged = false;
@@ -282,6 +295,10 @@ void CMeterHistogram::ReadConfig(const WCHAR* section)
 				Initialize();  // Reload the image
 			}
 		}
+	}
+	else
+	{
+		m_WidthChanged = true;
 	}
 }
 
