@@ -200,7 +200,8 @@ DWORD WINAPI NetworkThreadProc(LPVOID pParam)
 	{
 		pingData* pData = (pingData*)pParam;
 
-		BYTE reply[sizeof(ICMP_ECHO_REPLY) + 32];
+		const DWORD replySize = sizeof(ICMP_ECHO_REPLY) + 32;
+		BYTE* reply = new BYTE[replySize];
 
 		HANDLE hIcmpFile;
 		hIcmpFile = g_IcmpCreateFile();
@@ -214,7 +215,7 @@ DWORD WINAPI NetworkThreadProc(LPVOID pParam)
 				0,
 				NULL,
 				reply, 
-				sizeof(reply),
+				replySize,
 				pData->timeout);
 
 			g_IcmpCloseHandle(hIcmpFile);
@@ -231,6 +232,7 @@ DWORD WINAPI NetworkThreadProc(LPVOID pParam)
 			pData->value = pReply->RoundTripTime;
 		}
 
+		delete [] reply;
 		CloseHandle(pData->threadHandle);
 		pData->threadHandle = 0;
 		LeaveCriticalSection(&g_CriticalSection);
