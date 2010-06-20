@@ -87,6 +87,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginWifiStatus", "Plugins
 		{BE9D2400-7F1C-49D6-8498-5CE495491AD6} = {BE9D2400-7F1C-49D6-8498-5CE495491AD6}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginWin7Audio", "Plugins\PluginWin7Audio\PluginWin7Audio.vcproj", "{6D032D6B-7656-4743-B454-3388E2921EB0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BE9D2400-7F1C-49D6-8498-5CE495491AD6} = {BE9D2400-7F1C-49D6-8498-5CE495491AD6}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -279,6 +284,18 @@ Global
 		{45A34285-56DD-4521-912B-3F884D36FA35}.Release64|Win32.Build.0 = Release64|Win32
 		{45A34285-56DD-4521-912B-3F884D36FA35}.Release64|x64.ActiveCfg = Release64|x64
 		{45A34285-56DD-4521-912B-3F884D36FA35}.Release64|x64.Build.0 = Release64|x64
+		{6D032D6B-7656-4743-B454-3388E2921EB0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6D032D6B-7656-4743-B454-3388E2921EB0}.Debug|Win32.Build.0 = Debug|Win32
+		{6D032D6B-7656-4743-B454-3388E2921EB0}.Debug|x64.ActiveCfg = Debug|x64
+		{6D032D6B-7656-4743-B454-3388E2921EB0}.Debug|x64.Build.0 = Debug|x64
+		{6D032D6B-7656-4743-B454-3388E2921EB0}.Release|Win32.ActiveCfg = Release|Win32
+		{6D032D6B-7656-4743-B454-3388E2921EB0}.Release|Win32.Build.0 = Release|Win32
+		{6D032D6B-7656-4743-B454-3388E2921EB0}.Release|x64.ActiveCfg = Release|x64
+		{6D032D6B-7656-4743-B454-3388E2921EB0}.Release|x64.Build.0 = Release|x64
+		{6D032D6B-7656-4743-B454-3388E2921EB0}.Release64|Win32.ActiveCfg = Release64|Win32
+		{6D032D6B-7656-4743-B454-3388E2921EB0}.Release64|Win32.Build.0 = Release64|Win32
+		{6D032D6B-7656-4743-B454-3388E2921EB0}.Release64|x64.ActiveCfg = Release64|x64
+		{6D032D6B-7656-4743-B454-3388E2921EB0}.Release64|x64.Build.0 = Release64|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -615,6 +615,55 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 		break;
 
+	case WM_QUERY_RAINMETER:
+
+		if (Rainmeter && IsWindow((HWND)lParam))
+		{
+			if(wParam == RAINMETER_QUERY_ID_SKINS_PATH)
+			{
+				std::wstring path = Rainmeter->GetSkinPath();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_SKINS_PATH;
+				cds.cbData = (path.size() + 1) * 2;
+				cds.lpData = (LPVOID) path.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+			
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_SETTINGS_PATH)
+			{
+				std::wstring path = Rainmeter->GetSettingsPath();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_SKINS_PATH;
+				cds.cbData = (path.size() + 1) * 2;
+				cds.lpData = (LPVOID) path.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_PLUGINS_PATH)
+			{
+				std::wstring path = Rainmeter->GetPluginPath();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_SKINS_PATH;
+				cds.cbData = (path.size() + 1) * 2;
+				cds.lpData = (LPVOID) path.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+
+				return 0;
+			}
+		}
+		return 1;
+		
 	case WM_TIMER:
 		if (tray && tray->m_Measure)
 		{
