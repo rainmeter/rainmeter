@@ -38,7 +38,7 @@ Usage:
 
 void QueryRainmeterSkinsPath(HWND hWndSelf)
 {
-	HWND hWndRainmeter = FindWindow(RAINMETER_QUERY_WINDOW_TITLE, RAINMETER_QUERY_WINDOW_CLASS);
+	HWND hWndRainmeter = FindWindow(RAINMETER_QUERY_CLASS_NAME, RAINMETER_QUERY_WINDOW_NAME);
 	if (hWndRainmeter)
 	{
 		PostMessage(hWndRainmeter, WM_QUERY_RAINMETER, RAINMETER_QUERY_ID_SKINS_PATH, (LPARAM)hWndSelf);
@@ -75,8 +75,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 #include <tchar.h>
 
-#define RAINMETER_QUERY_WINDOW_NAME				TEXT("RainmeterTrayClass")
-#define RAINMETER_QUERY_CLASS_NAME				NULL
+#define RAINMETER_QUERY_CLASS_NAME				TEXT("RainmeterTrayClass")
+#define RAINMETER_QUERY_WINDOW_NAME				NULL
 
 #define WM_QUERY_RAINMETER						WM_APP + 1000
 
