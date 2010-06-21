@@ -273,7 +273,7 @@ void RepositionControls(HWND hwndDlg)
 	widget = GetDlgItem(hwndDlg, IDC_URL_STRING);
 	SetWindowPos(widget, NULL, 0, 0, r.right - 44, sr.bottom, SWP_NOMOVE | SWP_NOZORDER);
 
-	widget = GetDlgItem(hwndDlg, IDC_CHECK_FOR_UPDATE);
+	widget = GetDlgItem(hwndDlg, IDC_DISABLE_VERSION_CHECK);
 	GetClientRect(widget, &wr);
 	MapWindowPoints(widget, hwndDlg, (LPPOINT)&wr, 2);
 	SetWindowPos(widget, NULL, (r.right - (wr.right - wr.left)) / 2, wr.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
@@ -337,7 +337,7 @@ BOOL OnInitAboutDialog(HWND window)
     lvc.pszText = L"Range";	
     ListView_InsertColumn(widget, 2, &lvc);
 
-	CheckDlgButton(window, IDC_CHECK_FOR_UPDATE, Rainmeter->GetCheckUpdate() ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(window, IDC_DISABLE_VERSION_CHECK, Rainmeter->GetDisableVersionCheck() ? BST_CHECKED : BST_UNCHECKED);
 
 	ScanPlugins();
 	UpdateWidgets(window);
@@ -388,14 +388,14 @@ INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 		case WM_COMMAND:
 			switch (LOWORD(wParam))
 			{
-			case IDC_CHECK_FOR_UPDATE:
-				if (IsDlgButtonChecked(hwndDlg, IDC_CHECK_FOR_UPDATE))
+			case IDC_DISABLE_VERSION_CHECK:
+				if (IsDlgButtonChecked(hwndDlg, IDC_DISABLE_VERSION_CHECK))
 				{
-					Rainmeter->SetCheckUpdate(TRUE);	
+					Rainmeter->SetDisableVersionCheck(TRUE);	
 				}
 				else
 				{
-					Rainmeter->SetCheckUpdate(FALSE);
+					Rainmeter->SetDisableVersionCheck(FALSE);
 				}
 				break;
 

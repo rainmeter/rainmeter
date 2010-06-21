@@ -467,6 +467,10 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				command += L"\\Addons\\RainThemes\\RainThemes.exe\"";
 				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 			}
+			else if(wParam == ID_CONTEXT_NEW_VERSION)	//newvercheck
+			{
+				LSExecute(NULL, L"http://rainmeter.net/RainCMS/", SW_SHOWNORMAL);
+			}
 			else if(wParam == ID_CONTEXT_MANAGESKINS)
 			{
 				std::wstring command = L"\"" + Rainmeter->GetPath();
@@ -639,7 +643,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 				COPYDATASTRUCT cds;
 			
-				cds.dwData = RAINMETER_QUERY_ID_SKINS_PATH;
+				cds.dwData = RAINMETER_QUERY_ID_SETTINGS_PATH;
 				cds.cbData = (path.size() + 1) * 2;
 				cds.lpData = (LPVOID) path.c_str();
 
@@ -653,7 +657,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 				COPYDATASTRUCT cds;
 			
-				cds.dwData = RAINMETER_QUERY_ID_SKINS_PATH;
+				cds.dwData = RAINMETER_QUERY_ID_PLUGINS_PATH;
 				cds.cbData = (path.size() + 1) * 2;
 				cds.lpData = (LPVOID) path.c_str();
 
@@ -663,7 +667,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 		}
 		return 1;
-		
+
 	case WM_TIMER:
 		if (tray && tray->m_Measure)
 		{

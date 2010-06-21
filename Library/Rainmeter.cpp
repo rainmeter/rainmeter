@@ -680,7 +680,8 @@ CRainmeter::CRainmeter()
 	m_DesktopWorkAreaChanged = false;
 	m_DesktopWorkArea.left = m_DesktopWorkArea.top = m_DesktopWorkArea.right = m_DesktopWorkArea.bottom = 0;
 
-	m_CheckUpdate = FALSE;
+	m_DisableVersionCheck = FALSE;
+	m_NewVersion = FALSE;
 
 	m_Instance = NULL;
 	m_CurrentParser = NULL;
@@ -959,7 +960,9 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	ReadGeneralSettings(m_IniFile);
 
-	if (m_CheckUpdate)
+	WritePrivateProfileString(L"Rainmeter", L"CheckUpdate", NULL , m_IniFile.c_str());
+
+	if (!m_DisableVersionCheck)
 	{
 		CheckUpdate();
 	}
@@ -1664,7 +1667,8 @@ void CRainmeter::ScanForThemes(std::wstring& path)
 void CRainmeter::SaveSettings()
 {
 	// Just one setting for writing at the moment
-	WritePrivateProfileString(L"Rainmeter", L"CheckUpdate", m_CheckUpdate ? L"1" : L"0" , m_IniFile.c_str());
+	WritePrivateProfileString(L"Rainmeter", L"CheckUpdate", NULL , m_IniFile.c_str());
+	WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", m_DisableVersionCheck ? L"1" : L"0" , m_IniFile.c_str());
 }
 
 BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, CMeterWindow* meterWindow)
@@ -1996,8 +2000,8 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 	m_TrayExecuteDR = parser.ReadString(L"Rainmeter", L"TrayExecuteDR", L"", false);
 	m_TrayExecuteDM = parser.ReadString(L"Rainmeter", L"TrayExecuteDM", L"", false);
 
-	m_CheckUpdate = parser.ReadInt(L"Rainmeter", L"CheckUpdate", 0);
-
+	m_DisableVersionCheck = parser.ReadInt(L"Rainmeter", L"DisableVersionCheck", 0);
+	
 	std::wstring area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
 	if (!area.empty())
 	{
@@ -2239,7 +2243,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 		if(subMenu)
 		{
 			if (!GetDummyLitestep())
-			{
+			{ 
 				// Disable Quit if ran as a Litestep plugin
 				EnableMenuItem(subMenu, ID_CONTEXT_QUIT, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
@@ -2269,6 +2273,14 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 			}
 			else
 			{
+				UINT configPos = 10;
+				//Put Update notifications in the Tray menu
+				if (m_NewVersion)
+				{
+					configPos += 1;
+					InsertMenu(subMenu, 2, MF_BYPOSITION | MF_ENABLED, ID_CONTEXT_NEW_VERSION, L"Update Available");
+				}
+
 				// Create a menu for all active configs
 				std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
 
@@ -2277,7 +2289,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				{
 					CMeterWindow* mw = ((*iter).second);
 					HMENU skinMenu = CreateSkinMenu(mw, index);
-					InsertMenu(subMenu, 10, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
+					InsertMenu(subMenu, configPos, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
 					++index;
 				}
 			}

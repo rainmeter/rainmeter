@@ -167,7 +167,7 @@ BEGIN
     GROUPBOX        "About",IDC_STATIC_ABOUT,7,7,220,69
     CTEXT           "(build on ??? ?? ????)",IDC_BUILD_STRING,19,30,201,8
     DEFPUSHBUTTON   "OK",IDOK,91,204,50,14
-    CONTROL         "Check for update on startup",IDC_CHECK_FOR_UPDATE,
+    CONTROL         "Disable check for updates",IDC_DISABLE_VERSION_CHECK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,67,56,104,10
 END
 

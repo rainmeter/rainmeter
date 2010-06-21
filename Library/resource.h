@@ -14,7 +14,7 @@
 #define IDC_URL_STRING                  1005
 #define IDC_CONFIG_TAB                  1006
 #define IDC_AUTHOR_STRING               1007
-#define IDC_CHECK_FOR_UPDATE            1009
+#define IDC_DISABLE_VERSION_CHECK		1008
 #define ID_CONTEXT_REFRESH              4001
 #define ID_CONTEXT_QUIT                 4002
 #define ID_CONTEXT_ABOUT                4004
@@ -58,6 +58,7 @@
 #define ID_CONTEXT_MANAGESKINS          4047
 #define ID_CONTEXT_SKINMENU_MONITOR_PRIMARY	4048
 #define ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT	4049
+#define ID_CONTEXT_NEW_VERSION				4050 //newvercheck
 
 #define WM_QUERY_RAINMETER				WM_APP + 1000
 
