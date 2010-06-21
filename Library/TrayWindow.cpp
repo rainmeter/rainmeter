@@ -23,6 +23,7 @@
 #include "Rainmeter.h"
 #include "AboutDialog.h"
 #include "Error.h"
+#include "RainmeterQuery.h"
 #include <io.h>
 #include <ShellAPI.h>
 
@@ -620,7 +621,6 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		break;
 
 	case WM_QUERY_RAINMETER:
-
 		if (Rainmeter && IsWindow((HWND)lParam))
 		{
 			if(wParam == RAINMETER_QUERY_ID_SKINS_PATH)
@@ -630,7 +630,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				COPYDATASTRUCT cds;
 			
 				cds.dwData = RAINMETER_QUERY_ID_SKINS_PATH;
-				cds.cbData = (path.size() + 1) * 2;
+				cds.cbData = (path.size() + 1) * sizeof(wchar_t);
 				cds.lpData = (LPVOID) path.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -644,7 +644,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				COPYDATASTRUCT cds;
 			
 				cds.dwData = RAINMETER_QUERY_ID_SETTINGS_PATH;
-				cds.cbData = (path.size() + 1) * 2;
+				cds.cbData = (path.size() + 1) * sizeof(wchar_t);
 				cds.lpData = (LPVOID) path.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -658,7 +658,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				COPYDATASTRUCT cds;
 			
 				cds.dwData = RAINMETER_QUERY_ID_PLUGINS_PATH;
-				cds.cbData = (path.size() + 1) * 2;
+				cds.cbData = (path.size() + 1) * sizeof(wchar_t);
 				cds.lpData = (LPVOID) path.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);

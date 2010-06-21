@@ -2874,15 +2874,19 @@
 				>
 			</File>
 			<File
+				RelativePath="RainmeterQuery.h"
+				>
+			</File>
+			<File
 				RelativePath="resource.h"
 				>
 			</File>
 			<File
-				RelativePath=".\StdAfx.h"
+				RelativePath="StdAfx.h"
 				>
 			</File>
 			<File
-				RelativePath=".\System.h"
+				RelativePath="System.h"
 				>
 			</File>
 			<File
