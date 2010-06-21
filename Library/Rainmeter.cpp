@@ -2278,7 +2278,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				if (m_NewVersion)
 				{
 					configPos += 1;
-					InsertMenu(subMenu, 2, MF_BYPOSITION | MF_ENABLED, ID_CONTEXT_NEW_VERSION, L"Update Available");
+					InsertMenu(subMenu, 2, MF_BYPOSITION | MF_ENABLED, ID_CONTEXT_NEW_VERSION, L"New Version Available");
 				}
 
 				// Create a menu for all active configs

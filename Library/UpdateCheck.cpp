@@ -28,7 +28,7 @@ extern CRainmeter* Rainmeter;
 
 void CheckVersion(void* dummy)
 {
-	double version = 0.0;
+	int version = 0;
 
 	HINTERNET hRootHandle = InternetOpen(L"Rainmeter",
 									INTERNET_OPEN_TYPE_PRECONFIG,
@@ -65,7 +65,6 @@ void CheckVersion(void* dummy)
 
 					version += atoi(verMinor1.c_str()) * 1000;
 					version += atoi(verMinor2.c_str());
-
 				}
 				else
 				{

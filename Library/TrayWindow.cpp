@@ -467,7 +467,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				command += L"\\Addons\\RainThemes\\RainThemes.exe\"";
 				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 			}
-			else if(wParam == ID_CONTEXT_NEW_VERSION)	//newvercheck
+			else if(wParam == ID_CONTEXT_NEW_VERSION)
 			{
 				LSExecute(NULL, L"http://rainmeter.net/RainCMS/", SW_SHOWNORMAL);
 			}

@@ -32,13 +32,13 @@
 #define MAKE_VER(major, minor1, minor2) major * 1000000 + minor1 * 1000 + minor2
 
 #define APPNAME L"Rainmeter"
-#define APPVERSION L"1.2"
+#define APPVERSION L"1.3"
 #ifdef _WIN64
 #define APPBITS L"(64-bit)"
 #else
 #define APPBITS L"(32-bit)"
 #endif
-#define RAINMETER_VERSION MAKE_VER(1, 2, 0) //newvercheck
+#define RAINMETER_VERSION MAKE_VER(1, 3, 0)
 
 enum PLATFORM
 {
