@@ -419,7 +419,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				std::wstring log = Rainmeter->GetLogFile();
 				if (_waccess(log.c_str(), 0) != -1)
 				{
-					std::wstring command = L"Notepad.exe ";
+					std::wstring command = Rainmeter->GetConfigEditor();
 					command += log;
 					LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 				}
@@ -440,7 +440,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 							message += L"\nDelete it to disable Rainmeter's logging";
 							MessageBox(tray->GetWindow(), message.c_str(), L"Rainmeter", MB_OK | MB_ICONINFORMATION);
 
-							std::wstring command = L"Notepad.exe ";
+							std::wstring command = Rainmeter->GetConfigEditor();
 							command += log;
 							LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 						}
