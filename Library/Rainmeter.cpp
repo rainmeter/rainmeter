@@ -32,6 +32,7 @@
 #include <fstream>
 #include <iostream>
 #include <shlobj.h>
+#include <shlwapi.h>
 
 using namespace Gdiplus;
 
@@ -1986,13 +1987,30 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 	c_GlobalConfig.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", 0.0);
 	c_GlobalConfig.netOutSpeed = parser.ReadFloat(L"Rainmeter", L"NetOutSpeed", 0.0);
 
-	m_ConfigEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"Notepad");
+	m_ConfigEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"");
+	if (m_ConfigEditor.empty())
+	{
+		// Get the program path associated with .ini files
+		WCHAR buffer[MAX_PATH+1] = {0};
+		DWORD cchOut = MAX_PATH;
+
+		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".ini", L"open", buffer, &cchOut);
+		if (SUCCEEDED(hr) && cchOut > 0)
+		{
+			m_ConfigEditor = buffer;
+		}
+		else
+		{
+			m_ConfigEditor = L"Notepad";
+		}
+	}
 	if (!m_ConfigEditor.empty() && m_ConfigEditor[0] != L'\"')
 	{
-		m_ConfigEditor.insert(0,L"\"");
+		m_ConfigEditor.insert(0, L"\"");
 		m_ConfigEditor.append(L"\"");
 	}
-	
+	if (c_Debug) DebugLog(L"ConfigEditor: %s", m_ConfigEditor.c_str());
+
 	m_TrayExecuteL = parser.ReadString(L"Rainmeter", L"TrayExecuteL", L"", false);
 	m_TrayExecuteR = parser.ReadString(L"Rainmeter", L"TrayExecuteR", L"", false);
 	m_TrayExecuteM = parser.ReadString(L"Rainmeter", L"TrayExecuteM", L"", false);
@@ -2237,13 +2255,11 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 
 	if(menu)
 	{
-		HMENU configMenu = NULL;
-
 		HMENU subMenu = GetSubMenu(menu, 0);
 		if(subMenu)
 		{
 			if (!GetDummyLitestep())
-			{ 
+			{
 				// Disable Quit if ran as a Litestep plugin
 				EnableMenuItem(subMenu, ID_CONTEXT_QUIT, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
@@ -2268,18 +2284,14 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 
 			if (meterWindow)
 			{
-				HMENU skinMenu = CreateSkinMenu(meterWindow, 0);
-				InsertMenu(subMenu, 10, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, L"Skin Menu");
+				HMENU rainmeterMenu = subMenu;
+				subMenu = CreateSkinMenu(meterWindow, 0);
+				InsertMenu(subMenu, 7, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+				InsertMenu(subMenu, 8, MF_BYPOSITION | MF_POPUP, (UINT_PTR)rainmeterMenu, L"Rainmeter Menu");
 			}
 			else
 			{
-				UINT configPos = 10;
-				//Put Update notifications in the Tray menu
-				if (m_NewVersion)
-				{
-					configPos += 1;
-					InsertMenu(subMenu, 2, MF_BYPOSITION | MF_ENABLED, ID_CONTEXT_NEW_VERSION, L"New Version Available");
-				}
+				InsertMenu(subMenu, 10, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 
 				// Create a menu for all active configs
 				std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
@@ -2289,8 +2301,16 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				{
 					CMeterWindow* mw = ((*iter).second);
 					HMENU skinMenu = CreateSkinMenu(mw, index);
-					InsertMenu(subMenu, configPos, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
+					InsertMenu(subMenu, 10, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
 					++index;
+				}
+
+				// Put Update notifications in the Tray menu
+				if (m_NewVersion)
+				{
+					InsertMenu(subMenu, 0, MF_BYPOSITION, ID_CONTEXT_NEW_VERSION, L"New Version Available");
+					InsertMenu(subMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+					SetMenuDefaultItem(subMenu, ID_CONTEXT_NEW_VERSION, MF_BYCOMMAND);
 				}
 			}
 
@@ -2304,6 +2324,11 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 			  meterWindow ? meterWindow->GetWindow() : m_TrayWindow->GetWindow(),
 			  NULL
 			);		
+
+			if (meterWindow)
+			{
+				DestroyMenu(subMenu);
+			}
 		}
 
 		DestroyMenu(menu);
@@ -2378,58 +2403,61 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index)
 	if (skinMenu)
 	{
 		// Tick the position
-		HMENU posMenu = GetSubMenu(skinMenu, 0);
-		if (posMenu)
+		HMENU settingsMenu = GetSubMenu(skinMenu, 0);
+		if (settingsMenu)
 		{
-			switch(meterWindow->GetWindowZPosition()) 
+			HMENU posMenu = GetSubMenu(settingsMenu, 0);
+			if (posMenu)
 			{
-			case ZPOSITION_ONDESKTOP:
-				CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_ONDESKTOP, MF_BYCOMMAND | MF_CHECKED);
-				break;
+				switch(meterWindow->GetWindowZPosition()) 
+				{
+				case ZPOSITION_ONDESKTOP:
+					CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_ONDESKTOP, MF_BYCOMMAND | MF_CHECKED);
+					break;
 
-			case ZPOSITION_ONBOTTOM:
-				CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_BOTTOM, MF_BYCOMMAND | MF_CHECKED);
-				break;
+				case ZPOSITION_ONBOTTOM:
+					CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_BOTTOM, MF_BYCOMMAND | MF_CHECKED);
+					break;
 
-			case ZPOSITION_ONTOP:
-				CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_TOPMOST, MF_BYCOMMAND | MF_CHECKED);
-				break;
+				case ZPOSITION_ONTOP:
+					CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_TOPMOST, MF_BYCOMMAND | MF_CHECKED);
+					break;
 
-			case ZPOSITION_ONTOPMOST:
-				CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_VERYTOPMOST, MF_BYCOMMAND | MF_CHECKED);
-				break;
+				case ZPOSITION_ONTOPMOST:
+					CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_VERYTOPMOST, MF_BYCOMMAND | MF_CHECKED);
+					break;
 
-			default:
-				CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_NORMAL, MF_BYCOMMAND | MF_CHECKED);
-			}
+				default:
+					CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_NORMAL, MF_BYCOMMAND | MF_CHECKED);
+				}
 
-			if(meterWindow->GetXFromRight()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
-			if(meterWindow->GetYFromBottom()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
-			if(meterWindow->GetXPercentage()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
-			if(meterWindow->GetYPercentage()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
+				if(meterWindow->GetXFromRight()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
+				if(meterWindow->GetYFromBottom()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
+				if(meterWindow->GetXPercentage()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
+				if(meterWindow->GetYPercentage()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
 
-			if (!c_DummyLitestep)
-			{
-				EnableMenuItem(posMenu, ID_CONTEXT_SKINMENU_ONDESKTOP, MF_BYCOMMAND | MF_GRAYED);
-			}
+				if (!c_DummyLitestep)
+				{
+					EnableMenuItem(posMenu, ID_CONTEXT_SKINMENU_ONDESKTOP, MF_BYCOMMAND | MF_GRAYED);
+				}
 
-			HMENU monitorMenu = CreateMonitorMenu(meterWindow);
-			if (monitorMenu)
-			{
-				InsertMenu(posMenu, 0, MF_BYPOSITION | MF_POPUP, (UINT_PTR)monitorMenu, L"Display Monitor");
-				InsertMenu(posMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+				HMENU monitorMenu = GetSubMenu(posMenu, 0);
+				if (monitorMenu)
+				{
+					CreateMonitorMenu(monitorMenu, meterWindow);
+				}
 			}
 		}
 
 		// Tick the transparency
 		if (!meterWindow->GetNativeTransparency())
 		{
-			EnableMenuItem(skinMenu, 1, MF_BYPOSITION | MF_GRAYED);
-			EnableMenuItem(skinMenu, ID_CONTEXT_SKINMENU_CLICKTHROUGH, MF_BYCOMMAND | MF_GRAYED);
+			EnableMenuItem(settingsMenu, 1, MF_BYPOSITION | MF_GRAYED);
+			EnableMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_CLICKTHROUGH, MF_BYCOMMAND | MF_GRAYED);
 		}
 		else
 		{
-			HMENU alphaMenu = GetSubMenu(skinMenu, 1);
+			HMENU alphaMenu = GetSubMenu(settingsMenu, 1);
 			if (alphaMenu)
 			{
 				int value = (int)(10 - (meterWindow->GetAlphaValue() / 255.0) * 10.0);
@@ -2458,95 +2486,87 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index)
 		// Tick the configs
 		if (meterWindow->GetWindowHide() == HIDEMODE_HIDE)
 		{
-			CheckMenuItem(skinMenu, ID_CONTEXT_SKINMENU_HIDEONMOUSE, MF_BYCOMMAND | MF_CHECKED);
+			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_HIDEONMOUSE, MF_BYCOMMAND | MF_CHECKED);
 		}
 		else if (meterWindow->GetWindowHide() != HIDEMODE_NONE)
 		{
-			EnableMenuItem(skinMenu, ID_CONTEXT_SKINMENU_HIDEONMOUSE, MF_BYCOMMAND | MF_GRAYED);
+			EnableMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_HIDEONMOUSE, MF_BYCOMMAND | MF_GRAYED);
 		}
 
 		if (meterWindow->GetSnapEdges())
 		{
-			CheckMenuItem(skinMenu, ID_CONTEXT_SKINMENU_SNAPTOEDGES, MF_BYCOMMAND | MF_CHECKED);
+			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_SNAPTOEDGES, MF_BYCOMMAND | MF_CHECKED);
 		}
 
 		if (meterWindow->GetSavePosition())
 		{
-			CheckMenuItem(skinMenu, ID_CONTEXT_SKINMENU_REMEMBERPOSITION, MF_BYCOMMAND | MF_CHECKED);
+			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_REMEMBERPOSITION, MF_BYCOMMAND | MF_CHECKED);
 		}
 
 		if (meterWindow->GetWindowDraggable())
 		{
-			CheckMenuItem(skinMenu, ID_CONTEXT_SKINMENU_DRAGGABLE, MF_BYCOMMAND | MF_CHECKED);
+			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_DRAGGABLE, MF_BYCOMMAND | MF_CHECKED);
 		}
 
 		if (meterWindow->GetClickThrough())
 		{
-			CheckMenuItem(skinMenu, ID_CONTEXT_SKINMENU_CLICKTHROUGH, MF_BYCOMMAND | MF_CHECKED);
+			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_CLICKTHROUGH, MF_BYCOMMAND | MF_CHECKED);
 		}
 
 		if (meterWindow->GetKeepOnScreen())
 		{
-			CheckMenuItem(skinMenu, ID_CONTEXT_SKINMENU_KEEPONSCREEN, MF_BYCOMMAND | MF_CHECKED);
+			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_KEEPONSCREEN, MF_BYCOMMAND | MF_CHECKED);
 		}
 
 		// Add the name of the Skin to the menu and disable the item
-		InsertMenu(skinMenu, 0, MF_BYPOSITION, 0, meterWindow->GetSkinName().c_str());
+		const std::wstring& skinName = meterWindow->GetSkinName();
+		InsertMenu(skinMenu, 0, MF_BYPOSITION, ID_CONTEXT_SKINMENU_OPENSKINSFOLDER, skinName.c_str());
 		InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 		SetMenuDefaultItem(skinMenu, 0, MF_BYPOSITION);
-		EnableMenuItem(skinMenu, 0, MF_BYPOSITION | MF_GRAYED);
 	
 		ChangeSkinIndex(skinMenu, index);
+
+		// Add the variants menu
+		for (size_t i = 0; i < m_ConfigStrings.size(); ++i)
+		{
+			const CONFIG& config = m_ConfigStrings[i];
+			if (wcsicmp(config.config.c_str(), skinName.c_str()) == 0)
+			{
+				HMENU variantsMenu = CreatePopupMenu();
+				for (size_t j = 0; j < config.iniFiles.size(); ++j)
+				{
+					InsertMenu(variantsMenu, j, MF_BYPOSITION, config.commands[j], config.iniFiles[j].c_str());
+
+					if (config.active == j + 1)
+					{
+						CheckMenuItem(variantsMenu, j, MF_BYPOSITION | MF_CHECKED);
+					}
+				}
+				InsertMenu(skinMenu, 2, MF_BYPOSITION | MF_POPUP, (UINT_PTR)variantsMenu, L"Variants");
+				break;
+			}
+		}
 	}
 
 	return skinMenu;
 }
 
-HMENU CRainmeter::CreateMonitorMenu(CMeterWindow* meterWindow)
+void CRainmeter::CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow)
 {
-	WCHAR buffer[256];
-	std::wstring item;
-	UINT flags;
-
-	HMENU monitorMenu = CreatePopupMenu();
-
 	bool screenDefined = meterWindow->GetXScreenDefined();
 	int screenIndex = meterWindow->GetXScreen();
-
-	// for the "Primary monitor"
-	flags = 0;
-	if (!screenDefined)
-	{
-		flags |= MF_CHECKED;
-	}
-	AppendMenu(monitorMenu, flags, ID_CONTEXT_SKINMENU_MONITOR_PRIMARY, L"Use default: Primary monitor");
-
-	// for the "Virtual screen" (@0)
-	flags = 0;
-	if (screenDefined && screenIndex == 0)
-	{
-		flags |= MF_CHECKED;
-	}
-	AppendMenu(monitorMenu, flags, ID_MONITOR_FIRST, L"@0: Virtual screen");
 
 	// for the "Specified monitor" (@n)
 	if (CSystem::GetMonitorCount() > 0)
 	{
-		AppendMenu(monitorMenu, MF_SEPARATOR, 0, NULL);
-
 		const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
 		const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
 
 		for (size_t i = 0; i < monitors.size(); ++i)
 		{
+			WCHAR buffer[256];
 			wsprintf(buffer, L"@%i: ", i + 1);
-			item = buffer;
-
-			flags = 0;
-			if (screenDefined && screenIndex == (int)i + 1)
-			{
-				flags |= MF_CHECKED;
-			}
+			std::wstring item = buffer;
 
 			size_t len = wcslen(monitors[i].monitorName);
 			if (len > 32)
@@ -2559,25 +2579,36 @@ HMENU CRainmeter::CreateMonitorMenu(CMeterWindow* meterWindow)
 				item += monitors[i].monitorName;
 			}
 
-			if (!monitors[i].active)
+			UINT pos = i + 3;
+			InsertMenu(monitorMenu, pos, MF_BYPOSITION, ID_MONITOR_FIRST + i + 1, item.c_str());
+
+			if (screenDefined && screenIndex == (int)i + 1)
 			{
-				flags |= MF_GRAYED;
+				CheckMenuItem(monitorMenu, pos, MF_BYPOSITION | MF_CHECKED);
 			}
 
-			AppendMenu(monitorMenu, flags, ID_MONITOR_FIRST + i + 1, item.c_str());
+			if (!monitors[i].active)
+			{
+				EnableMenuItem(monitorMenu, pos, MF_BYPOSITION | MF_GRAYED);
+			}
 		}
 	}
 
-	AppendMenu(monitorMenu, MF_SEPARATOR, 0, NULL);
+	// Tick the configs
+	if (!screenDefined)
+	{
+		CheckMenuItem(monitorMenu, ID_CONTEXT_SKINMENU_MONITOR_PRIMARY, MF_BYCOMMAND | MF_CHECKED);
+	}
 
-	flags = 0;
+	if (screenDefined && screenIndex == 0)
+	{
+		CheckMenuItem(monitorMenu, ID_MONITOR_FIRST, MF_BYCOMMAND | MF_CHECKED);
+	}
+
 	if (meterWindow->GetAutoSelectScreen())
 	{
-		flags |= MF_CHECKED;
+		CheckMenuItem(monitorMenu, ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT, MF_BYCOMMAND | MF_CHECKED);
 	}
-	AppendMenu(monitorMenu, flags, ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT, L"Auto-select based on window position");
-
-	return monitorMenu;
 }
 
 void CRainmeter::ChangeSkinIndex(HMENU menu, int index)

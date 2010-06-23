@@ -37,7 +37,6 @@ BEGIN
         MENUITEM "Refresh All",                 ID_CONTEXT_REFRESH
         MENUITEM "Show Log File",               ID_CONTEXT_SHOWLOGFILE
         MENUITEM SEPARATOR
-        MENUITEM SEPARATOR
         MENUITEM "Exit",                        ID_CONTEXT_QUIT
     END
 END
@@ -46,74 +45,56 @@ IDR_SKIN_MENU MENU DISCARDABLE
 BEGIN
     POPUP "Skin Menu"
     BEGIN
-        POPUP "Position"
+        POPUP "Settings"
         BEGIN
-            MENUITEM "Stay Topmost",                ID_CONTEXT_SKINMENU_VERYTOPMOST
-
-            MENUITEM "Topmost",                     ID_CONTEXT_SKINMENU_TOPMOST
-
-            MENUITEM "Normal",                      ID_CONTEXT_SKINMENU_NORMAL
-
-            MENUITEM "Bottom",                      ID_CONTEXT_SKINMENU_BOTTOM
-
-            MENUITEM "On Desktop",                  ID_CONTEXT_SKINMENU_ONDESKTOP
-
+            POPUP "Position"
+            BEGIN
+                POPUP "Display Monitor"
+                BEGIN
+                    MENUITEM "Use default: Primary monitor",            ID_CONTEXT_SKINMENU_MONITOR_PRIMARY
+                    MENUITEM "@0: Virtual screen",                      ID_MONITOR_FIRST
+                    MENUITEM SEPARATOR
+                    MENUITEM SEPARATOR
+                    MENUITEM "Auto-select based on window position",    ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT
+                END
+                MENUITEM SEPARATOR
+                MENUITEM "Stay Topmost",                ID_CONTEXT_SKINMENU_VERYTOPMOST
+                MENUITEM "Topmost",                     ID_CONTEXT_SKINMENU_TOPMOST
+                MENUITEM "Normal",                      ID_CONTEXT_SKINMENU_NORMAL
+                MENUITEM "Bottom",                      ID_CONTEXT_SKINMENU_BOTTOM
+                MENUITEM "On Desktop",                  ID_CONTEXT_SKINMENU_ONDESKTOP
+                MENUITEM SEPARATOR
+                MENUITEM "From Right",                  ID_CONTEXT_SKINMENU_FROMRIGHT
+                MENUITEM "From Bottom",                 ID_CONTEXT_SKINMENU_FROMBOTTOM
+                MENUITEM "X as Percentage",             ID_CONTEXT_SKINMENU_XPERCENTAGE
+                MENUITEM "Y as Percentage",             ID_CONTEXT_SKINMENU_YPERCENTAGE
+            END
+            POPUP "Transparency"
+            BEGIN
+                MENUITEM "0%",                          ID_CONTEXT_SKINMENU_TRANSPARENCY_0
+                MENUITEM "10%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_10
+                MENUITEM "20%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_20
+                MENUITEM "30%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_30
+                MENUITEM "40%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_40
+                MENUITEM "50%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_50
+                MENUITEM "60%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_60
+                MENUITEM "70%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_70
+                MENUITEM "80%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_80
+                MENUITEM "90%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_90
+                MENUITEM SEPARATOR
+                MENUITEM "Fade in",                     ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN
+                MENUITEM "Fade out",                    ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT
+            END
             MENUITEM SEPARATOR
-
-            MENUITEM "From Right",                  ID_CONTEXT_SKINMENU_FROMRIGHT
-
-            MENUITEM "From Bottom",                 ID_CONTEXT_SKINMENU_FROMBOTTOM
-
-            MENUITEM "X as Percentage",             ID_CONTEXT_SKINMENU_XPERCENTAGE
-
-            MENUITEM "Y as Percentage",             ID_CONTEXT_SKINMENU_YPERCENTAGE
-
-
+            MENUITEM "Hide on Mouse Over",          ID_CONTEXT_SKINMENU_HIDEONMOUSE
+            MENUITEM "Draggable",                   ID_CONTEXT_SKINMENU_DRAGGABLE
+            MENUITEM "Save Position",               ID_CONTEXT_SKINMENU_REMEMBERPOSITION
+            MENUITEM "Snap to Edges",               ID_CONTEXT_SKINMENU_SNAPTOEDGES
+            MENUITEM "Click Through",               ID_CONTEXT_SKINMENU_CLICKTHROUGH
+            MENUITEM "Keep on Screen",              ID_CONTEXT_SKINMENU_KEEPONSCREEN
         END
-        POPUP "Transparency"
-        BEGIN
-            MENUITEM "0%",                          ID_CONTEXT_SKINMENU_TRANSPARENCY_0
-
-            MENUITEM "10%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_10
-
-            MENUITEM "20%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_20
-
-            MENUITEM "30%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_30
-
-            MENUITEM "40%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_40
-
-            MENUITEM "50%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_50
-
-            MENUITEM "60%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_60
-
-            MENUITEM "70%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_70
-
-            MENUITEM "80%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_80
-
-            MENUITEM "90%",                         ID_CONTEXT_SKINMENU_TRANSPARENCY_90
-
-            MENUITEM SEPARATOR
-            MENUITEM "Fade in",                     ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN
-
-            MENUITEM "FadeOut",                     ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT
-
-        END
-        MENUITEM SEPARATOR
-        MENUITEM "Hide on Mouse Over",          ID_CONTEXT_SKINMENU_HIDEONMOUSE
-
-        MENUITEM "Draggable",                   ID_CONTEXT_SKINMENU_DRAGGABLE
-
-        MENUITEM "Save Position",               ID_CONTEXT_SKINMENU_REMEMBERPOSITION
-
-        MENUITEM "Snap to Edges",               ID_CONTEXT_SKINMENU_SNAPTOEDGES
-
-        MENUITEM "Click Through",               ID_CONTEXT_SKINMENU_CLICKTHROUGH
-
-        MENUITEM "Keep on Screen",              ID_CONTEXT_SKINMENU_KEEPONSCREEN
-
         MENUITEM SEPARATOR
         MENUITEM "Edit Skin...",                ID_CONTEXT_SKINMENU_EDITSKIN
-		MENUITEM "Open Skin's folder",          ID_CONTEXT_SKINMENU_OPENSKINSFOLDER
         MENUITEM "Refresh Skin",                ID_CONTEXT_SKINMENU_REFRESH
         MENUITEM SEPARATOR
         MENUITEM "Close Skin",                  ID_CONTEXT_CLOSESKIN

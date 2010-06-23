@@ -37,6 +37,7 @@
 #include <shellapi.h>
 #include <Mmsystem.h>
 #include <shlobj.h>
+#include <shlwapi.h>
 #include <winperf.h>
 #include <Windns.h>
 #include <Ipexport.h>
