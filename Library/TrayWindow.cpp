@@ -665,6 +665,202 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 				return 0;
 			}
+			else if(wParam == RAINMETER_QUERY_ID_PROGRAM_PATH)
+			{
+				std::wstring path = Rainmeter->GetPath();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_PROGRAM_PATH;
+				cds.cbData = (path.size() + 1) * sizeof(wchar_t);
+				cds.lpData = (LPVOID) path.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_LOG_PATH)
+			{
+				std::wstring path = Rainmeter->GetLogFile();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_LOG_PATH;
+				cds.cbData = (path.size() + 1) * sizeof(wchar_t);
+				cds.lpData = (LPVOID) path.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_CONFIG_EDITOR)
+			{
+				std::wstring editor = Rainmeter->GetConfigEditor();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_CONFIG_EDITOR;
+				cds.cbData = (editor.size() + 1) * sizeof(wchar_t);
+				cds.lpData = (LPVOID) editor.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_COMMAND_LINE)
+			{
+				std::wstring commandline = Rainmeter->GetCommandLine();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_COMMAND_LINE;
+				cds.cbData = (commandline.size() + 1) * sizeof(wchar_t);
+				cds.lpData = (LPVOID) commandline.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_VERSION_CHECK)
+			{
+				UINT versioncheck = (Rainmeter->GetDisableVersionCheck() * (Rainmeter->GetDisableVersionCheck() + Rainmeter->GetNewVersion()));
+				
+				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM) versioncheck);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_IS_DEBUGGING)
+			{
+				BOOL debug = Rainmeter->GetDebug();
+
+				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM) debug);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_STATS_DATE)
+			{
+				std::wstring date = Rainmeter->GetStatsDate();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_STATS_DATE;
+				cds.cbData = (date.size() + 1) * sizeof(wchar_t);
+				cds.lpData = (LPVOID) date.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_TRAY_EX_L)
+			{
+				std::wstring tray = Rainmeter->GetTrayExecuteL();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_L;
+				cds.cbData = (tray.size() + 1) * sizeof(wchar_t);
+				cds.lpData = (LPVOID) tray.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_TRAY_EX_R)
+			{
+				std::wstring tray = Rainmeter->GetTrayExecuteR();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_R;
+				cds.cbData = (tray.size() + 1) * sizeof(wchar_t);
+				cds.lpData = (LPVOID) tray.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_TRAY_EX_M)
+			{
+				std::wstring tray = Rainmeter->GetTrayExecuteM();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_M;
+				cds.cbData = (tray.size() + 1) * sizeof(wchar_t);
+				cds.lpData = (LPVOID) tray.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_TRAY_EX_DL)
+			{
+				std::wstring tray = Rainmeter->GetTrayExecuteDL();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_DL;
+				cds.cbData = (tray.size() + 1) * sizeof(wchar_t);
+				cds.lpData = (LPVOID) tray.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_TRAY_EX_DR)
+			{
+				std::wstring tray = Rainmeter->GetTrayExecuteDR();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_DR;
+				cds.cbData = (tray.size() + 1) * sizeof(wchar_t);
+				cds.lpData = (LPVOID) tray.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_TRAY_EX_DM)
+			{
+				std::wstring tray = Rainmeter->GetTrayExecuteDM();
+
+				COPYDATASTRUCT cds;
+			
+				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_DM;
+				cds.cbData = (tray.size() + 1) * sizeof(wchar_t);
+				cds.lpData = (LPVOID) tray.c_str();
+
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+
+				return 0;
+			}
+			else if(wParam == RAINMETER_QUERY_ID_IS_LITESTEP)
+			{
+				BOOL islitestep = !Rainmeter->GetDummyLitestep();
+
+				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM) islitestep);
+
+				return 0;
+			}
+		}
+		return 1;
+
+	case WM_COPYDATA:
+		if(Rainmeter)
+		{
+			COPYDATASTRUCT *cds = (COPYDATASTRUCT*) lParam;
+			if(cds->dwData == RAINMETER_QUERY_ID_SKIN_WINDOWHANDLE)
+			{
+				std::wstring SkinName((LPTSTR) cds->lpData);
+				std::map<std::wstring, CMeterWindow*> MeterWindows = Rainmeter->GetAllMeterWindows();
+				std::map<std::wstring, CMeterWindow*>::const_iterator iter = MeterWindows.find(SkinName);
+				if(iter != MeterWindows.end())
+				{
+					return (LRESULT) iter->second->GetWindow();
+				}
+                return NULL;
+			}
 		}
 		return 1;
 
