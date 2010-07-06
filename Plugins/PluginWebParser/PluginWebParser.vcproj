@@ -76,7 +76,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Urlmon.lib Wininet.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="Urlmon.lib Wininet.lib Shlwapi.lib odbc32.lib odbccp32.lib"
 				OutputFile="../../TestBench/x32/Debug/Plugins/WebParser.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -166,7 +166,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Urlmon.lib Wininet.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="Urlmon.lib Wininet.lib Shlwapi.lib odbc32.lib odbccp32.lib"
 				OutputFile="../../TestBench/x32/Debug/Plugins/WebParser.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -350,7 +350,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Urlmon.lib Wininet.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="Urlmon.lib Wininet.lib Shlwapi.lib odbc32.lib odbccp32.lib"
 				OutputFile="../../TestBench/x32/Release/Plugins/WebParser.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -441,7 +441,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/machine:AMD64 /LTCG "
-				AdditionalDependencies="Urlmon.lib Wininet.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="Urlmon.lib Wininet.lib Shlwapi.lib odbc32.lib odbccp32.lib"
 				OutputFile="../../TestBench/x64/Release/Plugins/WebParser.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
