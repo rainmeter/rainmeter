@@ -612,12 +612,36 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		HideMeter(arg);
 		break;
 
+	case BANG_TOGGLEMETERGROUP:
+		ToggleMeter(arg, true);
+		break;
+
+	case BANG_SHOWMETERGROUP:
+		ShowMeter(arg, true);
+		break;
+
+	case BANG_HIDEMETERGROUP:
+		HideMeter(arg, true);
+		break;
+
 	case BANG_TOGGLEMEASURE:
 		ToggleMeasure(arg);
 		break;
 
 	case BANG_ENABLEMEASURE:
 		EnableMeasure(arg);
+		break;
+
+	case BANG_DISABLEMEASUREGROUP:
+		DisableMeasure(arg, true);
+		break;
+
+	case BANG_TOGGLEMEASUREGROUP:
+		ToggleMeasure(arg, true);
+		break;
+
+	case BANG_ENABLEMEASUREGROUP:
+		EnableMeasure(arg, true);
 		break;
 
 	case BANG_DISABLEMEASURE:
@@ -831,22 +855,28 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 ** Shows the given meter
 **
 */
-void CMeterWindow::ShowMeter(const WCHAR* name)
+void CMeterWindow::ShowMeter(const WCHAR* name, bool group)
 {
 	if (name == NULL || wcslen(name) == 0) return;
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
-		if (wcsicmp((*j)->GetName(), name) == 0)
+		if (group)
 		{
-			(*j)->Show();
-			m_ResetRegion = true;	// Need to recalculate the window region
-			return;
+			if (!(*j)->BelongsToGroup(name)) continue;
 		}
+		else
+		{
+			if (wcsicmp((*j)->GetName(), name) != 0) continue;
+		}
+
+		(*j)->Show();
+		m_ResetRegion = true;	// Need to recalculate the window region
+		if (!group) return;
 	}
 
-	DebugLog(L"Unable to show the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
+	if (!group) DebugLog(L"Unable to show the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 /*
@@ -855,22 +885,28 @@ void CMeterWindow::ShowMeter(const WCHAR* name)
 ** Hides the given meter
 **
 */
-void CMeterWindow::HideMeter(const WCHAR* name)
+void CMeterWindow::HideMeter(const WCHAR* name, bool group)
 {
 	if (name == NULL || wcslen(name) == 0) return;
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
-		if (wcsicmp((*j)->GetName(), name) == 0)
+		if (group)
 		{
-			(*j)->Hide();
-			m_ResetRegion = true;	// Need to recalculate the windowregion
-			return;
+			if (!(*j)->BelongsToGroup(name)) continue;
 		}
+		else
+		{
+			if (wcsicmp((*j)->GetName(), name) != 0) continue;
+		}
+
+		(*j)->Hide();
+		m_ResetRegion = true;	// Need to recalculate the windowregion
+		if (!group) return;
 	}
 
-	DebugLog(L"Unable to hide the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
+	if (!group) DebugLog(L"Unable to hide the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 /*
@@ -879,29 +915,35 @@ void CMeterWindow::HideMeter(const WCHAR* name)
 ** Toggles the given meter
 **
 */
-void CMeterWindow::ToggleMeter(const WCHAR* name)
+void CMeterWindow::ToggleMeter(const WCHAR* name, bool group)
 {
 	if (name == NULL || wcslen(name) == 0) return;
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
-		if (wcsicmp((*j)->GetName(), name) == 0)
+		if (group)
 		{
-			if ((*j)->IsHidden())
-			{
-				(*j)->Show();
-			}
-			else
-			{
-				(*j)->Hide();
-			}
-			m_ResetRegion = true;	// Need to recalculate the window region
-			return;
+			if (!(*j)->BelongsToGroup(name)) continue;
 		}
+		else
+		{
+			if (wcsicmp((*j)->GetName(), name) != 0) continue;
+		}
+
+		if ((*j)->IsHidden())
+		{
+			(*j)->Show();
+		}
+		else
+		{
+			(*j)->Hide();
+		}
+		m_ResetRegion = true;	// Need to recalculate the window region
+		if (!group) return;
 	}
 
-	DebugLog(L"Unable to toggle the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
+	if (!group) DebugLog(L"Unable to toggle the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 /*
@@ -928,27 +970,34 @@ void CMeterWindow::MoveMeter(int x, int y, const WCHAR* name)
 
 	DebugLog(L"Unable to move the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
+
 /*
 ** EnableMeasure
 **
 ** Enables the given measure
 **
 */
-void CMeterWindow::EnableMeasure(const WCHAR* name)
+void CMeterWindow::EnableMeasure(const WCHAR* name, bool group)
 {
 	if (name == NULL || wcslen(name) == 0) return;
 
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); ++i)
 	{
-		if (wcsicmp((*i)->GetName(), name) == 0)
+		if (group)
 		{
-			(*i)->Enable();
-			return;
+			if (!(*i)->BelongsToGroup(name)) continue;
 		}
+		else
+		{
+			if (wcsicmp((*i)->GetName(), name) != 0) continue;
+		}
+
+		(*i)->Enable();
+		if (!group) return;
 	}
 
-	DebugLog(L"Unable to enable the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
+	if (!group) DebugLog(L"Unable to enable the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 
@@ -958,21 +1007,27 @@ void CMeterWindow::EnableMeasure(const WCHAR* name)
 ** Disables the given measure
 **
 */
-void CMeterWindow::DisableMeasure(const WCHAR* name)
+void CMeterWindow::DisableMeasure(const WCHAR* name, bool group)
 {
 	if (name == NULL || wcslen(name) == 0) return;
 
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); ++i)
 	{
-		if (wcsicmp((*i)->GetName(), name) == 0)
+		if (group)
 		{
-			(*i)->Disable();
-			return;
+			if (!(*i)->BelongsToGroup(name)) continue;
 		}
+		else
+		{
+			if (wcsicmp((*i)->GetName(), name) != 0) continue;
+		}
+
+		(*i)->Disable();
+		if (!group) return;
 	}
 
-	DebugLog(L"Unable to disable the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
+	if (!group) DebugLog(L"Unable to disable the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 
@@ -982,28 +1037,34 @@ void CMeterWindow::DisableMeasure(const WCHAR* name)
 ** Toggless the given measure
 **
 */
-void CMeterWindow::ToggleMeasure(const WCHAR* name)
+void CMeterWindow::ToggleMeasure(const WCHAR* name, bool group)
 {
 	if (name == NULL || wcslen(name) == 0) return;
 
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); ++i)
 	{
-		if (wcsicmp((*i)->GetName(), name) == 0)
+		if (group)
 		{
-			if ((*i)->IsDisabled())
-			{
-				(*i)->Enable();
-			}
-			else
-			{
-				(*i)->Disable();
-			}
-			return;
+			if (!(*i)->BelongsToGroup(name)) continue;
 		}
+		else
+		{
+			if (wcsicmp((*i)->GetName(), name) != 0) continue;
+		}
+
+		if ((*i)->IsDisabled())
+		{
+			(*i)->Enable();
+		}
+		else
+		{
+			(*i)->Disable();
+		}
+		if (!group) return;
 	}
 
-	DebugLog(L"Unable to toggle the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
+	if (!group) DebugLog(L"Unable to toggle the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 /* WindowToScreen

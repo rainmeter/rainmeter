@@ -767,6 +767,69 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="Group.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;LIBRARY_EXPORTS"
+						BasicRuntimeChecks="3"
+						UsePrecompiledHeader="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;LIBRARY_EXPORTS"
+						BasicRuntimeChecks="3"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;LIBRARY_EXPORTS"
+						UsePrecompiledHeader="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;LIBRARY_EXPORTS"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release64|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;LIBRARY_EXPORTS"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release64|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;LIBRARY_EXPORTS"
+						UsePrecompiledHeader="2"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="Library.rc"
 				>
 				<FileConfiguration
@@ -2818,6 +2881,10 @@
 			</File>
 			<File
 				RelativePath="Export.h"
+				>
+			</File>
+			<File
+				RelativePath="Group.h"
 				>
 			</File>
 			<File

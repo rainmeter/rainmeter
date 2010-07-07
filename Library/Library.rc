@@ -35,7 +35,17 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Edit Settings...",            ID_CONTEXT_EDITCONFIG
         MENUITEM "Refresh All",                 ID_CONTEXT_REFRESH
-        MENUITEM "Show Log File",               ID_CONTEXT_SHOWLOGFILE
+        MENUITEM SEPARATOR
+        POPUP "Logging"
+        BEGIN
+            MENUITEM "Show Log File...",        ID_CONTEXT_SHOWLOGFILE
+            MENUITEM SEPARATOR
+            MENUITEM "Start Logging",           ID_CONTEXT_STARTLOG
+            MENUITEM "Stop Logging",            ID_CONTEXT_STOPLOG
+            MENUITEM SEPARATOR
+            MENUITEM "Delete Log File...",      ID_CONTEXT_DELETELOGFILE
+            MENUITEM "Debug Mode",              ID_CONTEXT_DEBUGLOG
+        END
         MENUITEM SEPARATOR
         MENUITEM "Exit",                        ID_CONTEXT_QUIT
     END

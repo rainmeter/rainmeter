@@ -21,10 +21,11 @@
 
 #include "MeterWindow.h"
 #include "Litestep.h"
+#include "Group.h"
 
 class CMeter;
 
-class CMeasure
+class CMeasure : public CGroup
 {
 public:
 	CMeasure(CMeterWindow* meterWindow);

@@ -24,10 +24,11 @@
 #include <gdiplus.h>
 #include "Litestep.h"
 #include "MeterWindow.h"
+#include "Group.h"
 
 class CMeasure;
 
-class CMeter
+class CMeter : public CGroup
 {
 public:
 	CMeter(CMeterWindow* meterWindow);

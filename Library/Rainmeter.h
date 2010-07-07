@@ -137,6 +137,7 @@ public:
 	std::wstring GetSettingsPath() { return ExtractPath(m_IniFile); };
 
 	const std::wstring& GetConfigEditor() { return m_ConfigEditor; };
+	const std::wstring& GetLogViewer() { return m_LogViewer; };
 	const std::wstring& GetStatsDate() { return m_StatsDate; };
 
 	HINSTANCE GetInstance() { return m_Instance; };
@@ -146,6 +147,7 @@ public:
 	static void SetCommandLine(LPCTSTR CmdLine) { c_CmdLine = CmdLine;};
 	static LPCTSTR GetCommandLine() { return c_CmdLine.c_str(); };
 	static GlobalConfig& GetGlobalConfig() { return c_GlobalConfig; };
+
 	static bool GetDebug() { return c_Debug; }
 
 	void ReloadSettings();
@@ -160,7 +162,10 @@ public:
 	BOOL GetNewVersion() { return m_NewVersion; };
 	void SetDisableVersionCheck(BOOL check) { m_DisableVersionCheck = check; };
 	void SetNewVersion(BOOL NewVer) { m_NewVersion = NewVer; };
-	
+
+	void SetLogging(bool logging);
+	bool GetLogging() { return m_Logging; }
+	void SetDebug(bool debug);
 
 	void ShowContextMenu(POINT pos, CMeterWindow* meterWindow);
 
@@ -233,7 +238,10 @@ private:
 	BOOL m_DesktopWorkAreaChanged;
 	RECT m_DesktopWorkArea;
 
+	bool m_Logging;
+
 	std::wstring m_ConfigEditor;
+	std::wstring m_LogViewer;
 
 	CConfigParser* m_CurrentParser;
 

@@ -362,6 +362,39 @@ void RainmeterToggleMeter(HWND, const char* arg)
 }
 
 /*
+** RainmeterHideMeterGroup
+**
+** Callback for the !RainmeterHideMeterGroup bang
+**
+*/
+void RainmeterHideMeterGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_HIDEMETERGROUP, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterShowMeterGroup
+**
+** Callback for the !RainmeterShowMeterGroup bang
+**
+*/
+void RainmeterShowMeterGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_SHOWMETERGROUP, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterToggleMeterGroup
+**
+** Callback for the !RainmeterToggleMeterGroup bang
+**
+*/
+void RainmeterToggleMeterGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_TOGGLEMETERGROUP, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
 ** RainmeterHideMeasure
 **
 ** Callback for the !RainmeterHideMeasure bang
@@ -392,6 +425,39 @@ void RainmeterEnableMeasure(HWND, const char* arg)
 void RainmeterToggleMeasure(HWND, const char* arg)
 {
 	BangWithArgs(BANG_TOGGLEMEASURE, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterHideMeasureGroup
+**
+** Callback for the !RainmeterHideMeasureGroup bang
+**
+*/
+void RainmeterDisableMeasureGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_DISABLEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterShowMeasureGroup
+**
+** Callback for the !RainmeterShowMeasureGroup bang
+**
+*/
+void RainmeterEnableMeasureGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_ENABLEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterToggleMeasureGroup
+**
+** Callback for the !RainmeterToggleMeasureGroup bang
+**
+*/
+void RainmeterToggleMeasureGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_TOGGLEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
 }
 
 /*
@@ -678,6 +744,8 @@ CRainmeter::CRainmeter()
 
 	c_Debug = false;
 
+	m_Logging = false;
+
 	m_DesktopWorkAreaChanged = false;
 	m_DesktopWorkArea.left = m_DesktopWorkArea.top = m_DesktopWorkArea.right = m_DesktopWorkArea.bottom = 0;
 
@@ -688,8 +756,6 @@ CRainmeter::CRainmeter()
 	m_CurrentParser = NULL;
 
 	m_TrayWindow = NULL;
-
-	m_ConfigEditor = L"Notepad";
 
 	INITCOMMONCONTROLSEX initCtrls;
 	initCtrls.dwSize = sizeof(INITCOMMONCONTROLSEX);
@@ -831,6 +897,22 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		bDefaultIniLocation = true;
 	}
 
+	// Set the log file location
+	m_LogFile = m_IniFile;
+	size_t posExt = m_LogFile.find(L".ini");
+	if (posExt != std::wstring::npos)
+	{
+		m_LogFile.replace(posExt, 4, L".log");
+	}
+	else
+	{
+		m_LogFile += L".log";	// Append the extension so that we don't accidentally overwrite the ini file
+	}
+
+	// Read Logging settings beforehand
+	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, m_IniFile.c_str());
+	c_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, m_IniFile.c_str());
+
 	m_PluginPath = tmpName;
 	m_PluginPath += L"Plugins\\";
 	m_SkinPath = m_Path + L"Skins\\";
@@ -883,18 +965,6 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	}
 	WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), m_IniFile.c_str());
 
-	// Set the log file location
-	m_LogFile = m_IniFile;
-	size_t posExt = m_LogFile.find(L".ini");
-	if (posExt != std::wstring::npos)
-	{
-		m_LogFile.replace(posExt, 4, L".log");
-	}
-	else
-	{
-		m_LogFile += L".log";	// Append the extension so that we don't accidentally overwrite the ini file
-	}
-
 	if (!c_DummyLitestep)
 	{
 		char tmpSz[MAX_LINE_LENGTH];
@@ -934,9 +1004,6 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	{
 		CheckSkinVersions();
 	}
-
-	// Read Debug first
-	c_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, m_IniFile.c_str());
 
 	CSystem::Initialize(Instance);
 	CMeasureNet::InitializeNewApi();
@@ -1007,6 +1074,12 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterDisableMeasure", RainmeterDisableMeasure);
 		AddBangCommand("!RainmeterEnableMeasure", RainmeterEnableMeasure);
 		AddBangCommand("!RainmeterToggleMeasure", RainmeterToggleMeasure);
+		AddBangCommand("!RainmeterHideMeterGroup", RainmeterHideMeterGroup);
+		AddBangCommand("!RainmeterShowMeterGroup", RainmeterShowMeterGroup);
+		AddBangCommand("!RainmeterToggleMeterGroup", RainmeterToggleMeterGroup);
+		AddBangCommand("!RainmeterDisableMeasureGroup", RainmeterDisableMeasureGroup);
+		AddBangCommand("!RainmeterEnableMeasureGroup", RainmeterEnableMeasureGroup);
+		AddBangCommand("!RainmeterToggleMeasureGroup", RainmeterToggleMeasureGroup);
 		AddBangCommand("!RainmeterActivateConfig", RainmeterActivateConfig);
 		AddBangCommand("!RainmeterToggleConfig", RainmeterToggleConfig);
 		AddBangCommand("!RainmeterDeactivateConfig", RainmeterDeactivateConfig);
@@ -1531,6 +1604,12 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainmeterHideMeasure");
 		RemoveBangCommand("!RainmeterShowMeasure");
 		RemoveBangCommand("!RainmeterToggleMeasure");
+		RemoveBangCommand("!RainmeterHideMeterGroup");
+		RemoveBangCommand("!RainmeterShowMeterGroup");
+		RemoveBangCommand("!RainmeterToggleMeterGroup");
+		RemoveBangCommand("!RainmeterHideMeasureGroup");
+		RemoveBangCommand("!RainmeterShowMeasureGroup");
+		RemoveBangCommand("!RainmeterToggleMeasureGroup");
 		RemoveBangCommand("!RainmeterActivateConfig");
 		RemoveBangCommand("!RainmeterDeactivateConfig");
 		RemoveBangCommand("!RainmeterToggleConfig");
@@ -1734,6 +1813,30 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleMeasure") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEMEASURE, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterHideMeterGroup") == 0)
+	{
+		BangWithArgs(BANG_HIDEMETERGROUP, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterShowMeterGroup") == 0)
+	{
+		BangWithArgs(BANG_SHOWMETERGROUP, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleMeterGroup") == 0)
+	{
+		BangWithArgs(BANG_TOGGLEMETERGROUP, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterDisableMeasureGroup") == 0)
+	{
+		BangWithArgs(BANG_DISABLEMEASUREGROUP, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterEnableMeasureGroup") == 0)
+	{
+		BangWithArgs(BANG_ENABLEMEASUREGROUP, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleMeasureGroup") == 0)
+	{
+		BangWithArgs(BANG_TOGGLEMEASUREGROUP, arg.c_str(), 1);
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterActivateConfig") == 0)
 	{
@@ -1979,6 +2082,10 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 	CConfigParser parser;
 	parser.Initialize(iniFile.c_str(), this);
 
+	// Read Logging settings
+	m_Logging = 0!=parser.ReadInt(L"Rainmeter", L"Logging", 0);
+	c_Debug = 0!=parser.ReadInt(L"Rainmeter", L"Debug", 0);
+
 	if (m_TrayWindow)
 	{
 		m_TrayWindow->ReadConfig(parser);
@@ -2009,7 +2116,35 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 		m_ConfigEditor.insert(0, L"\"");
 		m_ConfigEditor.append(L"\"");
 	}
-	if (c_Debug) DebugLog(L"ConfigEditor: %s", m_ConfigEditor.c_str());
+
+	m_LogViewer = parser.ReadString(L"Rainmeter", L"LogViewer", L"");
+	if (m_LogViewer.empty())
+	{
+		// Get the program path associated with .log files
+		WCHAR buffer[MAX_PATH+1] = {0};
+		DWORD cchOut = MAX_PATH;
+
+		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".log", L"open", buffer, &cchOut);
+		if (SUCCEEDED(hr) && cchOut > 0)
+		{
+			m_LogViewer = buffer;
+		}
+		else
+		{
+			m_LogViewer = L"Notepad";
+		}
+	}
+	if (!m_LogViewer.empty() && m_LogViewer[0] != L'\"')
+	{
+		m_LogViewer.insert(0, L"\"");
+		m_LogViewer.append(L"\"");
+	}
+
+	if (c_Debug)
+	{
+		DebugLog(L"ConfigEditor: %s", m_ConfigEditor.c_str());
+		DebugLog(L"LogViewer: %s", m_LogViewer.c_str());
+	}
 
 	m_TrayExecuteL = parser.ReadString(L"Rainmeter", L"TrayExecuteL", L"", false);
 	m_TrayExecuteR = parser.ReadString(L"Rainmeter", L"TrayExecuteR", L"", false);
@@ -2265,6 +2400,26 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
 			}
 
+			if (_waccess(m_LogFile.c_str(), 0) == -1)
+			{
+				EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(subMenu, ID_CONTEXT_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
+			}
+
+			if (m_Logging)
+			{
+				EnableMenuItem(subMenu, ID_CONTEXT_STARTLOG, MF_BYCOMMAND | MF_GRAYED);
+			}
+			else
+			{
+				EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
+			}
+
+			if (c_Debug)
+			{
+				CheckMenuItem(subMenu, ID_CONTEXT_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
+			}
+
 			HMENU configMenu = CreateConfigMenu(m_ConfigMenu);
 			if (configMenu)
 			{
@@ -2291,7 +2446,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 			}
 			else
 			{
-				InsertMenu(subMenu, 10, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+				InsertMenu(subMenu, 11, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 
 				// Create a menu for all active configs
 				std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
@@ -2301,7 +2456,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				{
 					CMeterWindow* mw = ((*iter).second);
 					HMENU skinMenu = CreateSkinMenu(mw, index);
-					InsertMenu(subMenu, 10, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
+					InsertMenu(subMenu, 11, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
 					++index;
 				}
 
@@ -2631,6 +2786,18 @@ void CRainmeter::ChangeSkinIndex(HMENU menu, int index)
 			ModifyMenu(menu, i, MF_BYPOSITION | flags, id | (index << 16), buffer);
 		}
 	}
+}
+
+void CRainmeter::SetLogging(bool logging)
+{
+	m_Logging = logging;
+	WritePrivateProfileString(L"Rainmeter", L"Logging", logging ? L"1" : L"0", m_IniFile.c_str());
+}
+
+void CRainmeter::SetDebug(bool debug)
+{
+	c_Debug = debug;
+	WritePrivateProfileString(L"Rainmeter", L"Debug", debug ? L"1" : L"0", m_IniFile.c_str());
 }
 
 void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)

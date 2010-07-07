@@ -157,6 +157,9 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	{
 		DebugLog(L"Incorrect substitute string: %s", subs.c_str());
 	}
+
+	std::wstring group = parser.ReadString(section, L"Group", L"");
+	InitializeGroup(group);
 }
 
 /*

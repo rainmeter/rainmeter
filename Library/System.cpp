@@ -730,7 +730,7 @@ void CSystem::ChangeZPosInOrder()
 */
 void CSystem::PrepareHelperWindow(HWND WorkerW)
 {
-	bool logging = CRainmeter::GetDebug();
+	bool logging = CRainmeter::GetDebug() && DEBUG_VERBOSE;
 
 	if (c_ShowDesktop && WorkerW)
 	{

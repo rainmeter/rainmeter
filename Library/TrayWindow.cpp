@@ -409,6 +409,10 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				help = L"\"" + help + L"Rainmeter.chm\"";
 				LSExecute(NULL, help.c_str(), SW_SHOWNORMAL);
 			}
+			else if(wParam == ID_CONTEXT_NEW_VERSION)
+			{
+				LSExecute(NULL, L"http://rainmeter.net/RainCMS/", SW_SHOWNORMAL);
+			}
 			else if(wParam == ID_CONTEXT_REFRESH)
 			{
 				PostMessage(tray->GetWindow(), WM_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
@@ -419,40 +423,65 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				std::wstring log = Rainmeter->GetLogFile();
 				if (_waccess(log.c_str(), 0) != -1)
 				{
-					std::wstring command = Rainmeter->GetConfigEditor();
+					std::wstring command = Rainmeter->GetLogViewer();
 					command += log;
 					LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 				}
-				else
+			}
+			else if(wParam == ID_CONTEXT_STARTLOG)
+			{
+				// Check if the file exists
+				std::wstring log = Rainmeter->GetLogFile();
+				if (_waccess(log.c_str(), 0) == -1)
 				{
-					int res = MessageBox(tray->GetWindow(), L"The log file doesn't exist.\nDo you want to create it?", L"Rainmeter", MB_YESNO | MB_ICONQUESTION);
-					if (res == IDYES)
+					// Create log file
+					HANDLE file = CreateFile(log.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+					if (file != INVALID_HANDLE_VALUE)
 					{
-						HANDLE file = CreateFile(log.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-						if (file != INVALID_HANDLE_VALUE)
-						{
-							CloseHandle(file);
-							ResetLoggingFlag();	// Re-enable logging
+						CloseHandle(file);
+						ResetLoggingFlag();	// Re-enable logging
+						Rainmeter->SetLogging(true);
 
-							std::wstring message;
-							message = L"Created file: ";
-							message += log;
-							message += L"\nDelete it to disable Rainmeter's logging";
-							MessageBox(tray->GetWindow(), message.c_str(), L"Rainmeter", MB_OK | MB_ICONINFORMATION);
-
-							std::wstring command = Rainmeter->GetConfigEditor();
-							command += log;
-							LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
-						}
-						else
-						{
-							std::wstring message;
-							message = L"Unable to create the file: ";
-							message += log;
-							MessageBox(tray->GetWindow(), message.c_str(), L"Rainmeter", MB_OK | MB_ICONERROR);
-						}
+						std::wstring message;
+						message = L"Log file created at: ";
+						message += log;
+						MessageBox(tray->GetWindow(), message.c_str(), L"Rainmeter", MB_OK | MB_ICONINFORMATION);
+					}
+					else
+					{
+						std::wstring message;
+						message = L"Unable to create log file: ";
+						message += log;
+						MessageBox(tray->GetWindow(), message.c_str(), L"Rainmeter", MB_OK | MB_ICONERROR);
 					}
 				}
+				else
+				{
+					Rainmeter->SetLogging(true);
+				}
+			}
+			else if(wParam == ID_CONTEXT_STOPLOG)
+			{
+				Rainmeter->SetLogging(false);
+			}
+			else if(wParam == ID_CONTEXT_DELETELOGFILE)
+			{
+				// Check if the file exists
+				std::wstring log = Rainmeter->GetLogFile();
+				if (_waccess(log.c_str(), 0) != -1)
+				{
+					int res = MessageBox(tray->GetWindow(), L"Do you want to delete log file?", L"Rainmeter", MB_YESNO | MB_ICONQUESTION);
+					if (res == IDYES)
+					{
+						Rainmeter->SetLogging(false);
+						ResetLoggingFlag();
+						DeleteFile(log.c_str());
+					}
+				}
+			}
+			else if(wParam == ID_CONTEXT_DEBUGLOG)
+			{
+				Rainmeter->SetDebug(!CRainmeter::GetDebug());
 			}
 			else if(wParam == ID_CONTEXT_EDITCONFIG)
 			{
@@ -467,10 +496,6 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				std::wstring command = L"\"" + Rainmeter->GetPath();
 				command += L"\\Addons\\RainThemes\\RainThemes.exe\"";
 				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
-			}
-			else if(wParam == ID_CONTEXT_NEW_VERSION)
-			{
-				LSExecute(NULL, L"http://rainmeter.net/RainCMS/", SW_SHOWNORMAL);
 			}
 			else if(wParam == ID_CONTEXT_MANAGESKINS)
 			{

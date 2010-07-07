@@ -511,11 +511,11 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 	// Add timestamp
 	static DWORD startTime = 0;
 	
+	DWORD time = GetTickCount();
 	if (startTime == 0) 
 	{
-		startTime = GetTickCount();
+		startTime = time;
 	}
-	DWORD time = GetTickCount();
 	WCHAR buffer[MAX_PATH];
 	swprintf(buffer, L"(%02i:%02i:%02i.%03i) ", (time - startTime) / (1000 * 60* 60), ((time - startTime) / (1000 * 60)) % 60, ((time - startTime) / 1000) % 60, (time - startTime) % 1000);
 
@@ -536,7 +536,7 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 	}
 
 	// The stub implementation
-	if (Rainmeter)
+	if (Rainmeter && Rainmeter->GetLogging())
 	{
 		FILE* logFile;
 		std::wstring logfile = Rainmeter->GetLogFile();
@@ -597,4 +597,4 @@ void DebugLog(const WCHAR* format, ... )
     _vsnwprintf( buffer, 4096, format, args );
 	LSLog(LOG_DEBUG, L"Rainmeter", buffer);
 	va_end(args);
-};
+}

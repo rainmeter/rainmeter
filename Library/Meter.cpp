@@ -357,6 +357,9 @@ void CMeter::ReadConfig(const WCHAR* section)
 		DebugLog(L"The transformation matrix has incorrect number of values:", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
 	}
 
+	std::wstring group = parser.ReadString(section, L"Group", L"");
+	InitializeGroup(group);
+
 /* Are these necessary?
 	if (m_W == 0 || m_H == 0)
 	{

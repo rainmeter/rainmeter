@@ -95,6 +95,12 @@ enum BANGCOMMAND
 	BANG_TOGGLEMEASURE,
 	BANG_ENABLEMEASURE,
 	BANG_DISABLEMEASURE,
+	BANG_TOGGLEMETERGROUP,
+	BANG_SHOWMETERGROUP,
+	BANG_HIDEMETERGROUP,
+	BANG_TOGGLEMEASUREGROUP,
+	BANG_ENABLEMEASUREGROUP,
+	BANG_DISABLEMEASUREGROUP,
 	BANG_SHOW,
 	BANG_HIDE,
 	BANG_TOGGLE,
@@ -126,12 +132,12 @@ public:
 	void RunBang(BANGCOMMAND bang, const WCHAR* arg);
 
 	void MoveMeter(int x, int y, const WCHAR* name);
-	void HideMeter(const WCHAR* name);
-	void ShowMeter(const WCHAR* name);
-	void ToggleMeter(const WCHAR* name);
-	void DisableMeasure(const WCHAR* name);
-	void EnableMeasure(const WCHAR* name);
-	void ToggleMeasure(const WCHAR* name);
+	void HideMeter(const WCHAR* name, bool group = false);
+	void ShowMeter(const WCHAR* name, bool group = false);
+	void ToggleMeter(const WCHAR* name, bool group = false);
+	void DisableMeasure(const WCHAR* name, bool group = false);
+	void EnableMeasure(const WCHAR* name, bool group = false);
+	void ToggleMeasure(const WCHAR* name, bool group = false);
 	void Refresh(bool init, bool all = false);
 	void Redraw();
 
