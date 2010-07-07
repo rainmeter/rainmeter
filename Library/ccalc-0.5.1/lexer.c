@@ -137,8 +137,14 @@ next_token:
                 intreaded = 1;
 	    }
 	    // Readind oct number
-	    if ( ch == '0' && nch >= '0' && nch <= '9' ) {
-	    	lexer->IntValue = strtol( lexer->SS, &NewSS, 8 );
+		if ( ch == '0' && nch == 'o') { // original version: if ( ch == '0' && nch >= '0' && nch <='9')
+	    	lexer->IntValue = strtol( lexer->SS+2, &NewSS, 8 );
+                intreaded = 1;
+	    }
+
+		// Readind bin number
+		if ( ch == '0' && nch == 'b') { // original version: if ( ch == '0' && nch >= '0' && nch <='9')
+	    	lexer->IntValue = strtol( lexer->SS+2, &NewSS, 2 );
                 intreaded = 1;
 	    }
 
