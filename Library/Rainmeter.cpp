@@ -395,9 +395,9 @@ void RainmeterToggleMeterGroup(HWND, const char* arg)
 }
 
 /*
-** RainmeterHideMeasure
+** RainmeterDisableMeasure
 **
-** Callback for the !RainmeterHideMeasure bang
+** Callback for the !RainmeterDisableMeasure bang
 **
 */
 void RainmeterDisableMeasure(HWND, const char* arg)
@@ -406,9 +406,9 @@ void RainmeterDisableMeasure(HWND, const char* arg)
 }
 
 /*
-** RainmeterShowMeasure
+** RainmeterEnableMeasure
 **
-** Callback for the !RainmeterShowMeasure bang
+** Callback for the !RainmeterEnableMeasure bang
 **
 */
 void RainmeterEnableMeasure(HWND, const char* arg)
@@ -428,9 +428,9 @@ void RainmeterToggleMeasure(HWND, const char* arg)
 }
 
 /*
-** RainmeterHideMeasureGroup
+** RainmeterDisableMeasureGroup
 **
-** Callback for the !RainmeterHideMeasureGroup bang
+** Callback for the !RainmeterDisableMeasureGroup bang
 **
 */
 void RainmeterDisableMeasureGroup(HWND, const char* arg)
@@ -439,9 +439,9 @@ void RainmeterDisableMeasureGroup(HWND, const char* arg)
 }
 
 /*
-** RainmeterShowMeasureGroup
+** RainmeterEnableMeasureGroup
 **
-** Callback for the !RainmeterShowMeasureGroup bang
+** Callback for the !RainmeterEnableMeasureGroup bang
 **
 */
 void RainmeterEnableMeasureGroup(HWND, const char* arg)
