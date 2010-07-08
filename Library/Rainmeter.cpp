@@ -913,6 +913,11 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, m_IniFile.c_str());
 	c_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, m_IniFile.c_str());
 
+	if (m_Logging)
+	{
+		StartLogging();
+	}
+
 	m_PluginPath = tmpName;
 	m_PluginPath += L"Plugins\\";
 	m_SkinPath = m_Path + L"Skins\\";
@@ -2086,6 +2091,11 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 	m_Logging = 0!=parser.ReadInt(L"Rainmeter", L"Logging", 0);
 	c_Debug = 0!=parser.ReadInt(L"Rainmeter", L"Debug", 0);
 
+	if (m_Logging)
+	{
+		StartLogging();
+	}
+
 	if (m_TrayWindow)
 	{
 		m_TrayWindow->ReadConfig(parser);
@@ -2404,15 +2414,18 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 			{
 				EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(subMenu, ID_CONTEXT_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
-			}
-
-			if (m_Logging)
-			{
-				EnableMenuItem(subMenu, ID_CONTEXT_STARTLOG, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
 			}
 			else
 			{
-				EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
+				if (m_Logging)
+				{
+					EnableMenuItem(subMenu, ID_CONTEXT_STARTLOG, MF_BYCOMMAND | MF_GRAYED);
+				}
+				else
+				{
+					EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
+				}
 			}
 
 			if (c_Debug)
@@ -2784,6 +2797,64 @@ void CRainmeter::ChangeSkinIndex(HMENU menu, int index)
 			UINT id = GetMenuItemID(menu, i);
 			UINT flags = GetMenuState(menu, i, MF_BYPOSITION);
 			ModifyMenu(menu, i, MF_BYPOSITION | flags, id | (index << 16), buffer);
+		}
+	}
+}
+
+void CRainmeter::StartLogging()
+{
+	// Check if the file exists
+	if (_waccess(m_LogFile.c_str(), 0) == -1)
+	{
+		// Create log file
+		HANDLE file = CreateFile(m_LogFile.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (file != INVALID_HANDLE_VALUE)
+		{
+			CloseHandle(file);
+			ResetLoggingFlag();	// Re-enable logging
+			SetLogging(true);
+
+			std::wstring message = L"Log file created at: ";
+			message += m_LogFile;
+			MessageBox(NULL, message.c_str(), L"Rainmeter", MB_OK | MB_ICONINFORMATION);
+		}
+		else
+		{
+			// Disable logging
+			SetLogging(false);
+			ResetLoggingFlag();
+
+			std::wstring message = L"Unable to create log file: ";
+			message += m_LogFile;
+			MessageBox(NULL, message.c_str(), L"Rainmeter", MB_OK | MB_ICONERROR);
+		}
+	}
+	else
+	{
+		SetLogging(true);
+	}
+}
+
+void CRainmeter::StopLogging()
+{
+	SetLogging(false);
+}
+
+void CRainmeter::DeleteLogFile()
+{
+	// Check if the file exists
+	if (_waccess(m_LogFile.c_str(), 0) != -1)
+	{
+		std::wstring message = L"Do you want to delete the following log file?\n";
+		message += m_LogFile;
+		int res = MessageBox(NULL, message.c_str(), L"Rainmeter", MB_YESNO | MB_ICONQUESTION);
+		if (res == IDYES)
+		{
+			// Disable logging
+			SetLogging(false);
+			ResetLoggingFlag();
+
+			DeleteFile(m_LogFile.c_str());
 		}
 	}
 }

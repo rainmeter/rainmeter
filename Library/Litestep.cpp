@@ -538,50 +538,55 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 	// The stub implementation
 	if (Rainmeter && Rainmeter->GetLogging())
 	{
-		FILE* logFile;
 		std::wstring logfile = Rainmeter->GetLogFile();
 		if (logFound == 0)
 		{
 			// Check if the file exists
-			logFile = _wfopen(logfile.c_str(), L"r");
-			if (logFile)
+			if (_waccess(logfile.c_str(), 0) != -1)
 			{
 				logFound = 1;
-				fclose(logFile);
 
 				// Clear the file
-				logFile = _wfopen(logfile.c_str(), L"w");
+				FILE* logFile = _wfopen(logfile.c_str(), L"w");
 				fclose(logFile);
 			}
 			else
 			{
-				logFound = 2;
+				logFound = 2;  // not found
 			}
 		}
 
 		if (logFound == 1)
 		{
-			logFile = _wfopen(logfile.c_str(), L"a+, ccs=UTF-8");
-			if (logFile)
+			if (_waccess(logfile.c_str(), 0) == -1)
 			{
-				switch(nLevel)
+				// Disable logging if the file was deleted manually
+				Rainmeter->StopLogging();
+			}
+			else
+			{
+				FILE* logFile = _wfopen(logfile.c_str(), L"a+, ccs=UTF-8");
+				if (logFile)
 				{
-				case 1:
-					fputws(L"ERROR: ", logFile);
-					break;
-				case 2:
-					fputws(L"WARNING: ", logFile);
-					break;
-				case 3:
-					fputws(L"NOTICE: ", logFile);
-					break;
-				case 4:
-					fputws(L"DEBUG: ", logFile);
-					break;
+					switch(nLevel)
+					{
+					case 1:
+						fputws(L"ERROR: ", logFile);
+						break;
+					case 2:
+						fputws(L"WARNING: ", logFile);
+						break;
+					case 3:
+						fputws(L"NOTICE: ", logFile);
+						break;
+					case 4:
+						fputws(L"DEBUG: ", logFile);
+						break;
+					}
+					fputws(message.c_str(), logFile);
+					fputws(L"\n", logFile);
+					fclose(logFile);
 				}
-				fputws(message.c_str(), logFile);
-				fputws(L"\n", logFile);
-				fclose(logFile);
 			}
 		}
 	}

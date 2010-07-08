@@ -163,8 +163,11 @@ public:
 	void SetDisableVersionCheck(BOOL check) { m_DisableVersionCheck = check; };
 	void SetNewVersion(BOOL NewVer) { m_NewVersion = NewVer; };
 
-	void SetLogging(bool logging);
 	bool GetLogging() { return m_Logging; }
+	void StartLogging();
+	void StopLogging();
+	void DeleteLogFile();
+
 	void SetDebug(bool debug);
 
 	void ShowContextMenu(POINT pos, CMeterWindow* meterWindow);
@@ -205,6 +208,7 @@ private:
 	HMENU CreateThemeMenu();
 	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);
 	void CreateDefaultConfigFile(std::wstring strFile);
+	void SetLogging(bool logging);
 	void TestSettingsFile(bool bDefaultIniLocation);
 	void CheckSkinVersions();
 	int CompareVersions(std::wstring strA, std::wstring strB);

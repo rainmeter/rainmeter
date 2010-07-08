@@ -430,54 +430,15 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if(wParam == ID_CONTEXT_STARTLOG)
 			{
-				// Check if the file exists
-				std::wstring log = Rainmeter->GetLogFile();
-				if (_waccess(log.c_str(), 0) == -1)
-				{
-					// Create log file
-					HANDLE file = CreateFile(log.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-					if (file != INVALID_HANDLE_VALUE)
-					{
-						CloseHandle(file);
-						ResetLoggingFlag();	// Re-enable logging
-						Rainmeter->SetLogging(true);
-
-						std::wstring message;
-						message = L"Log file created at: ";
-						message += log;
-						MessageBox(tray->GetWindow(), message.c_str(), L"Rainmeter", MB_OK | MB_ICONINFORMATION);
-					}
-					else
-					{
-						std::wstring message;
-						message = L"Unable to create log file: ";
-						message += log;
-						MessageBox(tray->GetWindow(), message.c_str(), L"Rainmeter", MB_OK | MB_ICONERROR);
-					}
-				}
-				else
-				{
-					Rainmeter->SetLogging(true);
-				}
+				Rainmeter->StartLogging();
 			}
 			else if(wParam == ID_CONTEXT_STOPLOG)
 			{
-				Rainmeter->SetLogging(false);
+				Rainmeter->StopLogging();
 			}
 			else if(wParam == ID_CONTEXT_DELETELOGFILE)
 			{
-				// Check if the file exists
-				std::wstring log = Rainmeter->GetLogFile();
-				if (_waccess(log.c_str(), 0) != -1)
-				{
-					int res = MessageBox(tray->GetWindow(), L"Do you want to delete log file?", L"Rainmeter", MB_YESNO | MB_ICONQUESTION);
-					if (res == IDYES)
-					{
-						Rainmeter->SetLogging(false);
-						ResetLoggingFlag();
-						DeleteFile(log.c_str());
-					}
-				}
+				Rainmeter->DeleteLogFile();
 			}
 			else if(wParam == ID_CONTEXT_DEBUGLOG)
 			{
