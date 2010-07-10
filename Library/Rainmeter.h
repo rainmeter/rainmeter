@@ -201,6 +201,7 @@ private:
 	void SetConfigOrder(const std::wstring& config, int index, int active);
 	int GetLoadOrder(const std::wstring& config);
 	bool SetActiveConfig(std::wstring& skinName, std::wstring& skinIni);
+	void UpdateDesktopWorkArea(bool reset);
 	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index);
 	void ChangeSkinIndex(HMENU subMenu, int index);
 	int ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse);
@@ -240,7 +241,8 @@ private:
 	BOOL m_NewVersion;
 	
 	BOOL m_DesktopWorkAreaChanged;
-	RECT m_DesktopWorkArea;
+	std::map<UINT, RECT> m_DesktopWorkAreas;
+	std::vector<RECT> m_OldDesktopWorkAreas;
 
 	bool m_Logging;
 

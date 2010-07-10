@@ -747,7 +747,6 @@ CRainmeter::CRainmeter()
 	m_Logging = false;
 
 	m_DesktopWorkAreaChanged = false;
-	m_DesktopWorkArea.left = m_DesktopWorkArea.top = m_DesktopWorkArea.right = m_DesktopWorkArea.bottom = 0;
 
 	m_DisableVersionCheck = FALSE;
 	m_NewVersion = FALSE;
@@ -775,12 +774,6 @@ CRainmeter::CRainmeter()
 */
 CRainmeter::~CRainmeter()
 {
-	// Change the work area back
-	if (m_DesktopWorkAreaChanged)
-	{
-		SystemParametersInfo(SPI_SETWORKAREA, 0, &m_DesktopWorkArea, 0);
-	}
-
 	while (m_Meters.size() > 0)
 	{
 		DeleteMeterWindow((*m_Meters.begin()).second, false);	// This removes the window from the vector
@@ -797,6 +790,12 @@ CRainmeter::~CRainmeter()
 	CMeasureNet::FinalizeNewApi();
 
 	CMeterString::FreeFontCache();
+
+	// Change the work area back
+	if (m_DesktopWorkAreaChanged)
+	{
+		UpdateDesktopWorkArea(true);
+	}
 
 	GdiplusShutdown(m_GDIplusToken);
 }
@@ -1051,10 +1050,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	// Change the work area if necessary
 	if (m_DesktopWorkAreaChanged)
 	{
-		RECT rc;
-		rc = m_DesktopWorkArea;
-		SystemParametersInfo(SPI_GETWORKAREA, 0, &m_DesktopWorkArea, 0);	// Store the old value
-		SystemParametersInfo(SPI_SETWORKAREA, 0, &rc, 0);
+		UpdateDesktopWorkArea(false);
 	}
 
 	// If we're running as Litestep's plugin, register the !bangs
@@ -2084,6 +2080,9 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 */
 void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 {
+	// Clear old settings
+	m_DesktopWorkAreas.clear();
+
 	CConfigParser parser;
 	parser.Initialize(iniFile.c_str(), this);
 
@@ -2164,13 +2163,28 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 	m_TrayExecuteDM = parser.ReadString(L"Rainmeter", L"TrayExecuteDM", L"", false);
 
 	m_DisableVersionCheck = parser.ReadInt(L"Rainmeter", L"DisableVersionCheck", 0);
-	
+
 	std::wstring area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
 	if (!area.empty())
 	{
-		swscanf(area.c_str(), L"%i,%i,%i,%i", &m_DesktopWorkArea.left, &m_DesktopWorkArea.top, 
-			&m_DesktopWorkArea.right, &m_DesktopWorkArea.bottom);
+		RECT r;
+		swscanf(area.c_str(), L"%i,%i,%i,%i", &r.left, &r.top, &r.right, &r.bottom);
+		m_DesktopWorkAreas[0] = r;
 		m_DesktopWorkAreaChanged = true;
+	}
+
+	for (UINT i = 1; i <= CSystem::GetMonitorCount(); ++i)
+	{
+		WCHAR buffer[256];
+		wsprintf(buffer, L"DesktopWorkArea@%i", i);
+		area = parser.ReadString(L"Rainmeter", buffer, L"");
+		if (!area.empty())
+		{
+			RECT r;
+			swscanf(area.c_str(), L"%i,%i,%i,%i", &r.left, &r.top, &r.right, &r.bottom);
+			m_DesktopWorkAreas[i] = r;
+			m_DesktopWorkAreaChanged = true;
+		}
 	}
 
 	// Check which configs are active
@@ -2288,8 +2302,94 @@ void CRainmeter::RefreshAll()
 		}
 	}
 
+	if (m_DesktopWorkAreaChanged)
+	{
+		UpdateDesktopWorkArea(false);
+	}
+
 	// Clear order
 	m_ConfigOrders.clear();
+}
+
+/* 
+** UpdateDesktopWorkArea
+**
+** Applies given DesktopWorkArea and DesktopWorkArea@n.
+**
+*/
+void CRainmeter::UpdateDesktopWorkArea(bool reset)
+{
+	bool changed = false;
+
+	if (reset)
+	{
+		if (!m_OldDesktopWorkAreas.empty())
+		{
+			for (size_t i = 0; i < m_OldDesktopWorkAreas.size(); ++i)
+			{
+				SystemParametersInfo(SPI_SETWORKAREA, 0, &m_OldDesktopWorkAreas[i], 0);
+			}
+			changed = true;
+		}
+	}
+	else
+	{
+		if (m_OldDesktopWorkAreas.empty())
+		{
+			// Store old work areas for changing them back
+			for (UINT i = 0; i < CSystem::GetMonitorCount(); ++i)
+			{
+				m_OldDesktopWorkAreas.push_back(CSystem::GetMultiMonitorInfo().monitors[i].work);
+			}
+		}
+
+		for (UINT i = 0; i <= CSystem::GetMonitorCount(); ++i)
+		{
+			std::map<UINT, RECT>::const_iterator it = m_DesktopWorkAreas.find(i);
+			if (it != m_DesktopWorkAreas.end())
+			{
+				RECT r = it->second;
+				if (i != 0)
+				{
+					// Move rect to correct offset
+					const RECT screenRect = CSystem::GetMultiMonitorInfo().monitors[i - 1].screen;
+					r.top += screenRect.top;
+					r.left += screenRect.left;
+					r.bottom += screenRect.top;
+					r.right += screenRect.left;
+				}
+
+				BOOL result = SystemParametersInfo(SPI_SETWORKAREA, 0, &r, 0);
+				if (result)
+				{
+					changed = true;
+				}
+
+				if (c_Debug)
+				{
+					std::wstring format = L"Applying DesktopWorkArea";
+					if (i != 0)
+					{
+						WCHAR buffer[256];
+						wsprintf(buffer, L"@%i", i);
+						format += buffer;
+					}
+					format += L": L=%i, T=%i, R=%i, B=%i";
+					if (!result)
+					{
+						format += L" => FAIL.";
+					}
+					DebugLog(format.c_str(), r.left, r.top, r.right, r.bottom);
+				}
+			}
+		}
+	}
+
+	if (changed)
+	{
+		// Broadcast all changes
+		SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, SPI_SETWORKAREA, 0, SMTO_ABORTIFHUNG, 1000, NULL);
+	}
 }
 
 /*
