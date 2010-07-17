@@ -362,39 +362,6 @@ void RainmeterToggleMeter(HWND, const char* arg)
 }
 
 /*
-** RainmeterHideMeterGroup
-**
-** Callback for the !RainmeterHideMeterGroup bang
-**
-*/
-void RainmeterHideMeterGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_HIDEMETERGROUP, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterShowMeterGroup
-**
-** Callback for the !RainmeterShowMeterGroup bang
-**
-*/
-void RainmeterShowMeterGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_SHOWMETERGROUP, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterToggleMeterGroup
-**
-** Callback for the !RainmeterToggleMeterGroup bang
-**
-*/
-void RainmeterToggleMeterGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_TOGGLEMETERGROUP, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
 ** RainmeterDisableMeasure
 **
 ** Callback for the !RainmeterDisableMeasure bang
@@ -425,39 +392,6 @@ void RainmeterEnableMeasure(HWND, const char* arg)
 void RainmeterToggleMeasure(HWND, const char* arg)
 {
 	BangWithArgs(BANG_TOGGLEMEASURE, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterDisableMeasureGroup
-**
-** Callback for the !RainmeterDisableMeasureGroup bang
-**
-*/
-void RainmeterDisableMeasureGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_DISABLEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterEnableMeasureGroup
-**
-** Callback for the !RainmeterEnableMeasureGroup bang
-**
-*/
-void RainmeterEnableMeasureGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_ENABLEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterToggleMeasureGroup
-**
-** Callback for the !RainmeterToggleMeasureGroup bang
-**
-*/
-void RainmeterToggleMeasureGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_TOGGLEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
 }
 
 /*
@@ -515,11 +449,11 @@ void RainmeterActivateConfig(HWND, const char* arg)
 
 			for (size_t i = 0; i < configs.size(); ++i)
 			{
-				if (wcsnicmp(configs[i].config.c_str(), subStrings[0].c_str(), configs[i].config.length()) == 0)
+				if (wcsicmp(configs[i].config.c_str(), subStrings[0].c_str()) == 0)
 				{
 					for (size_t j = 0; j < configs[i].iniFiles.size(); ++j)
 					{
-						if (wcsnicmp(configs[i].iniFiles[j].c_str(), subStrings[1].c_str(), configs[i].iniFiles[j].length()) == 0)
+						if (wcsicmp(configs[i].iniFiles[j].c_str(), subStrings[1].c_str()) == 0)
 						{
 							Rainmeter->ActivateConfig(i, j);
 							return;
@@ -639,6 +573,484 @@ void RainmeterSetTransparency(HWND, const char* arg)
 }
 
 /*
+** RainmeterSetVariable
+**
+** Callback for the !RainmeterSetVariable bang
+**
+*/
+void RainmeterSetVariable(HWND, const char* arg)
+{
+	BangWithArgs(BANG_SETVARIABLE, ConvertToWide(arg).c_str(), 2);
+}
+
+/*
+** RainmeterHideGroup
+**
+** Callback for the !RainmeterHideGroup bang
+**
+*/
+void RainmeterHideGroup(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 0)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				std::wstring argument = L"\"";
+				argument += (*iter).second->GetSkinName();
+				argument += L"\"";
+				BangWithArgs(BANG_HIDE, argument.c_str(), 0);
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterHideGroup");
+		}
+	}
+}
+
+/*
+** RainmeterShowGroup
+**
+** Callback for the !RainmeterShowGroup bang
+**
+*/
+void RainmeterShowGroup(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 0)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				std::wstring argument = L"\"";
+				argument += (*iter).second->GetSkinName();
+				argument += L"\"";
+				BangWithArgs(BANG_SHOW, argument.c_str(), 0);
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterShowGroup");
+		}
+	}
+}
+
+/*
+** RainmeterToggleGroup
+**
+** Callback for the !RainmeterToggleGroup bang
+**
+*/
+void RainmeterToggleGroup(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 0)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				std::wstring argument = L"\"";
+				argument += (*iter).second->GetSkinName();
+				argument += L"\"";
+				BangWithArgs(BANG_TOGGLE, argument.c_str(), 0);
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterToggleGroup");
+		}
+	}
+}
+
+/*
+** RainmeterHideFadeGroup
+**
+** Callback for the !RainmeterHideFadeGroup bang
+**
+*/
+void RainmeterHideFadeGroup(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 0)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				std::wstring argument = L"\"";
+				argument += (*iter).second->GetSkinName();
+				argument += L"\"";
+				BangWithArgs(BANG_HIDEFADE, argument.c_str(), 0);
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterHideFadeGroup");
+		}
+	}
+}
+
+/*
+** RainmeterShowFadeGroup
+**
+** Callback for the !RainmeterShowFadeGroup bang
+**
+*/
+void RainmeterShowFadeGroup(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 0)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				std::wstring argument = L"\"";
+				argument += (*iter).second->GetSkinName();
+				argument += L"\"";
+				BangWithArgs(BANG_SHOWFADE, argument.c_str(), 0);
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterShowFadeGroup");
+		}
+	}
+}
+
+/*
+** RainmeterToggleFadeGroup
+**
+** Callback for the !RainmeterToggleFadeGroup bang
+**
+*/
+void RainmeterToggleFadeGroup(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 0)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				std::wstring argument = L"\"";
+				argument += (*iter).second->GetSkinName();
+				argument += L"\"";
+				BangWithArgs(BANG_TOGGLEFADE, argument.c_str(), 0);
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterToggleFadeGroup");
+		}
+	}
+}
+
+/*
+** RainmeterHideMeterGroup
+**
+** Callback for the !RainmeterHideMeterGroup bang
+**
+*/
+void RainmeterHideMeterGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_HIDEMETERGROUP, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterShowMeterGroup
+**
+** Callback for the !RainmeterShowMeterGroup bang
+**
+*/
+void RainmeterShowMeterGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_SHOWMETERGROUP, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterToggleMeterGroup
+**
+** Callback for the !RainmeterToggleMeterGroup bang
+**
+*/
+void RainmeterToggleMeterGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_TOGGLEMETERGROUP, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterDisableMeasureGroup
+**
+** Callback for the !RainmeterDisableMeasureGroup bang
+**
+*/
+void RainmeterDisableMeasureGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_DISABLEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterEnableMeasureGroup
+**
+** Callback for the !RainmeterEnableMeasureGroup bang
+**
+*/
+void RainmeterEnableMeasureGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_ENABLEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterToggleMeasureGroup
+**
+** Callback for the !RainmeterToggleMeasureGroup bang
+**
+*/
+void RainmeterToggleMeasureGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_TOGGLEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterRefreshGroup
+**
+** Callback for the !RainmeterRefreshGroup bang
+**
+*/
+void RainmeterRefreshGroup(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 0)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				std::wstring argument = L"\"";
+				argument += (*iter).second->GetSkinName();
+				argument += L"\"";
+				BangWithArgs(BANG_REFRESH, argument.c_str(), 0);
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterRefreshGroup");
+		}
+	}
+}
+
+/*
+** RainmeterRedrawGroup
+**
+** Callback for the !RainmeterRedrawGroup bang
+**
+*/
+void RainmeterRedrawGroup(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 0)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				std::wstring argument = L"\"";
+				argument += (*iter).second->GetSkinName();
+				argument += L"\"";
+				BangWithArgs(BANG_REDRAW, argument.c_str(), 0);
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterRedrawGroup");
+		}
+	}
+}
+
+/*
+** RainmeterDeactivateConfigGroup
+**
+** Callback for the !RainmeterDeactivateConfigGroup bang
+**
+*/
+void RainmeterDeactivateConfigGroup(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 0)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				Rainmeter->DeactivateConfig((*iter).second, -1);		// -1 = Deactivate all ini-files
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterDeactivateConfigGroup");
+		}
+	}
+}
+
+/*
+** RainmeterZPosGroup
+**
+** Callback for the !RainmeterZPosGroup bang
+**
+*/
+void RainmeterZPosGroup(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 1)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[1]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				std::wstring argument = L"\"";
+				argument += subStrings[0];
+				argument += L"\" \"";
+				argument += (*iter).second->GetSkinName();
+				argument += L"\"";
+				BangWithArgs(BANG_ZPOS, argument.c_str(), 1);
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterZPosGroup");
+		}
+	}
+}
+
+/*
+** RainmeterSetTransparencyGroup
+**
+** Callback for the !RainmeterSetTransparencyGroup bang
+**
+*/
+void RainmeterSetTransparencyGroup(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 1)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[1]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				std::wstring argument = L"\"";
+				argument += subStrings[0];
+				argument += L"\" \"";
+				argument += (*iter).second->GetSkinName();
+				argument += L"\"";
+				BangWithArgs(BANG_SETTRANSPARENCY, argument.c_str(), 1);
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterSetTransparencyGroup");
+		}
+	}
+}
+
+/*
+** RainmeterSetVariableGroup
+**
+** Callback for the !RainmeterSetVariableGroup bang
+**
+*/
+void RainmeterSetVariableGroup(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 2)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[2]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				std::wstring argument = L"\"";
+				argument += subStrings[0];
+				argument += L"\" \"";
+				argument += subStrings[1];
+				argument += L"\" \"";
+				argument += (*iter).second->GetSkinName();
+				argument += L"\"";
+				BangWithArgs(BANG_SETVARIABLE, argument.c_str(), 2);
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterSetVariableGroup");
+		}
+	}
+}
+
+/*
 ** RainmeterLsHook
 **
 ** Callback for the !RainmeterLsHook bang
@@ -658,6 +1070,57 @@ void RainmeterLsHook(HWND, const char* arg)
 void RainmeterAbout(HWND, const char* arg)
 {
 	BangWithArgs(BANG_ABOUT, ConvertToWide(arg).c_str(), 0);
+}
+
+/*
+** RainmeterSkinMenu
+**
+** Callback for the !RainmeterSkinMenu bang
+**
+*/
+void RainmeterSkinMenu(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 0)
+		{
+			std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
+			for (; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
+			{
+				CMeterWindow* mw = ((*iter).second);
+				if (wcsicmp(subStrings[0].c_str(), mw->GetSkinName().c_str()) == 0)
+				{
+					POINT pos;
+					GetCursorPos(&pos);
+					Rainmeter->ShowContextMenu(pos, mw);
+					return;
+				}
+			}
+			DebugLog(L"The config is not active: \"%s\"", subStrings[0].c_str());
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterSkinMenu");
+		}
+	}
+}
+
+/*
+** RainmeterTrayMenu
+**
+** Callback for the !RainmeterTrayMenu bang
+**
+*/
+void RainmeterTrayMenu(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		POINT pos;
+		GetCursorPos(&pos);
+		Rainmeter->ShowContextMenu(pos, NULL);
+	}
 }
 
 /*
@@ -711,16 +1174,6 @@ void RainmeterQuit(HWND, const char* arg)
 	}
 }
 
-/*
-** RainmeterSetVariable
-**
-** Callback for the !RainmeterSetVariable bang
-**
-*/
-void RainmeterSetVariable(HWND, const char* arg)
-{
-	BangWithArgs(BANG_SETVARIABLE, ConvertToWide(arg).c_str(), 2);
-}
 
 // -----------------------------------------------------------------------------------------------
 //
@@ -747,6 +1200,7 @@ CRainmeter::CRainmeter()
 	m_Logging = false;
 
 	m_DesktopWorkAreaChanged = false;
+	m_DesktopWorkAreaType = false;
 
 	m_DisableVersionCheck = FALSE;
 	m_NewVersion = FALSE;
@@ -1061,7 +1515,6 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		if (m_TrayWindow && m_TrayWindow->GetWindow()) ::SendMessage(GetLitestepWnd(), LM_REGISTERMESSAGE, (WPARAM)m_TrayWindow->GetWindow(), (LPARAM)Msgs);
 
 		AddBangCommand("!RainmeterRefresh", RainmeterRefresh);
-		AddBangCommand("!RainmeterRefreshApp", RainmeterRefreshApp);
 		AddBangCommand("!RainmeterRedraw", RainmeterRedraw);
 		AddBangCommand("!RainmeterHide", RainmeterHide);
 		AddBangCommand("!RainmeterShow", RainmeterShow);
@@ -1072,39 +1525,57 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterHideMeter", RainmeterHideMeter);
 		AddBangCommand("!RainmeterShowMeter", RainmeterShowMeter);
 		AddBangCommand("!RainmeterToggleMeter", RainmeterToggleMeter);
+		AddBangCommand("!RainmeterMoveMeter", RainmeterMoveMeter);
 		AddBangCommand("!RainmeterDisableMeasure", RainmeterDisableMeasure);
 		AddBangCommand("!RainmeterEnableMeasure", RainmeterEnableMeasure);
 		AddBangCommand("!RainmeterToggleMeasure", RainmeterToggleMeasure);
+		AddBangCommand("!RainmeterActivateConfig", RainmeterActivateConfig);
+		AddBangCommand("!RainmeterDeactivateConfig", RainmeterDeactivateConfig);
+		AddBangCommand("!RainmeterToggleConfig", RainmeterToggleConfig);
+		AddBangCommand("!RainmeterMove", RainmeterMove);
+		AddBangCommand("!RainmeterZPos", RainmeterZPos);
+		AddBangCommand("!RainmeterSetTransparency", RainmeterSetTransparency);
+		AddBangCommand("!RainmeterSetVariable", RainmeterSetVariable);
+
+		AddBangCommand("!RainmeterRefreshGroup", RainmeterRefreshGroup);
+		AddBangCommand("!RainmeterRedrawGroup", RainmeterRedrawGroup);
+		AddBangCommand("!RainmeterHideGroup", RainmeterHideGroup);
+		AddBangCommand("!RainmeterShowGroup", RainmeterShowGroup);
+		AddBangCommand("!RainmeterToggleGroup", RainmeterToggleGroup);
+		AddBangCommand("!RainmeterHideFadeGroup", RainmeterHideFadeGroup);
+		AddBangCommand("!RainmeterShowFadeGroup", RainmeterShowFadeGroup);
+		AddBangCommand("!RainmeterToggleFadeGroup", RainmeterToggleFadeGroup);
 		AddBangCommand("!RainmeterHideMeterGroup", RainmeterHideMeterGroup);
 		AddBangCommand("!RainmeterShowMeterGroup", RainmeterShowMeterGroup);
 		AddBangCommand("!RainmeterToggleMeterGroup", RainmeterToggleMeterGroup);
 		AddBangCommand("!RainmeterDisableMeasureGroup", RainmeterDisableMeasureGroup);
 		AddBangCommand("!RainmeterEnableMeasureGroup", RainmeterEnableMeasureGroup);
 		AddBangCommand("!RainmeterToggleMeasureGroup", RainmeterToggleMeasureGroup);
-		AddBangCommand("!RainmeterActivateConfig", RainmeterActivateConfig);
-		AddBangCommand("!RainmeterToggleConfig", RainmeterToggleConfig);
-		AddBangCommand("!RainmeterDeactivateConfig", RainmeterDeactivateConfig);
-		AddBangCommand("!RainmeterMove", RainmeterMove);
-		AddBangCommand("!RainmeterZPos", RainmeterZPos);
-		AddBangCommand("!RainmeterSetTransparency", RainmeterSetTransparency);
+		AddBangCommand("!RainmeterDeactivateConfigGroup", RainmeterDeactivateConfigGroup);
+		AddBangCommand("!RainmeterZPosGroup", RainmeterZPosGroup);
+		AddBangCommand("!RainmeterSetTransparencyGroup", RainmeterSetTransparencyGroup);
+		AddBangCommand("!RainmeterSetVariableGroup", RainmeterSetVariableGroup);
+
+		AddBangCommand("!RainmeterRefreshApp", RainmeterRefreshApp);
 		AddBangCommand("!RainmeterLsBoxHook", RainmeterLsHook);
 		AddBangCommand("!RainmeterAbout", RainmeterAbout);
+		AddBangCommand("!RainmeterSkinMenu", RainmeterSkinMenu);
+		AddBangCommand("!RainmeterTrayMenu", RainmeterTrayMenu);
 		AddBangCommand("!RainmeterResetStats", RainmeterResetStats);
-		AddBangCommand("!RainmeterMoveMeter", RainmeterMoveMeter);
 		AddBangCommand("!RainmeterPluginBang", RainmeterPluginBang);
 		AddBangCommand("!RainmeterQuit", RainmeterQuit);
-		AddBangCommand("!RainmeterSetVariable", RainmeterSetVariable);
 	}
 
 	// Create meter windows for active configs
-	std::multimap<int, CONFIGORDER>::const_iterator iter = m_ConfigOrders.begin();
+	std::multimap<int, int>::const_iterator iter = m_ConfigOrders.begin();
 	for ( ; iter != m_ConfigOrders.end(); ++iter)
 	{
-		ActivateConfig((*iter).second.id, (*iter).second.active - 1);
+		const CONFIG& config = m_ConfigStrings[(*iter).second];
+		if (config.active > 0 && config.active <= (int)config.iniFiles.size())
+		{
+			ActivateConfig((*iter).second, config.active - 1);
+		}
 	}
-
-	//Clear order
-	m_ConfigOrders.clear();
 
 	return Result;	// Alles OK
 }
@@ -1509,12 +1980,25 @@ CMeterWindow* CRainmeter::GetMeterWindow(HWND hwnd)
 	return NULL;
 }
 
-void CRainmeter::SetConfigOrder(const std::wstring& config, int index, int active)
+void CRainmeter::GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group)
+{
+	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
+	for (; iter != m_Meters.end(); ++iter)
+	{
+		CMeterWindow* mw = (*iter).second;
+		if (mw && (group.empty() || mw->BelongsToGroup(group)))
+		{
+			windows.insert(std::pair<int, CMeterWindow*>(GetLoadOrder((*iter).first), mw));
+		}
+	}
+}
+
+void CRainmeter::SetConfigOrder(int configIndex)
 {
 	WCHAR buffer[256];
 	int order;
 
-	if (GetPrivateProfileString(config.c_str(), L"LoadOrder", L"", buffer, 256, m_IniFile.c_str()) > 0)
+	if (GetPrivateProfileString(m_ConfigStrings[configIndex].config.c_str(), L"LoadOrder", L"", buffer, 256, m_IniFile.c_str()) > 0)
 	{
 		if (wcsicmp(buffer, L"LAST") == 0)
 		{
@@ -1531,16 +2015,15 @@ void CRainmeter::SetConfigOrder(const std::wstring& config, int index, int activ
 	}
 	else  // LoadOrder not exists
 	{
-		//WritePrivateProfileString(config.c_str(), L"LoadOrder", L"0", m_IniFile.c_str());
 		order = 0;
 	}
 
-	std::multimap<int, CONFIGORDER>::iterator iter = m_ConfigOrders.begin();
+	std::multimap<int, int>::iterator iter = m_ConfigOrders.begin();
 	for ( ; iter != m_ConfigOrders.end(); ++iter)
 	{
-		if ((*iter).second.config == config)  // already exists
+		if ((*iter).second == configIndex)  // already exists
 		{
-			if ((*iter).first != order || (*iter).second.id != index || (*iter).second.active != active)
+			if ((*iter).first != order)
 			{
 				m_ConfigOrders.erase(iter);
 				break;
@@ -1552,26 +2035,21 @@ void CRainmeter::SetConfigOrder(const std::wstring& config, int index, int activ
 		}
 	}
 
-	// Add CONFIGORDER
-	CONFIGORDER configOrder;
-	configOrder.config = config;
-	configOrder.id = index;
-	configOrder.active = active;
-
-	m_ConfigOrders.insert(std::pair<int, CONFIGORDER>(order, configOrder));
+	m_ConfigOrders.insert(std::pair<int, int>(order, configIndex));
 }
 
 int CRainmeter::GetLoadOrder(const std::wstring& config)
 {
-	std::multimap<int, CONFIGORDER>::const_iterator iter = m_ConfigOrders.begin();
+	std::multimap<int, int>::const_iterator iter = m_ConfigOrders.begin();
 	for ( ; iter != m_ConfigOrders.end(); ++iter)
 	{
-		if ((*iter).second.config == config)
+		if (m_ConfigStrings[(*iter).second].config == config)
 		{
 			return (*iter).first;
 		}
 	}
 
+	// LoadOrder not exists
 	return 0;
 }
 
@@ -1591,7 +2069,6 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		if (m_TrayWindow && m_TrayWindow->GetWindow()) ::SendMessage(GetLitestepWnd(), LM_UNREGISTERMESSAGE, (WPARAM)m_TrayWindow->GetWindow(), (LPARAM)Msgs);
 
 		RemoveBangCommand("!RainmeterRefresh");
-		RemoveBangCommand("!RainmeterRefreshApp");
 		RemoveBangCommand("!RainmeterRedraw");
 		RemoveBangCommand("!RainmeterHide");
 		RemoveBangCommand("!RainmeterShow");
@@ -1602,28 +2079,45 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainmeterHideMeter");
 		RemoveBangCommand("!RainmeterShowMeter");
 		RemoveBangCommand("!RainmeterToggleMeter");
+		RemoveBangCommand("!RainmeterMoveMeter");
 		RemoveBangCommand("!RainmeterHideMeasure");
 		RemoveBangCommand("!RainmeterShowMeasure");
 		RemoveBangCommand("!RainmeterToggleMeasure");
-		RemoveBangCommand("!RainmeterHideMeterGroup");
-		RemoveBangCommand("!RainmeterShowMeterGroup");
-		RemoveBangCommand("!RainmeterToggleMeterGroup");
-		RemoveBangCommand("!RainmeterHideMeasureGroup");
-		RemoveBangCommand("!RainmeterShowMeasureGroup");
-		RemoveBangCommand("!RainmeterToggleMeasureGroup");
 		RemoveBangCommand("!RainmeterActivateConfig");
 		RemoveBangCommand("!RainmeterDeactivateConfig");
 		RemoveBangCommand("!RainmeterToggleConfig");
 		RemoveBangCommand("!RainmeterMove");
 		RemoveBangCommand("!RainmeterZPos");
 		RemoveBangCommand("!RainmeterSetTransparency");
+		RemoveBangCommand("!RainmeterSetVariable");
+
+		RemoveBangCommand("!RainmeterRefreshGroup");
+		RemoveBangCommand("!RainmeterRedrawGroup");
+		RemoveBangCommand("!RainmeterHideGroup");
+		RemoveBangCommand("!RainmeterShowGroup");
+		RemoveBangCommand("!RainmeterToggleGroup");
+		RemoveBangCommand("!RainmeterHideFadeGroup");
+		RemoveBangCommand("!RainmeterShowFadeGroup");
+		RemoveBangCommand("!RainmeterToggleFadeGroup");
+		RemoveBangCommand("!RainmeterHideMeterGroup");
+		RemoveBangCommand("!RainmeterShowMeterGroup");
+		RemoveBangCommand("!RainmeterToggleMeterGroup");
+		RemoveBangCommand("!RainmeterHideMeasureGroup");
+		RemoveBangCommand("!RainmeterShowMeasureGroup");
+		RemoveBangCommand("!RainmeterToggleMeasureGroup");
+		RemoveBangCommand("!RainmeterDeactivateConfigGroup");
+		RemoveBangCommand("!RainmeterZPosGroup");
+		RemoveBangCommand("!RainmeterSetTransparencyGroup");
+		RemoveBangCommand("!RainmeterSetVariableGroup");
+
+		RemoveBangCommand("!RainmeterRefreshApp");
 		RemoveBangCommand("!RainmeterLsBoxHook");
 		RemoveBangCommand("!RainmeterAbout");
+		RemoveBangCommand("!RainmeterSkinMenu");
+		RemoveBangCommand("!RainmeterTrayMenu");
 		RemoveBangCommand("!RainmeterResetStats");
-		RemoveBangCommand("!RainmeterMoveMeter");
 		RemoveBangCommand("!RainmeterPluginBang");
 		RemoveBangCommand("!RainmeterQuit");
-		RemoveBangCommand("!RainmeterSetVariable");
 	}
 }
 
@@ -1760,8 +2254,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterRefreshApp") == 0)
 	{
-		// Refresh needs to be delayed since it crashes if done during Update()
-		PostMessage(m_TrayWindow->GetWindow(), WM_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
+		RainmeterRefreshApp(NULL, NULL);
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterRedraw") == 0)
 	{
@@ -1815,30 +2308,6 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_TOGGLEMEASURE, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterHideMeterGroup") == 0)
-	{
-		BangWithArgs(BANG_HIDEMETERGROUP, arg.c_str(), 1);
-	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterShowMeterGroup") == 0)
-	{
-		BangWithArgs(BANG_SHOWMETERGROUP, arg.c_str(), 1);
-	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleMeterGroup") == 0)
-	{
-		BangWithArgs(BANG_TOGGLEMETERGROUP, arg.c_str(), 1);
-	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterDisableMeasureGroup") == 0)
-	{
-		BangWithArgs(BANG_DISABLEMEASUREGROUP, arg.c_str(), 1);
-	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterEnableMeasureGroup") == 0)
-	{
-		BangWithArgs(BANG_ENABLEMEASUREGROUP, arg.c_str(), 1);
-	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleMeasureGroup") == 0)
-	{
-		BangWithArgs(BANG_TOGGLEMEASUREGROUP, arg.c_str(), 1);
-	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterActivateConfig") == 0)
 	{
 		RainmeterActivateConfig(NULL, ConvertToAscii(arg.c_str()).c_str());
@@ -1867,9 +2336,93 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_SETTRANSPARENCY, arg.c_str(), 1);
 	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterSetVariable") == 0)
+	{
+		BangWithArgs(BANG_SETVARIABLE, arg.c_str(), 2);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterRefreshGroup") == 0)
+	{
+		RainmeterRefreshGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterRedrawGroup") == 0)
+	{
+		RainmeterRedrawGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterHideGroup") == 0)
+	{
+		RainmeterHideGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterShowGroup") == 0)
+	{
+		RainmeterShowGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleGroup") == 0)
+	{
+		RainmeterToggleGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterHideFadeGroup") == 0)
+	{
+		RainmeterHideFadeGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterShowFadeGroup") == 0)
+	{
+		RainmeterShowFadeGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleFadeGroup") == 0)
+	{
+		RainmeterToggleFadeGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterHideMeterGroup") == 0)
+	{
+		BangWithArgs(BANG_HIDEMETERGROUP, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterShowMeterGroup") == 0)
+	{
+		BangWithArgs(BANG_SHOWMETERGROUP, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleMeterGroup") == 0)
+	{
+		BangWithArgs(BANG_TOGGLEMETERGROUP, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterDisableMeasureGroup") == 0)
+	{
+		BangWithArgs(BANG_DISABLEMEASUREGROUP, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterEnableMeasureGroup") == 0)
+	{
+		BangWithArgs(BANG_ENABLEMEASUREGROUP, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleMeasureGroup") == 0)
+	{
+		BangWithArgs(BANG_TOGGLEMEASUREGROUP, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterDeactivateConfigGroup") == 0)
+	{
+		RainmeterDeactivateConfigGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterZPosGroup") == 0)
+	{
+		RainmeterZPosGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterSetTransparencyGroup") == 0)
+	{
+		RainmeterSetTransparencyGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterSetVariableGroup") == 0)
+	{
+		RainmeterSetVariableGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterAbout") == 0)
 	{
 		BangWithArgs(BANG_ABOUT, arg.c_str(), 0);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterSkinMenu") == 0)
+	{
+		RainmeterSkinMenu(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterTrayMenu") == 0)
+	{
+		RainmeterTrayMenu(NULL, NULL);
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterResetStats") == 0)
 	{
@@ -1883,18 +2436,13 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_PLUGIN, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterSetVariable") == 0)
-	{
-		BangWithArgs(BANG_SETVARIABLE, arg.c_str(), 2);
-	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterLsBoxHook") == 0)
 	{
 		// Nothing to do here (this works only with Litestep)
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterQuit") == 0)
 	{
-		// Quit needs to be delayed since it crashes if done during Update()
-		PostMessage(m_TrayWindow->GetWindow(), WM_COMMAND, MAKEWPARAM(ID_CONTEXT_QUIT, 0), (LPARAM)NULL);
+		RainmeterQuit(NULL, NULL);
 	}
 	else if (wcsicmp(bang.c_str(), L"!Execute") == 0)
 	{
@@ -2162,7 +2710,7 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 	m_TrayExecuteDR = parser.ReadString(L"Rainmeter", L"TrayExecuteDR", L"", false);
 	m_TrayExecuteDM = parser.ReadString(L"Rainmeter", L"TrayExecuteDM", L"", false);
 
-	m_DisableVersionCheck = parser.ReadInt(L"Rainmeter", L"DisableVersionCheck", 0);
+	m_DisableVersionCheck = 0!=parser.ReadInt(L"Rainmeter", L"DisableVersionCheck", 0);
 
 	std::wstring area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
 	if (!area.empty())
@@ -2186,6 +2734,8 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 			m_DesktopWorkAreaChanged = true;
 		}
 	}
+
+	m_DesktopWorkAreaType = 0!=parser.ReadInt(L"Rainmeter", L"DesktopWorkAreaType", 0);
 
 	// Check which configs are active
 	if (!c_DummyLitestep)
@@ -2225,9 +2775,9 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 		if (active > 0 && active <= (int)m_ConfigStrings[i].iniFiles.size())
 		{
 			m_ConfigStrings[i].active = active;
-
-			SetConfigOrder(m_ConfigStrings[i].config, i, active);
 		}
+
+		SetConfigOrder(i);
 	}
 }
 
@@ -2270,45 +2820,35 @@ void CRainmeter::RefreshAll()
 	// Read skins and settings
 	ReloadSettings();
 
-	// Make the sending order by using LoadOrder
-	std::multimap<int, CMeterWindow*> windows;
-
-	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
-	for (; iter != m_Meters.end(); ++iter)
-	{
-		if ((*iter).second)
-		{
-			windows.insert(std::pair<int, CMeterWindow*>(GetLoadOrder((*iter).first), (*iter).second));
-		}
-	}
-
-	// Prepare the helper window
-	CSystem::PrepareHelperWindow(CSystem::GetWorkerW());
-
-	// Refresh all
-	std::multimap<int, CMeterWindow*>::const_iterator iter2 = windows.begin();
-	for ( ; iter2 != windows.end(); ++iter2)
-	{
-		if ((*iter2).second)
-		{
-			try
-			{
-				(*iter2).second->Refresh(false, true);
-			}
-			catch (CError& error)
-			{
-				MessageBox((*iter2).second->GetWindow(), error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-			}
-		}
-	}
-
+	// Change the work area if necessary
 	if (m_DesktopWorkAreaChanged)
 	{
 		UpdateDesktopWorkArea(false);
 	}
 
-	// Clear order
-	m_ConfigOrders.clear();
+	// Make the sending order by using LoadOrder
+	std::multimap<int, CMeterWindow*> windows;
+	GetMeterWindowsByLoadOrder(windows);
+
+	// Prepare the helper window
+	CSystem::PrepareHelperWindow(CSystem::GetWorkerW());
+
+	// Refresh all
+	std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+	for ( ; iter != windows.end(); ++iter)
+	{
+		if ((*iter).second)
+		{
+			try
+			{
+				(*iter).second->Refresh(false, true);
+			}
+			catch (CError& error)
+			{
+				MessageBox((*iter).second->GetWindow(), error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			}
+		}
+	}
 }
 
 /* 
@@ -2327,20 +2867,40 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 		{
 			for (size_t i = 0; i < m_OldDesktopWorkAreas.size(); ++i)
 			{
-				SystemParametersInfo(SPI_SETWORKAREA, 0, &m_OldDesktopWorkAreas[i], 0);
+				RECT r = m_OldDesktopWorkAreas[i];
+
+				BOOL result = SystemParametersInfo(SPI_SETWORKAREA, 0, &r, 0);
+
+				if (c_Debug)
+				{
+					std::wstring format = L"Resetting WorkArea@%i: L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)";
+					if (!result)
+					{
+						format += L" => FAIL.";
+					}
+					DebugLog(format.c_str(), i + 1, r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
+				}
 			}
 			changed = true;
 		}
 	}
 	else
 	{
+		const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
+		const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
+
 		if (m_OldDesktopWorkAreas.empty())
 		{
 			// Store old work areas for changing them back
 			for (UINT i = 0; i < CSystem::GetMonitorCount(); ++i)
 			{
-				m_OldDesktopWorkAreas.push_back(CSystem::GetMultiMonitorInfo().monitors[i].work);
+				m_OldDesktopWorkAreas.push_back(monitors[i].work);
 			}
+		}
+
+		if (c_Debug)
+		{
+			DebugLog(L"DesktopWorkAreaType: %s", m_DesktopWorkAreaType ? L"Margin" : L"Default");
 		}
 
 		for (UINT i = 0; i <= CSystem::GetMonitorCount(); ++i)
@@ -2349,14 +2909,27 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 			if (it != m_DesktopWorkAreas.end())
 			{
 				RECT r = it->second;
-				if (i != 0)
+
+				// Move rect to correct offset
+				if (m_DesktopWorkAreaType)
 				{
-					// Move rect to correct offset
-					const RECT screenRect = CSystem::GetMultiMonitorInfo().monitors[i - 1].screen;
-					r.top += screenRect.top;
-					r.left += screenRect.left;
-					r.bottom += screenRect.top;
-					r.right += screenRect.left;
+					RECT margin = r;
+					r = (i == 0) ? monitors[multimonInfo.primary - 1].screen : monitors[i - 1].screen;
+					r.left += margin.left;
+					r.top += margin.top;
+					r.right -= margin.right;
+					r.bottom -= margin.bottom;
+				}
+				else
+				{
+					if (i != 0)
+					{
+						const RECT screenRect = monitors[i - 1].screen;
+						r.left += screenRect.left;
+						r.top += screenRect.top;
+						r.right += screenRect.left;
+						r.bottom += screenRect.top;
+					}
 				}
 
 				BOOL result = SystemParametersInfo(SPI_SETWORKAREA, 0, &r, 0);
@@ -2374,21 +2947,21 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 						wsprintf(buffer, L"@%i", i);
 						format += buffer;
 					}
-					format += L": L=%i, T=%i, R=%i, B=%i";
+					format += L": L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)";
 					if (!result)
 					{
 						format += L" => FAIL.";
 					}
-					DebugLog(format.c_str(), r.left, r.top, r.right, r.bottom);
+					DebugLog(format.c_str(), r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
 				}
 			}
 		}
 	}
 
-	if (changed)
+	if (changed && CSystem::GetWindow())
 	{
-		// Broadcast all changes
-		SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, SPI_SETWORKAREA, 0, SMTO_ABORTIFHUNG, 1000, NULL);
+		// Update CSystem::MULTIMONITOR_INFO for for work area variables
+		SendMessageTimeout(CSystem::GetWindow(), WM_SETTINGCHANGE, SPI_SETWORKAREA, 0, SMTO_ABORTIFHUNG, 1000, NULL);
 	}
 }
 

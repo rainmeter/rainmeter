@@ -134,10 +134,23 @@ void CSystem::Finalize()
 	KillTimer(c_Window, TIMER_NETSTATS);
 	KillTimer(c_Window, TIMER_DELETELATER);
 
-	if (c_WinEventHook) UnhookWinEvent(c_WinEventHook);
+	if (c_WinEventHook)
+	{
+		UnhookWinEvent(c_WinEventHook);
+		c_WinEventHook = NULL;
+	}
 
-	if (c_HelperWindow) DestroyWindow(c_HelperWindow);
-	if (c_Window) DestroyWindow(c_Window);
+	if (c_HelperWindow)
+	{
+		DestroyWindow(c_HelperWindow);
+		c_HelperWindow = NULL;
+	}
+
+	if (c_Window)
+	{
+		DestroyWindow(c_Window);
+		c_Window = NULL;
+	}
 }
 
 /* MyInfoEnumProc
@@ -522,7 +535,7 @@ void CSystem::UpdateWorkareaInfo()
 
 			if (CRainmeter::GetDebug())
 			{
-				DebugLog(L"WorkArea @%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+				DebugLog(L"WorkArea@%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 					i + 1,
 					info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
 					info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);

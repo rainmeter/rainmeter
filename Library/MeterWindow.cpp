@@ -502,7 +502,6 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 {
 	if(!m_ChildWindow)
 	{
-		HWND parent = GetAncestor(m_Window, GA_PARENT);
 		HWND winPos = HWND_NOTOPMOST;
 		m_WindowZPosition = zPos;
 
@@ -1453,6 +1452,8 @@ void CMeterWindow::ReadConfig()
 	m_AlphaValue = 255;
 	m_FadeDuration = 250;
 
+	std::wstring group = L"";
+
 	CConfigParser parser;
 	parser.Initialize(iniFile.c_str(), m_Rainmeter);
 
@@ -1531,6 +1532,9 @@ void CMeterWindow::ReadConfig()
 		m_AlphaValue = max(0, m_AlphaValue);
 
 		m_FadeDuration = parser.ReadInt(section, L"FadeDuration", m_FadeDuration);
+
+		group = parser.ReadString(section, L"Group", group.c_str());
+		InitializeGroup(group);
 
 		// On the second loop override settings from the skin's section
 		section = m_SkinName.c_str();

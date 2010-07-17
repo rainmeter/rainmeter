@@ -48,30 +48,56 @@ enum PLATFORM
 	PLATFORM_XP
 };
 
-void RainmeterActivateConfig(HWND, const char* arg);
-void RainmeterDeactivateConfig(HWND, const char* arg);
-void RainmeterToggleConfig(HWND, const char* arg);
 void RainmeterRefresh(HWND, const char* arg);
 void RainmeterRefreshApp(HWND, const char* arg);
 void RainmeterRedraw(HWND, const char* arg);
-void RainmeterToggleMeasure(HWND, const char* arg);
-void RainmeterEnableMeasure(HWND, const char* arg);
-void RainmeterDisableMeasure(HWND, const char* arg);
-void RainmeterToggleMeter(HWND, const char* arg);
-void RainmeterShowMeter(HWND, const char* arg);
-void RainmeterHideMeter(HWND, const char* arg);
 void RainmeterShow(HWND, const char* arg);
 void RainmeterHide(HWND, const char* arg);
 void RainmeterToggle(HWND, const char* arg);
+void RainmeterShowFade(HWND, const char* arg);
+void RainmeterHideFade(HWND, const char* arg);
+void RainmeterToggleFade(HWND, const char* arg);
+void RainmeterShowMeter(HWND, const char* arg);
+void RainmeterHideMeter(HWND, const char* arg);
+void RainmeterToggleMeter(HWND, const char* arg);
+void RainmeterMoveMeter(HWND, const char* arg);
+void RainmeterEnableMeasure(HWND, const char* arg);
+void RainmeterDisableMeasure(HWND, const char* arg);
+void RainmeterToggleMeasure(HWND, const char* arg);
+void RainmeterActivateConfig(HWND, const char* arg);
+void RainmeterDeactivateConfig(HWND, const char* arg);
+void RainmeterToggleConfig(HWND, const char* arg);
 void RainmeterMove(HWND, const char* arg);
 void RainmeterZPos(HWND, const char* arg);
+void RainmeterSetTransparency(HWND, const char* arg);
+void RainmeterSetVariable(HWND, const char* arg);
+
+void RainmeterRefreshGroup(HWND, const char* arg);
+void RainmeterRedrawGroup(HWND, const char* arg);
+void RainmeterShowGroup(HWND, const char* arg);
+void RainmeterHideGroup(HWND, const char* arg);
+void RainmeterToggleGroup(HWND, const char* arg);
+void RainmeterShowFadeGroup(HWND, const char* arg);
+void RainmeterHideFadeGroup(HWND, const char* arg);
+void RainmeterToggleFadeGroup(HWND, const char* arg);
+void RainmeterShowMeterGroup(HWND, const char* arg);
+void RainmeterHideMeterGroup(HWND, const char* arg);
+void RainmeterToggleMeterGroup(HWND, const char* arg);
+void RainmeterEnableMeasureGroup(HWND, const char* arg);
+void RainmeterDisableMeasureGroup(HWND, const char* arg);
+void RainmeterToggleMeasureGroup(HWND, const char* arg);
+void RainmeterDeactivateConfigGroup(HWND, const char* arg);
+void RainmeterZPosGroup(HWND, const char* arg);
+void RainmeterSetTransparencyGroup(HWND, const char* arg);
+void RainmeterSetVariableGroup(HWND, const char* arg);
+
 void RainmeterLsHook(HWND, const char* arg);
 void RainmeterAbout(HWND, const char* arg);
+void RainmeterSkinMenu(HWND, const char* arg);
+void RainmeterTrayMenu(HWND, const char* arg);
 void RainmeterResetStats(HWND, const char* arg);
-void RainmeterMoveMeter(HWND, const char* arg);
 void RainmeterPluginBang(HWND, const char* arg);
 void RainmeterQuit(HWND, const char* arg);
-void RainmeterSetVariable(HWND, const char* arg);
 
 void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
 
@@ -90,13 +116,6 @@ public:
 		std::wstring config;
 		std::vector<std::wstring> iniFiles;
 		std::vector<UINT> commands;
-		int active;
-	};
-
-	struct CONFIGORDER
-	{
-		std::wstring config;
-		int id;
 		int active;
 	};
 
@@ -121,9 +140,9 @@ public:
 
 	CMeterWindow* GetMeterWindow(const std::wstring& config);
 	CMeterWindow* GetMeterWindow(HWND hwnd);
+	void GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group = L"");
 	std::map<std::wstring, CMeterWindow*>& GetAllMeterWindows() { return m_Meters; };
 	const std::vector<CONFIG>& GetAllConfigs() { return m_ConfigStrings; };
-	const std::multimap<int, CONFIGORDER>& GetAllConfigOrders() { return m_ConfigOrders; }
 	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; };
 
 	void ActivateConfig(int configIndex, int iniIndex);
@@ -198,7 +217,7 @@ private:
 	void ScanForConfigs(std::wstring& path);
 	void ScanForThemes(std::wstring& path);
 	void ReadGeneralSettings(std::wstring& path);
-	void SetConfigOrder(const std::wstring& config, int index, int active);
+	void SetConfigOrder(int configIndex);
 	int GetLoadOrder(const std::wstring& config);
 	bool SetActiveConfig(std::wstring& skinName, std::wstring& skinIni);
 	void UpdateDesktopWorkArea(bool reset);
@@ -218,7 +237,7 @@ private:
 
 	std::vector<CONFIG> m_ConfigStrings;	    // All configs found in the given folder
 	std::vector<CONFIGMENU> m_ConfigMenu;
-	std::multimap<int, CONFIGORDER> m_ConfigOrders;
+	std::multimap<int, int> m_ConfigOrders;
 	std::map<std::wstring, CMeterWindow*> m_Meters;			// The meter windows
 	std::vector<std::wstring> m_Themes;
 
@@ -240,7 +259,8 @@ private:
 	BOOL m_DisableVersionCheck;
 	BOOL m_NewVersion;
 	
-	BOOL m_DesktopWorkAreaChanged;
+	bool m_DesktopWorkAreaChanged;
+	bool m_DesktopWorkAreaType;			// If true, DesktopWorkArea is treated as "margin"
 	std::map<UINT, RECT> m_DesktopWorkAreas;
 	std::vector<RECT> m_OldDesktopWorkAreas;
 
