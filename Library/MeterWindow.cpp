@@ -333,6 +333,11 @@ void CMeterWindow::Refresh(bool init, bool all)
 		std::list<CMeter*>::iterator j = m_Meters.begin();
 		for( ; j != m_Meters.end(); ++j)
 		{
+			if ((*j)->GetToolTipHandle() != NULL)
+			{
+				DestroyWindow((*j)->GetToolTipHandle());
+				(*j)->SetToolTipHandle(NULL);
+			}
 			delete (*j);
 		}
 		m_Meters.clear();
@@ -1840,6 +1845,11 @@ void CMeterWindow::ReadSkin()
 						}
 
 						meter->ReadConfig(strSection.c_str());
+
+						if (!meter->GetToolTipText().empty())
+						{
+							meter->CreateToolTip(this);
+						}
 					}
 				}
 				catch (CError& error)
@@ -2318,6 +2328,15 @@ void CMeterWindow::Update(bool nodraw)
 		}
 
 		Redraw();
+	}
+
+	j = m_Meters.begin();
+	for ( ; j != m_Meters.end(); ++j)
+	{
+		if ((*j)->GetToolTipHandle() != NULL)
+		{
+			(*j)->UpdateToolTip();
+		}
 	}
 
 	// Check for transitions and start the timer if necessary

@@ -185,6 +185,24 @@ int CMeter::GetY(bool abs)
 }
 
 /*
+** GetMeterRect
+**
+** Returns a RECT containing the dimensions of the meter within the MeterWindow
+**
+*/
+RECT CMeter::GetMeterRect()
+{
+	RECT meterRect;
+
+	meterRect.left = GetX();
+	meterRect.top = GetY();
+	meterRect.right = GetX() + m_W;
+	meterRect.bottom = GetY() + m_H;
+
+	return meterRect;
+}
+
+/*
 ** HitTest
 **
 ** Checks if the given point is inside the meter.
@@ -340,6 +358,11 @@ void CMeter::ReadConfig(const WCHAR* section)
 		|| !m_MiddleMouseUpAction.empty() || !m_MiddleMouseDownAction.empty() || !m_MiddleMouseDoubleClickAction.empty()
 		|| !m_RightMouseUpAction.empty() || !m_RightMouseDownAction.empty() || !m_RightMouseDoubleClickAction.empty() );
 
+	m_ToolTipText = parser.ReadString(section, L"ToolTipText", L"", true);
+	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"", true);
+	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"", true);
+	m_ToolTipType = 0!=parser.ReadInt(section, L"ToolTipType", 0);
+
 	m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
 
 	m_UpdateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
@@ -464,6 +487,149 @@ bool CMeter::Update()
 	m_UpdateCounter = 0;
 
 	return true;
+}
+
+/*
+** CreateToolTip
+**
+** Does the initial construction of the ToolTip for the meter
+*/
+void CMeter::CreateToolTip(CMeterWindow* meterWindow)
+{
+	HWND hwndTT;
+	if(!m_ToolTipType)
+	{
+		hwndTT = CreateWindowEx(WS_EX_TOPMOST,
+			TOOLTIPS_CLASS, 
+			NULL,
+			WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,		
+			CW_USEDEFAULT, 
+			CW_USEDEFAULT,
+			CW_USEDEFAULT, 
+			CW_USEDEFAULT,
+			m_MeterWindow->GetWindow(), 
+			NULL, 
+			m_MeterWindow->GetMainObject()->GetInstance(),
+			NULL);
+	}
+	else
+	{
+		hwndTT = CreateWindowEx(WS_EX_TOPMOST,
+			TOOLTIPS_CLASS, 
+			NULL,
+			WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP | TTS_BALLOON,		
+			CW_USEDEFAULT, 
+			CW_USEDEFAULT,
+			CW_USEDEFAULT, 
+			CW_USEDEFAULT,
+			m_MeterWindow->GetWindow(), 
+			NULL, 
+			m_MeterWindow->GetMainObject()->GetInstance(),
+			NULL);
+	}
+	SetWindowPos(hwndTT, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+	TOOLINFO ti = { 0 };
+	ti.cbSize = sizeof(TOOLINFO);
+	ti.uFlags = TTF_SUBCLASS;
+	ti.hwnd = m_MeterWindow->GetWindow();
+	ti.hinst = m_MeterWindow->GetMainObject()->GetInstance();
+	ti.lpszText = (PTSTR) m_ToolTipText.c_str();
+	ti.rect = GetMeterRect();
+
+	SendMessage(hwndTT, TTM_ADDTOOL, NULL, (LPARAM) (LPTOOLINFO) &ti);
+
+	if (!m_ToolTipTitle.empty())
+	{
+		HICON hIcon = NULL;
+		if (!m_ToolTipIcon.empty())
+		{
+			if (!_wcsicmp(m_ToolTipIcon.c_str(), L"INFO"))
+			{
+				hIcon = (HICON) TTI_INFO;
+			}
+			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"WARNING"))
+			{
+				hIcon = (HICON) TTI_WARNING;
+			}
+			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"ERROR"))
+			{
+				hIcon = (HICON) TTI_ERROR;
+			}
+			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"QUESTION"))
+			{
+				hIcon = LoadIcon(NULL, IDI_QUESTION);
+			}
+			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"SHIELD"))
+			{
+				hIcon = LoadIcon(NULL, IDI_SHIELD);
+			}
+			else
+			{
+				hIcon = (HICON) LoadImage(NULL, m_ToolTipIcon.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+			}
+		}
+
+		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) m_ToolTipTitle.c_str());
+		DestroyIcon(hIcon);
+	}
+	m_ToolTipHandle = hwndTT;
+}
+
+/*
+** UpdateToolTip
+**
+** Updates the ToolTip to match new values
+*/
+void CMeter::UpdateToolTip()
+{
+	HWND hwndTT = m_ToolTipHandle;
+
+	TOOLINFO ti = { 0 };
+	ti.cbSize = sizeof(TOOLINFO);
+	ti.hwnd = m_MeterWindow->GetWindow();
+
+	SendMessage(hwndTT, TTM_GETTOOLINFO, NULL, (LPARAM) (LPTOOLINFO) &ti);
+
+	ti.lpszText = (PTSTR) m_ToolTipText.c_str();
+	ti.rect = GetMeterRect();
+
+	SendMessage(hwndTT, TTM_SETTOOLINFO, NULL, (LPARAM) (LPTOOLINFO) &ti); 
+
+	if (!m_ToolTipTitle.empty())
+	{
+		HICON hIcon = NULL;
+		if (!m_ToolTipIcon.empty())
+		{
+			if (!_wcsicmp(m_ToolTipIcon.c_str(), L"INFO"))
+			{
+				hIcon = (HICON) TTI_INFO;
+			}
+			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"WARNING"))
+			{
+				hIcon = (HICON) TTI_WARNING;
+			}
+			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"ERROR"))
+			{
+				hIcon = (HICON) TTI_ERROR;
+			}
+			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"QUESTION"))
+			{
+				hIcon = LoadIcon(NULL, IDI_QUESTION);
+			}
+			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"SHIELD"))
+			{
+				hIcon = LoadIcon(NULL, IDI_SHIELD);
+			}
+			else
+			{
+				hIcon = (HICON) LoadImage(NULL, m_ToolTipIcon.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+			}
+		}
+
+		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) m_ToolTipTitle.c_str());
+		DestroyIcon(hIcon);
+	}
 }
 
 /*

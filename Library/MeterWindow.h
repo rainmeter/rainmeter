@@ -129,6 +129,8 @@ public:
 
 	int Initialize(CRainmeter& Rainmeter);
 
+	CRainmeter* GetMainObject() { return m_Rainmeter; };
+
 	void RunBang(BANGCOMMAND bang, const WCHAR* arg);
 
 	void MoveMeter(int x, int y, const WCHAR* name);

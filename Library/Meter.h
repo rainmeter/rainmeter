@@ -47,6 +47,7 @@ public:
 	virtual int GetW() { return m_Hidden ? 0 : m_W; };
 	virtual int GetX(bool abs = false);
 	virtual int GetY(bool abs = false);
+	RECT GetMeterRect();
 
 	void SetX(int x) { m_X = x; m_RelativeX = POSITION_ABSOLUTE; };
 	void SetY(int y) { m_Y = y; m_RelativeY = POSITION_ABSOLUTE; };
@@ -62,6 +63,13 @@ public:
 	std::wstring& GetMiddleMouseDoubleClickAction() { return m_MiddleMouseDoubleClickAction; };
 	std::wstring& GetMouseOverAction() { return m_MouseOverAction; };
 	std::wstring& GetMouseLeaveAction() { return m_MouseLeaveAction; };
+
+	std::wstring& GetToolTipText() { return m_ToolTipText; };
+	HWND GetToolTipHandle() { return m_ToolTipHandle; };
+	void SetToolTipHandle(HWND handle) { m_ToolTipHandle = handle; };
+
+	void CreateToolTip(CMeterWindow* meterWindow);
+	void UpdateToolTip();
 
 	bool HasMouseAction() { return m_HasMouseAction; };
 	bool HasMouseActionCursor() { return m_MouseActionCursor; };
@@ -112,6 +120,13 @@ protected:
 	bool m_Hidden;				// Status of the meter
 	CMeter*	m_RelativeMeter;
 	bool m_DynamicVariables;		// If true, the measure contains dynamic variables
+
+	std::wstring m_ToolTipText;
+	std::wstring m_ToolTipTitle;
+	std::wstring m_ToolTipIcon;
+	bool m_ToolTipType;
+
+	HWND m_ToolTipHandle;
 
 	std::wstring m_RightMouseDownAction;	// Actions for left and right and middle mouse buttons
 	std::wstring m_RightMouseUpAction;
