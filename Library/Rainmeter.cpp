@@ -261,6 +261,44 @@ void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 	}
 }
 
+/*
+** BangGroupWithArgs
+**
+** Parses Bang args for Group
+**
+*/
+void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = ParseString(arg);
+
+		if (subStrings.size() > numOfArgs)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[numOfArgs]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				std::wstring argument = L"\"";
+				for (size_t i = 0; i < numOfArgs; ++i)
+				{
+					argument += subStrings[i];
+					argument += L"\" \"";
+				}
+				argument += (*iter).second->GetSkinName();
+				argument += L"\"";
+				BangWithArgs(bang, argument.c_str(), numOfArgs);
+			}
+		}
+		else
+		{
+			DebugLog(L"Incorrect number of arguments for the group bang!");
+		}
+	}
+}
+
 
 /*
 ** RainmeterHide
@@ -591,29 +629,7 @@ void RainmeterSetVariable(HWND, const char* arg)
 */
 void RainmeterHideGroup(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 0)
-		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
-			{
-				std::wstring argument = L"\"";
-				argument += (*iter).second->GetSkinName();
-				argument += L"\"";
-				BangWithArgs(BANG_HIDE, argument.c_str(), 0);
-			}
-		}
-		else
-		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterHideGroup");
-		}
-	}
+	BangGroupWithArgs(BANG_HIDE, ConvertToWide(arg).c_str(), 0);
 }
 
 /*
@@ -624,29 +640,7 @@ void RainmeterHideGroup(HWND, const char* arg)
 */
 void RainmeterShowGroup(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 0)
-		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
-			{
-				std::wstring argument = L"\"";
-				argument += (*iter).second->GetSkinName();
-				argument += L"\"";
-				BangWithArgs(BANG_SHOW, argument.c_str(), 0);
-			}
-		}
-		else
-		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterShowGroup");
-		}
-	}
+	BangGroupWithArgs(BANG_SHOW, ConvertToWide(arg).c_str(), 0);
 }
 
 /*
@@ -657,29 +651,7 @@ void RainmeterShowGroup(HWND, const char* arg)
 */
 void RainmeterToggleGroup(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 0)
-		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
-			{
-				std::wstring argument = L"\"";
-				argument += (*iter).second->GetSkinName();
-				argument += L"\"";
-				BangWithArgs(BANG_TOGGLE, argument.c_str(), 0);
-			}
-		}
-		else
-		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterToggleGroup");
-		}
-	}
+	BangGroupWithArgs(BANG_TOGGLE, ConvertToWide(arg).c_str(), 0);
 }
 
 /*
@@ -690,29 +662,7 @@ void RainmeterToggleGroup(HWND, const char* arg)
 */
 void RainmeterHideFadeGroup(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 0)
-		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
-			{
-				std::wstring argument = L"\"";
-				argument += (*iter).second->GetSkinName();
-				argument += L"\"";
-				BangWithArgs(BANG_HIDEFADE, argument.c_str(), 0);
-			}
-		}
-		else
-		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterHideFadeGroup");
-		}
-	}
+	BangGroupWithArgs(BANG_HIDEFADE, ConvertToWide(arg).c_str(), 0);
 }
 
 /*
@@ -723,29 +673,7 @@ void RainmeterHideFadeGroup(HWND, const char* arg)
 */
 void RainmeterShowFadeGroup(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 0)
-		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
-			{
-				std::wstring argument = L"\"";
-				argument += (*iter).second->GetSkinName();
-				argument += L"\"";
-				BangWithArgs(BANG_SHOWFADE, argument.c_str(), 0);
-			}
-		}
-		else
-		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterShowFadeGroup");
-		}
-	}
+	BangGroupWithArgs(BANG_SHOWFADE, ConvertToWide(arg).c_str(), 0);
 }
 
 /*
@@ -756,29 +684,7 @@ void RainmeterShowFadeGroup(HWND, const char* arg)
 */
 void RainmeterToggleFadeGroup(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 0)
-		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
-			{
-				std::wstring argument = L"\"";
-				argument += (*iter).second->GetSkinName();
-				argument += L"\"";
-				BangWithArgs(BANG_TOGGLEFADE, argument.c_str(), 0);
-			}
-		}
-		else
-		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterToggleFadeGroup");
-		}
-	}
+	BangGroupWithArgs(BANG_TOGGLEFADE, ConvertToWide(arg).c_str(), 0);
 }
 
 /*
@@ -855,29 +761,7 @@ void RainmeterToggleMeasureGroup(HWND, const char* arg)
 */
 void RainmeterRefreshGroup(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 0)
-		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
-			{
-				std::wstring argument = L"\"";
-				argument += (*iter).second->GetSkinName();
-				argument += L"\"";
-				BangWithArgs(BANG_REFRESH, argument.c_str(), 0);
-			}
-		}
-		else
-		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterRefreshGroup");
-		}
-	}
+	BangGroupWithArgs(BANG_REFRESH, ConvertToWide(arg).c_str(), 0);
 }
 
 /*
@@ -888,29 +772,7 @@ void RainmeterRefreshGroup(HWND, const char* arg)
 */
 void RainmeterRedrawGroup(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 0)
-		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
-			{
-				std::wstring argument = L"\"";
-				argument += (*iter).second->GetSkinName();
-				argument += L"\"";
-				BangWithArgs(BANG_REDRAW, argument.c_str(), 0);
-			}
-		}
-		else
-		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterRedrawGroup");
-		}
-	}
+	BangGroupWithArgs(BANG_REDRAW, ConvertToWide(arg).c_str(), 0);
 }
 
 /*
@@ -951,31 +813,7 @@ void RainmeterDeactivateConfigGroup(HWND, const char* arg)
 */
 void RainmeterZPosGroup(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 1)
-		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[1]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
-			{
-				std::wstring argument = L"\"";
-				argument += subStrings[0];
-				argument += L"\" \"";
-				argument += (*iter).second->GetSkinName();
-				argument += L"\"";
-				BangWithArgs(BANG_ZPOS, argument.c_str(), 1);
-			}
-		}
-		else
-		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterZPosGroup");
-		}
-	}
+	BangGroupWithArgs(BANG_ZPOS, ConvertToWide(arg).c_str(), 1);
 }
 
 /*
@@ -986,31 +824,7 @@ void RainmeterZPosGroup(HWND, const char* arg)
 */
 void RainmeterSetTransparencyGroup(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 1)
-		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[1]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
-			{
-				std::wstring argument = L"\"";
-				argument += subStrings[0];
-				argument += L"\" \"";
-				argument += (*iter).second->GetSkinName();
-				argument += L"\"";
-				BangWithArgs(BANG_SETTRANSPARENCY, argument.c_str(), 1);
-			}
-		}
-		else
-		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterSetTransparencyGroup");
-		}
-	}
+	BangGroupWithArgs(BANG_SETTRANSPARENCY, ConvertToWide(arg).c_str(), 1);
 }
 
 /*
@@ -1021,33 +835,7 @@ void RainmeterSetTransparencyGroup(HWND, const char* arg)
 */
 void RainmeterSetVariableGroup(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 2)
-		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[2]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
-			{
-				std::wstring argument = L"\"";
-				argument += subStrings[0];
-				argument += L"\" \"";
-				argument += subStrings[1];
-				argument += L"\" \"";
-				argument += (*iter).second->GetSkinName();
-				argument += L"\"";
-				BangWithArgs(BANG_SETVARIABLE, argument.c_str(), 2);
-			}
-		}
-		else
-		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterSetVariableGroup");
-		}
-	}
+	BangGroupWithArgs(BANG_SETVARIABLE, ConvertToWide(arg).c_str(), 2);
 }
 
 /*

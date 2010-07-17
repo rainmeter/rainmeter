@@ -100,6 +100,7 @@ void RainmeterPluginBang(HWND, const char* arg);
 void RainmeterQuit(HWND, const char* arg);
 
 void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
+void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
 
 struct GlobalConfig
 {
