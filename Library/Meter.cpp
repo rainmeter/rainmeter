@@ -538,6 +538,7 @@ void CMeter::CreateToolTip(CMeterWindow* meterWindow)
 	ti.rect = GetMeterRect();
 
 	SendMessage(hwndTT, TTM_ADDTOOL, NULL, (LPARAM) (LPTOOLINFO) &ti);
+	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, NULL, 1000);
 
 	if (!m_ToolTipTitle.empty())
 	{
@@ -572,6 +573,10 @@ void CMeter::CreateToolTip(CMeterWindow* meterWindow)
 
 		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) m_ToolTipTitle.c_str());
 		DestroyIcon(hIcon);
+	}
+	if (IsHidden())
+	{
+		SendMessage(hwndTT, TTM_ACTIVATE, FALSE, NULL);
 	}
 	m_ToolTipHandle = hwndTT;
 }

@@ -502,6 +502,7 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 {
 	if(!m_ChildWindow)
 	{
+		HWND parent = GetAncestor(m_Window, GA_PARENT);
 		HWND winPos = HWND_NOTOPMOST;
 		m_WindowZPosition = zPos;
 
@@ -876,6 +877,10 @@ void CMeterWindow::ShowMeter(const WCHAR* name, bool group)
 		}
 
 		(*j)->Show();
+		if ((*j)->GetToolTipHandle() != NULL)
+		{
+			SendMessage((*j)->GetToolTipHandle(), TTM_ACTIVATE, TRUE, NULL);
+		}
 		m_ResetRegion = true;	// Need to recalculate the window region
 		if (!group) return;
 	}
@@ -906,6 +911,10 @@ void CMeterWindow::HideMeter(const WCHAR* name, bool group)
 		}
 
 		(*j)->Hide();
+		if ((*j)->GetToolTipHandle() != NULL)
+		{
+			SendMessage((*j)->GetToolTipHandle(), TTM_ACTIVATE, FALSE, NULL);
+		}
 		m_ResetRegion = true;	// Need to recalculate the windowregion
 		if (!group) return;
 	}
@@ -938,10 +947,18 @@ void CMeterWindow::ToggleMeter(const WCHAR* name, bool group)
 		if ((*j)->IsHidden())
 		{
 			(*j)->Show();
+			if ((*j)->GetToolTipHandle() != NULL)
+			{
+				SendMessage((*j)->GetToolTipHandle(), TTM_ACTIVATE, TRUE, NULL);
+			}
 		}
 		else
 		{
 			(*j)->Hide();
+			if ((*j)->GetToolTipHandle() != NULL)
+			{
+				SendMessage((*j)->GetToolTipHandle(), TTM_ACTIVATE, FALSE, NULL);
+			}
 		}
 		m_ResetRegion = true;	// Need to recalculate the window region
 		if (!group) return;
@@ -1452,8 +1469,6 @@ void CMeterWindow::ReadConfig()
 	m_AlphaValue = 255;
 	m_FadeDuration = 250;
 
-	std::wstring group = L"";
-
 	CConfigParser parser;
 	parser.Initialize(iniFile.c_str(), m_Rainmeter);
 
@@ -1532,9 +1547,6 @@ void CMeterWindow::ReadConfig()
 		m_AlphaValue = max(0, m_AlphaValue);
 
 		m_FadeDuration = parser.ReadInt(section, L"FadeDuration", m_FadeDuration);
-
-		group = parser.ReadString(section, L"Group", group.c_str());
-		InitializeGroup(group);
 
 		// On the second loop override settings from the skin's section
 		section = m_SkinName.c_str();
