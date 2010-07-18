@@ -222,7 +222,7 @@ private:
 	int GetLoadOrder(const std::wstring& config);
 	bool SetActiveConfig(std::wstring& skinName, std::wstring& skinIni);
 	void UpdateDesktopWorkArea(bool reset);
-	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index);
+	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU configMenu);
 	void ChangeSkinIndex(HMENU subMenu, int index);
 	int ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse);
 	HMENU CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData);

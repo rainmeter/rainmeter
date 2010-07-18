@@ -1948,14 +1948,19 @@ int CRainmeter::ScanForConfigsRecursive(std::wstring& path, std::wstring base, i
 		{
 			if(hSearchIni == INVALID_HANDLE_VALUE) break;    // No more files found
 
-			CONFIGMENU menuItem;
-			menuItem.name = fileDataIni.cFileName;
-			menuItem.index = m_ConfigStrings.size();
-			menu.push_back(menuItem);
+			// Check whether the extension is ".ini"
+			std::wstring ext = fileDataIni.cFileName;
+			std::wstring::size_type pos = ext.find_last_of(L'.');
+			if (pos != std::wstring::npos && wcsicmp(&(ext.c_str()[pos]), L".ini") == 0)
+			{
+				CONFIGMENU menuItem;
+				menuItem.name = fileDataIni.cFileName;
+				menuItem.index = m_ConfigStrings.size();
+				menu.push_back(menuItem);
 
-			config.iniFiles.push_back(fileDataIni.cFileName);
-			config.commands.push_back(ID_CONFIG_FIRST + index++);
-
+				config.iniFiles.push_back(fileDataIni.cFileName);
+				config.commands.push_back(ID_CONFIG_FIRST + index++);
+			}
 		} while (FindNextFile(hSearchIni, &fileDataIni));
 
 		if (!config.iniFiles.empty())
@@ -1988,6 +1993,12 @@ int CRainmeter::ScanForConfigsRecursive(std::wstring& path, std::wstring base, i
 			{
 				std::vector<CONFIGMENU>::iterator iter = menu.end() - 1;
 				index = ScanForConfigsRecursive(path, base + fileData.cFileName, index, (*iter).children, false);
+
+				// Remove menu item if it has no child
+				if ((*iter).children.empty())
+				{
+					menu.erase(iter);
+				}
 			}
 		}
 	} while(FindNextFile(hSearch, &fileData));
@@ -2856,111 +2867,122 @@ PLATFORM CRainmeter::IsNT()
 */
 void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow) 
 {
-	// Show context menu, if no actions were executed
-	HMENU menu = LoadMenu(m_Instance, MAKEINTRESOURCE(IDR_CONTEXT_MENU));
+	static bool active = false;
 
-	if(menu)
+	if (!active)
 	{
-		HMENU subMenu = GetSubMenu(menu, 0);
-		if(subMenu)
-		{
-			if (!GetDummyLitestep())
-			{
-				// Disable Quit if ran as a Litestep plugin
-				EnableMenuItem(subMenu, ID_CONTEXT_QUIT, MF_BYCOMMAND | MF_GRAYED);
-				EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
-			}
+		active = true;
 
-			if (_waccess(m_LogFile.c_str(), 0) == -1)
+		// Show context menu, if no actions were executed
+		HMENU menu = LoadMenu(m_Instance, MAKEINTRESOURCE(IDR_CONTEXT_MENU));
+
+		if(menu)
+		{
+			HMENU subMenu = GetSubMenu(menu, 0);
+			if(subMenu)
 			{
-				EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
-				EnableMenuItem(subMenu, ID_CONTEXT_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
-				EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
-			}
-			else
-			{
-				if (m_Logging)
+				if (!GetDummyLitestep())
 				{
-					EnableMenuItem(subMenu, ID_CONTEXT_STARTLOG, MF_BYCOMMAND | MF_GRAYED);
+					// Disable Quit if ran as a Litestep plugin
+					EnableMenuItem(subMenu, ID_CONTEXT_QUIT, MF_BYCOMMAND | MF_GRAYED);
+					EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
+				}
+
+				if (_waccess(m_LogFile.c_str(), 0) == -1)
+				{
+					EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
+					EnableMenuItem(subMenu, ID_CONTEXT_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
+					EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
 				}
 				else
 				{
-					EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
+					if (m_Logging)
+					{
+						EnableMenuItem(subMenu, ID_CONTEXT_STARTLOG, MF_BYCOMMAND | MF_GRAYED);
+					}
+					else
+					{
+						EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
+					}
 				}
-			}
 
-			if (c_Debug)
-			{
-				CheckMenuItem(subMenu, ID_CONTEXT_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
-			}
-
-			HMENU configMenu = CreateConfigMenu(m_ConfigMenu);
-			if (configMenu)
-			{
-				AppendMenu(configMenu, MF_SEPARATOR, 0, NULL);
-				AppendMenu(configMenu, 0, ID_CONTEXT_OPENSKINSFOLDER, L"Open Skins\' Folder");
-				AppendMenu(configMenu, 0, ID_CONTEXT_MANAGESKINS, L"Manage Skins...");
-
-				InsertMenu(subMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configMenu, L"Configs");
-			}
-
-			HMENU themeMenu = CreateThemeMenu();
-			if (themeMenu)
-			{
-				InsertMenu(subMenu, 4, MF_BYPOSITION | MF_POPUP, (UINT_PTR)themeMenu, L"Themes");
-				InsertMenu(subMenu, 5, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-			}
-
-			if (meterWindow)
-			{
-				HMENU rainmeterMenu = subMenu;
-				subMenu = CreateSkinMenu(meterWindow, 0);
-				InsertMenu(subMenu, 7, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-				InsertMenu(subMenu, 8, MF_BYPOSITION | MF_POPUP, (UINT_PTR)rainmeterMenu, L"Rainmeter Menu");
-			}
-			else
-			{
-				InsertMenu(subMenu, 11, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-
-				// Create a menu for all active configs
-				std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
-
-				int index = 0;
-				for (; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
+				if (c_Debug)
 				{
-					CMeterWindow* mw = ((*iter).second);
-					HMENU skinMenu = CreateSkinMenu(mw, index);
-					InsertMenu(subMenu, 11, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
-					++index;
+					CheckMenuItem(subMenu, ID_CONTEXT_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
 				}
 
-				// Put Update notifications in the Tray menu
-				if (m_NewVersion)
+				HMENU configMenu = CreateConfigMenu(m_ConfigMenu);
+				if (configMenu)
 				{
-					InsertMenu(subMenu, 0, MF_BYPOSITION, ID_CONTEXT_NEW_VERSION, L"New Version Available");
-					InsertMenu(subMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-					SetMenuDefaultItem(subMenu, ID_CONTEXT_NEW_VERSION, MF_BYCOMMAND);
+					AppendMenu(configMenu, MF_SEPARATOR, 0, NULL);
+					AppendMenu(configMenu, 0, ID_CONTEXT_OPENSKINSFOLDER, L"Open Skins\' Folder");
+					AppendMenu(configMenu, 0, ID_CONTEXT_MANAGESKINS, L"Manage Skins...");
+
+					InsertMenu(subMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configMenu, L"Configs");
+				}
+
+				HMENU themeMenu = CreateThemeMenu();
+				if (themeMenu)
+				{
+					InsertMenu(subMenu, 4, MF_BYPOSITION | MF_POPUP, (UINT_PTR)themeMenu, L"Themes");
+					InsertMenu(subMenu, 5, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+				}
+
+				if (meterWindow)
+				{
+					HMENU rainmeterMenu = subMenu;
+					subMenu = CreateSkinMenu(meterWindow, 0, configMenu);
+					InsertMenu(subMenu, 9, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+					InsertMenu(subMenu, 10, MF_BYPOSITION | MF_POPUP, (UINT_PTR)rainmeterMenu, L"Rainmeter Menu");
+				}
+				else
+				{
+					InsertMenu(subMenu, 11, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+
+					// Create a menu for all active configs
+					std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
+
+					int index = 0;
+					for (; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
+					{
+						CMeterWindow* mw = ((*iter).second);
+						HMENU skinMenu = CreateSkinMenu(mw, index, configMenu);
+						InsertMenu(subMenu, 11, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
+						++index;
+					}
+
+					// Put Update notifications in the Tray menu
+					if (m_NewVersion)
+					{
+						InsertMenu(subMenu, 0, MF_BYPOSITION, ID_CONTEXT_NEW_VERSION, L"New Version Available");
+						InsertMenu(subMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+						SetMenuDefaultItem(subMenu, ID_CONTEXT_NEW_VERSION, MF_BYCOMMAND);
+					}
+				}
+
+				HWND hwnd = meterWindow ? meterWindow->GetWindow() : m_TrayWindow->GetWindow();
+				SetForegroundWindow(hwnd);
+				TrackPopupMenu(
+				  subMenu,
+				  TPM_RIGHTBUTTON | TPM_LEFTALIGN, 
+				  pos.x,
+				  pos.y,
+				  0,
+				  hwnd,
+				  NULL
+				);
+				PostMessage(hwnd, WM_NULL, 0L, 0L);
+
+				if (meterWindow)
+				{
+					DestroyMenu(subMenu);
 				}
 			}
 
-
-			TrackPopupMenu(
-			  subMenu,
-			  TPM_RIGHTBUTTON | TPM_LEFTALIGN, 
-			  pos.x,
-			  pos.y,
-			  0,
-			  meterWindow ? meterWindow->GetWindow() : m_TrayWindow->GetWindow(),
-			  NULL
-			);		
-
-			if (meterWindow)
-			{
-				DestroyMenu(subMenu);
-			}
+			DestroyMenu(menu);
 		}
 
-		DestroyMenu(menu);
+		active = false;
 	}
 }
 
@@ -3017,7 +3039,7 @@ HMENU CRainmeter::CreateThemeMenu()
 	return themeMenu;
 }
 
-HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index)
+HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU configMenu)
 {
 	HMENU skinMenu = LoadMenu(m_Instance, MAKEINTRESOURCE(IDR_SKIN_MENU));
 
@@ -3173,6 +3195,40 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index)
 				}
 				InsertMenu(skinMenu, 2, MF_BYPOSITION | MF_POPUP, (UINT_PTR)variantsMenu, L"Variants");
 				break;
+			}
+		}
+
+		// Add config's root menu
+		int itemCount = GetMenuItemCount(configMenu) - 3;  // Subtract 3 for appended menus
+		if (itemCount > 0)
+		{
+			std::wstring root = meterWindow->GetSkinName();
+			std::wstring::size_type pos = root.find_first_of(L'\\');
+			if (pos != std::wstring::npos)
+			{
+				root.erase(pos);
+			}
+
+			for (int i = 0; i < itemCount; ++i)
+			{
+				WCHAR buffer[MAX_PATH+1] = {0};
+				MENUITEMINFO itemInfo = {sizeof(MENUITEMINFO)};
+				itemInfo.fMask = MIIM_STRING;
+				itemInfo.dwTypeData = buffer;
+				itemInfo.cch = MAX_PATH;
+				if (GetMenuItemInfo(configMenu, (UINT)i, TRUE, &itemInfo))
+				{
+					if (wcsicmp(root.c_str(), buffer) == 0)
+					{
+						HMENU configRootMenu = GetSubMenu(configMenu, i);
+						if (configRootMenu)
+						{
+							InsertMenu(skinMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configRootMenu, root.c_str());
+							InsertMenu(skinMenu, 4, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+						}
+						break;
+					}
+				}
 			}
 		}
 	}
