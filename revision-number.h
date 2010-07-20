@@ -1,2 +1,2 @@
 #pragma once
-const int revision_number = 474;
+const int revision_number = 477;

@@ -361,6 +361,7 @@ void CMeter::ReadConfig(const WCHAR* section)
 	m_ToolTipText = parser.ReadString(section, L"ToolTipText", L"", true);
 	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"", true);
 	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"", true);
+	m_ToolTipWidth = parser.ReadInt(section, L"ToolTipWidth", 1000);
 	m_ToolTipType = 0!=parser.ReadInt(section, L"ToolTipType", 0);
 
 	m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
@@ -538,7 +539,7 @@ void CMeter::CreateToolTip(CMeterWindow* meterWindow)
 	ti.rect = GetMeterRect();
 
 	SendMessage(hwndTT, TTM_ADDTOOL, NULL, (LPARAM) (LPTOOLINFO) &ti);
-	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, NULL, 1000);
+	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, NULL, m_ToolTipWidth);
 
 	if (!m_ToolTipTitle.empty())
 	{

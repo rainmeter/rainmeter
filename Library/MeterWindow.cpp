@@ -2349,6 +2349,10 @@ void CMeterWindow::Update(bool nodraw)
 	j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
+		if (!((*j)->GetToolTipHandle() != NULL) && (!(*j)->GetToolTipText().empty()))
+		{
+			(*j)->CreateToolTip(this);
+		}
 		if ((*j)->GetToolTipHandle() != NULL)
 		{
 			(*j)->UpdateToolTip();

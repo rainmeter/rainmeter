@@ -124,6 +124,7 @@ protected:
 	std::wstring m_ToolTipText;
 	std::wstring m_ToolTipTitle;
 	std::wstring m_ToolTipIcon;
+	unsigned int m_ToolTipWidth;
 	bool m_ToolTipType;
 
 	HWND m_ToolTipHandle;
