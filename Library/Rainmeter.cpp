@@ -2883,32 +2883,34 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 			{
 				if (!GetDummyLitestep())
 				{
-					// Disable Quit if ran as a Litestep plugin
+					// Disable Quit/Logging if ran as a Litestep plugin
 					EnableMenuItem(subMenu, ID_CONTEXT_QUIT, MF_BYCOMMAND | MF_GRAYED);
-					EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
-				}
-
-				if (_waccess(m_LogFile.c_str(), 0) == -1)
-				{
-					EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
-					EnableMenuItem(subMenu, ID_CONTEXT_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
-					EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
+					EnableMenuItem(subMenu, 6, MF_BYPOSITION | MF_GRAYED);
 				}
 				else
 				{
-					if (m_Logging)
+					if (_waccess(m_LogFile.c_str(), 0) == -1)
 					{
-						EnableMenuItem(subMenu, ID_CONTEXT_STARTLOG, MF_BYCOMMAND | MF_GRAYED);
+						EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
+						EnableMenuItem(subMenu, ID_CONTEXT_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
+						EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
 					}
 					else
 					{
-						EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
+						if (m_Logging)
+						{
+							EnableMenuItem(subMenu, ID_CONTEXT_STARTLOG, MF_BYCOMMAND | MF_GRAYED);
+						}
+						else
+						{
+							EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
+						}
 					}
-				}
 
-				if (c_Debug)
-				{
-					CheckMenuItem(subMenu, ID_CONTEXT_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
+					if (c_Debug)
+					{
+						CheckMenuItem(subMenu, ID_CONTEXT_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
+					}
 				}
 
 				HMENU configMenu = CreateConfigMenu(m_ConfigMenu);
@@ -2960,18 +2962,26 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					}
 				}
 
-				HWND hwnd = meterWindow ? meterWindow->GetWindow() : m_TrayWindow->GetWindow();
-				SetForegroundWindow(hwnd);
+				// Show context menu
+				HWND hWnd = meterWindow ? meterWindow->GetWindow() : m_TrayWindow->GetWindow();
+				HWND hWndForeground = GetForegroundWindow();
+				if (hWndForeground != hWnd)
+				{
+					DWORD foregroundThreadID = GetWindowThreadProcessId(hWndForeground, NULL);
+					DWORD currentThreadID = GetCurrentThreadId();
+					AttachThreadInput(currentThreadID, foregroundThreadID, TRUE);
+					SetForegroundWindow(hWnd);
+					AttachThreadInput(currentThreadID, foregroundThreadID, FALSE);
+				}
 				TrackPopupMenu(
 				  subMenu,
 				  TPM_RIGHTBUTTON | TPM_LEFTALIGN, 
 				  pos.x,
 				  pos.y,
 				  0,
-				  hwnd,
+				  hWnd,
 				  NULL
 				);
-				PostMessage(hwnd, WM_NULL, 0L, 0L);
 
 				if (meterWindow)
 				{
