@@ -357,7 +357,11 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	//TODO: Should these be moved to a Reload command instead of hitting the disk on every refresh
 	ReadConfig();	// Read the general settings 
-	ReadSkin();
+	if (!ReadSkin())
+	{
+		m_Rainmeter->DeactivateConfig(this, -1);
+		return;
+	}
 
 	InitializeMeasures();
 	InitializeMeters();
@@ -1621,12 +1625,25 @@ void CMeterWindow::WriteConfig()
 ** Reads the skin config, creates the meters and measures and does the bindings.
 **
 */
-void CMeterWindow::ReadSkin()
+bool CMeterWindow::ReadSkin()
 {
 	std::wstring iniFile = m_SkinPath;
 	iniFile += m_SkinName;
 	iniFile += L"\\";
 	iniFile += m_SkinIniFile;
+
+	// Verify whether the file exists
+	if (_waccess(iniFile.c_str(), 0) == -1)
+	{
+		std::wstring message = L"Unable to refresh config \"";
+		message += m_SkinName.c_str();
+		message += L"\": Ini-file not found: \"";
+		message += m_SkinIniFile.c_str();
+		message += L"\"";
+		LSLog(LOG_DEBUG, APPNAME, message.c_str());
+		MessageBox(m_Window, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		return false;
+	}
 
 	m_Parser.Initialize(iniFile.c_str(), m_Rainmeter, this);
 
@@ -1910,6 +1927,8 @@ void CMeterWindow::ReadSkin()
 			}
 		}
 	}
+
+	return true;
 }
 
 /*
@@ -3014,16 +3033,7 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		else if(wParam == ID_CONTEXT_CLOSESKIN)
 		{
-			const std::vector<CRainmeter::CONFIG>& configs = m_Rainmeter->GetAllConfigs();
-
-			for (size_t i = 0; i < configs.size(); ++i)
-			{
-				if (configs[i].config == m_SkinName)
-				{
-					m_Rainmeter->DeactivateConfig(this, i);
-					break;
-				}
-			}
+			m_Rainmeter->DeactivateConfig(this, -1);
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_FROMRIGHT)
 		{

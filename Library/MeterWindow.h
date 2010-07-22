@@ -237,7 +237,7 @@ private:
 	void UpdateTransparency(int alpha, bool reset);
 	void ReadConfig();
 	void WriteConfig();
-	void ReadSkin();
+	bool ReadSkin();
 	void InitializeMeasures();
 	void InitializeMeters();
 	void ShowWindowIfAppropriate();
