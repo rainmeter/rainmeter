@@ -502,7 +502,6 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 {
 	if(!m_ChildWindow)
 	{
-		HWND parent = GetAncestor(m_Window, GA_PARENT);
 		HWND winPos = HWND_NOTOPMOST;
 		m_WindowZPosition = zPos;
 
