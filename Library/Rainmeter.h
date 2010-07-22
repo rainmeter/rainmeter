@@ -215,6 +215,7 @@ public:
 private:
 	void CreateMeterWindow(std::wstring path, std::wstring config, std::wstring iniFile);
 	bool DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater);
+	void WriteActive(const std::wstring& config, int iniIndex);
 	void ScanForConfigs(std::wstring& path);
 	void ScanForThemes(std::wstring& path);
 	void ReadGeneralSettings(std::wstring& path);

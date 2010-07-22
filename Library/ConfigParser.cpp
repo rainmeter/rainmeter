@@ -864,6 +864,13 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 		return;
 	}
 
+	// Verify whether the file exists
+	if (_waccess(iniFile.c_str(), 0) == -1)
+	{
+		DebugLog(L"Unable to read file: %s", iniFile.c_str());
+		return;
+	}
+
 	// Avoid "IniFileMapping"
 	std::wstring iniRead = GetAlternateFileName(iniFile);
 	bool alternate = false;

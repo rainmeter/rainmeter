@@ -523,15 +523,11 @@ void RainmeterDeactivateConfig(HWND, const char* arg)
 
 		if (subStrings.size() > 0)
 		{
-			std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
-			for (; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
+			CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[0]);
+			if (mw)
 			{
-				CMeterWindow* mw = ((*iter).second);
-				if (wcsicmp(subStrings[0].c_str(), mw->GetSkinName().c_str()) == 0)
-				{
-					Rainmeter->DeactivateConfig(mw, -1);		// -1 = Deactivate all ini-files
-					return;
-				}
+				Rainmeter->DeactivateConfig(mw, -1);
+				return;
 			}
 			DebugLog(L"The config is not active: \"%s\"", subStrings[0].c_str());
 		}
@@ -556,15 +552,11 @@ void RainmeterToggleConfig(HWND, const char* arg)
 
 		if (subStrings.size() >= 2)
 		{
-			std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
-			for (; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
+			CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[0]);
+			if (mw)
 			{
-				CMeterWindow* mw = ((*iter).second);
-				if (wcsicmp(subStrings[0].c_str(), mw->GetSkinName().c_str()) == 0)
-				{
-					Rainmeter->DeactivateConfig(mw, -1);		// -1 = Deactivate all ini-files
-					return;
-				}
+				Rainmeter->DeactivateConfig(mw, -1);
+				return;
 			}
 
 			// If the config wasn't active, activate it
@@ -795,7 +787,7 @@ void RainmeterDeactivateConfigGroup(HWND, const char* arg)
 			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
 			for (; iter != windows.end(); ++iter)
 			{
-				Rainmeter->DeactivateConfig((*iter).second, -1);		// -1 = Deactivate all ini-files
+				Rainmeter->DeactivateConfig((*iter).second, -1);
 			}
 		}
 		else
@@ -874,17 +866,13 @@ void RainmeterSkinMenu(HWND, const char* arg)
 
 		if (subStrings.size() > 0)
 		{
-			std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
-			for (; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
+			CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[0]);
+			if (mw)
 			{
-				CMeterWindow* mw = ((*iter).second);
-				if (wcsicmp(subStrings[0].c_str(), mw->GetSkinName().c_str()) == 0)
-				{
-					POINT pos;
-					GetCursorPos(&pos);
-					Rainmeter->ShowContextMenu(pos, mw);
-					return;
-				}
+				POINT pos;
+				GetCursorPos(&pos);
+				Rainmeter->ShowContextMenu(pos, mw);
+				return;
 			}
 			DebugLog(L"The config is not active: \"%s\"", subStrings[0].c_str());
 		}
@@ -1256,7 +1244,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	if (c_Debug)
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"Enumerating installed font families ...");
+		LSLog(LOG_DEBUG, APPNAME, L"Enumerating installed font families ...");
 		CMeterString::EnumerateInstalledFontFamilies();
 	}
 
@@ -1603,10 +1591,9 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 {
 	if (configIndex >= 0 && configIndex < (int)m_ConfigStrings.size())
 	{
-		WCHAR buffer[256];
-		std::wstring skinIniFile = m_ConfigStrings[configIndex].iniFiles[iniIndex];
-		std::wstring skinConfig = m_ConfigStrings[configIndex].config;
-		std::wstring skinPath = m_ConfigStrings[configIndex].path;
+		const std::wstring skinIniFile = m_ConfigStrings[configIndex].iniFiles[iniIndex];
+		const std::wstring skinConfig = m_ConfigStrings[configIndex].config;
+		const std::wstring skinPath = m_ConfigStrings[configIndex].path;
 
 		// Verify that the config is not already active
 		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.find(skinConfig);
@@ -1624,13 +1611,29 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 			}
 		}
 
+		// Verify whether the ini-file exists
+		std::wstring skinIniPath = skinPath;
+		skinIniPath += skinConfig;
+		skinIniPath += L"\\";
+		skinIniPath += skinIniFile;
+
+		if (_waccess(skinIniPath.c_str(), 0) == -1)
+		{
+			std::wstring message = L"Unable to activate config \"";
+			message += skinConfig.c_str();
+			message += L"\": Ini-file not found: \"";
+			message += skinIniFile.c_str();
+			message += L"\"";
+			LSLog(LOG_DEBUG, APPNAME, message.c_str());
+			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			return;
+		}
+
+		m_ConfigStrings[configIndex].active = iniIndex + 1;
+		WriteActive(skinConfig, iniIndex);
+
 		try 
 		{
-			m_ConfigStrings[configIndex].active = iniIndex + 1;
-
-			wsprintf(buffer, L"%i", iniIndex + 1);
-			WritePrivateProfileString(skinConfig.c_str(), L"Active", buffer, m_IniFile.c_str());
-
 			CreateMeterWindow(skinPath, skinConfig, skinIniFile);
 		} 
 		catch(CError& error) 
@@ -1646,23 +1649,35 @@ bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex)
 	{
 		m_ConfigStrings[configIndex].active = 0;	// Deactivate the config
 	}
-	else
+	else if (configIndex == -1 && meterWindow)
 	{
-		// Deactive all
-		for(size_t i = 0; i < m_ConfigStrings.size(); ++i)
+		// Deactivate the config by using the meter window's config name
+		const std::wstring skinConfig = meterWindow->GetSkinName();
+		for (size_t i = 0; i < m_ConfigStrings.size(); ++i)
 		{
-			m_ConfigStrings[i].active = 0;
+			if (wcsicmp(skinConfig.c_str(), m_ConfigStrings[i].config.c_str()) == 0)
+			{
+				m_ConfigStrings[i].active = 0;
+				break;
+			}
 		}
 	}
 
 	if (meterWindow)
 	{
 		// Disable the config in the ini-file
-		WritePrivateProfileString(meterWindow->GetSkinName().c_str(), L"Active", L"0", m_IniFile.c_str());
+		WriteActive(meterWindow->GetSkinName(), -1);
 
 		return DeleteMeterWindow(meterWindow, true);
 	}
 	return false;
+}
+
+void CRainmeter::WriteActive(const std::wstring& config, int iniIndex)
+{
+	WCHAR buffer[256];
+	wsprintf(buffer, L"%i", iniIndex + 1);
+	WritePrivateProfileString(config.c_str(), L"Active", buffer, m_IniFile.c_str());
 }
 
 void CRainmeter::CreateMeterWindow(std::wstring path, std::wstring config, std::wstring iniFile)
@@ -1706,7 +1721,6 @@ bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
 	{
 		m_DelayDeleteList.push_back(meterWindow);
 		meterWindow->RunBang(BANG_HIDEFADE, NULL);	// Fade out the window
-		//meterWindow->FadeWindow(meterWindow->GetAlphaValue(), 0);	// Fade out the window
 	}
 	else
 	{
@@ -1744,7 +1758,7 @@ CMeterWindow* CRainmeter::GetMeterWindow(const std::wstring& config)
 
 	for (; iter != m_Meters.end(); ++iter)
 	{
-		if ((*iter).first == config)
+		if (wcsicmp((*iter).first.c_str(), config.c_str()) == 0)
 		{
 			return (*iter).second;
 		}
@@ -2454,7 +2468,7 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 	if (m_ConfigEditor.empty())
 	{
 		// Get the program path associated with .ini files
-		WCHAR buffer[MAX_PATH+1] = {0};
+		WCHAR buffer[MAX_PATH] = {0};
 		DWORD cchOut = MAX_PATH;
 
 		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".ini", L"open", buffer, &cchOut);
@@ -2477,7 +2491,7 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 	if (m_LogViewer.empty())
 	{
 		// Get the program path associated with .log files
-		WCHAR buffer[MAX_PATH+1] = {0};
+		WCHAR buffer[MAX_PATH] = {0};
 		DWORD cchOut = MAX_PATH;
 
 		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".log", L"open", buffer, &cchOut);
@@ -2636,15 +2650,71 @@ void CRainmeter::RefreshAll()
 	std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
 	for ( ; iter != windows.end(); ++iter)
 	{
-		if ((*iter).second)
+		CMeterWindow* mw = (*iter).second;
+		if (mw)
 		{
+			// Verify whether the cached information is valid
+			int found = 0;
+			std::wstring skinConfig = mw->GetSkinName();
+			for (size_t i = 0; i < m_ConfigStrings.size(); ++i)
+			{
+				if (wcsicmp(skinConfig.c_str(), m_ConfigStrings[i].config.c_str()) == 0)
+				{
+					found = 1;
+					std::wstring skinIniFile = mw->GetSkinIniFile();
+					for (size_t j = 0; j < m_ConfigStrings[i].iniFiles.size(); ++j)
+					{
+						if (wcsicmp(skinIniFile.c_str(), m_ConfigStrings[i].iniFiles[j].c_str()) == 0)
+						{
+							found = 2;
+							if (m_ConfigStrings[i].active != j + 1)
+							{
+								// Switch to new ini-file order
+								m_ConfigStrings[i].active = j + 1;
+								WriteActive(skinConfig, j);
+							}
+							break;
+						}
+					}
+
+					if (found == 1)  // Not found in ini-files
+					{
+						DeactivateConfig(mw, i);
+
+						std::wstring message = L"Unable to refresh config \"";
+						message += skinConfig.c_str();
+						message += L"\": Ini-file not found: \"";
+						message += skinIniFile.c_str();
+						message += L"\"";
+						LSLog(LOG_DEBUG, APPNAME, message.c_str());
+						MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+					}
+					break;
+				}
+			}
+
+			if (found != 2)
+			{
+				if (found == 0)  // Not found in configs
+				{
+					DeactivateConfig(mw, -2);  // -2 = Deactivate the config forcibly
+
+					std::wstring message = L"Unable to refresh config \"";
+					message += skinConfig.c_str();
+					message += L"\": Config not found";
+					LSLog(LOG_DEBUG, APPNAME, message.c_str());
+					MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+				}
+				continue;
+			}
+
 			try
 			{
-				(*iter).second->Refresh(false, true);
+				mw->Refresh(false, true);
 			}
 			catch (CError& error)
 			{
-				MessageBox((*iter).second->GetWindow(), error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+				MessageBox(mw->GetWindow(), error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 			}
 		}
 	}
@@ -3221,7 +3291,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 
 			for (int i = 0; i < itemCount; ++i)
 			{
-				WCHAR buffer[MAX_PATH+1] = {0};
+				WCHAR buffer[MAX_PATH] = {0};
 				MENUITEMINFO itemInfo = {sizeof(MENUITEMINFO)};
 				itemInfo.fMask = MIIM_STRING;
 				itemInfo.dwTypeData = buffer;
@@ -3460,19 +3530,33 @@ std::wstring CRainmeter::ExtractPath(const std::wstring& strFilePath)
 
 void CRainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
 {
-	if (strPath.find(L'%') != std::wstring::npos) 
+	if (strPath.find(L'%') != std::wstring::npos)
 	{
 		WCHAR buffer[4096];	// lets hope the buffer is large enough...
 
-		// Expand the environment variables
-		DWORD ret = ExpandEnvironmentStrings(strPath.c_str(), buffer, 4096);
-		if (ret != 0 && ret < 4096)
+		// %APPDATA% is a special case
+		std::wstring::size_type pos = strPath.find(L"%APPDATA%");
+		if (pos != std::wstring::npos)
 		{
-			strPath = buffer;
+			HRESULT hr = SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, buffer);
+			if (SUCCEEDED(hr))
+			{
+				strPath.replace(pos, 9, buffer);
+			}
 		}
-		else
+
+		if (strPath.find(L'%') != std::wstring::npos)
 		{
-			DebugLog(L"Unable to expand the environment strings for string: %s", strPath.c_str());
+			// Expand the environment variables
+			DWORD ret = ExpandEnvironmentStrings(strPath.c_str(), buffer, 4096);
+			if (ret != 0 && ret < 4096)
+			{
+				strPath = buffer;
+			}
+			else
+			{
+				DebugLog(L"Unable to expand the environment strings for string: %s", strPath.c_str());
+			}
 		}
 	}
 }
