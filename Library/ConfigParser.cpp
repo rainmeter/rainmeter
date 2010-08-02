@@ -129,6 +129,19 @@ void CConfigParser::SetDefaultVariables(CRainmeter* pRainmeter, CMeterWindow* me
 		SetVariable(L"CURRENTPATH", CRainmeter::ExtractPath(m_Filename));
 		SetVariable(L"ADDONSPATH", pRainmeter->GetPath() + L"Addons\\");
 		SetVariable(L"CRLF", L"\n");		
+
+		if (meterWindow)
+		{
+			const std::wstring& config = meterWindow->GetSkinName();
+			if ((loc = config.find_first_of(L'\\')) != std::wstring::npos)
+			{
+				SetVariable(L"ROOTCONFIGPATH", pRainmeter->GetSkinPath() + config.substr(0, loc + 1));
+			}
+			else
+			{
+				SetVariable(L"ROOTCONFIGPATH", pRainmeter->GetSkinPath() + config + L"\\");
+			}
+		}
 	}
 	if (meterWindow)
 	{
