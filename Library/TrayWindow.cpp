@@ -599,9 +599,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{
 				POINT point;
 				GetCursorPos(&point);
-				SetForegroundWindow(tray->m_Window);
 				Rainmeter->ShowContextMenu(point, NULL);
-				SetForegroundWindow(tray->m_Window);
 			}
 		}
 		break;

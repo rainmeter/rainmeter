@@ -999,3 +999,145 @@ BOOL CSystem::DwmIsCompositionEnabled()
 	}
 	return fEnabled;
 }
+
+/* 
+** CopyFiles
+**
+** Copies files and folders from one location to another.
+**
+*/
+bool CSystem::CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove)
+{
+	std::wstring tmpFrom(strFrom), tmpTo(strTo);
+
+	// The strings must end with double nul
+	tmpFrom.append(L"0");
+	tmpFrom[tmpFrom.size() - 1] = L'\0';
+	tmpTo.append(L"0");
+	tmpTo[tmpTo.size() - 1] = L'\0';
+
+	SHFILEOPSTRUCT fo = {0};
+	fo.wFunc = bMove ? FO_MOVE : FO_COPY;
+	fo.pFrom = tmpFrom.c_str();
+	fo.pTo = tmpTo.c_str();
+	fo.fFlags = FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO;
+
+	int result = SHFileOperation(&fo);
+	if (result != 0)
+	{
+		DebugLog(L"Unable to copy files from %s to %s (%i)", strFrom.c_str(), strTo.c_str(), result);
+		return false;
+	}
+	return true;
+}
+
+/* 
+** RemoveFile
+**
+** Removes a file even if a file is read-only.
+**
+*/
+bool CSystem::RemoveFile(const std::wstring& file)
+{
+	DWORD attr = GetFileAttributes(file.c_str());
+	if (attr == -1 || (attr & FILE_ATTRIBUTE_READONLY))
+	{
+		// Unset read-only
+		SetFileAttributes(file.c_str(), (attr == -1) ? FILE_ATTRIBUTE_NORMAL : attr - FILE_ATTRIBUTE_READONLY);
+	}
+
+	return (DeleteFile(file.c_str()) != 0);
+}
+
+/* 
+** GetIniFileMappingList
+**
+** Retrieves the "IniFileMapping" entries from Registry.
+**
+*/
+void CSystem::GetIniFileMappingList(std::vector<std::wstring>& iniFileMappings)
+{
+	HKEY hKey;
+	LONG ret;
+
+	ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\IniFileMapping", 0, KEY_ENUMERATE_SUB_KEYS, &hKey);
+	if (ret == ERROR_SUCCESS)
+	{
+		WCHAR buffer[MAX_PATH];
+		DWORD index = 0, cch = MAX_PATH;
+
+		while (true)
+		{
+			ret = RegEnumKeyEx(hKey, index++, buffer, &cch, NULL, NULL, NULL, NULL);
+			if (ret == ERROR_NO_MORE_ITEMS) break;
+
+			if (ret == ERROR_SUCCESS)
+			{
+				iniFileMappings.push_back(buffer);
+			}
+			cch = MAX_PATH;
+		}
+		RegCloseKey(hKey);
+	}
+}
+
+/* 
+** GetTemporaryFile
+**
+** Prepares a temporary file if iniFile is included in the "IniFileMapping" entries.
+** If iniFile is not included, returns a empty string. If error occurred, returns "<>".
+** Note that a temporary file must be deleted by caller.
+**
+*/
+std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring &iniFile)
+{
+	std::wstring temporary;
+
+	if (!iniFileMappings.empty())
+	{
+		std::wstring::size_type pos = iniFile.find_last_of(L'\\');
+		std::wstring filename;
+
+		if (pos != std::wstring::npos)
+		{
+			filename = iniFile.substr(pos + 1);
+		}
+		else
+		{
+			filename = iniFile;
+		}
+
+		for (size_t i = 0; i < iniFileMappings.size(); ++i)
+		{
+			if (wcsicmp(iniFileMappings[i].c_str(), filename.c_str()) == 0)
+			{
+				WCHAR buffer[MAX_PATH];
+
+				GetTempPath(MAX_PATH, buffer);
+				temporary = buffer;
+				if (GetTempFileName(temporary.c_str(), L"cfg", 0, buffer) != 0)
+				{
+					temporary = buffer;
+
+					std::wstring tmp = GetTemporaryFile(iniFileMappings, temporary);
+					if (tmp.empty() && CopyFiles(iniFile, temporary))
+					{
+						return temporary;
+					}
+					else  // alternate is reserved or failed
+					{
+						RemoveFile(temporary);
+						return tmp.empty() ? L"<>" : tmp;
+					}
+				}
+				else  // failed
+				{
+					DebugLog(L"Unable to create a temporary file to: %s", temporary.c_str());
+					return L"<>";
+				}
+			}
+		}
+	}
+
+	return temporary;
+}

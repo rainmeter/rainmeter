@@ -47,7 +47,7 @@ std::wstring CRainmeter::c_CmdLine;
 ** Splits the given string into substrings
 **
 */
-std::vector<std::wstring> ParseString(LPCTSTR str)
+std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 {
 	std::vector<std::wstring> result;
 	if (str)
@@ -198,7 +198,7 @@ void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 {
 	if(Rainmeter) 
 	{
-		std::vector<std::wstring> subStrings = ParseString(arg);
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
 		std::wstring config;
 		std::wstring argument;
 
@@ -271,7 +271,7 @@ void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 {
 	if (Rainmeter)
 	{
-		std::vector<std::wstring> subStrings = ParseString(arg);
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
 
 		if (subStrings.size() > numOfArgs)
 		{
@@ -479,7 +479,7 @@ void RainmeterActivateConfig(HWND, const char* arg)
 {
 	if (Rainmeter)
 	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(ConvertToWide(arg).c_str());
 
 		if (subStrings.size() > 1)
 		{
@@ -519,7 +519,7 @@ void RainmeterDeactivateConfig(HWND, const char* arg)
 {
 	if (Rainmeter)
 	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(ConvertToWide(arg).c_str());
 
 		if (subStrings.size() > 0)
 		{
@@ -548,7 +548,7 @@ void RainmeterToggleConfig(HWND, const char* arg)
 {
 	if (Rainmeter)
 	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(ConvertToWide(arg).c_str());
 
 		if (subStrings.size() >= 2)
 		{
@@ -777,7 +777,7 @@ void RainmeterDeactivateConfigGroup(HWND, const char* arg)
 {
 	if (Rainmeter)
 	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(ConvertToWide(arg).c_str());
 
 		if (subStrings.size() > 0)
 		{
@@ -862,7 +862,7 @@ void RainmeterSkinMenu(HWND, const char* arg)
 {
 	if (Rainmeter)
 	{
-		std::vector<std::wstring> subStrings = ParseString(ConvertToWide(arg).c_str());
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(ConvertToWide(arg).c_str());
 
 		if (subStrings.size() > 0)
 		{
@@ -925,6 +925,140 @@ void RainmeterMoveMeter(HWND, const char* arg)
 }
 
 /*
+** RainmeterWriteKeyValue
+**
+** Callback for the !RainmeterWriteKeyValue bang
+**
+*/
+void RainmeterWriteKeyValue(HWND, const char* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(ConvertToWide(arg).c_str());
+
+		if (subStrings.size() > 3)
+		{
+			const std::wstring& iniFile = subStrings[3];
+
+			if (iniFile.find(L"..\\") != std::string::npos || iniFile.find(L"../") != std::string::npos)
+			{
+				DebugLog(L"!RainmeterWriteKeyValue: Illegal characters in path - \"..\\\": %s", iniFile.c_str());
+				return;
+			}
+
+			if (wcsnicmp(iniFile.c_str(), Rainmeter->GetSkinPath().c_str(), Rainmeter->GetSkinPath().size()) != 0 &&
+				wcsnicmp(iniFile.c_str(), Rainmeter->GetPath().c_str(), Rainmeter->GetPath().size()) != 0)
+			{
+				DebugLog(L"!RainmeterWriteKeyValue: Illegal path outside of Rainmeter directories: %s", iniFile.c_str());
+				return;
+			}
+
+			// Verify whether the file exists
+			if (_waccess(iniFile.c_str(), 0) == -1)
+			{
+				DebugLog(L"!RainmeterWriteKeyValue: File not found: %s", iniFile.c_str());
+				return;
+			}
+
+			// Verify whether the file is read-only
+			DWORD attr = GetFileAttributes(iniFile.c_str());
+			if (attr == -1 || (attr & FILE_ATTRIBUTE_READONLY))
+			{
+				DebugLog(L"!RainmeterWriteKeyValue: File is read-only: %s", iniFile.c_str());
+				return;
+			}
+
+			// Avoid "IniFileMapping"
+			std::vector<std::wstring> iniFileMappings;
+			CSystem::GetIniFileMappingList(iniFileMappings);
+			std::wstring iniWrite = CSystem::GetTemporaryFile(iniFileMappings, iniFile);
+			if (iniWrite == L"<>")  // error occurred
+			{
+				DebugLog(L"!RainmeterWriteKeyValue: Failed to create a temporary file: %s", iniFile.c_str());
+				return;
+			}
+
+			bool temporary = !iniWrite.empty();
+
+			if (temporary)
+			{
+				if (CRainmeter::GetDebug()) DebugLog(L"!RainmeterWriteKeyValue: Writing file: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+			}
+			else
+			{
+				if (CRainmeter::GetDebug()) DebugLog(L"!RainmeterWriteKeyValue: Writing file: %s", iniFile.c_str());
+				iniWrite = iniFile;
+			}
+
+			const std::wstring& strSection = subStrings[0];
+			const std::wstring& strKey = subStrings[1];
+			const std::wstring& strValue = subStrings[2];
+
+			int formula = -1;
+			BOOL write = 0;
+
+			if (subStrings.size() > 4)
+			{
+				CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[4]);
+				if (mw)
+				{
+					double value;
+					formula = mw->GetParser().ReadFormula(strValue, &value);
+					
+					// Formula read fine
+					if (formula != -1)
+					{
+						TCHAR buffer[256];
+						swprintf(buffer, L"%f", value);
+
+						const std::wstring& resultString = buffer;
+
+						write = WritePrivateProfileString(strSection.c_str(), strKey.c_str(), resultString.c_str(), iniWrite.c_str());
+					}
+				}
+			}
+
+			if (formula == -1)
+			{
+				write = WritePrivateProfileString(strSection.c_str(), strKey.c_str(), strValue.c_str(), iniWrite.c_str());
+			}
+
+			if (temporary)
+			{
+				if (write != 0)
+				{
+					WritePrivateProfileString(NULL, NULL, NULL, iniWrite.c_str());  // FLUSH
+
+					// Copy the file back
+					if (!CSystem::CopyFiles(iniWrite, iniFile))
+					{
+						DebugLog(L"!RainmeterWriteKeyValue: Failed to copy a temporary file to the original filepath: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+					}
+				}
+				else  // failed
+				{
+					DebugLog(L"!RainmeterWriteKeyValue: Failed to write a value to the file: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+				}
+
+				// Remove a temporary file
+				CSystem::RemoveFile(iniWrite);
+			}
+			else
+			{
+				if (write == 0)  // failed
+				{
+					DebugLog(L"!RainmeterWriteKeyValue: Failed to write a value to the file: %s", iniFile.c_str());
+				}
+			}
+		}
+		else
+		{
+			DebugLog(L"Unable to parse the arguments for !RainmeterWriteKeyValue");
+		}
+	}
+}
+
+/*
 ** RainmeterPluginBang
 **
 ** Callback for the !RainmeterPluginBang bang
@@ -972,6 +1106,8 @@ CRainmeter::CRainmeter()
 	c_GlobalConfig.netOutSpeed = 0;
 
 	c_Debug = false;
+
+	m_MenuActive = false;
 
 	m_Logging = false;
 
@@ -1178,18 +1314,18 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 				// Copy the default skin to the Skins folder
 				std::wstring strFrom(m_Path + L"Skins\\" + L"*.*");
 				std::wstring strTo(m_SkinPath);
-				CopyFiles(strFrom, strTo);
+				CSystem::CopyFiles(strFrom, strTo);
 
 				// This shouldn't be copied
 				std::wstring strNote = strTo + L"Read me before copying skins to here.txt";
-				DeleteFile(strNote.c_str());
+				CSystem::RemoveFile(strNote);
 
 				// Copy also the themes to the %APPDATA%
 				strFrom = std::wstring(m_Path + L"Themes\\" + L"*.*");
 				strTo = std::wstring(GetSettingsPath() + L"Themes");
 				CreateDirectory(strTo.c_str(), NULL);
 				strTo += L"\\";
-				CopyFiles(strFrom, strTo);
+				CSystem::CopyFiles(strFrom, strTo);
 			}
 		}
 		else
@@ -1338,6 +1474,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterSkinMenu", RainmeterSkinMenu);
 		AddBangCommand("!RainmeterTrayMenu", RainmeterTrayMenu);
 		AddBangCommand("!RainmeterResetStats", RainmeterResetStats);
+		AddBangCommand("!RainmeterWriteKeyValue", RainmeterWriteKeyValue);
 		AddBangCommand("!RainmeterPluginBang", RainmeterPluginBang);
 		AddBangCommand("!RainmeterQuit", RainmeterQuit);
 	}
@@ -1433,17 +1570,17 @@ void CRainmeter::CheckSkinVersions()
 						if (strVersionCurrent.find_first_of(L"\\/\"*:?<>|") == std::wstring::npos)
 						{
 							std::wstring strTarget = m_SkinPath + L"Backup\\" + menu[i].name + L"-" + strVersionCurrent;
-							if (CopyFiles(m_SkinPath + menu[i].name, strTarget, true))	// Move the folder to "backup"
+							if (CSystem::CopyFiles(m_SkinPath + menu[i].name, strTarget, true))	// Move the folder to "backup"
 							{
 								// Upgrade the skin
-								CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
+								CSystem::CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
 
 								// TODO: Temporary 'fix': If this was Enigma upgrade the themes too
 								if (menu[i].name == L"Enigma" || menu[i].name == L"Gnometer")
 								{
 									std::wstring strMainThemes = m_Path + L"Themes";
 									std::wstring strCurrentThemes = GetSettingsPath();
-									CopyFiles(strMainThemes, strCurrentThemes);
+									CSystem::CopyFiles(strMainThemes, strCurrentThemes);
 								}
 								// End of temporary 'fix'
 							}
@@ -1466,10 +1603,10 @@ void CRainmeter::CheckSkinVersions()
 					strMessage += L"Do you want to add it to your skin and themes libraries?";
 					if (IDYES == MessageBox(NULL, strMessage.c_str(), APPNAME, MB_YESNO | MB_ICONQUESTION))
 					{
-						CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
+						CSystem::CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
 						std::wstring strMainThemes = m_Path + L"Themes";
 						std::wstring strCurrentThemes = GetSettingsPath();
-						CopyFiles(strMainThemes, strCurrentThemes);
+						CSystem::CopyFiles(strMainThemes, strCurrentThemes);
 					}
 				}
 
@@ -1517,37 +1654,6 @@ int CRainmeter::CompareVersions(std::wstring strA, std::wstring strB)
 }
 
 /* 
-** CopyFiles
-**
-** Copies files and folders from one location to another.
-**
-*/
-bool CRainmeter::CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove)
-{
-	std::wstring tmpFrom(strFrom), tmpTo(strTo);
-
-	// The strings must end with double nul
-	tmpFrom.append(L"0");
-	tmpFrom[tmpFrom.size() - 1] = L'\0';
-	tmpTo.append(L"0");
-	tmpTo[tmpTo.size() - 1] = L'\0';
-
-	SHFILEOPSTRUCT fo = {0};
-	fo.wFunc = bMove ? FO_MOVE : FO_COPY;
-	fo.pFrom = tmpFrom.c_str();
-	fo.pTo = tmpTo.c_str();
-	fo.fFlags = FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO;
-
-	int result = SHFileOperation(&fo);
-	if (result != 0)
-	{
-		DebugLog(L"Unable to copy files from %s to %s (%i)", strFrom.c_str(), strTo.c_str(), result);
-		return false;
-	}
-	return true;
-}
-
-/* 
 ** CreateDefaultConfigFile
 **
 ** Creates the default Rainmeter.ini file. Gnometer\Bars and Gnometer\Clock configs
@@ -1576,7 +1682,7 @@ void CRainmeter::CreateDefaultConfigFile(std::wstring strFile)
 	}
 	else
 	{
-		CopyFiles(defaultIni, GetIniFile());
+		CSystem::CopyFiles(defaultIni, GetIniFile());
 	}
 }
 
@@ -2244,6 +2350,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	else if (wcsicmp(bang.c_str(), L"!RainmeterMoveMeter") == 0)
 	{
 		BangWithArgs(BANG_MOVEMETER, arg.c_str(), 3);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterWriteKeyValue") == 0)
+	{
+		RainmeterWriteKeyValue(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterPluginBang") == 0)
 	{
@@ -2937,11 +3047,9 @@ PLATFORM CRainmeter::IsNT()
 */
 void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow) 
 {
-	static bool active = false;
-
-	if (!active)
+	if (!m_MenuActive)
 	{
-		active = true;
+		m_MenuActive = true;
 
 		// Show context menu, if no actions were executed
 		HMENU menu = LoadMenu(m_Instance, MAKEINTRESOURCE(IDR_CONTEXT_MENU));
@@ -2955,7 +3063,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				{
 					// Disable Quit/Logging if ran as a Litestep plugin
 					EnableMenuItem(subMenu, ID_CONTEXT_QUIT, MF_BYCOMMAND | MF_GRAYED);
-					EnableMenuItem(subMenu, 6, MF_BYPOSITION | MF_GRAYED);
+					EnableMenuItem(subMenu, 6, MF_BYPOSITION | MF_GRAYED);  // "Logging" menu
 				}
 				else
 				{
@@ -3032,8 +3140,19 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					}
 				}
 
-				// Show context menu
-				HWND hWnd = meterWindow ? meterWindow->GetWindow() : m_TrayWindow->GetWindow();
+				HWND hWnd = WindowFromPoint(pos);
+				if (hWnd != NULL)
+				{
+					CMeterWindow* mw = GetMeterWindow(hWnd);
+					if (mw)
+					{
+						// Cancel the mouse event beforehand
+						mw->SetMouseLeaveEvent(true);
+					}
+				}
+
+				// Set the window to foreground
+				hWnd = meterWindow ? meterWindow->GetWindow() : m_TrayWindow->GetWindow();
 				HWND hWndForeground = GetForegroundWindow();
 				if (hWndForeground != hWnd)
 				{
@@ -3043,6 +3162,8 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					SetForegroundWindow(hWnd);
 					AttachThreadInput(currentThreadID, foregroundThreadID, FALSE);
 				}
+
+				// Show context menu
 				TrackPopupMenu(
 				  subMenu,
 				  TPM_RIGHTBUTTON | TPM_LEFTALIGN, 
@@ -3062,7 +3183,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 			DestroyMenu(menu);
 		}
 
-		active = false;
+		m_MenuActive = false;
 	}
 }
 
@@ -3183,7 +3304,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 		// Tick the transparency
 		if (!meterWindow->GetNativeTransparency())
 		{
-			EnableMenuItem(settingsMenu, 1, MF_BYPOSITION | MF_GRAYED);
+			EnableMenuItem(settingsMenu, 1, MF_BYPOSITION | MF_GRAYED);  // "Transparency" menu
 			EnableMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_CLICKTHROUGH, MF_BYCOMMAND | MF_GRAYED);
 		}
 		else
@@ -3451,7 +3572,7 @@ void CRainmeter::DeleteLogFile()
 			SetLogging(false);
 			ResetLoggingFlag();
 
-			DeleteFile(m_LogFile.c_str());
+			CSystem::RemoveFile(m_LogFile);
 		}
 	}
 }

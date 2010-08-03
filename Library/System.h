@@ -64,6 +64,12 @@ public:
 	static HWND GetHelperWindow() { return c_HelperWindow; }
 	static void PrepareHelperWindow(HWND WorkerW);
 
+	static bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove = false);
+	static bool RemoveFile(const std::wstring& file);
+
+	static void GetIniFileMappingList(std::vector<std::wstring>& iniFileMappings);
+	static std::wstring GetTemporaryFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& iniFile);
+
 private:
 	static void CALLBACK MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

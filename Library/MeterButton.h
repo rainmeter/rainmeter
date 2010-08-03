@@ -41,6 +41,8 @@ public:
 	bool MouseDown(POINT pos);
 
 private:
+	bool HitTest2(int px, int py, bool checkAlpha);
+
 	Gdiplus::Bitmap* m_Bitmap;	// The bitmap
 	Gdiplus::CachedBitmap* m_Bitmaps[BUTTON_FRAMES];	// The cached bitmaps
 	std::wstring m_ImageName;	// Name of the image

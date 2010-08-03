@@ -323,6 +323,9 @@ void CMeterWindow::Refresh(bool init, bool all)
 		KillTimer(m_Window, FADETIMER);
 		KillTimer(m_Window, TRANSITIONTIMER);
 
+		m_MouseOver = false;
+		SetMouseLeaveEvent(true);
+
 		std::list<CMeasure*>::iterator i = m_Measures.begin();
 		for( ; i != m_Measures.end(); ++i)
 		{
@@ -415,6 +418,52 @@ void CMeterWindow::Refresh(bool init, bool all)
 	{
 		m_Rainmeter->ExecuteCommand(m_OnRefreshAction.c_str(), this);
 	}
+}
+
+void CMeterWindow::SetMouseLeaveEvent(bool cancel)
+{
+	if (!cancel && !m_MouseOver) return;
+
+	// Check whether the mouse event is set
+	TRACKMOUSEEVENT tme = {sizeof(TRACKMOUSEEVENT)};
+	tme.hwndTrack = m_Window;
+	tme.dwFlags = TME_QUERY;
+
+	if (TrackMouseEvent(&tme) != 0)
+	{
+		if (cancel)
+		{
+			if (tme.dwFlags == 0) return;
+		}
+		else
+		{
+			if (m_WindowDraggable)
+			{
+				if (tme.dwFlags == (TME_LEAVE | TME_NONCLIENT)) return;
+			}
+			else
+			{
+				if (tme.dwFlags == TME_LEAVE) return;
+			}
+		}
+	}
+
+	tme.cbSize = sizeof(TRACKMOUSEEVENT);
+	tme.hwndTrack = m_Window;
+
+	// Cancel the mouse event set before
+	tme.dwFlags |= TME_CANCEL;
+	TrackMouseEvent(&tme);
+
+	if (cancel) return;
+
+	// Set the mouse event
+	tme.dwFlags = TME_LEAVE;
+	if (m_WindowDraggable)
+	{
+		tme.dwFlags |= TME_NONCLIENT;
+	}
+	TrackMouseEvent(&tme);
 }
 
 void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
@@ -522,7 +571,7 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 				if (CSystem::GetShowDesktop())
 				{
 					// Insert after the tray window temporarily to keep order
-					winPos = Rainmeter->GetTrayWindow()->GetWindow();
+					winPos = m_Rainmeter->GetTrayWindow()->GetWindow();
 				}
 				else
 				{
@@ -2547,40 +2596,35 @@ LRESULT CMeterWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 	}
 	else if(wParam == MOUSETIMER)
 	{
-		ShowWindowIfAppropriate();
-
-		POINT pos;
-		GetCursorPos(&pos);
-		MapWindowPoints(NULL, m_Window, &pos, 1);
-		
-		if (!m_MouseLeaveAction.empty())
+		if (!m_Rainmeter->IsMenuActive() && !m_Dragging)
 		{
-			// Check mouse leave actions
-			DoAction(pos.x, pos.y, MOUSE_LEAVE, false);
-		}
+			ShowWindowIfAppropriate();
 
-		if (m_WindowZPosition == ZPOSITION_ONTOPMOST)
-		{
-			ChangeZPos(ZPOSITION_ONTOPMOST);
-		}
-
-		// Handle buttons
-		bool redraw = false;
-		std::list<CMeter*>::const_iterator j = m_Meters.begin();
-		for( ; j != m_Meters.end(); ++j)
-		{
-			// Hidden meters are ignored
-			if ((*j)->IsHidden()) continue;
-
-			CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
-			if (button)
+			if (m_WindowZPosition == ZPOSITION_ONTOPMOST)
 			{
-				redraw |= button->MouseMove(pos);
+				ChangeZPos(ZPOSITION_ONTOPMOST);
 			}
-		}
-		if (redraw)
-		{
-			Redraw();
+
+			if (m_MouseOver)
+			{
+				POINT pos;
+				GetCursorPos(&pos);
+				if (WindowFromPoint(pos) == m_Window)
+				{
+					SetMouseLeaveEvent(false);
+
+					MapWindowPoints(NULL, m_Window, &pos, 1);
+					DoMoveAction(pos.x, pos.y, MOUSE_OVER);
+
+					// Handle buttons
+					HandleButtons(pos, BUTTONPROC_MOVE, NULL, false);
+				}
+				else
+				{
+					// Run all mouse leave actions
+					OnMouseLeave(0, 0);
+				}
+			}
 		}
 	}
 	else if(wParam == FADETIMER)
@@ -2684,29 +2728,14 @@ void CMeterWindow::ShowWindowIfAppropriate()
 {
 	bool inside = false;
 	bool keyDown = GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000 || GetKeyState(VK_MENU) & 0x8000;
+
 	POINT pos;
-	RECT rect;
-
-	GetWindowRect(m_Window, &rect);
 	GetCursorPos(&pos);
-
-	if(rect.left <= pos.x && rect.right > pos.x &&
-	   rect.top <= pos.y && rect.bottom > pos.y) 
+	if (WindowFromPoint(pos) == m_Window)
 	{
-		// Check transparent pixels
-		if (m_DoubleBuffer)
-		{
-			Color color;
-			m_DoubleBuffer->GetPixel(pos.x - rect.left, pos.y - rect.top, &color);
-			if (color.GetA() != 0)
-			{
-				inside = true;
-			}
-		}
-		else
-		{
-			inside = true;
-		}
+		MapWindowPoints(NULL, m_Window, &pos, 1);
+
+		inside = HitTest(pos.x, pos.y);
 	}
 
 	if (m_ClickThrough)
@@ -2765,6 +2794,92 @@ void CMeterWindow::ShowWindowIfAppropriate()
 	}
 }
 
+/*
+** HitTest
+**
+** Checks if the given point is inside the window.
+**
+*/
+bool CMeterWindow::HitTest(int x, int y)
+{
+	if (x >= 0 && y >= 0 && x < m_WindowW && y < m_WindowH)
+	{
+		// Check transparent pixels
+		if (m_DoubleBuffer)
+		{
+			Color color;
+			Status status = m_DoubleBuffer->GetPixel(x, y, &color);
+			if (status != Ok || color.GetA() > 0)
+			{
+				return true;
+			}
+		}
+		else
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/*
+** HandleButtons
+**
+** Handles all buttons and cursor.
+** Note that meterWindow parameter is used if proc is BUTTONPROC_UP.
+**
+*/
+void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meterWindow, bool changeCursor) 
+{
+	bool redraw = false;
+	bool drawCursor = false;
+
+	std::list<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
+	for( ; j != m_Meters.rend(); ++j)
+	{
+		// Hidden meters are ignored
+		if ((*j)->IsHidden()) continue;
+
+		CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
+		if (button)
+		{
+			switch (proc)
+			{
+			case BUTTONPROC_DOWN:
+				redraw |= button->MouseDown(pos);
+				break;
+
+			case BUTTONPROC_UP:
+				redraw |= button->MouseUp(pos, meterWindow);
+				break;
+
+			case BUTTONPROC_MOVE:
+			default:
+				redraw |= button->MouseMove(pos);
+				break;
+			}
+		}
+
+		if (changeCursor && !drawCursor)
+		{
+			if ((*j)->HitTest(pos.x, pos.y) && (*j)->HasMouseActionCursor())
+			{
+				drawCursor = ((*j)->HasMouseAction() || button);	
+			}
+		}
+	}
+
+	if (redraw)
+	{
+		Redraw();
+	}
+
+	if (changeCursor)
+	{
+		SetCursor(LoadCursor(NULL, drawCursor ? IDC_HAND : IDC_ARROW));
+	}
+}
 
 /*
 ** OnMouseMove
@@ -2823,44 +2938,35 @@ LRESULT CMeterWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 	if (m_Message == WM_NCMOUSEMOVE)
 	{
 		// Map to local window
-		MapWindowPoints(GetDesktopWindow(), m_Window, &pos, 1);
+		MapWindowPoints(NULL, m_Window, &pos, 1);
 	}
-	
-	DoAction(pos.x, pos.y, MOUSE_OVER, false);
+
+	DoMoveAction(pos.x, pos.y, MOUSE_OVER);
 
 	// Handle buttons
-	bool redraw = false;
-	bool drawCursor = false;
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
-	{
-		// Hidden meters are ignored
-		if ((*j)->IsHidden()) continue;
+	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
 
-		CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
-		if (button)
-		{
-			redraw |= button->MouseMove(pos);
-		}
+	return 0;
+}
 
-		if((*j)->HitTest(pos.x, pos.y) && (*j)->HasMouseActionCursor())
-		{
-			drawCursor |= ((*j)->HasMouseAction() || button);	
-		}	
-	}
+/*
+** OnMouseLeave
+**
+** When we get WM_MOUSELEAVE messages, run all leave actions.
+**
+*/
+LRESULT CMeterWindow::OnMouseLeave(WPARAM wParam, LPARAM lParam) 
+{
+	POINT pos;
+	GetCursorPos(&pos);
+	HWND hWnd = WindowFromPoint(pos);
+	if (!hWnd || (hWnd != m_Window && GetParent(hWnd) != m_Window))  // ignore tooltips
+	{
+		POINT pos = {SHRT_MIN, SHRT_MIN};
+		while (DoMoveAction(pos.x, pos.y, MOUSE_LEAVE)) ;  // Leave all forcibly
 
-	if(drawCursor)
-	{
-		SetCursor(LoadCursor(NULL, IDC_HAND));
-	}
-	else
-	{
-		SetCursor(LoadCursor(NULL, IDC_ARROW));
-	}
-
-	if (redraw)
-	{
-		Redraw();
+		// Handle buttons
+		HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
 	}
 
 	return 0;
@@ -2889,12 +2995,12 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 		if(wParam == ID_CONTEXT_SKINMENU_EDITSKIN)
 		{
-			std::wstring command = Rainmeter->GetConfigEditor();
+			std::wstring command = m_Rainmeter->GetConfigEditor();
 			command += L" \"";
 			command += m_SkinPath + L"\\" + m_SkinName + L"\\" + m_SkinIniFile + L"\"";
 
 			// If the skins are in the program folder start the editor as admin
-			if (Rainmeter->GetPath() + L"Skins\\" == Rainmeter->GetSkinPath())
+			if (m_Rainmeter->GetPath() + L"Skins\\" == m_Rainmeter->GetSkinPath())
 			{
 				LSExecuteAsAdmin(NULL, command.c_str(), SW_SHOWNORMAL);
 			}
@@ -3154,9 +3260,6 @@ LRESULT CMeterWindow::OnSysCommand(WPARAM wParam, LPARAM lParam)
 	m_Dragging = true;
 	m_Dragged = false;
 
-	std::wstring startWindowX = m_WindowX;
-	std::wstring startWindowY = m_WindowY;
-
 	// Run the DefWindowProc so the dragging works
 	LRESULT result = DefWindowProc(m_Window, m_Message, wParam, lParam);
 
@@ -3169,6 +3272,13 @@ LRESULT CMeterWindow::OnSysCommand(WPARAM wParam, LPARAM lParam)
 		{
 			WriteConfig();
 		}
+
+		POINT pos;
+		GetCursorPos(&pos);
+		MapWindowPoints(NULL, m_Window, &pos, 1);
+
+		// Handle buttons
+		HandleButtons(pos, BUTTONPROC_UP, NULL, true);  // redraw only
 	}
 	else  // not dragged
 	{
@@ -3197,6 +3307,9 @@ LRESULT CMeterWindow::OnEnterSizeMove(WPARAM wParam, LPARAM lParam)
 	if (m_Dragging)
 	{
 		m_Dragged = true;  // Don't post the WM_NCLBUTTONUP message!
+
+		// Set cursor to default
+		SetCursor(LoadCursor(NULL, IDC_ARROW));
 	}
 
 	return 0;
@@ -3226,7 +3339,7 @@ LRESULT CMeterWindow::OnNcHitTest(WPARAM wParam, LPARAM lParam)
 		POINT pos;
 		pos.x = (SHORT)LOWORD(lParam);
 		pos.y = (SHORT)HIWORD(lParam);
-		MapWindowPoints(GetDesktopWindow(), m_Window, &pos, 1);
+		MapWindowPoints(NULL, m_Window, &pos, 1);
 
 		int x1 = m_DragMargins.GetLeft();
 		int x2 = m_WindowW - m_DragMargins.GetRight();
@@ -3406,26 +3519,13 @@ LRESULT CMeterWindow::OnLeftButtonDown(WPARAM wParam, LPARAM lParam)
 	}
 
 	// Handle buttons
-	bool redraw = false;
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
-	{
-		// Hidden meters are ignored
-		if ((*j)->IsHidden()) continue;
+	HandleButtons(pos, BUTTONPROC_DOWN, NULL, true);
 
-		CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
-		if (button)
-		{
-			redraw |= button->MouseDown(pos);
-		}
+	if (!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable)
+	{
+		// Cancel the mouse event beforehand
+		SetMouseLeaveEvent(true);
 
-	}
-	if (redraw)
-	{
-		Redraw();
-	}
-	else if(!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable)
-	{
 		// Run the DefWindowProc so the dragging works
 		return DefWindowProc(m_Window, m_Message, wParam, lParam);
 	}
@@ -3455,23 +3555,7 @@ LRESULT CMeterWindow::OnLeftButtonUp(WPARAM wParam, LPARAM lParam)
 	}
 
 	// Handle buttons
-	bool redraw = false;
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
-	{
-		// Hidden meters are ignored
-		if ((*j)->IsHidden()) continue;
-
-		CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
-		if (button)
-		{
-			redraw |= button->MouseUp(pos, this);
-		}
-	}
-	if (redraw)
-	{
-		Redraw();
-	}
+	HandleButtons(pos, BUTTONPROC_UP, this, true);
 
 	DoAction(pos.x, pos.y, MOUSE_LMB_UP, false);
 
@@ -3500,25 +3584,9 @@ LRESULT CMeterWindow::OnLeftButtonDoubleClick(WPARAM wParam, LPARAM lParam)
 	}
 
 	// Handle buttons
-	bool redraw = false;
-	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
-	{
-		// Hidden meters are ignored
-		if ((*j)->IsHidden()) continue;
+	HandleButtons(pos, BUTTONPROC_DOWN, NULL, true);
 
-		CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
-		if (button)
-		{
-			redraw |= button->MouseDown(pos);
-		}
-
-	}
-	if (redraw)
-	{
-		Redraw();
-	}
-	else if (!DoAction(pos.x, pos.y, MOUSE_LMB_DBLCLK, false))
+	if (!DoAction(pos.x, pos.y, MOUSE_LMB_DBLCLK, false))
 	{
 		DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false);
 	}
@@ -3547,6 +3615,9 @@ LRESULT CMeterWindow::OnRightButtonDown(WPARAM wParam, LPARAM lParam)
 		pos.y = pos.y - rect.top;
 	}
 
+	// Handle buttons
+	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+
 	DoAction(pos.x, pos.y, MOUSE_RMB_DOWN, false);
 
 	return 0;
@@ -3560,7 +3631,14 @@ LRESULT CMeterWindow::OnRightButtonDown(WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnRightButtonUp(WPARAM wParam, LPARAM lParam) 
 {
-	if (!DoAction((SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam), MOUSE_RMB_UP, false))
+	POINT pos;
+	pos.x = (SHORT)LOWORD(lParam);
+	pos.y = (SHORT)HIWORD(lParam);
+
+	// Handle buttons
+	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+
+	if (!DoAction(pos.x, pos.y, MOUSE_RMB_UP, false))
 	{
 		// Run the DefWindowProc so the context menu works
 		return DefWindowProc(m_Window, WM_RBUTTONUP, wParam, lParam);
@@ -3589,6 +3667,9 @@ LRESULT CMeterWindow::OnRightButtonDoubleClick(WPARAM wParam, LPARAM lParam)
 		pos.x = pos.x - rect.left;
 		pos.y = pos.y - rect.top;
 	}
+
+	// Handle buttons
+	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
 
 	if (!DoAction(pos.x, pos.y, MOUSE_RMB_DBLCLK, false))
 	{
@@ -3619,6 +3700,9 @@ LRESULT CMeterWindow::OnMiddleButtonDown(WPARAM wParam, LPARAM lParam)
 		pos.y = pos.y - rect.top;
 	}
 
+	// Handle buttons
+	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+
 	DoAction(pos.x, pos.y, MOUSE_MMB_DOWN, false);
 
 	return 0;
@@ -3644,6 +3728,9 @@ LRESULT CMeterWindow::OnMiddleButtonUp(WPARAM wParam, LPARAM lParam)
 		pos.x = pos.x - rect.left;
 		pos.y = pos.y - rect.top;
 	}
+
+	// Handle buttons
+	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
 
 	DoAction(pos.x, pos.y, MOUSE_MMB_UP, false);
 
@@ -3671,6 +3758,9 @@ LRESULT CMeterWindow::OnMiddleButtonDoubleClick(WPARAM wParam, LPARAM lParam)
 		pos.y = pos.y - rect.top;
 	}
 
+	// Handle buttons
+	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+
 	if (!DoAction(pos.x, pos.y, MOUSE_MMB_DBLCLK, false))
 	{
 		DoAction(pos.x, pos.y, MOUSE_MMB_DOWN, false);
@@ -3687,26 +3777,39 @@ LRESULT CMeterWindow::OnMiddleButtonDoubleClick(WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnContextMenu(WPARAM wParam, LPARAM lParam) 
 {
-	int xPos = (SHORT)LOWORD(lParam); 
-	int yPos = (SHORT)HIWORD(lParam); 
+	POINT pos;
+	int x = (SHORT)LOWORD(lParam); 
+	int y = (SHORT)HIWORD(lParam); 
 
-	// Transform the point to client rect
-	int x = (INT)(SHORT)LOWORD(lParam); 
-	int y = (INT)(SHORT)HIWORD(lParam); 
 	RECT rect;
 	GetWindowRect(m_Window, &rect);
-	x = x - rect.left;
-	y = y - rect.top;
 
-	// If RMB up or RMB down or double-click cause actions, do not show the menu!
-	if (DoAction(x, y, MOUSE_RMB_UP, false) || DoAction(x, y, MOUSE_RMB_DOWN, true) || DoAction(x, y, MOUSE_RMB_DBLCLK, true))
+	if (x == -1 && y == -1)  // WM_CONTEXTMENU is generated from the keyboard (Shift+F10/VK_APPS)
 	{
-		return 0;
+		// Set menu position to (0,0) on the window
+		pos.x = rect.left;
+		pos.y = rect.top;
+	}
+	else
+	{
+		// Transform the point to client rect
+		pos.x = x - rect.left;
+		pos.y = y - rect.top;
+
+		// Handle buttons
+		HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+
+		// If RMB up or RMB down or double-click cause actions, do not show the menu!
+		if (DoAction(pos.x, pos.y, MOUSE_RMB_UP, false) || DoAction(pos.x, pos.y, MOUSE_RMB_DOWN, true) || DoAction(pos.x, pos.y, MOUSE_RMB_DBLCLK, true))
+		{
+			return 0;
+		}
+
+		// Set menu position to cursor position
+		pos.x = x;
+		pos.y = y;
 	}
 
-	POINT pos;
-	pos.x = xPos;
-	pos.y = yPos;
 	m_Rainmeter->ShowContextMenu(pos, this);
 
 	return 0;
@@ -3722,8 +3825,8 @@ LRESULT CMeterWindow::OnContextMenu(WPARAM wParam, LPARAM lParam)
 bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test) 
 {
 	// Check if the hitpoint was over some meter
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
+	std::list<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
+	for( ; j != m_Meters.rend(); ++j)
 	{
 		// Hidden meters are ignored
 		if ((*j)->IsHidden()) continue;
@@ -3803,60 +3906,11 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 					return true;
 				}
 				break;
-
-			case MOUSE_OVER:
-				if (!(*j)->IsMouseOver())
-				{
-					(*j)->SetMouseOver(true);
-
-					if (!((*j)->GetMouseOverAction().empty()))
-					{
-						m_MouseOver = true;		// If the mouse is over a meter it's also over the main window
-						if (!test) m_Rainmeter->ExecuteCommand((*j)->GetMouseOverAction().c_str(), this);
-						return true;
-					}
-				}
-				break;
-			}
-		}
-		else
-		{
-			if (mouse == MOUSE_LEAVE || mouse == MOUSE_OVER)
-			{
-				if ((*j)->IsMouseOver())
-				{
-					(*j)->SetMouseOver(false);
-
-					if (!((*j)->GetMouseLeaveAction().empty()))
-					{
-						if (!test) m_Rainmeter->ExecuteCommand((*j)->GetMouseLeaveAction().c_str(), this);
-						return true;
-					}
-				}
 			}
 		}
 	}
 
-	bool inside = false;
-	if (x >= 0 && y >= 0 && x < m_WindowW && y < m_WindowH)
-	{
-		// Check transparent pixels
-		if (m_DoubleBuffer)
-		{
-			Color color;
-			Status status = m_DoubleBuffer->GetPixel(x, y, &color);
-			if (status != Ok || color.GetA() > 0)
-			{
-				inside = true;
-			}
-		}
-		else
-		{
-			inside = true;
-		}
-	}
-
-	if (inside)
+	if (HitTest(x, y))
 	{
 		// If no meters caused actions, do the default actions
 		switch (mouse)
@@ -3932,33 +3986,127 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 				return true;
 			}
 			break;
+		}
+	}
 
-		case MOUSE_OVER:
+	return false;
+}
+
+/*
+** DoMoveAction
+**
+** Executes the action if such are defined. Returns true, if meter/window which should be processed still may exist.
+**
+*/
+bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse, CMeter* upperMeter) 
+{
+	// Check if the hitpoint was over some meter
+	std::list<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
+	if (upperMeter)
+	{
+		for ( ; j != m_Meters.rend(); ++j)
+		{
+			if ((*j) == upperMeter)
+			{
+				++j;
+				break;
+			}
+		}
+	}
+	for( ; j != m_Meters.rend(); ++j)
+	{
+		if (!(*j)->IsHidden() && !upperMeter && (*j)->HitTest(x, y))
+		{
+			if (mouse == MOUSE_OVER)
+			{
+				if (!m_MouseOver)
+				{
+					// If the mouse is over a meter it's also over the main window
+					//DebugLog(L"@Enter: %s", m_SkinName.c_str());
+					m_MouseOver = true;
+					SetMouseLeaveEvent(false);
+
+					if (!m_MouseOverAction.empty())
+					{
+						m_Rainmeter->ExecuteCommand(m_MouseOverAction.c_str(), this);
+					}
+				}
+
+				if (!(*j)->IsMouseOver())
+				{
+					if (!((*j)->GetMouseOverAction().empty()) ||
+						!((*j)->GetMouseLeaveAction().empty()) ||
+						dynamic_cast<CMeterButton*>(*j) != NULL)
+					{
+						while (DoMoveAction(x, y, MOUSE_LEAVE, (*j))) ;  // Leave all lower meters
+
+						//DebugLog(L"MeterEnter: %s - [%s]", m_SkinName.c_str(), (*j)->GetName());
+						(*j)->SetMouseOver(true);
+
+						if (!((*j)->GetMouseOverAction().empty()))
+						{
+							m_Rainmeter->ExecuteCommand((*j)->GetMouseOverAction().c_str(), this);
+							return true;
+						}
+						return false;
+					}
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
+		else
+		{
+			if ((*j)->IsMouseOver())
+			{
+				//DebugLog(L"MeterLeave: %s - [%s]", m_SkinName.c_str(), (*j)->GetName());
+				(*j)->SetMouseOver(false);
+
+				if (!((*j)->GetMouseLeaveAction().empty()))
+				{
+					m_Rainmeter->ExecuteCommand((*j)->GetMouseLeaveAction().c_str(), this);
+				}
+				return true;
+			}
+		}
+	}
+
+	if (upperMeter) return false;
+
+	if (HitTest(x, y))
+	{
+		// If no meters caused actions, do the default actions
+		if (mouse == MOUSE_OVER)
+		{
 			if (!m_MouseOver)
 			{
+				//DebugLog(L"Enter: %s", m_SkinName.c_str());
 				m_MouseOver = true;
+				SetMouseLeaveEvent(false);
+
 				if (!m_MouseOverAction.empty())
 				{
-					if (!test) m_Rainmeter->ExecuteCommand(m_MouseOverAction.c_str(), this);
+					m_Rainmeter->ExecuteCommand(m_MouseOverAction.c_str(), this);
 					return true;
 				}
 			}
-			break;
 		}
 	}
 	else
 	{
 		// Mouse leave happens when the mouse is outside the window
-		if (mouse == MOUSE_LEAVE)
+		if (m_MouseOver)
 		{
-			if (m_MouseOver)
+			//DebugLog(L"Leave: %s", m_SkinName.c_str());
+			m_MouseOver = false;
+			SetMouseLeaveEvent(true);
+
+			if (!m_MouseLeaveAction.empty())
 			{
-				m_MouseOver = false;
-				if (!m_MouseLeaveAction.empty())
-				{
-					if (!test) m_Rainmeter->ExecuteCommand(m_MouseLeaveAction.c_str(), this);
-					return true;
-				}
+				m_Rainmeter->ExecuteCommand(m_MouseLeaveAction.c_str(), this);
+				return true;
 			}
 		}
 	}
@@ -4031,6 +4179,8 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnNcHitTest, WM_NCHITTEST)
 	MESSAGE(OnMouseMove, WM_MOUSEMOVE)
 	MESSAGE(OnMouseMove, WM_NCMOUSEMOVE)
+	MESSAGE(OnMouseLeave, WM_MOUSELEAVE)
+	MESSAGE(OnMouseLeave, WM_NCMOUSELEAVE)
 	MESSAGE(OnContextMenu, WM_CONTEXTMENU)
 	MESSAGE(OnRightButtonDown, WM_NCRBUTTONDOWN)
 	MESSAGE(OnRightButtonDown, WM_RBUTTONDOWN)
@@ -4180,11 +4330,26 @@ LRESULT CMeterWindow::OnCopyData(WPARAM wParam, LPARAM lParam)
 			bang = str;
 		}
 
+		if (wcsicmp(bang.c_str(), L"!RainmeterWriteKeyValue") == 0)
+		{
+			// !RainmeterWriteKeyValue is a special case.
+			if (CRainmeter::ParseString(arg.c_str()).size() < 4)
+			{
+				// Add the current config filepath to the args
+				arg += L" \"";
+				arg += m_SkinPath;
+				arg += m_SkinName;
+				arg += L"\\";
+				arg += m_SkinIniFile;
+				arg += L"\"";
+			}
+		}
+
 		// Add the current config name to the args. If it's not defined already
 		// the bang only affects this config, if there already is a config defined
 		// another one doesn't matter.
 		arg += L" \"";
-		arg += m_SkinName.c_str();
+		arg += m_SkinName;
 		arg += L"\"";
 
 		return Rainmeter->ExecuteBang(bang, arg, this);

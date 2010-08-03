@@ -54,6 +54,13 @@ enum MOUSE
 	MOUSE_LEAVE
 };
 
+enum BUTTONPROC
+{
+	BUTTONPROC_DOWN,
+	BUTTONPROC_UP,
+	BUTTONPROC_MOVE
+};
+
 enum ZPOSITION
 {
 	ZPOSITION_ONDESKTOP = -2,
@@ -146,10 +153,12 @@ public:
 	void Refresh(bool init, bool all = false);
 	void Redraw();
 
+	void SetMouseLeaveEvent(bool cancel);
+
 	void MoveWindow(int x, int y);
 	void ChangeZPos(ZPOSITION zPos, bool all = false);
 	void FadeWindow(int from, int to);
-	
+
 	Gdiplus::Bitmap* GetDoubleBuffer() { return m_DoubleBuffer; };
 	HWND GetWindow() { return m_Window; };
 
@@ -226,6 +235,8 @@ protected:
 	LRESULT OnDisplayChange(WPARAM wParam, LPARAM lParam);  
 
 private:
+	bool HitTest(int x, int y);
+
 	void CreateRegion(bool clear);
 	void GetSkinFolders(const std::wstring& folder);
 	Gdiplus::Bitmap* GrabDesktop(int x, int y, int w, int h);
@@ -241,7 +252,9 @@ private:
 	void InitializeMeasures();
 	void InitializeMeters();
 	void ShowWindowIfAppropriate();
+	void HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meterWindow, bool changeCursor);
 	bool DoAction(int x, int y, MOUSE mouse, bool test);
+	bool DoMoveAction(int x, int y, MOUSE mouse, CMeter* upperMeter = NULL);
 	bool ResizeWindow(bool reset);
 	void IgnoreAeroPeek();
 

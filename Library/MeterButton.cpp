@@ -43,7 +43,7 @@ CMeterButton::CMeterButton(CMeterWindow* meterWindow) : CMeter(meterWindow)
 {
 	for (int i = 0; i < BUTTON_FRAMES; ++i)
 	{
-		m_Bitmaps[i] = NULL;;
+		m_Bitmaps[i] = NULL;
 	}
 	m_Bitmap = NULL;
 	m_State = BUTTON_STATE_NORMAL;
@@ -235,25 +235,59 @@ void CMeterButton::BindMeasure(std::list<CMeasure*>& measures)
 	}
 }
 
-bool CMeterButton::MouseUp(POINT pos, CMeterWindow* window)
+/*
+** HitTest2
+**
+** Checks if the given point is inside the button.
+**
+*/
+bool CMeterButton::HitTest2(int px, int py, bool checkAlpha)
 {
 	int x = GetX();
 	int y = GetY();
 
+	if (m_MouseOver &&
+		px >= x && px < x + m_W &&
+		py >= y && py < y + m_H)
+	{
+		if (checkAlpha)
+		{
+			if (m_SolidColor.GetA() > 0 || m_SolidColor2.GetA() > 0)
+			{
+				return true;
+			}
+
+			// Check transparent pixels
+			if (m_Bitmap)
+			{
+				Color color;
+				Status status = m_Bitmap->GetPixel(px - x + m_W * m_State, py - y, &color);
+				if (status != Ok || color.GetA() > 0)
+				{
+					return true;
+				}
+			}
+			else
+			{
+				return true;
+			}
+		}
+		else
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool CMeterButton::MouseUp(POINT pos, CMeterWindow* window)
+{
 	if (m_State == BUTTON_STATE_DOWN)
 	{
-		if (m_Clicked &&
-			pos.x >= x && pos.x < x + m_W &&
-			pos.y >= y && pos.y < y + m_H)
+		if (window && m_Clicked && HitTest2(pos.x, pos.y, true))
 		{
-			Color color;
-			m_Bitmap->GetPixel(pos.x - x + m_W * m_State, pos.y - y, &color);
-
-			if (color.GetA() > 0)
-			{
-				// Do a delayed execute or ortherwise !RainmeterRefresh crashes
-				PostMessage(window->GetWindow(), WM_DELAYED_EXECUTE, (WPARAM)NULL, (LPARAM)m_Command.c_str());
-			}
+			// Do a delayed execute or ortherwise !RainmeterRefresh crashes
+			PostMessage(window->GetWindow(), WM_DELAYED_EXECUTE, (WPARAM)NULL, (LPARAM)m_Command.c_str());
 		}
 		m_State = BUTTON_STATE_NORMAL;
 		m_Clicked = false;
@@ -266,45 +300,25 @@ bool CMeterButton::MouseUp(POINT pos, CMeterWindow* window)
 
 bool CMeterButton::MouseDown(POINT pos)
 {
-	int x = GetX();
-	int y = GetY();
-
-	if (pos.x >= x && pos.x < x + m_W &&
-		pos.y >= y && pos.y < y + m_H)
+	if (HitTest2(pos.x, pos.y, true))
 	{
-		Color color;
-		m_Bitmap->GetPixel(pos.x - x + m_W * m_State, pos.y - y, &color);
-
-		if (color.GetA() > 0)
-		{
-			m_State = BUTTON_STATE_DOWN;
-			m_Clicked = true;
-			return true;
-		}
+		m_State = BUTTON_STATE_DOWN;
+		m_Clicked = true;
+		return true;
 	}
 	return false;
 }
 
 bool CMeterButton::MouseMove(POINT pos)
 {
-	int x = GetX();
-	int y = GetY();
-
 	if (m_Clicked == true)
 	{
-		if (pos.x >= x && pos.x < x + m_W &&
-			pos.y >= y && pos.y < y + m_H)
+		if (HitTest2(pos.x, pos.y, true))
 		{
-			Color color;
-			m_Bitmap->GetPixel(pos.x - x + m_W * m_State, pos.y - y, &color);
-
-			if (color.GetA() > 0)
+			if (m_State == BUTTON_STATE_NORMAL)
 			{
-				if (m_State == BUTTON_STATE_NORMAL)
-				{
-					m_State = BUTTON_STATE_DOWN;
-					return true;
-				}
+				m_State = BUTTON_STATE_DOWN;
+				return true;
 			}
 		}
 		else
@@ -324,8 +338,7 @@ bool CMeterButton::MouseMove(POINT pos)
 	}
 	else
 	{
-		if (pos.x >= x && pos.x < x + m_W &&
-			pos.y >= y && pos.y < y + m_H)
+		if (HitTest2(pos.x, pos.y, false))
 		{
 			if (m_State == BUTTON_STATE_NORMAL)
 			{

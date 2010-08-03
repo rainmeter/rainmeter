@@ -96,6 +96,7 @@ void RainmeterAbout(HWND, const char* arg);
 void RainmeterSkinMenu(HWND, const char* arg);
 void RainmeterTrayMenu(HWND, const char* arg);
 void RainmeterResetStats(HWND, const char* arg);
+void RainmeterWriteKeyValue(HWND, const char* arg);
 void RainmeterPluginBang(HWND, const char* arg);
 void RainmeterQuit(HWND, const char* arg);
 
@@ -190,6 +191,7 @@ public:
 
 	void SetDebug(bool debug);
 
+	bool IsMenuActive() { return m_MenuActive; }
 	void ShowContextMenu(POINT pos, CMeterWindow* meterWindow);
 
 	std::wstring GetTrayExecuteL() { return m_TrayExecuteL; };
@@ -207,10 +209,10 @@ public:
 
 	void ClearDeleteLaterList();
 
+	static std::vector<std::wstring> ParseString(LPCTSTR str);
 	static PLATFORM IsNT();
 	static std::wstring ExtractPath(const std::wstring& strFilePath);
 	static void ExpandEnvironmentVariables(std::wstring& strPath);
-	static bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove = false);
 
 private:
 	void CreateMeterWindow(std::wstring path, std::wstring config, std::wstring iniFile);
@@ -265,6 +267,8 @@ private:
 	bool m_DesktopWorkAreaType;			// If true, DesktopWorkArea is treated as "margin"
 	std::map<UINT, RECT> m_DesktopWorkAreas;
 	std::vector<RECT> m_OldDesktopWorkAreas;
+
+	bool m_MenuActive;
 
 	bool m_Logging;
 

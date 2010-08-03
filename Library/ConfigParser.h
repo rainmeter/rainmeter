@@ -71,15 +71,12 @@ private:
 	bool ReplaceVariables(std::wstring& result);
 	bool ReplaceMeasures(std::wstring& result);
 
-	void ReadIniFile(const std::wstring& strFileName, int depth = 0);
+	void ReadIniFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& strFileName, int depth = 0);
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
 	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
 	std::vector<std::wstring> GetKeys(const std::wstring& strSection);
 
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
-
-	void GetIniFileMappingList();
-	std::wstring GetAlternateFileName(const std::wstring& iniFile);
 
 	static void SetMultiMonitorVariables(bool reset);
 	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue);
@@ -95,8 +92,6 @@ private:
 	std::vector<std::wstring> m_Sections;		// The sections must be an ordered array
 	stdext::hash_map<std::wstring, std::vector<std::wstring> > m_Keys;
 	stdext::hash_map<std::wstring, std::wstring> m_Values;
-
-	std::vector<std::wstring> m_IniFileMappings;
 
 	static std::map<std::wstring, std::wstring> c_MonitorVariables;
 };

@@ -78,15 +78,11 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 	// Set the SCREENAREA/WORKAREA variables for present monitor
 	SetAutoSelectedMonitorVariables(meterWindow);
 
-	if (meterWindow)
-	{
-		GetIniFileMappingList();
-	}
+	std::vector<std::wstring> iniFileMappings;
+	CSystem::GetIniFileMappingList(iniFileMappings);
 
-	ReadIniFile(m_Filename);
+	ReadIniFile(iniFileMappings, m_Filename);
 	ReadVariables();
-
-	m_IniFileMappings.clear();
 }
 
 /*
@@ -869,7 +865,7 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 ** 
 ** \param iniFile The ini file to be read.
 */
-void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
+void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& iniFile, int depth)
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
@@ -885,24 +881,14 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 	}
 
 	// Avoid "IniFileMapping"
-	std::wstring iniRead = GetAlternateFileName(iniFile);
-	bool alternate = false;
+	std::wstring iniRead = CSystem::GetTemporaryFile(iniFileMappings, iniFile);
+	bool temporary = (!iniRead.empty() && iniRead != L"<>");
 
-	if (!iniRead.empty())
+	if (temporary)
 	{
-		// Copy iniFile to temporary directory
-		if (CRainmeter::CopyFiles(iniFile, iniRead))
-		{
-			if (CRainmeter::GetDebug()) DebugLog(L"Reading file: %s (Alternate: %s)", iniFile.c_str(), iniRead.c_str());
-			alternate = true;
-		}
-		else  // copy failed
-		{
-			DeleteFile(iniRead.c_str());
-		}
+		if (CRainmeter::GetDebug()) DebugLog(L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
 	}
-
-	if (!alternate)
+	else
 	{
 		if (CRainmeter::GetDebug()) DebugLog(L"Reading file: %s", iniFile.c_str());
 		iniRead = iniFile;
@@ -920,7 +906,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 		if (res == 0)		// File not found
 		{
 			delete [] items;
-			if (alternate) DeleteFile(iniRead.c_str());
+			if (temporary) CSystem::RemoveFile(iniRead);
 			return;
 		}
 		if (res < size - 2) break;		// Fits in the buffer
@@ -991,7 +977,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 					// It's a relative path so add the current path as a prefix
 					strIncludeFile = CRainmeter::ExtractPath(iniFile) + strIncludeFile;
 				}
-				ReadIniFile(strIncludeFile, depth + 1);
+				ReadIniFile(iniFileMappings, strIncludeFile, depth + 1);
 			}
 			else
 			{
@@ -1003,7 +989,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, int depth)
 	}
 	delete [] buffer;
 	delete [] items;
-	if (alternate) DeleteFile(iniRead.c_str());
+	if (temporary) CSystem::RemoveFile(iniRead);
 }
 
 //==============================================================================
@@ -1085,84 +1071,4 @@ std::vector<std::wstring> CConfigParser::GetKeys(const std::wstring& strSection)
 	}
 
 	return std::vector<std::wstring>();
-}
-
-void CConfigParser::GetIniFileMappingList()
-{
-	HKEY hKey;
-	LONG ret;
-
-	ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\IniFileMapping", 0, KEY_ENUMERATE_SUB_KEYS, &hKey);
-	if (ret == ERROR_SUCCESS)
-	{
-		WCHAR buffer[MAX_PATH];
-		DWORD index = 0, cch = MAX_PATH;
-
-		while (true)
-		{
-			ret = RegEnumKeyEx(hKey, index++, buffer, &cch, NULL, NULL, NULL, NULL);
-			if (ret == ERROR_NO_MORE_ITEMS) break;
-
-			if (ret == ERROR_SUCCESS)
-			{
-				m_IniFileMappings.push_back(buffer);
-			}
-			cch = MAX_PATH;
-		}
-		RegCloseKey(hKey);
-	}
-}
-
-std::wstring CConfigParser::GetAlternateFileName(const std::wstring &iniFile)
-{
-	std::wstring alternate;
-
-	if (!m_IniFileMappings.empty())
-	{
-		std::wstring::size_type pos = iniFile.find_last_of(L'\\');
-		std::wstring filename;
-
-		if (pos != std::wstring::npos)
-		{
-			filename = iniFile.substr(pos + 1);
-		}
-		else
-		{
-			filename = iniFile;
-		}
-
-		for (size_t i = 0; i < m_IniFileMappings.size(); ++i)
-		{
-			if (wcsicmp(m_IniFileMappings[i].c_str(), filename.c_str()) == 0)
-			{
-				WCHAR buffer[4096];
-
-				GetTempPath(4096, buffer);
-				alternate = buffer;
-				if (GetTempFileName(alternate.c_str(), L"cfg", 0, buffer) != 0)
-				{
-					alternate = buffer;
-
-					std::wstring tmp = GetAlternateFileName(alternate);
-					if (tmp.empty())
-					{
-						return alternate;
-					}
-					else  // alternate is reserved
-					{
-						DeleteFile(alternate.c_str());
-						return tmp;
-					}
-				}
-				else  // failed
-				{
-					DebugLog(L"Unable to create a temporary file to: %s", alternate.c_str());
-					alternate.clear();
-					break;
-				}
-			}
-		}
-	}
-
-	return alternate;
 }
