@@ -2024,6 +2024,7 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainmeterSkinMenu");
 		RemoveBangCommand("!RainmeterTrayMenu");
 		RemoveBangCommand("!RainmeterResetStats");
+		RemoveBangCommand("!RainmeterWriteKeyValue");
 		RemoveBangCommand("!RainmeterPluginBang");
 		RemoveBangCommand("!RainmeterQuit");
 	}
