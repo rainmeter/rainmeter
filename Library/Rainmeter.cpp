@@ -1247,7 +1247,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		{
 			iniFile += L"Rainmeter.ini";
 		}
-		else if (iniFile.substr(iniFile.length() - 4) != L".ini")
+		else if (iniFile.length() <= 4 || iniFile.substr(iniFile.length() - 4) != L".ini")
 		{
 			iniFile += L"\\Rainmeter.ini";
 		}
