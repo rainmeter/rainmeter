@@ -292,7 +292,7 @@ BOOL OnInitAboutDialog(HWND window)
 	HWND widget;
 
 	widget = GetDlgItem(window, IDC_VERSION_STRING);
-	swprintf(tmpSz, L"%s %s rev %i %s", APPNAME, APPVERSION, revision_number, APPBITS);
+	swprintf(tmpSz, L"%s %s%s rev %i %s", APPNAME, APPVERSION, revision_beta ? L" Beta" : L"", revision_number, APPBITS);
 	SetWindowText(widget, tmpSz);
 
 	widget = GetDlgItem(window, IDC_BUILD_STRING);

@@ -24,10 +24,15 @@
 #include "AboutDialog.h"
 #include "Error.h"
 #include "RainmeterQuery.h"
+#include "../revision-number.h"
 #include <io.h>
 #include <ShellAPI.h>
 
 #define TRAYTIMER 3
+
+#define RAINMETER_OFFICIAL		L"http://rainmeter.net/RainCMS/"
+#define RAINMETER_MANUAL		L"http://rainmeter.net/RainCMS/?q=Manual"
+#define RAINMETER_MANUALBETA	L"http://rainmeter.net/RainCMS/?q=ManualBeta"
 
 extern CRainmeter* Rainmeter;
 
@@ -405,13 +410,11 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			} 
 			else if(wParam == ID_CONTEXT_SHOW_HELP)
 			{
-				std::wstring help = Rainmeter->GetPath();
-				help = L"\"" + help + L"Rainmeter.chm\"";
-				LSExecute(NULL, help.c_str(), SW_SHOWNORMAL);
+				LSExecute(NULL, revision_beta ? RAINMETER_MANUALBETA : RAINMETER_MANUAL, SW_SHOWNORMAL);
 			}
 			else if(wParam == ID_CONTEXT_NEW_VERSION)
 			{
-				LSExecute(NULL, L"http://rainmeter.net/RainCMS/", SW_SHOWNORMAL);
+				LSExecute(NULL, RAINMETER_OFFICIAL, SW_SHOWNORMAL);
 			}
 			else if(wParam == ID_CONTEXT_REFRESH)
 			{
