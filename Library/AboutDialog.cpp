@@ -276,7 +276,7 @@ void RepositionControls(HWND hwndDlg)
 	widget = GetDlgItem(hwndDlg, IDC_DISABLE_VERSION_CHECK);
 	GetClientRect(widget, &wr);
 	MapWindowPoints(widget, hwndDlg, (LPPOINT)&wr, 2);
-	SetWindowPos(widget, NULL, (r.right - (wr.right - wr.left)) / 2, wr.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(widget, NULL, ((r.right - (wr.right - wr.left)) / 2) + 9, wr.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
 	widget = GetDlgItem(hwndDlg, IDC_CONFIG_TAB);
 	SetWindowPos(widget, NULL, 0, 0, r.right - 22, r.bottom - 175, SWP_NOMOVE | SWP_NOZORDER);
@@ -292,11 +292,11 @@ BOOL OnInitAboutDialog(HWND window)
 	HWND widget;
 
 	widget = GetDlgItem(window, IDC_VERSION_STRING);
-	swprintf(tmpSz, L"%s version %s rev %i %s", APPNAME, APPVERSION, revision_number, APPBITS);
+	swprintf(tmpSz, L"%s %s rev %i %s", APPNAME, APPVERSION, revision_number, APPBITS);
 	SetWindowText(widget, tmpSz);
 
 	widget = GetDlgItem(window, IDC_BUILD_STRING);
-	swprintf(tmpSz, L"Build on %s", ConvertToWide(__DATE__).c_str());
+	swprintf(tmpSz, L"Built on %s", ConvertToWide(__DATE__).c_str());
 	SetWindowText(widget, tmpSz);
 
 	// Add tabs for each config
