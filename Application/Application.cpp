@@ -21,6 +21,8 @@
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
+#include <string>
+#include <algorithm>
 #include "resource.h"
 #include "..\Library\Rainmeter.h"
 
@@ -41,6 +43,7 @@ BOOL InitApplication(HINSTANCE hInstance, const WCHAR* WinClass);
 HWND InitInstance(HINSTANCE hInstance, const WCHAR* WinClass, const WCHAR* WinName);
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 void Bang(const WCHAR* command);
+BOOL IsRunning(HANDLE* hMutex);
 
 /*
 ** Stuff from the DLL
@@ -61,6 +64,7 @@ const WCHAR* WinName = L"Rainmeter control window";
 */
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
+	HANDLE hMutex = NULL;
 	MSG msg;
 	HWND hWnd;
 
@@ -72,6 +76,13 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		// It's a !bang
 		Bang(lpCmdLine);
 		return 0;
+	}
+
+	// Check whether Rainmeter.exe is already running
+	if (IsRunning(&hMutex))
+	{
+		//MessageBox(NULL, L"Rainmeter.exe is already running.", L"Rainmeter", MB_ICONWARNING | MB_TOPMOST | MB_OK);
+		return FALSE;
 	}
 
 	if(!hPrevInstance) 
@@ -115,6 +126,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		DispatchMessage(&msg); 
 	} 
 
+	if (hMutex) ReleaseMutex(hMutex);
 	return (int)msg.wParam; 
 } 
 
@@ -195,6 +207,82 @@ void Bang(const WCHAR* command)
 			MessageBox(NULL, L"Rainmeter is not running.\nUnable to send the !bang to it.", L"Rainmeter", MB_OK);
 		}
 	}
+}
+
+/* 
+** IsRunning
+**
+** Checks whether Rainmeter.exe is running.
+**
+*/
+BOOL IsRunning(HANDLE* hMutex)
+{
+	typedef struct
+	{
+		ULONG         i[2];
+		ULONG         buf[4];
+		unsigned char in[64];
+		unsigned char digest[16];
+	} MD5_CTX;
+
+	typedef void (WINAPI *FPMD5INIT)(MD5_CTX *context);
+	typedef void (WINAPI *FPMD5UPDATE)(MD5_CTX *context, const unsigned char *input, unsigned int inlen);
+	typedef void (WINAPI *FPMD5FINAL)(MD5_CTX *context);
+
+	// Create MD5 digest from command line
+	HMODULE hCryptDll = LoadLibrary(L"cryptdll.dll");
+	if (!hCryptDll)  // Unable to check the mutex
+	{
+		*hMutex = NULL;
+		return FALSE;
+	}
+
+	FPMD5INIT MD5Init = (FPMD5INIT)GetProcAddress(hCryptDll, "MD5Init");
+	FPMD5UPDATE MD5Update = (FPMD5UPDATE)GetProcAddress(hCryptDll, "MD5Update");
+	FPMD5FINAL MD5Final = (FPMD5FINAL)GetProcAddress(hCryptDll, "MD5Final");
+	if (!MD5Init || !MD5Update || !MD5Final)  // Unable to check the mutex
+	{
+		FreeLibrary(hCryptDll);
+		*hMutex = NULL;
+		return FALSE;
+	}
+
+	std::wstring cmdLine = GetCommandLine();
+	std::transform(cmdLine.begin(), cmdLine.end(), cmdLine.begin(), ::towlower);
+
+	MD5_CTX ctx = {0};
+
+	MD5Init(&ctx);
+	MD5Update(&ctx, (LPBYTE)cmdLine.c_str(), cmdLine.length() * sizeof(WCHAR));
+	MD5Final(&ctx);
+
+	FreeLibrary(hCryptDll);
+
+	// Convert MD5 digest to mutex string (e.g. "Rainmeter@0123456789abcdef0123456789abcdef")
+	const WCHAR szHexTable[] = L"0123456789abcdef";
+	WCHAR szMutex[64] = {0};
+	wcscpy(szMutex, L"Rainmeter@");
+
+	WCHAR* pos = szMutex + wcslen(szMutex);
+
+	for (size_t i = 0; i < 16; ++i)
+	{
+		*(pos++) = *(szHexTable + ((ctx.digest[i] >> 4) & 0xF));
+		*(pos++) = *(szHexTable + (ctx.digest[i] & 0xF));
+	}
+
+	// Create mutex
+	HANDLE hMutexTemp = CreateMutex(NULL, FALSE, szMutex);
+	if (GetLastError() == ERROR_ALREADY_EXISTS)
+	{
+		// Rainmeter.exe is already running
+		*hMutex = NULL;
+		return TRUE;
+	}
+
+	// Rainmeter.exe is not running
+	*hMutex = hMutexTemp;
+	return FALSE;
 }
 
 /* 
