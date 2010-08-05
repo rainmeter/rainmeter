@@ -1236,25 +1236,38 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	{
 		// The command line defines the location of Rainmeter.ini (or whatever it calls it).
 		std::wstring iniFile = c_CmdLine;
-		if (iniFile[0] == L'\"' && iniFile[iniFile.length() - 1] == L'\"')
+		if (iniFile[0] == L'\"')
 		{
-			iniFile = iniFile.substr(1, iniFile.length() - 2);
+			if (iniFile.length() == 1)
+			{
+				iniFile.clear();
+			}
+			else if (iniFile[iniFile.length() - 1] == L'\"')
+			{
+				iniFile = iniFile.substr(1, iniFile.length() - 2);
+			}
 		}
 
 		ExpandEnvironmentVariables(iniFile);
 
-		if (iniFile[iniFile.length() - 1] == L'\\')
+		if (iniFile.empty() || iniFile[iniFile.length() - 1] == L'\\')
 		{
 			iniFile += L"Rainmeter.ini";
 		}
-		else if (iniFile.length() <= 4 || iniFile.substr(iniFile.length() - 4) != L".ini")
+		else if (iniFile.length() <= 4 || wcsicmp(iniFile.substr(iniFile.length() - 4).c_str(), L".ini") != 0)
 		{
 			iniFile += L"\\Rainmeter.ini";
 		}
 
+		if (iniFile[0] != L'\\' && iniFile[0] != L'/' && iniFile.find_first_of(L':') == std::wstring::npos)
+		{
+			// Make absolute path
+			iniFile.insert(0, m_Path);
+		}
+
 		m_IniFile = iniFile;
 
-		// If the ini file doesn't exist in the %APPDATA% either, create a default rainmeter.ini file.
+		// If the ini file doesn't exist, create a default rainmeter.ini file.
 		if (_waccess(m_IniFile.c_str(), 0) == -1)
 		{
 			CreateDefaultConfigFile(m_IniFile);
@@ -1264,10 +1277,10 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	// Set the log file location
 	m_LogFile = m_IniFile;
-	size_t posExt = m_LogFile.find(L".ini");
-	if (posExt != std::wstring::npos)
+	size_t logFileLen = m_LogFile.length();
+	if (logFileLen > 4 && wcsicmp(m_LogFile.substr(logFileLen - 4).c_str(), L".ini") == 0)
 	{
-		m_LogFile.replace(posExt, 4, L".log");
+		m_LogFile.replace(logFileLen - 4, 4, L".log");
 	}
 	else
 	{
