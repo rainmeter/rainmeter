@@ -65,6 +65,7 @@ typedef struct meas_data {
 
 
 std::map<UINT, meas_data_t> g_meas_data;
+int g_Instances = 0;
 /* Globals that store system's wifi interface/adapter structs */
 /* These are initialized in Initialize(), used during each update*/
 HANDLE hClient = NULL;
@@ -88,6 +89,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	/* initialize interface/adapter structs */
 	DWORD dwNegotiatedVersion = 0;
 	DWORD dwErr;
+	g_Instances++;
 	//Create WINLAN API Handle
 	if(hClient == NULL){
 		dwErr = WlanOpenHandle( WLAN_API_VERSION, NULL, &dwNegotiatedVersion, &hClient );
@@ -473,11 +475,12 @@ void Finalize(HMODULE instance, UINT id)
 		g_meas_data[id].listInit = false;
 		g_meas_data.erase(i1);
 	}
-	if(hClient != NULL){
+	g_Instances--;
+	if(hClient != NULL && g_Instances == 0){
 		WlanCloseHandle(hClient, NULL);
 		hClient = NULL;
 	}
-	if(pIntfList != NULL){
+	if(pIntfList != NULL && g_Instances == 0){
 		WlanFreeMemory(pIntfList);
 		pIntfList = NULL;
 	}
