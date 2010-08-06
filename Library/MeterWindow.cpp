@@ -4377,7 +4377,8 @@ std::wstring CMeterWindow::MakePathAbsolute(std::wstring path)
 
 	std::wstring root = m_SkinPath + m_SkinName;
 
-	if (root[root.length() - 1] != L'\\')
+	WCHAR ch = root[root.length() - 1];
+	if (ch != L'\\' && ch != L'/')
 	{
 		root += L"\\";
 	}

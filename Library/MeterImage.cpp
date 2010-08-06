@@ -408,7 +408,8 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 	m_Path = parser.ReadString(section, L"Path", L"");
 	if (!m_Path.empty())
 	{
-		if (m_Path[m_Path.length() - 1] != L'\\')
+		WCHAR ch = m_Path[m_Path.length() - 1];
+		if (ch != L'\\' && ch != L'/')
 		{
 			m_Path += L"\\";
 		}

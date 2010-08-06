@@ -1368,9 +1368,13 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 			m_PluginPath = ConvertToWide(tmpSz);
 		}
 
-		if (!m_SkinPath.empty() && m_SkinPath[m_SkinPath.size() - 1] != L'\\')
+		if (!m_SkinPath.empty())
 		{
-			m_SkinPath += L"\\";
+			WCHAR ch = m_SkinPath[m_SkinPath.size() - 1];
+			if (ch != L'\\' && ch != L'/')
+			{
+				m_SkinPath += L"\\";
+			}
 		}
 	}
 
@@ -3106,6 +3110,11 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				}
 
 				HMENU configMenu = CreateConfigMenu(m_ConfigMenu);
+				if (!configMenu)
+				{
+					configMenu = CreatePopupMenu();
+					AppendMenu(configMenu, MF_GRAYED, 0, L"No configs available");
+				}
 				if (configMenu)
 				{
 					AppendMenu(configMenu, MF_SEPARATOR, 0, NULL);
@@ -3655,12 +3664,12 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 
 std::wstring CRainmeter::ExtractPath(const std::wstring& strFilePath)
 {
-	size_t pos = strFilePath.rfind(L"\\");
+	std::wstring::size_type pos = strFilePath.find_last_of(L"\\/");
 	if (pos != std::wstring::npos)
 	{
 		return strFilePath.substr(0, pos + 1);
 	}
-	return L".";
+	return L".\\";
 }
 
 void CRainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
