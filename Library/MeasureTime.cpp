@@ -22,6 +22,13 @@
 #include "MeasureTime.h"
 #include "Rainmeter.h"
 #include <time.h>
+#include <errno.h>
+#include <crtdbg.h>
+
+void MeasureTime_CRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved)
+{
+	// Do nothing.
+}
 
 int GetYearDay(int year, int month, int day)
 {
@@ -72,6 +79,32 @@ CMeasureTime::~CMeasureTime()
 }
 
 /*
+** TimeToString
+**
+** Converts given time to string.
+** This function is a wrapper function for wcsftime.
+**
+*/
+void CMeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const struct tm* time)
+{
+	if (bufLen > 0)
+	{
+		_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(MeasureTime_CRTInvalidParameterHandler);
+		_CrtSetReportMode(_CRT_ASSERT, 0);
+
+		errno = 0;
+		wcsftime(buf, bufLen, m_Format.c_str(), time);
+		if (errno == EINVAL)
+		{
+			DebugLog(L"Time: Invalid Format: Measure=[%s], Format=\"%s\"", m_Name.c_str(), format);
+			buf[0] = 0;
+		}
+
+		_set_invalid_parameter_handler(oldHandler);
+	}
+}
+
+/*
 ** Update
 **
 ** Updates the current time
@@ -99,6 +132,8 @@ bool CMeasureTime::Update()
 		SYSTEMTIME sysToday;
 		FILETIME ftToday;
 
+		tmpSz[0] = 0;
+
 		ftToday.dwHighDateTime = m_Time.HighPart;
 		ftToday.dwLowDateTime = m_Time.LowPart;
 
@@ -125,7 +160,7 @@ bool CMeasureTime::Update()
 			today.tm_yday = GetYearDay(sysToday.wYear, sysToday.wMonth, sysToday.wDay);
 			today.tm_year = sysToday.wYear - 1900;
 
-			wcsftime(tmpSz, MAX_LINE_LENGTH, m_Format.c_str(), &today);
+			TimeToString(tmpSz, MAX_LINE_LENGTH, m_Format.c_str(), &today);
 		}
 
 		m_Value = wcstod(tmpSz, NULL);
@@ -146,6 +181,8 @@ const WCHAR* CMeasureTime::GetStringValue(bool autoScale, double scale, int deci
 	static WCHAR tmpSz[MAX_LINE_LENGTH];
 	struct tm today;
 	
+	tmpSz[0] = 0;
+
 	SYSTEMTIME sysToday;
 	FILETIME ftToday;
 	ftToday.dwHighDateTime = m_Time.HighPart;
@@ -176,12 +213,12 @@ const WCHAR* CMeasureTime::GetStringValue(bool autoScale, double scale, int deci
 		}
 		else
 		{
-			wcsftime(tmpSz, MAX_LINE_LENGTH, m_Format.c_str(), &today);
+			TimeToString(tmpSz, MAX_LINE_LENGTH, m_Format.c_str(), &today);
 		}
 	}
 	else
 	{
-		wcsftime(tmpSz, MAX_LINE_LENGTH, L"%H:%M:%S", &today);
+		TimeToString(tmpSz, MAX_LINE_LENGTH, L"%H:%M:%S", &today);
 	}
 
 	return CheckSubstitute(tmpSz);

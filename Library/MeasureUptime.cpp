@@ -93,7 +93,15 @@ const WCHAR* CMeasureUptime::GetStringValue(bool autoScale, double scale, int de
 		time[2] %= 24;
 	}
 
-	FormatMessage(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, m_Format.c_str(), 0, 0, buffer, MAX_LINE_LENGTH, (char**)time);
+	__try
+	{
+		FormatMessage(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY, m_Format.c_str(), 0, 0, buffer, MAX_LINE_LENGTH, (char**)time);
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+		DebugLog(L"Uptime: Invalid Format: Measure=[%s], Format=\"%s\"", m_Name.c_str(), m_Format.c_str());
+		buffer[0] = 0;
+	}
 
 	return CheckSubstitute(buffer);
 }

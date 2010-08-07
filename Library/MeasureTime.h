@@ -32,6 +32,8 @@ public:
 	virtual const WCHAR* GetStringValue(bool autoScale, double scale, int decimals, bool percentual);
 	
 private:
+	void TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const struct tm* time);
+
 	std::wstring m_Format;
 	LARGE_INTEGER m_DeltaTime;
 	LARGE_INTEGER m_Time;
