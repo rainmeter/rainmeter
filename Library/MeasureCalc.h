@@ -34,7 +34,7 @@ public:
 	static void UpdateVariableMap(CMeterWindow& meterWindow);
 	
 private:
-	void RandomFormulaReplace();
+	void FormulaReplace();
 	std::wstring m_Formula;
 	std::wstring m_FormulaHolder;
 	hqMathParser* m_Parser;

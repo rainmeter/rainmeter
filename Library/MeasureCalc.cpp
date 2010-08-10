@@ -76,7 +76,7 @@ bool CMeasureCalc::Update()
 	m_Parser->Parameters = c_VarMap;
 	if(m_UpdateRandom > 0)
 	{
-		RandomFormulaReplace();
+		FormulaReplace();
 	}
 
 	char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(m_Formula.c_str()).c_str(), &m_Value);
@@ -134,23 +134,24 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_HighBound = parser.ReadInt(section, L"HighBound", 100);
 	m_UpdateRandom = parser.ReadInt(section, L"UpdateRandom", 0);
 
-	RandomFormulaReplace();
+	FormulaReplace();
 }
 
 /*
-** RandomFormulaReplace
+** FormulaReplace
 **
 ** This replaces the word Random in m_Formula with a random number
+** and all cases of counter with Counter
 **
 */
-void CMeasureCalc::RandomFormulaReplace()
+void CMeasureCalc::FormulaReplace()
 {
 	//To implement random numbers the word "Random" in the string
 	//formula is being replaced by the random number value
 	m_Formula = m_FormulaHolder;
 	std::wstring::size_type loc = 0;
 
-	while ((loc = m_Formula.find_first_of(L"Rr", loc)) != std::wstring::npos)
+	while ((loc = m_Formula.find_first_of(L"RrCc", loc)) != std::wstring::npos)
 	{
 		if (wcsnicmp(L"Random", m_Formula.c_str() + loc, 6) == 0)
 		{
@@ -163,6 +164,11 @@ void CMeasureCalc::RandomFormulaReplace()
 
 			m_Formula.replace(loc, 6, buffer);
 			loc += wcslen(buffer);
+		}
+		else if (wcsnicmp(L"Counter", m_Formula.c_str() + loc, 7) == 0)
+		{
+			m_Formula.replace(loc, 7, L"Counter");
+			loc += 7;
 		}
 		else
 		{
