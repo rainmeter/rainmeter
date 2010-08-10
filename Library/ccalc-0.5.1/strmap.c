@@ -108,7 +108,7 @@ int StrMap_LenIndexOf( hqStrMap* strmap, const char *str, size_t len, void **dat
     char *Rec = strmap->FList;
     for (i=0; i<strmap->FCount; i++) {
         int recLen = *(int*)(Rec + sizeof(char*));
-		if (recLen==len && strncmp( str, *(char**)Rec, recLen )==0 ) {
+		if (recLen==len && strnicmp( str, *(char**)Rec, recLen )==0 ) {
 			*data = (Rec + sizeof(char*) + sizeof(int));
 			return i;
 		}

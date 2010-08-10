@@ -141,7 +141,6 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 ** FormulaReplace
 **
 ** This replaces the word Random in m_Formula with a random number
-** and all cases of counter with Counter
 **
 */
 void CMeasureCalc::FormulaReplace()
@@ -151,7 +150,7 @@ void CMeasureCalc::FormulaReplace()
 	m_Formula = m_FormulaHolder;
 	std::wstring::size_type loc = 0;
 
-	while ((loc = m_Formula.find_first_of(L"RrCc", loc)) != std::wstring::npos)
+	while ((loc = m_Formula.find_first_of(L"Rr", loc)) != std::wstring::npos)
 	{
 		if (wcsnicmp(L"Random", m_Formula.c_str() + loc, 6) == 0)
 		{
@@ -164,11 +163,6 @@ void CMeasureCalc::FormulaReplace()
 
 			m_Formula.replace(loc, 6, buffer);
 			loc += wcslen(buffer);
-		}
-		else if (wcsnicmp(L"Counter", m_Formula.c_str() + loc, 7) == 0)
-		{
-			m_Formula.replace(loc, 7, L"Counter");
-			loc += 7;
 		}
 		else
 		{

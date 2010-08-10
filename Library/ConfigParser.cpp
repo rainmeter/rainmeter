@@ -504,12 +504,12 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 					if (pos2 == std::wstring::npos || end < pos2)
 					{
 						std::wstring var(result.begin() + pos + 1, result.begin() + end);
-	
-						std::map<std::wstring, CMeasure*>::const_iterator iter = m_Measures.find(var);
-						if (iter != m_Measures.end())
+
+						CMeasure* measure = GetMeasure(var);
+						if (measure)
 						{
-							std::wstring value = (*iter).second->GetStringValue(false, 1, 5, false);
-	
+							std::wstring value = measure->GetStringValue(false, 1, 5, false);
+
 							// Measure found, replace it with the value
 							result.replace(result.begin() + pos, result.begin() + end + 1, value);
 							start = pos + value.length();
@@ -610,6 +610,20 @@ void CConfigParser::AddMeasure(CMeasure* pMeasure)
 	{
 		m_Measures[pMeasure->GetName()] = pMeasure;
 	}
+}
+
+CMeasure* CConfigParser::GetMeasure(const std::wstring& name)
+{
+	std::map<std::wstring, CMeasure*>::const_iterator iter = m_Measures.begin();
+	for ( ; iter != m_Measures.end(); ++iter)
+	{
+		if (wcsicmp((*iter).first.c_str(), name.c_str()) == 0)
+		{
+			return (*iter).second;
+		}
+	}
+
+	return NULL;
 }
 
 double CConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)

@@ -70,6 +70,7 @@ private:
 	void ReadVariables();
 	bool ReplaceVariables(std::wstring& result);
 	bool ReplaceMeasures(std::wstring& result);
+	CMeasure* GetMeasure(const std::wstring& name);
 
 	void ReadIniFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& strFileName, int depth = 0);
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
