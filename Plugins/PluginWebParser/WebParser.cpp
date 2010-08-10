@@ -584,6 +584,11 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 						else
 						{
 							Log(L"WebParser: Not enough substrings!");
+
+							// Clear the old result 
+							EnterCriticalSection(&g_CriticalSection);
+							((*i).second)->resultString.clear();
+							LeaveCriticalSection(&g_CriticalSection);
 						}
 					}
 				}
