@@ -35,6 +35,8 @@ public:
 	
 private:
 	void FormulaReplace();
+	bool IsDelimiter(WCHAR ch);
+
 	std::wstring m_Formula;
 	std::wstring m_FormulaHolder;
 	hqMathParser* m_Parser;
@@ -42,9 +44,9 @@ private:
 	static hqStrMap* c_VarMap;
 	static bool c_RandSeeded;
 
-	int m_UpdateRandom;
 	int m_LowBound;
 	int m_HighBound;
+	bool m_UpdateRandom;
 };
 
 #endif

@@ -43,6 +43,10 @@ CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow) : CMeasure(meterWindow)
 
 	m_Parser = MathParser_Create(NULL);
 
+	m_LowBound = 0;
+	m_HighBound = 100;
+	m_UpdateRandom = false;
+
 	rand();
 }
 
@@ -74,7 +78,7 @@ bool CMeasureCalc::Update()
 	if (!CMeasure::PreUpdate()) return false;
 
 	m_Parser->Parameters = c_VarMap;
-	if(m_UpdateRandom > 0)
+	if (m_UpdateRandom)
 	{
 		FormulaReplace();
 	}
@@ -126,15 +130,31 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	CMeasure::ReadConfig(parser, section);
 
+	// Store the current values so we know if the value needs to be updated
+	int oldLowBound = m_LowBound;
+	int oldHighBound = m_HighBound;
+	bool oldUpdateRandom = m_UpdateRandom;
+
 	m_Formula = parser.ReadString(section, L"Formula", L"");
-	// Hold onto the formula, we are going to change it
-	m_FormulaHolder = m_Formula;
 
 	m_LowBound = parser.ReadInt(section, L"LowBound", 0);
 	m_HighBound = parser.ReadInt(section, L"HighBound", 100);
-	m_UpdateRandom = parser.ReadInt(section, L"UpdateRandom", 0);
+	m_UpdateRandom = 0!=parser.ReadInt(section, L"UpdateRandom", 0);
 
-	FormulaReplace();
+	if (!m_Initialized ||
+		m_FormulaHolder != m_Formula ||
+		oldLowBound != m_LowBound ||
+		oldHighBound != m_HighBound ||
+		oldUpdateRandom != m_UpdateRandom)
+	{
+		// Hold onto the formula, we are going to change it
+		m_FormulaHolder = m_Formula;
+
+		if (!m_UpdateRandom)
+		{
+			FormulaReplace();
+		}
+	}
 }
 
 /*
@@ -152,11 +172,13 @@ void CMeasureCalc::FormulaReplace()
 
 	while ((loc = m_Formula.find_first_of(L"Rr", loc)) != std::wstring::npos)
 	{
-		if (wcsnicmp(L"Random", m_Formula.c_str() + loc, 6) == 0)
+		if (wcsnicmp(L"Random", m_Formula.c_str() + loc, 6) == 0 &&
+			(loc == 0 || IsDelimiter(*(m_Formula.c_str() + loc - 1))) &&
+			(loc == (m_Formula.length() - 6) || IsDelimiter(*(m_Formula.c_str() + loc + 6))))
 		{
 			int range = (m_HighBound - m_LowBound) + 1; 
 			srand((unsigned) rand()); 
-			int randNumber = m_LowBound + (range * rand()/(RAND_MAX + 1.0)); 
+			int randNumber = m_LowBound + (int)(range * rand()/(RAND_MAX + 1.0)); 
 
 			WCHAR buffer[32];
 			wsprintf(buffer, L"%i", randNumber);
@@ -169,4 +191,25 @@ void CMeasureCalc::FormulaReplace()
 			++loc;
 		}
 	}
+}
+
+/*
+** IsDelimiter
+**
+** Checks whether the given character is a operator or a delimiter.
+**
+*/
+bool CMeasureCalc::IsDelimiter(WCHAR ch)
+{
+	const WCHAR symbols[] = L" \t\n()+-/*^~<>%$,?:=&|;";
+
+	for (size_t i = 0, len = wcslen(symbols); i < len; ++i)
+	{
+		if (ch == symbols[i])
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
