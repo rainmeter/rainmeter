@@ -3998,24 +3998,15 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 ** Executes the action if such are defined. Returns true, if meter/window which should be processed still may exist.
 **
 */
-bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse, CMeter* upperMeter) 
+bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse) 
 {
+	bool buttonFound = false;
+
 	// Check if the hitpoint was over some meter
 	std::list<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
-	if (upperMeter)
-	{
-		for ( ; j != m_Meters.rend(); ++j)
-		{
-			if ((*j) == upperMeter)
-			{
-				++j;
-				break;
-			}
-		}
-	}
 	for( ; j != m_Meters.rend(); ++j)
 	{
-		if (!(*j)->IsHidden() && !upperMeter && (*j)->HitTest(x, y))
+		if (!(*j)->IsHidden() && (*j)->HitTest(x, y))
 		{
 			if (mouse == MOUSE_OVER)
 			{
@@ -4032,28 +4023,41 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse, CMeter* upperMeter)
 					}
 				}
 
+				// Handle button
+				CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
+				if (button)
+				{
+					if (!buttonFound)
+					{
+						if (!button->IsExecutable())
+						{
+							button->SetExecutable(true);
+						}
+						buttonFound = true;
+					}
+					else
+					{
+						if (button->IsExecutable())
+						{
+							button->SetExecutable(false);
+						}
+					}
+				}
+
 				if (!(*j)->IsMouseOver())
 				{
 					if (!((*j)->GetMouseOverAction().empty()) ||
 						!((*j)->GetMouseLeaveAction().empty()) ||
-						dynamic_cast<CMeterButton*>(*j) != NULL)
+						button)
 					{
-						while (DoMoveAction(x, y, MOUSE_LEAVE, (*j))) ;  // Leave all lower meters
-
 						//DebugLog(L"MeterEnter: %s - [%s]", m_SkinName.c_str(), (*j)->GetName());
 						(*j)->SetMouseOver(true);
 
 						if (!((*j)->GetMouseOverAction().empty()))
 						{
 							m_Rainmeter->ExecuteCommand((*j)->GetMouseOverAction().c_str(), this);
-							return true;
 						}
-						return false;
 					}
-				}
-				else
-				{
-					return false;
 				}
 			}
 		}
@@ -4061,6 +4065,16 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse, CMeter* upperMeter)
 		{
 			if ((*j)->IsMouseOver())
 			{
+				// Handle button
+				CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
+				if (button)
+				{
+					if (button->IsExecutable())
+					{
+						button->SetExecutable(false);
+					}
+				}
+
 				//DebugLog(L"MeterLeave: %s - [%s]", m_SkinName.c_str(), (*j)->GetName());
 				(*j)->SetMouseOver(false);
 
@@ -4068,12 +4082,9 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse, CMeter* upperMeter)
 				{
 					m_Rainmeter->ExecuteCommand((*j)->GetMouseLeaveAction().c_str(), this);
 				}
-				return true;
 			}
 		}
 	}
-
-	if (upperMeter) return false;
 
 	if (HitTest(x, y))
 	{

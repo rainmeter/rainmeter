@@ -48,6 +48,7 @@ CMeterButton::CMeterButton(CMeterWindow* meterWindow) : CMeter(meterWindow)
 	m_Bitmap = NULL;
 	m_State = BUTTON_STATE_NORMAL;
 	m_Clicked = false;
+	m_Executable = false;
 }
 
 /*
@@ -284,7 +285,7 @@ bool CMeterButton::MouseUp(POINT pos, CMeterWindow* window)
 {
 	if (m_State == BUTTON_STATE_DOWN)
 	{
-		if (window && m_Clicked && HitTest2(pos.x, pos.y, true))
+		if (window && m_Clicked && m_Executable && HitTest2(pos.x, pos.y, true))
 		{
 			// Do a delayed execute or ortherwise !RainmeterRefresh crashes
 			PostMessage(window->GetWindow(), WM_DELAYED_EXECUTE, (WPARAM)NULL, (LPARAM)m_Command.c_str());
@@ -300,7 +301,7 @@ bool CMeterButton::MouseUp(POINT pos, CMeterWindow* window)
 
 bool CMeterButton::MouseDown(POINT pos)
 {
-	if (HitTest2(pos.x, pos.y, true))
+	if (m_Executable && HitTest2(pos.x, pos.y, true))
 	{
 		m_State = BUTTON_STATE_DOWN;
 		m_Clicked = true;

@@ -254,7 +254,7 @@ private:
 	void ShowWindowIfAppropriate();
 	void HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meterWindow, bool changeCursor);
 	bool DoAction(int x, int y, MOUSE mouse, bool test);
-	bool DoMoveAction(int x, int y, MOUSE mouse, CMeter* upperMeter = NULL);
+	bool DoMoveAction(int x, int y, MOUSE mouse);
 	bool ResizeWindow(bool reset);
 	void IgnoreAeroPeek();
 

@@ -40,6 +40,9 @@ public:
 	bool MouseUp(POINT pos, CMeterWindow* window);
 	bool MouseDown(POINT pos);
 
+	void SetExecutable(bool exec) { m_Executable = exec; }
+	bool IsExecutable() { return m_Executable; }
+
 private:
 	bool HitTest2(int px, int py, bool checkAlpha);
 
@@ -49,6 +52,7 @@ private:
 	std::wstring m_Command;	// Command to be executed
 	int m_State;
 	bool m_Clicked;
+	bool m_Executable;
 };
 
 #endif
