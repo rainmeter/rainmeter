@@ -342,6 +342,90 @@ static bool updateCurrentTrack()
     return (NULL != CurrentTrack);
 }
 
+static bool iTunesAboutToPromptUserToQuit = false;
+// from http://www.codeproject.com/KB/cs/itunestray.aspx?msg=2300786#xx2300786xx
+class CiTunesEventHandler : public _IiTunesEvents
+{
+private:
+    long m_dwRefCount;
+    ITypeInfo* m_pITypeInfo; // Pointer to type information.
+
+public:
+    CiTunesEventHandler()
+    {
+        m_dwRefCount=0;
+        ITypeLib* pITypeLib = NULL ;
+        HRESULT hr = ::LoadRegTypeLib(LIBID_iTunesLib, 1, 5, 0x00, &pITypeLib) ;
+        // Get type information for the interface of the object.
+        hr = pITypeLib->GetTypeInfoOfGuid(DIID__IiTunesEvents, &m_pITypeInfo) ;
+        pITypeLib->Release() ;
+    }
+    ~CiTunesEventHandler()
+    {}
+
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void **ppvObject)
+    {
+        if ((iid == IID_IDispatch)||(iid == DIID__IiTunesEvents)) {
+            m_dwRefCount++;
+            *ppvObject = this;//(_IiTunesEvents *)this;
+            return S_OK;
+        }
+        if (iid == IID_IUnknown) {
+            m_dwRefCount++;
+            *ppvObject = this;//(IUnknown *)this;
+            return S_OK;
+        }
+        return E_NOINTERFACE;
+    }
+    ULONG STDMETHODCALLTYPE CiTunesEventHandler::AddRef()
+    {
+        InterlockedIncrement(&m_dwRefCount);
+        return m_dwRefCount;
+    }
+    ULONG STDMETHODCALLTYPE Release()
+    {
+        InterlockedDecrement(&m_dwRefCount);
+        if (m_dwRefCount == 0) {
+            delete this;
+            return 0;
+        }
+        return m_dwRefCount;
+    }
+    HRESULT STDMETHODCALLTYPE GetTypeInfoCount(UINT *){return E_NOTIMPL;};
+    HRESULT STDMETHODCALLTYPE GetTypeInfo(UINT,LCID,ITypeInfo ** ){return E_NOTIMPL;};
+    HRESULT STDMETHODCALLTYPE GetIDsOfNames(const IID &,LPOLESTR * ,UINT,LCID,DISPID *){return E_NOTIMPL;};
+    HRESULT STDMETHODCALLTYPE Invoke(DISPID dispidMember, REFIID, LCID,WORD, DISPPARAMS* pdispparams, VARIANT*,EXCEPINFO*, UINT*)
+    {
+        switch (dispidMember) //look in the documentation for "enum ITEvent" to get the numbers for the functions you want to implement
+        {
+        case 9: // AboutToPromptUserToQuitEvent
+            CurrentTrack.Release();
+            iTunes->Quit();
+            iTunes.Release();
+            InstanceCreated = false;
+            iTunesAboutToPromptUserToQuit = true;
+            break;
+        default:
+            break;
+        }
+        return S_OK;
+    }
+};
+
+static CiTunesEventHandler* iTunesEventHandler;
+static void initEventHandler()
+{
+    IConnectionPointContainer* icpc;
+    iTunes->QueryInterface(IID_IConnectionPointContainer, (void **)&icpc);
+    IConnectionPoint* icp;
+    icpc->FindConnectionPoint(DIID__IiTunesEvents, &icp);
+    icpc->Release();
+    DWORD dwAdvise;
+    iTunesEventHandler = new CiTunesEventHandler();
+    icp->Advise(iTunesEventHandler, &dwAdvise);
+    icp->Release();
+}
+
 /*
 This function is called when the measure is initialized.
 The function must return the maximum value that can be measured. 
@@ -373,6 +457,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		{
 	        InstanceCreated = true;
 			LSLog(LOG_DEBUG, L"Rainmeter", L"iTunesApp initialized successfully.");
+            initEventHandler();
 		}
 		else
 		{
@@ -410,24 +495,26 @@ UINT Update(UINT id)
 {
     if (!CoInitialized || !InstanceCreated)
     {
-		// Check if the iTunes window has appeared
-		if (::FindWindow(L"iTunes", L"iTunes"))
-		{
-			if (SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
-			{
-				InstanceCreated = true;
-				LSLog(LOG_DEBUG, L"Rainmeter", L"iTunesApp initialized successfully.");
-			}
-			else
-			{
-				LSLog(LOG_DEBUG, L"Rainmeter", L"Unable to create the iTunesApp instance.");
-				return 0;
-			}
-		}
-		else
-		{
-			return 0;
-		}
+        // Check if the iTunes window has appeared
+        if (::FindWindow(L"iTunes", L"iTunes"))
+        {
+            if (!iTunesAboutToPromptUserToQuit && SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
+            {
+                InstanceCreated = true;
+                LSLog(LOG_DEBUG, L"Rainmeter", L"iTunesApp initialized successfully.");
+                initEventHandler();
+            }
+            else
+            {
+                LSLog(LOG_DEBUG, L"Rainmeter", L"Unable to create the iTunesApp instance.");
+                return 0;
+            }
+        }
+        else
+        {
+            iTunesAboutToPromptUserToQuit = false;
+            return 0;
+        }
     }
 
     CCommandIdMap::const_iterator it = CommandIdMap.find(id);
