@@ -231,8 +231,11 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 		if (sep != L":") return false; 
 		word2 = ExtractWord(buffer);
 
-		m_Substitute.push_back(word1);
-		m_Substitute.push_back(word2);
+		if (word1 != word2)
+		{
+			m_Substitute.push_back(word1);
+			m_Substitute.push_back(word2);
+		}
 
 		sep = ExtractWord(buffer);
 		if (!sep.empty() && sep != L",") return false; 
@@ -296,7 +299,7 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 		}
 	}
 
-	while ((pos = ret.find_first_of(L"#QUOT#", pos)) != std::wstring::npos) ret.replace(pos, 6, L"\"");
+	while ((pos = ret.find(L"#QUOT#", pos)) != std::wstring::npos) ret.replace(pos, 6, L"\"");
 
 	return ret;
 }
