@@ -93,6 +93,7 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 	m_TransitionUpdate = 100;
 	m_ActiveTransition = false;
 	m_HasNetMeasures = false;
+	m_HasButtons = false;
 	m_WindowHide = HIDEMODE_NONE;
 	m_WindowStartHidden = false;
 	m_SnapEdges = true;
@@ -1863,6 +1864,7 @@ bool CMeterWindow::ReadSkin()
 	// Create the meters and measures
 
 	m_HasNetMeasures = false;
+	m_HasButtons = false;
 
 	// Get all the sections (i.e. different meters, measures and the other stuff)
 	std::vector<std::wstring> arraySections = m_Parser.GetSections();
@@ -1907,7 +1909,7 @@ bool CMeterWindow::ReadSkin()
 
 					m_Parser.AddMeasure(measure);
 
-					if (!m_HasNetMeasures && dynamic_cast<CMeasureNet*>((measure)))
+					if (!m_HasNetMeasures && dynamic_cast<CMeasureNet*>(measure))
 					{
 						m_HasNetMeasures = true;
 					}
@@ -1950,6 +1952,11 @@ bool CMeterWindow::ReadSkin()
 					m_Meters.push_back(meter);
 
 					m_Parser.ResetStyleTemplate();
+
+					if (!m_HasButtons && dynamic_cast<CMeterButton*>(meter))
+					{
+						m_HasButtons = true;
+					}
 				}
 			}
 			// If it's not a meter or measure it will be ignored
@@ -2376,7 +2383,7 @@ void CMeterWindow::Update(bool nodraw)
 	{
 		try
 		{
-			if ((*i)->HasDynamicVariables() && dynamic_cast<CMeasurePlugin*>((*i)) == NULL)		// Plugins are not meant to be reinitialized
+			if ((*i)->HasDynamicVariables())
 			{
 				(*i)->ReadConfig(m_Parser, (*i)->GetName());
 			}
@@ -2389,6 +2396,7 @@ void CMeterWindow::Update(bool nodraw)
 	}
 
 	// Update the meters
+	bool bActiveTransition = false;
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
@@ -2405,6 +2413,22 @@ void CMeterWindow::Update(bool nodraw)
 		{
 			MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		}
+
+		// Update tooltips
+		if (!((*j)->GetToolTipHandle() != NULL) && (!(*j)->GetToolTipText().empty()))
+		{
+			(*j)->CreateToolTip(this);
+		}
+		if ((*j)->GetToolTipHandle() != NULL)
+		{
+			(*j)->UpdateToolTip();
+		}
+
+		// Check for transitions and start the timer if necessary
+		if (!bActiveTransition && (*j)->HasActiveTransition())
+		{
+			bActiveTransition = true;
+		}
 	}
 
 	if (!nodraw)
@@ -2418,35 +2442,11 @@ void CMeterWindow::Update(bool nodraw)
 		Redraw();
 	}
 
-	j = m_Meters.begin();
-	for ( ; j != m_Meters.end(); ++j)
-	{
-		if (!((*j)->GetToolTipHandle() != NULL) && (!(*j)->GetToolTipText().empty()))
-		{
-			(*j)->CreateToolTip(this);
-		}
-		if ((*j)->GetToolTipHandle() != NULL)
-		{
-			(*j)->UpdateToolTip();
-		}
-	}
-
-	// Check for transitions and start the timer if necessary
-	bool bActiveTransition = false;
-	j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
-	{
-		if ((*j)->HasActiveTransition())
-		{
-			bActiveTransition = true;
-			break;
-		}
-	}
-
 	// Start/stop the transition timer if necessary
 	if (!m_ActiveTransition && bActiveTransition)
 	{
 		SetTimer(m_Window, TRANSITIONTIMER, m_TransitionUpdate, NULL);
+		m_ActiveTransition = true;
 	}
 	else if (m_ActiveTransition && !bActiveTransition)
 	{
@@ -2841,23 +2841,27 @@ void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meter
 		// Hidden meters are ignored
 		if ((*j)->IsHidden()) continue;
 
-		CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
-		if (button)
+		CMeterButton* button = NULL;
+		if (m_HasButtons)
 		{
-			switch (proc)
+			button = dynamic_cast<CMeterButton*>(*j);
+			if (button)
 			{
-			case BUTTONPROC_DOWN:
-				redraw |= button->MouseDown(pos);
-				break;
+				switch (proc)
+				{
+				case BUTTONPROC_DOWN:
+					redraw |= button->MouseDown(pos);
+					break;
 
-			case BUTTONPROC_UP:
-				redraw |= button->MouseUp(pos, meterWindow);
-				break;
+				case BUTTONPROC_UP:
+					redraw |= button->MouseUp(pos, meterWindow);
+					break;
 
-			case BUTTONPROC_MOVE:
-			default:
-				redraw |= button->MouseMove(pos);
-				break;
+				case BUTTONPROC_MOVE:
+				default:
+					redraw |= button->MouseMove(pos);
+					break;
+				}
 			}
 		}
 
@@ -4024,22 +4028,26 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 				}
 
 				// Handle button
-				CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
-				if (button)
+				CMeterButton* button = NULL;
+				if (m_HasButtons)
 				{
-					if (!buttonFound)
+					button = dynamic_cast<CMeterButton*>(*j);
+					if (button)
 					{
-						if (!button->IsExecutable())
+						if (!buttonFound)
 						{
-							button->SetExecutable(true);
+							if (!button->IsExecutable())
+							{
+								button->SetExecutable(true);
+							}
+							buttonFound = true;
 						}
-						buttonFound = true;
-					}
-					else
-					{
-						if (button->IsExecutable())
+						else
 						{
-							button->SetExecutable(false);
+							if (button->IsExecutable())
+							{
+								button->SetExecutable(false);
+							}
 						}
 					}
 				}
@@ -4066,12 +4074,15 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 			if ((*j)->IsMouseOver())
 			{
 				// Handle button
-				CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
-				if (button)
+				if (m_HasButtons)
 				{
-					if (button->IsExecutable())
+					CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
+					if (button)
 					{
-						button->SetExecutable(false);
+						if (button->IsExecutable())
+						{
+							button->SetExecutable(false);
+						}
 					}
 				}
 

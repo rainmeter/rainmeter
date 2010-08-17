@@ -101,6 +101,10 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	CMeasure::ReadConfig(parser, section);
 
+	// DynamicVariables is now disabled in MeasurePlugin due to a limitation of the re-initialization.
+	// Do not set m_DynamicVariables to "true".
+	m_DynamicVariables = false;
+
 	m_PluginName = parser.ReadString(section, L"Plugin", L"");
 
 	size_t pos = m_PluginName.rfind(L".");

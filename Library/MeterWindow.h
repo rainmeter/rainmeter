@@ -314,6 +314,7 @@ private:
 	int m_TransitionUpdate;						// Transition redraw frequency
 	bool m_ActiveTransition;
 	bool m_HasNetMeasures;
+	bool m_HasButtons;
 	HIDEMODE m_WindowHide;						// If true, the window is hidden when mouse is over it
 	bool m_WindowStartHidden;					// If true, the window is hidden at startup
 	bool m_SavePosition;						// If true, the window's position is saved
