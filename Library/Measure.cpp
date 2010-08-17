@@ -251,6 +251,7 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 {
 	std::wstring::size_type end = 0;
+	std::wstring::size_type pos = 0;
 	std::wstring ret;
 
 	if (buffer.empty()) return ret;	
@@ -294,6 +295,9 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 			buffer.erase(0, end + 1);
 		}
 	}
+
+	while ((pos = ret.find_first_of(L"#QUOT#", pos)) != std::wstring::npos) ret.replace(pos, 6, L"\"");
+
 	return ret;
 }
 
