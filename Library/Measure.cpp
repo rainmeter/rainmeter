@@ -153,6 +153,13 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	std::wstring subs;
 	subs = parser.ReadString(section, L"Substitute", L"");
+	if (!subs.empty() &&
+		(subs[0] != L'\"' || subs[subs.length() - 1] != L'\'') &&
+		(subs[0] != L'\'' || subs[subs.length() - 1] != L'\"'))
+	{
+		// Add quotes since they are removed by the GetProfileString
+		subs = L"\"" + subs + L"\"";
+	}
 	if (!ParseSubstitute(subs))
 	{
 		DebugLog(L"Incorrect substitute string: %s", subs.c_str());
@@ -217,9 +224,6 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 {
 	if (buffer.empty()) return true;	
 
-	// Add quotes since they are removed by the GetProfileString
-	buffer = L"\"" + buffer + L"\"";
-
 	std::wstring word1;
 	std::wstring word2;
 	std::wstring sep;
@@ -263,13 +267,15 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 	std::wstring::size_type notwhite = buffer.find_first_not_of(L" \t\n");
 	buffer.erase(0, notwhite);
 
-	if (buffer[0] == L'\"')
+	if (buffer[0] == L'\"' || buffer[0] == L'\'')
 	{
+		WCHAR quote = buffer[0];
+
 		end = 1;	// Skip the '"'
 		// Quotes around the word
-		while (buffer[end] != L'\"' && end < buffer.size()) ++end;
+		while (buffer[end] != quote && end < buffer.size()) ++end;
 
-		if (buffer[end] == L'\"')
+		if (buffer[end] == quote)
 		{
 			ret = buffer.substr(1, end - 1);
 			buffer.erase(0, end + 1);
@@ -298,8 +304,6 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 			buffer.erase(0, end + 1);
 		}
 	}
-
-	while ((pos = ret.find(L"#QUOT#", pos)) != std::wstring::npos) ret.replace(pos, 6, L"\"");
 
 	return ret;
 }

@@ -51,7 +51,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
@@ -141,7 +141,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
@@ -232,7 +232,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -325,7 +325,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -416,7 +416,7 @@
 				AdditionalOptions="/GL /EHsc /GA "
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -506,7 +506,7 @@
 				AdditionalOptions="/GL /EHsc /GA "
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -571,7 +571,15 @@
 			Name="pcre"
 			>
 			<File
-				RelativePath="pcre-6.4\chartables.c"
+				RelativePath=".\pcre-8.10\config.h"
+				>
+			</File>
+			<File
+				RelativePath=".\pcre-8.10\pcre.h"
+				>
+			</File>
+			<File
+				RelativePath=".\pcre-8.10\pcre_chartables.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -579,7 +587,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -589,7 +597,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -599,7 +607,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -608,7 +616,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -617,7 +625,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -626,12 +634,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_compile.c"
+				RelativePath=".\pcre-8.10\pcre_compile.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -639,7 +647,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -649,7 +657,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -659,7 +667,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -668,7 +676,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -677,7 +685,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -686,12 +694,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_config.c"
+				RelativePath=".\pcre-8.10\pcre_config.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -699,7 +707,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -709,7 +717,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -719,7 +727,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -728,7 +736,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -737,7 +745,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -746,12 +754,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_dfa_exec.c"
+				RelativePath=".\pcre-8.10\pcre_dfa_exec.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -759,7 +767,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -769,7 +777,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -779,7 +787,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -788,7 +796,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -797,7 +805,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -806,12 +814,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_exec.c"
+				RelativePath=".\pcre-8.10\pcre_exec.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -819,7 +827,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -829,7 +837,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -839,7 +847,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -848,7 +856,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -857,7 +865,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -866,12 +874,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_fullinfo.c"
+				RelativePath=".\pcre-8.10\pcre_fullinfo.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -879,7 +887,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -889,7 +897,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -899,7 +907,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -908,7 +916,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -917,7 +925,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -926,12 +934,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_get.c"
+				RelativePath=".\pcre-8.10\pcre_get.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -939,7 +947,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -949,7 +957,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -959,7 +967,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -968,7 +976,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -977,7 +985,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -986,12 +994,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_globals.c"
+				RelativePath=".\pcre-8.10\pcre_globals.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -999,7 +1007,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1009,7 +1017,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1019,7 +1027,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1028,7 +1036,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1037,7 +1045,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1046,12 +1054,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_info.c"
+				RelativePath=".\pcre-8.10\pcre_info.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1059,7 +1067,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1069,7 +1077,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1079,7 +1087,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1088,7 +1096,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1097,7 +1105,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1106,16 +1114,16 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_internal.h"
+				RelativePath=".\pcre-8.10\pcre_internal.h"
 				>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_maketables.c"
+				RelativePath=".\pcre-8.10\pcre_maketables.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1123,7 +1131,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1133,7 +1141,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1143,7 +1151,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1152,7 +1160,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1161,7 +1169,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1170,12 +1178,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_ord2utf8.c"
+				RelativePath=".\pcre-8.10\pcre_newline.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1183,7 +1191,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1193,7 +1201,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1203,7 +1211,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1212,7 +1220,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1221,7 +1229,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1230,12 +1238,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_refcount.c"
+				RelativePath=".\pcre-8.10\pcre_ord2utf8.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1243,7 +1251,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1253,7 +1261,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1263,7 +1271,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1272,7 +1280,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1281,7 +1289,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1290,16 +1298,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_scanner.h"
-				>
-			</File>
-			<File
-				RelativePath="pcre-6.4\pcre_study.c"
+				RelativePath=".\pcre-8.10\pcre_refcount.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1307,7 +1311,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1317,7 +1321,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1327,7 +1331,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1336,7 +1340,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1345,7 +1349,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1354,12 +1358,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_tables.c"
+				RelativePath=".\pcre-8.10\pcre_study.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1367,7 +1371,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1377,7 +1381,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1387,7 +1391,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1396,7 +1400,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1405,7 +1409,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1414,12 +1418,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_try_flipped.c"
+				RelativePath=".\pcre-8.10\pcre_tables.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1427,7 +1431,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1437,7 +1441,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1447,7 +1451,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1456,7 +1460,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1465,7 +1469,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1474,12 +1478,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_ucp_findchar.c"
+				RelativePath=".\pcre-8.10\pcre_try_flipped.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1487,7 +1491,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1497,7 +1501,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1507,7 +1511,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1516,7 +1520,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1525,7 +1529,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1534,12 +1538,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_valid_utf8.c"
+				RelativePath=".\pcre-8.10\pcre_ucd.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1547,7 +1551,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1557,7 +1561,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1567,7 +1571,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1576,7 +1580,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1585,7 +1589,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1594,12 +1598,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_version.c"
+				RelativePath=".\pcre-8.10\pcre_valid_utf8.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1607,7 +1611,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1617,7 +1621,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1627,7 +1631,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1636,7 +1640,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1645,7 +1649,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1654,12 +1658,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcre_xclass.c"
+				RelativePath=".\pcre-8.10\pcre_version.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1667,7 +1671,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1677,7 +1681,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1687,7 +1691,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1696,7 +1700,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1705,7 +1709,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1714,12 +1718,12 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="pcre-6.4\pcreposix.c"
+				RelativePath=".\pcre-8.10\pcre_xclass.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -1727,7 +1731,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1737,7 +1741,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1747,7 +1751,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1756,7 +1760,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1765,7 +1769,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1774,9 +1778,13 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\pcre-8.10\ucp.h"
+				>
 			</File>
 		</Filter>
 		<File
@@ -1788,7 +1796,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -1798,7 +1806,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -1808,7 +1816,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -1817,7 +1825,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -1826,7 +1834,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -1835,7 +1843,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;SUPPORT_UTF8;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 				/>
 			</FileConfiguration>
 		</File>

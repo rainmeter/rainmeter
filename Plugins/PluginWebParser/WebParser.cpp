@@ -29,7 +29,7 @@
 #include <vector>
 #include <Wininet.h>
 #include <shlwapi.h>
-#include "pcre-6.4/pcre.h"
+#include "pcre-8.10/pcre.h"
 #include "..\..\Library\Export.h"	// Rainmeter's exported functions
 
 /* The exported functions */
