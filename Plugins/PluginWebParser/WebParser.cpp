@@ -83,31 +83,10 @@ static bool g_Debug = false;
 static HINTERNET hRootHandle = NULL;
 
 #define OVECCOUNT 300    // should be a multiple of 3
-#define MUTEX_ERROR "Unable to obtain the mutex."
 
-std::string ConvertToUTF8(LPCWSTR str)
+std::wstring ConvertToWide(LPCSTR str, int codepage)
 {
-	std::string szAscii;
-
-	if (str && *str)
-	{
-		int strLen = (int)wcslen(str) + 1;
-		int bufLen = WideCharToMultiByte(CP_UTF8, 0, str, strLen, NULL, 0, NULL, NULL);
-		if (bufLen > 0)
-		{
-			char* tmpSz = new char[bufLen];
-			tmpSz[0] = 0;
-			WideCharToMultiByte(CP_UTF8, 0, str, strLen, tmpSz, bufLen, NULL, NULL);
-			szAscii = tmpSz;
-			delete [] tmpSz;
-		}
-	}
-	return szAscii;
-}
-
-std::string ConvertToUTF8(LPCSTR str, int codepage)
-{
-	std::string szUTF8;
+	std::wstring szWide;
 
 	if (str && *str)
 	{
@@ -118,26 +97,6 @@ std::string ConvertToUTF8(LPCSTR str, int codepage)
 			WCHAR* wideSz = new WCHAR[bufLen];
 			wideSz[0] = 0;
 			MultiByteToWideChar(codepage, 0, str, strLen, wideSz, bufLen);
-			szUTF8 = ConvertToUTF8(wideSz);
-			delete [] wideSz;
-		}
-	}
-	return szUTF8;
-}
-
-std::wstring ConvertToWide(LPCSTR str)
-{
-	std::wstring szWide;
-
-	if (str && *str)
-	{
-		int strLen = (int)strlen(str) + 1;
-		int bufLen = MultiByteToWideChar(CP_UTF8, 0, str, strLen, NULL, 0);
-		if (bufLen > 0)
-		{
-			WCHAR* wideSz = new WCHAR[bufLen];
-			wideSz[0] = 0;
-			MultiByteToWideChar(CP_UTF8, 0, str, strLen, wideSz, bufLen);
 			szWide = wideSz;
 			delete [] wideSz;
 		}
@@ -145,24 +104,59 @@ std::wstring ConvertToWide(LPCSTR str)
 	return szWide;
 }
 
-std::string ConvertToACP(LPCWSTR str)
+std::string ConvertToAscii(LPCWSTR str, int codepage)
 {
 	std::string szAscii;
 
 	if (str && *str)
 	{
 		int strLen = (int)wcslen(str) + 1;
-		int bufLen = WideCharToMultiByte(CP_ACP, 0, str, strLen, NULL, 0, NULL, NULL);
+		int bufLen = WideCharToMultiByte(codepage, 0, str, strLen, NULL, 0, NULL, NULL);
 		if (bufLen > 0)
 		{
 			char* tmpSz = new char[bufLen];
 			tmpSz[0] = 0;
-			WideCharToMultiByte(CP_ACP, 0, str, strLen, tmpSz, bufLen, NULL, NULL);
+			WideCharToMultiByte(codepage, 0, str, strLen, tmpSz, bufLen, NULL, NULL);
 			szAscii = tmpSz;
 			delete [] tmpSz;
 		}
 	}
 	return szAscii;
+}
+
+std::string ConvertWideToAscii(LPCWSTR str)
+{
+	return ConvertToAscii(str, CP_ACP);
+}
+
+std::wstring ConvertAsciiToWide(LPCSTR str)
+{
+	return ConvertToWide(str, CP_ACP);
+}
+
+std::wstring ConvertUTF8ToWide(LPCSTR str)
+{
+	return ConvertToWide(str, CP_UTF8);
+}
+
+std::string ConvertWideToUTF8(LPCWSTR str)
+{
+	return ConvertToAscii(str, CP_UTF8);
+}
+
+std::string ConvertAsciiToUTF8(LPCSTR str, int codepage)
+{
+	std::string szUTF8;
+
+	if (str && *str)
+	{
+		std::wstring wide = ConvertToWide(str, codepage);
+		if (!wide.empty())
+		{
+			szUTF8.swap(ConvertWideToUTF8(wide.c_str()));
+		}
+	}
+	return szUTF8;
 }
 
 HWND FindMeterWindow()
@@ -465,7 +459,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 	
 	// Compile the regular expression in the first argument
 	re = pcre_compile(
-		ConvertToUTF8(urlData->regExp.c_str()).c_str(),   // the pattern
+		ConvertWideToUTF8(urlData->regExp.c_str()).c_str(),   // the pattern
 		flags,					  // default options
 		&error,               // for error message
 		&erroffset,           // for error offset
@@ -479,7 +473,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 		if (urlData->codepage != CP_UTF8 && urlData->codepage != 0)		// 0 = CP_ACP
 		{
 			// Must convert the data to utf8
-			utf8Data = ConvertToUTF8(parseData, urlData->codepage);
+			utf8Data = ConvertAsciiToUTF8(parseData, urlData->codepage);
 			parseData = utf8Data.c_str();
 		}
 
@@ -516,7 +510,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 							int substring_length = ovector[2 * i + 1] - ovector[2 * i];
 							substring_length = min(substring_length, 256);
 							std::string tmpStr(substring_start, substring_length);
-							wsprintf(buffer, L"WebParser: (Index %2d) %s", i, ConvertToWide(tmpStr.c_str()).c_str());
+							wsprintf(buffer, L"WebParser: (Index %2d) %s", i, ConvertUTF8ToWide(tmpStr.c_str()).c_str());
 							Log(buffer);
 						}
 					}
@@ -526,7 +520,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 
 					EnterCriticalSection(&g_CriticalSection);
 					std::string szResult(substring_start, substring_length);
-					urlData->resultString = ConvertToWide(szResult.c_str());
+					urlData->resultString = ConvertUTF8ToWide(szResult.c_str());
 					LeaveCriticalSection(&g_CriticalSection);
 				}
 				else
@@ -569,7 +563,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 								EnterCriticalSection(&g_CriticalSection);
 								
 								// Substitude the [measure] with szResult
-								std::wstring wzResult = ConvertToWide(szResult.c_str());
+								std::wstring wzResult = ConvertUTF8ToWide(szResult.c_str());
 								std::wstring wzUrl = ((*i).second)->url;
 
 								wzUrl.replace(wzUrl.find(compareStr), compareStr.size(), wzResult);
@@ -628,7 +622,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 	{
 		// Compilation failed: print the error message and exit
 		WCHAR buffer[1024];
-		wsprintf(buffer, L"WebParser: PCRE compilation failed at offset %d: %s\n", erroffset, error);
+		wsprintf(buffer, L"WebParser: PCRE compilation failed at offset %d: %s\n", erroffset, ConvertAsciiToWide(error).c_str());
 		Log(buffer);
 	}
 
@@ -1118,7 +1112,7 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 	{
 		if (wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
 		{
-			std::string urlACP = ConvertToACP(url.c_str());
+			std::string urlACP = ConvertWideToAscii(url.c_str());
 			hUrlDump = InternetOpenUrlA(hRootHandle, urlACP.c_str(), NULL, NULL, flags, 0);
 		}
 
