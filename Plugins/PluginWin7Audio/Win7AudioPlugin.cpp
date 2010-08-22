@@ -41,8 +41,8 @@ extern "C"
 {
 __declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
 __declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-__declspec( dllexport ) UINT Update(UINT id);
-//__declspec( dllexport ) double Update2(UINT id);
+//__declspec( dllexport ) UINT Update(UINT id);
+__declspec( dllexport ) double Update2(UINT id);
 __declspec( dllexport ) LPCTSTR GetString(UINT id, UINT flags);
 __declspec( dllexport ) UINT GetPluginVersion();
 __declspec( dllexport ) LPCTSTR GetPluginAuthor();
@@ -328,21 +328,23 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
   This function is called when new value should be measured.
   The function returns the new value.
 */
-UINT Update(UINT id)
-{
-	GetWin7AudioState(GET_VOLUME);
-	UINT volume = is_mute == TRUE ? 0 : static_cast<UINT>(master_volume * 100.0f + 0.5f);	// rounding up at 0.5
-	return volume > 100 ? 100 : volume;
-}
+//UINT Update(UINT id)
+//{
+//	GetWin7AudioState(GET_VOLUME);
+//	UINT volume = is_mute == TRUE ? 0 : static_cast<UINT>(master_volume * 100.0f + 0.5f);	// rounding up at 0.5
+//	return volume > 100 ? 100 : volume;
+//}
 
 /*
 This function is called when new value should be measured.
 The function returns the new value.
 */
-//double Update2(UINT id)
-//{	
-//	return 0;
-//}
+double Update2(UINT id)
+{	
+	GetWin7AudioState(GET_VOLUME);
+	double volume = is_mute == TRUE ? -1.0 : floor(master_volume * 100.0 + 0.5);	// rounding up at 0.5
+	return volume > 100.0 ? 100.0 : volume;
+}
 
 LPCTSTR GetString(UINT id, UINT flags) 
 {
@@ -413,7 +415,7 @@ void Finalize(HMODULE instance, UINT id)
 
 UINT GetPluginVersion()
 {
-	return 1005;
+	return 1006;
 }
 
 LPCTSTR GetPluginAuthor()
@@ -506,6 +508,26 @@ void ExecuteBang(LPCTSTR args, UINT id)
 	else if (_wcsicmp(wholeBang.c_str(), L"ToggleMute") == 0)
 	{
 		if (!GetWin7AudioState(TOGGLE_MUTE)) LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Mute Toggle Error!");
+	}
+	else if (_wcsicmp(wholeBang.c_str(), L"Mute") == 0)
+	{
+		if (!is_mute)
+		{
+			if (!GetWin7AudioState(TOGGLE_MUTE))
+			{
+				LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Mute Error!");
+			}
+		}
+	}
+	else if (_wcsicmp(wholeBang.c_str(), L"Unmute") == 0)
+	{
+		if (is_mute)
+		{
+			if (!GetWin7AudioState(TOGGLE_MUTE))
+			{
+				LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Unmute Error!");
+			}
+		}
 	}
 	else
 	{
