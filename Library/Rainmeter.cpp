@@ -592,6 +592,50 @@ void RainmeterZPos(HWND, const char* arg)
 }
 
 /*
+** RainmeterClickThrough
+**
+** Callback for the !RainmeterClickThrough bang
+**
+*/
+void RainmeterClickThrough(HWND, const char* arg)
+{
+	BangWithArgs(BANG_CLICKTHROUGH, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterDraggable
+**
+** Callback for the !RainmeterDraggable bang
+**
+*/
+void RainmeterDraggable(HWND, const char* arg)
+{
+	BangWithArgs(BANG_DRAGGABLE, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterSnapEdges
+**
+** Callback for the !RainmeterSnapEdges bang
+**
+*/
+void RainmeterSnapEdges(HWND, const char* arg)
+{
+	BangWithArgs(BANG_SNAPEDGES, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterKeepOnScreen
+**
+** Callback for the !RainmeterKeepOnScreen bang
+**
+*/
+void RainmeterKeepOnScreen(HWND, const char* arg)
+{
+	BangWithArgs(BANG_KEEPONSCREEN, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
 ** RainmeterSetTransparency
 **
 ** Callback for the !RainmeterSetTransparency bang
@@ -806,6 +850,50 @@ void RainmeterDeactivateConfigGroup(HWND, const char* arg)
 void RainmeterZPosGroup(HWND, const char* arg)
 {
 	BangGroupWithArgs(BANG_ZPOS, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterClickThroughGroup
+**
+** Callback for the !RainmeterClickThroughGroup bang
+**
+*/
+void RainmeterClickThroughGroup(HWND, const char* arg)
+{
+	BangGroupWithArgs(BANG_CLICKTHROUGH, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterDraggableGroup
+**
+** Callback for the !RainmeterDraggableGroup bang
+**
+*/
+void RainmeterDraggableGroup(HWND, const char* arg)
+{
+	BangGroupWithArgs(BANG_DRAGGABLE, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterSnapEdgesGroup
+**
+** Callback for the !RainmeterSnapEdgesGroup bang
+**
+*/
+void RainmeterSnapEdgesGroup(HWND, const char* arg)
+{
+	BangGroupWithArgs(BANG_SNAPEDGES, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterKeepOnScreenGroup
+**
+** Callback for the !RainmeterKeepOnScreenGroup bang
+**
+*/
+void RainmeterKeepOnScreenGroup(HWND, const char* arg)
+{
+	BangGroupWithArgs(BANG_KEEPONSCREEN, ConvertToWide(arg).c_str(), 1);
 }
 
 /*
@@ -1463,6 +1551,10 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterToggleConfig", RainmeterToggleConfig);
 		AddBangCommand("!RainmeterMove", RainmeterMove);
 		AddBangCommand("!RainmeterZPos", RainmeterZPos);
+		AddBangCommand("!RainmeterClickThrough", RainmeterClickThrough);
+		AddBangCommand("!RainmeterDraggable", RainmeterDraggable);
+		AddBangCommand("!RainmeterSnapEdges", RainmeterSnapEdges);
+		AddBangCommand("!RainmeterKeepOnScreen", RainmeterKeepOnScreen);
 		AddBangCommand("!RainmeterSetTransparency", RainmeterSetTransparency);
 		AddBangCommand("!RainmeterSetVariable", RainmeterSetVariable);
 
@@ -1482,6 +1574,10 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterToggleMeasureGroup", RainmeterToggleMeasureGroup);
 		AddBangCommand("!RainmeterDeactivateConfigGroup", RainmeterDeactivateConfigGroup);
 		AddBangCommand("!RainmeterZPosGroup", RainmeterZPosGroup);
+		AddBangCommand("!RainmeterClickThroughGroup", RainmeterClickThroughGroup);
+		AddBangCommand("!RainmeterDraggableGroup", RainmeterDraggableGroup);
+		AddBangCommand("!RainmeterSnapEdgesGroup", RainmeterSnapEdgesGroup);
+		AddBangCommand("!RainmeterKeepOnScreenGroup", RainmeterKeepOnScreenGroup);
 		AddBangCommand("!RainmeterSetTransparencyGroup", RainmeterSetTransparencyGroup);
 		AddBangCommand("!RainmeterSetVariableGroup", RainmeterSetVariableGroup);
 
@@ -2013,6 +2109,10 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainmeterToggleConfig");
 		RemoveBangCommand("!RainmeterMove");
 		RemoveBangCommand("!RainmeterZPos");
+		RemoveBangCommand("!RainmeterClickThrough");
+		RemoveBangCommand("!RainmeterDraggable");
+		RemoveBangCommand("!RainmeterSnapEdges");
+		RemoveBangCommand("!RainmeterKeepOnScreen");
 		RemoveBangCommand("!RainmeterSetTransparency");
 		RemoveBangCommand("!RainmeterSetVariable");
 
@@ -2032,6 +2132,10 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainmeterToggleMeasureGroup");
 		RemoveBangCommand("!RainmeterDeactivateConfigGroup");
 		RemoveBangCommand("!RainmeterZPosGroup");
+		RemoveBangCommand("!RainmeterClickThroughGroup");
+		RemoveBangCommand("!RainmeterDraggableGroup");
+		RemoveBangCommand("!RainmeterSnapEdgesGroup");
+		RemoveBangCommand("!RainmeterKeepOnScreenGroup");
 		RemoveBangCommand("!RainmeterSetTransparencyGroup");
 		RemoveBangCommand("!RainmeterSetVariableGroup");
 
@@ -2269,6 +2373,22 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_ZPOS, arg.c_str(), 1);
 	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterClickThrough") == 0)
+	{
+		BangWithArgs(BANG_CLICKTHROUGH, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterDraggable") == 0)
+	{
+		BangWithArgs(BANG_DRAGGABLE, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterSnapEdges") == 0)
+	{
+		BangWithArgs(BANG_SNAPEDGES, arg.c_str(), 1);
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterKeepOnScreen") == 0)
+	{
+		BangWithArgs(BANG_KEEPONSCREEN, arg.c_str(), 1);
+	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterSetTransparency") == 0)
 	{
 		BangWithArgs(BANG_SETTRANSPARENCY, arg.c_str(), 1);
@@ -2340,6 +2460,22 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	else if (wcsicmp(bang.c_str(), L"!RainmeterZPosGroup") == 0)
 	{
 		RainmeterZPosGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterClickThroughGroup") == 0)
+	{
+		RainmeterClickThroughGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterDraggableGroup") == 0)
+	{
+		RainmeterDraggableGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterSnapEdgesGroup") == 0)
+	{
+		RainmeterSnapEdgesGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+	}
+	else if (wcsicmp(bang.c_str(), L"!RainmeterKeepOnScreenGroup") == 0)
+	{
+		RainmeterKeepOnScreenGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterSetTransparencyGroup") == 0)
 	{
@@ -3642,7 +3778,7 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 			error += L"\n\nto\n\n";
 			error += strTarget;
 			error += L"\n\nAlternatively you can also just remove the file and\n";
-			error += L"it will be automatically recreated to the correct location\n";
+			error += L"it will be automatically recreated in the correct location\n";
 			error += L"when Rainmeter is restarted the next time (you\'ll lose your\n";
 			error += L"current settings though).\n";
 		}

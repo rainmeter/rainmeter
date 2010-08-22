@@ -771,6 +771,76 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		ChangeZPos((ZPOSITION)_wtoi(arg));
 		break;
 
+	case BANG_CLICKTHROUGH:
+		if (_wtoi(arg) == -1)
+		{
+			m_ClickThrough = !m_ClickThrough;
+		}
+		else
+		{
+			m_ClickThrough = _wtoi(arg);
+		}
+		WriteConfig();
+
+		if (!m_ClickThrough)
+		{
+			// Remove transparent flag
+			LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
+			if ((style & WS_EX_TRANSPARENT) != 0)
+			{
+				SetWindowLong(m_Window, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
+			}
+		}
+		break;
+
+	case BANG_DRAGGABLE:
+		if (_wtoi(arg) == -1)
+		{
+			m_WindowDraggable = !m_WindowDraggable;
+		}
+		else
+		{
+			m_WindowDraggable = _wtoi(arg);
+		}
+		WriteConfig();
+		break;
+
+	case BANG_SNAPEDGES:
+		if (_wtoi(arg) == -1)
+		{
+			m_SnapEdges = !m_SnapEdges;
+		}
+		else
+		{
+			m_SnapEdges = _wtoi(arg);
+		}
+		WriteConfig();
+		break;
+
+	case BANG_KEEPONSCREEN:
+		if (_wtoi(arg) == -1)
+		{
+			m_KeepOnScreen = !m_KeepOnScreen;
+		}
+		else
+		{
+			m_KeepOnScreen = _wtoi(arg);
+		}
+		
+		WriteConfig();
+
+		if (m_KeepOnScreen) 
+		{
+			int x = m_ScreenX;
+			int y = m_ScreenY;
+			MapCoordsToScreen(x, y, m_WindowW, m_WindowH);
+			if (x != m_ScreenX || y != m_ScreenY)
+			{
+				MoveWindow(x, y);
+			}
+		}
+		break;
+
 	case BANG_SETTRANSPARENCY:
 		if (arg != NULL)
 		{
