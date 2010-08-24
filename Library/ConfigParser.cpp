@@ -187,7 +187,7 @@ bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& s
 	std::map<std::wstring, std::wstring>::const_iterator iter = m_BuiltInVariables.find(strTmp);
 	if (iter != m_BuiltInVariables.end())
 	{
-		// Built-in variable found, replace it with the value
+		// Built-in variable found
 		strValue = (*iter).second;
 		return true;
 	}
@@ -196,16 +196,16 @@ bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& s
 	iter = c_MonitorVariables.find(strTmp);
 	if (iter != c_MonitorVariables.end())
 	{
-		// SCREENAREA/WORKAREA variable found, replace it with the value
+		// SCREENAREA/WORKAREA variable found
 		strValue = (*iter).second;
 		return true;
 	}
 
-	// #3: User defined variables
+	// #3: User-defined variables
 	iter = m_Variables.find(strTmp);
 	if (iter != m_Variables.end())
 	{
-		// Variable found, replace it with the value
+		// Variable found
 		strValue = (*iter).second;
 		return true;
 	}
