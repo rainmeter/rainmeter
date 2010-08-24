@@ -39,11 +39,13 @@ public:
 
 	void Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterWindow* meterWindow = NULL);
 	void AddMeasure(CMeasure* pMeasure);
-	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue);
-	void SetStyleTemplate(const std::wstring& strStyle) { m_StyleTemplate = strStyle; }
-	void ResetStyleTemplate() { m_StyleTemplate.clear(); }
 
-	void ResetVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow = NULL);
+	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_Variables, strVariable, strValue); }
+
+	void SetStyleTemplate(const std::wstring& strStyle) { m_StyleTemplate = strStyle; }
+	void ClearStyleTemplate() { m_StyleTemplate.clear(); }
+
+	void ResetMonitorVariables(CMeterWindow* meterWindow = NULL);
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true, bool* bReplaced = NULL);
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
@@ -52,7 +54,7 @@ public:
 	Gdiplus::Color ReadColor(LPCTSTR section, LPCTSTR key, const Gdiplus::Color& defValue);
 	std::vector<Gdiplus::REAL> ReadFloats(LPCTSTR section, LPCTSTR key);
 
-	std::wstring& GetFilename() { return m_Filename; }
+	const std::wstring& GetFilename() { return m_Filename; }
 	const std::vector<std::wstring>& GetSections();
 
 	// Returns an int if the formula was read successfully, -1 for failure.
@@ -66,7 +68,10 @@ public:
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
 
 private:
-	void SetDefaultVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow);
+	void SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow);
+	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
+
+	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
 	void ReadVariables();
 	bool ReplaceVariables(std::wstring& result);
 	bool ReplaceMeasures(std::wstring& result);
@@ -79,10 +84,11 @@ private:
 
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
 
-	static void SetMultiMonitorVariables(bool reset);
-	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue);
+	static void SetVariable(std::map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue);
 
-	std::map<std::wstring, std::wstring> m_Variables;
+	static void SetMultiMonitorVariables(bool reset);
+	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(c_MonitorVariables, strVariable, strValue); }
+
 	std::wstring m_Filename;
 
 	hqMathParser* m_Parser;
@@ -94,7 +100,10 @@ private:
 	stdext::hash_map<std::wstring, std::vector<std::wstring> > m_Keys;
 	stdext::hash_map<std::wstring, std::wstring> m_Values;
 
-	static std::map<std::wstring, std::wstring> c_MonitorVariables;
+	std::map<std::wstring, std::wstring> m_BuiltInVariables;         // Built-in variables
+	std::map<std::wstring, std::wstring> m_Variables;                // User-defined variables
+
+	static std::map<std::wstring, std::wstring> c_MonitorVariables;  // Monitor variables
 };
 
 #endif

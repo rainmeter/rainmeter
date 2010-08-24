@@ -60,23 +60,16 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 {
 	m_Filename = filename;
 
+	m_BuiltInVariables.clear();
 	m_Variables.clear();
 	m_Measures.clear();
 	m_Keys.clear();
 	m_Values.clear();
 	m_Sections.clear();
 
-	// Set the default variables. Do this before the ini file is read so that the paths can be used with @include
-	SetDefaultVariables(pRainmeter, meterWindow);
-
-	// Set the SCREENAREA/WORKAREA variables
-	if (c_MonitorVariables.empty())
-	{
-		SetMultiMonitorVariables(true);
-	}
-
-	// Set the SCREENAREA/WORKAREA variables for present monitor
-	SetAutoSelectedMonitorVariables(meterWindow);
+	// Set the built-in variables. Do this before the ini file is read so that the paths can be used with @include
+	SetBuiltInVariables(pRainmeter, meterWindow);
+	ResetMonitorVariables(meterWindow);
 
 	std::vector<std::wstring> iniFileMappings;
 	CSystem::GetIniFileMappingList(iniFileMappings);
@@ -86,15 +79,15 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 }
 
 /*
-** SetDefaultVariables
+** SetBuiltInVariables
 **
 **
 */
-void CConfigParser::SetDefaultVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow)
+void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow)
 {
 	if (pRainmeter)
 	{
-		SetVariable(L"PROGRAMPATH", pRainmeter->GetPath());
+		SetBuiltInVariable(L"PROGRAMPATH", pRainmeter->GetPath());
 
 		// Extract volume path from program path
 		// E.g.:
@@ -105,7 +98,7 @@ void CConfigParser::SetDefaultVariables(CRainmeter* pRainmeter, CMeterWindow* me
 		std::wstring::size_type loc, loc2;
 		if ((loc = path.find_first_of(L':')) != std::wstring::npos)
 		{
-			SetVariable(L"PROGRAMDRIVE", path.substr(0, loc + 1));
+			SetBuiltInVariable(L"PROGRAMDRIVE", path.substr(0, loc + 1));
 		}
 		else if (path.length() >= 2 && (path[0] == L'\\' || path[0] == L'/') && (path[1] == L'\\' || path[1] == L'/'))
 		{
@@ -116,38 +109,39 @@ void CConfigParser::SetDefaultVariables(CRainmeter* pRainmeter, CMeterWindow* me
 					loc = loc2;
 				}
 			}
-			SetVariable(L"PROGRAMDRIVE", path.substr(0, loc));
+			SetBuiltInVariable(L"PROGRAMDRIVE", path.substr(0, loc));
 		}
 
-		SetVariable(L"SETTINGSPATH", pRainmeter->GetSettingsPath());
-		SetVariable(L"SKINSPATH", pRainmeter->GetSkinPath());
-		SetVariable(L"PLUGINSPATH", pRainmeter->GetPluginPath());
-		SetVariable(L"CURRENTPATH", CRainmeter::ExtractPath(m_Filename));
-		SetVariable(L"ADDONSPATH", pRainmeter->GetPath() + L"Addons\\");
-		SetVariable(L"CRLF", L"\n");		
+		SetBuiltInVariable(L"SETTINGSPATH", pRainmeter->GetSettingsPath());
+		SetBuiltInVariable(L"SKINSPATH", pRainmeter->GetSkinPath());
+		SetBuiltInVariable(L"PLUGINSPATH", pRainmeter->GetPluginPath());
+		SetBuiltInVariable(L"CURRENTPATH", CRainmeter::ExtractPath(m_Filename));
+		SetBuiltInVariable(L"ADDONSPATH", pRainmeter->GetPath() + L"Addons\\");
+		SetBuiltInVariable(L"CRLF", L"\n");		
 
 		if (meterWindow)
 		{
 			const std::wstring& config = meterWindow->GetSkinName();
 			if ((loc = config.find_first_of(L'\\')) != std::wstring::npos)
 			{
-				SetVariable(L"ROOTCONFIGPATH", pRainmeter->GetSkinPath() + config.substr(0, loc + 1));
+				SetBuiltInVariable(L"ROOTCONFIGPATH", pRainmeter->GetSkinPath() + config.substr(0, loc + 1));
 			}
 			else
 			{
-				SetVariable(L"ROOTCONFIGPATH", pRainmeter->GetSkinPath() + config + L"\\");
+				SetBuiltInVariable(L"ROOTCONFIGPATH", pRainmeter->GetSkinPath() + config + L"\\");
 			}
 		}
 	}
 	if (meterWindow)
 	{
-		SetVariable(L"CURRENTCONFIG", meterWindow->GetSkinName());
+		SetBuiltInVariable(L"CURRENTCONFIG", meterWindow->GetSkinName());
 	}
 }
 
 /*
 ** ReadVariables
 **
+** Sets all user-defined variables.
 **
 */
 void CConfigParser::ReadVariables()
@@ -164,30 +158,69 @@ void CConfigParser::ReadVariables()
 ** Sets a new value for the variable. The DynamicVariables must be set to 1 in the
 ** meter/measure for the changes to be applied.
 ** 
+** \param variables
 ** \param strVariable
 ** \param strValue
 */
-void CConfigParser::SetVariable(const std::wstring& strVariable, const std::wstring& strValue)
+void CConfigParser::SetVariable(std::map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue)
 {
 	// DebugLog(L"Variable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), m_Variables.size());
 
 	std::wstring strTmp(strVariable);
-	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
-	m_Variables[strTmp] = strValue;
+	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
+	variables[strTmp] = strValue;
+}
+
+/**
+** Gets a value for the variable.
+** 
+** \param strVariable
+** \param strValue
+** \return true if variable is found
+*/
+bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& strValue)
+{
+	std::wstring strTmp(strVariable);
+	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
+
+	// #1: Built-in variables
+	std::map<std::wstring, std::wstring>::const_iterator iter = m_BuiltInVariables.find(strTmp);
+	if (iter != m_BuiltInVariables.end())
+	{
+		// Built-in variable found, replace it with the value
+		strValue = (*iter).second;
+		return true;
+	}
+
+	// #2: Monitor variables
+	iter = c_MonitorVariables.find(strTmp);
+	if (iter != c_MonitorVariables.end())
+	{
+		// SCREENAREA/WORKAREA variable found, replace it with the value
+		strValue = (*iter).second;
+		return true;
+	}
+
+	// #3: User defined variables
+	iter = m_Variables.find(strTmp);
+	if (iter != m_Variables.end())
+	{
+		// Variable found, replace it with the value
+		strValue = (*iter).second;
+		return true;
+	}
+
+	// Not found
+	return false;
 }
 
 /*
-** ResetVariables
+** ResetMonitorVariables
 **
 **
 */
-void CConfigParser::ResetVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow)
+void CConfigParser::ResetMonitorVariables(CMeterWindow* meterWindow)
 {
-	m_Variables.clear();
-
-	// Set the default variables. Do this before the ini file is read so that the paths can be used with @include
-	SetDefaultVariables(pRainmeter, meterWindow);
-
 	// Set the SCREENAREA/WORKAREA variables
 	if (c_MonitorVariables.empty())
 	{
@@ -196,8 +229,6 @@ void CConfigParser::ResetVariables(CRainmeter* pRainmeter, CMeterWindow* meterWi
 
 	// Set the SCREENAREA/WORKAREA variables for present monitor
 	SetAutoSelectedMonitorVariables(meterWindow);
-
-	ReadVariables();
 }
 
 /*
@@ -306,21 +337,6 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 	}
 }
 
-/**
-** Sets a new value for the SCREENAREA/WORKAREA variable.
-** 
-** \param strVariable
-** \param strValue
-*/
-void CConfigParser::SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue)
-{
-	// DebugLog(L"MonitorVariable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), c_MonitorVariables.size());
-
-	std::wstring strTmp(strVariable);
-	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
-	c_MonitorVariables[strTmp] = strValue;
-}
-
 /*
 ** SetAutoSelectedMonitorVariables
 **
@@ -331,75 +347,112 @@ void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 {
 	if (meterWindow)
 	{
+		TCHAR buffer[256];
+
 		if (CSystem::GetMonitorCount() > 0)
 		{
-			TCHAR buffer[256];
 			int w1, w2, s1, s2;
+			int screenIndex;
 
 			const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
 			const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
 
+			// Set X / WIDTH
+			screenIndex = multimonInfo.primary;
 			if (meterWindow->GetXScreenDefined())
 			{
-				int screenIndex = meterWindow->GetXScreen();
-
-				if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() &&
-					screenIndex != multimonInfo.primary && monitors[screenIndex-1].active))
+				int i = meterWindow->GetXScreen();
+				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i-1].active))
 				{
-					if (screenIndex == 0)
-					{
-						s1 = w1 = multimonInfo.vsL;
-						s2 = w2 = multimonInfo.vsW;
-					}
-					else
-					{
-						w1 = monitors[screenIndex-1].work.left;
-						w2 = monitors[screenIndex-1].work.right - monitors[screenIndex-1].work.left;
-						s1 = monitors[screenIndex-1].screen.left;
-						s2 = monitors[screenIndex-1].screen.right - monitors[screenIndex-1].screen.left;
-					}
-
-					swprintf(buffer, L"%i", w1);
-					SetVariable(L"WORKAREAX", buffer);
-					swprintf(buffer, L"%i", w2);
-					SetVariable(L"WORKAREAWIDTH", buffer);
-					swprintf(buffer, L"%i", s1);
-					SetVariable(L"SCREENAREAX", buffer);
-					swprintf(buffer, L"%i", s2);
-					SetVariable(L"SCREENAREAWIDTH", buffer);
+					screenIndex = i;
 				}
 			}
 
+			if (screenIndex == 0)
+			{
+				s1 = w1 = multimonInfo.vsL;
+				s2 = w2 = multimonInfo.vsW;
+			}
+			else
+			{
+				w1 = monitors[screenIndex-1].work.left;
+				w2 = monitors[screenIndex-1].work.right - monitors[screenIndex-1].work.left;
+				s1 = monitors[screenIndex-1].screen.left;
+				s2 = monitors[screenIndex-1].screen.right - monitors[screenIndex-1].screen.left;
+			}
+
+			swprintf(buffer, L"%i", w1);
+			SetBuiltInVariable(L"WORKAREAX", buffer);
+			swprintf(buffer, L"%i", w2);
+			SetBuiltInVariable(L"WORKAREAWIDTH", buffer);
+			swprintf(buffer, L"%i", s1);
+			SetBuiltInVariable(L"SCREENAREAX", buffer);
+			swprintf(buffer, L"%i", s2);
+			SetBuiltInVariable(L"SCREENAREAWIDTH", buffer);
+
+			// Set Y / HEIGHT
+			screenIndex = multimonInfo.primary;
 			if (meterWindow->GetYScreenDefined())
 			{
-				int screenIndex = meterWindow->GetYScreen();
-
-				if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() &&
-					screenIndex != multimonInfo.primary && monitors[screenIndex-1].active))
+				int i = meterWindow->GetYScreen();
+				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i-1].active))
 				{
-					if (screenIndex == 0)
-					{
-						s1 = w1 = multimonInfo.vsL;
-						s2 = w2 = multimonInfo.vsW;
-					}
-					else
-					{
-						w1 = monitors[screenIndex-1].work.top;
-						w2 = monitors[screenIndex-1].work.bottom - monitors[screenIndex-1].work.top;
-						s1 = monitors[screenIndex-1].screen.top;
-						s2 = monitors[screenIndex-1].screen.bottom - monitors[screenIndex-1].screen.top;
-					}
-
-					swprintf(buffer, L"%i", w1);
-					SetVariable(L"WORKAREAY", buffer);
-					swprintf(buffer, L"%i", w2);
-					SetVariable(L"WORKAREAHEIGHT", buffer);
-					swprintf(buffer, L"%i", s1);
-					SetVariable(L"SCREENAREAY", buffer);
-					swprintf(buffer, L"%i", s2);
-					SetVariable(L"SCREENAREAHEIGHT", buffer);
+					screenIndex = i;
 				}
 			}
+
+			if (screenIndex == 0)
+			{
+				s1 = w1 = multimonInfo.vsL;
+				s2 = w2 = multimonInfo.vsW;
+			}
+			else
+			{
+				w1 = monitors[screenIndex-1].work.top;
+				w2 = monitors[screenIndex-1].work.bottom - monitors[screenIndex-1].work.top;
+				s1 = monitors[screenIndex-1].screen.top;
+				s2 = monitors[screenIndex-1].screen.bottom - monitors[screenIndex-1].screen.top;
+			}
+
+			swprintf(buffer, L"%i", w1);
+			SetBuiltInVariable(L"WORKAREAY", buffer);
+			swprintf(buffer, L"%i", w2);
+			SetBuiltInVariable(L"WORKAREAHEIGHT", buffer);
+			swprintf(buffer, L"%i", s1);
+			SetBuiltInVariable(L"SCREENAREAY", buffer);
+			swprintf(buffer, L"%i", s2);
+			SetBuiltInVariable(L"SCREENAREAHEIGHT", buffer);
+		}
+		else
+		{
+			RECT r;
+
+			// Set default WORKAREA
+			SystemParametersInfo(SPI_GETWORKAREA, 0, &r, 0);
+
+			swprintf(buffer, L"%i", r.left);
+			SetBuiltInVariable(L"WORKAREAX", buffer);
+			swprintf(buffer, L"%i", r.top);
+			SetBuiltInVariable(L"WORKAREAY", buffer);
+			swprintf(buffer, L"%i", r.right - r.left);
+			SetBuiltInVariable(L"WORKAREAWIDTH", buffer);
+			swprintf(buffer, L"%i", r.bottom - r.top);
+			SetBuiltInVariable(L"WORKAREAHEIGHT", buffer);
+
+			// Set default SCREENAREA
+			r.left = 0;
+			r.top = 0;
+			r.right = GetSystemMetrics(SM_CXSCREEN);
+			r.bottom = GetSystemMetrics(SM_CYSCREEN);
+
+			swprintf(buffer, L"%i", r.left);
+			SetBuiltInVariable(L"SCREENAREAX", buffer);
+			swprintf(buffer, L"%i", r.top);
+			SetBuiltInVariable(L"SCREENAREAY", buffer);
+			swprintf(buffer, L"%i", r.right - r.left);
+			SetBuiltInVariable(L"SCREENAREAWIDTH", buffer);
+			swprintf(buffer, L"%i", r.bottom - r.top);
+			SetBuiltInVariable(L"SCREENAREAHEIGHT", buffer);
 		}
 	}
 }
@@ -434,31 +487,19 @@ bool CConfigParser::ReplaceVariables(std::wstring& result)
 			end = result.find(L'#', pos + 1);
 			if (end != std::wstring::npos)
 			{
-				std::wstring strTmp(result.begin() + pos + 1, result.begin() + end);
-				std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
-				
-				std::map<std::wstring, std::wstring>::const_iterator iter = m_Variables.find(strTmp);
-				if (iter != m_Variables.end())
+				std::wstring strVariable(result.begin() + pos + 1, result.begin() + end);
+				std::wstring strValue;
+
+				if (GetVariable(strVariable, strValue))
 				{
 					// Variable found, replace it with the value
-					result.replace(result.begin() + pos, result.begin() + end + 1, (*iter).second);
-					start = pos + (*iter).second.length();
+					result.replace(result.begin() + pos, result.begin() + end + 1, strValue);
+					start = pos + strValue.length();
 					replaced = true;
 				}
 				else
 				{
-					std::map<std::wstring, std::wstring>::const_iterator iter2 = c_MonitorVariables.find(strTmp);
-					if (iter2 != c_MonitorVariables.end())
-					{
-						// SCREENAREA/WORKAREA variable found, replace it with the value
-						result.replace(result.begin() + pos, result.begin() + end + 1, (*iter2).second);
-						start = pos + (*iter2).second.length();
-						replaced = true;
-					}
-					else
-					{
-						start = end;
-					}
+					start = end;
 				}
 			}
 			else
@@ -936,7 +977,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 	while(wcslen(pos) > 0)
 	{
 		std::wstring strTmp(pos);
-		std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
+		std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
 		if (m_Keys.find(strTmp) == m_Keys.end())
 		{
 			m_Keys[strTmp] = std::vector<std::wstring>();
@@ -1020,8 +1061,8 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 
 	std::wstring strTmpSection(strSection);
 	std::wstring strTmpKey(strKey);
-	std::transform(strTmpSection.begin(), strTmpSection.end(), strTmpSection.begin(), ::tolower);
-	std::transform(strTmpKey.begin(), strTmpKey.end(), strTmpKey.begin(), ::tolower);
+	std::transform(strTmpSection.begin(), strTmpSection.end(), strTmpSection.begin(), ::towlower);
+	std::transform(strTmpKey.begin(), strTmpKey.end(), strTmpKey.begin(), ::towlower);
 
 	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.find(strTmpSection);
 	if (iter != m_Keys.end())
@@ -1044,7 +1085,7 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault)
 {
 	std::wstring strTmp(strSection + L"::" + strKey);
-	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
+	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
 
 	stdext::hash_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(strTmp);
 	if (iter != m_Values.end())
@@ -1076,7 +1117,7 @@ const std::vector<std::wstring>& CConfigParser::GetSections()
 std::vector<std::wstring> CConfigParser::GetKeys(const std::wstring& strSection)
 {
 	std::wstring strTmp(strSection);
-	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::tolower);
+	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
 
 	stdext::hash_map<std::wstring, std::vector<std::wstring> >::const_iterator iter = m_Keys.find(strTmp);
 	if (iter != m_Keys.end())

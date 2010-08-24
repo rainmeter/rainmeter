@@ -1471,7 +1471,7 @@ void CMeterWindow::ScreenToWindow()
 
 					if (reset)
 					{
-						m_Parser.ResetVariables(m_Rainmeter, this);  // Set present monitor variables
+						m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
 					}
 					break;
 				}
@@ -2021,7 +2021,7 @@ bool CMeterWindow::ReadSkin()
 				{
 					m_Meters.push_back(meter);
 
-					m_Parser.ResetStyleTemplate();
+					m_Parser.ClearStyleTemplate();
 
 					if (!m_HasButtons && dynamic_cast<CMeterButton*>(meter))
 					{
@@ -2475,7 +2475,7 @@ void CMeterWindow::Update(bool nodraw)
 			if ((*j)->HasDynamicVariables())
 			{
 				(*j)->ReadConfig((*j)->GetName());
-				m_Parser.ResetStyleTemplate();
+				m_Parser.ClearStyleTemplate();
 			}
 			(*j)->Update();
 		}
@@ -3295,7 +3295,7 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 				m_WindowXScreen = m_WindowYScreen = screenIndex;
 				m_WindowXScreenDefined = m_WindowYScreenDefined = screenDefined;
 
-				m_Parser.ResetVariables(m_Rainmeter, this);  // Set present monitor variables
+				m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
 				ScreenToWindow();
 
 				WriteConfig();
@@ -4353,7 +4353,7 @@ LRESULT CMeterWindow::OnDelayedMove(WPARAM wParam, LPARAM lParam)
 {
 	if (m_NativeTransparency)
 	{
-		m_Parser.ResetVariables(m_Rainmeter, this);
+		m_Parser.ResetMonitorVariables(this);
 
 		// Move the window to correct position
 		ResizeWindow(true);
