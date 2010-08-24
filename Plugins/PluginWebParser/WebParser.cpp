@@ -159,41 +159,42 @@ std::string ConvertAsciiToUTF8(LPCSTR str, int codepage)
 	return szUTF8;
 }
 
-HWND FindMeterWindow()
+bool BelongToSameProcess(HWND wnd)
 {
-	HWND wnd = FindWindow(L"RainmeterMeterWindow", NULL);
-	if (wnd == NULL)
-	{
-		// Check if all windows are "On Desktop"
-		HWND ProgmanHwnd = FindWindow(L"Progman", L"Program Manager");
-		if (ProgmanHwnd)
-		{
-			wnd = FindWindowEx(ProgmanHwnd, NULL, L"RainmeterMeterWindow", NULL);
-			if (wnd == NULL)
-			{
-				ProgmanHwnd = FindWindowEx(FindWindowEx(ProgmanHwnd, NULL, L"SHELLDLL_DefView", L""), NULL, L"SysListView32", L"FolderView");
-				if (ProgmanHwnd)
-				{
-					wnd = FindWindowEx(ProgmanHwnd, NULL, L"RainmeterMeterWindow", NULL);
-				}
-			}
-		}
+	DWORD procId = 0;
+	GetWindowThreadProcessId(wnd, &procId);
 
-		if (wnd == NULL)
+	return (procId == GetCurrentProcessId());
+}
+
+HWND FindMeterWindow(HWND parent = NULL)
+{
+	HWND wnd = NULL;
+
+	while (wnd = FindWindowEx(parent, wnd, L"RainmeterMeterWindow", NULL))
+	{
+		if (BelongToSameProcess(wnd))
 		{
-			HWND WorkerWHwnd = NULL;
-			while ((WorkerWHwnd = FindWindowEx(NULL, WorkerWHwnd, L"WorkerW", L"")) != NULL)
+			return wnd;
+		}
+	}
+
+	// for backward compatibility (0.14 - 1.1)
+	if (!parent)
+	{
+		while (parent = FindWindowEx(NULL, parent, L"Progman", NULL))
+		{
+			if (wnd = FindMeterWindow(parent))
 			{
-				ProgmanHwnd = FindWindowEx(FindWindowEx(WorkerWHwnd, NULL, L"SHELLDLL_DefView", L""), NULL, L"SysListView32", L"FolderView");
-				if (ProgmanHwnd)
+				if (BelongToSameProcess(wnd))
 				{
-					wnd = FindWindowEx(ProgmanHwnd, NULL, L"RainmeterMeterWindow", NULL);
-					break;
+					return wnd;
 				}
 			}
 		}
 	}
-	return wnd;
+
+	return NULL;
 }
 
 /*
@@ -617,6 +618,9 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 			}
 			LeaveCriticalSection(&g_CriticalSection);
 		}
+
+		// Release memory used for the compiled pattern 
+		pcre_free(re);
 	}
 	else
 	{
