@@ -6,6 +6,7 @@
 #define IDD_ABOUT_DIALOG                102
 #define IDR_SKIN_MENU                   102
 #define IDI_TRAY                        108
+#define IDI_WINDOW                      109
 #define IDC_STATISTICS                  1000
 #define IDC_BUILD_STRING                1001
 #define IDC_VERSION_STRING              1002
@@ -76,7 +77,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        109
+#define _APS_NEXT_RESOURCE_VALUE        110
 #define _APS_NEXT_COMMAND_VALUE         4040
 #define _APS_NEXT_CONTROL_VALUE         1010
 #define _APS_NEXT_SYMED_VALUE           101
