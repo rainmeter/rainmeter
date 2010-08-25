@@ -878,10 +878,6 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		}
 		break;
 
-	case BANG_ABOUT:
-		OpenAboutDialog(m_Window, m_Rainmeter->GetInstance());
-		break;
-
 	case BANG_MOVEMETER:
 		pos = wcschr(arg, ' ');
 		if (pos != NULL)

@@ -145,7 +145,7 @@ BOOL InitApplication(HINSTANCE hInstance, const WCHAR* WinClass)
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.hInstance = hInstance;
-	wc.hIcon = LoadIcon(NULL, MAKEINTRESOURCE(IDI_RAINMETER));
+	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_RAINMETER));
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH); 
 	wc.lpszMenuName =  NULL;

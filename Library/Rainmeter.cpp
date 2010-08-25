@@ -937,7 +937,10 @@ void RainmeterLsHook(HWND, const char* arg)
 */
 void RainmeterAbout(HWND, const char* arg)
 {
-	BangWithArgs(BANG_ABOUT, ConvertToWide(arg).c_str(), 0);
+	if (Rainmeter)
+	{
+		OpenAboutDialog(Rainmeter->GetTrayWindow()->GetWindow(), Rainmeter->GetInstance());
+	}
 }
 
 /*
@@ -2282,7 +2285,6 @@ void CRainmeter::ScanForThemes(std::wstring& path)
 
 void CRainmeter::SaveSettings()
 {
-	// Just one setting for writing at the moment
 	WritePrivateProfileString(L"Rainmeter", L"CheckUpdate", NULL , m_IniFile.c_str());
 	WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", m_DisableVersionCheck ? L"1" : L"0" , m_IniFile.c_str());
 }
@@ -2487,7 +2489,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterAbout") == 0)
 	{
-		BangWithArgs(BANG_ABOUT, arg.c_str(), 0);
+		RainmeterAbout(NULL, NULL);
 	}
 	else if (wcsicmp(bang.c_str(), L"!RainmeterSkinMenu") == 0)
 	{

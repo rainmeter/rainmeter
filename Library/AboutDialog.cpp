@@ -43,6 +43,12 @@ HWND OpenAboutDialog(HWND hwndOwner, HINSTANCE instance)
 	if (g_DialogWin == NULL)
 	{
 		g_DialogWin = CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUT_DIALOG), hwndOwner, AboutProc);
+
+		if (g_DialogWin)
+		{
+			HICON hIcon = LoadIcon(instance, MAKEINTRESOURCE(IDI_TRAY));
+			SendMessage(g_DialogWin, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+		}
 	}
 	ShowWindow(g_DialogWin, SW_SHOWNORMAL);
 	UpdateAboutStatistics();

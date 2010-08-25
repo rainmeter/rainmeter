@@ -47,7 +47,7 @@ CTrayWindow::CTrayWindow(HINSTANCE instance)
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.hInstance = instance;
-	wc.hIcon = NULL;
+	wc.hIcon = LoadIcon(instance, MAKEINTRESOURCE(IDI_TRAY));
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH); 
 	wc.lpszMenuName =  NULL;
