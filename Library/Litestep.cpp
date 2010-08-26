@@ -546,7 +546,12 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 		logInfo.type = L"DEBUG";
 		break;
 	}
+
 	Rainmeter->m_LogData.push_front(logInfo);
+	if (Rainmeter->m_LogData.size() > MAXABOUTLOGLINES)
+	{
+		Rainmeter->m_LogData.pop_back();
+	}
 
 	// Use the lsapi.dll version of the method if possible
 	if (fpLSLog) 
@@ -590,16 +595,13 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 				if (logFile)
 				{
 					fputws(logInfo.type.c_str(), logFile);
+					fputws(L": ", logFile);
 					fputws(message.c_str(), logFile);
 					fputws(L"\n", logFile);
 					fclose(logFile);
 				}
 			}
 		}
-	}
-	if (Rainmeter->m_LogData.size() > MAXABOUTLOGLINES)
-	{
-		Rainmeter->m_LogData.pop_back();
 	}
 	return TRUE;
 }
