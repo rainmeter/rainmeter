@@ -28,8 +28,8 @@ LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,3,0,515
- PRODUCTVERSION 1,3,0,515
+ FILEVERSION 1,3,0,520
+ PRODUCTVERSION 1,3,0,520
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -45,12 +45,12 @@ BEGIN
         BLOCK "040b04b0"
         BEGIN
             VALUE "FileDescription", "Rainmeter - A Customizable Resource Meter"
-            VALUE "FileVersion", "1, 3, 0, 515"
+            VALUE "FileVersion", "1, 3, 0, 520"
             VALUE "InternalName", "Rainmeter"
             VALUE "LegalCopyright", "Copyright (C) 2010 - Rainy"
             VALUE "OriginalFilename", "Rainmeter.exe"
             VALUE "ProductName", "Rainmeter"
-            VALUE "ProductVersion", "1, 3, 0, 515"
+            VALUE "ProductVersion", "1, 3, 0, 520"
         END
     END
     BLOCK "VarFileInfo"

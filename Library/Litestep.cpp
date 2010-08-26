@@ -508,6 +508,9 @@ std::wstring ConvertToWide(LPCSTR str)
 
 BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 {
+	CRainmeter::LOG_INFO logInfo;
+	logInfo.message = pszMessage;
+
 	// Add timestamp
 	static DWORD startTime = 0;
 	
@@ -520,12 +523,30 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 	swprintf(buffer, L"(%02i:%02i:%02i.%03i) ", (time - startTime) / (1000 * 60* 60), ((time - startTime) / (1000 * 60)) % 60, ((time - startTime) / 1000) % 60, (time - startTime) % 1000);
 
 	std::wstring message(buffer);
+	logInfo.timestamp = message; 
 	message += pszMessage;
 
 #ifdef _DEBUG
 	_RPT0(_CRT_WARN, ConvertToAscii(message.c_str()).c_str());
 	_RPT0(_CRT_WARN, "\n");
 #endif
+
+	switch(nLevel)
+	{
+	case 1:
+		logInfo.type = L"ERROR";
+		break;
+	case 2:
+		logInfo.type = L"WARNING";
+		break;
+	case 3:
+		logInfo.type = L"NOTICE";
+		break;
+	case 4:
+		logInfo.type = L"DEBUG";
+		break;
+	}
+	Rainmeter->m_LogData.push_front(logInfo);
 
 	// Use the lsapi.dll version of the method if possible
 	if (fpLSLog) 
@@ -568,21 +589,7 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 				FILE* logFile = _wfopen(logfile.c_str(), L"a+, ccs=UTF-8");
 				if (logFile)
 				{
-					switch(nLevel)
-					{
-					case 1:
-						fputws(L"ERROR: ", logFile);
-						break;
-					case 2:
-						fputws(L"WARNING: ", logFile);
-						break;
-					case 3:
-						fputws(L"NOTICE: ", logFile);
-						break;
-					case 4:
-						fputws(L"DEBUG: ", logFile);
-						break;
-					}
+					fputws(logInfo.type.c_str(), logFile);
 					fputws(message.c_str(), logFile);
 					fputws(L"\n", logFile);
 					fclose(logFile);
@@ -590,7 +597,10 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 			}
 		}
 	}
-
+	if (Rainmeter->m_LogData.size() > MAXABOUTLOGLINES)
+	{
+		Rainmeter->m_LogData.pop_back();
+	}
 	return TRUE;
 }
 

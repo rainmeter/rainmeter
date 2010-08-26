@@ -136,6 +136,13 @@ public:
 		std::vector<CONFIGMENU> children;
 	};
 
+	struct LOG_INFO
+	{
+		std::wstring type;
+		std::wstring timestamp;
+		std::wstring message;
+	};
+
 
 	CRainmeter();
 	~CRainmeter();
@@ -196,6 +203,7 @@ public:
 	void StartLogging();
 	void StopLogging();
 	void DeleteLogFile();
+	std::list<LOG_INFO> m_LogData;
 
 	void SetDebug(bool debug);
 

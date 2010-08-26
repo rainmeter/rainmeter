@@ -1,4 +1,4 @@
-//Microsoft Developer Studio generated resource script.
+// Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
 
@@ -26,7 +26,7 @@ LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 // Menu
 //
 
-IDR_CONTEXT_MENU MENU DISCARDABLE 
+IDR_CONTEXT_MENU MENU DISCARDABLE
 BEGIN
     POPUP "Context"
     BEGIN
@@ -38,20 +38,20 @@ BEGIN
         MENUITEM SEPARATOR
         POPUP "Logging"
         BEGIN
-            MENUITEM "Show Log File...",        ID_CONTEXT_SHOWLOGFILE
+            MENUITEM "Show Log File...",            ID_CONTEXT_SHOWLOGFILE
             MENUITEM SEPARATOR
-            MENUITEM "Start Logging",           ID_CONTEXT_STARTLOG
-            MENUITEM "Stop Logging",            ID_CONTEXT_STOPLOG
+            MENUITEM "Start Logging",               ID_CONTEXT_STARTLOG
+            MENUITEM "Stop Logging",                ID_CONTEXT_STOPLOG
             MENUITEM SEPARATOR
-            MENUITEM "Delete Log File...",      ID_CONTEXT_DELETELOGFILE
-            MENUITEM "Debug Mode",              ID_CONTEXT_DEBUGLOG
+            MENUITEM "Delete Log File...",          ID_CONTEXT_DELETELOGFILE
+            MENUITEM "Debug Mode",                  ID_CONTEXT_DEBUGLOG
         END
         MENUITEM SEPARATOR
         MENUITEM "Exit",                        ID_CONTEXT_QUIT
     END
 END
 
-IDR_SKIN_MENU MENU DISCARDABLE 
+IDR_SKIN_MENU MENU DISCARDABLE
 BEGIN
     POPUP "Skin Menu"
     BEGIN
@@ -61,11 +61,11 @@ BEGIN
             BEGIN
                 POPUP "Display Monitor"
                 BEGIN
-                    MENUITEM "Use default: Primary monitor",            ID_CONTEXT_SKINMENU_MONITOR_PRIMARY
-                    MENUITEM "@0: Virtual screen",                      ID_MONITOR_FIRST
+                    MENUITEM "Use default: Primary monitor", ID_CONTEXT_SKINMENU_MONITOR_PRIMARY
+                    MENUITEM "@0: Virtual screen",          ID_MONITOR_FIRST
                     MENUITEM SEPARATOR
                     MENUITEM SEPARATOR
-                    MENUITEM "Auto-select based on window position",    ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT
+                    MENUITEM "Auto-select based on window position", ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT
                 END
                 MENUITEM SEPARATOR
                 MENUITEM "Stay Topmost",                ID_CONTEXT_SKINMENU_VERYTOPMOST
@@ -118,18 +118,18 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE DISCARDABLE
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE DISCARDABLE
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE DISCARDABLE
 BEGIN
     "\r\n"
     "\0"
@@ -143,23 +143,21 @@ END
 // Dialog
 //
 
-IDD_ABOUT_DIALOG DIALOG DISCARDABLE  0, 0, 351, 225
-STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+IDD_ABOUT_DIALOG DIALOGEX DISCARDABLE 0, 0, 370, 240
+STYLE DS_SETFONT | DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_APPWINDOW
 CAPTION "About Rainmeter"
-FONT 8, "MS Shell Dlg 2"
+FONT 8, "MS Shell Dlg 2", 0, 0, 0x0
 BEGIN
-    CONTROL         "List1",IDC_STATISTICS,"SysListView32",LVS_REPORT | 
-                    LVS_SINGLESEL | LVS_NOSORTHEADER | WS_BORDER | 
-                    WS_TABSTOP,14,98,309,98
-    CTEXT           "Get the latest version at: http://www.rainmeter.net",
-                    IDC_URL_STRING,15,43,300,8
+    CONTROL         "List1",IDC_STATISTICS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,118,80,211,100
+    CTEXT           "Get the latest version at: http://www.rainmeter.net",IDC_URL_STRING,15,43,300,8
     CTEXT           "Rainmeter version 0.0",IDC_VERSION_STRING,15,17,300,8
-    CONTROL         "Tab1",IDC_CONFIG_TAB,"SysTabControl32",0x0,7,81,220,120
     GROUPBOX        "About",IDC_STATIC_ABOUT,7,7,220,69
     CTEXT           "(Built on ??? ?? ????)",IDC_BUILD_STRING,15,30,300,8
     DEFPUSHBUTTON   "OK",IDOK,91,204,50,14
     CONTROL         "Disable check for updates",IDC_DISABLE_VERSION_CHECK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,67,56,104,10
+    LISTBOX         IDC_ABOUT_ENTRIES,7,80,130,100,LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
 END
 
 
@@ -169,7 +167,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
+GUIDELINES DESIGNINFO DISCARDABLE
 BEGIN
     IDD_ABOUT_DIALOG, DIALOG
     BEGIN
