@@ -24,12 +24,18 @@
 #include "AboutDialog.h"
 #include "../revision-number.h"
 #include <commctrl.h>
+#include <string>
+#include <map>
+
+#define LOGTIMER 1
 
 extern CRainmeter* Rainmeter;
 
 INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
+void UpdateWidgets();
+BOOL OnInitAboutDialog(HWND window);
+
 HWND g_DialogWin = NULL;
-VOID UpdateWidgets(HWND window);
 
 struct PLUGIN_INFO
 {
@@ -57,7 +63,71 @@ HWND OpenAboutDialog(HWND hwndOwner, HINSTANCE instance)
 	return g_DialogWin;
 }
 
-void UpdateAboutStatistics()
+void UpdateAboutDialog()
+{
+	if (g_DialogWin != NULL && IsWindowVisible(g_DialogWin))
+	{
+		WCHAR* selectedItemName = NULL;
+
+		HWND widget;
+		widget = GetDlgItem(g_DialogWin, IDC_ABOUT_ENTRIES);
+		int selected = (int)SendMessage(widget, LB_GETCURSEL, 0, 0);
+
+		// Get current selected entry
+		if (selected != 0 && selected != 1 && selected != LB_ERR)
+		{
+			int selectedItemLen = (int)SendMessage(widget, LB_GETTEXTLEN, selected, 0);
+
+			if (selectedItemLen != LB_ERR)
+			{
+				selectedItemName = new WCHAR[selectedItemLen + 1];
+
+				if (LB_ERR != SendMessage(widget, LB_GETTEXT, selected, (LPARAM)selectedItemName))
+				{
+					selectedItemName[selectedItemLen] = L'\0';
+				}
+				else
+				{
+					delete [] selectedItemName;
+					selectedItemName = NULL;
+				}
+			}
+		}
+
+		// Delete all entries
+		SendMessage(widget, LB_RESETCONTENT, 0, 0);
+
+		// Update all dialog widgets
+		OnInitAboutDialog(g_DialogWin);
+
+		// Re-select entry
+		if (selected == 0 || selected == 1)
+		{
+			SendMessage(widget, LB_SETCURSEL, selected, 0);
+			UpdateWidgets();
+		}
+		else if (selectedItemName != NULL)
+		{
+			int sel = 3;
+
+			std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+			std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
+			for( ; iter != windows.end(); ++iter)
+			{
+				if (wcsicmp(selectedItemName, (*iter).first.c_str()) == 0)
+				{
+					SendMessage(widget, LB_SETCURSEL, sel, 0);
+					break;
+				}
+				++sel;
+			}
+
+			delete [] selectedItemName;
+		}
+	}
+}
+
+void UpdateAboutStatistics(LPCTSTR entryName)
 {
 	if (g_DialogWin != NULL && IsWindowVisible(g_DialogWin))
 	{
@@ -65,116 +135,135 @@ void UpdateAboutStatistics()
 		widget = GetDlgItem(g_DialogWin, IDC_ABOUT_ENTRIES);
 		int selected = (int)SendMessage(widget, LB_GETCURSEL, NULL, NULL);
 		int count = (int)SendMessage(widget, LB_GETCOUNT, NULL, NULL);
-		int current = 0;
-	
-		widget = GetDlgItem(g_DialogWin, IDC_STATISTICS);
-		SendMessage(widget, WM_SETREDRAW, 0, 0);
 
-		if (selected == 0)
+		if (selected != LB_ERR)
 		{
-			int count = ListView_GetItemCount(widget);
+			widget = GetDlgItem(g_DialogWin, IDC_STATISTICS);
+			SendMessage(widget, WM_SETREDRAW, 0, 0);
 
-			std::list<CRainmeter::LOG_INFO>::const_iterator iter = Rainmeter->m_LogData.begin();
-			LVITEM vitem;
-			vitem.mask = LVIF_TEXT;
-
-			int i = 0;
-			for ( ; iter != Rainmeter->m_LogData.end(); ++iter)
+			if (selected == 0)
 			{
-				if (i < count)
-				{
-					ListView_SetItemText(widget, i, 0, (WCHAR*)(*iter).type.c_str());
-				}
-				else
-				{
-					vitem.iItem = i;
-					vitem.iSubItem = 0;
-					vitem.pszText = (WCHAR*)(*iter).type.c_str();
-					ListView_InsertItem(widget, &vitem);
-				}
-				ListView_SetItemText(widget, i, 1, (WCHAR*)(*iter).timestamp.c_str());
-				ListView_SetItemText(widget, i, 2, (WCHAR*)(*iter).message.c_str());
-
-				++i;
-			}
-		}
-		else if (selected == 2)
-		{
-			widget = GetDlgItem(g_DialogWin, IDC_ABOUT_ENTRIES);
-			SendMessage(widget, LB_SETCURSEL, 1, NULL);
-			UpdateWidgets(g_DialogWin);
-		}
-		else if (selected > 2)
-		{
-			std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
-
-			std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-			for( ; iter != windows.end(); ++iter)
-			{
-				if (current == selected - 3)
+				if (entryName == NULL)
 				{
 					int count = ListView_GetItemCount(widget);
 
-					CMeterWindow* meterWindow = (*iter).second;
-					std::list<CMeasure*>& measures = meterWindow->GetMeasures();
+					std::list<CRainmeter::LOG_INFO>::const_iterator iter = Rainmeter->m_LogData.begin();
+					LVITEM vitem;
+					vitem.mask = LVIF_TEXT;
 
-					int index = 0;
-					std::list<CMeasure*>::const_iterator i = measures.begin();
-					for( ; i != measures.end(); ++i)
+					int i = 0;
+					for ( ; iter != Rainmeter->m_LogData.end(); ++iter)
 					{
-						const WCHAR* name = (*i)->GetName();
-						const WCHAR* val = (*i)->GetStats();
-
-						std::wstring range;
-						WCHAR buffer[256];
-						double minVal = (*i)->GetMinValue();
-						double maxVal = (*i)->GetMaxValue();
-						CMeasure::GetScaledValue(1, minVal, buffer);
-						range = buffer;
-						range += L" - ";
-						CMeasure::GetScaledValue(1, maxVal, buffer);
-						range += buffer;
-
-						if (name && wcslen(name) > 0)
+						if (i < count)
 						{
-							if (index < count) 
-							{
-								ListView_SetItemText(widget, index, 0, (WCHAR*)name);
-							}
-							else
-							{
-								LVITEM vitem;
-								vitem.mask = LVIF_TEXT;
-								vitem.iItem = 0; 
-								vitem.iSubItem = 0;
-								vitem.pszText = (WCHAR*)name;
-								ListView_InsertItem(widget, &vitem);
-							}
-
-							if (val && wcslen(val) > 0)
-							{
-								ListView_SetItemText(widget, index, 1, (WCHAR*)val);
-							}
-							ListView_SetItemText(widget, index, 2, (WCHAR*)range.c_str());
-							++index;
+							ListView_SetItemText(widget, i, 0, (WCHAR*)(*iter).type.c_str());
 						}
-					}
+						else
+						{
+							vitem.iItem = i;
+							vitem.iSubItem = 0;
+							vitem.pszText = (WCHAR*)(*iter).type.c_str();
+							ListView_InsertItem(widget, &vitem);
+						}
+						ListView_SetItemText(widget, i, 1, (WCHAR*)(*iter).timestamp.c_str());
+						ListView_SetItemText(widget, i, 2, (WCHAR*)(*iter).message.c_str());
 
-					break;
+						++i;
+					}
 				}
-				++current;
 			}
+			else if (selected == 2)
+			{
+				HWND widgetEnt;
+				widgetEnt = GetDlgItem(g_DialogWin, IDC_ABOUT_ENTRIES);
+				SendMessage(widgetEnt, LB_SETCURSEL, 1, NULL);
+				UpdateWidgets();
+			}
+			else
+			{
+				int current = 3;
+
+				std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
+				for( ; iter != windows.end(); ++iter)
+				{
+					if (current == selected)
+					{
+						if (entryName == NULL || wcsicmp(entryName, (*iter).first.c_str()) == 0)
+						{
+							int count = ListView_GetItemCount(widget);
+
+							CMeterWindow* meterWindow = (*iter).second;
+							std::list<CMeasure*>& measures = meterWindow->GetMeasures();
+
+							int index = 0;
+							std::list<CMeasure*>::const_iterator i = measures.begin();
+							for( ; i != measures.end(); ++i)
+							{
+								const WCHAR* name = (*i)->GetName();
+								const WCHAR* val = (*i)->GetStats();
+
+								std::wstring range;
+								WCHAR buffer[256];
+								double minVal = (*i)->GetMinValue();
+								double maxVal = (*i)->GetMaxValue();
+								CMeasure::GetScaledValue(1, minVal, buffer);
+								range = buffer;
+								range += L" - ";
+								CMeasure::GetScaledValue(1, maxVal, buffer);
+								range += buffer;
+
+								if (name && wcslen(name) > 0)
+								{
+									if (index < count) 
+									{
+										ListView_SetItemText(widget, index, 0, (WCHAR*)name);
+									}
+									else
+									{
+										LVITEM vitem;
+										vitem.mask = LVIF_TEXT;
+										vitem.iItem = index; 
+										vitem.iSubItem = 0;
+										vitem.pszText = (WCHAR*)name;
+										ListView_InsertItem(widget, &vitem);
+									}
+
+									if (val && wcslen(val) > 0)
+									{
+										ListView_SetItemText(widget, index, 1, (WCHAR*)val);
+									}
+									ListView_SetItemText(widget, index, 2, (WCHAR*)range.c_str());
+									++index;
+								}
+							}
+
+							if (count > index)
+							{
+								// Delete unnecessary items
+								for (int j = index; j < count; ++j)
+								{
+									ListView_DeleteItem(widget, index);
+								}
+							}
+						}
+
+						break;
+					}
+					++current;
+				}
+			}
+
+			SendMessage(widget, WM_SETREDRAW, 1, 0);
 		}
-		SendMessage(widget, WM_SETREDRAW, 1, 0);
 	}
 }
 
-void UpdateWidgets(HWND window) 
+void UpdateWidgets() 
 {
 	HWND widget;
 	widget = GetDlgItem(g_DialogWin, IDC_ABOUT_ENTRIES);
 	int selected = (int)SendMessage(widget, LB_GETCURSEL, NULL, NULL);
-	int count = (int)SendMessage(widget, LB_GETCOUNT, NULL, NULL);
 
 	widget = GetDlgItem(g_DialogWin, IDC_STATISTICS);
 	ListView_DeleteAllItems(widget);
@@ -234,7 +323,7 @@ void UpdateWidgets(HWND window)
 			ListView_SetItemState(widget, 0, LVIS_SELECTED, LVIS_SELECTED);
 		}
 	}
-    else
+	else
 	{
 		LVCOLUMN lvc; 
 		lvc.mask = LVCF_TEXT; 
@@ -354,20 +443,21 @@ BOOL OnInitAboutDialog(HWND window)
 	swprintf(tmpSz, L"Built on %s", ConvertToWide(__DATE__).c_str());
 	SetWindowText(widget, tmpSz);
 
+	CheckDlgButton(window, IDC_DISABLE_VERSION_CHECK, Rainmeter->GetDisableVersionCheck() ? BST_CHECKED : BST_UNCHECKED);
+
 	// Add entries for each config
 	widget = GetDlgItem(window, IDC_ABOUT_ENTRIES);
 	std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 	std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-	int i = 0;
 	for( ; iter != windows.end(); ++iter)
 	{
 		CMeterWindow* meterWindow = (*iter).second;
-		wchar_t* skinName = (WCHAR*)meterWindow->GetSkinName().c_str();
-		SendMessage(widget, LB_ADDSTRING, NULL, (LPARAM) skinName);
-		size_t namelength = wcslen(skinName);
+		const std::wstring& skinName = meterWindow->GetSkinName();
+		SendMessage(widget, LB_ADDSTRING, NULL, (LPARAM)skinName.c_str());
+		size_t namelength = skinName.length();
 
-		int currwidth = (INT)SendMessage(widget, LB_GETHORIZONTALEXTENT, NULL, NULL);
-		if(6 * namelength > currwidth)
+		int currwidth = (int)SendMessage(widget, LB_GETHORIZONTALEXTENT, NULL, NULL);
+		if(6 * (int)namelength > currwidth)
 		{
 			SendMessage(widget, LB_SETHORIZONTALEXTENT, 6 * namelength, NULL);
 		}
@@ -376,35 +466,35 @@ BOOL OnInitAboutDialog(HWND window)
 	SendMessage(widget, LB_INSERTSTRING, 1, (LPARAM) L"Plugins");
 	SendMessage(widget, LB_INSERTSTRING, 2, (LPARAM) L"--------------------");
 
-	// Add columns to the list view
-	widget = GetDlgItem(window, IDC_STATISTICS);
+	if (g_DialogWin == NULL)
+	{
+		// Add columns to the list view
+		widget = GetDlgItem(window, IDC_STATISTICS);
 
-	//ListView_SetExtendedListViewStyleEx(widget, LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
-	ListView_SetExtendedListViewStyleEx(widget, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+		//ListView_SetExtendedListViewStyleEx(widget, LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
+		ListView_SetExtendedListViewStyleEx(widget, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
-    LVCOLUMN lvc; 
-    lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM; 
-    lvc.iSubItem = 0;
-    lvc.pszText = L"Measure";
-    lvc.cx = 110;
-    lvc.fmt = LVCFMT_LEFT;  // left-aligned column
-    ListView_InsertColumn(widget, 0, &lvc);
-    lvc.iSubItem = 1;
-    lvc.cx = 100;
-    lvc.pszText = L"Value";	
-    ListView_InsertColumn(widget, 1, &lvc);
-    lvc.iSubItem = 1;
-    lvc.cx = 150;
-    lvc.pszText = L"Range";	
-    ListView_InsertColumn(widget, 2, &lvc);
+		LVCOLUMN lvc; 
+		lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM; 
+		lvc.iSubItem = 0;
+		lvc.pszText = L"Measure";
+		lvc.cx = 110;
+		lvc.fmt = LVCFMT_LEFT;  // left-aligned column
+		ListView_InsertColumn(widget, 0, &lvc);
+		lvc.iSubItem = 1;
+		lvc.cx = 100;
+		lvc.pszText = L"Value";	
+		ListView_InsertColumn(widget, 1, &lvc);
+		lvc.iSubItem = 2;
+		lvc.cx = 150;
+		lvc.pszText = L"Range";	
+		ListView_InsertColumn(widget, 2, &lvc);
 
-	CheckDlgButton(window, IDC_DISABLE_VERSION_CHECK, Rainmeter->GetDisableVersionCheck() ? BST_CHECKED : BST_UNCHECKED);
+		ScanPlugins();
+	}
 
-	ScanPlugins();
-	UpdateWidgets(window);
+	UpdateWidgets();
 	RepositionControls(window);
-
-	g_DialogWin = window;
 
 	return TRUE;
 }
@@ -430,6 +520,7 @@ INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 			break;
 
 		case WM_CLOSE:
+			KillTimer(hwndDlg, LOGTIMER);
 			Rainmeter->SaveSettings();
 			DestroyWindow(hwndDlg);
 			g_DialogWin = NULL;
@@ -450,18 +541,35 @@ INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 				break;
 
 			case IDOK:
-				Rainmeter->SaveSettings();
-				DestroyWindow(hwndDlg);
-				g_DialogWin = NULL;
+				SendMessage(hwndDlg, WM_CLOSE, 0, 0);
 				return TRUE;
 
 			case IDC_ABOUT_ENTRIES:
 				if (HIWORD(wParam) == LBN_SELCHANGE)
 				{
-					UpdateWidgets(hwndDlg);
+					KillTimer(hwndDlg, LOGTIMER);
+
+					HWND widget = GetDlgItem(hwndDlg, IDC_ABOUT_ENTRIES);
+					if (widget != NULL)
+					{
+						if (0 == (int)SendMessage(widget, LB_GETCURSEL, 0, 0))
+						{
+							SetTimer(g_DialogWin, LOGTIMER, 1000, NULL);
+						}
+					}
+
+					UpdateWidgets();
 					UpdateAboutStatistics();
 				} 
 				break;
+			}
+			break;
+
+		case WM_TIMER:
+			if (wParam == LOGTIMER)
+			{
+				UpdateAboutStatistics();
+				return TRUE;
 			}
 			break;
 	}

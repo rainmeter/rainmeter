@@ -1910,6 +1910,8 @@ void CRainmeter::CreateMeterWindow(std::wstring path, std::wstring config, std::
 	{
 		m_Meters[config] = mw;
 		mw->Initialize(*this);
+
+		UpdateAboutDialog();
 	}
 }
 
@@ -1929,6 +1931,8 @@ void CRainmeter::ClearDeleteLaterList()
 			if ((*iter).second == meterWindow)
 			{
 				m_Meters.erase(iter);
+
+				UpdateAboutDialog();
 				break;
 			}
 		}
@@ -1961,6 +1965,8 @@ bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
 			{
 				m_Meters.erase(iter);
 				delete meterWindow;
+
+				UpdateAboutDialog();
 				return true;
 			}
 		}
@@ -1969,6 +1975,8 @@ bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
 		{
 			m_Meters.clear();
 		}
+
+		UpdateAboutDialog();
 	}
 
 	return false;

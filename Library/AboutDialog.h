@@ -22,7 +22,8 @@
 #include "MeterWindow.h"
 
 HWND OpenAboutDialog(HWND hwndOwner, HINSTANCE instance);
-void UpdateAboutStatistics();
+void UpdateAboutDialog();
+void UpdateAboutStatistics(LPCTSTR entryName = NULL);
 
 #endif
 

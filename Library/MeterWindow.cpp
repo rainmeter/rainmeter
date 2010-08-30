@@ -2628,7 +2628,7 @@ LRESULT CMeterWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 	if(wParam == METERTIMER) 
 	{
 		Update(false);
-		UpdateAboutStatistics();
+		UpdateAboutStatistics(m_SkinName.c_str());
 
 		//if (m_KeepOnScreen) 
 		//{
