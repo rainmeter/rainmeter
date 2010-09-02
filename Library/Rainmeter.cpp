@@ -2653,20 +2653,36 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 
 	if (!strCommand.empty())
 	{
-		// Check for build-ins
-		if (wcsncmp(L"PLAY ", strCommand.c_str(), 5) == 0)
+		// Check for built-ins
+		if (wcsnicmp(L"PLAY ", strCommand.c_str(), 5) == 0 ||
+			wcsnicmp(L"PLAYLOOP ", strCommand.c_str(), 9) == 0)
 		{
-			BOOL ret = PlaySound(strCommand.c_str() + 5, NULL, SND_FILENAME | SND_ASYNC);
+			// Strip built-in command
+			size_t pos = strCommand.find(L' ');
+			strCommand.erase(0, pos + 1);
+
+			if (!strCommand.empty())
+			{
+				DWORD flags = SND_FILENAME | SND_ASYNC;
+				if (pos == 8)  // PLAYLOOP
+				{
+					flags |= SND_LOOP | SND_NODEFAULT;
+				}
+
+				// Strip the quotes
+				std::wstring::size_type len = strCommand.length();
+				if (len >= 2 && strCommand[0] == L'\"' && strCommand[len - 1] == L'\"')
+				{
+					strCommand.swap(strCommand.substr(1, len - 2));
+				}
+
+				PlaySound(strCommand.c_str(), NULL, flags);
+			}
 			return;
 		}
 		else if (wcsncmp(L"PLAYSTOP", strCommand.c_str(), 8) == 0)
 		{
 			PlaySound(NULL, NULL, SND_PURGE);
-			return;
-		}
-		else if (wcsncmp(L"PLAYLOOP ", strCommand.c_str(), 9) == 0)
-		{
-			PlaySound(strCommand.c_str() + 9, NULL, SND_ASYNC | SND_FILENAME | SND_LOOP | SND_NODEFAULT);
 			return;
 		}
 		

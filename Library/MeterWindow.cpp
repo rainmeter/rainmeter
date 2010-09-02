@@ -4312,7 +4312,7 @@ LRESULT CMeterWindow::OnDelayedExecute(WPARAM wParam, LPARAM lParam)
 		COPYDATASTRUCT copyData;
 
 		copyData.dwData = 1;
-		copyData.cbData = (DWORD)((lstrlen(szExecute))* sizeof(WCHAR));
+		copyData.cbData = (DWORD)((wcslen(szExecute) + 1) * sizeof(WCHAR));
 		copyData.lpData = (void*)szExecute;
 
 		OnCopyData(NULL, (LPARAM)&copyData);
@@ -4402,6 +4402,16 @@ LRESULT CMeterWindow::OnCopyData(WPARAM wParam, LPARAM lParam)
 		}
 
 		std::wstring str = (const WCHAR*)pCopyDataStruct->lpData;
+
+		if (wcsnicmp(L"PLAY ", str.c_str(), 5) == 0 ||
+			wcsnicmp(L"PLAYLOOP ", str.c_str(), 9) == 0 ||
+			wcsnicmp(L"PLAYSTOP", str.c_str(), 8) == 0)
+		{
+			// Audio commands are special cases.
+			Rainmeter->ExecuteCommand(str.c_str(), this);
+			return TRUE;
+		}
+
 		std::wstring bang;
 		std::wstring arg;
 

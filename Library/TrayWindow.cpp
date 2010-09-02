@@ -588,15 +588,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 			if (!bang.empty())
 			{
-				std::wstring arg;
-				size_t pos = bang.find(L' ');
-				if (pos != std::wstring::npos) 
-				{
-					arg = bang;
-					arg.erase(0, pos + 1);
-					bang = bang.substr(0, pos);
-				}
-				Rainmeter->ExecuteBang(bang, arg, NULL);
+				Rainmeter->ExecuteCommand(bang.c_str(), NULL);
 			}
 			else if	(uMouseMsg == WM_RBUTTONDOWN)
 			{

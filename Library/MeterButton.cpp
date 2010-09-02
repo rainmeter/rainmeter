@@ -287,8 +287,7 @@ bool CMeterButton::MouseUp(POINT pos, CMeterWindow* window)
 	{
 		if (window && m_Clicked && m_Executable && HitTest2(pos.x, pos.y, true))
 		{
-			// Do a delayed execute or ortherwise !RainmeterRefresh crashes
-			PostMessage(window->GetWindow(), WM_DELAYED_EXECUTE, (WPARAM)NULL, (LPARAM)m_Command.c_str());
+			Rainmeter->ExecuteCommand(m_Command.c_str(), window);
 		}
 		m_State = BUTTON_STATE_NORMAL;
 		m_Clicked = false;
