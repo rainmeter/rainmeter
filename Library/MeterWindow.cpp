@@ -423,7 +423,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 void CMeterWindow::SetMouseLeaveEvent(bool cancel)
 {
-	if (!cancel && !m_MouseOver) return;
+	if (!cancel && (!m_MouseOver || m_ClickThrough)) return;
 
 	// Check whether the mouse event is set
 	TRACKMOUSEEVENT tme = {sizeof(TRACKMOUSEEVENT)};
@@ -772,71 +772,57 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		break;
 
 	case BANG_CLICKTHROUGH:
-		if (_wtoi(arg) == -1)
 		{
-			m_ClickThrough = !m_ClickThrough;
-		}
-		else
-		{
-			m_ClickThrough = _wtoi(arg);
-		}
-		WriteConfig();
-
-		if (!m_ClickThrough)
-		{
-			// Remove transparent flag
-			LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
-			if ((style & WS_EX_TRANSPARENT) != 0)
+			int f = _wtoi(arg);
+			if (f == -1)
 			{
-				SetWindowLong(m_Window, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
+				SetClickThrough(!m_ClickThrough);
+			}
+			else
+			{
+				SetClickThrough(f != 0);
 			}
 		}
 		break;
 
 	case BANG_DRAGGABLE:
-		if (_wtoi(arg) == -1)
 		{
-			m_WindowDraggable = !m_WindowDraggable;
+			int f = _wtoi(arg);
+			if (f == -1)
+			{
+				SetWindowDraggable(!m_WindowDraggable);
+			}
+			else
+			{
+				SetWindowDraggable(f != 0);
+			}
 		}
-		else
-		{
-			m_WindowDraggable = _wtoi(arg);
-		}
-		WriteConfig();
 		break;
 
 	case BANG_SNAPEDGES:
-		if (_wtoi(arg) == -1)
 		{
-			m_SnapEdges = !m_SnapEdges;
+			int f = _wtoi(arg);
+			if (f == -1)
+			{
+				SetSnapEdges(!m_SnapEdges);
+			}
+			else
+			{
+				SetSnapEdges(f != 0);
+			}
 		}
-		else
-		{
-			m_SnapEdges = _wtoi(arg);
-		}
-		WriteConfig();
 		break;
 
 	case BANG_KEEPONSCREEN:
-		if (_wtoi(arg) == -1)
 		{
-			m_KeepOnScreen = !m_KeepOnScreen;
-		}
-		else
-		{
-			m_KeepOnScreen = _wtoi(arg);
-		}
-		
-		WriteConfig();
-
-		if (m_KeepOnScreen) 
-		{
-			int x = m_ScreenX;
-			int y = m_ScreenY;
-			MapCoordsToScreen(x, y, m_WindowW, m_WindowH);
-			if (x != m_ScreenX || y != m_ScreenY)
+			int f = _wtoi(arg);
+			if (f == -1)
 			{
-				MoveWindow(x, y);
+				SetKeepOnScreen(!m_KeepOnScreen);
+			}
+			else
+			{
+				SetKeepOnScreen(f != 0);
 			}
 		}
 		break;
@@ -2604,7 +2590,7 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 ** Repaints the window. This does not cause update of the measures.
 **
 */
-LRESULT CMeterWindow::OnPaint(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	PAINTSTRUCT ps;
 	HDC winDC = BeginPaint(m_Window, &ps);
@@ -2623,7 +2609,7 @@ LRESULT CMeterWindow::OnPaint(WPARAM wParam, LPARAM lParam)
 ** MOUSETIMER is used to hide/show the window.
 **
 */
-LRESULT CMeterWindow::OnTimer(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	if(wParam == METERTIMER) 
 	{
@@ -2675,20 +2661,34 @@ LRESULT CMeterWindow::OnTimer(WPARAM wParam, LPARAM lParam)
 			{
 				POINT pos;
 				GetCursorPos(&pos);
-				if (WindowFromPoint(pos) == m_Window)
+
+				if (!m_ClickThrough)
 				{
-					SetMouseLeaveEvent(false);
+					if (WindowFromPoint(pos) == m_Window)
+					{
+						SetMouseLeaveEvent(false);
 
-					MapWindowPoints(NULL, m_Window, &pos, 1);
-					DoMoveAction(pos.x, pos.y, MOUSE_OVER);
+						MapWindowPoints(NULL, m_Window, &pos, 1);
+						while (DoMoveAction(pos.x, pos.y, MOUSE_OVER)) ;
 
-					// Handle buttons
-					HandleButtons(pos, BUTTONPROC_MOVE, NULL, false);
+						// Handle buttons
+						HandleButtons(pos, BUTTONPROC_MOVE, NULL, false);
+					}
+					else
+					{
+						// Run all mouse leave actions
+						OnMouseLeave(m_WindowDraggable ? WM_NCMOUSELEAVE : WM_MOUSELEAVE, 0, 0);
+					}
 				}
 				else
 				{
-					// Run all mouse leave actions
-					OnMouseLeave(0, 0);
+					bool keyDown = GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000 || GetKeyState(VK_MENU) & 0x8000;
+
+					if (!keyDown || GetWindowFromPoint(pos) != m_Window)
+					{
+						// Run all mouse leave actions
+						OnMouseLeave(m_WindowDraggable ? WM_NCMOUSELEAVE : WM_MOUSELEAVE, 0, 0);
+					}
 				}
 			}
 		}
@@ -2797,7 +2797,7 @@ void CMeterWindow::ShowWindowIfAppropriate()
 
 	POINT pos;
 	GetCursorPos(&pos);
-	if (WindowFromPoint(pos) == m_Window)
+	if (GetWindowFromPoint(pos) == m_Window)
 	{
 		MapWindowPoints(NULL, m_Window, &pos, 1);
 
@@ -2858,6 +2858,39 @@ void CMeterWindow::ShowWindowIfAppropriate()
 			}
 		}
 	}
+}
+
+/*
+** GetWindowFromPoint
+**
+** Retrieves a handle to the window that contains the specified point.
+**
+*/
+HWND CMeterWindow::GetWindowFromPoint(POINT pos)
+{
+	HWND hwndPos = WindowFromPoint(pos);
+
+	if (hwndPos == m_Window || !m_ClickThrough)
+	{
+		return hwndPos;
+	}
+
+	MapWindowPoints(NULL, m_Window, &pos, 1);
+
+	if (HitTest(pos.x, pos.y))
+	{
+		HWND hWnd = GetAncestor(hwndPos, GA_ROOT);
+		while (hWnd = ::GetNextWindow(hWnd, GW_HWNDNEXT))
+		{
+			if (hWnd == m_Window)
+			{
+				return hwndPos;
+			}
+		}
+		return m_Window;
+	}
+
+	return hwndPos;
 }
 
 /*
@@ -2957,7 +2990,7 @@ void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meter
 ** When we get WM_MOUSEMOVE messages, hide the window as the mouse is over it.
 **
 */
-LRESULT CMeterWindow::OnMouseMove(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	bool keyDown = GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000 || GetKeyState(VK_MENU) & 0x8000;
 
@@ -3001,20 +3034,23 @@ LRESULT CMeterWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam);
-	pos.y = (SHORT)HIWORD(lParam);
-
-	if (m_Message == WM_NCMOUSEMOVE)
+	if (!m_ClickThrough || keyDown)
 	{
-		// Map to local window
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		POINT pos;
+		pos.x = (SHORT)LOWORD(lParam);
+		pos.y = (SHORT)HIWORD(lParam);
+
+		if (uMsg == WM_NCMOUSEMOVE)
+		{
+			// Map to local window
+			MapWindowPoints(NULL, m_Window, &pos, 1);
+		}
+
+		while (DoMoveAction(pos.x, pos.y, MOUSE_OVER)) ;
+
+		// Handle buttons
+		HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
 	}
-
-	DoMoveAction(pos.x, pos.y, MOUSE_OVER);
-
-	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
 
 	return 0;
 }
@@ -3025,7 +3061,7 @@ LRESULT CMeterWindow::OnMouseMove(WPARAM wParam, LPARAM lParam)
 ** When we get WM_MOUSELEAVE messages, run all leave actions.
 **
 */
-LRESULT CMeterWindow::OnMouseLeave(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	POINT pos;
 	GetCursorPos(&pos);
@@ -3048,7 +3084,7 @@ LRESULT CMeterWindow::OnMouseLeave(WPARAM wParam, LPARAM lParam)
 ** During window creation we do nothing.
 **
 */
-LRESULT CMeterWindow::OnCreate(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	return 0;
 }
@@ -3059,7 +3095,7 @@ LRESULT CMeterWindow::OnCreate(WPARAM wParam, LPARAM lParam)
 ** Handle the menu commands.
 **
 */
-LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	try 
 	{
@@ -3118,39 +3154,15 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_KEEPONSCREEN)
 		{
-			m_KeepOnScreen = !m_KeepOnScreen;
-			WriteConfig();
-
-			if (m_KeepOnScreen) 
-			{
-				int x = m_ScreenX;
-				int y = m_ScreenY;
-				MapCoordsToScreen(x, y, m_WindowW, m_WindowH);
-				if (x != m_ScreenX || y != m_ScreenY)
-				{
-					MoveWindow(x, y);
-				}
-			}
+			SetKeepOnScreen(!m_KeepOnScreen);
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_CLICKTHROUGH)
 		{
-			m_ClickThrough = !m_ClickThrough;
-			WriteConfig();
-
-			if (!m_ClickThrough)
-			{
-				// Remove transparent flag
-				LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
-				if ((style & WS_EX_TRANSPARENT) != 0)
-				{
-					SetWindowLong(m_Window, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
-				}
-			}
+			SetClickThrough(!m_ClickThrough);
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_DRAGGABLE)
 		{
-			m_WindowDraggable = !m_WindowDraggable;
-			WriteConfig();
+			SetWindowDraggable(!m_WindowDraggable);
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_HIDEONMOUSE)
 		{
@@ -3193,13 +3205,11 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_REMEMBERPOSITION)
 		{
-			m_SavePosition = !m_SavePosition;
-			WriteConfig();
+			SetSavePosition(!m_SavePosition);
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_SNAPTOEDGES)
 		{
-			m_SnapEdges = !m_SnapEdges;
-			WriteConfig();
+			SetSnapEdges(!m_SnapEdges);
 		}
 		else if(wParam >= ID_CONTEXT_SKINMENU_TRANSPARENCY_0 && wParam <= ID_CONTEXT_SKINMENU_TRANSPARENCY_90)
 		{
@@ -3312,16 +3322,102 @@ LRESULT CMeterWindow::OnCommand(WPARAM wParam, LPARAM lParam)
 }
 
 /*
+** SetClickThrough
+**
+** Helper function for setting ClickThrough
+**
+*/
+void CMeterWindow::SetClickThrough(bool b)
+{
+	m_ClickThrough = b;
+	WriteConfig();
+
+	if (!m_ClickThrough)
+	{
+		// Remove transparent flag
+		LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
+		if ((style & WS_EX_TRANSPARENT) != 0)
+		{
+			SetWindowLong(m_Window, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
+		}
+	}
+
+	if (m_MouseOver)
+	{
+		SetMouseLeaveEvent(m_ClickThrough);
+	}
+}
+
+/*
+** SetKeepOnScreen
+**
+** Helper function for setting KeepOnScreen
+**
+*/
+void CMeterWindow::SetKeepOnScreen(bool b)
+{
+	m_KeepOnScreen = b;
+	WriteConfig();
+
+	if (m_KeepOnScreen) 
+	{
+		int x = m_ScreenX;
+		int y = m_ScreenY;
+		MapCoordsToScreen(x, y, m_WindowW, m_WindowH);
+		if (x != m_ScreenX || y != m_ScreenY)
+		{
+			MoveWindow(x, y);
+		}
+	}
+}
+
+/*
+** SetWindowDraggable
+**
+** Helper function for setting WindowDraggable
+**
+*/
+void CMeterWindow::SetWindowDraggable(bool b)
+{
+	m_WindowDraggable = b;
+	WriteConfig();
+}
+
+/*
+** SetSavePosition
+**
+** Helper function for setting SavePosition
+**
+*/
+void CMeterWindow::SetSavePosition(bool b)
+{
+	m_SavePosition = b;
+	WriteConfig();
+}
+
+/*
+** SetSnapEdges
+**
+** Helper function for setting SnapEdges
+**
+*/
+void CMeterWindow::SetSnapEdges(bool b)
+{
+	m_SnapEdges = b;
+	WriteConfig();
+}
+
+/*
 ** OnSysCommand
 **
 ** Handle dragging the window
 **
 */
-LRESULT CMeterWindow::OnSysCommand(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	if ((wParam & 0xFFF0) != SC_MOVE)
 	{
-		return DefWindowProc(m_Window, m_Message, wParam, lParam);
+		return DefWindowProc(m_Window, uMsg, wParam, lParam);
 	}
 
 	// --- SC_MOVE ---
@@ -3331,7 +3427,7 @@ LRESULT CMeterWindow::OnSysCommand(WPARAM wParam, LPARAM lParam)
 	m_Dragged = false;
 
 	// Run the DefWindowProc so the dragging works
-	LRESULT result = DefWindowProc(m_Window, m_Message, wParam, lParam);
+	LRESULT result = DefWindowProc(m_Window, uMsg, wParam, lParam);
 
 	if (m_Dragged)
 	{
@@ -3372,7 +3468,7 @@ LRESULT CMeterWindow::OnSysCommand(WPARAM wParam, LPARAM lParam)
 ** Starts dragging
 **
 */
-LRESULT CMeterWindow::OnEnterSizeMove(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	if (m_Dragging)
 	{
@@ -3391,7 +3487,7 @@ LRESULT CMeterWindow::OnEnterSizeMove(WPARAM wParam, LPARAM lParam)
 ** Ends dragging
 **
 */
-LRESULT CMeterWindow::OnExitSizeMove(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	return 0;
 }
@@ -3402,7 +3498,7 @@ LRESULT CMeterWindow::OnExitSizeMove(WPARAM wParam, LPARAM lParam)
 ** This is overwritten so that the window can be dragged
 **
 */
-LRESULT CMeterWindow::OnNcHitTest(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	if (m_WindowDraggable)
 	{
@@ -3438,7 +3534,7 @@ LRESULT CMeterWindow::OnNcHitTest(WPARAM wParam, LPARAM lParam)
 ** Called when windows position is about to change
 **
 */
-LRESULT CMeterWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	LPWINDOWPOS wp=(LPWINDOWPOS)lParam;
 
@@ -3503,7 +3599,7 @@ LRESULT CMeterWindow::OnWindowPosChanging(WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-	return DefWindowProc(m_Window, m_Message, wParam, lParam);
+	return DefWindowProc(m_Window, uMsg, wParam, lParam);
 }
 
 void CMeterWindow::SnapToWindow(CMeterWindow* window, LPWINDOWPOS wp)
@@ -3538,7 +3634,7 @@ void CMeterWindow::SnapToWindow(CMeterWindow* window, LPWINDOWPOS wp)
 ** During destruction of the window do nothing.
 **
 */
-LRESULT CMeterWindow::OnDestroy(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	return 0;
 }
@@ -3550,7 +3646,7 @@ LRESULT CMeterWindow::OnDestroy(WPARAM wParam, LPARAM lParam)
 ** (OnDelayedMove function is used instead.)
 **
 */
-LRESULT CMeterWindow::OnDisplayChange(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	return 0;
 }
@@ -3562,7 +3658,7 @@ LRESULT CMeterWindow::OnDisplayChange(WPARAM wParam, LPARAM lParam)
 ** (OnDelayedMove function is used instead.)
 **
 */
-LRESULT CMeterWindow::OnSettingChange(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	return 0;
 }
@@ -3573,13 +3669,13 @@ LRESULT CMeterWindow::OnSettingChange(WPARAM wParam, LPARAM lParam)
 ** Runs the action when left mouse button is down
 **
 */
-LRESULT CMeterWindow::OnLeftButtonDown(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
 
-	if (m_Message == WM_NCLBUTTONDOWN)
+	if (uMsg == WM_NCLBUTTONDOWN)
 	{
 		// Transform the point to client rect
 		RECT rect;
@@ -3597,7 +3693,7 @@ LRESULT CMeterWindow::OnLeftButtonDown(WPARAM wParam, LPARAM lParam)
 		SetMouseLeaveEvent(true);
 
 		// Run the DefWindowProc so the dragging works
-		return DefWindowProc(m_Window, m_Message, wParam, lParam);
+		return DefWindowProc(m_Window, uMsg, wParam, lParam);
 	}
 
 	return 0;
@@ -3609,13 +3705,13 @@ LRESULT CMeterWindow::OnLeftButtonDown(WPARAM wParam, LPARAM lParam)
 ** Runs the action when left mouse button is up
 **
 */
-LRESULT CMeterWindow::OnLeftButtonUp(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
 
-	if (m_Message == WM_NCLBUTTONUP)
+	if (uMsg == WM_NCLBUTTONUP)
 	{
 		// Transform the point to client rect
 		RECT rect;
@@ -3638,13 +3734,13 @@ LRESULT CMeterWindow::OnLeftButtonUp(WPARAM wParam, LPARAM lParam)
 ** Runs the action when left mouse button is double-clicked
 **
 */
-LRESULT CMeterWindow::OnLeftButtonDoubleClick(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
 
-	if (m_Message == WM_NCLBUTTONDBLCLK)
+	if (uMsg == WM_NCLBUTTONDBLCLK)
 	{
 		// Transform the point to client rect
 		RECT rect;
@@ -3670,13 +3766,13 @@ LRESULT CMeterWindow::OnLeftButtonDoubleClick(WPARAM wParam, LPARAM lParam)
 ** Runs the action when right mouse button is down
 **
 */
-LRESULT CMeterWindow::OnRightButtonDown(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
 
-	if (m_Message == WM_NCRBUTTONDOWN)
+	if (uMsg == WM_NCRBUTTONDOWN)
 	{
 		// Transform the point to client rect
 		RECT rect;
@@ -3699,7 +3795,7 @@ LRESULT CMeterWindow::OnRightButtonDown(WPARAM wParam, LPARAM lParam)
 ** Runs the action when right mouse button is up
 **
 */
-LRESULT CMeterWindow::OnRightButtonUp(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam);
@@ -3723,13 +3819,13 @@ LRESULT CMeterWindow::OnRightButtonUp(WPARAM wParam, LPARAM lParam)
 ** Runs the action when right mouse button is double-clicked
 **
 */
-LRESULT CMeterWindow::OnRightButtonDoubleClick(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
 
-	if (m_Message == WM_NCRBUTTONDBLCLK)
+	if (uMsg == WM_NCRBUTTONDBLCLK)
 	{
 		// Transform the point to client rect
 		RECT rect;
@@ -3755,13 +3851,13 @@ LRESULT CMeterWindow::OnRightButtonDoubleClick(WPARAM wParam, LPARAM lParam)
 ** Runs the action when middle mouse button is down
 **
 */
-LRESULT CMeterWindow::OnMiddleButtonDown(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
 
-	if (m_Message == WM_NCMBUTTONDOWN)
+	if (uMsg == WM_NCMBUTTONDOWN)
 	{
 		// Transform the point to client rect
 		RECT rect;
@@ -3784,13 +3880,13 @@ LRESULT CMeterWindow::OnMiddleButtonDown(WPARAM wParam, LPARAM lParam)
 ** Runs the action when middle mouse button is up
 **
 */
-LRESULT CMeterWindow::OnMiddleButtonUp(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
 
-	if (m_Message == WM_NCMBUTTONUP)
+	if (uMsg == WM_NCMBUTTONUP)
 	{
 		// Transform the point to client rect
 		RECT rect;
@@ -3813,13 +3909,13 @@ LRESULT CMeterWindow::OnMiddleButtonUp(WPARAM wParam, LPARAM lParam)
 ** Runs the action when middle mouse button is double-clicked
 **
 */
-LRESULT CMeterWindow::OnMiddleButtonDoubleClick(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam); 
 	pos.y = (SHORT)HIWORD(lParam); 
 
-	if (m_Message == WM_NCMBUTTONDBLCLK)
+	if (uMsg == WM_NCMBUTTONDBLCLK)
 	{
 		// Transform the point to client rect
 		RECT rect;
@@ -3845,7 +3941,7 @@ LRESULT CMeterWindow::OnMiddleButtonDoubleClick(WPARAM wParam, LPARAM lParam)
 ** Handles the context menu. The menu is recreated every time it is shown.
 **
 */
-LRESULT CMeterWindow::OnContextMenu(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	POINT pos;
 	int x = (SHORT)LOWORD(lParam); 
@@ -4090,6 +4186,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 					if (!m_MouseOverAction.empty())
 					{
 						m_Rainmeter->ExecuteCommand(m_MouseOverAction.c_str(), this);
+						return true;
 					}
 				}
 
@@ -4130,6 +4227,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 						if (!((*j)->GetMouseOverAction().empty()))
 						{
 							m_Rainmeter->ExecuteCommand((*j)->GetMouseOverAction().c_str(), this);
+							return true;
 						}
 					}
 				}
@@ -4158,6 +4256,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 				if (!((*j)->GetMouseLeaveAction().empty()))
 				{
 					m_Rainmeter->ExecuteCommand((*j)->GetMouseLeaveAction().c_str(), this);
+					return true;
 				}
 			}
 		}
@@ -4209,7 +4308,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 ** Stores the new place of the window, in screen coordinates.
 **
 */
-LRESULT CMeterWindow::OnMove(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	// The lParam's x/y parameters are given in screen coordinates for overlapped and pop-up windows
 	// and in parent-client coordinates for child windows.
@@ -4251,8 +4350,6 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	{
 		Window = (CMeterWindow*)GetProp(hWnd, L"RAINMETER");
 	}
-
-	if (Window) Window->m_Message = uMsg;
 
 	BEGIN_MESSAGEPROC
 	MESSAGE(OnPaint, WM_PAINT)
@@ -4304,7 +4401,7 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 ** Handles delayed executes
 **
 */
-LRESULT CMeterWindow::OnDelayedExecute(WPARAM wParam, LPARAM lParam)
+LRESULT CMeterWindow::OnDelayedExecute(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (lParam)
 	{
@@ -4315,7 +4412,7 @@ LRESULT CMeterWindow::OnDelayedExecute(WPARAM wParam, LPARAM lParam)
 		copyData.cbData = (DWORD)((wcslen(szExecute) + 1) * sizeof(WCHAR));
 		copyData.lpData = (void*)szExecute;
 
-		OnCopyData(NULL, (LPARAM)&copyData);
+		OnCopyData(WM_COPYDATA, NULL, (LPARAM)&copyData);
 	}
 	return 0;
 }
@@ -4326,7 +4423,7 @@ LRESULT CMeterWindow::OnDelayedExecute(WPARAM wParam, LPARAM lParam)
 ** Handles delayed refresh
 **
 */
-LRESULT CMeterWindow::OnDelayedRefresh(WPARAM wParam, LPARAM lParam)
+LRESULT CMeterWindow::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	try
 	{
@@ -4345,7 +4442,7 @@ LRESULT CMeterWindow::OnDelayedRefresh(WPARAM wParam, LPARAM lParam)
 ** Handles delayed move
 **
 */
-LRESULT CMeterWindow::OnDelayedMove(WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
 	if (m_NativeTransparency)
 	{
@@ -4376,7 +4473,7 @@ LRESULT CMeterWindow::OnDelayedMove(WPARAM wParam, LPARAM lParam)
 ** Handles bangs from the exe
 **
 */
-LRESULT CMeterWindow::OnCopyData(WPARAM wParam, LPARAM lParam)
+LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	COPYDATASTRUCT* pCopyDataStruct = (COPYDATASTRUCT*) lParam;
 

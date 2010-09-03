@@ -31,7 +31,7 @@
 #include "Export.h"
 
 #define BEGIN_MESSAGEPROC switch(uMsg) {
-#define MESSAGE(handler, msg) case msg: return Window?Window->handler(wParam, lParam):DefWindowProc(hWnd, uMsg, wParam, lParam);
+#define MESSAGE(handler, msg) case msg: return Window?Window->handler(uMsg, wParam, lParam):DefWindowProc(hWnd, uMsg, wParam, lParam);
 #define REJECT_MESSAGE(msg) case msg: return 0;
 #define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
@@ -199,7 +199,7 @@ public:
 
 	void AddMeasureBang(const WCHAR* bang, int index, CMeasure* measure);
 
-	LRESULT OnCopyData(WPARAM wParam, LPARAM lParam);
+	LRESULT OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	std::wstring MakePathAbsolute(std::wstring path);
 
@@ -208,34 +208,34 @@ public:
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	LRESULT OnPaint(WPARAM wParam, LPARAM lParam);
-	LRESULT OnMove(WPARAM wParam, LPARAM lParam);
-	LRESULT OnCreate(WPARAM wParam, LPARAM lParam);
-	LRESULT OnDestroy(WPARAM wParam, LPARAM lParam);
-	LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
-	LRESULT OnCommand(WPARAM wParam, LPARAM lParam);
-	LRESULT OnSysCommand(WPARAM wParam, LPARAM lParam);
-	LRESULT OnEnterSizeMove(WPARAM wParam, LPARAM lParam);
-	LRESULT OnExitSizeMove(WPARAM wParam, LPARAM lParam);
-	LRESULT OnNcHitTest(WPARAM wParam, LPARAM lParam);
-	LRESULT OnWindowPosChanging(WPARAM wParam, LPARAM lParam);
-	LRESULT OnMouseMove(WPARAM wParam, LPARAM lParam);
-	LRESULT OnMouseLeave(WPARAM wParam, LPARAM lParam);
-	LRESULT OnContextMenu(WPARAM wParam, LPARAM lParam);
-	LRESULT OnLeftButtonDown(WPARAM wParam, LPARAM lParam);
-	LRESULT OnRightButtonDown(WPARAM wParam, LPARAM lParam);
-	LRESULT OnMiddleButtonDown(WPARAM wParam, LPARAM lParam);
-	LRESULT OnLeftButtonUp(WPARAM wParam, LPARAM lParam);
-	LRESULT OnRightButtonUp(WPARAM wParam, LPARAM lParam);
-	LRESULT OnMiddleButtonUp(WPARAM wParam, LPARAM lParam);
-	LRESULT OnLeftButtonDoubleClick(WPARAM wParam, LPARAM lParam);
-	LRESULT OnRightButtonDoubleClick(WPARAM wParam, LPARAM lParam);
-	LRESULT OnMiddleButtonDoubleClick(WPARAM wParam, LPARAM lParam);
-	LRESULT OnDelayedExecute(WPARAM wParam, LPARAM lParam);
-	LRESULT OnDelayedRefresh(WPARAM wParam, LPARAM lParam);
-	LRESULT OnDelayedMove(WPARAM wParam, LPARAM lParam);
-	LRESULT OnSettingChange(WPARAM wParam, LPARAM lParam);  
-	LRESULT OnDisplayChange(WPARAM wParam, LPARAM lParam);  
+	LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnDelayedExecute(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam);  
+	LRESULT OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam);  
 
 private:
 	bool HitTest(int x, int y);
@@ -255,7 +255,13 @@ private:
 	void InitializeMeasures();
 	void InitializeMeters();
 	void ShowWindowIfAppropriate();
+	HWND GetWindowFromPoint(POINT pos);
 	void HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meterWindow, bool changeCursor);
+	void SetClickThrough(bool b);
+	void SetKeepOnScreen(bool b);
+	void SetWindowDraggable(bool b);
+	void SetSavePosition(bool b);
+	void SetSnapEdges(bool b);
 	bool DoAction(int x, int y, MOUSE mouse, bool test);
 	bool DoMoveAction(int x, int y, MOUSE mouse);
 	bool ResizeWindow(bool reset);
@@ -355,8 +361,6 @@ private:
 	std::wstring m_SkinPath;					// Path of the skin folder
 	std::wstring m_SkinName;					// Name of the current skin folder
 	std::wstring m_SkinIniFile;					// Name of the current skin iniFile
-
-	UINT m_Message;								// The current window message
 
 	int m_UpdateCounter;
 

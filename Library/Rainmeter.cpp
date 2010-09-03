@@ -2696,7 +2696,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 				CopyDataStruct.cbData = (DWORD)((wcslen(command) + 1) * sizeof(WCHAR));
 				CopyDataStruct.dwData = 1;
 				CopyDataStruct.lpData = (void*)strCommand.c_str();
-				meterWindow->OnCopyData(NULL, (LPARAM)&CopyDataStruct);
+				meterWindow->OnCopyData(WM_COPYDATA, NULL, (LPARAM)&CopyDataStruct);
 			}
 			else
 			{
