@@ -20,6 +20,7 @@
 #include "System.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
+#include "MeterWindow.h"
 #include "MeasureNet.h"
 #include "Error.h"
 
@@ -675,7 +676,7 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 	CMeterWindow* Window;
 
 	if (GetClassName(hwnd, className, 128) > 0 &&
-		wcscmp(className, L"RainmeterMeterWindow") == 0 &&
+		wcscmp(className, METERWINDOW_CLASS_NAME) == 0 &&
 		Rainmeter && (Window = Rainmeter->GetMeterWindow(hwnd)))
 	{
 		ZPOSITION zPos = Window->GetWindowZPosition();

@@ -39,6 +39,8 @@
 #define WM_DELAYED_REFRESH WM_APP + 1
 #define WM_DELAYED_MOVE    WM_APP + 3
 
+#define METERWINDOW_CLASS_NAME	L"RainmeterMeterWindow"
+
 enum MOUSE
 {
 	MOUSE_LMB_DOWN,

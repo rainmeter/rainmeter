@@ -185,7 +185,7 @@ CMeterWindow::~CMeterWindow()
 		int counter = 0;
 		do {
 			// Wait for the window to die
-			Result = UnregisterClass(L"RainmeterMeterWindow", m_Rainmeter->GetInstance());
+			Result = UnregisterClass(METERWINDOW_CLASS_NAME, m_Rainmeter->GetInstance());
 			Sleep(100);
 			++counter;
 		} while(!Result && counter < 10);
@@ -211,7 +211,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.lpfnWndProc = WndProc;
 	wc.hInstance = m_Rainmeter->GetInstance();
-	wc.lpszClassName = L"RainmeterMeterWindow";
+	wc.lpszClassName = METERWINDOW_CLASS_NAME;
 	
 	if(!RegisterClassEx(&wc))
 	{
@@ -224,7 +224,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 	}
 
 	m_Window = CreateWindowEx(WS_EX_TOOLWINDOW,
-							L"RainmeterMeterWindow", 
+							METERWINDOW_CLASS_NAME, 
 							NULL, 
 							WS_POPUP,
 							CW_USEDEFAULT,
@@ -2667,12 +2667,6 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 					if (WindowFromPoint(pos) == m_Window)
 					{
 						SetMouseLeaveEvent(false);
-
-						MapWindowPoints(NULL, m_Window, &pos, 1);
-						while (DoMoveAction(pos.x, pos.y, MOUSE_OVER)) ;
-
-						// Handle buttons
-						HandleButtons(pos, BUTTONPROC_MOVE, NULL, false);
 					}
 					else
 					{
@@ -2797,11 +2791,14 @@ void CMeterWindow::ShowWindowIfAppropriate()
 
 	POINT pos;
 	GetCursorPos(&pos);
-	if (GetWindowFromPoint(pos) == m_Window)
-	{
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+	POINT posScr = pos;
 
-		inside = HitTest(pos.x, pos.y);
+	MapWindowPoints(NULL, m_Window, &pos, 1);
+	inside = HitTest(pos.x, pos.y);
+
+	if (inside)
+	{
+		inside = (GetWindowFromPoint(posScr) == m_Window);
 	}
 
 	if (m_ClickThrough)
@@ -2879,12 +2876,15 @@ HWND CMeterWindow::GetWindowFromPoint(POINT pos)
 
 	if (HitTest(pos.x, pos.y))
 	{
-		HWND hWnd = GetAncestor(hwndPos, GA_ROOT);
-		while (hWnd = ::GetNextWindow(hWnd, GW_HWNDNEXT))
+		if (hwndPos)
 		{
-			if (hWnd == m_Window)
+			HWND hWnd = GetAncestor(hwndPos, GA_ROOT);
+			while (hWnd = FindWindowEx(NULL, hWnd, METERWINDOW_CLASS_NAME, NULL))
 			{
-				return hwndPos;
+				if (hWnd == m_Window)
+				{
+					return hwndPos;
+				}
 			}
 		}
 		return m_Window;
