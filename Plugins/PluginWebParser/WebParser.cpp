@@ -253,11 +253,14 @@ std::wstring& DecodeReferences(std::wstring& str, int opt)
 
 void FillCharacterEntityReferences()
 {
-	// List from: http://www.w3.org/TR/html4/sgml/entities.html
+	// List from:
+	// http://www.w3.org/TR/html4/sgml/entities.html
+	// http://www.w3.org/TR/xhtml1/#C_16
 
 	// for markup-significant and internationalization characters
 	g_CERs[L"quot"]		= (WCHAR)34;
 	g_CERs[L"amp"]		= (WCHAR)38;
+	g_CERs[L"apos"]		= (WCHAR)39;
 	g_CERs[L"lt"]		= (WCHAR)60;
 	g_CERs[L"gt"]		= (WCHAR)62;
 	g_CERs[L"OElig"]	= (WCHAR)338;
