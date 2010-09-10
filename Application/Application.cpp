@@ -66,6 +66,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 {
 	HANDLE hMutex = NULL;
 	MSG msg;
+	BOOL bRet;
 	HWND hWnd;
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -120,10 +121,18 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	initModuleEx(hWnd, module, NULL);
 
 	// Run the standard window message loop
-	while(GetMessage(&msg, NULL, 0, 0)) 
+	while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0) 
 	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg); 
+		if (bRet == -1)  // error
+		{
+			quitModule(NULL);
+			break;
+		}
+		else
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg); 
+		}
 	} 
 
 	if (hMutex) ReleaseMutex(hMutex);
