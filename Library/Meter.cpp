@@ -491,6 +491,80 @@ bool CMeter::Update()
 }
 
 /*
+** SetAllMeasures
+**
+** Creates a vector containing all the defined measures  (Histogram)
+*/
+void CMeter::SetAllMeasures(CMeasure* measure)
+{
+	m_AllMeasures.clear();
+	m_AllMeasures.push_back(m_Measure);
+	m_AllMeasures.push_back(measure);
+}
+
+void CMeter::SetAllMeasures(std::vector<CMeasure*> measures)
+{
+	m_AllMeasures.clear();
+	m_AllMeasures.push_back(m_Measure);
+
+	std::vector<CMeasure*>::const_iterator i = measures.begin();
+	for( ; i != measures.end(); ++i)
+	{
+		m_AllMeasures.push_back(*i);
+	}
+}
+
+/*
+** ReplaceMeasures
+**
+** Replaces %1, %2 etc with the corresponding measure value
+*/
+std::wstring CMeter::ReplaceMeasures(std::wstring source)
+{
+	std::vector<std::wstring> stringValues;
+
+	if (!m_AllMeasures.empty()) 
+	{	
+		stringValues.push_back(m_AllMeasures.front()->GetStringValue(true, 1, 0, false));
+		// Get the values for the other measures
+		for (size_t i = 1; i < m_AllMeasures.size(); ++i)
+		{
+			stringValues.push_back(m_AllMeasures[i]->GetStringValue(true, 1, 0, false));
+		}
+	}
+	else if (m_Measure != NULL)
+	{
+		stringValues.push_back(m_Measure->GetStringValue(true, 1, 0, false));
+	}
+	else
+	{
+		return source;
+	}
+
+	WCHAR buffer[256];
+	// Create the actual text (i.e. replace %1, %2, .. with the measure texts)
+
+	for (size_t i = 0; i < stringValues.size(); ++i)
+	{
+		wsprintf(buffer, L"%%%i", i + 1);
+
+		size_t start = 0;
+		size_t pos = std::wstring::npos;
+
+		do 
+		{
+			pos = source.find(buffer, start);
+			if (pos != std::wstring::npos)
+			{
+				source.replace(source.begin() + pos, source.begin() + pos + wcslen(buffer), stringValues[i]);
+				start = pos + stringValues[i].length();
+			}
+		} while(pos != std::wstring::npos);
+	}
+	return source;
+}
+
+/*
 ** CreateToolTip
 **
 ** Does the initial construction of the ToolTip for the meter
@@ -535,7 +609,9 @@ void CMeter::CreateToolTip(CMeterWindow* meterWindow)
 	ti.uFlags = TTF_SUBCLASS;
 	ti.hwnd = m_MeterWindow->GetWindow();
 	ti.hinst = m_MeterWindow->GetMainObject()->GetInstance();
-	ti.lpszText = (PTSTR) m_ToolTipText.c_str();
+
+	std::wstring text = ReplaceMeasures(m_ToolTipText);
+	ti.lpszText = (PTSTR) text.c_str();
 	ti.rect = GetMeterRect();
 
 	SendMessage(hwndTT, TTM_ADDTOOL, NULL, (LPARAM) (LPTOOLINFO) &ti);
@@ -571,8 +647,8 @@ void CMeter::CreateToolTip(CMeterWindow* meterWindow)
 				hIcon = (HICON) LoadImage(NULL, m_ToolTipIcon.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
 			}
 		}
-
-		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) m_ToolTipTitle.c_str());
+		text = ReplaceMeasures(m_ToolTipTitle);
+		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) text.c_str());
 		DestroyIcon(hIcon);
 	}
 	if (IsHidden())
@@ -597,7 +673,8 @@ void CMeter::UpdateToolTip()
 
 	SendMessage(hwndTT, TTM_GETTOOLINFO, NULL, (LPARAM) (LPTOOLINFO) &ti);
 
-	ti.lpszText = (PTSTR) m_ToolTipText.c_str();
+	std::wstring text = ReplaceMeasures(m_ToolTipText);
+	ti.lpszText = (PTSTR) text.c_str();
 	ti.rect = GetMeterRect();
 
 	SendMessage(hwndTT, TTM_SETTOOLINFO, NULL, (LPARAM) (LPTOOLINFO) &ti); 
@@ -632,8 +709,8 @@ void CMeter::UpdateToolTip()
 				hIcon = (HICON) LoadImage(NULL, m_ToolTipIcon.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
 			}
 		}
-
-		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) m_ToolTipTitle.c_str());
+		text = ReplaceMeasures(m_ToolTipTitle);
+		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) text.c_str());
 		DestroyIcon(hIcon);
 	}
 }

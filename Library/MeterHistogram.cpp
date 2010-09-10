@@ -569,6 +569,7 @@ void CMeterHistogram::BindMeasure(std::list<CMeasure*>& measures)
 			if(_wcsicmp((*i)->GetName(), m_SecondaryMeasureName.c_str()) == 0)
 			{
 				m_SecondaryMeasure = (*i);
+				CMeter::SetAllMeasures(m_SecondaryMeasure);
 				return;
 			}
 		}

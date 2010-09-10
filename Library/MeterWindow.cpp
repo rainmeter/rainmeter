@@ -1985,11 +1985,6 @@ bool CMeterWindow::ReadSkin()
 						}
 
 						meter->ReadConfig(strSection.c_str());
-
-						if (!meter->GetToolTipText().empty())
-						{
-							meter->CreateToolTip(this);
-						}
 					}
 				}
 				catch (CError& error)
@@ -2021,13 +2016,18 @@ bool CMeterWindow::ReadSkin()
 	}
 	else
 	{
-		// Bind the meters to the measures
+		// Bind the meters to the measures and create tooltips
 		std::list<CMeter*>::const_iterator j = m_Meters.begin();
 		for( ; j != m_Meters.end(); ++j)
 		{
 			try
 			{
 				(*j)->BindMeasure(m_Measures);
+
+				if (!(*j)->GetToolTipText().empty())
+				{
+					(*j)->CreateToolTip(this);
+				}
 			}
 			catch (CError& error)
 			{

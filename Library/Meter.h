@@ -64,6 +64,11 @@ public:
 	std::wstring& GetMouseOverAction() { return m_MouseOverAction; };
 	std::wstring& GetMouseLeaveAction() { return m_MouseLeaveAction; };
 
+	void SetAllMeasures(CMeasure* measure);
+	void SetAllMeasures(std::vector<CMeasure*> measures);
+
+	std::wstring CMeter::ReplaceMeasures(std::wstring source);
+
 	std::wstring& GetToolTipText() { return m_ToolTipText; };
 	HWND GetToolTipHandle() { return m_ToolTipHandle; };
 	void SetToolTipHandle(HWND handle) { m_ToolTipHandle = handle; };
@@ -113,6 +118,7 @@ protected:
 	std::wstring m_Name;			// Name of the meter
 	std::wstring m_MeasureName;	// Name of the measure this is bound to
 	CMeasure* m_Measure;		// Pointer to the measure this meter is bound to
+	std::vector<CMeasure*> m_AllMeasures;
 	int	m_X;					// X-position of the meter
 	int	m_Y;					// Y-position of the meter
 	int	m_W;					// Width of the meter
