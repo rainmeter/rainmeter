@@ -18,6 +18,7 @@
 
 #include "StdAfx.h"
 #include "Rainmeter.h"
+#include "System.h"
 #include "MeterWindow.h"
 #include "Measure.h"
 #include "resource.h"
@@ -360,12 +361,8 @@ void ScanPlugins()
 
 		// Try to get the version and author
 		std::wstring tmpSz = Rainmeter->GetPluginPath() + fileData.cFileName;
-		UINT oldMode = SetErrorMode(0);
-		SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
-		SetLastError(ERROR_SUCCESS);
-		HMODULE dll = LoadLibrary(tmpSz.c_str());
-		DWORD err = GetLastError();
-		SetErrorMode(oldMode);  // Reset
+		DWORD err = 0;
+		HMODULE dll = CSystem::RmLoadLibrary(tmpSz.c_str(), &err, true);
 		if (dll)
 		{
 			GETPLUGINAUTHOR GetAuthorFunc = (GETPLUGINAUTHOR)GetProcAddress(dll, "GetPluginAuthor");

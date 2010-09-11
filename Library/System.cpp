@@ -51,6 +51,10 @@ HWINEVENTHOOK CSystem::c_WinEventHook = NULL;
 bool CSystem::c_DwmCompositionEnabled = false;
 bool CSystem::c_ShowDesktop = false;
 
+OSPLATFORM CSystem::c_Platform = OSPLATFORM_UNKNOWN;
+
+FPSETDLLDIRECTORYW CSystem::c_SetDllDirectoryW = NULL;
+
 extern CRainmeter* Rainmeter;
 
 /*
@@ -975,6 +979,150 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 }
 
 /*
+** GetOSPlatform
+**
+** Checks which OS you are running.
+**
+*/
+OSPLATFORM CSystem::GetOSPlatform()
+{
+	if (c_Platform == OSPLATFORM_UNKNOWN)
+	{
+		OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
+		if (!GetVersionEx((OSVERSIONINFO*)&osvi) || osvi.dwPlatformId != VER_PLATFORM_WIN32_NT)
+		{
+			c_Platform = OSPLATFORM_9X;
+		}
+		else
+		{
+			if (osvi.dwMajorVersion <= 4)  // NT4 or older
+			{
+				c_Platform = OSPLATFORM_NT4;
+			}
+			else if (osvi.dwMajorVersion == 5)  // 2000 / XP (x64 / Server 2003, R2)
+			{
+				if (osvi.dwMinorVersion == 0)
+				{
+					c_Platform = OSPLATFORM_2K;
+				}
+				else if (osvi.dwMinorVersion == 1 && osvi.wServicePackMajor == 0)
+				{
+					c_Platform = OSPLATFORM_XP;
+				}
+				else
+				{
+					c_Platform = OSPLATFORM_XP_SP1;
+				}
+			}
+			else if (osvi.dwMajorVersion == 6)  // Vista (Server 2008) / 7 (Server 2008R2)
+			{
+				if (osvi.dwMinorVersion == 0)
+				{
+					c_Platform = OSPLATFORM_VISTA;
+				}
+				else
+				{
+					c_Platform = OSPLATFORM_7;
+				}
+			}
+			else  // newer OS
+			{
+				c_Platform = OSPLATFORM_7;
+			}
+		}
+	}
+
+	return c_Platform;
+}
+
+/*
+** RmSetDllDirectory
+**
+** This function is a wrapper function for SetDllDirectory() that is enabled on Windows XP sp1 or newer.
+**
+** Adds a directory to the search path used to locate DLLs for the application.
+**
+** If lpPathName is an empty string (""), the call removes the current directory from the default DLL search order.
+** If lpPathName is NULL, the function restores the default search order.
+**
+*/
+BOOL CSystem::RmSetDllDirectory(LPCWSTR lpPathName)
+{
+	if (GetOSPlatform() >= OSPLATFORM_XP_SP1)
+	{
+		if (!c_SetDllDirectoryW)
+		{
+			c_SetDllDirectoryW = (FPSETDLLDIRECTORYW)GetProcAddress(GetModuleHandle(L"Kernel32.dll"), "SetDllDirectoryW");
+		}
+
+		if (c_SetDllDirectoryW)
+		{
+			return c_SetDllDirectoryW(lpPathName);
+		}
+	}
+
+	return FALSE;
+}
+
+/*
+** RmLoadLibrary
+**
+** This function is a wrapper function for LoadLibrary().
+**
+** Avoids loading a DLL from current directory.
+**
+*/
+HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError, bool ignoreErrors)
+{
+	OSPLATFORM platform = GetOSPlatform();
+	WCHAR buffer[MAX_PATH];
+
+	HMODULE hLib = NULL;
+	DWORD err;
+	UINT oldMode;
+
+	if (ignoreErrors)
+	{
+		oldMode = SetErrorMode(0);
+		SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
+	}
+
+	if (platform < OSPLATFORM_XP_SP1)
+	{
+		// Replace current directory to application directory
+		GetCurrentDirectory(MAX_PATH, buffer);
+		SetCurrentDirectory(Rainmeter->GetPath().c_str());
+	}
+	else
+	{
+		// Remove current directory from DLL search path
+		RmSetDllDirectory(L"");
+	}
+
+	SetLastError(ERROR_SUCCESS);
+	hLib = LoadLibrary(lpLibFileName);
+	err = GetLastError();
+
+	if (platform < OSPLATFORM_XP_SP1)
+	{
+		// Reset to old current directory
+		SetCurrentDirectory(buffer);
+	}
+
+	if (ignoreErrors)
+	{
+		SetErrorMode(oldMode);  // Reset
+	}
+
+	if (dwError)
+	{
+		*dwError = err;
+	}
+
+	return hLib;
+}
+
+/*
 ** DwmIsCompositionEnabled
 **
 ** Returns TRUE if the DWM desktop composition is enabled.
@@ -985,18 +1133,22 @@ BOOL CSystem::DwmIsCompositionEnabled()
 	BOOL fEnabled = FALSE;
 
 	typedef HRESULT (WINAPI * FPDWMISCOMPOSITIONENABLED)(BOOL* pfEnabled);
-	HINSTANCE h = LoadLibrary(L"dwmapi.dll");
-	if (h)
+
+	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
-		FPDWMISCOMPOSITIONENABLED DwmIsCompositionEnabled = (FPDWMISCOMPOSITIONENABLED)GetProcAddress(h, "DwmIsCompositionEnabled");
-		if (DwmIsCompositionEnabled)
+		HINSTANCE h = RmLoadLibrary(L"dwmapi.dll");
+		if (h)
 		{
-			if (DwmIsCompositionEnabled(&fEnabled) != S_OK)
+			FPDWMISCOMPOSITIONENABLED DwmIsCompositionEnabled = (FPDWMISCOMPOSITIONENABLED)GetProcAddress(h, "DwmIsCompositionEnabled");
+			if (DwmIsCompositionEnabled)
 			{
-				fEnabled = FALSE;
+				if (DwmIsCompositionEnabled(&fEnabled) != S_OK)
+				{
+					fEnabled = FALSE;
+				}
 			}
+			FreeLibrary(h);
 		}
-		FreeLibrary(h);
 	}
 	return fEnabled;
 }

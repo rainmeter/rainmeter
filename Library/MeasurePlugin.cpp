@@ -19,6 +19,7 @@
 #include "StdAfx.h"
 #include "MeasurePlugin.h"
 #include "Rainmeter.h"
+#include "System.h"
 #include "Error.h"
 
 extern CRainmeter* Rainmeter;
@@ -71,7 +72,7 @@ bool CMeasurePlugin::Update()
 	WCHAR buffer[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, buffer);
 
-	SetCurrentDirectory(m_MeterWindow->MakePathAbsolute(L"").c_str());
+	SetCurrentDirectory((Rainmeter->GetSkinPath() + m_MeterWindow->GetSkinName()).c_str());
 
 	if(UpdateFunc)
 	{
@@ -120,14 +121,13 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	m_PluginName = Rainmeter->GetPluginPath() + m_PluginName;
 
-	SetLastError(ERROR_SUCCESS);
-	m_Plugin = LoadLibrary(m_PluginName.c_str());
+	DWORD err = 0;
+	m_Plugin = CSystem::RmLoadLibrary(m_PluginName.c_str(), &err);
 	
 	if(m_Plugin == NULL)
 	{
 		if (CRainmeter::GetDebug())
 		{
-			DWORD err = GetLastError();
 			DebugLog(L"Plugin: Unable to load plugin: \"%s\", ErrorCode=%i", m_PluginName.c_str(), err);
 		}
 
@@ -137,14 +137,13 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		{
 			std::wstring pluginName = Rainmeter->GetPath() + m_PluginName.substr(pos + 1);
 
-			SetLastError(ERROR_SUCCESS);
-			m_Plugin = LoadLibrary(pluginName.c_str());
+			err = 0;
+			m_Plugin = CSystem::RmLoadLibrary(pluginName.c_str(), &err);
 
 			if (m_Plugin == NULL)
 			{
 				if (CRainmeter::GetDebug())
 				{
-					DWORD err = GetLastError();
 					DebugLog(L"Plugin: Unable to load plugin: \"%s\", ErrorCode=%i", pluginName.c_str(), err);
 				}
 			}
@@ -176,7 +175,10 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		WCHAR buffer[MAX_PATH];
 		GetCurrentDirectory(MAX_PATH, buffer);
 
-		SetCurrentDirectory(m_MeterWindow->MakePathAbsolute(L"").c_str());
+		SetCurrentDirectory((Rainmeter->GetSkinPath() + m_MeterWindow->GetSkinName()).c_str());
+
+		// Remove current directory from DLL search path
+		CSystem::RmSetDllDirectory(L"");
 
 		double maxValue;
 		maxValue = InitializeFunc(m_Plugin, parser.GetFilename().c_str(), section, m_ID);

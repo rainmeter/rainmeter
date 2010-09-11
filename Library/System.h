@@ -24,6 +24,20 @@
 #include <windows.h>
 #include <vector>
 
+typedef BOOL (WINAPI *FPSETDLLDIRECTORYW)(LPCWSTR lpPathName);
+
+enum OSPLATFORM
+{
+	OSPLATFORM_UNKNOWN = 0,
+	OSPLATFORM_9X,
+	OSPLATFORM_NT4,
+	OSPLATFORM_2K,
+	OSPLATFORM_XP,
+	OSPLATFORM_XP_SP1,
+	OSPLATFORM_VISTA,
+	OSPLATFORM_7
+};
+
 struct MONITOR_INFO
 {
 	bool active;
@@ -64,6 +78,12 @@ public:
 	static HWND GetHelperWindow() { return c_HelperWindow; }
 	static void PrepareHelperWindow(HWND WorkerW);
 
+	static bool IsNT() { return (GetOSPlatform() >= OSPLATFORM_NT4); }
+	static OSPLATFORM GetOSPlatform();
+
+	static BOOL RmSetDllDirectory(LPCWSTR lpPathName);
+	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = NULL, bool ignoreErrors = false);
+
 	static bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove = false);
 	static bool RemoveFile(const std::wstring& file);
 
@@ -94,6 +114,10 @@ private:
 
 	static bool c_DwmCompositionEnabled;
 	static bool c_ShowDesktop;
+
+	static OSPLATFORM c_Platform;
+
+	static FPSETDLLDIRECTORYW c_SetDllDirectoryW;
 };
 
 #endif

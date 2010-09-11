@@ -130,7 +130,7 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 	m_SkinName = config;
 	m_SkinIniFile = iniFile;
 
-	m_User32Library = LoadLibrary(L"user32.dll");
+	m_User32Library = GetModuleHandle(L"user32.dll");
 
 	m_UpdateCounter = 0;
 	m_FontCollection = NULL;
@@ -174,8 +174,6 @@ CMeterWindow::~CMeterWindow()
 	if(m_Window) DestroyWindow(m_Window);
 
 	if(m_FontCollection) delete m_FontCollection;
-
-	FreeLibrary(m_User32Library);
 
 	--c_InstanceCount;
 
@@ -281,16 +279,20 @@ void CMeterWindow::IgnoreAeroPeek()
 {
 	typedef HRESULT (WINAPI * FPDWMSETWINDOWATTRIBUTE)(HWND hwnd, DWORD dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
 	#define DWMWA_EXCLUDED_FROM_PEEK 12
-	HINSTANCE h = LoadLibrary(L"dwmapi.dll");
-	if (h)
+
+	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
-		FPDWMSETWINDOWATTRIBUTE DwmSetWindowAttribute = (FPDWMSETWINDOWATTRIBUTE)GetProcAddress(h, "DwmSetWindowAttribute");
-		if (DwmSetWindowAttribute)
+		HINSTANCE h = CSystem::RmLoadLibrary(L"dwmapi.dll");
+		if (h)
 		{
-			BOOL bValue = TRUE;
-			DwmSetWindowAttribute(m_Window, DWMWA_EXCLUDED_FROM_PEEK, &bValue, sizeof(bValue));
+			FPDWMSETWINDOWATTRIBUTE DwmSetWindowAttribute = (FPDWMSETWINDOWATTRIBUTE)GetProcAddress(h, "DwmSetWindowAttribute");
+			if (DwmSetWindowAttribute)
+			{
+				BOOL bValue = TRUE;
+				DwmSetWindowAttribute(m_Window, DWMWA_EXCLUDED_FROM_PEEK, &bValue, sizeof(bValue));
+			}
+			FreeLibrary(h);
 		}
-		FreeLibrary(h);
 	}
 }
 
@@ -1662,8 +1664,8 @@ void CMeterWindow::ReadConfig()
 		section = m_SkinName.c_str();
 	}
 
-	// Disable native transparency if not 2K/XP
-	if(CRainmeter::IsNT() == PLATFORM_9X || CRainmeter::IsNT() == PLATFORM_NT4)
+	// Disable native transparency if older OS
+	if (CSystem::GetOSPlatform() < OSPLATFORM_2K)
 	{
 		m_NativeTransparency = 0;
 	}
@@ -4558,7 +4560,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 /*
 ** MakePathAbsolute
 **
-** Converts the path to absolute bu adding the skin's path to it (unless it already is absolute).
+** Converts the path to absolute by adding the skin's path to it (unless it already is absolute).
 **
 */
 std::wstring CMeterWindow::MakePathAbsolute(std::wstring path)

@@ -1300,11 +1300,12 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		tmpName[0] = L'\0';
 	}
 
+	m_Path = tmpName;
+
 	if(!c_DummyLitestep) InitalizeLitestep();
 
 	bool bDefaultIniLocation = false;
 
-	m_Path = tmpName;
 	if (c_CmdLine.empty())
 	{
 		m_IniFile = m_Path + L"Rainmeter.ini";
@@ -3185,38 +3186,6 @@ void CRainmeter::ResetStats()
 	
 	// Only Net measure has stats at the moment
 	CMeasureNet::ResetStats();
-}
-
-
-/*
-** IsNT
-**
-** Checks which OS you are running
-**
-*/
-PLATFORM CRainmeter::IsNT()
-{
-	// Check if you are running a real OS
-
-	OSVERSIONINFO osvi;
-	ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
-	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-
-	if(!GetVersionEx((OSVERSIONINFO*)&osvi))
-	{
-		// Something's wrong, lets assime Win9x
-		return PLATFORM_9X;
-	}
-
-	if(osvi.dwPlatformId == VER_PLATFORM_WIN32_NT)
-	{
-		// You got NT
-		if(osvi.dwMajorVersion <= 4) return PLATFORM_NT4;
-		if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 0) return PLATFORM_2K;
-		return PLATFORM_XP;
-	}
-	
-	return PLATFORM_9X;	// Wintendo alert!
 }
 
 /*

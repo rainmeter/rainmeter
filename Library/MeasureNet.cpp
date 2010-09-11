@@ -19,6 +19,7 @@
 #include "StdAfx.h"
 #include "MeasureNet.h"
 #include "Rainmeter.h"
+#include "System.h"
 
 BYTE* CMeasureNet::c_Table = NULL;
 UINT CMeasureNet::c_NumOfTables = 0;
@@ -662,7 +663,7 @@ void CMeasureNet::InitializeNewApi()
 {
 	if (c_IpHlpApiLibrary == NULL)
 	{
-		c_IpHlpApiLibrary = LoadLibrary(L"IpHlpApi.dll");
+		c_IpHlpApiLibrary = GetModuleHandle(L"IpHlpApi.dll");
 		if (c_IpHlpApiLibrary)
 		{
 			c_GetIfTable2Ex = (FPGETIFTABLE2EX)GetProcAddress(c_IpHlpApiLibrary, "GetIfTable2Ex");
@@ -675,7 +676,6 @@ void CMeasureNet::InitializeNewApi()
 		{
 			if (c_IpHlpApiLibrary)
 			{
-				FreeLibrary(c_IpHlpApiLibrary);
 				c_IpHlpApiLibrary = NULL;
 			}
 			c_GetIfTable2Ex = NULL;
@@ -701,7 +701,6 @@ void CMeasureNet::FinalizeNewApi()
 	{
 		c_FreeMibTable(c_Table);
 
-		FreeLibrary(c_IpHlpApiLibrary);
 		c_IpHlpApiLibrary = NULL;
 		c_GetIfTable2Ex = NULL;
 		c_FreeMibTable = NULL;

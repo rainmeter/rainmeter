@@ -20,6 +20,7 @@
 #include "Litestep.h"
 #include "Error.h"
 #include "Rainmeter.h"
+#include "System.h"
 #include <shellapi.h>
 #include <crtdbg.h>
 #include <stdio.h>
@@ -67,7 +68,7 @@ void ResetLoggingFlag()
 void InitalizeLitestep()
 {
 	// Use lsapi's methods instead of the stubs
-	HINSTANCE h = LoadLibrary(L"lsapi.dll");
+	HINSTANCE h = CSystem::RmLoadLibrary(L"lsapi.dll");
 	if (h != NULL)
 	{
 		fpAddBangCommand = (FPADDBANGCOMMAND)GetProcAddress(h, "AddBangCommand");

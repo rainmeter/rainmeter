@@ -19,6 +19,7 @@
 #include "StdAfx.h"
 #include "MeasureCPU.h"
 #include "Rainmeter.h"
+#include "System.h"
 #include "Error.h"
 
 #define STATUS_SUCCESS					0
@@ -148,7 +149,7 @@ bool CMeasureCPU::Update()
 {
 	if (!CMeasure::PreUpdate()) return false;
 
-	if (CRainmeter::IsNT() != PLATFORM_9X)
+	if (CSystem::IsNT())
 	{
 		if (m_Processor == 0 && m_GetSystemTimes)
 		{

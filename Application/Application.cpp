@@ -43,6 +43,7 @@ BOOL InitApplication(HINSTANCE hInstance, const WCHAR* WinClass);
 HWND InitInstance(HINSTANCE hInstance, const WCHAR* WinClass, const WCHAR* WinName);
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 void Bang(const WCHAR* command);
+HMODULE RmLoadSystemLibrary(LPCWSTR lpLibFileName);
 BOOL IsRunning(HANDLE* hMutex);
 
 /*
@@ -71,6 +72,14 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 //	_CrtSetBreakAlloc(5055);
+
+	// Avoid loading a dll from current directory
+	typedef BOOL (WINAPI *FPSETDLLDIRECTORYW)(LPCWSTR lpPathName);
+	FPSETDLLDIRECTORYW SetDllDirectoryW = (FPSETDLLDIRECTORYW)GetProcAddress(GetModuleHandle(L"Kernel32.dll"), "SetDllDirectoryW");
+	if (SetDllDirectoryW)
+	{
+		SetDllDirectoryW(L"");
+	}
 
 	if (lpCmdLine && lpCmdLine[0] == L'!')
 	{
@@ -219,6 +228,29 @@ void Bang(const WCHAR* command)
 }
 
 /* 
+** RmLoadSystemLibrary
+**
+** Loads a system dll from system32 directory.
+**
+*/
+HMODULE RmLoadSystemLibrary(LPCWSTR lpLibFileName)
+{
+	WCHAR buffer[MAX_PATH];
+	std::wstring path;
+
+	if (GetSystemDirectory(buffer, MAX_PATH))
+	{
+		path = buffer;
+		path += L"\\";
+		path += lpLibFileName;
+
+		return LoadLibrary(path.c_str());
+	}
+
+	return NULL;
+}
+
+/* 
 ** IsRunning
 **
 ** Checks whether Rainmeter.exe is running.
@@ -239,7 +271,7 @@ BOOL IsRunning(HANDLE* hMutex)
 	typedef void (WINAPI *FPMD5FINAL)(MD5_CTX *context);
 
 	// Create MD5 digest from command line
-	HMODULE hCryptDll = LoadLibrary(L"cryptdll.dll");
+	HMODULE hCryptDll = RmLoadSystemLibrary(L"cryptdll.dll");
 	if (!hCryptDll)  // Unable to check the mutex
 	{
 		*hMutex = NULL;

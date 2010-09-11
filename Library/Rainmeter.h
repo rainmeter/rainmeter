@@ -40,14 +40,6 @@
 #endif
 #define RAINMETER_VERSION MAKE_VER(1, 3, 0)
 
-enum PLATFORM
-{
-	PLATFORM_9X,
-	PLATFORM_NT4,
-	PLATFORM_2K,
-	PLATFORM_XP
-};
-
 void RainmeterRefresh(HWND, const char* arg);
 void RainmeterRefreshApp(HWND, const char* arg);
 void RainmeterRedraw(HWND, const char* arg);
@@ -226,7 +218,6 @@ public:
 	void ClearDeleteLaterList();
 
 	static std::vector<std::wstring> ParseString(LPCTSTR str);
-	static PLATFORM IsNT();
 	static std::wstring ExtractPath(const std::wstring& strFilePath);
 	static void ExpandEnvironmentVariables(std::wstring& strPath);
 
