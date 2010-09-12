@@ -713,6 +713,7 @@ void CMeter::UpdateToolTip()
 		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) text.c_str());
 		DestroyIcon(hIcon);
 	}
+	SendMessage(hwndTT, TTM_ACTIVATE, !IsHidden(), NULL);
 }
 
 /*
