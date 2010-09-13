@@ -506,8 +506,7 @@ double CMeasure::GetValueRange()
 const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals, bool percentual)
 {
 	static WCHAR buffer[MAX_LINE_LENGTH];
-	static WCHAR buffer2[MAX_LINE_LENGTH];
-	double theValue = GetValue();
+	WCHAR format[32];
 
 	if(percentual)
 	{
@@ -515,20 +514,20 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 	} 
 	else if(autoScale)
 	{
-		GetScaledValue(decimals, theValue, buffer);
+		GetScaledValue(decimals, GetValue(), buffer);
 	}
 	else 
 	{
 		if(decimals == 0)
 		{
-			double val = theValue * (1.0 / scale);
-		    val = (val + ( (val >= 0) ? 0.5 : -0.5 ) );
+			double val = GetValue() * (1.0 / scale);
+			val += (val >= 0) ? 0.5 : -0.5;
 			swprintf(buffer, L"%lli", (LONGLONG)val);
 		}
 		else
 		{
-			swprintf(buffer2, L"%%.%if", decimals);
-			swprintf(buffer, buffer2, theValue * (1.0 / scale));
+			swprintf(format, L"%%.%if", decimals);
+			swprintf(buffer, format, GetValue() * (1.0 / scale));
 		}
 	}
 
@@ -537,7 +536,7 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 
 void CMeasure::GetScaledValue(int decimals, double theValue, WCHAR* buffer)
 {
-	WCHAR format[16];
+	WCHAR format[32];
 	double value = 0;
 
 	if(decimals == 0)

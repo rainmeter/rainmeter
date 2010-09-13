@@ -520,7 +520,7 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 	{
 		startTime = time;
 	}
-	WCHAR buffer[MAX_PATH];
+	WCHAR buffer[128];
 	swprintf(buffer, L"(%02i:%02i:%02i.%03i) ", (time - startTime) / (1000 * 60* 60), ((time - startTime) / (1000 * 60)) % 60, ((time - startTime) / 1000) % 60, (time - startTime) % 1000);
 
 	std::wstring message(buffer);

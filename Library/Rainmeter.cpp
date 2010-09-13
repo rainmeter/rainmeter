@@ -1643,8 +1643,8 @@ void CRainmeter::CheckSkinVersions()
 			// DebugLog(L"New: %s", strVersionNew.c_str());
 
 			// Compare with the version entry in the Rainmeter.ini
-			WCHAR tmpSz[MAX_LINE_LENGTH] = {0};
-			GetPrivateProfileString(menu[i].name.c_str(), L"Version", L"", tmpSz, MAX_LINE_LENGTH, m_IniFile.c_str());
+			WCHAR tmpSz[256] = {0};
+			GetPrivateProfileString(menu[i].name.c_str(), L"Version", L"", tmpSz, 256, m_IniFile.c_str());
 			strVersionInIni = tmpSz;
 
 			// DebugLog(L"In Ini: %s", strVersionInIni.c_str());
@@ -2827,7 +2827,7 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 
 	for (UINT i = 1; i <= CSystem::GetMonitorCount(); ++i)
 	{
-		WCHAR buffer[256];
+		WCHAR buffer[64];
 		wsprintf(buffer, L"DesktopWorkArea@%i", i);
 		area = parser.ReadString(L"Rainmeter", buffer, L"");
 		if (!area.empty())
@@ -3103,7 +3103,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 					std::wstring format = L"Applying DesktopWorkArea";
 					if (i != 0)
 					{
-						WCHAR buffer[256];
+						WCHAR buffer[64];
 						wsprintf(buffer, L"@%i", i);
 						format += buffer;
 					}
@@ -3604,7 +3604,7 @@ void CRainmeter::CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow)
 
 		for (size_t i = 0; i < monitors.size(); ++i)
 		{
-			WCHAR buffer[256];
+			WCHAR buffer[64];
 			wsprintf(buffer, L"@%i: ", i + 1);
 			std::wstring item = buffer;
 

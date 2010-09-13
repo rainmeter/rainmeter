@@ -541,7 +541,7 @@ std::wstring CMeter::ReplaceMeasures(std::wstring source)
 		return source;
 	}
 
-	WCHAR buffer[256];
+	WCHAR buffer[64];
 	// Create the actual text (i.e. replace %1, %2, .. with the measure texts)
 
 	for (size_t i = 0; i < stringValues.size(); ++i)

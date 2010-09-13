@@ -697,7 +697,7 @@ std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR ke
 
 int CConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 {
-	TCHAR buffer[256];
+	TCHAR buffer[32];
 	swprintf(buffer, L"%i", defValue);
 
 	const std::wstring& result = ReadString(section, key, buffer);
@@ -752,7 +752,7 @@ int CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
 
 Color CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, const Color& defValue)
 {
-	TCHAR buffer[256];
+	TCHAR buffer[128];
 	swprintf(buffer, L"%i, %i, %i, %i", defValue.GetR(), defValue.GetG(), defValue.GetB(), defValue.GetA());
 
 	const std::wstring& result = ReadString(section, key, buffer);

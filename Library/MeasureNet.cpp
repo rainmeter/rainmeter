@@ -586,7 +586,7 @@ void CMeasureNet::ResetStats()
 */
 void CMeasureNet::ReadStats(const std::wstring& iniFile)
 {
-	WCHAR buffer[256];
+	WCHAR buffer[64];
 	int count = GetPrivateProfileInt(L"Statistics", L"NetStatsCount", 0, iniFile.c_str());
 
 	c_StatValues.clear();
@@ -621,8 +621,8 @@ void CMeasureNet::ReadStats(const std::wstring& iniFile)
 */
 void CMeasureNet::WriteStats(const std::wstring& iniFile)
 {
-	WCHAR buffer[256];
-	WCHAR buffer2[256];
+	WCHAR buffer[32];
+	WCHAR buffer2[64];
 	
 	wsprintf(buffer, L"%i", c_StatValues.size() / 2);
 	WritePrivateProfileString(L"Statistics", L"NetStatsCount", buffer, iniFile.c_str());

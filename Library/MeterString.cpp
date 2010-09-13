@@ -215,7 +215,7 @@ void CMeterString::Initialize()
 */
 void CMeterString::ReadConfig(const WCHAR* section)
 {
-	WCHAR tmpName[256];
+	WCHAR tmpName[64];
 
 	// Store the current font values so we know if the font needs to be updated
 	std::wstring oldFontFace = m_FontFace;
@@ -418,7 +418,7 @@ bool CMeterString::Update()
 		}
 		else
 		{
-			WCHAR buffer[256];
+			WCHAR buffer[64];
 			// Create the actual text (i.e. replace %1, %2, .. with the measure texts)
 			std::wstring tmpText = m_Text;
 

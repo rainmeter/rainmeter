@@ -309,7 +309,7 @@ void UpdateWidgets()
 
 			if ((*iter).version != 0)
 			{
-				WCHAR buffer[256];
+				WCHAR buffer[64];
 				swprintf(buffer, L"%i.%i", (*iter).version / 1000, (*iter).version % 1000);
 				ListView_SetItemText(widget, i, 1, buffer);
 			}

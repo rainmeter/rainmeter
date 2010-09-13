@@ -1606,14 +1606,14 @@ void CMeterWindow::ReadConfig()
 		if (!m_WindowX.empty() && m_WindowX[0] == L'(' && m_WindowX[m_WindowX.size() - 1] == L')')
 		{
 			double value = parser.ReadFormula(section, L"WindowX", 0.0);
-			WCHAR buffer[256];
+			WCHAR buffer[32];
 			swprintf(buffer, L"%i", (int)value);
 			m_WindowX = buffer;
 		}
 		if (!m_WindowY.empty() && m_WindowY[0] == L'(' && m_WindowY[m_WindowY.size() - 1] == L')')
 		{
 			double value = parser.ReadFormula(section, L"WindowY", 0.0);
-			WCHAR buffer[256];
+			WCHAR buffer[32];
 			swprintf(buffer, L"%i", (int)value);
 			m_WindowY = buffer;
 		}
@@ -1682,7 +1682,7 @@ void CMeterWindow::ReadConfig()
 */
 void CMeterWindow::WriteConfig()
 {
-	WCHAR buffer[256];
+	WCHAR buffer[32];
 	std::wstring iniFile = m_Rainmeter->GetIniFile();
 	const WCHAR* section = m_SkinName.c_str();
 
@@ -1757,7 +1757,7 @@ bool CMeterWindow::ReadSkin()
 	int appVersion = m_Parser.ReadInt(L"Rainmeter", L"AppVersion", 0);
 	if (appVersion > RAINMETER_VERSION)
 	{
-		WCHAR buffer[256];
+		WCHAR buffer[128];
 		std::wstring text;
 		if (appVersion % 1000 != 0)
 		{
@@ -1864,7 +1864,7 @@ bool CMeterWindow::ReadSkin()
 		}
 		// Here we are checking to see if there are more than one local font
 		// to be loaded. They will be named LocalFont2, LocalFont 3, etc.
-		WCHAR tmpName[256];
+		WCHAR tmpName[64];
 		int i = 2;
 		bool loop = true;
 		do 
