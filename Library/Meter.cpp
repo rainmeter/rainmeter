@@ -62,6 +62,8 @@ CMeter::CMeter(CMeterWindow* meterWindow)
 	m_HasMouseAction = false;
 	m_MouseActionCursor = true;
 
+	m_ToolTipHandle = NULL;
+
 	m_MeterWindow = meterWindow;
 }
 
