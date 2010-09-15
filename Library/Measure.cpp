@@ -500,7 +500,7 @@ double CMeasure::GetValueRange()
 ** 
 ** autoScale  If true, scale the value automatically to some sensible range.
 ** scale      The scale to use if autoScale is false.
-** decimals   Number of decimals used in the value.
+** decimals   Number of decimals used in the value. If -1, get rid of ".00000" for dynamic variables.
 ** percentual Return the value as % from the maximum value.
 */
 const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals, bool percentual)
@@ -523,6 +523,16 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 			double val = GetValue() * (1.0 / scale);
 			val += (val >= 0) ? 0.5 : -0.5;
 			swprintf(buffer, L"%lli", (LONGLONG)val);
+		}
+		else if (decimals == -1)
+		{
+			swprintf(buffer, L"%.5f", GetValue() * (1.0 / scale));
+
+			size_t len = wcslen(buffer);
+			if (len >= 6 && wcscmp(buffer + len - 6, L".00000") == 0)
+			{
+				buffer[len - 6] = L'\0';
+			}
 		}
 		else
 		{
