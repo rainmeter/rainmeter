@@ -510,7 +510,17 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 
 	if(percentual)
 	{
-		swprintf(buffer, L"%i", (UINT)(100.0 * GetRelativeValue()));
+		double val = 100.0 * GetRelativeValue();
+
+		if (decimals == 0)
+		{
+			swprintf(buffer, L"%i", (UINT)val);
+		} 
+		else
+		{
+			swprintf(format, L"%%.%if", decimals);
+			swprintf(buffer, format, val);
+		}
 	} 
 	else if(autoScale)
 	{
@@ -518,15 +528,16 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 	}
 	else 
 	{
+		double val = GetValue() * (1.0 / scale);
+
 		if(decimals == 0)
 		{
-			double val = GetValue() * (1.0 / scale);
 			val += (val >= 0) ? 0.5 : -0.5;
 			swprintf(buffer, L"%lli", (LONGLONG)val);
 		}
 		else if (decimals == -1)
 		{
-			swprintf(buffer, L"%.5f", GetValue() * (1.0 / scale));
+			swprintf(buffer, L"%.5f", val);
 
 			size_t len = wcslen(buffer);
 			if (len >= 6 && wcscmp(buffer + len - 6, L".00000") == 0)
@@ -537,7 +548,7 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 		else
 		{
 			swprintf(format, L"%%.%if", decimals);
-			swprintf(buffer, format, GetValue() * (1.0 / scale));
+			swprintf(buffer, format, val);
 		}
 	}
 

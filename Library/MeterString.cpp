@@ -272,7 +272,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	std::wstring scale;
 	scale = parser.ReadString(section, L"Scale", L"1");
 
-	if (wcschr(scale.c_str(), '.') == NULL)
+	if (scale.find(L'.') == std::wstring::npos)
 	{
 		m_NoDecimals = true;
 	}
@@ -396,8 +396,7 @@ bool CMeterString::Update()
 	{
 		std::vector<std::wstring> stringValues;
 
-		int decimals = (m_NoDecimals && !m_AutoScale) ? 0 : 1;
-		if (m_NumOfDecimals != -1) decimals = m_NumOfDecimals;
+		int decimals = (m_NumOfDecimals != -1) ? m_NumOfDecimals : (m_NoDecimals && (m_Percentual || !m_AutoScale)) ? 0 : 1;
 
 		if (m_Measure) stringValues.push_back(m_Measure->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
 
