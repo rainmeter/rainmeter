@@ -104,104 +104,104 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	LPCTSTR type = ReadConfigString(section, L"SysInfoType", L"");
 	if(type) 
 	{
-		if (wcsicmp(L"COMPUTER_NAME", type) == 0)
+		if (_wcsicmp(L"COMPUTER_NAME", type) == 0)
 		{
 			g_Types[id] = COMPUTER_NAME;
 		} 
-		else if (wcsicmp(L"USER_NAME", type) == 0)
+		else if (_wcsicmp(L"USER_NAME", type) == 0)
 		{
 			g_Types[id] = USER_NAME;
 		} 
-		else if (wcsicmp(L"WORK_AREA", type) == 0)
+		else if (_wcsicmp(L"WORK_AREA", type) == 0)
 		{
 			g_Types[id] = WORK_AREA;
 		} 
-		else if (wcsicmp(L"SCREEN_SIZE", type) == 0)
+		else if (_wcsicmp(L"SCREEN_SIZE", type) == 0)
 		{
 			g_Types[id] = SCREEN_SIZE;
 		} 
-		else if (wcsicmp(L"RAS_STATUS", type) == 0)
+		else if (_wcsicmp(L"RAS_STATUS", type) == 0)
 		{
 			g_Types[id] = RAS_STATUS;
 		} 
-		else if (wcsicmp(L"OS_VERSION", type) == 0)
+		else if (_wcsicmp(L"OS_VERSION", type) == 0)
 		{
 			g_Types[id] = OS_VERSION;
 		} 
-		else if (wcsicmp(L"OS_BITS", type) == 0)
+		else if (_wcsicmp(L"OS_BITS", type) == 0)
 		{
 			g_Types[id] = OS_BITS;
 		} 
-		else if (wcsicmp(L"ADAPTER_DESCRIPTION", type) == 0)
+		else if (_wcsicmp(L"ADAPTER_DESCRIPTION", type) == 0)
 		{
 			g_Types[id] = ADAPTER_DESCRIPTION;
 		} 
-		else if (wcsicmp(L"NET_MASK", type) == 0)
+		else if (_wcsicmp(L"NET_MASK", type) == 0)
 		{
 			g_Types[id] = NET_MASK;
 		} 
-		else if (wcsicmp(L"IP_ADDRESS", type) == 0)
+		else if (_wcsicmp(L"IP_ADDRESS", type) == 0)
 		{
 			g_Types[id] = IP_ADDRESS;
 		} 
-		else if (wcsicmp(L"GATEWAY_ADDRESS", type) == 0)
+		else if (_wcsicmp(L"GATEWAY_ADDRESS", type) == 0)
 		{
 			g_Types[id] = GATEWAY_ADDRESS;
 		} 
-		else if (wcsicmp(L"HOST_NAME", type) == 0)
+		else if (_wcsicmp(L"HOST_NAME", type) == 0)
 		{
 			g_Types[id] = HOST_NAME;
 		} 
-		else if (wcsicmp(L"DOMAIN_NAME", type) == 0)
+		else if (_wcsicmp(L"DOMAIN_NAME", type) == 0)
 		{
 			g_Types[id] = DOMAIN_NAME;
 		} 
-		else if (wcsicmp(L"DNS_SERVER", type) == 0)
+		else if (_wcsicmp(L"DNS_SERVER", type) == 0)
 		{
 			g_Types[id] = DNS_SERVER;
 		} 
 
-		else if (wcsicmp(L"WORK_AREA_TOP", type) == 0)
+		else if (_wcsicmp(L"WORK_AREA_TOP", type) == 0)
 		{
 			g_Types[id] = WORK_AREA_TOP;
 		} 
-		else if (wcsicmp(L"WORK_AREA_LEFT", type) == 0)
+		else if (_wcsicmp(L"WORK_AREA_LEFT", type) == 0)
 		{
 			g_Types[id] = WORK_AREA_LEFT;
 		} 
-		else if (wcsicmp(L"WORK_AREA_WIDTH", type) == 0)
+		else if (_wcsicmp(L"WORK_AREA_WIDTH", type) == 0)
 		{
 			g_Types[id] = WORK_AREA_WIDTH;
 		} 
-		else if (wcsicmp(L"WORK_AREA_HEIGHT", type) == 0)
+		else if (_wcsicmp(L"WORK_AREA_HEIGHT", type) == 0)
 		{
 			g_Types[id] = WORK_AREA_HEIGHT;
 		} 
-		else if (wcsicmp(L"SCREEN_WIDTH", type) == 0)
+		else if (_wcsicmp(L"SCREEN_WIDTH", type) == 0)
 		{
 			g_Types[id] = SCREEN_WIDTH;
 		} 
-		else if (wcsicmp(L"SCREEN_HEIGHT", type) == 0)
+		else if (_wcsicmp(L"SCREEN_HEIGHT", type) == 0)
 		{
 			g_Types[id] = SCREEN_HEIGHT;
 		} 
-		else if (wcsicmp(L"NUM_MONITORS", type) == 0)
+		else if (_wcsicmp(L"NUM_MONITORS", type) == 0)
 		{
 			g_Types[id] = NUM_MONITORS;
 		} 
-		else if (wcsicmp(L"VIRTUAL_SCREEN_TOP", type) == 0)
+		else if (_wcsicmp(L"VIRTUAL_SCREEN_TOP", type) == 0)
 		{
 			g_Types[id] = VIRTUAL_SCREEN_TOP;
 		} 
-		else if (wcsicmp(L"VIRTUAL_SCREEN_LEFT", type) == 0)
+		else if (_wcsicmp(L"VIRTUAL_SCREEN_LEFT", type) == 0)
 		{
 			g_Types[id] = VIRTUAL_SCREEN_LEFT;
 		} 
-		else if (wcsicmp(L"VIRTUAL_SCREEN_WIDTH", type) == 0)
+		else if (_wcsicmp(L"VIRTUAL_SCREEN_WIDTH", type) == 0)
 		{
 			g_Types[id] = VIRTUAL_SCREEN_WIDTH;
 		} 
-		else if (wcsicmp(L"VIRTUAL_SCREEN_HEIGHT", type) == 0)
+		else if (_wcsicmp(L"VIRTUAL_SCREEN_HEIGHT", type) == 0)
 		{
 			g_Types[id] = VIRTUAL_SCREEN_HEIGHT;
 		} 

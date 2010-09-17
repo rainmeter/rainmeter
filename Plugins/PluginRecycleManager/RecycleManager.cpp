@@ -90,11 +90,11 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	LPCTSTR type = ReadConfigString(section, L"RecycleType", L"COUNT");
 	if (type)
 	{
-		if (wcsicmp(L"COUNT", type) == 0)
+		if (_wcsicmp(L"COUNT", type) == 0)
 		{
 			dataType = NUMRECYCLE;
 		} 
-		else if (wcsicmp(L"SIZE", type) == 0)
+		else if (_wcsicmp(L"SIZE", type) == 0)
 		{
 			dataType = SIZERECYCLE;
 		} 
@@ -152,7 +152,7 @@ double Update2(UINT id)
 	SHQUERYRBINFO RecycleBinInfo = { 0 };  
 	RecycleBinInfo.cbSize = sizeof( RecycleBinInfo ); // Tell size of structure  
 	
-	if(wcsicmp(driveSet.c_str(), L"ALL") == 0)
+	if(_wcsicmp(driveSet.c_str(), L"ALL") == 0)
 	{
 		if(SHQueryRecycleBin( NULL, &RecycleBinInfo ) == S_OK)
 		{
@@ -224,9 +224,9 @@ void ExecuteBang(LPCTSTR args, UINT id)
     std::wstring bang     = args;
 	std::wstring driveSet = g_DriveList[id];
 
-    if (wcsicmp(bang.c_str(), L"EmptyBin") == 0)
+    if (_wcsicmp(bang.c_str(), L"EmptyBin") == 0)
     { //Empty the Recycle Bin
-		if(wcsicmp(driveSet.c_str(), L"ALL") == 0)
+		if(_wcsicmp(driveSet.c_str(), L"ALL") == 0)
 		{
 			if(SHEmptyRecycleBin( NULL, NULL, NULL ) == S_OK)
 			{
@@ -250,9 +250,9 @@ void ExecuteBang(LPCTSTR args, UINT id)
     }
     else
     {
-		if (wcsicmp(bang.c_str(), L"EmptyBinSilent") == 0)
+		if (_wcsicmp(bang.c_str(), L"EmptyBinSilent") == 0)
         { //Empty the Recycle Bin (no prompt)
-			if(wcsicmp(driveSet.c_str(), L"ALL") == 0)
+			if(_wcsicmp(driveSet.c_str(), L"ALL") == 0)
 			{
 				if(SHEmptyRecycleBin( NULL, NULL, SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND ) == S_OK)
 				{
@@ -274,7 +274,7 @@ void ExecuteBang(LPCTSTR args, UINT id)
 			}
 			return;
         }
-        else if (wcsicmp(bang.c_str(), L"OpenBin") == 0)
+        else if (_wcsicmp(bang.c_str(), L"OpenBin") == 0)
         { //Open the Recycle Bin folder
             //system("explorer.exe /N,::{645FF040-5081-101B-9F08-00AA002F954E}");
 			std::wstring szCmd = L"explorer.exe";

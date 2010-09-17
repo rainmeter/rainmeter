@@ -495,7 +495,7 @@ bool CMeter::Update()
 /*
 ** SetAllMeasures
 **
-** Creates a vector containing all the defined measures  (Histogram)
+** Creates a vector containing all the defined measures (for Histogram)
 */
 void CMeter::SetAllMeasures(CMeasure* measure)
 {
@@ -504,6 +504,11 @@ void CMeter::SetAllMeasures(CMeasure* measure)
 	m_AllMeasures.push_back(measure);
 }
 
+/*
+** SetAllMeasures
+**
+** Creates a vector containing all the defined measures (for Line/String)
+*/
 void CMeter::SetAllMeasures(std::vector<CMeasure*> measures)
 {
 	m_AllMeasures.clear();
@@ -527,9 +532,8 @@ std::wstring CMeter::ReplaceMeasures(std::wstring source)
 
 	if (!m_AllMeasures.empty()) 
 	{	
-		stringValues.push_back(m_AllMeasures.front()->GetStringValue(true, 1, 0, false));
-		// Get the values for the other measures
-		for (size_t i = 1; i < m_AllMeasures.size(); ++i)
+		// Get the values for the measures
+		for (size_t i = 0; i < m_AllMeasures.size(); ++i)
 		{
 			stringValues.push_back(m_AllMeasures[i]->GetStringValue(true, 1, 0, false));
 		}
@@ -573,91 +577,42 @@ std::wstring CMeter::ReplaceMeasures(std::wstring source)
 */
 void CMeter::CreateToolTip(CMeterWindow* meterWindow)
 {
-	HWND hwndTT;
-	if(!m_ToolTipType)
-	{
-		hwndTT = CreateWindowEx(WS_EX_TOPMOST,
-			TOOLTIPS_CLASS, 
-			NULL,
-			WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,		
-			CW_USEDEFAULT, 
-			CW_USEDEFAULT,
-			CW_USEDEFAULT, 
-			CW_USEDEFAULT,
-			m_MeterWindow->GetWindow(), 
-			NULL, 
-			m_MeterWindow->GetMainObject()->GetInstance(),
-			NULL);
-	}
-	else
-	{
-		hwndTT = CreateWindowEx(WS_EX_TOPMOST,
-			TOOLTIPS_CLASS, 
-			NULL,
-			WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP | TTS_BALLOON,		
-			CW_USEDEFAULT, 
-			CW_USEDEFAULT,
-			CW_USEDEFAULT, 
-			CW_USEDEFAULT,
-			m_MeterWindow->GetWindow(), 
-			NULL, 
-			m_MeterWindow->GetMainObject()->GetInstance(),
-			NULL);
-	}
-	SetWindowPos(hwndTT, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+	DWORD style = WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP;
 
-	TOOLINFO ti = { 0 };
-	ti.cbSize = sizeof(TOOLINFO);
-	ti.uFlags = TTF_SUBCLASS;
-	ti.hwnd = m_MeterWindow->GetWindow();
-	ti.hinst = m_MeterWindow->GetMainObject()->GetInstance();
-
-	std::wstring text = ReplaceMeasures(m_ToolTipText);
-	ti.lpszText = (PTSTR) text.c_str();
-	ti.rect = GetMeterRect();
-
-	SendMessage(hwndTT, TTM_ADDTOOL, NULL, (LPARAM) (LPTOOLINFO) &ti);
-	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, NULL, m_ToolTipWidth);
-
-	if (!m_ToolTipTitle.empty())
+	if (m_ToolTipType)
 	{
-		HICON hIcon = NULL;
-		if (!m_ToolTipIcon.empty())
-		{
-			if (!_wcsicmp(m_ToolTipIcon.c_str(), L"INFO"))
-			{
-				hIcon = (HICON) TTI_INFO;
-			}
-			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"WARNING"))
-			{
-				hIcon = (HICON) TTI_WARNING;
-			}
-			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"ERROR"))
-			{
-				hIcon = (HICON) TTI_ERROR;
-			}
-			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"QUESTION"))
-			{
-				hIcon = LoadIcon(NULL, IDI_QUESTION);
-			}
-			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"SHIELD"))
-			{
-				hIcon = LoadIcon(NULL, IDI_SHIELD);
-			}
-			else
-			{
-				hIcon = (HICON) LoadImage(NULL, m_ToolTipIcon.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
-			}
-		}
-		text = ReplaceMeasures(m_ToolTipTitle);
-		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) text.c_str());
-		DestroyIcon(hIcon);
+		style |= TTS_BALLOON;
 	}
-	if (IsHidden())
+
+	HWND hwndTT = CreateWindowEx(WS_EX_TOPMOST,
+		TOOLTIPS_CLASS, 
+		NULL,
+		style,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		m_MeterWindow->GetWindow(),
+		NULL,
+		m_MeterWindow->GetMainObject()->GetInstance(),
+		NULL);
+
+	if (hwndTT)
 	{
-		SendMessage(hwndTT, TTM_ACTIVATE, FALSE, NULL);
+		SetWindowPos(hwndTT, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+		TOOLINFO ti = {sizeof(TOOLINFO)};
+		ti.uFlags = TTF_SUBCLASS;
+		ti.hwnd = m_MeterWindow->GetWindow();
+		ti.hinst = m_MeterWindow->GetMainObject()->GetInstance();
+
+		ti.rect = GetMeterRect();
+
+		SendMessage(hwndTT, TTM_ADDTOOL, NULL, (LPARAM) (LPTOOLINFO) &ti);
+
+		m_ToolTipHandle = hwndTT;
+		UpdateToolTip();
 	}
-	m_ToolTipHandle = hwndTT;
 }
 
 /*
@@ -669,8 +624,7 @@ void CMeter::UpdateToolTip()
 {
 	HWND hwndTT = m_ToolTipHandle;
 
-	TOOLINFO ti = { 0 };
-	ti.cbSize = sizeof(TOOLINFO);
+	TOOLINFO ti = {sizeof(TOOLINFO)};
 	ti.hwnd = m_MeterWindow->GetWindow();
 
 	SendMessage(hwndTT, TTM_GETTOOLINFO, NULL, (LPARAM) (LPTOOLINFO) &ti);
@@ -680,10 +634,13 @@ void CMeter::UpdateToolTip()
 	ti.rect = GetMeterRect();
 
 	SendMessage(hwndTT, TTM_SETTOOLINFO, NULL, (LPARAM) (LPTOOLINFO) &ti); 
+	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, NULL, m_ToolTipWidth);
 
 	if (!m_ToolTipTitle.empty())
 	{
 		HICON hIcon = NULL;
+		bool destroy = false;
+
 		if (!m_ToolTipIcon.empty())
 		{
 			if (!_wcsicmp(m_ToolTipIcon.c_str(), L"INFO"))
@@ -709,11 +666,17 @@ void CMeter::UpdateToolTip()
 			else
 			{
 				hIcon = (HICON) LoadImage(NULL, m_ToolTipIcon.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+				destroy = true;
 			}
 		}
+
 		text = ReplaceMeasures(m_ToolTipTitle);
 		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) text.c_str());
-		DestroyIcon(hIcon);
+
+		if (destroy)
+		{
+			DestroyIcon(hIcon);
+		}
 	}
 	SendMessage(hwndTT, TTM_ACTIVATE, !IsHidden(), NULL);
 }

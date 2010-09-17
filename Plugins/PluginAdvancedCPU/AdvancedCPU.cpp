@@ -114,7 +114,7 @@ bool CheckProcess(CPUMeasure* measure, const std::wstring& name)
 	{
 		for (size_t i = 0; i < measure->excludes.size(); i++)
 		{
-			if (wcsicmp(measure->excludes[i].c_str(), name.c_str()) == 0)
+			if (_wcsicmp(measure->excludes[i].c_str(), name.c_str()) == 0)
 			{
 				return false;		// Exclude
 			}
@@ -125,7 +125,7 @@ bool CheckProcess(CPUMeasure* measure, const std::wstring& name)
 	{
 		for (size_t i = 0; i < measure->includes.size(); i++)
 		{
-			if (wcsicmp(measure->includes[i].c_str(), name.c_str()) == 0)
+			if (_wcsicmp(measure->includes[i].c_str(), name.c_str()) == 0)
 			{
 				return true;	// Include
 			}
@@ -303,7 +303,7 @@ void UpdateProcesses()
 			{
 				if(pObjInst->GetObjectInstanceName(name, 256))
 				{
-					if (wcsicmp(name, L"_Total") == 0)
+					if (_wcsicmp(name, L"_Total") == 0)
 					{
 						continue;
 					}

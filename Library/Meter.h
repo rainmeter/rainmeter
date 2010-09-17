@@ -69,7 +69,7 @@ public:
 
 	std::wstring CMeter::ReplaceMeasures(std::wstring source);
 
-	std::wstring& GetToolTipText() { return m_ToolTipText; };
+	const std::wstring& GetToolTipText() { return m_ToolTipText; };
 	HWND GetToolTipHandle() { return m_ToolTipHandle; };
 	void SetToolTipHandle(HWND handle) { m_ToolTipHandle = handle; };
 

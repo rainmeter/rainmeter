@@ -112,7 +112,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	//Select a WLAN interface, default 0.
 	LPCTSTR data = ReadConfigString(section, L"WifiIntfID", L"");
 	
-	if ((data != NULL) && (wcsicmp(L"", data) != 0)){
+	if ((data != NULL) && (_wcsicmp(L"", data) != 0)){
 		if(_wtoi(data) < (int)pIntfList->dwNumberOfItems){
 			pInterface = &pIntfList->InterfaceInfo[_wtoi(data)];
 		} else {
@@ -127,7 +127,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	//Select LIST style
 	data = ReadConfigString(section, L"WifiListStyle", L"");
 	
-	if ((data != NULL) && (wcsicmp(L"", data) != 0)){
+	if ((data != NULL) && (_wcsicmp(L"", data) != 0)){
 		if ( (_wtoi(data) >= 0) && (_wtoi(data) <= 3)){
 			g_meas_data[id].listStyle = _wtoi(data);
 		} else {
@@ -143,7 +143,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	//Set maxmimum number of list items
 	data = ReadConfigString(section, L"WifiListLimit", L"");
 	g_meas_data[id].listInit = false;
-	if ((data != NULL) && (wcsicmp(L"", data) != 0)){
+	if ((data != NULL) && (_wcsicmp(L"", data) != 0)){
 		if (_wtoi(data) > 0){
 			g_meas_data[id].listMax = _wtoi(data);
 		} else {
@@ -159,22 +159,22 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	MEASURETYPE infoType = UNKNOWN;
 	LPCTSTR type = ReadConfigString(section, L"WifiInfoType", L"");
 	if(type){
-		if (wcsicmp(L"SSID", type) == 0){
+		if (_wcsicmp(L"SSID", type) == 0){
 			infoType=SSID;
 		} 
-		else if (wcsicmp(L"QUALITY", type) == 0){
+		else if (_wcsicmp(L"QUALITY", type) == 0){
 			infoType=QUALITY;
 		} 
-		else if (wcsicmp(L"ENCRYPTION", type) == 0){
+		else if (_wcsicmp(L"ENCRYPTION", type) == 0){
 			infoType=ENCRYPTION;
 		} 
-		else if (wcsicmp(L"AUTH", type) == 0){
+		else if (_wcsicmp(L"AUTH", type) == 0){
 			infoType=AUTH;
 		} 
-		else if (wcsicmp(L"LIST", type) == 0){
+		else if (_wcsicmp(L"LIST", type) == 0){
 			infoType=LIST;
 		} 
-		else if (wcsicmp(L"PHY", type) == 0){
+		else if (_wcsicmp(L"PHY", type) == 0){
 			infoType=PHY;
 		} else {
 			WCHAR buffer[256];
@@ -288,7 +288,7 @@ LPCTSTR GetString(UINT id, UINT flags)
 				mbstowcs(buffer,(char*)pwnl->Network[i].dot11Ssid.ucSSID,pwnl->Network[i].dot11Ssid.uSSIDLength);
 				
 				//Prevent duplicates that result from profiles, check using SSID
-				if((wcsstr(g_meas_data[id].netlist,buffer)== NULL)&&(wcsicmp(L"", buffer) != 0)){
+				if((wcsstr(g_meas_data[id].netlist,buffer)== NULL)&&(_wcsicmp(L"", buffer) != 0)){
 					printed++;
 					if(listStyle > 0){
 						wsprintf(g_meas_data[id].netlist,L"%s%s",g_meas_data[id].netlist,buffer);

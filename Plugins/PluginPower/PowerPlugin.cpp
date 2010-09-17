@@ -97,19 +97,19 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	LPCTSTR type = ReadConfigString(section, L"PowerState", L"");
 	if(type) 
 	{
-		if (wcsicmp(L"ACLINE", type) == 0)
+		if (_wcsicmp(L"ACLINE", type) == 0)
 		{
 			powerState = POWER_ACLINE;
 		} 
-		else if (wcsicmp(L"STATUS", type) == 0)
+		else if (_wcsicmp(L"STATUS", type) == 0)
 		{
 			powerState = POWER_STATUS;
 		} 
-		else if (wcsicmp(L"STATUS2", type) == 0)
+		else if (_wcsicmp(L"STATUS2", type) == 0)
 		{
 			powerState = POWER_STATUS2;
 		} 
-		else if (wcsicmp(L"LIFETIME", type) == 0)
+		else if (_wcsicmp(L"LIFETIME", type) == 0)
 		{
 			powerState= POWER_LIFETIME;
 
@@ -119,11 +119,11 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				g_Formats[id] = format;
 			}
 		} 
-		else if (wcsicmp(L"MHZ", type) == 0)
+		else if (_wcsicmp(L"MHZ", type) == 0)
         {
 			powerState= POWER_MHZ;
         }
-		else if (wcsicmp(L"PERCENT", type) == 0)
+		else if (_wcsicmp(L"PERCENT", type) == 0)
 		{
 			powerState = POWER_PERCENT;
 		}

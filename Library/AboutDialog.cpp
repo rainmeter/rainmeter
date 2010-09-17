@@ -115,7 +115,7 @@ void UpdateAboutDialog()
 			std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
 			for( ; iter != windows.end(); ++iter)
 			{
-				if (wcsicmp(selectedItemName, (*iter).first.c_str()) == 0)
+				if (_wcsicmp(selectedItemName, (*iter).first.c_str()) == 0)
 				{
 					SendMessage(widget, LB_SETCURSEL, sel, 0);
 					break;
@@ -190,7 +190,7 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 				{
 					if (current == selected)
 					{
-						if (entryName == NULL || wcsicmp(entryName, (*iter).first.c_str()) == 0)
+						if (entryName == NULL || _wcsicmp(entryName, (*iter).first.c_str()) == 0)
 						{
 							int count = ListView_GetItemCount(widget);
 

@@ -658,7 +658,7 @@ CMeasure* CConfigParser::GetMeasure(const std::wstring& name)
 	std::map<std::wstring, CMeasure*>::const_iterator iter = m_Measures.begin();
 	for ( ; iter != m_Measures.end(); ++iter)
 	{
-		if (wcsicmp((*iter).first.c_str(), name.c_str()) == 0)
+		if (_wcsicmp((*iter).first.c_str(), name.c_str()) == 0)
 		{
 			return (*iter).second;
 		}
@@ -1021,7 +1021,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 				buffer = new WCHAR[bufferSize];
 			}
 
-			if (wcsnicmp(strKey.c_str(), L"@include", 8) == 0)
+			if (_wcsnicmp(strKey.c_str(), L"@include", 8) == 0)
 			{
 				std::wstring strIncludeFile = buffer;
 				ReadVariables();

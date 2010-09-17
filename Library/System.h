@@ -116,8 +116,6 @@ private:
 	static bool c_ShowDesktop;
 
 	static OSPLATFORM c_Platform;
-
-	static FPSETDLLDIRECTORYW c_SetDllDirectoryW;
 };
 
 #endif

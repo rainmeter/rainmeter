@@ -472,7 +472,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
     const wchar_t* type = ReadConfigString(section, L"Command", L"");
     for(int i = 0; i < COMMAND_COUNT; i++)
 	{
-        if (CommandName[i] && type && wcsicmp(CommandName[i], type) == 0)
+        if (CommandName[i] && type && _wcsicmp(CommandName[i], type) == 0)
         {
             CommandIdMap[id] = (COMMAND_TYPE)i;
 

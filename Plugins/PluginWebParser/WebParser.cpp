@@ -1536,7 +1536,7 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 	hUrlDump = InternetOpenUrl(hRootHandle, url.c_str(), NULL, NULL, flags, 0);
 	if (hUrlDump == NULL)
 	{
-		if (wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
+		if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
 		{
 			std::string urlACP = ConvertWideToAscii(url.c_str());
 			hUrlDump = InternetOpenUrlA(hRootHandle, urlACP.c_str(), NULL, NULL, flags, 0);

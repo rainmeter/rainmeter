@@ -172,7 +172,7 @@ void CMeasureCalc::FormulaReplace()
 
 	while ((loc = m_Formula.find_first_of(L"Rr", loc)) != std::wstring::npos)
 	{
-		if (wcsnicmp(L"Random", m_Formula.c_str() + loc, 6) == 0 &&
+		if (_wcsnicmp(L"Random", m_Formula.c_str() + loc, 6) == 0 &&
 			(loc == 0 || IsDelimiter(*(m_Formula.c_str() + loc - 1))) &&
 			(loc == (m_Formula.length() - 6) || IsDelimiter(*(m_Formula.c_str() + loc + 6))))
 		{

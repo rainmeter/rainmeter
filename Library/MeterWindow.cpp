@@ -913,7 +913,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 				std::list<CMeasure*>::const_iterator iter = m_Measures.begin();
 				for( ; iter != m_Measures.end(); ++iter)
 				{
-					if (wcsicmp((*iter)->GetName(), measure.c_str()) == 0)
+					if (_wcsicmp((*iter)->GetName(), measure.c_str()) == 0)
 					{
 						(*iter)->ExecuteBang(args.c_str());
 						return;
@@ -980,7 +980,7 @@ void CMeterWindow::ShowMeter(const WCHAR* name, bool group)
 		}
 		else
 		{
-			if (wcsicmp((*j)->GetName(), name) != 0) continue;
+			if (_wcsicmp((*j)->GetName(), name) != 0) continue;
 		}
 
 		(*j)->Show();
@@ -1014,7 +1014,7 @@ void CMeterWindow::HideMeter(const WCHAR* name, bool group)
 		}
 		else
 		{
-			if (wcsicmp((*j)->GetName(), name) != 0) continue;
+			if (_wcsicmp((*j)->GetName(), name) != 0) continue;
 		}
 
 		(*j)->Hide();
@@ -1048,7 +1048,7 @@ void CMeterWindow::ToggleMeter(const WCHAR* name, bool group)
 		}
 		else
 		{
-			if (wcsicmp((*j)->GetName(), name) != 0) continue;
+			if (_wcsicmp((*j)->GetName(), name) != 0) continue;
 		}
 
 		if ((*j)->IsHidden())
@@ -1087,10 +1087,10 @@ void CMeterWindow::MoveMeter(int x, int y, const WCHAR* name)
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
-		if (wcsicmp((*j)->GetName(), name) == 0)
+		if (_wcsicmp((*j)->GetName(), name) == 0)
 		{
 			(*j)->SetX(x);
-				(*j)->SetY(y);
+			(*j)->SetY(y);
 			m_ResetRegion = true;
 			return;
 		}
@@ -1118,7 +1118,7 @@ void CMeterWindow::EnableMeasure(const WCHAR* name, bool group)
 		}
 		else
 		{
-			if (wcsicmp((*i)->GetName(), name) != 0) continue;
+			if (_wcsicmp((*i)->GetName(), name) != 0) continue;
 		}
 
 		(*i)->Enable();
@@ -1148,7 +1148,7 @@ void CMeterWindow::DisableMeasure(const WCHAR* name, bool group)
 		}
 		else
 		{
-			if (wcsicmp((*i)->GetName(), name) != 0) continue;
+			if (_wcsicmp((*i)->GetName(), name) != 0) continue;
 		}
 
 		(*i)->Disable();
@@ -1178,7 +1178,7 @@ void CMeterWindow::ToggleMeasure(const WCHAR* name, bool group)
 		}
 		else
 		{
-			if (wcsicmp((*i)->GetName(), name) != 0) continue;
+			if (_wcsicmp((*i)->GetName(), name) != 0) continue;
 		}
 
 		if ((*i)->IsDisabled())
@@ -1927,9 +1927,9 @@ bool CMeterWindow::ReadSkin()
 	{
 		std::wstring strSection = arraySections[i];
 
-		if(wcsicmp(L"Rainmeter", strSection.c_str()) != 0 && 
-			wcsicmp(L"Variables", strSection.c_str()) != 0 &&
-			wcsicmp(L"Metadata", strSection.c_str()) != 0)
+		if(_wcsicmp(L"Rainmeter", strSection.c_str()) != 0 && 
+			_wcsicmp(L"Variables", strSection.c_str()) != 0 &&
+			_wcsicmp(L"Metadata", strSection.c_str()) != 0)
 		{
 			std::wstring meterName, measureName;
 
@@ -2018,18 +2018,13 @@ bool CMeterWindow::ReadSkin()
 	}
 	else
 	{
-		// Bind the meters to the measures and create tooltips
+		// Bind the meters to the measures
 		std::list<CMeter*>::const_iterator j = m_Meters.begin();
 		for( ; j != m_Meters.end(); ++j)
 		{
 			try
 			{
 				(*j)->BindMeasure(m_Measures);
-
-				if (!(*j)->GetToolTipText().empty())
-				{
-					(*j)->CreateToolTip(this);
-				}
 			}
 			catch (CError& error)
 			{
@@ -2079,6 +2074,11 @@ void CMeterWindow::InitializeMeters()
 		try
 		{
 			(*j)->Initialize();
+
+			if (!(*j)->GetToolTipText().empty())
+			{
+				(*j)->CreateToolTip(this);
+			}
 		}
 		catch (CError& error)
 		{
@@ -2469,11 +2469,14 @@ void CMeterWindow::Update(bool nodraw)
 		}
 
 		// Update tooltips
-		if (!((*j)->GetToolTipHandle() != NULL) && (!(*j)->GetToolTipText().empty()))
+		if ((*j)->GetToolTipHandle() == NULL)
 		{
-			(*j)->CreateToolTip(this);
+			if (!(*j)->GetToolTipText().empty())
+			{
+				(*j)->CreateToolTip(this);
+			}
 		}
-		if ((*j)->GetToolTipHandle() != NULL)
+		else
 		{
 			(*j)->UpdateToolTip();
 		}
@@ -4502,9 +4505,9 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		std::wstring str = (const WCHAR*)pCopyDataStruct->lpData;
 
-		if (wcsnicmp(L"PLAY ", str.c_str(), 5) == 0 ||
-			wcsnicmp(L"PLAYLOOP ", str.c_str(), 9) == 0 ||
-			wcsnicmp(L"PLAYSTOP", str.c_str(), 8) == 0)
+		if (_wcsnicmp(L"PLAY ", str.c_str(), 5) == 0 ||
+			_wcsnicmp(L"PLAYLOOP ", str.c_str(), 9) == 0 ||
+			_wcsnicmp(L"PLAYSTOP", str.c_str(), 8) == 0)
 		{
 			// Audio commands are special cases.
 			Rainmeter->ExecuteCommand(str.c_str(), this);
@@ -4527,7 +4530,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			bang = str;
 		}
 
-		if (wcsicmp(bang.c_str(), L"!RainmeterWriteKeyValue") == 0)
+		if (_wcsicmp(bang.c_str(), L"!RainmeterWriteKeyValue") == 0)
 		{
 			// !RainmeterWriteKeyValue is a special case.
 			if (CRainmeter::ParseString(arg.c_str()).size() < 4)

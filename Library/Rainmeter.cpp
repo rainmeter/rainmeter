@@ -487,11 +487,11 @@ void RainmeterActivateConfig(HWND, const char* arg)
 
 			for (size_t i = 0; i < configs.size(); ++i)
 			{
-				if (wcsicmp(configs[i].config.c_str(), subStrings[0].c_str()) == 0)
+				if (_wcsicmp(configs[i].config.c_str(), subStrings[0].c_str()) == 0)
 				{
 					for (size_t j = 0; j < configs[i].iniFiles.size(); ++j)
 					{
-						if (wcsicmp(configs[i].iniFiles[j].c_str(), subStrings[1].c_str()) == 0)
+						if (_wcsicmp(configs[i].iniFiles[j].c_str(), subStrings[1].c_str()) == 0)
 						{
 							Rainmeter->ActivateConfig(i, j);
 							return;
@@ -1037,8 +1037,8 @@ void RainmeterWriteKeyValue(HWND, const char* arg)
 				return;
 			}
 
-			if (wcsnicmp(iniFile.c_str(), Rainmeter->GetSkinPath().c_str(), Rainmeter->GetSkinPath().size()) != 0 &&
-				wcsnicmp(iniFile.c_str(), Rainmeter->GetPath().c_str(), Rainmeter->GetPath().size()) != 0)
+			if (_wcsnicmp(iniFile.c_str(), Rainmeter->GetSkinPath().c_str(), Rainmeter->GetSkinPath().size()) != 0 &&
+				_wcsnicmp(iniFile.c_str(), Rainmeter->GetPath().c_str(), Rainmeter->GetPath().size()) != 0)
 			{
 				DebugLog(L"!RainmeterWriteKeyValue: Illegal path outside of Rainmeter directories: %s", iniFile.c_str());
 				return;
@@ -1346,7 +1346,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		{
 			iniFile += L"Rainmeter.ini";
 		}
-		else if (iniFile.length() <= 4 || wcsicmp(iniFile.substr(iniFile.length() - 4).c_str(), L".ini") != 0)
+		else if (iniFile.length() <= 4 || _wcsicmp(iniFile.substr(iniFile.length() - 4).c_str(), L".ini") != 0)
 		{
 			iniFile += L"\\Rainmeter.ini";
 		}
@@ -1370,7 +1370,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	// Set the log file location
 	m_LogFile = m_IniFile;
 	size_t logFileLen = m_LogFile.length();
-	if (logFileLen > 4 && wcsicmp(m_LogFile.substr(logFileLen - 4).c_str(), L".ini") == 0)
+	if (logFileLen > 4 && _wcsicmp(m_LogFile.substr(logFileLen - 4).c_str(), L".ini") == 0)
 	{
 		m_LogFile.replace(logFileLen - 4, 4, L".log");
 	}
@@ -1479,7 +1479,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	TestSettingsFile(bDefaultIniLocation);
 
 	// If the skin folder is somewhere else than in the program path
-	if (wcsnicmp(m_Path.c_str(), m_SkinPath.c_str(), m_Path.size()) != 0)
+	if (_wcsnicmp(m_Path.c_str(), m_SkinPath.c_str(), m_Path.size()) != 0)
 	{
 		CheckSkinVersions();
 	}
@@ -1878,7 +1878,7 @@ bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex)
 		const std::wstring skinConfig = meterWindow->GetSkinName();
 		for (size_t i = 0; i < m_ConfigStrings.size(); ++i)
 		{
-			if (wcsicmp(skinConfig.c_str(), m_ConfigStrings[i].config.c_str()) == 0)
+			if (_wcsicmp(skinConfig.c_str(), m_ConfigStrings[i].config.c_str()) == 0)
 			{
 				m_ConfigStrings[i].active = 0;
 				break;
@@ -1989,7 +1989,7 @@ CMeterWindow* CRainmeter::GetMeterWindow(const std::wstring& config)
 
 	for (; iter != m_Meters.end(); ++iter)
 	{
-		if (wcsicmp((*iter).first.c_str(), config.c_str()) == 0)
+		if (_wcsicmp((*iter).first.c_str(), config.c_str()) == 0)
 		{
 			return (*iter).second;
 		}
@@ -2033,11 +2033,11 @@ void CRainmeter::SetConfigOrder(int configIndex)
 
 	if (GetPrivateProfileString(m_ConfigStrings[configIndex].config.c_str(), L"LoadOrder", L"", buffer, 256, m_IniFile.c_str()) > 0)
 	{
-		if (wcsicmp(buffer, L"LAST") == 0)
+		if (_wcsicmp(buffer, L"LAST") == 0)
 		{
 			order = INT_MAX;
 		}
-		else if (wcsicmp(buffer, L"FIRST") == 0)
+		else if (_wcsicmp(buffer, L"FIRST") == 0)
 		{
 			order = INT_MIN;
 		}
@@ -2205,7 +2205,7 @@ int CRainmeter::ScanForConfigsRecursive(std::wstring& path, std::wstring base, i
 			// Check whether the extension is ".ini"
 			std::wstring ext = fileDataIni.cFileName;
 			std::wstring::size_type pos = ext.find_last_of(L'.');
-			if (pos != std::wstring::npos && wcsicmp(&(ext.c_str()[pos]), L".ini") == 0)
+			if (pos != std::wstring::npos && _wcsicmp(&(ext.c_str()[pos]), L".ini") == 0)
 			{
 				CONFIGMENU menuItem;
 				menuItem.name = fileDataIni.cFileName;
@@ -2300,239 +2300,239 @@ void CRainmeter::SaveSettings()
 
 BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, CMeterWindow* meterWindow)
 {
-	if (wcsicmp(bang.c_str(), L"!RainmeterRefresh") == 0)
+	if (_wcsicmp(bang.c_str(), L"!RainmeterRefresh") == 0)
 	{
 		BangWithArgs(BANG_REFRESH, arg.c_str(), 0);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterRefreshApp") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterRefreshApp") == 0)
 	{
 		RainmeterRefreshApp(NULL, NULL);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterRedraw") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterRedraw") == 0)
 	{
 		BangWithArgs(BANG_REDRAW, arg.c_str(), 0);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterHide") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterHide") == 0)
 	{
 		BangWithArgs(BANG_HIDE, arg.c_str(), 0);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterShow") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterShow") == 0)
 	{
 		BangWithArgs(BANG_SHOW, arg.c_str(), 0);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterToggle") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggle") == 0)
 	{
 		BangWithArgs(BANG_TOGGLE, arg.c_str(), 0);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterHideFade") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideFade") == 0)
 	{
 		BangWithArgs(BANG_HIDEFADE, arg.c_str(), 0);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterShowFade") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowFade") == 0)
 	{
 		BangWithArgs(BANG_SHOWFADE, arg.c_str(), 0);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleFade") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleFade") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEFADE, arg.c_str(), 0);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterHideMeter") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideMeter") == 0)
 	{
 		BangWithArgs(BANG_HIDEMETER, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterShowMeter") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowMeter") == 0)
 	{
 		BangWithArgs(BANG_SHOWMETER, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleMeter") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleMeter") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEMETER, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterDisableMeasure") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterDisableMeasure") == 0)
 	{
 		BangWithArgs(BANG_DISABLEMEASURE, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterEnableMeasure") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterEnableMeasure") == 0)
 	{
 		BangWithArgs(BANG_ENABLEMEASURE, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleMeasure") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleMeasure") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEMEASURE, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterActivateConfig") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterActivateConfig") == 0)
 	{
 		RainmeterActivateConfig(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterDeactivateConfig") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterDeactivateConfig") == 0)
 	{
 		RainmeterDeactivateConfig(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleConfig") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleConfig") == 0)
 	{
 		RainmeterToggleConfig(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterMove") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterMove") == 0)
 	{
 		BangWithArgs(BANG_MOVE, arg.c_str(), 2);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterChangeZPos") == 0)	// For backwards compatibility
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterChangeZPos") == 0)	// For backwards compatibility
 	{
 		BangWithArgs(BANG_ZPOS, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterZPos") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterZPos") == 0)
 	{
 		BangWithArgs(BANG_ZPOS, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterClickThrough") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterClickThrough") == 0)
 	{
 		BangWithArgs(BANG_CLICKTHROUGH, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterDraggable") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterDraggable") == 0)
 	{
 		BangWithArgs(BANG_DRAGGABLE, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterSnapEdges") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterSnapEdges") == 0)
 	{
 		BangWithArgs(BANG_SNAPEDGES, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterKeepOnScreen") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterKeepOnScreen") == 0)
 	{
 		BangWithArgs(BANG_KEEPONSCREEN, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterSetTransparency") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterSetTransparency") == 0)
 	{
 		BangWithArgs(BANG_SETTRANSPARENCY, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterSetVariable") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterSetVariable") == 0)
 	{
 		BangWithArgs(BANG_SETVARIABLE, arg.c_str(), 2);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterRefreshGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterRefreshGroup") == 0)
 	{
 		RainmeterRefreshGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterRedrawGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterRedrawGroup") == 0)
 	{
 		RainmeterRedrawGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterHideGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideGroup") == 0)
 	{
 		RainmeterHideGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterShowGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowGroup") == 0)
 	{
 		RainmeterShowGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleGroup") == 0)
 	{
 		RainmeterToggleGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterHideFadeGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideFadeGroup") == 0)
 	{
 		RainmeterHideFadeGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterShowFadeGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowFadeGroup") == 0)
 	{
 		RainmeterShowFadeGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleFadeGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleFadeGroup") == 0)
 	{
 		RainmeterToggleFadeGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterHideMeterGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideMeterGroup") == 0)
 	{
 		BangWithArgs(BANG_HIDEMETERGROUP, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterShowMeterGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowMeterGroup") == 0)
 	{
 		BangWithArgs(BANG_SHOWMETERGROUP, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleMeterGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleMeterGroup") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEMETERGROUP, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterDisableMeasureGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterDisableMeasureGroup") == 0)
 	{
 		BangWithArgs(BANG_DISABLEMEASUREGROUP, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterEnableMeasureGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterEnableMeasureGroup") == 0)
 	{
 		BangWithArgs(BANG_ENABLEMEASUREGROUP, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterToggleMeasureGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleMeasureGroup") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEMEASUREGROUP, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterDeactivateConfigGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterDeactivateConfigGroup") == 0)
 	{
 		RainmeterDeactivateConfigGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterZPosGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterZPosGroup") == 0)
 	{
 		RainmeterZPosGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterClickThroughGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterClickThroughGroup") == 0)
 	{
 		RainmeterClickThroughGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterDraggableGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterDraggableGroup") == 0)
 	{
 		RainmeterDraggableGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterSnapEdgesGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterSnapEdgesGroup") == 0)
 	{
 		RainmeterSnapEdgesGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterKeepOnScreenGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterKeepOnScreenGroup") == 0)
 	{
 		RainmeterKeepOnScreenGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterSetTransparencyGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterSetTransparencyGroup") == 0)
 	{
 		RainmeterSetTransparencyGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterSetVariableGroup") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterSetVariableGroup") == 0)
 	{
 		RainmeterSetVariableGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterAbout") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterAbout") == 0)
 	{
 		RainmeterAbout(NULL, NULL);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterSkinMenu") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterSkinMenu") == 0)
 	{
 		RainmeterSkinMenu(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterTrayMenu") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterTrayMenu") == 0)
 	{
 		RainmeterTrayMenu(NULL, NULL);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterResetStats") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterResetStats") == 0)
 	{
 		RainmeterResetStats(NULL, NULL);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterMoveMeter") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterMoveMeter") == 0)
 	{
 		BangWithArgs(BANG_MOVEMETER, arg.c_str(), 3);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterWriteKeyValue") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterWriteKeyValue") == 0)
 	{
 		RainmeterWriteKeyValue(NULL, ConvertToAscii(arg.c_str()).c_str());
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterPluginBang") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterPluginBang") == 0)
 	{
 		BangWithArgs(BANG_PLUGIN, arg.c_str(), 1);
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterLsBoxHook") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterLsBoxHook") == 0)
 	{
 		// Nothing to do here (this works only with Litestep)
 	}
-	else if (wcsicmp(bang.c_str(), L"!RainmeterQuit") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterQuit") == 0)
 	{
 		RainmeterQuit(NULL, NULL);
 	}
-	else if (wcsicmp(bang.c_str(), L"!Execute") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!Execute") == 0)
 	{
 		// Special case for multibang execution
 		std::wstring::size_type start = std::wstring::npos;
@@ -2587,7 +2587,7 @@ std::wstring CRainmeter::ParseCommand(const WCHAR* command, CMeterWindow* meterW
 {
 	std::wstring strCommand = command;
 
-	if (wcsnicmp(L"!execute", command, 8) == 0)
+	if (_wcsnicmp(L"!execute", command, 8) == 0)
 	{
 		return strCommand;
 	}
@@ -2617,7 +2617,7 @@ std::wstring CRainmeter::ParseCommand(const WCHAR* command, CMeterWindow* meterW
 							std::list<CMeasure*>::const_iterator iter = meterWindow->GetMeasures().begin();
 							for( ; iter != meterWindow->GetMeasures().end(); ++iter)
 							{
-								if (wcsicmp((*iter)->GetName(), measureName.c_str()) == 0)
+								if (_wcsicmp((*iter)->GetName(), measureName.c_str()) == 0)
 								{
 									std::wstring value = (*iter)->GetStringValue(false, 1, -1, false);
 									strCommand.replace(start, (end - start) + 1, value);
@@ -2655,8 +2655,8 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 	if (!strCommand.empty())
 	{
 		// Check for built-ins
-		if (wcsnicmp(L"PLAY ", strCommand.c_str(), 5) == 0 ||
-			wcsnicmp(L"PLAYLOOP ", strCommand.c_str(), 9) == 0)
+		if (_wcsnicmp(L"PLAY ", strCommand.c_str(), 5) == 0 ||
+			_wcsnicmp(L"PLAYLOOP ", strCommand.c_str(), 9) == 0)
 		{
 			// Strip built-in command
 			size_t pos = strCommand.find(L' ');
@@ -2949,13 +2949,13 @@ void CRainmeter::RefreshAll()
 			std::wstring skinConfig = mw->GetSkinName();
 			for (size_t i = 0; i < m_ConfigStrings.size(); ++i)
 			{
-				if (wcsicmp(skinConfig.c_str(), m_ConfigStrings[i].config.c_str()) == 0)
+				if (_wcsicmp(skinConfig.c_str(), m_ConfigStrings[i].config.c_str()) == 0)
 				{
 					found = 1;
 					std::wstring skinIniFile = mw->GetSkinIniFile();
 					for (size_t j = 0; j < m_ConfigStrings[i].iniFiles.size(); ++j)
 					{
-						if (wcsicmp(skinIniFile.c_str(), m_ConfigStrings[i].iniFiles[j].c_str()) == 0)
+						if (_wcsicmp(skinIniFile.c_str(), m_ConfigStrings[i].iniFiles[j].c_str()) == 0)
 						{
 							found = 2;
 							if (m_ConfigStrings[i].active != j + 1)
@@ -3536,7 +3536,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 		for (size_t i = 0; i < m_ConfigStrings.size(); ++i)
 		{
 			const CONFIG& config = m_ConfigStrings[i];
-			if (wcsicmp(config.config.c_str(), skinName.c_str()) == 0)
+			if (_wcsicmp(config.config.c_str(), skinName.c_str()) == 0)
 			{
 				HMENU variantsMenu = CreatePopupMenu();
 				for (size_t j = 0; j < config.iniFiles.size(); ++j)
@@ -3573,7 +3573,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 				itemInfo.cch = MAX_PATH;
 				if (GetMenuItemInfo(configMenu, (UINT)i, TRUE, &itemInfo))
 				{
-					if (wcsicmp(root.c_str(), buffer) == 0)
+					if (_wcsicmp(root.c_str(), buffer) == 0)
 					{
 						HMENU configRootMenu = GetSubMenu(configMenu, i);
 						if (configRootMenu)

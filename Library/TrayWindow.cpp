@@ -321,13 +321,13 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 	m_MeterType = TRAY_METER_TYPE_NONE;
 
 	std::wstring type = parser.ReadString(L"TrayMeasure", L"TrayMeter", L"HISTOGRAM");
-	if (wcsicmp(type.c_str(), L"HISTOGRAM") == 0) 
+	if (_wcsicmp(type.c_str(), L"HISTOGRAM") == 0) 
 	{
 		m_MeterType = TRAY_METER_TYPE_HISTOGRAM;
 		m_TrayColor1 = parser.ReadColor(L"TrayMeasure", L"TrayColor1", Color(0, 100, 0));
 		m_TrayColor2 = parser.ReadColor(L"TrayMeasure", L"TrayColor2", Color(0, 255, 0));
 	}
-	else if (wcsicmp(type.c_str(), L"BITMAP") == 0) 
+	else if (_wcsicmp(type.c_str(), L"BITMAP") == 0) 
 	{
 		m_MeterType = TRAY_METER_TYPE_BITMAP;
 

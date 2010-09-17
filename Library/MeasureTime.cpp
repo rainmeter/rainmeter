@@ -139,11 +139,11 @@ bool CMeasureTime::Update()
 
 		FileTimeToSystemTime(&ftToday, &sysToday);
 
-		if (wcsicmp(L"locale-time", m_Format.c_str()) == 0)
+		if (_wcsicmp(L"locale-time", m_Format.c_str()) == 0)
 		{
 			GetTimeFormat(LOCALE_USER_DEFAULT, 0, &sysToday, NULL, tmpSz, MAX_LINE_LENGTH);
 		}
-		else if (wcsicmp(L"locale-date", m_Format.c_str()) == 0)
+		else if (_wcsicmp(L"locale-date", m_Format.c_str()) == 0)
 		{
 			GetDateFormat(LOCALE_USER_DEFAULT, 0, &sysToday, NULL, tmpSz, MAX_LINE_LENGTH);
 		}
@@ -203,11 +203,11 @@ const WCHAR* CMeasureTime::GetStringValue(bool autoScale, double scale, int deci
 	// Create the string
 	if (m_Format.size() > 0)
 	{
-		if (wcsicmp(L"locale-time", m_Format.c_str()) == 0)
+		if (_wcsicmp(L"locale-time", m_Format.c_str()) == 0)
 		{
 			GetTimeFormat(LOCALE_USER_DEFAULT, 0, &sysToday, NULL, tmpSz, MAX_LINE_LENGTH);
 		}
-		else if (wcsicmp(L"locale-date", m_Format.c_str()) == 0)
+		else if (_wcsicmp(L"locale-date", m_Format.c_str()) == 0)
 		{
 			GetDateFormat(LOCALE_USER_DEFAULT, 0, &sysToday, NULL, tmpSz, MAX_LINE_LENGTH);
 		}
@@ -244,7 +244,7 @@ void CMeasureTime::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	GetLocalTime(&sysLocalTime);
 	GetSystemTime(&sysUTCTime);
 
-	if (wcsicmp(L"local", timezone.c_str()) == 0)
+	if (_wcsicmp(L"local", timezone.c_str()) == 0)
 	{
 		FILETIME ftLocalTime, ftUTCTime;
 		SystemTimeToFileTime(&sysLocalTime, &ftLocalTime);

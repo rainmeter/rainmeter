@@ -95,19 +95,19 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	/* Read our own settings from the ini-file */
 	if (type)
 	{
-		if ( wcsicmp ( L"GDI", type ) == 0 )
+		if ( _wcsicmp ( L"GDI", type ) == 0 )
 		{
 			g_Counters[id] = GDI_COUNT;
 		}
-		else if ( wcsicmp ( L"USER", type ) == 0 )
+		else if ( _wcsicmp ( L"USER", type ) == 0 )
 		{
 			g_Counters[id] = USER_COUNT;
 		}
-		else if ( wcsicmp ( L"HANDLE", type ) == 0 )
+		else if ( _wcsicmp ( L"HANDLE", type ) == 0 )
 		{
 			g_Counters[id] = HANDLE_COUNT;
 		}
-		else if ( wcsicmp ( L"WINDOW", type ) == 0 )
+		else if ( _wcsicmp ( L"WINDOW", type ) == 0 )
 		{
 			g_Counters[id] = WINDOW_COUNT;
 		}
@@ -188,7 +188,7 @@ UINT Update(UINT id)
 				{
 					if (GetModuleBaseName(hProcess, hMod[0], buffer, sizeof(buffer)))
 					{
-						if (wcsicmp(buffer, processName) != 0)
+						if (_wcsicmp(buffer, processName) != 0)
 						{
 							CloseHandle ( hProcess );
 							continue;

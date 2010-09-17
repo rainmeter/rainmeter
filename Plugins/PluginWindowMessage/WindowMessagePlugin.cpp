@@ -190,7 +190,7 @@ void ExecuteBang(LPCTSTR args, UINT id)
 		std::wstring bang = wholeBang.substr(0, pos);
 		wholeBang.erase(0, pos + 1);
 
-		if (wcsicmp(bang.c_str(), L"SendMessage") == 0)
+		if (_wcsicmp(bang.c_str(), L"SendMessage") == 0)
 		{
 			// Parse parameters
 			DWORD uMsg, wParam, lParam;

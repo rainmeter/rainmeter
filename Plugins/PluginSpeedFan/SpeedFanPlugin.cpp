@@ -90,22 +90,22 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	LPCTSTR type = ReadConfigString(section, L"SpeedFanType", L"TEMPERATURE");
 	if (type)
 	{
-		if (wcsicmp(L"TEMPERATURE", type) == 0)
+		if (_wcsicmp(L"TEMPERATURE", type) == 0)
 		{
 			g_Types[id] = TYPE_TEMP;
 
 			LPCTSTR scale = ReadConfigString(section, L"SpeedFanScale", L"C");
 			if (scale)
 			{
-				if (wcsicmp(L"C", scale) == 0)
+				if (_wcsicmp(L"C", scale) == 0)
 				{
 					g_Scales[id] = SCALE_CENTIGRADE;
 				} 
-				else if (wcsicmp(L"F", scale) == 0)
+				else if (_wcsicmp(L"F", scale) == 0)
 				{
 					g_Scales[id] = SCALE_FARENHEIT;
 				} 
-				else if (wcsicmp(L"K", scale) == 0)
+				else if (_wcsicmp(L"K", scale) == 0)
 				{
 					g_Scales[id] = SCALE_KELVIN;
 				} 
@@ -117,11 +117,11 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				}
 			}
 		} 
-		else if (wcsicmp(L"FAN", type) == 0)
+		else if (_wcsicmp(L"FAN", type) == 0)
 		{
 			g_Types[id] = TYPE_FAN;
 		} 
-		else if (wcsicmp(L"VOLTAGE", type) == 0)
+		else if (_wcsicmp(L"VOLTAGE", type) == 0)
 		{
 			g_Types[id] = TYPE_VOLT;
 		} 

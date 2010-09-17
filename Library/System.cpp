@@ -53,8 +53,6 @@ bool CSystem::c_ShowDesktop = false;
 
 OSPLATFORM CSystem::c_Platform = OSPLATFORM_UNKNOWN;
 
-FPSETDLLDIRECTORYW CSystem::c_SetDllDirectoryW = NULL;
-
 extern CRainmeter* Rainmeter;
 
 /*
@@ -1050,6 +1048,8 @@ BOOL CSystem::RmSetDllDirectory(LPCWSTR lpPathName)
 {
 	if (GetOSPlatform() >= OSPLATFORM_XP_SP1)
 	{
+		static FPSETDLLDIRECTORYW c_SetDllDirectoryW = NULL;
+
 		if (!c_SetDllDirectoryW)
 		{
 			c_SetDllDirectoryW = (FPSETDLLDIRECTORYW)GetProcAddress(GetModuleHandle(L"Kernel32.dll"), "SetDllDirectoryW");
@@ -1262,7 +1262,7 @@ std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileM
 
 		for (size_t i = 0; i < iniFileMappings.size(); ++i)
 		{
-			if (wcsicmp(iniFileMappings[i].c_str(), filename.c_str()) == 0)
+			if (_wcsicmp(iniFileMappings[i].c_str(), filename.c_str()) == 0)
 			{
 				WCHAR buffer[MAX_PATH];
 
