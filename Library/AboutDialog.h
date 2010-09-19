@@ -21,6 +21,8 @@
 
 #include "MeterWindow.h"
 
+#define MAXABOUTLOGLINES 20
+
 HWND OpenAboutDialog(HWND hwndOwner, HINSTANCE instance);
 void UpdateAboutDialog();
 void UpdateAboutStatistics(LPCTSTR entryName = NULL);

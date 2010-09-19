@@ -148,12 +148,12 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 				{
 					int count = ListView_GetItemCount(widget);
 
-					std::list<CRainmeter::LOG_INFO>::const_iterator iter = Rainmeter->m_LogData.begin();
+					std::list<CRainmeter::LOG_INFO>::const_iterator iter = Rainmeter->GetAboutLogData().begin();
 					LVITEM vitem;
 					vitem.mask = LVIF_TEXT;
 
 					int i = 0;
-					for ( ; iter != Rainmeter->m_LogData.end(); ++iter)
+					for ( ; iter != Rainmeter->GetAboutLogData().end(); ++iter)
 					{
 						if (i < count)
 						{

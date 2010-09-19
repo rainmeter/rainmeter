@@ -28,7 +28,6 @@
 #define LM_GETREVID            9265
 #define LM_REGISTERMESSAGE     9263
 #define LM_UNREGISTERMESSAGE   9264
-#define MAXABOUTLOGLINES	   20
 
 #ifdef _DEBUG
 #define DEBUGLOG DebugLog

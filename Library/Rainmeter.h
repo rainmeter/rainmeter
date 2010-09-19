@@ -195,7 +195,9 @@ public:
 	void StartLogging();
 	void StopLogging();
 	void DeleteLogFile();
-	std::list<LOG_INFO> m_LogData;
+
+	void AddAboutLogInfo(const LOG_INFO& logInfo);
+	const std::list<LOG_INFO>& GetAboutLogData() { return m_LogData; }
 
 	void SetDebug(bool debug);
 
@@ -278,6 +280,9 @@ private:
 	bool m_MenuActive;
 
 	bool m_Logging;
+
+	std::list<LOG_INFO> m_LogData;
+	CRITICAL_SECTION m_CsLogData;
 
 	std::wstring m_ConfigEditor;
 	std::wstring m_LogViewer;

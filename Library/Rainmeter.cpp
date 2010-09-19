@@ -1213,6 +1213,8 @@ CRainmeter::CRainmeter()
 
 	m_TrayWindow = NULL;
 
+	InitializeCriticalSection(&m_CsLogData);
+
 	INITCOMMONCONTROLSEX initCtrls;
 	initCtrls.dwSize = sizeof(INITCOMMONCONTROLSEX);
 	initCtrls.dwICC = ICC_TAB_CLASSES;
@@ -1253,6 +1255,8 @@ CRainmeter::~CRainmeter()
 	{
 		UpdateDesktopWorkArea(true);
 	}
+
+	DeleteCriticalSection(&m_CsLogData);
 
 	GdiplusShutdown(m_GDIplusToken);
 }
@@ -3729,6 +3733,19 @@ void CRainmeter::DeleteLogFile()
 			CSystem::RemoveFile(m_LogFile);
 		}
 	}
+}
+
+void CRainmeter::AddAboutLogInfo(const LOG_INFO& logInfo)
+{
+	EnterCriticalSection(&m_CsLogData);
+
+	m_LogData.push_front(logInfo);
+	if (m_LogData.size() > MAXABOUTLOGLINES)
+	{
+		m_LogData.pop_back();
+	}
+
+	LeaveCriticalSection(&m_CsLogData);
 }
 
 void CRainmeter::SetLogging(bool logging)

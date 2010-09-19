@@ -548,10 +548,9 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 		break;
 	}
 
-	Rainmeter->m_LogData.push_front(logInfo);
-	if (Rainmeter->m_LogData.size() > MAXABOUTLOGLINES)
+	if (Rainmeter)
 	{
-		Rainmeter->m_LogData.pop_back();
+		Rainmeter->AddAboutLogInfo(logInfo);
 	}
 
 	// Use the lsapi.dll version of the method if possible
