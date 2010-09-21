@@ -1739,11 +1739,11 @@ bool CMeterWindow::ReadSkin()
 	// Verify whether the file exists
 	if (_waccess(iniFile.c_str(), 0) == -1)
 	{
-		std::wstring message = L"Unable to refresh config \"";
+		std::wstring message = L"Unable to refresh skin \"";
 		message += m_SkinName.c_str();
-		message += L"\": Ini-file not found: \"";
+		message += L"\\";
 		message += m_SkinIniFile.c_str();
-		message += L"\"";
+		message += L"\": Ini-file not found.";
 		LSLog(LOG_DEBUG, APPNAME, message.c_str());
 		MessageBox(m_Window, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		return false;
@@ -1767,10 +1767,15 @@ bool CMeterWindow::ReadSkin()
 		{
 			wsprintf(buffer, L"%i.%i", appVersion / 1000000, (appVersion / 1000) % 1000);
 		}
-		text = L"This skin needs Rainmeter version ";
+
+		text = L"The skin \"";
+		text += m_SkinName;
+		text += L"\\";
+		text += m_SkinIniFile;
+		text += L"\" needs Rainmeter ";
 		text += buffer;
-		text += L" or newer.\nIt might not function as well as it should.\nYou should get an updated version or Rainmeter\nfrom http://www.rainmeter.net";
-		MessageBox(m_Window, text.c_str(), L"Rainmeter", MB_OK);
+		text += L" or newer.\nDownload the latest version of Rainmeter from www.rainmeter.net.";
+		MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 	}
 
 	m_Author = m_Parser.ReadString(L"Rainmeter", L"Author", L"");
@@ -2014,7 +2019,16 @@ bool CMeterWindow::ReadSkin()
 
 	if (m_Meters.empty())
 	{
-		MessageBox(m_Window, L"Your configuration file doesn't contain any meters!\nYour skin's ini-file might be out of date.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		std::wstring text;
+		text = L"The skin \"";
+		text += m_SkinName;
+		text += L"\\";
+		text += m_SkinIniFile;
+		text += L"\" does not contain any meters.\nDo you want to deactivate this skin?";
+		if (IDYES == MessageBox(m_Window, text.c_str(), APPNAME, MB_YESNO | MB_TOPMOST | MB_ICONEXCLAMATION))
+		{
+			m_Rainmeter->DeactivateConfig(this, -1);
+		}
 	}
 	else
 	{
