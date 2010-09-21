@@ -214,7 +214,7 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-        throw CError(std::wstring(L"No such BitmapAlign: ") + align, __LINE__, __FILE__);
+		throw CError(std::wstring(L"BitmapAlign=") + align + L" is not valid in meter [" + m_Name + L"].", __LINE__, __FILE__);
 	}
 
 	if (m_Initialized)

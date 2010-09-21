@@ -406,7 +406,7 @@ void CMeter::BindMeasure(std::list<CMeasure*>& measures)
 	// The meter is not bound to anything
 	if (m_MeasureName.empty())
 	{
-	    throw CError(std::wstring(L"The meter [") + m_Name + L"] is not bound to anything!", __LINE__, __FILE__);
+		throw CError(std::wstring(L"The meter [") + m_Name + L"] is not bound to anything!", __LINE__, __FILE__);
 	}
 
 	// Go through the list and check it there is a measure for us
@@ -420,8 +420,8 @@ void CMeter::BindMeasure(std::list<CMeasure*>& measures)
 		}
 	}
 
-    // Error :)
-    throw CError(std::wstring(L"The meter [") + m_Name + L"] cannot be bound with [" + m_MeasureName + L"]!", __LINE__, __FILE__);
+	// Error :)
+	throw CError(std::wstring(L"The meter [") + m_Name + L"] cannot be bound with [" + m_MeasureName + L"]!", __LINE__, __FILE__);
 }
 
 /*
@@ -470,8 +470,8 @@ CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow)
 		return new CMeterButton(meterWindow);
 	} 
 
-    // Error
-    throw CError(std::wstring(L"No such meter: ") + meter, __LINE__, __FILE__);
+	// Error
+	throw CError(std::wstring(L"Meter=") + meter + L" is not valid.", __LINE__, __FILE__);
 
 	return NULL;
 }

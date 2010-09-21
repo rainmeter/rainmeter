@@ -541,7 +541,7 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-        throw CError(std::wstring(L"No such ImageFlip: ") + flip, __LINE__, __FILE__);
+		throw CError(std::wstring(L"ImageFlip=") + flip + L" is not valid in meter [" + m_Name + L"].", __LINE__, __FILE__);
 	}
 
 	m_Rotate = (REAL)parser.ReadFloat(section, L"ImageRotate", 0.0);

@@ -201,7 +201,7 @@ void CMeterString::Initialize()
 
 			if (m_FontSize != 0)
 			{
-			    throw CError(std::wstring(L"Unable to create font: ") + m_FontFace, __LINE__, __FILE__);
+				throw CError(std::wstring(L"Unable to create font: ") + m_FontFace, __LINE__, __FILE__);
 			}
 		}
 	}
@@ -301,7 +301,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-        throw CError(std::wstring(L"No such StringAlign: ") + align, __LINE__, __FILE__);
+		throw CError(std::wstring(L"StringAlign=") + align + L" is not valid in meter [" + m_Name + L"].", __LINE__, __FILE__);
 	}
 
 	std::wstring stringCase;
@@ -323,8 +323,10 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	{
 		m_textCase = TEXTCASE_PROPER;
 	}
-
-	
+	else
+	{
+		throw CError(std::wstring(L"StringCase=") + stringCase + L" is not valid in meter [" + m_Name + L"].", __LINE__, __FILE__);
+	}
 
 	std::wstring style;
 	style = parser.ReadString(section, L"StringStyle", L"NORMAL");
@@ -347,7 +349,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-        throw CError(std::wstring(L"No such StringStyle: ") + style, __LINE__, __FILE__);
+		throw CError(std::wstring(L"StringStyle=") + style + L" is not valid in meter [" + m_Name + L"].", __LINE__, __FILE__);
 	}
 
 	std::wstring effect;
@@ -367,7 +369,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-        throw CError(std::wstring(L"No such StringEffect: ") + effect, __LINE__, __FILE__);
+		throw CError(std::wstring(L"StringEffect=") + effect + L" is not valid in meter [" + m_Name + L"].", __LINE__, __FILE__);
 	}
 
 	if (-1 != (int)parser.ReadFormula(section, L"W", -1) && -1 != (int)parser.ReadFormula(section, L"H", -1))
@@ -613,7 +615,7 @@ void CMeterString::BindMeasure(std::list<CMeasure*>& measures)
 
 		if (i == measures.end())
 		{
-	        throw CError(std::wstring(L"The meter [") + m_Name + L"] cannot be bound with [" + (*j) + L"]!", __LINE__, __FILE__);
+			throw CError(std::wstring(L"The meter [") + m_Name + L"] cannot be bound with [" + (*j) + L"]!", __LINE__, __FILE__);
 		}
 	}
 	CMeter::SetAllMeasures(m_Measures);

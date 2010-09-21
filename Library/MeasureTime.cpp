@@ -59,10 +59,10 @@ int GetYearDay(int year, int month, int day)
 CMeasureTime::CMeasureTime(CMeterWindow* meterWindow) : CMeasure(meterWindow)
 {
 	/* Set time zone from TZ environment variable. If TZ is not set,
-     * the operating system is queried to obtain the default value 
-     * for the variable. 
-     */
-    _tzset();
+	 * the operating system is queried to obtain the default value 
+	 * for the variable. 
+	 */
+	tzset();
 
 	m_DeltaTime.QuadPart = 0;
 	m_Time.QuadPart = 0;

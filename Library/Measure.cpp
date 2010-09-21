@@ -679,8 +679,8 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow)
 		return new CMeasureCalc(meterWindow);
 	}
 
-    // Error
-    throw CError(std::wstring(L"No such measure: ") + measure, __LINE__, __FILE__);
+	// Error
+	throw CError(std::wstring(L"Measure=") + measure + L" is not valid.", __LINE__, __FILE__);
 
 	return NULL;
 }

@@ -207,8 +207,9 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		} 
 		else
 		{
-			std::wstring error = L"No such SysInfoType: ";
+			std::wstring error = L"SysInfoType=";
 			error += type;
+			error += L" is not valid in measure [" + section + L"]." ;
 			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		}
 	}
