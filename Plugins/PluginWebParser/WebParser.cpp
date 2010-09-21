@@ -730,10 +730,10 @@ double Update2(UINT id)
 					}
 					else  // error
 					{
-						std::wstring error = L"WebParser: Failed to begin download thread: [";
-						error += urlData->section;
-						error += L"]";
-						Log(error.c_str());
+						std::wstring log = L"WebParser: [";
+						log += urlData->section;
+						log += L"] Failed to begin download thread.";
+						Log(log.c_str());
 					}
 				}
 
@@ -774,10 +774,10 @@ double Update2(UINT id)
 						}
 						else  // error
 						{
-							std::wstring error = L"WebParser: Failed to begin thread: [";
-							error += urlData->section;
-							error += L"]";
-							Log(error.c_str());
+							std::wstring log = L"WebParser: [";
+							log += urlData->section;
+							log += L"] Failed to begin thread.";
+							Log(log.c_str());
 						}
 					}
 
@@ -820,9 +820,11 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 			}
 			else
 			{
-				std::wstring error = L"WebParser: Failed to dump debug data: ";
-				error += urlData->debugFileLocation;
-				Log(error.c_str());
+				std::wstring log = L"WebParser: [";
+				log += urlData->section;
+				log += L"] Failed to dump debug data: ";
+				log += urlData->debugFileLocation;
+				Log(log.c_str());
 			}
 		}
 
@@ -894,7 +896,10 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 			if (rc == 0)
 			{
 				// The output vector wasn't big enough
-				Log(L"WebParser: Too many substrings!");
+				std::wstring log = L"WebParser: [";
+				log += urlData->section;
+				log += L"] Too many substrings!";
+				Log(log.c_str());
 			}
 			else
 			{
@@ -904,13 +909,21 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 					{
 						for (int i = 0; i < rc; ++i)
 						{
-							WCHAR buffer[512];
 							const char* substring_start = parseData + ovector[2 * i];
 							int substring_length = ovector[2 * i + 1] - ovector[2 * i];
 							substring_length = min(substring_length, 256);
 							std::string tmpStr(substring_start, substring_length);
-							wsprintf(buffer, L"WebParser: (Index %2d) %s", i, ConvertUTF8ToWide(tmpStr.c_str()).c_str());
-							Log(buffer);
+
+							WCHAR buffer[32];
+							wsprintf(buffer, L"%2d", i);
+
+							std::wstring log = L"WebParser: [";
+							log += urlData->section;
+							log += L"] (Index ";
+							log += buffer;
+							log += L") ";
+							log += ConvertUTF8ToWide(tmpStr.c_str());
+							Log(log.c_str());
 						}
 					}
 
@@ -924,11 +937,26 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 				}
 				else
 				{
-					Log(L"WebParser: Not enough substrings!");
+					std::wstring log = L"WebParser: [";
+					log += urlData->section;
+					log += L"] Not enough substrings!";
+					Log(log.c_str());
 
 					// Clear the old result 
 					EnterCriticalSection(&g_CriticalSection);
 					urlData->resultString.clear();
+					if (urlData->download)
+					{
+						if (urlData->downloadFile.empty())  // cache mode
+						{
+							if (!urlData->downloadedFile.empty())
+							{
+								// Delete old downloaded file
+								DeleteFile(urlData->downloadedFile.c_str());
+							}
+						}
+						urlData->downloadedFile.clear();
+					}
 					LeaveCriticalSection(&g_CriticalSection);
 				}
 
@@ -980,10 +1008,10 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 									}
 									else  // error
 									{
-										std::wstring error = L"WebParser: Failed to begin download thread: [";
-										error += (*i).second->section;
-										error += L"]";
-										Log(error.c_str());
+										std::wstring log = L"WebParser: [";
+										log += (*i).second->section;
+										log += L"] Failed to begin download thread.";
+										Log(log.c_str());
 									}
 								}
 
@@ -992,11 +1020,26 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 						}
 						else
 						{
-							Log(L"WebParser: Not enough substrings!");
+							std::wstring log = L"WebParser: [";
+							log += (*i).second->section;
+							log += L"] Not enough substrings!";
+							Log(log.c_str());
 
 							// Clear the old result 
 							EnterCriticalSection(&g_CriticalSection);
 							((*i).second)->resultString.clear();
+							if ((*i).second->download)
+							{
+								if ((*i).second->downloadFile.empty())  // cache mode
+								{
+									if (!(*i).second->downloadedFile.empty())
+									{
+										// Delete old downloaded file
+										DeleteFile((*i).second->downloadedFile.c_str());
+									}
+								}
+								(*i).second->downloadedFile.clear();
+							}
 							LeaveCriticalSection(&g_CriticalSection);
 						}
 					}
@@ -1006,9 +1049,15 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 		else
 		{
 			// Matching failed: handle error cases
-			WCHAR buffer[64];
-			wsprintf(buffer, L"WebParser: Matching error! (%d)\n", rc);
-			Log(buffer);
+			WCHAR buffer[32];
+			wsprintf(buffer, L"%d", rc);
+
+			std::wstring log = L"WebParser: [";
+			log += urlData->section;
+			log += L"] Matching error! (";
+			log += buffer;
+			log += L")\n";
+			Log(log.c_str());
 
 			EnterCriticalSection(&g_CriticalSection);
 			urlData->resultString = urlData->errorString;
@@ -1034,9 +1083,17 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 	else
 	{
 		// Compilation failed: print the error message and exit
-		WCHAR buffer[512];
-		wsprintf(buffer, L"WebParser: PCRE compilation failed at offset %d: %s\n", erroffset, ConvertAsciiToWide(error).c_str());
-		Log(buffer);
+		WCHAR buffer[32];
+		wsprintf(buffer, L"%d", erroffset);
+
+		std::wstring log = L"WebParser: [";
+		log += urlData->section;
+		log += L"] PCRE compilation failed at offset ";
+		log += buffer;
+		log += L": ";
+		log += ConvertAsciiToWide(error);
+		log += L"\n";
+		Log(log.c_str());
 	}
 
 	if (urlData->download)
@@ -1050,10 +1107,10 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 		}
 		else  // error
 		{
-			std::wstring error = L"WebParser: Failed to begin download thread: [";
-			error += urlData->section;
-			error += L"]";
-			Log(error.c_str());
+			std::wstring log = L"WebParser: [";
+			log += urlData->section;
+			log += L"] Failed to begin download thread.";
+			Log(log.c_str());
 		}
 	}
 	else
@@ -1083,12 +1140,17 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 {
 	UrlData* urlData = (UrlData*)pParam;
+	const bool download = !urlData->downloadFile.empty();
+	bool ready = false;
 
 	std::wstring url;
 
 	if (urlData->regExp.empty() && urlData->resultString.empty())
 	{
-		url = urlData->url;
+		if (!urlData->url.empty() && urlData->url[0] != L'[')
+		{
+			url = urlData->url;
+		}
 	}
 	else
 	{
@@ -1126,8 +1188,6 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 
 	if (!url.empty())
 	{
-		bool download = !urlData->downloadFile.empty();
-
 		// Create the filename
 		WCHAR buffer[MAX_PATH] = {0};
 		std::wstring fullpath, directory;
@@ -1198,59 +1258,52 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			}
 		}
 
-		bool ready = true;
+		ready = true;
+
 		if (download)  // download mode
 		{
-			std::wstring error;
+			std::wstring log;
 
 			if (!PathFileExists(directory.c_str()) || !PathIsDirectory(directory.c_str()))
 			{
 				ready = false;
 
-				error = L"WebParser: Directory not exists: ";
-				error += directory;
-				error += L"\n";
-				Log(error.c_str());
+				log = L"WebParser: [";
+				log += urlData->section;
+				log += L"] Directory not exists: ";
+				log += directory;
+				log += L"\n";
+				Log(log.c_str());
 			}
 			else if (PathIsDirectory(fullpath.c_str()))
 			{
 				ready = false;
 
-				error = L"WebParser: Path is a directory, not a file: ";
-				error += fullpath;
-				error += L"\n";
-				Log(error.c_str());
+				log = L"WebParser: [";
+				log += urlData->section;
+				log += L"] Path is a directory, not a file: ";
+				log += fullpath;
+				log += L"\n";
+				Log(log.c_str());
 			}
-			else
+			else if (PathFileExists(fullpath.c_str()))
 			{
-				DeleteFile(fullpath.c_str());
-
-				if (PathFileExists(fullpath.c_str()))
+				DWORD attr = GetFileAttributes(fullpath.c_str());
+				if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_READONLY))
 				{
 					ready = false;
 
-					DWORD attr = GetFileAttributes(fullpath.c_str());
-					if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_READONLY))
-					{
-						error = L"WebParser: File is READ-ONLY: ";
-					}
-					else
-					{
-						error = L"WebParser: Failed to delete file: ";
-					}
-					error += fullpath;
-					error += L"\n";
-					Log(error.c_str());
+					log = L"WebParser: [";
+					log += urlData->section;
+					log += L"] File is READ-ONLY: ";
+					log += fullpath;
+					log += L"\n";
+					Log(log.c_str());
 				}
 			}
 		}
 		else  // cache mode
 		{
-			if (!urlData->downloadedFile.empty())
-			{
-				DeleteFile(urlData->downloadedFile.c_str());
-			}
-
 			EnterCriticalSection(&g_CriticalSection);
 
 			if (PathFileExists(fullpath.c_str()))
@@ -1269,7 +1322,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 				}
 
 				// Assign a serial number
-				size_t i = 1;
+				int i = 1;
 				do
 				{
 					wsprintf(buffer, L"_%i", i++);
@@ -1330,12 +1383,14 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			}
 
 			// Write some log info
-			std::wstring info = L"WebParser: Downloading url ";
-			info += url;
-			info += L" to ";
-			info += fullpath;
-			info += L"\n";
-			Log(info.c_str());
+			std::wstring log = L"WebParser: [";
+			log += urlData->section;
+			log += L"] Downloading url ";
+			log += url;
+			log += L" to ";
+			log += fullpath;
+			log += L"\n";
+			Log(log.c_str());
 
 			HRESULT resultCoInitialize = CoInitialize(NULL);  // requires before calling URLDownloadToFile function
 
@@ -1344,6 +1399,15 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			if (result == S_OK)
 			{
 				EnterCriticalSection(&g_CriticalSection);
+
+				if (!download)  // cache mode
+				{
+					if (!urlData->downloadedFile.empty())
+					{
+						// Delete old downloaded file
+						DeleteFile(urlData->downloadedFile.c_str());
+					}
+				}
 
 				// Convert LFN to 8.3 filename if the path contains blank character
 				if (fullpath.find_first_of(L' ') != std::wstring::npos)
@@ -1377,6 +1441,8 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			}
 			else
 			{
+				ready = false;
+
 				if (!download)  // cache mode
 				{
 					// Delete empty file
@@ -1384,11 +1450,14 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 				}
 
 				wsprintf(buffer, L"result=0x%08X, COM=0x%08X", result, resultCoInitialize);
-				std::wstring error = L"WebParser: Download failed (";
-				error += buffer;
-				error += L"): ";
-				error += url;
-				Log(error.c_str());
+
+				std::wstring log = L"WebParser: [";
+				log += urlData->section;
+				log += L"] Download failed (";
+				log += buffer;
+				log += L"): ";
+				log += url;
+				Log(log.c_str());
 			}
 
 			if (SUCCEEDED(resultCoInitialize))
@@ -1398,14 +1467,38 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 		}
 		else
 		{
-			std::wstring error = L"WebParser: Download failed: ";
-			error += url;
-			Log(error.c_str());
+			std::wstring log = L"WebParser: [";
+			log += urlData->section;
+			log += L"] Download failed: ";
+			log += url;
+			Log(log.c_str());
 		}
 	}
 	else
 	{
-		Log(L"WebParser: The url is empty.\n");
+		std::wstring log = L"WebParser: [";
+		log += urlData->section;
+		log += L"] The url is empty.\n";
+		Log(log.c_str());
+	}
+
+	if (!ready) // download failed
+	{
+		EnterCriticalSection(&g_CriticalSection);
+
+		if (!download) // cache mode
+		{
+			if (!urlData->downloadedFile.empty())
+			{
+				// Delete old downloaded file
+				DeleteFile(urlData->downloadedFile.c_str());
+			}
+		}
+
+		// Clear old downloaded filename
+		urlData->downloadedFile.clear();
+
+		LeaveCriticalSection(&g_CriticalSection);
 	}
 
 	EnterCriticalSection(&g_CriticalSection);
