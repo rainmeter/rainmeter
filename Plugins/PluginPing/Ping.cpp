@@ -162,7 +162,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			}
 			else
 			{
-				LSLog(LOG_DEBUG, L"Rainmeter", L"Unable to initialize Windows Sockets");
+				LSLog(LOG_DEBUG, L"Rainmeter", L"Unable to initialize Windows Sockets.");
 			}
 		}
 		valid = true;

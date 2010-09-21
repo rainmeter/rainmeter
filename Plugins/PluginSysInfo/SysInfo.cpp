@@ -209,7 +209,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		{
 			std::wstring error = L"No such SysInfoType: ";
 			error += type;
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
+			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		}
 	}
 
@@ -435,8 +435,8 @@ double Update2(UINT id)
 	{
 		if(GetSystemMetrics(SM_CMONITORS)>32) 
 		{
-			std::wstring error = L"That's alot of monitors! 32 is the max. ";
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
+			std::wstring error = L"That's alot of monitors! 32 is the max.";
+			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
 			exit(-1);
 		}
 		m_Monitors.count = 0;

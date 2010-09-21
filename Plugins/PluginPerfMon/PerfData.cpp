@@ -139,7 +139,7 @@ double Update2(UINT id)
 			}
 			else
 			{
-				LSLog(LOG_DEBUG, L"Rainmeter", L"PerfMon plugin works only in Win2K/XP.");
+				LSLog(LOG_DEBUG, L"Rainmeter", L"PerfMon plugin works only in Win2K and later.");
 			}
 		}
 	}

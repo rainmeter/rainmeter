@@ -692,5 +692,5 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow)
 */
 void CMeasure::ExecuteBang(const WCHAR* args)
 {
-	DebugLog(L"[%s] Doesn't support this bang: %s", m_Name.c_str(), args);
+	DebugLog(L"[%s] doesn't support this bang: %s", m_Name.c_str(), args);
 }

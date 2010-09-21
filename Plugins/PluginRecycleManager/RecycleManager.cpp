@@ -102,7 +102,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		{
 			std::wstring error = L"No such RecycleType: ";
 			error += type;
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
+			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		}
 	}
 	

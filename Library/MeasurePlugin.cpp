@@ -230,6 +230,6 @@ void CMeasurePlugin::ExecuteBang(const WCHAR* args)
 	}
 	else
 	{
-		DebugLog(L"[%s] Doesn't support bangs.", m_Name.c_str());
+		DebugLog(L"[%s] doesn't support bangs.", m_Name.c_str());
 	}
 }

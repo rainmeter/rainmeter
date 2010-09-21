@@ -308,9 +308,9 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	m_Rainmeter->SetCurrentParser(&m_Parser);
 
-	std::wstring dbg = L"Refreshing (Name: \"" + m_SkinName;
-	dbg += L"\" Ini: \"" + m_SkinIniFile; 
-	dbg += L"\")"; 
+	std::wstring dbg = L"Refreshing skin \"" + m_SkinName;
+	dbg += L"\\" + m_SkinIniFile; 
+	dbg += L"\""; 
 	LSLog(LOG_DEBUG, L"Rainmeter", dbg.c_str());
 	
 	m_Refreshing = true;
@@ -765,7 +765,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		}
 		else
 		{
-			DebugLog(L"Cannot parse parameters for !RainmeterMove");
+			DebugLog(L"Unable to parse parameters for !RainmeterMove");
 		}
 		break;
 
@@ -861,7 +861,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			}
 			else
 			{
-				DebugLog(L"Cannot parse parameters for !RainmeterLsBoxHook (%s)", arg);
+				DebugLog(L"Unable to parse parameters for !RainmeterLsBoxHook (%s)", arg);
 			}
 		}
 		break;
@@ -877,12 +877,12 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			}
 			else
 			{
-				DebugLog(L"Cannot parse the for !RainmeterMoveMeter");
+				DebugLog(L"Unable to parse coordinates for !RainmeterMoveMeter");
 			}
 		}
 		else
 		{
-			DebugLog(L"Cannot parse the coordinates for !RainmeterMoveMeter");
+			DebugLog(L"Unable to parse parameters for !RainmeterMoveMeter");
 		}
 		break;
 
@@ -924,7 +924,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			}
 			else
 			{
-				DebugLog(L"Cannot parse the !RainmeterPluginBang");
+				DebugLog(L"Unable to parse parameters for !RainmeterPluginBang");
 			}
 		}
 		break;
@@ -955,7 +955,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		}
 		else
 		{
-			DebugLog(L"Cannot parse parameters for !RainmeterSetVariable");
+			DebugLog(L"Unable to parse parameters for !RainmeterSetVariable");
 		}
 		break;
 	}

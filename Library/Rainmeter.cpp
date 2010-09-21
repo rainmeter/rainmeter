@@ -1493,7 +1493,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	if (c_Debug)
 	{
-		LSLog(LOG_DEBUG, APPNAME, L"Enumerating installed font families ...");
+		LSLog(LOG_DEBUG, APPNAME, L"Enumerating installed font families...");
 		CMeterString::EnumerateInstalledFontFamilies();
 	}
 
@@ -1506,7 +1506,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	if(m_ConfigStrings.empty())
 	{
 		std::wstring error = L"There are no available skins at:\n" + m_SkinPath;
-		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_ICONERROR);
+		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 	}
 
 	ReadGeneralSettings(m_IniFile);
@@ -1708,13 +1708,13 @@ void CRainmeter::CheckSkinVersions()
 							else
 							{
 								std::wstring strMessage = L"Failed to upgrade the config.\nUnable to backup the current config.";
-								MessageBox(NULL, strMessage.c_str(), APPNAME, MB_OK | MB_ICONERROR);
+								MessageBox(NULL, strMessage.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 							}
 						}
 						else
 						{
 							std::wstring strMessage = L"Failed to upgrade the config.\nThe version number contains illegal characters.";
-							MessageBox(NULL, strMessage.c_str(), APPNAME, MB_OK | MB_ICONERROR);
+							MessageBox(NULL, strMessage.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 						}
 					}
 				}
@@ -1846,11 +1846,11 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 
 		if (_waccess(skinIniPath.c_str(), 0) == -1)
 		{
-			std::wstring message = L"Unable to activate config \"";
+			std::wstring message = L"Unable to activate skin \"";
 			message += skinConfig.c_str();
-			message += L"\": Ini-file not found: \"";
+			message += L"\\";
 			message += skinIniFile.c_str();
-			message += L"\"";
+			message += L"\": Ini-file not found.";
 			LSLog(LOG_DEBUG, APPNAME, message.c_str());
 			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 			return;
@@ -2573,7 +2573,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		std::wstring error = L"Unknown !bang: ";
 		error += bang;
-		MessageBox(NULL, error.c_str(), APPNAME, MB_OK);
+		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		return FALSE;
 	}
 
@@ -2868,8 +2868,8 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 			if (!SetActiveConfig(skinName, skinIni))
 			{
 				std::wstring error;
-				error = L"The selected config (L" + skinName + L"\\" + skinIni + L") cannot be found.";
-				MessageBox(NULL, error.c_str(), APPNAME, MB_OK);
+				error = L"The selected skin (L" + skinName + L"\\" + skinIni + L") cannot be found.";
+				MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 			}
 			return;
 		}
@@ -3692,7 +3692,7 @@ void CRainmeter::StartLogging()
 
 			std::wstring message = L"Log file created at: ";
 			message += m_LogFile;
-			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_ICONINFORMATION);
+			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONINFORMATION);
 		}
 		else
 		{
@@ -3702,7 +3702,7 @@ void CRainmeter::StartLogging()
 
 			std::wstring message = L"Unable to create log file: ";
 			message += m_LogFile;
-			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_ICONERROR);
+			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		}
 	}
 	else
@@ -3723,7 +3723,7 @@ void CRainmeter::DeleteLogFile()
 	{
 		std::wstring message = L"Do you want to delete the following log file?\n";
 		message += m_LogFile;
-		int res = MessageBox(NULL, message.c_str(), L"Rainmeter", MB_YESNO | MB_ICONQUESTION);
+		int res = MessageBox(NULL, message.c_str(), L"Rainmeter", MB_YESNO | MB_TOPMOST | MB_ICONQUESTION);
 		if (res == IDYES)
 		{
 			// Disable logging

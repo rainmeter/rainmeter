@@ -122,7 +122,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	HMODULE module = GetModuleHandle(L"Rainmeter.dll");
 	if(module == NULL)
 	{
-		MessageBox(NULL, L"Unable to load Rainmeter.dll", L"Rainmeter", MB_OK);
+		MessageBox(NULL, L"Unable to load Rainmeter.dll", L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
 		return 0;
 	}
 
@@ -222,7 +222,7 @@ void Bang(const WCHAR* command)
 	{
 		if (_wcsicmp(L"!rainmeterquit", command) != 0)
 		{
-			MessageBox(NULL, L"Rainmeter is not running.\nUnable to send the !bang to it.", L"Rainmeter", MB_OK);
+			MessageBox(NULL, L"Rainmeter is not running.\nUnable to send the !bang to it.", L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
 		}
 	}
 }

@@ -113,7 +113,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				{
 					std::wstring error = L"No such SpeedFanScale: ";
 					error += scale;
-					MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
+					MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 				}
 			}
 		} 
@@ -129,7 +129,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		{
 			std::wstring error = L"No such SpeedFanType: ";
 			error += type;
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK);
+			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		}
 	}
 	

@@ -106,6 +106,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		if(( ERROR_SUCCESS != dwErr) || (&pIntfList->dwNumberOfItems <= 0)){
 			WCHAR buffer[256];
 			wsprintf(buffer, L"WifiStatus.dll: Unable to find any WLAN interfaces/adapters. Error code %d",(int) dwErr);
+			Log(buffer);
 			return 0;
 		}
 	}
