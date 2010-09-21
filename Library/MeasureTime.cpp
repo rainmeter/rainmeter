@@ -21,9 +21,6 @@
 #include "StdAfx.h"
 #include "MeasureTime.h"
 #include "Rainmeter.h"
-#include <time.h>
-#include <errno.h>
-#include <crtdbg.h>
 
 void MeasureTime_CRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved)
 {
@@ -62,7 +59,7 @@ CMeasureTime::CMeasureTime(CMeterWindow* meterWindow) : CMeasure(meterWindow)
 	 * the operating system is queried to obtain the default value 
 	 * for the variable. 
 	 */
-	tzset();
+	_tzset();
 
 	m_DeltaTime.QuadPart = 0;
 	m_Time.QuadPart = 0;

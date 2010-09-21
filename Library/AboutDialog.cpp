@@ -24,9 +24,6 @@
 #include "resource.h"
 #include "AboutDialog.h"
 #include "../revision-number.h"
-#include <commctrl.h>
-#include <string>
-#include <map>
 
 #define LOGTIMER 1
 

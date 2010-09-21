@@ -21,7 +21,6 @@
 #include "Measure.h"
 #include "Error.h"
 #include "Rainmeter.h"
-#include <math.h>
 
 extern CRainmeter* Rainmeter;
 

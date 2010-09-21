@@ -38,6 +38,7 @@
 #include <Mmsystem.h>
 #include <shlobj.h>
 #include <shlwapi.h>
+#include <Wininet.h>
 #include <winperf.h>
 #include <Windns.h>
 #include <Ipexport.h>
@@ -49,19 +50,24 @@
 #include <vector>
 #include <hash_map>
 #include <list>
+#include <set>
 #include <sstream>
 #include <ctime>
 #include <cstdlib>
+#include <sstream>
 #include <fstream>
 #include <iostream>
 #include <algorithm>
 
 // RUNTIME
 #include <stdio.h>
+#include <errno.h>
 #include <time.h>
 #include <math.h>
 #include <time.h>
 #include <assert.h>
 #include <io.h>
+#include <stdarg.h>
+#include <process.h>
 
 #endif

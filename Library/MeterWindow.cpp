@@ -17,21 +17,15 @@
 */
 
 #include "StdAfx.h"
-#include <windows.h>
-#include <gdiplus.h>
 #include "MeterWindow.h"
 #include "Rainmeter.h"
 #include "System.h"
 #include "Error.h"
-#include <math.h>
-#include <time.h>
 #include "Meter.h"
 #include "Measure.h"
 #include "AboutDialog.h"
 #include "resource.h"
 #include "Litestep.h"
-#include <Mmsystem.h>
-#include <assert.h>
 #include "MeasureCalc.h"
 #include "MeasureNet.h"
 #include "MeasurePlugin.h"

@@ -19,9 +19,7 @@
 #include "StdAfx.h"
 #include "MeasureCalc.h"
 #include "Rainmeter.h"
-#include <cstdlib> 
-#include <ctime> 
-#include <sstream>  
+
 using namespace std;
 
 hqStrMap* CMeasureCalc::c_VarMap = NULL;

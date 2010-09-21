@@ -19,8 +19,6 @@
 #include "StdAfx.h"
 #include "Group.h"
 #include "ConfigParser.h"
-#include <vector>
-#include <algorithm>
 
 /*
 ** CGroup

@@ -17,12 +17,8 @@
 */
 
 #include "StdAfx.h"
-#include <windows.h>
 #include "Litestep.h"
 #include "Rainmeter.h"
-#include <string>
-#include <Wininet.h>
-#include <process.h>
 
 extern CRainmeter* Rainmeter;
 

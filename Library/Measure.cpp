@@ -36,7 +36,6 @@
 #include "Rainmeter.h"
 #include "Error.h"
 #include "Litestep.h"
-#include <algorithm>
 
 const int MEDIAN_SIZE = 7;
 

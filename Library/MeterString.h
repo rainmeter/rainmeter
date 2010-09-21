@@ -21,6 +21,7 @@
 
 #include "Meter.h"
 #include "MeterWindow.h"
+
 namespace Gdiplus
 {
 class Font;

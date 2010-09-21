@@ -21,10 +21,6 @@
 #include "Error.h"
 #include "Rainmeter.h"
 #include "System.h"
-#include <shellapi.h>
-#include <crtdbg.h>
-#include <stdio.h>
-#include <stdarg.h>
 
 extern CRainmeter* Rainmeter;
 

@@ -19,7 +19,6 @@
 #include "StdAfx.h"
 #include "MeasureUptime.h"
 #include "Rainmeter.h"
-#include <time.h>
 
 /*
 ** CMeasureUptime

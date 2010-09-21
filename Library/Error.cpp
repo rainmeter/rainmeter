@@ -18,7 +18,6 @@
 
 #include "StdAfx.h"
 #include "Error.h"
-#include <stdio.h>
 
 const WCHAR* CError::c_ErrorStrings[] = 
 {

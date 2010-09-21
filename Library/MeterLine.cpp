@@ -20,8 +20,6 @@
 #include "MeterLine.h"
 #include "Measure.h"
 #include "Error.h"
-#include <crtdbg.h>
-#include <gdiplus.h>
 
 using namespace Gdiplus;
 

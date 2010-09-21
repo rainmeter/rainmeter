@@ -20,12 +20,12 @@
 #define __RAINMETER_H__
 
 #include <windows.h>
-#include "Litestep.h"
-#include "MeterWindow.h"
-#include "TrayWindow.h"
 #include <map>
 #include <vector>
 #include <string>
+#include "Litestep.h"
+#include "MeterWindow.h"
+#include "TrayWindow.h"
 
 #define MAX_LINE_LENGTH 4096
 

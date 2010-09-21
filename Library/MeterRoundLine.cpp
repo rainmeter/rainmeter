@@ -20,9 +20,6 @@
 #include "MeterRoundLine.h"
 #include "Measure.h"
 #include "Error.h"
-#include <crtdbg.h>
-#include <math.h>
-#include <gdiplus.h>
 
 using namespace Gdiplus;
 #define PI 3.14159265

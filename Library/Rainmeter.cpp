@@ -25,14 +25,6 @@
 #include "MeterString.h"
 #include "Resource.h"
 #include "UpdateCheck.h"
-#include <assert.h>
-#include <time.h>
-#include <commctrl.h>
-#include <gdiplus.h>
-#include <fstream>
-#include <iostream>
-#include <shlobj.h>
-#include <shlwapi.h>
 
 using namespace Gdiplus;
 

@@ -25,8 +25,6 @@
 #include "Error.h"
 #include "RainmeterQuery.h"
 #include "../revision-number.h"
-#include <io.h>
-#include <ShellAPI.h>
 
 #define TRAYTIMER 3
 
