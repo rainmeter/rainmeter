@@ -230,7 +230,7 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 										ListView_InsertItem(widget, &vitem);
 									}
 
-									if (val && wcslen(val) > 0)
+									if (val)
 									{
 										ListView_SetItemText(widget, index, 1, (WCHAR*)val);
 									}
