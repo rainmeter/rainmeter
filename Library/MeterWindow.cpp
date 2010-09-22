@@ -2018,10 +2018,19 @@ bool CMeterWindow::ReadSkin()
 		text += m_SkinName;
 		text += L"\\";
 		text += m_SkinIniFile;
-		text += L"\" does not contain any meters.\nDo you want to deactivate this skin?";
-		if (IDYES == MessageBox(m_Window, text.c_str(), APPNAME, MB_YESNO | MB_TOPMOST | MB_ICONEXCLAMATION))
+		if (m_Measures.empty())
 		{
+			text += L"\" does not contain\nany valid meters or measures and will be deactivated.\n\nThe file may be damaged or not a Rainmeter skin file.";
+			MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 			m_Rainmeter->DeactivateConfig(this, -1);
+		}
+		else
+		{
+			text += L"\" does not contain any meters.\nDo you want to deactivate this skin?";
+			if (IDYES == MessageBox(m_Window, text.c_str(), APPNAME, MB_YESNO | MB_TOPMOST | MB_ICONEXCLAMATION))
+			{
+				m_Rainmeter->DeactivateConfig(this, -1);
+			}
 		}
 	}
 	else
