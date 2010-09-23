@@ -113,7 +113,9 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				{
 					std::wstring error = L"SpeedFanScale=";
 					error += scale;
-					error += L" is not valid in measure [" + section + L"]." ;
+					error += L" is not valid in measure [";
+					error += section;
+					error += L"].";
 					MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 				}
 			}
@@ -130,7 +132,9 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		{
 			std::wstring error = L"SpeedFanType=";
 			error += type;
-			error += L" is not valid in measure [" + section + L"]." ;
+			error += L" is not valid in measure [";
+			error += section;
+			error += L"].";
 			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		}
 	}
