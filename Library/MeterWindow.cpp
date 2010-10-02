@@ -3068,6 +3068,7 @@ LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			MapWindowPoints(NULL, m_Window, &pos, 1);
 		}
 
+		while (DoMoveAction(pos.x, pos.y, MOUSE_LEAVE)) ;
 		while (DoMoveAction(pos.x, pos.y, MOUSE_OVER)) ;
 
 		// Handle buttons
@@ -4257,28 +4258,31 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 		}
 		else
 		{
-			if ((*j)->IsMouseOver())
+			if (mouse == MOUSE_LEAVE)
 			{
-				// Handle button
-				if (m_HasButtons)
+				if ((*j)->IsMouseOver())
 				{
-					CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
-					if (button)
+					// Handle button
+					if (m_HasButtons)
 					{
-						if (button->IsExecutable())
+						CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
+						if (button)
 						{
-							button->SetExecutable(false);
+							if (button->IsExecutable())
+							{
+								button->SetExecutable(false);
+							}
 						}
 					}
-				}
 
-				//DebugLog(L"MeterLeave: %s - [%s]", m_SkinName.c_str(), (*j)->GetName());
-				(*j)->SetMouseOver(false);
+					//DebugLog(L"MeterLeave: %s - [%s]", m_SkinName.c_str(), (*j)->GetName());
+					(*j)->SetMouseOver(false);
 
-				if (!((*j)->GetMouseLeaveAction().empty()))
-				{
-					m_Rainmeter->ExecuteCommand((*j)->GetMouseLeaveAction().c_str(), this);
-					return true;
+					if (!((*j)->GetMouseLeaveAction().empty()))
+					{
+						m_Rainmeter->ExecuteCommand((*j)->GetMouseLeaveAction().c_str(), this);
+						return true;
+					}
 				}
 			}
 		}
@@ -4305,17 +4309,20 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 	}
 	else
 	{
-		// Mouse leave happens when the mouse is outside the window
-		if (m_MouseOver)
+		if (mouse == MOUSE_LEAVE)
 		{
-			//DebugLog(L"Leave: %s", m_SkinName.c_str());
-			m_MouseOver = false;
-			SetMouseLeaveEvent(true);
-
-			if (!m_MouseLeaveAction.empty())
+			// Mouse leave happens when the mouse is outside the window
+			if (m_MouseOver)
 			{
-				m_Rainmeter->ExecuteCommand(m_MouseLeaveAction.c_str(), this);
-				return true;
+				//DebugLog(L"Leave: %s", m_SkinName.c_str());
+				m_MouseOver = false;
+				SetMouseLeaveEvent(true);
+
+				if (!m_MouseLeaveAction.empty())
+				{
+					m_Rainmeter->ExecuteCommand(m_MouseLeaveAction.c_str(), this);
+					return true;
+				}
 			}
 		}
 	}
