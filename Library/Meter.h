@@ -132,6 +132,7 @@ protected:
 	std::wstring m_ToolTipIcon;
 	unsigned int m_ToolTipWidth;
 	bool m_ToolTipType;
+	bool m_ToolTipHidden;
 
 	HWND m_ToolTipHandle;
 

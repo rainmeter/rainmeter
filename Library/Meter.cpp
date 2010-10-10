@@ -365,6 +365,7 @@ void CMeter::ReadConfig(const WCHAR* section)
 	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"", true);
 	m_ToolTipWidth = (int)parser.ReadFormula(section, L"ToolTipWidth", 1000);
 	m_ToolTipType = 0!=parser.ReadInt(section, L"ToolTipType", 0);
+	m_ToolTipHidden = 0!=parser.ReadInt(section, L"ToolTipHidden", 0);
 
 	m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
 
@@ -678,7 +679,14 @@ void CMeter::UpdateToolTip()
 			DestroyIcon(hIcon);
 		}
 	}
-	SendMessage(hwndTT, TTM_ACTIVATE, !IsHidden(), NULL);
+	if (m_ToolTipHidden)
+	{
+		SendMessage(hwndTT, TTM_ACTIVATE, false, NULL);
+	}
+	else
+	{
+		SendMessage(hwndTT, TTM_ACTIVATE, !IsHidden(), NULL);
+	}
 }
 
 /*
