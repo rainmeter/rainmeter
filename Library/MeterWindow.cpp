@@ -980,7 +980,10 @@ void CMeterWindow::ShowMeter(const WCHAR* name, bool group)
 		(*j)->Show();
 		if ((*j)->GetToolTipHandle() != NULL)
 		{
-			SendMessage((*j)->GetToolTipHandle(), TTM_ACTIVATE, TRUE, NULL);
+			if (!(*j)->IsToolTipHidden())
+			{
+				SendMessage((*j)->GetToolTipHandle(), TTM_ACTIVATE, TRUE, NULL);
+			}
 		}
 		m_ResetRegion = true;	// Need to recalculate the window region
 		if (!group) return;
@@ -1822,6 +1825,7 @@ bool CMeterWindow::ReadSkin()
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", 1000);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", 100);
 	m_MouseActionCursor = 0 != m_Parser.ReadInt(L"Rainmeter", L"MouseActionCursor", 1);
+	m_ToolTipHidden = 0 != m_Parser.ReadInt(L"Rainmeter", L"ToolTipHidden", 0);
 
 	// Checking for localfonts
 	std::wstring localFont = m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"");
@@ -1980,9 +1984,14 @@ bool CMeterWindow::ReadSkin()
 					{
 						meter->SetName(strSection.c_str());
 						
-						if(m_MouseActionCursor == false)
+						if (m_MouseActionCursor == false)
 						{
 							meter->SetMouseActionCursor(false);
+						}
+
+						if (m_ToolTipHidden == true)
+						{
+							meter->SetToolTipHidden(true);
 						}
 
 						meter->ReadConfig(strSection.c_str());

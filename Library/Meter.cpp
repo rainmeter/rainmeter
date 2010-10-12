@@ -61,6 +61,7 @@ CMeter::CMeter(CMeterWindow* meterWindow)
 	m_Initialized = false;
 	m_HasMouseAction = false;
 	m_MouseActionCursor = true;
+	m_ToolTipHidden = false;
 
 	m_ToolTipHandle = NULL;
 
@@ -365,7 +366,7 @@ void CMeter::ReadConfig(const WCHAR* section)
 	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"", true);
 	m_ToolTipWidth = (int)parser.ReadFormula(section, L"ToolTipWidth", 1000);
 	m_ToolTipType = 0!=parser.ReadInt(section, L"ToolTipType", 0);
-	m_ToolTipHidden = 0!=parser.ReadInt(section, L"ToolTipHidden", 0);
+	m_ToolTipHidden = 0!=parser.ReadInt(section, L"ToolTipHidden", m_ToolTipHidden);
 
 	m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
 
@@ -679,9 +680,10 @@ void CMeter::UpdateToolTip()
 			DestroyIcon(hIcon);
 		}
 	}
+
 	if (m_ToolTipHidden)
 	{
-		SendMessage(hwndTT, TTM_ACTIVATE, false, NULL);
+		SendMessage(hwndTT, TTM_ACTIVATE, FALSE, NULL);
 	}
 	else
 	{

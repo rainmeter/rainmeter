@@ -72,6 +72,8 @@ public:
 	const std::wstring& GetToolTipText() { return m_ToolTipText; };
 	HWND GetToolTipHandle() { return m_ToolTipHandle; };
 	void SetToolTipHandle(HWND handle) { m_ToolTipHandle = handle; };
+	void SetToolTipHidden(bool b) { m_ToolTipHidden = b; };
+	bool IsToolTipHidden() { return m_ToolTipHidden; };
 
 	void CreateToolTip(CMeterWindow* meterWindow);
 	void UpdateToolTip();
@@ -131,6 +133,7 @@ protected:
 	std::wstring m_ToolTipTitle;
 	std::wstring m_ToolTipIcon;
 	unsigned int m_ToolTipWidth;
+	unsigned int m_ToolTipDelay;
 	bool m_ToolTipType;
 	bool m_ToolTipHidden;
 

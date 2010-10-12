@@ -373,6 +373,7 @@ private:
 	Gdiplus::PrivateFontCollection* m_FontCollection;
 
 	bool m_MouseActionCursor;
+	bool m_ToolTipHidden;
 };
 
 #endif
