@@ -43,7 +43,7 @@ CMeterBar::CMeterBar(CMeterWindow* meterWindow) : CMeterImage(meterWindow)
 	m_Flip = false;
 
 	m_ImageWidthString = L"ImageW";
-	m_ImageWidthString = L"ImageH";
+	m_ImageHeightString = L"ImageH";
 }
 
 /*

@@ -71,7 +71,7 @@ CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow)
 	m_Rotate = 0.0f;
 
 	m_ImageWidthString = L"W";
-	m_ImageWidthString = L"H";
+	m_ImageHeightString = L"H";
 }
 
 /*

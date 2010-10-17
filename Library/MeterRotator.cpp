@@ -37,6 +37,9 @@ CMeterRotator::CMeterRotator(CMeterWindow* meterWindow) : CMeterImage(meterWindo
 {
 	m_Bitmap = NULL;
 	m_Value = 0.0;
+
+	m_ImageWidthString = L"ImageW";
+	m_ImageHeightString = L"ImageH";
 }
 
 /*
