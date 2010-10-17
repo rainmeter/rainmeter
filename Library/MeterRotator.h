@@ -19,10 +19,9 @@
 #ifndef __METERROTATOR_H__
 #define __METERROTATOR_H__
 
-#include "Meter.h"
-#include "MeterWindow.h"
+#include "MeterImage.h"
 
-class CMeterRotator : public CMeter
+class CMeterRotator : public CMeterImage
 {
 public:
 	CMeterRotator(CMeterWindow* meterWindow);
@@ -34,8 +33,7 @@ public:
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 
 private:
-	Gdiplus::Bitmap* m_Bitmap;		// The bar bitmap
-	std::wstring m_ImageName;		// Name of the image
+
 	double m_OffsetX;
 	double m_OffsetY;
 	double m_StartAngle;

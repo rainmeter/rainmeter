@@ -33,7 +33,7 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeterRotator::CMeterRotator(CMeterWindow* meterWindow) : CMeter(meterWindow)
+CMeterRotator::CMeterRotator(CMeterWindow* meterWindow) : CMeterImage(meterWindow)
 {
 	m_Bitmap = NULL;
 	m_Value = 0.0;
@@ -47,7 +47,6 @@ CMeterRotator::CMeterRotator(CMeterWindow* meterWindow) : CMeter(meterWindow)
 */
 CMeterRotator::~CMeterRotator()
 {
-	if(m_Bitmap != NULL) delete m_Bitmap;
 }
 
 /*
@@ -63,16 +62,16 @@ void CMeterRotator::Initialize()
 	// Load the bitmaps if defined
 	if(!m_ImageName.empty())
 	{
-		if (m_Bitmap != NULL) delete m_Bitmap;
-		m_Bitmap = new Bitmap(m_ImageName.c_str());
-		Status status = m_Bitmap->GetLastStatus();
-		if(Ok != status)
-		{
-			DebugLog(L"Bitmap image not found: %s", m_ImageName.c_str());
+		// Since loading the image redefines the width of the meter we must 
+		// store the width and height that were defined.
+		int Height, Width;
+		Height = m_H;
+		Width = m_W;
 
-			delete m_Bitmap;
-			m_Bitmap = NULL;
-		}
+		LoadImage(false);
+
+		m_W = Width;
+		m_H = Height;
 	}
 	else
 	{
@@ -96,7 +95,7 @@ void CMeterRotator::ReadConfig(const WCHAR* section)
 	std::wstring oldImageName = m_ImageName;
 
 	// Read common configs
-	CMeter::ReadConfig(section);
+	CMeterImage::ReadConfig(section);
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
@@ -171,13 +170,15 @@ bool CMeterRotator::Draw(Graphics& graphics)
 	graphics.RotateTransform(angle);
 	graphics.TranslateTransform((REAL)-m_OffsetX, (REAL)-m_OffsetY);
 
-	if(m_Bitmap)
+	Bitmap* drawBitmap = (m_BitmapTint) ? m_BitmapTint : m_Bitmap;
+
+	if(drawBitmap)
 	{
-		UINT width = m_Bitmap->GetWidth();
-		UINT height = m_Bitmap->GetHeight();
+		UINT width = drawBitmap->GetWidth();
+		UINT height = drawBitmap->GetHeight();
 
 		// Blit the image
-		graphics.DrawImage(m_Bitmap, 0, 0, width, height);
+		graphics.DrawImage(drawBitmap, 0, 0, width, height);
 	}
 	graphics.ResetTransform();
 

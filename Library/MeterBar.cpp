@@ -23,6 +23,7 @@
 #include "Litestep.h"
 #include "Rainmeter.h"
 
+
 using namespace Gdiplus;
 
 extern CRainmeter* Rainmeter;
@@ -33,13 +34,16 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeterBar::CMeterBar(CMeterWindow* meterWindow) : CMeter(meterWindow)
+CMeterBar::CMeterBar(CMeterWindow* meterWindow) : CMeterImage(meterWindow)
 {
 	m_Color = 0;
 	m_Bitmap = NULL;
 	m_Value = 0.0;
 	m_Border = 0;
 	m_Flip = false;
+
+	m_ImageWidthString = L"ImageW";
+	m_ImageWidthString = L"ImageH";
 }
 
 /*
@@ -50,7 +54,7 @@ CMeterBar::CMeterBar(CMeterWindow* meterWindow) : CMeter(meterWindow)
 */
 CMeterBar::~CMeterBar()
 {
-	if(m_Bitmap != NULL) delete m_Bitmap;
+
 }
 
 /*
@@ -67,21 +71,15 @@ void CMeterBar::Initialize()
 	// Load the bitmaps if defined
 	if(!m_ImageName.empty())
 	{
-		if (m_Bitmap != NULL) delete m_Bitmap;
-		m_Bitmap = new Bitmap(m_ImageName.c_str());
-		Status status = m_Bitmap->GetLastStatus();
-		if(Ok != status)
-		{
-			DebugLog(L"Bitmap image not found: %s", m_ImageName.c_str());
 
-			delete m_Bitmap;
-			m_Bitmap = NULL;
-		}
-		else
+		LoadImage(false);
+
+		if(m_Bitmap)
 		{
 			m_W = m_Bitmap->GetWidth();
 			m_H = m_Bitmap->GetHeight();
 		}
+		
 	}
 	else
 	{
@@ -107,7 +105,7 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 	int oldH = m_H;
 
 	// Read common configs
-	CMeter::ReadConfig(section);
+	CMeterImage::ReadConfig(section);
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
@@ -180,41 +178,43 @@ bool CMeterBar::Draw(Graphics& graphics)
 	int x = GetX();
 	int y = GetY();
 
+	Bitmap* drawBitmap = (m_BitmapTint) ? m_BitmapTint : m_Bitmap;
+
 	if(m_Orientation == VERTICAL)
 	{
 		int size = (int)((m_H - 2 * m_Border) * m_Value);
 		size = min(m_H - 2 * m_Border, size);
 		size = max(0, size);
-
-		if (m_Bitmap)
+		
+		if (drawBitmap)
 		{
 			if (m_Flip) 
 			{
 				if (m_Border > 0)
 				{
 					Rect r2(x, y, m_W, m_Border);
-					graphics.DrawImage(m_Bitmap, r2, 0, 0, m_W, m_Border, UnitPixel);
+					graphics.DrawImage(drawBitmap, r2, 0, 0, m_W, m_Border, UnitPixel);
 					r2.Y = y + size + m_Border;
-					graphics.DrawImage(m_Bitmap, r2, 0, m_H - m_Border, m_W, m_Border, UnitPixel);
+					graphics.DrawImage(drawBitmap, r2, 0, m_H - m_Border, m_W, m_Border, UnitPixel);
 				}
 
 				// Blit the image
 				Rect r(x, y + m_Border, m_W, size);
-				graphics.DrawImage(m_Bitmap, r, 0, m_Border, m_W, size, UnitPixel);
+				graphics.DrawImage(drawBitmap, r, 0, m_Border, m_W, size, UnitPixel);
 			}
 			else
 			{
 				if (m_Border > 0)
 				{
 					Rect r2(x, y + m_H - size - 2 * m_Border, m_W, m_Border);
-					graphics.DrawImage(m_Bitmap, r2, 0, 0, m_W, m_Border, UnitPixel);
+					graphics.DrawImage(drawBitmap, r2, 0, 0, m_W, m_Border, UnitPixel);
 					r2.Y = y + m_H - m_Border;
-					graphics.DrawImage(m_Bitmap, r2, 0, m_H - m_Border, m_W, m_Border, UnitPixel);
+					graphics.DrawImage(drawBitmap, r2, 0, m_H - m_Border, m_W, m_Border, UnitPixel);
 				}
 
 				// Blit the image
 				Rect r(x, y + m_H - size - m_Border, m_W, size);
-				graphics.DrawImage(m_Bitmap, r, 0, m_H - size - m_Border, m_W, size, UnitPixel);
+				graphics.DrawImage(drawBitmap, r, 0, m_H - size - m_Border, m_W, size, UnitPixel);
 			}
 		}
 		else
@@ -238,35 +238,35 @@ bool CMeterBar::Draw(Graphics& graphics)
 		size = min(m_W - 2 * m_Border, size);
 		size = max(0, size);
 
-		if (m_Bitmap)
+		if (drawBitmap)
 		{
 			if (m_Flip) 
 			{
 				if (m_Border > 0)
 				{
 					Rect r2(x + m_W - size - 2 * m_Border, y, m_Border, m_H);
-					graphics.DrawImage(m_Bitmap, r2, 0, 0, m_Border, m_H, UnitPixel);
+					graphics.DrawImage(drawBitmap, r2, 0, 0, m_Border, m_H, UnitPixel);
 					r2.X = x + m_W - m_Border;
-					graphics.DrawImage(m_Bitmap, r2, m_W - m_Border, 0, m_Border, m_H, UnitPixel);
+					graphics.DrawImage(drawBitmap, r2, m_W - m_Border, 0, m_Border, m_H, UnitPixel);
 				}
 
 				// Blit the image
 				Rect r(x + m_W - size - m_Border, y, size, m_H);
-				graphics.DrawImage(m_Bitmap, r, m_W - size - m_Border, 0, size, m_H, UnitPixel);
+				graphics.DrawImage(drawBitmap, r, m_W - size - m_Border, 0, size, m_H, UnitPixel);
 			}
 			else
 			{
 				if (m_Border > 0)
 				{
 					Rect r2(x, y, m_Border, m_H);
-					graphics.DrawImage(m_Bitmap, r2, 0, 0, m_Border, m_H, UnitPixel);
+					graphics.DrawImage(drawBitmap, r2, 0, 0, m_Border, m_H, UnitPixel);
 					r2.X = x + size + m_Border;
-					graphics.DrawImage(m_Bitmap, r2, m_W - m_Border, 0, m_Border, m_H, UnitPixel);
+					graphics.DrawImage(drawBitmap, r2, m_W - m_Border, 0, m_Border, m_H, UnitPixel);
 				}
 
 				// Blit the image
 				Rect r(x + m_Border, y, size, m_H);
-				graphics.DrawImage(m_Bitmap, r, m_Border, 0, size, m_H, UnitPixel);
+				graphics.DrawImage(drawBitmap, r, m_Border, 0, size, m_H, UnitPixel);
 			}
 		}
 		else

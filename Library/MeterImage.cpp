@@ -69,6 +69,9 @@ CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow)
 	m_ColorMatrix = c_IdentifyMatrix;
 	m_Flip = RotateNoneFlipNone;
 	m_Rotate = 0.0f;
+
+	m_ImageWidthString = L"W";
+	m_ImageWidthString = L"H";
 }
 
 /*
@@ -102,7 +105,7 @@ void CMeterImage::Initialize()
 }
 
 /*
-** ReadConfig
+** LoadImage
 **
 ** Loads the image from disk
 **
@@ -429,11 +432,11 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 
 	m_PreserveAspectRatio = 0!=parser.ReadInt(section, L"PreserveAspectRatio", 0);
 
-	if (-1 != (int)parser.ReadFormula(section, L"W", -1))
+	if (-1 != (int)parser.ReadFormula(section, m_ImageWidthString.c_str(), -1))
 	{
 		m_WidthDefined = true;
 	}
-	if (-1 != (int)parser.ReadFormula(section, L"H", -1))
+	if (-1 != (int)parser.ReadFormula(section, m_ImageHeightString.c_str(), -1))
 	{
 		m_HeightDefined = true;
 	}

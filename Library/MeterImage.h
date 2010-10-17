@@ -39,13 +39,15 @@ public:
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 	virtual void BindMeasure(std::list<CMeasure*>& measures);
 
-private:
+protected:
+	std::wstring m_ImageWidthString;
+	std::wstring m_ImageHeightString;
 	void LoadImage(bool bLoadAlways);
 	bool CompareColorMatrix(const Gdiplus::ColorMatrix& a, const Gdiplus::ColorMatrix& b);
 	void ApplyTint();
 	Gdiplus::Bitmap* TurnGreyscale();
 	void ApplyTransform();
-
+	
 	Gdiplus::Bitmap* m_Bitmap;			// The bitmap
 	Gdiplus::Bitmap* m_BitmapTint;		// The bitmap
 	std::wstring m_ImageName;			// Name of the image
