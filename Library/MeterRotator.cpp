@@ -113,8 +113,7 @@ void CMeterRotator::ReadConfig(const WCHAR* section)
 	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", 0);		// Typo
 	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", m_ValueRemainder);
 
-	if (m_Initialized &&
-		oldImageName != m_ImageName)
+	if (m_Initialized && oldImageName != m_ImageName || m_NeedsTinting || m_NeedsTransform)
 	{
 		Initialize();  // Reload the image
 	}

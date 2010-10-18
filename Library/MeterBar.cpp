@@ -136,7 +136,7 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 
 	if (m_Initialized)
 	{
-		if (oldImageName != m_ImageName)
+		if (oldImageName != m_ImageName || m_NeedsTinting || m_NeedsTransform)
 		{
 			Initialize();  // Reload the image
 		}
