@@ -144,7 +144,7 @@ public:
 
 	int Initialize(CRainmeter& Rainmeter);
 
-	CRainmeter* GetMainObject() { return m_Rainmeter; };
+	CRainmeter* GetMainObject() { return m_Rainmeter; }
 
 	void RunBang(BANGCOMMAND bang, const WCHAR* arg);
 
@@ -164,17 +164,17 @@ public:
 	void ChangeZPos(ZPOSITION zPos, bool all = false);
 	void FadeWindow(int from, int to);
 
-	Gdiplus::Bitmap* GetDoubleBuffer() { return m_DoubleBuffer; };
-	HWND GetWindow() { return m_Window; };
+	Gdiplus::Bitmap* GetDoubleBuffer() { return m_DoubleBuffer; }
+	HWND GetWindow() { return m_Window; }
 
-	CConfigParser& GetParser() { return m_Parser; };
+	CConfigParser& GetParser() { return m_Parser; }
 
-	const std::wstring& GetSkinAuthor() { return m_Author; };
-	const std::wstring& GetSkinName() { return m_SkinName; };
-	const std::wstring& GetSkinIniFile() { return m_SkinIniFile; };
+	const std::wstring& GetSkinAuthor() { return m_Author; }
+	const std::wstring& GetSkinName() { return m_SkinName; }
+	const std::wstring& GetSkinIniFile() { return m_SkinIniFile; }
 
-	std::list<CMeasure*>& GetMeasures() { return m_Measures; };
-	std::list<CMeter*>& GetMeters() { return m_Meters; };
+	std::list<CMeasure*>& GetMeasures() { return m_Measures; }
+	std::list<CMeter*>& GetMeters() { return m_Meters; }
 
 	ZPOSITION GetWindowZPosition() { return m_WindowZPosition; }
 	bool GetXPercentage() { return m_WindowXPercentage; }
@@ -205,7 +205,7 @@ public:
 
 	std::wstring MakePathAbsolute(std::wstring path);
 
-	Gdiplus::PrivateFontCollection* GetPrivateFontCollection(){ return m_FontCollection; }
+	Gdiplus::PrivateFontCollection* GetPrivateFontCollection() { return m_FontCollection; }
 
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

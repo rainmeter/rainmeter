@@ -333,11 +333,6 @@ void CMeterWindow::Refresh(bool init, bool all)
 		std::list<CMeter*>::iterator j = m_Meters.begin();
 		for( ; j != m_Meters.end(); ++j)
 		{
-			if ((*j)->GetToolTipHandle() != NULL)
-			{
-				DestroyWindow((*j)->GetToolTipHandle());
-				(*j)->SetToolTipHandle(NULL);
-			}
 			delete (*j);
 		}
 		m_Meters.clear();
@@ -978,13 +973,6 @@ void CMeterWindow::ShowMeter(const WCHAR* name, bool group)
 		}
 
 		(*j)->Show();
-		if ((*j)->GetToolTipHandle() != NULL)
-		{
-			if (!(*j)->IsToolTipHidden())
-			{
-				SendMessage((*j)->GetToolTipHandle(), TTM_ACTIVATE, TRUE, NULL);
-			}
-		}
 		m_ResetRegion = true;	// Need to recalculate the window region
 		if (!group) return;
 	}
@@ -1015,10 +1003,6 @@ void CMeterWindow::HideMeter(const WCHAR* name, bool group)
 		}
 
 		(*j)->Hide();
-		if ((*j)->GetToolTipHandle() != NULL)
-		{
-			SendMessage((*j)->GetToolTipHandle(), TTM_ACTIVATE, FALSE, NULL);
-		}
 		m_ResetRegion = true;	// Need to recalculate the windowregion
 		if (!group) return;
 	}
@@ -1051,18 +1035,10 @@ void CMeterWindow::ToggleMeter(const WCHAR* name, bool group)
 		if ((*j)->IsHidden())
 		{
 			(*j)->Show();
-			if ((*j)->GetToolTipHandle() != NULL)
-			{
-				SendMessage((*j)->GetToolTipHandle(), TTM_ACTIVATE, TRUE, NULL);
-			}
 		}
 		else
 		{
 			(*j)->Hide();
-			if ((*j)->GetToolTipHandle() != NULL)
-			{
-				SendMessage((*j)->GetToolTipHandle(), TTM_ACTIVATE, FALSE, NULL);
-			}
 		}
 		m_ResetRegion = true;	// Need to recalculate the window region
 		if (!group) return;
@@ -2495,7 +2471,7 @@ void CMeterWindow::Update(bool nodraw)
 		}
 
 		// Update tooltips
-		if ((*j)->GetToolTipHandle() == NULL)
+		if (!(*j)->HasToolTip())
 		{
 			if (!(*j)->GetToolTipText().empty())
 			{

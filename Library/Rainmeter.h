@@ -142,39 +142,39 @@ public:
 	int Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath);
 	void Quit(HINSTANCE dllInst);
 
-	CConfigParser* GetCurrentParser() { return m_CurrentParser; };
-	void SetCurrentParser(CConfigParser* parser) { m_CurrentParser = parser; };
+	CConfigParser* GetCurrentParser() { return m_CurrentParser; }
+	void SetCurrentParser(CConfigParser* parser) { m_CurrentParser = parser; }
 
-	CTrayWindow* GetTrayWindow() { return m_TrayWindow; };
+	CTrayWindow* GetTrayWindow() { return m_TrayWindow; }
 
 	CMeterWindow* GetMeterWindow(const std::wstring& config);
 	CMeterWindow* GetMeterWindow(HWND hwnd);
 	void GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group = L"");
-	std::map<std::wstring, CMeterWindow*>& GetAllMeterWindows() { return m_Meters; };
-	const std::vector<CONFIG>& GetAllConfigs() { return m_ConfigStrings; };
-	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; };
+	std::map<std::wstring, CMeterWindow*>& GetAllMeterWindows() { return m_Meters; }
+	const std::vector<CONFIG>& GetAllConfigs() { return m_ConfigStrings; }
+	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; }
 
 	void ActivateConfig(int configIndex, int iniIndex);
 	bool DeactivateConfig(CMeterWindow* meterWindow, int configIndex);
 
-	const std::wstring& GetPath() { return m_Path; };
-	const std::wstring& GetIniFile() { return m_IniFile; };
-	const std::wstring& GetLogFile() { return m_LogFile; };
-	const std::wstring& GetSkinPath() { return m_SkinPath; };
-	const std::wstring& GetPluginPath() { return m_PluginPath; };
-	std::wstring GetSettingsPath() { return ExtractPath(m_IniFile); };
+	const std::wstring& GetPath() { return m_Path; }
+	const std::wstring& GetIniFile() { return m_IniFile; }
+	const std::wstring& GetLogFile() { return m_LogFile; }
+	const std::wstring& GetSkinPath() { return m_SkinPath; }
+	const std::wstring& GetPluginPath() { return m_PluginPath; }
+	std::wstring GetSettingsPath() { return ExtractPath(m_IniFile); }
 
-	const std::wstring& GetConfigEditor() { return m_ConfigEditor; };
-	const std::wstring& GetLogViewer() { return m_LogViewer; };
-	const std::wstring& GetStatsDate() { return m_StatsDate; };
+	const std::wstring& GetConfigEditor() { return m_ConfigEditor; }
+	const std::wstring& GetLogViewer() { return m_LogViewer; }
+	const std::wstring& GetStatsDate() { return m_StatsDate; }
 
-	HINSTANCE GetInstance() { return m_Instance; };
+	HINSTANCE GetInstance() { return m_Instance; }
 
-	static void SetDummyLitestep(bool Dummy) { c_DummyLitestep = Dummy; };
-	static bool GetDummyLitestep() { return c_DummyLitestep; };
-	static void SetCommandLine(LPCTSTR CmdLine) { c_CmdLine = CmdLine;};
-	static LPCTSTR GetCommandLine() { return c_CmdLine.c_str(); };
-	static GlobalConfig& GetGlobalConfig() { return c_GlobalConfig; };
+	static void SetDummyLitestep(bool Dummy) { c_DummyLitestep = Dummy; }
+	static bool GetDummyLitestep() { return c_DummyLitestep; }
+	static void SetCommandLine(LPCTSTR CmdLine) { c_CmdLine = CmdLine;}
+	static LPCTSTR GetCommandLine() { return c_CmdLine.c_str(); }
+	static GlobalConfig& GetGlobalConfig() { return c_GlobalConfig; }
 
 	static bool GetDebug() { return c_Debug; }
 
@@ -186,10 +186,10 @@ public:
 	void WriteStats(bool bForce);
 	void ResetStats();
 
-	BOOL GetDisableVersionCheck() { return m_DisableVersionCheck; };
-	BOOL GetNewVersion() { return m_NewVersion; };
-	void SetDisableVersionCheck(BOOL check) { m_DisableVersionCheck = check; };
-	void SetNewVersion(BOOL NewVer) { m_NewVersion = NewVer; };
+	BOOL GetDisableVersionCheck() { return m_DisableVersionCheck; }
+	BOOL GetNewVersion() { return m_NewVersion; }
+	void SetDisableVersionCheck(BOOL check) { m_DisableVersionCheck = check; }
+	void SetNewVersion(BOOL NewVer) { m_NewVersion = NewVer; }
 
 	bool GetLogging() { return m_Logging; }
 	void StartLogging();
@@ -204,12 +204,12 @@ public:
 	bool IsMenuActive() { return m_MenuActive; }
 	void ShowContextMenu(POINT pos, CMeterWindow* meterWindow);
 
-	std::wstring GetTrayExecuteL() { return m_TrayExecuteL; };
-	std::wstring GetTrayExecuteR() { return m_TrayExecuteR; };
-	std::wstring GetTrayExecuteM() { return m_TrayExecuteM; };
-	std::wstring GetTrayExecuteDR() { return m_TrayExecuteDR; };
-	std::wstring GetTrayExecuteDL() { return m_TrayExecuteDL; };
-	std::wstring GetTrayExecuteDM() { return m_TrayExecuteDM; };
+	std::wstring GetTrayExecuteL() { return m_TrayExecuteL; }
+	std::wstring GetTrayExecuteR() { return m_TrayExecuteR; }
+	std::wstring GetTrayExecuteM() { return m_TrayExecuteM; }
+	std::wstring GetTrayExecuteDR() { return m_TrayExecuteDR; }
+	std::wstring GetTrayExecuteDL() { return m_TrayExecuteDL; }
+	std::wstring GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
 	BOOL ExecuteBang(const std::wstring& bang, const std::wstring& arg, CMeterWindow* meterWindow);
 	std::wstring ParseCommand(const WCHAR* command, CMeterWindow* meterWindow);

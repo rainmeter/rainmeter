@@ -76,6 +76,10 @@ CMeter::CMeter(CMeterWindow* meterWindow)
 */
 CMeter::~CMeter()
 {
+	if (m_ToolTipHandle != NULL)
+	{
+		DestroyWindow(m_ToolTipHandle);
+	}
 }
 
 /*
@@ -199,8 +203,8 @@ RECT CMeter::GetMeterRect()
 
 	meterRect.left = GetX();
 	meterRect.top = GetY();
-	meterRect.right = GetX() + m_W;
-	meterRect.bottom = GetY() + m_H;
+	meterRect.right = meterRect.left + m_W;
+	meterRect.bottom = meterRect.top + m_H;
 
 	return meterRect;
 }
@@ -218,6 +222,41 @@ bool CMeter::HitTest(int x, int y)
 		return true;
 	}
 	return false;
+}
+
+/*
+** Show
+**
+** Shows the meter and tooltip.
+**
+*/
+void CMeter::Show()
+{
+	m_Hidden = false;
+
+	if (m_ToolTipHandle != NULL)
+	{
+		if (!m_ToolTipHidden)
+		{
+			SendMessage(m_ToolTipHandle, TTM_ACTIVATE, TRUE, NULL);
+		}
+	}
+}
+
+/*
+** Hide
+**
+** Hides the meter and tooltip.
+**
+*/
+void CMeter::Hide()
+{
+	m_Hidden = true;
+
+	if (m_ToolTipHandle != NULL)
+	{
+		SendMessage(m_ToolTipHandle, TTM_ACTIVATE, FALSE, NULL);
+	}
 }
 
 /*

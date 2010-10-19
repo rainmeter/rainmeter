@@ -43,48 +43,46 @@ public:
 	
 	bool HasDynamicVariables() { return m_DynamicVariables; }
 
-	virtual int GetH() { return m_Hidden ? 0 : m_H; };
-	virtual int GetW() { return m_Hidden ? 0 : m_W; };
+	virtual int GetH() { return m_Hidden ? 0 : m_H; }
+	virtual int GetW() { return m_Hidden ? 0 : m_W; }
 	virtual int GetX(bool abs = false);
 	virtual int GetY(bool abs = false);
 	RECT GetMeterRect();
 
-	void SetX(int x) { m_X = x; m_RelativeX = POSITION_ABSOLUTE; };
-	void SetY(int y) { m_Y = y; m_RelativeY = POSITION_ABSOLUTE; };
+	void SetX(int x) { m_X = x; m_RelativeX = POSITION_ABSOLUTE; }
+	void SetY(int y) { m_Y = y; m_RelativeY = POSITION_ABSOLUTE; }
 
-	std::wstring& GetRightMouseDownAction() { return m_RightMouseDownAction; };
-	std::wstring& GetRightMouseUpAction() { return m_RightMouseUpAction; };
-	std::wstring& GetRightMouseDoubleClickAction() { return m_RightMouseDoubleClickAction; };
-	std::wstring& GetLeftMouseDownAction() { return m_LeftMouseDownAction; };
-	std::wstring& GetLeftMouseUpAction() { return m_LeftMouseUpAction; };
-	std::wstring& GetLeftMouseDoubleClickAction() { return m_LeftMouseDoubleClickAction; };
-	std::wstring& GetMiddleMouseDownAction() { return m_MiddleMouseDownAction; };
-	std::wstring& GetMiddleMouseUpAction() { return m_MiddleMouseUpAction; };
-	std::wstring& GetMiddleMouseDoubleClickAction() { return m_MiddleMouseDoubleClickAction; };
-	std::wstring& GetMouseOverAction() { return m_MouseOverAction; };
-	std::wstring& GetMouseLeaveAction() { return m_MouseLeaveAction; };
+	std::wstring& GetRightMouseDownAction() { return m_RightMouseDownAction; }
+	std::wstring& GetRightMouseUpAction() { return m_RightMouseUpAction; }
+	std::wstring& GetRightMouseDoubleClickAction() { return m_RightMouseDoubleClickAction; }
+	std::wstring& GetLeftMouseDownAction() { return m_LeftMouseDownAction; }
+	std::wstring& GetLeftMouseUpAction() { return m_LeftMouseUpAction; }
+	std::wstring& GetLeftMouseDoubleClickAction() { return m_LeftMouseDoubleClickAction; }
+	std::wstring& GetMiddleMouseDownAction() { return m_MiddleMouseDownAction; }
+	std::wstring& GetMiddleMouseUpAction() { return m_MiddleMouseUpAction; }
+	std::wstring& GetMiddleMouseDoubleClickAction() { return m_MiddleMouseDoubleClickAction; }
+	std::wstring& GetMouseOverAction() { return m_MouseOverAction; }
+	std::wstring& GetMouseLeaveAction() { return m_MouseLeaveAction; }
 
 	void SetAllMeasures(CMeasure* measure);
 	void SetAllMeasures(std::vector<CMeasure*> measures);
 
 	std::wstring CMeter::ReplaceMeasures(std::wstring source);
 
-	const std::wstring& GetToolTipText() { return m_ToolTipText; };
-	HWND GetToolTipHandle() { return m_ToolTipHandle; };
-	void SetToolTipHandle(HWND handle) { m_ToolTipHandle = handle; };
-	void SetToolTipHidden(bool b) { m_ToolTipHidden = b; };
-	bool IsToolTipHidden() { return m_ToolTipHidden; };
+	const std::wstring& GetToolTipText() { return m_ToolTipText; }
+	bool HasToolTip() { return m_ToolTipHandle != NULL; }
+	void SetToolTipHidden(bool b) { m_ToolTipHidden = b; }
 
 	void CreateToolTip(CMeterWindow* meterWindow);
 	void UpdateToolTip();
 
-	bool HasMouseAction() { return m_HasMouseAction; };
-	bool HasMouseActionCursor() { return m_MouseActionCursor; };
-	void SetMouseActionCursor(bool b) { m_MouseActionCursor = b; };
+	bool HasMouseAction() { return m_HasMouseAction; }
+	bool HasMouseActionCursor() { return m_MouseActionCursor; }
+	void SetMouseActionCursor(bool b) { m_MouseActionCursor = b; }
 
-	void Hide() { m_Hidden = true; };
-	void Show() { m_Hidden = false; };
-	bool IsHidden() { return m_Hidden; };
+	virtual void Hide();
+	virtual void Show();
+	bool IsHidden() { return m_Hidden; }
 
 	const Gdiplus::Matrix& GetTransformationMatrix() { return m_Transformation; }
 
@@ -93,8 +91,8 @@ public:
 	void SetMouseOver(bool over) { m_MouseOver = over; }
 	bool IsMouseOver() { return m_MouseOver; }
 
-	void SetName(const WCHAR* name) { m_Name = name; };
-	const WCHAR* GetName() { return m_Name.c_str(); };
+	void SetName(const WCHAR* name) { m_Name = name; }
+	const WCHAR* GetName() { return m_Name.c_str(); }
 
 	static CMeter* Create(const WCHAR* meter, CMeterWindow* meterWindow);
 	
