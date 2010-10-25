@@ -31,6 +31,7 @@
 #define RAINMETER_OFFICIAL		L"http://rainmeter.net/RainCMS/"
 #define RAINMETER_MANUAL		L"http://rainmeter.net/RainCMS/?q=Manual"
 #define RAINMETER_MANUALBETA	L"http://rainmeter.net/RainCMS/?q=ManualBeta"
+#define RAINMETER_DOWNLOADS		L"http://rainmeter.net/RainCMS/?q=Downloads"
 
 extern CRainmeter* Rainmeter;
 
@@ -406,6 +407,10 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{
 				OpenAboutDialog(tray->GetWindow(), Rainmeter->GetInstance());
 			} 
+			if (wParam == ID_CONTEXT_DOWNLOADS)
+			{
+				LSExecute(NULL, RAINMETER_DOWNLOADS, SW_SHOWNORMAL);
+			}
 			else if(wParam == ID_CONTEXT_SHOW_HELP)
 			{
 				LSExecute(NULL, revision_beta ? RAINMETER_MANUALBETA : RAINMETER_MANUAL, SW_SHOWNORMAL);

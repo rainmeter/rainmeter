@@ -19,6 +19,7 @@
 #define ID_CONTEXT_REFRESH              4001
 #define ID_CONTEXT_QUIT                 4002
 #define ID_CONTEXT_ABOUT                4004
+#define ID_CONTEXT_DOWNLOADS			4005
 #define ID_CONTEXT_CONFIGS_DEFAULT      4006
 #define ID_CONTEXT_EDITCONFIG           4008
 #define ID_CONTEXT_CLOSESKIN            4009
