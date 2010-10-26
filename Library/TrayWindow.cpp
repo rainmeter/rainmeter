@@ -407,7 +407,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{
 				OpenAboutDialog(tray->GetWindow(), Rainmeter->GetInstance());
 			} 
-			if (wParam == ID_CONTEXT_DOWNLOADS)
+			else if (wParam == ID_CONTEXT_DOWNLOADS)
 			{
 				LSExecute(NULL, RAINMETER_DOWNLOADS, SW_SHOWNORMAL);
 			}
