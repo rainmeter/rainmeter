@@ -3267,7 +3267,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				}
 				else
 				{
-					InsertMenu(subMenu, 1, MF_BYPOSITION, ID_CONTEXT_DOWNLOADS, L"Rainmeter Downloads");
+					InsertMenu(subMenu, 1, MF_BYPOSITION, ID_CONTEXT_DOWNLOADS, L"Downloads");
 					InsertMenu(subMenu, 11, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 
 					// Create a menu for all active configs
