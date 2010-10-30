@@ -320,7 +320,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\x32/Debug/PluginiTunes.tlb"
+				TypeLibraryName=".\x64/Debug/PluginiTunes.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -331,10 +331,10 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\x32/Debug/PluginiTunes.pch"
-				AssemblerListingLocation=".\x32/Debug/"
-				ObjectFile=".\x32/Debug/"
-				ProgramDataBaseFileName=".\x32/Debug/"
+				PrecompiledHeaderFile=".\x64/Debug/PluginiTunes.pch"
+				AssemblerListingLocation=".\x64/Debug/"
+				ObjectFile=".\x64/Debug/"
+				ProgramDataBaseFileName=".\x64/Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -352,12 +352,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../../TestBench/x32/Debug/Plugins/iTunesPlugin.dll"
+				OutputFile="../../TestBench/x64/Debug/Plugins/iTunesPlugin.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\x32/Debug/iTunesPlugin.pdb"
-				ImportLibrary=".\x32/Debug/iTunesPlugin.lib"
+				ProgramDatabaseFile=".\x64/Debug/iTunesPlugin.pdb"
+				ImportLibrary=".\x64/Debug/iTunesPlugin.lib"
 				TargetMachine="17"
 			/>
 			<Tool

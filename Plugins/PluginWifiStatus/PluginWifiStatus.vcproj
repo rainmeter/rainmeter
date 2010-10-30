@@ -228,10 +228,10 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\x32/Debug/PluginWifiStatus.pch"
-				AssemblerListingLocation=".\x32/Debug/"
-				ObjectFile=".\x32/Debug/"
-				ProgramDataBaseFileName=".\x32/Debug/"
+				PrecompiledHeaderFile=".\x64/Debug/PluginWifiStatus.pch"
+				AssemblerListingLocation=".\x64/Debug/"
+				ObjectFile=".\x64/Debug/"
+				ProgramDataBaseFileName=".\x64/Debug/"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -247,14 +247,14 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
-				OutputFile="../../TestBench/x32/Debug/Plugins/WifiStatus.dll"
+				OutputFile="../../TestBench/x64/Debug/Plugins/WifiStatus.dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\x32/Debug/WifiStatus.pdb"
+				ProgramDatabaseFile=".\x64/Debug/WifiStatus.pdb"
 				SubSystem="0"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\x32/Debug/WifiStatus.lib"
+				ImportLibrary=".\x64/Debug/WifiStatus.lib"
 				TargetMachine="17"
 			/>
 			<Tool

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PluginMediaKey"
 	ProjectGUID="{EB48A04A-657E-41B8-B2F5-D47F8C30B2B4}"
 	RootNamespace="PluginMediaKey"
@@ -46,7 +46,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\x32/Debug/PluginWindowMessage.tlb"
+				TypeLibraryName=".\x32/Debug/MediaKey.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -77,11 +77,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Rainmeter.lib"
 				OutputFile="../../TestBench/x32/Debug/Plugins/MediaKey.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="../../Library/x32/Debug"
+				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\x32/Debug/MediaKey.pdb"
 				ImportLibrary=".\x32/Debug/MediaKey.lib"
@@ -137,20 +136,20 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\x32/Debug/PluginWindowMessage.tlb"
+				TypeLibraryName=".\x64/Debug/MediaKey.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWindowMessage_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;UNICODE;_USRDLL;MediaKey_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\x32/Debug/PluginWindowMessage.pch"
-				AssemblerListingLocation=".\x32/Debug/"
-				ObjectFile=".\x32/Debug/"
-				ProgramDataBaseFileName=".\x32/Debug/"
+				PrecompiledHeaderFile=".\x64/Debug/MediaKey.pch"
+				AssemblerListingLocation=".\x64/Debug/"
+				ObjectFile=".\x64/Debug/"
+				ProgramDataBaseFileName=".\x64/Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -168,12 +167,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../../TestBench/x32/Debug/Plugins/WindowMessagePlugin.dll"
+				OutputFile="../../TestBench/x64/Debug/Plugins/WindowMessagePlugin.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\x32/Debug/WindowMessagePlugin.pdb"
-				ImportLibrary=".\x32/Debug/WindowMessagePlugin.lib"
+				ProgramDatabaseFile=".\x64/Debug/WindowMessagePlugin.pdb"
+				ImportLibrary=".\x64/Debug/WindowMessagePlugin.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -226,7 +225,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\x64/Release/PluginWindowMessage.tlb"
+				TypeLibraryName=".\x64/Release/MediaKey.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -234,11 +233,11 @@
 				AdditionalOptions="/GL /EHsc /GA "
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWindowMessage_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;MediaKey_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\x64/Release/PluginWindowMessage.pch"
+				PrecompiledHeaderFile=".\x64/Release/MediaKey.pch"
 				AssemblerListingLocation=".\x64/Release/"
 				ObjectFile=".\x64/Release/"
 				ProgramDataBaseFileName=".\x64/Release/"
@@ -316,7 +315,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\x64/Release/PluginWindowMessage.tlb"
+				TypeLibraryName=".\x64/Release/MediaKey.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -328,7 +327,7 @@
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\x64/Release/PluginWindowMessage.pch"
+				PrecompiledHeaderFile=".\x64/Release/MediaKey.pch"
 				AssemblerListingLocation=".\x64/Release/"
 				ObjectFile=".\x64/Release/"
 				ProgramDataBaseFileName=".\x64/Release/"
@@ -410,7 +409,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\x32/Release/PluginWindowMessage.tlb"
+				TypeLibraryName=".\x32/Release/MediaKey.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -503,19 +502,19 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\x32/Release/PluginWindowMessage.tlb"
+				TypeLibraryName=".\x32/Release/MediaKey.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;PluginWindowMessage_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;MediaKey_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\x32/Release/PluginWindowMessage.pch"
+				PrecompiledHeaderFile=".\x32/Release/MediaKey.pch"
 				AssemblerListingLocation=".\x32/Release/"
 				ObjectFile=".\x32/Release/"
 				ProgramDataBaseFileName=".\x32/Release/"
@@ -577,7 +576,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWindowMessage_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;MediaKey_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -587,7 +586,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWindowMessage_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;MediaKey_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -597,7 +596,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWindowMessage_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;MediaKey_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -606,7 +605,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWindowMessage_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;MediaKey_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -615,7 +614,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWindowMessage_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;MediaKey_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -624,7 +623,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginWindowMessage_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;MediaKey_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 		</File>

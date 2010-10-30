@@ -137,7 +137,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\x32/Debug/PluginWindowMessage.tlb"
+				TypeLibraryName=".\x64/Debug/PluginWindowMessage.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -147,10 +147,10 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\x32/Debug/PluginWindowMessage.pch"
-				AssemblerListingLocation=".\x32/Debug/"
-				ObjectFile=".\x32/Debug/"
-				ProgramDataBaseFileName=".\x32/Debug/"
+				PrecompiledHeaderFile=".\x64/Debug/PluginWindowMessage.pch"
+				AssemblerListingLocation=".\x64/Debug/"
+				ObjectFile=".\x64/Debug/"
+				ProgramDataBaseFileName=".\x64/Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -168,12 +168,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../../TestBench/x32/Debug/Plugins/WindowMessagePlugin.dll"
+				OutputFile="../../TestBench/x64/Debug/Plugins/Win7AudioPlugin.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\x32/Debug/WindowMessagePlugin.pdb"
-				ImportLibrary=".\x32/Debug/WindowMessagePlugin.lib"
+				ProgramDatabaseFile=".\x64/Debug/Win7AudioPlugin.pdb"
+				ImportLibrary=".\x64/Debug/Win7AudioPlugin.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -260,11 +260,11 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/machine:AMD64 /LTCG "
 				AdditionalDependencies="bufferoverflowU.lib odbc32.lib odbccp32.lib"
-				OutputFile="../../TestBench/x64/Release/Plugins/WindowMessagePlugin.dll"
+				OutputFile="../../TestBench/x64/Release/Plugins/Win7AudioPlugin.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\x64/Release/WindowMessagePlugin.pdb"
-				ImportLibrary=".\x64/Release/WindowMessagePlugin.lib"
+				ProgramDatabaseFile=".\x64/Release/Win7AudioPlugin.pdb"
+				ImportLibrary=".\x64/Release/Win7AudioPlugin.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -535,11 +535,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../../TestBench/x32/Release/Plugins/WindowMessagePlugin.dll"
+				OutputFile="../../TestBench/x32/Release/Plugins/Win7AudioPlugin.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\x32/Release/WindowMessagePlugin.pdb"
-				ImportLibrary=".\x32/Release/WindowMessagePlugin.lib"
+				ProgramDatabaseFile=".\x32/Release/Win7AudioPlugin.pdb"
+				ImportLibrary=".\x32/Release/Win7AudioPlugin.lib"
 				TargetMachine="17"
 			/>
 			<Tool

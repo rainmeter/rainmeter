@@ -1688,8 +1688,8 @@ void CRainmeter::CheckSkinVersions()
 								// Upgrade the skin
 								CSystem::CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
 
-								// TODO: Temporary 'fix': If this was Enigma upgrade the themes too
-								if (menu[i].name == L"Enigma" || menu[i].name == L"Gnometer")
+								// TODO: Temporary 'fix': If skin was Illustro upgrade the themes too
+								if (menu[i].name == L"Illustro")
 								{
 									std::wstring strMainThemes = m_Path + L"Themes";
 									std::wstring strCurrentThemes = GetSettingsPath();
@@ -1769,8 +1769,8 @@ int CRainmeter::CompareVersions(std::wstring strA, std::wstring strB)
 /* 
 ** CreateDefaultConfigFile
 **
-** Creates the default Rainmeter.ini file. Gnometer\Bars and Gnometer\Clock configs
-** are enabled.
+** Creates the default Rainmeter.ini file.
+** Illustro\System is enabled.
 **
 */
 void CRainmeter::CreateDefaultConfigFile(std::wstring strFile)
@@ -1789,7 +1789,7 @@ void CRainmeter::CreateDefaultConfigFile(std::wstring strFile)
 		std::ofstream out(strFile.c_str(), std::ios::out);
 		if (out) 
 		{
-			out << std::string("[Rainmeter]\n\n[Gnometer\\Bars]\nActive=1\n\n[Gnometer\\Clock]\nActive=1\n");
+			out << std::string("[Rainmeter]\n\n[Illustro\\System]\nActive=1\n");
 			out.close();
 		}
 	}

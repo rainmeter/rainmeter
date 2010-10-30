@@ -134,7 +134,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\x32/Debug/PluginPower.tlb"
+				TypeLibraryName=".\x64/Debug/PluginPower.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -144,10 +144,10 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\x32/Debug/PluginPower.pch"
-				AssemblerListingLocation=".\x32/Debug/"
-				ObjectFile=".\x32/Debug/"
-				ProgramDataBaseFileName=".\x32/Debug/"
+				PrecompiledHeaderFile=".\x64/Debug/PluginPower.pch"
+				AssemblerListingLocation=".\x64/Debug/"
+				ObjectFile=".\x64/Debug/"
+				ProgramDataBaseFileName=".\x64/Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -165,12 +165,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../../TestBench/x32/Debug/Plugins/PowerPlugin.dll"
+				OutputFile="../../TestBench/x64/Debug/Plugins/PowerPlugin.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\x32/Debug/PowerPlugin.pdb"
-				ImportLibrary=".\x32/Debug/PowerPlugin.lib"
+				ProgramDatabaseFile=".\x64/Debug/PowerPlugin.pdb"
+				ImportLibrary=".\x64/Debug/PowerPlugin.lib"
 				TargetMachine="17"
 			/>
 			<Tool

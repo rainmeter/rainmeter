@@ -318,7 +318,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\x32/Debug/PluginPing.tlb"
+				TypeLibraryName=".\x64/Debug/PluginPing.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -328,10 +328,10 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\x32/Debug/PluginPing.pch"
-				AssemblerListingLocation=".\x32/Debug/"
-				ObjectFile=".\x32/Debug/"
-				ProgramDataBaseFileName=".\x32/Debug/"
+				PrecompiledHeaderFile=".\x64/Debug/PluginPing.pch"
+				AssemblerListingLocation=".\x64/Debug/"
+				ObjectFile=".\x64/Debug/"
+				ProgramDataBaseFileName=".\x64/Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -350,12 +350,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Ws2_32.lib odbc32.lib odbccp32.lib"
-				OutputFile="../../TestBench/x32/Debug/Plugins/PingPlugin.dll"
+				OutputFile="../../TestBench/x64/Debug/Plugins/PingPlugin.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\x32/Debug/PingPlugin.pdb"
-				ImportLibrary=".\x32/Debug/PingPlugin.lib"
+				ProgramDatabaseFile=".\x64/Debug/PingPlugin.pdb"
+				ImportLibrary=".\x64/Debug/PingPlugin.lib"
 				TargetMachine="17"
 			/>
 			<Tool

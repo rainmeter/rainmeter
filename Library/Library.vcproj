@@ -136,7 +136,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\x32/Debug/Library.tlb"
+				TypeLibraryName=".\x64/Debug/Library.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -147,10 +147,10 @@
 				RuntimeLibrary="3"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\x32/Debug/Library.pch"
-				AssemblerListingLocation=".\x32/Debug/"
-				ObjectFile=".\x32/Debug/"
-				ProgramDataBaseFileName=".\x32/Debug/"
+				PrecompiledHeaderFile=".\x64/Debug/Library.pch"
+				AssemblerListingLocation=".\x64/Debug/"
+				ObjectFile=".\x64/Debug/"
+				ProgramDataBaseFileName=".\x64/Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -169,12 +169,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="comctl32.lib Wininet.lib Winmm.lib gdiplus.lib Iphlpapi.lib shlwapi.lib odbc32.lib odbccp32.lib"
-				OutputFile="../TestBench/x32/Debug/Rainmeter.dll"
+				OutputFile="../TestBench/x64/Debug/Rainmeter.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\x32/Debug/Rainmeter.pdb"
-				ImportLibrary=".\x32/Debug/Rainmeter.lib"
+				ProgramDatabaseFile=".\x64/Debug/Rainmeter.pdb"
+				ImportLibrary=".\x64/Debug/Rainmeter.lib"
 				TargetMachine="17"
 			/>
 			<Tool

@@ -501,7 +501,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\x32/Debug/PluginQuote.tlb"
+				TypeLibraryName=".\x64/Debug/PluginQuote.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -511,10 +511,10 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\x32/Debug/PluginQuote.pch"
-				AssemblerListingLocation=".\x32/Debug/"
-				ObjectFile=".\x32/Debug/"
-				ProgramDataBaseFileName=".\x32/Debug/"
+				PrecompiledHeaderFile=".\x64/Debug/PluginQuote.pch"
+				AssemblerListingLocation=".\x64/Debug/"
+				ObjectFile=".\x64/Debug/"
+				ProgramDataBaseFileName=".\x64/Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -533,12 +533,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="shlwapi.lib odbc32.lib odbccp32.lib"
-				OutputFile="../../TestBench/x32/Debug/Plugins/QuotePlugin.dll"
+				OutputFile="../../TestBench/x64/Debug/Plugins/QuotePlugin.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\x32/Debug/QuotePlugin.pdb"
-				ImportLibrary=".\x32/Debug/QuotePlugin.lib"
+				ProgramDatabaseFile=".\x64/Debug/QuotePlugin.pdb"
+				ImportLibrary=".\x64/Debug/QuotePlugin.lib"
 				TargetMachine="17"
 			/>
 			<Tool

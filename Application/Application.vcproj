@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="Application"
 	ProjectGUID="{D2A0903C-E760-4134-AE61-3D55BF8F760C}"
 	TargetFrameworkVersion="0"
@@ -321,7 +321,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\x32/Debug/Application.tlb"
+				TypeLibraryName=".\x64/Debug/Application.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -331,10 +331,10 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\x32/Debug/Application.pch"
-				AssemblerListingLocation=".\x32/Debug/"
-				ObjectFile=".\x32/Debug/"
-				ProgramDataBaseFileName=".\x32/Debug/"
+				PrecompiledHeaderFile=".\x64/Debug/Application.pch"
+				AssemblerListingLocation=".\x64/Debug/"
+				ObjectFile=".\x64/Debug/"
+				ProgramDataBaseFileName=".\x64/Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -352,7 +352,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../TestBench/x32/Debug/Rainmeter.exe"
+				OutputFile="../TestBench/x64/Debug/Rainmeter.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
@@ -381,7 +381,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\testbench\x32\debug\skins (mkdir ..\testbench\x32\debug\skins)&#x0D;&#x0A;xcopy /S /Y ..\Install\Skins ..\testbench\x32\debug\skins&#x0D;&#x0A;"
+				CommandLine="if not exist ..\testbench\x64\debug\skins (mkdir ..\testbench\x64\debug\skins)&#x0D;&#x0A;if not exist ..\testbench\x64\debug\themes (mkdir ..\testbench\x64\debug\themes)&#x0D;&#x0A;echo &quot;Copying the skins...&quot;&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Skins ..\testbench\x64\debug\skins&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Themes ..\testbench\x64\debug\themes&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x64\debug\"
 			/>
 		</Configuration>
 		<Configuration

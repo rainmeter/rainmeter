@@ -135,7 +135,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\x32/Debug/PluginWebParser.tlb"
+				TypeLibraryName=".\x64/Debug/PluginWebParser.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -145,10 +145,10 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\x32/Debug/PluginWebParser.pch"
-				AssemblerListingLocation=".\x32/Debug/"
-				ObjectFile=".\x32/Debug/"
-				ProgramDataBaseFileName=".\x32/Debug/"
+				PrecompiledHeaderFile=".\x64/Debug/PluginWebParser.pch"
+				AssemblerListingLocation=".\x64/Debug/"
+				ObjectFile=".\x64/Debug/"
+				ProgramDataBaseFileName=".\x64/Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -167,12 +167,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="Urlmon.lib Wininet.lib Shlwapi.lib odbc32.lib odbccp32.lib"
-				OutputFile="../../TestBench/x32/Debug/Plugins/WebParser.dll"
+				OutputFile="../../TestBench/x64/Debug/Plugins/WebParser.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\x32/Debug/WebParser.pdb"
-				ImportLibrary=".\x32/Debug/WebParser.lib"
+				ProgramDatabaseFile=".\x64/Debug/WebParser.pdb"
+				ImportLibrary=".\x64/Debug/WebParser.lib"
 				TargetMachine="17"
 			/>
 			<Tool
