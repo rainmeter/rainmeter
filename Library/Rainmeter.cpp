@@ -3248,14 +3248,14 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					AppendMenu(configMenu, 0, ID_CONTEXT_OPENSKINSFOLDER, L"Open Skins\' Folder");
 					AppendMenu(configMenu, 0, ID_CONTEXT_MANAGESKINS, L"Manage Skins...");
 
-					InsertMenu(subMenu, 4, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configMenu, L"Configs");
+					InsertMenu(subMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configMenu, L"Configs");
 				}
 
 				HMENU themeMenu = CreateThemeMenu();
 				if (themeMenu)
 				{
-					InsertMenu(subMenu, 5, MF_BYPOSITION | MF_POPUP, (UINT_PTR)themeMenu, L"Themes");
-					InsertMenu(subMenu, 6, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+					InsertMenu(subMenu, 4, MF_BYPOSITION | MF_POPUP, (UINT_PTR)themeMenu, L"Themes");
+					InsertMenu(subMenu, 5, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 				}
 
 				if (meterWindow)
@@ -3267,7 +3267,6 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				}
 				else
 				{
-					InsertMenu(subMenu, 1, MF_BYPOSITION, ID_CONTEXT_DOWNLOADS, L"Downloads");
 					InsertMenu(subMenu, 11, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 
 					// Create a menu for all active configs
@@ -3278,9 +3277,11 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					{
 						CMeterWindow* mw = ((*iter).second);
 						HMENU skinMenu = CreateSkinMenu(mw, index, configMenu);
-						InsertMenu(subMenu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
+						InsertMenu(subMenu, 11, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
 						++index;
 					}
+
+					InsertMenu(subMenu, 1, MF_BYPOSITION, ID_CONTEXT_DOWNLOADS, L"Downloads");
 
 					// Put Update notifications in the Tray menu
 					if (m_NewVersion)
