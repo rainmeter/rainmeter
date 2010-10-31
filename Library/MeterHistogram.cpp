@@ -161,7 +161,7 @@ void CMeterHistogram::Initialize()
 	// A sanity check
 	if (m_SecondaryMeasure && !m_PrimaryImageName.empty() && (m_BothImageName.empty() || m_SecondaryImageName.empty()))
 	{
-        LSLog(LOG_DEBUG, L"Rainmeter", L"You need to define SecondaryImage and BothImage also!");
+        LSLog(LOG_DEBUG, APPNAME, L"You need to define SecondaryImage and BothImage also!");
 
 		if (m_PrimaryBitmap)
 		{

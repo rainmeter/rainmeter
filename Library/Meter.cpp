@@ -421,7 +421,7 @@ void CMeter::ReadConfig(const WCHAR* section)
 	}
 	else if (!matrix.empty())
 	{
-		DebugLog(L"The transformation matrix has incorrect number of values:", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
+		DebugLog(L"The transformation matrix has incorrect number of values: %s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
 	}
 
 	std::wstring group = parser.ReadString(section, L"Group", L"");

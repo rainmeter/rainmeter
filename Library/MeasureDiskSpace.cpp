@@ -173,7 +173,7 @@ void CMeasureDiskSpace::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_Drive = parser.ReadString(section, L"Drive", L"C:\\");
 	if (m_Drive.empty())
 	{
-		DebugLog(L"Drive path is not given.");
+		LSLog(LOG_DEBUG, APPNAME, L"Drive path is not given.");
 		m_Value = 0;
 		m_LabelName = L"";
 	}

@@ -33,7 +33,7 @@ void CheckVersion(void* dummy)
 									0);
 	if (hRootHandle == NULL)
 	{
-		DebugLog(L"CheckUpdate: InternetOpen failed.");
+		LSLog(LOG_DEBUG, APPNAME, L"CheckUpdate: InternetOpen failed.");
 		return;
 	}
 
@@ -75,18 +75,18 @@ void CheckVersion(void* dummy)
 			else
 			{
 				Rainmeter->SetNewVersion(FALSE);
-				DebugLog(L"CheckUpdate: No new version available.");
+				LSLog(LOG_DEBUG, APPNAME, L"CheckUpdate: No new version available.");
 			}
 		}
 		else
 		{
-			DebugLog(L"CheckUpdate: InternetReadFile failed.");
+			LSLog(LOG_DEBUG, APPNAME, L"CheckUpdate: InternetReadFile failed.");
 		}
 		InternetCloseHandle(hUrlDump);
 	}
 	else
 	{
-		DebugLog(L"CheckUpdate: InternetOpenUrl failed.");
+		LSLog(LOG_DEBUG, APPNAME, L"CheckUpdate: InternetOpenUrl failed.");
 	}
 
 	InternetCloseHandle(hRootHandle);

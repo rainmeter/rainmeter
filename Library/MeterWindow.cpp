@@ -258,7 +258,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 		}
 	}
 
-	LSLog(LOG_DEBUG, L"Rainmeter", L"Initialization successful.");
+	LSLog(LOG_DEBUG, APPNAME, L"Initialization successful.");
 
 	return 0;
 }
@@ -305,7 +305,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 	std::wstring dbg = L"Refreshing skin \"" + m_SkinName;
 	dbg += L"\\" + m_SkinIniFile; 
 	dbg += L"\""; 
-	LSLog(LOG_DEBUG, L"Rainmeter", dbg.c_str());
+	LSLog(LOG_DEBUG, APPNAME, dbg.c_str());
 	
 	m_Refreshing = true;
 
@@ -754,7 +754,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		}
 		else
 		{
-			DebugLog(L"Unable to parse parameters for !RainmeterMove");
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse parameters for !RainmeterMove");
 		}
 		break;
 
@@ -866,12 +866,12 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			}
 			else
 			{
-				DebugLog(L"Unable to parse coordinates for !RainmeterMoveMeter");
+				LSLog(LOG_DEBUG, APPNAME, L"Unable to parse coordinates for !RainmeterMoveMeter");
 			}
 		}
 		else
 		{
-			DebugLog(L"Unable to parse parameters for !RainmeterMoveMeter");
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse parameters for !RainmeterMoveMeter");
 		}
 		break;
 
@@ -913,7 +913,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			}
 			else
 			{
-				DebugLog(L"Unable to parse parameters for !RainmeterPluginBang");
+				LSLog(LOG_DEBUG, APPNAME, L"Unable to parse parameters for !RainmeterPluginBang");
 			}
 		}
 		break;
@@ -944,7 +944,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		}
 		else
 		{
-			DebugLog(L"Unable to parse parameters for !RainmeterSetVariable");
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse parameters for !RainmeterSetVariable");
 		}
 		break;
 	}
@@ -1177,7 +1177,7 @@ void CMeterWindow::WindowToScreen()
 {
 	if (CSystem::GetMonitorCount() == 0)
 	{
-		DebugLog(L"There are no monitors. WindowToScreen function fails.");
+		LSLog(LOG_DEBUG, APPNAME, L"There are no monitors. WindowToScreen function fails.");
 		return;
 	}
 
@@ -1403,7 +1403,7 @@ void CMeterWindow::ScreenToWindow()
 
 	if (monitors.empty())
 	{
-		DebugLog(L"There are no monitors. ScreenToWindow function fails.");
+		LSLog(LOG_DEBUG, APPNAME, L"There are no monitors. ScreenToWindow function fails.");
 		return;
 	}
 
@@ -1836,7 +1836,7 @@ bool CMeterWindow::ReadSkin()
 				{
 					std::wstring error = L"Error: Couldn't load font file: ";
 					error += localFont;
-					DebugLog(error.c_str());
+					LSLog(LOG_DEBUG, APPNAME, error.c_str());
 				}
 			}
 
@@ -1880,7 +1880,7 @@ bool CMeterWindow::ReadSkin()
 						{
 							std::wstring error = L"Error: Couldn't load font file: ";
 							error += localFont;
-							DebugLog(error.c_str());
+							LSLog(LOG_DEBUG, APPNAME, error.c_str());
 						}
 					} 
 				}
@@ -2007,14 +2007,14 @@ bool CMeterWindow::ReadSkin()
 		{
 			text += L"\" does not contain\nany valid meters or measures and will be deactivated.\n\nThe file may be damaged or not a Rainmeter skin file.";
 			MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-			m_Rainmeter->DeactivateConfig(this, -1);
+			return false;
 		}
 		else
 		{
 			text += L"\" does not contain any meters.\nDo you want to deactivate this skin?";
 			if (IDYES == MessageBox(m_Window, text.c_str(), APPNAME, MB_YESNO | MB_TOPMOST | MB_ICONEXCLAMATION))
 			{
-				m_Rainmeter->DeactivateConfig(this, -1);
+				return false;
 			}
 		}
 	}
@@ -4508,7 +4508,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		if (!found) 
 		{
-			DebugLog(L"Unable to send the !bang to a deactivated config.");
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to send the !bang to a deactivated config.");
 			return 0;	// This meterwindow has been deactivated
 		}
 

@@ -248,7 +248,7 @@ void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 		}
 		else
 		{
-			DebugLog(L"Incorrect number of arguments for the bang!");
+			LSLog(LOG_DEBUG, APPNAME, L"Incorrect number of arguments for the bang!");
 		}
 	}
 }
@@ -286,7 +286,7 @@ void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 		}
 		else
 		{
-			DebugLog(L"Incorrect number of arguments for the group bang!");
+			LSLog(LOG_DEBUG, APPNAME, L"Incorrect number of arguments for the group bang!");
 		}
 	}
 }
@@ -496,7 +496,7 @@ void RainmeterActivateConfig(HWND, const char* arg)
 		else
 		{
 			// If we got this far, something went wrong
-			DebugLog(L"Unable to parse the arguments for !RainmeterActivateConfig");
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterActivateConfig");
 		}
 	}
 }
@@ -525,7 +525,7 @@ void RainmeterDeactivateConfig(HWND, const char* arg)
 		}
 		else
 		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterDeactivateConfig");
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterDeactivateConfig");
 		}
 	}
 }
@@ -556,7 +556,7 @@ void RainmeterToggleConfig(HWND, const char* arg)
 		}
 		else
 		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterToggleConfig");
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterToggleConfig");
 		}
 	}
 }
@@ -828,7 +828,7 @@ void RainmeterDeactivateConfigGroup(HWND, const char* arg)
 		}
 		else
 		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterDeactivateConfigGroup");
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterDeactivateConfigGroup");
 		}
 	}
 }
@@ -961,7 +961,7 @@ void RainmeterSkinMenu(HWND, const char* arg)
 		}
 		else
 		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterSkinMenu");
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterSkinMenu");
 		}
 	}
 }
@@ -1136,7 +1136,7 @@ void RainmeterWriteKeyValue(HWND, const char* arg)
 		}
 		else
 		{
-			DebugLog(L"Unable to parse the arguments for !RainmeterWriteKeyValue");
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterWriteKeyValue");
 		}
 	}
 }
@@ -1431,7 +1431,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		}
 		else
 		{
-			DebugLog(L"Unable to get the My Documents location.");
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to get the My Documents location.");
 		}
 	}
 	WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), m_IniFile.c_str());
@@ -3767,7 +3767,7 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	}
 	if (!bSuccess)
 	{
-		DebugLog(L"The Rainmeter.ini file is NOT writable.");
+		LSLog(LOG_DEBUG, APPNAME, L"The Rainmeter.ini file is NOT writable.");
 
 		std::wstring error;
 		error += L"The Rainmeter.ini file is not writable. This means that the\n";
@@ -3799,7 +3799,7 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	}
 	else
 	{
-		DebugLog(L"The Rainmeter.ini file is writable.");
+		LSLog(LOG_DEBUG, APPNAME, L"The Rainmeter.ini file is writable.");
 	}
 }
 

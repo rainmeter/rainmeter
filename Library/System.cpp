@@ -171,7 +171,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 
 	if (CRainmeter::GetDebug())
 	{
-		DebugLog(info.szDevice);
+		LSLog(LOG_DEBUG, APPNAME, info.szDevice);
 		DebugLog(L"  Flags    : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
 		DebugLog(L"  Handle   : 0x%08X", hMonitor);
 		DebugLog(L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
@@ -270,8 +270,8 @@ void CSystem::SetMultiMonitorInfo()
 
 	if (logging)
 	{
-		DebugLog(L"------------------------------");
-		DebugLog(L"* EnumDisplayDevices / EnumDisplaySettings API");
+		LSLog(LOG_DEBUG, APPNAME, L"------------------------------");
+		LSLog(LOG_DEBUG, APPNAME, L"* EnumDisplayDevices / EnumDisplaySettings API");
 	}
 
 	DISPLAY_DEVICE dd = {0};
@@ -287,7 +287,7 @@ void CSystem::SetMultiMonitorInfo()
 
 			if (logging)
 			{
-				DebugLog(dd.DeviceName);
+				LSLog(LOG_DEBUG, APPNAME, dd.DeviceName);
 
 				if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
 				{
@@ -427,15 +427,15 @@ void CSystem::SetMultiMonitorInfo()
 
 	if (monitors.empty())  // Failed to enumerate the non-mirroring monitors
 	{
-		DebugLog(L"Failed to enumerate the non-mirroring monitors. Only EnumDisplayMonitors is used instead.");
+		LSLog(LOG_DEBUG, APPNAME, L"Failed to enumerate the non-mirroring monitors. Only EnumDisplayMonitors is used instead.");
 		c_Monitors.useEnumDisplayDevices = false;
 		c_Monitors.useEnumDisplayMonitors = true;
 	}
 
 	if (logging)
 	{
-		DebugLog(L"------------------------------");
-		DebugLog(L"* EnumDisplayMonitors API");
+		LSLog(LOG_DEBUG, APPNAME, L"------------------------------");
+		LSLog(LOG_DEBUG, APPNAME, L"* EnumDisplayMonitors API");
 	}
 
 	if (c_Monitors.useEnumDisplayMonitors)
@@ -444,7 +444,7 @@ void CSystem::SetMultiMonitorInfo()
 
 		if (monitors.empty())  // Failed to enumerate the monitors
 		{
-			DebugLog(L"Failed to enumerate the monitors. Prepares the dummy monitor information.");
+			LSLog(LOG_DEBUG, APPNAME, L"Failed to enumerate the monitors. Prepares the dummy monitor information.");
 			c_Monitors.useEnumDisplayMonitors = false;
 
 			MONITOR_INFO monitor = {0};
@@ -473,7 +473,7 @@ void CSystem::SetMultiMonitorInfo()
 
 	if (logging)
 	{
-		DebugLog(L"------------------------------");
+		LSLog(LOG_DEBUG, APPNAME, L"------------------------------");
 
 		std::wstring method = L"* METHOD: ";
 		if (c_Monitors.useEnumDisplayDevices)
@@ -485,10 +485,10 @@ void CSystem::SetMultiMonitorInfo()
 		{
 			method += c_Monitors.useEnumDisplayMonitors ? L"EnumDisplayMonitors Mode" : L"Dummy Mode";
 		}
-		DebugLog(method.c_str());
+		LSLog(LOG_DEBUG, APPNAME, method.c_str());
 
 		DebugLog(L"* MONITORS: Count=%i, Primary=@%i", monitors.size(), c_Monitors.primary);
-		DebugLog(L"@0: Virtual screen");
+		LSLog(LOG_DEBUG, APPNAME, L"@0: Virtual screen");
 		DebugLog(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 			c_Monitors.vsL, c_Monitors.vsT, c_Monitors.vsL + c_Monitors.vsW, c_Monitors.vsT + c_Monitors.vsH,
 			c_Monitors.vsW, c_Monitors.vsH);
@@ -507,7 +507,7 @@ void CSystem::SetMultiMonitorInfo()
 				DebugLog(L"@%i: %s (inactive), MonitorName: %s", i + 1, monitors[i].deviceName, monitors[i].monitorName);
 			}
 		}
-		DebugLog(L"------------------------------");
+		LSLog(LOG_DEBUG, APPNAME, L"------------------------------");
 	}
 }
 
@@ -717,7 +717,7 @@ void CSystem::ChangeZPosInOrder()
 		bool logging = CRainmeter::GetDebug() && DEBUG_VERBOSE;
 		std::vector<CMeterWindow*> windowsInZOrder;
 
-		if (logging) LSLog(LOG_DEBUG, L"Rainmeter", L"1: ----- BEFORE -----");
+		if (logging) LSLog(LOG_DEBUG, APPNAME, L"1: ----- BEFORE -----");
 
 		// Retrieve the Rainmeter's meter windows in Z-order
 		EnumWindows(MyEnumWindowsProc, (LPARAM)(&windowsInZOrder));
@@ -730,7 +730,7 @@ void CSystem::ChangeZPosInOrder()
 
 		if (logging)
 		{
-			LSLog(LOG_DEBUG, L"Rainmeter", L"2: ----- AFTER -----");
+			LSLog(LOG_DEBUG, APPNAME, L"2: ----- AFTER -----");
 
 			// Log all windows in Z-order
 			EnumWindows(MyEnumWindowsProc, (LPARAM)NULL);
@@ -927,7 +927,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		break;
 
 	case WM_DWMCOMPOSITIONCHANGED:
-		DebugLog(L"System: DWM desktop composition has been changed.");
+		LSLog(LOG_DEBUG, APPNAME, L"System: DWM desktop composition has been changed.");
 
 		KillTimer(c_Window, TIMER_SHOWDESKTOP);
 		KillTimer(c_Window, TIMER_COMPOSITION);
@@ -946,7 +946,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		return 0;
 
 	case WM_DISPLAYCHANGE:
-		DebugLog(L"System: Display setting has been changed.");
+		LSLog(LOG_DEBUG, APPNAME, L"System: Display setting has been changed.");
 		ClearMultiMonitorInfo();
 		CConfigParser::ClearMultiMonitorVariables();
 	case WM_SETTINGCHANGE:
@@ -954,7 +954,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		{
 			if (uMsg == WM_SETTINGCHANGE)  // SPI_SETWORKAREA
 			{
-				DebugLog(L"System: Work area has been changed.");
+				LSLog(LOG_DEBUG, APPNAME, L"System: Work area has been changed.");
 				UpdateWorkareaInfo();
 				CConfigParser::UpdateWorkareaVariables();
 			}
