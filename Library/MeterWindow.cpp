@@ -2554,7 +2554,7 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 		POINT ptSrc = {0, 0};
 		SIZE szWindow;
 
-		if (m_WindowW == 0 && m_WindowH == 0)
+		if (m_WindowW == 0 || m_WindowH == 0)
 		{
 			// Set dummy size to avoid invalid state
 			szWindow.cx = 1;
