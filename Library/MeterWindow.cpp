@@ -2362,7 +2362,7 @@ void CMeterWindow::Redraw()
 	}
 
 	if (m_DoubleBuffer) delete m_DoubleBuffer;
-	if (m_WindowW == 0 && m_WindowH == 0)
+	if (m_WindowW == 0 || m_WindowH == 0)
 	{
 		// Create a dummy bitmap to avoid invalid state
 		m_DoubleBuffer = new Bitmap(1, 1, PixelFormat32bppARGB);
