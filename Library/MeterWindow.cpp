@@ -2874,7 +2874,7 @@ HWND CMeterWindow::GetWindowFromPoint(POINT pos)
 {
 	HWND hwndPos = WindowFromPoint(pos);
 
-	if (hwndPos == m_Window || !m_ClickThrough)
+	if (hwndPos == m_Window || (!m_ClickThrough && m_WindowHide != HIDEMODE_HIDE))
 	{
 		return hwndPos;
 	}
