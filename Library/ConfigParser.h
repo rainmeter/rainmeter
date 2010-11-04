@@ -42,12 +42,16 @@ public:
 
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_Variables, strVariable, strValue); }
 
-	void SetStyleTemplate(const std::wstring& strStyle) { m_StyleTemplate = strStyle; }
+	void SetStyleTemplate(const std::wstring& strStyle) { m_StyleTemplate =  Tokenize(strStyle, L"|"); }
 	void ClearStyleTemplate() { m_StyleTemplate.clear(); }
+
+	const std::wstring& GetLastUsedStyle() { return m_LastUsedStyle; }
+	bool GetLastReplaced() { return m_LastReplaced; }
+	bool GetLastDefaultUsed() { return m_LastDefaultUsed; }
 
 	void ResetMonitorVariables(CMeterWindow* meterWindow = NULL);
 
-	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true, bool* bReplaced = NULL);
+	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
 	double ReadFormula(LPCTSTR section, LPCTSTR key, double defValue);
 	int ReadInt(LPCTSTR section, LPCTSTR key, int defValue);
@@ -60,7 +64,7 @@ public:
 	// Returns an int if the formula was read successfully, -1 for failure.
 	int ReadFormula(const std::wstring& result, double* number);
 
-	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring delimiters);
+	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static double ParseDouble(const std::wstring& string, double defValue, bool rejectExp = false);
 	static Gdiplus::Color ParseColor(LPCTSTR string);
 
@@ -94,7 +98,11 @@ private:
 	hqMathParser* m_Parser;
 	std::map<std::wstring, CMeasure*> m_Measures;
 
-	std::wstring m_StyleTemplate;
+	std::vector<std::wstring> m_StyleTemplate;
+
+	std::wstring m_LastUsedStyle;
+	bool m_LastReplaced;
+	bool m_LastDefaultUsed;
 
 	std::vector<std::wstring> m_Sections;		// The sections must be an ordered array
 	stdext::hash_map<std::wstring, std::vector<std::wstring> > m_Keys;

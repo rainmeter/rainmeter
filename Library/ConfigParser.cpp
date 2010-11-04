@@ -585,7 +585,7 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 **
 **
 */
-const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures, bool* bReplaced)
+const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures)
 {
 	static std::wstring result;
 
@@ -602,18 +602,66 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		defValue = L"";
 	}
 
+	// Clear last status
+	m_LastUsedStyle.clear();
+	m_LastReplaced = false;
+	m_LastDefaultUsed = false;
+
 	std::wstring strDefault = defValue;
 
 	// If the template is defined read the value first from there.
 	if (!m_StyleTemplate.empty())
 	{
-		strDefault = GetValue(m_StyleTemplate, key, strDefault);
+		std::vector<std::wstring>::const_reverse_iterator iter = m_StyleTemplate.rbegin();
+		for ( ; iter != m_StyleTemplate.rend(); ++iter)
+		{
+			if (!(*iter).empty())
+			{
+				std::wstring strSection = (*iter);
+
+				std::wstring::size_type pos = strSection.find_first_not_of(L" \t\r\n");
+				if (pos != std::wstring::npos)
+				{
+					std::wstring::size_type lastPos = strSection.find_last_not_of(L" \t\r\n");
+					if (pos != 0 || lastPos != (strSection.length() - 1))
+					{
+						// Trim white-space
+						strSection.swap(std::wstring(strSection, pos, lastPos - pos + 1));
+					}
+
+					const std::wstring& strStyle = GetValue(strSection, key, strDefault);
+
+					//DebugLog(L"[%s] %s (from [%s]) : strDefault=%s (0x%08X), strStyle=%s (0x%08X)",
+					//	section, key, strSection.c_str(), strDefault.c_str(), &strDefault, strStyle.c_str(), &strStyle);
+
+					if (&strStyle != &strDefault)
+					{
+						strDefault = strStyle;
+						m_LastUsedStyle = strSection;
+						break;
+					}
+				}
+			}
+		}
 	}
 
-	result = GetValue(section, key, strDefault);
-	if (result == defValue)
+	const std::wstring& strValue = GetValue(section, key, strDefault);
+	result = strValue;
+
+	if (!m_LastUsedStyle.empty())
 	{
-		return result;
+		if (&strValue != &strDefault)
+		{
+			m_LastUsedStyle.clear();
+		}
+	}
+	else
+	{
+		if (&strValue == &strDefault)
+		{
+			m_LastDefaultUsed = true;
+			return result;
+		}
 	}
 
 	// Check Litestep vars
@@ -629,16 +677,14 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		}
 	}
 
-	bool replaced = ReplaceVariables(result);
-
-	if (bReplaceMeasures)
+	if (ReplaceVariables(result))
 	{
-		replaced |= ReplaceMeasures(result);
+		m_LastReplaced = true;
 	}
 
-	if (bReplaced)
+	if (bReplaceMeasures && ReplaceMeasures(result))
 	{
-		*bReplaced = replaced;
+		m_LastReplaced = true;
 	}
 
 	return result;
@@ -766,11 +812,11 @@ Color CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, const Color& defVal
 **
 ** http://www.digitalpeer.com/id/simple
 */
-std::vector<std::wstring> CConfigParser::Tokenize(const std::wstring& str, const std::wstring delimiters)
+std::vector<std::wstring> CConfigParser::Tokenize(const std::wstring& str, const std::wstring& delimiters)
 {
 	std::vector<std::wstring> tokens;
     	
-	std::wstring::size_type lastPos = str.find_first_not_of(L";", 0);	// skip delimiters at beginning.
+	std::wstring::size_type lastPos = str.find_first_not_of(delimiters, 0);	// skip delimiters at beginning.
 	std::wstring::size_type pos = str.find_first_of(delimiters, lastPos);	// find first "non-delimiter".
 
 	while (std::wstring::npos != pos || std::wstring::npos != lastPos)

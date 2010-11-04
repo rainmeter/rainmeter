@@ -78,25 +78,24 @@ bool CGroup::BelongsToGroup(const std::wstring& group)
 
 std::wstring CGroup::CreateGroup(const std::wstring& str)
 {
-	std::wstring strTmp = str;
+	std::wstring strTmp;
 
-	// Trim whitespace
-	std::wstring::size_type pos = strTmp.find_last_not_of(L' ');
+	std::wstring::size_type pos = str.find_first_not_of(L" \t\r\n");
 	if (pos != std::wstring::npos)
 	{
-		strTmp.erase(pos + 1);
-		pos = strTmp.find_first_not_of(' ');
-		if (pos != std::wstring::npos)
+		std::wstring::size_type lastPos = str.find_last_not_of(L" \t\r\n");
+		if (pos != 0 || lastPos != (str.length() - 1))
 		{
-			strTmp.erase(0, pos);
+			// Trim white-space
+			strTmp.swap(std::wstring(str, pos, lastPos - pos + 1));
+		}
+		else
+		{
+			strTmp = str;
 		}
 
 		// Convert to lower
 		std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
-	}
-	else
-	{
-		strTmp.erase(strTmp.begin(), strTmp.end());
 	}
 
 	return strTmp;

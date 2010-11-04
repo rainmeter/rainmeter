@@ -127,6 +127,10 @@ protected:
 	CMeter*	m_RelativeMeter;
 	bool m_DynamicVariables;		// If true, the measure contains dynamic variables
 
+	std::wstring m_StyleX;
+	std::wstring m_StyleY;
+	std::wstring m_StyleHidden;
+
 	std::wstring m_ToolTipText;
 	std::wstring m_ToolTipTitle;
 	std::wstring m_ToolTipIcon;

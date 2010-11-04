@@ -102,8 +102,6 @@ void CMeasure::Initialize()
 */
 void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
-	bool replaced;
-
 	// Clear substitutes to prevent from being added more than once.
 	if (!m_Substitute.empty())
 	{
@@ -118,9 +116,8 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		replaced = false;
-		const std::wstring& result = parser.ReadString(section, L"Disabled", L"0", true, &replaced);
-		if (replaced)
+		const std::wstring& result = parser.ReadString(section, L"Disabled", L"0");
+		if (parser.GetLastReplaced())
 		{
 			m_Disabled = 0!=(int)parser.ParseDouble(result, 0.0, true);
 		}

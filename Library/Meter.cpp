@@ -269,8 +269,6 @@ void CMeter::Hide()
 */
 void CMeter::ReadConfig(const WCHAR* section)
 {
-	bool replaced;
-
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
 	// The MeterStyle defines a template where the values are read if the meter doesn't have it itself
@@ -280,9 +278,13 @@ void CMeter::ReadConfig(const WCHAR* section)
 		parser.SetStyleTemplate(style);
 	}
 
-	replaced = false;
-	std::wstring coord = parser.ReadString(section, L"X", L"0", true, &replaced);
-	if (!m_Initialized || replaced)
+	std::wstring oldStyleX = m_StyleX;
+	std::wstring oldStyleY = m_StyleY;
+	std::wstring oldStyleHidden = m_StyleHidden;
+
+	std::wstring coord = parser.ReadString(section, L"X", L"0");
+	m_StyleX = parser.GetLastUsedStyle();
+	if (!m_Initialized || parser.GetLastReplaced() || !parser.GetLastDefaultUsed() && m_StyleX != oldStyleX)
 	{
 		if (!coord.empty())
 		{
@@ -319,9 +321,9 @@ void CMeter::ReadConfig(const WCHAR* section)
 		}
 	}
 
-	replaced = false;
-	coord = parser.ReadString(section, L"Y", L"0", true, &replaced);
-	if (!m_Initialized || replaced)
+	coord = parser.ReadString(section, L"Y", L"0");
+	m_StyleY = parser.GetLastUsedStyle();
+	if (!m_Initialized || parser.GetLastReplaced() || !parser.GetLastDefaultUsed() && m_StyleY != oldStyleY)
 	{
 		if (!coord.empty())
 		{
@@ -367,9 +369,9 @@ void CMeter::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-		replaced = false;
-		const std::wstring& result = parser.ReadString(section, L"Hidden", L"0", true, &replaced);
-		if (replaced)
+		const std::wstring& result = parser.ReadString(section, L"Hidden", L"0");
+		m_StyleHidden = parser.GetLastUsedStyle();
+		if (parser.GetLastReplaced() || !parser.GetLastDefaultUsed() && m_StyleHidden != oldStyleHidden)
 		{
 			m_Hidden = 0!=(int)parser.ParseDouble(result, 0.0, true);
 		}
