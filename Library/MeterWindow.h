@@ -276,7 +276,6 @@ private:
 	SIZE m_BackgroundSize;
 
 	HWND m_Window;								// Handle to the Rainmeter window
-	HINSTANCE m_User32Library;
 	BOOL m_ChildWindow;
 
 	std::wstring m_RightMouseDownAction;		// Action to run when right mouse is pressed

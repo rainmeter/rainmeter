@@ -27,9 +27,38 @@ using namespace Gdiplus;
 std::map<std::wstring, Gdiplus::FontFamily*> CMeterString::c_FontFamilies;
 std::map<std::wstring, Gdiplus::Font*> CMeterString::c_Fonts;
 
-std::wstring StringToUpper(std::wstring str);
-std::wstring StringToLower(std::wstring str);
-std::wstring StringToProper(std::wstring str);
+void StringToUpper(std::wstring& str)
+{
+	//change each element of the string to upper case
+	std::transform(str.begin(), str.end(), str.begin(), ::towupper);
+}
+
+void StringToLower(std::wstring& str)
+{
+	//change each element of the string to lower case
+	std::transform(str.begin(), str.end(), str.begin(), ::towlower);
+}
+
+void StringToProper(std::wstring& str)
+{
+	//change each element of the string to lower case
+	if (!str.empty())
+	{
+		str[0] = towupper(str[0]);
+
+		for (size_t i = 1; i < str.length(); ++i)
+		{
+			if (str[i-1] == L' ')
+			{
+				str[i] = towupper(str[i]);
+			}
+			else
+			{
+				str[i] = towlower(str[i]);
+			}
+		}
+	}
+}
 
 /*
 ** CMeterString
@@ -443,21 +472,20 @@ bool CMeterString::Update()
 
 			m_String += tmpText;
 		}
-		m_String += m_Postfix;
+		if (!m_Postfix.empty()) m_String += m_Postfix;
 
 		switch(m_textCase)
 		{
 		case TEXTCASE_UPPER:
-			m_String = StringToUpper(m_String);
+			StringToUpper(m_String);
 			break;
 		case TEXTCASE_LOWER:
-			m_String = StringToLower(m_String);
+			StringToLower(m_String);
 			break;
 		case TEXTCASE_PROPER:
-			m_String = StringToProper(m_String);
+			StringToProper(m_String);
 			break;
 		}
-		
 
 		if (!m_DimensionsDefined)
 		{
@@ -530,58 +558,72 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 		break;
 	}
 
+	if (m_ClipString)
+	{
+		stringFormat.SetTrimming(StringTrimmingEllipsisCharacter);
+	}
+	else
+	{
+		stringFormat.SetTrimming(StringTrimmingNone);
+		stringFormat.SetFormatFlags(StringFormatFlagsNoClip | StringFormatFlagsNoWrap);
+	}
+
+	CharacterRange range(0, (int)m_String.length());
+	stringFormat.SetMeasurableCharacterRanges(1, &range);
+
 	REAL x = (REAL)GetX();
 	REAL y = (REAL)GetY();
 
 	if (rect)
 	{
 		PointF pos(x, y);
-		graphics.MeasureString(m_String.c_str(), -1, m_Font, pos, rect);
+		graphics.MeasureString(m_String.c_str(), (int)m_String.length(), m_Font, pos, &stringFormat, rect);
 	}
 	else
 	{
 		RectF rc((REAL)x, (REAL)y, (REAL)m_W, (REAL)m_H);
 
-		if (m_ClipString)
+		if (m_Angle != 0.0f)
 		{
-			stringFormat.SetTrimming(StringTrimmingEllipsisCharacter);
-		}
-		else
-		{
-			stringFormat.SetTrimming(StringTrimmingNone);
-			stringFormat.SetFormatFlags(StringFormatFlagsNoClip | StringFormatFlagsNoWrap);
+			REAL angle = m_Angle * 180.0f / 3.14159265f;		// Convert to degrees
+			graphics.TranslateTransform((Gdiplus::REAL)CMeter::GetX(), y);
+			graphics.RotateTransform(angle);
+			graphics.TranslateTransform(-(Gdiplus::REAL)CMeter::GetX(), -y);
 		}
 
-		REAL angle = m_Angle * 180.0f / 3.14159265f;		// Convert to degrees
-		graphics.TranslateTransform((Gdiplus::REAL)CMeter::GetX(), y);
-		graphics.RotateTransform(angle);
-		graphics.TranslateTransform(-(Gdiplus::REAL)CMeter::GetX(), -y);
-
-		if (m_Effect == EFFECT_SHADOW)
+		switch (m_Effect)
 		{
-			SolidBrush solidBrush(m_EffectColor);
-			RectF rcEffect(rc);
-			rcEffect.Offset(1, 1);
-			graphics.DrawString(m_String.c_str(), -1, m_Font, rcEffect, &stringFormat, &solidBrush);
-		}
-		else if (m_Effect == EFFECT_BORDER)
-		{
-			SolidBrush solidBrush(m_EffectColor);
-			RectF rcEffect(rc);
-			rcEffect.Offset(0, 1);
-			graphics.DrawString(m_String.c_str(), -1, m_Font, rcEffect, &stringFormat, &solidBrush);
-			rcEffect.Offset(1, -1);
-			graphics.DrawString(m_String.c_str(), -1, m_Font, rcEffect, &stringFormat, &solidBrush);
-			rcEffect.Offset(-1, -1);
-			graphics.DrawString(m_String.c_str(), -1, m_Font, rcEffect, &stringFormat, &solidBrush);
-			rcEffect.Offset(-1, 1);
-			graphics.DrawString(m_String.c_str(), -1, m_Font, rcEffect, &stringFormat, &solidBrush);
+		case EFFECT_SHADOW:
+			{
+				SolidBrush solidBrush(m_EffectColor);
+				RectF rcEffect(rc);
+				rcEffect.Offset(1, 1);
+				graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
+				break;
+			}
+		case EFFECT_BORDER:
+			{
+				SolidBrush solidBrush(m_EffectColor);
+				RectF rcEffect(rc);
+				rcEffect.Offset(0, 1);
+				graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
+				rcEffect.Offset(1, -1);
+				graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
+				rcEffect.Offset(-1, -1);
+				graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
+				rcEffect.Offset(-1, 1);
+				graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
+				break;
+			}
 		}
 		
 		SolidBrush solidBrush(m_Color);
-		graphics.DrawString(m_String.c_str(), -1, m_Font, rc, &stringFormat, &solidBrush);
+		graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rc, &stringFormat, &solidBrush);
 
-		graphics.ResetTransform();
+		if (m_Angle != 0.0f)
+		{
+			graphics.ResetTransform();
+		}
 	}
 
 	return true;
@@ -664,59 +706,6 @@ std::wstring CMeterString::FontPropertiesToString(FontFamily* fontFamily, REAL s
 		}
 	}
 	return stream.str();
-}
-
-/*
-** FontPropertiesToString
-**
-** Static helper to convert font properties to a string so it can be used as a key for the cache map.
-**
-*/
-std::wstring StringToUpper(std::wstring str)
-{
-	//change each element of the string to upper case
-	for(unsigned int i = 0; i < str.length(); ++i)
-	{
-		str[i] = toupper( str[i] );
-	}
-
-	return str; //return the converted string
-}
-
-std::wstring StringToLower(std::wstring str)
-{
-	//change each element of the string to lower case
-	for(unsigned int i = 0; i < str.length(); ++i)
-	{
-		str[i] = tolower(str[i]);
-	}
-
-	return str;//return the converted string
-}
-
-std::wstring StringToProper(std::wstring str)
-{
-	//change each element of the string to lower case
-	for(unsigned int i = 0; i < str.length(); ++i)
-	{
-		if(i == 0)
-		{
-			str[i] = toupper( str[i] );
-		}
-		else
-		{
-			if(str[i-1] == ' ')
-			{
-				str[i] = toupper(str[i]);
-			}
-			else
-			{
-				str[i] = tolower(str[i]);
-			}
-		}
-	}
-
-	return str;//return the converted string
 }
 
 /*

@@ -124,8 +124,6 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 	m_SkinName = config;
 	m_SkinIniFile = iniFile;
 
-	m_User32Library = GetModuleHandle(L"user32.dll");
-
 	m_UpdateCounter = 0;
 	m_FontCollection = NULL;
 
@@ -2123,8 +2121,6 @@ bool CMeterWindow::ResizeWindow(bool reset)
 	}
 
 	// Reset size (this is calculated below)
-	m_WindowW = 0;
-	m_WindowH = 0;
 
 	if (m_Background)
 	{
@@ -2145,11 +2141,13 @@ bool CMeterWindow::ResizeWindow(bool reset)
 			m_Background = NULL;
 			m_BackgroundSize.cx = 0;
 			m_BackgroundSize.cy = 0;
-		}
 
-		// Calculate the window dimensions
-		if(m_Background)
+			m_WindowW = 0;
+			m_WindowH = 0;
+		}
+		else
 		{
+			// Calculate the window dimensions
 			m_BackgroundSize.cx = m_Background->GetWidth();
 			m_BackgroundSize.cy = m_Background->GetHeight();
 
@@ -2242,7 +2240,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 				delete m_Background;
 				m_Background = desktop;
 			}
-		} 
+		}
 	} 
 	else
 	{
@@ -2545,9 +2543,6 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 			LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
 			SetWindowLong(m_Window, GWL_EXSTYLE, style | WS_EX_LAYERED);
 		}
-
-		typedef BOOL (WINAPI * FPUPDATELAYEREDWINDOW)(HWND hWnd, HDC hdcDst, POINT *pptDst, SIZE *psize, HDC hdcSrc, POINT *pptSrc, COLORREF crKey, BLENDFUNCTION *pblend, DWORD dwFlags);
-		FPUPDATELAYEREDWINDOW UpdateLayeredWindow = (FPUPDATELAYEREDWINDOW)GetProcAddress(m_User32Library, "UpdateLayeredWindow");
 
 		BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
 		POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
