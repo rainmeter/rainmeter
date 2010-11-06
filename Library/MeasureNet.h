@@ -198,7 +198,6 @@ protected:
 	static BYTE* c_Table;
 	static UINT c_NumOfTables;
 
-	static HINSTANCE c_IpHlpApiLibrary;
 	static FPGETIFTABLE2EX c_GetIfTable2Ex;
 	static FPFREEMIBTABLE c_FreeMibTable;
 	static bool c_UseNewApi;

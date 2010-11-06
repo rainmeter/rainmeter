@@ -26,7 +26,6 @@ UINT CMeasureNet::c_NumOfTables = 0;
 std::vector<ULONG64> CMeasureNet::c_StatValues;
 std::vector<ULONG64> CMeasureNet::c_OldStatValues;
 
-HINSTANCE CMeasureNet::c_IpHlpApiLibrary = NULL;
 FPGETIFTABLE2EX CMeasureNet::c_GetIfTable2Ex = NULL;
 FPFREEMIBTABLE CMeasureNet::c_FreeMibTable = NULL;
 bool CMeasureNet::c_UseNewApi = false;
@@ -146,6 +145,7 @@ void CMeasureNet::UpdateIFTable()
 					}
 
 					DebugLog(L"%i: %s", i + 1, ifTable->Table[i].Description);
+					DebugLog(L"  Alias: %s", ifTable->Table[i].Alias);
 					DebugLog(L"  Type=%s(%i), Hardware=%s, Filter=%s",
 						type.c_str(), ifTable->Table[i].Type,
 						(ifTable->Table[i].InterfaceAndOperStatusFlags.HardwareInterface == 1) ? L"Yes" : L"No",
@@ -569,13 +569,7 @@ void CMeasureNet::UpdateStats()
 */
 void CMeasureNet::ResetStats()
 {
-	if (c_Table)
-	{
-		for (size_t i = 0; i < c_StatValues.size(); ++i)
-		{
-			c_StatValues[i] = 0;
-		}
-	}
+	c_StatValues.clear();
 }
 
 /*
@@ -591,22 +585,22 @@ void CMeasureNet::ReadStats(const std::wstring& iniFile)
 
 	c_StatValues.clear();
 
-	for (int i = 0; i < count; ++i)
+	for (int i = 1; i <= count; ++i)
 	{
 		ULARGE_INTEGER value;
 
-		wsprintf(buffer, L"NetStatsInHigh%i", i + 1);
+		wsprintf(buffer, L"NetStatsInHigh%i", i);
 		value.HighPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile.c_str());
 
-		wsprintf(buffer, L"NetStatsInLow%i", i + 1);
+		wsprintf(buffer, L"NetStatsInLow%i", i);
 		value.LowPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile.c_str());
 
 		c_StatValues.push_back(value.QuadPart);
 
-		wsprintf(buffer, L"NetStatsOutHigh%i", i + 1);
+		wsprintf(buffer, L"NetStatsOutHigh%i", i);
 		value.HighPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile.c_str());
 
-		wsprintf(buffer, L"NetStatsOutLow%i", i + 1);
+		wsprintf(buffer, L"NetStatsOutLow%i", i);
 		value.LowPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile.c_str());
 
 		c_StatValues.push_back(value.QuadPart);
@@ -661,23 +655,19 @@ void CMeasureNet::WriteStats(const std::wstring& iniFile)
 */
 void CMeasureNet::InitializeNewApi()
 {
-	if (c_IpHlpApiLibrary == NULL)
+	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
-		c_IpHlpApiLibrary = GetModuleHandle(L"IpHlpApi.dll");
-		if (c_IpHlpApiLibrary)
+		HMODULE IpHlpApiLibrary = GetModuleHandle(L"IpHlpApi.dll");
+		if (IpHlpApiLibrary)
 		{
-			c_GetIfTable2Ex = (FPGETIFTABLE2EX)GetProcAddress(c_IpHlpApiLibrary, "GetIfTable2Ex");
-			c_FreeMibTable = (FPFREEMIBTABLE)GetProcAddress(c_IpHlpApiLibrary, "FreeMibTable");
+			c_GetIfTable2Ex = (FPGETIFTABLE2EX)GetProcAddress(IpHlpApiLibrary, "GetIfTable2Ex");
+			c_FreeMibTable = (FPFREEMIBTABLE)GetProcAddress(IpHlpApiLibrary, "FreeMibTable");
 		}
 
-		c_UseNewApi = (c_IpHlpApiLibrary && c_GetIfTable2Ex && c_FreeMibTable);
+		c_UseNewApi = (IpHlpApiLibrary && c_GetIfTable2Ex && c_FreeMibTable);
 
 		if (!c_UseNewApi)
 		{
-			if (c_IpHlpApiLibrary)
-			{
-				c_IpHlpApiLibrary = NULL;
-			}
 			c_GetIfTable2Ex = NULL;
 			c_FreeMibTable = NULL;
 		}
@@ -699,9 +689,11 @@ void CMeasureNet::FinalizeNewApi()
 {
 	if (c_UseNewApi)
 	{
-		c_FreeMibTable(c_Table);
+		if (c_Table)
+		{
+			c_FreeMibTable(c_Table);
+		}
 
-		c_IpHlpApiLibrary = NULL;
 		c_GetIfTable2Ex = NULL;
 		c_FreeMibTable = NULL;
 	}
