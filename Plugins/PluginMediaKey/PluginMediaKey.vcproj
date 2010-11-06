@@ -167,12 +167,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../../TestBench/x64/Debug/Plugins/WindowMessagePlugin.dll"
+				OutputFile="../../TestBench/x64/Debug/Plugins/MediaKey.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\x64/Debug/WindowMessagePlugin.pdb"
-				ImportLibrary=".\x64/Debug/WindowMessagePlugin.lib"
+				ProgramDatabaseFile=".\x64/Debug/MediaKey.pdb"
+				ImportLibrary=".\x64/Debug/MediaKey.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -259,11 +259,11 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/machine:AMD64 /LTCG "
 				AdditionalDependencies="bufferoverflowU.lib odbc32.lib odbccp32.lib"
-				OutputFile="../../TestBench/x64/Release/Plugins/WindowMessagePlugin.dll"
+				OutputFile="../../TestBench/x64/Release/Plugins/MediaKey.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\x64/Release/WindowMessagePlugin.pdb"
-				ImportLibrary=".\x64/Release/WindowMessagePlugin.lib"
+				ProgramDatabaseFile=".\x64/Release/MediaKey.pdb"
+				ImportLibrary=".\x64/Release/MediaKey.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -534,11 +534,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../../TestBench/x32/Release/Plugins/WindowMessagePlugin.dll"
+				OutputFile="../../TestBench/x32/Release/Plugins/MediaKey.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\x32/Release/WindowMessagePlugin.pdb"
-				ImportLibrary=".\x32/Release/WindowMessagePlugin.lib"
+				ProgramDatabaseFile=".\x32/Release/MediaKey.pdb"
+				ImportLibrary=".\x32/Release/MediaKey.lib"
 				TargetMachine="17"
 			/>
 			<Tool
