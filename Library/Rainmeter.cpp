@@ -1689,7 +1689,7 @@ void CRainmeter::CheckSkinVersions()
 								CSystem::CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
 
 								// TODO: Temporary 'fix': If skin was illustro upgrade the themes too
-								if (menu[i].name == L"illustro")
+								if (!_wcsicmp(menu[i].name.c_str(), L"illustro"))
 								{
 									std::wstring strMainThemes = m_Path + L"Themes";
 									std::wstring strCurrentThemes = GetSettingsPath();
