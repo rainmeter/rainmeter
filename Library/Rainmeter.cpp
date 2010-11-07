@@ -1688,8 +1688,8 @@ void CRainmeter::CheckSkinVersions()
 								// Upgrade the skin
 								CSystem::CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
 
-								// TODO: Temporary 'fix': If skin was Illustro upgrade the themes too
-								if (menu[i].name == L"Illustro")
+								// TODO: Temporary 'fix': If skin was illustro upgrade the themes too
+								if (menu[i].name == L"illustro")
 								{
 									std::wstring strMainThemes = m_Path + L"Themes";
 									std::wstring strCurrentThemes = GetSettingsPath();
@@ -1770,7 +1770,7 @@ int CRainmeter::CompareVersions(std::wstring strA, std::wstring strB)
 ** CreateDefaultConfigFile
 **
 ** Creates the default Rainmeter.ini file.
-** Illustro\System is enabled.
+** illustro\System is enabled.
 **
 */
 void CRainmeter::CreateDefaultConfigFile(std::wstring strFile)
@@ -1789,7 +1789,7 @@ void CRainmeter::CreateDefaultConfigFile(std::wstring strFile)
 		std::ofstream out(strFile.c_str(), std::ios::out);
 		if (out) 
 		{
-			out << std::string("[Rainmeter]\n\n[Illustro\\System]\nActive=1\n");
+			out << std::string("[Rainmeter]\n\n[illustro\\System]\nActive=1\n");
 			out.close();
 		}
 	}
