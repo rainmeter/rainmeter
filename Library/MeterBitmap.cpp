@@ -115,11 +115,6 @@ bool CMeterBitmap::HitTest(int x, int y)
 {
 	if (m_Extend)
 	{
-		int value = (int)m_Value;
-		value = max(0, value);		// Only positive integers are supported
-
-		int tmpValue = value;
-		
 		// Calc the number of numbers
 		int numOfNums = 0;
 
@@ -129,6 +124,9 @@ bool CMeterBitmap::HitTest(int x, int y)
 		}
 		else
 		{
+			int tmpValue = (int)m_Value;
+			tmpValue = max(0, tmpValue);		// Only positive integers are supported
+
 			int realFrames = (m_FrameCount / (m_TransitionFrameCount + 1));
 			do
 			{
@@ -197,8 +195,7 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
 
 	m_TransitionFrameCount = parser.ReadInt(section, L"BitmapTransitionFrames", 0);
 
-	std::wstring align;
-	align = parser.ReadString(section, L"BitmapAlign", L"LEFT");
+	std::wstring align = parser.ReadString(section, L"BitmapAlign", L"LEFT");
 	
 	if(_wcsicmp(align.c_str(), L"LEFT") == 0)
 	{
@@ -242,15 +239,7 @@ bool CMeterBitmap::Update()
 {
 	if (CMeter::Update() && m_Measure)
 	{
-		double value = 0.0;
-		if (m_Extend)
-		{
-			value = m_Measure->GetValue();
-		}
-		else
-		{
-			value = m_Measure->GetRelativeValue();
-		}
+		double value = (m_Extend) ? m_Measure->GetValue() : m_Measure->GetRelativeValue();
 
 		if (m_TransitionFrameCount > 0)
 		{
@@ -314,7 +303,6 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 		int transitionValue = (int)m_TransitionStartValue;
 		transitionValue = max(0, transitionValue);		// Only positive integers are supported
 
-		int tmpValue = value;
 		// Calc the number of numbers
 		int numOfNums = 0;
 
@@ -324,6 +312,8 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 		}
 		else
 		{
+			int tmpValue = value;
+
 			do
 			{
 				++numOfNums;

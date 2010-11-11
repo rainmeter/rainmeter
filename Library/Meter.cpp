@@ -39,7 +39,7 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-CMeter::CMeter(CMeterWindow* meterWindow)
+CMeter::CMeter(CMeterWindow* meterWindow) : m_MeterWindow(meterWindow)
 {
 	m_Measure = NULL;
 
@@ -64,8 +64,6 @@ CMeter::CMeter(CMeterWindow* meterWindow)
 	m_ToolTipHidden = false;
 
 	m_ToolTipHandle = NULL;
-
-	m_MeterWindow = meterWindow;
 }
 
 /*

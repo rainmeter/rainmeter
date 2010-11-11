@@ -47,7 +47,7 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeasure::CMeasure(CMeterWindow* meterWindow)
+CMeasure::CMeasure(CMeterWindow* meterWindow) : m_MeterWindow(meterWindow)
 {
 	m_Invert = false;
 	m_LogMaxValue = false;
@@ -68,8 +68,6 @@ CMeasure::CMeasure(CMeterWindow* meterWindow)
 	m_AverageSize = 0;
 	m_DynamicVariables = false;
 	m_Initialized = false;
-
-	m_MeterWindow = meterWindow;
 }
 
 /*
@@ -147,8 +145,7 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_DynamicVariables = 0!=parser.ReadInt(section, L"DynamicVariables", 0);
 
-	std::wstring subs;
-	subs = parser.ReadString(section, L"Substitute", L"");
+	std::wstring subs = parser.ReadString(section, L"Substitute", L"");
 	if (!subs.empty() &&
 		(subs[0] != L'\"' || subs[subs.length() - 1] != L'\'') &&
 		(subs[0] != L'\'' || subs[subs.length() - 1] != L'\"'))
@@ -220,16 +217,12 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 {
 	if (buffer.empty()) return true;	
 
-	std::wstring word1;
-	std::wstring word2;
-	std::wstring sep;
-
 	while (!buffer.empty())
 	{
-		word1 = ExtractWord(buffer);
-		sep = ExtractWord(buffer);
+		std::wstring word1 = ExtractWord(buffer);
+		std::wstring sep = ExtractWord(buffer);
 		if (sep != L":") return false; 
-		word2 = ExtractWord(buffer);
+		std::wstring word2 = ExtractWord(buffer);
 
 		if (word1 != word2)
 		{

@@ -66,10 +66,10 @@ void StringToProper(std::wstring& str)
 ** The constructor
 **
 */
-CMeterString::CMeterString(CMeterWindow* meterWindow) : CMeter(meterWindow)
+CMeterString::CMeterString(CMeterWindow* meterWindow) : CMeter(meterWindow),
+	m_Color(Color::White),
+	m_EffectColor(Color::Black)
 {
-	m_Color = RGB(255, 255, 255);
-	m_EffectColor = RGB(0, 0, 0);
 	m_Effect = EFFECT_NONE;
 	m_AutoScale = true;
 	m_Align = ALIGN_LEFT;
@@ -298,8 +298,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 
 	m_Angle = (Gdiplus::REAL)parser.ReadFloat(section, L"Angle", 0.0);
 
-	std::wstring scale;
-	scale = parser.ReadString(section, L"Scale", L"1");
+	std::wstring scale = parser.ReadString(section, L"Scale", L"1");
 
 	if (scale.find(L'.') == std::wstring::npos)
 	{
@@ -313,8 +312,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 
 	m_FontFace = parser.ReadString(section, L"FontFace", L"Arial");
 
-	std::wstring align;
-	align = parser.ReadString(section, L"StringAlign", L"LEFT");
+	std::wstring align = parser.ReadString(section, L"StringAlign", L"LEFT");
 
 	if(_wcsicmp(align.c_str(), L"LEFT") == 0)
 	{
@@ -333,8 +331,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 		throw CError(std::wstring(L"StringAlign=") + align + L" is not valid in meter [" + m_Name + L"].", __LINE__, __FILE__);
 	}
 
-	std::wstring stringCase;
-	stringCase = parser.ReadString(section, L"StringCase", L"NONE");
+	std::wstring stringCase = parser.ReadString(section, L"StringCase", L"NONE");
 	
 	if(_wcsicmp(stringCase.c_str(), L"NONE") == 0)
 	{
@@ -357,8 +354,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 		throw CError(std::wstring(L"StringCase=") + stringCase + L" is not valid in meter [" + m_Name + L"].", __LINE__, __FILE__);
 	}
 
-	std::wstring style;
-	style = parser.ReadString(section, L"StringStyle", L"NORMAL");
+	std::wstring style = parser.ReadString(section, L"StringStyle", L"NORMAL");
 
 	if(_wcsicmp(style.c_str(), L"NORMAL") == 0)
 	{
@@ -381,8 +377,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 		throw CError(std::wstring(L"StringStyle=") + style + L" is not valid in meter [" + m_Name + L"].", __LINE__, __FILE__);
 	}
 
-	std::wstring effect;
-	effect = parser.ReadString(section, L"StringEffect", L"NONE");
+	std::wstring effect = parser.ReadString(section, L"StringEffect", L"NONE");
 
 	if(_wcsicmp(effect.c_str(), L"NONE") == 0)
 	{
@@ -591,30 +586,25 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 			graphics.TranslateTransform(-(Gdiplus::REAL)CMeter::GetX(), -y);
 		}
 
-		switch (m_Effect)
+		if (m_Effect == EFFECT_SHADOW)
 		{
-		case EFFECT_SHADOW:
-			{
-				SolidBrush solidBrush(m_EffectColor);
-				RectF rcEffect(rc);
-				rcEffect.Offset(1, 1);
-				graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
-				break;
-			}
-		case EFFECT_BORDER:
-			{
-				SolidBrush solidBrush(m_EffectColor);
-				RectF rcEffect(rc);
-				rcEffect.Offset(0, 1);
-				graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
-				rcEffect.Offset(1, -1);
-				graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
-				rcEffect.Offset(-1, -1);
-				graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
-				rcEffect.Offset(-1, 1);
-				graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
-				break;
-			}
+			SolidBrush solidBrush(m_EffectColor);
+			RectF rcEffect(rc);
+			rcEffect.Offset(1, 1);
+			graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
+		}
+		else if (m_Effect == EFFECT_BORDER)
+		{
+			SolidBrush solidBrush(m_EffectColor);
+			RectF rcEffect(rc);
+			rcEffect.Offset(0, 1);
+			graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
+			rcEffect.Offset(1, -1);
+			graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
+			rcEffect.Offset(-1, -1);
+			graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
+			rcEffect.Offset(-1, 1);
+			graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
 		}
 		
 		SolidBrush solidBrush(m_Color);

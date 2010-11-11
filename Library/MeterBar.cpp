@@ -34,16 +34,12 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeterBar::CMeterBar(CMeterWindow* meterWindow) : CMeterImage(meterWindow)
+CMeterBar::CMeterBar(CMeterWindow* meterWindow) : CMeterImage(meterWindow, L"ImageW", L"ImageH"),
+	m_Color(Color::Green)
 {
-	m_Color = 0;
-	m_Bitmap = NULL;
 	m_Value = 0.0;
 	m_Border = 0;
 	m_Flip = false;
-
-	m_ImageWidthString = L"ImageW";
-	m_ImageHeightString = L"ImageH";
 }
 
 /*
@@ -118,8 +114,7 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 
 	m_Flip = parser.ReadInt(section, L"Flip", 0) == 1;
 
-	std::wstring orientation;
-	orientation = parser.ReadString(section, L"BarOrientation", L"VERTICAL");
+	std::wstring orientation = parser.ReadString(section, L"BarOrientation", L"VERTICAL");
 
 	if(_wcsicmp(L"VERTICAL", orientation.c_str()) == 0)
 	{
@@ -182,8 +177,9 @@ bool CMeterBar::Draw(Graphics& graphics)
 
 	if(m_Orientation == VERTICAL)
 	{
-		int size = (int)((m_H - 2 * m_Border) * m_Value);
-		size = min(m_H - 2 * m_Border, size);
+		int barSize = m_H - 2 * m_Border;
+		int size = (int)(barSize * m_Value);
+		size = min(barSize, size);
 		size = max(0, size);
 		
 		if (drawBitmap)
@@ -234,8 +230,9 @@ bool CMeterBar::Draw(Graphics& graphics)
 	}
 	else
 	{
-		int size = (int)((m_W - 2 * m_Border) * m_Value);
-		size = min(m_W - 2 * m_Border, size);
+		int barSize = m_W - 2 * m_Border;
+		int size = (int)(barSize * m_Value);
+		size = min(barSize, size);
 		size = max(0, size);
 
 		if (drawBitmap)

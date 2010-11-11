@@ -1242,7 +1242,7 @@ void CSystem::GetIniFileMappingList(std::vector<std::wstring>& iniFileMappings)
 ** Note that a temporary file must be deleted by caller.
 **
 */
-std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring &iniFile)
+std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& iniFile)
 {
 	std::wstring temporary;
 

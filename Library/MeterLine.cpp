@@ -29,11 +29,11 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-CMeterLine::CMeterLine(CMeterWindow* meterWindow) : CMeter(meterWindow)
+CMeterLine::CMeterLine(CMeterWindow* meterWindow) : CMeter(meterWindow),
+	m_HorizontalColor(Color::Black)
 {
 	m_Autoscale = false;
 	m_HorizontalLines = false;
-	m_HorizontalColor = 0;
 	m_CurrentPos = 0;
 	m_Flip = false;
 	m_LineWidth = 1.0;
@@ -224,19 +224,28 @@ bool CMeterLine::Draw(Graphics& graphics)
 		counter = 0;
 		for (; i != m_AllValues.end(); ++i)
 		{
+			double scale = m_ScaleValues[counter];
 			std::vector<double>::const_iterator j = (*i).begin();
 			for (; j != (*i).end(); ++j)
 			{
-				newValue = max(newValue, (*j) * m_ScaleValues[counter]);
+				double val = (*j) * scale;
+				newValue = max(newValue, val);
 			}
 			++counter;
 		}
 
 		// Scale the value up to nearest power of 2
-		maxValue = 2;
-		while(maxValue < newValue && maxValue != 0)
+		if (newValue > DBL_MAX / 2.0)
 		{
-			maxValue *= 2;
+			maxValue = DBL_MAX;
+		}
+		else
+		{
+			maxValue = 2.0;
+			while (maxValue < newValue)
+			{
+				maxValue *= 2.0;
+			}
 		}
 	}
 	else
@@ -248,14 +257,15 @@ bool CMeterLine::Draw(Graphics& graphics)
 			std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
 			for (; i != m_Measures.end(); ++i)
 			{
-				maxValue = max(maxValue, (*i)->GetMaxValue());
+				double val = (*i)->GetMaxValue();
+				maxValue = max(maxValue, val);
 			}
 		}
-	}
 
-	if (maxValue == 0.0)
-	{
-		maxValue = 1.0;
+		if (maxValue == 0.0)
+		{
+			maxValue = 1.0;
+		}
 	}
 	
 	int x = GetX();
@@ -294,47 +304,41 @@ bool CMeterLine::Draw(Graphics& graphics)
 	for (; i != m_AllValues.end(); ++i)
 	{
 		// Draw a line
-		int X = x;
-		REAL Y = 0;
-		REAL oldY = 0;
-		int pos = m_CurrentPos;
-		if (pos >= m_W) pos = 0;
+		REAL Y = 0.0f;
+		REAL oldY = 0.0f;
+		REAL H = m_H - 1.0f;
 
+		double scale = m_ScaleValues[counter] * H / maxValue;
+
+		int pos = m_CurrentPos;
 		int size = (int)(*i).size();
 		
 		Pen pen(m_Colors[counter], (REAL)m_LineWidth);
 
-		for (int j = 0; j < m_W; ++j)
+		for (int j = x, R = x + m_W; j < R; ++j)
 		{
+			if (pos >= m_W) pos = 0;
+
 			if (pos < size)
 			{
-				Y = (REAL)((*i)[pos] * m_ScaleValues[counter] * (m_H - 1) / maxValue);
-				Y = min(Y, m_H - 1);
-				Y = max(Y, 0);
+				Y = (REAL)((*i)[pos] * scale);
+				Y = min(Y, H);
+				Y = max(Y, 0.0f);
 			}
 			else
 			{
-				Y = 0;			
+				Y = 0.0f;			
 			}
 
-			if (m_Flip)
-			{
-				Y = y + Y;
-			}
-			else
-			{
-				Y = y + m_H - Y - 1;
-			}
+			Y = (m_Flip) ? y + Y : y + H - Y;
 
-			if (j != 0)
+			if (j != x)
 			{
-				graphics.DrawLine(&pen, (REAL)X - 1, oldY, (REAL)X, Y);	// GDI+
+				graphics.DrawLine(&pen, (REAL)(j - 1), oldY, (REAL)j, Y);	// GDI+
 			}
 			oldY = Y;
 
-			++X;
 			++pos;
-			if (pos >= m_W) pos = 0;
 		}
 
 		++counter;

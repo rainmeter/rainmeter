@@ -32,12 +32,12 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow) : CMeter(meterWindow)
+CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow) : CMeter(meterWindow),
+	m_PrimaryColor(Color::Green),
+	m_SecondaryColor(Color::Red),
+	m_BothColor(Color::Yellow)
 {
 	m_SecondaryMeasure = NULL;
-	m_PrimaryColor = 0;
-	m_SecondaryColor = 0;
-	m_BothColor = 0;
 	m_MeterPos = 0;
 	m_PrimaryBitmap = NULL;
 	m_SecondaryBitmap = NULL;
@@ -342,30 +342,44 @@ bool CMeterHistogram::Update()
 			// Go through all values and find the max
 
 			double newValue = 0;
-			for (int i = 0; i != m_W; ++i)
+			for (int i = 0; i < m_W; ++i)
 			{
 				newValue = max(newValue, m_PrimaryValues[i]);
 			}
 
 			// Scale the value up to nearest power of 2
-			m_MaxPrimaryValue = 2;
-			while(m_MaxPrimaryValue < newValue && m_MaxPrimaryValue != 0)
+			if (newValue > DBL_MAX / 2.0)
 			{
-				m_MaxPrimaryValue *= 2;
+				m_MaxPrimaryValue = DBL_MAX;
+			}
+			else
+			{
+				m_MaxPrimaryValue = 2.0;
+				while (m_MaxPrimaryValue < newValue)
+				{
+					m_MaxPrimaryValue *= 2.0;
+				}
 			}
 
 			if (m_SecondaryMeasure && m_SecondaryValues)
 			{
-				for (int i = 0; i != m_W; ++i)
+				for (int i = 0; i < m_W; ++i)
 				{
 					newValue = max(newValue, m_SecondaryValues[i]);
 				}
 
 				// Scale the value up to nearest power of 2
-				m_MaxSecondaryValue = 2;
-				while(m_MaxSecondaryValue < newValue && m_MaxSecondaryValue != 0)
+				if (newValue > DBL_MAX / 2.0)
 				{
-					m_MaxSecondaryValue *= 2;
+					m_MaxSecondaryValue = DBL_MAX;
+				}
+				else
+				{
+					m_MaxSecondaryValue = 2.0;
+					while (m_MaxSecondaryValue < newValue)
+					{
+						m_MaxSecondaryValue *= 2.0;
+					}
 				}
 			}
 		}
@@ -426,15 +440,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 			secondaryBarHeight = max(0, secondaryBarHeight);
 
 			// Check which measured value is higher
-			int bothBarHeight;
-			if (secondaryBarHeight > primaryBarHeight)
-			{
-				bothBarHeight = primaryBarHeight;
-			}
-			else
-			{
-				bothBarHeight = secondaryBarHeight;
-			}
+			int bothBarHeight = min(primaryBarHeight, secondaryBarHeight);
 
 			// Draw image/color for the both lines
 			if (m_PrimaryBitmap)

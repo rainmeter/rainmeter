@@ -45,7 +45,6 @@ protected:
 	void CalcUsage(double idleTime, double systemTime);
 	void CalcAverageUsage(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* systemPerfInfo);
 
-	bool m_CPUFromRegistry;
 	bool m_FirstTime;
 
 	int m_Processor;

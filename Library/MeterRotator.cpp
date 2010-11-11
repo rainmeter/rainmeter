@@ -33,13 +33,9 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeterRotator::CMeterRotator(CMeterWindow* meterWindow) : CMeterImage(meterWindow)
+CMeterRotator::CMeterRotator(CMeterWindow* meterWindow) : CMeterImage(meterWindow, L"ImageW", L"ImageH")
 {
-	m_Bitmap = NULL;
 	m_Value = 0.0;
-
-	m_ImageWidthString = L"ImageW";
-	m_ImageHeightString = L"ImageH";
 }
 
 /*

@@ -36,7 +36,7 @@ const WCHAR* CError::c_ErrorStrings[] =
 */
 const std::wstring& CError::GetString()
 {
-	static WCHAR Buffer[16];
+//	static WCHAR Buffer[16];
 
 	if (m_Error != ERROR_USER) 
 	{

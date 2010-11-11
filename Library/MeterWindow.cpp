@@ -33,9 +33,6 @@
 
 using namespace Gdiplus;
 
-#define ULW_ALPHA               0x00000002
-#define WS_EX_LAYERED           0x00080000
-
 #define METERTIMER 1
 #define MOUSETIMER 2
 #define FADETIMER 3
@@ -53,16 +50,18 @@ extern CRainmeter* Rainmeter;
 ** Constructor
 **
 */
-CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstring& iniFile)
+CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile) : m_SkinPath(path), m_SkinName(config), m_SkinIniFile(iniFile),
+	m_WindowX(L"0"),
+	m_WindowY(L"0")
 {
+	m_Rainmeter = NULL;
+
 	m_Background = NULL;
 	m_Window = NULL;
 	m_ChildWindow = false;
 
 	m_DoubleBuffer = NULL;
 
-	m_WindowX = L"0";
-	m_WindowY = L"0";
 	m_ScreenX = 0;
 	m_ScreenY = 0;
 	m_WindowW = 0;
@@ -91,7 +90,6 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 	m_WindowHide = HIDEMODE_NONE;
 	m_WindowStartHidden = false;
 	m_SnapEdges = true;
-	m_Rainmeter = NULL;
 	m_Hidden = false;
 	m_ResetRegion = false;
 	m_Refreshing = false;
@@ -119,10 +117,6 @@ CMeterWindow::CMeterWindow(std::wstring& path, std::wstring& config, std::wstrin
 
 	m_BackgroundMode = BGMODE_IMAGE;
 	m_SolidBevel = BEVELTYPE_NONE;
-
-	m_SkinPath = path;
-	m_SkinName = config;
-	m_SkinIniFile = iniFile;
 
 	m_UpdateCounter = 0;
 	m_FontCollection = NULL;
@@ -819,9 +813,9 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 	case BANG_SETTRANSPARENCY:
 		if (arg != NULL)
 		{
-			int alpha = (int)CConfigParser::ParseDouble(arg, 255, true);
-			alpha = max(alpha, 0);
-			m_AlphaValue = min(alpha, 255);
+			m_AlphaValue = (int)CConfigParser::ParseDouble(arg, 255, true);
+			m_AlphaValue = max(m_AlphaValue, 0);
+			m_AlphaValue = min(m_AlphaValue, 255);
 			UpdateTransparency(m_AlphaValue, false);
 		}
 		break;
@@ -1623,8 +1617,8 @@ void CMeterWindow::ReadConfig()
 		m_AutoSelectScreen = 0!=parser.ReadInt(section, L"AutoSelectScreen", m_AutoSelectScreen);
 
 		m_AlphaValue = parser.ReadInt(section, L"AlphaValue", m_AlphaValue);
-		m_AlphaValue = min(255, m_AlphaValue);
-		m_AlphaValue = max(0, m_AlphaValue);
+		m_AlphaValue = max(m_AlphaValue, 0);
+		m_AlphaValue = min(m_AlphaValue, 255);
 
 		m_FadeDuration = parser.ReadInt(section, L"FadeDuration", m_FadeDuration);
 
@@ -1729,7 +1723,6 @@ bool CMeterWindow::ReadSkin()
 	if (appVersion > RAINMETER_VERSION)
 	{
 		WCHAR buffer[128];
-		std::wstring text;
 		if (appVersion % 1000 != 0)
 		{
 			wsprintf(buffer, L"%i.%i.%i", appVersion / 1000000, (appVersion / 1000) % 1000, appVersion % 1000);
@@ -1739,7 +1732,7 @@ bool CMeterWindow::ReadSkin()
 			wsprintf(buffer, L"%i.%i", appVersion / 1000000, (appVersion / 1000) % 1000);
 		}
 
-		text = L"The skin \"";
+		std::wstring text = L"The skin \"";
 		text += m_SkinName;
 		text += L"\\";
 		text += m_SkinIniFile;
@@ -1809,7 +1802,7 @@ bool CMeterWindow::ReadSkin()
 		// We want to check the fonts folder first
 		// !!!!!!! - We may want to fix the method in which I get the path to
 		// Rainmeter/fonts
-		std::wstring szFontFile = m_Rainmeter->GetPath().c_str();
+		std::wstring szFontFile = m_Rainmeter->GetPath();
 		
 		m_FontCollection = new Gdiplus::PrivateFontCollection();
 
@@ -1828,7 +1821,7 @@ bool CMeterWindow::ReadSkin()
 			// The font wasn't found, check full path.
 			if(nResults != Ok)
 			{
-				szFontFile = localFont.c_str();
+				szFontFile = localFont;
 				nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 				if(nResults != Ok)
 				{
@@ -1854,7 +1847,7 @@ bool CMeterWindow::ReadSkin()
 				// We want to check the fonts folder first
 				// !!!!!!! - We may want to fix the method in which I get the path to
 				// Rainmeter/fonts
-				std::wstring szFontFile = m_Rainmeter->GetPath().c_str();
+				std::wstring szFontFile = m_Rainmeter->GetPath();
 				szFontFile  += L"Fonts\\";
 				szFontFile  += localFont;
 				
@@ -1871,7 +1864,7 @@ bool CMeterWindow::ReadSkin()
 					// The font wasn't found, check full path.
 					if(nResults != Ok)
 					{
-						szFontFile = localFont.c_str();
+						szFontFile = localFont;
 						nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 						// The font file wasn't found anywhere, log the error
 						if(nResults != Ok)
@@ -1908,11 +1901,9 @@ bool CMeterWindow::ReadSkin()
 			_wcsicmp(L"Variables", strSection.c_str()) != 0 &&
 			_wcsicmp(L"Metadata", strSection.c_str()) != 0)
 		{
-			std::wstring meterName, measureName;
-
 			// Check if the item is a meter or a measure (or perhaps something else)
-			measureName = m_Parser.ReadString(strSection.c_str(), L"Measure", L"");
-			meterName = m_Parser.ReadString(strSection.c_str(), L"Meter", L"");
+			std::wstring measureName = m_Parser.ReadString(strSection.c_str(), L"Measure", L"");
+			std::wstring meterName = m_Parser.ReadString(strSection.c_str(), L"Meter", L"");
 			if (measureName.length() > 0)
 			{
 				// It's a measure
@@ -1996,8 +1987,7 @@ bool CMeterWindow::ReadSkin()
 
 	if (m_Meters.empty())
 	{
-		std::wstring text;
-		text = L"The skin \"";
+		std::wstring text = L"The skin \"";
 		text += m_SkinName;
 		text += L"\\";
 		text += m_SkinIniFile;
@@ -2104,8 +2094,10 @@ bool CMeterWindow::ResizeWindow(bool reset)
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
-		w = max(w, (*j)->GetX() + (*j)->GetW());
-		h = max(h, (*j)->GetY() + (*j)->GetH());
+		int mr = (*j)->GetX() + (*j)->GetW();
+		w = max(w, mr);
+		int mb = (*j)->GetY() + (*j)->GetH();
+		h = max(h, mb);
 	}
 
 	w += m_BackgroundMargins.GetRight();
@@ -3120,8 +3112,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_OPENSKINSFOLDER)
 		{
-			std::wstring command;
-			command += L"\"";
+			std::wstring command = L"\"";
 			command += m_SkinPath + L"\\" + m_SkinName;
 			command += L"\"";
 			LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
@@ -4570,7 +4561,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Converts the path to absolute by adding the skin's path to it (unless it already is absolute).
 **
 */
-std::wstring CMeterWindow::MakePathAbsolute(std::wstring path)
+std::wstring CMeterWindow::MakePathAbsolute(const std::wstring& path)
 {
 	if (path.empty() ||
 		path.find(L":\\") != std::wstring::npos || path.find(L":/") != std::wstring::npos ||

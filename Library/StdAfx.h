@@ -69,5 +69,6 @@
 #include <io.h>
 #include <stdarg.h>
 #include <process.h>
+#include <float.h>
 
 #endif

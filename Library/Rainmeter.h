@@ -204,12 +204,12 @@ public:
 	bool IsMenuActive() { return m_MenuActive; }
 	void ShowContextMenu(POINT pos, CMeterWindow* meterWindow);
 
-	std::wstring GetTrayExecuteL() { return m_TrayExecuteL; }
-	std::wstring GetTrayExecuteR() { return m_TrayExecuteR; }
-	std::wstring GetTrayExecuteM() { return m_TrayExecuteM; }
-	std::wstring GetTrayExecuteDR() { return m_TrayExecuteDR; }
-	std::wstring GetTrayExecuteDL() { return m_TrayExecuteDL; }
-	std::wstring GetTrayExecuteDM() { return m_TrayExecuteDM; }
+	const std::wstring& GetTrayExecuteL() { return m_TrayExecuteL; }
+	const std::wstring& GetTrayExecuteR() { return m_TrayExecuteR; }
+	const std::wstring& GetTrayExecuteM() { return m_TrayExecuteM; }
+	const std::wstring& GetTrayExecuteDR() { return m_TrayExecuteDR; }
+	const std::wstring& GetTrayExecuteDL() { return m_TrayExecuteDL; }
+	const std::wstring& GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
 	BOOL ExecuteBang(const std::wstring& bang, const std::wstring& arg, CMeterWindow* meterWindow);
 	std::wstring ParseCommand(const WCHAR* command, CMeterWindow* meterWindow);
@@ -224,27 +224,27 @@ public:
 	static void ExpandEnvironmentVariables(std::wstring& strPath);
 
 private:
-	void CreateMeterWindow(std::wstring path, std::wstring config, std::wstring iniFile);
+	void CreateMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile);
 	bool DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater);
 	void WriteActive(const std::wstring& config, int iniIndex);
-	void ScanForConfigs(std::wstring& path);
-	void ScanForThemes(std::wstring& path);
-	void ReadGeneralSettings(std::wstring& path);
+	void ScanForConfigs(const std::wstring& path);
+	void ScanForThemes(const std::wstring& path);
+	void ReadGeneralSettings(const std::wstring& iniFile);
 	void SetConfigOrder(int configIndex);
 	int GetLoadOrder(const std::wstring& config);
-	bool SetActiveConfig(std::wstring& skinName, std::wstring& skinIni);
+	bool SetActiveConfig(const std::wstring& skinName, const std::wstring& skinIni);
 	void UpdateDesktopWorkArea(bool reset);
 	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU configMenu);
 	void ChangeSkinIndex(HMENU subMenu, int index);
-	int ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse);
+	int ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse);
 	HMENU CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData);
 	HMENU CreateThemeMenu();
 	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);
-	void CreateDefaultConfigFile(std::wstring strFile);
+	void CreateDefaultConfigFile(const std::wstring& strFile);
 	void SetLogging(bool logging);
 	void TestSettingsFile(bool bDefaultIniLocation);
 	void CheckSkinVersions();
-	int CompareVersions(std::wstring strA, std::wstring strB);
+	int CompareVersions(const std::wstring& strA, const std::wstring& strB);
 
 	CTrayWindow* m_TrayWindow;
 

@@ -233,8 +233,7 @@ void CMeasureTime::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_Format = parser.ReadString(section, L"Format", L"");
 
-	std::wstring timezone;
-	timezone = parser.ReadString(section, L"TimeZone", L"local");
+	std::wstring timezone = parser.ReadString(section, L"TimeZone", L"local");
 	bool dst = 1 == parser.ReadInt(section, L"DaylightSavingTime", 1);
 
 	SYSTEMTIME sysLocalTime, sysUTCTime;

@@ -27,7 +27,8 @@
 
 #define SystemProcessorPerformanceInformation	8
 
-#define Li2Double(x) ((double)((x).HighPart) * 4.294967296E9 + (double)((x).LowPart))
+//#define Li2Double(x) ((double)((x).HighPart) * 4.294967296E9 + (double)((x).LowPart))
+#define Li2Double(x) ((double)((x).QuadPart))
 #define Ft2Double(x) ((double)((x).dwHighDateTime) * 4.294967296E9 + (double)((x).dwLowDateTime))
 
 // ntdll!NtQuerySystemInformation (NT specific!)
@@ -56,7 +57,6 @@
 */
 CMeasureCPU::CMeasureCPU(CMeterWindow* meterWindow) : CMeasure(meterWindow)
 {
-	m_CPUFromRegistry = false;
 	m_MaxValue = 100.0;
 	m_MinValue = 0.0;
 	m_FirstTime = true;
@@ -85,19 +85,6 @@ CMeasureCPU::CMeasureCPU(CMeterWindow* meterWindow) : CMeasure(meterWindow)
 */
 CMeasureCPU::~CMeasureCPU()
 {
-	if(m_CPUFromRegistry)
-	{
-		// Stop the counter if it was started
-		HKEY hkey;
-		DWORD dwDataSize;
-		DWORD dwType;
-		DWORD dwDummy;
-
-		RegOpenKeyEx(HKEY_DYN_DATA, L"PerfStats\\StopStat", 0, KEY_ALL_ACCESS, &hkey); 
-		dwDataSize = sizeof(dwDummy); 
-		RegQueryValueEx(hkey, L"KERNEL\\CPUUsage", NULL, &dwType, (LPBYTE)&dwDummy, &dwDataSize); 
-		RegCloseKey(hkey); 
-	}
 }
 
 /*
@@ -141,132 +128,102 @@ void CMeasureCPU::ReadConfig(CConfigParser& parser, const WCHAR* section)
 /*
 ** Update
 **
-** Updates the current CPU utilization value. On NT the value is taken
-** from the performance counters and on 9x we'll use the registry.
+** Updates the current CPU utilization value.
 **
 */
 bool CMeasureCPU::Update()
 {
 	if (!CMeasure::PreUpdate()) return false;
 
-	if (CSystem::IsNT())
+	if (m_Processor == 0 && m_GetSystemTimes)
 	{
-		if (m_Processor == 0 && m_GetSystemTimes)
+		BOOL status;
+		FILETIME ftIdleTime, ftKernelTime, ftUserTime;
+
+		// get new CPU's idle/kernel/user time
+		status = m_GetSystemTimes(&ftIdleTime, &ftKernelTime, &ftUserTime);
+		if (status == 0) return false;
+
+		CalcUsage(Ft2Double(ftIdleTime),
+			Ft2Double(ftKernelTime) + Ft2Double(ftUserTime));
+	}
+	else if (m_NtQuerySystemInformation)
+	{
+		LONG status;
+		BYTE* buf = NULL;
+		ULONG bufSize = 0;
+
+		int loop = 0;
+
+		do
 		{
-			BOOL status;
-			FILETIME ftIdleTime, ftKernelTime, ftUserTime;
+			ULONG size = 0;
 
-			// get new CPU's idle/kernel/user time
-			status = m_GetSystemTimes(&ftIdleTime, &ftKernelTime, &ftUserTime);
-			if (status == 0) return false;
+			status = m_NtQuerySystemInformation(SystemProcessorPerformanceInformation, buf, bufSize, &size);
+			if (status == STATUS_SUCCESS) break;
 
-			CalcUsage(Ft2Double(ftIdleTime),
-				Ft2Double(ftKernelTime) + Ft2Double(ftUserTime));
-		}
-		else if (m_NtQuerySystemInformation)
-		{
-			LONG status;
-			BYTE* buf = NULL;
-			ULONG bufSize = 0;
-
-			int loop = 0;
-
-			do
+			if (status == STATUS_INFO_LENGTH_MISMATCH)
 			{
-				ULONG size = 0;
-
-				status = m_NtQuerySystemInformation(SystemProcessorPerformanceInformation, buf, bufSize, &size);
-				if (status == STATUS_SUCCESS) break;
-
-				if (status == STATUS_INFO_LENGTH_MISMATCH)
+				if (size == 0)  // Returned required buffer size is always 0 on Windows 2000/XP.
 				{
-					if (size == 0)  // Returned required buffer size is always 0 on Windows 2000/XP.
+					if (bufSize == 0)
 					{
-						if (bufSize == 0)
-						{
-							bufSize = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * m_NumOfProcessors;
-						}
-						else
-						{
-							bufSize += sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
-						}
+						bufSize = sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * m_NumOfProcessors;
 					}
 					else
 					{
-						if (size != bufSize)
-						{
-							bufSize = size;
-						}
-						else  // ??
-						{
-							bufSize += sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
-						}
+						bufSize += sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
 					}
-
-					if (buf) delete [] buf;
-					buf = new BYTE[bufSize];
 				}
-				else  // failed
+				else
 				{
-					if (buf) delete [] buf;
-					return false;
+					if (size != bufSize)
+					{
+						bufSize = size;
+					}
+					else  // ??
+					{
+						bufSize += sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+					}
 				}
 
-				++loop;
-			} while (loop < 10);
-
-			if (status != STATUS_SUCCESS)  // failed
+				if (buf) delete [] buf;
+				buf = new BYTE[bufSize];
+			}
+			else  // failed
 			{
 				if (buf) delete [] buf;
 				return false;
 			}
 
-			SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* systemPerfInfo = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION*)buf;
+			++loop;
+		} while (loop < 10);
 
-			if (m_Processor == 0)
-			{
-				CalcAverageUsage(systemPerfInfo);
-			}
-			else
-			{
-				int processor = m_Processor - 1;
+		if (status != STATUS_SUCCESS)  // failed
+		{
+			if (buf) delete [] buf;
+			return false;
+		}
 
-				CalcUsage(Li2Double(systemPerfInfo[processor].IdleTime),
-					Li2Double(systemPerfInfo[processor].KernelTime) + Li2Double(systemPerfInfo[processor].UserTime));
-			}
+		SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* systemPerfInfo = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION*)buf;
 
-			delete [] buf;
+		if (m_Processor == 0)
+		{
+			CalcAverageUsage(systemPerfInfo);
 		}
 		else
 		{
-			return false;
+			int processor = m_Processor - 1;
+
+			CalcUsage(Li2Double(systemPerfInfo[processor].IdleTime),
+				Li2Double(systemPerfInfo[processor].KernelTime) + Li2Double(systemPerfInfo[processor].UserTime));
 		}
+
+		delete [] buf;
 	}
 	else
 	{
-		// It's a wintendo!
-		HKEY hkey;
-		DWORD dwDataSize;
-		DWORD dwType;
-		DWORD dwCpuUsage;
-
-		if(m_FirstTime)
-		{
-			RegOpenKeyEx(HKEY_DYN_DATA, L"PerfStats\\StartStat", 0, KEY_ALL_ACCESS, &hkey); 
-			dwDataSize = sizeof(dwCpuUsage); 
-			RegQueryValueEx(hkey, L"KERNEL\\CPUUsage", NULL, &dwType, (LPBYTE)&dwCpuUsage, &dwDataSize); 
-			RegCloseKey(hkey);
-
-			m_FirstTime = false;
-		}
-
-		RegOpenKeyEx(HKEY_DYN_DATA, L"PerfStats\\StatData", 0, KEY_ALL_ACCESS, &hkey); 
-		dwDataSize = sizeof(dwCpuUsage); 
-		RegQueryValueEx(hkey, L"KERNEL\\CPUUsage", NULL, &dwType, (LPBYTE)&dwCpuUsage, &dwDataSize); 
-		RegCloseKey(hkey); 
-
-		m_Value = dwCpuUsage;
-		m_CPUFromRegistry = true;
+		return false;
 	}
 
 	return PostUpdate();

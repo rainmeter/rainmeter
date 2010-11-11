@@ -139,7 +139,7 @@ class CMeter;
 class CMeterWindow : public CGroup
 {
 public:
-	CMeterWindow(std::wstring& path, std::wstring& config, std::wstring& iniFile);
+	CMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile);
 	~CMeterWindow();
 
 	int Initialize(CRainmeter& Rainmeter);
@@ -203,7 +203,7 @@ public:
 
 	LRESULT OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	std::wstring MakePathAbsolute(std::wstring path);
+	std::wstring MakePathAbsolute(const std::wstring& path);
 
 	Gdiplus::PrivateFontCollection* GetPrivateFontCollection() { return m_FontCollection; }
 

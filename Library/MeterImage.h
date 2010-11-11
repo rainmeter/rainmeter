@@ -30,7 +30,7 @@ namespace Gdiplus
 class CMeterImage : public CMeter
 {
 public:
-	CMeterImage(CMeterWindow* meterWindow);
+	CMeterImage(CMeterWindow* meterWindow, WCHAR* wName = L"W", WCHAR* hName = L"H");
 	virtual ~CMeterImage();
 
 	virtual void ReadConfig(const WCHAR* section);
@@ -40,14 +40,15 @@ public:
 	virtual void BindMeasure(std::list<CMeasure*>& measures);
 
 protected:
-	std::wstring m_ImageWidthString;
-	std::wstring m_ImageHeightString;
 	void LoadImage(bool bLoadAlways);
 	bool CompareColorMatrix(const Gdiplus::ColorMatrix& a, const Gdiplus::ColorMatrix& b);
 	void ApplyTint();
 	Gdiplus::Bitmap* TurnGreyscale();
 	void ApplyTransform();
 	
+	const std::wstring m_ImageWidthString;
+	const std::wstring m_ImageHeightString;
+
 	Gdiplus::Bitmap* m_Bitmap;			// The bitmap
 	Gdiplus::Bitmap* m_BitmapTint;		// The bitmap
 	std::wstring m_ImageName;			// Name of the image

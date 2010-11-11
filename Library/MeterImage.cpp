@@ -51,7 +51,8 @@ const Gdiplus::ColorMatrix CMeterImage::c_IdentifyMatrix = {
 ** The constructor
 **
 */
-CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow)
+CMeterImage::CMeterImage(CMeterWindow* meterWindow, WCHAR* wName, WCHAR* hName) : CMeter(meterWindow), m_ImageWidthString(wName), m_ImageHeightString(hName),
+	m_ColorMatrix(c_IdentifyMatrix)
 {
 	m_Bitmap = NULL;
 	m_BitmapTint = NULL;
@@ -66,12 +67,8 @@ CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow)
 	m_Modified.dwLowDateTime = 0;
 
 	m_GreyScale = false;
-	m_ColorMatrix = c_IdentifyMatrix;
 	m_Flip = RotateNoneFlipNone;
 	m_Rotate = 0.0f;
-
-	m_ImageWidthString = L"W";
-	m_ImageHeightString = L"H";
 }
 
 /*
@@ -522,8 +519,7 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 
 	m_NeedsTinting = (oldGreyScale != m_GreyScale || !CompareColorMatrix(oldColorMatrix, m_ColorMatrix));
 
-	std::wstring flip;
-	flip = parser.ReadString(section, L"ImageFlip", L"NONE");
+	std::wstring flip = parser.ReadString(section, L"ImageFlip", L"NONE");
 
 	if(_wcsicmp(flip.c_str(), L"NONE") == 0)
 	{

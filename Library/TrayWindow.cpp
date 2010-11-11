@@ -37,7 +37,9 @@ extern CRainmeter* Rainmeter;
 
 using namespace Gdiplus;
 
-CTrayWindow::CTrayWindow(HINSTANCE instance)
+CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
+	m_TrayColor1(0, 100, 0),
+	m_TrayColor2(0, 255, 0)
 {
 	WNDCLASS  wc;
 
@@ -68,13 +70,10 @@ CTrayWindow::CTrayWindow(HINSTANCE instance)
 		instance,
 		this);
 
-	m_Instance = instance;
 	m_Measure = NULL;
 	m_TrayIcon = NULL;
 
 	m_MeterType = TRAY_METER_TYPE_HISTOGRAM;
-	m_TrayColor1 = Color(0, 100, 0);
-	m_TrayColor2 = Color(0, 255, 0);
 
 	m_Bitmap = NULL;
 
@@ -477,8 +476,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if(wParam == ID_CONTEXT_OPENSKINSFOLDER)
 			{
-				std::wstring command;
-				command += L"\"";
+				std::wstring command = L"\"";
 				command += Rainmeter->GetSkinPath();
 				command += L"\"";
 				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);

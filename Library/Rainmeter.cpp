@@ -230,8 +230,7 @@ void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 				}
 				else
 				{
-					std::wstring dbg;
-					dbg = L"Unknown config name: " + config;
+					std::wstring dbg = L"Unknown config name: " + config;
 					LSLog(LOG_DEBUG, APPNAME, dbg.c_str());
 				}
 			}
@@ -1174,7 +1173,7 @@ void RainmeterQuit(HWND, const char* arg)
 //
 // -----------------------------------------------------------------------------------------------
 
-GlobalConfig CRainmeter::c_GlobalConfig;
+GlobalConfig CRainmeter::c_GlobalConfig = {0};
 bool CRainmeter::c_Debug = false;
 
 /* 
@@ -1185,11 +1184,6 @@ bool CRainmeter::c_Debug = false;
 */
 CRainmeter::CRainmeter()
 {
-	c_GlobalConfig.netInSpeed = 0;
-	c_GlobalConfig.netOutSpeed = 0;
-
-	c_Debug = false;
-
 	m_MenuActive = false;
 
 	m_Logging = false;
@@ -1736,7 +1730,7 @@ void CRainmeter::CheckSkinVersions()
 ** Compares two version strings. Returns 0 if they are equal, 1 if A > B and -1 if A < B.
 **
 */
-int CRainmeter::CompareVersions(std::wstring strA, std::wstring strB)
+int CRainmeter::CompareVersions(const std::wstring& strA, const std::wstring& strB)
 {
 	if (strA.empty() && strB.empty()) return 0;
 	if (strA.empty()) return -1;
@@ -1773,7 +1767,7 @@ int CRainmeter::CompareVersions(std::wstring strA, std::wstring strB)
 ** illustro\System is enabled.
 **
 */
-void CRainmeter::CreateDefaultConfigFile(std::wstring strFile)
+void CRainmeter::CreateDefaultConfigFile(const std::wstring& strFile)
 {
 	size_t pos = strFile.find_last_of(L'\\');
 	if (pos != std::wstring::npos)
@@ -1839,9 +1833,9 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		if (_waccess(skinIniPath.c_str(), 0) == -1)
 		{
 			std::wstring message = L"Unable to activate skin \"";
-			message += skinConfig.c_str();
+			message += skinConfig;
 			message += L"\\";
-			message += skinIniFile.c_str();
+			message += skinIniFile;
 			message += L"\": Ini-file not found.";
 			LSLog(LOG_DEBUG, APPNAME, message.c_str());
 			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
@@ -1899,7 +1893,7 @@ void CRainmeter::WriteActive(const std::wstring& config, int iniIndex)
 	WritePrivateProfileString(config.c_str(), L"Active", buffer, m_IniFile.c_str());
 }
 
-void CRainmeter::CreateMeterWindow(std::wstring path, std::wstring config, std::wstring iniFile)
+void CRainmeter::CreateMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile)
 {
 	CMeterWindow* mw = new CMeterWindow(path, config, iniFile);
 
@@ -2164,7 +2158,7 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 **
 ** Scans all the subfolders and locates the ini-files.
 */
-void CRainmeter::ScanForConfigs(std::wstring& path)
+void CRainmeter::ScanForConfigs(const std::wstring& path)
 {
 	m_ConfigStrings.clear();
 	m_ConfigMenu.clear();
@@ -2173,7 +2167,7 @@ void CRainmeter::ScanForConfigs(std::wstring& path)
 	ScanForConfigsRecursive(path, L"", 0, m_ConfigMenu, false);
 }
 
-int CRainmeter::ScanForConfigsRecursive(std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse)
+int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse)
 {
     WIN32_FIND_DATA fileData;      // Data structure describes the file found
     WIN32_FIND_DATA fileDataIni;   // Data structure describes the file found
@@ -2263,7 +2257,7 @@ int CRainmeter::ScanForConfigsRecursive(std::wstring& path, std::wstring base, i
 **
 ** Scans the given folder for themes
 */
-void CRainmeter::ScanForThemes(std::wstring& path)
+void CRainmeter::ScanForThemes(const std::wstring& path)
 {
 	m_Themes.clear();
 
@@ -2726,7 +2720,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 ** Reads the general settings from the Rainmeter.ini file
 **
 */
-void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
+void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 {
 	// Clear old settings
 	m_DesktopWorkAreas.clear();
@@ -2859,8 +2853,7 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 		{
 			if (!SetActiveConfig(skinName, skinIni))
 			{
-				std::wstring error;
-				error = L"The selected skin (L" + skinName + L"\\" + skinIni + L") cannot be found.";
+				std::wstring error = L"The selected skin (L" + skinName + L"\\" + skinIni + L") cannot be found.";
 				MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 			}
 			return;
@@ -2886,7 +2879,7 @@ void CRainmeter::ReadGeneralSettings(std::wstring& iniFile)
 **
 ** Makes the given config active. If the config cannot be found this returns false.
 */
-bool CRainmeter::SetActiveConfig(std::wstring& skinName, std::wstring& skinIni)
+bool CRainmeter::SetActiveConfig(const std::wstring& skinName, const std::wstring& skinIni)
 {
 	for (size_t i = 0; i < m_ConfigStrings.size(); ++i)
 	{
@@ -2969,9 +2962,9 @@ void CRainmeter::RefreshAll()
 						DeactivateConfig(mw, i);
 
 						std::wstring message = L"Unable to refresh skin \"";
-						message += skinConfig.c_str();
+						message += skinConfig;
 						message += L"\\";
-						message += skinIniFile.c_str();
+						message += skinIniFile;
 						message += L"\": Ini-file not found.";
 						LSLog(LOG_DEBUG, APPNAME, message.c_str());
 						MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
@@ -2987,7 +2980,7 @@ void CRainmeter::RefreshAll()
 					DeactivateConfig(mw, -2);  // -2 = Deactivate the config forcibly
 
 					std::wstring message = L"Unable to refresh config \"";
-					message += skinConfig.c_str();
+					message += skinConfig;
 					message += L"\": Config not found.";
 					LSLog(LOG_DEBUG, APPNAME, message.c_str());
 					MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
@@ -3770,8 +3763,7 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	{
 		LSLog(LOG_DEBUG, APPNAME, L"The Rainmeter.ini file is NOT writable.");
 
-		std::wstring error;
-		error += L"The Rainmeter.ini file is not writable. This means that the\n";
+		std::wstring error = L"The Rainmeter.ini file is not writable. This means that the\n";
 		error += L"application will not be able to save any settings permanently.\n\n";
 
 		if (!bDefaultIniLocation)

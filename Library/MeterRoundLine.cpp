@@ -30,7 +30,8 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-CMeterRoundLine::CMeterRoundLine(CMeterWindow* meterWindow) : CMeter(meterWindow)
+CMeterRoundLine::CMeterRoundLine(CMeterWindow* meterWindow) : CMeter(meterWindow),
+	m_LineColor(Color::Black)
 {
 	m_LineWidth = 1.0;
 	m_LineLength = 20;
