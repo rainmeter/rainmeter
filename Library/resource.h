@@ -65,13 +65,14 @@
 #define ID_CONTEXT_STOPLOG              4052
 #define ID_CONTEXT_DEBUGLOG             4053
 #define ID_CONTEXT_DELETELOGFILE        4054
+
 #define ID_CONFIG_EDIT                  30000
 #define ID_CONFIG_FIRST                 30001
-#define ID_CONFIG_LAST                  33000
-#define ID_THEME_FIRST                  33001
-#define ID_THEME_LAST                   36000
-#define ID_MONITOR_FIRST                36001
-#define ID_MONITOR_LAST                 37000
+#define ID_CONFIG_LAST                  40000
+#define ID_THEME_FIRST                  40001
+#define ID_THEME_LAST                   43000
+#define ID_MONITOR_FIRST                43001
+#define ID_MONITOR_LAST                 44000
 
 // Next default values for new objects
 // 
