@@ -29,7 +29,7 @@ BEGIN
         BLOCK "040904E4"
         BEGIN
             VALUE "FileDescription", "Win7Audio Plugin for Rainmeter"
-            VALUE "FileVersion", "1, 6, 0, 0"
+            VALUE "FileVersion", "1.6.0.0"
             VALUE "InternalName", "PluginWin7Audio"
             VALUE "LegalCopyright", "Copyright (C) 2010 - Reiswaffle"
             VALUE "OriginalFilename", "PluginWin7Audio.dll"

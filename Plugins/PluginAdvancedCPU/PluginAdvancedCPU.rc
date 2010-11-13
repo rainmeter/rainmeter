@@ -29,7 +29,7 @@ BEGIN
         BLOCK "040904E4"
         BEGIN
             VALUE "FileDescription", "AdvancedCPU Plugin for Rainmeter"
-            VALUE "FileVersion", "1, 5, 0, 0"
+            VALUE "FileVersion", "1.5.0.0"
             VALUE "InternalName", "AdvancedCPU"
             VALUE "LegalCopyright", "Copyright (C) 2010 - Rainy"
             VALUE "OriginalFilename", "AdvancedCPU.dll"

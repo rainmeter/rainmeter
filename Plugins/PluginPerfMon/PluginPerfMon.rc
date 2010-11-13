@@ -29,7 +29,7 @@ BEGIN
         BLOCK "040904E4"
         BEGIN
             VALUE "FileDescription", "PerfMon Plugin for Rainmeter"
-            VALUE "FileVersion", "1, 2, 0, 0"
+            VALUE "FileVersion", "1.2.0.0"
             VALUE "InternalName", "PluginPerfMon"
             VALUE "LegalCopyright", "Copyright (C) 2010 - Rainy"
             VALUE "OriginalFilename", "PluginPerfMon.dll"

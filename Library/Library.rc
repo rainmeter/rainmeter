@@ -1,6 +1,7 @@
 // Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
+#include "..\revision-number.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -15,11 +16,48 @@
 /////////////////////////////////////////////////////////////////////////////
 // Finnish resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FIN)
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
 #ifdef _WIN32
-LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 #pragma code_page(1252)
 #endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION FILEVER
+ PRODUCTVERSION PRODUCTVER
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "FileDescription", "Rainmeter Core Library"
+            VALUE "FileVersion", STRFILEVER
+            VALUE "InternalName", "Rainmeter"
+            VALUE "LegalCopyright", "Copyright (C) 2010 - Rainy"
+            VALUE "OriginalFilename", "Rainmeter.dll"
+            VALUE "ProductName", "Rainmeter"
+            VALUE "ProductVersion", STRPRODUCTVER
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
 
 /////////////////////////////////////////////////////////////////////////////
 //

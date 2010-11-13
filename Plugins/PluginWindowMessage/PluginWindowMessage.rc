@@ -29,7 +29,7 @@ BEGIN
         BLOCK "040904E4"
         BEGIN
             VALUE "FileDescription", "WindowMessage Plugin for Rainmeter"
-            VALUE "FileVersion", "1, 1, 0, 0"
+            VALUE "FileVersion", "1.1.0.0"
             VALUE "InternalName", "PluginWindowMessage"
             VALUE "LegalCopyright", "Copyright (C) 2010 - Rainy"
             VALUE "OriginalFilename", "PluginWindowMessage.dll"

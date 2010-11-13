@@ -29,7 +29,7 @@ BEGIN
         BLOCK "040904E4"
         BEGIN
             VALUE "FileDescription", "VirtualDesktops Plugin for Rainmeter"
-            VALUE "FileVersion", "1, 0, 0, 0"
+            VALUE "FileVersion", "1.0.0, 0"
             VALUE "InternalName", "PluginVirtualDesktops"
             VALUE "LegalCopyright", "Copyright (C) 2010 - Dexpot GbR"
             VALUE "OriginalFilename", "PluginVirtualDesktops.dll"

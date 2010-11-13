@@ -17,9 +17,9 @@
 /////////////////////////////////////////////////////////////////////////////
 // Finnish resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FIN)
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
 #ifdef _WIN32
-LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 #pragma code_page(1252)
 #endif //_WIN32
 
@@ -43,7 +43,7 @@ VS_VERSION_INFO VERSIONINFO
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040b04b0"
+        BLOCK "040904E4"
         BEGIN
             VALUE "FileDescription", "Rainmeter - A Customizable Resource Meter"
             VALUE "FileVersion", STRFILEVER
@@ -56,7 +56,7 @@ BEGIN
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x40b, 1200
+        VALUE "Translation", 0x409, 1200
     END
 END
 
