@@ -52,7 +52,7 @@ CMeter::CMeter(CMeterWindow* meterWindow) : m_MeterWindow(meterWindow)
 	m_SolidBevel = BEVELTYPE_NONE;
 	m_MouseOver = false;
 	m_UpdateDivider = 1;
-	m_UpdateCounter = 0;
+	m_UpdateCounter = 1;
 	m_RelativeX = POSITION_ABSOLUTE;
 	m_RelativeY = POSITION_ABSOLUTE;
 	m_SolidAngle = 0.0f;
@@ -276,8 +276,6 @@ void CMeter::ReadConfig(const WCHAR* section)
 		parser.SetStyleTemplate(style);
 	}
 
-	UINT oldUpdateDivider = m_UpdateDivider;
-
 	std::wstring oldStyleX = m_StyleX;
 	std::wstring oldStyleY = m_StyleY;
 	std::wstring oldStyleHidden = m_StyleHidden;
@@ -411,7 +409,12 @@ void CMeter::ReadConfig(const WCHAR* section)
 
 	m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
 
-	m_UpdateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
+	UINT updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
+	if (updateDivider != m_UpdateDivider)
+	{
+		m_UpdateCounter = m_UpdateDivider = updateDivider;
+	}
+
 	m_AntiAlias = 0!=parser.ReadInt(section, L"AntiAlias", 0);
 	m_DynamicVariables = 0!=parser.ReadInt(section, L"DynamicVariables", 0);
 
@@ -427,12 +430,6 @@ void CMeter::ReadConfig(const WCHAR* section)
 
 	std::wstring group = parser.ReadString(section, L"Group", L"");
 	InitializeGroup(group);
-
-	if (!m_Initialized ||
-		oldUpdateDivider != m_UpdateDivider)
-	{
-		m_UpdateCounter = m_UpdateDivider;
-	}
 
 /* Are these necessary?
 	if (m_W == 0 || m_H == 0)
