@@ -2443,6 +2443,7 @@ void CMeterWindow::Update(bool nodraw)
 
 	// Update the meters
 	bool bActiveTransition = false;
+	bool bUpdate = false;
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
@@ -2453,7 +2454,10 @@ void CMeterWindow::Update(bool nodraw)
 				(*j)->ReadConfig((*j)->GetName());
 				m_Parser.ClearStyleTemplate();
 			}
-			(*j)->Update();
+			if ((*j)->Update())
+			{
+				bUpdate = true;
+			}
 		}
 		catch (CError& error)
 		{
@@ -2480,7 +2484,7 @@ void CMeterWindow::Update(bool nodraw)
 		}
 	}
 
-	if (!nodraw)
+	if (!nodraw && (m_Refreshing || bUpdate))
 	{
 		if (m_DynamicWindowSize)
 		{
