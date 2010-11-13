@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PluginSysInfo"
 	ProjectGUID="{6EBCA4DA-8CC7-42FE-8F45-878ABE165078}"
 	TargetFrameworkVersion="0"
@@ -567,6 +567,10 @@
 	<References>
 	</References>
 	<Files>
+		<File
+			RelativePath=".\PluginSysInfo.rc"
+			>
+		</File>
 		<File
 			RelativePath="SysInfo.cpp"
 			>

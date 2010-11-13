@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PluginRecycleManager"
 	ProjectGUID="{4F8C4C09-431C-45C4-830B-32006E783C3A}"
 	TargetFrameworkVersion="131072"
@@ -579,6 +579,10 @@
 	<References>
 	</References>
 	<Files>
+		<File
+			RelativePath=".\PluginRecycleManager.rc"
+			>
+		</File>
 		<File
 			RelativePath="RecycleManager.cpp"
 			>

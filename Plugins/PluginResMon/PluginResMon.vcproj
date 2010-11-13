@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PluginResMon"
 	ProjectGUID="{17D3BD92-6F5D-438C-A89B-88F4CE06DB94}"
 	TargetFrameworkVersion="0"
@@ -567,6 +567,10 @@
 	<References>
 	</References>
 	<Files>
+		<File
+			RelativePath=".\PluginResMon.rc"
+			>
+		</File>
 		<File
 			RelativePath="ResMon.cpp"
 			>

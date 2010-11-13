@@ -1,3 +1,3 @@
 #pragma once
-const int revision_number = 589;
+const int revision_number = 592;
 const bool revision_beta = true;

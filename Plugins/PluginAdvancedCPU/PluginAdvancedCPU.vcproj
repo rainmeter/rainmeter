@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PluginAdvancedCPU"
 	ProjectGUID="{EE8EC522-8430-4B46-86A3-D943D77F9E4B}"
 	TargetFrameworkVersion="0"
@@ -932,6 +932,10 @@
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\PluginAdvancedCPU.rc"
+			>
 		</File>
 		<File
 			RelativePath="..\PluginPerfMon\Titledb.cpp"

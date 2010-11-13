@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PluginVirtualDesktops"
 	ProjectGUID="{4640AB3A-5A8B-2DA0-980C-A70BCAB3A7F1}"
 	TargetFrameworkVersion="0"
@@ -596,6 +596,10 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\PluginVirtualDesktops.rc"
+			>
+		</File>
 		<File
 			RelativePath=".\VDMeasure.h"
 			>

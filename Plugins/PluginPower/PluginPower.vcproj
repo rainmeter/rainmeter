@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PluginPower"
 	ProjectGUID="{C30E7EB6-9655-4AF4-98AE-D6E6B14631AF}"
 	TargetFrameworkVersion="0"
@@ -564,6 +564,10 @@
 	<References>
 	</References>
 	<Files>
+		<File
+			RelativePath=".\PluginPower.rc"
+			>
+		</File>
 		<File
 			RelativePath="PowerPlugin.cpp"
 			>

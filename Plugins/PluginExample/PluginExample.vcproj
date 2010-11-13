@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PluginExample"
 	ProjectGUID="{761BAD94-EA54-4DBD-9FF0-50FDAFECBE93}"
 	TargetFrameworkVersion="0"
@@ -623,6 +623,10 @@
 					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PLUGINEXAMPLE_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\PluginExample.rc"
+			>
 		</File>
 	</Files>
 	<Globals>

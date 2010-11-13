@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PluginQuote"
 	ProjectGUID="{C029E0CF-F203-41D0-9608-A3EA2CF0ED1F}"
 	TargetFrameworkVersion="0"
@@ -567,6 +567,10 @@
 	<References>
 	</References>
 	<Files>
+		<File
+			RelativePath=".\PluginQuote.rc"
+			>
+		</File>
 		<File
 			RelativePath="Quote.cpp"
 			>

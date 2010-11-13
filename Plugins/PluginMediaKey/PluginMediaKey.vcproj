@@ -627,6 +627,10 @@
 				/>
 			</FileConfiguration>
 		</File>
+		<File
+			RelativePath=".\PluginMediaKey.rc"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

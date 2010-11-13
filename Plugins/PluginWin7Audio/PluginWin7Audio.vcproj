@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PluginWin7Audio"
 	ProjectGUID="{6D032D6B-7656-4743-B454-3388E2921EB0}"
 	RootNamespace="PluginWin7Audio"
@@ -568,6 +568,10 @@
 	<References>
 	</References>
 	<Files>
+		<File
+			RelativePath=".\PluginWin7Audio.rc"
+			>
+		</File>
 		<File
 			RelativePath=".\PolicyConfig.h"
 			>

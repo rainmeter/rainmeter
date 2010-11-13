@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PluginPing"
 	ProjectGUID="{C862B662-5CC6-4E79-B1B3-905E0B98D627}"
 	TargetFrameworkVersion="0"
@@ -626,6 +626,10 @@
 					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginPing_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\PluginPing.rc"
+			>
 		</File>
 	</Files>
 	<Globals>

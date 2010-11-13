@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PluginWindowMessage"
 	ProjectGUID="{B9184DBA-C6B7-44FE-8BBD-0852DB22D2E4}"
 	TargetFrameworkVersion="0"
@@ -564,6 +564,10 @@
 	<References>
 	</References>
 	<Files>
+		<File
+			RelativePath=".\PluginWindowMessage.rc"
+			>
+		</File>
 		<File
 			RelativePath="WindowMessagePlugin.cpp"
 			>

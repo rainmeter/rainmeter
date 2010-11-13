@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PluginPerfMon"
 	ProjectGUID="{5344B52B-BAC3-479C-B41D-D465B8BDA1AD}"
 	TargetFrameworkVersion="0"
@@ -950,6 +950,10 @@
 		</File>
 		<File
 			RelativePath="PerfSnap.h"
+			>
+		</File>
+		<File
+			RelativePath=".\PluginPerfMon.rc"
 			>
 		</File>
 		<File

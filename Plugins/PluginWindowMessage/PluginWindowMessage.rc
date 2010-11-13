@@ -1,0 +1,46 @@
+// Microsoft Developer Studio generated resource script.
+// Caution! Do not modify this file without changing \install\UpdateApplicationRC.au3
+//
+
+#define APSTUDIO_READONLY_SYMBOLS
+
+#include "windows.h"
+
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,1,0,0
+ PRODUCTVERSION 1,4,0,592
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS VS_FF_DEBUG
+#else
+ FILEFLAGS 0x0L		
+#endif
+ FILEOS	VOS_NT_WINDOWS32
+ FILETYPE VFT_DLL
+ FILESUBTYPE VFT_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "FileDescription", "WindowMessage Plugin for Rainmeter"
+            VALUE "FileVersion", "1, 1, 0, 0"
+            VALUE "InternalName", "PluginWindowMessage"
+            VALUE "LegalCopyright", "Copyright (C) 2010 - Rainy"
+            VALUE "OriginalFilename", "PluginWindowMessage.dll"
+            VALUE "ProductName", "Rainmeter"
+            VALUE "ProductVersion", "1, 4, 0, 592 (x64)"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END
