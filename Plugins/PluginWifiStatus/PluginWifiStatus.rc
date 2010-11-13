@@ -1,11 +1,9 @@
 // Microsoft Developer Studio generated resource script.
-// Caution! Do not modify this file without changing \install\UpdateApplicationRC.au3
 //
 
+#include "..\..\revision-number.h"
 #define APSTUDIO_READONLY_SYMBOLS
-
 #include "windows.h"
-
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
@@ -15,7 +13,7 @@
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION 1,9,0,0
- PRODUCTVERSION 1,4,0,592
+ PRODUCTVERSION PRODUCTVER
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -36,7 +34,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright (C) 2010 - nvme"
             VALUE "OriginalFilename", "PluginWifiStatus.dll"
             VALUE "ProductName", "Rainmeter"
-            VALUE "ProductVersion", "1, 4, 0, 592 (x64)"
+            VALUE "ProductVersion", STRPRODUCTVER
         END
     END
     BLOCK "VarFileInfo"

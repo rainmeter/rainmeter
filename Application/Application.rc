@@ -2,6 +2,7 @@
 // Caution! Do not modify this file without changing \install\UpdateApplicationRC.au3
 //
 #include "resource.h"
+#include "..\revision-number.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -28,8 +29,8 @@ LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,4,0,592
- PRODUCTVERSION 1,4,0,592
+ FILEVERSION FILEVER
+ PRODUCTVERSION PRODUCTVER
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -45,12 +46,12 @@ BEGIN
         BLOCK "040b04b0"
         BEGIN
             VALUE "FileDescription", "Rainmeter - A Customizable Resource Meter"
-            VALUE "FileVersion", "1, 4, 0, 592"
+            VALUE "FileVersion", STRFILEVER
             VALUE "InternalName", "Rainmeter"
             VALUE "LegalCopyright", "Copyright (C) 2010 - Rainy"
             VALUE "OriginalFilename", "Rainmeter.exe"
             VALUE "ProductName", "Rainmeter"
-            VALUE "ProductVersion", "1, 4, 0, 592"
+            VALUE "ProductVersion", STRPRODUCTVER
         END
     END
     BLOCK "VarFileInfo"
