@@ -34,7 +34,11 @@ BEGIN
             VALUE "LegalCopyright", "Copyright (C) 2010 - Elestel"
             VALUE "OriginalFilename", "PluginiTunes.dll"
             VALUE "ProductName", "Rainmeter"
-            VALUE "ProductVersion", STRPRODUCTVER
+            #ifdef _WIN64
+            VALUE "ProductVersion", STRPRODUCTVER " (64-bit)"
+            #else
+            VALUE "ProductVersion", STRPRODUCTVER " (32-bit)"
+            #endif //_WIN64
         END
     END
     BLOCK "VarFileInfo"
