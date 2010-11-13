@@ -580,6 +580,7 @@ void CMeasure::GetScaledValue(int decimals, double theValue, WCHAR* buffer)
 	}
 	else
 	{
+		wcscat(format, L" ");
 		value = theValue;
 	}
 	swprintf(buffer, format, value);
