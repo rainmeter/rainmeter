@@ -595,9 +595,9 @@ std::wstring CMeter::ReplaceMeasures(std::wstring source)
 	WCHAR buffer[64];
 	// Create the actual text (i.e. replace %1, %2, .. with the measure texts)
 
-	for (size_t i = 0; i < stringValues.size(); ++i)
+	for (size_t i = stringValues.size(); i > 0; --i)
 	{
-		wsprintf(buffer, L"%%%i", i + 1);
+		wsprintf(buffer, L"%%%i", i);
 
 		size_t start = 0;
 		size_t pos = std::wstring::npos;
@@ -607,8 +607,8 @@ std::wstring CMeter::ReplaceMeasures(std::wstring source)
 			pos = source.find(buffer, start);
 			if (pos != std::wstring::npos)
 			{
-				source.replace(source.begin() + pos, source.begin() + pos + wcslen(buffer), stringValues[i]);
-				start = pos + stringValues[i].length();
+				source.replace(source.begin() + pos, source.begin() + pos + wcslen(buffer), stringValues[i - 1]);
+				start = pos + stringValues[i - 1].length();
 			}
 		} while(pos != std::wstring::npos);
 	}

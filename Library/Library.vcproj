@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="Library"
 	ProjectGUID="{BE9D2400-7F1C-49D6-8498-5CE495491AD6}"
 	TargetFrameworkVersion="0"
