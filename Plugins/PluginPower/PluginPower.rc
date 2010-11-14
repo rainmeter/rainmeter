@@ -34,11 +34,11 @@ BEGIN
             VALUE "LegalCopyright", "Copyright (C) 2010 - Rainy"
             VALUE "OriginalFilename", "PluginPower.dll"
             VALUE "ProductName", "Rainmeter"
-            #ifdef _WIN64
+#ifdef _WIN64
             VALUE "ProductVersion", STRPRODUCTVER " (64-bit)"
-            #else
+#else
             VALUE "ProductVersion", STRPRODUCTVER " (32-bit)"
-            #endif //_WIN64
+#endif //_WIN64
         END
     END
     BLOCK "VarFileInfo"
