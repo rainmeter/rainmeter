@@ -30,7 +30,7 @@
 #include <Wininet.h>
 #include <shlwapi.h>
 #include <process.h>
-#include "pcre-8.10/pcre.h"
+#include "..\..\Library\pcre-8.10/pcre.h"
 #include "..\..\Library\Export.h"	// Rainmeter's exported functions
 
 /* The exported functions */
