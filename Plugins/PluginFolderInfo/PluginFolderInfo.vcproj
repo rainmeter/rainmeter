@@ -76,12 +76,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="comctl32.lib gdiplus.lib Rainmeter.lib"
 				OutputFile="../../TestBench/x32/Debug/Plugins/FolderInfo.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\x32/Debug/FolderInfoPlugin.pdb"
-				ImportLibrary=".\x32/Debug/FolderInfoPlugin.lib"
+				ProgramDatabaseFile=".\x32/Debug/FolderInfo.pdb"
+				ImportLibrary=".\x32/Debug/FolderInfo.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -165,12 +166,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="comctl32.lib gdiplus.lib Rainmeter.lib"
 				OutputFile="../../TestBench/x64/Debug/Plugins/FolderInfo.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\x64/Debug/FolderInfoPlugin.pdb"
-				ImportLibrary=".\x64/Debug/FolderInfoPlugin.lib"
+				ProgramDatabaseFile=".\x64/Debug/FolderInfo.pdb"
+				ImportLibrary=".\x64/Debug/FolderInfo.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -256,7 +258,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/machine:AMD64 /LTCG "
-				AdditionalDependencies="bufferoverflowU.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib Rainmeter.lib"
 				OutputFile="../../TestBench/x64/Release/Plugins/FolderInfo.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -347,13 +349,13 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/machine:AMD64 /LTCG "
-				AdditionalDependencies="odbc32.lib odbccp32.lib Rainmeter.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib Rainmeter.lib comctl32.lib"
 				OutputFile="../../TestBench/x64/Release/Plugins/FolderInfo.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\Library\x64\Release"
-				ProgramDatabaseFile=".\x64/Release/FolderInfoPlugin.pdb"
-				ImportLibrary=".\x64/Release/FolderInfoPlugin.lib"
+				ProgramDatabaseFile=".\x64/Release/FolderInfo.pdb"
+				ImportLibrary=".\x64/Release/FolderInfo.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -439,14 +441,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Rainmeter.lib"
+				AdditionalDependencies="Rainmeter.lib comctl32.lib gdiplus.lib"
 				OutputFile="../../TestBench/x32/Release/Plugins/FolderInfo.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\Library\x32\Release"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\x32/Release/FolderInfoPlugin.pdb"
-				ImportLibrary=".\x32/Release/FolderInfoPlugin.lib"
+				ProgramDatabaseFile=".\x32/Release/FolderInfo.pdb"
+				ImportLibrary=".\x32/Release/FolderInfo.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -531,6 +533,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="Rainmeter.lib comctl32.lib gdiplus.lib"
 				OutputFile="../../TestBench/x32/Release/Plugins/FolderInfo.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

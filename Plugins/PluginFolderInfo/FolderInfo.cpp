@@ -9,8 +9,8 @@ FolderInfo::FolderInfo(const wchar_t* aPath)
 	mySubFolderFlag = false;
 	myHiddenFileFlag = false;
 	mySystemFileFlag = false;
-	myRegExFilter = NULL;
-	myRegExFilterExtra = NULL;
+	myRegExpFilter = NULL;
+	myRegExpFilterExtra = NULL;
 	myLastUpdateTime = 0;
 	Clear();
 	SetPath(aPath);
@@ -82,9 +82,9 @@ void FolderInfo::CalculateSize()
 			else if (!mySystemFileFlag && (findData.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM)) {
 				continue;
 			}
-			else if (!isFolder && myRegExFilter) {
+			else if (!isFolder && myRegExpFilter) {
 				int utf8BufLen = WideCharToMultiByte(CP_UTF8, 0, findData.cFileName, wcslen(findData.cFileName) + 1, utf8Buf, MAX_PATH * 3, NULL, NULL);
-				if (0 != pcre_exec(myRegExFilter, myRegExFilterExtra, utf8Buf, utf8BufLen, 0, 0, NULL, 0)) {
+				if (0 != pcre_exec(myRegExpFilter, myRegExpFilterExtra, utf8Buf, utf8BufLen, 0, 0, NULL, 0)) {
 					continue;
 				}
 			}
@@ -108,12 +108,12 @@ void FolderInfo::CalculateSize()
 	}
 }
 
-void FolderInfo::SetRegExFilter(const wchar_t* aFilter)
+void FolderInfo::SetRegExpFilter(const wchar_t* aFilter)
 {
-	if (myRegExFilter) {
-		pcre_free(myRegExFilter);
-		myRegExFilter = NULL;
-		myRegExFilterExtra = NULL;
+	if (myRegExpFilter) {
+		pcre_free(myRegExpFilter);
+		myRegExpFilter = NULL;
+		myRegExpFilterExtra = NULL;
 	}
 
 	if (aFilter == NULL) {
@@ -128,9 +128,9 @@ void FolderInfo::SetRegExFilter(const wchar_t* aFilter)
 
 	const char* error;
 	int erroffset;
-	myRegExFilter = pcre_compile(buf, PCRE_UTF8, &error, &erroffset, NULL);
-	if (myRegExFilter) {
-		myRegExFilterExtra = pcre_study(myRegExFilter, 0, &error);
+	myRegExpFilter = pcre_compile(buf, PCRE_UTF8, &error, &erroffset, NULL);
+	if (myRegExpFilter) {
+		myRegExpFilterExtra = pcre_study(myRegExpFilter, 0, &error);
 	}
 }
 

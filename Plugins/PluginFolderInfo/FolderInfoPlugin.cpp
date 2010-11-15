@@ -146,9 +146,9 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	}
 
 	if (measureInfo->Folder) {
-		const wchar_t* strRegExFilter = ReadConfigString(section, L"RegExFilter", L"");
-		if (strRegExFilter && wcslen(strRegExFilter) > 0) {
-			measureInfo->Folder->SetRegExFilter(strRegExFilter);
+		const wchar_t* strRegExpFilter = ReadConfigString(section, L"RegExpFilter", L"");
+		if (strRegExpFilter && wcslen(strRegExpFilter) > 0) {
+			measureInfo->Folder->SetRegExpFilter(strRegExpFilter);
 		}
 
 		const wchar_t* strIncludeSubFolders = ReadConfigString(section, L"IncludeSubFolders", L"");
@@ -189,7 +189,7 @@ static void FormatSize(wchar_t* buffer, size_t bufferSize, UINT64 size)
 		wsprintf(buffer, L"%d.%02d k", (int)(size >> 10), (int)(( size << 54 >> 54 ) / 10.24));
 	}
 	else {
-		wsprintf(buffer, L"%ld b", size);
+		wsprintf(buffer, L"%ld ", size);
 	}
 }
 
@@ -292,7 +292,7 @@ void Finalize(HMODULE instance, UINT id)
 */
 UINT GetPluginVersion()
 {
-	return 0001;
+	return 0002;
 }
 
 /*

@@ -30,8 +30,8 @@ private:
 	UINT64 mySize;
 	unsigned int myFileCount;
 	unsigned int myFolderCount;
-	pcre* myRegExFilter;
-	pcre_extra* myRegExFilterExtra;
+	pcre* myRegExpFilter;
+	pcre_extra* myRegExpFilterExtra;
 	DWORD myLastUpdateTime;
 
 private:
@@ -45,7 +45,7 @@ public:
 		return myLastUpdateTime;
 	}
 
-	void SetRegExFilter(const wchar_t* aFilter);
+	void SetRegExpFilter(const wchar_t* aFilter);
 
 	void IncludeSubFolders(bool aFlag)
 	{
