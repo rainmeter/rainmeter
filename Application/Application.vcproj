@@ -18,191 +18,6 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Release64|Win32"
-			OutputDirectory=".\x64/Release"
-			IntermediateDirectory=".\x64/Release"
-			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName=".\x64/Release/Application.tlb"
-				HeaderFileName=""
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalOptions="/GL /EHsc /GA "
-				Optimization="2"
-				InlineFunctionExpansion="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE"
-				StringPooling="true"
-				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\x64/Release/Application.pch"
-				AssemblerListingLocation=".\x64/Release/"
-				ObjectFile=".\x64/Release/"
-				ProgramDataBaseFileName=".\x64/Release/"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/machine:AMD64 /LTCG "
-				AdditionalDependencies=" odbc32.lib odbccp32.lib Rainmeter.lib"
-				OutputFile="../TestBench/x64/Release/Rainmeter.exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\x64/Release/Rainmeter.pdb"
-				SubSystem="2"
-				EntryPointSymbol="wWinMainCRTStartup"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Release64|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="3"
-				TypeLibraryName=".\x64/Release/Application.tlb"
-				HeaderFileName=""
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalOptions="/GL /EHsc /GA "
-				Optimization="2"
-				InlineFunctionExpansion="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE"
-				StringPooling="true"
-				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\x64/Release/Application.pch"
-				AssemblerListingLocation=".\x64/Release/"
-				ObjectFile=".\x64/Release/"
-				ProgramDataBaseFileName=".\x64/Release/"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG;_WIN64"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/machine:AMD64 /LTCG "
-				AdditionalDependencies=" odbc32.lib odbccp32.lib Rainmeter.lib"
-				OutputFile="../TestBench/x64/Release/Rainmeter.exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\Library\x64\Release"
-				ProgramDatabaseFile=".\x64/Release/Rainmeter.pdb"
-				SubSystem="2"
-				EntryPointSymbol="wWinMainCRTStartup"
-				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory=".\x32/Debug"
 			IntermediateDirectory=".\x32/Debug"
@@ -507,24 +322,25 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\x32/Release/Application.tlb"
+				TypeLibraryName=".\x64/Release/Application.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/GL /EHsc /GA "
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
-				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\x32/Release/Application.pch"
-				AssemblerListingLocation=".\x32/Release/"
-				ObjectFile=".\x32/Release/"
-				ProgramDataBaseFileName=".\x32/Release/"
+				PrecompiledHeaderFile=".\x64/Release/Application.pch"
+				AssemblerListingLocation=".\x64/Release/"
+				ObjectFile=".\x64/Release/"
+				ProgramDataBaseFileName=".\x64/Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -539,10 +355,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../TestBench/x32/Release/Rainmeter.exe"
+				AdditionalOptions="/LTCG "
+				AdditionalDependencies="Rainmeter.lib"
+				OutputFile="../TestBench/x64/Release/Rainmeter.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\x32/Release/Rainmeter.pdb"
+				AdditionalLibraryDirectories="..\Library\x64\Release"
+				ProgramDatabaseFile=".\x64/Release/Rainmeter.pdb"
 				SubSystem="2"
 				EntryPointSymbol="wWinMainCRTStartup"
 				TargetMachine="17"
@@ -567,7 +386,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\testbench\x32\release\skins (mkdir ..\testbench\x32\release\skins)&#x0D;&#x0A;xcopy /S /Y ..\Install\Skins ..\testbench\x32\release\skins&#x0D;&#x0A;"
+				CommandLine="if not exist ..\testbench\x64\release\skins (mkdir ..\testbench\x64\release\skins)&#x0D;&#x0A;if not exist ..\testbench\x64\release\themes (mkdir ..\testbench\x64\release\themes)&#x0D;&#x0A;echo &quot;Copying the skins...&quot;&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Skins ..\testbench\x64\release\skins&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Themes ..\testbench\x64\release\themes&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x64\release\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -581,24 +400,6 @@
 			<File
 				RelativePath="Application.cpp"
 				>
-				<FileConfiguration
-					Name="Release64|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release64|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
 					>
@@ -641,22 +442,6 @@
 			<File
 				RelativePath="Application.rc"
 				>
-				<FileConfiguration
-					Name="Release64|Win32"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						PreprocessorDefinitions="NDEBUG"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release64|x64"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-						PreprocessorDefinitions="NDEBUG"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
 					>

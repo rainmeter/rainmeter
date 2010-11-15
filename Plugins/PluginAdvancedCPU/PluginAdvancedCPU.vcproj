@@ -18,190 +18,6 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Release64|Win32"
-			OutputDirectory=".\x64/Release"
-			IntermediateDirectory=".\x64/Release"
-			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName=".\x64/Release/PluginAdvancedCPU.tlb"
-				HeaderFileName=""
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalOptions="/GL /EHsc /GA "
-				Optimization="2"
-				InlineFunctionExpansion="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS"
-				StringPooling="true"
-				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\x64/Release/PluginAdvancedCPU.pch"
-				AssemblerListingLocation=".\x64/Release/"
-				ObjectFile=".\x64/Release/"
-				ProgramDataBaseFileName=".\x64/Release/"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/machine:AMD64 /LTCG "
-				AdditionalDependencies="bufferoverflowU.lib odbc32.lib odbccp32.lib"
-				OutputFile="../../TestBench/x64/Release/Plugins/AdvancedCPU.dll"
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\x64/Release/AdvancedCPU.pdb"
-				ImportLibrary=".\x64/Release/AdvancedCPU.lib"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Release64|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="3"
-				TypeLibraryName=".\x64/Release/PluginAdvancedCPU.tlb"
-				HeaderFileName=""
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalOptions="/GL /EHsc /GA "
-				Optimization="2"
-				InlineFunctionExpansion="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS"
-				StringPooling="true"
-				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\x64/Release/PluginAdvancedCPU.pch"
-				AssemblerListingLocation=".\x64/Release/"
-				ObjectFile=".\x64/Release/"
-				ProgramDataBaseFileName=".\x64/Release/"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG;_WIN64"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/machine:AMD64 /LTCG "
-				AdditionalDependencies=" odbc32.lib odbccp32.lib Rainmeter.lib"
-				OutputFile="../../TestBench/x64/Release/Plugins/AdvancedCPU.dll"
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\Library\x64\Release"
-				IgnoreAllDefaultLibraries="false"
-				ProgramDatabaseFile=".\x64/Release/AdvancedCPU.pdb"
-				ImportLibrary=".\x64/Release/AdvancedCPU.lib"
-				TargetMachine="17"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\x32/Release"
 			IntermediateDirectory=".\x32/Release"
@@ -322,24 +138,25 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\x32/Release/PluginAdvancedCPU.tlb"
+				TypeLibraryName=".\x64/Release/PluginAdvancedCPU.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/GL /EHsc /GA "
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
-				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\x32/Release/PluginAdvancedCPU.pch"
-				AssemblerListingLocation=".\x32/Release/"
-				ObjectFile=".\x32/Release/"
-				ProgramDataBaseFileName=".\x32/Release/"
+				PrecompiledHeaderFile=".\x64/Release/PluginAdvancedCPU.pch"
+				AssemblerListingLocation=".\x64/Release/"
+				ObjectFile=".\x64/Release/"
+				ProgramDataBaseFileName=".\x64/Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -354,11 +171,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../../TestBench/x32/Release/Plugins/AdvancedCPU.dll"
+				AdditionalOptions="/LTCG "
+				AdditionalDependencies="Rainmeter.lib"
+				OutputFile="../../TestBench/x64/Release/Plugins/AdvancedCPU.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\x32/Release/AdvancedCPU.pdb"
-				ImportLibrary=".\x32/Release/AdvancedCPU.lib"
+				AdditionalLibraryDirectories="..\..\Library\x64\Release"
+				IgnoreAllDefaultLibraries="false"
+				ProgramDatabaseFile=".\x64/Release/AdvancedCPU.pdb"
+				ImportLibrary=".\x64/Release/AdvancedCPU.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -569,24 +390,6 @@
 			RelativePath="AdvancedCPU.cpp"
 			>
 			<FileConfiguration
-				Name="Release64|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release64|x64"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
 				Name="Release|Win32"
 				>
 				<Tool
@@ -637,24 +440,6 @@
 			RelativePath="..\PluginPerfMon\ObjInst.cpp"
 			>
 			<FileConfiguration
-				Name="Release64|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release64|x64"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
 				Name="Release|Win32"
 				>
 				<Tool
@@ -696,24 +481,6 @@
 		<File
 			RelativePath="..\PluginPerfMon\ObjList.cpp"
 			>
-			<FileConfiguration
-				Name="Release64|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release64|x64"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
 			<FileConfiguration
 				Name="Release|Win32"
 				>
@@ -757,24 +524,6 @@
 			RelativePath="..\PluginPerfMon\PerfCntr.cpp"
 			>
 			<FileConfiguration
-				Name="Release64|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release64|x64"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
 				Name="Release|Win32"
 				>
 				<Tool
@@ -817,24 +566,6 @@
 			RelativePath="..\PluginPerfMon\PerfObj.cpp"
 			>
 			<FileConfiguration
-				Name="Release64|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release64|x64"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
 				Name="Release|Win32"
 				>
 				<Tool
@@ -876,24 +607,6 @@
 		<File
 			RelativePath="..\PluginPerfMon\PerfSnap.cpp"
 			>
-			<FileConfiguration
-				Name="Release64|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release64|x64"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
 			<FileConfiguration
 				Name="Release|Win32"
 				>
@@ -940,24 +653,6 @@
 		<File
 			RelativePath="..\PluginPerfMon\Titledb.cpp"
 			>
-			<FileConfiguration
-				Name="Release64|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release64|x64"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
-				/>
-			</FileConfiguration>
 			<FileConfiguration
 				Name="Release|Win32"
 				>
