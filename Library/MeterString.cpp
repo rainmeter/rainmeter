@@ -259,22 +259,25 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	m_MeasureNames.clear();
 
 	// Check for extra measures
-	int i = 2;
-	bool loop = true;
-	do 
+	if (!m_MeasureName.empty())
 	{
-		swprintf(tmpName, L"MeasureName%i", i);
-		std::wstring measure = parser.ReadString(section, tmpName, L"");
-		if (!measure.empty())
+		int i = 2;
+		bool loop = true;
+		do 
 		{
-			m_MeasureNames.push_back(measure);
-		}
-		else
-		{
-			loop = false;
-		}
-		++i;
-	} while(loop);
+			swprintf(tmpName, L"MeasureName%i", i);
+			std::wstring measure = parser.ReadString(section, tmpName, L"");
+			if (!measure.empty())
+			{
+				m_MeasureNames.push_back(measure);
+			}
+			else
+			{
+				loop = false;
+			}
+			++i;
+		} while(loop);
+	}
 
 	m_Color = parser.ReadColor(section, L"FontColor", Color::Black);
 	m_EffectColor = parser.ReadColor(section, L"FontEffectColor", Color::Black);

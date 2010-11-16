@@ -714,12 +714,9 @@ CMeasure* CConfigParser::GetMeasure(const std::wstring& name)
 
 double CConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 {
-	TCHAR buffer[256];
-	swprintf(buffer, L"%f", defValue);
+	const std::wstring& result = ReadString(section, key, L"");
 
-	const std::wstring& result = ReadString(section, key, buffer);
-
-	return ParseDouble(result, defValue);
+	return (m_LastDefaultUsed) ? defValue : ParseDouble(result, defValue);
 }
 
 std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
@@ -742,21 +739,15 @@ std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR ke
 
 int CConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 {
-	TCHAR buffer[32];
-	swprintf(buffer, L"%i", defValue);
+	const std::wstring& result = ReadString(section, key, L"");
 
-	const std::wstring& result = ReadString(section, key, buffer);
-
-	return (int)ParseDouble(result, defValue, true);
+	return (m_LastDefaultUsed) ? defValue : (int)ParseDouble(result, defValue, true);
 }
 
 // Works as ReadFloat except if the value is surrounded by parenthesis in which case it tries to evaluate the formula
 double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 {
-	TCHAR buffer[256];
-	swprintf(buffer, L"%f", defValue);
-
-	const std::wstring& result = ReadString(section, key, buffer);
+	const std::wstring& result = ReadString(section, key, L"");
 
 	// Formulas must be surrounded by parenthesis
 	if (!result.empty() && result[0] == L'(' && result[result.size() - 1] == L')')
@@ -771,7 +762,7 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 		return resultValue;
 	}
 
-	return ParseDouble(result, defValue);
+	return (m_LastDefaultUsed) ? defValue : ParseDouble(result, defValue);
 }
 
 // Returns an int if the formula was read successfully, -1 for failure.
@@ -797,12 +788,9 @@ int CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
 
 Color CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, const Color& defValue)
 {
-	TCHAR buffer[128];
-	swprintf(buffer, L"%i, %i, %i, %i", defValue.GetR(), defValue.GetG(), defValue.GetB(), defValue.GetA());
+	const std::wstring& result = ReadString(section, key, L"");
 
-	const std::wstring& result = ReadString(section, key, buffer);
-
-	return ParseColor(result.c_str());
+	return (m_LastDefaultUsed) ? defValue : ParseColor(result.c_str());
 }
 
 /*

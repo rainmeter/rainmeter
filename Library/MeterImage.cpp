@@ -447,7 +447,7 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 
 	if (alpha != tint.GetAlpha())
 	{
-		tint = Color(alpha, tint.GetRed(), tint.GetGreen(), tint.GetBlue());
+		tint.SetValue(Color::MakeARGB(alpha, tint.GetRed(), tint.GetGreen(), tint.GetBlue()));
 	}
 
 	m_ColorMatrix = c_IdentifyMatrix;
