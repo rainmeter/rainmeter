@@ -32,8 +32,8 @@ public:
 	const std::set<std::wstring>& GetGroup() { return m_Group; }
 
 protected:
-	CGroup();
-	virtual ~CGroup();
+	CGroup() {}
+	virtual ~CGroup() {}
 
 	void InitializeGroup(const std::wstring& group);
 

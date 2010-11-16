@@ -21,26 +21,6 @@
 #include "ConfigParser.h"
 
 /*
-** CGroup
-**
-** The constructor
-**
-*/
-CGroup::CGroup()
-{
-}
-
-/*
-** ~CGroup
-**
-** The destructor
-**
-*/
-CGroup::~CGroup()
-{
-}
-
-/*
 ** InitializeGroup
 **
 **

@@ -2064,15 +2064,15 @@ void CMeterWindow::InitializeMeters()
 		try
 		{
 			(*j)->Initialize();
-
-			if (!(*j)->GetToolTipText().empty())
-			{
-				(*j)->CreateToolTip(this);
-			}
 		}
 		catch (CError& error)
 		{
 			MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		}
+
+		if (!(*j)->GetToolTipText().empty())
+		{
+			(*j)->CreateToolTip(this);
 		}
 	}
 
@@ -2375,26 +2375,19 @@ void CMeterWindow::Redraw()
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
-		try
+		if (!(*j)->GetTransformationMatrix().IsIdentity())
 		{
-			if (!(*j)->GetTransformationMatrix().IsIdentity())
-			{
-				// Change the world matrix
-				graphics.SetTransform(&((*j)->GetTransformationMatrix()));
+			// Change the world matrix
+			graphics.SetTransform(&((*j)->GetTransformationMatrix()));
 
-				(*j)->Draw(graphics);
+			(*j)->Draw(graphics);
 
-				// Set back to identity matrix
-				graphics.ResetTransform();
-			}
-			else
-			{
-				(*j)->Draw(graphics);
-			}
+			// Set back to identity matrix
+			graphics.ResetTransform();
 		}
-		catch (CError& error)
+		else
 		{
-			MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			(*j)->Draw(graphics);
 		}
 	}
 		
@@ -2427,18 +2420,18 @@ void CMeterWindow::Update(bool nodraw)
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); ++i)
 	{
-		try
+		if ((*i)->HasDynamicVariables())
 		{
-			if ((*i)->HasDynamicVariables())
+			try
 			{
 				(*i)->ReadConfig(m_Parser, (*i)->GetName());
 			}
-			(*i)->Update();
+			catch (CError& error)
+			{
+				MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			}
 		}
-		catch (CError& error)
-		{
-			MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-		}
+		(*i)->Update();
 	}
 
 	// Update the meters
@@ -2447,21 +2440,22 @@ void CMeterWindow::Update(bool nodraw)
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
-		try
+		if ((*j)->HasDynamicVariables())
 		{
-			if ((*j)->HasDynamicVariables())
+			try
 			{
 				(*j)->ReadConfig((*j)->GetName());
 				m_Parser.ClearStyleTemplate();
 			}
-			if ((*j)->Update())
+			catch (CError& error)
 			{
-				bUpdate = true;
+				MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 			}
 		}
-		catch (CError& error)
+
+		if ((*j)->Update())
 		{
-			MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			bUpdate = true;
 		}
 
 		// Update tooltips
