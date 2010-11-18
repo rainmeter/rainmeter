@@ -12,7 +12,7 @@
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,0
+ FILEVERSION 0,2,0,0
  PRODUCTVERSION PRODUCTVER
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -29,7 +29,7 @@ BEGIN
         BLOCK "040904E4"
         BEGIN
             VALUE "FileDescription", "FolderInfo Plugin for Rainmeter"
-            VALUE "FileVersion", "1.0.0.0"
+            VALUE "FileVersion", "0.2.0.0"
             VALUE "InternalName", "FolderInfo"
             VALUE "LegalCopyright", "Copyright (C) 2010 - Elestel"
             VALUE "OriginalFilename", "FolderInfo.dll"
