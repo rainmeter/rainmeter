@@ -39,7 +39,7 @@ public:
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
-	virtual void BindMeasure(std::list<CMeasure*>& measures);
+	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 
 	static void FreeFontCache();
 	static void EnumerateInstalledFontFamilies();

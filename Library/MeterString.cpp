@@ -444,31 +444,15 @@ bool CMeterString::Update()
 				m_String += stringValues[0]; 
 			}
 		}
+		else if (!stringValues.empty())
+		{
+			std::wstring tmpText = m_Text;
+			ReplaceMeasures(stringValues, tmpText);
+			m_String += tmpText;
+		}
 		else
 		{
-			WCHAR buffer[64];
-			// Create the actual text (i.e. replace %1, %2, .. with the measure texts)
-			std::wstring tmpText = m_Text;
-
-			for (size_t i = stringValues.size(); i > 0; --i)
-			{
-				wsprintf(buffer, L"%%%i", i);
-
-				size_t start = 0;
-				size_t pos = std::wstring::npos;
-
-				do 
-				{
-					pos = tmpText.find(buffer, start);
-					if (pos != std::wstring::npos)
-					{
-						tmpText.replace(tmpText.begin() + pos, tmpText.begin() + pos + wcslen(buffer), stringValues[i - 1]);
-						start = pos + stringValues[i - 1].length();
-					}
-				} while(pos != std::wstring::npos);
-			}
-
-			m_String += tmpText;
+			m_String += m_Text;
 		}
 		if (!m_Postfix.empty()) m_String += m_Postfix;
 
@@ -628,7 +612,7 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 ** Overridden method. The string meters need not to be bound on anything
 **
 */
-void CMeterString::BindMeasure(std::list<CMeasure*>& measures)
+void CMeterString::BindMeasure(const std::list<CMeasure*>& measures)
 {
 	if (m_MeasureName.empty()) return;	// Allow NULL measure binding
 

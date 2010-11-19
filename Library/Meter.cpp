@@ -446,7 +446,7 @@ void CMeter::ReadConfig(const WCHAR* section)
 ** several meters but one meter and only be bound to one measure.
 **
 */
-void CMeter::BindMeasure(std::list<CMeasure*>& measures)
+void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 {
 	// The meter is not bound to anything
 	if (m_MeasureName.empty())
@@ -554,7 +554,7 @@ void CMeter::SetAllMeasures(CMeasure* measure)
 **
 ** Creates a vector containing all the defined measures (for Line/String)
 */
-void CMeter::SetAllMeasures(std::vector<CMeasure*> measures)
+void CMeter::SetAllMeasures(const std::vector<CMeasure*>& measures)
 {
 	m_AllMeasures.clear();
 	m_AllMeasures.push_back(m_Measure);
@@ -571,11 +571,40 @@ void CMeter::SetAllMeasures(std::vector<CMeasure*> measures)
 **
 ** Replaces %1, %2 etc with the corresponding measure value
 */
-std::wstring CMeter::ReplaceMeasures(std::wstring source)
+void CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str)
+{
+	WCHAR buffer[64];
+
+	// Create the actual text (i.e. replace %1, %2, .. with the measure texts)
+	for (size_t i = stringValues.size(); i > 0; --i)
+	{
+		wsprintf(buffer, L"%%%i", i);
+
+		size_t start = 0;
+		size_t pos = std::wstring::npos;
+
+		do 
+		{
+			pos = str.find(buffer, start);
+			if (pos != std::wstring::npos)
+			{
+				str.replace(str.begin() + pos, str.begin() + pos + wcslen(buffer), stringValues[i - 1]);
+				start = pos + stringValues[i - 1].length();
+			}
+		} while(pos != std::wstring::npos);
+	}
+}
+
+/*
+** ReplaceToolTipMeasures
+**
+** Replaces %1, %2 etc with the corresponding measure value
+*/
+void CMeter::ReplaceToolTipMeasures(std::wstring& str)
 {
 	std::vector<std::wstring> stringValues;
 
-	if (!m_AllMeasures.empty()) 
+	if (!m_AllMeasures.empty())
 	{	
 		// Get the values for the measures
 		for (size_t i = 0; i < m_AllMeasures.size(); ++i)
@@ -589,30 +618,13 @@ std::wstring CMeter::ReplaceMeasures(std::wstring source)
 	}
 	else
 	{
-		return source;
+		return;
 	}
 
-	WCHAR buffer[64];
-	// Create the actual text (i.e. replace %1, %2, .. with the measure texts)
-
-	for (size_t i = stringValues.size(); i > 0; --i)
+	if (!stringValues.empty())
 	{
-		wsprintf(buffer, L"%%%i", i);
-
-		size_t start = 0;
-		size_t pos = std::wstring::npos;
-
-		do 
-		{
-			pos = source.find(buffer, start);
-			if (pos != std::wstring::npos)
-			{
-				source.replace(source.begin() + pos, source.begin() + pos + wcslen(buffer), stringValues[i - 1]);
-				start = pos + stringValues[i - 1].length();
-			}
-		} while(pos != std::wstring::npos);
+		ReplaceMeasures(stringValues, str);
 	}
-	return source;
 }
 
 /*
@@ -674,7 +686,8 @@ void CMeter::UpdateToolTip()
 
 	SendMessage(hwndTT, TTM_GETTOOLINFO, NULL, (LPARAM) (LPTOOLINFO) &ti);
 
-	std::wstring text = ReplaceMeasures(m_ToolTipText);
+	std::wstring text = m_ToolTipText;
+	ReplaceToolTipMeasures(text);
 	ti.lpszText = (PTSTR) text.c_str();
 	ti.rect = GetMeterRect();
 
@@ -715,7 +728,8 @@ void CMeter::UpdateToolTip()
 			}
 		}
 
-		text = ReplaceMeasures(m_ToolTipTitle);
+		text = m_ToolTipTitle;
+		ReplaceToolTipMeasures(text);
 		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) text.c_str());
 
 		if (destroy)

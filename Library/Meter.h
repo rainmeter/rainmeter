@@ -38,7 +38,7 @@ public:
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
-	virtual void BindMeasure(std::list<CMeasure*>& measures);
+	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 	virtual bool HasActiveTransition() { return false; }
 	
 	bool HasDynamicVariables() { return m_DynamicVariables; }
@@ -52,22 +52,17 @@ public:
 	void SetX(int x) { m_X = x; m_RelativeX = POSITION_ABSOLUTE; }
 	void SetY(int y) { m_Y = y; m_RelativeY = POSITION_ABSOLUTE; }
 
-	std::wstring& GetRightMouseDownAction() { return m_RightMouseDownAction; }
-	std::wstring& GetRightMouseUpAction() { return m_RightMouseUpAction; }
-	std::wstring& GetRightMouseDoubleClickAction() { return m_RightMouseDoubleClickAction; }
-	std::wstring& GetLeftMouseDownAction() { return m_LeftMouseDownAction; }
-	std::wstring& GetLeftMouseUpAction() { return m_LeftMouseUpAction; }
-	std::wstring& GetLeftMouseDoubleClickAction() { return m_LeftMouseDoubleClickAction; }
-	std::wstring& GetMiddleMouseDownAction() { return m_MiddleMouseDownAction; }
-	std::wstring& GetMiddleMouseUpAction() { return m_MiddleMouseUpAction; }
-	std::wstring& GetMiddleMouseDoubleClickAction() { return m_MiddleMouseDoubleClickAction; }
-	std::wstring& GetMouseOverAction() { return m_MouseOverAction; }
-	std::wstring& GetMouseLeaveAction() { return m_MouseLeaveAction; }
-
-	void SetAllMeasures(CMeasure* measure);
-	void SetAllMeasures(std::vector<CMeasure*> measures);
-
-	std::wstring CMeter::ReplaceMeasures(std::wstring source);
+	const std::wstring& GetRightMouseDownAction() { return m_RightMouseDownAction; }
+	const std::wstring& GetRightMouseUpAction() { return m_RightMouseUpAction; }
+	const std::wstring& GetRightMouseDoubleClickAction() { return m_RightMouseDoubleClickAction; }
+	const std::wstring& GetLeftMouseDownAction() { return m_LeftMouseDownAction; }
+	const std::wstring& GetLeftMouseUpAction() { return m_LeftMouseUpAction; }
+	const std::wstring& GetLeftMouseDoubleClickAction() { return m_LeftMouseDoubleClickAction; }
+	const std::wstring& GetMiddleMouseDownAction() { return m_MiddleMouseDownAction; }
+	const std::wstring& GetMiddleMouseUpAction() { return m_MiddleMouseUpAction; }
+	const std::wstring& GetMiddleMouseDoubleClickAction() { return m_MiddleMouseDoubleClickAction; }
+	const std::wstring& GetMouseOverAction() { return m_MouseOverAction; }
+	const std::wstring& GetMouseLeaveAction() { return m_MouseLeaveAction; }
 
 	const std::wstring& GetToolTipText() { return m_ToolTipText; }
 	bool HasToolTip() { return m_ToolTipHandle != NULL; }
@@ -113,6 +108,12 @@ protected:
 		POSITION_RELATIVE_TL,
 		POSITION_RELATIVE_BR
 	};
+
+	void SetAllMeasures(CMeasure* measure);
+	void SetAllMeasures(const std::vector<CMeasure*>& measures);
+	void ReplaceToolTipMeasures(std::wstring& str);
+
+	static void ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str);
 
 	Gdiplus::Matrix m_Transformation;	// The transformation matrix
 	std::wstring m_Name;			// Name of the meter

@@ -69,6 +69,11 @@ void CMeterLine::Initialize()
 			{
 				m_AllValues.push_back(std::vector<double>());
 
+				if (m_W > 0)
+				{
+					m_AllValues.back().reserve(m_W);
+				}
+
 				if (num > 0)
 				{
 					m_AllValues.back().assign(num, 0);
@@ -299,23 +304,37 @@ bool CMeterLine::Draw(Graphics& graphics)
 	}
 
 	// Draw all the lines
+	const REAL H = m_H - 1.0f;
+	const bool closeRequired = (m_LineWidth != 1.0);
 	counter = 0;
 	std::vector< std::vector<double> >::const_iterator i = m_AllValues.begin();
 	for (; i != m_AllValues.end(); ++i)
 	{
 		// Draw a line
-		REAL Y = 0.0f;
-		REAL oldY = 0.0f;
-		REAL H = m_H - 1.0f;
+		REAL Y, oldY;
 
-		double scale = m_ScaleValues[counter] * H / maxValue;
+		const double scale = m_ScaleValues[counter] * H / maxValue;
+		const int size = (int)(*i).size();
 
 		int pos = m_CurrentPos;
-		int size = (int)(*i).size();
-		
-		Pen pen(m_Colors[counter], (REAL)m_LineWidth);
+		if (pos >= m_W) pos = 0;
 
-		for (int j = x, R = x + m_W; j < R; ++j)
+		if (pos < size)
+		{
+			oldY = (REAL)((*i)[pos] * scale);
+			oldY = min(oldY, H);
+			oldY = max(oldY, 0.0f);
+		}
+		else
+		{
+			oldY = 0.0f;
+		}
+		oldY = (m_Flip) ? y + oldY : y + H - oldY;
+		++pos;
+
+		// Cache all lines
+		GraphicsPath path;
+		for (int j = x + 1, R = x + m_W; j < R; ++j)
 		{
 			if (pos >= m_W) pos = 0;
 
@@ -327,19 +346,24 @@ bool CMeterLine::Draw(Graphics& graphics)
 			}
 			else
 			{
-				Y = 0.0f;			
+				Y = 0.0f;
 			}
-
 			Y = (m_Flip) ? y + Y : y + H - Y;
 
-			if (j != x)
-			{
-				graphics.DrawLine(&pen, (REAL)(j - 1), oldY, (REAL)j, Y);	// GDI+
-			}
-			oldY = Y;
+			path.AddLine((REAL)(j - 1), oldY, (REAL)j, Y);
 
+			if (closeRequired)
+			{
+				path.CloseFigure();
+			}
+
+			oldY = Y;
 			++pos;
 		}
+
+		// Draw cached lines
+		Pen pen(m_Colors[counter], (REAL)m_LineWidth);
+		graphics.DrawPath(&pen, &path);
 
 		++counter;
 	}
@@ -353,7 +377,7 @@ bool CMeterLine::Draw(Graphics& graphics)
 ** Overwritten method to handle the other measure bindings.
 **
 */
-void CMeterLine::BindMeasure(std::list<CMeasure*>& measures)
+void CMeterLine::BindMeasure(const std::list<CMeasure*>& measures)
 {
 	CMeter::BindMeasure(measures);
 

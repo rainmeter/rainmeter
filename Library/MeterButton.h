@@ -34,7 +34,7 @@ public:
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
-	virtual void BindMeasure(std::list<CMeasure*>& measures);
+	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 
 	bool MouseMove(POINT pos);
 	bool MouseUp(POINT pos, CMeterWindow* window);

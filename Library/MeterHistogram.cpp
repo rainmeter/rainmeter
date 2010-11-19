@@ -562,7 +562,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 ** Overwritten method to handle the secondary measure binding.
 **
 */
-void CMeterHistogram::BindMeasure(std::list<CMeasure*>& measures)
+void CMeterHistogram::BindMeasure(const std::list<CMeasure*>& measures)
 {
 	CMeter::BindMeasure(measures);
 

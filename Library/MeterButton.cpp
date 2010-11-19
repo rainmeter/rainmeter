@@ -227,7 +227,7 @@ bool CMeterButton::Draw(Graphics& graphics)
 ** Overridden method. The meters need not to be bound on anything
 **
 */
-void CMeterButton::BindMeasure(std::list<CMeasure*>& measures)
+void CMeterButton::BindMeasure(const std::list<CMeasure*>& measures)
 {
 	// It's ok not to bind meter to anything
 	if (!m_MeasureName.empty())

@@ -668,7 +668,7 @@ bool CMeterImage::Draw(Graphics& graphics)
 ** Overridden method. The Image meters need not to be bound on anything
 **
 */
-void CMeterImage::BindMeasure(std::list<CMeasure*>& measures)
+void CMeterImage::BindMeasure(const std::list<CMeasure*>& measures)
 {
 	// It's ok not to bind image meter to anything
 	if (!m_MeasureName.empty())
