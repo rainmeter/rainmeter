@@ -195,9 +195,9 @@ void CMeterString::Initialize()
 	}
 
 	// Adjust the font size with screen DPI
-	HDC dc = GetDC(GetDesktopWindow());
+	HDC dc = GetDC(0);
 	int dpi = GetDeviceCaps(dc, LOGPIXELSX);
-	ReleaseDC(GetDesktopWindow(), dc);
+	ReleaseDC(0, dc);
 
 	REAL size = (REAL)m_FontSize * (96.0f / (REAL)dpi);
 

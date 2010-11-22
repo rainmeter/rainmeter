@@ -359,9 +359,9 @@ private:
 	std::list<CMeasure*> m_Measures;			// All the measures
 	std::list<CMeter*> m_Meters;				// All the meters
 
-	std::wstring m_SkinPath;					// Path of the skin folder
-	std::wstring m_SkinName;					// Name of the current skin folder
-	std::wstring m_SkinIniFile;					// Name of the current skin iniFile
+	const std::wstring m_SkinPath;				// Path of the skin folder
+	const std::wstring m_SkinName;				// Name of the current skin folder
+	const std::wstring m_SkinIniFile;			// Name of the current skin iniFile
 
 	int m_UpdateCounter;
 

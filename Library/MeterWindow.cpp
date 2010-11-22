@@ -1705,9 +1705,9 @@ bool CMeterWindow::ReadSkin()
 	if (_waccess(iniFile.c_str(), 0) == -1)
 	{
 		std::wstring message = L"Unable to refresh skin \"";
-		message += m_SkinName.c_str();
+		message += m_SkinName;
 		message += L"\\";
-		message += m_SkinIniFile.c_str();
+		message += m_SkinIniFile;
 		message += L"\": Ini-file not found.";
 		LSLog(LOG_DEBUG, APPNAME, message.c_str());
 		MessageBox(m_Window, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
@@ -2295,14 +2295,14 @@ bool CMeterWindow::ResizeWindow(bool reset)
 */
 Bitmap* CMeterWindow::GrabDesktop(int x, int y, int w, int h)
 {
-	HDC desktopDC = GetDC(GetDesktopWindow());
+	HDC desktopDC = GetDC(0);
 	HDC dc = CreateCompatibleDC(desktopDC);
 	HBITMAP desktopBM = CreateCompatibleBitmap(desktopDC, w, h);
 	HBITMAP oldBM = (HBITMAP)SelectObject(dc, desktopBM);
 	BitBlt(dc, 0, 0, w, h, desktopDC, x, y, SRCCOPY);
 	SelectObject(dc, oldBM);
 	DeleteDC(dc);
-	ReleaseDC(GetDesktopWindow(), desktopDC);
+	ReleaseDC(0, desktopDC);
 	Bitmap* background = new Bitmap(desktopBM, NULL);
 	DeleteObject(desktopBM);
 	return background;
@@ -2551,14 +2551,14 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 			szWindow.cy = m_WindowH;
 		}
 
-		HDC dcScreen = GetDC(GetDesktopWindow());
+		HDC dcScreen = GetDC(0);
 		HDC dcMemory = CreateCompatibleDC(dcScreen);
 
 		HBITMAP dbBitmap;
 		m_DoubleBuffer->GetHBITMAP(Color(0, 0, 0, 0), &dbBitmap);
 		HBITMAP oldBitmap = (HBITMAP)SelectObject(dcMemory, dbBitmap);
 		UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
-		ReleaseDC(GetDesktopWindow(), dcScreen);
+		ReleaseDC(0, dcScreen);
 		SelectObject(dcMemory, oldBitmap);
 		DeleteDC(dcMemory);
 		DeleteObject(dbBitmap);
