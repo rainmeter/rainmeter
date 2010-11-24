@@ -985,6 +985,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 	// Get all the sections (i.e. different meters)
 	WCHAR* items = new WCHAR[MAX_LINE_LENGTH];
 	int size = MAX_LINE_LENGTH;
+	WCHAR* epos = NULL;
 
 	// Get all the sections
 	while(true)
@@ -997,7 +998,11 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 			if (temporary) CSystem::RemoveFile(iniRead);
 			return;
 		}
-		if (res < size - 2) break;		// Fits in the buffer
+		if (res < size - 2)		// Fits in the buffer
+		{
+			epos = items + res;
+			break;
+		}
 
 		delete [] items;
 		size *= 2;
@@ -1007,17 +1012,24 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 	// Read the sections
 	std::list<std::wstring> sections;
 	WCHAR* pos = items;
-	while(wcslen(pos) > 0)
+	while (pos < epos)
 	{
-		std::wstring strTmp(pos);
-		std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
-		if (m_Keys.find(strTmp) == m_Keys.end())
+		if (*pos)
 		{
-			m_Keys[strTmp] = std::vector<std::wstring>();
-			m_Sections.push_back(pos);
+			std::wstring strTmp(pos);
+			std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
+			if (m_Keys.find(strTmp) == m_Keys.end())
+			{
+				m_Keys[strTmp] = std::vector<std::wstring>();
+				m_Sections.push_back(pos);
+			}
+			sections.push_back(pos);
+			pos += wcslen(pos) + 1;
 		}
-		sections.push_back(pos);
-		pos = pos + wcslen(pos) + 1;
+		else  // Empty string
+		{
+			++pos;
+		}
 	}
 
 	// Read the keys and values
@@ -1031,48 +1043,59 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 		{
 			items[0] = 0;
 			int res = GetPrivateProfileString((*iter).c_str(), NULL, NULL, items, size, iniRead.c_str());
-			if (res < size - 2) break;		// Fits in the buffer
+			if (res < size - 2)		// Fits in the buffer
+			{
+				epos = items + res;
+				break;
+			}
 
 			delete [] items;
 			size *= 2;
 			items = new WCHAR[size];
 		}
 
-		WCHAR* pos = items;
-		while(wcslen(pos) > 0)
+		pos = items;
+		while (pos < epos)
 		{
-			std::wstring strKey = pos;
-
-			while(true)
+			if (*pos)
 			{
-				buffer[0] = 0;
-				int res = GetPrivateProfileString((*iter).c_str(), strKey.c_str(), L"", buffer, bufferSize, iniRead.c_str());
-				if (res < bufferSize - 2) break;		// Fits in the buffer
+				std::wstring strKey = pos;
 
-				delete [] buffer;
-				bufferSize *= 2;
-				buffer = new WCHAR[bufferSize];
-			}
-
-			if (_wcsnicmp(strKey.c_str(), L"@include", 8) == 0)
-			{
-				std::wstring strIncludeFile = buffer;
-				ReadVariables();
-				ReplaceVariables(strIncludeFile);
-				if (strIncludeFile.find(L':') == std::wstring::npos &&
-					(strIncludeFile.length() < 2 || (strIncludeFile[0] != L'\\' && strIncludeFile[0] != L'/') || (strIncludeFile[1] != L'\\' && strIncludeFile[1] != L'/')))
+				while(true)
 				{
-					// It's a relative path so add the current path as a prefix
-					strIncludeFile = CRainmeter::ExtractPath(iniFile) + strIncludeFile;
-				}
-				ReadIniFile(iniFileMappings, strIncludeFile, depth + 1);
-			}
-			else
-			{
-				SetValue((*iter), strKey, buffer);
-			}
+					buffer[0] = 0;
+					int res = GetPrivateProfileString((*iter).c_str(), strKey.c_str(), L"", buffer, bufferSize, iniRead.c_str());
+					if (res < bufferSize - 2) break;		// Fits in the buffer
 
-			pos = pos + wcslen(pos) + 1;
+					delete [] buffer;
+					bufferSize *= 2;
+					buffer = new WCHAR[bufferSize];
+				}
+
+				if (_wcsnicmp(strKey.c_str(), L"@include", 8) == 0)
+				{
+					std::wstring strIncludeFile = buffer;
+					ReadVariables();
+					ReplaceVariables(strIncludeFile);
+					if (strIncludeFile.find(L':') == std::wstring::npos &&
+						(strIncludeFile.length() < 2 || (strIncludeFile[0] != L'\\' && strIncludeFile[0] != L'/') || (strIncludeFile[1] != L'\\' && strIncludeFile[1] != L'/')))
+					{
+						// It's a relative path so add the current path as a prefix
+						strIncludeFile = CRainmeter::ExtractPath(iniFile) + strIncludeFile;
+					}
+					ReadIniFile(iniFileMappings, strIncludeFile, depth + 1);
+				}
+				else
+				{
+					SetValue((*iter), strKey, buffer);
+				}
+
+				pos += wcslen(pos) + 1;
+			}
+			else  // Empty string
+			{
+				++pos;
+			}
 		}
 	}
 	delete [] buffer;
