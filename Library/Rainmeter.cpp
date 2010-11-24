@@ -3766,7 +3766,7 @@ void CRainmeter::SetDebug(bool debug)
 void CRainmeter::SetDisableDrag(bool drag)
 {
 	m_DisableDrag = drag;
-	WritePrivateProfileString(L"Rainmeter", L"DisableDrag", dragging ? L"1" : L"0", m_IniFile.c_str());
+	WritePrivateProfileString(L"Rainmeter", L"DisableDrag", drag ? L"1" : L"0", m_IniFile.c_str());
 }
 
 void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)

@@ -294,6 +294,7 @@ private:
 	bool m_MouseOver;
 
 	std::wstring m_Author;						// Skin's author
+	std::wstring m_ConfigGroup;
 	std::wstring m_BackgroundName;				// Name of the background image
 	Gdiplus::Rect m_BackgroundMargins;
 	Gdiplus::Rect m_DragMargins;
