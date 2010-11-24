@@ -2486,7 +2486,12 @@ void CMeterWindow::Update(bool nodraw)
 			m_ResetRegion = true;
 		}
 
-		Redraw();
+		// If our option is to disable when in an RDP session, then check if in an RDP session.
+		// Only redraw if we are not in a remote session
+		if (!Rainmeter->GetDisableRDP() || !GetSystemMetrics(SM_REMOTESESSION))
+		{
+			Redraw();
+		}
 	}
 
 	// Start/stop the transition timer if necessary
@@ -3492,7 +3497,7 @@ LRESULT CMeterWindow::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
-	if (m_WindowDraggable)
+	if (m_WindowDraggable && !Rainmeter->GetDisableDrag())
 	{
 		POINT pos;
 		pos.x = (SHORT)LOWORD(lParam);

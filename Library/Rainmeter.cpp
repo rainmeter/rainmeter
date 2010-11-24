@@ -1186,13 +1186,17 @@ CRainmeter::CRainmeter()
 {
 	m_MenuActive = false;
 
+	m_DisableRDP = false;
+
+	m_DisableDrag = false;
+
 	m_Logging = false;
 
 	m_DesktopWorkAreaChanged = false;
 	m_DesktopWorkAreaType = false;
 
-	m_DisableVersionCheck = FALSE;
-	m_NewVersion = FALSE;
+	m_DisableVersionCheck = false;
+	m_NewVersion = false;
 
 	m_Instance = NULL;
 	m_CurrentParser = NULL;
@@ -2730,6 +2734,8 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	// Read Logging settings
 	m_Logging = 0!=parser.ReadInt(L"Rainmeter", L"Logging", 0);
+	m_DisableDrag = 0!=parser.ReadInt(L"Rainmeter", L"DisableDrag", 0);
+	m_DisableRDP = 0!=parser.ReadInt(L"Rainmeter", L"DisableRDP", 0);
 	c_Debug = 0!=parser.ReadInt(L"Rainmeter", L"Debug", 0);
 
 	if (m_Logging)
@@ -3239,7 +3245,13 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				{
 					AppendMenu(configMenu, MF_SEPARATOR, 0, NULL);
 					AppendMenu(configMenu, 0, ID_CONTEXT_OPENSKINSFOLDER, L"Open Skins\' Folder");
+					AppendMenu(configMenu, 0, ID_CONTEXT_DISABLEDRAG, L"Disable Drag");
 					AppendMenu(configMenu, 0, ID_CONTEXT_MANAGESKINS, L"Manage Skins...");
+
+					if (m_DisableDrag)
+					{
+						CheckMenuItem(configMenu, ID_CONTEXT_DISABLEDRAG, MF_BYCOMMAND | MF_CHECKED);
+					}
 
 					InsertMenu(subMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configMenu, L"Configs");
 				}
@@ -3500,7 +3512,11 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_REMEMBERPOSITION, MF_BYCOMMAND | MF_CHECKED);
 		}
 
-		if (meterWindow->GetWindowDraggable())
+		if (m_DisableDrag)
+		{
+			EnableMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_DRAGGABLE, MF_BYCOMMAND | MF_GRAYED);
+		}
+		else if (meterWindow->GetWindowDraggable())
 		{
 			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_DRAGGABLE, MF_BYCOMMAND | MF_CHECKED);
 		}
@@ -3745,6 +3761,12 @@ void CRainmeter::SetDebug(bool debug)
 {
 	c_Debug = debug;
 	WritePrivateProfileString(L"Rainmeter", L"Debug", debug ? L"1" : L"0", m_IniFile.c_str());
+}
+
+void CRainmeter::SetDisableDrag(bool drag)
+{
+	m_DisableDrag = drag;
+	WritePrivateProfileString(L"Rainmeter", L"DisableDrag", dragging ? L"1" : L"0", m_IniFile.c_str());
 }
 
 void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)

@@ -135,7 +135,6 @@ public:
 		std::wstring message;
 	};
 
-
 	CRainmeter();
 	~CRainmeter();
 
@@ -195,6 +194,11 @@ public:
 	void StartLogging();
 	void StopLogging();
 	void DeleteLogFile();
+
+	bool GetDisableRDP() { return m_DisableRDP; }
+
+	bool GetDisableDrag() { return m_DisableDrag; }
+	void SetDisableDrag(bool drag);
 
 	void AddAboutLogInfo(const LOG_INFO& logInfo);
 	const std::list<LOG_INFO>& GetAboutLogData() { return m_LogData; }
@@ -278,6 +282,10 @@ private:
 	std::vector<RECT> m_OldDesktopWorkAreas;
 
 	bool m_MenuActive;
+
+	bool m_DisableRDP;
+
+	bool m_DisableDrag;
 
 	bool m_Logging;
 

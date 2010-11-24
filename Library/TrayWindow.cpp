@@ -449,6 +449,10 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{
 				Rainmeter->SetDebug(!CRainmeter::GetDebug());
 			}
+			else if(wParam == ID_CONTEXT_DISABLEDRAG)
+			{
+				Rainmeter->SetDisableDrag(!Rainmeter->GetDisableDrag());
+			}
 			else if(wParam == ID_CONTEXT_EDITCONFIG)
 			{
 				std::wstring command = Rainmeter->GetConfigEditor();
