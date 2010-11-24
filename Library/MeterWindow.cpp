@@ -539,15 +539,18 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 {
 	if(!m_ChildWindow)
 	{
-		HWND winPos = HWND_NOTOPMOST;
 		m_WindowZPosition = zPos;
+
+		HWND winPos = HWND_NOTOPMOST;
+		UINT flags = SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING;
 
 		switch (zPos)
 		{
 		case ZPOSITION_ONTOPMOST:
 		case ZPOSITION_ONTOP:
 			winPos = HWND_TOPMOST;
- 			break;
+			flags |= SWP_NOOWNERZORDER;
+			break;
 
 		case ZPOSITION_ONBOTTOM:
 			if (all)
@@ -572,13 +575,15 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 		case ZPOSITION_ONDESKTOP:
 			if (CSystem::GetShowDesktop())
 			{
+				flags |= SWP_NOOWNERZORDER;
+
 				// Set WS_EX_TOPMOST flag
-				SetWindowPos(m_Window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+				SetWindowPos(m_Window, HWND_TOPMOST, 0, 0, 0, 0, flags);
 
 				if (all)
 				{
 					// Insert after the helper window
-					SetWindowPos(m_Window, CSystem::GetHelperWindow(), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+					SetWindowPos(m_Window, CSystem::GetHelperWindow(), 0, 0, 0, 0, flags);
 				}
 				else
 				{
@@ -589,7 +594,7 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 						if (GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
 						{
 							// Insert after the found window
-							if (0 != SetWindowPos(m_Window, hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING))
+							if (0 != SetWindowPos(m_Window, hwnd, 0, 0, 0, 0, flags))
 							{
 								break;
 							}
@@ -613,7 +618,7 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 			break;
 		}
 
-		SetWindowPos(m_Window, winPos, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+		SetWindowPos(m_Window, winPos, 0, 0, 0, 0, flags);
 	}
 }
 

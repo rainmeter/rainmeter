@@ -682,7 +682,7 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 		Rainmeter && (Window = Rainmeter->GetMeterWindow(hwnd)))
 	{
 		ZPOSITION zPos = Window->GetWindowZPosition();
-		if (zPos == ZPOSITION_ONDESKTOP)
+		if (zPos == ZPOSITION_ONDESKTOP || zPos == ZPOSITION_ONBOTTOM)
 		{
 			if (logging) DebugLog(L"+ [%c] 0x%08X : %s (Name: \"%s\", zPos=%i)", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetSkinName().c_str(), (int)zPos);
 
@@ -722,10 +722,27 @@ void CSystem::ChangeZPosInOrder()
 		// Retrieve the Rainmeter's meter windows in Z-order
 		EnumWindows(MyEnumWindowsProc, (LPARAM)(&windowsInZOrder));
 
-		// Reset ZPos in Z-order
-		for (size_t i = 0; i < windowsInZOrder.size(); ++i)
+		if (!c_ShowDesktop)
 		{
-			windowsInZOrder[i]->ChangeZPos(windowsInZOrder[i]->GetWindowZPosition());  // reset
+			// Reset ZPos in Z-order (Bottom)
+			std::vector<CMeterWindow*>::const_iterator iter = windowsInZOrder.begin(), iterEnd = windowsInZOrder.end();
+			for ( ; iter != iterEnd; ++iter)
+			{
+				if ((*iter)->GetWindowZPosition() == ZPOSITION_ONBOTTOM)
+				{
+					(*iter)->ChangeZPos(ZPOSITION_ONBOTTOM);  // reset
+				}
+			}
+		}
+
+		// Reset ZPos in Z-order (On Desktop)
+		std::vector<CMeterWindow*>::const_iterator iter = windowsInZOrder.begin(), iterEnd = windowsInZOrder.end();
+		for ( ; iter != iterEnd; ++iter)
+		{
+			if ((*iter)->GetWindowZPosition() == ZPOSITION_ONDESKTOP)
+			{
+				(*iter)->ChangeZPos(ZPOSITION_ONDESKTOP);  // reset
+			}
 		}
 
 		if (logging)
