@@ -1540,6 +1540,7 @@ void CMeterWindow::ReadConfig()
 	m_AutoSelectScreen = false;
 	m_AlphaValue = 255;
 	m_FadeDuration = 250;
+	m_ConfigGroup = L"";
 
 	CConfigParser parser;
 	parser.Initialize(iniFile.c_str(), m_Rainmeter);
@@ -1714,8 +1715,12 @@ bool CMeterWindow::ReadSkin()
 	m_Parser.Initialize(iniFile.c_str(), m_Rainmeter, this);
 
 	// Global settings
-	m_ConfigGroup += L"|";
-	m_ConfigGroup += m_Parser.ReadString(L"Rainmeter", L"Group", m_ConfigGroup.c_str());
+	std::wstring group = m_Parser.ReadString(L"Rainmeter", L"Group", L"");
+	if (!group.empty())
+	{
+		m_ConfigGroup += L"|";
+		m_ConfigGroup += group;
+	}
 	InitializeGroup(m_ConfigGroup);
 
 	// Check the version 
