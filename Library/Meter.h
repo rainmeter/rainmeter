@@ -89,6 +89,9 @@ public:
 	void SetName(const WCHAR* name) { m_Name = name; }
 	const WCHAR* GetName() { return m_Name.c_str(); }
 
+	UINT GetUpdateCounter() { return m_UpdateCounter; }
+	UINT GetUpdateDivider() { return m_UpdateDivider; }
+
 	static CMeter* Create(const WCHAR* meter, CMeterWindow* meterWindow);
 	
 	static void DrawBevel(Gdiplus::Graphics& graphics, Gdiplus::Rect& rect, Gdiplus::Pen& light, Gdiplus::Pen& dark);

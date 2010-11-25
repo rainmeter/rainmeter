@@ -37,13 +37,13 @@ public:
 
 	virtual const WCHAR* GetStats();
 
-	void SetName(const WCHAR* name) { m_Name = name; m_ANSIName = ConvertToAscii(name); };
-	const WCHAR* GetName() { return m_Name.c_str(); };
-	const char* GetANSIName() { return m_ANSIName.c_str(); };
+	void SetName(const WCHAR* name) { m_Name = name; m_ANSIName = ConvertToAscii(name); }
+	const WCHAR* GetName() { return m_Name.c_str(); }
+	const char* GetANSIName() { return m_ANSIName.c_str(); }
 
-	void Disable() { m_Disabled = true; };
-	void Enable() { m_Disabled = false; };
-	bool IsDisabled() { return m_Disabled; };
+	void Disable() { m_Disabled = true; }
+	void Enable() { m_Disabled = false; }
+	bool IsDisabled() { return m_Disabled; }
 
 	bool HasDynamicVariables() { return m_DynamicVariables; }
 
@@ -52,8 +52,11 @@ public:
 	double GetValue();
 	double GetRelativeValue();
 	double GetValueRange();
-	double GetMinValue() { return m_MinValue; };
-	double GetMaxValue() { return m_MaxValue; };
+	double GetMinValue() { return m_MinValue; }
+	double GetMaxValue() { return m_MaxValue; }
+
+	UINT GetUpdateCounter() { return m_UpdateCounter; }
+	UINT GetUpdateDivider() { return m_UpdateDivider; }
 
 	virtual const WCHAR* GetStringValue(bool autoScale, double scale, int decimals, bool percentual);
 	static void GetScaledValue(int decimals, double theValue, WCHAR* buffer);

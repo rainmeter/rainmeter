@@ -2409,7 +2409,8 @@ void CMeterWindow::Update(bool nodraw)
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); ++i)
 	{
-		if ((*i)->HasDynamicVariables())
+		if ((*i)->HasDynamicVariables() &&
+			((*i)->GetUpdateCounter() + 1) >= (*i)->GetUpdateDivider())
 		{
 			try
 			{
@@ -2429,7 +2430,8 @@ void CMeterWindow::Update(bool nodraw)
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
-		if ((*j)->HasDynamicVariables())
+		if ((*j)->HasDynamicVariables() &&
+			((*j)->GetUpdateCounter() + 1) >= (*j)->GetUpdateDivider())
 		{
 			try
 			{
