@@ -955,7 +955,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 */
 void CMeterWindow::ShowMeter(const WCHAR* name, bool group)
 {
-	if (name == NULL || wcslen(name) == 0) return;
+	if (name == NULL || *name == 0) return;
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
@@ -985,7 +985,7 @@ void CMeterWindow::ShowMeter(const WCHAR* name, bool group)
 */
 void CMeterWindow::HideMeter(const WCHAR* name, bool group)
 {
-	if (name == NULL || wcslen(name) == 0) return;
+	if (name == NULL || *name == 0) return;
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
@@ -1015,7 +1015,7 @@ void CMeterWindow::HideMeter(const WCHAR* name, bool group)
 */
 void CMeterWindow::ToggleMeter(const WCHAR* name, bool group)
 {
-	if (name == NULL || wcslen(name) == 0) return;
+	if (name == NULL || *name == 0) return;
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
@@ -1052,7 +1052,7 @@ void CMeterWindow::ToggleMeter(const WCHAR* name, bool group)
 */
 void CMeterWindow::MoveMeter(int x, int y, const WCHAR* name)
 {
-	if (name == NULL || wcslen(name) == 0) return;
+	if (name == NULL || *name == 0) return;
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
@@ -1077,7 +1077,7 @@ void CMeterWindow::MoveMeter(int x, int y, const WCHAR* name)
 */
 void CMeterWindow::EnableMeasure(const WCHAR* name, bool group)
 {
-	if (name == NULL || wcslen(name) == 0) return;
+	if (name == NULL || *name == 0) return;
 
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); ++i)
@@ -1107,7 +1107,7 @@ void CMeterWindow::EnableMeasure(const WCHAR* name, bool group)
 */
 void CMeterWindow::DisableMeasure(const WCHAR* name, bool group)
 {
-	if (name == NULL || wcslen(name) == 0) return;
+	if (name == NULL || *name == 0) return;
 
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); ++i)
@@ -1137,7 +1137,7 @@ void CMeterWindow::DisableMeasure(const WCHAR* name, bool group)
 */
 void CMeterWindow::ToggleMeasure(const WCHAR* name, bool group)
 {
-	if (name == NULL || wcslen(name) == 0) return;
+	if (name == NULL || *name == 0) return;
 
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); ++i)

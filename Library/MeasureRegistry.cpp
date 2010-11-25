@@ -149,7 +149,12 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		throw CError(std::wstring(L"HKEY=") + keyname + L" is not valid in measure [" + section + L"].", __LINE__, __FILE__);
+		std::wstring error = L"HKEY=";
+		error += keyname;
+		error += L" is not valid in measure [";
+		error += m_Name;
+		error += L"].";
+		throw CError(error, __LINE__, __FILE__);
 	}
 
 	m_RegKeyName = parser.ReadString(section, L"RegKey", L"");

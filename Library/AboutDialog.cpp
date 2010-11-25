@@ -210,7 +210,7 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 								CMeasure::GetScaledValue(1, maxVal, buffer);
 								range += buffer;
 
-								if (name && wcslen(name) > 0)
+								if (name && *name)
 								{
 									if (index < count) 
 									{
@@ -365,7 +365,7 @@ void ScanPlugins()
 			if (GetAuthorFunc)
 			{
 				LPCTSTR author = GetAuthorFunc();
-				if (author && wcslen(author) > 0)
+				if (author && *author)
 				{
 					info.author = author;
 				}

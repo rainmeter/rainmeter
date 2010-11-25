@@ -670,7 +670,10 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow)
 	}
 
 	// Error
-	throw CError(std::wstring(L"Measure=") + measure + L" is not valid.", __LINE__, __FILE__);
+	std::wstring error = L"Measure=";
+	error += measure;
+	error += L" is not valid.";
+	throw CError(error, __LINE__, __FILE__);
 
 	return NULL;
 }

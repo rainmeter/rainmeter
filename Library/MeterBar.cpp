@@ -126,7 +126,12 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-		throw CError(std::wstring(L"BarOrientation=") + orientation + L" is not valid in meter [" + m_Name + L"].", __LINE__, __FILE__);
+		std::wstring error = L"BarOrientation=";
+		error += orientation;
+		error += L" is not valid in meter [";
+		error += m_Name;
+		error += L"].";
+		throw CError(error, __LINE__, __FILE__);
 	}
 
 	if (m_Initialized)

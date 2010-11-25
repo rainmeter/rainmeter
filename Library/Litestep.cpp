@@ -332,7 +332,7 @@ HINSTANCE LSExecute(HWND Owner, LPCTSTR szCommand, int nShowCmd)
 HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR szVerb)
 {
 	// The stub implementation (some of this code is taken from lsapi.cpp)
-	if (szCommand == NULL || wcslen(szCommand) == 0) return NULL;
+	if (szCommand == NULL || *szCommand == 0) return NULL;
 
 	std::wstring args;
 	std::wstring command = szCommand;

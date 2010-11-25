@@ -430,13 +430,6 @@ void CMeter::ReadConfig(const WCHAR* section)
 
 	std::wstring group = parser.ReadString(section, L"Group", L"");
 	InitializeGroup(group);
-
-/* Are these necessary?
-	if (m_W == 0 || m_H == 0)
-	{
-        throw CError(std::wstring(L"The meter ") + section + L" has zero dimensions.", __LINE__, __FILE__);
-	}
-*/
 }
 
 /*
@@ -451,7 +444,10 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 	// The meter is not bound to anything
 	if (m_MeasureName.empty())
 	{
-		throw CError(std::wstring(L"The meter [") + m_Name + L"] is not bound to anything!", __LINE__, __FILE__);
+		std::wstring error = L"The meter [";
+		error += m_Name;
+		error += L"] is not bound to anything!";
+		throw CError(error, __LINE__, __FILE__);
 	}
 
 	// Go through the list and check it there is a measure for us
@@ -466,7 +462,12 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 	}
 
 	// Error :)
-	throw CError(std::wstring(L"The meter [") + m_Name + L"] cannot be bound with [" + m_MeasureName + L"]!", __LINE__, __FILE__);
+	std::wstring error = L"The meter [";
+	error += m_Name;
+	error += L"] cannot be bound with [";
+	error += m_MeasureName;
+	error += L"]!";
+	throw CError(error, __LINE__, __FILE__);
 }
 
 /*
@@ -516,7 +517,10 @@ CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow)
 	} 
 
 	// Error
-	throw CError(std::wstring(L"Meter=") + meter + L" is not valid.", __LINE__, __FILE__);
+	std::wstring error = L"Meter=";
+	error += meter;
+	error += L" is not valid.";
+	throw CError(error, __LINE__, __FILE__);
 
 	return NULL;
 }
