@@ -444,8 +444,7 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 	// The meter is not bound to anything
 	if (m_MeasureName.empty())
 	{
-		std::wstring error = L"The meter [";
-		error += m_Name;
+		std::wstring error = L"The meter [" + m_Name;
 		error += L"] is not bound to anything!";
 		throw CError(error, __LINE__, __FILE__);
 	}
@@ -462,8 +461,7 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 	}
 
 	// Error :)
-	std::wstring error = L"The meter [";
-	error += m_Name;
+	std::wstring error = L"The meter [" + m_Name;
 	error += L"] cannot be bound with [";
 	error += m_MeasureName;
 	error += L"]!";

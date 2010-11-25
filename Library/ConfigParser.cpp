@@ -87,48 +87,30 @@ void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* me
 	if (pRainmeter)
 	{
 		SetBuiltInVariable(L"PROGRAMPATH", pRainmeter->GetPath());
-
-		// Extract volume path from program path
-		// E.g.:
-		//  "C:\path\" to "C:"
-		//  "\\server\share\" to "\\server\share"
-		//  "\\server\C:\path\" to "\\server\C:"
-		const std::wstring& path = pRainmeter->GetPath();
-		std::wstring::size_type loc, loc2;
-		if ((loc = path.find_first_of(L':')) != std::wstring::npos)
-		{
-			SetBuiltInVariable(L"PROGRAMDRIVE", path.substr(0, loc + 1));
-		}
-		else if (path.length() >= 2 && (path[0] == L'\\' || path[0] == L'/') && (path[1] == L'\\' || path[1] == L'/'))
-		{
-			if ((loc = path.find_first_of(L"\\/", 2)) != std::wstring::npos)
-			{
-				if ((loc2 = path.find_first_of(L"\\/", loc + 1)) != std::wstring::npos || loc != (path.length() - 1))
-				{
-					loc = loc2;
-				}
-			}
-			SetBuiltInVariable(L"PROGRAMDRIVE", path.substr(0, loc));
-		}
-
+		SetBuiltInVariable(L"PROGRAMDRIVE", pRainmeter->GetDrive());
 		SetBuiltInVariable(L"SETTINGSPATH", pRainmeter->GetSettingsPath());
 		SetBuiltInVariable(L"SKINSPATH", pRainmeter->GetSkinPath());
 		SetBuiltInVariable(L"PLUGINSPATH", pRainmeter->GetPluginPath());
 		SetBuiltInVariable(L"CURRENTPATH", CRainmeter::ExtractPath(m_Filename));
-		SetBuiltInVariable(L"ADDONSPATH", pRainmeter->GetPath() + L"Addons\\");
+		SetBuiltInVariable(L"ADDONSPATH", pRainmeter->GetAddonPath());
 		SetBuiltInVariable(L"CRLF", L"\n");		
 
 		if (meterWindow)
 		{
 			const std::wstring& config = meterWindow->GetSkinName();
+			std::wstring path = pRainmeter->GetSkinPath();
+
+			std::wstring::size_type loc;
 			if ((loc = config.find_first_of(L'\\')) != std::wstring::npos)
 			{
-				SetBuiltInVariable(L"ROOTCONFIGPATH", pRainmeter->GetSkinPath() + config.substr(0, loc + 1));
+				path += config.substr(0, loc + 1);
 			}
 			else
 			{
-				SetBuiltInVariable(L"ROOTCONFIGPATH", pRainmeter->GetSkinPath() + config + L"\\");
+				path += config;
+				path += L"\\";
 			}
+			SetBuiltInVariable(L"ROOTCONFIGPATH", path);
 		}
 	}
 	if (meterWindow)
@@ -1126,7 +1108,10 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 		std::vector<std::wstring>& array = (*iter).second;
 		array.push_back(strTmpKey);
 	}
-	m_Values[strTmpSection + L"::" + strTmpKey] = strValue;
+
+	strTmpSection += L"::";
+	strTmpSection += strTmpKey;
+	m_Values[strTmpSection] = strValue;
 }
 
 //==============================================================================
@@ -1140,7 +1125,8 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 */
 const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault)
 {
-	std::wstring strTmp(strSection + L"::" + strKey);
+	std::wstring strTmp(strSection + L"::");
+	strTmp += strKey;
 	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
 
 	stdext::hash_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(strTmp);

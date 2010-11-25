@@ -184,7 +184,10 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
 	m_ImageName = parser.ReadString(section, L"BitmapImage", L"");
-	m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
+	if (!m_ImageName.empty())
+	{
+		m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
+	}
 
 	m_FrameCount = parser.ReadInt(section, L"BitmapFrames", 1);
 	m_ZeroFrame = 0!=parser.ReadInt(section, L"BitmapZeroFrame", 0);
@@ -211,8 +214,7 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"BitmapAlign=";
-		error += align;
+		std::wstring error = L"BitmapAlign=" + align;
 		error += L" is not valid in meter [";
 		error += m_Name;
 		error += L"].";

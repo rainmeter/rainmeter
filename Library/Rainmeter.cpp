@@ -1302,7 +1302,8 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	if (c_CmdLine.empty())
 	{
-		m_IniFile = m_Path + L"Rainmeter.ini";
+		m_IniFile = m_Path;
+		m_IniFile += L"Rainmeter.ini";
 
 		// If the ini file doesn't exist in the program folder store it to the %APPDATA% instead so that things work better in Vista/Win7
 		if (_waccess(m_IniFile.c_str(), 0) == -1)
@@ -1382,9 +1383,10 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		StartLogging();
 	}
 
-	m_PluginPath = tmpName;
+	m_PluginPath = m_AddonPath = m_SkinPath = m_Path;
 	m_PluginPath += L"Plugins\\";
-	m_SkinPath = m_Path + L"Skins\\";
+	m_AddonPath += L"Addons\\";
+	m_SkinPath += L"Skins\\";
 
 	// Read the skin folder from the ini file
 	WCHAR tmpSz[MAX_LINE_LENGTH];
@@ -1404,14 +1406,13 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 			m_SkinPath = szPath;
 			m_SkinPath += L"\\Rainmeter";
 			CreateDirectory(m_SkinPath.c_str(), NULL);
-			m_SkinPath += L"\\Skins";
+			m_SkinPath += L"\\Skins\\";
 			DWORD result = CreateDirectory(m_SkinPath.c_str(), NULL);
-			m_SkinPath += L"\\";
 			if (result != 0)
 			{
 				// The folder was created successfully which means that it wasn't available yet.
 				// Copy the default skin to the Skins folder
-				std::wstring strFrom(m_Path + L"Skins\\" + L"*.*");
+				std::wstring strFrom(m_Path + L"Skins\\*.*");
 				std::wstring strTo(m_SkinPath);
 				CSystem::CopyFiles(strFrom, strTo);
 
@@ -1420,10 +1421,9 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 				CSystem::RemoveFile(strNote);
 
 				// Copy also the themes to the %APPDATA%
-				strFrom = std::wstring(m_Path + L"Themes\\" + L"*.*");
-				strTo = std::wstring(GetSettingsPath() + L"Themes");
+				strFrom = std::wstring(m_Path + L"Themes\\*.*");
+				strTo = std::wstring(GetSettingsPath() + L"Themes\\");
 				CreateDirectory(strTo.c_str(), NULL);
-				strTo += L"\\";
 				CSystem::CopyFiles(strFrom, strTo);
 			}
 		}
@@ -1468,6 +1468,29 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	DebugLog(L"IniFile: %s", m_IniFile.c_str());
 	DebugLog(L"SkinPath: %s", m_SkinPath.c_str());
 	DebugLog(L"PluginPath: %s", m_PluginPath.c_str());
+
+	// Extract volume path from program path
+	// E.g.:
+	//  "C:\path\" to "C:"
+	//  "\\server\share\" to "\\server\share"
+	//  "\\server\C:\path\" to "\\server\C:"
+	std::wstring::size_type loc;
+	if ((loc = m_Path.find_first_of(L':')) != std::wstring::npos)
+	{
+		m_Drive = m_Path.substr(0, loc + 1);
+	}
+	else if (m_Path.length() >= 2 && (m_Path[0] == L'\\' || m_Path[0] == L'/') && (m_Path[1] == L'\\' || m_Path[1] == L'/'))
+	{
+		if ((loc = m_Path.find_first_of(L"\\/", 2)) != std::wstring::npos)
+		{
+			std::wstring::size_type loc2;
+			if ((loc2 = m_Path.find_first_of(L"\\/", loc + 1)) != std::wstring::npos || loc != (m_Path.length() - 1))
+			{
+				loc = loc2;
+			}
+		}
+		m_Drive = m_Path.substr(0, loc);
+	}
 
 	// Test that the Rainmeter.ini file is writable
 	TestSettingsFile(bDefaultIniLocation);
@@ -1622,8 +1645,10 @@ void CRainmeter::CheckSkinVersions()
 		// DebugLog(L"%s", menu[i].name.c_str());
 
 		// Read the version files
-		std::wstring strNewVersionFile = strMainSkinsPath + menu[i].name + L"\\version";
-		std::wstring strCurrentVersionFile = m_SkinPath + menu[i].name + L"\\version";
+		std::wstring strNewVersionFile = strMainSkinsPath + menu[i].name;
+		strNewVersionFile += L"\\version";
+		std::wstring strCurrentVersionFile = m_SkinPath + menu[i].name;
+		strCurrentVersionFile += L"\\version";
 
 		std::string strVersion;
 		std::wstring strVersionNew;
@@ -1664,13 +1689,13 @@ void CRainmeter::CheckSkinVersions()
 				std::wstring strSkinPath = m_SkinPath + menu[i].name;
 				if (_wstat(strSkinPath.c_str(), &s) == 0)
 				{
-					std::wstring strMessage = L"A new version of config \"" + menu[i].name + L"\" is available.\n\n";
-					strMessage += L"New version: " + (strVersionNew.empty() ? L"Unknown" : strVersionNew) + L"\n";
-					strMessage += L"Current version: " + (strVersionCurrent.empty() ? L"Unknown" : strVersionCurrent) + L"\n";
-					strMessage += L"\n";
-					strMessage += L"Do you want to upgrade?";
-					strMessage += L"\n\n";
-					strMessage += L"(If you select 'Yes' your current config\nwill be moved into the 'Backup' folder)";
+					std::wstring strMessage = L"A new version of config \"" + menu[i].name;
+					strMessage += L"\" is available.\n\nNew version: ";
+					strMessage += strVersionNew.empty() ? L"Unknown" : strVersionNew;
+					strMessage += L"\nCurrent version: ";
+					strMessage += strVersionCurrent.empty() ? L"Unknown" : strVersionCurrent;
+					strMessage += L"\n\nDo you want to upgrade?\n\n"
+						L"(If you select 'Yes' your current config\nwill be moved into the 'Backup' folder)";
 
 					if (IDYES == MessageBox(NULL, strMessage.c_str(), APPNAME, MB_YESNO | MB_ICONQUESTION))
 					{
@@ -1680,7 +1705,10 @@ void CRainmeter::CheckSkinVersions()
 						// Check for illegal characters from the version number
 						if (strVersionCurrent.find_first_of(L"\\/\"*:?<>|") == std::wstring::npos)
 						{
-							std::wstring strTarget = m_SkinPath + L"Backup\\" + menu[i].name + L"-" + strVersionCurrent;
+							std::wstring strTarget = m_SkinPath + L"Backup\\";
+							strTarget += menu[i].name;
+							strTarget += L"-";
+							strTarget += strVersionCurrent;
 							if (CSystem::CopyFiles(m_SkinPath + menu[i].name, strTarget, true))	// Move the folder to "backup"
 							{
 								// Upgrade the skin
@@ -1710,8 +1738,9 @@ void CRainmeter::CheckSkinVersions()
 				}
 				else
 				{
-					std::wstring strMessage = L"A new version of config \"" + menu[i].name + L"\" is available\n";
-					strMessage += L"Do you want to add it to your skin and themes libraries?";
+					std::wstring strMessage = L"A new version of config \"" + menu[i].name;
+					strMessage += L"\" is available\n"
+						L"Do you want to add it to your skin and themes libraries?";
 					if (IDYES == MessageBox(NULL, strMessage.c_str(), APPNAME, MB_YESNO | MB_ICONQUESTION))
 					{
 						CSystem::CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
@@ -1829,15 +1858,13 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		}
 
 		// Verify whether the ini-file exists
-		std::wstring skinIniPath = skinPath;
-		skinIniPath += skinConfig;
+		std::wstring skinIniPath = skinPath + skinConfig;
 		skinIniPath += L"\\";
 		skinIniPath += skinIniFile;
 
 		if (_waccess(skinIniPath.c_str(), 0) == -1)
 		{
-			std::wstring message = L"Unable to activate skin \"";
-			message += skinConfig;
+			std::wstring message = L"Unable to activate skin \"" + skinConfig;
 			message += L"\\";
 			message += skinIniFile;
 			message += L"\": Ini-file not found.";
@@ -2221,7 +2248,8 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 	}
 
 	// Scan for folders
-	std::wstring files = path + base + L"*";
+	std::wstring files = path + base;
+	files += L"*";
     hSearch = FindFirstFile(files.c_str(), &fileData);
 	do
 	{
@@ -2561,8 +2589,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else
 	{
-		std::wstring error = L"Unknown !bang: ";
-		error += bang;
+		std::wstring error = L"Unknown !bang: " + bang;
 		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		return FALSE;
 	}
@@ -2734,8 +2761,6 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	// Read Logging settings
 	m_Logging = 0!=parser.ReadInt(L"Rainmeter", L"Logging", 0);
-	m_DisableDrag = 0!=parser.ReadInt(L"Rainmeter", L"DisableDrag", 0);
-	m_DisableRDP = 0!=parser.ReadInt(L"Rainmeter", L"DisableRDP", 0);
 	c_Debug = 0!=parser.ReadInt(L"Rainmeter", L"Debug", 0);
 
 	if (m_Logging)
@@ -2750,6 +2775,9 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	c_GlobalConfig.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", 0.0);
 	c_GlobalConfig.netOutSpeed = parser.ReadFloat(L"Rainmeter", L"NetOutSpeed", 0.0);
+
+	m_DisableDrag = 0!=parser.ReadInt(L"Rainmeter", L"DisableDrag", 0);
+	m_DisableRDP = 0!=parser.ReadInt(L"Rainmeter", L"DisableRDP", 0);
 
 	m_ConfigEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"");
 	if (m_ConfigEditor.empty())
@@ -2859,7 +2887,10 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		{
 			if (!SetActiveConfig(skinName, skinIni))
 			{
-				std::wstring error = L"The selected skin (L" + skinName + L"\\" + skinIni + L") cannot be found.";
+				std::wstring error = L"The selected skin (L" + skinName;
+				error += L"\\";
+				error += skinIni;
+				error += L") cannot be found.";
 				MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 			}
 			return;
@@ -2967,8 +2998,7 @@ void CRainmeter::RefreshAll()
 					{
 						DeactivateConfig(mw, i);
 
-						std::wstring message = L"Unable to refresh skin \"";
-						message += skinConfig;
+						std::wstring message = L"Unable to refresh skin \"" + skinConfig;
 						message += L"\\";
 						message += skinIniFile;
 						message += L"\": Ini-file not found.";
@@ -2985,8 +3015,7 @@ void CRainmeter::RefreshAll()
 				{
 					DeactivateConfig(mw, -2);  // -2 = Deactivate the config forcibly
 
-					std::wstring message = L"Unable to refresh config \"";
-					message += skinConfig;
+					std::wstring message = L"Unable to refresh config \"" + skinConfig;
 					message += L"\": Config not found.";
 					LSLog(LOG_DEBUG, APPNAME, message.c_str());
 					MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
@@ -3693,8 +3722,7 @@ void CRainmeter::StartLogging()
 			ResetLoggingFlag();	// Re-enable logging
 			SetLogging(true);
 
-			std::wstring message = L"Log file created at: ";
-			message += m_LogFile;
+			std::wstring message = L"Log file created at: " + m_LogFile;
 			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONINFORMATION);
 		}
 		else
@@ -3703,8 +3731,7 @@ void CRainmeter::StartLogging()
 			SetLogging(false);
 			ResetLoggingFlag();
 
-			std::wstring message = L"Unable to create log file: ";
-			message += m_LogFile;
+			std::wstring message = L"Unable to create log file: " + m_LogFile;
 			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		}
 	}
@@ -3724,9 +3751,8 @@ void CRainmeter::DeleteLogFile()
 	// Check if the file exists
 	if (_waccess(m_LogFile.c_str(), 0) != -1)
 	{
-		std::wstring message = L"Do you want to delete the following log file?\n";
-		message += m_LogFile;
-		int res = MessageBox(NULL, message.c_str(), L"Rainmeter", MB_YESNO | MB_TOPMOST | MB_ICONQUESTION);
+		std::wstring message = L"Do you want to delete the following log file?\n" + m_LogFile;
+		int res = MessageBox(NULL, message.c_str(), APPNAME, MB_YESNO | MB_TOPMOST | MB_ICONQUESTION);
 		if (res == IDYES)
 		{
 			// Disable logging
@@ -3785,8 +3811,8 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	{
 		LSLog(LOG_DEBUG, APPNAME, L"The Rainmeter.ini file is NOT writable.");
 
-		std::wstring error = L"The Rainmeter.ini file is not writable. This means that the\n";
-		error += L"application will not be able to save any settings permanently.\n\n";
+		std::wstring error = L"The Rainmeter.ini file is not writable. This means that the\n"
+			L"application will not be able to save any settings permanently.\n\n";
 
 		if (!bDefaultIniLocation)
 		{
@@ -3797,16 +3823,16 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 			error += m_IniFile;
 			error += L"\n\nto\n\n";
 			error += strTarget;
-			error += L"\n\nAlternatively you can simply remove the file and\n";
-			error += L"it will be automatically recreated in the correct location\n";
-			error += L"when Rainmeter is restarted the next time (you\'ll lose your\n";
-			error += L"current settings though).\n";
+			error += L"\n\nAlternatively you can simply remove the file and\n"
+				L"it will be automatically recreated in the correct location\n"
+				L"when Rainmeter is restarted the next time (you\'ll lose your\n"
+				L"current settings though).\n";
 		}
 		else
 		{
-			error += L"Make sure that the settings file is not set as read-only and\n";
-			error += L"that it is located in a folder where you have write permissions.\n\n";
-			error += L"The settings file is located at:\n";
+			error += L"Make sure that the settings file is not set as read-only and\n"
+				L"that it is located in a folder where you have write permissions.\n\n"
+				L"The settings file is located at:\n";
 			error += m_IniFile;
 		}
 

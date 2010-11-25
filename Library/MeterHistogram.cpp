@@ -265,13 +265,22 @@ void CMeterHistogram::ReadConfig(const WCHAR* section)
 	}
 
 	m_PrimaryImageName = parser.ReadString(section, L"PrimaryImage", L"");
-	m_PrimaryImageName = m_MeterWindow->MakePathAbsolute(m_PrimaryImageName);
+	if (!m_PrimaryImageName.empty())
+	{
+		m_PrimaryImageName = m_MeterWindow->MakePathAbsolute(m_PrimaryImageName);
+	}
 
 	m_SecondaryImageName = parser.ReadString(section, L"SecondaryImage", L"");
-	m_SecondaryImageName = m_MeterWindow->MakePathAbsolute(m_SecondaryImageName);
+	if (!m_SecondaryImageName.empty())
+	{
+		m_SecondaryImageName = m_MeterWindow->MakePathAbsolute(m_SecondaryImageName);
+	}
 
 	m_BothImageName = parser.ReadString(section, L"BothImage", L"");
-	m_BothImageName = m_MeterWindow->MakePathAbsolute(m_BothImageName);
+	if (!m_BothImageName.empty())
+	{
+		m_BothImageName = m_MeterWindow->MakePathAbsolute(m_BothImageName);
+	}
 
 	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0);
 	m_Flip = 0!=parser.ReadInt(section, L"Flip", 0);
@@ -580,8 +589,7 @@ void CMeterHistogram::BindMeasure(const std::list<CMeasure*>& measures)
 			}
 		}
 
-		std::wstring error = L"The meter [";
-		error += m_Name;
+		std::wstring error = L"The meter [" + m_Name;
 		error += L"] cannot be bound with [";
 		error += m_SecondaryMeasureName;
 		error += L"]!";

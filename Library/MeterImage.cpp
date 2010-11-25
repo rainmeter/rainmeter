@@ -419,7 +419,11 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 		std::wstring oldImageName = m_ImageName;
 
 		m_ImageName = parser.ReadString(section, L"ImageName", L"");
-		m_ImageName = m_MeterWindow->MakePathAbsolute(m_Path + m_ImageName);
+		if (!m_ImageName.empty())
+		{
+			m_ImageName.insert(0, m_Path);
+			m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
+		}
 
 		if (m_DynamicVariables)
 		{
@@ -539,8 +543,7 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"ImageFlip=";
-		error += flip;
+		std::wstring error = L"ImageFlip=" + flip;
 		error += L" is not valid in meter [";
 		error += m_Name;
 		error += L"].";
@@ -588,7 +591,8 @@ bool CMeterImage::Update()
 			std::wstring val = m_Measure->GetStringValue(false, 1, 0, false);
 			if (!val.empty())
 			{
-				val = m_MeterWindow->MakePathAbsolute(m_Path + val);
+				val.insert(0, m_Path);
+				val = m_MeterWindow->MakePathAbsolute(val);
 				if (val != m_ImageName)
 				{
 					m_ImageName = val;

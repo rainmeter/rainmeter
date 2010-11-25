@@ -161,8 +161,7 @@ void CMeterString::Initialize()
 			// It couldn't find the font family: Log it.
 			if(Ok != status)
 			{	
-				std::wstring error = L"Error: Couldn't load font family: ";
-				error += m_FontFace;
+				std::wstring error = L"Error: Couldn't load font family: " + m_FontFace;
 				LSLog(LOG_DEBUG, APPNAME, error.c_str());
 				
 				delete m_FontFamily;
@@ -230,8 +229,7 @@ void CMeterString::Initialize()
 
 			if (m_FontSize != 0)
 			{
-				std::wstring error = L"Unable to create font: ";
-				error += m_FontFace;
+				std::wstring error = L"Unable to create font: " + m_FontFace;
 				throw CError(error, __LINE__, __FILE__);
 			}
 		}
@@ -333,8 +331,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"StringAlign=";
-		error += align;
+		std::wstring error = L"StringAlign=" + align;
 		error += L" is not valid in meter [";
 		error += m_Name;
 		error += L"].";
@@ -361,8 +358,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"StringCase=";
-		error += stringCase;
+		std::wstring error = L"StringCase=" + stringCase;
 		error += L" is not valid in meter [";
 		error += m_Name;
 		error += L"].";
@@ -389,8 +385,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"StringStyle=";
-		error += style;
+		std::wstring error = L"StringStyle=" + style;
 		error += L" is not valid in meter [";
 		error += m_Name;
 		error += L"].";
@@ -413,8 +408,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"StringEffect=";
-		error += effect;
+		std::wstring error = L"StringEffect=" + effect;
 		error += L" is not valid in meter [";
 		error += m_Name;
 		error += L"].";
@@ -656,8 +650,7 @@ void CMeterString::BindMeasure(const std::list<CMeasure*>& measures)
 
 		if (i == measures.end())
 		{
-			std::wstring error = L"The meter [";
-			error += m_Name;
+			std::wstring error = L"The meter [" + m_Name;
 			error += L"] cannot be bound with [";
 			error += (*j);
 			error += L"]!";
@@ -698,18 +691,21 @@ void CMeterString::FreeFontCache()
 */
 std::wstring CMeterString::FontPropertiesToString(FontFamily* fontFamily, REAL size, FontStyle style)
 {
-	std::wstringstream stream;
-	stream << size << L"-" << (int)style;
+	WCHAR ids[128] = {0};
+	swprintf(ids, L"%.1f-%i", size, (int)style);
 
 	if (fontFamily)
 	{
 		WCHAR familyName[LF_FACESIZE];
 		if (Ok == fontFamily->GetFamilyName(familyName))
 		{
-			return std::wstring(familyName) + L"-" + stream.str();
+			std::wstring prop = familyName;
+			prop += L"-";
+			prop += ids;
+			return prop;
 		}
 	}
-	return stream.str();
+	return ids;
 }
 
 /*

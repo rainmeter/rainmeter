@@ -373,9 +373,7 @@ HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR sz
 
 	std::wstring dir = CRainmeter::ExtractPath(command);
 
-	SHELLEXECUTEINFO si;
-	memset(&si, 0, sizeof(si));
-	si.cbSize = sizeof(SHELLEXECUTEINFO);
+	SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
 	si.hwnd = Owner;
 	si.lpVerb = szVerb;
 	si.lpFile = command.c_str();

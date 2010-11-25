@@ -161,7 +161,10 @@ public:
 	const std::wstring& GetLogFile() { return m_LogFile; }
 	const std::wstring& GetSkinPath() { return m_SkinPath; }
 	const std::wstring& GetPluginPath() { return m_PluginPath; }
+	const std::wstring& GetAddonPath() { return m_AddonPath; }
 	std::wstring GetSettingsPath() { return ExtractPath(m_IniFile); }
+
+	const std::wstring& GetDrive() { return m_Drive; }
 
 	const std::wstring& GetConfigEditor() { return m_ConfigEditor; }
 	const std::wstring& GetLogViewer() { return m_LogViewer; }
@@ -263,6 +266,9 @@ private:
 	std::wstring m_LogFile;				// The log file
 	std::wstring m_SkinPath;			// Path to the folder where the skins are
 	std::wstring m_PluginPath;			// Path to the folder where the plugins are
+	std::wstring m_AddonPath;			// Path to the folder where the addons are
+
+	std::wstring m_Drive;
 
 	std::wstring m_StatsDate;					// The date when stats gathering started
 

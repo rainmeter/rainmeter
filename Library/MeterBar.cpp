@@ -108,7 +108,10 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 	m_Color = parser.ReadColor(section, L"BarColor", Color::Green);
 
 	m_ImageName = parser.ReadString(section, L"BarImage", L"");
-	m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
+	if (!m_ImageName.empty())
+	{
+		m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
+	}
 
 	m_Border = parser.ReadInt(section, L"BarBorder", 0);
 
@@ -126,8 +129,7 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"BarOrientation=";
-		error += orientation;
+		std::wstring error = L"BarOrientation=" + orientation;
 		error += L" is not valid in meter [";
 		error += m_Name;
 		error += L"].";

@@ -184,14 +184,12 @@ CMeterWindow::~CMeterWindow()
 */
 int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 {
-	WNDCLASSEX wc;
+	WNDCLASSEX wc = {sizeof(WNDCLASSEX)};
 
 	m_Rainmeter = &Rainmeter;
 
 	// Register the windowclass
-	memset(&wc, 0, sizeof(WNDCLASSEX));
 	wc.style = CS_NOCLOSE | CS_DBLCLKS;
-	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.lpfnWndProc = WndProc;
 	wc.hInstance = m_Rainmeter->GetInstance();
@@ -295,7 +293,8 @@ void CMeterWindow::Refresh(bool init, bool all)
 	m_Rainmeter->SetCurrentParser(&m_Parser);
 
 	std::wstring dbg = L"Refreshing skin \"" + m_SkinName;
-	dbg += L"\\" + m_SkinIniFile; 
+	dbg += L"\\";
+	dbg += m_SkinIniFile; 
 	dbg += L"\""; 
 	LSLog(LOG_DEBUG, APPNAME, dbg.c_str());
 	
@@ -1266,15 +1265,8 @@ void CMeterWindow::WindowToScreen()
 	{
 		index = index + 1;
 		index2 = m_WindowX.find_first_not_of(L"0123456789", index);
-		std::wstring screenStr;
-		if (index2 != std::wstring::npos)
-		{
-			screenStr = m_WindowX.substr(index, index2 - index);
-		}
-		else
-		{
-			screenStr = m_WindowX.substr(index);
-		}
+
+		std::wstring screenStr = m_WindowX.substr(index, (index2 != std::wstring::npos) ? index2 - index : std::wstring::npos);
 		if (!screenStr.empty())
 		{
 			int screenIndex = _wtoi(screenStr.c_str());
@@ -1335,15 +1327,8 @@ void CMeterWindow::WindowToScreen()
 	{
 		index = index + 1;
 		index2 = m_WindowY.find_first_not_of(L"0123456789", index);
-		std::wstring screenStr;
-		if (index2 != std::wstring::npos)
-		{
-			screenStr = m_WindowY.substr(index, index2 - index);
-		}
-		else
-		{
-			screenStr = m_WindowY.substr(index);
-		}
+
+		std::wstring screenStr = m_WindowY.substr(index, (index2 != std::wstring::npos) ? index2 - index : std::wstring::npos);
 		if (!screenStr.empty())
 		{
 			int screenIndex = _wtoi(screenStr.c_str());
@@ -1524,7 +1509,7 @@ void CMeterWindow::ScreenToWindow()
 */
 void CMeterWindow::ReadConfig()
 {
-	std::wstring iniFile = m_Rainmeter->GetIniFile();
+	const std::wstring& iniFile = m_Rainmeter->GetIniFile();
 	const WCHAR* section = L"Rainmeter";
 
 	// Reset settings to the default value
@@ -1651,7 +1636,7 @@ void CMeterWindow::ReadConfig()
 void CMeterWindow::WriteConfig()
 {
 	WCHAR buffer[32];
-	std::wstring iniFile = m_Rainmeter->GetIniFile();
+	const std::wstring& iniFile = m_Rainmeter->GetIniFile();
 	const WCHAR* section = m_SkinName.c_str();
 
 	if(!iniFile.empty())
@@ -1699,16 +1684,14 @@ void CMeterWindow::WriteConfig()
 */
 bool CMeterWindow::ReadSkin()
 {
-	std::wstring iniFile = m_SkinPath;
-	iniFile += m_SkinName;
+	std::wstring iniFile = m_SkinPath + m_SkinName;
 	iniFile += L"\\";
 	iniFile += m_SkinIniFile;
 
 	// Verify whether the file exists
 	if (_waccess(iniFile.c_str(), 0) == -1)
 	{
-		std::wstring message = L"Unable to refresh skin \"";
-		message += m_SkinName;
+		std::wstring message = L"Unable to refresh skin \"" + m_SkinName;
 		message += L"\\";
 		message += m_SkinIniFile;
 		message += L"\": Ini-file not found.";
@@ -1742,8 +1725,7 @@ bool CMeterWindow::ReadSkin()
 			wsprintf(buffer, L"%i.%i", appVersion / 1000000, (appVersion / 1000) % 1000);
 		}
 
-		std::wstring text = L"The skin \"";
-		text += m_SkinName;
+		std::wstring text = L"The skin \"" + m_SkinName;
 		text += L"\\";
 		text += m_SkinIniFile;
 		text += L"\" needs Rainmeter ";
@@ -1835,8 +1817,7 @@ bool CMeterWindow::ReadSkin()
 				nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 				if(nResults != Ok)
 				{
-					std::wstring error = L"Error: Couldn't load font file: ";
-					error += localFont;
+					std::wstring error = L"Error: Couldn't load font file: " + localFont;
 					LSLog(LOG_DEBUG, APPNAME, error.c_str());
 				}
 			}
@@ -1879,8 +1860,7 @@ bool CMeterWindow::ReadSkin()
 						// The font file wasn't found anywhere, log the error
 						if(nResults != Ok)
 						{
-							std::wstring error = L"Error: Couldn't load font file: ";
-							error += localFont;
+							std::wstring error = L"Error: Couldn't load font file: " + localFont;
 							LSLog(LOG_DEBUG, APPNAME, error.c_str());
 						}
 					} 
@@ -1997,8 +1977,7 @@ bool CMeterWindow::ReadSkin()
 
 	if (m_Meters.empty())
 	{
-		std::wstring text = L"The skin \"";
-		text += m_SkinName;
+		std::wstring text = L"The skin \"" + m_SkinName;
 		text += L"\\";
 		text += m_SkinIniFile;
 		if (m_Measures.empty())
@@ -3109,9 +3088,13 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if(wParam == ID_CONTEXT_SKINMENU_EDITSKIN)
 		{
-			std::wstring command = m_Rainmeter->GetConfigEditor();
-			command += L" \"";
-			command += m_SkinPath + L"\\" + m_SkinName + L"\\" + m_SkinIniFile + L"\"";
+			std::wstring command = m_Rainmeter->GetConfigEditor() + L" \"";
+			command += m_SkinPath;
+			command += L"\\";
+			command += m_SkinName;
+			command += L"\\";
+			command += m_SkinIniFile;
+			command += L"\"";
 
 			// If the skins are in the program folder start the editor as admin
 			if (m_Rainmeter->GetPath() + L"Skins\\" == m_Rainmeter->GetSkinPath())
@@ -3125,8 +3108,9 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if(wParam == ID_CONTEXT_SKINMENU_OPENSKINSFOLDER)
 		{
-			std::wstring command = L"\"";
-			command += m_SkinPath + L"\\" + m_SkinName;
+			std::wstring command = L"\"" + m_SkinPath;
+			command += L"\\";
+			command += m_SkinName;
 			command += L"\"";
 			LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
 		} 
