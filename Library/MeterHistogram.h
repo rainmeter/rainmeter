@@ -35,6 +35,9 @@ public:
 	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 
 private:
+	void DisposeImage();
+	void DisposeBuffer();
+
 	std::wstring m_SecondaryMeasureName;	// Name of the secondary measure
 	CMeasure* m_SecondaryMeasure;		// Pointer ot the secondary measure
 	Gdiplus::Color m_PrimaryColor;			// Color of the primary histogram

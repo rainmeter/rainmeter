@@ -61,11 +61,57 @@ CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow) : CMeter(meterWindow
 */
 CMeterHistogram::~CMeterHistogram()
 {
-	if (m_PrimaryBitmap) delete m_PrimaryBitmap;
-	if (m_SecondaryBitmap) delete m_SecondaryBitmap;
-	if (m_BothBitmap) delete m_BothBitmap;
-	if (m_PrimaryValues) delete [] m_PrimaryValues;
-	if (m_SecondaryValues) delete [] m_SecondaryValues;
+	DisposeImage();
+	DisposeBuffer();
+}
+
+/*
+** DisposeImage
+**
+** Disposes the image buffers.
+**
+*/
+void CMeterHistogram::DisposeImage()
+{
+	if (m_PrimaryBitmap)
+	{
+		delete m_PrimaryBitmap;
+		m_PrimaryBitmap = NULL;
+	}
+	if (m_SecondaryBitmap)
+	{
+		delete m_SecondaryBitmap;
+		m_SecondaryBitmap = NULL;
+	}
+	if (m_BothBitmap)
+	{
+		delete m_BothBitmap;
+		m_BothBitmap = NULL;
+	}
+}
+
+/*
+** DisposeBuffer
+**
+** Disposes the buffers.
+**
+*/
+void CMeterHistogram::DisposeBuffer()
+{
+	// Reset current position
+	m_MeterPos = 0;
+
+	// Delete buffers
+	if (m_PrimaryValues)
+	{
+		delete [] m_PrimaryValues;
+		m_PrimaryValues = NULL;
+	}
+	if (m_SecondaryValues)
+	{
+		delete [] m_SecondaryValues;
+		m_SecondaryValues = NULL;
+	}
 }
 
 /*
@@ -79,104 +125,92 @@ void CMeterHistogram::Initialize()
 {
 	CMeter::Initialize();
 
-	// Load the bitmaps if defined
-	if(!m_PrimaryImageName.empty())
-	{
-		if (m_PrimaryBitmap) delete m_PrimaryBitmap;
-		m_PrimaryBitmap = new Bitmap(m_PrimaryImageName.c_str());
-		Status status = m_PrimaryBitmap->GetLastStatus();
-		if(Ok != status)
-		{
-			DebugLog(L"PrimaryImage not found: %s", m_PrimaryImageName.c_str());
-
-			delete m_PrimaryBitmap;
-			m_PrimaryBitmap = NULL;
-		}
-		else
-		{
-			int oldW = m_W;
-
-			m_W = m_PrimaryBitmap->GetWidth();
-			m_H = m_PrimaryBitmap->GetHeight();
-
-			if (oldW != m_W)
-			{
-				m_WidthChanged = true;
-			}
-		}
-	}
-	else
-	{
-		if (m_PrimaryBitmap)
-		{
-			delete m_PrimaryBitmap;
-			m_PrimaryBitmap = NULL;
-		}
-	}
-
-	if(!m_SecondaryImageName.empty())
-	{
-		if (m_SecondaryBitmap) delete m_SecondaryBitmap;
-		m_SecondaryBitmap = new Bitmap(m_SecondaryImageName.c_str());
-		Status status = m_SecondaryBitmap->GetLastStatus();
-		if(Ok != status)
-		{
-			DebugLog(L"SecondaryImage not found: %s", m_SecondaryImageName.c_str());
-
-			delete m_SecondaryBitmap;
-			m_SecondaryBitmap = NULL;
-		}
-	}
-	else
-	{
-		if (m_SecondaryBitmap)
-		{
-			delete m_SecondaryBitmap;
-			m_SecondaryBitmap = NULL;
-		}
-	}
-
-	if(!m_BothImageName.empty())
-	{
-		if (m_BothBitmap) delete m_BothBitmap;
-		m_BothBitmap = new Bitmap(m_BothImageName.c_str());
-		Status status = m_BothBitmap->GetLastStatus();
-		if(Ok != status)
-		{
-			DebugLog(L"BothImage not found: %s", m_BothImageName.c_str());
-
-			delete m_BothBitmap;
-			m_BothBitmap = NULL;
-		}
-	}
-	else
-	{
-		if (m_BothBitmap)
-		{
-			delete m_BothBitmap;
-			m_BothBitmap = NULL;
-		}
-	}
-
 	// A sanity check
 	if (m_SecondaryMeasure && !m_PrimaryImageName.empty() && (m_BothImageName.empty() || m_SecondaryImageName.empty()))
 	{
         LSLog(LOG_DEBUG, APPNAME, L"You need to define SecondaryImage and BothImage also!");
 
-		if (m_PrimaryBitmap)
+		DisposeImage();
+	}
+	else
+	{
+		// Load the bitmaps if defined
+		if(!m_PrimaryImageName.empty())
 		{
-			delete m_PrimaryBitmap;
-			m_PrimaryBitmap = NULL;
+			if (m_PrimaryBitmap) delete m_PrimaryBitmap;
+			m_PrimaryBitmap = new Bitmap(m_PrimaryImageName.c_str());
+			Status status = m_PrimaryBitmap->GetLastStatus();
+			if(Ok != status)
+			{
+				DebugLog(L"PrimaryImage not found: %s", m_PrimaryImageName.c_str());
+
+				delete m_PrimaryBitmap;
+				m_PrimaryBitmap = NULL;
+			}
+			else
+			{
+				int oldW = m_W;
+
+				m_W = m_PrimaryBitmap->GetWidth();
+				m_H = m_PrimaryBitmap->GetHeight();
+
+				if (oldW != m_W)
+				{
+					m_WidthChanged = true;
+				}
+			}
 		}
-		if (m_SecondaryBitmap)
+		else
 		{
-			delete m_SecondaryBitmap;
-			m_SecondaryBitmap = NULL;
+			if (m_PrimaryBitmap)
+			{
+				delete m_PrimaryBitmap;
+				m_PrimaryBitmap = NULL;
+			}
 		}
-		if (m_BothBitmap)
+
+		if(!m_SecondaryImageName.empty())
 		{
-			delete m_BothBitmap;
-			m_BothBitmap = NULL;
+			if (m_SecondaryBitmap) delete m_SecondaryBitmap;
+			m_SecondaryBitmap = new Bitmap(m_SecondaryImageName.c_str());
+			Status status = m_SecondaryBitmap->GetLastStatus();
+			if(Ok != status)
+			{
+				DebugLog(L"SecondaryImage not found: %s", m_SecondaryImageName.c_str());
+
+				delete m_SecondaryBitmap;
+				m_SecondaryBitmap = NULL;
+			}
+		}
+		else
+		{
+			if (m_SecondaryBitmap)
+			{
+				delete m_SecondaryBitmap;
+				m_SecondaryBitmap = NULL;
+			}
+		}
+
+		if(!m_BothImageName.empty())
+		{
+			if (m_BothBitmap) delete m_BothBitmap;
+			m_BothBitmap = new Bitmap(m_BothImageName.c_str());
+			Status status = m_BothBitmap->GetLastStatus();
+			if(Ok != status)
+			{
+				DebugLog(L"BothImage not found: %s", m_BothImageName.c_str());
+
+				delete m_BothBitmap;
+				m_BothBitmap = NULL;
+			}
+		}
+		else
+		{
+			if (m_BothBitmap)
+			{
+				delete m_BothBitmap;
+				m_BothBitmap = NULL;
+			}
 		}
 	}
 
@@ -184,39 +218,13 @@ void CMeterHistogram::Initialize()
 		(!m_SecondaryImageName.empty() && !m_SecondaryBitmap) ||
 		(!m_BothImageName.empty() && !m_BothBitmap))
 	{
-		// Reset current position
-		m_MeterPos = 0;
-
-		// Delete buffers
-		if (m_PrimaryValues)
-		{
-			delete [] m_PrimaryValues;
-			m_PrimaryValues = NULL;
-		}
-		if (m_SecondaryValues)
-		{
-			delete [] m_SecondaryValues;
-			m_SecondaryValues = NULL;
-		}
+		DisposeBuffer();
 
 		m_WidthChanged = false;
 	}
 	else if (m_WidthChanged)
 	{
-		// Reset current position
-		m_MeterPos = 0;
-
-		// Delete buffers
-		if (m_PrimaryValues)
-		{
-			delete [] m_PrimaryValues;
-			m_PrimaryValues = NULL;
-		}
-		if (m_SecondaryValues)
-		{
-			delete [] m_SecondaryValues;
-			m_SecondaryValues = NULL;
-		}
+		DisposeBuffer();
 
 		// Create buffers for values
 		if (m_W > 0)
@@ -350,7 +358,7 @@ bool CMeterHistogram::Update()
 		{
 			// Go through all values and find the max
 
-			double newValue = 0;
+			double newValue = 0.0;
 			for (int i = 0; i < m_W; ++i)
 			{
 				newValue = max(newValue, m_PrimaryValues[i]);
@@ -409,25 +417,18 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 		(m_Measure && !m_PrimaryValues) ||
 		(m_SecondaryMeasure && !m_SecondaryValues)) return false;
 
-	Pen primaryPen(m_PrimaryColor);
-	Pen secondaryPen(m_SecondaryColor);
-	Pen bothPen(m_BothColor);
-	
+	GraphicsPath primaryPath;
+	GraphicsPath secondaryPath;
+	GraphicsPath bothPath;
+
 	int x = GetX();
 	int y = GetY();
 
 	for (int i = 0; i < m_W; ++i)
 	{
-		double value;
-		
-		if (m_MaxPrimaryValue == 0.0)
-		{
-			value = 0;
-		}
-		else
-		{
-			value = m_PrimaryValues[(i + m_MeterPos) % m_W] / m_MaxPrimaryValue;
-		}
+		double value = (m_MaxPrimaryValue == 0.0) ?
+			  0.0
+			: m_PrimaryValues[(i + m_MeterPos) % m_W] / m_MaxPrimaryValue;
 		value -= m_MinPrimaryValue;
 		int primaryBarHeight = (int)(m_H * value);
 		primaryBarHeight = min(m_H, primaryBarHeight);
@@ -435,14 +436,9 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 
 		if (m_SecondaryMeasure != NULL)
 		{
-			if (m_MaxSecondaryValue == 0.0)
-			{
-				value = 0;
-			}
-			else
-			{
-				value = m_SecondaryValues[(i + m_MeterPos) % m_W] / m_MaxSecondaryValue;
-			}
+			value = (m_MaxSecondaryValue == 0.0) ?
+				  0.0
+				: m_SecondaryValues[(i + m_MeterPos) % m_W] / m_MaxSecondaryValue;
 			value -= m_MinSecondaryValue;
 			int secondaryBarHeight = (int)(m_H * value);
 			secondaryBarHeight = min(m_H, secondaryBarHeight);
@@ -452,114 +448,88 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 			int bothBarHeight = min(primaryBarHeight, secondaryBarHeight);
 
 			// Draw image/color for the both lines
-			if (m_PrimaryBitmap)
 			{
-				if (m_Flip)
+				Rect& r = (m_Flip) ?
+					  Rect(x + i, y + bothBarHeight, 1, -bothBarHeight)
+					: Rect(x + i, y + m_H - bothBarHeight, 1, bothBarHeight);
+
+				if (m_BothBitmap)
 				{
-					Rect r(x + i, y + bothBarHeight, 1, -bothBarHeight);
 					graphics.DrawImage(m_BothBitmap, r, i, m_H - bothBarHeight, 1, bothBarHeight, UnitPixel);
 				}
 				else
 				{
-					Rect r(x + i, y + m_H - bothBarHeight, 1, bothBarHeight);
-					graphics.DrawImage(m_BothBitmap, r, i, m_H - bothBarHeight, 1, bothBarHeight, UnitPixel);
-				}
-			}
-			else
-			{
-				if (m_Flip)
-				{
-					graphics.DrawLine(&bothPen, x + i, y, x + i, y + bothBarHeight);
-				}
-				else
-				{
-					graphics.DrawLine(&bothPen, x + i, y + m_H, x + i, y + m_H - bothBarHeight);
+					bothPath.AddRectangle(r);  // cache
 				}
 			}
 
 			// Draw the image/color for the rest
 			if (secondaryBarHeight > primaryBarHeight)
 			{
+				Rect& r = (m_Flip) ?
+					  Rect(x + i, y + secondaryBarHeight, 1, -(secondaryBarHeight - bothBarHeight))
+					: Rect(x + i, y + m_H - secondaryBarHeight, 1, secondaryBarHeight - bothBarHeight);
+
 				if (m_SecondaryBitmap)
 				{
-					if (m_Flip)
-					{
-						Rect r(x + i, y + secondaryBarHeight, 1, -(secondaryBarHeight - bothBarHeight));
-						graphics.DrawImage(m_SecondaryBitmap, r, i, m_H - secondaryBarHeight, 1, secondaryBarHeight - bothBarHeight, UnitPixel);
-					}
-					else
-					{
-						Rect r(x + i, y + m_H - secondaryBarHeight, 1, secondaryBarHeight - bothBarHeight);
-						graphics.DrawImage(m_SecondaryBitmap, r, i, m_H - secondaryBarHeight, 1, secondaryBarHeight - bothBarHeight, UnitPixel);
-					}
+					graphics.DrawImage(m_SecondaryBitmap, r, i, m_H - secondaryBarHeight, 1, secondaryBarHeight - bothBarHeight, UnitPixel);
 				}
 				else
 				{
-					if (m_Flip)
-					{
-						graphics.DrawLine(&secondaryPen, x + i, y + bothBarHeight, x + i, y + secondaryBarHeight);
-					}
-					else
-					{
-						graphics.DrawLine(&secondaryPen, x + i, y + m_H - bothBarHeight, x + i, y + m_H - secondaryBarHeight);
-					}
+					secondaryPath.AddRectangle(r);  // cache
 				}
 			}
 			else
 			{
+				Rect& r = (m_Flip) ?
+					  Rect(x + i, y + primaryBarHeight, 1, -(primaryBarHeight - bothBarHeight))
+					: Rect(x + i, y + m_H - primaryBarHeight, 1, primaryBarHeight - bothBarHeight);
+
 				if (m_PrimaryBitmap)
 				{
-					if (m_Flip)
-					{
-						Rect r(x + i, y + primaryBarHeight, 1, -(primaryBarHeight - bothBarHeight));
-						graphics.DrawImage(m_PrimaryBitmap, r, i, m_H - primaryBarHeight, 1, primaryBarHeight - bothBarHeight, UnitPixel);
-					}
-					else
-					{
-						Rect r(x + i, y + m_H - primaryBarHeight, 1, primaryBarHeight - bothBarHeight);
-						graphics.DrawImage(m_PrimaryBitmap, r, i, m_H - primaryBarHeight, 1, primaryBarHeight - bothBarHeight, UnitPixel);
-					}
+					graphics.DrawImage(m_PrimaryBitmap, r, i, m_H - primaryBarHeight, 1, primaryBarHeight - bothBarHeight, UnitPixel);
 				}
 				else
 				{
-					if (m_Flip)
-					{
-						graphics.DrawLine(&primaryPen, x + i, y, x + i, y + primaryBarHeight);
-					}
-					else
-					{
-						graphics.DrawLine(&primaryPen, x + i, y + m_H - bothBarHeight, x + i, y + m_H - primaryBarHeight);
-					}
+					primaryPath.AddRectangle(r);  // cache
 				}
 			}
 		}
 		else
 		{
+			Rect& r = (m_Flip) ?
+				  Rect(x + i, y + primaryBarHeight, 1, -primaryBarHeight)
+				: Rect(x + i, y + m_H - primaryBarHeight, 1, primaryBarHeight);
+
 			if (m_PrimaryBitmap)
 			{
-				if (m_Flip)
-				{
-					Rect r(x + i, y + primaryBarHeight, 1, -primaryBarHeight);
-					graphics.DrawImage(m_PrimaryBitmap, r, i, m_H - primaryBarHeight, 1, primaryBarHeight, UnitPixel);
-				}
-				else
-				{
-					Rect r(x + i, y + m_H - primaryBarHeight, 1, primaryBarHeight);
-					graphics.DrawImage(m_PrimaryBitmap, r, i, m_H - primaryBarHeight, 1, primaryBarHeight, UnitPixel);
-				}
+				graphics.DrawImage(m_PrimaryBitmap, r, i, m_H - primaryBarHeight, 1, primaryBarHeight, UnitPixel);
 			}
 			else
 			{
-				if (m_Flip)
-				{
-					graphics.DrawLine(&primaryPen, x + i, y, x + i, y + primaryBarHeight);
-				}
-				else
-				{
-					graphics.DrawLine(&primaryPen, x + i, y + m_H, x + i, y + m_H - primaryBarHeight);
-				}
+				primaryPath.AddRectangle(r);  // cache
 			}
 		}
+	}
+
+	// Draw cached rectangles
+	if (m_SecondaryMeasure != NULL)
+	{
+		if (!m_BothBitmap)
+		{
+			SolidBrush brush(m_BothColor);
+			graphics.FillPath(&brush, &bothPath);
+		}
+		if (!m_SecondaryBitmap)
+		{
+			SolidBrush brush(m_SecondaryColor);
+			graphics.FillPath(&brush, &secondaryPath);
+		}
+	}
+	if (!m_PrimaryBitmap)
+	{
+		SolidBrush brush(m_PrimaryColor);
+		graphics.FillPath(&brush, &primaryPath);
 	}
 
 	return true;
