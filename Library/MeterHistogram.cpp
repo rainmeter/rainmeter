@@ -422,7 +422,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 			// Cache image/color rectangle for the both lines
 			{
 				Rect& r = (m_Flip) ?
-					  Rect(x + i, y + bothBarHeight, 1, -bothBarHeight)
+					  Rect(x + i, y, 1, bothBarHeight)
 					: Rect(x + i, y + m_H - bothBarHeight, 1, bothBarHeight);
 
 				bothPath.AddRectangle(r);  // cache
@@ -432,7 +432,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 			if (secondaryBarHeight > primaryBarHeight)
 			{
 				Rect& r = (m_Flip) ?
-					  Rect(x + i, y + secondaryBarHeight, 1, -(secondaryBarHeight - bothBarHeight))
+					  Rect(x + i, y + bothBarHeight, 1, secondaryBarHeight - bothBarHeight)
 					: Rect(x + i, y + m_H - secondaryBarHeight, 1, secondaryBarHeight - bothBarHeight);
 
 				secondaryPath.AddRectangle(r);  // cache
@@ -440,7 +440,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 			else
 			{
 				Rect& r = (m_Flip) ?
-					  Rect(x + i, y + primaryBarHeight, 1, -(primaryBarHeight - bothBarHeight))
+					  Rect(x + i, y + bothBarHeight, 1, primaryBarHeight - bothBarHeight)
 					: Rect(x + i, y + m_H - primaryBarHeight, 1, primaryBarHeight - bothBarHeight);
 
 				primaryPath.AddRectangle(r);  // cache
@@ -449,7 +449,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 		else
 		{
 			Rect& r = (m_Flip) ?
-				  Rect(x + i, y + primaryBarHeight, 1, -primaryBarHeight)
+				  Rect(x + i, y, 1, primaryBarHeight)
 				: Rect(x + i, y + m_H - primaryBarHeight, 1, primaryBarHeight);
 
 			primaryPath.AddRectangle(r);  // cache
