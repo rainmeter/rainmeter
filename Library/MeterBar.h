@@ -19,9 +19,11 @@
 #ifndef __METERBAR_H__
 #define __METERBAR_H__
 
-#include "MeterImage.h"
+#include "Meter.h"
+#include "TintedImage.h"
+#include "MeterWindow.h"
 
-class CMeterBar : public CMeterImage
+class CMeterBar : public CMeter
 {
 public:
 	CMeterBar(CMeterWindow* meterWindow);
@@ -39,13 +41,15 @@ private:
 		VERTICAL
 	};
 
+	CTintedImage m_Image;
+	std::wstring m_ImageName;	// Name of the bar-image
+	bool m_NeedsReload;
+
 	Gdiplus::Color m_Color;			// Color of the bar
 	ORIENTATION m_Orientation;	// Orientation (i.e. the growth direction)
 	double m_Value;
 	int m_Border;
 	bool m_Flip;
-
-
 };
 
 #endif

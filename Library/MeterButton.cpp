@@ -39,13 +39,16 @@ enum BUTTON_STATE
 ** The constructor
 **
 */
-CMeterButton::CMeterButton(CMeterWindow* meterWindow) : CMeter(meterWindow)
+CMeterButton::CMeterButton(CMeterWindow* meterWindow) : CMeter(meterWindow),
+	m_Image(true)
 {
+	m_Image.SetConfigAttributes(L"ButtonImage", NULL);
+
 	for (int i = 0; i < BUTTON_FRAMES; ++i)
 	{
 		m_Bitmaps[i] = NULL;
 	}
-	m_Bitmap = NULL;
+	m_NeedsReload = false;
 	m_State = BUTTON_STATE_NORMAL;
 	m_Clicked = false;
 	m_Executable = false;
@@ -61,10 +64,8 @@ CMeterButton::~CMeterButton()
 {
 	for (int i = 0; i < BUTTON_FRAMES; ++i)
 	{
-		if (m_Bitmaps[i] != NULL) delete m_Bitmaps[i];
+		delete m_Bitmaps[i];
 	}
-
-	if (m_Bitmap != NULL) delete m_Bitmap;
 }
 
 /*
@@ -77,31 +78,26 @@ void CMeterButton::Initialize()
 {
 	CMeter::Initialize();
 
+	for (int i = 0; i < BUTTON_FRAMES; ++i)
+	{
+		if (m_Bitmaps[i])
+		{
+			delete m_Bitmaps[i];
+			m_Bitmaps[i] = NULL;
+		}
+	}
+
 	// Load the bitmaps if defined
 	if(!m_ImageName.empty())
 	{
-		for (int i = 0; i < BUTTON_FRAMES; ++i)
-		{
-			if (m_Bitmaps[i] != NULL)
-			{
-				delete m_Bitmaps[i];
-				m_Bitmaps[i] = NULL;
-			}
-		}
-		if (m_Bitmap != NULL) delete m_Bitmap;
-		m_Bitmap = new Bitmap(m_ImageName.c_str());
-		Status status = m_Bitmap->GetLastStatus();
-		if(Ok != status)
-		{
-			DebugLog(L"Bitmap image not found: %s", m_ImageName.c_str());
+		m_Image.LoadImage(m_ImageName, m_NeedsReload);
 
-			delete m_Bitmap;
-			m_Bitmap = NULL;
-		}
-		else
+		if (m_Image.IsLoaded())
 		{
-			m_W = m_Bitmap->GetWidth();
-			m_H = m_Bitmap->GetHeight();
+			Bitmap* bitmap = m_Image.GetImage();
+
+			m_W = bitmap->GetWidth();
+			m_H = bitmap->GetHeight();
 
 			if(m_H > m_W)
 			{
@@ -121,33 +117,21 @@ void CMeterButton::Initialize()
 				Graphics graphics(&bitmapPart);
 				Rect r(0, 0, m_W, m_H);
 
-				if(m_Bitmap->GetHeight() > m_Bitmap->GetWidth())
+				if(bitmap->GetHeight() > bitmap->GetWidth())
 				{
-					graphics.DrawImage(m_Bitmap, r, 0, m_H * i, m_W, m_H, UnitPixel);
+					graphics.DrawImage(bitmap, r, 0, m_H * i, m_W, m_H, UnitPixel);
 				}
 				else
 				{
-					graphics.DrawImage(m_Bitmap, r, m_W * i, 0, m_W, m_H, UnitPixel);
+					graphics.DrawImage(bitmap, r, m_W * i, 0, m_W, m_H, UnitPixel);
 				}
 				m_Bitmaps[i] = new CachedBitmap(&bitmapPart, &graphics);
 			}
 		}
 	}
-	else
+	else if (m_Image.IsLoaded())
 	{
-		for (int i = 0; i < BUTTON_FRAMES; ++i)
-		{
-			if (m_Bitmaps[i])
-			{
-				delete m_Bitmaps[i];
-				m_Bitmaps[i] = NULL;
-			}
-		}
-		if (m_Bitmap)
-		{
-			delete m_Bitmap;
-			m_Bitmap = NULL;
-		}
+		m_Image.DisposeImage();
 	}
 }
 
@@ -173,13 +157,23 @@ void CMeterButton::ReadConfig(const WCHAR* section)
 	if (!m_ImageName.empty())
 	{
 		m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
+
+		// Read tinting configs
+		m_Image.ReadConfig(parser, section);
+	}
+	else
+	{
+		m_Image.ClearConfigFlags();
 	}
 
 	m_Command = parser.ReadString(section, L"ButtonCommand", L"", false);
 
 	if (m_Initialized)
 	{
-		if (oldImageName != m_ImageName)
+		m_NeedsReload = (oldImageName != m_ImageName);
+
+		if (m_NeedsReload ||
+			m_Image.IsConfigsChanged())
 		{
 			Initialize();  // Reload the image
 		}
@@ -262,10 +256,10 @@ bool CMeterButton::HitTest2(int px, int py, bool checkAlpha)
 			}
 
 			// Check transparent pixels
-			if (m_Bitmap)
+			if (m_Image.IsLoaded())
 			{
 				Color color;
-				Status status = m_Bitmap->GetPixel(px - x + m_W * m_State, py - y, &color);
+				Status status = m_Image.GetImage()->GetPixel(px - x + m_W * m_State, py - y, &color);
 				if (status != Ok || color.GetA() > 0)
 				{
 					return true;

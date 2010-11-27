@@ -20,6 +20,7 @@
 #define __METERHISTOGRAM_H__
 
 #include "Meter.h"
+#include "TintedImage.h"
 #include "MeterWindow.h"
 
 class CMeterHistogram : public CMeter
@@ -35,7 +36,6 @@ public:
 	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 
 private:
-	void DisposeImage();
 	void DisposeBuffer();
 
 	std::wstring m_SecondaryMeasureName;	// Name of the secondary measure
@@ -52,9 +52,13 @@ private:
 	std::wstring m_SecondaryImageName;	// Name of the secondary image for bitmap histograms
 	std::wstring m_BothImageName;		// Name of the image for overlapping histograms
 
-	Gdiplus::Bitmap* m_PrimaryBitmap;			// The primary bitmap
-	Gdiplus::Bitmap* m_SecondaryBitmap;			// The secondary bitmap
-	Gdiplus::Bitmap* m_BothBitmap;				// The overlap bitmap
+	CTintedImage m_PrimaryImage;			// The primary bitmap
+	CTintedImage m_SecondaryImage;			// The secondary bitmap
+	CTintedImage m_BothImage;				// The overlap bitmap
+
+	bool m_PrimaryNeedsReload;
+	bool m_SecondaryNeedsReload;
+	bool m_BothNeedsReload;
 
 	double* m_PrimaryValues;
 	double* m_SecondaryValues;

@@ -33,8 +33,9 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeterRotator::CMeterRotator(CMeterWindow* meterWindow) : CMeterImage(meterWindow, L"ImageW", L"ImageH")
+CMeterRotator::CMeterRotator(CMeterWindow* meterWindow) : CMeter(meterWindow)
 {
+	m_NeedsReload = false;
 	m_Value = 0.0;
 }
 
@@ -61,24 +62,11 @@ void CMeterRotator::Initialize()
 	// Load the bitmaps if defined
 	if(!m_ImageName.empty())
 	{
-		// Since loading the image redefines the width of the meter we must 
-		// store the width and height that were defined.
-		int Height, Width;
-		Height = m_H;
-		Width = m_W;
-
-		LoadImage(false);
-
-		m_W = Width;
-		m_H = Height;
+		m_Image.LoadImage(m_ImageName, m_NeedsReload);
 	}
-	else
+	else if (m_Image.IsLoaded())
 	{
-		if (m_Bitmap)
-		{
-			delete m_Bitmap;
-			m_Bitmap = NULL;
-		}
+		m_Image.DisposeImage();
 	}
 }
 
@@ -94,7 +82,7 @@ void CMeterRotator::ReadConfig(const WCHAR* section)
 	std::wstring oldImageName = m_ImageName;
 
 	// Read common configs
-	CMeterImage::ReadConfig(section);
+	CMeter::ReadConfig(section);
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
@@ -102,6 +90,13 @@ void CMeterRotator::ReadConfig(const WCHAR* section)
 	if (!m_ImageName.empty())
 	{
 		m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
+
+		// Read tinting configs
+		m_Image.ReadConfig(parser, section);
+	}
+	else
+	{
+		m_Image.ClearConfigFlags();
 	}
 
 	m_OffsetX = parser.ReadFloat(section, L"OffsetX", 0.0);
@@ -112,9 +107,15 @@ void CMeterRotator::ReadConfig(const WCHAR* section)
 	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", 0);		// Typo
 	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", m_ValueRemainder);
 
-	if (m_Initialized && oldImageName != m_ImageName || m_NeedsTinting || m_NeedsTransform)
+	if (m_Initialized)
 	{
-		Initialize();  // Reload the image
+		m_NeedsReload = (oldImageName != m_ImageName);
+
+		if (m_NeedsReload ||
+			m_Image.IsConfigsChanged())
+		{
+			Initialize();  // Reload the image
+		}
 	}
 }
 
@@ -155,34 +156,34 @@ bool CMeterRotator::Draw(Graphics& graphics)
 {
 	if(!CMeter::Draw(graphics)) return false;
 
-	// Calculate the center for rotation
-	int x = GetX();
-	int y = GetY();
-
-	REAL cx = (REAL)(x + m_W / 2.0);
-	REAL cy = (REAL)(y + m_H / 2.0);
-
-	// Calculate the rotation
-	REAL angle = (REAL)(m_RotationAngle * m_Value + m_StartAngle);
-
-	angle = angle * 180.0f / 3.14159265f;		// Convert to degrees
-
-	graphics.TranslateTransform(cx, cy);
-	graphics.RotateTransform(angle);
-	graphics.TranslateTransform((REAL)-m_OffsetX, (REAL)-m_OffsetY);
-
-	Bitmap* drawBitmap = (m_BitmapTint) ? m_BitmapTint : m_Bitmap;
-
-	if(drawBitmap)
+	if (m_Image.IsLoaded())
 	{
+		// Calculate the center for rotation
+		int x = GetX();
+		int y = GetY();
+
+		REAL cx = (REAL)(x + m_W / 2.0);
+		REAL cy = (REAL)(y + m_H / 2.0);
+
+		// Calculate the rotation
+		REAL angle = (REAL)(m_RotationAngle * m_Value + m_StartAngle);
+
+		angle = angle * 180.0f / 3.14159265f;		// Convert to degrees
+
+		graphics.TranslateTransform(cx, cy);
+		graphics.RotateTransform(angle);
+		graphics.TranslateTransform((REAL)-m_OffsetX, (REAL)-m_OffsetY);
+
+		Bitmap* drawBitmap = m_Image.GetImage();
+
 		UINT width = drawBitmap->GetWidth();
 		UINT height = drawBitmap->GetHeight();
 
 		// Blit the image
 		graphics.DrawImage(drawBitmap, 0, 0, width, height);
+
+		graphics.ResetTransform();
 	}
-	graphics.ResetTransform();
 
 	return true;
 }
-

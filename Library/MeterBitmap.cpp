@@ -32,9 +32,12 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeterBitmap::CMeterBitmap(CMeterWindow* meterWindow) : CMeter(meterWindow)
+CMeterBitmap::CMeterBitmap(CMeterWindow* meterWindow) : CMeter(meterWindow),
+	m_Image(true)
 {
-	m_Bitmap = NULL;
+	m_Image.SetConfigAttributes(L"BitmapImage", NULL);
+
+	m_NeedsReload = false;
 	m_FrameCount = 1;
 	m_ZeroFrame = false;
 	m_Align = ALIGN_LEFT;
@@ -54,7 +57,6 @@ CMeterBitmap::CMeterBitmap(CMeterWindow* meterWindow) : CMeter(meterWindow)
 */
 CMeterBitmap::~CMeterBitmap()
 {
-	if(m_Bitmap != NULL) delete m_Bitmap;
 }
 
 /*
@@ -70,20 +72,14 @@ void CMeterBitmap::Initialize()
 	// Load the bitmaps if defined
 	if(!m_ImageName.empty())
 	{
-		if (m_Bitmap != NULL) delete m_Bitmap;
-		m_Bitmap = new Bitmap(m_ImageName.c_str());
-		Status status = m_Bitmap->GetLastStatus();
-		if(Ok != status)
-		{
-			DebugLog(L"Bitmap image not found: %s", m_ImageName.c_str());
+		m_Image.LoadImage(m_ImageName, m_NeedsReload);
 
-			delete m_Bitmap;
-			m_Bitmap = NULL;
-		}
-		else
+		if (m_Image.IsLoaded())
 		{
-			m_W = m_Bitmap->GetWidth();
-			m_H = m_Bitmap->GetHeight();
+			Bitmap* bitmap = m_Image.GetImage();
+
+			m_W = bitmap->GetWidth();
+			m_H = bitmap->GetHeight();
 
 			if(m_H > m_W)
 			{
@@ -95,13 +91,9 @@ void CMeterBitmap::Initialize()
 			}
 		}
 	}
-	else
+	else if (m_Image.IsLoaded())
 	{
-		if (m_Bitmap)
-		{
-			delete m_Bitmap;
-			m_Bitmap = NULL;
-		}
+		m_Image.DisposeImage();
 	}
 }
 
@@ -187,6 +179,13 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
 	if (!m_ImageName.empty())
 	{
 		m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
+
+		// Read tinting configs
+		m_Image.ReadConfig(parser, section);
+	}
+	else
+	{
+		m_Image.ClearConfigFlags();
 	}
 
 	m_FrameCount = parser.ReadInt(section, L"BitmapFrames", 1);
@@ -223,7 +222,10 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
 
 	if (m_Initialized)
 	{
-		if (oldImageName != m_ImageName)
+		m_NeedsReload = (oldImageName != m_ImageName);
+
+		if (m_NeedsReload ||
+			m_Image.IsConfigsChanged())
 		{
 			Initialize();  // Reload the image
 		}
@@ -296,7 +298,9 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 
 	int newY, newX;
 
-	if(m_FrameCount == 0 || m_Bitmap == NULL) return false;	// Unable to continue
+	if(m_FrameCount == 0 || !m_Image.IsLoaded()) return false;	// Unable to continue
+
+	Bitmap* bitmap = m_Image.GetImage();
 
 	int x = GetX();
 	int y = GetY();
@@ -383,7 +387,7 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 
 //			DebugLog(L"[%i] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
-			if(m_Bitmap->GetHeight() > m_Bitmap->GetWidth())
+			if(bitmap->GetHeight() > bitmap->GetWidth())
 			{
 				newX = 0;
 				newY = m_H * frame;
@@ -394,7 +398,7 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 				newY = 0;
 			}
 
-			graphics.DrawImage(m_Bitmap, r, newX, newY, m_W, m_H, UnitPixel);
+			graphics.DrawImage(bitmap, r, newX, newY, m_W, m_H, UnitPixel);
 			if (m_FrameCount == 1)
 			{
 				value /= 2;
@@ -449,7 +453,7 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 
 //		DebugLog(L"[%i] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
-		if(m_Bitmap->GetHeight() > m_Bitmap->GetWidth())
+		if(bitmap->GetHeight() > bitmap->GetWidth())
 		{
 			newX = 0;
 			newY = frame * m_H;
@@ -462,7 +466,7 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 
 		// Blit the image
 		Rect r(x, y, m_W, m_H);
-		graphics.DrawImage(m_Bitmap, r, newX, newY, m_W, m_H, UnitPixel);
+		graphics.DrawImage(bitmap, r, newX, newY, m_W, m_H, UnitPixel);
 	}
 
 	return true;

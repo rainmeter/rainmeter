@@ -23,7 +23,6 @@
 #include "Litestep.h"
 #include "Rainmeter.h"
 
-
 using namespace Gdiplus;
 
 extern CRainmeter* Rainmeter;
@@ -34,9 +33,12 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeterBar::CMeterBar(CMeterWindow* meterWindow) : CMeterImage(meterWindow, L"ImageW", L"ImageH"),
+CMeterBar::CMeterBar(CMeterWindow* meterWindow) : CMeter(meterWindow),
 	m_Color(Color::Green)
 {
+	m_Image.SetConfigAttributes(L"BarImage", NULL);
+
+	m_NeedsReload = false;
 	m_Value = 0.0;
 	m_Border = 0;
 	m_Flip = false;
@@ -50,7 +52,6 @@ CMeterBar::CMeterBar(CMeterWindow* meterWindow) : CMeterImage(meterWindow, L"Ima
 */
 CMeterBar::~CMeterBar()
 {
-
 }
 
 /*
@@ -67,23 +68,19 @@ void CMeterBar::Initialize()
 	// Load the bitmaps if defined
 	if(!m_ImageName.empty())
 	{
+		m_Image.LoadImage(m_ImageName, m_NeedsReload);
 
-		LoadImage(false);
-
-		if(m_Bitmap)
+		if (m_Image.IsLoaded())
 		{
-			m_W = m_Bitmap->GetWidth();
-			m_H = m_Bitmap->GetHeight();
+			Bitmap* bitmap = m_Image.GetImage();
+
+			m_W = bitmap->GetWidth();
+			m_H = bitmap->GetHeight();
 		}
-		
 	}
-	else
+	else if (m_Image.IsLoaded())
 	{
-		if (m_Bitmap)
-		{
-			delete m_Bitmap;
-			m_Bitmap = NULL;
-		}
+		m_Image.DisposeImage();
 	}
 }
 
@@ -101,7 +98,7 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 	int oldH = m_H;
 
 	// Read common configs
-	CMeterImage::ReadConfig(section);
+	CMeter::ReadConfig(section);
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
@@ -111,6 +108,13 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 	if (!m_ImageName.empty())
 	{
 		m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
+
+		// Read tinting configs
+		m_Image.ReadConfig(parser, section);
+	}
+	else
+	{
+		m_Image.ClearConfigFlags();
 	}
 
 	m_Border = parser.ReadInt(section, L"BarBorder", 0);
@@ -138,7 +142,10 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 
 	if (m_Initialized)
 	{
-		if (oldImageName != m_ImageName || m_NeedsTinting || m_NeedsTransform)
+		m_NeedsReload = (oldImageName != m_ImageName);
+
+		if (m_NeedsReload ||
+			m_Image.IsConfigsChanged())
 		{
 			Initialize();  // Reload the image
 		}
@@ -180,7 +187,7 @@ bool CMeterBar::Draw(Graphics& graphics)
 	int x = GetX();
 	int y = GetY();
 
-	Bitmap* drawBitmap = (m_BitmapTint) ? m_BitmapTint : m_Bitmap;
+	Bitmap* drawBitmap = m_Image.GetImage();
 
 	if(m_Orientation == VERTICAL)
 	{

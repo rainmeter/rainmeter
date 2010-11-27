@@ -19,9 +19,11 @@
 #ifndef __METERROTATOR_H__
 #define __METERROTATOR_H__
 
-#include "MeterImage.h"
+#include "Meter.h"
+#include "TintedImage.h"
+#include "MeterWindow.h"
 
-class CMeterRotator : public CMeterImage
+class CMeterRotator : public CMeter
 {
 public:
 	CMeterRotator(CMeterWindow* meterWindow);
@@ -33,6 +35,9 @@ public:
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 
 private:
+	CTintedImage m_Image;
+	std::wstring m_ImageName;		// Name of the image
+	bool m_NeedsReload;
 
 	double m_OffsetX;
 	double m_OffsetY;

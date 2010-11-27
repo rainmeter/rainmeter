@@ -20,6 +20,7 @@
 #define __METERBITMAP_H__
 
 #include "Meter.h"
+#include "TintedImage.h"
 #include "MeterWindow.h"
 
 class CMeterBitmap : public CMeter
@@ -37,11 +38,13 @@ public:
 	virtual bool HasActiveTransition();
 
 private:
+	CTintedImage m_Image;
+	std::wstring m_ImageName;	// Name of the image
+	bool m_NeedsReload;
+
 	bool m_ZeroFrame;			// If true, the first frame is only shown when the measured value is zero
 	int m_FrameCount;			// Number of frames in the bitmap
 	int m_TransitionFrameCount;	// Number of transition frames (per one frame) in the bitmap
-	Gdiplus::Bitmap* m_Bitmap;	// Handle to the bitmap
-	std::wstring m_ImageName;	// Name of the image
 	METER_ALIGNMENT m_Align;	// Alignment of the bitmaps
 	bool m_Extend;				// If true, bitmaps extend horizontally and are used like numbers
 	int m_Separation;

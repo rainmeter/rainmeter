@@ -20,6 +20,7 @@
 #define __METERBUTTON_H__
 
 #include "Meter.h"
+#include "TintedImage.h"
 #include "MeterWindow.h"
 
 #define BUTTON_FRAMES 3
@@ -46,9 +47,11 @@ public:
 private:
 	bool HitTest2(int px, int py, bool checkAlpha);
 
-	Gdiplus::Bitmap* m_Bitmap;	// The bitmap
-	Gdiplus::CachedBitmap* m_Bitmaps[BUTTON_FRAMES];	// The cached bitmaps
+	CTintedImage m_Image;
 	std::wstring m_ImageName;	// Name of the image
+	bool m_NeedsReload;
+
+	Gdiplus::CachedBitmap* m_Bitmaps[BUTTON_FRAMES];	// The cached bitmaps
 	std::wstring m_Command;	// Command to be executed
 	int m_State;
 	bool m_Clicked;
