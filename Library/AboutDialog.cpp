@@ -459,6 +459,10 @@ BOOL OnInitAboutDialog(HWND window)
 	SendMessage(widget, LB_INSERTSTRING, 1, (LPARAM) L"Plugins");
 	SendMessage(widget, LB_INSERTSTRING, 2, (LPARAM) L"--------------------");
 
+	// Select Log entry
+	SendMessage(widget, LB_SETCURSEL, 0, 0);
+	SetTimer(window, LOGTIMER, 1000, NULL);
+
 	if (g_DialogWin == NULL)
 	{
 		// Add columns to the list view
@@ -470,17 +474,17 @@ BOOL OnInitAboutDialog(HWND window)
 		LVCOLUMN lvc; 
 		lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM; 
 		lvc.iSubItem = 0;
-		lvc.pszText = L"Measure";
+		lvc.pszText = L"Log Type";
 		lvc.cx = 110;
 		lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 		ListView_InsertColumn(widget, 0, &lvc);
 		lvc.iSubItem = 1;
 		lvc.cx = 100;
-		lvc.pszText = L"Value";	
+		lvc.pszText = L"Time";
 		ListView_InsertColumn(widget, 1, &lvc);
 		lvc.iSubItem = 2;
 		lvc.cx = 150;
-		lvc.pszText = L"Range";	
+		lvc.pszText = L"Message";
 		ListView_InsertColumn(widget, 2, &lvc);
 
 		ScanPlugins();

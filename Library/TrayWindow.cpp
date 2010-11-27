@@ -444,7 +444,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if(wParam == ID_CONTEXT_DISABLEDRAG)
 			{
-				Rainmeter->SetDisableDrag(!Rainmeter->GetDisableDrag());
+				Rainmeter->SetDisableDragging(!Rainmeter->GetDisableDragging());
 			}
 			else if(wParam == ID_CONTEXT_EDITCONFIG)
 			{

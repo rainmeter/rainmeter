@@ -200,8 +200,8 @@ public:
 
 	bool GetDisableRDP() { return m_DisableRDP; }
 
-	bool GetDisableDrag() { return m_DisableDrag; }
-	void SetDisableDrag(bool drag);
+	bool GetDisableDragging() { return m_DisableDragging; }
+	void SetDisableDragging(bool dragging);
 
 	void AddAboutLogInfo(const LOG_INFO& logInfo);
 	const std::list<LOG_INFO>& GetAboutLogData() { return m_LogData; }
@@ -291,7 +291,7 @@ private:
 
 	bool m_DisableRDP;
 
-	bool m_DisableDrag;
+	bool m_DisableDragging;
 
 	bool m_Logging;
 

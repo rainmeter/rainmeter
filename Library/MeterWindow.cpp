@@ -3490,7 +3490,7 @@ LRESULT CMeterWindow::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
-	if (m_WindowDraggable && !Rainmeter->GetDisableDrag())
+	if (m_WindowDraggable && !Rainmeter->GetDisableDragging())
 	{
 		POINT pos;
 		pos.x = (SHORT)LOWORD(lParam);
