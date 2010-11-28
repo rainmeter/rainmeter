@@ -58,9 +58,8 @@ bool CMeasureDiskSpace::Update()
 
 	if (!m_Drive.empty())
 	{
-		BOOL sizeResult = FALSE, labelResult = FALSE;
+		BOOL sizeResult = FALSE;
 		ULARGE_INTEGER i64TotalBytes, i64FreeBytes;
-		WCHAR volumeName[MAX_PATH] = {0};
 
 		UINT type = GetDriveType(m_Drive.c_str());
 		if (type != DRIVE_NO_ROOT_DIR)
@@ -75,22 +74,11 @@ bool CMeasureDiskSpace::Update()
 				sizeResult = GetDiskFreeSpaceEx(m_Drive.c_str(), &i64FreeBytesToCaller, &i64TotalBytes, &i64FreeBytes);
 				SetErrorMode(oldMode);  // Reset
 			}
-
-			if (m_Label)
-			{
-				if (!m_IgnoreRemovable || type != DRIVE_REMOVABLE)	// Ignore removable drives
-				{
-					UINT oldMode = SetErrorMode(0);
-					SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
-					labelResult = GetVolumeInformation(m_Drive.c_str(), volumeName, MAX_PATH, NULL, NULL, NULL, NULL, 0);
-					SetErrorMode(oldMode);  // Reset
-				}
-			}
 		}
 
 		if (sizeResult)
 		{
-			m_Value = (double)((m_Total) ? i64TotalBytes.QuadPart : i64FreeBytes.QuadPart);
+			m_Value = (double)((m_Total) ? i64TotalBytes : i64FreeBytes).QuadPart;
 
 			if (i64TotalBytes.QuadPart != m_OldTotalBytes)
 			{
@@ -106,16 +94,27 @@ bool CMeasureDiskSpace::Update()
 			m_OldTotalBytes = 0;
 		}
 
-		if (labelResult)
+		if (m_Label)
 		{
-			m_LabelName = volumeName;
-		}
-		else
-		{
-			if (m_Label || !m_LabelName.empty())
+			BOOL labelResult = FALSE;
+			WCHAR volumeName[MAX_PATH] = {0};
+
+			if (type != DRIVE_NO_ROOT_DIR)
 			{
-				m_LabelName = L"";
+				if (!m_IgnoreRemovable || type != DRIVE_REMOVABLE)	// Ignore removable drives
+				{
+					UINT oldMode = SetErrorMode(0);
+					SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
+					labelResult = GetVolumeInformation(m_Drive.c_str(), volumeName, MAX_PATH, NULL, NULL, NULL, NULL, 0);
+					SetErrorMode(oldMode);  // Reset
+				}
 			}
+
+			m_LabelName = (labelResult) ? volumeName : L"";
+		}
+		else if (!m_LabelName.empty())
+		{
+			m_LabelName = L"";
 		}
 	}
 
