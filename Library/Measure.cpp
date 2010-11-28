@@ -460,14 +460,21 @@ double CMeasure::GetValue()
 */
 double CMeasure::GetRelativeValue()
 {
-	double value = GetValue();
+	double range = GetValueRange();
 
-	value = min(m_MaxValue, value);
-	value = max(m_MinValue, value);
+	if (range != 0.0)
+	{
+		double value = GetValue();
 
-	value -= m_MinValue;
+		value = min(m_MaxValue, value);
+		value = max(m_MinValue, value);
 
-	return value / GetValueRange();
+		value -= m_MinValue;
+
+		return value / range;
+	}
+
+	return 1.0;
 }
 
 /*
