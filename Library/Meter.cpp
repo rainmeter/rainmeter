@@ -375,6 +375,11 @@ void CMeter::ReadConfig(const WCHAR* section)
 		}
 	}
 
+	if (!m_Initialized)
+	{
+		m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
+	}
+
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
 
 	m_SolidColor = parser.ReadColor(section, L"SolidColor", Color(0, 0, 0, 0));
@@ -406,8 +411,6 @@ void CMeter::ReadConfig(const WCHAR* section)
 	m_ToolTipWidth = (int)parser.ReadFormula(section, L"ToolTipWidth", 1000);
 	m_ToolTipType = 0!=parser.ReadInt(section, L"ToolTipType", 0);
 	m_ToolTipHidden = 0!=parser.ReadInt(section, L"ToolTipHidden", m_ToolTipHidden);
-
-	m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
 
 	UINT updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
 	if (updateDivider != m_UpdateDivider)
@@ -575,25 +578,28 @@ void CMeter::SetAllMeasures(const std::vector<CMeasure*>& measures)
 */
 void CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str)
 {
-	WCHAR buffer[64];
-
-	// Create the actual text (i.e. replace %1, %2, .. with the measure texts)
-	for (size_t i = stringValues.size(); i > 0; --i)
+	if (str.find(L'%') != std::wstring::npos)
 	{
-		wsprintf(buffer, L"%%%i", i);
+		WCHAR buffer[64];
 
-		size_t start = 0;
-		size_t pos = std::wstring::npos;
-
-		do 
+		// Create the actual text (i.e. replace %1, %2, .. with the measure texts)
+		for (size_t i = stringValues.size(); i > 0; --i)
 		{
-			pos = str.find(buffer, start);
-			if (pos != std::wstring::npos)
+			wsprintf(buffer, L"%%%i", i);
+
+			size_t start = 0;
+			size_t pos = std::wstring::npos;
+
+			do 
 			{
-				str.replace(str.begin() + pos, str.begin() + pos + wcslen(buffer), stringValues[i - 1]);
-				start = pos + stringValues[i - 1].length();
-			}
-		} while(pos != std::wstring::npos);
+				pos = str.find(buffer, start);
+				if (pos != std::wstring::npos)
+				{
+					str.replace(str.begin() + pos, str.begin() + pos + wcslen(buffer), stringValues[i - 1]);
+					start = pos + stringValues[i - 1].length();
+				}
+			} while(pos != std::wstring::npos);
+		}
 	}
 }
 

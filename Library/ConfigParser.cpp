@@ -672,6 +672,12 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 	return result;
 }
 
+bool CConfigParser::IsValueDefined(LPCTSTR section, LPCTSTR key)
+{
+	ReadString(section, key, L"", false);
+	return !m_LastDefaultUsed;
+}
+
 void CConfigParser::AddMeasure(CMeasure* pMeasure)
 {
 	if (pMeasure)
@@ -773,6 +779,20 @@ Color CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, const Color& defVal
 	const std::wstring& result = ReadString(section, key, L"");
 
 	return (m_LastDefaultUsed) ? defValue : ParseColor(result.c_str());
+}
+
+Rect CConfigParser::ReadRect(LPCTSTR section, LPCTSTR key, const Rect& defValue)
+{
+	const std::wstring& result = ReadString(section, key, L"");
+
+	return (m_LastDefaultUsed) ? defValue : ParseRect(result.c_str());
+}
+
+RECT CConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
+{
+	const std::wstring& result = ReadString(section, key, L"");
+
+	return (m_LastDefaultUsed) ? defValue : ParseRECT(result.c_str());
 }
 
 /*
@@ -927,6 +947,76 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 	}
 
 	return Color(A, R, G, B);
+}
+
+/*
+** Parse4
+**
+** This is a helper template that parses four comma separated values from the given string.
+**
+*/
+template <typename T>
+bool Parse4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
+{
+	if (wcschr(string, L',') != NULL)
+	{
+		WCHAR* parseSz = _wcsdup(string);
+		WCHAR* token;
+
+		token = wcstok(parseSz, L",");
+		if (token != NULL)
+		{
+			v1 = _wtoi(token);
+		}
+		token = wcstok( NULL, L",");
+		if (token != NULL)
+		{
+			v2 = _wtoi(token);
+		}
+		token = wcstok( NULL, L",");
+		if (token != NULL)
+		{
+			v3 = _wtoi(token);
+		}
+		token = wcstok( NULL, L",");
+		if (token != NULL)
+		{
+			v4 = _wtoi(token);
+		}
+		free(parseSz);
+
+		return true;
+	}
+
+	return false;
+}
+
+/*
+** ParseRect
+**
+** This is a helper method that parses the Gdiplus::Rect values from the given string.
+** The rect can be supplied as four comma separated values (X/Y/Width/Height).
+**
+*/
+Rect CConfigParser::ParseRect(LPCTSTR string)
+{
+	Rect r;
+	Parse4(string, r.X, r.Y, r.Width, r.Height);
+	return r;
+}
+
+/*
+** ParseRECT
+**
+** This is a helper method that parses the RECT values from the given string.
+** The rect can be supplied as four comma separated values (left/top/right/bottom).
+**
+*/
+RECT CConfigParser::ParseRECT(LPCTSTR string)
+{
+	RECT r = {0};
+	Parse4(string, r.left, r.top, r.right, r.bottom);
+	return r;
 }
 
 //==============================================================================

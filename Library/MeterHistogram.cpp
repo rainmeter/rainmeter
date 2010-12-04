@@ -210,10 +210,13 @@ void CMeterHistogram::ReadConfig(const WCHAR* section)
 	m_SecondaryColor = parser.ReadColor(section, L"SecondaryColor", Color::Red);
 	m_BothColor = parser.ReadColor(section, L"BothColor", Color::Yellow);
 
-	m_SecondaryMeasureName = parser.ReadString(section, L"MeasureName2", L"");
-	if (m_SecondaryMeasureName.empty())
+	if (!m_Initialized && !m_MeasureName.empty())
 	{
-		m_SecondaryMeasureName = parser.ReadString(section, L"SecondaryMeasureName", L"");
+		m_SecondaryMeasureName = parser.ReadString(section, L"MeasureName2", L"");
+		if (m_SecondaryMeasureName.empty())
+		{
+			m_SecondaryMeasureName = parser.ReadString(section, L"SecondaryMeasureName", L"");
+		}
 	}
 
 	m_PrimaryImageName = parser.ReadString(section, L"PrimaryImage", L"");

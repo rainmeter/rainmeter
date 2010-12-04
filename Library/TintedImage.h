@@ -33,8 +33,8 @@ public:
 
 	bool IsLoaded() { return (m_Bitmap != NULL); }
 	bool IsTinted() { return (m_BitmapTint != NULL); }
-	bool IsConfigsChanged() { return m_NeedsTinting || m_NeedsTransform; }
-	void ClearConfigFlags() { m_NeedsTinting = m_NeedsTransform = false; }
+	bool IsConfigsChanged() { return m_NeedsCrop || m_NeedsTinting || m_NeedsTransform; }
+	void ClearConfigFlags() { m_NeedsCrop = m_NeedsTinting = m_NeedsTransform = false; }
 
 	Gdiplus::Bitmap* GetOriginalImage() { return m_Bitmap; }
 	Gdiplus::Bitmap* GetTintedImage() { return m_BitmapTint; }
@@ -44,6 +44,7 @@ public:
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
 protected:
+	void ApplyCrop();
 	void ApplyTint();
 	void ApplyTransform();
 
@@ -57,6 +58,7 @@ protected:
 	FILETIME m_Modified;
 
 	std::wstring m_ConfigName;
+	std::wstring m_ConfigImageCrop;
 	std::wstring m_ConfigGreyscale;
 	std::wstring m_ConfigImageTint;
 	std::wstring m_ConfigImageAlpha;
@@ -70,9 +72,11 @@ protected:
 
 	const bool m_DisableTransform;
 
+	bool m_NeedsCrop;
 	bool m_NeedsTinting;
 	bool m_NeedsTransform;
 
+	Gdiplus::Rect m_Crop;
 	bool m_GreyScale;
 	Gdiplus::ColorMatrix m_ColorMatrix;
 	Gdiplus::RotateFlipType m_Flip;

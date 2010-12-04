@@ -30,6 +30,7 @@
 #include "MeasureNet.h"
 #include "MeasurePlugin.h"
 #include "MeterButton.h"
+#include "TintedImage.h"
 
 using namespace Gdiplus;
 
@@ -1735,21 +1736,13 @@ bool CMeterWindow::ReadSkin()
 	m_BackgroundName = m_Parser.ReadString(L"Rainmeter", L"Background", L"");
 	m_BackgroundName = MakePathAbsolute(m_BackgroundName);
 
-	std::wstring margins = m_Parser.ReadString(L"Rainmeter", L"BackgroundMargins", L"0, 0, 0, 0");
-	int left = 0, top = 0, right = 0, bottom = 0;
-	swscanf(margins.c_str(), L"%i, %i, %i, %i", &left, &top, &right, &bottom);
-	m_BackgroundMargins.X = left;
-	m_BackgroundMargins.Width = right - left;
-	m_BackgroundMargins.Y = top;
-	m_BackgroundMargins.Height = bottom - top;
+	m_BackgroundMargins = m_Parser.ReadRect(L"Rainmeter", L"BackgroundMargins", Rect(0,0,0,0));
+	m_BackgroundMargins.Width -= m_BackgroundMargins.X;
+	m_BackgroundMargins.Height -= m_BackgroundMargins.Y;
 
-	margins = m_Parser.ReadString(L"Rainmeter", L"DragMargins", L"0, 0, 0, 0");
-	left = 0, top = 0, right = 0, bottom = 0;
-	swscanf(margins.c_str(), L"%i, %i, %i, %i", &left, &top, &right, &bottom);
-	m_DragMargins.X = left;
-	m_DragMargins.Width = right - left;
-	m_DragMargins.Y = top;
-	m_DragMargins.Height = bottom - top;
+	m_DragMargins = m_Parser.ReadRect(L"Rainmeter", L"DragMargins", Rect(0,0,0,0));
+	m_DragMargins.Width -= m_DragMargins.X;
+	m_DragMargins.Height -= m_DragMargins.Y;
 
 	m_BackgroundMode = (BGMODE)m_Parser.ReadInt(L"Rainmeter", L"BackgroundMode", BGMODE_IMAGE);
 	m_SolidBevel = (BEVELTYPE)m_Parser.ReadInt(L"Rainmeter", L"BevelType", BEVELTYPE_NONE);
@@ -1760,7 +1753,7 @@ bool CMeterWindow::ReadSkin()
 
 	m_DynamicWindowSize = 0!=m_Parser.ReadInt(L"Rainmeter", L"DynamicWindowSize", 0);
 
-	if ((m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE) && m_BackgroundName.empty())
+	if ((m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE) && m_BackgroundName.empty())
 	{
 		m_BackgroundMode = BGMODE_COPY;
 	}
@@ -2106,17 +2099,16 @@ bool CMeterWindow::ResizeWindow(bool reset)
 		m_Background = NULL;
 	}
 
-	if ((m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE) && !m_BackgroundName.empty())
+	if ((m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE) && !m_BackgroundName.empty())
 	{
 		// Load the background
-		m_Background = new Bitmap(m_BackgroundName.c_str());
-		Status status = m_Background->GetLastStatus();
-		if(Ok != status)
+		CTintedImage tintedBackground;
+		tintedBackground.SetConfigAttributes(L"Background", NULL);
+		tintedBackground.ReadConfig(m_Parser, L"Rainmeter");
+		tintedBackground.LoadImage(m_BackgroundName, true);
+
+		if (!tintedBackground.IsLoaded())
 		{
-			std::wstring err = L"Unable to load background: " + m_BackgroundName;
-			MessageBox(m_Window, err.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-			delete m_Background;
-			m_Background = NULL;
 			m_BackgroundSize.cx = 0;
 			m_BackgroundSize.cy = 0;
 
@@ -2125,81 +2117,99 @@ bool CMeterWindow::ResizeWindow(bool reset)
 		}
 		else
 		{
+			Bitmap* tempBackground = tintedBackground.GetImage();
+
 			// Calculate the window dimensions
-			m_BackgroundSize.cx = m_Background->GetWidth();
-			m_BackgroundSize.cy = m_Background->GetHeight();
+			m_BackgroundSize.cx = tempBackground->GetWidth();
+			m_BackgroundSize.cy = tempBackground->GetHeight();
 
-			w = max(w, m_BackgroundSize.cx);
-			h = max(h, m_BackgroundSize.cy);
-
-			if (m_BackgroundMode == BGMODE_SCALED_IMAGE)
+			if (m_BackgroundMode == BGMODE_IMAGE)
 			{
+				m_Background = tempBackground->Clone(0, 0, m_BackgroundSize.cx, m_BackgroundSize.cy, PixelFormat32bppARGB);
+			}
+			else
+			{
+				w = max(w, m_BackgroundSize.cx);
+				h = max(h, m_BackgroundSize.cy);
+
 				// Scale the background to fill the whole window
-				Bitmap* scaledBackground = new Bitmap(w, h, PixelFormat32bppARGB);
+				Bitmap* background = new Bitmap(w, h, PixelFormat32bppARGB);
 
-				Graphics graphics(scaledBackground);
+				Graphics graphics(background);
 
-				if (m_BackgroundMargins.GetTop() > 0) 
+				if (m_BackgroundMode == BGMODE_SCALED_IMAGE)
 				{
-					if (m_BackgroundMargins.GetLeft() > 0) 
+					RECT m = {m_BackgroundMargins.GetLeft(), m_BackgroundMargins.GetTop(), m_BackgroundMargins.GetRight(), m_BackgroundMargins.GetBottom()};
+
+					if (m.top > 0) 
 					{
-						// Top-Left
-						Rect r(0, 0, m_BackgroundMargins.GetLeft(), m_BackgroundMargins.GetTop());
-						graphics.DrawImage(m_Background, r, 0, 0, m_BackgroundMargins.GetLeft(), m_BackgroundMargins.GetTop(), UnitPixel);
+						if (m.left > 0) 
+						{
+							// Top-Left
+							Rect r(0, 0, m.left, m.top);
+							graphics.DrawImage(tempBackground, r, 0, 0, m.left, m.top, UnitPixel);
+						}
+
+						// Top
+						Rect r(m.left, 0, w - m.left - m.right, m.top);
+						graphics.DrawImage(tempBackground, r, m.left, 0, m_BackgroundSize.cx - m.left - m.right, m.top, UnitPixel);
+
+						if (m.right > 0) 
+						{
+							// Top-Right
+							Rect r(w - m.right, 0, m.right, m.top);
+							graphics.DrawImage(tempBackground, r, m_BackgroundSize.cx - m.right, 0, m.right, m.top, UnitPixel);
+						}
 					}
 
-					// Top
-					Rect r(m_BackgroundMargins.GetLeft(), 0, w - m_BackgroundMargins.GetLeft() - m_BackgroundMargins.GetRight(), m_BackgroundMargins.GetTop());
-					graphics.DrawImage(m_Background, r, m_BackgroundMargins.GetLeft(), 0, m_Background->GetWidth() - m_BackgroundMargins.GetLeft() - m_BackgroundMargins.GetRight(), m_BackgroundMargins.GetTop(), UnitPixel);
-
-					if (m_BackgroundMargins.GetRight() > 0) 
+					if (m.left > 0) 
 					{
-						// Top-Right
-						Rect r(w - m_BackgroundMargins.GetRight(), 0, m_BackgroundMargins.GetRight(), m_BackgroundMargins.GetTop());
-						graphics.DrawImage(m_Background, r, m_Background->GetWidth() - m_BackgroundMargins.GetRight(), 0, m_BackgroundMargins.GetRight(), m_BackgroundMargins.GetTop(), UnitPixel);
+						// Left
+						Rect r(0, m.top, m.left, h - m.top - m.bottom);
+						graphics.DrawImage(tempBackground, r, 0, m.top, m.left, m_BackgroundSize.cy - m.top - m.bottom, UnitPixel);
+					}
+
+					// Center
+					Rect r(m.left, m.top, w - m.left - m.right, h - m.top - m.bottom);
+					graphics.DrawImage(tempBackground, r, m.left, m.top, m_BackgroundSize.cx - m.left - m.right, m_BackgroundSize.cy - m.top - m.bottom, UnitPixel);
+
+					if (m.right > 0) 
+					{
+						// Right
+						Rect r(w - m.right, m.top, m.right, h - m.top - m.bottom);
+						graphics.DrawImage(tempBackground, r, m_BackgroundSize.cx - m.right, m.top, m.right, m_BackgroundSize.cy - m.top - m.bottom, UnitPixel);
+					}
+					
+					if (m.bottom > 0) 
+					{
+						if (m.left > 0) 
+						{
+							// Bottom-Left
+							Rect r(0, h - m.bottom, m.left, m.bottom);
+							graphics.DrawImage(tempBackground, r, 0, m_BackgroundSize.cy - m.bottom, m.left, m.bottom, UnitPixel);
+						}
+						// Bottom
+						Rect r(m.left, h - m.bottom, w - m.left - m.right, m.bottom);
+						graphics.DrawImage(tempBackground, r, m.left, m_BackgroundSize.cy - m.bottom, m_BackgroundSize.cx - m.left - m.right, m.bottom, UnitPixel);
+
+						if (m.right > 0) 
+						{
+							// Bottom-Right
+							Rect r(w - m.right, h - m.bottom, m.right, m.bottom);
+							graphics.DrawImage(tempBackground, r, m_BackgroundSize.cx - m.right, m_BackgroundSize.cy - m.bottom, m.right, m.bottom, UnitPixel);
+						}
 					}
 				}
-
-				if (m_BackgroundMargins.GetLeft() > 0) 
+				else
 				{
-					// Left
-					Rect r(0, m_BackgroundMargins.GetTop(), m_BackgroundMargins.GetLeft(), h - m_BackgroundMargins.GetTop() - m_BackgroundMargins.GetBottom());
-					graphics.DrawImage(m_Background, r, 0, m_BackgroundMargins.GetTop(), m_BackgroundMargins.GetLeft(), m_Background->GetHeight() - m_BackgroundMargins.GetTop() - m_BackgroundMargins.GetBottom(), UnitPixel);
+					ImageAttributes imgAttr;
+					imgAttr.SetWrapMode(WrapModeTile);
+
+					Rect r(0, 0, w, h);
+					graphics.DrawImage(tempBackground, r, 0, 0, w, h, UnitPixel, &imgAttr);
 				}
 
-				// Center
-				Rect r(m_BackgroundMargins.GetLeft(), m_BackgroundMargins.GetTop(), w - m_BackgroundMargins.GetLeft() - m_BackgroundMargins.GetRight(), h - m_BackgroundMargins.GetTop() - m_BackgroundMargins.GetBottom());
-				graphics.DrawImage(m_Background, r, m_BackgroundMargins.GetLeft(), m_BackgroundMargins.GetTop(), m_Background->GetWidth() - m_BackgroundMargins.GetLeft() - m_BackgroundMargins.GetRight(), m_Background->GetHeight() - m_BackgroundMargins.GetTop() - m_BackgroundMargins.GetBottom(), UnitPixel);
-
-				if (m_BackgroundMargins.GetRight() > 0) 
-				{
-					// Right
-					Rect r(w - m_BackgroundMargins.GetRight(), m_BackgroundMargins.GetTop(), m_BackgroundMargins.GetRight(), h - m_BackgroundMargins.GetTop() - m_BackgroundMargins.GetBottom());
-					graphics.DrawImage(m_Background, r, m_Background->GetWidth() - m_BackgroundMargins.GetRight(), m_BackgroundMargins.GetTop(), m_BackgroundMargins.GetRight(), m_Background->GetHeight() - m_BackgroundMargins.GetTop() - m_BackgroundMargins.GetBottom(), UnitPixel);
-				}
-				
-				if (m_BackgroundMargins.GetBottom() > 0) 
-				{
-					if (m_BackgroundMargins.GetLeft() > 0) 
-					{
-						// Bottom-Left
-						Rect r(0, h - m_BackgroundMargins.GetBottom(), m_BackgroundMargins.GetLeft(), m_BackgroundMargins.GetBottom());
-						graphics.DrawImage(m_Background, r, 0, m_Background->GetHeight() - m_BackgroundMargins.GetBottom(), m_BackgroundMargins.GetLeft(), m_BackgroundMargins.GetBottom(), UnitPixel);
-					}
-					// Bottom
-					Rect r(m_BackgroundMargins.GetLeft(), h - m_BackgroundMargins.GetBottom(), w - m_BackgroundMargins.GetLeft() - m_BackgroundMargins.GetRight(), m_BackgroundMargins.GetBottom());
-					graphics.DrawImage(m_Background, r, m_BackgroundMargins.GetLeft(), m_Background->GetHeight() - m_BackgroundMargins.GetBottom(), m_Background->GetWidth() - m_BackgroundMargins.GetLeft() - m_BackgroundMargins.GetRight(), m_BackgroundMargins.GetBottom(), UnitPixel);
-
-					if (m_BackgroundMargins.GetRight() > 0) 
-					{
-						// Bottom-Right
-						Rect r(w - m_BackgroundMargins.GetRight(), h - m_BackgroundMargins.GetBottom(), m_BackgroundMargins.GetRight(), m_BackgroundMargins.GetBottom());
-						graphics.DrawImage(m_Background, r, m_Background->GetWidth() - m_BackgroundMargins.GetRight(), m_Background->GetHeight() - m_BackgroundMargins.GetBottom(), m_BackgroundMargins.GetRight(), m_BackgroundMargins.GetBottom(), UnitPixel);
-					}
-				}
-
-				delete m_Background;
-				m_Background = scaledBackground;
+				m_Background = background;
 			}
 
 			// Get the size form the background bitmap
@@ -2239,34 +2249,36 @@ bool CMeterWindow::ResizeWindow(bool reset)
 		}
 		else
 		{
-			// Create a solid color bitmap for the background
-			m_Background = new Bitmap(m_WindowW, m_WindowH, PixelFormat32bppARGB);
-			Graphics graphics(m_Background);
-
-			if (m_SolidColor.GetValue() == m_SolidColor2.GetValue())
+			if (m_WindowW != 0 && m_WindowH != 0)
 			{
-				SolidBrush solid(m_SolidColor);
-				graphics.FillRectangle(&solid, 0, 0, m_WindowW, m_WindowH);
-			}
-			else
-			{
-				Rect r(0, 0, m_WindowW, m_WindowH);
-				LinearGradientBrush gradient(r, m_SolidColor, m_SolidColor2, m_SolidAngle, TRUE);
-				graphics.FillRectangle(&gradient, r);
-			}
+				// Create a solid color bitmap for the background
+				m_Background = new Bitmap(m_WindowW, m_WindowH, PixelFormat32bppARGB);
+				Graphics graphics(m_Background);
 
-			if (m_SolidBevel != BEVELTYPE_NONE)
-			{
-				Pen light(Color(255, 255, 255, 255));
-				Pen dark(Color(255, 0, 0, 0));
-
-				if (m_SolidBevel == BEVELTYPE_DOWN)
+				if (m_SolidColor.GetValue() == m_SolidColor2.GetValue())
 				{
-					light.SetColor(Color(255, 0, 0, 0));
-					dark.SetColor(Color(255, 255, 255, 255));
+					graphics.Clear(m_SolidColor);
 				}
-				Rect rect(0, 0, m_WindowW, m_WindowH);	
-				CMeter::DrawBevel(graphics, rect, light, dark);
+				else
+				{
+					Rect r(0, 0, m_WindowW, m_WindowH);
+					LinearGradientBrush gradient(r, m_SolidColor, m_SolidColor2, m_SolidAngle, TRUE);
+					graphics.FillRectangle(&gradient, r);
+				}
+
+				if (m_SolidBevel != BEVELTYPE_NONE)
+				{
+					Pen light(Color(255, 255, 255, 255));
+					Pen dark(Color(255, 0, 0, 0));
+
+					if (m_SolidBevel == BEVELTYPE_DOWN)
+					{
+						light.SetColor(Color(255, 0, 0, 0));
+						dark.SetColor(Color(255, 255, 255, 255));
+					}
+					Rect rect(0, 0, m_WindowW, m_WindowH);	
+					CMeter::DrawBevel(graphics, rect, light, dark);
+				}
 			}
 		}
 	}

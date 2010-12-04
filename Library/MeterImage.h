@@ -46,6 +46,7 @@ protected:
 	bool m_WidthDefined;
 	bool m_HeightDefined;
 	bool m_PreserveAspectRatio;			// If true, aspect ratio of the image is preserved when the image is scaled
+	bool m_Tile;
 };
 
 #endif

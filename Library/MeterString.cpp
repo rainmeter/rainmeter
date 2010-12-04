@@ -244,8 +244,6 @@ void CMeterString::Initialize()
 */
 void CMeterString::ReadConfig(const WCHAR* section)
 {
-	WCHAR tmpName[64];
-
 	// Store the current font values so we know if the font needs to be updated
 	std::wstring oldFontFace = m_FontFace;
 	int oldFontSize = m_FontSize;
@@ -256,11 +254,10 @@ void CMeterString::ReadConfig(const WCHAR* section)
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
-	m_MeasureNames.clear();
-
 	// Check for extra measures
-	if (!m_MeasureName.empty())
+	if (!m_Initialized && !m_MeasureName.empty())
 	{
+		WCHAR tmpName[64];
 		int i = 2;
 		bool loop = true;
 		do 
@@ -415,7 +412,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 		throw CError(error, __LINE__, __FILE__);
 	}
 
-	if (-1 != (int)parser.ReadFormula(section, L"W", -1) && -1 != (int)parser.ReadFormula(section, L"H", -1))
+	if (parser.IsValueDefined(section, L"W") && parser.IsValueDefined(section, L"H"))
 	{
 		m_DimensionsDefined = true;
 	}

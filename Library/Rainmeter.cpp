@@ -2843,9 +2843,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	std::wstring area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
 	if (!area.empty())
 	{
-		RECT r;
-		swscanf(area.c_str(), L"%i,%i,%i,%i", &r.left, &r.top, &r.right, &r.bottom);
-		m_DesktopWorkAreas[0] = r;
+		m_DesktopWorkAreas[0] = parser.ParseRECT(area.c_str());
 		m_DesktopWorkAreaChanged = true;
 	}
 
@@ -2856,9 +2854,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		area = parser.ReadString(L"Rainmeter", buffer, L"");
 		if (!area.empty())
 		{
-			RECT r;
-			swscanf(area.c_str(), L"%i,%i,%i,%i", &r.left, &r.top, &r.right, &r.bottom);
-			m_DesktopWorkAreas[i] = r;
+			m_DesktopWorkAreas[i] = parser.ParseRECT(area.c_str());
 			m_DesktopWorkAreaChanged = true;
 		}
 	}

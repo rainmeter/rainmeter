@@ -48,10 +48,12 @@ const Gdiplus::ColorMatrix CTintedImage::c_IdentifyMatrix = {
 ** The constructor.
 **
 ** If disableTransform is true, following configs are ignored:
+**  - ImageCrop
 **  - ImageRotate
 **
 */
 CTintedImage::CTintedImage(bool disableTransform) : m_DisableTransform(disableTransform),
+	m_Crop(-1, -1, -1, -1),
 	m_ColorMatrix(c_IdentifyMatrix)
 {
 	SetConfigAttributes(L"Image", L"");
@@ -161,7 +163,14 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 
 								if (m_Bitmap && Ok == m_Bitmap->GetLastStatus())
 								{
-									// Check whether the new image needs tinting (or flipping, rotating)
+									// Check whether the new image needs tinting (or cropping, flipping, rotating)
+									if (!m_NeedsCrop)
+									{
+										if (m_Crop.X != -1 || m_Crop.Y != -1 || m_Crop.Width != -1 || m_Crop.Height != -1)
+										{
+											m_NeedsCrop = true;
+										}
+									}
 									if (!m_NeedsTinting)
 									{
 										if (m_GreyScale || !CompareColorMatrix(m_ColorMatrix, c_IdentifyMatrix))
@@ -212,12 +221,27 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		if (m_Bitmap)
 		{
 			// We need a copy of the image if has tinting (or flipping, rotating)
-			if (m_NeedsTinting || m_NeedsTransform)
+			if (m_NeedsCrop || m_NeedsTinting || m_NeedsTransform)
 			{
-				ApplyTint();
-				m_NeedsTinting = false;
+				if (m_BitmapTint)
+				{
+					delete m_BitmapTint;
+					m_BitmapTint = NULL;
+				}
 
-				ApplyTransform();
+				if (m_Bitmap->GetWidth() > 0 && m_Bitmap->GetHeight() > 0)
+				{
+					ApplyCrop();
+
+					if (!m_BitmapTint || (m_BitmapTint->GetWidth() > 0 && m_BitmapTint->GetHeight() > 0))
+					{
+						ApplyTint();
+						ApplyTransform();
+					}
+				}
+
+				m_NeedsCrop = false;
+				m_NeedsTinting = false;
 				m_NeedsTransform = false;
 			}
 		}
@@ -229,6 +253,31 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 }
 
 /*
+** ApplyCrop
+**
+** This will apply the cropping.
+**
+*/
+void CTintedImage::ApplyCrop()
+{
+	if (m_Crop.Width >= 0 && m_Crop.Height >= 0)
+	{
+		if (m_Crop.Width == 0 || m_Crop.Height == 0)
+		{
+			m_BitmapTint = new Bitmap(0, 0, PixelFormat32bppARGB);  // create dummy bitmap
+		}
+		else
+		{
+			Rect r(0, 0, m_Crop.Width, m_Crop.Height);
+			m_BitmapTint = new Bitmap(r.Width, r.Height, PixelFormat32bppARGB);
+
+			Graphics graphics(m_BitmapTint);
+			graphics.DrawImage(m_Bitmap, r, m_Crop.X, m_Crop.Y, r.Width, r.Height, UnitPixel);
+		}
+	}
+}
+
+/*
 ** ApplyTint
 **
 ** This will apply the Greyscale matrix and the color tinting.
@@ -236,25 +285,32 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 */
 void CTintedImage::ApplyTint()
 {
-	ImageAttributes ImgAttr;
-	ImgAttr.SetColorMatrix(&m_ColorMatrix, ColorMatrixFlagsDefault, ColorAdjustTypeBitmap);
-
-	delete m_BitmapTint;
-
-	Rect r(0, 0, m_Bitmap->GetWidth(), m_Bitmap->GetHeight());
-	m_BitmapTint = new Bitmap(r.Width, r.Height, PixelFormat32bppARGB);
-
-	Graphics graphics(m_BitmapTint);
-
-	if (m_GreyScale)
+	if (m_GreyScale || !CompareColorMatrix(m_ColorMatrix, c_IdentifyMatrix))
 	{
-		Bitmap* gray = TurnGreyscale(m_Bitmap);
-		graphics.DrawImage(gray, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
-		delete gray;
-	}
-	else
-	{
-		graphics.DrawImage(m_Bitmap, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
+		Bitmap* original = GetImage();
+
+		ImageAttributes ImgAttr;
+		ImgAttr.SetColorMatrix(&m_ColorMatrix, ColorMatrixFlagsDefault, ColorAdjustTypeBitmap);
+
+		Rect r(0, 0, original->GetWidth(), original->GetHeight());
+
+		Bitmap* tint = new Bitmap(r.Width, r.Height, PixelFormat32bppARGB);
+
+		Graphics graphics(tint);
+
+		if (m_GreyScale)
+		{
+			Bitmap* gray = TurnGreyscale(original);
+			graphics.DrawImage(gray, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
+			delete gray;
+		}
+		else
+		{
+			graphics.DrawImage(original, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
+		}
+
+		delete m_BitmapTint;
+		m_BitmapTint = tint;
 	}
 }
 
@@ -290,7 +346,7 @@ void CTintedImage::ApplyTransform()
 {
 	if (m_Rotate != 0.0f)
 	{
-		Bitmap* original = (m_BitmapTint) ? m_BitmapTint : m_Bitmap;
+		Bitmap* original = GetImage();
 
 		REAL originalW = (REAL)original->GetWidth();
 		REAL originalH = (REAL)original->GetHeight();
@@ -331,7 +387,7 @@ void CTintedImage::ApplyTransform()
 	}
 	else if (m_Flip != RotateNoneFlipNone)
 	{
-		Bitmap* original = (m_BitmapTint) ? m_BitmapTint : m_Bitmap;
+		Bitmap* original = GetImage();
 
 		Rect r(0, 0, original->GetWidth(), original->GetHeight());
 		Bitmap* transform = new Bitmap(r.Width, r.Height, PixelFormat32bppARGB);
@@ -364,6 +420,7 @@ void CTintedImage::SetConfigAttributes(const WCHAR* name, const WCHAR* prefix)
 
 	if (prefix)
 	{
+		(m_ConfigImageCrop    = prefix) += L"ImageCrop";
 		(m_ConfigGreyscale    = prefix) += L"Greyscale";
 		(m_ConfigImageTint    = prefix) += L"ImageTint";
 		(m_ConfigImageAlpha   = prefix) += L"ImageAlpha";
@@ -386,10 +443,18 @@ void CTintedImage::SetConfigAttributes(const WCHAR* name, const WCHAR* prefix)
 void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be tinted or transformed
+	Rect oldCrop = m_Crop;
 	bool oldGreyScale = m_GreyScale;
 	ColorMatrix oldColorMatrix = m_ColorMatrix;
 	RotateFlipType oldFlip = m_Flip;
 	REAL oldRotate = m_Rotate;
+
+	if (!m_DisableTransform)
+	{
+		m_Crop = parser.ReadRect(section, m_ConfigImageCrop.c_str(), Rect(-1,-1,-1,-1));
+	}
+
+	m_NeedsCrop = (oldCrop.X != m_Crop.X || oldCrop.Y != m_Crop.Y || oldCrop.Width != m_Crop.Width || oldCrop.Height != m_Crop.Height);
 
 	m_GreyScale = 0!=parser.ReadInt(section, m_ConfigGreyscale.c_str(), 0);
 

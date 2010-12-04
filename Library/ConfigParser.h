@@ -52,10 +52,13 @@ public:
 	void ResetMonitorVariables(CMeterWindow* meterWindow = NULL);
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
+	bool IsValueDefined(LPCTSTR section, LPCTSTR key);
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
 	double ReadFormula(LPCTSTR section, LPCTSTR key, double defValue);
 	int ReadInt(LPCTSTR section, LPCTSTR key, int defValue);
 	Gdiplus::Color ReadColor(LPCTSTR section, LPCTSTR key, const Gdiplus::Color& defValue);
+	Gdiplus::Rect ReadRect(LPCTSTR section, LPCTSTR key, const Gdiplus::Rect& defValue);
+	RECT ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue);
 	std::vector<Gdiplus::REAL> ReadFloats(LPCTSTR section, LPCTSTR key);
 
 	const std::wstring& GetFilename() { return m_Filename; }
@@ -67,6 +70,8 @@ public:
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static double ParseDouble(const std::wstring& string, double defValue, bool rejectExp = false);
 	static Gdiplus::Color ParseColor(LPCTSTR string);
+	static Gdiplus::Rect ParseRect(LPCTSTR string);
+	static RECT ParseRECT(LPCTSTR string);
 
 	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }

@@ -109,7 +109,6 @@ void CMeterLine::ReadConfig(const WCHAR* section)
 
 	m_Colors.clear();
 	m_ScaleValues.clear();
-	m_MeasureNames.clear();
 
 	for (int i = 0; i < lineCount; ++i)
 	{
@@ -135,10 +134,13 @@ void CMeterLine::ReadConfig(const WCHAR* section)
 
 		m_ScaleValues.push_back(parser.ReadFloat(section, tmpName, 1.0));
 
-		if (i != 0)
+		if (!m_Initialized && !m_MeasureName.empty())
 		{
-			swprintf(tmpName, L"MeasureName%i", i + 1);
-			m_MeasureNames.push_back(parser.ReadString(section, tmpName, L""));
+			if (i != 0)
+			{
+				swprintf(tmpName, L"MeasureName%i", i + 1);
+				m_MeasureNames.push_back(parser.ReadString(section, tmpName, L""));
+			}
 		}
 	}
 

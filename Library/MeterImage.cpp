@@ -38,6 +38,7 @@ CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow)
 	m_WidthDefined = false;
 	m_HeightDefined = false;
 	m_PreserveAspectRatio = false;
+	m_Tile = false;
 }
 
 /*
@@ -85,14 +86,14 @@ void CMeterImage::LoadImage(bool bLoadAlways)
 		{
 			if (!m_HeightDefined)
 			{
-				m_H = (imageW == 0) ? 0 : (int)(m_W * imageH / (double)imageW);
+				m_H = (imageW == 0) ? 0 : (m_Tile) ? imageH : (int)(m_W * imageH / (double)imageW);
 			}
 		}
 		else
 		{
 			if (m_HeightDefined)
 			{
-				m_W = (imageH == 0) ? 0 : (int)(m_H * imageW / (double)imageH);
+				m_W = (imageH == 0) ? 0 : (m_Tile) ? imageW : (int)(m_H * imageW / (double)imageH);
 			}
 			else
 			{
@@ -144,12 +145,13 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 	}
 
 	m_PreserveAspectRatio = 0!=parser.ReadInt(section, L"PreserveAspectRatio", 0);
+	m_Tile = 0!=parser.ReadInt(section, L"Tile", 0);
 
-	if (-1 != (int)parser.ReadFormula(section, L"W", -1))
+	if (parser.IsValueDefined(section, L"W"))
 	{
 		m_WidthDefined = true;
 	}
-	if (-1 != (int)parser.ReadFormula(section, L"H", -1))
+	if (parser.IsValueDefined(section, L"H"))
 	{
 		m_HeightDefined = true;
 	}
@@ -215,43 +217,54 @@ bool CMeterImage::Draw(Graphics& graphics)
 		// Copy the image over the doublebuffer
 		Bitmap* drawBitmap = m_Image.GetImage();
 
-		int x = GetX();
-		int y = GetY();
 		int imageW = drawBitmap->GetWidth();
 		int imageH = drawBitmap->GetHeight();
 
-		int drawW, drawH;
+		if (imageW == 0 || imageH == 0 || m_W == 0 || m_H == 0) return true;
 
-		if (m_PreserveAspectRatio)
+		int x = GetX();
+		int y = GetY();
+
+		int drawW = m_W;
+		int drawH = m_H;
+
+		ImageAttributes imgAttr;
+		bool useImgAttr = false;
+
+		if (m_Tile)
 		{
-			if (imageW == 0 || imageH == 0 || m_W == 0 || m_H == 0) return true;
+			imageW = m_W;
+			imageH = m_H;
 
-			REAL imageRatio = imageW / (REAL)imageH;
-			REAL meterRatio = m_W / (REAL)m_H;
-
-			if (imageRatio >= meterRatio)
-			{
-				drawW = m_W;
-				drawH = m_W * imageH / imageW;
-			}
-			else
-			{
-				drawW = m_H * imageW / imageH;
-				drawH = m_H;
-			}
-
-			// Centering
-			x += (m_W - drawW) / 2;
-			y += (m_H - drawH) / 2;
+			imgAttr.SetWrapMode(WrapModeTile);
+			useImgAttr = true;
 		}
-		else
+		else if (m_PreserveAspectRatio)
 		{
-			drawW = m_W;
-			drawH = m_H;
+			if (m_WidthDefined && m_HeightDefined)
+			{
+				REAL imageRatio = imageW / (REAL)imageH;
+				REAL meterRatio = m_W / (REAL)m_H;
+
+				if (imageRatio >= meterRatio)
+				{
+					drawW = m_W;
+					drawH = m_W * imageH / imageW;
+				}
+				else
+				{
+					drawW = m_H * imageW / imageH;
+					drawH = m_H;
+				}
+
+				// Centering
+				x += (m_W - drawW) / 2;
+				y += (m_H - drawH) / 2;
+			}
 		}
 
 		Rect r(x, y, drawW, drawH);
-		graphics.DrawImage(drawBitmap, r, 0, 0, imageW, imageH, UnitPixel);
+		graphics.DrawImage(drawBitmap, r, 0, 0, imageW, imageH, UnitPixel, (useImgAttr) ? &imgAttr : NULL);
 	}
 
 	return true;
