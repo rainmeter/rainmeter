@@ -1205,6 +1205,8 @@ CRainmeter::CRainmeter()
 
 	InitializeCriticalSection(&m_CsLogData);
 
+	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
 	INITCOMMONCONTROLSEX initCtrls;
 	initCtrls.dwSize = sizeof(INITCOMMONCONTROLSEX);
 	initCtrls.dwICC = ICC_TAB_CLASSES;
@@ -1245,6 +1247,8 @@ CRainmeter::~CRainmeter()
 	{
 		UpdateDesktopWorkArea(true);
 	}
+
+	CoUninitialize();
 
 	DeleteCriticalSection(&m_CsLogData);
 
