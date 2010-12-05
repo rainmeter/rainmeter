@@ -950,45 +950,41 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 }
 
 /*
-** Parse4
+** ParseInt4
 **
 ** This is a helper template that parses four comma separated values from the given string.
 **
 */
 template <typename T>
-bool Parse4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
+void ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 {
-	if (wcschr(string, L',') != NULL)
+	if (wcschr(string, L','))
 	{
 		WCHAR* parseSz = _wcsdup(string);
 		WCHAR* token;
 
 		token = wcstok(parseSz, L",");
-		if (token != NULL)
+		if (token)
 		{
 			v1 = _wtoi(token);
 		}
-		token = wcstok( NULL, L",");
-		if (token != NULL)
+		token = wcstok(NULL, L",");
+		if (token)
 		{
 			v2 = _wtoi(token);
 		}
-		token = wcstok( NULL, L",");
-		if (token != NULL)
+		token = wcstok(NULL, L",");
+		if (token)
 		{
 			v3 = _wtoi(token);
 		}
-		token = wcstok( NULL, L",");
-		if (token != NULL)
+		token = wcstok(NULL, L",");
+		if (token)
 		{
 			v4 = _wtoi(token);
 		}
 		free(parseSz);
-
-		return true;
 	}
-
-	return false;
 }
 
 /*
@@ -1001,7 +997,7 @@ bool Parse4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 Rect CConfigParser::ParseRect(LPCTSTR string)
 {
 	Rect r;
-	Parse4(string, r.X, r.Y, r.Width, r.Height);
+	ParseInt4(string, r.X, r.Y, r.Width, r.Height);
 	return r;
 }
 
@@ -1015,7 +1011,7 @@ Rect CConfigParser::ParseRect(LPCTSTR string)
 RECT CConfigParser::ParseRECT(LPCTSTR string)
 {
 	RECT r = {0};
-	Parse4(string, r.left, r.top, r.right, r.bottom);
+	ParseInt4(string, r.left, r.top, r.right, r.bottom);
 	return r;
 }
 

@@ -61,7 +61,13 @@ void CMeterImage::Initialize()
 {
 	CMeter::Initialize();
 
-	if (!m_DynamicVariables) LoadImage(true);
+	if (!m_Measure && !m_DynamicVariables && !m_ImageName.empty())
+	{
+		m_ImageNameResult = m_Path;
+		m_ImageNameResult += m_ImageName;
+		m_ImageNameResult = m_MeterWindow->MakePathAbsolute(m_ImageNameResult);
+		LoadImage(m_ImageNameResult, true);
+	}
 }
 
 /*
@@ -70,9 +76,9 @@ void CMeterImage::Initialize()
 ** Loads the image from disk
 **
 */
-void CMeterImage::LoadImage(bool bLoadAlways)
+void CMeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 {
-	m_Image.LoadImage(m_ImageName, bLoadAlways);
+	m_Image.LoadImage(imageName, bLoadAlways);
 
 	if (m_Image.IsLoaded())
 	{
@@ -117,6 +123,12 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 
 	CConfigParser& parser = m_MeterWindow->GetParser();
 
+	// Check for extra measures
+	if (!m_Initialized && !m_MeasureName.empty())
+	{
+		ReadMeasureNames(parser, section, m_MeasureNames);
+	}
+
 	m_Path = parser.ReadString(section, L"Path", L"");
 	if (!m_Path.empty())
 	{
@@ -127,22 +139,7 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 		}
 	}
 
-	if (!m_Initialized || !m_Measure)
-	{
-		std::wstring oldImageName = m_ImageName;
-
-		m_ImageName = parser.ReadString(section, L"ImageName", L"");
-		if (!m_ImageName.empty())
-		{
-			m_ImageName.insert(0, m_Path);
-			m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
-		}
-
-		if (m_DynamicVariables)
-		{
-			m_NeedsReload = (oldImageName != m_ImageName);
-		}
-	}
+	m_ImageName = parser.ReadString(section, L"ImageName", L"");
 
 	m_PreserveAspectRatio = 0!=parser.ReadInt(section, L"PreserveAspectRatio", 0);
 	m_Tile = 0!=parser.ReadInt(section, L"Tile", 0);
@@ -170,32 +167,51 @@ bool CMeterImage::Update()
 {
 	if (CMeter::Update())
 	{
-		if (m_Measure)  //read from the measure
+		if (m_Measure || m_DynamicVariables)
 		{
-			std::wstring val = m_Measure->GetStringValue(false, 1, 0, false);
-			if (!val.empty())
+			// Store the current values so we know if the image needs to be updated
+			std::wstring oldResult = m_ImageNameResult;
+
+			if (m_Measure)  // read from the measures
 			{
-				val.insert(0, m_Path);
-				val = m_MeterWindow->MakePathAbsolute(val);
-				if (val != m_ImageName)
+				std::wstring val = m_Measure->GetStringValue(false, 1, 0, false);
+
+				if (m_ImageName.empty())
 				{
-					m_ImageName = val;
-					LoadImage(true);
+					m_ImageNameResult = val;
 				}
 				else
 				{
-					LoadImage(false);
+					std::vector<std::wstring> stringValues;
+
+					stringValues.push_back(val);
+
+					// Get the values for the other measures
+					for (size_t i = 0; i < m_Measures.size(); ++i)
+					{
+						stringValues.push_back(m_Measures[i]->GetStringValue(false, 1, 0, false));
+					}
+
+					m_ImageNameResult = m_ImageName;
+					if (!ReplaceMeasures(stringValues, m_ImageNameResult))
+					{
+						// ImageName doesn't contain any measures, so use the result of MeasureName.
+						m_ImageNameResult = val;
+					}
 				}
 			}
-			else if (m_Image.IsLoaded())
+			else  // read from the skin
 			{
-				m_Image.DisposeImage();
+				m_ImageNameResult = m_ImageName;
 			}
-			return true;
-		}
-		else if (m_DynamicVariables)  //read from the skin
-		{
-			LoadImage(m_NeedsReload);
+
+			if (!m_ImageNameResult.empty())
+			{
+				m_ImageNameResult.insert(0, m_Path);
+				m_ImageNameResult = m_MeterWindow->MakePathAbsolute(m_ImageNameResult);
+			}
+
+			LoadImage(m_ImageNameResult, oldResult != m_ImageNameResult);
 			return true;
 		}
 	}
@@ -278,9 +294,32 @@ bool CMeterImage::Draw(Graphics& graphics)
 */
 void CMeterImage::BindMeasure(const std::list<CMeasure*>& measures)
 {
-	// It's ok not to bind image meter to anything
-	if (!m_MeasureName.empty())
+	if (m_MeasureName.empty()) return;	// Allow NULL measure binding
+
+	CMeter::BindMeasure(measures);
+
+	std::vector<std::wstring>::const_iterator j = m_MeasureNames.begin();
+	for (; j != m_MeasureNames.end(); ++j)
 	{
-		CMeter::BindMeasure(measures);
+		// Go through the list and check it there is a secondary measures for us
+		std::list<CMeasure*>::const_iterator i = measures.begin();
+		for( ; i != measures.end(); ++i)
+		{
+			if(_wcsicmp((*i)->GetName(), (*j).c_str()) == 0)
+			{
+				m_Measures.push_back(*i);
+				break;
+			}
+		}
+
+		if (i == measures.end())
+		{
+			std::wstring error = L"The meter [" + m_Name;
+			error += L"] cannot be bound with [";
+			error += (*j);
+			error += L"]!";
+			throw CError(error, __LINE__, __FILE__);
+		}
 	}
+	CMeter::SetAllMeasures(m_Measures);
 }

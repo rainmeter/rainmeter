@@ -65,9 +65,11 @@ CTintedImage::CTintedImage(bool disableTransform) : m_DisableTransform(disableTr
 	m_Modified.dwHighDateTime = 0;
 	m_Modified.dwLowDateTime = 0;
 
+	m_NeedsCrop = false;
 	m_NeedsTinting = false;
 	m_NeedsTransform = false;
 
+	m_CropMode = CROPMODE_TL;
 	m_GreyScale = false;
 	m_Flip = RotateNoneFlipNone;
 	m_Rotate = 0.0f;
@@ -166,7 +168,7 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 									// Check whether the new image needs tinting (or cropping, flipping, rotating)
 									if (!m_NeedsCrop)
 									{
-										if (m_Crop.X != -1 || m_Crop.Y != -1 || m_Crop.Width != -1 || m_Crop.Height != -1)
+										if (m_Crop.Width >= 0 || m_Crop.Height >= 0)
 										{
 											m_NeedsCrop = true;
 										}
@@ -268,11 +270,45 @@ void CTintedImage::ApplyCrop()
 		}
 		else
 		{
+			int imageW = m_Bitmap->GetWidth();
+			int imageH = m_Bitmap->GetHeight();
+
+			int x, y;
+
+			switch (m_CropMode)
+			{
+			case CROPMODE_TL:
+			default:
+				x = m_Crop.X;
+				y = m_Crop.Y;
+				break;
+
+			case CROPMODE_TR:
+				x = m_Crop.X + imageW;
+				y = m_Crop.Y;
+				break;
+
+			case CROPMODE_BR:
+				x = m_Crop.X + imageW;
+				y = m_Crop.Y + imageH;
+				break;
+
+			case CROPMODE_BL:
+				x = m_Crop.X;
+				y = m_Crop.Y + imageH;
+				break;
+
+			case CROPMODE_C:
+				x = m_Crop.X + (imageW / 2);
+				y = m_Crop.Y + (imageH / 2);
+				break;
+			}
+
 			Rect r(0, 0, m_Crop.Width, m_Crop.Height);
 			m_BitmapTint = new Bitmap(r.Width, r.Height, PixelFormat32bppARGB);
 
 			Graphics graphics(m_BitmapTint);
-			graphics.DrawImage(m_Bitmap, r, m_Crop.X, m_Crop.Y, r.Width, r.Height, UnitPixel);
+			graphics.DrawImage(m_Bitmap, r, x, y, r.Width, r.Height, UnitPixel);
 		}
 	}
 }
@@ -444,6 +480,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be tinted or transformed
 	Rect oldCrop = m_Crop;
+	CROPMODE oldCropMode = m_CropMode;
 	bool oldGreyScale = m_GreyScale;
 	ColorMatrix oldColorMatrix = m_ColorMatrix;
 	RotateFlipType oldFlip = m_Flip;
@@ -451,10 +488,58 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	if (!m_DisableTransform)
 	{
-		m_Crop = parser.ReadRect(section, m_ConfigImageCrop.c_str(), Rect(-1,-1,-1,-1));
+		m_Crop.X = m_Crop.Y = m_Crop.Width = m_Crop.Height = -1;
+		m_CropMode = CROPMODE_TL;
+
+		std::wstring crop = parser.ReadString(section, m_ConfigImageCrop.c_str(), L"");
+		if (!crop.empty())
+		{
+			if (wcschr(crop.c_str(), L','))
+			{
+				WCHAR* parseSz = _wcsdup(crop.c_str());
+				WCHAR* token;
+				
+				token = wcstok(parseSz, L",");
+				if (token)
+				{
+					m_Crop.X = _wtoi(token);
+				}
+				token = wcstok(NULL, L",");
+				if (token)
+				{
+					m_Crop.Y = _wtoi(token);
+				}
+				token = wcstok(NULL, L",");
+				if (token)
+				{
+					m_Crop.Width = _wtoi(token);
+				}
+				token = wcstok(NULL, L",");
+				if (token)
+				{
+					m_Crop.Height = _wtoi(token);
+				}
+				token = wcstok(NULL, L",");
+				if (token)
+				{
+					m_CropMode = (CROPMODE)_wtoi(token);
+				}
+				free(parseSz);
+			}
+
+			if (m_CropMode < CROPMODE_TL || m_CropMode > CROPMODE_C)
+			{
+				std::wstring error = m_ConfigImageCrop + L"=";
+				error += crop;
+				error += L" (origin) is not valid in meter [";
+				error += section;
+				error += L"].";
+				throw CError(error, __LINE__, __FILE__);
+			}
+		}
 	}
 
-	m_NeedsCrop = (oldCrop.X != m_Crop.X || oldCrop.Y != m_Crop.Y || oldCrop.Width != m_Crop.Width || oldCrop.Height != m_Crop.Height);
+	m_NeedsCrop = (oldCrop.X != m_Crop.X || oldCrop.Y != m_Crop.Y || oldCrop.Width != m_Crop.Width || oldCrop.Height != m_Crop.Height || oldCropMode != m_CropMode);
 
 	m_GreyScale = 0!=parser.ReadInt(section, m_ConfigGreyscale.c_str(), 0);
 

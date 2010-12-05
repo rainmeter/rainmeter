@@ -36,10 +36,11 @@ public:
 	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 
 protected:
-	void LoadImage(bool bLoadAlways);
+	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
 	CTintedImage m_Image;
 	std::wstring m_ImageName;			// Name of the image
+	std::wstring m_ImageNameResult;		// Name of the image (as absolute path)
 	std::wstring m_Path;
 
 	bool m_NeedsReload;
@@ -47,6 +48,9 @@ protected:
 	bool m_HeightDefined;
 	bool m_PreserveAspectRatio;			// If true, aspect ratio of the image is preserved when the image is scaled
 	bool m_Tile;
+
+	std::vector<std::wstring> m_MeasureNames;
+	std::vector<CMeasure*> m_Measures;
 };
 
 #endif

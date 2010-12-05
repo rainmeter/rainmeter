@@ -116,7 +116,8 @@ protected:
 	void SetAllMeasures(const std::vector<CMeasure*>& measures);
 	void ReplaceToolTipMeasures(std::wstring& str);
 
-	static void ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str);
+	static void ReadMeasureNames(CConfigParser& parser, const WCHAR* section, std::vector<std::wstring>& measureNames);
+	static bool ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str);
 
 	Gdiplus::Matrix m_Transformation;	// The transformation matrix
 	std::wstring m_Name;			// Name of the meter
@@ -171,7 +172,7 @@ protected:
 	Gdiplus::Color m_SolidColor;
 	Gdiplus::Color m_SolidColor2;
 	Gdiplus::REAL m_SolidAngle;
-	bool m_AntiAlias;								// If true, the line is antialiased
+	bool m_AntiAlias;				// If true, the line is antialiased
 	bool m_Initialized;
 
 	CMeterWindow* m_MeterWindow;

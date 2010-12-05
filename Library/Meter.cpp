@@ -557,7 +557,7 @@ void CMeter::SetAllMeasures(CMeasure* measure)
 /*
 ** SetAllMeasures
 **
-** Creates a vector containing all the defined measures (for Line/String)
+** Creates a vector containing all the defined measures (for Image/Line/String)
 */
 void CMeter::SetAllMeasures(const std::vector<CMeasure*>& measures)
 {
@@ -572,12 +572,41 @@ void CMeter::SetAllMeasures(const std::vector<CMeasure*>& measures)
 }
 
 /*
+** ReadMeasureNames
+**
+** Reads measure names (MeasureName2 - MeasureName[N])
+*/
+void CMeter::ReadMeasureNames(CConfigParser& parser, const WCHAR* section, std::vector<std::wstring>& measureNames)
+{
+	WCHAR tmpName[64];
+
+	int i = 2;
+	bool loop = true;
+	do 
+	{
+		swprintf(tmpName, L"MeasureName%i", i);
+		std::wstring measure = parser.ReadString(section, tmpName, L"");
+		if (!measure.empty())
+		{
+			measureNames.push_back(measure);
+		}
+		else
+		{
+			loop = false;
+		}
+		++i;
+	} while(loop);
+}
+
+/*
 ** ReplaceMeasures
 **
 ** Replaces %1, %2 etc with the corresponding measure value
 */
-void CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str)
+bool CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str)
 {
+	bool replaced = false;
+
 	if (str.find(L'%') != std::wstring::npos)
 	{
 		WCHAR buffer[64];
@@ -597,10 +626,13 @@ void CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std:
 				{
 					str.replace(str.begin() + pos, str.begin() + pos + wcslen(buffer), stringValues[i - 1]);
 					start = pos + stringValues[i - 1].length();
+					replaced = true;
 				}
 			} while(pos != std::wstring::npos);
 		}
 	}
+
+	return replaced;
 }
 
 /*
