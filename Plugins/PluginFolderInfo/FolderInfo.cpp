@@ -4,7 +4,7 @@
 
 namespace PluginFolderInfo {
 
-FolderInfo::FolderInfo(const wchar_t* aPath)
+FolderInfo::FolderInfo(const wchar_t* aPath, const wchar_t* aIniPath)
 {
 	mySubFolderFlag = false;
 	myHiddenFileFlag = false;
@@ -13,7 +13,7 @@ FolderInfo::FolderInfo(const wchar_t* aPath)
 	myRegExpFilterExtra = NULL;
 	myLastUpdateTime = 0;
 	Clear();
-	SetPath(aPath);
+	SetPath(aPath, aIniPath);
 }
 
 void FolderInfo::Clear()
@@ -23,7 +23,7 @@ void FolderInfo::Clear()
 	myFolderCount = 0;
 }
 
-void FolderInfo::SetPath(const wchar_t* aPath)
+void FolderInfo::SetPath(const wchar_t* aPath, const wchar_t* aIniPath)
 {
 	if (!aPath || 0 == aPath[0]) {
 		myPath = L"";
@@ -31,6 +31,18 @@ void FolderInfo::SetPath(const wchar_t* aPath)
 	}
 
 	myPath = aPath;
+	if (wcsncmp(aPath, L".\\", 2) == 0 || wcsncmp(aPath, L"..\\", 3) == 0) {
+		wchar_t* buf = new wchar_t[wcslen(aIniPath) + 1];
+		wcscpy(buf, aIniPath);
+		wchar_t* iniFileName = wcsrchr(buf, '\\');
+		if (iniFileName) {
+			iniFileName[1] = 0;
+			myPath = buf;
+			myPath += aPath;
+		}
+		delete[] buf;
+	}
+
 	if (myPath[myPath.size() - 1] != L'\\') {
 		myPath += L"\\";
 	}

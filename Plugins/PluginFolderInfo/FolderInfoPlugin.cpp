@@ -96,7 +96,7 @@ static MeasureInfo* GetMeasureInfo(UINT aId)
 	return NULL;
 }
 
-static FolderInfo* GetFolderInfo(const wchar_t* aPath)
+static FolderInfo* GetFolderInfo(const wchar_t* aPath, const wchar_t* aIniPath)
 {
 	int pathLen = wcslen(aPath);
 	if(pathLen > 2 && L'[' == aPath[0] && L']' == aPath[pathLen - 1]) {
@@ -110,7 +110,7 @@ static FolderInfo* GetFolderInfo(const wchar_t* aPath)
 		return NULL;
 	}
 
-	FolderInfo* folderInfo = new FolderInfo(aPath);
+	FolderInfo* folderInfo = new FolderInfo(aPath, aIniPath);
 	sFolderRefCount[folderInfo] = 1;
 	return folderInfo;
 }
@@ -136,7 +136,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	MeasureInfo* measureInfo = new MeasureInfo(section);
 
 	const wchar_t* strFolder = ReadConfigString(section, L"Folder", L"");
-	measureInfo->Folder = GetFolderInfo(strFolder);
+	measureInfo->Folder = GetFolderInfo(strFolder, iniFile);
 
 	const wchar_t* strInfoType = ReadConfigString(section, L"InfoType", L"");
 	for (int i = 0; i < INFOTYPE_COUNT; i++) {

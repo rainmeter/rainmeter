@@ -37,7 +37,7 @@ private:
 private:
 	void Clear();
 	void CalculateSize();
-	void SetPath(const wchar_t* aPath);
+	void SetPath(const wchar_t* aPath, const wchar_t* aIniPath);
 
 public:
 	DWORD GetLastUpdateTime()
@@ -77,7 +77,7 @@ public:
 		return myFolderCount;
 	}
 
-	FolderInfo(const wchar_t* aPath);
+	FolderInfo(const wchar_t* aPath, const wchar_t* aIniPath);
 	void Update();
 }; // class FolderInfo
 
