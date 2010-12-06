@@ -291,6 +291,9 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 
 void CTrayWindow::ReadConfig(CConfigParser& parser)
 {
+	delete m_Measure;
+	m_Measure = NULL;
+
 	for (size_t i = 0; i < m_TrayIcons.size(); ++i) 
 	{
 		DestroyIcon(m_TrayIcons[i]);
@@ -299,15 +302,29 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 
 	std::wstring measureName = parser.ReadString(L"TrayMeasure", L"Measure", L"");
 
-	CConfigParser* oldParser = Rainmeter->GetCurrentParser();
-	Rainmeter->SetCurrentParser(&parser);
 	if (!measureName.empty())
 	{
-		m_Measure = CMeasure::Create(measureName.c_str(), NULL);
-		m_Measure->SetName(L"TrayMeasure");
-		m_Measure->ReadConfig(parser, L"TrayMeasure");
+		CConfigParser* oldParser = Rainmeter->GetCurrentParser();
+		Rainmeter->SetCurrentParser(&parser);
+
+		try
+		{
+			m_Measure = CMeasure::Create(measureName.c_str(), NULL);
+			if (m_Measure)
+			{
+				m_Measure->SetName(L"TrayMeasure");
+				m_Measure->ReadConfig(parser, L"TrayMeasure");
+			}
+		}
+		catch (CError& error)
+		{
+			delete m_Measure;
+			m_Measure = NULL;
+			MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		}
+
+		Rainmeter->SetCurrentParser(oldParser);
 	}
-	Rainmeter->SetCurrentParser(oldParser);
 
 	m_MeterType = TRAY_METER_TYPE_NONE;
 

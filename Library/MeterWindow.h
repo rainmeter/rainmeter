@@ -297,8 +297,8 @@ private:
 	std::wstring m_Author;						// Skin's author
 	std::wstring m_ConfigGroup;
 	std::wstring m_BackgroundName;				// Name of the background image
-	Gdiplus::Rect m_BackgroundMargins;
-	Gdiplus::Rect m_DragMargins;
+	RECT m_BackgroundMargins;
+	RECT m_DragMargins;
 	std::wstring m_WindowX;						// Window's X-position in config file
 	std::wstring m_WindowY;						// Window's Y-position in config file
 	std::wstring m_AnchorX;						// Anchor's X-position in config file

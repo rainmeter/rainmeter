@@ -109,6 +109,15 @@ CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config,
 	m_BackgroundSize.cx = 0;
 	m_BackgroundSize.cy = 0;
 
+	m_BackgroundMargins.left = 0;
+	m_BackgroundMargins.top = 0;
+	m_BackgroundMargins.right = 0;
+	m_BackgroundMargins.bottom = 0;
+	m_DragMargins.left = 0;
+	m_DragMargins.top = 0;
+	m_DragMargins.right = 0;
+	m_DragMargins.bottom = 0;
+
 	m_FadeStartTime = 0;
 	m_FadeStartValue = 0;
 	m_FadeEndValue = 0;
@@ -1736,13 +1745,9 @@ bool CMeterWindow::ReadSkin()
 	m_BackgroundName = m_Parser.ReadString(L"Rainmeter", L"Background", L"");
 	m_BackgroundName = MakePathAbsolute(m_BackgroundName);
 
-	m_BackgroundMargins = m_Parser.ReadRect(L"Rainmeter", L"BackgroundMargins", Rect(0,0,0,0));
-	m_BackgroundMargins.Width -= m_BackgroundMargins.X;
-	m_BackgroundMargins.Height -= m_BackgroundMargins.Y;
-
-	m_DragMargins = m_Parser.ReadRect(L"Rainmeter", L"DragMargins", Rect(0,0,0,0));
-	m_DragMargins.Width -= m_DragMargins.X;
-	m_DragMargins.Height -= m_DragMargins.Y;
+	static const RECT defMargins = {0};
+	m_BackgroundMargins = m_Parser.ReadRECT(L"Rainmeter", L"BackgroundMargins", defMargins);
+	m_DragMargins = m_Parser.ReadRECT(L"Rainmeter", L"DragMargins", defMargins);
 
 	m_BackgroundMode = (BGMODE)m_Parser.ReadInt(L"Rainmeter", L"BackgroundMode", BGMODE_IMAGE);
 	m_SolidBevel = (BEVELTYPE)m_Parser.ReadInt(L"Rainmeter", L"BevelType", BEVELTYPE_NONE);
@@ -2066,8 +2071,8 @@ void CMeterWindow::InitializeMeters()
 */
 bool CMeterWindow::ResizeWindow(bool reset)
 {
-	int w = m_BackgroundMargins.GetLeft();
-	int h = m_BackgroundMargins.GetTop();
+	int w = m_BackgroundMargins.left;
+	int h = m_BackgroundMargins.top;
 
 	// Get the largest meter point
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
@@ -2079,8 +2084,8 @@ bool CMeterWindow::ResizeWindow(bool reset)
 		h = max(h, mb);
 	}
 
-	w += m_BackgroundMargins.GetRight();
-	h += m_BackgroundMargins.GetBottom();
+	w += m_BackgroundMargins.right;
+	h += m_BackgroundMargins.bottom;
 
 	w = max(w, m_BackgroundSize.cx);
 	h = max(h, m_BackgroundSize.cy);
@@ -2139,7 +2144,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 
 				if (m_BackgroundMode == BGMODE_SCALED_IMAGE)
 				{
-					RECT m = {m_BackgroundMargins.GetLeft(), m_BackgroundMargins.GetTop(), m_BackgroundMargins.GetRight(), m_BackgroundMargins.GetBottom()};
+					const RECT& m = m_BackgroundMargins;
 
 					if (m.top > 0) 
 					{
@@ -3509,10 +3514,10 @@ LRESULT CMeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		pos.y = (SHORT)HIWORD(lParam);
 		MapWindowPoints(NULL, m_Window, &pos, 1);
 
-		int x1 = m_DragMargins.GetLeft();
-		int x2 = m_WindowW - m_DragMargins.GetRight();
-		int y1 = m_DragMargins.GetTop();
-		int y2 = m_WindowH - m_DragMargins.GetBottom();
+		int x1 = m_DragMargins.left;
+		int x2 = m_WindowW - m_DragMargins.right;
+		int y1 = m_DragMargins.top;
+		int y2 = m_WindowH - m_DragMargins.bottom;
 
 		if (x1 < 0) x1 += m_WindowW;
 		if (y1 < 0) y1 += m_WindowH;

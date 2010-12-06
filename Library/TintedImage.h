@@ -22,15 +22,6 @@
 #include "Meter.h"
 #include "MeterWindow.h"
 
-enum CROPMODE
-{
-	CROPMODE_TL = 1,
-	CROPMODE_TR,
-	CROPMODE_BR,
-	CROPMODE_BL,
-	CROPMODE_C
-};
-
 class CTintedImage
 {
 public:
@@ -53,6 +44,15 @@ public:
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
 protected:
+	enum CROPMODE
+	{
+		CROPMODE_TL = 1,
+		CROPMODE_TR,
+		CROPMODE_BR,
+		CROPMODE_BL,
+		CROPMODE_C
+	};
+
 	void ApplyCrop();
 	void ApplyTint();
 	void ApplyTransform();
