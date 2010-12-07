@@ -44,7 +44,6 @@ public:
 
 	void ReadConfig(CConfigParser& parser);
 	HWND GetWindow() { return m_Window; }
-	BOOL ShowBalloonHelp();
 
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

@@ -1538,11 +1538,6 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	ResetStats();
 	ReadStats();
 
-	if (_waccess(m_IniFile.c_str(), 0) == -1)
-	{
-		m_TrayWindow->ShowBalloonHelp();
-	}
-
 	// Change the work area if necessary
 	if (m_DesktopWorkAreaChanged)
 	{

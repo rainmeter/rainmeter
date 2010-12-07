@@ -173,25 +173,6 @@ BOOL CTrayWindow::ModifyTrayIcon(double value)
     return res; 
 }
 
-
-BOOL CTrayWindow::ShowBalloonHelp()
-{
-    BOOL res = FALSE; 
-
-	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
-	tnid.hWnd = m_Window; 
-	tnid.uID = IDI_TRAY;
-	tnid.uFlags = NIF_INFO;
-	tnid.uTimeout = 30000;
-	tnid.dwInfoFlags = 4; // NIIF_USER;
-	tnid.hIcon = LoadIcon(m_Instance, MAKEINTRESOURCE(IDI_TRAY));
-	wcscpy(tnid.szInfo, L"There aren't any configs active at the moment. Open the context menu from Rainmeter's tray icon and select a config you want to use.");
-	wcscpy(tnid.szInfoTitle, L"Rainmeter");
-	res = Shell_NotifyIcon(NIM_MODIFY, &tnid);
-
-	return res;
-}
-
 HICON CTrayWindow::CreateTrayIcon(double value)
 {
 	if (m_Measure != NULL)
