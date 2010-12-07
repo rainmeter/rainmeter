@@ -2483,7 +2483,7 @@ void CMeterWindow::Update(bool nodraw)
 		}
 	}
 
-	if (!nodraw && (m_Refreshing || bUpdate))
+	if (!nodraw && (bUpdate || m_ResetRegion || m_Refreshing))
 	{
 		if (m_DynamicWindowSize)
 		{
