@@ -817,14 +817,15 @@ bool CMeter::Draw(Graphics& graphics)
 		int x = GetX();
 		int y = GetY();
 
+		Rect r(x, y, m_W, m_H);
+
 		if (m_SolidColor.GetValue() == m_SolidColor2.GetValue())
 		{
 			SolidBrush solid(m_SolidColor);
-			graphics.FillRectangle(&solid, x, y, m_W, m_H);
+			graphics.FillRectangle(&solid, r);
 		}
 		else
 		{
-			Rect r(x, y, m_W, m_H);
 			LinearGradientBrush gradient(r, m_SolidColor, m_SolidColor2, m_SolidAngle, TRUE);
 			graphics.FillRectangle(&gradient, r);
 		}
@@ -835,14 +836,17 @@ bool CMeter::Draw(Graphics& graphics)
 		int x = GetX();
 		int y = GetY();
 
-		Pen light(Color(255, 255, 255, 255));
-		Pen dark(Color(255, 0, 0, 0));
+		Color lightColor(255, 255, 255, 255);
+		Color darkColor(255, 0, 0, 0);
 
 		if (m_SolidBevel == BEVELTYPE_DOWN)
 		{
-			light.SetColor(Color(255, 0, 0, 0));
-			dark.SetColor(Color(255, 255, 255, 255));
+			lightColor.SetValue(Color::MakeARGB(255, 0, 0, 0));
+			darkColor.SetValue(Color::MakeARGB(255, 255, 255, 255));
 		}
+
+		Pen light(lightColor);
+		Pen dark(darkColor);
 
 		// The bevel is drawn outside the meter
 		Rect rect(x - 2, y - 2, m_W + 4, m_H + 4);	
@@ -857,7 +861,7 @@ bool CMeter::Draw(Graphics& graphics)
 **
 ** Draws a bevel inside the given area
 */
-void CMeter::DrawBevel(Graphics& graphics, Rect& rect, Pen& light, Pen& dark)
+void CMeter::DrawBevel(Graphics& graphics, const Rect& rect, const Pen& light, const Pen& dark)
 {
 	int l = rect.GetLeft();
 	int r = rect.GetRight() - 1;

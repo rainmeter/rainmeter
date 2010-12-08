@@ -2258,40 +2258,6 @@ bool CMeterWindow::ResizeWindow(bool reset)
 				m_Background = GrabDesktop(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
 			}
 		}
-		else
-		{
-			if (m_WindowW != 0 && m_WindowH != 0)
-			{
-				// Create a solid color bitmap for the background
-				m_Background = new Bitmap(m_WindowW, m_WindowH, PixelFormat32bppARGB);
-				Graphics graphics(m_Background);
-
-				if (m_SolidColor.GetValue() == m_SolidColor2.GetValue())
-				{
-					graphics.Clear(m_SolidColor);
-				}
-				else
-				{
-					Rect r(0, 0, m_WindowW, m_WindowH);
-					LinearGradientBrush gradient(r, m_SolidColor, m_SolidColor2, m_SolidAngle, TRUE);
-					graphics.FillRectangle(&gradient, r);
-				}
-
-				if (m_SolidBevel != BEVELTYPE_NONE)
-				{
-					Pen light(Color(255, 255, 255, 255));
-					Pen dark(Color(255, 0, 0, 0));
-
-					if (m_SolidBevel == BEVELTYPE_DOWN)
-					{
-						light.SetColor(Color(255, 0, 0, 0));
-						dark.SetColor(Color(255, 255, 255, 255));
-					}
-					Rect rect(0, 0, m_WindowW, m_WindowH);	
-					CMeter::DrawBevel(graphics, rect, light, dark);
-				}
-			}
-		}
 	}
     
 	return true;
@@ -2378,6 +2344,44 @@ void CMeterWindow::Redraw()
 		// Copy the background over the doublebuffer
 		Rect r(0, 0, m_WindowW, m_WindowH);
 		graphics.DrawImage(m_Background, r, 0, 0, m_Background->GetWidth(), m_Background->GetHeight(), UnitPixel);
+	}
+	else if (m_BackgroundMode == BGMODE_SOLID)
+	{
+		// Draw the solid color background
+		if (m_WindowW != 0 && m_WindowH != 0)
+		{
+			Rect r(0, 0, m_WindowW, m_WindowH);
+
+			if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
+			{
+				if (m_SolidColor.GetValue() == m_SolidColor2.GetValue())
+				{
+					graphics.Clear(m_SolidColor);
+				}
+				else
+				{
+					LinearGradientBrush gradient(r, m_SolidColor, m_SolidColor2, m_SolidAngle, TRUE);
+					graphics.FillRectangle(&gradient, r);
+				}
+			}
+
+			if (m_SolidBevel != BEVELTYPE_NONE)
+			{
+				Color lightColor(255, 255, 255, 255);
+				Color darkColor(255, 0, 0, 0);
+
+				if (m_SolidBevel == BEVELTYPE_DOWN)
+				{
+					lightColor.SetValue(Color::MakeARGB(255, 0, 0, 0));
+					darkColor.SetValue(Color::MakeARGB(255, 255, 255, 255));
+				}
+
+				Pen light(lightColor);
+				Pen dark(darkColor);
+
+				CMeter::DrawBevel(graphics, r, light, dark);
+			}
+		}
 	}
 
 	// Draw the meters

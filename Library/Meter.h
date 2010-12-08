@@ -94,7 +94,7 @@ public:
 
 	static CMeter* Create(const WCHAR* meter, CMeterWindow* meterWindow);
 	
-	static void DrawBevel(Gdiplus::Graphics& graphics, Gdiplus::Rect& rect, Gdiplus::Pen& light, Gdiplus::Pen& dark);
+	static void DrawBevel(Gdiplus::Graphics& graphics, const Gdiplus::Rect& rect, const Gdiplus::Pen& light, const Gdiplus::Pen& dark);
 
 protected:
 
