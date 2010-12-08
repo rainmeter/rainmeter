@@ -1742,8 +1742,6 @@ bool CMeterWindow::ReadSkin()
 	}
 
 	m_Author = m_Parser.ReadString(L"Rainmeter", L"Author", L"");
-	m_BackgroundName = m_Parser.ReadString(L"Rainmeter", L"Background", L"");
-	m_BackgroundName = MakePathAbsolute(m_BackgroundName);
 
 	static const RECT defMargins = {0};
 	m_BackgroundMargins = m_Parser.ReadRECT(L"Rainmeter", L"BackgroundMargins", defMargins);
@@ -1758,9 +1756,17 @@ bool CMeterWindow::ReadSkin()
 
 	m_DynamicWindowSize = 0!=m_Parser.ReadInt(L"Rainmeter", L"DynamicWindowSize", 0);
 
-	if ((m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE) && m_BackgroundName.empty())
+	if (m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE)
 	{
-		m_BackgroundMode = BGMODE_COPY;
+		m_BackgroundName = m_Parser.ReadString(L"Rainmeter", L"Background", L"");
+		if (!m_BackgroundName.empty())
+		{
+			m_BackgroundName = MakePathAbsolute(m_BackgroundName);
+		}
+		else
+		{
+			m_BackgroundMode = BGMODE_COPY;
+		}
 	}
 
 	m_RightMouseDownAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseDownAction", L"", false);
