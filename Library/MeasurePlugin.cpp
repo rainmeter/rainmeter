@@ -72,7 +72,12 @@ bool CMeasurePlugin::Update()
 	WCHAR buffer[MAX_PATH];
 	GetCurrentDirectory(MAX_PATH, buffer);
 
-	SetCurrentDirectory((Rainmeter->GetSkinPath() + m_MeterWindow->GetSkinName()).c_str());
+	std::wstring dir = Rainmeter->GetSkinPath();
+	if (m_MeterWindow)
+	{
+		dir += m_MeterWindow->GetSkinName();
+	}
+	SetCurrentDirectory(dir.c_str());
 
 	if(UpdateFunc)
 	{
@@ -180,7 +185,12 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		WCHAR buffer[MAX_PATH];
 		GetCurrentDirectory(MAX_PATH, buffer);
 
-		SetCurrentDirectory((Rainmeter->GetSkinPath() + m_MeterWindow->GetSkinName()).c_str());
+		std::wstring dir = Rainmeter->GetSkinPath();
+		if (m_MeterWindow)
+		{
+			dir += m_MeterWindow->GetSkinName();
+		}
+		SetCurrentDirectory(dir.c_str());
 
 		// Remove current directory from DLL search path
 		CSystem::RmSetDllDirectory(L"");

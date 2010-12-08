@@ -92,8 +92,8 @@ CTrayWindow::~CTrayWindow()
 	KillTimer(m_Window, TRAYTIMER);
 	RemoveTrayIcon();
 
-	if (m_Bitmap) delete m_Bitmap;
-	if (m_Measure) delete m_Measure;
+	delete m_Bitmap;
+	delete m_Measure;
 
 	for (size_t i = 0; i < m_TrayIcons.size(); ++i) 
 	{
@@ -350,10 +350,7 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 			if (m_TrayIcons.size() == 0) 
 			{
 				// No icons found so load as bitmap
-				if (m_Bitmap) 
-				{
-					delete m_Bitmap;
-				}
+				delete m_Bitmap;
 				m_Bitmap = new Bitmap(imageName.c_str());
 				Status status = m_Bitmap->GetLastStatus();
 				if(Ok != status)
