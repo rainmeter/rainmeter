@@ -524,7 +524,7 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 	}
 	else 
 	{
-		double val = GetValue() * (1.0 / scale);
+		double val = GetValue() / scale;
 
 		if(decimals == 0)
 		{
@@ -536,7 +536,7 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 			swprintf(buffer, L"%.5f", val);
 
 			size_t len = wcslen(buffer);
-			if (len >= 6 && wcscmp(buffer + len - 6, L".00000") == 0)
+			if (len >= 6 && wcscmp(&buffer[len - 6], L".00000") == 0)
 			{
 				buffer[len - 6] = L'\0';
 			}
@@ -568,17 +568,17 @@ void CMeasure::GetScaledValue(int decimals, double theValue, WCHAR* buffer)
 	if(theValue > 1000.0 * 1000.0 * 1000.0 * 1000.0)
 	{
 		wcscat(format, L" T");
-		value = theValue / 1024.0 / 1024.0 / 1024.0 / 1024.0;
+		value = theValue / (1024.0 * 1024.0 * 1024.0 * 1024.0);
 	}
 	else if(theValue > 1000.0 * 1000.0 * 1000.0)
 	{
 		wcscat(format, L" G");
-		value = theValue / 1024.0 / 1024.0 / 1024.0;
+		value = theValue / (1024.0 * 1024.0 * 1024.0);
 	}
 	else if(theValue > 1000.0 * 1000.0)
 	{
 		wcscat(format, L" M");
-		value = theValue / 1024.0 / 1024.0;
+		value = theValue / (1024.0 * 1024.0);
 	}
 	else if(theValue > 1000.0)
 	{
