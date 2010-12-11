@@ -52,6 +52,7 @@ public:
 	void ResetMonitorVariables(CMeterWindow* meterWindow = NULL);
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
+	bool IsKeyDefined(LPCTSTR section, LPCTSTR key);
 	bool IsValueDefined(LPCTSTR section, LPCTSTR key);
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
 	double ReadFormula(LPCTSTR section, LPCTSTR key, double defValue);

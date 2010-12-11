@@ -672,10 +672,16 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 	return result;
 }
 
-bool CConfigParser::IsValueDefined(LPCTSTR section, LPCTSTR key)
+bool CConfigParser::IsKeyDefined(LPCTSTR section, LPCTSTR key)
 {
 	ReadString(section, key, L"", false);
 	return !m_LastDefaultUsed;
+}
+
+bool CConfigParser::IsValueDefined(LPCTSTR section, LPCTSTR key)
+{
+	const std::wstring& result = ReadString(section, key, L"", false);
+	return (!m_LastDefaultUsed && !result.empty());
 }
 
 void CConfigParser::AddMeasure(CMeasure* pMeasure)
