@@ -1421,7 +1421,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 				CSystem::CopyFiles(strFrom, strTo);
 
 				// This shouldn't be copied
-				std::wstring strNote = strTo + L"Read me before copying skins to here.txt";
+				std::wstring strNote = strTo + L"Read me before copying skins here.txt";
 				CSystem::RemoveFile(strNote);
 
 				// Copy also the themes to the %APPDATA%
