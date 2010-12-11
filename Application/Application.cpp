@@ -57,6 +57,12 @@ extern "C" EXPORT_PLUGIN void ExecuteBang(LPCTSTR szBang);
 const WCHAR* WinClass = L"DummyRainWClass";
 const WCHAR* WinName = L"Rainmeter control window";
 
+enum RetValue
+{
+	RetSuccess = 0,
+	RetError   = 1
+};
+
 /* 
 ** WinMain
 **
@@ -85,31 +91,30 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	{
 		// It's a !bang
 		Bang(lpCmdLine);
-		return 0;
+		return RetSuccess;
 	}
 
 	// Check whether Rainmeter.exe is already running
 	if (IsRunning(&hMutex))
 	{
 		//MessageBox(NULL, L"Rainmeter.exe is already running.", L"Rainmeter", MB_ICONWARNING | MB_TOPMOST | MB_OK);
-		return FALSE;
+		return RetSuccess;
 	}
 
 	if(!hPrevInstance) 
 	{
-		if (!InitApplication(hInstance, WinClass)) return FALSE;
+		if (!InitApplication(hInstance, WinClass)) return RetError;
 	}
 
 	hWnd=InitInstance(hInstance, WinClass, WinName);
-	if(!hWnd) return FALSE;
+	if(!hWnd) return RetError;
 
 	// Remove quotes from the commandline
-	WCHAR Path[256];
-	Path[0] = 0;
-	int Pos = 0;
+	WCHAR Path[MAX_PATH+1] = {0};
 	if(lpCmdLine)
 	{
-		for(size_t i = 0; i <= wcslen(lpCmdLine); i++) 
+		size_t Pos = 0;
+		for(size_t i = 0, len = wcslen(lpCmdLine); i <= len && Pos < MAX_PATH; ++i) 
 		{
 			if(lpCmdLine[i] != L'\"') Path[Pos++] = lpCmdLine[i];
 		}
@@ -123,11 +128,17 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	if(module == NULL)
 	{
 		MessageBox(NULL, L"Unable to load Rainmeter.dll", L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
-		return 0;
+		DestroyWindow(hWnd);
+		return RetError;
 	}
 
 	// Initialize the DLL
-	initModuleEx(hWnd, module, NULL);
+	if (initModuleEx(hWnd, module, NULL) == 1)
+	{
+		MessageBox(NULL, L"Unable to initialize Rainmeter.dll", L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
+		DestroyWindow(hWnd);
+		return RetError;
+	}
 
 	// Run the standard window message loop
 	while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0) 

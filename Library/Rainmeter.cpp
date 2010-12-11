@@ -160,6 +160,17 @@ void Initialize(bool DummyLS, LPCTSTR CmdLine)
 	CRainmeter::SetCommandLine(CmdLine);
 }
 
+/* 
+** ExecuteBang
+**
+** Runs a bang command. This is called from the main application
+** when a command is given as a command line argument.
+**
+*/
+void ExecuteBang(LPCTSTR szBang)
+{
+	if (Rainmeter) Rainmeter->ExecuteCommand(szBang, NULL);
+}
 
 /*
 ** ReadConfigString
@@ -1207,9 +1218,7 @@ CRainmeter::CRainmeter()
 
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
-	INITCOMMONCONTROLSEX initCtrls;
-	initCtrls.dwSize = sizeof(INITCOMMONCONTROLSEX);
-	initCtrls.dwICC = ICC_TAB_CLASSES;
+	INITCOMMONCONTROLSEX initCtrls = {sizeof(INITCOMMONCONTROLSEX), ICC_LISTVIEW_CLASSES};
 	InitCommonControlsEx(&initCtrls);
 
     // Initialize GDI+.
@@ -1253,18 +1262,6 @@ CRainmeter::~CRainmeter()
 	DeleteCriticalSection(&m_CsLogData);
 
 	GdiplusShutdown(m_GDIplusToken);
-}
-
-/* 
-** ExecuteBang
-**
-** Runs a bang command. This is called from the main application
-** when a command is given as a command line argument.
-**
-*/
-void ExecuteBang(LPCTSTR szBang)
-{
-	if (Rainmeter) Rainmeter->ExecuteCommand(szBang, NULL);
 }
 
 /* 
