@@ -54,10 +54,10 @@
 #include <sstream>
 #include <ctime>
 #include <cstdlib>
-#include <sstream>
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <cctype>
 
 // RUNTIME
 #include <stdio.h>

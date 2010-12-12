@@ -1,12 +1,8 @@
+#include "StdAfx.h"
 #include "MeasureScript.h"
 #include "lua/LuaManager.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
-
-#include <algorithm>
-#include <cctype>
-#include <iostream>
-#include <string>
 
 const char* g_strInitFunction = "Initialize";
 const char* g_strUpdateFunction = "Update";
