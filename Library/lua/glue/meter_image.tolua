@@ -1,0 +1,11 @@
+$#include "../MeterImage.h"
+$#include "LuaPush.h"
+
+class CMeterImage : public CMeter
+{
+public:
+	void SetImage(const WCHAR* imageName);
+	const WCHAR* GetImage();
+};
+
+
