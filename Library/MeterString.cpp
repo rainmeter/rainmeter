@@ -560,7 +560,7 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 	}
 	else
 	{
-		RectF rc((REAL)x, (REAL)y, (REAL)m_W, (REAL)m_H);
+		m_Rect = RectF((REAL)x, (REAL)y, (REAL)m_W, (REAL)m_H);
 
 		if (m_Angle != 0.0f)
 		{
@@ -573,14 +573,14 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 		if (m_Effect == EFFECT_SHADOW)
 		{
 			SolidBrush solidBrush(m_EffectColor);
-			RectF rcEffect(rc);
+			RectF rcEffect(m_Rect);
 			rcEffect.Offset(1, 1);
 			graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
 		}
 		else if (m_Effect == EFFECT_BORDER)
 		{
 			SolidBrush solidBrush(m_EffectColor);
-			RectF rcEffect(rc);
+			RectF rcEffect(m_Rect);
 			rcEffect.Offset(0, 1);
 			graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
 			rcEffect.Offset(1, -1);
@@ -592,7 +592,7 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 		}
 		
 		SolidBrush solidBrush(m_Color);
-		graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rc, &stringFormat, &solidBrush);
+		graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, m_Rect, &stringFormat, &solidBrush);
 
 		if (m_Angle != 0.0f)
 		{

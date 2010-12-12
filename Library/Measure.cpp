@@ -33,6 +33,7 @@
 #include "MeasureRegistry.h"
 #include "MeasureTime.h"
 #include "MeasureCalc.h"
+#include "MeasureScript.h"
 #include "Rainmeter.h"
 #include "Error.h"
 #include "Litestep.h"
@@ -674,6 +675,10 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow)
 	else if(_wcsicmp(L"Calc", measure) == 0)
 	{
 		return new CMeasureCalc(meterWindow);
+	}
+	else if(_wcsicmp(L"script", measure) == 0)
+	{
+		return new CMeasureScript(meterWindow);
 	}
 
 	// Error

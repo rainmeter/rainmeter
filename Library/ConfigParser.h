@@ -68,6 +68,9 @@ public:
 	// Returns an int if the formula was read successfully, -1 for failure.
 	int ReadFormula(const std::wstring& result, double* number);
 
+	bool ReplaceVariables(std::wstring& result);
+	bool ReplaceMeasures(std::wstring& result);
+
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static double ParseDouble(const std::wstring& string, double defValue, bool rejectExp = false);
 	static Gdiplus::Color ParseColor(LPCTSTR string);
@@ -77,14 +80,14 @@ public:
 	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
 
+
 private:
 	void SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow);
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
 
 	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
 	void ReadVariables();
-	bool ReplaceVariables(std::wstring& result);
-	bool ReplaceMeasures(std::wstring& result);
+
 	CMeasure* GetMeasure(const std::wstring& name);
 
 	void ReadIniFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& strFileName, int depth = 0);

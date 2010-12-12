@@ -47,6 +47,8 @@ public:
 	virtual int GetW() { return m_Hidden ? 0 : m_W; }
 	virtual int GetX(bool abs = false);
 	virtual int GetY(bool abs = false);
+	void SetW(int w) { m_W = w; }
+	void SetH(int h) { m_H = h; }
 	RECT GetMeterRect();
 
 	void SetX(int x) { m_X = x; m_RelativeX = POSITION_ABSOLUTE; }

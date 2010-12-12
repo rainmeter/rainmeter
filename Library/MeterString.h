@@ -38,8 +38,10 @@ public:
 	virtual void ReadConfig(const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
+	void SetText(const WCHAR* text) { m_Text = text; }
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 	virtual void BindMeasure(const std::list<CMeasure*>& measures);
+	Gdiplus::RectF GetRect() { return m_Rect; }
 
 	static void FreeFontCache();
 	static void EnumerateInstalledFontFamilies();
@@ -91,6 +93,7 @@ private:
 	int m_NumOfDecimals;				// Number of decimals to be displayed
 	bool m_DimensionsDefined;
 	Gdiplus::REAL m_Angle;
+	Gdiplus::RectF m_Rect;
 
 	std::wstring m_String;
 

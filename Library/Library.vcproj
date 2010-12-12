@@ -51,6 +51,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="&quot;lua/tolua++&quot;;lua/glue;lua/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;UNICODE;_USRDLL;LIBRARY_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -81,6 +82,7 @@
 				OutputFile="../TestBench/x32/Debug/Rainmeter.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\x32/Debug/Rainmeter.pdb"
 				ImportLibrary=".\x32/Debug/Rainmeter.lib"
@@ -142,6 +144,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="&quot;lua/tolua++&quot;;lua/glue;lua/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;UNICODE;_USRDLL;LIBRARY_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -172,6 +175,7 @@
 				OutputFile="../TestBench/x64/Debug/Rainmeter.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\x64/Debug/Rainmeter.pdb"
 				ImportLibrary=".\x64/Debug/Rainmeter.lib"
@@ -234,6 +238,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
+				AdditionalIncludeDirectories="&quot;lua/tolua++&quot;;lua/glue;lua/include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;LIBRARY_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -266,6 +271,7 @@
 				OutputFile="../TestBench/x32/Release/Rainmeter.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="lua/lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\x32/Release/Rainmeter.pdb"
 				ImportLibrary=".\x32/Release/Rainmeter.lib"
@@ -329,6 +335,7 @@
 				AdditionalOptions="/GL "
 				Optimization="2"
 				InlineFunctionExpansion="1"
+				AdditionalIncludeDirectories="&quot;lua/tolua++&quot;;lua/glue;lua/include;lua/../"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;LIBRARY_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -356,10 +363,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/LTCG "
-				AdditionalDependencies=" comctl32.lib Wininet.lib Winmm.lib gdiplus.lib Iphlpapi.lib shlwapi.lib"
+				AdditionalDependencies="comctl32.lib Wininet.lib Winmm.lib gdiplus.lib Iphlpapi.lib shlwapi.lib"
 				OutputFile="../TestBench/x64/Release/Rainmeter.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories=""
 				ProgramDatabaseFile=".\x64/Release/Rainmeter.pdb"
 				ImportLibrary=".\x64/Release/Rainmeter.lib"
 				TargetMachine="17"
@@ -1194,6 +1202,10 @@
 						UsePrecompiledHeader="2"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\MeasureScript.cpp"
+				>
 			</File>
 			<File
 				RelativePath="MeasureTime.cpp"
@@ -2156,6 +2168,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MeasureScript.h"
+				>
+			</File>
+			<File
 				RelativePath="MeasureTime.h"
 				>
 			</File>
@@ -2440,6 +2456,370 @@
 					/>
 				</FileConfiguration>
 			</File>
+		</Filter>
+		<Filter
+			Name="Lua"
+			>
+			<File
+				RelativePath=".\lua\LuaManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\lua\LuaManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\lua\LuaPush.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\lua\LuaPush.h"
+				>
+			</File>
+			<File
+				RelativePath=".\lua\LuaScript.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\lua\LuaScript.h"
+				>
+			</File>
+			<Filter
+				Name="glue"
+				>
+				<File
+					RelativePath=".\lua\glue\lua_group.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\glue\lua_group.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\glue\lua_measure.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\glue\lua_measure.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\glue\lua_meter.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\glue\lua_meter.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\glue\lua_meterstring.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\glue\lua_meterstring.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\glue\lua_meterwindow.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\glue\lua_meterwindow.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\glue\lua_rainmeter.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\glue\lua_rainmeter.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\glue\lua_rainmeter_ext.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Lua Headers"
+				>
+				<File
+					RelativePath=".\lua\include\lauxlib.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\include\lua.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\include\lua.hpp"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\glue\lua_rainmeter_ext.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\include\luaconf.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\include\lualib.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="tolua"
+				>
+				<File
+					RelativePath=".\lua\include\tolua++.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\tolua++\tolua_event.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\tolua++\tolua_event.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\tolua++\tolua_is.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\tolua++\tolua_map.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\tolua++\tolua_push.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\tolua++\tolua_to.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Lua"
+				>
+				<File
+					RelativePath=".\lua\lua\lapi.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lapi.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lauxlib.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lauxlib.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lbaselib.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lcode.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lcode.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\ldblib.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\ldebug.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\ldebug.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\ldo.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\ldo.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\ldump.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lfunc.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lfunc.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lgc.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lgc.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\linit.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\liolib.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\llex.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\llex.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\llimits.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lmathlib.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lmem.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lmem.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\loadlib.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lobject.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lobject.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lopcodes.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lopcodes.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\loslib.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lparser.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lparser.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lstate.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lstate.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lstring.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lstring.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lstrlib.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\ltable.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\ltable.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\ltablib.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\ltm.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\ltm.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lua.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\luac.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\luaconf.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lualib.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lundump.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lundump.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lvm.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lvm.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lzio.c"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\lzio.h"
+					>
+				</File>
+				<File
+					RelativePath=".\lua\lua\print.c"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

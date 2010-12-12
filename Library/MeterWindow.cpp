@@ -31,6 +31,7 @@
 #include "MeasurePlugin.h"
 #include "MeterButton.h"
 #include "TintedImage.h"
+#include "MeasureScript.h"
 
 using namespace Gdiplus;
 
@@ -330,6 +331,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 			delete (*i);
 		}
 		m_Measures.clear();
+		m_ScriptMeasures.clear();
 
 		std::list<CMeter*>::iterator j = m_Meters.begin();
 		for( ; j != m_Meters.end(); ++j)
@@ -1925,6 +1927,12 @@ bool CMeterWindow::ReadSkin()
 					if (!m_HasNetMeasures && dynamic_cast<CMeasureNet*>(measure))
 					{
 						m_HasNetMeasures = true;
+					}
+
+					CMeasureScript* measureScript = dynamic_cast<CMeasureScript*>(measure);
+					if(measureScript)
+					{
+						m_ScriptMeasures.push_back(measureScript);
 					}
 				}
 			}
@@ -4016,6 +4024,12 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 
 		if ((*j)->HitTest(x, y))
 		{
+			std::list<CMeasureScript*>::iterator k = m_ScriptMeasures.begin();
+			for( ; k != m_ScriptMeasures.end(); ++k)
+			{
+				(*k)->MeterMouseEvent((*j), mouse);
+			}
+
 			switch (mouse)
 			{
 			case MOUSE_LMB_DOWN:
@@ -4602,4 +4616,45 @@ std::wstring CMeterWindow::MakePathAbsolute(const std::wstring& path)
 	}
 
 	return root + path;
+}
+
+
+CMeter* CMeterWindow::GetMeter(std::wstring meterName)
+{
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
+	{
+		if (_wcsicmp((*j)->GetName(), meterName.c_str()) == 0)
+		{
+			return (*j);
+		}
+	}
+
+	return 0;
+}
+
+CMeasure* CMeterWindow::GetMeasure(std::wstring measureName)
+{
+	std::list<CMeasure*>::const_iterator j = m_Measures.begin();
+	for( ; j != m_Measures.end(); ++j)
+	{
+		if (_wcsicmp((*j)->GetName(), measureName.c_str()) == 0)
+		{
+			return (*j);
+		}
+	}
+	return 0;
+}
+
+
+const char* CMeterWindow::ReplaceVariables(const char* p_str)
+{
+	static std::string aStr = "";
+	std::wstring value = ConvertToWide(p_str);
+
+	m_Parser.ReplaceVariables(value);
+	m_Parser.ReplaceMeasures(value);
+	aStr = ConvertToAscii(value.c_str());
+	const char* str = aStr.c_str();
+	return str;
 }
