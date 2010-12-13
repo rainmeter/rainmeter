@@ -232,12 +232,12 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		}
 		else
 		{
-			LuaManager::LuaLog("%s : TableName missing.", m_ANSIName);
+			LuaManager::LuaLog("%s : TableName missing.", m_ANSIName.c_str());
 		}
 	}
 	else
 	{
-		LuaManager::LuaLog("%s : ScriptFile missing.", m_ANSIName);
+		LuaManager::LuaLog("%s : ScriptFile missing.", m_ANSIName.c_str());
 	}
 
 }
