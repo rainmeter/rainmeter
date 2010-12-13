@@ -1,3 +1,4 @@
+#include "../StdAfx.h"
 #include "LuaPush.h"
 
 #include "../Litestep.h"

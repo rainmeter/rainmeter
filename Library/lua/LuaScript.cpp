@@ -1,3 +1,4 @@
+#include "../StdAfx.h"
 #include "LuaScript.h"
 #include "LuaManager.h"
 #include "../Rainmeter.h"

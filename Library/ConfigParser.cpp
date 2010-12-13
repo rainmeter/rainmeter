@@ -220,7 +220,7 @@ void CConfigParser::ResetMonitorVariables(CMeterWindow* meterWindow)
 */
 void CConfigParser::SetMultiMonitorVariables(bool reset)
 {
-	TCHAR buffer[256];
+	WCHAR buffer[32];
 	RECT workArea, scrArea;
 
 	if (!reset && c_MonitorVariables.empty())
@@ -280,7 +280,7 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 
 		for (size_t i = 0; i < monitors.size(); ++i)
 		{
-			TCHAR buffer2[256];
+			WCHAR buffer2[64];
 
 			const RECT work = (monitors[i].active) ? monitors[i].work : workArea;
 
@@ -328,7 +328,7 @@ void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 {
 	if (meterWindow)
 	{
-		TCHAR buffer[256];
+		WCHAR buffer[32];
 
 		if (CSystem::GetMonitorCount() > 0)
 		{

@@ -1915,7 +1915,7 @@ bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex)
 
 void CRainmeter::WriteActive(const std::wstring& config, int iniIndex)
 {
-	WCHAR buffer[256];
+	WCHAR buffer[32];
 	wsprintf(buffer, L"%i", iniIndex + 1);
 	WritePrivateProfileString(config.c_str(), L"Active", buffer, m_IniFile.c_str());
 }

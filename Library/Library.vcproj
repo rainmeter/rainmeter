@@ -2479,6 +2479,24 @@
 			<File
 				RelativePath=".\lua\LuaManager.cpp"
 				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="../StdAfx.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="../StdAfx.h"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\lua\LuaManager.h"
@@ -2487,6 +2505,24 @@
 			<File
 				RelativePath=".\lua\LuaPush.cpp"
 				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="../StdAfx.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="../StdAfx.h"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\lua\LuaPush.h"
@@ -2495,6 +2531,24 @@
 			<File
 				RelativePath=".\lua\LuaScript.cpp"
 				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="../StdAfx.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="../StdAfx.h"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\lua\LuaScript.h"
