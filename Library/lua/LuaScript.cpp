@@ -60,7 +60,7 @@ LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_s
 
 LuaScript::~LuaScript(void)
 {
-	delete[] m_strTableName;
+	if (m_strTableName) free(m_strTableName);
 }
 
 void LuaScript::BindVariable(const char* p_strName, void* p_pValue, const char* p_strTypeName)

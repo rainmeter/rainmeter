@@ -13,6 +13,8 @@ CMeasureScript::CMeasureScript(CMeterWindow* meterWindow) : CMeasure(meterWindow
 {
 	LuaManager::Init();
 
+	m_pLuaScript = NULL;
+
 	m_bUpdateDefined = false;
 	m_bGetValueDefined = false;
 	m_bGetStringValueDefined = false;
@@ -88,37 +90,8 @@ const WCHAR* CMeasureScript::GetStringValue(bool autoScale, double scale, int de
 		
 		return CheckSubstitute(m_strValue.c_str());
 	}
-	else
-	{
-		static WCHAR buffer[MAX_LINE_LENGTH];
-		static WCHAR buffer2[MAX_LINE_LENGTH];
-		double theValue = GetValue();
 
-		if(percentual)
-		{
-			swprintf(buffer, L"%i", (UINT)(100.0 * GetRelativeValue()));
-		} 
-		else if(autoScale)
-		{
-			GetScaledValue(decimals, theValue, buffer);
-		}
-		else 
-		{
-			if(decimals == 0)
-			{
-				double val = theValue * (1.0 / scale);
-				val = (val + ( (val >= 0) ? 0.5 : -0.5 ) );
-				swprintf(buffer, L"%lli", (LONGLONG)val);
-			}
-			else
-			{
-				swprintf(buffer2, L"%%.%if", decimals);
-				swprintf(buffer, buffer2, theValue * (1.0 / scale));
-			}
-		}
-
-		return CheckSubstitute(buffer);
-	}
+	return CMeasure::GetStringValue(autoScale, scale, decimals, percentual);
 }
 
 static void stackDump (lua_State *L) {
