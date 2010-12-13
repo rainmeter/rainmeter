@@ -49,6 +49,8 @@ protected:
 	bool m_PreserveAspectRatio;			// If true, aspect ratio of the image is preserved when the image is scaled
 	bool m_Tile;
 
+	RECT m_ScaleMargins;
+
 	std::vector<std::wstring> m_MeasureNames;
 	std::vector<CMeasure*> m_Measures;
 };

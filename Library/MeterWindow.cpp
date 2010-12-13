@@ -883,24 +883,29 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 	case BANG_PLUGIN:
 		{
 			std::wstring args = arg;
-			std::wstring measure = arg;
-			size_t pos = std::wstring::npos;
+			std::wstring measure;
+			std::wstring::size_type pos3;
 			do 
 			{
-				pos = args.find('\"');
-				if (pos != std::wstring::npos)
+				pos3 = args.find(L'\"');
+				if (pos3 != std::wstring::npos)
 				{
-					args.erase(pos, 1);
+					args.erase(pos3, 1);
 				}
 				
-			} while(pos != std::wstring::npos);
+			} while(pos3 != std::wstring::npos);
 
-			pos = args.find(' ');
-			if (pos != std::wstring::npos)
+			pos3 = args.find(L' ');
+			if (pos3 != std::wstring::npos)
 			{
-				measure = args.substr(0, pos);
-				args.erase(0, pos + 1);
+				measure = args.substr(0, pos3);
+				++pos3;
 			}
+			else
+			{
+				measure = args;
+			}
+			args.erase(0, pos3);
 
 			if (!measure.empty())
 			{
@@ -2158,7 +2163,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 
 				if (m_BackgroundMode == BGMODE_SCALED_IMAGE)
 				{
-					const RECT& m = m_BackgroundMargins;
+					const RECT m = m_BackgroundMargins;
 
 					if (m.top > 0) 
 					{

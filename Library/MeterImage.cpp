@@ -39,6 +39,11 @@ CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow)
 	m_HeightDefined = false;
 	m_PreserveAspectRatio = false;
 	m_Tile = false;
+
+	m_ScaleMargins.left = 0;
+	m_ScaleMargins.top = 0;
+	m_ScaleMargins.right = 0;
+	m_ScaleMargins.bottom = 0;
 }
 
 /*
@@ -144,6 +149,9 @@ void CMeterImage::ReadConfig(const WCHAR* section)
 	m_PreserveAspectRatio = 0!=parser.ReadInt(section, L"PreserveAspectRatio", 0);
 	m_Tile = 0!=parser.ReadInt(section, L"Tile", 0);
 
+	static const RECT defMargins = {0};
+	m_ScaleMargins = parser.ReadRECT(section, L"ScaleMargins", defMargins);
+
 	if (parser.IsValueDefined(section, L"W"))
 	{
 		m_WidthDefined = true;
@@ -244,16 +252,13 @@ bool CMeterImage::Draw(Graphics& graphics)
 		int drawW = m_W;
 		int drawH = m_H;
 
-		ImageAttributes imgAttr;
-		bool useImgAttr = false;
-
 		if (m_Tile)
 		{
-			imageW = m_W;
-			imageH = m_H;
-
+			ImageAttributes imgAttr;
 			imgAttr.SetWrapMode(WrapModeTile);
-			useImgAttr = true;
+
+			Rect r(x, y, drawW, drawH);
+			graphics.DrawImage(drawBitmap, r, 0, 0, drawW, drawH, UnitPixel, &imgAttr);
 		}
 		else if (m_PreserveAspectRatio)
 		{
@@ -277,10 +282,74 @@ bool CMeterImage::Draw(Graphics& graphics)
 				x += (m_W - drawW) / 2;
 				y += (m_H - drawH) / 2;
 			}
-		}
 
-		Rect r(x, y, drawW, drawH);
-		graphics.DrawImage(drawBitmap, r, 0, 0, imageW, imageH, UnitPixel, (useImgAttr) ? &imgAttr : NULL);
+			Rect r(x, y, drawW, drawH);
+			graphics.DrawImage(drawBitmap, r, 0, 0, imageW, imageH, UnitPixel);
+		}
+		else
+		{
+			const RECT m = m_ScaleMargins;
+
+			if (m.top > 0) 
+			{
+				if (m.left > 0) 
+				{
+					// Top-Left
+					Rect r(x, y, m.left, m.top);
+					graphics.DrawImage(drawBitmap, r, 0, 0, m.left, m.top, UnitPixel);
+				}
+
+				// Top
+				Rect r(x + m.left, y, drawW - m.left - m.right, m.top);
+				graphics.DrawImage(drawBitmap, r, m.left, 0, imageW - m.left - m.right, m.top, UnitPixel);
+
+				if (m.right > 0) 
+				{
+					// Top-Right
+					Rect r(x + drawW - m.right, y, m.right, m.top);
+					graphics.DrawImage(drawBitmap, r, imageW - m.right, 0, m.right, m.top, UnitPixel);
+				}
+			}
+
+			if (m.left > 0) 
+			{
+				// Left
+				Rect r(x, y + m.top, m.left, drawH - m.top - m.bottom);
+				graphics.DrawImage(drawBitmap, r, 0, m.top, m.left, imageH - m.top - m.bottom, UnitPixel);
+			}
+
+			// Center
+			Rect r(x + m.left, y + m.top, drawW - m.left - m.right, drawH - m.top - m.bottom);
+			graphics.DrawImage(drawBitmap, r, m.left, m.top, imageW - m.left - m.right, imageH - m.top - m.bottom, UnitPixel);
+
+			if (m.right > 0) 
+			{
+				// Right
+				Rect r(x + drawW - m.right, y + m.top, m.right, drawH - m.top - m.bottom);
+				graphics.DrawImage(drawBitmap, r, imageW - m.right, m.top, m.right, imageH - m.top - m.bottom, UnitPixel);
+			}
+			
+			if (m.bottom > 0) 
+			{
+				if (m.left > 0) 
+				{
+					// Bottom-Left
+					Rect r(x, y + drawH - m.bottom, m.left, m.bottom);
+					graphics.DrawImage(drawBitmap, r, 0, imageH - m.bottom, m.left, m.bottom, UnitPixel);
+				}
+
+				// Bottom
+				Rect r(x + m.left, y + drawH - m.bottom, drawW - m.left - m.right, m.bottom);
+				graphics.DrawImage(drawBitmap, r, m.left, imageH - m.bottom, imageW - m.left - m.right, m.bottom, UnitPixel);
+
+				if (m.right > 0) 
+				{
+					// Bottom-Right
+					Rect r(x + drawW - m.right, y + drawH - m.bottom, m.right, m.bottom);
+					graphics.DrawImage(drawBitmap, r, imageW - m.right, imageH - m.bottom, m.right, m.bottom, UnitPixel);
+				}
+			}
+		}
 	}
 
 	return true;
