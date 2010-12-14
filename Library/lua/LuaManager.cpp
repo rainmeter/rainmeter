@@ -59,7 +59,7 @@ void LuaManager::LuaLog(const char* format, ... )
     va_list args;
     va_start( args, format );
 
-    _vsnprintf(buffer, 4096, format, args );
+    _vsnprintf_s(buffer, 4096, _TRUNCATE, format, args );
 
 #ifndef _DEBUG
 	// Forcing output to the Debug Output window!
@@ -69,6 +69,6 @@ void LuaManager::LuaLog(const char* format, ... )
 
 	std::wstring str = ConvertToWide(buffer);
 
-	LSLog(3,L"Lua", str.c_str());
+	LSLog(LOG_NOTICE, L"Lua", str.c_str());
 	va_end(args);
 }

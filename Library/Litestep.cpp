@@ -605,7 +605,7 @@ void DebugLog(const WCHAR* format, ... )
 	WCHAR buffer[4096];
     va_list args;
     va_start( args, format );
-    _vsnwprintf( buffer, 4096, format, args );
+    _vsnwprintf_s( buffer, 4096, _TRUNCATE, format, args );
 	LSLog(LOG_DEBUG, L"Rainmeter", buffer);
 	va_end(args);
 }
