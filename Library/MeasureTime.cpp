@@ -22,11 +22,6 @@
 #include "MeasureTime.h"
 #include "Rainmeter.h"
 
-void MeasureTime_CRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved)
-{
-	// Do nothing.
-}
-
 int GetYearDay(int year, int month, int day)
 {
 	int yearDay = 0;
@@ -86,7 +81,7 @@ void CMeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, 
 {
 	if (bufLen > 0)
 	{
-		_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(MeasureTime_CRTInvalidParameterHandler);
+		_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
 		_CrtSetReportMode(_CRT_ASSERT, 0);
 
 		errno = 0;

@@ -56,10 +56,20 @@ void LuaManager::ReportErrors(lua_State * L)
 void LuaManager::LuaLog(const char* format, ... )
 {
 	char buffer[4096];
-    va_list args;
-    va_start( args, format );
+	va_list args;
+	va_start( args, format );
 
-    _vsnprintf_s(buffer, 4096, _TRUNCATE, format, args );
+	_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
+	_CrtSetReportMode(_CRT_ASSERT, 0);
+
+	errno = 0;
+	_vsnprintf_s( buffer, 4096, _TRUNCATE, format, args );
+	if (errno != 0)
+	{
+		_snprintf_s(buffer, 4096, _TRUNCATE, "LuaLog internal error: %s", format);
+	}
+
+	_set_invalid_parameter_handler(oldHandler);
 
 #ifndef _DEBUG
 	// Forcing output to the Debug Output window!

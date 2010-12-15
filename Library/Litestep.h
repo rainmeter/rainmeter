@@ -52,6 +52,8 @@ BOOL RemoveBangCommand(LPCSTR command);
 void TransparentBltLS (HDC dc, int nXDest, int nYDest, int nWidth, int nHeight, HDC tempDC, int nXSrc, int nYSrc, COLORREF colorTransparent);
 void VarExpansion(LPSTR buffer, LPCSTR value);
 void LSSetVariable(const BSTR name, const BSTR value);
+
+void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved);
 void DebugLog(const WCHAR* message, ... );
 
 void ResetLoggingFlag();
