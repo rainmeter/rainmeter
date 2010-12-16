@@ -147,6 +147,12 @@ public:
 	CTrayWindow* GetTrayWindow() { return m_TrayWindow; }
 
 	CMeterWindow* GetMeterWindow(const std::wstring& config);
+	
+	// Added by Peter Souza IV / psouza4 / 2010.12.13
+	//
+	// Read comments in Rainmeter.cpp for details.
+	CMeterWindow* GetMeterWindowByINI(const std::wstring& ini_searching);
+	
 	CMeterWindow* GetMeterWindow(HWND hwnd);
 	void GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group = L"");
 	std::map<std::wstring, CMeterWindow*>& GetAllMeterWindows() { return m_Meters; }

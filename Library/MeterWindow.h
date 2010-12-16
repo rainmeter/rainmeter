@@ -174,6 +174,11 @@ public:
 	const std::wstring& GetSkinAuthor() { return m_Author; }
 	const std::wstring& GetSkinName() { return m_SkinName; }
 	const std::wstring& GetSkinIniFile() { return m_SkinIniFile; }
+	
+	// Added by Peter Souza IV / psouza4 / 2010.12.13
+	//
+	// Public read-only access to the skin's pathname (necessary for the plugin bridge)
+	const std::wstring& GetSkinPath() { return m_SkinPath; }
 
 	std::list<CMeasure*>& GetMeasures() { return m_Measures; }
 	std::list<CMeter*>& GetMeters() { return m_Meters; }

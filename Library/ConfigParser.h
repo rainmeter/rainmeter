@@ -80,12 +80,15 @@ public:
 	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
 
+	// Updated by Peter Souza IV / psouza4 / 2010.12.13
+	//
+	// Made this public so the plugin bridge can read variables directly
+	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
 
 private:
 	void SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow);
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
 
-	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
 	void ReadVariables();
 
 	CMeasure* GetMeasure(const std::wstring& name);

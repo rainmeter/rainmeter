@@ -2015,6 +2015,32 @@ CMeterWindow* CRainmeter::GetMeterWindow(const std::wstring& config)
 	return NULL;
 }
 
+// Added by Peter Souza IV / psouza4 / 2010.12.13
+//
+// Returns a CMeterWindow object given a config's INI path and filename.  Since plugins
+// get the full path and filename of an INI file on Initialize(), but not the name of
+// the config, this is used to convert the INI filename to a config name.
+CMeterWindow* CRainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
+{
+	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
+
+	for (; iter != m_Meters.end(); ++iter)
+	{
+		std::wstring ini_current = L"";
+		ini_current += ((*iter).second->GetSkinPath()); // includes trailing backslash
+		ini_current += ((*iter).second->GetSkinName());		
+		ini_current += L"\\";
+		ini_current += ((*iter).second->GetSkinIniFile());
+
+		if (_wcsicmp(ini_current.c_str(), ini_searching.c_str()) == 0)
+		{
+			return (*iter).second;
+		}
+	}
+
+	return NULL;
+}
+
 CMeterWindow* CRainmeter::GetMeterWindow(HWND hwnd)
 {
 	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
@@ -3882,4 +3908,169 @@ void CRainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
 			}
 		}
 	}
+}
+
+/*
+** PluginBridge
+**
+** Receives a command and data from a plugin and returns a result.  Used by plugins.
+**
+** Revision history:
+**      2010.12.13  Peter Souza IV / psouza4        initial creation
+**
+*/
+LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
+{
+	if (Rainmeter) 
+	{
+		static std::wstring result;
+		std::wstring sCommand = _sCommand;
+		std::wstring sData = _sData;
+		std::transform(sCommand.begin(), sCommand.end(), sCommand.begin(), ::towlower);
+
+		// Command       GetConfig
+		// Data          unquoted full path and filename given to the plugin on initialize
+		//               (note: this is CaSe-SeNsItIvE!)
+		// Execution     none
+		// Result        the config name if found or a blank string if not
+		if (sCommand == L"getconfig")
+		{
+			// returns the config name, lookup by INI file
+
+			CMeterWindow *meterWindow = Rainmeter->GetMeterWindowByINI(sData);
+			if (meterWindow)
+			{
+				result = meterWindow->GetSkinName();
+				return result.c_str();
+			}
+
+			return L"";
+		}
+
+		// Command       SkinAuthor
+		// Data          the config name
+		// Execution     none
+		// Result        the skin author of the skin name or 'error' if the config name
+		//               was not found
+		if (sCommand == L"skinauthor")
+		{
+			std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
+			std::wstring config;
+
+			if (subStrings.size() >= 1)
+			{
+				config = subStrings[0];
+
+				CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
+				if (meterWindow)
+				{
+					result = meterWindow->GetSkinAuthor();
+					return result.c_str();
+				}
+			}
+
+			return L"error";
+		}
+
+		
+		// Command       GetVariable
+		// Data          [the config name]
+		// Execution     none
+		// Result        the value of the variable
+		if (sCommand == L"getvariable")
+		{
+			std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
+			std::wstring config;
+			std::wstring variable;
+
+			if (subStrings.size() >= 2)
+			{
+				config = subStrings[0];
+				variable = subStrings[1];
+
+				CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
+				if (meterWindow)
+				{
+					std::wstring result_from_parser = L"";
+
+					if (meterWindow->GetParser().GetVariable(variable, result_from_parser))
+					{
+						result = result_from_parser;
+						return result.c_str();
+					}
+				}
+			}
+
+			return L"";
+		}
+
+		// Command       SetVariable
+		// Data          [the config name] [variable data]
+		// Execution     the indicated variable is updated
+		// Result        'success' if the config was found, 'error' otherwise
+		if (sCommand == L"setvariable")
+		{
+			std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
+			std::wstring config;
+			std::wstring arguments;
+
+			if (subStrings.size() >= 2)
+			{
+				config = subStrings[0];
+
+				for (size_t i = 1; i < subStrings.size(); ++i)
+				{
+					if (i != 1) arguments += L" ";
+					arguments += subStrings[i];
+				}
+
+				CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
+				if (meterWindow)
+				{
+					meterWindow->RunBang(BANG_SETVARIABLE, arguments.c_str());
+					return L"success";
+				}
+			}
+
+			/*
+			result = L"er1/";
+			result += subStrings[0];
+			result += L"/";
+			TCHAR x[100];
+			swprintf(x, L"%d", subStrings.size());
+			result += x;
+			return result.c_str();
+			*/
+			return L"error";
+		}
+
+		// Command       GetWindow
+		// Data          [the config name]
+		// Execution     none
+		// Result        the HWND to the specified config window if found, 'error' otherwise
+		if (sCommand == L"getwindow")
+		{
+			std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
+			std::wstring config;
+
+			if (subStrings.size() >= 1)
+			{
+				config = subStrings[0];
+
+				CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
+				if (meterWindow)
+				{
+					TCHAR buf1[100];
+					swprintf(buf1, L"%lu", meterWindow->GetWindow());
+					result = buf1;
+					return result.c_str();
+				}
+			}
+			return L"error";
+		}
+
+		return L"noop";
+	}	
+
+	return L"error:no rainmeter!";
 }
