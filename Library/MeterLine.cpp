@@ -114,22 +114,22 @@ void CMeterLine::ReadConfig(const WCHAR* section)
 	{
 		if (i == 0)
 		{
-			wcscpy(tmpName, L"LineColor");
+			wcsncpy_s(tmpName, L"LineColor", _TRUNCATE);
 		}
 		else
 		{
-			swprintf(tmpName, L"LineColor%i", i + 1);
+			_snwprintf_s(tmpName, _TRUNCATE, L"LineColor%i", i + 1);
 		}
 
 		m_Colors.push_back(parser.ReadColor(section, tmpName, Color::White));
 
 		if (i == 0)
 		{
-			wcscpy(tmpName, L"Scale");
+			wcsncpy_s(tmpName, L"Scale", _TRUNCATE);
 		}
 		else
 		{
-			swprintf(tmpName, L"Scale%i", i + 1);
+			_snwprintf_s(tmpName, _TRUNCATE, L"Scale%i", i + 1);
 		}
 
 		m_ScaleValues.push_back(parser.ReadFloat(section, tmpName, 1.0));
@@ -138,7 +138,7 @@ void CMeterLine::ReadConfig(const WCHAR* section)
 		{
 			if (i != 0)
 			{
-				swprintf(tmpName, L"MeasureName%i", i + 1);
+				_snwprintf_s(tmpName, _TRUNCATE, L"MeasureName%i", i + 1);
 				m_MeasureNames.push_back(parser.ReadString(section, tmpName, L""));
 			}
 		}

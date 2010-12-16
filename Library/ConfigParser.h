@@ -19,6 +19,8 @@
 #ifndef __CONFIGPARSER_H__
 #define __CONFIGPARSER_H__
 
+#pragma warning(disable: 4503)
+
 #include <windows.h>
 #include <map>
 #include <string>

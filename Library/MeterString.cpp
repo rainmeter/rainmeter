@@ -673,7 +673,7 @@ void CMeterString::FreeFontCache()
 std::wstring CMeterString::FontPropertiesToString(FontFamily* fontFamily, REAL size, FontStyle style)
 {
 	WCHAR ids[128] = {0};
-	swprintf(ids, L"%.1f-%i", size, (int)style);
+	_snwprintf_s(ids, _TRUNCATE, L"%.1f-%i", size, (int)style);
 
 	if (fontFamily)
 	{

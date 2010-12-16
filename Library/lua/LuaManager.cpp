@@ -63,10 +63,10 @@ void LuaManager::LuaLog(const char* format, ... )
 	_CrtSetReportMode(_CRT_ASSERT, 0);
 
 	errno = 0;
-	_vsnprintf_s( buffer, 4096, _TRUNCATE, format, args );
+	_vsnprintf_s( buffer, _TRUNCATE, format, args );
 	if (errno != 0)
 	{
-		_snprintf_s(buffer, 4096, _TRUNCATE, "LuaLog internal error: %s", format);
+		_snprintf_s(buffer, _TRUNCATE, "LuaLog internal error: %s", format);
 	}
 
 	_set_invalid_parameter_handler(oldHandler);

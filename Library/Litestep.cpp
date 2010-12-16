@@ -515,7 +515,7 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 		startTime = time;
 	}
 	WCHAR buffer[128];
-	swprintf(buffer, L"(%02i:%02i:%02i.%03i) ", (time - startTime) / (1000 * 60* 60), ((time - startTime) / (1000 * 60)) % 60, ((time - startTime) / 1000) % 60, (time - startTime) % 1000);
+	_snwprintf_s(buffer, _TRUNCATE, L"(%02i:%02i:%02i.%03i) ", (time - startTime) / (1000 * 60* 60), ((time - startTime) / (1000 * 60)) % 60, ((time - startTime) / 1000) % 60, (time - startTime) % 1000);
 
 	std::wstring message(buffer);
 	logInfo.timestamp = message; 
@@ -615,10 +615,10 @@ void DebugLog(const WCHAR* format, ... )
 	_CrtSetReportMode(_CRT_ASSERT, 0);
 
 	errno = 0;
-	_vsnwprintf_s( buffer, 4096, _TRUNCATE, format, args );
+	_vsnwprintf_s( buffer, _TRUNCATE, format, args );
 	if (errno != 0)
 	{
-		_snwprintf_s(buffer, 4096, _TRUNCATE, L"DebugLog internal error: %s", format);
+		_snwprintf_s(buffer, _TRUNCATE, L"DebugLog internal error: %s", format);
 	}
 
 	_set_invalid_parameter_handler(oldHandler);

@@ -179,7 +179,7 @@ void CMeasureCalc::FormulaReplace()
 			int randNumber = m_LowBound + (int)(range * rand()/(RAND_MAX + 1.0)); 
 
 			WCHAR buffer[32];
-			wsprintf(buffer, L"%i", randNumber);
+			_snwprintf_s(buffer, _TRUNCATE, L"%i", randNumber);
 
 			m_Formula.replace(loc, 6, buffer);
 			loc += wcslen(buffer);

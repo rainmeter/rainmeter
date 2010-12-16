@@ -133,7 +133,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	{
 		if (CRainmeter::GetDebug())
 		{
-			DebugLog(L"Plugin: Unable to load plugin: \"%s\", ErrorCode=%i", m_PluginName.c_str(), err);
+			DebugLog(L"Plugin: Unable to load plugin: \"%s\", ErrorCode=%u", m_PluginName.c_str(), err);
 		}
 
 		// Try to load from Rainmeter's folder
@@ -149,7 +149,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			{
 				if (CRainmeter::GetDebug())
 				{
-					DebugLog(L"Plugin: Unable to load plugin: \"%s\", ErrorCode=%i", pluginName.c_str(), err);
+					DebugLog(L"Plugin: Unable to load plugin: \"%s\", ErrorCode=%u", pluginName.c_str(), err);
 				}
 			}
 		}

@@ -511,17 +511,17 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 
 		if (decimals == 0)
 		{
-			swprintf(buffer, L"%i", (UINT)val);
+			_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)val);
 		} 
 		else
 		{
-			swprintf(format, L"%%.%if", decimals);
-			swprintf(buffer, format, val);
+			_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
+			_snwprintf_s(buffer, _TRUNCATE, format, val);
 		}
 	} 
 	else if(autoScale)
 	{
-		GetScaledValue(decimals, GetValue(), buffer);
+		GetScaledValue(decimals, GetValue(), buffer, _countof(buffer));
 	}
 	else 
 	{
@@ -530,11 +530,11 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 		if(decimals == 0)
 		{
 			val += (val >= 0) ? 0.5 : -0.5;
-			swprintf(buffer, L"%lli", (LONGLONG)val);
+			_snwprintf_s(buffer, _TRUNCATE, L"%lli", (LONGLONG)val);
 		}
 		else if (decimals == -1)
 		{
-			swprintf(buffer, L"%.5f", val);
+			_snwprintf_s(buffer, _TRUNCATE, L"%.5f", val);
 
 			size_t len = wcslen(buffer);
 			if (len >= 6 && wcscmp(&buffer[len - 6], L".00000") == 0)
@@ -544,54 +544,54 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 		}
 		else
 		{
-			swprintf(format, L"%%.%if", decimals);
-			swprintf(buffer, format, val);
+			_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
+			_snwprintf_s(buffer, _TRUNCATE, format, val);
 		}
 	}
 
 	return CheckSubstitute(buffer);
 }
 
-void CMeasure::GetScaledValue(int decimals, double theValue, WCHAR* buffer)
+void CMeasure::GetScaledValue(int decimals, double theValue, WCHAR* buffer, size_t sizeInWords)
 {
 	WCHAR format[32];
 	double value = 0;
 
 	if(decimals == 0)
 	{
-		wcscpy(format, L"%.0f");
+		wcsncpy_s(format, L"%.0f", _TRUNCATE);
 	}
 	else
 	{
-		swprintf(format, L"%%.%if", decimals);
+		_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
 	}
 
 	if(theValue > 1000.0 * 1000.0 * 1000.0 * 1000.0)
 	{
-		wcscat(format, L" T");
+		wcsncat_s(format, L" T", _TRUNCATE);
 		value = theValue / (1024.0 * 1024.0 * 1024.0 * 1024.0);
 	}
 	else if(theValue > 1000.0 * 1000.0 * 1000.0)
 	{
-		wcscat(format, L" G");
+		wcsncat_s(format, L" G", _TRUNCATE);
 		value = theValue / (1024.0 * 1024.0 * 1024.0);
 	}
 	else if(theValue > 1000.0 * 1000.0)
 	{
-		wcscat(format, L" M");
+		wcsncat_s(format, L" M", _TRUNCATE);
 		value = theValue / (1024.0 * 1024.0);
 	}
 	else if(theValue > 1000.0)
 	{
-		wcscat(format, L" k");
+		wcsncat_s(format, L" k", _TRUNCATE);
 		value = theValue / 1024.0;
 	}
 	else
 	{
-		wcscat(format, L" ");
+		wcsncat_s(format, L" ", _TRUNCATE);
 		value = theValue;
 	}
-	swprintf(buffer, format, value);
+	_snwprintf_s(buffer, sizeInWords, _TRUNCATE, format, value);
 }
 
 

@@ -124,7 +124,7 @@ BOOL CTrayWindow::AddTrayIcon()
 		tnid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP; 
 		tnid.uCallbackMessage = WM_NOTIFYICON; 
 		tnid.hIcon = m_TrayIcon;
-		lstrcpyn(tnid.szTip, L"Rainmeter", sizeof(tnid.szTip)); 
+		wcsncpy_s(tnid.szTip, L"Rainmeter", _TRUNCATE); 
 		
 		res = Shell_NotifyIcon(NIM_ADD, &tnid); 
 	}
@@ -338,7 +338,7 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 					do 
 					{
 						WCHAR buffer[MAX_PATH];
-						wsprintf(buffer, imageName.c_str(), count++);
+						_snwprintf_s(buffer, _TRUNCATE, imageName.c_str(), count++);
 
 						hIcon = (HICON)LoadImage(NULL, buffer, IMAGE_ICON, TRAYICON_SIZE, TRAYICON_SIZE, LR_LOADFROMFILE);
 						if (hIcon) m_TrayIcons.push_back(hIcon);
@@ -492,9 +492,9 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				// Check which config was selected
 				const std::vector<CRainmeter::CONFIG>& configs = Rainmeter->GetAllConfigs();
 
-				for (size_t i = 0; i < configs.size(); ++i)
+				for (int i = 0; i < (int)configs.size(); ++i)
 				{
-					for (size_t j = 0; j < configs[i].commands.size(); ++j)
+					for (int j = 0; j < (int)configs[i].commands.size(); ++j)
 					{
 						if (configs[i].commands[j] == wParam)
 						{
@@ -600,7 +600,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::wstring& path = Rainmeter->GetSkinPath();
 
 				cds.dwData = RAINMETER_QUERY_ID_SKINS_PATH;
-				cds.cbData = (path.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((path.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) path.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -612,7 +612,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				std::wstring path = Rainmeter->GetSettingsPath();
 
 				cds.dwData = RAINMETER_QUERY_ID_SETTINGS_PATH;
-				cds.cbData = (path.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((path.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) path.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -624,7 +624,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::wstring& path = Rainmeter->GetPluginPath();
 
 				cds.dwData = RAINMETER_QUERY_ID_PLUGINS_PATH;
-				cds.cbData = (path.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((path.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) path.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -636,7 +636,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::wstring& path = Rainmeter->GetPath();
 
 				cds.dwData = RAINMETER_QUERY_ID_PROGRAM_PATH;
-				cds.cbData = (path.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((path.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) path.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -648,7 +648,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::wstring& path = Rainmeter->GetLogFile();
 
 				cds.dwData = RAINMETER_QUERY_ID_LOG_PATH;
-				cds.cbData = (path.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((path.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) path.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -660,7 +660,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::wstring& editor = Rainmeter->GetConfigEditor();
 
 				cds.dwData = RAINMETER_QUERY_ID_CONFIG_EDITOR;
-				cds.cbData = (editor.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((editor.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) editor.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -672,7 +672,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				std::wstring commandline = Rainmeter->GetCommandLine();
 
 				cds.dwData = RAINMETER_QUERY_ID_COMMAND_LINE;
-				cds.cbData = (commandline.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((commandline.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) commandline.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -700,7 +700,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::wstring& date = Rainmeter->GetStatsDate();
 
 				cds.dwData = RAINMETER_QUERY_ID_STATS_DATE;
-				cds.cbData = (date.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((date.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) date.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -712,7 +712,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::wstring& tray = Rainmeter->GetTrayExecuteL();
 
 				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_L;
-				cds.cbData = (tray.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((tray.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) tray.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -724,7 +724,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::wstring& tray = Rainmeter->GetTrayExecuteR();
 
 				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_R;
-				cds.cbData = (tray.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((tray.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) tray.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -736,7 +736,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::wstring& tray = Rainmeter->GetTrayExecuteM();
 
 				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_M;
-				cds.cbData = (tray.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((tray.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) tray.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -748,7 +748,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::wstring& tray = Rainmeter->GetTrayExecuteDL();
 
 				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_DL;
-				cds.cbData = (tray.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((tray.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) tray.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -760,7 +760,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::wstring& tray = Rainmeter->GetTrayExecuteDR();
 
 				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_DR;
-				cds.cbData = (tray.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((tray.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) tray.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
@@ -772,7 +772,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::wstring& tray = Rainmeter->GetTrayExecuteDM();
 
 				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_DM;
-				cds.cbData = (tray.size() + 1) * sizeof(wchar_t);
+				cds.cbData = (DWORD)((tray.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) tray.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);

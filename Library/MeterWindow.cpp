@@ -940,8 +940,8 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			// Formula read fine
 			if(result != -1)
 			{
-				TCHAR buffer[256];
-				swprintf(buffer, L"%f", value);
+				WCHAR buffer[256];
+				_snwprintf_s(buffer, _TRUNCATE, L"%f", value);
 
 				const std::wstring& resultString = buffer;
 
@@ -1457,19 +1457,19 @@ void CMeterWindow::ScreenToWindow()
 	if (m_WindowXPercentage == true)
 	{
 		num = 100.0f * (float)pixel / (float)screenw;
-		swprintf(buffer, L"%.5f%%", num);
+		_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", num);
 	}
 	else
 	{
-		wsprintf(buffer, L"%i", pixel);
+		_snwprintf_s(buffer, _TRUNCATE, L"%i", pixel);
 	}
 	if (m_WindowXFromRight == true)
 	{
-		wsprintf(buffer, L"%sR", buffer);
+		_snwprintf_s(buffer, _TRUNCATE, L"%sR", buffer);
 	}
 	if (m_WindowXScreenDefined == true)
 	{
-		wsprintf(buffer, L"%s@%i", buffer, m_WindowXScreen);
+		_snwprintf_s(buffer, _TRUNCATE, L"%s@%i", buffer, m_WindowXScreen);
 	}
 	m_WindowX = buffer;
 
@@ -1498,19 +1498,19 @@ void CMeterWindow::ScreenToWindow()
 	if (m_WindowYPercentage == true)
 	{
 		num = 100.0f * (float)pixel / (float)screenh;
-		swprintf(buffer, L"%.5f%%", num);
+		_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", num);
 	}
 	else
 	{
-		wsprintf(buffer, L"%i", pixel);
+		_snwprintf_s(buffer, _TRUNCATE, L"%i", pixel);
 	}
 	if (m_WindowYFromBottom == true)
 	{
-		wsprintf(buffer, L"%sB", buffer);
+		_snwprintf_s(buffer, _TRUNCATE, L"%sB", buffer);
 	}
 	if (m_WindowYScreenDefined == true)
 	{
-		wsprintf(buffer, L"%s@%i", buffer, m_WindowYScreen);
+		_snwprintf_s(buffer, _TRUNCATE, L"%s@%i", buffer, m_WindowYScreen);
 	}
 	m_WindowY = buffer;
 }
@@ -1575,14 +1575,14 @@ void CMeterWindow::ReadConfig()
 		{
 			double value = parser.ReadFormula(section, L"WindowX", 0.0);
 			WCHAR buffer[32];
-			swprintf(buffer, L"%i", (int)value);
+			_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)value);
 			m_WindowX = buffer;
 		}
 		if (!m_WindowY.empty() && m_WindowY[0] == L'(' && m_WindowY[m_WindowY.size() - 1] == L')')
 		{
 			double value = parser.ReadFormula(section, L"WindowY", 0.0);
 			WCHAR buffer[32];
-			swprintf(buffer, L"%i", (int)value);
+			_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)value);
 			m_WindowY = buffer;
 		}
 
@@ -1663,28 +1663,28 @@ void CMeterWindow::WriteConfig()
 			WritePrivateProfileString(section, L"WindowY", m_WindowY.c_str(), iniFile.c_str());
 		}
 
-		wsprintf(buffer, L"%i", m_AlphaValue);
+		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_AlphaValue);
 		WritePrivateProfileString(section, L"AlphaValue", buffer, iniFile.c_str());
 
-		wsprintf(buffer, L"%i", m_FadeDuration);
+		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_FadeDuration);
 		WritePrivateProfileString(section, L"FadeDuration", buffer, iniFile.c_str());
 		
-		wsprintf(buffer, L"%i", m_ClickThrough);
+		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_ClickThrough);
 		WritePrivateProfileString(section, L"ClickThrough", buffer, iniFile.c_str());
-		wsprintf(buffer, L"%i", m_WindowDraggable);
+		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowDraggable);
 		WritePrivateProfileString(section, L"Draggable", buffer, iniFile.c_str());
-		wsprintf(buffer, L"%i", m_WindowHide);
+		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowHide);
 		WritePrivateProfileString(section, L"HideOnMouseOver", buffer, iniFile.c_str());
-		wsprintf(buffer, L"%i", m_SavePosition);
+		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_SavePosition);
 		WritePrivateProfileString(section, L"SavePosition", buffer, iniFile.c_str());
-		wsprintf(buffer, L"%i", m_SnapEdges);
+		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_SnapEdges);
 		WritePrivateProfileString(section, L"SnapEdges", buffer, iniFile.c_str());
-		wsprintf(buffer, L"%i", m_KeepOnScreen);
+		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_KeepOnScreen);
 		WritePrivateProfileString(section, L"KeepOnScreen", buffer, iniFile.c_str());
-		wsprintf(buffer, L"%i", m_AutoSelectScreen);
+		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_AutoSelectScreen);
 		WritePrivateProfileString(section, L"AutoSelectScreen", buffer, iniFile.c_str());
 
-		wsprintf(buffer, L"%i", m_WindowZPosition);
+		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowZPosition);
 		WritePrivateProfileString(section, L"AlwaysOnTop", buffer, iniFile.c_str());
 	}
 }
@@ -1732,11 +1732,11 @@ bool CMeterWindow::ReadSkin()
 		WCHAR buffer[128];
 		if (appVersion % 1000 != 0)
 		{
-			wsprintf(buffer, L"%i.%i.%i", appVersion / 1000000, (appVersion / 1000) % 1000, appVersion % 1000);
+			_snwprintf_s(buffer, _TRUNCATE, L"%i.%i.%i", appVersion / 1000000, (appVersion / 1000) % 1000, appVersion % 1000);
 		}
 		else
 		{
-			wsprintf(buffer, L"%i.%i", appVersion / 1000000, (appVersion / 1000) % 1000);
+			_snwprintf_s(buffer, _TRUNCATE, L"%i.%i", appVersion / 1000000, (appVersion / 1000) % 1000);
 		}
 
 		std::wstring text = L"The skin \"" + m_SkinName;
@@ -1838,7 +1838,7 @@ bool CMeterWindow::ReadSkin()
 		bool loop = true;
 		do 
 		{
-			swprintf(tmpName, L"LocalFont%i", i);
+			_snwprintf_s(tmpName, _TRUNCATE, L"LocalFont%i", i);
 			localFont = m_Parser.ReadString(L"Rainmeter", tmpName, L"");
 			// There is a key called LocalFont%i
 			if (!localFont.empty())

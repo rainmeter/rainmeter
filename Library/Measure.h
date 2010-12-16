@@ -59,7 +59,7 @@ public:
 	UINT GetUpdateDivider() { return m_UpdateDivider; }
 
 	virtual const WCHAR* GetStringValue(bool autoScale, double scale, int decimals, bool percentual);
-	static void GetScaledValue(int decimals, double theValue, WCHAR* buffer);
+	static void GetScaledValue(int decimals, double theValue, WCHAR* buffer, size_t sizeInWords);
 
 	static CMeasure* Create(const WCHAR* measure, CMeterWindow* meterWindow);
 

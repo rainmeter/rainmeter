@@ -204,10 +204,10 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 								WCHAR buffer[256];
 								double minVal = (*i)->GetMinValue();
 								double maxVal = (*i)->GetMaxValue();
-								CMeasure::GetScaledValue(1, minVal, buffer);
+								CMeasure::GetScaledValue(1, minVal, buffer, _countof(buffer));
 								std::wstring range = buffer;
 								range += L" - ";
-								CMeasure::GetScaledValue(1, maxVal, buffer);
+								CMeasure::GetScaledValue(1, maxVal, buffer, _countof(buffer));
 								range += buffer;
 
 								if (name && *name)
@@ -306,7 +306,7 @@ void UpdateWidgets()
 			if ((*iter).version != 0)
 			{
 				WCHAR buffer[64];
-				swprintf(buffer, L"%i.%i", (*iter).version / 1000, (*iter).version % 1000);
+				_snwprintf_s(buffer, _TRUNCATE, L"%u.%u", (*iter).version / 1000, (*iter).version % 1000);
 				ListView_SetItemText(widget, i, 1, buffer);
 			}
 
@@ -380,7 +380,7 @@ void ScanPlugins()
 		}
 		else
 		{
-			DebugLog(L"Unable to load library: \"%s\", ErrorCode=%i", tmpSz.c_str(), err);
+			DebugLog(L"Unable to load library: \"%s\", ErrorCode=%u", tmpSz.c_str(), err);
 		}
 
 		g_Plugins.push_back(info);
@@ -429,11 +429,11 @@ BOOL OnInitAboutDialog(HWND window)
 	HWND widget;
 
 	widget = GetDlgItem(window, IDC_VERSION_STRING);
-	swprintf(tmpSz, L"%s %s%s rev %i %s", APPNAME, APPVERSION, revision_beta ? L" Beta" : L"", revision_number, APPBITS);
+	_snwprintf_s(tmpSz, _TRUNCATE, L"%s %s%s rev %i %s", APPNAME, APPVERSION, revision_beta ? L" Beta" : L"", revision_number, APPBITS);
 	SetWindowText(widget, tmpSz);
 
 	widget = GetDlgItem(window, IDC_BUILD_STRING);
-	swprintf(tmpSz, L"Built on %s", ConvertToWide(__DATE__).c_str());
+	_snwprintf_s(tmpSz, _TRUNCATE, L"Built on %s", ConvertToWide(__DATE__).c_str());
 	SetWindowText(widget, tmpSz);
 
 	CheckDlgButton(window, IDC_DISABLE_VERSION_CHECK, Rainmeter->GetDisableVersionCheck() ? BST_CHECKED : BST_UNCHECKED);

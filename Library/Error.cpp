@@ -43,7 +43,7 @@ const std::wstring& CError::GetString()
 		m_String = c_ErrorStrings[m_Error];
 //		if (m_File) 
 //		{
-//			swprintf(Buffer, L"%i", m_Line);
+//			_snwprintf_s(Buffer, _TRUNCATE, L"%i", m_Line);
 //
 //			m_String += L"\n(";
 //			m_String += m_File;

@@ -264,11 +264,11 @@ void CMeasureTime::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			TIME_ZONE_INFORMATION tzi;
 			GetTimeZoneInformation(&tzi);
 
-			m_DeltaTime.QuadPart = (LONGLONG)((zone * 3600) - tzi.DaylightBias * 60) * 10000000.0;
+			m_DeltaTime.QuadPart = (LONGLONG)((zone * 3600) - tzi.DaylightBias * 60) * 10000000;
 		}
 		else
 		{
-			m_DeltaTime.QuadPart = (LONGLONG)(zone * 3600) * 10000000.0;
+			m_DeltaTime.QuadPart = (LONGLONG)(zone * 3600) * 10000000;
 		}
 	}
 }
