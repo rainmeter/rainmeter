@@ -465,6 +465,12 @@ void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 }
 
 
+// -----------------------------------------------------------------------------------------------
+//
+//                                Callbacks for Litestep
+//
+// -----------------------------------------------------------------------------------------------
+
 /*
 ** RainmeterHide
 **
@@ -565,6 +571,17 @@ void RainmeterToggleMeter(HWND, const char* arg)
 }
 
 /*
+** RainmeterMoveMeter
+**
+** Callback for the !RainmeterMoveMeter bang
+**
+*/
+void RainmeterMoveMeter(HWND, const char* arg)
+{
+	BangWithArgs(BANG_MOVEMETER, ConvertToWide(arg).c_str(), 3);
+}
+
+/*
 ** RainmeterDisableMeasure
 **
 ** Callback for the !RainmeterDisableMeasure bang
@@ -616,11 +633,7 @@ void RainmeterRefresh(HWND, const char* arg)
 */
 void RainmeterRefreshApp(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		// Refresh needs to be delayed since it crashes if done during Update()
-		PostMessage(Rainmeter->GetTrayWindow()->GetWindow(), WM_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
-	}
+	RainmeterRefreshAppWide();
 }
 
 /*
@@ -642,36 +655,7 @@ void RainmeterRedraw(HWND, const char* arg)
 */
 void RainmeterActivateConfig(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 1)
-		{
-			const std::vector<CRainmeter::CONFIG>& configs = Rainmeter->GetAllConfigs();
-
-			for (int i = 0; i < (int)configs.size(); ++i)
-			{
-				if (_wcsicmp(configs[i].config.c_str(), subStrings[0].c_str()) == 0)
-				{
-					for (int j = 0; j < (int)configs[i].iniFiles.size(); ++j)
-					{
-						if (_wcsicmp(configs[i].iniFiles[j].c_str(), subStrings[1].c_str()) == 0)
-						{
-							Rainmeter->ActivateConfig(i, j);
-							return;
-						}
-					}
-				}
-			}
-			DebugLog(L"No such config: \"%s\" \"%s\"", subStrings[0].c_str(), subStrings[1].c_str());
-		}
-		else
-		{
-			// If we got this far, something went wrong
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterActivateConfig");
-		}
-	}
+	RainmeterActivateConfigWide(ConvertToWide(arg).c_str());
 }
 
 /*
@@ -682,25 +666,7 @@ void RainmeterActivateConfig(HWND, const char* arg)
 */
 void RainmeterDeactivateConfig(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 0)
-		{
-			CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[0]);
-			if (mw)
-			{
-				Rainmeter->DeactivateConfig(mw, -1);
-				return;
-			}
-			DebugLog(L"The config is not active: \"%s\"", subStrings[0].c_str());
-		}
-		else
-		{
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterDeactivateConfig");
-		}
-	}
+	RainmeterDeactivateConfigWide(ConvertToWide(arg).c_str());
 }
 
 /*
@@ -711,27 +677,7 @@ void RainmeterDeactivateConfig(HWND, const char* arg)
 */
 void RainmeterToggleConfig(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() >= 2)
-		{
-			CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[0]);
-			if (mw)
-			{
-				Rainmeter->DeactivateConfig(mw, -1);
-				return;
-			}
-
-			// If the config wasn't active, activate it
-			RainmeterActivateConfig(NULL, arg);
-		}
-		else
-		{
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterToggleConfig");
-		}
-	}
+	RainmeterToggleConfigWide(ConvertToWide(arg).c_str());
 }
 
 /*
@@ -984,26 +930,7 @@ void RainmeterRedrawGroup(HWND, const char* arg)
 */
 void RainmeterDeactivateConfigGroup(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(ConvertToWide(arg).c_str());
-
-		if (subStrings.size() > 0)
-		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
-			{
-				Rainmeter->DeactivateConfig((*iter).second, -1);
-			}
-		}
-		else
-		{
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterDeactivateConfigGroup");
-		}
-	}
+	RainmeterDeactivateConfigGroupWide(ConvertToWide(arg).c_str());
 }
 
 /*
@@ -1102,10 +1029,7 @@ void RainmeterLsHook(HWND, const char* arg)
 */
 void RainmeterAbout(HWND, const char* arg)
 {
-	if (Rainmeter)
-	{
-		OpenAboutDialog(Rainmeter->GetTrayWindow()->GetWindow(), Rainmeter->GetInstance());
-	}
+	RainmeterAboutWide();
 }
 
 /*
@@ -1116,9 +1040,241 @@ void RainmeterAbout(HWND, const char* arg)
 */
 void RainmeterSkinMenu(HWND, const char* arg)
 {
+	RainmeterSkinMenuWide(ConvertToWide(arg).c_str());
+}
+
+/*
+** RainmeterTrayMenu
+**
+** Callback for the !RainmeterTrayMenu bang
+**
+*/
+void RainmeterTrayMenu(HWND, const char* arg)
+{
+	RainmeterTrayMenuWide();
+}
+
+/*
+** RainmeterResetStats
+**
+** Callback for the !RainmeterResetStats bang
+**
+*/
+void RainmeterResetStats(HWND, const char* arg)
+{
+	RainmeterResetStatsWide();
+}
+
+/*
+** RainmeterWriteKeyValue
+**
+** Callback for the !RainmeterWriteKeyValue bang
+**
+*/
+void RainmeterWriteKeyValue(HWND, const char* arg)
+{
+	RainmeterWriteKeyValueWide(ConvertToWide(arg).c_str());
+}
+
+/*
+** RainmeterPluginBang
+**
+** Callback for the !RainmeterPluginBang bang
+**
+*/
+void RainmeterPluginBang(HWND, const char* arg)
+{
+	BangWithArgs(BANG_PLUGIN, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
+** RainmeterQuit
+**
+** Callback for the !RainmeterQuit bang
+**
+*/
+void RainmeterQuit(HWND, const char* arg)
+{
+	RainmeterQuitWide();
+}
+
+
+// -----------------------------------------------------------------------------------------------
+//
+//                                Callbacks for Unicode support
+//
+// -----------------------------------------------------------------------------------------------
+
+/*
+** RainmeterActivateConfigWide
+**
+** Callback for the !RainmeterActivateConfig bang
+**
+*/
+void RainmeterActivateConfigWide(const WCHAR* arg)
+{
 	if (Rainmeter)
 	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(ConvertToWide(arg).c_str());
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
+
+		if (subStrings.size() > 1)
+		{
+			const std::vector<CRainmeter::CONFIG>& configs = Rainmeter->GetAllConfigs();
+
+			for (int i = 0; i < (int)configs.size(); ++i)
+			{
+				if (_wcsicmp(configs[i].config.c_str(), subStrings[0].c_str()) == 0)
+				{
+					for (int j = 0; j < (int)configs[i].iniFiles.size(); ++j)
+					{
+						if (_wcsicmp(configs[i].iniFiles[j].c_str(), subStrings[1].c_str()) == 0)
+						{
+							Rainmeter->ActivateConfig(i, j);
+							return;
+						}
+					}
+				}
+			}
+			DebugLog(L"No such config: \"%s\" \"%s\"", subStrings[0].c_str(), subStrings[1].c_str());
+		}
+		else
+		{
+			// If we got this far, something went wrong
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterActivateConfig");
+		}
+	}
+}
+
+/*
+** RainmeterDeactivateConfigWide
+**
+** Callback for the !RainmeterDeactivateConfig bang
+**
+*/
+void RainmeterDeactivateConfigWide(const WCHAR* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
+
+		if (subStrings.size() > 0)
+		{
+			CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[0]);
+			if (mw)
+			{
+				Rainmeter->DeactivateConfig(mw, -1);
+				return;
+			}
+			DebugLog(L"The config is not active: \"%s\"", subStrings[0].c_str());
+		}
+		else
+		{
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterDeactivateConfig");
+		}
+	}
+}
+
+/*
+** RainmeterToggleConfigWide
+**
+** Callback for the !RainmeterToggleConfig bang
+**
+*/
+void RainmeterToggleConfigWide(const WCHAR* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
+
+		if (subStrings.size() >= 2)
+		{
+			CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[0]);
+			if (mw)
+			{
+				Rainmeter->DeactivateConfig(mw, -1);
+				return;
+			}
+
+			// If the config wasn't active, activate it
+			RainmeterActivateConfigWide(arg);
+		}
+		else
+		{
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterToggleConfig");
+		}
+	}
+}
+
+/*
+** RainmeterDeactivateConfigGroupWide
+**
+** Callback for the !RainmeterDeactivateConfigGroup bang
+**
+*/
+void RainmeterDeactivateConfigGroupWide(const WCHAR* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
+
+		if (subStrings.size() > 0)
+		{
+			std::multimap<int, CMeterWindow*> windows;
+			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
+
+			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+			for (; iter != windows.end(); ++iter)
+			{
+				Rainmeter->DeactivateConfig((*iter).second, -1);
+			}
+		}
+		else
+		{
+			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterDeactivateConfigGroup");
+		}
+	}
+}
+
+/*
+** RainmeterRefreshAppWide
+**
+** Callback for the !RainmeterRefreshApp bang
+**
+*/
+void RainmeterRefreshAppWide()
+{
+	if (Rainmeter)
+	{
+		// Refresh needs to be delayed since it crashes if done during Update()
+		PostMessage(Rainmeter->GetTrayWindow()->GetWindow(), WM_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
+	}
+}
+
+/*
+** RainmeterAboutWide
+**
+** Callback for the !RainmeterAbout bang
+**
+*/
+void RainmeterAboutWide()
+{
+	if (Rainmeter)
+	{
+		OpenAboutDialog(Rainmeter->GetTrayWindow()->GetWindow(), Rainmeter->GetInstance());
+	}
+}
+
+/*
+** RainmeterSkinMenuWide
+**
+** Callback for the !RainmeterSkinMenu bang
+**
+*/
+void RainmeterSkinMenuWide(const WCHAR* arg)
+{
+	if (Rainmeter)
+	{
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
 
 		if (subStrings.size() > 0)
 		{
@@ -1140,12 +1296,12 @@ void RainmeterSkinMenu(HWND, const char* arg)
 }
 
 /*
-** RainmeterTrayMenu
+** RainmeterTrayMenuWide
 **
 ** Callback for the !RainmeterTrayMenu bang
 **
 */
-void RainmeterTrayMenu(HWND, const char* arg)
+void RainmeterTrayMenuWide()
 {
 	if (Rainmeter)
 	{
@@ -1156,12 +1312,12 @@ void RainmeterTrayMenu(HWND, const char* arg)
 }
 
 /*
-** RainmeterResetStats
+** RainmeterResetStatsWide
 **
 ** Callback for the !RainmeterResetStats bang
 **
 */
-void RainmeterResetStats(HWND, const char* arg)
+void RainmeterResetStatsWide()
 {
 	if (Rainmeter) 
 	{
@@ -1170,27 +1326,16 @@ void RainmeterResetStats(HWND, const char* arg)
 }
 
 /*
-** RainmeterMoveMeter
-**
-** Callback for the !RainmeterMoveMeter bang
-**
-*/
-void RainmeterMoveMeter(HWND, const char* arg)
-{
-	BangWithArgs(BANG_MOVEMETER, ConvertToWide(arg).c_str(), 3);
-}
-
-/*
-** RainmeterWriteKeyValue
+** RainmeterWriteKeyValueWide
 **
 ** Callback for the !RainmeterWriteKeyValue bang
 **
 */
-void RainmeterWriteKeyValue(HWND, const char* arg)
+void RainmeterWriteKeyValueWide(const WCHAR* arg)
 {
 	if (Rainmeter)
 	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(ConvertToWide(arg).c_str());
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
 
 		if (subStrings.size() > 3)
 		{
@@ -1318,23 +1463,12 @@ void RainmeterWriteKeyValue(HWND, const char* arg)
 }
 
 /*
-** RainmeterPluginBang
-**
-** Callback for the !RainmeterPluginBang bang
-**
-*/
-void RainmeterPluginBang(HWND, const char* arg)
-{
-	BangWithArgs(BANG_PLUGIN, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterQuit
+** RainmeterQuitWide
 **
 ** Callback for the !RainmeterQuit bang
 **
 */
-void RainmeterQuit(HWND, const char* arg)
+void RainmeterQuitWide()
 {
 	if (Rainmeter)
 	{
@@ -2515,7 +2649,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterRefreshApp") == 0)
 	{
-		RainmeterRefreshApp(NULL, NULL);
+		RainmeterRefreshAppWide();
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterRedraw") == 0)
 	{
@@ -2557,6 +2691,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_TOGGLEMETER, arg.c_str(), 1);
 	}
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterMoveMeter") == 0)
+	{
+		BangWithArgs(BANG_MOVEMETER, arg.c_str(), 3);
+	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterDisableMeasure") == 0)
 	{
 		BangWithArgs(BANG_DISABLEMEASURE, arg.c_str(), 1);
@@ -2571,25 +2709,21 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterActivateConfig") == 0)
 	{
-		RainmeterActivateConfig(NULL, ConvertToAscii(arg.c_str()).c_str());
+		RainmeterActivateConfigWide(arg.c_str());
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterDeactivateConfig") == 0)
 	{
-		RainmeterDeactivateConfig(NULL, ConvertToAscii(arg.c_str()).c_str());
+		RainmeterDeactivateConfigWide(arg.c_str());
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleConfig") == 0)
 	{
-		RainmeterToggleConfig(NULL, ConvertToAscii(arg.c_str()).c_str());
+		RainmeterToggleConfigWide(arg.c_str());
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterMove") == 0)
 	{
 		BangWithArgs(BANG_MOVE, arg.c_str(), 2);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterChangeZPos") == 0)	// For backwards compatibility
-	{
-		BangWithArgs(BANG_ZPOS, arg.c_str(), 1);
-	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterZPos") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterZPos") == 0 || _wcsicmp(bang.c_str(), L"!RainmeterChangeZPos") == 0)	// For backwards compatibility
 	{
 		BangWithArgs(BANG_ZPOS, arg.c_str(), 1);
 	}
@@ -2619,35 +2753,35 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterRefreshGroup") == 0)
 	{
-		RainmeterRefreshGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_REFRESH, arg.c_str(), 0);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterRedrawGroup") == 0)
 	{
-		RainmeterRedrawGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_REDRAW, arg.c_str(), 0);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideGroup") == 0)
 	{
-		RainmeterHideGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_HIDE, arg.c_str(), 0);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowGroup") == 0)
 	{
-		RainmeterShowGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_SHOW, arg.c_str(), 0);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleGroup") == 0)
 	{
-		RainmeterToggleGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_TOGGLE, arg.c_str(), 0);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideFadeGroup") == 0)
 	{
-		RainmeterHideFadeGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_HIDEFADE, arg.c_str(), 0);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowFadeGroup") == 0)
 	{
-		RainmeterShowFadeGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_SHOWFADE, arg.c_str(), 0);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleFadeGroup") == 0)
 	{
-		RainmeterToggleFadeGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_TOGGLEFADE, arg.c_str(), 0);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideMeterGroup") == 0)
 	{
@@ -2675,59 +2809,55 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterDeactivateConfigGroup") == 0)
 	{
-		RainmeterDeactivateConfigGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		RainmeterDeactivateConfigGroupWide(arg.c_str());
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterZPosGroup") == 0)
 	{
-		RainmeterZPosGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_ZPOS, arg.c_str(), 1);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterClickThroughGroup") == 0)
 	{
-		RainmeterClickThroughGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_CLICKTHROUGH, arg.c_str(), 1);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterDraggableGroup") == 0)
 	{
-		RainmeterDraggableGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_DRAGGABLE, arg.c_str(), 1);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterSnapEdgesGroup") == 0)
 	{
-		RainmeterSnapEdgesGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_SNAPEDGES, arg.c_str(), 1);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterKeepOnScreenGroup") == 0)
 	{
-		RainmeterKeepOnScreenGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_KEEPONSCREEN, arg.c_str(), 1);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterSetTransparencyGroup") == 0)
 	{
-		RainmeterSetTransparencyGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_SETTRANSPARENCY, arg.c_str(), 1);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterSetVariableGroup") == 0)
 	{
-		RainmeterSetVariableGroup(NULL, ConvertToAscii(arg.c_str()).c_str());
+		BangGroupWithArgs(BANG_SETVARIABLE, arg.c_str(), 2);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterAbout") == 0)
 	{
-		RainmeterAbout(NULL, NULL);
+		RainmeterAboutWide();
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterSkinMenu") == 0)
 	{
-		RainmeterSkinMenu(NULL, ConvertToAscii(arg.c_str()).c_str());
+		RainmeterSkinMenuWide(arg.c_str());
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterTrayMenu") == 0)
 	{
-		RainmeterTrayMenu(NULL, NULL);
+		RainmeterTrayMenuWide();
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterResetStats") == 0)
 	{
-		RainmeterResetStats(NULL, NULL);
-	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterMoveMeter") == 0)
-	{
-		BangWithArgs(BANG_MOVEMETER, arg.c_str(), 3);
+		RainmeterResetStatsWide();
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterWriteKeyValue") == 0)
 	{
-		RainmeterWriteKeyValue(NULL, ConvertToAscii(arg.c_str()).c_str());
+		RainmeterWriteKeyValueWide(arg.c_str());
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterPluginBang") == 0)
 	{
@@ -2739,7 +2869,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterQuit") == 0)
 	{
-		RainmeterQuit(NULL, NULL);
+		RainmeterQuitWide();
 	}
 	else if (_wcsicmp(bang.c_str(), L"!Execute") == 0)
 	{

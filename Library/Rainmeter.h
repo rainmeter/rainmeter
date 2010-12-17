@@ -40,6 +40,7 @@
 #endif
 #define RAINMETER_VERSION MAKE_VER(1, 4, 0)
 
+// Callbacks for Litestep
 void RainmeterRefresh(HWND, const char* arg);
 void RainmeterRefreshApp(HWND, const char* arg);
 void RainmeterRedraw(HWND, const char* arg);
@@ -99,6 +100,19 @@ void RainmeterResetStats(HWND, const char* arg);
 void RainmeterWriteKeyValue(HWND, const char* arg);
 void RainmeterPluginBang(HWND, const char* arg);
 void RainmeterQuit(HWND, const char* arg);
+
+// Callbacks for Unicode support
+void RainmeterActivateConfigWide(const WCHAR* arg);
+void RainmeterDeactivateConfigWide(const WCHAR* arg);
+void RainmeterToggleConfigWide(const WCHAR* arg);
+void RainmeterDeactivateConfigGroupWide(const WCHAR* arg);
+void RainmeterRefreshAppWide();
+void RainmeterAboutWide();
+void RainmeterSkinMenuWide(const WCHAR* arg);
+void RainmeterTrayMenuWide();
+void RainmeterResetStatsWide();
+void RainmeterWriteKeyValueWide(const WCHAR* arg);
+void RainmeterQuitWide();
 
 void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
 void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
