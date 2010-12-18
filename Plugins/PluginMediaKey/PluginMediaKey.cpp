@@ -60,7 +60,6 @@ void ExecuteBang(LPCTSTR args, UINT id)
 {
 	std::wstring wholeBang = args;
 
-	size_t pos = wholeBang.find(' ');
 	if (_wcsicmp(wholeBang.c_str(), L"NextTrack") == 0)
 	{
 		SendKey(VK_MEDIA_NEXT_TRACK);
