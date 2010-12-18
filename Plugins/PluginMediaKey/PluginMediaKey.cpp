@@ -58,39 +58,37 @@ void SendKey(WORD key)
 
 void ExecuteBang(LPCTSTR args, UINT id)
 {
-	std::wstring wholeBang = args;
-
-	if (_wcsicmp(wholeBang.c_str(), L"NextTrack") == 0)
+	if (_wcsicmp(args, L"NextTrack") == 0)
 	{
 		SendKey(VK_MEDIA_NEXT_TRACK);
 	}
-	else if (_wcsicmp(wholeBang.c_str(), L"PrevTrack") == 0)
+	else if (_wcsicmp(args, L"PrevTrack") == 0)
 	{
 		SendKey(VK_MEDIA_PREV_TRACK);
 	}
-	else if (_wcsicmp(wholeBang.c_str(), L"Stop") == 0)
+	else if (_wcsicmp(args, L"Stop") == 0)
 	{
 		SendKey(VK_MEDIA_STOP);
 	}
-	else if (_wcsicmp(wholeBang.c_str(), L"PlayPause") == 0)
+	else if (_wcsicmp(args, L"PlayPause") == 0)
 	{
 		SendKey(VK_MEDIA_PLAY_PAUSE);
 	}
-	else if (_wcsicmp(wholeBang.c_str(), L"VolumeMute") == 0)
+	else if (_wcsicmp(args, L"VolumeMute") == 0)
 	{
 		SendKey(VK_VOLUME_MUTE);
 	}
-	else if (_wcsicmp(wholeBang.c_str(), L"VolumeDown") == 0)
+	else if (_wcsicmp(args, L"VolumeDown") == 0)
 	{
 		SendKey(VK_VOLUME_DOWN);
 	}
-	else if (_wcsicmp(wholeBang.c_str(), L"VolumeUp") == 0)
+	else if (_wcsicmp(args, L"VolumeUp") == 0)
 	{
 		SendKey(VK_VOLUME_UP);
 	}
 	else
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"MediaKeyPlugin: Unknown bang!");
+		LSLog(LOG_WARNING, L"Rainmeter", L"MediaKeyPlugin: Unknown bang!");
 	}
 }
 
