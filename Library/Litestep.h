@@ -54,7 +54,8 @@ void VarExpansion(LPSTR buffer, LPCSTR value);
 void LSSetVariable(const BSTR name, const BSTR value);
 
 void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved);
-void DebugLog(const WCHAR* message, ... );
+void DebugLog(const WCHAR* message, ... );					// Left to support lines 32-36 in this file, I am not sure what they do.
+void LogWithArgs(int nLevel, const WCHAR* message, ... );	// Replacement for DebugLog(), has the same functionality but has the option to set teh Log Level.
 
 void ResetLoggingFlag();
 

@@ -259,7 +259,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 		}
 	}
 
-	LSLog(LOG_DEBUG, APPNAME, L"Initialization successful.");
+	LSLog(LOG_NOTICE, APPNAME, L"Initialization successful.");
 
 	return 0;
 }
@@ -303,11 +303,11 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	m_Rainmeter->SetCurrentParser(&m_Parser);
 
-	std::wstring dbg = L"Refreshing skin \"" + m_SkinName;
-	dbg += L"\\";
-	dbg += m_SkinIniFile; 
-	dbg += L"\""; 
-	LSLog(LOG_DEBUG, APPNAME, dbg.c_str());
+	std::wstring notice = L"Refreshing skin \"" + m_SkinName;
+	notice += L"\\";
+	notice += m_SkinIniFile; 
+	notice += L"\""; 
+	LSLog(LOG_NOTICE, APPNAME, notice.c_str());
 	
 	m_Refreshing = true;
 
@@ -759,7 +759,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse parameters for !RainmeterMove");
+			LSLog(LOG_ERROR, APPNAME, L"Unable to parse parameters for !RainmeterMove");
 		}
 		break;
 
@@ -855,7 +855,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			}
 			else
 			{
-				DebugLog(L"Unable to parse parameters for !RainmeterLsBoxHook (%s)", arg);
+				LogWithArgs(LOG_WARNING, L"Unable to parse parameters for !RainmeterLsBoxHook (%s)", arg);
 			}
 		}
 		break;
@@ -871,12 +871,12 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			}
 			else
 			{
-				LSLog(LOG_DEBUG, APPNAME, L"Unable to parse coordinates for !RainmeterMoveMeter");
+				LSLog(LOG_ERROR, APPNAME, L"Unable to parse coordinates for !RainmeterMoveMeter");
 			}
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse parameters for !RainmeterMoveMeter");
+			LSLog(LOG_ERROR, APPNAME, L"Unable to parse parameters for !RainmeterMoveMeter");
 		}
 		break;
 
@@ -919,11 +919,11 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 					}
 				}
 
-				DebugLog(L"Unable to find [%s] for !RainmeterPluginBang", measure.c_str());
+				LogWithArgs(LOG_WARNING, L"Unable to find [%s] for !RainmeterPluginBang", measure.c_str());
 			}
 			else
 			{
-				LSLog(LOG_DEBUG, APPNAME, L"Unable to parse parameters for !RainmeterPluginBang");
+				LSLog(LOG_ERROR, APPNAME, L"Unable to parse parameters for !RainmeterPluginBang");
 			}
 		}
 		break;
@@ -954,7 +954,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse parameters for !RainmeterSetVariable");
+			LSLog(LOG_ERROR, APPNAME, L"Unable to parse parameters for !RainmeterSetVariable");
 		}
 		break;
 	}
@@ -987,7 +987,7 @@ void CMeterWindow::ShowMeter(const WCHAR* name, bool group)
 		if (!group) return;
 	}
 
-	if (!group) DebugLog(L"Unable to show the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to show the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 /*
@@ -1017,7 +1017,7 @@ void CMeterWindow::HideMeter(const WCHAR* name, bool group)
 		if (!group) return;
 	}
 
-	if (!group) DebugLog(L"Unable to hide the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to hide the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 /*
@@ -1054,7 +1054,7 @@ void CMeterWindow::ToggleMeter(const WCHAR* name, bool group)
 		if (!group) return;
 	}
 
-	if (!group) DebugLog(L"Unable to toggle the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to toggle the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 /*
@@ -1079,7 +1079,7 @@ void CMeterWindow::MoveMeter(int x, int y, const WCHAR* name)
 		}
 	}
 
-	DebugLog(L"Unable to move the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
+	LogWithArgs(LOG_NOTICE, L"Unable to move the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 /*
@@ -1108,7 +1108,7 @@ void CMeterWindow::EnableMeasure(const WCHAR* name, bool group)
 		if (!group) return;
 	}
 
-	if (!group) DebugLog(L"Unable to enable the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to enable the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 
@@ -1138,7 +1138,7 @@ void CMeterWindow::DisableMeasure(const WCHAR* name, bool group)
 		if (!group) return;
 	}
 
-	if (!group) DebugLog(L"Unable to disable the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to disable the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 
@@ -1175,7 +1175,7 @@ void CMeterWindow::ToggleMeasure(const WCHAR* name, bool group)
 		if (!group) return;
 	}
 
-	if (!group) DebugLog(L"Unable to toggle the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to toggle the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 /* WindowToScreen
@@ -1187,7 +1187,7 @@ void CMeterWindow::WindowToScreen()
 {
 	if (CSystem::GetMonitorCount() == 0)
 	{
-		LSLog(LOG_DEBUG, APPNAME, L"There are no monitors. WindowToScreen function fails.");
+		LSLog(LOG_ERROR, APPNAME, L"There are no monitors. WindowToScreen function fails.");
 		return;
 	}
 
@@ -1399,7 +1399,7 @@ void CMeterWindow::ScreenToWindow()
 
 	if (monitors.empty())
 	{
-		LSLog(LOG_DEBUG, APPNAME, L"There are no monitors. ScreenToWindow function fails.");
+		LSLog(LOG_ERROR, APPNAME, L"There are no monitors. ScreenToWindow function fails.");
 		return;
 	}
 
@@ -1709,7 +1709,7 @@ bool CMeterWindow::ReadSkin()
 		message += L"\\";
 		message += m_SkinIniFile;
 		message += L"\": Ini-file not found.";
-		LSLog(LOG_DEBUG, APPNAME, message.c_str());
+		LSLog(LOG_WARNING, APPNAME, message.c_str());
 		MessageBox(m_Window, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		return false;
 	}
@@ -1825,8 +1825,8 @@ bool CMeterWindow::ReadSkin()
 				nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 				if(nResults != Ok)
 				{
-					std::wstring error = L"Error: Couldn't load font file: " + localFont;
-					LSLog(LOG_DEBUG, APPNAME, error.c_str());
+					std::wstring error = L"Couldn't load font file: " + localFont;
+					LSLog(LOG_ERROR, APPNAME, error.c_str());
 				}
 			}
 
@@ -1868,8 +1868,8 @@ bool CMeterWindow::ReadSkin()
 						// The font file wasn't found anywhere, log the error
 						if(nResults != Ok)
 						{
-							std::wstring error = L"Error: Couldn't load font file: " + localFont;
-							LSLog(LOG_DEBUG, APPNAME, error.c_str());
+							std::wstring error = L"Couldn't load font file: " + localFont;
+							LSLog(LOG_ERROR, APPNAME, error.c_str());
 						}
 					} 
 				}
@@ -4536,7 +4536,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		if (!found) 
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to send the !bang to a deactivated config.");
+			LSLog(LOG_WARNING, APPNAME, L"Unable to send the !bang to a deactivated config.");
 			return 0;	// This meterwindow has been deactivated
 		}
 

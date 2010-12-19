@@ -405,7 +405,7 @@ void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 				else
 				{
 					std::wstring dbg = L"Unknown config name: " + config;
-					LSLog(LOG_DEBUG, APPNAME, dbg.c_str());
+					LSLog(LOG_NOTICE, APPNAME, dbg.c_str());
 				}
 			}
 			else
@@ -421,7 +421,7 @@ void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"Incorrect number of arguments for the bang!");
+			LSLog(LOG_WARNING, APPNAME, L"Incorrect number of arguments for the bang!");
 		}
 	}
 }
@@ -459,7 +459,7 @@ void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"Incorrect number of arguments for the group bang!");
+			LSLog(LOG_WARNING, APPNAME, L"Incorrect number of arguments for the group bang!");
 		}
 	}
 }
@@ -1135,12 +1135,12 @@ void RainmeterActivateConfigWide(const WCHAR* arg)
 					}
 				}
 			}
-			DebugLog(L"No such config: \"%s\" \"%s\"", subStrings[0].c_str(), subStrings[1].c_str());
+			LogWithArgs(LOG_NOTICE, L"No such config: \"%s\" \"%s\"", subStrings[0].c_str(), subStrings[1].c_str());
 		}
 		else
 		{
 			// If we got this far, something went wrong
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterActivateConfig");
+			LSLog(LOG_WARNING, APPNAME, L"Unable to parse the arguments for !RainmeterActivateConfig");
 		}
 	}
 }
@@ -1165,11 +1165,11 @@ void RainmeterDeactivateConfigWide(const WCHAR* arg)
 				Rainmeter->DeactivateConfig(mw, -1);
 				return;
 			}
-			DebugLog(L"The config is not active: \"%s\"", subStrings[0].c_str());
+			LogWithArgs(LOG_NOTICE, L"The config is not active: \"%s\"", subStrings[0].c_str());
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterDeactivateConfig");
+			LSLog(LOG_WARNING, APPNAME, L"Unable to parse the arguments for !RainmeterDeactivateConfig");
 		}
 	}
 }
@@ -1200,7 +1200,7 @@ void RainmeterToggleConfigWide(const WCHAR* arg)
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterToggleConfig");
+			LSLog(LOG_WARNING, APPNAME, L"Unable to parse the arguments for !RainmeterToggleConfig");
 		}
 	}
 }
@@ -1230,7 +1230,7 @@ void RainmeterDeactivateConfigGroupWide(const WCHAR* arg)
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterDeactivateConfigGroup");
+			LSLog(LOG_WARNING, APPNAME, L"Unable to parse the arguments for !RainmeterDeactivateConfigGroup");
 		}
 	}
 }
@@ -1286,11 +1286,11 @@ void RainmeterSkinMenuWide(const WCHAR* arg)
 				Rainmeter->ShowContextMenu(pos, mw);
 				return;
 			}
-			DebugLog(L"The config is not active: \"%s\"", subStrings[0].c_str());
+			LogWithArgs(LOG_NOTICE, L"The config is not active: \"%s\"", subStrings[0].c_str());
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterSkinMenu");
+			LSLog(LOG_WARNING, APPNAME, L"Unable to parse the arguments for !RainmeterSkinMenu");
 		}
 	}
 }
@@ -1343,7 +1343,7 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 
 			if (iniFile.find(L"..\\") != std::string::npos || iniFile.find(L"../") != std::string::npos)
 			{
-				DebugLog(L"!RainmeterWriteKeyValue: Illegal characters in path - \"..\\\": %s", iniFile.c_str());
+				LogWithArgs(LOG_ERROR, L"!RainmeterWriteKeyValue: Illegal characters in path - \"..\\\": %s", iniFile.c_str());
 				return;
 			}
 
@@ -1353,14 +1353,14 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 			if (_wcsnicmp(iniFile.c_str(), skinPath.c_str(), skinPath.size()) != 0 &&
 				_wcsnicmp(iniFile.c_str(), settingsPath.c_str(), settingsPath.size()) != 0)
 			{
-				DebugLog(L"!RainmeterWriteKeyValue: Illegal path outside of Rainmeter directories: %s", iniFile.c_str());
+				LogWithArgs(LOG_ERROR, L"!RainmeterWriteKeyValue: Illegal path outside of Rainmeter directories: %s", iniFile.c_str());
 				return;
 			}
 
 			// Verify whether the file exists
 			if (_waccess(iniFile.c_str(), 0) == -1)
 			{
-				DebugLog(L"!RainmeterWriteKeyValue: File not found: %s", iniFile.c_str());
+				LogWithArgs(LOG_WARNING, L"!RainmeterWriteKeyValue: File not found: %s", iniFile.c_str());
 				return;
 			}
 
@@ -1368,7 +1368,7 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 			DWORD attr = GetFileAttributes(iniFile.c_str());
 			if (attr == -1 || (attr & FILE_ATTRIBUTE_READONLY))
 			{
-				DebugLog(L"!RainmeterWriteKeyValue: File is read-only: %s", iniFile.c_str());
+				LogWithArgs(LOG_WARNING, L"!RainmeterWriteKeyValue: File is read-only: %s", iniFile.c_str());
 				return;
 			}
 
@@ -1378,7 +1378,7 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 			std::wstring iniWrite = CSystem::GetTemporaryFile(iniFileMappings, iniFile);
 			if (iniWrite == L"<>")  // error occurred
 			{
-				DebugLog(L"!RainmeterWriteKeyValue: Failed to create a temporary file: %s", iniFile.c_str());
+				LogWithArgs(LOG_ERROR, L"!RainmeterWriteKeyValue: Failed to create a temporary file: %s", iniFile.c_str());
 				return;
 			}
 
@@ -1386,11 +1386,11 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 
 			if (temporary)
 			{
-				if (CRainmeter::GetDebug()) DebugLog(L"!RainmeterWriteKeyValue: Writing file: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+				if (CRainmeter::GetDebug()) LogWithArgs(LOG_DEBUG, L"!RainmeterWriteKeyValue: Writing file: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
 			}
 			else
 			{
-				if (CRainmeter::GetDebug()) DebugLog(L"!RainmeterWriteKeyValue: Writing file: %s", iniFile.c_str());
+				if (CRainmeter::GetDebug()) LogWithArgs(LOG_DEBUG, L"!RainmeterWriteKeyValue: Writing file: %s", iniFile.c_str());
 				iniWrite = iniFile;
 			}
 
@@ -1436,12 +1436,12 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 					// Copy the file back
 					if (!CSystem::CopyFiles(iniWrite, iniFile))
 					{
-						DebugLog(L"!RainmeterWriteKeyValue: Failed to copy a temporary file to the original filepath: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+						LogWithArgs(LOG_ERROR, L"!RainmeterWriteKeyValue: Failed to copy a temporary file to the original filepath: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
 					}
 				}
 				else  // failed
 				{
-					DebugLog(L"!RainmeterWriteKeyValue: Failed to write a value to the file: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+					LogWithArgs(LOG_ERROR, L"!RainmeterWriteKeyValue: Failed to write a value to the file: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
 				}
 
 				// Remove a temporary file
@@ -1451,13 +1451,13 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 			{
 				if (write == 0)  // failed
 				{
-					DebugLog(L"!RainmeterWriteKeyValue: Failed to write a value to the file: %s", iniFile.c_str());
+					LogWithArgs(LOG_ERROR, L"!RainmeterWriteKeyValue: Failed to write a value to the file: %s", iniFile.c_str());
 				}
 			}
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to parse the arguments for !RainmeterWriteKeyValue");
+			LSLog(LOG_WARNING, APPNAME, L"Unable to parse the arguments for !RainmeterWriteKeyValue");
 		}
 	}
 }
@@ -1730,7 +1730,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"Unable to get the My Documents location.");
+			LSLog(LOG_WARNING, APPNAME, L"Unable to get the My Documents location.");
 		}
 	}
 	WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), m_IniFile.c_str());
@@ -1765,10 +1765,10 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		}
 	}
 
-	DebugLog(L"Path: %s", m_Path.c_str());
-	DebugLog(L"IniFile: %s", m_IniFile.c_str());
-	DebugLog(L"SkinPath: %s", m_SkinPath.c_str());
-	DebugLog(L"PluginPath: %s", m_PluginPath.c_str());
+	LogWithArgs(LOG_NOTICE, L"Path: %s", m_Path.c_str());
+	LogWithArgs(LOG_NOTICE, L"IniFile: %s", m_IniFile.c_str());
+	LogWithArgs(LOG_NOTICE, L"SkinPath: %s", m_SkinPath.c_str());
+	LogWithArgs(LOG_NOTICE, L"PluginPath: %s", m_PluginPath.c_str());
 
 	// Extract volume path from program path
 	// E.g.:
@@ -2143,7 +2143,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		{
 			if (((*iter).second)->GetSkinIniFile() == skinIniFile)
 			{
-				DebugLog(L"MeterWindow \"%s\" is already active.", skinConfig.c_str());
+				LogWithArgs(LOG_WARNING, L"MeterWindow \"%s\" is already active.", skinConfig.c_str());
 				return;
 			}
 			else
@@ -2164,7 +2164,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 			message += L"\\";
 			message += skinIniFile;
 			message += L"\": Ini-file not found.";
-			LSLog(LOG_DEBUG, APPNAME, message.c_str());
+			LSLog(LOG_WARNING, APPNAME, message.c_str());
 			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 			return;
 		}
@@ -2965,7 +2965,7 @@ std::wstring CRainmeter::ParseCommand(const WCHAR* command, CMeterWindow* meterW
 							}
 							if (iter == meterWindow->GetMeasures().end())
 							{
-								DebugLog(L"No such measure [%s] for execute string: %s", measureName.c_str(), command);
+								LogWithArgs(LOG_WARNING, L"No such measure [%s] for execute string: %s", measureName.c_str(), command);
 								start = end + 1;
 							}
 						}
@@ -3144,8 +3144,8 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	if (c_Debug)
 	{
-		DebugLog(L"ConfigEditor: %s", m_ConfigEditor.c_str());
-		DebugLog(L"LogViewer: %s", m_LogViewer.c_str());
+		LogWithArgs(LOG_NOTICE, L"ConfigEditor: %s", m_ConfigEditor.c_str());
+		LogWithArgs(LOG_NOTICE, L"LogViewer: %s", m_LogViewer.c_str());
 	}
 
 	m_TrayExecuteL = parser.ReadString(L"Rainmeter", L"TrayExecuteL", L"", false);
@@ -3315,7 +3315,7 @@ void CRainmeter::RefreshAll()
 						message += L"\\";
 						message += skinIniFile;
 						message += L"\": Ini-file not found.";
-						LSLog(LOG_DEBUG, APPNAME, message.c_str());
+						LSLog(LOG_WARNING, APPNAME, message.c_str());
 						MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 					}
 					break;
@@ -3330,7 +3330,7 @@ void CRainmeter::RefreshAll()
 
 					std::wstring message = L"Unable to refresh config \"" + skinConfig;
 					message += L"\": Config not found.";
-					LSLog(LOG_DEBUG, APPNAME, message.c_str());
+					LSLog(LOG_WARNING, APPNAME, message.c_str());
 					MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 				}
 				continue;
@@ -3375,7 +3375,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 					{
 						format += L" => FAIL.";
 					}
-					DebugLog(format.c_str(), (int)i + 1, r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
+					LogWithArgs(LOG_NOTICE, format.c_str(), (int)i + 1, r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
 				}
 			}
 			changed = true;
@@ -3397,7 +3397,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 
 		if (c_Debug)
 		{
-			DebugLog(L"DesktopWorkAreaType: %s", m_DesktopWorkAreaType ? L"Margin" : L"Default");
+			LogWithArgs(LOG_NOTICE, L"DesktopWorkAreaType: %s", m_DesktopWorkAreaType ? L"Margin" : L"Default");
 		}
 
 		for (UINT i = 0; i <= CSystem::GetMonitorCount(); ++i)
@@ -3449,7 +3449,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 					{
 						format += L" => FAIL.";
 					}
-					DebugLog(format.c_str(), r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
+					LogWithArgs(LOG_NOTICE, format.c_str(), r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
 				}
 			}
 		}
@@ -4122,7 +4122,7 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	}
 	if (!bSuccess)
 	{
-		LSLog(LOG_DEBUG, APPNAME, L"The Rainmeter.ini file is NOT writable.");
+		LSLog(LOG_WARNING, APPNAME, L"The Rainmeter.ini file is NOT writable.");
 
 		std::wstring error = L"The Rainmeter.ini file is not writable. This means that the\n"
 			L"application will not be able to save any settings permanently.\n\n";
@@ -4153,7 +4153,7 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	}
 	else
 	{
-		LSLog(LOG_DEBUG, APPNAME, L"The Rainmeter.ini file is writable.");
+		LSLog(LOG_NOTICE, APPNAME, L"The Rainmeter.ini file is writable.");
 	}
 }
 
@@ -4199,7 +4199,7 @@ void CRainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
 			}
 			else
 			{
-				DebugLog(L"Unable to expand the environment strings for string: %s", strPath.c_str());
+				LogWithArgs(LOG_WARNING, L"Unable to expand the environment strings for string: %s", strPath.c_str());
 			}
 		}
 	}

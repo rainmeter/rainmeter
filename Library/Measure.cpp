@@ -156,7 +156,7 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	if (!ParseSubstitute(subs))
 	{
-		DebugLog(L"Incorrect substitute string: %s", subs.c_str());
+		LogWithArgs(LOG_WARNING, L"Incorrect substitute string: %s", subs.c_str());
 	}
 
 	std::wstring group = parser.ReadString(section, L"Group", L"");
@@ -697,5 +697,5 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow)
 */
 void CMeasure::ExecuteBang(const WCHAR* args)
 {
-	DebugLog(L"[%s] doesn't support this bang: %s", m_Name.c_str(), args);
+	LogWithArgs(LOG_WARNING, L"[%s] doesn't support this bang: %s", m_Name.c_str(), args);
 }

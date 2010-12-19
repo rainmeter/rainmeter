@@ -85,7 +85,7 @@ bool InitCom()
 	if (!com_initialized) com_initialized = SUCCEEDED(CoInitialize(0));
 	if (!com_initialized)
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: COM initialization failed!");
+		LSLog(LOG_ERROR, L"Rainmeter", L"Win7AudioPlugin: COM initialization failed!");
 		return false;
 	}
 	HRESULT hr = CoCreateInstance(CLSID_MMDeviceEnumerator, 0, CLSCTX_ALL,
@@ -104,12 +104,12 @@ bool InitCom()
 
 			dbg_str += e_code;
 		}
-		LSLog(LOG_DEBUG, L"Rainmeter", dbg_str.c_str());
+		LSLog(LOG_ERROR, L"Rainmeter", dbg_str.c_str());
 		return CleanUp() != 0;
 	}
 	if (S_OK != pEnumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &pCollection) || !pCollection)
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Could not enumerate AudioEndpoints!");
+		LSLog(LOG_WARNING, L"Rainmeter", L"Win7AudioPlugin: Could not enumerate AudioEndpoints!");
 		return CleanUp() != 0;
 	}
 	return true;
@@ -145,7 +145,7 @@ HRESULT RegisterDevice(PCWSTR devID)
 	}
 	catch (...)
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: RegisterDevice - Exception!");
+		LSLog(LOG_WARNING, L"Rainmeter", L"Win7AudioPlugin: RegisterDevice - Exception!");
 		hr = S_FALSE;
 	}
 	UnInitCom();
@@ -170,7 +170,7 @@ std::wstring GetDefaultID()
 	}
 	catch (...)
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: GetDefaultID - Exception!");
+		LSLog(LOG_WARNING, L"Rainmeter", L"Win7AudioPlugin: GetDefaultID - Exception!");
 		id_default = L"Exception";
 	}
 	SAFE_RELEASE(pEndpoint)
@@ -207,7 +207,7 @@ bool GetWin7AudioState(const VolumeAction action)
 	}
 	catch (...)
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Win7ToggleMute - Exception!");
+		LSLog(LOG_WARNING, L"Rainmeter", L"Win7AudioPlugin: Win7ToggleMute - Exception!");
 	}
 	SAFE_RELEASE(pEndptVol)
 	SAFE_RELEASE(pEndpoint)
@@ -266,7 +266,7 @@ bool SetWin7Volume(UINT volume, int offset = 0)
 	}
 	catch (...)
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: SetWin7Volume - Exception!");
+		LSLog(LOG_WARNING, L"Rainmeter", L"Win7AudioPlugin: SetWin7Volume - Exception!");
 	}
 	SAFE_RELEASE(pEndptVol)
 	SAFE_RELEASE(pEndpoint)
@@ -396,7 +396,7 @@ LPCTSTR GetString(UINT id, UINT flags)
 			wsprintf(result, L"ERROR - Getting Default Device");
 		}
 	} catch (...) {
-		LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: GetString - Exception!");
+		LSLog(LOG_WARNING, L"Rainmeter", L"Win7AudioPlugin: GetString - Exception!");
 		wsprintf(result, L"Exception");
 	}
 	UnInitCom();
@@ -441,7 +441,7 @@ void ExecuteBang(LPCTSTR args, UINT id)
 			{
 				if (endpointIDs.size() <= 0)
 				{
-					LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: No device found!");
+					LSLog(LOG_WARNING, L"Rainmeter", L"Win7AudioPlugin: No device found!");
 					return;
 				}
 				// set to endpoint [index-1]
@@ -451,7 +451,7 @@ void ExecuteBang(LPCTSTR args, UINT id)
 			}
 			else
 			{
-				LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Incorrect number of arguments for the bang!");
+				LSLog(LOG_WARNING, L"Rainmeter", L"Win7AudioPlugin: Incorrect number of arguments for the bang!");
 			}
 		}
 		else if (_wcsicmp(bang.c_str(), L"SetVolume") == 0)
@@ -462,12 +462,12 @@ void ExecuteBang(LPCTSTR args, UINT id)
 			{
 				if (!SetWin7Volume(volume < 0 ? 0 : (volume > 100 ? 100 : (UINT)volume)))
 				{
-					LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Error setting volume!");
+					LSLog(LOG_ERROR, L"Rainmeter", L"Win7AudioPlugin: Error setting volume!");
 				}
 			}
 			else
 			{
-				LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Incorrect number of arguments for the bang!");
+				LSLog(LOG_WARNING, L"Rainmeter", L"Win7AudioPlugin: Incorrect number of arguments for the bang!");
 			}
 		}
 		else if (_wcsicmp(bang.c_str(), L"ChangeVolume") == 0)
@@ -478,17 +478,17 @@ void ExecuteBang(LPCTSTR args, UINT id)
 			{
 				if (!SetWin7Volume(0, offset))
 				{
-					LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Error changing volume!");
+					LSLog(LOG_ERROR, L"Rainmeter", L"Win7AudioPlugin: Error changing volume!");
 				}
 			}
 			else
 			{
-				LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Incorrect number of arguments for the bang!");
+				LSLog(LOG_WARNING, L"Rainmeter", L"Win7AudioPlugin: Incorrect number of arguments for the bang!");
 			}
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Unknown bang!");
+			LSLog(LOG_WARNING, L"Rainmeter", L"Win7AudioPlugin: Unknown bang!");
 		}
 
 	}
@@ -497,17 +497,17 @@ void ExecuteBang(LPCTSTR args, UINT id)
 		//LSLog(LOG_NOTICE, L"Rainmeter", L"Win7AudioPlugin: Next device.");
 		const UINT i = GetIndex();
 		if (i) RegisterDevice(endpointIDs[(i == endpointIDs.size()) ? 0 : i].c_str());
-		else LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Update error - Try refresh!");
+		else LSLog(LOG_ERROR, L"Rainmeter", L"Win7AudioPlugin: Update error - Try refresh!");
 	}
 	else if (_wcsicmp(wholeBang.c_str(), L"TogglePrevious") == 0)
 	{
 		const UINT i = GetIndex();
 		if (i) RegisterDevice(endpointIDs[(i == 1) ? endpointIDs.size() - 1 : i - 2].c_str());
-		else LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Update error - Try refresh!");
+		else LSLog(LOG_ERROR, L"Rainmeter", L"Win7AudioPlugin: Update error - Try refresh!");
 	}
 	else if (_wcsicmp(wholeBang.c_str(), L"ToggleMute") == 0)
 	{
-		if (!GetWin7AudioState(TOGGLE_MUTE)) LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Mute Toggle Error!");
+		if (!GetWin7AudioState(TOGGLE_MUTE)) LSLog(LOG_ERROR, L"Rainmeter", L"Win7AudioPlugin: Mute Toggle Error!");
 	}
 	else if (_wcsicmp(wholeBang.c_str(), L"Mute") == 0)
 	{
@@ -515,7 +515,7 @@ void ExecuteBang(LPCTSTR args, UINT id)
 		{
 			if (!GetWin7AudioState(TOGGLE_MUTE))
 			{
-				LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Mute Error!");
+				LSLog(LOG_ERROR, L"Rainmeter", L"Win7AudioPlugin: Mute Error!");
 			}
 		}
 	}
@@ -525,12 +525,12 @@ void ExecuteBang(LPCTSTR args, UINT id)
 		{
 			if (!GetWin7AudioState(TOGGLE_MUTE))
 			{
-				LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Unmute Error!");
+				LSLog(LOG_ERROR, L"Rainmeter", L"Win7AudioPlugin: Unmute Error!");
 			}
 		}
 	}
 	else
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"Win7AudioPlugin: Unknown bang!");
+		LSLog(LOG_WARNING, L"Rainmeter", L"Win7AudioPlugin: Unknown bang!");
 	}
 }

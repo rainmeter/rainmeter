@@ -172,12 +172,12 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 	if (CRainmeter::GetDebug())
 	{
 		LSLog(LOG_DEBUG, APPNAME, info.szDevice);
-		DebugLog(L"  Flags    : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
-		DebugLog(L"  Handle   : 0x%p", hMonitor);
-		DebugLog(L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+		LogWithArgs(LOG_DEBUG, L"  Flags    : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
+		LogWithArgs(LOG_DEBUG, L"  Handle   : 0x%p", hMonitor);
+		LogWithArgs(LOG_DEBUG, L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 			lprcMonitor->left, lprcMonitor->top, lprcMonitor->right, lprcMonitor->bottom,
 			lprcMonitor->right - lprcMonitor->left, lprcMonitor->bottom - lprcMonitor->top);
-		DebugLog(L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+		LogWithArgs(LOG_DEBUG, L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 			info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
 			info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
 	}
@@ -346,7 +346,7 @@ void CSystem::SetMultiMonitorInfo()
 
 						if (logging)
 						{
-							DebugLog(L"  Name     : %s", ddm.DeviceString);
+							LogWithArgs(LOG_DEBUG, L"  Name     : %s", ddm.DeviceString);
 						}
 						break;
 					}
@@ -354,8 +354,8 @@ void CSystem::SetMultiMonitorInfo()
 
 				if (logging)
 				{
-					DebugLog(L"  Adapter  : %s", dd.DeviceString);
-					DebugLog(L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
+					LogWithArgs(LOG_DEBUG, L"  Adapter  : %s", dd.DeviceString);
+					LogWithArgs(LOG_DEBUG, L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
 				}
 
 				if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
@@ -372,7 +372,7 @@ void CSystem::SetMultiMonitorInfo()
 
 						if (logging)
 						{
-							DebugLog(L"  Handle   : 0x%p", monitor.handle);
+							LogWithArgs(LOG_DEBUG, L"  Handle   : 0x%p", monitor.handle);
 						}
 					}
 
@@ -387,10 +387,10 @@ void CSystem::SetMultiMonitorInfo()
 
 						if (logging)
 						{
-							DebugLog(L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+							LogWithArgs(LOG_DEBUG, L"  ScrArea  : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 								info.rcMonitor.left, info.rcMonitor.top, info.rcMonitor.right, info.rcMonitor.bottom,
 								info.rcMonitor.right - info.rcMonitor.left, info.rcMonitor.bottom - info.rcMonitor.top);
-							DebugLog(L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+							LogWithArgs(LOG_DEBUG, L"  WorkArea : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 								info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
 								info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
 						}
@@ -417,8 +417,8 @@ void CSystem::SetMultiMonitorInfo()
 			{
 				if (logging)
 				{
-					DebugLog(L"  Adapter  : %s", dd.DeviceString);
-					DebugLog(L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
+					LogWithArgs(LOG_DEBUG, L"  Adapter  : %s", dd.DeviceString);
+					LogWithArgs(LOG_DEBUG, L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
 				}
 			}
 			++dwDevice;
@@ -427,7 +427,7 @@ void CSystem::SetMultiMonitorInfo()
 
 	if (monitors.empty())  // Failed to enumerate the non-mirroring monitors
 	{
-		LSLog(LOG_DEBUG, APPNAME, L"Failed to enumerate the non-mirroring monitors. Only EnumDisplayMonitors is used instead.");
+		LSLog(LOG_WARNING, APPNAME, L"Failed to enumerate the non-mirroring monitors. Only EnumDisplayMonitors is used instead.");
 		c_Monitors.useEnumDisplayDevices = false;
 		c_Monitors.useEnumDisplayMonitors = true;
 	}
@@ -444,7 +444,7 @@ void CSystem::SetMultiMonitorInfo()
 
 		if (monitors.empty())  // Failed to enumerate the monitors
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"Failed to enumerate the monitors. Prepares the dummy monitor information.");
+			LSLog(LOG_WARNING, APPNAME, L"Failed to enumerate the monitors. Prepares the dummy monitor information.");
 			c_Monitors.useEnumDisplayMonitors = false;
 
 			MONITOR_INFO monitor = {0};
@@ -487,9 +487,9 @@ void CSystem::SetMultiMonitorInfo()
 		}
 		LSLog(LOG_DEBUG, APPNAME, method.c_str());
 
-		DebugLog(L"* MONITORS: Count=%i, Primary=@%i", (int)monitors.size(), c_Monitors.primary);
+		LogWithArgs(LOG_DEBUG, L"* MONITORS: Count=%i, Primary=@%i", (int)monitors.size(), c_Monitors.primary);
 		LSLog(LOG_DEBUG, APPNAME, L"@0: Virtual screen");
-		DebugLog(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+		LogWithArgs(LOG_DEBUG, L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 			c_Monitors.vsL, c_Monitors.vsT, c_Monitors.vsL + c_Monitors.vsW, c_Monitors.vsT + c_Monitors.vsH,
 			c_Monitors.vsW, c_Monitors.vsH);
 
@@ -497,14 +497,14 @@ void CSystem::SetMultiMonitorInfo()
 		{
 			if (monitors[i].active)
 			{
-				DebugLog(L"@%i: %s (active), MonitorName: %s", (int)i + 1, monitors[i].deviceName, monitors[i].monitorName);
-				DebugLog(L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+				LogWithArgs(LOG_DEBUG, L"@%i: %s (active), MonitorName: %s", (int)i + 1, monitors[i].deviceName, monitors[i].monitorName);
+				LogWithArgs(LOG_DEBUG, L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 					monitors[i].screen.left, monitors[i].screen.top, monitors[i].screen.right, monitors[i].screen.bottom,
 					monitors[i].screen.right - monitors[i].screen.left, monitors[i].screen.bottom - monitors[i].screen.top);
 			}
 			else
 			{
-				DebugLog(L"@%i: %s (inactive), MonitorName: %s", (int)i + 1, monitors[i].deviceName, monitors[i].monitorName);
+				LogWithArgs(LOG_DEBUG, L"@%i: %s (inactive), MonitorName: %s", (int)i + 1, monitors[i].deviceName, monitors[i].monitorName);
 			}
 		}
 		LSLog(LOG_DEBUG, APPNAME, L"------------------------------");
@@ -538,7 +538,7 @@ void CSystem::UpdateWorkareaInfo()
 
 			if (CRainmeter::GetDebug())
 			{
-				DebugLog(L"WorkArea@%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
+				LogWithArgs(LOG_DEBUG, L"WorkArea@%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 					(int)i + 1,
 					info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
 					info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
@@ -684,7 +684,7 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 		ZPOSITION zPos = Window->GetWindowZPosition();
 		if (zPos == ZPOSITION_ONDESKTOP || zPos == ZPOSITION_ONBOTTOM)
 		{
-			if (logging) DebugLog(L"+ [%c] 0x%p : %s (Name: \"%s\", zPos=%i)", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetSkinName().c_str(), (int)zPos);
+			if (logging) LogWithArgs(LOG_DEBUG, L"+ [%c] 0x%p : %s (Name: \"%s\", zPos=%i)", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetSkinName().c_str(), (int)zPos);
 
 			if (lParam)
 			{
@@ -693,12 +693,12 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 		}
 		else
 		{
-			if (logging) DebugLog(L"- [%c] 0x%p : %s (Name: \"%s\", zPos=%i)", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetSkinName().c_str(), (int)zPos);
+			if (logging) LogWithArgs(LOG_DEBUG, L"- [%c] 0x%p : %s (Name: \"%s\", zPos=%i)", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetSkinName().c_str(), (int)zPos);
 		}
 	}
 	else
 	{
-		if (logging) DebugLog(L"  [%c] 0x%p : %s", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className);
+		if (logging) LogWithArgs(LOG_DEBUG, L"  [%c] 0x%p : %s", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className);
 	}
 
 	return TRUE;
@@ -789,7 +789,7 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 				{
 					if (logging)
 					{
-						DebugLog(L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=0x%p (\"%s\" %s) - %s",
+						LogWithArgs(LOG_DEBUG, L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=0x%p (\"%s\" %s) - %s",
 							c_HelperWindow, WorkerW, hwnd, windowText, className, (GetWindowLong(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
 					}
 					return;
@@ -797,7 +797,7 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 
 				if (logging)
 				{
-					DebugLog(L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=0x%p (\"%s\" %s) - FAILED",
+					LogWithArgs(LOG_DEBUG, L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=0x%p (\"%s\" %s) - FAILED",
 						c_HelperWindow, WorkerW, hwnd, windowText, className);
 				}
 			}
@@ -805,7 +805,7 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 
 		if (logging)
 		{
-			DebugLog(L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=HWND_TOPMOST - %s",
+			LogWithArgs(LOG_DEBUG, L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=HWND_TOPMOST - %s",
 				c_HelperWindow, WorkerW, (GetWindowLong(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
 		}
 	}
@@ -816,7 +816,7 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 
 		if (logging)
 		{
-			DebugLog(L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=HWND_BOTTOM - %s",
+			LogWithArgs(LOG_DEBUG, L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=HWND_BOTTOM - %s",
 				c_HelperWindow, WorkerW, (GetWindowLong(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
 		}
 	}
@@ -843,7 +843,7 @@ void CSystem::CheckDesktopState(HWND WorkerW)
 
 		if (CRainmeter::GetDebug())
 		{
-			DebugLog(L"System: %s",
+			LogWithArgs(LOG_DEBUG, L"System: %s",
 				c_ShowDesktop ? L"\"Show the desktop\" has been detected." : L"\"Show open windows\" has been detected.");
 		}
 
@@ -944,7 +944,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		break;
 
 	case WM_DWMCOMPOSITIONCHANGED:
-		LSLog(LOG_DEBUG, APPNAME, L"System: DWM desktop composition has been changed.");
+		LSLog(LOG_NOTICE, APPNAME, L"System: DWM desktop composition has been changed.");
 
 		KillTimer(c_Window, TIMER_SHOWDESKTOP);
 		KillTimer(c_Window, TIMER_COMPOSITION);
@@ -963,7 +963,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		return 0;
 
 	case WM_DISPLAYCHANGE:
-		LSLog(LOG_DEBUG, APPNAME, L"System: Display setting has been changed.");
+		LSLog(LOG_NOTICE, APPNAME, L"System: Display setting has been changed.");
 		ClearMultiMonitorInfo();
 		CConfigParser::ClearMultiMonitorVariables();
 	case WM_SETTINGCHANGE:
@@ -971,7 +971,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		{
 			if (uMsg == WM_SETTINGCHANGE)  // SPI_SETWORKAREA
 			{
-				LSLog(LOG_DEBUG, APPNAME, L"System: Work area has been changed.");
+				LSLog(LOG_NOTICE, APPNAME, L"System: Work area has been changed.");
 				UpdateWorkareaInfo();
 				CConfigParser::UpdateWorkareaVariables();
 			}
@@ -1195,7 +1195,7 @@ bool CSystem::CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, 
 	int result = SHFileOperation(&fo);
 	if (result != 0)
 	{
-		DebugLog(L"Unable to copy files from %s to %s (%i)", strFrom.c_str(), strTo.c_str(), result);
+		LogWithArgs(LOG_ERROR, L"Unable to copy files from %s to %s (%i)", strFrom.c_str(), strTo.c_str(), result);
 		return false;
 	}
 	return true;
@@ -1302,7 +1302,7 @@ std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileM
 				}
 				else  // failed
 				{
-					DebugLog(L"Unable to create a temporary file to: %s", temporary.c_str());
+					LogWithArgs(LOG_ERROR, L"Unable to create a temporary file to: %s", temporary.c_str());
 					return L"<>";
 				}
 			}

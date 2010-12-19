@@ -101,7 +101,7 @@ void CMeasureCPU::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	if (processor < 0 || processor > m_NumOfProcessors)
 	{
-		DebugLog(L"[%s] Invalid Processor: %i", section, processor);
+		LogWithArgs(LOG_WARNING, L"[%s] Invalid Processor: %i", section, processor);
 
 		processor = 0;
 	}

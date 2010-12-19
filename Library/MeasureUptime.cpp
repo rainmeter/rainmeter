@@ -98,7 +98,7 @@ const WCHAR* CMeasureUptime::GetStringValue(bool autoScale, double scale, int de
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER)
 	{
-		DebugLog(L"Uptime: Invalid Format: Measure=[%s], Format=\"%s\"", m_Name.c_str(), m_Format.c_str());
+		LogWithArgs(LOG_WARNING, L"Uptime: Invalid Format: Measure=[%s], Format=\"%s\"", m_Name.c_str(), m_Format.c_str());
 		buffer[0] = 0;
 	}
 

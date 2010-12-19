@@ -528,16 +528,16 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 
 	switch(nLevel)
 	{
-	case 1:
+	case LOG_ERROR:
 		logInfo.type = L"ERROR";
 		break;
-	case 2:
+	case LOG_WARNING:
 		logInfo.type = L"WARNING";
 		break;
-	case 3:
+	case LOG_NOTICE:
 		logInfo.type = L"NOTICE";
 		break;
-	case 4:
+	case LOG_DEBUG:
 		logInfo.type = L"DEBUG";
 		break;
 	}
@@ -605,6 +605,8 @@ void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* 
 	// Do nothing.
 }
 
+// DebugLog function preserved to comply with lines 32-36 in Litestep.h,
+// it is unclear whether they/it are required or used.
 void DebugLog(const WCHAR* format, ... )
 {
 	WCHAR buffer[4096];
@@ -624,5 +626,28 @@ void DebugLog(const WCHAR* format, ... )
 	_set_invalid_parameter_handler(oldHandler);
 
 	LSLog(LOG_DEBUG, L"Rainmeter", buffer);
+	va_end(args);
+}
+
+void LogWithArgs(int nLevel, const WCHAR* format, ... )
+{
+	WCHAR buffer[4096];
+	va_list args;
+    va_start( args, format );
+
+	_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
+	_CrtSetReportMode(_CRT_ASSERT, 0);
+
+	errno = 0;
+	_vsnwprintf_s( buffer, _TRUNCATE, format, args );
+	if (errno != 0)
+	{
+		nLevel = LOG_ERROR;
+		_snwprintf_s(buffer, _TRUNCATE, L"LogWithArgs() internal error: %s", format);
+	}
+
+	_set_invalid_parameter_handler(oldHandler);
+
+	LSLog(nLevel, L"Rainmeter", buffer);
 	va_end(args);
 }

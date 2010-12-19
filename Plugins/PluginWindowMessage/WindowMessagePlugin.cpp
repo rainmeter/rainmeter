@@ -208,26 +208,26 @@ void ExecuteBang(LPCTSTR args, UINT id)
 					}
 					else
 					{
-						LSLog(LOG_DEBUG, L"Rainmeter", L"WindowMessagePlugin: Unable to find the window!");
+						LSLog(LOG_ERROR, L"Rainmeter", L"WindowMessagePlugin: Unable to find the window!");
 					}
 				}
 				else
 				{
-					LSLog(LOG_DEBUG, L"Rainmeter", L"WindowMessagePlugin: Unable to find the window data!");
+					LSLog(LOG_ERROR, L"Rainmeter", L"WindowMessagePlugin: Unable to find the window data!");
 				}
 			}
 			else
 			{
-				LSLog(LOG_DEBUG, L"Rainmeter", L"WindowMessagePlugin: Incorrect number of arguments for the bang!");
+				LSLog(LOG_WARNING, L"Rainmeter", L"WindowMessagePlugin: Incorrect number of arguments for the bang!");
 			}
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, L"Rainmeter", L"WindowMessagePlugin: Unknown bang!");
+			LSLog(LOG_WARNING, L"Rainmeter", L"WindowMessagePlugin: Unknown bang!");
 		}
 	}
 	else
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"WindowMessagePlugin: Unable to parse the bang!");
+		LSLog(LOG_WARNING, L"Rainmeter", L"WindowMessagePlugin: Unable to parse the bang!");
 	}
 }

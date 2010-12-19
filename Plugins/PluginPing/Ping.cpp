@@ -155,14 +155,14 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				}
 				else
 				{
-					LSLog(LOG_DEBUG, L"Rainmeter", L"Unable to get the host by name.");
+					LSLog(LOG_WARNING, L"Rainmeter", L"Unable to get the host by name.");
 				}
 
 				WSACleanup();
 			}
 			else
 			{
-				LSLog(LOG_DEBUG, L"Rainmeter", L"Unable to initialize Windows Sockets.");
+				LSLog(LOG_WARNING, L"Rainmeter", L"Unable to initialize Windows Sockets.");
 			}
 		}
 		valid = true;
@@ -290,7 +290,7 @@ void Finalize(HMODULE instance, UINT id)
 		if ((*i1).second->threadHandle)
 		{
 			// Should really wait until the thread finishes instead terminating it...
-			LSLog(LOG_DEBUG, L"Rainmeter", L"PingPlugin: Thread still running -> Terminate.");
+			LSLog(LOG_NOTICE, L"Rainmeter", L"PingPlugin: Thread still running -> Terminate.");
 			TerminateThread((*i1).second->threadHandle, 0);
 		}
 		LeaveCriticalSection(&g_CriticalSection);

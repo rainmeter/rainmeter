@@ -268,7 +268,7 @@ bool ReadSharedData(SensorType type, TempScale scale, UINT number, double* value
 	}
 	else
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"SpeedFanPlugin: The shared memory has incorrect version.");
+		LSLog(LOG_WARNING, L"Rainmeter", L"SpeedFanPlugin: The shared memory has incorrect version.");
 	}
 
 	UnmapViewOfFile(ptr);

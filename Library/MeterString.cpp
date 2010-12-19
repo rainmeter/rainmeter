@@ -161,8 +161,8 @@ void CMeterString::Initialize()
 			// It couldn't find the font family: Log it.
 			if(Ok != status)
 			{	
-				std::wstring error = L"Error: Couldn't load font family: " + m_FontFace;
-				LSLog(LOG_DEBUG, APPNAME, error.c_str());
+				std::wstring error = L"Couldn't load font family: " + m_FontFace;
+				LSLog(LOG_ERROR, APPNAME, error.c_str());
 				
 				delete m_FontFamily;
 				m_FontFamily = NULL;
@@ -725,24 +725,22 @@ void CMeterString::EnumerateInstalledFontFamilies()
 					}
 					fonts += L", ";
 				}
-				LSLog(LOG_DEBUG, APPNAME, fonts.c_str());
+				LSLog(LOG_NOTICE, APPNAME, fonts.c_str());
 			}
 			else
 			{
-				LSLog(LOG_DEBUG, APPNAME, L"Failed to enumerate installed font families: GetFamilies() failed.");
+				LSLog(LOG_ERROR, APPNAME, L"Failed to enumerate installed font families: GetFamilies() failed.");
 			}
 
 			delete [] fontFamilies;
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, APPNAME, L"There are no installed font families!");
+			LSLog(LOG_WARNING, APPNAME, L"There are no installed font families!");
 		}
 	}
 	else
 	{
-		LSLog(LOG_DEBUG, APPNAME, L"Failed to enumerate installed font families: InstalledFontCollection() failed.");
+		LSLog(LOG_ERROR, APPNAME, L"Failed to enumerate installed font families: InstalledFontCollection() failed.");
 	}
 }
-
-// EOF

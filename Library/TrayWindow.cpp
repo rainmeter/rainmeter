@@ -355,7 +355,7 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 				Status status = m_Bitmap->GetLastStatus();
 				if(Ok != status)
 				{
-					DebugLog(L"Bitmap image not found:  %s", imageName.c_str());
+					LogWithArgs(LOG_WARNING, L"Bitmap image not found:  %s", imageName.c_str());
 					delete m_Bitmap;
 					m_Bitmap = NULL;
 				}
@@ -364,7 +364,7 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 	}
 	else
 	{
-		DebugLog(L"No such TrayMeter: %s", type.c_str());
+		LogWithArgs(LOG_ERROR, L"No such TrayMeter: %s", type.c_str());
 	}
 
 	int trayIcon = parser.ReadInt(L"Rainmeter", L"TrayIcon", 1);

@@ -750,7 +750,7 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.substr(1, result.size() - 2).c_str()).c_str(), &resultValue);
 		if (errMsg != NULL)
 		{
-			LSLog(LOG_DEBUG, APPNAME, ConvertToWide(errMsg).c_str());
+			LSLog(LOG_ERROR, APPNAME, ConvertToWide(errMsg).c_str());
 		}
 
 		return resultValue;
@@ -770,7 +770,7 @@ int CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
 		
 		if (errMsg != NULL)
 		{
-			LSLog(LOG_DEBUG, APPNAME, ConvertToWide(errMsg).c_str());
+			LSLog(LOG_ERROR, APPNAME, ConvertToWide(errMsg).c_str());
 			return -1;
 		}
 
@@ -1038,7 +1038,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 	// Verify whether the file exists
 	if (_waccess(iniFile.c_str(), 0) == -1)
 	{
-		DebugLog(L"Unable to read file: %s", iniFile.c_str());
+		LogWithArgs(LOG_WARNING, L"Unable to read file: %s", iniFile.c_str());
 		return;
 	}
 
@@ -1048,11 +1048,11 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 
 	if (temporary)
 	{
-		if (CRainmeter::GetDebug()) DebugLog(L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
+		if (CRainmeter::GetDebug()) LogWithArgs(LOG_DEBUG, L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
 	}
 	else
 	{
-		if (CRainmeter::GetDebug()) DebugLog(L"Reading file: %s", iniFile.c_str());
+		if (CRainmeter::GetDebug()) LogWithArgs(LOG_DEBUG, L"Reading file: %s", iniFile.c_str());
 		iniRead = iniFile;
 	}
 

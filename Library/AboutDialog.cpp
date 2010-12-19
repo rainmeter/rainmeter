@@ -380,7 +380,7 @@ void ScanPlugins()
 		}
 		else
 		{
-			DebugLog(L"Unable to load library: \"%s\", ErrorCode=%u", tmpSz.c_str(), err);
+			LogWithArgs(LOG_WARNING, L"Unable to load library: \"%s\", ErrorCode=%u", tmpSz.c_str(), err);
 		}
 
 		g_Plugins.push_back(info);

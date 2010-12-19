@@ -198,25 +198,25 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 
 						if (!m_Bitmap)
 						{
-							DebugLog(L"Unable to create %s: %s", m_ConfigName.c_str(), filename.c_str());
+							LogWithArgs(LOG_ERROR, L"Unable to create %s: %s", m_ConfigName.c_str(), filename.c_str());
 							DisposeImage();
 						}
 					}
 					else
 					{
-						DebugLog(L"Unable to allocate memory ( %i bytes ) for %s: %s", imageSize, m_ConfigName.c_str(), filename.c_str());
+						LogWithArgs(LOG_ERROR, L"Unable to allocate memory ( %i bytes ) for %s: %s", imageSize, m_ConfigName.c_str(), filename.c_str());
 					}
 				}
 				else
 				{
-					DebugLog(L"Unable to get %s's file size: %s", m_ConfigName.c_str(), filename.c_str());
+					LogWithArgs(LOG_ERROR, L"Unable to get %s's file size: %s", m_ConfigName.c_str(), filename.c_str());
 				}
 			}
 			CloseHandle(fileHandle);
 		}
 		else
 		{
-			DebugLog(L"Unable to load %s: %s", m_ConfigName.c_str(), filename.c_str());
+			LogWithArgs(LOG_ERROR, L"Unable to load %s: %s", m_ConfigName.c_str(), filename.c_str());
 			DisposeImage();
 		}
 

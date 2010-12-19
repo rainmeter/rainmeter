@@ -456,17 +456,17 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		if (SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
 		{
 			InstanceCreated = true;
-			LSLog(LOG_DEBUG, L"Rainmeter", L"iTunesPlugin: iTunesApp initialized successfully.");
+			LSLog(LOG_NOTICE, L"Rainmeter", L"iTunesPlugin: iTunesApp initialized successfully.");
 			initEventHandler();
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, L"Rainmeter", L"iTunesPlugin: Unable to create the iTunesApp instance.");
+			LSLog(LOG_WARNING, L"Rainmeter", L"iTunesPlugin: Unable to create the iTunesApp instance.");
 		}
 	}
 	else
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"iTunesPlugin: Unable to find the iTunes window.");
+		LSLog(LOG_WARNING, L"Rainmeter", L"iTunesPlugin: Unable to find the iTunes window.");
 	}
 
 	const wchar_t* type = ReadConfigString(section, L"Command", L"");
@@ -501,12 +501,12 @@ UINT Update(UINT id)
 			if (!iTunesAboutToPromptUserToQuit && SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
 			{
 				InstanceCreated = true;
-				LSLog(LOG_DEBUG, L"Rainmeter", L"iTunesPlugin: iTunesApp initialized successfully.");
+				LSLog(LOG_NOTICE, L"Rainmeter", L"iTunesPlugin: iTunesApp initialized successfully.");
 				initEventHandler();
 			}
 			else
 			{
-				LSLog(LOG_DEBUG, L"Rainmeter", L"iTunesPlugin: Unable to create the iTunesApp instance.");
+				LSLog(LOG_WARNING, L"Rainmeter", L"iTunesPlugin: Unable to create the iTunesApp instance.");
 				return 0;
 			}
 		}
@@ -776,7 +776,7 @@ void ExecuteBang(LPCTSTR args, UINT id)
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, L"Rainmeter", L"iTunesPlugin: Invalid command.");
+			LSLog(LOG_NOTICE, L"Rainmeter", L"iTunesPlugin: Invalid command.");
 			return;
 		}
 	}
