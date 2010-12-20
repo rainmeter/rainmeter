@@ -405,7 +405,7 @@ void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 				else
 				{
 					std::wstring dbg = L"Unknown config name: " + config;
-					LSLog(LOG_NOTICE, APPNAME, dbg.c_str());
+					Log(LOG_NOTICE, dbg.c_str());
 				}
 			}
 			else
@@ -421,7 +421,7 @@ void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 		}
 		else
 		{
-			LSLog(LOG_WARNING, APPNAME, L"Incorrect number of arguments for the bang!");
+			Log(LOG_WARNING, L"Incorrect number of arguments for the bang!");
 		}
 	}
 }
@@ -459,7 +459,7 @@ void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 		}
 		else
 		{
-			LSLog(LOG_WARNING, APPNAME, L"Incorrect number of arguments for the group bang!");
+			Log(LOG_WARNING, L"Incorrect number of arguments for the group bang!");
 		}
 	}
 }
@@ -1140,7 +1140,7 @@ void RainmeterActivateConfigWide(const WCHAR* arg)
 		else
 		{
 			// If we got this far, something went wrong
-			LSLog(LOG_WARNING, APPNAME, L"Unable to parse the arguments for !RainmeterActivateConfig");
+			Log(LOG_WARNING, L"Unable to parse the arguments for !RainmeterActivateConfig");
 		}
 	}
 }
@@ -1169,7 +1169,7 @@ void RainmeterDeactivateConfigWide(const WCHAR* arg)
 		}
 		else
 		{
-			LSLog(LOG_WARNING, APPNAME, L"Unable to parse the arguments for !RainmeterDeactivateConfig");
+			Log(LOG_WARNING, L"Unable to parse the arguments for !RainmeterDeactivateConfig");
 		}
 	}
 }
@@ -1200,7 +1200,7 @@ void RainmeterToggleConfigWide(const WCHAR* arg)
 		}
 		else
 		{
-			LSLog(LOG_WARNING, APPNAME, L"Unable to parse the arguments for !RainmeterToggleConfig");
+			Log(LOG_WARNING, L"Unable to parse the arguments for !RainmeterToggleConfig");
 		}
 	}
 }
@@ -1230,7 +1230,7 @@ void RainmeterDeactivateConfigGroupWide(const WCHAR* arg)
 		}
 		else
 		{
-			LSLog(LOG_WARNING, APPNAME, L"Unable to parse the arguments for !RainmeterDeactivateConfigGroup");
+			Log(LOG_WARNING, L"Unable to parse the arguments for !RainmeterDeactivateConfigGroup");
 		}
 	}
 }
@@ -1290,7 +1290,7 @@ void RainmeterSkinMenuWide(const WCHAR* arg)
 		}
 		else
 		{
-			LSLog(LOG_WARNING, APPNAME, L"Unable to parse the arguments for !RainmeterSkinMenu");
+			Log(LOG_WARNING, L"Unable to parse the arguments for !RainmeterSkinMenu");
 		}
 	}
 }
@@ -1457,7 +1457,7 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 		}
 		else
 		{
-			LSLog(LOG_WARNING, APPNAME, L"Unable to parse the arguments for !RainmeterWriteKeyValue");
+			Log(LOG_WARNING, L"Unable to parse the arguments for !RainmeterWriteKeyValue");
 		}
 	}
 }
@@ -1730,7 +1730,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		}
 		else
 		{
-			LSLog(LOG_WARNING, APPNAME, L"Unable to get the My Documents location.");
+			Log(LOG_WARNING, L"Unable to get the My Documents location.");
 		}
 	}
 	WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), m_IniFile.c_str());
@@ -1807,7 +1807,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	if (c_Debug)
 	{
-		LSLog(LOG_DEBUG, APPNAME, L"Enumerating installed font families...");
+		Log(LOG_DEBUG, L"Enumerating installed font families...");
 		CMeterString::EnumerateInstalledFontFamilies();
 	}
 
@@ -1938,7 +1938,7 @@ void CRainmeter::CheckSkinVersions()
 
 	for (size_t i = 0; i < menu.size(); ++i)
 	{
-		// DebugLog(L"%s", menu[i].name.c_str());
+		// LogWithArgs(LOG_DEBUG, L"%s", menu[i].name.c_str());
 
 		// Read the version files
 		std::wstring strNewVersionFile = strMainSkinsPath + menu[i].name;
@@ -1955,21 +1955,21 @@ void CRainmeter::CheckSkinVersions()
 		if (getline(newFile, strVersion))
 		{
 			strVersionNew = ConvertToWide(strVersion.c_str());
-			// DebugLog(L"New: %s", strVersionNew.c_str());
+			// LogWithArgs(LOG_DEBUG, L"New: %s", strVersionNew.c_str());
 
 			// Compare with the version entry in the Rainmeter.ini
 			WCHAR tmpSz[256] = {0};
 			GetPrivateProfileString(menu[i].name.c_str(), L"Version", L"", tmpSz, 256, m_IniFile.c_str());
 			strVersionInIni = tmpSz;
 
-			// DebugLog(L"In Ini: %s", strVersionInIni.c_str());
+			// LogWithArgs(LOG_DEBUG, L"In Ini: %s", strVersionInIni.c_str());
 
 			// Compare with the version file in the skin folder
 			std::ifstream currentFile(strCurrentVersionFile.c_str(), std::ios_base::in);
 			if (getline(currentFile, strVersion))
 			{
 				strVersionCurrent = ConvertToWide(strVersion.c_str());
-				// DebugLog(L"Current: %s", strVersionCurrent.c_str());
+				// LogWithArgs(LOG_DEBUG, L"Current: %s", strVersionCurrent.c_str());
 			}
 		}
 
@@ -2164,7 +2164,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 			message += L"\\";
 			message += skinIniFile;
 			message += L"\": Ini-file not found.";
-			LSLog(LOG_WARNING, APPNAME, message.c_str());
+			Log(LOG_WARNING, message.c_str());
 			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 			return;
 		}
@@ -3315,7 +3315,7 @@ void CRainmeter::RefreshAll()
 						message += L"\\";
 						message += skinIniFile;
 						message += L"\": Ini-file not found.";
-						LSLog(LOG_WARNING, APPNAME, message.c_str());
+						Log(LOG_WARNING, message.c_str());
 						MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 					}
 					break;
@@ -3330,7 +3330,7 @@ void CRainmeter::RefreshAll()
 
 					std::wstring message = L"Unable to refresh config \"" + skinConfig;
 					message += L"\": Config not found.";
-					LSLog(LOG_WARNING, APPNAME, message.c_str());
+					Log(LOG_WARNING, message.c_str());
 					MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 				}
 				continue;
@@ -4122,7 +4122,7 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	}
 	if (!bSuccess)
 	{
-		LSLog(LOG_WARNING, APPNAME, L"The Rainmeter.ini file is NOT writable.");
+		Log(LOG_WARNING, L"The Rainmeter.ini file is NOT writable.");
 
 		std::wstring error = L"The Rainmeter.ini file is not writable. This means that the\n"
 			L"application will not be able to save any settings permanently.\n\n";
@@ -4153,7 +4153,7 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	}
 	else
 	{
-		LSLog(LOG_NOTICE, APPNAME, L"The Rainmeter.ini file is writable.");
+		Log(LOG_NOTICE, L"The Rainmeter.ini file is writable.");
 	}
 }
 

@@ -385,7 +385,7 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 				}
 			}
 
-//			DebugLog(L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
+//			LogWithArgs(LOG_DEBUG, L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
 			if(bitmap->GetHeight() > bitmap->GetWidth())
 			{
@@ -451,7 +451,7 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 			}
 		}
 
-//		DebugLog(L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
+//		LogWithArgs(LOG_DEBUG, L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
 		if(bitmap->GetHeight() > bitmap->GetWidth())
 		{

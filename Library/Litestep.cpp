@@ -605,28 +605,9 @@ void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* 
 	// Do nothing.
 }
 
-// DebugLog function preserved to comply with lines 32-36 in Litestep.h,
-// it is unclear whether they/it are required or used.
-void DebugLog(const WCHAR* format, ... )
+void Log(int nLevel, const WCHAR* message)
 {
-	WCHAR buffer[4096];
-	va_list args;
-    va_start( args, format );
-
-	_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
-	_CrtSetReportMode(_CRT_ASSERT, 0);
-
-	errno = 0;
-	_vsnwprintf_s( buffer, _TRUNCATE, format, args );
-	if (errno != 0)
-	{
-		_snwprintf_s(buffer, _TRUNCATE, L"DebugLog internal error: %s", format);
-	}
-
-	_set_invalid_parameter_handler(oldHandler);
-
-	LSLog(LOG_DEBUG, L"Rainmeter", buffer);
-	va_end(args);
+	LSLog(nLevel, L"Rainmeter", message);
 }
 
 void LogWithArgs(int nLevel, const WCHAR* format, ... )

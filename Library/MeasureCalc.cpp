@@ -84,7 +84,7 @@ bool CMeasureCalc::Update()
 	char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(m_Formula.c_str()).c_str(), &m_Value);
 	if (errMsg != NULL)
 	{
-		LSLog(LOG_ERROR, APPNAME, ConvertToWide(errMsg).c_str());
+		Log(LOG_ERROR, ConvertToWide(errMsg).c_str());
 	}
 
 	return PostUpdate();

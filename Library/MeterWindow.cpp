@@ -259,7 +259,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 		}
 	}
 
-	LSLog(LOG_NOTICE, APPNAME, L"Initialization successful.");
+	Log(LOG_NOTICE, L"Initialization successful.");
 
 	return 0;
 }
@@ -307,7 +307,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 	notice += L"\\";
 	notice += m_SkinIniFile; 
 	notice += L"\""; 
-	LSLog(LOG_NOTICE, APPNAME, notice.c_str());
+	Log(LOG_NOTICE, notice.c_str());
 	
 	m_Refreshing = true;
 
@@ -759,7 +759,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		}
 		else
 		{
-			LSLog(LOG_ERROR, APPNAME, L"Unable to parse parameters for !RainmeterMove");
+			Log(LOG_ERROR, L"Unable to parse parameters for !RainmeterMove");
 		}
 		break;
 
@@ -871,12 +871,12 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			}
 			else
 			{
-				LSLog(LOG_ERROR, APPNAME, L"Unable to parse coordinates for !RainmeterMoveMeter");
+				Log(LOG_ERROR, L"Unable to parse coordinates for !RainmeterMoveMeter");
 			}
 		}
 		else
 		{
-			LSLog(LOG_ERROR, APPNAME, L"Unable to parse parameters for !RainmeterMoveMeter");
+			Log(LOG_ERROR, L"Unable to parse parameters for !RainmeterMoveMeter");
 		}
 		break;
 
@@ -923,7 +923,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			}
 			else
 			{
-				LSLog(LOG_ERROR, APPNAME, L"Unable to parse parameters for !RainmeterPluginBang");
+				Log(LOG_ERROR, L"Unable to parse parameters for !RainmeterPluginBang");
 			}
 		}
 		break;
@@ -954,7 +954,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		}
 		else
 		{
-			LSLog(LOG_ERROR, APPNAME, L"Unable to parse parameters for !RainmeterSetVariable");
+			Log(LOG_ERROR, L"Unable to parse parameters for !RainmeterSetVariable");
 		}
 		break;
 	}
@@ -1187,7 +1187,7 @@ void CMeterWindow::WindowToScreen()
 {
 	if (CSystem::GetMonitorCount() == 0)
 	{
-		LSLog(LOG_ERROR, APPNAME, L"There are no monitors. WindowToScreen function fails.");
+		Log(LOG_ERROR, L"There are no monitors. WindowToScreen function fails.");
 		return;
 	}
 
@@ -1399,7 +1399,7 @@ void CMeterWindow::ScreenToWindow()
 
 	if (monitors.empty())
 	{
-		LSLog(LOG_ERROR, APPNAME, L"There are no monitors. ScreenToWindow function fails.");
+		Log(LOG_ERROR, L"There are no monitors. ScreenToWindow function fails.");
 		return;
 	}
 
@@ -1709,7 +1709,7 @@ bool CMeterWindow::ReadSkin()
 		message += L"\\";
 		message += m_SkinIniFile;
 		message += L"\": Ini-file not found.";
-		LSLog(LOG_WARNING, APPNAME, message.c_str());
+		Log(LOG_WARNING, message.c_str());
 		MessageBox(m_Window, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		return false;
 	}
@@ -1826,7 +1826,7 @@ bool CMeterWindow::ReadSkin()
 				if(nResults != Ok)
 				{
 					std::wstring error = L"Couldn't load font file: " + localFont;
-					LSLog(LOG_ERROR, APPNAME, error.c_str());
+					Log(LOG_ERROR, error.c_str());
 				}
 			}
 
@@ -1869,7 +1869,7 @@ bool CMeterWindow::ReadSkin()
 						if(nResults != Ok)
 						{
 							std::wstring error = L"Couldn't load font file: " + localFont;
-							LSLog(LOG_ERROR, APPNAME, error.c_str());
+							Log(LOG_ERROR, error.c_str());
 						}
 					} 
 				}
@@ -2753,7 +2753,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 //		GetWindowRect(m_Window, &rect);
 //		if (rect.left != m_WindowX && rect.top != m_WindowY)
 //		{
-//			DebugLog(L"Window position has been changed. Moving it back to the place it belongs.");
+//			LogWithArgs(LOG_DEBUG, L"Window position has been changed. Moving it back to the place it belongs.");
 //			SetWindowPos(m_Window, NULL, m_WindowX, m_WindowY, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 //		}
 //	}
@@ -4215,7 +4215,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 				if (!m_MouseOver)
 				{
 					// If the mouse is over a meter it's also over the main window
-					//DebugLog(L"@Enter: %s", m_SkinName.c_str());
+					//LogWithArgs(LOG_DEBUG, L"@Enter: %s", m_SkinName.c_str());
 					m_MouseOver = true;
 					SetMouseLeaveEvent(false);
 
@@ -4257,7 +4257,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 						!((*j)->GetMouseLeaveAction().empty()) ||
 						button)
 					{
-						//DebugLog(L"MeterEnter: %s - [%s]", m_SkinName.c_str(), (*j)->GetName());
+						//LogWithArgs(LOG_DEBUG, L"MeterEnter: %s - [%s]", m_SkinName.c_str(), (*j)->GetName());
 						(*j)->SetMouseOver(true);
 
 						if (!((*j)->GetMouseOverAction().empty()))
@@ -4288,7 +4288,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 						}
 					}
 
-					//DebugLog(L"MeterLeave: %s - [%s]", m_SkinName.c_str(), (*j)->GetName());
+					//LogWithArgs(LOG_DEBUG, L"MeterLeave: %s - [%s]", m_SkinName.c_str(), (*j)->GetName());
 					(*j)->SetMouseOver(false);
 
 					if (!((*j)->GetMouseLeaveAction().empty()))
@@ -4308,7 +4308,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 		{
 			if (!m_MouseOver)
 			{
-				//DebugLog(L"Enter: %s", m_SkinName.c_str());
+				//LogWithArgs(LOG_DEBUG, L"Enter: %s", m_SkinName.c_str());
 				m_MouseOver = true;
 				SetMouseLeaveEvent(false);
 
@@ -4327,7 +4327,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 			// Mouse leave happens when the mouse is outside the window
 			if (m_MouseOver)
 			{
-				//DebugLog(L"Leave: %s", m_SkinName.c_str());
+				//LogWithArgs(LOG_DEBUG, L"Leave: %s", m_SkinName.c_str());
 				m_MouseOver = false;
 				SetMouseLeaveEvent(true);
 
@@ -4536,7 +4536,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		if (!found) 
 		{
-			LSLog(LOG_WARNING, APPNAME, L"Unable to send the !bang to a deactivated config.");
+			Log(LOG_WARNING, L"Unable to send the !bang to a deactivated config.");
 			return 0;	// This meterwindow has been deactivated
 		}
 

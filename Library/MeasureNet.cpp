@@ -113,7 +113,7 @@ void CMeasureNet::UpdateIFTable()
 
 			if (CRainmeter::GetDebug() && logging)
 			{
-				LSLog(LOG_DEBUG, APPNAME, L"------------------------------");
+				Log(LOG_DEBUG, L"------------------------------");
 				LogWithArgs(LOG_DEBUG, L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
 
 				for (size_t i = 0; i < c_NumOfTables; ++i)
@@ -151,7 +151,7 @@ void CMeasureNet::UpdateIFTable()
 						(ifTable->Table[i].InterfaceAndOperStatusFlags.HardwareInterface == 1) ? L"Yes" : L"No",
 						(ifTable->Table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) ? L"Yes" : L"No");
 				}
-				LSLog(LOG_DEBUG, APPNAME, L"------------------------------");
+				Log(LOG_DEBUG, L"------------------------------");
 			}
 		}
 		else
@@ -209,7 +209,7 @@ void CMeasureNet::UpdateIFTable()
 
 				if (CRainmeter::GetDebug() && logging)
 				{
-					LSLog(LOG_DEBUG, APPNAME, L"------------------------------");
+					Log(LOG_DEBUG, L"------------------------------");
 					LogWithArgs(LOG_DEBUG, L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
 
 					for (size_t i = 0; i < c_NumOfTables; ++i)
@@ -246,7 +246,7 @@ void CMeasureNet::UpdateIFTable()
 						LogWithArgs(LOG_DEBUG, L"  Type=%s(%i)",
 							type.c_str(), ifTable->table[i].dwType);
 					}
-					LSLog(LOG_DEBUG, APPNAME, L"------------------------------");
+					Log(LOG_DEBUG, L"------------------------------");
 				}
 			}
 			else

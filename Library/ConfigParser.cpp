@@ -145,7 +145,7 @@ void CConfigParser::ReadVariables()
 */
 void CConfigParser::SetVariable(std::map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue)
 {
-	// DebugLog(L"Variable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), (int)m_Variables.size());
+	// LogWithArgs(LOG_DEBUG, L"Variable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), (int)m_Variables.size());
 
 	std::wstring strTmp(strVariable);
 	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
@@ -613,7 +613,7 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 
 					const std::wstring& strStyle = GetValue(strSection, key, strDefault);
 
-					//DebugLog(L"[%s] %s (from [%s]) : strDefault=%s (0x%p), strStyle=%s (0x%p)",
+					//LogWithArgs(LOG_DEBUG, L"[%s] %s (from [%s]) : strDefault=%s (0x%p), strStyle=%s (0x%p)",
 					//	section, key, strSection.c_str(), strDefault.c_str(), &strDefault, strStyle.c_str(), &strStyle);
 
 					if (&strStyle != &strDefault)
@@ -659,10 +659,14 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		}
 	}
 
+	SetVariable(L"CURRENTSECTION", section);  // Set temporarily
+
 	if (ReplaceVariables(result))
 	{
 		m_LastReplaced = true;
 	}
+
+	SetVariable(L"CURRENTSECTION", L"");  // Reset
 
 	if (bReplaceMeasures && ReplaceMeasures(result))
 	{
@@ -750,7 +754,7 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.substr(1, result.size() - 2).c_str()).c_str(), &resultValue);
 		if (errMsg != NULL)
 		{
-			LSLog(LOG_ERROR, APPNAME, ConvertToWide(errMsg).c_str());
+			Log(LOG_ERROR, ConvertToWide(errMsg).c_str());
 		}
 
 		return resultValue;
@@ -770,7 +774,7 @@ int CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
 		
 		if (errMsg != NULL)
 		{
-			LSLog(LOG_ERROR, APPNAME, ConvertToWide(errMsg).c_str());
+			Log(LOG_ERROR, ConvertToWide(errMsg).c_str());
 			return -1;
 		}
 
@@ -1187,7 +1191,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 */
 void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue)
 {
-	// DebugLog(L"[%s] %s=%s (size: %i)", strSection.c_str(), strKey.c_str(), strValue.c_str(), (int)m_Values.size());
+	// LogWithArgs(LOG_DEBUG, L"[%s] %s=%s (size: %i)", strSection.c_str(), strKey.c_str(), strValue.c_str(), (int)m_Values.size());
 
 	std::wstring strTmpSection(strSection);
 	std::wstring strTmpKey(strKey);
