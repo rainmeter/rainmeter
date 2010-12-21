@@ -37,7 +37,7 @@ enum INTERVAL
 {
 	INTERVAL_SHOWDESKTOP = 250,
 	INTERVAL_COMPOSITION = 250,
-	INTERVAL_NETSTATS    = 10000,
+	INTERVAL_NETSTATS    = 60000,
 	INTERVAL_DELETELATER = 1000
 };
 
@@ -106,6 +106,7 @@ void CSystem::Initialize(HINSTANCE instance)
 	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 	SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
+	c_Monitors.monitors.reserve(8);
 	SetMultiMonitorInfo();
 
 	c_DwmCompositionEnabled = (DwmIsCompositionEnabled() == TRUE);
@@ -255,8 +256,6 @@ void CSystem::SetMultiMonitorInfo()
 {
 	std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
 	bool logging = CRainmeter::GetDebug();
-
-	if (monitors.capacity() < 16) { monitors.reserve(16); }
 
 	c_Monitors.vsT = GetSystemMetrics(SM_YVIRTUALSCREEN);
 	c_Monitors.vsL = GetSystemMetrics(SM_XVIRTUALSCREEN);
@@ -765,6 +764,8 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 {
 	bool logging = CRainmeter::GetDebug() && DEBUG_VERBOSE;
 
+	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);  // always on bottom
+
 	if (c_ShowDesktop && WorkerW)
 	{
 		// Set WS_EX_TOPMOST flag
@@ -886,7 +887,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 {
 	static int DesktopCompositionCheckCount = 0;
 
-	if (uMsg == WM_CREATE || hWnd != c_Window)
+	if (hWnd != c_Window)
 	{
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}

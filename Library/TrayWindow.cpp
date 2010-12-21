@@ -272,6 +272,8 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 
 void CTrayWindow::ReadConfig(CConfigParser& parser)
 {
+	KillTimer(m_Window, TRAYTIMER);
+
 	delete m_Measure;
 	m_Measure = NULL;
 
@@ -371,7 +373,11 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 	if (trayIcon != 0)
 	{
 		AddTrayIcon();
-		SetTimer(m_Window, TRAYTIMER, 1000, NULL);		// Update the tray once per sec
+
+		if (m_Measure)
+		{
+			SetTimer(m_Window, TRAYTIMER, 1000, NULL);		// Update the tray once per sec
+		}
 	}
 }
 

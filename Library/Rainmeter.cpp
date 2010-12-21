@@ -243,7 +243,7 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 
 			if (subStrings.size() >= 1)
 			{
-				std::wstring config = subStrings[0];
+				const std::wstring& config = subStrings[0];
 
 				CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
 				if (meterWindow)
@@ -266,12 +266,12 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 
 			if (subStrings.size() >= 2)
 			{
-				std::wstring config = subStrings[0];
+				const std::wstring& config = subStrings[0];
 
 				CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
 				if (meterWindow)
 				{
-					std::wstring variable = subStrings[1];
+					const std::wstring& variable = subStrings[1];
 					std::wstring result_from_parser;
 
 					if (meterWindow->GetParser().GetVariable(variable, result_from_parser))
@@ -295,7 +295,7 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 
 			if (subStrings.size() >= 2)
 			{
-				std::wstring config = subStrings[0];
+				const std::wstring& config = subStrings[0];
 				std::wstring arguments;
 
 				for (size_t i = 1; i < subStrings.size(); ++i)
@@ -334,7 +334,7 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 
 			if (subStrings.size() >= 1)
 			{
-				std::wstring config = subStrings[0];
+				const std::wstring& config = subStrings[0];
 
 				CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
 				if (meterWindow)
@@ -1581,21 +1581,21 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	}	
 
 	m_Instance = Instance;
-	WCHAR tmpName[MAX_LINE_LENGTH];
-	GetModuleFileName(m_Instance, tmpName, MAX_LINE_LENGTH);
+	WCHAR tmpSz[MAX_LINE_LENGTH];
+	GetModuleFileName(m_Instance, tmpSz, MAX_LINE_LENGTH);
 
 	// Remove the module's name from the path
-	WCHAR* pos = wcsrchr(tmpName, L'\\');
+	WCHAR* pos = wcsrchr(tmpSz, L'\\');
 	if(pos) 
 	{
 		*(pos + 1) = L'\0';
 	} 
 	else 
 	{
-		tmpName[0] = L'\0';
+		tmpSz[0] = L'\0';
 	}
 
-	m_Path = tmpName;
+	m_Path = tmpSz;
 
 	if(!c_DummyLitestep) InitalizeLitestep();
 
@@ -1690,21 +1690,30 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	m_SkinPath += L"Skins\\";
 
 	// Read the skin folder from the ini file
-	WCHAR tmpSz[MAX_LINE_LENGTH];
+	tmpSz[0] = L'\0';
 	if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", tmpSz, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0) 
 	{
 		m_SkinPath = tmpSz;
 		ExpandEnvironmentVariables(m_SkinPath);
+
+		if (!m_SkinPath.empty())
+		{
+			WCHAR ch = m_SkinPath[m_SkinPath.size() - 1];
+			if (ch != L'\\' && ch != L'/')
+			{
+				m_SkinPath += L"\\";
+			}
+		}
 	}
 	else if (bDefaultIniLocation)
 	{
 		// If the skin path is not defined in the Rainmeter.ini file use My Documents/Rainmeter/Skins
-		TCHAR szPath[MAX_PATH] = {0};
-		HRESULT hr = SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, szPath);
+		tmpSz[0] = L'\0';
+		HRESULT hr = SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, tmpSz);
 		if (SUCCEEDED(hr))
 		{
 			// Make the folders if they don't exist yet
-			m_SkinPath = szPath;
+			m_SkinPath = tmpSz;
 			m_SkinPath += L"\\Rainmeter";
 			CreateDirectory(m_SkinPath.c_str(), NULL);
 			m_SkinPath += L"\\Skins\\";
@@ -3070,6 +3079,8 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 */
 void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 {
+	WCHAR buffer[MAX_PATH];
+
 	// Clear old settings
 	m_DesktopWorkAreas.clear();
 
@@ -3100,8 +3111,8 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	if (m_ConfigEditor.empty())
 	{
 		// Get the program path associated with .ini files
-		WCHAR buffer[MAX_PATH] = {0};
 		DWORD cchOut = MAX_PATH;
+		buffer[0] = L'\0';
 
 		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".ini", L"open", buffer, &cchOut);
 		if (SUCCEEDED(hr) && cchOut > 0)
@@ -3123,8 +3134,8 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	if (m_LogViewer.empty())
 	{
 		// Get the program path associated with .log files
-		WCHAR buffer[MAX_PATH] = {0};
 		DWORD cchOut = MAX_PATH;
+		buffer[0] = L'\0';
 
 		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".log", L"open", buffer, &cchOut);
 		if (SUCCEEDED(hr) && cchOut > 0)
@@ -3916,11 +3927,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 			for (int i = 0; i < itemCount; ++i)
 			{
 				WCHAR buffer[MAX_PATH] = {0};
-				MENUITEMINFO itemInfo = {sizeof(MENUITEMINFO)};
-				itemInfo.fMask = MIIM_STRING;
-				itemInfo.dwTypeData = buffer;
-				itemInfo.cch = MAX_PATH;
-				if (GetMenuItemInfo(configMenu, (UINT)i, TRUE, &itemInfo))
+				if (GetMenuString(configMenu, i, buffer, MAX_PATH, MF_BYPOSITION))
 				{
 					if (_wcsicmp(root.c_str(), buffer) == 0)
 					{

@@ -567,8 +567,8 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 			{
 				if (CSystem::GetShowDesktop())
 				{
-					// Insert after the tray window temporarily to keep order
-					winPos = m_Rainmeter->GetTrayWindow()->GetWindow();
+					// Insert after the system window temporarily to keep order
+					winPos = CSystem::GetWindow();
 				}
 				else
 				{
@@ -588,28 +588,28 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 				// Set WS_EX_TOPMOST flag
 				SetWindowPos(m_Window, HWND_TOPMOST, 0, 0, 0, 0, ZPOS_FLAGS);
 
+				winPos = CSystem::GetHelperWindow();
+
 				if (all)
 				{
 					// Insert after the helper window
-					SetWindowPos(m_Window, CSystem::GetHelperWindow(), 0, 0, 0, 0, ZPOS_FLAGS);
 				}
 				else
 				{
 					// Find the "backmost" topmost window
-					HWND hwnd = CSystem::GetHelperWindow();
-					while (hwnd = ::GetNextWindow(hwnd, GW_HWNDPREV))
+					while (winPos = ::GetNextWindow(winPos, GW_HWNDPREV))
 					{
-						if (GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
+						if (GetWindowLong(winPos, GWL_EXSTYLE) & WS_EX_TOPMOST)
 						{
 							// Insert after the found window
-							if (0 != SetWindowPos(m_Window, hwnd, 0, 0, 0, 0, ZPOS_FLAGS))
+							if (0 != SetWindowPos(m_Window, winPos, 0, 0, 0, 0, ZPOS_FLAGS))
 							{
 								break;
 							}
 						}
 					}
+					return;
 				}
-				return;
 			}
 			else
 			{
