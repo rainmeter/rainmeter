@@ -3061,7 +3061,7 @@ LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (!m_ClickThrough || keyDown)
 	{
-		POINT pos;
+		POINT pos, cpos;
 		pos.x = (SHORT)LOWORD(lParam);
 		pos.y = (SHORT)HIWORD(lParam);
 
@@ -3072,7 +3072,7 @@ LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 
 		while (DoMoveAction(pos.x, pos.y, MOUSE_LEAVE)) ;
-		while (DoMoveAction(pos.x, pos.y, MOUSE_OVER)) ;
+		while (GetCursorPos(&cpos) && WindowFromPoint(cpos) == m_Window && DoMoveAction(pos.x, pos.y, MOUSE_OVER)) ;
 
 		// Handle buttons
 		HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
