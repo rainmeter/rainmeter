@@ -378,6 +378,7 @@ private:
 	const std::wstring m_SkinIniFile;			// Name of the current skin iniFile
 
 	int m_UpdateCounter;
+	UINT m_MouseMoveCounter;
 
 	CRainmeter* m_Rainmeter;					// Pointer to the main object
 

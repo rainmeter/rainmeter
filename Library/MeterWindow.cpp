@@ -130,6 +130,7 @@ CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config,
 	m_SolidBevel = BEVELTYPE_NONE;
 
 	m_UpdateCounter = 0;
+	m_MouseMoveCounter = 0;
 	m_FontCollection = NULL;
 
 	++c_InstanceCount;
@@ -3071,6 +3072,8 @@ LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			MapWindowPoints(NULL, m_Window, &pos, 1);
 		}
 
+		++m_MouseMoveCounter;
+
 		while (DoMoveAction(pos.x, pos.y, MOUSE_LEAVE)) ;
 		while (DoMoveAction(pos.x, pos.y, MOUSE_OVER)) ;
 
@@ -3094,6 +3097,8 @@ LRESULT CMeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	HWND hWnd = WindowFromPoint(pos);
 	if (!hWnd || (hWnd != m_Window && GetParent(hWnd) != m_Window))  // ignore tooltips
 	{
+		++m_MouseMoveCounter;
+
 		POINT pos = {SHRT_MIN, SHRT_MIN};
 		while (DoMoveAction(pos.x, pos.y, MOUSE_LEAVE)) ;  // Leave all forcibly
 
@@ -4221,8 +4226,9 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 
 					if (!m_MouseOverAction.empty())
 					{
+						UINT currCounter = m_MouseMoveCounter;
 						m_Rainmeter->ExecuteCommand(m_MouseOverAction.c_str(), this);
-						return true;
+						return (currCounter == m_MouseMoveCounter);
 					}
 				}
 
@@ -4262,8 +4268,9 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 
 						if (!((*j)->GetMouseOverAction().empty()))
 						{
+							UINT currCounter = m_MouseMoveCounter;
 							m_Rainmeter->ExecuteCommand((*j)->GetMouseOverAction().c_str(), this);
-							return true;
+							return (currCounter == m_MouseMoveCounter);
 						}
 					}
 				}
@@ -4314,8 +4321,9 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 
 				if (!m_MouseOverAction.empty())
 				{
+					UINT currCounter = m_MouseMoveCounter;
 					m_Rainmeter->ExecuteCommand(m_MouseOverAction.c_str(), this);
-					return true;
+					return (currCounter == m_MouseMoveCounter);
 				}
 			}
 		}
