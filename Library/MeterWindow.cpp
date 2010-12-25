@@ -247,7 +247,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 	// Gotta have some kind of buffer during initialization
 	m_DoubleBuffer = new Bitmap(1, 1, PixelFormat32bppARGB);
 
-	Refresh(true);
+	Refresh(true, true);
 	if (!m_WindowStartHidden) 
 	{
 		if (m_WindowHide == HIDEMODE_FADEOUT) 
@@ -401,9 +401,9 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	UpdateTransparency(m_AlphaValue, true);
 
-	if (init || all || oldZPos != m_WindowZPosition)
+	if (all || oldZPos != m_WindowZPosition)
 	{
-		ChangeZPos(m_WindowZPosition, init || all);
+		ChangeZPos(m_WindowZPosition, all);
 	}
 
 	m_Rainmeter->SetCurrentParser(NULL);
