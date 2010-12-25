@@ -436,7 +436,7 @@ function are:
 instance  The instance of this DLL
 iniFile   The name of the ini-file (usually Rainmeter.ini)
 section   The name of the section in the ini-file for this measure
-id        The identifier for the measure. This is used to identify the measures that use the same plugin.
+id		The identifier for the measure. This is used to identify the measures that use the same plugin.
 */
 UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
@@ -781,30 +781,28 @@ void ExecuteBang(LPCTSTR args, UINT id)
 		}
 	}
 
+	if (!InstanceCreated)
+	{
+		if (COMMAND_POWER == command && CoInitialized && SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
+		{
+			IITBrowserWindowPtr browserWindow;
+			if (SUCCEEDED(iTunes->get_BrowserWindow(&browserWindow)))
+			{
+				browserWindow->put_Minimized(VARIANT_TRUE);
+			}
+			InstanceCreated = true;
+		}
+		return;
+	}
+
 	switch (command)
 	{
 		case COMMAND_POWER:
 		{
-			if (!InstanceCreated)
-			{
-				if (COMMAND_POWER == command && CoInitialized && SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
-				{
-					IITBrowserWindowPtr browserWindow;
-					if (SUCCEEDED(iTunes->get_BrowserWindow(&browserWindow)))
-					{
-						browserWindow->put_Minimized(VARIANT_TRUE);
-					}
-					InstanceCreated = true;
-				}
-				break;
-			}
-			else
-			{
-				iTunes->Quit();
-				iTunes.Release();
-				InstanceCreated = false;
-				break;
-			}
+			iTunes->Quit();
+			iTunes.Release();
+			InstanceCreated = false;
+			break;
 		}
 		case COMMAND_TOGGLEITUNES:
 		{
