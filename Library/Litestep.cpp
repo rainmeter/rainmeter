@@ -36,8 +36,8 @@ FPGETLITESTEPWND fpGetLitestepWnd = NULL;
 typedef BOOL (*FPGETRCSTRING)(LPCSTR lpKeyName, LPSTR value, LPCSTR defStr, int maxLen);
 FPGETRCSTRING fpGetRCString = NULL;
 
-typedef int (*FPGETRCINT)(LPCSTR lpKeyName, int nDefault);
-FPGETRCINT fpGetRCInt = NULL;
+//typedef int (*FPGETRCINT)(LPCSTR lpKeyName, int nDefault);
+//FPGETRCINT fpGetRCInt = NULL;
 
 typedef HINSTANCE (*FPLSEXECUTE)(HWND Owner, LPCSTR szCommand, int nShowCmd);
 FPLSEXECUTE fpLSExecute = NULL;
@@ -45,8 +45,8 @@ FPLSEXECUTE fpLSExecute = NULL;
 typedef BOOL (*FPREMOVEBANGCOMMAND)(LPCSTR command);
 FPREMOVEBANGCOMMAND fpRemoveBangCommand = NULL;
 
-typedef void (*FPTRANSPARENTBLTLS)(HDC dc, int nXDest, int nYDest, int nWidth, int nHeight, HDC tempDC, int nXSrc, int nYSrc, COLORREF colorTransparent);
-FPTRANSPARENTBLTLS fpTransparentBltLS = NULL;
+//typedef void (*FPTRANSPARENTBLTLS)(HDC dc, int nXDest, int nYDest, int nWidth, int nHeight, HDC tempDC, int nXSrc, int nYSrc, COLORREF colorTransparent);
+//FPTRANSPARENTBLTLS fpTransparentBltLS = NULL;
 
 typedef void (*FPVAREXPANSION)(LPSTR buffer, LPCSTR value);
 FPVAREXPANSION fpVarExpansion = NULL;
@@ -71,10 +71,10 @@ void InitalizeLitestep()
 		fpBitmapToRegion = (FPBITMAPTOREGION)GetProcAddress(h, "BitmapToRegion");
 		fpGetLitestepWnd = (FPGETLITESTEPWND)GetProcAddress(h, "GetLitestepWnd");
 		fpGetRCString = (FPGETRCSTRING)GetProcAddress(h, "GetRCString");
-		fpGetRCInt = (FPGETRCINT)GetProcAddress(h, "GetRCInt");
+		//fpGetRCInt = (FPGETRCINT)GetProcAddress(h, "GetRCInt");
 		fpLSExecute = (FPLSEXECUTE)GetProcAddress(h, "LSExecute");
 		fpRemoveBangCommand = (FPREMOVEBANGCOMMAND)GetProcAddress(h, "RemoveBangCommand");
-		fpTransparentBltLS = (FPTRANSPARENTBLTLS)GetProcAddress(h, "TransparentBltLS");
+		//fpTransparentBltLS = (FPTRANSPARENTBLTLS)GetProcAddress(h, "TransparentBltLS");
 		fpVarExpansion = (FPVAREXPANSION)GetProcAddress(h, "VarExpansion");
 		fpLSLog = (FPLSLOG)GetProcAddress(h, "_LSLog@12");
 	}
@@ -116,14 +116,14 @@ BOOL GetRCString(LPCSTR lpKeyName, LPSTR value, LPCSTR defStr, int maxLen)
 	return false;
 }
 
-int GetRCInt(LPCSTR lpKeyName, int nDefault)
-{
-	// Use the lsapi.dll version of the method if possible
-	if (fpGetRCInt) return fpGetRCInt(lpKeyName, nDefault);
-
-	// The stub implementation
-	return nDefault;
-}
+//int GetRCInt(LPCSTR lpKeyName, int nDefault)
+//{
+//	// Use the lsapi.dll version of the method if possible
+//	if (fpGetRCInt) return fpGetRCInt(lpKeyName, nDefault);
+//
+//	// The stub implementation
+//	return nDefault;
+//}
 
 void VarExpansion(LPSTR buffer, LPCSTR value)
 {
@@ -218,17 +218,15 @@ HRGN BitmapToRegion(HBITMAP hbm, COLORREF clrTransp, COLORREF clrTolerance, int 
 							while ( x < bm.bmWidth )
 							{
 								p = p32 + 4 * x;
-
 								// if the pixel is non-transparent
-								{
-									bool isOpaque = *p < clrLoB || *p > clrHiB;
-									p++;
-									isOpaque |= *p < clrLoG || *p > clrHiG;
-									p++;
-									isOpaque |= *p < clrLoR || *p > clrHiR;
-									if (isOpaque)
-										break;
-								}
+								if (*p < clrLoB || *p > clrHiB)
+									break;
+								p++;
+								if (*p < clrLoG || *p > clrHiG)
+									break;
+								p++;
+								if (*p < clrLoR || *p > clrHiR)
+									break;
 
 								x++;
 							}
@@ -252,7 +250,7 @@ HRGN BitmapToRegion(HBITMAP hbm, COLORREF clrTransp, COLORREF clrTolerance, int 
 								x++;
 							}
 							// if found one or more non-transparent pixels in a row, add them to the rgn...
-							if ((x - x0) > 0)
+							if (x != x0)
 							{
 								HRGN hTempRgn = CreateRectRgn(x0 + xoffset, y + yoffset, x + xoffset, y + 1 + yoffset);
 								CombineRgn(hRgn, hRgn, hTempRgn, RGN_OR);
@@ -385,81 +383,81 @@ HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR sz
 	return si.hInstApp;
 }
 
-void TransparentBltLS(HDC hdcDst, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, COLORREF colorTransparent)
-{
-	// Use the lsapi.dll version of the method if possible
-	if (fpTransparentBltLS) 
-	{
-		fpTransparentBltLS(hdcDst, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, colorTransparent);
-	}
-	else
-	{
-		HDC hdcMem, hdcMask, hdcDstCpy;
-		HBITMAP hbmMask, hbmMem, hbmDstCpy;
-		HBITMAP hbmOldMem, hbmOldMask, hbmOldDstCpy;
-
-		// create a destination compatble dc containing
-		// a copy of the destination dc
-		hdcDstCpy	= CreateCompatibleDC(hdcDst);
-		hbmDstCpy	= CreateCompatibleBitmap(hdcDst, nWidth, nHeight);
-		hbmOldDstCpy = (HBITMAP)SelectObject(hdcDstCpy, hbmDstCpy);
-
-		BitBlt(hdcDstCpy, 0, 0, nWidth, nHeight, hdcDst, nXDest, nYDest, SRCCOPY);
-
-		// create a destination compatble dc containing
-		// a copy of the source dc
-		hdcMem	= CreateCompatibleDC(hdcDst);
-		hbmMem	= CreateCompatibleBitmap(hdcDst, nWidth, nHeight);
-		hbmOldMem = (HBITMAP)SelectObject(hdcMem, hbmMem);
-
-		BitBlt(hdcMem, 0, 0, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, SRCCOPY);
-
-		// the transparent color should be selected as
-		// bkcolor into the memory dc
-		SetBkColor(hdcMem, colorTransparent);
-
-		// Create monochrome bitmap for the mask
-		hdcMask	= CreateCompatibleDC(hdcDst);
-		hbmMask = CreateBitmap(nWidth, nHeight, 1, 1, NULL);
-		hbmOldMask = (HBITMAP)SelectObject(hdcMask, hbmMask);
-
-		// Create the mask from the memory dc
-		BitBlt(hdcMask, 0, 0, nWidth, nHeight, hdcMem, 0, 0, SRCCOPY);
-
-		// Set the background in hdcMem to black. Using SRCPAINT with black
-		// and any other color results in the other color, thus making
-		// black the transparent color
-		SetBkColor(hdcMem, RGB(0, 0, 0));
-		SetTextColor(hdcMem, RGB(255, 255, 255));
-
-		BitBlt(hdcMem, 0, 0, nWidth, nHeight, hdcMask, 0, 0, SRCAND);
-
-		// Set the foreground to black. See comment above.
-		SetBkColor(hdcDst, RGB(255, 255, 255));
-		SetTextColor(hdcDst, RGB(0, 0, 0));
-
-		BitBlt(hdcDstCpy, 0, 0, nWidth, nHeight, hdcMask, 0, 0, SRCAND);
-
-		// Combine the foreground with the background
-		BitBlt(hdcDstCpy, 0, 0, nWidth, nHeight, hdcMem, 0, 0, SRCPAINT);
-
-		// now we have created the image we want to blt
-		// in the destination copy dc
-		BitBlt(hdcDst, nXDest, nYDest, nWidth, nHeight, hdcDstCpy, 0, 0, SRCCOPY);
-
-		SelectObject(hdcMask, hbmOldMask);
-		DeleteObject(hbmMask);
-		DeleteDC(hdcMask);
-
-		SelectObject(hdcMem, hbmOldMem);
-		DeleteObject(hbmMem);
-		DeleteDC(hdcMem);
-
-		SelectObject(hdcDstCpy, hbmOldDstCpy);
-		DeleteObject(hbmDstCpy);
-		DeleteDC(hdcDstCpy);
-	}
-}
+//void TransparentBltLS(HDC hdcDst, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, COLORREF colorTransparent)
+//{
+//	// Use the lsapi.dll version of the method if possible
+//	if (fpTransparentBltLS) 
+//	{
+//		fpTransparentBltLS(hdcDst, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, colorTransparent);
+//	}
+//	else
+//	{
+//		HDC hdcMem, hdcMask, hdcDstCpy;
+//		HBITMAP hbmMask, hbmMem, hbmDstCpy;
+//		HBITMAP hbmOldMem, hbmOldMask, hbmOldDstCpy;
+//
+//		// create a destination compatble dc containing
+//		// a copy of the destination dc
+//		hdcDstCpy	= CreateCompatibleDC(hdcDst);
+//		hbmDstCpy	= CreateCompatibleBitmap(hdcDst, nWidth, nHeight);
+//		hbmOldDstCpy = (HBITMAP)SelectObject(hdcDstCpy, hbmDstCpy);
+//
+//		BitBlt(hdcDstCpy, 0, 0, nWidth, nHeight, hdcDst, nXDest, nYDest, SRCCOPY);
+//
+//		// create a destination compatble dc containing
+//		// a copy of the source dc
+//		hdcMem	= CreateCompatibleDC(hdcDst);
+//		hbmMem	= CreateCompatibleBitmap(hdcDst, nWidth, nHeight);
+//		hbmOldMem = (HBITMAP)SelectObject(hdcMem, hbmMem);
+//
+//		BitBlt(hdcMem, 0, 0, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, SRCCOPY);
+//
+//		// the transparent color should be selected as
+//		// bkcolor into the memory dc
+//		SetBkColor(hdcMem, colorTransparent);
+//
+//		// Create monochrome bitmap for the mask
+//		hdcMask	= CreateCompatibleDC(hdcDst);
+//		hbmMask = CreateBitmap(nWidth, nHeight, 1, 1, NULL);
+//		hbmOldMask = (HBITMAP)SelectObject(hdcMask, hbmMask);
+//
+//		// Create the mask from the memory dc
+//		BitBlt(hdcMask, 0, 0, nWidth, nHeight, hdcMem, 0, 0, SRCCOPY);
+//
+//		// Set the background in hdcMem to black. Using SRCPAINT with black
+//		// and any other color results in the other color, thus making
+//		// black the transparent color
+//		SetBkColor(hdcMem, RGB(0, 0, 0));
+//		SetTextColor(hdcMem, RGB(255, 255, 255));
+//
+//		BitBlt(hdcMem, 0, 0, nWidth, nHeight, hdcMask, 0, 0, SRCAND);
+//
+//		// Set the foreground to black. See comment above.
+//		SetBkColor(hdcDst, RGB(255, 255, 255));
+//		SetTextColor(hdcDst, RGB(0, 0, 0));
+//
+//		BitBlt(hdcDstCpy, 0, 0, nWidth, nHeight, hdcMask, 0, 0, SRCAND);
+//
+//		// Combine the foreground with the background
+//		BitBlt(hdcDstCpy, 0, 0, nWidth, nHeight, hdcMem, 0, 0, SRCPAINT);
+//
+//		// now we have created the image we want to blt
+//		// in the destination copy dc
+//		BitBlt(hdcDst, nXDest, nYDest, nWidth, nHeight, hdcDstCpy, 0, 0, SRCCOPY);
+//
+//		SelectObject(hdcMask, hbmOldMask);
+//		DeleteObject(hbmMask);
+//		DeleteDC(hdcMask);
+//
+//		SelectObject(hdcMem, hbmOldMem);
+//		DeleteObject(hbmMem);
+//		DeleteDC(hdcMem);
+//
+//		SelectObject(hdcDstCpy, hbmOldDstCpy);
+//		DeleteObject(hbmDstCpy);
+//		DeleteDC(hdcDstCpy);
+//	}
+//}
 
 std::string ConvertToAscii(LPCTSTR str)
 {
