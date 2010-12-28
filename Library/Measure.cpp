@@ -122,7 +122,7 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		}
 	}
 
-	UINT updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
+	int updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
 	if (updateDivider != m_UpdateDivider)
 	{
 		m_UpdateCounter = m_UpdateDivider = updateDivider;

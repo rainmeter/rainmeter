@@ -412,7 +412,7 @@ void CMeter::ReadConfig(const WCHAR* section)
 	m_ToolTipType = 0!=parser.ReadInt(section, L"ToolTipType", 0);
 	m_ToolTipHidden = 0!=parser.ReadInt(section, L"ToolTipHidden", m_ToolTipHidden);
 
-	UINT updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
+	int updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
 	if (updateDivider != m_UpdateDivider)
 	{
 		m_UpdateCounter = m_UpdateDivider = updateDivider;

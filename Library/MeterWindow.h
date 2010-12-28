@@ -100,13 +100,16 @@ enum BANGCOMMAND
 {
 	BANG_REFRESH,
 	BANG_REDRAW,
+	BANG_UPDATE,
 	BANG_TOGGLEMETER,
 	BANG_SHOWMETER,
 	BANG_HIDEMETER,
 	BANG_MOVEMETER,
+	BANG_UPDATEMETER,
 	BANG_TOGGLEMEASURE,
 	BANG_ENABLEMEASURE,
 	BANG_DISABLEMEASURE,
+	BANG_UPDATEMEASURE,
 	BANG_SHOW,
 	BANG_HIDE,
 	BANG_TOGGLE,
@@ -124,9 +127,11 @@ enum BANGCOMMAND
 	BANG_TOGGLEMETERGROUP,
 	BANG_SHOWMETERGROUP,
 	BANG_HIDEMETERGROUP,
+	BANG_UPDATEMETERGROUP,
 	BANG_TOGGLEMEASUREGROUP,
 	BANG_ENABLEMEASUREGROUP,
 	BANG_DISABLEMEASUREGROUP,
+	BANG_UPDATEMEASUREGROUP,
 
 	BANG_LSHOOK,
 	BANG_PLUGIN,
@@ -154,9 +159,11 @@ public:
 	void HideMeter(const WCHAR* name, bool group = false);
 	void ShowMeter(const WCHAR* name, bool group = false);
 	void ToggleMeter(const WCHAR* name, bool group = false);
+	void UpdateMeter(const WCHAR* name, bool group = false);
 	void DisableMeasure(const WCHAR* name, bool group = false);
 	void EnableMeasure(const WCHAR* name, bool group = false);
 	void ToggleMeasure(const WCHAR* name, bool group = false);
+	void UpdateMeasure(const WCHAR* name, bool group = false);
 	void Refresh(bool init, bool all = false);
 	void Redraw();
 
@@ -261,6 +268,9 @@ private:
 	void MapCoordsToScreen(int& x, int& y, int w, int h);
 	void WindowToScreen();
 	void ScreenToWindow();
+	void PostUpdate(bool bActiveTransition);
+	bool UpdateMeasure(CMeasure* measure, bool force);
+	bool UpdateMeter(CMeter* meter, bool& bActiveTransition, bool force);
 	void Update(bool nodraw);
 	void UpdateTransparency(int alpha, bool reset);
 	void ReadConfig();

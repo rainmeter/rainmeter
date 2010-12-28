@@ -389,9 +389,12 @@ void CMeterWindow::Refresh(bool init, bool all)
 	ScreenToWindow();
 
 	// Start the timers
-	if(0 == SetTimer(m_Window, METERTIMER, m_WindowUpdate, NULL))
+	if (m_WindowUpdate >= 0)
 	{
-		throw CError(L"Unable to create a timer!", __LINE__, __FILE__);
+		if(0 == SetTimer(m_Window, METERTIMER, m_WindowUpdate, NULL))
+		{
+			throw CError(L"Unable to create a timer!", __LINE__, __FILE__);
+		}
 	}
 
 	if(0 == SetTimer(m_Window, MOUSETIMER, 500, NULL))	// Mouse position is checked twice per sec
@@ -655,6 +658,16 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		Redraw();
 		break;
 
+	case BANG_UPDATE:
+		KillTimer(m_Window, METERTIMER);  // Kill timer temporarily
+		Update(false);
+		UpdateAboutStatistics(m_SkinName.c_str());
+		if (m_WindowUpdate >= 0)
+		{
+			SetTimer(m_Window, METERTIMER, m_WindowUpdate, NULL);
+		}
+		break;
+
 	case BANG_TOGGLEMETER:
 		ToggleMeter(arg);
 		break;
@@ -665,6 +678,10 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 
 	case BANG_HIDEMETER:
 		HideMeter(arg);
+		break;
+
+	case BANG_UPDATEMETER:
+		UpdateMeter(arg);
 		break;
 
 	case BANG_TOGGLEMETERGROUP:
@@ -679,12 +696,25 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		HideMeter(arg, true);
 		break;
 
+	case BANG_UPDATEMETERGROUP:
+		UpdateMeter(arg, true);
+		break;
+
 	case BANG_TOGGLEMEASURE:
 		ToggleMeasure(arg);
 		break;
 
 	case BANG_ENABLEMEASURE:
 		EnableMeasure(arg);
+		break;
+
+	case BANG_DISABLEMEASURE:
+		DisableMeasure(arg);
+		break;
+
+	case BANG_UPDATEMEASURE:
+		UpdateMeasure(arg);
+		UpdateAboutStatistics(m_SkinName.c_str());
 		break;
 
 	case BANG_DISABLEMEASUREGROUP:
@@ -699,8 +729,9 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		EnableMeasure(arg, true);
 		break;
 
-	case BANG_DISABLEMEASURE:
-		DisableMeasure(arg);
+	case BANG_UPDATEMEASUREGROUP:
+		UpdateMeasure(arg, true);
+		UpdateAboutStatistics(m_SkinName.c_str());
 		break;
 
 	case BANG_SHOW:
@@ -962,6 +993,18 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 }
 
 /*
+** CompareName
+**
+** This is a helper template that compares the given name to measure/meter's name.
+**
+*/
+template <class T>
+bool CompareName(T* m, const WCHAR* name, bool group)
+{
+	return (group) ? m->BelongsToGroup(name) : (_wcsicmp(m->GetName(), name) == 0);
+}
+
+/*
 ** ShowMeter
 **
 ** Shows the given meter
@@ -974,18 +1017,12 @@ void CMeterWindow::ShowMeter(const WCHAR* name, bool group)
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
-		if (group)
+		if (CompareName((*j), name, group))
 		{
-			if (!(*j)->BelongsToGroup(name)) continue;
+			(*j)->Show();
+			m_ResetRegion = true;	// Need to recalculate the window region
+			if (!group) return;
 		}
-		else
-		{
-			if (_wcsicmp((*j)->GetName(), name) != 0) continue;
-		}
-
-		(*j)->Show();
-		m_ResetRegion = true;	// Need to recalculate the window region
-		if (!group) return;
 	}
 
 	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to show the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
@@ -1004,18 +1041,12 @@ void CMeterWindow::HideMeter(const WCHAR* name, bool group)
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
-		if (group)
+		if (CompareName((*j), name, group))
 		{
-			if (!(*j)->BelongsToGroup(name)) continue;
+			(*j)->Hide();
+			m_ResetRegion = true;	// Need to recalculate the windowregion
+			if (!group) return;
 		}
-		else
-		{
-			if (_wcsicmp((*j)->GetName(), name) != 0) continue;
-		}
-
-		(*j)->Hide();
-		m_ResetRegion = true;	// Need to recalculate the windowregion
-		if (!group) return;
 	}
 
 	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to hide the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
@@ -1034,25 +1065,19 @@ void CMeterWindow::ToggleMeter(const WCHAR* name, bool group)
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
-		if (group)
+		if (CompareName((*j), name, group))
 		{
-			if (!(*j)->BelongsToGroup(name)) continue;
+			if ((*j)->IsHidden())
+			{
+				(*j)->Show();
+			}
+			else
+			{
+				(*j)->Hide();
+			}
+			m_ResetRegion = true;	// Need to recalculate the window region
+			if (!group) return;
 		}
-		else
-		{
-			if (_wcsicmp((*j)->GetName(), name) != 0) continue;
-		}
-
-		if ((*j)->IsHidden())
-		{
-			(*j)->Show();
-		}
-		else
-		{
-			(*j)->Hide();
-		}
-		m_ResetRegion = true;	// Need to recalculate the window region
-		if (!group) return;
 	}
 
 	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to toggle the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
@@ -1071,16 +1096,58 @@ void CMeterWindow::MoveMeter(int x, int y, const WCHAR* name)
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
-		if (_wcsicmp((*j)->GetName(), name) == 0)
+		if (CompareName((*j), name, false))
 		{
 			(*j)->SetX(x);
 			(*j)->SetY(y);
-			m_ResetRegion = true;
+			m_ResetRegion = true;	// Need to recalculate the window region
 			return;
 		}
 	}
 
 	LogWithArgs(LOG_NOTICE, L"Unable to move the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
+}
+
+/*
+** UpdateMeter
+**
+** Updates the given meter
+**
+*/
+void CMeterWindow::UpdateMeter(const WCHAR* name, bool group)
+{
+	if (name == NULL || *name == 0) return;
+
+	bool bActiveTransition = false;
+	bool bContinue = true;
+	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	for( ; j != m_Meters.end(); ++j)
+	{
+		if (bContinue && CompareName((*j), name, group))
+		{
+			UpdateMeter((*j), bActiveTransition, true);
+			m_ResetRegion = true;	// Need to recalculate the windowregion
+			if (!group)
+			{
+				bContinue = false;
+				if (bActiveTransition) break;
+			}
+		}
+		else
+		{
+			// Check for transitions
+			if (!bActiveTransition && (*j)->HasActiveTransition())
+			{
+				bActiveTransition = true;
+				if (!group && !bContinue) break;
+			}
+		}
+	}
+
+	// Post-updates
+	PostUpdate(bActiveTransition);
+
+	if (!group && bContinue) LogWithArgs(LOG_NOTICE, L"Unable to update the meter %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 /*
@@ -1096,22 +1163,15 @@ void CMeterWindow::EnableMeasure(const WCHAR* name, bool group)
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); ++i)
 	{
-		if (group)
+		if (CompareName((*i), name, group))
 		{
-			if (!(*i)->BelongsToGroup(name)) continue;
+			(*i)->Enable();
+			if (!group) return;
 		}
-		else
-		{
-			if (_wcsicmp((*i)->GetName(), name) != 0) continue;
-		}
-
-		(*i)->Enable();
-		if (!group) return;
 	}
 
 	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to enable the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
-
 
 /*
 ** DisableMeasure
@@ -1126,22 +1186,15 @@ void CMeterWindow::DisableMeasure(const WCHAR* name, bool group)
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); ++i)
 	{
-		if (group)
+		if (CompareName((*i), name, group))
 		{
-			if (!(*i)->BelongsToGroup(name)) continue;
+			(*i)->Disable();
+			if (!group) return;
 		}
-		else
-		{
-			if (_wcsicmp((*i)->GetName(), name) != 0) continue;
-		}
-
-		(*i)->Disable();
-		if (!group) return;
 	}
 
 	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to disable the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
-
 
 /*
 ** ToggleMeasure
@@ -1156,27 +1209,57 @@ void CMeterWindow::ToggleMeasure(const WCHAR* name, bool group)
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); ++i)
 	{
-		if (group)
+		if (CompareName((*i), name, group))
 		{
-			if (!(*i)->BelongsToGroup(name)) continue;
+			if ((*i)->IsDisabled())
+			{
+				(*i)->Enable();
+			}
+			else
+			{
+				(*i)->Disable();
+			}
+			if (!group) return;
 		}
-		else
-		{
-			if (_wcsicmp((*i)->GetName(), name) != 0) continue;
-		}
-
-		if ((*i)->IsDisabled())
-		{
-			(*i)->Enable();
-		}
-		else
-		{
-			(*i)->Disable();
-		}
-		if (!group) return;
 	}
 
 	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to toggle the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
+}
+
+/*
+** UpdateMeasure
+**
+** Updates the given measure
+**
+*/
+void CMeterWindow::UpdateMeasure(const WCHAR* name, bool group)
+{
+	if (name == NULL || *name == 0) return;
+
+	// Pre-updates
+	if (!m_Measures.empty())
+	{
+		CMeasureCalc::UpdateVariableMap(*this);
+	}
+
+	bool bNetStats = m_HasNetMeasures;
+	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+	for( ; i != m_Measures.end(); ++i)
+	{
+		if (CompareName((*i), name, group))
+		{
+			if (bNetStats && dynamic_cast<CMeasureNet*>(*i) != NULL)
+			{
+				CMeasureNet::UpdateIFTable();
+				bNetStats = false;
+			}
+
+			UpdateMeasure((*i), true);
+			if (!group) return;
+		}
+	}
+
+	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to update the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
 }
 
 /* WindowToScreen
@@ -2430,6 +2513,127 @@ void CMeterWindow::Redraw()
 }
 
 /*
+** PostUpdate
+**
+** Updates the transition state
+**
+*/
+void CMeterWindow::PostUpdate(bool bActiveTransition)
+{
+	// Start/stop the transition timer if necessary
+	if (bActiveTransition && !m_ActiveTransition)
+	{
+		SetTimer(m_Window, TRANSITIONTIMER, m_TransitionUpdate, NULL);
+		m_ActiveTransition = true;
+	}
+	else if (m_ActiveTransition && !bActiveTransition)
+	{
+		KillTimer(m_Window, TRANSITIONTIMER);
+		m_ActiveTransition = false;
+	}
+}
+
+/*
+** UpdateMeasure
+**
+** Updates the given measure
+**
+*/
+bool CMeterWindow::UpdateMeasure(CMeasure* measure, bool force)
+{
+	bool bUpdate = false;
+
+	if (force)
+	{
+		measure->ResetUpdateCounter();
+	}
+
+	int updateDivider = measure->GetUpdateDivider();
+	if (updateDivider >= 0 || force || m_Refreshing)
+	{
+		if (measure->HasDynamicVariables() &&
+			(measure->GetUpdateCounter() + 1) >= updateDivider)
+		{
+			try
+			{
+				measure->ReadConfig(m_Parser, measure->GetName());
+			}
+			catch (CError& error)
+			{
+				MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			}
+		}
+
+		if (measure->Update())
+		{
+			bUpdate = true;
+		}
+	}
+
+	return bUpdate;
+}
+
+/*
+** UpdateMeter
+**
+** Updates the given meter
+**
+*/
+bool CMeterWindow::UpdateMeter(CMeter* meter, bool& bActiveTransition, bool force)
+{
+	bool bUpdate = false;
+
+	if (force)
+	{
+		meter->ResetUpdateCounter();
+	}
+
+	int updateDivider = meter->GetUpdateDivider();
+	if (updateDivider >= 0 || force || m_Refreshing)
+	{
+		if (meter->HasDynamicVariables() &&
+			(meter->GetUpdateCounter() + 1) >= updateDivider)
+		{
+			try
+			{
+				meter->ReadConfig(meter->GetName());
+				m_Parser.ClearStyleTemplate();
+			}
+			catch (CError& error)
+			{
+				MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			}
+		}
+
+		if (meter->Update())
+		{
+			bUpdate = true;
+		}
+	}
+
+	// Update tooltips
+	if (!meter->HasToolTip())
+	{
+		if (!meter->GetToolTipText().empty())
+		{
+			meter->CreateToolTip(this);
+		}
+	}
+	else
+	{
+		meter->UpdateToolTip();
+	}
+
+	// Check for transitions
+	if (!bActiveTransition && meter->HasActiveTransition())
+	{
+		bActiveTransition = true;
+	}
+
+	return bUpdate;
+}
+
+/*
 ** Update
 **
 ** Updates all the measures and redraws the meters
@@ -2440,73 +2644,32 @@ void CMeterWindow::Update(bool nodraw)
 	++m_UpdateCounter;
 
 	// Pre-updates
-	if (m_HasNetMeasures) CMeasureNet::UpdateIFTable();
-	CMeasureCalc::UpdateVariableMap(*this);
+	if (!m_Measures.empty())
+	{
+		if (m_HasNetMeasures) CMeasureNet::UpdateIFTable();
+		CMeasureCalc::UpdateVariableMap(*this);
+	}
 
 	// Update all measures
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for( ; i != m_Measures.end(); ++i)
 	{
-		if ((*i)->HasDynamicVariables() &&
-			((*i)->GetUpdateCounter() + 1) >= (*i)->GetUpdateDivider())
-		{
-			try
-			{
-				(*i)->ReadConfig(m_Parser, (*i)->GetName());
-			}
-			catch (CError& error)
-			{
-				MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-			}
-		}
-		(*i)->Update();
+		UpdateMeasure((*i), false);
 	}
 
-	// Update the meters
+	// Update all meters
 	bool bActiveTransition = false;
 	bool bUpdate = false;
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
 	{
-		if ((*j)->HasDynamicVariables() &&
-			((*j)->GetUpdateCounter() + 1) >= (*j)->GetUpdateDivider())
-		{
-			try
-			{
-				(*j)->ReadConfig((*j)->GetName());
-				m_Parser.ClearStyleTemplate();
-			}
-			catch (CError& error)
-			{
-				MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-			}
-		}
-
-		if ((*j)->Update())
+		if (UpdateMeter((*j), bActiveTransition, false))
 		{
 			bUpdate = true;
 		}
-
-		// Update tooltips
-		if (!(*j)->HasToolTip())
-		{
-			if (!(*j)->GetToolTipText().empty())
-			{
-				(*j)->CreateToolTip(this);
-			}
-		}
-		else
-		{
-			(*j)->UpdateToolTip();
-		}
-
-		// Check for transitions and start the timer if necessary
-		if (!bActiveTransition && (*j)->HasActiveTransition())
-		{
-			bActiveTransition = true;
-		}
 	}
 
+	// Redraw all meters
 	if (!nodraw && (bUpdate || m_ResetRegion || m_Refreshing))
 	{
 		if (m_DynamicWindowSize)
@@ -2523,16 +2686,8 @@ void CMeterWindow::Update(bool nodraw)
 		}
 	}
 
-	// Start/stop the transition timer if necessary
-	if (!m_ActiveTransition && bActiveTransition)
-	{
-		SetTimer(m_Window, TRANSITIONTIMER, m_TransitionUpdate, NULL);
-		m_ActiveTransition = true;
-	}
-	else if (m_ActiveTransition && !bActiveTransition)
-	{
-		KillTimer(m_Window, TRANSITIONTIMER);
-	}
+	// Post-updates
+	PostUpdate(bActiveTransition);
 
 //	if (m_MeasuresToVariables)	// BUG: LSSetVariable doens't seem to work for some reason.
 //	{
@@ -2670,6 +2825,12 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (bActiveTransition)
 		{
 			Redraw();
+		}
+		else
+		{
+			// Stop the transition timer
+			KillTimer(m_Window, TRANSITIONTIMER);
+			m_ActiveTransition = false;
 		}
 	}
 	else if(wParam == MOUSETIMER)

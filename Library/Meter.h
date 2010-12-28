@@ -91,8 +91,9 @@ public:
 	void SetName(const WCHAR* name) { m_Name = name; }
 	const WCHAR* GetName() { return m_Name.c_str(); }
 
-	UINT GetUpdateCounter() { return m_UpdateCounter; }
-	UINT GetUpdateDivider() { return m_UpdateDivider; }
+	void ResetUpdateCounter() { m_UpdateCounter = m_UpdateDivider; }
+	int GetUpdateCounter() { return m_UpdateCounter; }
+	int GetUpdateDivider() { return m_UpdateDivider; }
 
 	static CMeter* Create(const WCHAR* meter, CMeterWindow* meterWindow);
 	
@@ -167,8 +168,8 @@ protected:
 	METER_POSITION m_RelativeX;
 	METER_POSITION m_RelativeY;
 
-	UINT m_UpdateDivider;			// Divider for the update
-	UINT m_UpdateCounter;			// Current update counter
+	int m_UpdateDivider;			// Divider for the update
+	int m_UpdateCounter;			// Current update counter
 
 	BEVELTYPE m_SolidBevel;
 	Gdiplus::Color m_SolidColor;

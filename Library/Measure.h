@@ -55,8 +55,9 @@ public:
 	double GetMinValue() { return m_MinValue; }
 	double GetMaxValue() { return m_MaxValue; }
 
-	UINT GetUpdateCounter() { return m_UpdateCounter; }
-	UINT GetUpdateDivider() { return m_UpdateDivider; }
+	void ResetUpdateCounter() { m_UpdateCounter = m_UpdateDivider; }
+	int GetUpdateCounter() { return m_UpdateCounter; }
+	int GetUpdateDivider() { return m_UpdateDivider; }
 
 	virtual const WCHAR* GetStringValue(bool autoScale, double scale, int decimals, bool percentual);
 	static void GetScaledValue(int decimals, double theValue, WCHAR* buffer, size_t sizeInWords);
@@ -100,8 +101,8 @@ protected:
 	bool m_IfAboveCommited;			// True when the IfAbove action is executed.
 	bool m_IfBelowCommited;			// True when the IfBelow action is executed.
 	bool m_Disabled;				// Status of the measure
-	UINT m_UpdateDivider;			// Divider for the update
-	UINT m_UpdateCounter;			// Current update counter
+	int m_UpdateDivider;			// Divider for the update
+	int m_UpdateCounter;			// Current update counter
 	bool m_Initialized;
 
 	CMeterWindow* m_MeterWindow;

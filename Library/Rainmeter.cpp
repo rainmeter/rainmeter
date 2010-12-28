@@ -582,6 +582,17 @@ void RainmeterMoveMeter(HWND, const char* arg)
 }
 
 /*
+** RainmeterUpdateMeter
+**
+** Callback for the !RainmeterUpdateMeter bang
+**
+*/
+void RainmeterUpdateMeter(HWND, const char* arg)
+{
+	BangWithArgs(BANG_UPDATEMETER, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
 ** RainmeterDisableMeasure
 **
 ** Callback for the !RainmeterDisableMeasure bang
@@ -615,6 +626,17 @@ void RainmeterToggleMeasure(HWND, const char* arg)
 }
 
 /*
+** RainmeterUpdateMeasure
+**
+** Callback for the !RainmeterUpdateMeasure bang
+**
+*/
+void RainmeterUpdateMeasure(HWND, const char* arg)
+{
+	BangWithArgs(BANG_UPDATEMEASURE, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
 ** RainmeterRefresh
 **
 ** Callback for the !RainmeterRefresh bang
@@ -645,6 +667,17 @@ void RainmeterRefreshApp(HWND, const char* arg)
 void RainmeterRedraw(HWND, const char* arg)
 {
 	BangWithArgs(BANG_REDRAW, ConvertToWide(arg).c_str(), 0);
+}
+
+/*
+** RainmeterUpdate
+**
+** Callback for the !RainmeterUpdate bang
+**
+*/
+void RainmeterUpdate(HWND, const char* arg)
+{
+	BangWithArgs(BANG_UPDATE, ConvertToWide(arg).c_str(), 0);
 }
 
 /*
@@ -868,6 +901,17 @@ void RainmeterToggleMeterGroup(HWND, const char* arg)
 }
 
 /*
+** RainmeterUpdateMeterGroup
+**
+** Callback for the !RainmeterUpdateMeterGroup bang
+**
+*/
+void RainmeterUpdateMeterGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_UPDATEMETERGROUP, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
 ** RainmeterDisableMeasureGroup
 **
 ** Callback for the !RainmeterDisableMeasureGroup bang
@@ -901,6 +945,17 @@ void RainmeterToggleMeasureGroup(HWND, const char* arg)
 }
 
 /*
+** RainmeterUpdateMeasureGroup
+**
+** Callback for the !RainmeterUpdateMeasureGroup bang
+**
+*/
+void RainmeterUpdateMeasureGroup(HWND, const char* arg)
+{
+	BangWithArgs(BANG_UPDATEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
 ** RainmeterRefreshGroup
 **
 ** Callback for the !RainmeterRefreshGroup bang
@@ -920,6 +975,17 @@ void RainmeterRefreshGroup(HWND, const char* arg)
 void RainmeterRedrawGroup(HWND, const char* arg)
 {
 	BangGroupWithArgs(BANG_REDRAW, ConvertToWide(arg).c_str(), 0);
+}
+
+/*
+** RainmeterUpdateGroup
+**
+** Callback for the !RainmeterUpdateGroup bang
+**
+*/
+void RainmeterUpdateGroup(HWND, const char* arg)
+{
+	BangGroupWithArgs(BANG_UPDATE, ConvertToWide(arg).c_str(), 0);
 }
 
 /*
@@ -1859,6 +1925,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 		AddBangCommand("!RainmeterRefresh", RainmeterRefresh);
 		AddBangCommand("!RainmeterRedraw", RainmeterRedraw);
+		AddBangCommand("!RainmeterUpdate", RainmeterUpdate);
 		AddBangCommand("!RainmeterHide", RainmeterHide);
 		AddBangCommand("!RainmeterShow", RainmeterShow);
 		AddBangCommand("!RainmeterToggle", RainmeterToggle);
@@ -1869,9 +1936,11 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterShowMeter", RainmeterShowMeter);
 		AddBangCommand("!RainmeterToggleMeter", RainmeterToggleMeter);
 		AddBangCommand("!RainmeterMoveMeter", RainmeterMoveMeter);
+		AddBangCommand("!RainmeterUpdateMeter", RainmeterUpdateMeter);
 		AddBangCommand("!RainmeterDisableMeasure", RainmeterDisableMeasure);
 		AddBangCommand("!RainmeterEnableMeasure", RainmeterEnableMeasure);
 		AddBangCommand("!RainmeterToggleMeasure", RainmeterToggleMeasure);
+		AddBangCommand("!RainmeterUpdateMeasure", RainmeterUpdateMeasure);
 		AddBangCommand("!RainmeterActivateConfig", RainmeterActivateConfig);
 		AddBangCommand("!RainmeterDeactivateConfig", RainmeterDeactivateConfig);
 		AddBangCommand("!RainmeterToggleConfig", RainmeterToggleConfig);
@@ -1886,6 +1955,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 		AddBangCommand("!RainmeterRefreshGroup", RainmeterRefreshGroup);
 		AddBangCommand("!RainmeterRedrawGroup", RainmeterRedrawGroup);
+		AddBangCommand("!RainmeterUpdateGroup", RainmeterUpdateGroup);
 		AddBangCommand("!RainmeterHideGroup", RainmeterHideGroup);
 		AddBangCommand("!RainmeterShowGroup", RainmeterShowGroup);
 		AddBangCommand("!RainmeterToggleGroup", RainmeterToggleGroup);
@@ -1895,9 +1965,11 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterHideMeterGroup", RainmeterHideMeterGroup);
 		AddBangCommand("!RainmeterShowMeterGroup", RainmeterShowMeterGroup);
 		AddBangCommand("!RainmeterToggleMeterGroup", RainmeterToggleMeterGroup);
+		AddBangCommand("!RainmeterUpdateMeterGroup", RainmeterUpdateMeterGroup);
 		AddBangCommand("!RainmeterDisableMeasureGroup", RainmeterDisableMeasureGroup);
 		AddBangCommand("!RainmeterEnableMeasureGroup", RainmeterEnableMeasureGroup);
 		AddBangCommand("!RainmeterToggleMeasureGroup", RainmeterToggleMeasureGroup);
+		AddBangCommand("!RainmeterUpdateMeasureGroup", RainmeterUpdateMeasureGroup);
 		AddBangCommand("!RainmeterDeactivateConfigGroup", RainmeterDeactivateConfigGroup);
 		AddBangCommand("!RainmeterZPosGroup", RainmeterZPosGroup);
 		AddBangCommand("!RainmeterClickThroughGroup", RainmeterClickThroughGroup);
@@ -2454,6 +2526,7 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 
 		RemoveBangCommand("!RainmeterRefresh");
 		RemoveBangCommand("!RainmeterRedraw");
+		RemoveBangCommand("!RainmeterUpdate");
 		RemoveBangCommand("!RainmeterHide");
 		RemoveBangCommand("!RainmeterShow");
 		RemoveBangCommand("!RainmeterToggle");
@@ -2464,9 +2537,11 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainmeterShowMeter");
 		RemoveBangCommand("!RainmeterToggleMeter");
 		RemoveBangCommand("!RainmeterMoveMeter");
+		RemoveBangCommand("!RainmeterUpdateMeter");
 		RemoveBangCommand("!RainmeterHideMeasure");
 		RemoveBangCommand("!RainmeterShowMeasure");
 		RemoveBangCommand("!RainmeterToggleMeasure");
+		RemoveBangCommand("!RainmeterUpdateMeasure");
 		RemoveBangCommand("!RainmeterActivateConfig");
 		RemoveBangCommand("!RainmeterDeactivateConfig");
 		RemoveBangCommand("!RainmeterToggleConfig");
@@ -2481,6 +2556,7 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 
 		RemoveBangCommand("!RainmeterRefreshGroup");
 		RemoveBangCommand("!RainmeterRedrawGroup");
+		RemoveBangCommand("!RainmeterUpdateGroup");
 		RemoveBangCommand("!RainmeterHideGroup");
 		RemoveBangCommand("!RainmeterShowGroup");
 		RemoveBangCommand("!RainmeterToggleGroup");
@@ -2490,9 +2566,11 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainmeterHideMeterGroup");
 		RemoveBangCommand("!RainmeterShowMeterGroup");
 		RemoveBangCommand("!RainmeterToggleMeterGroup");
+		RemoveBangCommand("!RainmeterUpdateMeterGroup");
 		RemoveBangCommand("!RainmeterHideMeasureGroup");
 		RemoveBangCommand("!RainmeterShowMeasureGroup");
 		RemoveBangCommand("!RainmeterToggleMeasureGroup");
+		RemoveBangCommand("!RainmeterUpdateMeasureGroup");
 		RemoveBangCommand("!RainmeterDeactivateConfigGroup");
 		RemoveBangCommand("!RainmeterZPosGroup");
 		RemoveBangCommand("!RainmeterClickThroughGroup");
@@ -2664,6 +2742,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_REDRAW, arg.c_str(), 0);
 	}
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterUpdate") == 0)
+	{
+		BangWithArgs(BANG_UPDATE, arg.c_str(), 0);
+	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterHide") == 0)
 	{
 		BangWithArgs(BANG_HIDE, arg.c_str(), 0);
@@ -2704,6 +2786,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_MOVEMETER, arg.c_str(), 3);
 	}
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterUpdateMeter") == 0)
+	{
+		BangWithArgs(BANG_UPDATEMETER, arg.c_str(), 1);
+	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterDisableMeasure") == 0)
 	{
 		BangWithArgs(BANG_DISABLEMEASURE, arg.c_str(), 1);
@@ -2715,6 +2801,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleMeasure") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEMEASURE, arg.c_str(), 1);
+	}
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterUpdateMeasure") == 0)
+	{
+		BangWithArgs(BANG_UPDATEMEASURE, arg.c_str(), 1);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterActivateConfig") == 0)
 	{
@@ -2764,6 +2854,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangGroupWithArgs(BANG_REFRESH, arg.c_str(), 0);
 	}
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterUpdateGroup") == 0)
+	{
+		BangGroupWithArgs(BANG_UPDATE, arg.c_str(), 0);
+	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterRedrawGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_REDRAW, arg.c_str(), 0);
@@ -2804,6 +2898,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_TOGGLEMETERGROUP, arg.c_str(), 1);
 	}
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterUpdateMeterGroup") == 0)
+	{
+		BangWithArgs(BANG_UPDATEMETERGROUP, arg.c_str(), 1);
+	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterDisableMeasureGroup") == 0)
 	{
 		BangWithArgs(BANG_DISABLEMEASUREGROUP, arg.c_str(), 1);
@@ -2815,6 +2913,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleMeasureGroup") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEMEASUREGROUP, arg.c_str(), 1);
+	}
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterUpdateMeasureGroup") == 0)
+	{
+		BangWithArgs(BANG_UPDATEMEASUREGROUP, arg.c_str(), 1);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterDeactivateConfigGroup") == 0)
 	{
