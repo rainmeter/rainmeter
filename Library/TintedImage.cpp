@@ -23,7 +23,8 @@
 
 using namespace Gdiplus;
 
-#define PI 3.14159265f
+#define PI	(3.14159265f)
+#define CONVERT_TO_RADIANS(X)	((X) * (PI / 180.0f))
 
 // GrayScale Matrix
 const Gdiplus::ColorMatrix CTintedImage::c_GreyScaleMatrix = {
@@ -387,7 +388,7 @@ void CTintedImage::ApplyTransform()
 		REAL originalW = (REAL)original->GetWidth();
 		REAL originalH = (REAL)original->GetHeight();
 
-		REAL cos_f = cos(m_Rotate * PI / 180.0f), sin_f = sin(m_Rotate * PI / 180.0f);
+		REAL cos_f = cos(CONVERT_TO_RADIANS(m_Rotate)), sin_f = sin(CONVERT_TO_RADIANS(m_Rotate));
 
 		REAL transformW = fabs(originalW * cos_f) + fabs(originalH * sin_f);
 		REAL transformH = fabs(originalW * sin_f) + fabs(originalH * cos_f);

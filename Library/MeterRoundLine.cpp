@@ -22,7 +22,9 @@
 #include "Error.h"
 
 using namespace Gdiplus;
-#define PI 3.14159265
+
+#define PI	(3.14159265358979323846)
+#define CONVERT_TO_DEGREES(X)	((X) * (180.0 / PI))
 
 /*
 ** CMeterRoundLine
@@ -133,6 +135,11 @@ bool CMeterRoundLine::Draw(Graphics& graphics)
 
 	if (m_Solid)
 	{
+		REAL startAngle = (REAL)(CONVERT_TO_DEGREES(m_StartAngle));
+		REAL sweepAngle = (REAL)(CONVERT_TO_DEGREES(m_RotationAngle * m_Value));
+
+		SolidBrush solidBrush(m_LineColor);
+
 		if (1) //m_LineStart > 0.0)
 		{
 			// Create clipping region
@@ -142,60 +149,47 @@ bool CMeterRoundLine::Draw(Graphics& graphics)
 
 			// Calculate the end point of the line
 			//double angle = m_RotationAngle * m_Value + m_StartAngle;
-			double angle = m_RotationAngle + m_StartAngle;
-			if(m_CntrlAngle)
-				angle = m_RotationAngle * m_Value + m_StartAngle;
-			double lineStart = m_LineStart;
-			if(m_CntrlLineStart)
-			{
-				lineStart = m_LineStartShift * m_Value + m_LineStart;
-			}
-			double lineLength = m_LineLength;
-			if(m_CntrlLineLength)
-			{
-				lineLength = m_LineLengthShift * m_Value + m_LineLength;
-			}
+			double angle = (m_CntrlAngle) ? m_RotationAngle * m_Value + m_StartAngle : m_RotationAngle + m_StartAngle;
+			double lineStart = (m_CntrlLineStart) ? m_LineStartShift * m_Value + m_LineStart : m_LineStart;
+			double lineLength = (m_CntrlLineLength) ? m_LineLengthShift * m_Value + m_LineLength : m_LineLength;
+			REAL s_cos = (REAL)cos(m_StartAngle);
+			REAL s_sin = (REAL)sin(m_StartAngle);
+			REAL e_cos = (REAL)cos(angle);
+			REAL e_sin = (REAL)sin(angle);
 			
-			SolidBrush solidBrush(m_LineColor);
-
 			//Create a path to surround the arc
 			GraphicsPath path;
-			path.AddArc((REAL)(cx - lineStart), (REAL)(cy - lineStart), (REAL)(lineStart * 2.0), (REAL)(lineStart * 2.0), (REAL)(m_StartAngle * 180.0 / PI), (REAL)(m_RotationAngle * m_Value * 180.0 / PI));
-			path.AddLine((REAL)lineStart*(REAL)cos(m_StartAngle)+cx,(REAL)lineStart*(REAL)sin(m_StartAngle)+cy,(REAL)lineLength*(REAL)cos(m_StartAngle)+cx,(REAL)lineLength*(REAL)sin(m_StartAngle)+cy);
-			path.AddArc((REAL)(cx - lineLength), (REAL)(cy - lineLength), (REAL)(lineLength * 2.0), (REAL)(lineLength * 2.0), (REAL)(m_StartAngle * 180.0 / PI), (REAL)(m_RotationAngle * m_Value * 180.0 / PI));
-			path.AddLine((REAL)lineLength*(REAL)cos(angle)+cx,(REAL)lineLength*(REAL)sin(angle)+cy,(REAL)lineStart*(REAL)cos(angle)+cx,(REAL)lineStart*(REAL)sin(angle)+cy);
+			path.AddArc((REAL)(cx - lineStart), (REAL)(cy - lineStart), (REAL)(lineStart * 2.0), (REAL)(lineStart * 2.0), startAngle, sweepAngle);
+			path.AddLine((REAL)lineStart * s_cos + cx, (REAL)lineStart * s_sin + cy, (REAL)lineLength * s_cos + cx, (REAL)lineLength * s_sin + cy);
+			path.AddArc((REAL)(cx - lineLength), (REAL)(cy - lineLength), (REAL)(lineLength * 2.0), (REAL)(lineLength * 2.0), startAngle, sweepAngle);
+			path.AddLine((REAL)lineLength * e_cos + cx, (REAL)lineLength * e_sin + cy, (REAL)lineStart * e_cos + cx, (REAL)lineStart * e_sin + cy);
 	
-			graphics.FillPath(&solidBrush,&path);
+			graphics.FillPath(&solidBrush, &path);
 		}
 		else
 		{
 			// Calculate the center of for the line
-			SolidBrush solidBrush(m_LineColor);
-			graphics.FillPie(&solidBrush, (REAL)(cx - m_LineLength), (REAL)(cy - m_LineLength), (REAL)(m_LineLength * 2.0), (REAL)(m_LineLength * 2.0), (REAL)(m_StartAngle * 180.0 / PI), (REAL)(m_RotationAngle * m_Value * 180.0 / PI));
+			graphics.FillPie(&solidBrush, (REAL)(cx - m_LineLength), (REAL)(cy - m_LineLength), (REAL)(m_LineLength * 2.0), (REAL)(m_LineLength * 2.0), startAngle, sweepAngle);
 		}
 	}
 	else
 	{
-		REAL x, y;
-
-		Pen pen(m_LineColor, (REAL)m_LineWidth);
-
 		// Calculate the end point of the line
 		double angle = m_RotationAngle * m_Value + m_StartAngle;
-
-		x = (REAL)cos(angle);
-		y = (REAL)sin(angle);
+		REAL e_cos = (REAL)cos(angle);
+		REAL e_sin = (REAL)sin(angle);
 
 		// Set the length
-		x = x * (REAL)m_LineLength + cx;
-		y = y * (REAL)m_LineLength + cy;
+		REAL x = e_cos * (REAL)m_LineLength + cx;
+		REAL y = e_sin * (REAL)m_LineLength + cy;
 
 		if (m_LineStart > 0.0)
 		{
-			cx = (REAL)cos(angle) * (REAL)m_LineStart + cx;
-			cy = (REAL)sin(angle) * (REAL)m_LineStart + cy;
+			cx += e_cos * (REAL)m_LineStart;
+			cy += e_sin * (REAL)m_LineStart;
 		}
 
+		Pen pen(m_LineColor, (REAL)m_LineWidth);
 		graphics.DrawLine(&pen, cx, cy, x, y);
 	}
 
