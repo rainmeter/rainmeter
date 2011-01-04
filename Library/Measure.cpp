@@ -357,8 +357,8 @@ bool CMeasure::PreUpdate()
 			{
 				if(!m_IfEqualCommited)
 				{
+					m_IfEqualCommited = true;  // To avoid crashing by !RainmeterUpdate due to infinite loop
 					Rainmeter->ExecuteCommand(m_IfEqualAction.c_str(), m_MeterWindow);
-					m_IfEqualCommited = true;
 				}
 			}
 			else
@@ -374,8 +374,8 @@ bool CMeasure::PreUpdate()
 			{
 				if(!m_IfAboveCommited)
 				{
+					m_IfAboveCommited = true;  // To avoid crashing by !RainmeterUpdate due to infinite loop
 					Rainmeter->ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
-					m_IfAboveCommited = true;
 				}
 			}
 			else
@@ -391,8 +391,8 @@ bool CMeasure::PreUpdate()
 			{
 				if(!m_IfBelowCommited)
 				{
+					m_IfBelowCommited = true;  // To avoid crashing by !RainmeterUpdate due to infinite loop
 					Rainmeter->ExecuteCommand(m_IfBelowAction.c_str(), m_MeterWindow);
-					m_IfBelowCommited = true;
 				}
 			}
 			else
