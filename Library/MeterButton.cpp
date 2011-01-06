@@ -113,7 +113,7 @@ void CMeterButton::Initialize()
 
 			for (int i = 0; i < BUTTON_FRAMES; ++i)
 			{
-				Bitmap bitmapPart(m_W, m_H, PixelFormat32bppARGB);
+				Bitmap bitmapPart(m_W, m_H, PixelFormat32bppPARGB);
 				Graphics graphics(&bitmapPart);
 				Rect r(0, 0, m_W, m_H);
 
@@ -250,7 +250,7 @@ bool CMeterButton::HitTest2(int px, int py, bool checkAlpha)
 	{
 		if (checkAlpha)
 		{
-			if (m_SolidColor.GetA() > 0 || m_SolidColor2.GetA() > 0)
+			if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
 			{
 				return true;
 			}
@@ -260,7 +260,7 @@ bool CMeterButton::HitTest2(int px, int py, bool checkAlpha)
 			{
 				Color color;
 				Status status = m_Image.GetImage()->GetPixel(px - x + m_W * m_State, py - y, &color);
-				if (status != Ok || color.GetA() > 0)
+				if (status != Ok || color.GetA() != 0)
 				{
 					return true;
 				}

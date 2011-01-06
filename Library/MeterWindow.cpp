@@ -245,7 +245,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 	IgnoreAeroPeek();
 
 	// Gotta have some kind of buffer during initialization
-	m_DoubleBuffer = new Bitmap(1, 1, PixelFormat32bppARGB);
+	m_DoubleBuffer = new Bitmap(1, 1, PixelFormat32bppPARGB);
 
 	Refresh(true, true);
 	if (!m_WindowStartHidden) 
@@ -2233,7 +2233,12 @@ bool CMeterWindow::ResizeWindow(bool reset)
 
 			if (m_BackgroundMode == BGMODE_IMAGE)
 			{
-				m_Background = tempBackground->Clone(0, 0, m_BackgroundSize.cx, m_BackgroundSize.cy, PixelFormat32bppARGB);
+				PixelFormat format = tempBackground->GetPixelFormat();
+				if (format == PixelFormat32bppARGB)
+				{
+					format = PixelFormat32bppPARGB;
+				}
+				m_Background = tempBackground->Clone(0, 0, m_BackgroundSize.cx, m_BackgroundSize.cy, format);
 			}
 			else
 			{
@@ -2241,7 +2246,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 				h = max(h, m_BackgroundSize.cy);
 
 				// Scale the background to fill the whole window
-				Bitmap* background = new Bitmap(w, h, PixelFormat32bppARGB);
+				Bitmap* background = new Bitmap(w, h, PixelFormat32bppPARGB);
 
 				Graphics graphics(background);
 
@@ -2423,30 +2428,45 @@ void CMeterWindow::Redraw()
 		CreateRegion(true);
 	}
 
-	if (m_DoubleBuffer) delete m_DoubleBuffer;
-	if (m_WindowW == 0 || m_WindowH == 0)
+	// Create or clear the doublebuffer
 	{
-		// Create a dummy bitmap to avoid invalid state
-		m_DoubleBuffer = new Bitmap(1, 1, PixelFormat32bppARGB);
-	}
-	else
-	{
-		m_DoubleBuffer = new Bitmap(m_WindowW, m_WindowH, PixelFormat32bppARGB);
-	}
+		int cx = m_WindowW;
+		int cy = m_WindowH;
 
-	Graphics graphics(GetDoubleBuffer());
-
-	if (m_Background)
-	{
-		// Copy the background over the doublebuffer
-		Rect r(0, 0, m_WindowW, m_WindowH);
-		graphics.DrawImage(m_Background, r, 0, 0, m_Background->GetWidth(), m_Background->GetHeight(), UnitPixel);
-	}
-	else if (m_BackgroundMode == BGMODE_SOLID)
-	{
-		// Draw the solid color background
-		if (m_WindowW != 0 && m_WindowH != 0)
+		if (cx == 0 || cy == 0)
 		{
+			// Set dummy size to avoid invalid state
+			cx = 1;
+			cy = 1;
+		}
+
+		BitmapData buf;
+		if (cx != m_DoubleBuffer->GetWidth() || cy != m_DoubleBuffer->GetHeight() ||
+			Ok != m_DoubleBuffer->LockBits(&Rect(0, 0, cx, cy), ImageLockModeWrite, PixelFormat32bppPARGB, &buf))
+		{
+			if (m_DoubleBuffer) delete m_DoubleBuffer;
+			m_DoubleBuffer = new Bitmap(cx, cy, PixelFormat32bppPARGB);
+		}
+		else
+		{
+			memset(buf.Scan0, 0, buf.Stride * cy);  // assume that the bitmap is top-down
+			m_DoubleBuffer->UnlockBits(&buf);
+		}
+	}
+
+	if (m_WindowW != 0 && m_WindowH != 0)
+	{
+		Graphics graphics(m_DoubleBuffer);
+
+		if (m_Background)
+		{
+			// Copy the background over the doublebuffer
+			Rect r(0, 0, m_WindowW, m_WindowH);
+			graphics.DrawImage(m_Background, r, 0, 0, m_Background->GetWidth(), m_Background->GetHeight(), UnitPixel);
+		}
+		else if (m_BackgroundMode == BGMODE_SOLID)
+		{
+			// Draw the solid color background
 			Rect r(0, 0, m_WindowW, m_WindowH);
 
 			if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
@@ -2479,28 +2499,28 @@ void CMeterWindow::Redraw()
 				CMeter::DrawBevel(graphics, r, light, dark);
 			}
 		}
+
+		// Draw the meters
+		std::list<CMeter*>::const_iterator j = m_Meters.begin();
+		for( ; j != m_Meters.end(); ++j)
+		{
+			if (!(*j)->GetTransformationMatrix().IsIdentity())
+			{
+				// Change the world matrix
+				graphics.SetTransform(&((*j)->GetTransformationMatrix()));
+
+				(*j)->Draw(graphics);
+
+				// Set back to identity matrix
+				graphics.ResetTransform();
+			}
+			else
+			{
+				(*j)->Draw(graphics);
+			}
+		}
 	}
 
-	// Draw the meters
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
-	{
-		if (!(*j)->GetTransformationMatrix().IsIdentity())
-		{
-			// Change the world matrix
-			graphics.SetTransform(&((*j)->GetTransformationMatrix()));
-
-			(*j)->Draw(graphics);
-
-			// Set back to identity matrix
-			graphics.ResetTransform();
-		}
-		else
-		{
-			(*j)->Draw(graphics);
-		}
-	}
-		
 	if (m_ResetRegion) CreateRegion(false);
 	m_ResetRegion = false;
 
@@ -2726,18 +2746,13 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 		BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
 		POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
 		POINT ptSrc = {0, 0};
-		SIZE szWindow;
+		SIZE szWindow = {m_WindowW, m_WindowH};
 
-		if (m_WindowW == 0 || m_WindowH == 0)
+		if (szWindow.cx == 0 || szWindow.cy == 0)
 		{
 			// Set dummy size to avoid invalid state
 			szWindow.cx = 1;
 			szWindow.cy = 1;
-		}
-		else
-		{
-			szWindow.cx = m_WindowW;
-			szWindow.cy = m_WindowH;
 		}
 
 		HDC dcScreen = GetDC(0);
@@ -3095,7 +3110,7 @@ bool CMeterWindow::HitTest(int x, int y)
 		{
 			Color color;
 			Status status = m_DoubleBuffer->GetPixel(x, y, &color);
-			if (status != Ok || color.GetA() > 0)
+			if (status != Ok || color.GetA() != 0)
 			{
 				return true;
 			}

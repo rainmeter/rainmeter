@@ -267,7 +267,7 @@ void CTintedImage::ApplyCrop()
 	{
 		if (m_Crop.Width == 0 || m_Crop.Height == 0)
 		{
-			m_BitmapTint = new Bitmap(0, 0, PixelFormat32bppARGB);  // create dummy bitmap
+			m_BitmapTint = new Bitmap(0, 0, PixelFormat32bppPARGB);  // create dummy bitmap
 		}
 		else
 		{
@@ -306,7 +306,7 @@ void CTintedImage::ApplyCrop()
 			}
 
 			Rect r(0, 0, m_Crop.Width, m_Crop.Height);
-			m_BitmapTint = new Bitmap(r.Width, r.Height, PixelFormat32bppARGB);
+			m_BitmapTint = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
 
 			Graphics graphics(m_BitmapTint);
 			graphics.DrawImage(m_Bitmap, r, x, y, r.Width, r.Height, UnitPixel);
@@ -331,7 +331,7 @@ void CTintedImage::ApplyTint()
 
 		Rect r(0, 0, original->GetWidth(), original->GetHeight());
 
-		Bitmap* tint = new Bitmap(r.Width, r.Height, PixelFormat32bppARGB);
+		Bitmap* tint = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
 
 		Graphics graphics(tint);
 
@@ -365,7 +365,7 @@ Bitmap* CTintedImage::TurnGreyscale(Bitmap* source)
 
 	// We need a blank bitmap to paint our greyscale to in case of alpha
 	Rect r(0, 0, source->GetWidth(), source->GetHeight());
-	Bitmap* bitmap = new Bitmap(r.Width, r.Height, PixelFormat32bppARGB);
+	Bitmap* bitmap = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
 
 	Graphics graphics(bitmap);
 	graphics.DrawImage(source, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
@@ -393,7 +393,7 @@ void CTintedImage::ApplyTransform()
 		REAL transformW = fabs(originalW * cos_f) + fabs(originalH * sin_f);
 		REAL transformH = fabs(originalW * sin_f) + fabs(originalH * cos_f);
 
-		Bitmap* transform = new Bitmap((int)(transformW + 0.5f), (int)(transformH + 0.5f), PixelFormat32bppARGB);
+		Bitmap* transform = new Bitmap((int)(transformW + 0.5f), (int)(transformH + 0.5f), PixelFormat32bppPARGB);
 
 		Graphics graphics(transform);
 		graphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
@@ -427,7 +427,7 @@ void CTintedImage::ApplyTransform()
 		Bitmap* original = GetImage();
 
 		Rect r(0, 0, original->GetWidth(), original->GetHeight());
-		Bitmap* transform = new Bitmap(r.Width, r.Height, PixelFormat32bppARGB);
+		Bitmap* transform = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
 
 		Graphics graphics(transform);
 
