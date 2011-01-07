@@ -761,7 +761,7 @@ double Update2(UINT id)
 			if (urlData->url.size() > 0 && urlData->url.find(L'[') == std::wstring::npos)
 			{
 				// This is not a reference; need to update.
-				if (urlData->threadHandle == 0)
+				if (urlData->threadHandle == 0 && urlData->dlThreadHandle == 0)
 				{
 					if (urlData->updateCounter == 0)
 					{
