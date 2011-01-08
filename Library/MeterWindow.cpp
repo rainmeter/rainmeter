@@ -133,6 +133,9 @@ CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config,
 	m_MouseMoveCounter = 0;
 	m_FontCollection = NULL;
 
+	m_MouseActionCursor = true;
+	m_ToolTipHidden = false;
+
 	++c_InstanceCount;
 }
 
@@ -202,9 +205,9 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 
 	// Register the windowclass
 	wc.style = CS_NOCLOSE | CS_DBLCLKS;
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.lpfnWndProc = WndProc;
 	wc.hInstance = m_Rainmeter->GetInstance();
+	wc.hCursor = NULL;  // The cursor should be controlled by using SetCursor() when needed.
 	wc.lpszClassName = METERWINDOW_CLASS_NAME;
 	
 	if(!RegisterClassEx(&wc))
@@ -3131,7 +3134,7 @@ bool CMeterWindow::HitTest(int x, int y)
 ** Note that meterWindow parameter is used if proc is BUTTONPROC_UP.
 **
 */
-void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meterWindow, bool changeCursor) 
+void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meterWindow) 
 {
 	bool redraw = false;
 	bool drawCursor = false;
@@ -3166,9 +3169,9 @@ void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meter
 			}
 		}
 
-		if (changeCursor && !drawCursor)
+		if (!drawCursor)
 		{
-			if ((*j)->HitTest(pos.x, pos.y) && (*j)->HasMouseActionCursor())
+			if ((*j)->HasMouseActionCursor() && (*j)->HitTest(pos.x, pos.y))
 			{
 				drawCursor = ((*j)->HasMouseAction() || button);	
 			}
@@ -3180,10 +3183,33 @@ void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meter
 		Redraw();
 	}
 
-	if (changeCursor)
-	{
-		SetCursor(LoadCursor(NULL, drawCursor ? IDC_HAND : IDC_ARROW));
-	}
+	// Set cursor
+	SetCursor(LoadCursor(NULL, drawCursor ? IDC_HAND : IDC_ARROW));
+}
+
+/*
+** OnSetCursor
+**
+** During setting the cursor do nothing.
+**
+*/
+LRESULT CMeterWindow::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+{
+	return 0;
+}
+
+/*
+** OnEnterMenuLoop
+**
+** Enters context menu loop.
+**
+*/
+LRESULT CMeterWindow::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+{
+	// Set cursor to default
+	SetCursor(LoadCursor(NULL, IDC_ARROW));
+
+	return 0;
 }
 
 /*
@@ -3254,7 +3280,7 @@ LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		while (DoMoveAction(pos.x, pos.y, MOUSE_OVER)) ;
 
 		// Handle buttons
-		HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+		HandleButtons(pos, BUTTONPROC_MOVE, NULL);
 	}
 
 	return 0;
@@ -3279,7 +3305,7 @@ LRESULT CMeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		while (DoMoveAction(pos.x, pos.y, MOUSE_LEAVE)) ;  // Leave all forcibly
 
 		// Handle buttons
-		HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+		HandleButtons(pos, BUTTONPROC_MOVE, NULL);
 	}
 
 	return 0;
@@ -3655,7 +3681,7 @@ LRESULT CMeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		MapWindowPoints(NULL, m_Window, &pos, 1);
 
 		// Handle buttons
-		HandleButtons(pos, BUTTONPROC_UP, NULL, true);  // redraw only
+		HandleButtons(pos, BUTTONPROC_UP, NULL);  // redraw only
 	}
 	else  // not dragged
 	{
@@ -3896,7 +3922,7 @@ LRESULT CMeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_DOWN, NULL, true);
+	HandleButtons(pos, BUTTONPROC_DOWN, NULL);
 
 	if (!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable)
 	{
@@ -3932,7 +3958,7 @@ LRESULT CMeterWindow::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_UP, this, true);
+	HandleButtons(pos, BUTTONPROC_UP, this);
 
 	DoAction(pos.x, pos.y, MOUSE_LMB_UP, false);
 
@@ -3961,7 +3987,7 @@ LRESULT CMeterWindow::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM l
 	}
 
 	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_DOWN, NULL, true);
+	HandleButtons(pos, BUTTONPROC_DOWN, NULL);
 
 	if (!DoAction(pos.x, pos.y, MOUSE_LMB_DBLCLK, false))
 	{
@@ -3993,7 +4019,7 @@ LRESULT CMeterWindow::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+	HandleButtons(pos, BUTTONPROC_MOVE, NULL);
 
 	DoAction(pos.x, pos.y, MOUSE_RMB_DOWN, false);
 
@@ -4013,7 +4039,7 @@ LRESULT CMeterWindow::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	pos.y = (SHORT)HIWORD(lParam);
 
 	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+	HandleButtons(pos, BUTTONPROC_MOVE, NULL);
 
 	if (!DoAction(pos.x, pos.y, MOUSE_RMB_UP, false))
 	{
@@ -4046,7 +4072,7 @@ LRESULT CMeterWindow::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM 
 	}
 
 	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+	HandleButtons(pos, BUTTONPROC_MOVE, NULL);
 
 	if (!DoAction(pos.x, pos.y, MOUSE_RMB_DBLCLK, false))
 	{
@@ -4078,7 +4104,7 @@ LRESULT CMeterWindow::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam
 	}
 
 	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+	HandleButtons(pos, BUTTONPROC_MOVE, NULL);
 
 	DoAction(pos.x, pos.y, MOUSE_MMB_DOWN, false);
 
@@ -4107,7 +4133,7 @@ LRESULT CMeterWindow::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+	HandleButtons(pos, BUTTONPROC_MOVE, NULL);
 
 	DoAction(pos.x, pos.y, MOUSE_MMB_UP, false);
 
@@ -4136,7 +4162,7 @@ LRESULT CMeterWindow::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM
 	}
 
 	// Handle buttons
-	HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+	HandleButtons(pos, BUTTONPROC_MOVE, NULL);
 
 	if (!DoAction(pos.x, pos.y, MOUSE_MMB_DBLCLK, false))
 	{
@@ -4174,7 +4200,7 @@ LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		pos.y = y - rect.top;
 
 		// Handle buttons
-		HandleButtons(pos, BUTTONPROC_MOVE, NULL, true);
+		HandleButtons(pos, BUTTONPROC_MOVE, NULL);
 
 		// If RMB up or RMB down or double-click cause actions, do not show the menu!
 		if (DoAction(pos.x, pos.y, MOUSE_RMB_UP, false) || DoAction(pos.x, pos.y, MOUSE_RMB_DOWN, true) || DoAction(pos.x, pos.y, MOUSE_RMB_DBLCLK, true))
@@ -4588,6 +4614,8 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnEnterSizeMove, WM_ENTERSIZEMOVE)
 	MESSAGE(OnExitSizeMove, WM_EXITSIZEMOVE)
 	MESSAGE(OnNcHitTest, WM_NCHITTEST)
+	MESSAGE(OnSetCursor, WM_SETCURSOR)
+	MESSAGE(OnEnterMenuLoop, WM_ENTERMENULOOP)
 	MESSAGE(OnMouseMove, WM_MOUSEMOVE)
 	MESSAGE(OnMouseMove, WM_NCMOUSEMOVE)
 	MESSAGE(OnMouseLeave, WM_MOUSELEAVE)

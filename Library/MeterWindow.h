@@ -30,10 +30,10 @@
 #include "Group.h"
 #include "Export.h"
 
-#define BEGIN_MESSAGEPROC switch(uMsg) {
-#define MESSAGE(handler, msg) case msg: return Window?Window->handler(uMsg, wParam, lParam):DefWindowProc(hWnd, uMsg, wParam, lParam);
+#define BEGIN_MESSAGEPROC if (Window) { switch(uMsg) {
+#define MESSAGE(handler, msg) case msg: return Window->handler(uMsg, wParam, lParam);
 #define REJECT_MESSAGE(msg) case msg: return 0;
-#define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
+#define END_MESSAGEPROC } } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 #define WM_DELAYED_EXECUTE WM_APP + 0
 #define WM_DELAYED_REFRESH WM_APP + 1
@@ -240,6 +240,8 @@ protected:
 	LRESULT OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -280,7 +282,7 @@ private:
 	void InitializeMeters();
 	void ShowWindowIfAppropriate();
 	HWND GetWindowFromPoint(POINT pos);
-	void HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meterWindow, bool changeCursor);
+	void HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meterWindow);
 	void SetClickThrough(bool b);
 	void SetKeepOnScreen(bool b);
 	void SetWindowDraggable(bool b);
