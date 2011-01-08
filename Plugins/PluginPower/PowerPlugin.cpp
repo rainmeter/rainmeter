@@ -28,13 +28,13 @@
 #include "..\..\Library\Export.h"	// Rainmeter's exported functions
 
 typedef struct _PROCESSOR_POWER_INFORMATION 
-{  
-    ULONG Number;  
-    ULONG MaxMhz;  
-    ULONG CurrentMhz;  
-    ULONG MhzLimit;  
-    ULONG MaxIdleState;  
-    ULONG CurrentIdleState;
+{
+	ULONG Number;
+	ULONG MaxMhz;
+	ULONG CurrentMhz;
+	ULONG MhzLimit;
+	ULONG MaxIdleState;
+	ULONG CurrentIdleState;
 } PROCESSOR_POWER_INFORMATION, *PPROCESSOR_POWER_INFORMATION;
 
 typedef LONG (WINAPI *FPCALLNTPOWERINFORMATION)(POWER_INFORMATION_LEVEL, PVOID, ULONG, PVOID, ULONG);
@@ -45,7 +45,7 @@ extern "C"
 __declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
 __declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
 __declspec( dllexport ) LPCTSTR GetString(UINT id, UINT flags);
-__declspec( dllexport ) UINT Update(UINT id);
+__declspec( dllexport ) double Update2(UINT id);
 __declspec( dllexport ) UINT GetPluginVersion();
 __declspec( dllexport ) LPCTSTR GetPluginAuthor();
 }
@@ -58,13 +58,14 @@ enum POWER_STATE
 	POWER_STATUS2,
 	POWER_LIFETIME,
 	POWER_PERCENT,
-	POWER_MHZ
+	POWER_MHZ,
+	POWER_HZ
 };
 
 std::map<UINT, POWER_STATE> g_States;
 std::map<UINT, std::wstring> g_Formats;
 HINSTANCE hDLL = NULL;
-int g_Instances = 0;
+int g_Instances, g_NumOfProcessors = 0;
 FPCALLNTPOWERINFORMATION fpCallNtPowerInformation = NULL;
 
 /*
@@ -83,15 +84,19 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
 	g_Instances++;
 	if (hDLL == NULL)
-    {
-        hDLL = LoadLibrary(L"powrprof.dll");
-        if (hDLL)
-        {
-            fpCallNtPowerInformation = (FPCALLNTPOWERINFORMATION)GetProcAddress(hDLL, "CallNtPowerInformation");
-        }
-    }
+	{
+		hDLL = LoadLibrary(L"powrprof.dll");
+		if (hDLL)
+		{
+			fpCallNtPowerInformation = (FPCALLNTPOWERINFORMATION)GetProcAddress(hDLL, "CallNtPowerInformation");
+		}
+	}
 
-    POWER_STATE powerState = POWER_UNKNOWN;
+	POWER_STATE powerState = POWER_UNKNOWN;
+
+	SYSTEM_INFO systemInfo = {0};
+	GetSystemInfo(&systemInfo);
+	g_NumOfProcessors = (int)systemInfo.dwNumberOfProcessors;
 
 	/* Read our own settings from the ini-file */
 	LPCTSTR type = ReadConfigString(section, L"PowerState", L"");
@@ -120,9 +125,13 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			}
 		} 
 		else if (_wcsicmp(L"MHZ", type) == 0)
-        {
+		{
 			powerState= POWER_MHZ;
-        }
+		}
+		else if (_wcsicmp(L"HZ", type) == 0)
+		{
+			powerState= POWER_HZ;
+		}
 		else if (_wcsicmp(L"PERCENT", type) == 0)
 		{
 			powerState = POWER_PERCENT;
@@ -163,7 +172,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
   This function is called when new value should be measured.
   The function returns the new value.
 */
-UINT Update(UINT id)
+double Update2(UINT id)
 {
 	SYSTEM_POWER_STATUS status;
 	if (GetSystemPowerStatus(&status))
@@ -209,13 +218,16 @@ UINT Update(UINT id)
 				return status.BatteryLifePercent > 100 ? 100 : status.BatteryLifePercent;
 
 			case POWER_MHZ:
-                if (fpCallNtPowerInformation)
-                {
-                    PROCESSOR_POWER_INFORMATION ppi[8];     // Assume that 8 processors are enough
-                    memset(ppi, 0, sizeof(PROCESSOR_POWER_INFORMATION) * 8);
-                    fpCallNtPowerInformation(ProcessorInformation, NULL, 0, ppi, sizeof(PROCESSOR_POWER_INFORMATION) * 8);
-                    return ppi[0].CurrentMhz;
-                }
+			case POWER_HZ:
+				if (fpCallNtPowerInformation && g_NumOfProcessors > 0)
+				{
+					PROCESSOR_POWER_INFORMATION* ppi = new PROCESSOR_POWER_INFORMATION [g_NumOfProcessors];
+					memset(ppi, 0, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
+					fpCallNtPowerInformation(ProcessorInformation, NULL, 0, ppi, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
+					double value = ((*i).second == POWER_MHZ) ? ppi[0].CurrentMhz : ppi[0].CurrentMhz * 1000000.0;
+					delete [] ppi;
+					return value;
+				}
 			}
 		}
 	}
@@ -288,17 +300,17 @@ void Finalize(HMODULE instance, UINT id)
 	}
 
 	g_Instances--;
-    if (hDLL != NULL && g_Instances == 0)
-    {
-        FreeLibrary(hDLL);
-        hDLL = NULL;
+	if (hDLL != NULL && g_Instances == 0)
+	{
+		FreeLibrary(hDLL);
+		hDLL = NULL;
 		fpCallNtPowerInformation = NULL;
-    }
+	}
 }
 
 UINT GetPluginVersion()
 {
-	return 1003;
+	return 1004;
 }
 
 LPCTSTR GetPluginAuthor()
