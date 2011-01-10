@@ -718,6 +718,10 @@ void ExecuteBang(LPCTSTR args, UINT id)
 		{
 			command = COMMAND_PAUSE;
 		}
+		else if (_wcsicmp(args, L"Play") == 0)
+		{
+			command = COMMAND_PLAY;
+		}
 		else if (_wcsicmp(args, L"PlayPause") == 0)
 		{
 			command = COMMAND_PLAYPAUSE;
