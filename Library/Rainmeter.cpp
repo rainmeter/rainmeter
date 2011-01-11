@@ -3130,7 +3130,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 			}
 			return;
 		}
-		else if (wcsncmp(L"PLAYSTOP", strCommand.c_str(), 8) == 0)
+		else if (_wcsnicmp(L"PLAYSTOP", strCommand.c_str(), 8) == 0)
 		{
 			PlaySound(NULL, NULL, SND_PURGE);
 			return;
