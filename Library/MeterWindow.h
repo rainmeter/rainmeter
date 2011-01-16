@@ -196,6 +196,11 @@ public:
 	bool GetXFromRight() { return m_WindowXFromRight; }
 	bool GetYFromBottom() { return m_WindowYFromBottom; }
 
+	int GetW() { return m_WindowW; }
+	int GetH() { return m_WindowH; }
+	int GetX() { return m_ScreenX; }
+	int GetY() { return m_ScreenY; }
+
 	bool GetXScreenDefined() { return m_WindowXScreenDefined; }
 	bool GetYScreenDefined() { return m_WindowYScreenDefined; }
 	int GetXScreen() { return m_WindowXScreen; }
@@ -292,6 +297,8 @@ private:
 	bool DoMoveAction(int x, int y, MOUSE mouse);
 	bool ResizeWindow(bool reset);
 	void IgnoreAeroPeek();
+	void SetWindowPositionVariables(int x, int y);
+	void SetWindowSizeVariables(int w, int h);
 
 	CConfigParser m_Parser;
 

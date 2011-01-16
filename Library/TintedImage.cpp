@@ -558,7 +558,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	std::vector<Gdiplus::REAL> matrix = parser.ReadFloats(section, m_ConfigColorMatrix1.c_str());
 	if (matrix.size() == 5)
 	{
-		for (int i = 0; i < 5; ++i)
+		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
 			m_ColorMatrix.m[0][i] = matrix[i];
 		}
@@ -571,7 +571,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	matrix = parser.ReadFloats(section, m_ConfigColorMatrix2.c_str());
 	if (matrix.size() == 5)
 	{
-		for(int i = 0; i < 5; ++i)
+		for(int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
 			m_ColorMatrix.m[1][i] = matrix[i];
 		}
@@ -584,7 +584,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	matrix = parser.ReadFloats(section, m_ConfigColorMatrix3.c_str());
 	if (matrix.size() == 5)
 	{
-		for(int i = 0; i < 5; ++i)
+		for(int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
 			m_ColorMatrix.m[2][i] = matrix[i];
 		}
@@ -597,7 +597,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	matrix = parser.ReadFloats(section, m_ConfigColorMatrix4.c_str());
 	if (matrix.size() == 5)
 	{
-		for(int i = 0; i < 5; ++i)
+		for(int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
 			m_ColorMatrix.m[3][i] = matrix[i];
 		}
@@ -610,7 +610,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	matrix = parser.ReadFloats(section, m_ConfigColorMatrix5.c_str());
 	if (matrix.size() == 5)
 	{
-		for(int i = 0; i < 5; ++i)
+		for(int i = 0; i < 4; ++i)  // The fifth column must be 1.
 		{
 			m_ColorMatrix.m[4][i] = matrix[i];
 		}

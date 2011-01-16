@@ -1802,6 +1802,8 @@ bool CMeterWindow::ReadSkin()
 	}
 
 	m_Parser.Initialize(iniFile.c_str(), m_Rainmeter, this);
+	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
+	SetWindowSizeVariables(0, 0);
 
 	// Global settings
 	std::wstring group = m_Parser.ReadString(L"Rainmeter", L"Group", L"");
@@ -2352,6 +2354,8 @@ bool CMeterWindow::ResizeWindow(bool reset)
 		m_WindowH = h;
 		WindowToScreen();
 	}
+
+	SetWindowSizeVariables(m_WindowW, m_WindowH);
 
 	// If Background is not set, take a copy from the desktop
 	if(m_Background == NULL) 
@@ -4569,6 +4573,8 @@ LRESULT CMeterWindow::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	m_ScreenX = (SHORT)LOWORD(lParam);
 	m_ScreenY = (SHORT)HIWORD(lParam);
 
+	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
+
 	if (m_Dragging)
 	{
 		ScreenToWindow();
@@ -4807,6 +4813,38 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		return FALSE;
 	}
+}
+
+/*
+** SetWindowPositionVariables
+**
+** Sets up the window position variables.
+**
+*/
+void CMeterWindow::SetWindowPositionVariables(int x, int y)
+{
+	WCHAR buffer[32];
+
+	_snwprintf_s(buffer, _TRUNCATE, L"%i", x);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGX", buffer);
+	_snwprintf_s(buffer, _TRUNCATE, L"%i", y);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGY", buffer);
+}
+
+/*
+** SetWindowSizeVariables
+**
+** Sets up the window size variables.
+**
+*/
+void CMeterWindow::SetWindowSizeVariables(int w, int h)
+{
+	WCHAR buffer[32];
+
+	_snwprintf_s(buffer, _TRUNCATE, L"%i", w);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGWIDTH", buffer);
+	_snwprintf_s(buffer, _TRUNCATE, L"%i", h);
+	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGHEIGHT", buffer);
 }
 
 /*

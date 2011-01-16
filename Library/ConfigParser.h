@@ -43,6 +43,7 @@ public:
 	void AddMeasure(CMeasure* pMeasure);
 
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_Variables, strVariable, strValue); }
+	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
 
 	void SetStyleTemplate(const std::wstring& strStyle) { m_StyleTemplate =  Tokenize(strStyle, L"|"); }
 	void ClearStyleTemplate() { m_StyleTemplate.clear(); }
@@ -89,7 +90,6 @@ public:
 
 private:
 	void SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow);
-	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
 
 	void ReadVariables();
 

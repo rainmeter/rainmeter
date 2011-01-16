@@ -659,14 +659,14 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		}
 	}
 
-	SetVariable(L"CURRENTSECTION", section);  // Set temporarily
+	SetBuiltInVariable(L"CURRENTSECTION", section);  // Set temporarily
 
 	if (ReplaceVariables(result))
 	{
 		m_LastReplaced = true;
 	}
 
-	SetVariable(L"CURRENTSECTION", L"");  // Reset
+	SetBuiltInVariable(L"CURRENTSECTION", L"");  // Reset
 
 	if (bReplaceMeasures && ReplaceMeasures(result))
 	{
