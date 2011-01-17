@@ -43,7 +43,7 @@ public:
 	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 	Gdiplus::RectF GetRect() { return m_Rect; }
 
-	static void FreeFontCache();
+	static void FreeFontCache(Gdiplus::PrivateFontCollection* collection = NULL);
 	static void EnumerateInstalledFontFamilies();
 
 private:
@@ -100,7 +100,9 @@ private:
 	std::vector<std::wstring> m_MeasureNames;
 	std::vector<CMeasure*> m_Measures;
 
-	static std::wstring FontPropertiesToString(Gdiplus::FontFamily* fontFamily, Gdiplus::REAL size, Gdiplus::FontStyle style);
+	static std::wstring FontFaceToString(const std::wstring& fontFace, Gdiplus::PrivateFontCollection* collection);
+	static std::wstring FontPropertiesToString(Gdiplus::REAL size, Gdiplus::FontStyle style);
+
 	static std::map<std::wstring, Gdiplus::FontFamily*> c_FontFamilies;		// Cache for the font families
 	static std::map<std::wstring, Gdiplus::Font*> c_Fonts;					// Cache for the fonts
 };

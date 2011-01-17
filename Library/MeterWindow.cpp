@@ -30,6 +30,7 @@
 #include "MeasureNet.h"
 #include "MeasurePlugin.h"
 #include "MeterButton.h"
+#include "MeterString.h"
 #include "TintedImage.h"
 #include "MeasureScript.h"
 
@@ -174,7 +175,11 @@ CMeterWindow::~CMeterWindow()
 
 	if(m_Window) DestroyWindow(m_Window);
 
-	if(m_FontCollection) delete m_FontCollection;
+	if(m_FontCollection)
+	{
+		CMeterString::FreeFontCache(m_FontCollection);
+		delete m_FontCollection;
+	}
 
 	--c_InstanceCount;
 
@@ -351,8 +356,12 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 		m_BackgroundName.erase();
 
-		if (m_FontCollection) delete m_FontCollection;
-		m_FontCollection = NULL;
+		if (m_FontCollection)
+		{
+			CMeterString::FreeFontCache(m_FontCollection);
+			delete m_FontCollection;
+			m_FontCollection = NULL;
+		}
 	}
 
 	ZPOSITION oldZPos = m_WindowZPosition;
@@ -1921,7 +1930,7 @@ bool CMeterWindow::ReadSkin()
 
 		}
 		// Here we are checking to see if there are more than one local font
-		// to be loaded. They will be named LocalFont2, LocalFont 3, etc.
+		// to be loaded. They will be named LocalFont2, LocalFont3, etc.
 		WCHAR tmpName[64];
 		int i = 2;
 		bool loop = true;

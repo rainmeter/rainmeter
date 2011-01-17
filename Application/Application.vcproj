@@ -196,7 +196,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist ..\testbench\x64\debug\skins (mkdir ..\testbench\x64\debug\skins)&#x0D;&#x0A;if not exist ..\testbench\x64\debug\themes (mkdir ..\testbench\x64\debug\themes)&#x0D;&#x0A;echo &quot;Copying the skins...&quot;&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Skins ..\testbench\x64\debug\skins&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Themes ..\testbench\x64\debug\themes&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x64\debug\"
+				CommandLine="if not exist ..\testbench\x64\debug\skins (mkdir ..\testbench\x64\debug\skins)&#x0D;&#x0A;if not exist ..\testbench\x64\debug\themes (mkdir ..\testbench\x64\debug\themes)&#x0D;&#x0A;echo &quot;Copying the skins...&quot;&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Skins ..\testbench\x64\debug\skins&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Themes ..\testbench\x64\debug\themes&#x0D;&#x0A;xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x64\debug\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -234,7 +234,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_SECURE_SCL=0"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -330,7 +330,7 @@
 				AdditionalOptions="/GL /GA "
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_SECURE_SCL=0"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
