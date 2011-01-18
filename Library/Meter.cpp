@@ -871,7 +871,7 @@ void CMeter::DrawBevel(Graphics& graphics, const Rect& rect, const Pen& light, c
 	graphics.DrawLine(&light, l,     t,     l,     b);
 	graphics.DrawLine(&light, l,     t,     r,     t);
 	graphics.DrawLine(&light, l + 1, t + 1, l + 1, b - 1);
-	graphics.DrawLine(&light, l + 1, t + 1, r - 1, l + 1);
+	graphics.DrawLine(&light, l + 1, t + 1, r - 1, t + 1);
 	graphics.DrawLine(&dark,  l,     b,     r,     b);
 	graphics.DrawLine(&dark,  r,     t,     r,     b);
 	graphics.DrawLine(&dark,  l + 1, b - 1, r - 1, b - 1);
