@@ -168,7 +168,7 @@ bool CMeasureTime::Update()
 ** Returns the time as string.
 **
 */
-const WCHAR* CMeasureTime::GetStringValue(bool autoScale, double scale, int decimals, bool percentual)
+const WCHAR* CMeasureTime::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	static WCHAR tmpSz[MAX_LINE_LENGTH];
 	struct tm today;

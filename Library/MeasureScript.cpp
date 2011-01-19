@@ -81,7 +81,7 @@ void CMeasureScript::SetValue(double d)
 ** decimals   Number of decimals used in the value.
 ** percentual Return the value as % from the maximum value.
 */
-const WCHAR* CMeasureScript::GetStringValue(bool autoScale, double scale, int decimals, bool percentual)
+const WCHAR* CMeasureScript::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 
 	if (m_bGetStringValueDefined && m_pLuaScript->IsInitialized() )

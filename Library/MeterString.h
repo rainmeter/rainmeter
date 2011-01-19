@@ -21,6 +21,7 @@
 
 #include "Meter.h"
 #include "MeterWindow.h"
+#include "Measure.h"
 
 namespace Gdiplus
 {
@@ -78,7 +79,7 @@ private:
 	std::wstring m_Prefix;				// The prefix of the text
 	std::wstring m_Text;				// The text
 	std::wstring m_FontFace;			// name of the font face
-	bool m_AutoScale;					// true, if the value should be autoscaled
+	AUTOSCALE m_AutoScale;				// true, if the value should be autoscaled
 	METER_ALIGNMENT m_Align;			// Alignment of the text
 	TEXTSTYLE m_Style;					// Style of the text
 	TEXTEFFECT m_Effect;				// Text effect

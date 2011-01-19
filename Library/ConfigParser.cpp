@@ -530,7 +530,7 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 						CMeasure* measure = GetMeasure(var);
 						if (measure)
 						{
-							std::wstring value = measure->GetStringValue(false, 1, -1, false);
+							std::wstring value = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
 
 							// Measure found, replace it with the value
 							result.replace(result.begin() + pos, result.begin() + end + 1, value);

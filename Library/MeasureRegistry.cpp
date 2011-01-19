@@ -177,7 +177,7 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 ** value to string as normal.
 **
 */
-const WCHAR* CMeasureRegistry::GetStringValue(bool autoScale, double scale, int decimals, bool percentual)
+const WCHAR* CMeasureRegistry::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	if (m_StringValue.empty())
 	{

@@ -38,6 +38,27 @@
 #include "Error.h"
 #include "Litestep.h"
 
+enum AUTOSCALE_INDEX
+{
+	AUTOSCALE_INDEX_1024 = 0,
+	AUTOSCALE_INDEX_1000 = 1
+};
+
+static const double g_TblScale[2][4] = {
+	{
+		1024.0 * 1024.0 * 1024.0 * 1024.0,
+		1024.0 * 1024.0 * 1024.0,
+		1024.0 * 1024.0,
+		1024.0
+	},
+	{
+		1000.0 * 1000.0 * 1000.0 * 1000.0,
+		1000.0 * 1000.0 * 1000.0,
+		1000.0 * 1000.0,
+		1000.0
+	}
+};
+
 const int MEDIAN_SIZE = 7;
 
 extern CRainmeter* Rainmeter;
@@ -500,7 +521,7 @@ double CMeasure::GetValueRange()
 ** decimals   Number of decimals used in the value. If -1, get rid of ".00000" for dynamic variables.
 ** percentual Return the value as % from the maximum value.
 */
-const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals, bool percentual)
+const WCHAR* CMeasure::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	static WCHAR buffer[MAX_LINE_LENGTH];
 	WCHAR format[32];
@@ -519,9 +540,9 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 			_snwprintf_s(buffer, _TRUNCATE, format, val);
 		}
 	} 
-	else if(autoScale)
+	else if(autoScale != AUTOSCALE_OFF)
 	{
-		GetScaledValue(decimals, GetValue(), buffer, _countof(buffer));
+		GetScaledValue(autoScale, decimals, GetValue(), buffer, _countof(buffer));
 	}
 	else 
 	{
@@ -552,7 +573,7 @@ const WCHAR* CMeasure::GetStringValue(bool autoScale, double scale, int decimals
 	return CheckSubstitute(buffer);
 }
 
-void CMeasure::GetScaledValue(int decimals, double theValue, WCHAR* buffer, size_t sizeInWords)
+void CMeasure::GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords)
 {
 	WCHAR format[32];
 	double value = 0;
@@ -566,25 +587,27 @@ void CMeasure::GetScaledValue(int decimals, double theValue, WCHAR* buffer, size
 		_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
 	}
 
-	if(theValue > 1000.0 * 1000.0 * 1000.0 * 1000.0)
+	int index = (autoScale == AUTOSCALE_1000 || autoScale == AUTOSCALE_1000K) ? AUTOSCALE_INDEX_1000 : AUTOSCALE_INDEX_1024;
+
+	if(theValue > (g_TblScale[index][0] * 0.99))
 	{
 		wcsncat_s(format, L" T", _TRUNCATE);
-		value = theValue / (1024.0 * 1024.0 * 1024.0 * 1024.0);
+		value = theValue / g_TblScale[index][0];
 	}
-	else if(theValue > 1000.0 * 1000.0 * 1000.0)
+	else if(theValue > (g_TblScale[index][1] * 0.99))
 	{
 		wcsncat_s(format, L" G", _TRUNCATE);
-		value = theValue / (1024.0 * 1024.0 * 1024.0);
+		value = theValue / g_TblScale[index][1];
 	}
-	else if(theValue > 1000.0 * 1000.0)
+	else if(theValue > (g_TblScale[index][2] * 0.99))
 	{
 		wcsncat_s(format, L" M", _TRUNCATE);
-		value = theValue / (1024.0 * 1024.0);
+		value = theValue / g_TblScale[index][2];
 	}
-	else if(theValue > 1000.0)
+	else if(autoScale == AUTOSCALE_1024K || autoScale == AUTOSCALE_1000K || theValue > (g_TblScale[index][3] * 0.99))
 	{
 		wcsncat_s(format, L" k", _TRUNCATE);
-		value = theValue / 1024.0;
+		value = theValue / g_TblScale[index][3];
 	}
 	else
 	{
@@ -604,7 +627,7 @@ const WCHAR* CMeasure::GetStats()
 {
 	static std::wstring value;
 
-	value = GetStringValue(true, 1, 1, false);
+	value = GetStringValue(AUTOSCALE_ON, 1, 1, false);
 
 	return value.c_str();
 }

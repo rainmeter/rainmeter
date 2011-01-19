@@ -3068,7 +3068,7 @@ std::wstring CRainmeter::ParseCommand(const WCHAR* command, CMeterWindow* meterW
 							{
 								if (_wcsicmp((*iter)->GetName(), measureName.c_str()) == 0)
 								{
-									std::wstring value = (*iter)->GetStringValue(false, 1, -1, false);
+									std::wstring value = (*iter)->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
 									strCommand.replace(start, (end - start) + 1, value);
 									start += value.length();
 									break;

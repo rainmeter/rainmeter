@@ -649,12 +649,12 @@ void CMeter::ReplaceToolTipMeasures(std::wstring& str)
 		// Get the values for the measures
 		for (size_t i = 0; i < m_AllMeasures.size(); ++i)
 		{
-			stringValues.push_back(m_AllMeasures[i]->GetStringValue(true, 1, 0, false));
+			stringValues.push_back(m_AllMeasures[i]->GetStringValue(AUTOSCALE_ON, 1, 0, false));
 		}
 	}
 	else if (m_Measure != NULL)
 	{
-		stringValues.push_back(m_Measure->GetStringValue(true, 1, 0, false));
+		stringValues.push_back(m_Measure->GetStringValue(AUTOSCALE_ON, 1, 0, false));
 	}
 	else
 	{

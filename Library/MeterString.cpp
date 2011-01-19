@@ -71,7 +71,7 @@ CMeterString::CMeterString(CMeterWindow* meterWindow) : CMeter(meterWindow),
 	m_EffectColor(Color::Black)
 {
 	m_Effect = EFFECT_NONE;
-	m_AutoScale = true;
+	m_AutoScale = AUTOSCALE_OFF;
 	m_Align = ALIGN_LEFT;
 	m_Font = NULL;
 	m_FontFamily = NULL;
@@ -315,7 +315,6 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	m_Text = parser.ReadString(section, L"Text", L"");
 
 	m_Percentual = 0!=parser.ReadInt(section, L"Percentual", 0);
-	m_AutoScale = 0!=parser.ReadInt(section, L"AutoScale", 0);
 	m_ClipString = 0!=parser.ReadInt(section, L"ClipString", 0);
 
 	m_FontFace = parser.ReadString(section, L"FontFace", L"Arial");
@@ -333,6 +332,24 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	m_NumOfDecimals = parser.ReadInt(section, L"NumOfDecimals", -1);
 
 	m_Angle = (Gdiplus::REAL)parser.ReadFloat(section, L"Angle", 0.0);
+
+	std::wstring autoscale = parser.ReadString(section, L"AutoScale", L"0");
+	int autoscaleValue = _wtoi(autoscale.c_str());
+	if (autoscaleValue == 0)
+	{
+		m_AutoScale = AUTOSCALE_OFF;
+	}
+	else
+	{
+		if (autoscale.find_last_of(L"kK") == std::wstring::npos)
+		{
+			m_AutoScale = (autoscaleValue == 2) ? AUTOSCALE_1000 : AUTOSCALE_1024;
+		}
+		else
+		{
+			m_AutoScale = (autoscaleValue == 2) ? AUTOSCALE_1000K : AUTOSCALE_1024K;
+		}
+	}
 
 	std::wstring scale = parser.ReadString(section, L"Scale", L"1");
 	if (scale.find(L'.') == std::wstring::npos)
@@ -467,7 +484,7 @@ bool CMeterString::Update()
 	{
 		std::vector<std::wstring> stringValues;
 
-		int decimals = (m_NumOfDecimals != -1) ? m_NumOfDecimals : (m_NoDecimals && (m_Percentual || !m_AutoScale)) ? 0 : 1;
+		int decimals = (m_NumOfDecimals != -1) ? m_NumOfDecimals : (m_NoDecimals && (m_Percentual || m_AutoScale == AUTOSCALE_OFF)) ? 0 : 1;
 
 		if (m_Measure) stringValues.push_back(m_Measure->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
 

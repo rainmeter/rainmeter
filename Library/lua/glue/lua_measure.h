@@ -1,6 +1,6 @@
 /*
 ** Lua binding: measure
-** Generated automatically by tolua++-1.0.92 on 11/23/10 00:33:48.
+** Generated automatically by tolua++-1.0.92 on 01/19/11 04:59:42.
 */
 
 /* Exported function */

@@ -75,7 +75,7 @@ bool CMeasureUptime::Update()
 ** Returns the uptime as string.
 **
 */
-const WCHAR* CMeasureUptime::GetStringValue(bool autoScale, double scale, int decimals, bool percentual)
+const WCHAR* CMeasureUptime::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	static WCHAR buffer[MAX_LINE_LENGTH];
 

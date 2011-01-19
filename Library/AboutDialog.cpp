@@ -204,10 +204,10 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 								WCHAR buffer[256];
 								double minVal = (*i)->GetMinValue();
 								double maxVal = (*i)->GetMaxValue();
-								CMeasure::GetScaledValue(1, minVal, buffer, _countof(buffer));
+								CMeasure::GetScaledValue(AUTOSCALE_ON, 1, minVal, buffer, _countof(buffer));
 								std::wstring range = buffer;
 								range += L" - ";
-								CMeasure::GetScaledValue(1, maxVal, buffer, _countof(buffer));
+								CMeasure::GetScaledValue(AUTOSCALE_ON, 1, maxVal, buffer, _countof(buffer));
 								range += buffer;
 
 								if (name && *name)

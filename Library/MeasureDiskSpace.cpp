@@ -127,7 +127,7 @@ bool CMeasureDiskSpace::Update()
 ** Returns the time as string.
 **
 */
-const WCHAR* CMeasureDiskSpace::GetStringValue(bool autoScale, double scale, int decimals, bool percentual)
+const WCHAR* CMeasureDiskSpace::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	if (m_Label) 
 	{

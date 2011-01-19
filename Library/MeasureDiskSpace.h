@@ -29,7 +29,7 @@ public:
 
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual bool Update();
-	virtual const WCHAR* GetStringValue(bool autoScale, double scale, int decimals, bool percentual);
+	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 
 private:
 	std::wstring m_Drive;

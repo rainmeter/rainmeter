@@ -28,7 +28,7 @@ public:
 	virtual ~CMeasureUptime();
 
 	virtual bool Update();
-	virtual const WCHAR* GetStringValue(bool autoScale, double scale, int decimals, bool percentual);
+	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:

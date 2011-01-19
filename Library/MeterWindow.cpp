@@ -2730,7 +2730,7 @@ void CMeterWindow::Update(bool nodraw)
 //		std::list<CMeasure*>::iterator i = m_Measures.begin();
 //		for( ; i != m_Measures.end(); i++)
 //		{
-//			const char* sz = (*i)->GetStringValue(true, 1, 1, false);
+//			const char* sz = (*i)->GetStringValue(AUTOSCALE_ON, 1, 1, false);
 //			if (sz && wcslen(sz) > 0)
 //			{
 //				WCHAR* wideSz = CMeter::ConvertToWide(sz);

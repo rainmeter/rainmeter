@@ -182,7 +182,7 @@ bool CMeterImage::Update()
 
 			if (m_Measure)  // read from the measures
 			{
-				std::wstring val = m_Measure->GetStringValue(false, 1, 0, false);
+				std::wstring val = m_Measure->GetStringValue(AUTOSCALE_OFF, 1, 0, false);
 
 				if (m_ImageName.empty())
 				{
@@ -197,7 +197,7 @@ bool CMeterImage::Update()
 					// Get the values for the other measures
 					for (size_t i = 0; i < m_Measures.size(); ++i)
 					{
-						stringValues.push_back(m_Measures[i]->GetStringValue(false, 1, 0, false));
+						stringValues.push_back(m_Measures[i]->GetStringValue(AUTOSCALE_OFF, 1, 0, false));
 					}
 
 					m_ImageNameResult = m_ImageName;

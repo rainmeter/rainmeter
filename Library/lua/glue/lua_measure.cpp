@@ -1,6 +1,6 @@
 /*
 ** Lua binding: measure
-** Generated automatically by tolua++-1.0.92 on 11/23/10 00:33:48.
+** Generated automatically by tolua++-1.0.92 on 01/19/11 04:59:42.
 */
 
 #ifndef __cplusplus
@@ -451,7 +451,7 @@ static int tolua_measure_CMeasure_GetStringValue00(lua_State* tolua_S)
  tolua_Error tolua_err;
  if (
      !tolua_isusertype(tolua_S,1,"CMeasure",0,&tolua_err) ||
-     !tolua_isboolean(tolua_S,2,1,&tolua_err) ||
+     !tolua_isnumber(tolua_S,2,1,&tolua_err) ||
      !tolua_isnumber(tolua_S,3,1,&tolua_err) ||
      !tolua_isnumber(tolua_S,4,1,&tolua_err) ||
      !tolua_isboolean(tolua_S,5,1,&tolua_err) ||
@@ -462,7 +462,7 @@ static int tolua_measure_CMeasure_GetStringValue00(lua_State* tolua_S)
 #endif
  {
   CMeasure* self = (CMeasure*)  tolua_tousertype(tolua_S,1,0);
-  bool autoScale = ((bool)  tolua_toboolean(tolua_S,2,false));
+  AUTOSCALE autoScale = ((AUTOSCALE) (int)  tolua_tonumber(tolua_S,2,0));
   double scale = ((double)  tolua_tonumber(tolua_S,3,1.0));
   int decimals = ((int)  tolua_tonumber(tolua_S,4,0));
   bool percentual = ((bool)  tolua_toboolean(tolua_S,5,false));

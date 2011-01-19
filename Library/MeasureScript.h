@@ -23,7 +23,7 @@ public:
 
 	void SetValue(double d);
 
-	virtual const WCHAR* GetStringValue(bool autoScale, double scale, int decimals, bool percentual);
+	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 
 	void MeterMouseEvent(CMeter* p_pMeter, MOUSE p_eMouse);
 	void RunFunctionWithMeter(const char* p_strFunction, CMeter* p_pMeter);

@@ -23,6 +23,18 @@
 #include "Litestep.h"
 #include "Group.h"
 
+enum AUTOSCALE
+{
+	AUTOSCALE_1024  = 1,    // scales by 1024
+	AUTOSCALE_1000  = 2,    // scales by 1000
+
+	AUTOSCALE_1024K = 101,  // scales by 1024, and uses kilo as the lowest unit
+	AUTOSCALE_1000K = 102,  // scales by 1000, and uses kilo as the lowest unit
+
+	AUTOSCALE_OFF   = 0,
+	AUTOSCALE_ON    = AUTOSCALE_1024
+};
+
 class CMeter;
 
 class CMeasure : public CGroup
@@ -59,8 +71,8 @@ public:
 	int GetUpdateCounter() { return m_UpdateCounter; }
 	int GetUpdateDivider() { return m_UpdateDivider; }
 
-	virtual const WCHAR* GetStringValue(bool autoScale, double scale, int decimals, bool percentual);
-	static void GetScaledValue(int decimals, double theValue, WCHAR* buffer, size_t sizeInWords);
+	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
+	static void GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords);
 
 	static CMeasure* Create(const WCHAR* measure, CMeterWindow* meterWindow);
 
