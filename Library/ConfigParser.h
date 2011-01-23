@@ -29,7 +29,6 @@
 #include <algorithm>
 #include <gdiplus.h>
 #include "ccalc-0.5.1/mparser.h"
-#include "Litestep.h"
 
 class CRainmeter;
 class CMeterWindow;
