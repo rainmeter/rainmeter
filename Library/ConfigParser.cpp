@@ -26,7 +26,7 @@ extern CRainmeter* Rainmeter;
 
 using namespace Gdiplus;
 
-std::map<std::wstring, std::wstring> CConfigParser::c_MonitorVariables;
+stdext::hash_map<std::wstring, std::wstring> CConfigParser::c_MonitorVariables;
 
 /*
 ** CConfigParser
@@ -143,13 +143,11 @@ void CConfigParser::ReadVariables()
 ** \param strVariable
 ** \param strValue
 */
-void CConfigParser::SetVariable(std::map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue)
+void CConfigParser::SetVariable(stdext::hash_map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue)
 {
-	// LogWithArgs(LOG_DEBUG, L"Variable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), (int)m_Variables.size());
+	// LogWithArgs(LOG_DEBUG, L"Variable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), (int)variables.size());
 
-	std::wstring strTmp(strVariable);
-	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
-	variables[strTmp] = strValue;
+	variables[StrToLower(strVariable)] = strValue;
 }
 
 /**
@@ -161,11 +159,10 @@ void CConfigParser::SetVariable(std::map<std::wstring, std::wstring>& variables,
 */
 bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& strValue)
 {
-	std::wstring strTmp(strVariable);
-	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
+	std::wstring strTmp = StrToLower(strVariable);
 
 	// #1: Built-in variables
-	std::map<std::wstring, std::wstring>::const_iterator iter = m_BuiltInVariables.find(strTmp);
+	stdext::hash_map<std::wstring, std::wstring>::const_iterator iter = m_BuiltInVariables.find(strTmp);
 	if (iter != m_BuiltInVariables.end())
 	{
 		// Built-in variable found
@@ -692,19 +689,16 @@ void CConfigParser::AddMeasure(CMeasure* pMeasure)
 {
 	if (pMeasure)
 	{
-		m_Measures[pMeasure->GetName()] = pMeasure;
+		m_Measures[StrToLower(pMeasure->GetName())] = pMeasure;
 	}
 }
 
 CMeasure* CConfigParser::GetMeasure(const std::wstring& name)
 {
-	std::map<std::wstring, CMeasure*>::const_iterator iter = m_Measures.begin();
-	for ( ; iter != m_Measures.end(); ++iter)
+	std::map<std::wstring, CMeasure*>::const_iterator iter = m_Measures.find(StrToLower(name));
+	if (iter != m_Measures.end())
 	{
-		if (_wcsicmp((*iter).first.c_str(), name.c_str()) == 0)
-		{
-			return (*iter).second;
-		}
+		return (*iter).second;
 	}
 
 	return NULL;
@@ -1094,8 +1088,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 	{
 		if (*pos)
 		{
-			std::wstring strTmp(pos);
-			std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
+			std::wstring strTmp = StrToLower(pos);
 			if (m_Keys.find(strTmp) == m_Keys.end())
 			{
 				m_Keys[strTmp] = std::vector<std::wstring>();
@@ -1193,10 +1186,8 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 {
 	// LogWithArgs(LOG_DEBUG, L"[%s] %s=%s (size: %i)", strSection.c_str(), strKey.c_str(), strValue.c_str(), (int)m_Values.size());
 
-	std::wstring strTmpSection(strSection);
-	std::wstring strTmpKey(strKey);
-	std::transform(strTmpSection.begin(), strTmpSection.end(), strTmpSection.begin(), ::towlower);
-	std::transform(strTmpKey.begin(), strTmpKey.end(), strTmpKey.begin(), ::towlower);
+	std::wstring strTmpSection = StrToLower(strSection);
+	std::wstring strTmpKey = StrToLower(strKey);
 
 	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.find(strTmpSection);
 	if (iter != m_Keys.end())
@@ -1221,11 +1212,10 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 */
 const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault)
 {
-	std::wstring strTmp(strSection + L"::");
+	std::wstring strTmp = strSection + L"::";
 	strTmp += strKey;
-	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
 
-	stdext::hash_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(strTmp);
+	stdext::hash_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToLower(strTmp));
 	if (iter != m_Values.end())
 	{
 		return (*iter).second;
@@ -1254,10 +1244,7 @@ const std::vector<std::wstring>& CConfigParser::GetSections()
 */
 std::vector<std::wstring> CConfigParser::GetKeys(const std::wstring& strSection)
 {
-	std::wstring strTmp(strSection);
-	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
-
-	stdext::hash_map<std::wstring, std::vector<std::wstring> >::const_iterator iter = m_Keys.find(strTmp);
+	stdext::hash_map<std::wstring, std::vector<std::wstring> >::const_iterator iter = m_Keys.find(StrToLower(strSection));
 	if (iter != m_Keys.end())
 	{
 		return (*iter).second;

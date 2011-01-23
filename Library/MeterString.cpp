@@ -718,7 +718,7 @@ void CMeterString::FreeFontCache(PrivateFontCollection* collection)
 		WCHAR buffer[32];
 		_snwprintf_s(buffer, _TRUNCATE, L"<%p>", collection);
 		prefix = buffer;
-		std::transform(prefix.begin(), prefix.end(), prefix.begin(), ::towlower);
+		StringToLower(prefix);
 	}
 
 	std::map<std::wstring, Gdiplus::Font*>::iterator iter2 = c_Fonts.begin();
@@ -757,7 +757,7 @@ std::wstring CMeterString::FontFaceToString(const std::wstring& fontFace, Privat
 	WCHAR buffer[32];
 	_snwprintf_s(buffer, _TRUNCATE, L"<%p>", collection);
 	std::wstring strTmp = buffer + fontFace;
-	std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
+	StringToLower(strTmp);
 	return strTmp;
 }
 

@@ -26,8 +26,10 @@
 #include <string>
 #include <vector>
 #include <hash_map>
+#include <algorithm>
 #include <gdiplus.h>
 #include "ccalc-0.5.1/mparser.h"
+#include "Litestep.h"
 
 class CRainmeter;
 class CMeterWindow;
@@ -44,6 +46,7 @@ public:
 
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_Variables, strVariable, strValue); }
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
+	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
 
 	void SetStyleTemplate(const std::wstring& strStyle) { m_StyleTemplate =  Tokenize(strStyle, L"|"); }
 	void ClearStyleTemplate() { m_StyleTemplate.clear(); }
@@ -83,11 +86,6 @@ public:
 	static void ClearMultiMonitorVariables() { c_MonitorVariables.clear(); }
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
 
-	// Updated by Peter Souza IV / psouza4 / 2010.12.13
-	//
-	// Made this public so the plugin bridge can read variables directly
-	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
-
 private:
 	void SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow);
 
@@ -102,10 +100,12 @@ private:
 
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
 
-	static void SetVariable(std::map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue);
+	static void SetVariable(stdext::hash_map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue);
 
 	static void SetMultiMonitorVariables(bool reset);
 	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(c_MonitorVariables, strVariable, strValue); }
+
+	static std::wstring StrToLower(const std::wstring& str) { std::wstring strTmp(str); std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower); return strTmp; }
 
 	std::wstring m_Filename;
 
@@ -122,10 +122,10 @@ private:
 	stdext::hash_map<std::wstring, std::vector<std::wstring> > m_Keys;
 	stdext::hash_map<std::wstring, std::wstring> m_Values;
 
-	std::map<std::wstring, std::wstring> m_BuiltInVariables;         // Built-in variables
-	std::map<std::wstring, std::wstring> m_Variables;                // User-defined variables
+	stdext::hash_map<std::wstring, std::wstring> m_BuiltInVariables;         // Built-in variables
+	stdext::hash_map<std::wstring, std::wstring> m_Variables;                // User-defined variables
 
-	static std::map<std::wstring, std::wstring> c_MonitorVariables;  // Monitor variables
+	static stdext::hash_map<std::wstring, std::wstring> c_MonitorVariables;  // Monitor variables
 };
 
 #endif
