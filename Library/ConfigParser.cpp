@@ -1226,17 +1226,6 @@ const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, cons
 
 //==============================================================================
 /**
-** Returns the list of sections in the ini file.
-** 
-** \return A list of sections in the ini file.
-*/
-const std::vector<std::wstring>& CConfigParser::GetSections()
-{
-	return m_Sections;
-}
-
-//==============================================================================
-/**
 ** Returns a list of keys under the given section.
 ** 
 ** \param strSection The name of the section.

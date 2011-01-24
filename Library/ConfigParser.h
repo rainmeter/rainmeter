@@ -68,7 +68,7 @@ public:
 	std::vector<Gdiplus::REAL> ReadFloats(LPCTSTR section, LPCTSTR key);
 
 	const std::wstring& GetFilename() { return m_Filename; }
-	const std::vector<std::wstring>& GetSections();
+	const std::vector<std::wstring>& GetSections() { return m_Sections; }
 
 	// Returns an int if the formula was read successfully, -1 for failure.
 	int ReadFormula(const std::wstring& result, double* number);
