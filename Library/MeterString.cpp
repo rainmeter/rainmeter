@@ -333,7 +333,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 
 	m_Angle = (Gdiplus::REAL)parser.ReadFloat(section, L"Angle", 0.0);
 
-	std::wstring autoscale = parser.ReadString(section, L"AutoScale", L"0");
+	const std::wstring& autoscale = parser.ReadString(section, L"AutoScale", L"0");
 	int autoscaleValue = _wtoi(autoscale.c_str());
 	if (autoscaleValue == 0)
 	{
@@ -351,7 +351,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 		}
 	}
 
-	std::wstring scale = parser.ReadString(section, L"Scale", L"1");
+	const std::wstring& scale = parser.ReadString(section, L"Scale", L"1");
 	if (scale.find(L'.') == std::wstring::npos)
 	{
 		m_NoDecimals = true;
@@ -362,7 +362,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	}
 	m_Scale = wcstod(scale.c_str(), NULL);
 
-	std::wstring align = parser.ReadString(section, L"StringAlign", L"LEFT");
+	const std::wstring& align = parser.ReadString(section, L"StringAlign", L"LEFT");
 	if(_wcsicmp(align.c_str(), L"LEFT") == 0)
 	{
 		m_Align = ALIGN_LEFT;
@@ -384,7 +384,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 		throw CError(error, __LINE__, __FILE__);
 	}
 
-	std::wstring stringCase = parser.ReadString(section, L"StringCase", L"NONE");
+	const std::wstring& stringCase = parser.ReadString(section, L"StringCase", L"NONE");
 	if(_wcsicmp(stringCase.c_str(), L"NONE") == 0)
 	{
 		m_textCase = TEXTCASE_NONE;
@@ -410,7 +410,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 		throw CError(error, __LINE__, __FILE__);
 	}
 
-	std::wstring style = parser.ReadString(section, L"StringStyle", L"NORMAL");
+	const std::wstring& style = parser.ReadString(section, L"StringStyle", L"NORMAL");
 	if(_wcsicmp(style.c_str(), L"NORMAL") == 0)
 	{
 		m_Style = NORMAL;
@@ -436,7 +436,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 		throw CError(error, __LINE__, __FILE__);
 	}
 
-	std::wstring effect = parser.ReadString(section, L"StringEffect", L"NONE");
+	const std::wstring& effect = parser.ReadString(section, L"StringEffect", L"NONE");
 	if(_wcsicmp(effect.c_str(), L"NONE") == 0)
 	{
 		m_Effect = EFFECT_NONE;

@@ -980,7 +980,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 			if (Rainmeter)
 			{
 				// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
-				std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
 				for( ; iter != windows.end(); ++iter)
 				{

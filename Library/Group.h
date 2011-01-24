@@ -21,7 +21,6 @@
 
 #pragma warning(disable: 4786)
 
-#include <windows.h>
 #include <string>
 #include <set>
 
@@ -29,19 +28,18 @@ class CGroup
 {
 public:
 	bool BelongsToGroup(const std::wstring& group);
-	const std::set<std::wstring>& GetGroup() { return m_Group; }
 
 protected:
 	CGroup() {}
 	virtual ~CGroup() {}
 
-	void InitializeGroup(const std::wstring& group);
+	void InitializeGroup(const std::wstring& groups);
 
 private:
 	std::wstring CreateGroup(const std::wstring& str);
 
-	std::set<std::wstring> m_Group;
-	std::wstring m_OldGroup;
+	std::set<std::wstring> m_Groups;
+	std::wstring m_OldGroups;
 
 };
 

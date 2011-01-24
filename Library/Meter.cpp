@@ -105,7 +105,7 @@ int CMeter::GetX(bool abs)
 	{
 		if (m_RelativeMeter == NULL)
 		{
-			std::list<CMeter*>& meters = m_MeterWindow->GetMeters();
+			const std::list<CMeter*>& meters = m_MeterWindow->GetMeters();
 			std::list<CMeter*>::const_iterator iter = meters.begin();
 
 			// Find this meter
@@ -153,7 +153,7 @@ int CMeter::GetY(bool abs)
 	{
 		if (m_RelativeMeter == NULL)
 		{
-			std::list<CMeter*>& meters = m_MeterWindow->GetMeters();
+			const std::list<CMeter*>& meters = m_MeterWindow->GetMeters();
 			std::list<CMeter*>::const_iterator iter = meters.begin();
 
 			// Find this meter
@@ -431,7 +431,7 @@ void CMeter::ReadConfig(const WCHAR* section)
 		LogWithArgs(LOG_WARNING, L"The transformation matrix has incorrect number of values: %s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
 	}
 
-	std::wstring group = parser.ReadString(section, L"Group", L"");
+	const std::wstring& group = parser.ReadString(section, L"Group", L"");
 	InitializeGroup(group);
 }
 
@@ -585,7 +585,7 @@ void CMeter::ReadMeasureNames(CConfigParser& parser, const WCHAR* section, std::
 	do 
 	{
 		_snwprintf_s(tmpName, _TRUNCATE, L"MeasureName%i", i);
-		std::wstring measure = parser.ReadString(section, tmpName, L"");
+		const std::wstring& measure = parser.ReadString(section, tmpName, L"");
 		if (!measure.empty())
 		{
 			measureNames.push_back(measure);

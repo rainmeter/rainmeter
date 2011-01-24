@@ -173,14 +173,15 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		(subs[0] != L'\'' || subs[subs.length() - 1] != L'\"'))
 	{
 		// Add quotes since they are removed by the GetProfileString
-		subs = L"\"" + subs + L"\"";
+		subs.insert(0, L"\"");
+		subs.append(L"\"");
 	}
 	if (!ParseSubstitute(subs))
 	{
 		LogWithArgs(LOG_WARNING, L"Incorrect substitute string: %s", subs.c_str());
 	}
 
-	std::wstring group = parser.ReadString(section, L"Group", L"");
+	const std::wstring& group = parser.ReadString(section, L"Group", L"");
 	InitializeGroup(group);
 }
 

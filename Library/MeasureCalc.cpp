@@ -102,7 +102,7 @@ void CMeasureCalc::UpdateVariableMap(CMeterWindow& meterWindow)
 	// Create the variable map
 	c_VarMap = Strmap_Create(sizeof(double), 0); 
 
-	std::list<CMeasure*>& measures = meterWindow.GetMeasures();
+	const std::list<CMeasure*>& measures = meterWindow.GetMeasures();
 
 	std::list<CMeasure*>::const_iterator iter = measures.begin();
 	for( ; iter != measures.end(); ++iter)
@@ -199,11 +199,11 @@ void CMeasureCalc::FormulaReplace()
 */
 bool CMeasureCalc::IsDelimiter(WCHAR ch)
 {
-	const WCHAR symbols[] = L" \t\n()+-/*^~<>%$,?:=&|;";
+	const WCHAR* symbols = L" \t\n()+-/*^~<>%$,?:=&|;";
 
-	for (size_t i = 0, len = wcslen(symbols); i < len; ++i)
+	for (const WCHAR* sch = symbols; *sch != L'\0'; ++sch)
 	{
-		if (ch == symbols[i])
+		if (ch == *sch)
 		{
 			return true;
 		}

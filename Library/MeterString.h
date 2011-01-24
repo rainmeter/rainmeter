@@ -68,7 +68,7 @@ private:
 		TEXTCASE_NONE,
 		TEXTCASE_UPPER,
 		TEXTCASE_LOWER,
-		TEXTCASE_PROPER,
+		TEXTCASE_PROPER
 	};
 
 	bool DrawString(Gdiplus::Graphics& graphics, Gdiplus::RectF* rect);

@@ -121,8 +121,7 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 
 	m_Flip = parser.ReadInt(section, L"Flip", 0) == 1;
 
-	std::wstring orientation = parser.ReadString(section, L"BarOrientation", L"VERTICAL");
-
+	const std::wstring& orientation = parser.ReadString(section, L"BarOrientation", L"VERTICAL");
 	if(_wcsicmp(L"VERTICAL", orientation.c_str()) == 0)
 	{
 		m_Orientation = VERTICAL;

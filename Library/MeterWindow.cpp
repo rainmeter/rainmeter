@@ -3783,7 +3783,7 @@ LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lPara
 				}
 
 				// Snap to other windows
-				std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
 				for( ; iter != windows.end(); ++iter)
 				{
@@ -4710,7 +4710,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		// Check that we're still alive
 		bool found = false;
-		std::map<std::wstring, CMeterWindow*>& meters = Rainmeter->GetAllMeterWindows();
+		const std::map<std::wstring, CMeterWindow*>& meters = Rainmeter->GetAllMeterWindows();
 		std::map<std::wstring, CMeterWindow*>::const_iterator iter = meters.begin();
 
 		for ( ; iter != meters.end(); ++iter)

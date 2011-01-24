@@ -530,7 +530,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{
 				// Forward the message to correct window
 				int index = (int)(wParam >> 16);
-				std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 
 				if (index < (int)windows.size())
 				{

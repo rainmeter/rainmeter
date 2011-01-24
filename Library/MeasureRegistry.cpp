@@ -117,8 +117,7 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	CMeasure::ReadConfig(parser, section);
 
-	std::wstring keyname = parser.ReadString(section, L"RegHKey", L"HKEY_CURRENT_USER");
-
+	const std::wstring& keyname = parser.ReadString(section, L"RegHKey", L"HKEY_CURRENT_USER");
 	if(_wcsicmp(keyname.c_str(), L"HKEY_CLASSES_ROOT") == 0)
 	{
 		m_HKey = HKEY_CLASSES_ROOT;

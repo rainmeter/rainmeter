@@ -25,22 +25,25 @@
 **
 **
 */
-void CGroup::InitializeGroup(const std::wstring& group)
+void CGroup::InitializeGroup(const std::wstring& groups)
 {
-	if (group != m_OldGroup)
+	if (groups != m_OldGroups)
 	{
-		m_OldGroup = group;
-		m_Group.clear();
+		m_OldGroups = groups;
+		m_Groups.clear();
 
-		std::vector<std::wstring> vGroup = CConfigParser::Tokenize(group, L"|");
-
-		std::vector<std::wstring>::const_iterator iter = vGroup.begin();
-		for ( ; iter != vGroup.end(); ++iter)
+		if (!groups.empty())
 		{
-			std::wstring group = CreateGroup(*iter);
-			if (!group.empty())
+			std::vector<std::wstring> vGroups = CConfigParser::Tokenize(groups, L"|");
+
+			std::vector<std::wstring>::const_iterator iter = vGroups.begin();
+			for ( ; iter != vGroups.end(); ++iter)
 			{
-				m_Group.insert(group);
+				std::wstring group = CreateGroup(*iter);
+				if (!group.empty())
+				{
+					m_Groups.insert(group);
+				}
 			}
 		}
 	}
@@ -53,7 +56,7 @@ void CGroup::InitializeGroup(const std::wstring& group)
 */
 bool CGroup::BelongsToGroup(const std::wstring& group)
 {
-	return (m_Group.find(CreateGroup(group)) != m_Group.end());
+	return (m_Groups.find(CreateGroup(group)) != m_Groups.end());
 }
 
 std::wstring CGroup::CreateGroup(const std::wstring& str)

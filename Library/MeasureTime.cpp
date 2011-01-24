@@ -115,9 +115,8 @@ bool CMeasureTime::Update()
 	m_Time.LowPart = ftUTCTime.dwLowDateTime;
 
 	m_Time.QuadPart += m_DeltaTime.QuadPart;
-	m_Value = (double)(m_Time.QuadPart / 10000000);
 
-	if (m_Format.size() != 0)
+	if (m_Format.size() > 0)
 	{
 		// If there is some date format, parse the value from it instead
 		WCHAR tmpSz[MAX_LINE_LENGTH];
@@ -156,6 +155,10 @@ bool CMeasureTime::Update()
 		}
 
 		m_Value = wcstod(tmpSz, NULL);
+	}
+	else
+	{
+		m_Value = (double)(m_Time.QuadPart / 10000000);
 	}
 
 	return PostUpdate();
@@ -229,14 +232,12 @@ void CMeasureTime::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_Format = parser.ReadString(section, L"Format", L"");
 
 	std::wstring timezone = parser.ReadString(section, L"TimeZone", L"local");
-	bool dst = 1 == parser.ReadInt(section, L"DaylightSavingTime", 1);
-
-	SYSTEMTIME sysLocalTime, sysUTCTime;
-	GetLocalTime(&sysLocalTime);
-	GetSystemTime(&sysUTCTime);
-
 	if (_wcsicmp(L"local", timezone.c_str()) == 0)
 	{
+		SYSTEMTIME sysLocalTime, sysUTCTime;
+		GetLocalTime(&sysLocalTime);
+		GetSystemTime(&sysUTCTime);
+
 		FILETIME ftLocalTime, ftUTCTime;
 		SystemTimeToFileTime(&sysLocalTime, &ftLocalTime);
 		SystemTimeToFileTime(&sysUTCTime, &ftUTCTime);
@@ -252,6 +253,7 @@ void CMeasureTime::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	else
 	{
 		double zone = wcstod(timezone.c_str(), NULL);
+		bool dst = 1 == parser.ReadInt(section, L"DaylightSavingTime", 1);
 
 		struct tm* today;
 		time_t now;

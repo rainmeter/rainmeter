@@ -197,8 +197,7 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
 
 	m_TransitionFrameCount = parser.ReadInt(section, L"BitmapTransitionFrames", 0);
 
-	std::wstring align = parser.ReadString(section, L"BitmapAlign", L"LEFT");
-	
+	const std::wstring& align = parser.ReadString(section, L"BitmapAlign", L"LEFT");
 	if(_wcsicmp(align.c_str(), L"LEFT") == 0)
 	{
 		m_Align = ALIGN_LEFT;

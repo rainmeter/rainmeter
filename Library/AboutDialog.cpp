@@ -108,7 +108,7 @@ void UpdateAboutDialog()
 		{
 			int sel = 3;
 
-			std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+			const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 			std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
 			for( ; iter != windows.end(); ++iter)
 			{
@@ -181,7 +181,7 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 			{
 				int current = 3;
 
-				std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
 				for( ; iter != windows.end(); ++iter)
 				{
@@ -192,7 +192,7 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 							int count = ListView_GetItemCount(widget);
 
 							CMeterWindow* meterWindow = (*iter).second;
-							std::list<CMeasure*>& measures = meterWindow->GetMeasures();
+							const std::list<CMeasure*>& measures = meterWindow->GetMeasures();
 
 							int index = 0;
 							std::list<CMeasure*>::const_iterator i = measures.begin();
@@ -440,7 +440,7 @@ BOOL OnInitAboutDialog(HWND window)
 
 	// Add entries for each config
 	widget = GetDlgItem(window, IDC_ABOUT_ENTRIES);
-	std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+	const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 	std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
 	for( ; iter != windows.end(); ++iter)
 	{
