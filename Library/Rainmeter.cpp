@@ -54,9 +54,6 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 		while (quotePos != std::wstring::npos || spacePos != std::wstring::npos)
 		{
 			size_t endPos = 0;
-			std::wstring newStr;
-
-			if (spacePos == std::wstring::npos) spacePos = arg.size() - 1;
 
 			if (quotePos == 0)
 			{
@@ -65,17 +62,18 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 				// Find the second quote
 				quotePos = arg.find(L"\"");
 				endPos = quotePos;
-				newStr = arg.substr(0, endPos); 
-				arg.erase(0, endPos + 1);
 			}
 			else
 			{
+				if (spacePos == std::wstring::npos) spacePos = arg.size() - 1;
+
 				endPos = spacePos;
-				newStr = arg.substr(0, endPos); 
-				arg.erase(0, endPos + 1);
 			}
 
-			if (newStr.size() > 0)
+			std::wstring newStr = arg.substr(0, endPos); 
+			arg.erase(0, endPos + 1);
+
+			if (newStr.size() > 0 || quotePos == 0)
 			{
 				result.push_back(newStr);
 			}
@@ -123,9 +121,9 @@ int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath)
 			Result=Rainmeter->Initialize(ParentWnd, dllInst, szPath);
 		}
 
-	} 
-    catch(CError& error) 
-    {
+	}
+	catch(CError& error) 
+	{
 		MessageBox(ParentWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 	}
 

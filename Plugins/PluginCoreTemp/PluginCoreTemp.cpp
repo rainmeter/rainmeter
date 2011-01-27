@@ -130,7 +130,17 @@ LPCTSTR GetString(UINT id, UINT flags)
 */
 void Finalize(HMODULE instance, UINT id)
 {
-	/* Nothing to do here */
+	std::map<UINT, eMeasureType>::iterator i1 = g_Types.find(id);
+	if (i1 != g_Types.end())
+	{
+		g_Types.erase(i1);
+	}
+
+	std::map<UINT, int>::iterator i2 = g_Indexes.find(id);
+	if (i2 != g_Indexes.end())
+	{
+		g_Indexes.erase(i2);
+	}
 }
 
 /*
