@@ -3,7 +3,6 @@
 // Author: Matt Pietrek
 // From: Microsoft Systems Journal, "Under the Hood", March 1996
 //===========================================================================
-#pragma warning(disable: 4996)
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN

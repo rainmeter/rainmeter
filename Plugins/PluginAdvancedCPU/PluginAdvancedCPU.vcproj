@@ -395,7 +395,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -404,7 +404,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -413,7 +413,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -423,7 +423,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -445,7 +445,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -454,7 +454,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -463,7 +463,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -473,7 +473,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -487,7 +487,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -496,7 +496,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -505,7 +505,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -515,7 +515,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -529,7 +529,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -538,7 +538,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -547,7 +547,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -557,7 +557,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -571,7 +571,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -580,7 +580,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -589,7 +589,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -599,7 +599,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -613,7 +613,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -622,7 +622,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -631,7 +631,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -641,7 +641,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -659,7 +659,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -668,7 +668,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -677,7 +677,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -687,7 +687,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginAdvancedCPU_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>

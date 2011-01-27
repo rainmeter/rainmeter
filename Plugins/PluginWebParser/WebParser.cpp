@@ -20,7 +20,6 @@
 // See: http://www.perldoc.com/perl5.8.0/pod/perlre.html
 
 #pragma warning(disable: 4786)
-#pragma warning(disable: 4996)
 
 #include <windows.h>
 #include <math.h>

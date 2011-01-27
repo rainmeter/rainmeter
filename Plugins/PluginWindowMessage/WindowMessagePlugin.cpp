@@ -17,7 +17,6 @@
 */
 
 #pragma warning(disable: 4786)
-#pragma warning(disable: 4996)
 
 #include <windows.h>
 #include <math.h>

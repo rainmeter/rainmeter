@@ -14,24 +14,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-------------
-
-Usage:
-
-[MeasureBin1]
-Measure=Plugin
-Plugin=RecycleManager.dll
-Drives=C:                     (for total system bin, use Drives=ALL  ::  for multiple drives use | as a delimiter e.g. Drives=A:|C:|D: will give the sum of these drives)
-RecycleType=COUNT             (type can be COUNT for nomber of items or SIZE, for size in bytes)
-Update=1000
-UpdateDivider=10
-
-
 */
 
 #pragma warning(disable: 4786)
-#pragma warning(disable: 4996)
 
 #include <windows.h>
 #include <stdlib.h>

@@ -407,7 +407,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -417,7 +417,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -427,7 +427,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -436,7 +436,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -449,7 +449,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -459,7 +459,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -469,7 +469,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -478,7 +478,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -491,7 +491,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -501,7 +501,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -511,7 +511,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -520,7 +520,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -533,7 +533,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -543,7 +543,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -553,7 +553,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -562,7 +562,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -575,7 +575,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -585,7 +585,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -595,7 +595,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -604,7 +604,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -617,7 +617,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -627,7 +627,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -637,7 +637,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -646,7 +646,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -659,7 +659,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -669,7 +669,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -679,7 +679,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -688,7 +688,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -701,7 +701,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -711,7 +711,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -721,7 +721,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -730,7 +730,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -743,7 +743,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -753,7 +753,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -763,7 +763,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -772,7 +772,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -789,7 +789,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -799,7 +799,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -809,7 +809,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -818,7 +818,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -831,7 +831,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -841,7 +841,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -851,7 +851,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -860,7 +860,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -873,7 +873,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -883,7 +883,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -893,7 +893,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -902,7 +902,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -915,7 +915,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -925,7 +925,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -935,7 +935,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -944,7 +944,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -957,7 +957,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -967,7 +967,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -977,7 +977,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -986,7 +986,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -999,7 +999,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1009,7 +1009,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1019,7 +1019,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1028,7 +1028,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -1041,7 +1041,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1051,7 +1051,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1061,7 +1061,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1070,7 +1070,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -1083,7 +1083,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1093,7 +1093,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1103,7 +1103,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1112,7 +1112,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -1125,7 +1125,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1135,7 +1135,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1145,7 +1145,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1154,7 +1154,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -1167,7 +1167,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1177,7 +1177,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1187,7 +1187,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1196,7 +1196,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -1209,7 +1209,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1219,7 +1219,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="0"
-						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
 					/>
 				</FileConfiguration>
@@ -1229,7 +1229,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -1238,7 +1238,7 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"
-						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
+						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
 				</FileConfiguration>
 			</File>
@@ -1250,6 +1250,44 @@
 		<File
 			RelativePath="FolderInfo.cpp"
 			>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					Optimization="0"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
+					BasicRuntimeChecks="3"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|x64"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					Optimization="0"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
+					BasicRuntimeChecks="3"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					Optimization="2"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|x64"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					Optimization="2"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
+				/>
+			</FileConfiguration>
 		</File>
 		<File
 			RelativePath="FolderInfo.h"
@@ -1264,7 +1302,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -1274,7 +1312,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
 				/>
 			</FileConfiguration>
@@ -1284,7 +1322,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -1293,7 +1331,7 @@
 				<Tool
 					Name="VCCLCompilerTool"
 					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;$(NoInherit)"
+					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
 				/>
 			</FileConfiguration>
 		</File>
