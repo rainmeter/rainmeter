@@ -2228,7 +2228,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 			else
 			{
 				// Deactivate the existing config
-				DeactivateConfig((*iter).second, configIndex);
+				DeactivateConfig((*iter).second, configIndex, false);
 			}
 		}
 
@@ -2262,7 +2262,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 	}
 }
 
-bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex)
+bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bool bLater)
 {
 	if (configIndex >= 0 && configIndex < (int)m_ConfigStrings.size())
 	{
@@ -2287,7 +2287,7 @@ bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex)
 		// Disable the config in the ini-file
 		WriteActive(meterWindow->GetSkinName(), -1);
 
-		return DeleteMeterWindow(meterWindow, true);
+		return DeleteMeterWindow(meterWindow, bLater);
 	}
 	return false;
 }

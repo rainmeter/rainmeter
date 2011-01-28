@@ -511,14 +511,6 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 							}
 							else
 							{
-								if (configs[i].active != 0)
-								{
-									CMeterWindow* meterWindow = Rainmeter->GetMeterWindow(configs[i].config);
-									if (meterWindow)
-									{
-										Rainmeter->DeactivateConfig(meterWindow, i);
-									}
-								}
 								Rainmeter->ActivateConfig(i, j);
 							}
 							return 0;
