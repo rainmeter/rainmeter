@@ -2576,6 +2576,8 @@
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalOptions="/wd4800"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -2616,6 +2618,8 @@
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalOptions="/wd4800"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -2656,6 +2660,8 @@
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalOptions="/wd4800"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -2696,6 +2702,8 @@
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalOptions="/wd4800"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -2736,6 +2744,8 @@
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalOptions="/wd4800"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -2776,6 +2786,8 @@
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalOptions="/wd4800"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration
@@ -2816,6 +2828,8 @@
 						<Tool
 							Name="VCCLCompilerTool"
 							AdditionalOptions="/wd4800"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
 						/>
 					</FileConfiguration>
 					<FileConfiguration

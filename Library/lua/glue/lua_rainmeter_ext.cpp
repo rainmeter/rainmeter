@@ -3,10 +3,11 @@
 ** Generated automatically by tolua++-1.0.92 on 11/22/10 21:20:13.
 */
 
+#include "../../StdAfx.h"
+
 #ifndef __cplusplus
 #include "stdlib.h"
 #endif
-
 #include "string.h"
 
 #include "tolua++.h"

@@ -3,6 +3,8 @@
 ** Generated automatically by tolua++-1.0.92 on 11/27/10 18:13:41.
 */
 
+#include "../../StdAfx.h"
+
 #ifndef __cplusplus
 #include "stdlib.h"
 #endif
