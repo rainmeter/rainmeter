@@ -17,26 +17,6 @@
 const double DblErR = -1.68736462823243E308;
 const double DblNiN = -1.68376462823243E308;
 
-#if (defined(__WIN32) || defined(__WIN32__)) && defined(RUSSIAN)
-
-char eBrackets [] = "#Ошибка со скобками!";
-char eSyntax   [] = "#Синтиксическая ошибка!";
-char eInternal [] = "#Внутренняя ошибка!";
-char eExtraOp  [] = "#Лишняя операция!";
-char eInfinity [] = "#Где-то бесконечность!";
-char eInvArg   [] = "#Неверный аргумент!";
-char eUnknFunc [] = "# %s - Неизвестная функция/перменная!";
-char eExtrnFunc[] = "#Ошибка внешней функции!";
-char eLogicErr [] = "#Ошибка в логическом выражении!";
-char eCalcErr  [] = "#Ошибка при вычислениях!";
-char eUnexpEnd [] = "#Неожиданный конец скрипта!";
-char eExpVarRet[] = "#Ожидается переменная или return!";
-char eExpAssign[] = "#Ожидается присваивание!";
-char eValSizErr[] = "#Значение слишком большое для операции!";
-char eInvPrmCnt[] = "#Неверное количество параметров при вызове функции!"
-
-#else 
-
 char eBrackets [] = "#Brackets not match!";
 char eSyntax   [] = "#Syntax error!";
 char eInternal [] = "#Internal error!";
@@ -52,8 +32,6 @@ char eExpVarRet[] = "#Variable name or return expected!";
 char eExpAssign[] = "#Assignment expected!";
 char eValSizErr[] = "#Value too big for operation!";
 char eInvPrmCnt[] = "#Invalid parameters count for function call!";
-
-#endif /* __WIN32__ */
 
 static double _neg_(double);
 static double _frac_(double);

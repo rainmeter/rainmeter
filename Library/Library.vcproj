@@ -2592,22 +2592,6 @@
 				<File
 					RelativePath=".\lua\glue\lua_group.h"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalOptions="/wd4800"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalOptions="/wd4800"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_measure.cpp"
@@ -2634,22 +2618,6 @@
 				<File
 					RelativePath=".\lua\glue\lua_measure.h"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalOptions="/wd4800"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalOptions="/wd4800"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_meter.cpp"
@@ -2676,22 +2644,6 @@
 				<File
 					RelativePath=".\lua\glue\lua_meter.h"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalOptions="/wd4800"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalOptions="/wd4800"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_meterstring.cpp"
@@ -2718,22 +2670,6 @@
 				<File
 					RelativePath=".\lua\glue\lua_meterstring.h"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalOptions="/wd4800"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalOptions="/wd4800"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_meterwindow.cpp"
@@ -2760,22 +2696,6 @@
 				<File
 					RelativePath=".\lua\glue\lua_meterwindow.h"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalOptions="/wd4800"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalOptions="/wd4800"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_rainmeter.cpp"
@@ -2802,22 +2722,6 @@
 				<File
 					RelativePath=".\lua\glue\lua_rainmeter.h"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalOptions="/wd4800"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalOptions="/wd4800"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_rainmeter_ext.cpp"
