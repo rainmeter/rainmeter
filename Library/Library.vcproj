@@ -2342,6 +2342,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4267"
 						Optimization="0"
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;LIBRARY_EXPORTS"
 						BasicRuntimeChecks="3"
@@ -2352,6 +2353,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4267"
 						Optimization="0"
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;LIBRARY_EXPORTS"
 						BasicRuntimeChecks="3"
@@ -2362,6 +2364,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4267"
 						Optimization="2"
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;LIBRARY_EXPORTS"
 					/>
@@ -2371,6 +2374,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4267"
 						Optimization="2"
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;LIBRARY_EXPORTS"
 					/>
@@ -2392,6 +2396,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4267 /wd4996"
 						Optimization="0"
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;LIBRARY_EXPORTS"
 						BasicRuntimeChecks="3"
@@ -2402,6 +2407,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4267 /wd4996"
 						Optimization="0"
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;LIBRARY_EXPORTS"
 						BasicRuntimeChecks="3"
@@ -2412,6 +2418,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4267 /wd4996"
 						Optimization="2"
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;LIBRARY_EXPORTS"
 					/>
@@ -2421,6 +2428,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4267 /wd4996"
 						Optimization="2"
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;LIBRARY_EXPORTS"
 					/>
@@ -2536,6 +2544,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4996"
 						UsePrecompiledHeader="2"
 						PrecompiledHeaderThrough="../StdAfx.h"
 					/>
@@ -2545,6 +2554,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4996"
 						UsePrecompiledHeader="2"
 						PrecompiledHeaderThrough="../StdAfx.h"
 					/>
@@ -2560,54 +2570,262 @@
 				<File
 					RelativePath=".\lua\glue\lua_group.cpp"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_group.h"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_measure.cpp"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_measure.h"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_meter.cpp"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_meter.h"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_meterstring.cpp"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_meterstring.h"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_meterwindow.cpp"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_meterwindow.h"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_rainmeter.cpp"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_rainmeter.h"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\glue\lua_rainmeter_ext.cpp"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4800"
+						/>
+					</FileConfiguration>
 				</File>
 			</Filter>
 			<Filter
@@ -2656,10 +2874,42 @@
 				<File
 					RelativePath=".\lua\tolua++\tolua_is.c"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4114"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4114"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\tolua++\tolua_map.c"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4090"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4090"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\tolua++\tolua_push.c"
@@ -2736,6 +2986,22 @@
 				<File
 					RelativePath=".\lua\lua\lgc.c"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4334"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4334"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\lua\lgc.h"
@@ -2828,6 +3094,22 @@
 				<File
 					RelativePath=".\lua\lua\ltable.c"
 					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4334"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalOptions="/wd4334"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\lua\lua\ltable.h"

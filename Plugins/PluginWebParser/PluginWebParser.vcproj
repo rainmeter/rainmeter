@@ -448,6 +448,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="0"
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
@@ -458,6 +459,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="0"
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
@@ -468,6 +470,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="2"
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
@@ -477,6 +480,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="2"
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
@@ -1124,6 +1128,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="0"
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
@@ -1134,6 +1139,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="0"
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
@@ -1144,6 +1150,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="2"
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
@@ -1153,6 +1160,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="2"
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
@@ -1259,6 +1267,7 @@
 				>
 				<Tool
 					Name="VCCLCompilerTool"
+					AdditionalOptions="/wd4267"
 					Optimization="0"
 					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					BasicRuntimeChecks="3"
@@ -1269,6 +1278,7 @@
 				>
 				<Tool
 					Name="VCCLCompilerTool"
+					AdditionalOptions="/wd4267"
 					Optimization="0"
 					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					BasicRuntimeChecks="3"
@@ -1279,6 +1289,7 @@
 				>
 				<Tool
 					Name="VCCLCompilerTool"
+					AdditionalOptions="/wd4267"
 					Optimization="2"
 					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 				/>
@@ -1288,6 +1299,7 @@
 				>
 				<Tool
 					Name="VCCLCompilerTool"
+					AdditionalOptions="/wd4267"
 					Optimization="2"
 					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginWebParser_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 				/>

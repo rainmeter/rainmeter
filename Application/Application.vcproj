@@ -405,6 +405,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4267"
 						Optimization="0"
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"
@@ -415,6 +416,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4267"
 						Optimization="0"
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"
@@ -425,6 +427,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4267"
 						Optimization="2"
 						PreprocessorDefinitions=""
 					/>
@@ -434,6 +437,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4267"
 						Optimization="2"
 						PreprocessorDefinitions=""
 					/>

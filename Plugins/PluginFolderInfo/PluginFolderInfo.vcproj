@@ -448,6 +448,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="0"
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
@@ -458,6 +459,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="0"
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
@@ -468,6 +470,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="2"
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
@@ -477,6 +480,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="2"
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
@@ -1124,6 +1128,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="0"
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
@@ -1134,6 +1139,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="0"
 						PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 						BasicRuntimeChecks="3"
@@ -1144,6 +1150,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="2"
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
@@ -1153,6 +1160,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4244"
 						Optimization="2"
 						PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;$(NoInherit)"
 					/>
@@ -1255,9 +1263,8 @@
 				>
 				<Tool
 					Name="VCCLCompilerTool"
-					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
-					BasicRuntimeChecks="3"
+					AdditionalOptions="/wd4267"
+					PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -1265,9 +1272,8 @@
 				>
 				<Tool
 					Name="VCCLCompilerTool"
-					Optimization="0"
-					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
-					BasicRuntimeChecks="3"
+					AdditionalOptions="/wd4267"
+					PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -1275,8 +1281,8 @@
 				>
 				<Tool
 					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
+					AdditionalOptions="/wd4267"
+					PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -1284,8 +1290,8 @@
 				>
 				<Tool
 					Name="VCCLCompilerTool"
-					Optimization="2"
-					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
+					AdditionalOptions="/wd4267"
+					PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS"
 				/>
 			</FileConfiguration>
 		</File>
@@ -1301,6 +1307,7 @@
 				>
 				<Tool
 					Name="VCCLCompilerTool"
+					AdditionalOptions="/wd4267"
 					Optimization="0"
 					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
@@ -1311,6 +1318,7 @@
 				>
 				<Tool
 					Name="VCCLCompilerTool"
+					AdditionalOptions="/wd4267"
 					Optimization="0"
 					PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
 					BasicRuntimeChecks="3"
@@ -1321,6 +1329,7 @@
 				>
 				<Tool
 					Name="VCCLCompilerTool"
+					AdditionalOptions="/wd4267"
 					Optimization="2"
 					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
 				/>
@@ -1330,6 +1339,7 @@
 				>
 				<Tool
 					Name="VCCLCompilerTool"
+					AdditionalOptions="/wd4267"
 					Optimization="2"
 					PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;PluginFolderInfo_EXPORTS;$(NoInherit)"
 				/>
