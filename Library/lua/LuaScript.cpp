@@ -10,7 +10,7 @@ LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_s
 
 	int result = luaL_loadfile(m_pState, p_strFile);
 
-	m_strTableName = strdup(p_strTableName);
+	m_strTableName = _strdup(p_strTableName);
 	
 	// If the file loaded okay.
 	if(result == 0)
