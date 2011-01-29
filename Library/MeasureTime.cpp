@@ -46,16 +46,15 @@ int GetYearDay(int year, int month, int day)
 ** The constructor
 **
 */
-CMeasureTime::CMeasureTime(CMeterWindow* meterWindow) : CMeasure(meterWindow)
+CMeasureTime::CMeasureTime(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+	m_DeltaTime(),
+	m_Time()
 {
 	/* Set time zone from TZ environment variable. If TZ is not set,
 	 * the operating system is queried to obtain the default value 
 	 * for the variable. 
 	 */
 	_tzset();
-
-	m_DeltaTime.QuadPart = 0;
-	m_Time.QuadPart = 0;
 }
 
 /*

@@ -38,8 +38,14 @@ extern CRainmeter* Rainmeter;
 using namespace Gdiplus;
 
 CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
+	m_TrayIcon(),
+	m_Measure(),
+	m_MeterType(TRAY_METER_TYPE_HISTOGRAM),
 	m_TrayColor1(0, 100, 0),
-	m_TrayColor2(0, 255, 0)
+	m_TrayColor2(0, 255, 0),
+	m_Bitmap(),
+	m_TrayValues(),
+	m_TrayPos()
 {
 	WNDCLASS  wc;
 
@@ -70,21 +76,11 @@ CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
 		instance,
 		this);
 
-	m_Measure = NULL;
-	m_TrayIcon = NULL;
-
-	m_MeterType = TRAY_METER_TYPE_HISTOGRAM;
-
-	m_Bitmap = NULL;
-
 #ifndef _WIN64
 	SetWindowLong(m_Window, GWL_USERDATA, magicDWord);
 #endif
 
 	SetWindowPos(m_Window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
-
-	m_TrayPos = 0;
-	memset(m_TrayValues, 0, sizeof(double) * TRAYICON_SIZE);
 }
 
 CTrayWindow::~CTrayWindow()

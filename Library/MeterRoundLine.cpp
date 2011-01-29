@@ -33,21 +33,21 @@ using namespace Gdiplus;
 **
 */
 CMeterRoundLine::CMeterRoundLine(CMeterWindow* meterWindow) : CMeter(meterWindow),
-	m_LineColor(Color::Black)
+	m_Solid(false),
+	m_LineWidth(1.0),
+	m_LineLength(20.0),
+	m_LineStart(-1.0),
+	m_StartAngle(),
+	m_RotationAngle(6.2832),
+	m_CntrlAngle(true),
+	m_CntrlLineStart(false),
+	m_CntrlLineLength(false),
+	m_LineStartShift(),
+	m_LineLengthShift(),
+	m_ValueRemainder(),
+	m_LineColor(Color::Black),
+	m_Value()
 {
-	m_LineWidth = 1.0;
-	m_LineLength = 20;
-	m_LineStart = -1.0;
-	m_StartAngle = 0.0;
-	m_RotationAngle = 0.0;
-	m_ValueRemainder = 0;
-	m_Solid = false;
-	m_Value = 0.0;
-	m_CntrlAngle = true;
-	m_CntrlLineStart = false;
-	m_CntrlLineLength = false;
-	m_LineStartShift = 0;
-	m_LineLengthShift = 0;
 }
 
 /*
@@ -85,8 +85,8 @@ void CMeterRoundLine::ReadConfig(const WCHAR* section)
 	m_CntrlAngle = 0!=parser.ReadInt(section, L"ControlAngle", 1);
 	m_CntrlLineStart = 0!=parser.ReadInt(section, L"ControlStart", 0);
 	m_CntrlLineLength = 0!=parser.ReadInt(section, L"ControlLength", 0);
-	m_LineStartShift = parser.ReadFloat(section, L"StartShift", 0);
-	m_LineLengthShift = parser.ReadFloat(section, L"LengthShift", 0);
+	m_LineStartShift = parser.ReadFloat(section, L"StartShift", 0.0);
+	m_LineLengthShift = parser.ReadFloat(section, L"LengthShift", 0.0);
 }
 
 /*

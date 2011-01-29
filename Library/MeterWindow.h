@@ -307,7 +307,7 @@ private:
 	SIZE m_BackgroundSize;
 
 	HWND m_Window;								// Handle to the Rainmeter window
-	BOOL m_ChildWindow;
+	bool m_ChildWindow;
 
 	std::wstring m_RightMouseDownAction;		// Action to run when right mouse is pressed
 	std::wstring m_LeftMouseDownAction;			// Action to run when left mouse is pressed
@@ -364,7 +364,7 @@ private:
 	bool m_NativeTransparency;					// If true, use the W2k/XP native transparency
 	int m_AlphaValue;							// The 'from' transparency value 0 - 255
 	int m_FadeDuration;							// Time it takes to fade the window
-	bool m_MeasuresToVariables;					// If true, Measured values are transformed to Litestep's eVars
+//	bool m_MeasuresToVariables;					// If true, Measured values are transformed to Litestep's eVars
 	ZPOSITION m_WindowZPosition;				// Window's Z-position
 	bool m_DynamicWindowSize;					// 
 	bool m_ClickThrough;						// 
@@ -401,12 +401,12 @@ private:
 
 	CRainmeter* m_Rainmeter;					// Pointer to the main object
 
-	static int c_InstanceCount;
-
 	Gdiplus::PrivateFontCollection* m_FontCollection;
 
 	bool m_MouseActionCursor;
 	bool m_ToolTipHidden;
+
+	static int c_InstanceCount;
 };
 
 #endif

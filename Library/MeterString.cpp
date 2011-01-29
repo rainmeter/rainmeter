@@ -68,23 +68,23 @@ void StringToProper(std::wstring& str)
 */
 CMeterString::CMeterString(CMeterWindow* meterWindow) : CMeter(meterWindow),
 	m_Color(Color::White),
-	m_EffectColor(Color::Black)
+	m_EffectColor(Color::Black),
+	m_AutoScale(AUTOSCALE_OFF),
+	m_Align(ALIGN_LEFT),
+	m_Style(NORMAL),
+	m_Effect(EFFECT_NONE),
+	m_textCase(TEXTCASE_NONE),
+	m_FontSize(10),
+	m_Scale(1.0),
+	m_NoDecimals(true),
+	m_Percentual(true),
+	m_ClipString(false),
+	m_Font(),
+	m_FontFamily(),
+	m_NumOfDecimals(-1),
+	m_DimensionsDefined(false),
+	m_Angle()
 {
-	m_Effect = EFFECT_NONE;
-	m_AutoScale = AUTOSCALE_OFF;
-	m_Align = ALIGN_LEFT;
-	m_Font = NULL;
-	m_FontFamily = NULL;
-	m_Style = NORMAL;
-	m_FontSize = 10;
-	m_Scale = 1.0;
-	m_NoDecimals = true;
-	m_Percentual = true;
-	m_ClipString = false;
-	m_NumOfDecimals = -1;
-	m_DimensionsDefined = false;
-	m_Angle = 0.0;
-	m_textCase = TEXTCASE_NONE;
 }
 
 /*

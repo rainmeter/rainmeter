@@ -54,26 +54,21 @@ const Gdiplus::ColorMatrix CTintedImage::c_IdentifyMatrix = {
 **
 */
 CTintedImage::CTintedImage(bool disableTransform) : m_DisableTransform(disableTransform),
+	m_Bitmap(),
+	m_BitmapTint(),
+	m_hBuffer(),
+	m_Modified(),
+	m_NeedsCrop(false),
+	m_NeedsTinting(false),
+	m_NeedsTransform(false),
 	m_Crop(-1, -1, -1, -1),
-	m_ColorMatrix(c_IdentifyMatrix)
+	m_CropMode(CROPMODE_TL),
+	m_GreyScale(false),
+	m_ColorMatrix(c_IdentifyMatrix),
+	m_Flip(RotateNoneFlipNone),
+	m_Rotate()
 {
 	SetConfigAttributes(L"Image", L"");
-
-	m_Bitmap = NULL;
-	m_BitmapTint = NULL;
-
-	m_hBuffer = NULL;
-	m_Modified.dwHighDateTime = 0;
-	m_Modified.dwLowDateTime = 0;
-
-	m_NeedsCrop = false;
-	m_NeedsTinting = false;
-	m_NeedsTransform = false;
-
-	m_CropMode = CROPMODE_TL;
-	m_GreyScale = false;
-	m_Flip = RotateNoneFlipNone;
-	m_Rotate = 0.0f;
 }
 
 /*
@@ -112,6 +107,54 @@ void CTintedImage::DisposeImage()
 }
 
 /*
+** LoadImageFromFileHandle
+**
+** Loads the image from file handle
+**
+*/
+bool CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, Bitmap** pBitmap, HGLOBAL* phBuffer)
+{
+	DWORD imageSize = GetFileSize(fileHandle, NULL);
+
+	if (imageSize != INVALID_FILE_SIZE)
+	{
+		HGLOBAL hBuffer = ::GlobalAlloc(GMEM_MOVEABLE, imageSize);
+		if (hBuffer)
+		{
+			void* pBuffer = ::GlobalLock(hBuffer);
+			if (pBuffer)
+			{
+				DWORD readBytes;
+				ReadFile(fileHandle, pBuffer, imageSize, &readBytes, NULL);
+				::GlobalUnlock(hBuffer);
+
+				IStream* pStream = NULL;
+				if (::CreateStreamOnHGlobal(hBuffer, FALSE, &pStream) == S_OK)
+				{
+					Bitmap* bitmap = Bitmap::FromStream(pStream);
+					pStream->Release();
+
+					if (bitmap && Ok == bitmap->GetLastStatus())
+					{
+						*pBitmap = bitmap;
+						*phBuffer = hBuffer;
+						return true;
+					}
+					else
+					{
+						delete bitmap;
+					}
+				}
+			}
+
+			::GlobalFree(hBuffer);
+		}
+	}
+
+	return false;
+}
+
+/*
 ** LoadImage
 **
 ** Loads the image from disk
@@ -142,111 +185,73 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 			if (bLoadAlways || CompareFileTime(&tmpTime, &m_Modified) != 0)
 			{
 				DisposeImage();
-				m_Modified = tmpTime;
 
-				DWORD imageSize = GetFileSize(fileHandle, NULL);
-
-				if (imageSize != INVALID_FILE_SIZE)
+				if (LoadImageFromFileHandle(fileHandle, &m_Bitmap, &m_hBuffer))
 				{
-					m_hBuffer = ::GlobalAlloc(GMEM_MOVEABLE, imageSize);
-					if (m_hBuffer)
+					m_Modified = tmpTime;
+
+					// Check whether the new image needs tinting (or cropping, flipping, rotating)
+					if (!m_NeedsCrop)
 					{
-						void* pBuffer = ::GlobalLock(m_hBuffer);
-						if (pBuffer)
+						if (m_Crop.Width >= 0 || m_Crop.Height >= 0)
 						{
-							DWORD readBytes;
-							ReadFile(fileHandle, pBuffer, imageSize, &readBytes, NULL);
-							::GlobalUnlock(m_hBuffer);
-
-							IStream* pStream = NULL;
-							if (::CreateStreamOnHGlobal(m_hBuffer, FALSE, &pStream) == S_OK)
-							{
-								m_Bitmap = Bitmap::FromStream(pStream);
-								pStream->Release();
-
-								if (m_Bitmap && Ok == m_Bitmap->GetLastStatus())
-								{
-									// Check whether the new image needs tinting (or cropping, flipping, rotating)
-									if (!m_NeedsCrop)
-									{
-										if (m_Crop.Width >= 0 || m_Crop.Height >= 0)
-										{
-											m_NeedsCrop = true;
-										}
-									}
-									if (!m_NeedsTinting)
-									{
-										if (m_GreyScale || !CompareColorMatrix(m_ColorMatrix, c_IdentifyMatrix))
-										{
-											m_NeedsTinting = true;
-										}
-									}
-									if (!m_NeedsTransform)
-									{
-										if (m_Flip != RotateNoneFlipNone || m_Rotate != 0.0f)
-										{
-											m_NeedsTransform = true;
-										}
-									}
-								}
-								else  // failed
-								{
-									delete m_Bitmap;
-									m_Bitmap = NULL;
-								}
-							}
-						}
-
-						if (!m_Bitmap)
-						{
-							LogWithArgs(LOG_ERROR, L"Unable to create %s: %s", m_ConfigName.c_str(), filename.c_str());
-							DisposeImage();
+							m_NeedsCrop = true;
 						}
 					}
-					else
+					if (!m_NeedsTinting)
 					{
-						LogWithArgs(LOG_ERROR, L"Unable to allocate memory ( %i bytes ) for %s: %s", imageSize, m_ConfigName.c_str(), filename.c_str());
+						if (m_GreyScale || !CompareColorMatrix(m_ColorMatrix, c_IdentifyMatrix))
+						{
+							m_NeedsTinting = true;
+						}
+					}
+					if (!m_NeedsTransform)
+					{
+						if (m_Flip != RotateNoneFlipNone || m_Rotate != 0.0f)
+						{
+							m_NeedsTransform = true;
+						}
 					}
 				}
 				else
 				{
-					LogWithArgs(LOG_ERROR, L"Unable to get %s's file size: %s", m_ConfigName.c_str(), filename.c_str());
+					LogWithArgs(LOG_ERROR, L"Unable to load %s: %s", m_ConfigName.c_str(), filename.c_str());
 				}
 			}
 			CloseHandle(fileHandle);
+
+			if (m_Bitmap)
+			{
+				// We need a copy of the image if has tinting (or flipping, rotating)
+				if (m_NeedsCrop || m_NeedsTinting || m_NeedsTransform)
+				{
+					if (m_BitmapTint)
+					{
+						delete m_BitmapTint;
+						m_BitmapTint = NULL;
+					}
+
+					if (m_Bitmap->GetWidth() > 0 && m_Bitmap->GetHeight() > 0)
+					{
+						ApplyCrop();
+
+						if (!m_BitmapTint || (m_BitmapTint->GetWidth() > 0 && m_BitmapTint->GetHeight() > 0))
+						{
+							ApplyTint();
+							ApplyTransform();
+						}
+					}
+
+					m_NeedsCrop = false;
+					m_NeedsTinting = false;
+					m_NeedsTransform = false;
+				}
+			}
 		}
 		else
 		{
-			LogWithArgs(LOG_ERROR, L"Unable to load %s: %s", m_ConfigName.c_str(), filename.c_str());
+			LogWithArgs(LOG_ERROR, L"Unable to open %s: %s", m_ConfigName.c_str(), filename.c_str());
 			DisposeImage();
-		}
-
-		if (m_Bitmap)
-		{
-			// We need a copy of the image if has tinting (or flipping, rotating)
-			if (m_NeedsCrop || m_NeedsTinting || m_NeedsTransform)
-			{
-				if (m_BitmapTint)
-				{
-					delete m_BitmapTint;
-					m_BitmapTint = NULL;
-				}
-
-				if (m_Bitmap->GetWidth() > 0 && m_Bitmap->GetHeight() > 0)
-				{
-					ApplyCrop();
-
-					if (!m_BitmapTint || (m_BitmapTint->GetWidth() > 0 && m_BitmapTint->GetHeight() > 0))
-					{
-						ApplyTint();
-						ApplyTransform();
-					}
-				}
-
-				m_NeedsCrop = false;
-				m_NeedsTinting = false;
-				m_NeedsTransform = false;
-			}
 		}
 	}
 	else if (IsLoaded())

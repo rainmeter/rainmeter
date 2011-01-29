@@ -34,9 +34,11 @@ stdext::hash_map<std::wstring, std::wstring> CConfigParser::c_MonitorVariables;
 ** The constructor
 **
 */
-CConfigParser::CConfigParser()
+CConfigParser::CConfigParser() :
+	m_Parser(MathParser_Create(NULL)),
+	m_LastReplaced(false),
+	m_LastDefaultUsed(false)
 {
-	m_Parser = MathParser_Create(NULL);
 }
 
 /*

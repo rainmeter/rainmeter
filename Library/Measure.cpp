@@ -67,27 +67,27 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeasure::CMeasure(CMeterWindow* meterWindow) : m_MeterWindow(meterWindow)
+CMeasure::CMeasure(CMeterWindow* meterWindow) : m_MeterWindow(meterWindow),
+	m_DynamicVariables(false),
+	m_Invert(false),
+	m_LogMaxValue(false),
+	m_MinValue(),
+	m_MaxValue(1.0),
+	m_Value(),
+	m_MedianPos(),
+	m_AveragePos(),
+	m_AverageSize(),
+	m_IfEqualValue(),
+	m_IfAboveValue(),
+	m_IfBelowValue(),
+	m_IfEqualCommited(false),
+	m_IfAboveCommited(false),
+	m_IfBelowCommited(false),
+	m_Disabled(false),
+	m_UpdateDivider(1),
+	m_UpdateCounter(1),
+	m_Initialized(false)
 {
-	m_Invert = false;
-	m_LogMaxValue = false;
-	m_MinValue = 0.0;
-	m_MaxValue = 1.0;
-	m_Value = 0.0;
-	m_IfAboveValue = 0.0;
-	m_IfBelowValue = 0.0;
-	m_IfEqualValue = 0.0;
-	m_IfAboveCommited = false;
-	m_IfBelowCommited = false;
-	m_IfEqualCommited = false;
-	m_Disabled = false;
-	m_UpdateDivider = 1;
-	m_UpdateCounter = 1;
-	m_MedianPos = 0;
-	m_AveragePos = 0;
-	m_AverageSize = 0;
-	m_DynamicVariables = false;
-	m_Initialized = false;
 }
 
 /*

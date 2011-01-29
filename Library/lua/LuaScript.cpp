@@ -3,14 +3,10 @@
 #include "LuaManager.h"
 #include "../Rainmeter.h"
 
-LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_strTableName) : 
-	m_pState(p_pState)
+LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_strTableName) : m_pState(p_pState), m_strTableName(_strdup(p_strTableName)),
+	m_bInitialized(true)
 {
-	m_bInitialized = true; 
-
 	int result = luaL_loadfile(m_pState, p_strFile);
-
-	m_strTableName = _strdup(p_strTableName);
 	
 	// If the file loaded okay.
 	if(result == 0)

@@ -33,10 +33,15 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeterRotator::CMeterRotator(CMeterWindow* meterWindow) : CMeter(meterWindow)
+CMeterRotator::CMeterRotator(CMeterWindow* meterWindow) : CMeter(meterWindow),
+	m_NeedsReload(false),
+	m_OffsetX(),
+	m_OffsetY(),
+	m_StartAngle(),
+	m_RotationAngle(6.2832),
+	m_ValueRemainder(),
+	m_Value()
 {
-	m_NeedsReload = false;
-	m_Value = 0.0;
 }
 
 /*

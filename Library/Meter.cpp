@@ -39,31 +39,32 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-CMeter::CMeter(CMeterWindow* meterWindow) : m_MeterWindow(meterWindow)
+CMeter::CMeter(CMeterWindow* meterWindow) : m_MeterWindow(meterWindow),
+	m_Measure(),
+	m_X(),
+	m_Y(),
+	m_W(),
+	m_H(),
+	m_Hidden(false),
+	m_RelativeMeter(),
+	m_DynamicVariables(false),
+	m_ToolTipWidth(),
+	m_ToolTipDelay(),
+	m_ToolTipType(false),
+	m_ToolTipHidden(false),
+	m_ToolTipHandle(),
+	m_HasMouseAction(false),
+	m_MouseActionCursor(true),
+	m_MouseOver(false),
+	m_RelativeX(POSITION_ABSOLUTE),
+	m_RelativeY(POSITION_ABSOLUTE),
+	m_UpdateDivider(1),
+	m_UpdateCounter(1),
+	m_SolidBevel(BEVELTYPE_NONE),
+	m_SolidAngle(),
+	m_AntiAlias(false),
+	m_Initialized(false)
 {
-	m_Measure = NULL;
-
-	m_X = 0;
-	m_Y = 0;
-	m_W = 0;
-	m_H = 0;
-	m_RelativeMeter = NULL;
-	m_Hidden = false;
-	m_SolidBevel = BEVELTYPE_NONE;
-	m_MouseOver = false;
-	m_UpdateDivider = 1;
-	m_UpdateCounter = 1;
-	m_RelativeX = POSITION_ABSOLUTE;
-	m_RelativeY = POSITION_ABSOLUTE;
-	m_SolidAngle = 0.0f;
-	m_AntiAlias = false;
-	m_DynamicVariables = false;
-	m_Initialized = false;
-	m_HasMouseAction = false;
-	m_MouseActionCursor = true;
-	m_ToolTipHidden = false;
-
-	m_ToolTipHandle = NULL;
 }
 
 /*

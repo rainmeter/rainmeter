@@ -26,12 +26,12 @@
 ** The constructor
 **
 */
-CMeasureDiskSpace::CMeasureDiskSpace(CMeterWindow* meterWindow) : CMeasure(meterWindow)
+CMeasureDiskSpace::CMeasureDiskSpace(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+	m_Total(false),
+	m_Label(false),
+	m_IgnoreRemovable(true),
+	m_OldTotalBytes()
 {
-	m_Total = false;
-	m_Label = false;
-	m_IgnoreRemovable = true;
-	m_OldTotalBytes = 0;
 }
 
 /*

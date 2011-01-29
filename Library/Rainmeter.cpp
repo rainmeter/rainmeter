@@ -1557,27 +1557,21 @@ bool CRainmeter::c_Debug = false;
 ** Constructor
 **
 */
-CRainmeter::CRainmeter()
+CRainmeter::CRainmeter() :
+	m_TrayWindow(),
+	m_DisableVersionCheck(FALSE),
+	m_NewVersion(FALSE),
+	m_DesktopWorkAreaChanged(false),
+	m_DesktopWorkAreaType(false),
+	m_MenuActive(false),
+	m_DisableRDP(false),
+	m_DisableDragging(false),
+	m_Logging(false),
+	m_CsLogData(),
+	m_CurrentParser(),
+	m_Instance(),
+	m_GDIplusToken()
 {
-	m_MenuActive = false;
-
-	m_DisableRDP = false;
-
-	m_DisableDragging = false;
-
-	m_Logging = false;
-
-	m_DesktopWorkAreaChanged = false;
-	m_DesktopWorkAreaType = false;
-
-	m_DisableVersionCheck = false;
-	m_NewVersion = false;
-
-	m_Instance = NULL;
-	m_CurrentParser = NULL;
-
-	m_TrayWindow = NULL;
-
 	InitializeCriticalSection(&m_CsLogData);
 
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);

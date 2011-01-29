@@ -38,12 +38,12 @@ extern CRainmeter* Rainmeter;
 ** The constructor. This is the base class for the net-meters. 
 **
 */
-CMeasureNet::CMeasureNet(CMeterWindow* meterWindow) : CMeasure(meterWindow)
+CMeasureNet::CMeasureNet(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+	m_CurrentTraffic(),
+	m_TrafficValue(),
+	m_Interface(),
+	m_Cumulative(false)
 {
-	m_TrafficValue = 0;
-	m_CurrentTraffic = 0;
-	m_Interface = 0;
-	m_Cumulative = false;
 }
 
 /*

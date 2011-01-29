@@ -34,14 +34,14 @@ extern CRainmeter* Rainmeter;
 **
 */
 CMeterBar::CMeterBar(CMeterWindow* meterWindow) : CMeter(meterWindow),
-	m_Color(Color::Green)
+	m_NeedsReload(false),
+	m_Color(Color::Green),
+	m_Orientation(VERTICAL),
+	m_Value(),
+	m_Border(),
+	m_Flip(false)
 {
 	m_Image.SetConfigAttributes(L"BarImage", NULL);
-
-	m_NeedsReload = false;
-	m_Value = 0.0;
-	m_Border = 0;
-	m_Flip = false;
 }
 
 /*

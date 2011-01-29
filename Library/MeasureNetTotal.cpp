@@ -25,10 +25,10 @@
 ** The constructor
 **
 */
-CMeasureNetTotal::CMeasureNetTotal(CMeterWindow* meterWindow) : CMeasureNet(meterWindow)
+CMeasureNetTotal::CMeasureNetTotal(CMeterWindow* meterWindow) : CMeasureNet(meterWindow),
+	m_FirstTime(true),
+	m_TotalOctets()
 {
-	m_FirstTime = true;
-	m_TotalOctets = 0;
 }
 
 /*

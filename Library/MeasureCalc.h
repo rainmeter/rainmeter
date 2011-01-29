@@ -41,12 +41,12 @@ private:
 	std::wstring m_FormulaHolder;
 	hqMathParser* m_Parser;
 
-	static hqStrMap* c_VarMap;
-	static bool c_RandSeeded;
-
 	int m_LowBound;
 	int m_HighBound;
 	bool m_UpdateRandom;
+
+	static hqStrMap* c_VarMap;
+	static bool c_RandSeeded;
 };
 
 #endif

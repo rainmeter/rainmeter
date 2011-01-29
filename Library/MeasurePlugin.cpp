@@ -30,18 +30,17 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeasurePlugin::CMeasurePlugin(CMeterWindow* meterWindow) : CMeasure(meterWindow)
+CMeasurePlugin::CMeasurePlugin(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+	m_Plugin(),
+	m_ID(),
+	InitializeFunc(),
+	UpdateFunc(),
+	UpdateFunc2(),
+	FinalizeFunc(),
+	GetStringFunc(),
+	ExecuteBangFunc()
 {
-	m_Plugin = NULL;
-	m_ID = 0;
-	m_MaxValue = 0;
-
-	InitializeFunc = NULL;
-	UpdateFunc = NULL;
-	UpdateFunc2 = NULL;
-	FinalizeFunc = NULL;
-	GetStringFunc = NULL;
-	ExecuteBangFunc = NULL;
+	m_MaxValue = 0.0;
 }
 
 /*

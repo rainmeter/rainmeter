@@ -54,89 +54,72 @@ extern CRainmeter* Rainmeter;
 **
 */
 CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile) : m_SkinPath(path), m_SkinName(config), m_SkinIniFile(iniFile),
+	m_DoubleBuffer(),
+	m_Background(),
+	m_BackgroundSize(),
+	m_Window(),
+	m_ChildWindow(false),
+	m_MouseOver(false),
+	m_BackgroundMargins(),
+	m_DragMargins(),
 	m_WindowX(L"0"),
-	m_WindowY(L"0")
+	m_WindowY(L"0"),
+	m_WindowXScreen(1),
+	m_WindowYScreen(1),
+	m_WindowXScreenDefined(false),
+	m_WindowYScreenDefined(false),
+	m_WindowXFromRight(false),
+	m_WindowYFromBottom(false),
+	m_WindowXPercentage(false),
+	m_WindowYPercentage(false),
+	m_WindowW(),
+	m_WindowH(),
+	m_ScreenX(),
+	m_ScreenY(),
+	m_AnchorXFromRight(false),
+	m_AnchorYFromBottom(false),
+	m_AnchorXPercentage(false),
+	m_AnchorYPercentage(false),
+	m_AnchorScreenX(),
+	m_AnchorScreenY(),
+	m_WindowDraggable(true),
+	m_WindowUpdate(1000),
+	m_TransitionUpdate(100),
+	m_ActiveTransition(false),
+	m_HasNetMeasures(false),
+	m_HasButtons(false),
+	m_WindowHide(HIDEMODE_NONE),
+	m_WindowStartHidden(false),
+	m_SavePosition(false),			// Must be false
+	m_SnapEdges(true),
+	m_NativeTransparency(true),
+	m_AlphaValue(255),
+	m_FadeDuration(250),
+//	m_MeasuresToVariables(false),
+	m_WindowZPosition(ZPOSITION_NORMAL),
+	m_DynamicWindowSize(false),
+	m_ClickThrough(false),
+	m_KeepOnScreen(true),
+	m_AutoSelectScreen(false),
+	m_Dragging(false),
+	m_Dragged(false),
+	m_BackgroundMode(BGMODE_IMAGE),
+	m_SolidAngle(),
+	m_SolidBevel(BEVELTYPE_NONE),
+	m_FadeStartTime(),
+	m_FadeStartValue(),
+	m_FadeEndValue(),
+	m_TransparencyValue(),
+	m_Refreshing(false),
+	m_Hidden(false),
+	m_ResetRegion(false),
+	m_UpdateCounter(),
+	m_MouseMoveCounter(),
+	m_Rainmeter(),
+	m_FontCollection(),
+	m_MouseActionCursor(true),
+	m_ToolTipHidden(false)
 {
-	m_Rainmeter = NULL;
-
-	m_Background = NULL;
-	m_Window = NULL;
-	m_ChildWindow = false;
-
-	m_DoubleBuffer = NULL;
-
-	m_ScreenX = 0;
-	m_ScreenY = 0;
-	m_WindowW = 0;
-	m_WindowH = 0;
-	m_WindowXPercentage = false;
-	m_WindowYPercentage = false;
-	m_WindowXFromRight = false;
-	m_WindowYFromBottom = false;
-	m_WindowXScreen = 1;
-	m_WindowYScreen = 1;
-	m_WindowXScreenDefined = false;
-	m_WindowYScreenDefined = false;
-	m_AnchorXFromRight = false;
-	m_AnchorYFromBottom = false;
-	m_AnchorXPercentage = false;
-	m_AnchorYPercentage = false;
-	m_AnchorScreenX = 0; 
-	m_AnchorScreenY = 0;
-	m_WindowZPosition = ZPOSITION_NORMAL;
-	m_WindowDraggable = true;
-	m_WindowUpdate = 1000;
-	m_TransitionUpdate = 100;
-	m_ActiveTransition = false;
-	m_HasNetMeasures = false;
-	m_HasButtons = false;
-	m_WindowHide = HIDEMODE_NONE;
-	m_WindowStartHidden = false;
-	m_SnapEdges = true;
-	m_Hidden = false;
-	m_ResetRegion = false;
-	m_Refreshing = false;
-	m_NativeTransparency = true;
-	m_MeasuresToVariables = false;
-	m_SavePosition = false;			// Must be false
-	m_AlphaValue = 255;
-	m_FadeDuration = 250;
-	m_ClickThrough = false;
-	m_DynamicWindowSize = false;
-	m_KeepOnScreen = true;
-	m_AutoSelectScreen = false;
-	m_Dragging = false;
-	m_Dragged = false;
-
-	m_BackgroundSize.cx = 0;
-	m_BackgroundSize.cy = 0;
-
-	m_BackgroundMargins.left = 0;
-	m_BackgroundMargins.top = 0;
-	m_BackgroundMargins.right = 0;
-	m_BackgroundMargins.bottom = 0;
-	m_DragMargins.left = 0;
-	m_DragMargins.top = 0;
-	m_DragMargins.right = 0;
-	m_DragMargins.bottom = 0;
-
-	m_FadeStartTime = 0;
-	m_FadeStartValue = 0;
-	m_FadeEndValue = 0;
-	m_TransparencyValue = 0;
-
-	m_MouseOver = false;
-
-	m_BackgroundMode = BGMODE_IMAGE;
-	m_SolidBevel = BEVELTYPE_NONE;
-
-	m_UpdateCounter = 0;
-	m_MouseMoveCounter = 0;
-	m_FontCollection = NULL;
-
-	m_MouseActionCursor = true;
-	m_ToolTipHidden = false;
-
 	++c_InstanceCount;
 }
 
@@ -1633,7 +1616,7 @@ void CMeterWindow::ReadConfig()
 	m_WindowStartHidden = false;
 	m_SavePosition = true;
 	m_SnapEdges = true;
-	m_MeasuresToVariables = false;
+//	m_MeasuresToVariables = false;
 	m_NativeTransparency = true;
 	m_ClickThrough = false;
 	m_KeepOnScreen = true;
@@ -1709,7 +1692,7 @@ void CMeterWindow::ReadConfig()
 		m_WindowStartHidden = 0!=parser.ReadInt(section, L"StartHidden", m_WindowStartHidden);
 		m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", m_SavePosition);
 		m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", m_SnapEdges);
-		m_MeasuresToVariables = 0!=parser.ReadInt(section, L"MeasuresToVariables", m_MeasuresToVariables);
+//		m_MeasuresToVariables = 0!=parser.ReadInt(section, L"MeasuresToVariables", m_MeasuresToVariables);
 		m_NativeTransparency = 0!=parser.ReadInt(section, L"NativeTransparency", m_NativeTransparency);
 		m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", m_ClickThrough);
 		m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", m_KeepOnScreen);

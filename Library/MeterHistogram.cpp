@@ -33,28 +33,27 @@ extern CRainmeter* Rainmeter;
 **
 */
 CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow) : CMeter(meterWindow),
+	m_SecondaryMeasure(),
 	m_PrimaryColor(Color::Green),
 	m_SecondaryColor(Color::Red),
-	m_BothColor(Color::Yellow)
+	m_BothColor(Color::Yellow),
+	m_MeterPos(),
+	m_Autoscale(false),
+	m_Flip(false),
+	m_PrimaryNeedsReload(false),
+	m_SecondaryNeedsReload(false),
+	m_BothNeedsReload(false),
+	m_PrimaryValues(),
+	m_SecondaryValues(),
+	m_MaxPrimaryValue(1.0),
+	m_MinPrimaryValue(),
+	m_MaxSecondaryValue(1.0),
+	m_MinSecondaryValue(),
+	m_WidthChanged(true)
 {
 	m_PrimaryImage.SetConfigAttributes(L"PrimaryImage", L"Primary");
 	m_SecondaryImage.SetConfigAttributes(L"SecondaryImage", L"Secondary");
 	m_BothImage.SetConfigAttributes(L"BothImage", L"Both");
-
-	m_PrimaryNeedsReload = false;
-	m_SecondaryNeedsReload = false;
-	m_BothNeedsReload = false;
-	m_SecondaryMeasure = NULL;
-	m_MeterPos = 0;
-	m_PrimaryValues = NULL;
-	m_SecondaryValues = NULL;
-	m_Autoscale = false;
-	m_Flip = false;
-	m_MaxPrimaryValue = 1.0;
-	m_MinPrimaryValue = 0.0;
-	m_MaxSecondaryValue = 1.0;
-	m_MinSecondaryValue = 0.0;
-	m_WidthChanged = true;
 }
 
 /*

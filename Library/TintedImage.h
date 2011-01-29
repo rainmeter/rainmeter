@@ -57,6 +57,8 @@ protected:
 	void ApplyTint();
 	void ApplyTransform();
 
+	static bool LoadImageFromFileHandle(HANDLE fileHandle, Gdiplus::Bitmap** pBitmap, HGLOBAL* phBuffer);
+
 	static Gdiplus::Bitmap* TurnGreyscale(Gdiplus::Bitmap* source);
 	static bool CompareColorMatrix(const Gdiplus::ColorMatrix& a, const Gdiplus::ColorMatrix& b);
 

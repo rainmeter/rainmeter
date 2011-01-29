@@ -27,10 +27,10 @@
 ** The constructor
 **
 */
-CMeasureRegistry::CMeasureRegistry(CMeterWindow* meterWindow) : CMeasure(meterWindow)
+CMeasureRegistry::CMeasureRegistry(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+	m_RegKey(),
+	m_HKey()
 {
-	m_RegKey = NULL;
-	m_HKey = NULL;
 	m_MaxValue = 0.0;
 }
 

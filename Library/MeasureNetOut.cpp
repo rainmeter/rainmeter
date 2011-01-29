@@ -25,10 +25,10 @@
 ** The constructor
 **
 */
-CMeasureNetOut::CMeasureNetOut(CMeterWindow* meterWindow) : CMeasureNet(meterWindow)
+CMeasureNetOut::CMeasureNetOut(CMeterWindow* meterWindow) : CMeasureNet(meterWindow),
+	m_FirstTime(true),
+	m_OutOctets()
 {
-	m_FirstTime = true;
-	m_OutOctets = 0;
 }
 
 /*

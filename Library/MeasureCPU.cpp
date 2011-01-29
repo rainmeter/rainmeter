@@ -55,22 +55,13 @@
 ** The constructor
 **
 */
-CMeasureCPU::CMeasureCPU(CMeterWindow* meterWindow) : CMeasure(meterWindow)
+CMeasureCPU::CMeasureCPU(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+	m_FirstTime(true),
+	m_Processor(),
+	m_NtQuerySystemInformation((PROCNTQSI)GetProcAddress(GetModuleHandle(L"ntdll"), "NtQuerySystemInformation")),
+	m_GetSystemTimes((PROCGST)GetProcAddress(GetModuleHandle(L"kernel32"), "GetSystemTimes"))
 {
 	m_MaxValue = 100.0;
-	m_MinValue = 0.0;
-	m_FirstTime = true;
-
-	m_Processor = 0;
-
-	m_NtQuerySystemInformation = (PROCNTQSI)GetProcAddress(
-										  GetModuleHandle(L"ntdll"),
-										 "NtQuerySystemInformation"
-										 );
-	m_GetSystemTimes = (PROCGST)GetProcAddress(
-								GetModuleHandle(L"kernel32"),
-								"GetSystemTimes"
-								);
 
 	SYSTEM_INFO systemInfo = {0};
 	GetSystemInfo(&systemInfo);

@@ -30,13 +30,13 @@ using namespace Gdiplus;
 **
 */
 CMeterLine::CMeterLine(CMeterWindow* meterWindow) : CMeter(meterWindow),
-	m_HorizontalColor(Color::Black)
+	m_Autoscale(false),
+	m_HorizontalLines(false),
+	m_Flip(false),
+	m_LineWidth(1.0),
+	m_HorizontalColor(Color::Black),
+	m_CurrentPos()
 {
-	m_Autoscale = false;
-	m_HorizontalLines = false;
-	m_CurrentPos = 0;
-	m_Flip = false;
-	m_LineWidth = 1.0;
 }
 
 /*

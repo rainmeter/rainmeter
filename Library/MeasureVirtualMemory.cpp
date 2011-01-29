@@ -25,9 +25,9 @@
 ** The constructor
 **
 */
-CMeasureVirtualMemory::CMeasureVirtualMemory(CMeterWindow* meterWindow) : CMeasure(meterWindow)
+CMeasureVirtualMemory::CMeasureVirtualMemory(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+	m_Total(false)
 {
-	m_Total = false;
 }
 
 /*

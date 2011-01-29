@@ -31,19 +31,17 @@ bool CMeasureCalc::c_RandSeeded = false;
 ** The constructor
 **
 */
-CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow) : CMeasure(meterWindow)
+CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+	m_Parser(MathParser_Create(NULL)),
+	m_LowBound(),
+	m_HighBound(100),
+	m_UpdateRandom(false)
 {
 	if(!c_RandSeeded)
 	{
 		c_RandSeeded = true;
 		srand((unsigned)time(0)); 
 	}
-
-	m_Parser = MathParser_Create(NULL);
-
-	m_LowBound = 0;
-	m_HighBound = 100;
-	m_UpdateRandom = false;
 
 	rand();
 }

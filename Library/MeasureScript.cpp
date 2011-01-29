@@ -9,16 +9,14 @@ const char* g_strUpdateFunction = "Update";
 const char* g_strGetValueFunction = "GetValue";
 const char* g_strGetStringValueFunction = "GetStringValue";
 
-CMeasureScript::CMeasureScript(CMeterWindow* meterWindow) : CMeasure(meterWindow)
+CMeasureScript::CMeasureScript(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+	m_pLuaScript(),
+	m_bUpdateDefined(false),
+	m_bGetValueDefined(false),
+	m_bGetStringValueDefined(false),	
+	m_bInitializeDefined(false)
 {
 	LuaManager::Init();
-
-	m_pLuaScript = NULL;
-
-	m_bUpdateDefined = false;
-	m_bGetValueDefined = false;
-	m_bGetStringValueDefined = false;
-	m_bInitializeDefined = false;
 }
 
 CMeasureScript::~CMeasureScript()

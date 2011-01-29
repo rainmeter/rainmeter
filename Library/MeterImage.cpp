@@ -32,18 +32,14 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow)
+CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow),
+	m_NeedsReload(false),
+	m_WidthDefined(false),
+	m_HeightDefined(false),
+	m_PreserveAspectRatio(false),
+	m_Tile(false),
+	m_ScaleMargins()
 {
-	m_NeedsReload = false;
-	m_WidthDefined = false;
-	m_HeightDefined = false;
-	m_PreserveAspectRatio = false;
-	m_Tile = false;
-
-	m_ScaleMargins.left = 0;
-	m_ScaleMargins.top = 0;
-	m_ScaleMargins.right = 0;
-	m_ScaleMargins.bottom = 0;
 }
 
 /*

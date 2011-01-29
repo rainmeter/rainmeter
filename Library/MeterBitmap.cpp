@@ -33,20 +33,20 @@ extern CRainmeter* Rainmeter;
 **
 */
 CMeterBitmap::CMeterBitmap(CMeterWindow* meterWindow) : CMeter(meterWindow),
-	m_Image(true)
+	m_Image(true),
+	m_NeedsReload(false),
+	m_ZeroFrame(false),
+	m_FrameCount(1),
+	m_TransitionFrameCount(),
+	m_Align(ALIGN_LEFT),
+	m_Extend(false),
+	m_Separation(),
+	m_Digits(),
+	m_Value(),
+	m_TransitionStartTicks(),
+	m_TransitionStartValue()
 {
 	m_Image.SetConfigAttributes(L"BitmapImage", NULL);
-
-	m_NeedsReload = false;
-	m_FrameCount = 1;
-	m_ZeroFrame = false;
-	m_Align = ALIGN_LEFT;
-	m_Extend = false;
-	m_Separation = 0;
-	m_Digits = 0;
-	m_Value = 0;
-	m_TransitionFrameCount = 0;
-	m_TransitionStartTicks = 0;
 }
 
 /*
