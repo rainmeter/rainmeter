@@ -91,7 +91,7 @@ static int AsMeterString(lua_State* tolua_S)
 static int staticLuaLog(lua_State* tolua_S)
 {
 	const char* str = tolua_tostring(tolua_S,1,0);
-	LuaManager::LuaLog(str);
+	LuaManager::LuaLog(LOG_NOTICE, str);
 	return 0;
 }
 

@@ -22,7 +22,6 @@ CMeasureScript::CMeasureScript(CMeterWindow* meterWindow) : CMeasure(meterWindow
 CMeasureScript::~CMeasureScript()
 {
 	delete m_pLuaScript;
-
 }
 
 void CMeasureScript::Initialize()
@@ -92,26 +91,33 @@ const WCHAR* CMeasureScript::GetStringValue(AUTOSCALE autoScale, double scale, i
 	return CMeasure::GetStringValue(autoScale, scale, decimals, percentual);
 }
 
-static void stackDump (lua_State *L) {
-      int i=lua_gettop(L);
-      LuaManager::LuaLog(" ----------------  Stack Dump ----------------" );
-      while(  i   ) {
-        int t = lua_type(L, i);
-        switch (t) {
-          case LUA_TSTRING:
-			  LuaManager::LuaLog("%d:`%s'", i, lua_tostring(L, i));
-          break;
-          case LUA_TBOOLEAN:
-            LuaManager::LuaLog("%d: %s",i,lua_toboolean(L, i) ? "true" : "false");
-          break;
-          case LUA_TNUMBER:
-            LuaManager::LuaLog("%d: %g",  i, lua_tonumber(L, i));
-         break;
-         default: LuaManager::LuaLog("%d: %s", i, lua_typename(L, t)); break;
-        }
-       i--;
-      }
-     LuaManager::LuaLog("--------------- Stack Dump Finished ---------------" );
+static void stackDump(lua_State *L)
+{
+	int i = lua_gettop(L);
+	LuaManager::LuaLog(LOG_DEBUG, " ----------------  Stack Dump ----------------" );
+	while(i)
+	{
+		int t = lua_type(L, i);
+		switch (t)
+		{
+		case LUA_TSTRING:
+			LuaManager::LuaLog(LOG_DEBUG, "%d:`%s'", i, lua_tostring(L, i));
+			break;
+
+		case LUA_TBOOLEAN:
+			LuaManager::LuaLog(LOG_DEBUG, "%d: %s",i,lua_toboolean(L, i) ? "true" : "false");
+			break;
+
+		case LUA_TNUMBER:
+			LuaManager::LuaLog(LOG_DEBUG, "%d: %g",  i, lua_tonumber(L, i));
+			break;
+
+		default:
+			LuaManager::LuaLog(LOG_DEBUG, "%d: %s", i, lua_typename(L, t)); break;
+		}
+		i--;
+	}
+	LuaManager::LuaLog(LOG_DEBUG, "--------------- Stack Dump Finished ---------------" );
 }
 
 
@@ -123,98 +129,97 @@ static void stackDump (lua_State *L) {
 */
 void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
-
 	CMeasure::ReadConfig(parser, section);
 
 	std::string strScriptFile = ConvertToAscii(parser.ReadString(section, L"ScriptFile", L"").c_str());
 	std::string strTableName = ConvertToAscii(parser.ReadString(section, L"TableName", L"").c_str());
 
-	if(strScriptFile.empty() == false)
+	if (strScriptFile.empty() == false)
 	{
-
-		if(strTableName.empty() == false)
+		if (strTableName.empty() == false)
 		{
 			lua_State* L = LuaManager::GetState();
+
 			m_pLuaScript = new LuaScript(LuaManager::GetState(), strScriptFile.c_str(), strTableName.c_str());
 			
-			m_bUpdateDefined = m_pLuaScript->FunctionExists(g_strUpdateFunction);
-			m_bInitializeDefined = m_pLuaScript->FunctionExists(g_strInitFunction);
-			m_bGetValueDefined = m_pLuaScript->FunctionExists(g_strGetValueFunction);
-			m_bGetStringValueDefined = m_pLuaScript->FunctionExists(g_strGetStringValueFunction);
-
-
-			m_pLuaScript->PushTable();
-
-			// Push the variable name we want to put a value in.
-			lua_pushstring(L, "SELF");
-			// Push the value
-			tolua_pushusertype(L, this, "CMeasure");
-			// Bind the variable
-			lua_settable(L, -3);
-
-			// Push the variable name we want to put a value in.
-			lua_pushstring(L, "SKIN");
-			// Push the value
-			tolua_pushusertype(L, m_MeterWindow, "CMeterWindow");
-			// Bind the variable
-			lua_settable(L, -3);
-
-			// Push the variable name we want to put a value in.
-			lua_pushstring(L, "RAINMETER");
-			// Push the value
-			tolua_pushusertype(L, m_MeterWindow->GetMainObject(), "CRainmeter");
-			// Bind the variable
-			lua_settable(L, -3);
-
-			// Look i nthe properties table for values to read from the section.
-			lua_getfield(L, -1, "PROPERTIES");
-			if(lua_isnil(L, -1) == 0)
+			if (m_pLuaScript->IsInitialized())
 			{
-				lua_pushnil(L);
+				m_bUpdateDefined = m_pLuaScript->FunctionExists(g_strUpdateFunction);
+				m_bInitializeDefined = m_pLuaScript->FunctionExists(g_strInitFunction);
+				m_bGetValueDefined = m_pLuaScript->FunctionExists(g_strGetValueFunction);
+				m_bGetStringValueDefined = m_pLuaScript->FunctionExists(g_strGetStringValueFunction);
 
-				while(lua_next(L, -2)) 
-				{  
-					lua_pop(L, 1);
+				m_pLuaScript->PushTable();
 
-					const char* strKey = lua_tostring(L, -1);
+				// Push the variable name we want to put a value in.
+				lua_pushstring(L, "SELF");
+				// Push the value
+				tolua_pushusertype(L, this, "CMeasure");
+				// Bind the variable
+				lua_settable(L, -3);
 
-					std::wstring wstrKey = ConvertToWide(strKey);
-					std::wstring wstrValue = parser.ReadString(section, wstrKey.c_str(), L"").c_str();
-					
-					if( !wstrValue.empty() )
+				// Push the variable name we want to put a value in.
+				lua_pushstring(L, "SKIN");
+				// Push the value
+				tolua_pushusertype(L, m_MeterWindow, "CMeterWindow");
+				// Bind the variable
+				lua_settable(L, -3);
+
+				// Push the variable name we want to put a value in.
+				lua_pushstring(L, "RAINMETER");
+				// Push the value
+				tolua_pushusertype(L, m_MeterWindow->GetMainObject(), "CRainmeter");
+				// Bind the variable
+				lua_settable(L, -3);
+
+				// Look i nthe properties table for values to read from the section.
+				lua_getfield(L, -1, "PROPERTIES");
+				if (lua_isnil(L, -1) == 0)
+				{
+					lua_pushnil(L);
+
+					while(lua_next(L, -2)) 
 					{
-						const wchar_t* wstrValue2 = wstrValue.c_str();
-						std::string strStrVal = ConvertToAscii(wstrValue2);
-						const char* strValue = strStrVal.c_str();
+						lua_pop(L, 1);
+
+						const char* strKey = lua_tostring(L, -1);
+
+						std::wstring wstrKey = ConvertToWide(strKey);
+						std::wstring wstrValue = parser.ReadString(section, wstrKey.c_str(), L"").c_str();
 						
-						lua_pushstring(L,strValue);
-						lua_settable(L, -3);
+						if (!wstrValue.empty())
+						{
+							const wchar_t* wstrValue2 = wstrValue.c_str();
+							std::string strStrVal = ConvertToAscii(wstrValue2);
+							const char* strValue = strStrVal.c_str();
+							
+							lua_pushstring(L,strValue);
+							lua_settable(L, -3);
 
-						lua_pushstring(L,strKey);
+							lua_pushstring(L,strKey);
+						}
+
 					}
-
 				}
-			}
-			// Pop PROPERTIES table
-			lua_pop(L, 1);
+				// Pop PROPERTIES table
+				lua_pop(L, 1);
 
-			// Pop the table
-			lua_pop(L, 1);	
+				// Pop the table
+				lua_pop(L, 1);
+			}
 		}
 		else
 		{
-			LuaManager::LuaLog("%s : TableName missing.", m_ANSIName.c_str());
+			LuaManager::LuaLog(LOG_ERROR, "Script: TableName missing in %s.", m_ANSIName.c_str());
 		}
 	}
 	else
 	{
-		LuaManager::LuaLog("%s : ScriptFile missing.", m_ANSIName.c_str());
+		LuaManager::LuaLog(LOG_ERROR, "Script: ScriptFile missing in %s.", m_ANSIName.c_str());
 	}
-
 }
 void CMeasureScript::RunFunctionWithMeter(const char* p_strFunction, CMeter* p_pMeter)
 {
-
 	// Get the Lua State
 	lua_State* L = m_pLuaScript->GetState();
 
@@ -222,14 +227,18 @@ void CMeasureScript::RunFunctionWithMeter(const char* p_strFunction, CMeter* p_p
 	m_pLuaScript->PushTable();
 
 	// Push the function onto the stack
-	lua_getfield(L,-1, p_strFunction);
+	lua_getfield(L, -1, p_strFunction);
 
-	// Push the Meter
-	tolua_pushusertype(L, (void*) p_pMeter ,"CMeter");
-
-	if( lua_pcall(L, 1, 0, 0) )
+	// Check if the function exists
+	if (!lua_isnil(L, -1))
 	{
-		LuaManager::ReportErrors(L);
+		// Push the Meter
+		tolua_pushusertype(L, (void*) p_pMeter, "CMeter");
+
+		if (lua_pcall(L, 1, 0, 0))
+		{
+			LuaManager::ReportErrors(L);
+		}
 	}
 
 	// Clean up
@@ -238,36 +247,45 @@ void CMeasureScript::RunFunctionWithMeter(const char* p_strFunction, CMeter* p_p
 
 void CMeasureScript::MeterMouseEvent(CMeter* p_pMeter, MOUSE p_eMouse)
 {
-	switch (p_eMouse)
+	if (m_pLuaScript->IsInitialized())
 	{
+		switch (p_eMouse)
+		{
 		case MOUSE_LMB_DOWN:
 			RunFunctionWithMeter("LeftMouseDown", p_pMeter);
 			break;
+
 		case MOUSE_LMB_UP:
 			RunFunctionWithMeter("LeftMouseUp", p_pMeter);
 			break;
+
 		case MOUSE_LMB_DBLCLK:
 			RunFunctionWithMeter("LeftMouseDoubleClick", p_pMeter);
 			break;
+
 		case MOUSE_RMB_DOWN:
 			RunFunctionWithMeter("RightMouseDown", p_pMeter);
 			break;
+
 		case MOUSE_RMB_UP:
 			RunFunctionWithMeter("RightMouseUp", p_pMeter);
 			break;
+
 		case MOUSE_RMB_DBLCLK:
 			RunFunctionWithMeter("RightMouseDoubleClick", p_pMeter);
 			break;
+
 		case MOUSE_MMB_DOWN:
 			RunFunctionWithMeter("MiddleMouseDown", p_pMeter);
 			break;
+
 		case MOUSE_MMB_UP:
 			RunFunctionWithMeter("MiddleMouseUp", p_pMeter);
 			break;
+
 		case MOUSE_MMB_DBLCLK:
 			RunFunctionWithMeter("MiddleMouseDoubleClick", p_pMeter);
 			break;
+		}
 	}
-
-
 }

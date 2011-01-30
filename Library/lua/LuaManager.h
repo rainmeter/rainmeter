@@ -16,7 +16,7 @@ public:
 	
 	static void ReportErrors(lua_State * L);
 
-	static void LuaLog(const char* format, ... );
+	static void LuaLog(int nLevel, const char* format, ... );
 
 protected:
 

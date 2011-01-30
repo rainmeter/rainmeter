@@ -12,7 +12,6 @@
 
 #include "lua_rainmeter_ext.h"
 
-
 bool LuaManager::m_bInitialized = false;
 lua_State* LuaManager::m_pState = 0;
 
@@ -20,7 +19,6 @@ void LuaManager::Init()
 {
 	if(m_pState == 0)
 	{
-
 		// initialize Lua 
 		m_pState = lua_open();
 
@@ -36,7 +34,6 @@ void LuaManager::Init()
 		//tolua_meter_image_open(m_pState);
 
 		luaopen_rainmeter_ext(m_pState);
-
 	}
 }
 
@@ -47,13 +44,11 @@ void LuaManager::CleanUp()
 
 void LuaManager::ReportErrors(lua_State * L)
 {
-
-	LuaLog("Lua Error: %s", lua_tostring(L, -1));
+	LuaLog(LOG_ERROR, "Script: %s", lua_tostring(L, -1));
 	lua_pop(L, 1);
-
 } 
 
-void LuaManager::LuaLog(const char* format, ... )
+void LuaManager::LuaLog(int nLevel, const char* format, ... )
 {
 	char buffer[4096];
 	va_list args;
@@ -66,7 +61,7 @@ void LuaManager::LuaLog(const char* format, ... )
 	_vsnprintf_s( buffer, _TRUNCATE, format, args );
 	if (errno != 0)
 	{
-		_snprintf_s(buffer, _TRUNCATE, "LuaLog internal error: %s", format);
+		_snprintf_s(buffer, _TRUNCATE, "Script: LuaLog internal error: %s", format);
 	}
 
 	_set_invalid_parameter_handler(oldHandler);
@@ -79,6 +74,6 @@ void LuaManager::LuaLog(const char* format, ... )
 
 	std::wstring str = ConvertToWide(buffer);
 
-	LSLog(LOG_NOTICE, L"Lua", str.c_str());
+	LSLog(nLevel, L"Rainmeter", str.c_str());
 	va_end(args);
 }

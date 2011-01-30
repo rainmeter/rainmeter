@@ -9,7 +9,7 @@ LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_s
 	int result = luaL_loadfile(m_pState, p_strFile);
 	
 	// If the file loaded okay.
-	if(result == 0)
+	if (result == 0)
 	{
 		// Create the table this script will reside in
 		lua_newtable(m_pState);
@@ -38,20 +38,19 @@ LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_s
 		// Execute the Lua script
 		result = lua_pcall(m_pState, 0, LUA_MULTRET, 0);
 
-		if(result)
+		if (result)
 		{
 			m_bInitialized = false;
-			LuaManager::LuaLog("Lua cannot run file:");
-			LuaManager::LuaLog("%s", lua_tostring(m_pState, -1) );
+			LuaManager::LuaLog(LOG_ERROR, "Script: Cannot run file: %s", p_strFile);
+			LuaManager::LuaLog(LOG_ERROR, "Script: %s", lua_tostring(m_pState, -1));
 		}
 	}
 	else
 	{
 		m_bInitialized = false;
-		LuaManager::LuaLog("Lua cannot run file:");
-		LuaManager::LuaLog("%s", lua_tostring(m_pState, -1) );
+		LuaManager::LuaLog(LOG_ERROR, "Script: Cannot run file: %s", p_strFile);
+		LuaManager::LuaLog(LOG_ERROR, "Script: %s", lua_tostring(m_pState, -1));
 	}
-
 }
 
 LuaScript::~LuaScript(void)
@@ -61,7 +60,6 @@ LuaScript::~LuaScript(void)
 
 void LuaScript::BindVariable(const char* p_strName, void* p_pValue, const char* p_strTypeName)
 {
-
 	PushTable();
 
 	/*
@@ -89,7 +87,7 @@ void LuaScript::BindVariable(const char* p_strName, void* p_pValue, const char* 
 
 double LuaScript::RunFunctionDouble(const char* p_strFuncName)
 {
-	if( m_bInitialized && p_strFuncName )
+	if (m_bInitialized && p_strFuncName)
 	{
 		// Push our table onto the stack
 		lua_getglobal(m_pState, m_strTableName);
@@ -97,7 +95,7 @@ double LuaScript::RunFunctionDouble(const char* p_strFuncName)
 		// Push the function onto the stack
 		lua_getfield(m_pState,-1, p_strFuncName);
 
-		if( lua_pcall(m_pState, 0, 1, 0) )
+		if(lua_pcall(m_pState, 0, 1, 0))
 		{
 			LuaManager::ReportErrors(m_pState);
 		}
@@ -105,7 +103,7 @@ double LuaScript::RunFunctionDouble(const char* p_strFuncName)
 		{
 			if (!lua_isnumber(m_pState, -1))
 			{
-				LuaManager::LuaLog("Function `%s:%s' must return a number",m_strTableName, p_strFuncName);
+				LuaManager::LuaLog(LOG_ERROR, "Script: Function '%s:%s' must return a number", m_strTableName, p_strFuncName);
 			}
 
 			double d = lua_tonumber(m_pState, -1);
@@ -121,7 +119,6 @@ double LuaScript::RunFunctionDouble(const char* p_strFuncName)
 	return -1;
 }
 
-
 std::wstring LuaScript::RunFunctionString(const char* p_strFuncName)
 {
 	if( m_bInitialized && p_strFuncName )
@@ -130,9 +127,9 @@ std::wstring LuaScript::RunFunctionString(const char* p_strFuncName)
 		lua_getglobal(m_pState, m_strTableName);
 
 		// Push the function onto the stack
-		lua_getfield(m_pState,-1, p_strFuncName);
+		lua_getfield(m_pState, -1, p_strFuncName);
 
-		if( lua_pcall(m_pState, 0, 1, 0) )
+		if (lua_pcall(m_pState, 0, 1, 0))
 		{
 			LuaManager::ReportErrors(m_pState);
 		}
@@ -140,7 +137,7 @@ std::wstring LuaScript::RunFunctionString(const char* p_strFuncName)
 		{
 			if (!lua_isstring(m_pState, -1))
 			{
-				LuaManager::LuaLog("Function `%s:%s' must return a string",m_strTableName, p_strFuncName);
+				LuaManager::LuaLog(LOG_ERROR, "Script: Function '%s:%s' must return a string",m_strTableName, p_strFuncName);
 			}
 
 			const char* str = lua_tostring(m_pState, -1);
@@ -153,7 +150,7 @@ std::wstring LuaScript::RunFunctionString(const char* p_strFuncName)
 		lua_pop(m_pState, 1);
 	}
 
-	return 0;
+	return L"";
 }
 
 void LuaScript::RunFunction(const char* p_strFuncName)
