@@ -48,7 +48,7 @@ HWND OpenAboutDialog(HWND hwndOwner, HINSTANCE instance)
 	if (g_DialogWin == NULL)
 	{
 		g_DialogWin = CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUT_DIALOG), hwndOwner, AboutProc);
-      
+
 		if (g_DialogWin)
 		{
 			HICON hIcon = LoadIcon(instance, MAKEINTRESOURCE(IDI_TRAY));
@@ -288,6 +288,11 @@ void UpdateWidgets()
 		ListView_SetColumn(widget, 2, &lvc);
 
 		// Update the list of plugins
+		if (g_Plugins.empty())
+		{
+			ScanPlugins();
+		}
+
 		std::vector<PLUGIN_INFO>::const_iterator iter = g_Plugins.begin();
 		LVITEM vitem;
 		vitem.mask = LVIF_TEXT;
@@ -338,15 +343,13 @@ typedef UINT (*GETPLUGINVERSION)();
 
 void ScanPlugins()
 {
-    WIN32_FIND_DATA fileData;      // Data structure describes the file found
-    HANDLE hSearch;                // Search handle returned by FindFirstFile
+	WIN32_FIND_DATA fileData;      // Data structure describes the file found
+	HANDLE hSearch;                // Search handle returned by FindFirstFile
 
 	std::wstring files = Rainmeter->GetPluginPath() + L"*.dll";
 
-	g_Plugins.clear();
-
-    // Start searching for .ini files in the given directory.
-    hSearch = FindFirstFile(files.c_str(), &fileData);
+	// Start searching for .ini files in the given directory.
+	hSearch = FindFirstFile(files.c_str(), &fileData);
 	do
 	{
 		if(hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
@@ -486,8 +489,6 @@ BOOL OnInitAboutDialog(HWND window)
 		lvc.cx = 150;
 		lvc.pszText = L"Message";
 		ListView_InsertColumn(widget, 2, &lvc);
-
-		ScanPlugins();
 	}
 
 	UpdateWidgets();
@@ -498,78 +499,78 @@ BOOL OnInitAboutDialog(HWND window)
 
 INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
 {
-    switch (message) 
-    { 
-        case WM_INITDIALOG:
-			return OnInitAboutDialog(hwndDlg);
+	switch (message) 
+	{
+	case WM_INITDIALOG:
+		return OnInitAboutDialog(hwndDlg);
 
-		case WM_WINDOWPOSCHANGING:
+	case WM_WINDOWPOSCHANGING:
+		{
+			WINDOWPOS* pos = (WINDOWPOS*)lParam;
+
+			pos->cx = max(280, pos->cx);
+			pos->cy = max(280, pos->cy);
+		}
+		break;
+
+	case WM_SIZE:
+		RepositionControls(hwndDlg);
+		break;
+
+	case WM_CLOSE:
+		KillTimer(hwndDlg, LOGTIMER);
+		Rainmeter->SaveSettings();
+		DestroyWindow(hwndDlg);
+		g_DialogWin = NULL;
+		return TRUE;
+
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case IDC_DISABLE_VERSION_CHECK:
+			if (IsDlgButtonChecked(hwndDlg, IDC_DISABLE_VERSION_CHECK))
 			{
-				WINDOWPOS* pos = (WINDOWPOS*)lParam;
-
-				pos->cx = max(280, pos->cx);
-				pos->cy = max(280, pos->cy);
+				Rainmeter->SetDisableVersionCheck(TRUE);	
+			}
+			else
+			{
+				Rainmeter->SetDisableVersionCheck(FALSE);
 			}
 			break;
 
-		case WM_SIZE:
-			RepositionControls(hwndDlg);
-			break;
-
-		case WM_CLOSE:
-			KillTimer(hwndDlg, LOGTIMER);
-			Rainmeter->SaveSettings();
-			DestroyWindow(hwndDlg);
-			g_DialogWin = NULL;
+		case IDOK:
+			SendMessage(hwndDlg, WM_CLOSE, 0, 0);
 			return TRUE;
 
-		case WM_COMMAND:
-			switch (LOWORD(wParam))
+		case IDC_ABOUT_ENTRIES:
+			if (HIWORD(wParam) == LBN_SELCHANGE)
 			{
-			case IDC_DISABLE_VERSION_CHECK:
-				if (IsDlgButtonChecked(hwndDlg, IDC_DISABLE_VERSION_CHECK))
-				{
-					Rainmeter->SetDisableVersionCheck(TRUE);	
-				}
-				else
-				{
-					Rainmeter->SetDisableVersionCheck(FALSE);
-				}
-				break;
+				KillTimer(hwndDlg, LOGTIMER);
 
-			case IDOK:
-				SendMessage(hwndDlg, WM_CLOSE, 0, 0);
-				return TRUE;
-
-			case IDC_ABOUT_ENTRIES:
-				if (HIWORD(wParam) == LBN_SELCHANGE)
+				HWND widget = GetDlgItem(hwndDlg, IDC_ABOUT_ENTRIES);
+				if (widget != NULL)
 				{
-					KillTimer(hwndDlg, LOGTIMER);
-
-					HWND widget = GetDlgItem(hwndDlg, IDC_ABOUT_ENTRIES);
-					if (widget != NULL)
+					if (0 == (int)SendMessage(widget, LB_GETCURSEL, 0, 0))
 					{
-						if (0 == (int)SendMessage(widget, LB_GETCURSEL, 0, 0))
-						{
-							SetTimer(g_DialogWin, LOGTIMER, 1000, NULL);
-						}
+						SetTimer(g_DialogWin, LOGTIMER, 1000, NULL);
 					}
+				}
 
-					UpdateWidgets();
-					UpdateAboutStatistics();
-				} 
-				break;
-			}
-			break;
-
-		case WM_TIMER:
-			if (wParam == LOGTIMER)
-			{
+				UpdateWidgets();
 				UpdateAboutStatistics();
-				return TRUE;
-			}
+			} 
 			break;
+		}
+		break;
+
+	case WM_TIMER:
+		if (wParam == LOGTIMER)
+		{
+			UpdateAboutStatistics();
+			return TRUE;
+		}
+		break;
 	}
-    return FALSE;
+	return FALSE;
 }
 

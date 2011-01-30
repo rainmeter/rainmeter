@@ -26,6 +26,7 @@
 HWND OpenAboutDialog(HWND hwndOwner, HINSTANCE instance);
 void UpdateAboutDialog();
 void UpdateAboutStatistics(LPCTSTR entryName = NULL);
+void ScanPlugins();
 
 #endif
 
