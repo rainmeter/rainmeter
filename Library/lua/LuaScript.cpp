@@ -15,13 +15,13 @@ LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_s
 		lua_newtable(m_pState);
 
 		// Create the metatable that will store the global table
-		lua_createtable(m_pState,0,1); 
+		lua_createtable(m_pState, 0, 1); 
 		
 		// Push the global teble
-		lua_pushvalue(m_pState,LUA_GLOBALSINDEX);
+		lua_pushvalue(m_pState, LUA_GLOBALSINDEX);
 		
 		// Set the __index of the table to be the global table
-		lua_setfield(m_pState,-2, "__index");
+		lua_setfield(m_pState, -2, "__index");
 
 		// Set the metatable for the script's table
 		lua_setmetatable(m_pState, -2);
@@ -33,7 +33,7 @@ LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_s
 
 		// Set the environment for the function to be run in to be the table that
 		// has been created for the script/
-		lua_setfenv(m_pState,-2);
+		lua_setfenv(m_pState, -2);
 
 		// Execute the Lua script
 		result = lua_pcall(m_pState, 0, LUA_MULTRET, 0);
@@ -93,7 +93,7 @@ double LuaScript::RunFunctionDouble(const char* p_strFuncName)
 		lua_getglobal(m_pState, m_strTableName);
 
 		// Push the function onto the stack
-		lua_getfield(m_pState,-1, p_strFuncName);
+		lua_getfield(m_pState, -1, p_strFuncName);
 
 		if(lua_pcall(m_pState, 0, 1, 0))
 		{
@@ -121,7 +121,7 @@ double LuaScript::RunFunctionDouble(const char* p_strFuncName)
 
 std::wstring LuaScript::RunFunctionString(const char* p_strFuncName)
 {
-	if( m_bInitialized && p_strFuncName )
+	if (m_bInitialized && p_strFuncName)
 	{
 		// Push our table onto the stack
 		lua_getglobal(m_pState, m_strTableName);
@@ -137,7 +137,7 @@ std::wstring LuaScript::RunFunctionString(const char* p_strFuncName)
 		{
 			if (!lua_isstring(m_pState, -1))
 			{
-				LuaManager::LuaLog(LOG_ERROR, "Script: Function '%s:%s' must return a string",m_strTableName, p_strFuncName);
+				LuaManager::LuaLog(LOG_ERROR, "Script: Function '%s:%s' must return a string", m_strTableName, p_strFuncName);
 			}
 
 			const char* str = lua_tostring(m_pState, -1);
@@ -155,7 +155,7 @@ std::wstring LuaScript::RunFunctionString(const char* p_strFuncName)
 
 void LuaScript::RunFunction(const char* p_strFuncName)
 {
-	if( m_bInitialized && p_strFuncName )
+	if (m_bInitialized && p_strFuncName)
 	{
 		// Push our table onto the stack
 		lua_getglobal(m_pState, m_strTableName);
@@ -163,7 +163,7 @@ void LuaScript::RunFunction(const char* p_strFuncName)
 		// Push the function onto the stack
 		lua_getfield(m_pState,-1, p_strFuncName);
 
-		if( lua_pcall(m_pState, 0, 0, 0) )
+		if (lua_pcall(m_pState, 0, 0, 0))
 		{
 			LuaManager::ReportErrors(m_pState);
 		}
@@ -176,15 +176,15 @@ bool LuaScript::FunctionExists(const char* p_strFuncName)
 {
 	bool bExists = false;
 
-	if( m_bInitialized && p_strFuncName )
+	if (m_bInitialized && p_strFuncName)
 	{
 		// Push our table onto the stack
 		lua_getglobal(m_pState, m_strTableName);
 
 		// Push the function onto the stack
-		lua_getfield(m_pState,-1, p_strFuncName);
+		lua_getfield(m_pState, -1, p_strFuncName);
 
-		if( lua_isfunction( m_pState, lua_gettop(m_pState) ) ) 
+		if (lua_isfunction( m_pState, lua_gettop(m_pState))) 
 		{
 			bExists = true;
 		}
@@ -195,5 +195,3 @@ bool LuaScript::FunctionExists(const char* p_strFuncName)
 
 	return bExists;
 }
-
-

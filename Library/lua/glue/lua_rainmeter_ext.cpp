@@ -114,6 +114,7 @@ static const luaL_reg rainmeter_ext_funcs[] =
 
 TOLUA_API int luaopen_rainmeter_ext (lua_State* L)
 {
+    lua_register(L, "print", staticLuaLog);
     luaL_register(L,"TO", rainmeter_ext_funcs);
     return 1;
 }

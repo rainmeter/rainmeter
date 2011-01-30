@@ -17,7 +17,7 @@ lua_State* LuaManager::m_pState = 0;
 
 void LuaManager::Init()
 {
-	if(m_pState == 0)
+	if (m_pState == 0)
 	{
 		// initialize Lua 
 		m_pState = lua_open();

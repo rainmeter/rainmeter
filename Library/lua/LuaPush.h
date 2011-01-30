@@ -17,4 +17,3 @@ const wchar_t* to_wchar   (lua_State* L, int arg, void* type);
 int is_wchar (lua_State* L, int lo, const char* type, int def, tolua_Error* err);
 
 #endif
-

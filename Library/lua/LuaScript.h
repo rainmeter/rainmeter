@@ -28,7 +28,7 @@ public:
 
 	void BindVariable(const char* p_strName, void* p_pValue, const char* p_strTypeName);
 
-	void PushTable() {	lua_getglobal(m_pState, m_strTableName); }
+	void PushTable() { lua_getglobal(m_pState, m_strTableName); }
 
 	static void ReportErrors(lua_State * L);
 
