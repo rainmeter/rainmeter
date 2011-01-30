@@ -7,39 +7,35 @@
 
 class CMeasureScript : public CMeasure
 {
-
 public:
-
 	CMeasureScript(CMeterWindow* meterWindow);
 	virtual ~CMeasureScript();
 
-	void ReadConfig(CConfigParser& parser, const WCHAR* section);
-
-	void Initialize();
-
-	bool Update();
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void Initialize();
+	virtual bool Update();
+	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 
 	double GetValue();
-
 	void SetValue(double d);
 
-	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
+	void DeleteLuaScript();
 
 	void MeterMouseEvent(CMeter* p_pMeter, MOUSE p_eMouse);
 	void RunFunctionWithMeter(const char* p_strFunction, CMeter* p_pMeter);
 
-	
 protected:
-
 	LuaScript*	m_pLuaScript;
 
 	bool		m_bUpdateDefined;
 	bool		m_bGetValueDefined;
-	bool		m_bGetStringValueDefined;	
+	bool		m_bGetStringValueDefined;
 	bool		m_bInitializeDefined;
 
 	std::wstring m_strValue;
-	std::wstring m_ScriptTableName;
+
+	std::string m_ScriptFile;
+	std::string m_TableName;
 
 	/*
 	Sqrat::Table* m_ScriptTable;
@@ -49,7 +45,6 @@ protected:
 	Sqrat::Function* m_InitFunc;
 	Sqrat::Function* m_UpdateTransitionFunc;
 	*/
-
 };
 
 #endif

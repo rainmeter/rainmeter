@@ -20,7 +20,7 @@ public:
 
 protected:
 
-	static bool m_bInitialized;
+	static int m_RefCount;
 
 	static lua_State* m_pState;
 };

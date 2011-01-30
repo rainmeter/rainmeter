@@ -12,7 +12,7 @@
 
 #include "lua_rainmeter_ext.h"
 
-bool LuaManager::m_bInitialized = false;
+int LuaManager::m_RefCount = 0;
 lua_State* LuaManager::m_pState = 0;
 
 void LuaManager::Init()
@@ -35,11 +35,22 @@ void LuaManager::Init()
 
 		luaopen_rainmeter_ext(m_pState);
 	}
+
+	++m_RefCount;
 }
 
 void LuaManager::CleanUp()
 {
-	lua_close(m_pState);
+	if (m_RefCount > 0)
+	{
+		--m_RefCount;
+	}
+
+	if (m_RefCount == 0 && m_pState != 0)
+	{
+		lua_close(m_pState);
+		m_pState = 0;
+	}
 }
 
 void LuaManager::ReportErrors(lua_State * L)
