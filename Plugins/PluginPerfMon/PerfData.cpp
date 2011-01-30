@@ -23,6 +23,8 @@
 #include <crtdbg.h>
 #include "..\..\Library\Export.h"	// Rainmeter's exported functions
 
+#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+
 ULONGLONG GetPerfData(PCTSTR ObjectName, PCTSTR InstanceName, PCTSTR CounterName);
 
 struct PerfMeasure

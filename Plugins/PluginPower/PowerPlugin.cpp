@@ -26,6 +26,8 @@
 #include <Powrprof.h>
 #include "..\..\Library\Export.h"	// Rainmeter's exported functions
 
+#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+
 typedef struct _PROCESSOR_POWER_INFORMATION 
 {
 	ULONG Number;

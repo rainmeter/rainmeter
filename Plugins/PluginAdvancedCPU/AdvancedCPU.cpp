@@ -23,6 +23,8 @@
 #include <map>
 #include "..\..\Library\Export.h"	// Rainmeter's exported functions
 
+#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+
 //ULONGLONG GetPerfData(PCTSTR ObjectName, PCTSTR InstanceName, PCTSTR CounterName);
 void UpdateProcesses();
 

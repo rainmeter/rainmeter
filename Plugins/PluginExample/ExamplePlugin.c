@@ -22,6 +22,8 @@
 #include <math.h>
 #include "..\..\Library\Export.h"	// Rainmeter's exported functions
 
+//#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+
 /* The exported functions */
 __declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
 __declspec( dllexport ) void Finalize(HMODULE instance, UINT id);

@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma comment( lib, "wlanapi.lib")
 #include "..\..\Library\Export.h"	// Rainmeter's exported functions
 
+#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+
 /* The exported functions */
 extern "C"
 {

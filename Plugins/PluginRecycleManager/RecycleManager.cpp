@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <time.h>
 #include "..\..\Library\Export.h"       // Rainmeter's exported functions
 
+#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+
 /* The exported functions */
 extern "C"
 {

@@ -32,6 +32,8 @@
 
 #include "..\..\Library\Export.h"	// Rainmeter's exported functions
 
+#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+
 #define SAFE_RELEASE(punk)  \
               if ((punk) != NULL) { (punk)->Release(); (punk) = NULL; }
 

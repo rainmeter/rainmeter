@@ -25,6 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <map>
 #include <time.h>
 
+#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+
 const int VOLUME_STEP = 5;
 
 /* The exported functions */

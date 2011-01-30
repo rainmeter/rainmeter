@@ -26,6 +26,8 @@
 #include "Resource.h"
 #include "UpdateCheck.h"
 
+#include "DisableThreadLibraryCalls.h"	// contains DllMain entry point
+
 using namespace Gdiplus;
 
 CRainmeter* Rainmeter; // The module

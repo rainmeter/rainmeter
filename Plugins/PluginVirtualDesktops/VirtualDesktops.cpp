@@ -72,6 +72,8 @@
 
 #include "../../Library/Export.h"
 
+#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+
 extern "C"
 {
 	__declspec(dllexport) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
