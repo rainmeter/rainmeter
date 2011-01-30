@@ -522,6 +522,7 @@ INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 		Rainmeter->SaveSettings();
 		DestroyWindow(hwndDlg);
 		g_DialogWin = NULL;
+		g_Plugins.clear();
 		return TRUE;
 
 	case WM_COMMAND:
