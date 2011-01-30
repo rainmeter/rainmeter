@@ -12,7 +12,7 @@ public:
 
 	static void CleanUp();
 
-	static lua_State* GetState() { return m_pState; }
+	static lua_State* GetState() { return c_pState; }
 	
 	static void ReportErrors(lua_State * L);
 
@@ -20,9 +20,9 @@ public:
 
 protected:
 
-	static int m_RefCount;
+	static int c_RefCount;
 
-	static lua_State* m_pState;
+	static lua_State* c_pState;
 };
 
 #endif

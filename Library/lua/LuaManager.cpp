@@ -12,44 +12,44 @@
 
 #include "lua_rainmeter_ext.h"
 
-int LuaManager::m_RefCount = 0;
-lua_State* LuaManager::m_pState = 0;
+int LuaManager::c_RefCount = 0;
+lua_State* LuaManager::c_pState = 0;
 
 void LuaManager::Init()
 {
-	if (m_pState == 0)
+	if (c_pState == 0)
 	{
 		// initialize Lua 
-		m_pState = lua_open();
+		c_pState = lua_open();
 
 		//load Lua base libraries
-		luaL_openlibs(m_pState);
+		luaL_openlibs(c_pState);
 
-		tolua_measure_open(m_pState);
-		tolua_group_open(m_pState);
-		tolua_meter_open(m_pState);
-		tolua_meterwindow_open(m_pState);
-		tolua_rainmeter_open(m_pState);
-		tolua_meter_string_open(m_pState);
-		//tolua_meter_image_open(m_pState);
+		tolua_measure_open(c_pState);
+		tolua_group_open(c_pState);
+		tolua_meter_open(c_pState);
+		tolua_meterwindow_open(c_pState);
+		tolua_rainmeter_open(c_pState);
+		tolua_meter_string_open(c_pState);
+		//tolua_meter_image_open(c_pState);
 
-		luaopen_rainmeter_ext(m_pState);
+		luaopen_rainmeter_ext(c_pState);
 	}
 
-	++m_RefCount;
+	++c_RefCount;
 }
 
 void LuaManager::CleanUp()
 {
-	if (m_RefCount > 0)
+	if (c_RefCount > 0)
 	{
-		--m_RefCount;
+		--c_RefCount;
 	}
 
-	if (m_RefCount == 0 && m_pState != 0)
+	if (c_RefCount == 0 && c_pState != 0)
 	{
-		lua_close(m_pState);
-		m_pState = 0;
+		lua_close(c_pState);
+		c_pState = 0;
 	}
 }
 
