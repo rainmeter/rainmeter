@@ -827,8 +827,19 @@ bool CMeter::Draw(Graphics& graphics)
 		}
 		else
 		{
+			if (!m_AntiAlias)
+			{
+				// Fix the tiling issue in some GradientAngle values
+				graphics.SetPixelOffsetMode(PixelOffsetModeHalf);
+			}
+
 			LinearGradientBrush gradient(r, m_SolidColor, m_SolidColor2, m_SolidAngle, TRUE);
 			graphics.FillRectangle(&gradient, r);
+
+			if (!m_AntiAlias)
+			{
+				graphics.SetPixelOffsetMode(PixelOffsetModeDefault);
+			}
 		}
 	}
 
