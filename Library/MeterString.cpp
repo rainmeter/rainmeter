@@ -200,7 +200,7 @@ void CMeterString::Initialize()
 				// It couldn't find the font family: Log it.
 				if (Ok != status)
 				{	
-					std::wstring error = L"Couldn't load font family: " + m_FontFace;
+					std::wstring error = L"Unable to load font family: " + m_FontFace;
 					Log(LOG_ERROR, error.c_str());
 
 					delete m_FontFamily;
@@ -707,6 +707,7 @@ void CMeterString::BindMeasure(const std::list<CMeasure*>& measures)
 ** FreeFontCache
 **
 ** Static function which frees the font cache.
+** If collection is not NULL, frees the private font cache.
 **
 */
 void CMeterString::FreeFontCache(PrivateFontCollection* collection)
@@ -722,26 +723,38 @@ void CMeterString::FreeFontCache(PrivateFontCollection* collection)
 	}
 
 	std::map<std::wstring, Gdiplus::Font*>::iterator iter2 = c_Fonts.begin();
-	for ( ; iter2 != c_Fonts.end(); ++iter2)
+	while (iter2 != c_Fonts.end())
 	{
-		if (collection == NULL || (*iter2).first.compare(0, prefix.length(), prefix) == 0)
+		if (collection == NULL || wcsncmp((*iter2).first.c_str(), prefix.c_str(), prefix.length()) == 0)
 		{
 			//LogWithArgs(LOG_DEBUG, L"FontCache-Remove: %s", (*iter2).first.c_str());
 			delete (*iter2).second;
-			if (collection) c_Fonts.erase(iter2);
+
+			if (collection)
+			{
+				c_Fonts.erase(iter2++);
+				continue;
+			}
 		}
+		++iter2;
 	}
 	if (collection == NULL) c_Fonts.clear();
 
 	std::map<std::wstring, Gdiplus::FontFamily*>::iterator iter = c_FontFamilies.begin();
-	for ( ; iter != c_FontFamilies.end(); ++iter)
+	while (iter != c_FontFamilies.end())
 	{
-		if (collection == NULL || (*iter).first.compare(0, prefix.length(), prefix) == 0)
+		if (collection == NULL || wcsncmp((*iter).first.c_str(), prefix.c_str(), prefix.length()) == 0)
 		{
 			//LogWithArgs(LOG_DEBUG, L"FontFamilyCache-Remove: %s", (*iter).first.c_str());
 			delete (*iter).second;
-			if (collection) c_FontFamilies.erase(iter);
+
+			if (collection)
+			{
+				c_FontFamilies.erase(iter++);
+				continue;
+			}
 		}
+		++iter;
 	}
 	if (collection == NULL) c_FontFamilies.clear();
 }
