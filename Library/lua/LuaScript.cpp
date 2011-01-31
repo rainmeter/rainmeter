@@ -41,15 +41,13 @@ LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_s
 		if (result)
 		{
 			m_bInitialized = false;
-			LuaManager::LuaLog(LOG_ERROR, "Script: Cannot run file: %s", p_strFile);
-			LuaManager::LuaLog(LOG_ERROR, "Script: %s", lua_tostring(m_pState, -1));
+			LuaManager::LuaLog(LOG_ERROR, "Script: Could not run file: %s", lua_tostring(m_pState, -1));
 		}
 	}
 	else
 	{
 		m_bInitialized = false;
-		LuaManager::LuaLog(LOG_ERROR, "Script: Cannot run file: %s", p_strFile);
-		LuaManager::LuaLog(LOG_ERROR, "Script: %s", lua_tostring(m_pState, -1));
+		LuaManager::LuaLog(LOG_ERROR, "Script: Could not run file: %s", lua_tostring(m_pState, -1));
 	}
 }
 

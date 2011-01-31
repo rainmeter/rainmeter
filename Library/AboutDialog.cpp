@@ -34,6 +34,7 @@ void UpdateWidgets();
 BOOL OnInitAboutDialog(HWND window);
 
 HWND g_DialogWin = NULL;
+WINDOWPLACEMENT g_DialogPlacement = {0};
 
 struct PLUGIN_INFO
 {
@@ -53,9 +54,23 @@ HWND OpenAboutDialog(HWND hwndOwner, HINSTANCE instance)
 		{
 			HICON hIcon = LoadIcon(instance, MAKEINTRESOURCE(IDI_TRAY));
 			SendMessage(g_DialogWin, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+
+			if (g_DialogPlacement.length == 0)
+			{
+				g_DialogPlacement.length = sizeof(WINDOWPLACEMENT);
+				GetWindowPlacement(g_DialogWin, &g_DialogPlacement);
+			}
+
+			SetWindowPlacement(g_DialogWin, &g_DialogPlacement);
 		}
 	}
-	ShowWindow(g_DialogWin, SW_SHOWNORMAL);
+	else
+	{
+		if (!IsZoomed(g_DialogWin))
+		{
+			ShowWindow(g_DialogWin, SW_SHOWNORMAL);
+		}
+	}
 	UpdateAboutStatistics();
 
 	return g_DialogWin;
@@ -154,16 +169,16 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 					{
 						if (i < count)
 						{
-							ListView_SetItemText(widget, i, 0, (WCHAR*)(*iter).type.c_str());
+							ListView_SetItemText(widget, i, 0, (WCHAR*)(*iter).timestamp.c_str());
 						}
 						else
 						{
 							vitem.iItem = i;
 							vitem.iSubItem = 0;
-							vitem.pszText = (WCHAR*)(*iter).type.c_str();
+							vitem.pszText = (WCHAR*)(*iter).timestamp.c_str();
 							ListView_InsertItem(widget, &vitem);
 						}
-						ListView_SetItemText(widget, i, 1, (WCHAR*)(*iter).timestamp.c_str());
+						ListView_SetItemText(widget, i, 1, (WCHAR*)(*iter).type.c_str());
 						ListView_SetItemText(widget, i, 2, (WCHAR*)(*iter).message.c_str());
 
 						++i;
@@ -226,11 +241,11 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 										ListView_InsertItem(widget, &vitem);
 									}
 
+									ListView_SetItemText(widget, index, 1, (WCHAR*)range.c_str());
 									if (val)
 									{
-										ListView_SetItemText(widget, index, 1, (WCHAR*)val);
+										ListView_SetItemText(widget, index, 2, (WCHAR*)val);
 									}
-									ListView_SetItemText(widget, index, 2, (WCHAR*)range.c_str());
 									++index;
 								}
 							}
@@ -269,9 +284,9 @@ void UpdateWidgets()
 	{
 		LVCOLUMN lvc; 
 		lvc.mask = LVCF_TEXT; 
-		lvc.pszText = L"Log Type";
-		ListView_SetColumn(widget, 0, &lvc);
 		lvc.pszText = L"Time";
+		ListView_SetColumn(widget, 0, &lvc);
+		lvc.pszText = L"Type";
 		ListView_SetColumn(widget, 1, &lvc);
 		lvc.pszText = L"Message";
 		ListView_SetColumn(widget, 2, &lvc);
@@ -331,9 +346,9 @@ void UpdateWidgets()
 		lvc.mask = LVCF_TEXT; 
 		lvc.pszText = L"Measure";
 		ListView_SetColumn(widget, 0, &lvc);
-		lvc.pszText = L"Value";
-		ListView_SetColumn(widget, 1, &lvc);
 		lvc.pszText = L"Range";
+		ListView_SetColumn(widget, 1, &lvc);
+		lvc.pszText = L"Value";
 		ListView_SetColumn(widget, 2, &lvc);
 	}
 }
@@ -420,10 +435,17 @@ void RepositionControls(HWND hwndDlg)
 
 	widget = GetDlgItem(hwndDlg, IDC_ABOUT_ENTRIES);
 	SetWindowPos(widget, NULL, 0, 0, (r.right - 28) / 3, r.bottom - 170, SWP_NOMOVE | SWP_NOZORDER);
-	widget = GetDlgItem(hwndDlg, IDC_STATISTICS);
-	SetWindowPos(widget, NULL, 18 + ((r.right - 28) / 3), 130, 2 * ((r.right - 28) / 3), r.bottom - 170, SWP_NOZORDER);
 	widget = GetDlgItem(hwndDlg, IDOK);
 	SetWindowPos(widget, NULL, (r.right - br.right) / 2, r.bottom - br.bottom - 9, br.right, br.bottom, SWP_NOZORDER);
+
+	// Set listbox width and adjust third column
+	widget = GetDlgItem(hwndDlg, IDC_STATISTICS);
+	SetWindowPos(widget, NULL, 18 + ((r.right - 28) / 3), 130, 2 * ((r.right - 28) / 3), r.bottom - 170, SWP_NOZORDER);
+
+	LVCOLUMN lvc; 
+	lvc.mask = LVCF_WIDTH; 
+	lvc.cx = (2 * ((r.right - 28) / 3)) - 190;
+	ListView_SetColumn(widget, 2, &lvc);
 }
 
 BOOL OnInitAboutDialog(HWND window) 
@@ -477,16 +499,16 @@ BOOL OnInitAboutDialog(HWND window)
 		LVCOLUMN lvc; 
 		lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM; 
 		lvc.iSubItem = 0;
-		lvc.pszText = L"Log Type";
+		lvc.pszText = L"Time";
 		lvc.cx = 110;
 		lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 		ListView_InsertColumn(widget, 0, &lvc);
 		lvc.iSubItem = 1;
-		lvc.cx = 100;
-		lvc.pszText = L"Time";
+		lvc.cx = 75;
+		lvc.pszText = L"Type";
 		ListView_InsertColumn(widget, 1, &lvc);
 		lvc.iSubItem = 2;
-		lvc.cx = 150;
+		lvc.cx = 180;
 		lvc.pszText = L"Message";
 		ListView_InsertColumn(widget, 2, &lvc);
 	}
@@ -499,7 +521,7 @@ BOOL OnInitAboutDialog(HWND window)
 
 INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
 {
-	switch (message) 
+	switch (message)
 	{
 	case WM_INITDIALOG:
 		return OnInitAboutDialog(hwndDlg);
@@ -520,6 +542,11 @@ INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 	case WM_CLOSE:
 		KillTimer(hwndDlg, LOGTIMER);
 		Rainmeter->SaveSettings();
+		GetWindowPlacement(hwndDlg, &g_DialogPlacement);
+		if (g_DialogPlacement.showCmd == SW_SHOWMINIMIZED)
+		{
+			g_DialogPlacement.showCmd = SW_SHOWNORMAL;
+		}
 		DestroyWindow(hwndDlg);
 		g_DialogWin = NULL;
 		g_Plugins.clear();
