@@ -630,7 +630,7 @@ union luai_Cast { double l_d; long l_l; };
 @* can do during pattern-matching.
 ** CHANGE it if you need more captures. This limit is arbitrary.
 */
-#define LUA_MAXCAPTURES		32
+#define LUA_MAXCAPTURES		256
 
 
 /*
