@@ -434,17 +434,17 @@ void RepositionControls(HWND hwndDlg)
 	SetWindowPos(widget, NULL, ((r.right - (wr.right - wr.left)) / 2) + 9, wr.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
 	widget = GetDlgItem(hwndDlg, IDC_ABOUT_ENTRIES);
-	SetWindowPos(widget, NULL, 0, 0, (r.right - 28) / 3, r.bottom - 170, SWP_NOMOVE | SWP_NOZORDER);
+	SetWindowPos(widget, NULL, 0, 0, (r.right < 800) ? ((r.right - 28) / 3) : 257, r.bottom - 170, SWP_NOMOVE | SWP_NOZORDER);
 	widget = GetDlgItem(hwndDlg, IDOK);
 	SetWindowPos(widget, NULL, (r.right - br.right) / 2, r.bottom - br.bottom - 9, br.right, br.bottom, SWP_NOZORDER);
 
 	// Set listbox width and adjust third column
 	widget = GetDlgItem(hwndDlg, IDC_STATISTICS);
-	SetWindowPos(widget, NULL, 18 + ((r.right - 28) / 3), 130, 2 * ((r.right - 28) / 3), r.bottom - 170, SWP_NOZORDER);
+	SetWindowPos(widget, NULL, (r.right < 800) ? (18 + ((r.right - 28) / 3)) : 275, 130, (r.right < 800) ? (2 * ((r.right - 28) / 3)) : (r.right - 287), r.bottom - 170, SWP_NOZORDER);
 
 	LVCOLUMN lvc; 
 	lvc.mask = LVCF_WIDTH; 
-	lvc.cx = (2 * ((r.right - 28) / 3)) - 190;
+	lvc.cx = ((r.right < 800) ? (2 * ((r.right - 28) / 3)) : (r.right - 287)) - 200;
 	ListView_SetColumn(widget, 2, &lvc);
 }
 
@@ -504,11 +504,11 @@ BOOL OnInitAboutDialog(HWND window)
 		lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 		ListView_InsertColumn(widget, 0, &lvc);
 		lvc.iSubItem = 1;
-		lvc.cx = 75;
+		lvc.cx = 85;
 		lvc.pszText = L"Type";
 		ListView_InsertColumn(widget, 1, &lvc);
 		lvc.iSubItem = 2;
-		lvc.cx = 180;
+		lvc.cx = 170;
 		lvc.pszText = L"Message";
 		ListView_InsertColumn(widget, 2, &lvc);
 	}
