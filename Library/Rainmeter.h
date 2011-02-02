@@ -180,7 +180,7 @@ public:
 	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; }
 
 	void ActivateConfig(int configIndex, int iniIndex);
-	bool DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bool bLater = true);
+	bool DeactivateConfig(CMeterWindow* meterWindow, int configIndex);
 
 	const std::wstring& GetPath() { return m_Path; }
 	const std::wstring& GetIniFile() { return m_IniFile; }
