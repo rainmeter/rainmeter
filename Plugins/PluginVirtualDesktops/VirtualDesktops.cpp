@@ -72,7 +72,7 @@
 
 #include "../../Library/Export.h"
 
-#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+#include "..\..\Library\DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 extern "C"
 {

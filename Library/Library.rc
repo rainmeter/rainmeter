@@ -1,7 +1,7 @@
 // Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
-#include "..\revision-number.h"
+#include "..\Version.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -191,15 +191,15 @@ EXSTYLE WS_EX_APPWINDOW
 CAPTION "About Rainmeter"
 FONT 8, "MS Shell Dlg 2", 0, 0, 0x0
 BEGIN
-    CONTROL         "List1",IDC_STATISTICS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,118,80,211,100
-    CTEXT           "Get the latest version at: http://www.rainmeter.net",IDC_URL_STRING,15,43,300,8
-    CTEXT           "Rainmeter version 0.0",IDC_VERSION_STRING,15,17,300,8
     GROUPBOX        "About",IDC_STATIC_ABOUT,7,7,220,69
+    CTEXT           "Rainmeter version 0.0",IDC_VERSION_STRING,15,17,300,8
     CTEXT           "(Built on ??? ?? ????)",IDC_BUILD_STRING,15,30,300,8
-    DEFPUSHBUTTON   "OK",IDOK,91,204,50,14
+    CTEXT           "Get the latest version at www.rainmeter.net",IDC_URL_STRING,15,43,300,8
     CONTROL         "Disable check for updates",IDC_DISABLE_VERSION_CHECK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,67,56,104,10
     LISTBOX         IDC_ABOUT_ENTRIES,7,80,130,100,LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    CONTROL         "List1",IDC_STATISTICS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,118,80,211,100
+    DEFPUSHBUTTON   "OK",IDOK,91,204,50,14
 END
 
 

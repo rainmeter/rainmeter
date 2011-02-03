@@ -2,7 +2,7 @@
 // Caution! Do not modify this file without changing \install\UpdateApplicationRC.au3
 //
 #include "resource.h"
-#include "..\revision-number.h"
+#include "..\Version.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////

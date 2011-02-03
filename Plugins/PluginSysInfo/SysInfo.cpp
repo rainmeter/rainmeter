@@ -26,7 +26,7 @@
 #include <Iphlpapi.h>
 #include "..\..\Library\Export.h"	// Rainmeter's exported functions
 
-#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+#include "..\..\Library\DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 /* The exported functions */
 extern "C"

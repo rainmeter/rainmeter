@@ -23,7 +23,7 @@
 #include "Measure.h"
 #include "resource.h"
 #include "AboutDialog.h"
-#include "../revision-number.h"
+#include "../Version.h"
 
 #define LOGTIMER 1
 
@@ -367,7 +367,7 @@ void ScanPlugins()
 	hSearch = FindFirstFile(files.c_str(), &fileData);
 	do
 	{
-		if(hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
+		if (hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
 
 		PLUGIN_INFO info;
 		info.name = fileData.cFileName;
@@ -398,14 +398,14 @@ void ScanPlugins()
 		}
 		else
 		{
-			LogWithArgs(LOG_WARNING, L"Unable to load library: \"%s\", ErrorCode=%u", tmpSz.c_str(), err);
+			LogWithArgs(LOG_WARNING, L"Unable to load plugin: \"%s\", ErrorCode=%u", tmpSz.c_str(), err);
 		}
 
 		g_Plugins.push_back(info);
 	}
-	while(FindNextFile(hSearch, &fileData));
+	while (FindNextFile(hSearch, &fileData));
 
-    FindClose(hSearch);
+	FindClose(hSearch);
 }
 
 void RepositionControls(HWND hwndDlg)
@@ -454,7 +454,7 @@ BOOL OnInitAboutDialog(HWND window)
 	HWND widget;
 
 	widget = GetDlgItem(window, IDC_VERSION_STRING);
-	_snwprintf_s(tmpSz, _TRUNCATE, L"%s %s%s rev %i %s", APPNAME, APPVERSION, revision_beta ? L" Beta" : L"", revision_number, APPBITS);
+	_snwprintf_s(tmpSz, _TRUNCATE, L"%s %s%s rev %i %s", APPNAME, APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS);
 	SetWindowText(widget, tmpSz);
 
 	widget = GetDlgItem(window, IDC_BUILD_STRING);
@@ -467,7 +467,7 @@ BOOL OnInitAboutDialog(HWND window)
 	widget = GetDlgItem(window, IDC_ABOUT_ENTRIES);
 	const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 	std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-	for( ; iter != windows.end(); ++iter)
+	for ( ; iter != windows.end(); ++iter)
 	{
 		CMeterWindow* meterWindow = (*iter).second;
 		const std::wstring& skinName = meterWindow->GetSkinName();
@@ -530,8 +530,8 @@ INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 		{
 			WINDOWPOS* pos = (WINDOWPOS*)lParam;
 
-			pos->cx = max(280, pos->cx);
-			pos->cy = max(280, pos->cy);
+			pos->cx = max(420, pos->cx);
+			pos->cy = max(340, pos->cy);
 		}
 		break;
 

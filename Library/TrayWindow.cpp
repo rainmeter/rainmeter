@@ -24,7 +24,7 @@
 #include "AboutDialog.h"
 #include "Error.h"
 #include "RainmeterQuery.h"
-#include "../revision-number.h"
+#include "../Version.h"
 
 #define TRAYTIMER 3
 
