@@ -51,7 +51,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;lua/tolua++&quot;;lua/glue;lua/include"
+				AdditionalIncludeDirectories="lua/include;lua/lua;&quot;lua/tolua++&quot;;lua/glue"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;UNICODE;_USRDLL;LIBRARY_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -144,7 +144,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;lua/tolua++&quot;;lua/glue;lua/include"
+				AdditionalIncludeDirectories="lua/include;lua/lua;&quot;lua/tolua++&quot;;lua/glue"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;UNICODE;_USRDLL;LIBRARY_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -238,7 +238,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="&quot;lua/tolua++&quot;;lua/glue;lua/include"
+				AdditionalIncludeDirectories="lua/include;lua/lua;&quot;lua/tolua++&quot;;lua/glue"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;LIBRARY_EXPORTS;_SECURE_SCL=0"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -335,7 +335,7 @@
 				AdditionalOptions="/GL "
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="&quot;lua/tolua++&quot;;lua/glue;lua/include;lua/../"
+				AdditionalIncludeDirectories="lua/include;lua/lua;&quot;lua/tolua++&quot;;lua/glue"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;UNICODE;_USRDLL;_CRT_SECURE_NO_WARNINGS;LIBRARY_EXPORTS;_SECURE_SCL=0"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -2767,32 +2767,20 @@
 						/>
 					</FileConfiguration>
 				</File>
+				<File
+					RelativePath=".\lua\glue\lua_rainmeter_ext.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Lua Headers"
 				>
 				<File
-					RelativePath=".\lua\include\lauxlib.h"
-					>
-				</File>
-				<File
-					RelativePath=".\lua\include\lua.h"
-					>
-				</File>
-				<File
 					RelativePath=".\lua\include\lua.hpp"
 					>
 				</File>
 				<File
-					RelativePath=".\lua\glue\lua_rainmeter_ext.h"
-					>
-				</File>
-				<File
-					RelativePath=".\lua\include\luaconf.h"
-					>
-				</File>
-				<File
-					RelativePath=".\lua\include\lualib.h"
+					RelativePath=".\lua\lua\luaconf.h"
 					>
 				</File>
 			</Filter>
@@ -3073,10 +3061,6 @@
 				</File>
 				<File
 					RelativePath=".\lua\lua\luac.c"
-					>
-				</File>
-				<File
-					RelativePath=".\lua\lua\luaconf.h"
 					>
 				</File>
 				<File

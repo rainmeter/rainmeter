@@ -716,17 +716,21 @@ double CConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
 {
 	std::vector<Gdiplus::REAL> result;
-	std::wstring tmp = ReadString(section, key, L"");
-	if (!tmp.empty() && tmp[tmp.length() - 1] != L';')
+	const std::wstring& string = ReadString(section, key, L"");
+	if (!string.empty())
 	{
-		tmp += L";";
-	}
+		std::wstring tmp = string;
+		if (tmp[tmp.length() - 1] != L';')
+		{
+			tmp += L";";
+		}
 
-	// Tokenize and parse the floats
-	std::vector<std::wstring> tokens = Tokenize(tmp, L";");
-	for (size_t i = 0; i < tokens.size(); ++i)
-	{
-		result.push_back((Gdiplus::REAL)ParseDouble(tokens[i], 0));
+		// Tokenize and parse the floats
+		std::vector<std::wstring> tokens = Tokenize(tmp, L";");
+		for (size_t i = 0; i < tokens.size(); ++i)
+		{
+			result.push_back((Gdiplus::REAL)ParseDouble(tokens[i], 0));
+		}
 	}
 	return result;
 }
