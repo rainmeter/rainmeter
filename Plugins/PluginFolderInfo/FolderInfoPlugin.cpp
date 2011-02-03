@@ -17,12 +17,12 @@
 */
 
 #include <windows.h>
-#include "..\..\Library\Export.h"	// Rainmeter's exported functions
+#include "../../Library/Export.h"	// Rainmeter's exported functions
 
 #include <map>
 #include "FolderInfo.h"
 
-#include "..\..\Library\DisableThreadLibraryCalls.h"	// contains DllMain entry point
+#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 #define UPDATE_TIME_MIN_MS 10000
 

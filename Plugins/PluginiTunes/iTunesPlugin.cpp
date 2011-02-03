@@ -21,11 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <windows.h>
 #include <comdef.h>
 #include "iTunesCOMInterface.h"
-#include "..\..\Library\Export.h"	// Rainmeter's exported functions
+#include "../../Library/Export.h"	// Rainmeter's exported functions
 #include <map>
 #include <time.h>
 
-#include "..\..\Library\DisableThreadLibraryCalls.h"	// contains DllMain entry point
+#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 const int VOLUME_STEP = 5;
 
