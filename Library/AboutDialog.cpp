@@ -27,6 +27,8 @@
 
 #define LOGTIMER 1
 
+#define WM_DELAYED_CLOSE WM_APP + 0
+
 extern CRainmeter* Rainmeter;
 
 INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
@@ -533,23 +535,14 @@ INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 			pos->cx = max(420, pos->cx);
 			pos->cy = max(340, pos->cy);
 		}
-		break;
+		return TRUE;
 
 	case WM_SIZE:
 		RepositionControls(hwndDlg);
-		break;
+		return TRUE;
 
 	case WM_CLOSE:
-		KillTimer(hwndDlg, LOGTIMER);
-		Rainmeter->SaveSettings();
-		GetWindowPlacement(hwndDlg, &g_DialogPlacement);
-		if (g_DialogPlacement.showCmd == SW_SHOWMINIMIZED)
-		{
-			g_DialogPlacement.showCmd = SW_SHOWNORMAL;
-		}
-		DestroyWindow(hwndDlg);
-		g_DialogWin = NULL;
-		g_Plugins.clear();
+		PostMessage(hwndDlg, WM_DELAYED_CLOSE, 0, 0);
 		return TRUE;
 
 	case WM_COMMAND:
@@ -564,10 +557,10 @@ INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 			{
 				Rainmeter->SetDisableVersionCheck(FALSE);
 			}
-			break;
+			return TRUE;
 
 		case IDOK:
-			SendMessage(hwndDlg, WM_CLOSE, 0, 0);
+			PostMessage(hwndDlg, WM_DELAYED_CLOSE, 0, 0);
 			return TRUE;
 
 		case IDC_ABOUT_ENTRIES:
@@ -586,10 +579,24 @@ INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 
 				UpdateWidgets();
 				UpdateAboutStatistics();
+				return TRUE;
 			} 
 			break;
 		}
 		break;
+
+	case WM_DELAYED_CLOSE:
+		KillTimer(hwndDlg, LOGTIMER);
+		Rainmeter->SaveSettings();
+		GetWindowPlacement(hwndDlg, &g_DialogPlacement);
+		if (g_DialogPlacement.showCmd == SW_SHOWMINIMIZED)
+		{
+			g_DialogPlacement.showCmd = SW_SHOWNORMAL;
+		}
+		DestroyWindow(hwndDlg);
+		g_DialogWin = NULL;
+		g_Plugins.clear();
+		return TRUE;
 
 	case WM_TIMER:
 		if (wParam == LOGTIMER)
