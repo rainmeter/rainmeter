@@ -3503,7 +3503,16 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		else
 		{
 			// Forward to tray window, which handles all the other commands
-			SendMessage(m_Rainmeter->GetTrayWindow()->GetWindow(), WM_COMMAND, wParam, lParam);
+			HWND tray = m_Rainmeter->GetTrayWindow()->GetWindow();
+
+			if (wParam == ID_CONTEXT_QUIT)
+			{
+				PostMessage(tray, WM_COMMAND, wParam, lParam);
+			}
+			else
+			{
+				SendMessage(tray, WM_COMMAND, wParam, lParam);
+			}
 		}
 	} 
     catch(CError& error) 
