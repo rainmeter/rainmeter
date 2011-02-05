@@ -1207,6 +1207,14 @@
 				RelativePath=".\MeasureScript.cpp"
 				>
 				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -2496,6 +2504,15 @@
 				RelativePath=".\lua\LuaManager.cpp"
 				>
 				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="../StdAfx.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -2522,6 +2539,15 @@
 				RelativePath=".\lua\LuaPush.cpp"
 				>
 				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="../StdAfx.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -2547,6 +2573,15 @@
 			<File
 				RelativePath=".\lua\LuaScript.cpp"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="../StdAfx.h"
+					/>
+				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -2579,6 +2614,15 @@
 					RelativePath=".\lua\glue\lua_group.cpp"
 					>
 					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|Win32"
 						>
 						<Tool
@@ -2606,6 +2650,15 @@
 				<File
 					RelativePath=".\lua\glue\lua_measure.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
+						/>
+					</FileConfiguration>
 					<FileConfiguration
 						Name="Release|Win32"
 						>
@@ -2635,6 +2688,15 @@
 					RelativePath=".\lua\glue\lua_meter.cpp"
 					>
 					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|Win32"
 						>
 						<Tool
@@ -2662,6 +2724,15 @@
 				<File
 					RelativePath=".\lua\glue\lua_meterstring.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
+						/>
+					</FileConfiguration>
 					<FileConfiguration
 						Name="Release|Win32"
 						>
@@ -2691,6 +2762,15 @@
 					RelativePath=".\lua\glue\lua_meterwindow.cpp"
 					>
 					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|Win32"
 						>
 						<Tool
@@ -2719,6 +2799,15 @@
 					RelativePath=".\lua\glue\lua_rainmeter.cpp"
 					>
 					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|Win32"
 						>
 						<Tool
@@ -2746,6 +2835,15 @@
 				<File
 					RelativePath=".\lua\glue\lua_rainmeter_ext.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"
+							PrecompiledHeaderThrough="../../StdAfx.h"
+						/>
+					</FileConfiguration>
 					<FileConfiguration
 						Name="Release|Win32"
 						>
