@@ -48,12 +48,14 @@ protected:
 	bool m_FirstTime;
 
 	int m_Processor;
-	int m_NumOfProcessors;
-
-	PROCNTQSI m_NtQuerySystemInformation;
-	PROCGST   m_GetSystemTimes;
 
 	std::vector<double> m_OldTime;
+
+	static PROCNTQSI c_NtQuerySystemInformation;
+	static PROCGST   c_GetSystemTimes;
+
+	static int c_NumOfProcessors;
+	static ULONG c_BufferSize;
 };
 
 #endif

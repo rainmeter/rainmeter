@@ -2169,12 +2169,11 @@ bool CMeterWindow::ResizeWindow(bool reset)
 	if ((m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE) && !m_BackgroundName.empty())
 	{
 		// Load the background
-		CTintedImage tintedBackground;
-		tintedBackground.SetConfigAttributes(L"Background", NULL);
-		tintedBackground.ReadConfig(m_Parser, L"Rainmeter");
-		tintedBackground.LoadImage(m_BackgroundName, true);
+		CTintedImage* tintedBackground = new CTintedImage(L"Background");
+		tintedBackground->ReadConfig(m_Parser, L"Rainmeter");
+		tintedBackground->LoadImage(m_BackgroundName, true);
 
-		if (!tintedBackground.IsLoaded())
+		if (!tintedBackground->IsLoaded())
 		{
 			m_BackgroundSize.cx = 0;
 			m_BackgroundSize.cy = 0;
@@ -2184,7 +2183,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 		}
 		else
 		{
-			Bitmap* tempBackground = tintedBackground.GetImage();
+			Bitmap* tempBackground = tintedBackground->GetImage();
 
 			// Calculate the window dimensions
 			m_BackgroundSize.cx = tempBackground->GetWidth();
@@ -2301,6 +2300,8 @@ bool CMeterWindow::ResizeWindow(bool reset)
 				m_Background = desktop;
 			}
 		}
+
+		delete tintedBackground;
 	} 
 	else
 	{

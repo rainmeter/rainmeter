@@ -23,15 +23,53 @@
 #include <gdiplus.h>
 #include <string>
 
+/*
+** CTintedImageHelper_DefineConfigArray macro
+**
+** This is a helper macro to define the array of the config item.
+** It's necessary to give a string literal to the prefix parameter.
+**
+*/
+#define CTintedImageHelper_DefineConfigArray(name, prefix) \
+	const WCHAR* (name)[CTintedImage::ConfigCount] = { \
+		prefix  L"ImageCrop", \
+		prefix  L"Greyscale", \
+		prefix  L"ImageTint", \
+		prefix  L"ImageAlpha", \
+		prefix  L"ColorMatrix1", \
+		prefix  L"ColorMatrix2", \
+		prefix  L"ColorMatrix3", \
+		prefix  L"ColorMatrix4", \
+		prefix  L"ColorMatrix5", \
+		prefix  L"ImageFlip", \
+		prefix  L"ImageRotate" \
+	};
+
 class CConfigParser;
 
 class CTintedImage
 {
 public:
-	CTintedImage(bool disableTransform = false);
+	enum ConfigIndex
+	{
+		ConfigIndexImageCrop = 0,
+		ConfigIndexGreyscale,
+		ConfigIndexImageTint,
+		ConfigIndexImageAlpha,
+		ConfigIndexColorMatrix1,
+		ConfigIndexColorMatrix2,
+		ConfigIndexColorMatrix3,
+		ConfigIndexColorMatrix4,
+		ConfigIndexColorMatrix5,
+		ConfigIndexImageFlip,
+		ConfigIndexImageRotate,
+
+		ConfigCount
+	};
+
+	CTintedImage(const WCHAR* name = L"Image", const WCHAR** configArray = c_DefaultConfigArray, bool disableTransform = false);
 	virtual ~CTintedImage();
 
-	void SetConfigAttributes(const WCHAR* name, const WCHAR* prefix);
 	void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 	bool IsLoaded() { return (m_Bitmap != NULL); }
@@ -63,7 +101,7 @@ protected:
 	static bool LoadImageFromFileHandle(HANDLE fileHandle, Gdiplus::Bitmap** pBitmap, HGLOBAL* phBuffer);
 
 	static Gdiplus::Bitmap* TurnGreyscale(Gdiplus::Bitmap* source);
-	static bool CompareColorMatrix(const Gdiplus::ColorMatrix& a, const Gdiplus::ColorMatrix& b);
+	static bool CompareColorMatrix(const Gdiplus::ColorMatrix* a, const Gdiplus::ColorMatrix* b);
 
 	Gdiplus::Bitmap* m_Bitmap;			// The bitmap
 	Gdiplus::Bitmap* m_BitmapTint;		// The tinted bitmap
@@ -71,19 +109,8 @@ protected:
 	HGLOBAL m_hBuffer;
 	FILETIME m_Modified;
 
-	std::wstring m_ConfigName;
-	std::wstring m_ConfigImageCrop;
-	std::wstring m_ConfigGreyscale;
-	std::wstring m_ConfigImageTint;
-	std::wstring m_ConfigImageAlpha;
-	std::wstring m_ConfigColorMatrix1;
-	std::wstring m_ConfigColorMatrix2;
-	std::wstring m_ConfigColorMatrix3;
-	std::wstring m_ConfigColorMatrix4;
-	std::wstring m_ConfigColorMatrix5;
-	std::wstring m_ConfigImageFlip;
-	std::wstring m_ConfigImageRotate;
-
+	const std::wstring m_ConfigName;
+	const WCHAR** m_ConfigArray;
 	const bool m_DisableTransform;
 
 	bool m_NeedsCrop;
@@ -93,12 +120,14 @@ protected:
 	Gdiplus::Rect m_Crop;
 	CROPMODE m_CropMode;
 	bool m_GreyScale;
-	Gdiplus::ColorMatrix m_ColorMatrix;
+	Gdiplus::ColorMatrix* m_ColorMatrix;
 	Gdiplus::RotateFlipType m_Flip;
 	Gdiplus::REAL m_Rotate;
 
 	static const Gdiplus::ColorMatrix c_GreyScaleMatrix;
 	static const Gdiplus::ColorMatrix c_IdentifyMatrix;
+
+	static const WCHAR* c_DefaultConfigArray[ConfigCount];
 };
 
 #endif

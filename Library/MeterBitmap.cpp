@@ -33,7 +33,7 @@ extern CRainmeter* Rainmeter;
 **
 */
 CMeterBitmap::CMeterBitmap(CMeterWindow* meterWindow) : CMeter(meterWindow),
-	m_Image(true),
+	m_Image(L"BitmapImage", NULL, true),
 	m_NeedsReload(false),
 	m_ZeroFrame(false),
 	m_FrameCount(1),
@@ -46,7 +46,6 @@ CMeterBitmap::CMeterBitmap(CMeterWindow* meterWindow) : CMeter(meterWindow),
 	m_TransitionStartTicks(),
 	m_TransitionStartValue()
 {
-	m_Image.SetConfigAttributes(L"BitmapImage", NULL);
 }
 
 /*

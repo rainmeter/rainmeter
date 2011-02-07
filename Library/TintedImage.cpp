@@ -44,6 +44,8 @@ const Gdiplus::ColorMatrix CTintedImage::c_IdentifyMatrix = {
 	0.0f, 0.0f, 0.0f, 0.0f, 1.0f
 };
 
+CTintedImageHelper_DefineConfigArray(CTintedImage::c_DefaultConfigArray, L"");
+
 /*
 ** CTintedImage
 **
@@ -54,7 +56,10 @@ const Gdiplus::ColorMatrix CTintedImage::c_IdentifyMatrix = {
 **  - ImageRotate
 **
 */
-CTintedImage::CTintedImage(bool disableTransform) : m_DisableTransform(disableTransform),
+CTintedImage::CTintedImage(const WCHAR* name, const WCHAR** configArray, bool disableTransform) : m_DisableTransform(disableTransform),
+	m_ConfigName(name ? name : L"Image"),
+	m_ConfigArray(configArray ? configArray : c_DefaultConfigArray),
+
 	m_Bitmap(),
 	m_BitmapTint(),
 	m_hBuffer(),
@@ -65,11 +70,11 @@ CTintedImage::CTintedImage(bool disableTransform) : m_DisableTransform(disableTr
 	m_Crop(-1, -1, -1, -1),
 	m_CropMode(CROPMODE_TL),
 	m_GreyScale(false),
-	m_ColorMatrix(c_IdentifyMatrix),
+	m_ColorMatrix(new ColorMatrix),
 	m_Flip(RotateNoneFlipNone),
 	m_Rotate()
 {
-	SetConfigAttributes(L"Image", L"");
+	*m_ColorMatrix = c_IdentifyMatrix;
 }
 
 /*
@@ -81,6 +86,8 @@ CTintedImage::CTintedImage(bool disableTransform) : m_DisableTransform(disableTr
 CTintedImage::~CTintedImage()
 {
 	DisposeImage();
+
+	delete m_ColorMatrix;
 }
 
 /*
@@ -201,7 +208,7 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 					}
 					if (!m_NeedsTinting)
 					{
-						if (m_GreyScale || !CompareColorMatrix(m_ColorMatrix, c_IdentifyMatrix))
+						if (m_GreyScale || !CompareColorMatrix(m_ColorMatrix, &c_IdentifyMatrix))
 						{
 							m_NeedsTinting = true;
 						}
@@ -328,12 +335,12 @@ void CTintedImage::ApplyCrop()
 */
 void CTintedImage::ApplyTint()
 {
-	if (m_GreyScale || !CompareColorMatrix(m_ColorMatrix, c_IdentifyMatrix))
+	if (m_GreyScale || !CompareColorMatrix(m_ColorMatrix, &c_IdentifyMatrix))
 	{
 		Bitmap* original = GetImage();
 
 		ImageAttributes ImgAttr;
-		ImgAttr.SetColorMatrix(&m_ColorMatrix, ColorMatrixFlagsDefault, ColorAdjustTypeBitmap);
+		ImgAttr.SetColorMatrix(m_ColorMatrix, ColorMatrixFlagsDefault, ColorAdjustTypeBitmap);
 
 		Rect r(0, 0, original->GetWidth(), original->GetHeight());
 
@@ -449,35 +456,6 @@ void CTintedImage::ApplyTransform()
 }
 
 /*
-** SetConfigAttributes
-**
-** Sets own attributes.
-**
-*/
-void CTintedImage::SetConfigAttributes(const WCHAR* name, const WCHAR* prefix)
-{
-	if (name)
-	{
-		m_ConfigName = name;
-	}
-
-	if (prefix)
-	{
-		(m_ConfigImageCrop    = prefix) += L"ImageCrop";
-		(m_ConfigGreyscale    = prefix) += L"Greyscale";
-		(m_ConfigImageTint    = prefix) += L"ImageTint";
-		(m_ConfigImageAlpha   = prefix) += L"ImageAlpha";
-		(m_ConfigColorMatrix1 = prefix) += L"ColorMatrix1";
-		(m_ConfigColorMatrix2 = prefix) += L"ColorMatrix2";
-		(m_ConfigColorMatrix3 = prefix) += L"ColorMatrix3";
-		(m_ConfigColorMatrix4 = prefix) += L"ColorMatrix4";
-		(m_ConfigColorMatrix5 = prefix) += L"ColorMatrix5";
-		(m_ConfigImageFlip    = prefix) += L"ImageFlip";
-		(m_ConfigImageRotate  = prefix) += L"ImageRotate";
-	}
-}
-
-/*
 ** ReadConfig
 **
 ** Read the meter-specific configs from the ini-file.
@@ -489,7 +467,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	Rect oldCrop = m_Crop;
 	CROPMODE oldCropMode = m_CropMode;
 	bool oldGreyScale = m_GreyScale;
-	ColorMatrix oldColorMatrix = m_ColorMatrix;
+	ColorMatrix oldColorMatrix = *m_ColorMatrix;
 	RotateFlipType oldFlip = m_Flip;
 	REAL oldRotate = m_Rotate;
 
@@ -498,7 +476,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_Crop.X = m_Crop.Y = m_Crop.Width = m_Crop.Height = -1;
 		m_CropMode = CROPMODE_TL;
 
-		std::wstring crop = parser.ReadString(section, m_ConfigImageCrop.c_str(), L"");
+		std::wstring crop = parser.ReadString(section, m_ConfigArray[ConfigIndexImageCrop], L"");
 		if (!crop.empty())
 		{
 			if (wcschr(crop.c_str(), L','))
@@ -536,7 +514,8 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 			if (m_CropMode < CROPMODE_TL || m_CropMode > CROPMODE_C)
 			{
-				std::wstring error = m_ConfigImageCrop + L"=";
+				std::wstring error = m_ConfigArray[ConfigIndexImageCrop];
+				error += L"=";
 				error += crop;
 				error += L" (origin) is not valid in meter [";
 				error += section;
@@ -548,83 +527,83 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_NeedsCrop = (oldCrop.X != m_Crop.X || oldCrop.Y != m_Crop.Y || oldCrop.Width != m_Crop.Width || oldCrop.Height != m_Crop.Height || oldCropMode != m_CropMode);
 
-	m_GreyScale = 0!=parser.ReadInt(section, m_ConfigGreyscale.c_str(), 0);
+	m_GreyScale = 0!=parser.ReadInt(section, m_ConfigArray[ConfigIndexGreyscale], 0);
 
-	Color tint = parser.ReadColor(section, m_ConfigImageTint.c_str(), Color::White);
-	int alpha = parser.ReadInt(section, m_ConfigImageAlpha.c_str(), tint.GetAlpha());  // for backwards compatibility
+	Color tint = parser.ReadColor(section, m_ConfigArray[ConfigIndexImageTint], Color::White);
+	int alpha = parser.ReadInt(section, m_ConfigArray[ConfigIndexImageAlpha], tint.GetAlpha());  // for backwards compatibility
 	alpha = min(255, alpha);
 	alpha = max(0, alpha);
 
-	m_ColorMatrix = c_IdentifyMatrix;
+	*m_ColorMatrix = c_IdentifyMatrix;
 
 	// Read in the Color Matrix
 	// It has to be read in like this because it crashes when reading over 17 floats
 	// at one time. The parser does it fine, but after putting the returned values
 	// into the Color Matrix the next time the parser is used it crashes.
-	std::vector<Gdiplus::REAL> matrix = parser.ReadFloats(section, m_ConfigColorMatrix1.c_str());
-	if (matrix.size() == 5)
+	std::vector<Gdiplus::REAL> matrix1 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix1]);
+	if (matrix1.size() == 5)
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
-			m_ColorMatrix.m[0][i] = matrix[i];
+			m_ColorMatrix->m[0][i] = matrix1[i];
 		}
 	}
 	else
 	{
-		m_ColorMatrix.m[0][0] = (REAL)tint.GetRed() / 255.0f;
+		m_ColorMatrix->m[0][0] = (REAL)tint.GetRed() / 255.0f;
 	}
 
-	matrix = parser.ReadFloats(section, m_ConfigColorMatrix2.c_str());
-	if (matrix.size() == 5)
+	std::vector<Gdiplus::REAL> matrix2 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix2]);
+	if (matrix2.size() == 5)
 	{
 		for(int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
-			m_ColorMatrix.m[1][i] = matrix[i];
+			m_ColorMatrix->m[1][i] = matrix2[i];
 		}
 	}
 	else
 	{
-		m_ColorMatrix.m[1][1] = (REAL)tint.GetGreen() / 255.0f;
+		m_ColorMatrix->m[1][1] = (REAL)tint.GetGreen() / 255.0f;
 	}
 
-	matrix = parser.ReadFloats(section, m_ConfigColorMatrix3.c_str());
-	if (matrix.size() == 5)
+	std::vector<Gdiplus::REAL> matrix3 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix3]);
+	if (matrix3.size() == 5)
 	{
 		for(int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
-			m_ColorMatrix.m[2][i] = matrix[i];
+			m_ColorMatrix->m[2][i] = matrix3[i];
 		}
 	}
 	else
 	{
-		m_ColorMatrix.m[2][2] = (REAL)tint.GetBlue() / 255.0f;
+		m_ColorMatrix->m[2][2] = (REAL)tint.GetBlue() / 255.0f;
 	}
 
-	matrix = parser.ReadFloats(section, m_ConfigColorMatrix4.c_str());
-	if (matrix.size() == 5)
+	std::vector<Gdiplus::REAL> matrix4 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix4]);
+	if (matrix4.size() == 5)
 	{
 		for(int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
-			m_ColorMatrix.m[3][i] = matrix[i];
+			m_ColorMatrix->m[3][i] = matrix4[i];
 		}
 	}
 	else
 	{
-		m_ColorMatrix.m[3][3] = (REAL)alpha / 255.0f;
+		m_ColorMatrix->m[3][3] = (REAL)alpha / 255.0f;
 	}
 
-	matrix = parser.ReadFloats(section, m_ConfigColorMatrix5.c_str());
-	if (matrix.size() == 5)
+	std::vector<Gdiplus::REAL> matrix5 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix5]);
+	if (matrix5.size() == 5)
 	{
 		for(int i = 0; i < 4; ++i)  // The fifth column must be 1.
 		{
-			m_ColorMatrix.m[4][i] = matrix[i];
+			m_ColorMatrix->m[4][i] = matrix5[i];
 		}
 	}
 
-	m_NeedsTinting = (oldGreyScale != m_GreyScale || !CompareColorMatrix(oldColorMatrix, m_ColorMatrix));
+	m_NeedsTinting = (oldGreyScale != m_GreyScale || !CompareColorMatrix(&oldColorMatrix, m_ColorMatrix));
 
-	std::wstring flip = parser.ReadString(section, m_ConfigImageFlip.c_str(), L"NONE");
+	std::wstring flip = parser.ReadString(section, m_ConfigArray[ConfigIndexImageFlip], L"NONE");
 	if(_wcsicmp(flip.c_str(), L"NONE") == 0)
 	{
 		m_Flip = RotateNoneFlipNone;
@@ -643,7 +622,8 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = m_ConfigImageFlip + L"=";
+		std::wstring error = m_ConfigArray[ConfigIndexImageFlip];
+		error += L"=";
 		error += flip;
 		error += L" is not valid in meter [";
 		error += section;
@@ -653,7 +633,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	if (!m_DisableTransform)
 	{
-		m_Rotate = (REAL)parser.ReadFloat(section, m_ConfigImageRotate.c_str(), 0.0);
+		m_Rotate = (REAL)parser.ReadFloat(section, m_ConfigArray[ConfigIndexImageRotate], 0.0);
 	}
 
 	m_NeedsTransform = (oldFlip != m_Flip || oldRotate != m_Rotate);
@@ -665,13 +645,13 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 ** Compares the two given color matrices.
 **
 */
-bool CTintedImage::CompareColorMatrix(const Gdiplus::ColorMatrix& a, const Gdiplus::ColorMatrix& b)
+bool CTintedImage::CompareColorMatrix(const Gdiplus::ColorMatrix* a, const Gdiplus::ColorMatrix* b)
 {
 	for (int i = 0; i < 5; ++i)
 	{
-		for (int j = 0; j < 5; ++j)
+		for (int j = 0; j < 4; ++j)  // The fifth column is reserved.
 		{
-			if (a.m[i][j] != b.m[i][j])
+			if (a->m[i][j] != b->m[i][j])
 			{
 				return false;
 			}

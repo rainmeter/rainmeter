@@ -40,14 +40,13 @@ enum BUTTON_STATE
 **
 */
 CMeterButton::CMeterButton(CMeterWindow* meterWindow) : CMeter(meterWindow),
-	m_Image(true),
+	m_Image(L"ButtonImage", NULL, true),
 	m_NeedsReload(false),
 	m_Bitmaps(),
 	m_State(BUTTON_STATE_NORMAL),
 	m_Clicked(false),
 	m_Executable(false)
 {
-	m_Image.SetConfigAttributes(L"ButtonImage", NULL);
 }
 
 /*

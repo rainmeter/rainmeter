@@ -26,6 +26,10 @@ using namespace Gdiplus;
 
 extern CRainmeter* Rainmeter;
 
+CTintedImageHelper_DefineConfigArray(CMeterHistogram::c_PrimaryConfigArray, L"Primary");
+CTintedImageHelper_DefineConfigArray(CMeterHistogram::c_SecondaryConfigArray, L"Secondary");
+CTintedImageHelper_DefineConfigArray(CMeterHistogram::c_BothConfigArray, L"Both");
+
 /*
 ** CMeterHistogram
 **
@@ -40,6 +44,9 @@ CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow) : CMeter(meterWindow
 	m_MeterPos(),
 	m_Autoscale(false),
 	m_Flip(false),
+	m_PrimaryImage(L"PrimaryImage", c_PrimaryConfigArray),
+	m_SecondaryImage(L"SecondaryImage", c_SecondaryConfigArray),
+	m_BothImage(L"BothImage", c_BothConfigArray),
 	m_PrimaryNeedsReload(false),
 	m_SecondaryNeedsReload(false),
 	m_BothNeedsReload(false),
@@ -51,9 +58,6 @@ CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow) : CMeter(meterWindow
 	m_MinSecondaryValue(),
 	m_WidthChanged(true)
 {
-	m_PrimaryImage.SetConfigAttributes(L"PrimaryImage", L"Primary");
-	m_SecondaryImage.SetConfigAttributes(L"SecondaryImage", L"Secondary");
-	m_BothImage.SetConfigAttributes(L"BothImage", L"Both");
 }
 
 /*

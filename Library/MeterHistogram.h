@@ -68,6 +68,10 @@ private:
 	double m_MinSecondaryValue;
 
 	bool m_WidthChanged;
+
+	static const WCHAR* c_PrimaryConfigArray[CTintedImage::ConfigCount];
+	static const WCHAR* c_SecondaryConfigArray[CTintedImage::ConfigCount];
+	static const WCHAR* c_BothConfigArray[CTintedImage::ConfigCount];
 };
 
 #endif
