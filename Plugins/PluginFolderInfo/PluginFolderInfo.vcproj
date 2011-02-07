@@ -76,7 +76,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="comctl32.lib gdiplus.lib Rainmeter.lib"
 				OutputFile="../../TestBench/x32/Debug/Plugins/FolderInfo.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
