@@ -19,7 +19,9 @@
 #ifndef __MEASURE_H__
 #define __MEASURE_H__
 
-#include "MeterWindow.h"
+#include <windows.h>
+#include <vector>
+#include <string>
 #include "Litestep.h"
 #include "Group.h"
 
@@ -36,6 +38,8 @@ enum AUTOSCALE
 };
 
 class CMeter;
+class CMeterWindow;
+class CConfigParser;
 
 class CMeasure : public CGroup
 {

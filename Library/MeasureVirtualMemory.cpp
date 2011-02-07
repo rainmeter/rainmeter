@@ -18,6 +18,7 @@
 
 #include "StdAfx.h"
 #include "MeasureVirtualMemory.h"
+#include "ConfigParser.h"
 
 /*
 ** CMeasureVirtualMemory

@@ -18,7 +18,8 @@
 
 #include "StdAfx.h"
 #include "TrayWindow.h"
-#include "Resource.h"
+#include "Measure.h"
+#include "resource.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
 #include "AboutDialog.h"

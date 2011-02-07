@@ -21,7 +21,6 @@
 
 #include "Meter.h"
 #include "TintedImage.h"
-#include "MeterWindow.h"
 
 #define BUTTON_FRAMES 3
 

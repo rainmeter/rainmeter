@@ -22,7 +22,8 @@
 #pragma warning(disable: 4786)
 
 #include <windows.h>
-#include "Measure.h"
+#include <gdiplus.h>
+#include <vector>
 
 #define WM_DELAYED_REFRESH_ALL WM_APP + 0
 
@@ -35,6 +36,9 @@ enum TRAY_METER_TYPE
 	TRAY_METER_TYPE_HISTOGRAM,
 	TRAY_METER_TYPE_BITMAP
 };
+
+class CConfigParser;
+class CMeasure;
 
 class CTrayWindow
 {

@@ -19,8 +19,11 @@
 #ifndef __TINTEDIMAGE_H__
 #define __TINTEDIMAGE_H__
 
-#include "Meter.h"
-#include "MeterWindow.h"
+#include <windows.h>
+#include <gdiplus.h>
+#include <string>
+
+class CConfigParser;
 
 class CTintedImage
 {

@@ -18,6 +18,7 @@
 
 #include "StdAfx.h"
 #include "MeasurePhysicalMemory.h"
+#include "ConfigParser.h"
 
 /*
 ** CMeasurePhysicalMemory

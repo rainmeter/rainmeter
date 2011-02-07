@@ -18,13 +18,15 @@
 
 #include "StdAfx.h"
 #include "Rainmeter.h"
+#include "TrayWindow.h"
 #include "System.h"
 #include "Error.h"
 #include "AboutDialog.h"
 #include "MeasureNet.h"
 #include "MeterString.h"
-#include "Resource.h"
+#include "resource.h"
 #include "UpdateCheck.h"
+#include "../Version.h"
 
 #include "DisableThreadLibraryCalls.h"	// contains DllMain entry point
 

@@ -18,6 +18,7 @@
 
 #include "StdAfx.h"
 #include "TintedImage.h"
+#include "ConfigParser.h"
 #include "Error.h"
 #include "Litestep.h"
 

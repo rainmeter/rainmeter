@@ -21,6 +21,7 @@
 #include "Litestep.h"
 #include "Rainmeter.h"
 #include "System.h"
+#include "Measure.h"
 
 extern CRainmeter* Rainmeter;
 

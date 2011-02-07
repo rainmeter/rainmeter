@@ -25,10 +25,8 @@
 #include <gdiplus.h>
 #include <string>
 #include <list>
-#include <vector>
 #include "ConfigParser.h"
 #include "Group.h"
-#include "Export.h"
 
 #define BEGIN_MESSAGEPROC if (Window) { switch(uMsg) {
 #define MESSAGE(handler, msg) case msg: return Window->handler(uMsg, wParam, lParam);

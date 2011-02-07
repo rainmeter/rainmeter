@@ -18,6 +18,7 @@
 
 #include "StdAfx.h"
 #include "MeasureMemory.h"
+#include "ConfigParser.h"
 
 /*
 ** CMeasureMemory

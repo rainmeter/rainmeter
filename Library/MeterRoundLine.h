@@ -20,7 +20,6 @@
 #define __METERROUNDLINE_H__
 
 #include "Meter.h"
-#include "MeterWindow.h"
 
 class CMeterRoundLine : public CMeter
 {

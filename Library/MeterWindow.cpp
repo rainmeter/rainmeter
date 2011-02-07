@@ -19,6 +19,7 @@
 #include "StdAfx.h"
 #include "MeterWindow.h"
 #include "Rainmeter.h"
+#include "TrayWindow.h"
 #include "System.h"
 #include "Error.h"
 #include "Meter.h"
@@ -33,6 +34,7 @@
 #include "MeterString.h"
 #include "TintedImage.h"
 #include "MeasureScript.h"
+#include "../Version.h"
 
 using namespace Gdiplus;
 

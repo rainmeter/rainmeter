@@ -22,11 +22,10 @@
 #include <windows.h>
 #include <map>
 #include <vector>
+#include <list>
 #include <string>
 #include "Litestep.h"
 #include "MeterWindow.h"
-#include "TrayWindow.h"
-#include "../Version.h"
 
 #define MAX_LINE_LENGTH 4096
 
@@ -125,6 +124,9 @@ struct GlobalConfig
 	double netInSpeed;
 	double netOutSpeed;
 };
+
+class CConfigParser;
+class CTrayWindow;
 
 class CRainmeter
 {

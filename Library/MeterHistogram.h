@@ -21,7 +21,6 @@
 
 #include "Meter.h"
 #include "TintedImage.h"
-#include "MeterWindow.h"
 
 class CMeterHistogram : public CMeter
 {

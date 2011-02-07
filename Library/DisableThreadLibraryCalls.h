@@ -16,8 +16,8 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef _DISABLETHREADLIBRARYCALLS_H_
-#define _DISABLETHREADLIBRARYCALLS_H_
+#ifndef __DISABLETHREADLIBRARYCALLS_H__
+#define __DISABLETHREADLIBRARYCALLS_H__
 
 // DisableThreadLibraryCalls Function
 //   http://msdn.microsoft.com/en-us/library/ms682579.aspx

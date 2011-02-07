@@ -20,7 +20,6 @@
 #define __METERSTRING_H__
 
 #include "Meter.h"
-#include "MeterWindow.h"
 #include "Measure.h"
 
 namespace Gdiplus

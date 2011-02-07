@@ -20,13 +20,14 @@
 #define __METER_H__
 
 #include <windows.h>
-#include <list>
 #include <gdiplus.h>
+#include <vector>
 #include "Litestep.h"
 #include "MeterWindow.h"
 #include "Group.h"
 
 class CMeasure;
+class CConfigParser;
 
 class CMeter : public CGroup
 {

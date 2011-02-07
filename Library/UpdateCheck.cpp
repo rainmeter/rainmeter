@@ -19,6 +19,7 @@
 #include "StdAfx.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
+#include "../Version.h"
 
 extern CRainmeter* Rainmeter;
 

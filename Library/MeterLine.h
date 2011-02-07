@@ -20,7 +20,6 @@
 #define __METERLINE_H__
 
 #include "Meter.h"
-#include "MeterWindow.h"
 
 class CMeterLine : public CMeter
 {

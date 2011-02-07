@@ -21,7 +21,6 @@
 
 #include "Meter.h"
 #include "TintedImage.h"
-#include "MeterWindow.h"
 
 class CMeterBitmap : public CMeter
 {
