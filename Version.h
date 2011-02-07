@@ -1,13 +1,13 @@
 #pragma once 
 #define MAKE_VER(major, minor1, minor2) major * 1000000 + minor1 * 1000 + minor2 
  
-#define FILEVER        1,4,0,734 
-#define PRODUCTVER     1,4,0,734 
-#define STRFILEVER     "1.4.0.734" 
-#define STRPRODUCTVER  "1.4.0.734" 
+#define FILEVER        2,1,0,748 
+#define PRODUCTVER     2,1,0,748 
+#define STRFILEVER     "2.1.0.748" 
+#define STRPRODUCTVER  "2.1.0.748" 
  
-#define APPVERSION L"1.4.0" 
-#define RAINMETER_VERSION MAKE_VER(1, 4, 0) 
+#define APPVERSION L"2.1.0" 
+#define RAINMETER_VERSION MAKE_VER(2, 1, 0) 
  
-const int revision_number = 734; 
+const int revision_number = 748; 
 const bool revision_beta = true; 
