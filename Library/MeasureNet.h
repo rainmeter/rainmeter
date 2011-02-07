@@ -20,6 +20,7 @@
 #define __MEASURENET_H__
 
 #include "Measure.h"
+#include <Iphlpapi.h>
 
 //
 // Medium the Ndis Driver is running on (OID_GEN_MEDIA_SUPPORTED/ OID_GEN_MEDIA_IN_USE).
