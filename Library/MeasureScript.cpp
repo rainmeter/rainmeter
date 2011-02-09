@@ -207,16 +207,14 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 							std::wstring wstrKey = ConvertToWide(strKey);
 							std::wstring wstrValue = parser.ReadString(section, wstrKey.c_str(), L"");
-							
+
 							if (!wstrValue.empty())
 							{
 								std::string strStrVal = ConvertToAscii(wstrValue.c_str());
 								const char* strValue = strStrVal.c_str();
-								
-								lua_pushstring(L, strValue);
-								lua_settable(L, -3);
 
-								lua_pushstring(L, strKey);
+								lua_pushstring(L, strValue);
+								lua_setfield(L, -3, strKey);
 							}
 						}
 					}
@@ -266,10 +264,13 @@ void CMeasureScript::RunFunctionWithMeter(const char* p_strFunction, CMeter* p_p
 		{
 			LuaManager::ReportErrors(L);
 		}
-	}
 
-	// Clean up
-	lua_pop(L, 1);
+		lua_pop(L, 1);
+	}
+	else
+	{
+		lua_pop(L, 2);
+	}
 }
 
 void CMeasureScript::MeterMouseEvent(CMeter* p_pMeter, MOUSE p_eMouse)

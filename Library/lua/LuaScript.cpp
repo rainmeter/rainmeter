@@ -7,7 +7,7 @@ LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_s
 	m_bInitialized(true)
 {
 	int result = luaL_loadfile(m_pState, p_strFile);
-	
+
 	// If the file loaded okay.
 	if (result == 0)
 	{
@@ -42,12 +42,14 @@ LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_s
 		{
 			m_bInitialized = false;
 			LuaManager::LuaLog(LOG_ERROR, "Script: Could not run file: %s", lua_tostring(m_pState, -1));
+			lua_pop(m_pState, 1);
 		}
 	}
 	else
 	{
 		m_bInitialized = false;
 		LuaManager::LuaLog(LOG_ERROR, "Script: Could not run file: %s", lua_tostring(m_pState, -1));
+		lua_pop(m_pState, 1);
 	}
 }
 
@@ -85,6 +87,8 @@ void LuaScript::BindVariable(const char* p_strName, void* p_pValue, const char* 
 
 double LuaScript::RunFunctionDouble(const char* p_strFuncName)
 {
+	double result = -1;
+
 	if (m_bInitialized && p_strFuncName)
 	{
 		// Push our table onto the stack
@@ -104,21 +108,20 @@ double LuaScript::RunFunctionDouble(const char* p_strFuncName)
 				LuaManager::LuaLog(LOG_ERROR, "Script: Function '%s:%s' must return a number", m_strTableName, p_strFuncName);
 			}
 
-			double d = lua_tonumber(m_pState, -1);
-
-			lua_pop(m_pState, 1);
-
-			return d;
+			result = lua_tonumber(m_pState, -1);
 		}
 
-		lua_pop(m_pState, 1);
+		// Pop both the table and the return value off the stack.
+		lua_pop(m_pState, 2);
 	}
 
-	return -1;
+	return result;
 }
 
 std::wstring LuaScript::RunFunctionString(const char* p_strFuncName)
 {
+	std::wstring result;
+
 	if (m_bInitialized && p_strFuncName)
 	{
 		// Push our table onto the stack
@@ -139,16 +142,14 @@ std::wstring LuaScript::RunFunctionString(const char* p_strFuncName)
 			}
 
 			const char* str = lua_tostring(m_pState, -1);
-
-			lua_pop(m_pState, 1);
-
-			return ConvertToWide(str);
+			result = ConvertToWide(str);
 		}
 
-		lua_pop(m_pState, 1);
+		// Pop both the table and the return value off the stack.
+		lua_pop(m_pState, 2);
 	}
 
-	return L"";
+	return result;
 }
 
 void LuaScript::RunFunction(const char* p_strFuncName)
@@ -182,7 +183,7 @@ bool LuaScript::FunctionExists(const char* p_strFuncName)
 		// Push the function onto the stack
 		lua_getfield(m_pState, -1, p_strFuncName);
 
-		if (lua_isfunction( m_pState, lua_gettop(m_pState))) 
+		if (lua_isfunction( m_pState, -1)) 
 		{
 			bExists = true;
 		}
