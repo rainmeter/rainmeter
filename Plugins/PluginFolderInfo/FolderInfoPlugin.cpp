@@ -33,7 +33,6 @@ extern "C"
 {
 	__declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
 	__declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-	__declspec( dllexport ) LPCTSTR GetString(UINT id, UINT flags);
 	__declspec( dllexport ) UINT Update(UINT id);
 	__declspec( dllexport ) UINT GetPluginVersion();
 	__declspec( dllexport ) LPCTSTR GetPluginAuthor();
@@ -41,30 +40,11 @@ extern "C"
 
 enum InfoType
 {
-	// folder info (string)
-	INFOTYPE_FOLDERSIZESTR,
-	INFOTYPE_FILECOUNTSTR,
-	INFOTYPE_FOLDERCOUNTSTR,
-
-	// folder info (int)
 	INFOTYPE_FOLDERSIZE,
 	INFOTYPE_FILECOUNT,
 	INFOTYPE_FOLDERCOUNT,
 
 	INFOTYPE_COUNT
-};
-
-const static wchar_t* InfoTypeName[INFOTYPE_COUNT] =
-{
-	// folder info (string)
-	L"FolderSizeStr",					// FIELD_FOLDERSIZESTR
-	L"FileCountStr",					 // FIELD_FILECOUNTSTR
-	L"FolderCountStr",				   // FIELD_FOLDERCOUNTSTR
-
-	// folder info (int)
-	L"FolderSize",					   // FIELD_FOLDERSIZE
-	L"FileCount",						// FIELD_FILECOUNT
-	L"FolderCount",					  // FIELD_FOLDERCOUNT
 };
 
 struct MeasureInfo
@@ -99,7 +79,7 @@ static MeasureInfo* GetMeasureInfo(UINT aId)
 static FolderInfo* GetFolderInfo(const wchar_t* aPath, const wchar_t* aIniPath)
 {
 	int pathLen = wcslen(aPath);
-	if(pathLen > 2 && L'[' == aPath[0] && L']' == aPath[pathLen - 1]) {
+	if (pathLen > 2 && L'[' == aPath[0] && L']' == aPath[pathLen - 1]) {
 		MeasureIdMap::iterator it;
 		for (it = sMeasures.begin(); it != sMeasures.end(); it++) {
 			if (wcsncmp(&aPath[1], it->second->Section.c_str(), pathLen - 2) == 0) {
@@ -139,10 +119,14 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	measureInfo->Folder = GetFolderInfo(strFolder, iniFile);
 
 	const wchar_t* strInfoType = ReadConfigString(section, L"InfoType", L"");
-	for (int i = 0; i < INFOTYPE_COUNT; i++) {
-		if (_wcsicmp(strInfoType, InfoTypeName[i]) == 0) {
-			measureInfo->Type = (InfoType)i;
-		}
+	if (_wcsicmp(strInfoType, L"FolderSize") == 0 || _wcsicmp(strInfoType, L"FolderSizeStr") == 0) {
+			measureInfo->Type = INFOTYPE_FOLDERSIZE;
+	}
+	else if (_wcsicmp(strInfoType, L"FolderCount") == 0 || _wcsicmp(strInfoType, L"FolderCountStr") == 0) {
+			measureInfo->Type = INFOTYPE_FOLDERCOUNT;
+	}
+	else if (_wcsicmp(strInfoType, L"FileCount") == 0 || _wcsicmp(strInfoType, L"FileCountStr") == 0) {
+			measureInfo->Type = INFOTYPE_FILECOUNT;
 	}
 
 	if (measureInfo->Folder) {
@@ -172,59 +156,6 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	sMeasures[id] = measureInfo;
 
 	return 0;
-}
-
-static void FormatSize(wchar_t* buffer, size_t bufferSize, UINT64 size)
-{
-	if ((size >> 40) > 0) {
-		wsprintf(buffer, L"%d.%02d T", (int)(size >> 40), (int)(( size << 24 >> 54 ) / 10.24));
-	}
-	else if ((size >> 30) > 0) {
-		wsprintf(buffer, L"%d.%02d G", (int)(size >> 30), (int)(( size << 34 >> 54 ) / 10.24));
-	}
-	else if ((size >> 20) > 0) {
-		wsprintf(buffer, L"%d.%02d M", (int)(size >> 20), (int)(( size << 44 >> 54 ) / 10.24));
-	}
-	else if ((size >> 10) > 0) {
-		wsprintf(buffer, L"%d.%02d k", (int)(size >> 10), (int)(( size << 54 >> 54 ) / 10.24));
-	}
-	else {
-		wsprintf(buffer, L"%ld ", size);
-	}
-}
-
-/*
-This function is called when the value should be
-returned as a string.
-*/
-LPCTSTR GetString(UINT id, UINT flags) 
-{
-	static wchar_t buffer[MAX_PATH];
-	buffer[0] = 0;
-
-	MeasureInfo* measureInfo = sMeasures[id];
-	if (!measureInfo->Folder) {
-		return buffer;
-	}
-
-	int now = GetTickCount();
-	if (now - measureInfo->Folder->GetLastUpdateTime() > UPDATE_TIME_MIN_MS) {
-		measureInfo->Folder->Update();
-	}
-	
-	switch (measureInfo->Type)
-	{
-		case INFOTYPE_FOLDERSIZESTR:
-			FormatSize(buffer, MAX_PATH, measureInfo->Folder->GetSize());
-			break;
-		case INFOTYPE_FILECOUNTSTR:
-			wsprintf(buffer, L"%d", measureInfo->Folder->GetFileCount());
-			break;
-		case INFOTYPE_FOLDERCOUNTSTR:
-			wsprintf(buffer, L"%d", measureInfo->Folder->GetFolderCount());
-			break;
-	}
-	return buffer;
 }
 
 /*
@@ -292,7 +223,7 @@ void Finalize(HMODULE instance, UINT id)
 */
 UINT GetPluginVersion()
 {
-	return 0002;
+	return 0003;
 }
 
 /*
