@@ -19,7 +19,6 @@
 #ifndef __METERWINDOW_H__
 #define __METERWINDOW_H__
 
-#pragma warning(disable: 4786)
 
 #include <windows.h>
 #include <gdiplus.h>

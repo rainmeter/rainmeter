@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Dexpot">
+      <UniqueIdentifier>{33f898cd-3c3c-42a0-9b7c-112f37cd558b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VirtuaWin">
+      <UniqueIdentifier>{9d236685-79d3-4b8c-a7d6-8405dd5d260b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DexpotConstants.h">
+      <Filter>Dexpot</Filter>
+    </ClInclude>
+    <ClInclude Include="DexpotMeasure.h">
+      <Filter>Dexpot</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtuaWinMeasure.h">
+      <Filter>VirtuaWin</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtuaWinMessages.h">
+      <Filter>VirtuaWin</Filter>
+    </ClInclude>
+    <ClInclude Include="VDMeasure.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DexpotMeasure.cpp">
+      <Filter>Dexpot</Filter>
+    </ClCompile>
+    <ClCompile Include="VirtuaWinMeasure.cpp">
+      <Filter>VirtuaWin</Filter>
+    </ClCompile>
+    <ClCompile Include="VirtualDesktops.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PluginVirtualDesktops.rc" />
+  </ItemGroup>
+</Project>

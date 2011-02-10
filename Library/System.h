@@ -19,8 +19,6 @@
 #ifndef __RAINMETER_SYSTEM_H__
 #define __RAINMETER_SYSTEM_H__
 
-#pragma warning(disable: 4786)
-
 #include <windows.h>
 #include <vector>
 

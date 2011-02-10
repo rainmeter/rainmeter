@@ -19,8 +19,6 @@
 // Note: To compile this you need the PCRE library (http://www.pcre.org/).
 // See: http://www.perldoc.com/perl5.8.0/pod/perlre.html
 
-#pragma warning(disable: 4786)
-
 #include <windows.h>
 #include <math.h>
 #include <string>

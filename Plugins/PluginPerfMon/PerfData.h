@@ -8,8 +8,6 @@
 #include "objinst.h"
 #include "perfcntr.h"
 
-#pragma warning ( disable: 4786 )
-
 /* The exported functions */
 extern "C"
 {

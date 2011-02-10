@@ -19,8 +19,6 @@
 #ifndef __GROUP_H__
 #define __GROUP_H__
 
-#pragma warning(disable: 4786)
-
 #include <string>
 #include <set>
 

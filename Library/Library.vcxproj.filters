@@ -1,0 +1,559 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{976df8a7-1f37-4f6c-a341-22311ba418a3}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{d68c51de-41f6-4d17-8f8b-c03388b8c59d}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{2d6bf39d-48e1-4de3-8924-46c5666cb141}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="CCalc">
+      <UniqueIdentifier>{1d914071-7b9c-400c-b7ab-76ac461a16f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lua">
+      <UniqueIdentifier>{6570e2b7-2e40-4fba-a051-01de85760fea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lua\glue">
+      <UniqueIdentifier>{941dce28-a314-4492-befb-5770432c98bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lua\Lua Headers">
+      <UniqueIdentifier>{45f9e20c-cd34-4e18-84f2-9090ee108656}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lua\tolua">
+      <UniqueIdentifier>{b3b45d6d-b775-470e-9882-82a231d0b209}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lua\Lua">
+      <UniqueIdentifier>{c8550e7b-009b-4e12-a55a-ed458d05bdad}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AboutDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Error.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Group.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Litestep.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Measure.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureCalc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureCPU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureDiskSpace.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureMemory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureNet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureNetIn.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureNetOut.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureNetTotal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasurePhysicalMemory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasurePlugin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureRegistry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureScript.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureTime.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureUptime.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureVirtualMemory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Meter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeterBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeterBitmap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeterButton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeterHistogram.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeterImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeterLine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeterRotator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeterRoundLine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeterString.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeterWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Rainmeter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StdAfx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="System.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TintedImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TrayWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UpdateCheck.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ccalc-0.5.1\lexer.c">
+      <Filter>CCalc</Filter>
+    </ClCompile>
+    <ClCompile Include="ccalc-0.5.1\mparser.c">
+      <Filter>CCalc</Filter>
+    </ClCompile>
+    <ClCompile Include="ccalc-0.5.1\strmap.c">
+      <Filter>CCalc</Filter>
+    </ClCompile>
+    <ClCompile Include="ccalc-0.5.1\wininit.c">
+      <Filter>CCalc</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\LuaManager.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\LuaPush.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\LuaScript.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\glue\lua_group.cpp">
+      <Filter>Lua\glue</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\glue\lua_measure.cpp">
+      <Filter>Lua\glue</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\glue\lua_meter.cpp">
+      <Filter>Lua\glue</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\glue\lua_meterstring.cpp">
+      <Filter>Lua\glue</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\glue\lua_meterwindow.cpp">
+      <Filter>Lua\glue</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\glue\lua_rainmeter.cpp">
+      <Filter>Lua\glue</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\glue\lua_rainmeter_ext.cpp">
+      <Filter>Lua\glue</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\tolua++\tolua_event.c">
+      <Filter>Lua\tolua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\tolua++\tolua_is.c">
+      <Filter>Lua\tolua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\tolua++\tolua_map.c">
+      <Filter>Lua\tolua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\tolua++\tolua_push.c">
+      <Filter>Lua\tolua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\tolua++\tolua_to.c">
+      <Filter>Lua\tolua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lapi.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lauxlib.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lbaselib.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lcode.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\ldblib.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\ldebug.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\ldo.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\ldump.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lfunc.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lgc.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\linit.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\liolib.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\llex.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lmathlib.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lmem.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\loadlib.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lobject.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lopcodes.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\loslib.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lparser.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lstate.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lstring.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lstrlib.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\ltable.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\ltablib.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\ltm.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\luac.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lundump.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lvm.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\lzio.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="lua\lua\print.c">
+      <Filter>Lua\Lua</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Library.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AboutDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DisableThreadLibraryCalls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Export.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Group.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Litestep.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Measure.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureCalc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureCPU.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureDiskSpace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureMemory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureNet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureNetIn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureNetOut.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureNetTotal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasurePhysicalMemory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasurePlugin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureRegistry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureScript.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureTime.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureUptime.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureVirtualMemory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Meter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeterBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeterBitmap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeterButton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeterHistogram.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeterImage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeterLine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeterRotator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeterRoundLine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeterString.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeterWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Rainmeter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RainmeterQuery.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="System.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TintedImage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TrayWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UpdateCheck.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ccalc-0.5.1\lexer.h">
+      <Filter>CCalc</Filter>
+    </ClInclude>
+    <ClInclude Include="ccalc-0.5.1\mparser.h">
+      <Filter>CCalc</Filter>
+    </ClInclude>
+    <ClInclude Include="ccalc-0.5.1\pack.h">
+      <Filter>CCalc</Filter>
+    </ClInclude>
+    <ClInclude Include="ccalc-0.5.1\strmap.h">
+      <Filter>CCalc</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\LuaManager.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\LuaPush.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\LuaScript.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\glue\lua_group.h">
+      <Filter>Lua\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\glue\lua_measure.h">
+      <Filter>Lua\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\glue\lua_meter.h">
+      <Filter>Lua\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\glue\lua_meterstring.h">
+      <Filter>Lua\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\glue\lua_meterwindow.h">
+      <Filter>Lua\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\glue\lua_rainmeter.h">
+      <Filter>Lua\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\glue\lua_rainmeter_ext.h">
+      <Filter>Lua\glue</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\include\lua.hpp">
+      <Filter>Lua\Lua Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\luaconf.h">
+      <Filter>Lua\Lua Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\include\tolua++.h">
+      <Filter>Lua\tolua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\tolua++\tolua_event.h">
+      <Filter>Lua\tolua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lapi.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lauxlib.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lcode.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\ldebug.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\ldo.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lfunc.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lgc.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\llex.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\llimits.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lmem.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lobject.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lopcodes.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lparser.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lstate.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lstring.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\ltable.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\ltm.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lua.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lualib.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lundump.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lvm.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\lzio.h">
+      <Filter>Lua\Lua</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Res\tray.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+</Project>

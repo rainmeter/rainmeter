@@ -26,8 +26,6 @@
 #include "../PluginPerfMon/objinst.h"
 #include "../PluginPerfMon/perfcntr.h"
 
-#pragma warning ( disable: 4786 )
-
 /* The exported functions */
 extern "C"
 {

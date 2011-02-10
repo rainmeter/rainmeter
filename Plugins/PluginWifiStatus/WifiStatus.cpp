@@ -16,8 +16,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-#pragma warning(disable: 4786)
-
 #include <windows.h>
 #include <map>
 #include <string>

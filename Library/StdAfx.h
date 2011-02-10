@@ -21,8 +21,6 @@
 
 #define _WIN32_IE 0x0600
 
-#pragma warning(disable: 4786)
-
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>

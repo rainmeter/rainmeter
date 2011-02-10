@@ -19,8 +19,6 @@
 #ifndef __TRAYWINDOW_H__
 #define __TRAYWINDOW_H__
 
-#pragma warning(disable: 4786)
-
 #include <windows.h>
 #include <gdiplus.h>
 #include <vector>

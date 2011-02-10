@@ -23,8 +23,6 @@
   resource leaks in itself (all fixed).  There's irony for you!
 */
 
-#pragma warning(disable: 4786)
-
 #define _WIN32_WINNT 0x0501
 
 #include <windows.h>

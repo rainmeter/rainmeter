@@ -393,7 +393,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	case WM_COMMAND:
 		if (Rainmeter && tray)
 		{
-			if(wParam == ID_CONTEXT_ABOUT)
+			if (wParam == ID_CONTEXT_ABOUT)
 			{
 				OpenAboutDialog(tray->GetWindow(), Rainmeter->GetInstance());
 			} 
