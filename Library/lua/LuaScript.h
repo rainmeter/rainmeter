@@ -10,7 +10,7 @@ class LuaScript
 {
 public:
 
-	LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_strTableName);
+	LuaScript(lua_State* p_pState, const char* p_strFile);
 
 	~LuaScript(void);
 	
@@ -28,7 +28,7 @@ public:
 
 	void BindVariable(const char* p_strName, void* p_pValue, const char* p_strTypeName);
 
-	void PushTable() { lua_getglobal(m_pState, m_strTableName); }
+	void PushTable() { lua_rawgeti(m_pState, LUA_GLOBALSINDEX, m_iRef); }
 
 	static void ReportErrors(lua_State * L);
 
@@ -36,7 +36,8 @@ protected:
 
 	lua_State* m_pState;
 
-	char* m_strTableName;
+	char* m_strFile;
+	int m_iRef;
 
 	bool m_bInitialized;
 };

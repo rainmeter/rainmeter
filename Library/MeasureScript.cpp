@@ -142,98 +142,87 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values
 	std::string oldScriptFile = m_ScriptFile;
-	std::string oldTableName = m_TableName;
 
 	// Read common configs
 	CMeasure::ReadConfig(parser, section);
 
 	m_ScriptFile = ConvertToAscii(parser.ReadString(section, L"ScriptFile", L"").c_str());
-	m_TableName = ConvertToAscii(parser.ReadString(section, L"TableName", L"").c_str());
 
 	if (!m_ScriptFile.empty())
 	{
-		if (!m_TableName.empty())
+		if (!m_Initialized ||
+			oldScriptFile != m_ScriptFile)
 		{
-			if (!m_Initialized ||
-				oldScriptFile != m_ScriptFile ||
-				oldTableName != m_TableName)
+			lua_State* L = LuaManager::GetState();
+
+			DeleteLuaScript();
+			m_pLuaScript = new LuaScript(LuaManager::GetState(), m_ScriptFile.c_str());
+
+			if (m_pLuaScript->IsInitialized())
 			{
-				lua_State* L = LuaManager::GetState();
+				m_bUpdateDefined = m_pLuaScript->FunctionExists(g_strUpdateFunction);
+				m_bInitializeDefined = m_pLuaScript->FunctionExists(g_strInitFunction);
+				m_bGetValueDefined = m_pLuaScript->FunctionExists(g_strGetValueFunction);
+				m_bGetStringValueDefined = m_pLuaScript->FunctionExists(g_strGetStringValueFunction);
 
-				DeleteLuaScript();
-				m_pLuaScript = new LuaScript(LuaManager::GetState(), m_ScriptFile.c_str(), m_TableName.c_str());
+				m_pLuaScript->PushTable();
 
-				if (m_pLuaScript->IsInitialized())
+				// Push the variable name we want to put a value in.
+				lua_pushstring(L, "SELF");
+				// Push the value
+				tolua_pushusertype(L, this, "CMeasure");
+				// Bind the variable
+				lua_settable(L, -3);
+
+				// Push the variable name we want to put a value in.
+				lua_pushstring(L, "SKIN");
+				// Push the value
+				tolua_pushusertype(L, m_MeterWindow, "CMeterWindow");
+				// Bind the variable
+				lua_settable(L, -3);
+
+				// Push the variable name we want to put a value in.
+				lua_pushstring(L, "RAINMETER");
+				// Push the value
+				tolua_pushusertype(L, m_MeterWindow->GetMainObject(), "CRainmeter");
+				// Bind the variable
+				lua_settable(L, -3);
+
+				// Look i nthe properties table for values to read from the section.
+				lua_getfield(L, -1, "PROPERTIES");
+				if (lua_isnil(L, -1) == 0)
 				{
-					m_bUpdateDefined = m_pLuaScript->FunctionExists(g_strUpdateFunction);
-					m_bInitializeDefined = m_pLuaScript->FunctionExists(g_strInitFunction);
-					m_bGetValueDefined = m_pLuaScript->FunctionExists(g_strGetValueFunction);
-					m_bGetStringValueDefined = m_pLuaScript->FunctionExists(g_strGetStringValueFunction);
+					lua_pushnil(L);
 
-					m_pLuaScript->PushTable();
-
-					// Push the variable name we want to put a value in.
-					lua_pushstring(L, "SELF");
-					// Push the value
-					tolua_pushusertype(L, this, "CMeasure");
-					// Bind the variable
-					lua_settable(L, -3);
-
-					// Push the variable name we want to put a value in.
-					lua_pushstring(L, "SKIN");
-					// Push the value
-					tolua_pushusertype(L, m_MeterWindow, "CMeterWindow");
-					// Bind the variable
-					lua_settable(L, -3);
-
-					// Push the variable name we want to put a value in.
-					lua_pushstring(L, "RAINMETER");
-					// Push the value
-					tolua_pushusertype(L, m_MeterWindow->GetMainObject(), "CRainmeter");
-					// Bind the variable
-					lua_settable(L, -3);
-
-					// Look i nthe properties table for values to read from the section.
-					lua_getfield(L, -1, "PROPERTIES");
-					if (lua_isnil(L, -1) == 0)
+					while(lua_next(L, -2)) 
 					{
-						lua_pushnil(L);
+						lua_pop(L, 1);
 
-						while(lua_next(L, -2)) 
+						const char* strKey = lua_tostring(L, -1);
+
+						std::wstring wstrKey = ConvertToWide(strKey);
+						std::wstring wstrValue = parser.ReadString(section, wstrKey.c_str(), L"");
+
+						if (!wstrValue.empty())
 						{
-							lua_pop(L, 1);
+							std::string strStrVal = ConvertToAscii(wstrValue.c_str());
+							const char* strValue = strStrVal.c_str();
 
-							const char* strKey = lua_tostring(L, -1);
-
-							std::wstring wstrKey = ConvertToWide(strKey);
-							std::wstring wstrValue = parser.ReadString(section, wstrKey.c_str(), L"");
-
-							if (!wstrValue.empty())
-							{
-								std::string strStrVal = ConvertToAscii(wstrValue.c_str());
-								const char* strValue = strStrVal.c_str();
-
-								lua_pushstring(L, strValue);
-								lua_setfield(L, -3, strKey);
-							}
+							lua_pushstring(L, strValue);
+							lua_setfield(L, -3, strKey);
 						}
 					}
-					// Pop PROPERTIES table
-					lua_pop(L, 1);
+				}
+				// Pop PROPERTIES table
+				lua_pop(L, 1);
 
-					// Pop the table
-					lua_pop(L, 1);
-				}
-				else
-				{
-					DeleteLuaScript();
-				}
+				// Pop the table
+				lua_pop(L, 1);
 			}
-		}
-		else
-		{
-			LuaManager::LuaLog(LOG_ERROR, "Script: TableName missing in %s.", m_ANSIName.c_str());
-			DeleteLuaScript();
+			else
+			{
+				DeleteLuaScript();
+			}
 		}
 	}
 	else

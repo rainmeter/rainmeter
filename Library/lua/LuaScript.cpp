@@ -3,7 +3,8 @@
 #include "LuaManager.h"
 #include "../Rainmeter.h"
 
-LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_strTableName) : m_pState(p_pState), m_strTableName(_strdup(p_strTableName)),
+LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile) : m_pState(p_pState), m_strFile(_strdup(p_strFile)),
+	m_iRef(LUA_NOREF),
 	m_bInitialized(true)
 {
 	int result = luaL_loadfile(m_pState, p_strFile);
@@ -27,9 +28,9 @@ LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_s
 		lua_setmetatable(m_pState, -2);
 
 		// Put the table into the global table
-		lua_setglobal(m_pState, p_strTableName);
+		m_iRef = luaL_ref(m_pState, LUA_GLOBALSINDEX);
 
-		lua_getglobal(m_pState, p_strTableName);
+		PushTable();
 
 		// Set the environment for the function to be run in to be the table that
 		// has been created for the script/
@@ -43,6 +44,9 @@ LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_s
 			m_bInitialized = false;
 			LuaManager::LuaLog(LOG_ERROR, "Script: Could not run file: %s", lua_tostring(m_pState, -1));
 			lua_pop(m_pState, 1);
+
+			luaL_unref(m_pState, LUA_GLOBALSINDEX, m_iRef);
+			m_iRef = LUA_NOREF;
 		}
 	}
 	else
@@ -55,7 +59,8 @@ LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile, const char* p_s
 
 LuaScript::~LuaScript(void)
 {
-	if (m_strTableName) free(m_strTableName);
+	luaL_unref(m_pState, LUA_GLOBALSINDEX, m_iRef);
+	if (m_strFile) free(m_strFile);
 }
 
 void LuaScript::BindVariable(const char* p_strName, void* p_pValue, const char* p_strTypeName)
@@ -92,7 +97,7 @@ double LuaScript::RunFunctionDouble(const char* p_strFuncName)
 	if (m_bInitialized && p_strFuncName)
 	{
 		// Push our table onto the stack
-		lua_getglobal(m_pState, m_strTableName);
+		PushTable();
 
 		// Push the function onto the stack
 		lua_getfield(m_pState, -1, p_strFuncName);
@@ -105,7 +110,7 @@ double LuaScript::RunFunctionDouble(const char* p_strFuncName)
 		{
 			if (!lua_isnumber(m_pState, -1))
 			{
-				LuaManager::LuaLog(LOG_ERROR, "Script: Function '%s:%s' must return a number", m_strTableName, p_strFuncName);
+				LuaManager::LuaLog(LOG_ERROR, "Script: Function '%s' must return a number: %s", p_strFuncName, m_strFile);
 			}
 
 			result = lua_tonumber(m_pState, -1);
@@ -125,7 +130,7 @@ std::wstring LuaScript::RunFunctionString(const char* p_strFuncName)
 	if (m_bInitialized && p_strFuncName)
 	{
 		// Push our table onto the stack
-		lua_getglobal(m_pState, m_strTableName);
+		PushTable();
 
 		// Push the function onto the stack
 		lua_getfield(m_pState, -1, p_strFuncName);
@@ -138,7 +143,7 @@ std::wstring LuaScript::RunFunctionString(const char* p_strFuncName)
 		{
 			if (!lua_isstring(m_pState, -1))
 			{
-				LuaManager::LuaLog(LOG_ERROR, "Script: Function '%s:%s' must return a string", m_strTableName, p_strFuncName);
+				LuaManager::LuaLog(LOG_ERROR, "Script: Function '%s' must return a string: %s", p_strFuncName, m_strFile);
 			}
 
 			const char* str = lua_tostring(m_pState, -1);
@@ -157,7 +162,7 @@ void LuaScript::RunFunction(const char* p_strFuncName)
 	if (m_bInitialized && p_strFuncName)
 	{
 		// Push our table onto the stack
-		lua_getglobal(m_pState, m_strTableName);
+		PushTable();
 
 		// Push the function onto the stack
 		lua_getfield(m_pState,-1, p_strFuncName);
@@ -178,7 +183,7 @@ bool LuaScript::FunctionExists(const char* p_strFuncName)
 	if (m_bInitialized && p_strFuncName)
 	{
 		// Push our table onto the stack
-		lua_getglobal(m_pState, m_strTableName);
+		PushTable();
 
 		// Push the function onto the stack
 		lua_getfield(m_pState, -1, p_strFuncName);
