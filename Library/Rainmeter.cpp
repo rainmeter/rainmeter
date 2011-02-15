@@ -227,7 +227,9 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 			CMeterWindow *meterWindow = Rainmeter->GetMeterWindowByINI(sData);
 			if (meterWindow)
 			{
-				result = meterWindow->GetSkinName();
+				result = L"\"";
+				result += meterWindow->GetSkinName();
+				result += L"\"";
 				return result.c_str();
 			}
 
