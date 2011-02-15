@@ -489,7 +489,7 @@ bool CMeterString::Update()
 		if (m_Measure) stringValues.push_back(m_Measure->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
 
 		// Get the values for the other measures
-		for (size_t i = 0; i < m_Measures.size(); ++i)
+		for (size_t i = 0, isize = m_Measures.size(); i < isize; ++i)
 		{
 			stringValues.push_back(m_Measures[i]->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
 		}
@@ -498,7 +498,7 @@ bool CMeterString::Update()
 		m_String = m_Prefix;
 		if (m_Text.empty())
 		{
-			if (stringValues.size() > 0)
+			if (!stringValues.empty())
 			{
 				m_String += stringValues[0]; 
 			}

@@ -58,7 +58,7 @@ bool CMeasureRegistry::Update()
 	if(m_RegKey != NULL)
 	{
 		DWORD size = 4096;
-		WCHAR data[4096];
+		WCHAR* data = new WCHAR[size];
 		DWORD type = 0;
 
 		if(RegQueryValueEx(m_RegKey,
@@ -98,6 +98,8 @@ bool CMeasureRegistry::Update()
 			m_StringValue.erase();
 			RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
 		}
+
+		delete [] data;
 	}
 	else
 	{

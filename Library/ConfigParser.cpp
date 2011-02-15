@@ -132,7 +132,7 @@ void CConfigParser::ReadVariables()
 {
 	std::vector<std::wstring> listVariables = GetKeys(L"Variables");
 
-	for (size_t i = 0; i < listVariables.size(); ++i)
+	for (size_t i = 0, isize = listVariables.size(); i < isize; ++i)
 	{
 		SetVariable(listVariables[i], ReadString(L"Variables", listVariables[i].c_str(), L"", false));
 	}
@@ -278,7 +278,7 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 		const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
 		const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
 
-		for (size_t i = 0; i < monitors.size(); ++i)
+		for (size_t i = 0, isize = monitors.size(); i < isize; ++i)
 		{
 			WCHAR buffer2[64];
 
@@ -592,12 +592,12 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 	std::wstring strDefault = defValue;
 
 	// If the template is defined read the value first from there.
-	if (!m_StyleTemplate.empty())
+	if (m_StyleTemplate.size() > 0)
 	{
 		std::vector<std::wstring>::const_reverse_iterator iter = m_StyleTemplate.rbegin();
 		for ( ; iter != m_StyleTemplate.rend(); ++iter)
 		{
-			if (!(*iter).empty())
+			if ((*iter).size() > 0)
 			{
 				std::wstring strSection = (*iter);
 
@@ -630,7 +630,7 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 	const std::wstring& strValue = GetValue(section, key, strDefault);
 	result = strValue;
 
-	if (!m_LastUsedStyle.empty())
+	if (m_LastUsedStyle.size() > 0)
 	{
 		if (&strValue != &strDefault)
 		{
@@ -650,12 +650,12 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 	if (Rainmeter && !Rainmeter->GetDummyLitestep())
 	{
 		std::string ansi = ConvertToAscii(result.c_str());
-		char buffer[4096];	// lets hope the buffer is large enough...
-
 		if (ansi.size() < 4096)
 		{
+			char* buffer = new char[4096];	// lets hope the buffer is large enough...
 			VarExpansion(buffer, ansi.c_str());
 			result = ConvertToWide(buffer);
+			delete [] buffer;
 		}
 	}
 
@@ -685,7 +685,7 @@ bool CConfigParser::IsKeyDefined(LPCTSTR section, LPCTSTR key)
 bool CConfigParser::IsValueDefined(LPCTSTR section, LPCTSTR key)
 {
 	const std::wstring& result = ReadString(section, key, L"", false);
-	return (!m_LastDefaultUsed && !result.empty());
+	return (!m_LastDefaultUsed && result.size() > 0);
 }
 
 void CConfigParser::AddMeasure(CMeasure* pMeasure)
@@ -718,7 +718,7 @@ std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR ke
 {
 	std::vector<Gdiplus::REAL> result;
 	const std::wstring& string = ReadString(section, key, L"");
-	if (!string.empty())
+	if (string.size() > 0)
 	{
 		std::wstring tmp = string;
 		if (tmp[tmp.length() - 1] != L';')
@@ -728,7 +728,7 @@ std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR ke
 
 		// Tokenize and parse the floats
 		std::vector<std::wstring> tokens = Tokenize(tmp, L";");
-		for (size_t i = 0; i < tokens.size(); ++i)
+		for (size_t i = 0, isize = tokens.size(); i < isize; ++i)
 		{
 			result.push_back((Gdiplus::REAL)ParseDouble(tokens[i], 0));
 		}
@@ -749,7 +749,7 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 	const std::wstring& result = ReadString(section, key, L"");
 
 	// Formulas must be surrounded by parenthesis
-	if (!result.empty() && result[0] == L'(' && result[result.size() - 1] == L')')
+	if (result.size() > 0 && result[0] == L'(' && result[result.size() - 1] == L')')
 	{
 		double resultValue = defValue;
 		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.substr(1, result.size() - 2).c_str()).c_str(), &resultValue);
@@ -769,7 +769,7 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 int CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
 {
 	// Formulas must be surrounded by parenthesis
-	if (!result.empty() && result[0] == L'(' && result[result.size() - 1] == L')')
+	if (result.size() > 0 && result[0] == L'(' && result[result.size() - 1] == L')')
 	{
 		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.substr(1, result.size() - 2).c_str()).c_str(), resultValue);
 		
@@ -1049,7 +1049,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 
 	// Avoid "IniFileMapping"
 	std::wstring iniRead = CSystem::GetTemporaryFile(iniFileMappings, iniFile);
-	bool temporary = (!iniRead.empty() && iniRead != L"<>");
+	bool temporary = (iniRead.size() > 0 && iniRead != L"<>");
 
 	if (temporary)
 	{

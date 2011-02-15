@@ -186,7 +186,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 
 	if (m->useEnumDisplayDevices)
 	{
-		for (size_t i = 0; i < m->monitors.size(); ++i)
+		for (size_t i = 0, isize = m->monitors.size(); i < isize; ++i)
 		{
 			if (m->monitors[i].handle == NULL && _wcsnicmp(info.szDevice, m->monitors[i].deviceName, 32) == 0)
 			{
@@ -240,7 +240,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 */
 size_t CSystem::GetMonitorCount()
 {
-	if (c_Monitors.monitors.size() == 0)
+	if (c_Monitors.monitors.empty())
 	{
 		SetMultiMonitorInfo();
 	}
@@ -492,7 +492,7 @@ void CSystem::SetMultiMonitorInfo()
 			c_Monitors.vsL, c_Monitors.vsT, c_Monitors.vsL + c_Monitors.vsW, c_Monitors.vsT + c_Monitors.vsH,
 			c_Monitors.vsW, c_Monitors.vsH);
 
-		for (size_t i = 0; i < monitors.size(); ++i)
+		for (size_t i = 0, isize = monitors.size(); i < isize; ++i)
 		{
 			if (monitors[i].active)
 			{
@@ -525,7 +525,7 @@ void CSystem::UpdateWorkareaInfo()
 		return;
 	}
 
-	for (size_t i = 0; i < monitors.size(); ++i)
+	for (size_t i = 0, isize = monitors.size(); i < isize; ++i)
 	{
 		if (monitors[i].active && monitors[i].handle != NULL)
 		{
@@ -1278,7 +1278,7 @@ std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileM
 			filename = iniFile;
 		}
 
-		for (size_t i = 0; i < iniFileMappings.size(); ++i)
+		for (size_t i = 0, isize = iniFileMappings.size(); i < isize; ++i)
 		{
 			if (_wcsicmp(iniFileMappings[i].c_str(), filename.c_str()) == 0)
 			{

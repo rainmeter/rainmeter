@@ -196,14 +196,14 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 	{
 		str = buffer;
 
-		for (size_t i = 0; i < m_Substitute.size(); i += 2)
+		for (size_t i = 0, isize = m_Substitute.size(); i < isize; i += 2)
 		{
 			if (str.empty() && m_Substitute[i].empty())
 			{
 				// Empty result and empty substitute -> use second
 				str = m_Substitute[i + 1];
 			}
-			else if (m_Substitute[i].size() > 0)
+			else if (!m_Substitute[i].empty())
 			{
 				size_t start = 0;
 				size_t pos = std::wstring::npos;
@@ -267,53 +267,64 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 */
 std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 {
-	std::wstring::size_type end = 0;
-	std::wstring::size_type pos = 0;
+	std::wstring::size_type end, len;
 	std::wstring ret;
 
 	if (buffer.empty()) return ret;	
 
+	len = buffer.size();
+
 	// Remove whitespaces
-	std::wstring::size_type notwhite = buffer.find_first_not_of(L" \t\n");
-	buffer.erase(0, notwhite);
-
-	if (buffer[0] == L'\"' || buffer[0] == L'\'')
+	end = 0;
+	while (end < len && (buffer[end] == L' ' || buffer[end] == L'\t' || buffer[end] == L'\n')) ++end;
+	if (end == len)
 	{
-		WCHAR quote = buffer[0];
-
-		end = 1;	// Skip the '"'
-		// Quotes around the word
-		while (buffer[end] != quote && end < buffer.size()) ++end;
-
-		if (buffer[end] == quote)
-		{
-			ret = buffer.substr(1, end - 1);
-			buffer.erase(0, end + 1);
-		}
-		else
-		{
-			// End of string reached
-			ret = buffer.substr(end);
-			buffer.erase(0, end);
-		}
+		// End of line reached
+		end = std::wstring::npos;
 	}
 	else
 	{
-		end = 0;
-		while ((buffer[end] != L',') && (buffer[end] != L':') && (buffer[end] != L' ') && (buffer[end] != L'\t') && end < buffer.size()) ++end;
+		buffer.erase(0, end);
+		len = buffer.size();
 
-		if (end == buffer.size())
+		if (buffer[0] == L'\"' || buffer[0] == L'\'')
 		{
-			// End of line reached
-			ret = buffer;
-			buffer.erase(0, end);
+			WCHAR quote = buffer[0];
+
+			end = 1;	// Skip the '"'
+			// Quotes around the word
+			while (end < len && (buffer[end] != quote)) ++end;
+			if (end == len) end = std::wstring::npos;
+
+			if (end != std::wstring::npos)
+			{
+				ret = buffer.substr(1, end - 1);
+				++end;
+			}
+			else
+			{
+				// End of string reached - discard result
+			}
 		}
 		else
 		{
-			ret = buffer.substr(0, end + 1);	// The separator is also returned!
-			buffer.erase(0, end + 1);
+			end = 0;
+			while (end < len && (buffer[end] != L',' && buffer[end] != L':' && buffer[end] != L' ' && buffer[end] != L'\t')) ++end;
+			if (end == len) end = std::wstring::npos;
+
+			if (end == std::wstring::npos)
+			{
+				// End of line reached
+				ret = buffer;
+			}
+			else
+			{
+				ret = buffer.substr(0, ++end);	// The separator is also returned!
+			}
 		}
 	}
+
+	buffer.erase(0, end);
 
 	return ret;
 }
@@ -436,22 +447,24 @@ bool CMeasure::PostUpdate()
 {
 	if (m_AverageSize > 0)
 	{
-		if (m_AverageValues.size() == 0)
+		if (!m_AverageValues.empty())
 		{
 			m_AverageValues.resize(m_AverageSize, m_Value);
 		}
 		m_AverageValues[m_AveragePos] = m_Value;
 
+		size_t averageValuesSize = m_AverageValues.size();
+
 		++m_AveragePos;
-		m_AveragePos %= m_AverageValues.size();
+		m_AveragePos %= averageValuesSize;
 
 		// Calculate the average value
 		m_Value = 0;
-		for (size_t i = 0; i < m_AverageValues.size(); ++i)
+		for (size_t i = 0; i < averageValuesSize; ++i)
 		{
 			m_Value += m_AverageValues[i];
 		}
-		m_Value = m_Value / (double)m_AverageValues.size();
+		m_Value /= (double)averageValuesSize;
 	}
 	return true;
 }

@@ -1,5 +1,5 @@
 /*
-** Lua binding: group
+** Lua binding: rainmeter_ext
 ** Generated automatically by tolua++-1.0.92 on 11/22/10 21:20:13.
 */
 
@@ -11,9 +11,11 @@
 #include "string.h"
 
 #include "tolua++.h"
-#include "../LuaManager.h"
+
 /* Exported function */
 TOLUA_API int  luaopen_rainmeter_ext (lua_State* tolua_S);
+
+#include "../LuaManager.h"
 
 #include "../../MeterBar.h"
 #include "../../MeterBitmap.h"
@@ -99,7 +101,7 @@ static int staticLuaLog(lua_State* tolua_S)
 /* list of functions in the module */
 static const luaL_reg rainmeter_ext_funcs[] =
 {
-	{ "LuaLog", staticLuaLog},
+	{ "LuaLog", staticLuaLog },
 	{ "MeterBar", AsMeterBar },
 	{ "MeterBitmap", AsMeterBitmap },
 	{ "MeterButton", AsMeterButton },

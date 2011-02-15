@@ -191,7 +191,7 @@ bool CMeterImage::Update()
 					stringValues.push_back(val);
 
 					// Get the values for the other measures
-					for (size_t i = 0; i < m_Measures.size(); ++i)
+					for (size_t i = 0, isize = m_Measures.size(); i < isize; ++i)
 					{
 						stringValues.push_back(m_Measures[i]->GetStringValue(AUTOSCALE_OFF, 1, 0, false));
 					}

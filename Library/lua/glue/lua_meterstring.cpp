@@ -1,6 +1,6 @@
 /*
 ** Lua binding: meter_string
-** Generated automatically by tolua++-1.0.92 on 11/23/10 03:16:44.
+** Generated automatically by tolua++-1.0.92 on 02/15/11 03:01:13.
 */
 
 #include "../../StdAfx.h"
@@ -55,37 +55,6 @@ static int tolua_meter_string_CMeterString_GetX00(lua_State* tolua_S)
 #ifndef TOLUA_RELEASE
  tolua_lerror:
  tolua_error(tolua_S,"#ferror in function 'GetX'.",&tolua_err);
- return 0;
-#endif
-}
-#endif //#ifndef TOLUA_DISABLE
-
-/* method: Initialize of class  CMeterString */
-#ifndef TOLUA_DISABLE_tolua_meter_string_CMeterString_Initialize00
-static int tolua_meter_string_CMeterString_Initialize00(lua_State* tolua_S)
-{
-#ifndef TOLUA_RELEASE
- tolua_Error tolua_err;
- if (
-     !tolua_isusertype(tolua_S,1,"CMeterString",0,&tolua_err) ||
-     !tolua_isnoobj(tolua_S,2,&tolua_err)
- )
-  goto tolua_lerror;
- else
-#endif
- {
-  CMeterString* self = (CMeterString*)  tolua_tousertype(tolua_S,1,0);
-#ifndef TOLUA_RELEASE
-  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'Initialize'", NULL);
-#endif
-  {
-   self->Initialize();
-  }
- }
- return 0;
-#ifndef TOLUA_RELEASE
- tolua_lerror:
- tolua_error(tolua_S,"#ferror in function 'Initialize'.",&tolua_err);
  return 0;
 #endif
 }
@@ -157,7 +126,7 @@ static int tolua_meter_string_CMeterString_SetText00(lua_State* tolua_S)
 #endif //#ifndef TOLUA_DISABLE
 
 
-/* method: SetText of class  CMeterString */
+/* method: GetRect of class  CMeterString */
 #ifndef TOLUA_DISABLE_tolua_meter_string_CMeterString_GetRect00
 static int tolua_meter_string_CMeterString_GetRect00(lua_State* tolua_S)
 {
@@ -216,7 +185,6 @@ TOLUA_API int tolua_meter_string_open (lua_State* tolua_S)
   tolua_cclass(tolua_S,"CMeterString","CMeterString","CMeter",NULL);
   tolua_beginmodule(tolua_S,"CMeterString");
    tolua_function(tolua_S,"GetX",tolua_meter_string_CMeterString_GetX00);
-   tolua_function(tolua_S,"Initialize",tolua_meter_string_CMeterString_Initialize00);
    tolua_function(tolua_S,"Update",tolua_meter_string_CMeterString_Update00);
    tolua_function(tolua_S,"SetText",tolua_meter_string_CMeterString_SetText00);
    tolua_function(tolua_S,"GetRect",tolua_meter_string_CMeterString_GetRect00);

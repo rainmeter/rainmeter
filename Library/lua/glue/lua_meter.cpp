@@ -1,6 +1,6 @@
- /*
+/*
 ** Lua binding: meter
-** Generated automatically by tolua++-1.0.92 on 11/22/10 21:20:13.
+** Generated automatically by tolua++-1.0.92 on 02/15/11 18:55:46.
 */
 
 #include "../../StdAfx.h"
@@ -39,37 +39,6 @@ static void tolua_reg_types (lua_State* tolua_S)
  tolua_usertype(tolua_S,"CGroup");
  tolua_usertype(tolua_S,"WCHAR");
 }
-
-/* method: Initialize of class  CMeter */
-#ifndef TOLUA_DISABLE_tolua_meter_CMeter_Initialize00
-static int tolua_meter_CMeter_Initialize00(lua_State* tolua_S)
-{
-#ifndef TOLUA_RELEASE
- tolua_Error tolua_err;
- if (
-     !tolua_isusertype(tolua_S,1,"CMeter",0,&tolua_err) ||
-     !tolua_isnoobj(tolua_S,2,&tolua_err)
- )
-  goto tolua_lerror;
- else
-#endif
- {
-  CMeter* self = (CMeter*)  tolua_tousertype(tolua_S,1,0);
-#ifndef TOLUA_RELEASE
-  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'Initialize'", NULL);
-#endif
-  {
-   self->Initialize();
-  }
- }
- return 0;
-#ifndef TOLUA_RELEASE
- tolua_lerror:
- tolua_error(tolua_S,"#ferror in function 'Initialize'.",&tolua_err);
- return 0;
-#endif
-}
-#endif //#ifndef TOLUA_DISABLE
 
 /* method: Update of class  CMeter */
 #ifndef TOLUA_DISABLE_tolua_meter_CMeter_Update00
@@ -167,38 +136,6 @@ static int tolua_meter_CMeter_HasDynamicVariables00(lua_State* tolua_S)
 }
 #endif //#ifndef TOLUA_DISABLE
 
-/* method: GetH of class  CMeter */
-#ifndef TOLUA_DISABLE_tolua_meter_CMeter_GetH00
-static int tolua_meter_CMeter_GetH00(lua_State* tolua_S)
-{
-#ifndef TOLUA_RELEASE
- tolua_Error tolua_err;
- if (
-     !tolua_isusertype(tolua_S,1,"CMeter",0,&tolua_err) ||
-     !tolua_isnoobj(tolua_S,2,&tolua_err)
- )
-  goto tolua_lerror;
- else
-#endif
- {
-  CMeter* self = (CMeter*)  tolua_tousertype(tolua_S,1,0);
-#ifndef TOLUA_RELEASE
-  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'GetH'", NULL);
-#endif
-  {
-   int tolua_ret = (int)  self->GetH();
-   tolua_pushnumber(tolua_S,(lua_Number)tolua_ret);
-  }
- }
- return 1;
-#ifndef TOLUA_RELEASE
- tolua_lerror:
- tolua_error(tolua_S,"#ferror in function 'GetH'.",&tolua_err);
- return 0;
-#endif
-}
-#endif //#ifndef TOLUA_DISABLE
-
 /* method: GetW of class  CMeter */
 #ifndef TOLUA_DISABLE_tolua_meter_CMeter_GetW00
 static int tolua_meter_CMeter_GetW00(lua_State* tolua_S)
@@ -226,6 +163,38 @@ static int tolua_meter_CMeter_GetW00(lua_State* tolua_S)
 #ifndef TOLUA_RELEASE
  tolua_lerror:
  tolua_error(tolua_S,"#ferror in function 'GetW'.",&tolua_err);
+ return 0;
+#endif
+}
+#endif //#ifndef TOLUA_DISABLE
+
+/* method: GetH of class  CMeter */
+#ifndef TOLUA_DISABLE_tolua_meter_CMeter_GetH00
+static int tolua_meter_CMeter_GetH00(lua_State* tolua_S)
+{
+#ifndef TOLUA_RELEASE
+ tolua_Error tolua_err;
+ if (
+     !tolua_isusertype(tolua_S,1,"CMeter",0,&tolua_err) ||
+     !tolua_isnoobj(tolua_S,2,&tolua_err)
+ )
+  goto tolua_lerror;
+ else
+#endif
+ {
+  CMeter* self = (CMeter*)  tolua_tousertype(tolua_S,1,0);
+#ifndef TOLUA_RELEASE
+  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'GetH'", NULL);
+#endif
+  {
+   int tolua_ret = (int)  self->GetH();
+   tolua_pushnumber(tolua_S,(lua_Number)tolua_ret);
+  }
+ }
+ return 1;
+#ifndef TOLUA_RELEASE
+ tolua_lerror:
+ tolua_error(tolua_S,"#ferror in function 'GetH'.",&tolua_err);
  return 0;
 #endif
 }
@@ -294,6 +263,72 @@ static int tolua_meter_CMeter_GetY00(lua_State* tolua_S)
 #ifndef TOLUA_RELEASE
  tolua_lerror:
  tolua_error(tolua_S,"#ferror in function 'GetY'.",&tolua_err);
+ return 0;
+#endif
+}
+#endif //#ifndef TOLUA_DISABLE
+
+/* method: SetW of class  CMeter */
+#ifndef TOLUA_DISABLE_tolua_meter_CMeter_SetW00
+static int tolua_meter_CMeter_SetW00(lua_State* tolua_S)
+{
+#ifndef TOLUA_RELEASE
+ tolua_Error tolua_err;
+ if (
+     !tolua_isusertype(tolua_S,1,"CMeter",0,&tolua_err) ||
+     !tolua_isnumber(tolua_S,2,0,&tolua_err) ||
+     !tolua_isnoobj(tolua_S,3,&tolua_err)
+ )
+  goto tolua_lerror;
+ else
+#endif
+ {
+  CMeter* self = (CMeter*)  tolua_tousertype(tolua_S,1,0);
+  int w = ((int)  tolua_tonumber(tolua_S,2,0));
+#ifndef TOLUA_RELEASE
+  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'SetW'", NULL);
+#endif
+  {
+   self->SetW(w);
+  }
+ }
+ return 0;
+#ifndef TOLUA_RELEASE
+ tolua_lerror:
+ tolua_error(tolua_S,"#ferror in function 'SetW'.",&tolua_err);
+ return 0;
+#endif
+}
+#endif //#ifndef TOLUA_DISABLE
+
+/* method: SetH of class  CMeter */
+#ifndef TOLUA_DISABLE_tolua_meter_CMeter_SetH00
+static int tolua_meter_CMeter_SetH00(lua_State* tolua_S)
+{
+#ifndef TOLUA_RELEASE
+ tolua_Error tolua_err;
+ if (
+     !tolua_isusertype(tolua_S,1,"CMeter",0,&tolua_err) ||
+     !tolua_isnumber(tolua_S,2,0,&tolua_err) ||
+     !tolua_isnoobj(tolua_S,3,&tolua_err)
+ )
+  goto tolua_lerror;
+ else
+#endif
+ {
+  CMeter* self = (CMeter*)  tolua_tousertype(tolua_S,1,0);
+  int h = ((int)  tolua_tonumber(tolua_S,2,0));
+#ifndef TOLUA_RELEASE
+  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'SetH'", NULL);
+#endif
+  {
+   self->SetH(h);
+  }
+ }
+ return 0;
+#ifndef TOLUA_RELEASE
+ tolua_lerror:
+ tolua_error(tolua_S,"#ferror in function 'SetH'.",&tolua_err);
  return 0;
 #endif
 }
@@ -385,13 +420,45 @@ static int tolua_meter_CMeter_GetToolTipText00(lua_State* tolua_S)
 #endif
   {
    const std::wstring& tolua_ret = (const std::wstring&)  self->GetToolTipText();
-    tolua_pushusertype(tolua_S,(void*)&tolua_ret,"const std::wstring");
+    push_wstring(tolua_S,(void*)&tolua_ret,"const std::wstring");
   }
  }
  return 1;
 #ifndef TOLUA_RELEASE
  tolua_lerror:
  tolua_error(tolua_S,"#ferror in function 'GetToolTipText'.",&tolua_err);
+ return 0;
+#endif
+}
+#endif //#ifndef TOLUA_DISABLE
+
+/* method: HasToolTip of class  CMeter */
+#ifndef TOLUA_DISABLE_tolua_meter_CMeter_HasToolTip00
+static int tolua_meter_CMeter_HasToolTip00(lua_State* tolua_S)
+{
+#ifndef TOLUA_RELEASE
+ tolua_Error tolua_err;
+ if (
+     !tolua_isusertype(tolua_S,1,"CMeter",0,&tolua_err) ||
+     !tolua_isnoobj(tolua_S,2,&tolua_err)
+ )
+  goto tolua_lerror;
+ else
+#endif
+ {
+  CMeter* self = (CMeter*)  tolua_tousertype(tolua_S,1,0);
+#ifndef TOLUA_RELEASE
+  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'HasToolTip'", NULL);
+#endif
+  {
+   bool tolua_ret = (bool)  self->HasToolTip();
+   tolua_pushboolean(tolua_S,(bool)tolua_ret);
+  }
+ }
+ return 1;
+#ifndef TOLUA_RELEASE
+ tolua_lerror:
+ tolua_error(tolua_S,"#ferror in function 'HasToolTip'.",&tolua_err);
  return 0;
 #endif
 }
@@ -720,39 +787,6 @@ static int tolua_meter_CMeter_HitTest00(lua_State* tolua_S)
 }
 #endif //#ifndef TOLUA_DISABLE
 
-/* method: SetMouseOver of class  CMeter */
-#ifndef TOLUA_DISABLE_tolua_meter_CMeter_SetMouseOver00
-static int tolua_meter_CMeter_SetMouseOver00(lua_State* tolua_S)
-{
-#ifndef TOLUA_RELEASE
- tolua_Error tolua_err;
- if (
-     !tolua_isusertype(tolua_S,1,"CMeter",0,&tolua_err) ||
-     !tolua_isboolean(tolua_S,2,0,&tolua_err) ||
-     !tolua_isnoobj(tolua_S,3,&tolua_err)
- )
-  goto tolua_lerror;
- else
-#endif
- {
-  CMeter* self = (CMeter*)  tolua_tousertype(tolua_S,1,0);
-  bool over = ((bool)  tolua_toboolean(tolua_S,2,0));
-#ifndef TOLUA_RELEASE
-  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'SetMouseOver'", NULL);
-#endif
-  {
-   self->SetMouseOver(over);
-  }
- }
- return 0;
-#ifndef TOLUA_RELEASE
- tolua_lerror:
- tolua_error(tolua_S,"#ferror in function 'SetMouseOver'.",&tolua_err);
- return 0;
-#endif
-}
-#endif //#ifndef TOLUA_DISABLE
-
 /* method: IsMouseOver of class  CMeter */
 #ifndef TOLUA_DISABLE_tolua_meter_CMeter_IsMouseOver00
 static int tolua_meter_CMeter_IsMouseOver00(lua_State* tolua_S)
@@ -780,39 +814,6 @@ static int tolua_meter_CMeter_IsMouseOver00(lua_State* tolua_S)
 #ifndef TOLUA_RELEASE
  tolua_lerror:
  tolua_error(tolua_S,"#ferror in function 'IsMouseOver'.",&tolua_err);
- return 0;
-#endif
-}
-#endif //#ifndef TOLUA_DISABLE
-
-/* method: SetName of class  CMeter */
-#ifndef TOLUA_DISABLE_tolua_meter_CMeter_SetName00
-static int tolua_meter_CMeter_SetName00(lua_State* tolua_S)
-{
-#ifndef TOLUA_RELEASE
- tolua_Error tolua_err;
- if (
-     !tolua_isusertype(tolua_S,1,"CMeter",0,&tolua_err) ||
-     !is_wchar(tolua_S,2,"const WCHAR",0,&tolua_err) ||
-     !tolua_isnoobj(tolua_S,3,&tolua_err)
- )
-  goto tolua_lerror;
- else
-#endif
- {
-  CMeter* self = (CMeter*)  tolua_tousertype(tolua_S,1,0);
-  const WCHAR* name = ((const WCHAR*)  to_wchar(tolua_S,2,0));
-#ifndef TOLUA_RELEASE
-  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'SetName'", NULL);
-#endif
-  {
-   self->SetName(name);
-  }
- }
- return 0;
-#ifndef TOLUA_RELEASE
- tolua_lerror:
- tolua_error(tolua_S,"#ferror in function 'SetName'.",&tolua_err);
  return 0;
 #endif
 }
@@ -850,73 +851,6 @@ static int tolua_meter_CMeter_GetName00(lua_State* tolua_S)
 }
 #endif //#ifndef TOLUA_DISABLE
 
-
-/* method: SetW of class  CMeter */
-#ifndef TOLUA_DISABLE_tolua_meter_CMeter_SetW00
-static int tolua_meter_CMeter_SetW00(lua_State* tolua_S)
-{
-#ifndef TOLUA_RELEASE
- tolua_Error tolua_err;
- if (
-     !tolua_isusertype(tolua_S,1,"CMeter",0,&tolua_err) ||
-     !tolua_isnumber(tolua_S,2,0,&tolua_err) ||
-     !tolua_isnoobj(tolua_S,3,&tolua_err)
- )
-  goto tolua_lerror;
- else
-#endif
- {
-  CMeter* self = (CMeter*)  tolua_tousertype(tolua_S,1,0);
-  int w = ((int)  tolua_tonumber(tolua_S,2,0));
-#ifndef TOLUA_RELEASE
-  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'SetW'", NULL);
-#endif
-  {
-   self->SetW(w);
-  }
- }
- return 0;
-#ifndef TOLUA_RELEASE
- tolua_lerror:
- tolua_error(tolua_S,"#ferror in function 'SetW'.",&tolua_err);
- return 0;
-#endif
-}
-#endif //#ifndef TOLUA_DISABLE
-
-/* method: SetH of class  CMeter */
-#ifndef TOLUA_DISABLE_tolua_meter_CMeter_SetH00
-static int tolua_meter_CMeter_SetH00(lua_State* tolua_S)
-{
-#ifndef TOLUA_RELEASE
- tolua_Error tolua_err;
- if (
-     !tolua_isusertype(tolua_S,1,"CMeter",0,&tolua_err) ||
-     !tolua_isnumber(tolua_S,2,0,&tolua_err) ||
-     !tolua_isnoobj(tolua_S,3,&tolua_err)
- )
-  goto tolua_lerror;
- else
-#endif
- {
-  CMeter* self = (CMeter*)  tolua_tousertype(tolua_S,1,0);
-  int h = ((int)  tolua_tonumber(tolua_S,2,0));
-#ifndef TOLUA_RELEASE
-  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'SetH'", NULL);
-#endif
-  {
-   self->SetH(h);
-  }
- }
- return 0;
-#ifndef TOLUA_RELEASE
- tolua_lerror:
- tolua_error(tolua_S,"#ferror in function 'SetH'.",&tolua_err);
- return 0;
-#endif
-}
-#endif //#ifndef TOLUA_DISABLE
-
 /* Open function */
 TOLUA_API int tolua_meter_open (lua_State* tolua_S)
 {
@@ -926,19 +860,19 @@ TOLUA_API int tolua_meter_open (lua_State* tolua_S)
  tolua_beginmodule(tolua_S,NULL);
   tolua_cclass(tolua_S,"CMeter","CMeter","CGroup",NULL);
   tolua_beginmodule(tolua_S,"CMeter");
-   tolua_function(tolua_S,"Initialize",tolua_meter_CMeter_Initialize00);
    tolua_function(tolua_S,"Update",tolua_meter_CMeter_Update00);
    tolua_function(tolua_S,"HasActiveTransition",tolua_meter_CMeter_HasActiveTransition00);
    tolua_function(tolua_S,"HasDynamicVariables",tolua_meter_CMeter_HasDynamicVariables00);
-   tolua_function(tolua_S,"GetH",tolua_meter_CMeter_GetH00);
    tolua_function(tolua_S,"GetW",tolua_meter_CMeter_GetW00);
+   tolua_function(tolua_S,"GetH",tolua_meter_CMeter_GetH00);
    tolua_function(tolua_S,"GetX",tolua_meter_CMeter_GetX00);
    tolua_function(tolua_S,"GetY",tolua_meter_CMeter_GetY00);
-   tolua_function(tolua_S,"SetX",tolua_meter_CMeter_SetX00);
-   tolua_function(tolua_S,"SetY",tolua_meter_CMeter_SetY00);
    tolua_function(tolua_S,"SetW",tolua_meter_CMeter_SetW00);
    tolua_function(tolua_S,"SetH",tolua_meter_CMeter_SetH00);
+   tolua_function(tolua_S,"SetX",tolua_meter_CMeter_SetX00);
+   tolua_function(tolua_S,"SetY",tolua_meter_CMeter_SetY00);
    tolua_function(tolua_S,"GetToolTipText",tolua_meter_CMeter_GetToolTipText00);
+   tolua_function(tolua_S,"HasToolTip",tolua_meter_CMeter_HasToolTip00);
    tolua_function(tolua_S,"SetToolTipHidden",tolua_meter_CMeter_SetToolTipHidden00);
    tolua_function(tolua_S,"UpdateToolTip",tolua_meter_CMeter_UpdateToolTip00);
    tolua_function(tolua_S,"HasMouseAction",tolua_meter_CMeter_HasMouseAction00);
@@ -949,9 +883,7 @@ TOLUA_API int tolua_meter_open (lua_State* tolua_S)
    tolua_function(tolua_S,"IsHidden",tolua_meter_CMeter_IsHidden00);
    tolua_function(tolua_S,"GetTransformationMatrix",tolua_meter_CMeter_GetTransformationMatrix00);
    tolua_function(tolua_S,"HitTest",tolua_meter_CMeter_HitTest00);
-   tolua_function(tolua_S,"SetMouseOver",tolua_meter_CMeter_SetMouseOver00);
    tolua_function(tolua_S,"IsMouseOver",tolua_meter_CMeter_IsMouseOver00);
-   tolua_function(tolua_S,"SetName",tolua_meter_CMeter_SetName00);
    tolua_function(tolua_S,"GetName",tolua_meter_CMeter_GetName00);
   tolua_endmodule(tolua_S);
  tolua_endmodule(tolua_S);
@@ -964,6 +896,4 @@ TOLUA_API int tolua_meter_open (lua_State* tolua_S)
  return tolua_meter_open(tolua_S);
 };
 #endif
-
-
 

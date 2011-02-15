@@ -648,7 +648,7 @@ void CMeter::ReplaceToolTipMeasures(std::wstring& str)
 	if (!m_AllMeasures.empty())
 	{	
 		// Get the values for the measures
-		for (size_t i = 0; i < m_AllMeasures.size(); ++i)
+		for (size_t i = 0, isize = m_AllMeasures.size(); i < isize; ++i)
 		{
 			stringValues.push_back(m_AllMeasures[i]->GetStringValue(AUTOSCALE_ON, 1, 0, false));
 		}

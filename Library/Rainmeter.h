@@ -133,7 +133,6 @@ class CRainmeter
 public:
 	struct CONFIG 
 	{
-		std::wstring path;
 		std::wstring config;
 		std::vector<std::wstring> iniFiles;
 		std::vector<UINT> commands;

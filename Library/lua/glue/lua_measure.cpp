@@ -1,6 +1,6 @@
 /*
 ** Lua binding: measure
-** Generated automatically by tolua++-1.0.92 on 01/19/11 04:59:42.
+** Generated automatically by tolua++-1.0.92 on 02/15/11 18:55:46.
 */
 
 #include "../../StdAfx.h"
@@ -15,9 +15,6 @@
 /* Exported function */
 TOLUA_API int  tolua_measure_open (lua_State* tolua_S);
 
-#include "../../MeterWindow.h"
-#include "../../Litestep.h"
-#include "../../Group.h"
 #include "../../Measure.h"
 #include "../LuaPush.h"
 
@@ -29,34 +26,33 @@ static void tolua_reg_types (lua_State* tolua_S)
  tolua_usertype(tolua_S,"WCHAR");
 }
 
-/* method: SetName of class  CMeasure */
-#ifndef TOLUA_DISABLE_tolua_measure_CMeasure_SetName00
-static int tolua_measure_CMeasure_SetName00(lua_State* tolua_S)
+/* method: GetName of class  CMeasure */
+#ifndef TOLUA_DISABLE_tolua_measure_CMeasure_GetName00
+static int tolua_measure_CMeasure_GetName00(lua_State* tolua_S)
 {
 #ifndef TOLUA_RELEASE
  tolua_Error tolua_err;
  if (
      !tolua_isusertype(tolua_S,1,"CMeasure",0,&tolua_err) ||
-     !is_wchar(tolua_S,2,"const WCHAR",0,&tolua_err) ||
-     !tolua_isnoobj(tolua_S,3,&tolua_err)
+     !tolua_isnoobj(tolua_S,2,&tolua_err)
  )
   goto tolua_lerror;
  else
 #endif
  {
   CMeasure* self = (CMeasure*)  tolua_tousertype(tolua_S,1,0);
-  const WCHAR* name = ((const WCHAR*)  to_wchar(tolua_S,2,0));
 #ifndef TOLUA_RELEASE
-  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'SetName'", NULL);
+  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'GetName'", NULL);
 #endif
   {
-   self->SetName(name);
+   const WCHAR* tolua_ret = (const WCHAR*)  self->GetName();
+    push_wchar(tolua_S,(void*)tolua_ret,"const WCHAR");
   }
  }
- return 0;
+ return 1;
 #ifndef TOLUA_RELEASE
  tolua_lerror:
- tolua_error(tolua_S,"#ferror in function 'SetName'.",&tolua_err);
+ tolua_error(tolua_S,"#ferror in function 'GetName'.",&tolua_err);
  return 0;
 #endif
 }
@@ -188,38 +184,6 @@ static int tolua_measure_CMeasure_IsDisabled00(lua_State* tolua_S)
 }
 #endif //#ifndef TOLUA_DISABLE
 
-/* method: GetName of class  CMeasure */
-#ifndef TOLUA_DISABLE_tolua_measure_CMeasure_GetName00
-static int tolua_measure_CMeasure_GetName00(lua_State* tolua_S)
-{
-#ifndef TOLUA_RELEASE
- tolua_Error tolua_err;
- if (
-     !tolua_isusertype(tolua_S,1,"CMeasure",0,&tolua_err) ||
-     !tolua_isnoobj(tolua_S,2,&tolua_err)
- )
-  goto tolua_lerror;
- else
-#endif
- {
-  CMeasure* self = (CMeasure*)  tolua_tousertype(tolua_S,1,0);
-#ifndef TOLUA_RELEASE
-  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'GetName'", NULL);
-#endif
-  {
-   const WCHAR* tolua_ret = (const WCHAR*)  self->GetName();
-    push_wchar(tolua_S,(void*)tolua_ret,"const WCHAR");
-  }
- }
- return 1;
-#ifndef TOLUA_RELEASE
- tolua_lerror:
- tolua_error(tolua_S,"#ferror in function 'GetName'.",&tolua_err);
- return 0;
-#endif
-}
-#endif //#ifndef TOLUA_DISABLE
-
 /* method: HasDynamicVariables of class  CMeasure */
 #ifndef TOLUA_DISABLE_tolua_measure_CMeasure_HasDynamicVariables00
 static int tolua_measure_CMeasure_HasDynamicVariables00(lua_State* tolua_S)
@@ -247,39 +211,6 @@ static int tolua_measure_CMeasure_HasDynamicVariables00(lua_State* tolua_S)
 #ifndef TOLUA_RELEASE
  tolua_lerror:
  tolua_error(tolua_S,"#ferror in function 'HasDynamicVariables'.",&tolua_err);
- return 0;
-#endif
-}
-#endif //#ifndef TOLUA_DISABLE
-
-/* method: ExecuteBang of class  CMeasure */
-#ifndef TOLUA_DISABLE_tolua_measure_CMeasure_ExecuteBang00
-static int tolua_measure_CMeasure_ExecuteBang00(lua_State* tolua_S)
-{
-#ifndef TOLUA_RELEASE
- tolua_Error tolua_err;
- if (
-     !tolua_isusertype(tolua_S,1,"CMeasure",0,&tolua_err) ||
-     !is_wchar(tolua_S,2,"const WCHAR",0,&tolua_err) ||
-     !tolua_isnoobj(tolua_S,3,&tolua_err)
- )
-  goto tolua_lerror;
- else
-#endif
- {
-  CMeasure* self = (CMeasure*)  tolua_tousertype(tolua_S,1,0);
-  const WCHAR* args = ((const WCHAR*)  to_wchar(tolua_S,2,0));
-#ifndef TOLUA_RELEASE
-  if (!self) tolua_error(tolua_S,"invalid 'self' in function 'ExecuteBang'", NULL);
-#endif
-  {
-   self->ExecuteBang(args);
-  }
- }
- return 0;
-#ifndef TOLUA_RELEASE
- tolua_lerror:
- tolua_error(tolua_S,"#ferror in function 'ExecuteBang'.",&tolua_err);
  return 0;
 #endif
 }
@@ -464,7 +395,7 @@ static int tolua_measure_CMeasure_GetStringValue00(lua_State* tolua_S)
 #endif
  {
   CMeasure* self = (CMeasure*)  tolua_tousertype(tolua_S,1,0);
-  AUTOSCALE autoScale = ((AUTOSCALE) (int)  tolua_tonumber(tolua_S,2,0));
+  AUTOSCALE autoScale = ((AUTOSCALE) (int)  tolua_tonumber(tolua_S,2,AUTOSCALE_OFF));
   double scale = ((double)  tolua_tonumber(tolua_S,3,1.0));
   int decimals = ((int)  tolua_tonumber(tolua_S,4,0));
   bool percentual = ((bool)  tolua_toboolean(tolua_S,5,false));
@@ -492,16 +423,20 @@ TOLUA_API int tolua_measure_open (lua_State* tolua_S)
  tolua_reg_types(tolua_S);
  tolua_module(tolua_S,NULL,0);
  tolua_beginmodule(tolua_S,NULL);
+  tolua_constant(tolua_S,"AUTOSCALE_1024",AUTOSCALE_1024);
+  tolua_constant(tolua_S,"AUTOSCALE_1000",AUTOSCALE_1000);
+  tolua_constant(tolua_S,"AUTOSCALE_1024K",AUTOSCALE_1024K);
+  tolua_constant(tolua_S,"AUTOSCALE_1000K",AUTOSCALE_1000K);
+  tolua_constant(tolua_S,"AUTOSCALE_OFF",AUTOSCALE_OFF);
+  tolua_constant(tolua_S,"AUTOSCALE_ON",AUTOSCALE_ON);
   tolua_cclass(tolua_S,"CMeasure","CMeasure","CGroup",NULL);
   tolua_beginmodule(tolua_S,"CMeasure");
-   tolua_function(tolua_S,"SetName",tolua_measure_CMeasure_SetName00);
+   tolua_function(tolua_S,"GetName",tolua_measure_CMeasure_GetName00);
    tolua_function(tolua_S,"GetANSIName",tolua_measure_CMeasure_GetANSIName00);
    tolua_function(tolua_S,"Disable",tolua_measure_CMeasure_Disable00);
    tolua_function(tolua_S,"Enable",tolua_measure_CMeasure_Enable00);
    tolua_function(tolua_S,"IsDisabled",tolua_measure_CMeasure_IsDisabled00);
-   tolua_function(tolua_S,"GetName",tolua_measure_CMeasure_GetName00);
    tolua_function(tolua_S,"HasDynamicVariables",tolua_measure_CMeasure_HasDynamicVariables00);
-   tolua_function(tolua_S,"ExecuteBang",tolua_measure_CMeasure_ExecuteBang00);
    tolua_function(tolua_S,"GetValue",tolua_measure_CMeasure_GetValue00);
    tolua_function(tolua_S,"GetRelativeValue",tolua_measure_CMeasure_GetRelativeValue00);
    tolua_function(tolua_S,"GetValueRange",tolua_measure_CMeasure_GetValueRange00);

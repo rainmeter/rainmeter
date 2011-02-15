@@ -1,7 +1,9 @@
 /*
 ** Lua binding: meter_image
-** Generated automatically by tolua++-1.0.92 on 11/28/10 09:56:41.
+** Generated automatically by tolua++-1.0.92 on 02/15/11 03:01:12.
 */
+
+#include "../../StdAfx.h"
 
 #ifndef __cplusplus
 #include "stdlib.h"

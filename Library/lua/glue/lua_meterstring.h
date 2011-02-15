@@ -1,6 +1,6 @@
 /*
 ** Lua binding: meter_string
-** Generated automatically by tolua++-1.0.92 on 11/23/10 03:16:44.
+** Generated automatically by tolua++-1.0.92 on 02/15/11 03:01:13.
 */
 
 /* Exported function */

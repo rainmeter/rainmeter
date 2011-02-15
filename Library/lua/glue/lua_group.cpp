@@ -1,6 +1,6 @@
 /*
 ** Lua binding: group
-** Generated automatically by tolua++-1.0.92 on 11/22/10 21:20:13.
+** Generated automatically by tolua++-1.0.92 on 02/15/11 03:01:14.
 */
 
 #include "../../StdAfx.h"
@@ -33,7 +33,7 @@ static int tolua_group_CGroup_BelongsToGroup00(lua_State* tolua_S)
  tolua_Error tolua_err;
  if (
      !tolua_isusertype(tolua_S,1,"CGroup",0,&tolua_err) ||
-     (tolua_isvaluenil(tolua_S,2,&tolua_err) || !tolua_isusertype(tolua_S,2,"const std::wstring",0,&tolua_err)) ||
+     (tolua_isvaluenil(tolua_S,2,&tolua_err) || !is_wstring(tolua_S,2,"const std::wstring",0,&tolua_err)) ||
      !tolua_isnoobj(tolua_S,3,&tolua_err)
  )
   goto tolua_lerror;
@@ -41,12 +41,12 @@ static int tolua_group_CGroup_BelongsToGroup00(lua_State* tolua_S)
 #endif
  {
   CGroup* self = (CGroup*)  tolua_tousertype(tolua_S,1,0);
-  const std::wstring* group = ((const std::wstring*)  tolua_tousertype(tolua_S,2,0));
+  const std::wstring group = ((const std::wstring)  to_wstring(tolua_S,2,0));
 #ifndef TOLUA_RELEASE
   if (!self) tolua_error(tolua_S,"invalid 'self' in function 'BelongsToGroup'", NULL);
 #endif
   {
-   bool tolua_ret = (bool)  self->BelongsToGroup(*group);
+   bool tolua_ret = (bool)  self->BelongsToGroup(group);
    tolua_pushboolean(tolua_S,(bool)tolua_ret);
   }
  }

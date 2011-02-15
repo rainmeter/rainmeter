@@ -32,7 +32,7 @@ void CGroup::InitializeGroup(const std::wstring& groups)
 		m_OldGroups = groups;
 		m_Groups.clear();
 
-		if (!groups.empty())
+		if (groups.size() > 0)
 		{
 			std::vector<std::wstring> vGroups = CConfigParser::Tokenize(groups, L"|");
 
@@ -40,7 +40,7 @@ void CGroup::InitializeGroup(const std::wstring& groups)
 			for ( ; iter != vGroups.end(); ++iter)
 			{
 				std::wstring group = CreateGroup(*iter);
-				if (!group.empty())
+				if (group.size() > 0)
 				{
 					m_Groups.insert(group);
 				}

@@ -61,7 +61,7 @@ void LuaManager::ReportErrors(lua_State * L)
 
 void LuaManager::LuaLog(int nLevel, const char* format, ... )
 {
-	char buffer[4096];
+	char* buffer = new char[4096];
 	va_list args;
 	va_start( args, format );
 
@@ -69,10 +69,10 @@ void LuaManager::LuaLog(int nLevel, const char* format, ... )
 	_CrtSetReportMode(_CRT_ASSERT, 0);
 
 	errno = 0;
-	_vsnprintf_s( buffer, _TRUNCATE, format, args );
+	_vsnprintf_s( buffer, 4096, _TRUNCATE, format, args );
 	if (errno != 0)
 	{
-		_snprintf_s(buffer, _TRUNCATE, "Script: LuaLog internal error: %s", format);
+		_snprintf_s(buffer, 4096, _TRUNCATE, "Script: LuaLog internal error: %s", format);
 	}
 
 	_set_invalid_parameter_handler(oldHandler);
@@ -87,4 +87,6 @@ void LuaManager::LuaLog(int nLevel, const char* format, ... )
 
 	LSLog(nLevel, L"Rainmeter", str.c_str());
 	va_end(args);
+
+	delete [] buffer;
 }

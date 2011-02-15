@@ -337,7 +337,7 @@ void UpdateWidgets()
 			++i;
 		}
 
-		if (g_Plugins.size() > 0)
+		if (!g_Plugins.empty())
 		{
 			ListView_SetItemState(widget, 0, LVIS_SELECTED, LVIS_SELECTED);
 		}

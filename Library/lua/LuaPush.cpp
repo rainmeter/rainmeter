@@ -4,28 +4,19 @@
 #include "../Litestep.h"
 
 void push_wstring(lua_State* L, void* value, const char* type)
-{	
-	std::string str2 = std::string(ConvertToAscii((const wchar_t*)value));
-	lua_pushstring(L,str2.c_str());
+{
+	push_wchar(L, (void*)((const std::wstring*)value)->c_str(), type);
 }
 
 void push_wchar(lua_State* L, void* value, const char* type)
 {
-	std::string str2 =  ConvertToAscii((WCHAR*)value);
+	std::string str2 = ConvertToAscii((const WCHAR*)value);
 	lua_pushstring(L,str2.c_str());
 }
 
 std::wstring to_wstring(lua_State* L, int arg, void* type)
 {
-	// We have a static wstring here so we can keep a copy of the string 
-	// passed in alive while its being passed around.
-	// This isn't exactly safe, but we shouldn't really have to worry as
-	// Rainmeter isn't threaded.
-	static std::wstring str2 = std::wstring(L"");
-
-	str2 = ConvertToWide(lua_tostring(L,arg));
-
-	return str2;
+	return ConvertToWide(lua_tostring(L,arg));
 }
 
 const wchar_t* to_wchar (lua_State* L, int arg, void* type)
@@ -34,7 +25,7 @@ const wchar_t* to_wchar (lua_State* L, int arg, void* type)
 	// passed in alive while its being passed around.
 	// This isn't exactly safe, but we shouldn't really have to worry as
 	// Rainmeter isn't threaded.
-	static std::wstring str = std::wstring(L"");
+	static std::wstring str;
 
 	str = ConvertToWide(lua_tostring(L,arg));
 		

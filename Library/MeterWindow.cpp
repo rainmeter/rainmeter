@@ -734,14 +734,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 	case BANG_SHOW:
 		m_Hidden = false;
 		ShowWindow(m_Window, SW_SHOWNOACTIVATE);
-		if (m_WindowHide == HIDEMODE_FADEOUT)
-		{
-			UpdateTransparency(255, false);
-		}
-		else
-		{
-			UpdateTransparency(m_AlphaValue, false);
-		}
+		UpdateTransparency((m_WindowHide == HIDEMODE_FADEOUT) ? 255 : m_AlphaValue, false);
 		break;
 
 	case BANG_HIDE:
@@ -757,14 +750,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		m_Hidden = false;
 		if (!IsWindowVisible(m_Window))
 		{
-			if (m_WindowHide == HIDEMODE_FADEOUT) 
-			{
-				FadeWindow(0, 255);
-			}
-			else
-			{
-				FadeWindow(0, m_AlphaValue);
-			}
+			FadeWindow(0, (m_WindowHide == HIDEMODE_FADEOUT) ? 255 : m_AlphaValue);
 		}
 		break;
 
@@ -799,56 +785,28 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 	case BANG_CLICKTHROUGH:
 		{
 			int f = _wtoi(arg);
-			if (f == -1)
-			{
-				SetClickThrough(!m_ClickThrough);
-			}
-			else
-			{
-				SetClickThrough(f != 0);
-			}
+			SetClickThrough((f == -1) ? !m_ClickThrough : f);
 		}
 		break;
 
 	case BANG_DRAGGABLE:
 		{
 			int f = _wtoi(arg);
-			if (f == -1)
-			{
-				SetWindowDraggable(!m_WindowDraggable);
-			}
-			else
-			{
-				SetWindowDraggable(f != 0);
-			}
+			SetWindowDraggable((f == -1) ? !m_WindowDraggable : f);
 		}
 		break;
 
 	case BANG_SNAPEDGES:
 		{
 			int f = _wtoi(arg);
-			if (f == -1)
-			{
-				SetSnapEdges(!m_SnapEdges);
-			}
-			else
-			{
-				SetSnapEdges(f != 0);
-			}
+			SetSnapEdges((f == -1) ? !m_SnapEdges : f);
 		}
 		break;
 
 	case BANG_KEEPONSCREEN:
 		{
 			int f = _wtoi(arg);
-			if (f == -1)
-			{
-				SetKeepOnScreen(!m_KeepOnScreen);
-			}
-			else
-			{
-				SetKeepOnScreen(f != 0);
-			}
+			SetKeepOnScreen((f == -1) ? !m_KeepOnScreen : f);
 		}
 		break;
 
@@ -938,14 +896,11 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 
 			if (!measure.empty())
 			{
-				std::list<CMeasure*>::const_iterator iter = m_Measures.begin();
-				for( ; iter != m_Measures.end(); ++iter)
+				CMeasure* m = GetMeasure(measure);
+				if (m)
 				{
-					if (_wcsicmp((*iter)->GetName(), measure.c_str()) == 0)
-					{
-						(*iter)->ExecuteBang(args.c_str());
-						return;
-					}
+					m->ExecuteBang(args.c_str());
+					return;
 				}
 
 				LogWithArgs(LOG_WARNING, L"Unable to find [%s] for !RainmeterPluginBang", measure.c_str());
@@ -1492,7 +1447,7 @@ void CMeterWindow::ScreenToWindow()
 
 		if (hMonitor != NULL)
 		{
-			for (size_t i = 0; i < monitors.size(); ++i)
+			for (size_t i = 0, isize = monitors.size(); i < isize; ++i)
 			{
 				if (monitors[i].active && monitors[i].handle == hMonitor)
 				{
@@ -1639,7 +1594,7 @@ void CMeterWindow::ReadConfig()
 
 		if (!m_Rainmeter->GetDummyLitestep())
 		{
-			char tmpSz[MAX_LINE_LENGTH];
+			char* tmpSz = new char[MAX_LINE_LENGTH];
 			// Check if step.rc has overrides these values
 			if (GetRCString("RainmeterWindowX", tmpSz, ConvertToAscii(m_WindowX.c_str()).c_str(), MAX_LINE_LENGTH - 1))
 			{
@@ -1649,6 +1604,7 @@ void CMeterWindow::ReadConfig()
 			{
 				m_WindowY = ConvertToWide(tmpSz);
 			}
+			delete [] tmpSz;
 		}
 		
 		// Check if the window position should be read as a formula
@@ -1934,9 +1890,9 @@ bool CMeterWindow::ReadSkin()
 	// Get all the sections (i.e. different meters, measures and the other stuff)
 	std::vector<std::wstring> arraySections = m_Parser.GetSections();
 
-	for (size_t i = 0; i < arraySections.size(); ++i)
+	for (size_t i = 0, isize = arraySections.size(); i < isize; ++i)
 	{
-		std::wstring strSection = arraySections[i];
+		const std::wstring& strSection = arraySections[i];
 
 		if(_wcsicmp(L"Rainmeter", strSection.c_str()) != 0 && 
 			_wcsicmp(L"Variables", strSection.c_str()) != 0 &&
@@ -4838,7 +4794,7 @@ std::wstring CMeterWindow::MakePathAbsolute(const std::wstring& path)
 }
 
 
-CMeter* CMeterWindow::GetMeter(std::wstring meterName)
+CMeter* CMeterWindow::GetMeter(const std::wstring& meterName)
 {
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for( ; j != m_Meters.end(); ++j)
@@ -4852,14 +4808,14 @@ CMeter* CMeterWindow::GetMeter(std::wstring meterName)
 	return 0;
 }
 
-CMeasure* CMeterWindow::GetMeasure(std::wstring measureName)
+CMeasure* CMeterWindow::GetMeasure(const std::wstring& measureName)
 {
-	std::list<CMeasure*>::const_iterator j = m_Measures.begin();
-	for( ; j != m_Measures.end(); ++j)
+	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+	for( ; i != m_Measures.end(); ++i)
 	{
-		if (_wcsicmp((*j)->GetName(), measureName.c_str()) == 0)
+		if (_wcsicmp((*i)->GetName(), measureName.c_str()) == 0)
 		{
-			return (*j);
+			return (*i);
 		}
 	}
 	return 0;

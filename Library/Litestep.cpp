@@ -610,7 +610,7 @@ void Log(int nLevel, const WCHAR* message)
 
 void LogWithArgs(int nLevel, const WCHAR* format, ... )
 {
-	WCHAR buffer[4096];
+	WCHAR* buffer = new WCHAR[4096];
 	va_list args;
     va_start( args, format );
 
@@ -618,15 +618,17 @@ void LogWithArgs(int nLevel, const WCHAR* format, ... )
 	_CrtSetReportMode(_CRT_ASSERT, 0);
 
 	errno = 0;
-	_vsnwprintf_s( buffer, _TRUNCATE, format, args );
+	_vsnwprintf_s( buffer, 4096, _TRUNCATE, format, args );
 	if (errno != 0)
 	{
 		nLevel = LOG_ERROR;
-		_snwprintf_s(buffer, _TRUNCATE, L"LogWithArgs() internal error: %s", format);
+		_snwprintf_s(buffer, 4096, _TRUNCATE, L"LogWithArgs() internal error: %s", format);
 	}
 
 	_set_invalid_parameter_handler(oldHandler);
 
 	LSLog(nLevel, L"Rainmeter", buffer);
 	va_end(args);
+
+	delete [] buffer;
 }

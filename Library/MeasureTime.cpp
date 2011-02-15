@@ -116,7 +116,7 @@ bool CMeasureTime::Update()
 	if (m_Format.size() > 0)
 	{
 		// If there is some date format, parse the value from it instead
-		WCHAR tmpSz[MAX_LINE_LENGTH];
+		WCHAR* tmpSz = new WCHAR[MAX_LINE_LENGTH];
 		SYSTEMTIME sysToday;
 		FILETIME ftToday;
 
@@ -152,6 +152,8 @@ bool CMeasureTime::Update()
 		}
 
 		m_Value = wcstod(tmpSz, NULL);
+
+		delete [] tmpSz;
 	}
 	else
 	{

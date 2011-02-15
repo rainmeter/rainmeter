@@ -1,6 +1,6 @@
 /*
 ** Lua binding: meterwindow
-** Generated automatically by tolua++-1.0.92 on 11/27/10 18:13:41.
+** Generated automatically by tolua++-1.0.92 on 02/15/11 18:55:45.
 */
 
 /* Exported function */

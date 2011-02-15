@@ -389,14 +389,15 @@ ULONG64 CMeasureNet::GetNetOctets(NET net)
 ULONG64 CMeasureNet::GetNetStatsValue(NET net)
 {
 	ULONG64 value = 0;
+	size_t statsSize = c_StatValues.size() / 2;
 
 	if (m_Interface == 0)
 	{
 		// Get all interfaces
-		for(size_t i = 0; i < c_StatValues.size() / 2; ++i)
+		for(size_t i = 0; i < statsSize; ++i)
 		{
 			// Ignore the loopback and filter interfaces
-			if (c_NumOfTables == c_StatValues.size() / 2)
+			if (c_NumOfTables == statsSize)
 			{
 				if (c_UseNewApi)
 				{
@@ -429,7 +430,7 @@ ULONG64 CMeasureNet::GetNetStatsValue(NET net)
 	else
 	{
 		// Get the selected interface
-		if (m_Interface <= c_StatValues.size() / 2)
+		if (m_Interface <= statsSize)
 		{
 			switch (net)
 			{
@@ -517,13 +518,15 @@ void CMeasureNet::UpdateStats()
 {
 	if (c_Table)
 	{
+		size_t statsSize = c_NumOfTables * 2;
+
 		// Fill the vectors
-		while (c_StatValues.size() < c_NumOfTables * 2)
+		while (c_StatValues.size() < statsSize)
 		{
 			c_StatValues.push_back(0);
 		}
 
-		while (c_OldStatValues.size() < c_NumOfTables * 2)
+		while (c_OldStatValues.size() < statsSize)
 		{ 
 			c_OldStatValues.push_back(0);
 		}
@@ -617,11 +620,13 @@ void CMeasureNet::WriteStats(const std::wstring& iniFile)
 {
 	WCHAR buffer[32];
 	WCHAR buffer2[64];
+
+	size_t statsSize = c_StatValues.size() / 2;
 	
-	_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)c_StatValues.size() / 2);
+	_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)statsSize);
 	WritePrivateProfileString(L"Statistics", L"NetStatsCount", buffer, iniFile.c_str());
 
-	for (size_t i = 0; i < c_StatValues.size() / 2; ++i)
+	for (size_t i = 0; i < statsSize; ++i)
 	{
 		ULARGE_INTEGER value;
 
