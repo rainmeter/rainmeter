@@ -44,16 +44,17 @@ class CConfigParser;
 class CMeasure : public CGroup
 {
 public:
-	CMeasure(CMeterWindow* meterWindow);
+	CMeasure(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasure();
-	
+
+	void ReadConfig(CConfigParser& parser) { ReadConfig(parser, GetName()); }
+
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update() = 0;
 
 	virtual const WCHAR* GetStats();
 
-	void SetName(const WCHAR* name) { m_Name = name; m_ANSIName = ConvertToAscii(name); }
 	const WCHAR* GetName() { return m_Name.c_str(); }
 	const char* GetANSIName() { return m_ANSIName.c_str(); }
 
@@ -78,7 +79,7 @@ public:
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 	static void GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords);
 
-	static CMeasure* Create(const WCHAR* measure, CMeterWindow* meterWindow);
+	static CMeasure* Create(const WCHAR* measure, CMeterWindow* meterWindow, const WCHAR* name);
 
 protected:
 	virtual bool PreUpdate();
@@ -94,8 +95,8 @@ protected:
 	double m_MinValue;				// The minimum value (so far)
 	double m_MaxValue;				// The maximum value (so far)
 	double m_Value;					// The current value
-	std::wstring m_Name;				// Name of this Measure
-	std::string m_ANSIName;				// Name of this Measure in ANSI
+	const std::wstring m_Name;				// Name of this Measure
+	const std::string m_ANSIName;				// Name of this Measure in ANSI
 
 	std::vector<std::wstring> m_Substitute;	// Vec of substitute strings
 

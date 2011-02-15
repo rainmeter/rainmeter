@@ -25,7 +25,7 @@
 ** The constructor
 **
 */
-CMeasureNetIn::CMeasureNetIn(CMeterWindow* meterWindow) : CMeasureNet(meterWindow),
+CMeasureNetIn::CMeasureNetIn(CMeterWindow* meterWindow, const WCHAR* name) : CMeasureNet(meterWindow, name),
 	m_FirstTime(true),
 	m_InOctets()
 {

@@ -24,7 +24,7 @@
 class CMeasureTime : public CMeasure
 {
 public:
-	CMeasureTime(CMeterWindow* meterWindow);
+	CMeasureTime(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureTime();
 
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);

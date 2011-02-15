@@ -24,7 +24,7 @@
 class CMeasureUptime : public CMeasure
 {
 public:
-	CMeasureUptime(CMeterWindow* meterWindow);
+	CMeasureUptime(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureUptime();
 
 	virtual bool Update();

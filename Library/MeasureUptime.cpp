@@ -26,7 +26,7 @@
 ** The constructor
 **
 */
-CMeasureUptime::CMeasureUptime(CMeterWindow* meterWindow) : CMeasure(meterWindow)
+CMeasureUptime::CMeasureUptime(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name)
 {
 }
 

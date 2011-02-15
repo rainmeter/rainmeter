@@ -24,7 +24,7 @@
 class CMeasureNetIn : public CMeasureNet
 {
 public:
-	CMeasureNetIn(CMeterWindow* meterWindow);
+	CMeasureNetIn(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureNetIn();
 
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);

@@ -9,7 +9,7 @@ const char* g_strUpdateFunction = "Update";
 const char* g_strGetValueFunction = "GetValue";
 const char* g_strGetStringValueFunction = "GetStringValue";
 
-CMeasureScript::CMeasureScript(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+CMeasureScript::CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
 	m_pLuaScript(),
 	m_bUpdateDefined(false),
 	m_bGetValueDefined(false),

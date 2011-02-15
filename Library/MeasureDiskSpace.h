@@ -24,7 +24,7 @@
 class CMeasureDiskSpace : public CMeasure
 {
 public:
-	CMeasureDiskSpace(CMeterWindow* meterWindow);
+	CMeasureDiskSpace(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureDiskSpace();
 
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);

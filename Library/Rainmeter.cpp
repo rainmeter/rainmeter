@@ -4292,7 +4292,7 @@ void CRainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
 {
 	if (strPath.find(L'%') != std::wstring::npos)
 	{
-		WCHAR bufSize = 4096;
+		DWORD bufSize = 4096;
 		WCHAR* buffer = new WCHAR[bufSize];	// lets hope the buffer is large enough...
 
 		// %APPDATA% is a special case

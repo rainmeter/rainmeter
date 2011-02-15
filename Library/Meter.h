@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <gdiplus.h>
 #include <vector>
+#include <string>
 #include "Litestep.h"
 #include "MeterWindow.h"
 #include "Group.h"
@@ -32,10 +33,12 @@ class CConfigParser;
 class CMeter : public CGroup
 {
 public:
-	CMeter(CMeterWindow* meterWindow);
+	CMeter(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeter();
 
-	virtual void ReadConfig(const WCHAR* section);
+	void ReadConfig(CConfigParser& parser) { ReadConfig(parser, GetName()); parser.ClearStyleTemplate(); }
+
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
@@ -89,14 +92,13 @@ public:
 	void SetMouseOver(bool over) { m_MouseOver = over; }
 	bool IsMouseOver() { return m_MouseOver; }
 
-	void SetName(const WCHAR* name) { m_Name = name; }
 	const WCHAR* GetName() { return m_Name.c_str(); }
 
 	void ResetUpdateCounter() { m_UpdateCounter = m_UpdateDivider; }
 	int GetUpdateCounter() { return m_UpdateCounter; }
 	int GetUpdateDivider() { return m_UpdateDivider; }
 
-	static CMeter* Create(const WCHAR* meter, CMeterWindow* meterWindow);
+	static CMeter* Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHAR* name);
 	
 	static void DrawBevel(Gdiplus::Graphics& graphics, const Gdiplus::Rect& rect, const Gdiplus::Pen& light, const Gdiplus::Pen& dark);
 
@@ -124,7 +126,7 @@ protected:
 	static bool ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str);
 
 	Gdiplus::Matrix m_Transformation;	// The transformation matrix
-	std::wstring m_Name;			// Name of the meter
+	const std::wstring m_Name;			// Name of the meter
 	std::wstring m_MeasureName;	// Name of the measure this is bound to
 	CMeasure* m_Measure;		// Pointer to the measure this meter is bound to
 	std::vector<CMeasure*> m_AllMeasures;

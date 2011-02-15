@@ -26,7 +26,7 @@
 ** The constructor
 **
 */
-CMeasureMemory::CMeasureMemory(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+CMeasureMemory::CMeasureMemory(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
 	m_Total(false)
 {
 }

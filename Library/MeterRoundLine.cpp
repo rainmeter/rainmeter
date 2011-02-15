@@ -32,7 +32,7 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-CMeterRoundLine::CMeterRoundLine(CMeterWindow* meterWindow) : CMeter(meterWindow),
+CMeterRoundLine::CMeterRoundLine(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
 	m_Solid(false),
 	m_LineWidth(1.0),
 	m_LineLength(20.0),
@@ -66,12 +66,10 @@ CMeterRoundLine::~CMeterRoundLine()
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CMeterRoundLine::ReadConfig(const WCHAR* section)
+void CMeterRoundLine::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	// Read common configs
-	CMeter::ReadConfig(section);
-
-	CConfigParser& parser = m_MeterWindow->GetParser();
+	CMeter::ReadConfig(parser, section);
 
 	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
 	m_LineLength = parser.ReadFloat(section, L"LineLength", 20.0);

@@ -29,7 +29,7 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-CMeterLine::CMeterLine(CMeterWindow* meterWindow) : CMeter(meterWindow),
+CMeterLine::CMeterLine(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
 	m_Autoscale(false),
 	m_HorizontalLines(false),
 	m_Flip(false),
@@ -93,7 +93,7 @@ void CMeterLine::Initialize()
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CMeterLine::ReadConfig(const WCHAR* section)
+void CMeterLine::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	WCHAR tmpName[64];
 
@@ -101,9 +101,7 @@ void CMeterLine::ReadConfig(const WCHAR* section)
 	int oldLineCount = (int)m_Colors.size();
 
 	// Read common configs
-	CMeter::ReadConfig(section);
-
-	CConfigParser& parser = m_MeterWindow->GetParser();
+	CMeter::ReadConfig(parser, section);
 
 	int lineCount = parser.ReadInt(section, L"LineCount", 1);
 

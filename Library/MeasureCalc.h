@@ -25,7 +25,7 @@
 class CMeasureCalc : public CMeasure
 {
 public:
-	CMeasureCalc(CMeterWindow* meterWindow);
+	CMeasureCalc(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureCalc();
 
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);

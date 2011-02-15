@@ -27,7 +27,7 @@
 ** The constructor
 **
 */
-CMeasureRegistry::CMeasureRegistry(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+CMeasureRegistry::CMeasureRegistry(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
 	m_RegKey(),
 	m_HKey()
 {

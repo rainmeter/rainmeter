@@ -33,7 +33,7 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeterRotator::CMeterRotator(CMeterWindow* meterWindow) : CMeter(meterWindow),
+CMeterRotator::CMeterRotator(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
 	m_NeedsReload(false),
 	m_OffsetX(),
 	m_OffsetY(),
@@ -81,15 +81,13 @@ void CMeterRotator::Initialize()
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CMeterRotator::ReadConfig(const WCHAR* section)
+void CMeterRotator::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 
 	// Read common configs
-	CMeter::ReadConfig(section);
-
-	CConfigParser& parser = m_MeterWindow->GetParser();
+	CMeter::ReadConfig(parser, section);
 
 	m_ImageName = parser.ReadString(section, L"ImageName", L"");
 	if (!m_ImageName.empty())

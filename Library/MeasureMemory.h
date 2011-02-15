@@ -24,7 +24,7 @@
 class CMeasureMemory : public CMeasure
 {
 public:
-	CMeasureMemory(CMeterWindow* meterWindow);
+	CMeasureMemory(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureMemory();
 
 	virtual bool Update();

@@ -25,10 +25,10 @@
 class CMeterBar : public CMeter
 {
 public:
-	CMeterBar(CMeterWindow* meterWindow);
+	CMeterBar(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterBar();
 
-	virtual void ReadConfig(const WCHAR* section);
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);

@@ -33,7 +33,7 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeterBar::CMeterBar(CMeterWindow* meterWindow) : CMeter(meterWindow),
+CMeterBar::CMeterBar(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
 	m_Image(L"BarImage"),
 	m_NeedsReload(false),
 	m_Color(Color::Green),
@@ -90,7 +90,7 @@ void CMeterBar::Initialize()
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CMeterBar::ReadConfig(const WCHAR* section)
+void CMeterBar::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
@@ -98,9 +98,7 @@ void CMeterBar::ReadConfig(const WCHAR* section)
 	int oldH = m_H;
 
 	// Read common configs
-	CMeter::ReadConfig(section);
-
-	CConfigParser& parser = m_MeterWindow->GetParser();
+	CMeter::ReadConfig(parser, section);
 
 	m_Color = parser.ReadColor(section, L"BarColor", Color::Green);
 

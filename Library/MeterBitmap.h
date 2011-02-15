@@ -25,12 +25,12 @@
 class CMeterBitmap : public CMeter
 {
 public:
-	CMeterBitmap(CMeterWindow* meterWindow);
+	CMeterBitmap(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterBitmap();
 
 	virtual bool HitTest(int x, int y);
 
-	virtual void ReadConfig(const WCHAR* section);
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);

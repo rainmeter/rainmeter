@@ -30,12 +30,12 @@ class Font;
 class CMeterString : public CMeter
 {
 public:
-	CMeterString(CMeterWindow* meterWindow);
+	CMeterString(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterString();
 
 	virtual int GetX(bool abs = false);
 
-	virtual void ReadConfig(const WCHAR* section);
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	void SetText(const WCHAR* text) { m_Text = text; }

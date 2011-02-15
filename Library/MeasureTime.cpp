@@ -46,7 +46,7 @@ int GetYearDay(int year, int month, int day)
 ** The constructor
 **
 */
-CMeasureTime::CMeasureTime(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+CMeasureTime::CMeasureTime(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
 	m_DeltaTime(),
 	m_Time()
 {

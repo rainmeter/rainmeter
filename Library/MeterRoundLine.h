@@ -24,10 +24,10 @@
 class CMeterRoundLine : public CMeter
 {
 public:
-	CMeterRoundLine(CMeterWindow* meterWindow);
+	CMeterRoundLine(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterRoundLine();
 
-	virtual void ReadConfig(const WCHAR* section);
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 

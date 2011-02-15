@@ -27,10 +27,10 @@
 class CMeterButton : public CMeter
 {
 public:
-	CMeterButton(CMeterWindow* meterWindow);
+	CMeterButton(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterButton();
 
-	virtual void ReadConfig(const WCHAR* section);
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);

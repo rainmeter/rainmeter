@@ -67,7 +67,7 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeasure::CMeasure(CMeterWindow* meterWindow) : m_MeterWindow(meterWindow),
+CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(meterWindow), m_Name(name), m_ANSIName(ConvertToAscii(name)),
 	m_DynamicVariables(false),
 	m_Invert(false),
 	m_LogMaxValue(false),
@@ -651,75 +651,77 @@ const WCHAR* CMeasure::GetStats()
 ** If new measures are implemented this method needs to be updated.
 ** 
 */
-CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow)
+CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, const WCHAR* name)
 {
-	// Comparson is caseinsensitive
+	// Comparison is caseinsensitive
 
-	if(_wcsicmp(L"", measure) == 0)
+	if(*measure == L'\0')
 	{
 		return NULL;
 	}
 	else if(_wcsicmp(L"CPU", measure) == 0)
 	{
-		return new CMeasureCPU(meterWindow);
+		return new CMeasureCPU(meterWindow, name);
 	} 
 	else if(_wcsicmp(L"Memory", measure) == 0)
 	{
-		return new CMeasureMemory(meterWindow);
+		return new CMeasureMemory(meterWindow, name);
 	}
 	else if(_wcsicmp(L"NetIn", measure) == 0)
 	{
-		return new CMeasureNetIn(meterWindow);
+		return new CMeasureNetIn(meterWindow, name);
 	}
 	else if(_wcsicmp(L"NetOut", measure) == 0)
 	{
-		return new CMeasureNetOut(meterWindow);
+		return new CMeasureNetOut(meterWindow, name);
 	}
 	else if(_wcsicmp(L"NetTotal", measure) == 0)
 	{
-		return new CMeasureNetTotal(meterWindow);
+		return new CMeasureNetTotal(meterWindow, name);
 	}
 	else if(_wcsicmp(L"PhysicalMemory", measure) == 0)
 	{
-		return new CMeasurePhysicalMemory(meterWindow);
+		return new CMeasurePhysicalMemory(meterWindow, name);
 	}
 	else if(_wcsicmp(L"SwapMemory", measure) == 0)
 	{
-		return new CMeasureVirtualMemory(meterWindow);
+		return new CMeasureVirtualMemory(meterWindow, name);
 	}
 	else if(_wcsicmp(L"FreeDiskSpace", measure) == 0)
 	{
-		return new CMeasureDiskSpace(meterWindow);
+		return new CMeasureDiskSpace(meterWindow, name);
 	}
 	else if(_wcsicmp(L"Uptime", measure) == 0)
 	{
-		return new CMeasureUptime(meterWindow);
+		return new CMeasureUptime(meterWindow, name);
 	}
 	else if(_wcsicmp(L"Time", measure) == 0)
 	{
-		return new CMeasureTime(meterWindow);
+		return new CMeasureTime(meterWindow, name);
 	}
 	else if(_wcsicmp(L"Plugin", measure) == 0)
 	{
-		return new CMeasurePlugin(meterWindow);
+		return new CMeasurePlugin(meterWindow, name);
 	}
 	else if(_wcsicmp(L"Registry", measure) == 0)
 	{
-		return new CMeasureRegistry(meterWindow);
+		return new CMeasureRegistry(meterWindow, name);
 	}
 	else if(_wcsicmp(L"Calc", measure) == 0)
 	{
-		return new CMeasureCalc(meterWindow);
+		return new CMeasureCalc(meterWindow, name);
 	}
 	else if(_wcsicmp(L"script", measure) == 0)
 	{
-		return new CMeasureScript(meterWindow);
+		return new CMeasureScript(meterWindow, name);
 	}
 
 	// Error
 	std::wstring error = L"Measure=";
 	error += measure;
-	error += L" is not valid.";
+	error += L" is not valid in section [";
+	error += name;
+	error += L"].";
 	throw CError(error, __LINE__, __FILE__);
 
 	return NULL;

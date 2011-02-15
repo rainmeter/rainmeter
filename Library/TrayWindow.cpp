@@ -289,11 +289,10 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 
 		try
 		{
-			m_Measure = CMeasure::Create(measureName.c_str(), NULL);
+			m_Measure = CMeasure::Create(measureName.c_str(), NULL, L"TrayMeasure");
 			if (m_Measure)
 			{
-				m_Measure->SetName(L"TrayMeasure");
-				m_Measure->ReadConfig(parser, L"TrayMeasure");
+				m_Measure->ReadConfig(parser);
 			}
 		}
 		catch (CError& error)

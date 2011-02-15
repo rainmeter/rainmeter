@@ -32,7 +32,7 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeterBitmap::CMeterBitmap(CMeterWindow* meterWindow) : CMeter(meterWindow),
+CMeterBitmap::CMeterBitmap(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
 	m_Image(L"BitmapImage", NULL, true),
 	m_NeedsReload(false),
 	m_ZeroFrame(false),
@@ -162,7 +162,7 @@ bool CMeterBitmap::HitTest(int x, int y)
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CMeterBitmap::ReadConfig(const WCHAR* section)
+void CMeterBitmap::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
@@ -170,9 +170,7 @@ void CMeterBitmap::ReadConfig(const WCHAR* section)
 	int oldH = m_H;
 
 	// Read common configs
-	CMeter::ReadConfig(section);
-
-	CConfigParser& parser = m_MeterWindow->GetParser();
+	CMeter::ReadConfig(parser, section);
 
 	m_ImageName = parser.ReadString(section, L"BitmapImage", L"");
 	if (!m_ImageName.empty())

@@ -39,7 +39,7 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-CMeter::CMeter(CMeterWindow* meterWindow) : m_MeterWindow(meterWindow),
+CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(meterWindow), m_Name(name),
 	m_Measure(),
 	m_X(),
 	m_Y(),
@@ -266,10 +266,8 @@ void CMeter::Hide()
 ** the base implementation if they overwrite this method.
 **
 */
-void CMeter::ReadConfig(const WCHAR* section)
+void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
-	CConfigParser& parser = m_MeterWindow->GetParser();
-
 	// The MeterStyle defines a template where the values are read if the meter doesn't have it itself
 	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
 	if (!style.empty())
@@ -479,49 +477,51 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 ** If new meters are implemented this method needs to be updated.
 **
 */
-CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow)
+CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHAR* name)
 {
 	if(_wcsicmp(L"HISTOGRAM", meter) == 0)
 	{
-		return new CMeterHistogram(meterWindow);
+		return new CMeterHistogram(meterWindow, name);
 	} 
 	else if(_wcsicmp(L"STRING", meter) == 0)
 	{
-		return new CMeterString(meterWindow);
+		return new CMeterString(meterWindow, name);
 	} 
 	else if(_wcsicmp(L"BAR", meter) == 0)
 	{
-		return new CMeterBar(meterWindow);
+		return new CMeterBar(meterWindow, name);
 	} 
 	else if(_wcsicmp(L"BITMAP", meter) == 0)
 	{
-		return new CMeterBitmap(meterWindow);
+		return new CMeterBitmap(meterWindow, name);
 	} 
 	else if(_wcsicmp(L"IMAGE", meter) == 0)
 	{
-		return new CMeterImage(meterWindow);
+		return new CMeterImage(meterWindow, name);
 	} 
 	else if(_wcsicmp(L"LINE", meter) == 0)
 	{
-		return new CMeterLine(meterWindow);
+		return new CMeterLine(meterWindow, name);
 	} 
 	else if(_wcsicmp(L"ROUNDLINE", meter) == 0)
 	{
-		return new CMeterRoundLine(meterWindow);
+		return new CMeterRoundLine(meterWindow, name);
 	} 
 	else if(_wcsicmp(L"ROTATOR", meter) == 0)
 	{
-		return new CMeterRotator(meterWindow);
+		return new CMeterRotator(meterWindow, name);
 	} 
 	else if(_wcsicmp(L"BUTTON", meter) == 0)
 	{
-		return new CMeterButton(meterWindow);
+		return new CMeterButton(meterWindow, name);
 	} 
 
 	// Error
 	std::wstring error = L"Meter=";
 	error += meter;
-	error += L" is not valid.";
+	error += L" is not valid in section [";
+	error += name;
+	error += L"].";
 	throw CError(error, __LINE__, __FILE__);
 
 	return NULL;

@@ -31,7 +31,7 @@ bool CMeasureCalc::c_RandSeeded = false;
 ** The constructor
 **
 */
-CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
 	m_Parser(MathParser_Create(NULL)),
 	m_LowBound(),
 	m_HighBound(100),

@@ -31,7 +31,7 @@ typedef void (*EXECUTEBANG)(LPCTSTR, UINT);
 class CMeasurePlugin : public CMeasure
 {
 public:
-	CMeasurePlugin(CMeterWindow* meterWindow);
+	CMeasurePlugin(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasurePlugin();
 
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);

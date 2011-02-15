@@ -36,7 +36,7 @@ CTintedImageHelper_DefineConfigArray(CMeterHistogram::c_BothConfigArray, L"Both"
 ** The constructor
 **
 */
-CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow) : CMeter(meterWindow),
+CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
 	m_SecondaryMeasure(),
 	m_PrimaryColor(Color::Green),
 	m_SecondaryColor(Color::Red),
@@ -195,7 +195,7 @@ void CMeterHistogram::Initialize()
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CMeterHistogram::ReadConfig(const WCHAR* section)
+void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldPrimaryImageName = m_PrimaryImageName;
@@ -205,9 +205,7 @@ void CMeterHistogram::ReadConfig(const WCHAR* section)
 	int oldH = m_H;
 
 	// Read common configs
-	CMeter::ReadConfig(section);
-
-	CConfigParser& parser = m_MeterWindow->GetParser();
+	CMeter::ReadConfig(parser, section);
 
 	m_PrimaryColor = parser.ReadColor(section, L"PrimaryColor", Color::Green);
 	m_SecondaryColor = parser.ReadColor(section, L"SecondaryColor", Color::Red);

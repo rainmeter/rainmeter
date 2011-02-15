@@ -25,7 +25,7 @@
 ** The constructor
 **
 */
-CMeasureNetTotal::CMeasureNetTotal(CMeterWindow* meterWindow) : CMeasureNet(meterWindow),
+CMeasureNetTotal::CMeasureNetTotal(CMeterWindow* meterWindow, const WCHAR* name) : CMeasureNet(meterWindow, name),
 	m_FirstTime(true),
 	m_TotalOctets()
 {

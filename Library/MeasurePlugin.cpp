@@ -30,7 +30,7 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeasurePlugin::CMeasurePlugin(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+CMeasurePlugin::CMeasurePlugin(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
 	m_Plugin(),
 	m_ID(),
 	InitializeFunc(),

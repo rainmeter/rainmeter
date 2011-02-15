@@ -24,7 +24,7 @@
 class CMeasureNetTotal : public CMeasureNet
 {
 public:
-	CMeasureNetTotal(CMeterWindow* meterWindow);
+	CMeasureNetTotal(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureNetTotal();
 
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);

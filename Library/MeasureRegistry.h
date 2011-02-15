@@ -24,7 +24,7 @@
 class CMeasureRegistry : public CMeasure
 {
 public:
-	CMeasureRegistry(CMeterWindow* meterWindow);
+	CMeasureRegistry(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureRegistry();
 
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);

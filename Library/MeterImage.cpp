@@ -32,7 +32,7 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-CMeterImage::CMeterImage(CMeterWindow* meterWindow) : CMeter(meterWindow),
+CMeterImage::CMeterImage(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
 	m_NeedsReload(false),
 	m_WidthDefined(false),
 	m_HeightDefined(false),
@@ -117,12 +117,10 @@ void CMeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CMeterImage::ReadConfig(const WCHAR* section)
+void CMeterImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	// Read common configs
-	CMeter::ReadConfig(section);
-
-	CConfigParser& parser = m_MeterWindow->GetParser();
+	CMeter::ReadConfig(parser, section);
 
 	// Check for extra measures
 	if (!m_Initialized && !m_MeasureName.empty())

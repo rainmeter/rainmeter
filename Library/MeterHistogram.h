@@ -25,10 +25,10 @@
 class CMeterHistogram : public CMeter
 {
 public:
-	CMeterHistogram(CMeterWindow* meterWindow);
+	CMeterHistogram(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterHistogram();
 
-	virtual void ReadConfig(const WCHAR* section);
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);

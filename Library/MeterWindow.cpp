@@ -1908,11 +1908,24 @@ bool CMeterWindow::ReadSkin()
 
 				try
 				{
-					measure = CMeasure::Create(measureName.c_str(), this);
+					measure = CMeasure::Create(measureName.c_str(), this, strSection.c_str());
 					if (measure)
 					{
-						measure->SetName(strSection.c_str());
-						measure->ReadConfig(m_Parser, strSection.c_str());
+						measure->ReadConfig(m_Parser);
+
+						m_Measures.push_back(measure);
+						m_Parser.AddMeasure(measure);
+
+						if (!m_HasNetMeasures && dynamic_cast<CMeasureNet*>(measure))
+						{
+							m_HasNetMeasures = true;
+						}
+
+						CMeasureScript* measureScript = dynamic_cast<CMeasureScript*>(measure);
+						if(measureScript)
+						{
+							m_ScriptMeasures.push_back(measureScript);
+						}
 					}
 				}
 				catch (CError& error)
@@ -1920,24 +1933,6 @@ bool CMeterWindow::ReadSkin()
 					delete measure;
 					measure = NULL;
 					MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-				}
-
-				if (measure)
-				{
-					m_Measures.push_back(measure);
-
-					m_Parser.AddMeasure(measure);
-
-					if (!m_HasNetMeasures && dynamic_cast<CMeasureNet*>(measure))
-					{
-						m_HasNetMeasures = true;
-					}
-
-					CMeasureScript* measureScript = dynamic_cast<CMeasureScript*>(measure);
-					if(measureScript)
-					{
-						m_ScriptMeasures.push_back(measureScript);
-					}
 				}
 			}
 			else if (meterName.length() > 0)
@@ -1947,22 +1942,20 @@ bool CMeterWindow::ReadSkin()
 
 				try
 				{
-					meter = CMeter::Create(meterName.c_str(), this);
+					meter = CMeter::Create(meterName.c_str(), this, strSection.c_str());
 					if (meter)
 					{
-						meter->SetName(strSection.c_str());
-						
-						if (m_MouseActionCursor == false)
-						{
-							meter->SetMouseActionCursor(false);
-						}
+						meter->SetMouseActionCursor(m_MouseActionCursor);
+						meter->SetToolTipHidden(m_ToolTipHidden);
 
-						if (m_ToolTipHidden == true)
-						{
-							meter->SetToolTipHidden(true);
-						}
+						meter->ReadConfig(m_Parser);
 
-						meter->ReadConfig(strSection.c_str());
+						m_Meters.push_back(meter);
+
+						if (!m_HasButtons && dynamic_cast<CMeterButton*>(meter))
+						{
+							m_HasButtons = true;
+						}
 					}
 				}
 				catch (CError& error)
@@ -1970,18 +1963,6 @@ bool CMeterWindow::ReadSkin()
 					delete meter;
 					meter = NULL;
 					MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-				}
-
-				if (meter)
-				{
-					m_Meters.push_back(meter);
-
-					m_Parser.ClearStyleTemplate();
-
-					if (!m_HasButtons && dynamic_cast<CMeterButton*>(meter))
-					{
-						m_HasButtons = true;
-					}
 				}
 			}
 			// If it's not a meter or measure it will be ignored
@@ -2494,7 +2475,7 @@ bool CMeterWindow::UpdateMeasure(CMeasure* measure, bool force)
 		{
 			try
 			{
-				measure->ReadConfig(m_Parser, measure->GetName());
+				measure->ReadConfig(m_Parser);
 			}
 			catch (CError& error)
 			{
@@ -2534,8 +2515,7 @@ bool CMeterWindow::UpdateMeter(CMeter* meter, bool& bActiveTransition, bool forc
 		{
 			try
 			{
-				meter->ReadConfig(meter->GetName());
-				m_Parser.ClearStyleTemplate();
+				meter->ReadConfig(m_Parser);
 			}
 			catch (CError& error)
 			{

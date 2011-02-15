@@ -25,10 +25,10 @@
 class CMeterRotator : public CMeter
 {
 public:
-	CMeterRotator(CMeterWindow* meterWindow);
+	CMeterRotator(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterRotator();
 
-	virtual void ReadConfig(const WCHAR* section);
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);

@@ -66,7 +66,7 @@ void StringToProper(std::wstring& str)
 ** The constructor
 **
 */
-CMeterString::CMeterString(CMeterWindow* meterWindow) : CMeter(meterWindow),
+CMeterString::CMeterString(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
 	m_Color(Color::White),
 	m_EffectColor(Color::Black),
 	m_AutoScale(AUTOSCALE_OFF),
@@ -289,7 +289,7 @@ void CMeterString::Initialize()
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CMeterString::ReadConfig(const WCHAR* section)
+void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	// Store the current font values so we know if the font needs to be updated
 	std::wstring oldFontFace = m_FontFace;
@@ -297,9 +297,7 @@ void CMeterString::ReadConfig(const WCHAR* section)
 	TEXTSTYLE oldStyle = m_Style;
 
 	// Read common configs
-	CMeter::ReadConfig(section);
-
-	CConfigParser& parser = m_MeterWindow->GetParser();
+	CMeter::ReadConfig(parser, section);
 
 	// Check for extra measures
 	if (!m_Initialized && !m_MeasureName.empty())

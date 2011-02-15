@@ -26,7 +26,7 @@
 ** The constructor
 **
 */
-CMeasureDiskSpace::CMeasureDiskSpace(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+CMeasureDiskSpace::CMeasureDiskSpace(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
 	m_Total(false),
 	m_Label(false),
 	m_IgnoreRemovable(true),

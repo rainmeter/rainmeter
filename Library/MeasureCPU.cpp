@@ -60,7 +60,7 @@ ULONG CMeasureCPU::c_BufferSize = 0;
 ** The constructor
 **
 */
-CMeasureCPU::CMeasureCPU(CMeterWindow* meterWindow) : CMeasure(meterWindow),
+CMeasureCPU::CMeasureCPU(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
 	m_FirstTime(true),
 	m_Processor()
 {

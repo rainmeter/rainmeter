@@ -24,7 +24,7 @@
 class CMeasurePhysicalMemory : public CMeasure
 {
 public:
-	CMeasurePhysicalMemory(CMeterWindow* meterWindow);
+	CMeasurePhysicalMemory(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasurePhysicalMemory();
 
 	virtual bool Update();

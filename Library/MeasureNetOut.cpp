@@ -25,7 +25,7 @@
 ** The constructor
 **
 */
-CMeasureNetOut::CMeasureNetOut(CMeterWindow* meterWindow) : CMeasureNet(meterWindow),
+CMeasureNetOut::CMeasureNetOut(CMeterWindow* meterWindow, const WCHAR* name) : CMeasureNet(meterWindow, name),
 	m_FirstTime(true),
 	m_OutOctets()
 {

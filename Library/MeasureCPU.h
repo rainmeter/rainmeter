@@ -35,7 +35,7 @@ typedef BOOL (WINAPI *PROCGST)(LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, L
 class CMeasureCPU : public CMeasure
 {
 public:
-	CMeasureCPU(CMeterWindow* meterWindow);
+	CMeasureCPU(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureCPU();
 
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);

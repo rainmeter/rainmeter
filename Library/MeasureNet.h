@@ -167,7 +167,7 @@ public:
 		NET_TOTAL
 	};
 
-	CMeasureNet(CMeterWindow* meterWindow);
+	CMeasureNet(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureNet();
 	
 	virtual bool Update();

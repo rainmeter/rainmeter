@@ -8,7 +8,7 @@
 class CMeasureScript : public CMeasure
 {
 public:
-	CMeasureScript(CMeterWindow* meterWindow);
+	CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureScript();
 
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
