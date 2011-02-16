@@ -119,7 +119,7 @@ BOOL CTrayWindow::AddTrayIcon()
 		tnid.hWnd = m_Window; 
 		tnid.uID = IDI_TRAY;
 		tnid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP; 
-		tnid.uCallbackMessage = WM_NOTIFYICON; 
+		tnid.uCallbackMessage = WM_TRAY_NOTIFYICON; 
 		tnid.hIcon = m_TrayIcon;
 		wcsncpy_s(tnid.szTip, L"Rainmeter", _TRUNCATE); 
 		
@@ -410,7 +410,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if(wParam == ID_CONTEXT_REFRESH)
 			{
-				PostMessage(tray->GetWindow(), WM_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
+				PostMessage(tray->GetWindow(), WM_TRAY_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
 			} 
 			else if(wParam == ID_CONTEXT_SHOWLOGFILE)
 			{
@@ -538,7 +538,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 		return 0;	// Don't send WM_COMMANDS any further
 
-	case WM_NOTIFYICON:
+	case WM_TRAY_NOTIFYICON:
 		{
 			UINT uMouseMsg = (UINT)lParam; 
 
@@ -810,11 +810,21 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 		break;
 
-	case WM_DELAYED_REFRESH_ALL:
+	case WM_TRAY_DELAYED_REFRESH_ALL:
 		if (Rainmeter)
 		{
 			// Refresh all
 			Rainmeter->RefreshAll();
+		}
+		return 0;
+
+	case WM_TRAY_DELAYED_EXECUTE:
+		if (Rainmeter && lParam)
+		{
+			// Execute bang
+			WCHAR* bang = (WCHAR*)lParam;
+			Rainmeter->ExecuteCommand(bang, NULL);
+			free(bang);  // _wcsdup()
 		}
 		return 0;
 

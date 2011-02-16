@@ -171,7 +171,13 @@ void Initialize(bool DummyLS, LPCTSTR CmdLine)
 */
 void ExecuteBang(LPCTSTR szBang)
 {
-	if (Rainmeter) Rainmeter->ExecuteCommand(szBang, NULL);
+	if (Rainmeter && szBang)
+	{
+		// ExecuteBang needs to be delayed since it crashes if done during processing.
+		// The receiver must free a given string buffer (lParam) by using free().
+		WCHAR* bang = _wcsdup(szBang);
+		PostMessage(Rainmeter->GetTrayWindow()->GetWindow(), WM_TRAY_DELAYED_EXECUTE, (WPARAM)NULL, (LPARAM)bang);
+	}
 }
 
 /*
@@ -1318,7 +1324,7 @@ void RainmeterRefreshAppWide()
 	if (Rainmeter)
 	{
 		// Refresh needs to be delayed since it crashes if done during Update()
-		PostMessage(Rainmeter->GetTrayWindow()->GetWindow(), WM_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
+		PostMessage(Rainmeter->GetTrayWindow()->GetWindow(), WM_TRAY_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
 	}
 }
 

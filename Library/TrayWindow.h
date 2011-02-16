@@ -23,9 +23,10 @@
 #include <gdiplus.h>
 #include <vector>
 
-#define WM_DELAYED_REFRESH_ALL WM_APP + 0
+#define WM_TRAY_DELAYED_REFRESH_ALL WM_APP + 0
+#define WM_TRAY_DELAYED_EXECUTE     WM_APP + 1
 
-#define WM_NOTIFYICON WM_USER + 101
+#define WM_TRAY_NOTIFYICON WM_USER + 101
 #define TRAYICON_SIZE 16
 
 enum TRAY_METER_TYPE
