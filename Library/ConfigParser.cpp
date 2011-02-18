@@ -27,7 +27,7 @@ extern CRainmeter* Rainmeter;
 
 using namespace Gdiplus;
 
-stdext::hash_map<std::wstring, std::wstring> CConfigParser::c_MonitorVariables;
+std::unordered_map<std::wstring, std::wstring> CConfigParser::c_MonitorVariables;
 
 /*
 ** CConfigParser
@@ -146,7 +146,7 @@ void CConfigParser::ReadVariables()
 ** \param strVariable
 ** \param strValue
 */
-void CConfigParser::SetVariable(stdext::hash_map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue)
+void CConfigParser::SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue)
 {
 	// LogWithArgs(LOG_DEBUG, L"Variable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), (int)variables.size());
 
@@ -165,7 +165,7 @@ bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& s
 	std::wstring strTmp = StrToLower(strVariable);
 
 	// #1: Built-in variables
-	stdext::hash_map<std::wstring, std::wstring>::const_iterator iter = m_BuiltInVariables.find(strTmp);
+	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_BuiltInVariables.find(strTmp);
 	if (iter != m_BuiltInVariables.end())
 	{
 		// Built-in variable found
@@ -698,7 +698,7 @@ void CConfigParser::AddMeasure(CMeasure* pMeasure)
 
 CMeasure* CConfigParser::GetMeasure(const std::wstring& name)
 {
-	std::map<std::wstring, CMeasure*>::const_iterator iter = m_Measures.find(StrToLower(name));
+	std::unordered_map<std::wstring, CMeasure*>::const_iterator iter = m_Measures.find(StrToLower(name));
 	if (iter != m_Measures.end())
 	{
 		return (*iter).second;
@@ -1196,7 +1196,7 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 	std::wstring strTmpSection = StrToLower(strSection);
 	std::wstring strTmpKey = StrToLower(strKey);
 
-	stdext::hash_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.find(strTmpSection);
+	std::unordered_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.find(strTmpSection);
 	if (iter != m_Keys.end())
 	{
 		std::vector<std::wstring>& array = (*iter).second;
@@ -1222,7 +1222,7 @@ const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, cons
 	std::wstring strTmp = strSection + L"::";
 	strTmp += strKey;
 
-	stdext::hash_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToLower(strTmp));
+	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToLower(strTmp));
 	if (iter != m_Values.end())
 	{
 		return (*iter).second;
@@ -1240,7 +1240,7 @@ const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, cons
 */
 std::vector<std::wstring> CConfigParser::GetKeys(const std::wstring& strSection)
 {
-	stdext::hash_map<std::wstring, std::vector<std::wstring> >::const_iterator iter = m_Keys.find(StrToLower(strSection));
+	std::unordered_map<std::wstring, std::vector<std::wstring> >::const_iterator iter = m_Keys.find(StrToLower(strSection));
 	if (iter != m_Keys.end())
 	{
 		return (*iter).second;

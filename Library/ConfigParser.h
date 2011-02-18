@@ -22,10 +22,9 @@
 #pragma warning(disable: 4503)
 
 #include <windows.h>
-#include <map>
 #include <string>
 #include <vector>
-#include <hash_map>
+#include <unordered_map>
 #include <algorithm>
 #include <gdiplus.h>
 #include "ccalc-0.5.1/mparser.h"
@@ -99,7 +98,7 @@ private:
 
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
 
-	static void SetVariable(stdext::hash_map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue);
+	static void SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue);
 
 	static void SetMultiMonitorVariables(bool reset);
 	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(c_MonitorVariables, strVariable, strValue); }
@@ -109,7 +108,7 @@ private:
 	std::wstring m_Filename;
 
 	hqMathParser* m_Parser;
-	std::map<std::wstring, CMeasure*> m_Measures;
+	std::unordered_map<std::wstring, CMeasure*> m_Measures;
 
 	std::vector<std::wstring> m_StyleTemplate;
 
@@ -118,13 +117,13 @@ private:
 	bool m_LastDefaultUsed;
 
 	std::vector<std::wstring> m_Sections;		// The sections must be an ordered array
-	stdext::hash_map<std::wstring, std::vector<std::wstring> > m_Keys;
-	stdext::hash_map<std::wstring, std::wstring> m_Values;
+	std::unordered_map<std::wstring, std::vector<std::wstring> > m_Keys;
+	std::unordered_map<std::wstring, std::wstring> m_Values;
 
-	stdext::hash_map<std::wstring, std::wstring> m_BuiltInVariables;         // Built-in variables
-	stdext::hash_map<std::wstring, std::wstring> m_Variables;                // User-defined variables
+	std::unordered_map<std::wstring, std::wstring> m_BuiltInVariables;         // Built-in variables
+	std::unordered_map<std::wstring, std::wstring> m_Variables;                // User-defined variables
 
-	static stdext::hash_map<std::wstring, std::wstring> c_MonitorVariables;  // Monitor variables
+	static std::unordered_map<std::wstring, std::wstring> c_MonitorVariables;  // Monitor variables
 };
 
 #endif

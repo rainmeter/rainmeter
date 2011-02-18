@@ -20,7 +20,7 @@
 #define __GROUP_H__
 
 #include <string>
-#include <set>
+#include <unordered_set>
 
 class CGroup
 {
@@ -36,7 +36,7 @@ protected:
 private:
 	std::wstring CreateGroup(const std::wstring& str);
 
-	std::set<std::wstring> m_Groups;
+	std::unordered_set<std::wstring> m_Groups;
 	std::wstring m_OldGroups;
 
 };

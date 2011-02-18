@@ -21,6 +21,7 @@
 
 #include "Meter.h"
 #include "Measure.h"
+#include <unordered_map>
 
 namespace Gdiplus
 {
@@ -103,8 +104,8 @@ private:
 	static std::wstring FontFaceToString(const std::wstring& fontFace, Gdiplus::PrivateFontCollection* collection);
 	static std::wstring FontPropertiesToString(Gdiplus::REAL size, Gdiplus::FontStyle style);
 
-	static std::map<std::wstring, Gdiplus::FontFamily*> c_FontFamilies;		// Cache for the font families
-	static std::map<std::wstring, Gdiplus::Font*> c_Fonts;					// Cache for the fonts
+	static std::unordered_map<std::wstring, Gdiplus::FontFamily*> c_FontFamilies;		// Cache for the font families
+	static std::unordered_map<std::wstring, Gdiplus::Font*> c_Fonts;					// Cache for the fonts
 };
 
 #endif

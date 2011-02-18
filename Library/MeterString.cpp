@@ -24,8 +24,8 @@
 
 using namespace Gdiplus;
 
-std::map<std::wstring, Gdiplus::FontFamily*> CMeterString::c_FontFamilies;
-std::map<std::wstring, Gdiplus::Font*> CMeterString::c_Fonts;
+std::unordered_map<std::wstring, Gdiplus::FontFamily*> CMeterString::c_FontFamilies;
+std::unordered_map<std::wstring, Gdiplus::Font*> CMeterString::c_Fonts;
 
 void StringToUpper(std::wstring& str)
 {
@@ -142,7 +142,7 @@ void CMeterString::Initialize()
 	// Check if the font family is in the cache and use it
 	std::wstring cacheKey;
 	std::wstring systemFontFaceKey = FontFaceToString(m_FontFace, NULL);
-	std::map<std::wstring, Gdiplus::FontFamily*>::const_iterator iter = c_FontFamilies.find(systemFontFaceKey);
+	std::unordered_map<std::wstring, Gdiplus::FontFamily*>::const_iterator iter = c_FontFamilies.find(systemFontFaceKey);
 	if (iter != c_FontFamilies.end())
 	{
 		m_FontFamily = (*iter).second;
@@ -246,7 +246,7 @@ void CMeterString::Initialize()
 	// Check if the font is in the cache and use it
 	cacheKey += L"-";
 	cacheKey += FontPropertiesToString(size, style);
-	std::map<std::wstring, Gdiplus::Font*>::const_iterator iter2 = c_Fonts.find(cacheKey);
+	std::unordered_map<std::wstring, Gdiplus::Font*>::const_iterator iter2 = c_Fonts.find(cacheKey);
 	if (iter2 != c_Fonts.end())
 	{
 		m_Font = (*iter2).second;
@@ -720,7 +720,7 @@ void CMeterString::FreeFontCache(PrivateFontCollection* collection)
 		StringToLower(prefix);
 	}
 
-	std::map<std::wstring, Gdiplus::Font*>::iterator iter2 = c_Fonts.begin();
+	std::unordered_map<std::wstring, Gdiplus::Font*>::iterator iter2 = c_Fonts.begin();
 	while (iter2 != c_Fonts.end())
 	{
 		if (collection == NULL || wcsncmp((*iter2).first.c_str(), prefix.c_str(), prefix.length()) == 0)
@@ -738,7 +738,7 @@ void CMeterString::FreeFontCache(PrivateFontCollection* collection)
 	}
 	if (collection == NULL) c_Fonts.clear();
 
-	std::map<std::wstring, Gdiplus::FontFamily*>::iterator iter = c_FontFamilies.begin();
+	std::unordered_map<std::wstring, Gdiplus::FontFamily*>::iterator iter = c_FontFamilies.begin();
 	while (iter != c_FontFamilies.end())
 	{
 		if (collection == NULL || wcsncmp((*iter).first.c_str(), prefix.c_str(), prefix.length()) == 0)
