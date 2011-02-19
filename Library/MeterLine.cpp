@@ -59,30 +59,34 @@ void CMeterLine::Initialize()
 {
 	CMeter::Initialize();
 
-	if (m_Colors.size() != m_AllValues.size())
-	{
-		if (m_Colors.size() > m_AllValues.size())
-		{
-			size_t num = (!m_AllValues.empty()) ? m_AllValues[0].size() : 0;
+	size_t colorsSize = m_Colors.size();
+	size_t allValuesSize = m_AllValues.size();
+	size_t num = (allValuesSize > 0) ? m_AllValues[0].size() : 0;
 
-			for (size_t i = m_AllValues.size(), end = m_Colors.size(); i < end; ++i)
+	if (colorsSize != allValuesSize)
+	{
+		if (colorsSize > allValuesSize)
+		{
+			for (size_t i = allValuesSize; i < colorsSize; ++i)
 			{
 				m_AllValues.push_back(std::vector<double>());
 
-				if (m_W > 0)
-				{
-					m_AllValues.back().reserve(m_W);
-				}
-
-				if (num > 0)
-				{
-					m_AllValues.back().assign(num, 0);
-				}
+				m_AllValues.back().assign(m_W, 0.0);
 			}
 		}
 		else
 		{
-			m_AllValues.resize(m_Colors.size());
+			m_AllValues.resize(colorsSize);
+		}
+	}
+
+	if (num != (size_t)m_W)
+	{
+		if (m_CurrentPos >= m_W) m_CurrentPos = 0;
+
+		for (size_t i = 0; i < allValuesSize; ++i)
+		{
+			m_AllValues[i].resize(m_W, 0.0);
 		}
 	}
 }
@@ -99,6 +103,7 @@ void CMeterLine::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	// Store the current number of lines so we know if the buffer needs to be updated
 	int oldLineCount = (int)m_Colors.size();
+	int oldW = m_W;
 
 	// Read common configs
 	CMeter::ReadConfig(parser, section);
@@ -150,7 +155,8 @@ void CMeterLine::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_HorizontalColor = parser.ReadColor(section, L"HorizontalLineColor", m_HorizontalColor);	// This is what it should be
 
 	if (m_Initialized &&
-		oldLineCount != lineCount)
+		(oldLineCount != lineCount ||
+		oldW != m_W))
 	{
 		Initialize();
 	}
@@ -166,42 +172,28 @@ bool CMeterLine::Update()
 {
 	if (CMeter::Update() && m_Measure)
 	{
-		// Collect the values
-		if (!m_Measure->IsDisabled())
+		if (m_W > 0)
 		{
-			double value = m_Measure->GetValue();
+			// Collect the values
+			if (!m_Measure->IsDisabled())
+			{
+				double value = m_Measure->GetValue();
 
-			if ((int)m_AllValues[0].size() < m_W)
-			{
-				m_AllValues[0].push_back(value);
-			}
-			else
-			{
 				m_AllValues[0][m_CurrentPos] = value;
 			}
-		}
 
-		int counter = 1;
-		std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
-		for ( ; i != m_Measures.end(); ++i)
-		{
-			double value = (*i)->GetValue();
+			int counter = 1;
+			std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
+			for ( ; i != m_Measures.end(); ++i)
+			{
+				double value = (*i)->GetValue();
 
-			if ((int)m_AllValues[counter].size() < m_W)
-			{
-				m_AllValues[counter].push_back(value);
-			}
-			else
-			{
 				m_AllValues[counter][m_CurrentPos] = value;
+				++counter;
 			}
-			++counter;
-		}
 
-		++m_CurrentPos;
-		if (m_CurrentPos >= m_W)
-		{
-			m_CurrentPos = 0;
+			++m_CurrentPos;
+			if (m_CurrentPos >= m_W) m_CurrentPos = 0;
 		}
 		return true;
 	}
@@ -216,7 +208,7 @@ bool CMeterLine::Update()
 */
 bool CMeterLine::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw(graphics)) return false;
+	if(!CMeter::Draw(graphics) || m_W == 0) return false;
 
 	double maxValue = 0.0;
 	int counter = 0;
@@ -317,38 +309,23 @@ bool CMeterLine::Draw(Graphics& graphics)
 		const int size = (int)(*i).size();
 
 		int pos = m_CurrentPos;
-		if (pos >= m_W) pos = 0;
 
-		if (pos < size)
-		{
-			oldY = (REAL)((*i)[pos] * scale);
-			oldY = min(oldY, H);
-			oldY = max(oldY, 0.0f);
-		}
-		else
-		{
-			oldY = 0.0f;
-		}
-		oldY = (m_Flip) ? y + oldY : y + H - oldY;
-		++pos;
+		oldY = (REAL)((*i)[pos] * scale);
+		oldY = min(oldY, H);
+		oldY = max(oldY, 0.0f);
+		oldY = y + ((m_Flip) ? oldY : H - oldY);
 
 		// Cache all lines
 		GraphicsPath path;
 		for (int j = x + 1, R = x + m_W; j < R; ++j)
 		{
+			++pos;
 			if (pos >= m_W) pos = 0;
 
-			if (pos < size)
-			{
-				Y = (REAL)((*i)[pos] * scale);
-				Y = min(Y, H);
-				Y = max(Y, 0.0f);
-			}
-			else
-			{
-				Y = 0.0f;
-			}
-			Y = (m_Flip) ? y + Y : y + H - Y;
+			Y = (REAL)((*i)[pos] * scale);
+			Y = min(Y, H);
+			Y = max(Y, 0.0f);
+			Y = y + ((m_Flip) ? Y : H - Y);
 
 			path.AddLine((REAL)(j - 1), oldY, (REAL)j, Y);
 
@@ -358,7 +335,6 @@ bool CMeterLine::Draw(Graphics& graphics)
 			}
 
 			oldY = Y;
-			++pos;
 		}
 
 		// Draw cached lines
