@@ -32,15 +32,17 @@ bool CSharedMemClient::ReadSharedMem(PCORE_TEMP_SHARED_DATA i_SharedData)
 	if (hdlMemory == NULL) 
 	{	
 		ReleaseMutex(hdlMutex); 
+		CloseHandle(hdlMutex);
 		return false;
 	} 
 	
 	pSharedData = (PCORE_TEMP_SHARED_DATA)MapViewOfFile(hdlMemory, FILE_MAP_READ, 0, 0, 0);
 	if (pSharedData == NULL) 
 	{
-		ReleaseMutex(hdlMutex); 
 		CloseHandle(hdlMemory);
 		hdlMemory = NULL;
+		ReleaseMutex(hdlMutex); 
+		CloseHandle(hdlMutex);
 		return false;
 	} 
 
@@ -58,6 +60,7 @@ bool CSharedMemClient::ReadSharedMem(PCORE_TEMP_SHARED_DATA i_SharedData)
 	UnmapViewOfFile(pSharedData);
 	CloseHandle(hdlMemory);
 	ReleaseMutex(hdlMutex); 
+	CloseHandle(hdlMutex);
 
 	return bRet;
 }
