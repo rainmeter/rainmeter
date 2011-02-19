@@ -453,7 +453,7 @@ bool CMeasure::PostUpdate()
 		{
 			m_AverageValues.resize(m_AverageSize, m_Value);
 			averageValuesSize = m_AverageValues.size();
-			m_AveragePos %= averageValuesSize;
+			if (m_AveragePos >= averageValuesSize) m_AveragePos = 0;
 		}
 		m_AverageValues[m_AveragePos] = m_Value;
 
