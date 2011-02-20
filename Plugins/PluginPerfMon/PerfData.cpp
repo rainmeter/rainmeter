@@ -111,35 +111,24 @@ double Update2(UINT id)
 
 		if(measure)
 		{
-			// Check the platform
-			OSVERSIONINFO osvi;
-			ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
-			osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-			if(GetVersionEx((OSVERSIONINFO*)&osvi) && osvi.dwPlatformId == VER_PLATFORM_WIN32_NT && osvi.dwMajorVersion > 4)
-			{
-				ULONGLONG longvalue = 0;
-				longvalue = GetPerfData(measure->ObjectName.c_str(), 
-										measure->InstanceName.c_str(), 
-										measure->CounterName.c_str());
+			ULONGLONG longvalue;
+			longvalue = GetPerfData(measure->ObjectName.c_str(), 
+									measure->InstanceName.c_str(), 
+									measure->CounterName.c_str());
 
-				if(measure->Difference)
+			if(measure->Difference)
+			{
+				// Compare with the old value
+				if(!measure->FirstTime) 
 				{
-					// Compare with the old value
-					if(!measure->FirstTime) 
-					{
-						value = (double)(longvalue - measure->OldValue);
-					}
-					measure->OldValue = longvalue;
-					measure->FirstTime = false;
+					value = (double)(longvalue - measure->OldValue);
 				}
-				else
-				{
-					value = (double)longvalue;
-				}
+				measure->OldValue = longvalue;
+				measure->FirstTime = false;
 			}
 			else
 			{
-				LSLog(LOG_NOTICE, L"Rainmeter", L"PerfMon plugin works only in Win2K and later.");
+				value = (double)longvalue;
 			}
 		}
 	}

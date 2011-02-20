@@ -611,17 +611,7 @@ void GetOSVersion(WCHAR* buffer)
 void GetOSBits(WCHAR* buffer)
 {
 	SYSTEM_INFO systemInfo = {0};
-
-	typedef void (WINAPI *FPGETNATIVESYSTEMINFO)(LPSYSTEM_INFO lpSystemInfo);
-	FPGETNATIVESYSTEMINFO GetNativeSystemInfo = (FPGETNATIVESYSTEMINFO)GetProcAddress(GetModuleHandle(L"kernel32"), "GetNativeSystemInfo");
-	if (GetNativeSystemInfo != NULL)
-	{
-		GetNativeSystemInfo(&systemInfo);
-	}
-	else
-	{
-		GetSystemInfo(&systemInfo);
-	}
+	GetNativeSystemInfo(&systemInfo);
 
 	if (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ||
 		systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_IA64)

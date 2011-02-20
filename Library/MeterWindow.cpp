@@ -1668,12 +1668,6 @@ void CMeterWindow::ReadConfig()
 		section = m_SkinName.c_str();
 	}
 
-	// Disable native transparency if older OS
-	if (CSystem::GetOSPlatform() < OSPLATFORM_2K)
-	{
-		m_NativeTransparency = 0;
-	}
-
 	// Set WindowXScreen/WindowYScreen temporarily
 	WindowToScreen();
 }

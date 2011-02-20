@@ -30,7 +30,6 @@ typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
 } SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION, *PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
 
 typedef LONG (WINAPI *PROCNTQSI)(UINT,PVOID,ULONG,PULONG);
-typedef BOOL (WINAPI *PROCGST)(LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, LPFILETIME lpUserTime);
 
 class CMeasureCPU : public CMeasure
 {
@@ -49,10 +48,9 @@ protected:
 
 	int m_Processor;
 
-	std::vector<double> m_OldTime;
+	double m_OldTime[2];
 
 	static PROCNTQSI c_NtQuerySystemInformation;
-	static PROCGST   c_GetSystemTimes;
 
 	static int c_NumOfProcessors;
 	static ULONG c_BufferSize;

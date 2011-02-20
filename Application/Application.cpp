@@ -78,12 +78,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 //	_CrtSetBreakAlloc(5055);
 
 	// Avoid loading a dll from current directory
-	typedef BOOL (WINAPI *FPSETDLLDIRECTORYW)(LPCWSTR lpPathName);
-	FPSETDLLDIRECTORYW SetDllDirectoryW = (FPSETDLLDIRECTORYW)GetProcAddress(GetModuleHandle(L"Kernel32.dll"), "SetDllDirectoryW");
-	if (SetDllDirectoryW)
-	{
-		SetDllDirectoryW(L"");
-	}
+	SetDllDirectory(L"");
 
 	if (lpCmdLine && lpCmdLine[0] == L'!')
 	{

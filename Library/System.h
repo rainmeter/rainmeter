@@ -31,7 +31,6 @@ enum OSPLATFORM
 	OSPLATFORM_NT4,
 	OSPLATFORM_2K,
 	OSPLATFORM_XP,
-	OSPLATFORM_XP_SP1,
 	OSPLATFORM_VISTA,
 	OSPLATFORM_7
 };
@@ -76,10 +75,8 @@ public:
 	static HWND GetHelperWindow() { return c_HelperWindow; }
 	static void PrepareHelperWindow(HWND WorkerW);
 
-	static bool IsNT() { return (GetOSPlatform() >= OSPLATFORM_NT4); }
 	static OSPLATFORM GetOSPlatform();
 
-	static BOOL RmSetDllDirectory(LPCWSTR lpPathName);
 	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = NULL, bool ignoreErrors = false);
 
 	static bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove = false);

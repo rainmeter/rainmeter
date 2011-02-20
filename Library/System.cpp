@@ -1021,13 +1021,9 @@ OSPLATFORM CSystem::GetOSPlatform()
 				{
 					c_Platform = OSPLATFORM_2K;
 				}
-				else if (osvi.dwMinorVersion == 1 && osvi.wServicePackMajor == 0)
-				{
-					c_Platform = OSPLATFORM_XP;
-				}
 				else
 				{
-					c_Platform = OSPLATFORM_XP_SP1;
+					c_Platform = OSPLATFORM_XP;
 				}
 			}
 			else if (osvi.dwMajorVersion == 6)  // Vista (Server 2008) / 7 (Server 2008R2)
@@ -1052,37 +1048,6 @@ OSPLATFORM CSystem::GetOSPlatform()
 }
 
 /*
-** RmSetDllDirectory
-**
-** This function is a wrapper function for SetDllDirectory() that is enabled on Windows XP sp1 or newer.
-**
-** Adds a directory to the search path used to locate DLLs for the application.
-**
-** If lpPathName is an empty string (""), the call removes the current directory from the default DLL search order.
-** If lpPathName is NULL, the function restores the default search order.
-**
-*/
-BOOL CSystem::RmSetDllDirectory(LPCWSTR lpPathName)
-{
-	if (GetOSPlatform() >= OSPLATFORM_XP_SP1)
-	{
-		static FPSETDLLDIRECTORYW c_SetDllDirectoryW = NULL;
-
-		if (!c_SetDllDirectoryW)
-		{
-			c_SetDllDirectoryW = (FPSETDLLDIRECTORYW)GetProcAddress(GetModuleHandle(L"Kernel32.dll"), "SetDllDirectoryW");
-		}
-
-		if (c_SetDllDirectoryW)
-		{
-			return c_SetDllDirectoryW(lpPathName);
-		}
-	}
-
-	return FALSE;
-}
-
-/*
 ** RmLoadLibrary
 **
 ** This function is a wrapper function for LoadLibrary().
@@ -1092,9 +1057,6 @@ BOOL CSystem::RmSetDllDirectory(LPCWSTR lpPathName)
 */
 HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError, bool ignoreErrors)
 {
-	OSPLATFORM platform = GetOSPlatform();
-	WCHAR buffer[MAX_PATH];
-
 	HMODULE hLib = NULL;
 	DWORD err;
 	UINT oldMode;
@@ -1105,27 +1067,12 @@ HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError, bool ignor
 		SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
 	}
 
-	if (platform < OSPLATFORM_XP_SP1)
-	{
-		// Replace current directory to application directory
-		GetCurrentDirectory(MAX_PATH, buffer);
-		SetCurrentDirectory(Rainmeter->GetPath().c_str());
-	}
-	else
-	{
-		// Remove current directory from DLL search path
-		RmSetDllDirectory(L"");
-	}
+	// Remove current directory from DLL search path
+	SetDllDirectory(L"");
 
 	SetLastError(ERROR_SUCCESS);
 	hLib = LoadLibrary(lpLibFileName);
 	err = GetLastError();
-
-	if (platform < OSPLATFORM_XP_SP1)
-	{
-		// Reset to old current directory
-		SetCurrentDirectory(buffer);
-	}
 
 	if (ignoreErrors)
 	{

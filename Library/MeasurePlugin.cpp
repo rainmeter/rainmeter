@@ -192,7 +192,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		SetCurrentDirectory(dir.c_str());
 
 		// Remove current directory from DLL search path
-		CSystem::RmSetDllDirectory(L"");
+		SetDllDirectory(L"");
 
 		double maxValue;
 		maxValue = InitializeFunc(m_Plugin, parser.GetFilename().c_str(), section, m_ID);
