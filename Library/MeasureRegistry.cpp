@@ -65,7 +65,7 @@ bool CMeasureRegistry::Update()
 						m_RegValueName.c_str(),
 						NULL,
 						(LPDWORD)&type,
-						(LPBYTE)&data,
+						(LPBYTE)data,
 						(LPDWORD)&size) == ERROR_SUCCESS)
 		{
 			switch(type)
