@@ -19,10 +19,100 @@
 #include "StdAfx.h"
 #include "TintedImage.h"
 #include "ConfigParser.h"
+#include "System.h"
 #include "Error.h"
 #include "Litestep.h"
 
 using namespace Gdiplus;
+
+class ImageCache
+{
+public:
+	ImageCache(Bitmap* bitmap, HGLOBAL hBuffer) : m_Bitmap(bitmap), m_hBuffer(hBuffer), m_Ref(1) {}
+	~ImageCache() { Dispose(); }
+
+	void AddRef() { ++m_Ref; }
+	void Release() { if (m_Ref > 0) { --m_Ref; } if (m_Ref == 0) { Dispose(); } }
+
+	bool IsInvalid() { return m_Ref == 0; }
+	//int GetRef() { return m_Ref; }
+	Bitmap* GetCache() { return m_Bitmap; }
+
+private:
+	ImageCache() {}
+	ImageCache(const ImageCache& cache) {}
+
+	void Dispose() { delete m_Bitmap; m_Bitmap = NULL; if (m_hBuffer) { ::GlobalFree(m_hBuffer); m_hBuffer = NULL; } }
+
+	Bitmap* m_Bitmap;
+	HGLOBAL m_hBuffer;
+	int m_Ref;
+};
+
+class ImageCachePool
+{
+public:
+	static std::wstring CreateKey(const std::wstring& fname, FILETIME ftime, DWORD fileSize)
+	{
+		WCHAR buffer[MAX_PATH];
+
+		std::wstring key = (PathCanonicalize(buffer, fname.c_str())) ? buffer : fname;
+
+		_snwprintf_s(buffer, _TRUNCATE, L":%x%08x:%x", ftime.dwHighDateTime, ftime.dwLowDateTime, fileSize);
+		key += buffer;
+
+		std::transform(key.begin(), key.end(), key.begin(), ::towlower);
+		return key;
+	}
+
+	static Bitmap* GetCache(const std::wstring& key)
+	{
+		std::unordered_map<std::wstring, ImageCache*>::const_iterator iter = c_CacheMap.find(key);
+		if (iter != c_CacheMap.end())
+		{
+			return (*iter).second->GetCache();
+		}
+		return NULL;
+	}
+
+	static void AddCache(const std::wstring& key, ImageCache* cache)
+	{
+		std::unordered_map<std::wstring, ImageCache*>::const_iterator iter = c_CacheMap.find(key);
+		if (iter != c_CacheMap.end())
+		{
+			(*iter).second->AddRef();
+			//LogWithArgs(LOG_DEBUG, L"* ADD: key=%s, ref=%i", key.c_str(), (*iter).second->GetRef());
+		}
+		else if (cache)
+		{
+			c_CacheMap[key] = cache;
+			//LogWithArgs(LOG_DEBUG, L"* ADD: key=%s, ref=%i", key.c_str(), cache->GetRef());
+		}
+	}
+
+	static void RemoveCache(const std::wstring& key)
+	{
+		std::unordered_map<std::wstring, ImageCache*>::const_iterator iter = c_CacheMap.find(key);
+		if (iter != c_CacheMap.end())
+		{
+			ImageCache* cache = (*iter).second;
+			cache->Release();
+			//LogWithArgs(LOG_DEBUG, L"* REMOVE: key=%s, ref=%i", key.c_str(), cache->GetRef());
+
+			if (cache->IsInvalid())
+			{
+				//LogWithArgs(LOG_DEBUG, L"* EMPTY-ERASE: key=%s", key.c_str());
+				c_CacheMap.erase(iter);
+				delete cache;
+			}
+		}
+	}
+
+private:
+	static std::unordered_map<std::wstring, ImageCache*> c_CacheMap;
+};
+std::unordered_map<std::wstring, ImageCache*> ImageCachePool::c_CacheMap;
+
 
 #define PI	(3.14159265f)
 #define CONVERT_TO_RADIANS(X)	((X) * (PI / 180.0f))
@@ -62,8 +152,6 @@ CTintedImage::CTintedImage(const WCHAR* name, const WCHAR** configArray, bool di
 
 	m_Bitmap(),
 	m_BitmapTint(),
-	m_hBuffer(),
-	m_Modified(),
 	m_NeedsCrop(false),
 	m_NeedsTinting(false),
 	m_NeedsTransform(false),
@@ -98,20 +186,16 @@ CTintedImage::~CTintedImage()
 */
 void CTintedImage::DisposeImage()
 {
-	delete m_Bitmap;
-	m_Bitmap = NULL;
-
 	delete m_BitmapTint;
 	m_BitmapTint = NULL;
 
-	if (m_hBuffer)
-	{
-		::GlobalFree(m_hBuffer);
-		m_hBuffer = NULL;
-	}
+	m_Bitmap = NULL;
 
-	m_Modified.dwHighDateTime = 0;
-	m_Modified.dwLowDateTime = 0;
+	if (!m_CacheKey.empty())
+	{
+		ImageCachePool::RemoveCache(m_CacheKey);
+		m_CacheKey.clear();
+	}
 }
 
 /*
@@ -120,46 +204,60 @@ void CTintedImage::DisposeImage()
 ** Loads the image from file handle
 **
 */
-bool CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, Bitmap** pBitmap, HGLOBAL* phBuffer)
+Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize, ImageCache** ppCache)
 {
-	DWORD imageSize = GetFileSize(fileHandle, NULL);
-
-	if (imageSize != INVALID_FILE_SIZE)
+	HGLOBAL hBuffer = ::GlobalAlloc(GMEM_MOVEABLE, fileSize);
+	if (hBuffer)
 	{
-		HGLOBAL hBuffer = ::GlobalAlloc(GMEM_MOVEABLE, imageSize);
-		if (hBuffer)
+		void* pBuffer = ::GlobalLock(hBuffer);
+		if (pBuffer)
 		{
-			void* pBuffer = ::GlobalLock(hBuffer);
-			if (pBuffer)
+			DWORD readBytes;
+			ReadFile(fileHandle, pBuffer, fileSize, &readBytes, NULL);
+			::GlobalUnlock(hBuffer);
+
+			IStream* pStream = NULL;
+			if (::CreateStreamOnHGlobal(hBuffer, FALSE, &pStream) == S_OK)
 			{
-				DWORD readBytes;
-				ReadFile(fileHandle, pBuffer, imageSize, &readBytes, NULL);
-				::GlobalUnlock(hBuffer);
+				Bitmap* bitmap = Bitmap::FromStream(pStream);
+				pStream->Release();
 
-				IStream* pStream = NULL;
-				if (::CreateStreamOnHGlobal(hBuffer, FALSE, &pStream) == S_OK)
+				if (Ok == bitmap->GetLastStatus())
 				{
-					Bitmap* bitmap = Bitmap::FromStream(pStream);
-					pStream->Release();
+					////////////////////////////////////////////
+					// Workaround to avoid image corruption with JPEG in some cases
+					if (CSystem::GetOSPlatform() < OSPLATFORM_7)
+					{
+						GUID guid;
+						bitmap->GetRawFormat(&guid);
+						if (guid == ImageFormatJPEG)
+						{
+							Rect r(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
+							Bitmap* clone = new Bitmap(r.Width, r.Height, PixelFormat24bppRGB);
+							{
+								Graphics graphics(clone);
+								graphics.DrawImage(bitmap, r, 0, 0, r.Width, r.Height, UnitPixel);
+							}
+							delete bitmap;
+							bitmap = clone;
 
-					if (bitmap && Ok == bitmap->GetLastStatus())
-					{
-						*pBitmap = bitmap;
-						*phBuffer = hBuffer;
-						return true;
+							::GlobalFree(hBuffer);
+							hBuffer = NULL;
+						}
 					}
-					else
-					{
-						delete bitmap;
-					}
+					////////////////////////////////////////////
+					*ppCache = new ImageCache(bitmap, hBuffer);
+					return bitmap;
 				}
-			}
 
-			::GlobalFree(hBuffer);
+				delete bitmap;
+			}
 		}
+
+		::GlobalFree(hBuffer);
 	}
 
-	return false;
+	return NULL;
 }
 
 /*
@@ -184,19 +282,30 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		}
 
 		// Read the bitmap to memory so that it's not locked by GDI+
+		DWORD fileSize;
 		HANDLE fileHandle = CreateFile(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-		if (fileHandle != INVALID_HANDLE_VALUE)
+		if (fileHandle != INVALID_HANDLE_VALUE && (fileSize = GetFileSize(fileHandle, NULL)) != INVALID_FILE_SIZE)
 		{
-			// Compare the timestamp and filename to check if the file has been changed (don't load if it's not)
+			// Compare the filename/timestamp/filesize to check if the file has been changed (don't load if it's not)
 			FILETIME tmpTime;
 			GetFileTime(fileHandle, NULL, NULL, &tmpTime);
-			if (bLoadAlways || CompareFileTime(&tmpTime, &m_Modified) != 0)
+			std::wstring key = ImageCachePool::CreateKey(filename, tmpTime, fileSize);
+
+			if (bLoadAlways || key != m_CacheKey)
 			{
 				DisposeImage();
 
-				if (LoadImageFromFileHandle(fileHandle, &m_Bitmap, &m_hBuffer))
+				Bitmap* bitmap = ImageCachePool::GetCache(key);
+				ImageCache* cache = NULL;
+
+				m_Bitmap = (bitmap) ?
+					bitmap :
+					LoadImageFromFileHandle(fileHandle, fileSize, &cache);
+
+				if (m_Bitmap)
 				{
-					m_Modified = tmpTime;
+					m_CacheKey = key;
+					ImageCachePool::AddCache(key, cache);
 
 					// Check whether the new image needs tinting (or cropping, flipping, rotating)
 					if (!m_NeedsCrop)
@@ -233,11 +342,8 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 				// We need a copy of the image if has tinting (or flipping, rotating)
 				if (m_NeedsCrop || m_NeedsTinting || m_NeedsTransform)
 				{
-					if (m_BitmapTint)
-					{
-						delete m_BitmapTint;
-						m_BitmapTint = NULL;
-					}
+					delete m_BitmapTint;
+					m_BitmapTint = NULL;
 
 					if (m_Bitmap->GetWidth() > 0 && m_Bitmap->GetHeight() > 0)
 					{
@@ -280,7 +386,7 @@ void CTintedImage::ApplyCrop()
 	{
 		if (m_Crop.Width == 0 || m_Crop.Height == 0)
 		{
-			m_BitmapTint = new Bitmap(0, 0, PixelFormat32bppPARGB);  // create dummy bitmap
+			m_BitmapTint = new Bitmap(0, 0, PixelFormat24bppRGB);  // create dummy bitmap
 		}
 		else
 		{
@@ -319,7 +425,7 @@ void CTintedImage::ApplyCrop()
 			}
 
 			Rect r(0, 0, m_Crop.Width, m_Crop.Height);
-			m_BitmapTint = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
+			m_BitmapTint = new Bitmap(r.Width, r.Height, AdjustNonAlphaPixelFormat(m_Bitmap));
 
 			Graphics graphics(m_BitmapTint);
 			graphics.DrawImage(m_Bitmap, r, x, y, r.Width, r.Height, UnitPixel);
@@ -335,28 +441,38 @@ void CTintedImage::ApplyCrop()
 */
 void CTintedImage::ApplyTint()
 {
-	if (m_GreyScale || !CompareColorMatrix(m_ColorMatrix, &c_IdentifyMatrix))
+	bool useColorMatrix = !CompareColorMatrix(m_ColorMatrix, &c_IdentifyMatrix);
+
+	if (m_GreyScale || useColorMatrix)
 	{
 		Bitmap* original = GetImage();
+		Bitmap* tint;
 
-		ImageAttributes ImgAttr;
-		ImgAttr.SetColorMatrix(m_ColorMatrix, ColorMatrixFlagsDefault, ColorAdjustTypeBitmap);
-
-		Rect r(0, 0, original->GetWidth(), original->GetHeight());
-
-		Bitmap* tint = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
-
-		Graphics graphics(tint);
-
-		if (m_GreyScale)
+		if (m_GreyScale && !useColorMatrix)
 		{
-			Bitmap* gray = TurnGreyscale(original);
-			graphics.DrawImage(gray, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
-			delete gray;
+			tint = TurnGreyscale(original);
 		}
 		else
 		{
-			graphics.DrawImage(original, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
+			ImageAttributes ImgAttr;
+			ImgAttr.SetColorMatrix(m_ColorMatrix, ColorMatrixFlagsDefault, ColorAdjustTypeBitmap);
+
+			Rect r(0, 0, original->GetWidth(), original->GetHeight());
+
+			tint = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
+
+			Graphics graphics(tint);
+
+			if (m_GreyScale)
+			{
+				Bitmap* gray = TurnGreyscale(original);
+				graphics.DrawImage(gray, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
+				delete gray;
+			}
+			else
+			{
+				graphics.DrawImage(original, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
+			}
 		}
 
 		delete m_BitmapTint;
@@ -378,7 +494,7 @@ Bitmap* CTintedImage::TurnGreyscale(Bitmap* source)
 
 	// We need a blank bitmap to paint our greyscale to in case of alpha
 	Rect r(0, 0, source->GetWidth(), source->GetHeight());
-	Bitmap* bitmap = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
+	Bitmap* bitmap = new Bitmap(r.Width, r.Height, AdjustNonAlphaPixelFormat(source));
 
 	Graphics graphics(bitmap);
 	graphics.DrawImage(source, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
@@ -429,7 +545,7 @@ void CTintedImage::ApplyTransform()
 
 		if (m_Flip != RotateNoneFlipNone)
 		{
-			original->RotateFlip(RotateNoneFlipNone);
+			original->RotateFlip(m_Flip);
 		}
 
 		delete m_BitmapTint;
@@ -440,7 +556,7 @@ void CTintedImage::ApplyTransform()
 		Bitmap* original = GetImage();
 
 		Rect r(0, 0, original->GetWidth(), original->GetHeight());
-		Bitmap* transform = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
+		Bitmap* transform = new Bitmap(r.Width, r.Height, AdjustNonAlphaPixelFormat(original));
 
 		Graphics graphics(transform);
 
@@ -448,7 +564,7 @@ void CTintedImage::ApplyTransform()
 
 		graphics.DrawImage(original, r, 0, 0, r.Width, r.Height, UnitPixel);
 
-		original->RotateFlip(RotateNoneFlipNone);
+		original->RotateFlip(m_Flip);
 
 		delete m_BitmapTint;
 		m_BitmapTint = transform;

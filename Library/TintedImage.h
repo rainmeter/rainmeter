@@ -46,6 +46,7 @@
 	};
 
 class CConfigParser;
+class ImageCache;
 
 class CTintedImage
 {
@@ -84,6 +85,9 @@ public:
 	void DisposeImage();
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
+	static Gdiplus::PixelFormat AdjustNonAlphaPixelFormat(Gdiplus::Bitmap* bitmap)
+		{ return (bitmap->GetPixelFormat() == PixelFormat24bppRGB) ? PixelFormat24bppRGB : PixelFormat32bppPARGB; }
+
 protected:
 	enum CROPMODE
 	{
@@ -98,16 +102,13 @@ protected:
 	void ApplyTint();
 	void ApplyTransform();
 
-	static bool LoadImageFromFileHandle(HANDLE fileHandle, Gdiplus::Bitmap** pBitmap, HGLOBAL* phBuffer);
+	Gdiplus::Bitmap* LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize, ImageCache** ppCache);
 
 	static Gdiplus::Bitmap* TurnGreyscale(Gdiplus::Bitmap* source);
 	static bool CompareColorMatrix(const Gdiplus::ColorMatrix* a, const Gdiplus::ColorMatrix* b);
 
 	Gdiplus::Bitmap* m_Bitmap;			// The bitmap
 	Gdiplus::Bitmap* m_BitmapTint;		// The tinted bitmap
-
-	HGLOBAL m_hBuffer;
-	FILETIME m_Modified;
 
 	const std::wstring m_ConfigName;
 	const WCHAR** m_ConfigArray;
@@ -123,6 +124,8 @@ protected:
 	Gdiplus::ColorMatrix* m_ColorMatrix;
 	Gdiplus::RotateFlipType m_Flip;
 	Gdiplus::REAL m_Rotate;
+
+	std::wstring m_CacheKey;
 
 	static const Gdiplus::ColorMatrix c_GreyScaleMatrix;
 	static const Gdiplus::ColorMatrix c_IdentifyMatrix;

@@ -2122,23 +2122,26 @@ bool CMeterWindow::ResizeWindow(bool reset)
 
 			if (m_BackgroundMode == BGMODE_IMAGE)
 			{
-				PixelFormat format = tempBackground->GetPixelFormat();
-				if (format == PixelFormat32bppARGB)
-				{
-					format = PixelFormat32bppPARGB;
-				}
-				m_Background = tempBackground->Clone(0, 0, m_BackgroundSize.cx, m_BackgroundSize.cy, format);
+				w = m_BackgroundSize.cx;
+				h = m_BackgroundSize.cy;
 			}
 			else
 			{
 				w = max(w, m_BackgroundSize.cx);
 				h = max(h, m_BackgroundSize.cy);
+			}
 
+			Bitmap* background = new Bitmap(w, h, CTintedImage::AdjustNonAlphaPixelFormat(tempBackground));
+			Graphics graphics(background);
+
+			if (m_BackgroundMode == BGMODE_IMAGE)
+			{
+				Rect r(0, 0, w, h);
+				graphics.DrawImage(tempBackground, r, 0, 0, w, h, UnitPixel);
+			}
+			else
+			{
 				// Scale the background to fill the whole window
-				Bitmap* background = new Bitmap(w, h, PixelFormat32bppPARGB);
-
-				Graphics graphics(background);
-
 				if (m_BackgroundMode == BGMODE_SCALED_IMAGE)
 				{
 					const RECT m = m_BackgroundMargins;
@@ -2210,9 +2213,9 @@ bool CMeterWindow::ResizeWindow(bool reset)
 					Rect r(0, 0, w, h);
 					graphics.DrawImage(tempBackground, r, 0, 0, w, h, UnitPixel, &imgAttr);
 				}
-
-				m_Background = background;
 			}
+
+			m_Background = background;
 
 			// Get the size form the background bitmap
 			m_WindowW = m_Background->GetWidth();
