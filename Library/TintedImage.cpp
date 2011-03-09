@@ -425,7 +425,8 @@ void CTintedImage::ApplyCrop()
 			}
 
 			Rect r(0, 0, m_Crop.Width, m_Crop.Height);
-			m_BitmapTint = new Bitmap(r.Width, r.Height, AdjustNonAlphaPixelFormat(m_Bitmap));
+			m_BitmapTint = new Bitmap(r.Width, r.Height,
+				AdjustNonAlphaPixelFormat(m_Bitmap, x >= 0 && y >= 0 && (x + m_Crop.Width) <= imageW && (y + m_Crop.Height) <= imageH));
 
 			Graphics graphics(m_BitmapTint);
 			graphics.DrawImage(m_Bitmap, r, x, y, r.Width, r.Height, UnitPixel);
