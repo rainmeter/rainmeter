@@ -292,9 +292,16 @@ private:
 	void SetWindowPositionVariables(int x, int y);
 	void SetWindowSizeVariables(int w, int h);
 
+	void CreateDoubleBuffer(int cx, int cy);
+
 	CConfigParser m_Parser;
 
 	Gdiplus::Bitmap* m_DoubleBuffer;
+	HBITMAP m_DIBSectionBuffer;
+	LPDWORD m_DIBSectionBufferPixels;
+	int m_DIBSectionBufferW;
+	int m_DIBSectionBufferH;
+
 	Gdiplus::Bitmap* m_Background;				// The background bitmap
 	SIZE m_BackgroundSize;
 

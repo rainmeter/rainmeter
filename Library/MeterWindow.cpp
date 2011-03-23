@@ -57,6 +57,10 @@ extern CRainmeter* Rainmeter;
 */
 CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile) : m_SkinPath(path), m_SkinName(config), m_SkinIniFile(iniFile),
 	m_DoubleBuffer(),
+	m_DIBSectionBuffer(),
+	m_DIBSectionBufferPixels(),
+	m_DIBSectionBufferW(),
+	m_DIBSectionBufferH(),
 	m_Background(),
 	m_BackgroundSize(),
 	m_Window(),
@@ -156,7 +160,8 @@ CMeterWindow::~CMeterWindow()
 	}
 
 	if(m_Background) delete m_Background;
-	if(m_DoubleBuffer) delete (m_DoubleBuffer);
+	if(m_DoubleBuffer) delete m_DoubleBuffer;
+	if(m_DIBSectionBuffer) DeleteObject(m_DIBSectionBuffer);
 
 	if(m_Window) DestroyWindow(m_Window);
 
@@ -238,7 +243,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 	IgnoreAeroPeek();
 
 	// Gotta have some kind of buffer during initialization
-	m_DoubleBuffer = new Bitmap(1, 1, PixelFormat32bppPARGB);
+	CreateDoubleBuffer(1, 1);
 
 	Refresh(true, true);
 	if (!m_WindowStartHidden) 
@@ -2282,6 +2287,35 @@ Bitmap* CMeterWindow::GrabDesktop(int x, int y, int w, int h)
 }
 
 /*
+** CreateDoubleBuffer
+**
+** Creates the back buffer bitmap.
+**
+*/
+void CMeterWindow::CreateDoubleBuffer(int cx, int cy)
+{
+	// Create DIBSection bitmap
+	BITMAPV4HEADER bmiHeader = {sizeof(BITMAPV4HEADER)};
+	bmiHeader.bV4Width = cx;
+	bmiHeader.bV4Height = -cy;  // top-down DIB
+	bmiHeader.bV4Planes = 1;
+	bmiHeader.bV4BitCount = 32;
+	bmiHeader.bV4V4Compression = BI_BITFIELDS;
+	bmiHeader.bV4RedMask = 0x00FF0000;
+	bmiHeader.bV4GreenMask = 0x0000FF00;
+	bmiHeader.bV4BlueMask = 0x000000FF;
+	bmiHeader.bV4AlphaMask = 0xFF000000;
+
+	m_DIBSectionBuffer = CreateDIBSection(NULL, (BITMAPINFO*)&bmiHeader, DIB_RGB_COLORS, (void**)&m_DIBSectionBufferPixels, NULL, 0);
+
+	// Create GDI+ bitmap from DIBSection's pixels
+	m_DoubleBuffer = new Bitmap(cx, cy, cx * 4, PixelFormat32bppPARGB, (BYTE*)m_DIBSectionBufferPixels);
+
+	m_DIBSectionBufferW = cx;
+	m_DIBSectionBufferH = cy;
+}
+
+/*
 ** CreateRegion
 **
 ** Creates/Clears a window region
@@ -2298,13 +2332,16 @@ void CMeterWindow::CreateRegion(bool clear)
 		// Set window region if needed
 		if(!m_BackgroundName.empty()) 
 		{
-			HBITMAP background = NULL;
-			m_DoubleBuffer->GetHBITMAP(Color(255,0,255), &background);
-			if (background)
+			if (m_WindowW != 0 && m_WindowH != 0)
 			{
-				HRGN region = BitmapToRegion(background, RGB(255,0,255), 0x101010, 0, 0);
-				SetWindowRgn(m_Window, region, TRUE);
-				DeleteObject(background);
+				HBITMAP background = NULL;
+				m_DoubleBuffer->GetHBITMAP(Color(255,0,255), &background);
+				if (background)
+				{
+					HRGN region = BitmapToRegion(background, RGB(255,0,255), 0x101010, 0, 0);
+					SetWindowRgn(m_Window, region, TRUE);
+					DeleteObject(background);
+				}
 			}
 		}
 	}
@@ -2336,17 +2373,17 @@ void CMeterWindow::Redraw()
 			cy = 1;
 		}
 
-		BitmapData buf;
-		if (cx != m_DoubleBuffer->GetWidth() || cy != m_DoubleBuffer->GetHeight() ||
-			Ok != m_DoubleBuffer->LockBits(&Rect(0, 0, cx, cy), ImageLockModeWrite, PixelFormat32bppPARGB, &buf))
+		if (cx != m_DIBSectionBufferW || cy != m_DIBSectionBufferH || m_DIBSectionBufferPixels == NULL)
 		{
 			if (m_DoubleBuffer) delete m_DoubleBuffer;
-			m_DoubleBuffer = new Bitmap(cx, cy, PixelFormat32bppPARGB);
+			if (m_DIBSectionBuffer) DeleteObject(m_DIBSectionBuffer);
+			m_DIBSectionBufferPixels = NULL;
+
+			CreateDoubleBuffer(cx, cy);
 		}
 		else
 		{
-			memset(buf.Scan0, 0, buf.Stride * cy);  // assume that the bitmap is top-down
-			m_DoubleBuffer->UnlockBits(&buf);
+			memset(m_DIBSectionBufferPixels, 0, cx * cy * 4);
 		}
 	}
 
@@ -2652,15 +2689,12 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 
 		HDC dcScreen = GetDC(0);
 		HDC dcMemory = CreateCompatibleDC(dcScreen);
+		SelectObject(dcMemory, m_DIBSectionBuffer);
 
-		HBITMAP dbBitmap;
-		m_DoubleBuffer->GetHBITMAP(Color(0, 0, 0, 0), &dbBitmap);
-		HBITMAP oldBitmap = (HBITMAP)SelectObject(dcMemory, dbBitmap);
 		UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+
 		ReleaseDC(0, dcScreen);
-		SelectObject(dcMemory, oldBitmap);
 		DeleteDC(dcMemory);
-		DeleteObject(dbBitmap);
 
 		m_TransparencyValue = alpha;
 	}
@@ -2679,6 +2713,7 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 ** OnPaint
 **
 ** Repaints the window. This does not cause update of the measures.
+** This handler is called if NativeTransparency is false.
 **
 */
 LRESULT CMeterWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam) 
@@ -3001,14 +3036,10 @@ bool CMeterWindow::HitTest(int x, int y)
 	if (x >= 0 && y >= 0 && x < m_WindowW && y < m_WindowH)
 	{
 		// Check transparent pixels
-		if (m_DoubleBuffer)
+		if (m_DIBSectionBufferPixels)
 		{
-			Color color;
-			Status status = m_DoubleBuffer->GetPixel(x, y, &color);
-			if (status != Ok || color.GetA() != 0)
-			{
-				return true;
-			}
+			DWORD pixel = m_DIBSectionBufferPixels[y * m_WindowW + x];  // top-down DIB
+			return ((pixel & 0xFF000000) != 0);
 		}
 		else
 		{
