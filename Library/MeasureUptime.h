@@ -32,6 +32,7 @@ public:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
+	bool m_AddDaysToHours;
 	std::wstring m_Format;
 };
 

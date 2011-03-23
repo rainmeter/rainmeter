@@ -26,7 +26,8 @@
 ** The constructor
 **
 */
-CMeasureUptime::CMeasureUptime(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name)
+CMeasureUptime::CMeasureUptime(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+	m_AddDaysToHours(false)
 {
 }
 
@@ -51,6 +52,15 @@ void CMeasureUptime::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	CMeasure::ReadConfig(parser, section);
 
 	m_Format = parser.ReadString(section, L"Format", L"%4!i!d %3!i!:%2!02i!");
+
+	if (m_Format.find(L"%4") == std::wstring::npos)
+	{
+		m_AddDaysToHours = 0!=parser.ReadInt(section, L"AddDaysToHours", 1);
+	}
+	else
+	{
+		m_AddDaysToHours = false;
+	}
 }
 
 /*
@@ -85,9 +95,9 @@ const WCHAR* CMeasureUptime::GetStringValue(AUTOSCALE autoScale, double scale, i
 	time[0] = value % 60;
 	time[1] = (value / 60) % 60;
 	time[2] = (value / (60 * 60));
-	time[3] =  (value / (60 * 60 * 24));
+	time[3] = (value / (60 * 60 * 24));
 
-	if (m_Format.find(L"%4") != std::wstring::npos) 
+	if (!m_AddDaysToHours)
 	{
 		time[2] %= 24;
 	}
