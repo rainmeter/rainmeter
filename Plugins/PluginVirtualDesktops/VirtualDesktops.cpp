@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 Patrick Dubbert
+  Copyright (C) 2010-2011 Patrick Dubbert
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -155,7 +155,7 @@ void Finalize(HMODULE instance, UINT id)
 
 UINT GetPluginVersion()
 {
-	return 1000;
+	return 1001;
 }
 
 LPCTSTR GetPluginAuthor()

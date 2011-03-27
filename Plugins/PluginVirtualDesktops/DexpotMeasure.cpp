@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 Patrick Dubbert
+  Copyright (C) 2010-2011 Patrick Dubbert
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -513,17 +513,22 @@ void DexpotDesktopNameMeasure::InitializeData()
 		{
 			for(int i = 1; i <= DesktopCount; i++)
 			{
-				PostMessage(hWndDexpot, DEX_GETDESKTOPTITLE, i, (LPARAM) hWndMessageWindow);
+				SendMessage(hWndDexpot, DEX_GETDESKTOPTITLE, i, (LPARAM) hWndMessageWindow);
 			}
 		}
 		else if(DesktopNumber > 0 && DesktopNumber <= DesktopCount)
 		{
-			PostMessage(hWndDexpot, DEX_GETDESKTOPTITLE, DesktopNumber, (LPARAM) hWndMessageWindow);
+			SendMessage(hWndDexpot, DEX_GETDESKTOPTITLE, DesktopNumber, (LPARAM) hWndMessageWindow);
 		}
 	}
 }
 
 void DexpotDesktopNameMeasure::OnDesktopConfigurationChanged()
+{
+	InitializeData();
+}
+
+void DexpotDesktopNameMeasure::OnDesktopCountChanged(int NewCount)
 {
 	InitializeData();
 }
@@ -573,21 +578,26 @@ void DexpotDesktopWallpaperMeasure::InitializeData()
 		{
 			for(int i = 1; i <= DesktopCount; i++)
 			{
-				PostMessage(hWndDexpot, DEX_GETDESKTOPWALLPAPER, i, (LPARAM) hWndMessageWindow);
+				SendMessage(hWndDexpot, DEX_GETDESKTOPWALLPAPER, i, (LPARAM) hWndMessageWindow);
 			}
 		}
 		else if(DesktopNumber > 0 && DesktopNumber <= DesktopCount)
 		{
-			PostMessage(hWndDexpot, DEX_GETDESKTOPWALLPAPER, DesktopNumber, (LPARAM) hWndMessageWindow);
+			SendMessage(hWndDexpot, DEX_GETDESKTOPWALLPAPER, DesktopNumber, (LPARAM) hWndMessageWindow);
 		}
 	}
 }
 void DexpotDesktopWallpaperMeasure::OnSwitched(int FromDesktop, int ToDesktop, WORD Flags, WORD Trigger)
 {
-	PostMessage(hWndDexpot, DEX_GETDESKTOPWALLPAPER, FromDesktop, (LPARAM) hWndMessageWindow);
+	SendMessage(hWndDexpot, DEX_GETDESKTOPWALLPAPER, FromDesktop, (LPARAM) hWndMessageWindow);
 }
 
 void DexpotDesktopWallpaperMeasure::OnDesktopConfigurationChanged()
+{
+	InitializeData();
+}
+
+void DexpotDesktopWallpaperMeasure::OnDesktopCountChanged(int NewCount)
 {
 	InitializeData();
 }

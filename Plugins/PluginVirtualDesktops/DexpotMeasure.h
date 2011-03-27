@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 Patrick Dubbert
+  Copyright (C) 2010-2011 Patrick Dubbert
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -169,6 +169,7 @@ public:
 	virtual LPCTSTR GetString(UINT flags);
 	virtual void InitializeData();
 	virtual void OnDesktopConfigurationChanged();
+	virtual void OnDesktopCountChanged(int NewCount);
 
 	static void SetDesktopName(UINT Desktop, std::wstring &Name);
 
@@ -189,6 +190,7 @@ public:
 	virtual void InitializeData();
 	virtual void OnSwitched(int FromDesktop, int ToDesktop, WORD Flags, WORD Trigger);
 	virtual void OnDesktopConfigurationChanged();
+	virtual void OnDesktopCountChanged(int NewCount);
 
 	static void SetDesktopWallpaper(UINT Desktop, std::wstring &Wallpaper);
 
