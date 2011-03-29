@@ -26,6 +26,8 @@
 #include <crtdbg.h>
 
 // WINAPI
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <windows.h>
 #include <gdiplus.h>
 #include <comdef.h>
