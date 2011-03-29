@@ -19,7 +19,7 @@ void LuaManager::Init()
 {
 	if (c_pState == 0)
 	{
-		// initialize Lua 
+		// initialize Lua
 		c_pState = lua_open();
 
 		//load Lua base libraries
@@ -57,7 +57,7 @@ void LuaManager::ReportErrors(lua_State * L)
 {
 	LuaLog(LOG_ERROR, "Script: %s", lua_tostring(L, -1));
 	lua_pop(L, 1);
-} 
+}
 
 void LuaManager::LuaLog(int nLevel, const char* format, ... )
 {

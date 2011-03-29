@@ -573,7 +573,7 @@ HWND CSystem::GetDefaultShellWindow()
 **
 ** Finds the Shell's desktop window or WorkerW window.
 ** If the window is not found, this function returns NULL.
-** 
+**
 ** Note for WorkerW:
 **
 ** In Earlier Windows / 7 (without Aero):
@@ -982,7 +982,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
 				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-				for( ; iter != windows.end(); ++iter)
+				for ( ; iter != windows.end(); ++iter)
 				{
 					PostMessage((*iter).second->GetWindow(), WM_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
 				}
@@ -1118,7 +1118,7 @@ HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError, bool ignor
 //	return fEnabled;
 //}
 
-/* 
+/*
 ** CopyFiles
 **
 ** Copies files and folders from one location to another.
@@ -1149,7 +1149,7 @@ bool CSystem::CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, 
 	return true;
 }
 
-/* 
+/*
 ** RemoveFile
 **
 ** Removes a file even if a file is read-only.
@@ -1167,7 +1167,7 @@ bool CSystem::RemoveFile(const std::wstring& file)
 	return (DeleteFile(file.c_str()) != 0);
 }
 
-/* 
+/*
 ** GetIniFileMappingList
 **
 ** Retrieves the "IniFileMapping" entries from Registry.
@@ -1199,7 +1199,7 @@ void CSystem::GetIniFileMappingList(std::vector<std::wstring>& iniFileMappings)
 	}
 }
 
-/* 
+/*
 ** GetTemporaryFile
 **
 ** Prepares a temporary file if iniFile is included in the "IniFileMapping" entries.

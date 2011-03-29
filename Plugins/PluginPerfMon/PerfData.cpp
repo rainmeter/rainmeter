@@ -42,7 +42,7 @@ static std::map<UINT, PerfMeasure*> g_Measures;
 
 /*
   This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured. 
+  The function must return the maximum value that can be measured.
   The return value can also be 0, which means that Rainmeter will
   track the maximum value automatically. The parameters for this
   function are:
@@ -105,21 +105,21 @@ double Update2(UINT id)
 	double value = 0;
 
 	std::map<UINT, PerfMeasure*>::iterator i = g_Measures.find(id);
-	if(i != g_Measures.end())
+	if (i != g_Measures.end())
 	{
 		PerfMeasure* measure = (*i).second;
 
-		if(measure)
+		if (measure)
 		{
 			ULONGLONG longvalue;
-			longvalue = GetPerfData(measure->ObjectName.c_str(), 
-									measure->InstanceName.c_str(), 
+			longvalue = GetPerfData(measure->ObjectName.c_str(),
+									measure->InstanceName.c_str(),
 									measure->CounterName.c_str());
 
-			if(measure->Difference)
+			if (measure->Difference)
 			{
 				// Compare with the old value
-				if(!measure->FirstTime) 
+				if (!measure->FirstTime)
 				{
 					value = (double)(longvalue - measure->OldValue);
 				}
@@ -145,7 +145,7 @@ void Finalize(HMODULE instance, UINT id)
 {
 	// delete the measure
 	std::map<UINT, PerfMeasure*>::iterator i = g_Measures.find(id);
-	if(i != g_Measures.end())
+	if (i != g_Measures.end())
 	{
 		delete (*i).second;
 		g_Measures.erase(i);
@@ -166,7 +166,7 @@ ULONGLONG GetPerfData(PCTSTR ObjectName, PCTSTR InstanceName, PCTSTR CounterName
 	WCHAR name[256];
 	ULONGLONG value = 0;
 
-	if(ObjectName == NULL || CounterName == NULL || wcslen(ObjectName) == 0 || wcslen(CounterName) == 0)
+	if (ObjectName == NULL || CounterName == NULL || wcslen(ObjectName) == 0 || wcslen(CounterName) == 0)
 	{
 		// Unable to continue
 		return 0;
@@ -175,21 +175,21 @@ ULONGLONG GetPerfData(PCTSTR ObjectName, PCTSTR InstanceName, PCTSTR CounterName
 	CPerfSnapshot snapshot(&g_CounterTitles);
 	CPerfObjectList objList(&snapshot, &g_CounterTitles);
 
-	if(snapshot.TakeSnapshot(ObjectName))
+	if (snapshot.TakeSnapshot(ObjectName))
 	{
 		pPerfObj = objList.GetPerfObject(ObjectName);
 
-		if(pPerfObj)
+		if (pPerfObj)
 		{
-			for(pObjInst = pPerfObj->GetFirstObjectInstance();
+			for (pObjInst = pPerfObj->GetFirstObjectInstance();
 				pObjInst != NULL;
 				pObjInst = pPerfObj->GetNextObjectInstance())
 			{
 				if (InstanceName != NULL && wcslen(InstanceName) > 0)
 				{
-					if(pObjInst->GetObjectInstanceName(name, 256))
+					if (pObjInst->GetObjectInstanceName(name, 256))
 					{
-						if(_wcsicmp(InstanceName, name) != 0) 
+						if (_wcsicmp(InstanceName, name) != 0)
 						{
 							delete pObjInst;
 							continue;
@@ -203,23 +203,23 @@ ULONGLONG GetPerfData(PCTSTR ObjectName, PCTSTR InstanceName, PCTSTR CounterName
 				}
 
 				pPerfCntr = pObjInst->GetCounterByName(CounterName);
-				if(pPerfCntr != NULL)
+				if (pPerfCntr != NULL)
 				{
 					pPerfCntr->GetData(data, 256, NULL);
-					
-					if(pPerfCntr->GetSize() == 1)
+
+					if (pPerfCntr->GetSize() == 1)
 					{
 						value = *(BYTE*)data;
-					} 
-					else if(pPerfCntr->GetSize() == 2)
+					}
+					else if (pPerfCntr->GetSize() == 2)
 					{
 						value = *(WORD*)data;
 					}
-					else if(pPerfCntr->GetSize() == 4)
+					else if (pPerfCntr->GetSize() == 4)
 					{
 						value = *(DWORD*)data;
 					}
-					else if(pPerfCntr->GetSize() == 8)
+					else if (pPerfCntr->GetSize() == 8)
 					{
 						value = *(ULONGLONG*)data;
 					}

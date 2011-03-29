@@ -35,7 +35,7 @@ extern CRainmeter* Rainmeter;
 /*
 ** CMeasureNet
 **
-** The constructor. This is the base class for the net-meters. 
+** The constructor. This is the base class for the net-meters.
 **
 */
 CMeasureNet::CMeasureNet(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
@@ -394,7 +394,7 @@ ULONG64 CMeasureNet::GetNetStatsValue(NET net)
 	if (m_Interface == 0)
 	{
 		// Get all interfaces
-		for(size_t i = 0; i < statsSize; ++i)
+		for (size_t i = 0; i < statsSize; ++i)
 		{
 			// Ignore the loopback and filter interfaces
 			if (c_NumOfTables == statsSize)
@@ -482,15 +482,15 @@ void CMeasureNet::ReadConfig(CConfigParser& parser, const WCHAR* section, NET ne
 	}
 
 	double maxValue = parser.ReadFloat(section, L"MaxValue", -1);
-	if (maxValue == -1) 
+	if (maxValue == -1)
 	{
 		maxValue = parser.ReadFloat(section, netName, -1);
-		if (maxValue == -1) 
+		if (maxValue == -1)
 		{
 			maxValue = value;
 		}
 	}
-	
+
 	m_Interface = parser.ReadInt(section, L"Interface", 0);
 	m_Cumulative = 0!=parser.ReadInt(section, L"Cumulative", 0);
 
@@ -527,7 +527,7 @@ void CMeasureNet::UpdateStats()
 		}
 
 		while (c_OldStatValues.size() < statsSize)
-		{ 
+		{
 			c_OldStatValues.push_back(0);
 		}
 
@@ -622,7 +622,7 @@ void CMeasureNet::WriteStats(const std::wstring& iniFile)
 	WCHAR buffer2[64];
 
 	size_t statsSize = c_StatValues.size() / 2;
-	
+
 	_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)statsSize);
 	WritePrivateProfileString(L"Statistics", L"NetStatsCount", buffer, iniFile.c_str());
 

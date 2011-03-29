@@ -128,7 +128,7 @@ BOOL GetRCString(LPCSTR lpKeyName, LPSTR value, LPCSTR defStr, int maxLen)
 void VarExpansion(LPSTR buffer, LPCSTR value)
 {
 	// Use the lsapi.dll version of the method if possible
-	if (fpVarExpansion) 
+	if (fpVarExpansion)
 	{
 		fpVarExpansion(buffer, value);
 	}
@@ -281,7 +281,7 @@ HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd)
 	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
 	PSID AdministratorsGroup;
 	// Initialize SID.
-	if( !AllocateAndInitializeSid( &NtAuthority,
+	if (!AllocateAndInitializeSid( &NtAuthority,
 		2,
 		SECURITY_BUILTIN_DOMAIN_RID,
 		DOMAIN_ALIAS_RID_ADMINS,
@@ -294,7 +294,7 @@ HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd)
 	else
 	{
 		// Check whether the token is present in admin group.
-		if( !CheckTokenMembership( NULL,
+		if (!CheckTokenMembership( NULL,
 			AdministratorsGroup,
 			&IsInAdminGroup ))
 		{
@@ -318,7 +318,7 @@ HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd)
 HINSTANCE LSExecute(HWND Owner, LPCTSTR szCommand, int nShowCmd)
 {
 	// Use the lsapi.dll version of the method if possible
-    if (fpLSExecute) 
+	if (fpLSExecute)
 	{
 		std::string asc = ConvertToAscii(szCommand);
 		return fpLSExecute(Owner, asc.c_str(), nShowCmd);
@@ -386,7 +386,7 @@ HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR sz
 //void TransparentBltLS(HDC hdcDst, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, COLORREF colorTransparent)
 //{
 //	// Use the lsapi.dll version of the method if possible
-//	if (fpTransparentBltLS) 
+//	if (fpTransparentBltLS)
 //	{
 //		fpTransparentBltLS(hdcDst, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, colorTransparent);
 //	}
@@ -506,9 +506,9 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 
 	// Add timestamp
 	static DWORD startTime = 0;
-	
+
 	DWORD time = GetTickCount();
-	if (startTime == 0) 
+	if (startTime == 0)
 	{
 		startTime = time;
 	}
@@ -516,7 +516,7 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 	_snwprintf_s(buffer, _TRUNCATE, L"(%02i:%02i:%02i.%03i) ", (time - startTime) / (1000 * 60* 60), ((time - startTime) / (1000 * 60)) % 60, ((time - startTime) / 1000) % 60, (time - startTime) % 1000);
 
 	std::wstring message(buffer);
-	logInfo.timestamp = message; 
+	logInfo.timestamp = message;
 	message += pszMessage;
 
 #ifdef _DEBUG
@@ -546,7 +546,7 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 	}
 
 	// Use the lsapi.dll version of the method if possible
-	if (fpLSLog) 
+	if (fpLSLog)
 	{
 		std::string asc = ConvertToAscii(message.c_str());
 		std::string mod = ConvertToAscii(pszModule);
@@ -612,7 +612,7 @@ void LogWithArgs(int nLevel, const WCHAR* format, ... )
 {
 	WCHAR* buffer = new WCHAR[4096];
 	va_list args;
-    va_start( args, format );
+	va_start( args, format );
 
 	_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
 	_CrtSetReportMode(_CRT_ASSERT, 0);

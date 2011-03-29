@@ -44,7 +44,7 @@ CMeasureVirtualMemory::~CMeasureVirtualMemory()
 /*
 ** Update
 **
-** Updates the current virtual memory value. 
+** Updates the current virtual memory value.
 **
 */
 bool CMeasureVirtualMemory::Update()

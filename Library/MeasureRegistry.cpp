@@ -42,7 +42,7 @@ CMeasureRegistry::CMeasureRegistry(CMeterWindow* meterWindow, const WCHAR* name)
 */
 CMeasureRegistry::~CMeasureRegistry()
 {
-	if(m_RegKey) RegCloseKey(m_RegKey);
+	if (m_RegKey) RegCloseKey(m_RegKey);
 }
 
 /*
@@ -55,13 +55,13 @@ bool CMeasureRegistry::Update()
 {
 	if (!CMeasure::PreUpdate()) return false;
 
-	if(m_RegKey != NULL)
+	if (m_RegKey != NULL)
 	{
 		DWORD size = 4096;
 		WCHAR* data = new WCHAR[size];
 		DWORD type = 0;
 
-		if(RegQueryValueEx(m_RegKey,
+		if (RegQueryValueEx(m_RegKey,
 						m_RegValueName.c_str(),
 						NULL,
 						(LPDWORD)&type,
@@ -120,31 +120,31 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	CMeasure::ReadConfig(parser, section);
 
 	const std::wstring& keyname = parser.ReadString(section, L"RegHKey", L"HKEY_CURRENT_USER");
-	if(_wcsicmp(keyname.c_str(), L"HKEY_CLASSES_ROOT") == 0)
+	if (_wcsicmp(keyname.c_str(), L"HKEY_CLASSES_ROOT") == 0)
 	{
 		m_HKey = HKEY_CLASSES_ROOT;
 	}
-	else if(_wcsicmp(keyname.c_str(), L"HKEY_CURRENT_CONFIG") == 0)
+	else if (_wcsicmp(keyname.c_str(), L"HKEY_CURRENT_CONFIG") == 0)
 	{
 		m_HKey = HKEY_CURRENT_CONFIG;
 	}
-	else if(_wcsicmp(keyname.c_str(), L"HKEY_CURRENT_USER") == 0)
+	else if (_wcsicmp(keyname.c_str(), L"HKEY_CURRENT_USER") == 0)
 	{
 		m_HKey = HKEY_CURRENT_USER;
 	}
-	else if(_wcsicmp(keyname.c_str(), L"HKEY_LOCAL_MACHINE") == 0)
+	else if (_wcsicmp(keyname.c_str(), L"HKEY_LOCAL_MACHINE") == 0)
 	{
 		m_HKey = HKEY_LOCAL_MACHINE;
 	}
-	else if(_wcsicmp(keyname.c_str(), L"HKEY_CLASSES_ROOT") == 0)
+	else if (_wcsicmp(keyname.c_str(), L"HKEY_CLASSES_ROOT") == 0)
 	{
 		m_HKey = HKEY_CLASSES_ROOT;
 	}
-	else if(_wcsicmp(keyname.c_str(), L"HKEY_PERFORMANCE_DATA") == 0)
+	else if (_wcsicmp(keyname.c_str(), L"HKEY_PERFORMANCE_DATA") == 0)
 	{
 		m_HKey = HKEY_PERFORMANCE_DATA;
 	}
-	else if(_wcsicmp(keyname.c_str(), L"HKEY_DYN_DATA") == 0)
+	else if (_wcsicmp(keyname.c_str(), L"HKEY_DYN_DATA") == 0)
 	{
 		m_HKey = HKEY_DYN_DATA;
 	}
@@ -167,8 +167,8 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 
 	// Try to open the key
-	if(m_RegKey) RegCloseKey(m_RegKey);
-	RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey); 
+	if (m_RegKey) RegCloseKey(m_RegKey);
+	RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
 }
 
 /*

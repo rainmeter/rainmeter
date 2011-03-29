@@ -17,34 +17,34 @@ bool CSharedMemClient::ReadSharedMem(PCORE_TEMP_SHARED_DATA i_SharedData)
 	HANDLE hdlMutex;
 
 	hdlMutex = CreateMutex(NULL,FALSE,CORE_TEMP_MUTEX_OBJECT);
-	if (hdlMutex == NULL) 
-	{		
+	if (hdlMutex == NULL)
+	{
 		return false;
-	} 
-	
-	WaitForSingleObject(hdlMutex, INFINITE);   
-	
+	}
+
+	WaitForSingleObject(hdlMutex, INFINITE);
+
 	hdlMemory = OpenFileMapping(
-		FILE_MAP_READ,						// Read only permission. 
-		TRUE,								
+		FILE_MAP_READ,						// Read only permission.
+		TRUE,
 		CORE_TEMP_MAPPING_OBJECT);			// "CoreTempMappingObject"
-	
-	if (hdlMemory == NULL) 
-	{	
-		ReleaseMutex(hdlMutex); 
+
+	if (hdlMemory == NULL)
+	{
+		ReleaseMutex(hdlMutex);
 		CloseHandle(hdlMutex);
 		return false;
-	} 
-	
+	}
+
 	pSharedData = (PCORE_TEMP_SHARED_DATA)MapViewOfFile(hdlMemory, FILE_MAP_READ, 0, 0, 0);
-	if (pSharedData == NULL) 
+	if (pSharedData == NULL)
 	{
 		CloseHandle(hdlMemory);
 		hdlMemory = NULL;
-		ReleaseMutex(hdlMutex); 
+		ReleaseMutex(hdlMutex);
 		CloseHandle(hdlMutex);
 		return false;
-	} 
+	}
 
 	__try
 	{
@@ -59,7 +59,7 @@ bool CSharedMemClient::ReadSharedMem(PCORE_TEMP_SHARED_DATA i_SharedData)
 
 	UnmapViewOfFile(pSharedData);
 	CloseHandle(hdlMemory);
-	ReleaseMutex(hdlMutex); 
+	ReleaseMutex(hdlMutex);
 	CloseHandle(hdlMutex);
 
 	return bRet;

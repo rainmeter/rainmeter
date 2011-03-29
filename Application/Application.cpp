@@ -61,7 +61,7 @@ enum RetValue
 	RetError   = 1
 };
 
-/* 
+/*
 ** WinMain
 **
 ** The Main-function
@@ -94,22 +94,22 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		return RetSuccess;
 	}
 
-	if(!hPrevInstance) 
+	if (!hPrevInstance)
 	{
 		if (!InitApplication(hInstance, WinClass)) return RetError;
 	}
 
 	hWnd=InitInstance(hInstance, WinClass, WinName);
-	if(!hWnd) return RetError;
+	if (!hWnd) return RetError;
 
 	// Remove quotes from the commandline
 	WCHAR Path[MAX_PATH+1] = {0};
-	if(lpCmdLine)
+	if (lpCmdLine)
 	{
 		size_t Pos = 0;
-		for(size_t i = 0, len = wcslen(lpCmdLine); i <= len && Pos < MAX_PATH; ++i) 
+		for (size_t i = 0, len = wcslen(lpCmdLine); i <= len && Pos < MAX_PATH; ++i)
 		{
-			if(lpCmdLine[i] != L'\"') Path[Pos++] = lpCmdLine[i];
+			if (lpCmdLine[i] != L'\"') Path[Pos++] = lpCmdLine[i];
 		}
 	}
 
@@ -118,7 +118,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 
 	// Check that the DLL is available
 	HMODULE module = GetModuleHandle(L"Rainmeter.dll");
-	if(module == NULL)
+	if (module == NULL)
 	{
 		MessageBox(NULL, L"Unable to load Rainmeter.dll", L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
 		DestroyWindow(hWnd);
@@ -134,7 +134,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	}
 
 	// Run the standard window message loop
-	while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0) 
+	while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
 	{
 		if (bRet == -1)  // error
 		{
@@ -144,15 +144,15 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		else
 		{
 			TranslateMessage(&msg);
-			DispatchMessage(&msg); 
+			DispatchMessage(&msg);
 		}
-	} 
+	}
 
 	if (hMutex) ReleaseMutex(hMutex);
-	return (int)msg.wParam; 
-} 
+	return (int)msg.wParam;
+}
 
-/* 
+/*
 ** InitApplication
 **
 ** Creates the windowclass
@@ -169,14 +169,14 @@ BOOL InitApplication(HINSTANCE hInstance, const WCHAR* WinClass)
 	wc.hInstance = hInstance;
 	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_RAINMETER));
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH); 
+	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	wc.lpszMenuName =  NULL;
 	wc.lpszClassName = WinClass;
 
 	return RegisterClass(&wc);
 }
 
-/* 
+/*
 ** InitInstance
 **
 ** Creates the window. This is just an invisible window. The real window
@@ -201,7 +201,7 @@ HWND InitInstance(HINSTANCE hInstance, const WCHAR* WinClass, const WCHAR* WinNa
 	);
 }
 
-/* 
+/*
 ** Bang
 **
 ** Sends bangs to the DLL
@@ -231,7 +231,7 @@ void Bang(const WCHAR* command)
 	}
 }
 
-/* 
+/*
 ** RmLoadSystemLibrary
 **
 ** Loads a system dll from system32 directory.
@@ -254,7 +254,7 @@ HMODULE RmLoadSystemLibrary(LPCWSTR lpLibFileName)
 	return NULL;
 }
 
-/* 
+/*
 ** IsRunning
 **
 ** Checks whether Rainmeter.exe is running.
@@ -330,7 +330,7 @@ BOOL IsRunning(HANDLE* hMutex)
 	return FALSE;
 }
 
-/* 
+/*
 ** MainWndProc
 **
 ** The main window procedure

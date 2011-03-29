@@ -65,7 +65,7 @@ void CMeterRotator::Initialize()
 	CMeter::Initialize();
 
 	// Load the bitmaps if defined
-	if(!m_ImageName.empty())
+	if (!m_ImageName.empty())
 	{
 		m_Image.LoadImage(m_ImageName, m_NeedsReload);
 	}
@@ -157,7 +157,7 @@ bool CMeterRotator::Update()
 */
 bool CMeterRotator::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(graphics)) return false;
 
 	if (m_Image.IsLoaded())
 	{

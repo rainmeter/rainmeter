@@ -50,7 +50,7 @@ ULONG CMeasureCPU::c_BufferSize = 0;
 //    OUT PULONG ReturnLength OPTIONAL   // pointer to a 32-bit
 //                                       // variable that receives
 //                                       // the number of bytes
-//                                       // written to the buffer 
+//                                       // written to the buffer
 // );
 
 /*

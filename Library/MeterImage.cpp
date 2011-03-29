@@ -228,7 +228,7 @@ bool CMeterImage::Update()
 */
 bool CMeterImage::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(graphics)) return false;
 
 	if (m_Image.IsLoaded())
 	{
@@ -284,9 +284,9 @@ bool CMeterImage::Draw(Graphics& graphics)
 		{
 			const RECT m = m_ScaleMargins;
 
-			if (m.top > 0) 
+			if (m.top > 0)
 			{
-				if (m.left > 0) 
+				if (m.left > 0)
 				{
 					// Top-Left
 					Rect r(x, y, m.left, m.top);
@@ -297,7 +297,7 @@ bool CMeterImage::Draw(Graphics& graphics)
 				Rect r(x + m.left, y, drawW - m.left - m.right, m.top);
 				graphics.DrawImage(drawBitmap, r, m.left, 0, imageW - m.left - m.right, m.top, UnitPixel);
 
-				if (m.right > 0) 
+				if (m.right > 0)
 				{
 					// Top-Right
 					Rect r(x + drawW - m.right, y, m.right, m.top);
@@ -305,7 +305,7 @@ bool CMeterImage::Draw(Graphics& graphics)
 				}
 			}
 
-			if (m.left > 0) 
+			if (m.left > 0)
 			{
 				// Left
 				Rect r(x, y + m.top, m.left, drawH - m.top - m.bottom);
@@ -316,16 +316,16 @@ bool CMeterImage::Draw(Graphics& graphics)
 			Rect r(x + m.left, y + m.top, drawW - m.left - m.right, drawH - m.top - m.bottom);
 			graphics.DrawImage(drawBitmap, r, m.left, m.top, imageW - m.left - m.right, imageH - m.top - m.bottom, UnitPixel);
 
-			if (m.right > 0) 
+			if (m.right > 0)
 			{
 				// Right
 				Rect r(x + drawW - m.right, y + m.top, m.right, drawH - m.top - m.bottom);
 				graphics.DrawImage(drawBitmap, r, imageW - m.right, m.top, m.right, imageH - m.top - m.bottom, UnitPixel);
 			}
-			
-			if (m.bottom > 0) 
+
+			if (m.bottom > 0)
 			{
-				if (m.left > 0) 
+				if (m.left > 0)
 				{
 					// Bottom-Left
 					Rect r(x, y + drawH - m.bottom, m.left, m.bottom);
@@ -336,7 +336,7 @@ bool CMeterImage::Draw(Graphics& graphics)
 				Rect r(x + m.left, y + drawH - m.bottom, drawW - m.left - m.right, m.bottom);
 				graphics.DrawImage(drawBitmap, r, m.left, imageH - m.bottom, imageW - m.left - m.right, m.bottom, UnitPixel);
 
-				if (m.right > 0) 
+				if (m.right > 0)
 				{
 					// Bottom-Right
 					Rect r(x + drawW - m.right, y + drawH - m.bottom, m.right, m.bottom);
@@ -366,9 +366,9 @@ void CMeterImage::BindMeasure(const std::list<CMeasure*>& measures)
 	{
 		// Go through the list and check it there is a secondary measures for us
 		std::list<CMeasure*>::const_iterator i = measures.begin();
-		for( ; i != measures.end(); ++i)
+		for ( ; i != measures.end(); ++i)
 		{
-			if(_wcsicmp((*i)->GetName(), (*j).c_str()) == 0)
+			if (_wcsicmp((*i)->GetName(), (*j).c_str()) == 0)
 			{
 				m_Measures.push_back(*i);
 				break;

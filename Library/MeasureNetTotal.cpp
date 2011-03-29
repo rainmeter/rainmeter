@@ -44,14 +44,14 @@ CMeasureNetTotal::~CMeasureNetTotal()
 /*
 ** Update
 **
-** Updates the current net total value. 
+** Updates the current net total value.
 **
 */
 bool CMeasureNetTotal::Update()
 {
 	if (!CMeasureNet::PreUpdate()) return false;
 
-	if(c_Table == NULL) return false;
+	if (c_Table == NULL) return false;
 
 	if (m_Cumulative)
 	{
@@ -61,7 +61,7 @@ bool CMeasureNetTotal::Update()
 	{
 		ULONG64 value = 0;
 
-		if (!m_FirstTime) 
+		if (!m_FirstTime)
 		{
 			value = GetNetOctets(NET_TOTAL);
 			if (value > m_TotalOctets)

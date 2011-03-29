@@ -44,7 +44,7 @@ CMeasureMemory::~CMeasureMemory()
 /*
 ** Update
 **
-** Updates the current total memory value. 
+** Updates the current total memory value.
 **
 */
 bool CMeasureMemory::Update()

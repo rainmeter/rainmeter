@@ -16,11 +16,11 @@ LuaScript::LuaScript(lua_State* p_pState, const char* p_strFile) : m_pState(p_pS
 		lua_newtable(m_pState);
 
 		// Create the metatable that will store the global table
-		lua_createtable(m_pState, 0, 1); 
-		
+		lua_createtable(m_pState, 0, 1);
+
 		// Push the global teble
 		lua_pushvalue(m_pState, LUA_GLOBALSINDEX);
-		
+
 		// Set the __index of the table to be the global table
 		lua_setfield(m_pState, -2, "__index");
 
@@ -102,7 +102,7 @@ double LuaScript::RunFunctionDouble(const char* p_strFuncName)
 		// Push the function onto the stack
 		lua_getfield(m_pState, -1, p_strFuncName);
 
-		if(lua_pcall(m_pState, 0, 1, 0))
+		if (lua_pcall(m_pState, 0, 1, 0))
 		{
 			LuaManager::ReportErrors(m_pState);
 		}
@@ -188,7 +188,7 @@ bool LuaScript::FunctionExists(const char* p_strFuncName)
 		// Push the function onto the stack
 		lua_getfield(m_pState, -1, p_strFuncName);
 
-		if (lua_isfunction( m_pState, -1)) 
+		if (lua_isfunction( m_pState, -1))
 		{
 			bExists = true;
 		}

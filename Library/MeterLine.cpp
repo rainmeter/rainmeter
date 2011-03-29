@@ -208,7 +208,7 @@ bool CMeterLine::Update()
 */
 bool CMeterLine::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw(graphics) || m_W == 0) return false;
+	if (!CMeter::Draw(graphics) || m_W == 0) return false;
 
 	double maxValue = 0.0;
 	int counter = 0;
@@ -264,7 +264,7 @@ bool CMeterLine::Draw(Graphics& graphics)
 			maxValue = 1.0;
 		}
 	}
-	
+
 	int x = GetX();
 	int y = GetY();
 
@@ -277,7 +277,7 @@ bool CMeterLine::Draw(Graphics& graphics)
 
 		// Check the highest power of 2 that fits in maxLines
 		int power = 2;
-		while(power < maxLines)
+		while (power < maxLines)
 		{
 			power *= 2;
 		}
@@ -362,22 +362,22 @@ void CMeterLine::BindMeasure(const std::list<CMeasure*>& measures)
 	{
 		// Go through the list and check it there is a secondary measure for us
 		std::list<CMeasure*>::const_iterator i = measures.begin();
-		for( ; i != measures.end(); ++i)
+		for ( ; i != measures.end(); ++i)
 		{
-			if(_wcsicmp((*i)->GetName(), (*j).c_str()) == 0)
+			if (_wcsicmp((*i)->GetName(), (*j).c_str()) == 0)
 			{
 				m_Measures.push_back(*i);
 				break;
 			}
 		}
-		
+
 		if (i == measures.end())
 		{
 			std::wstring error = L"The meter [" + m_Name;
 			error += L"] cannot be bound with [";
 			error += (*j);
 			error += L"]!";
-	        throw CError(error, __LINE__, __FILE__);
+			throw CError(error, __LINE__, __FILE__);
 		}
 	}
 	CMeter::SetAllMeasures(m_Measures);

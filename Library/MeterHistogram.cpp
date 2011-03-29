@@ -109,7 +109,7 @@ void CMeterHistogram::Initialize()
 	// A sanity check
 	if (m_SecondaryMeasure && !m_PrimaryImageName.empty() && (m_BothImageName.empty() || m_SecondaryImageName.empty()))
 	{
-        Log(LOG_WARNING, L"You need to define SecondaryImage and BothImage also!");
+		Log(LOG_WARNING, L"You need to define SecondaryImage and BothImage also!");
 
 		m_PrimaryImage.DisposeImage();
 		m_SecondaryImage.DisposeImage();
@@ -385,7 +385,7 @@ bool CMeterHistogram::Update()
 */
 bool CMeterHistogram::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw(graphics) ||
+	if (!CMeter::Draw(graphics) ||
 		(m_Measure && !m_PrimaryValues) ||
 		(m_SecondaryMeasure && !m_SecondaryValues)) return false;
 
@@ -517,13 +517,13 @@ void CMeterHistogram::BindMeasure(const std::list<CMeasure*>& measures)
 {
 	CMeter::BindMeasure(measures);
 
-	if(!m_SecondaryMeasureName.empty())
+	if (!m_SecondaryMeasureName.empty())
 	{
 		// Go through the list and check it there is a secondary measure for us
 		std::list<CMeasure*>::const_iterator i = measures.begin();
-		for( ; i != measures.end(); ++i)
+		for ( ; i != measures.end(); ++i)
 		{
-			if(_wcsicmp((*i)->GetName(), m_SecondaryMeasureName.c_str()) == 0)
+			if (_wcsicmp((*i)->GetName(), m_SecondaryMeasureName.c_str()) == 0)
 			{
 				m_SecondaryMeasure = (*i);
 				CMeter::SetAllMeasures(m_SecondaryMeasure);
@@ -535,6 +535,6 @@ void CMeterHistogram::BindMeasure(const std::list<CMeasure*>& measures)
 		error += L"] cannot be bound with [";
 		error += m_SecondaryMeasureName;
 		error += L"]!";
-        throw CError(error, __LINE__, __FILE__);
+		throw CError(error, __LINE__, __FILE__);
 	}
 }

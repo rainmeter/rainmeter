@@ -63,7 +63,7 @@ typedef struct tagIPINFO
 typedef IPINFO* PIPINFO;
 
 static std::map<UINT, pingData*> g_Values;
-static CRITICAL_SECTION g_CriticalSection; 
+static CRITICAL_SECTION g_CriticalSection;
 static bool g_Initialized = false;
 static HINSTANCE g_ICMPInstance = NULL;
 
@@ -99,7 +99,7 @@ std::string ConvertToAscii(LPCTSTR str)
 
 /*
   This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured. 
+  The function must return the maximum value that can be measured.
   The return value can also be 0, which means that Rainmeter will
   track the maximum value automatically. The parameters for this
   function are:
@@ -127,7 +127,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			g_IcmpSendEcho = (IcmpSendEcho)GetProcAddress(g_ICMPInstance,"IcmpSendEcho");
 			g_IcmpSendEcho2 = (IcmpSendEcho2)GetProcAddress(g_ICMPInstance,"IcmpSendEcho2");
 		}
-	
+
 		g_Initialized = true;
 	}
 
@@ -143,7 +143,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		if (pData->destAddr == INADDR_NONE)
 		{
 			WSADATA wsaData;
-		    if (WSAStartup(0x0101, &wsaData) == 0)
+			if (WSAStartup(0x0101, &wsaData) == 0)
 			{
 				LPHOSTENT pHost;
 
@@ -184,7 +184,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	{
 		pData->timeoutValue = wcstod(data, NULL);
 	}
-	
+
 	if (valid)
 	{
 		g_Values[id] = pData;
@@ -210,10 +210,10 @@ DWORD WINAPI NetworkThreadProc(LPVOID pParam)
 			DWORD res = g_IcmpSendEcho(
 				hIcmpFile,
 				pData->destAddr,
-				NULL, 
+				NULL,
 				0,
 				NULL,
-				reply, 
+				reply,
 				replySize,
 				pData->timeout);
 
@@ -236,7 +236,7 @@ DWORD WINAPI NetworkThreadProc(LPVOID pParam)
 		pData->threadHandle = 0;
 		LeaveCriticalSection(&g_CriticalSection);
 	}
-    return 0;   // thread completed successfully
+	return 0;   // thread completed successfully
 }
 
 /*
@@ -299,7 +299,7 @@ void Finalize(HMODULE instance, UINT id)
 	}
 
 	// Last instance deletes the critical section
-	if (g_Values.empty()) 
+	if (g_Values.empty())
 	{
 		if (g_ICMPInstance)
 		{

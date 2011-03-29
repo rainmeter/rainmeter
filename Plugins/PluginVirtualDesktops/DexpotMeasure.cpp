@@ -45,28 +45,28 @@ DexpotMeasure* DexpotMeasure::CreateMeasure(HMODULE instance, UINT id, LPCTSTR i
 {
 	std::wstring TypeString(ReadConfigString(section, _T("VDMeasureType"), _T("")));
 
-	if(TypeString == _T("VDMActive")) return new DexpotVDMActiveMeasure(instance, id);
-	else if(TypeString == _T("DesktopCount")) return new DexpotDesktopCountMeasure(instance, id);
-	else if(TypeString == _T("CurrentDesktop")) return new DexpotCurrentDesktopMeasure(instance, id);
-	else if(TypeString == _T("SwitchDesktop")) return new DexpotSwitchDesktopMeasure(instance, id);
-	else if(TypeString == _T("Screenshot")) return new DexpotScreenshotMeasure(instance, id);
-	else if(TypeString == _T("DesktopName")) return new DexpotDesktopNameMeasure(instance, id);
-	else if(TypeString == _T("DesktopWallpaper")) return new DexpotDesktopWallpaperMeasure(instance, id);
-	else if(TypeString == _T("Command")) return new DexpotCommandMeasure(instance, id);
+	if (TypeString == _T("VDMActive")) return new DexpotVDMActiveMeasure(instance, id);
+	else if (TypeString == _T("DesktopCount")) return new DexpotDesktopCountMeasure(instance, id);
+	else if (TypeString == _T("CurrentDesktop")) return new DexpotCurrentDesktopMeasure(instance, id);
+	else if (TypeString == _T("SwitchDesktop")) return new DexpotSwitchDesktopMeasure(instance, id);
+	else if (TypeString == _T("Screenshot")) return new DexpotScreenshotMeasure(instance, id);
+	else if (TypeString == _T("DesktopName")) return new DexpotDesktopNameMeasure(instance, id);
+	else if (TypeString == _T("DesktopWallpaper")) return new DexpotDesktopWallpaperMeasure(instance, id);
+	else if (TypeString == _T("Command")) return new DexpotCommandMeasure(instance, id);
 
 	return NULL;
 }
 
 UINT DexpotMeasure::Initialize(LPCTSTR iniFile, LPCTSTR section)
 {
-	if(InstanceCount == 0)
+	if (InstanceCount == 0)
 	{
 		hWndRainmeterControl = FindWindow(_T("DummyRainWClass"), _T("Rainmeter control window"));
 		hWndMessageWindow = CreateMessageWindow();
 	}
 	InstanceCount++;
 
-	if(!PluginRegistered && FindDexpotWindow())
+	if (!PluginRegistered && FindDexpotWindow())
 	{
 		SendNotifyMessage(hWndDexpot, DEX_REGISTERPLUGIN, 0, (LPARAM) hWndMessageWindow);
 		CurrentDesktop = (int) SendMessage(hWndDexpot, DEX_GETCURRENTDESKTOP, 0, 0);
@@ -82,9 +82,9 @@ UINT DexpotMeasure::Initialize(LPCTSTR iniFile, LPCTSTR section)
 void DexpotMeasure::Finalize()
 {
 	InstanceCount--;
-	if(InstanceCount == 0)
+	if (InstanceCount == 0)
 	{
-		if(PluginRegistered)
+		if (PluginRegistered)
 		{
 			SendNotifyMessage(hWndDexpot, DEX_UNREGISTERPLUGIN, 0, (LPARAM) hWndMessageWindow);
 			PluginRegistered = FALSE;
@@ -113,7 +113,7 @@ void DexpotMeasure::OnDexpotStarted()
 
 BOOL DexpotMeasure::FindDexpotWindow()
 {
-	if(IsWindow(hWndDexpot)) return TRUE;
+	if (IsWindow(hWndDexpot)) return TRUE;
 	hWndDexpot = FindWindow(DEXPOTCLASS, DEXPOTTITLE);
 	return hWndDexpot != NULL;
 }
@@ -153,14 +153,14 @@ LRESULT CALLBACK DexpotMeasure::WindowProc(HWND hWnd, UINT message, WPARAM wPara
 	{
 	case DEX_SWITCHED:
 		CurrentDesktop = HIWORD(lParam);
-		for(std::set<DexpotMeasure*>::iterator i = DexpotMeasures.begin(); i != DexpotMeasures.end(); ++i)
+		for (std::set<DexpotMeasure*>::iterator i = DexpotMeasures.begin(); i != DexpotMeasures.end(); ++i)
 		{
 			(*i)->OnSwitched(LOWORD(lParam), HIWORD(lParam), LOWORD(wParam), HIWORD(wParam));
 		}
 		return 0;
 
 	case DEX_DESKTOPCOUNTCHANGED:
-		for(std::set<DexpotMeasure*>::iterator i = DexpotMeasures.begin(); i != DexpotMeasures.end(); ++i)
+		for (std::set<DexpotMeasure*>::iterator i = DexpotMeasures.begin(); i != DexpotMeasures.end(); ++i)
 		{
 			(*i)->OnDesktopCountChanged((int)wParam);
 		}
@@ -168,21 +168,21 @@ LRESULT CALLBACK DexpotMeasure::WindowProc(HWND hWnd, UINT message, WPARAM wPara
 
 	case DEX_SHUTDOWN:
 		PluginRegistered = FALSE;
-		for(std::set<DexpotMeasure*>::iterator i = DexpotMeasures.begin(); i != DexpotMeasures.end(); ++i)
+		for (std::set<DexpotMeasure*>::iterator i = DexpotMeasures.begin(); i != DexpotMeasures.end(); ++i)
 		{
 			(*i)->OnShutdown();
 		}
 		return 0;
 
 	case DEX_DESKTOPCONFIGURATIONCHANGED:
-		for(std::set<DexpotMeasure*>::iterator i = DexpotMeasures.begin(); i != DexpotMeasures.end(); ++i)
+		for (std::set<DexpotMeasure*>::iterator i = DexpotMeasures.begin(); i != DexpotMeasures.end(); ++i)
 		{
 			(*i)->OnDesktopConfigurationChanged();
 		}
 		return 0;
 
 	case WM_COPYDATA:
-		if((HWND) wParam == hWndDexpot)
+		if ((HWND) wParam == hWndDexpot)
 		{
 			COPYDATASTRUCT *cds = (COPYDATASTRUCT*) lParam;
 			switch(LOWORD(cds->dwData))
@@ -198,17 +198,17 @@ LRESULT CALLBACK DexpotMeasure::WindowProc(HWND hWnd, UINT message, WPARAM wPara
 		return 0;
 
 	default:
-		if(message == WM_DEXPOTSTARTED)
+		if (message == WM_DEXPOTSTARTED)
 		{
 			hWndDexpot = (HWND) wParam;
-			if(!hWndDexpot) FindDexpotWindow();
-			if(hWndDexpot)
+			if (!hWndDexpot) FindDexpotWindow();
+			if (hWndDexpot)
 			{
 				SendMessage(hWndDexpot, DEX_REGISTERPLUGIN, 0, (LPARAM) hWndMessageWindow);
 				CurrentDesktop = (int) SendMessage(hWndDexpot, DEX_GETCURRENTDESKTOP, 0, 0);
 				PluginRegistered = TRUE;
 			}
-			for(std::set<DexpotMeasure*>::iterator i = DexpotMeasures.begin(); i != DexpotMeasures.end(); ++i)
+			for (std::set<DexpotMeasure*>::iterator i = DexpotMeasures.begin(); i != DexpotMeasures.end(); ++i)
 			{
 				(*i)->OnDexpotStarted();
 			}
@@ -222,7 +222,7 @@ LRESULT CALLBACK DexpotMeasure::WindowProc(HWND hWnd, UINT message, WPARAM wPara
 
 /*
  * DexpotDesktopCountMeasure
- * 
+ *
  */
 DexpotDesktopCountMeasure::DexpotDesktopCountMeasure(HMODULE instance, UINT id) : DexpotMeasure(instance, id) {}
 
@@ -230,11 +230,11 @@ UINT DexpotDesktopCountMeasure::Initialize(LPCTSTR iniFile, LPCTSTR section)
 {
 	DesktopCount = 0;
 	OnChange = ReadConfigString(section, _T("VDOnChange"), _T(""));
-	
+
 	CountType = Total;
 	LPCTSTR TypeString = ReadConfigString(section, _T("VDDesktopCount"), _T(""));
-	if(_tcsicmp(TypeString, _T("X")) == 0) CountType = Columns;
-	else if(_tcsicmp(TypeString, _T("Y")) == 0) CountType = Rows;
+	if (_tcsicmp(TypeString, _T("X")) == 0) CountType = Columns;
+	else if (_tcsicmp(TypeString, _T("Y")) == 0) CountType = Rows;
 
 	DexpotMeasure::Initialize(iniFile, section);
 	return 20;
@@ -242,25 +242,25 @@ UINT DexpotDesktopCountMeasure::Initialize(LPCTSTR iniFile, LPCTSTR section)
 
 void DexpotDesktopCountMeasure::InitializeData()
 {
-	if(PluginRegistered) DesktopCount = (int) SendMessage(hWndDexpot, DEX_GETDESKTOPCOUNT, 0, 0);
+	if (PluginRegistered) DesktopCount = (int) SendMessage(hWndDexpot, DEX_GETDESKTOPCOUNT, 0, 0);
 }
 
 UINT DexpotDesktopCountMeasure::Update()
 {
-	if(CountType == Rows) return 1;
+	if (CountType == Rows) return 1;
 	else return DesktopCount;
 }
 
 void DexpotDesktopCountMeasure::OnDesktopCountChanged(int NewCount)
 {
 	DesktopCount = NewCount;
-	if(OnChange.length()) SendBang(OnChange);
+	if (OnChange.length()) SendBang(OnChange);
 }
 
 
 /*
  * DexpotCurrentDesktopMeasure
- * 
+ *
  */
 DexpotCurrentDesktopMeasure::DexpotCurrentDesktopMeasure(HMODULE instance, UINT id) : DexpotMeasure(instance, id) {}
 
@@ -279,13 +279,13 @@ UINT DexpotCurrentDesktopMeasure::Update()
 
 void DexpotCurrentDesktopMeasure::OnSwitched(int FromDesktop, int ToDesktop, WORD Flags, WORD Trigger)
 {
-	if(OnChange.length()) SendBang(OnChange);
+	if (OnChange.length()) SendBang(OnChange);
 }
 
 
 /*
  * DexpotVDMActiveMeasure
- * 
+ *
  */
 DexpotVDMActiveMeasure::DexpotVDMActiveMeasure(HMODULE instance, UINT id) : DexpotMeasure(instance, id) {};
 
@@ -305,30 +305,30 @@ UINT DexpotVDMActiveMeasure::Initialize(LPCTSTR iniFile, LPCTSTR section)
 
 void DexpotVDMActiveMeasure::OnShutdown()
 {
-	if(OnDeactivate.length()) SendBang(OnDeactivate);
+	if (OnDeactivate.length()) SendBang(OnDeactivate);
 }
 
 void DexpotVDMActiveMeasure::OnDexpotStarted()
 {
-	if(OnActivate.length()) SendBang(OnActivate);
+	if (OnActivate.length()) SendBang(OnActivate);
 }
 
 
 /*
  * DexpotSwitchDesktopMeasure
- * 
+ *
  */
 DexpotSwitchDesktopMeasure::DexpotSwitchDesktopMeasure(HMODULE instance, UINT id) : DexpotMeasure(instance, id) {}
 
 void DexpotSwitchDesktopMeasure::ExecuteBang(LPCTSTR args)
 {
-	if(PluginRegistered)
+	if (PluginRegistered)
 	{
 		DWORD Desktop;
 
-		if(_tcsicmp(args, _T("next")) == 0) Desktop = MAKELPARAM(0, 1);
-		else if(_tcsicmp(args, _T("prev")) == 0) Desktop = MAKELPARAM(0, 2);
-		else if(_tcsicmp(args, _T("back")) == 0) Desktop = MAKELPARAM(0, 3);
+		if (_tcsicmp(args, _T("next")) == 0) Desktop = MAKELPARAM(0, 1);
+		else if (_tcsicmp(args, _T("prev")) == 0) Desktop = MAKELPARAM(0, 2);
+		else if (_tcsicmp(args, _T("back")) == 0) Desktop = MAKELPARAM(0, 3);
 		else Desktop = _ttoi(args);
 
 		SendNotifyMessage(hWndDexpot, DEX_SWITCHDESKTOP, 0, Desktop);
@@ -338,7 +338,7 @@ void DexpotSwitchDesktopMeasure::ExecuteBang(LPCTSTR args)
 
 /*
  * DexpotScreenshotMeasure
- * 
+ *
  */
 DexpotScreenshotMeasure::DexpotScreenshotMeasure(HMODULE instance, UINT id) : DexpotMeasure(instance, id) {}
 
@@ -356,7 +356,7 @@ UINT DexpotScreenshotMeasure::Initialize(LPCTSTR iniFile, LPCTSTR section)
 
 UINT DexpotScreenshotMeasure::Update()
 {
-	if(RefreshOnUpdate && (DesktopNumber == 0 || DesktopNumber == CurrentDesktop))
+	if (RefreshOnUpdate && (DesktopNumber == 0 || DesktopNumber == CurrentDesktop))
 	{
 		UpdateScreenshot();
 	}
@@ -375,7 +375,7 @@ void DexpotScreenshotMeasure::InitializeData()
 
 void DexpotScreenshotMeasure::OnSwitched(int FromDesktop, int ToDesktop, WORD Flags, WORD Trigger)
 {
-	if(DesktopNumber == FromDesktop || DesktopNumber == 0)
+	if (DesktopNumber == FromDesktop || DesktopNumber == 0)
 	{
 		UpdateScreenshot();
 	}
@@ -385,11 +385,11 @@ void DexpotScreenshotMeasure::UpdateScreenshot()
 {
 	int Desktop = DesktopNumber == 0 ? CurrentDesktop : DesktopNumber;
 	int nBytes = 0;
-    BYTE *pBytes = NULL;
+	BYTE *pBytes = NULL;
 	HANDLE fm;
 	HANDLE mutex;
 
-	if(!IsWindow(hWndDexpot)) return;
+	if (!IsWindow(hWndDexpot)) return;
 
 	int DesktopWidth = (int) SendMessage(hWndDexpot, DEX_GETDESKTOPWIDTH, Desktop, 0);
 	int DesktopHeight = (int) SendMessage(hWndDexpot, DEX_GETDESKTOPHEIGHT, Desktop, 0);
@@ -398,9 +398,9 @@ void DexpotScreenshotMeasure::UpdateScreenshot()
 	WaitForSingleObject(mutex, 2000);
 	fm = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, DesktopWidth * DesktopHeight * 4, L"Local\\DexpotScreenshotFilemap");
 	pBytes = (BYTE*) MapViewOfFile(fm, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-	if(pBytes) nBytes = (int) SendMessage(hWndDexpot, DEX_GETSCREENSHOT, Desktop, 0);
+	if (pBytes) nBytes = (int) SendMessage(hWndDexpot, DEX_GETSCREENSHOT, Desktop, 0);
 
-	if(nBytes > 0 && nBytes == DesktopWidth * DesktopHeight * 4)	
+	if (nBytes > 0 && nBytes == DesktopWidth * DesktopHeight * 4)
 	{
 		HDC ScreenDC;
 		HDC MemDC;
@@ -415,10 +415,10 @@ void DexpotScreenshotMeasure::UpdateScreenshot()
 		int ScaledHeight = Height;
 		int ScaledWidth = Width;
 
-		if(ScaledHeight == 0) ScaledHeight = (int) ((float) DesktopHeight * (ScaledWidth / (float) DesktopWidth) + .5f);
-		if(ScaledWidth == 0) ScaledWidth = (int) ((float) DesktopWidth * (ScaledHeight / (float) DesktopHeight) + .5f);
-		if(ScaledHeight == 0) ScaledHeight = DesktopHeight;
-		if(ScaledWidth == 0) ScaledWidth = DesktopWidth;
+		if (ScaledHeight == 0) ScaledHeight = (int) ((float) DesktopHeight * (ScaledWidth / (float) DesktopWidth) + .5f);
+		if (ScaledWidth == 0) ScaledWidth = (int) ((float) DesktopWidth * (ScaledHeight / (float) DesktopHeight) + .5f);
+		if (ScaledHeight == 0) ScaledHeight = DesktopHeight;
+		if (ScaledWidth == 0) ScaledWidth = DesktopWidth;
 
 		ZeroMemory(&bmi.bmiHeader, sizeof(BITMAPINFOHEADER));
 		bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -433,7 +433,7 @@ void DexpotScreenshotMeasure::UpdateScreenshot()
 		MemDC = CreateCompatibleDC(ScreenDC);
 		MemDC2 = CreateCompatibleDC(ScreenDC);
 		OriginalBitmap = CreateCompatibleBitmap(ScreenDC, DesktopWidth, DesktopHeight);
-		SetDIBits(MemDC2, OriginalBitmap, 0, DesktopHeight, pBytes, &bmi, 0); 
+		SetDIBits(MemDC2, OriginalBitmap, 0, DesktopHeight, pBytes, &bmi, 0);
 		OldBitmap2 = SelectObject(MemDC2, (HGDIOBJ) OriginalBitmap);
 
 		nBytes = ScaledWidth * ScaledHeight * 4;
@@ -453,7 +453,7 @@ void DexpotScreenshotMeasure::UpdateScreenshot()
 		bmfh.bfType = 0x4d42;
 
 		std::ofstream ofs(OutputFile.c_str(), std::ios_base::binary);
-		if(ofs)
+		if (ofs)
 		{
 			ofs.write((char*) &bmfh, sizeof(BITMAPFILEHEADER));
 			ofs.write((char*) &bmi, sizeof(BITMAPINFOHEADER));
@@ -479,7 +479,7 @@ void DexpotScreenshotMeasure::UpdateScreenshot()
 
 /*
  * DexpotDesktopNameMeasure
- * 
+ *
  */
 DexpotDesktopNameMeasure::DexpotDesktopNameMeasure(HMODULE instance, UINT id) : DexpotMeasure(instance, id) {}
 
@@ -492,7 +492,7 @@ UINT DexpotDesktopNameMeasure::Initialize(LPCTSTR iniFile, LPCTSTR section)
 LPCTSTR DexpotDesktopNameMeasure::GetString(UINT flags)
 {
 	UINT Desktop = (DesktopNumber == 0 ? CurrentDesktop : DesktopNumber) - 1;
-	if(Desktop >= 0 && Desktop < DesktopNames.size())
+	if (Desktop >= 0 && Desktop < DesktopNames.size())
 	{
 		return DesktopNames[Desktop].c_str();
 	}
@@ -505,18 +505,18 @@ LPCTSTR DexpotDesktopNameMeasure::GetString(UINT flags)
 
 void DexpotDesktopNameMeasure::InitializeData()
 {
-	if(PluginRegistered)
+	if (PluginRegistered)
 	{
 		int DesktopCount = (int) SendMessage(hWndDexpot, DEX_GETDESKTOPCOUNT, 0, 0);
 		DesktopNames.resize(DesktopCount);
-		if(DesktopNumber == 0)
+		if (DesktopNumber == 0)
 		{
-			for(int i = 1; i <= DesktopCount; i++)
+			for (int i = 1; i <= DesktopCount; i++)
 			{
 				SendMessage(hWndDexpot, DEX_GETDESKTOPTITLE, i, (LPARAM) hWndMessageWindow);
 			}
 		}
-		else if(DesktopNumber > 0 && DesktopNumber <= DesktopCount)
+		else if (DesktopNumber > 0 && DesktopNumber <= DesktopCount)
 		{
 			SendMessage(hWndDexpot, DEX_GETDESKTOPTITLE, DesktopNumber, (LPARAM) hWndMessageWindow);
 		}
@@ -535,14 +535,14 @@ void DexpotDesktopNameMeasure::OnDesktopCountChanged(int NewCount)
 
 void DexpotDesktopNameMeasure::SetDesktopName(UINT Desktop, std::wstring &Name)
 {
-	if(--Desktop >= DesktopNames.size()) DesktopNames.resize(Desktop + 1);
-	if(Desktop >= 0) DesktopNames[Desktop] = Name;
+	if (--Desktop >= DesktopNames.size()) DesktopNames.resize(Desktop + 1);
+	if (Desktop >= 0) DesktopNames[Desktop] = Name;
 }
 
 
 /*
  * DexpotDesktopWallpaperMeasure
- * 
+ *
  */
 DexpotDesktopWallpaperMeasure::DexpotDesktopWallpaperMeasure(HMODULE instance, UINT id) : DexpotMeasure(instance, id) {}
 
@@ -554,12 +554,12 @@ UINT DexpotDesktopWallpaperMeasure::Initialize(LPCTSTR iniFile, LPCTSTR section)
 
 LPCTSTR DexpotDesktopWallpaperMeasure::GetString(UINT flags)
 {
-	if(DesktopNumber == 0)
+	if (DesktopNumber == 0)
 	{
 		SystemParametersInfo(SPI_GETDESKWALLPAPER, STRINGBUFFER_SIZE, StringBuffer, 0);
 		return StringBuffer;
 	}
-	else if(DesktopNumber > 0 && (UINT) DesktopNumber <= DesktopWallpapers.size())
+	else if (DesktopNumber > 0 && (UINT) DesktopNumber <= DesktopWallpapers.size())
 	{
 		return DesktopWallpapers[DesktopNumber - 1].c_str();
 	}
@@ -570,18 +570,18 @@ LPCTSTR DexpotDesktopWallpaperMeasure::GetString(UINT flags)
 
 void DexpotDesktopWallpaperMeasure::InitializeData()
 {
-	if(PluginRegistered)
+	if (PluginRegistered)
 	{
 		int DesktopCount = (int) SendMessage(hWndDexpot, DEX_GETDESKTOPCOUNT, 0, 0);
 		DesktopWallpapers.resize(DesktopCount);
-		if(DesktopNumber == 0)
+		if (DesktopNumber == 0)
 		{
-			for(int i = 1; i <= DesktopCount; i++)
+			for (int i = 1; i <= DesktopCount; i++)
 			{
 				SendMessage(hWndDexpot, DEX_GETDESKTOPWALLPAPER, i, (LPARAM) hWndMessageWindow);
 			}
 		}
-		else if(DesktopNumber > 0 && DesktopNumber <= DesktopCount)
+		else if (DesktopNumber > 0 && DesktopNumber <= DesktopCount)
 		{
 			SendMessage(hWndDexpot, DEX_GETDESKTOPWALLPAPER, DesktopNumber, (LPARAM) hWndMessageWindow);
 		}
@@ -604,20 +604,20 @@ void DexpotDesktopWallpaperMeasure::OnDesktopCountChanged(int NewCount)
 
 void DexpotDesktopWallpaperMeasure::SetDesktopWallpaper(UINT Desktop, std::wstring &Wallpaper)
 {
-	if(--Desktop >= DesktopWallpapers.size()) DesktopWallpapers.resize(Desktop + 1);
-	if(Desktop >= 0) DesktopWallpapers[Desktop] = Wallpaper;
+	if (--Desktop >= DesktopWallpapers.size()) DesktopWallpapers.resize(Desktop + 1);
+	if (Desktop >= 0) DesktopWallpapers[Desktop] = Wallpaper;
 }
 
 
 /*
  * DexpotCommandMeasure
- * 
+ *
  */
 DexpotCommandMeasure::DexpotCommandMeasure(HMODULE instance, UINT id) : DexpotMeasure(instance, id) {}
 
 void DexpotCommandMeasure::ExecuteBang(LPCTSTR args)
 {
-	if(PluginRegistered)
+	if (PluginRegistered)
 	{
 		COPYDATASTRUCT cds;
 

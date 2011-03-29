@@ -44,7 +44,7 @@ CMeasurePhysicalMemory::~CMeasurePhysicalMemory()
 /*
 ** Update
 **
-** Updates the current physical memory value. 
+** Updates the current physical memory value.
 **
 */
 bool CMeasurePhysicalMemory::Update()

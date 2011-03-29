@@ -69,7 +69,7 @@ void CMeterBitmap::Initialize()
 	CMeter::Initialize();
 
 	// Load the bitmaps if defined
-	if(!m_ImageName.empty())
+	if (!m_ImageName.empty())
 	{
 		m_Image.LoadImage(m_ImageName, m_NeedsReload);
 
@@ -80,7 +80,7 @@ void CMeterBitmap::Initialize()
 			m_W = bitmap->GetWidth();
 			m_H = bitmap->GetHeight();
 
-			if(m_H > m_W)
+			if (m_H > m_W)
 			{
 				m_H = m_H / m_FrameCount;
 			}
@@ -195,15 +195,15 @@ void CMeterBitmap::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_TransitionFrameCount = parser.ReadInt(section, L"BitmapTransitionFrames", 0);
 
 	const std::wstring& align = parser.ReadString(section, L"BitmapAlign", L"LEFT");
-	if(_wcsicmp(align.c_str(), L"LEFT") == 0)
+	if (_wcsicmp(align.c_str(), L"LEFT") == 0)
 	{
 		m_Align = ALIGN_LEFT;
 	}
-	else if(_wcsicmp(align.c_str(), L"RIGHT") == 0)
+	else if (_wcsicmp(align.c_str(), L"RIGHT") == 0)
 	{
 		m_Align = ALIGN_RIGHT;
 	}
-	else if(_wcsicmp(align.c_str(), L"CENTER") == 0)
+	else if (_wcsicmp(align.c_str(), L"CENTER") == 0)
 	{
 		m_Align = ALIGN_CENTER;
 	}
@@ -290,11 +290,11 @@ bool CMeterBitmap::HasActiveTransition()
 */
 bool CMeterBitmap::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(graphics)) return false;
 
 	int newY, newX;
 
-	if(m_FrameCount == 0 || !m_Image.IsLoaded()) return false;	// Unable to continue
+	if (m_FrameCount == 0 || !m_Image.IsLoaded()) return false;	// Unable to continue
 
 	Bitmap* bitmap = m_Image.GetImage();
 
@@ -383,7 +383,7 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 
 //			LogWithArgs(LOG_DEBUG, L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
-			if(bitmap->GetHeight() > bitmap->GetWidth())
+			if (bitmap->GetHeight() > bitmap->GetWidth())
 			{
 				newX = 0;
 				newY = m_H * frame;
@@ -449,7 +449,7 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 
 //		LogWithArgs(LOG_DEBUG, L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
-		if(bitmap->GetHeight() > bitmap->GetWidth())
+		if (bitmap->GetHeight() > bitmap->GetWidth())
 		{
 			newX = 0;
 			newY = frame * m_H;

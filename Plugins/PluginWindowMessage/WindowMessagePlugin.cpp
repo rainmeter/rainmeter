@@ -53,7 +53,7 @@ static std::map<UINT, windowData> g_Values;
 
 /*
   This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured. 
+  The function must return the maximum value that can be measured.
   The return value can also be 0, which means that Rainmeter will
   track the maximum value automatically. The parameters for this
   function are:
@@ -107,7 +107,7 @@ This function is called when new value should be measured.
 The function returns the new value.
 */
 double Update2(UINT id)
-{	
+{
 	std::map<UINT, windowData>::iterator i = g_Values.find(id);
 	if (i != g_Values.end())
 	{
@@ -134,7 +134,7 @@ double Update2(UINT id)
 	return 0;
 }
 
-LPCTSTR GetString(UINT id, UINT flags) 
+LPCTSTR GetString(UINT id, UINT flags)
 {
 	static WCHAR buffer[256];
 

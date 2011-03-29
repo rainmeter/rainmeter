@@ -13,7 +13,7 @@ CMeasureScript::CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name) : C
 	m_pLuaScript(),
 	m_bUpdateDefined(false),
 	m_bGetValueDefined(false),
-	m_bGetStringValueDefined(false),	
+	m_bGetStringValueDefined(false),
 	m_bInitializeDefined(false)
 {
 	LuaManager::Init();
@@ -84,7 +84,7 @@ void CMeasureScript::SetValue(double d)
 **
 ** This method returns the value as text string. The actual value is
 ** get with GetValue() so we don't have to worry about m_Invert.
-** 
+**
 ** autoScale  If true, scale the value automatically to some sensible range.
 ** scale      The scale to use if autoScale is false.
 ** decimals   Number of decimals used in the value.
@@ -95,7 +95,7 @@ const WCHAR* CMeasureScript::GetStringValue(AUTOSCALE autoScale, double scale, i
 	if (m_bGetStringValueDefined && m_pLuaScript && m_pLuaScript->IsInitialized())
 	{
 		m_strValue = m_pLuaScript->RunFunctionString(g_strGetStringValueFunction);
-		
+
 		return CheckSubstitute(m_strValue.c_str());
 	}
 
@@ -106,7 +106,7 @@ static void stackDump(lua_State *L)
 {
 	int i = lua_gettop(L);
 	LuaManager::LuaLog(LOG_DEBUG, " ----------------  Stack Dump ----------------" );
-	while(i)
+	while (i)
 	{
 		int t = lua_type(L, i);
 		switch (t)
@@ -194,7 +194,7 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 				{
 					lua_pushnil(L);
 
-					while(lua_next(L, -2)) 
+					while (lua_next(L, -2))
 					{
 						lua_pop(L, 1);
 

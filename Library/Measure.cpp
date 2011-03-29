@@ -116,7 +116,7 @@ void CMeasure::Initialize()
 **
 ** Reads the common configs for all Measures. The inherited classes
 ** must call the base implementation if they overwrite this method.
-** 
+**
 */
 void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
@@ -185,7 +185,7 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 /*
 ** CheckSubstitute
-** 
+**
 ** Substitutes part of the text
 */
 const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
@@ -208,7 +208,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 				size_t start = 0;
 				size_t pos = std::wstring::npos;
 
-				do 
+				do
 				{
 					pos = str.find(m_Substitute[i], start);
 					if (pos != std::wstring::npos)
@@ -221,7 +221,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 		}
 
 		return str.c_str();
-	}	
+	}
 	else
 	{
 		return buffer;
@@ -230,19 +230,19 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 
 /*
 ** ParseSubstitute
-** 
+**
 ** Reads the buffer for "Name":"Value"-pairs separated with comma and
 ** fills the map with the parsed data.
 */
 bool CMeasure::ParseSubstitute(std::wstring buffer)
 {
-	if (buffer.empty()) return true;	
+	if (buffer.empty()) return true;
 
 	while (!buffer.empty())
 	{
 		std::wstring word1 = ExtractWord(buffer);
 		std::wstring sep = ExtractWord(buffer);
-		if (sep != L":") return false; 
+		if (sep != L":") return false;
 		std::wstring word2 = ExtractWord(buffer);
 
 		if (word1 != word2)
@@ -252,7 +252,7 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 		}
 
 		sep = ExtractWord(buffer);
-		if (!sep.empty() && sep != L",") return false; 
+		if (!sep.empty() && sep != L",") return false;
 	}
 
 	return true;
@@ -262,7 +262,7 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 ** ExtractWord
 **
 ** Returns the first word from the buffer. The word can be inside quotes.
-** If not, the separators are ' ', '\t', ',' and ':'. Whitespaces are removed 
+** If not, the separators are ' ', '\t', ',' and ':'. Whitespaces are removed
 ** and buffer _will_ be modified.
 */
 std::wstring CMeasure::ExtractWord(std::wstring& buffer)
@@ -270,7 +270,7 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 	std::wstring::size_type end, len;
 	std::wstring ret;
 
-	if (buffer.empty()) return ret;	
+	if (buffer.empty()) return ret;
 
 	len = buffer.size();
 
@@ -334,28 +334,28 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 ** PreUpdate
 **
 ** The base implementation of the update method. This includes the code
-** that is common for all measures. This is called every time the measure 
-** is updated. The inherited classes must call the base implementation if 
+** that is common for all measures. This is called every time the measure
+** is updated. The inherited classes must call the base implementation if
 ** they overwrite this method. If this method returns false, the update
 ** needs not to be done.
-** 
+**
 */
 bool CMeasure::PreUpdate()
 {
-	if (IsDisabled()) 
+	if (IsDisabled())
 	{
 		m_Value = 0.0;	// Disable measures return 0 as value
 		return false;
 	}
-	
-	// Only update the counter if the divider 
+
+	// Only update the counter if the divider
 	++m_UpdateCounter;
 	if (m_UpdateCounter < m_UpdateDivider) return false;
 	m_UpdateCounter = 0;
 
 	// If we're logging the maximum value of the measure, check if
 	// the new value is greater than the old one, and update if necessary.
-	if(m_LogMaxValue)
+	if (m_LogMaxValue)
 	{
 		if (m_MedianMaxValues.empty())
 		{
@@ -369,7 +369,7 @@ bool CMeasure::PreUpdate()
 		m_MedianPos %= MEDIAN_SIZE;
 
 		std::vector<double> medianArray;
-		
+
 		medianArray = m_MedianMaxValues;
 		std::sort(medianArray.begin(), medianArray.end());
 		m_MaxValue = max(m_MaxValue, medianArray[MEDIAN_SIZE / 2]);
@@ -382,11 +382,11 @@ bool CMeasure::PreUpdate()
 	if (m_MeterWindow)
 	{
 		// Check the IfEqualValue
-		if(!m_IfEqualAction.empty())
+		if (!m_IfEqualAction.empty())
 		{
-			if((int)m_Value == (int)m_IfEqualValue)
+			if ((int)m_Value == (int)m_IfEqualValue)
 			{
-				if(!m_IfEqualCommited)
+				if (!m_IfEqualCommited)
 				{
 					m_IfEqualCommited = true;  // To avoid crashing by !RainmeterUpdate due to infinite loop
 					Rainmeter->ExecuteCommand(m_IfEqualAction.c_str(), m_MeterWindow);
@@ -399,11 +399,11 @@ bool CMeasure::PreUpdate()
 		}
 
 		// Check the IfAboveValue
-		if(!m_IfAboveAction.empty())
+		if (!m_IfAboveAction.empty())
 		{
-			if(m_Value > m_IfAboveValue)
+			if (m_Value > m_IfAboveValue)
 			{
-				if(!m_IfAboveCommited)
+				if (!m_IfAboveCommited)
 				{
 					m_IfAboveCommited = true;  // To avoid crashing by !RainmeterUpdate due to infinite loop
 					Rainmeter->ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
@@ -416,11 +416,11 @@ bool CMeasure::PreUpdate()
 		}
 
 		// Check the IfBelowValue
-		if(!m_IfBelowAction.empty())
+		if (!m_IfBelowAction.empty())
 		{
-			if(m_Value < m_IfBelowValue)
+			if (m_Value < m_IfBelowValue)
 			{
-				if(!m_IfBelowCommited)
+				if (!m_IfBelowCommited)
 				{
 					m_IfBelowCommited = true;  // To avoid crashing by !RainmeterUpdate due to infinite loop
 					Rainmeter->ExecuteCommand(m_IfBelowAction.c_str(), m_MeterWindow);
@@ -441,7 +441,7 @@ bool CMeasure::PreUpdate()
 **
 ** Does post measuring things to the value. All measures must call this
 ** after they have set the m_Value.
-** 
+**
 */
 bool CMeasure::PostUpdate()
 {
@@ -474,8 +474,8 @@ bool CMeasure::PostUpdate()
 /*
 ** GetValue
 **
-** Returns the value of the measure. 
-** 
+** Returns the value of the measure.
+**
 */
 double CMeasure::GetValue()
 {
@@ -491,8 +491,8 @@ double CMeasure::GetValue()
 /*
 ** GetRelativeValue
 **
-** Returns the relative value of the measure (0.0 - 1.0). 
-** 
+** Returns the relative value of the measure (0.0 - 1.0).
+**
 */
 double CMeasure::GetRelativeValue()
 {
@@ -516,8 +516,8 @@ double CMeasure::GetRelativeValue()
 /*
 ** GetValueRange
 **
-** Returns the value range. 
-** 
+** Returns the value range.
+**
 */
 double CMeasure::GetValueRange()
 {
@@ -529,7 +529,7 @@ double CMeasure::GetValueRange()
 **
 ** This method returns the value as text string. The actual value is
 ** get with GetValue() so we don't have to worry about m_Invert.
-** 
+**
 ** autoScale  If true, scale the value automatically to some sensible range.
 ** scale      The scale to use if autoScale is false.
 ** decimals   Number of decimals used in the value. If -1, get rid of ".00000" for dynamic variables.
@@ -540,29 +540,29 @@ const WCHAR* CMeasure::GetStringValue(AUTOSCALE autoScale, double scale, int dec
 	static WCHAR buffer[MAX_LINE_LENGTH];
 	WCHAR format[32];
 
-	if(percentual)
+	if (percentual)
 	{
 		double val = 100.0 * GetRelativeValue();
 
 		if (decimals == 0)
 		{
 			_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)val);
-		} 
+		}
 		else
 		{
 			_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
 			_snwprintf_s(buffer, _TRUNCATE, format, val);
 		}
-	} 
-	else if(autoScale != AUTOSCALE_OFF)
+	}
+	else if (autoScale != AUTOSCALE_OFF)
 	{
 		GetScaledValue(autoScale, decimals, GetValue(), buffer, _countof(buffer));
 	}
-	else 
+	else
 	{
 		double val = GetValue() / scale;
 
-		if(decimals == 0)
+		if (decimals == 0)
 		{
 			val += (val >= 0) ? 0.5 : -0.5;
 			_snwprintf_s(buffer, _TRUNCATE, L"%lli", (LONGLONG)val);
@@ -592,7 +592,7 @@ void CMeasure::GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue
 	WCHAR format[32];
 	double value = 0;
 
-	if(decimals == 0)
+	if (decimals == 0)
 	{
 		wcsncpy_s(format, L"%.0f", _TRUNCATE);
 	}
@@ -603,22 +603,22 @@ void CMeasure::GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue
 
 	int index = (autoScale == AUTOSCALE_1000 || autoScale == AUTOSCALE_1000K) ? AUTOSCALE_INDEX_1000 : AUTOSCALE_INDEX_1024;
 
-	if(theValue > (g_TblScale[index][0] * 0.99))
+	if (theValue > (g_TblScale[index][0] * 0.99))
 	{
 		wcsncat_s(format, L" T", _TRUNCATE);
 		value = theValue / g_TblScale[index][0];
 	}
-	else if(theValue > (g_TblScale[index][1] * 0.99))
+	else if (theValue > (g_TblScale[index][1] * 0.99))
 	{
 		wcsncat_s(format, L" G", _TRUNCATE);
 		value = theValue / g_TblScale[index][1];
 	}
-	else if(theValue > (g_TblScale[index][2] * 0.99))
+	else if (theValue > (g_TblScale[index][2] * 0.99))
 	{
 		wcsncat_s(format, L" M", _TRUNCATE);
 		value = theValue / g_TblScale[index][2];
 	}
-	else if(autoScale == AUTOSCALE_1024K || autoScale == AUTOSCALE_1000K || theValue > (g_TblScale[index][3] * 0.99))
+	else if (autoScale == AUTOSCALE_1024K || autoScale == AUTOSCALE_1000K || theValue > (g_TblScale[index][3] * 0.99))
 	{
 		wcsncat_s(format, L" k", _TRUNCATE);
 		value = theValue / g_TblScale[index][3];
@@ -651,69 +651,69 @@ const WCHAR* CMeasure::GetStats()
 **
 ** Creates the given measure. This is the factory method for the measures.
 ** If new measures are implemented this method needs to be updated.
-** 
+**
 */
 CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, const WCHAR* name)
 {
 	// Comparison is caseinsensitive
 
-	if(*measure == L'\0')
+	if (*measure == L'\0')
 	{
 		return NULL;
 	}
-	else if(_wcsicmp(L"CPU", measure) == 0)
+	else if (_wcsicmp(L"CPU", measure) == 0)
 	{
 		return new CMeasureCPU(meterWindow, name);
-	} 
-	else if(_wcsicmp(L"Memory", measure) == 0)
+	}
+	else if (_wcsicmp(L"Memory", measure) == 0)
 	{
 		return new CMeasureMemory(meterWindow, name);
 	}
-	else if(_wcsicmp(L"NetIn", measure) == 0)
+	else if (_wcsicmp(L"NetIn", measure) == 0)
 	{
 		return new CMeasureNetIn(meterWindow, name);
 	}
-	else if(_wcsicmp(L"NetOut", measure) == 0)
+	else if (_wcsicmp(L"NetOut", measure) == 0)
 	{
 		return new CMeasureNetOut(meterWindow, name);
 	}
-	else if(_wcsicmp(L"NetTotal", measure) == 0)
+	else if (_wcsicmp(L"NetTotal", measure) == 0)
 	{
 		return new CMeasureNetTotal(meterWindow, name);
 	}
-	else if(_wcsicmp(L"PhysicalMemory", measure) == 0)
+	else if (_wcsicmp(L"PhysicalMemory", measure) == 0)
 	{
 		return new CMeasurePhysicalMemory(meterWindow, name);
 	}
-	else if(_wcsicmp(L"SwapMemory", measure) == 0)
+	else if (_wcsicmp(L"SwapMemory", measure) == 0)
 	{
 		return new CMeasureVirtualMemory(meterWindow, name);
 	}
-	else if(_wcsicmp(L"FreeDiskSpace", measure) == 0)
+	else if (_wcsicmp(L"FreeDiskSpace", measure) == 0)
 	{
 		return new CMeasureDiskSpace(meterWindow, name);
 	}
-	else if(_wcsicmp(L"Uptime", measure) == 0)
+	else if (_wcsicmp(L"Uptime", measure) == 0)
 	{
 		return new CMeasureUptime(meterWindow, name);
 	}
-	else if(_wcsicmp(L"Time", measure) == 0)
+	else if (_wcsicmp(L"Time", measure) == 0)
 	{
 		return new CMeasureTime(meterWindow, name);
 	}
-	else if(_wcsicmp(L"Plugin", measure) == 0)
+	else if (_wcsicmp(L"Plugin", measure) == 0)
 	{
 		return new CMeasurePlugin(meterWindow, name);
 	}
-	else if(_wcsicmp(L"Registry", measure) == 0)
+	else if (_wcsicmp(L"Registry", measure) == 0)
 	{
 		return new CMeasureRegistry(meterWindow, name);
 	}
-	else if(_wcsicmp(L"Calc", measure) == 0)
+	else if (_wcsicmp(L"Calc", measure) == 0)
 	{
 		return new CMeasureCalc(meterWindow, name);
 	}
-	else if(_wcsicmp(L"script", measure) == 0)
+	else if (_wcsicmp(L"script", measure) == 0)
 	{
 		return new CMeasureScript(meterWindow, name);
 	}

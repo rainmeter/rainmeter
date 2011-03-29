@@ -73,7 +73,7 @@ void CMeterRoundLine::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
 	m_LineLength = parser.ReadFloat(section, L"LineLength", 20.0);
-	m_LineStart = parser.ReadFloat(section, L"LineStart", -1.0);
+	m_LineStart = parser.ReadFormula(section, L"LineStart", -1.0);
 	m_StartAngle = parser.ReadFloat(section, L"StartAngle", 0.0);
 	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 6.2832);
 	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", 0);		// Typo
@@ -123,7 +123,7 @@ bool CMeterRoundLine::Update()
 */
 bool CMeterRoundLine::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(graphics)) return false;
 
 	// Calculate the center of for the line
 	int x = GetX();
@@ -154,14 +154,14 @@ bool CMeterRoundLine::Draw(Graphics& graphics)
 			REAL s_sin = (REAL)sin(m_StartAngle);
 			REAL e_cos = (REAL)cos(angle);
 			REAL e_sin = (REAL)sin(angle);
-			
+
 			//Create a path to surround the arc
 			GraphicsPath path;
 			path.AddArc((REAL)(cx - lineStart), (REAL)(cy - lineStart), (REAL)(lineStart * 2.0), (REAL)(lineStart * 2.0), startAngle, sweepAngle);
 			path.AddLine((REAL)lineStart * s_cos + cx, (REAL)lineStart * s_sin + cy, (REAL)lineLength * s_cos + cx, (REAL)lineLength * s_sin + cy);
 			path.AddArc((REAL)(cx - lineLength), (REAL)(cy - lineLength), (REAL)(lineLength * 2.0), (REAL)(lineLength * 2.0), startAngle, sweepAngle);
 			path.AddLine((REAL)lineLength * e_cos + cx, (REAL)lineLength * e_sin + cy, (REAL)lineStart * e_cos + cx, (REAL)lineStart * e_sin + cy);
-	
+
 			graphics.FillPath(&solidBrush, &path);
 		}
 		else

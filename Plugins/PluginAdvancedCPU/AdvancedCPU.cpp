@@ -52,9 +52,9 @@ static std::map<UINT, CPUMeasure*> g_CPUMeasures;
 void SplitName(WCHAR* names, std::vector< std::wstring >& splittedNames)
 {
 	WCHAR* token;
-	
+
 	token = wcstok(names, L";");
-	while(token != NULL)
+	while (token != NULL)
 	{
 		splittedNames.push_back(token);
 		token = wcstok(NULL, L";");
@@ -63,7 +63,7 @@ void SplitName(WCHAR* names, std::vector< std::wstring >& splittedNames)
 
 /*
   This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured. 
+  The function must return the maximum value that can be measured.
   The return value can also be 0, which means that Rainmeter will
   track the maximum value automatically. The parameters for this
   function are:
@@ -110,7 +110,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 
 bool CheckProcess(CPUMeasure* measure, const std::wstring& name)
 {
-	if (measure->includes.empty()) 
+	if (measure->includes.empty())
 	{
 		for (size_t i = 0; i < measure->excludes.size(); i++)
 		{
@@ -141,7 +141,7 @@ bool CheckProcess(CPUMeasure* measure, const std::wstring& name)
 double Update2(UINT id)
 {
 	static DWORD oldTime = 0;
-	
+
 	// Only update twice per second
 	DWORD time = GetTickCount();
 	if (oldTime == 0 || time - oldTime > 500)
@@ -153,25 +153,25 @@ double Update2(UINT id)
 	LONGLONG newValue = 0;
 
 	std::map<UINT, CPUMeasure*>::iterator i = g_CPUMeasures.find(id);
-	if(i != g_CPUMeasures.end())
+	if (i != g_CPUMeasures.end())
 	{
 		CPUMeasure* measure = (*i).second;
 
-		if(measure)
+		if (measure)
 		{
-			for (size_t i = 0; i < g_Processes.size(); i++) 
+			for (size_t i = 0; i < g_Processes.size(); i++)
 			{
 				// Check process include/exclude
-				if (CheckProcess(measure, g_Processes[i].name)) 
+				if (CheckProcess(measure, g_Processes[i].name))
 				{
-					if (g_Processes[i].oldValue != 0) 
+					if (g_Processes[i].oldValue != 0)
 					{
-						if (measure->topProcess == 0) 
+						if (measure->topProcess == 0)
 						{
 							// Add all values together
 							newValue += g_Processes[i].newValue - g_Processes[i].oldValue;
 						}
-						else 
+						else
 						{
 							// Find the top process
 							if (newValue < g_Processes[i].newValue - g_Processes[i].oldValue)
@@ -197,14 +197,14 @@ double Update2(UINT id)
 //
 //					// Then substract the excluded processes
 //					std::vector< std::wstring >::iterator j = measure->excludes.begin();
-//					for( ; j != measure->excludes.end(); j++)
+//					for ( ; j != measure->excludes.end(); j++)
 //					{
 //						longvalue = GetPerfData(L"Process", (*j).c_str(), L"% Processor Time");
 //						newValue += longvalue;		// Adding means actually substraction
 //					}
 //
 //					// Compare with the old value
-//					if(measure->oldValue != 0) 
+//					if (measure->oldValue != 0)
 //					{
 //						int val = 10000000 - (UINT)(newValue - measure->oldValue);
 //						if (val < 0) val = 0;
@@ -216,14 +216,14 @@ double Update2(UINT id)
 //				{
 //					// Add the included processes
 //					std::vector< std::wstring >::iterator j = measure->includes.begin();
-//					for( ; j != measure->includes.end(); j++)
+//					for ( ; j != measure->includes.end(); j++)
 //					{
 //						longvalue = GetPerfData(L"Process", (*j).c_str(), L"% Processor Time");
 //						newValue += longvalue;
 //					}
 //
 //					// Compare with the old value
-//					if(measure->oldValue != 0) 
+//					if (measure->oldValue != 0)
 //					{
 //						value = (UINT)(newValue - measure->oldValue);
 //					}
@@ -241,14 +241,14 @@ double Update2(UINT id)
   This function is called when the value should be
   returned as a string.
 */
-LPCTSTR GetString(UINT id, UINT flags) 
+LPCTSTR GetString(UINT id, UINT flags)
 {
 	std::map<UINT, CPUMeasure*>::iterator i = g_CPUMeasures.find(id);
-	if(i != g_CPUMeasures.end())
+	if (i != g_CPUMeasures.end())
 	{
 		CPUMeasure* measure = (*i).second;
 
-		if (measure->topProcess == 2) 
+		if (measure->topProcess == 2)
 		{
 			return measure->topProcessName.c_str();
 		}
@@ -266,7 +266,7 @@ void Finalize(HMODULE instance, UINT id)
 {
 	// delete the measure
 	std::map<UINT, CPUMeasure*>::iterator i = g_CPUMeasures.find(id);
-	if(i != g_CPUMeasures.end())
+	if (i != g_CPUMeasures.end())
 	{
 		delete (*i).second;
 		g_CPUMeasures.erase(i);
@@ -291,17 +291,17 @@ void UpdateProcesses()
 	CPerfSnapshot snapshot(&g_CounterTitles);
 	CPerfObjectList objList(&snapshot, &g_CounterTitles);
 
-	if(snapshot.TakeSnapshot(L"Process"))
+	if (snapshot.TakeSnapshot(L"Process"))
 	{
 		pPerfObj = objList.GetPerfObject(L"Process");
 
-		if(pPerfObj)
+		if (pPerfObj)
 		{
-			for(pObjInst = pPerfObj->GetFirstObjectInstance();
+			for (pObjInst = pPerfObj->GetFirstObjectInstance();
 				pObjInst != NULL;
 				pObjInst = pPerfObj->GetNextObjectInstance())
 			{
-				if(pObjInst->GetObjectInstanceName(name, 256))
+				if (pObjInst->GetObjectInstanceName(name, 256))
 				{
 					if (_wcsicmp(name, L"_Total") == 0)
 					{
@@ -309,20 +309,20 @@ void UpdateProcesses()
 					}
 
 					pPerfCntr = pObjInst->GetCounterByName(L"% Processor Time");
-					if(pPerfCntr != NULL)
+					if (pPerfCntr != NULL)
 					{
 						pPerfCntr->GetData(data, 256, NULL);
-						
-						if(pPerfCntr->GetSize() == 8)
+
+						if (pPerfCntr->GetSize() == 8)
 						{
 							ProcessValues values;
 							values.name = name;
 							values.oldValue = 0;
 
 							// Check if we can find the old value
-							for (size_t i = 0; i < g_Processes.size(); i++) 
+							for (size_t i = 0; i < g_Processes.size(); i++)
 							{
-								if (!g_Processes[i].found && g_Processes[i].name == name) 
+								if (!g_Processes[i].found && g_Processes[i].name == name)
 								{
 									values.oldValue = g_Processes[i].newValue;
 									g_Processes[i].found = true;

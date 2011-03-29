@@ -49,7 +49,7 @@ int CMeterWindow::c_InstanceCount = 0;
 
 extern CRainmeter* Rainmeter;
 
-/* 
+/*
 ** CMeterWindow
 **
 ** Constructor
@@ -129,7 +129,7 @@ CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config,
 	++c_InstanceCount;
 }
 
-/* 
+/*
 ** ~CMeterWindow
 **
 ** Destructor
@@ -147,25 +147,25 @@ CMeterWindow::~CMeterWindow()
 
 	// Destroy the meters
 	std::list<CMeter*>::iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
+	for ( ; j != m_Meters.end(); ++j)
 	{
 		delete (*j);
 	}
 
 	// Destroy the measures
 	std::list<CMeasure*>::iterator i = m_Measures.begin();
-	for( ; i != m_Measures.end(); ++i)
+	for ( ; i != m_Measures.end(); ++i)
 	{
 		delete (*i);
 	}
 
-	if(m_Background) delete m_Background;
-	if(m_DoubleBuffer) delete m_DoubleBuffer;
-	if(m_DIBSectionBuffer) DeleteObject(m_DIBSectionBuffer);
+	if (m_Background) delete m_Background;
+	if (m_DoubleBuffer) delete m_DoubleBuffer;
+	if (m_DIBSectionBuffer) DeleteObject(m_DIBSectionBuffer);
 
-	if(m_Window) DestroyWindow(m_Window);
+	if (m_Window) DestroyWindow(m_Window);
 
-	if(m_FontCollection)
+	if (m_FontCollection)
 	{
 		CMeterString::FreeFontCache(m_FontCollection);
 		delete m_FontCollection;
@@ -186,7 +186,7 @@ CMeterWindow::~CMeterWindow()
 	}
 }
 
-/* 
+/*
 ** Initialize
 **
 ** Initializes the window, creates the class and the window.
@@ -204,8 +204,8 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 	wc.hInstance = m_Rainmeter->GetInstance();
 	wc.hCursor = NULL;  // The cursor should be controlled by using SetCursor() when needed.
 	wc.lpszClassName = METERWINDOW_CLASS_NAME;
-	
-	if(!RegisterClassEx(&wc))
+
+	if (!RegisterClassEx(&wc))
 	{
 		DWORD err = GetLastError();
 
@@ -216,8 +216,8 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 	}
 
 	m_Window = CreateWindowEx(WS_EX_TOOLWINDOW,
-							METERWINDOW_CLASS_NAME, 
-							NULL, 
+							METERWINDOW_CLASS_NAME,
+							NULL,
 							WS_POPUP,
 							CW_USEDEFAULT,
 							CW_USEDEFAULT,
@@ -228,8 +228,8 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 							m_Rainmeter->GetInstance(),
 							this);
 
-	if(m_Window == NULL) 
-	{ 
+	if (m_Window == NULL)
+	{
 		throw CError(CError::ERROR_CREATE_WINDOW, __LINE__, __FILE__);
 	}
 
@@ -246,9 +246,9 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 	CreateDoubleBuffer(1, 1);
 
 	Refresh(true, true);
-	if (!m_WindowStartHidden) 
+	if (!m_WindowStartHidden)
 	{
-		if (m_WindowHide == HIDEMODE_FADEOUT) 
+		if (m_WindowHide == HIDEMODE_FADEOUT)
 		{
 			FadeWindow(0, 255);
 		}
@@ -304,13 +304,13 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	std::wstring notice = L"Refreshing skin \"" + m_SkinName;
 	notice += L"\\";
-	notice += m_SkinIniFile; 
-	notice += L"\""; 
+	notice += m_SkinIniFile;
+	notice += L"\"";
 	Log(LOG_NOTICE, notice.c_str());
-	
+
 	m_Refreshing = true;
 
-	if(!init)
+	if (!init)
 	{
 		// First destroy everything
 		// WriteConfig(); //Not clear why this is needed and it messes up resolution changes
@@ -325,7 +325,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 		SetMouseLeaveEvent(true);
 
 		std::list<CMeasure*>::iterator i = m_Measures.begin();
-		for( ; i != m_Measures.end(); ++i)
+		for ( ; i != m_Measures.end(); ++i)
 		{
 			delete (*i);
 		}
@@ -333,13 +333,13 @@ void CMeterWindow::Refresh(bool init, bool all)
 		m_ScriptMeasures.clear();
 
 		std::list<CMeter*>::iterator j = m_Meters.begin();
-		for( ; j != m_Meters.end(); ++j)
+		for ( ; j != m_Meters.end(); ++j)
 		{
 			delete (*j);
 		}
 		m_Meters.clear();
 
-		if(m_Background) delete m_Background;
+		if (m_Background) delete m_Background;
 		m_Background = NULL;
 
 		m_BackgroundSize.cx = m_BackgroundSize.cy = 0;
@@ -357,7 +357,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 	ZPOSITION oldZPos = m_WindowZPosition;
 
 	//TODO: Should these be moved to a Reload command instead of hitting the disk on every refresh
-	ReadConfig();	// Read the general settings 
+	ReadConfig();	// Read the general settings
 	if (!ReadSkin())
 	{
 		m_Rainmeter->DeactivateConfig(this, -1);
@@ -381,7 +381,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 	Update(false);
 	CreateRegion(false);
 
-	if (m_KeepOnScreen) 
+	if (m_KeepOnScreen)
 	{
 		MapCoordsToScreen(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
 	}
@@ -393,13 +393,13 @@ void CMeterWindow::Refresh(bool init, bool all)
 	// Start the timers
 	if (m_WindowUpdate >= 0)
 	{
-		if(0 == SetTimer(m_Window, METERTIMER, m_WindowUpdate, NULL))
+		if (0 == SetTimer(m_Window, METERTIMER, m_WindowUpdate, NULL))
 		{
 			throw CError(L"Unable to create a timer!", __LINE__, __FILE__);
 		}
 	}
 
-	if(0 == SetTimer(m_Window, MOUSETIMER, 500, NULL))	// Mouse position is checked twice per sec
+	if (0 == SetTimer(m_Window, MOUSETIMER, 500, NULL))	// Mouse position is checked twice per sec
 	{
 		throw CError(L"Unable to create a timer!", __LINE__, __FILE__);
 	}
@@ -474,9 +474,9 @@ void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 	MONITORINFO mi;
 
 	POINT pt = {x, y};
-	for (int i = 0; i < 5; ++i) 
+	for (int i = 0; i < 5; ++i)
 	{
-		switch(i) 
+		switch(i)
 		{
 		case 0:
 			pt.x = x + w / 2;
@@ -506,7 +506,7 @@ void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 
 		hMonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTONULL);
 
-		if(hMonitor != NULL)
+		if (hMonitor != NULL)
 		{
 			mi.cbSize = sizeof(mi);
 			GetMonitorInfo(hMonitor, &mi);
@@ -556,7 +556,7 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 {
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
 
-	if(!m_ChildWindow)
+	if (!m_ChildWindow)
 	{
 		HWND winPos = HWND_NOTOPMOST;
 		m_WindowZPosition = zPos;
@@ -649,7 +649,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 
 	if (!m_Window) return;
 
-	switch(bang) 
+	switch(bang)
 	{
 	case BANG_REFRESH:
 		// Refresh needs to be delayed since it crashes if done during Update()
@@ -835,7 +835,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 #else
 				HWND hWnd = (HWND)_wtoi(pos);
 #endif
-				if (hWnd) 
+				if (hWnd)
 				{
 					// Disable native transparency
 					m_NativeTransparency = false;
@@ -877,14 +877,14 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			std::wstring args = arg;
 			std::wstring measure;
 			std::wstring::size_type pos3;
-			do 
+			do
 			{
 				pos3 = args.find(L'\"');
 				if (pos3 != std::wstring::npos)
 				{
 					args.erase(pos3, 1);
 				}
-				
+
 			} while(pos3 != std::wstring::npos);
 
 			pos3 = args.find(L' ');
@@ -925,9 +925,9 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			std::wstring strValue(pos + 1);
 			double value;
 			int result = m_Parser.ReadFormula(strValue, &value);
-			
+
 			// Formula read fine
-			if(result != -1)
+			if (result != -1)
 			{
 				WCHAR buffer[256];
 				_snwprintf_s(buffer, _TRUNCATE, L"%f", value);
@@ -972,7 +972,7 @@ void CMeterWindow::ShowMeter(const WCHAR* name, bool group)
 	if (name == NULL || *name == 0) return;
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
+	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (CompareName((*j), name, group))
 		{
@@ -996,7 +996,7 @@ void CMeterWindow::HideMeter(const WCHAR* name, bool group)
 	if (name == NULL || *name == 0) return;
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
+	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (CompareName((*j), name, group))
 		{
@@ -1020,7 +1020,7 @@ void CMeterWindow::ToggleMeter(const WCHAR* name, bool group)
 	if (name == NULL || *name == 0) return;
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
+	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (CompareName((*j), name, group))
 		{
@@ -1051,7 +1051,7 @@ void CMeterWindow::MoveMeter(int x, int y, const WCHAR* name)
 	if (name == NULL || *name == 0) return;
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
+	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (CompareName((*j), name, false))
 		{
@@ -1078,7 +1078,7 @@ void CMeterWindow::UpdateMeter(const WCHAR* name, bool group)
 	bool bActiveTransition = false;
 	bool bContinue = true;
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
+	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (bContinue && CompareName((*j), name, group))
 		{
@@ -1118,7 +1118,7 @@ void CMeterWindow::EnableMeasure(const WCHAR* name, bool group)
 	if (name == NULL || *name == 0) return;
 
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
-	for( ; i != m_Measures.end(); ++i)
+	for ( ; i != m_Measures.end(); ++i)
 	{
 		if (CompareName((*i), name, group))
 		{
@@ -1141,7 +1141,7 @@ void CMeterWindow::DisableMeasure(const WCHAR* name, bool group)
 	if (name == NULL || *name == 0) return;
 
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
-	for( ; i != m_Measures.end(); ++i)
+	for ( ; i != m_Measures.end(); ++i)
 	{
 		if (CompareName((*i), name, group))
 		{
@@ -1164,7 +1164,7 @@ void CMeterWindow::ToggleMeasure(const WCHAR* name, bool group)
 	if (name == NULL || *name == 0) return;
 
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
-	for( ; i != m_Measures.end(); ++i)
+	for ( ; i != m_Measures.end(); ++i)
 	{
 		if (CompareName((*i), name, group))
 		{
@@ -1201,7 +1201,7 @@ void CMeterWindow::UpdateMeasure(const WCHAR* name, bool group)
 
 	bool bNetStats = m_HasNetMeasures;
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
-	for( ; i != m_Measures.end(); ++i)
+	for ( ; i != m_Measures.end(); ++i)
 	{
 		if (CompareName((*i), name, group))
 		{
@@ -1316,7 +1316,7 @@ void CMeterWindow::WindowToScreen()
 		m_WindowXFromRight = true;
 	}
 	index = m_WindowX.find_last_of(L'@');
-	if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index)) 
+	if (index != std::wstring::npos && (index2 == std::wstring::npos || index2 < index))
 	{
 		index = index + 1;
 		index2 = m_WindowX.find_first_not_of(L"0123456789", index);
@@ -1420,7 +1420,7 @@ void CMeterWindow::WindowToScreen()
 	{
 		pixel = screeny + pixel;
 	}
-    m_ScreenY = pixel - m_AnchorScreenY;
+	m_ScreenY = pixel - m_AnchorScreenY;
 }
 
 /* ScreenToWindow
@@ -1611,7 +1611,7 @@ void CMeterWindow::ReadConfig()
 			}
 			delete [] tmpSz;
 		}
-		
+
 		// Check if the window position should be read as a formula
 		if (!m_WindowX.empty() && m_WindowX[0] == L'(' && m_WindowX[m_WindowX.size() - 1] == L')')
 		{
@@ -1689,10 +1689,10 @@ void CMeterWindow::WriteConfig()
 	const std::wstring& iniFile = m_Rainmeter->GetIniFile();
 	const WCHAR* section = m_SkinName.c_str();
 
-	if(!iniFile.empty())
+	if (!iniFile.empty())
 	{
 		// If position needs to be save, do so.
-		if(m_SavePosition)
+		if (m_SavePosition)
 		{
 			ScreenToWindow();
 			WritePrivateProfileString(section, L"WindowX", m_WindowX.c_str(), iniFile.c_str());
@@ -1704,7 +1704,7 @@ void CMeterWindow::WriteConfig()
 
 		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_FadeDuration);
 		WritePrivateProfileString(section, L"FadeDuration", buffer, iniFile.c_str());
-		
+
 		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_ClickThrough);
 		WritePrivateProfileString(section, L"ClickThrough", buffer, iniFile.c_str());
 		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowDraggable);
@@ -1763,7 +1763,7 @@ bool CMeterWindow::ReadSkin()
 	}
 	InitializeGroup(m_ConfigGroup);
 
-	// Check the version 
+	// Check the version
 	int appVersion = m_Parser.ReadInt(L"Rainmeter", L"AppVersion", 0);
 	if (appVersion > RAINMETER_VERSION)
 	{
@@ -1835,7 +1835,7 @@ bool CMeterWindow::ReadSkin()
 	// Checking for localfonts
 	std::wstring localFont = m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"");
 	// If there is a local font we want to load it
-	if(!localFont.empty())
+	if (!localFont.empty())
 	{
 		m_FontCollection = new PrivateFontCollection();
 
@@ -1848,23 +1848,23 @@ bool CMeterWindow::ReadSkin()
 			std::wstring szFontFile = m_Rainmeter->GetPath() + L"Fonts\\";
 			szFontFile += localFont;
 			Status nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
-			
+
 			// It wasn't found in the fonts folder, check the local folder
-			if(nResults != Ok)
+			if (nResults != Ok)
 			{
-				szFontFile = m_SkinPath; // Get the local path	
+				szFontFile = m_SkinPath; // Get the local path
 				szFontFile += m_SkinName;
 				szFontFile += L"\\";
 				szFontFile += localFont;
 				nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
-				
+
 				// The font wasn't found, check full path.
-				if(nResults != Ok)
+				if (nResults != Ok)
 				{
 					szFontFile = localFont;
 					nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 
-					if(nResults != Ok)
+					if (nResults != Ok)
 					{
 						std::wstring error = L"Unable to load font file: " + localFont;
 						Log(LOG_ERROR, error.c_str());
@@ -1893,7 +1893,7 @@ bool CMeterWindow::ReadSkin()
 	{
 		const std::wstring& strSection = arraySections[i];
 
-		if(_wcsicmp(L"Rainmeter", strSection.c_str()) != 0 && 
+		if (_wcsicmp(L"Rainmeter", strSection.c_str()) != 0 &&
 			_wcsicmp(L"Variables", strSection.c_str()) != 0 &&
 			_wcsicmp(L"Metadata", strSection.c_str()) != 0)
 		{
@@ -1921,7 +1921,7 @@ bool CMeterWindow::ReadSkin()
 						}
 
 						CMeasureScript* measureScript = dynamic_cast<CMeasureScript*>(measure);
-						if(measureScript)
+						if (measureScript)
 						{
 							m_ScriptMeasures.push_back(measureScript);
 						}
@@ -1992,7 +1992,7 @@ bool CMeterWindow::ReadSkin()
 	{
 		// Bind the meters to the measures
 		std::list<CMeter*>::const_iterator j = m_Meters.begin();
-		for( ; j != m_Meters.end(); ++j)
+		for ( ; j != m_Meters.end(); ++j)
 		{
 			try
 			{
@@ -2018,7 +2018,7 @@ void CMeterWindow::InitializeMeasures()
 {
 	// Initalize all measures
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
-	for( ; i != m_Measures.end(); ++i)
+	for ( ; i != m_Measures.end(); ++i)
 	{
 		try
 		{
@@ -2041,7 +2041,7 @@ void CMeterWindow::InitializeMeters()
 {
 	// Initalize all meters
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
+	for ( ; j != m_Meters.end(); ++j)
 	{
 		try
 		{
@@ -2064,7 +2064,7 @@ void CMeterWindow::InitializeMeters()
 
 /*
 ** ResizeWindow
-** 
+**
 ** Changes the size of the window and re-adjusts the background
 */
 bool CMeterWindow::ResizeWindow(bool reset)
@@ -2074,7 +2074,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 
 	// Get the largest meter point
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
+	for ( ; j != m_Meters.end(); ++j)
 	{
 		int mr = (*j)->GetX() + (*j)->GetW();
 		w = max(w, mr);
@@ -2151,9 +2151,9 @@ bool CMeterWindow::ResizeWindow(bool reset)
 				{
 					const RECT m = m_BackgroundMargins;
 
-					if (m.top > 0) 
+					if (m.top > 0)
 					{
-						if (m.left > 0) 
+						if (m.left > 0)
 						{
 							// Top-Left
 							Rect r(0, 0, m.left, m.top);
@@ -2164,7 +2164,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 						Rect r(m.left, 0, w - m.left - m.right, m.top);
 						graphics.DrawImage(tempBackground, r, m.left, 0, m_BackgroundSize.cx - m.left - m.right, m.top, UnitPixel);
 
-						if (m.right > 0) 
+						if (m.right > 0)
 						{
 							// Top-Right
 							Rect r(w - m.right, 0, m.right, m.top);
@@ -2172,7 +2172,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 						}
 					}
 
-					if (m.left > 0) 
+					if (m.left > 0)
 					{
 						// Left
 						Rect r(0, m.top, m.left, h - m.top - m.bottom);
@@ -2183,16 +2183,16 @@ bool CMeterWindow::ResizeWindow(bool reset)
 					Rect r(m.left, m.top, w - m.left - m.right, h - m.top - m.bottom);
 					graphics.DrawImage(tempBackground, r, m.left, m.top, m_BackgroundSize.cx - m.left - m.right, m_BackgroundSize.cy - m.top - m.bottom, UnitPixel);
 
-					if (m.right > 0) 
+					if (m.right > 0)
 					{
 						// Right
 						Rect r(w - m.right, m.top, m.right, h - m.top - m.bottom);
 						graphics.DrawImage(tempBackground, r, m_BackgroundSize.cx - m.right, m.top, m.right, m_BackgroundSize.cy - m.top - m.bottom, UnitPixel);
 					}
-					
-					if (m.bottom > 0) 
+
+					if (m.bottom > 0)
 					{
-						if (m.left > 0) 
+						if (m.left > 0)
 						{
 							// Bottom-Left
 							Rect r(0, h - m.bottom, m.left, m.bottom);
@@ -2202,7 +2202,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 						Rect r(m.left, h - m.bottom, w - m.left - m.right, m.bottom);
 						graphics.DrawImage(tempBackground, r, m.left, m_BackgroundSize.cy - m.bottom, m_BackgroundSize.cx - m.left - m.right, m.bottom, UnitPixel);
 
-						if (m.right > 0) 
+						if (m.right > 0)
 						{
 							// Bottom-Right
 							Rect r(w - m.right, h - m.bottom, m.right, m.bottom);
@@ -2241,7 +2241,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 		}
 
 		delete tintedBackground;
-	} 
+	}
 	else
 	{
 		m_WindowW = w;
@@ -2252,7 +2252,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 	SetWindowSizeVariables(m_WindowW, m_WindowH);
 
 	// If Background is not set, take a copy from the desktop
-	if(m_Background == NULL) 
+	if (m_Background == NULL)
 	{
 		if (m_BackgroundMode == BGMODE_COPY)
 		{
@@ -2262,13 +2262,13 @@ bool CMeterWindow::ResizeWindow(bool reset)
 			}
 		}
 	}
-    
+
 	return true;
 }
 
 /*
 ** GrabDesktop
-** 
+**
 ** Grabs a part of the desktop
 */
 Bitmap* CMeterWindow::GrabDesktop(int x, int y, int w, int h)
@@ -2330,7 +2330,7 @@ void CMeterWindow::CreateRegion(bool clear)
 	else
 	{
 		// Set window region if needed
-		if(!m_BackgroundName.empty()) 
+		if (!m_BackgroundName.empty())
 		{
 			if (m_WindowW != 0 && m_WindowH != 0)
 			{
@@ -2353,7 +2353,7 @@ void CMeterWindow::CreateRegion(bool clear)
 ** Redraws the meters and paints the window
 **
 */
-void CMeterWindow::Redraw() 
+void CMeterWindow::Redraw()
 {
 	if (m_ResetRegion)
 	{
@@ -2435,7 +2435,7 @@ void CMeterWindow::Redraw()
 
 		// Draw the meters
 		std::list<CMeter*>::const_iterator j = m_Meters.begin();
-		for( ; j != m_Meters.end(); ++j)
+		for ( ; j != m_Meters.end(); ++j)
 		{
 			if (!(*j)->GetTransformationMatrix().IsIdentity())
 			{
@@ -2604,7 +2604,7 @@ void CMeterWindow::Update(bool nodraw)
 
 	// Update all measures
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
-	for( ; i != m_Measures.end(); ++i)
+	for ( ; i != m_Measures.end(); ++i)
 	{
 		UpdateMeasure((*i), false);
 	}
@@ -2613,7 +2613,7 @@ void CMeterWindow::Update(bool nodraw)
 	bool bActiveTransition = false;
 	bool bUpdate = false;
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
+	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (UpdateMeter((*j), bActiveTransition, false))
 		{
@@ -2644,7 +2644,7 @@ void CMeterWindow::Update(bool nodraw)
 //	if (m_MeasuresToVariables)	// BUG: LSSetVariable doens't seem to work for some reason.
 //	{
 //		std::list<CMeasure*>::iterator i = m_Measures.begin();
-//		for( ; i != m_Measures.end(); i++)
+//		for ( ; i != m_Measures.end(); i++)
 //		{
 //			const char* sz = (*i)->GetStringValue(AUTOSCALE_ON, 1, 1, false);
 //			if (sz && wcslen(sz) > 0)
@@ -2716,7 +2716,7 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 ** This handler is called if NativeTransparency is false.
 **
 */
-LRESULT CMeterWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
 	HDC winDC = BeginPaint(m_Window, &ps);
@@ -2731,18 +2731,18 @@ LRESULT CMeterWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam)
 /*
 ** OnTimer
 **
-** Handles the timers. The METERTIMER updates all the measures 
+** Handles the timers. The METERTIMER updates all the measures
 ** MOUSETIMER is used to hide/show the window.
 **
 */
-LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if(wParam == METERTIMER) 
+	if (wParam == METERTIMER)
 	{
 		Update(false);
 		UpdateAboutStatistics(m_SkinName.c_str());
 
-		//if (m_KeepOnScreen) 
+		//if (m_KeepOnScreen)
 		//{
 		//	int x = m_ScreenX;
 		//	int y = m_ScreenY;
@@ -2753,12 +2753,12 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		//	}
 		//}
 	}
-	else if(wParam == TRANSITIONTIMER)
+	else if (wParam == TRANSITIONTIMER)
 	{
 		// Redraw only if there is active transition still going
 		bool bActiveTransition = false;
 		std::list<CMeter*>::const_iterator j = m_Meters.begin();
-		for( ; j != m_Meters.end(); ++j)
+		for ( ; j != m_Meters.end(); ++j)
 		{
 			if ((*j)->HasActiveTransition())
 			{
@@ -2778,7 +2778,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			m_ActiveTransition = false;
 		}
 	}
-	else if(wParam == MOUSETIMER)
+	else if (wParam == MOUSETIMER)
 	{
 		if (!m_Rainmeter->IsMenuActive() && !m_Dragging)
 		{
@@ -2819,7 +2819,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 		}
 	}
-	else if(wParam == FADETIMER)
+	else if (wParam == FADETIMER)
 	{
 		DWORD ticks = GetTickCount();
 		if (m_FadeStartTime == 0)
@@ -2884,7 +2884,7 @@ void CMeterWindow::FadeWindow(int from, int to)
 			{
 				UpdateTransparency(to, false);
 			}
-			if (from == 0) 
+			if (from == 0)
 			{
 				if (!m_Hidden)
 				{
@@ -2898,7 +2898,7 @@ void CMeterWindow::FadeWindow(int from, int to)
 		m_FadeStartValue = from;
 		m_FadeEndValue = to;
 		UpdateTransparency(from, false);
-		if (from == 0) 
+		if (from == 0)
 		{
 			if (!m_Hidden)
 			{
@@ -2946,11 +2946,11 @@ void CMeterWindow::ShowWindowIfAppropriate()
 		}
 	}
 
-	if(m_WindowHide)
+	if (m_WindowHide)
 	{
 		if (!m_Hidden && !inside && !keyDown)
 		{
-			switch(m_WindowHide) 
+			switch(m_WindowHide)
 			{
 			case HIDEMODE_HIDE:
 				if (m_TransparencyValue == 0 || !IsWindowVisible(m_Window))
@@ -3057,13 +3057,13 @@ bool CMeterWindow::HitTest(int x, int y)
 ** Note that meterWindow parameter is used if proc is BUTTONPROC_UP.
 **
 */
-void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meterWindow) 
+void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meterWindow)
 {
 	bool redraw = false;
 	bool drawCursor = false;
 
 	std::list<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
-	for( ; j != m_Meters.rend(); ++j)
+	for ( ; j != m_Meters.rend(); ++j)
 	{
 		// Hidden meters are ignored
 		if ((*j)->IsHidden()) continue;
@@ -3096,7 +3096,7 @@ void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meter
 		{
 			if ((*j)->HasMouseActionCursor() && (*j)->HitTest(pos.x, pos.y))
 			{
-				drawCursor = ((*j)->HasMouseAction() || button);	
+				drawCursor = ((*j)->HasMouseAction() || button);
 			}
 		}
 	}
@@ -3116,7 +3116,7 @@ void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meter
 ** During setting the cursor do nothing.
 **
 */
-LRESULT CMeterWindow::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return 0;
 }
@@ -3127,7 +3127,7 @@ LRESULT CMeterWindow::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Enters context menu loop.
 **
 */
-LRESULT CMeterWindow::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	// Set cursor to default
 	SetCursor(LoadCursor(NULL, IDC_ARROW));
@@ -3141,7 +3141,7 @@ LRESULT CMeterWindow::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** When we get WM_MOUSEMOVE messages, hide the window as the mouse is over it.
 **
 */
-LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	bool keyDown = GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000 || GetKeyState(VK_MENU) & 0x8000;
 
@@ -3159,7 +3159,7 @@ LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (!m_Hidden)
 		{
 			// If Alt, shift or control is down, do not hide the window
-			switch(m_WindowHide) 
+			switch(m_WindowHide)
 			{
 			case HIDEMODE_HIDE:
 				if (!m_NativeTransparency || m_TransparencyValue == m_AlphaValue)
@@ -3215,7 +3215,7 @@ LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** When we get WM_MOUSELEAVE messages, run all leave actions.
 **
 */
-LRESULT CMeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	GetCursorPos(&pos);
@@ -3240,7 +3240,7 @@ LRESULT CMeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** During window creation we do nothing.
 **
 */
-LRESULT CMeterWindow::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return 0;
 }
@@ -3251,11 +3251,11 @@ LRESULT CMeterWindow::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Handle the menu commands.
 **
 */
-LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	try 
+	try
 	{
-		if(wParam == ID_CONTEXT_SKINMENU_EDITSKIN)
+		if (wParam == ID_CONTEXT_SKINMENU_EDITSKIN)
 		{
 			std::wstring command = m_Rainmeter->GetConfigEditor() + L" \"";
 			command += m_SkinPath;
@@ -3275,56 +3275,56 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
 			}
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_OPENSKINSFOLDER)
+		else if (wParam == ID_CONTEXT_SKINMENU_OPENSKINSFOLDER)
 		{
 			std::wstring command = L"\"" + m_SkinPath;
 			command += L"\\";
 			command += m_SkinName;
 			command += L"\"";
 			LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
-		} 
-		else if(wParam == ID_CONTEXT_SKINMENU_REFRESH)
+		}
+		else if (wParam == ID_CONTEXT_SKINMENU_REFRESH)
 		{
 			Refresh(false);
-		} 
-		else if(wParam == ID_CONTEXT_SKINMENU_VERYTOPMOST)
+		}
+		else if (wParam == ID_CONTEXT_SKINMENU_VERYTOPMOST)
 		{
 			ChangeZPos(ZPOSITION_ONTOPMOST);
 			WriteConfig();
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_TOPMOST)
+		else if (wParam == ID_CONTEXT_SKINMENU_TOPMOST)
 		{
 			ChangeZPos(ZPOSITION_ONTOP);
 			WriteConfig();
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_BOTTOM)
+		else if (wParam == ID_CONTEXT_SKINMENU_BOTTOM)
 		{
 			ChangeZPos(ZPOSITION_ONBOTTOM);
 			WriteConfig();
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_NORMAL)
+		else if (wParam == ID_CONTEXT_SKINMENU_NORMAL)
 		{
 			ChangeZPos(ZPOSITION_NORMAL);
 			WriteConfig();
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_ONDESKTOP)
+		else if (wParam == ID_CONTEXT_SKINMENU_ONDESKTOP)
 		{
 			ChangeZPos(ZPOSITION_ONDESKTOP);
 			WriteConfig();
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_KEEPONSCREEN)
+		else if (wParam == ID_CONTEXT_SKINMENU_KEEPONSCREEN)
 		{
 			SetKeepOnScreen(!m_KeepOnScreen);
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_CLICKTHROUGH)
+		else if (wParam == ID_CONTEXT_SKINMENU_CLICKTHROUGH)
 		{
 			SetClickThrough(!m_ClickThrough);
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_DRAGGABLE)
+		else if (wParam == ID_CONTEXT_SKINMENU_DRAGGABLE)
 		{
 			SetWindowDraggable(!m_WindowDraggable);
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_HIDEONMOUSE)
+		else if (wParam == ID_CONTEXT_SKINMENU_HIDEONMOUSE)
 		{
 			if (m_WindowHide == HIDEMODE_NONE)
 			{
@@ -3337,7 +3337,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			WriteConfig();
 			UpdateTransparency(m_AlphaValue, false);
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN)
+		else if (wParam == ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN)
 		{
 			if (m_WindowHide == HIDEMODE_NONE)
 			{
@@ -3350,7 +3350,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			WriteConfig();
 			UpdateTransparency(m_AlphaValue, false);
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT)
+		else if (wParam == ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT)
 		{
 			if (m_WindowHide == HIDEMODE_NONE)
 			{
@@ -3363,25 +3363,25 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			WriteConfig();
 			UpdateTransparency(m_AlphaValue, false);
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_REMEMBERPOSITION)
+		else if (wParam == ID_CONTEXT_SKINMENU_REMEMBERPOSITION)
 		{
 			SetSavePosition(!m_SavePosition);
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_SNAPTOEDGES)
+		else if (wParam == ID_CONTEXT_SKINMENU_SNAPTOEDGES)
 		{
 			SetSnapEdges(!m_SnapEdges);
 		}
-		else if(wParam >= ID_CONTEXT_SKINMENU_TRANSPARENCY_0 && wParam <= ID_CONTEXT_SKINMENU_TRANSPARENCY_90)
+		else if (wParam >= ID_CONTEXT_SKINMENU_TRANSPARENCY_0 && wParam <= ID_CONTEXT_SKINMENU_TRANSPARENCY_90)
 		{
 			m_AlphaValue = (int)(255.0 - 230.0 * (double)(wParam - ID_CONTEXT_SKINMENU_TRANSPARENCY_0) / (double)(ID_CONTEXT_SKINMENU_TRANSPARENCY_90 - ID_CONTEXT_SKINMENU_TRANSPARENCY_0));
 			WriteConfig();
 			UpdateTransparency(m_AlphaValue, false);
 		}
-		else if(wParam == ID_CONTEXT_CLOSESKIN)
+		else if (wParam == ID_CONTEXT_CLOSESKIN)
 		{
 			m_Rainmeter->DeactivateConfig(this, -1);
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_FROMRIGHT)
+		else if (wParam == ID_CONTEXT_SKINMENU_FROMRIGHT)
 		{
 			m_WindowXFromRight = !m_WindowXFromRight;
 
@@ -3392,7 +3392,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				WriteConfig();
 			}
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_FROMBOTTOM)
+		else if (wParam == ID_CONTEXT_SKINMENU_FROMBOTTOM)
 		{
 			m_WindowYFromBottom = !m_WindowYFromBottom;
 
@@ -3403,7 +3403,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				WriteConfig();
 			}
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_XPERCENTAGE)
+		else if (wParam == ID_CONTEXT_SKINMENU_XPERCENTAGE)
 		{
 			m_WindowXPercentage = !m_WindowXPercentage;
 
@@ -3414,7 +3414,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				WriteConfig();
 			}
 		}
-		else if(wParam == ID_CONTEXT_SKINMENU_YPERCENTAGE)
+		else if (wParam == ID_CONTEXT_SKINMENU_YPERCENTAGE)
 		{
 			m_WindowYPercentage = !m_WindowYPercentage;
 
@@ -3481,9 +3481,9 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				SendMessage(tray, WM_COMMAND, wParam, lParam);
 			}
 		}
-	} 
-    catch(CError& error) 
-    {
+	}
+	catch(CError& error)
+	{
 		MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 	}
 
@@ -3528,7 +3528,7 @@ void CMeterWindow::SetKeepOnScreen(bool b)
 	m_KeepOnScreen = b;
 	WriteConfig();
 
-	if (m_KeepOnScreen) 
+	if (m_KeepOnScreen)
 	{
 		int x = m_ScreenX;
 		int y = m_ScreenY;
@@ -3582,7 +3582,7 @@ void CMeterWindow::SetSnapEdges(bool b)
 ** Handle dragging the window
 **
 */
-LRESULT CMeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if ((wParam & 0xFFF0) != SC_MOVE)
 	{
@@ -3637,7 +3637,7 @@ LRESULT CMeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Starts dragging
 **
 */
-LRESULT CMeterWindow::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_Dragging)
 	{
@@ -3656,7 +3656,7 @@ LRESULT CMeterWindow::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Ends dragging
 **
 */
-LRESULT CMeterWindow::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return 0;
 }
@@ -3667,7 +3667,7 @@ LRESULT CMeterWindow::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** This is overwritten so that the window can be dragged
 **
 */
-LRESULT CMeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_WindowDraggable && !Rainmeter->GetDisableDragging())
 	{
@@ -3686,9 +3686,9 @@ LRESULT CMeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (x2 > m_WindowW) x2 -= m_WindowW;
 		if (y2 > m_WindowH) y2 -= m_WindowH;
 
-		if (pos.x >= x1 && pos.x < x2) 
+		if (pos.x >= x1 && pos.x < x2)
 		{
-			if (pos.y >= y1 && pos.y < y2) 
+			if (pos.y >= y1 && pos.y < y2)
 			{
 				return HTCAPTION;
 			}
@@ -3703,7 +3703,7 @@ LRESULT CMeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Called when windows position is about to change
 **
 */
-LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LPWINDOWPOS wp=(LPWINDOWPOS)lParam;
 
@@ -3716,12 +3716,12 @@ LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lPara
 		}
 	}
 
-	if ((wp->flags & SWP_NOMOVE) == 0) 
+	if ((wp->flags & SWP_NOMOVE) == 0)
 	{
 		if (m_SnapEdges && !(GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000))
 		{
 			// only process movement (ignore anything without winpos values)
-			if(wp->cx != 0 && wp->cy != 0)
+			if (wp->cx != 0 && wp->cy != 0)
 			{
 				RECT workArea;
 
@@ -3729,7 +3729,7 @@ LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lPara
 				RECT windowRect = {wp->x, wp->y, (wp->x + m_WindowW), (wp->y + m_WindowH)};
 				HMONITOR hMonitor = MonitorFromRect(&windowRect, MONITOR_DEFAULTTONULL);
 
-				if(hMonitor != NULL)
+				if (hMonitor != NULL)
 				{
 					MONITORINFO mi;
 					mi.cbSize = sizeof(mi);
@@ -3744,7 +3744,7 @@ LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lPara
 				// Snap to other windows
 				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-				for( ; iter != windows.end(); ++iter)
+				for ( ; iter != windows.end(); ++iter)
 				{
 					if ((*iter).second != this)
 					{
@@ -3762,7 +3762,7 @@ LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lPara
 			}
 		}
 
-		if (m_KeepOnScreen) 
+		if (m_KeepOnScreen)
 		{
 			MapCoordsToScreen(wp->x, wp->y, m_WindowW, m_WindowH);
 		}
@@ -3780,20 +3780,20 @@ void CMeterWindow::SnapToWindow(CMeterWindow* window, LPWINDOWPOS wp)
 
 	if (wp->y < y + h && wp->y + m_WindowH > y)
 	{
-		if((wp->x < SNAPDISTANCE + x) && (wp->x > x - SNAPDISTANCE)) wp->x = x;
-		if((wp->x < SNAPDISTANCE + x + w) && (wp->x > x + w - SNAPDISTANCE)) wp->x = x + w;
+		if ((wp->x < SNAPDISTANCE + x) && (wp->x > x - SNAPDISTANCE)) wp->x = x;
+		if ((wp->x < SNAPDISTANCE + x + w) && (wp->x > x + w - SNAPDISTANCE)) wp->x = x + w;
 
-		if((wp->x + m_WindowW < SNAPDISTANCE + x) && (wp->x + m_WindowW > x - SNAPDISTANCE)) wp->x = x - m_WindowW;
-		if((wp->x + m_WindowW < SNAPDISTANCE + x + w) && (wp->x + m_WindowW > x + w - SNAPDISTANCE)) wp->x = x + w - m_WindowW;
+		if ((wp->x + m_WindowW < SNAPDISTANCE + x) && (wp->x + m_WindowW > x - SNAPDISTANCE)) wp->x = x - m_WindowW;
+		if ((wp->x + m_WindowW < SNAPDISTANCE + x + w) && (wp->x + m_WindowW > x + w - SNAPDISTANCE)) wp->x = x + w - m_WindowW;
 	}
 
 	if (wp->x < x + w && wp->x + m_WindowW > x)
 	{
-		if((wp->y < SNAPDISTANCE + y) && (wp->y > y - SNAPDISTANCE)) wp->y = y;
-		if((wp->y < SNAPDISTANCE + y + h) && (wp->y > y + h - SNAPDISTANCE)) wp->y = y + h;
+		if ((wp->y < SNAPDISTANCE + y) && (wp->y > y - SNAPDISTANCE)) wp->y = y;
+		if ((wp->y < SNAPDISTANCE + y + h) && (wp->y > y + h - SNAPDISTANCE)) wp->y = y + h;
 
-		if((wp->y + m_WindowH < SNAPDISTANCE + y) && (wp->y + m_WindowH > y - SNAPDISTANCE)) wp->y = y - m_WindowH;
-		if((wp->y + m_WindowH < SNAPDISTANCE + y + h) && (wp->y + m_WindowH > y + h - SNAPDISTANCE)) wp->y = y + h - m_WindowH;
+		if ((wp->y + m_WindowH < SNAPDISTANCE + y) && (wp->y + m_WindowH > y - SNAPDISTANCE)) wp->y = y - m_WindowH;
+		if ((wp->y + m_WindowH < SNAPDISTANCE + y + h) && (wp->y + m_WindowH > y + h - SNAPDISTANCE)) wp->y = y + h - m_WindowH;
 	}
 }
 
@@ -3803,7 +3803,7 @@ void CMeterWindow::SnapToWindow(CMeterWindow* window, LPWINDOWPOS wp)
 ** During destruction of the window do nothing.
 **
 */
-LRESULT CMeterWindow::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return 0;
 }
@@ -3815,7 +3815,7 @@ LRESULT CMeterWindow::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** (OnDelayedMove function is used instead.)
 **
 */
-LRESULT CMeterWindow::OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return 0;
 }
@@ -3827,7 +3827,7 @@ LRESULT CMeterWindow::OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** (OnDelayedMove function is used instead.)
 **
 */
-LRESULT CMeterWindow::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return 0;
 }
@@ -3838,11 +3838,11 @@ LRESULT CMeterWindow::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when left mouse button is down
 **
 */
-LRESULT CMeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam); 
-	pos.y = (SHORT)HIWORD(lParam); 
+	pos.x = (SHORT)LOWORD(lParam);
+	pos.y = (SHORT)HIWORD(lParam);
 
 	if (uMsg == WM_NCLBUTTONDOWN)
 	{
@@ -3874,11 +3874,11 @@ LRESULT CMeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when left mouse button is up
 **
 */
-LRESULT CMeterWindow::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam); 
-	pos.y = (SHORT)HIWORD(lParam); 
+	pos.x = (SHORT)LOWORD(lParam);
+	pos.y = (SHORT)HIWORD(lParam);
 
 	if (uMsg == WM_NCLBUTTONUP)
 	{
@@ -3903,11 +3903,11 @@ LRESULT CMeterWindow::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when left mouse button is double-clicked
 **
 */
-LRESULT CMeterWindow::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam); 
-	pos.y = (SHORT)HIWORD(lParam); 
+	pos.x = (SHORT)LOWORD(lParam);
+	pos.y = (SHORT)HIWORD(lParam);
 
 	if (uMsg == WM_NCLBUTTONDBLCLK)
 	{
@@ -3935,11 +3935,11 @@ LRESULT CMeterWindow::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM l
 ** Runs the action when right mouse button is down
 **
 */
-LRESULT CMeterWindow::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam); 
-	pos.y = (SHORT)HIWORD(lParam); 
+	pos.x = (SHORT)LOWORD(lParam);
+	pos.y = (SHORT)HIWORD(lParam);
 
 	if (uMsg == WM_NCRBUTTONDOWN)
 	{
@@ -3964,7 +3964,7 @@ LRESULT CMeterWindow::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when right mouse button is up
 **
 */
-LRESULT CMeterWindow::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = (SHORT)LOWORD(lParam);
@@ -3988,11 +3988,11 @@ LRESULT CMeterWindow::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when right mouse button is double-clicked
 **
 */
-LRESULT CMeterWindow::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam); 
-	pos.y = (SHORT)HIWORD(lParam); 
+	pos.x = (SHORT)LOWORD(lParam);
+	pos.y = (SHORT)HIWORD(lParam);
 
 	if (uMsg == WM_NCRBUTTONDBLCLK)
 	{
@@ -4020,11 +4020,11 @@ LRESULT CMeterWindow::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM 
 ** Runs the action when middle mouse button is down
 **
 */
-LRESULT CMeterWindow::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam); 
-	pos.y = (SHORT)HIWORD(lParam); 
+	pos.x = (SHORT)LOWORD(lParam);
+	pos.y = (SHORT)HIWORD(lParam);
 
 	if (uMsg == WM_NCMBUTTONDOWN)
 	{
@@ -4049,11 +4049,11 @@ LRESULT CMeterWindow::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam
 ** Runs the action when middle mouse button is up
 **
 */
-LRESULT CMeterWindow::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam); 
-	pos.y = (SHORT)HIWORD(lParam); 
+	pos.x = (SHORT)LOWORD(lParam);
+	pos.y = (SHORT)HIWORD(lParam);
 
 	if (uMsg == WM_NCMBUTTONUP)
 	{
@@ -4078,11 +4078,11 @@ LRESULT CMeterWindow::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when middle mouse button is double-clicked
 **
 */
-LRESULT CMeterWindow::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam); 
-	pos.y = (SHORT)HIWORD(lParam); 
+	pos.x = (SHORT)LOWORD(lParam);
+	pos.y = (SHORT)HIWORD(lParam);
 
 	if (uMsg == WM_NCMBUTTONDBLCLK)
 	{
@@ -4110,11 +4110,11 @@ LRESULT CMeterWindow::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM
 ** Handles the context menu. The menu is recreated every time it is shown.
 **
 */
-LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	int x = (SHORT)LOWORD(lParam); 
-	int y = (SHORT)HIWORD(lParam); 
+	int x = (SHORT)LOWORD(lParam);
+	int y = (SHORT)HIWORD(lParam);
 
 	RECT rect;
 	GetWindowRect(m_Window, &rect);
@@ -4157,11 +4157,11 @@ LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** If the test is true, the action is not executed.
 **
 */
-bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test) 
+bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 {
 	// Check if the hitpoint was over some meter
 	std::list<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
-	for( ; j != m_Meters.rend(); ++j)
+	for ( ; j != m_Meters.rend(); ++j)
 	{
 		// Hidden meters are ignored
 		if ((*j)->IsHidden()) continue;
@@ -4169,7 +4169,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 		if ((*j)->HitTest(x, y))
 		{
 			std::list<CMeasureScript*>::iterator k = m_ScriptMeasures.begin();
-			for( ; k != m_ScriptMeasures.end(); ++k)
+			for ( ; k != m_ScriptMeasures.end(); ++k)
 			{
 				(*k)->MeterMouseEvent((*j), mouse);
 			}
@@ -4339,13 +4339,13 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 ** Executes the action if such are defined. Returns true, if meter/window which should be processed still may exist.
 **
 */
-bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse) 
+bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 {
 	bool buttonFound = false;
 
 	// Check if the hitpoint was over some meter
 	std::list<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
-	for( ; j != m_Meters.rend(); ++j)
+	for ( ; j != m_Meters.rend(); ++j)
 	{
 		if (!(*j)->IsHidden() && (*j)->HitTest(x, y))
 		{
@@ -4492,7 +4492,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 ** Stores the new place of the window, in screen coordinates.
 **
 */
-LRESULT CMeterWindow::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	// The lParam's x/y parameters are given in screen coordinates for overlapped and pop-up windows
 	// and in parent-client coordinates for child windows.
@@ -4511,7 +4511,7 @@ LRESULT CMeterWindow::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/* 
+/*
 ** WndProc
 **
 ** The window procedure for the Meter
@@ -4521,14 +4521,14 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 {
 	CMeterWindow* Window = NULL;
 
-	if(uMsg == WM_CREATE) 
+	if (uMsg == WM_CREATE)
 	{
 		// Fetch this window-object from the CreateStruct
 		Window=(CMeterWindow*)((LPCREATESTRUCT)lParam)->lpCreateParams;
 
 		SetProp(hWnd, L"RAINMETER", Window);
 	}
-	else if(uMsg == WM_DESTROY) 
+	else if (uMsg == WM_DESTROY)
 	{
 		RemoveProp(hWnd, L"RAINMETER");
 	}
@@ -4630,7 +4630,7 @@ LRESULT CMeterWindow::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Handles delayed move
 **
 */
-LRESULT CMeterWindow::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam) 
+LRESULT CMeterWindow::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_NativeTransparency)
 	{
@@ -4639,7 +4639,7 @@ LRESULT CMeterWindow::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Move the window to correct position
 		ResizeWindow(true);
 
-		if (m_KeepOnScreen) 
+		if (m_KeepOnScreen)
 		{
 			MapCoordsToScreen(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
 		}
@@ -4680,7 +4680,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 		}
-		if (!found) 
+		if (!found)
 		{
 			Log(LOG_WARNING, L"Unable to send the !bang to a deactivated config.");
 			return 0;	// This meterwindow has been deactivated
@@ -4805,7 +4805,7 @@ std::wstring CMeterWindow::MakePathAbsolute(const std::wstring& path)
 CMeter* CMeterWindow::GetMeter(const std::wstring& meterName)
 {
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
-	for( ; j != m_Meters.end(); ++j)
+	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (_wcsicmp((*j)->GetName(), meterName.c_str()) == 0)
 		{
@@ -4819,7 +4819,7 @@ CMeter* CMeterWindow::GetMeter(const std::wstring& meterName)
 CMeasure* CMeterWindow::GetMeasure(const std::wstring& measureName)
 {
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
-	for( ; i != m_Measures.end(); ++i)
+	for ( ; i != m_Measures.end(); ++i)
 	{
 		if (_wcsicmp((*i)->GetName(), measureName.c_str()) == 0)
 		{

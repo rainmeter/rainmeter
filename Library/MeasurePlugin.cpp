@@ -49,11 +49,11 @@ CMeasurePlugin::CMeasurePlugin(CMeterWindow* meterWindow, const WCHAR* name) : C
 ** The destructor
 **
 */
-CMeasurePlugin::~CMeasurePlugin() 
+CMeasurePlugin::~CMeasurePlugin()
 {
 	if (m_Plugin)
 	{
-		if(FinalizeFunc) FinalizeFunc(m_Plugin, m_ID);
+		if (FinalizeFunc) FinalizeFunc(m_Plugin, m_ID);
 		FreeLibrary(m_Plugin);
 	}
 }
@@ -78,12 +78,12 @@ bool CMeasurePlugin::Update()
 	}
 	SetCurrentDirectory(dir.c_str());
 
-	if(UpdateFunc)
+	if (UpdateFunc)
 	{
 		// Update the plugin
 		m_Value = UpdateFunc(m_ID);
 	}
-	else if(UpdateFunc2)
+	else if (UpdateFunc2)
 	{
 		// Update the plugin
 		m_Value = UpdateFunc2(m_ID);
@@ -113,13 +113,13 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_PluginName = parser.ReadString(section, L"Plugin", L"");
 
 	size_t pos = m_PluginName.rfind(L".");
-	if (pos == std::wstring::npos) 
+	if (pos == std::wstring::npos)
 	{
 		m_PluginName += L".dll";
 	}
 
 	pos = m_PluginName.rfind(L'\\');
-	if (pos != std::wstring::npos) 
+	if (pos != std::wstring::npos)
 	{
 		m_PluginName.insert(0, L"..\\");
 	}
@@ -127,8 +127,8 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	DWORD err = 0;
 	m_Plugin = CSystem::RmLoadLibrary(m_PluginName.c_str(), &err);
-	
-	if(m_Plugin == NULL)
+
+	if (m_Plugin == NULL)
 	{
 		if (CRainmeter::GetDebug())
 		{
@@ -137,7 +137,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 		// Try to load from Rainmeter's folder
 		pos = m_PluginName.rfind(L'\\');
-		if (pos != std::wstring::npos) 
+		if (pos != std::wstring::npos)
 		{
 			std::wstring pluginName = Rainmeter->GetPath() + m_PluginName.substr(pos + 1);
 
@@ -160,7 +160,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			throw CError(error, __LINE__, __FILE__);
 		}
 	}
-	
+
 	InitializeFunc = (INITIALIZE)GetProcAddress(m_Plugin, "Initialize");
 	FinalizeFunc = (FINALIZE)GetProcAddress(m_Plugin, "Finalize");
 	UpdateFunc = (UPDATE)GetProcAddress(m_Plugin, "Update");
@@ -179,7 +179,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	// Initialize the plugin
 	m_ID = id++;
-	if(InitializeFunc) 
+	if (InitializeFunc)
 	{
 		WCHAR buffer[MAX_PATH];
 		GetCurrentDirectory(MAX_PATH, buffer);
@@ -200,13 +200,13 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		SetCurrentDirectory(buffer);
 
 		std::wstring szMaxValue = parser.ReadString(section, L"MaxValue", L"NotSet");
-		if (szMaxValue == L"NotSet") 
+		if (szMaxValue == L"NotSet")
 		{
 			m_MaxValue = maxValue;
 		}
 	}
 
-	if(m_MaxValue == 0)
+	if (m_MaxValue == 0)
 	{
 		m_MaxValue = 1;
 		m_LogMaxValue = true;
@@ -221,7 +221,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 */
 const WCHAR* CMeasurePlugin::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
-	if(GetStringFunc)
+	if (GetStringFunc)
 	{
 		const WCHAR* ret = GetStringFunc(m_ID, 0);
 		if (ret) return CheckSubstitute(ret);

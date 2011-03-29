@@ -76,7 +76,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
 void Log(const WCHAR* string);
 void ParseData(UrlData* urlData, LPCSTR parseData);
 
-CRITICAL_SECTION g_CriticalSection; 
+CRITICAL_SECTION g_CriticalSection;
 bool g_Initialized = false;
 
 static std::map<UINT, UrlData*> g_UrlData;
@@ -290,7 +290,7 @@ void FillCharacterEntityReferences()
 	g_CERs[L"lsaquo"]	= (WCHAR)8249;
 	g_CERs[L"rsaquo"]	= (WCHAR)8250;
 	g_CERs[L"euro"]		= (WCHAR)8364;
-	
+
 	// for ISO 8859-1 characters
 	g_CERs[L"nbsp"]		= (WCHAR)160;
 	g_CERs[L"iexcl"]	= (WCHAR)161;
@@ -388,7 +388,7 @@ void FillCharacterEntityReferences()
 	g_CERs[L"yacute"]	= (WCHAR)253;
 	g_CERs[L"thorn"]	= (WCHAR)254;
 	g_CERs[L"yuml"]		= (WCHAR)255;
-	
+
 	// for symbols, mathematical symbols, and Greek letters
 	g_CERs[L"fnof"]		= (WCHAR)402;
 	g_CERs[L"Alpha"]	= (WCHAR)913;
@@ -565,7 +565,7 @@ HWND FindMeterWindow(HWND parent = NULL)
 
 /*
   This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured. 
+  The function must return the maximum value that can be measured.
   The return value can also be 0, which means that Rainmeter will
   track the maximum value automatically. The parameters for this
   function are:
@@ -577,7 +577,7 @@ HWND FindMeterWindow(HWND parent = NULL)
 */
 UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
-	LPCTSTR tmpSz; 
+	LPCTSTR tmpSz;
 
 	if (!g_Initialized)
 	{
@@ -602,10 +602,10 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	data->proxy = ReadConfigString(section, L"ProxyServer", L"");
 	data->downloadFile = ReadConfigString(section, L"DownloadFile", L"");
 	data->debugFileLocation = ReadConfigString(section, L"Debug2File", L"c:\\WebParserDump.txt");
-	
-	if(data->debugFileLocation.find(L"\\") == std::wstring::npos)
+
+	if (data->debugFileLocation.find(L"\\") == std::wstring::npos)
 	{
-		std::wstring str = data->iniFile.substr(0,data->iniFile.find_last_of(L"\\")+1); 
+		std::wstring str = data->iniFile.substr(0,data->iniFile.find_last_of(L"\\")+1);
 		str += data->debugFileLocation;
 		Log(str.c_str());
 		data->debugFileLocation = str;
@@ -706,12 +706,12 @@ double Update2(UINT id)
 
 	// Find the data for this instance (the data structure is not changed by anyone so this should be safe)
 	std::map<UINT, UrlData*>::iterator urlIter = g_UrlData.find(id);
-	if(urlIter != g_UrlData.end())
+	if (urlIter != g_UrlData.end())
 	{
 		urlData = (*urlIter).second;
 	}
 
-	if (urlData) 
+	if (urlData)
 	{
 		if (urlData->download && urlData->regExp.empty() && urlData->url.find(L'[') == std::wstring::npos)
 		{
@@ -749,7 +749,7 @@ double Update2(UINT id)
 		{
 			// Make sure that the thread is not writing to the result at the same time
 			EnterCriticalSection(&g_CriticalSection);
-			
+
 			if (!urlData->resultString.empty())
 			{
 				value = wcstod(urlData->resultString.c_str(), NULL);
@@ -837,7 +837,7 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 	urlData->threadHandle = 0;
 	LeaveCriticalSection(&g_CriticalSection);
 
-    return 0;   // thread completed successfully
+	return 0;   // thread completed successfully
 }
 
 void ParseData(UrlData* urlData, LPCSTR parseData)
@@ -851,12 +851,12 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 	int ovector[OVECCOUNT];
 	int rc;
 	int flags = PCRE_UTF8;
-	
+
 	if (urlData->codepage == 0)
 	{
 		flags = 0;
 	}
-	
+
 	// Compile the regular expression in the first argument
 	re = pcre_compile(
 		ConvertWideToUTF8(urlData->regExp.c_str()).c_str(),   // the pattern
@@ -864,7 +864,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 		&error,               // for error message
 		&erroffset,           // for error offset
 		NULL);                // use default character tables
-	
+
 	if (re != NULL)
 	{
 		// Compilation succeeded: match the subject in the second argument
@@ -878,7 +878,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 		}
 
 		dwSize = strlen(parseData);
-		
+
 		rc = pcre_exec(
 			re,                   // the compiled pattern
 			NULL,                 // no extra data - we didn't study the pattern
@@ -888,8 +888,8 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 			0,					  // default options
 			ovector,              // output vector for substring information
 			OVECCOUNT);           // number of elements in the output vector
-		
-		
+
+
 		if (rc >= 0)
 		{
 			if (rc == 0)
@@ -941,7 +941,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 					log += L"] Not enough substrings!";
 					Log(log.c_str());
 
-					// Clear the old result 
+					// Clear the old result
 					EnterCriticalSection(&g_CriticalSection);
 					urlData->resultString.clear();
 					if (urlData->download)
@@ -975,7 +975,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 
 							std::string szResult(substring_start, substring_length);
 
-							if (!((*i).second)->regExp.empty()) 
+							if (!((*i).second)->regExp.empty())
 							{
 								// Change the index and parse the substring
 								int index = (*i).second->stringIndex;
@@ -985,9 +985,9 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 							}
 							else
 							{
-								// Set the result 
+								// Set the result
 								EnterCriticalSection(&g_CriticalSection);
-								
+
 								// Substitude the [measure] with szResult
 								std::wstring wzResult = ConvertUTF8ToWide(szResult.c_str());
 								std::wstring wzUrl = ((*i).second)->url;
@@ -1024,7 +1024,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 							log += L"] Not enough substrings!";
 							Log(log.c_str());
 
-							// Clear the old result 
+							// Clear the old result
 							EnterCriticalSection(&g_CriticalSection);
 							((*i).second)->resultString.clear();
 							if ((*i).second->download)
@@ -1076,7 +1076,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 			LeaveCriticalSection(&g_CriticalSection);
 		}
 
-		// Release memory used for the compiled pattern 
+		// Release memory used for the compiled pattern
 		pcre_free(re);
 	}
 	else
@@ -1114,7 +1114,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 	}
 	else
 	{
-		if (!urlData->finishAction.empty()) 
+		if (!urlData->finishAction.empty())
 		{
 			HWND wnd = FindMeterWindow();
 
@@ -1156,7 +1156,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 		EnterCriticalSection(&g_CriticalSection);
 		url = urlData->resultString;
 		LeaveCriticalSection(&g_CriticalSection);
-	
+
 		std::wstring::size_type pos = url.find(L':');
 		if (pos == std::wstring::npos && !url.empty())	// No protocol
 		{
@@ -1420,8 +1420,8 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 				urlData->downloadedFile = fullpath;
 
 				LeaveCriticalSection(&g_CriticalSection);
-	
-				if (!urlData->finishAction.empty()) 
+
+				if (!urlData->finishAction.empty())
 				{
 					HWND wnd = FindMeterWindow();
 
@@ -1505,20 +1505,20 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 	urlData->dlThreadHandle = 0;
 	LeaveCriticalSection(&g_CriticalSection);
 
-    return 0;   // thread completed successfully
+	return 0;   // thread completed successfully
 }
 
 /*
   This function is called when the value should be
   returned as a string.
 */
-LPCTSTR GetString(UINT id, UINT flags) 
+LPCTSTR GetString(UINT id, UINT flags)
 {
 	static std::wstring resultString;
 
 	std::map<UINT, UrlData*>::iterator urlIter = g_UrlData.find(id);
 
-	if(urlIter != g_UrlData.end())
+	if (urlIter != g_UrlData.end())
 	{
 		EnterCriticalSection(&g_CriticalSection);
 		if (((*urlIter).second)->download)
@@ -1546,7 +1546,7 @@ void Finalize(HMODULE instance, UINT id)
 {
 	std::map<UINT, UrlData*>::iterator urlIter = g_UrlData.find(id);
 
-	if(urlIter != g_UrlData.end())
+	if (urlIter != g_UrlData.end())
 	{
 		if (((*urlIter).second)->threadHandle)
 		{
@@ -1555,7 +1555,7 @@ void Finalize(HMODULE instance, UINT id)
 
 			TerminateThread(((*urlIter).second)->threadHandle, 0);
 			(*urlIter).second->threadHandle = NULL;
-			
+
 			LeaveCriticalSection(&g_CriticalSection);
 		}
 
@@ -1566,7 +1566,7 @@ void Finalize(HMODULE instance, UINT id)
 
 			TerminateThread(((*urlIter).second)->dlThreadHandle, 0);
 			(*urlIter).second->dlThreadHandle = NULL;
-			
+
 			LeaveCriticalSection(&g_CriticalSection);
 		}
 
@@ -1618,7 +1618,7 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 	std::wstring err = L"WebParser: Fetching URL: ";
 	err += url;
 	Log(err.c_str());
-	
+
 	DWORD flags = INTERNET_FLAG_RESYNCHRONIZE;
 	if (forceReload)
 	{
@@ -1662,14 +1662,14 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 			{
 				break;
 			}
-			
+
 			// Determine the buffer size to hold the new data and the data
 			// already written (if any).
 			nBufferSize = *dwDataSize + dwSize;
-			
+
 			// Allocate the output buffer.
 			lpOutPut = new BYTE[nBufferSize + 2];
-			
+
 			// Make sure the buffer is not the initial buffer.
 			if (lpHolding != NULL)
 			{
@@ -1695,7 +1695,7 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 			// End with double null
 			lpOutPut[dwSize] = 0;
 			lpOutPut[dwSize + 1] = 0;
-			
+
 			// Increment the number of buffers read.
 			++nCounter;
 
@@ -1703,7 +1703,7 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 			memset(lpData, 0, CHUNK_SIZE);
 		}
 	} while (TRUE);
-	
+
 	// Close the HINTERNET handle.
 	InternetCloseHandle(hUrlDump);
 
@@ -1734,7 +1734,7 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 
 	if (errorMsg == NULL)
 	{
-		if (dwErr == ERROR_INTERNET_EXTENDED_ERROR) 
+		if (dwErr == ERROR_INTERNET_EXTENDED_ERROR)
 		{
 			WCHAR szBuffer[1024];
 			DWORD dwError, dwLen = 1024;
@@ -1757,10 +1757,10 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 		{
 			LPVOID lpMsgBuf = NULL;
 
-			FormatMessage( 
-				FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-				FORMAT_MESSAGE_FROM_HMODULE | 
-				FORMAT_MESSAGE_FROM_SYSTEM | 
+			FormatMessage(
+				FORMAT_MESSAGE_ALLOCATE_BUFFER |
+				FORMAT_MESSAGE_FROM_HMODULE |
+				FORMAT_MESSAGE_FROM_SYSTEM |
 				FORMAT_MESSAGE_IGNORE_INSERTS |
 				FORMAT_MESSAGE_MAX_WIDTH_MASK,
 				GetModuleHandle(L"wininet"),
@@ -1768,10 +1768,10 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
 				(LPTSTR) &lpMsgBuf,
 				0,
-				NULL 
+				NULL
 			);
 
-			if (lpMsgBuf == NULL) 
+			if (lpMsgBuf == NULL)
 			{
 				err += L"Unknown error";
 			}

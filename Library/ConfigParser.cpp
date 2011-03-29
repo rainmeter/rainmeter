@@ -96,7 +96,7 @@ void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* me
 		SetBuiltInVariable(L"PLUGINSPATH", pRainmeter->GetPluginPath());
 		SetBuiltInVariable(L"CURRENTPATH", CRainmeter::ExtractPath(m_Filename));
 		SetBuiltInVariable(L"ADDONSPATH", pRainmeter->GetAddonPath());
-		SetBuiltInVariable(L"CRLF", L"\n");		
+		SetBuiltInVariable(L"CRLF", L"\n");
 
 		if (meterWindow)
 		{
@@ -141,7 +141,7 @@ void CConfigParser::ReadVariables()
 /**
 ** Sets a new value for the variable. The DynamicVariables must be set to 1 in the
 ** meter/measure for the changes to be applied.
-** 
+**
 ** \param variables
 ** \param strVariable
 ** \param strValue
@@ -155,7 +155,7 @@ void CConfigParser::SetVariable(std::unordered_map<std::wstring, std::wstring>& 
 
 /**
 ** Gets a value for the variable.
-** 
+**
 ** \param strVariable
 ** \param strValue
 ** \return true if variable is found
@@ -216,7 +216,7 @@ void CConfigParser::ResetMonitorVariables(CMeterWindow* meterWindow)
 ** SetMultiMonitorVariables
 **
 ** Sets new values for the SCREENAREA/WORKAREA variables.
-** 
+**
 */
 void CConfigParser::SetMultiMonitorVariables(bool reset)
 {
@@ -322,7 +322,7 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 ** SetAutoSelectedMonitorVariables
 **
 ** Sets new SCREENAREA/WORKAREA variables for present monitor.
-** 
+**
 */
 void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 {
@@ -440,7 +440,7 @@ void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 
 /**
 ** Replaces environment and internal variables in the given string.
-** 
+**
 ** \param result The string where the variables are returned. The string is modified.
 */
 bool CConfigParser::ReplaceVariables(std::wstring& result)
@@ -460,7 +460,7 @@ bool CConfigParser::ReplaceVariables(std::wstring& result)
 	size_t pos = std::wstring::npos;
 	bool loop = true;
 
-	do 
+	do
 	{
 		pos = result.find(L'#', start);
 		if (pos != std::wstring::npos)
@@ -499,7 +499,7 @@ bool CConfigParser::ReplaceVariables(std::wstring& result)
 
 /**
 ** Replaces measures in the given string.
-** 
+**
 ** \param result The string where the measure values are returned. The string is modified.
 */
 bool CConfigParser::ReplaceMeasures(std::wstring& result)
@@ -514,7 +514,7 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 		size_t pos = std::wstring::npos;
 		size_t pos2 = std::wstring::npos;
 		bool loop = true;
-		do 
+		do
 		{
 			pos = result.find(L'[', start);
 			if (pos != std::wstring::npos)
@@ -764,7 +764,7 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 	return (m_LastDefaultUsed) ? defValue : ParseDouble(result, defValue);
 }
 
-// Returns an int if the formula was read successfully, -1 for failure.
+// Returns 1 if the formula was read successfully, -1 for failure.
 // Pass a pointer to a double.
 int CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
 {
@@ -772,7 +772,7 @@ int CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
 	if (result.size() > 0 && result[0] == L'(' && result[result.size() - 1] == L')')
 	{
 		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.substr(1, result.size() - 2).c_str()).c_str(), resultValue);
-		
+
 		if (errMsg != NULL)
 		{
 			Log(LOG_ERROR, ConvertToWide(errMsg).c_str());
@@ -816,15 +816,15 @@ RECT CConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
 std::vector<std::wstring> CConfigParser::Tokenize(const std::wstring& str, const std::wstring& delimiters)
 {
 	std::vector<std::wstring> tokens;
-    	
+
 	std::wstring::size_type lastPos = str.find_first_not_of(delimiters, 0);	// skip delimiters at beginning.
 	std::wstring::size_type pos = str.find_first_of(delimiters, lastPos);	// find first "non-delimiter".
 
 	while (std::wstring::npos != pos || std::wstring::npos != lastPos)
 	{
-    	tokens.push_back(str.substr(lastPos, pos - lastPos));    	// found a token, add it to the vector.
-    	lastPos = str.find_first_not_of(delimiters, pos);    	// skip delimiters.  Note the "not_of"
-    	pos = str.find_first_of(delimiters, lastPos);    	// find next "non-delimiter"
+		tokens.push_back(str.substr(lastPos, pos - lastPos));    	// found a token, add it to the vector.
+		lastPos = str.find_first_not_of(delimiters, pos);    	// skip delimiters.  Note the "not_of"
+		pos = str.find_first_of(delimiters, lastPos);    	// find next "non-delimiter"
 	}
 
 	return tokens;
@@ -840,7 +840,7 @@ std::vector<std::wstring> CConfigParser::Tokenize(const std::wstring& str, const
 double CConfigParser::ParseDouble(const std::wstring& string, double defValue, bool rejectExp)
 {
 	std::wstring::size_type pos;
-	
+
 	// Ignore inline comments which start with ';'
 	if ((pos = string.find_first_of(L';')) != std::wstring::npos)
 	{
@@ -878,7 +878,7 @@ double CConfigParser::ParseDouble(const std::wstring& string, double defValue, b
 ** ParseColor
 **
 ** This is a helper method that parses the color values from the given string.
-** The color can be supplied as three/four comma separated values or as one 
+** The color can be supplied as three/four comma separated values or as one
 ** hex-value.
 **
 */
@@ -886,7 +886,7 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 {
 	int R, G, B, A;
 
-	if(wcschr(string, L',') != NULL)
+	if (wcschr(string, L',') != NULL)
 	{
 		WCHAR* parseSz = _wcsdup(string);
 		WCHAR* token;
@@ -936,7 +936,7 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 			A = 255;
 		}
 		free(parseSz);
-	} 
+	}
 	else
 	{
 		const WCHAR* start = string;
@@ -949,8 +949,8 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 		if (wcslen(string) > 6 && !iswspace(string[6]))
 		{
 			swscanf(string, L"%02x%02x%02x%02x", &R, &G, &B, &A);
-		} 
-		else 
+		}
+		else
 		{
 			swscanf(string, L"%02x%02x%02x", &R, &G, &B);
 			A = 255;	// Opaque
@@ -1029,7 +1029,7 @@ RECT CConfigParser::ParseRECT(LPCTSTR string)
 //==============================================================================
 /**
 ** Reads the given ini file and fills the m_Values and m_Keys maps.
-** 
+**
 ** \param iniFile The ini file to be read.
 */
 void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& iniFile, int depth)
@@ -1067,7 +1067,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 	WCHAR* epos = NULL;
 
 	// Get all the sections
-	while(true)
+	while (true)
 	{
 		items[0] = 0;
 		int res = GetPrivateProfileString( NULL, NULL, NULL, items, size, iniRead.c_str());
@@ -1117,7 +1117,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 	std::list<std::wstring>::const_iterator iter = sections.begin();
 	for ( ; iter != sections.end(); ++iter)
 	{
-		while(true)
+		while (true)
 		{
 			items[0] = 0;
 			int res = GetPrivateProfileString((*iter).c_str(), NULL, NULL, items, size, iniRead.c_str());
@@ -1139,7 +1139,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 			{
 				std::wstring strKey = pos;
 
-				while(true)
+				while (true)
 				{
 					buffer[0] = 0;
 					int res = GetPrivateProfileString((*iter).c_str(), strKey.c_str(), L"", buffer, bufferSize, iniRead.c_str());
@@ -1184,7 +1184,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 //==============================================================================
 /**
 ** Sets the value for the key under the given section.
-** 
+**
 ** \param strSection The name of the section.
 ** \param strKey The name of the key.
 ** \param strValue The value for the key.
@@ -1211,7 +1211,7 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 //==============================================================================
 /**
 ** Returns the value for the key under the given section.
-** 
+**
 ** \param strSection The name of the section.
 ** \param strKey The name of the key.
 ** \param strDefault The default value for the key.
@@ -1234,7 +1234,7 @@ const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, cons
 //==============================================================================
 /**
 ** Returns a list of keys under the given section.
-** 
+**
 ** \param strSection The name of the section.
 ** \return A list of keys under the given section.
 */

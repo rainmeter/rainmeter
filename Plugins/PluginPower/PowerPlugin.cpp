@@ -26,7 +26,7 @@
 
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
-typedef struct _PROCESSOR_POWER_INFORMATION 
+typedef struct _PROCESSOR_POWER_INFORMATION
 {
 	ULONG Number;
 	ULONG MaxMhz;
@@ -69,7 +69,7 @@ FPCALLNTPOWERINFORMATION fpCallNtPowerInformation = NULL;
 
 /*
   This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured. 
+  The function must return the maximum value that can be measured.
   The return value can also be 0, which means that Rainmeter will
   track the maximum value automatically. The parameters for this
   function are:
@@ -99,20 +99,20 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 
 	/* Read our own settings from the ini-file */
 	LPCTSTR type = ReadConfigString(section, L"PowerState", L"");
-	if(type) 
+	if (type)
 	{
 		if (_wcsicmp(L"ACLINE", type) == 0)
 		{
 			powerState = POWER_ACLINE;
-		} 
+		}
 		else if (_wcsicmp(L"STATUS", type) == 0)
 		{
 			powerState = POWER_STATUS;
-		} 
+		}
 		else if (_wcsicmp(L"STATUS2", type) == 0)
 		{
 			powerState = POWER_STATUS2;
-		} 
+		}
 		else if (_wcsicmp(L"LIFETIME", type) == 0)
 		{
 			powerState= POWER_LIFETIME;
@@ -122,7 +122,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			{
 				g_Formats[id] = format;
 			}
-		} 
+		}
 		else if (_wcsicmp(L"MHZ", type) == 0)
 		{
 			powerState= POWER_MHZ;
@@ -237,7 +237,7 @@ double Update2(UINT id)
   This function is called when the value should be
   returned as a string.
 */
-LPCTSTR GetString(UINT id, UINT flags) 
+LPCTSTR GetString(UINT id, UINT flags)
 {
 	static WCHAR buffer[256];
 

@@ -97,7 +97,7 @@ static FolderInfo* GetFolderInfo(const wchar_t* aPath, const wchar_t* aIniPath)
 
 /*
   This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured. 
+  The function must return the maximum value that can be measured.
   The return value can also be 0, which means that Rainmeter will
   track the maximum value automatically. The parameters for this
   function are:
@@ -139,7 +139,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		if (_wcsicmp(strIncludeSubFolders, L"1") == 0) {
 			measureInfo->Folder->IncludeSubFolders(true);
 		}
-			
+
 		const wchar_t* strShowHiddenFiles = ReadConfigString(section, L"IncludeHiddenFiles", L"");
 		if (_wcsicmp(strShowHiddenFiles, L"1") == 0) {
 			measureInfo->Folder->IncludeHiddenFiles(true);

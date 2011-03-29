@@ -139,7 +139,7 @@ int CMeter::GetX(bool abs)
 			}
 		}
 	}
-	return m_X; 
+	return m_X;
 }
 
 /*
@@ -187,7 +187,7 @@ int CMeter::GetY(bool abs)
 			}
 		}
 	}
-	return m_Y; 
+	return m_Y;
 }
 
 /*
@@ -262,7 +262,7 @@ void CMeter::Hide()
 ** ReadConfig
 **
 ** Reads the meter-specific configs from the ini-file. The base implementation
-** reads the common settings for all meters. The inherited classes must call 
+** reads the common settings for all meters. The inherited classes must call
 ** the base implementation if they overwrite this method.
 **
 */
@@ -453,9 +453,9 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 
 	// Go through the list and check it there is a measure for us
 	std::list<CMeasure*>::const_iterator i = measures.begin();
-	for( ; i != measures.end(); ++i)
+	for ( ; i != measures.end(); ++i)
 	{
-		if(_wcsicmp((*i)->GetName(), m_MeasureName.c_str()) == 0)
+		if (_wcsicmp((*i)->GetName(), m_MeasureName.c_str()) == 0)
 		{
 			m_Measure = (*i);
 			return;
@@ -479,42 +479,42 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 */
 CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHAR* name)
 {
-	if(_wcsicmp(L"HISTOGRAM", meter) == 0)
+	if (_wcsicmp(L"HISTOGRAM", meter) == 0)
 	{
 		return new CMeterHistogram(meterWindow, name);
-	} 
-	else if(_wcsicmp(L"STRING", meter) == 0)
+	}
+	else if (_wcsicmp(L"STRING", meter) == 0)
 	{
 		return new CMeterString(meterWindow, name);
-	} 
-	else if(_wcsicmp(L"BAR", meter) == 0)
+	}
+	else if (_wcsicmp(L"BAR", meter) == 0)
 	{
 		return new CMeterBar(meterWindow, name);
-	} 
-	else if(_wcsicmp(L"BITMAP", meter) == 0)
+	}
+	else if (_wcsicmp(L"BITMAP", meter) == 0)
 	{
 		return new CMeterBitmap(meterWindow, name);
-	} 
-	else if(_wcsicmp(L"IMAGE", meter) == 0)
+	}
+	else if (_wcsicmp(L"IMAGE", meter) == 0)
 	{
 		return new CMeterImage(meterWindow, name);
-	} 
-	else if(_wcsicmp(L"LINE", meter) == 0)
+	}
+	else if (_wcsicmp(L"LINE", meter) == 0)
 	{
 		return new CMeterLine(meterWindow, name);
-	} 
-	else if(_wcsicmp(L"ROUNDLINE", meter) == 0)
+	}
+	else if (_wcsicmp(L"ROUNDLINE", meter) == 0)
 	{
 		return new CMeterRoundLine(meterWindow, name);
-	} 
-	else if(_wcsicmp(L"ROTATOR", meter) == 0)
+	}
+	else if (_wcsicmp(L"ROTATOR", meter) == 0)
 	{
 		return new CMeterRotator(meterWindow, name);
-	} 
-	else if(_wcsicmp(L"BUTTON", meter) == 0)
+	}
+	else if (_wcsicmp(L"BUTTON", meter) == 0)
 	{
 		return new CMeterButton(meterWindow, name);
-	} 
+	}
 
 	// Error
 	std::wstring error = L"Meter=";
@@ -566,7 +566,7 @@ void CMeter::SetAllMeasures(const std::vector<CMeasure*>& measures)
 	m_AllMeasures.push_back(m_Measure);
 
 	std::vector<CMeasure*>::const_iterator i = measures.begin();
-	for( ; i != measures.end(); ++i)
+	for ( ; i != measures.end(); ++i)
 	{
 		m_AllMeasures.push_back(*i);
 	}
@@ -583,7 +583,7 @@ void CMeter::ReadMeasureNames(CConfigParser& parser, const WCHAR* section, std::
 
 	int i = 2;
 	bool loop = true;
-	do 
+	do
 	{
 		_snwprintf_s(tmpName, _TRUNCATE, L"MeasureName%i", i);
 		const std::wstring& measure = parser.ReadString(section, tmpName, L"");
@@ -620,7 +620,7 @@ bool CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std:
 			size_t start = 0;
 			size_t pos = std::wstring::npos;
 
-			do 
+			do
 			{
 				pos = str.find(buffer, start);
 				if (pos != std::wstring::npos)
@@ -646,7 +646,7 @@ void CMeter::ReplaceToolTipMeasures(std::wstring& str)
 	std::vector<std::wstring> stringValues;
 
 	if (!m_AllMeasures.empty())
-	{	
+	{
 		// Get the values for the measures
 		for (size_t i = 0, isize = m_AllMeasures.size(); i < isize; ++i)
 		{
@@ -683,7 +683,7 @@ void CMeter::CreateToolTip(CMeterWindow* meterWindow)
 	}
 
 	HWND hwndTT = CreateWindowEx(WS_EX_TOPMOST,
-		TOOLTIPS_CLASS, 
+		TOOLTIPS_CLASS,
 		NULL,
 		style,
 		CW_USEDEFAULT,
@@ -732,7 +732,7 @@ void CMeter::UpdateToolTip()
 	ti.lpszText = (PTSTR) text.c_str();
 	ti.rect = GetMeterRect();
 
-	SendMessage(hwndTT, TTM_SETTOOLINFO, NULL, (LPARAM) (LPTOOLINFO) &ti); 
+	SendMessage(hwndTT, TTM_SETTOOLINFO, NULL, (LPARAM) (LPTOOLINFO) &ti);
 	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, NULL, m_ToolTipWidth);
 
 	if (!m_ToolTipTitle.empty())
@@ -861,7 +861,7 @@ bool CMeter::Draw(Graphics& graphics)
 		Pen dark(darkColor);
 
 		// The bevel is drawn outside the meter
-		Rect rect(x - 2, y - 2, m_W + 4, m_H + 4);	
+		Rect rect(x - 2, y - 2, m_W + 4, m_H + 4);
 		DrawBevel(graphics, rect, light, dark);
 	}
 

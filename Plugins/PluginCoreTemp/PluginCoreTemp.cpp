@@ -61,7 +61,7 @@ float getHighestTemp();
 
 /*
   This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured. 
+  The function must return the maximum value that can be measured.
   The return value can also be 0, which means that Rainmeter will
   track the maximum value automatically. The parameters for this
   function are:
@@ -73,10 +73,10 @@ float getHighestTemp();
 */
 UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
-	/* 
-	  Read our own settings from the ini-file 
+	/*
+	  Read our own settings from the ini-file
 	  The ReadConfigString can be used for this purpose. Plugins
-	  can also read the config some other way (e.g. with 
+	  can also read the config some other way (e.g. with
 	  GetPrivateProfileInt, but in that case the variables
 	  do not work.
 	*/
@@ -100,7 +100,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			}
 		}
 	}
-	
+
 	return 0;
 }
 

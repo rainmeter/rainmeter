@@ -33,7 +33,7 @@
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 #define SAFE_RELEASE(punk)  \
-              if ((punk) != NULL) { (punk)->Release(); (punk) = NULL; }
+			  if ((punk) != NULL) { (punk)->Release(); (punk) = NULL; }
 
 /* The exported functions */
 extern "C"
@@ -148,7 +148,7 @@ HRESULT RegisterDevice(PCWSTR devID)
 		hr = S_FALSE;
 	}
 	UnInitCom();
-    return hr;
+	return hr;
 }
 
 std::wstring GetDefaultID()
@@ -216,7 +216,7 @@ bool GetWin7AudioState(const VolumeAction action)
 
 UINT GetIndex()
 {
-	
+
 	std::wstring id_default = L"";
 	if (InitCom()) id_default = GetDefaultID();
 	UnInitCom();
@@ -275,7 +275,7 @@ bool SetWin7Volume(UINT volume, int offset = 0)
 
 /*
   This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured. 
+  The function must return the maximum value that can be measured.
   The return value can also be 0, which means that Rainmeter will
   track the maximum value automatically. The parameters for this
   function are:
@@ -294,7 +294,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	}
 
 	UINT count;
-    if (!pCollection || (S_OK != pCollection->GetCount(&count)))
+	if (!pCollection || (S_OK != pCollection->GetCount(&count)))
 	{
 		UnInitCom();
 		return 0;
@@ -302,10 +302,10 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	endpointIDs = std::vector<std::wstring>(count);
 
 	for (UINT i = 0; i < count; i++)
-    {
-	    IMMDevice *pEndpoint = 0;
+	{
+		IMMDevice *pEndpoint = 0;
 
-        // Get pointer to endpoint number i.
+		// Get pointer to endpoint number i.
 		if (pCollection->Item(i, &pEndpoint) == S_OK)
 		{
 			// Get the endpoint ID string.
@@ -339,13 +339,13 @@ This function is called when new value should be measured.
 The function returns the new value.
 */
 double Update2(UINT id)
-{	
+{
 	GetWin7AudioState(GET_VOLUME);
 	double volume = is_mute == TRUE ? -1.0 : floor(master_volume * 100.0 + 0.5);	// rounding up at 0.5
 	return volume > 100.0 ? 100.0 : volume;
 }
 
-LPCTSTR GetString(UINT id, UINT flags) 
+LPCTSTR GetString(UINT id, UINT flags)
 {
 	static WCHAR result[256];
 	wsprintf(result, L"ERROR");

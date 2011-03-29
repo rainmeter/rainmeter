@@ -44,14 +44,14 @@ CMeasureNetIn::~CMeasureNetIn()
 /*
 ** Update
 **
-** Updates the current net in value. 
+** Updates the current net in value.
 **
 */
 bool CMeasureNetIn::Update()
 {
 	if (!CMeasureNet::PreUpdate()) return false;
 
-	if(c_Table == NULL) return false;
+	if (c_Table == NULL) return false;
 
 	if (m_Cumulative)
 	{
@@ -61,7 +61,7 @@ bool CMeasureNetIn::Update()
 	{
 		ULONG64 value = 0;
 
-		if (!m_FirstTime) 
+		if (!m_FirstTime)
 		{
 			value = GetNetOctets(NET_IN);
 			if (value > m_InOctets)

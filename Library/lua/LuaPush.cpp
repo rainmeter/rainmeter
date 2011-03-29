@@ -21,14 +21,14 @@ std::wstring to_wstring(lua_State* L, int arg, void* type)
 
 const wchar_t* to_wchar (lua_State* L, int arg, void* type)
 {
-	// We have a static wstring here so we can keep a copy of the string 
+	// We have a static wstring here so we can keep a copy of the string
 	// passed in alive while its being passed around.
 	// This isn't exactly safe, but we shouldn't really have to worry as
 	// Rainmeter isn't threaded.
 	static std::wstring str;
 
 	str = ConvertToWide(lua_tostring(L,arg));
-		
+
 	return str.c_str();
 }
 

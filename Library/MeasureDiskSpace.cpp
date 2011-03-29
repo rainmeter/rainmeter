@@ -47,7 +47,7 @@ CMeasureDiskSpace::~CMeasureDiskSpace()
 /*
 ** Update
 **
-** Updates the current disk free space value. 
+** Updates the current disk free space value.
 **
 */
 bool CMeasureDiskSpace::Update()
@@ -127,7 +127,7 @@ bool CMeasureDiskSpace::Update()
 */
 const WCHAR* CMeasureDiskSpace::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
-	if (m_Label) 
+	if (m_Label)
 	{
 		return CheckSubstitute(m_LabelName.c_str());
 	}

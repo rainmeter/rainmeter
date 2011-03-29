@@ -74,7 +74,7 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 				endPos = spacePos;
 			}
 
-			std::wstring newStr = arg.substr(0, endPos); 
+			std::wstring newStr = arg.substr(0, endPos);
 			arg.erase(0, endPos + 1);
 
 			if (newStr.size() > 0 || quotePos == 0)
@@ -105,7 +105,7 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 
 	return result;
 }
-	
+
 /*
 ** initModuleEx
 **
@@ -115,18 +115,18 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath)
 {
 	int Result=1;
-	
-	try 
+
+	try
 	{
 		Rainmeter=new CRainmeter;
 
-		if(Rainmeter) 
+		if (Rainmeter)
 		{
 			Result=Rainmeter->Initialize(ParentWnd, dllInst, szPath);
 		}
 
 	}
-	catch(CError& error) 
+	catch(CError& error)
 	{
 		MessageBox(ParentWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 	}
@@ -142,7 +142,7 @@ int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath)
 */
 void quitModule(HINSTANCE dllInst)
 {
-	if(Rainmeter) 
+	if (Rainmeter)
 	{
 		Rainmeter->Quit(dllInst);
 		delete Rainmeter;
@@ -162,7 +162,7 @@ void Initialize(bool DummyLS, LPCTSTR CmdLine)
 	CRainmeter::SetCommandLine(CmdLine);
 }
 
-/* 
+/*
 ** ExecuteBang
 **
 ** Runs a bang command. This is called from the main application
@@ -188,14 +188,14 @@ void ExecuteBang(LPCTSTR szBang)
 */
 LPCTSTR ReadConfigString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue)
 {
-	if (Rainmeter) 
+	if (Rainmeter)
 	{
 		CConfigParser* parser = Rainmeter->GetCurrentParser();
 		if (parser)
 		{
 			return parser->ReadString(section, key, defValue, false).c_str();
 		}
-	}	
+	}
 	return NULL;
 }
 
@@ -210,7 +210,7 @@ LPCTSTR ReadConfigString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue)
 */
 LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 {
-	if (Rainmeter) 
+	if (Rainmeter)
 	{
 		static std::wstring result;
 
@@ -359,7 +359,7 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 		}
 
 		return L"noop";
-	}	
+	}
 
 	return L"error:no rainmeter!";
 }
@@ -372,7 +372,7 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 */
 void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 {
-	if(Rainmeter) 
+	if (Rainmeter)
 	{
 		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
 		size_t subStringsSize = subStrings.size();
@@ -1397,7 +1397,7 @@ void RainmeterTrayMenuWide()
 */
 void RainmeterResetStatsWide()
 {
-	if (Rainmeter) 
+	if (Rainmeter)
 	{
 		Rainmeter->ResetStats();
 	}
@@ -1486,7 +1486,7 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 				{
 					double value;
 					formula = mw->GetParser().ReadFormula(strValue, &value);
-					
+
 					// Formula read fine
 					if (formula != -1)
 					{
@@ -1565,7 +1565,7 @@ void RainmeterQuitWide()
 GlobalConfig CRainmeter::c_GlobalConfig = {0};
 bool CRainmeter::c_Debug = false;
 
-/* 
+/*
 ** CRainmeter
 **
 ** Constructor
@@ -1593,12 +1593,12 @@ CRainmeter::CRainmeter() :
 	INITCOMMONCONTROLSEX initCtrls = {sizeof(INITCOMMONCONTROLSEX), ICC_LISTVIEW_CLASSES};
 	InitCommonControlsEx(&initCtrls);
 
-    // Initialize GDI+.
-    GdiplusStartupInput gdiplusStartupInput;
-    GdiplusStartup(&m_GDIplusToken, &gdiplusStartupInput, NULL);
+	// Initialize GDI+.
+	GdiplusStartupInput gdiplusStartupInput;
+	GdiplusStartup(&m_GDIplusToken, &gdiplusStartupInput, NULL);
 }
 
-/* 
+/*
 ** ~CRainmeter
 **
 ** Destructor
@@ -1633,7 +1633,7 @@ CRainmeter::~CRainmeter()
 	GdiplusShutdown(m_GDIplusToken);
 }
 
-/* 
+/*
 ** Initialize
 **
 ** The main initialization function for the module.
@@ -1644,10 +1644,10 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 {
 	int Result=0;
 
-	if(Parent==NULL || Instance==NULL) 
+	if (Parent==NULL || Instance==NULL)
 	{
 		throw CError(CError::ERROR_NULL_PARAMETER, __LINE__, __FILE__);
-	}	
+	}
 
 	m_Instance = Instance;
 
@@ -1656,18 +1656,18 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	// Remove the module's name from the path
 	WCHAR* pos = wcsrchr(tmpSzPath, L'\\');
-	if(pos) 
+	if (pos)
 	{
 		*(pos + 1) = L'\0';
-	} 
-	else 
+	}
+	else
 	{
 		tmpSzPath[0] = L'\0';
 	}
 
 	m_Path = tmpSzPath;
 
-	if(!c_DummyLitestep) InitalizeLitestep();
+	if (!c_DummyLitestep) InitalizeLitestep();
 
 	bool bDefaultIniLocation = false;
 
@@ -1761,7 +1761,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	// Read the skin folder from the ini file
 	tmpSzPath[0] = L'\0';
-	if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0) 
+	if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0)
 	{
 		m_SkinPath = tmpSzPath;
 		ExpandEnvironmentVariables(m_SkinPath);
@@ -1901,7 +1901,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	ScanForConfigs(m_SkinPath);
 	ScanForThemes(GetSettingsPath() + L"Themes");
 
-	if(m_ConfigStrings.empty())
+	if (m_ConfigStrings.empty())
 	{
 		std::wstring error = L"There are no available skins at:\n" + m_SkinPath;
 		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
@@ -1926,7 +1926,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	}
 
 	// If we're running as Litestep's plugin, register the !bangs
-	if(!c_DummyLitestep) 
+	if (!c_DummyLitestep)
 	{
 		int Msgs[] = { LM_GETREVID, 0 };
 		// Register RevID message to Litestep
@@ -2013,7 +2013,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	return Result;	// Alles OK
 }
 
-/* 
+/*
 ** CheckSkinVersions
 **
 ** Checks if any of the skins in the program folder are newer than in the skin folder.
@@ -2143,7 +2143,7 @@ void CRainmeter::CheckSkinVersions()
 	}
 }
 
-/*	
+/*
 ** CompareVersions
 **
 ** Compares two version strings. Returns 0 if they are equal, 1 if A > B and -1 if A < B.
@@ -2159,7 +2159,7 @@ int CRainmeter::CompareVersions(const std::wstring& strA, const std::wstring& st
 	std::vector<std::wstring> arrayB = CConfigParser::Tokenize(strB, L".");
 	size_t arrayASize = arrayA.size();
 	size_t arrayBSize = arrayB.size();
-	
+
 	size_t len = max(arrayASize, arrayBSize);
 	for (size_t i = 0; i < len; ++i)
 	{
@@ -2181,7 +2181,7 @@ int CRainmeter::CompareVersions(const std::wstring& strA, const std::wstring& st
 	return 0;
 }
 
-/* 
+/*
 ** CreateDefaultConfigFile
 **
 ** Creates the default Rainmeter.ini file.
@@ -2202,7 +2202,7 @@ void CRainmeter::CreateDefaultConfigFile(const std::wstring& strFile)
 	{
 		// The default.ini wasn't found -> create new
 		std::ofstream out(strFile.c_str(), std::ios::out);
-		if (out) 
+		if (out)
 		{
 			out << std::string("[Rainmeter]\n\n[illustro\\System]\nActive=1\n");
 			out.close();
@@ -2264,11 +2264,11 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		m_ConfigStrings[configIndex].active = iniIndex + 1;
 		WriteActive(skinConfig, iniIndex);
 
-		try 
+		try
 		{
 			CreateMeterWindow(skinPath, skinConfig, skinIniFile);
-		} 
-		catch(CError& error) 
+		}
+		catch(CError& error)
 		{
 			MessageBox(NULL, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		}
@@ -2375,7 +2375,7 @@ bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
 			{
 				// Delete all meter windows
 				delete (*iter).second;
-			} 
+			}
 			else if ((*iter).second == meterWindow)
 			{
 				m_Meters.erase(iter);
@@ -2525,7 +2525,7 @@ int CRainmeter::GetLoadOrder(const std::wstring& config)
 	return 0;
 }
 
-/* 
+/*
 ** Quit
 **
 ** Called when the module quits
@@ -2534,7 +2534,7 @@ int CRainmeter::GetLoadOrder(const std::wstring& config)
 void CRainmeter::Quit(HINSTANCE dllInst)
 {
 	// If we're running as Litestep's plugin, unregister the !bangs
-	if(!c_DummyLitestep) 
+	if (!c_DummyLitestep)
 	{
 		int Msgs[] = { LM_GETREVID, 0 };
 		// Unregister RevID message
@@ -2608,7 +2608,7 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 	}
 }
 
-/* 
+/*
 ** ScanForConfigs
 **
 ** Scans all the subfolders and locates the ini-files.
@@ -2624,10 +2624,10 @@ void CRainmeter::ScanForConfigs(const std::wstring& path)
 
 int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse)
 {
-    WIN32_FIND_DATA fileData;      // Data structure describes the file found
-    WIN32_FIND_DATA fileDataIni;   // Data structure describes the file found
-    HANDLE hSearch;                // Search handle returned by FindFirstFile
-    HANDLE hSearchIni;             // Search handle returned by FindFirstFile
+	WIN32_FIND_DATA fileData;      // Data structure describes the file found
+	WIN32_FIND_DATA fileDataIni;   // Data structure describes the file found
+	HANDLE hSearch;                // Search handle returned by FindFirstFile
+	HANDLE hSearchIni;             // Search handle returned by FindFirstFile
 
 	if (!base.empty())
 	{
@@ -2644,7 +2644,7 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 
 		do
 		{
-			if(hSearchIni == INVALID_HANDLE_VALUE) break;    // No more files found
+			if (hSearchIni == INVALID_HANDLE_VALUE) break;    // No more files found
 
 			// Check whether the extension is ".ini"
 			std::wstring ext = fileDataIni.cFileName;
@@ -2673,12 +2673,12 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 	// Scan for folders
 	std::wstring files = path + base;
 	files += L"*";
-    hSearch = FindFirstFile(files.c_str(), &fileData);
+	hSearch = FindFirstFile(files.c_str(), &fileData);
 	do
 	{
-		if(hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
+		if (hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
 
-		if(fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && 
+		if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
 			!(wcscmp(L"Backup", fileData.cFileName) == 0 && base.empty()) &&		// Skip the backup folder
 			wcscmp(L".", fileData.cFileName) != 0 &&
 			wcscmp(L"..", fileData.cFileName) != 0)
@@ -2702,12 +2702,12 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 		}
 	} while(FindNextFile(hSearch, &fileData));
 
-    FindClose(hSearch);
+	FindClose(hSearch);
 
 	return index;
 }
 
-/* 
+/*
 ** ScanForThemes
 **
 ** Scans the given folder for themes
@@ -2717,16 +2717,16 @@ void CRainmeter::ScanForThemes(const std::wstring& path)
 	m_Themes.clear();
 
 	WIN32_FIND_DATA fileData;      // Data structure describes the file found
-    HANDLE hSearch;                // Search handle returned by FindFirstFile
+	HANDLE hSearch;                // Search handle returned by FindFirstFile
 
 	// Scan for folders
 	std::wstring folders = path + L"\\*";
-    hSearch = FindFirstFile(folders.c_str(), &fileData);
+	hSearch = FindFirstFile(folders.c_str(), &fileData);
 	do
 	{
-		if(hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
+		if (hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
 
-		if(fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && 
+		if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
 			wcscmp(L".", fileData.cFileName) != 0 &&
 			wcscmp(L"..", fileData.cFileName) != 0)
 		{
@@ -2734,7 +2734,7 @@ void CRainmeter::ScanForThemes(const std::wstring& path)
 		}
 	} while(FindNextFile(hSearch, &fileData));
 
-    FindClose(hSearch);
+	FindClose(hSearch);
 }
 
 void CRainmeter::SaveSettings()
@@ -3076,11 +3076,11 @@ std::wstring CRainmeter::ParseCommand(const WCHAR* command, CMeterWindow* meterW
 					}
 					else
 					{
-						if (meterWindow) 
+						if (meterWindow)
 						{
 							const std::list<CMeasure*>& measures = meterWindow->GetMeasures();
 							std::list<CMeasure*>::const_iterator iter = measures.begin();
-							for( ; iter != measures.end(); ++iter)
+							for ( ; iter != measures.end(); ++iter)
 							{
 								if (_wcsicmp((*iter)->GetName(), measureName.c_str()) == 0)
 								{
@@ -3111,7 +3111,7 @@ std::wstring CRainmeter::ParseCommand(const WCHAR* command, CMeterWindow* meterW
 ** Runs the given command or bang
 **
 */
-void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow) 
+void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 {
 	if (command == NULL) return;
 
@@ -3151,11 +3151,11 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 			PlaySound(NULL, NULL, SND_PURGE);
 			return;
 		}
-		
+
 		// Run the command
-		if(strCommand.c_str()[0] == L'!' && Rainmeter->GetDummyLitestep())
+		if (strCommand.c_str()[0] == L'!' && Rainmeter->GetDummyLitestep())
 		{
-			if (meterWindow) 
+			if (meterWindow)
 			{
 				// Fake WM_COPY to deliver bangs
 				COPYDATASTRUCT CopyDataStruct;
@@ -3168,7 +3168,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 			{
 				std::wstring bang, arg;
 				size_t pos = strCommand.find(L' ');
-				if (pos != std::wstring::npos) 
+				if (pos != std::wstring::npos)
 				{
 					bang = strCommand.substr(0, pos);
 					strCommand.erase(0, pos + 1);
@@ -3191,7 +3191,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 
 /*
 ** ReadGeneralSettings
-**	
+**
 ** Reads the general settings from the Rainmeter.ini file
 **
 */
@@ -3326,7 +3326,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		}
 
 		delete [] tmpSz;
-		
+
 		if (!skinName.empty())
 		{
 			if (!SetActiveConfig(skinName, skinIni))
@@ -3355,7 +3355,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	}
 }
 
-/* 
+/*
 ** SetActiveConfig
 **
 ** Makes the given config active. If the config cannot be found this returns false.
@@ -3382,7 +3382,7 @@ bool CRainmeter::SetActiveConfig(const std::wstring& skinName, const std::wstrin
 	return false;
 }
 
-/* 
+/*
 ** RefreshAll
 **
 ** Refreshes all active meter windows.
@@ -3479,7 +3479,7 @@ void CRainmeter::RefreshAll()
 	}
 }
 
-/* 
+/*
 ** UpdateDesktopWorkArea
 **
 ** Applies given DesktopWorkArea and DesktopWorkArea@n.
@@ -3603,7 +3603,7 @@ void CRainmeter::ReadStats()
 {
 	WCHAR* tmpSz = new WCHAR[MAX_LINE_LENGTH];
 
-	if(GetPrivateProfileString(L"Statistics", L"Since", L"", tmpSz, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0) 
+	if (GetPrivateProfileString(L"Statistics", L"Since", L"", tmpSz, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0)
 	{
  		m_StatsDate = tmpSz;
 	}
@@ -3648,12 +3648,12 @@ void CRainmeter::ResetStats()
 {
 	// Set the stats-date string
 	struct tm *newtime;
-    time_t long_time;
-    time(&long_time);
-    newtime = localtime(&long_time);
+	time_t long_time;
+	time(&long_time);
+	newtime = localtime(&long_time);
 	m_StatsDate = _wasctime(newtime);
 	m_StatsDate.resize(m_StatsDate.size() - 1);
-	
+
 	// Only Net measure has stats at the moment
 	CMeasureNet::ResetStats();
 }
@@ -3664,7 +3664,7 @@ void CRainmeter::ResetStats()
 ** Opens the context menu in given coordinates.
 **
 */
-void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow) 
+void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 {
 	if (!m_MenuActive)
 	{
@@ -3673,10 +3673,10 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 		// Show context menu, if no actions were executed
 		HMENU menu = LoadMenu(m_Instance, MAKEINTRESOURCE(IDR_CONTEXT_MENU));
 
-		if(menu)
+		if (menu)
 		{
 			HMENU subMenu = GetSubMenu(menu, 0);
-			if(subMenu)
+			if (subMenu)
 			{
 				if (!GetDummyLitestep())
 				{
@@ -3798,7 +3798,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				// Show context menu
 				TrackPopupMenu(
 				  subMenu,
-				  TPM_RIGHTBUTTON | TPM_LEFTALIGN, 
+				  TPM_RIGHTBUTTON | TPM_LEFTALIGN,
 				  pos.x,
 				  pos.y,
 				  0,
@@ -3893,7 +3893,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 			HMENU posMenu = GetSubMenu(settingsMenu, 0);
 			if (posMenu)
 			{
-				switch(meterWindow->GetWindowZPosition()) 
+				switch(meterWindow->GetWindowZPosition())
 				{
 				case ZPOSITION_ONDESKTOP:
 					CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_ONDESKTOP, MF_BYCOMMAND | MF_CHECKED);
@@ -3915,10 +3915,10 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 					CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_NORMAL, MF_BYCOMMAND | MF_CHECKED);
 				}
 
-				if(meterWindow->GetXFromRight()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
-				if(meterWindow->GetYFromBottom()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
-				if(meterWindow->GetXPercentage()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
-				if(meterWindow->GetYPercentage()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
+				if (meterWindow->GetXFromRight()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
+				if (meterWindow->GetYFromBottom()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
+				if (meterWindow->GetXPercentage()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
+				if (meterWindow->GetYPercentage()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
 
 				if (!c_DummyLitestep)
 				{
@@ -3949,17 +3949,17 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 				value = max(0, value);
 				CheckMenuItem(alphaMenu, value, MF_BYPOSITION | MF_CHECKED);
 
-				if (meterWindow->GetWindowHide() == HIDEMODE_FADEIN) 
+				if (meterWindow->GetWindowHide() == HIDEMODE_FADEIN)
 				{
 					CheckMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_CHECKED);
 					EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
 				}
-				else if (meterWindow->GetWindowHide() == HIDEMODE_FADEOUT) 
+				else if (meterWindow->GetWindowHide() == HIDEMODE_FADEOUT)
 				{
 					CheckMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_CHECKED);
 					EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
 				}
-				else if (meterWindow->GetWindowHide() == HIDEMODE_HIDE) 
+				else if (meterWindow->GetWindowHide() == HIDEMODE_HIDE)
 				{
 					EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
 					EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
@@ -4011,7 +4011,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 		InsertMenu(skinMenu, 0, MF_BYPOSITION, ID_CONTEXT_SKINMENU_OPENSKINSFOLDER, skinName.c_str());
 		InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 		SetMenuDefaultItem(skinMenu, 0, MF_BYPOSITION);
-	
+
 		ChangeSkinIndex(skinMenu, index);
 
 		// Add the variants menu
@@ -4247,7 +4247,7 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	if (bSuccess)
 	{
 		bSuccess = (wcscmp(L"TRUE", tmpSz) == 0);
-		WritePrivateProfileString(L"Rainmeter", L"WriteTest", NULL, m_IniFile.c_str());	
+		WritePrivateProfileString(L"Rainmeter", L"WriteTest", NULL, m_IniFile.c_str());
 	}
 	if (!bSuccess)
 	{

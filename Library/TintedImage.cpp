@@ -600,7 +600,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			{
 				WCHAR* parseSz = _wcsdup(crop.c_str());
 				WCHAR* token;
-				
+
 				token = wcstok(parseSz, L",");
 				if (token)
 				{
@@ -673,7 +673,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	std::vector<Gdiplus::REAL> matrix2 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix2]);
 	if (matrix2.size() == 5)
 	{
-		for(int i = 0; i < 4; ++i)  // The fifth column must be 0.
+		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
 			m_ColorMatrix->m[1][i] = matrix2[i];
 		}
@@ -686,7 +686,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	std::vector<Gdiplus::REAL> matrix3 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix3]);
 	if (matrix3.size() == 5)
 	{
-		for(int i = 0; i < 4; ++i)  // The fifth column must be 0.
+		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
 			m_ColorMatrix->m[2][i] = matrix3[i];
 		}
@@ -699,7 +699,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	std::vector<Gdiplus::REAL> matrix4 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix4]);
 	if (matrix4.size() == 5)
 	{
-		for(int i = 0; i < 4; ++i)  // The fifth column must be 0.
+		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
 		{
 			m_ColorMatrix->m[3][i] = matrix4[i];
 		}
@@ -712,7 +712,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	std::vector<Gdiplus::REAL> matrix5 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix5]);
 	if (matrix5.size() == 5)
 	{
-		for(int i = 0; i < 4; ++i)  // The fifth column must be 1.
+		for (int i = 0; i < 4; ++i)  // The fifth column must be 1.
 		{
 			m_ColorMatrix->m[4][i] = matrix5[i];
 		}
@@ -721,19 +721,19 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_NeedsTinting = (oldGreyScale != m_GreyScale || !CompareColorMatrix(&oldColorMatrix, m_ColorMatrix));
 
 	std::wstring flip = parser.ReadString(section, m_ConfigArray[ConfigIndexImageFlip], L"NONE");
-	if(_wcsicmp(flip.c_str(), L"NONE") == 0)
+	if (_wcsicmp(flip.c_str(), L"NONE") == 0)
 	{
 		m_Flip = RotateNoneFlipNone;
 	}
-	else if(_wcsicmp(flip.c_str(), L"HORIZONTAL") == 0)
+	else if (_wcsicmp(flip.c_str(), L"HORIZONTAL") == 0)
 	{
 		m_Flip = RotateNoneFlipX;
 	}
-	else if(_wcsicmp(flip.c_str(), L"VERTICAL") == 0)
+	else if (_wcsicmp(flip.c_str(), L"VERTICAL") == 0)
 	{
 		m_Flip = RotateNoneFlipY;
 	}
-	else if(_wcsicmp(flip.c_str(), L"BOTH") == 0)
+	else if (_wcsicmp(flip.c_str(), L"BOTH") == 0)
 	{
 		m_Flip = RotateNoneFlipXY;
 	}

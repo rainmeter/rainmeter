@@ -107,7 +107,7 @@ int CMeterString::GetX(bool abs)
 {
 	int x = CMeter::GetX();
 
-	if (!abs) 
+	if (!abs)
 	{
 		switch(m_Align)
 		{
@@ -199,7 +199,7 @@ void CMeterString::Initialize()
 
 				// It couldn't find the font family: Log it.
 				if (Ok != status)
-				{	
+				{
 					std::wstring error = L"Unable to load font family: " + m_FontFace;
 					Log(LOG_ERROR, error.c_str());
 
@@ -259,7 +259,7 @@ void CMeterString::Initialize()
 		}
 		else
 		{
-			m_Font = new Gdiplus::Font(FontFamily::GenericSansSerif(), size, style);
+			m_Font = new Gdiplus::Font(FontFamily::GenericSansSerif (), size, style);
 		}
 
 		Status status = m_Font->GetLastStatus();
@@ -361,15 +361,15 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_Scale = wcstod(scale.c_str(), NULL);
 
 	const std::wstring& align = parser.ReadString(section, L"StringAlign", L"LEFT");
-	if(_wcsicmp(align.c_str(), L"LEFT") == 0)
+	if (_wcsicmp(align.c_str(), L"LEFT") == 0)
 	{
 		m_Align = ALIGN_LEFT;
 	}
-	else if(_wcsicmp(align.c_str(), L"RIGHT") == 0)
+	else if (_wcsicmp(align.c_str(), L"RIGHT") == 0)
 	{
 		m_Align = ALIGN_RIGHT;
 	}
-	else if(_wcsicmp(align.c_str(), L"CENTER") == 0)
+	else if (_wcsicmp(align.c_str(), L"CENTER") == 0)
 	{
 		m_Align = ALIGN_CENTER;
 	}
@@ -383,19 +383,19 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 
 	const std::wstring& stringCase = parser.ReadString(section, L"StringCase", L"NONE");
-	if(_wcsicmp(stringCase.c_str(), L"NONE") == 0)
+	if (_wcsicmp(stringCase.c_str(), L"NONE") == 0)
 	{
 		m_textCase = TEXTCASE_NONE;
 	}
-	else if(_wcsicmp(stringCase.c_str(), L"UPPER") == 0)
+	else if (_wcsicmp(stringCase.c_str(), L"UPPER") == 0)
 	{
 		m_textCase = TEXTCASE_UPPER;
 	}
-	else if(_wcsicmp(stringCase.c_str(), L"LOWER") == 0)
+	else if (_wcsicmp(stringCase.c_str(), L"LOWER") == 0)
 	{
 		m_textCase = TEXTCASE_LOWER;
 	}
-	else if(_wcsicmp(stringCase.c_str(), L"PROPER") == 0)
+	else if (_wcsicmp(stringCase.c_str(), L"PROPER") == 0)
 	{
 		m_textCase = TEXTCASE_PROPER;
 	}
@@ -409,19 +409,19 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 
 	const std::wstring& style = parser.ReadString(section, L"StringStyle", L"NORMAL");
-	if(_wcsicmp(style.c_str(), L"NORMAL") == 0)
+	if (_wcsicmp(style.c_str(), L"NORMAL") == 0)
 	{
 		m_Style = NORMAL;
 	}
-	else if(_wcsicmp(style.c_str(), L"BOLD") == 0)
+	else if (_wcsicmp(style.c_str(), L"BOLD") == 0)
 	{
 		m_Style = BOLD;
 	}
-	else if(_wcsicmp(style.c_str(), L"ITALIC") == 0)
+	else if (_wcsicmp(style.c_str(), L"ITALIC") == 0)
 	{
 		m_Style = ITALIC;
 	}
-	else if(_wcsicmp(style.c_str(), L"BOLDITALIC") == 0)
+	else if (_wcsicmp(style.c_str(), L"BOLDITALIC") == 0)
 	{
 		m_Style = BOLDITALIC;
 	}
@@ -435,15 +435,15 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 
 	const std::wstring& effect = parser.ReadString(section, L"StringEffect", L"NONE");
-	if(_wcsicmp(effect.c_str(), L"NONE") == 0)
+	if (_wcsicmp(effect.c_str(), L"NONE") == 0)
 	{
 		m_Effect = EFFECT_NONE;
 	}
-	else if(_wcsicmp(effect.c_str(), L"SHADOW") == 0)
+	else if (_wcsicmp(effect.c_str(), L"SHADOW") == 0)
 	{
 		m_Effect = EFFECT_SHADOW;
 	}
-	else if(_wcsicmp(effect.c_str(), L"BORDER") == 0)
+	else if (_wcsicmp(effect.c_str(), L"BORDER") == 0)
 	{
 		m_Effect = EFFECT_BORDER;
 	}
@@ -498,7 +498,7 @@ bool CMeterString::Update()
 		{
 			if (!stringValues.empty())
 			{
-				m_String += stringValues[0]; 
+				m_String += stringValues[0];
 			}
 		}
 		else if (!stringValues.empty())
@@ -556,7 +556,7 @@ bool CMeterString::Update()
 */
 bool CMeterString::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(graphics)) return false;
 
 	return DrawString(graphics, NULL);
 }
@@ -572,7 +572,7 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 	if (m_Font == NULL) return false;
 
 	StringFormat stringFormat;
-	
+
 	if (m_AntiAlias)
 	{
 		graphics.SetTextRenderingHint(TextRenderingHintAntiAlias);
@@ -650,7 +650,7 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 			rcEffect.Offset(-1, 1);
 			graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
 		}
-		
+
 		SolidBrush solidBrush(m_Color);
 		graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, m_Rect, &stringFormat, &solidBrush);
 
@@ -680,9 +680,9 @@ void CMeterString::BindMeasure(const std::list<CMeasure*>& measures)
 	{
 		// Go through the list and check it there is a secondary measures for us
 		std::list<CMeasure*>::const_iterator i = measures.begin();
-		for( ; i != measures.end(); ++i)
+		for ( ; i != measures.end(); ++i)
 		{
-			if(_wcsicmp((*i)->GetName(), (*j).c_str()) == 0)
+			if (_wcsicmp((*i)->GetName(), (*j).c_str()) == 0)
 			{
 				m_Measures.push_back(*i);
 				break;

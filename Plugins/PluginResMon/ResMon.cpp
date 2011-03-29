@@ -77,7 +77,7 @@ BOOL CALLBACK EnumWindowProc ( HWND hWnd, LPARAM lParam )
 
 /*
   This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured. 
+  The function must return the maximum value that can be measured.
   The return value can also be 0, which means that Rainmeter will
   track the maximum value automatically. The parameters for this
   function are:
@@ -186,7 +186,7 @@ UINT Update(UINT id)
 		{
 			if (processName)
 			{
-				if(EnumProcessModules(hProcess, hMod, sizeof(hMod), &cbNeeded))
+				if (EnumProcessModules(hProcess, hMod, sizeof(hMod), &cbNeeded))
 				{
 					if (GetModuleBaseName(hProcess, hMod[0], buffer, sizeof(buffer)))
 					{

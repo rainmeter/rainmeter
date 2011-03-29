@@ -44,14 +44,14 @@ CMeasureNetOut::~CMeasureNetOut()
 /*
 ** Update
 **
-** Updates the current net out value. 
+** Updates the current net out value.
 **
 */
 bool CMeasureNetOut::Update()
 {
 	if (!CMeasureNet::PreUpdate()) return false;
 
-	if(c_Table == NULL) return false;
+	if (c_Table == NULL) return false;
 
 	if (m_Cumulative)
 	{
@@ -61,7 +61,7 @@ bool CMeasureNetOut::Update()
 	{
 		ULONG64 value = 0;
 
-		if (!m_FirstTime) 
+		if (!m_FirstTime)
 		{
 			value = GetNetOctets(NET_OUT);
 			if (value > m_OutOctets)

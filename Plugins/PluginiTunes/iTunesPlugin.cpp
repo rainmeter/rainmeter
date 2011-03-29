@@ -310,7 +310,7 @@ static bool updateCurrentTrack()
 			IITArtworkPtr artwork;
 			ITArtworkFormat artworkFormat;
 			if (count > 0 &&
-				SUCCEEDED(artworkCollection->get_Item(1, &artwork)) && 
+				SUCCEEDED(artworkCollection->get_Item(1, &artwork)) &&
 				SUCCEEDED(artwork->get_Format(&artworkFormat)))
 			{
 				_bstr_t path;
@@ -427,7 +427,7 @@ static void initEventHandler()
 
 /*
 This function is called when the measure is initialized.
-The function must return the maximum value that can be measured. 
+The function must return the maximum value that can be measured.
 The return value can also be 0, which means that Rainmeter will
 track the maximum value automatically. The parameters for this
 function are:
@@ -469,7 +469,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	}
 
 	const wchar_t* type = ReadConfigString(section, L"Command", L"");
-	for(int i = 0; i < COMMAND_COUNT; i++)
+	for (int i = 0; i < COMMAND_COUNT; i++)
 	{
 		if (CommandName[i] && type && _wcsicmp(CommandName[i], type) == 0)
 		{
@@ -552,7 +552,7 @@ This function is called when the value should be
 returned as a string.
 */
 #define BUFFER_SIZE 256
-LPCTSTR GetString(UINT id, UINT flags) 
+LPCTSTR GetString(UINT id, UINT flags)
 {
 	//Error Check
 	static wchar_t buffer[BUFFER_SIZE];

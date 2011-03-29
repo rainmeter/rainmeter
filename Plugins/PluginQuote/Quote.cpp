@@ -94,7 +94,7 @@ std::wstring ConvertToWide(LPCSTR str)
 
 /*
   This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured. 
+  The function must return the maximum value that can be measured.
   The return value can also be 0, which means that Rainmeter will
   track the maximum value automatically. The parameters for this
   function are:
@@ -129,7 +129,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 
 		size_t start = 0;
 		size_t pos = ext.find(L';');
-		while (pos != std::wstring::npos) 
+		while (pos != std::wstring::npos)
 		{
 			qData.fileFilters.push_back(ext.substr(start, pos - start));
 			start = pos + 1;
@@ -157,9 +157,9 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			}
 		}
 
-		if (PathIsDirectory(qData.pathname.c_str())) 
+		if (PathIsDirectory(qData.pathname.c_str()))
 		{
-			if (qData.pathname[qData.pathname.size() - 1] != L'\\') 
+			if (qData.pathname[qData.pathname.size() - 1] != L'\\')
 			{
 				qData.pathname += L"\\";
 			}
@@ -168,7 +168,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			ScanFolder(qData, bSubfolders, qData.pathname);
 		}
 	}
-	
+
 	if (!qData.pathname.empty())
 	{
 		g_Values[id] = qData;
@@ -192,11 +192,11 @@ void ScanFolder(quoteData& qData, bool bSubfolders, const std::wstring& path)
 	hSearch = FindFirstFile(searchPath.c_str(), &fileData);
 	do
 	{
-		if(hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
+		if (hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
 
-		if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) 
+		if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
-			if (bSubfolders) 
+			if (bSubfolders)
 			{
 				if (wcscmp(fileData.cFileName, L".") != 0 && wcscmp(fileData.cFileName, L"..") != 0)
 				{
@@ -206,11 +206,11 @@ void ScanFolder(quoteData& qData, bool bSubfolders, const std::wstring& path)
 		}
 		else
 		{
-			if (!qData.fileFilters.empty()) 
+			if (!qData.fileFilters.empty())
 			{
-				for (int i = 0; i < qData.fileFilters.size(); i++) 
+				for (int i = 0; i < qData.fileFilters.size(); i++)
 				{
-					if (!qData.fileFilters[i].empty() && PathMatchSpec(fileData.cFileName, qData.fileFilters[i].c_str())) 
+					if (!qData.fileFilters[i].empty() && PathMatchSpec(fileData.cFileName, qData.fileFilters[i].c_str()))
 					{
 						qData.files.push_back(path + fileData.cFileName);
 						break;
@@ -223,7 +223,7 @@ void ScanFolder(quoteData& qData, bool bSubfolders, const std::wstring& path)
 			}
 		}
 	}
-	while(FindNextFile(hSearch, &fileData));
+	while (FindNextFile(hSearch, &fileData));
 }
 
 #define BUFFER_SIZE 4096
@@ -262,7 +262,7 @@ double Update2(UINT id)
 
 					qData.value.erase();
 
-					if (0xFEFF == *(WCHAR*)buffer) 
+					if (0xFEFF == *(WCHAR*)buffer)
 					{
 						// It's unicode
 						WCHAR* wBuffer = (WCHAR*)buffer;
@@ -270,7 +270,7 @@ double Update2(UINT id)
 						// Read until we find the first separator
 						WCHAR* sepPos1 = NULL;
 						WCHAR* sepPos2 = NULL;
-						do 
+						do
 						{
 							size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
 							buffer[len] = 0;
@@ -299,7 +299,7 @@ double Update2(UINT id)
 						while (sepPos1 == NULL);
 
 						// Find the second separator
-						do 
+						do
 						{
 							sepPos2 = wcsstr(sepPos1, qData.separator.c_str());
 							if (sepPos2 == NULL)
@@ -343,7 +343,7 @@ double Update2(UINT id)
 						// Read until we find the first separator
 						char* sepPos1 = NULL;
 						char* sepPos2 = NULL;
-						do 
+						do
 						{
 							size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
 							aBuffer[len] = 0;
@@ -370,7 +370,7 @@ double Update2(UINT id)
 						while (sepPos1 == NULL);
 
 						// Find the second separator
-						do 
+						do
 						{
 							sepPos2 = strstr(sepPos1, ConvertToAscii(qData.separator.c_str()).c_str());
 							if (sepPos2 == NULL)
@@ -419,11 +419,11 @@ double Update2(UINT id)
 			}
 		}
 	}
-	
+
 	return 0;
 }
 
-LPCTSTR GetString(UINT id, UINT flags) 
+LPCTSTR GetString(UINT id, UINT flags)
 {
 	std::map<UINT, quoteData>::iterator i = g_Values.find(id);
 	if (i != g_Values.end())

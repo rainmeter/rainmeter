@@ -70,7 +70,7 @@ id        The identifier for the measure. This is used to identify the measures 
 UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
 	MEASURETYPE dataType = NUMRECYCLE;  // 1 for numRecycled, 2 for sizeRecycled
-	
+
 	/* Read our own settings from the ini-file */
 	LPCTSTR type = ReadConfigString(section, L"RecycleType", L"COUNT");
 	if (type)
@@ -78,11 +78,11 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		if (_wcsicmp(L"COUNT", type) == 0)
 		{
 			dataType = NUMRECYCLE;
-		} 
+		}
 		else if (_wcsicmp(L"SIZE", type) == 0)
 		{
 			dataType = SIZERECYCLE;
-		} 
+		}
 		else
 		{
 			std::wstring error = L"RecycleType=";
@@ -93,9 +93,9 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		}
 	}
-	
+
 	g_Values[id] = dataType;
-	
+
 	LPCTSTR drives = ReadConfigString(section, L"Drives", L"ALL");
 	if (drives && wcslen(drives) > 0)
 	{
@@ -105,7 +105,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	{
 		g_DriveList[id] = L"ALL";
 	}
-	
+
 	return 0;
 }
 
@@ -116,7 +116,7 @@ void Tokenize(const std::wstring& str, std::vector<std::wstring>& tokens, const 
 	std::wstring::size_type lastPos = str.find_first_not_of(delimiters, 0);
 	// Find first "non-delimiter".
 	std::wstring::size_type pos     = str.find_first_of(delimiters, lastPos);
-	
+
 	while (std::wstring::npos != pos || std::wstring::npos != lastPos)
 	{
 		// Found a token, add it to the vector.
@@ -136,13 +136,13 @@ double Update2(UINT id)
 {
 	MEASURETYPE dataType = g_Values[id];
 	std::wstring driveSet = g_DriveList[id];
-	
-	SHQUERYRBINFO RecycleBinInfo = { 0 };  
-	RecycleBinInfo.cbSize = sizeof( RecycleBinInfo ); // Tell size of structure  
-	
-	if(_wcsicmp(driveSet.c_str(), L"ALL") == 0)
+
+	SHQUERYRBINFO RecycleBinInfo = { 0 };
+	RecycleBinInfo.cbSize = sizeof( RecycleBinInfo ); // Tell size of structure
+
+	if (_wcsicmp(driveSet.c_str(), L"ALL") == 0)
 	{
-		if(SHQueryRecycleBin( NULL, &RecycleBinInfo ) == S_OK)
+		if (SHQueryRecycleBin( NULL, &RecycleBinInfo ) == S_OK)
 		{
 			if (dataType == SIZERECYCLE)
 			{
@@ -160,15 +160,15 @@ double Update2(UINT id)
 		}
 	}
 	std::vector<std::wstring> tokens;
-	std::wstring toSplit(driveSet.begin(), driveSet.end()); 
+	std::wstring toSplit(driveSet.begin(), driveSet.end());
 	double retVal = 0;
 	Tokenize(toSplit, tokens, L"|");
-	
-	for(int i=0;i < tokens.size(); i++)
+
+	for (int i=0;i < tokens.size(); i++)
 	{
 		double tempVal;
 		std::wstring strd = tokens.at(i);
-		SHQueryRecycleBin( strd.c_str(), &RecycleBinInfo ); // Get recycle bin info  
+		SHQueryRecycleBin( strd.c_str(), &RecycleBinInfo ); // Get recycle bin info
 		if (dataType == SIZERECYCLE)
 		{
 			tempVal = (double)RecycleBinInfo.i64Size; // size in bytes
@@ -179,7 +179,7 @@ double Update2(UINT id)
 		}
 		retVal += tempVal;
 	}
-	
+
 	return (retVal);
 }
 
@@ -209,14 +209,14 @@ LPCTSTR GetPluginAuthor()
 
 void ExecuteBang(LPCTSTR args, UINT id)
 {
-    std::wstring bang     = args;
+	std::wstring bang     = args;
 	std::wstring driveSet = g_DriveList[id];
 
-    if (_wcsicmp(bang.c_str(), L"EmptyBin") == 0)
-    { //Empty the Recycle Bin
-		if(_wcsicmp(driveSet.c_str(), L"ALL") == 0)
+	if (_wcsicmp(bang.c_str(), L"EmptyBin") == 0)
+	{ //Empty the Recycle Bin
+		if (_wcsicmp(driveSet.c_str(), L"ALL") == 0)
 		{
-			if(SHEmptyRecycleBin( NULL, NULL, NULL ) == S_OK)
+			if (SHEmptyRecycleBin( NULL, NULL, NULL ) == S_OK)
 			{
 				return;
 			}
@@ -226,23 +226,23 @@ void ExecuteBang(LPCTSTR args, UINT id)
 			}
 		}
 		std::vector<std::wstring> tokens;
-		std::wstring toSplit(driveSet.begin(), driveSet.end()); 
+		std::wstring toSplit(driveSet.begin(), driveSet.end());
 		Tokenize(toSplit, tokens, L"|");
-		
-		for(int i=0;i < tokens.size(); i++)
+
+		for (int i=0;i < tokens.size(); i++)
 		{
 			std::wstring strd = tokens.at(i);
 			SHEmptyRecycleBin( NULL, strd.c_str(), NULL ); // empty bin
 		}
 		return;
-    }
-    else
-    {
+	}
+	else
+	{
 		if (_wcsicmp(bang.c_str(), L"EmptyBinSilent") == 0)
-        { //Empty the Recycle Bin (no prompt)
-			if(_wcsicmp(driveSet.c_str(), L"ALL") == 0)
+		{ //Empty the Recycle Bin (no prompt)
+			if (_wcsicmp(driveSet.c_str(), L"ALL") == 0)
 			{
-				if(SHEmptyRecycleBin( NULL, NULL, SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND ) == S_OK)
+				if (SHEmptyRecycleBin( NULL, NULL, SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND ) == S_OK)
 				{
 					return;
 				}
@@ -252,24 +252,24 @@ void ExecuteBang(LPCTSTR args, UINT id)
 				}
 			}
 			std::vector<std::wstring> tokens;
-			std::wstring toSplit(driveSet.begin(), driveSet.end()); 
+			std::wstring toSplit(driveSet.begin(), driveSet.end());
 			Tokenize(toSplit, tokens, L"|");
 
-			for(int i=0;i < tokens.size(); i++)
+			for (int i=0;i < tokens.size(); i++)
 			{
 				std::wstring strd = tokens.at(i);
 				SHEmptyRecycleBin( NULL, strd.c_str(), SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND ); // empty bin
 			}
 			return;
-        }
-        else if (_wcsicmp(bang.c_str(), L"OpenBin") == 0)
-        { //Open the Recycle Bin folder
-            //system("explorer.exe /N,::{645FF040-5081-101B-9F08-00AA002F954E}");
+		}
+		else if (_wcsicmp(bang.c_str(), L"OpenBin") == 0)
+		{ //Open the Recycle Bin folder
+			//system("explorer.exe /N,::{645FF040-5081-101B-9F08-00AA002F954E}");
 			std::wstring szCmd = L"explorer.exe";
 			std::wstring szParm= L"/N,::{645FF040-5081-101B-9F08-00AA002F954E}";
 			ShellExecute(NULL,L"open",szCmd.c_str(),szParm.c_str(),NULL,SW_SHOW);
 			return;
-        }
-    }
+		}
+	}
 }
 

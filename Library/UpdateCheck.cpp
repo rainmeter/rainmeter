@@ -68,7 +68,7 @@ void CheckVersion(void* dummy)
 					version += atoi(verMinor.c_str()) * 1000;
 				}
 			}
-				
+
 			if (version > RAINMETER_VERSION)
 			{
 				Rainmeter->SetNewVersion(TRUE);

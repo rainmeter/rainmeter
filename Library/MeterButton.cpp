@@ -83,7 +83,7 @@ void CMeterButton::Initialize()
 	}
 
 	// Load the bitmaps if defined
-	if(!m_ImageName.empty())
+	if (!m_ImageName.empty())
 	{
 		m_Image.LoadImage(m_ImageName, m_NeedsReload);
 
@@ -94,7 +94,7 @@ void CMeterButton::Initialize()
 			m_W = bitmap->GetWidth();
 			m_H = bitmap->GetHeight();
 
-			if(m_H > m_W)
+			if (m_H > m_W)
 			{
 				m_H = m_H / BUTTON_FRAMES;
 			}
@@ -112,7 +112,7 @@ void CMeterButton::Initialize()
 				Graphics graphics(&bitmapPart);
 				Rect r(0, 0, m_W, m_H);
 
-				if(bitmap->GetHeight() > bitmap->GetWidth())
+				if (bitmap->GetHeight() > bitmap->GetWidth())
 				{
 					graphics.DrawImage(bitmap, r, 0, m_H * i, m_W, m_H, UnitPixel);
 				}
@@ -198,7 +198,7 @@ bool CMeterButton::Update()
 */
 bool CMeterButton::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(graphics)) return false;
 
 	if (m_Bitmaps[m_State] == NULL) return false;	// Unable to continue
 
@@ -207,7 +207,7 @@ bool CMeterButton::Draw(Graphics& graphics)
 
 	// Blit the image
 	graphics.DrawCachedBitmap(m_Bitmaps[m_State], x, y);
-	
+
 	return true;
 }
 

@@ -36,7 +36,7 @@ __declspec( dllexport ) LPCTSTR GetPluginAuthor();
 
 #pragma pack(1)
 
-struct SpeedFanData 
+struct SpeedFanData
 {
 	WORD version;
 	WORD flags;
@@ -50,7 +50,7 @@ struct SpeedFanData
 	INT volts[32];
 };
 
-enum SensorType 
+enum SensorType
 {
 	TYPE_TEMP,
 	TYPE_FAN,
@@ -73,7 +73,7 @@ static std::map<UINT, UINT> g_Numbers;
 
 /*
   This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured. 
+  The function must return the maximum value that can be measured.
   The return value can also be 0, which means that Rainmeter will
   track the maximum value automatically. The parameters for this
   function are:
@@ -99,15 +99,15 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				if (_wcsicmp(L"C", scale) == 0)
 				{
 					g_Scales[id] = SCALE_CENTIGRADE;
-				} 
+				}
 				else if (_wcsicmp(L"F", scale) == 0)
 				{
 					g_Scales[id] = SCALE_FARENHEIT;
-				} 
+				}
 				else if (_wcsicmp(L"K", scale) == 0)
 				{
 					g_Scales[id] = SCALE_KELVIN;
-				} 
+				}
 				else
 				{
 					std::wstring error = L"SpeedFanScale=";
@@ -118,15 +118,15 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 					MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 				}
 			}
-		} 
+		}
 		else if (_wcsicmp(L"FAN", type) == 0)
 		{
 			g_Types[id] = TYPE_FAN;
-		} 
+		}
 		else if (_wcsicmp(L"VOLTAGE", type) == 0)
 		{
 			g_Types[id] = TYPE_VOLT;
-		} 
+		}
 		else
 		{
 			std::wstring error = L"SpeedFanType=";
@@ -137,7 +137,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		}
 	}
-	
+
 	LPCTSTR data = ReadConfigString(section, L"SpeedFanNumber", L"0");
 	if (data)
 	{
@@ -153,13 +153,13 @@ The function returns the new value.
 */
 double Update2(UINT id)
 {
-	double value = 0.0; 
-	
+	double value = 0.0;
+
 	std::map<UINT, SensorType>::const_iterator type = g_Types.find(id);
 	std::map<UINT, TempScale>::const_iterator scale = g_Scales.find(id);
 	std::map<UINT, UINT>::const_iterator number = g_Numbers.find(id);
-	
-	if(type == g_Types.end() || number == g_Numbers.end())
+
+	if (type == g_Types.end() || number == g_Numbers.end())
 	{
 		return 0.0;		// No id in the map. How this can be ????
 	}
@@ -179,7 +179,7 @@ double Update2(UINT id)
 			return value;
 		}
 	}
-	
+
 	return 0.0;
 }
 
@@ -216,10 +216,10 @@ bool ReadSharedData(SensorType type, TempScale scale, UINT number, double* value
 {
 	SpeedFanData* ptr;
 	HANDLE hData;
-	
+
 	hData = OpenFileMapping(FILE_MAP_READ, FALSE, L"SFSharedMemory_ALM");
 	if (hData == NULL) return false;
-	
+
 	ptr = (SpeedFanData*)MapViewOfFile(hData, FILE_MAP_READ, 0, 0, 0);
 	if (ptr == 0)
 	{
@@ -229,7 +229,7 @@ bool ReadSharedData(SensorType type, TempScale scale, UINT number, double* value
 
 	if (ptr->version == 1)
 	{
-		switch(type) 
+		switch(type)
 		{
 		case TYPE_TEMP:
 			if (number < ptr->NumTemps)
@@ -272,7 +272,7 @@ bool ReadSharedData(SensorType type, TempScale scale, UINT number, double* value
 
 	UnmapViewOfFile(ptr);
 	CloseHandle(hData);
-	
+
 	return true;
 }
 

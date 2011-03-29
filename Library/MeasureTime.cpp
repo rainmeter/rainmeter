@@ -25,7 +25,7 @@ int GetYearDay(int year, int month, int day)
 	int yearDay = 0;
 	UINT dates[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
-	for (int i = 0; i < month - 1; ++i) 
+	for (int i = 0; i < month - 1; ++i)
 	{
 		yearDay += dates[i];
 	}
@@ -51,8 +51,8 @@ CMeasureTime::CMeasureTime(CMeterWindow* meterWindow, const WCHAR* name) : CMeas
 	m_Time()
 {
 	/* Set time zone from TZ environment variable. If TZ is not set,
-	 * the operating system is queried to obtain the default value 
-	 * for the variable. 
+	 * the operating system is queried to obtain the default value
+	 * for the variable.
 	 */
 	_tzset();
 }
@@ -174,7 +174,7 @@ const WCHAR* CMeasureTime::GetStringValue(AUTOSCALE autoScale, double scale, int
 {
 	static WCHAR tmpSz[MAX_LINE_LENGTH];
 	struct tm today;
-	
+
 	tmpSz[0] = 0;
 
 	SYSTEMTIME sysToday;

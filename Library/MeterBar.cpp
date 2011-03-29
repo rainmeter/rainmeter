@@ -66,7 +66,7 @@ void CMeterBar::Initialize()
 	CMeter::Initialize();
 
 	// Load the bitmaps if defined
-	if(!m_ImageName.empty())
+	if (!m_ImageName.empty())
 	{
 		m_Image.LoadImage(m_ImageName, m_NeedsReload);
 
@@ -120,11 +120,11 @@ void CMeterBar::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_Flip = parser.ReadInt(section, L"Flip", 0) == 1;
 
 	const std::wstring& orientation = parser.ReadString(section, L"BarOrientation", L"VERTICAL");
-	if(_wcsicmp(L"VERTICAL", orientation.c_str()) == 0)
+	if (_wcsicmp(L"VERTICAL", orientation.c_str()) == 0)
 	{
 		m_Orientation = VERTICAL;
-	} 
-	else if(_wcsicmp(L"HORIZONTAL", orientation.c_str()) == 0)
+	}
+	else if (_wcsicmp(L"HORIZONTAL", orientation.c_str()) == 0)
 	{
 		m_Orientation = HORIZONTAL;
 	}
@@ -179,23 +179,23 @@ bool CMeterBar::Update()
 */
 bool CMeterBar::Draw(Graphics& graphics)
 {
-	if(!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(graphics)) return false;
 
 	int x = GetX();
 	int y = GetY();
 
 	Bitmap* drawBitmap = m_Image.GetImage();
 
-	if(m_Orientation == VERTICAL)
+	if (m_Orientation == VERTICAL)
 	{
 		int barSize = m_H - 2 * m_Border;
 		int size = (int)(barSize * m_Value);
 		size = min(barSize, size);
 		size = max(0, size);
-		
+
 		if (drawBitmap)
 		{
-			if (m_Flip) 
+			if (m_Flip)
 			{
 				if (m_Border > 0)
 				{
@@ -227,7 +227,7 @@ bool CMeterBar::Draw(Graphics& graphics)
 		else
 		{
 			SolidBrush brush(m_Color);
-			if (m_Flip) 
+			if (m_Flip)
 			{
 				Rect r(x, y, m_W, size);
 				graphics.FillRectangle(&brush, r);
@@ -248,7 +248,7 @@ bool CMeterBar::Draw(Graphics& graphics)
 
 		if (drawBitmap)
 		{
-			if (m_Flip) 
+			if (m_Flip)
 			{
 				if (m_Border > 0)
 				{
@@ -280,7 +280,7 @@ bool CMeterBar::Draw(Graphics& graphics)
 		else
 		{
 			SolidBrush brush(m_Color);
-			if (m_Flip) 
+			if (m_Flip)
 			{
 				Rect r(x + m_W - size, y, size, m_H);
 				graphics.FillRectangle(&brush, r);

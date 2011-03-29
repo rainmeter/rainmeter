@@ -28,7 +28,7 @@ std::map<std::wstring, VirtuaWinMeasure::MeasureType> VirtuaWinMeasure::StringTo
 
 VirtuaWinMeasure::VirtuaWinMeasure(HMODULE instance, UINT id) : VDMeasure(instance, id)
 {
-	if(StringToType.size() == 0)
+	if (StringToType.size() == 0)
 	{
 		StringToType.insert(std::make_pair(std::wstring(L"VDMActive"), VDMActive));
 		StringToType.insert(std::make_pair(std::wstring(L"DesktopCount"), DesktopCountTotal));
@@ -45,7 +45,7 @@ UINT VirtuaWinMeasure::Initialize(LPCTSTR iniFile, LPCTSTR section)
 {
 	std::wstring TypeString(ReadConfigString(section, _T("VDMeasureType"), _T("")));
 	std::map<std::wstring, MeasureType>::iterator i = StringToType.find(TypeString);
-	if(i != StringToType.end())
+	if (i != StringToType.end())
 	{
 		Type = i->second;
 	}
@@ -62,9 +62,9 @@ UINT VirtuaWinMeasure::Initialize(LPCTSTR iniFile, LPCTSTR section)
 	case DesktopCountTotal:
 		{
 			LPCTSTR CountType = ReadConfigString(section, _T("VDDesktopCount"), _T(""));
-			if(_tcsicmp(CountType, _T("X")) == 0) Type = DesktopCountColumns;
-			else if(_tcsicmp(CountType, _T("Y")) == 0) Type = DesktopCountRows;
-			if(FindVirtuaWinWindow())
+			if (_tcsicmp(CountType, _T("X")) == 0) Type = DesktopCountColumns;
+			else if (_tcsicmp(CountType, _T("Y")) == 0) Type = DesktopCountRows;
+			if (FindVirtuaWinWindow())
 			{
 				return (UINT) SendMessage(vwHandle, VW_DESKTOP_SIZE, 0, 0);
 			}
@@ -81,7 +81,7 @@ void VirtuaWinMeasure::Finalize()
 
 UINT VirtuaWinMeasure::Update()
 {
-	if(!FindVirtuaWinWindow())
+	if (!FindVirtuaWinWindow())
 	{
 		return 0;
 	}
@@ -130,7 +130,7 @@ void VirtuaWinMeasure::ExecuteBang(LPCTSTR args)
 {
 	INT32 Desktop;
 
-	if(!FindVirtuaWinWindow()) return;
+	if (!FindVirtuaWinWindow()) return;
 
 	switch(Type)
 	{
@@ -142,7 +142,7 @@ void VirtuaWinMeasure::ExecuteBang(LPCTSTR args)
 
 BOOL VirtuaWinMeasure::FindVirtuaWinWindow()
 {
-	if(IsWindow(vwHandle)) return TRUE;
+	if (IsWindow(vwHandle)) return TRUE;
 	vwHandle = FindWindow(_T("VirtuaWinMainClass"), _T("VirtuaWinMainClass"));
 	return vwHandle != NULL;
 }

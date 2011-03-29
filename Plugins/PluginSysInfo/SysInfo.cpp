@@ -37,7 +37,7 @@ __declspec( dllexport ) UINT GetPluginVersion();
 __declspec( dllexport ) LPCTSTR GetPluginAuthor();
 }
 
-typedef struct 
+typedef struct
 {
 	int count;						//Number of monitors
 	HMONITOR m_Monitors[32];		//Monitor info
@@ -87,7 +87,7 @@ static std::map<UINT, UINT> g_Datas;
 
 /*
   This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured. 
+  The function must return the maximum value that can be measured.
   The return value can also be 0, which means that Rainmeter will
   track the maximum value automatically. The parameters for this
   function are:
@@ -101,109 +101,109 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
 	/* Read our own settings from the ini-file */
 	LPCTSTR type = ReadConfigString(section, L"SysInfoType", L"");
-	if(type) 
+	if (type)
 	{
 		if (_wcsicmp(L"COMPUTER_NAME", type) == 0)
 		{
 			g_Types[id] = COMPUTER_NAME;
-		} 
+		}
 		else if (_wcsicmp(L"USER_NAME", type) == 0)
 		{
 			g_Types[id] = USER_NAME;
-		} 
+		}
 		else if (_wcsicmp(L"WORK_AREA", type) == 0)
 		{
 			g_Types[id] = WORK_AREA;
-		} 
+		}
 		else if (_wcsicmp(L"SCREEN_SIZE", type) == 0)
 		{
 			g_Types[id] = SCREEN_SIZE;
-		} 
+		}
 		else if (_wcsicmp(L"RAS_STATUS", type) == 0)
 		{
 			g_Types[id] = RAS_STATUS;
-		} 
+		}
 		else if (_wcsicmp(L"OS_VERSION", type) == 0)
 		{
 			g_Types[id] = OS_VERSION;
-		} 
+		}
 		else if (_wcsicmp(L"OS_BITS", type) == 0)
 		{
 			g_Types[id] = OS_BITS;
-		} 
+		}
 		else if (_wcsicmp(L"ADAPTER_DESCRIPTION", type) == 0)
 		{
 			g_Types[id] = ADAPTER_DESCRIPTION;
-		} 
+		}
 		else if (_wcsicmp(L"NET_MASK", type) == 0)
 		{
 			g_Types[id] = NET_MASK;
-		} 
+		}
 		else if (_wcsicmp(L"IP_ADDRESS", type) == 0)
 		{
 			g_Types[id] = IP_ADDRESS;
-		} 
+		}
 		else if (_wcsicmp(L"GATEWAY_ADDRESS", type) == 0)
 		{
 			g_Types[id] = GATEWAY_ADDRESS;
-		} 
+		}
 		else if (_wcsicmp(L"HOST_NAME", type) == 0)
 		{
 			g_Types[id] = HOST_NAME;
-		} 
+		}
 		else if (_wcsicmp(L"DOMAIN_NAME", type) == 0)
 		{
 			g_Types[id] = DOMAIN_NAME;
-		} 
+		}
 		else if (_wcsicmp(L"DNS_SERVER", type) == 0)
 		{
 			g_Types[id] = DNS_SERVER;
-		} 
+		}
 
 		else if (_wcsicmp(L"WORK_AREA_TOP", type) == 0)
 		{
 			g_Types[id] = WORK_AREA_TOP;
-		} 
+		}
 		else if (_wcsicmp(L"WORK_AREA_LEFT", type) == 0)
 		{
 			g_Types[id] = WORK_AREA_LEFT;
-		} 
+		}
 		else if (_wcsicmp(L"WORK_AREA_WIDTH", type) == 0)
 		{
 			g_Types[id] = WORK_AREA_WIDTH;
-		} 
+		}
 		else if (_wcsicmp(L"WORK_AREA_HEIGHT", type) == 0)
 		{
 			g_Types[id] = WORK_AREA_HEIGHT;
-		} 
+		}
 		else if (_wcsicmp(L"SCREEN_WIDTH", type) == 0)
 		{
 			g_Types[id] = SCREEN_WIDTH;
-		} 
+		}
 		else if (_wcsicmp(L"SCREEN_HEIGHT", type) == 0)
 		{
 			g_Types[id] = SCREEN_HEIGHT;
-		} 
+		}
 		else if (_wcsicmp(L"NUM_MONITORS", type) == 0)
 		{
 			g_Types[id] = NUM_MONITORS;
-		} 
+		}
 		else if (_wcsicmp(L"VIRTUAL_SCREEN_TOP", type) == 0)
 		{
 			g_Types[id] = VIRTUAL_SCREEN_TOP;
-		} 
+		}
 		else if (_wcsicmp(L"VIRTUAL_SCREEN_LEFT", type) == 0)
 		{
 			g_Types[id] = VIRTUAL_SCREEN_LEFT;
-		} 
+		}
 		else if (_wcsicmp(L"VIRTUAL_SCREEN_WIDTH", type) == 0)
 		{
 			g_Types[id] = VIRTUAL_SCREEN_WIDTH;
-		} 
+		}
 		else if (_wcsicmp(L"VIRTUAL_SCREEN_HEIGHT", type) == 0)
 		{
 			g_Types[id] = VIRTUAL_SCREEN_HEIGHT;
-		} 
+		}
 		else
 		{
 			std::wstring error = L"SysInfoType=";
@@ -248,7 +248,7 @@ std::wstring ConvertToWide(LPCSTR str)
   This function is called when the value should be
   returned as a string.
 */
-LPCTSTR GetString(UINT id, UINT flags) 
+LPCTSTR GetString(UINT id, UINT flags)
 {
 	static WCHAR buffer[4096];
 	UINT data;
@@ -256,8 +256,8 @@ LPCTSTR GetString(UINT id, UINT flags)
 	std::map<UINT, TYPE>::iterator typeIter = g_Types.find(id);
 	std::map<UINT, UINT>::iterator dataIter = g_Datas.find(id);
 
-	if(typeIter == g_Types.end()) return NULL;
-	if(dataIter == g_Datas.end())
+	if (typeIter == g_Types.end()) return NULL;
+	if (dataIter == g_Datas.end())
 	{
 		data = 0;
 	}
@@ -321,11 +321,11 @@ LPCTSTR GetString(UINT id, UINT flags)
 			if (data >= 1000)
 			{
 				data = data-999;
-				for(UINT i=0; i<ipTable->dwNumEntries; i++)
+				for (UINT i=0; i<ipTable->dwNumEntries; i++)
 				{
-					if((ipTable->table[i].wType)&MIB_IPADDR_DISCONNECTED) continue;
+					if ((ipTable->table[i].wType)&MIB_IPADDR_DISCONNECTED) continue;
 					data--;
-					if(data==0)
+					if (data==0)
 					{
 						DWORD ip = ipTable->table[i].dwAddr;
 						wsprintf(buffer, L"%i.%i.%i.%i", ip%256, (ip>>8)%256, (ip>>16)%256, (ip>>24)%256);
@@ -423,8 +423,8 @@ double Update2(UINT id)
 	std::map<UINT, TYPE>::iterator typeIter = g_Types.find(id);
 	std::map<UINT, UINT>::iterator dataIter = g_Datas.find(id);
 
-	if(typeIter == g_Types.end()) return NULL;
-	if(dataIter == g_Datas.end())
+	if (typeIter == g_Types.end()) return NULL;
+	if (dataIter == g_Datas.end())
 	{
 		data = 0;
 	}
@@ -433,16 +433,16 @@ double Update2(UINT id)
 		data = (*dataIter).second;
 	}
 
-	if(data) //For speed purposes, only check if they specify a non-primary monitor.
+	if (data) //For speed purposes, only check if they specify a non-primary monitor.
 	{
-		if(GetSystemMetrics(SM_CMONITORS)>32) 
+		if (GetSystemMetrics(SM_CMONITORS)>32)
 		{
 			std::wstring error = L"That's alot of monitors! 32 is the max.";
 			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
 			exit(-1);
 		}
 		m_Monitors.count = 0;
-		EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)(&m_Monitors)); 
+		EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)(&m_Monitors));
 	}
 
 
@@ -633,17 +633,17 @@ BOOL CheckConnection()
 	static HRASCONN g_hRasConn=NULL;
 	RASCONNSTATUS rasStatus;
 	LPRASCONN lpRasConn=NULL;
-    DWORD cbBuf=0;
-    DWORD cConn=1;
-    DWORD dwRet=0;
+	DWORD cbBuf=0;
+	DWORD cConn=1;
+	DWORD dwRet=0;
 
-	if(g_hRasConn==NULL) {
-	    // Enumerate connections
+	if (g_hRasConn==NULL) {
+		// Enumerate connections
 		cbBuf=sizeof(RASCONN);
-		if(((lpRasConn=(LPRASCONN)malloc((UINT)cbBuf))!= NULL)) {            
+		if (((lpRasConn=(LPRASCONN)malloc((UINT)cbBuf))!= NULL)) {
 			lpRasConn->dwSize=sizeof(RASCONN);
-			if(0==RasEnumConnections(lpRasConn, &cbBuf, &cConn)) {
-				if(cConn!=0) {
+			if (0==RasEnumConnections(lpRasConn, &cbBuf, &cConn)) {
+				if (cConn!=0) {
 					g_hRasConn=lpRasConn->hrasconn;
 				}
 			}
@@ -651,19 +651,19 @@ BOOL CheckConnection()
 		}
 	}
 
-	if(g_hRasConn!=NULL) {
+	if (g_hRasConn!=NULL) {
 		// get connection status
 		rasStatus.dwSize=sizeof(RASCONNSTATUS);
 		dwRet=RasGetConnectStatus(g_hRasConn, &rasStatus );
-		if(dwRet==0) {
+		if (dwRet==0) {
 			// Check for connection
-			if(rasStatus.rasconnstate==RASCS_Connected) return TRUE;
+			if (rasStatus.rasconnstate==RASCS_Connected) return TRUE;
 		} else {
 			g_hRasConn=NULL;
 		}
 	}
 
-    return FALSE;
+	return FALSE;
 }
 
 UINT GetPluginVersion()

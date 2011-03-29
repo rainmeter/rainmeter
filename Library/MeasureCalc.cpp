@@ -37,10 +37,10 @@ CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow, const WCHAR* name) : CMeas
 	m_HighBound(100),
 	m_UpdateRandom(false)
 {
-	if(!c_RandSeeded)
+	if (!c_RandSeeded)
 	{
 		c_RandSeeded = true;
-		srand((unsigned)time(0)); 
+		srand((unsigned)time(0));
 	}
 
 	rand();
@@ -98,12 +98,12 @@ void CMeasureCalc::UpdateVariableMap(CMeterWindow& meterWindow)
 	}
 
 	// Create the variable map
-	c_VarMap = Strmap_Create(sizeof(double), 0); 
+	c_VarMap = Strmap_Create(sizeof(double), 0);
 
 	const std::list<CMeasure*>& measures = meterWindow.GetMeasures();
 
 	std::list<CMeasure*>::const_iterator iter = measures.begin();
-	for( ; iter != measures.end(); ++iter)
+	for ( ; iter != measures.end(); ++iter)
 	{
 		const char* name = (*iter)->GetANSIName();
 		double val = (*iter)->GetValue();
@@ -172,9 +172,9 @@ void CMeasureCalc::FormulaReplace()
 			(loc == 0 || IsDelimiter(*(m_Formula.c_str() + loc - 1))) &&
 			(loc == (m_Formula.length() - 6) || IsDelimiter(*(m_Formula.c_str() + loc + 6))))
 		{
-			int range = (m_HighBound - m_LowBound) + 1; 
-			srand((unsigned) rand()); 
-			int randNumber = m_LowBound + (int)(range * rand()/(RAND_MAX + 1.0)); 
+			int range = (m_HighBound - m_LowBound) + 1;
+			srand((unsigned) rand());
+			int randNumber = m_LowBound + (int)(range * rand()/(RAND_MAX + 1.0));
 
 			WCHAR buffer[32];
 			_snwprintf_s(buffer, _TRUNCATE, L"%i", randNumber);

@@ -127,7 +127,7 @@ void UpdateAboutDialog()
 
 			const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 			std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-			for( ; iter != windows.end(); ++iter)
+			for ( ; iter != windows.end(); ++iter)
 			{
 				if (_wcsicmp(selectedItemName, (*iter).first.c_str()) == 0)
 				{
@@ -200,7 +200,7 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 
 				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-				for( ; iter != windows.end(); ++iter)
+				for ( ; iter != windows.end(); ++iter)
 				{
 					if (current == selected)
 					{
@@ -213,7 +213,7 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 
 							int index = 0;
 							std::list<CMeasure*>::const_iterator i = measures.begin();
-							for( ; i != measures.end(); ++i)
+							for ( ; i != measures.end(); ++i)
 							{
 								const WCHAR* name = (*i)->GetName();
 								const WCHAR* val = (*i)->GetStats();
@@ -229,7 +229,7 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 
 								if (name && *name)
 								{
-									if (index < count) 
+									if (index < count)
 									{
 										ListView_SetItemText(widget, index, 0, (WCHAR*)name);
 									}
@@ -237,7 +237,7 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 									{
 										LVITEM vitem;
 										vitem.mask = LVIF_TEXT;
-										vitem.iItem = index; 
+										vitem.iItem = index;
 										vitem.iSubItem = 0;
 										vitem.pszText = (WCHAR*)name;
 										ListView_InsertItem(widget, &vitem);
@@ -273,7 +273,7 @@ void UpdateAboutStatistics(LPCTSTR entryName)
 	}
 }
 
-void UpdateWidgets() 
+void UpdateWidgets()
 {
 	HWND widget;
 	widget = GetDlgItem(g_DialogWin, IDC_ABOUT_ENTRIES);
@@ -284,8 +284,8 @@ void UpdateWidgets()
 
 	if (selected == 0)
 	{
-		LVCOLUMN lvc; 
-		lvc.mask = LVCF_TEXT; 
+		LVCOLUMN lvc;
+		lvc.mask = LVCF_TEXT;
 		lvc.pszText = L"Time";
 		ListView_SetColumn(widget, 0, &lvc);
 		lvc.pszText = L"Type";
@@ -295,8 +295,8 @@ void UpdateWidgets()
 	}
 	else if (selected == 1)
 	{
-		LVCOLUMN lvc; 
-		lvc.mask = LVCF_TEXT; 
+		LVCOLUMN lvc;
+		lvc.mask = LVCF_TEXT;
 		lvc.pszText = L"Plugin";
 		ListView_SetColumn(widget, 0, &lvc);
 		lvc.pszText = L"Version";
@@ -344,8 +344,8 @@ void UpdateWidgets()
 	}
 	else
 	{
-		LVCOLUMN lvc; 
-		lvc.mask = LVCF_TEXT; 
+		LVCOLUMN lvc;
+		lvc.mask = LVCF_TEXT;
 		lvc.pszText = L"Measure";
 		ListView_SetColumn(widget, 0, &lvc);
 		lvc.pszText = L"Range";
@@ -390,7 +390,7 @@ void ScanPlugins()
 					info.author = author;
 				}
 			}
-			
+
 			GETPLUGINVERSION GetVersionFunc = (GETPLUGINVERSION)GetProcAddress(dll, "GetPluginVersion");
 			if (GetVersionFunc)
 			{
@@ -444,13 +444,13 @@ void RepositionControls(HWND hwndDlg)
 	widget = GetDlgItem(hwndDlg, IDC_STATISTICS);
 	SetWindowPos(widget, NULL, (r.right < 800) ? (18 + ((r.right - 28) / 3)) : 275, 130, (r.right < 800) ? (2 * ((r.right - 28) / 3)) : (r.right - 287), r.bottom - 170, SWP_NOZORDER);
 
-	LVCOLUMN lvc; 
-	lvc.mask = LVCF_WIDTH; 
+	LVCOLUMN lvc;
+	lvc.mask = LVCF_WIDTH;
 	lvc.cx = ((r.right < 800) ? (2 * ((r.right - 28) / 3)) : (r.right - 287)) - 200;
 	ListView_SetColumn(widget, 2, &lvc);
 }
 
-BOOL OnInitAboutDialog(HWND window) 
+BOOL OnInitAboutDialog(HWND window)
 {
 	WCHAR tmpSz[256];
 	HWND widget;
@@ -477,7 +477,7 @@ BOOL OnInitAboutDialog(HWND window)
 		size_t namelength = skinName.length();
 
 		int currwidth = (int)SendMessage(widget, LB_GETHORIZONTALEXTENT, NULL, NULL);
-		if(6 * (int)namelength > currwidth)
+		if (6 * (int)namelength > currwidth)
 		{
 			SendMessage(widget, LB_SETHORIZONTALEXTENT, 6 * namelength, NULL);
 		}
@@ -498,8 +498,8 @@ BOOL OnInitAboutDialog(HWND window)
 		//ListView_SetExtendedListViewStyleEx(widget, LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
 		ListView_SetExtendedListViewStyleEx(widget, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
-		LVCOLUMN lvc; 
-		lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM; 
+		LVCOLUMN lvc;
+		lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 		lvc.iSubItem = 0;
 		lvc.pszText = L"Time";
 		lvc.cx = 110;
@@ -521,7 +521,7 @@ BOOL OnInitAboutDialog(HWND window)
 	return TRUE;
 }
 
-INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
+INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
@@ -551,7 +551,7 @@ INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 		case IDC_DISABLE_VERSION_CHECK:
 			if (IsDlgButtonChecked(hwndDlg, IDC_DISABLE_VERSION_CHECK))
 			{
-				Rainmeter->SetDisableVersionCheck(TRUE);	
+				Rainmeter->SetDisableVersionCheck(TRUE);
 			}
 			else
 			{
@@ -580,7 +580,7 @@ INT_PTR CALLBACK AboutProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lPa
 				UpdateWidgets();
 				UpdateAboutStatistics();
 				return TRUE;
-			} 
+			}
 			break;
 		}
 		break;
