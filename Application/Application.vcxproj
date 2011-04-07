@@ -311,7 +311,6 @@ xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32\release\
   </ItemGroup>
   <ItemGroup>
     <None Include="Rainmeter.ico" />
-    <None Include="..\Help\History.htm" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Library\Library.vcxproj">

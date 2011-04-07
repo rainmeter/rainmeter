@@ -835,12 +835,12 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	case LM_GETREVID:
 		if (lParam != NULL)
 		{
-			char* Buffer=(char*)lParam;
-			if (wParam==0)
+			char* Buffer = (char*)lParam;
+			if (wParam == 0)
 			{
 				sprintf(Buffer, "Rainmeter.dll: %s", APPVERSION);
 			}
-			else if (wParam==1)
+			else if (wParam == 1)
 			{
 				sprintf(Buffer, "Rainmeter.dll: %s %s, Rainy", APPVERSION, __DATE__);
 			}

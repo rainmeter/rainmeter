@@ -22,8 +22,6 @@
 #include <windows.h>
 #include <vector>
 
-typedef BOOL (WINAPI *FPSETDLLDIRECTORYW)(LPCWSTR lpPathName);
-
 enum OSPLATFORM
 {
 	OSPLATFORM_UNKNOWN = 0,
