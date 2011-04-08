@@ -30,6 +30,7 @@
 #include <ws2tcpip.h>
 #include <windows.h>
 #include <gdiplus.h>
+#include <dwmapi.h>
 #include <comdef.h>
 #include <Iphlpapi.h>
 #include <commctrl.h>

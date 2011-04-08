@@ -47,6 +47,12 @@ using namespace Gdiplus;
 
 int CMeterWindow::c_InstanceCount = 0;
 
+HINSTANCE CMeterWindow::c_DwmInstance = NULL;
+FPDWMENABLEBLURBEHINDWINDOW CMeterWindow::c_DwmEnableBlurBehindWindow = NULL;
+FPDWMGETCOLORIZATIONCOLOR CMeterWindow::c_DwmGetColorizationColor = NULL;
+FPDWMSETWINDOWATTRIBUTE CMeterWindow::c_DwmSetWindowAttribute = NULL;
+FPDWMISCOMPOSITIONENABLED CMeterWindow::c_DwmIsCompositionEnabled = NULL;
+
 extern CRainmeter* Rainmeter;
 
 /*
@@ -112,6 +118,9 @@ CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config,
 	m_BackgroundMode(BGMODE_IMAGE),
 	m_SolidAngle(),
 	m_SolidBevel(BEVELTYPE_NONE),
+	m_Blur(false),
+	m_BlurMode(BLURMODE_NONE),
+	m_BlurRegion(),
 	m_FadeStartTime(),
 	m_FadeStartValue(),
 	m_FadeEndValue(),
@@ -126,6 +135,18 @@ CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config,
 	m_MouseActionCursor(true),
 	m_ToolTipHidden(false)
 {
+	if (!c_DwmInstance && CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
+	{
+		c_DwmInstance = CSystem::RmLoadLibrary(L"dwmapi.dll");
+		if (c_DwmInstance)
+		{
+			c_DwmEnableBlurBehindWindow = (FPDWMENABLEBLURBEHINDWINDOW)GetProcAddress(c_DwmInstance, "DwmEnableBlurBehindWindow");
+			c_DwmGetColorizationColor = (FPDWMGETCOLORIZATIONCOLOR)GetProcAddress(c_DwmInstance, "DwmGetColorizationColor");
+			c_DwmSetWindowAttribute = (FPDWMSETWINDOWATTRIBUTE)GetProcAddress(c_DwmInstance, "DwmSetWindowAttribute");
+			c_DwmIsCompositionEnabled = (FPDWMISCOMPOSITIONENABLED)GetProcAddress(c_DwmInstance, "DwmIsCompositionEnabled");
+		}
+	}
+
 	++c_InstanceCount;
 }
 
@@ -163,6 +184,8 @@ CMeterWindow::~CMeterWindow()
 	if (m_DoubleBuffer) delete m_DoubleBuffer;
 	if (m_DIBSectionBuffer) DeleteObject(m_DIBSectionBuffer);
 
+	if (m_BlurRegion) DeleteObject(m_BlurRegion);
+
 	if (m_Window) DestroyWindow(m_Window);
 
 	if (m_FontCollection)
@@ -183,6 +206,17 @@ CMeterWindow::~CMeterWindow()
 			Sleep(100);
 			++counter;
 		} while(!Result && counter < 10);
+
+		if (c_DwmInstance)
+		{
+			FreeLibrary(c_DwmInstance);
+			c_DwmInstance = NULL;
+
+			c_DwmEnableBlurBehindWindow = NULL;
+			c_DwmGetColorizationColor = NULL;
+			c_DwmSetWindowAttribute = NULL;
+			c_DwmIsCompositionEnabled = NULL;
+		}
 	}
 }
 
@@ -271,22 +305,10 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 */
 void CMeterWindow::IgnoreAeroPeek()
 {
-	typedef HRESULT (WINAPI * FPDWMSETWINDOWATTRIBUTE)(HWND hwnd, DWORD dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
-	#define DWMWA_EXCLUDED_FROM_PEEK 12
-
-	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
+	if (c_DwmSetWindowAttribute)
 	{
-		HINSTANCE h = CSystem::RmLoadLibrary(L"dwmapi.dll");
-		if (h)
-		{
-			FPDWMSETWINDOWATTRIBUTE DwmSetWindowAttribute = (FPDWMSETWINDOWATTRIBUTE)GetProcAddress(h, "DwmSetWindowAttribute");
-			if (DwmSetWindowAttribute)
-			{
-				BOOL bValue = TRUE;
-				DwmSetWindowAttribute(m_Window, DWMWA_EXCLUDED_FROM_PEEK, &bValue, sizeof(bValue));
-			}
-			FreeLibrary(h);
-		}
+		BOOL bValue = TRUE;
+		c_DwmSetWindowAttribute(m_Window, DWMWA_EXCLUDED_FROM_PEEK, &bValue, sizeof(bValue));
 	}
 }
 
@@ -345,6 +367,9 @@ void CMeterWindow::Refresh(bool init, bool all)
 		m_BackgroundSize.cx = m_BackgroundSize.cy = 0;
 
 		m_BackgroundName.erase();
+
+		if (m_BlurRegion) DeleteObject(m_BlurRegion);
+		m_BlurRegion = NULL;
 
 		if (m_FontCollection)
 		{
@@ -409,6 +434,15 @@ void CMeterWindow::Refresh(bool init, bool all)
 	if (all || oldZPos != m_WindowZPosition)
 	{
 		ChangeZPos(m_WindowZPosition, all);
+	}
+
+	if (m_BlurMode == BLURMODE_NONE)
+	{
+		HideBlur();
+	}
+	else
+	{
+		ShowBlur();
 	}
 
 	m_Rainmeter->SetCurrentParser(NULL);
@@ -668,6 +702,28 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		{
 			SetTimer(m_Window, METERTIMER, m_WindowUpdate, NULL);
 		}
+		break;
+
+	case BANG_SHOWBLUR:
+		ShowBlur();
+		break;
+
+	case BANG_HIDEBLUR:
+		HideBlur();
+		break;
+
+	case BANG_TOGGLEBLUR:
+		RunBang(IsBlur() ? BANG_HIDEBLUR : BANG_SHOWBLUR, arg);
+		break;
+
+	case BANG_ADDBLUR:
+		ResizeBlur(arg, RGN_OR);
+		if (IsBlur()) ShowBlur();
+		break;
+
+	case BANG_REMOVEBLUR:
+		ResizeBlur(arg, RGN_DIFF);
+		if (IsBlur()) ShowBlur();
 		break;
 
 	case BANG_TOGGLEMETER:
@@ -959,6 +1015,142 @@ template <class T>
 bool CompareName(T* m, const WCHAR* name, bool group)
 {
 	return (group) ? m->BelongsToGroup(name) : (_wcsicmp(m->GetName(), name) == 0);
+}
+
+/*
+** ShowBlur
+**
+** Enables blurring of the window background (using Aero)
+**
+*/
+void CMeterWindow::ShowBlur()
+{
+	if (c_DwmGetColorizationColor && c_DwmIsCompositionEnabled && c_DwmEnableBlurBehindWindow)
+	{
+		SetBlur(true);
+
+		// Check that Aero and transparency is enabled
+		DWORD color;
+		BOOL opaque, enabled;
+		if (c_DwmGetColorizationColor(&color, &opaque) != S_OK)
+		{
+			opaque = TRUE;
+		}
+		if (c_DwmIsCompositionEnabled(&enabled) != S_OK)
+		{
+			enabled = FALSE;
+		}
+		if (opaque || !enabled) return;
+
+		if (m_BlurMode == BLURMODE_FULL)
+		{
+			if (m_BlurRegion) DeleteObject(m_BlurRegion);
+			m_BlurRegion = CreateRectRgn(0, 0, GetW(), GetH());
+		}
+
+		BlurBehindWindow(TRUE);
+	}
+}
+
+/*
+** HideBlur
+**
+** Disables Aero blur
+**
+*/
+void CMeterWindow::HideBlur()
+{
+	if (c_DwmEnableBlurBehindWindow)
+	{
+		SetBlur(false);
+
+		BlurBehindWindow(FALSE);
+	}
+}
+
+/*
+** ResizeBlur
+**
+** Adds to or removes from blur region
+**
+*/
+void CMeterWindow::ResizeBlur(const WCHAR* arg, int mode)
+{
+	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
+	{
+		WCHAR* parseSz = _wcsdup(arg);
+		double val;
+		int type, x, y, w, h;
+
+		WCHAR* token = wcstok(parseSz, L",");
+		if (token)
+		{
+			while (token[0] == L' ') ++token;
+			type = (m_Parser.ReadFormula(token, &val) == 1) ? (int)val : _wtoi(token);
+		}
+
+		token = wcstok(NULL, L",");
+		if (token)
+		{
+			while (token[0] == L' ') ++token;
+			x = (m_Parser.ReadFormula(token, &val) == 1) ? (int)val : _wtoi(token);
+		}
+
+		token = wcstok(NULL, L",");
+		if (token)
+		{
+			while (token[0] == L' ') ++token;
+			y = (m_Parser.ReadFormula(token, &val) == 1) ? (int)val : _wtoi(token);
+		}
+
+		token = wcstok(NULL, L",");
+		if (token)
+		{
+			while (token[0] == L' ') ++token;
+			w = (m_Parser.ReadFormula(token, &val) == 1) ? (int)val : _wtoi(token);
+		}
+
+		token = wcstok(NULL, L",");
+		if (token)
+		{
+			while (token[0] == L' ') ++token;
+			h = (m_Parser.ReadFormula(token, &val) == 1) ? (int)val : _wtoi(token);
+		}
+
+		if (w && h)
+		{
+			HRGN tempRegion;
+
+			switch (type)
+			{
+			case 1:
+				tempRegion = CreateRectRgn(x, y, w, h);
+				break;
+						
+			case 2:
+				token = wcstok(NULL, L",");
+				if (token)
+				{
+					while (token[0] == L' ') ++token;
+					int r = (m_Parser.ReadFormula(token, &val) == 1) ? (int)val : _wtoi(token);
+					tempRegion = CreateRoundRectRgn(x, y, w, h, r, r);
+				}
+				break;
+
+			case 3:
+				tempRegion = CreateEllipticRgn(x, y, w, h);
+				break;
+	
+			default:  // Unknown type
+				free(parseSz);
+				return;
+			}
+
+			CombineRgn(m_BlurRegion, m_BlurRegion, tempRegion, mode);
+			DeleteObject(tempRegion);
+		}
+		free(parseSz);
+	}
 }
 
 /*
@@ -1832,14 +2024,49 @@ bool CMeterWindow::ReadSkin()
 	m_MouseActionCursor = 0 != m_Parser.ReadInt(L"Rainmeter", L"MouseActionCursor", 1);
 	m_ToolTipHidden = 0 != m_Parser.ReadInt(L"Rainmeter", L"ToolTipHidden", 0);
 
+	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
+	{
+		if (0 != m_Parser.ReadInt(L"Rainmeter", L"Blur", 0))
+		{
+			std::wstring blurRegion = m_Parser.ReadString(L"Rainmeter", L"BlurRegion", L"", false);
+
+			if (!blurRegion.empty())
+			{
+				m_BlurMode = BLURMODE_REGION;
+				m_BlurRegion = CreateRectRgn(0, 0, 0, 0);	// Create empty region
+				int i = 1;
+
+				do
+				{
+					ResizeBlur(blurRegion.c_str(), RGN_OR);
+
+					// Here we are checking to see if there are more than one blur region
+					// to be loaded. They will be named BlurRegion2, BlurRegion3, etc.
+					WCHAR tmpName[64];
+					_snwprintf_s(tmpName, _TRUNCATE, L"BlurRegion%i", ++i);
+					blurRegion = m_Parser.ReadString(L"Rainmeter", tmpName, L"");
+
+				} while (!blurRegion.empty());
+			}
+			else
+			{
+				m_BlurMode = BLURMODE_FULL;
+			}
+		}
+		else
+		{
+			m_BlurMode = BLURMODE_NONE;
+		}
+	}
+
 	// Checking for localfonts
 	std::wstring localFont = m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"");
 	// If there is a local font we want to load it
 	if (!localFont.empty())
 	{
 		m_FontCollection = new PrivateFontCollection();
+		int i = 1;
 
-		int i = 2;
 		do
 		{
 			// We want to check the fonts folder first
@@ -1875,7 +2102,7 @@ bool CMeterWindow::ReadSkin()
 			// Here we are checking to see if there are more than one local font
 			// to be loaded. They will be named LocalFont2, LocalFont3, etc.
 			WCHAR tmpName[64];
-			_snwprintf_s(tmpName, _TRUNCATE, L"LocalFont%i", i++);
+			_snwprintf_s(tmpName, _TRUNCATE, L"LocalFont%i", ++i);
 			localFont = m_Parser.ReadString(L"Rainmeter", tmpName, L"");
 
 		} while (!localFont.empty());
@@ -3809,6 +4036,80 @@ LRESULT CMeterWindow::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
+** OnDwmColorChange
+**
+** Disables blur when Aero transparency is disabled
+**
+*/
+LRESULT CMeterWindow::OnDwmColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (m_BlurMode != BLURMODE_NONE && IsBlur() && c_DwmGetColorizationColor && c_DwmEnableBlurBehindWindow)
+	{
+		DWORD color;
+		BOOL opaque;
+		if (c_DwmGetColorizationColor(&color, &opaque) != S_OK)
+		{
+			opaque = TRUE;
+		}
+
+		BlurBehindWindow(!opaque);
+	}
+
+	return 0;
+}
+
+/*
+** OnDwmCompositionChange
+**
+** Disables blur when desktop composition is disabled
+**
+*/
+LRESULT CMeterWindow::OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (m_BlurMode != BLURMODE_NONE && IsBlur() && c_DwmIsCompositionEnabled && c_DwmEnableBlurBehindWindow)
+	{
+		BOOL enabled;
+		if (c_DwmIsCompositionEnabled(&enabled) != S_OK)
+		{
+			enabled = FALSE;
+		}
+
+		BlurBehindWindow(enabled);
+	}
+
+	return 0;
+}
+
+/*
+** BlurBehindWindow
+**
+** Adds the blur region to the window
+**
+*/
+void CMeterWindow::BlurBehindWindow(BOOL fEnable)
+{
+	if (c_DwmEnableBlurBehindWindow)
+	{
+		DWM_BLURBEHIND bb = {0};
+		bb.fEnable = fEnable;
+
+		if (fEnable)
+		{
+			// Restore blur with whatever the region was prior to disabling
+			bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
+			bb.hRgnBlur = m_BlurRegion;
+			c_DwmEnableBlurBehindWindow(m_Window, &bb);
+		}
+		else
+		{
+			// Disable blur
+			bb.dwFlags = DWM_BB_ENABLE;
+			c_DwmEnableBlurBehindWindow(m_Window, &bb);
+		}
+	}
+}
+
+/*
 ** OnDisplayChange
 **
 ** During resolution changes do nothing.
@@ -4578,6 +4879,8 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnDelayedExecute, WM_DELAYED_EXECUTE)
 	MESSAGE(OnDelayedRefresh, WM_DELAYED_REFRESH)
 	MESSAGE(OnDelayedMove, WM_DELAYED_MOVE)
+	MESSAGE(OnDwmColorChange, WM_DWMCOLORIZATIONCOLORCHANGED)
+	MESSAGE(OnDwmCompositionChange, WM_DWMCOMPOSITIONCHANGED)
 	MESSAGE(OnSettingChange, WM_SETTINGCHANGE)
 	MESSAGE(OnDisplayChange, WM_DISPLAYCHANGE)
 	END_MESSAGEPROC

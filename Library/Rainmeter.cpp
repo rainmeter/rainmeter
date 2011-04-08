@@ -550,6 +550,62 @@ void RainmeterToggleFade(HWND, const char* arg)
 }
 
 /*
+** RainmeterHideBlur
+**
+** Callback for the !RainmeterHideBlur bang
+**
+*/
+void RainmeterHideBlur(HWND, const char* arg)
+{
+	BangWithArgs(BANG_HIDEBLUR, ConvertToWide(arg).c_str(), 0);
+}
+
+/*
+** RainmeterShowBlur
+**
+** Callback for the !RainmeterShowBlur bang
+**
+*/
+void RainmeterShowBlur(HWND, const char* arg)
+{
+	BangWithArgs(BANG_SHOWBLUR, ConvertToWide(arg).c_str(), 0);
+}
+
+/*
+** RainmeterToggleBlur
+**
+** Callback for the !RainmeterToggleBlur bang
+**
+*/
+void RainmeterToggleBlur(HWND, const char* arg)
+{
+	BangWithArgs(BANG_TOGGLEBLUR, ConvertToWide(arg).c_str(), 0);
+}
+
+/*
+** RainmeterAddBlur
+**
+** Callback for the !RainmeterAddBlur bang
+**
+*/
+void RainmeterAddBlur(HWND, const char* arg)
+{
+	BangWithArgs(BANG_ADDBLUR, ConvertToWide(arg).c_str(), 1);
+}
+
+
+/*
+** RainmeterRemoveBlur
+**
+** Callback for the !RainmeterRemoveBlur bang
+**
+*/
+void RainmeterRemoveBlur(HWND, const char* arg)
+{
+	BangWithArgs(BANG_REMOVEBLUR, ConvertToWide(arg).c_str(), 1);
+}
+
+/*
 ** RainmeterHideMeter
 **
 ** Callback for the !RainmeterHideMeter bang
@@ -1941,6 +1997,11 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterHideFade", RainmeterHideFade);
 		AddBangCommand("!RainmeterShowFade", RainmeterShowFade);
 		AddBangCommand("!RainmeterToggleFade", RainmeterToggleFade);
+		AddBangCommand("!RainmeterHideBlur", RainmeterHideBlur);
+		AddBangCommand("!RainmeterShowBlur", RainmeterShowBlur);
+		AddBangCommand("!RainmeterToggleBlur", RainmeterToggleBlur);
+		AddBangCommand("!RainmeterAddBlur", RainmeterAddBlur);
+		AddBangCommand("!RainmeterRemoveBlur", RainmeterRemoveBlur);
 		AddBangCommand("!RainmeterHideMeter", RainmeterHideMeter);
 		AddBangCommand("!RainmeterShowMeter", RainmeterShowMeter);
 		AddBangCommand("!RainmeterToggleMeter", RainmeterToggleMeter);
@@ -2549,6 +2610,11 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainmeterHideFade");
 		RemoveBangCommand("!RainmeterShowFade");
 		RemoveBangCommand("!RainmeterToggleFade");
+		RemoveBangCommand("!RainmeterHideBlur");
+		RemoveBangCommand("!RainmeterShowBlur");
+		RemoveBangCommand("!RainmeterToggleBlur");
+		RemoveBangCommand("!RainmeterAddBlur");
+		RemoveBangCommand("!RainmeterRemoveBlur");
 		RemoveBangCommand("!RainmeterHideMeter");
 		RemoveBangCommand("!RainmeterShowMeter");
 		RemoveBangCommand("!RainmeterToggleMeter");
@@ -2820,6 +2886,26 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterUpdateMeasure") == 0)
 	{
 		BangWithArgs(BANG_UPDATEMEASURE, arg.c_str(), 1);
+	}
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowBlur") == 0)
+	{
+		BangWithArgs(BANG_SHOWBLUR, arg.c_str(), 0);
+	}
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideBlur") == 0)
+	{
+		BangWithArgs(BANG_HIDEBLUR, arg.c_str(), 0);
+	}
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleBlur") == 0)
+	{
+		BangWithArgs(BANG_TOGGLEBLUR, arg.c_str(), 0);
+	}
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterAddBlur") == 0)
+	{
+		BangWithArgs(BANG_ADDBLUR, arg.c_str(), 1);
+	}
+	else if (_wcsicmp(bang.c_str(), L"!RainmeterRemoveBlur") == 0)
+	{
+		BangWithArgs(BANG_REMOVEBLUR, arg.c_str(), 1);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!RainmeterActivateConfig") == 0)
 	{

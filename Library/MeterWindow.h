@@ -22,6 +22,7 @@
 
 #include <windows.h>
 #include <gdiplus.h>
+#include <dwmapi.h>
 #include <string>
 #include <list>
 #include "ConfigParser.h"
@@ -37,6 +38,11 @@
 #define WM_DELAYED_MOVE    WM_APP + 3
 
 #define METERWINDOW_CLASS_NAME	L"RainmeterMeterWindow"
+
+typedef HRESULT (WINAPI * FPDWMENABLEBLURBEHINDWINDOW)(HWND hWnd, const DWM_BLURBEHIND* pBlurBehind);
+typedef HRESULT (WINAPI * FPDWMGETCOLORIZATIONCOLOR)(DWORD* pcrColorization, BOOL* pfOpaqueBlend);
+typedef HRESULT (WINAPI * FPDWMSETWINDOWATTRIBUTE)(HWND hwnd, DWORD dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
+typedef HRESULT (WINAPI * FPDWMISCOMPOSITIONENABLED)(BOOL* pfEnabled);
 
 enum MOUSE
 {
@@ -67,6 +73,13 @@ enum ZPOSITION
 	ZPOSITION_NORMAL = 0,
 	ZPOSITION_ONTOP = 1,
 	ZPOSITION_ONTOPMOST = 2
+};
+
+enum BLURMODE
+{
+	BLURMODE_NONE = 0,
+	BLURMODE_FULL,
+	BLURMODE_REGION
 };
 
 enum BGMODE
@@ -107,6 +120,11 @@ enum BANGCOMMAND
 	BANG_ENABLEMEASURE,
 	BANG_DISABLEMEASURE,
 	BANG_UPDATEMEASURE,
+	BANG_SHOWBLUR,
+	BANG_HIDEBLUR,
+	BANG_TOGGLEBLUR,
+	BANG_ADDBLUR,
+	BANG_REMOVEBLUR,
 	BANG_SHOW,
 	BANG_HIDE,
 	BANG_TOGGLE,
@@ -169,6 +187,10 @@ public:
 	void MoveWindow(int x, int y);
 	void ChangeZPos(ZPOSITION zPos, bool all = false);
 	void FadeWindow(int from, int to);
+
+	void ResizeBlur(const WCHAR* arg, int mode);
+	bool IsBlur() { return m_Blur; }
+	void SetBlur(bool b) { m_Blur = b; }
 
 	Gdiplus::Bitmap* GetDoubleBuffer() { return m_DoubleBuffer; }
 	HWND GetWindow() { return m_Window; }
@@ -254,8 +276,10 @@ protected:
 	LRESULT OnDelayedExecute(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam);  
-	LRESULT OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam);  
+	LRESULT OnDwmColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
 	bool HitTest(int x, int y);
@@ -289,8 +313,12 @@ private:
 	bool DoMoveAction(int x, int y, MOUSE mouse);
 	bool ResizeWindow(bool reset);
 	void IgnoreAeroPeek();
+	void BlurBehindWindow(BOOL fEnable);
 	void SetWindowPositionVariables(int x, int y);
 	void SetWindowSizeVariables(int w, int h);
+
+	void ShowBlur();
+	void HideBlur();
 
 	void CreateDoubleBuffer(int cx, int cy);
 
@@ -374,8 +402,12 @@ private:
 	BGMODE m_BackgroundMode;					// The background mode
 	Gdiplus::Color m_SolidColor;				// Color of the solid background
 	Gdiplus::Color m_SolidColor2;				// Color of the solid background
-	Gdiplus::REAL m_SolidAngle;				// 
+	Gdiplus::REAL m_SolidAngle;					//
 	BEVELTYPE m_SolidBevel;						// The type of the bevel
+
+	bool m_Blur;								// If true, Aero blur is active
+	BLURMODE m_BlurMode;						// The blur mode
+	HRGN m_BlurRegion;							// Handle to the blur region
 
 	DWORD m_FadeStartTime;
 	int m_FadeStartValue;
@@ -406,6 +438,13 @@ private:
 	bool m_ToolTipHidden;
 
 	static int c_InstanceCount;
+
+	static HINSTANCE c_DwmInstance;
+
+	static FPDWMENABLEBLURBEHINDWINDOW c_DwmEnableBlurBehindWindow;
+	static FPDWMGETCOLORIZATIONCOLOR c_DwmGetColorizationColor;
+	static FPDWMSETWINDOWATTRIBUTE c_DwmSetWindowAttribute;
+	static FPDWMISCOMPOSITIONENABLED c_DwmIsCompositionEnabled;
 };
 
 #endif
