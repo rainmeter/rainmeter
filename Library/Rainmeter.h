@@ -170,10 +170,6 @@ public:
 	CTrayWindow* GetTrayWindow() { return m_TrayWindow; }
 
 	CMeterWindow* GetMeterWindow(const std::wstring& config);
-	
-	// Added by Peter Souza IV / psouza4 / 2010.12.13
-	//
-	// Read comments in Rainmeter.cpp for details.
 	CMeterWindow* GetMeterWindowByINI(const std::wstring& ini_searching);
 	
 	CMeterWindow* GetMeterWindow(HWND hwnd);
@@ -284,14 +280,15 @@ private:
 
 	CTrayWindow* m_TrayWindow;
 
-	std::vector<CONFIG> m_ConfigStrings;	    // All configs found in the given folder
+	std::vector<CONFIG> m_ConfigStrings;				// All configs found in the given folder
 	std::vector<CONFIGMENU> m_ConfigMenu;
 	std::multimap<int, int> m_ConfigOrders;
-	std::map<std::wstring, CMeterWindow*> m_Meters;			// The meter windows
+	std::map<std::wstring, CMeterWindow*> m_Meters;		// The meter windows
 	std::vector<std::wstring> m_Themes;
 
-	std::wstring m_Path;			    // Path to the main folder
+	std::wstring m_Path;				// Path to the main folder
 	std::wstring m_IniFile;				// The main ini file
+	std::wstring m_StatsFile;			// The statistics ini file
 	std::wstring m_LogFile;				// The log file
 	std::wstring m_SkinPath;			// Path to the folder where the skins are
 	std::wstring m_PluginPath;			// Path to the folder where the plugins are

@@ -1790,15 +1790,18 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	}
 
 	// Set the log file location
-	m_LogFile = m_IniFile;
+	m_LogFile = m_StatsFile = m_IniFile;
 	size_t logFileLen = m_LogFile.length();
 	if (logFileLen > 4 && _wcsicmp(m_LogFile.substr(logFileLen - 4).c_str(), L".ini") == 0)
 	{
 		m_LogFile.replace(logFileLen - 4, 4, L".log");
+		m_StatsFile.replace(logFileLen - 4, 4, L".sta");
+		m_StatsFile += L"ts";
 	}
 	else
 	{
 		m_LogFile += L".log";	// Append the extension so that we don't accidentally overwrite the ini file
+		m_StatsFile += L".stats";
 	}
 
 	// Read Logging settings beforehand
@@ -2245,8 +2248,7 @@ int CRainmeter::CompareVersions(const std::wstring& strA, const std::wstring& st
 /*
 ** CreateDefaultConfigFile
 **
-** Creates the default Rainmeter.ini file.
-** illustro\System is enabled.
+** Creates the default Rainmeter.ini file with illustro\System enabled.
 **
 */
 void CRainmeter::CreateDefaultConfigFile(const std::wstring& strFile)
@@ -3687,17 +3689,31 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 */
 void CRainmeter::ReadStats()
 {
+	// If m_StatsFile doesn't exist, create it and copy the stats section from m_IniFile
+	if (_waccess(m_StatsFile.c_str(), 0) == -1)
+	{
+		WCHAR* tmpSz = new WCHAR[SHRT_MAX];	// Max size returned by GetPrivateProfileSection()
+
+		if (GetPrivateProfileSection(L"Statistics", tmpSz, SHRT_MAX, m_IniFile.c_str()) > 0)
+		{
+			WritePrivateProfileSection(L"Statistics", tmpSz, m_StatsFile.c_str());
+			WritePrivateProfileString(L"Statistics", NULL, NULL, m_IniFile.c_str());
+		}
+
+		delete [] tmpSz;
+	}
+
 	WCHAR* tmpSz = new WCHAR[MAX_LINE_LENGTH];
 
-	if (GetPrivateProfileString(L"Statistics", L"Since", L"", tmpSz, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0)
+	if (GetPrivateProfileString(L"Statistics", L"Since", L"", tmpSz, MAX_LINE_LENGTH, m_StatsFile.c_str()) > 0)
 	{
- 		m_StatsDate = tmpSz;
+		m_StatsDate = tmpSz;
 	}
 
 	delete [] tmpSz;
 
 	// Only Net measure has stats at the moment
-	CMeasureNet::ReadStats(m_IniFile);
+	CMeasureNet::ReadStats(m_StatsFile);
 }
 
 /*
@@ -3715,12 +3731,12 @@ void CRainmeter::WriteStats(bool bForce)
 		lastWrite = GetTickCount();
 
 		// Write the date for statistics
-		WritePrivateProfileString(L"Statistics", L"Since", m_StatsDate.c_str(), m_IniFile.c_str());
+		WritePrivateProfileString(L"Statistics", L"Since", m_StatsDate.c_str(), m_StatsFile.c_str());
 
 		// Only Net measure has stats at the moment
-		CMeasureNet::WriteStats(m_IniFile);
+		CMeasureNet::WriteStats(m_StatsFile);
 
-		WritePrivateProfileString(NULL, NULL, NULL, m_IniFile.c_str());
+		WritePrivateProfileString(NULL, NULL, NULL, m_StatsFile.c_str());
 	}
 }
 
