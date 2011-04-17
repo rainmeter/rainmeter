@@ -29,14 +29,12 @@
 enum TIMER
 {
 	TIMER_SHOWDESKTOP = 1,
-//	TIMER_COMPOSITION = 2,
-	TIMER_NETSTATS    = 3,
-	TIMER_DELETELATER = 4
+	TIMER_NETSTATS    = 2,
+	TIMER_DELETELATER = 3
 };
 enum INTERVAL
 {
 	INTERVAL_SHOWDESKTOP = 250,
-//	INTERVAL_COMPOSITION = 250,
 	INTERVAL_NETSTATS    = 60000,
 	INTERVAL_DELETELATER = 1000
 };
@@ -48,7 +46,6 @@ HWND CSystem::c_HelperWindow = NULL;
 
 HWINEVENTHOOK CSystem::c_WinEventHook = NULL;
 
-//bool CSystem::c_DwmCompositionEnabled = false;
 bool CSystem::c_ShowDesktop = false;
 
 OSPLATFORM CSystem::c_Platform = OSPLATFORM_UNKNOWN;
@@ -109,8 +106,6 @@ void CSystem::Initialize(HINSTANCE instance)
 	c_Monitors.monitors.reserve(8);
 	SetMultiMonitorInfo();
 
-//	c_DwmCompositionEnabled = (DwmIsCompositionEnabled() == TRUE);
-
 	c_WinEventHook = SetWinEventHook(
 		EVENT_SYSTEM_FOREGROUND,
 		EVENT_SYSTEM_FOREGROUND,
@@ -134,7 +129,6 @@ void CSystem::Initialize(HINSTANCE instance)
 void CSystem::Finalize()
 {
 	KillTimer(c_Window, TIMER_SHOWDESKTOP);
-//	KillTimer(c_Window, TIMER_COMPOSITION);
 	KillTimer(c_Window, TIMER_NETSTATS);
 	KillTimer(c_Window, TIMER_DELETELATER);
 
@@ -905,30 +899,6 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 			CheckDesktopState(GetWorkerW());
 			return 0;
 
-		//case TIMER_COMPOSITION:
-		//	{
-		//		if (GetShellDesktopWindow() || DesktopCompositionCheckCount >= 10)  // 250ms * 10 = 2.5s
-		//		{
-		//			KillTimer(c_Window, TIMER_COMPOSITION);
-
-		//			c_WinEventHook = SetWinEventHook(
-		//				EVENT_SYSTEM_FOREGROUND,
-		//				EVENT_SYSTEM_FOREGROUND,
-		//				NULL,
-		//				MyWinEventProc,
-		//				0,
-		//				0,
-		//				WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
-
-		//			SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
-		//		}
-		//		else
-		//		{
-		//			++DesktopCompositionCheckCount;
-		//		}
-		//	}
-		//	return 0;
-
 		case TIMER_NETSTATS:
 			CMeasureNet::UpdateIFTable();
 
@@ -943,25 +913,6 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 			return 0;
 		}
 		break;
-
-	//case WM_DWMCOMPOSITIONCHANGED:
-	//	Log(LOG_NOTICE, L"System: DWM desktop composition has been changed.");
-
-	//	KillTimer(c_Window, TIMER_SHOWDESKTOP);
-	//	KillTimer(c_Window, TIMER_COMPOSITION);
-
-	//	if (c_WinEventHook)
-	//	{
-	//		UnhookWinEvent(c_WinEventHook);
-	//		c_WinEventHook = NULL;
-	//	}
-
-	//	c_DwmCompositionEnabled = (DwmIsCompositionEnabled() == TRUE);
-
-	//	DesktopCompositionCheckCount = 0;
-	//	SetTimer(c_Window, TIMER_COMPOSITION, INTERVAL_COMPOSITION, NULL);
-
-	//	return 0;
 
 	case WM_DISPLAYCHANGE:
 		Log(LOG_NOTICE, L"System: Display setting has been changed.");
@@ -1086,37 +1037,6 @@ HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError, bool ignor
 
 	return hLib;
 }
-
-/*
-** DwmIsCompositionEnabled
-**
-** Returns TRUE if the DWM desktop composition is enabled.
-**
-*/
-//BOOL CSystem::DwmIsCompositionEnabled()
-//{
-//	BOOL fEnabled = FALSE;
-//
-//	typedef HRESULT (WINAPI * FPDWMISCOMPOSITIONENABLED)(BOOL* pfEnabled);
-//
-//	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
-//	{
-//		HINSTANCE h = RmLoadLibrary(L"dwmapi.dll");
-//		if (h)
-//		{
-//			FPDWMISCOMPOSITIONENABLED DwmIsCompositionEnabled = (FPDWMISCOMPOSITIONENABLED)GetProcAddress(h, "DwmIsCompositionEnabled");
-//			if (DwmIsCompositionEnabled)
-//			{
-//				if (DwmIsCompositionEnabled(&fEnabled) != S_OK)
-//				{
-//					fEnabled = FALSE;
-//				}
-//			}
-//			FreeLibrary(h);
-//		}
-//	}
-//	return fEnabled;
-//}
 
 /*
 ** CopyFiles

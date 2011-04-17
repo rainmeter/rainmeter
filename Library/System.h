@@ -64,7 +64,6 @@ public:
 	static const MULTIMONITOR_INFO& GetMultiMonitorInfo() { return c_Monitors; }
 	static size_t GetMonitorCount();
 
-//	static bool GetDwmCompositionEnabled() { return c_DwmCompositionEnabled; }
 	static bool GetShowDesktop() { return c_ShowDesktop; }
 
 	static HWND GetShellDesktopWindow(bool findWorkerW = false);
@@ -105,7 +104,6 @@ private:
 
 	static MULTIMONITOR_INFO c_Monitors;		// Multi-Monitor info
 
-//	static bool c_DwmCompositionEnabled;
 	static bool c_ShowDesktop;
 
 	static OSPLATFORM c_Platform;
