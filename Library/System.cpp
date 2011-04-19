@@ -552,10 +552,11 @@ HWND CSystem::GetDefaultShellWindow()
 
 	if (ShellW)
 	{
-		HWND hwnd = NULL;
-		while (hwnd = FindWindowEx(NULL, hwnd, L"Progman", NULL))
+		WCHAR className[16];
+		if (GetClassName(ShellW, className, 16) > 0 &&
+			_wcsicmp(className, L"Progman") == 0)
 		{
-			if (hwnd == ShellW) return ShellW;
+			return ShellW;
 		}
 	}
 
@@ -667,10 +668,10 @@ bool CSystem::BelongToSameProcess(HWND hwndA, HWND hwndB)
 BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
 	bool logging = CRainmeter::GetDebug() && DEBUG_VERBOSE;
-	WCHAR className[128] = {0};
+	WCHAR className[64];
 	CMeterWindow* Window;
 
-	if (GetClassName(hwnd, className, 128) > 0 &&
+	if (GetClassName(hwnd, className, 64) > 0 &&
 		wcscmp(className, METERWINDOW_CLASS_NAME) == 0 &&
 		Rainmeter && (Window = Rainmeter->GetMeterWindow(hwnd)))
 	{
@@ -771,12 +772,12 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 		{
 			if (GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
 			{
-				WCHAR className[128], windowText[128];
+				WCHAR className[64], windowText[64];
 
 				if (logging)
 				{
-					GetClassName(hwnd, className, 128);
-					GetWindowText(hwnd, windowText, 128);
+					GetClassName(hwnd, className, 64);
+					GetWindowText(hwnd, windowText, 64);
 				}
 
 				// Insert the helper window after the found window
@@ -860,9 +861,9 @@ void CALLBACK CSystem::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, 
 	{
 		if (!c_ShowDesktop)
 		{
-			WCHAR className[128];
-			if (GetClassName(hwnd, className, 128) > 0 &&
-				wcscmp(className, L"WorkerW") == 0 &&
+			WCHAR className[16];
+			if (GetClassName(hwnd, className, 16) > 0 &&
+				_wcsicmp(className, L"WorkerW") == 0 &&
 				hwnd == GetWorkerW())
 			{
 				CheckDesktopState(hwnd);
