@@ -47,6 +47,7 @@ public:
 
 	void ReadConfig(CConfigParser& parser);
 	HWND GetWindow() { return m_Window; }
+	bool IsTrayIconEnabled() { return m_TrayIconEnabled; }
 
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -71,6 +72,8 @@ private:
 
 	double m_TrayValues[TRAYICON_SIZE];
 	int m_TrayPos;
+
+	bool m_TrayIconEnabled;
 };
 
 #endif

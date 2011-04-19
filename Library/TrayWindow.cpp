@@ -34,6 +34,8 @@
 #define RAINMETER_MANUALBETA	L"http://rainmeter.net/RainCMS/?q=ManualBeta"
 #define RAINMETER_DOWNLOADS		L"http://rainmeter.net/RainCMS/?q=Downloads"
 
+const UINT WM_TASKBARCREATED = ::RegisterWindowMessage(L"TaskbarCreated");
+
 extern CRainmeter* Rainmeter;
 
 using namespace Gdiplus;
@@ -46,7 +48,8 @@ CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
 	m_TrayColor2(0, 255, 0),
 	m_Bitmap(),
 	m_TrayValues(),
-	m_TrayPos()
+	m_TrayPos(),
+	m_TrayIconEnabled(true)
 {
 	WNDCLASS  wc;
 
@@ -365,8 +368,8 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 		LogWithArgs(LOG_ERROR, L"No such TrayMeter: %s", type.c_str());
 	}
 
-	int trayIcon = parser.ReadInt(L"Rainmeter", L"TrayIcon", 1);
-	if (trayIcon != 0)
+	m_TrayIconEnabled = 0!=parser.ReadInt(L"Rainmeter", L"TrayIcon", 1);
+	if (m_TrayIconEnabled)
 	{
 		AddTrayIcon();
 
@@ -374,6 +377,10 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 		{
 			SetTimer(m_Window, TRAYTIMER, 1000, NULL);		// Update the tray once per sec
 		}
+	}
+	else
+	{
+		RemoveTrayIcon();
 	}
 }
 
@@ -385,6 +392,14 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	if (uMsg == WM_CREATE)
 	{
 		tray=(CTrayWindow*)((LPCREATESTRUCT)lParam)->lpCreateParams;
+	}
+	else if (uMsg == WM_TASKBARCREATED)
+	{
+		if (tray && tray->IsTrayIconEnabled())
+		{
+			tray->RemoveTrayIcon();
+			tray->AddTrayIcon();
+		}
 	}
 
 	switch(uMsg)
