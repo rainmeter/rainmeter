@@ -564,78 +564,25 @@ HWND CSystem::GetDefaultShellWindow()
 }
 
 /*
-** GetShellDesktopWindow
+** GetWorkerW
 **
-** Finds the Shell's desktop window or WorkerW window.
-** If the window is not found, this function returns NULL.
-**
-** Note for WorkerW:
-**
-** In Earlier Windows / 7 (without Aero):
-** This function returns a topmost window handle which is visible.
-**
-** In Windows 7 (with Aero):
-** This function returns a window handle which has the "SHELLDLL_DefView".
+** Finds the WorkerW window.
+** If the window is not found, returns NULL.
 **
 */
-HWND CSystem::GetShellDesktopWindow(bool findWorkerW)
+HWND CSystem::GetWorkerW()
 {
-	HWND DesktopW = NULL, hwnd;
-
 	HWND ShellW = GetDefaultShellWindow();
 	if (!ShellW) return NULL;  // Default Shell (Explorer) not running
 
-	if ((hwnd = FindWindowEx(ShellW, NULL, L"SHELLDLL_DefView", L"")) &&
-		(DesktopW = FindWindowEx(hwnd, NULL, L"SysListView32", NULL)))  // In Earlier Windows / 7 (without Aero)
-	{
-		if (findWorkerW)
-		{
-			HWND WorkerW = NULL;
-			while (WorkerW = FindWindowEx(NULL, WorkerW, L"WorkerW", L""))
-			{
-				if (IsWindowVisible(WorkerW) && BelongToSameProcess(ShellW, WorkerW))
-				{
-					// Check whether WorkerW covers whole of the screens
-					WINDOWPLACEMENT wp = {sizeof(WINDOWPLACEMENT)};
-					GetWindowPlacement(WorkerW, &wp);
-
-					if (wp.rcNormalPosition.left == c_Monitors.vsL &&
-						wp.rcNormalPosition.top == c_Monitors.vsT &&
-						(wp.rcNormalPosition.right - wp.rcNormalPosition.left) == c_Monitors.vsW &&
-						(wp.rcNormalPosition.bottom - wp.rcNormalPosition.top) == c_Monitors.vsH)
-					{
-						return WorkerW;
-					}
-				}
-			}
-		}
-		else
-		{
-			if (BelongToSameProcess(ShellW, DesktopW))
-			{
-				return DesktopW;
-			}
-		}
-	}
-	else  // In Windows 7 (with Aero)
+	if (FindWindowEx(ShellW, NULL, L"SHELLDLL_DefView", L"") == NULL)
 	{
 		HWND WorkerW = NULL;
 		while (WorkerW = FindWindowEx(NULL, WorkerW, L"WorkerW", L""))
 		{
-			if (BelongToSameProcess(ShellW, WorkerW))
+			if (BelongToSameProcess(ShellW, WorkerW) && FindWindowEx(WorkerW, NULL, L"SHELLDLL_DefView", L""))
 			{
-				if ((hwnd = FindWindowEx(WorkerW, NULL, L"SHELLDLL_DefView", L"")) &&
-					(DesktopW = FindWindowEx(hwnd, NULL, L"SysListView32", NULL)))
-				{
-					if (findWorkerW)
-					{
-						return WorkerW;
-					}
-					else
-					{
-						return DesktopW;
-					}
-				}
+				return WorkerW;
 			}
 		}
 	}
@@ -864,7 +811,8 @@ void CALLBACK CSystem::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, 
 			WCHAR className[16];
 			if (GetClassName(hwnd, className, 16) > 0 &&
 				_wcsicmp(className, L"WorkerW") == 0 &&
-				hwnd == GetWorkerW())
+				BelongToSameProcess(GetDefaultShellWindow(), hwnd) &&
+				FindWindowEx(hwnd, NULL, L"SHELLDLL_DefView", L""))
 			{
 				CheckDesktopState(hwnd);
 			}
@@ -880,8 +828,6 @@ void CALLBACK CSystem::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, 
 */
 LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	static int DesktopCompositionCheckCount = 0;
-
 	if (hWnd != c_Window)
 	{
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);

@@ -66,8 +66,7 @@ public:
 
 	static bool GetShowDesktop() { return c_ShowDesktop; }
 
-	static HWND GetShellDesktopWindow(bool findWorkerW = false);
-	static HWND GetWorkerW() { return GetShellDesktopWindow(true); }
+	static HWND GetWorkerW();
 
 	static HWND GetHelperWindow() { return c_HelperWindow; }
 	static void PrepareHelperWindow(HWND WorkerW);
