@@ -297,7 +297,6 @@ bool CMeterLine::Draw(Graphics& graphics)
 
 	// Draw all the lines
 	const REAL H = m_H - 1.0f;
-	const bool closeRequired = (m_LineWidth != 1.0);
 	counter = 0;
 	std::vector< std::vector<double> >::const_iterator i = m_AllValues.begin();
 	for (; i != m_AllValues.end(); ++i)
@@ -329,16 +328,12 @@ bool CMeterLine::Draw(Graphics& graphics)
 
 			path.AddLine((REAL)(j - 1), oldY, (REAL)j, Y);
 
-			if (closeRequired)
-			{
-				path.CloseFigure();
-			}
-
 			oldY = Y;
 		}
 
 		// Draw cached lines
 		Pen pen(m_Colors[counter], (REAL)m_LineWidth);
+		pen.SetLineJoin(LineJoinBevel);
 		graphics.DrawPath(&pen, &path);
 
 		++counter;
