@@ -1725,7 +1725,6 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	if (!c_DummyLitestep) InitalizeLitestep();
 
-	bool bDefaultIniLocation = false;
 	bool bPortableInstallation = false;
 
 	if (c_CmdLine.empty())
@@ -1738,7 +1737,6 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		{
 			m_IniFile = L"%APPDATA%\\Rainmeter\\Rainmeter.ini";
 			ExpandEnvironmentVariables(m_IniFile);
-			bDefaultIniLocation = true;
 
 			// If the ini file doesn't exist in the %APPDATA% either, create a default Rainmeter.ini file.
 			if (_waccess(m_IniFile.c_str(), 0) == -1)
@@ -1791,7 +1789,6 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		{
 			CreateDefaultConfigFile(m_IniFile);
 		}
-		bDefaultIniLocation = true;
 	}
 
 	// Set the log file location
@@ -1818,14 +1815,18 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		StartLogging();
 	}
 
-	m_PluginPath = m_AddonPath = m_SkinPath = m_Path;
+	m_PluginPath = m_AddonPath = m_Path;
 	m_PluginPath += L"Plugins\\";
 	m_AddonPath += L"Addons\\";
-	m_SkinPath += L"Skins\\";
 
-	// Read the skin folder from the ini file
-	if (!bPortableInstallation)
+	if (bPortableInstallation)
 	{
+		m_SkinPath = m_Path;
+		m_SkinPath += L"Skins\\";
+	}
+	else
+	{
+		// Read the skin folder from the ini file
 		tmpSzPath[0] = L'\0';
 		if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0)
 		{
@@ -1841,7 +1842,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 				}
 			}
 		}
-		else if (bDefaultIniLocation)
+		else
 		{
 			// If the skin path is not defined in the Rainmeter.ini file use My Documents/Rainmeter/Skins
 			tmpSzPath[0] = L'\0';
@@ -1945,7 +1946,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	}
 
 	// Test that the Rainmeter.ini file is writable
-	TestSettingsFile(bDefaultIniLocation);
+	TestSettingsFile(bPortableInstallation);
 
 	// If the skin folder is somewhere else than in the program path
 	if (_wcsnicmp(m_Path.c_str(), m_SkinPath.c_str(), m_Path.size()) != 0)
@@ -4347,7 +4348,7 @@ void CRainmeter::SetDisableDragging(bool dragging)
 	WritePrivateProfileString(L"Rainmeter", L"DisableDragging", dragging ? L"1" : L"0", m_IniFile.c_str());
 }
 
-void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
+void CRainmeter::TestSettingsFile(bool bPortableInstallation)
 {
 	WritePrivateProfileString(L"Rainmeter", L"WriteTest", L"TRUE", m_IniFile.c_str());
 	WritePrivateProfileString(NULL, NULL, NULL, m_IniFile.c_str());	// FLUSH
@@ -4366,7 +4367,7 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 		std::wstring error = L"The Rainmeter.ini file is not writable. This means that the\n"
 			L"application will not be able to save any settings permanently.\n\n";
 
-		if (!bDefaultIniLocation)
+		if (bPortableInstallation)
 		{
 			std::wstring strTarget = L"%APPDATA%\\Rainmeter\\";
 			ExpandEnvironmentVariables(strTarget);
