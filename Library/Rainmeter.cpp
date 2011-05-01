@@ -1726,6 +1726,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	if (!c_DummyLitestep) InitalizeLitestep();
 
 	bool bDefaultIniLocation = false;
+	bool bPortableInstallation = false;
 
 	if (c_CmdLine.empty())
 	{
@@ -1744,6 +1745,10 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 			{
 				CreateDefaultConfigFile(m_IniFile);
 			}
+		}
+		else
+		{
+			bPortableInstallation = true;
 		}
 	}
 	else
@@ -1819,56 +1824,59 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	m_SkinPath += L"Skins\\";
 
 	// Read the skin folder from the ini file
-	tmpSzPath[0] = L'\0';
-	if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0)
+	if (!bPortableInstallation)
 	{
-		m_SkinPath = tmpSzPath;
-		ExpandEnvironmentVariables(m_SkinPath);
-
-		if (!m_SkinPath.empty())
-		{
-			WCHAR ch = m_SkinPath[m_SkinPath.size() - 1];
-			if (ch != L'\\' && ch != L'/')
-			{
-				m_SkinPath += L"\\";
-			}
-		}
-	}
-	else if (bDefaultIniLocation)
-	{
-		// If the skin path is not defined in the Rainmeter.ini file use My Documents/Rainmeter/Skins
 		tmpSzPath[0] = L'\0';
-		HRESULT hr = SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, tmpSzPath);
-		if (SUCCEEDED(hr))
+		if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0)
 		{
-			// Make the folders if they don't exist yet
 			m_SkinPath = tmpSzPath;
-			m_SkinPath += L"\\Rainmeter";
-			CreateDirectory(m_SkinPath.c_str(), NULL);
-			m_SkinPath += L"\\Skins\\";
-			DWORD result = CreateDirectory(m_SkinPath.c_str(), NULL);
-			if (result != 0)
+			ExpandEnvironmentVariables(m_SkinPath);
+
+			if (!m_SkinPath.empty())
 			{
-				// The folder was created successfully which means that it wasn't available yet.
-				// Copy the default skin to the Skins folder
-				std::wstring strFrom(m_Path + L"Skins\\*.*");
-				std::wstring strTo(m_SkinPath);
-				CSystem::CopyFiles(strFrom, strTo);
-
-				// This shouldn't be copied
-				std::wstring strNote = strTo + L"Read me before copying skins here.txt";
-				CSystem::RemoveFile(strNote);
-
-				// Copy also the themes to the %APPDATA%
-				strFrom = std::wstring(m_Path + L"Themes\\*.*");
-				strTo = std::wstring(GetSettingsPath() + L"Themes\\");
-				CreateDirectory(strTo.c_str(), NULL);
-				CSystem::CopyFiles(strFrom, strTo);
+				WCHAR ch = m_SkinPath[m_SkinPath.size() - 1];
+				if (ch != L'\\' && ch != L'/')
+				{
+					m_SkinPath += L"\\";
+				}
 			}
 		}
-		else
+		else if (bDefaultIniLocation)
 		{
-			Log(LOG_WARNING, L"Unable to get the My Documents location.");
+			// If the skin path is not defined in the Rainmeter.ini file use My Documents/Rainmeter/Skins
+			tmpSzPath[0] = L'\0';
+			HRESULT hr = SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, tmpSzPath);
+			if (SUCCEEDED(hr))
+			{
+				// Make the folders if they don't exist yet
+				m_SkinPath = tmpSzPath;
+				m_SkinPath += L"\\Rainmeter";
+				CreateDirectory(m_SkinPath.c_str(), NULL);
+				m_SkinPath += L"\\Skins\\";
+				DWORD result = CreateDirectory(m_SkinPath.c_str(), NULL);
+				if (result != 0)
+				{
+					// The folder was created successfully which means that it wasn't available yet.
+					// Copy the default skin to the Skins folder
+					std::wstring strFrom(m_Path + L"Skins\\*.*");
+					std::wstring strTo(m_SkinPath);
+					CSystem::CopyFiles(strFrom, strTo);
+
+					// This shouldn't be copied
+					std::wstring strNote = strTo + L"Read me before copying skins here.txt";
+					CSystem::RemoveFile(strNote);
+
+					// Copy also the themes to the %APPDATA%
+					strFrom = std::wstring(m_Path + L"Themes\\*.*");
+					strTo = std::wstring(GetSettingsPath() + L"Themes\\");
+					CreateDirectory(strTo.c_str(), NULL);
+					CSystem::CopyFiles(strFrom, strTo);
+				}
+			}
+			else
+			{
+				Log(LOG_WARNING, L"Unable to get the My Documents location.");
+			}
 		}
 	}
 	WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), m_IniFile.c_str());
