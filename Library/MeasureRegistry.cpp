@@ -71,7 +71,7 @@ bool CMeasureRegistry::Update()
 			switch(type)
 			{
 			case REG_DWORD:
-				m_Value = *((LPDWORD)&data);
+				m_Value = *((LPDWORD)data);
 				m_StringValue.erase();
 				break;
 
@@ -83,7 +83,7 @@ bool CMeasureRegistry::Update()
 				break;
 
 			case REG_QWORD:
-				m_Value = (double)((LARGE_INTEGER*)&data)->QuadPart;
+				m_Value = (double)((LARGE_INTEGER*)data)->QuadPart;
 				m_StringValue.erase();
 				break;
 
