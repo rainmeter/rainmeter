@@ -1725,7 +1725,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	if (!c_DummyLitestep) InitalizeLitestep();
 
-	bool bPortableInstallation = false;
+	bool bDefaultIniLocation = false;
 
 	if (c_CmdLine.empty())
 	{
@@ -1737,16 +1737,13 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		{
 			m_IniFile = L"%APPDATA%\\Rainmeter\\Rainmeter.ini";
 			ExpandEnvironmentVariables(m_IniFile);
+			bDefaultIniLocation = true;
 
 			// If the ini file doesn't exist in the %APPDATA% either, create a default Rainmeter.ini file.
 			if (_waccess(m_IniFile.c_str(), 0) == -1)
 			{
 				CreateDefaultConfigFile(m_IniFile);
 			}
-		}
-		else
-		{
-			bPortableInstallation = true;
 		}
 	}
 	else
@@ -1789,6 +1786,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		{
 			CreateDefaultConfigFile(m_IniFile);
 		}
+		bDefaultIniLocation = true;
 	}
 
 	// Set the log file location
@@ -1815,72 +1813,66 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		StartLogging();
 	}
 
-	m_PluginPath = m_AddonPath = m_Path;
+	m_PluginPath = m_AddonPath = m_SkinPath = m_Path;
 	m_PluginPath += L"Plugins\\";
 	m_AddonPath += L"Addons\\";
+	m_SkinPath += L"Skins\\";
 
-	if (bPortableInstallation)
+	// Read the skin folder from the ini file
+	tmpSzPath[0] = L'\0';
+	if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0)
 	{
-		m_SkinPath = m_Path;
-		m_SkinPath += L"Skins\\";
-	}
-	else
-	{
-		// Read the skin folder from the ini file
-		tmpSzPath[0] = L'\0';
-		if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0)
+		m_SkinPath = tmpSzPath;
+		ExpandEnvironmentVariables(m_SkinPath);
+
+		if (!m_SkinPath.empty())
 		{
-			m_SkinPath = tmpSzPath;
-			ExpandEnvironmentVariables(m_SkinPath);
-
-			if (!m_SkinPath.empty())
+			WCHAR ch = m_SkinPath[m_SkinPath.size() - 1];
+			if (ch != L'\\' && ch != L'/')
 			{
-				WCHAR ch = m_SkinPath[m_SkinPath.size() - 1];
-				if (ch != L'\\' && ch != L'/')
-				{
-					m_SkinPath += L"\\";
-				}
+				m_SkinPath += L"\\";
+			}
+		}
+	}
+	else if (bDefaultIniLocation)
+	{
+		// If the skin path is not defined in the Rainmeter.ini file use My Documents/Rainmeter/Skins
+		tmpSzPath[0] = L'\0';
+		HRESULT hr = SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, tmpSzPath);
+		if (SUCCEEDED(hr))
+		{
+			// Make the folders if they don't exist yet
+			m_SkinPath = tmpSzPath;
+			m_SkinPath += L"\\Rainmeter";
+			CreateDirectory(m_SkinPath.c_str(), NULL);
+			m_SkinPath += L"\\Skins\\";
+			DWORD result = CreateDirectory(m_SkinPath.c_str(), NULL);
+			if (result != 0)
+			{
+				// The folder was created successfully which means that it wasn't available yet.
+				// Copy the default skin to the Skins folder
+				std::wstring strFrom(m_Path + L"Skins\\*.*");
+				std::wstring strTo(m_SkinPath);
+				CSystem::CopyFiles(strFrom, strTo);
+
+				// This shouldn't be copied
+				std::wstring strNote = strTo + L"Read me before copying skins here.txt";
+				CSystem::RemoveFile(strNote);
+
+				// Copy also the themes to the %APPDATA%
+				strFrom = std::wstring(m_Path + L"Themes\\*.*");
+				strTo = std::wstring(GetSettingsPath() + L"Themes\\");
+				CreateDirectory(strTo.c_str(), NULL);
+				CSystem::CopyFiles(strFrom, strTo);
 			}
 		}
 		else
 		{
-			// If the skin path is not defined in the Rainmeter.ini file use My Documents/Rainmeter/Skins
-			tmpSzPath[0] = L'\0';
-			HRESULT hr = SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, tmpSzPath);
-			if (SUCCEEDED(hr))
-			{
-				// Make the folders if they don't exist yet
-				m_SkinPath = tmpSzPath;
-				m_SkinPath += L"\\Rainmeter";
-				CreateDirectory(m_SkinPath.c_str(), NULL);
-				m_SkinPath += L"\\Skins\\";
-				DWORD result = CreateDirectory(m_SkinPath.c_str(), NULL);
-				if (result != 0)
-				{
-					// The folder was created successfully which means that it wasn't available yet.
-					// Copy the default skin to the Skins folder
-					std::wstring strFrom(m_Path + L"Skins\\*.*");
-					std::wstring strTo(m_SkinPath);
-					CSystem::CopyFiles(strFrom, strTo);
-
-					// This shouldn't be copied
-					std::wstring strNote = strTo + L"Read me before copying skins here.txt";
-					CSystem::RemoveFile(strNote);
-
-					// Copy also the themes to the %APPDATA%
-					strFrom = std::wstring(m_Path + L"Themes\\*.*");
-					strTo = std::wstring(GetSettingsPath() + L"Themes\\");
-					CreateDirectory(strTo.c_str(), NULL);
-					CSystem::CopyFiles(strFrom, strTo);
-				}
-			}
-			else
-			{
-				Log(LOG_WARNING, L"Unable to get the My Documents location.");
-			}
+			Log(LOG_WARNING, L"Unable to get the My Documents location.");
 		}
+
+		WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), m_IniFile.c_str());
 	}
-	WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), m_IniFile.c_str());
 
 	delete [] tmpSzPath;
 	tmpSzPath = NULL;
@@ -1946,7 +1938,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	}
 
 	// Test that the Rainmeter.ini file is writable
-	TestSettingsFile(bPortableInstallation);
+	TestSettingsFile(bDefaultIniLocation);
 
 	// If the skin folder is somewhere else than in the program path
 	if (_wcsnicmp(m_Path.c_str(), m_SkinPath.c_str(), m_Path.size()) != 0)
@@ -4348,7 +4340,7 @@ void CRainmeter::SetDisableDragging(bool dragging)
 	WritePrivateProfileString(L"Rainmeter", L"DisableDragging", dragging ? L"1" : L"0", m_IniFile.c_str());
 }
 
-void CRainmeter::TestSettingsFile(bool bPortableInstallation)
+void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 {
 	WritePrivateProfileString(L"Rainmeter", L"WriteTest", L"TRUE", m_IniFile.c_str());
 	WritePrivateProfileString(NULL, NULL, NULL, m_IniFile.c_str());	// FLUSH
@@ -4367,7 +4359,7 @@ void CRainmeter::TestSettingsFile(bool bPortableInstallation)
 		std::wstring error = L"The Rainmeter.ini file is not writable. This means that the\n"
 			L"application will not be able to save any settings permanently.\n\n";
 
-		if (bPortableInstallation)
+		if (!bDefaultIniLocation)
 		{
 			std::wstring strTarget = L"%APPDATA%\\Rainmeter\\";
 			ExpandEnvironmentVariables(strTarget);

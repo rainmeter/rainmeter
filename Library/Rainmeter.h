@@ -274,7 +274,7 @@ private:
 	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);
 	void CreateDefaultConfigFile(const std::wstring& strFile);
 	void SetLogging(bool logging);
-	void TestSettingsFile(bool bPortableInstallation);
+	void TestSettingsFile(bool bDefaultIniLocation);
 	void CheckSkinVersions();
 	int CompareVersions(const std::wstring& strA, const std::wstring& strB);
 
