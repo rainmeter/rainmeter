@@ -127,16 +127,21 @@ bool CMeterRoundLine::Draw(Graphics& graphics)
 	// Calculate the center of for the line
 	int x = GetX();
 	int y = GetY();
-	REAL cx = (REAL)(x + m_W / 2.0);
-	REAL cy = (REAL)(y + m_H / 2.0);
+	double cx = x + m_W / 2.0;
+	double cy = y + m_H / 2.0;
 
 	double lineStart = ((m_CntrlLineStart) ? m_LineStartShift * m_Value : 0) + m_LineStart;
 	double lineLength = ((m_CntrlLineLength) ? m_LineLengthShift * m_Value : 0) + m_LineLength;
 
 	// Calculate the end point of the line
 	double angle = ((m_CntrlAngle) ? m_RotationAngle * m_Value : m_RotationAngle) + m_StartAngle;
-	REAL e_cos = (REAL)cos(angle);
-	REAL e_sin = (REAL)sin(angle);
+	double e_cos = cos(angle);
+	double e_sin = sin(angle);
+
+	REAL sx = (REAL)(e_cos * lineStart + cx);
+	REAL sy = (REAL)(e_sin * lineStart + cy);
+	REAL ex = (REAL)(e_cos * lineLength + cx);
+	REAL ey = (REAL)(e_sin * lineLength + cy);
 
 	if (m_Solid)
 	{
@@ -144,33 +149,23 @@ bool CMeterRoundLine::Draw(Graphics& graphics)
 		REAL sweepAngle = (REAL)(CONVERT_TO_DEGREES(m_RotationAngle * m_Value));
 
 		// Calculate the start point of the line
-		REAL s_cos = (REAL)cos(m_StartAngle);
-		REAL s_sin = (REAL)sin(m_StartAngle);
+		double s_cos = cos(m_StartAngle);
+		double s_sin = sin(m_StartAngle);
 
 		//Create a path to surround the arc
 		GraphicsPath path;
 		path.AddArc((REAL)(cx - lineStart), (REAL)(cy - lineStart), (REAL)(lineStart * 2.0), (REAL)(lineStart * 2.0), startAngle, sweepAngle);
-		path.AddLine((REAL)lineStart * s_cos + cx, (REAL)lineStart * s_sin + cy, (REAL)lineLength * s_cos + cx, (REAL)lineLength * s_sin + cy);
+		path.AddLine((REAL)(lineStart * s_cos + cx), (REAL)(lineStart * s_sin + cy), (REAL)(lineLength * s_cos + cx), (REAL)(lineLength * s_sin + cy));
 		path.AddArc((REAL)(cx - lineLength), (REAL)(cy - lineLength), (REAL)(lineLength * 2.0), (REAL)(lineLength * 2.0), startAngle, sweepAngle);
-		path.AddLine((REAL)lineLength * e_cos + cx, (REAL)lineLength * e_sin + cy, (REAL)lineStart * e_cos + cx, (REAL)lineStart * e_sin + cy);
+		path.AddLine(ex, ey, sx, sy);
 
 		SolidBrush solidBrush(m_LineColor);
 		graphics.FillPath(&solidBrush, &path);
 	}
 	else
 	{
-		// Set the length
-		REAL x = e_cos * (REAL)lineLength + cx;
-		REAL y = e_sin * (REAL)lineLength + cy;
-
-		if (lineStart > 0.0)
-		{
-			cx += e_cos * (REAL)lineStart;
-			cy += e_sin * (REAL)lineStart;
-		}
-
 		Pen pen(m_LineColor, (REAL)m_LineWidth);
-		graphics.DrawLine(&pen, cx, cy, x, y);
+		graphics.DrawLine(&pen, sx, sy, ex, ey);
 	}
 
 	return true;

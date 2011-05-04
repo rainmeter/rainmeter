@@ -25,6 +25,9 @@
 
 using namespace Gdiplus;
 
+#define PI	(3.14159265358979323846)
+#define CONVERT_TO_DEGREES(X)	((X) * (180.0 / PI))
+
 extern CRainmeter* Rainmeter;
 
 /*
@@ -134,9 +137,8 @@ bool CMeterRotator::Update()
 	{
 		if (m_ValueRemainder > 0)
 		{
-			LARGE_INTEGER time;
-			time.QuadPart = (LONGLONG)m_Measure->GetValue();
-			m_Value = (double)(time.QuadPart % m_ValueRemainder);
+			LONGLONG time = (LONGLONG)m_Measure->GetValue();
+			m_Value = (double)(time % m_ValueRemainder);
 			m_Value /= (double)m_ValueRemainder;
 		}
 		else
@@ -169,9 +171,7 @@ bool CMeterRotator::Draw(Graphics& graphics)
 		REAL cy = (REAL)(y + m_H / 2.0);
 
 		// Calculate the rotation
-		REAL angle = (REAL)(m_RotationAngle * m_Value + m_StartAngle);
-
-		angle = angle * 180.0f / 3.14159265f;		// Convert to degrees
+		REAL angle = (REAL)(CONVERT_TO_DEGREES(m_RotationAngle * m_Value + m_StartAngle));
 
 		graphics.TranslateTransform(cx, cy);
 		graphics.RotateTransform(angle);
