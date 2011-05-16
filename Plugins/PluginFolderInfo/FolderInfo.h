@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <windows.h>
+#include "../../Library/pcre-8.10/config.h"
 #include "../../Library/pcre-8.10/pcre.h"
 
 namespace PluginFolderInfo {
