@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010 poiru
+  Copyright (C) 2010 Birunthan Mohanathas (www.poiru.net)
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -101,5 +101,5 @@ UINT GetPluginVersion()
 
 LPCTSTR GetPluginAuthor()
 {
-	return L"poiru";
+	return L"Birunthan Mohanathas (www.poiru.net)";
 }

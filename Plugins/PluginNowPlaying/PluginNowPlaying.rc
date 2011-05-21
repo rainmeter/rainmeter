@@ -14,7 +14,7 @@
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION 1,0,0,0
  PRODUCTVERSION PRODUCTVER
- FILEFLAGSMASK 0x17L
+ FILEFLAGSMASK 0x17L 
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
 #else
@@ -28,11 +28,11 @@ BEGIN
     BEGIN
         BLOCK "040904E4"
         BEGIN
-            VALUE "FileDescription", "MediaKey Plugin for Rainmeter"
+            VALUE "FileDescription", "NowPlaying Plugin for Rainmeter"
             VALUE "FileVersion", "1.0.0.0"
-            VALUE "InternalName", "PluginMediaKey"
-            VALUE "LegalCopyright", "Copyright (C) 2010 - Birunthan Mohanathas"
-            VALUE "OriginalFilename", "PluginMediaKey.dll"
+            VALUE "InternalName", "NowPlaying"
+            VALUE "LegalCopyright", "Copyright (C) 2011 - Birunthan Mohanathas"
+            VALUE "OriginalFilename", "NowPlaying.dll"
             VALUE "ProductName", "Rainmeter"
 #ifdef _WIN64
             VALUE "ProductVersion", STRPRODUCTVER " (64-bit)"
