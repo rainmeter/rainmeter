@@ -50,6 +50,8 @@ bool CSystem::c_ShowDesktop = false;
 
 OSPLATFORM CSystem::c_Platform = OSPLATFORM_UNKNOWN;
 
+std::wstring CSystem::c_WorkingDirectory;
+
 extern CRainmeter* Rainmeter;
 
 /*
@@ -114,6 +116,18 @@ void CSystem::Initialize(HINSTANCE instance)
 		0,
 		0,
 		WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+
+	WCHAR directory[MAX_PATH] = {0};
+	GetCurrentDirectory(MAX_PATH, directory);
+	c_WorkingDirectory = directory;
+	if (!c_WorkingDirectory.empty())
+	{
+		WCHAR ch = c_WorkingDirectory[c_WorkingDirectory.size() - 1];
+		if (ch != L'\\' && ch != L'/')
+		{
+			c_WorkingDirectory += L"\\";
+		}
+	}
 
 	SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
 	SetTimer(c_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, NULL);

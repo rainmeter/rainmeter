@@ -68,15 +68,14 @@ bool CMeasurePlugin::Update()
 {
 	if (!CMeasure::PreUpdate()) return false;
 
-	WCHAR buffer[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH, buffer);
+	bool bulkUpdating = (m_MeterWindow && m_MeterWindow->IsBulkUpdating());
 
-	std::wstring dir = Rainmeter->GetSkinPath();
-	if (m_MeterWindow)
+	if (!bulkUpdating)
 	{
-		dir += m_MeterWindow->GetSkinName();
+		std::wstring dir = Rainmeter->GetSkinPath();
+		if (m_MeterWindow) dir += m_MeterWindow->GetSkinName();
+		CSystem::SetWorkingDirectory(dir);
 	}
-	SetCurrentDirectory(dir.c_str());
 
 	if (UpdateFunc)
 	{
@@ -89,7 +88,10 @@ bool CMeasurePlugin::Update()
 		m_Value = UpdateFunc2(m_ID);
 	}
 
-	SetCurrentDirectory(buffer);
+	if (!bulkUpdating)
+	{
+		CSystem::ResetWorkingDirectory();
+	}
 
 	return PostUpdate();
 }
@@ -181,23 +183,17 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_ID = id++;
 	if (InitializeFunc)
 	{
-		WCHAR buffer[MAX_PATH];
-		GetCurrentDirectory(MAX_PATH, buffer);
-
-		std::wstring dir = Rainmeter->GetSkinPath();
-		if (m_MeterWindow)
-		{
-			dir += m_MeterWindow->GetSkinName();
-		}
-		SetCurrentDirectory(dir.c_str());
-
 		// Remove current directory from DLL search path
 		SetDllDirectory(L"");
+
+		std::wstring dir = Rainmeter->GetSkinPath();
+		if (m_MeterWindow) dir += m_MeterWindow->GetSkinName();
+		CSystem::SetWorkingDirectory(dir);
 
 		double maxValue;
 		maxValue = InitializeFunc(m_Plugin, parser.GetFilename().c_str(), section, m_ID);
 
-		SetCurrentDirectory(buffer);
+		CSystem::ResetWorkingDirectory();
 
 		std::wstring szMaxValue = parser.ReadString(section, L"MaxValue", L"NotSet");
 		if (szMaxValue == L"NotSet")

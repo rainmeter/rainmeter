@@ -75,6 +75,9 @@ public:
 
 	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = NULL, bool ignoreErrors = false);
 
+	static void SetWorkingDirectory(const std::wstring& directory) { SetCurrentDirectory(directory.c_str()); }
+	static void ResetWorkingDirectory() { SetWorkingDirectory(c_WorkingDirectory); }
+
 	static bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove = false);
 	static bool RemoveFile(const std::wstring& file);
 
@@ -106,6 +109,8 @@ private:
 	static bool c_ShowDesktop;
 
 	static OSPLATFORM c_Platform;
+
+	static std::wstring c_WorkingDirectory;
 };
 
 #endif
