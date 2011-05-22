@@ -25,7 +25,7 @@
 ** Constructor.
 **
 */
-CPlayerAIMP::CPlayerAIMP() :
+CPlayerAIMP::CPlayerAIMP() : CPlayer(),
 	m_HasCoverMeasure(false),
 	m_FileMap(),
 	m_FileMapHandle(),
@@ -183,7 +183,6 @@ void CPlayerAIMP::UpdateData()
 		info->nFileSize != oldFileSize	||	// FileSize and TitleLen are probably unique enough
 		info->nTitleLen != oldTitleLen)
 	{
-		m_TrackChanged = true;
 		oldFileSize = info->nFileSize;
 		oldTitleLen = info->nTitleLen;
 
@@ -199,7 +198,45 @@ void CPlayerAIMP::UpdateData()
 
 		stringData += info->nArtistLen;
 		stringData += info->nDateLen;
-		std::wstring filename(stringData, info->nFileNameLen);
+		std::wstring filepath(stringData, info->nFileNameLen);
+		if (filepath != m_FilePath)
+		{
+			m_FilePath = filepath;
+			m_TrackChanged = true;
+
+			if (m_HasCoverMeasure)
+			{
+				std::wstring cover = CreateCoverArtPath();
+				if (_waccess(cover.c_str(), 0) == 0)
+				{
+					// Cover is in cache, lets use the that
+					m_CoverPath = cover;
+					return;
+				}
+
+				TagLib::FileRef fr(m_FilePath.c_str());
+				if (!fr.isNull() && fr.tag() && GetEmbeddedArt(fr, cover))
+				{
+					// Embedded art found
+					return;
+				}
+
+				// Get rid of the name and extension from filename
+				std::wstring trackFolder = m_FilePath;
+				std::wstring::size_type pos = trackFolder.find_last_of(L'\\');
+				if (pos == std::wstring::npos) return;
+				trackFolder.resize(++pos);
+
+				if (GetLocalArt(trackFolder, L"cover") || GetLocalArt(trackFolder, L"folder"))
+				{
+					// Local art found
+					return;
+				}
+
+				// Nothing found
+				m_CoverPath.clear();
+			}
+		}
 
 		stringData += info->nFileNameLen;
 		stringData += info->nGenreLen;
@@ -211,39 +248,6 @@ void CPlayerAIMP::UpdateData()
 		{
 			// Get the rating through the AIMP Winamp API
 			m_Rating = SendMessage(m_WinampWindow, WM_WA_IPC, 0, IPC_GETRATING);
-		}
-
-		if (m_HasCoverMeasure)
-		{
-			std::wstring cover = CreateCoverArtPath();
-			if (_waccess(cover.c_str(), 0) == 0)
-			{
-				// Cover is in cache, lets use the that
-				m_CoverPath = cover;
-				return;
-			}
-
-			TagLib::FileRef fr(filename.c_str());
-			if (!fr.isNull() && fr.tag() && GetEmbeddedArt(fr, cover))
-			{
-				// Embedded art found
-				return;
-			}
-
-			// Get rid of the name and extension from filename
-			std::wstring trackFolder = filename;
-			std::wstring::size_type pos = trackFolder.find_last_of(L'\\');
-			if (pos == std::wstring::npos) return;
-			trackFolder.resize(++pos);
-
-			if (GetLocalArt(trackFolder, L"cover") || GetLocalArt(trackFolder, L"folder"))
-			{
-				// Local art found
-				return;
-			}
-
-			// Nothing found
-			m_CoverPath.clear();
 		}
 	}
 }

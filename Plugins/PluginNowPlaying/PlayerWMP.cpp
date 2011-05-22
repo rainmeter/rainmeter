@@ -147,7 +147,7 @@ void CPlayerWMP::CRemoteHost::SwitchedToControl()
 ** Constructor.
 **
 */
-CPlayerWMP::CPlayerWMP() :
+CPlayerWMP::CPlayerWMP() : CPlayer(),
 	m_Initialized(false),
 	m_HasCoverMeasure(false),
 	m_ComModule(),
@@ -448,58 +448,63 @@ void CPlayerWMP::UpdateData()
 				spMedia->get_duration(&duration);
 				m_Duration = (UINT)duration;
 
-				// TODO: Better solution for this
-				if (m_HasCoverMeasure || m_InstanceCount == 0)
+				CComBSTR url;
+				spMedia->get_sourceURL(&url);
+				std::wstring targetPath = url;
+
+				if (targetPath != m_FilePath)
 				{
-					CComBSTR url;
-					spMedia->get_sourceURL(&url);
-					spMedia->getItemInfo(CComBSTR("WM/WMCollectionID"), &val);
-					std::wstring targetPath = url;
+					m_FilePath = targetPath;
 
-					targetPath.resize(targetPath.find_last_of(L'\\') + 1);
-					targetPath += L"AlbumArt_";
-					targetPath += val;
-					targetPath += L"_Large.jpg";
-
-					if (_waccess(targetPath.c_str(), 0) == 0)
+					// TODO: Better solution for this
+					if (m_HasCoverMeasure || m_InstanceCount == 0)
 					{
-						m_CoverPath = targetPath;
+						spMedia->getItemInfo(CComBSTR("WM/WMCollectionID"), &val);
+						targetPath.resize(targetPath.find_last_of(L'\\') + 1);
+						targetPath += L"AlbumArt_";
+						targetPath += val;
+						targetPath += L"_Large.jpg";
+
+						if (_waccess(targetPath.c_str(), 0) == 0)
+						{
+							m_CoverPath = targetPath;
+						}
+						else
+						{
+							std::wstring cover = CreateCoverArtPath();
+							if (_waccess(cover.c_str(), 0) == 0)
+							{
+								// Cover is in cache, lets use the that
+								m_CoverPath = cover;
+								return;
+							}
+
+							TagLib::FileRef fr(url.m_str);
+							if (!fr.isNull() && fr.tag() && GetEmbeddedArt(fr, cover))
+							{
+								// Embedded art found
+								return;
+							}
+
+							// Get rid of the name and extension from filename
+							std::wstring trackFolder = url;
+							std::wstring::size_type pos = trackFolder.find_last_of(L'\\');
+							if (pos == std::wstring::npos) return;
+							trackFolder.resize(++pos);
+
+							if (GetLocalArt(trackFolder, L"cover") || GetLocalArt(trackFolder, L"folder"))
+							{
+								// Local art found
+								return;
+							}
+
+							// Nothing found
+							m_CoverPath.clear();
+						}
 					}
-					else
-					{
-						std::wstring cover = CreateCoverArtPath();
-						if (_waccess(cover.c_str(), 0) == 0)
-						{
-							// Cover is in cache, lets use the that
-							m_CoverPath = cover;
-							return;
-						}
 
-						TagLib::FileRef fr(url.m_str);
-						if (!fr.isNull() && fr.tag() && GetEmbeddedArt(fr, cover))
-						{
-							// Embedded art found
-							return;
-						}
-
-						// Get rid of the name and extension from filename
-						std::wstring trackFolder = url;
-						std::wstring::size_type pos = trackFolder.find_last_of(L'\\');
-						if (pos == std::wstring::npos) return;
-						trackFolder.resize(++pos);
-
-						if (GetLocalArt(trackFolder, L"cover") || GetLocalArt(trackFolder, L"folder"))
-						{
-							// Local art found
-							return;
-						}
-
-						// Nothing found
-						m_CoverPath.clear();
-					}
+					ExecuteTrackChangeAction();
 				}
-
-				ExecuteTrackChangeAction();
 			}
 		}
 	}

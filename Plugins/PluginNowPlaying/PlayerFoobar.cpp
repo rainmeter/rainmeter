@@ -25,7 +25,7 @@
 ** Constructor.
 **
 */
-CPlayerFoobar::CPlayerFoobar() :
+CPlayerFoobar::CPlayerFoobar() : CPlayer(),
 	m_HasCoverMeasure(false),
 	m_Window(),
 	m_FooWindow()
@@ -209,12 +209,6 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 					foobar->m_State = PLAYER_PLAYING;
 				}
 
-				if (foobar->m_Position != 0)
-				{
-					foobar->m_Position = 0;
-					foobar->m_TrackChanged = true;
-				}
-
 				// In the format "TITLE ARTIST ALBUM LENGTH RATING" (seperated by \t)
 				WCHAR buffer[1024];
 				MultiByteToWideChar(CP_UTF8, 0, (char*)cds->lpData, cds->cbData, buffer, 1024);
@@ -248,7 +242,14 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 				token = wcstok(NULL, L"\t");
 				if (token)
 				{
-					foobar->GetCoverArt(token);
+					if (wcscmp(token, foobar->m_FilePath.c_str()) != 0)
+					{
+						// If different file
+						foobar->m_FilePath = token;
+						foobar->m_TrackChanged = true;
+						foobar->m_Position = 0;
+						foobar->GetCoverArt(token);
+					}
 				}
 			}
 		}

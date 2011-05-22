@@ -115,7 +115,7 @@ HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Invoke(DISPID dispidMemb
 ** Constructor.
 **
 */
-CPlayerITunes::CPlayerITunes() :
+CPlayerITunes::CPlayerITunes() : CPlayer(),
 	m_Initialized(false),
 	m_UserQuitPrompt(false),
 	m_HasCoverMeasure(false),
@@ -338,7 +338,6 @@ void CPlayerITunes::OnTrackChange()
 
 	if (SUCCEEDED(hr))
 	{
-		m_TrackChanged = true;
 		CComBSTR tmpStr;
 		long tmpVal;
 
@@ -359,45 +358,58 @@ void CPlayerITunes::OnTrackChange()
 		tmpVal /= 20L;
 		m_Rating = (UINT)tmpVal;
 
-		if (m_HasCoverMeasure)
+		IITFileOrCDTrack* file;
+		hr = track->QueryInterface(&file);
+		if (SUCCEEDED(hr))
 		{
-			// Check if MP3 file contains embedded art
-			std::wstring cover = CreateCoverArtPath();
-			if (_waccess(cover.c_str(), 0) == 0)
+			file->get_Location(&tmpStr);
+			file->Release();
+			if (tmpStr && wcscmp(tmpStr, m_FilePath.c_str()) != 0)
 			{
-				// Cover is in cache, lets use the that
-				m_CoverPath = cover;
-			}
-			else
-			{
-				IITArtworkCollection* artworkCollection;
-				hr = track->get_Artwork(&artworkCollection);
+				m_FilePath = tmpStr;
+				m_TrackChanged = true;
 
-				if (SUCCEEDED(hr))
+				if (m_HasCoverMeasure)
 				{
-					long count;
-					artworkCollection->get_Count(&count);
-
-					if (count > 0)
+					// Check if MP3 file contains embedded art
+					std::wstring cover = CreateCoverArtPath();
+					if (_waccess(cover.c_str(), 0) == 0)
 					{
-						IITArtwork* artwork;
-						hr = artworkCollection->get_Item(1, &artwork);
-
-						if (SUCCEEDED(hr))
-						{
-							tmpStr = cover.c_str();
-							hr = artwork->SaveArtworkToFile(tmpStr);
-							SUCCEEDED(hr) ? m_CoverPath = cover : m_CoverPath.clear();
-
-							artwork->Release();
-						}
+						// Cover is in cache, lets use the that
+						m_CoverPath = cover;
 					}
 					else
 					{
-						m_CoverPath.clear();
-					}
+						IITArtworkCollection* artworkCollection;
+						hr = track->get_Artwork(&artworkCollection);
 
-					artworkCollection->Release();
+						if (SUCCEEDED(hr))
+						{
+							long count;
+							artworkCollection->get_Count(&count);
+
+							if (count > 0)
+							{
+								IITArtwork* artwork;
+								hr = artworkCollection->get_Item(1, &artwork);
+
+								if (SUCCEEDED(hr))
+								{
+									tmpStr = cover.c_str();
+									hr = artwork->SaveArtworkToFile(tmpStr);
+									SUCCEEDED(hr) ? m_CoverPath = cover : m_CoverPath.clear();
+
+									artwork->Release();
+								}
+							}
+							else
+							{
+								m_CoverPath.clear();
+							}
+
+							artworkCollection->Release();
+						}
+					}
 				}
 			}
 		}

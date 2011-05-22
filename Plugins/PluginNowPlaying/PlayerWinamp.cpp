@@ -25,7 +25,7 @@
 ** Constructor.
 **
 */
-CPlayerWinamp::CPlayerWinamp() :
+CPlayerWinamp::CPlayerWinamp() : CPlayer(),
 	m_HasCoverMeasure(false),
 	m_Window()
 {
@@ -155,11 +155,9 @@ void CPlayerWinamp::UpdateData()
 	int playing = SendMessage(m_Window, WM_WA_IPC, 0, IPC_ISPLAYING);
 	if (playing == 0)
 	{
-		if (!m_Path.empty())
+		if (!m_FilePath.empty())
 		{
 			ClearInfo();
-			m_State = PLAYER_STOPPED;
-			m_Path.clear();
 		}
 		return;	// Don't continue if stopped
 	}
@@ -178,10 +176,10 @@ void CPlayerWinamp::UpdateData()
 	{
 		LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Failed to read Winamp memory");
 	}
-	else if (wcscmp(buffer, m_Path.c_str()) != 0)
+	else if (wcscmp(buffer, m_FilePath.c_str()) != 0)
 	{
 		m_TrackChanged = true;
-		m_Path = buffer;
+		m_FilePath = buffer;
 		m_Rating = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETRATING);
 		m_Duration = SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
 
@@ -236,7 +234,7 @@ void CPlayerWinamp::UpdateData()
 			}
 
 			// Get rid of the name and extension from filename
-			std::wstring trackFolder = m_Path;
+			std::wstring trackFolder = m_FilePath;
 			std::wstring::size_type pos = trackFolder.find_last_of(L'\\');
 			if (pos == std::wstring::npos) return;
 			trackFolder.resize(++pos);

@@ -240,6 +240,10 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			data->measure = MEASURE_VOLUME;
 			maxValue = 100;
 		}
+		else if (_wcsicmp(L"FILE", str) == 0)
+		{
+			data->measure = MEASURE_FILE;
+		}
 	}
 
 	data->player->AddInstance(data->measure);
@@ -280,14 +284,11 @@ UINT Update(UINT id)
 			// Only allow main measure to update
 			(*i).second->player->UpdateData();
 		}
-		
+
 		CPlayer* player = (*i).second->player;
 
 		switch ((*i).second->measure)
 		{
-		case MEASURE_RATING:
-			return player->GetRating();
-
 		case MEASURE_DURATION:
 			return player->GetDuration();
 
@@ -300,6 +301,9 @@ UINT Update(UINT id)
 				return (player->GetPosition() * 100) / player->GetDuration();
 			}
 			return 0;
+
+		case MEASURE_RATING:
+			return player->GetRating();
 
 		case MEASURE_STATE:
 			return (int)player->GetState();
@@ -340,18 +344,6 @@ LPCTSTR GetString(UINT id, UINT flags)
 		case MEASURE_COVER:
 			return player->GetCoverPath();
 
-		case MEASURE_RATING:
-			_itow(player->GetRating(), buffer, 10);
-			return buffer;
-
-		case MEASURE_STATE:
-			_itow(player->GetState(), buffer, 10);
-			return buffer;
-
-		case MEASURE_VOLUME:
-			_itow(player->GetVolume(), buffer, 10);
-			return buffer;
-
 		case MEASURE_DURATION:
 			SecondsToTime(player->GetDuration(), buffer);
 			return buffer;
@@ -368,6 +360,21 @@ LPCTSTR GetString(UINT id, UINT flags)
 				return buffer;
 			}
 			return L"0";
+
+		case MEASURE_RATING:
+			_itow(player->GetRating(), buffer, 10);
+			return buffer;
+
+		case MEASURE_STATE:
+			_itow(player->GetState(), buffer, 10);
+			return buffer;
+
+		case MEASURE_VOLUME:
+			_itow(player->GetVolume(), buffer, 10);
+			return buffer;
+
+		case MEASURE_FILE:
+			return player->GetFilePath();
 		}
 	}
 	else

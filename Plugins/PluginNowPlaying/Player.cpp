@@ -92,6 +92,7 @@ void CPlayer::ClearInfo()
 	m_Artist.clear();
 	m_Album.clear();
 	m_Title.clear();
+	m_FilePath.clear();
 	m_CoverPath.clear();
 }
 

@@ -51,7 +51,6 @@ private:
 	bool Initialize();
 	bool CheckActive();
 
-	std::wstring m_Path;
 	bool m_HasCoverMeasure;
 	HWND m_Window;				// Winamp window
 	HANDLE m_WinampHandle;		// Handle to Winamp process

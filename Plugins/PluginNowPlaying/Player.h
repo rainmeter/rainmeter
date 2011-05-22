@@ -64,7 +64,8 @@ enum MEASURETYPE
 	MEASURE_PROGRESS,
 	MEASURE_RATING,
 	MEASURE_STATE,
-	MEASURE_VOLUME
+	MEASURE_VOLUME,
+	MEASURE_FILE
 };
 
 class CPlayer
@@ -93,6 +94,7 @@ public:
 	LPCTSTR GetArtist() { return m_Artist.c_str(); }
 	LPCTSTR GetAlbum() { return m_Album.c_str(); }
 	LPCTSTR GetTitle() { return m_Title.c_str(); }
+	LPCTSTR GetFilePath() { return m_FilePath.c_str(); }
 	LPCTSTR GetCoverPath() { return m_CoverPath.c_str(); }
 	LPCTSTR GetPlayerPath() { return m_PlayerPath.c_str(); }
 	UINT GetDuration() { return m_Duration; }
@@ -122,6 +124,7 @@ protected:
 	std::wstring m_Artist;
 	std::wstring m_Album;
 	std::wstring m_Title;
+	std::wstring m_FilePath;		// Path to playing file
 	std::wstring m_CoverPath;		// Path to cover art image
 	std::wstring m_PlayerPath;		// Path to player executable
 	UINT m_Duration;				// Track duration in seconds

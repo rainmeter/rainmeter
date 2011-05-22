@@ -25,7 +25,7 @@
 ** Constructor.
 **
 */
-CPlayerSpotify::CPlayerSpotify() :
+CPlayerSpotify::CPlayerSpotify() : CPlayer(),
 	m_Window()
 {
 	GetWindow();
