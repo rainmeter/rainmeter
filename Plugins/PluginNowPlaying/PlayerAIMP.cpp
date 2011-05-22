@@ -441,7 +441,7 @@ void CPlayerAIMP::OpenPlayer()
 					path.resize(path.find_last_of(L'\\') + 1);
 					path += L"AIMP3.exe";
 					ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
-					m_PlayerPath = data;
+					m_PlayerPath = path;
 				}
 			}
 		}
