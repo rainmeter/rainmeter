@@ -371,15 +371,9 @@ void CPlayerITunes::OnTrackChange()
 
 				if (m_HasCoverMeasure)
 				{
-					// Check if MP3 file contains embedded art
-					std::wstring cover = CreateCoverArtPath();
-					if (_waccess(cover.c_str(), 0) == 0)
+					if (!GetCachedArt())
 					{
-						// Cover is in cache, lets use the that
-						m_CoverPath = cover;
-					}
-					else
-					{
+						// Art not in cache, check for embedded art
 						IITArtworkCollection* artworkCollection;
 						hr = track->get_Artwork(&artworkCollection);
 
@@ -395,9 +389,12 @@ void CPlayerITunes::OnTrackChange()
 
 								if (SUCCEEDED(hr))
 								{
-									tmpStr = cover.c_str();
+									tmpStr = m_CoverPath.c_str();
 									hr = artwork->SaveArtworkToFile(tmpStr);
-									SUCCEEDED(hr) ? m_CoverPath = cover : m_CoverPath.clear();
+									if (FAILED(hr))
+									{
+										m_CoverPath.clear();
+									}
 
 									artwork->Release();
 								}
@@ -408,6 +405,10 @@ void CPlayerITunes::OnTrackChange()
 							}
 
 							artworkCollection->Release();
+						}
+						else
+						{
+							m_CoverPath.clear();
 						}
 					}
 				}

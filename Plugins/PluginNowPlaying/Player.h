@@ -107,14 +107,14 @@ public:
 	void ExecuteTrackChangeAction();
 	void ClearInfo();
 
-	std::wstring CreateCoverArtPath();
+	bool GetCachedArt();
 	bool GetLocalArt(std::wstring& folder, std::wstring filename);
-	bool GetEmbeddedArt(const TagLib::FileRef& fr, std::wstring& path);
-	bool GetArtAPE(TagLib::APE::Tag* tag, std::wstring& path);
-	bool GetArtID3(TagLib::ID3v2::Tag* tag, std::wstring& path);
-	bool GetArtASF(TagLib::ASF::File* file, std::wstring& path);
-	bool GetArtFLAC(TagLib::FLAC::File* file, std::wstring& path);
-	bool GetArtMP4(TagLib::MP4::File* file, std::wstring& path);
+	bool GetEmbeddedArt(const TagLib::FileRef& fr);
+	bool GetArtAPE(TagLib::APE::Tag* tag);
+	bool GetArtID3(TagLib::ID3v2::Tag* tag);
+	bool GetArtASF(TagLib::ASF::File* file);
+	bool GetArtFLAC(TagLib::FLAC::File* file);
+	bool GetArtMP4(TagLib::MP4::File* file);
 
 protected:
 	int m_InstanceCount;

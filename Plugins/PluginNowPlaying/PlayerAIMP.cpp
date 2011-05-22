@@ -206,16 +206,14 @@ void CPlayerAIMP::UpdateData()
 
 			if (m_HasCoverMeasure)
 			{
-				std::wstring cover = CreateCoverArtPath();
-				if (_waccess(cover.c_str(), 0) == 0)
+				if (GetCachedArt())
 				{
 					// Cover is in cache, lets use the that
-					m_CoverPath = cover;
 					return;
 				}
 
 				TagLib::FileRef fr(m_FilePath.c_str());
-				if (!fr.isNull() && fr.tag() && GetEmbeddedArt(fr, cover))
+				if (!fr.isNull() && fr.tag() && GetEmbeddedArt(fr))
 				{
 					// Embedded art found
 					return;

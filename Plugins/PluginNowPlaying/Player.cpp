@@ -97,17 +97,17 @@ void CPlayer::ClearInfo()
 }
 
 /*
-** CreateCoverArtPath
+** GetCachedArt
 **
-** Determines the path to save cover art.
+** Checks if cover art is in cache.
 **
 */
-std::wstring CPlayer::CreateCoverArtPath()
+bool CPlayer::GetCachedArt()
 {
-	std::wstring targetPath = g_CachePath;
+	m_CoverPath = g_CachePath;
 	if (m_Artist.empty() || m_Title.empty())
 	{
-		targetPath += L"temp.art";
+		m_CoverPath += L"temp.art";
 	}
 	else
 	{
@@ -119,16 +119,21 @@ std::wstring CPlayer::CreateCoverArtPath()
 		// Replace reserved chars with _
 		std::wstring::size_type pos = 0;
 		while ((pos = name.find_first_of(L"\\/:*?\"<>|", pos)) != std::wstring::npos) name[pos] = L'_';
-					
-		targetPath += name;
-		targetPath += L".art";
+
+		m_CoverPath += name;
+		m_CoverPath += L".art";
+		if (_waccess(m_CoverPath.c_str(), 0) == 0)
+		{
+			// Art found in cache
+			return true;
+		}
 	}
 
-	return targetPath;
+	return false;
 }
 
 /*
-** GetArtLocal
+** GetLocalArt
 **
 ** Attemps to find local cover art in various formats.
 **
@@ -162,12 +167,12 @@ bool CPlayer::GetLocalArt(std::wstring& folder, std::wstring filename)
 }
 
 /*
-** GetEmbeddedCover
+** GetEmbeddedArt
 **
 ** Attempts to extract cover art from audio files.
 **
 */
-bool CPlayer::GetEmbeddedArt(const TagLib::FileRef& fr, std::wstring& path)
+bool CPlayer::GetEmbeddedArt(const TagLib::FileRef& fr)
 {
 	bool found = false;
 
@@ -175,58 +180,53 @@ bool CPlayer::GetEmbeddedArt(const TagLib::FileRef& fr, std::wstring& path)
 	{
 		if (file->ID3v2Tag())
 		{
-			found = GetArtID3(file->ID3v2Tag(), path);
+			found = GetArtID3(file->ID3v2Tag());
 		}
 		if (!found && file->APETag())
 		{
-			found = GetArtAPE(file->APETag(), path);
+			found = GetArtAPE(file->APETag());
 		}
 	}
 	else if (TagLib::MP4::File* file = dynamic_cast<TagLib::MP4::File*>(fr.file()))
 	{
 		if (file->tag())
 		{
-			found = GetArtMP4(file, path);
+			found = GetArtMP4(file);
 		}
 	}
 	else if (TagLib::FLAC::File* file = dynamic_cast<TagLib::FLAC::File*>(fr.file()))
 	{
-		found = GetArtFLAC(file, path);
+		found = GetArtFLAC(file);
 
 		if (!found && file->ID3v2Tag())
 		{
-			found = GetArtID3(file->ID3v2Tag(), path);
+			found = GetArtID3(file->ID3v2Tag());
 		}
 	}
 	else if (TagLib::ASF::File* file = dynamic_cast<TagLib::ASF::File*>(fr.file()))
 	{
-		found = GetArtASF(file, path);
+		found = GetArtASF(file);
 	}
 	else if (TagLib::APE::File* file = dynamic_cast<TagLib::APE::File*>(fr.file()))
 	{
 		if (file->APETag())
 		{
-			found = GetArtAPE(file->APETag(), path);
+			found = GetArtAPE(file->APETag());
 		}
 	}
 	else if (TagLib::MPC::File* file = dynamic_cast<TagLib::MPC::File*>(fr.file()))
 	{
 		if (file->APETag())
 		{
-			found = GetArtAPE(file->APETag(), path);
+			found = GetArtAPE(file->APETag());
 		}
 	}
 	else if (TagLib::WavPack::File* file = dynamic_cast<TagLib::WavPack::File*>(fr.file()))
 	{
 		if (file->APETag())
 		{
-			found = GetArtAPE(file->APETag(), path);
+			found = GetArtAPE(file->APETag());
 		}
-	}
-
-	if (found)
-	{
-		m_CoverPath = path;
 	}
 
 	return found;
@@ -238,7 +238,7 @@ bool CPlayer::GetEmbeddedArt(const TagLib::FileRef& fr, std::wstring& path)
 ** Extracts cover art embedded in APE tags.
 **
 */
-bool CPlayer::GetArtAPE(TagLib::APE::Tag* tag, std::wstring& path)
+bool CPlayer::GetArtAPE(TagLib::APE::Tag* tag)
 {
 	bool ret = false;
 	const TagLib::APE::ItemListMap& listMap = tag->itemListMap();
@@ -254,7 +254,7 @@ bool CPlayer::GetArtAPE(TagLib::APE::Tag* tag, std::wstring& path)
 		{
 			const TagLib::ByteVector& pic = item.mid(pos);
 
-			FILE* f = _wfopen(path.c_str(), L"wb");
+			FILE* f = _wfopen(m_CoverPath.c_str(), L"wb");
 			if (f)
 			{
 				ret = (fwrite(pic.data(), 1, pic.size(), f) == pic.size());
@@ -272,7 +272,7 @@ bool CPlayer::GetArtAPE(TagLib::APE::Tag* tag, std::wstring& path)
 ** Extracts cover art embedded in ID3v2 tags.
 **
 */
-bool CPlayer::GetArtID3(TagLib::ID3v2::Tag* tag, std::wstring& path)
+bool CPlayer::GetArtID3(TagLib::ID3v2::Tag* tag)
 {
 	bool ret = false;
 
@@ -285,7 +285,7 @@ bool CPlayer::GetArtID3(TagLib::ID3v2::Tag* tag, std::wstring& path)
 
 		if (size > 0)
 		{
-			FILE* f = _wfopen(path.c_str(), L"wb");
+			FILE* f = _wfopen(m_CoverPath.c_str(), L"wb");
 			if (f)
 			{
 				ret = (fwrite(frame->picture().data(), 1, size, f) == size);
@@ -303,7 +303,7 @@ bool CPlayer::GetArtID3(TagLib::ID3v2::Tag* tag, std::wstring& path)
 ** Extracts cover art embedded in ASF/WMA files.
 **
 */
-bool CPlayer::GetArtASF(TagLib::ASF::File* file, std::wstring& path)
+bool CPlayer::GetArtASF(TagLib::ASF::File* file)
 {
 	bool ret = false;
 
@@ -320,7 +320,7 @@ bool CPlayer::GetArtASF(TagLib::ASF::File* file, std::wstring& path)
 
 			if (wmpic.isValid())
 			{
-				FILE* f = _wfopen(path.c_str(), L"wb");
+				FILE* f = _wfopen(m_CoverPath.c_str(), L"wb");
 				if (f)
 				{
 					ret = (fwrite(wmpic.picture().data(), 1, wmpic.picture().size(), f) == wmpic.picture().size());
@@ -339,7 +339,7 @@ bool CPlayer::GetArtASF(TagLib::ASF::File* file, std::wstring& path)
 ** Extracts cover art embedded in FLAC files.
 **
 */
-bool CPlayer::GetArtFLAC(TagLib::FLAC::File* file, std::wstring& path)
+bool CPlayer::GetArtFLAC(TagLib::FLAC::File* file)
 {
 	bool ret = false;
 
@@ -349,7 +349,7 @@ bool CPlayer::GetArtFLAC(TagLib::FLAC::File* file, std::wstring& path)
 		// Let's grab the first image
 		TagLib::FLAC::Picture* pic = picList[0];
 
-		FILE* f = _wfopen(path.c_str(), L"wb");
+		FILE* f = _wfopen(m_CoverPath.c_str(), L"wb");
 		if (f)
 		{
 			ret = (fwrite(pic->data().data(), 1, pic->data().size(), f) == pic->data().size());
@@ -366,7 +366,7 @@ bool CPlayer::GetArtFLAC(TagLib::FLAC::File* file, std::wstring& path)
 ** Extracts cover art embedded in MP4-like files.
 **
 */
-bool CPlayer::GetArtMP4(TagLib::MP4::File* file, std::wstring& path)
+bool CPlayer::GetArtMP4(TagLib::MP4::File* file)
 {
 	bool ret = false;
 
@@ -378,7 +378,7 @@ bool CPlayer::GetArtMP4(TagLib::MP4::File* file, std::wstring& path)
 
 		if (size > 0)
 		{
-			FILE* f = _wfopen(path.c_str(), L"wb");
+			FILE* f = _wfopen(m_CoverPath.c_str(), L"wb");
 			if (f)
 			{
 				ret = (fwrite(coverList[0].data().data(), 1, size, f) == size);

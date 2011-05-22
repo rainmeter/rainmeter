@@ -17,7 +17,6 @@
 */
 
 #include "StdAfx.h"
-#include "../../Library/Export.h"
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 #include "NowPlaying.h"
 #include "PlayerAIMP.h"
@@ -163,13 +162,12 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			}
 			else
 			{
-				std::wstring error = L"PlayerName=";
+				std::wstring error = L"NowPlayingPlugin: PlayerName=";
 				error += str;
 				error += L" is not valid in section [";
 				error += section;
-				error += L"] of the following file: \n\n";
-				error += iniFile;
-				MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_ICONERROR | MB_TOPMOST);
+				error += L"].";
+				LSLog(LOG_ERROR, L"Rainmeter", error.c_str());
 				delete data;
 				return maxValue;
 			}
@@ -311,9 +309,11 @@ UINT Update(UINT id)
 		case MEASURE_VOLUME:
 			return player->GetVolume();
 		}
+
+		return 0;
 	}
 
-	return 0;
+	return 1;
 }
 
 /*

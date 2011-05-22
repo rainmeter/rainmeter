@@ -471,16 +471,14 @@ void CPlayerWMP::UpdateData()
 						}
 						else
 						{
-							std::wstring cover = CreateCoverArtPath();
-							if (_waccess(cover.c_str(), 0) == 0)
+							if (GetCachedArt())
 							{
 								// Cover is in cache, lets use the that
-								m_CoverPath = cover;
 								return;
 							}
 
 							TagLib::FileRef fr(url.m_str);
-							if (!fr.isNull() && fr.tag() && GetEmbeddedArt(fr, cover))
+							if (!fr.isNull() && fr.tag() && GetEmbeddedArt(fr))
 							{
 								// Embedded art found
 								return;

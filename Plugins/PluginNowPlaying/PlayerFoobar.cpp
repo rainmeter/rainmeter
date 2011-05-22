@@ -271,16 +271,14 @@ void CPlayerFoobar::GetCoverArt(LPTSTR filename)
 	// TODO: Fix temp solution
 	if (m_HasCoverMeasure || m_InstanceCount == 0)
 	{
-		std::wstring cover = CreateCoverArtPath();
-		if (_waccess(cover.c_str(), 0) == 0)
+		if (GetCachedArt())
 		{
 			// Cover is in cache, lets use the that
-			m_CoverPath = cover;
 			return;
 		}
 
 		TagLib::FileRef fr(filename);
-		if (!fr.isNull() && fr.tag() && GetEmbeddedArt(fr, cover))
+		if (!fr.isNull() && fr.tag() && GetEmbeddedArt(fr))
 		{
 			// Embedded art found
 			return;

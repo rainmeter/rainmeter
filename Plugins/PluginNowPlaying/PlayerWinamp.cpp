@@ -193,43 +193,41 @@ void CPlayerWinamp::UpdateData()
 		}
 		else
 		{
-			ClearInfo();
-
-			/*LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETPLAYLISTTITLEW);
-			if (ReadProcessMemory(m_WinampHandle, m_WinampAddress, &buffer, MAX_PATH, NULL))
+			// TagLib couldn't parse the file, try title instead
+			int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
+			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTTITLEW);
+			if (ReadProcessMemory(m_WinampHandle, address, &buffer, MAX_PATH, NULL))
 			{
 				std::wstring title = buffer;
-				std::wstring::size_type pos = title.find(L" - ");
+				std::wstring::size_type pos = title.find(L". ");
+
+				if (pos != std::wstring::npos && pos < 5)
+				{
+					pos += 2; // Skip ". "
+					title.erase(0, pos);
+				}
+
+				pos = title.find(L" - ");
 				if (pos != std::wstring::npos)
 				{
-					std::wstring artist = title.substr(0, pos);
-					std::wstring track = title.substr(pos + 3);
-
-					if (track != m_Title && artist != m_Artist)
-					{
-						m_Title = track;
-						m_Artist = artist;
-						m_Album.clear();
-					}
+					m_Title = title.substr(0, pos);
+					pos += 3;	// Skip " - "
+					m_Artist = title.substr(pos);
+					m_Album.clear();
 				}
-			}*/
-
-			return;
+				else
+				{
+					ClearInfo();
+					return;
+				}
+			}
 		}
 
 		if (m_HasCoverMeasure)
 		{
-			std::wstring cover = CreateCoverArtPath();
-			if (_waccess(cover.c_str(), 0) == 0)
+			if (GetCachedArt() || GetEmbeddedArt(fr))
 			{
-				// Cover is in cache, lets use the that
-				m_CoverPath = cover;
-				return;
-			}
-
-			if (GetEmbeddedArt(fr, cover))
-			{
-				// Embedded art found
+				// Art found in cache or embedded in file
 				return;
 			}
 
