@@ -19,6 +19,8 @@
 #include "StdAfx.h"
 #include "PlayerAIMP.h"
 
+extern CPlayer* g_AIMP;
+
 /*
 ** CPlayerAIMP
 **
@@ -72,6 +74,7 @@ void CPlayerAIMP::RemoveInstance()
 {
 	if (--m_InstanceCount == 0)
 	{
+		g_AIMP = NULL;
 		delete this;
 	}
 }
@@ -199,6 +202,16 @@ void CPlayerAIMP::UpdateData()
 		stringData += info->nArtistLen;
 		stringData += info->nDateLen;
 		std::wstring filepath(stringData, info->nFileNameLen);
+
+		stringData += info->nFileNameLen;
+		stringData += info->nGenreLen;
+		m_Title.assign(stringData, info->nTitleLen);
+		
+		m_Duration = info->nDuration / 1000;
+
+		// Get rating through the AIMP Winamp API
+		m_Rating = SendMessage(m_WinampWindow, WM_WA_IPC, 0, IPC_GETRATING);
+
 		if (filepath != m_FilePath)
 		{
 			m_FilePath = filepath;
@@ -234,18 +247,6 @@ void CPlayerAIMP::UpdateData()
 				// Nothing found
 				m_CoverPath.clear();
 			}
-		}
-
-		stringData += info->nFileNameLen;
-		stringData += info->nGenreLen;
-		m_Title.assign(stringData, info->nTitleLen);
-		
-		m_Duration = info->nDuration / 1000;
-
-		if (m_WinampWindow)
-		{
-			// Get the rating through the AIMP Winamp API
-			m_Rating = SendMessage(m_WinampWindow, WM_WA_IPC, 0, IPC_GETRATING);
 		}
 	}
 }

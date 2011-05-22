@@ -19,6 +19,8 @@
 #include "StdAfx.h"
 #include "PlayerWMP.h"
 
+extern CPlayer* g_WMP;
+
 /*
 ** CRemoteHost
 **
@@ -198,6 +200,7 @@ void CPlayerWMP::RemoveInstance()
 {
 	if (--m_InstanceCount == 0)
 	{
+		g_WMP = NULL;
 		delete this;
 	}
 }

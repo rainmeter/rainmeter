@@ -19,6 +19,8 @@
 #include "StdAfx.h"
 #include "PlayerFoobar.h"
 
+extern CPlayer* g_Foobar;
+
 /*
 ** CPlayerFoobar
 **
@@ -70,6 +72,7 @@ void CPlayerFoobar::RemoveInstance()
 {
 	if (--m_InstanceCount == 0)
 	{
+		g_Foobar = NULL;
 		delete this;
 	}
 }

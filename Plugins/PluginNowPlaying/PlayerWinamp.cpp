@@ -19,6 +19,8 @@
 #include "StdAfx.h"
 #include "PlayerWinamp.h"
 
+extern CPlayer* g_Winamp;
+
 /*
 ** CPlayerWinamp
 **
@@ -55,6 +57,7 @@ void CPlayerWinamp::AddInstance(MEASURETYPE type)
 
 	if (type == MEASURE_COVER)
 	{
+		g_Winamp = NULL;
 		m_HasCoverMeasure = true;
 	}
 }

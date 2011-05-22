@@ -26,12 +26,12 @@
 #include "PlayerWinamp.h"
 #include "PlayerWMP.h"
 
-static CPlayer* g_AIMP = NULL;
-static CPlayer* g_Foobar = NULL;
-static CPlayer* g_iTunes = NULL;
-static CPlayer* g_Spotify = NULL;
-static CPlayer* g_Winamp = NULL;
-static CPlayer* g_WMP = NULL;
+CPlayer* g_AIMP = NULL;
+CPlayer* g_Foobar = NULL;
+CPlayer* g_iTunes = NULL;
+CPlayer* g_Spotify = NULL;
+CPlayer* g_Winamp = NULL;
+CPlayer* g_WMP = NULL;
 
 static MeasureMap g_Values;
 static bool g_DisableLeazingZero = false;
@@ -99,9 +99,11 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 
 				if (!data->player)
 				{
-					std::wstring error = L"NowPlayingPlugin: The referenced measure PlayerName=";
+					std::wstring error = L"NowPlayingPlugin: PlayerName=";
 					error += str;
-					error += L" does not exist.";
+					error += L" in section [";
+					error += section;
+					error += L"] does not exist.";
 					LSLog(LOG_WARNING, L"Rainmeter", error.c_str());
 					return maxValue;
 				}
@@ -164,9 +166,9 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			{
 				std::wstring error = L"NowPlayingPlugin: PlayerName=";
 				error += str;
-				error += L" is not valid in section [";
+				error += L" in section [";
 				error += section;
-				error += L"].";
+				error += L"] is not valid.";
 				LSLog(LOG_ERROR, L"Rainmeter", error.c_str());
 				delete data;
 				return maxValue;

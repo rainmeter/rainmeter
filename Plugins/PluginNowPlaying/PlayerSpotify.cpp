@@ -19,6 +19,8 @@
 #include "StdAfx.h"
 #include "PlayerSpotify.h"
 
+extern CPlayer* g_Spotify;
+
 /*
 ** CPlayerSpotify
 **
@@ -62,6 +64,7 @@ void CPlayerSpotify::RemoveInstance()
 {
 	if (--m_InstanceCount == 0)
 	{
+		g_Spotify = NULL;
 		delete this;
 	}
 }

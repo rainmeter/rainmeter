@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "PlayerITunes.h"
 
-extern std::wstring g_CachePath;
+extern CPlayer* g_iTunes;
 
 /*
 ** CEventHandler
@@ -166,6 +166,7 @@ void CPlayerITunes::RemoveInstance()
 {
 	if (--m_InstanceCount == 0)
 	{
+		g_iTunes = NULL;
 		delete this;
 	}
 }
