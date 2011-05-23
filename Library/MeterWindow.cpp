@@ -99,7 +99,6 @@ CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config,
 	m_TransitionUpdate(100),
 	m_ActiveTransition(false),
 	m_HasNetMeasures(false),
-	m_HasPluginMeasures(false),
 	m_HasButtons(false),
 	m_WindowHide(HIDEMODE_NONE),
 	m_WindowStartHidden(false),
@@ -127,7 +126,6 @@ CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config,
 	m_FadeEndValue(),
 	m_TransparencyValue(),
 	m_Refreshing(false),
-	m_BulkUpdating(false),
 	m_Hidden(false),
 	m_ResetRegion(false),
 	m_UpdateCounter(),
@@ -2113,7 +2111,6 @@ bool CMeterWindow::ReadSkin()
 	// Create the meters and measures
 
 	m_HasNetMeasures = false;
-	m_HasPluginMeasures = false;
 	m_HasButtons = false;
 
 	// Get all the sections (i.e. different meters, measures and the other stuff)
@@ -2155,11 +2152,6 @@ bool CMeterWindow::ReadSkin()
 							if (!m_HasNetMeasures && dynamic_cast<CMeasureNet*>(measure))
 							{
 								m_HasNetMeasures = true;
-							}
-
-							if (!m_HasPluginMeasures && dynamic_cast<CMeasurePlugin*>(measure))
-							{
-								m_HasPluginMeasures = true;
 							}
 						}
 					}
@@ -2832,8 +2824,6 @@ void CMeterWindow::Update(bool nodraw)
 {
 	++m_UpdateCounter;
 
-	m_BulkUpdating = true;
-
 	if (!m_Measures.empty())
 	{
 		// Pre-updates
@@ -2841,15 +2831,11 @@ void CMeterWindow::Update(bool nodraw)
 		CMeasureCalc::UpdateVariableMap(*this);
 
 		// Update all measures
-		if (m_HasPluginMeasures) CSystem::SetWorkingDirectory(m_SkinPath + m_SkinName);
-
 		std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 		for ( ; i != m_Measures.end(); ++i)
 		{
 			UpdateMeasure((*i), false);
 		}
-
-		if (m_HasPluginMeasures) CSystem::ResetWorkingDirectory();
 	}
 
 	// Update all meters
@@ -2883,8 +2869,6 @@ void CMeterWindow::Update(bool nodraw)
 
 	// Post-updates
 	PostUpdate(bActiveTransition);
-
-	m_BulkUpdating = false;
 
 //	if (m_MeasuresToVariables)	// BUG: LSSetVariable doens't seem to work for some reason.
 //	{

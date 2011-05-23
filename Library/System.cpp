@@ -120,14 +120,6 @@ void CSystem::Initialize(HINSTANCE instance)
 	WCHAR directory[MAX_PATH] = {0};
 	GetCurrentDirectory(MAX_PATH, directory);
 	c_WorkingDirectory = directory;
-	if (!c_WorkingDirectory.empty())
-	{
-		WCHAR ch = c_WorkingDirectory[c_WorkingDirectory.size() - 1];
-		if (ch != L'\\' && ch != L'/')
-		{
-			c_WorkingDirectory += L"\\";
-		}
-	}
 
 	SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
 	SetTimer(c_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, NULL);
@@ -997,6 +989,23 @@ HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError, bool ignor
 	}
 
 	return hLib;
+}
+
+/*
+** ResetWorkingDirectory
+**
+** Resets working directory to default.
+**
+*/
+void CSystem::ResetWorkingDirectory()
+{
+	WCHAR directory[MAX_PATH] = {0};
+	GetCurrentDirectory(MAX_PATH, directory);
+
+	if (_wcsicmp(directory, c_WorkingDirectory.c_str()) != 0)
+	{
+		SetCurrentDirectory(c_WorkingDirectory.c_str());
+	}
 }
 
 /*

@@ -74,9 +74,7 @@ public:
 	static OSPLATFORM GetOSPlatform();
 
 	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = NULL, bool ignoreErrors = false);
-
-	static void SetWorkingDirectory(const std::wstring& directory) { SetCurrentDirectory(directory.c_str()); }
-	static void ResetWorkingDirectory() { SetWorkingDirectory(c_WorkingDirectory); }
+	static void ResetWorkingDirectory();
 
 	static bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove = false);
 	static bool RemoveFile(const std::wstring& file);

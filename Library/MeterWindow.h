@@ -182,8 +182,6 @@ public:
 	void Refresh(bool init, bool all = false);
 	void Redraw();
 
-	bool IsBulkUpdating() { return m_BulkUpdating; }
-
 	void SetMouseLeaveEvent(bool cancel);
 
 	void MoveWindow(int x, int y);
@@ -385,7 +383,6 @@ private:
 	int m_TransitionUpdate;						// Transition redraw frequency
 	bool m_ActiveTransition;
 	bool m_HasNetMeasures;
-	bool m_HasPluginMeasures;
 	bool m_HasButtons;
 	HIDEMODE m_WindowHide;						// If true, the window is hidden when mouse is over it
 	bool m_WindowStartHidden;					// If true, the window is hidden at startup
@@ -418,7 +415,6 @@ private:
 	int m_TransparencyValue;
 
 	bool m_Refreshing;							// This is true, when the meter is refreshing
-	bool m_BulkUpdating;
 
 	bool m_Hidden;								// True, if Rainmeter is hidden
 	bool m_ResetRegion;							// If true, the window region is recalculated during the next update

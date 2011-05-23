@@ -68,15 +68,6 @@ bool CMeasurePlugin::Update()
 {
 	if (!CMeasure::PreUpdate()) return false;
 
-	bool bulkUpdating = (m_MeterWindow && m_MeterWindow->IsBulkUpdating());
-
-	if (!bulkUpdating)
-	{
-		std::wstring dir = Rainmeter->GetSkinPath();
-		if (m_MeterWindow) dir += m_MeterWindow->GetSkinName();
-		CSystem::SetWorkingDirectory(dir);
-	}
-
 	if (UpdateFunc)
 	{
 		// Update the plugin
@@ -88,10 +79,8 @@ bool CMeasurePlugin::Update()
 		m_Value = UpdateFunc2(m_ID);
 	}
 
-	if (!bulkUpdating)
-	{
-		CSystem::ResetWorkingDirectory();
-	}
+	// Reset to default
+	CSystem::ResetWorkingDirectory();
 
 	return PostUpdate();
 }
@@ -186,13 +175,11 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		// Remove current directory from DLL search path
 		SetDllDirectory(L"");
 
-		std::wstring dir = Rainmeter->GetSkinPath();
-		if (m_MeterWindow) dir += m_MeterWindow->GetSkinName();
-		CSystem::SetWorkingDirectory(dir);
-
 		double maxValue;
 		maxValue = InitializeFunc(m_Plugin, parser.GetFilename().c_str(), section, m_ID);
 
+		// Reset to default
+		SetDllDirectory(L"");
 		CSystem::ResetWorkingDirectory();
 
 		std::wstring szMaxValue = parser.ReadString(section, L"MaxValue", L"NotSet");
