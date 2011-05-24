@@ -18,6 +18,8 @@
 
 #include "StdAfx.h"
 #include "PlayerWinamp.h"
+#include "Winamp/wa_ipc.h"
+#include "Winamp/wa_cmd.h"
 
 extern CPlayer* g_Winamp;
 
@@ -197,8 +199,7 @@ void CPlayerWinamp::UpdateData()
 		else
 		{
 			// TagLib couldn't parse the file, try title instead
-			int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
-			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTTITLEW);
+			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_TITLE);
 			if (ReadProcessMemory(m_WinampHandle, address, &buffer, MAX_PATH, NULL))
 			{
 				std::wstring title = buffer;

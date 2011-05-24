@@ -18,6 +18,8 @@
 
 #include "StdAfx.h"
 #include "PlayerAIMP.h"
+#include "AIMP/aimp2_sdk.h"
+#include "Winamp/wa_ipc.h"
 
 extern CPlayer* g_AIMP;
 
@@ -347,7 +349,7 @@ void CPlayerAIMP::SetRating(int rating)
 }
 
 /*
-** Previous
+** SetVolume
 **
 ** Handles the SetVolume bang.
 **
@@ -366,7 +368,7 @@ void CPlayerAIMP::SetVolume(int volume)
 void CPlayerAIMP::ChangeVolume(int volume)
 {
 	volume += m_Volume;
-	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(volume, AIMP_STS_VOLUME));
+	SetVolume(volume);
 }
 
 /*

@@ -554,12 +554,8 @@ void CPlayerITunes::SetVolume(int volume)
 */
 void CPlayerITunes::ChangeVolume(int volume)
 {
-	if (m_Initialized)
-	{
-		int newVolume = m_Volume;
-		newVolume += volume;
-		m_iTunes->put_SoundVolume(newVolume);
-	}
+	volume += m_Volume;
+	SetVolume(volume);
 }
 
 /*

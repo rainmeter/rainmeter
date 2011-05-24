@@ -19,11 +19,7 @@
 #ifndef __PLAYERAIMP_H__
 #define __PLAYERAIMP_H__
 
-#include <windows.h>
 #include "Player.h"
-
-#include "AIMP/aimp2_sdk.h"
-#include "Winamp/wa_ipc.h"
 
 class CPlayerAIMP : public CPlayer
 {

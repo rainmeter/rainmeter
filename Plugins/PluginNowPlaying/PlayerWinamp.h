@@ -20,10 +20,6 @@
 #define __PLAYERWINAMP_H__
 
 #include "Player.h"
-#include "Winamp/wa_cmd.h"
-#include "Winamp/wa_dlg.h"
-#include "Winamp/wa_hotkeys.h"
-#include "Winamp/wa_ipc.h"
 
 class CPlayerWinamp : public CPlayer
 {

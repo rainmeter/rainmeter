@@ -20,6 +20,7 @@
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 #include "NowPlaying.h"
 #include "PlayerAIMP.h"
+#include "PlayerCAD.h"
 #include "PlayerFoobar.h"
 #include "PlayerITunes.h"
 #include "PlayerSpotify.h"
@@ -27,6 +28,7 @@
 #include "PlayerWMP.h"
 
 CPlayer* g_AIMP = NULL;
+CPlayer* g_CAD = NULL;
 CPlayer* g_Foobar = NULL;
 CPlayer* g_iTunes = NULL;
 CPlayer* g_Spotify = NULL;
@@ -121,6 +123,14 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 					g_AIMP = new CPlayerAIMP;
 				}
 				data->player = g_AIMP;
+			}
+			else if (_wcsicmp(L"MusicBee", str) == 0)
+			{
+				if (!g_CAD)
+				{
+					g_CAD = new CPlayerCAD;
+				}
+				data->player = g_CAD;
 			}
 			else if (_wcsicmp(L"iTunes", str) == 0)
 			{

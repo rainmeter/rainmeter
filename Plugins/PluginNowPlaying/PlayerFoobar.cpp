@@ -320,9 +320,9 @@ void CPlayerFoobar::UpdateData()
 }
 
 /*
-** PlayPause
+** Play
 **
-** Handles the PlayPause bang.
+** Handles the Play bang.
 **
 */
 void CPlayerFoobar::Play()
@@ -397,11 +397,8 @@ void CPlayerFoobar::Previous()
 */
 void CPlayerFoobar::ChangeVolume(int volume) 
 {
-	if (m_FooWindow)
-	{
-		volume += m_Volume;
-		SendMessage(m_FooWindow, WM_USER, volume, FOO_SETVOLUME);
-	}
+	volume += m_Volume;
+	SetVolume(volume);
 }
 
 /*

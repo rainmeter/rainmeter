@@ -672,19 +672,15 @@ void CPlayerWMP::SetVolume(int volume)
 }
 
 /*
-** ClosePlayer
+** ChangeVolume
 **
-** Handles the ClosePlayer bang.
+** Handles the ChangeVolume bang.
 **
 */
 void CPlayerWMP::ChangeVolume(int volume)
 {
-	if (m_IPlayer)
-	{
-		int newVolume = m_Volume;
-		newVolume += volume;
-		m_ISettings->put_volume(newVolume);
-	}
+	volume += m_Volume;
+	SetVolume(volume);
 }
 
 /*

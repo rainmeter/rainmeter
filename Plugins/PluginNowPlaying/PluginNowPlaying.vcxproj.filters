@@ -257,6 +257,9 @@
     <ClCompile Include="taglib\mpc\mpcfile.cpp">
       <Filter>taglib</Filter>
     </ClCompile>
+    <ClCompile Include="PlayerCAD.cpp">
+      <Filter>Players</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SDKs\AIMP\aimp2_sdk.h">
@@ -305,6 +308,9 @@
     </ClInclude>
     <ClInclude Include="sha2\sha2.h">
       <Filter>sha2</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerCAD.h">
+      <Filter>Players</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
