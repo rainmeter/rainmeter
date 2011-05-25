@@ -120,47 +120,47 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			{
 				if (!g_AIMP)
 				{
-					g_AIMP = new CPlayerAIMP;
+					g_AIMP = new CPlayerAIMP();
 				}
 				data->player = g_AIMP;
-			}
-			else if (_wcsicmp(L"MusicBee", str) == 0)
-			{
-				if (!g_CAD)
-				{
-					g_CAD = new CPlayerCAD;
-				}
-				data->player = g_CAD;
-			}
-			else if (_wcsicmp(L"iTunes", str) == 0)
-			{
-				if (!g_iTunes)
-				{
-					g_iTunes = new CPlayerITunes;
-				}
-				data->player = g_iTunes;
 			}
 			else if (_wcsicmp(L"foobar2000", str) == 0)
 			{
 				if (!g_Foobar)
 				{
-					g_Foobar = new CPlayerFoobar;
+					g_Foobar = new CPlayerFoobar();
 				}
 				data->player = g_Foobar;
+			}
+			else if (_wcsicmp(L"iTunes", str) == 0)
+			{
+				if (!g_iTunes)
+				{
+					g_iTunes = new CPlayerITunes();
+				}
+				data->player = g_iTunes;
+			}
+			else if (_wcsicmp(L"MusicBee", str) == 0)
+			{
+				if (!g_CAD)
+				{
+					g_CAD = new CPlayerCAD();
+				}
+				data->player = g_CAD;
 			}
 			else if (_wcsicmp(L"Spotify", str) == 0)
 			{
 				if (!g_Spotify)
 				{
-					g_Spotify = new CPlayerSpotify;
+					g_Spotify = new CPlayerSpotify();
 				}
 				data->player = g_Spotify;
 			}
-			else if (_wcsicmp(L"WinAmp", str) == 0)
+			else if (_wcsicmp(L"WinAmp", str) == 0 || _wcsicmp(L"MediaMonkey", str) == 0)
 			{
 				if (!g_Winamp)
 				{
-					g_Winamp = new CPlayerWinamp;
+					g_Winamp = new CPlayerWinamp();
 				}
 				data->player = g_Winamp;
 			}
@@ -168,7 +168,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			{
 				if (!g_WMP)
 				{
-					g_WMP = new CPlayerWMP;
+					g_WMP = new CPlayerWMP();
 				}
 				data->player = g_WMP;
 			}

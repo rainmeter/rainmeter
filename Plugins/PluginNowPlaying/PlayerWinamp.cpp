@@ -30,6 +30,7 @@ extern CPlayer* g_Winamp;
 **
 */
 CPlayerWinamp::CPlayerWinamp() : CPlayer(),
+	m_UseUnicodeAPI(false),
 	m_HasCoverMeasure(false),
 	m_Window()
 {
@@ -93,10 +94,11 @@ bool CPlayerWinamp::Initialize()
 		DWORD pID;
 		GetWindowThreadProcessId(m_Window, &pID);
 		m_WinampHandle = OpenProcess(PROCESS_VM_READ, false, pID);
-		m_WinampAddress = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_FILENAME);
 
 		if (m_WinampHandle)
 		{
+			m_WinampAddress = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_FILENAME);
+			m_UseUnicodeAPI = m_WinampAddress ? true : false;
 			return true;
 		}
 	}
@@ -176,19 +178,37 @@ void CPlayerWinamp::UpdateData()
 		m_Volume = (UINT)volume;
 	}
 
-	WCHAR buffer[MAX_PATH];
-	if (!ReadProcessMemory(m_WinampHandle, m_WinampAddress, &buffer, MAX_PATH, NULL))
+	BOOL ret;
+	WCHAR wBuffer[MAX_PATH];
+	char cBuffer[MAX_PATH];
+
+	if (m_UseUnicodeAPI)
 	{
-		LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Failed to read Winamp memory");
+		ret = ReadProcessMemory(m_WinampHandle, m_WinampAddress, &wBuffer, MAX_PATH, NULL);
 	}
-	else if (wcscmp(buffer, m_FilePath.c_str()) != 0)
+	else
+	{
+		// MediaMonkey doesn't support wide IPC messages
+		int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
+		LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTFILE);
+		ret = ReadProcessMemory(m_WinampHandle, address, &cBuffer, MAX_PATH, NULL);
+		mbstowcs(wBuffer, cBuffer, MAX_PATH);
+	}
+
+	if (!ret)
+	{
+		LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Failed to read Winamp memory (file).");
+		return;
+	}
+
+	if (wcscmp(wBuffer, m_FilePath.c_str()) != 0)
 	{
 		m_TrackChanged = true;
-		m_FilePath = buffer;
+		m_FilePath = wBuffer;
 		m_Rating = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETRATING);
 		m_Duration = SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
 
-		TagLib::FileRef fr(buffer);
+		TagLib::FileRef fr(wBuffer);
 		if (!fr.isNull() && fr.tag())
 		{
 			TagLib::Tag* tag = fr.tag();
@@ -199,31 +219,46 @@ void CPlayerWinamp::UpdateData()
 		else
 		{
 			// TagLib couldn't parse the file, try title instead
-			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_TITLE);
-			if (ReadProcessMemory(m_WinampHandle, address, &buffer, MAX_PATH, NULL))
+			if (m_UseUnicodeAPI)
 			{
-				std::wstring title = buffer;
-				std::wstring::size_type pos = title.find(L". ");
+				LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_TITLE);
+				ret = ReadProcessMemory(m_WinampHandle, address, &wBuffer, MAX_PATH, NULL);
+			}
+			else
+			{
+				int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
+				LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTTITLE);
+				ReadProcessMemory(m_WinampHandle, m_WinampAddress, &cBuffer, MAX_PATH, NULL);
+				ret = mbstowcs(wBuffer, cBuffer, MAX_PATH);
+			}
 
-				if (pos != std::wstring::npos && pos < 5)
-				{
-					pos += 2; // Skip ". "
-					title.erase(0, pos);
-				}
+			if (!ret)
+			{
+				LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Failed to read Winamp memory (title).");
+				return;
+			}
 
-				pos = title.find(L" - ");
-				if (pos != std::wstring::npos)
-				{
-					m_Title = title.substr(0, pos);
-					pos += 3;	// Skip " - "
-					m_Artist = title.substr(pos);
-					m_Album.clear();
-				}
-				else
-				{
-					ClearInfo();
-					return;
-				}
+			std::wstring title = wBuffer;
+			std::wstring::size_type pos = title.find(L". ");
+
+			if (pos != std::wstring::npos && pos < 5)
+			{
+				pos += 2; // Skip ". "
+				title.erase(0, pos);
+			}
+
+			pos = title.find(L" - ");
+			if (pos != std::wstring::npos)
+			{
+				m_Title = title.substr(0, pos);
+				pos += 3;	// Skip " - "
+				m_Artist = title.substr(pos);
+				m_Album.clear();
+			}
+			else
+			{
+				ClearInfo();
+				return;
 			}
 		}
 
@@ -400,7 +435,11 @@ void CPlayerWinamp::SetVolume(int volume)
 	if (m_Window)
 	{
 		++volume;	// For proper scaling
-		if (volume > 100)
+		if (volume < 0)
+		{
+			volume = 0;
+		}
+		else if (volume > 100)
 		{
 			volume = 100;
 		}
@@ -422,26 +461,8 @@ void CPlayerWinamp::SetVolume(int volume)
 */
 void CPlayerWinamp::ChangeVolume(int volume)
 {
-	if (m_Window)
-	{
-		++volume;	// For proper scaling
-		volume += m_Volume;
-
-		if (volume < 0)
-		{
-			volume = 0;
-		}
-		else if (volume > 100)
-		{
-			volume = 100;
-		}
-
-		float fVolume = (float)volume;
-		fVolume *= 2.55f;
-		volume = (UINT)fVolume;
-
-		SendMessage(m_Window, WM_WA_IPC, volume, IPC_SETVOLUME);
-	}
+	volume += m_Volume;
+	SetVolume(volume);
 }
 
 /*

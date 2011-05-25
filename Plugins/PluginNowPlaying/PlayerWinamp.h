@@ -48,6 +48,7 @@ private:
 	bool CheckActive();
 
 	bool m_HasCoverMeasure;
+	bool m_UseUnicodeAPI;
 	HWND m_Window;				// Winamp window
 	HANDLE m_WinampHandle;		// Handle to Winamp process
 	LPCVOID m_WinampAddress;
