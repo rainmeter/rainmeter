@@ -76,12 +76,12 @@ bool CMeasureDiskSpace::Update()
 
 		if (sizeResult)
 		{
-			m_Value = (double)((m_Total) ? i64TotalBytes : i64FreeBytes).QuadPart;
+			m_Value = (double)(__int64)((m_Total) ? i64TotalBytes : i64FreeBytes).QuadPart;
 
 			if (i64TotalBytes.QuadPart != m_OldTotalBytes)
 			{
 				// Total size was changed, so set new max value.
-				m_MaxValue = (double)i64TotalBytes.QuadPart;
+				m_MaxValue = (double)(__int64)i64TotalBytes.QuadPart;
 				m_OldTotalBytes = i64TotalBytes.QuadPart;
 			}
 		}
@@ -188,7 +188,7 @@ void CMeasureDiskSpace::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 		if (result)
 		{
-			m_MaxValue = (double)i64TotalBytes.QuadPart;
+			m_MaxValue = (double)(__int64)i64TotalBytes.QuadPart;
 			m_OldTotalBytes = i64TotalBytes.QuadPart;
 		}
 		else

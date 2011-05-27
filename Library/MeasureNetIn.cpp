@@ -55,7 +55,7 @@ bool CMeasureNetIn::Update()
 
 	if (m_Cumulative)
 	{
-		m_Value = (double)GetNetStatsValue(NET_IN);
+		m_Value = (double)(__int64)GetNetStatsValue(NET_IN);
 	}
 	else
 	{
@@ -82,7 +82,7 @@ bool CMeasureNetIn::Update()
 			m_FirstTime = false;
 		}
 
-		m_Value = (double)value;
+		m_Value = (double)(__int64)value;
 	}
 
 	return PostUpdate();

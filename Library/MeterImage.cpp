@@ -93,14 +93,14 @@ void CMeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		{
 			if (!m_HeightDefined)
 			{
-				m_H = (imageW == 0) ? 0 : (m_Tile) ? imageH : (int)(m_W * imageH / (double)imageW);
+				m_H = (imageW == 0) ? 0 : (m_Tile) ? imageH : m_W * imageH / imageW;
 			}
 		}
 		else
 		{
 			if (m_HeightDefined)
 			{
-				m_W = (imageH == 0) ? 0 : (m_Tile) ? imageW : (int)(m_H * imageW / (double)imageH);
+				m_W = (imageH == 0) ? 0 : (m_Tile) ? imageW : m_H * imageW / imageH;
 			}
 			else
 			{
