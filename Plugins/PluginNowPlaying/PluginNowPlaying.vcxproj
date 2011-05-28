@@ -353,6 +353,7 @@
     <ClInclude Include="PlayerWinamp.h" />
     <ClInclude Include="PlayerWMP.h" />
     <ClInclude Include="SDKs\AIMP\aimp2_sdk.h" />
+    <ClInclude Include="SDKs\CAD\cad_sdk.h" />
     <ClInclude Include="SDKs\iTunes\iTunesCOMInterface.h" />
     <ClInclude Include="SDKs\Winamp\wa_cmd.h" />
     <ClInclude Include="SDKs\Winamp\wa_dlg.h" />

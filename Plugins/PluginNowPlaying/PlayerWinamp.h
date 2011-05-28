@@ -21,10 +21,16 @@
 
 #include "Player.h"
 
+enum WINAMPTYPE
+{
+	WA_WINAMP,
+	WA_MEDIAMONKEY
+};
+
 class CPlayerWinamp : public CPlayer
 {
 public:
-	CPlayerWinamp();
+	CPlayerWinamp(WINAMPTYPE type);
 	~CPlayerWinamp();
 
 	virtual void Play();
@@ -49,6 +55,7 @@ private:
 
 	bool m_HasCoverMeasure;
 	bool m_UseUnicodeAPI;
+	WINAMPTYPE m_WinampType;
 	HWND m_Window;				// Winamp window
 	HANDLE m_WinampHandle;		// Handle to Winamp process
 	LPCVOID m_WinampAddress;

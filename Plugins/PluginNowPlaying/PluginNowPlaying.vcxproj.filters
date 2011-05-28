@@ -22,6 +22,9 @@
     <Filter Include="Players">
       <UniqueIdentifier>{8be2f033-c29f-41d2-affd-c7721f0df88b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SDKs\CD Art Display">
+      <UniqueIdentifier>{9e4422be-972a-442d-95f1-f238ef237a7b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SDKs\iTunes\iTunesCOMInterface_i.c">
@@ -311,6 +314,9 @@
     </ClInclude>
     <ClInclude Include="PlayerCAD.h">
       <Filter>Players</Filter>
+    </ClInclude>
+    <ClInclude Include="SDKs\CAD\cad_sdk.h">
+      <Filter>SDKs\CD Art Display</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -44,49 +44,6 @@ public:
 	virtual void UpdateData();
 
 private:
-	enum IPCMESSAGE
-	{
-		IPC_PLAY						= 100,
-		IPC_PLAYPAUSE,
-		IPC_FORCEPAUSE,
-		IPC_STOP,
-		IPC_NEXT,
-		IPC_PREVIOUS,
-		IPC_SET_VOLUME					= 108,
-		IPC_GET_VOLUME,
-		IPC_GET_CURRENT_TRACK,
-		IPC_GET_DURATION				= 113,
-		IPC_SET_POSITION,
-		IPC_IS_PLAYING,
-		IPC_IS_PAUSED,
-		IPC_GET_LIST_LENGTH,
-		IPC_SET_LIST_POS,
-		IPC_GET_LIST_ITEM,
-		IPC_SET_CALLBACK_HWND,					// Recieved by player. wParam is handle to CAD window.
-		IPC_GET_LIST_POS,
-		IPC_GET_POSITION,
-		IPC_TRACK_CHANGED_NOTIFICATION,			// Sent by player.
-		IPC_SHOW_PLAYER_WINDOW,
-		IPC_GET_PLAYER_STATE,
-		IPC_PLAYER_STATE_CHANGED_NOTIFICATION,	// Sent by player.
-		IPC_AUTOENQUEUE_OPTIONS,				// Ignored.
-		IPC_SET_REPEAT,
-		IPC_SHUTDOWN_NOTIFICATION,				// Sent by/to player on exit. Player should NULL the CAD window handle.
-		IPC_GET_REPEAT,
-		IPC_CLOSE_PLAYER,						// Player should exit upon receival.
-		IPC_GET_SHUFFLE					= 140,
-		IPC_SET_SHUFFLE,
-		IPC_RATING_CHANGED_NOTIFICATION = 639,	// Sent by/to player.
-		IPC_REGISTER_PLAYER				= 700,	// Sent by player to CAD on startup.
-		IPC_CURRENT_TRACK_INFO,
-		IPC_SEND_LYRICS,
-		IPC_SEND_NEW_LYRICS,
-		IPC_NEW_COVER_NOTIFICATION		= 800,	// Sent by player (ignored).
-		IPC_GET_CURRENT_LYRICS,
-		IPC_ADDFILE_PLAY_PLAYLIST,
-		IPC_ADDFILE_QUEUE_PLAYLIST
-	};
-
 	void Initialize();
 	void Uninitialize();
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);

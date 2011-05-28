@@ -29,15 +29,8 @@ extern CPlayer* g_iTunes;
 */
 CPlayerITunes::CEventHandler::CEventHandler(CPlayerITunes* player) :
 	m_iTunes(player),
-	m_TypeInfo(),
 	m_RefCount()
 {
-	ITypeLib* pITypeLib = NULL;
-	HRESULT hr = LoadRegTypeLib(LIBID_iTunesLib, 1, 5, 0x00, &pITypeLib);
-
-	// Get type information for the interface of the object.
-	hr = pITypeLib->GetTypeInfoOfGuid(DIID__IiTunesEvents, &m_TypeInfo);
-	pITypeLib->Release();
 }
 
 /*
@@ -64,13 +57,13 @@ HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::QueryInterface(REFIID ii
 
 ULONG STDMETHODCALLTYPE CPlayerITunes::CEventHandler::AddRef()
 {
-	InterlockedIncrement(&m_RefCount);
+	++m_RefCount;
 	return m_RefCount;
 }
 
 ULONG STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Release()
 {
-	InterlockedDecrement(&m_RefCount);
+	--m_RefCount;
 	if (m_RefCount == 0)
 	{
 		delete this;
@@ -568,9 +561,9 @@ void CPlayerITunes::ClosePlayer()
 {
 	if (m_Initialized)
 	{
-		m_Initialized = false;
+		m_UserQuitPrompt = true;
 		m_iTunes->Quit();
-		ClearInfo();
+		Uninitialize();
 	}
 }
 

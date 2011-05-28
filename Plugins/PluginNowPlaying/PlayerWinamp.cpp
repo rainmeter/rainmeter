@@ -21,6 +21,8 @@
 #include "Winamp/wa_ipc.h"
 #include "Winamp/wa_cmd.h"
 
+// This player retrieves data through the Winamp IPC API.
+
 extern CPlayer* g_Winamp;
 
 /*
@@ -29,7 +31,8 @@ extern CPlayer* g_Winamp;
 ** Constructor.
 **
 */
-CPlayerWinamp::CPlayerWinamp() : CPlayer(),
+CPlayerWinamp::CPlayerWinamp(WINAMPTYPE type) : CPlayer(),
+	m_WinampType(type),
 	m_UseUnicodeAPI(false),
 	m_HasCoverMeasure(false),
 	m_Window()
@@ -475,7 +478,18 @@ void CPlayerWinamp::ClosePlayer()
 {
 	if (m_Window)
 	{
-		SendMessage(m_Window, WM_CLOSE, 0, 0);
+		if (m_WinampType == WA_WINAMP)
+		{
+			SendMessage(m_Window, WM_CLOSE, 0, 0);
+		}
+		else // if (m_WinampType == WA_MEDIAMONKEY)
+		{
+			HWND wnd = FindWindow(L"TFMainWindow", L"MediaMonkey");
+			if (wnd)
+			{
+				SendMessage(wnd, WM_CLOSE, 0, 0);
+			}
+		}
 	}
 }
 
@@ -487,7 +501,48 @@ void CPlayerWinamp::ClosePlayer()
 */
 void CPlayerWinamp::OpenPlayer()
 {
-	ShellExecute(NULL, L"open", m_PlayerPath.empty() ? L"winamp.exe" : m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
+	if (m_WinampType == WA_WINAMP)
+	{
+		ShellExecute(NULL, L"open", m_PlayerPath.empty() ? L"winamp.exe" : m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
+	}
+	else // if (m_WinampType == WA_MEDIAMONKEY)
+	{
+		if (m_PlayerPath.empty())
+		{
+			// Gotta figure out where Winamp is located at
+			HKEY hKey;
+			RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+						 L"SOFTWARE\\Clients\\Media\\MediaMonkey\\shell\\open\\command",
+						 0,
+						 KEY_QUERY_VALUE,
+						 &hKey);
+
+			DWORD size = 512;
+			WCHAR* data = new WCHAR[size];
+			DWORD type = 0;
+
+			if (RegQueryValueEx(hKey,
+								NULL,
+								NULL,
+								(LPDWORD)&type,
+								(LPBYTE)data,
+								(LPDWORD)&size) == ERROR_SUCCESS)
+			{
+				if (type == REG_SZ)
+				{
+					ShellExecute(NULL, L"open", data, NULL, NULL, SW_SHOW);
+					m_PlayerPath = data;
+				}
+			}
+
+			delete [] data;
+			RegCloseKey(hKey);
+		}
+		else
+		{
+			ShellExecute(NULL, L"open", m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
+		}
+	}
 }
 
 /*

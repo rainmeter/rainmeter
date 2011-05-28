@@ -140,6 +140,14 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				}
 				data->player = g_iTunes;
 			}
+			else if (_wcsicmp(L"MediaMonkey", str) == 0)
+			{
+				if (!g_Winamp)
+				{
+					g_Winamp = new CPlayerWinamp(WA_MEDIAMONKEY);
+				}
+				data->player = g_Winamp;
+			}
 			else if (_wcsicmp(L"MusicBee", str) == 0)
 			{
 				if (!g_CAD)
@@ -156,11 +164,11 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				}
 				data->player = g_Spotify;
 			}
-			else if (_wcsicmp(L"WinAmp", str) == 0 || _wcsicmp(L"MediaMonkey", str) == 0)
+			else if (_wcsicmp(L"WinAmp", str) == 0)
 			{
 				if (!g_Winamp)
 				{
-					g_Winamp = new CPlayerWinamp();
+					g_Winamp = new CPlayerWinamp(WA_WINAMP);
 				}
 				data->player = g_Winamp;
 			}

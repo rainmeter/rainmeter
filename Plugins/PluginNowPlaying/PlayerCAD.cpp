@@ -18,6 +18,7 @@
 
 #include "StdAfx.h"
 #include "PlayerCAD.h"
+#include "CAD/cad_sdk.h"
 
 // This player emulates the CD Art Display IPC API. For now, only MusicBee
 // is supported, but this can easily be extended.
@@ -121,6 +122,7 @@ void CPlayerCAD::Initialize()
 			m_PlayerWindow = wnd;
 			SendMessage(m_PlayerWindow, WM_USER, (WPARAM)m_Window, IPC_SET_CALLBACK_HWND);
 			SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_CURRENT_TRACK);
+			m_State = (PLAYERSTATE)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_PLAYER_STATE);
 		}
 		else
 		{
@@ -140,7 +142,6 @@ void CPlayerCAD::Uninitialize()
 	DestroyWindow(m_Window);
 	UnregisterClass(L"NowPlayingCADClass", GetModuleHandle(NULL));
 }
-
 
 /*
 ** WndProc
@@ -180,6 +181,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 
 		case IPC_SHUTDOWN_NOTIFICATION:
 			p->m_PlayerWindow = NULL;
+			p->ClearInfo();
 			break;
 		}
 		return 0;
@@ -376,7 +378,6 @@ void CPlayerCAD::SetVolume(int volume)
 {
 	if (m_PlayerWindow)
 	{
-		volume += m_Volume;
 		if (volume < 0)
 		{
 			volume = 0;
@@ -410,6 +411,8 @@ void CPlayerCAD::ChangeVolume(int volume)
 void CPlayerCAD::ClosePlayer()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_CLOSE_PLAYER);
+	m_PlayerWindow = NULL;
+	ClearInfo();
 }
 
 /*

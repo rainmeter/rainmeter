@@ -74,7 +74,6 @@ private:
 
 	private:
 		ULONG m_RefCount;
-		ITypeInfo* m_TypeInfo;		// Pointer to type information
 		CPlayerITunes* m_iTunes;
 	};
 
