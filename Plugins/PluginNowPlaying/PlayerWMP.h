@@ -64,7 +64,7 @@ private:
 		CRemoteHost();
 		~CRemoteHost();
 
-		CPlayerWMP* m_WMP;
+		CPlayerWMP* m_Player;
 
 		BEGIN_COM_MAP(CRemoteHost)
 			COM_INTERFACE_ENTRY(IServiceProvider)

@@ -28,7 +28,7 @@ extern CPlayer* g_WMP;
 **
 */
 CPlayerWMP::CRemoteHost::CRemoteHost() :
-	m_WMP()
+	m_Player()
 {
 }
 
@@ -96,7 +96,7 @@ HRESULT CPlayerWMP::CRemoteHost::GetCustomUIMode(BSTR* pbstrFile)
 */
 void CPlayerWMP::CRemoteHost::CurrentItemChange(IDispatch* pdispMedia)
 {
-	m_WMP->m_TrackChanged = true;
+	m_Player->m_TrackChanged = true;
 }
 
 /*
@@ -111,19 +111,19 @@ void CPlayerWMP::CRemoteHost::PlayStateChange(long NewState)
 	{
 	case wmppsStopped:
 	case wmppsMediaEnded:
-		m_WMP->ClearInfo();
+		m_Player->ClearInfo();
 		break;
 
 	case wmppsPaused:
-		m_WMP->m_State = PLAYER_PAUSED;
+		m_Player->m_State = PLAYER_PAUSED;
 		break;
 
 	case wmppsPlaying:
-		if (m_WMP->m_State == PLAYER_STOPPED)
+		if (m_Player->m_State == PLAYER_STOPPED)
 		{
-			m_WMP->m_TrackChanged = true;
+			m_Player->m_TrackChanged = true;
 		}
-		m_WMP->m_State = PLAYER_PLAYING;
+		m_Player->m_State = PLAYER_PLAYING;
 		break;
 
 	default:
@@ -139,8 +139,8 @@ void CPlayerWMP::CRemoteHost::PlayStateChange(long NewState)
 */
 void CPlayerWMP::CRemoteHost::SwitchedToControl()
 {
-	m_WMP->ClearInfo();
-	m_WMP->Uninitialize();
+	m_Player->ClearInfo();
+	m_Player->Uninitialize();
 }
 
 /*
@@ -273,7 +273,7 @@ void CPlayerWMP::Initialize()
 		if (pRemoteHost)
 		{
 			pRemoteHost->AddRef();
-			pRemoteHost->m_WMP = this;
+			pRemoteHost->m_Player = this;
 		}
 		else
 		{

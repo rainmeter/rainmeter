@@ -28,9 +28,16 @@ extern CPlayer* g_iTunes;
 **
 */
 CPlayerITunes::CEventHandler::CEventHandler(CPlayerITunes* player) :
-	m_iTunes(player),
-	m_RefCount()
+	m_Player(player),
+	m_RefCount(),
+	m_ConnectionPoint(),
+	m_ConnectionCookie()
 {
+	IConnectionPointContainer* icpc;
+	m_Player->m_iTunes->QueryInterface(IID_IConnectionPointContainer, (void**)&icpc);
+	icpc->FindConnectionPoint(DIID__IiTunesEvents, &m_ConnectionPoint);
+	m_ConnectionPoint->Advise(this, &m_ConnectionCookie);
+	icpc->Release();
 }
 
 /*
@@ -41,6 +48,11 @@ CPlayerITunes::CEventHandler::CEventHandler(CPlayerITunes* player) :
 */
 CPlayerITunes::CEventHandler::~CEventHandler()
 {
+	if (m_ConnectionPoint)
+	{
+		m_ConnectionPoint->Unadvise(m_ConnectionCookie);
+		m_ConnectionPoint->Release();
+	}
 }
 
 HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::QueryInterface(REFIID iid, void** ppvObject)
@@ -57,19 +69,12 @@ HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::QueryInterface(REFIID ii
 
 ULONG STDMETHODCALLTYPE CPlayerITunes::CEventHandler::AddRef()
 {
-	++m_RefCount;
-	return m_RefCount;
+	return ++m_RefCount;
 }
 
 ULONG STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Release()
 {
-	--m_RefCount;
-	if (m_RefCount == 0)
-	{
-		delete this;
-		return 0;
-	}
-	return m_RefCount;
+	return --m_RefCount;
 }
 
 HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Invoke(DISPID dispidMember, REFIID, LCID, WORD, DISPPARAMS* dispParams, VARIANT*, EXCEPINFO*, UINT*)
@@ -77,25 +82,25 @@ HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Invoke(DISPID dispidMemb
 	switch (dispidMember)
 	{
 	case ITEventPlayerPlay:
-		m_iTunes->OnStateChange(true);
-		m_iTunes->OnTrackChange();
-		break;	
+		m_Player->OnStateChange(true);
+		m_Player->OnTrackChange();
+		break;
 
 	case ITEventPlayerStop:
-		m_iTunes->OnStateChange(false);
+		m_Player->OnStateChange(false);
 		break;
 
 	case ITEventPlayerPlayingTrackChanged:
-		m_iTunes->OnTrackChange();
+		m_Player->OnTrackChange();
 		break;
 
 	case ITEventSoundVolumeChanged:
-		m_iTunes->OnVolumeChange(dispParams->rgvarg[0].intVal);
+		m_Player->OnVolumeChange(dispParams->rgvarg[0].intVal);
 		break;
 
 	case ITEventAboutToPromptUserToQuit:
-		m_iTunes->m_UserQuitPrompt = true;
-		m_iTunes->Uninitialize();
+		m_Player->m_UserQuitPrompt = true;
+		m_Player->Uninitialize();
 		break;
 	}
 
@@ -114,9 +119,7 @@ CPlayerITunes::CPlayerITunes() : CPlayer(),
 	m_HasCoverMeasure(false),
 	m_Window(),
 	m_iTunes(),
-	m_iTunesEvent(),
-	m_ConnectionPoint(),
-	m_ConnectionCookie()
+	m_iTunesEvent()
 {
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 }
@@ -196,12 +199,7 @@ void CPlayerITunes::Initialize()
 		m_Initialized = true;
 
 		// Set up event handler
-		IConnectionPointContainer* icpc;
-		m_iTunes->QueryInterface(IID_IConnectionPointContainer, (void **)&icpc);
-		icpc->FindConnectionPoint(DIID__IiTunesEvents, &m_ConnectionPoint);
-		icpc->Release();
 		m_iTunesEvent = new CEventHandler(this);
-		m_ConnectionPoint->Advise(m_iTunesEvent, &m_ConnectionCookie);
 
 		// Try getting track info and player state
 		ITPlayerState state;
@@ -251,17 +249,11 @@ void CPlayerITunes::Uninitialize()
 	if (m_Initialized)
 	{
 		m_Initialized = false;
-
+		m_UserQuitPrompt = true;
 		if (m_iTunes)
 		{
 			m_iTunes->Release();
-			m_iTunesEvent->Release();
-		}
-
-		if (m_ConnectionPoint)
-		{
-			m_ConnectionPoint->Unadvise(m_ConnectionCookie);
-			m_ConnectionPoint->Release();
+			delete m_iTunesEvent;
 		}
 
 		ClearInfo();

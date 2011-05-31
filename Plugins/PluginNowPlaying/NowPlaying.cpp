@@ -78,7 +78,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 
 	UINT maxValue = 0;
 	MeasureData* data = new MeasureData;
-	
+
 	// Read settings from the ini-file
 	LPCTSTR str = ReadConfigString(section, L"PlayerName", NULL);
 	if (str)
@@ -88,8 +88,8 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			int len = wcslen(str) - 2;
 			if (len > 0)
 			{
-				MeasureMap::iterator it;
-				for (it = g_Values.begin(); it != g_Values.end(); ++it)
+				MeasureMap::iterator it = g_Values.begin();
+				for ( ; it != g_Values.end(); ++it)
 				{
 					if (wcsncmp(&str[1], it->second->section.c_str(), len) == 0 &&
 						wcscmp(iniFile, it->second->iniFile.c_str()) == 0)

@@ -74,7 +74,9 @@ private:
 
 	private:
 		ULONG m_RefCount;
-		CPlayerITunes* m_iTunes;
+		CPlayerITunes* m_Player;
+		IConnectionPoint* m_ConnectionPoint;
+		DWORD m_ConnectionCookie;
 	};
 
 	void Initialize();
@@ -91,8 +93,6 @@ private:
 
 	IiTunes* m_iTunes;
 	CEventHandler* m_iTunesEvent;
-	IConnectionPoint* m_ConnectionPoint;
-	DWORD m_ConnectionCookie;
 };
 
 #endif
