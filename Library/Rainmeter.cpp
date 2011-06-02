@@ -214,11 +214,14 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 	{
 		static std::wstring result;
 
-		if (_sCommand == NULL) _sCommand = L"";
+		if (_sCommand == NULL || *_sCommand == L'\0')
+		{
+			return L"noop";
+		}
+
 		if (_sData == NULL) _sData = L"";
 
 		std::wstring sCommand = _sCommand;
-		std::wstring sData = _sData;
 		std::transform(sCommand.begin(), sCommand.end(), sCommand.begin(), ::towlower);
 
 		// Command       GetConfig
@@ -230,7 +233,7 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 		{
 			// returns the config name, lookup by INI file
 
-			CMeterWindow *meterWindow = Rainmeter->GetMeterWindowByINI(sData);
+			CMeterWindow *meterWindow = Rainmeter->GetMeterWindowByINI(_sData);
 			if (meterWindow)
 			{
 				result = L"\"";
@@ -240,6 +243,30 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 			}
 
 			return L"";
+		}
+
+		// Command       GetWindow
+		// Data          [the config name]
+		// Execution     none
+		// Result        the HWND to the specified config window if found, 'error' otherwise
+		if (sCommand == L"getwindow")
+		{
+			std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
+
+			if (subStrings.size() >= 1)
+			{
+				const std::wstring& config = subStrings[0];
+
+				CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
+				if (meterWindow)
+				{
+					WCHAR buf1[64];
+					_snwprintf_s(buf1, _TRUNCATE, L"%lu", PtrToUlong(meterWindow->GetWindow()));
+					result = buf1;
+					return result.c_str();
+				}
+			}
+			return L"error";
 		}
 
 		// Command       SkinAuthor
@@ -331,30 +358,6 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 			result += x;
 			return result.c_str();
 			*/
-			return L"error";
-		}
-
-		// Command       GetWindow
-		// Data          [the config name]
-		// Execution     none
-		// Result        the HWND to the specified config window if found, 'error' otherwise
-		if (sCommand == L"getwindow")
-		{
-			std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
-
-			if (subStrings.size() >= 1)
-			{
-				const std::wstring& config = subStrings[0];
-
-				CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
-				if (meterWindow)
-				{
-					TCHAR buf1[100];
-					_snwprintf_s(buf1, _TRUNCATE, L"%lu", meterWindow->GetWindow());
-					result = buf1;
-					return result.c_str();
-				}
-			}
 			return L"error";
 		}
 

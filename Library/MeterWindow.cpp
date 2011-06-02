@@ -4986,7 +4986,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (!found)
 		{
 			Log(LOG_WARNING, L"Unable to send the !bang to a deactivated config.");
-			return 0;	// This meterwindow has been deactivated
+			return TRUE;	// This meterwindow has been deactivated
 		}
 
 		std::wstring str = (const WCHAR*)pCopyDataStruct->lpData;
