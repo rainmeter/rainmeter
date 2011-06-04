@@ -534,7 +534,7 @@ bool BelongToSameProcess(HWND wnd)
 	return (procId == GetCurrentProcessId());
 }
 
-HWND FindMeterWindow(HWND parent = NULL)
+HWND FindMeterWindow(HWND parent)
 {
 	HWND wnd = NULL;
 
@@ -546,22 +546,22 @@ HWND FindMeterWindow(HWND parent = NULL)
 		}
 	}
 
-	// for backward compatibility (0.14 - 1.1)
-	if (!parent)
+	return NULL;
+}
+
+HWND FindMeterWindow(const std::wstring& iniFile)
+{
+	std::wstring str = PluginBridge(L"getconfig", iniFile.c_str());
+	if (!str.empty())
 	{
-		while (parent = FindWindowEx(NULL, parent, L"Progman", NULL))
+		str = PluginBridge(L"getwindow", str.c_str());
+		if (str != L"error")
 		{
-			if (wnd = FindMeterWindow(parent))
-			{
-				if (BelongToSameProcess(wnd))
-				{
-					return wnd;
-				}
-			}
+			return (HWND)UlongToPtr(wcstoul(str.c_str(), NULL, 10));
 		}
 	}
 
-	return NULL;
+	return FindMeterWindow(NULL);  // Use old way to find
 }
 
 /*
@@ -1117,7 +1117,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 	{
 		if (!urlData->finishAction.empty())
 		{
-			HWND wnd = FindMeterWindow();
+			HWND wnd = FindMeterWindow(urlData->iniFile);
 
 			if (wnd != NULL)
 			{
@@ -1424,7 +1424,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 
 				if (!urlData->finishAction.empty())
 				{
-					HWND wnd = FindMeterWindow();
+					HWND wnd = FindMeterWindow(urlData->iniFile);
 
 					if (wnd != NULL)
 					{
