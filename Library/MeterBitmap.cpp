@@ -21,6 +21,7 @@
 #include "Measure.h"
 #include "Error.h"
 #include "Rainmeter.h"
+#include "System.h"
 
 using namespace Gdiplus;
 
@@ -252,7 +253,7 @@ bool CMeterBitmap::Update()
 			if ((int)(value * realFrames) != (int)(m_Value * realFrames))
 			{
 				m_TransitionStartValue = m_Value;
-				m_TransitionStartTicks = GetTickCount();
+				m_TransitionStartTicks = CSystem::GetTickCount64();
 			}
 			else
 			{
@@ -301,7 +302,6 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 	int x = GetX();
 	int y = GetY();
 
-	DWORD diffTicks = GetTickCount() - m_TransitionStartTicks;
 	if (m_Extend)
 	{
 		int value = (int)m_Value;
@@ -362,20 +362,21 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 			// If transition is ongoing the pick the correct frame
 			if (m_TransitionStartTicks > 0)
 			{
-				int range = ((value % realFrames) - ((int)transitionValue % realFrames)) * (m_TransitionFrameCount + 1);
+				int diffTicks = (int)(CSystem::GetTickCount64() - m_TransitionStartTicks);
+
+				int range = ((value % realFrames) - (transitionValue % realFrames)) * (m_TransitionFrameCount + 1);
 				if (range < 0)
 				{
 					range += m_FrameCount;
 				}
-				int frameAdjustment = 0;
-				frameAdjustment = range * diffTicks / ((m_TransitionFrameCount + 1) * m_MeterWindow->GetTransitionUpdate());
+				int frameAdjustment = range * diffTicks / ((m_TransitionFrameCount + 1) * m_MeterWindow->GetTransitionUpdate());
 				if (frameAdjustment > range)
 				{
 					m_TransitionStartTicks = 0;		// The transition is over. Draw with the real value.
 				}
 				else
 				{
-					frame = ((int)transitionValue % realFrames) * (m_TransitionFrameCount + 1);
+					frame = (transitionValue % realFrames) * (m_TransitionFrameCount + 1);
 					frame += frameAdjustment;
 					frame %= m_FrameCount;
 				}
@@ -430,7 +431,9 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 		// If transition is ongoing the pick the correct frame
 		if (m_TransitionStartTicks > 0)
 		{
-			if ((int)diffTicks > ((m_TransitionFrameCount + 1) * m_MeterWindow->GetTransitionUpdate()))
+			int diffTicks = (int)(CSystem::GetTickCount64() - m_TransitionStartTicks);
+
+			if (diffTicks > ((m_TransitionFrameCount + 1) * m_MeterWindow->GetTransitionUpdate()))
 			{
 				m_TransitionStartTicks = 0;		// The transition is over. Draw with the real value.
 			}

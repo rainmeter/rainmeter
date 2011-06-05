@@ -409,7 +409,7 @@ private:
 	BLURMODE m_BlurMode;						// The blur mode
 	HRGN m_BlurRegion;							// Handle to the blur region
 
-	DWORD m_FadeStartTime;
+	ULONGLONG m_FadeStartTime;
 	int m_FadeStartValue;
 	int m_FadeEndValue;
 	int m_TransparencyValue;

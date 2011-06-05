@@ -50,7 +50,7 @@ private:
 	int m_Digits;
 	double m_Value;
 
-	DWORD m_TransitionStartTicks;
+	ULONGLONG m_TransitionStartTicks;
 	double m_TransitionStartValue;
 };
 

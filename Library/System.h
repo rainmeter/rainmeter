@@ -72,6 +72,7 @@ public:
 	static void PrepareHelperWindow(HWND WorkerW);
 
 	static OSPLATFORM GetOSPlatform();
+	static ULONGLONG GetTickCount64();
 
 	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = NULL, bool ignoreErrors = false);
 	static void ResetWorkingDirectory();

@@ -3050,13 +3050,13 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	else if (wParam == FADETIMER)
 	{
-		DWORD ticks = GetTickCount();
+		ULONGLONG ticks = CSystem::GetTickCount64();
 		if (m_FadeStartTime == 0)
 		{
 			m_FadeStartTime = ticks;
 		}
 
-		if (ticks - m_FadeStartTime > (DWORD)m_FadeDuration)
+		if (ticks - m_FadeStartTime > (ULONGLONG)m_FadeDuration)
 		{
 			KillTimer(m_Window, FADETIMER);
 			m_FadeStartTime = 0;
@@ -3071,7 +3071,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else
 		{
-			double value = (ticks - m_FadeStartTime);
+			double value = (double)(__int64)(ticks - m_FadeStartTime);
 			value /= m_FadeDuration;
  			value *= m_FadeEndValue - m_FadeStartValue;
 			value += m_FadeStartValue;

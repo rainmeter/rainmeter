@@ -3728,11 +3728,13 @@ void CRainmeter::ReadStats()
 */
 void CRainmeter::WriteStats(bool bForce)
 {
-	static DWORD lastWrite = 0;
+	static ULONGLONG lastWrite = 0;
 
-	if (bForce || (lastWrite + 1000 * 60 < GetTickCount()))
+	ULONGLONG ticks = CSystem::GetTickCount64();
+
+	if (bForce || (lastWrite + 1000 * 60 < ticks))
 	{
-		lastWrite = GetTickCount();
+		lastWrite = ticks;
 
 		// Write the date for statistics
 		WritePrivateProfileString(L"Statistics", L"Since", m_StatsDate.c_str(), m_StatsFile.c_str());

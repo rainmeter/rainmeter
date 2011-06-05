@@ -505,15 +505,11 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 	logInfo.message = pszMessage;
 
 	// Add timestamp
-	static DWORD startTime = 0;
+	static ULONGLONG startTime = CSystem::GetTickCount64();
+	ULONGLONG time = CSystem::GetTickCount64();
 
-	DWORD time = GetTickCount();
-	if (startTime == 0)
-	{
-		startTime = time;
-	}
 	WCHAR buffer[128];
-	_snwprintf_s(buffer, _TRUNCATE, L"(%02i:%02i:%02i.%03i) ", (time - startTime) / (1000 * 60* 60), ((time - startTime) / (1000 * 60)) % 60, ((time - startTime) / 1000) % 60, (time - startTime) % 1000);
+	_snwprintf_s(buffer, _TRUNCATE, L"(%02llu:%02llu:%02llu.%03llu) ", (time - startTime) / (1000 * 60* 60), ((time - startTime) / (1000 * 60)) % 60, ((time - startTime) / 1000) % 60, (time - startTime) % 1000);
 
 	std::wstring message(buffer);
 	logInfo.timestamp = message;

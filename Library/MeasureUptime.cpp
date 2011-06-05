@@ -19,6 +19,7 @@
 #include "StdAfx.h"
 #include "MeasureUptime.h"
 #include "Rainmeter.h"
+#include "System.h"
 
 /*
 ** CMeasureUptime
@@ -73,8 +74,8 @@ bool CMeasureUptime::Update()
 {
 	if (!CMeasure::PreUpdate()) return false;
 
-	DWORD ticks = GetTickCount();
-	m_Value = ticks / 1000;
+	ULONGLONG ticks = CSystem::GetTickCount64();
+	m_Value = (double)(__int64)(ticks / 1000);
 
 	return PostUpdate();
 }

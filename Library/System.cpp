@@ -952,6 +952,32 @@ OSPLATFORM CSystem::GetOSPlatform()
 }
 
 /*
+** GetTickCount64
+**
+** Retrieves the number of milliseconds that have elapsed since the system was started.
+** In XP, returns the predictive value due to the 32bit limitation.
+**
+*/
+ULONGLONG CSystem::GetTickCount64()
+{
+	typedef ULONGLONG (WINAPI * FPGETTICKCOUNT64)();
+	static FPGETTICKCOUNT64 c_GetTickCount64 = (FPGETTICKCOUNT64)GetProcAddress(GetModuleHandle(L"kernel32"), "GetTickCount64");
+
+	if (c_GetTickCount64)
+	{
+		return c_GetTickCount64();
+	}
+	else
+	{
+		static ULONGLONG lastTicks = 0;
+		ULONGLONG ticks = GetTickCount();
+		while (ticks < lastTicks) ticks += 0x100000000;
+		lastTicks = ticks;
+		return ticks;
+	}
+}
+
+/*
 ** RmLoadLibrary
 **
 ** This function is a wrapper function for LoadLibrary().
