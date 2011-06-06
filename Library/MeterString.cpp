@@ -27,6 +27,9 @@ using namespace Gdiplus;
 std::unordered_map<std::wstring, Gdiplus::FontFamily*> CMeterString::c_FontFamilies;
 std::unordered_map<std::wstring, Gdiplus::Font*> CMeterString::c_Fonts;
 
+#define PI	(3.14159265f)
+#define CONVERT_TO_DEGREES(X)	((X) * (180.0f / PI))
+
 void StringToUpper(std::wstring& str)
 {
 	//change each element of the string to upper case
@@ -571,6 +574,9 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 {
 	if (m_Font == NULL) return false;
 
+	LPCWSTR string = m_String.c_str();
+	int stringLen = (int)m_String.length();
+
 	StringFormat stringFormat;
 
 	if (m_AntiAlias)
@@ -607,7 +613,7 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 		stringFormat.SetFormatFlags(StringFormatFlagsNoClip | StringFormatFlagsNoWrap);
 	}
 
-	CharacterRange range(0, (int)m_String.length());
+	CharacterRange range(0, stringLen);
 	stringFormat.SetMeasurableCharacterRanges(1, &range);
 
 	REAL x = (REAL)GetX();
@@ -616,43 +622,48 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 	if (rect)
 	{
 		PointF pos(x, y);
-		graphics.MeasureString(m_String.c_str(), (int)m_String.length(), m_Font, pos, &stringFormat, rect);
+		graphics.MeasureString(string, stringLen, m_Font, pos, &stringFormat, rect);
 	}
 	else
 	{
-		m_Rect = RectF((REAL)x, (REAL)y, (REAL)m_W, (REAL)m_H);
+		RectF rcDest(x, y, (REAL)m_W, (REAL)m_H);
+		m_Rect = rcDest;
 
 		if (m_Angle != 0.0f)
 		{
-			REAL angle = m_Angle * 180.0f / 3.14159265f;		// Convert to degrees
 			graphics.TranslateTransform((Gdiplus::REAL)CMeter::GetX(), y);
-			graphics.RotateTransform(angle);
+			graphics.RotateTransform(CONVERT_TO_DEGREES(m_Angle));
 			graphics.TranslateTransform(-(Gdiplus::REAL)CMeter::GetX(), -y);
 		}
 
-		if (m_Effect == EFFECT_SHADOW)
+		if (m_Effect == EFFECT_NONE)
 		{
-			SolidBrush solidBrush(m_EffectColor);
-			RectF rcEffect(m_Rect);
-			rcEffect.Offset(1, 1);
-			graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
 		}
-		else if (m_Effect == EFFECT_BORDER)
+		else
 		{
 			SolidBrush solidBrush(m_EffectColor);
-			RectF rcEffect(m_Rect);
-			rcEffect.Offset(0, 1);
-			graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
-			rcEffect.Offset(1, -1);
-			graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
-			rcEffect.Offset(-1, -1);
-			graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
-			rcEffect.Offset(-1, 1);
-			graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, rcEffect, &stringFormat, &solidBrush);
+			RectF rcEffect(rcDest);
+
+			if (m_Effect == EFFECT_SHADOW)
+			{
+				rcEffect.Offset(1, 1);
+				graphics.DrawString(string, stringLen, m_Font, rcEffect, &stringFormat, &solidBrush);
+			}
+			else  //if (m_Effect == EFFECT_BORDER)
+			{
+				rcEffect.Offset(0, 1);
+				graphics.DrawString(string, stringLen, m_Font, rcEffect, &stringFormat, &solidBrush);
+				rcEffect.Offset(1, -1);
+				graphics.DrawString(string, stringLen, m_Font, rcEffect, &stringFormat, &solidBrush);
+				rcEffect.Offset(-1, -1);
+				graphics.DrawString(string, stringLen, m_Font, rcEffect, &stringFormat, &solidBrush);
+				rcEffect.Offset(-1, 1);
+				graphics.DrawString(string, stringLen, m_Font, rcEffect, &stringFormat, &solidBrush);
+			}
 		}
 
 		SolidBrush solidBrush(m_Color);
-		graphics.DrawString(m_String.c_str(), (int)m_String.length(), m_Font, m_Rect, &stringFormat, &solidBrush);
+		graphics.DrawString(string, stringLen, m_Font, rcDest, &stringFormat, &solidBrush);
 
 		if (m_Angle != 0.0f)
 		{
