@@ -3717,7 +3717,7 @@ void CRainmeter::ReadStats()
 	delete [] tmpSz;
 
 	// Only Net measure has stats at the moment
-	CMeasureNet::ReadStats(m_StatsFile);
+	CMeasureNet::ReadStats(m_StatsFile.c_str());
 }
 
 /*
@@ -3740,7 +3740,7 @@ void CRainmeter::WriteStats(bool bForce)
 		WritePrivateProfileString(L"Statistics", L"Since", m_StatsDate.c_str(), m_StatsFile.c_str());
 
 		// Only Net measure has stats at the moment
-		CMeasureNet::WriteStats(m_StatsFile);
+		CMeasureNet::WriteStats(m_StatsFile.c_str());
 
 		WritePrivateProfileString(NULL, NULL, NULL, m_StatsFile.c_str());
 	}

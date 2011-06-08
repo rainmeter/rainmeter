@@ -45,8 +45,8 @@ public:
 
 	static void UpdateStats();
 	static void ResetStats();
-	static void ReadStats(const std::wstring& iniFile);
-	static void WriteStats(const std::wstring& iniFile);
+	static void ReadStats(const WCHAR* iniFile);
+	static void WriteStats(const WCHAR* iniFile);
 
 	static void InitializeNewApi();
 	static void FinalizeNewApi();

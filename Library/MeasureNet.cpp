@@ -581,10 +581,10 @@ void CMeasureNet::ResetStats()
 ** Reads statistics.
 **
 */
-void CMeasureNet::ReadStats(const std::wstring& iniFile)
+void CMeasureNet::ReadStats(const WCHAR* iniFile)
 {
 	WCHAR buffer[64];
-	int count = GetPrivateProfileInt(L"Statistics", L"NetStatsCount", 0, iniFile.c_str());
+	int count = GetPrivateProfileInt(L"Statistics", L"NetStatsCount", 0, iniFile);
 
 	c_StatValues.clear();
 
@@ -593,18 +593,18 @@ void CMeasureNet::ReadStats(const std::wstring& iniFile)
 		ULARGE_INTEGER value;
 
 		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInHigh%i", i);
-		value.HighPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile.c_str());
+		value.HighPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInLow%i", i);
-		value.LowPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile.c_str());
+		value.LowPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile);
 
 		c_StatValues.push_back(value.QuadPart);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutHigh%i", i);
-		value.HighPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile.c_str());
+		value.HighPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutLow%i", i);
-		value.LowPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile.c_str());
+		value.LowPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile);
 
 		c_StatValues.push_back(value.QuadPart);
 	}
@@ -616,7 +616,7 @@ void CMeasureNet::ReadStats(const std::wstring& iniFile)
 ** Writes statistics.
 **
 */
-void CMeasureNet::WriteStats(const std::wstring& iniFile)
+void CMeasureNet::WriteStats(const WCHAR* iniFile)
 {
 	WCHAR buffer[32];
 	WCHAR buffer2[64];
@@ -624,7 +624,7 @@ void CMeasureNet::WriteStats(const std::wstring& iniFile)
 	size_t statsSize = c_StatValues.size() / 2;
 
 	_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)statsSize);
-	WritePrivateProfileString(L"Statistics", L"NetStatsCount", buffer, iniFile.c_str());
+	WritePrivateProfileString(L"Statistics", L"NetStatsCount", buffer, iniFile);
 
 	for (size_t i = 0; i < statsSize; ++i)
 	{
@@ -634,21 +634,21 @@ void CMeasureNet::WriteStats(const std::wstring& iniFile)
 
 		_snwprintf_s(buffer2, _TRUNCATE, L"NetStatsInHigh%i", (int)i + 1);
 		_snwprintf_s(buffer, _TRUNCATE, L"%u", value.HighPart);
-		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile.c_str());
+		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile);
 
 		_snwprintf_s(buffer2, _TRUNCATE, L"NetStatsInLow%i", (int)i + 1);
 		_snwprintf_s(buffer, _TRUNCATE, L"%u", value.LowPart);
-		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile.c_str());
+		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile);
 
 		value.QuadPart = c_StatValues[i * 2 + 1];
 
 		_snwprintf_s(buffer2, _TRUNCATE, L"NetStatsOutHigh%i", (int)i + 1);
 		_snwprintf_s(buffer, _TRUNCATE, L"%u", value.HighPart);
-		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile.c_str());
+		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile);
 
 		_snwprintf_s(buffer2, _TRUNCATE, L"NetStatsOutLow%i", (int)i + 1);
 		_snwprintf_s(buffer, _TRUNCATE, L"%u", value.LowPart);
-		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile.c_str());
+		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile);
 	}
 }
 

@@ -504,17 +504,13 @@ void CMeterWindow::SetMouseLeaveEvent(bool cancel)
 void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 {
 	// Check that the window is inside the screen area
-	HMONITOR hMonitor;
-	MONITORINFO mi;
-
-	POINT pt = {x, y};
+	POINT pt = {x + w / 2, y + h / 2};
 	for (int i = 0; i < 5; ++i)
 	{
-		switch(i)
+		switch (i)
 		{
 		case 0:
-			pt.x = x + w / 2;
-			pt.y = y + h / 2;
+			// Use initial value
 			break;
 
 		case 1:
@@ -538,10 +534,11 @@ void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 			break;
 		}
 
-		hMonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTONULL);
+		HMONITOR hMonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTONULL);
 
 		if (hMonitor != NULL)
 		{
+			MONITORINFO mi;
 			mi.cbSize = sizeof(mi);
 			GetMonitorInfo(hMonitor, &mi);
 
@@ -1878,42 +1875,42 @@ void CMeterWindow::ReadConfig()
 void CMeterWindow::WriteConfig()
 {
 	WCHAR buffer[32];
-	const std::wstring& iniFile = m_Rainmeter->GetIniFile();
+	const WCHAR* iniFile = m_Rainmeter->GetIniFile().c_str();
 	const WCHAR* section = m_SkinName.c_str();
 
-	if (!iniFile.empty())
+	if (*iniFile)
 	{
 		// If position needs to be save, do so.
 		if (m_SavePosition)
 		{
 			ScreenToWindow();
-			WritePrivateProfileString(section, L"WindowX", m_WindowX.c_str(), iniFile.c_str());
-			WritePrivateProfileString(section, L"WindowY", m_WindowY.c_str(), iniFile.c_str());
+			WritePrivateProfileString(section, L"WindowX", m_WindowX.c_str(), iniFile);
+			WritePrivateProfileString(section, L"WindowY", m_WindowY.c_str(), iniFile);
 		}
 
 		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_AlphaValue);
-		WritePrivateProfileString(section, L"AlphaValue", buffer, iniFile.c_str());
+		WritePrivateProfileString(section, L"AlphaValue", buffer, iniFile);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_FadeDuration);
-		WritePrivateProfileString(section, L"FadeDuration", buffer, iniFile.c_str());
+		WritePrivateProfileString(section, L"FadeDuration", buffer, iniFile);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_ClickThrough);
-		WritePrivateProfileString(section, L"ClickThrough", buffer, iniFile.c_str());
+		WritePrivateProfileString(section, L"ClickThrough", buffer, iniFile);
 		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowDraggable);
-		WritePrivateProfileString(section, L"Draggable", buffer, iniFile.c_str());
+		WritePrivateProfileString(section, L"Draggable", buffer, iniFile);
 		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowHide);
-		WritePrivateProfileString(section, L"HideOnMouseOver", buffer, iniFile.c_str());
+		WritePrivateProfileString(section, L"HideOnMouseOver", buffer, iniFile);
 		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_SavePosition);
-		WritePrivateProfileString(section, L"SavePosition", buffer, iniFile.c_str());
+		WritePrivateProfileString(section, L"SavePosition", buffer, iniFile);
 		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_SnapEdges);
-		WritePrivateProfileString(section, L"SnapEdges", buffer, iniFile.c_str());
+		WritePrivateProfileString(section, L"SnapEdges", buffer, iniFile);
 		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_KeepOnScreen);
-		WritePrivateProfileString(section, L"KeepOnScreen", buffer, iniFile.c_str());
+		WritePrivateProfileString(section, L"KeepOnScreen", buffer, iniFile);
 		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_AutoSelectScreen);
-		WritePrivateProfileString(section, L"AutoSelectScreen", buffer, iniFile.c_str());
+		WritePrivateProfileString(section, L"AutoSelectScreen", buffer, iniFile);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowZPosition);
-		WritePrivateProfileString(section, L"AlwaysOnTop", buffer, iniFile.c_str());
+		WritePrivateProfileString(section, L"AlwaysOnTop", buffer, iniFile);
 	}
 }
 
@@ -3147,7 +3144,6 @@ void CMeterWindow::FadeWindow(int from, int to)
 */
 void CMeterWindow::ShowWindowIfAppropriate()
 {
-	bool inside = false;
 	bool keyDown = GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000 || GetKeyState(VK_MENU) & 0x8000;
 
 	POINT pos;
@@ -3155,7 +3151,7 @@ void CMeterWindow::ShowWindowIfAppropriate()
 	POINT posScr = pos;
 
 	MapWindowPoints(NULL, m_Window, &pos, 1);
-	inside = HitTest(pos.x, pos.y);
+	bool inside = HitTest(pos.x, pos.y);
 
 	if (inside)
 	{
@@ -3600,7 +3596,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam >= ID_CONTEXT_SKINMENU_TRANSPARENCY_0 && wParam <= ID_CONTEXT_SKINMENU_TRANSPARENCY_90)
 		{
-			m_AlphaValue = (int)(255.0 - 230.0 * (double)(wParam - ID_CONTEXT_SKINMENU_TRANSPARENCY_0) / (double)(ID_CONTEXT_SKINMENU_TRANSPARENCY_90 - ID_CONTEXT_SKINMENU_TRANSPARENCY_0));
+			m_AlphaValue = (int)(255.0 - (wParam - ID_CONTEXT_SKINMENU_TRANSPARENCY_0) * (230.0 / (ID_CONTEXT_SKINMENU_TRANSPARENCY_90 - ID_CONTEXT_SKINMENU_TRANSPARENCY_0)));
 			WriteConfig();
 			UpdateTransparency(m_AlphaValue, false);
 		}
@@ -3904,17 +3900,19 @@ LRESULT CMeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		MapWindowPoints(NULL, m_Window, &pos, 1);
 
 		int x1 = m_DragMargins.left;
-		int x2 = m_WindowW - m_DragMargins.right;
-		int y1 = m_DragMargins.top;
-		int y2 = m_WindowH - m_DragMargins.bottom;
-
 		if (x1 < 0) x1 += m_WindowW;
-		if (y1 < 0) y1 += m_WindowH;
+
+		int x2 = m_WindowW - m_DragMargins.right;
 		if (x2 > m_WindowW) x2 -= m_WindowW;
-		if (y2 > m_WindowH) y2 -= m_WindowH;
 
 		if (pos.x >= x1 && pos.x < x2)
 		{
+			int y1 = m_DragMargins.top;
+			if (y1 < 0) y1 += m_WindowH;
+
+			int y2 = m_WindowH - m_DragMargins.bottom;
+			if (y2 > m_WindowH) y2 -= m_WindowH;
+
 			if (pos.y >= y1 && pos.y < y2)
 			{
 				return HTCAPTION;
@@ -4148,10 +4146,7 @@ LRESULT CMeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (uMsg == WM_NCLBUTTONDOWN)
 	{
 		// Transform the point to client rect
-		RECT rect;
-		GetWindowRect(m_Window, &rect);
-		pos.x = pos.x - rect.left;
-		pos.y = pos.y - rect.top;
+		MapWindowPoints(NULL, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4184,10 +4179,7 @@ LRESULT CMeterWindow::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (uMsg == WM_NCLBUTTONUP)
 	{
 		// Transform the point to client rect
-		RECT rect;
-		GetWindowRect(m_Window, &rect);
-		pos.x = pos.x - rect.left;
-		pos.y = pos.y - rect.top;
+		MapWindowPoints(NULL, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4213,10 +4205,7 @@ LRESULT CMeterWindow::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM l
 	if (uMsg == WM_NCLBUTTONDBLCLK)
 	{
 		// Transform the point to client rect
-		RECT rect;
-		GetWindowRect(m_Window, &rect);
-		pos.x = pos.x - rect.left;
-		pos.y = pos.y - rect.top;
+		MapWindowPoints(NULL, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4245,10 +4234,7 @@ LRESULT CMeterWindow::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (uMsg == WM_NCRBUTTONDOWN)
 	{
 		// Transform the point to client rect
-		RECT rect;
-		GetWindowRect(m_Window, &rect);
-		pos.x = pos.x - rect.left;
-		pos.y = pos.y - rect.top;
+		MapWindowPoints(NULL, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4298,10 +4284,7 @@ LRESULT CMeterWindow::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM 
 	if (uMsg == WM_NCRBUTTONDBLCLK)
 	{
 		// Transform the point to client rect
-		RECT rect;
-		GetWindowRect(m_Window, &rect);
-		pos.x = pos.x - rect.left;
-		pos.y = pos.y - rect.top;
+		MapWindowPoints(NULL, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4330,10 +4313,7 @@ LRESULT CMeterWindow::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam
 	if (uMsg == WM_NCMBUTTONDOWN)
 	{
 		// Transform the point to client rect
-		RECT rect;
-		GetWindowRect(m_Window, &rect);
-		pos.x = pos.x - rect.left;
-		pos.y = pos.y - rect.top;
+		MapWindowPoints(NULL, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4359,10 +4339,7 @@ LRESULT CMeterWindow::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (uMsg == WM_NCMBUTTONUP)
 	{
 		// Transform the point to client rect
-		RECT rect;
-		GetWindowRect(m_Window, &rect);
-		pos.x = pos.x - rect.left;
-		pos.y = pos.y - rect.top;
+		MapWindowPoints(NULL, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4388,10 +4365,7 @@ LRESULT CMeterWindow::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM
 	if (uMsg == WM_NCMBUTTONDBLCLK)
 	{
 		// Transform the point to client rect
-		RECT rect;
-		GetWindowRect(m_Window, &rect);
-		pos.x = pos.x - rect.left;
-		pos.y = pos.y - rect.top;
+		MapWindowPoints(NULL, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4414,13 +4388,10 @@ LRESULT CMeterWindow::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM
 LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	int x = (SHORT)LOWORD(lParam);
-	int y = (SHORT)HIWORD(lParam);
-
 	RECT rect;
 	GetWindowRect(m_Window, &rect);
 
-	if (x == -1 && y == -1)  // WM_CONTEXTMENU is generated from the keyboard (Shift+F10/VK_APPS)
+	if ((lParam & 0xFFFFFFFF) == 0xFFFFFFFF)  // WM_CONTEXTMENU is generated from the keyboard (Shift+F10/VK_APPS)
 	{
 		// Set menu position to (0,0) on the window
 		pos.x = rect.left;
@@ -4428,22 +4399,20 @@ LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	else
 	{
+		pos.x = (SHORT)LOWORD(lParam);
+		pos.y = (SHORT)HIWORD(lParam);
+
 		// Transform the point to client rect
-		pos.x = x - rect.left;
-		pos.y = y - rect.top;
+		POINT posc = {pos.x - rect.left, pos.y - rect.top};
 
 		// Handle buttons
-		HandleButtons(pos, BUTTONPROC_MOVE, NULL);
+		HandleButtons(posc, BUTTONPROC_MOVE, NULL);
 
 		// If RMB up or RMB down or double-click cause actions, do not show the menu!
-		if (DoAction(pos.x, pos.y, MOUSE_RMB_UP, false) || DoAction(pos.x, pos.y, MOUSE_RMB_DOWN, true) || DoAction(pos.x, pos.y, MOUSE_RMB_DBLCLK, true))
+		if (DoAction(posc.x, posc.y, MOUSE_RMB_UP, false) || DoAction(posc.x, posc.y, MOUSE_RMB_DOWN, true) || DoAction(posc.x, posc.y, MOUSE_RMB_DBLCLK, true))
 		{
 			return 0;
 		}
-
-		// Set menu position to cursor position
-		pos.x = x;
-		pos.y = y;
 	}
 
 	m_Rainmeter->ShowContextMenu(pos, this);
@@ -5094,12 +5063,7 @@ std::wstring CMeterWindow::MakePathAbsolute(const std::wstring& path)
 	}
 
 	std::wstring root = m_SkinPath + m_SkinName;
-
-	WCHAR ch = root[root.length() - 1];
-	if (ch != L'\\' && ch != L'/')
-	{
-		root += L"\\";
-	}
+	root += L"\\";
 
 	return root + path;
 }
@@ -5116,7 +5080,7 @@ CMeter* CMeterWindow::GetMeter(const std::wstring& meterName)
 		}
 	}
 
-	return 0;
+	return NULL;
 }
 
 CMeasure* CMeterWindow::GetMeasure(const std::wstring& measureName)
@@ -5129,7 +5093,7 @@ CMeasure* CMeterWindow::GetMeasure(const std::wstring& measureName)
 			return (*i);
 		}
 	}
-	return 0;
+	return NULL;
 }
 
 
