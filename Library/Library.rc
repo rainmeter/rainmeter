@@ -75,6 +75,7 @@ BEGIN
         MENUITEM "About...",                    ID_CONTEXT_ABOUT
         MENUITEM "Help",                        ID_CONTEXT_SHOW_HELP
         MENUITEM SEPARATOR
+        MENUITEM SEPARATOR
         MENUITEM "Edit Settings...",            ID_CONTEXT_EDITCONFIG
         MENUITEM "Refresh All",                 ID_CONTEXT_REFRESH
         MENUITEM SEPARATOR

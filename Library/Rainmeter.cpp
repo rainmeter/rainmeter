@@ -3790,7 +3790,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				{
 					// Disable Quit/Logging if ran as a Litestep plugin
 					EnableMenuItem(subMenu, ID_CONTEXT_QUIT, MF_BYCOMMAND | MF_GRAYED);
-					EnableMenuItem(subMenu, 6, MF_BYPOSITION | MF_GRAYED);  // "Logging" menu
+					EnableMenuItem(subMenu, 7, MF_BYPOSITION | MF_GRAYED);  // "Logging" menu
 				}
 				else
 				{
@@ -3802,14 +3802,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					}
 					else
 					{
-						if (m_Logging)
-						{
-							EnableMenuItem(subMenu, ID_CONTEXT_STARTLOG, MF_BYCOMMAND | MF_GRAYED);
-						}
-						else
-						{
-							EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
-						}
+						EnableMenuItem(subMenu, (m_Logging) ? ID_CONTEXT_STARTLOG : ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
 					}
 
 					if (c_Debug)
@@ -3828,13 +3821,8 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				{
 					AppendMenu(configMenu, MF_SEPARATOR, 0, NULL);
 					AppendMenu(configMenu, 0, ID_CONTEXT_OPENSKINSFOLDER, L"Open Skins\' Folder");
-					AppendMenu(configMenu, 0, ID_CONTEXT_DISABLEDRAG, L"Disable Dragging");
+					AppendMenu(configMenu, (m_DisableDragging) ? MF_CHECKED : MF_UNCHECKED, ID_CONTEXT_DISABLEDRAG, L"Disable Dragging");
 					AppendMenu(configMenu, 0, ID_CONTEXT_MANAGESKINS, L"Manage Skins...");
-
-					if (m_DisableDragging)
-					{
-						CheckMenuItem(configMenu, ID_CONTEXT_DISABLEDRAG, MF_BYCOMMAND | MF_CHECKED);
-					}
 
 					InsertMenu(subMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configMenu, L"Configs");
 				}
@@ -3843,7 +3831,6 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				if (themeMenu)
 				{
 					InsertMenu(subMenu, 4, MF_BYPOSITION | MF_POPUP, (UINT_PTR)themeMenu, L"Themes");
-					InsertMenu(subMenu, 5, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 				}
 
 				if (meterWindow)
@@ -3935,26 +3922,31 @@ HMENU CRainmeter::CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData)
 	if (!configMenuData.empty())
 	{
 		configMenu = CreatePopupMenu();
+		bool item = false;
 
-		for (int i = 0, isize = (int)configMenuData.size(); i < isize; ++i)
+		for (int i = 0, j = 0, isize = (int)configMenuData.size(); i < isize; ++i)
 		{
 			if (configMenuData[i].index == -1)
 			{
+				if (item)
+				{
+					// Insert a separator
+					InsertMenu(configMenu, i, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+					++j;
+					item = false;
+				}
+
 				HMENU submenu = CreateConfigMenu(configMenuData[i].children);
 				if (submenu)
 				{
-					InsertMenu(configMenu, i, MF_BYPOSITION | MF_POPUP, (UINT_PTR)submenu, configMenuData[i].name.c_str());
+					InsertMenu(configMenu, i + j, MF_BYPOSITION | MF_POPUP, (UINT_PTR)submenu, configMenuData[i].name.c_str());
 				}
 			}
 			else
 			{
 				CONFIG& config = m_ConfigStrings[configMenuData[i].index];
-				InsertMenu(configMenu, i, MF_BYPOSITION, config.commands[i], configMenuData[i].name.c_str());
-
-				if (config.active == i + 1)
-				{
-					CheckMenuItem(configMenu, i, MF_BYPOSITION | MF_CHECKED);
-				}
+				InsertMenu(configMenu, i, MF_BYPOSITION | ((config.active == i + 1) ? MF_CHECKED : MF_UNCHECKED), config.commands[i], configMenuData[i].name.c_str());
+				item = true;
 			}
 		}
 	}
@@ -4052,7 +4044,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 			HMENU alphaMenu = GetSubMenu(settingsMenu, 1);
 			if (alphaMenu)
 			{
-				int value = (int)(10 - (meterWindow->GetAlphaValue() / 255.0) * 10.0);
+				int value = (int)(10 - meterWindow->GetAlphaValue() / 25.5);
 				value = min(9, value);
 				value = max(0, value);
 				CheckMenuItem(alphaMenu, value, MF_BYPOSITION | MF_CHECKED);
@@ -4131,12 +4123,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 				HMENU variantsMenu = CreatePopupMenu();
 				for (int j = 0, jsize = (int)config.iniFiles.size(); j < jsize; ++j)
 				{
-					InsertMenu(variantsMenu, j, MF_BYPOSITION, config.commands[j], config.iniFiles[j].c_str());
-
-					if (config.active == j + 1)
-					{
-						CheckMenuItem(variantsMenu, j, MF_BYPOSITION | MF_CHECKED);
-					}
+					InsertMenu(variantsMenu, j, MF_BYPOSITION | ((config.active == j + 1) ? MF_CHECKED : MF_UNCHECKED), config.commands[j], config.iniFiles[j].c_str());
 				}
 				InsertMenu(skinMenu, 2, MF_BYPOSITION | MF_POPUP, (UINT_PTR)variantsMenu, L"Variants");
 				break;
@@ -4144,7 +4131,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 		}
 
 		// Add config's root menu
-		int itemCount = GetMenuItemCount(configMenu) - 3;  // Subtract 3 for appended menus
+		int itemCount = GetMenuItemCount(configMenu);
 		if (itemCount > 0)
 		{
 			std::wstring root = meterWindow->GetSkinName();
@@ -4156,7 +4143,10 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 
 			for (int i = 0; i < itemCount; ++i)
 			{
-				WCHAR buffer[MAX_PATH] = {0};
+				UINT state = GetMenuState(configMenu, i, MF_BYPOSITION);
+				if (state == 0xFFFFFFFF || (state & MF_POPUP) == 0) break;
+
+				WCHAR buffer[MAX_PATH];
 				if (GetMenuString(configMenu, i, buffer, MAX_PATH, MF_BYPOSITION))
 				{
 					if (_wcsicmp(root.c_str(), buffer) == 0)
@@ -4205,18 +4195,11 @@ void CRainmeter::CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow)
 				item += monitors[i].monitorName;
 			}
 
-			UINT pos = i + 3;
-			InsertMenu(monitorMenu, pos, MF_BYPOSITION, ID_MONITOR_FIRST + i + 1, item.c_str());
-
-			if (screenDefined && screenIndex == i + 1)
-			{
-				CheckMenuItem(monitorMenu, pos, MF_BYPOSITION | MF_CHECKED);
-			}
-
-			if (!monitors[i].active)
-			{
-				EnableMenuItem(monitorMenu, pos, MF_BYPOSITION | MF_GRAYED);
-			}
+			InsertMenu(monitorMenu,
+				i + 3,
+				MF_BYPOSITION | ((screenDefined && screenIndex == i + 1) ? MF_CHECKED : MF_UNCHECKED) | ((!monitors[i].active) ? MF_GRAYED : MF_ENABLED),
+				ID_MONITOR_FIRST + i + 1,
+				item.c_str());
 		}
 	}
 
