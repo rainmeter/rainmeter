@@ -375,7 +375,7 @@ LPCTSTR GetString(UINT id, UINT flags)
 		case MEASURE_PROGRESS:
 			if (player->GetDuration())
 			{
-				UINT res = (player->GetPosition() * 100) / player->GetDuration();
+				int res = (player->GetPosition() * 100) / player->GetDuration();
 				_itow(res, buffer, 10);
 				return buffer;
 			}
@@ -419,7 +419,11 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 	{
 		CPlayer* player = (*i).second->player;
 
-		if (_wcsicmp(bang, L"Play") == 0)
+		if (_wcsicmp(bang, L"Pause") == 0)
+		{
+			player->Pause();
+		}
+		else if (_wcsicmp(bang, L"Play") == 0)
 		{
 			player->Play();
 		}
@@ -457,20 +461,31 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 
 			if (++arg)	// Skip the space
 			{
-				if (wcsnicmp(bang, L"SetRating", 9) == 0)
+				if (wcsnicmp(bang, L"SetPosition", 11) == 0)
+				{
+					//(player->GetPosition() * 100) / player->GetDuration()
+					int position = (_wtoi(arg) * player->GetDuration()) / 100;
+					if (arg[0] == L'+' || arg[0] == L'-')
+					{
+						position += player->GetPosition();
+					}
+
+					player->SetPosition(position);
+				}
+				else if (wcsnicmp(bang, L"SetRating", 9) == 0)
 				{
 					player->SetRating(_wtoi(arg));
 				}
 				else if (wcsnicmp(bang, L"SetVolume", 9) == 0)
 				{
+					int volume = _wtoi(arg);
 					if (arg[0] == L'+' || arg[0] == L'-')
 					{
-						player->ChangeVolume(_wtoi(arg));
+						// Relative to current volume
+						volume += player->GetVolume();
 					}
-					else
-					{
-						player->SetVolume(_wtoi(arg));
-					}
+
+					player->SetVolume(volume);
 				}
 				else
 				{

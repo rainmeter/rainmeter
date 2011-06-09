@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="sha2">
-      <UniqueIdentifier>{1f50024f-4311-4946-b0a5-91dc7fb60453}</UniqueIdentifier>
-    </Filter>
     <Filter Include="taglib">
       <UniqueIdentifier>{068012df-e981-4223-a90f-e0cc39dc46bb}</UniqueIdentifier>
     </Filter>
@@ -19,45 +16,19 @@
     <Filter Include="SDKs\iTunes">
       <UniqueIdentifier>{f632b821-b18a-445e-b7a2-2844b6633beb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Players">
-      <UniqueIdentifier>{8be2f033-c29f-41d2-affd-c7721f0df88b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="SDKs\CD Art Display">
       <UniqueIdentifier>{9e4422be-972a-442d-95f1-f238ef237a7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{3f6e39c4-31fd-45a7-a450-6c090c99ff47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{abad9374-731c-48b4-8ae1-45793b348013}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SDKs\iTunes\iTunesCOMInterface_i.c">
       <Filter>SDKs\iTunes</Filter>
-    </ClCompile>
-    <ClCompile Include="PlayerWMP.cpp">
-      <Filter>Players</Filter>
-    </ClCompile>
-    <ClCompile Include="Player.cpp">
-      <Filter>Players</Filter>
-    </ClCompile>
-    <ClCompile Include="PlayerAIMP.cpp">
-      <Filter>Players</Filter>
-    </ClCompile>
-    <ClCompile Include="PlayerFoobar.cpp">
-      <Filter>Players</Filter>
-    </ClCompile>
-    <ClCompile Include="PlayerITunes.cpp">
-      <Filter>Players</Filter>
-    </ClCompile>
-    <ClCompile Include="PlayerSpotify.cpp">
-      <Filter>Players</Filter>
-    </ClCompile>
-    <ClCompile Include="PlayerWinamp.cpp">
-      <Filter>Players</Filter>
-    </ClCompile>
-    <ClCompile Include="NowPlaying.cpp" />
-    <ClCompile Include="StdAfx.cpp" />
-    <ClCompile Include="sha2\sha2.c">
-      <Filter>sha2</Filter>
-    </ClCompile>
-    <ClCompile Include="sha2\hmac_sha2.c">
-      <Filter>sha2</Filter>
     </ClCompile>
     <ClCompile Include="taglib\ape\apefile.cpp">
       <Filter>taglib</Filter>
@@ -260,8 +231,35 @@
     <ClCompile Include="taglib\mpc\mpcfile.cpp">
       <Filter>taglib</Filter>
     </ClCompile>
+    <ClCompile Include="NowPlaying.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerWMP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerAIMP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="PlayerCAD.cpp">
-      <Filter>Players</Filter>
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerFoobar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerITunes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerSpotify.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerWinamp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StdAfx.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -283,43 +281,43 @@
     <ClInclude Include="SDKs\Winamp\wa_cmd.h">
       <Filter>SDKs\Winamp</Filter>
     </ClInclude>
-    <ClInclude Include="PlayerWinamp.h">
-      <Filter>Players</Filter>
-    </ClInclude>
-    <ClInclude Include="PlayerWMP.h">
-      <Filter>Players</Filter>
-    </ClInclude>
-    <ClInclude Include="Player.h">
-      <Filter>Players</Filter>
-    </ClInclude>
-    <ClInclude Include="PlayerAIMP.h">
-      <Filter>Players</Filter>
-    </ClInclude>
-    <ClInclude Include="PlayerFoobar.h">
-      <Filter>Players</Filter>
-    </ClInclude>
-    <ClInclude Include="PlayerITunes.h">
-      <Filter>Players</Filter>
-    </ClInclude>
-    <ClInclude Include="PlayerSpotify.h">
-      <Filter>Players</Filter>
-    </ClInclude>
-    <ClInclude Include="NowPlaying.h" />
-    <ClInclude Include="StdAfx.h" />
-    <ClInclude Include="sha2\hmac_sha2.h">
-      <Filter>sha2</Filter>
-    </ClInclude>
-    <ClInclude Include="sha2\sha2.h">
-      <Filter>sha2</Filter>
-    </ClInclude>
-    <ClInclude Include="PlayerCAD.h">
-      <Filter>Players</Filter>
-    </ClInclude>
     <ClInclude Include="SDKs\CAD\cad_sdk.h">
       <Filter>SDKs\CD Art Display</Filter>
     </ClInclude>
+    <ClInclude Include="PlayerFoobar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerCAD.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerAIMP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NowPlaying.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerITunes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerSpotify.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerWinamp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerWMP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="PluginNowPlaying.rc" />
+    <ResourceCompile Include="PluginNowPlaying.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

@@ -268,7 +268,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 */
 void CPlayerCAD::UpdateData()
 {
-	if (m_PlayerWindow)
+	if (m_State != PLAYER_STOPPED)
 	{
 		m_Position = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_POSITION);
 		m_Volume = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_VOLUME);
@@ -278,6 +278,20 @@ void CPlayerCAD::UpdateData()
 			ExecuteTrackChangeAction();
 			m_TrackChanged = false;
 		}
+	}
+}
+
+/*
+** Pause
+**
+** Handles the Pause bang.
+**
+*/
+void CPlayerCAD::Pause()
+{
+	if (m_PlayerWindow)
+	{
+		SendMessage(m_PlayerWindow, WM_USER, 0, IPC_FORCEPAUSE);
 	}
 }
 
@@ -353,6 +367,17 @@ void CPlayerCAD::Previous()
 }
 
 /*
+** SetPosition
+**
+** Handles the SetPosition bang.
+**
+*/
+void CPlayerCAD::SetPosition(int position)
+{
+	SendMessage(m_PlayerWindow, WM_USER, position, IPC_SET_POSITION);
+}
+
+/*
 ** SetRating
 **
 ** Handles the SetVolume bang.
@@ -388,18 +413,6 @@ void CPlayerCAD::SetVolume(int volume)
 		}
 		SendMessage(m_PlayerWindow, WM_USER, volume, IPC_SET_VOLUME);
 	}
-}
-
-/*
-** ChangeVolume
-**
-** Handles the ChangeVolume bang.
-**
-*/
-void CPlayerCAD::ChangeVolume(int volume) 
-{
-	volume += m_Volume;
-	SetVolume(volume);
 }
 
 /*

@@ -265,8 +265,6 @@
     <ClCompile Include="PlayerWinamp.cpp" />
     <ClCompile Include="PlayerWMP.cpp" />
     <ClCompile Include="SDKs\iTunes\iTunesCOMInterface_i.c" />
-    <ClCompile Include="sha2\hmac_sha2.c" />
-    <ClCompile Include="sha2\sha2.c" />
     <ClCompile Include="StdAfx.cpp" />
     <ClCompile Include="taglib\ape\apefile.cpp" />
     <ClCompile Include="taglib\ape\apefooter.cpp" />
@@ -359,8 +357,6 @@
     <ClInclude Include="SDKs\Winamp\wa_dlg.h" />
     <ClInclude Include="SDKs\Winamp\wa_hotkeys.h" />
     <ClInclude Include="SDKs\Winamp\wa_ipc.h" />
-    <ClInclude Include="sha2\hmac_sha2.h" />
-    <ClInclude Include="sha2\sha2.h" />
     <ClInclude Include="StdAfx.h" />
   </ItemGroup>
   <ItemGroup>

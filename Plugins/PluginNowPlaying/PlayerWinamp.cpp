@@ -334,6 +334,20 @@ void CPlayerWinamp::UpdateData()
 }
 
 /*
+** Pause
+**
+** Handles the Pause bang.
+**
+*/
+void CPlayerWinamp::Pause()
+{
+	if (m_Window)
+	{
+		SendMessage(m_Window, WM_COMMAND, WINAMP_PAUSE, 0);
+	}
+}
+
+/*
 ** Play
 **
 ** Handles the Play bang.
@@ -355,10 +369,7 @@ void CPlayerWinamp::Play()
 */
 void CPlayerWinamp::PlayPause()
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_COMMAND, (m_State == PLAYER_STOPPED) ? WINAMP_PLAY : WINAMP_PAUSE, 0);
-	}
+	(m_State == PLAYER_PLAYING) ? Pause() : Play();
 }
 
 /*
@@ -400,6 +411,21 @@ void CPlayerWinamp::Previous()
 	if (m_Window)
 	{
 		SendMessage(m_Window, WM_COMMAND, WINAMP_REWIND, 0);
+	}
+}
+
+/*
+** SetPosition
+**
+** Handles the SetPosition bang.
+**
+*/
+void CPlayerWinamp::SetPosition(int position)
+{
+	if (m_Window)
+	{
+		position *= 1000; // To milliseconds
+		SendMessage(m_Window, WM_WA_IPC, position, IPC_JUMPTOTIME);
 	}
 }
 
@@ -454,18 +480,6 @@ void CPlayerWinamp::SetVolume(int volume)
 
 		SendMessage(m_Window, WM_WA_IPC, volume, IPC_SETVOLUME);
 	}
-}
-
-/*
-** ChangeVolume
-**
-** Handles the ChangeVolume bang.
-**
-*/
-void CPlayerWinamp::ChangeVolume(int volume)
-{
-	volume += m_Volume;
-	SetVolume(volume);
 }
 
 /*

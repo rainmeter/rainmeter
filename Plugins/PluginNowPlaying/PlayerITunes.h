@@ -38,14 +38,15 @@ public:
 	CPlayerITunes();
 	~CPlayerITunes();
 
-	virtual void Play() { return PlayPause(); }
+	virtual void Pause();
+	virtual void Play();
 	virtual void PlayPause();
 	virtual void Stop();
 	virtual void Next();
 	virtual void Previous();
+	virtual void SetPosition(int position);
 	virtual void SetRating(int rating);
 	virtual void SetVolume(int volume);
-	virtual void ChangeVolume(int volume);
 	virtual void ClosePlayer();
 	virtual void OpenPlayer();
 	virtual void TogglePlayer();

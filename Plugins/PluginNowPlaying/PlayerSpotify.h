@@ -35,6 +35,7 @@ public:
 	CPlayerSpotify();
 	~CPlayerSpotify();
 
+	virtual void Pause() { return PlayPause(); }
 	virtual void Play() { return PlayPause(); }
 	virtual void PlayPause();
 	virtual void Stop();

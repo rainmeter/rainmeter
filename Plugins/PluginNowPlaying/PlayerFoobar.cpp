@@ -113,7 +113,7 @@ void CPlayerFoobar::Initialize()
 		int version = (int)SendMessage(m_FooWindow, WM_USER, 0, FOO_GETVERSION);
 		if (version < 100)
 		{
-			std::wstring error = L"Your copy of the foo_rainmeter.dll plugin is outdated.\n";
+			std::wstring error = L"Your copy of the foo_rainmeter.dll plugin for foobar2000 is outdated.\n";
 			error += L"Please download the latest version and try again.";
 			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_ICONERROR | MB_TOPMOST);
 			m_FooWindow = NULL;
@@ -320,6 +320,20 @@ void CPlayerFoobar::UpdateData()
 }
 
 /*
+** Pause
+**
+** Handles the Pause bang.
+**
+*/
+void CPlayerFoobar::Pause()
+{
+	if (m_FooWindow)
+	{
+		SendMessage(m_FooWindow, WM_USER, 0, FOO_PAUSE);
+	}
+}
+
+/*
 ** Play
 **
 ** Handles the Play bang.
@@ -390,15 +404,17 @@ void CPlayerFoobar::Previous()
 }
 
 /*
-** ChangeVolume
+** SetPosition
 **
-** Handles the ChangeVolume bang.
+** Handles the SetPosition bang.
 **
 */
-void CPlayerFoobar::ChangeVolume(int volume) 
+void CPlayerFoobar::SetPosition(int position)
 {
-	volume += m_Volume;
-	SetVolume(volume);
+	if (m_FooWindow)
+	{
+		SendMessage(m_FooWindow, WM_USER, position, FOO_SETPOSITION);
+	}
 }
 
 /*

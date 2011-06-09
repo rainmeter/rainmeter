@@ -23,10 +23,6 @@
 
 extern std::wstring g_CachePath;
 
-// =======================================================================
-//  PlayerData functions
-// =======================================================================
-
 /*
 ** CPlayer
 **
@@ -267,7 +263,7 @@ bool CPlayer::GetArtAPE(TagLib::APE::Tag* tag)
 }
 
 /*
-** GetArtAPE
+** GetArtID3
 **
 ** Extracts cover art embedded in ID3v2 tags.
 **

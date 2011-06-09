@@ -254,6 +254,20 @@ void CPlayerAIMP::UpdateData()
 }
 
 /*
+** Pause
+**
+** Handles the Pause bang.
+**
+*/
+void CPlayerAIMP::Pause()
+{
+	if (m_Window)
+	{
+		SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PAUSE);
+	}
+}
+
+/*
 ** Play
 **
 ** Handles the Play bang.
@@ -275,10 +289,7 @@ void CPlayerAIMP::Play()
 */
 void CPlayerAIMP::PlayPause()
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, (m_State == PLAYER_STOPPED) ? AIMP_PLAY : AIMP_PAUSE);
-	}
+	(m_State == PLAYER_STOPPED) ? Play() : Pause();
 }
 
 /*
@@ -324,6 +335,17 @@ void CPlayerAIMP::Previous()
 }
 
 /*
+** SetPosition
+**
+** Handles the SetPosition bang.
+**
+*/
+void CPlayerAIMP::SetPosition(int position)
+{
+	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(position, AIMP_STS_POS));
+}
+
+/*
 ** SetRating
 **
 ** Handles the SetRating bang.
@@ -357,18 +379,6 @@ void CPlayerAIMP::SetRating(int rating)
 void CPlayerAIMP::SetVolume(int volume)
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(volume, AIMP_STS_VOLUME));
-}
-
-/*
-** ChangeVolume
-**
-** Handles the ChangeVolume bang.
-**
-*/
-void CPlayerAIMP::ChangeVolume(int volume)
-{
-	volume += m_Volume;
-	SetVolume(volume);
 }
 
 /*

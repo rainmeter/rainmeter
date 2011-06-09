@@ -440,6 +440,34 @@ void CPlayerITunes::OnVolumeChange(int volume)
 }
 
 /*
+** Pause
+**
+** Handles the Pause bang.
+**
+*/
+void CPlayerITunes::Pause()
+{
+	if (m_Initialized)
+	{
+		m_iTunes->Pause();
+	}
+}
+
+/*
+** Play
+**
+** Handles the Play bang.
+**
+*/
+void CPlayerITunes::Play()
+{
+	if (m_Initialized)
+	{
+		m_iTunes->Play();
+	}
+}
+
+/*
 ** PlayPause
 **
 ** Handles the PlayPause bang.
@@ -496,6 +524,20 @@ void CPlayerITunes::Previous()
 }
 
 /*
+** SetPosition
+**
+** Handles the SetPosition bang.
+**
+*/
+void CPlayerITunes::SetPosition(int position)
+{
+	if (m_Initialized)
+	{
+		m_iTunes->put_PlayerPosition((long)position);
+	}
+}
+
+/*
 ** SetRating
 **
 ** Handles the SetRating bang.
@@ -529,18 +571,6 @@ void CPlayerITunes::SetVolume(int volume)
 	{
 		m_iTunes->put_SoundVolume((long)volume);
 	}
-}
-
-/*
-** ChangeVolume
-**
-** Handles the ChangeVolume bang.
-**
-*/
-void CPlayerITunes::ChangeVolume(int volume)
-{
-	volume += m_Volume;
-	SetVolume(volume);
 }
 
 /*

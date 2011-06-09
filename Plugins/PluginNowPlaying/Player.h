@@ -19,10 +19,6 @@
 #ifndef __PLAYER_H__
 #define __PLAYER_H__
 
-// SHA
-#include "hmac_sha2.h"
-#include "sha2.h"
-
 // TagLib
 #include "apefile.h"
 #include "apetag.h"
@@ -41,10 +37,6 @@
 #include "tstring.h"
 #include "vorbisfile.h"
 #include "wavpackfile.h"
-
-// Amazon keys
-#define ACCESSKEY L"AKIAIDIAU7MXWSOJF3PQ"
-#define SECRETKEY "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"
 
 enum PLAYERSTATE
 {
@@ -73,15 +65,16 @@ class CPlayer
 public:
 	CPlayer();
 	virtual ~CPlayer();
-
+	
+	virtual void Pause() {}
 	virtual void Play() {}
 	virtual void PlayPause() {}
 	virtual void Stop() {}
 	virtual void Next() {}
 	virtual void Previous() {}
+	virtual void SetPosition(int position) {}
 	virtual void SetRating(int rating) {}
 	virtual void SetVolume(int volume) {}
-	virtual void ChangeVolume(int volume) {}
 	virtual void OpenPlayer() {}
 	virtual void ClosePlayer() {}
 	virtual void TogglePlayer() {}

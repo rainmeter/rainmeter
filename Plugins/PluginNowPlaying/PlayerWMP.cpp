@@ -528,6 +528,20 @@ void CPlayerWMP::UpdateData()
 }
 
 /*
+** Pause
+**
+** Handles the Pause bang.
+**
+*/
+void CPlayerWMP::Pause() 
+{
+	if (m_IPlayer)
+	{
+		m_IControls->pause();
+	}
+}
+
+/*
 ** Play
 **
 ** Handles the Play bang.
@@ -549,20 +563,7 @@ void CPlayerWMP::Play()
 */
 void CPlayerWMP::PlayPause() 
 {
-	if (m_IPlayer)
-	{
-		WMPPlayState state;
-		m_IPlayer->get_playState(&state);
-
-		if (state == wmppsPlaying)
-		{
-			m_IControls->pause();
-		}
-		else
-		{
-			m_IControls->play();
-		}
-	}
+	(m_State == PLAYER_PLAYING) ? Pause() : Play();
 }
 
 /*
@@ -605,6 +606,20 @@ void CPlayerWMP::Previous()
 	if (m_IPlayer)
 	{
 		m_IControls->previous();
+	}
+}
+
+/*
+** SetPosition
+**
+** Handles the SetPosition bang.
+**
+*/
+void CPlayerWMP::SetPosition(int position)
+{
+	if (m_IPlayer)
+	{
+		m_IControls->put_currentPosition((double)position);
 	}
 }
 
@@ -669,18 +684,6 @@ void CPlayerWMP::SetVolume(int volume)
 	{
 		m_ISettings->put_volume(volume);
 	}
-}
-
-/*
-** ChangeVolume
-**
-** Handles the ChangeVolume bang.
-**
-*/
-void CPlayerWMP::ChangeVolume(int volume)
-{
-	volume += m_Volume;
-	SetVolume(volume);
 }
 
 /*
