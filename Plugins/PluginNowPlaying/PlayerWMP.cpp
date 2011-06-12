@@ -52,7 +52,7 @@ HRESULT CPlayerWMP::CRemoteHost::GetServiceType(BSTR* pbstrType)
 	HRESULT hr = E_POINTER;
 	if (pbstrType)
 	{
-		*pbstrType = SysAllocString(L"Remote");
+		*pbstrType = SysAllocString(L"RemoteNoDialogs");
 		hr = *pbstrType? S_OK : E_POINTER;
 	}
 	return hr;
@@ -222,9 +222,9 @@ void CPlayerWMP::Initialize()
 	wc.lpszClassName = L"NowPlayingWMPClass";
 	RegisterClass(&wc);
 
-	// Create dummy window
+	// Create the host window
 	m_Window = CreateWindow(L"NowPlayingWMPClass",
-							L"DummyWindow",
+							L"HostWindow",
 							WS_DISABLED,
 							CW_USEDEFAULT,
 							CW_USEDEFAULT,
@@ -253,7 +253,7 @@ void CPlayerWMP::Initialize()
 		m_AxWindow->Create(m_Window, NULL, NULL, WS_CHILD | WS_DISABLED);
 		if(IsWindow(m_AxWindow->m_hWnd))
 		{
-			hr = m_AxWindow->QueryHost(IID_IObjectWithSite, (void **)&spHostObject);
+			hr = m_AxWindow->QueryHost(IID_IObjectWithSite, (void**)&spHostObject);
 			if(!spHostObject.p)
 			{
 				hr = E_POINTER;
@@ -336,7 +336,6 @@ void CPlayerWMP::Initialize()
 	{
 		pRemoteHost->Release();
 	}
-	
 
 	hr = m_IPlayer->get_controls(&m_IControls);
 	if (FAILED(hr)) return;
@@ -356,7 +355,11 @@ void CPlayerWMP::Initialize()
 		m_State = PLAYER_PAUSED;
 	}
 
-	m_TrackChanged = true;
+	if (m_State != PLAYER_STOPPED)
+	{
+		m_TrackChanged = true;
+	}
+
 	m_Initialized = true;
 }
 

@@ -21,9 +21,9 @@
 #include "Winamp/wa_ipc.h"
 #include "Winamp/wa_cmd.h"
 
-// This player retrieves data through the Winamp IPC API.
-
 extern CPlayer* g_Winamp;
+
+// This player retrieves data through the Winamp IPC interface.
 
 /*
 ** CPlayerWinamp
@@ -63,7 +63,6 @@ void CPlayerWinamp::AddInstance(MEASURETYPE type)
 
 	if (type == MEASURE_COVER)
 	{
-		g_Winamp = NULL;
 		m_HasCoverMeasure = true;
 	}
 }
@@ -78,6 +77,7 @@ void CPlayerWinamp::RemoveInstance()
 {
 	if (--m_InstanceCount == 0)
 	{
+		g_Winamp = NULL;
 		delete this;
 	}
 }

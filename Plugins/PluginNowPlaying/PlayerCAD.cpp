@@ -20,10 +20,11 @@
 #include "PlayerCAD.h"
 #include "CAD/cad_sdk.h"
 
-// This player emulates the CD Art Display IPC API. For now, only MusicBee
-// is supported, but this can easily be extended.
-
 extern CPlayer* g_CAD;
+extern std::wstring g_SettingsFile;
+
+// This player emulates the CD Art Display IPC interface, which is supported by
+// MusicBee, VLC (with libcad plugin), and possibly others.
 
 /*
 ** CPlayerCAD
@@ -111,22 +112,44 @@ void CPlayerCAD::Initialize()
 							hInstance,
 							this);
 
-	HWND wnd = FindWindow(L"WindowsForms10.Window.8.app.0.378734a", NULL);
-	if (wnd)
+	WCHAR buffer[MAX_PATH];
+	LPCTSTR file = g_SettingsFile.c_str();
+
+	// Read saved settings
+	GetPrivateProfileString(L"NowPlaying.dll", L"ClassName", NULL, buffer, MAX_PATH, file);
+	std::wstring className = buffer;
+
+	GetPrivateProfileString(L"NowPlaying.dll", L"WindowName", NULL, buffer, MAX_PATH, file);
+	std::wstring windowName = buffer;
+
+	GetPrivateProfileString(L"NowPlaying.dll", L"PlayerPath", NULL, buffer, MAX_PATH, file);
+	m_PlayerPath = buffer;
+
+	LPCTSTR classSz = className.empty() ? NULL : className.c_str();
+	LPCTSTR windowSz = windowName.empty() ? NULL : windowName.c_str();
+
+	if (classSz || windowSz)
 	{
-		// Let's check if it's MusicBee
-		WCHAR buffer[256];
-		GetWindowText(wnd, buffer, 256);
-		if (wcsstr(buffer, L"MusicBee"))
+		m_PlayerWindow = FindWindow(classSz, windowSz);
+	}
+	else
+	{
+		// TODO: Remove this in a few weeks (left here for MusicBee backwards compatibility)
+		m_PlayerWindow = FindWindow(L"WindowsForms10.Window.8.app.0.378734a", NULL);
+		if (m_PlayerWindow)
 		{
-			m_PlayerWindow = wnd;
-			SendMessage(m_PlayerWindow, WM_USER, (WPARAM)m_Window, IPC_SET_CALLBACK_HWND);
-			SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_CURRENT_TRACK);
-			m_State = (PLAYERSTATE)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_PLAYER_STATE);
+			WritePrivateProfileString(L"NowPlaying.dll", L"ClassName", L"WindowsForms10.Window.8.app.0.378734a", file);
 		}
-		else
+	}
+
+	if (m_PlayerWindow)
+	{
+		SendMessage(m_PlayerWindow, WM_USER, (WPARAM)m_Window, IPC_SET_CALLBACK_HWND);
+		m_State = (PLAYERSTATE)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_PLAYER_STATE);
+
+		if (m_State != PLAYER_STOPPED)
 		{
-			LSLog(LOG_DEBUG, L"Rainmeter", L"NowPlayingPlugin: MusicBee class found with invalid title.");
+			SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_CURRENT_TRACK);
 		}
 	}
 }
@@ -220,8 +243,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				data.erase(0, ++len);
 
 				len = data.find_first_of(L'\t');
-				UINT rating = _wtoi(data.substr(0, len).c_str()) + 1;
-				rating /= 2; // From 0 - 10 to 0 - 5
+				UINT rating = (_wtoi(data.substr(0, len).c_str()) + 1) / 2;	// From 0 - 10 to 0 - 5
 				p->m_Rating = rating;
 				data.erase(0, ++len);
 
@@ -248,8 +270,25 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 					p->m_PlayerPath.assign(data, 0, len);
 					data.erase(0, ++len);
 
-					p->m_PlayerWindow = FindWindow(className.empty() ? NULL : className.c_str(),
-												   windowName.empty() ? NULL : windowName.c_str());
+					LPCTSTR classSz = className.empty() ? NULL : className.c_str();
+					LPCTSTR windowSz = windowName.empty() ? NULL : windowName.c_str();
+					LPCTSTR file = g_SettingsFile.c_str();
+
+					WritePrivateProfileString(L"NowPlaying.dll", L"ClassName", classSz, file);
+					WritePrivateProfileString(L"NowPlaying.dll", L"WindowName", windowSz, file);
+					WritePrivateProfileString(L"NowPlaying.dll", L"PlayerPath", p->m_PlayerPath.c_str(), file);
+
+					p->m_PlayerWindow = FindWindow(classSz, windowSz);
+
+					if (p->m_PlayerWindow)
+					{
+						p->m_State = (PLAYERSTATE)SendMessage(p->m_PlayerWindow, WM_USER, 0, IPC_GET_PLAYER_STATE);
+
+						if (p->m_State != PLAYER_STOPPED)
+						{
+							SendMessage(p->m_PlayerWindow, WM_USER, 0, IPC_GET_CURRENT_TRACK);
+						}
+					}
 				}
 			}
 		}
@@ -436,6 +475,10 @@ void CPlayerCAD::ClosePlayer()
 */
 void CPlayerCAD::OpenPlayer()
 {
+	if (!m_PlayerPath.empty())
+	{
+		ShellExecute(NULL, L"open", m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
+	}
 }
 
 /*

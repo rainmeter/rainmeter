@@ -263,6 +263,7 @@
     <ClCompile Include="PlayerITunes.cpp" />
     <ClCompile Include="PlayerSpotify.cpp" />
     <ClCompile Include="PlayerWinamp.cpp" />
+    <ClCompile Include="PlayerWLM.cpp" />
     <ClCompile Include="PlayerWMP.cpp" />
     <ClCompile Include="SDKs\iTunes\iTunesCOMInterface_i.c" />
     <ClCompile Include="StdAfx.cpp" />
@@ -349,6 +350,7 @@
     <ClInclude Include="PlayerITunes.h" />
     <ClInclude Include="PlayerSpotify.h" />
     <ClInclude Include="PlayerWinamp.h" />
+    <ClInclude Include="PlayerWLM.h" />
     <ClInclude Include="PlayerWMP.h" />
     <ClInclude Include="SDKs\AIMP\aimp2_sdk.h" />
     <ClInclude Include="SDKs\CAD\cad_sdk.h" />

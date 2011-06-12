@@ -25,6 +25,7 @@
 #include "PlayerITunes.h"
 #include "PlayerSpotify.h"
 #include "PlayerWinamp.h"
+#include "PlayerWLM.h"
 #include "PlayerWMP.h"
 
 CPlayer* g_AIMP = NULL;
@@ -33,11 +34,13 @@ CPlayer* g_Foobar = NULL;
 CPlayer* g_iTunes = NULL;
 CPlayer* g_Spotify = NULL;
 CPlayer* g_Winamp = NULL;
+CPlayer* g_WLM = NULL;
 CPlayer* g_WMP = NULL;
 
 static MeasureMap g_Values;
 static bool g_DisableLeazingZero = false;
 std::wstring g_CachePath;
+std::wstring g_SettingsFile;
 
 void SecondsToTime(UINT seconds, WCHAR* buffer)
 {
@@ -69,11 +72,21 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
 	if (g_Values.empty())
 	{
+		// Get path to temporary folder (for cover art cache)
 		WCHAR buffer[MAX_PATH];
 		GetTempPath(MAX_PATH, buffer);
 		wcscat(buffer, L"Rainmeter-Cache\\");
 		CreateDirectory(buffer, NULL);
 		g_CachePath = buffer;
+
+		// Get path to Plugins.ini (usually %APPDATA%\Rainmeter\Plugins.ini)
+		std::wstring str = PluginBridge(L"getconfig", iniFile);
+		if (!str.empty())
+		{
+			str += L" \"SETTINGSPATH\"";
+			g_SettingsFile = PluginBridge(L"getvariable", str.c_str());
+			g_SettingsFile += L"Plugins.ini";
+		}
 	}
 
 	UINT maxValue = 0;
@@ -124,6 +137,14 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				}
 				data->player = g_AIMP;
 			}
+			else if (_wcsicmp(L"CAD", str) == 0)
+			{
+				if (!g_CAD)
+				{
+					g_CAD = new CPlayerCAD();
+				}
+				data->player = g_CAD;
+			}
 			else if (_wcsicmp(L"foobar2000", str) == 0)
 			{
 				if (!g_Foobar)
@@ -148,14 +169,6 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				}
 				data->player = g_Winamp;
 			}
-			else if (_wcsicmp(L"MusicBee", str) == 0)
-			{
-				if (!g_CAD)
-				{
-					g_CAD = new CPlayerCAD();
-				}
-				data->player = g_CAD;
-			}
 			else if (_wcsicmp(L"Spotify", str) == 0)
 			{
 				if (!g_Spotify)
@@ -172,6 +185,14 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				}
 				data->player = g_Winamp;
 			}
+			else if (_wcsicmp(L"WLM", str) == 0)
+			{
+				if (!g_WLM)
+				{
+					g_WLM = new CPlayerWLM();
+				}
+				data->player = g_WLM;
+			}
 			else if (_wcsicmp(L"WMP", str) == 0)
 			{
 				if (!g_WMP)
@@ -182,6 +203,12 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			}
 			else
 			{
+				if (_wcsicmp(L"MusicBee", str) == 0)
+				{
+					// TODO: Remove this in a few weeks (left here for MusicBee backwards compatibility)
+					MessageBox(NULL, L"Due to some internal changes in the NowPlaying plugin, PlayerName=MusicBee is not valid any longer.\n\nPlease edit the skin and change to PlayerName=CAD to continue use with MusicBee.", L"NowPlaying", MB_OK | MB_ICONINFORMATION | MB_TOPMOST);
+				}
+
 				std::wstring error = L"NowPlayingPlugin: PlayerName=";
 				error += str;
 				error += L" in section [";
@@ -463,7 +490,6 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 			{
 				if (wcsnicmp(bang, L"SetPosition", 11) == 0)
 				{
-					//(player->GetPosition() * 100) / player->GetDuration()
 					int position = (_wtoi(arg) * player->GetDuration()) / 100;
 					if (arg[0] == L'+' || arg[0] == L'-')
 					{
@@ -505,7 +531,7 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 UINT GetPluginVersion()
 {
 	// Major * 1000 + Minor
-	return 1000;
+	return 1001;
 }
 
 /*

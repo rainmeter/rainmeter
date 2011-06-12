@@ -16,42 +16,33 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef __PLAYERCAD_H__
-#define __PLAYERCAD_H__
+#ifndef __PLAYERWLM_H__
+#define __PLAYERWLM_H__
 
 #include "Player.h"
 
-class CPlayerCAD : public CPlayer
+class CPlayerWLM : public CPlayer
 {
 public:
-	CPlayerCAD();
-	~CPlayerCAD();
+	CPlayerWLM();
+	~CPlayerWLM();
 
-	virtual void Pause();
-	virtual void Play();
+	virtual void Pause() { return PlayPause(); }
+	virtual void Play() { return PlayPause(); }
 	virtual void PlayPause();
 	virtual void Stop();
 	virtual void Next();
 	virtual void Previous();
-	virtual void SetPosition(int position);
-	virtual void SetRating(int rating);
-	virtual void SetVolume(int volume);
-	virtual void ClosePlayer();
-	virtual void OpenPlayer();
-	virtual void TogglePlayer();
 
 	virtual void AddInstance(MEASURETYPE type);
 	virtual void RemoveInstance();
 	virtual void UpdateData();
 
 private:
-	void Initialize();
-	void Uninitialize();
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	void SendKeyInput(WORD key);
 
-	bool m_HasCoverMeasure;
-	HWND m_Window;
-	HWND m_PlayerWindow;
+	HWND m_Window;				// Spotify window
 };
 
 #endif

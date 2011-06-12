@@ -94,7 +94,7 @@ void CPlayerFoobar::Initialize()
 	wc.lpszClassName = L"NowPlayingFoobarClass";
 	RegisterClass(&wc);
 
-	// Create dummy window
+	// Create window
 	m_Window = CreateWindow(L"NowPlayingFoobarClass",
 							L"ReceiverWindow",
 							WS_DISABLED,
