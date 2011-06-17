@@ -21,38 +21,36 @@
 
 #include "Player.h"
 
-#define SPOTIFY_PLAYPAUSE	917504
-#define SPOTIFY_NEXT		720896
-#define SPOTIFY_PREV		786432
-#define SPOTIFY_STOP		851968
-#define SPOTIFY_MUTE		524288
-#define SPOTIFY_VOLUMEDOWN	589824
-#define SPOTIFY_VOLUMEUP	655360
-
 class CPlayerSpotify : public CPlayer
 {
 public:
 	CPlayerSpotify();
 	~CPlayerSpotify();
 
-	virtual void Pause() { return PlayPause(); }
-	virtual void Play() { return PlayPause(); }
-	virtual void PlayPause();
+	virtual void Pause() { return Play(); }
+	virtual void Play();
 	virtual void Stop();
 	virtual void Next();
 	virtual void Previous();
 	virtual void ClosePlayer();
-	virtual void OpenPlayer();
-	virtual void TogglePlayer();
-
-	virtual void AddInstance(MEASURETYPE type);
-	virtual void RemoveInstance();
+	virtual void OpenPlayer(std::wstring& path);
 	virtual void UpdateData();
 
 private:
-	bool GetWindow();
+	enum SPOTIFYCOMMAND
+	{
+		SPOTIFY_MUTE		= 524288,
+		SPOTIFY_VOLUMEDOWN	= 589824,
+		SPOTIFY_VOLUMEUP	= 655360,
+		SPOTIFY_NEXT		= 720896,
+		SPOTIFY_PREV		= 786432,
+		SPOTIFY_STOP		= 851968,
+		SPOTIFY_PLAYPAUSE	= 917504
+	};
 
-	HWND m_Window;				// Spotify window
+	bool CheckWindow();
+
+	HWND m_Window;
 };
 
 #endif

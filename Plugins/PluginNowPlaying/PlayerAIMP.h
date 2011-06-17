@@ -27,9 +27,10 @@ public:
 	CPlayerAIMP();
 	~CPlayerAIMP();
 
+	virtual void UpdateData();
+
 	virtual void Pause();
 	virtual void Play();
-	virtual void PlayPause();
 	virtual void Stop();
 	virtual void Next();
 	virtual void Previous();
@@ -37,18 +38,12 @@ public:
 	virtual void SetRating(int rating);
 	virtual void SetVolume(int volume);
 	virtual void ClosePlayer();
-	virtual void OpenPlayer();
-	virtual void TogglePlayer();
-
-	virtual void AddInstance(MEASURETYPE type);
-	virtual void RemoveInstance();
-	virtual void UpdateData();
+	virtual void OpenPlayer(std::wstring& path);
 
 private:
 	bool Initialize();
 	bool CheckActive();
 
-	bool m_HasCoverMeasure;
 	LPVOID m_FileMap;
 	HANDLE m_FileMapHandle;
 	HWND m_Window;				// AIMP window

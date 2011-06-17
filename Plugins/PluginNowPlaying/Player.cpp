@@ -16,12 +16,8 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-// Common functions for the players
-
 #include "StdAfx.h"
 #include "Player.h"
-
-extern std::wstring g_CachePath;
 
 /*
 ** CPlayer
@@ -30,13 +26,17 @@ extern std::wstring g_CachePath;
 **
 */
 CPlayer::CPlayer() :
+	m_Initialized(false),
+	m_HasCoverMeasure(false),
+	m_HasLyricsMeasure(false),
 	m_InstanceCount(),
+	m_UpdateCount(),
+	m_TrackCount(),
 	m_State(),
 	m_Duration(),
 	m_Position(),
 	m_Rating(),
-	m_Volume(),
-	m_TrackChanged(false)
+	m_Volume()
 {
 }
 
@@ -51,35 +51,72 @@ CPlayer::~CPlayer()
 }
 
 /*
-** ExecuteTrackChangeAction
+** AddInstance
 **
-** Called from player implementation on track change.
+** Called during initialization of main measure.
 **
 */
-void CPlayer::ExecuteTrackChangeAction()
+void CPlayer::AddInstance()
 {
-	if (!m_TrackChangeAction.empty())
-	{
-		HWND wnd = FindWindow(L"RainmeterMeterWindow", NULL);
-		if (wnd != NULL)
-		{
-			COPYDATASTRUCT cds;
-			cds.dwData = 1;
-			cds.cbData = (DWORD)(m_TrackChangeAction.size() + 1) * sizeof(WCHAR);
-			cds.lpData = (void*)m_TrackChangeAction.c_str();
+	++m_InstanceCount;
+}
 
-			// Send the bang to the Rainmeter window
-			SendMessage(wnd, WM_COPYDATA, (WPARAM)NULL, (LPARAM)&cds);
-		}
+/*
+** RemoveInstance
+**
+** Called during destruction of main measure.
+**
+*/
+void CPlayer::RemoveInstance()
+{
+	if (--m_InstanceCount == 0)
+	{
+		delete this;
 	}
 }
+
 /*
-** ClearInfo
+** AddMeasure
+**
+** Called during initialization of any measure.
+**
+*/
+void CPlayer::AddMeasure(MEASURETYPE measure)
+{
+	switch (measure)
+	{
+	case MEASURE_LYRICS:
+		m_HasLyricsMeasure = true;
+		break;
+
+	case MEASURE_COVER:
+		m_HasCoverMeasure = true;
+		break;
+	}
+}
+
+/*
+** UpdateMeasure
+**
+** Called during update of main measure.
+**
+*/
+void CPlayer::UpdateMeasure()
+{
+	if (++m_UpdateCount == m_InstanceCount)
+	{
+		UpdateData();
+		m_UpdateCount = 0;
+	}
+}
+
+/*
+** ClearData
 **
 ** Clear track information.
 **
 */
-void CPlayer::ClearInfo()
+void CPlayer::ClearData()
 {
 	m_Duration = 0;
 	m_Position = 0;
@@ -90,298 +127,4 @@ void CPlayer::ClearInfo()
 	m_Title.clear();
 	m_FilePath.clear();
 	m_CoverPath.clear();
-}
-
-/*
-** GetCachedArt
-**
-** Checks if cover art is in cache.
-**
-*/
-bool CPlayer::GetCachedArt()
-{
-	m_CoverPath = g_CachePath;
-	if (m_Artist.empty() || m_Title.empty())
-	{
-		m_CoverPath += L"temp.art";
-	}
-	else
-	{
-		// Otherwise, save it as "Artist - Title.art"
-		std::wstring name = m_Artist;
-		name += L" - ";
-		name += m_Title;
-
-		// Replace reserved chars with _
-		std::wstring::size_type pos = 0;
-		while ((pos = name.find_first_of(L"\\/:*?\"<>|", pos)) != std::wstring::npos) name[pos] = L'_';
-
-		m_CoverPath += name;
-		m_CoverPath += L".art";
-		if (_waccess(m_CoverPath.c_str(), 0) == 0)
-		{
-			// Art found in cache
-			return true;
-		}
-	}
-
-	return false;
-}
-
-/*
-** GetLocalArt
-**
-** Attemps to find local cover art in various formats.
-**
-*/
-bool CPlayer::GetLocalArt(std::wstring& folder, std::wstring filename)
-{
-	std::wstring testPath = folder;
-	testPath += filename;
-	testPath += L".";
-	std::wstring::size_type origLen = testPath.length();
-
-	const int extCount = 4;
-	LPCTSTR extName[extCount] = { L"jpg", L"jpeg", L"png", L"bmp" };
-
-	for (int i = 0; i < extCount; ++i)
-	{
-		testPath += extName[i];
-		if (_waccess(testPath.c_str(), 0) == 0)
-		{
-			m_CoverPath = testPath;
-			return true;
-		}
-		else
-		{
-			// Get rid of the added extension
-			testPath.resize(origLen);
-		}
-	}
-
-	return false;
-}
-
-/*
-** GetEmbeddedArt
-**
-** Attempts to extract cover art from audio files.
-**
-*/
-bool CPlayer::GetEmbeddedArt(const TagLib::FileRef& fr)
-{
-	bool found = false;
-
-	if (TagLib::MPEG::File* file = dynamic_cast<TagLib::MPEG::File*>(fr.file()))
-	{
-		if (file->ID3v2Tag())
-		{
-			found = GetArtID3(file->ID3v2Tag());
-		}
-		if (!found && file->APETag())
-		{
-			found = GetArtAPE(file->APETag());
-		}
-	}
-	else if (TagLib::MP4::File* file = dynamic_cast<TagLib::MP4::File*>(fr.file()))
-	{
-		if (file->tag())
-		{
-			found = GetArtMP4(file);
-		}
-	}
-	else if (TagLib::FLAC::File* file = dynamic_cast<TagLib::FLAC::File*>(fr.file()))
-	{
-		found = GetArtFLAC(file);
-
-		if (!found && file->ID3v2Tag())
-		{
-			found = GetArtID3(file->ID3v2Tag());
-		}
-	}
-	else if (TagLib::ASF::File* file = dynamic_cast<TagLib::ASF::File*>(fr.file()))
-	{
-		found = GetArtASF(file);
-	}
-	else if (TagLib::APE::File* file = dynamic_cast<TagLib::APE::File*>(fr.file()))
-	{
-		if (file->APETag())
-		{
-			found = GetArtAPE(file->APETag());
-		}
-	}
-	else if (TagLib::MPC::File* file = dynamic_cast<TagLib::MPC::File*>(fr.file()))
-	{
-		if (file->APETag())
-		{
-			found = GetArtAPE(file->APETag());
-		}
-	}
-	else if (TagLib::WavPack::File* file = dynamic_cast<TagLib::WavPack::File*>(fr.file()))
-	{
-		if (file->APETag())
-		{
-			found = GetArtAPE(file->APETag());
-		}
-	}
-
-	return found;
-}
-
-/*
-** GetArtAPE
-**
-** Extracts cover art embedded in APE tags.
-**
-*/
-bool CPlayer::GetArtAPE(TagLib::APE::Tag* tag)
-{
-	bool ret = false;
-	const TagLib::APE::ItemListMap& listMap = tag->itemListMap();
-
-	if (listMap.contains("COVER ART (FRONT)"))
-	{
-		const TagLib::ByteVector nullStringTerminator(1, 0);
-
-		TagLib::ByteVector item = listMap["COVER ART (FRONT)"].value();
-		int pos = item.find(nullStringTerminator);	// Skip the filename
-
-		if (++pos > 0)
-		{
-			const TagLib::ByteVector& pic = item.mid(pos);
-
-			FILE* f = _wfopen(m_CoverPath.c_str(), L"wb");
-			if (f)
-			{
-				ret = (fwrite(pic.data(), 1, pic.size(), f) == pic.size());
-				fclose(f);
-			}
-		}
-	}
-
-	return ret;
-}
-
-/*
-** GetArtID3
-**
-** Extracts cover art embedded in ID3v2 tags.
-**
-*/
-bool CPlayer::GetArtID3(TagLib::ID3v2::Tag* tag)
-{
-	bool ret = false;
-
-	const TagLib::ID3v2::FrameList& frameList = tag->frameList("APIC");
-	if (!frameList.isEmpty())
-	{
-		// Grab the first image
-		TagLib::ID3v2::AttachedPictureFrame* frame = static_cast<TagLib::ID3v2::AttachedPictureFrame*>(frameList.front());
-		TagLib::uint size = frame->picture().size();
-
-		if (size > 0)
-		{
-			FILE* f = _wfopen(m_CoverPath.c_str(), L"wb");
-			if (f)
-			{
-				ret = (fwrite(frame->picture().data(), 1, size, f) == size);
-				fclose(f);
-			}
-		}
-	}
-
-	return ret;
-}
-
-/*
-** GetArtASF
-**
-** Extracts cover art embedded in ASF/WMA files.
-**
-*/
-bool CPlayer::GetArtASF(TagLib::ASF::File* file)
-{
-	bool ret = false;
-
-	const TagLib::ASF::AttributeListMap& attrListMap = file->tag()->attributeListMap();
-
-	if (attrListMap.contains("WM/Picture"))
-	{
-		const TagLib::ASF::AttributeList& attrList = attrListMap["WM/Picture"];
-
-		if (!attrList.isEmpty())
-		{
-			// Let's grab the first cover. TODO: Check/loop for correct type
-			TagLib::ASF::Picture wmpic = attrList[0].toPicture();
-
-			if (wmpic.isValid())
-			{
-				FILE* f = _wfopen(m_CoverPath.c_str(), L"wb");
-				if (f)
-				{
-					ret = (fwrite(wmpic.picture().data(), 1, wmpic.picture().size(), f) == wmpic.picture().size());
-					fclose(f);
-				}
-			}
-		}
-	}
-
-	return ret;
-}
-
-/*
-** GetArtFLAC
-**
-** Extracts cover art embedded in FLAC files.
-**
-*/
-bool CPlayer::GetArtFLAC(TagLib::FLAC::File* file)
-{
-	bool ret = false;
-
-	const TagLib::List<TagLib::FLAC::Picture*>& picList = file->pictureList();
-	if (!picList.isEmpty())
-	{
-		// Let's grab the first image
-		TagLib::FLAC::Picture* pic = picList[0];
-
-		FILE* f = _wfopen(m_CoverPath.c_str(), L"wb");
-		if (f)
-		{
-			ret = (fwrite(pic->data().data(), 1, pic->data().size(), f) == pic->data().size());
-			fclose(f);
-		}
-	}
-
-	return ret;
-}
-
-/*
-** GetArtMP4
-**
-** Extracts cover art embedded in MP4-like files.
-**
-*/
-bool CPlayer::GetArtMP4(TagLib::MP4::File* file)
-{
-	bool ret = false;
-
-	TagLib::MP4::Tag* tag = file->tag();
-	if (tag->itemListMap().contains("covr"))
-	{
-		TagLib::MP4::CoverArtList coverList = tag->itemListMap()["covr"].toCoverArtList();
-		TagLib::uint size = coverList[0].data().size();
-
-		if (size > 0)
-		{
-			FILE* f = _wfopen(m_CoverPath.c_str(), L"wb");
-			if (f)
-			{
-				ret = (fwrite(coverList[0].data().data(), 1, size, f) == size);
-				fclose(f);
-			}
-		}
-	}
-
-	return ret;
 }

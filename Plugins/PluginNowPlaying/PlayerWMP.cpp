@@ -111,7 +111,7 @@ void CPlayerWMP::CRemoteHost::PlayStateChange(long NewState)
 	{
 	case wmppsStopped:
 	case wmppsMediaEnded:
-		m_Player->ClearInfo();
+		m_Player->ClearData();
 		break;
 
 	case wmppsPaused:
@@ -139,7 +139,7 @@ void CPlayerWMP::CRemoteHost::PlayStateChange(long NewState)
 */
 void CPlayerWMP::CRemoteHost::SwitchedToControl()
 {
-	m_Player->ClearInfo();
+	m_Player->ClearData();
 	m_Player->Uninitialize();
 }
 
@@ -150,8 +150,8 @@ void CPlayerWMP::CRemoteHost::SwitchedToControl()
 **
 */
 CPlayerWMP::CPlayerWMP() : CPlayer(),
-	m_Initialized(false),
-	m_HasCoverMeasure(false),
+	m_TrackChanged(false),
+	m_Window(),
 	m_ComModule(),
 	m_AxWindow(),
 	m_IPlayer(),
@@ -170,39 +170,9 @@ CPlayerWMP::CPlayerWMP() : CPlayer(),
 */
 CPlayerWMP::~CPlayerWMP()
 {
+	g_WMP = NULL;
 	Uninitialize();
 	m_ComModule.Term();
-}
-
-/*
-** AddInstance
-**
-** Called during initialization of each measure.
-**
-*/
-void CPlayerWMP::AddInstance(MEASURETYPE type)
-{
-	++m_InstanceCount;
-
-	if (type == MEASURE_COVER)
-	{
-		m_HasCoverMeasure = true;
-	}
-}
-
-/*
-** RemoveInstance
-**
-** Called during destruction of each measure.
-**
-*/
-void CPlayerWMP::RemoveInstance()
-{
-	if (--m_InstanceCount == 0)
-	{
-		g_WMP = NULL;
-		delete this;
-	}
 }
 
 /*
@@ -410,7 +380,9 @@ void CPlayerWMP::UpdateData()
 
 		if (m_TrackChanged)
 		{
+			++m_TrackCount;
 			m_TrackChanged = false;
+
 			CComPtr<IWMPMedia> spMedia;
 			m_IPlayer->get_currentMedia(&spMedia);
 
@@ -462,7 +434,8 @@ void CPlayerWMP::UpdateData()
 				{
 					m_FilePath = targetPath;
 
-					// TODO: Better solution for this
+					// Find cover if needed
+					// TODO: Fix temp solution
 					if (m_HasCoverMeasure || m_InstanceCount == 0)
 					{
 						spMedia->getItemInfo(CComBSTR("WM/WMCollectionID"), &val);
@@ -477,37 +450,9 @@ void CPlayerWMP::UpdateData()
 						}
 						else
 						{
-							if (GetCachedArt())
-							{
-								// Cover is in cache, lets use the that
-								return;
-							}
-
-							TagLib::FileRef fr(url.m_str);
-							if (!fr.isNull() && fr.tag() && GetEmbeddedArt(fr))
-							{
-								// Embedded art found
-								return;
-							}
-
-							// Get rid of the name and extension from filename
-							std::wstring trackFolder = url;
-							std::wstring::size_type pos = trackFolder.find_last_of(L'\\');
-							if (pos == std::wstring::npos) return;
-							trackFolder.resize(++pos);
-
-							if (GetLocalArt(trackFolder, L"cover") || GetLocalArt(trackFolder, L"folder"))
-							{
-								// Local art found
-								return;
-							}
-
-							// Nothing found
-							m_CoverPath.clear();
+							GetCover(m_Artist, m_Title, m_FilePath, m_CoverPath);
 						}
 					}
-
-					ExecuteTrackChangeAction();
 				}
 			}
 		}
@@ -538,10 +483,7 @@ void CPlayerWMP::UpdateData()
 */
 void CPlayerWMP::Pause() 
 {
-	if (m_IPlayer)
-	{
-		m_IControls->pause();
-	}
+	m_IControls->pause();
 }
 
 /*
@@ -552,21 +494,7 @@ void CPlayerWMP::Pause()
 */
 void CPlayerWMP::Play() 
 {
-	if (m_IPlayer)
-	{
-		m_IControls->play();
-	}
-}
-
-/*
-** PlayPause
-**
-** Handles the PlayPause bang.
-**
-*/
-void CPlayerWMP::PlayPause() 
-{
-	(m_State == PLAYER_PLAYING) ? Pause() : Play();
+	m_IControls->play();
 }
 
 /*
@@ -577,11 +505,9 @@ void CPlayerWMP::PlayPause()
 */
 void CPlayerWMP::Stop() 
 {
-	if (m_IPlayer)
-	{
-		m_IControls->stop();
-		m_State = PLAYER_STOPPED;
-	}
+	m_IControls->stop();
+	// TODO: FIXME
+	m_State = PLAYER_STOPPED;
 }
 
 /*
@@ -592,10 +518,7 @@ void CPlayerWMP::Stop()
 */
 void CPlayerWMP::Next() 
 {
-	if (m_IPlayer)
-	{
-		m_IControls->next();
-	}
+	m_IControls->next();
 }
 
 /*
@@ -606,10 +529,7 @@ void CPlayerWMP::Next()
 */
 void CPlayerWMP::Previous() 
 {
-	if (m_IPlayer)
-	{
-		m_IControls->previous();
-	}
+	m_IControls->previous();
 }
 
 /*
@@ -620,10 +540,7 @@ void CPlayerWMP::Previous()
 */
 void CPlayerWMP::SetPosition(int position)
 {
-	if (m_IPlayer)
-	{
-		m_IControls->put_currentPosition((double)position);
-	}
+	m_IControls->put_currentPosition((double)position);
 }
 
 /*
@@ -634,7 +551,7 @@ void CPlayerWMP::SetPosition(int position)
 */
 void CPlayerWMP::SetRating(int rating)
 {
-	if (m_IPlayer && (m_State == PLAYER_PLAYING || m_State == PLAYER_PAUSED))
+	if (m_State != PLAYER_STOPPED)
 	{
 		CComPtr<IWMPMedia> spMedia;
 		m_IPlayer->get_currentMedia(&spMedia);
@@ -683,10 +600,7 @@ void CPlayerWMP::SetRating(int rating)
 */
 void CPlayerWMP::SetVolume(int volume)
 {
-	if (m_IPlayer)
-	{
-		m_ISettings->put_volume(volume);
-	}
+	m_ISettings->put_volume(volume);
 }
 
 /*
@@ -697,14 +611,11 @@ void CPlayerWMP::SetVolume(int volume)
 */
 void CPlayerWMP::ClosePlayer()
 {
-	if (m_IPlayer)
-	{
-		HWND wmp = FindWindow(L"WMPlayerApp", NULL);
+	HWND wnd = FindWindow(L"WMPlayerApp", NULL);
 
-		if (wmp)
-		{
-			SendMessage(wmp, WM_CLOSE, 0, 0);
-		}
+	if (wnd)
+	{
+		SendMessage(wnd, WM_CLOSE, 0, 0);
 	}
 }
 
@@ -714,18 +625,7 @@ void CPlayerWMP::ClosePlayer()
 ** Handles the OpenPlayer bang.
 **
 */
-void CPlayerWMP::OpenPlayer()
+void CPlayerWMP::OpenPlayer(std::wstring& path)
 {
-	ShellExecute(NULL, L"open", m_PlayerPath.empty() ? L"wmplayer.exe" : m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
-}
-
-/*
-** TogglePlayer
-**
-** Handles the TogglePlayer bang.
-**
-*/
-void CPlayerWMP::TogglePlayer()
-{
-	m_IPlayer ? ClosePlayer() : OpenPlayer();
+	ShellExecute(NULL, L"open", path.empty() ? L"wmplayer.exe" : path.c_str(), NULL, NULL, SW_SHOW);
 }

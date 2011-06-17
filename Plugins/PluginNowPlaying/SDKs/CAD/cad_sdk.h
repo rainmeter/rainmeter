@@ -109,7 +109,7 @@ enum IPCMESSAGE
 	// uMsg: WM_USER, wParam: 0 or 1, lParam: 128
 	IPC_SET_REPEAT,
 
-	// uMsg: WM_USER, wParam: 0 or 1, lParam: 128 [Sent by/to player]
+	// uMsg: WM_USER, wParam: 0 or 1, lParam: 129 [Sent by/to player]
 	// The player should send this message when it quits.
 	// CAD will also send this message on exit. Upon receival, the player should
 	// disconnect the communication interface and get ready for a IPC_SET_CALLBACK_HWND message.

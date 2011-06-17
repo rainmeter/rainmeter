@@ -21,20 +21,36 @@
 
 #include "Player.h"
 
-struct MeasureData
+struct ParentMeasure
 {
-	std::wstring iniFile;
-	std::wstring section;
-	MEASURETYPE measure;
+	UINT id;
+	UINT childCount;
+	UINT trackCount;
 	CPlayer* player;
+	HANDLE thread;
+	HWND window;
+	std::wstring name;
+	std::wstring iniFile;
+	std::wstring trackChangeAction;
+	std::wstring playerPath;
+	bool disableLeadingZero;
 
-	MeasureData() :
-		player(NULL)
-	{
-	}
+	ParentMeasure() : player(NULL), thread(NULL) {}
 };
 
-typedef std::map<UINT, MeasureData*> MeasureMap;
+struct ChildMeasure
+{
+	MEASURETYPE type;
+	ParentMeasure* parent;
+
+	ChildMeasure() : parent(NULL) {}
+};
+
+void SecondsToTime(UINT seconds, bool leadingZero, WCHAR* buffer);
+void ExecuteCommand(std::wstring& command, HWND wnd);
+bool BelongToSameProcess(HWND wnd);
+HWND FindMeterWindow(HWND parent);
+HWND FindMeterWindow(const std::wstring& iniFile);
 
 /* The exported functions */
 extern "C"

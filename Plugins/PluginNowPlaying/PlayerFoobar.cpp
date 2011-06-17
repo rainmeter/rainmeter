@@ -28,7 +28,6 @@ extern CPlayer* g_Foobar;
 **
 */
 CPlayerFoobar::CPlayerFoobar() : CPlayer(),
-	m_HasCoverMeasure(false),
 	m_Window(),
 	m_FooWindow()
 {
@@ -43,38 +42,8 @@ CPlayerFoobar::CPlayerFoobar() : CPlayer(),
 */
 CPlayerFoobar::~CPlayerFoobar()
 {
+	g_Foobar = NULL;
 	Uninitialize();
-}
-
-/*
-** AddInstance
-**
-** Called during initialization of each measure.
-**
-*/
-void CPlayerFoobar::AddInstance(MEASURETYPE type)
-{
-	++m_InstanceCount;
-
-	if (type == MEASURE_COVER)
-	{
-		m_HasCoverMeasure = true;
-	}
-}
-
-/*
-** RemoveInstance
-**
-** Called during destruction of each measure.
-**
-*/
-void CPlayerFoobar::RemoveInstance()
-{
-	if (--m_InstanceCount == 0)
-	{
-		g_Foobar = NULL;
-		delete this;
-	}
 }
 
 /*
@@ -150,7 +119,7 @@ void CPlayerFoobar::Uninitialize()
 */
 LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static CPlayerFoobar* foobar;
+	static CPlayerFoobar* player;
 
 	switch (msg)
 	{
@@ -158,7 +127,7 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 		{
 			// Get pointer to the CPlayerFoobar class from the CreateWindow call
 			LPVOID params = ((CREATESTRUCT*)lParam)->lpCreateParams;
-			foobar = (CPlayerFoobar*)params;
+			player = (CPlayerFoobar*)params;
 			return 0;
 		}
 
@@ -170,33 +139,33 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
 		case FOO_STATECHANGE:
 			{
-				PLAYERSTATE ps = (PLAYERSTATE)wParam;
+				PLAYSTATE ps = (PLAYSTATE)wParam;
 				if (ps == PLAYER_STOPPED)
 				{
-					foobar->ClearInfo();
+					player->ClearData();
 				}
 				else
 				{
-					foobar->m_State = ps;
+					player->m_State = ps;
 				}
 			}
 			break;
 
 		case FOO_TIMECHANGE:
-			foobar->m_Position = (UINT)wParam;
+			player->m_Position = (UINT)wParam;
 			break;
 
 		case FOO_VOLUMECHANGE:
-			foobar->m_Volume = (UINT)wParam;
+			player->m_Volume = (UINT)wParam;
 			break;
 
 		case FOO_PLAYERSTART:
-			foobar->m_FooWindow = (HWND)wParam;
+			player->m_FooWindow = (HWND)wParam;
 			break;
 
 		case FOO_PLAYERQUIT:
-			foobar->m_FooWindow = NULL;
-			foobar->ClearInfo();
+			player->m_FooWindow = NULL;
+			player->ClearData();
 			break;
 		}
 		return 0;
@@ -207,51 +176,52 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
 			if (cds->dwData == FOO_TRACKCHANGE)
 			{
-				if (foobar->m_State != PLAYER_PLAYING)
+				if (player->m_State != PLAYER_PLAYING)
 				{
-					foobar->m_State = PLAYER_PLAYING;
+					player->m_State = PLAYER_PLAYING;
 				}
 
 				// In the format "TITLE ARTIST ALBUM LENGTH RATING" (seperated by \t)
 				WCHAR buffer[1024];
 				MultiByteToWideChar(CP_UTF8, 0, (char*)cds->lpData, cds->cbData, buffer, 1024);
-				foobar->m_Artist = buffer;
+				player->m_Artist = buffer;
 
 				WCHAR* token = wcstok(buffer, L"\t");
 				if (token)
 				{
-					foobar->m_Title = token;
+					player->m_Title = token;
 				}
 				token = wcstok(NULL, L"\t");
 				if (token)
 				{
-					foobar->m_Artist = token;
+					player->m_Artist = token;
 				}
 				token = wcstok(NULL, L"\t");
 				if (token)
 				{
-					foobar->m_Album = token;
+					player->m_Album = token;
 				}
 				token = wcstok(NULL, L"\t");
 				if (token)
 				{
-					foobar->m_Duration = _wtoi(token);
+					player->m_Duration = _wtoi(token);
 				}
 				token = wcstok(NULL, L"\t");
 				if (token)
 				{
-					foobar->m_Rating = _wtoi(token);
+					player->m_Rating = _wtoi(token);
 				}
 				token = wcstok(NULL, L"\t");
-				if (token)
+				if (token && wcscmp(token, player->m_FilePath.c_str()) != 0)
 				{
-					if (wcscmp(token, foobar->m_FilePath.c_str()) != 0)
+					// If different file
+					++player->m_TrackCount;
+					player->m_FilePath = token;
+					player->m_Position = 0;
+
+					if (player->m_HasCoverMeasure || player->m_InstanceCount == 0)
 					{
-						// If different file
-						foobar->m_FilePath = token;
-						foobar->m_TrackChanged = true;
-						foobar->m_Position = 0;
-						foobar->GetCoverArt(token);
+						GetCover(player->m_Artist, player->m_Title, player->m_FilePath, player->m_CoverPath);
 					}
 				}
 			}
@@ -264,47 +234,6 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 }
 
 /*
-** GetCoverArt
-**
-** Try to find cover art for file.
-**
-*/
-void CPlayerFoobar::GetCoverArt(LPTSTR filename)
-{
-	// TODO: Fix temp solution
-	if (m_HasCoverMeasure || m_InstanceCount == 0)
-	{
-		if (GetCachedArt())
-		{
-			// Cover is in cache, lets use the that
-			return;
-		}
-
-		TagLib::FileRef fr(filename);
-		if (!fr.isNull() && fr.tag() && GetEmbeddedArt(fr))
-		{
-			// Embedded art found
-			return;
-		}
-
-		// Get rid of the name and extension from filename
-		std::wstring trackFolder = filename;
-		std::wstring::size_type pos = trackFolder.find_last_of(L'\\');
-		if (pos == std::wstring::npos) return;
-		trackFolder.resize(++pos);
-
-		if (GetLocalArt(trackFolder, L"cover") || GetLocalArt(trackFolder, L"folder"))
-		{
-			// Local art found
-			return;
-		}
-
-		// Nothing found
-		m_CoverPath.clear();
-	}
-}
-
-/*
 ** UpdateData
 **
 ** Called during each update of the main measure.
@@ -312,11 +241,6 @@ void CPlayerFoobar::GetCoverArt(LPTSTR filename)
 */
 void CPlayerFoobar::UpdateData()
 {
-	if (m_TrackChanged)
-	{
-		ExecuteTrackChangeAction();
-		m_TrackChanged = false;
-	}
 }
 
 /*
@@ -327,10 +251,7 @@ void CPlayerFoobar::UpdateData()
 */
 void CPlayerFoobar::Pause()
 {
-	if (m_FooWindow)
-	{
-		SendMessage(m_FooWindow, WM_USER, 0, FOO_PAUSE);
-	}
+	SendMessage(m_FooWindow, WM_USER, 0, FOO_PAUSE);
 }
 
 /*
@@ -341,24 +262,7 @@ void CPlayerFoobar::Pause()
 */
 void CPlayerFoobar::Play()
 {
-	if (m_FooWindow)
-	{
-		SendMessage(m_FooWindow, WM_USER, 0, FOO_PLAY);
-	}
-}
-
-/*
-** PlayPause
-**
-** Handles the PlayPause bang.
-**
-*/
-void CPlayerFoobar::PlayPause()
-{
-	if (m_FooWindow)
-	{
-		SendMessage(m_FooWindow, WM_USER, 0, FOO_PLAYPAUSE);
-	}
+	SendMessage(m_FooWindow, WM_USER, 0, FOO_PLAY);
 }
 
 /*
@@ -369,10 +273,7 @@ void CPlayerFoobar::PlayPause()
 */
 void CPlayerFoobar::Stop() 
 {
-	if (m_FooWindow)
-	{
-		SendMessage(m_FooWindow, WM_USER, 0, FOO_STOP);
-	}
+	SendMessage(m_FooWindow, WM_USER, 0, FOO_STOP);
 }
 
 /*
@@ -383,10 +284,7 @@ void CPlayerFoobar::Stop()
 */
 void CPlayerFoobar::Next() 
 {
-	if (m_FooWindow)
-	{
-		SendMessage(m_FooWindow, WM_USER, 0, FOO_NEXT);
-	}
+	SendMessage(m_FooWindow, WM_USER, 0, FOO_NEXT);
 }
 
 /*
@@ -397,10 +295,7 @@ void CPlayerFoobar::Next()
 */
 void CPlayerFoobar::Previous() 
 {
-	if (m_FooWindow)
-	{
-		SendMessage(m_FooWindow, WM_USER, 0, FOO_PREVIOUS);
-	}
+	SendMessage(m_FooWindow, WM_USER, 0, FOO_PREVIOUS);
 }
 
 /*
@@ -411,10 +306,7 @@ void CPlayerFoobar::Previous()
 */
 void CPlayerFoobar::SetPosition(int position)
 {
-	if (m_FooWindow)
-	{
-		SendMessage(m_FooWindow, WM_USER, position, FOO_SETPOSITION);
-	}
+	SendMessage(m_FooWindow, WM_USER, position, FOO_SETPOSITION);
 }
 
 /*
@@ -425,10 +317,7 @@ void CPlayerFoobar::SetPosition(int position)
 */
 void CPlayerFoobar::SetVolume(int volume) 
 {
-	if (m_FooWindow)
-	{
-		SendMessage(m_FooWindow, WM_USER, volume, FOO_SETVOLUME);
-	}
+	SendMessage(m_FooWindow, WM_USER, volume, FOO_SETVOLUME);
 }
 
 /*
@@ -439,10 +328,7 @@ void CPlayerFoobar::SetVolume(int volume)
 */
 void CPlayerFoobar::ClosePlayer()
 {
-	if (m_FooWindow)
-	{
-		SendMessage(m_FooWindow, WM_USER, 0, FOO_QUITPLAYER);
-	}
+	SendMessage(m_FooWindow, WM_USER, 0, FOO_QUITPLAYER);
 }
 
 /*
@@ -451,11 +337,11 @@ void CPlayerFoobar::ClosePlayer()
 ** Handles the OpenPlayer bang.
 **
 */
-void CPlayerFoobar::OpenPlayer()
+void CPlayerFoobar::OpenPlayer(std::wstring& path)
 {
 	if (!m_FooWindow)
 	{
-		if (m_PlayerPath.empty())
+		if (path.empty())
 		{
 			// Gotta figure out where foobar2000 is located at
 			HKEY hKey;
@@ -478,7 +364,7 @@ void CPlayerFoobar::OpenPlayer()
 			{
 				if (type == REG_SZ && data[0] == L'\"')
 				{
-					std::wstring path = data;
+					path = data;
 					path.erase(0, 1);	// Get rid of the leading quote
 					std::wstring::size_type pos = path.find_first_of(L'\"');
 
@@ -486,7 +372,11 @@ void CPlayerFoobar::OpenPlayer()
 					{
 						path.resize(pos);	// Get rid the last quote and everything after it
 						ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
-						m_PlayerPath = path;
+						path = path;
+					}
+					else
+					{
+						path.clear();
 					}
 				}
 			}
@@ -496,22 +386,11 @@ void CPlayerFoobar::OpenPlayer()
 		}
 		else
 		{
-			ShellExecute(NULL, L"open", m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
+			ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
 		}
 	}
 	else
 	{
 		SendMessage(m_FooWindow, WM_USER, 0, FOO_SHOWPLAYER);
 	}
-}
-
-/*
-** TogglePlayer
-**
-** Handles the TogglePlayer bang.
-**
-*/
-void CPlayerFoobar::TogglePlayer()
-{
-	m_FooWindow ? ClosePlayer() : OpenPlayer();
 }

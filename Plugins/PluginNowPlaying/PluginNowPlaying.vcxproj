@@ -255,6 +255,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Cover.cpp" />
     <ClCompile Include="NowPlaying.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerAIMP.cpp" />
@@ -342,6 +343,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Cover.h" />
     <ClInclude Include="NowPlaying.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerAIMP.h" />

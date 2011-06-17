@@ -264,6 +264,9 @@
     <ClCompile Include="PlayerWLM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Cover.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SDKs\AIMP\aimp2_sdk.h">
@@ -318,6 +321,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PlayerWLM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Cover.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

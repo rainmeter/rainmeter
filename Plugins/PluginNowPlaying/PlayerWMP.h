@@ -37,22 +37,18 @@ public:
 	CPlayerWMP();
 	~CPlayerWMP();
 
+	virtual void UpdateData();
+
 	virtual void Pause();
 	virtual void Play();
-	virtual void PlayPause();
 	virtual void Stop();
 	virtual void Next();
 	virtual void Previous();
 	virtual void SetPosition(int position);
 	virtual void SetRating(int rating);
 	virtual void SetVolume(int volume);
-	virtual void OpenPlayer();
+	virtual void OpenPlayer(std::wstring& path);
 	virtual void ClosePlayer();
-	virtual void TogglePlayer();
-
-	virtual void AddInstance(MEASURETYPE type);
-	virtual void RemoveInstance();
-	virtual void UpdateData();
 
 private:
 	class CRemoteHost :
@@ -133,11 +129,10 @@ private:
 	void Initialize();
 	void Uninitialize();
 
-	bool m_Initialized;
-	bool m_HasCoverMeasure;
+	bool m_TrackChanged;
 	HWND m_Window;
-	CComModule m_ComModule;
 	CAxWindow* m_AxWindow;
+	CComModule m_ComModule;
 	CComPtr<IWMPPlayer4> m_IPlayer;
 	CComPtr<IWMPControls> m_IControls;
 	CComPtr<IWMPSettings> m_ISettings;

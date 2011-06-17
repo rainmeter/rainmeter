@@ -22,7 +22,7 @@
 extern CPlayer* g_WLM;
 
 // This player emulates the MSN/WLM Messenger 'Listening to' interface, which is
-// supported by OpenPandora, Last.fm, Media Player Classic, TTPlayer, etc.
+// supported by OpenPandora, Last.fm, Media Player Classic, TTPlayer, Zune, etc.
 
 /*
 ** CPlayerWLM
@@ -64,34 +64,9 @@ CPlayerWLM::CPlayerWLM() : CPlayer(),
 */
 CPlayerWLM::~CPlayerWLM()
 {
+	g_WLM = NULL;
 	DestroyWindow(m_Window);
 	UnregisterClass(L"MsnMsgrUIManager", GetModuleHandle(NULL));
-}
-
-/*
-** AddInstance
-**
-** Called during initialization of each measure.
-**
-*/
-void CPlayerWLM::AddInstance(MEASURETYPE type)
-{
-	++m_InstanceCount;
-}
-
-/*
-** RemoveInstance
-**
-** Called during destruction of each measure.
-**
-*/
-void CPlayerWLM::RemoveInstance()
-{
-	if (--m_InstanceCount == 0)
-	{
-		g_WLM = NULL;
-		delete this;
-	}
 }
 
 LRESULT CALLBACK CPlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -127,6 +102,7 @@ LRESULT CALLBACK CPlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 				player->m_State = PLAYER_PLAYING;
 				data.erase(0, 3);	// Get rid of the status
 
+				// TODO: Handle invalid
 				len = data.find_first_of(L'\\');
 				len += 2;
 				data.erase(0, len); // Get rid of the format
@@ -146,7 +122,7 @@ LRESULT CALLBACK CPlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 			}
 			else
 			{
-				player->ClearInfo();
+				player->ClearData();
 			}
 
 			return 0;
@@ -180,12 +156,12 @@ void CPlayerWLM::UpdateData()
 }
 
 /*
-** PlayPause
+** Play
 **
-** Handles the PlayPause bang.
+** Handles the Play bang.
 **
 */
-void CPlayerWLM::PlayPause()
+void CPlayerWLM::Play()
 {
 	SendKeyInput(VK_MEDIA_PLAY_PAUSE);
 }

@@ -27,22 +27,19 @@ public:
 	CPlayerWLM();
 	~CPlayerWLM();
 
-	virtual void Pause() { return PlayPause(); }
-	virtual void Play() { return PlayPause(); }
-	virtual void PlayPause();
+	virtual void UpdateData();
+
+	virtual void Pause() { return Play(); }
+	virtual void Play();
 	virtual void Stop();
 	virtual void Next();
 	virtual void Previous();
-
-	virtual void AddInstance(MEASURETYPE type);
-	virtual void RemoveInstance();
-	virtual void UpdateData();
 
 private:
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	void SendKeyInput(WORD key);
 
-	HWND m_Window;				// Spotify window
+	HWND m_Window;
 };
 
 #endif

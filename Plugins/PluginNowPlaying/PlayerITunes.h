@@ -38,9 +38,10 @@ public:
 	CPlayerITunes();
 	~CPlayerITunes();
 
+	virtual void UpdateData();
+
 	virtual void Pause();
 	virtual void Play();
-	virtual void PlayPause();
 	virtual void Stop();
 	virtual void Next();
 	virtual void Previous();
@@ -48,12 +49,7 @@ public:
 	virtual void SetRating(int rating);
 	virtual void SetVolume(int volume);
 	virtual void ClosePlayer();
-	virtual void OpenPlayer();
-	virtual void TogglePlayer();
-
-	virtual void AddInstance(MEASURETYPE type);
-	virtual void RemoveInstance();
-	virtual void UpdateData();
+	virtual void OpenPlayer(std::wstring& path);
 
 private:
 	class CEventHandler : public _IiTunesEvents
@@ -85,13 +81,9 @@ private:
 	void OnTrackChange();
 	void OnStateChange(bool playing);
 	void OnVolumeChange(int volume);
-	bool CheckActive();
+	bool CheckWindow();
 
-	bool m_Initialized;
 	bool m_UserQuitPrompt;
-	bool m_HasCoverMeasure;
-	HWND m_Window;
-
 	IiTunes* m_iTunes;
 	CEventHandler* m_iTunesEvent;
 };

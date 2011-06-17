@@ -37,30 +37,10 @@ CPlayer* g_Winamp = NULL;
 CPlayer* g_WLM = NULL;
 CPlayer* g_WMP = NULL;
 
-static MeasureMap g_Values;
+static std::map<UINT, ChildMeasure*> g_Measures;
 static bool g_DisableLeazingZero = false;
 std::wstring g_CachePath;
 std::wstring g_SettingsFile;
-
-void SecondsToTime(UINT seconds, WCHAR* buffer)
-{
-	int hours = seconds;
-	int mins = seconds;
-	hours /= 3600;
-	mins %= 3600;
-	int secs = mins;
-	mins /= 60;
-	secs %= 60;
-
-	if (hours)
-	{
-		_snwprintf_s(buffer, 32, _TRUNCATE, g_DisableLeazingZero ? L"%i:%02i:%02i" : L"%02i:%02i:%02i", hours, mins, secs);
-	}
-	else
-	{
-		_snwprintf_s(buffer, 32, _TRUNCATE, g_DisableLeazingZero ? L"%i:%02i" : L"%02i:%02i", mins, secs);
-	}
-}
 
 /*
 ** Initialize
@@ -70,7 +50,7 @@ void SecondsToTime(UINT seconds, WCHAR* buffer)
 */
 UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
-	if (g_Values.empty())
+	if (g_Measures.empty())
 	{
 		// Get path to temporary folder (for cover art cache)
 		WCHAR buffer[MAX_PATH];
@@ -87,10 +67,17 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			g_SettingsFile = PluginBridge(L"getvariable", str.c_str());
 			g_SettingsFile += L"Plugins.ini";
 		}
+		else
+		{
+			LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Unable to get path to Plugins.ini.");
+		}
 	}
 
+	// Data is stored in two structs: ChildMeasure and ParentMeasure. ParentMeasure is created for measures
+	// with PlayerName=someplayer. ChildMeasure is created for all measures and points to ParentMeasure as
+	// referenced in PlayerName=[section].
+	ChildMeasure* child = new ChildMeasure;
 	UINT maxValue = 0;
-	MeasureData* data = new MeasureData;
 
 	// Read settings from the ini-file
 	LPCTSTR str = ReadConfigString(section, L"PlayerName", NULL);
@@ -98,36 +85,43 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	{
 		if (str[0] == L'[')
 		{
+			// PlayerName starts with [ so use referenced section
 			int len = wcslen(str) - 2;
 			if (len > 0)
 			{
-				MeasureMap::iterator it = g_Values.begin();
-				for ( ; it != g_Values.end(); ++it)
+				std::map<UINT, ChildMeasure*>::iterator it = g_Measures.begin();
+				for ( ; it != g_Measures.end(); ++it)
 				{
-					if (wcsncmp(&str[1], it->second->section.c_str(), len) == 0 &&
-						wcscmp(iniFile, it->second->iniFile.c_str()) == 0)
+					if (wcsncmp(&str[1], it->second->parent->name.c_str(), len) == 0 &&
+						wcscmp(iniFile, it->second->parent->iniFile.c_str()) == 0)
 					{
-						// Use same player instance as pointed section
-						data->player = it->second->player;
+						// Use same ParentMeasure as referenced section
+						child->parent = it->second->parent;
+						++child->parent->childCount;
+						break;
 					}
 				}
 
-				if (!data->player)
+				if (!child->parent)
 				{
+					// The referenced section doesn't exist
 					std::wstring error = L"NowPlayingPlugin: PlayerName=";
 					error += str;
-					error += L" in section [";
+					error += L" in [";
 					error += section;
 					error += L"] does not exist.";
 					LSLog(LOG_WARNING, L"Rainmeter", error.c_str());
+					delete child;
 					return maxValue;
 				}
 			}
 		}
 		else
 		{
-			data->section = section;
-			data->iniFile = iniFile;
+			// ParentMeasure is created when PlayerName is an actual player (and not a reference)
+			ParentMeasure* parent = new ParentMeasure;
+			parent->name = section;
+			parent->iniFile = iniFile;
 
 			if (_wcsicmp(L"AIMP", str) == 0)
 			{
@@ -135,7 +129,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				{
 					g_AIMP = new CPlayerAIMP();
 				}
-				data->player = g_AIMP;
+				parent->player = g_AIMP;
 			}
 			else if (_wcsicmp(L"CAD", str) == 0)
 			{
@@ -143,7 +137,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				{
 					g_CAD = new CPlayerCAD();
 				}
-				data->player = g_CAD;
+				parent->player = g_CAD;
 			}
 			else if (_wcsicmp(L"foobar2000", str) == 0)
 			{
@@ -151,7 +145,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				{
 					g_Foobar = new CPlayerFoobar();
 				}
-				data->player = g_Foobar;
+				parent->player = g_Foobar;
 			}
 			else if (_wcsicmp(L"iTunes", str) == 0)
 			{
@@ -159,7 +153,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				{
 					g_iTunes = new CPlayerITunes();
 				}
-				data->player = g_iTunes;
+				parent->player = g_iTunes;
 			}
 			else if (_wcsicmp(L"MediaMonkey", str) == 0)
 			{
@@ -167,7 +161,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				{
 					g_Winamp = new CPlayerWinamp(WA_MEDIAMONKEY);
 				}
-				data->player = g_Winamp;
+				parent->player = g_Winamp;
 			}
 			else if (_wcsicmp(L"Spotify", str) == 0)
 			{
@@ -175,7 +169,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				{
 					g_Spotify = new CPlayerSpotify();
 				}
-				data->player = g_Spotify;
+				parent->player = g_Spotify;
 			}
 			else if (_wcsicmp(L"WinAmp", str) == 0)
 			{
@@ -183,7 +177,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				{
 					g_Winamp = new CPlayerWinamp(WA_WINAMP);
 				}
-				data->player = g_Winamp;
+				parent->player = g_Winamp;
 			}
 			else if (_wcsicmp(L"WLM", str) == 0)
 			{
@@ -191,7 +185,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				{
 					g_WLM = new CPlayerWLM();
 				}
-				data->player = g_WLM;
+				parent->player = g_WLM;
 			}
 			else if (_wcsicmp(L"WMP", str) == 0)
 			{
@@ -199,7 +193,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				{
 					g_WMP = new CPlayerWMP();
 				}
-				data->player = g_WMP;
+				parent->player = g_WMP;
 			}
 			else
 			{
@@ -215,27 +209,31 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				error += section;
 				error += L"] is not valid.";
 				LSLog(LOG_ERROR, L"Rainmeter", error.c_str());
-				delete data;
+				delete parent;
+				delete child;
 				return maxValue;
 			}
 
-			str = ReadConfigString(section, L"PlayerPath", NULL);
-			if (str && *str)
+			parent->id = id;
+			parent->childCount = 1;
+			parent->player->AddInstance();
+			parent->playerPath = ReadConfigString(section, L"PlayerPath", L"");
+			parent->trackChangeAction = ReadConfigString(section, L"TrackChangeAction", L"");
+
+			if (!parent->trackChangeAction.empty())
 			{
-				data->player->SetPlayerPath(str);
+				// Get window handle to send the bang later on
+				parent->window = FindMeterWindow(parent->iniFile);
+				parent->trackCount = 1;
 			}
 
-			str = ReadConfigString(section, L"DisableLeadingZero", NULL);
-			if (str && *str)
+			str = ReadConfigString(section, L"DisableLeadingZero", L"0");
+			if (str)
 			{
-				g_DisableLeazingZero = (1 == _wtoi(str));
+				parent->disableLeadingZero = (1 == _wtoi(str));
 			}
 
-			str = ReadConfigString(section, L"TrackChangeAction", NULL);
-			if (str && *str)
-			{
-				data->player->SetTrackChangeAction(str);
-			}
+			child->parent = parent;
 		}
 	}
 
@@ -244,55 +242,69 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	{
 		if (_wcsicmp(L"ARTIST", str) == 0)
 		{
-			data->measure = MEASURE_ARTIST;
+			child->type = MEASURE_ARTIST;
 		}
 		else if (_wcsicmp(L"TITLE", str) == 0)
 		{
-			data->measure = MEASURE_TITLE;
+			child->type = MEASURE_TITLE;
 		}
 		else if (_wcsicmp(L"ALBUM", str) == 0)
 		{
-			data->measure = MEASURE_ALBUM;
+			child->type = MEASURE_ALBUM;
+		}
+		else if (_wcsicmp(L"LYRICS", str) == 0)
+		{
+			child->type = MEASURE_LYRICS;
 		}
 		else if (_wcsicmp(L"COVER", str) == 0)
 		{
-			data->measure = MEASURE_COVER;
+			child->type = MEASURE_COVER;
 		}
 		else if (_wcsicmp(L"DURATION", str) == 0)
 		{
-			data->measure = MEASURE_DURATION;
+			child->type = MEASURE_DURATION;
 		}
 		else if (_wcsicmp(L"POSITION", str) == 0)
 		{
-			data->measure = MEASURE_POSITION;
+			child->type = MEASURE_POSITION;
 		}
 		else if (_wcsicmp(L"PROGRESS", str) == 0)
 		{
-			data->measure = MEASURE_PROGRESS;
+			child->type = MEASURE_PROGRESS;
 			maxValue = 100;
 		}
 		else if (_wcsicmp(L"RATING", str) == 0)
 		{
-			data->measure = MEASURE_RATING;
+			child->type = MEASURE_RATING;
 			maxValue = 5;
 		}
 		else if (_wcsicmp(L"STATE", str) == 0)
 		{
-			data->measure = MEASURE_STATE;
+			child->type = MEASURE_STATE;
 		}
 		else if (_wcsicmp(L"VOLUME", str) == 0)
 		{
-			data->measure = MEASURE_VOLUME;
+			child->type = MEASURE_VOLUME;
 			maxValue = 100;
 		}
 		else if (_wcsicmp(L"FILE", str) == 0)
 		{
-			data->measure = MEASURE_FILE;
+			child->type = MEASURE_FILE;
 		}
+		else
+		{
+			std::wstring error = L"NowPlayingPlugin: PlayerType=";
+			error += str;
+			error += L" in section [";
+			error += section;
+			error += L"] is not valid.";
+			LSLog(LOG_WARNING, L"Rainmeter", error.c_str());
+		}
+
+		child->parent->player->AddMeasure(child->type);
 	}
 
-	data->player->AddInstance(data->measure);
-	g_Values[id] = data;
+	g_Measures[id] = child;
 	return maxValue;
 }
 
@@ -304,16 +316,26 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 */
 void Finalize(HMODULE instance, UINT id)
 {
-	MeasureMap::iterator i = g_Values.find(id);
-	if (i != g_Values.end())
+	std::map<UINT, ChildMeasure*>::iterator i = g_Measures.find(id);
+	if (i != g_Measures.end())
 	{
-		(*i).second->player->RemoveInstance();
-		delete (*i).second;
-		g_Values.erase(i);
+		ChildMeasure* child = (*i).second;
+		ParentMeasure* parent = child->parent;
+		CPlayer* player = parent->player;
+
+		if (--parent->childCount == 0)
+		{
+			player->RemoveInstance();
+			delete parent;
+		}
+
+		delete child;
+		g_Measures.erase(i);
 	}
 }
 
 /*
+
 ** Update
 **
 ** Called on each update.
@@ -321,18 +343,29 @@ void Finalize(HMODULE instance, UINT id)
 */
 UINT Update(UINT id)
 {
-	MeasureMap::iterator i = g_Values.find(id);
-	if (i != g_Values.end())
+	std::map<UINT, ChildMeasure*>::iterator i = g_Measures.find(id);
+	if (i != g_Measures.end())
 	{
-		if (!(*i).second->section.empty())
+		ChildMeasure* child = (*i).second;
+		ParentMeasure* parent = child->parent;
+		CPlayer* player = parent->player;
+
+		if (parent->id == id)
 		{
-			// Only allow main measure to update
-			(*i).second->player->UpdateData();
+			player->UpdateMeasure();
+
+			// Execute TrackChangeAction= if necessary
+			if (!parent->trackChangeAction.empty() &&
+				parent->trackCount != player->GetTrackCount())
+			{
+				ExecuteCommand(parent->trackChangeAction, parent->window);
+
+				// TODO: First is true..
+				parent->trackCount = player->GetTrackCount();
+			}
 		}
 
-		CPlayer* player = (*i).second->player;
-
-		switch ((*i).second->measure)
+		switch (child->type)
 		{
 		case MEASURE_DURATION:
 			return player->GetDuration();
@@ -351,7 +384,7 @@ UINT Update(UINT id)
 			return player->GetRating();
 
 		case MEASURE_STATE:
-			return (int)player->GetState();
+			return (UINT)player->GetState();
 
 		case MEASURE_VOLUME:
 			return player->GetVolume();
@@ -371,13 +404,15 @@ UINT Update(UINT id)
 */
 LPCTSTR GetString(UINT id, UINT flags)
 {
-	MeasureMap::iterator i = g_Values.find(id);
-	if (i != g_Values.end())
+	std::map<UINT, ChildMeasure*>::iterator i = g_Measures.find(id);
+	if (i != g_Measures.end())
 	{
-		CPlayer* player = (*i).second->player;
+		ChildMeasure* child = (*i).second;
+		ParentMeasure* parent = child->parent;
+		CPlayer* player = parent->player;
 		static WCHAR buffer[32];
 
-		switch ((*i).second->measure)
+		switch (child->type)
 		{
 		case MEASURE_ARTIST:
 			return player->GetArtist();
@@ -392,21 +427,16 @@ LPCTSTR GetString(UINT id, UINT flags)
 			return player->GetCoverPath();
 
 		case MEASURE_DURATION:
-			SecondsToTime(player->GetDuration(), buffer);
+			SecondsToTime(player->GetDuration(), parent->disableLeadingZero, buffer);
 			return buffer;
 
 		case MEASURE_POSITION:
-			SecondsToTime(player->GetPosition(), buffer);
+			SecondsToTime(player->GetPosition(), parent->disableLeadingZero, buffer);
 			return buffer;
 
 		case MEASURE_PROGRESS:
-			if (player->GetDuration())
-			{
-				int res = (player->GetPosition() * 100) / player->GetDuration();
-				_itow(res, buffer, 10);
-				return buffer;
-			}
-			return L"0";
+			_itow(player->GetDuration() ? ((player->GetPosition() * 100) / player->GetDuration()) : 0, buffer, 10);
+			return buffer;
 
 		case MEASURE_RATING:
 			_itow(player->GetRating(), buffer, 10);
@@ -426,8 +456,7 @@ LPCTSTR GetString(UINT id, UINT flags)
 	}
 	else
 	{
-		// For invalid PlayerName=
-		return L"0";
+		return L"Error: Invalid player.";
 	}
 
 	return L"";
@@ -441,12 +470,21 @@ LPCTSTR GetString(UINT id, UINT flags)
 */
 void ExecuteBang(LPCTSTR bang, UINT id)
 {
-	MeasureMap::iterator i = g_Values.find(id);
-	if (i != g_Values.end())
+	std::map<UINT, ChildMeasure*>::iterator i = g_Measures.find(id);
+	if (i != g_Measures.end())
 	{
-		CPlayer* player = (*i).second->player;
+		ChildMeasure* child = (*i).second;
+		ParentMeasure* parent = child->parent;
+		CPlayer* player = parent->player;
 
-		if (_wcsicmp(bang, L"Pause") == 0)
+		if (!player->IsInitialized())
+		{
+			if (_wcsicmp(bang, L"OpenPlayer") == 0 || _wcsicmp(bang, L"TogglePlayer") == 0)
+			{
+				player->OpenPlayer(parent->playerPath);
+			}
+		}
+		else if (_wcsicmp(bang, L"Pause") == 0)
 		{
 			player->Pause();
 		}
@@ -456,7 +494,7 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 		}
 		else if (_wcsicmp(bang, L"PlayPause") == 0)
 		{
-			player->PlayPause();
+			(player->GetState() != PLAYER_PLAYING) ? player->Play() : player->Pause();
 		}
 		else if (_wcsicmp(bang, L"Stop") == 0)
 		{
@@ -470,24 +508,18 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 		{
 			player->Previous();
 		}
-		else if (_wcsicmp(bang, L"ClosePlayer") == 0)
+		else if (_wcsicmp(bang, L"ClosePlayer") == 0 || _wcsicmp(bang, L"TogglePlayer") == 0)
 		{
 			player->ClosePlayer();
-		}
-		else if (_wcsicmp(bang, L"OpenPlayer") == 0)
-		{
-			player->OpenPlayer();
-		}
-		else if (_wcsicmp(bang, L"TogglePlayer") == 0)
-		{
-			player->TogglePlayer();
 		}
 		else
 		{
 			LPCTSTR arg = wcschr(bang, L' ');
 
-			if (++arg)	// Skip the space
+			if (arg)
 			{
+				++arg;	// Skip the space
+
 				if (wcsnicmp(bang, L"SetPosition", 11) == 0)
 				{
 					int position = (_wtoi(arg) * player->GetDuration()) / 100;
@@ -543,4 +575,72 @@ UINT GetPluginVersion()
 LPCTSTR GetPluginAuthor()
 {
 	return L"Birunthan Mohanathas (www.poiru.net)";
+}
+
+void SecondsToTime(UINT seconds, bool leadingZero, WCHAR* buffer)
+{
+	int hours = seconds;
+	int mins = seconds;
+	hours /= 3600;
+	mins %= 3600;
+	int secs = mins;
+	mins /= 60;
+	secs %= 60;
+
+	if (hours)
+	{
+		_snwprintf_s(buffer, 32, _TRUNCATE, leadingZero ? L"%i:%02i:%02i" : L"%02i:%02i:%02i", hours, mins, secs);
+	}
+	else
+	{
+		_snwprintf_s(buffer, 32, _TRUNCATE, leadingZero ? L"%i:%02i" : L"%02i:%02i", mins, secs);
+	}
+}
+
+void ExecuteCommand(std::wstring& command, HWND wnd)
+{
+	COPYDATASTRUCT cds;
+	cds.dwData = 1;
+	cds.cbData = (DWORD)(command.size() + 1) * sizeof(WCHAR);
+	cds.lpData = (void*)command.c_str();
+
+	// Send bang to the Rainmeter window
+	SendMessage(wnd, WM_COPYDATA, (WPARAM)NULL, (LPARAM)&cds);
+}
+
+bool BelongToSameProcess(HWND wnd)
+{
+	DWORD procId = 0;
+	GetWindowThreadProcessId(wnd, &procId);
+
+	return (procId == GetCurrentProcessId());
+}
+
+HWND FindMeterWindow(HWND parent)
+{
+	HWND wnd = NULL;
+	while (wnd = FindWindowEx(parent, wnd, L"RainmeterMeterWindow", NULL))
+	{
+		if (BelongToSameProcess(wnd))
+		{
+			return wnd;
+		}
+	}
+
+	return NULL;
+}
+
+HWND FindMeterWindow(const std::wstring& iniFile)
+{
+	std::wstring str = PluginBridge(L"getconfig", iniFile.c_str());
+	if (!str.empty())
+	{
+		str = PluginBridge(L"getwindow", str.c_str());
+		if (str != L"error")
+		{
+			return (HWND)UlongToPtr(wcstoul(str.c_str(), NULL, 10));
+		}
+	}
+
+	return FindMeterWindow(NULL);  // Use old way to find
 }

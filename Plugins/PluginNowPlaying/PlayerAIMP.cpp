@@ -30,7 +30,6 @@ extern CPlayer* g_AIMP;
 **
 */
 CPlayerAIMP::CPlayerAIMP() : CPlayer(),
-	m_HasCoverMeasure(false),
 	m_FileMap(),
 	m_FileMapHandle(),
 	m_Window(),
@@ -46,41 +45,17 @@ CPlayerAIMP::CPlayerAIMP() : CPlayer(),
 */
 CPlayerAIMP::~CPlayerAIMP()
 {
+	g_AIMP = NULL;
 	if (m_FileMap) UnmapViewOfFile(m_FileMap);
 	if (m_FileMapHandle) CloseHandle(m_FileMapHandle);
 }
 
 /*
-** AddInstance
+** Initialize
 **
-** Called during initialization of each measure.
-**
-*/
-void CPlayerAIMP::AddInstance(MEASURETYPE type)
-{
-	++m_InstanceCount;
-
-	if (type == MEASURE_COVER)
-	{
-		m_HasCoverMeasure = true;
-	}
-}
-
-/*
-** RemoveInstance
-**
-** Called during destruction of each measure.
+** Find AIMP window and mapped object.
 **
 */
-void CPlayerAIMP::RemoveInstance()
-{
-	if (--m_InstanceCount == 0)
-	{
-		g_AIMP = NULL;
-		delete this;
-	}
-}
-
 bool CPlayerAIMP::Initialize()
 {
 	m_Window = FindWindow(L"AIMP2_RemoteInfo", L"AIMP2_RemoteInfo");
@@ -118,7 +93,7 @@ bool CPlayerAIMP::CheckActive()
 			m_WinampWindow = NULL;
 			if (m_FileMap) UnmapViewOfFile(m_FileMap);
 			if (m_FileMapHandle) CloseHandle(m_FileMapHandle);
-			ClearInfo();
+			ClearData();
 			return false;
 		}
 
@@ -162,22 +137,16 @@ void CPlayerAIMP::UpdateData()
 		return;
 	}
 
-	m_State = (PLAYERSTATE)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_Player);
+	m_State = (PLAYSTATE)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_Player);
 	if (m_State == PLAYER_STOPPED)
 	{
 		if (oldFileSize != 0)
 		{
 			oldFileSize = 0;
 			oldTitleLen = 0;
-			ClearInfo();
+			ClearData();
 		}
 		return;
-	}
-
-	if (m_TrackChanged)
-	{
-		ExecuteTrackChangeAction();
-		m_TrackChanged = false;
 	}
 
 	m_Position = SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_POS);
@@ -217,37 +186,12 @@ void CPlayerAIMP::UpdateData()
 		if (filepath != m_FilePath)
 		{
 			m_FilePath = filepath;
-			m_TrackChanged = true;
+			++m_TrackCount;
 
+			// Find cover if needed
 			if (m_HasCoverMeasure)
 			{
-				if (GetCachedArt())
-				{
-					// Cover is in cache, lets use the that
-					return;
-				}
-
-				TagLib::FileRef fr(m_FilePath.c_str());
-				if (!fr.isNull() && fr.tag() && GetEmbeddedArt(fr))
-				{
-					// Embedded art found
-					return;
-				}
-
-				// Get rid of the name and extension from filename
-				std::wstring trackFolder = m_FilePath;
-				std::wstring::size_type pos = trackFolder.find_last_of(L'\\');
-				if (pos == std::wstring::npos) return;
-				trackFolder.resize(++pos);
-
-				if (GetLocalArt(trackFolder, L"cover") || GetLocalArt(trackFolder, L"folder"))
-				{
-					// Local art found
-					return;
-				}
-
-				// Nothing found
-				m_CoverPath.clear();
+				GetCover(m_Artist, m_Title, m_FilePath, m_CoverPath);
 			}
 		}
 	}
@@ -261,10 +205,7 @@ void CPlayerAIMP::UpdateData()
 */
 void CPlayerAIMP::Pause()
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PAUSE);
-	}
+	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PAUSE);
 }
 
 /*
@@ -275,21 +216,7 @@ void CPlayerAIMP::Pause()
 */
 void CPlayerAIMP::Play()
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PLAY);
-	}
-}
-
-/*
-** PlayPause
-**
-** Handles the PlayPause bang.
-**
-*/
-void CPlayerAIMP::PlayPause()
-{
-	(m_State == PLAYER_STOPPED) ? Play() : Pause();
+	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PLAY);
 }
 
 /*
@@ -300,10 +227,7 @@ void CPlayerAIMP::PlayPause()
 */
 void CPlayerAIMP::Stop()
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_STOP);
-	}
+	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_STOP);
 }
 
 /*
@@ -314,10 +238,7 @@ void CPlayerAIMP::Stop()
 */
 void CPlayerAIMP::Next() 
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_NEXT);
-	}
+	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_NEXT);
 }
 
 /*
@@ -328,10 +249,7 @@ void CPlayerAIMP::Next()
 */
 void CPlayerAIMP::Previous()
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PREV);
-	}
+	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PREV);
 }
 
 /*
@@ -354,7 +272,7 @@ void CPlayerAIMP::SetPosition(int position)
 void CPlayerAIMP::SetRating(int rating)
 {
 	// Set rating through the AIMP Winamp API
-	if (m_WinampWindow && (m_State == PLAYER_PLAYING || m_State == PLAYER_PAUSED))
+	if (m_State != PLAYER_STOPPED)
 	{
 		if (rating < 0)
 		{
@@ -389,10 +307,7 @@ void CPlayerAIMP::SetVolume(int volume)
 */
 void CPlayerAIMP::ClosePlayer()
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_CLOSE, 0, 0);
-	}
+	SendMessage(m_Window, WM_CLOSE, 0, 0);
 }
 
 /*
@@ -401,9 +316,9 @@ void CPlayerAIMP::ClosePlayer()
 ** Handles the OpenPlayer bang.
 **
 */
-void CPlayerAIMP::OpenPlayer()
+void CPlayerAIMP::OpenPlayer(std::wstring& path)
 {
-	if (m_PlayerPath.empty())
+	if (path.empty())
 	{
 		// Check for AIMP2 first
 		DWORD size = 512;
@@ -427,7 +342,7 @@ void CPlayerAIMP::OpenPlayer()
 			if (type == REG_SZ)
 			{
 				ShellExecute(NULL, L"open", data, NULL, NULL, SW_SHOW);
-				m_PlayerPath = data;
+				path = data;
 			}
 		}
 		else
@@ -449,11 +364,10 @@ void CPlayerAIMP::OpenPlayer()
 			{
 				if (type == REG_SZ)
 				{
-					std::wstring path = data;
+					path = data;
 					path.resize(path.find_last_of(L'\\') + 1);
 					path += L"AIMP3.exe";
 					ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
-					m_PlayerPath = path;
 				}
 			}
 		}
@@ -463,17 +377,6 @@ void CPlayerAIMP::OpenPlayer()
 	}
 	else
 	{
-		ShellExecute(NULL, L"open", m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
+		ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
 	}
-}
-
-/*
-** TogglePlayer
-**
-** Handles the TogglePlayer bang.
-**
-*/
-void CPlayerAIMP::TogglePlayer()
-{
-	m_Window ? ClosePlayer() : OpenPlayer();
 }

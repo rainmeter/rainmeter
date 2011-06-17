@@ -30,7 +30,6 @@ extern CPlayer* g_Spotify;
 CPlayerSpotify::CPlayerSpotify() : CPlayer(),
 	m_Window()
 {
-	GetWindow();
 }
 
 /*
@@ -41,32 +40,33 @@ CPlayerSpotify::CPlayerSpotify() : CPlayer(),
 */
 CPlayerSpotify::~CPlayerSpotify()
 {
+	g_Spotify = NULL;
 }
 
 /*
-** AddInstance
+** CheckWindow
 **
-** Called during initialization of each measure.
-**
-*/
-void CPlayerSpotify::AddInstance(MEASURETYPE type)
-{
-	++m_InstanceCount;
-}
-
-/*
-** RemoveInstance
-**
-** Called during destruction of each measure.
+** Try to find Spotify periodically.
 **
 */
-void CPlayerSpotify::RemoveInstance()
+bool CPlayerSpotify::CheckWindow()
 {
-	if (--m_InstanceCount == 0)
+	static DWORD oldTime = 0;
+	DWORD time = GetTickCount();
+		
+	// Try to find Spotify window every 5 seconds
+	if (time - oldTime > 5000)
 	{
-		g_Spotify = NULL;
-		delete this;
+		oldTime = time;
+
+		m_Window = FindWindow(L"SpotifyMainWindow", NULL);
+		if (m_Window)
+		{
+			m_Initialized = true;
+		}
 	}
+
+	return m_Initialized;
 }
 
 /*
@@ -77,59 +77,52 @@ void CPlayerSpotify::RemoveInstance()
 */
 void CPlayerSpotify::UpdateData()
 {
-	if (GetWindow())
+	if (m_Initialized || CheckWindow())
 	{
-		if (m_TrackChanged)
-		{
-			ExecuteTrackChangeAction();
-			m_TrackChanged = false;
-		}
-
-		// Get window text
+		// Parse title and artist from window title
 		WCHAR buffer[256];
-		buffer[0] = 0;
-		GetWindowText(m_Window, buffer, 256);
-		std::wstring title = buffer;
-
-		title.erase(0, 10);	// Get rid of "Spotify - "
-		std::wstring::size_type pos = title.find(L" – ");
-		if (pos != std::wstring::npos)
+		if (GetWindowText(m_Window, buffer, 256) > 10)
 		{
-			std::wstring artist = title.substr(0, pos);
-			std::wstring track = title.substr(pos + 3);
+			std::wstring title = buffer;
+			title.erase(0, 10);	// Get rid of "Spotify - "
 
-			if (track != m_Title && artist != m_Artist)
+			std::wstring::size_type pos = title.find(L" – ");
+			if (pos != std::wstring::npos)
 			{
-				m_Title = track;
-				m_Artist = artist;
-				m_TrackChanged = true;
+				m_State = PLAYER_PLAYING;
+				std::wstring artist = title.substr(0, pos);
+				std::wstring track = title.substr(pos + 3);
+
+				if (track != m_Title && artist != m_Artist)
+				{
+					m_Title = track;
+					m_Artist = artist;
+					++m_TrackCount;
+				}
+				return;
 			}
-			return;
+		}
+		else if (IsWindow(m_Window))
+		{
+			m_State = PLAYER_PAUSED;
+		}
+		else
+		{
+			ClearData();
+			m_Initialized = false;
 		}
 	}
-
-	ClearInfo();
-}
-
-bool CPlayerSpotify::GetWindow()
-{
-	m_Window = FindWindow(L"SpotifyMainWindow", NULL);
-
-	return m_Window ? true : false;
 }
 
 /*
-** PlayPause
+** Play
 **
-** Handles the PlayPause bang.
+** Handles the Play bang.
 **
 */
-void CPlayerSpotify::PlayPause()
+void CPlayerSpotify::Play()
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_PLAYPAUSE);
-	}
+	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_PLAYPAUSE);
 }
 
 /*
@@ -140,10 +133,7 @@ void CPlayerSpotify::PlayPause()
 */
 void CPlayerSpotify::Stop() 
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_STOP);
-	}
+	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_STOP);
 }
 
 /*
@@ -154,10 +144,7 @@ void CPlayerSpotify::Stop()
 */
 void CPlayerSpotify::Next() 
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_NEXT);
-	}
+	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_NEXT);
 }
 
 /*
@@ -168,10 +155,7 @@ void CPlayerSpotify::Next()
 */
 void CPlayerSpotify::Previous() 
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_PREV);
-	}
+	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_PREV);
 }
 
 
@@ -183,17 +167,14 @@ void CPlayerSpotify::Previous()
 */
 void CPlayerSpotify::ClosePlayer()
 {
-	if (m_Window)
+	// A little harsh...
+	DWORD pID;
+	GetWindowThreadProcessId(m_Window, &pID);
+	HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pID);
+	if (hProcess)
 	{
-		// A little harsh...
-		DWORD pID;
-		GetWindowThreadProcessId(m_Window, &pID);
-		HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pID);
-		if (hProcess)
-		{
-			TerminateProcess(hProcess, 0);
-			CloseHandle(hProcess);
-		}
+		TerminateProcess(hProcess, 0);
+		CloseHandle(hProcess);
 	}
 }
 
@@ -203,11 +184,11 @@ void CPlayerSpotify::ClosePlayer()
 ** Handles the OpenPlayer bang.
 **
 */
-void CPlayerSpotify::OpenPlayer()
+void CPlayerSpotify::OpenPlayer(std::wstring& path)
 {
-	if (!m_Window)
+	if (!m_Initialized)
 	{
-		if (m_PlayerPath.empty())
+		if (path.empty())
 		{
 			// Gotta figure out where Winamp is located at
 			HKEY hKey;
@@ -230,11 +211,10 @@ void CPlayerSpotify::OpenPlayer()
 			{
 				if (type == REG_SZ)
 				{
-					std::wstring path = data;
+					path = data;
 					path.erase(0, 1);				// Get rid of the leading quote
 					path.resize(path.length() - 3);	// And the ",0 at the end
 					ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
-					m_PlayerPath = path;
 				}
 			}
 
@@ -243,7 +223,7 @@ void CPlayerSpotify::OpenPlayer()
 		}
 		else
 		{
-			ShellExecute(NULL, L"open", m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
+			ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
 		}
 	}
 	else
@@ -252,15 +232,4 @@ void CPlayerSpotify::OpenPlayer()
 		ShowWindow(m_Window, SW_SHOWNORMAL);
 		BringWindowToTop(m_Window);
 	}
-}
-
-/*
-** TogglePlayer
-**
-** Handles the TogglePlayer bang.
-**
-*/
-void CPlayerSpotify::TogglePlayer()
-{
-	m_Window ? ClosePlayer() : OpenPlayer();
 }

@@ -34,10 +34,8 @@ extern CPlayer* g_Winamp;
 CPlayerWinamp::CPlayerWinamp(WINAMPTYPE type) : CPlayer(),
 	m_WinampType(type),
 	m_UseUnicodeAPI(false),
-	m_HasCoverMeasure(false),
 	m_Window()
 {
-	Initialize();
 }
 
 /*
@@ -48,102 +46,43 @@ CPlayerWinamp::CPlayerWinamp(WINAMPTYPE type) : CPlayer(),
 */
 CPlayerWinamp::~CPlayerWinamp()
 {
+	g_Winamp = NULL;
 	if (m_WinampHandle) CloseHandle(m_WinampHandle);
 }
 
 /*
-** AddInstance
+** CheckWindow
 **
-** Called during initialization of each measure.
-**
-*/
-void CPlayerWinamp::AddInstance(MEASURETYPE type)
-{
-	++m_InstanceCount;
-
-	if (type == MEASURE_COVER)
-	{
-		m_HasCoverMeasure = true;
-	}
-}
-
-/*
-** RemoveInstance
-**
-** Called during destruction of each measure.
+** Try to find Winamp periodically.
 **
 */
-void CPlayerWinamp::RemoveInstance()
+bool CPlayerWinamp::CheckWindow()
 {
-	if (--m_InstanceCount == 0)
-	{
-		g_Winamp = NULL;
-		delete this;
-	}
-}
-
-/*
-** Initialize
-**
-** Get things ready with Winamp.
-**
-*/
-bool CPlayerWinamp::Initialize()
-{
-	m_Window = FindWindow(L"Winamp v1.x", NULL);
-
-	if (m_Window)
-	{
-		DWORD pID;
-		GetWindowThreadProcessId(m_Window, &pID);
-		m_WinampHandle = OpenProcess(PROCESS_VM_READ, false, pID);
-
-		if (m_WinampHandle)
-		{
-			m_WinampAddress = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_FILENAME);
-			m_UseUnicodeAPI = m_WinampAddress ? true : false;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-/*
-** CheckActive
-**
-** Check if Winamp is active.
-**
-*/
-bool CPlayerWinamp::CheckActive()
-{
-	if (m_Window)
-	{
-		if (!IsWindow(m_Window))
-		{
-			m_Window = NULL;
-			CloseHandle(m_WinampHandle);
-			ClearInfo();
-
-			return false;
-		}
+	static DWORD oldTime = 0;
+	DWORD time = GetTickCount();
 		
-		return true;
-	}
-	else
+	// Try to find Winamp window every 5 seconds
+	if (time - oldTime > 5000)
 	{
-		static DWORD oldTime = 0;
-		DWORD time = GetTickCount();
-		
-		// Try to find Winamp window every 5 seconds
-		if (time - oldTime > 5000)
-		{
-			oldTime = time;
-			return Initialize();
-		}
+		oldTime = time;
 
-		return false;
+		m_Window = FindWindow(L"Winamp v1.x", NULL);
+		if (m_Window)
+		{
+			DWORD pID;
+			GetWindowThreadProcessId(m_Window, &pID);
+			m_WinampHandle = OpenProcess(PROCESS_VM_READ, false, pID);
+
+			if (m_WinampHandle)
+			{
+				m_WinampAddress = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_FILENAME);
+				m_UseUnicodeAPI = m_WinampAddress ? true : false;
+				m_Initialized = true;
+			}
+		}
 	}
+
+	return m_Initialized;
 }
 
 /*
@@ -154,181 +93,175 @@ bool CPlayerWinamp::CheckActive()
 */
 void CPlayerWinamp::UpdateData()
 {
-	if (!CheckActive()) return; // Make sure Winamp is running
-
-	if (m_TrackChanged)
+	if (m_Initialized || CheckWindow())
 	{
-		ExecuteTrackChangeAction();
-		m_TrackChanged = false;
-	}
-
-	int playing = SendMessage(m_Window, WM_WA_IPC, 0, IPC_ISPLAYING);
-	if (playing == 0)
-	{
-		if (!m_FilePath.empty())
+		int playing = SendMessage(m_Window, WM_WA_IPC, 0, IPC_ISPLAYING);
+		if (playing == 0)
 		{
-			ClearInfo();
-		}
-		return;	// Don't continue if stopped
-	}
-	else
-	{
-		m_State = (playing == 1) ? PLAYER_PLAYING : PLAYER_PAUSED;
-		m_Position = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETOUTPUTTIME) / 1000; // Returns ms, make seconds
+			// Make sure Winamp is still active
+			if (!IsWindow(m_Window))
+			{
+				m_Initialized = false;
+				if (m_WinampHandle) CloseHandle(m_WinampHandle);
+			}
 
-		float volume = SendMessage(m_Window, WM_WA_IPC, -666, IPC_SETVOLUME);
-		volume /= 2.55f;
-		m_Volume = (UINT)volume;
-	}
+			if (!m_FilePath.empty())
+			{
+				ClearData();
+			}
 
-	BOOL ret;
-	WCHAR wBuffer[MAX_PATH];
-	char cBuffer[MAX_PATH];
-
-	if (m_UseUnicodeAPI)
-	{
-		ret = ReadProcessMemory(m_WinampHandle, m_WinampAddress, &wBuffer, MAX_PATH, NULL);
-	}
-	else
-	{
-		// MediaMonkey doesn't support wide IPC messages
-		int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
-		LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTFILE);
-		ret = ReadProcessMemory(m_WinampHandle, address, &cBuffer, MAX_PATH, NULL);
-		mbstowcs(wBuffer, cBuffer, MAX_PATH);
-	}
-
-	if (!ret)
-	{
-		LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Failed to read Winamp memory (file).");
-		return;
-	}
-
-	if (wcscmp(wBuffer, m_FilePath.c_str()) != 0)
-	{
-		m_TrackChanged = true;
-		m_FilePath = wBuffer;
-		m_Rating = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETRATING);
-		m_Duration = SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
-
-		TagLib::FileRef fr(wBuffer);
-		if (!fr.isNull() && fr.tag())
-		{
-			TagLib::Tag* tag = fr.tag();
-			m_Artist = tag->artist().toWString();
-			m_Album = tag->album().toWString();
-			m_Title = tag->title().toWString();
+			// Don't continue if Winamp has quit or is stopped
+			return;
 		}
 		else
 		{
-			// TagLib couldn't parse the file, try title instead
-			if (m_UseUnicodeAPI)
-			{
-				LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_TITLE);
-				ret = ReadProcessMemory(m_WinampHandle, address, &wBuffer, MAX_PATH, NULL);
-			}
-			else
-			{
-				int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
-				LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTTITLE);
-				ReadProcessMemory(m_WinampHandle, m_WinampAddress, &cBuffer, MAX_PATH, NULL);
-				ret = mbstowcs(wBuffer, cBuffer, MAX_PATH);
-			}
-
-			if (!ret)
-			{
-				LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Failed to read Winamp memory (title).");
-				return;
-			}
-
-			std::wstring title = wBuffer;
-			std::wstring::size_type pos = title.find(L". ");
-
-			if (pos != std::wstring::npos && pos < 5)
-			{
-				pos += 2; // Skip ". "
-				title.erase(0, pos);
-			}
-
-			pos = title.find(L" - ");
-			if (pos != std::wstring::npos)
-			{
-				m_Title = title.substr(0, pos);
-				pos += 3;	// Skip " - "
-				m_Artist = title.substr(pos);
-				m_Album.clear();
-			}
-			else
-			{
-				ClearInfo();
-				return;
-			}
+			m_State = (playing == 1) ? PLAYER_PLAYING : PLAYER_PAUSED;
+			m_Position = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETOUTPUTTIME) / 1000;		// ms to secs
+			m_Volume = (SendMessage(m_Window, WM_WA_IPC, -666, IPC_SETVOLUME) * 100) / 255;	// 0 - 255 to 0 - 100
 		}
 
-		if (m_HasCoverMeasure)
+		BOOL ret;
+		WCHAR wBuffer[MAX_PATH];
+		char cBuffer[MAX_PATH];
+
+		if (m_UseUnicodeAPI)
 		{
-			if (GetCachedArt() || GetEmbeddedArt(fr))
+			ret = ReadProcessMemory(m_WinampHandle, m_WinampAddress, &wBuffer, MAX_PATH, NULL);
+		}
+		else
+		{
+			// MediaMonkey doesn't support wide IPC messages
+			int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
+			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTFILE);
+			ret = ReadProcessMemory(m_WinampHandle, address, &cBuffer, MAX_PATH, NULL);
+			mbstowcs(wBuffer, cBuffer, MAX_PATH);
+		}
+
+		if (!ret)
+		{
+			LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Failed to read Winamp memory (file).");
+			return;
+		}
+
+		if (wcscmp(wBuffer, m_FilePath.c_str()) != 0)
+		{
+			++m_TrackCount;
+			m_FilePath = wBuffer;
+			m_Rating = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETRATING);
+			m_Duration = SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
+
+			TagLib::FileRef fr(wBuffer);
+			if (!fr.isNull() && fr.tag())
 			{
-				// Art found in cache or embedded in file
-				return;
+				TagLib::Tag* tag = fr.tag();
+				m_Artist = tag->artist().toWString();
+				m_Album = tag->album().toWString();
+				m_Title = tag->title().toWString();
 			}
-
-			// Get rid of the name and extension from filename
-			std::wstring trackFolder = m_FilePath;
-			std::wstring::size_type pos = trackFolder.find_last_of(L'\\');
-			if (pos == std::wstring::npos) return;
-			trackFolder.resize(++pos);
-
-			if (!m_Album.empty())
+			else
 			{
-				std::wstring file = m_Album;
-				std::wstring::size_type end = file.length();
-				for (pos = 0; pos < end; ++pos)
+				// TagLib couldn't parse the file, try title instead
+				if (m_UseUnicodeAPI)
 				{
-					// Replace reserved chars according to Winamp specs
-					switch (file[pos])
-					{
-					case L'?':
-					case L'*':
-					case L'|':
-						file[pos] = L'_';
-						break;
-
-					case L'/':
-					case L'\\':
-					case L':':
-						file[pos] = L'-';
-						break;
-
-					case L'\"':
-						file[pos] = L'\'';
-						break;
-
-					case L'<':
-						file[pos] = L'(';
-						break;
-
-					case L'>':
-						file[pos] = L')';
-						break;
-					}
+					LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_TITLE);
+					ret = ReadProcessMemory(m_WinampHandle, address, &wBuffer, MAX_PATH, NULL);
+				}
+				else
+				{
+					int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
+					LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTTITLE);
+					ReadProcessMemory(m_WinampHandle, m_WinampAddress, &cBuffer, MAX_PATH, NULL);
+					ret = mbstowcs(wBuffer, cBuffer, MAX_PATH);
 				}
 
-				if (GetLocalArt(trackFolder, file))
+				if (!ret)
 				{
-					// %album% art file found
+					LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Failed to read Winamp memory (title).");
+					return;
+				}
+
+				std::wstring title = wBuffer;
+				std::wstring::size_type pos = title.find(L". ");
+
+				if (pos != std::wstring::npos && pos < 5)
+				{
+					pos += 2; // Skip ". "
+					title.erase(0, pos);
+				}
+
+				pos = title.find(L" - ");
+				if (pos != std::wstring::npos)
+				{
+					m_Title = title.substr(0, pos);
+					pos += 3;	// Skip " - "
+					m_Artist = title.substr(pos);
+					m_Album.clear();
+				}
+				else
+				{
+					ClearData();
 					return;
 				}
 			}
 
-			if (GetLocalArt(trackFolder, L"cover") || GetLocalArt(trackFolder, L"folder"))
+			// Find cover if needed
+			if (m_HasCoverMeasure &&
+				!GetCachedCover(m_Artist, m_Title, m_CoverPath) &&
+				!GetEmbeddedCover(fr, m_CoverPath))
 			{
-				// Local art found
-				return;
-			}
+				std::wstring trackFolder = GetFileFolder(m_FilePath);
 
-			// Nothing found
-			m_CoverPath.clear();
+				if (!m_Album.empty())
+				{
+					// Winamp stores covers usually as %album%.jpg
+					std::wstring file = m_Album;
+					std::wstring::size_type end = file.length();
+					for (std::wstring::size_type pos = 0; pos < end; ++pos)
+					{
+						// Replace reserved chars according to Winamp specs
+						switch (file[pos])
+						{
+						case L'?':
+						case L'*':
+						case L'|':
+							file[pos] = L'_';
+							break;
+
+						case L'/':
+						case L'\\':
+						case L':':
+							file[pos] = L'-';
+							break;
+
+						case L'\"':
+							file[pos] = L'\'';
+							break;
+
+						case L'<':
+							file[pos] = L'(';
+							break;
+
+						case L'>':
+							file[pos] = L')';
+							break;
+						}
+					}
+
+					if (GetLocalCover(file, trackFolder, m_CoverPath))
+					{
+						// %album% art file found
+						return;
+					}
+				}
+
+				if (!GetLocalCover(L"cover", trackFolder, m_CoverPath) &&
+					!GetLocalCover(L"folder", trackFolder, m_CoverPath))
+				{
+					// Nothing found
+					m_CoverPath.clear();
+				}
+
+			}
 		}
 	}
 }
@@ -341,10 +274,7 @@ void CPlayerWinamp::UpdateData()
 */
 void CPlayerWinamp::Pause()
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_COMMAND, WINAMP_PAUSE, 0);
-	}
+	SendMessage(m_Window, WM_COMMAND, WINAMP_PAUSE, 0);
 }
 
 /*
@@ -355,21 +285,7 @@ void CPlayerWinamp::Pause()
 */
 void CPlayerWinamp::Play()
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_COMMAND, WINAMP_PLAY, 0);
-	}
-}
-
-/*
-** PlayPause
-**
-** Handles the PlayPause bang.
-**
-*/
-void CPlayerWinamp::PlayPause()
-{
-	(m_State == PLAYER_PLAYING) ? Pause() : Play();
+	SendMessage(m_Window, WM_COMMAND, WINAMP_PLAY, 0);
 }
 
 /*
@@ -380,10 +296,7 @@ void CPlayerWinamp::PlayPause()
 */
 void CPlayerWinamp::Stop()
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_COMMAND, WINAMP_STOP, 0);
-	}
+	SendMessage(m_Window, WM_COMMAND, WINAMP_STOP, 0);
 }
 
 /*
@@ -394,10 +307,7 @@ void CPlayerWinamp::Stop()
 */
 void CPlayerWinamp::Next() 
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_COMMAND, WINAMP_FASTFWD, 0);
-	}
+	SendMessage(m_Window, WM_COMMAND, WINAMP_FASTFWD, 0);
 }
 
 /*
@@ -408,10 +318,7 @@ void CPlayerWinamp::Next()
 */
 void CPlayerWinamp::Previous()
 {
-	if (m_Window)
-	{
-		SendMessage(m_Window, WM_COMMAND, WINAMP_REWIND, 0);
-	}
+	SendMessage(m_Window, WM_COMMAND, WINAMP_REWIND, 0);
 }
 
 /*
@@ -422,11 +329,8 @@ void CPlayerWinamp::Previous()
 */
 void CPlayerWinamp::SetPosition(int position)
 {
-	if (m_Window)
-	{
-		position *= 1000; // To milliseconds
-		SendMessage(m_Window, WM_WA_IPC, position, IPC_JUMPTOTIME);
-	}
+	position *= 1000; // To milliseconds
+	SendMessage(m_Window, WM_WA_IPC, position, IPC_JUMPTOTIME);
 }
 
 /*
@@ -437,20 +341,17 @@ void CPlayerWinamp::SetPosition(int position)
 */
 void CPlayerWinamp::SetRating(int rating)
 {
-	if (m_Window && (m_State != PLAYER_STOPPED))
+	if (rating < 0)
 	{
-		if (rating < 0)
-		{
-			rating = 0;
-		}
-		else if (rating > 5)
-		{
-			rating = 5;
-		}
-
-		SendMessage(m_Window, WM_WA_IPC, rating, IPC_SETRATING);
-		m_Rating = rating;
+		rating = 0;
 	}
+	else if (rating > 5)
+	{
+		rating = 5;
+	}
+
+	SendMessage(m_Window, WM_WA_IPC, rating, IPC_SETRATING);
+	m_Rating = rating;
 }
 
 /*
@@ -461,25 +362,20 @@ void CPlayerWinamp::SetRating(int rating)
 */
 void CPlayerWinamp::SetVolume(int volume)
 {
-	if (m_Window)
+	++volume;	// For proper scaling
+	if (volume < 0)
 	{
-		++volume;	// For proper scaling
-		if (volume < 0)
-		{
-			volume = 0;
-		}
-		else if (volume > 100)
-		{
-			volume = 100;
-		}
-
-		// Winamp accepts volume in 0 - 255 range
-		float fVolume = (float)volume;
-		fVolume *= 2.55f;
-		volume = (UINT)fVolume;
-
-		SendMessage(m_Window, WM_WA_IPC, volume, IPC_SETVOLUME);
+		volume = 0;
 	}
+	else if (volume > 100)
+	{
+		volume = 100;
+	}
+
+	// Winamp accepts volume in 0 - 255 range
+	volume *= 255;
+	volume /= 100;
+	SendMessage(m_Window, WM_WA_IPC, volume, IPC_SETVOLUME);
 }
 
 /*
@@ -490,19 +386,16 @@ void CPlayerWinamp::SetVolume(int volume)
 */
 void CPlayerWinamp::ClosePlayer()
 {
-	if (m_Window)
+	if (m_WinampType == WA_WINAMP)
 	{
-		if (m_WinampType == WA_WINAMP)
+		SendMessage(m_Window, WM_CLOSE, 0, 0);
+	}
+	else // if (m_WinampType == WA_MEDIAMONKEY)
+	{
+		HWND wnd = FindWindow(L"TFMainWindow", L"MediaMonkey");
+		if (wnd)
 		{
-			SendMessage(m_Window, WM_CLOSE, 0, 0);
-		}
-		else // if (m_WinampType == WA_MEDIAMONKEY)
-		{
-			HWND wnd = FindWindow(L"TFMainWindow", L"MediaMonkey");
-			if (wnd)
-			{
-				SendMessage(wnd, WM_CLOSE, 0, 0);
-			}
+			SendMessage(wnd, WM_CLOSE, 0, 0);
 		}
 	}
 }
@@ -513,15 +406,15 @@ void CPlayerWinamp::ClosePlayer()
 ** Handles the OpenPlayer bang.
 **
 */
-void CPlayerWinamp::OpenPlayer()
+void CPlayerWinamp::OpenPlayer(std::wstring& path)
 {
 	if (m_WinampType == WA_WINAMP)
 	{
-		ShellExecute(NULL, L"open", m_PlayerPath.empty() ? L"winamp.exe" : m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
+		ShellExecute(NULL, L"open", path.empty() ? L"winamp.exe" : path.c_str(), NULL, NULL, SW_SHOW);
 	}
 	else // if (m_WinampType == WA_MEDIAMONKEY)
 	{
-		if (m_PlayerPath.empty())
+		if (path.empty())
 		{
 			// Gotta figure out where Winamp is located at
 			HKEY hKey;
@@ -545,7 +438,7 @@ void CPlayerWinamp::OpenPlayer()
 				if (type == REG_SZ)
 				{
 					ShellExecute(NULL, L"open", data, NULL, NULL, SW_SHOW);
-					m_PlayerPath = data;
+					path = data;
 				}
 			}
 
@@ -554,18 +447,7 @@ void CPlayerWinamp::OpenPlayer()
 		}
 		else
 		{
-			ShellExecute(NULL, L"open", m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
+			ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
 		}
 	}
-}
-
-/*
-** TogglePlayer
-**
-** Handles the TogglePlayer bang.
-**
-*/
-void CPlayerWinamp::TogglePlayer()
-{
-	m_Window ? ClosePlayer() : OpenPlayer();
 }

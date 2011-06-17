@@ -33,7 +33,6 @@ extern std::wstring g_SettingsFile;
 **
 */
 CPlayerCAD::CPlayerCAD() : CPlayer(),
-	m_HasCoverMeasure(false),
 	m_Window(),
 	m_PlayerWindow()
 {
@@ -48,38 +47,8 @@ CPlayerCAD::CPlayerCAD() : CPlayer(),
 */
 CPlayerCAD::~CPlayerCAD()
 {
+	g_CAD = NULL;
 	Uninitialize();
-}
-
-/*
-** AddInstance
-**
-** Called during initialization of each measure.
-**
-*/
-void CPlayerCAD::AddInstance(MEASURETYPE type)
-{
-	++m_InstanceCount;
-
-	if (type == MEASURE_COVER)
-	{
-		m_HasCoverMeasure = true;
-	}
-}
-
-/*
-** RemoveInstance
-**
-** Called during destruction of each measure.
-**
-*/
-void CPlayerCAD::RemoveInstance()
-{
-	if (--m_InstanceCount == 0)
-	{
-		g_CAD = NULL;
-		delete this;
-	}
 }
 
 /*
@@ -145,7 +114,7 @@ void CPlayerCAD::Initialize()
 	if (m_PlayerWindow)
 	{
 		SendMessage(m_PlayerWindow, WM_USER, (WPARAM)m_Window, IPC_SET_CALLBACK_HWND);
-		m_State = (PLAYERSTATE)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_PLAYER_STATE);
+		m_State = (PLAYSTATE)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_PLAYER_STATE);
 
 		if (m_State != PLAYER_STOPPED)
 		{
@@ -195,16 +164,16 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			break;
 
 		case IPC_PLAYER_STATE_CHANGED_NOTIFICATION:
-			p->m_State = (PLAYERSTATE)wParam;
+			p->m_State = (PLAYSTATE)wParam;
 			if (p->m_State == PLAYER_STOPPED)
 			{
-				p->ClearInfo();
+				p->ClearData();
 			}
 			break;
 
 		case IPC_SHUTDOWN_NOTIFICATION:
 			p->m_PlayerWindow = NULL;
-			p->ClearInfo();
+			p->ClearData();
 			break;
 		}
 		return 0;
@@ -214,7 +183,9 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			PCOPYDATASTRUCT cds = (PCOPYDATASTRUCT)lParam;
 			if (cds->dwData == IPC_CURRENT_TRACK_INFO)
 			{
-				p->m_TrackChanged = true;
+				// TODO: Sent on track update?
+				++p->m_TrackCount;
+
 				std::wstring data = (WCHAR*)cds->lpData;
 				std::wstring::size_type len = data.find_first_of(L'\t');
 				p->m_Title.assign(data, 0, len);
@@ -282,7 +253,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 
 					if (p->m_PlayerWindow)
 					{
-						p->m_State = (PLAYERSTATE)SendMessage(p->m_PlayerWindow, WM_USER, 0, IPC_GET_PLAYER_STATE);
+						p->m_State = (PLAYSTATE)SendMessage(p->m_PlayerWindow, WM_USER, 0, IPC_GET_PLAYER_STATE);
 
 						if (p->m_State != PLAYER_STOPPED)
 						{
@@ -311,12 +282,6 @@ void CPlayerCAD::UpdateData()
 	{
 		m_Position = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_POSITION);
 		m_Volume = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_VOLUME);
-
-		if (m_TrackChanged)
-		{
-			ExecuteTrackChangeAction();
-			m_TrackChanged = false;
-		}
 	}
 }
 
@@ -328,10 +293,7 @@ void CPlayerCAD::UpdateData()
 */
 void CPlayerCAD::Pause()
 {
-	if (m_PlayerWindow)
-	{
-		SendMessage(m_PlayerWindow, WM_USER, 0, IPC_FORCEPAUSE);
-	}
+	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_FORCEPAUSE);
 }
 
 /*
@@ -342,25 +304,7 @@ void CPlayerCAD::Pause()
 */
 void CPlayerCAD::Play()
 {
-	if (m_PlayerWindow)
-	{
-		SendMessage(m_PlayerWindow, WM_USER, 0, IPC_PLAY);
-	}
-
-}
-
-/*
-** PlayPause
-**
-** Handles the PlayPause bang.
-**
-*/
-void CPlayerCAD::PlayPause()
-{
-	if (m_PlayerWindow)
-	{
-		SendMessage(m_PlayerWindow, WM_USER, 0, IPC_PLAYPAUSE);
-	}
+	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_PLAY);
 }
 
 /*
@@ -371,10 +315,7 @@ void CPlayerCAD::PlayPause()
 */
 void CPlayerCAD::Stop() 
 {
-	if (m_PlayerWindow)
-	{
-		SendMessage(m_PlayerWindow, WM_USER, 0, IPC_STOP);
-	}
+	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_STOP);
 }
 
 /*
@@ -385,10 +326,7 @@ void CPlayerCAD::Stop()
 */
 void CPlayerCAD::Next() 
 {
-	if (m_PlayerWindow)
-	{
-		SendMessage(m_PlayerWindow, WM_USER, 0, IPC_NEXT);
-	}
+	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_NEXT);
 }
 
 /*
@@ -399,10 +337,7 @@ void CPlayerCAD::Next()
 */
 void CPlayerCAD::Previous() 
 {
-	if (m_PlayerWindow)
-	{
-		SendMessage(m_PlayerWindow, WM_USER, 0, IPC_PREVIOUS);
-	}
+	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_PREVIOUS);
 }
 
 /*
@@ -424,12 +359,9 @@ void CPlayerCAD::SetPosition(int position)
 */
 void CPlayerCAD::SetRating(int rating) 
 {
-	if (m_PlayerWindow)
-	{
-		m_Rating = rating;
-		rating *= 2; // From 0 - 5 to 0 - 10
-		SendMessage(m_PlayerWindow, WM_USER, rating, IPC_RATING_CHANGED_NOTIFICATION);
-	}
+	m_Rating = rating;
+	rating *= 2; // From 0 - 5 to 0 - 10
+	SendMessage(m_PlayerWindow, WM_USER, rating, IPC_RATING_CHANGED_NOTIFICATION);
 }
 
 /*
@@ -440,18 +372,15 @@ void CPlayerCAD::SetRating(int rating)
 */
 void CPlayerCAD::SetVolume(int volume) 
 {
-	if (m_PlayerWindow)
+	if (volume < 0)
 	{
-		if (volume < 0)
-		{
-			volume = 0;
-		}
-		else if (volume > 100)
-		{
-			volume = 100;
-		}
-		SendMessage(m_PlayerWindow, WM_USER, volume, IPC_SET_VOLUME);
+		volume = 0;
 	}
+	else if (volume > 100)
+	{
+		volume = 100;
+	}
+	SendMessage(m_PlayerWindow, WM_USER, volume, IPC_SET_VOLUME);
 }
 
 /*
@@ -464,7 +393,7 @@ void CPlayerCAD::ClosePlayer()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_CLOSE_PLAYER);
 	m_PlayerWindow = NULL;
-	ClearInfo();
+	ClearData();
 }
 
 /*
@@ -473,21 +402,14 @@ void CPlayerCAD::ClosePlayer()
 ** Handles the OpenPlayer bang.
 **
 */
-void CPlayerCAD::OpenPlayer()
+void CPlayerCAD::OpenPlayer(std::wstring& path)
 {
-	if (!m_PlayerPath.empty())
+	if (!path.empty())
+	{
+		ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
+	}
+	else if (!m_PlayerPath.empty())
 	{
 		ShellExecute(NULL, L"open", m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
 	}
-}
-
-/*
-** TogglePlayer
-**
-** Handles the TogglePlayer bang.
-**
-*/
-void CPlayerCAD::TogglePlayer()
-{
-	m_PlayerWindow ? ClosePlayer() : OpenPlayer();
 }

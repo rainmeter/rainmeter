@@ -114,10 +114,7 @@ HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Invoke(DISPID dispidMemb
 **
 */
 CPlayerITunes::CPlayerITunes() : CPlayer(),
-	m_Initialized(false),
 	m_UserQuitPrompt(false),
-	m_HasCoverMeasure(false),
-	m_Window(),
 	m_iTunes(),
 	m_iTunesEvent()
 {
@@ -132,39 +129,9 @@ CPlayerITunes::CPlayerITunes() : CPlayer(),
 */
 CPlayerITunes::~CPlayerITunes()
 {
+	g_iTunes = NULL;
 	Uninitialize();
 	CoUninitialize();
-}
-
-/*
-** AddInstance
-**
-** Called during initialization of each measure.
-**
-*/
-void CPlayerITunes::AddInstance(MEASURETYPE type)
-{
-	++m_InstanceCount;
-
-	if (type == MEASURE_COVER)
-	{
-		m_HasCoverMeasure = true;
-	}
-}
-
-/*
-** RemoveInstance
-**
-** Called during destruction of each measure.
-**
-*/
-void CPlayerITunes::RemoveInstance()
-{
-	if (--m_InstanceCount == 0)
-	{
-		g_iTunes = NULL;
-		delete this;
-	}
 }
 
 /*
@@ -256,11 +223,17 @@ void CPlayerITunes::Uninitialize()
 			delete m_iTunesEvent;
 		}
 
-		ClearInfo();
+		ClearData();
 	}
 }
 
-bool CPlayerITunes::CheckActive()
+/*
+** CheckWindow
+**
+** Try to find iTunes periodically.
+**
+*/
+bool CPlayerITunes::CheckWindow()
 {
 	static DWORD oldTime = 0;
 	DWORD time = GetTickCount();
@@ -268,36 +241,9 @@ bool CPlayerITunes::CheckActive()
 	if (time - oldTime > 5000)
 	{
 		oldTime = time;
-		m_Window = FindWindow(L"iTunes", L"iTunes");
-		return m_Window ? true : false;
-	}
 
-	return false;
-}
-
-/*
-** UpdateData
-**
-** Called during each update of the main measure.
-**
-*/
-void CPlayerITunes::UpdateData()
-{
-	if (m_Initialized)
-	{
-		if (m_TrackChanged)
-		{
-			ExecuteTrackChangeAction();
-			m_TrackChanged = false;
-		}
-
-		long position;
-		m_iTunes->get_PlayerPosition(&position);
-		m_Position = (UINT)position;
-	}
-	else
-	{
-		if (CheckActive())
+		HWND wnd = FindWindow(L"iTunes", L"iTunes");
+		if (wnd)
 		{
 			if (!m_UserQuitPrompt)
 			{
@@ -308,6 +254,24 @@ void CPlayerITunes::UpdateData()
 		{
 			m_UserQuitPrompt = false;
 		}
+	}
+
+	return m_Initialized;
+}
+
+/*
+** UpdateData
+**
+** Called during each update of the main measure.
+**
+*/
+void CPlayerITunes::UpdateData()
+{
+	if ((m_Initialized || CheckWindow()) && m_State != PLAYER_STOPPED)
+	{
+		long position;
+		m_iTunes->get_PlayerPosition(&position);
+		m_Position = (UINT)position;
 	}
 }
 
@@ -352,50 +316,47 @@ void CPlayerITunes::OnTrackChange()
 			file->Release();
 			if (tmpStr && wcscmp(tmpStr, m_FilePath.c_str()) != 0)
 			{
+				++m_TrackCount;
 				m_FilePath = tmpStr;
-				m_TrackChanged = true;
 
-				if (m_HasCoverMeasure)
+				if (m_HasCoverMeasure && !GetCachedCover(m_Artist, m_Title, m_CoverPath))
 				{
-					if (!GetCachedArt())
+					// Art not in cache, check for embedded art
+					IITArtworkCollection* artworkCollection;
+					hr = track->get_Artwork(&artworkCollection);
+
+					if (SUCCEEDED(hr))
 					{
-						// Art not in cache, check for embedded art
-						IITArtworkCollection* artworkCollection;
-						hr = track->get_Artwork(&artworkCollection);
+						long count;
+						artworkCollection->get_Count(&count);
 
-						if (SUCCEEDED(hr))
+						if (count > 0)
 						{
-							long count;
-							artworkCollection->get_Count(&count);
+							IITArtwork* artwork;
+							hr = artworkCollection->get_Item(1, &artwork);
 
-							if (count > 0)
+							if (SUCCEEDED(hr))
 							{
-								IITArtwork* artwork;
-								hr = artworkCollection->get_Item(1, &artwork);
-
-								if (SUCCEEDED(hr))
+								tmpStr = m_CoverPath.c_str();
+								hr = artwork->SaveArtworkToFile(tmpStr);
+								if (FAILED(hr))
 								{
-									tmpStr = m_CoverPath.c_str();
-									hr = artwork->SaveArtworkToFile(tmpStr);
-									if (FAILED(hr))
-									{
-										m_CoverPath.clear();
-									}
-
-									artwork->Release();
+									m_CoverPath.clear();
 								}
-							}
-							else
-							{
-								m_CoverPath.clear();
-							}
 
-							artworkCollection->Release();
+								artwork->Release();
+							}
 						}
 						else
 						{
 							m_CoverPath.clear();
 						}
+
+						artworkCollection->Release();
+					}
+					else
+					{
+						m_CoverPath.clear();
 					}
 				}
 			}
@@ -405,7 +366,7 @@ void CPlayerITunes::OnTrackChange()
 	}
 	else
 	{
-		ClearInfo();
+		ClearData();
 	}
 }
 
@@ -447,10 +408,7 @@ void CPlayerITunes::OnVolumeChange(int volume)
 */
 void CPlayerITunes::Pause()
 {
-	if (m_Initialized)
-	{
-		m_iTunes->Pause();
-	}
+	m_iTunes->Pause();
 }
 
 /*
@@ -461,24 +419,7 @@ void CPlayerITunes::Pause()
 */
 void CPlayerITunes::Play()
 {
-	if (m_Initialized)
-	{
-		m_iTunes->Play();
-	}
-}
-
-/*
-** PlayPause
-**
-** Handles the PlayPause bang.
-**
-*/
-void CPlayerITunes::PlayPause()
-{
-	if (m_Initialized)
-	{
-		m_iTunes->PlayPause();
-	}
+	m_iTunes->Play();
 }
 
 /*
@@ -489,10 +430,7 @@ void CPlayerITunes::PlayPause()
 */
 void CPlayerITunes::Stop() 
 {
-	if (m_Initialized)
-	{
-		m_iTunes->Stop();
-	}
+	m_iTunes->Stop();
 }
 
 /*
@@ -503,10 +441,7 @@ void CPlayerITunes::Stop()
 */
 void CPlayerITunes::Next() 
 {
-	if (m_Initialized)
-	{
-		m_iTunes->NextTrack();
-	}
+	m_iTunes->NextTrack();
 }
 
 /*
@@ -517,10 +452,7 @@ void CPlayerITunes::Next()
 */
 void CPlayerITunes::Previous() 
 {
-	if (m_Initialized)
-	{
-		m_iTunes->PreviousTrack();
-	}
+	m_iTunes->PreviousTrack();
 }
 
 /*
@@ -531,10 +463,7 @@ void CPlayerITunes::Previous()
 */
 void CPlayerITunes::SetPosition(int position)
 {
-	if (m_Initialized)
-	{
-		m_iTunes->put_PlayerPosition((long)position);
-	}
+	m_iTunes->put_PlayerPosition((long)position);
 }
 
 /*
@@ -545,17 +474,14 @@ void CPlayerITunes::SetPosition(int position)
 */
 void CPlayerITunes::SetRating(int rating)
 {
-	if (m_Initialized)
+	IITTrack* track;
+	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
+
+	if (SUCCEEDED(hr))
 	{
 		rating *= 20;
-		IITTrack* track;
-		HRESULT hr = m_iTunes->get_CurrentTrack(&track);
-
-		if (SUCCEEDED(hr))
-		{
-			track->put_Rating((long)rating);
-			track->Release();
-		}
+		track->put_Rating((long)rating);
+		track->Release();
 	}
 }
 
@@ -567,10 +493,7 @@ void CPlayerITunes::SetRating(int rating)
 */
 void CPlayerITunes::SetVolume(int volume)
 {
-	if (m_Initialized)
-	{
-		m_iTunes->put_SoundVolume((long)volume);
-	}
+	m_iTunes->put_SoundVolume((long)volume);
 }
 
 /*
@@ -581,12 +504,9 @@ void CPlayerITunes::SetVolume(int volume)
 */
 void CPlayerITunes::ClosePlayer()
 {
-	if (m_Initialized)
-	{
-		m_UserQuitPrompt = true;
-		m_iTunes->Quit();
-		Uninitialize();
-	}
+	m_UserQuitPrompt = true;
+	m_iTunes->Quit();
+	Uninitialize();
 }
 
 /*
@@ -595,18 +515,7 @@ void CPlayerITunes::ClosePlayer()
 ** Handles the OpenPlayer bang.
 **
 */
-void CPlayerITunes::OpenPlayer()
+void CPlayerITunes::OpenPlayer(std::wstring& path)
 {
-	ShellExecute(NULL, L"open", m_PlayerPath.empty() ? L"iTunes.exe" : m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
-}
-
-/*
-** TogglePlayer
-**
-** Handles the TogglePlayer bang.
-**
-*/
-void CPlayerITunes::TogglePlayer()
-{
-	m_Initialized ? ClosePlayer() : OpenPlayer();
+	ShellExecute(NULL, L"open", path.empty() ? L"iTunes.exe" : path.c_str(), NULL, NULL, SW_SHOW);
 }
