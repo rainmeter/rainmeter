@@ -19,76 +19,25 @@
 #include "StdAfx.h"
 #include "Cover.h"
 
-extern std::wstring g_CachePath;
-
 /*
-** GetCover
-**
-** Default implementation for getting cover.
-**
-*/
-void CCover::GetCover(const std::wstring& artist, const std::wstring& title, const std::wstring& file, std::wstring& target)
-{
-	if (!GetCachedCover(artist, title, target))
-	{
-		TagLib::FileRef fr(file.c_str());
-		if (fr.isNull() || !fr.tag() || !GetEmbeddedCover(fr, target))
-		{
-			std::wstring trackFolder = GetFileFolder(file);
-
-			if (!GetLocalCover(L"cover", trackFolder, target) &&
-				!GetLocalCover(L"folder", trackFolder, target))
-			{
-				// Nothing found
-				target.clear();
-			}
-		}
-	}
-}
-
-/*
-** GetCachedArt
+** GetCached
 **
 ** Checks if cover art is in cache.
 **
 */
-bool CCover::GetCachedCover(const std::wstring& artist, const std::wstring& title, std::wstring& target)
+bool CCover::GetCached(std::wstring& path)
 {
-	target = g_CachePath;
-	if (artist.empty() || title.empty())
-	{
-		target += L"temp.art";
-	}
-	else
-	{
-		// Otherwise, save it as "Artist - Title.art"
-		std::wstring name = artist;
-		name += L" - ";
-		name += title;
-
-		// Replace reserved chars with _
-		std::wstring::size_type pos = 0;
-		while ((pos = name.find_first_of(L"\\/:*?\"<>|", pos)) != std::wstring::npos) name[pos] = L'_';
-
-		target += name;
-		target += L".art";
-		if (_waccess(target.c_str(), 0) == 0)
-		{
-			// Art found in cache
-			return true;
-		}
-	}
-
-	return false;
+	path += L".art";
+	return (_waccess(path.c_str(), 0) == 0) ? true : false;
 }
 
 /*
-** GetLocalArt
+** GetLocal
 **
 ** Attemps to find local cover art in various formats.
 **
 */
-bool CCover::GetLocalCover(std::wstring filename, const std::wstring& folder, std::wstring& target)
+bool CCover::GetLocal(std::wstring filename, const std::wstring& folder, std::wstring& target)
 {
 	std::wstring testPath = folder;
 	testPath += filename;
@@ -117,12 +66,12 @@ bool CCover::GetLocalCover(std::wstring filename, const std::wstring& folder, st
 }
 
 /*
-** GetEmbeddedArt
+** GetEmbedded
 **
 ** Attempts to extract cover art from audio files.
 **
 */
-bool CCover::GetEmbeddedCover(const TagLib::FileRef& fr, std::wstring& target)
+bool CCover::GetEmbedded(const TagLib::FileRef& fr, std::wstring& target)
 {
 	bool found = false;
 

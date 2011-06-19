@@ -24,8 +24,9 @@
 class CPlayerFoobar : public CPlayer
 {
 public:
-	CPlayerFoobar();
-	~CPlayerFoobar();
+	virtual ~CPlayerFoobar();
+
+	static CPlayer* Create();
 
 	virtual void UpdateData();
 
@@ -39,6 +40,9 @@ public:
 	virtual void SetVolume(int volume);
 	virtual void ClosePlayer();
 	virtual void OpenPlayer(std::wstring& path);
+
+protected:
+	CPlayerFoobar();
 
 private:
 	enum FOOMESSAGE
@@ -72,6 +76,8 @@ private:
 	void Initialize();
 	void Uninitialize();
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+	static CPlayer* c_Player;
 
 	HWND m_Window;				// Our reciever window
 	HWND m_FooWindow;			// Foobar receiver window

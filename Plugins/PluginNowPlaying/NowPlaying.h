@@ -27,7 +27,6 @@ struct ParentMeasure
 	UINT childCount;
 	UINT trackCount;
 	CPlayer* player;
-	HANDLE thread;
 	HWND window;
 	std::wstring name;
 	std::wstring iniFile;
@@ -35,7 +34,7 @@ struct ParentMeasure
 	std::wstring playerPath;
 	bool disableLeadingZero;
 
-	ParentMeasure() : player(NULL), thread(NULL) {}
+	ParentMeasure() : player(NULL) {}
 };
 
 struct ChildMeasure

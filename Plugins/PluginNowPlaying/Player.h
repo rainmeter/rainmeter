@@ -19,8 +19,11 @@
 #ifndef __PLAYER_H__
 #define __PLAYER_H__
 
+#include "fileref.h"
 #include "tag.h"
 #include "Cover.h"
+#include "Internet.h"
+#include "Lyrics.h"
 
 enum PLAYSTATE
 {
@@ -45,8 +48,7 @@ enum MEASURETYPE
 	MEASURE_FILE
 };
 
-class CPlayer :
-	public CCover
+class CPlayer
 {
 public:
 	CPlayer();
@@ -60,6 +62,10 @@ public:
 
 	bool IsInitialized() { return m_Initialized; }
 	UINT GetTrackCount() { return m_TrackCount; }
+	
+	std::wstring GetCacheFile();
+	void FindCover();
+	void FindLyrics();
 
 	virtual void Pause() {}
 	virtual void Play() {}
@@ -105,6 +111,12 @@ protected:
 	UINT m_Position;				// Current position in seconds
 	UINT m_Rating;					// Track rating from 0 to 100
 	UINT m_Volume;					// Volume from 0 to 100
+
+private:
+	static unsigned __stdcall LyricsThreadProc(void* pParam);
+
+	HANDLE m_InternetThread;
+	CRITICAL_SECTION m_CriticalSection;
 };
 
 #endif

@@ -19,6 +19,8 @@
 #ifndef __COVER_H__
 #define __COVER_H__
 
+// TagLib
+#include "fileref.h"
 #include "apefile.h"
 #include "apetag.h"
 #include "asffile.h"
@@ -40,10 +42,9 @@
 class CCover
 {
 public:
-	static void GetCover(const std::wstring& artist, const std::wstring& title, const std::wstring& file, std::wstring& target);
-	static bool GetCachedCover(const std::wstring& artist, const std::wstring& title, std::wstring& target);
-	static bool GetLocalCover(std::wstring filename, const std::wstring& folder, std::wstring& target);
-	static bool GetEmbeddedCover(const TagLib::FileRef& fr, std::wstring& target);
+	static bool GetCached(std::wstring& path);
+	static bool GetLocal(std::wstring filename, const std::wstring& folder, std::wstring& target);
+	static bool GetEmbedded(const TagLib::FileRef& fr, std::wstring& target);
 	static std::wstring GetFileFolder(const std::wstring& file);
 
 private:

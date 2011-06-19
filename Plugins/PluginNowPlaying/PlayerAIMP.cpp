@@ -21,8 +21,9 @@
 #include "AIMP/aimp2_sdk.h"
 #include "Winamp/wa_ipc.h"
 
-extern CPlayer* g_AIMP;
+CPlayer* CPlayerAIMP::c_Player = NULL;
 
+// TODO
 /*
 ** CPlayerAIMP
 **
@@ -30,10 +31,10 @@ extern CPlayer* g_AIMP;
 **
 */
 CPlayerAIMP::CPlayerAIMP() : CPlayer(),
-	m_FileMap(),
-	m_FileMapHandle(),
 	m_Window(),
-	m_WinampWindow()
+	m_WinampWindow(),
+	m_FileMap(),
+	m_FileMapHandle()
 {
 }
 
@@ -45,74 +46,69 @@ CPlayerAIMP::CPlayerAIMP() : CPlayer(),
 */
 CPlayerAIMP::~CPlayerAIMP()
 {
-	g_AIMP = NULL;
+	c_Player = NULL;
 	if (m_FileMap) UnmapViewOfFile(m_FileMap);
 	if (m_FileMapHandle) CloseHandle(m_FileMapHandle);
 }
 
 /*
-** Initialize
+** Create
 **
-** Find AIMP window and mapped object.
+** Creates a shared class object.
 **
 */
-bool CPlayerAIMP::Initialize()
+CPlayer* CPlayerAIMP::Create()
 {
-	m_Window = FindWindow(L"AIMP2_RemoteInfo", L"AIMP2_RemoteInfo");
-	m_WinampWindow = FindWindow(L"Winamp v1.x", NULL);
-
-	if (m_Window)
+	if (!c_Player)
 	{
-		m_FileMapHandle = OpenFileMapping(FILE_MAP_READ, FALSE, L"AIMP2_RemoteInfo");
-		if (!m_FileMapHandle)
-		{
-			LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: AIMP - Unable to access mapping.");
-			return false;
-		}
-
-		m_FileMap = (LPVOID)MapViewOfFile(m_FileMapHandle, FILE_MAP_READ, 0, 0, 2048);
-		if (!m_FileMap)
-		{
-			LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: AIMP - Unable to view mapping.");
-			return false;
-		}
-
-		return true;
+		c_Player = new CPlayerAIMP();
 	}
 
-	return false;
+	return c_Player;
 }
 
-bool CPlayerAIMP::CheckActive()
+/*
+** CheckWindow
+**
+** Try to find AIMP periodically.
+**
+*/
+bool CPlayerAIMP::CheckWindow()
 {
-	if (m_Window)
-	{
-		if (!IsWindow(m_Window))
-		{
-			m_Window = NULL;
-			m_WinampWindow = NULL;
-			if (m_FileMap) UnmapViewOfFile(m_FileMap);
-			if (m_FileMapHandle) CloseHandle(m_FileMapHandle);
-			ClearData();
-			return false;
-		}
-
-		return true;
-	}
-	else
-	{
-		static DWORD oldTime = 0;
-		DWORD time = GetTickCount();
+	static DWORD oldTime = 0;
+	DWORD time = GetTickCount();
 		
-		// Try to find AIMP every 5 seconds
-		if (time - oldTime > 5000)
-		{
-			oldTime = time;
-			return Initialize();
-		}
+	// Try to find AIMP every 5 seconds
+	if (time - oldTime > 5000)
+	{
+		oldTime = time;
+		m_Window = FindWindow(L"AIMP2_RemoteInfo", L"AIMP2_RemoteInfo");
 
-		return false;
+		if (m_Window)
+		{
+			m_WinampWindow = FindWindow(L"Winamp v1.x", NULL);
+
+			m_FileMapHandle = OpenFileMapping(FILE_MAP_READ, FALSE, L"AIMP2_RemoteInfo");
+			if (m_FileMapHandle)
+			{
+				m_FileMap = (LPVOID)MapViewOfFile(m_FileMapHandle, FILE_MAP_READ, 0, 0, 2048);
+				if (m_FileMap)
+				{
+					m_Initialized = true;
+				}
+				else
+				{
+					LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Unable to view AIMP file mapping.");
+				}
+			}
+			else
+			{
+				LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: AIMP - Unable to access AIMP file mapping.");
+			}
+		}
 	}
+
+	return m_Initialized;
 }
 
 /*
@@ -123,29 +119,43 @@ bool CPlayerAIMP::CheckActive()
 */
 void CPlayerAIMP::UpdateData()
 {
-	static long oldFileSize;
-	static UINT oldTitleLen; 
-	
-	if (!CheckActive())
+	static long oldFileSize = 0;
+	static UINT oldTitleLen = 0;
+
+	if (!m_Initialized)
 	{
-		// Make sure AIMP is running
-		if (oldFileSize != 0)
+		if (oldTitleLen != 0)
 		{
 			oldFileSize = 0;
 			oldTitleLen = 0;
 		}
-		return;
+
+		if (!CheckWindow())
+		{
+			return;
+		}
 	}
 
+	// If initialized
 	m_State = (PLAYSTATE)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_Player);
 	if (m_State == PLAYER_STOPPED)
 	{
-		if (oldFileSize != 0)
+		// Make sure AIMP is still active
+		if (!IsWindow(m_Window))
+		{
+			m_Initialized = false;
+			if (m_FileMap) UnmapViewOfFile(m_FileMap);
+			if (m_FileMapHandle) CloseHandle(m_FileMapHandle);
+		}
+
+		if (oldTitleLen != 0)
 		{
 			oldFileSize = 0;
 			oldTitleLen = 0;
 			ClearData();
 		}
+
+		// Don't continue if AIMP has quit or is stopped
 		return;
 	}
 
@@ -154,7 +164,7 @@ void CPlayerAIMP::UpdateData()
 
 	AIMP2FileInfo* info = (AIMP2FileInfo*)m_FileMap;
 	if (info->cbSizeOf > 0 &&
-		info->nFileSize != oldFileSize	||	// FileSize and TitleLen are probably unique enough
+		info->nFileSize != oldFileSize	||	// Avoid reading the same file
 		info->nTitleLen != oldTitleLen)
 	{
 		oldFileSize = info->nFileSize;
@@ -191,7 +201,12 @@ void CPlayerAIMP::UpdateData()
 			// Find cover if needed
 			if (m_HasCoverMeasure)
 			{
-				GetCover(m_Artist, m_Title, m_FilePath, m_CoverPath);
+				FindCover();
+			}
+
+			if (m_HasLyricsMeasure)
+			{
+				FindLyrics();
 			}
 		}
 	}

@@ -267,6 +267,12 @@
     <ClCompile Include="Cover.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Lyrics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Internet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SDKs\AIMP\aimp2_sdk.h">
@@ -324,6 +330,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Cover.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lyrics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Internet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

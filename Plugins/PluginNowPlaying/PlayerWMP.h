@@ -34,8 +34,9 @@
 class CPlayerWMP : public CPlayer
 {
 public:
-	CPlayerWMP();
-	~CPlayerWMP();
+	virtual ~CPlayerWMP();
+
+	static CPlayer* Create();
 
 	virtual void UpdateData();
 
@@ -49,6 +50,9 @@ public:
 	virtual void SetVolume(int volume);
 	virtual void OpenPlayer(std::wstring& path);
 	virtual void ClosePlayer();
+
+protected:
+	CPlayerWMP();
 
 private:
 	class CRemoteHost :
@@ -128,6 +132,8 @@ private:
 
 	void Initialize();
 	void Uninitialize();
+
+	static CPlayer* c_Player;
 
 	bool m_TrackChanged;
 	HWND m_Window;

@@ -1,0 +1,204 @@
+/*
+  Copyright (C) 2011 Birunthan Mohanathas (www.poiru.net)
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
+#include "StdAfx.h"
+#include "Player.h"
+#include "Internet.h"
+#include "Lyrics.h"
+
+/*
+** GetFromInternet
+**
+** Download lyrics from various serivces.
+**
+*/
+bool CLyrics::GetFromInternet(const std::wstring& artist, const std::wstring& title, std::wstring& out)
+{
+	std::wstring encArtist = CInternet::EncodeUrl(artist);
+	std::wstring encTitle = CInternet::EncodeUrl(title);
+
+	bool found = GetFromWikia(encArtist, encTitle, out) ||
+				 GetFromLYRDB(encArtist, encTitle, out) ||
+				 GetFromLetras(encArtist, encTitle, out);
+
+	return found;
+}
+
+/*
+** GetFromWikia
+**
+** Download lyrics from LyricWiki.
+**
+*/
+bool CLyrics::GetFromWikia(const std::wstring& artist, const std::wstring& title, std::wstring& data)
+{
+	bool ret = false;
+	
+	std::wstring url = L"http://lyrics.wikia.com/api.php?func=getSong&fmt=json&artist=";
+	url += artist;
+	url += L"&song=";
+	url += title;
+
+	data = CInternet::DownloadUrl(url, CP_UTF8);
+	if (!data.empty())
+	{
+		// First we get the URL to the actual wiki page
+		std::wstring::size_type pos = data.find(L"http://");
+		if (pos != std::wstring::npos)
+		{
+			data.erase(0, pos);
+			pos = data.find(L"'");
+			url = data.substr(0, pos);
+
+			// Fetch the wiki page
+			data = CInternet::DownloadUrl(url, CP_UTF8);
+			if (!data.empty())
+			{
+				pos = data.find(L"'lyricbox'");
+				pos = data.find(L"&#", pos);
+				if (pos != std::wstring::npos)
+				{
+					// Get and decode lyrics
+					data.erase(0, pos);
+					pos = data.find(L"<!");
+					data.resize(pos);
+					CInternet::DecodeReferences(data);
+
+					pos = data.find(L"[...]");
+					if (pos != std::wstring::npos)
+					{
+						// Skip incomplete lyrics
+						return ret;
+					}
+
+					pos = data.find(L"<p>");
+					if (pos != std::wstring::npos)
+					{
+						// Skip unavailable lyrics
+						return ret;
+					}
+
+					while ((pos = data.find(L"<br />"), pos) != std::wstring::npos)
+					{
+						data.replace(pos, 6, L"\n");
+					}
+
+					// Get rid of all HTML tags
+					std::wstring::size_type len = 0;
+					while ((pos = data.find_first_of(L'<'), pos) != std::wstring::npos)
+					{
+						len = data.find_first_of(L'>', pos);
+						len -= pos;
+						data.erase(pos, ++len);
+					}
+
+					ret = true;
+				}
+			}
+		}
+	}
+
+	return ret;
+}
+
+/*
+** GetFromLYRDB
+**
+** Download lyrics from LYRDB.
+**
+*/
+bool CLyrics::GetFromLYRDB(const std::wstring& artist, const std::wstring& title, std::wstring& data)
+{
+	bool ret = false;
+
+	std::wstring query = artist;
+	query += L"|";
+	query += title;
+
+	// LYRDB doesn't like apostrophes
+	std::wstring::size_type pos = 0;
+	while ((pos = query.find(L"%27", pos)) != std::wstring::npos)
+	{
+		query.erase(pos, 3);
+	}
+
+	std::wstring url = L"http://webservices.lyrdb.com/lookup.php?q=";
+	url += query;
+	url += L"&for=match&agent=RainmeterNowPlaying";
+
+	data = CInternet::DownloadUrl(url, CP_ACP);
+	if (!data.empty())
+	{
+		pos = data.find(L"\\");
+		if (pos != std::wstring::npos)
+		{
+			// Grab the first match
+			url = L"http://webservices.lyrdb.com/getlyr.php?q=";
+			url += data.substr(0, pos);
+
+			data = CInternet::DownloadUrl(url, CP_ACP);
+			if (!data.empty())
+			{
+				ret = true;
+			}
+		}
+	}
+
+	return ret;
+}
+
+/*
+** GetFromLetras
+**
+** Download lyrics from Letras.
+**
+*/
+bool CLyrics::GetFromLetras(const std::wstring& artist, const std::wstring& title, std::wstring& data)
+{
+	bool ret = false;
+
+	std::wstring url = L"http://letras.terra.com.br/winamp.php?musica=";
+	url += title;
+	url += L"&artista=";
+	url += artist;
+	data = CInternet::DownloadUrl(url, CP_ACP);
+	if (!data.empty())
+	{
+		std::wstring::size_type pos = data.find(L"\"letra\"");
+		pos = data.find(L"<p>", pos);
+		if (pos != std::wstring::npos)
+		{
+			pos += 3;
+			data.erase(0, pos);
+
+			pos = data.find(L"</p>");
+			data.resize(pos);
+
+			CInternet::DecodeReferences(data);
+
+			while ((pos = data.find(L"<br/>"), pos) != std::wstring::npos)
+			{
+				data.erase(pos, 5);
+			}
+
+			ret = true;
+		}
+	}
+
+	return ret;
+}

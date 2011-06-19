@@ -16,44 +16,22 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef __PLAYERCAD_H__
-#define __PLAYERCAD_H__
+#ifndef __INTERNET_H__
+#define __INTERNET_H__
 
-#include "Player.h"
-
-class CPlayerCAD : public CPlayer
+class CInternet
 {
 public:
-	virtual ~CPlayerCAD();
+	static void Initialize();
+	static void Finalize();
 
-	static CPlayer* Create();
-
-	virtual void UpdateData();
-
-	virtual void Pause();
-	virtual void Play();
-	virtual void Stop();
-	virtual void Next();
-	virtual void Previous();
-	virtual void SetPosition(int position);
-	virtual void SetRating(int rating);
-	virtual void SetVolume(int volume);
-	virtual void ClosePlayer();
-	virtual void OpenPlayer(std::wstring& path);
-
-protected:
-	CPlayerCAD();
+	static std::wstring DownloadUrl(const std::wstring& url, int codepage);
+	static std::wstring EncodeUrl(const std::wstring& url);
+	static void DecodeReferences(std::wstring& str);
+	static std::wstring ConvertToWide(LPCSTR str, int codepage);
 
 private:
-	void Initialize();
-	void Uninitialize();
-	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-	static CPlayer* c_Player;
-
-	HWND m_Window;
-	HWND m_PlayerWindow;
-	std::wstring m_PlayerPath;
+	static HINTERNET c_NetHandle;
 };
 
 #endif

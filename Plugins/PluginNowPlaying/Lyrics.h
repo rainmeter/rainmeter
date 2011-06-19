@@ -16,44 +16,18 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef __PLAYERCAD_H__
-#define __PLAYERCAD_H__
+#ifndef __LYRICS_H__
+#define __LYRICS_H__
 
-#include "Player.h"
-
-class CPlayerCAD : public CPlayer
+class CLyrics
 {
 public:
-	virtual ~CPlayerCAD();
-
-	static CPlayer* Create();
-
-	virtual void UpdateData();
-
-	virtual void Pause();
-	virtual void Play();
-	virtual void Stop();
-	virtual void Next();
-	virtual void Previous();
-	virtual void SetPosition(int position);
-	virtual void SetRating(int rating);
-	virtual void SetVolume(int volume);
-	virtual void ClosePlayer();
-	virtual void OpenPlayer(std::wstring& path);
-
-protected:
-	CPlayerCAD();
+	static bool GetFromInternet(const std::wstring& artist, const std::wstring& title, std::wstring& out);
 
 private:
-	void Initialize();
-	void Uninitialize();
-	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-	static CPlayer* c_Player;
-
-	HWND m_Window;
-	HWND m_PlayerWindow;
-	std::wstring m_PlayerPath;
+	static bool GetFromLetras(const std::wstring& artist, const std::wstring& title, std::wstring& data);
+	static bool GetFromLYRDB(const std::wstring& artist, const std::wstring& title, std::wstring& data);
+	static bool GetFromWikia(const std::wstring& artist, const std::wstring& title, std::wstring& data);
 };
 
 #endif

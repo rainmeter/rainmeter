@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "PlayerITunes.h"
 
-extern CPlayer* g_iTunes;
+CPlayer* CPlayerITunes::c_Player = NULL;
 
 /*
 ** CEventHandler
@@ -129,9 +129,25 @@ CPlayerITunes::CPlayerITunes() : CPlayer(),
 */
 CPlayerITunes::~CPlayerITunes()
 {
-	g_iTunes = NULL;
+	c_Player = NULL;
 	Uninitialize();
 	CoUninitialize();
+}
+
+/*
+** Create
+**
+** Creates a shared class object.
+**
+*/
+CPlayer* CPlayerITunes::Create()
+{
+	if (!c_Player)
+	{
+		c_Player = new CPlayerITunes();
+	}
+
+	return c_Player;
 }
 
 /*
@@ -216,7 +232,6 @@ void CPlayerITunes::Uninitialize()
 	if (m_Initialized)
 	{
 		m_Initialized = false;
-		m_UserQuitPrompt = true;
 		if (m_iTunes)
 		{
 			m_iTunes->Release();
@@ -304,6 +319,7 @@ void CPlayerITunes::OnTrackChange()
 		track->get_Duration(&tmpVal);
 		m_Duration = (UINT)tmpVal;
 
+		// Rating is 0 - 100, divide to 0 - 5
 		track->get_Rating(&tmpVal);
 		tmpVal /= 20L;
 		m_Rating = (UINT)tmpVal;
@@ -319,45 +335,54 @@ void CPlayerITunes::OnTrackChange()
 				++m_TrackCount;
 				m_FilePath = tmpStr;
 
-				if (m_HasCoverMeasure && !GetCachedCover(m_Artist, m_Title, m_CoverPath))
+				if (m_HasCoverMeasure)
 				{
-					// Art not in cache, check for embedded art
-					IITArtworkCollection* artworkCollection;
-					hr = track->get_Artwork(&artworkCollection);
-
-					if (SUCCEEDED(hr))
+					m_CoverPath = GetCacheFile();
+					if (!CCover::GetCached(m_CoverPath))
 					{
-						long count;
-						artworkCollection->get_Count(&count);
+						// Art not in cache, check for embedded art through iTunes interface
+						IITArtworkCollection* artworkCollection;
+						hr = track->get_Artwork(&artworkCollection);
 
-						if (count > 0)
+						if (SUCCEEDED(hr))
 						{
-							IITArtwork* artwork;
-							hr = artworkCollection->get_Item(1, &artwork);
+							long count;
+							artworkCollection->get_Count(&count);
 
-							if (SUCCEEDED(hr))
+							if (count > 0)
 							{
-								tmpStr = m_CoverPath.c_str();
-								hr = artwork->SaveArtworkToFile(tmpStr);
-								if (FAILED(hr))
-								{
-									m_CoverPath.clear();
-								}
+								IITArtwork* artwork;
+								hr = artworkCollection->get_Item(1, &artwork);
 
-								artwork->Release();
+								if (SUCCEEDED(hr))
+								{
+									tmpStr = m_CoverPath.c_str();
+									hr = artwork->SaveArtworkToFile(tmpStr);
+									if (FAILED(hr))
+									{
+										m_CoverPath.clear();
+									}
+
+									artwork->Release();
+								}
 							}
+							else
+							{
+								m_CoverPath.clear();
+							}
+
+							artworkCollection->Release();
 						}
 						else
 						{
 							m_CoverPath.clear();
 						}
+					}
+				}
 
-						artworkCollection->Release();
-					}
-					else
-					{
-						m_CoverPath.clear();
-					}
+				if (m_HasLyricsMeasure)
+				{
+					FindLyrics();
 				}
 			}
 		}

@@ -24,8 +24,9 @@
 class CPlayerSpotify : public CPlayer
 {
 public:
-	CPlayerSpotify();
-	~CPlayerSpotify();
+	virtual ~CPlayerSpotify();
+
+	static CPlayer* Create();
 
 	virtual void Pause() { return Play(); }
 	virtual void Play();
@@ -35,6 +36,9 @@ public:
 	virtual void ClosePlayer();
 	virtual void OpenPlayer(std::wstring& path);
 	virtual void UpdateData();
+
+protected:
+	CPlayerSpotify();
 
 private:
 	enum SPOTIFYCOMMAND
@@ -49,6 +53,8 @@ private:
 	};
 
 	bool CheckWindow();
+
+	static CPlayer* c_Player;
 
 	HWND m_Window;
 };

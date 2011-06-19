@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "PlayerWLM.h"
 
-extern CPlayer* g_WLM;
+CPlayer* CPlayerWLM::c_Player = NULL;
 
 // This player emulates the MSN/WLM Messenger 'Listening to' interface, which is
 // supported by OpenPandora, Last.fm, Media Player Classic, TTPlayer, Zune, etc.
@@ -54,6 +54,8 @@ CPlayerWLM::CPlayerWLM() : CPlayer(),
 							NULL,
 							hInstance,
 							this);
+
+	m_Initialized = true;
 }
 
 /*
@@ -64,9 +66,25 @@ CPlayerWLM::CPlayerWLM() : CPlayer(),
 */
 CPlayerWLM::~CPlayerWLM()
 {
-	g_WLM = NULL;
+	c_Player = NULL;
 	DestroyWindow(m_Window);
 	UnregisterClass(L"MsnMsgrUIManager", GetModuleHandle(NULL));
+}
+
+/*
+** Create
+**
+** Creates a shared class object.
+**
+*/
+CPlayer* CPlayerWLM::Create()
+{
+	if (!c_Player)
+	{
+		c_Player = new CPlayerWLM();
+	}
+
+	return c_Player;
 }
 
 LRESULT CALLBACK CPlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -99,6 +117,7 @@ LRESULT CALLBACK CPlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 
 			if (playing)
 			{
+				++player->m_TrackCount;
 				player->m_State = PLAYER_PLAYING;
 				data.erase(0, 3);	// Get rid of the status
 
@@ -119,6 +138,11 @@ LRESULT CALLBACK CPlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 
 				len = data.find_first_of(L'\\');
 				player->m_Album = data.substr(0, len);
+
+				if (player->m_HasLyricsMeasure)
+				{
+					player->FindLyrics();
+				}
 			}
 			else
 			{

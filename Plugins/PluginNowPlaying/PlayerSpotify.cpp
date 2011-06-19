@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "PlayerSpotify.h"
 
-extern CPlayer* g_Spotify;
+CPlayer* CPlayerSpotify::c_Player = NULL;
 
 /*
 ** CPlayerSpotify
@@ -40,7 +40,23 @@ CPlayerSpotify::CPlayerSpotify() : CPlayer(),
 */
 CPlayerSpotify::~CPlayerSpotify()
 {
-	g_Spotify = NULL;
+	c_Player = NULL;
+}
+
+/*
+** Create
+**
+** Creates a shared class object.
+**
+*/
+CPlayer* CPlayerSpotify::Create()
+{
+	if (!c_Player)
+	{
+		c_Player = new CPlayerSpotify();
+	}
+
+	return c_Player;
 }
 
 /*
@@ -98,6 +114,11 @@ void CPlayerSpotify::UpdateData()
 					m_Title = track;
 					m_Artist = artist;
 					++m_TrackCount;
+
+					if (m_HasLyricsMeasure)
+					{
+						FindLyrics();
+					}
 				}
 				return;
 			}

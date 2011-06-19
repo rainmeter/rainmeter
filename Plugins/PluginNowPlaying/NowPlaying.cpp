@@ -19,6 +19,7 @@
 #include "StdAfx.h"
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 #include "NowPlaying.h"
+#include "Internet.h"
 #include "PlayerAIMP.h"
 #include "PlayerCAD.h"
 #include "PlayerFoobar.h"
@@ -28,17 +29,7 @@
 #include "PlayerWLM.h"
 #include "PlayerWMP.h"
 
-CPlayer* g_AIMP = NULL;
-CPlayer* g_CAD = NULL;
-CPlayer* g_Foobar = NULL;
-CPlayer* g_iTunes = NULL;
-CPlayer* g_Spotify = NULL;
-CPlayer* g_Winamp = NULL;
-CPlayer* g_WLM = NULL;
-CPlayer* g_WMP = NULL;
-
 static std::map<UINT, ChildMeasure*> g_Measures;
-static bool g_DisableLeazingZero = false;
 std::wstring g_CachePath;
 std::wstring g_SettingsFile;
 
@@ -71,6 +62,8 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		{
 			LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Unable to get path to Plugins.ini.");
 		}
+
+		CInternet::Initialize();
 	}
 
 	// Data is stored in two structs: ChildMeasure and ParentMeasure. ParentMeasure is created for measures
@@ -125,75 +118,39 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 
 			if (_wcsicmp(L"AIMP", str) == 0)
 			{
-				if (!g_AIMP)
-				{
-					g_AIMP = new CPlayerAIMP();
-				}
-				parent->player = g_AIMP;
+				parent->player = CPlayerAIMP::Create();
 			}
 			else if (_wcsicmp(L"CAD", str) == 0)
 			{
-				if (!g_CAD)
-				{
-					g_CAD = new CPlayerCAD();
-				}
-				parent->player = g_CAD;
+				parent->player = CPlayerCAD::Create();
 			}
 			else if (_wcsicmp(L"foobar2000", str) == 0)
 			{
-				if (!g_Foobar)
-				{
-					g_Foobar = new CPlayerFoobar();
-				}
-				parent->player = g_Foobar;
+				parent->player = CPlayerFoobar::Create();
 			}
 			else if (_wcsicmp(L"iTunes", str) == 0)
 			{
-				if (!g_iTunes)
-				{
-					g_iTunes = new CPlayerITunes();
-				}
-				parent->player = g_iTunes;
+				parent->player = CPlayerITunes::Create();
 			}
 			else if (_wcsicmp(L"MediaMonkey", str) == 0)
 			{
-				if (!g_Winamp)
-				{
-					g_Winamp = new CPlayerWinamp(WA_MEDIAMONKEY);
-				}
-				parent->player = g_Winamp;
+				parent->player = CPlayerWinamp::Create(WA_MEDIAMONKEY);
 			}
 			else if (_wcsicmp(L"Spotify", str) == 0)
 			{
-				if (!g_Spotify)
-				{
-					g_Spotify = new CPlayerSpotify();
-				}
-				parent->player = g_Spotify;
+				parent->player = CPlayerSpotify::Create();
 			}
 			else if (_wcsicmp(L"WinAmp", str) == 0)
 			{
-				if (!g_Winamp)
-				{
-					g_Winamp = new CPlayerWinamp(WA_WINAMP);
-				}
-				parent->player = g_Winamp;
+				parent->player = CPlayerWinamp::Create(WA_WINAMP);
 			}
 			else if (_wcsicmp(L"WLM", str) == 0)
 			{
-				if (!g_WLM)
-				{
-					g_WLM = new CPlayerWLM();
-				}
-				parent->player = g_WLM;
+				parent->player = CPlayerWLM::Create();
 			}
 			else if (_wcsicmp(L"WMP", str) == 0)
 			{
-				if (!g_WMP)
-				{
-					g_WMP = new CPlayerWMP();
-				}
-				parent->player = g_WMP;
+				parent->player = CPlayerWMP::Create();
 			}
 			else
 			{
@@ -331,6 +288,11 @@ void Finalize(HMODULE instance, UINT id)
 
 		delete child;
 		g_Measures.erase(i);
+
+		if (g_Measures.empty())
+		{
+			CInternet::Finalize();
+		}
 	}
 }
 
@@ -359,8 +321,6 @@ UINT Update(UINT id)
 				parent->trackCount != player->GetTrackCount())
 			{
 				ExecuteCommand(parent->trackChangeAction, parent->window);
-
-				// TODO: First is true..
 				parent->trackCount = player->GetTrackCount();
 			}
 		}
@@ -422,6 +382,9 @@ LPCTSTR GetString(UINT id, UINT flags)
 
 		case MEASURE_ALBUM:
 			return player->GetAlbum();
+
+		case MEASURE_LYRICS:
+			return player->GetLyrics();
 
 		case MEASURE_COVER:
 			return player->GetCoverPath();

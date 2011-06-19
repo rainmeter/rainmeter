@@ -19,6 +19,8 @@
 #include "StdAfx.h"
 #include "Player.h"
 
+extern std::wstring g_CachePath;
+
 /*
 ** CPlayer
 **
@@ -36,8 +38,11 @@ CPlayer::CPlayer() :
 	m_Duration(),
 	m_Position(),
 	m_Rating(),
-	m_Volume()
+	m_Volume(),
+	m_CriticalSection(),
+	m_InternetThread()
 {
+	InitializeCriticalSection(&m_CriticalSection);
 }
 
 /*
@@ -48,6 +53,7 @@ CPlayer::CPlayer() :
 */
 CPlayer::~CPlayer()
 {
+	DeleteCriticalSection(&m_CriticalSection);
 }
 
 /*
@@ -111,6 +117,131 @@ void CPlayer::UpdateMeasure()
 }
 
 /*
+** GetCacheFile
+**
+** Creates escaped path to cache file (without extension)
+**
+*/
+std::wstring CPlayer::GetCacheFile()
+{
+	std::wstring path = g_CachePath;
+
+	if (m_Artist.empty() || m_Title.empty())
+	{
+		path += L"temp";
+	}
+	else
+	{
+		std::wstring name = m_Artist;
+		name += L" - ";
+		name += m_Title;
+
+		// Replace reserved chars with _
+		std::wstring::size_type pos = 0;
+		while ((pos = name.find_first_of(L"\\/:*?\"<>|", pos)) != std::wstring::npos) name[pos] = L'_';
+
+		path += name;
+	}
+
+	return path;
+}
+
+/*
+** FindCover
+**
+** Default implementation for getting cover.
+**
+*/
+void CPlayer::FindCover()
+{
+	m_CoverPath = GetCacheFile();
+
+	if (!CCover::GetCached(m_CoverPath))
+	{
+		TagLib::FileRef fr(m_FilePath.c_str());
+		if (fr.isNull() || !fr.tag() || !CCover::GetEmbedded(fr, m_CoverPath))
+		{
+			std::wstring trackFolder = CCover::GetFileFolder(m_FilePath);
+
+			if (!CCover::GetLocal(L"cover", trackFolder, m_CoverPath) &&
+				!CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
+			{
+				// Nothing found
+				m_CoverPath.clear();
+			}
+		}
+	}
+}
+
+/*
+** FindLyrics
+**
+** Default implementation for getting lyrics.
+**
+*/
+void CPlayer::FindLyrics()
+{
+	if (TryEnterCriticalSection(&m_CriticalSection))
+	{
+		m_Lyrics.clear();
+
+		unsigned int id;
+		HANDLE thread = (HANDLE)_beginthreadex(NULL, 0, LyricsThreadProc, this, 0, &id);
+		if (thread)
+		{
+			m_InternetThread = thread;
+		}
+		else
+		{
+			LSLog(LOG_DEBUG, L"Rainmeter", L"NowPlayingPlugin: Failed to start lyrics thread.");
+		}
+
+		LeaveCriticalSection(&m_CriticalSection);
+	}
+}
+
+/*
+** LyricsThreadProc
+**
+** Thread to download lyrics.
+**
+*/
+unsigned __stdcall CPlayer::LyricsThreadProc(void* pParam)
+{
+	CPlayer* player = (CPlayer*)pParam;
+
+	EnterCriticalSection(&player->m_CriticalSection);
+	std::wstring lyrics;
+	bool found;
+
+	while (true)
+	{
+		UINT beforeCount = player->GetTrackCount();
+		found = CLyrics::GetFromInternet(player->m_Artist, player->m_Title, lyrics);
+		UINT afterCount = player->GetTrackCount();
+
+		if (beforeCount == afterCount)
+		{
+			// We're on the same track
+			break;
+		}
+
+		// Track changed, fetch lyrics for it
+	}
+
+	if (found)
+	{
+		player->m_Lyrics = lyrics;
+	}
+
+	CloseHandle(player->m_InternetThread);
+	player->m_InternetThread = NULL;
+	LeaveCriticalSection(&player->m_CriticalSection);
+
+	return 0;
+}
+
+/*
 ** ClearData
 **
 ** Clear track information.
@@ -125,6 +256,7 @@ void CPlayer::ClearData()
 	m_Artist.clear();
 	m_Album.clear();
 	m_Title.clear();
+	m_Lyrics.clear();
 	m_FilePath.clear();
 	m_CoverPath.clear();
 }

@@ -20,7 +20,8 @@
 #define __STDAFX_H__
 
 // WinAPI
-#include <windows.h>
+#include <Windows.h>
+#include <WinInet.h>
 
 // STL
 #include <string>
@@ -31,8 +32,5 @@
 
 // Rainmeter's exported functions
 #include "../../Library/Export.h"
-
-// TagLib
-#include "fileref.h"
 
 #endif

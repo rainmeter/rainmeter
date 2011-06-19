@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "PlayerWMP.h"
 
-extern CPlayer* g_WMP;
+CPlayer* CPlayerWMP::c_Player = NULL;
 
 /*
 ** CRemoteHost
@@ -170,9 +170,25 @@ CPlayerWMP::CPlayerWMP() : CPlayer(),
 */
 CPlayerWMP::~CPlayerWMP()
 {
-	g_WMP = NULL;
+	c_Player = NULL;
 	Uninitialize();
 	m_ComModule.Term();
+}
+
+/*
+** Create
+**
+** Creates a shared class object.
+**
+*/
+CPlayer* CPlayerWMP::Create()
+{
+	if (!c_Player)
+	{
+		c_Player = new CPlayerWMP();
+	}
+
+	return c_Player;
 }
 
 /*
@@ -450,8 +466,13 @@ void CPlayerWMP::UpdateData()
 						}
 						else
 						{
-							GetCover(m_Artist, m_Title, m_FilePath, m_CoverPath);
+							FindCover();
 						}
+					}
+
+					if (m_HasLyricsMeasure)
+					{
+						FindLyrics();
 					}
 				}
 			}

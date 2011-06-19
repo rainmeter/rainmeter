@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "PlayerFoobar.h"
 
-extern CPlayer* g_Foobar;
+CPlayer* CPlayerFoobar::c_Player = NULL;
 
 /*
 ** CPlayerFoobar
@@ -42,8 +42,24 @@ CPlayerFoobar::CPlayerFoobar() : CPlayer(),
 */
 CPlayerFoobar::~CPlayerFoobar()
 {
-	g_Foobar = NULL;
+	c_Player = NULL;
 	Uninitialize();
+}
+
+/*
+** Create
+**
+** Creates a shared class object.
+**
+*/
+CPlayer* CPlayerFoobar::Create()
+{
+	if (!c_Player)
+	{
+		c_Player = new CPlayerFoobar();
+	}
+
+	return c_Player;
 }
 
 /*
@@ -89,6 +105,7 @@ void CPlayerFoobar::Initialize()
 		}
 		else
 		{
+			m_Initialized = true;
 			SendMessage(m_FooWindow, WM_USER, (WPARAM)m_Window, FOO_SETCALLBACK);
 		}
 	}
@@ -164,7 +181,7 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 			break;
 
 		case FOO_PLAYERQUIT:
-			player->m_FooWindow = NULL;
+			player->m_Initialized = false;
 			player->ClearData();
 			break;
 		}
@@ -221,7 +238,12 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
 					if (player->m_HasCoverMeasure || player->m_InstanceCount == 0)
 					{
-						GetCover(player->m_Artist, player->m_Title, player->m_FilePath, player->m_CoverPath);
+						player->FindCover();
+					}
+
+					if (player->m_HasLyricsMeasure)
+					{
+						player->FindLyrics();
 					}
 				}
 			}
@@ -339,7 +361,7 @@ void CPlayerFoobar::ClosePlayer()
 */
 void CPlayerFoobar::OpenPlayer(std::wstring& path)
 {
-	if (!m_FooWindow)
+	if (!m_Initialized)
 	{
 		if (path.empty())
 		{

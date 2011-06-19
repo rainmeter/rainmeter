@@ -30,8 +30,9 @@ enum WINAMPTYPE
 class CPlayerWinamp : public CPlayer
 {
 public:
-	CPlayerWinamp(WINAMPTYPE type);
-	~CPlayerWinamp();
+	virtual ~CPlayerWinamp();
+
+	static CPlayer* Create(WINAMPTYPE type);
 
 	virtual void UpdateData();
 
@@ -46,12 +47,17 @@ public:
 	virtual void ClosePlayer();
 	virtual void OpenPlayer(std::wstring& path);
 
+protected:
+	CPlayerWinamp(WINAMPTYPE type);
+
 private:
 	bool CheckWindow();
 
+	static CPlayer* c_Player;
+
+	HWND m_Window;				// Winamp window
 	bool m_UseUnicodeAPI;
 	WINAMPTYPE m_WinampType;
-	HWND m_Window;				// Winamp window
 	HANDLE m_WinampHandle;		// Handle to Winamp process
 	LPCVOID m_WinampAddress;
 };

@@ -24,8 +24,9 @@
 class CPlayerAIMP : public CPlayer
 {
 public:
-	CPlayerAIMP();
-	~CPlayerAIMP();
+	virtual ~CPlayerAIMP();
+
+	static CPlayer* Create();
 
 	virtual void UpdateData();
 
@@ -40,14 +41,19 @@ public:
 	virtual void ClosePlayer();
 	virtual void OpenPlayer(std::wstring& path);
 
+protected:
+	CPlayerAIMP();
+
 private:
 	bool Initialize();
-	bool CheckActive();
+	bool CheckWindow();
 
-	LPVOID m_FileMap;
-	HANDLE m_FileMapHandle;
+	static CPlayer* c_Player;
+	
 	HWND m_Window;				// AIMP window
 	HWND m_WinampWindow;		// AIMP Winamp API window
+	LPVOID m_FileMap;
+	HANDLE m_FileMapHandle;
 };
 
 #endif

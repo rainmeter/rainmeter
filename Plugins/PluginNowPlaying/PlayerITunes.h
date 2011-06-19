@@ -35,8 +35,9 @@
 class CPlayerITunes : public CPlayer
 {
 public:
-	CPlayerITunes();
-	~CPlayerITunes();
+	virtual ~CPlayerITunes();
+
+	static CPlayer* Create();
 
 	virtual void UpdateData();
 
@@ -50,6 +51,9 @@ public:
 	virtual void SetVolume(int volume);
 	virtual void ClosePlayer();
 	virtual void OpenPlayer(std::wstring& path);
+
+protected:
+	CPlayerITunes();
 
 private:
 	class CEventHandler : public _IiTunesEvents
@@ -82,6 +86,8 @@ private:
 	void OnStateChange(bool playing);
 	void OnVolumeChange(int volume);
 	bool CheckWindow();
+
+	static CPlayer* c_Player;
 
 	bool m_UserQuitPrompt;
 	IiTunes* m_iTunes;

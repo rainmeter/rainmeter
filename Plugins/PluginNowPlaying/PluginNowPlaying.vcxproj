@@ -122,6 +122,7 @@
       <ProgramDatabaseFile>.\x32/Debug/NowPlaying.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x32/Debug/NowPlaying.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalDependencies>WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -162,6 +163,7 @@
       <ProgramDatabaseFile>.\x64/Debug/NowPlaying.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x64/Debug/NowPlaying.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
+      <AdditionalDependencies>WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -198,7 +200,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>Rainmeter.lib;Wininet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Rainmeter.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>../../TestBench/x32/Release/Plugins/NowPlaying.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\Library\x32\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -243,7 +245,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/LTCG  %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>Rainmeter.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Rainmeter.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>../../TestBench/x64/Release/Plugins/NowPlaying.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\Library\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -256,6 +258,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Cover.cpp" />
+    <ClCompile Include="Internet.cpp" />
+    <ClCompile Include="Lyrics.cpp" />
     <ClCompile Include="NowPlaying.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerAIMP.cpp" />
@@ -344,6 +348,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cover.h" />
+    <ClInclude Include="Internet.h" />
+    <ClInclude Include="Lyrics.h" />
     <ClInclude Include="NowPlaying.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerAIMP.h" />

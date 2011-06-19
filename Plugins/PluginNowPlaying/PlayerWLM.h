@@ -24,8 +24,9 @@
 class CPlayerWLM : public CPlayer
 {
 public:
-	CPlayerWLM();
-	~CPlayerWLM();
+	virtual ~CPlayerWLM();
+
+	static CPlayer* Create();
 
 	virtual void UpdateData();
 
@@ -35,9 +36,14 @@ public:
 	virtual void Next();
 	virtual void Previous();
 
+protected:
+	CPlayerWLM();
+
 private:
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	void SendKeyInput(WORD key);
+
+	static CPlayer* c_Player;
 
 	HWND m_Window;
 };
