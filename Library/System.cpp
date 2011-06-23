@@ -108,6 +108,10 @@ void CSystem::Initialize(HINSTANCE instance)
 	c_Monitors.monitors.reserve(8);
 	SetMultiMonitorInfo();
 
+	WCHAR directory[MAX_PATH] = {0};
+	GetCurrentDirectory(MAX_PATH, directory);
+	c_WorkingDirectory = directory;
+
 	c_WinEventHook = SetWinEventHook(
 		EVENT_SYSTEM_FOREGROUND,
 		EVENT_SYSTEM_FOREGROUND,
@@ -117,11 +121,10 @@ void CSystem::Initialize(HINSTANCE instance)
 		0,
 		WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
 
-	WCHAR directory[MAX_PATH] = {0};
-	GetCurrentDirectory(MAX_PATH, directory);
-	c_WorkingDirectory = directory;
-
-	SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
+	if (c_WinEventHook == NULL)
+	{
+		SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
+	}
 	SetTimer(c_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, NULL);
 	SetTimer(c_Window, TIMER_DELETELATER, INTERVAL_DELETELATER, NULL);
 }
@@ -209,8 +212,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 		wcsncpy_s(monitor.deviceName, info.szDevice, _TRUNCATE);  // E.g. "\\.\DISPLAY1"
 
 		// Get the monitor name (E.g. "Generic Non-PnP Monitor")
-		DISPLAY_DEVICE ddm = {0};
-		ddm.cb = sizeof(DISPLAY_DEVICE);
+		DISPLAY_DEVICE ddm = {sizeof(DISPLAY_DEVICE)};
 		DWORD dwMon = 0;
 		while (EnumDisplayDevices(info.szDevice, dwMon++, &ddm, 0))
 		{
@@ -273,8 +275,7 @@ void CSystem::SetMultiMonitorInfo()
 		Log(LOG_DEBUG, L"* EnumDisplayDevices / EnumDisplaySettings API");
 	}
 
-	DISPLAY_DEVICE dd = {0};
-	dd.cb = sizeof(DISPLAY_DEVICE);
+	DISPLAY_DEVICE dd = {sizeof(DISPLAY_DEVICE)};
 
 	if (EnumDisplayDevices(NULL, 0, &dd, 0))
 	{
@@ -334,8 +335,7 @@ void CSystem::SetMultiMonitorInfo()
 				wcsncpy_s(monitor.deviceName, dd.DeviceName, _TRUNCATE);  // E.g. "\\.\DISPLAY1"
 
 				// Get the monitor name (E.g. "Generic Non-PnP Monitor")
-				DISPLAY_DEVICE ddm = {0};
-				ddm.cb = sizeof(DISPLAY_DEVICE);
+				DISPLAY_DEVICE ddm = {sizeof(DISPLAY_DEVICE)};
 				DWORD dwMon = 0;
 				while (EnumDisplayDevices(dd.DeviceName, dwMon++, &ddm, 0))
 				{
@@ -377,8 +377,7 @@ void CSystem::SetMultiMonitorInfo()
 
 					if (monitor.handle != NULL)
 					{
-						MONITORINFO info = {0};
-						info.cbSize = sizeof(MONITORINFO);
+						MONITORINFO info = {sizeof(MONITORINFO)};
 						GetMonitorInfo(monitor.handle, &info);
 
 						monitor.screen = info.rcMonitor;
@@ -529,8 +528,7 @@ void CSystem::UpdateWorkareaInfo()
 	{
 		if (monitors[i].active && monitors[i].handle != NULL)
 		{
-			MONITORINFO info = {0};
-			info.cbSize = sizeof(MONITORINFO);
+			MONITORINFO info = {sizeof(MONITORINFO)};
 			GetMonitorInfo(monitors[i].handle, &info);
 
 			monitors[i].work = info.rcWork;
@@ -777,18 +775,32 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 ** Changes the "Show Desktop" state.
 **
 */
-void CSystem::CheckDesktopState(HWND WorkerW)
+bool CSystem::CheckDesktopState(HWND WorkerW)
 {
 	HWND hwnd = NULL;
 
-	if (WorkerW)
+	if (WorkerW && IsWindowVisible(WorkerW))
 	{
 		hwnd = FindWindowEx(NULL, WorkerW, L"RainmeterSystemClass", L"SystemWindow");
 	}
 
-	if ((hwnd && !c_ShowDesktop) || (!hwnd && c_ShowDesktop))  // State changed
+	bool stateChanged = (hwnd && !c_ShowDesktop) || (!hwnd && c_ShowDesktop);
+
+	if (stateChanged)
 	{
 		c_ShowDesktop = !c_ShowDesktop;
+
+		if (c_WinEventHook)
+		{
+			if (c_ShowDesktop)
+			{
+				SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
+			}
+			else
+			{
+				KillTimer(c_Window, TIMER_SHOWDESKTOP);
+			}
+		}
 
 		if (CRainmeter::GetDebug())
 		{
@@ -800,6 +812,8 @@ void CSystem::CheckDesktopState(HWND WorkerW)
 
 		ChangeZPosInOrder();
 	}
+
+	return stateChanged;
 }
 
 /*
@@ -817,10 +831,30 @@ void CALLBACK CSystem::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, 
 			WCHAR className[16];
 			if (GetClassName(hwnd, className, 16) > 0 &&
 				_wcsicmp(className, L"WorkerW") == 0 &&
-				BelongToSameProcess(GetDefaultShellWindow(), hwnd) &&
-				FindWindowEx(hwnd, NULL, L"SHELLDLL_DefView", L""))
+				BelongToSameProcess(GetDefaultShellWindow(), hwnd))
 			{
-				CheckDesktopState(hwnd);
+				const int max = 5;
+				int loop = 0;
+				while (loop < max && FindWindowEx(hwnd, NULL, L"SHELLDLL_DefView", L"") == NULL)
+				{
+					Sleep(2);  // Wait for 2-16 ms before retrying
+					++loop;
+				}
+
+				if (loop < max)
+				{
+					loop = 0;
+					while (loop < max && !CheckDesktopState(hwnd))
+					{
+						Sleep(2);  // Wait for 2-16 ms before retrying
+						++loop;
+					}
+				}
+
+				if (loop >= max)  // detection failed
+				{
+					SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
+				}
 			}
 		}
 	}

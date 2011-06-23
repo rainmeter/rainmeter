@@ -95,7 +95,7 @@ private:
 	static HWND GetDefaultShellWindow();
 	static void ChangeZPosInOrder();
 
-	static void CheckDesktopState(HWND WorkerW);
+	static bool CheckDesktopState(HWND WorkerW);
 	static bool BelongToSameProcess(HWND hwndA, HWND hwndB);
 
 	static HWND c_Window;
