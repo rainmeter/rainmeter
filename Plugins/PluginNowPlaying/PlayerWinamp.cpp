@@ -138,20 +138,20 @@ void CPlayerWinamp::UpdateData()
 			m_Volume = (SendMessage(m_Window, WM_WA_IPC, -666, IPC_SETVOLUME) * 100) / 255;	// 0 - 255 to 0 - 100
 		}
 
-		BOOL ret;
 		WCHAR wBuffer[MAX_PATH];
 		char cBuffer[MAX_PATH];
+		BOOL ret;
 
 		if (m_UseUnicodeAPI)
 		{
-			ret = ReadProcessMemory(m_WinampHandle, m_WinampAddress, &wBuffer, MAX_PATH, NULL);
+			ret = ReadProcessMemory(m_WinampHandle, m_WinampAddress, &wBuffer, sizeof(wBuffer), NULL);
 		}
 		else
 		{
 			// MediaMonkey doesn't support wide IPC messages
 			int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
 			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTFILE);
-			ret = ReadProcessMemory(m_WinampHandle, address, &cBuffer, MAX_PATH, NULL);
+			ret = ReadProcessMemory(m_WinampHandle, address, &cBuffer, sizeof(cBuffer), NULL);
 			mbstowcs(wBuffer, cBuffer, MAX_PATH);
 		}
 
@@ -182,13 +182,13 @@ void CPlayerWinamp::UpdateData()
 				if (m_UseUnicodeAPI)
 				{
 					LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_TITLE);
-					ret = ReadProcessMemory(m_WinampHandle, address, &wBuffer, MAX_PATH, NULL);
+					ret = ReadProcessMemory(m_WinampHandle, address, &wBuffer, sizeof(wBuffer), NULL);
 				}
 				else
 				{
 					int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
 					LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTTITLE);
-					ReadProcessMemory(m_WinampHandle, m_WinampAddress, &cBuffer, MAX_PATH, NULL);
+					ReadProcessMemory(m_WinampHandle, m_WinampAddress, &cBuffer, sizeof(cBuffer), NULL);
 					ret = mbstowcs(wBuffer, cBuffer, MAX_PATH);
 				}
 

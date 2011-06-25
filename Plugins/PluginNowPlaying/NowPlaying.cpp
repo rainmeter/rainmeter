@@ -209,10 +209,6 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		{
 			child->type = MEASURE_ALBUM;
 		}
-		else if (_wcsicmp(L"LYRICS", str) == 0)
-		{
-			child->type = MEASURE_LYRICS;
-		}
 		else if (_wcsicmp(L"COVER", str) == 0)
 		{
 			child->type = MEASURE_COVER;
@@ -239,10 +235,18 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		{
 			child->type = MEASURE_STATE;
 		}
+		else if (_wcsicmp(L"STATUS", str) == 0)
+		{
+			child->type = MEASURE_STATUS;
+		}
 		else if (_wcsicmp(L"VOLUME", str) == 0)
 		{
 			child->type = MEASURE_VOLUME;
 			maxValue = 100;
+		}
+		else if (_wcsicmp(L"LYRICS", str) == 0)
+		{
+			child->type = MEASURE_LYRICS;
 		}
 		else if (_wcsicmp(L"FILE", str) == 0)
 		{
@@ -343,11 +347,14 @@ UINT Update(UINT id)
 		case MEASURE_RATING:
 			return player->GetRating();
 
+		case MEASURE_VOLUME:
+			return player->GetVolume();
+
 		case MEASURE_STATE:
 			return (UINT)player->GetState();
 
-		case MEASURE_VOLUME:
-			return player->GetVolume();
+		case MEASURE_STATUS:
+			return (UINT)player->IsInitialized();
 		}
 
 		return 0;
@@ -389,6 +396,9 @@ LPCTSTR GetString(UINT id, UINT flags)
 		case MEASURE_COVER:
 			return player->GetCoverPath();
 
+		case MEASURE_FILE:
+			return player->GetFilePath();
+
 		case MEASURE_DURATION:
 			SecondsToTime(player->GetDuration(), parent->disableLeadingZero, buffer);
 			return buffer;
@@ -405,21 +415,22 @@ LPCTSTR GetString(UINT id, UINT flags)
 			_itow(player->GetRating(), buffer, 10);
 			return buffer;
 
-		case MEASURE_STATE:
-			_itow(player->GetState(), buffer, 10);
-			return buffer;
-
 		case MEASURE_VOLUME:
 			_itow(player->GetVolume(), buffer, 10);
 			return buffer;
 
-		case MEASURE_FILE:
-			return player->GetFilePath();
+		case MEASURE_STATE:
+			_itow(player->GetState(), buffer, 10);
+			return buffer;
+
+		case MEASURE_STATUS:
+			_itow((UINT)player->IsInitialized(), buffer, 10);
+			return buffer;
 		}
 	}
 	else
 	{
-		return L"Error: Invalid player.";
+		return L"Error: Invalid player name.";
 	}
 
 	return L"";

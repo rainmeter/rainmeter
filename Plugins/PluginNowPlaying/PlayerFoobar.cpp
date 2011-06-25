@@ -284,7 +284,7 @@ void CPlayerFoobar::Pause()
 */
 void CPlayerFoobar::Play()
 {
-	SendMessage(m_FooWindow, WM_USER, 0, FOO_PLAY);
+	SendMessage(m_FooWindow, WM_USER, 0, (m_State == PLAYER_PAUSED) ? FOO_PLAYPAUSE : FOO_PLAY);
 }
 
 /*

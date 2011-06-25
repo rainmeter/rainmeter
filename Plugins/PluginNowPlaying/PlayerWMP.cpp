@@ -230,7 +230,7 @@ void CPlayerWMP::Initialize()
 	CComPtr<IObjectWithSite> spHostObject;
 	CComPtr<IAxWinHostWindow> spHost;
 	CComObject<CRemoteHost>* pRemoteHost;
-	
+
 	m_AxWindow = new CAxWindow();
 	HRESULT hr = m_AxWindow ? S_OK : E_OUTOFMEMORY;
 

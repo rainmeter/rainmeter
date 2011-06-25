@@ -60,6 +60,7 @@ void CInternet::Finalize()
 */
 std::wstring CInternet::DownloadUrl(const std::wstring& url, int codepage)
 {
+	// From WebParser.cpp
 	std::wstring result;
 	DWORD flags = INTERNET_FLAG_RESYNCHRONIZE;
 	HINTERNET hUrlDump = InternetOpenUrl(c_NetHandle, url.c_str(), NULL, NULL, flags, 0);

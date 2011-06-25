@@ -84,7 +84,7 @@ void CPlayerCAD::Initialize()
 	wc.lpszClassName = L"NowPlayingCADClass";
 	RegisterClass(&wc);
 
-	// Create dummy window
+	// Create reciever window
 	m_Window = CreateWindow(L"NowPlayingCADClass",
 							L"CD Art Display 1.x Class",
 							WS_DISABLED,
@@ -96,6 +96,31 @@ void CPlayerCAD::Initialize()
 							NULL,
 							hInstance,
 							this);
+
+	// Add WM_USER/WM_COPYDATA to allowed messages from lower level processes
+	HMODULE hUser32 = LoadLibrary(L"user32.dll");
+	if (hUser32)
+	{
+		// Try ChangeWindowMessageFilterEx first (Win7+)
+		FPCHANGEWINDOWMESSAGEFILTEREX ChangeWindowMessageFilterEx = (FPCHANGEWINDOWMESSAGEFILTEREX)GetProcAddress(hUser32, "ChangeWindowMessageFilterEx");
+		if (ChangeWindowMessageFilterEx)
+		{
+			ChangeWindowMessageFilterEx(m_Window, WM_USER, MSGFLT_ALLOW, NULL);
+			ChangeWindowMessageFilterEx(m_Window, WM_COPYDATA, MSGFLT_ALLOW, NULL);
+		}
+		else
+		{
+			// Try ChangeWindowMessageFilter (Vista)
+			FPCHANGEWINDOWMESSAGEFILTER ChangeWindowMessageFilter = (FPCHANGEWINDOWMESSAGEFILTER)GetProcAddress(hUser32, "ChangeWindowMessageFilter");
+			if (ChangeWindowMessageFilter)
+			{
+				ChangeWindowMessageFilter(WM_USER, MSGFLT_ALLOW);
+				ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ALLOW);
+			}
+		}
+
+		FreeLibrary(hUser32);
+	}
 
 	WCHAR buffer[MAX_PATH];
 	LPCTSTR file = g_SettingsFile.c_str();
@@ -177,7 +202,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 		switch (lParam)
 		{
 		case IPC_TRACK_CHANGED_NOTIFICATION:
-			SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_CURRENT_TRACK);
+			PostMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_CURRENT_TRACK);
 			break;
 
 		case IPC_PLAYER_STATE_CHANGED_NOTIFICATION:
@@ -280,7 +305,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 
 						if (player->m_State != PLAYER_STOPPED)
 						{
-							SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_CURRENT_TRACK);
+							PostMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_CURRENT_TRACK);
 						}
 					}
 				}

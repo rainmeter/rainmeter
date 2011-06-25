@@ -21,6 +21,9 @@
 
 #include "Player.h"
 
+typedef BOOL (WINAPI * FPCHANGEWINDOWMESSAGEFILTER)(UINT message, DWORD dwFlag);
+typedef BOOL (WINAPI * FPCHANGEWINDOWMESSAGEFILTEREX)(HWND hWnd, UINT message, DWORD dwFlag, PCHANGEFILTERSTRUCT pChangeFilterStruct);
+
 class CPlayerCAD : public CPlayer
 {
 public:

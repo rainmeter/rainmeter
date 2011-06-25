@@ -23,7 +23,6 @@
 
 CPlayer* CPlayerAIMP::c_Player = NULL;
 
-// TODO
 /*
 ** CPlayerAIMP
 **
