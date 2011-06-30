@@ -871,7 +871,13 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 		// Compilation succeeded: match the subject in the second argument
 		std::string utf8Data;
 
-		if (urlData->codepage != CP_UTF8 && urlData->codepage != 0)		// 0 = CP_ACP
+		if (urlData->codepage == 1200)		// 1200 = UTF-16LE
+		{
+			// Must convert the data to utf8
+			utf8Data = ConvertWideToUTF8((LPCWSTR)parseData);
+			parseData = utf8Data.c_str();
+		}
+		else if (urlData->codepage != CP_UTF8 && urlData->codepage != 0)		// 0 = CP_ACP
 		{
 			// Must convert the data to utf8
 			utf8Data = ConvertAsciiToUTF8(parseData, urlData->codepage);
