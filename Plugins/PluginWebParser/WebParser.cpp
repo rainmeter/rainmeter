@@ -1675,7 +1675,7 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 			nBufferSize = *dwDataSize + dwSize;
 
 			// Allocate the output buffer.
-			lpOutPut = new BYTE[nBufferSize + 2];
+			lpOutPut = new BYTE[nBufferSize + 3];
 
 			// Make sure the buffer is not the initial buffer.
 			if (lpHolding != NULL)
@@ -1699,9 +1699,10 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 
 			*dwDataSize += dwSize;
 
-			// End with double null
+			// End with triple null
 			lpOutPut[dwSize] = 0;
 			lpOutPut[dwSize + 1] = 0;
+			lpOutPut[dwSize + 2] = 0;
 
 			// Increment the number of buffers read.
 			++nCounter;
