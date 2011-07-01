@@ -39,10 +39,8 @@ CPlayer::CPlayer() :
 	m_Position(),
 	m_Rating(),
 	m_Volume(),
-	m_CriticalSection(),
 	m_InternetThread()
 {
-	InitializeCriticalSection(&m_CriticalSection);
 }
 
 /*
@@ -53,7 +51,10 @@ CPlayer::CPlayer() :
 */
 CPlayer::~CPlayer()
 {
-	DeleteCriticalSection(&m_CriticalSection);
+	if (m_InternetThread)
+	{
+		TerminateThread(m_InternetThread, 0);
+	}
 }
 
 /*
@@ -79,6 +80,8 @@ void CPlayer::RemoveInstance()
 	{
 		delete this;
 	}
+
+	m_UpdateCount = 0;
 }
 
 /*
@@ -181,7 +184,7 @@ void CPlayer::FindCover()
 */
 void CPlayer::FindLyrics()
 {
-	if (TryEnterCriticalSection(&m_CriticalSection))
+	if (!m_InternetThread)
 	{
 		m_Lyrics.clear();
 
@@ -195,8 +198,6 @@ void CPlayer::FindLyrics()
 		{
 			LSLog(LOG_DEBUG, L"Rainmeter", L"NowPlayingPlugin: Failed to start lyrics thread.");
 		}
-
-		LeaveCriticalSection(&m_CriticalSection);
 	}
 }
 
@@ -210,7 +211,6 @@ unsigned __stdcall CPlayer::LyricsThreadProc(void* pParam)
 {
 	CPlayer* player = (CPlayer*)pParam;
 
-	EnterCriticalSection(&player->m_CriticalSection);
 	std::wstring lyrics;
 	bool found;
 
@@ -226,7 +226,7 @@ unsigned __stdcall CPlayer::LyricsThreadProc(void* pParam)
 			break;
 		}
 
-		// Track changed, fetch lyrics for it
+		// Track changed, try again
 	}
 
 	if (found)
@@ -236,7 +236,6 @@ unsigned __stdcall CPlayer::LyricsThreadProc(void* pParam)
 
 	CloseHandle(player->m_InternetThread);
 	player->m_InternetThread = NULL;
-	LeaveCriticalSection(&player->m_CriticalSection);
 
 	return 0;
 }

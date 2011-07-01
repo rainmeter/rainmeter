@@ -19,12 +19,14 @@
 #ifndef __PLAYERWMP_H__
 #define __PLAYERWMP_H__
 
+#include "Player.h"
+
 #ifndef _ATL_DLL
   #define _ATL_DLL
   #define _ATL_APARTMENT_THREADED
+  #define _ATL_NO_EXCEPTIONS
 #endif
 
-#include "Player.h"
 #include <wmp.h>
 #include <atlbase.h>
 #include <atlcom.h>

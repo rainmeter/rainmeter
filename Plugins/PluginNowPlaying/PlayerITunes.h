@@ -25,6 +25,7 @@
 #ifndef _ATL_DLL
   #define _ATL_DLL
   #define _ATL_APARTMENT_THREADED
+  #define _ATL_NO_EXCEPTIONS
 #endif
 
 #include <atlbase.h>

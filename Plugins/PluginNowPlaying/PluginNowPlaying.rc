@@ -12,7 +12,7 @@
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,1,2,0
+ FILEVERSION 1,1,3,0
  PRODUCTVERSION PRODUCTVER
  FILEFLAGSMASK 0x17L 
 #ifdef _DEBUG
@@ -29,7 +29,7 @@ BEGIN
         BLOCK "040904E4"
         BEGIN
             VALUE "FileDescription", "NowPlaying Plugin for Rainmeter"
-            VALUE "FileVersion", "1.1.2.0"
+            VALUE "FileVersion", "1.1.3.0"
             VALUE "InternalName", "NowPlaying"
             VALUE "LegalCopyright", "Copyright (C) 2011 - Birunthan Mohanathas"
             VALUE "OriginalFilename", "NowPlaying.dll"

@@ -117,7 +117,6 @@ private:
 	static unsigned __stdcall LyricsThreadProc(void* pParam);
 
 	HANDLE m_InternetThread;
-	CRITICAL_SECTION m_CriticalSection;
 };
 
 #endif

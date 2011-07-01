@@ -122,7 +122,7 @@
       <ProgramDatabaseFile>.\x32/Debug/NowPlaying.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x32/Debug/NowPlaying.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalDependencies>WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Psapi.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -163,7 +163,7 @@
       <ProgramDatabaseFile>.\x64/Debug/NowPlaying.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x64/Debug/NowPlaying.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
-      <AdditionalDependencies>WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Psapi.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -192,15 +192,16 @@
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <DisableSpecificWarnings>4018;4090;4099;4114;4244;4267;4309;4351;4390;4786;4800;4996</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4018;4090;4099;4114;4244;4267;4309;4351;4390;4530;4786;4800;4996</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>.\sha2;.\taglib;.\taglib\toolkit;.\taglib\mpeg\id3v2\frames;.\taglib\ogg;.\taglib\asf;.\taglib\mp4;.\taglib\ogg\vorbis;.\taglib\ogg\flac;.\taglib\ogg\speex;.\taglib\riff;.\taglib\riff\wav;.\taglib\riff\aiff;.\taglib\flac;.\taglib\mpeg;.\taglib\mpeg\id3v1;.\taglib\mpeg\id3v2;.\taglib\mpc;.\taglib\ape;.\taglib\trueaudio;.\taglib\wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>Rainmeter.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Rainmeter.lib;Psapi.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>../../TestBench/x32/Release/Plugins/NowPlaying.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\Library\x32\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -236,8 +237,9 @@
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <DisableSpecificWarnings>4018;4090;4099;4114;4244;4267;4309;4351;4390;4786;4800;4996</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4018;4090;4099;4114;4244;4267;4309;4351;4390;4530;4786;4800;4996</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>.\sha2;.\taglib;.\taglib\toolkit;.\taglib\mpeg\id3v2\frames;.\taglib\ogg;.\taglib\asf;.\taglib\mp4;.\taglib\ogg\vorbis;.\taglib\ogg\flac;.\taglib\ogg\speex;.\taglib\riff;.\taglib\riff\wav;.\taglib\riff\aiff;.\taglib\flac;.\taglib\mpeg;.\taglib\mpeg\id3v1;.\taglib\mpeg\id3v2;.\taglib\mpc;.\taglib\ape;.\taglib\trueaudio;.\taglib\wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -245,7 +247,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/LTCG  %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>Rainmeter.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Rainmeter.lib;Psapi.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>../../TestBench/x64/Release/Plugins/NowPlaying.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\Library\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

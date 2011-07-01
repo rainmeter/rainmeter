@@ -316,6 +316,7 @@ UINT Update(UINT id)
 		ParentMeasure* parent = child->parent;
 		CPlayer* player = parent->player;
 
+		// Only allow parent measure to update
 		if (parent->id == id)
 		{
 			player->UpdateMeasure();
@@ -451,14 +452,7 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 		ParentMeasure* parent = child->parent;
 		CPlayer* player = parent->player;
 
-		if (!player->IsInitialized())
-		{
-			if (_wcsicmp(bang, L"OpenPlayer") == 0 || _wcsicmp(bang, L"TogglePlayer") == 0)
-			{
-				player->OpenPlayer(parent->playerPath);
-			}
-		}
-		else if (_wcsicmp(bang, L"Pause") == 0)
+		if (_wcsicmp(bang, L"Pause") == 0)
 		{
 			player->Pause();
 		}
@@ -482,7 +476,13 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 		{
 			player->Previous();
 		}
-		else if (_wcsicmp(bang, L"ClosePlayer") == 0 || _wcsicmp(bang, L"TogglePlayer") == 0)
+		else if (_wcsicmp(bang, L"OpenPlayer") == 0 ||
+				 (!player->IsInitialized() && _wcsicmp(bang, L"TogglePlayer") == 0))
+		{
+			player->OpenPlayer(parent->playerPath);
+		}
+		else if (_wcsicmp(bang, L"ClosePlayer") == 0 ||
+				 (player->IsInitialized() && _wcsicmp(bang, L"TogglePlayer") == 0))
 		{
 			player->ClosePlayer();
 		}

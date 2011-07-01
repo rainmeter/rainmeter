@@ -89,7 +89,7 @@ bool CPlayerWinamp::CheckWindow()
 		{
 			DWORD pID;
 			GetWindowThreadProcessId(m_Window, &pID);
-			m_WinampHandle = OpenProcess(PROCESS_VM_READ, false, pID);
+			m_WinampHandle = OpenProcess(PROCESS_VM_READ, FALSE, pID);
 
 			if (m_WinampHandle)
 			{
@@ -200,7 +200,6 @@ void CPlayerWinamp::UpdateData()
 
 				std::wstring title = wBuffer;
 				std::wstring::size_type pos = title.find(L". ");
-
 				if (pos != std::wstring::npos && pos < 5)
 				{
 					pos += 2; // Skip ". "
@@ -217,8 +216,9 @@ void CPlayerWinamp::UpdateData()
 				}
 				else
 				{
-					ClearData();
-					return;
+					m_Title = title;
+					m_Artist.clear();
+					m_Album.clear();
 				}
 			}
 

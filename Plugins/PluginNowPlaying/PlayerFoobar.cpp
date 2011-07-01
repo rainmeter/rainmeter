@@ -177,6 +177,7 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 			break;
 
 		case FOO_PLAYERSTART:
+			player->m_Initialized = true;
 			player->m_FooWindow = (HWND)wParam;
 			break;
 

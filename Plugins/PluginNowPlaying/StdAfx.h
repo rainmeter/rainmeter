@@ -22,6 +22,7 @@
 // WinAPI
 #include <Windows.h>
 #include <WinInet.h>
+#include <Psapi.h>
 
 // STL
 #include <string>

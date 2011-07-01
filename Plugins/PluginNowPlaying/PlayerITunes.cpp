@@ -197,15 +197,12 @@ void CPlayerITunes::Initialize()
 				if (position != 0)
 				{
 					m_State = PLAYER_PAUSED;
+					OnTrackChange();
 				}
 			}
 			else if (state == ITPlayerStatePlaying)
 			{
 				m_State = PLAYER_PLAYING;
-			}
-
-			if (m_State != PLAYER_STOPPED)
-			{
 				OnTrackChange();
 			}
 

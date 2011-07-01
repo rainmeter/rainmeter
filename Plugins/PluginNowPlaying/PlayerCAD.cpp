@@ -144,11 +144,27 @@ void CPlayerCAD::Initialize()
 	}
 	else
 	{
-		// TODO: Remove this in a few weeks (left here for MusicBee backwards compatibility)
-		m_PlayerWindow = FindWindow(L"WindowsForms10.Window.8.app.0.378734a", NULL);
+		m_PlayerWindow = FindWindow(L"CD Art Display IPC Class", NULL);
 		if (m_PlayerWindow)
 		{
-			WritePrivateProfileString(L"NowPlaying.dll", L"ClassName", L"WindowsForms10.Window.8.app.0.378734a", file);
+			classSz = L"CD Art Display IPC Class";
+			WritePrivateProfileString(L"NowPlaying.dll", L"ClassName", classSz, file);
+
+			windowSz = (GetWindowText(m_PlayerWindow, buffer, MAX_PATH) > 0) ? buffer : NULL;
+			WritePrivateProfileString(L"NowPlaying.dll", L"WindowName", windowSz, file);
+
+			DWORD pID;
+			GetWindowThreadProcessId(m_PlayerWindow, &pID);
+			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pID);
+			if (hProcess)
+			{
+				if (GetModuleFileNameEx(hProcess, NULL, buffer, MAX_PATH) > 0)
+				{
+					WritePrivateProfileString(L"NowPlaying.dll", L"PlayerPath", buffer, file);
+				}
+
+				CloseHandle(hProcess);
+			}
 		}
 	}
 
@@ -156,7 +172,7 @@ void CPlayerCAD::Initialize()
 	{
 		m_Initialized = true;
 		SendMessage(m_PlayerWindow, WM_USER, (WPARAM)m_Window, IPC_SET_CALLBACK_HWND);
-		m_State = (PLAYSTATE)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_PLAYER_STATE);
+		m_State = (PLAYSTATE)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_STATE);
 
 		if (m_State != PLAYER_STOPPED)
 		{
@@ -190,40 +206,62 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 	switch (msg)
 	{
 	case WM_CREATE:
-		// Get pointer to the CPlayerCAD class from the CreateWindow call
-		player = (CPlayerCAD*)((CREATESTRUCT*)lParam)->lpCreateParams;
-		return 0;
+		{
+			// Get pointer to the CPlayerCAD class from the CreateWindow call
+			player = (CPlayerCAD*)((CREATESTRUCT*)lParam)->lpCreateParams;
+			return 0;
+		}
 
 	case WM_DESTROY:
-		SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_SHUTDOWN_NOTIFICATION);
-		return 0;
+		{
+			SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_SHUTDOWN_NOTIFICATION);
+			return 0;
+		}
 
 	case WM_USER:
 		switch (lParam)
 		{
 		case IPC_TRACK_CHANGED_NOTIFICATION:
-			PostMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_CURRENT_TRACK);
-			break;
-
-		case IPC_PLAYER_STATE_CHANGED_NOTIFICATION:
-			player->m_State = (PLAYSTATE)wParam;
-			if (player->m_State == PLAYER_STOPPED)
 			{
-				player->ClearData();
+				PostMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_CURRENT_TRACK);
+				break;
 			}
-			break;
+
+		case IPC_STATE_CHANGED_NOTIFICATION:
+			{
+				player->m_State = (PLAYSTATE)wParam;
+				if (player->m_State == PLAYER_STOPPED)
+				{
+					player->ClearData();
+				}
+				break;
+			}
+
+		case IPC_VOLUME_CHANGED_NOTIFICATION:
+			{
+				player->m_Volume = wParam;
+				break;
+			}
+
+		case IPC_RATING_CHANGED_NOTIFICATION:
+			{
+				player->m_Rating = (wParam + 1) / 2;	// From 0 - 10 to 0 - 5
+				break;
+			}
 
 		case IPC_SHUTDOWN_NOTIFICATION:
-			player->m_Initialized = false;
-			player->ClearData();
-			break;
+			{
+				player->m_Initialized = false;
+				player->ClearData();
+				break;
+			}
 		}
 		return 0;
 
 	case WM_COPYDATA:
 		{
 			PCOPYDATASTRUCT cds = (PCOPYDATASTRUCT)lParam;
-			if (cds->dwData == IPC_CURRENT_TRACK_INFO)
+			if (cds->dwData == IPC_CURRENT_TRACK_NOTIFICATION)
 			{
 				// TODO: Sent on track update?
 				++player->m_TrackCount;
@@ -269,7 +307,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 					player->FindLyrics();
 				}
 			}
-			else if (cds->dwData == IPC_REGISTER_PLAYER && !player->m_Initialized)
+			else if (cds->dwData == IPC_REGISTER_NOTIFICATION && !player->m_Initialized)
 			{
 				std::wstring data = (WCHAR*)cds->lpData;
 				if (data[0] == L'1')
@@ -301,7 +339,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 					if (player->m_PlayerWindow)
 					{
 						player->m_Initialized = true;
-						player->m_State = (PLAYSTATE)SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_PLAYER_STATE);
+						player->m_State = (PLAYSTATE)SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_STATE);
 
 						if (player->m_State != PLAYER_STOPPED)
 						{
@@ -341,7 +379,7 @@ void CPlayerCAD::UpdateData()
 */
 void CPlayerCAD::Pause()
 {
-	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_FORCEPAUSE);
+	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_PAUSE);
 }
 
 /*
@@ -409,7 +447,7 @@ void CPlayerCAD::SetRating(int rating)
 {
 	m_Rating = rating;
 	rating *= 2; // From 0 - 5 to 0 - 10
-	SendMessage(m_PlayerWindow, WM_USER, rating, IPC_RATING_CHANGED_NOTIFICATION);
+	SendMessage(m_PlayerWindow, WM_USER, rating, IPC_SET_RATING);
 }
 
 /*
@@ -439,7 +477,7 @@ void CPlayerCAD::SetVolume(int volume)
 */
 void CPlayerCAD::ClosePlayer()
 {
-	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_CLOSE_PLAYER);
+	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_CLOSE);
 	// TODO
 	m_Initialized = false;
 	ClearData();
@@ -453,12 +491,20 @@ void CPlayerCAD::ClosePlayer()
 */
 void CPlayerCAD::OpenPlayer(std::wstring& path)
 {
-	if (!path.empty())
+	if (!m_Initialized)
 	{
-		ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
+		if (!path.empty())
+		{
+			ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
+		}
+		else if (!m_PlayerPath.empty())
+		{
+			ShellExecute(NULL, L"open", m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
+		}
 	}
-	else if (!m_PlayerPath.empty())
+	else
 	{
-		ShellExecute(NULL, L"open", m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
+		// Bring player to front
+		SendMessage(m_PlayerWindow, WM_USER, 0, IPC_SHOW_WINDOW);
 	}
 }
