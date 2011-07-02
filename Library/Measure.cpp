@@ -569,13 +569,8 @@ const WCHAR* CMeasure::GetStringValue(AUTOSCALE autoScale, double scale, int dec
 		}
 		else if (decimals == -1)
 		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%.5f", val);
-
-			size_t len = wcslen(buffer);
-			if (len >= 6 && wcscmp(&buffer[len - 6], L".00000") == 0)
-			{
-				buffer[len - 6] = L'\0';
-			}
+			int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", val);
+			RemoveTrailingZero(buffer, len);
 		}
 		else
 		{
@@ -631,6 +626,26 @@ void CMeasure::GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue
 	_snwprintf_s(buffer, sizeInWords, _TRUNCATE, format, value);
 }
 
+void CMeasure::RemoveTrailingZero(WCHAR* str, int strLen)
+{
+	--strLen;
+	while (strLen >= 0)
+	{
+		if (str[strLen] == L'0')
+		{
+			str[strLen] = L'\0';
+			--strLen;
+		}
+		else
+		{
+			if (str[strLen] == L'.')
+			{
+				str[strLen] = L'\0';
+			}
+			break;
+		}
+	}
+}
 
 /*
 ** GetStats

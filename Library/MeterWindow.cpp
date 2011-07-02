@@ -983,7 +983,8 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			if (result != -1)
 			{
 				WCHAR buffer[256];
-				_snwprintf_s(buffer, _TRUNCATE, L"%f", value);
+				int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
+				CMeasure::RemoveTrailingZero(buffer, len);
 
 				const std::wstring& resultString = buffer;
 

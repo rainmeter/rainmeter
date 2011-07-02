@@ -78,6 +78,7 @@ public:
 
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 	static void GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords);
+	static void RemoveTrailingZero(WCHAR* str, int strLen);
 
 	static CMeasure* Create(const WCHAR* measure, CMeterWindow* meterWindow, const WCHAR* name);
 
