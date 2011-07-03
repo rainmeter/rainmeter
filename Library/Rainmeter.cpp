@@ -2815,8 +2815,8 @@ void CRainmeter::SaveSettings()
 BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, CMeterWindow* meterWindow)
 {
 	// Skip "!Rainmeter" or "!"
-	int pos = (_wcsnicmp(bang.c_str(), L"!Rainmeter", 10) == 0) ? 10 : 1;
-	LPCWSTR name = &bang.c_str()[pos];
+	LPCWSTR name = bang.c_str();
+	name += (_wcsnicmp(name, L"!Rainmeter", 10) == 0) ? 10 : 1;
 
 	if (_wcsicmp(name, L"Refresh") == 0)
 	{
@@ -3090,7 +3090,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		RainmeterQuitWide();
 	}
-	else if (_wcsicmp(name, L"Execute") == 0)
+	else if (_wcsicmp(bang.c_str(), L"!Execute") == 0)
 	{
 		// Special case for multibang execution
 		std::wstring::size_type start = std::wstring::npos;
