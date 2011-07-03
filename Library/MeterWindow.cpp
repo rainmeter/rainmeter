@@ -4989,7 +4989,8 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			bang = str;
 		}
 
-		if (_wcsicmp(bang.c_str(), L"!RainmeterWriteKeyValue") == 0)
+		if (_wcsicmp(bang.c_str(), L"!RainmeterWriteKeyValue") == 0 ||
+			_wcsicmp(bang.c_str(), L"!WriteKeyValue") == 0)
 		{
 			// !RainmeterWriteKeyValue is a special case.
 			if (CRainmeter::ParseString(arg.c_str()).size() < 4)

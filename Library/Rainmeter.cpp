@@ -204,9 +204,6 @@ LPCTSTR ReadConfigString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue)
 **
 ** Receives a command and data from a plugin and returns a result.  Used by plugins.
 **
-** Revision history:
-**      2010.12.13  Peter Souza IV / psouza4        initial creation
-**
 */
 LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 {
@@ -2817,279 +2814,283 @@ void CRainmeter::SaveSettings()
 
 BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, CMeterWindow* meterWindow)
 {
-	if (_wcsicmp(bang.c_str(), L"!RainmeterRefresh") == 0)
+	// Skip "!Rainmeter" or "!"
+	int pos = (_wcsnicmp(bang.c_str(), L"!Rainmeter", 10) == 0) ? 10 : 1;
+	LPCWSTR name = &bang.c_str()[pos];
+
+	if (_wcsicmp(name, L"Refresh") == 0)
 	{
 		BangWithArgs(BANG_REFRESH, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterRefreshApp") == 0)
+	else if (_wcsicmp(name, L"RefreshApp") == 0)
 	{
 		RainmeterRefreshAppWide();
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterRedraw") == 0)
+	else if (_wcsicmp(name, L"Redraw") == 0)
 	{
 		BangWithArgs(BANG_REDRAW, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterUpdate") == 0)
+	else if (_wcsicmp(name, L"Update") == 0)
 	{
 		BangWithArgs(BANG_UPDATE, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterHide") == 0)
+	else if (_wcsicmp(name, L"Hide") == 0)
 	{
 		BangWithArgs(BANG_HIDE, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterShow") == 0)
+	else if (_wcsicmp(name, L"Show") == 0)
 	{
 		BangWithArgs(BANG_SHOW, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggle") == 0)
+	else if (_wcsicmp(name, L"Toggle") == 0)
 	{
 		BangWithArgs(BANG_TOGGLE, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideFade") == 0)
+	else if (_wcsicmp(name, L"HideFade") == 0)
 	{
 		BangWithArgs(BANG_HIDEFADE, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowFade") == 0)
+	else if (_wcsicmp(name, L"ShowFade") == 0)
 	{
 		BangWithArgs(BANG_SHOWFADE, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleFade") == 0)
+	else if (_wcsicmp(name, L"ToggleFade") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEFADE, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideMeter") == 0)
+	else if (_wcsicmp(name, L"HideMeter") == 0)
 	{
 		BangWithArgs(BANG_HIDEMETER, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowMeter") == 0)
+	else if (_wcsicmp(name, L"ShowMeter") == 0)
 	{
 		BangWithArgs(BANG_SHOWMETER, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleMeter") == 0)
+	else if (_wcsicmp(name, L"ToggleMeter") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEMETER, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterMoveMeter") == 0)
+	else if (_wcsicmp(name, L"MoveMeter") == 0)
 	{
 		BangWithArgs(BANG_MOVEMETER, arg.c_str(), 3);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterUpdateMeter") == 0)
+	else if (_wcsicmp(name, L"UpdateMeter") == 0)
 	{
 		BangWithArgs(BANG_UPDATEMETER, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterDisableMeasure") == 0)
+	else if (_wcsicmp(name, L"DisableMeasure") == 0)
 	{
 		BangWithArgs(BANG_DISABLEMEASURE, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterEnableMeasure") == 0)
+	else if (_wcsicmp(name, L"EnableMeasure") == 0)
 	{
 		BangWithArgs(BANG_ENABLEMEASURE, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleMeasure") == 0)
+	else if (_wcsicmp(name, L"ToggleMeasure") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEMEASURE, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterUpdateMeasure") == 0)
+	else if (_wcsicmp(name, L"UpdateMeasure") == 0)
 	{
 		BangWithArgs(BANG_UPDATEMEASURE, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowBlur") == 0)
+	else if (_wcsicmp(name, L"ShowBlur") == 0)
 	{
 		BangWithArgs(BANG_SHOWBLUR, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideBlur") == 0)
+	else if (_wcsicmp(name, L"HideBlur") == 0)
 	{
 		BangWithArgs(BANG_HIDEBLUR, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleBlur") == 0)
+	else if (_wcsicmp(name, L"ToggleBlur") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEBLUR, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterAddBlur") == 0)
+	else if (_wcsicmp(name, L"AddBlur") == 0)
 	{
 		BangWithArgs(BANG_ADDBLUR, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterRemoveBlur") == 0)
+	else if (_wcsicmp(name, L"RemoveBlur") == 0)
 	{
 		BangWithArgs(BANG_REMOVEBLUR, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterActivateConfig") == 0)
+	else if (_wcsicmp(name, L"ActivateConfig") == 0)
 	{
 		RainmeterActivateConfigWide(arg.c_str());
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterDeactivateConfig") == 0)
+	else if (_wcsicmp(name, L"DeactivateConfig") == 0)
 	{
 		RainmeterDeactivateConfigWide(arg.c_str());
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleConfig") == 0)
+	else if (_wcsicmp(name, L"ToggleConfig") == 0)
 	{
 		RainmeterToggleConfigWide(arg.c_str());
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterMove") == 0)
+	else if (_wcsicmp(name, L"Move") == 0)
 	{
 		BangWithArgs(BANG_MOVE, arg.c_str(), 2);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterZPos") == 0 || _wcsicmp(bang.c_str(), L"!RainmeterChangeZPos") == 0)	// For backwards compatibility
+	else if (_wcsicmp(name, L"ZPos") == 0 || _wcsicmp(name, L"ChangeZPos") == 0)	// For backwards compatibility
 	{
 		BangWithArgs(BANG_ZPOS, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterClickThrough") == 0)
+	else if (_wcsicmp(name, L"ClickThrough") == 0)
 	{
 		BangWithArgs(BANG_CLICKTHROUGH, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterDraggable") == 0)
+	else if (_wcsicmp(name, L"Draggable") == 0)
 	{
 		BangWithArgs(BANG_DRAGGABLE, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterSnapEdges") == 0)
+	else if (_wcsicmp(name, L"SnapEdges") == 0)
 	{
 		BangWithArgs(BANG_SNAPEDGES, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterKeepOnScreen") == 0)
+	else if (_wcsicmp(name, L"KeepOnScreen") == 0)
 	{
 		BangWithArgs(BANG_KEEPONSCREEN, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterSetTransparency") == 0)
+	else if (_wcsicmp(name, L"SetTransparency") == 0)
 	{
 		BangWithArgs(BANG_SETTRANSPARENCY, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterSetVariable") == 0)
+	else if (_wcsicmp(name, L"SetVariable") == 0)
 	{
 		BangWithArgs(BANG_SETVARIABLE, arg.c_str(), 2);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterRefreshGroup") == 0)
+	else if (_wcsicmp(name, L"RefreshGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_REFRESH, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterUpdateGroup") == 0)
+	else if (_wcsicmp(name, L"UpdateGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_UPDATE, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterRedrawGroup") == 0)
+	else if (_wcsicmp(name, L"RedrawGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_REDRAW, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideGroup") == 0)
+	else if (_wcsicmp(name, L"HideGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_HIDE, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowGroup") == 0)
+	else if (_wcsicmp(name, L"ShowGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_SHOW, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleGroup") == 0)
+	else if (_wcsicmp(name, L"ToggleGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_TOGGLE, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideFadeGroup") == 0)
+	else if (_wcsicmp(name, L"HideFadeGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_HIDEFADE, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowFadeGroup") == 0)
+	else if (_wcsicmp(name, L"ShowFadeGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_SHOWFADE, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleFadeGroup") == 0)
+	else if (_wcsicmp(name, L"ToggleFadeGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_TOGGLEFADE, arg.c_str(), 0);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterHideMeterGroup") == 0)
+	else if (_wcsicmp(name, L"HideMeterGroup") == 0)
 	{
 		BangWithArgs(BANG_HIDEMETERGROUP, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterShowMeterGroup") == 0)
+	else if (_wcsicmp(name, L"ShowMeterGroup") == 0)
 	{
 		BangWithArgs(BANG_SHOWMETERGROUP, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleMeterGroup") == 0)
+	else if (_wcsicmp(name, L"ToggleMeterGroup") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEMETERGROUP, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterUpdateMeterGroup") == 0)
+	else if (_wcsicmp(name, L"UpdateMeterGroup") == 0)
 	{
 		BangWithArgs(BANG_UPDATEMETERGROUP, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterDisableMeasureGroup") == 0)
+	else if (_wcsicmp(name, L"DisableMeasureGroup") == 0)
 	{
 		BangWithArgs(BANG_DISABLEMEASUREGROUP, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterEnableMeasureGroup") == 0)
+	else if (_wcsicmp(name, L"EnableMeasureGroup") == 0)
 	{
 		BangWithArgs(BANG_ENABLEMEASUREGROUP, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterToggleMeasureGroup") == 0)
+	else if (_wcsicmp(name, L"ToggleMeasureGroup") == 0)
 	{
 		BangWithArgs(BANG_TOGGLEMEASUREGROUP, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterUpdateMeasureGroup") == 0)
+	else if (_wcsicmp(name, L"UpdateMeasureGroup") == 0)
 	{
 		BangWithArgs(BANG_UPDATEMEASUREGROUP, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterDeactivateConfigGroup") == 0)
+	else if (_wcsicmp(name, L"DeactivateConfigGroup") == 0)
 	{
 		RainmeterDeactivateConfigGroupWide(arg.c_str());
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterZPosGroup") == 0)
+	else if (_wcsicmp(name, L"ZPosGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_ZPOS, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterClickThroughGroup") == 0)
+	else if (_wcsicmp(name, L"ClickThroughGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_CLICKTHROUGH, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterDraggableGroup") == 0)
+	else if (_wcsicmp(name, L"DraggableGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_DRAGGABLE, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterSnapEdgesGroup") == 0)
+	else if (_wcsicmp(name, L"SnapEdgesGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_SNAPEDGES, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterKeepOnScreenGroup") == 0)
+	else if (_wcsicmp(name, L"KeepOnScreenGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_KEEPONSCREEN, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterSetTransparencyGroup") == 0)
+	else if (_wcsicmp(name, L"SetTransparencyGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_SETTRANSPARENCY, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterSetVariableGroup") == 0)
+	else if (_wcsicmp(name, L"SetVariableGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_SETVARIABLE, arg.c_str(), 2);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterAbout") == 0)
+	else if (_wcsicmp(name, L"About") == 0)
 	{
 		RainmeterAboutWide();
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterSkinMenu") == 0)
+	else if (_wcsicmp(name, L"SkinMenu") == 0)
 	{
 		RainmeterSkinMenuWide(arg.c_str());
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterTrayMenu") == 0)
+	else if (_wcsicmp(name, L"TrayMenu") == 0)
 	{
 		RainmeterTrayMenuWide();
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterResetStats") == 0)
+	else if (_wcsicmp(name, L"ResetStats") == 0)
 	{
 		RainmeterResetStatsWide();
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterWriteKeyValue") == 0)
+	else if (_wcsicmp(name, L"WriteKeyValue") == 0)
 	{
 		RainmeterWriteKeyValueWide(arg.c_str());
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterPluginBang") == 0)
+	else if (_wcsicmp(name, L"PluginBang") == 0)
 	{
 		BangWithArgs(BANG_PLUGIN, arg.c_str(), 1);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterLsBoxHook") == 0)
+	else if (_wcsicmp(name, L"LsBoxHook") == 0)
 	{
 		// Nothing to do here (this works only with Litestep)
 	}
-	else if (_wcsicmp(bang.c_str(), L"!RainmeterQuit") == 0)
+	else if (_wcsicmp(name, L"Quit") == 0)
 	{
 		RainmeterQuitWide();
 	}
-	else if (_wcsicmp(bang.c_str(), L"!Execute") == 0)
+	else if (_wcsicmp(name, L"Execute") == 0)
 	{
 		// Special case for multibang execution
 		std::wstring::size_type start = std::wstring::npos;
