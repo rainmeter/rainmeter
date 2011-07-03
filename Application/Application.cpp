@@ -224,7 +224,8 @@ void Bang(const WCHAR* command)
 	}
 	else
 	{
-		if (_wcsicmp(L"!rainmeterquit", command) != 0)
+		if (_wcsicmp(L"!rainmeterquit", command) != 0 ||
+			_wcsicmp(L"!quit", command) != 0)
 		{
 			MessageBox(NULL, L"Rainmeter is not running.\nUnable to send the !bang to it.", L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
 		}
