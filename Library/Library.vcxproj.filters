@@ -168,25 +168,25 @@
     <ClCompile Include="lua\LuaScript.cpp">
       <Filter>Lua</Filter>
     </ClCompile>
-    <ClCompile Include="lua\glue\lua_group.cpp">
+    <ClCompile Include="lua\glue\LuaGroup.cpp">
       <Filter>Lua\glue</Filter>
     </ClCompile>
-    <ClCompile Include="lua\glue\lua_measure.cpp">
+    <ClCompile Include="lua\glue\LuaMeasure.cpp">
       <Filter>Lua\glue</Filter>
     </ClCompile>
-    <ClCompile Include="lua\glue\lua_meter.cpp">
+    <ClCompile Include="lua\glue\LuaMeter.cpp">
       <Filter>Lua\glue</Filter>
     </ClCompile>
-    <ClCompile Include="lua\glue\lua_meterstring.cpp">
+    <ClCompile Include="lua\glue\LuaMeterString.cpp">
       <Filter>Lua\glue</Filter>
     </ClCompile>
-    <ClCompile Include="lua\glue\lua_meterwindow.cpp">
+    <ClCompile Include="lua\glue\LuaMeterWindow.cpp">
       <Filter>Lua\glue</Filter>
     </ClCompile>
-    <ClCompile Include="lua\glue\lua_rainmeter.cpp">
+    <ClCompile Include="lua\glue\LuaRainmeter.cpp">
       <Filter>Lua\glue</Filter>
     </ClCompile>
-    <ClCompile Include="lua\glue\lua_rainmeter_ext.cpp">
+    <ClCompile Include="lua\glue\LuaGlobal.cpp">
       <Filter>Lua\glue</Filter>
     </ClCompile>
     <ClCompile Include="lua\tolua++\tolua_event.c">
@@ -450,27 +450,6 @@
     </ClInclude>
     <ClInclude Include="lua\LuaScript.h">
       <Filter>Lua</Filter>
-    </ClInclude>
-    <ClInclude Include="lua\glue\lua_group.h">
-      <Filter>Lua\glue</Filter>
-    </ClInclude>
-    <ClInclude Include="lua\glue\lua_measure.h">
-      <Filter>Lua\glue</Filter>
-    </ClInclude>
-    <ClInclude Include="lua\glue\lua_meter.h">
-      <Filter>Lua\glue</Filter>
-    </ClInclude>
-    <ClInclude Include="lua\glue\lua_meterstring.h">
-      <Filter>Lua\glue</Filter>
-    </ClInclude>
-    <ClInclude Include="lua\glue\lua_meterwindow.h">
-      <Filter>Lua\glue</Filter>
-    </ClInclude>
-    <ClInclude Include="lua\glue\lua_rainmeter.h">
-      <Filter>Lua\glue</Filter>
-    </ClInclude>
-    <ClInclude Include="lua\glue\lua_rainmeter_ext.h">
-      <Filter>Lua\glue</Filter>
     </ClInclude>
     <ClInclude Include="lua\include\lua.hpp">
       <Filter>Lua\Lua Headers</Filter>

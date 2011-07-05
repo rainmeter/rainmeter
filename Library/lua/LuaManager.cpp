@@ -1,39 +1,53 @@
+/*
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful, 
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
 #include "../StdAfx.h"
 #include "LuaManager.h"
 #include "../Rainmeter.h"
-
-#include "lua_measure.h"
-#include "lua_meter.h"
-#include "lua_group.h"
-#include "lua_meterwindow.h"
-#include "lua_rainmeter.h"
-#include "lua_meterstring.h"
-#include "lua_meterimage.h"
-
-#include "lua_rainmeter_ext.h"
 
 int LuaManager::c_RefCount = 0;
 lua_State* LuaManager::c_pState = 0;
 
 void LuaManager::Init()
 {
-	if (c_pState == 0)
+	if (c_pState == NULL)
 	{
-		// initialize Lua
+		// Initialize Lua
 		c_pState = lua_open();
 
-		//load Lua base libraries
+		// Load Lua base libraries
 		luaL_openlibs(c_pState);
 
-		tolua_measure_open(c_pState);
-		tolua_group_open(c_pState);
-		tolua_meter_open(c_pState);
-		tolua_meterwindow_open(c_pState);
-		tolua_rainmeter_open(c_pState);
-		tolua_meter_string_open(c_pState);
-		//tolua_meter_image_open(c_pState);
+		// Initialize tolua
+		tolua_open(c_pState);
 
-		luaopen_rainmeter_ext(c_pState);
+		// Register custom types and functions
+		RegisterTypes(c_pState);
+
+		tolua_module(c_pState, NULL, 0);
+		tolua_beginmodule(c_pState, NULL);
+		RegisterGlobal(c_pState);
+		RegisterMeasure(c_pState);
+		RegisterGroup(c_pState);
+		RegisterMeasure(c_pState);
+		RegisterMeter(c_pState);
+		RegisterMeterWindow(c_pState);
+		RegisterRainmeter(c_pState);
+		RegisterMeterString(c_pState);
+		tolua_endmodule(c_pState);
 	}
 
 	++c_RefCount;
@@ -46,14 +60,18 @@ void LuaManager::CleanUp()
 		--c_RefCount;
 	}
 
-	if (c_RefCount == 0 && c_pState != 0)
+	if (c_RefCount == 0 && c_pState != NULL)
 	{
 		lua_close(c_pState);
-		c_pState = 0;
+		c_pState = NULL;
 	}
 }
 
-void LuaManager::ReportErrors(lua_State * L)
+void LuaManager::RegisterTypes(lua_State* L)
+{
+}
+
+void LuaManager::ReportErrors(lua_State* L)
 {
 	LuaLog(LOG_ERROR, "Script: %s", lua_tostring(L, -1));
 	lua_pop(L, 1);

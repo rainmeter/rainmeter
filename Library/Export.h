@@ -38,11 +38,7 @@ extern "C"
 
 	EXPORT_PLUGIN BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage);
 	EXPORT_PLUGIN LPCTSTR ReadConfigString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue);
-	
-	// Added by Peter Souza IV / psouza4 / 2010.12.13
-	//
-	// Read comments in Rainmeter.cpp for details.
-	EXPORT_PLUGIN LPCTSTR PluginBridge(LPCTSTR sCommand, LPCTSTR sData);  
+	EXPORT_PLUGIN LPCTSTR PluginBridge(LPCTSTR sCommand, LPCTSTR sData);
 
 #ifdef __cplusplus
 }
