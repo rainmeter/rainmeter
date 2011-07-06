@@ -243,8 +243,6 @@ public:
 	CMeter* GetMeter(const std::wstring& meterName);
 	CMeasure* GetMeasure(const std::wstring& measureName);
 
-	const char* ReplaceVariables(const char* p_str);
-
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

@@ -5100,16 +5100,3 @@ CMeasure* CMeterWindow::GetMeasure(const std::wstring& measureName)
 	}
 	return NULL;
 }
-
-
-const char* CMeterWindow::ReplaceVariables(const char* p_str)
-{
-	static std::string aStr = "";
-	std::wstring value = ConvertToWide(p_str);
-
-	m_Parser.ReplaceVariables(value);
-	m_Parser.ReplaceMeasures(value);
-	aStr = ConvertToAscii(value.c_str());
-	const char* str = aStr.c_str();
-	return str;
-}

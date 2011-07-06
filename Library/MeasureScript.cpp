@@ -125,7 +125,7 @@ bool CMeasureScript::Update()
 */
 const WCHAR* CMeasureScript::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
-	return m_StringValue.c_str();
+	return CheckSubstitute(m_StringValue.c_str());
 }
 
 /*
