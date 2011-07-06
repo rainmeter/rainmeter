@@ -832,7 +832,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		}
 		else
 		{
-			Log(LOG_ERROR, L"Unable to parse parameters for !RainmeterMove");
+			Log(LOG_ERROR, L"Unable to parse parameters for !Move");
 		}
 		break;
 
@@ -900,7 +900,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			}
 			else
 			{
-				LogWithArgs(LOG_WARNING, L"Unable to parse parameters for !RainmeterLsBoxHook (%s)", arg);
+				LogWithArgs(LOG_WARNING, L"Unable to parse parameters for !LsBoxHook (%s)", arg);
 			}
 		}
 		break;
@@ -916,12 +916,12 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			}
 			else
 			{
-				Log(LOG_ERROR, L"Unable to parse coordinates for !RainmeterMoveMeter");
+				Log(LOG_ERROR, L"Unable to parse coordinates for !MoveMeter");
 			}
 		}
 		else
 		{
-			Log(LOG_ERROR, L"Unable to parse parameters for !RainmeterMoveMeter");
+			Log(LOG_ERROR, L"Unable to parse parameters for !MoveMeter");
 		}
 		break;
 
@@ -961,11 +961,11 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 					return;
 				}
 
-				LogWithArgs(LOG_WARNING, L"Unable to find [%s] for !RainmeterPluginBang", measure.c_str());
+				LogWithArgs(LOG_WARNING, L"Unable to find [%s] for !PluginBang", measure.c_str());
 			}
 			else
 			{
-				Log(LOG_ERROR, L"Unable to parse parameters for !RainmeterPluginBang");
+				Log(LOG_ERROR, L"Unable to parse parameters for !PluginBang");
 			}
 		}
 		break;
@@ -997,7 +997,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		}
 		else
 		{
-			Log(LOG_ERROR, L"Unable to parse parameters for !RainmeterSetVariable");
+			Log(LOG_ERROR, L"Unable to parse parameters for !SetVariable");
 		}
 		break;
 	}

@@ -34,7 +34,7 @@ using namespace Gdiplus;
 
 CRainmeter* Rainmeter; // The module
 
-bool CRainmeter::c_DummyLitestep=false;
+bool CRainmeter::c_DummyLitestep = false;
 std::wstring CRainmeter::c_CmdLine;
 
 /*
@@ -263,30 +263,6 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 					return result.c_str();
 				}
 			}
-			return L"error";
-		}
-
-		// Command       SkinAuthor
-		// Data          the config name
-		// Execution     none
-		// Result        the skin author of the skin name or 'error' if the config name
-		//               was not found
-		if (sCommand == L"skinauthor")
-		{
-			std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
-
-			if (subStrings.size() >= 1)
-			{
-				const std::wstring& config = subStrings[0];
-
-				CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
-				if (meterWindow)
-				{
-					result = meterWindow->GetSkinAuthor();
-					return result.c_str();
-				}
-			}
-
 			return L"error";
 		}
 
@@ -1274,7 +1250,7 @@ void RainmeterActivateConfigWide(const WCHAR* arg)
 		else
 		{
 			// If we got this far, something went wrong
-			Log(LOG_WARNING, L"Unable to parse the arguments for !RainmeterActivateConfig");
+			Log(LOG_WARNING, L"Unable to parse the arguments for !ActivateConfig");
 		}
 	}
 }
@@ -1303,7 +1279,7 @@ void RainmeterDeactivateConfigWide(const WCHAR* arg)
 		}
 		else
 		{
-			Log(LOG_WARNING, L"Unable to parse the arguments for !RainmeterDeactivateConfig");
+			Log(LOG_WARNING, L"Unable to parse the arguments for !DeactivateConfig");
 		}
 	}
 }
@@ -1334,7 +1310,7 @@ void RainmeterToggleConfigWide(const WCHAR* arg)
 		}
 		else
 		{
-			Log(LOG_WARNING, L"Unable to parse the arguments for !RainmeterToggleConfig");
+			Log(LOG_WARNING, L"Unable to parse the arguments for !ToggleConfig");
 		}
 	}
 }
@@ -1364,7 +1340,7 @@ void RainmeterDeactivateConfigGroupWide(const WCHAR* arg)
 		}
 		else
 		{
-			Log(LOG_WARNING, L"Unable to parse the arguments for !RainmeterDeactivateConfigGroup");
+			Log(LOG_WARNING, L"Unable to parse the arguments for !DeactivateConfigGroup");
 		}
 	}
 }
@@ -1424,7 +1400,7 @@ void RainmeterSkinMenuWide(const WCHAR* arg)
 		}
 		else
 		{
-			Log(LOG_WARNING, L"Unable to parse the arguments for !RainmeterSkinMenu");
+			Log(LOG_WARNING, L"Unable to parse the arguments for !SkinMenu");
 		}
 	}
 }
@@ -1477,7 +1453,7 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 
 			if (iniFile.find(L"..\\") != std::string::npos || iniFile.find(L"../") != std::string::npos)
 			{
-				LogWithArgs(LOG_ERROR, L"!RainmeterWriteKeyValue: Illegal characters in path - \"..\\\": %s", iniFile.c_str());
+				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal characters in path - \"..\\\": %s", iniFile.c_str());
 				return;
 			}
 
@@ -1487,14 +1463,14 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 			if (_wcsnicmp(iniFile.c_str(), skinPath.c_str(), skinPath.size()) != 0 &&
 				_wcsnicmp(iniFile.c_str(), settingsPath.c_str(), settingsPath.size()) != 0)
 			{
-				LogWithArgs(LOG_ERROR, L"!RainmeterWriteKeyValue: Illegal path outside of Rainmeter directories: %s", iniFile.c_str());
+				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path outside of Rainmeter directories: %s", iniFile.c_str());
 				return;
 			}
 
 			// Verify whether the file exists
 			if (_waccess(iniFile.c_str(), 0) == -1)
 			{
-				LogWithArgs(LOG_WARNING, L"!RainmeterWriteKeyValue: File not found: %s", iniFile.c_str());
+				LogWithArgs(LOG_WARNING, L"!WriteKeyValue: File not found: %s", iniFile.c_str());
 				return;
 			}
 
@@ -1502,7 +1478,7 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 			DWORD attr = GetFileAttributes(iniFile.c_str());
 			if (attr == -1 || (attr & FILE_ATTRIBUTE_READONLY))
 			{
-				LogWithArgs(LOG_WARNING, L"!RainmeterWriteKeyValue: File is read-only: %s", iniFile.c_str());
+				LogWithArgs(LOG_WARNING, L"!WriteKeyValue: File is read-only: %s", iniFile.c_str());
 				return;
 			}
 
@@ -1512,7 +1488,7 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 			std::wstring iniWrite = CSystem::GetTemporaryFile(iniFileMappings, iniFile);
 			if (iniWrite == L"<>")  // error occurred
 			{
-				LogWithArgs(LOG_ERROR, L"!RainmeterWriteKeyValue: Failed to create a temporary file: %s", iniFile.c_str());
+				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to create a temporary file: %s", iniFile.c_str());
 				return;
 			}
 
@@ -1520,11 +1496,11 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 
 			if (temporary)
 			{
-				if (CRainmeter::GetDebug()) LogWithArgs(LOG_DEBUG, L"!RainmeterWriteKeyValue: Writing file: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+				if (CRainmeter::GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing file: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
 			}
 			else
 			{
-				if (CRainmeter::GetDebug()) LogWithArgs(LOG_DEBUG, L"!RainmeterWriteKeyValue: Writing file: %s", iniFile.c_str());
+				if (CRainmeter::GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing file: %s", iniFile.c_str());
 				iniWrite = iniFile;
 			}
 
@@ -1571,12 +1547,12 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 					// Copy the file back
 					if (!CSystem::CopyFiles(iniWrite, iniFile))
 					{
-						LogWithArgs(LOG_ERROR, L"!RainmeterWriteKeyValue: Failed to copy a temporary file to the original filepath: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+						LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to copy a temporary file to the original filepath: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
 					}
 				}
 				else  // failed
 				{
-					LogWithArgs(LOG_ERROR, L"!RainmeterWriteKeyValue: Failed to write a value to the file: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+					LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write a value to the file: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
 				}
 
 				// Remove a temporary file
@@ -1586,13 +1562,13 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 			{
 				if (write == 0)  // failed
 				{
-					LogWithArgs(LOG_ERROR, L"!RainmeterWriteKeyValue: Failed to write a value to the file: %s", iniFile.c_str());
+					LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write a value to the file: %s", iniFile.c_str());
 				}
 			}
 		}
 		else
 		{
-			Log(LOG_WARNING, L"Unable to parse the arguments for !RainmeterWriteKeyValue");
+			Log(LOG_WARNING, L"Unable to parse the arguments for !WriteKeyValue");
 		}
 	}
 }
