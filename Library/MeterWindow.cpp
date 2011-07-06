@@ -1778,7 +1778,7 @@ void CMeterWindow::ReadConfig()
 	m_ConfigGroup = L"";
 
 	CConfigParser parser;
-	parser.Initialize(iniFile.c_str(), m_Rainmeter);
+	parser.Initialize(iniFile.c_str(), m_Rainmeter, NULL, m_SkinName.c_str());
 
 	for (int i = 0; i < 2; ++i)
 	{

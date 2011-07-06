@@ -24,6 +24,7 @@
 #include <windows.h>
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include <unordered_map>
 #include <algorithm>
 #include <gdiplus.h>
@@ -39,7 +40,7 @@ public:
 	CConfigParser();
 	~CConfigParser();
 
-	void Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterWindow* meterWindow = NULL);
+	void Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterWindow* meterWindow = NULL, LPCTSTR config = NULL);
 	void AddMeasure(CMeasure* pMeasure);
 
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_Variables, strVariable, strValue); }
@@ -91,10 +92,9 @@ private:
 
 	CMeasure* GetMeasure(const std::wstring& name);
 
-	void ReadIniFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& strFileName, int depth = 0);
-	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
+	void ReadIniFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& strFileName, LPCTSTR config = NULL, int depth = 0);
+	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue, bool isVariables);
 	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
-	std::vector<std::wstring> GetKeys(const std::wstring& strSection);
 
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
 
@@ -104,6 +104,7 @@ private:
 	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(c_MonitorVariables, strVariable, strValue); }
 
 	static std::wstring StrToLower(const std::wstring& str) { std::wstring strTmp(str); std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower); return strTmp; }
+	static std::wstring StrToLower(const WCHAR* str) { std::wstring strTmp(str); std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower); return strTmp; }
 
 	std::wstring m_Filename;
 
@@ -117,7 +118,8 @@ private:
 	bool m_LastDefaultUsed;
 
 	std::vector<std::wstring> m_Sections;		// The sections must be an ordered array
-	std::unordered_map<std::wstring, std::vector<std::wstring> > m_Keys;
+	std::unordered_set<std::wstring> m_FoundSections;
+	std::vector<std::wstring> m_ListVariables;
 	std::unordered_map<std::wstring, std::wstring> m_Values;
 
 	std::unordered_map<std::wstring, std::wstring> m_BuiltInVariables;         // Built-in variables

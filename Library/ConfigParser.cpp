@@ -58,16 +58,17 @@ CConfigParser::~CConfigParser()
 **
 **
 */
-void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterWindow* meterWindow)
+void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterWindow* meterWindow, LPCTSTR config)
 {
 	m_Filename = filename;
 
 	m_BuiltInVariables.clear();
 	m_Variables.clear();
 	m_Measures.clear();
-	m_Keys.clear();
 	m_Values.clear();
 	m_Sections.clear();
+	m_FoundSections.clear();
+	m_ListVariables.clear();
 
 	// Set the built-in variables. Do this before the ini file is read so that the paths can be used with @include
 	SetBuiltInVariables(pRainmeter, meterWindow);
@@ -76,8 +77,10 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 	std::vector<std::wstring> iniFileMappings;
 	CSystem::GetIniFileMappingList(iniFileMappings);
 
-	ReadIniFile(iniFileMappings, m_Filename);
+	ReadIniFile(iniFileMappings, m_Filename, config);
 	ReadVariables();
+
+	std::unordered_set<std::wstring>().swap(m_FoundSections);  // clear and minimize
 }
 
 /*
@@ -130,11 +133,9 @@ void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* me
 */
 void CConfigParser::ReadVariables()
 {
-	std::vector<std::wstring> listVariables = GetKeys(L"Variables");
-
-	for (size_t i = 0, isize = listVariables.size(); i < isize; ++i)
+	for (size_t i = 0, isize = m_ListVariables.size(); i < isize; ++i)
 	{
-		SetVariable(listVariables[i], ReadString(L"Variables", listVariables[i].c_str(), L"", false));
+		SetVariable(m_ListVariables[i], ReadString(L"Variables", m_ListVariables[i].c_str(), L"", false));
 	}
 }
 
@@ -1032,7 +1033,7 @@ RECT CConfigParser::ParseRECT(LPCTSTR string)
 **
 ** \param iniFile The ini file to be read.
 */
-void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& iniFile, int depth)
+void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& iniFile, LPCTSTR config, int depth)
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
@@ -1062,65 +1063,83 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 	}
 
 	// Get all the sections (i.e. different meters)
+	std::list<std::wstring> sections;
 	WCHAR* items = new WCHAR[MAX_LINE_LENGTH];
-	int size = MAX_LINE_LENGTH;
+	DWORD size = MAX_LINE_LENGTH;
+	WCHAR* pos = NULL;
 	WCHAR* epos = NULL;
 
-	// Get all the sections
-	while (true)
+	if (config == NULL)
 	{
-		items[0] = 0;
-		int res = GetPrivateProfileString( NULL, NULL, NULL, items, size, iniRead.c_str());
-		if (res == 0)		// File not found
+		// Get all the sections
+		while (true)
 		{
-			delete [] items;
-			if (temporary) CSystem::RemoveFile(iniRead);
-			return;
-		}
-		if (res < size - 2)		// Fits in the buffer
-		{
-			epos = items + res;
-			break;
-		}
-
-		delete [] items;
-		size *= 2;
-		items = new WCHAR[size];
-	}
-
-	// Read the sections
-	std::list<std::wstring> sections;
-	WCHAR* pos = items;
-	while (pos < epos)
-	{
-		if (*pos)
-		{
-			std::wstring strTmp = StrToLower(pos);
-			if (m_Keys.find(strTmp) == m_Keys.end())
+			items[0] = 0;
+			DWORD res = GetPrivateProfileString(NULL, NULL, NULL, items, size, iniRead.c_str());
+			if (res == 0)		// File not found
 			{
-				m_Keys[strTmp] = std::vector<std::wstring>();
-				m_Sections.push_back(pos);
+				delete [] items;
+				if (temporary) CSystem::RemoveFile(iniRead);
+				return;
 			}
-			sections.push_back(pos);
-			pos += wcslen(pos) + 1;
+			if (res < size - 2)		// Fits in the buffer
+			{
+				epos = items + res;
+				break;
+			}
+
+			delete [] items;
+			size *= 2;
+			items = new WCHAR[size];
 		}
-		else  // Empty string
+
+		// Read the sections
+		pos = items;
+		while (pos < epos)
 		{
-			++pos;
+			if (*pos)
+			{
+				std::wstring strTmp = StrToLower(pos);
+				if (m_FoundSections.find(strTmp) == m_FoundSections.end())
+				{
+					m_FoundSections.insert(strTmp);
+					m_Sections.push_back(pos);
+				}
+				sections.push_back(pos);
+				pos += strTmp.size() + 1;
+			}
+			else  // Empty string
+			{
+				++pos;
+			}
+		}
+	}
+	else
+	{
+		// Special case: Read only "Rainmeter" and specified section from "Rainmeter.ini"
+		sections.push_back(L"Rainmeter");
+		sections.push_back(config);
+
+		if (depth == 0)
+		{
+			m_Sections.push_back(L"Rainmeter");
+			m_Sections.push_back(config);
 		}
 	}
 
 	// Read the keys and values
-	int bufferSize = MAX_LINE_LENGTH;
+	DWORD bufferSize = MAX_LINE_LENGTH;
 	WCHAR* buffer = new WCHAR[bufferSize];
 
 	std::list<std::wstring>::const_iterator iter = sections.begin();
 	for ( ; iter != sections.end(); ++iter)
 	{
+		bool isVariables = (_wcsicmp((*iter).c_str(), L"Variables") == 0);
+
 		while (true)
 		{
 			items[0] = 0;
-			int res = GetPrivateProfileString((*iter).c_str(), NULL, NULL, items, size, iniRead.c_str());
+			DWORD res = GetPrivateProfileString((*iter).c_str(), NULL, NULL, items, size, iniRead.c_str());
 			if (res < size - 2)		// Fits in the buffer
 			{
 				epos = items + res;
@@ -1137,12 +1156,10 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 		{
 			if (*pos)
 			{
-				std::wstring strKey = pos;
-
 				while (true)
 				{
 					buffer[0] = 0;
-					int res = GetPrivateProfileString((*iter).c_str(), strKey.c_str(), L"", buffer, bufferSize, iniRead.c_str());
+					DWORD res = GetPrivateProfileString((*iter).c_str(), pos, L"", buffer, bufferSize, iniRead.c_str());
 					if (res < bufferSize - 2) break;		// Fits in the buffer
 
 					delete [] buffer;
@@ -1150,7 +1167,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 					buffer = new WCHAR[bufferSize];
 				}
 
-				if (_wcsnicmp(strKey.c_str(), L"@include", 8) == 0)
+				if (_wcsnicmp(pos, L"@include", 8) == 0)
 				{
 					std::wstring strIncludeFile = buffer;
 					ReadVariables();
@@ -1159,13 +1176,13 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 						(strIncludeFile.length() < 2 || (strIncludeFile[0] != L'\\' && strIncludeFile[0] != L'/') || (strIncludeFile[1] != L'\\' && strIncludeFile[1] != L'/')))
 					{
 						// It's a relative path so add the current path as a prefix
-						strIncludeFile = CRainmeter::ExtractPath(iniFile) + strIncludeFile;
+						strIncludeFile.insert(0, CRainmeter::ExtractPath(iniFile));
 					}
-					ReadIniFile(iniFileMappings, strIncludeFile, depth + 1);
+					ReadIniFile(iniFileMappings, strIncludeFile, config, depth + 1);
 				}
 				else
 				{
-					SetValue((*iter), strKey, buffer);
+					SetValue((*iter), pos, buffer, isVariables);
 				}
 
 				pos += wcslen(pos) + 1;
@@ -1189,18 +1206,16 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 ** \param strKey The name of the key.
 ** \param strValue The value for the key.
 */
-void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue)
+void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue, bool isVariables)
 {
 	// LogWithArgs(LOG_DEBUG, L"[%s] %s=%s (size: %i)", strSection.c_str(), strKey.c_str(), strValue.c_str(), (int)m_Values.size());
 
 	std::wstring strTmpSection = StrToLower(strSection);
 	std::wstring strTmpKey = StrToLower(strKey);
 
-	std::unordered_map<std::wstring, std::vector<std::wstring> >::iterator iter = m_Keys.find(strTmpSection);
-	if (iter != m_Keys.end())
+	if (isVariables)
 	{
-		std::vector<std::wstring>& array = (*iter).second;
-		array.push_back(strTmpKey);
+		m_ListVariables.push_back(strTmpKey);
 	}
 
 	strTmpSection += L"::";
@@ -1229,22 +1244,4 @@ const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, cons
 	}
 
 	return strDefault;
-}
-
-//==============================================================================
-/**
-** Returns a list of keys under the given section.
-**
-** \param strSection The name of the section.
-** \return A list of keys under the given section.
-*/
-std::vector<std::wstring> CConfigParser::GetKeys(const std::wstring& strSection)
-{
-	std::unordered_map<std::wstring, std::vector<std::wstring> >::const_iterator iter = m_Keys.find(StrToLower(strSection));
-	if (iter != m_Keys.end())
-	{
-		return (*iter).second;
-	}
-
-	return std::vector<std::wstring>();
 }
