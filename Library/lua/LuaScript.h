@@ -1,45 +1,46 @@
-#ifndef LUA_SCRIPT_H
-#define LUA_SCRIPT_H
+/*
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
 
-#include <stdio.h>
-#include "string"
+  This program is distributed in the hope that it will be useful, 
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
+#ifndef __LUASCRIPT_H__
+#define __LUASCRIPT_H__
 
 #include "lua.hpp"
 
 class LuaScript
 {
 public:
-
-	LuaScript(lua_State* p_pState, const char* p_strFile);
-
-	~LuaScript(void);
+	LuaScript(lua_State* state, const char* file);
+	~LuaScript();
 	
-	bool FunctionExists(const char* p_strFuncName);
+	bool IsInitialized() { return m_Initialized; }
 
-	void RunFunction(const char* p_strFuncName);
+	lua_State* GetState() { return m_State; }
+	void PushTable() { lua_rawgeti(m_State, LUA_GLOBALSINDEX, m_iRef); }
 
-	double RunFunctionDouble(const char* p_strFuncName);
+	bool IsFunction(const char* funcName);
+	void RunFunction(const char* funcName);
+	bool RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue);
 
-	std::wstring RunFunctionString(const char* p_strFuncName);
-
-	lua_State* GetState() { return m_pState; }
-
-	bool IsInitialized() { return m_bInitialized; }
-
-	void BindVariable(const char* p_strName, void* p_pValue, const char* p_strTypeName);
-
-	void PushTable() { lua_rawgeti(m_pState, LUA_GLOBALSINDEX, m_iRef); }
-
-	static void ReportErrors(lua_State * L);
+	static void ReportErrors(lua_State* L);
 
 protected:
+	lua_State* m_State;
 
-	lua_State* m_pState;
-
-	char* m_strFile;
 	int m_iRef;
-
-	bool m_bInitialized;
+	bool m_Initialized;
 };
 
 #endif

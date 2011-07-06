@@ -19,35 +19,33 @@
 #include "../Rainmeter.h"
 
 int LuaManager::c_RefCount = 0;
-lua_State* LuaManager::c_pState = 0;
+lua_State* LuaManager::c_State = 0;
 
 void LuaManager::Init()
 {
-	if (c_pState == NULL)
+	if (c_State == NULL)
 	{
 		// Initialize Lua
-		c_pState = lua_open();
+		c_State = lua_open();
 
 		// Load Lua base libraries
-		luaL_openlibs(c_pState);
+		luaL_openlibs(c_State);
 
 		// Initialize tolua
-		tolua_open(c_pState);
+		tolua_open(c_State);
 
 		// Register custom types and functions
-		RegisterTypes(c_pState);
-
-		tolua_module(c_pState, NULL, 0);
-		tolua_beginmodule(c_pState, NULL);
-		RegisterGlobal(c_pState);
-		RegisterMeasure(c_pState);
-		RegisterGroup(c_pState);
-		RegisterMeasure(c_pState);
-		RegisterMeter(c_pState);
-		RegisterMeterWindow(c_pState);
-		RegisterRainmeter(c_pState);
-		RegisterMeterString(c_pState);
-		tolua_endmodule(c_pState);
+		tolua_module(c_State, NULL, 0);
+		tolua_beginmodule(c_State, NULL);
+		RegisterGlobal(c_State);
+		RegisterMeasure(c_State);
+		RegisterGroup(c_State);
+		RegisterMeasure(c_State);
+		RegisterMeter(c_State);
+		RegisterMeterWindow(c_State);
+		RegisterRainmeter(c_State);
+		RegisterMeterString(c_State);
+		tolua_endmodule(c_State);
 	}
 
 	++c_RefCount;
@@ -60,15 +58,11 @@ void LuaManager::CleanUp()
 		--c_RefCount;
 	}
 
-	if (c_RefCount == 0 && c_pState != NULL)
+	if (c_RefCount == 0 && c_State != NULL)
 	{
-		lua_close(c_pState);
-		c_pState = NULL;
+		lua_close(c_State);
+		c_State = NULL;
 	}
-}
-
-void LuaManager::RegisterTypes(lua_State* L)
-{
 }
 
 void LuaManager::ReportErrors(lua_State* L)

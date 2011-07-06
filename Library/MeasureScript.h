@@ -1,5 +1,21 @@
-#ifndef MEASURESCRIPT_H
-#define MEASURESCRIPT_H
+/*
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful, 
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
+#ifndef __MEASURESCRIPT_H__
+#define __MEASURESCRIPT_H__
 
 #include "Measure.h"
 #include "lua/LuaScript.h"
@@ -16,35 +32,22 @@ public:
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 
-	double GetValue();
-	void SetValue(double d);
-
 	void DeleteLuaScript();
 
 	void MeterMouseEvent(CMeter* p_pMeter, MOUSE p_eMouse);
 	void RunFunctionWithMeter(const char* p_strFunction, CMeter* p_pMeter);
 
 protected:
-	LuaScript*	m_pLuaScript;
+	LuaScript* m_LuaScript;
+	
+	bool m_HasInitializeFunction;
+	bool m_HasUpdateFunction;
+	bool m_HasGetStringFunction;
 
-	bool		m_bUpdateDefined;
-	bool		m_bGetValueDefined;
-	bool		m_bGetStringValueDefined;
-	bool		m_bInitializeDefined;
-
-	std::wstring m_strValue;
+	std::wstring m_StringValue;
 
 	std::string m_ScriptFile;
 	std::string m_TableName;
-
-	/*
-	Sqrat::Table* m_ScriptTable;
-	Sqrat::Function* m_UpdateFunc;
-	Sqrat::Function* m_GetValueFunc;
-	Sqrat::Function* m_GetStringValueFunc;
-	Sqrat::Function* m_InitFunc;
-	Sqrat::Function* m_UpdateTransitionFunc;
-	*/
 };
 
 #endif

@@ -20,5 +20,3 @@ void LuaManager::RegisterGlobal(lua_State* L)
 	lua_register(L, "print", Global_Log);
 	luaL_register(L, "TO", TO_funcs);	// For backwards compatibility
 }
-
-

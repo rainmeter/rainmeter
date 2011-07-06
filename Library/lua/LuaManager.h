@@ -27,19 +27,16 @@ public:
 	static void Init();
 	static void CleanUp();
 
-	static lua_State* GetState() { return c_pState; }
+	static lua_State* GetState() { return c_State; }
 
-	static void ReportErrors(lua_State * L);
+	static void ReportErrors(lua_State* L);
 	static void LuaLog(int nLevel, const char* format, ... );
 
 protected:
 	static int c_RefCount;
-
-	static lua_State* c_pState;
+	static lua_State* c_State;
 
 private:
-	static void RegisterTypes(lua_State* L);
-
 	static void RegisterGlobal(lua_State* L);
 	static void RegisterRainmeter(lua_State* L);
 	static void RegisterGroup(lua_State* L);

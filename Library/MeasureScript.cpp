@@ -1,24 +1,50 @@
+/*
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful, 
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
 #include "StdAfx.h"
 #include "MeasureScript.h"
 #include "lua/LuaManager.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
 
-const char* g_strInitFunction = "Initialize";
-const char* g_strUpdateFunction = "Update";
-const char* g_strGetValueFunction = "GetValue";
-const char* g_strGetStringValueFunction = "GetStringValue";
+const char* g_InitializeFunctionName = "Initialize";
+const char* g_UpdateFunctionName = "Update";
+const char* g_GetStringFunctionName = "GetStringValue";
 
+/*
+** CMeasureScript
+**
+** The constructor
+**
+*/
 CMeasureScript::CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
-	m_pLuaScript(),
-	m_bUpdateDefined(false),
-	m_bGetValueDefined(false),
-	m_bGetStringValueDefined(false),
-	m_bInitializeDefined(false)
+	m_LuaScript(),
+	m_HasInitializeFunction(false),
+	m_HasUpdateFunction(false),
+	m_HasGetStringFunction(false)
 {
 	LuaManager::Init();
 }
 
+/*
+** ~CMeasureScript
+**
+** The destructor
+**
+*/
 CMeasureScript::~CMeasureScript()
 {
 	DeleteLuaScript();
@@ -27,28 +53,39 @@ CMeasureScript::~CMeasureScript()
 
 void CMeasureScript::DeleteLuaScript()
 {
-	if (m_pLuaScript)
+	if (m_LuaScript)
 	{
-		delete m_pLuaScript;
-		m_pLuaScript = NULL;
+		delete m_LuaScript;
+		m_LuaScript = NULL;
 	}
 
-	m_bUpdateDefined = false;
-	m_bGetValueDefined = false;
-	m_bGetStringValueDefined = false;
-	m_bInitializeDefined = false;
+	m_HasInitializeFunction = false;
+	m_HasUpdateFunction = false;
+	m_HasGetStringFunction = false;
 }
 
+/*
+** Initialize
+**
+** Initializes the measure.
+**
+*/
 void CMeasureScript::Initialize()
 {
 	CMeasure::Initialize();
 
-	if (m_bInitializeDefined && m_pLuaScript && m_pLuaScript->IsInitialized())
+	if (m_HasInitializeFunction)
 	{
-		m_pLuaScript->RunFunction(g_strInitFunction);
+		m_LuaScript->RunFunction(g_InitializeFunctionName);
 	}
 }
 
+/*
+** Update
+**
+** Updates the current disk free space value.
+**
+*/
 bool CMeasureScript::Update()
 {
 	if (!CMeasure::PreUpdate())
@@ -56,80 +93,39 @@ bool CMeasureScript::Update()
 		return false;
 	}
 
-	if (m_bUpdateDefined && m_pLuaScript && m_pLuaScript->IsInitialized())
+	if (m_HasUpdateFunction)
 	{
-		m_pLuaScript->RunFunction(g_strUpdateFunction);
+		bool ret = m_LuaScript->RunFunctionWithReturn(g_UpdateFunctionName, m_Value, m_StringValue);
+
+		if (!ret)
+		{
+			// Update() didn't return anything. For backwards compatibility, check for GetStringValue() first
+			if (m_HasGetStringFunction)
+			{
+				m_LuaScript->RunFunctionWithReturn(g_GetStringFunctionName, m_Value, m_StringValue);
+			}
+			else
+			{
+				std::wstring error = L"Script: Update() in measure [";
+				error += m_Name;
+				error += L"] is not returning a valid number or string.";
+				Log(LOG_WARNING, error.c_str());
+			}
+		}
 	}
 
 	return PostUpdate();
 }
 
-double CMeasureScript::GetValue()
-{
-	if (m_bGetValueDefined && m_pLuaScript && m_pLuaScript->IsInitialized())
-	{
-		return m_pLuaScript->RunFunctionDouble(g_strGetValueFunction);
-	}
-
-	return CMeasure::GetValue();
-}
-
-void CMeasureScript::SetValue(double d)
-{
-	m_Value = d;
-}
-
 /*
 ** GetStringValue
 **
-** This method returns the value as text string. The actual value is
-** get with GetValue() so we don't have to worry about m_Invert.
+** Returns the time as string.
 **
-** autoScale  If true, scale the value automatically to some sensible range.
-** scale      The scale to use if autoScale is false.
-** decimals   Number of decimals used in the value.
-** percentual Return the value as % from the maximum value.
 */
 const WCHAR* CMeasureScript::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
-	if (m_bGetStringValueDefined && m_pLuaScript && m_pLuaScript->IsInitialized())
-	{
-		m_strValue = m_pLuaScript->RunFunctionString(g_strGetStringValueFunction);
-
-		return CheckSubstitute(m_strValue.c_str());
-	}
-
-	return CMeasure::GetStringValue(autoScale, scale, decimals, percentual);
-}
-
-static void stackDump(lua_State *L)
-{
-	int i = lua_gettop(L);
-	LuaManager::LuaLog(LOG_DEBUG, " ----------------  Stack Dump ----------------" );
-	while (i)
-	{
-		int t = lua_type(L, i);
-		switch (t)
-		{
-		case LUA_TSTRING:
-			LuaManager::LuaLog(LOG_DEBUG, "%d:`%s'", i, lua_tostring(L, i));
-			break;
-
-		case LUA_TBOOLEAN:
-			LuaManager::LuaLog(LOG_DEBUG, "%d: %s",i,lua_toboolean(L, i) ? "true" : "false");
-			break;
-
-		case LUA_TNUMBER:
-			LuaManager::LuaLog(LOG_DEBUG, "%d: %g",  i, lua_tonumber(L, i));
-			break;
-
-		default:
-			LuaManager::LuaLog(LOG_DEBUG, "%d: %s", i, lua_typename(L, t));
-			break;
-		}
-		i--;
-	}
-	LuaManager::LuaLog(LOG_DEBUG, "--------------- Stack Dump Finished ---------------" );
+	return m_StringValue.c_str();
 }
 
 /*
@@ -156,16 +152,23 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			lua_State* L = LuaManager::GetState();
 
 			DeleteLuaScript();
-			m_pLuaScript = new LuaScript(LuaManager::GetState(), m_ScriptFile.c_str());
+			m_LuaScript = new LuaScript(LuaManager::GetState(), m_ScriptFile.c_str());
 
-			if (m_pLuaScript->IsInitialized())
+			if (m_LuaScript->IsInitialized())
 			{
-				m_bUpdateDefined = m_pLuaScript->FunctionExists(g_strUpdateFunction);
-				m_bInitializeDefined = m_pLuaScript->FunctionExists(g_strInitFunction);
-				m_bGetValueDefined = m_pLuaScript->FunctionExists(g_strGetValueFunction);
-				m_bGetStringValueDefined = m_pLuaScript->FunctionExists(g_strGetStringValueFunction);
+				m_HasInitializeFunction = m_LuaScript->IsFunction(g_InitializeFunctionName);
+				m_HasUpdateFunction = m_LuaScript->IsFunction(g_UpdateFunctionName);
+				m_HasGetStringFunction = m_LuaScript->IsFunction(g_GetStringFunctionName);  // For backwards compatbility
 
-				m_pLuaScript->PushTable();
+				if (m_HasGetStringFunction)
+				{
+					std::wstring error = L"Script: GetStringValue() used in measure [";
+					error += m_Name;
+					error += L"] has been deprecated. Check manual to ensure future compatibility.";
+					Log(LOG_WARNING, error.c_str());
+				}
+
+				m_LuaScript->PushTable();
 
 				// Push the variable name we want to put a value in.
 				lua_pushstring(L, "SELF");
@@ -174,21 +177,15 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 				// Bind the variable
 				lua_settable(L, -3);
 
-				// Push the variable name we want to put a value in.
 				lua_pushstring(L, "SKIN");
-				// Push the value
 				tolua_pushusertype(L, m_MeterWindow, "CMeterWindow");
-				// Bind the variable
 				lua_settable(L, -3);
 
-				// Push the variable name we want to put a value in.
 				lua_pushstring(L, "RAINMETER");
-				// Push the value
 				tolua_pushusertype(L, m_MeterWindow->GetMainObject(), "CRainmeter");
-				// Bind the variable
 				lua_settable(L, -3);
 
-				// Look i nthe properties table for values to read from the section.
+				// Look in the properties table for values to read from the section.
 				lua_getfield(L, -1, "PROPERTIES");
 				if (lua_isnil(L, -1) == 0)
 				{
@@ -213,6 +210,7 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 						}
 					}
 				}
+
 				// Pop PROPERTIES table
 				lua_pop(L, 1);
 
@@ -227,7 +225,11 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LuaManager::LuaLog(LOG_ERROR, "Script: ScriptFile missing in %s.", m_ANSIName.c_str());
+		std::wstring error = L"Script: ScriptFile= is not valid in measure [";
+		error += m_Name;
+		error += L"].";
+		Log(LOG_WARNING, error.c_str());
+
 		DeleteLuaScript();
 	}
 }
@@ -235,10 +237,10 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 void CMeasureScript::RunFunctionWithMeter(const char* p_strFunction, CMeter* p_pMeter)
 {
 	// Get the Lua State
-	lua_State* L = m_pLuaScript->GetState();
+	lua_State* L = m_LuaScript->GetState();
 
 	// Push the script table
-	m_pLuaScript->PushTable();
+	m_LuaScript->PushTable();
 
 	// Push the function onto the stack
 	lua_getfield(L, -1, p_strFunction);
@@ -264,7 +266,7 @@ void CMeasureScript::RunFunctionWithMeter(const char* p_strFunction, CMeter* p_p
 
 void CMeasureScript::MeterMouseEvent(CMeter* p_pMeter, MOUSE p_eMouse)
 {
-	if (m_pLuaScript && m_pLuaScript->IsInitialized())
+	if (m_LuaScript && m_LuaScript->IsInitialized())
 	{
 		switch (p_eMouse)
 		{
@@ -305,4 +307,34 @@ void CMeasureScript::MeterMouseEvent(CMeter* p_pMeter, MOUSE p_eMouse)
 			break;
 		}
 	}
+}
+
+static void stackDump(lua_State *L)
+{
+	int i = lua_gettop(L);
+	LuaManager::LuaLog(LOG_DEBUG, " ----------------  Stack Dump ----------------" );
+	while (i)
+	{
+		int t = lua_type(L, i);
+		switch (t)
+		{
+		case LUA_TSTRING:
+			LuaManager::LuaLog(LOG_DEBUG, "%d:`%s'", i, lua_tostring(L, i));
+			break;
+
+		case LUA_TBOOLEAN:
+			LuaManager::LuaLog(LOG_DEBUG, "%d: %s",i,lua_toboolean(L, i) ? "true" : "false");
+			break;
+
+		case LUA_TNUMBER:
+			LuaManager::LuaLog(LOG_DEBUG, "%d: %g",  i, lua_tonumber(L, i));
+			break;
+
+		default:
+			LuaManager::LuaLog(LOG_DEBUG, "%d: %s", i, lua_typename(L, t));
+			break;
+		}
+		i--;
+	}
+	LuaManager::LuaLog(LOG_DEBUG, "--------------- Stack Dump Finished ---------------" );
 }
