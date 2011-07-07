@@ -976,10 +976,9 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			std::wstring strVariable(arg, pos - arg);
 			std::wstring strValue(pos + 1);
 			double value;
-			int result = m_Parser.ReadFormula(strValue, &value);
 
 			// Formula read fine
-			if (result != -1)
+			if (m_Parser.ReadFormula(strValue, &value))
 			{
 				WCHAR buffer[256];
 				int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
@@ -1083,35 +1082,35 @@ void CMeterWindow::ResizeBlur(const WCHAR* arg, int mode)
 		if (token)
 		{
 			while (token[0] == L' ') ++token;
-			type = (m_Parser.ReadFormula(token, &val) == 1) ? (int)val : _wtoi(token);
+			type = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
 		}
 
 		token = wcstok(NULL, L",");
 		if (token)
 		{
 			while (token[0] == L' ') ++token;
-			x = (m_Parser.ReadFormula(token, &val) == 1) ? (int)val : _wtoi(token);
+			x = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
 		}
 
 		token = wcstok(NULL, L",");
 		if (token)
 		{
 			while (token[0] == L' ') ++token;
-			y = (m_Parser.ReadFormula(token, &val) == 1) ? (int)val : _wtoi(token);
+			y = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
 		}
 
 		token = wcstok(NULL, L",");
 		if (token)
 		{
 			while (token[0] == L' ') ++token;
-			w = (m_Parser.ReadFormula(token, &val) == 1) ? (int)val : _wtoi(token);
+			w = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
 		}
 
 		token = wcstok(NULL, L",");
 		if (token)
 		{
 			while (token[0] == L' ') ++token;
-			h = (m_Parser.ReadFormula(token, &val) == 1) ? (int)val : _wtoi(token);
+			h = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
 		}
 
 		if (w && h)
@@ -1129,7 +1128,7 @@ void CMeterWindow::ResizeBlur(const WCHAR* arg, int mode)
 				if (token)
 				{
 					while (token[0] == L' ') ++token;
-					int r = (m_Parser.ReadFormula(token, &val) == 1) ? (int)val : _wtoi(token);
+					int r = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
 					tempRegion = CreateRoundRectRgn(x, y, w, h, r, r);
 				}
 				break;

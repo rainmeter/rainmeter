@@ -1508,7 +1508,7 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 			const std::wstring& strKey = subStrings[1];
 			const std::wstring& strValue = subStrings[2];
 
-			int formula = -1;
+			bool formula = false;
 			BOOL write = 0;
 
 			if (subStrings.size() > 4)
@@ -1520,7 +1520,7 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 					formula = mw->GetParser().ReadFormula(strValue, &value);
 
 					// Formula read fine
-					if (formula != -1)
+					if (formula)
 					{
 						WCHAR buffer[256];
 						int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
@@ -1533,7 +1533,7 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 				}
 			}
 
-			if (formula == -1)
+			if (!formula)
 			{
 				write = WritePrivateProfileString(strSection.c_str(), strKey.c_str(), strValue.c_str(), iniWrite.c_str());
 			}

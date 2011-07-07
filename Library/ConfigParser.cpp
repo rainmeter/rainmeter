@@ -765,25 +765,24 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 	return (m_LastDefaultUsed) ? defValue : ParseDouble(result, defValue);
 }
 
-// Returns 1 if the formula was read successfully, -1 for failure.
+// Returns true if the formula was read successfully, false for failure.
 // Pass a pointer to a double.
-int CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
+bool CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
 {
 	// Formulas must be surrounded by parenthesis
 	if (result.size() > 0 && result[0] == L'(' && result[result.size() - 1] == L')')
 	{
 		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.substr(1, result.size() - 2).c_str()).c_str(), resultValue);
-
 		if (errMsg != NULL)
 		{
 			Log(LOG_ERROR, ConvertToWide(errMsg).c_str());
-			return -1;
+			return false;
 		}
 
-		return 1;
+		return true;
 	}
 
-	return -1;
+	return false;
 }
 
 Color CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, const Color& defValue)
@@ -885,76 +884,58 @@ double CConfigParser::ParseDouble(const std::wstring& string, double defValue, b
 */
 Color CConfigParser::ParseColor(LPCTSTR string)
 {
-	int R, G, B, A;
+	int R = 255, G = 255, B = 255, A = 255;
 
-	if (wcschr(string, L',') != NULL)
+	if (wcschr(string, L','))
 	{
 		WCHAR* parseSz = _wcsdup(string);
 		WCHAR* token;
 
 		token = wcstok(parseSz, L",");
-		if (token != NULL)
+		if (token)
 		{
 			R = _wtoi(token);
 			R = max(R, 0);
 			R = min(R, 255);
 		}
-		else
-		{
-			R = 255;
-		}
-		token = wcstok( NULL, L",");
-		if (token != NULL)
+		token = wcstok(NULL, L",");
+		if (token)
 		{
 			G = _wtoi(token);
 			G = max(G, 0);
 			G = min(G, 255);
 		}
-		else
-		{
-			G = 255;
-		}
-		token = wcstok( NULL, L",");
-		if (token != NULL)
+		token = wcstok(NULL, L",");
+		if (token)
 		{
 			B = _wtoi(token);
 			B = max(B, 0);
 			B = min(B, 255);
 		}
-		else
-		{
-			B = 255;
-		}
-		token = wcstok( NULL, L",");
-		if (token != NULL)
+		token = wcstok(NULL, L",");
+		if (token)
 		{
 			A = _wtoi(token);
 			A = max(A, 0);
 			A = min(A, 255);
 		}
-		else
-		{
-			A = 255;
-		}
 		free(parseSz);
 	}
 	else
 	{
-		const WCHAR* start = string;
-
 		if (wcsncmp(string, L"0x", 2) == 0)
 		{
-			start = string + 2;
+			string += 2;  // skip prefix
 		}
 
-		if (wcslen(string) > 6 && !iswspace(string[6]))
+		size_t len = wcslen(string);
+		if (len >= 8 && !iswspace(string[6]))
 		{
 			swscanf(string, L"%02x%02x%02x%02x", &R, &G, &B, &A);
 		}
-		else
+		else if (len >= 6)
 		{
 			swscanf(string, L"%02x%02x%02x", &R, &G, &B);
-			A = 255;	// Opaque
 		}
 	}
 
@@ -1188,7 +1169,12 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 						}
 						else
 						{
-							SetValue((*iter), key, value, isVariables);
+							SetValue((*iter), key, value);
+
+							if (isVariables)
+							{
+								m_ListVariables.push_back(lowerKey);
+							}
 						}
 					}
 				}
@@ -1212,21 +1198,14 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 ** \param strKey The name of the key.
 ** \param strValue The value for the key.
 */
-void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue, bool isVariables)
+void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue)
 {
 	// LogWithArgs(LOG_DEBUG, L"[%s] %s=%s (size: %i)", strSection.c_str(), strKey.c_str(), strValue.c_str(), (int)m_Values.size());
 
-	std::wstring strTmpSection = StrToLower(strSection);
-	std::wstring strTmpKey = StrToLower(strKey);
+	std::wstring strTmp = strSection + L"::";
+	strTmp += strKey;
 
-	if (isVariables)
-	{
-		m_ListVariables.push_back(strTmpKey);
-	}
-
-	strTmpSection += L"::";
-	strTmpSection += strTmpKey;
-	m_Values[strTmpSection] = strValue;
+	m_Values[StrToLower(strTmp)] = strValue;
 }
 
 //==============================================================================

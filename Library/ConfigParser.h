@@ -67,11 +67,10 @@ public:
 	RECT ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue);
 	std::vector<Gdiplus::REAL> ReadFloats(LPCTSTR section, LPCTSTR key);
 
+	bool ReadFormula(const std::wstring& result, double* resultValue);
+
 	const std::wstring& GetFilename() { return m_Filename; }
 	const std::vector<std::wstring>& GetSections() { return m_Sections; }
-
-	// Returns an int if the formula was read successfully, -1 for failure.
-	int ReadFormula(const std::wstring& result, double* number);
 
 	bool ReplaceVariables(std::wstring& result);
 	bool ReplaceMeasures(std::wstring& result);
@@ -93,7 +92,7 @@ private:
 	CMeasure* GetMeasure(const std::wstring& name);
 
 	void ReadIniFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& strFileName, LPCTSTR config = NULL, int depth = 0);
-	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue, bool isVariables);
+	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
 	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
 
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);

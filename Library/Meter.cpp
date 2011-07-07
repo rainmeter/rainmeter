@@ -302,7 +302,7 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			}
 
 			double val;
-			if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && -1 != parser.ReadFormula(coord, &val))
+			if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && parser.ReadFormula(coord, &val))
 			{
 				m_X = (int)val;
 			}
@@ -341,7 +341,7 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			}
 
 			double val;
-			if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && -1 != parser.ReadFormula(coord, &val))
+			if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && parser.ReadFormula(coord, &val))
 			{
 				m_Y = (int)val;
 			}
