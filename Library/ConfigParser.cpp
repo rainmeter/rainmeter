@@ -1064,8 +1064,8 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 
 	// Get all the sections (i.e. different meters)
 	std::list<std::wstring> sections;
-	WCHAR* items = new WCHAR[MAX_LINE_LENGTH];
-	DWORD size = MAX_LINE_LENGTH;
+	DWORD itemsSize = MAX_LINE_LENGTH;
+	WCHAR* items = new WCHAR[itemsSize];
 	WCHAR* pos = NULL;
 	WCHAR* epos = NULL;
 
@@ -1075,22 +1075,22 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 		while (true)
 		{
 			items[0] = 0;
-			DWORD res = GetPrivateProfileString(NULL, NULL, NULL, items, size, iniRead.c_str());
+			DWORD res = GetPrivateProfileString(NULL, NULL, NULL, items, itemsSize, iniRead.c_str());
 			if (res == 0)		// File not found
 			{
 				delete [] items;
 				if (temporary) CSystem::RemoveFile(iniRead);
 				return;
 			}
-			if (res < size - 2)		// Fits in the buffer
+			if (res < itemsSize - 2)		// Fits in the buffer
 			{
 				epos = items + res;
 				break;
 			}
 
 			delete [] items;
-			size *= 2;
-			items = new WCHAR[size];
+			itemsSize *= 2;
+			items = new WCHAR[itemsSize];
 		}
 
 		// Read the sections
@@ -1100,9 +1100,8 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 			if (*pos)
 			{
 				std::wstring strTmp = StrToLower(pos);
-				if (m_FoundSections.find(strTmp) == m_FoundSections.end())
+				if (m_FoundSections.insert(strTmp).second)
 				{
-					m_FoundSections.insert(strTmp);
 					m_Sections.push_back(pos);
 				}
 				sections.push_back(pos);
@@ -1120,7 +1119,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 		sections.push_back(L"Rainmeter");
 		sections.push_back(config);
 
-		if (depth == 0)
+		if (depth == 0)  // Add once
 		{
 			m_Sections.push_back(L"Rainmeter");
 			m_Sections.push_back(config);
@@ -1128,27 +1127,26 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 	}
 
 	// Read the keys and values
-	DWORD bufferSize = MAX_LINE_LENGTH;
-	WCHAR* buffer = new WCHAR[bufferSize];
-
 	std::list<std::wstring>::const_iterator iter = sections.begin();
 	for ( ; iter != sections.end(); ++iter)
 	{
+		std::unordered_set<std::wstring> foundKeys;
 		bool isVariables = (_wcsicmp((*iter).c_str(), L"Variables") == 0);
 
+		// Read all "key=value" from the section
 		while (true)
 		{
 			items[0] = 0;
-			DWORD res = GetPrivateProfileString((*iter).c_str(), NULL, NULL, items, size, iniRead.c_str());
-			if (res < size - 2)		// Fits in the buffer
+			DWORD res = GetPrivateProfileSection((*iter).c_str(), items, itemsSize, iniRead.c_str());
+			if (res < itemsSize - 2)		// Fits in the buffer
 			{
 				epos = items + res;
 				break;
 			}
 
 			delete [] items;
-			size *= 2;
-			items = new WCHAR[size];
+			itemsSize *= 2;
+			items = new WCHAR[itemsSize];
 		}
 
 		pos = items;
@@ -1156,36 +1154,45 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 		{
 			if (*pos)
 			{
-				while (true)
+				std::wstring key = pos;
+				std::wstring::size_type len = key.length(), sep = key.find_first_of(L'=');
+				if (sep != std::wstring::npos && sep != 0)
 				{
-					buffer[0] = 0;
-					DWORD res = GetPrivateProfileString((*iter).c_str(), pos, L"", buffer, bufferSize, iniRead.c_str());
-					if (res < bufferSize - 2) break;		// Fits in the buffer
+					std::wstring value = key.substr(sep + 1, len - sep);
+					key.resize(sep);
 
-					delete [] buffer;
-					bufferSize *= 2;
-					buffer = new WCHAR[bufferSize];
-				}
-
-				if (_wcsnicmp(pos, L"@include", 8) == 0)
-				{
-					std::wstring strIncludeFile = buffer;
-					ReadVariables();
-					ReplaceVariables(strIncludeFile);
-					if (strIncludeFile.find(L':') == std::wstring::npos &&
-						(strIncludeFile.length() < 2 || (strIncludeFile[0] != L'\\' && strIncludeFile[0] != L'/') || (strIncludeFile[1] != L'\\' && strIncludeFile[1] != L'/')))
+					std::wstring lowerKey = StrToLower(key);
+					if (foundKeys.insert(lowerKey).second)
 					{
-						// It's a relative path so add the current path as a prefix
-						strIncludeFile.insert(0, CRainmeter::ExtractPath(iniFile));
-					}
-					ReadIniFile(iniFileMappings, strIncludeFile, config, depth + 1);
-				}
-				else
-				{
-					SetValue((*iter), pos, buffer, isVariables);
-				}
+						// Trim surrounded quotes from value
+						std::wstring::size_type valueLen = value.length();
+						if (valueLen >= 2 && (
+							(value[0] == L'\"' && value[valueLen - 1] == L'\"') ||
+							(value[0] == L'\'' && value[valueLen - 1] == L'\'')))
+						{
+							valueLen -= 2;
+							value.swap(value.substr(1, valueLen));
+						}
 
-				pos += wcslen(pos) + 1;
+						if (wcsncmp(lowerKey.c_str(), L"@include", 8) == 0)
+						{
+							ReadVariables();
+							ReplaceVariables(value);
+							if (value.find(L':') == std::wstring::npos &&
+								(valueLen < 2 || (value[0] != L'\\' && value[0] != L'/') || (value[1] != L'\\' && value[1] != L'/')))
+							{
+								// It's a relative path so add the current path as a prefix
+								value.insert(0, CRainmeter::ExtractPath(iniFile));
+							}
+							ReadIniFile(iniFileMappings, value, config, depth + 1);
+						}
+						else
+						{
+							SetValue((*iter), key, value, isVariables);
+						}
+					}
+				}
+				pos += len + 1;
 			}
 			else  // Empty string
 			{
@@ -1193,7 +1200,6 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 			}
 		}
 	}
-	delete [] buffer;
 	delete [] items;
 	if (temporary) CSystem::RemoveFile(iniRead);
 }
