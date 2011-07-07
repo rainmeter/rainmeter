@@ -31,11 +31,9 @@ public:
 	virtual void Initialize();
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
+	virtual void ExecuteBang(const WCHAR* args);
 
 	void DeleteLuaScript();
-
-	void MeterMouseEvent(CMeter* p_pMeter, MOUSE p_eMouse);
-	void RunFunctionWithMeter(const char* p_strFunction, CMeter* p_pMeter);
 
 protected:
 	LuaScript* m_LuaScript;

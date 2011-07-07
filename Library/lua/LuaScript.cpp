@@ -64,8 +64,7 @@ LuaScript::LuaScript(lua_State* state, const char* file) : m_State(state),
 		if (result)
 		{
 			m_Initialized = false;
-			LuaManager::LuaLog(LOG_ERROR, "Script: Could not run file: %s", lua_tostring(m_State, -1));
-			lua_pop(m_State, 1);
+			LuaManager::ReportErrors(m_State);
 
 			luaL_unref(m_State, LUA_GLOBALSINDEX, m_iRef);
 			m_iRef = LUA_NOREF;
@@ -74,8 +73,7 @@ LuaScript::LuaScript(lua_State* state, const char* file) : m_State(state),
 	else
 	{
 		m_Initialized = false;
-		LuaManager::LuaLog(LOG_ERROR, "Script: Could not run file: %s", lua_tostring(m_State, -1));
-		lua_pop(m_State, 1);
+		LuaManager::ReportErrors(m_State);
 	}
 }
 

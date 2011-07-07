@@ -418,7 +418,6 @@ private:
 	bool m_ResetRegion;							// If true, the window region is recalculated during the next update
 
 	std::list<CMeasure*> m_Measures;			// All the measures
-	std::list<CMeasureScript*> m_ScriptMeasures;// All the measures
 	std::list<CMeter*> m_Meters;				// All the meters
 
 	const std::wstring m_SkinPath;				// Path of the skin folder

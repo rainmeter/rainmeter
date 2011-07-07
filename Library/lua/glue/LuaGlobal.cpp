@@ -12,7 +12,8 @@ static int Global_Log(lua_State* L)
 
 static const luaL_reg TO_funcs[] =
 {
-	{ "LuaLog", Global_Log }, { NULL, NULL }
+	{ "LuaLog", Global_Log },
+	{ NULL, NULL }
 };
 
 void LuaManager::RegisterGlobal(lua_State* L)

@@ -234,107 +234,52 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 }
 
-void CMeasureScript::RunFunctionWithMeter(const char* p_strFunction, CMeter* p_pMeter)
+/*
+** ExecuteBang
+**
+** Sends a bang to the measure.
+**
+*/
+void CMeasureScript::ExecuteBang(const WCHAR* args)
 {
-	// Get the Lua State
-	lua_State* L = m_LuaScript->GetState();
+	std::string function = ConvertToAscii(args);
 
-	// Push the script table
-	m_LuaScript->PushTable();
-
-	// Push the function onto the stack
-	lua_getfield(L, -1, p_strFunction);
-
-	// Check if the function exists
-	if (!lua_isnil(L, -1))
+	if (m_LuaScript->IsFunction(function.c_str()))
 	{
-		// Push the Meter
-		tolua_pushusertype(L, (void*) p_pMeter, "CMeter");
-
-		if (lua_pcall(L, 1, 0, 0))
-		{
-			LuaManager::ReportErrors(L);
-		}
-
-		lua_pop(L, 1);
+		m_LuaScript->RunFunction(function.c_str());
 	}
 	else
 	{
-		lua_pop(L, 2);
-	}
-}
-
-void CMeasureScript::MeterMouseEvent(CMeter* p_pMeter, MOUSE p_eMouse)
-{
-	if (m_LuaScript && m_LuaScript->IsInitialized())
-	{
-		switch (p_eMouse)
-		{
-		case MOUSE_LMB_DOWN:
-			RunFunctionWithMeter("LeftMouseDown", p_pMeter);
-			break;
-
-		case MOUSE_LMB_UP:
-			RunFunctionWithMeter("LeftMouseUp", p_pMeter);
-			break;
-
-		case MOUSE_LMB_DBLCLK:
-			RunFunctionWithMeter("LeftMouseDoubleClick", p_pMeter);
-			break;
-
-		case MOUSE_RMB_DOWN:
-			RunFunctionWithMeter("RightMouseDown", p_pMeter);
-			break;
-
-		case MOUSE_RMB_UP:
-			RunFunctionWithMeter("RightMouseUp", p_pMeter);
-			break;
-
-		case MOUSE_RMB_DBLCLK:
-			RunFunctionWithMeter("RightMouseDoubleClick", p_pMeter);
-			break;
-
-		case MOUSE_MMB_DOWN:
-			RunFunctionWithMeter("MiddleMouseDown", p_pMeter);
-			break;
-
-		case MOUSE_MMB_UP:
-			RunFunctionWithMeter("MiddleMouseUp", p_pMeter);
-			break;
-
-		case MOUSE_MMB_DBLCLK:
-			RunFunctionWithMeter("MiddleMouseDoubleClick", p_pMeter);
-			break;
-		}
+		std::wstring error = L"Script: Function \"";
+		error += args;
+		error += L"\" does not exist.";
 	}
 }
 
 static void stackDump(lua_State *L)
 {
-	int i = lua_gettop(L);
 	LuaManager::LuaLog(LOG_DEBUG, " ----------------  Stack Dump ----------------" );
-	while (i)
+	for (int i = lua_gettop(L); i > 0; --i)
 	{
 		int t = lua_type(L, i);
 		switch (t)
 		{
 		case LUA_TSTRING:
-			LuaManager::LuaLog(LOG_DEBUG, "%d:`%s'", i, lua_tostring(L, i));
+			LuaManager::LuaLog(LOG_DEBUG, "%d:'%s'", i, lua_tostring(L, i));
 			break;
 
 		case LUA_TBOOLEAN:
-			LuaManager::LuaLog(LOG_DEBUG, "%d: %s",i,lua_toboolean(L, i) ? "true" : "false");
+			LuaManager::LuaLog(LOG_DEBUG, "%d: %s", i, lua_toboolean(L, i) ? "true" : "false");
 			break;
 
 		case LUA_TNUMBER:
-			LuaManager::LuaLog(LOG_DEBUG, "%d: %g",  i, lua_tonumber(L, i));
+			LuaManager::LuaLog(LOG_DEBUG, "%d: %g", i, lua_tonumber(L, i));
 			break;
 
 		default:
 			LuaManager::LuaLog(LOG_DEBUG, "%d: %s", i, lua_typename(L, t));
 			break;
 		}
-		i--;
 	}
 	LuaManager::LuaLog(LOG_DEBUG, "--------------- Stack Dump Finished ---------------" );
 }

@@ -67,8 +67,21 @@ void LuaManager::CleanUp()
 
 void LuaManager::ReportErrors(lua_State* L)
 {
-	LuaLog(LOG_ERROR, "Script: %s", lua_tostring(L, -1));
+	std::string error = lua_tostring(L, -1);
 	lua_pop(L, 1);
+
+	// Get rid of everything up to the filename
+	std::string::size_type pos = 4; // Skip the drive
+	pos = error.find_first_of(':', pos);
+	pos = error.find_last_of('\\', pos);
+	if (pos != std::string::npos)
+	{
+		error.erase(0, ++pos);
+	}
+
+	std::wstring str = L"Script: ";
+	str += ConvertToWide(error.c_str());
+	Log(LOG_ERROR, str.c_str());
 }
 
 void LuaManager::LuaLog(int nLevel, const char* format, ... )
@@ -89,15 +102,8 @@ void LuaManager::LuaLog(int nLevel, const char* format, ... )
 
 	_set_invalid_parameter_handler(oldHandler);
 
-#ifndef _DEBUG
-	// Forcing output to the Debug Output window!
-	OutputDebugStringA(buffer);
-	OutputDebugStringA("\n");
-#endif
-
 	std::wstring str = ConvertToWide(buffer);
-
-	LSLog(nLevel, L"Rainmeter", str.c_str());
+	Log(nLevel, str.c_str());
 	va_end(args);
 
 	delete [] buffer;

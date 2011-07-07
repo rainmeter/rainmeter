@@ -352,7 +352,6 @@ void CMeterWindow::Refresh(bool init, bool all)
 			delete (*i);
 		}
 		m_Measures.clear();
-		m_ScriptMeasures.clear();
 
 		std::list<CMeter*>::iterator j = m_Meters.begin();
 		for ( ; j != m_Meters.end(); ++j)
@@ -2140,17 +2139,9 @@ bool CMeterWindow::ReadSkin()
 						m_Measures.push_back(measure);
 						m_Parser.AddMeasure(measure);
 
-						CMeasureScript* measureScript = dynamic_cast<CMeasureScript*>(measure);
-						if (measureScript)
+						if (!m_HasNetMeasures && dynamic_cast<CMeasureNet*>(measure))
 						{
-							m_ScriptMeasures.push_back(measureScript);
-						}
-						else
-						{
-							if (!m_HasNetMeasures && dynamic_cast<CMeasureNet*>(measure))
-							{
-								m_HasNetMeasures = true;
-							}
+							m_HasNetMeasures = true;
 						}
 					}
 				}
@@ -4442,12 +4433,6 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 
 		if ((*j)->HitTest(x, y))
 		{
-			std::list<CMeasureScript*>::iterator k = m_ScriptMeasures.begin();
-			for ( ; k != m_ScriptMeasures.end(); ++k)
-			{
-				(*k)->MeterMouseEvent((*j), mouse);
-			}
-
 			switch (mouse)
 			{
 			case MOUSE_LMB_DOWN:
