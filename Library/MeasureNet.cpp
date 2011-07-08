@@ -584,7 +584,11 @@ void CMeasureNet::ResetStats()
 void CMeasureNet::ReadStats(const WCHAR* iniFile)
 {
 	WCHAR buffer[64];
-	int count = GetPrivateProfileInt(L"Statistics", L"NetStatsCount", 0, iniFile);
+
+	CConfigParser parser;
+	parser.Initialize(iniFile, NULL, NULL, L"Statistics");
+
+	int count = parser.ReadInt(L"Statistics", L"NetStatsCount", 0);
 
 	c_StatValues.clear();
 
@@ -593,18 +597,18 @@ void CMeasureNet::ReadStats(const WCHAR* iniFile)
 		ULARGE_INTEGER value;
 
 		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInHigh%i", i);
-		value.HighPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile);
+		value.HighPart = (DWORD)parser.ReadUInt(L"Statistics", buffer, 0);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInLow%i", i);
-		value.LowPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile);
+		value.LowPart = (DWORD)parser.ReadUInt(L"Statistics", buffer, 0);
 
 		c_StatValues.push_back(value.QuadPart);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutHigh%i", i);
-		value.HighPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile);
+		value.HighPart = (DWORD)parser.ReadUInt(L"Statistics", buffer, 0);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutLow%i", i);
-		value.LowPart = (DWORD)GetPrivateProfileInt(L"Statistics", buffer, 0, iniFile);
+		value.LowPart = (DWORD)parser.ReadUInt(L"Statistics", buffer, 0);
 
 		c_StatValues.push_back(value.QuadPart);
 	}

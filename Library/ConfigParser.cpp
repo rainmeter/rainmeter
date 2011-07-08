@@ -744,6 +744,13 @@ int CConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 	return (m_LastDefaultUsed) ? defValue : (int)ParseDouble(result, defValue, true);
 }
 
+unsigned int CConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, unsigned int defValue)
+{
+	const std::wstring& result = ReadString(section, key, L"");
+
+	return (m_LastDefaultUsed) ? defValue : (unsigned int)ParseDouble(result, defValue, true);
+}
+
 // Works as ReadFloat except if the value is surrounded by parenthesis in which case it tries to evaluate the formula
 double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 {
@@ -1056,7 +1063,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 		while (true)
 		{
 			items[0] = 0;
-			DWORD res = GetPrivateProfileString(NULL, NULL, NULL, items, itemsSize, iniRead.c_str());
+			DWORD res = GetPrivateProfileSectionNames(items, itemsSize, iniRead.c_str());
 			if (res == 0)		// File not found
 			{
 				delete [] items;
