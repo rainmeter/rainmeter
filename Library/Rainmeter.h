@@ -61,6 +61,7 @@ void RainmeterEnableMeasure(HWND, const char* arg);
 void RainmeterDisableMeasure(HWND, const char* arg);
 void RainmeterToggleMeasure(HWND, const char* arg);
 void RainmeterUpdateMeasure(HWND, const char* arg);
+void RainmeterCommandMeasure(HWND, const char* arg);
 void RainmeterActivateConfig(HWND, const char* arg);
 void RainmeterDeactivateConfig(HWND, const char* arg);
 void RainmeterToggleConfig(HWND, const char* arg);

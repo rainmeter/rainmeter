@@ -33,8 +33,7 @@ public:
 	bool IsFunction(const char* funcName);
 	void RunFunction(const char* funcName);
 	bool RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue);
-
-	static void ReportErrors(lua_State* L);
+	void RunString(const char* str);
 
 protected:
 	lua_State* m_State;

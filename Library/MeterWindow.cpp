@@ -824,7 +824,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		break;
 
 	case BANG_MOVE:
-		pos = wcschr(arg, ' ');
+		pos = wcschr(arg, L' ');
 		if (pos != NULL)
 		{
 			MoveWindow(_wtoi(arg), _wtoi(pos));
@@ -879,7 +879,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 
 	case BANG_LSHOOK:
 		{
-			pos = wcsrchr(arg, ' ');
+			pos = wcsrchr(arg, L' ');
 			if (pos != NULL)
 			{
 #ifdef _WIN64
@@ -905,10 +905,10 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		break;
 
 	case BANG_MOVEMETER:
-		pos = wcschr(arg, ' ');
+		pos = wcschr(arg, L' ');
 		if (pos != NULL)
 		{
-			pos2 = wcschr(pos + 1, ' ');
+			pos2 = wcschr(pos + 1, L' ');
 			if (pos2 != NULL)
 			{
 				MoveMeter(_wtoi(arg), _wtoi(pos), pos2 + 1);
@@ -921,6 +921,34 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		else
 		{
 			Log(LOG_ERROR, L"Unable to parse parameters for !MoveMeter");
+		}
+		break;
+
+	case BANG_COMMANDMEASURE:
+		{
+			std::wstring args = arg;
+			std::wstring measure;
+			std::wstring::size_type pos3;
+
+			pos3 = args.find(L' ');
+			if (pos3 != std::wstring::npos)
+			{
+				measure = args.substr(0, pos3);
+				args.erase(0, ++pos3);
+
+				CMeasure* m = GetMeasure(measure);
+				if (m)
+				{
+					m->ExecuteBang(args.c_str());
+					return;
+				}
+
+				LogWithArgs(LOG_WARNING, L"Unable to find [%s] for !CommandMeasure", measure.c_str());
+			}
+			else
+			{
+				Log(LOG_ERROR, L"Unable to parse parameters for !CommandMeasure");
+			}
 		}
 		break;
 
@@ -970,7 +998,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		break;
 
 	case BANG_SETVARIABLE:
-		pos = wcschr(arg, ' ');
+		pos = wcschr(arg, L' ');
 		if (pos != NULL)
 		{
 			std::wstring strVariable(arg, pos - arg);

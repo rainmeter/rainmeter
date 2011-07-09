@@ -19,7 +19,6 @@
 #ifndef __METERWINDOW_H__
 #define __METERWINDOW_H__
 
-
 #include <windows.h>
 #include <gdiplus.h>
 #include <dwmapi.h>
@@ -120,6 +119,7 @@ enum BANGCOMMAND
 	BANG_ENABLEMEASURE,
 	BANG_DISABLEMEASURE,
 	BANG_UPDATEMEASURE,
+	BANG_COMMANDMEASURE,
 	BANG_SHOWBLUR,
 	BANG_HIDEBLUR,
 	BANG_TOGGLEBLUR,

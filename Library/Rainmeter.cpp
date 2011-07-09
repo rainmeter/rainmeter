@@ -681,6 +681,17 @@ void RainmeterUpdateMeasure(HWND, const char* arg)
 }
 
 /*
+** RainmeterCommandMeasure
+**
+** Callback for the !RainmeterCommandMeasure bang
+**
+*/
+void RainmeterCommandMeasure(HWND, const char* arg)
+{
+	BangWithArgs(BANG_COMMANDMEASURE, ConvertToWide(arg).c_str(), 2);
+}
+
+/*
 ** RainmeterRefresh
 **
 ** Callback for the !RainmeterRefresh bang
@@ -2870,6 +2881,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	else if (_wcsicmp(name, L"UpdateMeasure") == 0)
 	{
 		BangWithArgs(BANG_UPDATEMEASURE, arg.c_str(), 1);
+	}
+	else if (_wcsicmp(name, L"CommandMeasure") == 0)
+	{
+		BangWithArgs(BANG_COMMANDMEASURE, arg.c_str(), 2);
 	}
 	else if (_wcsicmp(name, L"ShowBlur") == 0)
 	{

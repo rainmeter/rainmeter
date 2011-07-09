@@ -242,18 +242,8 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 */
 void CMeasureScript::ExecuteBang(const WCHAR* args)
 {
-	std::string function = ConvertToAscii(args);
-
-	if (m_LuaScript->IsFunction(function.c_str()))
-	{
-		m_LuaScript->RunFunction(function.c_str());
-	}
-	else
-	{
-		std::wstring error = L"Script: Function \"";
-		error += args;
-		error += L"\" does not exist.";
-	}
+	std::string str = ConvertToAscii(args);
+	m_LuaScript->RunString(str.c_str());
 }
 
 static void stackDump(lua_State *L)

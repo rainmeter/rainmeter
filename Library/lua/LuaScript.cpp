@@ -189,6 +189,35 @@ bool LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, st
 	return ret;
 }
 
+/*
+** RunString
+**
+** Runs given string in the context of the script file.
+**
+*/
+void LuaScript::RunString(const char* str)
+{
+	if (m_Initialized)
+	{
+		// Load the string as a Lua chunk
+		if (luaL_loadstring(m_State, str))
+		{
+			LuaManager::ReportErrors(m_State);
+		}
+
+		// Push our table onto the stack
+		PushTable();
+
+		// Pop table and set the environment of the loaded chunk to it
+		lua_setfenv(m_State, -2);
+
+		if (lua_pcall(m_State, 0, 0, 0))
+		{
+			LuaManager::ReportErrors(m_State);
+		}
+	}
+}
+
 //void LuaScript::BindVariable(const char* p_strName, void* p_pValue, const char* p_strTypeName)
 //{
 //	PushTable();
