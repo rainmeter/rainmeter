@@ -98,7 +98,7 @@ bool LuaScript::IsFunction(const char* funcName)
 {
 	bool bExists = false;
 
-	if (m_Initialized && funcName)
+	if (m_Initialized)
 	{
 		// Push our table onto the stack
 		PushTable();

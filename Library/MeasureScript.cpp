@@ -142,10 +142,13 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	// Read common configs
 	CMeasure::ReadConfig(parser, section);
 
-	m_ScriptFile = ConvertToAscii(parser.ReadString(section, L"ScriptFile", L"").c_str());
+	std::wstring file = parser.ReadString(section, L"ScriptFile", L"");
 
-	if (!m_ScriptFile.empty())
+	if (!file.empty())
 	{
+		file = m_MeterWindow->MakePathAbsolute(file);
+		m_ScriptFile = ConvertToAscii(file.c_str());
+
 		if (!m_Initialized ||
 			oldScriptFile != m_ScriptFile)
 		{
