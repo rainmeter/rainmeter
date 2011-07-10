@@ -154,12 +154,6 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			}
 			else
 			{
-				if (_wcsicmp(L"MusicBee", str) == 0)
-				{
-					// TODO: Remove this in a few weeks (left here for MusicBee backwards compatibility)
-					MessageBox(NULL, L"Due to some internal changes in the NowPlaying plugin, PlayerName=MusicBee is not valid any longer.\n\nPlease edit the skin and change to PlayerName=CAD to continue use with MusicBee.", L"NowPlaying", MB_OK | MB_ICONINFORMATION | MB_TOPMOST);
-				}
-
 				std::wstring error = L"NowPlayingPlugin: PlayerName=";
 				error += str;
 				error += L" in section [";
@@ -301,7 +295,6 @@ void Finalize(HMODULE instance, UINT id)
 }
 
 /*
-
 ** Update
 **
 ** Called on each update.

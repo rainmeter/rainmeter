@@ -76,12 +76,12 @@ void CPlayer::AddInstance()
 */
 void CPlayer::RemoveInstance()
 {
+	m_UpdateCount = 0;
+
 	if (--m_InstanceCount == 0)
 	{
 		delete this;
 	}
-
-	m_UpdateCount = 0;
 }
 
 /*

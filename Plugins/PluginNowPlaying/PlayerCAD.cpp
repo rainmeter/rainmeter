@@ -34,7 +34,8 @@ extern std::wstring g_SettingsFile;
 */
 CPlayerCAD::CPlayerCAD() : CPlayer(),
 	m_Window(),
-	m_PlayerWindow()
+	m_PlayerWindow(),
+	m_ExtendedAPI(false)
 {
 	Initialize();
 }
@@ -137,6 +138,12 @@ void CPlayerCAD::Initialize()
 
 	LPCTSTR classSz = className.empty() ? NULL : className.c_str();
 	LPCTSTR windowSz = windowName.empty() ? NULL : windowName.c_str();
+
+	if (windowName == L"VLC")
+	{
+		// Temporary workaround
+		m_ExtendedAPI = true;
+	}
 
 	if (classSz || windowSz)
 	{
@@ -339,6 +346,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 					if (player->m_PlayerWindow)
 					{
 						player->m_Initialized = true;
+						player->m_ExtendedAPI = (windowName == L"VLC");
 						player->m_State = (PLAYSTATE)SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_STATE);
 
 						if (player->m_State != PLAYER_STOPPED)
@@ -379,7 +387,7 @@ void CPlayerCAD::UpdateData()
 */
 void CPlayerCAD::Pause()
 {
-	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_PAUSE);
+	SendMessage(m_PlayerWindow, WM_USER, 0, m_ExtendedAPI ? IPC_PAUSE : IPC_PLAYPAUSE);
 }
 
 /*
@@ -390,7 +398,7 @@ void CPlayerCAD::Pause()
 */
 void CPlayerCAD::Play()
 {
-	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_PLAY);
+	SendMessage(m_PlayerWindow, WM_USER, 0, m_ExtendedAPI ? IPC_PLAY : IPC_PLAYPAUSE);
 }
 
 /*
