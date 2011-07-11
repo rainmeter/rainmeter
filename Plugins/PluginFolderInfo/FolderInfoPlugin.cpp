@@ -33,7 +33,7 @@ extern "C"
 {
 	__declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
 	__declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-	__declspec( dllexport ) UINT Update(UINT id);
+	__declspec( dllexport ) double Update2(UINT id);
 	__declspec( dllexport ) UINT GetPluginVersion();
 	__declspec( dllexport ) LPCTSTR GetPluginAuthor();
 }
@@ -162,14 +162,14 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
   This function is called when new value should be measured.
   The function returns the new value.
 */
-UINT Update(UINT id)
+double Update2(UINT id)
 {
 	MeasureInfo* measureInfo = sMeasures[id];
 	if (!measureInfo->Folder) {
 		return 0;
 	}
 
-	int now = GetTickCount();
+	DWORD now = GetTickCount();
 	if (now - measureInfo->Folder->GetLastUpdateTime() > UPDATE_TIME_MIN_MS) {
 		measureInfo->Folder->Update();
 	}
@@ -177,7 +177,7 @@ UINT Update(UINT id)
 	switch (measureInfo->Type)
 	{
 		case INFOTYPE_FOLDERSIZE:
-			return (UINT)measureInfo->Folder->GetSize();
+			return (double)measureInfo->Folder->GetSize();
 			break;
 		case INFOTYPE_FILECOUNT:
 			return measureInfo->Folder->GetFileCount();

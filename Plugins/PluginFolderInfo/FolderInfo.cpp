@@ -81,8 +81,8 @@ void FolderInfo::CalculateSize()
 
 		do {
 			// special case for "." and ".."
-			if (_wcsicmp(findData.cFileName, L".") == 0 ||
-				_wcsicmp(findData.cFileName, L"..") == 0) {
+			if (wcscmp(findData.cFileName, L".") == 0 ||
+				wcscmp(findData.cFileName, L"..") == 0) {
 				continue;
 			}
 
