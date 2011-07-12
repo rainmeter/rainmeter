@@ -469,13 +469,13 @@ bool CConfigParser::ReplaceVariables(std::wstring& result)
 			end = result.find(L'#', pos + 1);
 			if (end != std::wstring::npos)
 			{
-				std::wstring strVariable(result.begin() + pos + 1, result.begin() + end);
+				std::wstring strVariable = result.substr(pos + 1, end - (pos + 1));
 				std::wstring strValue;
 
 				if (GetVariable(strVariable, strValue))
 				{
 					// Variable found, replace it with the value
-					result.replace(result.begin() + pos, result.begin() + end + 1, strValue);
+					result.replace(pos, end - pos + 1, strValue);
 					start = pos + strValue.length();
 					replaced = true;
 				}
@@ -493,7 +493,7 @@ bool CConfigParser::ReplaceVariables(std::wstring& result)
 		{
 			loop = false;
 		}
-	} while(loop);
+	} while (loop);
 
 	return replaced;
 }
@@ -526,7 +526,7 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 					pos2 = result.find(L'[', pos + 1);
 					if (pos2 == std::wstring::npos || end < pos2)
 					{
-						std::wstring var(result.begin() + pos + 1, result.begin() + end);
+						std::wstring var = result.substr(pos + 1, end - (pos + 1));
 
 						CMeasure* measure = GetMeasure(var);
 						if (measure)
@@ -534,7 +534,7 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 							std::wstring value = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
 
 							// Measure found, replace it with the value
-							result.replace(result.begin() + pos, result.begin() + end + 1, value);
+							result.replace(pos, end - pos + 1, value);
 							start = pos + value.length();
 							replaced = true;
 						}
@@ -557,7 +557,7 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 			{
 				loop = false;
 			}
-		} while(loop);
+		} while (loop);
 	}
 
 	return replaced;

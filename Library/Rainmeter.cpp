@@ -97,7 +97,7 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 			size_t pos = result[i].find(L"\"");
 			while (pos != std::wstring::npos)
 			{
-				result[i].erase(result[i].begin() + pos, result[i].begin() + pos + 1);
+				result[i].erase(pos, 1);
 				pos = result[i].find(L"\"");
 			}
 		}
@@ -2245,7 +2245,7 @@ void CRainmeter::CreateDefaultConfigFile(const std::wstring& strFile)
 	size_t pos = strFile.find_last_of(L'\\');
 	if (pos != std::wstring::npos)
 	{
-		std::wstring strPath(strFile.begin(), strFile.begin() + pos);
+		std::wstring strPath(strFile, 0, pos);
 		CreateDirectory(strPath.c_str(), NULL);
 	}
 

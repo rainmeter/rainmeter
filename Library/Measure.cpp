@@ -213,10 +213,10 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 					pos = str.find(m_Substitute[i], start);
 					if (pos != std::wstring::npos)
 					{
-						str.replace(str.begin() + pos, str.begin() + pos + m_Substitute[i].size(), m_Substitute[i + 1]);
-						start = pos + m_Substitute[i + 1].size();
+						str.replace(pos, m_Substitute[i].length(), m_Substitute[i + 1]);
+						start = pos + m_Substitute[i + 1].length();
 					}
-				} while(pos != std::wstring::npos);
+				} while (pos != std::wstring::npos);
 			}
 		}
 

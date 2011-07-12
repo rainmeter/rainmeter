@@ -625,11 +625,11 @@ bool CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std:
 				pos = str.find(buffer, start);
 				if (pos != std::wstring::npos)
 				{
-					str.replace(str.begin() + pos, str.begin() + pos + wcslen(buffer), stringValues[i - 1]);
+					str.replace(pos, wcslen(buffer), stringValues[i - 1]);
 					start = pos + stringValues[i - 1].length();
 					replaced = true;
 				}
-			} while(pos != std::wstring::npos);
+			} while (pos != std::wstring::npos);
 		}
 	}
 
