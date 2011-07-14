@@ -933,7 +933,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			pos3 = args.find(L' ');
 			if (pos3 != std::wstring::npos)
 			{
-				measure = args.substr(0, pos3);
+				measure.assign(args, 0, pos3);
 				args.erase(0, ++pos3);
 
 				CMeasure* m = GetMeasure(measure);
@@ -970,7 +970,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			pos3 = args.find(L' ');
 			if (pos3 != std::wstring::npos)
 			{
-				measure = args.substr(0, pos3);
+				measure.assign(args, 0, pos3);
 				++pos3;
 			}
 			else
@@ -4992,7 +4992,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		std::wstring::size_type pos = str.find(' ');
 		if (pos != std::wstring::npos)
 		{
-			bang = str.substr(0, pos);
+			bang.assign(str, 0, pos);
 			str.erase(0, pos + 1);
 			arg = str;
 		}

@@ -1206,7 +1206,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			std::wstring::size_type pos = path.find_first_not_of(L'\\');
 			if (pos != std::wstring::npos)
 			{
-				path = path.substr(pos);
+				path.erase(0, pos);
 			}
 
 			PathCanonicalize(buffer, urlData->iniFile.substr(0, urlData->iniFile.find_last_of(L'\\') + 1).c_str());  // "#CURRENTPATH#"
@@ -1241,11 +1241,11 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			std::wstring name;
 			if (pos2 != std::wstring::npos)
 			{
-				name = url.substr(pos1, pos2 - pos1);
+				name.assign(url, pos1, pos2 - pos1);
 			}
 			else
 			{
-				name = url.substr(pos1);
+				name.assign(url, pos1, url.length() - pos1);
 			}
 
 			if (!name.empty())
@@ -1319,8 +1319,8 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 				std::wstring path, ext;
 				if (pos != std::wstring::npos)
 				{
-					path = fullpath.substr(0, pos);
-					ext = fullpath.substr(pos);
+					path.assign(fullpath, 0, pos);
+					ext.assign(fullpath, pos, fullpath.length() - pos);
 				}
 				else
 				{

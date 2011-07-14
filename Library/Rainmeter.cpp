@@ -1746,7 +1746,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 			}
 			else if (iniFile[iniFile.length() - 1] == L'\"')
 			{
-				iniFile = iniFile.substr(1, iniFile.length() - 2);
+				iniFile.assign(iniFile, 1, iniFile.length() - 2);
 			}
 		}
 
@@ -1777,14 +1777,13 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		bDefaultIniLocation = true;
 	}
 
-	// Set the log file location
+	// Set the log file and stats file location
 	m_LogFile = m_StatsFile = m_IniFile;
 	size_t logFileLen = m_LogFile.length();
 	if (logFileLen > 4 && _wcsicmp(m_LogFile.substr(logFileLen - 4).c_str(), L".ini") == 0)
 	{
 		m_LogFile.replace(logFileLen - 4, 4, L".log");
-		m_StatsFile.replace(logFileLen - 4, 4, L".sta");
-		m_StatsFile += L"ts";
+		m_StatsFile.replace(logFileLen - 4, 4, L".stats");
 	}
 	else
 	{
@@ -1910,7 +1909,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	std::wstring::size_type loc;
 	if ((loc = m_Path.find_first_of(L':')) != std::wstring::npos)
 	{
-		m_Drive = m_Path.substr(0, loc + 1);
+		m_Drive.assign(m_Path, 0, loc + 1);
 	}
 	else if (m_Path.length() >= 2 && (m_Path[0] == L'\\' || m_Path[0] == L'/') && (m_Path[1] == L'\\' || m_Path[1] == L'/'))
 	{
@@ -1922,7 +1921,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 				loc = loc2;
 			}
 		}
-		m_Drive = m_Path.substr(0, loc);
+		m_Drive.assign(m_Path, 0, loc);
 	}
 
 	// Test that the Rainmeter.ini file is writable
@@ -3224,7 +3223,8 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 				std::wstring::size_type len = strCommand.length();
 				if (len >= 2 && strCommand[0] == L'\"' && strCommand[len - 1] == L'\"')
 				{
-					strCommand.swap(strCommand.substr(1, len - 2));
+					len -= 2;
+					strCommand.assign(strCommand, 1, len);
 				}
 
 				PlaySound(strCommand.c_str(), NULL, flags);
@@ -3255,7 +3255,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 				size_t pos = strCommand.find(L' ');
 				if (pos != std::wstring::npos)
 				{
-					bang = strCommand.substr(0, pos);
+					bang.assign(strCommand, 0, pos);
 					strCommand.erase(0, pos + 1);
 					arg = strCommand;
 				}
@@ -3753,7 +3753,7 @@ void CRainmeter::ResetStats()
 	time(&long_time);
 	newtime = localtime(&long_time);
 	m_StatsDate = _wasctime(newtime);
-	m_StatsDate.resize(m_StatsDate.size() - 1);
+	m_StatsDate.erase(m_StatsDate.size() - 1);
 
 	// Only Net measure has stats at the moment
 	CMeasureNet::ResetStats();

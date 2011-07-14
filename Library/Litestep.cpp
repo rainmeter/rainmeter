@@ -344,12 +344,12 @@ HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR sz
 		size_t quotePos2 = command.find(L"\"", quotePos + 1);
 		if (quotePos2 != std::wstring::npos)
 		{
-			args = command.substr(quotePos2 + 1);
-			command = command.substr(quotePos + 1, quotePos2 - quotePos - 1);
+			args.assign(command, quotePos2 + 1, command.length() - (quotePos2 + 1));
+			command.assign(command, quotePos + 1, quotePos2 - quotePos - 1);
 		}
 		else
 		{
-			command.erase(0, quotePos + 1);
+			command.erase(0, 1);
 		}
 	}
 	else
@@ -357,8 +357,8 @@ HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR sz
 		size_t spacePos = command.find(L" ");
 		if (spacePos != std::wstring::npos)
 		{
-			args = command.substr(spacePos + 1);
-			command = command.substr(0, spacePos);
+			args.assign(command, spacePos + 1, command.length() - (spacePos + 1));
+			command.erase(spacePos);
 		}
 	}
 

@@ -600,17 +600,13 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		{
 			if ((*iter).size() > 0)
 			{
-				std::wstring strSection = (*iter);
-
-				std::wstring::size_type pos = strSection.find_first_not_of(L" \t\r\n");
+				std::wstring::size_type pos = (*iter).find_first_not_of(L" \t\r\n");
 				if (pos != std::wstring::npos)
 				{
-					std::wstring::size_type lastPos = strSection.find_last_not_of(L" \t\r\n");
-					if (pos != 0 || lastPos != (strSection.length() - 1))
-					{
-						// Trim white-space
-						strSection.swap(std::wstring(strSection, pos, lastPos - pos + 1));
-					}
+					std::wstring::size_type lastPos = (*iter).find_last_not_of(L" \t\r\n");
+
+					// Trim white-space
+					std::wstring strSection((*iter), pos, lastPos - pos + 1);
 
 					const std::wstring& strStyle = GetValue(strSection, key, strDefault);
 
@@ -1147,7 +1143,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 				if (sep != std::wstring::npos && sep != 0)
 				{
 					std::wstring value = key.substr(sep + 1, len - sep);
-					key.resize(sep);
+					key.erase(sep);
 
 					std::wstring lowerKey = StrToLower(key);
 					if (foundKeys.insert(lowerKey).second)
@@ -1159,7 +1155,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 							(value[0] == L'\'' && value[valueLen - 1] == L'\'')))
 						{
 							valueLen -= 2;
-							value.swap(value.substr(1, valueLen));
+							value.assign(value, 1, valueLen);
 						}
 
 						if (wcsncmp(lowerKey.c_str(), L"@include", 8) == 0)

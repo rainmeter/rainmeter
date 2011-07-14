@@ -1168,7 +1168,7 @@ std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileM
 
 		if (pos != std::wstring::npos)
 		{
-			filename = iniFile.substr(pos + 1);
+			filename.assign(iniFile, pos + 1, iniFile.length() - (pos + 1));
 		}
 		else
 		{

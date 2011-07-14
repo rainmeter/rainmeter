@@ -298,7 +298,7 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 
 			if (end != std::wstring::npos)
 			{
-				ret = buffer.substr(1, end - 1);
+				ret.assign(buffer, 1, end - 1);
 				++end;
 			}
 			else
@@ -319,7 +319,7 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 			}
 			else
 			{
-				ret = buffer.substr(0, ++end);	// The separator is also returned!
+				ret.assign(buffer, 0, ++end);	// The separator is also returned!
 			}
 		}
 	}
