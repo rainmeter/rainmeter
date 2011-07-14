@@ -62,8 +62,8 @@ bool CLyrics::GetFromWikia(const std::wstring& artist, const std::wstring& title
 		if (pos != std::wstring::npos)
 		{
 			data.erase(0, pos);
-			pos = data.find(L"'");
-			url = data.substr(0, pos);
+			pos = data.find_first_of(L'\'');
+			url.assign(data, 0, pos);
 
 			// Fetch the wiki page
 			data = CInternet::DownloadUrl(url, CP_UTF8);
@@ -148,8 +148,8 @@ bool CLyrics::GetFromLYRDB(const std::wstring& artist, const std::wstring& title
 		if (pos != std::wstring::npos)
 		{
 			// Grab the first match
-			url = L"http://webservices.lyrdb.com/getlyr.php?q=";
-			url += data.substr(0, pos);
+			url.assign(data, 0, pos);
+			url.insert(0, L"http://webservices.lyrdb.com/getlyr.php?q=");
 
 			data = CInternet::DownloadUrl(url, CP_ACP);
 			if (!data.empty())

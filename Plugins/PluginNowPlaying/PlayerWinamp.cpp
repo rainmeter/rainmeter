@@ -209,9 +209,9 @@ void CPlayerWinamp::UpdateData()
 				pos = title.find(L" - ");
 				if (pos != std::wstring::npos)
 				{
-					m_Title = title.substr(0, pos);
-					pos += 3;	// Skip " - "
-					m_Artist = title.substr(pos);
+					m_Title.assign(title, 0, pos);
+					pos += 3;  // Skip " - "
+					m_Artist.assign(title, pos, title.length() - pos);
 					m_Album.clear();
 				}
 				else

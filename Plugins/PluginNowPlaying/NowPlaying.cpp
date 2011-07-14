@@ -445,7 +445,14 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 		ParentMeasure* parent = child->parent;
 		CPlayer* player = parent->player;
 
-		if (_wcsicmp(bang, L"Pause") == 0)
+		if (!player->IsInitialized())
+		{
+			if (_wcsicmp(bang, L"ClosePlayer") == 0 || _wcsicmp(bang, L"TogglePlayer") == 0)
+			{
+				player->OpenPlayer(parent->playerPath);
+			}
+		}
+		else if (_wcsicmp(bang, L"Pause") == 0)
 		{
 			player->Pause();
 		}
@@ -469,13 +476,7 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 		{
 			player->Previous();
 		}
-		else if (_wcsicmp(bang, L"OpenPlayer") == 0 ||
-				 (!player->IsInitialized() && _wcsicmp(bang, L"TogglePlayer") == 0))
-		{
-			player->OpenPlayer(parent->playerPath);
-		}
-		else if (_wcsicmp(bang, L"ClosePlayer") == 0 ||
-				 (player->IsInitialized() && _wcsicmp(bang, L"TogglePlayer") == 0))
+		else if (_wcsicmp(bang, L"OpenPlayer") == 0 || _wcsicmp(bang, L"TogglePlayer") == 0)
 		{
 			player->ClosePlayer();
 		}

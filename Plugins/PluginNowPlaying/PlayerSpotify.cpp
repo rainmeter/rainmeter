@@ -99,18 +99,18 @@ void CPlayerSpotify::UpdateData()
 		WCHAR buffer[256];
 		if (GetWindowText(m_Window, buffer, 256) > 10)
 		{
-			std::wstring title = buffer;
-			title.erase(0, 10);	// Get rid of "Spotify - "
+			std::wstring title = &buffer[10];  // Skip "Spotify - "
 
 			std::wstring::size_type pos = title.find(L" – ");
 			if (pos != std::wstring::npos)
 			{
-				m_State = PLAYER_PLAYING;
-				std::wstring artist = title.substr(0, pos);
-				std::wstring track = title.substr(pos + 3);
+				std::wstring artist(title, 0, pos);
+				pos += 3;  // Skip " - "
+				std::wstring track(title, pos);
 
-				if (track != m_Title && artist != m_Artist)
+				if (track != m_Title || artist != m_Artist)
 				{
+					m_State = PLAYER_PLAYING;
 					m_Title = track;
 					m_Artist = artist;
 					++m_TrackCount;

@@ -127,17 +127,17 @@ LRESULT CALLBACK CPlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 				data.erase(0, len); // Get rid of the format
 
 				len = data.find_first_of(L'\\');
-				player->m_Title = data.substr(0, len);
+				player->m_Title.assign(data, 0, len);
 				len += 2;
 				data.erase(0, len);
 
 				len = data.find_first_of(L'\\');
-				player->m_Artist = data.substr(0, len);
+				player->m_Artist.assign(data, 0, len);
 				len += 2;
 				data.erase(0, len);
 
 				len = data.find_first_of(L'\\');
-				player->m_Album = data.substr(0, len);
+				player->m_Album.assign(data, 0, len);
 
 				if (player->m_HasLyricsMeasure)
 				{

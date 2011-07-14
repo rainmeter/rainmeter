@@ -293,7 +293,8 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				data.erase(0, ++len);
 
 				len = data.find_first_of(L'\t');
-				player->m_Duration = _wtoi(data.substr(0, len).c_str());
+				std::wstring tmpStr(data, 0, len);
+				player->m_Duration = _wtoi(tmpStr.c_str());
 				data.erase(0, ++len);
 
 				len = data.find_first_of(L'\t');
@@ -301,7 +302,8 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				data.erase(0, ++len);
 
 				len = data.find_first_of(L'\t');
-				UINT rating = (_wtoi(data.substr(0, len).c_str()) + 1) / 2;	// From 0 - 10 to 0 - 5
+				tmpStr.assign(data, 0, len);
+				UINT rating = (_wtoi(tmpStr.c_str()) + 1) / 2;	// From 0 - 10 to 0 - 5
 				player->m_Rating = rating;
 				data.erase(0, ++len);
 
@@ -322,11 +324,11 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 					data.erase(0, 2);	// Get rid of the 1\t at the beginning
 
 					std::wstring::size_type len = data.find_first_of(L'\t');
-					std::wstring className = data.substr(0, len);
+					std::wstring className(data, 0, len);
 					data.erase(0, ++len);
 
 					len = data.find_first_of(L'\t');
-					std::wstring windowName = data.substr(0, len);
+					std::wstring windowName(data, 0, len);
 					data.erase(0, ++len);
 
 					len = data.find_first_of(L'\t');
