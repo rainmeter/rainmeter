@@ -72,6 +72,7 @@ public:
 
 	const std::wstring& GetFilename() { return m_Filename; }
 	const std::vector<std::wstring>& GetSections() { return m_Sections; }
+	bool IsSectionDefined(LPCTSTR section) { return m_FoundSections.find(StrToLower(section)) != m_FoundSections.end(); }
 
 	bool ReplaceVariables(std::wstring& result);
 	bool ReplaceMeasures(std::wstring& result);

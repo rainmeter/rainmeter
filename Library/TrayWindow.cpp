@@ -272,10 +272,14 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 
 void CTrayWindow::ReadConfig(CConfigParser& parser)
 {
+	// Clear old Settings
 	KillTimer(m_Window, TRAYTIMER);
 
 	delete m_Measure;
 	m_Measure = NULL;
+
+	delete m_Bitmap;
+	m_Bitmap = NULL;
 
 	for (size_t i = 0, isize = m_TrayIcons.size(); i < isize; ++i)
 	{
@@ -283,94 +287,99 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 	}
 	m_TrayIcons.clear();
 
-	std::wstring measureName = parser.ReadString(L"TrayMeasure", L"Measure", L"");
-
-	if (!measureName.empty())
-	{
-		CConfigParser* oldParser = Rainmeter->GetCurrentParser();
-		Rainmeter->SetCurrentParser(&parser);
-
-		try
-		{
-			m_Measure = CMeasure::Create(measureName.c_str(), NULL, L"TrayMeasure");
-			if (m_Measure)
-			{
-				m_Measure->ReadConfig(parser);
-			}
-		}
-		catch (CError& error)
-		{
-			delete m_Measure;
-			m_Measure = NULL;
-			MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-		}
-
-		Rainmeter->SetCurrentParser(oldParser);
-	}
-
 	m_MeterType = TRAY_METER_TYPE_NONE;
 
-	std::wstring type = parser.ReadString(L"TrayMeasure", L"TrayMeter", L"HISTOGRAM");
-	if (_wcsicmp(type.c_str(), L"HISTOGRAM") == 0)
-	{
-		m_MeterType = TRAY_METER_TYPE_HISTOGRAM;
-		m_TrayColor1 = parser.ReadColor(L"TrayMeasure", L"TrayColor1", Color(0, 100, 0));
-		m_TrayColor2 = parser.ReadColor(L"TrayMeasure", L"TrayColor2", Color(0, 255, 0));
-	}
-	else if (_wcsicmp(type.c_str(), L"BITMAP") == 0)
-	{
-		m_MeterType = TRAY_METER_TYPE_BITMAP;
-
-		std::wstring imageName = parser.ReadString(L"TrayMeasure", L"TrayBitmap", L"");
-
-		// Load the bitmaps if defined
-		if (!imageName.empty())
-		{
-			imageName.insert(0, Rainmeter->GetSkinPath());
-			if (imageName.size() > 3)
-			{
-				std::wstring extension = imageName.substr(imageName.size() - 3);
-				if (extension == L"ico" || extension == L"ICO")
-				{
-					int count = 1;
-					HICON hIcon = NULL;
-
-					// Load the icons
-					do
-					{
-						WCHAR buffer[MAX_PATH];
-						_snwprintf_s(buffer, _TRUNCATE, imageName.c_str(), count++);
-
-						hIcon = (HICON)LoadImage(NULL, buffer, IMAGE_ICON, TRAYICON_SIZE, TRAYICON_SIZE, LR_LOADFROMFILE);
-						if (hIcon) m_TrayIcons.push_back(hIcon);
-						if (imageName == buffer) break;
-					} while(hIcon != NULL);
-				}
-			}
-
-			if (m_TrayIcons.empty())
-			{
-				// No icons found so load as bitmap
-				delete m_Bitmap;
-				m_Bitmap = new Bitmap(imageName.c_str());
-				Status status = m_Bitmap->GetLastStatus();
-				if (Ok != status)
-				{
-					LogWithArgs(LOG_WARNING, L"Bitmap image not found:  %s", imageName.c_str());
-					delete m_Bitmap;
-					m_Bitmap = NULL;
-				}
-			}
-		}
-	}
-	else
-	{
-		LogWithArgs(LOG_ERROR, L"No such TrayMeter: %s", type.c_str());
-	}
-
+	// Read tray settings
 	m_TrayIconEnabled = 0!=parser.ReadInt(L"Rainmeter", L"TrayIcon", 1);
 	if (m_TrayIconEnabled)
 	{
+		std::wstring measureName = parser.ReadString(L"TrayMeasure", L"Measure", L"");
+
+		if (!measureName.empty())
+		{
+			CConfigParser* oldParser = Rainmeter->GetCurrentParser();
+			Rainmeter->SetCurrentParser(&parser);
+
+			try
+			{
+				m_Measure = CMeasure::Create(measureName.c_str(), NULL, L"TrayMeasure");
+				if (m_Measure)
+				{
+					m_Measure->ReadConfig(parser);
+				}
+			}
+			catch (CError& error)
+			{
+				delete m_Measure;
+				m_Measure = NULL;
+				MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			}
+
+			Rainmeter->SetCurrentParser(oldParser);
+		}
+
+		std::wstring type = parser.ReadString(L"TrayMeasure", L"TrayMeter", m_Measure ? L"HISTOGRAM" : L"NONE");
+		if (_wcsicmp(type.c_str(), L"NONE") == 0)
+		{
+			// Use main icon
+		}
+		else if (_wcsicmp(type.c_str(), L"HISTOGRAM") == 0)
+		{
+			m_MeterType = TRAY_METER_TYPE_HISTOGRAM;
+			m_TrayColor1 = parser.ReadColor(L"TrayMeasure", L"TrayColor1", Color(0, 100, 0));
+			m_TrayColor2 = parser.ReadColor(L"TrayMeasure", L"TrayColor2", Color(0, 255, 0));
+		}
+		else if (_wcsicmp(type.c_str(), L"BITMAP") == 0)
+		{
+			m_MeterType = TRAY_METER_TYPE_BITMAP;
+
+			std::wstring imageName = parser.ReadString(L"TrayMeasure", L"TrayBitmap", L"");
+
+			// Load the bitmaps if defined
+			if (!imageName.empty())
+			{
+				imageName.insert(0, Rainmeter->GetSkinPath());
+				if (imageName.size() > 3)
+				{
+					std::wstring extension = imageName.substr(imageName.size() - 3);
+					if (extension == L"ico" || extension == L"ICO")
+					{
+						int count = 1;
+						HICON hIcon = NULL;
+
+						// Load the icons
+						do
+						{
+							WCHAR buffer[MAX_PATH];
+							_snwprintf_s(buffer, _TRUNCATE, imageName.c_str(), count++);
+
+							hIcon = (HICON)LoadImage(NULL, buffer, IMAGE_ICON, TRAYICON_SIZE, TRAYICON_SIZE, LR_LOADFROMFILE);
+							if (hIcon) m_TrayIcons.push_back(hIcon);
+							if (imageName == buffer) break;
+						} while(hIcon != NULL);
+					}
+				}
+
+				if (m_TrayIcons.empty())
+				{
+					// No icons found so load as bitmap
+					delete m_Bitmap;
+					m_Bitmap = new Bitmap(imageName.c_str());
+					Status status = m_Bitmap->GetLastStatus();
+					if (Ok != status)
+					{
+						LogWithArgs(LOG_WARNING, L"Bitmap image not found: %s", imageName.c_str());
+						delete m_Bitmap;
+						m_Bitmap = NULL;
+					}
+				}
+			}
+		}
+		else
+		{
+			LogWithArgs(LOG_ERROR, L"No such TrayMeter: %s", type.c_str());
+		}
+
 		AddTrayIcon();
 
 		if (m_Measure)

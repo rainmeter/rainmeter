@@ -2516,31 +2516,8 @@ void CRainmeter::GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& w
 	}
 }
 
-void CRainmeter::SetConfigOrder(int configIndex)
+void CRainmeter::SetLoadOrder(int configIndex, int order)
 {
-	WCHAR buffer[256];
-	int order;
-
-	if (GetPrivateProfileString(m_ConfigStrings[configIndex].config.c_str(), L"LoadOrder", L"", buffer, 256, m_IniFile.c_str()) > 0)
-	{
-		if (_wcsicmp(buffer, L"LAST") == 0)
-		{
-			order = INT_MAX;
-		}
-		else if (_wcsicmp(buffer, L"FIRST") == 0)
-		{
-			order = INT_MIN;
-		}
-		else
-		{
-			order = _wtoi(buffer);
-		}
-	}
-	else  // LoadOrder not exists
-	{
-		order = 0;
-	}
-
 	std::multimap<int, int>::iterator iter = m_ConfigOrders.begin();
 	for ( ; iter != m_ConfigOrders.end(); ++iter)
 	{
@@ -3394,7 +3371,6 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	for (UINT i = 1; i <= CSystem::GetMonitorCount(); ++i)
 	{
-		WCHAR buffer[64];
 		_snwprintf_s(buffer, _TRUNCATE, L"DesktopWorkArea@%i", i);
 		area = parser.ReadString(L"Rainmeter", buffer, L"");
 		if (!area.empty())
@@ -3450,7 +3426,33 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 			m_ConfigStrings[i].active = active;
 		}
 
-		SetConfigOrder(i);
+		int order;
+		if (parser.IsSectionDefined(m_ConfigStrings[i].config.c_str()))
+		{
+			std::wstring orderStr = parser.ReadString(m_ConfigStrings[i].config.c_str(), L"LoadOrder", L"", false);
+			if (orderStr.empty())
+			{
+				order = 0;
+			}
+			else if (_wcsicmp(orderStr.c_str(), L"LAST") == 0)
+			{
+				order = INT_MAX;
+			}
+			else if (_wcsicmp(orderStr.c_str(), L"FIRST") == 0)
+			{
+				order = INT_MIN;
+			}
+			else
+			{
+				order = _wtoi(orderStr.c_str());
+			}
+		}
+		else
+		{
+			order = 0;
+		}
+
+		SetLoadOrder(i, order);
 	}
 }
 

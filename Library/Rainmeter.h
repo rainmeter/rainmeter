@@ -263,7 +263,7 @@ private:
 	void ScanForConfigs(const std::wstring& path);
 	void ScanForThemes(const std::wstring& path);
 	void ReadGeneralSettings(const std::wstring& iniFile);
-	void SetConfigOrder(int configIndex);
+	void SetLoadOrder(int configIndex, int order);
 	int GetLoadOrder(const std::wstring& config);
 	bool SetActiveConfig(const std::wstring& skinName, const std::wstring& skinIni);
 	void UpdateDesktopWorkArea(bool reset);

@@ -80,7 +80,8 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 	ReadIniFile(iniFileMappings, m_Filename, config);
 	ReadVariables();
 
-	std::unordered_set<std::wstring>().swap(m_FoundSections);  // clear and minimize
+	// Clear and minimize
+	std::vector<std::wstring>().swap(m_ListVariables);
 }
 
 /*
@@ -1107,6 +1108,8 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 		{
 			m_Sections.push_back(L"Rainmeter");
 			m_Sections.push_back(config);
+			m_FoundSections.insert(L"rainmeter");
+			m_FoundSections.insert(StrToLower(config));
 		}
 	}
 
