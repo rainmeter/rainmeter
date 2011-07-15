@@ -22,6 +22,7 @@
 
 CPlayer* CPlayerCAD::c_Player = NULL;
 extern std::wstring g_SettingsFile;
+extern HINSTANCE g_Instance;
 
 // This player emulates the CD Art Display IPC interface, which is supported by
 // MusicBee, VLC (with libcad plugin), and possibly others.
@@ -76,11 +77,9 @@ CPlayer* CPlayerCAD::Create()
 */
 void CPlayerCAD::Initialize()
 {
-	HINSTANCE hInstance = GetModuleHandle(NULL);
-
 	// Create windows class
 	WNDCLASS wc = {0};
-	wc.hInstance = hInstance;
+	wc.hInstance = g_Instance;
 	wc.lpfnWndProc = WndProc;
 	wc.lpszClassName = L"NowPlayingCADClass";
 	RegisterClass(&wc);
@@ -95,7 +94,7 @@ void CPlayerCAD::Initialize()
 							CW_USEDEFAULT,
 							NULL,
 							NULL,
-							hInstance,
+							g_Instance,
 							this);
 
 	// Add WM_USER/WM_COPYDATA to allowed messages from lower level processes
@@ -197,7 +196,7 @@ void CPlayerCAD::Initialize()
 void CPlayerCAD::Uninitialize()
 {
 	DestroyWindow(m_Window);
-	UnregisterClass(L"NowPlayingCADClass", GetModuleHandle(NULL));
+	UnregisterClass(L"NowPlayingCADClass", g_Instance);
 }
 
 /*

@@ -32,6 +32,7 @@
 static std::map<UINT, ChildMeasure*> g_Measures;
 std::wstring g_CachePath;
 std::wstring g_SettingsFile;
+HINSTANCE g_Instance = NULL;
 
 /*
 ** Initialize
@@ -63,6 +64,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Unable to get path to Plugins.ini.");
 		}
 
+		g_Instance = instance;
 		CInternet::Initialize();
 	}
 

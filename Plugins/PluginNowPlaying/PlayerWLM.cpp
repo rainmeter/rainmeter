@@ -20,6 +20,7 @@
 #include "PlayerWLM.h"
 
 CPlayer* CPlayerWLM::c_Player = NULL;
+extern HINSTANCE g_Instance;
 
 // This player emulates the MSN/WLM Messenger 'Listening to' interface, which is
 // supported by OpenPandora, Last.fm, Media Player Classic, TTPlayer, Zune, etc.
@@ -33,11 +34,9 @@ CPlayer* CPlayerWLM::c_Player = NULL;
 CPlayerWLM::CPlayerWLM() : CPlayer(),
 	m_Window()
 {
-	HINSTANCE hInstance = GetModuleHandle(NULL);
-
 	// Create windows class
 	WNDCLASS wc = {0};
-	wc.hInstance = hInstance;
+	wc.hInstance = g_Instance;
 	wc.lpfnWndProc = WndProc;
 	wc.lpszClassName = L"MsnMsgrUIManager";
 	RegisterClass(&wc);
@@ -52,7 +51,7 @@ CPlayerWLM::CPlayerWLM() : CPlayer(),
 							CW_USEDEFAULT,
 							NULL,
 							NULL,
-							hInstance,
+							g_Instance,
 							this);
 
 	m_Initialized = true;
@@ -68,7 +67,7 @@ CPlayerWLM::~CPlayerWLM()
 {
 	c_Player = NULL;
 	DestroyWindow(m_Window);
-	UnregisterClass(L"MsnMsgrUIManager", GetModuleHandle(NULL));
+	UnregisterClass(L"MsnMsgrUIManager", g_Instance);
 }
 
 /*

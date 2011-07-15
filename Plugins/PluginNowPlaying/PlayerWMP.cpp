@@ -20,6 +20,7 @@
 #include "PlayerWMP.h"
 
 CPlayer* CPlayerWMP::c_Player = NULL;
+extern HINSTANCE g_Instance;
 
 /*
 ** CRemoteHost
@@ -199,11 +200,9 @@ CPlayer* CPlayerWMP::Create()
 */
 void CPlayerWMP::Initialize()
 {
-	HINSTANCE hInstance = GetModuleHandle(NULL);
-
 	// Create windows class
 	WNDCLASS wc = {0};
-	wc.hInstance = hInstance;
+	wc.hInstance = g_Instance;
 	wc.lpfnWndProc = DefWindowProc;
 	wc.lpszClassName = L"NowPlayingWMPClass";
 	RegisterClass(&wc);
@@ -218,7 +217,7 @@ void CPlayerWMP::Initialize()
 							CW_USEDEFAULT,
 							NULL,
 							NULL,
-							hInstance,
+							g_Instance,
 							NULL);
 
 	if (!m_Window)
@@ -366,7 +365,7 @@ void CPlayerWMP::Uninitialize()
 		m_AxWindow->DestroyWindow();
 		delete m_AxWindow;
 		DestroyWindow(m_Window);
-		UnregisterClass(L"NowPlayingWMPClass", GetModuleHandle(NULL));
+		UnregisterClass(L"NowPlayingWMPClass", g_Instance);
 	}
 }
 

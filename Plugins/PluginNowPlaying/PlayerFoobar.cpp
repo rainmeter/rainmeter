@@ -20,6 +20,7 @@
 #include "PlayerFoobar.h"
 
 CPlayer* CPlayerFoobar::c_Player = NULL;
+extern HINSTANCE g_Instance;
 
 /*
 ** CPlayerFoobar
@@ -70,11 +71,9 @@ CPlayer* CPlayerFoobar::Create()
 */
 void CPlayerFoobar::Initialize()
 {
-	HINSTANCE hInstance = GetModuleHandle(NULL);
-
 	// Create windows class
 	WNDCLASS wc = {0};
-	wc.hInstance = hInstance;
+	wc.hInstance = g_Instance;
 	wc.lpfnWndProc = WndProc;
 	wc.lpszClassName = L"NowPlayingFoobarClass";
 	RegisterClass(&wc);
@@ -89,7 +88,7 @@ void CPlayerFoobar::Initialize()
 							CW_USEDEFAULT,
 							NULL,
 							NULL,
-							hInstance,
+							g_Instance,
 							this);
 
 	m_FooWindow = FindWindow(L"foo_rainmeter_class", NULL);
@@ -125,7 +124,7 @@ void CPlayerFoobar::Uninitialize()
 	}
 
 	DestroyWindow(m_Window);
-	UnregisterClass(L"NowPlayingFoobarClass", GetModuleHandle(NULL));
+	UnregisterClass(L"NowPlayingFoobarClass", g_Instance);
 }
 
 /*
