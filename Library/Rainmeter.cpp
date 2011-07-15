@@ -2681,84 +2681,89 @@ void CRainmeter::ScanForConfigs(const std::wstring& path)
 int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse)
 {
 	WIN32_FIND_DATA fileData;      // Data structure describes the file found
-	WIN32_FIND_DATA fileDataIni;   // Data structure describes the file found
 	HANDLE hSearch;                // Search handle returned by FindFirstFile
-	HANDLE hSearchIni;             // Search handle returned by FindFirstFile
+	std::list<std::wstring> folders;
+	const bool first = base.empty();
 
-	if (!base.empty())
+	// Scan all .ini files and folders from the subfolder
+	std::wstring filter = path + base;
+	filter += L"\\*";
+
+	hSearch = FindFirstFileEx(
+		filter.c_str(),
+		(CSystem::GetOSPlatform() >= OSPLATFORM_7) ? FindExInfoBasic : FindExInfoStandard,
+		&fileData,
+		FindExSearchNameMatch,
+		NULL,
+		0);
+
+	if (hSearch != INVALID_HANDLE_VALUE)
 	{
-		// Scan for ini-files
 		CONFIG config;
 		config.config = base;
-		config.active = false;
-
-		// Scan all .ini files from the subfolder
-		std::wstring inis = path;
-		inis += base;
-		inis += L"\\*.ini";
-		hSearchIni = FindFirstFile(inis.c_str(), &fileDataIni);
+		config.active = 0;
 
 		do
 		{
-			if (hSearchIni == INVALID_HANDLE_VALUE) break;    // No more files found
-
-			// Check whether the extension is ".ini"
-			std::wstring ext = fileDataIni.cFileName;
-			std::wstring::size_type pos = ext.find_last_of(L'.');
-			if (pos != std::wstring::npos && _wcsicmp(&(ext.c_str()[pos]), L".ini") == 0)
+			if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
-				CONFIGMENU menuItem;
-				menuItem.name = fileDataIni.cFileName;
-				menuItem.index = m_ConfigStrings.size();
-				menu.push_back(menuItem);
-
-				config.iniFiles.push_back(fileDataIni.cFileName);
-				config.commands.push_back(ID_CONFIG_FIRST + index++);
+				if (!(wcscmp(L"Backup", fileData.cFileName) == 0 && first) &&		// Skip the backup folder
+					wcscmp(L".", fileData.cFileName) != 0 &&
+					wcscmp(L"..", fileData.cFileName) != 0)
+				{
+					folders.push_back(fileData.cFileName);
+				}
 			}
-		} while (FindNextFile(hSearchIni, &fileDataIni));
+			else if (!first)
+			{
+				// Check whether the extension is ".ini"
+				size_t filenameLen = wcslen(fileData.cFileName);
+				if (filenameLen >= 4 && _wcsicmp(fileData.cFileName + (filenameLen - 4), L".ini") == 0)
+				{
+					CONFIGMENU menuItem;
+					menuItem.name = fileData.cFileName;
+					menuItem.index = m_ConfigStrings.size();
+					menu.push_back(menuItem);
+
+					config.iniFiles.push_back(fileData.cFileName);
+					config.commands.push_back(ID_CONFIG_FIRST + index++);
+				}
+			}
+		} while (FindNextFile(hSearch, &fileData));
+
+		FindClose(hSearch);
 
 		if (!config.iniFiles.empty())
 		{
 			m_ConfigStrings.push_back(config);
 		}
-		FindClose(hSearchIni);
+	}
 
+	if (!first)
+	{
 		base += L"\\";
 	}
 
-	// Scan for folders
-	std::wstring files = path + base;
-	files += L"*";
-	hSearch = FindFirstFile(files.c_str(), &fileData);
-	do
+	std::list<std::wstring>::const_iterator iter = folders.begin();
+	for ( ; iter != folders.end(); ++iter)
 	{
-		if (hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
+		CONFIGMENU menuItem;
+		menuItem.name = (*iter);
+		menuItem.index = -1;
+		menu.push_back(menuItem);
 
-		if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
-			!(wcscmp(L"Backup", fileData.cFileName) == 0 && base.empty()) &&		// Skip the backup folder
-			wcscmp(L".", fileData.cFileName) != 0 &&
-			wcscmp(L"..", fileData.cFileName) != 0)
+		if (!DontRecurse)
 		{
-			CONFIGMENU menuItem;
-			menuItem.name = fileData.cFileName;
-			menuItem.index = -1;
-			menu.push_back(menuItem);
+			std::vector<CONFIGMENU>::iterator iter2 = menu.end() - 1;
+			index = ScanForConfigsRecursive(path, base + (*iter), index, (*iter2).children, false);
 
-			if (!DontRecurse)
+			// Remove menu item if it has no child
+			if ((*iter2).children.empty())
 			{
-				std::vector<CONFIGMENU>::iterator iter = menu.end() - 1;
-				index = ScanForConfigsRecursive(path, base + fileData.cFileName, index, (*iter).children, false);
-
-				// Remove menu item if it has no child
-				if ((*iter).children.empty())
-				{
-					menu.erase(iter);
-				}
+				menu.erase(iter2);
 			}
 		}
-	} while(FindNextFile(hSearch, &fileData));
-
-	FindClose(hSearch);
+	}
 
 	return index;
 }
@@ -2777,20 +2782,29 @@ void CRainmeter::ScanForThemes(const std::wstring& path)
 
 	// Scan for folders
 	std::wstring folders = path + L"\\*";
-	hSearch = FindFirstFile(folders.c_str(), &fileData);
-	do
+
+	hSearch = FindFirstFileEx(
+		folders.c_str(),
+		(CSystem::GetOSPlatform() >= OSPLATFORM_7) ? FindExInfoBasic : FindExInfoStandard,
+		&fileData,
+		FindExSearchNameMatch,
+		NULL,
+		0);
+
+	if (hSearch != INVALID_HANDLE_VALUE)
 	{
-		if (hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
-
-		if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
-			wcscmp(L".", fileData.cFileName) != 0 &&
-			wcscmp(L"..", fileData.cFileName) != 0)
+		do
 		{
-			m_Themes.push_back(fileData.cFileName);
-		}
-	} while(FindNextFile(hSearch, &fileData));
+			if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
+				wcscmp(L".", fileData.cFileName) != 0 &&
+				wcscmp(L"..", fileData.cFileName) != 0)
+			{
+				m_Themes.push_back(fileData.cFileName);
+			}
+		} while (FindNextFile(hSearch, &fileData));
 
-	FindClose(hSearch);
+		FindClose(hSearch);
+	}
 }
 
 void CRainmeter::SaveSettings()
