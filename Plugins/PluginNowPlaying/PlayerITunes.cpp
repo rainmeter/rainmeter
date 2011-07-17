@@ -20,6 +20,7 @@
 #include "PlayerITunes.h"
 
 CPlayer* CPlayerITunes::c_Player = NULL;
+extern HINSTANCE g_Instance;
 
 /*
 ** CEventHandler
@@ -99,8 +100,8 @@ HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Invoke(DISPID dispidMemb
 		break;
 
 	case ITEventAboutToPromptUserToQuit:
-		m_Player->m_UserQuitPrompt = true;
-		m_Player->Uninitialize();
+		PostMessage(m_Player->m_CallbackWindow, WM_USER, ITEventAboutToPromptUserToQuit, 0);
+		SetTimer(m_Player->m_CallbackWindow, TIMER_CHECKACTIVE, 500, NULL);
 		break;
 	}
 
@@ -114,11 +115,30 @@ HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Invoke(DISPID dispidMemb
 **
 */
 CPlayerITunes::CPlayerITunes() : CPlayer(),
-	m_UserQuitPrompt(false),
+	m_CallbackWindow(),
+	m_iTunesActive(false),
 	m_iTunes(),
 	m_iTunesEvent()
 {
-	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	// Create windows class
+	WNDCLASS wc = {0};
+	wc.hInstance = g_Instance;
+	wc.lpfnWndProc = WndProc;
+	wc.lpszClassName = L"NowPlayingITunesClass";
+	RegisterClass(&wc);
+
+	// Create callback window
+	m_CallbackWindow = CreateWindow(L"NowPlayingITunesClass",
+									L"CallbackWindow",
+									WS_DISABLED,
+									CW_USEDEFAULT,
+									CW_USEDEFAULT,
+									CW_USEDEFAULT,
+									CW_USEDEFAULT,
+									HWND_MESSAGE,
+									NULL,
+									g_Instance,
+									this);
 }
 
 /*
@@ -130,8 +150,11 @@ CPlayerITunes::CPlayerITunes() : CPlayer(),
 CPlayerITunes::~CPlayerITunes()
 {
 	c_Player = NULL;
+
+	DestroyWindow(m_CallbackWindow);
+	UnregisterClass(L"NowPlayingITunesClass", g_Instance);
+
 	Uninitialize();
-	CoUninitialize();
 }
 
 /*
@@ -179,6 +202,7 @@ void CPlayerITunes::Initialize()
 
 	if (m_iTunes)
 	{
+		//SetTimer(NULL, 0, 1000, QuitCallback);
 		m_Initialized = true;
 
 		// Set up event handler
@@ -229,13 +253,51 @@ void CPlayerITunes::Uninitialize()
 	if (m_Initialized)
 	{
 		m_Initialized = false;
-		if (m_iTunes)
-		{
-			m_iTunes->Release();
-			delete m_iTunesEvent;
-		}
-
 		ClearData();
+
+		m_iTunes->Release();
+		delete m_iTunesEvent;
+	}
+}
+
+/*
+** WndProc
+**
+** Window procedure for the callback window.
+**
+*/
+LRESULT CALLBACK CPlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	static CPlayerITunes* player;
+
+	switch (msg)
+	{
+	case WM_CREATE:
+		// Get pointer to the CPlayerITunes class from the CreateWindow call
+		player = (CPlayerITunes*)(((CREATESTRUCT*)lParam)->lpCreateParams);
+		return 0;
+
+	case WM_USER:
+		if (wParam == ITEventAboutToPromptUserToQuit)
+		{
+			// Event handler calls this through a PostMessage when iTunes quits
+			player->Uninitialize();
+		}
+		return 0;
+
+	case WM_TIMER:
+		if (wParam == TIMER_CHECKACTIVE)
+		{
+			if (!FindWindow(L"iTunes", L"iTunes"))
+			{
+				player->m_iTunesActive = false;
+				KillTimer(hwnd, TIMER_CHECKACTIVE);
+			}
+		}
+		return 0;
+
+	default:
+		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
 }
 
@@ -248,23 +310,17 @@ void CPlayerITunes::Uninitialize()
 bool CPlayerITunes::CheckWindow()
 {
 	static DWORD oldTime = 0;
-	DWORD time = GetTickCount();
 
+	DWORD time = GetTickCount();
 	if (time - oldTime > 5000)
 	{
 		oldTime = time;
 
 		HWND wnd = FindWindow(L"iTunes", L"iTunes");
-		if (wnd)
+		if (wnd && !m_iTunesActive)
 		{
-			if (!m_UserQuitPrompt)
-			{
-				Initialize();
-			}
-		}
-		else if (m_UserQuitPrompt)
-		{
-			m_UserQuitPrompt = false;
+			m_iTunesActive = true;
+			Initialize();
 		}
 	}
 
@@ -526,9 +582,9 @@ void CPlayerITunes::SetVolume(int volume)
 */
 void CPlayerITunes::ClosePlayer()
 {
-	m_UserQuitPrompt = true;
 	m_iTunes->Quit();
 	Uninitialize();
+	SetTimer(m_CallbackWindow, TIMER_CHECKACTIVE, 500, NULL);
 }
 
 /*

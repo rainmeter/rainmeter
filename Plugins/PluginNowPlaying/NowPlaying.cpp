@@ -449,7 +449,7 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 
 		if (!player->IsInitialized())
 		{
-			if (_wcsicmp(bang, L"ClosePlayer") == 0 || _wcsicmp(bang, L"TogglePlayer") == 0)
+			if (_wcsicmp(bang, L"OpenPlayer") == 0 || _wcsicmp(bang, L"TogglePlayer") == 0)
 			{
 				player->OpenPlayer(parent->playerPath);
 			}
@@ -478,7 +478,7 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 		{
 			player->Previous();
 		}
-		else if (_wcsicmp(bang, L"OpenPlayer") == 0 || _wcsicmp(bang, L"TogglePlayer") == 0)
+		else if (_wcsicmp(bang, L"ClosePlayer") == 0 || _wcsicmp(bang, L"TogglePlayer") == 0)
 		{
 			player->ClosePlayer();
 		}

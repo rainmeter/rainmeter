@@ -33,6 +33,8 @@
 #include <atlhost.h>
 #include <atlctl.h>
 
+const int TIMER_CHECKACTIVE = 1;
+
 class CPlayerITunes : public CPlayer
 {
 public:
@@ -88,9 +90,12 @@ private:
 	void OnVolumeChange(int volume);
 	bool CheckWindow();
 
-	static CPlayer* c_Player;
+	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-	bool m_UserQuitPrompt;
+	static CPlayer* c_Player;
+	
+	HWND m_CallbackWindow;
+	bool m_iTunesActive;
 	IiTunes* m_iTunes;
 	CEventHandler* m_iTunesEvent;
 };
