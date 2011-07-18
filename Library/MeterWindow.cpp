@@ -5072,17 +5072,41 @@ void CMeterWindow::SetWindowSizeVariables(int w, int h)
 */
 std::wstring CMeterWindow::MakePathAbsolute(const std::wstring& path)
 {
+	std::wstring absolute;
+
 	if (path.empty() ||
 		path.find(L":\\") != std::wstring::npos || path.find(L":/") != std::wstring::npos ||
 		(path.length() >= 2 && (path[0] == L'\\' || path[0] == L'/') && (path[1] == L'\\' || path[1] == L'/')))  // UNC
 	{
-		return path;	// It's already absolute path (or it's empty)
+		absolute = path;	// It's already absolute path (or it's empty)
+	}
+	else
+	{
+		absolute = m_SkinPath;
+		absolute += m_SkinName;
+		absolute += L"\\";
+		absolute += path;
 	}
 
-	std::wstring root = m_SkinPath + m_SkinName;
-	root += L"\\";
+	return absolute;
+}
 
-	return root + path;
+std::wstring CMeterWindow::GetSkinRootPath()
+{
+	std::wstring path = m_Rainmeter->GetSkinPath();
+
+	std::wstring::size_type loc;
+	if ((loc = m_SkinName.find_first_of(L'\\')) != std::wstring::npos)
+	{
+		path.append(m_SkinName, 0, loc + 1);
+	}
+	else
+	{
+		path += m_SkinName;
+		path += L"\\";
+	}
+
+	return path;
 }
 
 
@@ -5096,7 +5120,6 @@ CMeter* CMeterWindow::GetMeter(const std::wstring& meterName)
 			return (*j);
 		}
 	}
-
 	return NULL;
 }
 

@@ -335,8 +335,9 @@ HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR sz
 	std::wstring args;
 	std::wstring command = szCommand;
 
-	size_t notwhite = command.find_first_not_of(L" \t\n");
+	size_t notwhite = command.find_first_not_of(L" \t\r\n");
 	command.erase(0, notwhite);
+	if (command.empty()) return NULL;
 
 	size_t quotePos = command.find(L"\"");
 	if (quotePos == 0)

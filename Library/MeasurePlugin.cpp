@@ -130,7 +130,8 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		pos = m_PluginName.rfind(L'\\');
 		if (pos != std::wstring::npos)
 		{
-			std::wstring pluginName = Rainmeter->GetPath() + m_PluginName.substr(pos + 1);
+			std::wstring pluginName = Rainmeter->GetPath();
+			pluginName.append(m_PluginName, pos + 1, m_PluginName.length() - (pos + 1));
 
 			err = 0;
 			m_Plugin = CSystem::RmLoadLibrary(pluginName.c_str(), &err);

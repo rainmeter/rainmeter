@@ -200,6 +200,7 @@ public:
 	const std::wstring& GetSkinAuthor() { return m_Author; }
 	const std::wstring& GetSkinName() { return m_SkinName; }
 	const std::wstring& GetSkinIniFile() { return m_SkinIniFile; }
+	std::wstring GetSkinRootPath();
 	
 	std::list<CMeasure*>& GetMeasures() { return m_Measures; }
 	std::list<CMeter*>& GetMeters() { return m_Meters; }

@@ -66,10 +66,8 @@ std::wstring CGroup::CreateGroup(const std::wstring& str)
 	std::wstring::size_type pos = str.find_first_not_of(L" \t\r\n");
 	if (pos != std::wstring::npos)
 	{
-		std::wstring::size_type lastPos = str.find_last_not_of(L" \t\r\n");
-
 		// Trim white-space
-		strTmp.assign(str, pos, lastPos - pos + 1);
+		strTmp.assign(str, pos, str.find_last_not_of(L" \t\r\n") - pos + 1);
 
 		// Convert to lower
 		std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);

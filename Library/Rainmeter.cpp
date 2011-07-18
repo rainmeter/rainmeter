@@ -3098,7 +3098,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 
 					std::wstring command = arg.substr(start + 1, end - (start + 1));
 					// trim leading whitespace
-					std::wstring::size_type notwhite = command.find_first_not_of(L" \t\n");
+					std::wstring::size_type notwhite = command.find_first_not_of(L" \t\r\n");
 					command.erase(0, notwhite);
 					ExecuteCommand(command.c_str(), meterWindow);
 				}

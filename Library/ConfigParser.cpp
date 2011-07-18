@@ -101,28 +101,11 @@ void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* me
 		SetBuiltInVariable(L"CURRENTPATH", CRainmeter::ExtractPath(m_Filename));
 		SetBuiltInVariable(L"ADDONSPATH", pRainmeter->GetAddonPath());
 		SetBuiltInVariable(L"CRLF", L"\n");
-
-		if (meterWindow)
-		{
-			const std::wstring& config = meterWindow->GetSkinName();
-			std::wstring path = pRainmeter->GetSkinPath();
-
-			std::wstring::size_type loc;
-			if ((loc = config.find_first_of(L'\\')) != std::wstring::npos)
-			{
-				path += config.substr(0, loc + 1);
-			}
-			else
-			{
-				path += config;
-				path += L"\\";
-			}
-			SetBuiltInVariable(L"ROOTCONFIGPATH", path);
-		}
 	}
 	if (meterWindow)
 	{
 		SetBuiltInVariable(L"CURRENTCONFIG", meterWindow->GetSkinName());
+		SetBuiltInVariable(L"ROOTCONFIGPATH", meterWindow->GetSkinRootPath());
 	}
 }
 
@@ -604,10 +587,8 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 				std::wstring::size_type pos = (*iter).find_first_not_of(L" \t\r\n");
 				if (pos != std::wstring::npos)
 				{
-					std::wstring::size_type lastPos = (*iter).find_last_not_of(L" \t\r\n");
-
 					// Trim white-space
-					std::wstring strSection((*iter), pos, lastPos - pos + 1);
+					std::wstring strSection((*iter), pos, (*iter).find_last_not_of(L" \t\r\n") - pos + 1);
 
 					const std::wstring& strStyle = GetValue(strSection, key, strDefault);
 
