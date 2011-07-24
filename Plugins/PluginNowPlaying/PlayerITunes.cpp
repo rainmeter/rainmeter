@@ -202,7 +202,6 @@ void CPlayerITunes::Initialize()
 
 	if (m_iTunes)
 	{
-		//SetTimer(NULL, 0, 1000, QuitCallback);
 		m_Initialized = true;
 
 		// Set up event handler

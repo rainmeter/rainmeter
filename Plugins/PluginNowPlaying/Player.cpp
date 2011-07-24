@@ -162,7 +162,7 @@ void CPlayer::FindCover()
 	if (!CCover::GetCached(m_CoverPath))
 	{
 		TagLib::FileRef fr(m_FilePath.c_str());
-		if (fr.isNull() || !fr.tag() || !CCover::GetEmbedded(fr, m_CoverPath))
+		if (fr.isNull() || !CCover::GetEmbedded(fr, m_CoverPath))
 		{
 			std::wstring trackFolder = CCover::GetFileFolder(m_FilePath);
 

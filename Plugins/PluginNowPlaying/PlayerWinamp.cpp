@@ -34,6 +34,7 @@ CPlayer* CPlayerWinamp::c_Player = NULL;
 CPlayerWinamp::CPlayerWinamp(WINAMPTYPE type) : CPlayer(),
 	m_Window(),
 	m_UseUnicodeAPI(false),
+	m_PlayingStream(false),
 	m_WinampType(type),
 	m_WinampHandle(),
 	m_WinampAddress()
@@ -140,153 +141,180 @@ void CPlayerWinamp::UpdateData()
 
 		WCHAR wBuffer[MAX_PATH];
 		char cBuffer[MAX_PATH];
-		BOOL ret;
 
 		if (m_UseUnicodeAPI)
 		{
-			ret = ReadProcessMemory(m_WinampHandle, m_WinampAddress, &wBuffer, sizeof(wBuffer), NULL);
+			if (!ReadProcessMemory(m_WinampHandle, m_WinampAddress, &wBuffer, sizeof(wBuffer), NULL))
+			{
+				// Failed to read memory
+				return;
+			}
 		}
 		else
 		{
 			// MediaMonkey doesn't support wide IPC messages
 			int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
 			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTFILE);
-			ret = ReadProcessMemory(m_WinampHandle, address, &cBuffer, sizeof(cBuffer), NULL);
-			mbstowcs(wBuffer, cBuffer, MAX_PATH);
-		}
 
-		if (!ret)
-		{
-			LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Failed to read Winamp memory (file).");
-			return;
+			if (!ReadProcessMemory(m_WinampHandle, address, &cBuffer, sizeof(cBuffer), NULL))
+			{
+				// Failed to read memory
+				return;
+			}
+
+			mbstowcs(wBuffer, cBuffer, MAX_PATH);
 		}
 
 		if (wcscmp(wBuffer, m_FilePath.c_str()) != 0)
 		{
 			++m_TrackCount;
 			m_FilePath = wBuffer;
-			m_Rating = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETRATING);
-			m_Duration = SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
+			m_PlayingStream = (m_FilePath.find(L"://") != std::wstring::npos);
 
-			TagLib::FileRef fr(wBuffer);
-			if (!fr.isNull() && fr.tag())
+			if (!m_PlayingStream)
 			{
+				m_Rating = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETRATING);
+				m_Duration = SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
+
+				TagLib::FileRef fr(wBuffer);
 				TagLib::Tag* tag = fr.tag();
-				m_Artist = tag->artist().toWString();
-				m_Album = tag->album().toWString();
-				m_Title = tag->title().toWString();
-			}
-			else
-			{
-				// TagLib couldn't parse the file, try title instead
-				if (m_UseUnicodeAPI)
+				if (tag)
 				{
-					LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_TITLE);
-					ret = ReadProcessMemory(m_WinampHandle, address, &wBuffer, sizeof(wBuffer), NULL);
-				}
-				else
-				{
-					int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
-					LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTTITLE);
-					ReadProcessMemory(m_WinampHandle, m_WinampAddress, &cBuffer, sizeof(cBuffer), NULL);
-					ret = mbstowcs(wBuffer, cBuffer, MAX_PATH);
-				}
+					m_Artist = tag->artist().toWString();
+					m_Album = tag->album().toWString();
+					m_Title = tag->title().toWString();
 
-				if (!ret)
-				{
-					LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Failed to read Winamp memory (title).");
-					return;
-				}
-
-				std::wstring title = wBuffer;
-				std::wstring::size_type pos = title.find(L". ");
-				if (pos != std::wstring::npos && pos < 5)
-				{
-					pos += 2; // Skip ". "
-					title.erase(0, pos);
-				}
-
-				pos = title.find(L" - ");
-				if (pos != std::wstring::npos)
-				{
-					m_Title.assign(title, 0, pos);
-					pos += 3;  // Skip " - "
-					m_Artist.assign(title, pos, title.length() - pos);
-					m_Album.clear();
-				}
-				else
-				{
-					m_Title = title;
-					m_Artist.clear();
-					m_Album.clear();
-				}
-			}
-
-			if (m_HasLyricsMeasure)
-			{
-				FindLyrics();
-			}
-
-			// Find cover if needed
-			if (m_HasCoverMeasure)
-			{
-				m_CoverPath = GetCacheFile();
-				if (!CCover::GetCached(m_CoverPath) &&
-					!CCover::GetEmbedded(fr, m_CoverPath))
-				{
-					std::wstring trackFolder = CCover::GetFileFolder(m_FilePath);
-
-					if (!m_Album.empty())
+					if (m_HasLyricsMeasure)
 					{
-						// Winamp stores covers usually as %album%.jpg
-						std::wstring file = m_Album;
-						std::wstring::size_type end = file.length();
-						for (std::wstring::size_type pos = 0; pos < end; ++pos)
+						FindLyrics();
+					}
+				}
+				else if (m_HasLyricsMeasure)
+				{
+					m_Lyrics.clear();
+				}
+
+				// Find cover if needed
+				if (m_HasCoverMeasure)
+				{
+					m_CoverPath = GetCacheFile();
+					if (!CCover::GetCached(m_CoverPath) &&
+						(tag && !CCover::GetEmbedded(fr, m_CoverPath)))
+					{
+						std::wstring trackFolder = CCover::GetFileFolder(m_FilePath);
+
+						if (!m_Album.empty())
 						{
-							// Replace reserved chars according to Winamp specs
-							switch (file[pos])
+							// Winamp stores covers usually as %album%.jpg
+							std::wstring file = m_Album;
+							std::wstring::size_type end = file.length();
+							for (std::wstring::size_type pos = 0; pos < end; ++pos)
 							{
-							case L'?':
-							case L'*':
-							case L'|':
-								file[pos] = L'_';
-								break;
+								// Replace reserved chars according to Winamp specs
+								switch (file[pos])
+								{
+								case L'?':
+								case L'*':
+								case L'|':
+									file[pos] = L'_';
+									break;
 
-							case L'/':
-							case L'\\':
-							case L':':
-								file[pos] = L'-';
-								break;
+								case L'/':
+								case L'\\':
+								case L':':
+									file[pos] = L'-';
+									break;
 
-							case L'\"':
-								file[pos] = L'\'';
-								break;
+								case L'\"':
+									file[pos] = L'\'';
+									break;
 
-							case L'<':
-								file[pos] = L'(';
-								break;
+								case L'<':
+									file[pos] = L'(';
+									break;
 
-							case L'>':
-								file[pos] = L')';
-								break;
+								case L'>':
+									file[pos] = L')';
+									break;
+								}
+							}
+
+							if (CCover::GetLocal(file, trackFolder, m_CoverPath))
+							{
+								// %album% art file found
+								return;
 							}
 						}
 
-						if (CCover::GetLocal(file, trackFolder, m_CoverPath))
+						if (!CCover::GetLocal(L"cover", trackFolder, m_CoverPath) &&
+							!CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
 						{
-							// %album% art file found
-							return;
+							// Nothing found
+							m_CoverPath.clear();
 						}
 					}
+				}
 
-					if (!CCover::GetLocal(L"cover", trackFolder, m_CoverPath) &&
-						!CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
-					{
-						// Nothing found
-						m_CoverPath.clear();
-					}
+				if (tag)
+				{
+					// Got metadata, return
+					return;
 				}
 			}
+			else
+			{
+				m_Rating = 0;
+				m_Duration = 0;
+				
+				if (m_HasCoverMeasure)
+				{
+					m_CoverPath.clear();
+				}
+			}
+		}
+		else if (!m_PlayingStream)
+		{
+			return;
+		}
+
+		// TagLib couldn't parse the file or Winamp is playing a stream, try to get title
+		if (m_UseUnicodeAPI)
+		{
+			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_TITLE);
+			ReadProcessMemory(m_WinampHandle, address, &wBuffer, sizeof(wBuffer), NULL);
+		}
+		else
+		{
+			int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
+			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTTITLE);
+			ReadProcessMemory(m_WinampHandle, address, &cBuffer, sizeof(cBuffer), NULL);
+			mbstowcs(wBuffer, cBuffer, MAX_PATH);
+		}
+
+		std::wstring title = wBuffer;
+		std::wstring::size_type pos = title.find(L" - ");
+		if (pos != std::wstring::npos)
+		{
+			m_Artist.assign(title, 0, pos);
+			pos += 3;  // Skip " - "
+			m_Title.assign(title, pos, title.length() - pos);
+			m_Album.clear();
+
+			if (m_PlayingStream)
+			{
+				// Remove crap from title if playing radio
+				pos = m_Title.find(L" (");
+				if (pos != std::wstring::npos)
+				{
+					m_Title.resize(pos);
+				}
+			}
+		}
+		else
+		{
+			m_Title = title;
+			m_Artist.clear();
+			m_Album.clear();
 		}
 	}
 }

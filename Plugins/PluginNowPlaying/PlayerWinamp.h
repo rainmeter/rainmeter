@@ -57,6 +57,7 @@ private:
 
 	HWND m_Window;				// Winamp window
 	bool m_UseUnicodeAPI;
+	bool m_PlayingStream;
 	WINAMPTYPE m_WinampType;
 	HANDLE m_WinampHandle;		// Handle to Winamp process
 	LPCVOID m_WinampAddress;
