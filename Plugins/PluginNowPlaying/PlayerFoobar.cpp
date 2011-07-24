@@ -98,7 +98,7 @@ void CPlayerFoobar::Initialize()
 		if (version < 100)
 		{
 			std::wstring error = L"Your copy of the foo_rainmeter.dll plugin for foobar2000 is outdated.\n";
-			error += L"Please download the latest version and try again.";
+			error += L"Please download the latest version from foo-rainmeter.googlecode.com and try again.";
 			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_ICONERROR | MB_TOPMOST);
 			m_FooWindow = NULL;
 		}
@@ -206,17 +206,38 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 				WCHAR* token = wcstok(buffer, L"\t");
 				if (token)
 				{
-					player->m_Title = token;
+					if (wcscmp(token, L" ") == 0)
+					{
+						player->m_Title.clear();
+					}
+					else
+					{
+						player->m_Title = token;
+					}
 				}
 				token = wcstok(NULL, L"\t");
 				if (token)
 				{
-					player->m_Artist = token;
+					if (wcscmp(token, L" ") == 0)
+					{
+						player->m_Artist.clear();
+					}
+					else
+					{
+						player->m_Artist = token;
+					}
 				}
 				token = wcstok(NULL, L"\t");
 				if (token)
 				{
-					player->m_Album = token;
+					if (wcscmp(token, L" ") == 0)
+					{
+						player->m_Album.clear();
+					}
+					else
+					{
+						player->m_Album = token;
+					}
 				}
 				token = wcstok(NULL, L"\t");
 				if (token)
