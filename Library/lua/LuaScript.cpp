@@ -165,6 +165,7 @@ bool LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, st
 		if (lua_pcall(m_State, 0, 1, 0))
 		{
 			LuaManager::ReportErrors(m_State);
+			lua_pop(m_State, 1);
 		}
 		else
 		{
@@ -181,9 +182,9 @@ bool LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, st
 
 				ret = true;
 			}
-		}
 
-		lua_pop(m_State, 2);
+			lua_pop(m_State, 2);
+		}
 	}
 
 	return ret;
