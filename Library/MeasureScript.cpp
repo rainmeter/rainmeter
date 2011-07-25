@@ -93,24 +93,13 @@ bool CMeasureScript::Update()
 		return false;
 	}
 
-	if (m_HasUpdateFunction)
+	if (!(m_HasUpdateFunction && m_LuaScript->RunFunctionWithReturn(g_UpdateFunctionName, m_Value, m_StringValue)) &&
+		!(m_HasGetStringFunction && m_LuaScript->RunFunctionWithReturn(g_GetStringFunctionName, m_Value, m_StringValue)))
 	{
-		bool ret = m_LuaScript->RunFunctionWithReturn(g_UpdateFunctionName, m_Value, m_StringValue);
-
-		if (!ret)
+		if (!m_StringValue.empty())
 		{
-			// Update() didn't return anything. For backwards compatibility, check for GetStringValue() first
-			if (m_HasGetStringFunction)
-			{
-				m_LuaScript->RunFunctionWithReturn(g_GetStringFunctionName, m_Value, m_StringValue);
-			}
-			else
-			{
-				std::wstring error = L"Script: Update() in measure [";
-				error += m_Name;
-				error += L"] is not returning a valid number or string.";
-				Log(LOG_WARNING, error.c_str());
-			}
+			m_Value = 0;
+			m_StringValue.clear();
 		}
 	}
 
@@ -184,9 +173,9 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 				tolua_pushusertype(L, m_MeterWindow, "CMeterWindow");
 				lua_settable(L, -3);
 
-				lua_pushstring(L, "RAINMETER");
-				tolua_pushusertype(L, m_MeterWindow->GetMainObject(), "CRainmeter");
-				lua_settable(L, -3);
+				//lua_pushstring(L, "RAINMETER");
+				//tolua_pushusertype(L, m_MeterWindow->GetMainObject(), "CRainmeter");
+				//lua_settable(L, -3);
 
 				// Look in the properties table for values to read from the section.
 				lua_getfield(L, -1, "PROPERTIES");
@@ -197,7 +186,6 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 					while (lua_next(L, -2))
 					{
 						lua_pop(L, 1);
-
 						const char* strKey = lua_tostring(L, -1);
 
 						std::wstring wstrKey = ConvertToWide(strKey);

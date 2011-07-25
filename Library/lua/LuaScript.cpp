@@ -171,14 +171,12 @@ bool LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, st
 		{
 			if (lua_isstring(m_State, -1))
 			{
+				// Type is LUA_TSTRING or LUA_TNUMBER
 				const char* str = lua_tostring(m_State, -1);
 				strValue = ConvertToWide(str);
 
-				// A number is a string and numerical string (e.g. "10") is a number, so check for it here
-				if (lua_isnumber(m_State, -1))
-				{
-					numValue = lua_tonumber(m_State, -1);
-				}
+				// lua_tonumber() returns 0 when type is non-number
+				numValue = lua_tonumber(m_State, -1);
 
 				ret = true;
 			}
