@@ -7,7 +7,7 @@ static int Group_BelongsToGroup(lua_State* L)
 	CGroup* self = (CGroup*)tolua_tousertype(L, 1, 0);
 	const std::wstring group = (const std::wstring)to_wstring(L, 2, 0);
 	bool val = self->BelongsToGroup(group);
-	tolua_pushboolean(L, val);
+	lua_pushboolean(L, val);
 
 	return 1;
 }

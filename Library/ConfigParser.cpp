@@ -1197,6 +1197,26 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 
 //==============================================================================
 /**
+** Deletes the value for the key under the given section.
+**
+** \param strSection The name of the section.
+** \param strKey The name of the key.
+** \param strValue The value for the key.
+*/
+void CConfigParser::DeleteValue(const std::wstring& strSection, const std::wstring& strKey)
+{
+	std::wstring strTmp = strSection + L"::";
+	strTmp += strKey;
+
+	std::unordered_map<std::wstring, std::wstring>::iterator i = m_Values.find(StrToLower(strTmp));
+	if (i != m_Values.end())
+	{
+		m_Values.erase(i);
+	}
+}
+
+//==============================================================================
+/**
 ** Returns the value for the key under the given section.
 **
 ** \param strSection The name of the section.

@@ -63,6 +63,7 @@ public:
 	bool IsDisabled() { return m_Disabled; }
 
 	bool HasDynamicVariables() { return m_DynamicVariables; }
+	void SetDynamicVariables(bool b) { m_DynamicVariables = b; }
 
 	virtual void ExecuteBang(const WCHAR* args);
 
@@ -79,6 +80,8 @@ public:
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 	static void GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords);
 	static void RemoveTrailingZero(WCHAR* str, int strLen);
+
+	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
 
 	static CMeasure* Create(const WCHAR* measure, CMeterWindow* meterWindow, const WCHAR* name);
 

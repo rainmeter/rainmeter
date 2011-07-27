@@ -173,10 +173,6 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 				tolua_pushusertype(L, m_MeterWindow, "CMeterWindow");
 				lua_settable(L, -3);
 
-				//lua_pushstring(L, "RAINMETER");
-				//tolua_pushusertype(L, m_MeterWindow->GetMainObject(), "CRainmeter");
-				//lua_settable(L, -3);
-
 				// Look in the properties table for values to read from the section.
 				lua_getfield(L, -1, "PROPERTIES");
 				if (lua_isnil(L, -1) == 0)

@@ -46,6 +46,7 @@ public:
 	virtual bool HasActiveTransition() { return false; }
 	
 	bool HasDynamicVariables() { return m_DynamicVariables; }
+	void SetDynamicVariables(bool b) { m_DynamicVariables = b; }
 
 	virtual int GetW() { return m_Hidden ? 0 : m_W; }
 	virtual int GetH() { return m_Hidden ? 0 : m_H; }
@@ -97,6 +98,8 @@ public:
 	void ResetUpdateCounter() { m_UpdateCounter = m_UpdateDivider; }
 	int GetUpdateCounter() { return m_UpdateCounter; }
 	int GetUpdateDivider() { return m_UpdateDivider; }
+
+	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
 
 	static CMeter* Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHAR* name);
 	

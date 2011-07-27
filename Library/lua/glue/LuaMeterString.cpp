@@ -7,7 +7,7 @@ static int MeterString_GetX(lua_State* L)
 	CMeterString* self = (CMeterString*)tolua_tousertype(L, 1, 0);
 	bool abs = (bool)tolua_toboolean(L, 2, false);
 	int val = self->GetX(abs);
-	tolua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
@@ -16,7 +16,7 @@ static int MeterString_Update(lua_State* L)
 {
 	CMeterString* self = (CMeterString*)tolua_tousertype(L, 1, 0);
 	bool val = self->Update();
-	tolua_pushboolean(L, val);
+	lua_pushboolean(L, val);
 
 	return 1;
 }

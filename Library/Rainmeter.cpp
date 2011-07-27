@@ -857,6 +857,17 @@ void RainmeterSetVariable(HWND, const char* arg)
 }
 
 /*
+** RainmeterSetOption
+**
+** Callback for the !RainmeterSetOption bang
+**
+*/
+void RainmeterSetOption(HWND, const char* arg)
+{
+	BangWithArgs(BANG_SETOPTION, ConvertToWide(arg).c_str(), 3);
+}
+
+/*
 ** RainmeterHideGroup
 **
 ** Callback for the !RainmeterHideGroup bang
@@ -1129,6 +1140,16 @@ void RainmeterSetTransparencyGroup(HWND, const char* arg)
 void RainmeterSetVariableGroup(HWND, const char* arg)
 {
 	BangGroupWithArgs(BANG_SETVARIABLE, ConvertToWide(arg).c_str(), 2);
+}
+/*
+** RainmeterSetOptionGroup
+**
+** Callback for the !RainmeterSetOptionGroup bang
+**
+*/
+void RainmeterSetOptionGroup(HWND, const char* arg)
+{
+	BangGroupWithArgs(BANG_SETOPTION, ConvertToWide(arg).c_str(), 3);
 }
 
 /*
@@ -2940,6 +2961,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_SETVARIABLE, arg.c_str(), 2);
 	}
+	else if (_wcsicmp(name, L"SetOption") == 0)
+	{
+		BangWithArgs(BANG_SETOPTION, arg.c_str(), 3);
+	}
 	else if (_wcsicmp(name, L"RefreshGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_REFRESH, arg.c_str(), 0);
@@ -3039,6 +3064,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	else if (_wcsicmp(name, L"SetVariableGroup") == 0)
 	{
 		BangGroupWithArgs(BANG_SETVARIABLE, arg.c_str(), 2);
+	}
+	else if (_wcsicmp(name, L"SetOptionGroup") == 0)
+	{
+		BangWithArgs(BANG_SETOPTIONGROUP, arg.c_str(), 3);
 	}
 	else if (_wcsicmp(name, L"About") == 0)
 	{

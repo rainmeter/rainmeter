@@ -147,7 +147,7 @@ static int MeterWindow_GetW(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
 	int val = (int)self->GetW();
-	tolua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
@@ -156,7 +156,7 @@ static int MeterWindow_GetH(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
 	int val = (int)self->GetH();
-	tolua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
@@ -165,7 +165,7 @@ static int MeterWindow_GetX(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
 	int val = (int)self->GetX();
-	tolua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
@@ -174,7 +174,7 @@ static int MeterWindow_GetY(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
 	int val = (int)self->GetY();
-	tolua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
@@ -183,7 +183,7 @@ static int MeterWindow_GetXScreen(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
 	int val = (int)self->GetXScreen();
-	tolua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
@@ -192,7 +192,7 @@ static int MeterWindow_GetYScreen(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
 	int val = (int)self->GetYScreen();
-	tolua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }

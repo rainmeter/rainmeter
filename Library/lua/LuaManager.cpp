@@ -43,7 +43,6 @@ void LuaManager::Init()
 		RegisterMeasure(c_State);
 		RegisterMeter(c_State);
 		RegisterMeterWindow(c_State);
-		RegisterRainmeter(c_State);
 		RegisterMeterString(c_State);
 		tolua_endmodule(c_State);
 	}

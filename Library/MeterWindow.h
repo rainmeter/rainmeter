@@ -150,7 +150,9 @@ enum BANGCOMMAND
 
 	BANG_LSHOOK,
 	BANG_PLUGIN,
-	BANG_SETVARIABLE
+	BANG_SETVARIABLE,
+	BANG_SETOPTION,
+	BANG_SETOPTIONGROUP
 };
 
 class CRainmeter;
@@ -181,6 +183,7 @@ public:
 	void UpdateMeasure(const WCHAR* name, bool group = false);
 	void Refresh(bool init, bool all = false);
 	void Redraw();
+	void SetOption(const WCHAR* name, bool group);
 
 	void SetMouseLeaveEvent(bool cancel);
 

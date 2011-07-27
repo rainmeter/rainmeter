@@ -1,6 +1,7 @@
 #include "../../StdAfx.h"
 #include "../LuaManager.h"
 #include "../../Measure.h"
+#include "../../MeterWindow.h"
 
 static int Measure_GetName(lua_State* L)
 {
@@ -11,12 +12,26 @@ static int Measure_GetName(lua_State* L)
 	return 1;
 }
 
-static int Measure_GetANSIName(lua_State* L)
+static int Measure_GetOption(lua_State* L)
 {
 	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
-	const char* val = (const char*)self->GetANSIName();
-	tolua_pushstring(L, (const char*)val);
+	CMeterWindow* meterWindow = self->GetMeterWindow();
+	CConfigParser& parser = meterWindow->GetParser();
 
+	const char* arg = (const char*)tolua_tostring(L, 2, 0);
+	std::wstring strTmp = ConvertToWide(arg);
+	strTmp = parser.GetValue(self->GetName(), strTmp, L"");
+
+	parser.SetBuiltInVariable(L"CURRENTSECTION", self->GetName());  // Set temporarily
+	parser.ReplaceVariables(strTmp);
+	parser.SetBuiltInVariable(L"CURRENTSECTION", L"");  // Reset
+
+	if (self->HasDynamicVariables())
+	{
+		parser.ReplaceMeasures(strTmp);
+	}
+
+	push_wchar(L, strTmp.c_str());
 	return 1;
 }
 
@@ -36,29 +51,11 @@ static int Measure_Enable(lua_State* L)
 	return 0;
 }
 
-static int Measure_IsDisabled(lua_State* L)
-{
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
-	bool val = self->IsDisabled();
-	tolua_pushboolean(L, val);
-
-	return 1;
-}
-
-static int Measure_HasDynamicVariables(lua_State* L)
-{
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
-	bool val = self->HasDynamicVariables();
-	tolua_pushboolean(L, val);
-
-	return 1;
-}
-
 static int Measure_GetValue(lua_State* L)
 {
 	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
 	double val = (double)self->GetValue();
-	tolua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
@@ -67,7 +64,7 @@ static int Measure_GetRelativeValue(lua_State* L)
 {
 	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
 	double val = (double)self->GetRelativeValue();
-	tolua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
@@ -76,7 +73,7 @@ static int Measure_GetValueRange(lua_State* L)
 {
 	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
 	double val = (double)self->GetValueRange();
-	tolua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
@@ -85,7 +82,7 @@ static int Measure_GetMinValue(lua_State* L)
 {
 	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
 	double val = (double)self->GetMinValue();
-	tolua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
@@ -94,7 +91,7 @@ static int Measure_GetMaxValue(lua_State* L)
 {
 	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
 	double val = (double)self->GetMaxValue();
-	tolua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
@@ -115,23 +112,14 @@ static int Measure_GetStringValue(lua_State* L)
 
 void LuaManager::RegisterMeasure(lua_State* L)
 {
-	tolua_constant(L, "AUTOSCALE_1024", AUTOSCALE_1024);
-	tolua_constant(L, "AUTOSCALE_1000", AUTOSCALE_1000);
-	tolua_constant(L, "AUTOSCALE_1024K", AUTOSCALE_1024K);
-	tolua_constant(L, "AUTOSCALE_1000K", AUTOSCALE_1000K);
-	tolua_constant(L, "AUTOSCALE_OFF", AUTOSCALE_OFF);
-	tolua_constant(L, "AUTOSCALE_ON", AUTOSCALE_ON);
-
 	tolua_usertype(L, "CMeasure");
 	tolua_cclass(L, "CMeasure", "CMeasure", "CGroup", NULL);
 
 	tolua_beginmodule(L, "CMeasure");
 	tolua_function(L, "GetName", Measure_GetName);
-	tolua_function(L, "GetANSIName", Measure_GetANSIName);
+	tolua_function(L, "GetOption", Measure_GetOption);
 	tolua_function(L, "Disable", Measure_Disable);
 	tolua_function(L, "Enable", Measure_Enable);
-	tolua_function(L, "IsDisabled", Measure_IsDisabled);
-	tolua_function(L, "HasDynamicVariables", Measure_HasDynamicVariables);
 	tolua_function(L, "GetValue", Measure_GetValue);
 	tolua_function(L, "GetRelativeValue", Measure_GetRelativeValue);
 	tolua_function(L, "GetValueRange", Measure_GetValueRange);

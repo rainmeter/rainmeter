@@ -47,6 +47,10 @@ public:
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
 	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
 
+	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
+	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
+	void DeleteValue(const std::wstring& strSection, const std::wstring& strKey);
+
 	void SetStyleTemplate(const std::wstring& strStyle) { m_StyleTemplate =  Tokenize(strStyle, L"|"); }
 	void ClearStyleTemplate() { m_StyleTemplate.clear(); }
 
@@ -94,8 +98,6 @@ private:
 	CMeasure* GetMeasure(const std::wstring& name);
 
 	void ReadIniFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& strFileName, LPCTSTR config = NULL, int depth = 0);
-	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
-	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
 
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
 

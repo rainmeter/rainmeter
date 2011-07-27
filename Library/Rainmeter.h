@@ -73,6 +73,7 @@ void RainmeterSnapEdges(HWND, const char* arg);
 void RainmeterKeepOnScreen(HWND, const char* arg);
 void RainmeterSetTransparency(HWND, const char* arg);
 void RainmeterSetVariable(HWND, const char* arg);
+void RainmeterSetOption(HWND, const char* arg);
 
 void RainmeterRefreshGroup(HWND, const char* arg);
 void RainmeterRedrawGroup(HWND, const char* arg);
@@ -99,6 +100,7 @@ void RainmeterSnapEdgesGroup(HWND, const char* arg);
 void RainmeterKeepOnScreenGroup(HWND, const char* arg);
 void RainmeterSetTransparencyGroup(HWND, const char* arg);
 void RainmeterSetVariableGroup(HWND, const char* arg);
+void RainmeterSetOptionGroup(HWND, const char* arg);
 
 void RainmeterLsHook(HWND, const char* arg);
 void RainmeterAbout(HWND, const char* arg);

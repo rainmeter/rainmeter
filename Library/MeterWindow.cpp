@@ -1026,6 +1026,14 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			Log(LOG_ERROR, L"Unable to parse parameters for !SetVariable");
 		}
 		break;
+
+	case BANG_SETOPTION:
+		SetOption(arg, false);
+		break;
+
+	case BANG_SETOPTIONGROUP:
+		SetOption(arg, true);
+		break;
 	}
 }
 
@@ -1433,6 +1441,104 @@ void CMeterWindow::UpdateMeasure(const WCHAR* name, bool group)
 	}
 
 	if (!group) LogWithArgs(LOG_NOTICE, L"Unable to update the measure %s (there is no such thing in %s)", name, m_SkinName.c_str());
+}
+
+/*
+** SetOption
+**
+** Changes the property of a meter or measure.
+**
+*/
+void CMeterWindow::SetOption(const WCHAR* arg, bool group)
+{
+	const WCHAR* pos = wcschr(arg, L' ');
+	if (pos != NULL)
+	{
+		const WCHAR* pos2 = wcschr(pos + 1, L' ');
+		std::wstring section(arg, pos - arg);
+		std::wstring option(pos + 1, pos2);
+		std::wstring value(pos2 + 1);
+
+		if (group)
+		{
+			for (std::list<CMeter*>::const_iterator i = m_Meters.begin(); i != m_Meters.end(); ++i)
+			{
+				if ((*i)->BelongsToGroup(section))
+				{
+					(*i)->SetDynamicVariables(true);
+
+					if (value.empty())
+					{
+						GetParser().DeleteValue((*i)->GetName(), option);
+					}
+					else
+					{
+						GetParser().SetValue((*i)->GetName(), option, value);
+					}
+				}
+			}
+
+			for (std::list<CMeasure*>::const_iterator i = m_Measures.begin(); i != m_Measures.end(); ++i)
+			{
+				if ((*i)->BelongsToGroup(section))
+				{
+					(*i)->SetDynamicVariables(true);
+
+					if (value.empty())
+					{
+						GetParser().DeleteValue(section, option);
+					}
+					else
+					{
+						GetParser().SetValue(section, option, value);
+					}
+				}
+			}
+		}
+		else
+		{
+			CMeter* meter = GetMeter(section);
+			if (meter)
+			{
+				// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
+				meter->SetDynamicVariables(true);
+
+				if (value.empty())
+				{
+					GetParser().DeleteValue(section, option);
+				}
+				else
+				{
+					GetParser().SetValue(section, option, value);
+				}
+
+				return;
+			}
+
+			CMeasure* measure = GetMeasure(section);
+			if (measure)
+			{
+				measure->SetDynamicVariables(true);
+
+				if (value.empty())
+				{
+					GetParser().DeleteValue(section, option);
+				}
+				else
+				{
+					GetParser().SetValue(section, option, value);
+				}
+
+				return;
+			}
+
+			// Is it a style?
+		}
+	}
+	else
+	{
+		Log(LOG_ERROR, L"Unable to parse parameters for !SetOption");
+	}
 }
 
 /* WindowToScreen
