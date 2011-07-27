@@ -183,9 +183,6 @@
     <ClCompile Include="lua\glue\LuaMeterWindow.cpp">
       <Filter>Lua\glue</Filter>
     </ClCompile>
-    <ClCompile Include="lua\glue\LuaRainmeter.cpp">
-      <Filter>Lua\glue</Filter>
-    </ClCompile>
     <ClCompile Include="lua\glue\LuaGlobal.cpp">
       <Filter>Lua\glue</Filter>
     </ClCompile>
