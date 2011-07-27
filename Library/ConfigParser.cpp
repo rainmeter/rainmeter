@@ -1208,10 +1208,10 @@ void CConfigParser::DeleteValue(const std::wstring& strSection, const std::wstri
 	std::wstring strTmp = strSection + L"::";
 	strTmp += strKey;
 
-	std::unordered_map<std::wstring, std::wstring>::iterator i = m_Values.find(StrToLower(strTmp));
-	if (i != m_Values.end())
+	std::unordered_map<std::wstring, std::wstring>::iterator iter = m_Values.find(StrToLower(strTmp));
+	if (iter != m_Values.end())
 	{
-		m_Values.erase(i);
+		m_Values.erase(iter);
 	}
 }
 

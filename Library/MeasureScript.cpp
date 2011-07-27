@@ -62,6 +62,8 @@ void CMeasureScript::DeleteLuaScript()
 	m_HasInitializeFunction = false;
 	m_HasUpdateFunction = false;
 	m_HasGetStringFunction = false;
+
+	m_ScriptFile.clear();
 }
 
 /*
@@ -125,9 +127,6 @@ const WCHAR* CMeasureScript::GetStringValue(AUTOSCALE autoScale, double scale, i
 */
 void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
-	// Store the current values
-	std::string oldScriptFile = m_ScriptFile;
-
 	// Read common configs
 	CMeasure::ReadConfig(parser, section);
 
@@ -135,15 +134,15 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	if (!file.empty())
 	{
-		file = m_MeterWindow->MakePathAbsolute(file);
-		m_ScriptFile = ConvertToAscii(file.c_str());
+		std::string scriptFile = ConvertToAscii(m_MeterWindow->MakePathAbsolute(file).c_str());
 
 		if (!m_Initialized ||
-			oldScriptFile != m_ScriptFile)
+			scriptFile != m_ScriptFile)
 		{
-			lua_State* L = LuaManager::GetState();
-
 			DeleteLuaScript();
+
+			lua_State* L = LuaManager::GetState();
+			m_ScriptFile = scriptFile;
 			m_LuaScript = new LuaScript(LuaManager::GetState(), m_ScriptFile.c_str());
 
 			if (m_LuaScript->IsInitialized())

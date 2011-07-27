@@ -33,7 +33,7 @@ using namespace Gdiplus;
 **
 */
 CMeterImage::CMeterImage(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
-	m_NeedsReload(false),
+	m_NeedsRedraw(false),
 	m_WidthDefined(false),
 	m_HeightDefined(false),
 	m_PreserveAspectRatio(false),
@@ -157,6 +157,13 @@ void CMeterImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	// Read tinting configs
 	m_Image.ReadConfig(parser, section);
+
+	if (m_Initialized &&
+		!m_Measure && !m_DynamicVariables)
+	{
+		Initialize();
+		m_NeedsRedraw = true;
+	}
 }
 
 /*
@@ -214,6 +221,11 @@ bool CMeterImage::Update()
 			}
 
 			LoadImage(m_ImageNameResult, oldResult != m_ImageNameResult);
+			return true;
+		}
+		else if (m_NeedsRedraw)
+		{
+			m_NeedsRedraw = false;
 			return true;
 		}
 	}

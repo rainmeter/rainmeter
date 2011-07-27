@@ -45,7 +45,6 @@ protected:
 	std::wstring m_StringValue;
 
 	std::string m_ScriptFile;
-	std::string m_TableName;
 };
 
 #endif

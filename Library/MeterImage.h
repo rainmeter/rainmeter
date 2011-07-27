@@ -42,7 +42,7 @@ protected:
 	std::wstring m_ImageNameResult;		// Name of the image (as absolute path)
 	std::wstring m_Path;
 
-	bool m_NeedsReload;
+	bool m_NeedsRedraw;
 	bool m_WidthDefined;
 	bool m_HeightDefined;
 	bool m_PreserveAspectRatio;			// If true, aspect ratio of the image is preserved when the image is scaled
