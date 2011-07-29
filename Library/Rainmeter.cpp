@@ -3167,49 +3167,45 @@ std::wstring CRainmeter::ParseCommand(const WCHAR* command, CMeterWindow* meterW
 		start = strCommand.find(L'[', start);
 		if (start != std::wstring::npos)
 		{
-			end = strCommand.find(L']', start);
+			end = strCommand.find(L']', start + 1);
 			if (end != std::wstring::npos)
 			{
 				std::wstring measureName = strCommand.substr(start + 1, end - (start + 1));
-				if (!measureName.empty())
+				if (!measureName.empty() && measureName[0] != L'!')	// Ignore bangs
 				{
-					// Ignore bangs
-					if (measureName[0] == L'!')
+					if (meterWindow)
 					{
-						start = end + 1;
-					}
-					else
-					{
-						if (meterWindow)
+						if (strCommand[start + 1] == L'*' && strCommand[end - 1] == L'*')
 						{
-							if (strCommand[start + 1] == L'*' && strCommand[end - 1] == L'*')
+							strCommand.erase(start + 1, 1);
+							strCommand.erase(end - 2, 1);
+							start = end - 1;
+						}
+						else
+						{
+							const std::list<CMeasure*>& measures = meterWindow->GetMeasures();
+							std::list<CMeasure*>::const_iterator iter = measures.begin();
+							for ( ; iter != measures.end(); ++iter)
 							{
-								strCommand.erase(start + 1, 1);
-								strCommand.erase(end - 2, 1);
-								start = end - 1;
+								if (_wcsicmp((*iter)->GetName(), measureName.c_str()) == 0)
+								{
+									std::wstring value = (*iter)->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
+									strCommand.replace(start, (end - start) + 1, value);
+									start += value.length();
+									break;
+								}
 							}
-							else
+							if (iter == measures.end())
 							{
-								const std::list<CMeasure*>& measures = meterWindow->GetMeasures();
-								std::list<CMeasure*>::const_iterator iter = measures.begin();
-								for ( ; iter != measures.end(); ++iter)
-								{
-									if (_wcsicmp((*iter)->GetName(), measureName.c_str()) == 0)
-									{
-										std::wstring value = (*iter)->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
-										strCommand.replace(start, (end - start) + 1, value);
-										start += value.length();
-										break;
-									}
-								}
-								if (iter == measures.end())
-								{
-									//LogWithArgs(LOG_WARNING, L"No such measure [%s] for execute string: %s", measureName.c_str(), command);
-									start = end + 1;
-								}
+								//LogWithArgs(LOG_WARNING, L"No such measure [%s] for execute string: %s", measureName.c_str(), command);
+								start = end + 1;
 							}
 						}
 					}
+				}
+				else
+				{
+					start = end + 1;
 				}
 			}
 		}
