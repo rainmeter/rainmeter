@@ -4,106 +4,6 @@
 #include "../../MeterWindow.h"
 #include "../../MeterString.h"
 
-static int MeterWindow_MoveMeter(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	int x = (int)tolua_tonumber(L, 2, 0);
-	int y = (int)tolua_tonumber(L, 3, 0);
-	const WCHAR* name = ((const WCHAR*)to_wchar(L, 4, 0));
-	self->MoveMeter(x, y, name);
-
-	return 0;
-}
-
-static int MeterWindow_HideMeter(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const WCHAR* name = ((const WCHAR*)to_wchar(L, 2, 0));
-	bool group = ((bool)tolua_toboolean(L, 3, false));
-	self->HideMeter(name, group);
-
-	return 0;
-}
-
-static int MeterWindow_ShowMeter(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const WCHAR* name = ((const WCHAR*)to_wchar(L, 2, 0));
-	bool group = ((bool)tolua_toboolean(L, 3, false));
-	self->ShowMeter(name, group);
-
-	return 0;
-}
-
-static int MeterWindow_ToggleMeter(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const WCHAR* name = ((const WCHAR*)to_wchar(L, 2, 0));
-	bool group = ((bool)tolua_toboolean(L, 3, false));
-	self->ToggleMeter(name, group);
-
-	return 0;
-}
-
-static int MeterWindow_UpdateMeter(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const WCHAR* name = ((const WCHAR*)to_wchar(L, 2, 0));
-	bool group = ((bool)tolua_toboolean(L, 3, false));
-	self->UpdateMeter(name, group);
-
-	return 0;
-}
-
-static int MeterWindow_DisableMeasure(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const WCHAR* name = ((const WCHAR*)to_wchar(L, 2, 0));
-	bool group = ((bool)tolua_toboolean(L, 3, false));
-	self->DisableMeasure(name, group);
-
-	return 0;
-}
-
-static int MeterWindow_EnableMeasure(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const WCHAR* name = ((const WCHAR*)to_wchar(L, 2, 0));
-	bool group = ((bool)tolua_toboolean(L, 3, false));
-	self->EnableMeasure(name, group);
-
-	return 0;
-}
-
-static int MeterWindow_ToggleMeasure(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const WCHAR* name = ((const WCHAR*)to_wchar(L, 2, 0));
-	bool group = ((bool)tolua_toboolean(L, 3, false));
-	self->ToggleMeasure(name, group);
-
-	return 0;
-}
-
-static int MeterWindow_UpdateMeasure(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const WCHAR* name = ((const WCHAR*)to_wchar(L, 2, 0));
-	bool group = ((bool)tolua_toboolean(L, 3, false));
-
-	self->UpdateMeasure(name, group);
-
-	return 0;
-}
-
-static int MeterWindow_Redraw(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	self->Redraw();
-
-	return 0;
-}
-
 static int MeterWindow_MoveWindow(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
@@ -174,24 +74,6 @@ static int MeterWindow_GetY(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
 	int val = (int)self->GetY();
-	lua_pushnumber(L, (lua_Number)val);
-
-	return 1;
-}
-
-static int MeterWindow_GetXScreen(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	int val = (int)self->GetXScreen();
-	lua_pushnumber(L, (lua_Number)val);
-
-	return 1;
-}
-
-static int MeterWindow_GetYScreen(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	int val = (int)self->GetYScreen();
 	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
@@ -294,19 +176,9 @@ static int MeterWindow_Bang(lua_State* L)
 void LuaManager::RegisterMeterWindow(lua_State* L)
 {
 	tolua_usertype(L, "CMeterWindow");
-	tolua_cclass(L, "CMeterWindow", "CMeterWindow", "CGroup", NULL);
+	tolua_cclass(L, "CMeterWindow", "CMeterWindow", "", NULL);
 
 	tolua_beginmodule(L, "CMeterWindow");
-	tolua_function(L, "MoveMeter", MeterWindow_MoveMeter);
-	tolua_function(L, "HideMeter", MeterWindow_HideMeter);
-	tolua_function(L, "ShowMeter", MeterWindow_ShowMeter);
-	tolua_function(L, "ToggleMeter", MeterWindow_ToggleMeter);
-	tolua_function(L, "UpdateMeter", MeterWindow_UpdateMeter);
-	tolua_function(L, "DisableMeasure", MeterWindow_DisableMeasure);
-	tolua_function(L, "EnableMeasure", MeterWindow_EnableMeasure);
-	tolua_function(L, "ToggleMeasure", MeterWindow_ToggleMeasure);
-	tolua_function(L, "UpdateMeasure", MeterWindow_UpdateMeasure);
-	tolua_function(L, "Redraw", MeterWindow_Redraw);
 	tolua_function(L, "MoveWindow", MeterWindow_MoveWindow);
 	tolua_function(L, "FadeWindow", MeterWindow_FadeWindow);
 	tolua_function(L, "GetSkinName", MeterWindow_GetSkinName);
@@ -315,8 +187,6 @@ void LuaManager::RegisterMeterWindow(lua_State* L)
 	tolua_function(L, "GetH", MeterWindow_GetH);
 	tolua_function(L, "GetX", MeterWindow_GetX);
 	tolua_function(L, "GetY", MeterWindow_GetY);
-	tolua_function(L, "GetXScreen", MeterWindow_GetXScreen);
-	tolua_function(L, "GetYScreen", MeterWindow_GetYScreen);
 	tolua_function(L, "MakePathAbsolute", MeterWindow_MakePathAbsolute);
 	tolua_function(L, "GetMeter", MeterWindow_GetMeter);
 	tolua_function(L, "GetMeasure", MeterWindow_GetMeasure);

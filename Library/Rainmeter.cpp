@@ -3182,22 +3182,31 @@ std::wstring CRainmeter::ParseCommand(const WCHAR* command, CMeterWindow* meterW
 					{
 						if (meterWindow)
 						{
-							const std::list<CMeasure*>& measures = meterWindow->GetMeasures();
-							std::list<CMeasure*>::const_iterator iter = measures.begin();
-							for ( ; iter != measures.end(); ++iter)
+							if (strCommand[start + 1] == L'*' && strCommand[end - 1] == L'*')
 							{
-								if (_wcsicmp((*iter)->GetName(), measureName.c_str()) == 0)
-								{
-									std::wstring value = (*iter)->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
-									strCommand.replace(start, (end - start) + 1, value);
-									start += value.length();
-									break;
-								}
+								strCommand.erase(start + 1, 1);
+								strCommand.erase(end - 2, 1);
+								start = end - 1;
 							}
-							if (iter == measures.end())
+							else
 							{
-								//LogWithArgs(LOG_WARNING, L"No such measure [%s] for execute string: %s", measureName.c_str(), command);
-								start = end + 1;
+								const std::list<CMeasure*>& measures = meterWindow->GetMeasures();
+								std::list<CMeasure*>::const_iterator iter = measures.begin();
+								for ( ; iter != measures.end(); ++iter)
+								{
+									if (_wcsicmp((*iter)->GetName(), measureName.c_str()) == 0)
+									{
+										std::wstring value = (*iter)->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
+										strCommand.replace(start, (end - start) + 1, value);
+										start += value.length();
+										break;
+									}
+								}
+								if (iter == measures.end())
+								{
+									//LogWithArgs(LOG_WARNING, L"No such measure [%s] for execute string: %s", measureName.c_str(), command);
+									start = end + 1;
+								}
 							}
 						}
 					}

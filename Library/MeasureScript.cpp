@@ -197,11 +197,8 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 					}
 				}
 
-				// Pop PROPERTIES table
-				lua_pop(L, 1);
-
-				// Pop the table
-				lua_pop(L, 1);
+				// Pop PROPERTIES table and our table
+				lua_pop(L, 2);
 			}
 			else
 			{

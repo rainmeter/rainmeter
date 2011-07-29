@@ -25,11 +25,7 @@ static int Measure_GetOption(lua_State* L)
 	parser.SetBuiltInVariable(L"CURRENTSECTION", self->GetName());  // Set temporarily
 	parser.ReplaceVariables(strTmp);
 	parser.SetBuiltInVariable(L"CURRENTSECTION", L"");  // Reset
-
-	if (self->HasDynamicVariables())
-	{
-		parser.ReplaceMeasures(strTmp);
-	}
+	parser.ReplaceMeasures(strTmp);
 
 	push_wchar(L, strTmp.c_str());
 	return 1;
@@ -113,7 +109,7 @@ static int Measure_GetStringValue(lua_State* L)
 void LuaManager::RegisterMeasure(lua_State* L)
 {
 	tolua_usertype(L, "CMeasure");
-	tolua_cclass(L, "CMeasure", "CMeasure", "CGroup", NULL);
+	tolua_cclass(L, "CMeasure", "CMeasure", "", NULL);
 
 	tolua_beginmodule(L, "CMeasure");
 	tolua_function(L, "GetName", Measure_GetName);

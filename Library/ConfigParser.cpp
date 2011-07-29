@@ -453,19 +453,28 @@ bool CConfigParser::ReplaceVariables(std::wstring& result)
 			end = result.find(L'#', pos + 1);
 			if (end != std::wstring::npos)
 			{
-				std::wstring strVariable = result.substr(pos + 1, end - (pos + 1));
-				std::wstring strValue;
-
-				if (GetVariable(strVariable, strValue))
+				if (result[pos + 1] == L'*' && result[end - 1] == L'*')
 				{
-					// Variable found, replace it with the value
-					result.replace(pos, end - pos + 1, strValue);
-					start = pos + strValue.length();
-					replaced = true;
+					result.erase(pos + 1, 1);
+					result.erase(end - 2, 1);
+					start = end - 1;
 				}
 				else
 				{
-					start = end;
+					std::wstring strVariable = result.substr(pos + 1, end - (pos + 1));
+					std::wstring strValue;
+
+					if (GetVariable(strVariable, strValue))
+					{
+						// Variable found, replace it with the value
+						result.replace(pos, end - pos + 1, strValue);
+						start = pos + strValue.length();
+						replaced = true;
+					}
+					else
+					{
+						start = end;
+					}
 				}
 			}
 			else
@@ -510,21 +519,30 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 					pos2 = result.find(L'[', pos + 1);
 					if (pos2 == std::wstring::npos || end < pos2)
 					{
-						std::wstring var = result.substr(pos + 1, end - (pos + 1));
-
-						CMeasure* measure = GetMeasure(var);
-						if (measure)
+						if (result[pos + 1] == L'*' && result[end - 1] == L'*')
 						{
-							std::wstring value = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
-
-							// Measure found, replace it with the value
-							result.replace(pos, end - pos + 1, value);
-							start = pos + value.length();
-							replaced = true;
+							result.erase(pos + 1, 1);
+							result.erase(end - 2, 1);
+							start = end - 1;
 						}
 						else
 						{
-							start = end;
+							std::wstring var = result.substr(pos + 1, end - (pos + 1));
+
+							CMeasure* measure = GetMeasure(var);
+							if (measure)
+							{
+								std::wstring value = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
+
+								// Measure found, replace it with the value
+								result.replace(pos, end - pos + 1, value);
+								start = pos + value.length();
+								replaced = true;
+							}
+							else
+							{
+								start = end;
+							}
 						}
 					}
 					else

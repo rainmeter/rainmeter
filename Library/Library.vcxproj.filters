@@ -171,9 +171,6 @@
     <ClCompile Include="lua\LuaScript.cpp">
       <Filter>Lua</Filter>
     </ClCompile>
-    <ClCompile Include="lua\glue\LuaGroup.cpp">
-      <Filter>Lua\glue</Filter>
-    </ClCompile>
     <ClCompile Include="lua\glue\LuaMeasure.cpp">
       <Filter>Lua\glue</Filter>
     </ClCompile>

@@ -23,11 +23,7 @@ static int Meter_GetOption(lua_State* L)
 	parser.SetBuiltInVariable(L"CURRENTSECTION", self->GetName());  // Set temporarily
 	parser.ReplaceVariables(strTmp);
 	parser.SetBuiltInVariable(L"CURRENTSECTION", L"");  // Reset
-
-	if (self->HasDynamicVariables())
-	{
-		parser.ReplaceMeasures(strTmp);
-	}
+	parser.ReplaceMeasures(strTmp);
 
 	push_wchar(L, strTmp.c_str());
 	return 1;
@@ -127,7 +123,7 @@ static int Meter_Show(lua_State* L)
 void LuaManager::RegisterMeter(lua_State* L)
 {
 	tolua_usertype(L, "CMeter");
-	tolua_cclass(L, "CMeter", "CMeter", "CGroup", NULL);
+	tolua_cclass(L, "CMeter", "CMeter", "", NULL);
 
 	tolua_beginmodule(L, "CMeter");
 	tolua_function(L, "GetName", Meter_GetName);

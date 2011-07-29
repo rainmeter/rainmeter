@@ -39,7 +39,6 @@ void LuaManager::Init()
 		tolua_beginmodule(c_State, NULL);
 		RegisterGlobal(c_State);
 		RegisterMeasure(c_State);
-		RegisterGroup(c_State);
 		RegisterMeasure(c_State);
 		RegisterMeter(c_State);
 		RegisterMeterWindow(c_State);

@@ -38,7 +38,6 @@ protected:
 
 private:
 	static void RegisterGlobal(lua_State* L);
-	static void RegisterGroup(lua_State* L);
 	static void RegisterMeasure(lua_State* L);
 	static void RegisterMeter(lua_State* L);
 	static void RegisterMeterWindow(lua_State* L);

@@ -59,7 +59,7 @@ LuaScript::LuaScript(lua_State* state, const char* file) : m_State(state),
 		lua_setfenv(m_State, -2);
 
 		// Execute the Lua script
-		result = lua_pcall(m_State, 0, LUA_MULTRET, 0);
+		result = lua_pcall(m_State, 0, 0, 0);
 
 		if (result)
 		{
