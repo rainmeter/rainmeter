@@ -95,7 +95,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>lua/include;lua/lua;lua/tolua++;lua/glue;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBRARY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HAVE_CONFIG_H;SUPPORT_UTF8;LIBRARY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -138,7 +138,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>lua/include;lua/lua;lua/tolua++;lua/glue;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBRARY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HAVE_CONFIG_H;SUPPORT_UTF8;LIBRARY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -182,7 +182,7 @@
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>lua/include;lua/lua;lua/tolua++;lua/glue;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBRARY_EXPORTS;_SECURE_SCL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBRARY_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;_SECURE_SCL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -232,7 +232,7 @@
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>lua/include;lua/lua;lua/tolua++;lua/glue;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBRARY_EXPORTS;_SECURE_SCL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBRARY_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;_SECURE_SCL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -611,6 +611,26 @@
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="pcre-8.10\pcre_chartables.c" />
+    <ClCompile Include="pcre-8.10\pcre_compile.c" />
+    <ClCompile Include="pcre-8.10\pcre_config.c" />
+    <ClCompile Include="pcre-8.10\pcre_dfa_exec.c" />
+    <ClCompile Include="pcre-8.10\pcre_exec.c" />
+    <ClCompile Include="pcre-8.10\pcre_fullinfo.c" />
+    <ClCompile Include="pcre-8.10\pcre_get.c" />
+    <ClCompile Include="pcre-8.10\pcre_globals.c" />
+    <ClCompile Include="pcre-8.10\pcre_info.c" />
+    <ClCompile Include="pcre-8.10\pcre_maketables.c" />
+    <ClCompile Include="pcre-8.10\pcre_newline.c" />
+    <ClCompile Include="pcre-8.10\pcre_ord2utf8.c" />
+    <ClCompile Include="pcre-8.10\pcre_refcount.c" />
+    <ClCompile Include="pcre-8.10\pcre_study.c" />
+    <ClCompile Include="pcre-8.10\pcre_tables.c" />
+    <ClCompile Include="pcre-8.10\pcre_try_flipped.c" />
+    <ClCompile Include="pcre-8.10\pcre_ucd.c" />
+    <ClCompile Include="pcre-8.10\pcre_valid_utf8.c" />
+    <ClCompile Include="pcre-8.10\pcre_version.c" />
+    <ClCompile Include="pcre-8.10\pcre_xclass.c" />
     <ClCompile Include="Rainmeter.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
@@ -855,6 +875,10 @@
     <ClInclude Include="MeterRoundLine.h" />
     <ClInclude Include="MeterString.h" />
     <ClInclude Include="MeterWindow.h" />
+    <ClInclude Include="pcre-8.10\config.h" />
+    <ClInclude Include="pcre-8.10\pcre.h" />
+    <ClInclude Include="pcre-8.10\pcre_internal.h" />
+    <ClInclude Include="pcre-8.10\ucp.h" />
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="RainmeterQuery.h" />
     <ClInclude Include="resource.h" />

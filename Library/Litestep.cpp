@@ -500,6 +500,46 @@ std::wstring ConvertToWide(LPCSTR str)
 	return szWide;
 }
 
+std::string ConvertToUTF8(LPCWSTR str)
+{
+	std::string szAscii;
+
+	if (str && *str)
+	{
+		int strLen = (int)wcslen(str) + 1;
+		int bufLen = WideCharToMultiByte(CP_UTF8, 0, str, strLen, NULL, 0, NULL, NULL);
+		if (bufLen > 0)
+		{
+			char* tmpSz = new char[bufLen];
+			tmpSz[0] = 0;
+			WideCharToMultiByte(CP_UTF8, 0, str, strLen, tmpSz, bufLen, NULL, NULL);
+			szAscii = tmpSz;
+			delete [] tmpSz;
+		}
+	}
+	return szAscii;
+}
+
+std::wstring ConvertUTF8ToWide(LPCSTR str)
+{
+	std::wstring szWide;
+
+	if (str && *str)
+	{
+		int strLen = (int)strlen(str) + 1;
+		int bufLen = MultiByteToWideChar(CP_UTF8, 0, str, strLen, NULL, 0);
+		if (bufLen > 0)
+		{
+			WCHAR* wideSz = new WCHAR[bufLen];
+			wideSz[0] = 0;
+			MultiByteToWideChar(CP_UTF8, 0, str, strLen, wideSz, bufLen);
+			szWide = wideSz;
+			delete [] wideSz;
+		}
+	}
+	return szWide;
+}
+
 BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 {
 	CRainmeter::LOG_INFO logInfo;

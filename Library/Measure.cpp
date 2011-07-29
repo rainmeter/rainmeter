@@ -35,6 +35,10 @@
 #include "Rainmeter.h"
 #include "Error.h"
 #include "Litestep.h"
+#include "pcre-8.10/config.h"
+#include "pcre-8.10/pcre.h"
+
+#define OVECCOUNT 300	// Should be a multiple of 3
 
 enum AUTOSCALE_INDEX
 {
@@ -74,6 +78,7 @@ CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow
 	m_MinValue(),
 	m_MaxValue(1.0),
 	m_Value(),
+	m_RegExpSubstitute(false),
 	m_MedianPos(),
 	m_AveragePos(),
 	m_AverageSize(),
@@ -165,6 +170,7 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_DynamicVariables = 0!=parser.ReadInt(section, L"DynamicVariables", 0);
 
+	m_RegExpSubstitute = 0!=parser.ReadInt(section, L"RegExpSubstitute", 0);
 	std::wstring subs = parser.ReadString(section, L"Substitute", L"");
 	if (!subs.empty() &&
 		(subs[0] != L'\"' || subs[subs.length() - 1] != L'\'') &&
@@ -184,6 +190,29 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
+** MakePlainSubstitute
+**
+** Substitues text using a straight find and replace method
+*/
+bool CMeasure::MakePlainSubstitute(std::wstring& str, size_t index)
+{
+	size_t start = 0;
+	size_t pos = std::wstring::npos;
+
+	do
+	{
+		pos = str.find(m_Substitute[index].first, start);
+		if (pos != std::wstring::npos)
+		{
+			str.replace(pos, m_Substitute[index].first.length(), m_Substitute[index].second);
+			start = pos + m_Substitute[index].second.length();
+		}
+	} while (pos != std::wstring::npos);
+
+	return true;
+}
+
+/*
 ** CheckSubstitute
 **
 ** Substitutes part of the text
@@ -194,30 +223,104 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 
 	if (!m_Substitute.empty())
 	{
-		str = buffer;
-
-		for (size_t i = 0, isize = m_Substitute.size(); i < isize; i += 2)
+		if (!m_RegExpSubstitute)	// Plain Substitutions only
 		{
-			if (str.empty() && m_Substitute[i].empty())
-			{
-				// Empty result and empty substitute -> use second
-				str = m_Substitute[i + 1];
-			}
-			else if (!m_Substitute[i].empty())
-			{
-				size_t start = 0;
-				size_t pos = std::wstring::npos;
+			str = buffer;
 
-				do
+			for (size_t i = 0, isize = m_Substitute.size(); i < isize; i++)
+			{
+				if (str.empty() && m_Substitute[i].first.empty())
 				{
-					pos = str.find(m_Substitute[i], start);
-					if (pos != std::wstring::npos)
-					{
-						str.replace(pos, m_Substitute[i].length(), m_Substitute[i + 1]);
-						start = pos + m_Substitute[i + 1].length();
-					}
-				} while (pos != std::wstring::npos);
+					// Empty result and empty substitute -> use second
+					str = m_Substitute[i].second;
+				}
+				else if (!m_Substitute[i].first.empty())
+				{
+					MakePlainSubstitute(str, i);
+				}
 			}
+		}
+		else // Contains a RegEx
+		{
+			std::string utf8str = ConvertToUTF8(buffer);
+
+			for (size_t i = 0, isize = m_Substitute.size() ; i < isize ; i++)
+			{
+				pcre* re;
+				const char* error;
+				int erroffset;
+				int ovector[OVECCOUNT];
+				int rc;
+				int flags = PCRE_UTF8;
+				int offset = 0;
+
+				re = pcre_compile(
+					ConvertToUTF8(m_Substitute[i].first.c_str()).c_str(),   // the pattern
+					flags,						// default options
+					&error,						// for error message
+					&erroffset,					// for error offset
+					NULL);						// use default character tables
+
+				if (re == NULL)
+				{
+					MakePlainSubstitute(str, i);
+					Log(LOG_NOTICE, ConvertToWide(error).c_str());
+				}
+				else
+				{
+					do
+					{
+						rc = pcre_exec(
+							re,						// the compiled pattern
+							NULL,					// no extra data - we didn't study the pattern
+							utf8str.c_str(),		// the subject string
+							utf8str.length(),		// the length of the subject
+							offset,					// start at offset 0 in the subject
+							0,						// default options
+							ovector,				// output vector for substring information
+							OVECCOUNT);				// number of elements in the output vector
+
+						if (rc <= 0)
+						{
+							break;
+						}
+						else
+						{
+							std::string result = ConvertToUTF8(m_Substitute[i].second.c_str());
+
+							if (rc > 1)
+							{
+								for (int j = rc - 1 ; j > 0 ; j--)
+								{
+									size_t new_start = ovector[2*j];
+									size_t in_length = ovector[2*j+1] - ovector[2*j];
+
+									char tmpName[64];
+									_snprintf_s(tmpName, _TRUNCATE, "\\%i", j);
+
+									size_t cut_length = strlen(tmpName);
+									size_t pos = result.find(tmpName);
+									while (pos != std::string::npos)
+									{
+										result.replace(pos, cut_length, utf8str, new_start, in_length);
+										pos = result.find(tmpName, pos + in_length);
+									}
+								}
+							}
+
+							size_t start = ovector[0];
+							size_t length = ovector[1] - ovector[0];
+							utf8str.replace(start, length, result);
+							offset = start + result.length();
+						}
+					} while (true);
+
+					// Release memory used for the compiled pattern
+					pcre_free(re);
+				}
+			}
+
+			str = ConvertUTF8ToWide(utf8str.c_str());
 		}
 
 		return str.c_str();
@@ -247,8 +350,7 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 
 		if (word1 != word2)
 		{
-			m_Substitute.push_back(word1);
-			m_Substitute.push_back(word2);
+			m_Substitute.push_back(std::pair<std::wstring, std::wstring>(word1, word2));
 		}
 
 		sep = ExtractWord(buffer);

@@ -92,6 +92,7 @@ protected:
 	bool ParseSubstitute(std::wstring buffer);
 	std::wstring ExtractWord(std::wstring& buffer);
 	const WCHAR* CheckSubstitute(const WCHAR* buffer);
+	bool MakePlainSubstitute(std::wstring& str, size_t index);
 
 	bool m_DynamicVariables;		// If true, the measure contains dynamic variables
 	bool m_Invert;					// If true, the value should be inverted
@@ -102,7 +103,8 @@ protected:
 	const std::wstring m_Name;				// Name of this Measure
 	const std::string m_ANSIName;				// Name of this Measure in ANSI
 
-	std::vector<std::wstring> m_Substitute;	// Vec of substitute strings
+	std::vector< std::pair<std::wstring, std::wstring> > m_Substitute;	// Vec of substitute strings
+	bool m_RegExpSubstitute;
 
 	std::vector<double> m_MedianMaxValues;	// The values for the median filtering
 	std::vector<double> m_MedianMinValues;	// The values for the median filtering
