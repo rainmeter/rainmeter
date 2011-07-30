@@ -290,7 +290,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 
 							if (rc > 1)
 							{
-								for (int j = rc - 1 ; j > 0 ; j--)
+								for (int j = rc - 1 ; j >= 0 ; j--)
 								{
 									size_t new_start = ovector[2*j];
 									size_t in_length = ovector[2*j+1] - ovector[2*j];
