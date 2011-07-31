@@ -98,11 +98,8 @@ bool CMeasureScript::Update()
 	if (!(m_HasUpdateFunction && m_LuaScript->RunFunctionWithReturn(g_UpdateFunctionName, m_Value, m_StringValue)) &&
 		!(m_HasGetStringFunction && m_LuaScript->RunFunctionWithReturn(g_GetStringFunctionName, m_Value, m_StringValue)))
 	{
-		if (!m_StringValue.empty())
-		{
-			m_Value = 0;
-			m_StringValue.clear();
-		}
+		m_Value = 0;
+		m_StringValue.clear();
 	}
 
 	return PostUpdate();
@@ -116,7 +113,12 @@ bool CMeasureScript::Update()
 */
 const WCHAR* CMeasureScript::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
-	return CheckSubstitute(m_StringValue.c_str());
+	if (!m_StringValue.empty())
+	{
+		return CheckSubstitute(m_StringValue.c_str());
+	}
+
+	return CMeasure::GetStringValue(autoScale, scale, decimals, percentual);
 }
 
 /*

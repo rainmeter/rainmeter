@@ -146,7 +146,7 @@ void LuaScript::RunFunction(const char* funcName)
 /*
 ** RunFunctionWithReturn
 **
-** Runs given function in script file and stores the retruned number and/or string.
+** Runs given function in script file and stores the retruned number or string.
 ** Returns true if the executed function returns a valid value.
 **
 */
@@ -169,15 +169,19 @@ bool LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, st
 		}
 		else
 		{
-			if (lua_isstring(m_State, -1))
+			if (lua_isnumber(m_State, -1))
 			{
-				// Type is LUA_TSTRING or LUA_TNUMBER
+				numValue = lua_tonumber(m_State, -1);
+
+				strValue.clear();
+				ret = true;
+			}
+			else if (lua_isstring(m_State, -1))
+			{
 				const char* str = lua_tostring(m_State, -1);
 				strValue = ConvertToWide(str);
 
-				// lua_tonumber() returns 0 when type is non-number
-				numValue = lua_tonumber(m_State, -1);
-
+				numValue = 0;
 				ret = true;
 			}
 

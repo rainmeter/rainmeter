@@ -81,6 +81,7 @@ private:
 
 	HWND m_Window;				// Our reciever window
 	HWND m_FooWindow;			// Foobar receiver window
+	bool m_MaximizeOnStart;
 };
 
 #endif

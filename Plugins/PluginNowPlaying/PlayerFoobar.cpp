@@ -30,7 +30,8 @@ extern HINSTANCE g_Instance;
 */
 CPlayerFoobar::CPlayerFoobar() : CPlayer(),
 	m_Window(),
-	m_FooWindow()
+	m_FooWindow(),
+	m_MaximizeOnStart(false)
 {
 	Initialize();
 }
@@ -178,6 +179,12 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 		case FOO_PLAYERSTART:
 			player->m_Initialized = true;
 			player->m_FooWindow = (HWND)wParam;
+
+			if (player->m_MaximizeOnStart)
+			{
+				SendMessage(player->m_FooWindow, WM_USER, 0, FOO_SHOWPLAYER);
+				player->m_MaximizeOnStart = false;
+			}
 			break;
 
 		case FOO_PLAYERQUIT:
@@ -430,6 +437,7 @@ void CPlayerFoobar::OpenPlayer(std::wstring& path)
 		else
 		{
 			ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
+			m_MaximizeOnStart = true;
 		}
 	}
 	else
