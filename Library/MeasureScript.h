@@ -37,10 +37,12 @@ public:
 
 protected:
 	LuaScript* m_LuaScript;
-	
+
 	bool m_HasInitializeFunction;
 	bool m_HasUpdateFunction;
 	bool m_HasGetStringFunction;
+
+	int m_ValueType;
 
 	std::wstring m_StringValue;
 

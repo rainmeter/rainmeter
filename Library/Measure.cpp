@@ -830,7 +830,7 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, cons
 	{
 		return new CMeasureCalc(meterWindow, name);
 	}
-	else if (_wcsicmp(L"script", measure) == 0)
+	else if (_wcsicmp(L"Script", measure) == 0)
 	{
 		return new CMeasureScript(meterWindow, name);
 	}

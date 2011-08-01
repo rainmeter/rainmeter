@@ -147,12 +147,12 @@ void LuaScript::RunFunction(const char* funcName)
 ** RunFunctionWithReturn
 **
 ** Runs given function in script file and stores the retruned number or string.
-** Returns true if the executed function returns a valid value.
+** Returns LUA_TNIL when no return.
 **
 */
-bool LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue)
+int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue)
 {
-	bool ret = false;
+	int ret = LUA_TNIL;
 
 	if (m_Initialized)
 	{
@@ -172,17 +172,13 @@ bool LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, st
 			if (lua_isnumber(m_State, -1))
 			{
 				numValue = lua_tonumber(m_State, -1);
-
-				strValue.clear();
-				ret = true;
+				ret = LUA_TNUMBER;
 			}
 			else if (lua_isstring(m_State, -1))
 			{
 				const char* str = lua_tostring(m_State, -1);
 				strValue = ConvertToWide(str);
-
-				numValue = 0;
-				ret = true;
+				ret = LUA_TSTRING;
 			}
 
 			lua_pop(m_State, 2);

@@ -34,7 +34,8 @@ CMeasureScript::CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name) : C
 	m_LuaScript(),
 	m_HasInitializeFunction(false),
 	m_HasUpdateFunction(false),
-	m_HasGetStringFunction(false)
+	m_HasGetStringFunction(false),
+	m_ValueType(LUA_TNIL)
 {
 	LuaManager::Init();
 }
@@ -95,11 +96,19 @@ bool CMeasureScript::Update()
 		return false;
 	}
 
-	if (!(m_HasUpdateFunction && m_LuaScript->RunFunctionWithReturn(g_UpdateFunctionName, m_Value, m_StringValue)) &&
-		!(m_HasGetStringFunction && m_LuaScript->RunFunctionWithReturn(g_GetStringFunctionName, m_Value, m_StringValue)))
+	if (m_HasUpdateFunction)
 	{
-		m_Value = 0;
-		m_StringValue.clear();
+		m_ValueType = m_LuaScript->RunFunctionWithReturn(g_UpdateFunctionName, m_Value, m_StringValue);
+
+		if (m_ValueType == LUA_TSTRING)
+		{
+			m_Value = 0;
+		}
+		else if (m_ValueType == LUA_TNIL && m_HasGetStringFunction)
+		{
+			// For backwards compatbility
+			m_ValueType = m_LuaScript->RunFunctionWithReturn(g_GetStringFunctionName, m_Value, m_StringValue);
+		}
 	}
 
 	return PostUpdate();
@@ -113,7 +122,7 @@ bool CMeasureScript::Update()
 */
 const WCHAR* CMeasureScript::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
-	if (!m_StringValue.empty())
+	if (m_ValueType == LUA_TSTRING)
 	{
 		return CheckSubstitute(m_StringValue.c_str());
 	}

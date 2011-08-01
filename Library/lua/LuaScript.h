@@ -32,7 +32,7 @@ public:
 
 	bool IsFunction(const char* funcName);
 	void RunFunction(const char* funcName);
-	bool RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue);
+	int RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue);
 	void RunString(const char* str);
 
 protected:
