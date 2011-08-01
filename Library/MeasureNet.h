@@ -24,8 +24,9 @@
 #include <Iphlpapi.h>
 #include "Measure.h"
 
-typedef NETIO_STATUS (NETIOAPI_API_ * FPGETIFTABLE2EX)(MIB_IF_TABLE_LEVEL Level, PMIB_IF_TABLE2* Table);
-typedef VOID (NETIOAPI_API_ * FPFREEMIBTABLE)(PVOID Memory);
+typedef NETIO_STATUS (NETIOAPI_API_ * FPGETIFENTRY2)(PMIB_IF_ROW2 Row);
+typedef NETIO_STATUS (NETIOAPI_API_ * FPNOTIFYIPINTERFACECHANGE)(ADDRESS_FAMILY Family, PIPINTERFACE_CHANGE_CALLBACK Callback, PVOID CallerContext, BOOLEAN InitialNotification, HANDLE* NotificationHandle);
+typedef NETIO_STATUS (NETIOAPI_API_ * FPCANCELMIBCHANGENOTIFY2)(HANDLE NotificationHandle);
 
 class CMeasureNet : public CMeasure
 {
@@ -56,6 +57,9 @@ protected:
 	ULONG64 GetNetOctets(NET net);
 	ULONG64 GetNetStatsValue(NET net);
 
+	static void DisposeBuffer();
+	static VOID NETIOAPI_API_ IpInterfaceChangeCallback(PVOID CallerContext, PMIB_IPINTERFACE_ROW Row, MIB_NOTIFICATION_TYPE NotificationType);
+
 	double m_CurrentTraffic;
 	double m_TrafficValue;
 	UINT m_Interface;
@@ -65,11 +69,17 @@ protected:
 	static std::vector<ULONG64> c_OldStatValues;
 	static std::vector<ULONG64> c_StatValues;
 	static BYTE* c_Table;
+	static ULONG c_Size;
 	static UINT c_NumOfTables;
+	static BYTE* c_AATable;
+	static ULONG c_AASize;
 
-	static FPGETIFTABLE2EX c_GetIfTable2Ex;
-	static FPFREEMIBTABLE c_FreeMibTable;
-	static bool c_UseNewApi;
+	static bool c_IpInterfaceChanged;
+	static HANDLE c_NotificationHandle;
+
+	static FPGETIFENTRY2 c_GetIfEntry2;
+	static FPNOTIFYIPINTERFACECHANGE c_NotifyIpInterfaceChange;
+	static FPCANCELMIBCHANGENOTIFY2 c_CancelMibChangeNotify2;
 };
 
 #endif
