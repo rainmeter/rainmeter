@@ -466,13 +466,17 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 		{
 			(player->GetState() != PLAYER_PLAYING) ? player->Play() : player->Pause();
 		}
-		else if (_wcsicmp(bang, L"Stop") == 0)
-		{
-			player->Stop();
-		}
 		else if (_wcsicmp(bang, L"Next") == 0)
 		{
 			player->Next();
+		}
+		else if (_wcsicmp(bang, L"Previous") == 0)
+		{
+			player->Previous();
+		}
+		else if (_wcsicmp(bang, L"Stop") == 0)
+		{
+			player->Stop();
 		}
 		else if (_wcsicmp(bang, L"OpenPlayer") == 0)
 		{

@@ -147,12 +147,11 @@ void LuaScript::RunFunction(const char* funcName)
 ** RunFunctionWithReturn
 **
 ** Runs given function in script file and stores the retruned number or string.
-** Returns LUA_TNIL when no return.
 **
 */
 int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue)
 {
-	int ret = LUA_TNIL;
+	int type = LUA_TNIL;
 
 	if (m_Initialized)
 	{
@@ -169,23 +168,23 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 		}
 		else
 		{
-			if (lua_isnumber(m_State, -1))
+			type = lua_type(m_State, -1);
+			if (type == LUA_TNUMBER)
 			{
 				numValue = lua_tonumber(m_State, -1);
-				ret = LUA_TNUMBER;
 			}
-			else if (lua_isstring(m_State, -1))
+			else if (type == LUA_TSTRING)
 			{
 				const char* str = lua_tostring(m_State, -1);
 				strValue = ConvertToWide(str);
-				ret = LUA_TSTRING;
+				numValue = 0;
 			}
 
 			lua_pop(m_State, 2);
 		}
 	}
 
-	return ret;
+	return type;
 }
 
 /*

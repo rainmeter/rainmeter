@@ -100,11 +100,7 @@ bool CMeasureScript::Update()
 	{
 		m_ValueType = m_LuaScript->RunFunctionWithReturn(g_UpdateFunctionName, m_Value, m_StringValue);
 
-		if (m_ValueType == LUA_TSTRING)
-		{
-			m_Value = 0;
-		}
-		else if (m_ValueType == LUA_TNIL && m_HasGetStringFunction)
+		if (m_ValueType == LUA_TNIL && m_HasGetStringFunction)
 		{
 			// For backwards compatbility
 			m_ValueType = m_LuaScript->RunFunctionWithReturn(g_GetStringFunctionName, m_Value, m_StringValue);
