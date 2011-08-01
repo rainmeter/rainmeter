@@ -177,7 +177,7 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 			{
 				const char* str = lua_tostring(m_State, -1);
 				strValue = ConvertToWide(str);
-				numValue = 0;
+				numValue = strtod(str, NULL);
 			}
 
 			lua_pop(m_State, 2);
