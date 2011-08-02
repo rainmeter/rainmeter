@@ -21,18 +21,14 @@
 #include "Rainmeter.h"
 #include "System.h"
 
+BYTE* CMeasureNet::c_Table = NULL;
+UINT CMeasureNet::c_NumOfTables = 0;
 std::vector<ULONG64> CMeasureNet::c_StatValues;
 std::vector<ULONG64> CMeasureNet::c_OldStatValues;
-BYTE* CMeasureNet::c_Table = NULL;
-ULONG CMeasureNet::c_Size = 0;
-UINT CMeasureNet::c_NumOfTables = 0;
-BYTE* CMeasureNet::c_AATable = NULL;
-ULONG CMeasureNet::c_AASize = 0;
-bool CMeasureNet::c_IpInterfaceChanged = true;
-HANDLE CMeasureNet::c_NotificationHandle = NULL;
-FPGETIFENTRY2 CMeasureNet::c_GetIfEntry2 = NULL;
-FPNOTIFYIPINTERFACECHANGE CMeasureNet::c_NotifyIpInterfaceChange = NULL;
-FPCANCELMIBCHANGENOTIFY2 CMeasureNet::c_CancelMibChangeNotify2 = NULL;
+
+FPGETIFTABLE2EX CMeasureNet::c_GetIfTable2Ex = NULL;
+FPFREEMIBTABLE CMeasureNet::c_FreeMibTable = NULL;
+bool CMeasureNet::c_UseNewApi = false;
 
 extern CRainmeter* Rainmeter;
 
@@ -88,18 +84,6 @@ bool CMeasureNet::Update()
 }
 
 /*
-** IpInterfaceChangeCallback
-**
-*/
-VOID NETIOAPI_API_ CMeasureNet::IpInterfaceChangeCallback(PVOID CallerContext, PMIB_IPINTERFACE_ROW Row, MIB_NOTIFICATION_TYPE NotificationType)
-{
-	if (NotificationType == MibAddInstance || NotificationType == MibDeleteInstance)
-	{
-		c_IpInterfaceChanged = true;
-	}
-}
-
-/*
 ** UpdateIFTable
 **
 ** Reads the tables for all net interfaces
@@ -107,59 +91,133 @@ VOID NETIOAPI_API_ CMeasureNet::IpInterfaceChangeCallback(PVOID CallerContext, P
 */
 void CMeasureNet::UpdateIFTable()
 {
-	if (c_IpInterfaceChanged || c_NotificationHandle == NULL || c_AATable == NULL)
+	bool logging = false;
+
+	if (c_UseNewApi)
 	{
-		// Gotta reserve few bytes for the tables
-		ULONG flags = GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_FRIENDLY_NAME | GAA_FLAG_SKIP_UNICAST | GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST;
-
-		ULONG ret = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, (PIP_ADAPTER_ADDRESSES)c_AATable, &c_AASize);
-		if (ret == ERROR_BUFFER_OVERFLOW)
+		if (c_Table)
 		{
-			delete [] c_AATable;
-			c_AATable = new BYTE[c_AASize];
-
-			ret = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, (PIP_ADAPTER_ADDRESSES)c_AATable, &c_AASize);
+			c_FreeMibTable(c_Table);
+			c_Table = NULL;
 		}
 
-		if (ret == ERROR_SUCCESS)
+		if (c_GetIfTable2Ex(MibIfTableNormal, (MIB_IF_TABLE2**)&c_Table) == NO_ERROR)
 		{
-			UINT numOfTables = 0;
-			for (PIP_ADAPTER_ADDRESSES addrPtr = (PIP_ADAPTER_ADDRESSES)c_AATable; addrPtr != NULL; addrPtr = addrPtr->Next)
+			MIB_IF_TABLE2* ifTable = (MIB_IF_TABLE2*)c_Table;
+
+			if (c_NumOfTables != ifTable->NumEntries)
 			{
-				++numOfTables;
+				c_NumOfTables = ifTable->NumEntries;
+				logging = true;
 			}
 
-			if (c_NumOfTables != numOfTables)
+			if (CRainmeter::GetDebug() && logging)
 			{
-				c_NumOfTables = numOfTables;
-				delete [] c_Table;
+				Log(LOG_DEBUG, L"------------------------------");
+				LogWithArgs(LOG_DEBUG, L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
+
+				for (size_t i = 0; i < c_NumOfTables; ++i)
+				{
+					std::wstring type;
+					switch (ifTable->Table[i].Type)
+					{
+					case IF_TYPE_ETHERNET_CSMACD:
+						type += L"Ethernet";
+						break;
+					case IF_TYPE_PPP:
+						type += L"PPP";
+						break;
+					case IF_TYPE_SOFTWARE_LOOPBACK:
+						type += L"Loopback";
+						break;
+					case IF_TYPE_IEEE80211:
+						type += L"IEEE802.11";
+						break;
+					case IF_TYPE_TUNNEL:
+						type += L"Tunnel";
+						break;
+					case IF_TYPE_IEEE1394:
+						type += L"IEEE1394";
+						break;
+					default:
+						type += L"Other";
+						break;
+					}
+
+					LogWithArgs(LOG_DEBUG, L"%i: %s", (int)i + 1, ifTable->Table[i].Description);
+					LogWithArgs(LOG_DEBUG, L"  Alias: %s", ifTable->Table[i].Alias);
+					LogWithArgs(LOG_DEBUG, L"  Type=%s(%i), Hardware=%s, Filter=%s",
+						type.c_str(), ifTable->Table[i].Type,
+						(ifTable->Table[i].InterfaceAndOperStatusFlags.HardwareInterface == 1) ? L"Yes" : L"No",
+						(ifTable->Table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) ? L"Yes" : L"No");
+				}
+				Log(LOG_DEBUG, L"------------------------------");
+			}
+		}
+		else
+		{
+			// Something's wrong. Unable to get the table.
+			c_Table = NULL;
+			c_NumOfTables = 0;
+		}
+	}
+	else
+	{
+		if (c_Table == NULL)
+		{
+			// Gotta reserve few bytes for the tables
+			DWORD value = 0;
+			if (GetNumberOfInterfaces(&value) == NO_ERROR)
+			{
+				if (c_NumOfTables != value)
+				{
+					c_NumOfTables = value;
+					logging = true;
+				}
 
 				if (c_NumOfTables > 0)
 				{
-					c_Size = ((c_GetIfEntry2) ? sizeof(MIB_IF_ROW2) : sizeof(MIB_IFROW)) * c_NumOfTables;
-					c_Table = new BYTE[c_Size];
+					DWORD size = sizeof(MIB_IFTABLE) + sizeof(MIB_IFROW) * c_NumOfTables;
+					c_Table = new BYTE[size];
 				}
-				else
-				{
-					c_Table = NULL;
-					c_Size = 0;
-				}
+			}
+		}
 
-				c_IpInterfaceChanged = true;
+		if (c_Table)
+		{
+			DWORD ret, size = 0;
+
+			MIB_IFTABLE* ifTable = (MIB_IFTABLE*)c_Table;
+
+			if ((ret = GetIfTable(ifTable, &size, FALSE)) == ERROR_INSUFFICIENT_BUFFER)
+			{
+				delete [] c_Table;
+				c_Table = new BYTE[size];
+
+				ifTable = (MIB_IFTABLE*)c_Table;
+
+				ret = GetIfTable(ifTable, &size, FALSE);
 			}
 
-			if (c_IpInterfaceChanged && CRainmeter::GetDebug())
+			if (ret == NO_ERROR)
 			{
-				Log(LOG_DEBUG, L"------------------------------");
-				LogWithArgs(LOG_DEBUG, L"* NETWORK-INTERFACE: %s", (c_GetIfEntry2) ? L"GetIfEntry2" : L"GetIfEntry");
-
-				if (c_Table)
+				if (c_NumOfTables != ifTable->dwNumEntries)
 				{
-					int i = 0;
-					for (PIP_ADAPTER_ADDRESSES addrPtr = (PIP_ADAPTER_ADDRESSES)c_AATable; addrPtr != NULL; addrPtr = addrPtr->Next)
+					c_NumOfTables = ifTable->dwNumEntries;
+					logging = true;
+				}
+
+				if (CRainmeter::GetDebug() && logging)
+				{
+					Log(LOG_DEBUG, L"------------------------------");
+					LogWithArgs(LOG_DEBUG, L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
+
+					for (size_t i = 0; i < c_NumOfTables; ++i)
 					{
+						std::string desc((char*)ifTable->table[i].bDescr, ifTable->table[i].dwDescrLen);
+
 						std::wstring type;
-						switch (addrPtr->IfType)
+						switch (ifTable->table[i].dwType)
 						{
 						case IF_TYPE_ETHERNET_CSMACD:
 							type += L"Ethernet";
@@ -184,76 +242,19 @@ void CMeasureNet::UpdateIFTable()
 							break;
 						}
 
-						std::wstring oper;
-						switch (addrPtr->OperStatus)
-						{
-						case IfOperStatusUp:
-							oper += L"Up";
-							break;
-						case IfOperStatusDown:
-							oper += L"Down";
-							break;
-						case IfOperStatusTesting:
-							oper += L"Testing";
-							break;
-						case IfOperStatusUnknown:
-							oper += L"Unknown";
-							break;
-						case IfOperStatusDormant:
-							oper += L"Dormant";
-							break;
-						case IfOperStatusNotPresent:
-							oper += L"NotPresent";
-							break;
-						case IfOperStatusLowerLayerDown:
-							oper += L"LowerLayerDown";
-							break;
-						}
-
-						LogWithArgs(LOG_DEBUG, L"%i: %s", ++i, addrPtr->Description);
-						LogWithArgs(LOG_DEBUG, L"  IfIndex=%u, LUID=%llu, AdapterName=%s", addrPtr->IfIndex, addrPtr->Luid.Value, ConvertToWide(addrPtr->AdapterName).c_str());
-						LogWithArgs(LOG_DEBUG, L"  Type=%s (%i), Oper=%s (%i)", type.c_str(), addrPtr->IfType, oper.c_str(), addrPtr->OperStatus);
+						LogWithArgs(LOG_DEBUG, L"%i: %s", (int)i + 1, ConvertToWide(desc.c_str()).c_str());
+						LogWithArgs(LOG_DEBUG, L"  Type=%s(%i)",
+							type.c_str(), ifTable->table[i].dwType);
 					}
+					Log(LOG_DEBUG, L"------------------------------");
 				}
-				else
-				{
-					Log(LOG_DEBUG, L"None.");
-				}
-
-				Log(LOG_DEBUG, L"------------------------------");
 			}
-		}
-		else
-		{
-			// Something's wrong. Unable to get the table.
-			DisposeBuffer();
-		}
-
-		c_IpInterfaceChanged = false;
-	}
-
-	if (c_AATable && c_Table)
-	{
-		memset(c_Table, 0, c_Size);
-
-		if (c_GetIfEntry2)
-		{
-			PMIB_IF_ROW2 ifRowPtr = (PMIB_IF_ROW2)c_Table;
-			for (PIP_ADAPTER_ADDRESSES addrPtr = (PIP_ADAPTER_ADDRESSES)c_AATable; addrPtr != NULL; addrPtr = addrPtr->Next)
+			else
 			{
-				(*ifRowPtr).InterfaceIndex = addrPtr->IfIndex;
-				c_GetIfEntry2(ifRowPtr);
-				++ifRowPtr;
-			}
-		}
-		else
-		{
-			PMIB_IFROW ifRowPtr = (PMIB_IFROW)c_Table;
-			for (PIP_ADAPTER_ADDRESSES addrPtr = (PIP_ADAPTER_ADDRESSES)c_AATable; addrPtr != NULL; addrPtr = addrPtr->Next)
-			{
-				(*ifRowPtr).dwIndex = addrPtr->IfIndex;
-				GetIfEntry(ifRowPtr);
-				++ifRowPtr;
+				// Something's wrong. Unable to get the table.
+				delete [] c_Table;
+				c_Table = NULL;
+				c_NumOfTables = 0;
 			}
 		}
 	}
@@ -270,17 +271,18 @@ ULONG64 CMeasureNet::GetNetOctets(NET net)
 {
 	ULONG64 value = 0;
 
-	if (c_GetIfEntry2)
+	if (c_UseNewApi)
 	{
-		PMIB_IF_ROW2 table = (PMIB_IF_ROW2)c_Table;
+		MIB_IF_ROW2* table = (MIB_IF_ROW2*)((MIB_IF_TABLE2*)c_Table)->Table;
 
 		if (m_Interface == 0)
 		{
 			// Get all interfaces
 			for (UINT i = 0; i < c_NumOfTables; ++i)
 			{
-				// Ignore the loopback interface
-				if (table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK) continue;
+				// Ignore the loopback and filter interfaces
+				if (table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK ||
+					table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) continue;
 
 				switch (net)
 				{
@@ -324,14 +326,14 @@ ULONG64 CMeasureNet::GetNetOctets(NET net)
 	}
 	else
 	{
-		PMIB_IFROW table = (PMIB_IFROW)c_Table;
+		MIB_IFROW* table = (MIB_IFROW*)((MIB_IFTABLE*)c_Table)->table;
 
 		if (m_Interface == 0)
 		{
 			// Get all interfaces
 			for (UINT i = 0; i < c_NumOfTables; ++i)
 			{
-				// Ignore the loopback interface
+				// Ignore the loopback
 				if (table[i].dwType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
 
 				switch (net)
@@ -394,16 +396,17 @@ ULONG64 CMeasureNet::GetNetStatsValue(NET net)
 		// Get all interfaces
 		for (size_t i = 0; i < statsSize; ++i)
 		{
-			// Ignore the loopback interface
+			// Ignore the loopback and filter interfaces
 			if (c_NumOfTables == statsSize)
 			{
-				if (c_GetIfEntry2)
+				if (c_UseNewApi)
 				{
-					if (((PMIB_IF_ROW2)c_Table)[i].Type == IF_TYPE_SOFTWARE_LOOPBACK) continue;
+					if (((MIB_IF_TABLE2*)c_Table)->Table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK ||
+						((MIB_IF_TABLE2*)c_Table)->Table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) continue;
 				}
 				else
 				{
-					if (((PMIB_IFROW)c_Table)[i].dwType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
+					if (((MIB_IFTABLE*)c_Table)->table[i].dwType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
 				}
 			}
 
@@ -532,15 +535,15 @@ void CMeasureNet::UpdateStats()
 		{
 			ULONG64 in, out;
 
-			if (c_GetIfEntry2)
+			if (c_UseNewApi)
 			{
-				in = ((PMIB_IF_ROW2)c_Table)[i].InOctets;
-				out = ((PMIB_IF_ROW2)c_Table)[i].OutOctets;
+				in = (DWORD)((MIB_IF_TABLE2*)c_Table)->Table[i].InOctets;
+				out = (DWORD)((MIB_IF_TABLE2*)c_Table)->Table[i].OutOctets;
 			}
 			else
 			{
-				in = ((PMIB_IFROW)c_Table)[i].dwInOctets;
-				out = ((PMIB_IFROW)c_Table)[i].dwOutOctets;
+				in = ((MIB_IFTABLE*)c_Table)->table[i].dwInOctets;
+				out = ((MIB_IFTABLE*)c_Table)->table[i].dwOutOctets;
 			}
 
 			if (c_OldStatValues[i * 2 + 0] != 0 && c_OldStatValues[i * 2 + 1] != 0)
@@ -661,30 +664,21 @@ void CMeasureNet::WriteStats(const WCHAR* iniFile)
 */
 void CMeasureNet::InitializeNewApi()
 {
-	HMODULE IpHlpApi = GetModuleHandle(L"IpHlpApi");
-	c_GetIfEntry2 = (FPGETIFENTRY2)GetProcAddress(IpHlpApi, "GetIfEntry2");
-
-	if (c_GetIfEntry2)
+	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
-		c_NotifyIpInterfaceChange = (FPNOTIFYIPINTERFACECHANGE)GetProcAddress(IpHlpApi, "NotifyIpInterfaceChange");
-		c_CancelMibChangeNotify2 = (FPCANCELMIBCHANGENOTIFY2)GetProcAddress(IpHlpApi, "CancelMibChangeNotify2");
-
-		if (c_NotifyIpInterfaceChange && c_CancelMibChangeNotify2)
+		HMODULE IpHlpApiLibrary = GetModuleHandle(L"IpHlpApi.dll");
+		if (IpHlpApiLibrary)
 		{
-			c_NotifyIpInterfaceChange(AF_UNSPEC, (PIPINTERFACE_CHANGE_CALLBACK)IpInterfaceChangeCallback, NULL, FALSE, &c_NotificationHandle);
-
-			if (c_NotificationHandle == NULL)
-			{
-				c_NotifyIpInterfaceChange = NULL;
-				c_CancelMibChangeNotify2 = NULL;
-				Log(LOG_ERROR, L"NotifyIpInterfaceChange function failed.");
-			}
+			c_GetIfTable2Ex = (FPGETIFTABLE2EX)GetProcAddress(IpHlpApiLibrary, "GetIfTable2Ex");
+			c_FreeMibTable = (FPFREEMIBTABLE)GetProcAddress(IpHlpApiLibrary, "FreeMibTable");
 		}
-		else
+
+		c_UseNewApi = (IpHlpApiLibrary && c_GetIfTable2Ex && c_FreeMibTable);
+
+		if (!c_UseNewApi)
 		{
-			c_NotifyIpInterfaceChange = NULL;
-			c_CancelMibChangeNotify2 = NULL;
-			Log(LOG_ERROR, L"NotifyIpInterfaceChange/CancelMibChangeNotify2 function not found in IpHlpApi.dll.");
+			c_GetIfTable2Ex = NULL;
+			c_FreeMibTable = NULL;
 		}
 	}
 
@@ -702,32 +696,22 @@ void CMeasureNet::InitializeNewApi()
 */
 void CMeasureNet::FinalizeNewApi()
 {
-	if (c_NotificationHandle)
+	if (c_UseNewApi)
 	{
-		c_CancelMibChangeNotify2(c_NotificationHandle);
-		c_NotificationHandle = NULL;
+		if (c_Table)
+		{
+			c_FreeMibTable(c_Table);
+		}
+
+		c_GetIfTable2Ex = NULL;
+		c_FreeMibTable = NULL;
 	}
-
-	c_GetIfEntry2 = NULL;
-	c_NotifyIpInterfaceChange = NULL;
-	c_CancelMibChangeNotify2 = NULL;
-
-	DisposeBuffer();
-}
-
-/*
-** DisposeBuffer
-**
-*/
-void CMeasureNet::DisposeBuffer()
-{
-	delete [] c_AATable;
-	c_AATable = NULL;
-	c_AASize = 0;
-
-	delete [] c_Table;
+	else
+	{
+		delete [] c_Table;
+	}
 	c_Table = NULL;
-	c_Size = 0;
-
 	c_NumOfTables = 0;
+
+	c_UseNewApi = false;
 }
