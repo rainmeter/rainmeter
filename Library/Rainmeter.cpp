@@ -3750,17 +3750,8 @@ void CRainmeter::ReadStats()
 		delete [] tmpSz;
 	}
 
-	WCHAR* tmpSz = new WCHAR[MAX_LINE_LENGTH];
-
-	if (GetPrivateProfileString(L"Statistics", L"Since", L"", tmpSz, MAX_LINE_LENGTH, m_StatsFile.c_str()) > 0)
-	{
-		m_StatsDate = tmpSz;
-	}
-
-	delete [] tmpSz;
-
 	// Only Net measure has stats at the moment
-	CMeasureNet::ReadStats(m_StatsFile.c_str());
+	CMeasureNet::ReadStats(m_StatsFile.c_str(), m_StatsDate);
 }
 
 /*
@@ -3779,11 +3770,8 @@ void CRainmeter::WriteStats(bool bForce)
 	{
 		lastWrite = ticks;
 
-		// Write the date for statistics
-		WritePrivateProfileString(L"Statistics", L"Since", m_StatsDate.c_str(), m_StatsFile.c_str());
-
 		// Only Net measure has stats at the moment
-		CMeasureNet::WriteStats(m_StatsFile.c_str());
+		CMeasureNet::WriteStats(m_StatsFile.c_str(), m_StatsDate.c_str());
 
 		WritePrivateProfileString(NULL, NULL, NULL, m_StatsFile.c_str());
 	}

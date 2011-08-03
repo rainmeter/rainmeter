@@ -581,12 +581,18 @@ void CMeasureNet::ResetStats()
 ** Reads statistics.
 **
 */
-void CMeasureNet::ReadStats(const WCHAR* iniFile)
+void CMeasureNet::ReadStats(const WCHAR* iniFile, std::wstring& statsDate)
 {
 	WCHAR buffer[64];
 
 	CConfigParser parser;
 	parser.Initialize(iniFile, NULL, NULL, L"Statistics");
+
+	std::wstring date = parser.ReadString(L"Statistics", L"Since", L"", false);
+	if (!date.empty())
+	{
+		statsDate = date;
+	}
 
 	int count = parser.ReadInt(L"Statistics", L"NetStatsCount", 0);
 
@@ -620,16 +626,25 @@ void CMeasureNet::ReadStats(const WCHAR* iniFile)
 ** Writes statistics.
 **
 */
-void CMeasureNet::WriteStats(const WCHAR* iniFile)
+void CMeasureNet::WriteStats(const WCHAR* iniFile, const WCHAR* statsDate)
 {
 	WCHAR buffer[32];
 	WCHAR buffer2[64];
 
 	size_t statsSize = c_StatValues.size() / 2;
 
-	_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)statsSize);
-	WritePrivateProfileString(L"Statistics", L"NetStatsCount", buffer, iniFile);
+	// Reserve sufficient buffer for statistics
+	std::wstring data;
+	data.reserve((64 * 2) + 128 * statsSize);
 
+	// Add date
+	AppendStatsValue(data, L"Since", statsDate);
+
+	// Add stats count
+	_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)statsSize);
+	AppendStatsValue(data, L"NetStatsCount", buffer);
+
+	// Add stats
 	for (size_t i = 0; i < statsSize; ++i)
 	{
 		ULARGE_INTEGER value;
@@ -638,22 +653,39 @@ void CMeasureNet::WriteStats(const WCHAR* iniFile)
 
 		_snwprintf_s(buffer2, _TRUNCATE, L"NetStatsInHigh%i", (int)i + 1);
 		_snwprintf_s(buffer, _TRUNCATE, L"%u", value.HighPart);
-		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile);
+		AppendStatsValue(data, buffer2, buffer);
 
 		_snwprintf_s(buffer2, _TRUNCATE, L"NetStatsInLow%i", (int)i + 1);
 		_snwprintf_s(buffer, _TRUNCATE, L"%u", value.LowPart);
-		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile);
+		AppendStatsValue(data, buffer2, buffer);
 
 		value.QuadPart = c_StatValues[i * 2 + 1];
 
 		_snwprintf_s(buffer2, _TRUNCATE, L"NetStatsOutHigh%i", (int)i + 1);
 		_snwprintf_s(buffer, _TRUNCATE, L"%u", value.HighPart);
-		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile);
+		AppendStatsValue(data, buffer2, buffer);
 
 		_snwprintf_s(buffer2, _TRUNCATE, L"NetStatsOutLow%i", (int)i + 1);
 		_snwprintf_s(buffer, _TRUNCATE, L"%u", value.LowPart);
-		WritePrivateProfileString(L"Statistics", buffer2, buffer, iniFile);
+		AppendStatsValue(data, buffer2, buffer);
 	}
+
+	// Write statistics
+	WritePrivateProfileSection(L"Statistics", data.c_str(), iniFile);
+}
+
+/*
+** AppendStatsValue
+**
+** Appends "key=value\0" to given string.
+**
+*/
+void CMeasureNet::AppendStatsValue(std::wstring& data, const WCHAR* key, const WCHAR* value)
+{
+	data += key;
+	data += L'=';
+	data += value;
+	data += L'\0';
 }
 
 /*
