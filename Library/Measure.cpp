@@ -227,29 +227,29 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 		{
 			str = buffer;
 
-			for (size_t i = 0, isize = m_Substitute.size(); i < isize; i++)
+			for (size_t i = 0, isize = m_Substitute.size(); i < isize; ++i)
 			{
-				if (str.empty() && m_Substitute[i].first.empty())
+				if (!m_Substitute[i].first.empty())
+				{
+					MakePlainSubstitute(str, i);
+				}
+				else if (str.empty())
 				{
 					// Empty result and empty substitute -> use second
 					str = m_Substitute[i].second;
-				}
-				else if (!m_Substitute[i].first.empty())
-				{
-					MakePlainSubstitute(str, i);
 				}
 			}
 		}
 		else // Contains a RegEx
 		{
 			std::string utf8str = ConvertToUTF8(buffer);
+			int* ovector = new int[OVECCOUNT];
 
-			for (size_t i = 0, isize = m_Substitute.size() ; i < isize ; i++)
+			for (size_t i = 0, isize = m_Substitute.size() ; i < isize ; ++i)
 			{
 				pcre* re;
 				const char* error;
 				int erroffset;
-				int ovector[OVECCOUNT];
 				int rc;
 				int flags = PCRE_UTF8;
 				int offset = 0;
@@ -290,7 +290,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 
 							if (rc > 1)
 							{
-								for (int j = rc - 1 ; j >= 0 ; j--)
+								for (int j = rc - 1 ; j >= 0 ; --j)
 								{
 									size_t new_start = ovector[2*j];
 									size_t in_length = ovector[2*j+1] - ovector[2*j];
@@ -319,6 +319,8 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 					pcre_free(re);
 				}
 			}
+
+			delete [] ovector;
 
 			str = ConvertUTF8ToWide(utf8str.c_str());
 		}
