@@ -572,7 +572,7 @@ void CMeterWindow::MoveWindow(int x, int y)
 
 	if (m_SavePosition)
 	{
-		WriteConfig();
+		WriteConfig(SETTING_WINDOWPOSITION);
 	}
 }
 
@@ -1889,6 +1889,7 @@ void CMeterWindow::ScreenToWindow()
 */
 void CMeterWindow::ReadConfig()
 {
+	WCHAR buffer[32];
 	const std::wstring& iniFile = m_Rainmeter->GetIniFile();
 	const WCHAR* section = L"Rainmeter";
 
@@ -1938,45 +1939,33 @@ void CMeterWindow::ReadConfig()
 		}
 
 		// Check if the window position should be read as a formula
+		double value;
 		if (!m_WindowX.empty() && m_WindowX[0] == L'(' && m_WindowX[m_WindowX.size() - 1] == L')')
 		{
-			double value = parser.ReadFormula(section, L"WindowX", 0.0);
-			WCHAR buffer[32];
+			if (!parser.ReadFormula(m_WindowX, &value))
+			{
+				value = 0.0;
+			}
 			_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)value);
 			m_WindowX = buffer;
 		}
 		if (!m_WindowY.empty() && m_WindowY[0] == L'(' && m_WindowY[m_WindowY.size() - 1] == L')')
 		{
-			double value = parser.ReadFormula(section, L"WindowY", 0.0);
-			WCHAR buffer[32];
+			if (!parser.ReadFormula(m_WindowY, &value))
+			{
+				value = 0.0;
+			}
 			_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)value);
 			m_WindowY = buffer;
 		}
 
 		int zPos = parser.ReadInt(section, L"AlwaysOnTop", m_WindowZPosition);
-		if (zPos == -1)
-		{
-			m_WindowZPosition = ZPOSITION_ONBOTTOM;
-		}
-		else if (zPos == -2)
-		{
-			m_WindowZPosition = ZPOSITION_ONDESKTOP;
-		}
-		else if (zPos == 1)
-		{
-			m_WindowZPosition = ZPOSITION_ONTOP;
-		}
-		else if (zPos == 2)
-		{
-			m_WindowZPosition = ZPOSITION_ONTOPMOST;
-		}
-		else
-		{
-			m_WindowZPosition = ZPOSITION_NORMAL;
-		}
+		m_WindowZPosition = (zPos >= ZPOSITION_ONDESKTOP && zPos <= ZPOSITION_ONTOPMOST) ? (ZPOSITION)zPos : ZPOSITION_NORMAL;
+
+		int hideMode = parser.ReadInt(section, L"HideOnMouseOver", m_WindowHide);
+		m_WindowHide = (hideMode >= HIDEMODE_NONE && hideMode <= HIDEMODE_FADEOUT) ? (HIDEMODE)hideMode : HIDEMODE_NONE;
 
 		m_WindowDraggable = 0!=parser.ReadInt(section, L"Draggable", m_WindowDraggable);
-		m_WindowHide = (HIDEMODE)parser.ReadInt(section, L"HideOnMouseOver", m_WindowHide);
 		m_WindowStartHidden = 0!=parser.ReadInt(section, L"StartHidden", m_WindowStartHidden);
 		m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", m_SavePosition);
 		m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", m_SnapEdges);
@@ -2008,45 +1997,79 @@ void CMeterWindow::ReadConfig()
 ** Writes the new settings to the config
 **
 */
-void CMeterWindow::WriteConfig()
+void CMeterWindow::WriteConfig(INT setting)
 {
-	WCHAR buffer[32];
 	const WCHAR* iniFile = m_Rainmeter->GetIniFile().c_str();
-	const WCHAR* section = m_SkinName.c_str();
 
 	if (*iniFile)
 	{
-		// If position needs to be save, do so.
-		if (m_SavePosition)
+		WCHAR buffer[32];
+		const WCHAR* section = m_SkinName.c_str();
+
+		if (setting & SETTING_WINDOWPOSITION)
 		{
-			ScreenToWindow();
-			WritePrivateProfileString(section, L"WindowX", m_WindowX.c_str(), iniFile);
-			WritePrivateProfileString(section, L"WindowY", m_WindowY.c_str(), iniFile);
+			// If position needs to be save, do so.
+			if (m_SavePosition)
+			{
+				ScreenToWindow();
+				WritePrivateProfileString(section, L"WindowX", m_WindowX.c_str(), iniFile);
+				WritePrivateProfileString(section, L"WindowY", m_WindowY.c_str(), iniFile);
+			}
 		}
 
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_AlphaValue);
-		WritePrivateProfileString(section, L"AlphaValue", buffer, iniFile);
+		if (setting & SETTING_ALPHAVALUE)
+		{
+			_snwprintf_s(buffer, _TRUNCATE, L"%i", m_AlphaValue);
+			WritePrivateProfileString(section, L"AlphaValue", buffer, iniFile);
+		}
 
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_FadeDuration);
-		WritePrivateProfileString(section, L"FadeDuration", buffer, iniFile);
+		if (setting & SETTING_FADEDURATION)
+		{
+			_snwprintf_s(buffer, _TRUNCATE, L"%i", m_FadeDuration);
+			WritePrivateProfileString(section, L"FadeDuration", buffer, iniFile);
+		}
 
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_ClickThrough);
-		WritePrivateProfileString(section, L"ClickThrough", buffer, iniFile);
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowDraggable);
-		WritePrivateProfileString(section, L"Draggable", buffer, iniFile);
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowHide);
-		WritePrivateProfileString(section, L"HideOnMouseOver", buffer, iniFile);
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_SavePosition);
-		WritePrivateProfileString(section, L"SavePosition", buffer, iniFile);
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_SnapEdges);
-		WritePrivateProfileString(section, L"SnapEdges", buffer, iniFile);
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_KeepOnScreen);
-		WritePrivateProfileString(section, L"KeepOnScreen", buffer, iniFile);
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_AutoSelectScreen);
-		WritePrivateProfileString(section, L"AutoSelectScreen", buffer, iniFile);
+		if (setting & SETTING_CLICKTHROUGH)
+		{
+			WritePrivateProfileString(section, L"ClickThrough", m_ClickThrough ? L"1" : L"0", iniFile);
+		}
 
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowZPosition);
-		WritePrivateProfileString(section, L"AlwaysOnTop", buffer, iniFile);
+		if (setting & SETTING_WINDOWDRAGGABLE)
+		{
+			WritePrivateProfileString(section, L"Draggable", m_WindowDraggable ? L"1" : L"0", iniFile);
+		}
+
+		if (setting & SETTING_HIDEONMOUSEOVER)
+		{
+			_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowHide);
+			WritePrivateProfileString(section, L"HideOnMouseOver", buffer, iniFile);
+		}
+
+		if (setting & SETTING_SAVEPOSITION)
+		{
+			WritePrivateProfileString(section, L"SavePosition", m_SavePosition ? L"1" : L"0", iniFile);
+		}
+
+		if (setting & SETTING_SNAPEDGES)
+		{
+			WritePrivateProfileString(section, L"SnapEdges", m_SnapEdges ? L"1" : L"0", iniFile);
+		}
+
+		if (setting & SETTING_KEEPONSCREEN)
+		{
+			WritePrivateProfileString(section, L"KeepOnScreen", m_KeepOnScreen ? L"1" : L"0", iniFile);
+		}
+
+		if (setting & SETTING_AUTOSELECTSCREEN)
+		{
+			WritePrivateProfileString(section, L"AutoSelectScreen", m_AutoSelectScreen ? L"1" : L"0", iniFile);
+		}
+
+		if (setting & SETTING_ALWAYSONTOP)
+		{
+			_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowZPosition);
+			WritePrivateProfileString(section, L"AlwaysOnTop", buffer, iniFile);
+		}
 	}
 }
 
@@ -3641,27 +3664,27 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		else if (wParam == ID_CONTEXT_SKINMENU_VERYTOPMOST)
 		{
 			ChangeZPos(ZPOSITION_ONTOPMOST);
-			WriteConfig();
+			WriteConfig(SETTING_ALWAYSONTOP);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_TOPMOST)
 		{
 			ChangeZPos(ZPOSITION_ONTOP);
-			WriteConfig();
+			WriteConfig(SETTING_ALWAYSONTOP);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_BOTTOM)
 		{
 			ChangeZPos(ZPOSITION_ONBOTTOM);
-			WriteConfig();
+			WriteConfig(SETTING_ALWAYSONTOP);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_NORMAL)
 		{
 			ChangeZPos(ZPOSITION_NORMAL);
-			WriteConfig();
+			WriteConfig(SETTING_ALWAYSONTOP);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_ONDESKTOP)
 		{
 			ChangeZPos(ZPOSITION_ONDESKTOP);
-			WriteConfig();
+			WriteConfig(SETTING_ALWAYSONTOP);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_KEEPONSCREEN)
 		{
@@ -3685,7 +3708,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				m_WindowHide = HIDEMODE_NONE;
 			}
-			WriteConfig();
+			WriteConfig(SETTING_HIDEONMOUSEOVER);
 			UpdateTransparency(m_AlphaValue, false);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN)
@@ -3698,7 +3721,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				m_WindowHide = HIDEMODE_NONE;
 			}
-			WriteConfig();
+			WriteConfig(SETTING_HIDEONMOUSEOVER);
 			UpdateTransparency(m_AlphaValue, false);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT)
@@ -3711,7 +3734,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				m_WindowHide = HIDEMODE_NONE;
 			}
-			WriteConfig();
+			WriteConfig(SETTING_HIDEONMOUSEOVER);
 			UpdateTransparency(m_AlphaValue, false);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_REMEMBERPOSITION)
@@ -3725,7 +3748,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		else if (wParam >= ID_CONTEXT_SKINMENU_TRANSPARENCY_0 && wParam <= ID_CONTEXT_SKINMENU_TRANSPARENCY_90)
 		{
 			m_AlphaValue = (int)(255.0 - (wParam - ID_CONTEXT_SKINMENU_TRANSPARENCY_0) * (230.0 / (ID_CONTEXT_SKINMENU_TRANSPARENCY_90 - ID_CONTEXT_SKINMENU_TRANSPARENCY_0)));
-			WriteConfig();
+			WriteConfig(SETTING_ALPHAVALUE);
 			UpdateTransparency(m_AlphaValue, false);
 		}
 		else if (wParam == ID_CONTEXT_CLOSESKIN)
@@ -3740,7 +3763,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			if (m_SavePosition)
 			{
-				WriteConfig();
+				WriteConfig(SETTING_WINDOWPOSITION);
 			}
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_FROMBOTTOM)
@@ -3751,7 +3774,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			if (m_SavePosition)
 			{
-				WriteConfig();
+				WriteConfig(SETTING_WINDOWPOSITION);
 			}
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_XPERCENTAGE)
@@ -3762,7 +3785,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			if (m_SavePosition)
 			{
-				WriteConfig();
+				WriteConfig(SETTING_WINDOWPOSITION);
 			}
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_YPERCENTAGE)
@@ -3773,7 +3796,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			if (m_SavePosition)
 			{
-				WriteConfig();
+				WriteConfig(SETTING_WINDOWPOSITION);
 			}
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT)
@@ -3782,7 +3805,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			ScreenToWindow();
 
-			WriteConfig();
+			WriteConfig(SETTING_WINDOWPOSITION | SETTING_AUTOSELECTSCREEN);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
 		{
@@ -3815,7 +3838,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
 				ScreenToWindow();
 
-				WriteConfig();
+				WriteConfig(SETTING_WINDOWPOSITION | SETTING_AUTOSELECTSCREEN);
 			}
 		}
 		else
@@ -3850,7 +3873,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 void CMeterWindow::SetClickThrough(bool b)
 {
 	m_ClickThrough = b;
-	WriteConfig();
+	WriteConfig(SETTING_CLICKTHROUGH);
 
 	if (!m_ClickThrough)
 	{
@@ -3877,7 +3900,7 @@ void CMeterWindow::SetClickThrough(bool b)
 void CMeterWindow::SetKeepOnScreen(bool b)
 {
 	m_KeepOnScreen = b;
-	WriteConfig();
+	WriteConfig(SETTING_KEEPONSCREEN);
 
 	if (m_KeepOnScreen)
 	{
@@ -3900,7 +3923,7 @@ void CMeterWindow::SetKeepOnScreen(bool b)
 void CMeterWindow::SetWindowDraggable(bool b)
 {
 	m_WindowDraggable = b;
-	WriteConfig();
+	WriteConfig(SETTING_WINDOWDRAGGABLE);
 }
 
 /*
@@ -3912,7 +3935,7 @@ void CMeterWindow::SetWindowDraggable(bool b)
 void CMeterWindow::SetSavePosition(bool b)
 {
 	m_SavePosition = b;
-	WriteConfig();
+	WriteConfig(SETTING_WINDOWPOSITION | SETTING_SAVEPOSITION);
 }
 
 /*
@@ -3924,7 +3947,7 @@ void CMeterWindow::SetSavePosition(bool b)
 void CMeterWindow::SetSnapEdges(bool b)
 {
 	m_SnapEdges = b;
-	WriteConfig();
+	WriteConfig(SETTING_SNAPEDGES);
 }
 
 /*
@@ -3956,7 +3979,7 @@ LRESULT CMeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Write the new place of the window to config file
 		if (m_SavePosition)
 		{
-			WriteConfig();
+			WriteConfig(SETTING_WINDOWPOSITION);
 		}
 
 		POINT pos;

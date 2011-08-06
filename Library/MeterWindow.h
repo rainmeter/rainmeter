@@ -284,6 +284,23 @@ protected:
 	LRESULT OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
+	enum SETTING
+	{
+		SETTING_WINDOWPOSITION   = 0x00000001,
+		SETTING_ALPHAVALUE       = 0x00000002,
+		SETTING_FADEDURATION     = 0x00000004,
+		SETTING_CLICKTHROUGH     = 0x00000008,
+		SETTING_WINDOWDRAGGABLE  = 0x00000010,
+		SETTING_HIDEONMOUSEOVER  = 0x00000020,
+		SETTING_SAVEPOSITION     = 0x00000040,
+		SETTING_SNAPEDGES        = 0x00000080,
+		SETTING_KEEPONSCREEN     = 0x00000100,
+		SETTING_AUTOSELECTSCREEN = 0x00000200,
+		SETTING_ALWAYSONTOP      = 0x00000400,
+
+		SETTING_ALL              = 0xFFFFFFFF
+	};
+
 	bool HitTest(int x, int y);
 
 	void CreateRegion(bool clear);
@@ -299,7 +316,7 @@ private:
 	void Update(bool nodraw);
 	void UpdateTransparency(int alpha, bool reset);
 	void ReadConfig();
-	void WriteConfig();
+	void WriteConfig(INT setting = SETTING_ALL);
 	bool ReadSkin();
 	void InitializeMeasures();
 	void InitializeMeters();
