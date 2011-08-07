@@ -1432,6 +1432,7 @@ void CMeterWindow::UpdateMeasure(const WCHAR* name, bool group)
 			if (bNetStats && dynamic_cast<CMeasureNet*>(*i) != NULL)
 			{
 				CMeasureNet::UpdateIFTable();
+				CMeasureNet::UpdateStats();
 				bNetStats = false;
 			}
 
@@ -2975,7 +2976,11 @@ void CMeterWindow::Update(bool nodraw)
 	if (!m_Measures.empty())
 	{
 		// Pre-updates
-		if (m_HasNetMeasures) CMeasureNet::UpdateIFTable();
+		if (m_HasNetMeasures)
+		{
+			CMeasureNet::UpdateIFTable();
+			CMeasureNet::UpdateStats();
+		}
 		CMeasureCalc::UpdateVariableMap(*this);
 
 		// Update all measures

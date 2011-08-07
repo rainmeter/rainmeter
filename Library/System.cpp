@@ -888,8 +888,6 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
 		case TIMER_NETSTATS:
 			CMeasureNet::UpdateIFTable();
-
-			// Statistics
 			CMeasureNet::UpdateStats();
 			if (Rainmeter) Rainmeter->WriteStats(false);
 

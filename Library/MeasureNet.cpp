@@ -26,9 +26,8 @@ UINT CMeasureNet::c_NumOfTables = 0;
 std::vector<ULONG64> CMeasureNet::c_StatValues;
 std::vector<ULONG64> CMeasureNet::c_OldStatValues;
 
-FPGETIFTABLE2EX CMeasureNet::c_GetIfTable2Ex = NULL;
+FPGETIFTABLE2 CMeasureNet::c_GetIfTable2 = NULL;
 FPFREEMIBTABLE CMeasureNet::c_FreeMibTable = NULL;
-bool CMeasureNet::c_UseNewApi = false;
 
 extern CRainmeter* Rainmeter;
 
@@ -93,7 +92,7 @@ void CMeasureNet::UpdateIFTable()
 {
 	bool logging = false;
 
-	if (c_UseNewApi)
+	if (c_GetIfTable2)
 	{
 		if (c_Table)
 		{
@@ -101,7 +100,7 @@ void CMeasureNet::UpdateIFTable()
 			c_Table = NULL;
 		}
 
-		if (c_GetIfTable2Ex(MibIfTableNormal, (MIB_IF_TABLE2**)&c_Table) == NO_ERROR)
+		if (c_GetIfTable2((MIB_IF_TABLE2**)&c_Table) == NO_ERROR)
 		{
 			MIB_IF_TABLE2* ifTable = (MIB_IF_TABLE2*)c_Table;
 
@@ -271,7 +270,7 @@ ULONG64 CMeasureNet::GetNetOctets(NET net)
 {
 	ULONG64 value = 0;
 
-	if (c_UseNewApi)
+	if (c_GetIfTable2)
 	{
 		MIB_IF_ROW2* table = (MIB_IF_ROW2*)((MIB_IF_TABLE2*)c_Table)->Table;
 
@@ -399,7 +398,7 @@ ULONG64 CMeasureNet::GetNetStatsValue(NET net)
 			// Ignore the loopback and filter interfaces
 			if (c_NumOfTables == statsSize)
 			{
-				if (c_UseNewApi)
+				if (c_GetIfTable2)
 				{
 					if (((MIB_IF_TABLE2*)c_Table)->Table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK ||
 						((MIB_IF_TABLE2*)c_Table)->Table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) continue;
@@ -521,24 +520,24 @@ void CMeasureNet::UpdateStats()
 		size_t statsSize = c_NumOfTables * 2;
 
 		// Fill the vectors
-		while (c_StatValues.size() < statsSize)
+		if (c_StatValues.size() < statsSize)
 		{
-			c_StatValues.push_back(0);
+			c_StatValues.resize(statsSize, 0);
 		}
 
-		while (c_OldStatValues.size() < statsSize)
+		if (c_OldStatValues.size() < statsSize)
 		{
-			c_OldStatValues.push_back(0);
+			c_OldStatValues.resize(statsSize, 0);
 		}
 
 		for (UINT i = 0; i < c_NumOfTables; ++i)
 		{
 			ULONG64 in, out;
 
-			if (c_UseNewApi)
+			if (c_GetIfTable2)
 			{
-				in = (DWORD)((MIB_IF_TABLE2*)c_Table)->Table[i].InOctets;
-				out = (DWORD)((MIB_IF_TABLE2*)c_Table)->Table[i].OutOctets;
+				in = ((MIB_IF_TABLE2*)c_Table)->Table[i].InOctets;
+				out = ((MIB_IF_TABLE2*)c_Table)->Table[i].OutOctets;
 			}
 			else
 			{
@@ -546,12 +545,16 @@ void CMeasureNet::UpdateStats()
 				out = ((MIB_IFTABLE*)c_Table)->table[i].dwOutOctets;
 			}
 
-			if (c_OldStatValues[i * 2 + 0] != 0 && c_OldStatValues[i * 2 + 1] != 0)
+			if (c_OldStatValues[i * 2 + 0] != 0)
 			{
 				if (in > c_OldStatValues[i * 2 + 0])
 				{
 					c_StatValues[i * 2 + 0] += in - c_OldStatValues[i * 2 + 0];
 				}
+			}
+
+			if (c_OldStatValues[i * 2 + 1] != 0)
+			{
 				if (out > c_OldStatValues[i * 2 + 1])
 				{
 					c_StatValues[i * 2 + 1] += out - c_OldStatValues[i * 2 + 1];
@@ -597,24 +600,25 @@ void CMeasureNet::ReadStats(const WCHAR* iniFile, std::wstring& statsDate)
 	int count = parser.ReadInt(L"Statistics", L"NetStatsCount", 0);
 
 	c_StatValues.clear();
+	c_StatValues.reserve(count * 2);
 
 	for (int i = 1; i <= count; ++i)
 	{
 		ULARGE_INTEGER value;
 
 		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInHigh%i", i);
-		value.HighPart = (DWORD)parser.ReadUInt(L"Statistics", buffer, 0);
+		value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInLow%i", i);
-		value.LowPart = (DWORD)parser.ReadUInt(L"Statistics", buffer, 0);
+		value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0);
 
 		c_StatValues.push_back(value.QuadPart);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutHigh%i", i);
-		value.HighPart = (DWORD)parser.ReadUInt(L"Statistics", buffer, 0);
+		value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutLow%i", i);
-		value.LowPart = (DWORD)parser.ReadUInt(L"Statistics", buffer, 0);
+		value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0);
 
 		c_StatValues.push_back(value.QuadPart);
 	}
@@ -701,15 +705,13 @@ void CMeasureNet::InitializeNewApi()
 		HMODULE IpHlpApiLibrary = GetModuleHandle(L"IpHlpApi.dll");
 		if (IpHlpApiLibrary)
 		{
-			c_GetIfTable2Ex = (FPGETIFTABLE2EX)GetProcAddress(IpHlpApiLibrary, "GetIfTable2Ex");
+			c_GetIfTable2 = (FPGETIFTABLE2)GetProcAddress(IpHlpApiLibrary, "GetIfTable2");
 			c_FreeMibTable = (FPFREEMIBTABLE)GetProcAddress(IpHlpApiLibrary, "FreeMibTable");
 		}
 
-		c_UseNewApi = (IpHlpApiLibrary && c_GetIfTable2Ex && c_FreeMibTable);
-
-		if (!c_UseNewApi)
+		if (!c_GetIfTable2 || !c_FreeMibTable)
 		{
-			c_GetIfTable2Ex = NULL;
+			c_GetIfTable2 = NULL;
 			c_FreeMibTable = NULL;
 		}
 	}
@@ -728,14 +730,14 @@ void CMeasureNet::InitializeNewApi()
 */
 void CMeasureNet::FinalizeNewApi()
 {
-	if (c_UseNewApi)
+	if (c_GetIfTable2)
 	{
 		if (c_Table)
 		{
 			c_FreeMibTable(c_Table);
 		}
 
-		c_GetIfTable2Ex = NULL;
+		c_GetIfTable2 = NULL;
 		c_FreeMibTable = NULL;
 	}
 	else
@@ -744,6 +746,4 @@ void CMeasureNet::FinalizeNewApi()
 	}
 	c_Table = NULL;
 	c_NumOfTables = 0;
-
-	c_UseNewApi = false;
 }
