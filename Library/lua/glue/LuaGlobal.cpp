@@ -4,9 +4,38 @@
 
 static int Global_Log(lua_State* L)
 {
-	const char* str = tolua_tostring(L, 1, 0);
-	LuaManager::LuaLog(LOG_NOTICE, str);
+	// Modified version of luaB_print()
+	std::string message;
 
+	int n = lua_gettop(L);		// Number of arguments
+	lua_getglobal(L, "tostring");
+
+	for (int i = 1; i <= n; ++i)
+	{
+		lua_pushvalue(L, -1);	// Function to be called
+		lua_pushvalue(L, i);	// Value to print
+		lua_call(L, 1, 1);
+
+		// Get result
+		const char* s = lua_tostring(L, -1);
+		if (s == NULL)
+		{
+			return luaL_error(L, LUA_QL("tostring") " must return a string to " LUA_QL("print"));
+		}
+
+		if (i > 1)
+		{
+			// About dialog List View doesn't like tabs, just use 4 spaces instead
+			message += "    ";
+		}
+
+		message += s;
+
+		// Pop result
+		lua_pop(L, 1);
+	}
+
+	LuaManager::LuaLog(LOG_DEBUG, message.c_str());
 	return 0;
 }
 
