@@ -121,10 +121,7 @@ void CSystem::Initialize(HINSTANCE instance)
 		0,
 		WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
 
-	if (c_WinEventHook == NULL)
-	{
-		SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
-	}
+	SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
 	SetTimer(c_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, NULL);
 	SetTimer(c_Window, TIMER_DELETELATER, INTERVAL_DELETELATER, NULL);
 }
@@ -552,18 +549,28 @@ void CSystem::UpdateWorkareaInfo()
 */
 HWND CSystem::GetDefaultShellWindow()
 {
+	static HWND c_ShellW = NULL;  // cache
 	HWND ShellW = GetShellWindow();
 
 	if (ShellW)
 	{
-		WCHAR className[16];
-		if (GetClassName(ShellW, className, 16) > 0 &&
-			_wcsicmp(className, L"Progman") == 0)
+		if (ShellW == c_ShellW)
 		{
 			return ShellW;
 		}
+		else
+		{
+			WCHAR className[16];
+			if (GetClassName(ShellW, className, 16) > 0 &&
+				wcscmp(className, L"Progman") == 0)
+			{
+				c_ShellW = ShellW;
+				return ShellW;
+			}
+		}
 	}
 
+	c_ShellW = NULL;
 	return NULL;
 }
 
@@ -790,22 +797,10 @@ bool CSystem::CheckDesktopState(HWND WorkerW)
 	{
 		c_ShowDesktop = !c_ShowDesktop;
 
-		if (c_WinEventHook)
-		{
-			if (c_ShowDesktop)
-			{
-				SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
-			}
-			else
-			{
-				KillTimer(c_Window, TIMER_SHOWDESKTOP);
-			}
-		}
-
 		if (CRainmeter::GetDebug())
 		{
-			LogWithArgs(LOG_DEBUG, L"System: %s",
-				c_ShowDesktop ? L"\"Show the desktop\" has been detected." : L"\"Show open windows\" has been detected.");
+			LogWithArgs(LOG_DEBUG, L"System: \"%s\" has been detected.",
+				c_ShowDesktop ? L"Show the desktop" : L"Show open windows");
 		}
 
 		PrepareHelperWindow(WorkerW);
@@ -830,7 +825,7 @@ void CALLBACK CSystem::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, 
 		{
 			WCHAR className[16];
 			if (GetClassName(hwnd, className, 16) > 0 &&
-				_wcsicmp(className, L"WorkerW") == 0 &&
+				wcscmp(className, L"WorkerW") == 0 &&
 				BelongToSameProcess(GetDefaultShellWindow(), hwnd))
 			{
 				const int max = 5;
@@ -849,11 +844,6 @@ void CALLBACK CSystem::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, 
 						Sleep(2);  // Wait for 2-16 ms before retrying
 						++loop;
 					}
-				}
-
-				if (loop >= max)  // detection failed
-				{
-					SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
 				}
 			}
 		}
