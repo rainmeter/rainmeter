@@ -66,10 +66,8 @@ public:
 
 	static bool GetShowDesktop() { return c_ShowDesktop; }
 
-	static HWND GetWorkerW();
-
 	static HWND GetHelperWindow() { return c_HelperWindow; }
-	static void PrepareHelperWindow(HWND WorkerW);
+	static void PrepareHelperWindow(HWND WorkerW = GetWorkerW());
 
 	static OSPLATFORM GetOSPlatform();
 	static ULONGLONG GetTickCount64();
@@ -93,6 +91,7 @@ private:
 	static void UpdateWorkareaInfo();
 
 	static HWND GetDefaultShellWindow();
+	static HWND GetWorkerW();
 	static void ChangeZPosInOrder();
 
 	static bool CheckDesktopState(HWND WorkerW);

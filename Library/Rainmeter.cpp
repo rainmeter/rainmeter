@@ -3540,7 +3540,7 @@ void CRainmeter::RefreshAll()
 	GetMeterWindowsByLoadOrder(windows);
 
 	// Prepare the helper window
-	CSystem::PrepareHelperWindow(CSystem::GetWorkerW());
+	CSystem::PrepareHelperWindow();
 
 	// Refresh all
 	std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();

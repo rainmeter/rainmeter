@@ -561,44 +561,68 @@ HWND CSystem::GetDefaultShellWindow()
 		else
 		{
 			WCHAR className[16];
-			if (GetClassName(ShellW, className, 16) > 0 &&
-				wcscmp(className, L"Progman") == 0)
+			if (!(GetClassName(ShellW, className, 16) > 0 &&
+				wcscmp(className, L"Progman") == 0))
 			{
-				c_ShellW = ShellW;
-				return ShellW;
+				ShellW = NULL;
 			}
 		}
 	}
 
-	c_ShellW = NULL;
-	return NULL;
+	c_ShellW = ShellW;
+	return ShellW;
 }
 
 /*
 ** GetWorkerW
 **
 ** Finds the WorkerW window.
-** If the window is not found, returns NULL.
+** If the WorkerW window is not active, returns NULL.
 **
 */
 HWND CSystem::GetWorkerW()
 {
+	static HWND c_DefView = NULL;  // cache
 	HWND ShellW = GetDefaultShellWindow();
 	if (!ShellW) return NULL;  // Default Shell (Explorer) not running
 
-	if (FindWindowEx(ShellW, NULL, L"SHELLDLL_DefView", L"") == NULL)
+	if (c_DefView && IsWindow(c_DefView))
 	{
-		HWND WorkerW = NULL;
-		while (WorkerW = FindWindowEx(NULL, WorkerW, L"WorkerW", L""))
+		HWND parent = GetAncestor(c_DefView, GA_PARENT);
+		if (parent)
 		{
-			if (BelongToSameProcess(ShellW, WorkerW) && FindWindowEx(WorkerW, NULL, L"SHELLDLL_DefView", L""))
+			if (parent == ShellW)
 			{
-				return WorkerW;
+				return NULL;
+			}
+			else
+			{
+				WCHAR className[16];
+				if (GetClassName(parent, className, 16) > 0 &&
+					wcscmp(className, L"WorkerW") == 0)
+				{
+					return parent;
+				}
 			}
 		}
 	}
 
-	return NULL;
+	HWND WorkerW = NULL, DefView = FindWindowEx(ShellW, NULL, L"SHELLDLL_DefView", L"");
+	if (DefView == NULL)
+	{
+		while (WorkerW = FindWindowEx(NULL, WorkerW, L"WorkerW", L""))
+		{
+			if (IsWindowVisible(WorkerW) &&
+				BelongToSameProcess(ShellW, WorkerW) &&
+				(DefView = FindWindowEx(WorkerW, NULL, L"SHELLDLL_DefView", L"")))
+			{
+				break;
+			}
+		}
+	}
+
+	c_DefView = DefView;
+	return WorkerW;
 }
 
 /*
