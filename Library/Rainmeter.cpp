@@ -3162,7 +3162,8 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 					ExecuteCommand(command.c_str(), meterWindow);
 				}
 			}
-			else if (arg[i] == L'"' && arg[i + 1] == L'"' && arg[i + 2] == L'"')
+			else if (isize > (i + 2) &&
+				arg[i] == L'"' && arg[i + 1] == L'"' && arg[i + 2] == L'"')
 			{
 				i += 3;
 
