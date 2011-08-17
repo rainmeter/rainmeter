@@ -59,16 +59,23 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 		{
 			if (arg[pos] == L'"')
 			{
-				if (arg[pos + 1] == L'"' && arg[pos + 2] == L'"')
+				if (arg.size() > (pos + 2) &&
+					arg[pos + 1] == L'"' && arg[pos + 2] == L'"')
 				{
 					// Eat found quotes and finding ending """
 					arg.erase(0, pos + 3);
-					pos = arg.find(L"\"\"\" ");
+
+					size_t extra = 4;
+					if ((pos = arg.find(L"\"\"\" ")) == std::wstring::npos)
+					{
+						extra = 3;
+						pos = arg.find(L"\"\"\"");
+					}
 
 					if (pos != std::wstring::npos)
 					{
 						newStr.assign(arg, 0, pos);
-						arg.erase(0, pos + 4);
+						arg.erase(0, pos + extra);
 
 						result.push_back(newStr);
 					}
@@ -80,7 +87,7 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 				{
 					// Eat found quote and find ending quote 
 					arg.erase(0, pos + 1);
-					pos = arg.find_first_of(L"\"");
+					pos = arg.find_first_of(L'"');
 				}
 			}
 			else
@@ -101,17 +108,27 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 				arg.erase(0, pos + 1);
 
 				// Strip quotes
-				while ((pos = newStr.find(L"\"")) != std::wstring::npos)
+				while ((pos = newStr.find(L'"')) != std::wstring::npos)
 				{
 					newStr.erase(pos, 1);
 				}
 
 				result.push_back(newStr);
 			}
+			else  // quote or space not found
+			{
+				break;
+			}
 		}
 
 		if (arg.size() > 0)
 		{
+			// Strip quotes
+			while ((pos = arg.find(L'"')) != std::wstring::npos)
+			{
+				arg.erase(pos, 1);
+			}
+
 			result.push_back(arg);
 		}
 	}
