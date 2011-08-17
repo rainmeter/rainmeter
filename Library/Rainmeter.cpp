@@ -53,53 +53,66 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 		// Split the argument between first space.
 		// Or if string is in quotes, the after the second quote.
 
-		size_t quotePos = arg.find(L"\"");
-		size_t spacePos = arg.find(L" ");
-		while (quotePos != std::wstring::npos || spacePos != std::wstring::npos)
+		size_t pos;
+		std::wstring newStr;
+		while ((pos = arg.find_first_not_of(L' ')) != std::wstring::npos)
 		{
-			size_t endPos = 0;
-
-			if (quotePos == 0)
+			if (arg[pos] == L'"')
 			{
-				arg.erase(0, 1);	// Eat the quote
+				if (arg[pos + 1] == L'"' && arg[pos + 2] == L'"')
+				{
+					// Eat found quotes and finding ending """
+					arg.erase(0, pos + 3);
+					pos = arg.find(L"\"\"\" ");
 
-				// Find the second quote
-				quotePos = arg.find(L"\"");
-				endPos = quotePos;
+					if (pos != std::wstring::npos)
+					{
+						newStr.assign(arg, 0, pos);
+						arg.erase(0, pos + 4);
+
+						result.push_back(newStr);
+					}
+
+					// Skip stripping quotes
+					continue;
+				}
+				else
+				{
+					// Eat found quote and find ending quote 
+					arg.erase(0, pos + 1);
+					pos = arg.find_first_of(L"\"");
+				}
 			}
 			else
 			{
-				if (spacePos == std::wstring::npos) spacePos = arg.size() - 1;
+				if (pos > 0)
+				{
+					// Eat everything until non-space (and non-quote) char
+					arg.erase(0, pos);
+				}
 
-				endPos = spacePos;
+				// Find the second quote
+				pos = arg.find_first_of(L' ');
 			}
 
-			std::wstring newStr = arg.substr(0, endPos);
-			arg.erase(0, endPos + 1);
-
-			if (newStr.size() > 0 || quotePos == 0)
+			if (pos != std::wstring::npos)
 			{
+				newStr.assign(arg, 0, pos);
+				arg.erase(0, pos + 1);
+
+				// Strip quotes
+				while ((pos = newStr.find(L"\"")) != std::wstring::npos)
+				{
+					newStr.erase(pos, 1);
+				}
+
 				result.push_back(newStr);
 			}
-
-			quotePos = arg.find(L"\"");
-			spacePos = arg.find(L" ");
 		}
 
 		if (arg.size() > 0)
 		{
 			result.push_back(arg);
-		}
-
-		// Strip the quotes from all strings
-		for (size_t i = 0, isize = result.size(); i < isize; ++i)
-		{
-			size_t pos = result[i].find(L"\"");
-			while (pos != std::wstring::npos)
-			{
-				result[i].erase(pos, 1);
-				pos = result[i].find(L"\"");
-			}
 		}
 	}
 
@@ -3132,6 +3145,16 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 					ExecuteCommand(command.c_str(), meterWindow);
 				}
 			}
+			else if (arg[i] == L'"' && arg[i + 1] == L'"' && arg[i + 2] == L'"')
+			{
+				i += 3;
+
+				std::wstring::size_type pos = arg.find(L"\"\"\"", i);
+				if (pos != std::wstring::npos)
+				{
+					i = pos + 2;	// Skip "", loop will skip last "
+				}
+			}
 		}
 	}
 	else
@@ -3228,51 +3251,18 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 
 	if (!strCommand.empty())
 	{
-		// Check for built-ins
-		if (_wcsnicmp(L"PLAY ", strCommand.c_str(), 5) == 0 ||
-			_wcsnicmp(L"PLAYLOOP ", strCommand.c_str(), 9) == 0)
-		{
-			// Strip built-in command
-			size_t pos = strCommand.find(L' ');
-			strCommand.erase(0, pos + 1);
+		const WCHAR* command = strCommand.c_str();
 
-			if (!strCommand.empty())
-			{
-				DWORD flags = SND_FILENAME | SND_ASYNC;
-				if (pos == 8)  // PLAYLOOP
-				{
-					flags |= SND_LOOP | SND_NODEFAULT;
-				}
-
-				// Strip the quotes
-				std::wstring::size_type len = strCommand.length();
-				if (len >= 2 && strCommand[0] == L'\"' && strCommand[len - 1] == L'\"')
-				{
-					len -= 2;
-					strCommand.assign(strCommand, 1, len);
-				}
-
-				PlaySound(strCommand.c_str(), NULL, flags);
-			}
-			return;
-		}
-		else if (_wcsnicmp(L"PLAYSTOP", strCommand.c_str(), 8) == 0)
-		{
-			PlaySound(NULL, NULL, SND_PURGE);
-			return;
-		}
-
-		// Run the command
-		if (strCommand.c_str()[0] == L'!' && Rainmeter->GetDummyLitestep())
+		if (command[0] == L'!' && Rainmeter->GetDummyLitestep()) // Bangs
 		{
 			if (meterWindow)
 			{
-				// Fake WM_COPY to deliver bangs
-				COPYDATASTRUCT CopyDataStruct;
-				CopyDataStruct.cbData = (DWORD)((wcslen(command) + 1) * sizeof(WCHAR));
-				CopyDataStruct.dwData = 1;
-				CopyDataStruct.lpData = (void*)strCommand.c_str();
-				meterWindow->OnCopyData(WM_COPYDATA, NULL, (LPARAM)&CopyDataStruct);
+				// Fake WM_COPYDATA to deliver bangs
+				COPYDATASTRUCT cds;
+				cds.cbData = (DWORD)((wcslen(command) + 1) * sizeof(WCHAR));
+				cds.dwData = 1;
+				cds.lpData = (void*)command;
+				meterWindow->OnCopyData(WM_COPYDATA, NULL, (LPARAM)&cds);
 			}
 			else
 			{
@@ -3291,10 +3281,45 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 				ExecuteBang(bang, arg, meterWindow);
 			}
 		}
-		else
+		else if (_wcsnicmp(L"PLAY", command, 4) == 0)
 		{
-			// This can run bangs also
-			LSExecute(NULL, strCommand.c_str(), SW_SHOWNORMAL);
+			command += 4;	// Skip PLAY
+			if (_wcsnicmp(L"STOP", command, 4) == 0)
+			{
+				PlaySound(NULL, NULL, SND_PURGE);
+			}
+			else
+			{
+				DWORD flags = SND_FILENAME | SND_ASYNC;
+
+				if (_wcsnicmp(L"LOOP", command, 4) == 0)
+				{
+					flags |= SND_LOOP | SND_NODEFAULT;
+					command += 4;	// Skip LOOP
+				}
+
+				if (command[1] == L' ')
+				{
+					command += 1;	// Skip the space
+					strCommand = command;
+					if (!strCommand.empty())
+					{
+						// Strip the quotes
+						std::wstring::size_type len = strCommand.length();
+						if (len >= 2 && strCommand[0] == L'\"' && strCommand[len - 1] == L'\"')
+						{
+							len -= 2;
+							strCommand.assign(strCommand, 1, len);
+						}
+
+						PlaySound(strCommand.c_str(), NULL, flags);
+					}
+				}
+			}
+		}
+		else // Run command
+		{
+			LSExecute(NULL, command, SW_SHOWNORMAL);
 		}
 	}
 }
