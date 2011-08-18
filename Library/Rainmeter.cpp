@@ -3299,29 +3299,29 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 				ExecuteBang(bang, arg, meterWindow);
 			}
 		}
-		else if (_wcsnicmp(L"PLAY", command, 4) == 0)
+		else
 		{
-			command += 4;	// Skip PLAY
-			if (_wcsnicmp(L"STOP", command, 4) == 0)
+			// Check for built-ins
+			if (_wcsnicmp(L"PLAY", command, 4) == 0)
 			{
-				PlaySound(NULL, NULL, SND_PURGE);
-			}
-			else
-			{
-				DWORD flags = SND_FILENAME | SND_ASYNC;
-
-				if (_wcsnicmp(L"LOOP", command, 4) == 0)
+				if (command[4] == L' ' ||                      // PLAY
+					_wcsnicmp(L"LOOP ", &command[4], 5) == 0)  // PLAYLOOP
 				{
-					flags |= SND_LOOP | SND_NODEFAULT;
-					command += 4;	// Skip LOOP
-				}
+					command += 4;	// Skip PLAY
 
-				if (command[0] == L' ')
-				{
-					command += 1;	// Skip the space
-					strCommand = command;
-					if (!strCommand.empty())
+					DWORD flags = SND_FILENAME | SND_ASYNC;
+
+					if (command[0] != L' ')
 					{
+						flags |= SND_LOOP | SND_NODEFAULT;
+						command += 4;	// Skip LOOP
+					}
+
+					++command;	// Skip the space
+					if (command[0] != L'\0')
+					{
+						strCommand = command;
+
 						// Strip the quotes
 						std::wstring::size_type len = strCommand.length();
 						if (len >= 2 && strCommand[0] == L'\"' && strCommand[len - 1] == L'\"')
@@ -3332,11 +3332,16 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 
 						PlaySound(strCommand.c_str(), NULL, flags);
 					}
+					return;
+				}
+				else if (_wcsnicmp(L"STOP", &command[4], 4) == 0)  // PLAYSTOP
+				{
+					PlaySound(NULL, NULL, SND_PURGE);
+					return;
 				}
 			}
-		}
-		else // Run command
-		{
+
+			// Run command
 			LSExecute(NULL, command, SW_SHOWNORMAL);
 		}
 	}
