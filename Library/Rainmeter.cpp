@@ -3269,7 +3269,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 
 	if (!strCommand.empty())
 	{
-		const WCHAR* command = strCommand.c_str();
+		command = strCommand.c_str();
 
 		if (command[0] == L'!' && Rainmeter->GetDummyLitestep()) // Bangs
 		{
@@ -3316,7 +3316,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 					command += 4;	// Skip LOOP
 				}
 
-				if (command[1] == L' ')
+				if (command[0] == L' ')
 				{
 					command += 1;	// Skip the space
 					strCommand = command;
