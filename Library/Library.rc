@@ -73,8 +73,20 @@ BEGIN
     POPUP "Context"
     BEGIN
         MENUITEM "About...",                    ID_CONTEXT_ABOUT
+        MENUITEM "Downloads",                   ID_CONTEXT_DOWNLOADS
         MENUITEM "Help",                        ID_CONTEXT_SHOW_HELP
         MENUITEM SEPARATOR
+        POPUP "Configs"
+        BEGIN
+            MENUITEM SEPARATOR
+            MENUITEM "Open Skins' Folder",          ID_CONTEXT_OPENSKINSFOLDER
+            MENUITEM "Disable Dragging",            ID_CONTEXT_DISABLEDRAG
+            MENUITEM "Manage Skins...",             ID_CONTEXT_MANAGESKINS
+        END
+        POPUP "Themes"
+        BEGIN
+            MENUITEM "Manage Themes...",            ID_CONTEXT_MANAGETHEMES
+        END
         MENUITEM SEPARATOR
         MENUITEM "Edit Settings...",            ID_CONTEXT_EDITCONFIG
         MENUITEM "Refresh All",                 ID_CONTEXT_REFRESH
@@ -98,14 +110,21 @@ IDR_SKIN_MENU MENU DISCARDABLE
 BEGIN
     POPUP "Skin Menu"
     BEGIN
+        MENUITEM " ",                           ID_CONTEXT_SKINMENU_OPENSKINSFOLDER
+        MENUITEM SEPARATOR
+        POPUP "Variants"
+        BEGIN
+            MENUITEM " ",                           0, GRAYED  // DUMMY
+        END
+        MENUITEM SEPARATOR
         POPUP "Settings"
         BEGIN
             POPUP "Position"
             BEGIN
                 POPUP "Display Monitor"
                 BEGIN
-                    MENUITEM "Use default: Primary monitor", ID_CONTEXT_SKINMENU_MONITOR_PRIMARY
-                    MENUITEM "@0: Virtual screen",          ID_MONITOR_FIRST
+                    MENUITEM "Use default: Primary monitor",         ID_CONTEXT_SKINMENU_MONITOR_PRIMARY
+                    MENUITEM "@0: Virtual screen",                   ID_MONITOR_FIRST
                     MENUITEM SEPARATOR
                     MENUITEM SEPARATOR
                     MENUITEM "Auto-select based on window position", ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT

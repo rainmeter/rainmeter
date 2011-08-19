@@ -3869,7 +3869,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				{
 					// Disable Quit/Logging if ran as a Litestep plugin
 					EnableMenuItem(subMenu, ID_CONTEXT_QUIT, MF_BYCOMMAND | MF_GRAYED);
-					EnableMenuItem(subMenu, 7, MF_BYPOSITION | MF_GRAYED);  // "Logging" menu
+					EnableMenuItem(subMenu, 10, MF_BYPOSITION | MF_GRAYED);  // "Logging" menu
 				}
 				else
 				{
@@ -3890,26 +3890,24 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					}
 				}
 
-				HMENU configMenu = CreateConfigMenu(m_ConfigMenu);
-				if (!configMenu)
-				{
-					configMenu = CreatePopupMenu();
-					AppendMenu(configMenu, MF_GRAYED, 0, L"No configs available");
-				}
+				HMENU configMenu = GetSubMenu(subMenu, 4);
 				if (configMenu)
 				{
-					AppendMenu(configMenu, MF_SEPARATOR, 0, NULL);
-					AppendMenu(configMenu, 0, ID_CONTEXT_OPENSKINSFOLDER, L"Open Skins\' Folder");
-					AppendMenu(configMenu, (m_DisableDragging) ? MF_CHECKED : MF_UNCHECKED, ID_CONTEXT_DISABLEDRAG, L"Disable Dragging");
-					AppendMenu(configMenu, 0, ID_CONTEXT_MANAGESKINS, L"Manage Skins...");
+					if (!CreateConfigMenu(configMenu, m_ConfigMenu))
+					{
+						InsertMenu(configMenu, 0, MF_BYPOSITION | MF_GRAYED, 0, L"No configs available");
+					}
 
-					InsertMenu(subMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configMenu, L"Configs");
+					if (m_DisableDragging)
+					{
+						CheckMenuItem(configMenu, ID_CONTEXT_DISABLEDRAG, MF_BYCOMMAND | MF_CHECKED);
+					}
 				}
 
-				HMENU themeMenu = CreateThemeMenu();
+				HMENU themeMenu = GetSubMenu(subMenu, 5);
 				if (themeMenu)
 				{
-					InsertMenu(subMenu, 4, MF_BYPOSITION | MF_POPUP, (UINT_PTR)themeMenu, L"Themes");
+					CreateThemeMenu(themeMenu);
 				}
 
 				if (meterWindow)
@@ -3918,10 +3916,12 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					subMenu = CreateSkinMenu(meterWindow, 0, configMenu);
 					InsertMenu(subMenu, 9, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 					InsertMenu(subMenu, 10, MF_BYPOSITION | MF_POPUP, (UINT_PTR)rainmeterMenu, L"Rainmeter Menu");
+
+					RemoveMenu(rainmeterMenu, ID_CONTEXT_DOWNLOADS, MF_BYCOMMAND);
 				}
 				else
 				{
-					InsertMenu(subMenu, 11, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+					InsertMenu(subMenu, 12, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 
 					// Create a menu for all active configs
 					std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
@@ -3931,11 +3931,9 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					{
 						CMeterWindow* mw = ((*iter).second);
 						HMENU skinMenu = CreateSkinMenu(mw, index, configMenu);
-						InsertMenu(subMenu, 11, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
+						InsertMenu(subMenu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
 						++index;
 					}
-
-					InsertMenu(subMenu, 1, MF_BYPOSITION, ID_CONTEXT_DOWNLOADS, L"Downloads");
 
 					// Put Update notifications in the Tray menu
 					if (m_NewVersion)
@@ -3994,15 +3992,16 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 }
 
 
-HMENU CRainmeter::CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData)
+HMENU CRainmeter::CreateConfigMenu(HMENU configMenu, std::vector<CONFIGMENU>& configMenuData)
 {
-	HMENU configMenu = NULL;
-
 	if (!configMenuData.empty())
 	{
-		configMenu = CreatePopupMenu();
-		bool item = false;
+		if (!configMenu)
+		{
+			configMenu = CreatePopupMenu();
+		}
 
+		bool item = false;
 		for (int i = 0, j = 0, isize = (int)configMenuData.size(); i < isize; ++i)
 		{
 			if (configMenuData[i].index == -1)
@@ -4015,7 +4014,7 @@ HMENU CRainmeter::CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData)
 					item = false;
 				}
 
-				HMENU submenu = CreateConfigMenu(configMenuData[i].children);
+				HMENU submenu = CreateConfigMenu(NULL, configMenuData[i].children);
 				if (submenu)
 				{
 					InsertMenu(configMenu, i + j, MF_BYPOSITION | MF_POPUP, (UINT_PTR)submenu, configMenuData[i].name.c_str());
@@ -4028,27 +4027,24 @@ HMENU CRainmeter::CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData)
 				item = true;
 			}
 		}
+
+		return configMenu;
 	}
-	return configMenu;
+
+	return NULL;
 }
 
-HMENU CRainmeter::CreateThemeMenu()
+void CRainmeter::CreateThemeMenu(HMENU themeMenu)
 {
-	HMENU themeMenu = CreatePopupMenu();
-
-	for (size_t i = 0, isize = m_Themes.size(); i < isize; ++i)
-	{
-		AppendMenu(themeMenu, 0, ID_THEME_FIRST + i, m_Themes[i].c_str());
-	}
-
 	if (!m_Themes.empty())
 	{
-		AppendMenu(themeMenu, MF_SEPARATOR, 0, NULL);
+		InsertMenu(themeMenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+
+		for (size_t i = 0, isize = m_Themes.size(); i < isize; ++i)
+		{
+			InsertMenu(themeMenu, i, MF_BYPOSITION, ID_THEME_FIRST + i, m_Themes[i].c_str());
+		}
 	}
-
-	AppendMenu(themeMenu, 0, ID_CONTEXT_MANAGETHEMES, L"Manage Themes...");
-
-	return themeMenu;
 }
 
 HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU configMenu)
@@ -4066,7 +4062,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 	if (skinMenu)
 	{
 		// Tick the position
-		HMENU settingsMenu = GetSubMenu(skinMenu, 0);
+		HMENU settingsMenu = GetSubMenu(skinMenu, 4);
 		if (settingsMenu)
 		{
 			HMENU posMenu = GetSubMenu(settingsMenu, 0);
@@ -4110,102 +4106,110 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 					CreateMonitorMenu(monitorMenu, meterWindow);
 				}
 			}
-		}
 
-		// Tick the transparency
-		if (!meterWindow->GetNativeTransparency())
-		{
-			EnableMenuItem(settingsMenu, 1, MF_BYPOSITION | MF_GRAYED);  // "Transparency" menu
-			EnableMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_CLICKTHROUGH, MF_BYCOMMAND | MF_GRAYED);
-		}
-		else
-		{
-			HMENU alphaMenu = GetSubMenu(settingsMenu, 1);
-			if (alphaMenu)
+			// Tick the transparency
+			if (!meterWindow->GetNativeTransparency())
 			{
-				int value = (int)(10 - meterWindow->GetAlphaValue() / 25.5);
-				value = min(9, value);
-				value = max(0, value);
-				CheckMenuItem(alphaMenu, value, MF_BYPOSITION | MF_CHECKED);
+				EnableMenuItem(settingsMenu, 1, MF_BYPOSITION | MF_GRAYED);  // "Transparency" menu
+				EnableMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_CLICKTHROUGH, MF_BYCOMMAND | MF_GRAYED);
+			}
+			else
+			{
+				HMENU alphaMenu = GetSubMenu(settingsMenu, 1);
+				if (alphaMenu)
+				{
+					int value = (int)(10 - meterWindow->GetAlphaValue() / 25.5);
+					value = min(9, value);
+					value = max(0, value);
+					CheckMenuItem(alphaMenu, value, MF_BYPOSITION | MF_CHECKED);
 
-				if (meterWindow->GetWindowHide() == HIDEMODE_FADEIN)
-				{
-					CheckMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_CHECKED);
-					EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
+					if (meterWindow->GetWindowHide() == HIDEMODE_FADEIN)
+					{
+						CheckMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_CHECKED);
+						EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
+					}
+					else if (meterWindow->GetWindowHide() == HIDEMODE_FADEOUT)
+					{
+						CheckMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_CHECKED);
+						EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
+					}
+					else if (meterWindow->GetWindowHide() == HIDEMODE_HIDE)
+					{
+						EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
+						EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
+					}
 				}
-				else if (meterWindow->GetWindowHide() == HIDEMODE_FADEOUT)
-				{
-					CheckMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_CHECKED);
-					EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
-				}
-				else if (meterWindow->GetWindowHide() == HIDEMODE_HIDE)
-				{
-					EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
-					EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
-				}
+			}
+
+			// Tick the configs
+			if (meterWindow->GetWindowHide() == HIDEMODE_HIDE)
+			{
+				CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_HIDEONMOUSE, MF_BYCOMMAND | MF_CHECKED);
+			}
+			else if (meterWindow->GetWindowHide() != HIDEMODE_NONE)
+			{
+				EnableMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_HIDEONMOUSE, MF_BYCOMMAND | MF_GRAYED);
+			}
+
+			if (meterWindow->GetSnapEdges())
+			{
+				CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_SNAPTOEDGES, MF_BYCOMMAND | MF_CHECKED);
+			}
+
+			if (meterWindow->GetSavePosition())
+			{
+				CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_REMEMBERPOSITION, MF_BYCOMMAND | MF_CHECKED);
+			}
+
+			if (m_DisableDragging)
+			{
+				EnableMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_DRAGGABLE, MF_BYCOMMAND | MF_GRAYED);
+			}
+			else if (meterWindow->GetWindowDraggable())
+			{
+				CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_DRAGGABLE, MF_BYCOMMAND | MF_CHECKED);
+			}
+
+			if (meterWindow->GetClickThrough())
+			{
+				CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_CLICKTHROUGH, MF_BYCOMMAND | MF_CHECKED);
+			}
+
+			if (meterWindow->GetKeepOnScreen())
+			{
+				CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_KEEPONSCREEN, MF_BYCOMMAND | MF_CHECKED);
 			}
 		}
 
-		// Tick the configs
-		if (meterWindow->GetWindowHide() == HIDEMODE_HIDE)
-		{
-			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_HIDEONMOUSE, MF_BYCOMMAND | MF_CHECKED);
-		}
-		else if (meterWindow->GetWindowHide() != HIDEMODE_NONE)
-		{
-			EnableMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_HIDEONMOUSE, MF_BYCOMMAND | MF_GRAYED);
-		}
-
-		if (meterWindow->GetSnapEdges())
-		{
-			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_SNAPTOEDGES, MF_BYCOMMAND | MF_CHECKED);
-		}
-
-		if (meterWindow->GetSavePosition())
-		{
-			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_REMEMBERPOSITION, MF_BYCOMMAND | MF_CHECKED);
-		}
-
-		if (m_DisableDragging)
-		{
-			EnableMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_DRAGGABLE, MF_BYCOMMAND | MF_GRAYED);
-		}
-		else if (meterWindow->GetWindowDraggable())
-		{
-			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_DRAGGABLE, MF_BYCOMMAND | MF_CHECKED);
-		}
-
-		if (meterWindow->GetClickThrough())
-		{
-			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_CLICKTHROUGH, MF_BYCOMMAND | MF_CHECKED);
-		}
-
-		if (meterWindow->GetKeepOnScreen())
-		{
-			CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_KEEPONSCREEN, MF_BYCOMMAND | MF_CHECKED);
-		}
-
-		// Add the name of the Skin to the menu and disable the item
+		// Add the name of the Skin to the menu
 		const std::wstring& skinName = meterWindow->GetSkinName();
-		InsertMenu(skinMenu, 0, MF_BYPOSITION, ID_CONTEXT_SKINMENU_OPENSKINSFOLDER, skinName.c_str());
-		InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-		SetMenuDefaultItem(skinMenu, 0, MF_BYPOSITION);
+		ModifyMenu(skinMenu, ID_CONTEXT_SKINMENU_OPENSKINSFOLDER, MF_BYCOMMAND, ID_CONTEXT_SKINMENU_OPENSKINSFOLDER, skinName.c_str());
+		SetMenuDefaultItem(skinMenu, ID_CONTEXT_SKINMENU_OPENSKINSFOLDER, FALSE);
 
+		// Remove dummy menuitem from the variants menu
+		HMENU variantsMenu = GetSubMenu(skinMenu, 2);
+		if (variantsMenu)
+		{
+			RemoveMenu(variantsMenu, 0, MF_BYPOSITION);
+		}
+
+		// Give the menuitem the unique id that depends on the skin
 		ChangeSkinIndex(skinMenu, index);
 
 		// Add the variants menu
-		for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
+		if (variantsMenu)
 		{
-			const CONFIG& config = m_ConfigStrings[i];
-			if (_wcsicmp(config.config.c_str(), skinName.c_str()) == 0)
+			for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
 			{
-				HMENU variantsMenu = CreatePopupMenu();
-				for (int j = 0, jsize = (int)config.iniFiles.size(); j < jsize; ++j)
+				const CONFIG& config = m_ConfigStrings[i];
+				if (_wcsicmp(config.config.c_str(), skinName.c_str()) == 0)
 				{
-					InsertMenu(variantsMenu, j, MF_BYPOSITION | ((config.active == j + 1) ? MF_CHECKED : MF_UNCHECKED), config.commands[j], config.iniFiles[j].c_str());
+					for (int j = 0, jsize = (int)config.iniFiles.size(); j < jsize; ++j)
+					{
+						InsertMenu(variantsMenu, j, MF_BYPOSITION | ((config.active == j + 1) ? MF_CHECKED : MF_UNCHECKED), config.commands[j], config.iniFiles[j].c_str());
+					}
+					break;
 				}
-				InsertMenu(skinMenu, 2, MF_BYPOSITION | MF_POPUP, (UINT_PTR)variantsMenu, L"Variants");
-				break;
 			}
 		}
 
@@ -4234,7 +4238,6 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 						if (configRootMenu)
 						{
 							InsertMenu(skinMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configRootMenu, root.c_str());
-							InsertMenu(skinMenu, 4, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 						}
 						break;
 					}

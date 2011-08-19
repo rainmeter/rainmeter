@@ -272,8 +272,8 @@ private:
 	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU configMenu);
 	void ChangeSkinIndex(HMENU subMenu, int index);
 	int ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse);
-	HMENU CreateConfigMenu(std::vector<CONFIGMENU>& configMenuData);
-	HMENU CreateThemeMenu();
+	HMENU CreateConfigMenu(HMENU configMenu, std::vector<CONFIGMENU>& configMenuData);
+	void CreateThemeMenu(HMENU themeMenu);
 	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);
 	void CreateDefaultConfigFile(const std::wstring& strFile);
 	void SetLogging(bool logging);
