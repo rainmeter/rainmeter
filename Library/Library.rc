@@ -70,7 +70,7 @@ END
 
 IDR_CONTEXT_MENU MENU DISCARDABLE
 BEGIN
-    POPUP "Context"
+    POPUP "Rainmeter Menu"
     BEGIN
         MENUITEM "About...",                    ID_CONTEXT_ABOUT
         MENUITEM "Downloads",                   ID_CONTEXT_DOWNLOADS
@@ -78,6 +78,7 @@ BEGIN
         MENUITEM SEPARATOR
         POPUP "Configs"
         BEGIN
+            MENUITEM "No configs available",        0, GRAYED
             MENUITEM SEPARATOR
             MENUITEM "Open Skins' Folder",          ID_CONTEXT_OPENSKINSFOLDER
             MENUITEM "Disable Dragging",            ID_CONTEXT_DISABLEDRAG
@@ -114,7 +115,7 @@ BEGIN
         MENUITEM SEPARATOR
         POPUP "Variants"
         BEGIN
-            MENUITEM " ",                           0, GRAYED  // DUMMY
+            MENUITEM SEPARATOR  // DUMMY
         END
         MENUITEM SEPARATOR
         POPUP "Settings"

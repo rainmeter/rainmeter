@@ -3893,9 +3893,10 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				HMENU configMenu = GetSubMenu(subMenu, 4);
 				if (configMenu)
 				{
-					if (!CreateConfigMenu(configMenu, m_ConfigMenu))
+					if (!m_ConfigMenu.empty())
 					{
-						InsertMenu(configMenu, 0, MF_BYPOSITION | MF_GRAYED, 0, L"No configs available");
+						DeleteMenu(configMenu, 0, MF_BYPOSITION);
+						CreateConfigMenu(configMenu, m_ConfigMenu);
 					}
 
 					if (m_DisableDragging)
@@ -3914,10 +3915,13 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				{
 					HMENU rainmeterMenu = subMenu;
 					subMenu = CreateSkinMenu(meterWindow, 0, configMenu);
-					InsertMenu(subMenu, 9, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-					InsertMenu(subMenu, 10, MF_BYPOSITION | MF_POPUP, (UINT_PTR)rainmeterMenu, L"Rainmeter Menu");
 
-					RemoveMenu(rainmeterMenu, ID_CONTEXT_DOWNLOADS, MF_BYCOMMAND);
+					WCHAR buffer[256];
+					GetMenuString(menu, 0, buffer, 256, MF_BYPOSITION);
+					InsertMenu(subMenu, 10, MF_BYPOSITION | MF_POPUP, (UINT_PTR)rainmeterMenu, buffer);
+					InsertMenu(subMenu, 11, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+
+					DeleteMenu(rainmeterMenu, ID_CONTEXT_DOWNLOADS, MF_BYCOMMAND);
 				}
 				else
 				{
@@ -4001,22 +4005,21 @@ HMENU CRainmeter::CreateConfigMenu(HMENU configMenu, std::vector<CONFIGMENU>& co
 			configMenu = CreatePopupMenu();
 		}
 
-		bool item = false;
+		bool separator = false;
 		for (int i = 0, j = 0, isize = (int)configMenuData.size(); i < isize; ++i)
 		{
 			if (configMenuData[i].index == -1)
 			{
-				if (item)
-				{
-					// Insert a separator
-					InsertMenu(configMenu, i, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-					++j;
-					item = false;
-				}
-
 				HMENU submenu = CreateConfigMenu(NULL, configMenuData[i].children);
 				if (submenu)
 				{
+					if (separator)
+					{
+						// Insert a separator
+						InsertMenu(configMenu, i, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+						++j;
+						separator = false;
+					}
 					InsertMenu(configMenu, i + j, MF_BYPOSITION | MF_POPUP, (UINT_PTR)submenu, configMenuData[i].name.c_str());
 				}
 			}
@@ -4024,7 +4027,7 @@ HMENU CRainmeter::CreateConfigMenu(HMENU configMenu, std::vector<CONFIGMENU>& co
 			{
 				CONFIG& config = m_ConfigStrings[configMenuData[i].index];
 				InsertMenu(configMenu, i, MF_BYPOSITION | ((config.active == i + 1) ? MF_CHECKED : MF_UNCHECKED), config.commands[i], configMenuData[i].name.c_str());
-				item = true;
+				separator = true;
 			}
 		}
 
@@ -4123,32 +4126,37 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 					value = max(0, value);
 					CheckMenuItem(alphaMenu, value, MF_BYPOSITION | MF_CHECKED);
 
-					if (meterWindow->GetWindowHide() == HIDEMODE_FADEIN)
+					switch (meterWindow->GetWindowHide())
 					{
+					case HIDEMODE_FADEIN:
 						CheckMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_CHECKED);
 						EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
-					}
-					else if (meterWindow->GetWindowHide() == HIDEMODE_FADEOUT)
-					{
+						break;
+
+					case HIDEMODE_FADEOUT:
 						CheckMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_CHECKED);
 						EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
-					}
-					else if (meterWindow->GetWindowHide() == HIDEMODE_HIDE)
-					{
+						break;
+
+					case HIDEMODE_HIDE:
 						EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
 						EnableMenuItem(alphaMenu, ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
+						break;
 					}
 				}
 			}
 
 			// Tick the configs
-			if (meterWindow->GetWindowHide() == HIDEMODE_HIDE)
+			switch (meterWindow->GetWindowHide())
 			{
+			case HIDEMODE_HIDE:
 				CheckMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_HIDEONMOUSE, MF_BYCOMMAND | MF_CHECKED);
-			}
-			else if (meterWindow->GetWindowHide() != HIDEMODE_NONE)
-			{
+				break;
+
+			case HIDEMODE_FADEIN:
+			case HIDEMODE_FADEOUT:
 				EnableMenuItem(settingsMenu, ID_CONTEXT_SKINMENU_HIDEONMOUSE, MF_BYCOMMAND | MF_GRAYED);
+				break;
 			}
 
 			if (meterWindow->GetSnapEdges())
@@ -4190,7 +4198,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 		HMENU variantsMenu = GetSubMenu(skinMenu, 2);
 		if (variantsMenu)
 		{
-			RemoveMenu(variantsMenu, 0, MF_BYPOSITION);
+			DeleteMenu(variantsMenu, 0, MF_BYPOSITION);
 		}
 
 		// Give the menuitem the unique id that depends on the skin
