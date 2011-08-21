@@ -273,7 +273,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 */
 void Finalize(HMODULE instance, UINT id)
 {
-	std::map<UINT, ChildMeasure*>::iterator i = g_Measures.find(id);
+	std::map<UINT, ChildMeasure*>::const_iterator i = g_Measures.find(id);
 	if (i != g_Measures.end())
 	{
 		ChildMeasure* child = (*i).second;
@@ -304,7 +304,7 @@ void Finalize(HMODULE instance, UINT id)
 */
 UINT Update(UINT id)
 {
-	std::map<UINT, ChildMeasure*>::iterator i = g_Measures.find(id);
+	std::map<UINT, ChildMeasure*>::const_iterator i = g_Measures.find(id);
 	if (i != g_Measures.end())
 	{
 		ChildMeasure* child = (*i).second;
@@ -367,7 +367,7 @@ UINT Update(UINT id)
 */
 LPCTSTR GetString(UINT id, UINT flags)
 {
-	std::map<UINT, ChildMeasure*>::iterator i = g_Measures.find(id);
+	std::map<UINT, ChildMeasure*>::const_iterator i = g_Measures.find(id);
 	if (i != g_Measures.end())
 	{
 		ChildMeasure* child = (*i).second;
@@ -440,7 +440,7 @@ LPCTSTR GetString(UINT id, UINT flags)
 */
 void ExecuteBang(LPCTSTR bang, UINT id)
 {
-	std::map<UINT, ChildMeasure*>::iterator i = g_Measures.find(id);
+	std::map<UINT, ChildMeasure*>::const_iterator i = g_Measures.find(id);
 	if (i != g_Measures.end())
 	{
 		ChildMeasure* child = (*i).second;

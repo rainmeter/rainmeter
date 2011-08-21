@@ -138,22 +138,16 @@ void CPlayerCAD::Initialize()
 	LPCTSTR classSz = className.empty() ? NULL : className.c_str();
 	LPCTSTR windowSz = windowName.empty() ? NULL : windowName.c_str();
 
-	if (windowName == L"VLC")
-	{
-		// Temporary workaround
-		m_ExtendedAPI = true;
-	}
-
 	if (classSz || windowSz)
 	{
 		m_PlayerWindow = FindWindow(classSz, windowSz);
 	}
 	else
 	{
-		m_PlayerWindow = FindWindow(L"CD Art Display IPC Class", NULL);
+		classSz = L"CD Art Display IPC Class";
+		m_PlayerWindow = FindWindow(classSz, NULL);
 		if (m_PlayerWindow)
 		{
-			classSz = L"CD Art Display IPC Class";
 			WritePrivateProfileString(L"NowPlaying.dll", L"ClassName", classSz, file);
 
 			windowSz = (GetWindowText(m_PlayerWindow, buffer, MAX_PATH) > 0) ? buffer : NULL;
@@ -177,6 +171,12 @@ void CPlayerCAD::Initialize()
 	if (m_PlayerWindow)
 	{
 		m_Initialized = true;
+
+		if (classSz && wcscmp(classSz, L"CD Art Display IPC Class") == 0)
+		{
+			m_ExtendedAPI = true;
+		}
+
 		SendMessage(m_PlayerWindow, WM_USER, (WPARAM)m_Window, IPC_SET_CALLBACK_HWND);
 		m_State = (PLAYSTATE)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_STATE);
 
@@ -347,7 +347,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 					if (player->m_PlayerWindow)
 					{
 						player->m_Initialized = true;
-						player->m_ExtendedAPI = (windowName == L"VLC");
+						player->m_ExtendedAPI = (classSz && wcscmp(classSz, L"CD Art Display IPC Class") == 0);
 						player->m_State = (PLAYSTATE)SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_STATE);
 
 						if (player->m_State != PLAYER_STOPPED)
