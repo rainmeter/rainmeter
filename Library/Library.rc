@@ -234,10 +234,10 @@ IDD_ABOUTVERSION_DIALOG DIALOGEX 15, 30, 370, 148
 STYLE DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
 FONT 8, "MS Shell Dlg 2", 0, 0, 0x0
 BEGIN
-    CONTROL         IDI_WINDOW, IDC_ABOUTVERSION_LOGO_BITMAP, STATIC, SS_ICON | WS_CHILD | WS_VISIBLE, 0, 8, 24, 24
+    CONTROL         IDI_WINDOW, IDC_STATIC, STATIC, SS_ICON | WS_CHILD | WS_VISIBLE, 0, 8, 24, 24
     LTEXT           "", IDC_ABOUTVERSION_VERSION_TEXT, 28, 0, 300, 9
     CONTROL         "Get the latest version at <a href=""http://rainmeter.net"">rainmeter.net</a>.", IDC_STATIC, "SysLink", 0x0, 28, 13, 300, 9
-    CONTROL         "Rainmeter is an open source project distributed under the <a href=""http://www.gnu.org/licenses"">GNU GPL v2</a> license.", IDC_STATIC, "SysLink", 0x0, 28, 26, 300, 9
+    CONTROL         "Distributed under the <a href=""http://www.gnu.org/licenses"">GNU GPL v2</a> license.", IDC_STATIC, "SysLink", 0x0, 28, 26, 300, 9
     LTEXT           "", IDC_ABOUTVERSION_PATHS_TEXT, 0, 43, 300, 34
     PUSHBUTTON      "Copy to clipboard", IDC_ABOUTVERSION_COPY_BUTTON, 0, 81, 80, 14, WS_TABSTOP
 END

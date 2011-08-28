@@ -1140,7 +1140,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			file += m_SkinName;
 			file += L"\\";
 			file += m_FileName;
-			WritePrivateProfileString(L"Rainmeter", L"\r\n[Metadata]\r\nInformation=\r\nLicense=\r\nVersion", L"", file.c_str());
+			WritePrivateProfileString(L"Rainmeter", L"\r\n[Metadata]\r\nName=\r\nInformation=\r\nLicense=\r\nVersion", L"", file.c_str());
 			SendMessage(m_Window, WM_COMMAND, MAKEWPARAM(IDC_MANAGESKINS_EDIT_BUTTON, 0), 0);
 			ShowWindow(nm->hwndFrom, SW_HIDE);
 		}
@@ -1175,6 +1175,9 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				if (menu && TreeView_GetItem(nm->hwndFrom, &tvi))
 				{
 					HMENU subMenu;
+					MENUITEMINFO mii = {0};
+					mii.cbSize = sizeof(MENUITEMINFO);
+					mii.fMask = MIIM_STRING;
 
 					if (m_FileName.empty())
 					{
@@ -1184,9 +1187,6 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						if (tvi.state & TVIS_EXPANDED)
 						{
-							MENUITEMINFO mii = {0};
-							mii.cbSize = sizeof(MENUITEMINFO);
-							mii.fMask = MIIM_STRING;
 							mii.dwTypeData = L"Collapse";
 							SetMenuItemInfo(subMenu, ID_CONTEXT_MANAGESKINSMENU_EXPAND, MF_BYCOMMAND, &mii);
 						}
@@ -1199,9 +1199,6 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						if (m_SkinWindow)
 						{
-							MENUITEMINFO mii = {0};
-							mii.cbSize = sizeof(MENUITEMINFO);
-							mii.fMask = MIIM_STRING;
 							mii.dwTypeData = L"Unload";
 							SetMenuItemInfo(subMenu, ID_CONTEXT_MANAGESKINSMENU_LOAD, MF_BYCOMMAND, &mii);
 						}
@@ -1237,8 +1234,6 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 			// Temporarily disable handling commands
 			m_HandleCommands = false;
-
-			//LSLog(LOG_DEBUG, L"Rainmeter", L"UPDATE");
 
 			WCHAR buffer[MAX_PATH];
 

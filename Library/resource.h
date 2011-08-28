@@ -28,10 +28,9 @@
 #define IDC_ABOUTMEASURES_ITEMS_LISTBOX              1007
 #define IDC_ABOUTMEASURES_ITEMS_LISTVIEW             1008
 #define IDC_ABOUTPLUGINS_ITEMS_LISTVIEW              1009
-#define IDC_ABOUTVERSION_LOGO_BITMAP                 1010
-#define IDC_ABOUTVERSION_VERSION_TEXT                1011
-#define IDC_ABOUTVERSION_PATHS_TEXT                  1012
-#define IDC_ABOUTVERSION_COPY_BUTTON                 1013
+#define IDC_ABOUTVERSION_VERSION_TEXT                1010
+#define IDC_ABOUTVERSION_PATHS_TEXT                  1011
+#define IDC_ABOUTVERSION_COPY_BUTTON                 1012
 
 #define IDC_MANAGE_TAB                               1017
 #define IDC_REFRESHALL_BUTTON                        1018
