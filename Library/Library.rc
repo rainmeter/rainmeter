@@ -201,7 +201,6 @@ CAPTION "About Rainmeter"
 FONT 8, "MS Shell Dlg 2", 0, 0, 0x0
 BEGIN
     CONTROL         "", IDC_ABOUT_TAB, "SysTabControl32", TCS_TABS | TCS_FIXEDWIDTH, 6, 6, 388, 181
-    LTEXT           "", IDC_ABOUT_VERSION_TEXT, 5, 194, 200, 9
     DEFPUSHBUTTON   "Close", IDCLOSE, 344, 191, 50, 14
 END
 
@@ -229,6 +228,18 @@ STYLE DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
 FONT 8, "MS Shell Dlg 2", 0, 0, 0x0
 BEGIN
     CONTROL         "", IDC_ABOUTPLUGINS_ITEMS_LISTVIEW, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP, 0, 0, 368, 148
+END
+
+IDD_ABOUTVERSION_DIALOG DIALOGEX 15, 30, 370, 148
+STYLE DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
+FONT 8, "MS Shell Dlg 2", 0, 0, 0x0
+BEGIN
+    CONTROL         IDI_WINDOW, IDC_ABOUTVERSION_LOGO_BITMAP, STATIC, SS_ICON | WS_CHILD | WS_VISIBLE, 0, 8, 24, 24
+    LTEXT           "", IDC_ABOUTVERSION_VERSION_TEXT, 28, 0, 300, 9
+    CONTROL         "Get the latest version at <a href=""http://rainmeter.net"">rainmeter.net</a>.", IDC_STATIC, "SysLink", 0x0, 28, 13, 300, 9
+    CONTROL         "Rainmeter is an open source project distributed under the <a href=""http://www.gnu.org/licenses"">GNU GPL v2</a> license.", IDC_STATIC, "SysLink", 0x0, 28, 26, 300, 9
+    LTEXT           "", IDC_ABOUTVERSION_PATHS_TEXT, 0, 43, 300, 34
+    PUSHBUTTON      "Copy to clipboard", IDC_ABOUTVERSION_COPY_BUTTON, 0, 81, 80, 14, WS_TABSTOP
 END
 
 IDD_MANAGE_DIALOG DIALOGEX 0, 0, 500, 322
@@ -292,7 +303,7 @@ STYLE DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
 FONT 8, "MS Shell Dlg 2", 0, 0, 0x0
 BEGIN
     GROUPBOX        "Save new theme", IDC_STATIC, 0, 0, 230, 150
-    LTEXT           "A theme allows you to save the current layout of your Rainmeter skins and restore it at a later time. Themes remember your skins' positions and settings, but restoring an old theme will not undo edits or updates to your skins.", IDC_STATIC, 6, 16, 205, 44
+    LTEXT           "A theme allows you to save the current layout of your Rainmeter skins and restore it at a later time. Restoring an old theme will restore the layout, but will not not undo edits or updates to your skins.", IDC_STATIC, 6, 16, 205, 44
     AUTOCHECKBOX    "Save as empty theme", IDC_MANAGETHEMES_EMPTYTHEME_CHECKBOX, 6, 70, 120, 9, WS_TABSTOP
     AUTOCHECKBOX    "Exclude unused skins", IDC_MANAGETHEMES_UNUSEDSKINS_CHECKBOX, 6, 83, 120, 9, WS_TABSTOP
     AUTOCHECKBOX    "Include current wallpaper", IDC_MANAGETHEMES_WALLPAPER_CHECKBOX, 6, 96, 120, 9, WS_TABSTOP
@@ -326,10 +337,6 @@ BEGIN
     AUTOCHECKBOX    "Verbose logging (debug mode)", IDC_MANAGESETTINGS_VERBOSELOGGING_CHECKBOX, 6, 104, 140, 9
     PUSHBUTTON      "Show log file", IDC_MANAGESETTINGS_SHOWLOGFILE_BUTTON, 6, 122, 70, 14
     PUSHBUTTON      "Delete log file", IDC_MANAGESETTINGS_DELETELOGFILE_BUTTON, 80, 122, 70, 14
-
-    LTEXT           "Rainmeter 2.1.0 beta r886 (64-bit). Built on Aug 1 2011.\r\n", IDC_MANAGESETTINGS_VERSION_LABEL, 0, 225, 300, 27
-    CONTROL         "Get the latest version at <a href=""http://rainmeter.net"">rainmeter.net</a>.", IDC_STATIC, "SysLink", 0x0, 0, 238, 300, 9
-    CONTROL         "Rainmeter is an open source project distributed under the <a href=""http://www.gnu.org/licenses"">GNU GPL v2</a> license.", IDC_STATIC, "SysLink", 0x0, 0, 251, 300, 9
 END
 
 /////////////////////////////////////////////////////////////////////////////

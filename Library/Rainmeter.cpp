@@ -2177,9 +2177,6 @@ void CRainmeter::CreateDefaultConfigFile(const std::wstring& strFile)
 
 void CRainmeter::ReloadSettings()
 {
-	// TODO FIXME
-//	UpdateDialog();
-
 	ScanForConfigs(m_SkinPath);
 	ScanForThemes(GetSettingsPath() + L"Themes");
 	ReadGeneralSettings(m_IniFile);
@@ -3528,6 +3525,8 @@ void CRainmeter::RefreshAll()
 			}
 		}
 	}
+
+	CDialogManage::UpdateSkins(NULL);
 }
 
 /*

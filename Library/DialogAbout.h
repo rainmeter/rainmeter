@@ -96,10 +96,25 @@ private:
 		typedef LPCTSTR (*GETPLUGINAUTHOR)();
 		typedef UINT (*GETPLUGINVERSION)();
 	};
+
+	// Version tab
+	class CTabVersion : public CTab
+	{
+	public:
+		CTabVersion(HWND window);
+
+		virtual void Initialize();
+		virtual void Resize(int w, int h);
+
+		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+	};
 	
 	CTabLog* m_TabLog;
 	CTabMeasures* m_TabMeasures;
 	CTabPlugins* m_TabPlugins;
+	CTabVersion* m_TabVersion;
 };
 
 #endif

@@ -12,7 +12,7 @@
 #define IDD_ABOUTLOG_DIALOG                          106
 #define IDD_ABOUTMEASURES_DIALOG                     107
 #define IDD_ABOUTPLUGINS_DIALOG                      108
-//#define IDD_ABOUTINFO_DIALOG                       109
+#define IDD_ABOUTVERSION_DIALOG                      109
 #define IDD_MANAGE_DIALOG                            110
 #define IDD_MANAGESKINS_DIALOG                       111
 #define IDD_MANAGETHEMES_DIALOG                      112
@@ -28,6 +28,10 @@
 #define IDC_ABOUTMEASURES_ITEMS_LISTBOX              1007
 #define IDC_ABOUTMEASURES_ITEMS_LISTVIEW             1008
 #define IDC_ABOUTPLUGINS_ITEMS_LISTVIEW              1009
+#define IDC_ABOUTVERSION_LOGO_BITMAP                 1010
+#define IDC_ABOUTVERSION_VERSION_TEXT                1011
+#define IDC_ABOUTVERSION_PATHS_TEXT                  1012
+#define IDC_ABOUTVERSION_COPY_BUTTON                 1013
 
 #define IDC_MANAGE_TAB                               1017
 #define IDC_REFRESHALL_BUTTON                        1018
@@ -74,7 +78,6 @@
 #define IDC_MANAGESETTINGS_VERBOSELOGGING_CHECKBOX   1056
 #define IDC_MANAGESETTINGS_SHOWLOGFILE_BUTTON        1057
 #define IDC_MANAGESETTINGS_DELETELOGFILE_BUTTON      1058
-#define IDC_MANAGESETTINGS_VERSION_LABEL             1059
 
 #define ID_CONTEXT_REFRESH                           4001
 #define ID_CONTEXT_QUIT                              4002

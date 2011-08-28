@@ -41,7 +41,8 @@ CDialogAbout* CDialogAbout::c_Dialog = NULL;
 CDialogAbout::CDialogAbout(HWND wnd) : CDialog(wnd),
 	m_TabLog(),
 	m_TabMeasures(),
-	m_TabPlugins()
+	m_TabPlugins(),
+	m_TabVersion()
 {
 }
 
@@ -56,6 +57,7 @@ CDialogAbout::~CDialogAbout()
 	delete m_TabLog;
 	delete m_TabMeasures;
 	delete m_TabPlugins;
+	delete m_TabVersion;
 }
 
 /*
@@ -144,8 +146,8 @@ INT_PTR CALLBACK CDialogAbout::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 		case WM_GETMINMAXINFO:
 			{
 				MINMAXINFO* mmi = (MINMAXINFO*)lParam;
-				mmi->ptMinTrackSize.x = 400;
-				mmi->ptMinTrackSize.y = 250;
+				mmi->ptMinTrackSize.x = 550;
+				mmi->ptMinTrackSize.y = 350;
 			}
 			return TRUE;
 
@@ -160,10 +162,6 @@ INT_PTR CALLBACK CDialogAbout::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 					HWND item = GetDlgItem(hWnd, IDC_ABOUT_TAB);
 					SetWindowPos(item, NULL, 0, 0, w - 18, h - 47, SWP_NOMOVE | SWP_NOZORDER);
 
-					item = GetDlgItem(hWnd, IDC_ABOUT_VERSION_TEXT);
-					GetClientRect(item, &r);
-					SetWindowPos(item, NULL, 8, h - r.bottom - 11, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
 					item = GetDlgItem(hWnd, IDCLOSE);
 					GetClientRect(item, &r);
 					SetWindowPos(item, NULL, w - r.right - 9, h - r.bottom - 8, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
@@ -171,6 +169,7 @@ INT_PTR CALLBACK CDialogAbout::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 					c_Dialog->m_TabLog->Resize(w - 48, h - 100);
 					c_Dialog->m_TabMeasures->Resize(w - 48, h - 100);
 					c_Dialog->m_TabPlugins->Resize(w - 48, h - 100);
+					c_Dialog->m_TabVersion->Resize(w - 48, h - 100);
 				}
 			}
 			return TRUE;
@@ -220,16 +219,14 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	TabCtrl_InsertItem(item, 1, &tci);
 	tci.pszText = L"Plugins";
 	TabCtrl_InsertItem(item, 2, &tci);
-
-	item = GetDlgItem(m_Window, IDC_ABOUT_VERSION_TEXT);
-	WCHAR tmpSz[128];
-	_snwprintf_s(tmpSz, _TRUNCATE, L"%s %s%s r%i %s (%s)", APPNAME, APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
-	SetWindowText(item, tmpSz);
+	tci.pszText = L"Version";
+	TabCtrl_InsertItem(item, 3, &tci);
 
 	HINSTANCE instance = Rainmeter->GetInstance();
-	m_TabLog = new CTabLog(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTLOG_DIALOG), m_Window, CDialogAbout::CTabLog::DlgProc));
-	m_TabMeasures = new CTabMeasures(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTMEASURES_DIALOG), m_Window, CDialogAbout::CTabMeasures::DlgProc));
-	m_TabPlugins = new CTabPlugins(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTPLUGINS_DIALOG), m_Window, CDialogAbout::CTabPlugins::DlgProc));
+	m_TabLog = new CTabLog(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTLOG_DIALOG), m_Window, CTabLog::DlgProc));
+	m_TabMeasures = new CTabMeasures(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTMEASURES_DIALOG), m_Window, CTabMeasures::DlgProc));
+	m_TabPlugins = new CTabPlugins(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTPLUGINS_DIALOG), m_Window, CTabPlugins::DlgProc));
+	m_TabVersion = new CTabVersion(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTVERSION_DIALOG), m_Window, CTabVersion::DlgProc));
 
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
@@ -273,9 +270,13 @@ INT_PTR CDialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 			{
 				tab = m_TabMeasures;
 			}
-			else // if (sel == 2)
+			else if (sel == 2)
 			{
 				tab = m_TabPlugins;
+			}
+			else // if (sel == 3)
+			{
+				tab = m_TabVersion;
 			}
 
 			if (tab)
@@ -916,8 +917,6 @@ void CDialogAbout::CTabPlugins::Initialize()
 	while (FindNextFile(hSearch, &fileData));
 
 	FindClose(hSearch);
-
-	LSLog(LOG_ERROR, L"Rainmeter", L"here end");
 }
 
 /*
@@ -959,4 +958,123 @@ INT_PTR CALLBACK CDialogAbout::CTabPlugins::DlgProc(HWND hWnd, UINT uMsg, WPARAM
 	}
 
 	return FALSE;
+}
+
+// -----------------------------------------------------------------------------------------------
+//
+//                                Version tab
+//
+// -----------------------------------------------------------------------------------------------
+
+/*
+** CTabVersion
+**
+** Constructor.
+**
+*/
+CDialogAbout::CTabVersion::CTabVersion(HWND wnd) : CTab(wnd)
+{
+}
+
+/*
+** Initialize
+**
+** Called when tab is displayed.
+**
+*/
+void CDialogAbout::CTabVersion::Initialize()
+{
+	m_Initialized = true;
+
+	HWND item = GetDlgItem(m_Window, IDC_ABOUTVERSION_VERSION_TEXT);
+	WCHAR tmpSz[128];
+	_snwprintf_s(tmpSz, _TRUNCATE, L"%s %s%s r%i %s (%s)", APPNAME, APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
+	SetWindowText(item, tmpSz);
+
+	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_PATHS_TEXT);
+	std::wstring text = L"Path: " + Rainmeter->GetPath();
+	text += L"\r\nSettings: ";
+	text += Rainmeter->GetSettingsPath();
+	text += L"\r\nSkins: ";
+	text += Rainmeter->GetSkinPath();
+	SetWindowText(item, text.c_str());
+}
+
+/*
+** Resize
+**
+** Resizes window and repositions controls.
+**
+*/
+void CDialogAbout::CTabVersion::Resize(int w, int h)
+{
+	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+}
+
+/*
+** DlgProc
+**
+** Dialog procedure for the Version tab.
+**
+*/
+INT_PTR CALLBACK CDialogAbout::CTabVersion::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_COMMAND:
+		return c_Dialog->m_TabVersion->OnCommand(wParam, lParam);
+
+	case WM_NOTIFY:
+		return c_Dialog->m_TabVersion->OnNotify(wParam, lParam);
+
+	case WM_CTLCOLORDLG:
+		return OnColorDialog(wParam, lParam);
+
+	case WM_CTLCOLORBTN:
+	case WM_CTLCOLORSTATIC:
+		return OnColorStatic(wParam, lParam);
+	}
+
+	return FALSE;
+}
+
+INT_PTR CDialogAbout::CTabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	switch (LOWORD(wParam))
+	{
+	case IDC_ABOUTVERSION_COPY_BUTTON:
+		{
+			WCHAR tmpSz[128];
+			_snwprintf_s(tmpSz, _TRUNCATE, L"%s %s%s r%i %s (%s)", APPNAME, APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
+			std::wstring text = tmpSz;
+			text += L"\r\nPath: " + Rainmeter->GetPath();
+			text += L"\r\nSettings: ";
+			text += Rainmeter->GetSettingsPath();
+			text += L"\r\nSkins: ";
+			text += Rainmeter->GetSkinPath();
+			CSystem::SetClipboardText(text);
+		}
+		break;
+
+	default:
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+INT_PTR CDialogAbout::CTabVersion::OnNotify(WPARAM wParam, LPARAM lParam)
+{
+	LPNMHDR nm = (LPNMHDR)lParam;
+	switch (nm->code)
+	{
+	case NM_CLICK:
+		LSExecute(NULL, ((PNMLINK)lParam)->item.szUrl, SW_SHOWNORMAL);
+		break;
+
+	default:
+		return FALSE;
+	}
+
+	return TRUE;
 }

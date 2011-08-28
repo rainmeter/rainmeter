@@ -102,7 +102,6 @@ private:
 		virtual void Initialize();
 
 		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	};
 

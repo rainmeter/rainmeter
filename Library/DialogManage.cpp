@@ -375,13 +375,7 @@ void CDialogManage::CTabSkins::Initialize()
 	// Apply icons and populate tree
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_SKINS_TREEVIEW);
 	TreeView_SetImageList(item, hImageList, TVSIL_NORMAL);
-
-	TV_INSERTSTRUCT tvi = {0};
-	tvi.hParent = NULL;
-	tvi.hInsertAfter = TVI_LAST;
-	tvi.item.mask= TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-	tvi.item.iImage = tvi.item.iSelectedImage= 0;
-	PopulateTree(item, tvi, Rainmeter->m_ConfigMenu);
+	UpdateSkins(NULL);
 
 	// Get rid of the EDITTEXT control border
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_DESCRIPTION_TEXT);
@@ -430,30 +424,46 @@ void CDialogManage::CTabSkins::Initialize()
 */
 void CDialogManage::CTabSkins::Update(CMeterWindow* meterWindow, bool deleted)
 {
-	if (m_IgnoreUpdate)
+	if (meterWindow)
 	{
-		// Changed setting from dialog, no need to update
-		m_IgnoreUpdate = false;
-	}
-	else if (m_SkinWindow && m_SkinWindow == meterWindow) 
-	{
-		// Update from currently open skin
-		m_HandleCommands = false;
-		if (deleted)
+		if (m_IgnoreUpdate)
 		{
-			DisableControls();
-			m_SkinWindow = NULL;
+			// Changed setting from dialog, no need to update
+			m_IgnoreUpdate = false;
 		}
-		else
+		else if (m_SkinWindow && m_SkinWindow == meterWindow) 
 		{
-			SetControls();
+			// Update from currently open skin
+			m_HandleCommands = false;
+			if (deleted)
+			{
+				DisableControls();
+				m_SkinWindow = NULL;
+			}
+			else
+			{
+				SetControls();
+			}
+			m_HandleCommands = true;
 		}
-		m_HandleCommands = true;
+		else if (wcscmp(meterWindow->GetSkinName().c_str(), m_SkinName.c_str()) == 0 &&
+				 wcscmp(meterWindow->GetSkinIniFile().c_str(), m_FileName.c_str()) == 0)
+		{
+			ReadSkin();
+		}
 	}
-	else if (wcscmp(meterWindow->GetSkinName().c_str(), m_SkinName.c_str()) == 0 &&
-			 wcscmp(meterWindow->GetSkinIniFile().c_str(), m_FileName.c_str()) == 0)
+	else
 	{
-		ReadSkin();
+		// Populate tree
+		HWND item = GetDlgItem(m_Window, IDC_MANAGESKINS_SKINS_TREEVIEW);
+		TreeView_DeleteAllItems(item);
+
+		TV_INSERTSTRUCT tvi = {0};
+		tvi.hParent = NULL;
+		tvi.hInsertAfter = TVI_LAST;
+		tvi.item.mask= TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
+		tvi.item.iImage = tvi.item.iSelectedImage= 0;
+		PopulateTree(item, tvi, Rainmeter->m_ConfigMenu);
 	}
 }
 
@@ -740,7 +750,6 @@ void CDialogManage::CTabSkins::PopulateTree(HWND tree, TV_INSERTSTRUCT& tvi, con
 			else
 			{
 				tvi.item.iImage = tvi.item.iSelectedImage = 1;
-				//MessageBox(NULL, configMenuData[i].name.c_str(), NULL, MB_TOPMOST | MB_OK);
 				tvi.item.pszText = const_cast<WCHAR*>(configMenuData[i].name.c_str());
 				SendMessage(tree, TVM_INSERTITEM, 0, (LPARAM)&tvi);
 			}
@@ -1611,8 +1620,8 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_MANAGETHEMES_BACKUP_BUTTON:
 		{
-			std::wstring command = Rainmeter->GetAddonPath();
-			command += L"RainBackup\\RainBackup.exe";
+			std::wstring command = L"\"" + Rainmeter->GetAddonPath();
+			command += L"RainBackup\\RainBackup.exe\"";
 			LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
 		}
 		break;
@@ -1658,10 +1667,6 @@ void CDialogManage::CTabSettings::Initialize()
 	BOOL isLogFile = (_waccess(Rainmeter->GetLogFile().c_str(), 0) != -1);
 	EnableWindow(GetDlgItem(m_Window, IDC_MANAGESETTINGS_SHOWLOGFILE_BUTTON), isLogFile);
 	EnableWindow(GetDlgItem(m_Window, IDC_MANAGESETTINGS_DELETELOGFILE_BUTTON), isLogFile);
-
-	WCHAR tmpSz[128];
-	_snwprintf_s(tmpSz, _TRUNCATE, L"%s %s%s r%i %s (%s).", APPNAME, APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
-	SetWindowText(GetDlgItem(m_Window, IDC_MANAGESETTINGS_VERSION_LABEL), tmpSz);
 }
 
 /*
@@ -1676,9 +1681,6 @@ INT_PTR CALLBACK CDialogManage::CTabSettings::DlgProc(HWND hWnd, UINT uMsg, WPAR
 	{
 	case WM_COMMAND:
 		return c_Dialog->m_TabSettings->OnCommand(wParam, lParam);
-
-	case WM_NOTIFY:
-		return c_Dialog->m_TabSettings->OnNotify(wParam, lParam);
 
 	case WM_CTLCOLORDLG:
 		return OnColorDialog(wParam, lParam);
@@ -1743,22 +1745,6 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_MANAGESETTINGS_VERBOSELOGGING_CHECKBOX:
 		Rainmeter->SetDebug(!Rainmeter->GetDebug());
-		break;
-
-	default:
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-INT_PTR CDialogManage::CTabSettings::OnNotify(WPARAM wParam, LPARAM lParam)
-{
-	LPNMHDR nm = (LPNMHDR)lParam;
-	switch (nm->code)
-	{
-	case NM_CLICK:
-		LSExecute(NULL, ((PNMLINK)lParam)->item.szUrl, SW_SHOWNORMAL);
 		break;
 
 	default:
