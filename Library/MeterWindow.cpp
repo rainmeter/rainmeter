@@ -3937,6 +3937,7 @@ void CMeterWindow::SetSnapEdges(bool b)
 	m_SnapEdges = b;
 	WriteConfig(SETTING_SNAPEDGES);
 }
+
 /*
 ** SetWindowHide
 **

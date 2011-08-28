@@ -107,6 +107,7 @@ void RainmeterSetOptionGroup(HWND, const char* arg);
 
 void RainmeterLsHook(HWND, const char* arg);
 void RainmeterAbout(HWND, const char* arg);
+void RainmeterManage(HWND, const char* arg);
 void RainmeterSkinMenu(HWND, const char* arg);
 void RainmeterTrayMenu(HWND, const char* arg);
 void RainmeterResetStats(HWND, const char* arg);

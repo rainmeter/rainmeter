@@ -1202,7 +1202,18 @@ void RainmeterLsHook(HWND, const char* arg)
 */
 void RainmeterAbout(HWND, const char* arg)
 {
-	RainmeterAboutWide();
+	RainmeterAboutWide(ConvertToWide(arg).c_str());
+}
+
+/*
+** RainmeterManage
+**
+** Callback for the !RainmeterManage bang
+**
+*/
+void RainmeterManage(HWND, const char* arg)
+{
+	RainmeterManageWide(ConvertToWide(arg).c_str());
 }
 
 /*
@@ -1455,9 +1466,9 @@ void RainmeterAboutWide(const WCHAR* arg)
 }
 
 /*
-** RainmeterManagerWide
+** RainmeterManageWide
 **
-** Callback for the !RainmeterAbout bang
+** Callback for the !RainmeterManage bang
 **
 */
 void RainmeterManageWide(const WCHAR* arg)
@@ -2131,6 +2142,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		AddBangCommand("!RainmeterRefreshApp", RainmeterRefreshApp);
 		AddBangCommand("!RainmeterLsBoxHook", RainmeterLsHook);
 		AddBangCommand("!RainmeterAbout", RainmeterAbout);
+		AddBangCommand("!RainmeterManage", RainmeterManage);
 		AddBangCommand("!RainmeterSkinMenu", RainmeterSkinMenu);
 		AddBangCommand("!RainmeterTrayMenu", RainmeterTrayMenu);
 		AddBangCommand("!RainmeterResetStats", RainmeterResetStats);
@@ -2554,6 +2566,7 @@ void CRainmeter::Quit(HINSTANCE dllInst)
 		RemoveBangCommand("!RainmeterRefreshApp");
 		RemoveBangCommand("!RainmeterLsBoxHook");
 		RemoveBangCommand("!RainmeterAbout");
+		RemoveBangCommand("!RainmeterManage");
 		RemoveBangCommand("!RainmeterSkinMenu");
 		RemoveBangCommand("!RainmeterTrayMenu");
 		RemoveBangCommand("!RainmeterResetStats");
