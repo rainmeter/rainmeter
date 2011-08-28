@@ -1444,6 +1444,10 @@ void RainmeterAboutWide(const WCHAR* arg)
 			{
 				tab = 2;
 			}
+			else if (_wcsnicmp(arg, L"Version", 7) == 0)
+			{
+				tab = 3;
+			}
 		}
 
 		CDialogAbout::Open(tab);

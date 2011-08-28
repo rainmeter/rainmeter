@@ -90,6 +90,8 @@ private:
 		void Update();
 
 	private:
+		void PreserveSetting(const std::wstring& backupFile, LPCTSTR key, bool replace = true);
+
 		bool m_LoadTheme;
 	};
 	

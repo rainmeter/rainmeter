@@ -82,7 +82,7 @@ void CDialogAbout::Open(int tab)
 		}
 	}
 
-	BringWindowToTop(c_Dialog->m_Window);
+	SetForegroundWindow(c_Dialog->m_Window);
 
 	// Fake WM_NOTIFY to change tab
 	NMHDR nm;

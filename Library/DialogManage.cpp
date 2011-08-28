@@ -80,7 +80,7 @@ void CDialogManage::Open(int tab)
 		}
 	}
 
-	BringWindowToTop(c_Dialog->m_Window);
+	SetForegroundWindow(c_Dialog->m_Window);
 
 	// Fake WM_NOTIFY to change tab
 	NMHDR nm;
@@ -662,7 +662,7 @@ void CDialogManage::CTabSkins::ReadSkin()
 
 	SetControls();
 
-	WCHAR buffer[MAX_LINE_LENGTH];
+	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_AUTHOR_TEXT);
 	GetPrivateProfileString(L"Rainmeter", L"Author", NULL, buffer, MAX_LINE_LENGTH, file.c_str());
@@ -683,13 +683,22 @@ void CDialogManage::CTabSkins::ReadSkin()
 		SetWindowText(item, buffer);
 
 		item = GetDlgItem(m_Window, IDC_MANAGESKINS_DESCRIPTION_TEXT);
-		GetPrivateProfileString(L"Metadata", L"Description", NULL, buffer, MAX_LINE_LENGTH, file.c_str());
-		std::wstring text = buffer;
-
-		if (GetPrivateProfileString(L"Metadata", L"Instructions", NULL, buffer, MAX_LINE_LENGTH, file.c_str()) > 0)
+		std::wstring text;
+		if (GetPrivateProfileString(L"Metadata", L"Information", NULL, buffer, MAX_LINE_LENGTH, file.c_str()) > 0)
 		{
-			text += L"\r\n\r\n";
-			text += buffer;
+			text = buffer;
+		}
+		else
+		{
+			// For backwards compatibility
+			GetPrivateProfileString(L"Metadata", L"Description", NULL, buffer, MAX_LINE_LENGTH, file.c_str());
+			text = buffer;
+
+			if (GetPrivateProfileString(L"Metadata", L"Instructions", NULL, buffer, MAX_LINE_LENGTH, file.c_str()) > 0)
+			{
+				text += L"\r\n\r\n";
+				text += buffer;
+			}
 		}
 
 		// Replace | with newline
@@ -724,6 +733,8 @@ void CDialogManage::CTabSkins::ReadSkin()
 		SetWindowText(item, L"");
 		ShowScrollBar(item, SB_VERT, FALSE);
 	}
+
+	delete buffer;
 }
 
 /*
@@ -1129,7 +1140,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			file += m_SkinName;
 			file += L"\\";
 			file += m_FileName;
-			WritePrivateProfileString(L"Rainmeter", L"\r\n[Metadata]\r\nDescription=\r\nLicense=\r\nVersion", L"", file.c_str());
+			WritePrivateProfileString(L"Rainmeter", L"\r\n[Metadata]\r\nInformation=\r\nLicense=\r\nVersion", L"", file.c_str());
 			SendMessage(m_Window, WM_COMMAND, MAKEWPARAM(IDC_MANAGESKINS_EDIT_BUTTON, 0), 0);
 			ShowWindow(nm->hwndFrom, SW_HIDE);
 		}
@@ -1319,31 +1330,45 @@ void CDialogManage::CTabThemes::Update()
 {
 	if (m_LoadTheme)
 	{
-		m_LoadTheme = false;
-		HWND item = GetDlgItem(m_Window, IDC_MANAGETHEMES_LOAD_BUTTON);
-		EnableWindow(item, TRUE);
-
 		// Called by ClearDeleteLaterList(), all MeterWindows have been deleted now so
 		// proceed to loading theme
-		item  = GetDlgItem(m_Window, IDC_MANAGETHEMES_LIST);
-		int sel = ListBox_GetCurSel(item);
-
+		m_LoadTheme = false;
 		const std::vector<std::wstring>& themes = Rainmeter->GetAllThemes();
 
-		std::wstring path = Rainmeter->GetSettingsPath() + L"Themes\\";
-		path += themes[sel].c_str();
-		std::wstring theme = path + L"\\Rainmeter.thm";
-		std::wstring wallpaper = path + L"\\RainThemes.bmp";
-		
+		HWND item  = GetDlgItem(m_Window, IDC_MANAGETHEMES_LIST);
+		int sel = ListBox_GetCurSel(item);
+
+		// Make a copy of current Rainmeter.ini
+		std::wstring backup = Rainmeter->GetSettingsPath() + L"Themes\\Backup";
+		CreateDirectory(backup.c_str(), NULL);
+		backup += L"\\Rainmeter.thm";
+		CSystem::CopyFiles(Rainmeter->GetIniFile(), backup);
+
+		// Replace Rainmeter.ini with theme
+		std::wstring theme = Rainmeter->GetSettingsPath() + L"Themes\\";
+		theme += themes[sel].c_str();
+		std::wstring wallpaper = theme + L"\\RainThemes.bmp";
+		theme += L"\\Rainmeter.thm";
 		CSystem::CopyFiles(theme, Rainmeter->GetIniFile());
+
+		PreserveSetting(backup, L"SkinPath");
+		PreserveSetting(backup, L"ConfigEditor");
+		PreserveSetting(backup, L"LogViewer");
+		PreserveSetting(backup, L"Logging");
+		PreserveSetting(backup, L"DisableVersionCheck");
+		PreserveSetting(backup, L"TrayExecuteL", false);
+		PreserveSetting(backup, L"TrayExecuteM", false);
+		PreserveSetting(backup, L"TrayExecuteR", false);
+		PreserveSetting(backup, L"TrayExecuteDM", false);
+		PreserveSetting(backup, L"TrayExecuteDR", false);
+
+		Rainmeter->ReadGeneralSettings(Rainmeter->GetIniFile());
 
 		if (_waccess(wallpaper.c_str(), 0) != -1)
 		{
 			// Set wallpaper
 			SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)wallpaper.c_str(), 0);
 		}
-
-		Rainmeter->ReadGeneralSettings(Rainmeter->GetIniFile());
 
 		// Create meter windows for active configs
 		const std::multimap<int, int>& configOrders = Rainmeter->m_ConfigOrders;
@@ -1355,7 +1380,23 @@ void CDialogManage::CTabThemes::Update()
 				Rainmeter->ActivateConfig((*iter).second, config.active - 1);
 			}
 		}
+
+		item = GetDlgItem(m_Window, IDC_MANAGETHEMES_LOAD_BUTTON);
+		EnableWindow(item, TRUE);
 	}
+}
+
+void CDialogManage::CTabThemes::PreserveSetting(const std::wstring& backupFile, LPCTSTR key, bool replace)
+{
+	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
+
+	if ((replace || GetPrivateProfileString(L"Rainmeter", key, L"", buffer, 4, Rainmeter->GetIniFile().c_str()) == 0) &&
+		GetPrivateProfileString(L"Rainmeter", key, L"", buffer, MAX_LINE_LENGTH, backupFile.c_str()) > 0)
+	{
+		WritePrivateProfileString(L"Rainmeter", key, buffer, Rainmeter->GetIniFile().c_str());
+	}
+
+	delete buffer;
 }
 
 /*
