@@ -1341,7 +1341,7 @@ void CDialogManage::CTabThemes::Update()
 
 		// Replace Rainmeter.ini with theme
 		std::wstring theme = Rainmeter->GetSettingsPath() + L"Themes\\";
-		theme += themes[sel].c_str();
+		theme += themes[sel];
 		std::wstring wallpaper = theme + L"\\RainThemes.bmp";
 		theme += L"\\Rainmeter.thm";
 		CSystem::CopyFiles(theme, Rainmeter->GetIniFile());
@@ -1609,7 +1609,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			std::wstring command = Rainmeter->GetConfigEditor() + L" \"";
 			command += Rainmeter->GetSettingsPath();
 			command += L"Themes\\";
-			command += themes[sel].c_str();
+			command += themes[sel];
 			command += L"\\Rainmeter.thm\"";
 			LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
 		}
@@ -1630,7 +1630,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			}
 
 			std::wstring folder = Rainmeter->GetSettingsPath() + L"Themes\\";
-			folder += themes[sel].c_str();
+			folder += themes[sel];
 
 			if (CSystem::RemoveFolder(folder))
 			{
