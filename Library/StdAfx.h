@@ -29,6 +29,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
+#include <windowsx.h>
 #include <gdiplus.h>
 #include <dwmapi.h>
 #include <comdef.h>
@@ -54,8 +55,6 @@
 #include <sstream>
 #include <ctime>
 #include <cstdlib>
-#include <fstream>
-#include <iostream>
 #include <algorithm>
 #include <cctype>
 

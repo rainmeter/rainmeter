@@ -27,7 +27,7 @@
 #include "ConfigParser.h"
 #include "Group.h"
 
-#define BEGIN_MESSAGEPROC if (Window) { switch(uMsg) {
+#define BEGIN_MESSAGEPROC if (Window) { switch (uMsg) {
 #define MESSAGE(handler, msg) case msg: return Window->handler(uMsg, wParam, lParam);
 #define REJECT_MESSAGE(msg) case msg: return 0;
 #define END_MESSAGEPROC } } return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -204,7 +204,7 @@ public:
 	const std::wstring& GetSkinName() { return m_SkinName; }
 	const std::wstring& GetSkinIniFile() { return m_SkinIniFile; }
 	std::wstring GetSkinRootPath();
-	
+
 	std::list<CMeasure*>& GetMeasures() { return m_Measures; }
 	std::list<CMeter*>& GetMeters() { return m_Meters; }
 
@@ -246,6 +246,8 @@ public:
 
 	CMeter* GetMeter(const std::wstring& meterName);
 	CMeasure* GetMeasure(const std::wstring& measureName);
+
+	friend class CDialogManage;
 
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -328,6 +330,7 @@ private:
 	void SetWindowDraggable(bool b);
 	void SetSavePosition(bool b);
 	void SetSnapEdges(bool b);
+	void SetWindowHide(HIDEMODE hide);
 	bool DoAction(int x, int y, MOUSE mouse, bool test);
 	bool DoMoveAction(int x, int y, MOUSE mouse);
 	bool ResizeWindow(bool reset);

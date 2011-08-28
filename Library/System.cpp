@@ -1081,6 +1081,40 @@ void CSystem::ResetWorkingDirectory()
 }
 
 /*
+** SetClipboardText
+**
+** Sets clipboard text to given string.
+**
+*/
+void CSystem::SetClipboardText(const std::wstring& text)
+{
+	if (OpenClipboard(NULL))
+	{
+		// Include terminating null char
+		size_t len = text.length() + 1;
+
+		HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(WCHAR));
+		if (hMem)
+		{
+			LPVOID data = GlobalLock(hMem);
+			if (data)
+			{
+				memcpy(data, text.c_str(), len * sizeof(WCHAR));
+				GlobalUnlock(hMem);
+
+				EmptyClipboard();
+				if (!SetClipboardData(CF_UNICODETEXT, hMem))
+				{
+					GlobalFree(hMem);
+				}
+			}
+		}
+
+		CloseClipboard();
+	}
+}
+
+/*
 ** CopyFiles
 **
 ** Copies files and folders from one location to another.
@@ -1127,6 +1161,34 @@ bool CSystem::RemoveFile(const std::wstring& file)
 	}
 
 	return (DeleteFile(file.c_str()) != 0);
+}
+
+/*
+** RemoveFolder
+**
+** Recursively removes folder.
+**
+*/
+bool CSystem::RemoveFolder(const std::wstring& strFolder)
+{
+	std::wstring tmpFolder(strFolder);
+
+	// The strings must end with double nul
+	tmpFolder.append(L"0");
+	tmpFolder[tmpFolder.size() - 1] = L'\0';
+
+	SHFILEOPSTRUCT fo = {0};
+	fo.wFunc = FO_DELETE;
+	fo.pFrom = tmpFolder.c_str();
+	fo.fFlags = FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO;
+
+	int result = SHFileOperation(&fo);
+	if (result != 0)
+	{
+		LogWithArgs(LOG_ERROR, L"Unable to delete folder %s (%i)", strFolder.c_str(), result);
+		return false;
+	}
+	return true;
 }
 
 /*

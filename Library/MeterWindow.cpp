@@ -24,7 +24,8 @@
 #include "Error.h"
 #include "Meter.h"
 #include "Measure.h"
-#include "AboutDialog.h"
+#include "DialogAbout.h"
+#include "DialogManage.h"
 #include "resource.h"
 #include "Litestep.h"
 #include "MeasureCalc.h"
@@ -200,7 +201,8 @@ CMeterWindow::~CMeterWindow()
 	{
 		BOOL Result;
 		int counter = 0;
-		do {
+		do
+		{
 			// Wait for the window to die
 			Result = UnregisterClass(METERWINDOW_CLASS_NAME, m_Rainmeter->GetInstance());
 			Sleep(100);
@@ -679,7 +681,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 
 	if (!m_Window) return;
 
-	switch(bang)
+	switch (bang)
 	{
 	case BANG_REFRESH:
 		// Refresh needs to be delayed since it crashes if done during Update()
@@ -693,7 +695,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 	case BANG_UPDATE:
 		KillTimer(m_Window, METERTIMER);  // Kill timer temporarily
 		Update(false);
-		UpdateAboutStatistics(m_SkinName.c_str());
+		CDialogAbout::UpdateMeasures(m_SkinName.c_str());
 		if (m_WindowUpdate >= 0)
 		{
 			SetTimer(m_Window, METERTIMER, m_WindowUpdate, NULL);
@@ -768,7 +770,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 
 	case BANG_UPDATEMEASURE:
 		UpdateMeasure(arg);
-		UpdateAboutStatistics(m_SkinName.c_str());
+		CDialogAbout::UpdateMeasures(m_SkinName.c_str());
 		break;
 
 	case BANG_DISABLEMEASUREGROUP:
@@ -785,7 +787,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 
 	case BANG_UPDATEMEASUREGROUP:
 		UpdateMeasure(arg, true);
-		UpdateAboutStatistics(m_SkinName.c_str());
+		CDialogAbout::UpdateMeasures(m_SkinName.c_str());
 		break;
 
 	case BANG_SHOW:
@@ -2007,6 +2009,11 @@ void CMeterWindow::WriteConfig(INT setting)
 		WCHAR buffer[32];
 		const WCHAR* section = m_SkinName.c_str();
 
+		if (setting != SETTING_ALL)
+		{
+			CDialogManage::UpdateSkins(this);
+		}
+
 		if (setting & SETTING_WINDOWPOSITION)
 		{
 			// If position needs to be save, do so.
@@ -2073,7 +2080,6 @@ void CMeterWindow::WriteConfig(INT setting)
 		}
 	}
 }
-
 
 /*
 ** ReadSkin
@@ -3122,7 +3128,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (wParam == METERTIMER)
 	{
 		Update(false);
-		UpdateAboutStatistics(m_SkinName.c_str());
+		CDialogAbout::UpdateMeasures(m_SkinName.c_str());
 
 		//if (m_KeepOnScreen)
 		//{
@@ -3331,7 +3337,7 @@ void CMeterWindow::ShowWindowIfAppropriate()
 	{
 		if (!m_Hidden && !inside && !keyDown)
 		{
-			switch(m_WindowHide)
+			switch (m_WindowHide)
 			{
 			case HIDEMODE_HIDE:
 				if (m_TransparencyValue == 0 || !IsWindowVisible(m_Window))
@@ -3540,7 +3546,7 @@ LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (!m_Hidden)
 		{
 			// If Alt, shift or control is down, do not hide the window
-			switch(m_WindowHide)
+			switch (m_WindowHide)
 			{
 			case HIDEMODE_HIDE:
 				if (!m_NativeTransparency || m_TransparencyValue == m_AlphaValue)
@@ -3655,6 +3661,10 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
 			}
 		}
+		else if (wParam == ID_CONTEXT_SKINMENU_REFRESH)
+		{
+			Refresh(false);
+		}
 		else if (wParam == ID_CONTEXT_SKINMENU_OPENSKINSFOLDER)
 		{
 			std::wstring command = L"\"" + m_SkinPath;
@@ -3662,9 +3672,9 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			command += L"\"";
 			LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_REFRESH)
+		else if (wParam == ID_CONTEXT_SKINMENU_MANAGESKIN)
 		{
-			Refresh(false);
+			CDialogManage::OpenSkin(this);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_VERYTOPMOST)
 		{
@@ -3705,42 +3715,15 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_HIDEONMOUSE)
 		{
-			if (m_WindowHide == HIDEMODE_NONE)
-			{
-				m_WindowHide = HIDEMODE_HIDE;
-			}
-			else
-			{
-				m_WindowHide = HIDEMODE_NONE;
-			}
-			WriteConfig(SETTING_HIDEONMOUSEOVER);
-			UpdateTransparency(m_AlphaValue, false);
+			SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_HIDE : HIDEMODE_NONE);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN)
 		{
-			if (m_WindowHide == HIDEMODE_NONE)
-			{
-				m_WindowHide = HIDEMODE_FADEIN;
-			}
-			else
-			{
-				m_WindowHide = HIDEMODE_NONE;
-			}
-			WriteConfig(SETTING_HIDEONMOUSEOVER);
-			UpdateTransparency(m_AlphaValue, false);
+			SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_FADEIN : HIDEMODE_NONE);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT)
 		{
-			if (m_WindowHide == HIDEMODE_NONE)
-			{
-				m_WindowHide = HIDEMODE_FADEOUT;
-			}
-			else
-			{
-				m_WindowHide = HIDEMODE_NONE;
-			}
-			WriteConfig(SETTING_HIDEONMOUSEOVER);
-			UpdateTransparency(m_AlphaValue, false);
+			SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_FADEOUT : HIDEMODE_NONE);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_REMEMBERPOSITION)
 		{
@@ -3953,6 +3936,18 @@ void CMeterWindow::SetSnapEdges(bool b)
 {
 	m_SnapEdges = b;
 	WriteConfig(SETTING_SNAPEDGES);
+}
+/*
+** SetWindowHide
+**
+** Helper function for setting WindowHide
+**
+*/
+void CMeterWindow::SetWindowHide(HIDEMODE hide)
+{
+	m_WindowHide = hide;
+	WriteConfig(SETTING_HIDEONMOUSEOVER);
+	UpdateTransparency(m_AlphaValue, false);
 }
 
 /*
@@ -4908,7 +4903,6 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 	return false;
 }
 
-
 /*
 ** OnMove
 **
@@ -5088,7 +5082,7 @@ LRESULT CMeterWindow::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	COPYDATASTRUCT* pCopyDataStruct = (COPYDATASTRUCT*) lParam;
+	COPYDATASTRUCT* pCopyDataStruct = (COPYDATASTRUCT*)lParam;
 
 	if (pCopyDataStruct && (pCopyDataStruct->dwData == 1) && (pCopyDataStruct->cbData > 0))
 	{
@@ -5245,7 +5239,6 @@ std::wstring CMeterWindow::GetSkinRootPath()
 
 	return path;
 }
-
 
 CMeter* CMeterWindow::GetMeter(const std::wstring& meterName)
 {

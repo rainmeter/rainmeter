@@ -71,12 +71,12 @@ void CheckVersion(void* dummy)
 
 			if (version > RAINMETER_VERSION)
 			{
-				Rainmeter->SetNewVersion(TRUE);
+				Rainmeter->SetNewVersion(true);
+				Log(LOG_NOTICE, L"CheckUpdate: New version available.");
 			}
 			else
 			{
-				Rainmeter->SetNewVersion(FALSE);
-				Log(LOG_NOTICE, L"CheckUpdate: No new version available.");
+				Rainmeter->SetNewVersion(false);
 			}
 		}
 		else

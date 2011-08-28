@@ -22,7 +22,8 @@
 #include "resource.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
-#include "AboutDialog.h"
+#include "DialogAbout.h"
+#include "DialogManage.h"
 #include "Error.h"
 #include "RainmeterQuery.h"
 #include "../Version.h"
@@ -411,18 +412,18 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 	}
 
-	switch(uMsg)
+	switch (uMsg)
 	{
 	case WM_COMMAND:
 		if (Rainmeter && tray)
 		{
-			if (wParam == ID_CONTEXT_ABOUT)
+			if (wParam == ID_CONTEXT_MANAGE)
 			{
-				OpenAboutDialog(tray->GetWindow(), Rainmeter->GetInstance());
+				CDialogManage::Open();
 			}
-			else if (wParam == ID_CONTEXT_DOWNLOADS)
+			else if (wParam == ID_CONTEXT_ABOUT)
 			{
-				LSExecute(NULL, RAINMETER_DOWNLOADS, SW_SHOWNORMAL);
+				CDialogAbout::Open();
 			}
 			else if (wParam == ID_CONTEXT_SHOW_HELP)
 			{
@@ -472,18 +473,6 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				std::wstring command = Rainmeter->GetConfigEditor() + L" \"";
 				command += Rainmeter->GetIniFile();
 				command += L"\"";
-				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
-			}
-			else if (wParam == ID_CONTEXT_MANAGETHEMES)
-			{
-				std::wstring command = L"\"" + Rainmeter->GetAddonPath();
-				command += L"RainThemes\\RainThemes.exe\"";
-				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
-			}
-			else if (wParam == ID_CONTEXT_MANAGESKINS)
-			{
-				std::wstring command = L"\"" + Rainmeter->GetAddonPath();
-				command += L"RainBrowser\\RainBrowser.exe\"";
 				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 			}
 			else if (wParam == ID_CONTEXT_QUIT)
@@ -565,10 +554,9 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	case WM_TRAY_NOTIFYICON:
 		{
 			UINT uMouseMsg = (UINT)lParam;
-
 			std::wstring bang;
 
-			switch(uMouseMsg)
+			switch (uMouseMsg)
 			{
 			case WM_LBUTTONDOWN:
 				bang = Rainmeter->GetTrayExecuteL();
@@ -599,11 +587,15 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{
 				Rainmeter->ExecuteCommand(bang.c_str(), NULL);
 			}
-			else if	(uMouseMsg == WM_RBUTTONDOWN)
+			else if (uMouseMsg == WM_RBUTTONDOWN)
 			{
 				POINT point;
 				GetCursorPos(&point);
 				Rainmeter->ShowContextMenu(point, NULL);
+			}
+			else if (uMouseMsg == WM_LBUTTONDOWN || uMouseMsg == WM_LBUTTONDBLCLK)
+			{
+				CDialogManage::Open();
 			}
 		}
 		break;
@@ -699,9 +691,9 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if (wParam == RAINMETER_QUERY_ID_VERSION_CHECK)
 			{
-				UINT versioncheck = (Rainmeter->GetDisableVersionCheck() * (Rainmeter->GetDisableVersionCheck() + Rainmeter->GetNewVersion()));
+				UINT versioncheck = ((int)Rainmeter->GetDisableVersionCheck() * ((int)Rainmeter->GetDisableVersionCheck() + (int)Rainmeter->GetNewVersion()));
 
-				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM) versioncheck);
+				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)versioncheck);
 
 				return 0;
 			}
@@ -709,7 +701,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{
 				BOOL debug = Rainmeter->GetDebug();
 
-				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM) debug);
+				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)debug);
 
 				return 0;
 			}
@@ -801,7 +793,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{
 				BOOL islitestep = !Rainmeter->GetDummyLitestep();
 
-				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM) islitestep);
+				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)islitestep);
 
 				return 0;
 			}

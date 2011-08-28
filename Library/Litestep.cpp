@@ -339,10 +339,10 @@ HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR sz
 	command.erase(0, notwhite);
 	if (command.empty()) return NULL;
 
-	size_t quotePos = command.find(L"\"");
+	size_t quotePos = command.find(L'"');
 	if (quotePos == 0)
 	{
-		size_t quotePos2 = command.find(L"\"", quotePos + 1);
+		size_t quotePos2 = command.find(L'"', quotePos + 1);
 		if (quotePos2 != std::wstring::npos)
 		{
 			args.assign(command, quotePos2 + 1, command.length() - (quotePos2 + 1));
@@ -355,7 +355,7 @@ HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR sz
 	}
 	else
 	{
-		size_t spacePos = command.find(L" ");
+		size_t spacePos = command.find(L' ');
 		if (spacePos != std::wstring::npos)
 		{
 			args.assign(command, spacePos + 1, command.length() - (spacePos + 1));
@@ -470,11 +470,8 @@ std::string ConvertToAscii(LPCTSTR str)
 		int bufLen = WideCharToMultiByte(CP_ACP, 0, str, strLen, NULL, 0, NULL, NULL);
 		if (bufLen > 0)
 		{
-			char* tmpSz = new char[bufLen];
-			tmpSz[0] = 0;
-			WideCharToMultiByte(CP_ACP, 0, str, strLen, tmpSz, bufLen, NULL, NULL);
-			szAscii = tmpSz;
-			delete [] tmpSz;
+			szAscii.resize(bufLen - 1);
+			WideCharToMultiByte(CP_ACP, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
 		}
 	}
 	return szAscii;
@@ -490,11 +487,8 @@ std::wstring ConvertToWide(LPCSTR str)
 		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
 		if (bufLen > 0)
 		{
-			WCHAR* wideSz = new WCHAR[bufLen];
-			wideSz[0] = 0;
-			MultiByteToWideChar(CP_ACP, 0, str, strLen, wideSz, bufLen);
-			szWide = wideSz;
-			delete [] wideSz;
+			szWide.resize(bufLen - 1);
+			MultiByteToWideChar(CP_ACP, 0, str, strLen, &szWide[0], bufLen);
 		}
 	}
 	return szWide;
@@ -510,11 +504,8 @@ std::string ConvertToUTF8(LPCWSTR str)
 		int bufLen = WideCharToMultiByte(CP_UTF8, 0, str, strLen, NULL, 0, NULL, NULL);
 		if (bufLen > 0)
 		{
-			char* tmpSz = new char[bufLen];
-			tmpSz[0] = 0;
-			WideCharToMultiByte(CP_UTF8, 0, str, strLen, tmpSz, bufLen, NULL, NULL);
-			szAscii = tmpSz;
-			delete [] tmpSz;
+			szAscii.resize(bufLen - 1);
+			WideCharToMultiByte(CP_UTF8, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
 		}
 	}
 	return szAscii;
@@ -530,57 +521,36 @@ std::wstring ConvertUTF8ToWide(LPCSTR str)
 		int bufLen = MultiByteToWideChar(CP_UTF8, 0, str, strLen, NULL, 0);
 		if (bufLen > 0)
 		{
-			WCHAR* wideSz = new WCHAR[bufLen];
-			wideSz[0] = 0;
-			MultiByteToWideChar(CP_UTF8, 0, str, strLen, wideSz, bufLen);
-			szWide = wideSz;
-			delete [] wideSz;
+			szWide.resize(bufLen - 1);
+			MultiByteToWideChar(CP_UTF8, 0, str, strLen, &szWide[0], bufLen);
 		}
 	}
 	return szWide;
 }
 
-BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
+BOOL LogInternal(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 {
-	CRainmeter::LOG_INFO logInfo;
-	logInfo.message = pszMessage;
-
 	// Add timestamp
 	static ULONGLONG startTime = CSystem::GetTickCount64();
 	ULONGLONG time = CSystem::GetTickCount64();
 
 	WCHAR buffer[128];
-	_snwprintf_s(buffer, _TRUNCATE, L"(%02llu:%02llu:%02llu.%03llu) ", (time - startTime) / (1000 * 60* 60), ((time - startTime) / (1000 * 60)) % 60, ((time - startTime) / 1000) % 60, (time - startTime) % 1000);
+	_snwprintf_s(buffer, _TRUNCATE, L"%02llu:%02llu:%02llu.%03llu", (time - startTime) / (1000 * 60* 60), ((time - startTime) / (1000 * 60)) % 60, ((time - startTime) / 1000) % 60, (time - startTime) % 1000);
 
-	std::wstring message(buffer);
-	logInfo.timestamp = message;
+	if (Rainmeter)
+	{
+		Rainmeter->AddAboutLogInfo(nLevel, buffer, pszMessage);
+	}
+
+	std::wstring message = L"(";
+	message += buffer;
+	message += L") ";
 	message += pszMessage;
 
 #ifdef _DEBUG
 	_RPT0(_CRT_WARN, ConvertToAscii(message.c_str()).c_str());
 	_RPT0(_CRT_WARN, "\n");
 #endif
-
-	switch(nLevel)
-	{
-	case LOG_ERROR:
-		logInfo.type = L"ERROR";
-		break;
-	case LOG_WARNING:
-		logInfo.type = L"WARNING";
-		break;
-	case LOG_NOTICE:
-		logInfo.type = L"NOTICE";
-		break;
-	case LOG_DEBUG:
-		logInfo.type = L"DEBUG";
-		break;
-	}
-
-	if (Rainmeter)
-	{
-		Rainmeter->AddAboutLogInfo(logInfo);
-	}
 
 	// Use the lsapi.dll version of the method if possible
 	if (fpLSLog)
@@ -623,10 +593,29 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 				FILE* logFile = _wfopen(logfile.c_str(), L"a+, ccs=UTF-8");
 				if (logFile)
 				{
-					fputws(logInfo.type.c_str(), logFile);
-					fputws(L": ", logFile);
+					message.insert(0, L": ");
+
+					switch (nLevel)
+					{
+					case LOG_ERROR:
+						message.insert(0, L"ERROR");
+						break;
+
+					case LOG_WARNING:
+						message.insert(0, L"WARNING");
+						break;
+
+					case LOG_NOTICE:
+						message.insert(0, L"NOTICE");
+						break;
+
+					case LOG_DEBUG:
+						message.insert(0, L"DEBUG");
+						break;
+					}
+
+					message += L"\n";
 					fputws(message.c_str(), logFile);
-					fputws(L"\n", logFile);
 					fclose(logFile);
 				}
 			}
@@ -635,14 +624,19 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 	return TRUE;
 }
 
-void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved)
+BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 {
-	// Do nothing.
+	if (nLevel != LOG_DEBUG || Rainmeter->GetDebug())
+	{
+		return LogInternal(nLevel, pszModule, pszMessage);
+	}
+
+	return TRUE;
 }
 
 void Log(int nLevel, const WCHAR* message)
 {
-	LSLog(nLevel, L"Rainmeter", message);
+	LogInternal(nLevel, L"Rainmeter", message);
 }
 
 void LogWithArgs(int nLevel, const WCHAR* format, ... )
@@ -664,8 +658,13 @@ void LogWithArgs(int nLevel, const WCHAR* format, ... )
 
 	_set_invalid_parameter_handler(oldHandler);
 
-	LSLog(nLevel, L"Rainmeter", buffer);
+	LogInternal(nLevel, L"Rainmeter", buffer);
 	va_end(args);
 
 	delete [] buffer;
+}
+
+void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved)
+{
+	// Do nothing.
 }

@@ -31,10 +31,13 @@
 
 #define APPNAME L"Rainmeter"
 #ifdef _WIN64
-#define APPBITS L"(64-bit)"
+#define APPBITS L"64-bit"
 #else
-#define APPBITS L"(32-bit)"
+#define APPBITS L"32-bit"
 #endif
+#define WIDEN2(x) L ## x
+#define WIDEN(x) WIDEN2(x)
+#define APPDATE WIDEN(__DATE__)
 
 // Callbacks for Litestep
 void RainmeterRefresh(HWND, const char* arg);
@@ -117,7 +120,8 @@ void RainmeterDeactivateConfigWide(const WCHAR* arg);
 void RainmeterToggleConfigWide(const WCHAR* arg);
 void RainmeterDeactivateConfigGroupWide(const WCHAR* arg);
 void RainmeterRefreshAppWide();
-void RainmeterAboutWide();
+void RainmeterAboutWide(const WCHAR* arg = NULL);
+void RainmeterManageWide(const WCHAR* arg = NULL);
 void RainmeterSkinMenuWide(const WCHAR* arg);
 void RainmeterTrayMenuWide();
 void RainmeterResetStatsWide();
@@ -156,7 +160,7 @@ public:
 
 	struct LOG_INFO
 	{
-		std::wstring type;
+		int level;
 		std::wstring timestamp;
 		std::wstring message;
 	};
@@ -182,7 +186,7 @@ public:
 	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; }
 
 	void ActivateConfig(int configIndex, int iniIndex);
-	bool DeactivateConfig(CMeterWindow* meterWindow, int configIndex);
+	bool DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bool save = true);
 
 	const std::wstring& GetPath() { return m_Path; }
 	const std::wstring& GetIniFile() { return m_IniFile; }
@@ -209,17 +213,16 @@ public:
 	static bool GetDebug() { return c_Debug; }
 
 	void ReloadSettings();
-	void SaveSettings();
 
 	void UpdateStats();
 	void ReadStats();
 	void WriteStats(bool bForce);
 	void ResetStats();
 
-	BOOL GetDisableVersionCheck() { return m_DisableVersionCheck; }
-	BOOL GetNewVersion() { return m_NewVersion; }
-	void SetDisableVersionCheck(BOOL check) { m_DisableVersionCheck = check; }
-	void SetNewVersion(BOOL NewVer) { m_NewVersion = NewVer; }
+	bool GetDisableVersionCheck() { return m_DisableVersionCheck; }
+	void SetDisableVersionCheck(bool check);
+	bool GetNewVersion() { return m_NewVersion; }
+	void SetNewVersion(bool newver) { m_NewVersion = newver; }
 
 	bool GetLogging() { return m_Logging; }
 	void StartLogging();
@@ -231,8 +234,7 @@ public:
 	bool GetDisableDragging() { return m_DisableDragging; }
 	void SetDisableDragging(bool dragging);
 
-	void AddAboutLogInfo(const LOG_INFO& logInfo);
-	const std::list<LOG_INFO>& GetAboutLogData() { return m_LogData; }
+	void AddAboutLogInfo(int level, LPCWSTR time, LPCWSTR message);
 
 	void SetDebug(bool debug);
 
@@ -258,6 +260,8 @@ public:
 	static std::wstring ExtractPath(const std::wstring& strFilePath);
 	static void ExpandEnvironmentVariables(std::wstring& strPath);
 
+	friend class CDialogManage;
+
 private:
 	void CreateMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile);
 	bool DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater);
@@ -278,8 +282,6 @@ private:
 	void CreateDefaultConfigFile(const std::wstring& strFile);
 	void SetLogging(bool logging);
 	void TestSettingsFile(bool bDefaultIniLocation);
-	void CheckSkinVersions();
-	int CompareVersions(const std::wstring& strA, const std::wstring& strB);
 
 	CTrayWindow* m_TrayWindow;
 
@@ -308,8 +310,8 @@ private:
 	std::wstring m_TrayExecuteDR;
 	std::wstring m_TrayExecuteDM;
 
-	BOOL m_DisableVersionCheck;
-	BOOL m_NewVersion;
+	bool m_DisableVersionCheck;
+	bool m_NewVersion;
 	
 	bool m_DesktopWorkAreaChanged;
 	bool m_DesktopWorkAreaType;			// If true, DesktopWorkArea is treated as "margin"

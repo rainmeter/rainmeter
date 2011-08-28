@@ -75,8 +75,11 @@ public:
 	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = NULL, bool ignoreErrors = false);
 	static void ResetWorkingDirectory();
 
+	static void SetClipboardText(const std::wstring& text);
+
 	static bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove = false);
 	static bool RemoveFile(const std::wstring& file);
+	static bool RemoveFolder(const std::wstring& strFolder);
 
 	static void GetIniFileMappingList(std::vector<std::wstring>& iniFileMappings);
 	static std::wstring GetTemporaryFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& iniFile);

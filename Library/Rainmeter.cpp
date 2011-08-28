@@ -21,7 +21,8 @@
 #include "TrayWindow.h"
 #include "System.h"
 #include "Error.h"
-#include "AboutDialog.h"
+#include "DialogAbout.h"
+#include "DialogManage.h"
 #include "MeasureNet.h"
 #include "MeterString.h"
 #include "resource.h"
@@ -1428,11 +1429,51 @@ void RainmeterRefreshAppWide()
 ** Callback for the !RainmeterAbout bang
 **
 */
-void RainmeterAboutWide()
+void RainmeterAboutWide(const WCHAR* arg)
 {
 	if (Rainmeter)
 	{
-		OpenAboutDialog(Rainmeter->GetTrayWindow()->GetWindow(), Rainmeter->GetInstance());
+		int tab = 0;
+		if (arg)
+		{
+			if (_wcsnicmp(arg, L"Measures", 8) == 0)
+			{
+				tab = 1;
+			}
+			else if (_wcsnicmp(arg, L"Plugins", 7) == 0)
+			{
+				tab = 2;
+			}
+		}
+
+		CDialogAbout::Open(tab);
+	}
+}
+
+/*
+** RainmeterManagerWide
+**
+** Callback for the !RainmeterAbout bang
+**
+*/
+void RainmeterManageWide(const WCHAR* arg)
+{
+	if (Rainmeter)
+	{
+		int tab = 0;
+		if (arg)
+		{
+			if (_wcsnicmp(arg, L"Themes", 6) == 0)
+			{
+				tab = 1;
+			}
+			else if (_wcsnicmp(arg, L"Settings", 8) == 0)
+			{
+				tab = 2;
+			}
+		}
+
+		CDialogManage::Open(tab);
 	}
 }
 
@@ -1668,8 +1709,8 @@ bool CRainmeter::c_Debug = false;
 */
 CRainmeter::CRainmeter() :
 	m_TrayWindow(),
-	m_DisableVersionCheck(FALSE),
-	m_NewVersion(FALSE),
+	m_DisableVersionCheck(false),
+	m_NewVersion(false),
 	m_DesktopWorkAreaChanged(false),
 	m_DesktopWorkAreaType(false),
 	m_MenuActive(false),
@@ -1685,8 +1726,7 @@ CRainmeter::CRainmeter() :
 
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
-	INITCOMMONCONTROLSEX initCtrls = {sizeof(INITCOMMONCONTROLSEX), ICC_LISTVIEW_CLASSES};
-	InitCommonControlsEx(&initCtrls);
+	InitCommonControls();
 
 	// Initialize GDI+.
 	GdiplusStartupInput gdiplusStartupInput;
@@ -1950,7 +1990,6 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	LogWithArgs(LOG_NOTICE, L"Path: %s", m_Path.c_str());
 	LogWithArgs(LOG_NOTICE, L"IniFile: %s", m_IniFile.c_str());
 	LogWithArgs(LOG_NOTICE, L"SkinPath: %s", m_SkinPath.c_str());
-	LogWithArgs(LOG_NOTICE, L"PluginPath: %s", m_PluginPath.c_str());
 
 	// Extract volume path from program path
 	// E.g.:
@@ -1977,12 +2016,6 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	// Test that the Rainmeter.ini file is writable
 	TestSettingsFile(bDefaultIniLocation);
-
-	// If the skin folder is somewhere else than in the program path
-	if (_wcsnicmp(m_Path.c_str(), m_SkinPath.c_str(), m_Path.size()) != 0)
-	{
-		CheckSkinVersions();
-	}
 
 	CSystem::Initialize(Instance);
 	CMeasureNet::InitializeNewApi();
@@ -2117,174 +2150,6 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 }
 
 /*
-** CheckSkinVersions
-**
-** Checks if any of the skins in the program folder are newer than in the skin folder.
-**
-*/
-void CRainmeter::CheckSkinVersions()
-{
-	// List all skins in the program folder
-	std::wstring strMainSkinsPath = m_Path + L"Skins\\";
-	std::vector<CONFIGMENU> menu;
-	ScanForConfigsRecursive(strMainSkinsPath, L"", 0, menu, true);
-
-	for (size_t i = 0, isize = menu.size(); i < isize; ++i)
-	{
-		// LogWithArgs(LOG_DEBUG, L"%s", menu[i].name.c_str());
-
-		// Read the version files
-		std::wstring strNewVersionFile = strMainSkinsPath + menu[i].name;
-		strNewVersionFile += L"\\version";
-		std::wstring strCurrentVersionFile = m_SkinPath + menu[i].name;
-		strCurrentVersionFile += L"\\version";
-
-		std::string strVersion;
-		std::wstring strVersionNew;
-		std::wstring strVersionCurrent;
-		std::wstring strVersionInIni;
-
-		std::ifstream newFile(strNewVersionFile.c_str(), std::ios_base::in);
-		if (getline(newFile, strVersion))
-		{
-			strVersionNew = ConvertToWide(strVersion.c_str());
-			// LogWithArgs(LOG_DEBUG, L"New: %s", strVersionNew.c_str());
-
-			// Compare with the version entry in the Rainmeter.ini
-			WCHAR tmpSz[256] = {0};
-			GetPrivateProfileString(menu[i].name.c_str(), L"Version", L"", tmpSz, 256, m_IniFile.c_str());
-			strVersionInIni = tmpSz;
-
-			// LogWithArgs(LOG_DEBUG, L"In Ini: %s", strVersionInIni.c_str());
-
-			// Compare with the version file in the skin folder
-			std::ifstream currentFile(strCurrentVersionFile.c_str(), std::ios_base::in);
-			if (getline(currentFile, strVersion))
-			{
-				strVersionCurrent = ConvertToWide(strVersion.c_str());
-				// LogWithArgs(LOG_DEBUG, L"Current: %s", strVersionCurrent.c_str());
-			}
-		}
-
-		// If the skin doesn't define a version file no need to do anything
-		if (!strVersionNew.empty())
-		{
-			// Compare the version files
-			if (CompareVersions(strVersionNew, strVersionInIni) == 1 &&
-				CompareVersions(strVersionNew, strVersionCurrent) == 1)
-			{
-				// Check if the old skin exists at all
-				struct _stat64i32 s;
-				std::wstring strSkinPath = m_SkinPath + menu[i].name;
-				if (_wstat(strSkinPath.c_str(), &s) == 0)
-				{
-					std::wstring strMessage = L"A new version of config \"" + menu[i].name;
-					strMessage += L"\" is available.\n\nNew version: ";
-					strMessage += strVersionNew.empty() ? L"Unknown" : strVersionNew;
-					strMessage += L"\nCurrent version: ";
-					strMessage += strVersionCurrent.empty() ? L"Unknown" : strVersionCurrent;
-					strMessage += L"\n\nDo you want to upgrade?\n\n"
-						L"(If you select 'Yes' your current config\nwill be moved into the 'Backup' folder)";
-
-					if (IDYES == MessageBox(NULL, strMessage.c_str(), APPNAME, MB_YESNO | MB_ICONQUESTION))
-					{
-						// Make sure that the folder exists
-						CreateDirectory(std::wstring(m_SkinPath + L"Backup").c_str(), NULL);
-
-						// Check for illegal characters from the version number
-						if (strVersionCurrent.find_first_of(L"\\/\"*:?<>|") == std::wstring::npos)
-						{
-							std::wstring strTarget = m_SkinPath + L"Backup\\";
-							strTarget += menu[i].name;
-							strTarget += L"-";
-							strTarget += strVersionCurrent;
-							if (CSystem::CopyFiles(m_SkinPath + menu[i].name, strTarget, true))	// Move the folder to "backup"
-							{
-								// Upgrade the skin
-								CSystem::CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
-
-								// TODO: Temporary 'fix': If skin was illustro upgrade the themes too
-								if (!_wcsicmp(menu[i].name.c_str(), L"illustro"))
-								{
-									std::wstring strMainThemes = m_Path + L"Themes";
-									std::wstring strCurrentThemes = GetSettingsPath();
-									CSystem::CopyFiles(strMainThemes, strCurrentThemes);
-								}
-								// End of temporary 'fix'
-							}
-							else
-							{
-								std::wstring strMessage = L"Failed to upgrade the config.\nUnable to backup the current config.";
-								MessageBox(NULL, strMessage.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
-							}
-						}
-						else
-						{
-							std::wstring strMessage = L"Failed to upgrade the config.\nThe version number contains illegal characters.";
-							MessageBox(NULL, strMessage.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
-						}
-					}
-				}
-				else
-				{
-					std::wstring strMessage = L"A new version of config \"" + menu[i].name;
-					strMessage += L"\" is available\n"
-						L"Do you want to add it to your skin and themes libraries?";
-					if (IDYES == MessageBox(NULL, strMessage.c_str(), APPNAME, MB_YESNO | MB_ICONQUESTION))
-					{
-						CSystem::CopyFiles(strMainSkinsPath + menu[i].name, m_SkinPath);
-						std::wstring strMainThemes = m_Path + L"Themes";
-						std::wstring strCurrentThemes = GetSettingsPath();
-						CSystem::CopyFiles(strMainThemes, strCurrentThemes);
-					}
-				}
-
-				// Even if the user doesn't want to upgrade mark it to the Rainmeter.ini so we don't ask the upgrade question again
-				WritePrivateProfileString(menu[i].name.c_str(), L"Version", strVersionNew.c_str(), m_IniFile.c_str());
-			}
-		}
-	}
-}
-
-/*
-** CompareVersions
-**
-** Compares two version strings. Returns 0 if they are equal, 1 if A > B and -1 if A < B.
-**
-*/
-int CRainmeter::CompareVersions(const std::wstring& strA, const std::wstring& strB)
-{
-	if (strA.empty() && strB.empty()) return 0;
-	if (strA.empty()) return -1;
-	if (strB.empty()) return 1;
-
-	std::vector<std::wstring> arrayA = CConfigParser::Tokenize(strA, L".");
-	std::vector<std::wstring> arrayB = CConfigParser::Tokenize(strB, L".");
-	size_t arrayASize = arrayA.size();
-	size_t arrayBSize = arrayB.size();
-
-	size_t len = max(arrayASize, arrayBSize);
-	for (size_t i = 0; i < len; ++i)
-	{
-		int a = 0;
-		int b = 0;
-
-		if (i < arrayASize)
-		{
-			a = _wtoi(arrayA[i].c_str());
-		}
-		if (i < arrayBSize)
-		{
-			b = _wtoi(arrayB[i].c_str());
-		}
-
-		if (a > b) return 1;
-		if (a < b) return -1;
-	}
-	return 0;
-}
-
-/*
 ** CreateDefaultConfigFile
 **
 ** Creates the default Rainmeter.ini file with illustro\System enabled.
@@ -2302,13 +2167,7 @@ void CRainmeter::CreateDefaultConfigFile(const std::wstring& strFile)
 	std::wstring defaultIni = GetPath() + L"Default.ini";
 	if (_waccess(defaultIni.c_str(), 0) == -1)
 	{
-		// The default.ini wasn't found -> create new
-		std::ofstream out(strFile.c_str(), std::ios::out);
-		if (out)
-		{
-			out << std::string("[Rainmeter]\n\n[illustro\\System]\nActive=1\n");
-			out.close();
-		}
+		WritePrivateProfileString(L"Rainmeter", L"\r\n[illustro\\System]\r\nActive", L"1", strFile.c_str());
 	}
 	else
 	{
@@ -2318,6 +2177,9 @@ void CRainmeter::CreateDefaultConfigFile(const std::wstring& strFile)
 
 void CRainmeter::ReloadSettings()
 {
+	// TODO FIXME
+//	UpdateDialog();
+
 	ScanForConfigs(m_SkinPath);
 	ScanForThemes(GetSettingsPath() + L"Themes");
 	ReadGeneralSettings(m_IniFile);
@@ -2377,7 +2239,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 	}
 }
 
-bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex)
+bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bool save)
 {
 	if (configIndex >= 0 && configIndex < (int)m_ConfigStrings.size())
 	{
@@ -2399,8 +2261,11 @@ bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex)
 
 	if (meterWindow)
 	{
-		// Disable the config in the ini-file
-		WriteActive(meterWindow->GetSkinName(), -1);
+		if (save)
+		{
+			// Disable the config in the ini-file
+			WriteActive(meterWindow->GetSkinName(), -1);
+		}
 
 		return DeleteMeterWindow(meterWindow, true);
 	}
@@ -2423,33 +2288,41 @@ void CRainmeter::CreateMeterWindow(const std::wstring& path, const std::wstring&
 		m_Meters[config] = mw;
 		mw->Initialize(*this);
 
-		UpdateAboutDialog();
+		CDialogAbout::UpdateSkins();
+		CDialogManage::UpdateSkins(mw);
 	}
 }
 
 void CRainmeter::ClearDeleteLaterList()
 {
-	while (!m_DelayDeleteList.empty())
+	if (!m_DelayDeleteList.empty())
 	{
-		CMeterWindow* meterWindow = m_DelayDeleteList.front();
-
-		// Remove from the delete later list
-		m_DelayDeleteList.remove(meterWindow);
-
-		// Remove from the meter window list if it is still there
-		std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
-		for (; iter != m_Meters.end(); ++iter)
+		do
 		{
-			if ((*iter).second == meterWindow)
+			CMeterWindow* meterWindow = m_DelayDeleteList.front();
+
+			// Remove from the delete later list
+			m_DelayDeleteList.remove(meterWindow);
+
+			// Remove from the meter window list if it is still there
+			std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
+			for (; iter != m_Meters.end(); ++iter)
 			{
-				m_Meters.erase(iter);
-
-				UpdateAboutDialog();
-				break;
+				if ((*iter).second == meterWindow)
+				{
+					m_Meters.erase(iter);
+					CDialogManage::UpdateSkins(meterWindow, true);
+					break;
+				}
 			}
-		}
 
-		delete meterWindow;
+			delete meterWindow;
+		}
+		while (!m_DelayDeleteList.empty());
+
+
+		CDialogManage::UpdateThemes();
+		CDialogAbout::UpdateSkins();
 	}
 }
 
@@ -2483,7 +2356,6 @@ bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
 				m_Meters.erase(iter);
 				delete meterWindow;
 
-				UpdateAboutDialog();
 				return true;
 			}
 		}
@@ -2492,8 +2364,6 @@ bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
 		{
 			m_Meters.clear();
 		}
-
-		UpdateAboutDialog();
 	}
 
 	return false;
@@ -2835,12 +2705,6 @@ void CRainmeter::ScanForThemes(const std::wstring& path)
 	}
 }
 
-void CRainmeter::SaveSettings()
-{
-	WritePrivateProfileString(L"Rainmeter", L"CheckUpdate", NULL , m_IniFile.c_str());
-	WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", m_DisableVersionCheck ? L"1" : L"0" , m_IniFile.c_str());
-}
-
 BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, CMeterWindow* meterWindow)
 {
 	// Skip "!Rainmeter" or "!"
@@ -3101,7 +2965,11 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"About") == 0)
 	{
-		RainmeterAboutWide();
+		RainmeterAboutWide(arg.c_str());
+	}
+	else if (_wcsicmp(name, L"Manage") == 0)
+	{
+		RainmeterManageWide(arg.c_str());
 	}
 	else if (_wcsicmp(name, L"SkinMenu") == 0)
 	{
@@ -3865,6 +3733,8 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 			HMENU subMenu = GetSubMenu(menu, 0);
 			if (subMenu)
 			{
+				SetMenuDefaultItem(subMenu, ID_CONTEXT_MANAGE, MF_BYCOMMAND);
+
 				if (!GetDummyLitestep())
 				{
 					// Disable Quit/Logging if ran as a Litestep plugin
@@ -3918,10 +3788,8 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 
 					WCHAR buffer[256];
 					GetMenuString(menu, 0, buffer, 256, MF_BYPOSITION);
-					InsertMenu(subMenu, 10, MF_BYPOSITION | MF_POPUP, (UINT_PTR)rainmeterMenu, buffer);
-					InsertMenu(subMenu, 11, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-
-					DeleteMenu(rainmeterMenu, ID_CONTEXT_DOWNLOADS, MF_BYCOMMAND);
+					InsertMenu(subMenu, 11, MF_BYPOSITION | MF_POPUP, (UINT_PTR)rainmeterMenu, buffer);
+					InsertMenu(subMenu, 12, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 				}
 				else
 				{
@@ -3942,9 +3810,9 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					// Put Update notifications in the Tray menu
 					if (m_NewVersion)
 					{
-						InsertMenu(subMenu, 0, MF_BYPOSITION, ID_CONTEXT_NEW_VERSION, L"New Version Available");
+						InsertMenu(subMenu, 0, MF_BYPOSITION, ID_CONTEXT_NEW_VERSION, L"Update available");
+						HiliteMenuItem(Rainmeter->GetTrayWindow()->GetWindow(), subMenu, 0, MF_BYPOSITION | MF_HILITE);
 						InsertMenu(subMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-						SetMenuDefaultItem(subMenu, ID_CONTEXT_NEW_VERSION, MF_BYCOMMAND);
 					}
 				}
 
@@ -3994,7 +3862,6 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 		m_MenuActive = false;
 	}
 }
-
 
 HMENU CRainmeter::CreateConfigMenu(HMENU configMenu, std::vector<CONFIGMENU>& configMenuData)
 {
@@ -4071,7 +3938,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 			HMENU posMenu = GetSubMenu(settingsMenu, 0);
 			if (posMenu)
 			{
-				switch(meterWindow->GetWindowZPosition())
+				switch (meterWindow->GetWindowZPosition())
 				{
 				case ZPOSITION_ONDESKTOP:
 					CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_ONDESKTOP, MF_BYCOMMAND | MF_CHECKED);
@@ -4387,16 +4254,12 @@ void CRainmeter::DeleteLogFile()
 	}
 }
 
-void CRainmeter::AddAboutLogInfo(const LOG_INFO& logInfo)
+void CRainmeter::AddAboutLogInfo(int level, LPCWSTR time, LPCWSTR message)
 {
+	// TODO: Store items in vector
+
 	EnterCriticalSection(&m_CsLogData);
-
-	m_LogData.push_front(logInfo);
-	if (m_LogData.size() > MAXABOUTLOGLINES)
-	{
-		m_LogData.pop_back();
-	}
-
+	CDialogAbout::AddLogItem(level, time, message);
 	LeaveCriticalSection(&m_CsLogData);
 }
 
@@ -4416,6 +4279,12 @@ void CRainmeter::SetDisableDragging(bool dragging)
 {
 	m_DisableDragging = dragging;
 	WritePrivateProfileString(L"Rainmeter", L"DisableDragging", dragging ? L"1" : L"0", m_IniFile.c_str());
+}
+
+void CRainmeter::SetDisableVersionCheck(bool check)
+{
+	m_DisableVersionCheck = check;
+	WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", check ? L"1" : L"0" , m_IniFile.c_str());
 }
 
 void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
