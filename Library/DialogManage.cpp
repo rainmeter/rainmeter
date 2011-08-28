@@ -734,7 +734,7 @@ void CDialogManage::CTabSkins::ReadSkin()
 		ShowScrollBar(item, SB_VERT, FALSE);
 	}
 
-	delete buffer;
+	delete [] buffer;
 }
 
 /*
@@ -1396,7 +1396,7 @@ void CDialogManage::CTabThemes::PreserveSetting(const std::wstring& backupFile, 
 		WritePrivateProfileString(L"Rainmeter", key, buffer, Rainmeter->GetIniFile().c_str());
 	}
 
-	delete buffer;
+	delete [] buffer;
 }
 
 /*

@@ -466,11 +466,11 @@ std::string ConvertToAscii(LPCTSTR str)
 
 	if (str && *str)
 	{
-		int strLen = (int)wcslen(str) + 1;
+		int strLen = (int)wcslen(str);
 		int bufLen = WideCharToMultiByte(CP_ACP, 0, str, strLen, NULL, 0, NULL, NULL);
 		if (bufLen > 0)
 		{
-			szAscii.resize(bufLen - 1);
+			szAscii.resize(bufLen);
 			WideCharToMultiByte(CP_ACP, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
 		}
 	}
@@ -483,11 +483,11 @@ std::wstring ConvertToWide(LPCSTR str)
 
 	if (str && *str)
 	{
-		int strLen = (int)strlen(str) + 1;
+		int strLen = (int)strlen(str);
 		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
 		if (bufLen > 0)
 		{
-			szWide.resize(bufLen - 1);
+			szWide.resize(bufLen);
 			MultiByteToWideChar(CP_ACP, 0, str, strLen, &szWide[0], bufLen);
 		}
 	}
@@ -500,11 +500,11 @@ std::string ConvertToUTF8(LPCWSTR str)
 
 	if (str && *str)
 	{
-		int strLen = (int)wcslen(str) + 1;
+		int strLen = (int)wcslen(str);
 		int bufLen = WideCharToMultiByte(CP_UTF8, 0, str, strLen, NULL, 0, NULL, NULL);
 		if (bufLen > 0)
 		{
-			szAscii.resize(bufLen - 1);
+			szAscii.resize(bufLen);
 			WideCharToMultiByte(CP_UTF8, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
 		}
 	}
@@ -517,11 +517,11 @@ std::wstring ConvertUTF8ToWide(LPCSTR str)
 
 	if (str && *str)
 	{
-		int strLen = (int)strlen(str) + 1;
+		int strLen = (int)strlen(str);
 		int bufLen = MultiByteToWideChar(CP_UTF8, 0, str, strLen, NULL, 0);
 		if (bufLen > 0)
 		{
-			szWide.resize(bufLen - 1);
+			szWide.resize(bufLen);
 			MultiByteToWideChar(CP_UTF8, 0, str, strLen, &szWide[0], bufLen);
 		}
 	}
