@@ -3794,7 +3794,11 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				HMENU themeMenu = GetSubMenu(subMenu, 5);
 				if (themeMenu)
 				{
-					CreateThemeMenu(themeMenu);
+					if (!m_Themes.empty())
+					{
+						DeleteMenu(themeMenu, 0, MF_BYPOSITION);
+						CreateThemeMenu(themeMenu);
+					}
 				}
 
 				if (meterWindow)
@@ -3924,8 +3928,6 @@ void CRainmeter::CreateThemeMenu(HMENU themeMenu)
 {
 	if (!m_Themes.empty())
 	{
-		InsertMenu(themeMenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-
 		for (size_t i = 0, isize = m_Themes.size(); i < isize; ++i)
 		{
 			InsertMenu(themeMenu, i, MF_BYPOSITION, ID_THEME_FIRST + i, m_Themes[i].c_str());

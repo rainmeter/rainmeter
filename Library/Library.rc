@@ -111,7 +111,7 @@ IDR_SKIN_MENU MENU
 BEGIN
     POPUP "Skin"
     BEGIN
-        MENUITEM "",                           ID_CONTEXT_SKINMENU_OPENSKINSFOLDER
+        MENUITEM " ",                           ID_CONTEXT_SKINMENU_OPENSKINSFOLDER  // Avoid to be compiled as a separator
         MENUITEM SEPARATOR
         POPUP "Variants"
         BEGIN
