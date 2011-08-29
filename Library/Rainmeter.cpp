@@ -3781,7 +3781,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				{
 					if (!m_ConfigMenu.empty())
 					{
-						DeleteMenu(configMenu, 0, MF_BYPOSITION);
+						DeleteMenu(configMenu, 0, MF_BYPOSITION);  // "No skins available" menuitem
 						CreateConfigMenu(configMenu, m_ConfigMenu);
 					}
 
@@ -3796,7 +3796,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				{
 					if (!m_Themes.empty())
 					{
-						DeleteMenu(themeMenu, 0, MF_BYPOSITION);
+						DeleteMenu(themeMenu, 0, MF_BYPOSITION);  // "No themes available" menuitem
 						CreateThemeMenu(themeMenu);
 					}
 				}
@@ -3926,12 +3926,9 @@ HMENU CRainmeter::CreateConfigMenu(HMENU configMenu, std::vector<CONFIGMENU>& co
 
 void CRainmeter::CreateThemeMenu(HMENU themeMenu)
 {
-	if (!m_Themes.empty())
+	for (size_t i = 0, isize = m_Themes.size(); i < isize; ++i)
 	{
-		for (size_t i = 0, isize = m_Themes.size(); i < isize; ++i)
-		{
-			InsertMenu(themeMenu, i, MF_BYPOSITION, ID_THEME_FIRST + i, m_Themes[i].c_str());
-		}
+		InsertMenu(themeMenu, i, MF_BYPOSITION, ID_THEME_FIRST + i, m_Themes[i].c_str());
 	}
 }
 

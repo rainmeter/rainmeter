@@ -82,7 +82,12 @@ bool CMeasureCalc::Update()
 	char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(m_Formula.c_str()).c_str(), &m_Value);
 	if (errMsg != NULL)
 	{
-		Log(LOG_ERROR, ConvertToWide(errMsg).c_str());
+		std::wstring error = L"Calc: ";
+		error += ConvertToWide(errMsg);
+		error += L" in measure [";
+		error += m_Name;
+		error += L"].";
+		Log(LOG_ERROR, error.c_str());
 	}
 
 	return PostUpdate();

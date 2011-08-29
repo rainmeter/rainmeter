@@ -759,7 +759,14 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.substr(1, result.size() - 2).c_str()).c_str(), &resultValue);
 		if (errMsg != NULL)
 		{
-			Log(LOG_ERROR, ConvertToWide(errMsg).c_str());
+			std::wstring error = L"ReadFormula: ";
+			error += ConvertToWide(errMsg);
+			error += L" in key \"";
+			error += key ? key : L"";
+			error += L"\" in section [";
+			error += section ? section : L"";
+			error += L"].";
+			Log(LOG_ERROR, error.c_str());
 		}
 
 		return resultValue;
@@ -778,7 +785,11 @@ bool CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
 		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.substr(1, result.size() - 2).c_str()).c_str(), resultValue);
 		if (errMsg != NULL)
 		{
-			Log(LOG_ERROR, ConvertToWide(errMsg).c_str());
+			std::wstring error = L"ReadFormula: ";
+			error += ConvertToWide(errMsg);
+			error += L": ";
+			error += result;
+			Log(LOG_ERROR, error.c_str());
 			return false;
 		}
 
