@@ -838,13 +838,6 @@ INT_PTR CALLBACK CDialogManage::CTabSkins::DlgProc(HWND hWnd, UINT uMsg, WPARAM 
 
 	case WM_NOTIFY:
 		return c_Dialog->m_TabSkins->OnNotify(wParam, lParam);
-
-	case WM_CTLCOLORDLG:
-		return OnColorDialog(wParam, lParam);
-
-	case WM_CTLCOLORBTN:
-	case WM_CTLCOLORSTATIC:
-		return OnColorStatic(wParam, lParam);
 	}
 
 	return FALSE;
@@ -1406,13 +1399,6 @@ INT_PTR CALLBACK CDialogManage::CTabThemes::DlgProc(HWND hWnd, UINT uMsg, WPARAM
 	{
 	case WM_COMMAND:
 		return c_Dialog->m_TabThemes->OnCommand(wParam, lParam);
-
-	case WM_CTLCOLORDLG:
-		return OnColorDialog(wParam, lParam);
-
-	case WM_CTLCOLORBTN:
-	case WM_CTLCOLORSTATIC:
-		return OnColorStatic(wParam, lParam);
 	}
 
 	return FALSE;
@@ -1717,13 +1703,6 @@ INT_PTR CALLBACK CDialogManage::CTabSettings::DlgProc(HWND hWnd, UINT uMsg, WPAR
 	{
 	case WM_COMMAND:
 		return c_Dialog->m_TabSettings->OnCommand(wParam, lParam);
-
-	case WM_CTLCOLORDLG:
-		return OnColorDialog(wParam, lParam);
-
-	case WM_CTLCOLORBTN:
-	case WM_CTLCOLORSTATIC:
-		return OnColorStatic(wParam, lParam);
 	}
 
 	return FALSE;

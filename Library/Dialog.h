@@ -30,9 +30,6 @@ protected:
 
 	void SetDialogFont();
 
-	static INT_PTR OnColorDialog(WPARAM wParam, LPARAM lParam);
-	static INT_PTR OnColorStatic(WPARAM wParam, LPARAM lParam);
-
 	HWND m_Window;
 	HFONT m_Font;
 	HFONT m_FontBold;

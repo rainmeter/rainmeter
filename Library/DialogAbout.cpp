@@ -475,13 +475,6 @@ INT_PTR CALLBACK CDialogAbout::CTabLog::DlgProc(HWND hWnd, UINT uMsg, WPARAM wPa
 	{
 	case WM_COMMAND:
 		return c_Dialog->m_TabLog->OnCommand(wParam, lParam);
-
-	case WM_CTLCOLORDLG:
-		return OnColorDialog(wParam, lParam);
-
-	case WM_CTLCOLORBTN:
-	case WM_CTLCOLORSTATIC:
-		return OnColorStatic(wParam, lParam);
 	}
 
 	return FALSE;
@@ -784,13 +777,6 @@ INT_PTR CALLBACK CDialogAbout::CTabMeasures::DlgProc(HWND hWnd, UINT uMsg, WPARA
 	{
 	case WM_COMMAND:
 		return c_Dialog->m_TabMeasures->OnCommand(wParam, lParam);
-
-	case WM_CTLCOLORDLG:
-		return OnColorDialog(wParam, lParam);
-
-	case WM_CTLCOLORBTN:
-	case WM_CTLCOLORSTATIC:
-		return OnColorStatic(wParam, lParam);
 	}
 
 	return FALSE;
@@ -947,16 +933,6 @@ void CDialogAbout::CTabPlugins::Resize(int w, int h)
 */
 INT_PTR CALLBACK CDialogAbout::CTabPlugins::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	switch (uMsg)
-	{
-	case WM_CTLCOLORDLG:
-		return OnColorDialog(wParam, lParam);
-
-	case WM_CTLCOLORBTN:
-	case WM_CTLCOLORSTATIC:
-		return OnColorStatic(wParam, lParam);
-	}
-
 	return FALSE;
 }
 
@@ -1026,13 +1002,6 @@ INT_PTR CALLBACK CDialogAbout::CTabVersion::DlgProc(HWND hWnd, UINT uMsg, WPARAM
 
 	case WM_NOTIFY:
 		return c_Dialog->m_TabVersion->OnNotify(wParam, lParam);
-
-	case WM_CTLCOLORDLG:
-		return OnColorDialog(wParam, lParam);
-
-	case WM_CTLCOLORBTN:
-	case WM_CTLCOLORSTATIC:
-		return OnColorStatic(wParam, lParam);
 	}
 
 	return FALSE;

@@ -75,32 +75,6 @@ BOOL CALLBACK CDialog::SetFontProc(HWND hWnd, LPARAM lParam)
 }
 
 /*
-** OnColorDialog
-**
-** Paints dialog background.
-**
-*/
-INT_PTR CDialog::OnColorDialog(WPARAM wParam, LPARAM lParam)
-{
-	return (INT_PTR)GetStockObject(WHITE_BRUSH);
-}
-
-/*
-** OnColorStatic
-**
-** Paints control text and background.
-**
-*/
-INT_PTR CDialog::OnColorStatic(WPARAM wParam, LPARAM lParam)
-{
-	HDC hdc = (HDC)wParam;
-	SetTextColor(hdc, (COLORREF)GetSysColor(COLOR_WINDOWTEXT));
-	SetBkMode(hdc, TRANSPARENT);
-
-	return OnColorDialog(wParam, lParam);
-}
-
-/*
 ** CTab
 **
 ** Constructor.
@@ -109,6 +83,7 @@ INT_PTR CDialog::OnColorStatic(WPARAM wParam, LPARAM lParam)
 CTab::CTab(HWND wnd) : CDialog(wnd),
 	m_Initialized(false)
 {
+	EnableThemeDialogTexture(wnd, ETDT_ENABLETAB);
 }
 
 /*
