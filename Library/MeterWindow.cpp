@@ -3736,8 +3736,8 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		else if (wParam >= ID_CONTEXT_SKINMENU_TRANSPARENCY_0 && wParam <= ID_CONTEXT_SKINMENU_TRANSPARENCY_90)
 		{
 			m_AlphaValue = (int)(255.0 - (wParam - ID_CONTEXT_SKINMENU_TRANSPARENCY_0) * (230.0 / (ID_CONTEXT_SKINMENU_TRANSPARENCY_90 - ID_CONTEXT_SKINMENU_TRANSPARENCY_0)));
-			WriteConfig(SETTING_ALPHAVALUE);
 			UpdateTransparency(m_AlphaValue, false);
+			WriteConfig(SETTING_ALPHAVALUE);
 		}
 		else if (wParam == ID_CONTEXT_CLOSESKIN)
 		{
@@ -3748,51 +3748,34 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			m_WindowXFromRight = !m_WindowXFromRight;
 
 			ScreenToWindow();
-
-			if (m_SavePosition)
-			{
-				WriteConfig(SETTING_WINDOWPOSITION);
-			}
+			WriteConfig(SETTING_WINDOWPOSITION);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_FROMBOTTOM)
 		{
 			m_WindowYFromBottom = !m_WindowYFromBottom;
 
 			ScreenToWindow();
-
-			if (m_SavePosition)
-			{
-				WriteConfig(SETTING_WINDOWPOSITION);
-			}
+			WriteConfig(SETTING_WINDOWPOSITION);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_XPERCENTAGE)
 		{
 			m_WindowXPercentage = !m_WindowXPercentage;
 
 			ScreenToWindow();
-
-			if (m_SavePosition)
-			{
-				WriteConfig(SETTING_WINDOWPOSITION);
-			}
+			WriteConfig(SETTING_WINDOWPOSITION);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_YPERCENTAGE)
 		{
 			m_WindowYPercentage = !m_WindowYPercentage;
 
 			ScreenToWindow();
-
-			if (m_SavePosition)
-			{
-				WriteConfig(SETTING_WINDOWPOSITION);
-			}
+			WriteConfig(SETTING_WINDOWPOSITION);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT)
 		{
 			m_AutoSelectScreen = !m_AutoSelectScreen;
 
 			ScreenToWindow();
-
 			WriteConfig(SETTING_WINDOWPOSITION | SETTING_AUTOSELECTSCREEN);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
@@ -3825,7 +3808,6 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 				m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
 				ScreenToWindow();
-
 				WriteConfig(SETTING_WINDOWPOSITION | SETTING_AUTOSELECTSCREEN);
 			}
 		}
@@ -3947,8 +3929,8 @@ void CMeterWindow::SetSnapEdges(bool b)
 void CMeterWindow::SetWindowHide(HIDEMODE hide)
 {
 	m_WindowHide = hide;
-	WriteConfig(SETTING_HIDEONMOUSEOVER);
 	UpdateTransparency(m_AlphaValue, false);
+	WriteConfig(SETTING_HIDEONMOUSEOVER);
 }
 
 /*
@@ -4307,19 +4289,8 @@ LRESULT CMeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_DOWN, NULL);
 
-	SHORT state = GetKeyState(VK_CONTROL);
-	bool down = ((unsigned short) state) >> 15;
-	// Ctrl is pressed, so only run default action
-	if (down)
-	{
-		// Cancel the mouse event beforehand
-		SetMouseLeaveEvent(true);
-
-		// Run the DefWindowProc so the dragging works
-		return DefWindowProc(m_Window, uMsg, wParam, lParam);
-	}
-
-	if (!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable)
+	if ((GetKeyState(VK_CONTROL) & 0x80) ||  // Ctrl is pressed, so only run default action
+		(!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable))
 	{
 		// Cancel the mouse event beforehand
 		SetMouseLeaveEvent(true);
@@ -4427,15 +4398,8 @@ LRESULT CMeterWindow::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE, NULL);
 
-	SHORT state = GetKeyState(VK_CONTROL);
-	bool down = ((unsigned short) state) >> 15;
-	// Ctrl is pressed, so only run default action
-	if (down)
-	{
-		return DefWindowProc(m_Window, WM_RBUTTONUP, wParam, lParam);
-	}
-
-	if (!DoAction(pos.x, pos.y, MOUSE_RMB_UP, false))
+	if ((GetKeyState(VK_CONTROL) & 0x80) ||  // Ctrl is pressed, so only run default action
+		!DoAction(pos.x, pos.y, MOUSE_RMB_UP, false))
 	{
 		// Run the DefWindowProc so the context menu works
 		return DefWindowProc(m_Window, WM_RBUTTONUP, wParam, lParam);
@@ -4583,16 +4547,11 @@ LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Handle buttons
 		HandleButtons(posc, BUTTONPROC_MOVE, NULL);
 
-		SHORT state = GetKeyState(VK_CONTROL);
-		bool down = ((unsigned short) state) >> 15;
-		// Ctrl is pressed, so ignore any actions
-		if (!down)
+		// If RMB up or RMB down or double-click cause actions, do not show the menu!
+		if ((GetKeyState(VK_CONTROL) & 0x80) == 0 &&  // Ctrl is pressed, so ignore any actions
+			(DoAction(posc.x, posc.y, MOUSE_RMB_UP, false) || DoAction(posc.x, posc.y, MOUSE_RMB_DOWN, true) || DoAction(posc.x, posc.y, MOUSE_RMB_DBLCLK, true)))
 		{
-			// If RMB up or RMB down or double-click cause actions, do not show the menu!
-			if (DoAction(posc.x, posc.y, MOUSE_RMB_UP, false) || DoAction(posc.x, posc.y, MOUSE_RMB_DOWN, true) || DoAction(posc.x, posc.y, MOUSE_RMB_DBLCLK, true))
-			{
-				return 0;
-			}
+			return 0;
 		}
 	}
 
