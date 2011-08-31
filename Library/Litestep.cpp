@@ -54,6 +54,9 @@ FPVAREXPANSION fpVarExpansion = NULL;
 typedef BOOL (WINAPI *FPLSLOG)(int nLevel, LPCSTR pszModule, LPCSTR pszMessage);
 FPLSLOG fpLSLog = NULL;
 
+static CRITICAL_SECTION g_CsLog = {0};
+static CRITICAL_SECTION g_CsLogDelay = {0};
+
 static int logFound = 0;
 
 void ResetLoggingFlag()
@@ -63,21 +66,33 @@ void ResetLoggingFlag()
 
 void InitalizeLitestep()
 {
-	// Use lsapi's methods instead of the stubs
-	HINSTANCE h = CSystem::RmLoadLibrary(L"lsapi.dll");
-	if (h != NULL)
+	InitializeCriticalSection(&g_CsLog);
+	InitializeCriticalSection(&g_CsLogDelay);
+
+	if (!CRainmeter::GetDummyLitestep())
 	{
-		fpAddBangCommand = (FPADDBANGCOMMAND)GetProcAddress(h, "AddBangCommand");
-		fpBitmapToRegion = (FPBITMAPTOREGION)GetProcAddress(h, "BitmapToRegion");
-		fpGetLitestepWnd = (FPGETLITESTEPWND)GetProcAddress(h, "GetLitestepWnd");
-		fpGetRCString = (FPGETRCSTRING)GetProcAddress(h, "GetRCString");
-		//fpGetRCInt = (FPGETRCINT)GetProcAddress(h, "GetRCInt");
-		fpLSExecute = (FPLSEXECUTE)GetProcAddress(h, "LSExecute");
-		fpRemoveBangCommand = (FPREMOVEBANGCOMMAND)GetProcAddress(h, "RemoveBangCommand");
-		//fpTransparentBltLS = (FPTRANSPARENTBLTLS)GetProcAddress(h, "TransparentBltLS");
-		fpVarExpansion = (FPVAREXPANSION)GetProcAddress(h, "VarExpansion");
-		fpLSLog = (FPLSLOG)GetProcAddress(h, "_LSLog@12");
+		// Use lsapi's methods instead of the stubs
+		HINSTANCE h = CSystem::RmLoadLibrary(L"lsapi.dll");
+		if (h != NULL)
+		{
+			fpAddBangCommand = (FPADDBANGCOMMAND)GetProcAddress(h, "AddBangCommand");
+			fpBitmapToRegion = (FPBITMAPTOREGION)GetProcAddress(h, "BitmapToRegion");
+			fpGetLitestepWnd = (FPGETLITESTEPWND)GetProcAddress(h, "GetLitestepWnd");
+			fpGetRCString = (FPGETRCSTRING)GetProcAddress(h, "GetRCString");
+			//fpGetRCInt = (FPGETRCINT)GetProcAddress(h, "GetRCInt");
+			fpLSExecute = (FPLSEXECUTE)GetProcAddress(h, "LSExecute");
+			fpRemoveBangCommand = (FPREMOVEBANGCOMMAND)GetProcAddress(h, "RemoveBangCommand");
+			//fpTransparentBltLS = (FPTRANSPARENTBLTLS)GetProcAddress(h, "TransparentBltLS");
+			fpVarExpansion = (FPVAREXPANSION)GetProcAddress(h, "VarExpansion");
+			fpLSLog = (FPLSLOG)GetProcAddress(h, "_LSLog@12");
+		}
 	}
+}
+
+void FinalizeLitestep()
+{
+	DeleteCriticalSection(&g_CsLog);
+	DeleteCriticalSection(&g_CsLogDelay);
 }
 
 BOOL AddBangCommand(LPCSTR command, BangCommand f)
@@ -528,14 +543,11 @@ std::wstring ConvertUTF8ToWide(LPCSTR str)
 	return szWide;
 }
 
-BOOL LogInternal(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
+BOOL LogInternal(int nLevel, LPCTSTR pszModule, ULONGLONG elapsed, LPCTSTR pszMessage)
 {
 	// Add timestamp
-	static ULONGLONG startTime = CSystem::GetTickCount64();
-	ULONGLONG time = CSystem::GetTickCount64();
-
 	WCHAR buffer[128];
-	_snwprintf_s(buffer, _TRUNCATE, L"%02llu:%02llu:%02llu.%03llu", (time - startTime) / (1000 * 60* 60), ((time - startTime) / (1000 * 60)) % 60, ((time - startTime) / 1000) % 60, (time - startTime) % 1000);
+	_snwprintf_s(buffer, _TRUNCATE, L"%02llu:%02llu:%02llu.%03llu", elapsed / (1000 * 60 * 60), (elapsed / (1000 * 60)) % 60, (elapsed / 1000) % 60, elapsed % 1000);
 
 	if (Rainmeter)
 	{
@@ -621,6 +633,7 @@ BOOL LogInternal(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 			}
 		}
 	}
+
 	return TRUE;
 }
 
@@ -628,7 +641,50 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 {
 	if (nLevel != LOG_DEBUG || Rainmeter->GetDebug())
 	{
-		return LogInternal(nLevel, pszModule, pszMessage);
+		struct DELAYED_LOG_INFO
+		{
+			int level;
+			std::wstring module;
+			ULONGLONG elapsed;
+			std::wstring message;
+		};
+		static std::list<DELAYED_LOG_INFO> c_LogDelay;
+
+		static ULONGLONG startTime = CSystem::GetTickCount64();
+		ULONGLONG elapsed = CSystem::GetTickCount64() - startTime;
+
+		if (TryEnterCriticalSection(&g_CsLog))
+		{
+			// Log the queued messages first
+			EnterCriticalSection(&g_CsLogDelay);
+
+			while (!c_LogDelay.empty())
+			{
+				DELAYED_LOG_INFO& logInfo = c_LogDelay.front();
+				LogInternal(logInfo.level, logInfo.module.c_str(), logInfo.elapsed, logInfo.message.c_str());
+
+				c_LogDelay.erase(c_LogDelay.begin());
+			}
+
+			LeaveCriticalSection(&g_CsLogDelay);
+
+			// Log the message
+			BOOL ret = LogInternal(nLevel, pszModule, elapsed, pszMessage);
+
+			LeaveCriticalSection(&g_CsLog);
+
+			return ret;
+		}
+		else
+		{
+			// Queue the message
+			EnterCriticalSection(&g_CsLogDelay);
+
+			DELAYED_LOG_INFO logInfo = {nLevel, pszModule, elapsed, pszMessage};
+			c_LogDelay.push_back(logInfo);
+
+			LeaveCriticalSection(&g_CsLogDelay);
+		}
 	}
 
 	return TRUE;
@@ -636,7 +692,7 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 
 void Log(int nLevel, const WCHAR* message)
 {
-	LogInternal(nLevel, L"Rainmeter", message);
+	LSLog(nLevel, L"Rainmeter", message);
 }
 
 void LogWithArgs(int nLevel, const WCHAR* format, ... )
@@ -658,7 +714,7 @@ void LogWithArgs(int nLevel, const WCHAR* format, ... )
 
 	_set_invalid_parameter_handler(oldHandler);
 
-	LogInternal(nLevel, L"Rainmeter", buffer);
+	LSLog(nLevel, L"Rainmeter", buffer);
 	va_end(args);
 
 	delete [] buffer;

@@ -328,7 +328,6 @@ private:
 	bool m_Logging;
 
 	std::list<LOG_INFO> m_LogData;
-	CRITICAL_SECTION m_CsLogData;
 
 	std::wstring m_ConfigEditor;
 	std::wstring m_LogViewer;

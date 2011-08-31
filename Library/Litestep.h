@@ -34,6 +34,7 @@ typedef void (BangCommand)(HWND sender, LPCSTR args);
 
 // Call this if you want to use lsapi.dll's functions instead of stubs
 void InitalizeLitestep();
+void FinalizeLitestep();
 
 // The stubs
 BOOL AddBangCommand(LPCSTR command, BangCommand f);

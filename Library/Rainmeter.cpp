@@ -1732,13 +1732,10 @@ CRainmeter::CRainmeter() :
 	m_DisableRDP(false),
 	m_DisableDragging(false),
 	m_Logging(false),
-	m_CsLogData(),
 	m_CurrentParser(),
 	m_Instance(),
 	m_GDIplusToken()
 {
-	InitializeCriticalSection(&m_CsLogData);
-
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
 	InitCommonControls();
@@ -1776,9 +1773,9 @@ CRainmeter::~CRainmeter()
 		UpdateDesktopWorkArea(true);
 	}
 
-	CoUninitialize();
+	FinalizeLitestep();
 
-	DeleteCriticalSection(&m_CsLogData);
+	CoUninitialize();
 
 	GdiplusShutdown(m_GDIplusToken);
 }
@@ -1817,7 +1814,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	m_Path = tmpSzPath;
 
-	if (!c_DummyLitestep) InitalizeLitestep();
+	InitalizeLitestep();
 
 	bool bDefaultIniLocation = false;
 
@@ -4273,9 +4270,7 @@ void CRainmeter::AddAboutLogInfo(int level, LPCWSTR time, LPCWSTR message)
 {
 	// TODO: Store items in vector
 
-	EnterCriticalSection(&m_CsLogData);
 	CDialogAbout::AddLogItem(level, time, message);
-	LeaveCriticalSection(&m_CsLogData);
 }
 
 void CRainmeter::SetLogging(bool logging)
