@@ -4307,6 +4307,18 @@ LRESULT CMeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_DOWN, NULL);
 
+	SHORT state = GetKeyState(VK_CONTROL);
+	bool down = ((unsigned short) state) >> 15;
+	// Ctrl is pressed, so only run default action
+	if (down)
+	{
+		// Cancel the mouse event beforehand
+		SetMouseLeaveEvent(true);
+
+		// Run the DefWindowProc so the dragging works
+		return DefWindowProc(m_Window, uMsg, wParam, lParam);
+	}
+
 	if (!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable)
 	{
 		// Cancel the mouse event beforehand
@@ -4414,6 +4426,14 @@ LRESULT CMeterWindow::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE, NULL);
+
+	SHORT state = GetKeyState(VK_CONTROL);
+	bool down = ((unsigned short) state) >> 15;
+	// Ctrl is pressed, so only run default action
+	if (down)
+	{
+		return DefWindowProc(m_Window, WM_RBUTTONUP, wParam, lParam);
+	}
 
 	if (!DoAction(pos.x, pos.y, MOUSE_RMB_UP, false))
 	{
@@ -4563,10 +4583,16 @@ LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Handle buttons
 		HandleButtons(posc, BUTTONPROC_MOVE, NULL);
 
-		// If RMB up or RMB down or double-click cause actions, do not show the menu!
-		if (DoAction(posc.x, posc.y, MOUSE_RMB_UP, false) || DoAction(posc.x, posc.y, MOUSE_RMB_DOWN, true) || DoAction(posc.x, posc.y, MOUSE_RMB_DBLCLK, true))
+		SHORT state = GetKeyState(VK_CONTROL);
+		bool down = ((unsigned short) state) >> 15;
+		// Ctrl is pressed, so ignore any actions
+		if (!down)
 		{
-			return 0;
+			// If RMB up or RMB down or double-click cause actions, do not show the menu!
+			if (DoAction(posc.x, posc.y, MOUSE_RMB_UP, false) || DoAction(posc.x, posc.y, MOUSE_RMB_DOWN, true) || DoAction(posc.x, posc.y, MOUSE_RMB_DBLCLK, true))
+			{
+				return 0;
+			}
 		}
 	}
 
