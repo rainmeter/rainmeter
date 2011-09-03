@@ -109,10 +109,10 @@ void LuaManager::LuaLog(int nLevel, const char* format, ... )
 
 void LuaManager::PushWide(lua_State* L, const WCHAR* str)
 {
-	lua_pushstring(L, ConvertToUTF8(str).c_str());
+	lua_pushstring(L, ConvertToAscii(str).c_str());
 }
 
 std::wstring LuaManager::ToWide(lua_State* L, int narg)
 {
-	return ConvertUTF8ToWide(lua_tostring(L, narg));
+	return ConvertToWide(lua_tostring(L, narg));
 }

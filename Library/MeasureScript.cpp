@@ -232,7 +232,7 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 */
 void CMeasureScript::ExecuteBang(const WCHAR* args)
 {
-	std::string str = ConvertToUTF8(args);
+	std::string str = ConvertToAscii(args);
 	m_LuaScript->RunString(str.c_str());
 }
 

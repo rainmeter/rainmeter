@@ -176,7 +176,7 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 			else if (type == LUA_TSTRING)
 			{
 				const char* str = lua_tostring(m_State, -1);
-				strValue = ConvertUTF8ToWide(str);
+				strValue = ConvertToWide(str);
 				numValue = strtod(str, NULL);
 			}
 
