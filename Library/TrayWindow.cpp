@@ -583,7 +583,8 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				break;
 			}
 
-			if (!bang.empty())
+			if (!(GetKeyState(VK_CONTROL) & 0x80) &&   // Ctrl is pressed, so only run default action
+				!bang.empty())
 			{
 				Rainmeter->ExecuteCommand(bang.c_str(), NULL);
 			}
