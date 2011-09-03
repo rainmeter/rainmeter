@@ -26,6 +26,8 @@
 
 #define DEBUG_VERBOSE  (0)  // Set 1 if you need verbose logging.
 
+#define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
+
 enum TIMER
 {
 	TIMER_SHOWDESKTOP = 1,
@@ -73,7 +75,7 @@ void CSystem::Initialize(HINSTANCE instance)
 		WS_EX_TOOLWINDOW,
 		L"RainmeterSystemClass",
 		L"SystemWindow",
-		WS_POPUP,
+		WS_POPUP | WS_DISABLED,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -87,7 +89,7 @@ void CSystem::Initialize(HINSTANCE instance)
 		WS_EX_TOOLWINDOW,
 		L"RainmeterSystemClass",
 		L"PositioningHelperWindow",
-		WS_POPUP,
+		WS_POPUP | WS_DISABLED,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -102,8 +104,8 @@ void CSystem::Initialize(HINSTANCE instance)
 	SetWindowLong(c_HelperWindow, GWL_USERDATA, magicDWord);
 #endif
 
-	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
-	SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
+	SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 
 	c_Monitors.monitors.reserve(8);
 	SetMultiMonitorInfo();
@@ -652,6 +654,7 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 	bool logging = CRainmeter::GetDebug() && DEBUG_VERBOSE;
 	WCHAR className[64];
 	CMeterWindow* Window;
+	WCHAR flag;
 
 	if (GetClassName(hwnd, className, 64) > 0 &&
 		wcscmp(className, METERWINDOW_CLASS_NAME) == 0 &&
@@ -660,21 +663,31 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 		ZPOSITION zPos = Window->GetWindowZPosition();
 		if (zPos == ZPOSITION_ONDESKTOP || zPos == ZPOSITION_ONBOTTOM)
 		{
-			if (logging) LogWithArgs(LOG_DEBUG, L"+ [%c] 0x%p : %s (Name: \"%s\", zPos=%i)", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetSkinName().c_str(), (int)zPos);
-
 			if (lParam)
 			{
 				((std::vector<CMeterWindow*>*)lParam)->push_back(Window);
 			}
+
+			if (logging) flag = L'+';
 		}
 		else
 		{
-			if (logging) LogWithArgs(LOG_DEBUG, L"- [%c] 0x%p : %s (Name: \"%s\", zPos=%i)", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetSkinName().c_str(), (int)zPos);
+			if (logging) flag = L'-';
+		}
+
+		if (logging)
+		{
+			LogWithArgs(LOG_DEBUG, L"%c [%c] 0x%p : %s (Name: \"%s\", zPos=%i)",
+				flag, IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetSkinName().c_str(), (int)zPos);
 		}
 	}
 	else
 	{
-		if (logging) LogWithArgs(LOG_DEBUG, L"  [%c] 0x%p : %s", IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className);
+		if (logging)
+		{
+			flag = (hwnd == CSystem::GetHelperWindow()) ? L'o' : ' ';
+			LogWithArgs(LOG_DEBUG, L"%c [%c] 0x%p : %s", flag, IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className);
+		}
 	}
 
 	return TRUE;
@@ -741,12 +754,12 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 {
 	bool logging = CRainmeter::GetDebug() && DEBUG_VERBOSE;
 
-	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);  // always on bottom
+	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);  // always on bottom
 
 	if (c_ShowDesktop && WorkerW)
 	{
 		// Set WS_EX_TOPMOST flag
-		SetWindowPos(c_HelperWindow, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+		SetWindowPos(c_HelperWindow, HWND_TOPMOST, 0, 0, 0, 0, ZPOS_FLAGS);
 
 		// Find the "backmost" topmost window
 		HWND hwnd = WorkerW;
@@ -760,10 +773,12 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 				{
 					GetClassName(hwnd, className, 64);
 					GetWindowText(hwnd, windowText, 64);
+
+					SetLastError(0);
 				}
 
 				// Insert the helper window after the found window
-				if (0 != SetWindowPos(c_HelperWindow, hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING))
+				if (0 != SetWindowPos(c_HelperWindow, hwnd, 0, 0, 0, 0, ZPOS_FLAGS))
 				{
 					if (logging)
 					{
@@ -775,8 +790,9 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 
 				if (logging)
 				{
-					LogWithArgs(LOG_DEBUG, L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=0x%p (\"%s\" %s) - FAILED",
-						c_HelperWindow, WorkerW, hwnd, windowText, className);
+					DWORD err = GetLastError();
+					LogWithArgs(LOG_DEBUG, L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=0x%p (\"%s\" %s) - FAILED (ErrorCode=0x%08X)",
+						c_HelperWindow, WorkerW, hwnd, windowText, className, err);
 				}
 			}
 		}
@@ -790,7 +806,7 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 	else
 	{
 		// Insert the helper window to the bottom
-		SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+		SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 
 		if (logging)
 		{

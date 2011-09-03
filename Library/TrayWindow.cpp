@@ -35,6 +35,8 @@
 #define RAINMETER_MANUALBETA	L"http://rainmeter.net/RainCMS/?q=ManualBeta"
 #define RAINMETER_DOWNLOADS		L"http://rainmeter.net/RainCMS/?q=Downloads"
 
+#define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
+
 const UINT WM_TASKBARCREATED = ::RegisterWindowMessage(L"TaskbarCreated");
 
 extern CRainmeter* Rainmeter;
@@ -71,7 +73,7 @@ CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
 		WS_EX_TOOLWINDOW,
 		L"RainmeterTrayClass",
 		NULL,
-		WS_POPUP,
+		WS_POPUP | WS_DISABLED,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -85,7 +87,7 @@ CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
 	SetWindowLong(m_Window, GWL_USERDATA, magicDWord);
 #endif
 
-	SetWindowPos(m_Window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	SetWindowPos(m_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 }
 
 CTrayWindow::~CTrayWindow()

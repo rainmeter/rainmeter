@@ -189,7 +189,7 @@ HWND InitInstance(HINSTANCE hInstance, const WCHAR* WinClass, const WCHAR* WinNa
 		WS_EX_TOOLWINDOW,
 		WinClass,
 		WinName,
-		WS_POPUP,
+		WS_POPUP | WS_DISABLED,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
