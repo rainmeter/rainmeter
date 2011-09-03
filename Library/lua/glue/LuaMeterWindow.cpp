@@ -29,7 +29,7 @@ static int MeterWindow_GetSkinName(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
 	const std::wstring& val = self->GetSkinName();
-	push_wstring(L, val);
+	LuaManager::PushWide(L, val.c_str());
 
 	return 1;
 }
@@ -38,7 +38,7 @@ static int MeterWindow_GetSkinIniFile(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
 	const std::wstring& val = self->GetSkinIniFile();
-	push_wchar(L, val.c_str());
+	LuaManager::PushWide(L, val.c_str());
 
 	return 1;
 }
@@ -82,10 +82,10 @@ static int MeterWindow_GetY(lua_State* L)
 static int MeterWindow_MakePathAbsolute(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const std::wstring path = to_wstring(L, 2, 0);
+	const std::wstring path = LuaManager::ToWide(L, 2);
 
 	std::wstring val = self->MakePathAbsolute(path);
-	push_wstring(L, val);
+	LuaManager::PushWide(L, val.c_str());
 
 	return 1;
 }
@@ -93,7 +93,7 @@ static int MeterWindow_MakePathAbsolute(lua_State* L)
 static int MeterWindow_GetMeter(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const std::wstring meterName = to_wstring(L, 2, 0);
+	const std::wstring meterName = LuaManager::ToWide(L, 2);
 
 	CMeter* meter = self->GetMeter(meterName);
 	if (!meter)
@@ -120,7 +120,7 @@ static int MeterWindow_GetMeter(lua_State* L)
 static int MeterWindow_GetMeasure(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const std::wstring measureName = to_wstring(L, 2, 0);
+	const std::wstring measureName = LuaManager::ToWide(L, 2);
 
 	CMeasure* val = self->GetMeasure(measureName);
 	tolua_pushusertype(L, (void*)val, "CMeasure");
@@ -131,13 +131,11 @@ static int MeterWindow_GetMeasure(lua_State* L)
 static int MeterWindow_GetVariable(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const char* arg = (const char*)tolua_tostring(L, 2, 0);
-	std::wstring strTmp = ConvertToWide(arg);
+	std::wstring strTmp = LuaManager::ToWide(L, 2);
 
 	if (self->GetParser().GetVariable(strTmp, strTmp))
 	{
-		std::string val = ConvertToAscii(strTmp.c_str());
-		tolua_pushstring(L, val.c_str());
+		LuaManager::PushWide(L, strTmp.c_str());
 		return 1;
 	}
 	else
@@ -149,12 +147,10 @@ static int MeterWindow_GetVariable(lua_State* L)
 static int MeterWindow_ReplaceVariables(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const char* arg = (const char*)tolua_tostring(L, 2, 0);
-	std::wstring strTmp = ConvertToWide(arg);
+	std::wstring strTmp = LuaManager::ToWide(L, 2);
 
 	self->GetParser().ReplaceVariables(strTmp);
-	std::string val = ConvertToAscii(strTmp.c_str());
-	tolua_pushstring(L, val.c_str());
+	LuaManager::PushWide(L, strTmp.c_str());
 
 	return 1;
 }
@@ -162,8 +158,7 @@ static int MeterWindow_ReplaceVariables(lua_State* L)
 static int MeterWindow_Bang(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const char* arg = (const char*)tolua_tostring(L, 2, 0);
-	std::wstring strTmp = ConvertToWide(arg);
+	std::wstring strTmp = LuaManager::ToWide(L, 2);
 
 	CConfigParser& parser = self->GetParser();
 	parser.ReplaceVariables(strTmp);

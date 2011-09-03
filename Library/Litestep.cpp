@@ -639,60 +639,59 @@ BOOL LogInternal(int nLevel, LPCTSTR pszModule, ULONGLONG elapsed, LPCTSTR pszMe
 
 BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 {
+	// Ignore LOG_DEBUG messages from plugins unless in debug mode
 	if (nLevel != LOG_DEBUG || Rainmeter->GetDebug())
 	{
-		struct DELAYED_LOG_INFO
-		{
-			int level;
-			std::wstring module;
-			ULONGLONG elapsed;
-			std::wstring message;
-		};
-		static std::list<DELAYED_LOG_INFO> c_LogDelay;
-
-		static ULONGLONG startTime = CSystem::GetTickCount64();
-		ULONGLONG elapsed = CSystem::GetTickCount64() - startTime;
-
-		if (TryEnterCriticalSection(&g_CsLog))
-		{
-			// Log the queued messages first
-			EnterCriticalSection(&g_CsLogDelay);
-
-			while (!c_LogDelay.empty())
-			{
-				DELAYED_LOG_INFO& logInfo = c_LogDelay.front();
-				LogInternal(logInfo.level, logInfo.module.c_str(), logInfo.elapsed, logInfo.message.c_str());
-
-				c_LogDelay.erase(c_LogDelay.begin());
-			}
-
-			LeaveCriticalSection(&g_CsLogDelay);
-
-			// Log the message
-			BOOL ret = LogInternal(nLevel, pszModule, elapsed, pszMessage);
-
-			LeaveCriticalSection(&g_CsLog);
-
-			return ret;
-		}
-		else
-		{
-			// Queue the message
-			EnterCriticalSection(&g_CsLogDelay);
-
-			DELAYED_LOG_INFO logInfo = {nLevel, pszModule, elapsed, pszMessage};
-			c_LogDelay.push_back(logInfo);
-
-			LeaveCriticalSection(&g_CsLogDelay);
-		}
+		Log(nLevel, pszMessage, pszModule);
 	}
 
 	return TRUE;
 }
 
-void Log(int nLevel, const WCHAR* message)
+void Log(int nLevel, const WCHAR* message, const WCHAR* module)
 {
-	LSLog(nLevel, L"Rainmeter", message);
+	struct DELAYED_LOG_INFO
+	{
+		int level;
+		std::wstring module;
+		ULONGLONG elapsed;
+		std::wstring message;
+	};
+	static std::list<DELAYED_LOG_INFO> c_LogDelay;
+
+	static ULONGLONG startTime = CSystem::GetTickCount64();
+	ULONGLONG elapsed = CSystem::GetTickCount64() - startTime;
+
+	if (TryEnterCriticalSection(&g_CsLog))
+	{
+		// Log the queued messages first
+		EnterCriticalSection(&g_CsLogDelay);
+
+		while (!c_LogDelay.empty())
+		{
+			DELAYED_LOG_INFO& logInfo = c_LogDelay.front();
+			LogInternal(logInfo.level, logInfo.module.c_str(), logInfo.elapsed, logInfo.message.c_str());
+
+			c_LogDelay.erase(c_LogDelay.begin());
+		}
+
+		LeaveCriticalSection(&g_CsLogDelay);
+
+		// Log the message
+		LogInternal(nLevel, module, elapsed, message);
+
+		LeaveCriticalSection(&g_CsLog);
+	}
+	else
+	{
+		// Queue the message
+		EnterCriticalSection(&g_CsLogDelay);
+
+		DELAYED_LOG_INFO logInfo = {nLevel, module, elapsed, message};
+		c_LogDelay.push_back(logInfo);
+
+		LeaveCriticalSection(&g_CsLogDelay);
+	}
 }
 
 void LogWithArgs(int nLevel, const WCHAR* format, ... )
@@ -714,7 +713,7 @@ void LogWithArgs(int nLevel, const WCHAR* format, ... )
 
 	_set_invalid_parameter_handler(oldHandler);
 
-	LSLog(nLevel, L"Rainmeter", buffer);
+	Log(nLevel, buffer);
 	va_end(args);
 
 	delete [] buffer;

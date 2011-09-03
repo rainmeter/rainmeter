@@ -162,9 +162,6 @@
     <ClCompile Include="lua\LuaManager.cpp">
       <Filter>Lua</Filter>
     </ClCompile>
-    <ClCompile Include="lua\LuaPush.cpp">
-      <Filter>Lua</Filter>
-    </ClCompile>
     <ClCompile Include="lua\LuaScript.cpp">
       <Filter>Lua</Filter>
     </ClCompile>
@@ -503,9 +500,6 @@
       <Filter>CCalc</Filter>
     </ClInclude>
     <ClInclude Include="lua\LuaManager.h">
-      <Filter>Lua</Filter>
-    </ClInclude>
-    <ClInclude Include="lua\LuaPush.h">
       <Filter>Lua</Filter>
     </ClInclude>
     <ClInclude Include="lua\LuaScript.h">

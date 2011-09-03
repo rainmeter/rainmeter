@@ -78,7 +78,7 @@ void LuaManager::ReportErrors(lua_State* L)
 	}
 
 	std::wstring str = L"Script: ";
-	str += ConvertToWide(error.c_str());
+	str += ConvertUTF8ToWide(error.c_str());
 	Log(LOG_ERROR, str.c_str());
 }
 
@@ -100,9 +100,19 @@ void LuaManager::LuaLog(int nLevel, const char* format, ... )
 
 	_set_invalid_parameter_handler(oldHandler);
 
-	std::wstring str = ConvertToWide(buffer);
+	std::wstring str = ConvertUTF8ToWide(buffer);
 	Log(nLevel, str.c_str());
 	va_end(args);
 
 	delete [] buffer;
+}
+
+void LuaManager::PushWide(lua_State* L, const WCHAR* str)
+{
+	lua_pushstring(L, ConvertToUTF8(str).c_str());
+}
+
+std::wstring LuaManager::ToWide(lua_State* L, int narg)
+{
+	return ConvertUTF8ToWide(lua_tostring(L, narg));
 }

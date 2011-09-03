@@ -368,6 +368,13 @@ void CDialogAbout::CTabLog::Initialize()
 	lvc.pszText = L"Message";
 	ListView_InsertColumn(item, 2, &lvc);
 
+	// Add stored entires
+	std::list<CRainmeter::LOG_INFO>::const_iterator iter = Rainmeter->GetAboutLogData().begin();
+	for ( ; iter != Rainmeter->GetAboutLogData().end(); ++iter)
+	{
+		AddItem((*iter).level, (*iter).timestamp.c_str(), (*iter).message.c_str());
+	}
+
 	item = GetDlgItem(m_Window, IDC_ABOUTLOG_ERROR_CHECKBOX);
 	Button_SetCheck(item, BST_CHECKED);
 
@@ -561,7 +568,7 @@ void CDialogAbout::CTabMeasures::Initialize()
 	lvc.pszText = L"Range";
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-	lvc.cx = 160;
+	lvc.cx = 130;
 	lvc.pszText = L"Value";
 	ListView_InsertColumn(item, 2, &lvc);
 
@@ -597,17 +604,17 @@ void CDialogAbout::CTabMeasures::Resize(int w, int h)
 {
 	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
-	SetWindowPos(item, NULL, 0, 0, w - 160, h, SWP_NOMOVE | SWP_NOZORDER);
+	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTBOX);
+	SetWindowPos(item, NULL, 0, 0, 180, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	// Adjust third colum
+	item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
+	SetWindowPos(item, NULL, 0, 0, w - 190, h, SWP_NOMOVE | SWP_NOZORDER);
+
+	// Adjust third column
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_WIDTH;
-	lvc.cx = w - 392;
+	lvc.cx = w - 422;
 	ListView_SetColumn(item, 2, &lvc);
-
-	item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTBOX);
-	SetWindowPos(item, NULL, 0, 0, 150, h, SWP_NOMOVE | SWP_NOZORDER);
 }
 
 /*

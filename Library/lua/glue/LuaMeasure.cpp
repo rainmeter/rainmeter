@@ -7,7 +7,7 @@ static int Measure_GetName(lua_State* L)
 {
 	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
 	const WCHAR* val = (const WCHAR*)self->GetName();
-	push_wchar(L, val);
+	LuaManager::PushWide(L, val);
 
 	return 1;
 }
@@ -18,8 +18,7 @@ static int Measure_GetOption(lua_State* L)
 	CMeterWindow* meterWindow = self->GetMeterWindow();
 	CConfigParser& parser = meterWindow->GetParser();
 
-	const char* arg = (const char*)tolua_tostring(L, 2, 0);
-	std::wstring strTmp = ConvertToWide(arg);
+	std::wstring strTmp = LuaManager::ToWide(L, 2);
 	strTmp = parser.GetValue(self->GetName(), strTmp, L"");
 
 	parser.SetBuiltInVariable(L"CURRENTSECTION", self->GetName());  // Set temporarily
@@ -27,7 +26,7 @@ static int Measure_GetOption(lua_State* L)
 	parser.SetBuiltInVariable(L"CURRENTSECTION", L"");  // Reset
 	parser.ReplaceMeasures(strTmp);
 
-	push_wchar(L, strTmp.c_str());
+	LuaManager::PushWide(L, strTmp.c_str());
 	return 1;
 }
 
@@ -101,7 +100,7 @@ static int Measure_GetStringValue(lua_State* L)
 	bool percentual = (bool)tolua_toboolean(L, 5, false);
 
 	const WCHAR* val = self->GetStringValue(autoScale, scale, decimals, percentual);
-	push_wchar(L, val);
+	LuaManager::PushWide(L, val);
 
 	return 1;
 }

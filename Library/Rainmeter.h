@@ -236,6 +236,7 @@ public:
 	void SetDisableDragging(bool dragging);
 
 	void AddAboutLogInfo(int level, LPCWSTR time, LPCWSTR message);
+	const std::list<LOG_INFO>& GetAboutLogData() { return m_LogData; }
 
 	void SetDebug(bool debug);
 

@@ -19,7 +19,6 @@
 
 #include "lua.hpp"
 #include "tolua++.h"
-#include "LuaPush.h"
 
 class LuaManager
 {
@@ -31,6 +30,9 @@ public:
 
 	static void ReportErrors(lua_State* L);
 	static void LuaLog(int nLevel, const char* format, ... );
+
+	static void PushWide(lua_State* L, const WCHAR* str);
+	static std::wstring ToWide(lua_State* L, int narg);
 
 protected:
 	static int c_RefCount;

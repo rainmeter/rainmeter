@@ -6,7 +6,8 @@ static int Meter_GetName(lua_State* L)
 {
 	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
 	const WCHAR* val = (const WCHAR*)self->GetName();
-	push_wchar(L, val);
+	LuaManager::PushWide(L, val);
+
 	return 1;
 }
 
@@ -16,8 +17,7 @@ static int Meter_GetOption(lua_State* L)
 	CMeterWindow* meterWindow = self->GetMeterWindow();
 	CConfigParser& parser = meterWindow->GetParser();
 
-	const char* arg = (const char*)tolua_tostring(L, 2, 0);
-	std::wstring strTmp = ConvertToWide(arg);
+	std::wstring strTmp = LuaManager::ToWide(L, 2);
 	strTmp = parser.GetValue(self->GetName(), strTmp, L"");
 
 	parser.SetBuiltInVariable(L"CURRENTSECTION", self->GetName());  // Set temporarily
@@ -25,7 +25,7 @@ static int Meter_GetOption(lua_State* L)
 	parser.SetBuiltInVariable(L"CURRENTSECTION", L"");  // Reset
 	parser.ReplaceMeasures(strTmp);
 
-	push_wchar(L, strTmp.c_str());
+	LuaManager::PushWide(L, strTmp.c_str());
 	return 1;
 }
 

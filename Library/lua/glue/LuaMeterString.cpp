@@ -24,8 +24,8 @@ static int MeterString_Update(lua_State* L)
 static int MeterString_SetText(lua_State* L)
 {
 	CMeterString* self = (CMeterString*)tolua_tousertype(L, 1, 0);
-	const WCHAR* text = to_wchar(L, 2, 0);
-	self->SetText(text);
+	std::wstring str = LuaManager::ToWide(L, 2);
+	self->SetText(str.c_str());
 
 	return 0;
 }

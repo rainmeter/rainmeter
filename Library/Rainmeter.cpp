@@ -4268,7 +4268,13 @@ void CRainmeter::DeleteLogFile()
 
 void CRainmeter::AddAboutLogInfo(int level, LPCWSTR time, LPCWSTR message)
 {
-	// TODO: Store items in vector
+	// Store 20 last items
+	LOG_INFO logInfo = {level, time, message};
+	m_LogData.push_back(logInfo);
+	if (m_LogData.size() > 20)
+	{
+		m_LogData.pop_front();
+	}
 
 	CDialogAbout::AddLogItem(level, time, message);
 }

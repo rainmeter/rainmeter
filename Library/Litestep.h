@@ -50,7 +50,7 @@ void VarExpansion(LPSTR buffer, LPCSTR value);
 
 void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved);
 
-void Log(int nLevel, const WCHAR* message);		// Wrapper for LSLog().
+void Log(int nLevel, const WCHAR* message, const WCHAR* module = L"Rainmeter");		// Wrapper for LSLog().
 void LogWithArgs(int nLevel, const WCHAR* format, ... );	// Replacement for DebugLog(), has the same functionality but has the option to set teh Log Level.
 
 void ResetLoggingFlag();
