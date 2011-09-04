@@ -605,15 +605,16 @@ void CDialogAbout::CTabMeasures::Resize(int w, int h)
 	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTBOX);
-	SetWindowPos(item, NULL, 0, 0, 180, h, SWP_NOMOVE | SWP_NOZORDER);
+	int wList = (w < 650) ? (w - 373) : 277;
+	SetWindowPos(item, NULL, 0, 0, wList, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
-	SetWindowPos(item, NULL, 0, 0, w - 190, h, SWP_NOMOVE | SWP_NOZORDER);
+	SetWindowPos(item, NULL, (w < 650) ? (w - 365) : 285, 0, w - wList - 10, h, SWP_NOZORDER);
 
 	// Adjust third column
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_WIDTH;
-	lvc.cx = w - 422;
+	lvc.cx = w - wList - 243;
 	ListView_SetColumn(item, 2, &lvc);
 }
 
