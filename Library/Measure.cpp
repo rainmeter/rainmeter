@@ -758,11 +758,7 @@ void CMeasure::RemoveTrailingZero(WCHAR* str, int strLen)
 */
 const WCHAR* CMeasure::GetStats()
 {
-	static std::wstring value;
-
-	value = GetStringValue(AUTOSCALE_ON, 1, 1, false);
-
-	return value.c_str();
+	return GetStringValue(AUTOSCALE_OFF, 1, -1, false);
 }
 
 /*
