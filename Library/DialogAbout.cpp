@@ -166,10 +166,12 @@ INT_PTR CALLBACK CDialogAbout::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 					GetClientRect(item, &r);
 					SetWindowPos(item, NULL, w - r.right - 9, h - r.bottom - 8, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
-					c_Dialog->m_TabLog->Resize(w - 48, h - 100);
-					c_Dialog->m_TabMeasures->Resize(w - 48, h - 100);
-					c_Dialog->m_TabPlugins->Resize(w - 48, h - 100);
-					c_Dialog->m_TabVersion->Resize(w - 48, h - 100);
+					w -= 48;
+					h -= 100;
+					c_Dialog->m_TabLog->Resize(w, h);
+					c_Dialog->m_TabMeasures->Resize(w, h);
+					c_Dialog->m_TabPlugins->Resize(w, h);
+					c_Dialog->m_TabVersion->Resize(w, h);
 				}
 			}
 			return TRUE;
@@ -202,14 +204,6 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = LoadIcon(Rainmeter->GetInstance(), MAKEINTRESOURCE(IDI_TRAY));
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	if (c_WindowPlacement.length == 0)
-	{
-		c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
-		GetWindowPlacement(m_Window, &c_WindowPlacement);
-	}
-
-	SetWindowPlacement(m_Window, &c_WindowPlacement);
-
 	HWND item = GetDlgItem(m_Window, IDC_ABOUT_TAB);
 	TCITEM tci = {0};
 	tci.mask = TCIF_TEXT;
@@ -232,6 +226,16 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	{
 		// Use UI font (Segoe UI) on Vista+
 		SetDialogFont();
+	}
+
+	if (c_WindowPlacement.length == 0)
+	{
+		c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
+		GetWindowPlacement(m_Window, &c_WindowPlacement);
+	}
+	else
+	{
+		SetWindowPlacement(m_Window, &c_WindowPlacement);
 	}
 
 	return TRUE;

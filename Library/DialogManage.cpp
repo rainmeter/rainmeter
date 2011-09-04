@@ -208,8 +208,10 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 		c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
 		GetWindowPlacement(m_Window, &c_WindowPlacement);
 	}
-
-	SetWindowPlacement(m_Window, &c_WindowPlacement);
+	else
+	{
+		SetWindowPlacement(m_Window, &c_WindowPlacement);
+	}
 
 	HWND item = GetDlgItem(m_Window, IDC_MANAGE_TAB);
 	TCITEM tci = {0};
