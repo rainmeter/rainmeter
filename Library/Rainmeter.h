@@ -268,6 +268,7 @@ public:
 	friend class CDialogManage;
 
 private:
+	void ActivateActiveConfigs();
 	void CreateMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile);
 	bool DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater);
 	void WriteActive(const std::wstring& config, int iniIndex);

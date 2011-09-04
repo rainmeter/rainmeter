@@ -1141,10 +1141,8 @@ bool CSystem::CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, 
 	std::wstring tmpFrom(strFrom), tmpTo(strTo);
 
 	// The strings must end with double nul
-	tmpFrom.append(L"0");
-	tmpFrom[tmpFrom.size() - 1] = L'\0';
-	tmpTo.append(L"0");
-	tmpTo[tmpTo.size() - 1] = L'\0';
+	tmpFrom.append(1, L'\0');
+	tmpTo.append(1, L'\0');
 
 	SHFILEOPSTRUCT fo = {0};
 	fo.wFunc = bMove ? FO_MOVE : FO_COPY;
@@ -1190,8 +1188,7 @@ bool CSystem::RemoveFolder(const std::wstring& strFolder)
 	std::wstring tmpFolder(strFolder);
 
 	// The strings must end with double nul
-	tmpFolder.append(L"0");
-	tmpFolder[tmpFolder.size() - 1] = L'\0';
+	tmpFolder.append(1, L'\0');
 
 	SHFILEOPSTRUCT fo = {0};
 	fo.wFunc = FO_DELETE;

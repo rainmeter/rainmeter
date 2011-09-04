@@ -2149,15 +2149,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	}
 
 	// Create meter windows for active configs
-	std::multimap<int, int>::const_iterator iter = m_ConfigOrders.begin();
-	for ( ; iter != m_ConfigOrders.end(); ++iter)
-	{
-		const CONFIG& config = m_ConfigStrings[(*iter).second];
-		if (config.active > 0 && config.active <= (int)config.iniFiles.size())
-		{
-			ActivateConfig((*iter).second, config.active - 1);
-		}
-	}
+	ActivateActiveConfigs();
 
 	return Result;	// Alles OK
 }
@@ -2193,6 +2185,19 @@ void CRainmeter::ReloadSettings()
 	ScanForConfigs(m_SkinPath);
 	ScanForThemes(GetSettingsPath() + L"Themes");
 	ReadGeneralSettings(m_IniFile);
+}
+
+void CRainmeter::ActivateActiveConfigs()
+{
+	std::multimap<int, int>::const_iterator iter = m_ConfigOrders.begin();
+	for ( ; iter != m_ConfigOrders.end(); ++iter)
+	{
+		const CONFIG& config = m_ConfigStrings[(*iter).second];
+		if (config.active > 0 && config.active <= (int)config.iniFiles.size())
+		{
+			ActivateConfig((*iter).second, config.active - 1);
+		}
+	}
 }
 
 void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
@@ -3580,15 +3585,7 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 	ReloadSettings();
 
 	// Create meter windows for active configs
-	std::multimap<int, int>::const_iterator iter = m_ConfigOrders.begin();
-	for ( ; iter != m_ConfigOrders.end(); ++iter)
-	{
-		const CONFIG& config = m_ConfigStrings[(*iter).second];
-		if (config.active > 0 && config.active <= (int)config.iniFiles.size())
-		{
-			ActivateConfig((*iter).second, config.active - 1);
-		}
-	}
+	ActivateActiveConfigs();
 }
 
 void CRainmeter::PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace)
