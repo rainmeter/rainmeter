@@ -2330,8 +2330,6 @@ void CRainmeter::ClearDeleteLaterList()
 		}
 		while (!m_DelayDeleteList.empty());
 
-
-		CDialogManage::UpdateThemes();
 		CDialogAbout::UpdateSkins();
 	}
 }
@@ -3540,7 +3538,70 @@ void CRainmeter::RefreshAll()
 		}
 	}
 
+	CDialogAbout::UpdateSkins();
 	CDialogManage::UpdateSkins(NULL);
+}
+
+void CRainmeter::LoadTheme(const std::wstring& name)
+{
+	// Delete all meter windows
+	DeleteMeterWindow(NULL, false);
+
+	// Make a copy of current Rainmeter.ini
+	std::wstring backup = GetSettingsPath() + L"Themes\\Backup";
+	CreateDirectory(backup.c_str(), NULL);
+	backup += L"\\Rainmeter.thm";
+	CSystem::CopyFiles(m_IniFile, backup);
+
+	// Replace Rainmeter.ini with theme
+	std::wstring theme = Rainmeter->GetSettingsPath() + L"Themes\\";
+	theme += name;
+	std::wstring wallpaper = theme + L"\\RainThemes.bmp";
+	theme += L"\\Rainmeter.thm";
+	CSystem::CopyFiles(theme, Rainmeter->GetIniFile());
+
+	PreserveSetting(backup, L"SkinPath");
+	PreserveSetting(backup, L"ConfigEditor");
+	PreserveSetting(backup, L"LogViewer");
+	PreserveSetting(backup, L"Logging");
+	PreserveSetting(backup, L"DisableVersionCheck");
+	PreserveSetting(backup, L"TrayExecuteL", false);
+	PreserveSetting(backup, L"TrayExecuteM", false);
+	PreserveSetting(backup, L"TrayExecuteR", false);
+	PreserveSetting(backup, L"TrayExecuteDM", false);
+	PreserveSetting(backup, L"TrayExecuteDR", false);
+
+	// Set wallpaper if it exists
+	if (_waccess(wallpaper.c_str(), 0) != -1)
+	{
+		SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)wallpaper.c_str(), 0);
+	}
+
+	ReloadSettings();
+
+	// Create meter windows for active configs
+	std::multimap<int, int>::const_iterator iter = m_ConfigOrders.begin();
+	for ( ; iter != m_ConfigOrders.end(); ++iter)
+	{
+		const CONFIG& config = m_ConfigStrings[(*iter).second];
+		if (config.active > 0 && config.active <= (int)config.iniFiles.size())
+		{
+			ActivateConfig((*iter).second, config.active - 1);
+		}
+	}
+}
+
+void CRainmeter::PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace)
+{
+	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
+
+	if ((replace || GetPrivateProfileString(L"Rainmeter", key, L"", buffer, 4, m_IniFile.c_str()) == 0) &&
+		GetPrivateProfileString(L"Rainmeter", key, L"", buffer, MAX_LINE_LENGTH, from.c_str()) > 0)
+	{
+		WritePrivateProfileString(L"Rainmeter", key, buffer, m_IniFile.c_str());
+	}
+
+	delete [] buffer;
 }
 
 /*

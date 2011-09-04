@@ -256,6 +256,9 @@ public:
 
 	void RefreshAll();
 
+	void LoadTheme(const std::wstring& name);
+	void PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace = true);
+
 	void ClearDeleteLaterList();
 
 	static std::vector<std::wstring> ParseString(LPCTSTR str);

@@ -495,11 +495,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::vector<std::wstring>& themes = Rainmeter->GetAllThemes();
 				if (pos >= 0 && pos < (int)themes.size())
 				{
-					std::wstring command = L"\"" + Rainmeter->GetAddonPath();
-					command += L"RainThemes\\RainThemes.exe\" /load \"";
-					command += themes[pos];
-					command += L"\"";
-					LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
+					Rainmeter->LoadTheme(themes[pos]);
 				}
 			}
 			else if ((wParam & 0x0ffff) >= ID_CONFIG_FIRST && (wParam & 0x0ffff) <= ID_CONFIG_LAST)

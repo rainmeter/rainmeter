@@ -126,20 +126,6 @@ void CDialogManage::UpdateSkins(CMeterWindow* meterWindow, bool deleted)
 	}
 }
 
-/*
-** UpdateThemes
-**
-** Updates Themes tab.
-**
-*/
-void CDialogManage::UpdateThemes()
-{
-	if (c_Dialog && c_Dialog->m_TabThemes && c_Dialog->m_TabThemes->IsInitialized())
-	{
-		c_Dialog->m_TabThemes->Update();
-	}
-}
-
 std::wstring GetTreeSelectionPath(HWND tree)
 {
 	WCHAR buffer[MAX_PATH];
@@ -1309,85 +1295,6 @@ void CDialogManage::CTabThemes::Initialize()
 }
 
 /*
-** Update
-**
-** Loads new theme.
-**
-*/
-void CDialogManage::CTabThemes::Update()
-{
-	if (m_LoadTheme)
-	{
-		// Called by ClearDeleteLaterList(), all MeterWindows have been deleted now so
-		// proceed to loading theme
-		m_LoadTheme = false;
-		const std::vector<std::wstring>& themes = Rainmeter->GetAllThemes();
-
-		HWND item  = GetDlgItem(m_Window, IDC_MANAGETHEMES_LIST);
-		int sel = ListBox_GetCurSel(item);
-
-		// Make a copy of current Rainmeter.ini
-		std::wstring backup = Rainmeter->GetSettingsPath() + L"Themes\\Backup";
-		CreateDirectory(backup.c_str(), NULL);
-		backup += L"\\Rainmeter.thm";
-		CSystem::CopyFiles(Rainmeter->GetIniFile(), backup);
-
-		// Replace Rainmeter.ini with theme
-		std::wstring theme = Rainmeter->GetSettingsPath() + L"Themes\\";
-		theme += themes[sel];
-		std::wstring wallpaper = theme + L"\\RainThemes.bmp";
-		theme += L"\\Rainmeter.thm";
-		CSystem::CopyFiles(theme, Rainmeter->GetIniFile());
-
-		PreserveSetting(backup, L"SkinPath");
-		PreserveSetting(backup, L"ConfigEditor");
-		PreserveSetting(backup, L"LogViewer");
-		PreserveSetting(backup, L"Logging");
-		PreserveSetting(backup, L"DisableVersionCheck");
-		PreserveSetting(backup, L"TrayExecuteL", false);
-		PreserveSetting(backup, L"TrayExecuteM", false);
-		PreserveSetting(backup, L"TrayExecuteR", false);
-		PreserveSetting(backup, L"TrayExecuteDM", false);
-		PreserveSetting(backup, L"TrayExecuteDR", false);
-
-		Rainmeter->ReadGeneralSettings(Rainmeter->GetIniFile());
-
-		if (_waccess(wallpaper.c_str(), 0) != -1)
-		{
-			// Set wallpaper
-			SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)wallpaper.c_str(), 0);
-		}
-
-		// Create meter windows for active configs
-		const std::multimap<int, int>& configOrders = Rainmeter->m_ConfigOrders;
-		for (std::multimap<int, int>::const_iterator iter = configOrders.begin(); iter != configOrders.end(); ++iter)
-		{
-			const CRainmeter::CONFIG& config = Rainmeter->GetAllConfigs()[(*iter).second];
-			if (config.active > 0 && config.active <= (int)config.iniFiles.size())
-			{
-				Rainmeter->ActivateConfig((*iter).second, config.active - 1);
-			}
-		}
-
-		item = GetDlgItem(m_Window, IDC_MANAGETHEMES_LOAD_BUTTON);
-		EnableWindow(item, TRUE);
-	}
-}
-
-void CDialogManage::CTabThemes::PreserveSetting(const std::wstring& backupFile, LPCTSTR key, bool replace)
-{
-	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
-
-	if ((replace || GetPrivateProfileString(L"Rainmeter", key, L"", buffer, 4, Rainmeter->GetIniFile().c_str()) == 0) &&
-		GetPrivateProfileString(L"Rainmeter", key, L"", buffer, MAX_LINE_LENGTH, backupFile.c_str()) > 0)
-	{
-		WritePrivateProfileString(L"Rainmeter", key, buffer, Rainmeter->GetIniFile().c_str());
-	}
-
-	delete [] buffer;
-}
-
-/*
 ** DlgProc
 **
 ** Dialog procedure for the Themes tab.
@@ -1566,23 +1473,9 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_MANAGETHEMES_LOAD_BUTTON:
 		{
-			EnableWindow((HWND)lParam, FALSE);
-			m_LoadTheme = true;
-
-			// Deactivate all skins
-			std::map<std::wstring, CMeterWindow*>& meterWindows = Rainmeter->GetAllMeterWindows();
-			if (!meterWindows.empty())
-			{
-				std::map<std::wstring, CMeterWindow*>::const_iterator iter = meterWindows.begin();
-				for ( ; iter != meterWindows.end(); ++iter)
-				{
-					Rainmeter->DeactivateConfig((*iter).second, -1, false);
-				}
-			}
-			else
-			{
-				Update();
-			}
+			HWND item  = GetDlgItem(m_Window, IDC_MANAGETHEMES_LIST);
+			int sel = ListBox_GetCurSel(item);
+			Rainmeter->LoadTheme(Rainmeter->m_Themes[sel]);
 		}
 		break;
 
