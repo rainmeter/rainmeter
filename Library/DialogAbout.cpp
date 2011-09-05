@@ -233,10 +233,8 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 		c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
 		GetWindowPlacement(m_Window, &c_WindowPlacement);
 	}
-	else
-	{
-		SetWindowPlacement(m_Window, &c_WindowPlacement);
-	}
+
+	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
 	return TRUE;
 }

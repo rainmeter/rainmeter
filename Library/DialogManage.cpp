@@ -203,16 +203,6 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = LoadIcon(Rainmeter->GetInstance(), MAKEINTRESOURCE(IDI_TRAY));
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	if (c_WindowPlacement.length == 0)
-	{
-		c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
-		GetWindowPlacement(m_Window, &c_WindowPlacement);
-	}
-	else
-	{
-		SetWindowPlacement(m_Window, &c_WindowPlacement);
-	}
-
 	HWND item = GetDlgItem(m_Window, IDC_MANAGE_TAB);
 	TCITEM tci = {0};
 	tci.mask = TCIF_TEXT;
@@ -240,6 +230,14 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	item = GetDlgItem(m_TabSkins->GetWindow(), IDC_MANAGESKINS_FILE_TEXT);
 	SendMessage(item, WM_SETFONT, (WPARAM)m_FontBold, 0);
+
+	if (c_WindowPlacement.length == 0)
+	{
+		c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
+		GetWindowPlacement(m_Window, &c_WindowPlacement);
+	}
+
+	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
 	return TRUE;
 }
