@@ -774,7 +774,7 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 					GetClassName(hwnd, className, 64);
 					GetWindowText(hwnd, windowText, 64);
 
-					SetLastError(0);
+					SetLastError(ERROR_SUCCESS);
 				}
 
 				// Insert the helper window after the found window
@@ -900,6 +900,11 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 {
 	if (hWnd != c_Window)
 	{
+		if (uMsg == WM_WINDOWPOSCHANGING)
+		{
+			((LPWINDOWPOS)lParam)->flags |= SWP_NOZORDER;
+			return 0;
+		}
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
