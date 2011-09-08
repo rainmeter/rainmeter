@@ -315,7 +315,7 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 			{
 				delete m_Measure;
 				m_Measure = NULL;
-				Log(LOG_ERROR, error.GetString().c_str());
+				LogError(error);
 			}
 
 			Rainmeter->SetCurrentParser(oldParser);

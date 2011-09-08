@@ -2248,7 +2248,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		}
 		catch (CError& error)
 		{
-			Log(LOG_ERROR, error.GetString().c_str());
+			LogError(error);
 		}
 	}
 }
@@ -3562,7 +3562,7 @@ void CRainmeter::RefreshAll()
 			}
 			catch (CError& error)
 			{
-				Log(LOG_ERROR, error.GetString().c_str());
+				LogError(error);
 			}
 		}
 	}

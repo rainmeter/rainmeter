@@ -2315,7 +2315,7 @@ bool CMeterWindow::ReadSkin()
 				{
 					delete measure;
 					measure = NULL;
-					Log(LOG_ERROR, error.GetString().c_str());
+					LogError(error);
 				}
 			}
 			else if (meterName.length() > 0)
@@ -2345,7 +2345,7 @@ bool CMeterWindow::ReadSkin()
 				{
 					delete meter;
 					meter = NULL;
-					Log(LOG_ERROR, error.GetString().c_str());
+					LogError(error);
 				}
 			}
 			// If it's not a meter or measure it will be ignored
@@ -2384,7 +2384,7 @@ bool CMeterWindow::ReadSkin()
 			}
 			catch (CError& error)
 			{
-				Log(LOG_ERROR, error.GetString().c_str());
+				LogError(error);
 			}
 		}
 	}
@@ -2410,7 +2410,7 @@ void CMeterWindow::InitializeMeasures()
 		}
 		catch (CError& error)
 		{
-			Log(LOG_ERROR, error.GetString().c_str());
+			LogError(error);
 		}
 	}
 }
@@ -2433,7 +2433,7 @@ void CMeterWindow::InitializeMeters()
 		}
 		catch (CError& error)
 		{
-			Log(LOG_ERROR, error.GetString().c_str());
+			LogError(error);
 		}
 
 		if (!(*j)->GetToolTipText().empty())
@@ -2897,7 +2897,7 @@ bool CMeterWindow::UpdateMeasure(CMeasure* measure, bool force)
 			}
 			catch (CError& error)
 			{
-				Log(LOG_ERROR, error.GetString().c_str());
+				LogError(error);
 			}
 		}
 
@@ -2937,7 +2937,7 @@ bool CMeterWindow::UpdateMeter(CMeter* meter, bool& bActiveTransition, bool forc
 			}
 			catch (CError& error)
 			{
-				Log(LOG_ERROR, error.GetString().c_str());
+				LogError(error);
 			}
 		}
 
@@ -3828,7 +3828,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	catch (CError& error)
 	{
-		Log(LOG_ERROR, error.GetString().c_str());
+		LogError(error);
 	}
 
 	return 0;
@@ -5024,7 +5024,7 @@ LRESULT CMeterWindow::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	catch (CError& error)
 	{
-		Log(LOG_ERROR, error.GetString().c_str());
+		LogError(error);
 	}
 	return 0;
 }

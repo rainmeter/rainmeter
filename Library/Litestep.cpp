@@ -18,8 +18,8 @@
 
 #include "StdAfx.h"
 #include "Litestep.h"
-#include "Error.h"
 #include "Rainmeter.h"
+#include "DialogAbout.h"
 #include "System.h"
 
 extern CRainmeter* Rainmeter;
@@ -717,6 +717,12 @@ void LogWithArgs(int nLevel, const WCHAR* format, ... )
 	va_end(args);
 
 	delete [] buffer;
+}
+
+void LogError(CError& error)
+{
+	Log(LOG_ERROR, error.GetString().c_str());
+	CDialogAbout::ShowAboutLog();
 }
 
 void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved)

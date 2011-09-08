@@ -93,17 +93,23 @@ void CDialogAbout::Open(int tab)
 	c_Dialog->OnNotify(0, (LPARAM)&nm);
 }
 
-void CDialogAbout::AddLogItem(int level, LPCWSTR time, LPCWSTR message)
+/*
+** ShowAboutLog
+**
+** Shows log if dialog isn't already open.
+**
+*/
+void CDialogAbout::ShowAboutLog()
 {
 	if (!c_Dialog)
 	{
-		if (level == LOG_ERROR)
-		{
-			// Open About Log window for errors
-			CDialogAbout::Open();
-		}
+		Open();
 	}
-	else if (c_Dialog->m_TabLog && c_Dialog->m_TabLog->IsInitialized())
+}
+
+void CDialogAbout::AddLogItem(int level, LPCWSTR time, LPCWSTR message)
+{
+	if (c_Dialog && c_Dialog->m_TabLog && c_Dialog->m_TabLog->IsInitialized())
 	{
 		c_Dialog->m_TabLog->AddItem(level, time, message);
 	}

@@ -35,6 +35,7 @@ public:
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 	static void Open(int tab = 0);
+	static void ShowAboutLog();
 
 	static void AddLogItem(int level, LPCWSTR time, LPCWSTR message);
 	static void UpdateSkins();

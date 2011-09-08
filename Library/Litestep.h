@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <comdef.h>
 #include <string>
+#include "Error.h"
 #include "Export.h"
 
 #define magicDWord             0x49474541
@@ -52,6 +53,7 @@ void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* 
 
 void Log(int nLevel, const WCHAR* message, const WCHAR* module = L"Rainmeter");		// Wrapper for LSLog().
 void LogWithArgs(int nLevel, const WCHAR* format, ... );	// Replacement for DebugLog(), has the same functionality but has the option to set teh Log Level.
+void LogError(CError& error);
 
 void ResetLoggingFlag();
 
