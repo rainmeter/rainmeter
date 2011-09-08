@@ -313,8 +313,8 @@ bool CMeterButton::MouseMove(POINT pos)
 		}
 		else
 		{
-			// If the left button is not down anymore the cliked state needs to be set false
-			if ((GetKeyState(VK_LBUTTON) & 0x8000) == 0)
+			// If the left button is not down anymore the clicked state needs to be set false
+			if (!(GetKeyState(VK_LBUTTON) < 0))
 			{
 				m_Clicked = false;
 			}

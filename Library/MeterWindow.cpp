@@ -3196,7 +3196,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				else
 				{
-					bool keyDown = GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000 || GetKeyState(VK_MENU) & 0x8000;
+					bool keyDown = GetKeyState(VK_CONTROL) < 0 || GetKeyState(VK_SHIFT) < 0 || GetKeyState(VK_MENU) < 0;
 
 					if (!keyDown || GetWindowFromPoint(pos) != m_Window)
 					{
@@ -3306,7 +3306,7 @@ void CMeterWindow::FadeWindow(int from, int to)
 */
 void CMeterWindow::ShowWindowIfAppropriate()
 {
-	bool keyDown = GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000 || GetKeyState(VK_MENU) & 0x8000;
+	bool keyDown = GetKeyState(VK_CONTROL) < 0 || GetKeyState(VK_SHIFT) < 0 || GetKeyState(VK_MENU) < 0;
 
 	POINT pos;
 	GetCursorPos(&pos);
@@ -3530,7 +3530,7 @@ LRESULT CMeterWindow::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	bool keyDown = GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000 || GetKeyState(VK_MENU) & 0x8000;
+	bool keyDown = GetKeyState(VK_CONTROL) < 0 || GetKeyState(VK_SHIFT) < 0 || GetKeyState(VK_MENU) < 0;
 
 	if (!keyDown)
 	{
@@ -4080,7 +4080,7 @@ LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lPara
 
 	if ((wp->flags & SWP_NOMOVE) == 0)
 	{
-		if (m_SnapEdges && !(GetKeyState(VK_CONTROL) & 0x8000 || GetKeyState(VK_SHIFT) & 0x8000))
+		if (m_SnapEdges && !(GetKeyState(VK_CONTROL) < 0 || GetKeyState(VK_SHIFT) < 0))
 		{
 			// only process movement (ignore anything without winpos values)
 			if (wp->cx != 0 && wp->cy != 0)
@@ -4289,7 +4289,7 @@ LRESULT CMeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_DOWN, NULL);
 
-	if ((GetKeyState(VK_CONTROL) & 0x80) ||  // Ctrl is pressed, so only run default action
+	if (GetKeyState(VK_CONTROL) < 0 ||  // Ctrl is pressed, so only run default action
 		(!DoAction(pos.x, pos.y, MOUSE_LMB_DOWN, false) && m_WindowDraggable))
 	{
 		// Cancel the mouse event beforehand
@@ -4398,7 +4398,7 @@ LRESULT CMeterWindow::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE, NULL);
 
-	if ((GetKeyState(VK_CONTROL) & 0x80) ||  // Ctrl is pressed, so only run default action
+	if (GetKeyState(VK_CONTROL) < 0 ||  // Ctrl is pressed, so only run default action
 		!DoAction(pos.x, pos.y, MOUSE_RMB_UP, false))
 	{
 		// Run the DefWindowProc so the context menu works
@@ -4548,7 +4548,7 @@ LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		HandleButtons(posc, BUTTONPROC_MOVE, NULL);
 
 		// If RMB up or RMB down or double-click cause actions, do not show the menu!
-		if ((GetKeyState(VK_CONTROL) & 0x80) == 0 &&  // Ctrl is pressed, so ignore any actions
+		if (!(GetKeyState(VK_CONTROL) < 0) &&  // Ctrl is pressed, so ignore any actions
 			(DoAction(posc.x, posc.y, MOUSE_RMB_UP, false) || DoAction(posc.x, posc.y, MOUSE_RMB_DOWN, true) || DoAction(posc.x, posc.y, MOUSE_RMB_DBLCLK, true)))
 		{
 			return 0;
