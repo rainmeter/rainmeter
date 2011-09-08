@@ -68,7 +68,7 @@ bool CMeasureRegistry::Update()
 						(LPBYTE)data,
 						(LPDWORD)&size) == ERROR_SUCCESS)
 		{
-			switch(type)
+			switch (type)
 			{
 			case REG_DWORD:
 				m_Value = *((LPDWORD)data);

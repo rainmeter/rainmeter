@@ -247,7 +247,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 
 		if (err != 0 && ERROR_CLASS_ALREADY_EXISTS != err)
 		{
-			throw CError(CError::ERROR_REGISTER_WINDOWCLASS, __LINE__, __FILE__);
+			throw CError(L"Unable to register class!", __LINE__, __FILE__);
 		}
 	}
 
@@ -266,7 +266,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 
 	if (m_Window == NULL)
 	{
-		throw CError(CError::ERROR_CREATE_WINDOW, __LINE__, __FILE__);
+		throw CError(L"Unable to register window!", __LINE__, __FILE__);
 	}
 
 #ifndef _WIN64
@@ -421,13 +421,13 @@ void CMeterWindow::Refresh(bool init, bool all)
 	{
 		if (0 == SetTimer(m_Window, METERTIMER, m_WindowUpdate, NULL))
 		{
-			throw CError(L"Unable to create a timer!", __LINE__, __FILE__);
+			throw CError(L"Unable to set timer!", __LINE__, __FILE__);
 		}
 	}
 
 	if (0 == SetTimer(m_Window, MOUSETIMER, 500, NULL))	// Mouse position is checked twice per sec
 	{
-		throw CError(L"Unable to create a timer!", __LINE__, __FILE__);
+		throw CError(L"Unable to set timer!", __LINE__, __FILE__);
 	}
 
 	UpdateTransparency(m_AlphaValue, true);
@@ -2315,7 +2315,7 @@ bool CMeterWindow::ReadSkin()
 				{
 					delete measure;
 					measure = NULL;
-					MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+					Log(LOG_ERROR, error.GetString().c_str());
 				}
 			}
 			else if (meterName.length() > 0)
@@ -2345,7 +2345,7 @@ bool CMeterWindow::ReadSkin()
 				{
 					delete meter;
 					meter = NULL;
-					MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+					Log(LOG_ERROR, error.GetString().c_str());
 				}
 			}
 			// If it's not a meter or measure it will be ignored
@@ -2384,7 +2384,7 @@ bool CMeterWindow::ReadSkin()
 			}
 			catch (CError& error)
 			{
-				MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+				Log(LOG_ERROR, error.GetString().c_str());
 			}
 		}
 	}
@@ -2410,7 +2410,7 @@ void CMeterWindow::InitializeMeasures()
 		}
 		catch (CError& error)
 		{
-			MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			Log(LOG_ERROR, error.GetString().c_str());
 		}
 	}
 }
@@ -2433,7 +2433,7 @@ void CMeterWindow::InitializeMeters()
 		}
 		catch (CError& error)
 		{
-			MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			Log(LOG_ERROR, error.GetString().c_str());
 		}
 
 		if (!(*j)->GetToolTipText().empty())
@@ -2897,7 +2897,7 @@ bool CMeterWindow::UpdateMeasure(CMeasure* measure, bool force)
 			}
 			catch (CError& error)
 			{
-				MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+				Log(LOG_ERROR, error.GetString().c_str());
 			}
 		}
 
@@ -2937,7 +2937,7 @@ bool CMeterWindow::UpdateMeter(CMeter* meter, bool& bActiveTransition, bool forc
 			}
 			catch (CError& error)
 			{
-				MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+				Log(LOG_ERROR, error.GetString().c_str());
 			}
 		}
 
@@ -3826,9 +3826,9 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 		}
 	}
-	catch(CError& error)
+	catch (CError& error)
 	{
-		MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		Log(LOG_ERROR, error.GetString().c_str());
 	}
 
 	return 0;
@@ -5024,7 +5024,7 @@ LRESULT CMeterWindow::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	catch (CError& error)
 	{
-		MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		Log(LOG_ERROR, error.GetString().c_str());
 	}
 	return 0;
 }

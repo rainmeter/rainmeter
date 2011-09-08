@@ -315,7 +315,7 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 			{
 				delete m_Measure;
 				m_Measure = NULL;
-				MessageBox(m_Window, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+				Log(LOG_ERROR, error.GetString().c_str());
 			}
 
 			Rainmeter->SetCurrentParser(oldParser);
@@ -445,8 +445,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				const std::wstring& log = Rainmeter->GetLogFile();
 				if (_waccess(log.c_str(), 0) != -1)
 				{
-					std::wstring command = Rainmeter->GetLogViewer();
-					command += log;
+					std::wstring command = Rainmeter->GetLogViewer() + log;
 					LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 				}
 			}

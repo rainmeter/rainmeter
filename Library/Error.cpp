@@ -19,15 +19,6 @@
 #include "StdAfx.h"
 #include "Error.h"
 
-const WCHAR* CError::c_ErrorStrings[] =
-{
-	L"User defined error",
-	L"Out of memory",
-	L"Null parameter",
-	L"Unable to register windowclass",
-	L"Unable to create window"
-};
-
 /*
 ** GetString
 **
@@ -36,22 +27,5 @@ const WCHAR* CError::c_ErrorStrings[] =
 */
 const std::wstring& CError::GetString()
 {
-//	static WCHAR Buffer[16];
-
-	if (m_Error != ERROR_USER)
-	{
-		m_String = c_ErrorStrings[m_Error];
-//		if (m_File)
-//		{
-//			_snwprintf_s(Buffer, _TRUNCATE, L"%i", m_Line);
-//
-//			m_String += L"\n(";
-//			m_String += m_File;
-//			m_String += L" : ";
-//			m_String += Buffer;
-//			m_String += L")";
-//		}
-	}
-
 	return m_String;
 }

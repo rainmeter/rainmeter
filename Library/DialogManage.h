@@ -39,7 +39,6 @@ public:
 	static void OpenSkin(CMeterWindow* meterWindow);
 
 	static void UpdateSkins(CMeterWindow* meterWindow, bool deleted = false);
-	static void UpdateThemes();
 
 	static WINDOWPLACEMENT c_WindowPlacement;
 	static CDialogManage* c_Dialog;
@@ -86,13 +85,6 @@ private:
 		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
-
-		void Update();
-
-	private:
-		void PreserveSetting(const std::wstring& backupFile, LPCTSTR key, bool replace = true);
-
-		bool m_LoadTheme;
 	};
 	
 	// Settings tab

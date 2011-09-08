@@ -112,7 +112,7 @@ int CMeterString::GetX(bool abs)
 
 	if (!abs)
 	{
-		switch(m_Align)
+		switch (m_Align)
 		{
 		case ALIGN_CENTER:
 			x = x - (m_W / 2);
@@ -224,7 +224,7 @@ void CMeterString::Initialize()
 
 	FontStyle style = FontStyleRegular;
 
-	switch(m_Style)
+	switch (m_Style)
 	{
 	case ITALIC:
 		style = FontStyleItalic;
@@ -516,7 +516,7 @@ bool CMeterString::Update()
 		}
 		if (!m_Postfix.empty()) m_String += m_Postfix;
 
-		switch(m_textCase)
+		switch (m_textCase)
 		{
 		case TEXTCASE_UPPER:
 			StringToUpper(m_String);
@@ -588,7 +588,7 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 		graphics.SetTextRenderingHint(TextRenderingHintSingleBitPerPixelGridFit);
 	}
 
-	switch(m_Align)
+	switch (m_Align)
 	{
 	case ALIGN_CENTER:
 		stringFormat.SetAlignment(StringAlignmentCenter);
@@ -836,7 +836,7 @@ void CMeterString::EnumerateInstalledFontFamilies()
 			}
 			else
 			{
-				Log(LOG_ERROR, L"Failed to enumerate installed font families: GetFamilies() failed.");
+				Log(LOG_ERROR, L"Font family enumeration: GetFamilies() failed.");
 			}
 
 			delete [] fontFamilies;
@@ -848,6 +848,6 @@ void CMeterString::EnumerateInstalledFontFamilies()
 	}
 	else
 	{
-		Log(LOG_ERROR, L"Failed to enumerate installed font families: InstalledFontCollection() failed.");
+		Log(LOG_ERROR, L"Font family enumeration: InstalledFontCollection() failed.");
 	}
 }

@@ -147,8 +147,8 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 		if (m_Plugin == NULL)
 		{
-			std::wstring error = L"Rainmeter plugin " + m_PluginName;
-			error += L" not found!";
+			std::wstring error = L"Plugin: \"" + m_PluginName;
+			error += L"\" not found!";
 			throw CError(error, __LINE__, __FILE__);
 		}
 	}
@@ -164,8 +164,8 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	{
 		FreeLibrary(m_Plugin);
 
-		std::wstring error = L"Rainmeter plugin " + m_PluginName;
-		error += L" doesn't export Update or GetString function!";
+		std::wstring error = L"Plugin: \"" + m_PluginName;
+		error += L"\" doesn't export Update() or GetString()!";
 		throw CError(error, __LINE__, __FILE__);
 	}
 

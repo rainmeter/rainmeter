@@ -145,24 +145,23 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 */
 int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath)
 {
-	int Result=1;
+	int result = 1;
 
 	try
 	{
-		Rainmeter=new CRainmeter;
+		Rainmeter = new CRainmeter;
 
 		if (Rainmeter)
 		{
-			Result=Rainmeter->Initialize(ParentWnd, dllInst, szPath);
+			result = Rainmeter->Initialize(ParentWnd, dllInst, szPath);
 		}
-
 	}
-	catch(CError& error)
+	catch (CError& error)
 	{
 		MessageBox(ParentWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 	}
 
-	return Result;
+	return result;
 }
 
 /*
@@ -1303,21 +1302,12 @@ void RainmeterActivateConfigWide(const WCHAR* arg)
 
 		if (subStrings.size() > 1)
 		{
-			const std::vector<CRainmeter::CONFIG>& configs = Rainmeter->GetAllConfigs();
-
-			for (int i = 0, isize = (int)configs.size(); i < isize; ++i)
+			CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[0]);
+			if (mw)
 			{
-				if (_wcsicmp(configs[i].config.c_str(), subStrings[0].c_str()) == 0)
-				{
-					for (int j = 0, jsize = (int)configs[i].iniFiles.size(); j < jsize; ++j)
-					{
-						if (_wcsicmp(configs[i].iniFiles[j].c_str(), subStrings[1].c_str()) == 0)
-						{
-							Rainmeter->ActivateConfig(i, j);
-							return;
-						}
-					}
-				}
+				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(mw);
+				Rainmeter->ActivateConfig(indexes.first, indexes.second);
+				return;
 			}
 			LogWithArgs(LOG_NOTICE, L"No such config: \"%s\" \"%s\"", subStrings[0].c_str(), subStrings[1].c_str());
 		}
@@ -1789,11 +1779,11 @@ CRainmeter::~CRainmeter()
 */
 int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 {
-	int Result=0;
+	int result = 0;
 
-	if (Parent==NULL || Instance==NULL)
+	if (Parent == NULL || Instance == NULL)
 	{
-		throw CError(CError::ERROR_NULL_PARAMETER, __LINE__, __FILE__);
+		throw CError(L"Null parameter", __LINE__, __FILE__);
 	}
 
 	m_Instance = Instance;
@@ -2151,7 +2141,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	// Create meter windows for active configs
 	ActivateActiveConfigs();
 
-	return Result;	// Alles OK
+	return result;	// Alles OK
 }
 
 /*
@@ -2247,9 +2237,9 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		{
 			CreateMeterWindow(skinPath, skinConfig, skinIniFile);
 		}
-		catch(CError& error)
+		catch (CError& error)
 		{
-			MessageBox(NULL, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			Log(LOG_ERROR, error.GetString().c_str());
 		}
 	}
 }
@@ -2423,6 +2413,27 @@ CMeterWindow* CRainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
 	return NULL;
 }
 
+std::pair<int, int> CRainmeter::GetMeterWindowIndex(CMeterWindow* meterWindow)
+{
+	std::pair<int, int> indexes;
+
+	for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
+	{
+		if (_wcsicmp(m_ConfigStrings[i].config.c_str(), meterWindow->GetSkinName().c_str()) == 0)
+		{
+			for (int j = 0, jsize = (int)m_ConfigStrings[i].iniFiles.size(); j < jsize; ++j)
+			{
+				if (_wcsicmp(m_ConfigStrings[i].iniFiles[j].c_str(), meterWindow->GetSkinIniFile().c_str()) == 0)
+				{
+					indexes = std::make_pair(i, j);
+				}
+			}
+		}
+	}
+
+	return indexes;
+}
+
 CMeterWindow* CRainmeter::GetMeterWindow(HWND hwnd)
 {
 	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
@@ -2483,7 +2494,7 @@ int CRainmeter::GetLoadOrder(const std::wstring& config)
 		}
 	}
 
-	// LoadOrder not exists
+	// LoadOrder not specified
 	return 0;
 }
 
@@ -3067,7 +3078,6 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	return TRUE;
 }
 
-
 /*
 ** ParseCommand
 **
@@ -3210,6 +3220,11 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 						{
 							len -= 2;
 							strCommand.assign(strCommand, 1, len);
+						}
+
+						if (meterWindow)
+						{
+							meterWindow->MakePathAbsolute(strCommand);
 						}
 
 						PlaySound(strCommand.c_str(), NULL, flags);
@@ -3481,13 +3496,13 @@ void CRainmeter::RefreshAll()
 		{
 			// Verify whether the cached information is valid
 			int found = 0;
-			std::wstring skinConfig = mw->GetSkinName();
+			const std::wstring& skinConfig = mw->GetSkinName();
 			for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
 			{
 				if (_wcsicmp(skinConfig.c_str(), m_ConfigStrings[i].config.c_str()) == 0)
 				{
 					found = 1;
-					std::wstring skinIniFile = mw->GetSkinIniFile();
+					const std::wstring& skinIniFile = mw->GetSkinIniFile();
 					for (int j = 0, jsize = (int)m_ConfigStrings[i].iniFiles.size(); j < jsize; ++j)
 					{
 						if (_wcsicmp(skinIniFile.c_str(), m_ConfigStrings[i].iniFiles[j].c_str()) == 0)
@@ -3538,7 +3553,7 @@ void CRainmeter::RefreshAll()
 			}
 			catch (CError& error)
 			{
-				MessageBox(mw->GetWindow(), error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+				Log(LOG_ERROR, error.GetString().c_str());
 			}
 		}
 	}
@@ -3626,7 +3641,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 					std::wstring format = L"Resetting WorkArea@%i: L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)";
 					if (!result)
 					{
-						format += L" => FAIL.";
+						format += L" => FAIL";
 					}
 					LogWithArgs(LOG_NOTICE, format.c_str(), (int)i + 1, r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
 				}
@@ -3700,7 +3715,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 					format += L": L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)";
 					if (!result)
 					{
-						format += L" => FAIL.";
+						format += L" => FAIL";
 					}
 					LogWithArgs(LOG_NOTICE, format.c_str(), r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
 				}
@@ -4326,6 +4341,12 @@ void CRainmeter::DeleteLogFile()
 
 void CRainmeter::AddAboutLogInfo(int level, LPCWSTR time, LPCWSTR message)
 {
+	if (level == LOG_ERROR)
+	{
+		// Open About Log window for errors
+		CDialogAbout::Open();
+	}
+
 	// Store 20 last items
 	LOG_INFO logInfo = {level, time, message};
 	m_LogData.push_back(logInfo);
@@ -4375,38 +4396,32 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	}
 	if (!bSuccess)
 	{
-		Log(LOG_WARNING, L"The Rainmeter.ini file is NOT writable.");
+		Log(LOG_WARNING, L"Rainmeter.ini is NOT writable.");
 
-		std::wstring error = L"The Rainmeter.ini file is not writable. This means that the\n"
-			L"application will not be able to save any settings permanently.\n\n";
+		std::wstring error = L"Rainmeter.ini is not writable. Rainmeter will not\n"
+			L"be able to save any settings permanently.\n\n";
 
 		if (!bDefaultIniLocation)
 		{
 			std::wstring strTarget = L"%APPDATA%\\Rainmeter\\";
 			ExpandEnvironmentVariables(strTarget);
 
-			error += L"You should quit Rainmeter and move the settings file from\n\n";
+			error += L"You should quit Rainmeter and move the settings file from\n";
 			error += m_IniFile;
-			error += L"\n\nto\n\n";
+			error += L"\n\nto\n";
 			error += strTarget;
-			error += L"\n\nAlternatively you can simply remove the file and\n"
-				L"it will be automatically recreated in the correct location\n"
-				L"when Rainmeter is restarted the next time (you\'ll lose your\n"
-				L"current settings though).\n";
+			error += L"\n\nAlternatively, simply remove the file and it will\n"
+				L"be automatically recreated in the correct location on\n"
+				L"next launch (current settings will be lost).";
 		}
 		else
 		{
-			error += L"Make sure that the settings file is not set as read-only and\n"
-				L"that it is located in a folder where you have write permissions.\n\n"
-				L"The settings file is located at:\n";
+			error += L"Make sure that the settings file is not set as read-only and that\n"
+				L"the folder is writable. The file is located at:\n";
 			error += m_IniFile;
 		}
 
 		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_ICONERROR);
-	}
-	else
-	{
-		Log(LOG_NOTICE, L"The Rainmeter.ini file is writable.");
 	}
 }
 

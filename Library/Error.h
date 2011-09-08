@@ -25,32 +25,17 @@
 class CError
 {
 public:
-	// Few predefined errors
-	enum RAINERROR 
-	{
-		ERROR_USER,
-		ERROR_OUT_OF_MEM,
-		ERROR_NULL_PARAMETER,
-		ERROR_REGISTER_WINDOWCLASS,
-		ERROR_CREATE_WINDOW
-	};
+	CError(const std::wstring& String) : m_String(String), m_File(NULL) {}
+	CError(const WCHAR* String ) : m_String(String), m_File(NULL) {}
+	CError(const std::wstring& String, int Line, const char* File) : m_String(String), m_Line(Line), m_File(File) {}
+	CError(const WCHAR* String, int Line, const char* File) : m_String(String), m_Line(Line), m_File(File) {}
 
-	CError(const std::wstring& String) : m_Error(ERROR_USER), m_String(String), m_File(NULL) {}
-	CError(const WCHAR* String ) : m_Error(ERROR_USER), m_String(String), m_File(NULL) {}
-	CError(const std::wstring& String, int Line, const char* File) : m_Error(ERROR_USER), m_String(String), m_Line(Line), m_File(File) {}
-	CError(const WCHAR* String, int Line, const char* File) : m_Error(ERROR_USER), m_String(String), m_Line(Line), m_File(File) {}
-	CError(RAINERROR Error) : m_Error(Error), m_File(NULL) {}
-	CError(RAINERROR Error, int Line, const char* File) : m_Error(Error), m_Line(Line), m_File(File) {}
-
-    const std::wstring& GetString(); 
+	const std::wstring& GetString(); 
 
 private:
 	std::wstring m_String;
 	int m_Line;
 	const char* m_File;
-	RAINERROR m_Error;
-
-	static const WCHAR* c_ErrorStrings[];
 };
 
 #endif

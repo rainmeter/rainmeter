@@ -447,7 +447,7 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 	if (m_MeasureName.empty())
 	{
 		std::wstring error = L"The meter [" + m_Name;
-		error += L"] is not bound to anything!";
+		error += L"] is unbound!";
 		throw CError(error, __LINE__, __FILE__);
 	}
 
