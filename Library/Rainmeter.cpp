@@ -1302,12 +1302,21 @@ void RainmeterActivateConfigWide(const WCHAR* arg)
 
 		if (subStrings.size() > 1)
 		{
-			CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[0]);
-			if (mw)
+			const std::vector<CRainmeter::CONFIG>& configs = Rainmeter->GetAllConfigs();
+
+			for (int i = 0, isize = (int)configs.size(); i < isize; ++i)
 			{
-				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(mw);
-				Rainmeter->ActivateConfig(indexes.first, indexes.second);
-				return;
+				if (_wcsicmp(configs[i].config.c_str(), subStrings[0].c_str()) == 0)
+				{
+					for (int j = 0, jsize = (int)configs[i].iniFiles.size(); j < jsize; ++j)
+					{
+						if (_wcsicmp(configs[i].iniFiles[j].c_str(), subStrings[1].c_str()) == 0)
+						{
+							Rainmeter->ActivateConfig(i, j);
+							return;
+						}
+					}
+				}
 			}
 			LogWithArgs(LOG_NOTICE, L"No such config: \"%s\" \"%s\"", subStrings[0].c_str(), subStrings[1].c_str());
 		}
