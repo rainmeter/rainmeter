@@ -3079,8 +3079,8 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else
 	{
-		std::wstring error = L"Unknown !bang: " + bang;
-		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		std::wstring error = L"Unknown bang: " + bang;
+		Log(LOG_ERROR, error.c_str());
 		return FALSE;
 	}
 
@@ -4350,12 +4350,6 @@ void CRainmeter::DeleteLogFile()
 
 void CRainmeter::AddAboutLogInfo(int level, LPCWSTR time, LPCWSTR message)
 {
-	if (level == LOG_ERROR)
-	{
-		// Open About Log window for errors
-		CDialogAbout::Open();
-	}
-
 	// Store 20 last items
 	LOG_INFO logInfo = {level, time, message};
 	m_LogData.push_back(logInfo);
