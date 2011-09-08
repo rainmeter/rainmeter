@@ -179,7 +179,8 @@ public:
 
 	CMeterWindow* GetMeterWindow(const std::wstring& config);
 	CMeterWindow* GetMeterWindowByINI(const std::wstring& ini_searching);
-	std::pair<int, int> GetMeterWindowIndex(CMeterWindow* meterWindow);
+	std::pair<int, int> GetMeterWindowIndex(const std::wstring& config, const std::wstring& iniFile);
+	std::pair<int, int> GetMeterWindowIndex(CMeterWindow* meterWindow) { return GetMeterWindowIndex(meterWindow->GetSkinName(), meterWindow->GetSkinIniFile()); }
 
 	CMeterWindow* GetMeterWindow(HWND hwnd);
 	void GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group = L"");

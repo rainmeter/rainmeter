@@ -2325,11 +2325,11 @@ void CRainmeter::ClearDeleteLaterList()
 				if ((*iter).second == meterWindow)
 				{
 					m_Meters.erase(iter);
-					CDialogManage::UpdateSkins(meterWindow, true);
 					break;
 				}
 			}
 
+			CDialogManage::UpdateSkins(meterWindow, true);
 			delete meterWindow;
 		}
 		while (!m_DelayDeleteList.empty());
@@ -2422,24 +2422,26 @@ CMeterWindow* CRainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
 	return NULL;
 }
 
-std::pair<int, int> CRainmeter::GetMeterWindowIndex(CMeterWindow* meterWindow)
+std::pair<int, int> CRainmeter::GetMeterWindowIndex(const std::wstring& config, const std::wstring& iniFile)
 {
 	std::pair<int, int> indexes;
 
 	for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
 	{
-		if (_wcsicmp(m_ConfigStrings[i].config.c_str(), meterWindow->GetSkinName().c_str()) == 0)
+		if (_wcsicmp(m_ConfigStrings[i].config.c_str(), config.c_str()) == 0)
 		{
 			for (int j = 0, jsize = (int)m_ConfigStrings[i].iniFiles.size(); j < jsize; ++j)
 			{
-				if (_wcsicmp(m_ConfigStrings[i].iniFiles[j].c_str(), meterWindow->GetSkinIniFile().c_str()) == 0)
+				if (_wcsicmp(m_ConfigStrings[i].iniFiles[j].c_str(), iniFile.c_str()) == 0)
 				{
 					indexes = std::make_pair(i, j);
+					return indexes;
 				}
 			}
 		}
 	}
 
+	indexes = std::make_pair(-1, -1);  // error
 	return indexes;
 }
 

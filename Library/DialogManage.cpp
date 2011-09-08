@@ -411,7 +411,7 @@ void CDialogManage::CTabSkins::Update(CMeterWindow* meterWindow, bool deleted)
 {
 	if (meterWindow)
 	{
-		if (m_IgnoreUpdate)
+		if (!deleted && m_IgnoreUpdate)
 		{
 			// Changed setting from dialog, no need to update
 			m_IgnoreUpdate = false;
@@ -881,10 +881,10 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			if (!m_SkinWindow)
 			{
-				CMeterWindow* mw = Rainmeter->GetMeterWindow(m_SkinName);
-				if (mw)
+				// Skin not active, load
+				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(m_SkinName, m_FileName);
+				if (indexes.first != -1 && indexes.second != -1)
 				{
-					std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(mw);
 					Rainmeter->ActivateConfig(indexes.first, indexes.second);
 
 					// Fake selection change to update controls
@@ -984,19 +984,22 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 				WritePrivateProfileString(m_SkinName.c_str(), L"LoadOrder", buffer, Rainmeter->GetIniFile().c_str());
 				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(m_SkinWindow);
-				Rainmeter->SetLoadOrder(indexes.first, value);
-
-				std::multimap<int, CMeterWindow*> windows;
-				Rainmeter->GetMeterWindowsByLoadOrder(windows);
-
-				CSystem::PrepareHelperWindow();
-
-				// Reorder window z-position to reflect load order
-				std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-				for ( ; iter != windows.end(); ++iter)
+				if (indexes.first != -1)
 				{
-					CMeterWindow* mw = (*iter).second;
-					mw->ChangeZPos(mw->GetWindowZPosition(), true);
+					Rainmeter->SetLoadOrder(indexes.first, value);
+
+					std::multimap<int, CMeterWindow*> windows;
+					Rainmeter->GetMeterWindowsByLoadOrder(windows);
+
+					CSystem::PrepareHelperWindow();
+
+					// Reorder window z-position to reflect load order
+					std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+					for ( ; iter != windows.end(); ++iter)
+					{
+						CMeterWindow* mw = (*iter).second;
+						mw->ChangeZPos(mw->GetWindowZPosition(), true);
+					}
 				}
 			}
 		}
