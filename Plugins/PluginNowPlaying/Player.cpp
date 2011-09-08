@@ -29,11 +29,10 @@ extern std::wstring g_CachePath;
 */
 CPlayer::CPlayer() :
 	m_Initialized(false),
-	m_HasCoverMeasure(false),
-	m_HasLyricsMeasure(false),
 	m_InstanceCount(),
 	m_UpdateCount(),
 	m_TrackCount(),
+	m_Measures(),
 	m_State(),
 	m_Duration(),
 	m_Position(),
@@ -90,18 +89,9 @@ void CPlayer::RemoveInstance()
 ** Called during initialization of any measure.
 **
 */
-void CPlayer::AddMeasure(MEASURETYPE measure)
+void CPlayer::AddMeasure(INT type)
 {
-	switch (measure)
-	{
-	case MEASURE_LYRICS:
-		m_HasLyricsMeasure = true;
-		break;
-
-	case MEASURE_COVER:
-		m_HasCoverMeasure = true;
-		break;
-	}
+	m_Measures |= type;
 }
 
 /*
@@ -135,8 +125,7 @@ std::wstring CPlayer::GetCacheFile()
 	}
 	else
 	{
-		std::wstring name = m_Artist;
-		name += L" - ";
+		std::wstring name = m_Artist + L" - ";
 		name += m_Title;
 
 		// Replace reserved chars with _

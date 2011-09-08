@@ -98,8 +98,7 @@ void CPlayerFoobar::Initialize()
 		int version = (int)SendMessage(m_FooWindow, WM_USER, 0, FOO_GETVERSION);
 		if (version < 100)
 		{
-			std::wstring error = L"Your copy of the foo_rainmeter.dll plugin for foobar2000 is outdated.\n";
-			error += L"Please download the latest version from foo-rainmeter.googlecode.com and try again.";
+			std::wstring error = L"Your copy of the foo_rainmeter.dll plugin for foobar2000 is outdated.\nDownload the latest version from foo-rainmeter.googlecode.com and try again.";
 			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_ICONERROR | MB_TOPMOST);
 			m_FooWindow = NULL;
 		}
@@ -264,12 +263,12 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 					player->m_FilePath = token;
 					player->m_Position = 0;
 
-					if (player->m_HasCoverMeasure || player->m_InstanceCount == 0)
+					if (player->m_Measures & MEASURE_COVER || player->m_InstanceCount == 0)
 					{
 						player->FindCover();
 					}
 
-					if (player->m_HasLyricsMeasure)
+					if (player->m_Measures & MEASURE_LYRICS)
 					{
 						player->FindLyrics();
 					}

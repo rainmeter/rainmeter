@@ -39,8 +39,7 @@ bool CCover::GetCached(std::wstring& path)
 */
 bool CCover::GetLocal(std::wstring filename, const std::wstring& folder, std::wstring& target)
 {
-	std::wstring testPath = folder;
-	testPath += filename;
+	std::wstring testPath = folder + filename;
 	testPath += L".";
 	std::wstring::size_type origLen = testPath.length();
 

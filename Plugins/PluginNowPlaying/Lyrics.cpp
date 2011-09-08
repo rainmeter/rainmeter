@@ -49,8 +49,7 @@ bool CLyrics::GetFromWikia(const std::wstring& artist, const std::wstring& title
 {
 	bool ret = false;
 	
-	std::wstring url = L"http://lyrics.wikia.com/api.php?func=getSong&fmt=json&artist=";
-	url += artist;
+	std::wstring url = L"http://lyrics.wikia.com/api.php?func=getSong&fmt=json&artist=" + artist;
 	url += L"&song=";
 	url += title;
 
@@ -126,8 +125,7 @@ bool CLyrics::GetFromLYRDB(const std::wstring& artist, const std::wstring& title
 {
 	bool ret = false;
 
-	std::wstring query = artist;
-	query += L"|";
+	std::wstring query = artist + L"|";
 	query += title;
 
 	// LYRDB doesn't like apostrophes
@@ -137,8 +135,7 @@ bool CLyrics::GetFromLYRDB(const std::wstring& artist, const std::wstring& title
 		query.erase(pos, 3);
 	}
 
-	std::wstring url = L"http://webservices.lyrdb.com/lookup.php?q=";
-	url += query;
+	std::wstring url = L"http://webservices.lyrdb.com/lookup.php?q=" + query;
 	url += L"&for=match&agent=RainmeterNowPlaying";
 
 	data = CInternet::DownloadUrl(url, CP_ACP);
@@ -172,8 +169,7 @@ bool CLyrics::GetFromLetras(const std::wstring& artist, const std::wstring& titl
 {
 	bool ret = false;
 
-	std::wstring url = L"http://letras.terra.com.br/winamp.php?musica=";
-	url += title;
+	std::wstring url = L"http://letras.terra.com.br/winamp.php?musica=" + title;
 	url += L"&artista=";
 	url += artist;
 	data = CInternet::DownloadUrl(url, CP_ACP);

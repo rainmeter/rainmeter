@@ -184,18 +184,18 @@ void CPlayerWinamp::UpdateData()
 					m_Album = tag->album().toWString();
 					m_Title = tag->title().toWString();
 
-					if (m_HasLyricsMeasure)
+					if (m_Measures & MEASURE_LYRICS)
 					{
 						FindLyrics();
 					}
 				}
-				else if (m_HasLyricsMeasure)
+				else if (m_Measures & MEASURE_LYRICS)
 				{
 					m_Lyrics.clear();
 				}
 
 				// Find cover if needed
-				if (m_HasCoverMeasure)
+				if (m_Measures & MEASURE_COVER)
 				{
 					m_CoverPath = GetCacheFile();
 					if (!CCover::GetCached(m_CoverPath) &&
@@ -266,7 +266,7 @@ void CPlayerWinamp::UpdateData()
 				m_Rating = 0;
 				m_Duration = 0;
 				
-				if (m_HasCoverMeasure)
+				if (m_Measures & MEASURE_COVER)
 				{
 					m_CoverPath.clear();
 				}

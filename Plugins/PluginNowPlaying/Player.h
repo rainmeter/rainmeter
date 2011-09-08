@@ -34,19 +34,19 @@ enum PLAYSTATE
 
 enum MEASURETYPE
 {
-	MEASURE_ARTIST,
-	MEASURE_TITLE,
-	MEASURE_ALBUM,
-	MEASURE_LYRICS,
-	MEASURE_COVER,
-	MEASURE_FILE,
-	MEASURE_DURATION,
-	MEASURE_POSITION,
-	MEASURE_PROGRESS,
-	MEASURE_RATING,
-	MEASURE_VOLUME,
-	MEASURE_STATE,
-	MEASURE_STATUS
+	MEASURE_ARTIST   = 0x00000001,
+	MEASURE_TITLE    = 0x00000002,
+	MEASURE_ALBUM    = 0x00000004,
+	MEASURE_LYRICS   = 0x00000008,
+	MEASURE_COVER    = 0x00000010,
+	MEASURE_FILE     = 0x00000020,
+	MEASURE_DURATION = 0x00000040,
+	MEASURE_POSITION = 0x00000080,
+	MEASURE_PROGRESS = 0x00000100,
+	MEASURE_RATING   = 0x00000200,
+	MEASURE_VOLUME   = 0x00000400,
+	MEASURE_STATE    = 0x00000800,
+	MEASURE_STATUS   = 0x00001000
 };
 
 class CPlayer
@@ -58,7 +58,7 @@ public:
 	void AddInstance();
 	void RemoveInstance();
 	void UpdateMeasure();
-	virtual void AddMeasure(MEASURETYPE measure);
+	virtual void AddMeasure(INT type);
 	virtual void UpdateData() = 0;
 
 	bool IsInitialized() { return m_Initialized; }
@@ -95,12 +95,11 @@ protected:
 	void ClearData();
 
 	bool m_Initialized;
-	bool m_HasCoverMeasure;
-	bool m_HasLyricsMeasure;
 	UINT m_InstanceCount;
 	UINT m_UpdateCount;
 	UINT m_TrackCount;
 
+	INT m_Measures;
 	PLAYSTATE m_State;
 	std::wstring m_Artist;
 	std::wstring m_Title;

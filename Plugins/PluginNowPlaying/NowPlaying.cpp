@@ -242,6 +242,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		}
 		else if (_wcsicmp(L"LYRICS", str) == 0)
 		{
+			LSLog(LOG_WARNING, L"Rainmeter", L"NowPlayingPlugin: Using undocumented PlayerType=LYRICS!");
 			child->type = MEASURE_LYRICS;
 		}
 		else if (_wcsicmp(L"FILE", str) == 0)

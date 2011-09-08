@@ -257,7 +257,7 @@ void CInternet::DecodeReferences(std::wstring& str)
 /*
 ** ConvertToWide
 **
-** Convert from multibyte ti wide string.
+** Convert multibyte string to wide string.
 **
 */
 std::wstring CInternet::ConvertToWide(LPCSTR str, int codepage)
@@ -266,15 +266,12 @@ std::wstring CInternet::ConvertToWide(LPCSTR str, int codepage)
 
 	if (str && *str)
 	{
-		int strLen = (int)strlen(str) + 1;
+		int strLen = (int)strlen(str);
 		int bufLen = MultiByteToWideChar(codepage, 0, str, strLen, NULL, 0);
 		if (bufLen > 0)
 		{
-			WCHAR* wideSz = new WCHAR[bufLen];
-			wideSz[0] = 0;
-			MultiByteToWideChar(codepage, 0, str, strLen, wideSz, bufLen);
-			szWide = wideSz;
-			delete [] wideSz;
+			szWide.resize(bufLen);
+			MultiByteToWideChar(codepage, 0, str, strLen, &szWide[0], bufLen);
 		}
 	}
 

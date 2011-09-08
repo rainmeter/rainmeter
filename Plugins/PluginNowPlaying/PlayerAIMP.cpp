@@ -118,8 +118,8 @@ bool CPlayerAIMP::CheckWindow()
 */
 void CPlayerAIMP::UpdateData()
 {
-	static long oldFileSize = 0;
-	static UINT oldTitleLen = 0;
+	static INT64 oldFileSize = 0;
+	static long oldTitleLen = 0;
 
 	if (!m_Initialized)
 	{
@@ -198,12 +198,12 @@ void CPlayerAIMP::UpdateData()
 			++m_TrackCount;
 
 			// Find cover if needed
-			if (m_HasCoverMeasure)
+			if (m_Measures & MEASURE_COVER)
 			{
 				FindCover();
 			}
 
-			if (m_HasLyricsMeasure)
+			if (m_Measures & MEASURE_LYRICS)
 			{
 				FindLyrics();
 			}

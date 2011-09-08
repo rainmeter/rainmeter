@@ -451,7 +451,7 @@ void CPlayerWMP::UpdateData()
 
 					// Find cover if needed
 					// TODO: Fix temp solution
-					if (m_HasCoverMeasure || m_InstanceCount == 0)
+					if (m_Measures & MEASURE_COVER || m_InstanceCount == 0)
 					{
 						spMedia->getItemInfo(CComBSTR("WM/WMCollectionID"), &val);
 						targetPath.resize(targetPath.find_last_of(L'\\') + 1);
@@ -469,7 +469,7 @@ void CPlayerWMP::UpdateData()
 						}
 					}
 
-					if (m_HasLyricsMeasure)
+					if (m_Measures & MEASURE_LYRICS)
 					{
 						FindLyrics();
 					}

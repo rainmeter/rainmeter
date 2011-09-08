@@ -115,7 +115,7 @@ void CPlayerSpotify::UpdateData()
 					m_Artist = artist;
 					++m_TrackCount;
 
-					if (m_HasLyricsMeasure)
+					if (m_Measures & MEASURE_LYRICS)
 					{
 						FindLyrics();
 					}

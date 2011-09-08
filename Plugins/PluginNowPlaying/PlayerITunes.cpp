@@ -387,7 +387,7 @@ void CPlayerITunes::OnTrackChange()
 				++m_TrackCount;
 				m_FilePath = tmpStr;
 
-				if (m_HasCoverMeasure)
+				if (m_Measures & MEASURE_COVER)
 				{
 					m_CoverPath = GetCacheFile();
 					if (!CCover::GetCached(m_CoverPath))
@@ -432,7 +432,7 @@ void CPlayerITunes::OnTrackChange()
 					}
 				}
 
-				if (m_HasLyricsMeasure)
+				if (m_Measures & MEASURE_LYRICS)
 				{
 					FindLyrics();
 				}

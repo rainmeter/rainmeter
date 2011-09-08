@@ -310,7 +310,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				player->m_CoverPath.assign(data, 0, len);
 				data.erase(0, ++len);
 
-				if (player->m_HasLyricsMeasure)
+				if (player->m_Measures & MEASURE_LYRICS)
 				{
 					player->FindLyrics();
 				}

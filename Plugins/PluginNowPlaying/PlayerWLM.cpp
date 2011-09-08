@@ -138,7 +138,7 @@ LRESULT CALLBACK CPlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 				len = data.find_first_of(L'\\');
 				player->m_Album.assign(data, 0, len);
 
-				if (player->m_HasLyricsMeasure)
+				if (player->m_Measures & MEASURE_LYRICS)
 				{
 					player->FindLyrics();
 				}
