@@ -441,7 +441,7 @@ void CSystem::SetMultiMonitorInfo()
 
 		if (monitors.empty())  // Failed to enumerate the monitors
 		{
-			Log(LOG_WARNING, L"Failed to enumerate the monitors. Prepares the dummy monitor information.");
+			Log(LOG_WARNING, L"Failed to enumerate monitors. Using dummy monitor info.");
 			c_Monitors.useEnumDisplayMonitors = false;
 
 			MONITOR_INFO monitor = {0};
@@ -839,8 +839,8 @@ bool CSystem::CheckDesktopState(HWND WorkerW)
 
 		if (CRainmeter::GetDebug())
 		{
-			LogWithArgs(LOG_DEBUG, L"System: \"%s\" has been detected.",
-				c_ShowDesktop ? L"Show the desktop" : L"Show open windows");
+			LogWithArgs(LOG_DEBUG, L"System: \"Show %s\" has been detected.",
+				c_ShowDesktop ? L"desktop" : L"open windows");
 		}
 
 		PrepareHelperWindow(WorkerW);
@@ -935,7 +935,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		break;
 
 	case WM_DISPLAYCHANGE:
-		Log(LOG_NOTICE, L"System: Display setting has been changed.");
+		Log(LOG_NOTICE, L"System: Display settings changed");
 		ClearMultiMonitorInfo();
 		CConfigParser::ClearMultiMonitorVariables();
 	case WM_SETTINGCHANGE:
@@ -943,7 +943,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		{
 			if (uMsg == WM_SETTINGCHANGE)  // SPI_SETWORKAREA
 			{
-				Log(LOG_NOTICE, L"System: Work area has been changed.");
+				Log(LOG_NOTICE, L"System: Work area changed");
 				UpdateWorkareaInfo();
 				CConfigParser::UpdateWorkareaVariables();
 			}
@@ -1292,7 +1292,7 @@ std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileM
 				}
 				else  // failed
 				{
-					LogWithArgs(LOG_ERROR, L"Unable to create a temporary file to: %s", temporary.c_str());
+					LogWithArgs(LOG_ERROR, L"Unable to create temporary file to: %s", temporary.c_str());
 					return L"<>";
 				}
 			}

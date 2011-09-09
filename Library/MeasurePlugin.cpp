@@ -123,7 +123,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	{
 		if (CRainmeter::GetDebug())
 		{
-			LogWithArgs(LOG_ERROR, L"Plugin: Unable to load plugin: \"%s\", ErrorCode=%u", m_PluginName.c_str(), err);
+			LogWithArgs(LOG_ERROR, L"Plugin: Unable to load \"%s\" (%u)", m_PluginName.c_str(), err);
 		}
 
 		// Try to load from Rainmeter's folder
@@ -140,7 +140,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			{
 				if (CRainmeter::GetDebug())
 				{
-					LogWithArgs(LOG_ERROR, L"Plugin: Unable to load plugin: \"%s\", ErrorCode=%u", pluginName.c_str(), err);
+					LogWithArgs(LOG_ERROR, L"Plugin: Unable to load \"%s\" (%u)", pluginName.c_str(), err);
 				}
 			}
 		}
@@ -148,7 +148,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		if (m_Plugin == NULL)
 		{
 			std::wstring error = L"Plugin: \"" + m_PluginName;
-			error += L"\" not found!";
+			error += L"\" not found";
 			throw CError(error, __LINE__, __FILE__);
 		}
 	}
@@ -228,6 +228,6 @@ void CMeasurePlugin::ExecuteBang(const WCHAR* args)
 	}
 	else
 	{
-		LogWithArgs(LOG_WARNING, L"[%s] doesn't support bangs.", m_Name.c_str());
+		CMeasure::ExecuteBang(args);
 	}
 }

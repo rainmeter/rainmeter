@@ -85,7 +85,7 @@ void CMeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, 
 		wcsftime(buf, bufLen, m_Format.c_str(), time);
 		if (errno == EINVAL)
 		{
-			LogWithArgs(LOG_WARNING, L"Time: Invalid Format: Measure=[%s], Format=\"%s\"", m_Name.c_str(), format);
+			LogWithArgs(LOG_ERROR, L"Time: \"Format=%s\" invalid in [%s]", format, m_Name.c_str());
 			buf[0] = 0;
 		}
 

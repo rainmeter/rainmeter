@@ -34,7 +34,7 @@ void CheckVersion(void* dummy)
 									0);
 	if (hRootHandle == NULL)
 	{
-		Log(LOG_ERROR, L"CheckUpdate: InternetOpen failed.");
+		Log(LOG_ERROR, L"CheckUpdate: InternetOpen failed");
 		return;
 	}
 
@@ -72,7 +72,7 @@ void CheckVersion(void* dummy)
 			if (version > RAINMETER_VERSION)
 			{
 				Rainmeter->SetNewVersion(true);
-				Log(LOG_NOTICE, L"CheckUpdate: New version available.");
+				Log(LOG_NOTICE, L"CheckUpdate: Update available");
 			}
 			else
 			{
@@ -81,13 +81,13 @@ void CheckVersion(void* dummy)
 		}
 		else
 		{
-			Log(LOG_ERROR, L"CheckUpdate: InternetReadFile failed.");
+			Log(LOG_ERROR, L"CheckUpdate: InternetReadFile failed");
 		}
 		InternetCloseHandle(hUrlDump);
 	}
 	else
 	{
-		Log(LOG_ERROR, L"CheckUpdate: InternetOpenUrl failed.");
+		Log(LOG_ERROR, L"CheckUpdate: InternetOpenUrl failed");
 	}
 
 	InternetCloseHandle(hRootHandle);

@@ -104,6 +104,7 @@ void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* me
 	}
 	if (meterWindow)
 	{
+		SetBuiltInVariable(L"CURRENTFILE", meterWindow->GetSkinIniFile());
 		SetBuiltInVariable(L"CURRENTCONFIG", meterWindow->GetSkinName());
 		SetBuiltInVariable(L"ROOTCONFIGPATH", meterWindow->GetSkinRootPath());
 	}
@@ -1032,14 +1033,14 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
-		MessageBox(NULL, L"It looks like you've made an infinite\nloop with the @include statements.\nPlease check your skin.", L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
+		MessageBox(NULL, L"It seems that you have created an infinite loop with @include.\nPlease check your skin.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		return;
 	}
 
 	// Verify whether the file exists
 	if (_waccess(iniFile.c_str(), 0) == -1)
 	{
-		LogWithArgs(LOG_WARNING, L"Unable to read file: %s", iniFile.c_str());
+		LogWithArgs(LOG_ERROR, L"Unable to read file: %s", iniFile.c_str());
 		return;
 	}
 

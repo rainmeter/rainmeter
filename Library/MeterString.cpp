@@ -203,7 +203,7 @@ void CMeterString::Initialize()
 				// It couldn't find the font family: Log it.
 				if (Ok != status)
 				{
-					std::wstring error = L"Unable to load font family: " + m_FontFace;
+					std::wstring error = L"String: Unable to load font: " + m_FontFace;
 					Log(LOG_ERROR, error.c_str());
 
 					delete m_FontFamily;
@@ -279,7 +279,7 @@ void CMeterString::Initialize()
 
 			if (m_FontSize != 0)
 			{
-				std::wstring error = L"Unable to create font: " + m_FontFace;
+				std::wstring error = L"String: Unable to create font: " + m_FontFace;
 				throw CError(error, __LINE__, __FILE__);
 			}
 		}
@@ -836,18 +836,18 @@ void CMeterString::EnumerateInstalledFontFamilies()
 			}
 			else
 			{
-				Log(LOG_ERROR, L"Font family enumeration: GetFamilies() failed.");
+				Log(LOG_ERROR, L"Font enumeration: GetFamilies failed");
 			}
 
 			delete [] fontFamilies;
 		}
 		else
 		{
-			Log(LOG_WARNING, L"There are no installed font families!");
+			Log(LOG_WARNING, L"No installed fonts");
 		}
 	}
 	else
 	{
-		Log(LOG_ERROR, L"Font family enumeration: InstalledFontCollection() failed.");
+		Log(LOG_ERROR, L"Font enumeration: InstalledFontCollection failed");
 	}
 }

@@ -708,7 +708,7 @@ void LogWithArgs(int nLevel, const WCHAR* format, ... )
 	if (errno != 0)
 	{
 		nLevel = LOG_ERROR;
-		_snwprintf_s(buffer, 4096, _TRUNCATE, L"LogWithArgs() internal error: %s", format);
+		_snwprintf_s(buffer, 4096, _TRUNCATE, L"LogWithArgs internal error: %s", format);
 	}
 
 	_set_invalid_parameter_handler(oldHandler);

@@ -160,10 +160,7 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 				if (m_HasGetStringFunction)
 				{
-					std::wstring error = L"Script: GetStringValue() used in measure [";
-					error += m_Name;
-					error += L"] has been deprecated. Check manual to ensure future compatibility.";
-					Log(LOG_WARNING, error.c_str());
+					LogWithArgs(LOG_WARNING, L"Script: Using deprecated GetStringValue() in [%s]", m_Name.c_str());
 				}
 
 				m_LuaScript->PushTable();
@@ -215,11 +212,7 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"Script: ScriptFile= is not valid in measure [";
-		error += m_Name;
-		error += L"].";
-		Log(LOG_WARNING, error.c_str());
-
+		LogWithArgs(LOG_ERROR, L"Script: File not valid in [%s]", m_Name.c_str());
 		DeleteLuaScript();
 	}
 }
@@ -236,30 +229,30 @@ void CMeasureScript::ExecuteBang(const WCHAR* args)
 	m_LuaScript->RunString(str.c_str());
 }
 
-static void stackDump(lua_State *L)
-{
-	LuaManager::LuaLog(LOG_DEBUG, " ----------------  Stack Dump ----------------" );
-	for (int i = lua_gettop(L); i > 0; --i)
-	{
-		int t = lua_type(L, i);
-		switch (t)
-		{
-		case LUA_TSTRING:
-			LuaManager::LuaLog(LOG_DEBUG, "%d:'%s'", i, lua_tostring(L, i));
-			break;
-
-		case LUA_TBOOLEAN:
-			LuaManager::LuaLog(LOG_DEBUG, "%d: %s", i, lua_toboolean(L, i) ? "true" : "false");
-			break;
-
-		case LUA_TNUMBER:
-			LuaManager::LuaLog(LOG_DEBUG, "%d: %g", i, lua_tonumber(L, i));
-			break;
-
-		default:
-			LuaManager::LuaLog(LOG_DEBUG, "%d: %s", i, lua_typename(L, t));
-			break;
-		}
-	}
-	LuaManager::LuaLog(LOG_DEBUG, "--------------- Stack Dump Finished ---------------" );
-}
+//static void stackDump(lua_State *L)
+//{
+//	LuaManager::LuaLog(LOG_DEBUG, " ----------------  Stack Dump ----------------" );
+//	for (int i = lua_gettop(L); i > 0; --i)
+//	{
+//		int t = lua_type(L, i);
+//		switch (t)
+//		{
+//		case LUA_TSTRING:
+//			LuaManager::LuaLog(LOG_DEBUG, "%d:'%s'", i, lua_tostring(L, i));
+//			break;
+//
+//		case LUA_TBOOLEAN:
+//			LuaManager::LuaLog(LOG_DEBUG, "%d: %s", i, lua_toboolean(L, i) ? "true" : "false");
+//			break;
+//
+//		case LUA_TNUMBER:
+//			LuaManager::LuaLog(LOG_DEBUG, "%d: %g", i, lua_tonumber(L, i));
+//			break;
+//
+//		default:
+//			LuaManager::LuaLog(LOG_DEBUG, "%d: %s", i, lua_typename(L, t));
+//			break;
+//		}
+//	}
+//	LuaManager::LuaLog(LOG_DEBUG, "--------------- Stack Dump Finished ---------------" );
+//}

@@ -109,7 +109,7 @@ void CMeterHistogram::Initialize()
 	// A sanity check
 	if (m_SecondaryMeasure && !m_PrimaryImageName.empty() && (m_BothImageName.empty() || m_SecondaryImageName.empty()))
 	{
-		Log(LOG_WARNING, L"You need to define SecondaryImage and BothImage also!");
+		Log(LOG_WARNING, L"Histogram: SecondaryImage and BothImage not defined");
 
 		m_PrimaryImage.DisposeImage();
 		m_SecondaryImage.DisposeImage();

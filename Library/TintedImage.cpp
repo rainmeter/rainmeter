@@ -332,7 +332,7 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 				}
 				else
 				{
-					LogWithArgs(LOG_ERROR, L"Unable to load %s: %s", m_ConfigName.c_str(), filename.c_str());
+					LogWithArgs(LOG_ERROR, L"%s: Unable to load: %s", m_ConfigName.c_str(), filename.c_str());
 				}
 			}
 			CloseHandle(fileHandle);
@@ -364,7 +364,7 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		}
 		else
 		{
-			LogWithArgs(LOG_ERROR, L"Unable to open %s: %s", m_ConfigName.c_str(), filename.c_str());
+			LogWithArgs(LOG_ERROR, L"%s: Unable to open: %s", m_ConfigName.c_str(), filename.c_str());
 			DisposeImage();
 		}
 	}
