@@ -1557,7 +1557,7 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 		{
 			const std::wstring& iniFile = subStrings[3];
 
-			if (iniFile.find(L"..") != std::string::npos)
+			if (iniFile.find(L"..\\") != std::string::npos || iniFile.find(L"../") != std::string::npos)
 			{
 				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile.c_str());
 				return;

@@ -851,5 +851,5 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, cons
 */
 void CMeasure::ExecuteBang(const WCHAR* args)
 {
-	LogWithArgs(LOG_WARNING, L"!CommandMeasure: Not suppoted by [%s]", m_Name.c_str());
+	LogWithArgs(LOG_WARNING, L"!CommandMeasure: Not supported by [%s]", m_Name.c_str());
 }
