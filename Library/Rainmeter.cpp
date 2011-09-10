@@ -2229,14 +2229,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		m_ConfigStrings[configIndex].active = iniIndex + 1;
 		WriteActive(skinConfig, iniIndex);
 
-		try
-		{
-			CreateMeterWindow(skinPath, skinConfig, skinIniFile);
-		}
-		catch (CError& error)
-		{
-			LogError(error);
-		}
+		CreateMeterWindow(skinPath, skinConfig, skinIniFile);
 	}
 }
 
@@ -2287,10 +2280,20 @@ void CRainmeter::CreateMeterWindow(const std::wstring& path, const std::wstring&
 	if (mw)
 	{
 		m_Meters[config] = mw;
-		mw->Initialize(*this);
 
-		CDialogAbout::UpdateSkins();
-		CDialogManage::UpdateSkins(mw);
+		try
+		{
+			mw->Initialize(*this);
+
+			CDialogAbout::UpdateSkins();
+			CDialogManage::UpdateSkins(mw);
+		}
+		catch (CError& error)
+		{
+			DeleteMeterWindow(mw, false);
+			LogError(error);
+		}
+
 	}
 }
 
