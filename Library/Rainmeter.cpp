@@ -2285,15 +2285,14 @@ void CRainmeter::CreateMeterWindow(const std::wstring& path, const std::wstring&
 		{
 			mw->Initialize(*this);
 
+			CDialogAbout::UpdateSkins();
 			CDialogManage::UpdateSkins(mw);
 		}
 		catch (CError& error)
 		{
-			DeleteMeterWindow(mw, false);
+			DeactivateConfig(mw, -1);
 			LogError(error);
 		}
-
-		CDialogAbout::UpdateSkins();
 	}
 }
 
