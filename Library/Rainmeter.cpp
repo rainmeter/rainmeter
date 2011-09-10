@@ -2285,7 +2285,6 @@ void CRainmeter::CreateMeterWindow(const std::wstring& path, const std::wstring&
 		{
 			mw->Initialize(*this);
 
-			CDialogAbout::UpdateSkins();
 			CDialogManage::UpdateSkins(mw);
 		}
 		catch (CError& error)
@@ -2294,6 +2293,7 @@ void CRainmeter::CreateMeterWindow(const std::wstring& path, const std::wstring&
 			LogError(error);
 		}
 
+		CDialogAbout::UpdateSkins();
 	}
 }
 
