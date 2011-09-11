@@ -273,6 +273,26 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 						player->FindLyrics();
 					}
 				}
+				token = wcstok(NULL, L"\t");
+				if (token)
+				{
+					switch (_wtoi(token))
+					{
+					case 0:
+						player->m_Shuffle = player->m_Repeat = false;
+						break;
+
+					case 1:
+						player->m_Shuffle = true;
+						player->m_Repeat = false;
+						break;
+
+					case 2:
+						player->m_Shuffle = false;
+						player->m_Repeat = true;
+						break;
+					}
+				}
 			}
 		}
 		return 0;
@@ -356,6 +376,32 @@ void CPlayerFoobar::Previous()
 void CPlayerFoobar::SetPosition(int position)
 {
 	SendMessage(m_FooWindow, WM_USER, position, FOO_SETPOSITION);
+}
+
+/*
+** SetShuffle
+**
+** Handles the SetShuffle bang.
+**
+*/
+void CPlayerFoobar::SetShuffle(bool state)
+{
+	m_Shuffle = state;
+	m_Repeat = state ? !m_Shuffle : m_Shuffle;
+	SendMessage(m_FooWindow, WM_USER, state ? 1 : 0, FOO_SETORDER);
+}
+
+/*
+** SetRepeat
+**
+** Handles the SetRepeat bang.
+**
+*/
+void CPlayerFoobar::SetRepeat(bool state)
+{
+	m_Repeat = state;
+	m_Shuffle = state ? !m_Repeat : m_Repeat;
+	SendMessage(m_FooWindow, WM_USER, state ? 2 : 0, FOO_SETORDER);
 }
 
 /*
