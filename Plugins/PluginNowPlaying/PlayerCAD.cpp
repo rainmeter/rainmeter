@@ -281,6 +281,9 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			PCOPYDATASTRUCT cds = (PCOPYDATASTRUCT)lParam;
 			if (cds->dwData == IPC_CURRENT_TRACK_NOTIFICATION)
 			{
+				player->m_Shuffle = (bool)SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_SHUFFLE);
+				player->m_Repeat = (bool)SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_REPEAT);
+
 				// TODO: Sent on track update?
 				++player->m_TrackCount;
 
@@ -490,8 +493,8 @@ void CPlayerCAD::SetVolume(int volume)
 */
 void CPlayerCAD::SetShuffle(bool state)
 {
-	//m_Shuffle = state;
-	SendMessage(m_PlayerWindow, WM_USER, (WPARAM)m_Shuffle, IPC_SET_SHUFFLE);
+	SendMessage(m_PlayerWindow, WM_USER, (WPARAM)state, IPC_SET_SHUFFLE);
+	m_Shuffle = (bool)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_SHUFFLE);
 }
 
 /*
@@ -502,8 +505,8 @@ void CPlayerCAD::SetShuffle(bool state)
 */
 void CPlayerCAD::SetRepeat(bool state)
 {
-	//m_Repeat = state;
-	SendMessage(m_PlayerWindow, WM_USER, (WPARAM)m_Repeat, IPC_SET_REPEAT);
+	SendMessage(m_PlayerWindow, WM_USER, (WPARAM)state, IPC_SET_REPEAT);
+	m_Repeat = (bool)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_REPEAT);
 }
 
 /*
