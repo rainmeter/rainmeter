@@ -61,7 +61,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		}
 		else
 		{
-			LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Unable to get path to Plugins.ini.");
+			LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: PluginBridge error");
 		}
 
 		g_Instance = instance;
@@ -100,11 +100,11 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				if (!child->parent)
 				{
 					// The referenced section doesn't exist
-					std::wstring error = L"NowPlayingPlugin: PlayerName=";
+					std::wstring error = L"NowPlayingPlugin: Invalid PlayerName=";
 					error += str;
 					error += L" in [";
 					error += section;
-					error += L"] does not exist.";
+					error += L"]";
 					LSLog(LOG_WARNING, L"Rainmeter", error.c_str());
 					delete child;
 					return maxValue;
@@ -156,11 +156,11 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			}
 			else
 			{
-				std::wstring error = L"NowPlayingPlugin: PlayerName=";
+				std::wstring error = L"NowPlayingPlugin: Invalid PlayerName=";
 				error += str;
-				error += L" in section [";
+				error += L" in [";
 				error += section;
-				error += L"] is not valid.";
+				error += L"]";
 				LSLog(LOG_ERROR, L"Rainmeter", error.c_str());
 				delete parent;
 				delete child;
@@ -240,6 +240,14 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			child->type = MEASURE_VOLUME;
 			maxValue = 100;
 		}
+		else if (_wcsicmp(L"SHUFFLE", str) == 0)
+		{
+			child->type = MEASURE_SHUFFLE;
+		}
+		else if (_wcsicmp(L"REPEAT", str) == 0)
+		{
+			child->type = MEASURE_REPEAT;
+		}
 		else if (_wcsicmp(L"LYRICS", str) == 0)
 		{
 			LSLog(LOG_WARNING, L"Rainmeter", L"NowPlayingPlugin: Using undocumented PlayerType=LYRICS!");
@@ -251,11 +259,11 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		}
 		else
 		{
-			std::wstring error = L"NowPlayingPlugin: PlayerType=";
+			std::wstring error = L"NowPlayingPlugin: Invalid PlayerType=";
 			error += str;
-			error += L" in section [";
+			error += L" in [";
 			error += section;
-			error += L"] is not valid.";
+			error += L"]";
 			LSLog(LOG_WARNING, L"Rainmeter", error.c_str());
 		}
 
@@ -352,6 +360,12 @@ UINT Update(UINT id)
 
 		case MEASURE_STATUS:
 			return (UINT)player->IsInitialized();
+
+		case MEASURE_SHUFFLE:
+			return (UINT)player->GetShuffle();
+
+		case MEASURE_REPEAT:
+			return (UINT)player->GetRepeat();
 		}
 
 		return 0;
@@ -421,13 +435,21 @@ LPCTSTR GetString(UINT id, UINT flags)
 			return buffer;
 
 		case MEASURE_STATUS:
-			_itow((UINT)player->IsInitialized(), buffer, 10);
+			_itow((int)player->IsInitialized(), buffer, 10);
+			return buffer;
+
+		case MEASURE_SHUFFLE:
+			_itow((int)player->GetShuffle(), buffer, 10);
+			return buffer;
+
+		case MEASURE_REPEAT:
+			_itow((int)player->GetRepeat(), buffer, 10);
 			return buffer;
 		}
 	}
 	else
 	{
-		return L"Error: Invalid player name.";
+		return L"Error: Invalid player name";
 	}
 
 	return L"";
@@ -507,7 +529,11 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 				}
 				else if (wcsnicmp(bang, L"SetRating", 9) == 0)
 				{
-					player->SetRating(_wtoi(arg));
+					int rating = _wtoi(arg);
+					if (rating >= 0 && rating <= 5)
+					{
+						player->SetRating(rating);
+					}
 				}
 				else if (wcsnicmp(bang, L"SetVolume", 9) == 0)
 				{
@@ -517,8 +543,40 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 						// Relative to current volume
 						volume += player->GetVolume();
 					}
-
-					player->SetVolume(volume);
+					
+					if (volume < 0)
+					{
+						volume = 0;
+					}
+					else if (volume > 100)
+					{
+						volume = 100;
+					}
+					player->SetVolume(volume);;
+				}
+				else if (wcsnicmp(bang, L"SetShuffle", 9) == 0)
+				{
+					int state = _wtoi(arg);
+					if (state == -1)
+					{
+						player->SetShuffle(!player->GetShuffle());
+					}
+					else if (state == 0 || state == 1)
+					{
+						player->SetShuffle((bool)state);
+					}
+				}
+				else if (wcsnicmp(bang, L"SetRepeat", 9) == 0)
+				{
+					int state = _wtoi(arg);
+					if (state == -1)
+					{
+						player->SetRepeat(!player->GetRepeat());
+					}
+					else if (state == 0 || state == 1)
+					{
+						player->SetRepeat((bool)state);
+					}
 				}
 				else
 				{
@@ -561,6 +619,11 @@ void SecondsToTime(UINT seconds, bool leadingZero, WCHAR* buffer)
 	int secs = mins;
 	mins /= 60;
 	secs %= 60;
+
+	if (seconds < 0)
+	{
+		hours = mins = secs = 0;
+	}
 
 	if (hours)
 	{

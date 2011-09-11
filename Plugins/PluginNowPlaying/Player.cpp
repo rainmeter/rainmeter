@@ -34,6 +34,8 @@ CPlayer::CPlayer() :
 	m_TrackCount(),
 	m_Measures(),
 	m_State(),
+	m_Shuffle(false),
+	m_Repeat(false),
 	m_Duration(),
 	m_Position(),
 	m_Rating(),
@@ -237,9 +239,6 @@ unsigned __stdcall CPlayer::LyricsThreadProc(void* pParam)
 */
 void CPlayer::ClearData()
 {
-	m_Duration = 0;
-	m_Position = 0;
-	m_Rating = 0;
 	m_State = PLAYER_STOPPED;
 	m_Artist.clear();
 	m_Album.clear();
@@ -247,4 +246,7 @@ void CPlayer::ClearData()
 	m_Lyrics.clear();
 	m_FilePath.clear();
 	m_CoverPath.clear();
+	m_Duration = 0;
+	m_Position = 0;
+	m_Rating = 0;
 }

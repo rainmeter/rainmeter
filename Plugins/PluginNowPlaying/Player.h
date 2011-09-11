@@ -46,7 +46,9 @@ enum MEASURETYPE
 	MEASURE_RATING   = 0x00000200,
 	MEASURE_VOLUME   = 0x00000400,
 	MEASURE_STATE    = 0x00000800,
-	MEASURE_STATUS   = 0x00001000
+	MEASURE_STATUS   = 0x00001000,
+	MEASURE_SHUFFLE  = 0x00002000,
+	MEASURE_REPEAT   = 0x00004000
 };
 
 class CPlayer
@@ -73,9 +75,11 @@ public:
 	virtual void Stop() {}
 	virtual void Next() {}
 	virtual void Previous() {}
-	virtual void SetPosition(int position) {}
-	virtual void SetRating(int rating) {}
-	virtual void SetVolume(int volume) {}
+	virtual void SetPosition(int position) {}		// position: position in seconds
+	virtual void SetRating(int rating) {}			// rating: 0 - 5
+	virtual void SetVolume(int volume) {}			// volume: 0 - 100
+	virtual void SetShuffle(bool state) {}			// state: off = 0, on = 1
+	virtual void SetRepeat(bool state) {}			// state: off = 0, on = 1
 	virtual void OpenPlayer(std::wstring& path) {}
 	virtual void ClosePlayer() {}
 
@@ -90,6 +94,8 @@ public:
 	UINT GetPosition() { return m_Position; }
 	UINT GetRating() { return m_Rating; }
 	UINT GetVolume() { return m_Volume; }
+	bool GetShuffle() { return m_Shuffle; }
+	bool GetRepeat() { return m_Repeat; }
 
 protected:
 	void ClearData();
@@ -111,6 +117,8 @@ protected:
 	UINT m_Position;				// Current position in seconds
 	UINT m_Rating;					// Track rating from 0 to 100
 	UINT m_Volume;					// Volume from 0 to 100
+	bool m_Shuffle;
+	bool m_Repeat;
 
 private:
 	static unsigned __stdcall LyricsThreadProc(void* pParam);

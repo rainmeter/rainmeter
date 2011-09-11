@@ -175,6 +175,8 @@ void CPlayerWinamp::UpdateData()
 			{
 				m_Rating = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETRATING);
 				m_Duration = SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
+				m_Shuffle = (bool)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_SHUFFLE);
+				m_Repeat = (bool)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_REPEAT);
 
 				TagLib::FileRef fr(wBuffer);
 				TagLib::Tag* tag = fr.tag();
@@ -415,20 +417,42 @@ void CPlayerWinamp::SetRating(int rating)
 */
 void CPlayerWinamp::SetVolume(int volume)
 {
-	++volume;	// For proper scaling
-	if (volume < 0)
-	{
-		volume = 0;
-	}
-	else if (volume > 100)
-	{
-		volume = 100;
-	}
+	if (volume) ++volume;	// For proper scaling
 
 	// Winamp accepts volume in 0 - 255 range
 	volume *= 255;
 	volume /= 100;
 	SendMessage(m_Window, WM_WA_IPC, volume, IPC_SETVOLUME);
+}
+
+/*
+** SetShuffle
+**
+** Handles the SetShuffle bang.
+**
+*/
+void CPlayerWinamp::SetShuffle(bool state)
+{
+	if (!m_PlayingStream)
+	{
+		m_Shuffle = state;
+		SendMessage(m_Window, WM_WA_IPC, (WPARAM)m_Shuffle, IPC_SET_SHUFFLE);
+	}
+}
+
+/*
+** SetRepeat
+**
+** Handles the SetRepeat bang.
+**
+*/
+void CPlayerWinamp::SetRepeat(bool state)
+{
+	if (!m_PlayingStream)
+	{
+		m_Repeat = state;
+		SendMessage(m_Window, WM_WA_IPC, (WPARAM)m_Repeat, IPC_SET_REPEAT);
+	}
 }
 
 /*

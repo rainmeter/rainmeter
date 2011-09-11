@@ -189,6 +189,9 @@ void CPlayerAIMP::UpdateData()
 		
 		m_Duration = info->nDuration / 1000;
 
+		m_Shuffle = (bool)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_SHUFFLE);
+		m_Repeat = (bool)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_REPEAT);
+
 		// Get rating through the AIMP Winamp API
 		m_Rating = SendMessage(m_WinampWindow, WM_WA_IPC, 0, IPC_GETRATING);
 
@@ -288,15 +291,6 @@ void CPlayerAIMP::SetRating(int rating)
 	// Set rating through the AIMP Winamp API
 	if (m_State != PLAYER_STOPPED)
 	{
-		if (rating < 0)
-		{
-			rating = 0;
-		}
-		else if (rating > 5)
-		{
-			rating = 5;
-		}
-
 		SendMessage(m_WinampWindow, WM_WA_IPC, rating, IPC_SETRATING);
 		m_Rating = rating;
 	}
@@ -311,6 +305,30 @@ void CPlayerAIMP::SetRating(int rating)
 void CPlayerAIMP::SetVolume(int volume)
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(volume, AIMP_STS_VOLUME));
+}
+
+/*
+** SetShuffle
+**
+** Handles the SetShuffle bang.
+**
+*/
+void CPlayerAIMP::SetShuffle(bool state)
+{
+	m_Shuffle = state;
+	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(m_Shuffle, AIMP_STS_SHUFFLE));
+}
+
+/*
+** SetRepeat
+**
+** Handles the SetRepeat bang.
+**
+*/
+void CPlayerAIMP::SetRepeat(bool state)
+{
+	m_Repeat = state;
+	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(m_Repeat, AIMP_STS_REPEAT));
 }
 
 /*

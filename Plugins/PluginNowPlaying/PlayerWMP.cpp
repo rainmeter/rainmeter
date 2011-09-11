@@ -579,31 +579,31 @@ void CPlayerWMP::SetRating(int rating)
 		if (spMedia)
 		{
 			CComBSTR val;
-			if (rating <= 0)
+			switch (rating)
 			{
-				rating = 0;
+			case 0:
 				val = L"0";
-			}
-			else if (rating == 1)
-			{
+				break;
+
+			case 1:
 				val = L"1";
-			}
-			else if (rating == 2)
-			{
+				break;
+
+			case 2:
 				val = L"25";
-			}
-			else if (rating == 3)
-			{
+				break;
+
+			case 3:
 				val = L"50";
-			}
-			else if (rating == 4)
-			{
+				break;
+
+			case 4:
 				val = L"75";
-			}
-			else if (rating >= 5)
-			{
-				rating = 5;
+				break;
+
+			case 5:
 				val = L"99";
+				break;
 			}
 
 			spMedia->setItemInfo(CComBSTR("UserRating"), val);

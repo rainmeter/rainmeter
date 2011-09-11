@@ -41,6 +41,8 @@ public:
 	virtual void SetPosition(int position);
 	virtual void SetRating(int rating);
 	virtual void SetVolume(int volume);
+	virtual void SetShuffle(bool state);
+	virtual void SetRepeat(bool state);
 	virtual void ClosePlayer();
 	virtual void OpenPlayer(std::wstring& path);
 

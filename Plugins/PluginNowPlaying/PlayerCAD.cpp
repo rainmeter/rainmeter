@@ -249,6 +249,18 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				break;
 			}
 
+		case IPC_REPEAT_CHANGED_NOTIFICATION:
+			{
+				player->m_Repeat = (bool)wParam;
+				break;
+			}
+
+		case IPC_SHUFFLE_CHANGED_NOTIFICATION:
+			{
+				player->m_Shuffle = (bool)wParam;
+				break;
+			}
+
 		case IPC_RATING_CHANGED_NOTIFICATION:
 			{
 				player->m_Rating = (wParam + 1) / 2;	// From 0 - 10 to 0 - 5
@@ -467,15 +479,31 @@ void CPlayerCAD::SetRating(int rating)
 */
 void CPlayerCAD::SetVolume(int volume) 
 {
-	if (volume < 0)
-	{
-		volume = 0;
-	}
-	else if (volume > 100)
-	{
-		volume = 100;
-	}
 	SendMessage(m_PlayerWindow, WM_USER, volume, IPC_SET_VOLUME);
+}
+
+/*
+** SetShuffle
+**
+** Handles the SetShuffle bang.
+**
+*/
+void CPlayerCAD::SetShuffle(bool state)
+{
+	//m_Shuffle = state;
+	SendMessage(m_PlayerWindow, WM_USER, (WPARAM)m_Shuffle, IPC_SET_SHUFFLE);
+}
+
+/*
+** SetRepeat
+**
+** Handles the SetRepeat bang.
+**
+*/
+void CPlayerCAD::SetRepeat(bool state)
+{
+	//m_Repeat = state;
+	SendMessage(m_PlayerWindow, WM_USER, (WPARAM)m_Repeat, IPC_SET_REPEAT);
 }
 
 /*

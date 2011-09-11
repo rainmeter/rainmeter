@@ -574,6 +574,59 @@ void CPlayerITunes::SetVolume(int volume)
 }
 
 /*
+** SetShuffle
+**
+** Handles the SetShuffle bang.
+**
+*/
+void CPlayerITunes::SetShuffle(bool state)
+{
+	IITTrack* track;
+	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
+	if (SUCCEEDED(hr))
+	{
+		IITPlaylist* playlist;
+		hr = track->get_Playlist(&playlist);
+		if (SUCCEEDED(hr))
+		{
+			m_Shuffle = state;
+			VARIANT_BOOL shuffle = m_Shuffle ? VARIANT_TRUE : VARIANT_FALSE;
+			playlist->put_Shuffle(shuffle);
+
+			playlist->Release();
+		}
+
+		track->Release();
+	}
+}
+
+/*
+** SetRepeat
+**
+** Handles the SetRepeat bang.
+**
+*/
+void CPlayerITunes::SetRepeat(bool state)
+{
+	IITTrack* track;
+	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
+	if (SUCCEEDED(hr))
+	{
+		IITPlaylist* playlist;
+		hr = track->get_Playlist(&playlist);
+		if (SUCCEEDED(hr))
+		{
+			m_Repeat = state;
+			playlist->put_SongRepeat((ITPlaylistRepeatMode)m_Repeat);
+
+			playlist->Release();
+		}
+
+		track->Release();
+	}
+}
+
+/*
 ** ClosePlayer
 **
 ** Handles the ClosePlayer bang.
