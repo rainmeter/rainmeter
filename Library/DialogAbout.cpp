@@ -414,26 +414,29 @@ void CDialogAbout::CTabLog::Resize(int w, int h)
 {
 	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTLOG_ITEMS_LISTVIEW);
-	SetWindowPos(item, NULL, 0, 0, w, h - 22, SWP_NOMOVE | SWP_NOZORDER);
+	RECT r;
+	HWND item = GetDlgItem(m_Window, IDC_ABOUTLOG_ERROR_CHECKBOX);
+	GetClientRect(item, &r);
+
+	SetWindowPos(item, NULL, 0, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+
+	item = GetDlgItem(m_Window, IDC_ABOUTLOG_WARNING_CHECKBOX);
+	SetWindowPos(item, NULL, r.right, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+
+	item = GetDlgItem(m_Window, IDC_ABOUTLOG_NOTICE_CHECKBOX);
+	SetWindowPos(item, NULL, r.right * 2, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+
+	item = GetDlgItem(m_Window, IDC_ABOUTLOG_DEBUG_CHECKBOX);
+	SetWindowPos(item, NULL, r.right * 3, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+
+	item = GetDlgItem(m_Window, IDC_ABOUTLOG_ITEMS_LISTVIEW);
+	SetWindowPos(item, NULL, 0, 0, w, h - r.bottom - 7, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust third colum
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_WIDTH;
 	lvc.cx = w - 183;
 	ListView_SetColumn(item, 2, &lvc);
-
-	item = GetDlgItem(m_Window, IDC_ABOUTLOG_ERROR_CHECKBOX);
-	SetWindowPos(item, NULL, 0, h - 15, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
-	item = GetDlgItem(m_Window, IDC_ABOUTLOG_WARNING_CHECKBOX);
-	SetWindowPos(item, NULL, 75, h - 15, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
-	item = GetDlgItem(m_Window, IDC_ABOUTLOG_NOTICE_CHECKBOX);
-	SetWindowPos(item, NULL, 150, h - 15, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
-	item = GetDlgItem(m_Window, IDC_ABOUTLOG_DEBUG_CHECKBOX);
-	SetWindowPos(item, NULL, 225, h - 15, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 /*

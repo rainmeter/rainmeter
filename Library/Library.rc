@@ -171,7 +171,7 @@ BEGIN
         MENUITEM "Edit skin",                   ID_CONTEXT_SKINMENU_EDITSKIN
         MENUITEM "Refresh skin",                ID_CONTEXT_SKINMENU_REFRESH
         MENUITEM SEPARATOR
-        MENUITEM "Close skin",                  ID_CONTEXT_CLOSESKIN
+        MENUITEM "Unload skin",                 ID_CONTEXT_CLOSESKIN
     END
 END
 

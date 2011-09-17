@@ -30,10 +30,9 @@
 
 #define TRAYTIMER 3
 
-#define RAINMETER_OFFICIAL		L"http://rainmeter.net/RainCMS/"
-#define RAINMETER_MANUAL		L"http://rainmeter.net/RainCMS/?q=Manual"
-#define RAINMETER_MANUALBETA	L"http://rainmeter.net/RainCMS/?q=ManualBeta"
-#define RAINMETER_DOWNLOADS		L"http://rainmeter.net/RainCMS/?q=Downloads"
+#define RAINMETER_OFFICIAL		L"http://rainmeter.net/cms/"
+#define RAINMETER_MANUAL		L"http://rainmeter.net/cms/Manual"
+#define RAINMETER_MANUALBETA	L"http://rainmeter.net/cms/Manual_beta"
 
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
 
