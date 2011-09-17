@@ -417,7 +417,7 @@ void CPlayerWinamp::SetRating(int rating)
 */
 void CPlayerWinamp::SetVolume(int volume)
 {
-	if (volume) ++volume;	// For proper scaling
+	if (volume > 0 && volume < 100) ++volume;	// For proper scaling
 
 	// Winamp accepts volume in 0 - 255 range
 	volume *= 255;

@@ -60,7 +60,7 @@ public:
 	void AddInstance();
 	void RemoveInstance();
 	void UpdateMeasure();
-	virtual void AddMeasure(INT type);
+	void AddMeasure(INT type);
 	virtual void UpdateData() = 0;
 
 	bool IsInitialized() { return m_Initialized; }
