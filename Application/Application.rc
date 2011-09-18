@@ -45,7 +45,7 @@ BEGIN
     BEGIN
         BLOCK "040904E4"
         BEGIN
-            VALUE "FileDescription", "Rainmeter - A Customizable Resource Meter"
+            VALUE "FileDescription", "Rainmeter"
             VALUE "FileVersion", STRFILEVER
             VALUE "InternalName", "Rainmeter"
             VALUE "LegalCopyright", "Copyright (C) 2010 - Rainy"
