@@ -3565,34 +3565,43 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 	// Delete all meter windows
 	DeleteMeterWindow(NULL, false);
 
-	// Make a copy of current Rainmeter.ini
 	std::wstring backup = GetSettingsPath() + L"Themes\\Backup";
 	CreateDirectory(backup.c_str(), NULL);
 	backup += L"\\Rainmeter.thm";
-	CSystem::CopyFiles(m_IniFile, backup);
 
-	// Replace Rainmeter.ini with theme
-	std::wstring theme = Rainmeter->GetSettingsPath() + L"Themes\\";
-	theme += name;
-	std::wstring wallpaper = theme + L"\\RainThemes.bmp";
-	theme += L"\\Rainmeter.thm";
-	CSystem::CopyFiles(theme, Rainmeter->GetIniFile());
-
-	PreserveSetting(backup, L"SkinPath");
-	PreserveSetting(backup, L"ConfigEditor");
-	PreserveSetting(backup, L"LogViewer");
-	PreserveSetting(backup, L"Logging");
-	PreserveSetting(backup, L"DisableVersionCheck");
-	PreserveSetting(backup, L"TrayExecuteL", false);
-	PreserveSetting(backup, L"TrayExecuteM", false);
-	PreserveSetting(backup, L"TrayExecuteR", false);
-	PreserveSetting(backup, L"TrayExecuteDM", false);
-	PreserveSetting(backup, L"TrayExecuteDR", false);
-
-	// Set wallpaper if it exists
-	if (_waccess(wallpaper.c_str(), 0) != -1)
+	if (_wcsicmp(name.c_str(), L"Backup") == 0)
 	{
-		SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)wallpaper.c_str(), 0);
+		// Just load the backup
+		CSystem::CopyFiles(backup, m_IniFile);
+	}
+	else
+	{
+		// Make a copy of current Rainmeter.ini
+		CSystem::CopyFiles(m_IniFile, backup);
+
+		// Replace Rainmeter.ini with theme
+		std::wstring theme = Rainmeter->GetSettingsPath() + L"Themes\\";
+		theme += name;
+		std::wstring wallpaper = theme + L"\\RainThemes.bmp";
+		theme += L"\\Rainmeter.thm";
+		CSystem::CopyFiles(theme, Rainmeter->GetIniFile());
+
+		PreserveSetting(backup, L"SkinPath");
+		PreserveSetting(backup, L"ConfigEditor");
+		PreserveSetting(backup, L"LogViewer");
+		PreserveSetting(backup, L"Logging");
+		PreserveSetting(backup, L"DisableVersionCheck");
+		PreserveSetting(backup, L"TrayExecuteL", false);
+		PreserveSetting(backup, L"TrayExecuteM", false);
+		PreserveSetting(backup, L"TrayExecuteR", false);
+		PreserveSetting(backup, L"TrayExecuteDM", false);
+		PreserveSetting(backup, L"TrayExecuteDR", false);
+
+		// Set wallpaper if it exists
+		if (_waccess(wallpaper.c_str(), 0) != -1)
+		{
+			SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)wallpaper.c_str(), 0);
+		}
 	}
 
 	ReloadSettings();

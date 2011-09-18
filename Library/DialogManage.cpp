@@ -1363,7 +1363,11 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDC_MANAGETHEMES_NAME_TEXT:
 		if (HIWORD(wParam) == EN_CHANGE)
 		{
-			BOOL state = (Edit_GetTextLength((HWND)lParam) != 0);
+			WCHAR buffer[32];
+			Edit_GetText((HWND)lParam, buffer, 32);
+
+			// Disable save button if no text or if name is "Backup"
+			BOOL state = (wcslen(buffer) != 0 && _wcsicmp(buffer, L"Backup") != 0);
 			EnableWindow(GetDlgItem(m_Window, IDC_MANAGETHEMES_SAVE_BUTTON), state);
 		}
 		break;
