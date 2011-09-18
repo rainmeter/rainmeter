@@ -378,25 +378,32 @@ HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR sz
 		}
 	}
 
-	DWORD type = GetFileAttributes(command.c_str());
-	if (type & FILE_ATTRIBUTE_DIRECTORY && type != 0xFFFFFFFF)
+	if (!command.empty())
 	{
-		HINSTANCE instance = ShellExecute(Owner, szVerb, command.c_str(), NULL, NULL, nShowCmd ? nShowCmd : SW_SHOWNORMAL);
-		return instance;
+		DWORD type = GetFileAttributes(command.c_str());
+		if (type & FILE_ATTRIBUTE_DIRECTORY && type != 0xFFFFFFFF)
+		{
+			HINSTANCE instance = ShellExecute(Owner, szVerb, command.c_str(), NULL, NULL, nShowCmd ? nShowCmd : SW_SHOWNORMAL);
+			return instance;
+		}
+
+		std::wstring dir = CRainmeter::ExtractPath(command);
+
+		SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
+		si.hwnd = Owner;
+		si.lpVerb = szVerb;
+		si.lpFile = command.c_str();
+		si.lpParameters = args.c_str();
+		si.lpDirectory = dir.c_str();
+		si.nShow = nShowCmd ? nShowCmd : SW_SHOWNORMAL;
+		si.fMask = SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI;
+		ShellExecuteEx(&si);
+		return si.hInstApp;
 	}
-
-	std::wstring dir = CRainmeter::ExtractPath(command);
-
-	SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
-	si.hwnd = Owner;
-	si.lpVerb = szVerb;
-	si.lpFile = command.c_str();
-	si.lpParameters = args.c_str();
-	si.lpDirectory = dir.c_str();
-	si.nShow = nShowCmd ? nShowCmd : SW_SHOWNORMAL;
-	si.fMask = SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI;
-	ShellExecuteEx(&si);
-	return si.hInstApp;
+	else
+	{
+		return (HINSTANCE)SE_ERR_FNF;
+	}
 }
 
 //void TransparentBltLS(HDC hdcDst, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, COLORREF colorTransparent)
