@@ -68,7 +68,7 @@ void CDialogManage::Open(int tab)
 {
 	if (!c_Dialog)
 	{
-		HINSTANCE instance = Rainmeter->GetInstance();
+		HINSTANCE instance = Rainmeter->GetResourceInstance();
 		HWND owner = Rainmeter->GetTrayWindow()->GetWindow();
 		if (!CreateDialog(instance, MAKEINTRESOURCE(IDD_MANAGE_DIALOG), owner, DlgProc)) return;
 	}
@@ -202,17 +202,18 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = LoadIcon(Rainmeter->GetInstance(), MAKEINTRESOURCE(IDI_TRAY));
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
+	std::wstring tmpSz;
 	HWND item = GetDlgItem(m_Window, IDC_MANAGE_TAB);
 	TCITEM tci = {0};
 	tci.mask = TCIF_TEXT;
-	tci.pszText = L"Skins";
+	tci.pszText = GetString(ID_STR_SKINS, tmpSz);
 	TabCtrl_InsertItem(item, 0, &tci);
-	tci.pszText = L"Themes";
+	tci.pszText = GetString(ID_STR_THEMES, tmpSz);
 	TabCtrl_InsertItem(item, 1, &tci);
-	tci.pszText = L"Settings";
+	tci.pszText = GetString(ID_STR_SETTINGS, tmpSz);
 	TabCtrl_InsertItem(item, 2, &tci);
 
-	HINSTANCE instance = Rainmeter->GetInstance();
+	HINSTANCE instance = Rainmeter->GetResourceInstance();
 	m_TabSkins = new CTabSkins(CreateDialog(instance, MAKEINTRESOURCE(IDD_MANAGESKINS_DIALOG), m_Window, CTabSkins::DlgProc));
 	m_TabThemes = new CTabThemes(CreateDialog(instance, MAKEINTRESOURCE(IDD_MANAGETHEMES_DIALOG), m_Window, CTabThemes::DlgProc));
 	m_TabSettings = new CTabSettings(CreateDialog(instance, MAKEINTRESOURCE(IDD_MANAGESETTINGS_DIALOG), m_Window, CTabSettings::DlgProc));
@@ -342,9 +343,16 @@ CDialogManage::CTabSkins::CTabSkins(HWND wnd) : CTab(wnd),
 void CDialogManage::CTabSkins::Initialize()
 {
 	m_Initialized = true;
-	
+
+	std::wstring tmpSz;
+	GetString(ID_STR_ACTIVESKINS, tmpSz);
+	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
+	{
+		// Arrow down
+		tmpSz += L" \x25BE";
+	}
 	HWND item = GetDlgItem(m_Window, IDC_MANAGESKINS_ACTIVESKINS_BUTTON);
-	SetWindowText(item, L"Active skins \x25BE");
+	SetWindowText(item, tmpSz.c_str());
 
 	// Load folder/.ini icons from shell32
 	HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR32, 2, 10);
@@ -371,7 +379,13 @@ void CDialogManage::CTabSkins::Initialize()
 	ShowWindow(item, SW_HIDE);
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_DISPLAYMONITOR_BUTTON);
-	SetWindowText(item, L"Display monitor \x25BE");
+	GetString(ID_STR_DISPLAYMONITOR, tmpSz);
+	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
+	{
+		// Arrow down
+		tmpSz += L" \x25BE";
+	}
+	SetWindowText(item, tmpSz.c_str());
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_TRANSPARENCY_COMBOBOX);
 	ComboBox_AddString(item, L"0%");
@@ -386,17 +400,17 @@ void CDialogManage::CTabSkins::Initialize()
 	ComboBox_AddString(item, L"90%");
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_ZPOSITION_COMBOBOX);
-	ComboBox_AddString(item, L"On desktop");
-	ComboBox_AddString(item, L"Bottom");
-	ComboBox_AddString(item, L"Normal");
-	ComboBox_AddString(item, L"Topmost");
-	ComboBox_AddString(item, L"Stay topmost");
+	ComboBox_AddString(item, GetString(ID_STR_ONDESKTOP, tmpSz));
+	ComboBox_AddString(item, GetString(ID_STR_BOTTOM, tmpSz));
+	ComboBox_AddString(item, GetString(ID_STR_NORMAL, tmpSz));
+	ComboBox_AddString(item, GetString(ID_STR_TOPMOST, tmpSz));
+	ComboBox_AddString(item, GetString(ID_STR_STAYTOPMOST, tmpSz));
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_ONHOVER_COMBOBOX);
-	ComboBox_AddString(item, L"Do nothing");
-	ComboBox_AddString(item, L"Hide");
-	ComboBox_AddString(item, L"Fade in");
-	ComboBox_AddString(item, L"Fade out");
+	ComboBox_AddString(item, GetString(ID_STR_DONOTHING, tmpSz));
+	ComboBox_AddString(item, GetString(ID_STR_HIDE, tmpSz));
+	ComboBox_AddString(item, GetString(ID_STR_FADEIN, tmpSz));
+	ComboBox_AddString(item, GetString(ID_STR_FADEOUT, tmpSz));
 
 	m_HandleCommands = true;
 }
@@ -464,7 +478,7 @@ void CDialogManage::CTabSkins::SetControls()
 
 	if (m_SkinWindow)
 	{
-		SetWindowText(item, L"Unload");
+		SetWindowText(item, GetString(ID_STR_UNLOAD, buffer, 64));
 
 		item = GetDlgItem(m_Window, IDC_MANAGESKINS_REFRESH_BUTTON);
 		EnableWindow(item, TRUE);
@@ -532,14 +546,15 @@ void CDialogManage::CTabSkins::SetControls()
 	}
 	else
 	{
-		SetWindowText(item, L"Load");
+		SetWindowText(item, GetString(ID_STR_LOAD, buffer, 64));
 	}
 }
 
 void CDialogManage::CTabSkins::DisableControls(bool clear)
 {
 	HWND item = GetDlgItem(m_Window, IDC_MANAGESKINS_LOAD_BUTTON);
-	SetWindowText(item, L"Load");
+	WCHAR buffer[64];
+	SetWindowText(item, GetString(ID_STR_LOAD, buffer, 64));
 
 	if (clear)
 	{
@@ -854,24 +869,22 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				++index;
 			}
 
-			if (index == 0)
+			if (index > 0)
 			{
-				InsertMenu(menu, index, MF_BYPOSITION | MF_GRAYED, 0, L"No active skins");
+				RECT r;
+				GetWindowRect((HWND)lParam, &r);
+
+				// Show context menu
+				TrackPopupMenu(
+					menu,
+					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
+					r.left,
+					--r.bottom,
+					0,
+					m_Window,
+					NULL
+				);
 			}
-
-			RECT r;
-			GetWindowRect((HWND)lParam, &r);
-
-			// Show context menu
-			TrackPopupMenu(
-				menu,
-				TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-				r.left,
-				--r.bottom,
-				0,
-				m_Window,
-				NULL
-			);
 
 			DestroyMenu(menu);
 		}
@@ -1007,7 +1020,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_MANAGESKINS_DISPLAYMONITOR_BUTTON:
 		{
-			HMENU menu = LoadMenu(Rainmeter->GetInstance(), MAKEINTRESOURCE(IDR_SKIN_MENU));
+			HMENU menu = LoadMenu(Rainmeter->GetResourceInstance(), MAKEINTRESOURCE(IDR_SKIN_MENU));
 			if (menu)
 			{
 				HMENU subMenu = GetSubMenu(menu, 0);	// Skin menu
@@ -1182,9 +1195,10 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				tvi.hItem = TreeView_GetSelection(nm->hwndFrom);
 				tvi.mask = TVIF_STATE;
 
-				HMENU menu = LoadMenu(Rainmeter->GetInstance(), MAKEINTRESOURCE(IDR_MANAGESKINS_MENU));
+				HMENU menu = LoadMenu(Rainmeter->GetResourceInstance(), MAKEINTRESOURCE(IDR_MANAGESKINS_MENU));
 				if (menu && TreeView_GetItem(nm->hwndFrom, &tvi))
 				{
+					std::wstring tmpSz;
 					HMENU subMenu;
 					MENUITEMINFO mii = {0};
 					mii.cbSize = sizeof(MENUITEMINFO);
@@ -1198,7 +1212,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						if (tvi.state & TVIS_EXPANDED)
 						{
-							mii.dwTypeData = L"Collapse";
+							mii.dwTypeData = GetString(ID_STR_COLLAPSE, tmpSz);
 							SetMenuItemInfo(subMenu, ID_CONTEXT_MANAGESKINSMENU_EXPAND, MF_BYCOMMAND, &mii);
 						}
 					}
@@ -1210,7 +1224,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						if (m_SkinWindow)
 						{
-							mii.dwTypeData = L"Unload";
+							mii.dwTypeData = GetString(ID_STR_UNLOAD, tmpSz);
 							SetMenuItemInfo(subMenu, ID_CONTEXT_MANAGESKINSMENU_LOAD, MF_BYCOMMAND, &mii);
 						}
 						else
@@ -1407,9 +1421,8 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			bool alreadyExists = (_waccess(path.c_str(), 0) != -1);
 			if (alreadyExists)
 			{
-				std::wstring question = L"A theme named \"" + theme;
-				question += L"\" already exists.\n\nDo you want to replace it?";
-				if (MessageBox(NULL, question.c_str(), APPNAME, MB_ICONWARNING | MB_YESNO | MB_TOPMOST) != IDYES)
+				std::wstring text = GetFormattedString(ID_STR_THEMEALREADYEXISTS, theme.c_str());
+				if (MessageBox(NULL, text.c_str(), APPNAME, MB_ICONWARNING | MB_YESNO | MB_TOPMOST) != IDYES)
 				{
 					// Cancel
 					break;
@@ -1428,8 +1441,8 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				if (!CSystem::CopyFiles(Rainmeter->GetIniFile(), path))
 				{
-					std::wstring message = L"Unable to save theme at: " + path;
-					MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+					std::wstring text = GetFormattedString(ID_STR_THEMESAVEFAIL, path.c_str());
+					MessageBox(NULL, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 					break;
 				}
 
@@ -1472,8 +1485,8 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 				HANDLE file = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 				if (file == INVALID_HANDLE_VALUE)
 				{
-					std::wstring message = L"Unable to save theme at: " + path;
-					MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+					std::wstring text = GetFormattedString(ID_STR_THEMESAVEFAIL, path.c_str());
+					MessageBox(NULL, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 					break;
 				}
 
@@ -1535,9 +1548,8 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			int sel = ListBox_GetCurSel(item);
 			std::vector<std::wstring>& themes = const_cast<std::vector<std::wstring>&>(Rainmeter->GetAllThemes());
 
-			std::wstring question = L"Are you sure you want to delete the \"" + themes[sel];
-			question += L"\" theme?";
-			if (MessageBox(NULL, question.c_str(), APPNAME, MB_ICONQUESTION | MB_YESNO | MB_TOPMOST) != IDYES)
+			std::wstring text = GetFormattedString(ID_STR_THEMEDELETE, themes[sel].c_str());
+			if (MessageBox(NULL, text.c_str(), APPNAME, MB_ICONQUESTION | MB_YESNO | MB_TOPMOST) != IDYES)
 			{
 				// Cancel
 				break;

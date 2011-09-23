@@ -206,6 +206,7 @@ public:
 	const std::wstring& GetStatsDate() { return m_StatsDate; }
 
 	HINSTANCE GetInstance() { return m_Instance; }
+	HINSTANCE GetResourceInstance() { return m_ResourceInstance; }
 
 	static void SetDummyLitestep(bool Dummy) { c_DummyLitestep = Dummy; }
 	static bool GetDummyLitestep() { return c_DummyLitestep; }
@@ -342,6 +343,7 @@ private:
 	CConfigParser* m_CurrentParser;
 
 	HINSTANCE m_Instance;
+	HMODULE m_ResourceInstance;
 
 	ULONG_PTR m_GDIplusToken;
 

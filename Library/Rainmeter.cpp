@@ -1721,6 +1721,7 @@ CRainmeter::CRainmeter() :
 	m_Logging(false),
 	m_CurrentParser(),
 	m_Instance(),
+	m_ResourceInstance(),
 	m_GDIplusToken()
 {
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
@@ -1780,7 +1781,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	if (Parent == NULL || Instance == NULL)
 	{
-		throw CError(L"Null parameter", __LINE__, __FILE__);
+		throw CError(L"Null parameter");
 	}
 
 	m_Instance = Instance;
@@ -1800,6 +1801,13 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	}
 
 	m_Path = tmpSzPath;
+
+	wcscat(tmpSzPath, L"Language.dll");
+	m_ResourceInstance = LoadLibraryEx(tmpSzPath, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+	if (!m_ResourceInstance)
+	{
+		throw CError(L"Unable to load Language.dll");
+	}
 
 	InitalizeLitestep();
 
@@ -2033,7 +2041,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	if (m_ConfigStrings.empty())
 	{
-		std::wstring error = L"There are no available skins at:\n" + m_SkinPath;
+		std::wstring error = GetFormattedString(ID_STR_NOAVAILABLESKINS, m_SkinPath.c_str());
 		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 	}
 
@@ -2218,10 +2226,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 
 		if (_waccess(skinIniPath.c_str(), 0) == -1)
 		{
-			std::wstring message = L"Unable to activate skin \"" + skinConfig;
-			message += L"\\";
-			message += skinIniFile;
-			message += L"\": File not found";
+			std::wstring message = GetFormattedString(ID_STR_UNABLETOACTIVATESKIN, skinConfig.c_str(), skinIniFile.c_str());
 			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 			return;
 		}
@@ -3385,10 +3390,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		{
 			if (!SetActiveConfig(skinName, skinIni))
 			{
-				std::wstring error = L"The selected skin (L" + skinName;
-				error += L"\\";
-				error += skinIni;
-				error += L") cannot be found.";
+				std::wstring error = GetFormattedString(ID_STR_UNABLETOACTIVATESKIN, skinName.c_str(), skinIni.c_str());
 				MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 			}
 			return;
@@ -3522,11 +3524,8 @@ void CRainmeter::RefreshAll()
 					{
 						DeactivateConfig(mw, i);
 
-						std::wstring message = L"Unable to refresh skin \"" + skinConfig;
-						message += L"\\";
-						message += skinIniFile;
-						message += L"\": File not found.";
-						MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+						std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinConfig.c_str(), skinIniFile.c_str());
+						MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 					}
 					break;
 				}
@@ -3538,9 +3537,8 @@ void CRainmeter::RefreshAll()
 				{
 					DeactivateConfig(mw, -2);  // -2 = Deactivate the config forcibly
 
-					std::wstring message = L"Unable to refresh config \"" + skinConfig;
-					message += L"\": Config not found.";
-					MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+					std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinConfig.c_str(), L"");
+					MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 				}
 				continue;
 			}
@@ -3819,7 +3817,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 		m_MenuActive = true;
 
 		// Show context menu, if no actions were executed
-		HMENU menu = LoadMenu(m_Instance, MAKEINTRESOURCE(IDR_CONTEXT_MENU));
+		HMENU menu = LoadMenu(m_ResourceInstance, MAKEINTRESOURCE(IDR_CONTEXT_MENU));
 
 		if (menu)
 		{
@@ -3907,7 +3905,8 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					// Put Update notifications in the Tray menu
 					if (m_NewVersion)
 					{
-						InsertMenu(subMenu, 0, MF_BYPOSITION, ID_CONTEXT_NEW_VERSION, L"Update available");
+						std::wstring tmpSz;
+						InsertMenu(subMenu, 0, MF_BYPOSITION, ID_CONTEXT_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE, tmpSz));
 						HiliteMenuItem(Rainmeter->GetTrayWindow()->GetWindow(), subMenu, 0, MF_BYPOSITION | MF_HILITE);
 						InsertMenu(subMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 					}
@@ -4011,7 +4010,7 @@ void CRainmeter::CreateThemeMenu(HMENU themeMenu)
 
 HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU configMenu)
 {
-	HMENU skinMenu = LoadMenu(m_Instance, MAKEINTRESOURCE(IDR_SKIN_MENU));
+	HMENU skinMenu = LoadMenu(m_ResourceInstance, MAKEINTRESOURCE(IDR_SKIN_MENU));
 
 	if (skinMenu)
 	{
@@ -4304,17 +4303,17 @@ void CRainmeter::StartLogging()
 			ResetLoggingFlag();	// Re-enable logging
 			SetLogging(true);
 
-			std::wstring message = L"Log file created at: " + m_LogFile;
-			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONINFORMATION);
+			std::wstring text = GetFormattedString(ID_STR_LOGFILECREATED, m_LogFile.c_str());
+			MessageBox(NULL, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONINFORMATION);
 		}
 		else
 		{
 			// Disable logging
 			SetLogging(false);
 			ResetLoggingFlag();
-
-			std::wstring message = L"Unable to create log file: " + m_LogFile;
-			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+	
+			std::wstring text = GetFormattedString(ID_STR_LOGFILECREATEFAIL, m_LogFile.c_str());
+			MessageBox(NULL, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		}
 	}
 	else
@@ -4333,8 +4332,8 @@ void CRainmeter::DeleteLogFile()
 	// Check if the file exists
 	if (_waccess(m_LogFile.c_str(), 0) != -1)
 	{
-		std::wstring message = L"Do you want to delete the following log file?\n" + m_LogFile;
-		int res = MessageBox(NULL, message.c_str(), APPNAME, MB_YESNO | MB_TOPMOST | MB_ICONQUESTION);
+		std::wstring text = GetFormattedString(ID_STR_LOGFILEDELETE, m_LogFile.c_str());
+		int res = MessageBox(NULL, text.c_str(), APPNAME, MB_YESNO | MB_TOPMOST | MB_ICONQUESTION);
 		if (res == IDYES)
 		{
 			// Disable logging
@@ -4397,27 +4396,19 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	}
 	if (!bSuccess)
 	{
-		std::wstring error = L"Rainmeter.ini is not writable. Rainmeter will not\n"
-			L"be able to save any settings permanently.\n\n";
+		std::wstring error;
+		GetString(ID_STR_SETTINGSNOTWRITABLE, error);
 
 		if (!bDefaultIniLocation)
 		{
 			std::wstring strTarget = L"%APPDATA%\\Rainmeter\\";
 			ExpandEnvironmentVariables(strTarget);
 
-			error += L"You should quit Rainmeter and move the settings file from\n";
-			error += m_IniFile;
-			error += L"\n\nto\n";
-			error += strTarget;
-			error += L"\n\nAlternatively, simply remove the file and it will\n"
-				L"be automatically recreated in the correct location on\n"
-				L"next launch (current settings will be lost).";
+			error += GetFormattedString(ID_STR_SETTINGSMOVEFILE, m_IniFile.c_str(), strTarget.c_str());
 		}
 		else
 		{
-			error += L"Make sure that the settings file is not set as read-only and that\n"
-				L"the folder is writable. The file is located at:\n";
-			error += m_IniFile;
+			error += GetFormattedString(ID_STR_SETTINGSREADONLY, m_IniFile.c_str());
 		}
 
 		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_ICONERROR);

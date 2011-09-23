@@ -62,6 +62,10 @@ std::wstring ConvertToWide(LPCSTR str);
 std::string ConvertToUTF8(LPCWSTR str);
 std::wstring ConvertUTF8ToWide(LPCSTR str);
 
+WCHAR* GetString(UINT id, WCHAR* buffer, int len = 64);
+WCHAR* GetString(UINT id, std::wstring& buffer);
+std::wstring GetFormattedString(UINT id, ...);
+
 HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd);
 HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR szVerb);
 

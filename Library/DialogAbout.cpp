@@ -70,7 +70,7 @@ void CDialogAbout::Open(int tab)
 {
 	if (!c_Dialog)
 	{
-		HINSTANCE instance = Rainmeter->GetInstance();
+		HINSTANCE instance = Rainmeter->GetResourceInstance();
 		HWND owner = Rainmeter->GetTrayWindow()->GetWindow();
 		if (!CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUT_DIALOG), owner, DlgProc)) return;
 	}
@@ -218,19 +218,20 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = LoadIcon(Rainmeter->GetInstance(), MAKEINTRESOURCE(IDI_TRAY));
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
+	std::wstring tmpSz;
 	HWND item = GetDlgItem(m_Window, IDC_ABOUT_TAB);
 	TCITEM tci = {0};
 	tci.mask = TCIF_TEXT;
-	tci.pszText = L"Log";
+	tci.pszText = GetString(ID_STR_LOG, tmpSz);
 	TabCtrl_InsertItem(item, 0, &tci);
-	tci.pszText = L"Measures";
+	tci.pszText = GetString(ID_STR_MEASURES, tmpSz);
 	TabCtrl_InsertItem(item, 1, &tci);
-	tci.pszText = L"Plugins";
+	tci.pszText = GetString(ID_STR_PLUGINS, tmpSz);
 	TabCtrl_InsertItem(item, 2, &tci);
-	tci.pszText = L"Version";
+	tci.pszText = GetString(ID_STR_VERSION, tmpSz);
 	TabCtrl_InsertItem(item, 3, &tci);
 
-	HINSTANCE instance = Rainmeter->GetInstance();
+	HINSTANCE instance = Rainmeter->GetResourceInstance();
 	m_TabLog = new CTabLog(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTLOG_DIALOG), m_Window, CTabLog::DlgProc));
 	m_TabMeasures = new CTabMeasures(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTMEASURES_DIALOG), m_Window, CTabMeasures::DlgProc));
 	m_TabPlugins = new CTabPlugins(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTPLUGINS_DIALOG), m_Window, CTabPlugins::DlgProc));
@@ -368,20 +369,21 @@ void CDialogAbout::CTabLog::Initialize()
 
 	ListView_SetImageList(item, (WPARAM)hImageList, LVSIL_SMALL);
 
+	std::wstring tmpSz;
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
-	lvc.pszText = L"Type";
 	lvc.cx = 75;
+	lvc.pszText = GetString(ID_STR_TYPE, tmpSz);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = 85;
-	lvc.pszText = L"Time";
+	lvc.pszText = GetString(ID_STR_TIME, tmpSz);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
 	lvc.cx = 370;
-	lvc.pszText = L"Message";
+	lvc.pszText = GetString(ID_STR_MESSAGE, tmpSz);
 	ListView_InsertColumn(item, 2, &lvc);
 
 	// Add stored entires
@@ -447,39 +449,43 @@ void CDialogAbout::CTabLog::Resize(int w, int h)
 */
 void CDialogAbout::CTabLog::AddItem(int level, LPCWSTR time, LPCWSTR message)
 {
+	WCHAR buffer[32];
 	LVITEM vitem;
 	vitem.mask = LVIF_IMAGE | LVIF_TEXT;
 	vitem.iItem = 0;
 	vitem.iSubItem = 0;
+	vitem.pszText = buffer;
+	HWND item;
 
 	switch (level)
 	{
 	case LOG_ERROR:
 		if (!m_Error) return;
-		vitem.pszText = L"Error";
+		item = GetDlgItem(m_Window, IDC_ABOUTLOG_ERROR_CHECKBOX);
 		vitem.iImage = 0;
 		break;
 
 	case LOG_WARNING:
 		if (!m_Error) return;
-		vitem.pszText = L"Warning";
+		item = GetDlgItem(m_Window, IDC_ABOUTLOG_WARNING_CHECKBOX);
 		vitem.iImage = 1;
 		break;
 
 	case LOG_NOTICE:
 		if (!m_Notice) return;
-		vitem.pszText = L"Notice";
+		item = GetDlgItem(m_Window, IDC_ABOUTLOG_NOTICE_CHECKBOX);
 		vitem.iImage = 2;
 		break;
 
 	case LOG_DEBUG:
 		if (!m_Debug) return;
-		vitem.pszText = L"Debug";
+		item = GetDlgItem(m_Window, IDC_ABOUTLOG_DEBUG_CHECKBOX);
 		vitem.iImage = -1;
 		break;
 	}
-	
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTLOG_ITEMS_LISTVIEW);
+
+	GetWindowText(item, buffer, 32);
+	item = GetDlgItem(m_Window, IDC_ABOUTLOG_ITEMS_LISTVIEW);
 	ListView_InsertItem(item, &vitem);
 	ListView_SetItemText(item, vitem.iItem, 1, (WCHAR*)time);
 	ListView_SetItemText(item, vitem.iItem, 2, (WCHAR*)message);
@@ -575,20 +581,21 @@ void CDialogAbout::CTabMeasures::Initialize()
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
 	ListView_SetExtendedListViewStyleEx(item, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
+	std::wstring tmpSz;
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
-	lvc.iSubItem = 0;
-	lvc.pszText = L"Name";
-	lvc.cx = 120;
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
+	lvc.iSubItem = 0;
+	lvc.cx = 120;
+	lvc.pszText = GetString(ID_STR_NAME, tmpSz);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = 90;
-	lvc.pszText = L"Range";
+	lvc.pszText = GetString(ID_STR_RANGE, tmpSz);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
 	lvc.cx = 130;
-	lvc.pszText = L"Value";
+	lvc.pszText = GetString(ID_STR_VALUE, tmpSz);
 	ListView_InsertColumn(item, 2, &lvc);
 
 	// Add entries for each config
@@ -856,20 +863,21 @@ void CDialogAbout::CTabPlugins::Initialize()
 	// Add columns to the list view
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTPLUGINS_ITEMS_LISTVIEW);
 
+	std::wstring tmpSz;
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
-	lvc.iSubItem = 0;
-	lvc.pszText = L"Name";
-	lvc.cx = 140;
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
+	lvc.iSubItem = 0;
+	lvc.cx = 140;
+	lvc.pszText = GetString(ID_STR_NAME, tmpSz);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = 80;
-	lvc.pszText = L"Version";
+	lvc.pszText = GetString(ID_STR_VERSION, tmpSz);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
 	lvc.cx = 310;
-	lvc.pszText = L"Author";
+	lvc.pszText = GetString(ID_STR_AUTHOR, tmpSz);
 	ListView_InsertColumn(item, 2, &lvc);
 
 	LVITEM vitem;
@@ -990,16 +998,12 @@ void CDialogAbout::CTabVersion::Initialize()
 	m_Initialized = true;
 
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTVERSION_VERSION_TEXT);
-	WCHAR tmpSz[128];
-	_snwprintf_s(tmpSz, _TRUNCATE, L"%s %s%s r%i %s (%s)", APPNAME, APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
+	WCHAR tmpSz[64];
+	_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%s %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", REVISION, APPBITS, APPDATE);
 	SetWindowText(item, tmpSz);
 
 	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_PATHS_TEXT);
-	std::wstring text = L"Path: " + Rainmeter->GetPath();
-	text += L"\r\nSettings: ";
-	text += Rainmeter->GetSettingsPath();
-	text += L"\r\nSkins: ";
-	text += Rainmeter->GetSkinPath();
+	std::wstring text = GetFormattedString(ID_STR_PATHDETAILS, Rainmeter->GetPath().c_str(), Rainmeter->GetSettingsPath().c_str(), Rainmeter->GetSkinPath().c_str());
 	SetWindowText(item, text.c_str());
 }
 
@@ -1040,14 +1044,9 @@ INT_PTR CDialogAbout::CTabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 	case IDC_ABOUTVERSION_COPY_BUTTON:
 		{
-			WCHAR tmpSz[128];
-			_snwprintf_s(tmpSz, _TRUNCATE, L"%s %s%s r%i %s (%s)", APPNAME, APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
-			std::wstring text = tmpSz;
-			text += L"\r\nPath: " + Rainmeter->GetPath();
-			text += L"\r\nSettings: ";
-			text += Rainmeter->GetSettingsPath();
-			text += L"\r\nSkins: ";
-			text += Rainmeter->GetSkinPath();
+			WCHAR tmpSz[64];
+			_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
+			std::wstring text = GetFormattedString(ID_STR_PATHDETAILS, Rainmeter->GetPath().c_str(), Rainmeter->GetSettingsPath().c_str(), Rainmeter->GetSkinPath().c_str());
 			CSystem::SetClipboardText(text);
 		}
 		break;

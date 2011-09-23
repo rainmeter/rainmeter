@@ -48,7 +48,7 @@ BEGIN
             VALUE "FileDescription", "Rainmeter"
             VALUE "FileVersion", STRFILEVER
             VALUE "InternalName", "Rainmeter"
-            VALUE "LegalCopyright", "Copyright (C) 2010 - Rainy"
+            VALUE "LegalCopyright", "Copyright (C) 2011 - All authors"
             VALUE "OriginalFilename", "Rainmeter.exe"
             VALUE "ProductName", "Rainmeter"
 #ifdef _WIN64

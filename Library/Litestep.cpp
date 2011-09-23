@@ -701,7 +701,7 @@ void Log(int nLevel, const WCHAR* message, const WCHAR* module)
 	}
 }
 
-void LogWithArgs(int nLevel, const WCHAR* format, ... )
+void LogWithArgs(int nLevel, const WCHAR* format, ...)
 {
 	WCHAR* buffer = new WCHAR[4096];
 	va_list args;
@@ -730,6 +730,50 @@ void LogError(CError& error)
 {
 	Log(LOG_ERROR, error.GetString().c_str());
 	CDialogAbout::ShowAboutLog();
+}
+
+WCHAR* GetString(UINT id, WCHAR* buffer, int len)
+{
+	LoadString(Rainmeter->GetResourceInstance(), id, buffer, len);
+	return buffer;
+}
+
+WCHAR* GetString(UINT id, std::wstring& buffer)
+{
+	LPWSTR pData;
+	int len = LoadString(Rainmeter->GetResourceInstance(), id, (LPWSTR)&pData, 0);
+	if (len)
+	{
+		buffer.assign(pData, len);
+	}
+	else
+	{
+		buffer.clear();
+	}
+
+	return (WCHAR*)buffer.c_str();
+}
+
+std::wstring GetFormattedString(UINT id, ...)
+{
+	LPWSTR pBuffer = NULL;
+	va_list args = NULL;
+	va_start(args, id);
+	std::wstring tmpSz;
+
+	FormatMessage(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+				  GetString(id, tmpSz),
+				  0,
+				  0,
+				  (LPWSTR)&pBuffer,
+				  0,
+				  &args);
+
+	va_end(args);
+
+	tmpSz = pBuffer;
+	LocalFree(pBuffer);
+	return tmpSz;
 }
 
 void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved)
