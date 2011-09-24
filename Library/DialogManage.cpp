@@ -377,7 +377,7 @@ void CDialogManage::CTabSkins::Initialize()
 	ShowWindow(item, SW_HIDE);
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_DISPLAYMONITOR_BUTTON);
-	GetString(ID_STR_DISPLAYMONITOR);
+	tmpSz = GetString(ID_STR_DISPLAYMONITOR);
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
 		// Arrow down
@@ -914,7 +914,10 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDC_MANAGESKINS_REFRESH_BUTTON:
-		m_SkinWindow->Refresh(false);
+		if (m_SkinWindow)
+		{
+			m_SkinWindow->Refresh(false);
+		}
 		break;
 
 	case IDC_MANAGESKINS_EDIT_BUTTON:
