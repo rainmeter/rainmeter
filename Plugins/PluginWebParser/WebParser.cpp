@@ -75,7 +75,7 @@ void ShowError(int lineNumber, WCHAR* errorMsg = NULL);
 unsigned __stdcall NetworkThreadProc(void* pParam);
 unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
 void Log(int level, const WCHAR* string);
-void ParseData(UrlData* urlData, LPCSTR parseData);
+void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize);
 
 CRITICAL_SECTION g_CriticalSection;
 bool g_Initialized = false;
@@ -828,7 +828,7 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 			}
 		}
 
-		ParseData(urlData, (LPCSTR)data);
+		ParseData(urlData, (LPCSTR)data, dwSize);
 
 		delete [] data;
 	}
@@ -841,10 +841,8 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 	return 0;   // thread completed successfully
 }
 
-void ParseData(UrlData* urlData, LPCSTR parseData)
+void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 {
-	size_t dwSize = 0;
-
 	// Parse the value from the data
 	pcre* re;
 	const char* error;
@@ -883,8 +881,6 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 			utf8Data = ConvertAsciiToUTF8(parseData, urlData->codepage);
 			parseData = utf8Data.c_str();
 		}
-
-		dwSize = strlen(parseData);
 
 		rc = pcre_exec(
 			re,                   // the compiled pattern
@@ -987,7 +983,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData)
 								// Change the index and parse the substring
 								int index = (*i).second->stringIndex;
 								(*i).second->stringIndex = (*i).second->stringIndex2;
-								ParseData((*i).second, szResult.c_str());
+								ParseData((*i).second, szResult.c_str(), szResult.length());
 								(*i).second->stringIndex = index;
 							}
 							else
