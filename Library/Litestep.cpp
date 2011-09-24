@@ -745,7 +745,7 @@ std::wstring GetFormattedString(UINT id, ...)
 	va_list args = NULL;
 	va_start(args, id);
 
-	FormatMessage(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+	DWORD len = FormatMessage(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
 				  GetString(id),
 				  0,
 				  0,
@@ -755,8 +755,8 @@ std::wstring GetFormattedString(UINT id, ...)
 
 	va_end(args);
 
-	std::wstring tmpSz = pBuffer;
-	LocalFree(pBuffer);
+	std::wstring tmpSz(len ? pBuffer : L"");
+	if (pBuffer) LocalFree(pBuffer);
 	return tmpSz;
 }
 
