@@ -31,6 +31,7 @@
 #define IDC_ABOUTVERSION_VERSION_TEXT                1010
 #define IDC_ABOUTVERSION_PATHS_TEXT                  1011
 #define IDC_ABOUTVERSION_COPY_BUTTON                 1012
+#define IDC_ABOUTVERSION_RAINMETER_ICON              1013
 
 #define IDC_MANAGE_TAB                               1017
 #define IDC_REFRESHALL_BUTTON                        1018
@@ -121,6 +122,9 @@
 #define ID_STR_NOAVAILABLESKINS                      2040
 #define ID_STR_UNABLETOACTIVATESKIN                  2041
 #define ID_STR_UNABLETOREFRESHSKIN                   2042
+#define ID_STR_NEWVERSIONREQUIRED                    2043
+#define ID_STR_NOMETERSINSKIN                        2044
+#define ID_STR_INCLUDEINFINITELOOP                   2045
 
 #define ID_CONTEXT_REFRESH                           4001
 #define ID_CONTEXT_QUIT                              4002

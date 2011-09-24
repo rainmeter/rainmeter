@@ -43,17 +43,10 @@ HRGN BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF cToleranc
 HWND GetLitestepWnd(void);
 BOOL GetRCString(LPCSTR lpKeyName, LPSTR value, LPCSTR defStr, int maxLen);
 //int GetRCInt(LPCSTR lpKeyName, int nDefault);
-HINSTANCE LSExecute(HWND Owner, LPCTSTR szCommand, int nShowCmd);
 BOOL RemoveBangCommand(LPCSTR command);
 //void TransparentBltLS (HDC dc, int nXDest, int nYDest, int nWidth, int nHeight, HDC tempDC, int nXSrc, int nYSrc, COLORREF colorTransparent);
 void VarExpansion(LPSTR buffer, LPCSTR value);
 //void LSSetVariable(const BSTR name, const BSTR value);
-
-void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved);
-
-void Log(int nLevel, const WCHAR* message, const WCHAR* module = L"Rainmeter");		// Wrapper for LSLog().
-void LogWithArgs(int nLevel, const WCHAR* format, ... );	// Replacement for DebugLog(), has the same functionality but has the option to set teh Log Level.
-void LogError(CError& error);
 
 void ResetLoggingFlag();
 
@@ -62,10 +55,17 @@ std::wstring ConvertToWide(LPCSTR str);
 std::string ConvertToUTF8(LPCWSTR str);
 std::wstring ConvertUTF8ToWide(LPCSTR str);
 
+void Log(int nLevel, const WCHAR* message, const WCHAR* module = L"Rainmeter");		// Wrapper for LSLog().
+void LogWithArgs(int nLevel, const WCHAR* format, ... );	// Replacement for DebugLog(), has the same functionality but has the option to set teh Log Level.
+void LogError(CError& error);
+
+HINSTANCE LSExecute(HWND Owner, LPCTSTR szCommand, int nShowCmd);
+HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd);
+HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR szVerb);
+
 WCHAR* GetString(UINT id);
 std::wstring GetFormattedString(UINT id, ...);
 
-HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd);
-HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR szVerb);
+void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved);
 
 #endif

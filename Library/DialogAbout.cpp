@@ -993,9 +993,13 @@ void CDialogAbout::CTabVersion::Initialize()
 {
 	m_Initialized = true;
 
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTVERSION_VERSION_TEXT);
+	HWND item = GetDlgItem(m_Window, IDC_ABOUTVERSION_RAINMETER_ICON);
+	HICON icon = LoadIcon(Rainmeter->GetInstance(), MAKEINTRESOURCE(IDI_WINDOW));
+	Static_SetIcon(item, icon);
+
+	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_VERSION_TEXT);
 	WCHAR tmpSz[64];
-	_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%s %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", REVISION, APPBITS, APPDATE);
+	_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
 	SetWindowText(item, tmpSz);
 
 	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_PATHS_TEXT);

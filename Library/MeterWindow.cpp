@@ -2090,11 +2090,7 @@ bool CMeterWindow::ReadSkin()
 	// Verify whether the file exists
 	if (_waccess(iniFile.c_str(), 0) == -1)
 	{
-		std::wstring message = L"Unable to refresh skin \"" + m_SkinName;
-		message += L"\\";
-		message += m_SkinIniFile;
-		message += L"\": File not found.";
-		Log(LOG_WARNING, message.c_str());
+		std::wstring message = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, m_SkinName.c_str(), m_SkinIniFile.c_str());
 		MessageBox(m_Window, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		return false;
 	}
@@ -2126,12 +2122,7 @@ bool CMeterWindow::ReadSkin()
 			_snwprintf_s(buffer, _TRUNCATE, L"%i.%i", appVersion / 1000000, (appVersion / 1000) % 1000);
 		}
 
-		std::wstring text = L"The skin \"" + m_SkinName;
-		text += L"\\";
-		text += m_SkinIniFile;
-		text += L"\" needs Rainmeter ";
-		text += buffer;
-		text += L" or newer.\nDownload the latest version of Rainmeter from www.rainmeter.net.";
+		std::wstring text = GetFormattedString(ID_STR_NEWVERSIONREQUIRED, m_SkinName.c_str(), m_SkinIniFile.c_str(), buffer);
 		MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 	}
 
@@ -2354,23 +2345,9 @@ bool CMeterWindow::ReadSkin()
 
 	if (m_Meters.empty())
 	{
-		std::wstring text = L"The skin \"" + m_SkinName;
-		text += L"\\";
-		text += m_SkinIniFile;
-		if (m_Measures.empty())
-		{
-			text += L"\" does not contain\nany meters or measures and will be deactivated.\n\nThe file may be damaged or may not be a Rainmeter skin.";
-			MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-			return false;
-		}
-		else
-		{
-			text += L"\" does not contain any meters.\nDo you want to deactivate this skin?";
-			if (IDYES == MessageBox(m_Window, text.c_str(), APPNAME, MB_YESNO | MB_TOPMOST | MB_ICONEXCLAMATION))
-			{
-				return false;
-			}
-		}
+		std::wstring text = GetFormattedString(ID_STR_NOMETERSINSKIN, m_SkinName.c_str(), m_SkinIniFile.c_str());
+		MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		return false;
 	}
 	else
 	{

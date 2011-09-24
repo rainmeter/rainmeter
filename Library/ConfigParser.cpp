@@ -22,6 +22,7 @@
 #include "Rainmeter.h"
 #include "System.h"
 #include "Measure.h"
+#include "resource.h"
 
 extern CRainmeter* Rainmeter;
 
@@ -1033,7 +1034,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
-		MessageBox(NULL, L"It seems that you have created an infinite loop with @include.\nPlease check your skin.", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		MessageBox(NULL, GetString(ID_STR_INCLUDEINFINITELOOP), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		return;
 	}
 
