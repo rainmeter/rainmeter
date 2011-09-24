@@ -6,6 +6,7 @@
 #define STRFILEVER     "2.2.0.960" 
 #define STRPRODUCTVER  "2.2.0.960" 
  
+#define REVISION   L"960" 
 #define APPVERSION L"2.2.0" 
 #define RAINMETER_VERSION MAKE_VER(2, 2, 0) 
  
