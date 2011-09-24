@@ -732,26 +732,11 @@ void LogError(CError& error)
 	CDialogAbout::ShowAboutLog();
 }
 
-WCHAR* GetString(UINT id, WCHAR* buffer, int len)
-{
-	LoadString(Rainmeter->GetResourceInstance(), id, buffer, len);
-	return buffer;
-}
-
-WCHAR* GetString(UINT id, std::wstring& buffer)
+WCHAR* GetString(UINT id)
 {
 	LPWSTR pData;
 	int len = LoadString(Rainmeter->GetResourceInstance(), id, (LPWSTR)&pData, 0);
-	if (len)
-	{
-		buffer.assign(pData, len);
-	}
-	else
-	{
-		buffer.clear();
-	}
-
-	return (WCHAR*)buffer.c_str();
+	return len ? pData : L"";
 }
 
 std::wstring GetFormattedString(UINT id, ...)
@@ -759,10 +744,9 @@ std::wstring GetFormattedString(UINT id, ...)
 	LPWSTR pBuffer = NULL;
 	va_list args = NULL;
 	va_start(args, id);
-	std::wstring tmpSz;
 
 	FormatMessage(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-				  GetString(id, tmpSz),
+				  GetString(id),
 				  0,
 				  0,
 				  (LPWSTR)&pBuffer,
@@ -771,7 +755,7 @@ std::wstring GetFormattedString(UINT id, ...)
 
 	va_end(args);
 
-	tmpSz = pBuffer;
+	std::wstring tmpSz = pBuffer;
 	LocalFree(pBuffer);
 	return tmpSz;
 }

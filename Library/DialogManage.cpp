@@ -202,15 +202,14 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = LoadIcon(Rainmeter->GetInstance(), MAKEINTRESOURCE(IDI_TRAY));
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	std::wstring tmpSz;
 	HWND item = GetDlgItem(m_Window, IDC_MANAGE_TAB);
 	TCITEM tci = {0};
 	tci.mask = TCIF_TEXT;
-	tci.pszText = GetString(ID_STR_SKINS, tmpSz);
+	tci.pszText = GetString(ID_STR_SKINS);
 	TabCtrl_InsertItem(item, 0, &tci);
-	tci.pszText = GetString(ID_STR_THEMES, tmpSz);
+	tci.pszText = GetString(ID_STR_THEMES);
 	TabCtrl_InsertItem(item, 1, &tci);
-	tci.pszText = GetString(ID_STR_SETTINGS, tmpSz);
+	tci.pszText = GetString(ID_STR_SETTINGS);
 	TabCtrl_InsertItem(item, 2, &tci);
 
 	HINSTANCE instance = Rainmeter->GetResourceInstance();
@@ -344,8 +343,7 @@ void CDialogManage::CTabSkins::Initialize()
 {
 	m_Initialized = true;
 
-	std::wstring tmpSz;
-	GetString(ID_STR_ACTIVESKINS, tmpSz);
+	std::wstring tmpSz = GetString(ID_STR_ACTIVESKINS);
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
 		// Arrow down
@@ -379,7 +377,7 @@ void CDialogManage::CTabSkins::Initialize()
 	ShowWindow(item, SW_HIDE);
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_DISPLAYMONITOR_BUTTON);
-	GetString(ID_STR_DISPLAYMONITOR, tmpSz);
+	GetString(ID_STR_DISPLAYMONITOR);
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
 		// Arrow down
@@ -400,17 +398,17 @@ void CDialogManage::CTabSkins::Initialize()
 	ComboBox_AddString(item, L"90%");
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_ZPOSITION_COMBOBOX);
-	ComboBox_AddString(item, GetString(ID_STR_ONDESKTOP, tmpSz));
-	ComboBox_AddString(item, GetString(ID_STR_BOTTOM, tmpSz));
-	ComboBox_AddString(item, GetString(ID_STR_NORMAL, tmpSz));
-	ComboBox_AddString(item, GetString(ID_STR_TOPMOST, tmpSz));
-	ComboBox_AddString(item, GetString(ID_STR_STAYTOPMOST, tmpSz));
+	ComboBox_AddString(item, GetString(ID_STR_ONDESKTOP));
+	ComboBox_AddString(item, GetString(ID_STR_BOTTOM));
+	ComboBox_AddString(item, GetString(ID_STR_NORMAL));
+	ComboBox_AddString(item, GetString(ID_STR_TOPMOST));
+	ComboBox_AddString(item, GetString(ID_STR_STAYTOPMOST));
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_ONHOVER_COMBOBOX);
-	ComboBox_AddString(item, GetString(ID_STR_DONOTHING, tmpSz));
-	ComboBox_AddString(item, GetString(ID_STR_HIDE, tmpSz));
-	ComboBox_AddString(item, GetString(ID_STR_FADEIN, tmpSz));
-	ComboBox_AddString(item, GetString(ID_STR_FADEOUT, tmpSz));
+	ComboBox_AddString(item, GetString(ID_STR_DONOTHING));
+	ComboBox_AddString(item, GetString(ID_STR_HIDE));
+	ComboBox_AddString(item, GetString(ID_STR_FADEIN));
+	ComboBox_AddString(item, GetString(ID_STR_FADEOUT));
 
 	m_HandleCommands = true;
 }
@@ -478,7 +476,7 @@ void CDialogManage::CTabSkins::SetControls()
 
 	if (m_SkinWindow)
 	{
-		SetWindowText(item, GetString(ID_STR_UNLOAD, buffer, 64));
+		SetWindowText(item, GetString(ID_STR_UNLOAD));
 
 		item = GetDlgItem(m_Window, IDC_MANAGESKINS_REFRESH_BUTTON);
 		EnableWindow(item, TRUE);
@@ -546,15 +544,14 @@ void CDialogManage::CTabSkins::SetControls()
 	}
 	else
 	{
-		SetWindowText(item, GetString(ID_STR_LOAD, buffer, 64));
+		SetWindowText(item, GetString(ID_STR_LOAD));
 	}
 }
 
 void CDialogManage::CTabSkins::DisableControls(bool clear)
 {
 	HWND item = GetDlgItem(m_Window, IDC_MANAGESKINS_LOAD_BUTTON);
-	WCHAR buffer[64];
-	SetWindowText(item, GetString(ID_STR_LOAD, buffer, 64));
+	SetWindowText(item, GetString(ID_STR_LOAD));
 
 	if (clear)
 	{
@@ -1198,7 +1195,6 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				HMENU menu = LoadMenu(Rainmeter->GetResourceInstance(), MAKEINTRESOURCE(IDR_MANAGESKINS_MENU));
 				if (menu && TreeView_GetItem(nm->hwndFrom, &tvi))
 				{
-					std::wstring tmpSz;
 					HMENU subMenu;
 					MENUITEMINFO mii = {0};
 					mii.cbSize = sizeof(MENUITEMINFO);
@@ -1212,7 +1208,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						if (tvi.state & TVIS_EXPANDED)
 						{
-							mii.dwTypeData = GetString(ID_STR_COLLAPSE, tmpSz);
+							mii.dwTypeData = GetString(ID_STR_COLLAPSE);
 							SetMenuItemInfo(subMenu, ID_CONTEXT_MANAGESKINSMENU_EXPAND, MF_BYCOMMAND, &mii);
 						}
 					}
@@ -1224,7 +1220,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 						if (m_SkinWindow)
 						{
-							mii.dwTypeData = GetString(ID_STR_UNLOAD, tmpSz);
+							mii.dwTypeData = GetString(ID_STR_UNLOAD);
 							SetMenuItemInfo(subMenu, ID_CONTEXT_MANAGESKINSMENU_LOAD, MF_BYCOMMAND, &mii);
 						}
 						else

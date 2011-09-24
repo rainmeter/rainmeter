@@ -1763,6 +1763,8 @@ CRainmeter::~CRainmeter()
 
 	FinalizeLitestep();
 
+	if (m_ResourceInstance) FreeLibrary(m_ResourceInstance);
+
 	CoUninitialize();
 
 	GdiplusShutdown(m_GDIplusToken);
@@ -3905,8 +3907,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					// Put Update notifications in the Tray menu
 					if (m_NewVersion)
 					{
-						std::wstring tmpSz;
-						InsertMenu(subMenu, 0, MF_BYPOSITION, ID_CONTEXT_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE, tmpSz));
+						InsertMenu(subMenu, 0, MF_BYPOSITION, ID_CONTEXT_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE));
 						HiliteMenuItem(Rainmeter->GetTrayWindow()->GetWindow(), subMenu, 0, MF_BYPOSITION | MF_HILITE);
 						InsertMenu(subMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 					}
@@ -4396,8 +4397,7 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	}
 	if (!bSuccess)
 	{
-		std::wstring error;
-		GetString(ID_STR_SETTINGSNOTWRITABLE, error);
+		std::wstring error = GetString(ID_STR_SETTINGSNOTWRITABLE);
 
 		if (!bDefaultIniLocation)
 		{

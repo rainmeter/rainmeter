@@ -218,17 +218,16 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = LoadIcon(Rainmeter->GetInstance(), MAKEINTRESOURCE(IDI_TRAY));
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	std::wstring tmpSz;
 	HWND item = GetDlgItem(m_Window, IDC_ABOUT_TAB);
 	TCITEM tci = {0};
 	tci.mask = TCIF_TEXT;
-	tci.pszText = GetString(ID_STR_LOG, tmpSz);
+	tci.pszText = GetString(ID_STR_LOG);
 	TabCtrl_InsertItem(item, 0, &tci);
-	tci.pszText = GetString(ID_STR_MEASURES, tmpSz);
+	tci.pszText = GetString(ID_STR_MEASURES);
 	TabCtrl_InsertItem(item, 1, &tci);
-	tci.pszText = GetString(ID_STR_PLUGINS, tmpSz);
+	tci.pszText = GetString(ID_STR_PLUGINS);
 	TabCtrl_InsertItem(item, 2, &tci);
-	tci.pszText = GetString(ID_STR_VERSION, tmpSz);
+	tci.pszText = GetString(ID_STR_VERSION);
 	TabCtrl_InsertItem(item, 3, &tci);
 
 	HINSTANCE instance = Rainmeter->GetResourceInstance();
@@ -369,21 +368,20 @@ void CDialogAbout::CTabLog::Initialize()
 
 	ListView_SetImageList(item, (WPARAM)hImageList, LVSIL_SMALL);
 
-	std::wstring tmpSz;
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
 	lvc.cx = 75;
-	lvc.pszText = GetString(ID_STR_TYPE, tmpSz);
+	lvc.pszText = GetString(ID_STR_TYPE);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = 85;
-	lvc.pszText = GetString(ID_STR_TIME, tmpSz);
+	lvc.pszText = GetString(ID_STR_TIME);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
 	lvc.cx = 370;
-	lvc.pszText = GetString(ID_STR_MESSAGE, tmpSz);
+	lvc.pszText = GetString(ID_STR_MESSAGE);
 	ListView_InsertColumn(item, 2, &lvc);
 
 	// Add stored entires
@@ -581,21 +579,20 @@ void CDialogAbout::CTabMeasures::Initialize()
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
 	ListView_SetExtendedListViewStyleEx(item, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
-	std::wstring tmpSz;
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
 	lvc.cx = 120;
-	lvc.pszText = GetString(ID_STR_NAME, tmpSz);
+	lvc.pszText = GetString(ID_STR_NAME);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = 90;
-	lvc.pszText = GetString(ID_STR_RANGE, tmpSz);
+	lvc.pszText = GetString(ID_STR_RANGE);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
 	lvc.cx = 130;
-	lvc.pszText = GetString(ID_STR_VALUE, tmpSz);
+	lvc.pszText = GetString(ID_STR_VALUE);
 	ListView_InsertColumn(item, 2, &lvc);
 
 	// Add entries for each config
@@ -863,21 +860,20 @@ void CDialogAbout::CTabPlugins::Initialize()
 	// Add columns to the list view
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTPLUGINS_ITEMS_LISTVIEW);
 
-	std::wstring tmpSz;
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
 	lvc.iSubItem = 0;
 	lvc.cx = 140;
-	lvc.pszText = GetString(ID_STR_NAME, tmpSz);
+	lvc.pszText = GetString(ID_STR_NAME);
 	ListView_InsertColumn(item, 0, &lvc);
 	lvc.iSubItem = 1;
 	lvc.cx = 80;
-	lvc.pszText = GetString(ID_STR_VERSION, tmpSz);
+	lvc.pszText = GetString(ID_STR_VERSION);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
 	lvc.cx = 310;
-	lvc.pszText = GetString(ID_STR_AUTHOR, tmpSz);
+	lvc.pszText = GetString(ID_STR_AUTHOR);
 	ListView_InsertColumn(item, 2, &lvc);
 
 	LVITEM vitem;
