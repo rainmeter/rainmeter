@@ -289,46 +289,46 @@ HRGN BitmapToRegion(HBITMAP hbm, COLORREF clrTransp, COLORREF clrTolerance, int 
 	return hRgn;
 }
 
-HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd)
-{
-	BOOL IsInAdminGroup = FALSE;
-
-	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
-	PSID AdministratorsGroup;
-	// Initialize SID.
-	if (!AllocateAndInitializeSid( &NtAuthority,
-		2,
-		SECURITY_BUILTIN_DOMAIN_RID,
-		DOMAIN_ALIAS_RID_ADMINS,
-		0, 0, 0, 0, 0, 0,
-		&AdministratorsGroup))
-	{
-		// Initializing SID Failed.
-		IsInAdminGroup = FALSE;
-	}
-	else
-	{
-		// Check whether the token is present in admin group.
-		if (!CheckTokenMembership( NULL,
-			AdministratorsGroup,
-			&IsInAdminGroup ))
-		{
-			// Error occurred.
-			IsInAdminGroup = FALSE;
-		}
-		// Free SID and return.
-		FreeSid(AdministratorsGroup);
-	}
-
-	if (IsInAdminGroup)
-	{
-		return ExecuteCommand(Owner, szCommand, nShowCmd, L"open");
-	}
-	else
-	{
-		return ExecuteCommand(Owner, szCommand, nShowCmd, L"runas");
-	}
-}
+//HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd)
+//{
+//	BOOL IsInAdminGroup = FALSE;
+//
+//	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+//	PSID AdministratorsGroup;
+//	// Initialize SID.
+//	if (!AllocateAndInitializeSid( &NtAuthority,
+//		2,
+//		SECURITY_BUILTIN_DOMAIN_RID,
+//		DOMAIN_ALIAS_RID_ADMINS,
+//		0, 0, 0, 0, 0, 0,
+//		&AdministratorsGroup))
+//	{
+//		// Initializing SID Failed.
+//		IsInAdminGroup = FALSE;
+//	}
+//	else
+//	{
+//		// Check whether the token is present in admin group.
+//		if (!CheckTokenMembership( NULL,
+//			AdministratorsGroup,
+//			&IsInAdminGroup ))
+//		{
+//			// Error occurred.
+//			IsInAdminGroup = FALSE;
+//		}
+//		// Free SID and return.
+//		FreeSid(AdministratorsGroup);
+//	}
+//
+//	if (IsInAdminGroup)
+//	{
+//		return ExecuteCommand(Owner, szCommand, nShowCmd, L"open");
+//	}
+//	else
+//	{
+//		return ExecuteCommand(Owner, szCommand, nShowCmd, L"runas");
+//	}
+//}
 
 HINSTANCE LSExecute(HWND Owner, LPCTSTR szCommand, int nShowCmd)
 {

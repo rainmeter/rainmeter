@@ -60,7 +60,7 @@ void LogWithArgs(int nLevel, const WCHAR* format, ... );	// Replacement for Debu
 void LogError(CError& error);
 
 HINSTANCE LSExecute(HWND Owner, LPCTSTR szCommand, int nShowCmd);
-HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd);
+//HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd);
 HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR szVerb);
 
 WCHAR* GetString(UINT id);

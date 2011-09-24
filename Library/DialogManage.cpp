@@ -922,20 +922,23 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_MANAGESKINS_EDIT_BUTTON:
 		{
-			std::wstring command = Rainmeter->GetConfigEditor() + L" \"";
-			command += Rainmeter->GetSkinPath();
-			command += m_SkinName;
+			std::wstring command = Rainmeter->GetSkinPath() + m_SkinName;
 			command += L"\\";
 			command += m_FileName;
+			HANDLE file = CreateFile(command.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+			command.insert(0, L" \"");
+			command.insert(0, Rainmeter->GetConfigEditor());
 			command += L"\"";
 
-			// If the skins are in the program folder start the editor as admin
-			if (Rainmeter->GetPath() + L"Skins\\" == Rainmeter->GetSkinPath())
+			if (file == INVALID_HANDLE_VALUE)
 			{
-				LSExecuteAsAdmin(NULL, command.c_str(), SW_SHOWNORMAL);
+				// File is in protected location, so execute as admin
+				ExecuteCommand(NULL, command.c_str(), SW_SHOWNORMAL, L"runas");
 			}
 			else
 			{
+				CloseHandle(file);
 				LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
 			}
 		}

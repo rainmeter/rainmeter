@@ -3621,20 +3621,23 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (wParam == ID_CONTEXT_SKINMENU_EDITSKIN)
 		{
-			std::wstring command = m_Rainmeter->GetConfigEditor() + L" \"";
-			command += m_SkinPath;
-			command += m_SkinName;
+			std::wstring command = m_SkinPath + m_SkinName;
 			command += L"\\";
 			command += m_SkinIniFile;
+			HANDLE file = CreateFile(command.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+			command.insert(0, L" \"");
+			command.insert(0, m_Rainmeter->GetConfigEditor());
 			command += L"\"";
 
-			// If the skins are in the program folder start the editor as admin
-			if (m_Rainmeter->GetPath() + L"Skins\\" == m_Rainmeter->GetSkinPath())
+			if (file == INVALID_HANDLE_VALUE)
 			{
-				LSExecuteAsAdmin(NULL, command.c_str(), SW_SHOWNORMAL);
+				// File is in protected location, so execute as admin
+				ExecuteCommand(NULL, command.c_str(), SW_SHOWNORMAL, L"runas");
 			}
 			else
 			{
+				CloseHandle(file);
 				LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
 			}
 		}
