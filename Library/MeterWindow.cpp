@@ -1478,7 +1478,7 @@ void CMeterWindow::SetOption(const WCHAR* arg, bool group)
 
 			for (std::list<CMeasure*>::const_iterator i = m_Measures.begin(); i != m_Measures.end(); ++i)
 			{
-				if ((*i)->BelongsToGroup(section) && dynamic_cast<CMeasurePlugin*>(*i) == NULL)
+				if ((*i)->BelongsToGroup(section))
 				{
 					// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
 					(*i)->SetDynamicVariables(true);
@@ -1515,7 +1515,7 @@ void CMeterWindow::SetOption(const WCHAR* arg, bool group)
 			}
 
 			CMeasure* measure = GetMeasure(section);
-			if (measure && dynamic_cast<CMeasurePlugin*>(measure) == NULL)
+			if (measure)
 			{
 				// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
 				measure->SetDynamicVariables(true);
