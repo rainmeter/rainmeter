@@ -97,9 +97,11 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	CMeasure::ReadConfig(parser, section);
 
-	// DynamicVariables is now disabled in MeasurePlugin due to a limitation of the re-initialization.
-	// Do not set m_DynamicVariables to "true".
-	m_DynamicVariables = false;
+	if (m_Initialized)
+	{
+		// DynamicVariables doesn't work with plugins, so stop here.
+		return;
+	}
 
 	m_PluginName = parser.ReadString(section, L"Plugin", L"");
 
@@ -183,8 +185,8 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		SetDllDirectory(L"");
 		CSystem::ResetWorkingDirectory();
 
-		std::wstring szMaxValue = parser.ReadString(section, L"MaxValue", L"NotSet");
-		if (szMaxValue == L"NotSet")
+		const std::wstring& szMaxValue = parser.ReadString(section, L"MaxValue", L"");
+		if (szMaxValue.empty())
 		{
 			m_MaxValue = maxValue;
 		}
