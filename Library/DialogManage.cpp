@@ -254,12 +254,12 @@ INT_PTR CDialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 			std::wstring command = Rainmeter->GetConfigEditor() + L" \"";
 			command += Rainmeter->GetIniFile();
 			command += L"\"";
-			LSExecute(Rainmeter->GetTrayWindow()->GetWindow(), command.c_str(), SW_SHOWNORMAL);
+			RunCommand(Rainmeter->GetTrayWindow()->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 		}
 		break;
 
 	case IDC_OPENLOG_BUTTON:
-		RainmeterAboutWide();
+		RainmeterAbout();
 		break;
 
 	case IDCLOSE:
@@ -925,7 +925,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			std::wstring command = Rainmeter->GetSkinPath() + m_SkinName;
 			command += L"\\";
 			command += m_FileName;
-			HANDLE file = CreateFile(command.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			HANDLE file = CreateFile(command.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 
 			command.insert(0, L" \"");
 			command.insert(0, Rainmeter->GetConfigEditor());
@@ -934,12 +934,12 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (file == INVALID_HANDLE_VALUE)
 			{
 				// File is in protected location, so execute as admin
-				ExecuteCommand(NULL, command.c_str(), SW_SHOWNORMAL, L"runas");
+				RunCommand(NULL, command.c_str(), SW_SHOWNORMAL, L"runas");
 			}
 			else
 			{
 				CloseHandle(file);
-				LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
+				RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
 			}
 		}
 		break;
@@ -1117,7 +1117,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			std::wstring command = L"\"" + Rainmeter->GetSkinPath();
 			command += GetTreeSelectionPath(tree);
 			command += L"\"";
-			LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
+			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
 		}
 		break;
 
@@ -1540,7 +1540,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			command += L"Themes\\";
 			command += themes[sel];
 			command += L"\\Rainmeter.thm\"";
-			LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
+			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
 		}
 		break;
 
@@ -1586,7 +1586,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			std::wstring command = L"\"" + Rainmeter->GetAddonPath();
 			command += L"RainBackup\\RainBackup.exe\"";
-			LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
+			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
 		}
 		break;
 
@@ -1669,7 +1669,7 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDC_MANAGESETTINGS_SHOWLOGFILE_BUTTON:
 		{
 			std::wstring command = Rainmeter->GetLogViewer() + Rainmeter->GetLogFile();
-			LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
+			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
 		}
 		break;
 

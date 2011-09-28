@@ -1064,7 +1064,7 @@ INT_PTR CDialogAbout::CTabVersion::OnNotify(WPARAM wParam, LPARAM lParam)
 	switch (nm->code)
 	{
 	case NM_CLICK:
-		LSExecute(NULL, ((PNMLINK)lParam)->item.szUrl, SW_SHOWNORMAL);
+		RunCommand(NULL, ((PNMLINK)lParam)->item.szUrl, SW_SHOWNORMAL);
 		break;
 
 	default:

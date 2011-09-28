@@ -645,19 +645,6 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		}
 	}
 
-	// Check Litestep vars
-	if (Rainmeter && !Rainmeter->GetDummyLitestep())
-	{
-		std::string ansi = ConvertToAscii(result.c_str());
-		if (ansi.size() < 4096)
-		{
-			char* buffer = new char[4096];	// lets hope the buffer is large enough...
-			VarExpansion(buffer, ansi.c_str());
-			result = ConvertToWide(buffer);
-			delete [] buffer;
-		}
-	}
-
 	SetBuiltInVariable(L"CURRENTSECTION", section);  // Set temporarily
 
 	if (ReplaceVariables(result))
@@ -1051,11 +1038,11 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 
 	if (temporary)
 	{
-		if (CRainmeter::GetDebug()) LogWithArgs(LOG_DEBUG, L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
+		if (Rainmeter->GetDebug()) LogWithArgs(LOG_DEBUG, L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
 	}
 	else
 	{
-		if (CRainmeter::GetDebug()) LogWithArgs(LOG_DEBUG, L"Reading file: %s", iniFile.c_str());
+		if (Rainmeter->GetDebug()) LogWithArgs(LOG_DEBUG, L"Reading file: %s", iniFile.c_str());
 		iniRead = iniFile;
 	}
 

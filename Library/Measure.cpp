@@ -433,7 +433,6 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 	return ret;
 }
 
-
 /*
 ** PreUpdate
 **

@@ -99,11 +99,6 @@ void CSystem::Initialize(HINSTANCE instance)
 		instance,
 		NULL);
 
-#ifndef _WIN64
-	SetWindowLong(c_Window, GWL_USERDATA, magicDWord);
-	SetWindowLong(c_HelperWindow, GWL_USERDATA, magicDWord);
-#endif
-
 	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 	SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 
@@ -172,7 +167,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 	info.cbSize = sizeof(MONITORINFOEX);
 	GetMonitorInfo(hMonitor, &info);
 
-	if (CRainmeter::GetDebug())
+	if (Rainmeter->GetDebug())
 	{
 		Log(LOG_DEBUG, info.szDevice);
 		LogWithArgs(LOG_DEBUG, L"  Flags    : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
@@ -256,7 +251,7 @@ size_t CSystem::GetMonitorCount()
 void CSystem::SetMultiMonitorInfo()
 {
 	std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
-	bool logging = CRainmeter::GetDebug();
+	bool logging = Rainmeter->GetDebug();
 
 	c_Monitors.vsT = GetSystemMetrics(SM_YVIRTUALSCREEN);
 	c_Monitors.vsL = GetSystemMetrics(SM_XVIRTUALSCREEN);
@@ -532,7 +527,7 @@ void CSystem::UpdateWorkareaInfo()
 
 			monitors[i].work = info.rcWork;
 
-			if (CRainmeter::GetDebug())
+			if (Rainmeter->GetDebug())
 			{
 				LogWithArgs(LOG_DEBUG, L"WorkArea@%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 					(int)i + 1,
@@ -651,7 +646,7 @@ bool CSystem::BelongToSameProcess(HWND hwndA, HWND hwndB)
 */
 BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
-	bool logging = CRainmeter::GetDebug() && DEBUG_VERBOSE;
+	bool logging = Rainmeter->GetDebug() && DEBUG_VERBOSE;
 	WCHAR className[64];
 	CMeterWindow* Window;
 	WCHAR flag;
@@ -703,7 +698,7 @@ void CSystem::ChangeZPosInOrder()
 {
 	if (Rainmeter)
 	{
-		bool logging = CRainmeter::GetDebug() && DEBUG_VERBOSE;
+		bool logging = Rainmeter->GetDebug() && DEBUG_VERBOSE;
 		std::vector<CMeterWindow*> windowsInZOrder;
 
 		if (logging) Log(LOG_DEBUG, L"1: ----- BEFORE -----");
@@ -752,7 +747,7 @@ void CSystem::ChangeZPosInOrder()
 */
 void CSystem::PrepareHelperWindow(HWND WorkerW)
 {
-	bool logging = CRainmeter::GetDebug() && DEBUG_VERBOSE;
+	bool logging = Rainmeter->GetDebug() && DEBUG_VERBOSE;
 
 	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);  // always on bottom
 
@@ -837,7 +832,7 @@ bool CSystem::CheckDesktopState(HWND WorkerW)
 	{
 		c_ShowDesktop = !c_ShowDesktop;
 
-		if (CRainmeter::GetDebug())
+		if (Rainmeter->GetDebug())
 		{
 			LogWithArgs(LOG_DEBUG, L"System: \"Show %s\" has been detected.",
 				c_ShowDesktop ? L"desktop" : L"open windows");
@@ -1049,36 +1044,28 @@ ULONGLONG CSystem::GetTickCount64()
 **
 ** This function is a wrapper function for LoadLibrary().
 **
-** Avoids loading a DLL from current directory.
 **
 */
 HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError, bool ignoreErrors)
 {
-	HMODULE hLib = NULL;
-	DWORD err;
 	UINT oldMode;
-
 	if (ignoreErrors)
 	{
 		oldMode = SetErrorMode(0);
 		SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
 	}
 
-	// Remove current directory from DLL search path
-	SetDllDirectory(L"");
-
 	SetLastError(ERROR_SUCCESS);
-	hLib = LoadLibrary(lpLibFileName);
-	err = GetLastError();
+	HMODULE hLib = LoadLibrary(lpLibFileName);
+
+	if (dwError)
+	{
+		*dwError = GetLastError();
+	}
 
 	if (ignoreErrors)
 	{
 		SetErrorMode(oldMode);  // Reset
-	}
-
-	if (dwError)
-	{
-		*dwError = err;
 	}
 
 	return hLib;

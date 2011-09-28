@@ -24,36 +24,6 @@
 
 extern CRainmeter* Rainmeter;
 
-typedef BOOL (*FPADDBANGCOMMAND)(LPCSTR command, BangCommand f);
-FPADDBANGCOMMAND fpAddBangCommand = NULL;
-
-typedef HRGN (*FPBITMAPTOREGION)(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF cTolerance, int xoffset, int yoffset);
-FPBITMAPTOREGION fpBitmapToRegion = NULL;
-
-typedef HWND (*FPGETLITESTEPWND)(void);
-FPGETLITESTEPWND fpGetLitestepWnd = NULL;
-
-typedef BOOL (*FPGETRCSTRING)(LPCSTR lpKeyName, LPSTR value, LPCSTR defStr, int maxLen);
-FPGETRCSTRING fpGetRCString = NULL;
-
-//typedef int (*FPGETRCINT)(LPCSTR lpKeyName, int nDefault);
-//FPGETRCINT fpGetRCInt = NULL;
-
-typedef HINSTANCE (*FPLSEXECUTE)(HWND Owner, LPCSTR szCommand, int nShowCmd);
-FPLSEXECUTE fpLSExecute = NULL;
-
-typedef BOOL (*FPREMOVEBANGCOMMAND)(LPCSTR command);
-FPREMOVEBANGCOMMAND fpRemoveBangCommand = NULL;
-
-//typedef void (*FPTRANSPARENTBLTLS)(HDC dc, int nXDest, int nYDest, int nWidth, int nHeight, HDC tempDC, int nXSrc, int nYSrc, COLORREF colorTransparent);
-//FPTRANSPARENTBLTLS fpTransparentBltLS = NULL;
-
-typedef void (*FPVAREXPANSION)(LPSTR buffer, LPCSTR value);
-FPVAREXPANSION fpVarExpansion = NULL;
-
-typedef BOOL (WINAPI *FPLSLOG)(int nLevel, LPCSTR pszModule, LPCSTR pszMessage);
-FPLSLOG fpLSLog = NULL;
-
 static CRITICAL_SECTION g_CsLog = {0};
 static CRITICAL_SECTION g_CsLogDelay = {0};
 
@@ -68,25 +38,6 @@ void InitalizeLitestep()
 {
 	InitializeCriticalSection(&g_CsLog);
 	InitializeCriticalSection(&g_CsLogDelay);
-
-	if (!CRainmeter::GetDummyLitestep())
-	{
-		// Use lsapi's methods instead of the stubs
-		HINSTANCE h = CSystem::RmLoadLibrary(L"lsapi.dll");
-		if (h != NULL)
-		{
-			fpAddBangCommand = (FPADDBANGCOMMAND)GetProcAddress(h, "AddBangCommand");
-			fpBitmapToRegion = (FPBITMAPTOREGION)GetProcAddress(h, "BitmapToRegion");
-			fpGetLitestepWnd = (FPGETLITESTEPWND)GetProcAddress(h, "GetLitestepWnd");
-			fpGetRCString = (FPGETRCSTRING)GetProcAddress(h, "GetRCString");
-			//fpGetRCInt = (FPGETRCINT)GetProcAddress(h, "GetRCInt");
-			fpLSExecute = (FPLSEXECUTE)GetProcAddress(h, "LSExecute");
-			fpRemoveBangCommand = (FPREMOVEBANGCOMMAND)GetProcAddress(h, "RemoveBangCommand");
-			//fpTransparentBltLS = (FPTRANSPARENTBLTLS)GetProcAddress(h, "TransparentBltLS");
-			fpVarExpansion = (FPVAREXPANSION)GetProcAddress(h, "VarExpansion");
-			fpLSLog = (FPLSLOG)GetProcAddress(h, "_LSLog@12");
-		}
-	}
 }
 
 void FinalizeLitestep()
@@ -95,73 +46,8 @@ void FinalizeLitestep()
 	DeleteCriticalSection(&g_CsLogDelay);
 }
 
-BOOL AddBangCommand(LPCSTR command, BangCommand f)
-{
-	// Use the lsapi.dll version of the method if possible
-	if (fpAddBangCommand) return fpAddBangCommand(command, f);
-
-	// The stub implementation
-	return true;
-}
-
-HWND GetLitestepWnd(void)
-{
-	// Use the lsapi.dll version of the method if possible
-	if (fpGetLitestepWnd) return fpGetLitestepWnd();
-
-	// The stub implementation
-	return NULL;
-}
-
-BOOL RemoveBangCommand(LPCSTR command)
-{
-	// Use the lsapi.dll version of the method if possible
-	if (fpRemoveBangCommand) return fpRemoveBangCommand(command);
-
-	// The stub implementation
-	return true;
-}
-
-BOOL GetRCString(LPCSTR lpKeyName, LPSTR value, LPCSTR defStr, int maxLen)
-{
-	// Use the lsapi.dll version of the method if possible
-	if (fpGetRCString) return fpGetRCString(lpKeyName, value, defStr, maxLen);
-
-	// The stub implementation
-	return false;
-}
-
-//int GetRCInt(LPCSTR lpKeyName, int nDefault)
-//{
-//	// Use the lsapi.dll version of the method if possible
-//	if (fpGetRCInt) return fpGetRCInt(lpKeyName, nDefault);
-//
-//	// The stub implementation
-//	return nDefault;
-//}
-
-void VarExpansion(LPSTR buffer, LPCSTR value)
-{
-	// Use the lsapi.dll version of the method if possible
-	if (fpVarExpansion)
-	{
-		fpVarExpansion(buffer, value);
-	}
-	else
-	{
-		// The stub implementation
-		if (buffer != value)
-		{
-			strcpy(buffer, value);
-		}
-	}
-}
-
 HRGN BitmapToRegion(HBITMAP hbm, COLORREF clrTransp, COLORREF clrTolerance, int xoffset, int yoffset)
 {
-	// Use the lsapi.dll version of the method if possible
-	if (fpBitmapToRegion) return fpBitmapToRegion(hbm, clrTransp, clrTolerance, xoffset, yoffset);
-
 	// start with a completely transparent rgn
 	// this is more correct as no bmp, should render a transparent background
 	HRGN hRgn = CreateRectRgn(0, 0, 0, 0);
@@ -289,70 +175,17 @@ HRGN BitmapToRegion(HBITMAP hbm, COLORREF clrTransp, COLORREF clrTolerance, int 
 	return hRgn;
 }
 
-//HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd)
-//{
-//	BOOL IsInAdminGroup = FALSE;
-//
-//	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
-//	PSID AdministratorsGroup;
-//	// Initialize SID.
-//	if (!AllocateAndInitializeSid( &NtAuthority,
-//		2,
-//		SECURITY_BUILTIN_DOMAIN_RID,
-//		DOMAIN_ALIAS_RID_ADMINS,
-//		0, 0, 0, 0, 0, 0,
-//		&AdministratorsGroup))
-//	{
-//		// Initializing SID Failed.
-//		IsInAdminGroup = FALSE;
-//	}
-//	else
-//	{
-//		// Check whether the token is present in admin group.
-//		if (!CheckTokenMembership( NULL,
-//			AdministratorsGroup,
-//			&IsInAdminGroup ))
-//		{
-//			// Error occurred.
-//			IsInAdminGroup = FALSE;
-//		}
-//		// Free SID and return.
-//		FreeSid(AdministratorsGroup);
-//	}
-//
-//	if (IsInAdminGroup)
-//	{
-//		return ExecuteCommand(Owner, szCommand, nShowCmd, L"open");
-//	}
-//	else
-//	{
-//		return ExecuteCommand(Owner, szCommand, nShowCmd, L"runas");
-//	}
-//}
-
-HINSTANCE LSExecute(HWND Owner, LPCTSTR szCommand, int nShowCmd)
-{
-	// Use the lsapi.dll version of the method if possible
-	if (fpLSExecute)
-	{
-		std::string asc = ConvertToAscii(szCommand);
-		return fpLSExecute(Owner, asc.c_str(), nShowCmd);
-	}
-
-	return ExecuteCommand(Owner, szCommand, nShowCmd, L"open");
-}
-
-HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR szVerb)
+void RunCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, bool asAdmin)
 {
 	// The stub implementation (some of this code is taken from lsapi.cpp)
-	if (szCommand == NULL || *szCommand == 0) return NULL;
+	if (szCommand == NULL || *szCommand == 0) return;
 
 	std::wstring args;
 	std::wstring command = szCommand;
 
 	size_t notwhite = command.find_first_not_of(L" \t\r\n");
 	command.erase(0, notwhite);
-	if (command.empty()) return NULL;
+	if (command.empty()) return;
 
 	size_t quotePos = command.find(L'"');
 	if (quotePos == 0)
@@ -380,11 +213,12 @@ HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR sz
 
 	if (!command.empty())
 	{
+		LPCWSTR szVerb = asAdmin ? L"runas" : L"open";
 		DWORD type = GetFileAttributes(command.c_str());
 		if (type & FILE_ATTRIBUTE_DIRECTORY && type != 0xFFFFFFFF)
 		{
-			HINSTANCE instance = ShellExecute(Owner, szVerb, command.c_str(), NULL, NULL, nShowCmd ? nShowCmd : SW_SHOWNORMAL);
-			return instance;
+			ShellExecute(Owner, szVerb, command.c_str(), NULL, NULL, nShowCmd ? nShowCmd : SW_SHOWNORMAL);
+			return;
 		}
 
 		std::wstring dir = CRainmeter::ExtractPath(command);
@@ -398,11 +232,6 @@ HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR sz
 		si.nShow = nShowCmd ? nShowCmd : SW_SHOWNORMAL;
 		si.fMask = SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI;
 		ShellExecuteEx(&si);
-		return si.hInstApp;
-	}
-	else
-	{
-		return (HINSTANCE)SE_ERR_FNF;
 	}
 }
 
@@ -556,10 +385,7 @@ BOOL LogInternal(int nLevel, LPCTSTR pszModule, ULONGLONG elapsed, LPCTSTR pszMe
 	WCHAR buffer[128];
 	_snwprintf_s(buffer, _TRUNCATE, L"%02llu:%02llu:%02llu.%03llu", elapsed / (1000 * 60 * 60), (elapsed / (1000 * 60)) % 60, (elapsed / 1000) % 60, elapsed % 1000);
 
-	if (Rainmeter)
-	{
-		Rainmeter->AddAboutLogInfo(nLevel, buffer, pszMessage);
-	}
+	Rainmeter->AddAboutLogInfo(nLevel, buffer, pszMessage);
 
 	std::wstring message = L"(";
 	message += buffer;
@@ -571,16 +397,8 @@ BOOL LogInternal(int nLevel, LPCTSTR pszModule, ULONGLONG elapsed, LPCTSTR pszMe
 	_RPT0(_CRT_WARN, "\n");
 #endif
 
-	// Use the lsapi.dll version of the method if possible
-	if (fpLSLog)
-	{
-		std::string asc = ConvertToAscii(message.c_str());
-		std::string mod = ConvertToAscii(pszModule);
-		return fpLSLog(nLevel, mod.c_str(), asc.c_str());
-	}
-
 	// The stub implementation
-	if (Rainmeter && Rainmeter->GetLogging())
+	if (Rainmeter->GetLogging())
 	{
 		std::wstring logfile = Rainmeter->GetLogFile();
 		if (logFound == 0)

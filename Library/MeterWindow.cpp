@@ -269,10 +269,6 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 		throw CError(L"Unable to register window!", __LINE__, __FILE__);
 	}
 
-#ifndef _WIN64
-	SetWindowLong(m_Window, GWL_USERDATA, magicDWord);
-#endif
-
 	setlocale(LC_NUMERIC, "C");
 
 	// Mark the window to ignore the Aero peek
@@ -876,33 +872,6 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			m_AlphaValue = max(m_AlphaValue, 0);
 			m_AlphaValue = min(m_AlphaValue, 255);
 			UpdateTransparency(m_AlphaValue, false);
-		}
-		break;
-
-	case BANG_LSHOOK:
-		{
-			pos = wcsrchr(arg, L' ');
-			if (pos != NULL)
-			{
-#ifdef _WIN64
-				HWND hWnd = (HWND)_wtoi64(pos);
-#else
-				HWND hWnd = (HWND)_wtoi(pos);
-#endif
-				if (hWnd)
-				{
-					// Disable native transparency
-					m_NativeTransparency = false;
-					UpdateTransparency(m_AlphaValue, true);
-					SetWindowLong(m_Window, GWL_STYLE, (GetWindowLong(m_Window, GWL_STYLE) &~ WS_POPUP) | WS_CHILD);
-					SetParent(m_Window, hWnd);
-					m_ChildWindow = true;
-				}
-			}
-			else
-			{
-				LogWithArgs(LOG_ERROR, L"!LsBoxHook: Invalid parameters (%s)", arg);
-			}
 		}
 		break;
 
@@ -1919,21 +1888,6 @@ void CMeterWindow::ReadConfig()
 		m_WindowY = parser.ReadString(section, L"WindowY", m_WindowY.c_str());
 		m_AnchorX = parser.ReadString(section, L"AnchorX", m_AnchorX.c_str());
 		m_AnchorY = parser.ReadString(section, L"AnchorY", m_AnchorY.c_str());
-
-		if (!m_Rainmeter->GetDummyLitestep())
-		{
-			char* tmpSz = new char[MAX_LINE_LENGTH];
-			// Check if step.rc has overrides these values
-			if (GetRCString("RainmeterWindowX", tmpSz, ConvertToAscii(m_WindowX.c_str()).c_str(), MAX_LINE_LENGTH - 1))
-			{
-				m_WindowX = ConvertToWide(tmpSz);
-			}
-			if (GetRCString("RainmeterWindowY", tmpSz, ConvertToAscii(m_WindowY.c_str()).c_str(), MAX_LINE_LENGTH - 1))
-			{
-				m_WindowY = ConvertToWide(tmpSz);
-			}
-			delete [] tmpSz;
-		}
 
 		// Check if the window position should be read as a formula
 		double value;
@@ -3624,7 +3578,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			std::wstring command = m_SkinPath + m_SkinName;
 			command += L"\\";
 			command += m_SkinIniFile;
-			HANDLE file = CreateFile(command.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			HANDLE file = CreateFile(command.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 
 			command.insert(0, L" \"");
 			command.insert(0, m_Rainmeter->GetConfigEditor());
@@ -3633,12 +3587,12 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (file == INVALID_HANDLE_VALUE)
 			{
 				// File is in protected location, so execute as admin
-				ExecuteCommand(NULL, command.c_str(), SW_SHOWNORMAL, L"runas");
+				RunCommand(NULL, command.c_str(), SW_SHOWNORMAL, true);
 			}
 			else
 			{
 				CloseHandle(file);
-				LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
+				RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
 			}
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_REFRESH)
@@ -3650,7 +3604,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			std::wstring command = L"\"" + m_SkinPath;
 			command += m_SkinName;
 			command += L"\"";
-			LSExecute(NULL, command.c_str(), SW_SHOWNORMAL);
+			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_MANAGESKIN)
 		{

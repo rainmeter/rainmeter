@@ -123,7 +123,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	if (m_Plugin == NULL)
 	{
-		if (CRainmeter::GetDebug())
+		if (Rainmeter->GetDebug())
 		{
 			LogWithArgs(LOG_ERROR, L"Plugin: Unable to load \"%s\" (%u)", m_PluginName.c_str(), err);
 		}
@@ -140,7 +140,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 			if (m_Plugin == NULL)
 			{
-				if (CRainmeter::GetDebug())
+				if (Rainmeter->GetDebug())
 				{
 					LogWithArgs(LOG_ERROR, L"Plugin: Unable to load \"%s\" (%u)", pluginName.c_str(), err);
 				}
@@ -175,14 +175,9 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_ID = id++;
 	if (InitializeFunc)
 	{
-		// Remove current directory from DLL search path
-		SetDllDirectory(L"");
-
 		double maxValue;
 		maxValue = InitializeFunc(m_Plugin, parser.GetFilename().c_str(), section, m_ID);
 
-		// Reset to default
-		SetDllDirectory(L"");
 		CSystem::ResetWorkingDirectory();
 
 		const std::wstring& szMaxValue = parser.ReadString(section, L"MaxValue", L"");

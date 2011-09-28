@@ -35,9 +35,6 @@ using namespace Gdiplus;
 
 CRainmeter* Rainmeter; // The module
 
-bool CRainmeter::c_DummyLitestep = false;
-std::wstring CRainmeter::c_CmdLine;
-
 /*
 ** ParseString
 **
@@ -138,61 +135,6 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 }
 
 /*
-** initModuleEx
-**
-** This is called when the plugin is initialized
-**
-*/
-int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath)
-{
-	int result = 1;
-
-	try
-	{
-		Rainmeter = new CRainmeter;
-
-		if (Rainmeter)
-		{
-			result = Rainmeter->Initialize(ParentWnd, dllInst, szPath);
-		}
-	}
-	catch (CError& error)
-	{
-		MessageBox(ParentWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-	}
-
-	return result;
-}
-
-/*
-** quitModule
-**
-** This is called when the plugin quits.
-**
-*/
-void quitModule(HINSTANCE dllInst)
-{
-	if (Rainmeter)
-	{
-		Rainmeter->Quit(dllInst);
-		delete Rainmeter;
-		Rainmeter = NULL;
-	}
-}
-
-/*
-** Initialize
-**
-** Init Rainmeter
-**
-*/
-void Initialize(bool DummyLS, LPCTSTR CmdLine)
-{
-	CRainmeter::SetDummyLitestep(DummyLS);
-	CRainmeter::SetCommandLine(CmdLine);
-}
-
-/*
 ** ExecuteBang
 **
 ** Runs a bang command. This is called from the main application
@@ -201,7 +143,7 @@ void Initialize(bool DummyLS, LPCTSTR CmdLine)
 */
 void ExecuteBang(LPCTSTR szBang)
 {
-	if (Rainmeter && szBang)
+	if (szBang)
 	{
 		// ExecuteBang needs to be delayed since it crashes if done during processing.
 		// The receiver must free a given string buffer (lParam) by using free().
@@ -409,15 +351,7 @@ void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 
 				if (meterWindow)
 				{
-					if (bang == BANG_LSHOOK)
-					{
-						// LsHook is a special case
-						meterWindow->RunBang(bang, arg);
-					}
-					else
-					{
-						meterWindow->RunBang(bang, argument.c_str());
-					}
+					meterWindow->RunBang(bang, argument.c_str());
 				}
 				else
 				{
@@ -481,819 +415,13 @@ void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 	}
 }
 
-
-// -----------------------------------------------------------------------------------------------
-//
-//                                Callbacks for Litestep
-//
-// -----------------------------------------------------------------------------------------------
-
-/*
-** RainmeterHide
-**
-** Callback for the !RainmeterHide bang
-**
-*/
-void RainmeterHide(HWND, const char* arg)
-{
-	BangWithArgs(BANG_HIDE, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterShow
-**
-** Callback for the !RainmeterShow bang
-**
-*/
-void RainmeterShow(HWND, const char* arg)
-{
-	BangWithArgs(BANG_SHOW, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterToggle
-**
-** Callback for the !RainmeterToggle bang
-**
-*/
-void RainmeterToggle(HWND, const char* arg)
-{
-	BangWithArgs(BANG_TOGGLE, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterHideFade
-**
-** Callback for the !RainmeterHideFade bang
-**
-*/
-void RainmeterHideFade(HWND, const char* arg)
-{
-	BangWithArgs(BANG_HIDEFADE, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterShowFade
-**
-** Callback for the !RainmeterShowFade bang
-**
-*/
-void RainmeterShowFade(HWND, const char* arg)
-{
-	BangWithArgs(BANG_SHOWFADE, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterToggleFade
-**
-** Callback for the !RainmeterToggleFade bang
-**
-*/
-void RainmeterToggleFade(HWND, const char* arg)
-{
-	BangWithArgs(BANG_TOGGLEFADE, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterHideBlur
-**
-** Callback for the !RainmeterHideBlur bang
-**
-*/
-void RainmeterHideBlur(HWND, const char* arg)
-{
-	BangWithArgs(BANG_HIDEBLUR, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterShowBlur
-**
-** Callback for the !RainmeterShowBlur bang
-**
-*/
-void RainmeterShowBlur(HWND, const char* arg)
-{
-	BangWithArgs(BANG_SHOWBLUR, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterToggleBlur
-**
-** Callback for the !RainmeterToggleBlur bang
-**
-*/
-void RainmeterToggleBlur(HWND, const char* arg)
-{
-	BangWithArgs(BANG_TOGGLEBLUR, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterAddBlur
-**
-** Callback for the !RainmeterAddBlur bang
-**
-*/
-void RainmeterAddBlur(HWND, const char* arg)
-{
-	BangWithArgs(BANG_ADDBLUR, ConvertToWide(arg).c_str(), 1);
-}
-
-
-/*
-** RainmeterRemoveBlur
-**
-** Callback for the !RainmeterRemoveBlur bang
-**
-*/
-void RainmeterRemoveBlur(HWND, const char* arg)
-{
-	BangWithArgs(BANG_REMOVEBLUR, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterHideMeter
-**
-** Callback for the !RainmeterHideMeter bang
-**
-*/
-void RainmeterHideMeter(HWND, const char* arg)
-{
-	BangWithArgs(BANG_HIDEMETER, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterShowMeter
-**
-** Callback for the !RainmeterShowMeter bang
-**
-*/
-void RainmeterShowMeter(HWND, const char* arg)
-{
-	BangWithArgs(BANG_SHOWMETER, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterToggleMeter
-**
-** Callback for the !RainmeterToggleMeter bang
-**
-*/
-void RainmeterToggleMeter(HWND, const char* arg)
-{
-	BangWithArgs(BANG_TOGGLEMETER, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterMoveMeter
-**
-** Callback for the !RainmeterMoveMeter bang
-**
-*/
-void RainmeterMoveMeter(HWND, const char* arg)
-{
-	BangWithArgs(BANG_MOVEMETER, ConvertToWide(arg).c_str(), 3);
-}
-
-/*
-** RainmeterUpdateMeter
-**
-** Callback for the !RainmeterUpdateMeter bang
-**
-*/
-void RainmeterUpdateMeter(HWND, const char* arg)
-{
-	BangWithArgs(BANG_UPDATEMETER, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterDisableMeasure
-**
-** Callback for the !RainmeterDisableMeasure bang
-**
-*/
-void RainmeterDisableMeasure(HWND, const char* arg)
-{
-	BangWithArgs(BANG_DISABLEMEASURE, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterEnableMeasure
-**
-** Callback for the !RainmeterEnableMeasure bang
-**
-*/
-void RainmeterEnableMeasure(HWND, const char* arg)
-{
-	BangWithArgs(BANG_ENABLEMEASURE, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterToggleMeasure
-**
-** Callback for the !RainmeterToggleMeasure bang
-**
-*/
-void RainmeterToggleMeasure(HWND, const char* arg)
-{
-	BangWithArgs(BANG_TOGGLEMEASURE, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterUpdateMeasure
-**
-** Callback for the !RainmeterUpdateMeasure bang
-**
-*/
-void RainmeterUpdateMeasure(HWND, const char* arg)
-{
-	BangWithArgs(BANG_UPDATEMEASURE, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterCommandMeasure
-**
-** Callback for the !RainmeterCommandMeasure bang
-**
-*/
-void RainmeterCommandMeasure(HWND, const char* arg)
-{
-	BangWithArgs(BANG_COMMANDMEASURE, ConvertToWide(arg).c_str(), 2);
-}
-
-/*
-** RainmeterRefresh
-**
-** Callback for the !RainmeterRefresh bang
-**
-*/
-void RainmeterRefresh(HWND, const char* arg)
-{
-	BangWithArgs(BANG_REFRESH, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterRefreshApp
-**
-** Callback for the !RainmeterRefreshApp bang
-**
-*/
-void RainmeterRefreshApp(HWND, const char* arg)
-{
-	RainmeterRefreshAppWide();
-}
-
-/*
-** RainmeterRedraw
-**
-** Callback for the !RainmeterRedraw bang
-**
-*/
-void RainmeterRedraw(HWND, const char* arg)
-{
-	BangWithArgs(BANG_REDRAW, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterUpdate
-**
-** Callback for the !RainmeterUpdate bang
-**
-*/
-void RainmeterUpdate(HWND, const char* arg)
-{
-	BangWithArgs(BANG_UPDATE, ConvertToWide(arg).c_str(), 0);
-}
-
 /*
 ** RainmeterActivateConfig
 **
 ** Callback for the !RainmeterActivateConfig bang
 **
 */
-void RainmeterActivateConfig(HWND, const char* arg)
-{
-	RainmeterActivateConfigWide(ConvertToWide(arg).c_str());
-}
-
-/*
-** RainmeterDeactivateConfig
-**
-** Callback for the !RainmeterDeactivateConfig bang
-**
-*/
-void RainmeterDeactivateConfig(HWND, const char* arg)
-{
-	RainmeterDeactivateConfigWide(ConvertToWide(arg).c_str());
-}
-
-/*
-** RainmeterToggleConfig
-**
-** Callback for the !RainmeterToggleConfig bang
-**
-*/
-void RainmeterToggleConfig(HWND, const char* arg)
-{
-	RainmeterToggleConfigWide(ConvertToWide(arg).c_str());
-}
-
-/*
-** RainmeterMove
-**
-** Callback for the !RainmeterMove bang
-**
-*/
-void RainmeterMove(HWND, const char* arg)
-{
-	BangWithArgs(BANG_MOVE, ConvertToWide(arg).c_str(), 2);
-}
-
-/*
-** RainmeterZPos
-**
-** Callback for the !RainmeterZPos bang
-**
-*/
-void RainmeterZPos(HWND, const char* arg)
-{
-	BangWithArgs(BANG_ZPOS, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterClickThrough
-**
-** Callback for the !RainmeterClickThrough bang
-**
-*/
-void RainmeterClickThrough(HWND, const char* arg)
-{
-	BangWithArgs(BANG_CLICKTHROUGH, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterDraggable
-**
-** Callback for the !RainmeterDraggable bang
-**
-*/
-void RainmeterDraggable(HWND, const char* arg)
-{
-	BangWithArgs(BANG_DRAGGABLE, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterSnapEdges
-**
-** Callback for the !RainmeterSnapEdges bang
-**
-*/
-void RainmeterSnapEdges(HWND, const char* arg)
-{
-	BangWithArgs(BANG_SNAPEDGES, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterKeepOnScreen
-**
-** Callback for the !RainmeterKeepOnScreen bang
-**
-*/
-void RainmeterKeepOnScreen(HWND, const char* arg)
-{
-	BangWithArgs(BANG_KEEPONSCREEN, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterSetTransparency
-**
-** Callback for the !RainmeterSetTransparency bang
-**
-*/
-void RainmeterSetTransparency(HWND, const char* arg)
-{
-	BangWithArgs(BANG_SETTRANSPARENCY, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterSetVariable
-**
-** Callback for the !RainmeterSetVariable bang
-**
-*/
-void RainmeterSetVariable(HWND, const char* arg)
-{
-	BangWithArgs(BANG_SETVARIABLE, ConvertToWide(arg).c_str(), 2);
-}
-
-/*
-** RainmeterSetOption
-**
-** Callback for the !RainmeterSetOption bang
-**
-*/
-void RainmeterSetOption(HWND, const char* arg)
-{
-	BangWithArgs(BANG_SETOPTION, ConvertToWide(arg).c_str(), 3);
-}
-
-/*
-** RainmeterHideGroup
-**
-** Callback for the !RainmeterHideGroup bang
-**
-*/
-void RainmeterHideGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_HIDE, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterShowGroup
-**
-** Callback for the !RainmeterShowGroup bang
-**
-*/
-void RainmeterShowGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_SHOW, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterToggleGroup
-**
-** Callback for the !RainmeterToggleGroup bang
-**
-*/
-void RainmeterToggleGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_TOGGLE, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterHideFadeGroup
-**
-** Callback for the !RainmeterHideFadeGroup bang
-**
-*/
-void RainmeterHideFadeGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_HIDEFADE, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterShowFadeGroup
-**
-** Callback for the !RainmeterShowFadeGroup bang
-**
-*/
-void RainmeterShowFadeGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_SHOWFADE, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterToggleFadeGroup
-**
-** Callback for the !RainmeterToggleFadeGroup bang
-**
-*/
-void RainmeterToggleFadeGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_TOGGLEFADE, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterHideMeterGroup
-**
-** Callback for the !RainmeterHideMeterGroup bang
-**
-*/
-void RainmeterHideMeterGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_HIDEMETERGROUP, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterShowMeterGroup
-**
-** Callback for the !RainmeterShowMeterGroup bang
-**
-*/
-void RainmeterShowMeterGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_SHOWMETERGROUP, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterToggleMeterGroup
-**
-** Callback for the !RainmeterToggleMeterGroup bang
-**
-*/
-void RainmeterToggleMeterGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_TOGGLEMETERGROUP, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterUpdateMeterGroup
-**
-** Callback for the !RainmeterUpdateMeterGroup bang
-**
-*/
-void RainmeterUpdateMeterGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_UPDATEMETERGROUP, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterDisableMeasureGroup
-**
-** Callback for the !RainmeterDisableMeasureGroup bang
-**
-*/
-void RainmeterDisableMeasureGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_DISABLEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterEnableMeasureGroup
-**
-** Callback for the !RainmeterEnableMeasureGroup bang
-**
-*/
-void RainmeterEnableMeasureGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_ENABLEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterToggleMeasureGroup
-**
-** Callback for the !RainmeterToggleMeasureGroup bang
-**
-*/
-void RainmeterToggleMeasureGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_TOGGLEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterUpdateMeasureGroup
-**
-** Callback for the !RainmeterUpdateMeasureGroup bang
-**
-*/
-void RainmeterUpdateMeasureGroup(HWND, const char* arg)
-{
-	BangWithArgs(BANG_UPDATEMEASUREGROUP, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterRefreshGroup
-**
-** Callback for the !RainmeterRefreshGroup bang
-**
-*/
-void RainmeterRefreshGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_REFRESH, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterRedrawGroup
-**
-** Callback for the !RainmeterRedrawGroup bang
-**
-*/
-void RainmeterRedrawGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_REDRAW, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterUpdateGroup
-**
-** Callback for the !RainmeterUpdateGroup bang
-**
-*/
-void RainmeterUpdateGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_UPDATE, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterDeactivateConfigGroup
-**
-** Callback for the !RainmeterDeactivateConfigGroup bang
-**
-*/
-void RainmeterDeactivateConfigGroup(HWND, const char* arg)
-{
-	RainmeterDeactivateConfigGroupWide(ConvertToWide(arg).c_str());
-}
-
-/*
-** RainmeterZPosGroup
-**
-** Callback for the !RainmeterZPosGroup bang
-**
-*/
-void RainmeterZPosGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_ZPOS, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterClickThroughGroup
-**
-** Callback for the !RainmeterClickThroughGroup bang
-**
-*/
-void RainmeterClickThroughGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_CLICKTHROUGH, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterDraggableGroup
-**
-** Callback for the !RainmeterDraggableGroup bang
-**
-*/
-void RainmeterDraggableGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_DRAGGABLE, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterSnapEdgesGroup
-**
-** Callback for the !RainmeterSnapEdgesGroup bang
-**
-*/
-void RainmeterSnapEdgesGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_SNAPEDGES, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterKeepOnScreenGroup
-**
-** Callback for the !RainmeterKeepOnScreenGroup bang
-**
-*/
-void RainmeterKeepOnScreenGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_KEEPONSCREEN, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterSetTransparencyGroup
-**
-** Callback for the !RainmeterSetTransparencyGroup bang
-**
-*/
-void RainmeterSetTransparencyGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_SETTRANSPARENCY, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterSetVariableGroup
-**
-** Callback for the !RainmeterSetVariableGroup bang
-**
-*/
-void RainmeterSetVariableGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_SETVARIABLE, ConvertToWide(arg).c_str(), 2);
-}
-/*
-** RainmeterSetOptionGroup
-**
-** Callback for the !RainmeterSetOptionGroup bang
-**
-*/
-void RainmeterSetOptionGroup(HWND, const char* arg)
-{
-	BangGroupWithArgs(BANG_SETOPTION, ConvertToWide(arg).c_str(), 3);
-}
-
-/*
-** RainmeterLsHook
-**
-** Callback for the !RainmeterLsHook bang
-**
-*/
-void RainmeterLsHook(HWND, const char* arg)
-{
-	BangWithArgs(BANG_LSHOOK, ConvertToWide(arg).c_str(), 0);
-}
-
-/*
-** RainmeterAbout
-**
-** Callback for the !RainmeterAbout bang
-**
-*/
-void RainmeterAbout(HWND, const char* arg)
-{
-	RainmeterAboutWide(ConvertToWide(arg).c_str());
-}
-
-/*
-** RainmeterManage
-**
-** Callback for the !RainmeterManage bang
-**
-*/
-void RainmeterManage(HWND, const char* arg)
-{
-	RainmeterManageWide(ConvertToWide(arg).c_str());
-}
-
-/*
-** RainmeterSkinMenu
-**
-** Callback for the !RainmeterSkinMenu bang
-**
-*/
-void RainmeterSkinMenu(HWND, const char* arg)
-{
-	RainmeterSkinMenuWide(ConvertToWide(arg).c_str());
-}
-
-/*
-** RainmeterTrayMenu
-**
-** Callback for the !RainmeterTrayMenu bang
-**
-*/
-void RainmeterTrayMenu(HWND, const char* arg)
-{
-	RainmeterTrayMenuWide();
-}
-
-/*
-** RainmeterResetStats
-**
-** Callback for the !RainmeterResetStats bang
-**
-*/
-void RainmeterResetStats(HWND, const char* arg)
-{
-	RainmeterResetStatsWide();
-}
-
-/*
-** RainmeterWriteKeyValue
-**
-** Callback for the !RainmeterWriteKeyValue bang
-**
-*/
-void RainmeterWriteKeyValue(HWND, const char* arg)
-{
-	RainmeterWriteKeyValueWide(ConvertToWide(arg).c_str());
-}
-
-/*
-** RainmeterPluginBang
-**
-** Callback for the !RainmeterPluginBang bang
-**
-*/
-void RainmeterPluginBang(HWND, const char* arg)
-{
-	BangWithArgs(BANG_PLUGIN, ConvertToWide(arg).c_str(), 1);
-}
-
-/*
-** RainmeterQuit
-**
-** Callback for the !RainmeterQuit bang
-**
-*/
-void RainmeterQuit(HWND, const char* arg)
-{
-	RainmeterQuitWide();
-}
-
-
-// -----------------------------------------------------------------------------------------------
-//
-//                                Callbacks for Unicode support
-//
-// -----------------------------------------------------------------------------------------------
-
-/*
-** RainmeterActivateConfigWide
-**
-** Callback for the !RainmeterActivateConfig bang
-**
-*/
-void RainmeterActivateConfigWide(const WCHAR* arg)
+void RainmeterActivateConfig(const WCHAR* arg)
 {
 	if (Rainmeter)
 	{
@@ -1318,12 +446,12 @@ void RainmeterActivateConfigWide(const WCHAR* arg)
 }
 
 /*
-** RainmeterDeactivateConfigWide
+** RainmeterDeactivateConfig
 **
 ** Callback for the !RainmeterDeactivateConfig bang
 **
 */
-void RainmeterDeactivateConfigWide(const WCHAR* arg)
+void RainmeterDeactivateConfig(const WCHAR* arg)
 {
 	if (Rainmeter)
 	{
@@ -1347,12 +475,12 @@ void RainmeterDeactivateConfigWide(const WCHAR* arg)
 }
 
 /*
-** RainmeterToggleConfigWide
+** RainmeterToggleConfig
 **
 ** Callback for the !RainmeterToggleConfig bang
 **
 */
-void RainmeterToggleConfigWide(const WCHAR* arg)
+void RainmeterToggleConfig(const WCHAR* arg)
 {
 	if (Rainmeter)
 	{
@@ -1368,7 +496,7 @@ void RainmeterToggleConfigWide(const WCHAR* arg)
 			}
 
 			// If the config wasn't active, activate it
-			RainmeterActivateConfigWide(arg);
+			RainmeterActivateConfig(arg);
 		}
 		else
 		{
@@ -1378,12 +506,12 @@ void RainmeterToggleConfigWide(const WCHAR* arg)
 }
 
 /*
-** RainmeterDeactivateConfigGroupWide
+** RainmeterDeactivateConfigGroup
 **
 ** Callback for the !RainmeterDeactivateConfigGroup bang
 **
 */
-void RainmeterDeactivateConfigGroupWide(const WCHAR* arg)
+void RainmeterDeactivateConfigGroup(const WCHAR* arg)
 {
 	if (Rainmeter)
 	{
@@ -1408,12 +536,12 @@ void RainmeterDeactivateConfigGroupWide(const WCHAR* arg)
 }
 
 /*
-** RainmeterRefreshAppWide
+** RainmeterRefreshApp
 **
 ** Callback for the !RainmeterRefreshApp bang
 **
 */
-void RainmeterRefreshAppWide()
+void RainmeterRefreshApp()
 {
 	if (Rainmeter)
 	{
@@ -1423,12 +551,12 @@ void RainmeterRefreshAppWide()
 }
 
 /*
-** RainmeterAboutWide
+** RainmeterAbout
 **
 ** Callback for the !RainmeterAbout bang
 **
 */
-void RainmeterAboutWide(const WCHAR* arg)
+void RainmeterAbout(const WCHAR* arg)
 {
 	if (Rainmeter)
 	{
@@ -1454,12 +582,12 @@ void RainmeterAboutWide(const WCHAR* arg)
 }
 
 /*
-** RainmeterManageWide
+** RainmeterManage
 **
 ** Callback for the !RainmeterManage bang
 **
 */
-void RainmeterManageWide(const WCHAR* arg)
+void RainmeterManage(const WCHAR* arg)
 {
 	if (Rainmeter)
 	{
@@ -1481,12 +609,12 @@ void RainmeterManageWide(const WCHAR* arg)
 }
 
 /*
-** RainmeterSkinMenuWide
+** RainmeterSkinMenu
 **
 ** Callback for the !RainmeterSkinMenu bang
 **
 */
-void RainmeterSkinMenuWide(const WCHAR* arg)
+void RainmeterSkinMenu(const WCHAR* arg)
 {
 	if (Rainmeter)
 	{
@@ -1528,12 +656,12 @@ void RainmeterTrayMenuWide()
 }
 
 /*
-** RainmeterResetStatsWide
+** RainmeterResetStats
 **
 ** Callback for the !RainmeterResetStats bang
 **
 */
-void RainmeterResetStatsWide()
+void RainmeterResetStats()
 {
 	if (Rainmeter)
 	{
@@ -1542,12 +670,12 @@ void RainmeterResetStatsWide()
 }
 
 /*
-** RainmeterWriteKeyValueWide
+** RainmeterWriteKeyValue
 **
 ** Callback for the !RainmeterWriteKeyValue bang
 **
 */
-void RainmeterWriteKeyValueWide(const WCHAR* arg)
+void RainmeterWriteKeyValue(const WCHAR* arg)
 {
 	if (Rainmeter)
 	{
@@ -1601,11 +729,11 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 
 			if (temporary)
 			{
-				if (CRainmeter::GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+				if (Rainmeter->GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
 			}
 			else
 			{
-				if (CRainmeter::GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s", iniFile.c_str());
+				if (Rainmeter->GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s", iniFile.c_str());
 				iniWrite = iniFile;
 			}
 
@@ -1679,12 +807,12 @@ void RainmeterWriteKeyValueWide(const WCHAR* arg)
 }
 
 /*
-** RainmeterQuitWide
+** RainmeterQuit
 **
 ** Callback for the !RainmeterQuit bang
 **
 */
-void RainmeterQuitWide()
+void RainmeterQuit()
 {
 	if (Rainmeter)
 	{
@@ -1700,9 +828,6 @@ void RainmeterQuitWide()
 //
 // -----------------------------------------------------------------------------------------------
 
-GlobalConfig CRainmeter::c_GlobalConfig = {0};
-bool CRainmeter::c_Debug = false;
-
 /*
 ** CRainmeter
 **
@@ -1711,6 +836,7 @@ bool CRainmeter::c_Debug = false;
 */
 CRainmeter::CRainmeter() :
 	m_TrayWindow(),
+	m_Debug(false),
 	m_DisableVersionCheck(false),
 	m_NewVersion(false),
 	m_DesktopWorkAreaChanged(false),
@@ -1722,7 +848,8 @@ CRainmeter::CRainmeter() :
 	m_CurrentParser(),
 	m_Instance(),
 	m_ResourceInstance(),
-	m_GDIplusToken()
+	m_GDIplusToken(),
+	m_GlobalConfig()
 {
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
@@ -1777,16 +904,11 @@ CRainmeter::~CRainmeter()
 ** May throw CErrors !!!!
 **
 */
-int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
+int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 {
 	int result = 0;
 
-	if (Parent == NULL || Instance == NULL)
-	{
-		throw CError(L"Null parameter");
-	}
-
-	m_Instance = Instance;
+	m_Instance = hInstance;
 
 	WCHAR* tmpSzPath = new WCHAR[MAX_LINE_LENGTH];
 	GetModuleFileName(m_Instance, tmpSzPath, MAX_LINE_LENGTH);
@@ -1804,40 +926,21 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	m_Path = tmpSzPath;
 
-	wcscat(tmpSzPath, L"Language.dll");
+	wcscat(tmpSzPath, L"Languages\\English.dll");
 	m_ResourceInstance = LoadLibraryEx(tmpSzPath, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
 	if (!m_ResourceInstance)
 	{
-		throw CError(L"Unable to load Language.dll");
+		throw CError(L"Unable to load English.dll");
 	}
 
 	InitalizeLitestep();
 
 	bool bDefaultIniLocation = false;
 
-	if (c_CmdLine.empty())
-	{
-		m_IniFile = m_Path;
-		m_IniFile += L"Rainmeter.ini";
-
-		// If the ini file doesn't exist in the program folder store it to the %APPDATA% instead so that things work better in Vista/Win7
-		if (_waccess(m_IniFile.c_str(), 0) == -1)
-		{
-			m_IniFile = L"%APPDATA%\\Rainmeter\\Rainmeter.ini";
-			ExpandEnvironmentVariables(m_IniFile);
-			bDefaultIniLocation = true;
-
-			// If the ini file doesn't exist in the %APPDATA% either, create a default Rainmeter.ini file.
-			if (_waccess(m_IniFile.c_str(), 0) == -1)
-			{
-				CreateDefaultConfigFile(m_IniFile);
-			}
-		}
-	}
-	else
+	if (*szPath)
 	{
 		// The command line defines the location of Rainmeter.ini (or whatever it calls it).
-		std::wstring iniFile = c_CmdLine;
+		std::wstring iniFile = szPath;
 		if (iniFile[0] == L'\"')
 		{
 			if (iniFile.length() == 1)
@@ -1876,6 +979,25 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		}
 		bDefaultIniLocation = true;
 	}
+	else
+	{
+		m_IniFile = m_Path;
+		m_IniFile += L"Rainmeter.ini";
+
+		// If the ini file doesn't exist in the program folder store it to the %APPDATA% instead so that things work better in Vista/Win7
+		if (_waccess(m_IniFile.c_str(), 0) == -1)
+		{
+			m_IniFile = L"%APPDATA%\\Rainmeter\\Rainmeter.ini";
+			ExpandEnvironmentVariables(m_IniFile);
+			bDefaultIniLocation = true;
+
+			// If the ini file doesn't exist in the %APPDATA% either, create a default Rainmeter.ini file.
+			if (_waccess(m_IniFile.c_str(), 0) == -1)
+			{
+				CreateDefaultConfigFile(m_IniFile);
+			}
+		}
+	}
 
 	// Set the log file and stats file location
 	m_LogFile = m_StatsFile = m_IniFile;
@@ -1893,7 +1015,7 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 
 	// Read Logging settings beforehand
 	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, m_IniFile.c_str());
-	c_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, m_IniFile.c_str());
+	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, m_IniFile.c_str());
 
 	if (m_Logging)
 	{
@@ -1964,38 +1086,6 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	delete [] tmpSzPath;
 	tmpSzPath = NULL;
 
-	if (!c_DummyLitestep)
-	{
-		char* tmpSz = new char[MAX_LINE_LENGTH];
-
-		// Check if step.rc has overrides these values
-		if (GetRCString("RainmeterIniFile", tmpSz, NULL, MAX_LINE_LENGTH - 1))
-		{
-			m_IniFile = ConvertToWide(tmpSz);
-		}
-
-		if (GetRCString("RainmeterSkinPath", tmpSz, NULL, MAX_LINE_LENGTH - 1))
-		{
-			m_SkinPath = ConvertToWide(tmpSz);
-		}
-
-		if (GetRCString("RainmeterPluginPath", tmpSz, NULL, MAX_LINE_LENGTH - 1))
-		{
-			m_PluginPath = ConvertToWide(tmpSz);
-		}
-
-		delete [] tmpSz;
-
-		if (!m_SkinPath.empty())
-		{
-			WCHAR ch = m_SkinPath[m_SkinPath.size() - 1];
-			if (ch != L'\\' && ch != L'/')
-			{
-				m_SkinPath += L"\\";
-			}
-		}
-	}
-
 	LogWithArgs(LOG_NOTICE, L"Path: %s", m_Path.c_str());
 	LogWithArgs(LOG_NOTICE, L"IniFile: %s", m_IniFile.c_str());
 	LogWithArgs(LOG_NOTICE, L"SkinPath: %s", m_SkinPath.c_str());
@@ -2026,10 +1116,10 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 	// Test that the Rainmeter.ini file is writable
 	TestSettingsFile(bDefaultIniLocation);
 
-	CSystem::Initialize(Instance);
+	CSystem::Initialize(hInstance);
 	CMeasureNet::InitializeNewApi();
 
-	if (c_Debug)
+	if (m_Debug)
 	{
 		Log(LOG_DEBUG, L"Enumerating installed font families...");
 		CMeterString::EnumerateInstalledFontFamilies();
@@ -2065,90 +1155,25 @@ int CRainmeter::Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath)
 		UpdateDesktopWorkArea(false);
 	}
 
-	// If we're running as Litestep's plugin, register the !bangs
-	if (!c_DummyLitestep)
-	{
-		int Msgs[] = { LM_GETREVID, 0 };
-		// Register RevID message to Litestep
-		if (m_TrayWindow && m_TrayWindow->GetWindow()) ::SendMessage(GetLitestepWnd(), LM_REGISTERMESSAGE, (WPARAM)m_TrayWindow->GetWindow(), (LPARAM)Msgs);
-
-		AddBangCommand("!RainmeterRefresh", RainmeterRefresh);
-		AddBangCommand("!RainmeterRedraw", RainmeterRedraw);
-		AddBangCommand("!RainmeterUpdate", RainmeterUpdate);
-		AddBangCommand("!RainmeterHide", RainmeterHide);
-		AddBangCommand("!RainmeterShow", RainmeterShow);
-		AddBangCommand("!RainmeterToggle", RainmeterToggle);
-		AddBangCommand("!RainmeterHideFade", RainmeterHideFade);
-		AddBangCommand("!RainmeterShowFade", RainmeterShowFade);
-		AddBangCommand("!RainmeterToggleFade", RainmeterToggleFade);
-		AddBangCommand("!RainmeterHideBlur", RainmeterHideBlur);
-		AddBangCommand("!RainmeterShowBlur", RainmeterShowBlur);
-		AddBangCommand("!RainmeterToggleBlur", RainmeterToggleBlur);
-		AddBangCommand("!RainmeterAddBlur", RainmeterAddBlur);
-		AddBangCommand("!RainmeterRemoveBlur", RainmeterRemoveBlur);
-		AddBangCommand("!RainmeterHideMeter", RainmeterHideMeter);
-		AddBangCommand("!RainmeterShowMeter", RainmeterShowMeter);
-		AddBangCommand("!RainmeterToggleMeter", RainmeterToggleMeter);
-		AddBangCommand("!RainmeterMoveMeter", RainmeterMoveMeter);
-		AddBangCommand("!RainmeterUpdateMeter", RainmeterUpdateMeter);
-		AddBangCommand("!RainmeterDisableMeasure", RainmeterDisableMeasure);
-		AddBangCommand("!RainmeterEnableMeasure", RainmeterEnableMeasure);
-		AddBangCommand("!RainmeterToggleMeasure", RainmeterToggleMeasure);
-		AddBangCommand("!RainmeterUpdateMeasure", RainmeterUpdateMeasure);
-		AddBangCommand("!RainmeterActivateConfig", RainmeterActivateConfig);
-		AddBangCommand("!RainmeterDeactivateConfig", RainmeterDeactivateConfig);
-		AddBangCommand("!RainmeterToggleConfig", RainmeterToggleConfig);
-		AddBangCommand("!RainmeterMove", RainmeterMove);
-		AddBangCommand("!RainmeterZPos", RainmeterZPos);
-		AddBangCommand("!RainmeterClickThrough", RainmeterClickThrough);
-		AddBangCommand("!RainmeterDraggable", RainmeterDraggable);
-		AddBangCommand("!RainmeterSnapEdges", RainmeterSnapEdges);
-		AddBangCommand("!RainmeterKeepOnScreen", RainmeterKeepOnScreen);
-		AddBangCommand("!RainmeterSetTransparency", RainmeterSetTransparency);
-		AddBangCommand("!RainmeterSetVariable", RainmeterSetVariable);
-
-		AddBangCommand("!RainmeterRefreshGroup", RainmeterRefreshGroup);
-		AddBangCommand("!RainmeterRedrawGroup", RainmeterRedrawGroup);
-		AddBangCommand("!RainmeterUpdateGroup", RainmeterUpdateGroup);
-		AddBangCommand("!RainmeterHideGroup", RainmeterHideGroup);
-		AddBangCommand("!RainmeterShowGroup", RainmeterShowGroup);
-		AddBangCommand("!RainmeterToggleGroup", RainmeterToggleGroup);
-		AddBangCommand("!RainmeterHideFadeGroup", RainmeterHideFadeGroup);
-		AddBangCommand("!RainmeterShowFadeGroup", RainmeterShowFadeGroup);
-		AddBangCommand("!RainmeterToggleFadeGroup", RainmeterToggleFadeGroup);
-		AddBangCommand("!RainmeterHideMeterGroup", RainmeterHideMeterGroup);
-		AddBangCommand("!RainmeterShowMeterGroup", RainmeterShowMeterGroup);
-		AddBangCommand("!RainmeterToggleMeterGroup", RainmeterToggleMeterGroup);
-		AddBangCommand("!RainmeterUpdateMeterGroup", RainmeterUpdateMeterGroup);
-		AddBangCommand("!RainmeterDisableMeasureGroup", RainmeterDisableMeasureGroup);
-		AddBangCommand("!RainmeterEnableMeasureGroup", RainmeterEnableMeasureGroup);
-		AddBangCommand("!RainmeterToggleMeasureGroup", RainmeterToggleMeasureGroup);
-		AddBangCommand("!RainmeterUpdateMeasureGroup", RainmeterUpdateMeasureGroup);
-		AddBangCommand("!RainmeterDeactivateConfigGroup", RainmeterDeactivateConfigGroup);
-		AddBangCommand("!RainmeterZPosGroup", RainmeterZPosGroup);
-		AddBangCommand("!RainmeterClickThroughGroup", RainmeterClickThroughGroup);
-		AddBangCommand("!RainmeterDraggableGroup", RainmeterDraggableGroup);
-		AddBangCommand("!RainmeterSnapEdgesGroup", RainmeterSnapEdgesGroup);
-		AddBangCommand("!RainmeterKeepOnScreenGroup", RainmeterKeepOnScreenGroup);
-		AddBangCommand("!RainmeterSetTransparencyGroup", RainmeterSetTransparencyGroup);
-		AddBangCommand("!RainmeterSetVariableGroup", RainmeterSetVariableGroup);
-
-		AddBangCommand("!RainmeterRefreshApp", RainmeterRefreshApp);
-		AddBangCommand("!RainmeterLsBoxHook", RainmeterLsHook);
-		AddBangCommand("!RainmeterAbout", RainmeterAbout);
-		AddBangCommand("!RainmeterManage", RainmeterManage);
-		AddBangCommand("!RainmeterSkinMenu", RainmeterSkinMenu);
-		AddBangCommand("!RainmeterTrayMenu", RainmeterTrayMenu);
-		AddBangCommand("!RainmeterResetStats", RainmeterResetStats);
-		AddBangCommand("!RainmeterWriteKeyValue", RainmeterWriteKeyValue);
-		AddBangCommand("!RainmeterPluginBang", RainmeterPluginBang);
-		AddBangCommand("!RainmeterQuit", RainmeterQuit);
-	}
-
 	// Create meter windows for active configs
 	ActivateActiveConfigs();
 
 	return result;	// Alles OK
+}
+
+/*
+** Quit
+**
+** Quits Rainmeter.
+**
+*/
+void CRainmeter::Quit()
+{
+	if (Rainmeter)
+	{
+		delete Rainmeter;
+		Rainmeter = NULL;
+	}
 }
 
 /*
@@ -2506,95 +1531,6 @@ int CRainmeter::GetLoadOrder(const std::wstring& config)
 }
 
 /*
-** Quit
-**
-** Called when the module quits
-**
-*/
-void CRainmeter::Quit(HINSTANCE dllInst)
-{
-	// If we're running as Litestep's plugin, unregister the !bangs
-	if (!c_DummyLitestep)
-	{
-		int Msgs[] = { LM_GETREVID, 0 };
-		// Unregister RevID message
-		if (m_TrayWindow && m_TrayWindow->GetWindow()) ::SendMessage(GetLitestepWnd(), LM_UNREGISTERMESSAGE, (WPARAM)m_TrayWindow->GetWindow(), (LPARAM)Msgs);
-
-		RemoveBangCommand("!RainmeterRefresh");
-		RemoveBangCommand("!RainmeterRedraw");
-		RemoveBangCommand("!RainmeterUpdate");
-		RemoveBangCommand("!RainmeterHide");
-		RemoveBangCommand("!RainmeterShow");
-		RemoveBangCommand("!RainmeterToggle");
-		RemoveBangCommand("!RainmeterHideFade");
-		RemoveBangCommand("!RainmeterShowFade");
-		RemoveBangCommand("!RainmeterToggleFade");
-		RemoveBangCommand("!RainmeterHideBlur");
-		RemoveBangCommand("!RainmeterShowBlur");
-		RemoveBangCommand("!RainmeterToggleBlur");
-		RemoveBangCommand("!RainmeterAddBlur");
-		RemoveBangCommand("!RainmeterRemoveBlur");
-		RemoveBangCommand("!RainmeterHideMeter");
-		RemoveBangCommand("!RainmeterShowMeter");
-		RemoveBangCommand("!RainmeterToggleMeter");
-		RemoveBangCommand("!RainmeterMoveMeter");
-		RemoveBangCommand("!RainmeterUpdateMeter");
-		RemoveBangCommand("!RainmeterHideMeasure");
-		RemoveBangCommand("!RainmeterShowMeasure");
-		RemoveBangCommand("!RainmeterToggleMeasure");
-		RemoveBangCommand("!RainmeterUpdateMeasure");
-		RemoveBangCommand("!RainmeterActivateConfig");
-		RemoveBangCommand("!RainmeterDeactivateConfig");
-		RemoveBangCommand("!RainmeterToggleConfig");
-		RemoveBangCommand("!RainmeterMove");
-		RemoveBangCommand("!RainmeterZPos");
-		RemoveBangCommand("!RainmeterClickThrough");
-		RemoveBangCommand("!RainmeterDraggable");
-		RemoveBangCommand("!RainmeterSnapEdges");
-		RemoveBangCommand("!RainmeterKeepOnScreen");
-		RemoveBangCommand("!RainmeterSetTransparency");
-		RemoveBangCommand("!RainmeterSetVariable");
-
-		RemoveBangCommand("!RainmeterRefreshGroup");
-		RemoveBangCommand("!RainmeterRedrawGroup");
-		RemoveBangCommand("!RainmeterUpdateGroup");
-		RemoveBangCommand("!RainmeterHideGroup");
-		RemoveBangCommand("!RainmeterShowGroup");
-		RemoveBangCommand("!RainmeterToggleGroup");
-		RemoveBangCommand("!RainmeterHideFadeGroup");
-		RemoveBangCommand("!RainmeterShowFadeGroup");
-		RemoveBangCommand("!RainmeterToggleFadeGroup");
-		RemoveBangCommand("!RainmeterHideMeterGroup");
-		RemoveBangCommand("!RainmeterShowMeterGroup");
-		RemoveBangCommand("!RainmeterToggleMeterGroup");
-		RemoveBangCommand("!RainmeterUpdateMeterGroup");
-		RemoveBangCommand("!RainmeterHideMeasureGroup");
-		RemoveBangCommand("!RainmeterShowMeasureGroup");
-		RemoveBangCommand("!RainmeterToggleMeasureGroup");
-		RemoveBangCommand("!RainmeterUpdateMeasureGroup");
-		RemoveBangCommand("!RainmeterDeactivateConfigGroup");
-		RemoveBangCommand("!RainmeterZPosGroup");
-		RemoveBangCommand("!RainmeterClickThroughGroup");
-		RemoveBangCommand("!RainmeterDraggableGroup");
-		RemoveBangCommand("!RainmeterSnapEdgesGroup");
-		RemoveBangCommand("!RainmeterKeepOnScreenGroup");
-		RemoveBangCommand("!RainmeterSetTransparencyGroup");
-		RemoveBangCommand("!RainmeterSetVariableGroup");
-
-		RemoveBangCommand("!RainmeterRefreshApp");
-		RemoveBangCommand("!RainmeterLsBoxHook");
-		RemoveBangCommand("!RainmeterAbout");
-		RemoveBangCommand("!RainmeterManage");
-		RemoveBangCommand("!RainmeterSkinMenu");
-		RemoveBangCommand("!RainmeterTrayMenu");
-		RemoveBangCommand("!RainmeterResetStats");
-		RemoveBangCommand("!RainmeterWriteKeyValue");
-		RemoveBangCommand("!RainmeterPluginBang");
-		RemoveBangCommand("!RainmeterQuit");
-	}
-}
-
-/*
 ** ScanForConfigs
 **
 ** Scans all the subfolders and locates the ini-files.
@@ -2749,7 +1685,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"RefreshApp") == 0)
 	{
-		RainmeterRefreshAppWide();
+		RainmeterRefreshApp();
 	}
 	else if (_wcsicmp(name, L"Redraw") == 0)
 	{
@@ -2845,15 +1781,15 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"ActivateConfig") == 0)
 	{
-		RainmeterActivateConfigWide(arg.c_str());
+		RainmeterActivateConfig(arg.c_str());
 	}
 	else if (_wcsicmp(name, L"DeactivateConfig") == 0)
 	{
-		RainmeterDeactivateConfigWide(arg.c_str());
+		RainmeterDeactivateConfig(arg.c_str());
 	}
 	else if (_wcsicmp(name, L"ToggleConfig") == 0)
 	{
-		RainmeterToggleConfigWide(arg.c_str());
+		RainmeterToggleConfig(arg.c_str());
 	}
 	else if (_wcsicmp(name, L"Move") == 0)
 	{
@@ -2961,7 +1897,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"DeactivateConfigGroup") == 0)
 	{
-		RainmeterDeactivateConfigGroupWide(arg.c_str());
+		RainmeterDeactivateConfigGroup(arg.c_str());
 	}
 	else if (_wcsicmp(name, L"ZPosGroup") == 0)
 	{
@@ -2997,15 +1933,15 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"About") == 0)
 	{
-		RainmeterAboutWide(arg.c_str());
+		RainmeterAbout(arg.c_str());
 	}
 	else if (_wcsicmp(name, L"Manage") == 0)
 	{
-		RainmeterManageWide(arg.c_str());
+		RainmeterManage(arg.c_str());
 	}
 	else if (_wcsicmp(name, L"SkinMenu") == 0)
 	{
-		RainmeterSkinMenuWide(arg.c_str());
+		RainmeterSkinMenu(arg.c_str());
 	}
 	else if (_wcsicmp(name, L"TrayMenu") == 0)
 	{
@@ -3013,11 +1949,11 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"ResetStats") == 0)
 	{
-		RainmeterResetStatsWide();
+		RainmeterResetStats();
 	}
 	else if (_wcsicmp(name, L"WriteKeyValue") == 0)
 	{
-		RainmeterWriteKeyValueWide(arg.c_str());
+		RainmeterWriteKeyValue(arg.c_str());
 	}
 	else if (_wcsicmp(name, L"PluginBang") == 0)
 	{
@@ -3029,7 +1965,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"Quit") == 0)
 	{
-		RainmeterQuitWide();
+		RainmeterQuit();
 	}
 	else if (_wcsicmp(bang.c_str(), L"!Execute") == 0)
 	{
@@ -3170,7 +2106,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 	{
 		command = strCommand.c_str();
 
-		if (command[0] == L'!' && Rainmeter->GetDummyLitestep()) // Bangs
+		if (command[0] == L'!') // Bang
 		{
 			if (meterWindow)
 			{
@@ -3246,7 +2182,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 			}
 
 			// Run command
-			LSExecute(NULL, command, SW_SHOWNORMAL);
+			RunCommand(NULL, command, SW_SHOWNORMAL);
 		}
 	}
 }
@@ -3269,7 +2205,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	// Read Logging settings
 	m_Logging = 0!=parser.ReadInt(L"Rainmeter", L"Logging", 0);
-	c_Debug = 0!=parser.ReadInt(L"Rainmeter", L"Debug", 0);
+	m_Debug = 0!=parser.ReadInt(L"Rainmeter", L"Debug", 0);
 
 	if (m_Logging)
 	{
@@ -3281,8 +2217,8 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		m_TrayWindow->ReadConfig(parser);
 	}
 
-	c_GlobalConfig.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", 0.0);
-	c_GlobalConfig.netOutSpeed = parser.ReadFloat(L"Rainmeter", L"NetOutSpeed", 0.0);
+	m_GlobalConfig.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", 0.0);
+	m_GlobalConfig.netOutSpeed = parser.ReadFloat(L"Rainmeter", L"NetOutSpeed", 0.0);
 
 	m_DisableDragging = 0!=parser.ReadInt(L"Rainmeter", L"DisableDragging", 0);
 	m_DisableRDP = 0!=parser.ReadInt(L"Rainmeter", L"DisableRDP", 0);
@@ -3333,7 +2269,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		m_LogViewer.append(L"\"");
 	}
 
-	if (c_Debug)
+	if (m_Debug)
 	{
 		LogWithArgs(LOG_NOTICE, L"ConfigEditor: %s", m_ConfigEditor.c_str());
 		LogWithArgs(LOG_NOTICE, L"LogViewer: %s", m_LogViewer.c_str());
@@ -3368,37 +2304,6 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	m_DesktopWorkAreaType = 0!=parser.ReadInt(L"Rainmeter", L"DesktopWorkAreaType", 0);
 
-	// Check which configs are active
-	if (!c_DummyLitestep)
-	{
-		char* tmpSz = new char[MAX_LINE_LENGTH];
-		std::wstring skinName;
-		std::wstring skinIni = L"Rainmeter.ini";
-
-		// Check if step.rc has overrides these values
-		if (GetRCString("RainmeterCurrentConfig", tmpSz, "", MAX_LINE_LENGTH - 1))
-		{
-			skinName = ConvertToWide(tmpSz);
-		}
-
-		if (GetRCString("RainmeterCurrentConfigIni", tmpSz, "Rainmeter.ini", MAX_LINE_LENGTH - 1))
-		{
-			skinIni = ConvertToWide(tmpSz);
-		}
-
-		delete [] tmpSz;
-
-		if (!skinName.empty())
-		{
-			if (!SetActiveConfig(skinName, skinIni))
-			{
-				std::wstring error = GetFormattedString(ID_STR_UNABLETOACTIVATESKIN, skinName.c_str(), skinIni.c_str());
-				MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-			}
-			return;
-		}
-	}
-
 	for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
 	{
 		int active  = parser.ReadInt(m_ConfigStrings[i].config.c_str(), L"Active", 0);
@@ -3409,32 +2314,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 			m_ConfigStrings[i].active = active;
 		}
 
-		int order;
-		if (parser.IsSectionDefined(m_ConfigStrings[i].config.c_str()))
-		{
-			std::wstring orderStr = parser.ReadString(m_ConfigStrings[i].config.c_str(), L"LoadOrder", L"", false);
-			if (orderStr.empty())
-			{
-				order = 0;
-			}
-			else if (_wcsicmp(orderStr.c_str(), L"LAST") == 0)
-			{
-				order = INT_MAX;
-			}
-			else if (_wcsicmp(orderStr.c_str(), L"FIRST") == 0)
-			{
-				order = INT_MIN;
-			}
-			else
-			{
-				order = _wtoi(orderStr.c_str());
-			}
-		}
-		else
-		{
-			order = 0;
-		}
-
+		int order = parser.ReadInt(m_ConfigStrings[i].config.c_str(), L"LoadOrder", 0);
 		SetLoadOrder(i, order);
 	}
 }
@@ -3586,6 +2466,9 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 		theme += L"\\Rainmeter.thm";
 		CSystem::CopyFiles(theme, Rainmeter->GetIniFile());
 
+		/*
+		TODO fix me
+		*/
 		PreserveSetting(backup, L"SkinPath");
 		PreserveSetting(backup, L"ConfigEditor");
 		PreserveSetting(backup, L"LogViewer");
@@ -3643,7 +2526,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 
 				BOOL result = SystemParametersInfo(SPI_SETWORKAREA, 0, &r, 0);
 
-				if (c_Debug)
+				if (m_Debug)
 				{
 					std::wstring format = L"Resetting WorkArea@%i: L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)";
 					if (!result)
@@ -3670,7 +2553,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 			}
 		}
 
-		if (c_Debug)
+		if (m_Debug)
 		{
 			LogWithArgs(LOG_DEBUG, L"DesktopWorkAreaType: %s", m_DesktopWorkAreaType ? L"Margin" : L"Default");
 		}
@@ -3710,7 +2593,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 					changed = true;
 				}
 
-				if (c_Debug)
+				if (m_Debug)
 				{
 					std::wstring format = L"Applying DesktopWorkArea";
 					if (i != 0)
@@ -3828,29 +2711,20 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 			{
 				SetMenuDefaultItem(subMenu, ID_CONTEXT_MANAGE, MF_BYCOMMAND);
 
-				if (!GetDummyLitestep())
+				if (_waccess(m_LogFile.c_str(), 0) == -1)
 				{
-					// Disable Quit/Logging if ran as a Litestep plugin
-					EnableMenuItem(subMenu, ID_CONTEXT_QUIT, MF_BYCOMMAND | MF_GRAYED);
-					EnableMenuItem(subMenu, 10, MF_BYPOSITION | MF_GRAYED);  // "Logging" menu
+					EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
+					EnableMenuItem(subMenu, ID_CONTEXT_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
+					EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
 				}
 				else
 				{
-					if (_waccess(m_LogFile.c_str(), 0) == -1)
-					{
-						EnableMenuItem(subMenu, ID_CONTEXT_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
-						EnableMenuItem(subMenu, ID_CONTEXT_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
-						EnableMenuItem(subMenu, ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
-					}
-					else
-					{
-						EnableMenuItem(subMenu, (m_Logging) ? ID_CONTEXT_STARTLOG : ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
-					}
+					EnableMenuItem(subMenu, (m_Logging) ? ID_CONTEXT_STARTLOG : ID_CONTEXT_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
+				}
 
-					if (c_Debug)
-					{
-						CheckMenuItem(subMenu, ID_CONTEXT_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
-					}
+				if (m_Debug)
+				{
+					CheckMenuItem(subMenu, ID_CONTEXT_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
 				}
 
 				HMENU configMenu = GetSubMenu(subMenu, 4);
@@ -4056,11 +2930,6 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 				if (meterWindow->GetYFromBottom()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
 				if (meterWindow->GetXPercentage()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
 				if (meterWindow->GetYPercentage()) CheckMenuItem(posMenu, ID_CONTEXT_SKINMENU_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
-
-				if (!c_DummyLitestep)
-				{
-					EnableMenuItem(posMenu, ID_CONTEXT_SKINMENU_ONDESKTOP, MF_BYCOMMAND | MF_GRAYED);
-				}
 
 				HMENU monitorMenu = GetSubMenu(posMenu, 0);
 				if (monitorMenu)
@@ -4367,7 +3236,7 @@ void CRainmeter::SetLogging(bool logging)
 
 void CRainmeter::SetDebug(bool debug)
 {
-	c_Debug = debug;
+	m_Debug = debug;
 	WritePrivateProfileString(L"Rainmeter", L"Debug", debug ? L"1" : L"0", m_IniFile.c_str());
 }
 

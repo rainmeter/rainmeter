@@ -39,95 +39,19 @@
 #define WIDEN(x) WIDEN2(x)
 #define APPDATE WIDEN(__DATE__)
 
-// Callbacks for Litestep
-void RainmeterRefresh(HWND, const char* arg);
-void RainmeterRefreshApp(HWND, const char* arg);
-void RainmeterRedraw(HWND, const char* arg);
-void RainmeterUpdate(HWND, const char* arg);
-void RainmeterShow(HWND, const char* arg);
-void RainmeterHide(HWND, const char* arg);
-void RainmeterToggle(HWND, const char* arg);
-void RainmeterShowFade(HWND, const char* arg);
-void RainmeterHideFade(HWND, const char* arg);
-void RainmeterToggleFade(HWND, const char* arg);
-void RainmeterShowBlur(HWND, const char* arg);
-void RainmeterHideBlur(HWND, const char* arg);
-void RainmeterToggleBlur(HWND, const char* arg);
-void RainmeterAddBlur(HWND, const char* arg);
-void RainmeterRemoveBlur(HWND, const char* arg);
-void RainmeterShowMeter(HWND, const char* arg);
-void RainmeterHideMeter(HWND, const char* arg);
-void RainmeterToggleMeter(HWND, const char* arg);
-void RainmeterMoveMeter(HWND, const char* arg);
-void RainmeterUpdateMeter(HWND, const char* arg);
-void RainmeterEnableMeasure(HWND, const char* arg);
-void RainmeterDisableMeasure(HWND, const char* arg);
-void RainmeterToggleMeasure(HWND, const char* arg);
-void RainmeterUpdateMeasure(HWND, const char* arg);
-void RainmeterCommandMeasure(HWND, const char* arg);
-void RainmeterActivateConfig(HWND, const char* arg);
-void RainmeterDeactivateConfig(HWND, const char* arg);
-void RainmeterToggleConfig(HWND, const char* arg);
-void RainmeterMove(HWND, const char* arg);
-void RainmeterZPos(HWND, const char* arg);
-void RainmeterClickThrough(HWND, const char* arg);
-void RainmeterDraggable(HWND, const char* arg);
-void RainmeterSnapEdges(HWND, const char* arg);
-void RainmeterKeepOnScreen(HWND, const char* arg);
-void RainmeterSetTransparency(HWND, const char* arg);
-void RainmeterSetVariable(HWND, const char* arg);
-void RainmeterSetOption(HWND, const char* arg);
-
-void RainmeterRefreshGroup(HWND, const char* arg);
-void RainmeterRedrawGroup(HWND, const char* arg);
-void RainmeterUpdateGroup(HWND, const char* arg);
-void RainmeterShowGroup(HWND, const char* arg);
-void RainmeterHideGroup(HWND, const char* arg);
-void RainmeterToggleGroup(HWND, const char* arg);
-void RainmeterShowFadeGroup(HWND, const char* arg);
-void RainmeterHideFadeGroup(HWND, const char* arg);
-void RainmeterToggleFadeGroup(HWND, const char* arg);
-void RainmeterShowMeterGroup(HWND, const char* arg);
-void RainmeterHideMeterGroup(HWND, const char* arg);
-void RainmeterToggleMeterGroup(HWND, const char* arg);
-void RainmeterUpdateMeterGroup(HWND, const char* arg);
-void RainmeterEnableMeasureGroup(HWND, const char* arg);
-void RainmeterDisableMeasureGroup(HWND, const char* arg);
-void RainmeterToggleMeasureGroup(HWND, const char* arg);
-void RainmeterUpdateMeasureGroup(HWND, const char* arg);
-void RainmeterDeactivateConfigGroup(HWND, const char* arg);
-void RainmeterZPosGroup(HWND, const char* arg);
-void RainmeterClickThroughGroup(HWND, const char* arg);
-void RainmeterDraggableGroup(HWND, const char* arg);
-void RainmeterSnapEdgesGroup(HWND, const char* arg);
-void RainmeterKeepOnScreenGroup(HWND, const char* arg);
-void RainmeterSetTransparencyGroup(HWND, const char* arg);
-void RainmeterSetVariableGroup(HWND, const char* arg);
-void RainmeterSetOptionGroup(HWND, const char* arg);
-
-void RainmeterLsHook(HWND, const char* arg);
-void RainmeterAbout(HWND, const char* arg);
-void RainmeterManage(HWND, const char* arg);
-void RainmeterSkinMenu(HWND, const char* arg);
-void RainmeterTrayMenu(HWND, const char* arg);
-void RainmeterResetStats(HWND, const char* arg);
-void RainmeterWriteKeyValue(HWND, const char* arg);
-void RainmeterPluginBang(HWND, const char* arg);
-void RainmeterQuit(HWND, const char* arg);
-
-// Callbacks for Unicode support
-void RainmeterActivateConfigWide(const WCHAR* arg);
-void RainmeterDeactivateConfigWide(const WCHAR* arg);
-void RainmeterToggleConfigWide(const WCHAR* arg);
-void RainmeterDeactivateConfigGroupWide(const WCHAR* arg);
-void RainmeterRefreshAppWide();
-void RainmeterAboutWide(const WCHAR* arg = NULL);
-void RainmeterManageWide(const WCHAR* arg = NULL);
-void RainmeterSkinMenuWide(const WCHAR* arg);
+// Callbacks
+void RainmeterActivateConfig(const WCHAR* arg);
+void RainmeterDeactivateConfig(const WCHAR* arg);
+void RainmeterToggleConfig(const WCHAR* arg);
+void RainmeterDeactivateConfigGroup(const WCHAR* arg);
+void RainmeterRefreshApp();
+void RainmeterAbout(const WCHAR* arg = NULL);
+void RainmeterManage(const WCHAR* arg = NULL);
+void RainmeterSkinMenu(const WCHAR* arg);
 void RainmeterTrayMenuWide();
-void RainmeterResetStatsWide();
-void RainmeterWriteKeyValueWide(const WCHAR* arg);
-void RainmeterQuitWide();
+void RainmeterResetStats();
+void RainmeterWriteKeyValue(const WCHAR* arg);
+void RainmeterQuit();
 
 void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
 void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
@@ -169,8 +93,8 @@ public:
 	CRainmeter();
 	~CRainmeter();
 
-	int Initialize(HWND Parent, HINSTANCE Instance, LPCSTR szPath);
-	void Quit(HINSTANCE dllInst);
+	int Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath);
+	static void Quit();
 
 	CConfigParser* GetCurrentParser() { return m_CurrentParser; }
 	void SetCurrentParser(CConfigParser* parser) { m_CurrentParser = parser; }
@@ -208,13 +132,9 @@ public:
 	HINSTANCE GetInstance() { return m_Instance; }
 	HINSTANCE GetResourceInstance() { return m_ResourceInstance; }
 
-	static void SetDummyLitestep(bool Dummy) { c_DummyLitestep = Dummy; }
-	static bool GetDummyLitestep() { return c_DummyLitestep; }
-	static void SetCommandLine(LPCTSTR CmdLine) { c_CmdLine = CmdLine;}
-	static LPCTSTR GetCommandLine() { return c_CmdLine.c_str(); }
-	static GlobalConfig& GetGlobalConfig() { return c_GlobalConfig; }
+	bool GetDebug() { return m_Debug; }
 
-	static bool GetDebug() { return c_Debug; }
+	GlobalConfig& GetGlobalConfig() { return m_GlobalConfig; }
 
 	void ReloadSettings();
 
@@ -319,6 +239,8 @@ private:
 	std::wstring m_TrayExecuteDR;
 	std::wstring m_TrayExecuteDM;
 
+	bool m_Debug;
+
 	bool m_DisableVersionCheck;
 	bool m_NewVersion;
 	
@@ -349,24 +271,9 @@ private:
 
 	std::list<CMeterWindow*> m_DelayDeleteList;
 
-	static bool c_DummyLitestep;	// true, if not a Litestep plugin
-	static std::wstring c_CmdLine;	// The command line arguments
-	static GlobalConfig c_GlobalConfig;
-	static bool c_Debug;
+	GlobalConfig m_GlobalConfig;
 };
 
-#ifdef LIBRARY_EXPORTS
-#define EXPORT_PLUGIN __declspec(dllexport)
-#else
-#define EXPORT_PLUGIN __declspec(dllimport)
-#endif
-
-extern "C"
-{
-	EXPORT_PLUGIN int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR szPath);
-	EXPORT_PLUGIN void quitModule(HINSTANCE dllInst);
-	EXPORT_PLUGIN void Initialize(bool DummyLS, LPCTSTR CmdLine);
-	EXPORT_PLUGIN void ExecuteBang(LPCTSTR szBang);
-}
+void ExecuteBang(LPCTSTR szBang);
 
 #endif

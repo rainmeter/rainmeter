@@ -17,12 +17,10 @@
 */
 
 #define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-#include <string>
-#include <algorithm>
+#include "StdAfx.h"
 #include "resource.h"
-#include "../Library/Rainmeter.h"
+#include "Rainmeter.h"
+#include "TrayWindow.h"
 
 #if defined _M_IX86
 #pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -34,23 +32,13 @@
 #pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
-/*
-** Protos
-*/
+extern CRainmeter* Rainmeter;
+
+void Bang(const WCHAR* command);
 BOOL InitApplication(HINSTANCE hInstance, const WCHAR* WinClass);
 HWND InitInstance(HINSTANCE hInstance, const WCHAR* WinClass, const WCHAR* WinName);
-LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-void Bang(const WCHAR* command);
-HMODULE RmLoadSystemLibrary(LPCWSTR lpLibFileName);
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 BOOL IsRunning(HANDLE* hMutex);
-
-/*
-** Stuff from the DLL
-*/
-extern "C" EXPORT_PLUGIN int initModuleEx(HWND ParentWnd, HINSTANCE dllInst, LPCSTR);
-extern "C" EXPORT_PLUGIN void quitModule(HINSTANCE dllInst);
-extern "C" EXPORT_PLUGIN void Initialize(bool DummyLS, LPCTSTR CmdLine);
-extern "C" EXPORT_PLUGIN void ExecuteBang(LPCTSTR szBang);
 
 const WCHAR* WinClass = L"DummyRainWClass";
 const WCHAR* WinName = L"Rainmeter control window";
@@ -99,7 +87,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		if (!InitApplication(hInstance, WinClass)) return RetError;
 	}
 
-	hWnd=InitInstance(hInstance, WinClass, WinName);
+	hWnd = InitInstance(hInstance, WinClass, WinName);
 	if (!hWnd) return RetError;
 
 	// Remove quotes from the commandline
@@ -113,38 +101,40 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		}
 	}
 
-	// Initialize from exe
-	Initialize(true, Path);
-
-	// Check that the DLL is available
-	HMODULE module = GetModuleHandle(L"Rainmeter.dll");
-	if (module == NULL)
+	int result = 1;
+	try
 	{
-		MessageBox(NULL, L"Unable to load Rainmeter.dll", L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
-		DestroyWindow(hWnd);
-		return RetError;
-	}
+		Rainmeter = new CRainmeter;
 
-	// Initialize the DLL
-	if (initModuleEx(hWnd, module, NULL) == 1)
-	{
-		MessageBox(NULL, L"Unable to initialize Rainmeter.dll", L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
-		DestroyWindow(hWnd);
-		return RetError;
-	}
-
-	// Run the standard window message loop
-	while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
-	{
-		if (bRet == -1)  // error
+		if (Rainmeter)
 		{
-			quitModule(NULL);
-			break;
+			result = Rainmeter->Initialize(hWnd, hInstance, lpCmdLine);
 		}
-		else
+	}
+	catch (CError& error)
+	{
+		MessageBox(hWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+	}
+
+	if (result == 1)
+	{
+		DestroyWindow(hWnd);
+	}
+	else
+	{
+		// Run the standard window message loop
+		while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
 		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			if (bRet == -1)  // error
+			{
+				CRainmeter::Quit();
+				break;
+			}
+			else
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 		}
 	}
 
@@ -163,11 +153,11 @@ BOOL InitApplication(HINSTANCE hInstance, const WCHAR* WinClass)
 	WNDCLASS  wc;
 
 	wc.style = 0;
-	wc.lpfnWndProc = (WNDPROC) MainWndProc;
+	wc.lpfnWndProc = (WNDPROC)WndProc;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.hInstance = hInstance;
-	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_RAINMETER));
+	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_WINDOW));
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
 	wc.lpszMenuName =  NULL;
@@ -332,34 +322,34 @@ BOOL IsRunning(HANDLE* hMutex)
 }
 
 /*
-** MainWndProc
+** WndProc
 **
 ** The main window procedure
 **
 */
-LRESULT CALLBACK MainWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	switch(message) {
-
+	switch (uMsg)
+	{
 	case WM_DESTROY:
 		{
-			quitModule(NULL);
+			CRainmeter::Quit();
 			PostQuitMessage(0);
 		}
 		break;
 
 	case WM_COPYDATA:
 		{
-			COPYDATASTRUCT* pCopyDataStruct = (COPYDATASTRUCT*) lParam;
-			if (pCopyDataStruct && (pCopyDataStruct->dwData == 1) && (pCopyDataStruct->cbData > 0))
+			COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lParam;
+			if (Rainmeter && cds && (cds->dwData == 1) && (cds->cbData > 0) && cds->lpData)
 			{
-				ExecuteBang((const WCHAR*)pCopyDataStruct->lpData);
+				ExecuteBang((LPCWSTR)cds->lpData);
 			}
 		}
 		break;
 
 	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
 	return 0;

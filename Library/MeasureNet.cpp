@@ -110,7 +110,7 @@ void CMeasureNet::UpdateIFTable()
 				logging = true;
 			}
 
-			if (CRainmeter::GetDebug() && logging)
+			if (Rainmeter->GetDebug() && logging)
 			{
 				Log(LOG_DEBUG, L"------------------------------");
 				LogWithArgs(LOG_DEBUG, L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
@@ -206,7 +206,7 @@ void CMeasureNet::UpdateIFTable()
 					logging = true;
 				}
 
-				if (CRainmeter::GetDebug() && logging)
+				if (Rainmeter->GetDebug() && logging)
 				{
 					Log(LOG_DEBUG, L"------------------------------");
 					LogWithArgs(LOG_DEBUG, L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
@@ -467,17 +467,17 @@ void CMeasureNet::ReadConfig(CConfigParser& parser, const WCHAR* section, NET ne
 	if (net == NET_IN)
 	{
 		netName = L"NetInSpeed";
-		value = CRainmeter::GetGlobalConfig().netInSpeed;
+		value = Rainmeter->GetGlobalConfig().netInSpeed;
 	}
 	else if (net == NET_OUT)
 	{
 		netName = L"NetOutSpeed";
-		value = CRainmeter::GetGlobalConfig().netOutSpeed;
+		value = Rainmeter->GetGlobalConfig().netOutSpeed;
 	}
 	else
 	{
 		netName = L"NetTotalSpeed";
-		value = CRainmeter::GetGlobalConfig().netInSpeed + CRainmeter::GetGlobalConfig().netOutSpeed;
+		value = Rainmeter->GetGlobalConfig().netInSpeed + Rainmeter->GetGlobalConfig().netOutSpeed;
 	}
 
 	double maxValue = parser.ReadFloat(section, L"MaxValue", -1);
@@ -716,7 +716,7 @@ void CMeasureNet::InitializeNewApi()
 		}
 	}
 
-	if (CRainmeter::GetDebug())
+	if (Rainmeter->GetDebug())
 	{
 		UpdateIFTable();
 	}

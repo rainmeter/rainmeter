@@ -82,10 +82,6 @@ CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
 		instance,
 		this);
 
-#ifndef _WIN64
-	SetWindowLong(m_Window, GWL_USERDATA, magicDWord);
-#endif
-
 	SetWindowPos(m_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 }
 
@@ -428,11 +424,11 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if (wParam == ID_CONTEXT_SHOW_HELP)
 			{
-				LSExecute(NULL, revision_beta ? RAINMETER_MANUALBETA : RAINMETER_MANUAL, SW_SHOWNORMAL);
+				RunCommand(NULL, revision_beta ? RAINMETER_MANUALBETA : RAINMETER_MANUAL, SW_SHOWNORMAL);
 			}
 			else if (wParam == ID_CONTEXT_NEW_VERSION)
 			{
-				LSExecute(NULL, RAINMETER_OFFICIAL, SW_SHOWNORMAL);
+				RunCommand(NULL, RAINMETER_OFFICIAL, SW_SHOWNORMAL);
 			}
 			else if (wParam == ID_CONTEXT_REFRESH)
 			{
@@ -445,7 +441,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				if (_waccess(log.c_str(), 0) != -1)
 				{
 					std::wstring command = Rainmeter->GetLogViewer() + log;
-					LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
+					RunCommand(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 				}
 			}
 			else if (wParam == ID_CONTEXT_STARTLOG)
@@ -462,7 +458,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if (wParam == ID_CONTEXT_DEBUGLOG)
 			{
-				Rainmeter->SetDebug(!CRainmeter::GetDebug());
+				Rainmeter->SetDebug(!Rainmeter->GetDebug());
 			}
 			else if (wParam == ID_CONTEXT_DISABLEDRAG)
 			{
@@ -473,18 +469,18 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				std::wstring command = Rainmeter->GetConfigEditor() + L" \"";
 				command += Rainmeter->GetIniFile();
 				command += L"\"";
-				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
+				RunCommand(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 			}
 			else if (wParam == ID_CONTEXT_QUIT)
 			{
-				if (Rainmeter->GetDummyLitestep()) PostQuitMessage(0);
-				quitModule(Rainmeter->GetInstance());
+				PostQuitMessage(0);
+				CRainmeter::Quit();
 			}
 			else if (wParam == ID_CONTEXT_OPENSKINSFOLDER)
 			{
 				std::wstring command = L"\"" + Rainmeter->GetSkinPath();
 				command += L"\"";
-				LSExecute(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
+				RunCommand(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 			}
 			else if ((wParam & 0x0ffff) >= ID_THEME_FIRST && (wParam & 0x0ffff) <= ID_THEME_LAST)
 			{
@@ -590,7 +586,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				GetCursorPos(&point);
 				Rainmeter->ShowContextMenu(point, NULL);
 			}
-			else if (uMouseMsg == WM_LBUTTONDOWN || uMouseMsg == WM_LBUTTONDBLCLK)
+			else if (uMouseMsg == WM_LBUTTONDOWN)
 			{
 				CDialogManage::Open();
 			}
@@ -669,18 +665,6 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				cds.dwData = RAINMETER_QUERY_ID_CONFIG_EDITOR;
 				cds.cbData = (DWORD)((editor.size() + 1) * sizeof(wchar_t));
 				cds.lpData = (LPVOID) editor.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_COMMAND_LINE)
-			{
-				std::wstring commandline = Rainmeter->GetCommandLine();
-
-				cds.dwData = RAINMETER_QUERY_ID_COMMAND_LINE;
-				cds.cbData = (DWORD)((commandline.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) commandline.c_str();
 
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
 
@@ -788,9 +772,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if (wParam == RAINMETER_QUERY_ID_IS_LITESTEP)
 			{
-				BOOL islitestep = !Rainmeter->GetDummyLitestep();
-
-				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)islitestep);
+				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)0);
 
 				return 0;
 			}
@@ -842,29 +824,8 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		return 0;
 
 	case WM_DESTROY:
-		if (Rainmeter->GetDummyLitestep()) PostQuitMessage(0);
+		PostQuitMessage(0);
 		break;
-
-	case LM_GETREVID:
-		if (lParam != NULL)
-		{
-			char* Buffer = (char*)lParam;
-			if (wParam == 0)
-			{
-				sprintf(Buffer, "Rainmeter.dll: %s", APPVERSION);
-			}
-			else if (wParam == 1)
-			{
-				sprintf(Buffer, "Rainmeter.dll: %s %s, Rainy", APPVERSION, __DATE__);
-			}
-			else
-			{
-				Buffer[0] = 0;
-			}
-
-			return strlen(Buffer);
-		}
-		return 0;
 	}
 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);

@@ -65,7 +65,6 @@ typedef std::map<UINT, MeasureInfo*> MeasureIdMap; // measure ID -> MeasureInfo
 static MeasureIdMap sMeasures;
 typedef std::map<FolderInfo*, UINT> FolderInfoMap; // FolderInfo -> ref count
 static FolderInfoMap sFolderRefCount;
-static bool sInitialized = false;
 
 static MeasureInfo* GetMeasureInfo(UINT aId)
 {
@@ -109,10 +108,6 @@ static FolderInfo* GetFolderInfo(const wchar_t* aPath, const wchar_t* aIniPath)
 */
 UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
-	if (!sInitialized) {
-		sInitialized = true;
-	}
-
 	MeasureInfo* measureInfo = new MeasureInfo(section);
 
 	const wchar_t* strFolder = ReadConfigString(section, L"Folder", L"");
@@ -136,17 +131,17 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		}
 
 		const wchar_t* strIncludeSubFolders = ReadConfigString(section, L"IncludeSubFolders", L"");
-		if (_wcsicmp(strIncludeSubFolders, L"1") == 0) {
+		if (wcscmp(strIncludeSubFolders, L"1") == 0) {
 			measureInfo->Folder->IncludeSubFolders(true);
 		}
 
 		const wchar_t* strShowHiddenFiles = ReadConfigString(section, L"IncludeHiddenFiles", L"");
-		if (_wcsicmp(strShowHiddenFiles, L"1") == 0) {
+		if (wcscmp(strShowHiddenFiles, L"1") == 0) {
 			measureInfo->Folder->IncludeHiddenFiles(true);
 		}
 
 		const wchar_t* strShowSystemFiles = ReadConfigString(section, L"IncludeSystemFiles", L"");
-		if (_wcsicmp(strShowSystemFiles, L"1") == 0) {
+		if (wcscmp(strShowSystemFiles, L"1") == 0) {
 			measureInfo->Folder->IncludeSystemFiles(true);
 		}
 
@@ -176,15 +171,17 @@ double Update2(UINT id)
 
 	switch (measureInfo->Type)
 	{
-		case INFOTYPE_FOLDERSIZE:
-			return (double)measureInfo->Folder->GetSize();
-			break;
-		case INFOTYPE_FILECOUNT:
-			return measureInfo->Folder->GetFileCount();
-			break;
-		case INFOTYPE_FOLDERCOUNT:
-			return measureInfo->Folder->GetFolderCount();
-			break;
+	case INFOTYPE_FOLDERSIZE:
+		return (double)measureInfo->Folder->GetSize();
+		break;
+
+	case INFOTYPE_FILECOUNT:
+		return measureInfo->Folder->GetFileCount();
+		break;
+
+	case INFOTYPE_FOLDERCOUNT:
+		return measureInfo->Folder->GetFolderCount();
+		break;
 	}
 	return 0;
 }

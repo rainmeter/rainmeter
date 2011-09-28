@@ -25,30 +25,12 @@
 #include "Error.h"
 #include "Export.h"
 
-#define magicDWord             0x49474541
-#define LM_GETREVID            9265
-#define LM_REGISTERMESSAGE     9263
-#define LM_UNREGISTERMESSAGE   9264
-
-
-typedef void (BangCommand)(HWND sender, LPCSTR args);
-
-// Call this if you want to use lsapi.dll's functions instead of stubs
 void InitalizeLitestep();
 void FinalizeLitestep();
 
-// The stubs
-BOOL AddBangCommand(LPCSTR command, BangCommand f);
-HRGN BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF cTolerance, int xoffset, int yoffset);
-HWND GetLitestepWnd(void);
-BOOL GetRCString(LPCSTR lpKeyName, LPSTR value, LPCSTR defStr, int maxLen);
-//int GetRCInt(LPCSTR lpKeyName, int nDefault);
-BOOL RemoveBangCommand(LPCSTR command);
-//void TransparentBltLS (HDC dc, int nXDest, int nYDest, int nWidth, int nHeight, HDC tempDC, int nXSrc, int nYSrc, COLORREF colorTransparent);
-void VarExpansion(LPSTR buffer, LPCSTR value);
-//void LSSetVariable(const BSTR name, const BSTR value);
-
 void ResetLoggingFlag();
+
+HRGN BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF cTolerance, int xoffset, int yoffset);
 
 std::string ConvertToAscii(LPCTSTR str);
 std::wstring ConvertToWide(LPCSTR str);
@@ -59,9 +41,7 @@ void Log(int nLevel, const WCHAR* message, const WCHAR* module = L"Rainmeter");	
 void LogWithArgs(int nLevel, const WCHAR* format, ... );	// Replacement for DebugLog(), has the same functionality but has the option to set teh Log Level.
 void LogError(CError& error);
 
-HINSTANCE LSExecute(HWND Owner, LPCTSTR szCommand, int nShowCmd);
-//HINSTANCE LSExecuteAsAdmin(HWND Owner, LPCTSTR szCommand, int nShowCmd);
-HINSTANCE ExecuteCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, LPCTSTR szVerb);
+void RunCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, bool asAdmin = false);
 
 WCHAR* GetString(UINT id);
 std::wstring GetFormattedString(UINT id, ...);
