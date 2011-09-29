@@ -135,6 +135,48 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 }
 
 /*
+** Initialize
+**
+** Initializes Rainmeter
+**
+*/
+int Initialize(HWND hWnd, HINSTANCE hInstance, LPCWSTR lpCmdLine)
+{
+	int result = 1;
+
+	try
+	{
+		Rainmeter = new CRainmeter;
+
+		if (Rainmeter)
+		{
+			result = Rainmeter->Initialize(hWnd, hInstance, lpCmdLine);
+		}
+	}
+	catch (CError& error)
+	{
+		MessageBox(hWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+	}
+
+	return result;
+}
+
+/*
+** Quit
+**
+** Quits Rainmeter.
+**
+*/
+void Quit()
+{
+	if (Rainmeter)
+	{
+		delete Rainmeter;
+		Rainmeter = NULL;
+	}
+}
+
+/*
 ** ExecuteBang
 **
 ** Runs a bang command. This is called from the main application
@@ -1159,21 +1201,6 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 	ActivateActiveConfigs();
 
 	return result;	// Alles OK
-}
-
-/*
-** Quit
-**
-** Quits Rainmeter.
-**
-*/
-void CRainmeter::Quit()
-{
-	if (Rainmeter)
-	{
-		delete Rainmeter;
-		Rainmeter = NULL;
-	}
 }
 
 /*

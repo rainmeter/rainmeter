@@ -31,11 +31,11 @@ BEGIN
     BEGIN
         BLOCK "040904E4"
         BEGIN
-            VALUE "FileDescription", "Rainmeter"
+            VALUE "FileDescription", "Rainmeter Core Library"
             VALUE "FileVersion", STRFILEVER
             VALUE "InternalName", "Rainmeter"
             VALUE "LegalCopyright", "Copyright (C) 2011 - All authors"
-            VALUE "OriginalFilename", "Rainmeter.exe"
+            VALUE "OriginalFilename", "Rainmeter.dll"
             VALUE "ProductName", "Rainmeter"
 #ifdef _WIN64
             VALUE "ProductVersion", STRPRODUCTVER " (64-bit)"

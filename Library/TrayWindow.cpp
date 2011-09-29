@@ -474,7 +474,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			else if (wParam == ID_CONTEXT_QUIT)
 			{
 				PostQuitMessage(0);
-				CRainmeter::Quit();
+				Quit();
 			}
 			else if (wParam == ID_CONTEXT_OPENSKINSFOLDER)
 			{

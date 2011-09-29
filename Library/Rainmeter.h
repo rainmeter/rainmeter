@@ -94,7 +94,6 @@ public:
 	~CRainmeter();
 
 	int Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath);
-	static void Quit();
 
 	CConfigParser* GetCurrentParser() { return m_CurrentParser; }
 	void SetCurrentParser(CConfigParser* parser) { m_CurrentParser = parser; }
@@ -274,6 +273,17 @@ private:
 	GlobalConfig m_GlobalConfig;
 };
 
-void ExecuteBang(LPCTSTR szBang);
+#ifdef LIBRARY_EXPORTS
+#define EXPORT_PLUGIN __declspec(dllexport)
+#else
+#define EXPORT_PLUGIN __declspec(dllimport)
+#endif
+
+extern "C"
+{
+	EXPORT_PLUGIN int Initialize(HWND hWnd, HINSTANCE hInstance, LPCWSTR lpCmdLine);
+	EXPORT_PLUGIN void Quit();
+	EXPORT_PLUGIN void ExecuteBang(LPCTSTR szBang);
+}
 
 #endif
