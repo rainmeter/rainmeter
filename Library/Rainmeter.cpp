@@ -682,12 +682,12 @@ void RainmeterSkinMenu(const WCHAR* arg)
 }
 
 /*
-** RainmeterTrayMenuWide
+** RainmeterTrayMenu
 **
 ** Callback for the !RainmeterTrayMenu bang
 **
 */
-void RainmeterTrayMenuWide()
+void RainmeterTrayMenu()
 {
 	if (Rainmeter)
 	{
@@ -1972,7 +1972,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"TrayMenu") == 0)
 	{
-		RainmeterTrayMenuWide();
+		RainmeterTrayMenu();
 	}
 	else if (_wcsicmp(name, L"ResetStats") == 0)
 	{

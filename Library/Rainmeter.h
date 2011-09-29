@@ -48,7 +48,7 @@ void RainmeterRefreshApp();
 void RainmeterAbout(const WCHAR* arg = NULL);
 void RainmeterManage(const WCHAR* arg = NULL);
 void RainmeterSkinMenu(const WCHAR* arg);
-void RainmeterTrayMenuWide();
+void RainmeterTrayMenu();
 void RainmeterResetStats();
 void RainmeterWriteKeyValue(const WCHAR* arg);
 void RainmeterQuit();
