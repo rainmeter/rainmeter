@@ -199,7 +199,6 @@ private:
 	void ReadGeneralSettings(const std::wstring& iniFile);
 	void SetLoadOrder(int configIndex, int order);
 	int GetLoadOrder(const std::wstring& config);
-	bool SetActiveConfig(const std::wstring& skinName, const std::wstring& skinIni);
 	void UpdateDesktopWorkArea(bool reset);
 	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU configMenu);
 	void ChangeSkinIndex(HMENU subMenu, int index);

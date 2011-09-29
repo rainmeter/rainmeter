@@ -1044,16 +1044,21 @@ ULONGLONG CSystem::GetTickCount64()
 **
 ** This function is a wrapper function for LoadLibrary().
 **
+** Avoids loading a DLL from current directory.
 **
 */
 HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError, bool ignoreErrors)
 {
 	UINT oldMode;
+
 	if (ignoreErrors)
 	{
 		oldMode = SetErrorMode(0);
 		SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
 	}
+
+	// Remove current directory from DLL search path
+	SetDllDirectory(L"");
 
 	SetLastError(ERROR_SUCCESS);
 	HMODULE hLib = LoadLibrary(lpLibFileName);

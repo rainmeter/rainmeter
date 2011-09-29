@@ -2347,33 +2347,6 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 }
 
 /*
-** SetActiveConfig
-**
-** Makes the given config active. If the config cannot be found this returns false.
-*/
-bool CRainmeter::SetActiveConfig(const std::wstring& skinName, const std::wstring& skinIni)
-{
-	for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
-	{
-		m_ConfigStrings[i].active = 0;	// Disable all other configs
-
-		if (skinName == m_ConfigStrings[i].config)
-		{
-			for (int j = 0, jsize = (int)m_ConfigStrings[i].iniFiles.size(); j < jsize; ++j)
-			{
-				if (skinIni == m_ConfigStrings[i].iniFiles[j])
-				{
-					m_ConfigStrings[i].active = j + 1;
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
-}
-
-/*
 ** RefreshAll
 **
 ** Refreshes all active meter windows.
