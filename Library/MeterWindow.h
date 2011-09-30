@@ -330,6 +330,7 @@ private:
 	void SetSavePosition(bool b);
 	void SetSnapEdges(bool b);
 	void SetWindowHide(HIDEMODE hide);
+	void SetWindowZPosition(ZPOSITION zpos);
 	bool DoAction(int x, int y, MOUSE mouse, bool test);
 	bool DoMoveAction(int x, int y, MOUSE mouse);
 	bool ResizeWindow(bool reset);

@@ -1081,7 +1081,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			m_IgnoreUpdate = true;
 			ZPOSITION zpos = (ZPOSITION)(ComboBox_GetCurSel((HWND)lParam) - 2);
-			m_SkinWindow->ChangeZPos(zpos);
+			m_SkinWindow->SetWindowZPosition(zpos);
 		}
 		break;
 

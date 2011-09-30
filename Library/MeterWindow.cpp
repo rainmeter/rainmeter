@@ -3612,28 +3612,23 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_VERYTOPMOST)
 		{
-			ChangeZPos(ZPOSITION_ONTOPMOST);
-			WriteConfig(SETTING_ALWAYSONTOP);
+			SetWindowZPosition(ZPOSITION_ONTOPMOST);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_TOPMOST)
 		{
-			ChangeZPos(ZPOSITION_ONTOP);
-			WriteConfig(SETTING_ALWAYSONTOP);
+			SetWindowZPosition(ZPOSITION_ONTOP);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_BOTTOM)
 		{
-			ChangeZPos(ZPOSITION_ONBOTTOM);
-			WriteConfig(SETTING_ALWAYSONTOP);
+			SetWindowZPosition(ZPOSITION_ONBOTTOM);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_NORMAL)
 		{
-			ChangeZPos(ZPOSITION_NORMAL);
-			WriteConfig(SETTING_ALWAYSONTOP);
+			SetWindowZPosition(ZPOSITION_NORMAL);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_ONDESKTOP)
 		{
-			ChangeZPos(ZPOSITION_ONDESKTOP);
-			WriteConfig(SETTING_ALWAYSONTOP);
+			SetWindowZPosition(ZPOSITION_ONDESKTOP);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_KEEPONSCREEN)
 		{
@@ -3865,6 +3860,18 @@ void CMeterWindow::SetWindowHide(HIDEMODE hide)
 	m_WindowHide = hide;
 	UpdateTransparency(m_AlphaValue, false);
 	WriteConfig(SETTING_HIDEONMOUSEOVER);
+}
+
+/*
+** SetWindowZPosition
+**
+** Helper function for setting Position
+**
+*/
+void CMeterWindow::SetWindowZPosition(ZPOSITION zpos)
+{
+	ChangeZPos(zpos);
+	WriteConfig(SETTING_ALWAYSONTOP);
 }
 
 /*
