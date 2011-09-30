@@ -28,6 +28,8 @@ protected:
 	CDialog(HWND wnd);
 	virtual ~CDialog();
 
+	void SetRTL();
+
 	void SetDialogFont();
 
 	HWND m_Window;

@@ -52,6 +52,17 @@ CDialog::~CDialog()
 }
 
 /*
+** SetRTL
+**
+** Enables RTL layout.
+**
+*/
+void CDialog::SetRTL()
+{
+	SetWindowLong(m_Window, GWL_EXSTYLE, GetWindowLong(m_Window, GWL_EXSTYLE) | WS_EX_LAYOUTRTL);
+}
+
+/*
 ** SetDialogFont
 **
 ** Sets dialog font to UI font.

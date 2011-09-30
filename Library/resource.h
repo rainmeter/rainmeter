@@ -125,6 +125,8 @@
 #define ID_STR_NEWVERSIONREQUIRED                    2043
 #define ID_STR_NOMETERSINSKIN                        2044
 #define ID_STR_INCLUDEINFINITELOOP                   2045
+#define ID_STR_ABOUTRAINMETER                        2046
+#define ID_STR_MANAGERAINMETER                       2047
 
 #define ID_CONTEXT_REFRESH                           4001
 #define ID_CONTEXT_QUIT                              4002
