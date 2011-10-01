@@ -130,6 +130,7 @@ public:
 
 	HINSTANCE GetInstance() { return m_Instance; }
 	HINSTANCE GetResourceInstance() { return m_ResourceInstance; }
+	LCID GetResourceLCID() { return m_ResourceLCID; }
 
 	bool GetDebug() { return m_Debug; }
 
@@ -264,6 +265,7 @@ private:
 
 	HINSTANCE m_Instance;
 	HMODULE m_ResourceInstance;
+	LCID m_ResourceLCID;
 
 	ULONG_PTR m_GDIplusToken;
 

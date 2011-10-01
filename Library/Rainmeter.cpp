@@ -155,7 +155,7 @@ int Initialize(HWND hWnd, HINSTANCE hInstance, LPCWSTR lpCmdLine)
 	}
 	catch (CError& error)
 	{
-		MessageBox(hWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		MessageBox(hWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 	}
 
 	return result;
@@ -968,13 +968,6 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 
 	m_Path = tmpSzPath;
 
-	wcscat(tmpSzPath, L"Languages\\English.dll");
-	m_ResourceInstance = LoadLibraryEx(tmpSzPath, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-	if (!m_ResourceInstance)
-	{
-		throw CError(L"Unable to load English.dll");
-	}
-
 	InitalizeLitestep();
 
 	bool bDefaultIniLocation = false;
@@ -1055,6 +1048,42 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 		m_StatsFile += L".stats";
 	}
 
+	// Determine the language resource to load
+	std::wstring resource = m_Path + L"Languages\\";
+	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0)
+	{
+		m_ResourceLCID = wcstoul(tmpSzPath, NULL, 10);
+	}
+	else
+	{
+		// Use whatever the user selected for the installer
+		DWORD lang;
+		DWORD size = sizeof(DWORD);
+		if (SHGetValue(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", L"Language", NULL, &lang, &size) == ERROR_SUCCESS)
+		{
+			_ultow(lang, tmpSzPath, 10);
+			m_ResourceLCID = lang;
+		}
+	}
+	resource += tmpSzPath;
+	resource += L".dll";
+
+	m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+	if (!m_ResourceInstance)
+	{
+		resource.insert(0, L"Unable to load language: ");
+		Log(LOG_ERROR, resource.c_str());
+
+		// Try English
+		resource = m_Path + L"Languages\\1033.dll";
+		m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+		m_ResourceLCID = 1033;
+		if (!m_ResourceInstance)
+		{
+			throw CError(L"Unable to load language library");
+		}
+	}
+
 	// Read Logging settings beforehand
 	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, m_IniFile.c_str());
 	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, m_IniFile.c_str());
@@ -1070,7 +1099,6 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 	m_SkinPath += L"Skins\\";
 
 	// Read the skin folder from the ini file
-	tmpSzPath[0] = L'\0';
 	if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0)
 	{
 		m_SkinPath = tmpSzPath;

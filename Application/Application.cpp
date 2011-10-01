@@ -101,7 +101,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	HMODULE module = GetModuleHandle(L"Rainmeter.dll");
 	if (module == NULL || Initialize(hWnd, module, lpCmdLine) == 1)
 	{
-		MessageBox(NULL, L"Unable to load Rainmeter.dll", L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
 		DestroyWindow(hWnd);
 		return RetError;
 	}

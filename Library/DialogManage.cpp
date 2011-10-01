@@ -1629,6 +1629,53 @@ void CDialogManage::CTabSettings::Initialize()
 {
 	m_Initialized = true;
 
+	// Scan for languages
+	HWND item = GetDlgItem(m_Window, IDC_MANAGESETTINGS_LANGUAGE_COMBOBOX);
+	WIN32_FIND_DATA fd;      // Data structure describes the file found
+	HANDLE hSearch;          // Search handle returned by FindFirstFile
+
+	std::wstring files = Rainmeter->GetPath() + L"Languages\\*.dll";
+	hSearch = FindFirstFile(files.c_str(), &fd);
+	do
+	{
+		if (hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
+
+		WCHAR* pos = wcschr(fd.cFileName, L'.');
+		if (pos)
+		{
+			LCID lcid = (LCID)wcstoul(fd.cFileName, &pos, 10);
+			if (GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, fd.cFileName, MAX_PATH) > 0)
+			{
+				// Strip brackets in language name
+				std::wstring text = fd.cFileName;
+				std::wstring::size_type pos = 0;
+				while ((pos = text.find_first_of(L"()")) != std::wstring::npos)
+				{
+					text.erase(pos, 1);
+				}
+
+				text += L" (";
+				GetLocaleInfo(lcid, LOCALE_SNATIVELANGUAGENAME, fd.cFileName, MAX_PATH);
+
+				// Some native language names don't start with a uppercase char..
+				fd.cFileName[0] = towupper(fd.cFileName[0]);
+				text += fd.cFileName;
+				text += L")";
+
+				int index = ComboBox_AddString(item, text.c_str());
+				ComboBox_SetItemData(item, index, (LPARAM)lcid);
+
+				if (lcid == Rainmeter->GetResourceLCID())
+				{
+					ComboBox_SetCurSel(item, index);
+				}
+			}
+		}
+	}
+	while (FindNextFile(hSearch, &fd));
+
+	FindClose(hSearch);
+
 	Button_SetCheck(GetDlgItem(m_Window, IDC_MANAGESETTINGS_CHECKUPDATES_CHECKBOX), !Rainmeter->GetDisableVersionCheck());
 	Button_SetCheck(GetDlgItem(m_Window, IDC_MANAGESETTINGS_LOCKSKINS_CHECKBOX), Rainmeter->GetDisableDragging());
 	Button_SetCheck(GetDlgItem(m_Window, IDC_MANAGESETTINGS_LOGTOFILE_CHECKBOX), Rainmeter->GetLogging());
@@ -1660,6 +1707,27 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
+	case IDC_MANAGESETTINGS_LANGUAGE_COMBOBOX:
+		if (HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			WCHAR buffer[16];
+			int sel = ComboBox_GetCurSel((HWND)lParam);
+			LCID lcid = ComboBox_GetItemData((HWND)lParam, sel);
+			_ultow(lcid, buffer, 10);
+			WritePrivateProfileString(L"Rainmeter", L"Language", buffer, Rainmeter->GetIniFile().c_str());
+
+			std::wstring resource = Rainmeter->GetPath() + L"Languages\\";
+			resource += buffer;
+			resource += L".dll";
+			FreeLibrary(Rainmeter->m_ResourceInstance);
+			Rainmeter->m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+			Rainmeter->m_ResourceLCID = lcid;
+
+			SendMessage(c_Dialog->GetWindow(), WM_DELAYED_CLOSE, 0, 0);
+			ExecuteBang(L"!Manage Settings"); // Delayed execute
+		}
+		break;
+
 	case IDC_MANAGESETTINGS_CHECKUPDATES_CHECKBOX:
 		Rainmeter->SetDisableVersionCheck(!Rainmeter->GetDisableVersionCheck());
 		break;

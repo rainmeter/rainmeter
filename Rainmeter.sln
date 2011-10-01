@@ -5,6 +5,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Language", "Language\Language.vcxproj", "{6BE6F228-B741-4DA9-9FBC-E9F2A7BD483A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Library", "Library\Library.vcxproj", "{BE9D2400-7F1C-49D6-8498-5CE495491AD6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6BE6F228-B741-4DA9-9FBC-E9F2A7BD483A} = {6BE6F228-B741-4DA9-9FBC-E9F2A7BD483A}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginAdvancedCPU", "Plugins\PluginAdvancedCPU\PluginAdvancedCPU.vcxproj", "{EE8EC522-8430-4B46-86A3-D943D77F9E4B}"
 EndProject
