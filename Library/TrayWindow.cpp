@@ -53,17 +53,9 @@ CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
 	m_TrayPos(),
 	m_TrayIconEnabled(true)
 {
-	WNDCLASS  wc;
-
-	wc.style = 0;
+	WNDCLASS wc = {0};
 	wc.lpfnWndProc = (WNDPROC)WndProc;
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
 	wc.hInstance = instance;
-	wc.hIcon = LoadIcon(instance, MAKEINTRESOURCE(IDI_WINDOW));
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-	wc.lpszMenuName =  NULL;
 	wc.lpszClassName = L"RainmeterTrayClass";
 
 	RegisterClass(&wc);

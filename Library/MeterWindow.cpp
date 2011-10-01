@@ -230,11 +230,10 @@ CMeterWindow::~CMeterWindow()
 */
 int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 {
-	WNDCLASSEX wc = {sizeof(WNDCLASSEX)};
-
 	m_Rainmeter = &Rainmeter;
 
 	// Register the windowclass
+	WNDCLASSEX wc = {sizeof(WNDCLASSEX)};
 	wc.style = CS_NOCLOSE | CS_DBLCLKS;
 	wc.lpfnWndProc = WndProc;
 	wc.hInstance = m_Rainmeter->GetInstance();

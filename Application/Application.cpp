@@ -71,7 +71,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	HANDLE hMutex = NULL;
 	MSG msg;
 	BOOL bRet;
-	HWND hWnd;
 
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 //	_CrtSetBreakAlloc(5055);
@@ -93,25 +92,10 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 		return RetSuccess;
 	}
 
-	if (!hPrevInstance)
-	{
-		if (!InitApplication(hInstance, WinClass)) return RetError;
-	}
+	if (!InitApplication(hInstance, WinClass)) return RetError;
 
-	hWnd=InitInstance(hInstance, WinClass, WinName);
+	HWND hWnd = InitInstance(hInstance, WinClass, WinName);
 	if (!hWnd) return RetError;
-
-	// Remove quotes from the commandline
-	WCHAR Path[MAX_PATH+1] = {0};
-	if (lpCmdLine)
-	{
-		size_t Pos = 0;
-		for (size_t i = 0, len = wcslen(lpCmdLine); i <= len && Pos < MAX_PATH; ++i)
-		{
-			if (lpCmdLine[i] != L'\"') Path[Pos++] = lpCmdLine[i];
-		}
-	}
-
 
 	// Check that the DLL is available and initialize it
 	HMODULE module = GetModuleHandle(L"Rainmeter.dll");
@@ -149,17 +133,9 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 */
 BOOL InitApplication(HINSTANCE hInstance, const WCHAR* WinClass)
 {
-	WNDCLASS  wc;
-
-	wc.style = 0;
-	wc.lpfnWndProc = (WNDPROC) MainWndProc;
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
+	WNDCLASS wc = {0};
+	wc.lpfnWndProc = (WNDPROC)MainWndProc;
 	wc.hInstance = hInstance;
-	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_RAINMETER));
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-	wc.lpszMenuName =  NULL;
 	wc.lpszClassName = WinClass;
 
 	return RegisterClass(&wc);
