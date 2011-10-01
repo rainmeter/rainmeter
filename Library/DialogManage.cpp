@@ -23,6 +23,7 @@
 #include "Measure.h"
 #include "resource.h"
 #include "DialogManage.h"
+#include "DialogAbout.h"
 #include "../Version.h"
 
 #define WM_DELAYED_CLOSE WM_APP + 0
@@ -1722,6 +1723,28 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 			FreeLibrary(Rainmeter->m_ResourceInstance);
 			Rainmeter->m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
 			Rainmeter->m_ResourceLCID = lcid;
+
+			if (CDialogAbout::c_Dialog)
+			{
+				int sel = TabCtrl_GetCurSel(GetDlgItem(CDialogAbout::c_Dialog->GetWindow(), IDC_ABOUT_TAB));
+				SendMessage(CDialogAbout::c_Dialog->GetWindow(), WM_DELAYED_CLOSE, 0, 0);
+				if (sel == 0)
+				{
+					ExecuteBang(L"!About"); // Delayed execute
+				}
+				else if (sel == 1)
+				{
+					ExecuteBang(L"!About Measures"); // Delayed execute
+				}
+				else if (sel == 2)
+				{
+					ExecuteBang(L"!About Plugins"); // Delayed execute
+				}
+				else //if (sel == 3)
+				{
+					ExecuteBang(L"!About Version"); // Delayed execute
+				}
+			}
 
 			SendMessage(c_Dialog->GetWindow(), WM_DELAYED_CLOSE, 0, 0);
 			ExecuteBang(L"!Manage Settings"); // Delayed execute
