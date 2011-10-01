@@ -2502,6 +2502,7 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 		PreserveSetting(backup, L"LogViewer");
 		PreserveSetting(backup, L"Logging");
 		PreserveSetting(backup, L"DisableVersionCheck");
+		PreserveSetting(backup, L"Language");
 		PreserveSetting(backup, L"TrayExecuteL", false);
 		PreserveSetting(backup, L"TrayExecuteM", false);
 		PreserveSetting(backup, L"TrayExecuteR", false);
