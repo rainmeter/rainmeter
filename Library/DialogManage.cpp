@@ -882,7 +882,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				TrackPopupMenu(
 					menu,
 					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					r.left,
+					(wcscmp(GetString(ID_STR_ISRTL), L"1") == 0) ? r.right : r.left,
 					--r.bottom,
 					0,
 					m_Window,
@@ -1046,7 +1046,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				TrackPopupMenu(
 					subMenu,
 					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					r.left,
+					(wcscmp(GetString(ID_STR_ISRTL), L"1") == 0) ? r.right : r.left,
 					--r.bottom,
 					0,
 					m_Window,
@@ -1649,19 +1649,12 @@ void CDialogManage::CTabSettings::Initialize()
 			{
 				// Strip brackets in language name
 				std::wstring text = fd.cFileName;
-				std::wstring::size_type pos = 0;
-				while ((pos = text.find_first_of(L"()")) != std::wstring::npos)
-				{
-					text.erase(pos, 1);
-				}
-
-				text += L" (";
+				text += L" - ";
 				GetLocaleInfo(lcid, LOCALE_SNATIVELANGUAGENAME, fd.cFileName, MAX_PATH);
 
 				// Some native language names don't start with a uppercase char..
 				fd.cFileName[0] = towupper(fd.cFileName[0]);
 				text += fd.cFileName;
-				text += L")";
 
 				int index = ComboBox_AddString(item, text.c_str());
 				ComboBox_SetItemData(item, index, (LPARAM)lcid);
