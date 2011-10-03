@@ -1153,7 +1153,10 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			wParam == ID_CONTEXT_SKINMENU_MONITOR_PRIMARY ||
 			wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
 		{
-			SendMessage(m_SkinWindow->GetWindow(), WM_COMMAND, wParam, 0);
+			if (m_SkinWindow)
+			{
+				SendMessage(m_SkinWindow->GetWindow(), WM_COMMAND, wParam, 0);
+			}
 			break;
 		}
 
@@ -1645,7 +1648,9 @@ void CDialogManage::CTabSettings::Initialize()
 		if (pos)
 		{
 			LCID lcid = (LCID)wcstoul(fd.cFileName, &pos, 10);
-			if (GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, fd.cFileName, MAX_PATH) > 0)
+			if (pos != fd.cFileName &&
+				_wcsicmp(pos, L".dll") == 0 &&
+				GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, fd.cFileName, MAX_PATH) > 0)
 			{
 				// Strip brackets in language name
 				std::wstring text = fd.cFileName;
