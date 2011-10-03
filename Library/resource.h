@@ -29,9 +29,11 @@
 #define IDC_ABOUTMEASURES_ITEMS_LISTVIEW             1008
 #define IDC_ABOUTPLUGINS_ITEMS_LISTVIEW              1009
 #define IDC_ABOUTVERSION_VERSION_TEXT                1010
-#define IDC_ABOUTVERSION_PATHS_TEXT                  1011
-#define IDC_ABOUTVERSION_COPY_BUTTON                 1012
-#define IDC_ABOUTVERSION_RAINMETER_ICON              1013
+#define IDC_ABOUTVERSION_PATH_TEXT                   1011
+#define IDC_ABOUTVERSION_INIFILE_TEXT                1012
+#define IDC_ABOUTVERSION_SKINPATH_TEXT               1013
+#define IDC_ABOUTVERSION_COPY_BUTTON                 1014
+#define IDC_ABOUTVERSION_RAINMETER_ICON              1015
 
 #define IDC_MANAGE_TAB                               1017
 #define IDC_REFRESHALL_BUTTON                        1018
@@ -93,7 +95,7 @@
 #define ID_STR_RANGE                                 2010
 #define ID_STR_VALUE                                 2011
 #define ID_STR_AUTHOR                                2012
-#define ID_STR_PATHDETAILS                           2013
+#define ID_STR_MANAGERAINMETER                       2013
 #define ID_STR_SKINS                                 2014
 #define ID_STR_THEMES                                2015
 #define ID_STR_SETTINGS                              2016
@@ -127,7 +129,6 @@
 #define ID_STR_NOMETERSINSKIN                        2044
 #define ID_STR_INCLUDEINFINITELOOP                   2045
 #define ID_STR_ABOUTRAINMETER                        2046
-#define ID_STR_MANAGERAINMETER                       2047
 
 #define ID_CONTEXT_REFRESH                           4001
 #define ID_CONTEXT_QUIT                              4002

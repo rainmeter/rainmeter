@@ -1008,8 +1008,16 @@ void CDialogAbout::CTabVersion::Initialize()
 	_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
 	SetWindowText(item, tmpSz);
 
-	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_PATHS_TEXT);
-	std::wstring text = GetFormattedString(ID_STR_PATHDETAILS, Rainmeter->GetPath().c_str(), Rainmeter->GetSettingsPath().c_str(), Rainmeter->GetSkinPath().c_str());
+	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_PATH_TEXT);
+	std::wstring text = L"Path: " + Rainmeter->GetPath();
+	SetWindowText(item, text.c_str());
+
+	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_INIFILE_TEXT);
+	text = L"IniFile: " + Rainmeter->GetIniFile();
+	SetWindowText(item, text.c_str());
+
+	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_SKINPATH_TEXT);
+	text = L"SkinPath: " + Rainmeter->GetSkinPath();
 	SetWindowText(item, text.c_str());
 }
 
@@ -1052,7 +1060,13 @@ INT_PTR CDialogAbout::CTabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			WCHAR tmpSz[64];
 			_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
-			std::wstring text = GetFormattedString(ID_STR_PATHDETAILS, Rainmeter->GetPath().c_str(), Rainmeter->GetSettingsPath().c_str(), Rainmeter->GetSkinPath().c_str());
+			std::wstring text = tmpSz;
+			text += L"\nPath: ";
+			text += Rainmeter->GetPath();
+			text += L"\nIniFile: ";
+			text += Rainmeter->GetIniFile();
+			text += L"\nSkinPath: ";
+			text += Rainmeter->GetSkinPath();
 			CSystem::SetClipboardText(text);
 		}
 		break;
