@@ -993,18 +993,27 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			}
 			else
 			{
-				m_IgnoreUpdate = true;
-
 				// Convert text to number and set it to get rid of extra chars
-				int value = GetDlgItemInt(m_Window, IDC_MANAGESKINS_LOADORDER_TEXT, NULL, TRUE);
+				WCHAR buffer[32];
+				int len = GetWindowText((HWND)lParam, buffer, 32);
+				if ((len == 0) || (len == 1 && buffer[0] == L'-'))
+				{
+					// Ignore if empty or if - is only char
+					break;
+				}
+
+				// Get selection
+				DWORD sel = Edit_GetSel((HWND)lParam);
+
+				// Reset value (to get rid of invalid chars)
+				m_IgnoreUpdate = true;
+				int value = _wtoi(buffer);
 				SetDlgItemInt(m_Window, IDC_MANAGESKINS_LOADORDER_TEXT, value, TRUE);
 
-				// Move caret to end
-				Edit_SetSel((HWND)lParam, 32, 32);
+				// Reset selection
+				Edit_SetSel((HWND)lParam, LOWORD(sel), HIWORD(sel));
 
-				WCHAR buffer[32];
 				_itow(value, buffer, 10);
-
 				WritePrivateProfileString(m_SkinName.c_str(), L"LoadOrder", buffer, Rainmeter->GetIniFile().c_str());
 				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(m_SkinWindow);
 				if (indexes.first != -1)
