@@ -1008,12 +1008,13 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				// Reset value (to get rid of invalid chars)
 				m_IgnoreUpdate = true;
 				int value = _wtoi(buffer);
-				SetDlgItemInt(m_Window, IDC_MANAGESKINS_LOADORDER_TEXT, value, TRUE);
+
+				_itow(value, buffer, 10);
+				SetWindowText((HWND)lParam, buffer);
 
 				// Reset selection
 				Edit_SetSel((HWND)lParam, LOWORD(sel), HIWORD(sel));
 
-				_itow(value, buffer, 10);
 				WritePrivateProfileString(m_SkinName.c_str(), L"LoadOrder", buffer, Rainmeter->GetIniFile().c_str());
 				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(m_SkinWindow);
 				if (indexes.first != -1)
@@ -1443,7 +1444,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (alreadyExists)
 			{
 				std::wstring text = GetFormattedString(ID_STR_THEMEALREADYEXISTS, theme.c_str());
-				if (MessageBox(NULL, text.c_str(), APPNAME, MB_ICONWARNING | MB_YESNO | MB_TOPMOST) != IDYES)
+				if (MessageBox(m_Window, text.c_str(), APPNAME, MB_ICONWARNING | MB_YESNO | MB_TOPMOST) != IDYES)
 				{
 					// Cancel
 					break;
@@ -1463,7 +1464,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 				if (!CSystem::CopyFiles(Rainmeter->GetIniFile(), path))
 				{
 					std::wstring text = GetFormattedString(ID_STR_THEMESAVEFAIL, path.c_str());
-					MessageBox(NULL, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+					MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 					break;
 				}
 
@@ -1507,7 +1508,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 				if (file == INVALID_HANDLE_VALUE)
 				{
 					std::wstring text = GetFormattedString(ID_STR_THEMESAVEFAIL, path.c_str());
-					MessageBox(NULL, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+					MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 					break;
 				}
 
@@ -1570,7 +1571,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			std::vector<std::wstring>& themes = const_cast<std::vector<std::wstring>&>(Rainmeter->GetAllThemes());
 
 			std::wstring text = GetFormattedString(ID_STR_THEMEDELETE, themes[sel].c_str());
-			if (MessageBox(NULL, text.c_str(), APPNAME, MB_ICONQUESTION | MB_YESNO | MB_TOPMOST) != IDYES)
+			if (MessageBox(m_Window, text.c_str(), APPNAME, MB_ICONQUESTION | MB_YESNO | MB_TOPMOST) != IDYES)
 			{
 				// Cancel
 				break;

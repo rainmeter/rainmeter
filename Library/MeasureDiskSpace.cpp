@@ -112,7 +112,7 @@ bool CMeasureDiskSpace::Update()
 		}
 		else if (!m_LabelName.empty())
 		{
-			m_LabelName = L"";
+			m_LabelName.clear();
 		}
 	}
 
