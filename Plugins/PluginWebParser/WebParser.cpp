@@ -94,15 +94,12 @@ std::wstring ConvertToWide(LPCSTR str, int codepage)
 
 	if (str && *str)
 	{
-		int strLen = (int)strlen(str) + 1;
+		int strLen = (int)strlen(str);
 		int bufLen = MultiByteToWideChar(codepage, 0, str, strLen, NULL, 0);
 		if (bufLen > 0)
 		{
-			WCHAR* wideSz = new WCHAR[bufLen];
-			wideSz[0] = 0;
-			MultiByteToWideChar(codepage, 0, str, strLen, wideSz, bufLen);
-			szWide = wideSz;
-			delete [] wideSz;
+			szWide.resize(bufLen);
+			MultiByteToWideChar(codepage, 0, str, strLen, &szWide[0], bufLen);
 		}
 	}
 	return szWide;
@@ -114,15 +111,12 @@ std::string ConvertToAscii(LPCWSTR str, int codepage)
 
 	if (str && *str)
 	{
-		int strLen = (int)wcslen(str) + 1;
+		int strLen = (int)wcslen(str);
 		int bufLen = WideCharToMultiByte(codepage, 0, str, strLen, NULL, 0, NULL, NULL);
 		if (bufLen > 0)
 		{
-			char* tmpSz = new char[bufLen];
-			tmpSz[0] = 0;
-			WideCharToMultiByte(codepage, 0, str, strLen, tmpSz, bufLen, NULL, NULL);
-			szAscii = tmpSz;
-			delete [] tmpSz;
+			szAscii.resize(bufLen);
+			WideCharToMultiByte(codepage, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
 		}
 	}
 	return szAscii;
@@ -874,12 +868,14 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 			// Must convert the data to utf8
 			utf8Data = ConvertWideToUTF8((LPCWSTR)parseData);
 			parseData = utf8Data.c_str();
+			dwSize = utf8Data.length();
 		}
 		else if (urlData->codepage != CP_UTF8 && urlData->codepage != 0)		// 0 = CP_ACP
 		{
 			// Must convert the data to utf8
 			utf8Data = ConvertAsciiToUTF8(parseData, urlData->codepage);
 			parseData = utf8Data.c_str();
+			dwSize = utf8Data.length();
 		}
 
 		rc = pcre_exec(
