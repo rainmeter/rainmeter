@@ -450,7 +450,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		CoInitialized = true;
 	}
 
-	if (CoInitialized && !InstanceCreated && ::FindWindow(L"iTunes", L"iTunes"))
+	if (CoInitialized && !InstanceCreated && ::FindWindow(L"ITWindow", L"iTunes"))
 	{
 		if (SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
 		{
@@ -495,7 +495,7 @@ UINT Update(UINT id)
 	if (!CoInitialized || !InstanceCreated)
 	{
 		// Check if the iTunes window has appeared
-		if (::FindWindow(L"iTunes", L"iTunes"))
+		if (::FindWindow(L"ITWindow", L"iTunes"))
 		{
 			if (!iTunesAboutToPromptUserToQuit && SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
 			{
