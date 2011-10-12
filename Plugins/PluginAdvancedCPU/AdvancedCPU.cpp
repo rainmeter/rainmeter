@@ -334,7 +334,7 @@ void UpdateProcesses()
 							values.found = false;
 							newProcesses.push_back(values);
 
-//							LSLog(LOG_DEBUG, L"Rainmeter", name);		// DEBUG
+//							LSLog(LOG_DEBUG, NULL, name);		// DEBUG
 						}
 
 						delete pPerfCntr;

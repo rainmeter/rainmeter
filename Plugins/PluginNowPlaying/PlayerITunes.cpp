@@ -116,6 +116,7 @@ HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Invoke(DISPID dispidMemb
 */
 CPlayerITunes::CPlayerITunes() : CPlayer(),
 	m_CallbackWindow(),
+	m_LastCheckTime(0),
 	m_iTunesActive(false),
 	m_iTunes(),
 	m_iTunesEvent()
@@ -237,7 +238,6 @@ void CPlayerITunes::Initialize()
 	else
 	{
 		m_Initialized = false;
-		LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Failed to get hold of iTunes instance via COM.");
 	}
 }
 
@@ -308,12 +308,10 @@ LRESULT CALLBACK CPlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 */
 bool CPlayerITunes::CheckWindow()
 {
-	static DWORD oldTime = 0;
-
 	DWORD time = GetTickCount();
-	if (time - oldTime > 5000)
+	if (time - m_LastCheckTime > 5000)
 	{
-		oldTime = time;
+		m_LastCheckTime = time;
 
 		HWND wnd = FindWindow(L"ITWindow", L"iTunes");
 		if (wnd && !m_iTunesActive)

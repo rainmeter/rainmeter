@@ -90,7 +90,7 @@ void ExecuteBang(LPCTSTR args, UINT id)
 	}
 	else
 	{
-		LSLog(LOG_WARNING, L"Rainmeter", L"MediaKeyPlugin: Unknown bang!");
+		LSLog(LOG_WARNING, NULL, L"MediaKey.dll: Unknown bang");
 	}
 }
 

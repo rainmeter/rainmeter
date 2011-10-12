@@ -112,12 +112,12 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		}
 		else
 		{
-			std::wstring error = L"GDICountType=";
+			std::wstring error = L"ResMon.dll: GDICountType=";
 			error += type;
-			error += L" is not valid in measure [";
+			error += L" is not valid in [";
 			error += section;
-			error += L"].";
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			error += L"]";
+			LSLog(LOG_ERROR, NULL, error.c_str());
 		}
 	}
 

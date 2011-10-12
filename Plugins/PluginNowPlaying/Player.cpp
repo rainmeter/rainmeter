@@ -187,7 +187,7 @@ void CPlayer::FindLyrics()
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, L"Rainmeter", L"NowPlayingPlugin: Failed to start lyrics thread.");
+			LSLog(LOG_DEBUG, NULL, L"NowPlaying.dll: Failed to start lyrics thread");
 		}
 	}
 }

@@ -83,15 +83,12 @@ std::string ConvertToAscii(LPCTSTR str)
 
 	if (str && *str)
 	{
-		int strLen = (int)wcslen(str) + 1;
+		int strLen = (int)wcslen(str);
 		int bufLen = WideCharToMultiByte(CP_ACP, 0, str, strLen, NULL, 0, NULL, NULL);
 		if (bufLen > 0)
 		{
-			char* tmpSz = new char[bufLen];
-			tmpSz[0] = 0;
-			WideCharToMultiByte(CP_ACP, 0, str, strLen, tmpSz, bufLen, NULL, NULL);
-			szAscii = tmpSz;
-			delete [] tmpSz;
+			szAscii.resize(bufLen);
+			WideCharToMultiByte(CP_ACP, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
 		}
 	}
 	return szAscii;
@@ -154,14 +151,14 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				}
 				else
 				{
-					LSLog(LOG_WARNING, L"Rainmeter", L"Unable to get the host by name.");
+					LSLog(LOG_WARNING, NULL, L"PingPlugin.dll: Unable to get host by name");
 				}
 
 				WSACleanup();
 			}
 			else
 			{
-				LSLog(LOG_WARNING, L"Rainmeter", L"Unable to initialize Windows Sockets.");
+				LSLog(LOG_WARNING, NULL, L"PingPlugin.dll: Unable to start WSA");
 			}
 		}
 		valid = true;
@@ -289,7 +286,6 @@ void Finalize(HMODULE instance, UINT id)
 		if ((*i1).second->threadHandle)
 		{
 			// Should really wait until the thread finishes instead terminating it...
-			LSLog(LOG_NOTICE, L"Rainmeter", L"PingPlugin: Thread still running -> Terminate.");
 			TerminateThread((*i1).second->threadHandle, 0);
 		}
 		LeaveCriticalSection(&g_CriticalSection);

@@ -153,6 +153,7 @@ void CPlayerWMP::CRemoteHost::SwitchedToControl()
 CPlayerWMP::CPlayerWMP() : CPlayer(),
 	m_TrackChanged(false),
 	m_Window(),
+	m_LastCheckTime(0),
 	m_ComModule(),
 	m_AxWindow(),
 	m_IPlayer(),
@@ -220,11 +221,7 @@ void CPlayerWMP::Initialize()
 							g_Instance,
 							NULL);
 
-	if (!m_Window)
-	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"NowPlayingPlugin: Unable to create window (WMP).");
-		return;
-	}
+	if (!m_Window) return;
 
 	CComPtr<IObjectWithSite> spHostObject;
 	CComPtr<IAxWinHostWindow> spHost;
@@ -247,7 +244,6 @@ void CPlayerWMP::Initialize()
 	}
 	else
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"NowPlayingPlugin: Failed to initialize COM (WMP).");
 		return;
 	}
 
@@ -479,13 +475,12 @@ void CPlayerWMP::UpdateData()
 	}
 	else
 	{
-		static DWORD oldTime = 0;
 		DWORD time = GetTickCount();
 		
 		// Try to find WMP window every 5 seconds
-		if (oldTime = 0 || time - oldTime > 5000)
+		if (m_LastCheckTime = 0 || time - m_LastCheckTime > 5000)
 		{
-			oldTime = time;
+			m_LastCheckTime = time;
 
 			if (FindWindow(L"WMPlayerApp", NULL))
 			{

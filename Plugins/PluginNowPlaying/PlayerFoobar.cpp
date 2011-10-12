@@ -98,8 +98,8 @@ void CPlayerFoobar::Initialize()
 		int version = (int)SendMessage(m_FooWindow, WM_USER, 0, FOO_GETVERSION);
 		if (version < 100)
 		{
-			std::wstring error = L"Your copy of the foo_rainmeter.dll plugin for foobar2000 is outdated.\nDownload the latest version from foo-rainmeter.googlecode.com and try again.";
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_ICONERROR | MB_TOPMOST);
+			const WCHAR* error = L"Your copy of the foo_rainmeter.dll plugin for foobar2000 is outdated.\nDownload the latest version from foo-rainmeter.googlecode.com and try again.";
+			MessageBox(NULL, error, L"Rainmeter", MB_OK | MB_ICONERROR | MB_TOPMOST);
 			m_FooWindow = NULL;
 		}
 		else

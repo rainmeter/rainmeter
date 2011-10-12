@@ -37,8 +37,8 @@ std::wstring ConvertToWide(LPCSTR str);
 std::string ConvertToUTF8(LPCWSTR str);
 std::wstring ConvertUTF8ToWide(LPCSTR str);
 
-void Log(int nLevel, const WCHAR* message, const WCHAR* module = L"Rainmeter");		// Wrapper for LSLog().
-void LogWithArgs(int nLevel, const WCHAR* format, ... );	// Replacement for DebugLog(), has the same functionality but has the option to set teh Log Level.
+void Log(int nLevel, const WCHAR* message);
+void LogWithArgs(int nLevel, const WCHAR* format, ... );
 void LogError(CError& error);
 
 void RunCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, bool asAdmin = false);

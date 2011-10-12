@@ -32,6 +32,9 @@ CPlayer* CPlayerAIMP::c_Player = NULL;
 CPlayerAIMP::CPlayerAIMP() : CPlayer(),
 	m_Window(),
 	m_WinampWindow(),
+	m_LastCheckTime(0),
+	m_LastFileSize(0),
+	m_LastTitleSize(0),
 	m_FileMap(),
 	m_FileMapHandle()
 {
@@ -74,13 +77,12 @@ CPlayer* CPlayerAIMP::Create()
 */
 bool CPlayerAIMP::CheckWindow()
 {
-	static DWORD oldTime = 0;
 	DWORD time = GetTickCount();
-		
+
 	// Try to find AIMP every 5 seconds
-	if (time - oldTime > 5000)
+	if (time - m_LastCheckTime > 5000)
 	{
-		oldTime = time;
+		m_LastCheckTime = time;
 		m_Window = FindWindow(L"AIMP2_RemoteInfo", L"AIMP2_RemoteInfo");
 
 		if (m_Window)
@@ -95,14 +97,6 @@ bool CPlayerAIMP::CheckWindow()
 				{
 					m_Initialized = true;
 				}
-				else
-				{
-					LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Unable to view AIMP file mapping.");
-				}
-			}
-			else
-			{
-				LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: AIMP - Unable to access AIMP file mapping.");
 			}
 		}
 	}
@@ -118,21 +112,15 @@ bool CPlayerAIMP::CheckWindow()
 */
 void CPlayerAIMP::UpdateData()
 {
-	static INT64 oldFileSize = 0;
-	static long oldTitleLen = 0;
-
 	if (!m_Initialized)
 	{
-		if (oldTitleLen != 0)
+		if (m_LastTitleSize != 0)
 		{
-			oldFileSize = 0;
-			oldTitleLen = 0;
+			m_LastFileSize = 0;
+			m_LastTitleSize = 0;
 		}
 
-		if (!CheckWindow())
-		{
-			return;
-		}
+		if (!CheckWindow()) return;
 	}
 
 	// If initialized
@@ -147,10 +135,10 @@ void CPlayerAIMP::UpdateData()
 			if (m_FileMapHandle) CloseHandle(m_FileMapHandle);
 		}
 
-		if (oldTitleLen != 0)
+		if (m_LastTitleSize != 0)
 		{
-			oldFileSize = 0;
-			oldTitleLen = 0;
+			m_LastFileSize = 0;
+			m_LastTitleSize = 0;
 			ClearData();
 		}
 
@@ -163,11 +151,11 @@ void CPlayerAIMP::UpdateData()
 
 	AIMP2FileInfo* info = (AIMP2FileInfo*)m_FileMap;
 	if (info->cbSizeOf > 0 &&
-		info->nFileSize != oldFileSize	||	// Avoid reading the same file
-		info->nTitleLen != oldTitleLen)
+		info->nFileSize != m_LastFileSize	||	// Avoid reading the same file
+		info->nTitleLen != m_LastTitleSize)
 	{
-		oldFileSize = info->nFileSize;
-		oldTitleLen = info->nTitleLen;
+		m_LastFileSize = info->nFileSize;
+		m_LastTitleSize = info->nTitleLen;
 
 		// 44 is sizeof(AIMP2FileInfo) / 2 (due to WCHAR being 16-bit).
 		// Written explicitly due to size differences in 32bit/64bit.
@@ -200,16 +188,9 @@ void CPlayerAIMP::UpdateData()
 			m_FilePath = filepath;
 			++m_TrackCount;
 
-			// Find cover if needed
-			if (m_Measures & MEASURE_COVER)
-			{
-				FindCover();
-			}
+			if (m_Measures & MEASURE_COVER) FindCover();
 
-			if (m_Measures & MEASURE_LYRICS)
-			{
-				FindLyrics();
-			}
+			if (m_Measures & MEASURE_LYRICS) FindLyrics();
 		}
 	}
 }

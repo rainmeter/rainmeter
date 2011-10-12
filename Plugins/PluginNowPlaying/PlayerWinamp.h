@@ -58,6 +58,7 @@ private:
 	static CPlayer* c_Player;
 
 	HWND m_Window;				// Winamp window
+	DWORD m_LastCheckTime;
 	bool m_UseUnicodeAPI;
 	bool m_PlayingStream;
 	WINAMPTYPE m_WinampType;

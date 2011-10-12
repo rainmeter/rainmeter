@@ -724,7 +724,7 @@ double Update2(UINT id)
 					}
 					else  // error
 					{
-						std::wstring log = L"WebParser: [";
+						std::wstring log = L"WebParser.dll: [";
 						log += urlData->section;
 						log += L"] Failed to begin download thread.";
 						Log(LOG_ERROR, log.c_str());
@@ -768,7 +768,7 @@ double Update2(UINT id)
 						}
 						else  // error
 						{
-							std::wstring log = L"WebParser: [";
+							std::wstring log = L"WebParser.dll: [";
 							log += urlData->section;
 							log += L"] Failed to begin thread.";
 							Log(LOG_ERROR, log.c_str());
@@ -814,7 +814,7 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 			}
 			else
 			{
-				std::wstring log = L"WebParser: [";
+				std::wstring log = L"WebParser.dll: [";
 				log += urlData->section;
 				log += L"] Failed to dump debug data: ";
 				log += urlData->debugFileLocation;
@@ -894,7 +894,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 			if (rc == 0)
 			{
 				// The output vector wasn't big enough
-				std::wstring log = L"WebParser: [";
+				std::wstring log = L"WebParser.dll: [";
 				log += urlData->section;
 				log += L"] Too many substrings!";
 				Log(LOG_ERROR, log.c_str());
@@ -915,7 +915,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 							WCHAR buffer[32];
 							wsprintf(buffer, L"%2d", i);
 
-							std::wstring log = L"WebParser: [";
+							std::wstring log = L"WebParser.dll: [";
 							log += urlData->section;
 							log += L"] (Index ";
 							log += buffer;
@@ -935,7 +935,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 				}
 				else
 				{
-					std::wstring log = L"WebParser: [";
+					std::wstring log = L"WebParser.dll: [";
 					log += urlData->section;
 					log += L"] Not enough substrings!";
 					Log(LOG_WARNING, log.c_str());
@@ -1006,7 +1006,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 									}
 									else  // error
 									{
-										std::wstring log = L"WebParser: [";
+										std::wstring log = L"WebParser.dll: [";
 										log += (*i).second->section;
 										log += L"] Failed to begin download thread.";
 										Log(LOG_ERROR, log.c_str());
@@ -1018,7 +1018,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 						}
 						else
 						{
-							std::wstring log = L"WebParser: [";
+							std::wstring log = L"WebParser.dll: [";
 							log += (*i).second->section;
 							log += L"] Not enough substrings!";
 							Log(LOG_WARNING, log.c_str());
@@ -1050,7 +1050,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 			WCHAR buffer[32];
 			wsprintf(buffer, L"%d", rc);
 
-			std::wstring log = L"WebParser: [";
+			std::wstring log = L"WebParser.dll: [";
 			log += urlData->section;
 			log += L"] Matching error! (";
 			log += buffer;
@@ -1084,7 +1084,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 		WCHAR buffer[32];
 		wsprintf(buffer, L"%d", erroffset);
 
-		std::wstring log = L"WebParser: [";
+		std::wstring log = L"WebParser.dll: [";
 		log += urlData->section;
 		log += L"] PCRE compilation failed at offset ";
 		log += buffer;
@@ -1105,7 +1105,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 		}
 		else  // error
 		{
-			std::wstring log = L"WebParser: [";
+			std::wstring log = L"WebParser.dll: [";
 			log += urlData->section;
 			log += L"] Failed to begin download thread.";
 			Log(LOG_ERROR, log.c_str());
@@ -1266,7 +1266,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			{
 				ready = false;
 
-				log = L"WebParser: [";
+				log = L"WebParser.dll: [";
 				log += urlData->section;
 				log += L"] Directory does not exist: ";
 				log += directory;
@@ -1276,7 +1276,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			{
 				ready = false;
 
-				log = L"WebParser: [";
+				log = L"WebParser.dll: [";
 				log += urlData->section;
 				log += L"] Path is a directory, not a file: ";
 				log += fullpath;
@@ -1289,7 +1289,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 				{
 					ready = false;
 
-					log = L"WebParser: [";
+					log = L"WebParser.dll: [";
 					log += urlData->section;
 					log += L"] File is READ-ONLY: ";
 					log += fullpath;
@@ -1378,7 +1378,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			}
 
 			// Write some log info
-			std::wstring log = L"WebParser: [";
+			std::wstring log = L"WebParser.dll: [";
 			log += urlData->section;
 			log += L"] Downloading url ";
 			log += url;
@@ -1446,7 +1446,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 
 				wsprintf(buffer, L"result=0x%08X, COM=0x%08X", result, resultCoInitialize);
 
-				std::wstring log = L"WebParser: [";
+				std::wstring log = L"WebParser.dll: [";
 				log += urlData->section;
 				log += L"] Download failed (";
 				log += buffer;
@@ -1462,7 +1462,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 		}
 		else
 		{
-			std::wstring log = L"WebParser: [";
+			std::wstring log = L"WebParser.dll: [";
 			log += urlData->section;
 			log += L"] Download failed: ";
 			log += url;
@@ -1471,7 +1471,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 	}
 	else
 	{
-		std::wstring log = L"WebParser: [";
+		std::wstring log = L"WebParser.dll: [";
 		log += urlData->section;
 		log += L"] The url is empty.\n";
 		Log(LOG_ERROR, log.c_str());
@@ -1611,8 +1611,7 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 	int nBufferSize;
 	const int CHUNK_SIZE = 8192;
 
-	std::wstring err = L"WebParser: Fetching URL: ";
-	err += url;
+	std::wstring err = L"WebParser.dll: Fetching: " + url;
 	Log(LOG_DEBUG, err.c_str());
 
 	DWORD flags = INTERNET_FLAG_RESYNCHRONIZE;
@@ -1704,10 +1703,6 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 	// Close the HINTERNET handle.
 	InternetCloseHandle(hUrlDump);
 
-	err = L"WebParser: Finished URL: ";
-	err += url;
-	Log(LOG_DEBUG, err.c_str());
-
 	// Delete the existing buffers.
 	delete [] lpData;
 
@@ -1725,7 +1720,7 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 	WCHAR buffer[16];
 	wsprintf(buffer, L"%i", lineNumber);
 
-	std::wstring err = L"WebParser (";
+	std::wstring err = L"WebParser.dll: (";
 	err += buffer;
 	err += L") ";
 
@@ -1793,11 +1788,11 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 }
 
 /*
-  Writes the log to a file (logging is thread safe (I think...)).
+  Writes the log to a file
 */
 void Log(int level, const WCHAR* string)
 {
-	LSLog(level, L"Rainmeter", string);
+	LSLog(level, NULL, string);
 }
 
 UINT GetPluginVersion()

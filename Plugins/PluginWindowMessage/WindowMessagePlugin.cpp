@@ -66,7 +66,6 @@ static std::map<UINT, windowData> g_Values;
 UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
 	windowData wData;
-
 	wData.uMsg = 0;
 	wData.wParam = 0;
 	wData.lParam = 0;
@@ -111,8 +110,8 @@ double Update2(UINT id)
 	std::map<UINT, windowData>::iterator i = g_Values.find(id);
 	if (i != g_Values.end())
 	{
-		std::wstring& winName = (*i).second.windowName;
-		std::wstring& winClass = (*i).second.windowClass;
+		const std::wstring& winName = (*i).second.windowName;
+		const std::wstring& winClass = (*i).second.windowClass;
 		HWND hwnd = FindWindow(winClass.empty() ? NULL : winClass.c_str(), winName.empty() ? NULL : winName.c_str());
 		if (hwnd)
 		{
@@ -136,7 +135,7 @@ double Update2(UINT id)
 
 LPCTSTR GetString(UINT id, UINT flags)
 {
-	static WCHAR buffer[256];
+	static WCHAR buffer[64];
 
 	std::map<UINT, windowData>::iterator i = g_Values.find(id);
 	if (i != g_Values.end())
@@ -183,7 +182,7 @@ void ExecuteBang(LPCTSTR args, UINT id)
 {
 	std::wstring wholeBang = args;
 
-	size_t pos = wholeBang.find(' ');
+	size_t pos = wholeBang.find(L' ');
 	if (pos != -1)
 	{
 		std::wstring bang = wholeBang.substr(0, pos);
@@ -207,26 +206,22 @@ void ExecuteBang(LPCTSTR args, UINT id)
 					}
 					else
 					{
-						LSLog(LOG_ERROR, L"Rainmeter", L"WindowMessagePlugin: Unable to find the window!");
+						LSLog(LOG_ERROR, NULL, L"WindowMessagePlugin.dll: Unable to find window");
 					}
 				}
 				else
 				{
-					LSLog(LOG_ERROR, L"Rainmeter", L"WindowMessagePlugin: Unable to find the window data!");
+					LSLog(LOG_ERROR, NULL, L"WindowMessagePlugin.dll: Unable to find window data");
 				}
 			}
 			else
 			{
-				LSLog(LOG_WARNING, L"Rainmeter", L"WindowMessagePlugin: Incorrect number of arguments for the bang!");
+				LSLog(LOG_WARNING, NULL, L"WindowMessagePlugin.dll: Incorrect number of arguments for bang");
 			}
-		}
-		else
-		{
-			LSLog(LOG_WARNING, L"Rainmeter", L"WindowMessagePlugin: Unknown bang!");
+
+			return;
 		}
 	}
-	else
-	{
-		LSLog(LOG_WARNING, L"Rainmeter", L"WindowMessagePlugin: Unable to parse the bang!");
-	}
+
+	LSLog(LOG_WARNING, NULL, L"WindowMessagePlugin.dll: Unknown bang");
 }

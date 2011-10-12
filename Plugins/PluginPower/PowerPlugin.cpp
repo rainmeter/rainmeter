@@ -67,6 +67,11 @@ HINSTANCE hDLL = NULL;
 int g_Instances, g_NumOfProcessors = 0;
 FPCALLNTPOWERINFORMATION fpCallNtPowerInformation = NULL;
 
+void NullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved)
+{
+	// Do nothing.
+}
+
 /*
   This function is called when the measure is initialized.
   The function must return the maximum value that can be measured.
@@ -179,7 +184,7 @@ double Update2(UINT id)
 		std::map<UINT, POWER_STATE>::iterator i = g_States.find(id);
 		if (i != g_States.end())
 		{
-			switch((*i).second)
+			switch ((*i).second)
 			{
 			case POWER_ACLINE:
 				return status.ACLineStatus == 1 ? 1 : 0;
@@ -220,7 +225,7 @@ double Update2(UINT id)
 			case POWER_HZ:
 				if (fpCallNtPowerInformation && g_NumOfProcessors > 0)
 				{
-					PROCESSOR_POWER_INFORMATION* ppi = new PROCESSOR_POWER_INFORMATION [g_NumOfProcessors];
+					PROCESSOR_POWER_INFORMATION* ppi = new PROCESSOR_POWER_INFORMATION[g_NumOfProcessors];
 					memset(ppi, 0, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
 					fpCallNtPowerInformation(ProcessorInformation, NULL, 0, ppi, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
 					double value = ((*i).second == POWER_MHZ) ? ppi[0].CurrentMhz : ppi[0].CurrentMhz * 1000000.0;
@@ -233,14 +238,14 @@ double Update2(UINT id)
 
 	return 0;
 }
+
 /*
   This function is called when the value should be
   returned as a string.
 */
 LPCTSTR GetString(UINT id, UINT flags)
 {
-	static WCHAR buffer[256];
-
+	static WCHAR buffer[128];
 	std::map<UINT, POWER_STATE>::iterator i = g_States.find(id);
 	if (i != g_States.end())
 	{
@@ -259,13 +264,22 @@ LPCTSTR GetString(UINT id, UINT flags)
 					std::map<UINT, std::wstring>::iterator iter = g_Formats.find(id);
 					if (iter != g_Formats.end())
 					{
-						tm time;
-						memset(&time, 0, sizeof(tm));
+						tm time = {0};
 						time.tm_sec = status.BatteryLifeTime % 60;
 						time.tm_min = (status.BatteryLifeTime / 60) % 60;
 						time.tm_hour = status.BatteryLifeTime / 60 / 60;
 
-						wcsftime(buffer, 256, (*iter).second.c_str(), &time);
+						_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(NullCRTInvalidParameterHandler);
+						_CrtSetReportMode(_CRT_ASSERT, 0);
+
+						errno = 0;
+						wcsftime(buffer, 128, (*iter).second.c_str(), &time);
+						if (errno == EINVAL)
+						{
+							buffer[0] = L'\0';
+						}
+
+						_set_invalid_parameter_handler(oldHandler);
 					}
 					else
 					{

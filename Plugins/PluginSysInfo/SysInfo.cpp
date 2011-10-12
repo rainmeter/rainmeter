@@ -159,7 +159,6 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		{
 			g_Types[id] = DNS_SERVER;
 		}
-
 		else if (_wcsicmp(L"WORK_AREA_TOP", type) == 0)
 		{
 			g_Types[id] = WORK_AREA_TOP;
@@ -206,12 +205,12 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		}
 		else
 		{
-			std::wstring error = L"SysInfoType=";
+			std::wstring error = L"SysInfo.dll: SysInfoType=";
 			error += type;
-			error += L" is not valid in measure [";
+			error += L" is not valid in [";
 			error += section;
-			error += L"].";
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			error += L"]";
+			LSLog(LOG_ERROR, NULL, error.c_str());
 		}
 	}
 
@@ -230,15 +229,12 @@ std::wstring ConvertToWide(LPCSTR str)
 
 	if (str && *str)
 	{
-		int strLen = (int)strlen(str) + 1;
+		int strLen = (int)strlen(str);
 		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
 		if (bufLen > 0)
 		{
-			WCHAR* wideSz = new WCHAR[bufLen];
-			wideSz[0] = 0;
-			MultiByteToWideChar(CP_ACP, 0, str, strLen, wideSz, bufLen);
-			szWide = wideSz;
-			delete [] wideSz;
+			szWide.resize(bufLen);
+			MultiByteToWideChar(CP_ACP, 0, str, strLen, &szWide[0], bufLen);
 		}
 	}
 	return szWide;
@@ -435,11 +431,10 @@ double Update2(UINT id)
 
 	if (data) //For speed purposes, only check if they specify a non-primary monitor.
 	{
-		if (GetSystemMetrics(SM_CMONITORS)>32)
+		if (GetSystemMetrics(SM_CMONITORS) > 32)
 		{
-			std::wstring error = L"That's alot of monitors! 32 is the max.";
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
-			exit(-1);
+			LSLog(LOG_ERROR, NULL, L"SysInfo.dll: Max amount of monitors supported is 32.");
+			return 0.0;
 		}
 		m_Monitors.count = 0;
 		EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)(&m_Monitors));

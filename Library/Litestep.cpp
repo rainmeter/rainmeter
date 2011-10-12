@@ -303,7 +303,7 @@ std::wstring ConvertUTF8ToWide(LPCSTR str)
 	return szWide;
 }
 
-BOOL LogInternal(int nLevel, LPCTSTR pszModule, ULONGLONG elapsed, LPCTSTR pszMessage)
+BOOL LogInternal(int nLevel, ULONGLONG elapsed, LPCTSTR pszMessage)
 {
 	// Add timestamp
 	WCHAR buffer[128];
@@ -391,18 +391,17 @@ BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
 	// Ignore LOG_DEBUG messages from plugins unless in debug mode
 	if (nLevel != LOG_DEBUG || Rainmeter->GetDebug())
 	{
-		Log(nLevel, pszMessage, pszModule);
+		Log(nLevel, pszMessage);
 	}
 
 	return TRUE;
 }
 
-void Log(int nLevel, const WCHAR* message, const WCHAR* module)
+void Log(int nLevel, const WCHAR* message)
 {
 	struct DELAYED_LOG_INFO
 	{
 		int level;
-		std::wstring module;
 		ULONGLONG elapsed;
 		std::wstring message;
 	};
@@ -419,7 +418,7 @@ void Log(int nLevel, const WCHAR* message, const WCHAR* module)
 		while (!c_LogDelay.empty())
 		{
 			DELAYED_LOG_INFO& logInfo = c_LogDelay.front();
-			LogInternal(logInfo.level, logInfo.module.c_str(), logInfo.elapsed, logInfo.message.c_str());
+			LogInternal(logInfo.level, logInfo.elapsed, logInfo.message.c_str());
 
 			c_LogDelay.erase(c_LogDelay.begin());
 		}
@@ -427,7 +426,7 @@ void Log(int nLevel, const WCHAR* message, const WCHAR* module)
 		LeaveCriticalSection(&g_CsLogDelay);
 
 		// Log the message
-		LogInternal(nLevel, module, elapsed, message);
+		LogInternal(nLevel, elapsed, message);
 
 		LeaveCriticalSection(&g_CsLog);
 	}
@@ -436,7 +435,7 @@ void Log(int nLevel, const WCHAR* message, const WCHAR* module)
 		// Queue the message
 		EnterCriticalSection(&g_CsLogDelay);
 
-		DELAYED_LOG_INFO logInfo = {nLevel, module, elapsed, message};
+		DELAYED_LOG_INFO logInfo = {nLevel, elapsed, message};
 		c_LogDelay.push_back(logInfo);
 
 		LeaveCriticalSection(&g_CsLogDelay);

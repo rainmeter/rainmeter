@@ -61,7 +61,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		}
 		else
 		{
-			LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: PluginBridge error");
+			LSLog(LOG_ERROR, NULL, L"NowPlaying.dll: PluginBridge error");
 		}
 
 		g_Instance = instance;
@@ -100,12 +100,12 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				if (!child->parent)
 				{
 					// The referenced section doesn't exist
-					std::wstring error = L"NowPlayingPlugin: Invalid PlayerName=";
+					std::wstring error = L"NowPlaying.dll: Invalid PlayerName=";
 					error += str;
 					error += L" in [";
 					error += section;
 					error += L"]";
-					LSLog(LOG_WARNING, L"Rainmeter", error.c_str());
+					LSLog(LOG_WARNING, NULL, error.c_str());
 					delete child;
 					return maxValue;
 				}
@@ -156,12 +156,12 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			}
 			else
 			{
-				std::wstring error = L"NowPlayingPlugin: Invalid PlayerName=";
+				std::wstring error = L"NowPlaying.dll: Invalid PlayerName=";
 				error += str;
 				error += L" in [";
 				error += section;
 				error += L"]";
-				LSLog(LOG_ERROR, L"Rainmeter", error.c_str());
+				LSLog(LOG_ERROR, NULL, error.c_str());
 				delete parent;
 				delete child;
 				return maxValue;
@@ -250,7 +250,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		}
 		else if (_wcsicmp(L"LYRICS", str) == 0)
 		{
-			LSLog(LOG_WARNING, L"Rainmeter", L"NowPlayingPlugin: Using undocumented PlayerType=LYRICS!");
+			LSLog(LOG_WARNING, NULL, L"NowPlaying.dll: Using undocumented PlayerType=LYRICS!");
 			child->type = MEASURE_LYRICS;
 		}
 		else if (_wcsicmp(L"FILE", str) == 0)
@@ -259,12 +259,12 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		}
 		else
 		{
-			std::wstring error = L"NowPlayingPlugin: Invalid PlayerType=";
+			std::wstring error = L"NowPlaying.dll: Invalid PlayerType=";
 			error += str;
 			error += L" in [";
 			error += section;
 			error += L"]";
-			LSLog(LOG_WARNING, L"Rainmeter", error.c_str());
+			LSLog(LOG_WARNING, NULL, error.c_str());
 		}
 
 		child->parent->player->AddMeasure(child->type);
@@ -580,8 +580,12 @@ void ExecuteBang(LPCTSTR bang, UINT id)
 				}
 				else
 				{
-					LSLog(LOG_WARNING, L"Rainmeter", L"NowPlayingPlugin: Unknown bang!");
+					LSLog(LOG_WARNING, NULL, L"NowPlaying.dll: Unknown bang");
 				}
+			}
+			else
+			{
+				LSLog(LOG_WARNING, NULL, L"NowPlaying.dll: Unknown bang");
 			}
 		}
 	}

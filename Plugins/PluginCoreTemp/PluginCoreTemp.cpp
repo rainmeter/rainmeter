@@ -96,7 +96,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			else
 			{
 				g_Indexes[id] = 0;
-				LSLog(LOG_WARNING, L"Rainmeter", L"CoreTempPlugin: Selected CoreTempType requires CoreTempIndex, assuming 0.");
+				LSLog(LOG_WARNING, NULL, L"CoreTemp.dll: Selected CoreTempType requires CoreTempIndex, assuming 0");
 			}
 		}
 	}
@@ -211,7 +211,7 @@ eMeasureType convertStringToMeasureType(LPCWSTR i_String)
 	else
 	{
 		result = MeasureTemperature;
-		LSLog(LOG_WARNING, L"Rainmeter", L"CoreTempPlugin: Incorrect CoreTempType, assuming Temperature.");
+		LSLog(LOG_WARNING, NULL, L"CoreTemp.dll: Invalid CoreTempType");
 	}
 
 	return result;

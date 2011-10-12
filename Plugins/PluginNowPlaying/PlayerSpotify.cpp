@@ -28,7 +28,8 @@ CPlayer* CPlayerSpotify::c_Player = NULL;
 **
 */
 CPlayerSpotify::CPlayerSpotify() : CPlayer(),
-	m_Window()
+	m_Window(),
+	m_LastCheckTime(0)
 {
 }
 
@@ -67,13 +68,12 @@ CPlayer* CPlayerSpotify::Create()
 */
 bool CPlayerSpotify::CheckWindow()
 {
-	static DWORD oldTime = 0;
 	DWORD time = GetTickCount();
 		
 	// Try to find Spotify window every 5 seconds
-	if (time - oldTime > 5000)
+	if (time - m_LastCheckTime > 5000)
 	{
-		oldTime = time;
+		m_LastCheckTime = time;
 
 		m_Window = FindWindow(L"SpotifyMainWindow", NULL);
 		if (m_Window)

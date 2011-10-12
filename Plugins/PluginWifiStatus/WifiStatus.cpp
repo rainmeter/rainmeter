@@ -37,10 +37,9 @@ __declspec( dllexport ) UINT GetPluginVersion();
 __declspec( dllexport ) LPCTSTR GetPluginAuthor();
 
 }
+
 //Function that translates DOT11 ENUMs to output strings
 LPCTSTR getDot11str(int,int);
-//Wrapper function for writing to log file
-void Log(const WCHAR* string);
 
 enum MEASURETYPE
 {
@@ -95,7 +94,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		if ( ERROR_SUCCESS != dwErr ){
 			WCHAR buffer[256];
 			wsprintf(buffer, L"WifiStatus.dll: Unable to open WLAN API Handle. Error code (%d): %s",(int)dwErr,getDot11str(dwErr,5));
-			Log(buffer);
+			LSLog(LOG_ERROR, NULL, buffer);
 			return 0;
 		}
 	}
@@ -105,20 +104,20 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		if (( ERROR_SUCCESS != dwErr) || (&pIntfList->dwNumberOfItems <= 0)){
 			WCHAR buffer[256];
 			wsprintf(buffer, L"WifiStatus.dll: Unable to find any WLAN interfaces/adapters. Error code %d",(int) dwErr);
-			Log(buffer);
+			LSLog(LOG_ERROR, NULL, buffer);
 			return 0;
 		}
 	}
 	//Select a WLAN interface, default 0.
 	LPCTSTR data = ReadConfigString(section, L"WifiIntfID", L"");
 
-	if ((data != NULL) && (_wcsicmp(L"", data) != 0)){
+	if ((data != NULL) && *data){
 		if (_wtoi(data) < (int)pIntfList->dwNumberOfItems){
 			pInterface = &pIntfList->InterfaceInfo[_wtoi(data)];
 		} else {
 			WCHAR buffer[256];
-			wsprintf(buffer, L"WifiStatus.dll: Adapter is disabled or invalid (WifiIntfID=%s), fix INTF ID(default=0) or enable the adapter.",data);
-			Log(buffer);
+			wsprintf(buffer, L"WifiStatus.dll: Adapter (WifiIntfID=%s) not valid", data);
+			LSLog(LOG_ERROR, NULL, buffer);
 			pInterface = &pIntfList->InterfaceInfo[0];
 		}
 	} else {
@@ -127,13 +126,13 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	//Select LIST style
 	data = ReadConfigString(section, L"WifiListStyle", L"");
 
-	if ((data != NULL) && (_wcsicmp(L"", data) != 0)){
+	if ((data != NULL) && *data){
 		if ( (_wtoi(data) >= 0) && (_wtoi(data) <= 3)){
 			g_meas_data[id].listStyle = _wtoi(data);
 		} else {
 			WCHAR buffer[256];
-			wsprintf(buffer, L"WifiStatus.dll: Invalid List Style given (WifiListStyle=%s), defaulting to 0.",data);
-			Log(buffer);
+			wsprintf(buffer, L"WifiStatus.dll: WifiListStyle=%s not valid",data);
+			LSLog(LOG_WARNING, NULL, buffer);
 			g_meas_data[id].listStyle = 0;
 		}
 	} else {
@@ -143,13 +142,13 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	//Set maxmimum number of list items
 	data = ReadConfigString(section, L"WifiListLimit", L"");
 	g_meas_data[id].listInit = false;
-	if ((data != NULL) && (_wcsicmp(L"", data) != 0)){
+	if ((data != NULL) && *data){
 		if (_wtoi(data) > 0){
 			g_meas_data[id].listMax = _wtoi(data);
 		} else {
 			WCHAR buffer[256];
-			wsprintf(buffer, L"WifiStatus.dll: Invalid List Limit given (WifiListLimit=%s), defaulting to 5.",data);
-			Log(buffer);
+			wsprintf(buffer, L"WifiStatus.dll: WifiListLimit=%s not valid.",data);
+			LSLog(LOG_WARNING, NULL, buffer);
 			g_meas_data[id].listMax = 5;
 		}
 	} else {
@@ -178,8 +177,8 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			infoType=PHY;
 		} else {
 			WCHAR buffer[256];
-			wsprintf(buffer, L"WifiStatus.dll: Invalid type given, WifiInfoType=%d.",type);
-			Log(buffer);
+			wsprintf(buffer, L"WifiStatus.dll: WifiInfoType=%d not valid",type);
+			LSLog(LOG_ERROR, NULL, buffer);
 		}
 		g_meas_data[id].type = infoType;
 	}
@@ -266,9 +265,7 @@ LPCTSTR GetString(UINT id, UINT flags)
 				//Size of network name can be up to 64 chars, set to 80 to add room for  delimiters
 				g_meas_data[id].netlist = (WCHAR*)malloc( 80 * sizeof(WCHAR) * g_meas_data[id].listMax);
 				if (g_meas_data[id].netlist == NULL){
-					WCHAR debug[256];
-					wsprintf(debug, L"WifiStatus.dll: Unable to allocate memory for network list.");
-					Log(buffer);
+					LSLog(LOG_ERROR, NULL, L"WifiStatus.dll: Unable to allocate network list memory");
 					g_meas_data[id].listInit = false;
 					free(g_meas_data[id].netlist);
 					return NULL;
@@ -450,13 +447,13 @@ LPCTSTR getDot11str(int dot11enum,int type){
 	else{
 		switch(dot11enum){
 				case ERROR_INVALID_PARAMETER:
-					return L"Invalid parameters.";
+					return L"Invalid parameters";
 				case ERROR_NOT_ENOUGH_MEMORY:
-					return L"Not enough memory.";
+					return L"Not enough memory";
 				case ERROR_REMOTE_SESSION_LIMIT_EXCEEDED:
-					return L"Too many handles already issued.";
+					return L"Too many handles already issued";
 				default:
-					return L"Unknown error code.";
+					return L"Unknown error code";
 		}
 	}
 }
@@ -484,15 +481,6 @@ void Finalize(HMODULE instance, UINT id)
 		WlanFreeMemory(pIntfList);
 		pIntfList = NULL;
 	}
-}
-
-/*
-  Wrapper function grabbed from the WebParser plugin
-*/
-void Log(const WCHAR* string)
-{
-	// @TODO: put logging into critical section
-	LSLog(LOG_DEBUG, L"Rainmeter", string);
 }
 
 /*

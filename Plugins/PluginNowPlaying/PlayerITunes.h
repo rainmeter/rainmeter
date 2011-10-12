@@ -95,8 +95,9 @@ private:
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	static CPlayer* c_Player;
-	
+
 	HWND m_CallbackWindow;
+	DWORD m_LastCheckTime;
 	bool m_iTunesActive;
 	IiTunes* m_iTunes;
 	CEventHandler* m_iTunesEvent;

@@ -57,6 +57,7 @@ private:
 	static CPlayer* c_Player;
 
 	HWND m_Window;
+	DWORD m_LastCheckTime;
 };
 
 #endif

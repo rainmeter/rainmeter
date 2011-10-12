@@ -37,7 +37,7 @@ void CInternet::Initialize()
 
 	if (!c_NetHandle)
 	{
-		LSLog(LOG_ERROR, L"Rainmeter", L"NowPlayingPlugin: Unable to open net handle.");
+		LSLog(LOG_ERROR, NULL, L"NowPlaying.dll: Unable to open net handle");
 	}
 }
 
@@ -67,7 +67,6 @@ std::wstring CInternet::DownloadUrl(const std::wstring& url, int codepage)
 
 	if (!hUrlDump)
 	{
-		LSLog(LOG_DEBUG, L"Rainmeter", L"NowPlayingPlguin: Unable to open internet file.");
 		return result;
 	}
 
@@ -86,7 +85,6 @@ std::wstring CInternet::DownloadUrl(const std::wstring& url, int codepage)
 		// Read the data.
 		if (!InternetReadFile(hUrlDump, (LPVOID)lpData, CHUNK_SIZE, &dwSize))
 		{
-			LSLog(LOG_DEBUG, L"Rainmeter", L"NowPlayingPlguin: Unable to read internet file.");
 			break;
 		}
 		else
@@ -161,12 +159,12 @@ std::wstring CInternet::DownloadUrl(const std::wstring& url, int codepage)
 std::wstring CInternet::EncodeUrl(const std::wstring& url)
 {
 	// Based on http://www.zedwood.com/article/111/cpp-urlencode-function
-	static const std::wstring url_chars = L" !*'();:@&=+$,/?#[]";
+	const WCHAR* urlChars = L" !*'();:@&=+$,/?#[]";
 	std::wstring ret;
 
 	for (size_t i = 0, max = url.length(); i < max; ++i)
 	{
-		if (url_chars.find_first_of(url[i]) != std::string::npos)
+		if (wcschr(urlChars, url[i]))
 		{
 			// If reserved character
 			ret.append(L"%");

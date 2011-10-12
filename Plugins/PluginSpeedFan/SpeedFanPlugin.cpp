@@ -110,12 +110,12 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 				}
 				else
 				{
-					std::wstring error = L"SpeedFanScale=";
+					std::wstring error = L"SpeedFanPlugin.dll: SpeedFanScale=";
 					error += scale;
-					error += L" is not valid in measure [";
+					error += L" is not valid in [";
 					error += section;
-					error += L"].";
-					MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+					error += L"]";
+					LSLog(LOG_ERROR, NULL, error.c_str());
 				}
 			}
 		}
@@ -129,12 +129,12 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 		}
 		else
 		{
-			std::wstring error = L"SpeedFanType=";
+			std::wstring error = L"SpeedFanPlugin.dll: SpeedFanType=";
 			error += type;
-			error += L" is not valid in measure [";
+			error += L" is not valid in [";
 			error += section;
-			error += L"].";
-			MessageBox(NULL, error.c_str(), L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			error += L"]";
+			LSLog(LOG_ERROR, NULL, error.c_str());
 		}
 	}
 
@@ -267,7 +267,7 @@ bool ReadSharedData(SensorType type, TempScale scale, UINT number, double* value
 	}
 	else
 	{
-		LSLog(LOG_WARNING, L"Rainmeter", L"SpeedFanPlugin: The shared memory has incorrect version.");
+		LSLog(LOG_ERROR, NULL, L"SpeedFanPlugin.dll: Incorrect shared memory version");
 	}
 
 	UnmapViewOfFile(ptr);

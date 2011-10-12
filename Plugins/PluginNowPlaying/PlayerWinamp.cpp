@@ -77,13 +77,12 @@ CPlayer* CPlayerWinamp::Create(WINAMPTYPE type)
 */
 bool CPlayerWinamp::CheckWindow()
 {
-	static DWORD oldTime = 0;
 	DWORD time = GetTickCount();
-		
+
 	// Try to find Winamp window every 5 seconds
-	if (time - oldTime > 5000)
+	if (time - m_LastCheckTime > 5000)
 	{
-		oldTime = time;
+		m_LastCheckTime = time;
 
 		m_Window = FindWindow(L"Winamp v1.x", NULL);
 		if (m_Window)

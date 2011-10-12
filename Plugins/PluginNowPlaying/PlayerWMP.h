@@ -139,8 +139,10 @@ private:
 
 	bool m_TrackChanged;
 	HWND m_Window;
-	CAxWindow* m_AxWindow;
+	DWORD m_LastCheckTime;
+
 	CComModule m_ComModule;
+	CAxWindow* m_AxWindow;
 	CComPtr<IWMPPlayer4> m_IPlayer;
 	CComPtr<IWMPControls> m_IControls;
 	CComPtr<IWMPSettings> m_ISettings;
