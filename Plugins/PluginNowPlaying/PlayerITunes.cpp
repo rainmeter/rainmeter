@@ -315,7 +315,7 @@ bool CPlayerITunes::CheckWindow()
 	{
 		oldTime = time;
 
-		HWND wnd = FindWindow(L"iTunes", L"iTunes");
+		HWND wnd = FindWindow(L"ITWindow", L"iTunes");
 		if (wnd && !m_iTunesActive)
 		{
 			m_iTunesActive = true;
