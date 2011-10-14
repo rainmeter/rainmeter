@@ -578,7 +578,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				GetCursorPos(&point);
 				Rainmeter->ShowContextMenu(point, NULL);
 			}
-			else if (uMouseMsg == WM_LBUTTONDOWN)
+			else if (uMouseMsg == WM_LBUTTONDOWN || uMouseMsg == WM_LBUTTONDBLCLK)
 			{
 				CDialogManage::Open();
 			}

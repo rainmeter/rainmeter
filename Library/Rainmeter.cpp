@@ -1050,21 +1050,23 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 
 	// Determine the language resource to load
 	std::wstring resource = m_Path + L"Languages\\";
-	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0)
-	{
-		m_ResourceLCID = wcstoul(tmpSzPath, NULL, 10);
-	}
-	else
+	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) == 0)
 	{
 		// Use whatever the user selected for the installer
-		DWORD lang;
-		DWORD size = sizeof(DWORD);
-		if (SHGetValue(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", L"Language", NULL, &lang, &size) == ERROR_SUCCESS)
+		DWORD size = MAX_LINE_LENGTH;
+		HKEY hKey;
+		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &hKey) == ERROR_SUCCESS)
 		{
-			_ultow(lang, tmpSzPath, 10);
-			m_ResourceLCID = lang;
+			DWORD type = 0;
+			if (RegQueryValueEx(hKey, L"Language", NULL, &type, (LPBYTE)tmpSzPath, (LPDWORD)&size) != ERROR_SUCCESS ||
+				type != REG_SZ)
+			{
+				tmpSzPath = L'\0';
+			}
+			RegCloseKey(hKey);
 		}
 	}
+	m_ResourceLCID = wcstoul(tmpSzPath, NULL, 10);
 	resource += tmpSzPath;
 	resource += L".dll";
 
@@ -2167,7 +2169,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 			{
 				// Fake WM_COPYDATA to deliver bangs
 				COPYDATASTRUCT cds;
-				cds.cbData = (DWORD)((wcslen(command) + 1) * sizeof(WCHAR));
+				cds.cbData = 1; // Size doesn't matter as long as not empty
 				cds.dwData = 1;
 				cds.lpData = (void*)command;
 				meterWindow->OnCopyData(WM_COPYDATA, NULL, (LPARAM)&cds);
@@ -2494,9 +2496,6 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 		theme += L"\\Rainmeter.thm";
 		CSystem::CopyFiles(theme, Rainmeter->GetIniFile());
 
-		/*
-		TODO fix me
-		*/
 		PreserveSetting(backup, L"SkinPath");
 		PreserveSetting(backup, L"ConfigEditor");
 		PreserveSetting(backup, L"LogViewer");
@@ -2512,7 +2511,7 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 		// Set wallpaper if it exists
 		if (_waccess(wallpaper.c_str(), 0) != -1)
 		{
-			SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)wallpaper.c_str(), 0);
+			SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)wallpaper.c_str(), SPIF_UPDATEINIFILE);
 		}
 	}
 
