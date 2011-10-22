@@ -399,8 +399,8 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	// Set the window region
 	CreateRegion(true);	// Clear the region
+	if (init) ShowWindow(m_Window, SW_SHOWNOACTIVATE);
 	Update(false);
-	CreateRegion(false);
 
 	if (m_KeepOnScreen)
 	{
@@ -2652,10 +2652,18 @@ void CMeterWindow::CreateRegion(bool clear)
 				m_DoubleBuffer->GetHBITMAP(Color(255,0,255), &background);
 				if (background)
 				{
-					HRGN region = BitmapToRegion(background, RGB(255,0,255), 0x101010, 0, 0);
+					HRGN region = BitmapToRegion(background, RGB(255,0,255), 0x101010);
 					SetWindowRgn(m_Window, region, TRUE);
 					DeleteObject(background);
 				}
+				else
+				{
+					SetWindowRgn(m_Window, NULL, TRUE);
+				}
+			}
+			else
+			{
+				SetWindowRgn(m_Window, NULL, TRUE);
 			}
 		}
 	}
@@ -2672,7 +2680,6 @@ void CMeterWindow::Redraw()
 	if (m_ResetRegion)
 	{
 		ResizeWindow(false);
-		CreateRegion(true);
 	}
 
 	// Create or clear the doublebuffer
@@ -2768,8 +2775,11 @@ void CMeterWindow::Redraw()
 		}
 	}
 
-	if (m_ResetRegion) CreateRegion(false);
-	m_ResetRegion = false;
+	if (m_ResetRegion || !m_BackgroundName.empty())
+	{
+		CreateRegion(false);
+		m_ResetRegion = false;
+	}
 
 	UpdateTransparency(m_TransparencyValue, false);
 

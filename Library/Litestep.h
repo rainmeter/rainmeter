@@ -30,7 +30,7 @@ void FinalizeLitestep();
 
 void ResetLoggingFlag();
 
-HRGN BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF cTolerance, int xoffset, int yoffset);
+HRGN BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF cTolerance);
 
 std::string ConvertToAscii(LPCTSTR str);
 std::wstring ConvertToWide(LPCSTR str);
