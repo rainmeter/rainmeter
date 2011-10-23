@@ -1061,7 +1061,7 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 			if (RegQueryValueEx(hKey, L"Language", NULL, &type, (LPBYTE)tmpSzPath, (LPDWORD)&size) != ERROR_SUCCESS ||
 				type != REG_SZ)
 			{
-				tmpSzPath = L'\0';
+				tmpSzPath[0] = L'\0';
 			}
 			RegCloseKey(hKey);
 		}
