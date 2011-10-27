@@ -399,8 +399,17 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	// Set the window region
 	CreateRegion(true);	// Clear the region
-	if (init) ShowWindow(m_Window, SW_SHOWNOACTIVATE);
+	UpdateTransparency(m_AlphaValue, true);  // Add/Remove layered flag
 	Update(false);
+
+	if (m_BlurMode == BLURMODE_NONE)
+	{
+		HideBlur();
+	}
+	else
+	{
+		ShowBlur();
+	}
 
 	if (m_KeepOnScreen)
 	{
@@ -410,6 +419,11 @@ void CMeterWindow::Refresh(bool init, bool all)
 	SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, m_WindowW, m_WindowH, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
 	ScreenToWindow();
+
+	if (all || oldZPos != m_WindowZPosition)
+	{
+		ChangeZPos(m_WindowZPosition, all);
+	}
 
 	// Start the timers
 	if (m_WindowUpdate >= 0)
@@ -423,22 +437,6 @@ void CMeterWindow::Refresh(bool init, bool all)
 	if (0 == SetTimer(m_Window, MOUSETIMER, 500, NULL))	// Mouse position is checked twice per sec
 	{
 		throw CError(L"Unable to set timer!", __LINE__, __FILE__);
-	}
-
-	UpdateTransparency(m_AlphaValue, true);
-
-	if (all || oldZPos != m_WindowZPosition)
-	{
-		ChangeZPos(m_WindowZPosition, all);
-	}
-
-	if (m_BlurMode == BLURMODE_NONE)
-	{
-		HideBlur();
-	}
-	else
-	{
-		ShowBlur();
 	}
 
 	m_Rainmeter->SetCurrentParser(NULL);
@@ -3006,14 +3004,7 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 		BLENDFUNCTION blendPixelFunction= {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
 		POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
 		POINT ptSrc = {0, 0};
-		SIZE szWindow = {m_WindowW, m_WindowH};
-
-		if (szWindow.cx == 0 || szWindow.cy == 0)
-		{
-			// Set dummy size to avoid invalid state
-			szWindow.cx = 1;
-			szWindow.cy = 1;
-		}
+		SIZE szWindow = {m_DIBSectionBufferW, m_DIBSectionBufferH};
 
 		HDC dcScreen = GetDC(0);
 		HDC dcMemory = CreateCompatibleDC(dcScreen);
