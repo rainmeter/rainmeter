@@ -358,7 +358,9 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 
 	m_W = (int)parser.ReadFormula(section, L"W", 1.0);
+	if (m_W < 0) m_W = 0;
 	m_H = (int)parser.ReadFormula(section, L"H", 1.0);
+	if (m_H < 0) m_H = 0;
 
 	if (!m_Initialized)
 	{
