@@ -486,29 +486,10 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if ((wParam & 0x0ffff) >= ID_CONFIG_FIRST && (wParam & 0x0ffff) <= ID_CONFIG_LAST)
 			{
-				wParam = wParam & 0x0ffff;
-
-				// Check which config was selected
-				const std::vector<CRainmeter::CONFIG>& configs = Rainmeter->GetAllConfigs();
-
-				for (int i = 0, isize = (int)configs.size(); i < isize; ++i)
+				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex((UINT)(wParam & 0x0ffff));
+				if (indexes.first != -1 && indexes.second != -1)
 				{
-					for (int j = 0, jsize = (int)configs[i].commands.size(); j < jsize; ++j)
-					{
-						if (configs[i].commands[j] == wParam)
-						{
-							if (configs[i].active == j + 1)
-							{
-								CMeterWindow* meterWindow = Rainmeter->GetMeterWindow(configs[i].config);
-								Rainmeter->DeactivateConfig(meterWindow, i);
-							}
-							else
-							{
-								Rainmeter->ActivateConfig(i, j);
-							}
-							return 0;
-						}
-					}
+					Rainmeter->ToggleConfig(indexes.first, indexes.second);
 				}
 			}
 			else

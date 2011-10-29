@@ -35,6 +35,7 @@ public:
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
+	static void Open(const WCHAR* name);
 	static void Open(int tab = 0);
 	static void OpenSkin(CMeterWindow* meterWindow);
 

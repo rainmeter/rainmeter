@@ -36,105 +36,6 @@ using namespace Gdiplus;
 CRainmeter* Rainmeter; // The module
 
 /*
-** ParseString
-**
-** Splits the given string into substrings
-**
-*/
-std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
-{
-	std::vector<std::wstring> result;
-	if (str)
-	{
-		std::wstring arg = str;
-
-		// Split the argument between first space.
-		// Or if string is in quotes, the after the second quote.
-
-		size_t pos;
-		std::wstring newStr;
-		while ((pos = arg.find_first_not_of(L' ')) != std::wstring::npos)
-		{
-			if (arg[pos] == L'"')
-			{
-				if (arg.size() > (pos + 2) &&
-					arg[pos + 1] == L'"' && arg[pos + 2] == L'"')
-				{
-					// Eat found quotes and finding ending """
-					arg.erase(0, pos + 3);
-
-					size_t extra = 4;
-					if ((pos = arg.find(L"\"\"\" ")) == std::wstring::npos)
-					{
-						extra = 3;
-						pos = arg.find(L"\"\"\"");
-					}
-
-					if (pos != std::wstring::npos)
-					{
-						newStr.assign(arg, 0, pos);
-						arg.erase(0, pos + extra);
-
-						result.push_back(newStr);
-					}
-
-					// Skip stripping quotes
-					continue;
-				}
-				else
-				{
-					// Eat found quote and find ending quote 
-					arg.erase(0, pos + 1);
-					pos = arg.find_first_of(L'"');
-				}
-			}
-			else
-			{
-				if (pos > 0)
-				{
-					// Eat everything until non-space (and non-quote) char
-					arg.erase(0, pos);
-				}
-
-				// Find the second quote
-				pos = arg.find_first_of(L' ');
-			}
-
-			if (pos != std::wstring::npos)
-			{
-				newStr.assign(arg, 0, pos);
-				arg.erase(0, pos + 1);
-
-				// Strip quotes
-				while ((pos = newStr.find(L'"')) != std::wstring::npos)
-				{
-					newStr.erase(pos, 1);
-				}
-
-				result.push_back(newStr);
-			}
-			else  // quote or space not found
-			{
-				break;
-			}
-		}
-
-		if (arg.size() > 0)
-		{
-			// Strip quotes
-			while ((pos = arg.find(L'"')) != std::wstring::npos)
-			{
-				arg.erase(pos, 1);
-			}
-
-			result.push_back(arg);
-		}
-	}
-
-	return result;
-}
-
-/*
 ** Initialize
 **
 ** Initializes Rainmeter
@@ -355,67 +256,162 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 }
 
 /*
+** ParseString
+**
+** Splits the given string into substrings
+**
+*/
+std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
+{
+	std::vector<std::wstring> result;
+
+	if (str)
+	{
+		std::wstring arg = str;
+
+		// Split the argument between first space.
+		// Or if string is in quotes, the after the second quote.
+
+		size_t pos;
+		std::wstring newStr;
+		while ((pos = arg.find_first_not_of(L' ')) != std::wstring::npos)
+		{
+			if (arg[pos] == L'"')
+			{
+				if (arg.size() > (pos + 2) &&
+					arg[pos + 1] == L'"' && arg[pos + 2] == L'"')
+				{
+					// Eat found quotes and finding ending """
+					arg.erase(0, pos + 3);
+
+					size_t extra = 4;
+					if ((pos = arg.find(L"\"\"\" ")) == std::wstring::npos)
+					{
+						extra = 3;
+						pos = arg.find(L"\"\"\"");
+					}
+
+					if (pos != std::wstring::npos)
+					{
+						newStr.assign(arg, 0, pos);
+						arg.erase(0, pos + extra);
+
+						result.push_back(newStr);
+					}
+
+					// Skip stripping quotes
+					continue;
+				}
+				else
+				{
+					// Eat found quote and find ending quote 
+					arg.erase(0, pos + 1);
+					pos = arg.find_first_of(L'"');
+				}
+			}
+			else
+			{
+				if (pos > 0)
+				{
+					// Eat everything until non-space (and non-quote) char
+					arg.erase(0, pos);
+				}
+
+				// Find the second quote
+				pos = arg.find_first_of(L' ');
+			}
+
+			if (pos != std::wstring::npos)
+			{
+				newStr.assign(arg, 0, pos);
+				arg.erase(0, pos + 1);
+
+				// Strip quotes
+				while ((pos = newStr.find(L'"')) != std::wstring::npos)
+				{
+					newStr.erase(pos, 1);
+				}
+
+				result.push_back(newStr);
+			}
+			else  // quote or space not found
+			{
+				break;
+			}
+		}
+
+		if (arg.size() > 0)
+		{
+			// Strip quotes
+			while ((pos = arg.find(L'"')) != std::wstring::npos)
+			{
+				arg.erase(pos, 1);
+			}
+
+			result.push_back(arg);
+		}
+	}
+
+	return result;
+}
+
+/*
 ** BangWithArgs
 **
 ** Parses Bang args
 **
 */
-void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
+void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
-		size_t subStringsSize = subStrings.size();
-		std::wstring config;
-		std::wstring argument;
+	std::vector<std::wstring> subStrings = ParseString(arg);
+	size_t subStringsSize = subStrings.size();
+	std::wstring config;
+	std::wstring argument;
 
-		// Don't include the config name from the arg if there is one
-		for (size_t i = 0; i < numOfArgs; ++i)
+	// Don't include the config name from the arg if there is one
+	for (size_t i = 0; i < numOfArgs; ++i)
+	{
+		if (i != 0) argument += L" ";
+		if (i < subStringsSize)
 		{
-			if (i != 0) argument += L" ";
-			if (i < subStringsSize)
-			{
-				argument += subStrings[i];
-			}
+			argument += subStrings[i];
+		}
+	}
+
+	if (subStringsSize >= numOfArgs)
+	{
+		if (subStringsSize > numOfArgs)
+		{
+			config = subStrings[numOfArgs];
 		}
 
-		if (subStringsSize >= numOfArgs)
+		if ((!config.empty()) && (config != L"*"))
 		{
-			if (subStringsSize > numOfArgs)
-			{
-				config = subStrings[numOfArgs];
-			}
+			// Config defined, so bang only that
+			CMeterWindow* meterWindow = GetMeterWindow(config);
 
-			if ((!config.empty()) && (config != L"*"))
+			if (meterWindow)
 			{
-				// Config defined, so bang only that
-				CMeterWindow* meterWindow = Rainmeter->GetMeterWindow(config);
-
-				if (meterWindow)
-				{
-					meterWindow->RunBang(bang, argument.c_str());
-				}
-				else
-				{
-					LogWithArgs(LOG_ERROR,  L"Bang: Config \"%s\" not found", config.c_str());
-				}
+				meterWindow->RunBang(bang, argument.c_str());
 			}
 			else
 			{
-				// No config defined -> apply to all.
-				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
-				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-
-				for (; iter != windows.end(); ++iter)
-				{
-					((*iter).second)->RunBang(bang, argument.c_str());
-				}
+				LogWithArgs(LOG_ERROR,  L"Bang: Config \"%s\" not found", config.c_str());
 			}
 		}
 		else
 		{
-			Log(LOG_ERROR, L"Bang: Incorrect number of arugments");
+			// No config defined -> apply to all.
+			std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
+			for (; iter != m_Meters.end(); ++iter)
+			{
+				((*iter).second)->RunBang(bang, argument.c_str());
+			}
 		}
+	}
+	else
+	{
+		Log(LOG_ERROR, L"Bang: Incorrect number of arugments");
 	}
 }
 
@@ -425,441 +421,315 @@ void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 ** Parses Bang args for Group
 **
 */
-void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
+void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
 {
-	if (Rainmeter)
+	std::vector<std::wstring> subStrings = ParseString(arg);
+
+	if (subStrings.size() > numOfArgs)
 	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
+		std::multimap<int, CMeterWindow*> windows;
+		GetMeterWindowsByLoadOrder(windows, subStrings[numOfArgs]);
 
-		if (subStrings.size() > numOfArgs)
+		std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+		for (; iter != windows.end(); ++iter)
 		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[numOfArgs]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
+			std::wstring argument = L"\"";
+			for (size_t i = 0; i < numOfArgs; ++i)
 			{
-				std::wstring argument = L"\"";
-				for (size_t i = 0; i < numOfArgs; ++i)
-				{
-					argument += subStrings[i];
-					argument += L"\" \"";
-				}
-				argument += (*iter).second->GetSkinName();
-				argument += L"\"";
-				BangWithArgs(bang, argument.c_str(), numOfArgs);
+				argument += subStrings[i];
+				argument += L"\" \"";
 			}
+			argument += (*iter).second->GetSkinName();
+			argument += L"\"";
+			BangWithArgs(bang, argument.c_str(), numOfArgs);
 		}
-		else
-		{
-			Log(LOG_ERROR, L"BangGroup: Incorrect number of arguments");
-		}
+	}
+	else
+	{
+		Log(LOG_ERROR, L"BangGroup: Incorrect number of arguments");
 	}
 }
 
 /*
 ** RainmeterActivateConfig
 **
-** Callback for the !RainmeterActivateConfig bang
+** !RainmeterActivateConfig bang
 **
 */
-void RainmeterActivateConfig(const WCHAR* arg)
+void CRainmeter::RainmeterActivateConfig(const WCHAR* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
+	std::vector<std::wstring> subStrings = ParseString(arg);
 
-		if (subStrings.size() > 1)
+	if (subStrings.size() > 1)
+	{
+		std::pair<int, int> indexes = GetMeterWindowIndex(subStrings[0], subStrings[1]);
+		if (indexes.first != -1 && indexes.second != -1)
 		{
-			std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(subStrings[0], subStrings[1]);
-			if (indexes.first != -1 && indexes.second != -1)
-			{
-				Rainmeter->ActivateConfig(indexes.first, indexes.second);
-				return;
-			}
-			LogWithArgs(LOG_ERROR, L"!ActivateConfig: \"%s\\%s\" not found", subStrings[0].c_str(), subStrings[1].c_str());
+			ActivateConfig(indexes.first, indexes.second);
+			return;
 		}
-		else
-		{
-			// If we got this far, something went wrong
-			Log(LOG_ERROR, L"!ActivateConfig: Invalid parameters");
-		}
+		LogWithArgs(LOG_ERROR, L"!ActivateConfig: \"%s\\%s\" not found", subStrings[0].c_str(), subStrings[1].c_str());
+	}
+	else
+	{
+		// If we got this far, something went wrong
+		Log(LOG_ERROR, L"!ActivateConfig: Invalid parameters");
 	}
 }
 
 /*
 ** RainmeterDeactivateConfig
 **
-** Callback for the !RainmeterDeactivateConfig bang
+** !RainmeterDeactivateConfig bang
 **
 */
-void RainmeterDeactivateConfig(const WCHAR* arg)
+void CRainmeter::RainmeterDeactivateConfig(const WCHAR* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
+	std::vector<std::wstring> subStrings = ParseString(arg);
 
-		if (!subStrings.empty())
+	if (!subStrings.empty())
+	{
+		CMeterWindow* mw = GetMeterWindow(subStrings[0]);
+		if (mw)
 		{
-			CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[0]);
-			if (mw)
-			{
-				Rainmeter->DeactivateConfig(mw, -1);
-				return;
-			}
-			LogWithArgs(LOG_WARNING, L"!DeactivateConfig: \"%s\" not active", subStrings[0].c_str());
+			DeactivateConfig(mw, -1);
+			return;
 		}
-		else
-		{
-			Log(LOG_ERROR, L"!DeactivateConfig: Invalid parameters");
-		}
+		LogWithArgs(LOG_WARNING, L"!DeactivateConfig: \"%s\" not active", subStrings[0].c_str());
+	}
+	else
+	{
+		Log(LOG_ERROR, L"!DeactivateConfig: Invalid parameters");
 	}
 }
 
 /*
 ** RainmeterToggleConfig
 **
-** Callback for the !RainmeterToggleConfig bang
+** !RainmeterToggleConfig bang
 **
 */
-void RainmeterToggleConfig(const WCHAR* arg)
+void CRainmeter::RainmeterToggleConfig(const WCHAR* arg)
 {
-	if (Rainmeter)
+	std::vector<std::wstring> subStrings = ParseString(arg);
+
+	if (subStrings.size() >= 2)
 	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
-
-		if (subStrings.size() >= 2)
+		CMeterWindow* mw = GetMeterWindow(subStrings[0]);
+		if (mw)
 		{
-			CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[0]);
-			if (mw)
-			{
-				Rainmeter->DeactivateConfig(mw, -1);
-				return;
-			}
+			DeactivateConfig(mw, -1);
+			return;
+		}
 
-			// If the config wasn't active, activate it
-			RainmeterActivateConfig(arg);
-		}
-		else
-		{
-			Log(LOG_ERROR, L"!ToggleConfig: Invalid parameters");
-		}
+		// If the config wasn't active, activate it
+		RainmeterActivateConfig(arg);
+	}
+	else
+	{
+		Log(LOG_ERROR, L"!ToggleConfig: Invalid parameters");
 	}
 }
 
 /*
 ** RainmeterDeactivateConfigGroup
 **
-** Callback for the !RainmeterDeactivateConfigGroup bang
+** !RainmeterDeactivateConfigGroup bang
 **
 */
-void RainmeterDeactivateConfigGroup(const WCHAR* arg)
+void CRainmeter::RainmeterDeactivateConfigGroup(const WCHAR* arg)
 {
-	if (Rainmeter)
+	std::vector<std::wstring> subStrings = ParseString(arg);
+
+	if (!subStrings.empty())
 	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
+		std::multimap<int, CMeterWindow*> windows;
+		GetMeterWindowsByLoadOrder(windows, subStrings[0]);
 
-		if (!subStrings.empty())
+		std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+		for (; iter != windows.end(); ++iter)
 		{
-			std::multimap<int, CMeterWindow*> windows;
-			Rainmeter->GetMeterWindowsByLoadOrder(windows, subStrings[0]);
-
-			std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-			for (; iter != windows.end(); ++iter)
-			{
-				Rainmeter->DeactivateConfig((*iter).second, -1);
-			}
-		}
-		else
-		{
-			Log(LOG_ERROR, L"!DeactivateConfigGroup: Invalid parameters");
+			DeactivateConfig((*iter).second, -1);
 		}
 	}
-}
-
-/*
-** RainmeterRefreshApp
-**
-** Callback for the !RainmeterRefreshApp bang
-**
-*/
-void RainmeterRefreshApp()
-{
-	if (Rainmeter)
+	else
 	{
-		// Refresh needs to be delayed since it crashes if done during Update()
-		PostMessage(Rainmeter->GetTrayWindow()->GetWindow(), WM_TRAY_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
-	}
-}
-
-/*
-** RainmeterAbout
-**
-** Callback for the !RainmeterAbout bang
-**
-*/
-void RainmeterAbout(const WCHAR* arg)
-{
-	if (Rainmeter)
-	{
-		int tab = 0;
-		if (arg)
-		{
-			if (_wcsnicmp(arg, L"Measures", 8) == 0)
-			{
-				tab = 1;
-			}
-			else if (_wcsnicmp(arg, L"Plugins", 7) == 0)
-			{
-				tab = 2;
-			}
-			else if (_wcsnicmp(arg, L"Version", 7) == 0)
-			{
-				tab = 3;
-			}
-		}
-
-		CDialogAbout::Open(tab);
-	}
-}
-
-/*
-** RainmeterManage
-**
-** Callback for the !RainmeterManage bang
-**
-*/
-void RainmeterManage(const WCHAR* arg)
-{
-	if (Rainmeter)
-	{
-		int tab = 0;
-		if (arg)
-		{
-			if (_wcsnicmp(arg, L"Themes", 6) == 0)
-			{
-				tab = 1;
-			}
-			else if (_wcsnicmp(arg, L"Settings", 8) == 0)
-			{
-				tab = 2;
-			}
-		}
-
-		CDialogManage::Open(tab);
+		Log(LOG_ERROR, L"!DeactivateConfigGroup: Invalid parameters");
 	}
 }
 
 /*
 ** RainmeterSkinMenu
 **
-** Callback for the !RainmeterSkinMenu bang
+** !RainmeterSkinMenu bang
 **
 */
-void RainmeterSkinMenu(const WCHAR* arg)
+void CRainmeter::RainmeterSkinMenu(const WCHAR* arg)
 {
-	if (Rainmeter)
-	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
+	std::vector<std::wstring> subStrings = ParseString(arg);
 
-		if (!subStrings.empty())
+	if (!subStrings.empty())
+	{
+		CMeterWindow* mw = GetMeterWindow(subStrings[0]);
+		if (mw)
 		{
-			CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[0]);
-			if (mw)
-			{
-				POINT pos;
-				GetCursorPos(&pos);
-				Rainmeter->ShowContextMenu(pos, mw);
-				return;
-			}
-			LogWithArgs(LOG_WARNING, L"!SkinMenu: \"%s\" not active", subStrings[0].c_str());
+			POINT pos;
+			GetCursorPos(&pos);
+			ShowContextMenu(pos, mw);
+			return;
 		}
-		else
-		{
-			Log(LOG_ERROR, L"!SkinMenu: Invalid parameter");
-		}
+		LogWithArgs(LOG_WARNING, L"!SkinMenu: \"%s\" not active", subStrings[0].c_str());
+	}
+	else
+	{
+		Log(LOG_ERROR, L"!SkinMenu: Invalid parameter");
 	}
 }
 
 /*
 ** RainmeterTrayMenu
 **
-** Callback for the !RainmeterTrayMenu bang
+** !RainmeterTrayMenu bang
 **
 */
-void RainmeterTrayMenu()
+void CRainmeter::RainmeterTrayMenu()
 {
-	if (Rainmeter)
-	{
-		POINT pos;
-		GetCursorPos(&pos);
-		Rainmeter->ShowContextMenu(pos, NULL);
-	}
-}
-
-/*
-** RainmeterResetStats
-**
-** Callback for the !RainmeterResetStats bang
-**
-*/
-void RainmeterResetStats()
-{
-	if (Rainmeter)
-	{
-		Rainmeter->ResetStats();
-	}
+	POINT pos;
+	GetCursorPos(&pos);
+	ShowContextMenu(pos, NULL);
 }
 
 /*
 ** RainmeterWriteKeyValue
 **
-** Callback for the !RainmeterWriteKeyValue bang
+** !RainmeterWriteKeyValue bang
 **
 */
-void RainmeterWriteKeyValue(const WCHAR* arg)
+void CRainmeter::RainmeterWriteKeyValue(const WCHAR* arg)
 {
-	if (Rainmeter)
+	std::vector<std::wstring> subStrings = ParseString(arg);
+
+	if (subStrings.size() > 3)
 	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(arg);
+		const std::wstring& iniFile = subStrings[3];
 
-		if (subStrings.size() > 3)
+		if (iniFile.find(L"..\\") != std::string::npos || iniFile.find(L"../") != std::string::npos)
 		{
-			const std::wstring& iniFile = subStrings[3];
+			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile.c_str());
+			return;
+		}
 
-			if (iniFile.find(L"..\\") != std::string::npos || iniFile.find(L"../") != std::string::npos)
-			{
-				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile.c_str());
-				return;
-			}
+		const std::wstring& skinPath = GetSkinPath();
+		const std::wstring settingsPath = GetSettingsPath();
 
-			const std::wstring& skinPath = Rainmeter->GetSkinPath();
-			const std::wstring settingsPath = Rainmeter->GetSettingsPath();
+		if (_wcsnicmp(iniFile.c_str(), skinPath.c_str(), skinPath.size()) != 0 &&
+			_wcsnicmp(iniFile.c_str(), settingsPath.c_str(), settingsPath.size()) != 0)
+		{
+			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile.c_str());
+			return;
+		}
 
-			if (_wcsnicmp(iniFile.c_str(), skinPath.c_str(), skinPath.size()) != 0 &&
-				_wcsnicmp(iniFile.c_str(), settingsPath.c_str(), settingsPath.size()) != 0)
-			{
-				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile.c_str());
-				return;
-			}
+		// Verify whether the file exists
+		if (_waccess(iniFile.c_str(), 0) == -1)
+		{
+			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: File not found: %s", iniFile.c_str());
+			return;
+		}
 
-			// Verify whether the file exists
-			if (_waccess(iniFile.c_str(), 0) == -1)
-			{
-				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: File not found: %s", iniFile.c_str());
-				return;
-			}
+		// Verify whether the file is read-only
+		DWORD attr = GetFileAttributes(iniFile.c_str());
+		if (attr == -1 || (attr & FILE_ATTRIBUTE_READONLY))
+		{
+			LogWithArgs(LOG_WARNING, L"!WriteKeyValue: File is read-only: %s", iniFile.c_str());
+			return;
+		}
 
-			// Verify whether the file is read-only
-			DWORD attr = GetFileAttributes(iniFile.c_str());
-			if (attr == -1 || (attr & FILE_ATTRIBUTE_READONLY))
-			{
-				LogWithArgs(LOG_WARNING, L"!WriteKeyValue: File is read-only: %s", iniFile.c_str());
-				return;
-			}
+		// Avoid "IniFileMapping"
+		std::vector<std::wstring> iniFileMappings;
+		CSystem::GetIniFileMappingList(iniFileMappings);
+		std::wstring iniWrite = CSystem::GetTemporaryFile(iniFileMappings, iniFile);
+		if (iniWrite == L"<>")  // error occurred
+		{
+			return;
+		}
 
-			// Avoid "IniFileMapping"
-			std::vector<std::wstring> iniFileMappings;
-			CSystem::GetIniFileMappingList(iniFileMappings);
-			std::wstring iniWrite = CSystem::GetTemporaryFile(iniFileMappings, iniFile);
-			if (iniWrite == L"<>")  // error occurred
-			{
-				return;
-			}
+		bool temporary = !iniWrite.empty();
 
-			bool temporary = !iniWrite.empty();
-
-			if (temporary)
-			{
-				if (Rainmeter->GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
-			}
-			else
-			{
-				if (Rainmeter->GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s", iniFile.c_str());
-				iniWrite = iniFile;
-			}
-
-			const std::wstring& strSection = subStrings[0];
-			const std::wstring& strKey = subStrings[1];
-			const std::wstring& strValue = subStrings[2];
-
-			bool formula = false;
-			BOOL write = 0;
-
-			if (subStrings.size() > 4)
-			{
-				CMeterWindow* mw = Rainmeter->GetMeterWindow(subStrings[4]);
-				if (mw)
-				{
-					double value;
-					formula = mw->GetParser().ReadFormula(strValue, &value);
-
-					// Formula read fine
-					if (formula)
-					{
-						WCHAR buffer[256];
-						int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
-						CMeasure::RemoveTrailingZero(buffer, len);
-
-						const std::wstring& resultString = buffer;
-
-						write = WritePrivateProfileString(strSection.c_str(), strKey.c_str(), resultString.c_str(), iniWrite.c_str());
-					}
-				}
-			}
-
-			if (!formula)
-			{
-				write = WritePrivateProfileString(strSection.c_str(), strKey.c_str(), strValue.c_str(), iniWrite.c_str());
-			}
-
-			if (temporary)
-			{
-				if (write != 0)
-				{
-					WritePrivateProfileString(NULL, NULL, NULL, iniWrite.c_str());  // FLUSH
-
-					// Copy the file back
-					if (!CSystem::CopyFiles(iniWrite, iniFile))
-					{
-						LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to copy temporary file to original filepath: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
-					}
-				}
-				else  // failed
-				{
-					LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
-				}
-
-				// Remove a temporary file
-				CSystem::RemoveFile(iniWrite);
-			}
-			else
-			{
-				if (write == 0)  // failed
-				{
-					LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s", iniFile.c_str());
-				}
-			}
+		if (temporary)
+		{
+			if (GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
 		}
 		else
 		{
-			Log(LOG_ERROR, L"!WriteKeyValue: Invalid parameters");
+			if (GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s", iniFile.c_str());
+			iniWrite = iniFile;
+		}
+
+		const std::wstring& strSection = subStrings[0];
+		const std::wstring& strKey = subStrings[1];
+		const std::wstring& strValue = subStrings[2];
+
+		bool formula = false;
+		BOOL write = 0;
+
+		if (subStrings.size() > 4)
+		{
+			CMeterWindow* mw = GetMeterWindow(subStrings[4]);
+			if (mw)
+			{
+				double value;
+				formula = mw->GetParser().ReadFormula(strValue, &value);
+
+				// Formula read fine
+				if (formula)
+				{
+					WCHAR buffer[256];
+					int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
+					CMeasure::RemoveTrailingZero(buffer, len);
+
+					const std::wstring& resultString = buffer;
+
+					write = WritePrivateProfileString(strSection.c_str(), strKey.c_str(), resultString.c_str(), iniWrite.c_str());
+				}
+			}
+		}
+
+		if (!formula)
+		{
+			write = WritePrivateProfileString(strSection.c_str(), strKey.c_str(), strValue.c_str(), iniWrite.c_str());
+		}
+
+		if (temporary)
+		{
+			if (write != 0)
+			{
+				WritePrivateProfileString(NULL, NULL, NULL, iniWrite.c_str());  // FLUSH
+
+				// Copy the file back
+				if (!CSystem::CopyFiles(iniWrite, iniFile))
+				{
+					LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to copy temporary file to original filepath: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+				}
+			}
+			else  // failed
+			{
+				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+			}
+
+			// Remove a temporary file
+			CSystem::RemoveFile(iniWrite);
+		}
+		else
+		{
+			if (write == 0)  // failed
+			{
+				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s", iniFile.c_str());
+			}
 		}
 	}
-}
-
-/*
-** RainmeterQuit
-**
-** Callback for the !RainmeterQuit bang
-**
-*/
-void RainmeterQuit()
-{
-	if (Rainmeter)
+	else
 	{
-		// Quit needs to be delayed since it crashes if done during Update()
-		PostMessage(Rainmeter->GetTrayWindow()->GetWindow(), WM_COMMAND, MAKEWPARAM(ID_CONTEXT_QUIT, 0), (LPARAM)NULL);
+		Log(LOG_ERROR, L"!WriteKeyValue: Invalid parameters");
 	}
 }
 
@@ -1281,7 +1151,8 @@ void CRainmeter::ActivateActiveConfigs()
 
 void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 {
-	if (configIndex >= 0 && configIndex < (int)m_ConfigStrings.size())
+	if (configIndex >= 0 && configIndex < (int)m_ConfigStrings.size() &&
+		iniIndex >= 0 && iniIndex < (int)m_ConfigStrings[configIndex].iniFiles.size())
 	{
 		const std::wstring skinIniFile = m_ConfigStrings[configIndex].iniFiles[iniIndex];
 		const std::wstring skinConfig = m_ConfigStrings[configIndex].config;
@@ -1353,6 +1224,23 @@ bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bo
 		return DeleteMeterWindow(meterWindow, true);
 	}
 	return false;
+}
+
+void CRainmeter::ToggleConfig(int configIndex, int iniIndex)
+{
+	if (configIndex >= 0 && configIndex < (int)m_ConfigStrings.size() &&
+		iniIndex >= 0 && iniIndex < (int)m_ConfigStrings[configIndex].iniFiles.size())
+	{
+		if (m_ConfigStrings[configIndex].active == iniIndex + 1)
+		{
+			CMeterWindow* meterWindow = Rainmeter->GetMeterWindow(m_ConfigStrings[configIndex].config);
+			DeactivateConfig(meterWindow, configIndex);
+		}
+		else
+		{
+			ActivateConfig(configIndex, iniIndex);
+		}
+	}
 }
 
 void CRainmeter::WriteActive(const std::wstring& config, int iniIndex)
@@ -1523,6 +1411,29 @@ std::pair<int, int> CRainmeter::GetMeterWindowIndex(const std::wstring& config, 
 	return indexes;
 }
 
+std::pair<int, int> CRainmeter::GetMeterWindowIndex(UINT menuCommand)
+{
+	std::pair<int, int> indexes;
+
+	if (menuCommand >= ID_CONFIG_FIRST && menuCommand <= ID_CONFIG_LAST)
+	{
+		// Check which config was selected
+		for (size_t i = 0, isize = m_ConfigStrings.size(); i < isize; ++i)
+		{
+			if (menuCommand >= m_ConfigStrings[i].commandBase &&
+				menuCommand < (m_ConfigStrings[i].commandBase + m_ConfigStrings[i].iniFiles.size()))
+			{
+				indexes = std::make_pair(i, menuCommand - m_ConfigStrings[i].commandBase);
+				return indexes;
+			}
+		}
+	}
+
+	indexes = std::make_pair(-1, -1);  // error
+	return indexes;
+}
+
+
 CMeterWindow* CRainmeter::GetMeterWindow(HWND hwnd)
 {
 	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
@@ -1648,8 +1559,12 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 					menuItem.index = m_ConfigStrings.size();
 					menu.push_back(menuItem);
 
+					if (config.iniFiles.empty())
+					{
+						config.commandBase = ID_CONFIG_FIRST + index;
+					}
 					config.iniFiles.push_back(fileData.cFileName);
-					config.commands.push_back(ID_CONFIG_FIRST + index++);
+					++index;
 				}
 			}
 		} while (FindNextFile(hSearch, &fileData));
@@ -1742,7 +1657,8 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"RefreshApp") == 0)
 	{
-		RainmeterRefreshApp();
+		// Refresh needs to be delayed since it crashes if done during Update()
+		PostMessage(GetTrayWindow()->GetWindow(), WM_TRAY_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
 	}
 	else if (_wcsicmp(name, L"Redraw") == 0)
 	{
@@ -1988,13 +1904,21 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_SETOPTIONGROUP, arg.c_str(), 3);
 	}
+	else if (_wcsicmp(name, L"WriteKeyValue") == 0)
+	{
+		RainmeterWriteKeyValue(arg.c_str());
+	}
+	else if (_wcsicmp(name, L"PluginBang") == 0)
+	{
+		BangWithArgs(BANG_PLUGIN, arg.c_str(), 1);
+	}
 	else if (_wcsicmp(name, L"About") == 0)
 	{
-		RainmeterAbout(arg.c_str());
+		CDialogAbout::Open(arg.c_str());
 	}
 	else if (_wcsicmp(name, L"Manage") == 0)
 	{
-		RainmeterManage(arg.c_str());
+		CDialogManage::Open(arg.c_str());
 	}
 	else if (_wcsicmp(name, L"SkinMenu") == 0)
 	{
@@ -2006,23 +1930,12 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"ResetStats") == 0)
 	{
-		RainmeterResetStats();
-	}
-	else if (_wcsicmp(name, L"WriteKeyValue") == 0)
-	{
-		RainmeterWriteKeyValue(arg.c_str());
-	}
-	else if (_wcsicmp(name, L"PluginBang") == 0)
-	{
-		BangWithArgs(BANG_PLUGIN, arg.c_str(), 1);
-	}
-	else if (_wcsicmp(name, L"LsBoxHook") == 0)
-	{
-		// Nothing to do here (this works only with Litestep)
+		ResetStats();
 	}
 	else if (_wcsicmp(name, L"Quit") == 0)
 	{
-		RainmeterQuit();
+		// Quit needs to be delayed since it crashes if done during Update()
+		PostMessage(GetTrayWindow()->GetWindow(), WM_COMMAND, MAKEWPARAM(ID_CONTEXT_QUIT, 0), (LPARAM)NULL);
 	}
 	else if (_wcsicmp(bang.c_str(), L"!Execute") == 0)
 	{
@@ -2067,6 +1980,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 				}
 			}
 		}
+	}
+	else if (_wcsicmp(name, L"LsBoxHook") == 0)
+	{
+		// Deprecated.
 	}
 	else
 	{
@@ -2490,11 +2407,11 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 		CSystem::CopyFiles(m_IniFile, backup);
 
 		// Replace Rainmeter.ini with theme
-		std::wstring theme = Rainmeter->GetSettingsPath() + L"Themes\\";
+		std::wstring theme = GetSettingsPath() + L"Themes\\";
 		theme += name;
 		std::wstring wallpaper = theme + L"\\RainThemes.bmp";
 		theme += L"\\Rainmeter.thm";
-		CSystem::CopyFiles(theme, Rainmeter->GetIniFile());
+		CSystem::CopyFiles(theme, GetIniFile());
 
 		PreserveSetting(backup, L"SkinPath");
 		PreserveSetting(backup, L"ConfigEditor");
@@ -2795,10 +2712,9 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					InsertMenu(subMenu, 12, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 
 					// Create a menu for all active configs
-					std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
-
 					int index = 0;
-					for (; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
+					std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
+					for (; iter != m_Meters.end(); ++iter)
 					{
 						CMeterWindow* mw = ((*iter).second);
 						HMENU skinMenu = CreateSkinMenu(mw, index, configMenu);
@@ -2810,7 +2726,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					if (m_NewVersion)
 					{
 						InsertMenu(subMenu, 0, MF_BYPOSITION, ID_CONTEXT_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE));
-						HiliteMenuItem(Rainmeter->GetTrayWindow()->GetWindow(), subMenu, 0, MF_BYPOSITION | MF_HILITE);
+						HiliteMenuItem(GetTrayWindow()->GetWindow(), subMenu, 0, MF_BYPOSITION | MF_HILITE);
 						InsertMenu(subMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 					}
 				}
@@ -2862,7 +2778,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 	}
 }
 
-HMENU CRainmeter::CreateConfigMenu(HMENU configMenu, std::vector<CONFIGMENU>& configMenuData)
+HMENU CRainmeter::CreateConfigMenu(HMENU configMenu, const std::vector<CONFIGMENU>& configMenuData)
 {
 	if (!configMenuData.empty())
 	{
@@ -2892,7 +2808,7 @@ HMENU CRainmeter::CreateConfigMenu(HMENU configMenu, std::vector<CONFIGMENU>& co
 			else
 			{
 				CONFIG& config = m_ConfigStrings[configMenuData[i].index];
-				InsertMenu(configMenu, i, MF_BYPOSITION | ((config.active == i + 1) ? MF_CHECKED : MF_UNCHECKED), config.commands[i], configMenuData[i].name.c_str());
+				InsertMenu(configMenu, i, MF_BYPOSITION | ((config.active == i + 1) ? MF_CHECKED : MF_UNCHECKED), config.commandBase + i, configMenuData[i].name.c_str());
 				separator = true;
 			}
 		}
@@ -3070,7 +2986,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 				{
 					for (int j = 0, jsize = (int)config.iniFiles.size(); j < jsize; ++j)
 					{
-						InsertMenu(variantsMenu, j, MF_BYPOSITION | ((config.active == j + 1) ? MF_CHECKED : MF_UNCHECKED), config.commands[j], config.iniFiles[j].c_str());
+						InsertMenu(variantsMenu, j, MF_BYPOSITION | ((config.active == j + 1) ? MF_CHECKED : MF_UNCHECKED), config.commandBase + j, config.iniFiles[j].c_str());
 					}
 					break;
 				}

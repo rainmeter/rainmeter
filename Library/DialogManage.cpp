@@ -62,6 +62,31 @@ CDialogManage::~CDialogManage()
 /*
 ** Open
 **
+** Opens the Manage dialog by tab name.
+**
+*/
+void CDialogManage::Open(const WCHAR* name)
+{
+	int tab = 0;
+
+	if (name)
+	{
+		if (_wcsnicmp(name, L"Themes", 6) == 0)
+		{
+			tab = 1;
+		}
+		else if (_wcsnicmp(name, L"Settings", 8) == 0)
+		{
+			tab = 2;
+		}
+	}
+
+	Open(tab);
+}
+
+/*
+** Open
+**
 ** Opens the Manage dialog.
 **
 */
@@ -266,7 +291,7 @@ INT_PTR CDialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDC_OPENLOG_BUTTON:
-		RainmeterAbout();
+		CDialogAbout::Open();
 		break;
 
 	case IDCLOSE:

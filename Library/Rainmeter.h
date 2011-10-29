@@ -39,23 +39,6 @@
 #define WIDEN(x) WIDEN2(x)
 #define APPDATE WIDEN(__DATE__)
 
-// Callbacks
-void RainmeterActivateConfig(const WCHAR* arg);
-void RainmeterDeactivateConfig(const WCHAR* arg);
-void RainmeterToggleConfig(const WCHAR* arg);
-void RainmeterDeactivateConfigGroup(const WCHAR* arg);
-void RainmeterRefreshApp();
-void RainmeterAbout(const WCHAR* arg = NULL);
-void RainmeterManage(const WCHAR* arg = NULL);
-void RainmeterSkinMenu(const WCHAR* arg);
-void RainmeterTrayMenu();
-void RainmeterResetStats();
-void RainmeterWriteKeyValue(const WCHAR* arg);
-void RainmeterQuit();
-
-void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
-void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
-
 struct GlobalConfig
 {
 	double netInSpeed;
@@ -72,7 +55,7 @@ public:
 	{
 		std::wstring config;
 		std::vector<std::wstring> iniFiles;
-		std::vector<UINT> commands;
+		UINT commandBase;
 		int active;
 	};
 
@@ -104,6 +87,7 @@ public:
 	CMeterWindow* GetMeterWindowByINI(const std::wstring& ini_searching);
 	std::pair<int, int> GetMeterWindowIndex(const std::wstring& config, const std::wstring& iniFile);
 	std::pair<int, int> GetMeterWindowIndex(CMeterWindow* meterWindow) { return GetMeterWindowIndex(meterWindow->GetSkinName(), meterWindow->GetSkinIniFile()); }
+	std::pair<int, int> GetMeterWindowIndex(UINT menuCommand);
 
 	CMeterWindow* GetMeterWindow(HWND hwnd);
 	void GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group = L"");
@@ -113,6 +97,7 @@ public:
 
 	void ActivateConfig(int configIndex, int iniIndex);
 	bool DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bool save = true);
+	void ToggleConfig(int configIndex, int iniIndex);
 
 	const std::wstring& GetPath() { return m_Path; }
 	const std::wstring& GetIniFile() { return m_IniFile; }
@@ -191,6 +176,16 @@ public:
 	friend class CDialogManage;
 
 private:
+	void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
+	void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
+	void RainmeterActivateConfig(const WCHAR* arg);
+	void RainmeterDeactivateConfig(const WCHAR* arg);
+	void RainmeterToggleConfig(const WCHAR* arg);
+	void RainmeterDeactivateConfigGroup(const WCHAR* arg);
+	void RainmeterSkinMenu(const WCHAR* arg);
+	void RainmeterTrayMenu();
+	void RainmeterWriteKeyValue(const WCHAR* arg);
+
 	void ActivateActiveConfigs();
 	void CreateMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile);
 	bool DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater);
@@ -204,7 +199,7 @@ private:
 	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU configMenu);
 	void ChangeSkinIndex(HMENU subMenu, int index);
 	int ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse);
-	HMENU CreateConfigMenu(HMENU configMenu, std::vector<CONFIGMENU>& configMenuData);
+	HMENU CreateConfigMenu(HMENU configMenu, const std::vector<CONFIGMENU>& configMenuData);
 	void CreateThemeMenu(HMENU themeMenu);
 	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);
 	void CreateDefaultConfigFile(const std::wstring& strFile);
