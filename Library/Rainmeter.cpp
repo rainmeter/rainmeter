@@ -918,6 +918,15 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 		m_StatsFile += L".stats";
 	}
 
+	// Read Logging settings beforehand
+	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, m_IniFile.c_str());
+	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, m_IniFile.c_str());
+
+	if (m_Logging)
+	{
+		StartLogging();
+	}
+
 	// Determine the language resource to load
 	std::wstring resource = m_Path + L"Languages\\";
 	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) == 0)
@@ -936,33 +945,31 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 			RegCloseKey(hKey);
 		}
 	}
-	m_ResourceLCID = wcstoul(tmpSzPath, NULL, 10);
-	resource += tmpSzPath;
-	resource += L".dll";
+	if (tmpSzPath[0] != L'\0')
+	{
+		// Try selected language
+		m_ResourceLCID = wcstoul(tmpSzPath, NULL, 10);
+		resource += tmpSzPath;
+		resource += L".dll";
 
-	m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+		m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+		if (!m_ResourceInstance)
+		{
+			resource.insert(0, L"Unable to load language: ");
+			Log(LOG_ERROR, resource.c_str());
+		}
+	}
 	if (!m_ResourceInstance)
 	{
-		resource.insert(0, L"Unable to load language: ");
-		Log(LOG_ERROR, resource.c_str());
-
 		// Try English
-		resource = m_Path + L"Languages\\1033.dll";
+		resource = m_Path;
+		resource += L"Languages\\1033.dll";
 		m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
 		m_ResourceLCID = 1033;
 		if (!m_ResourceInstance)
 		{
 			throw CError(L"Unable to load language library");
 		}
-	}
-
-	// Read Logging settings beforehand
-	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, m_IniFile.c_str());
-	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, m_IniFile.c_str());
-
-	if (m_Logging)
-	{
-		StartLogging();
 	}
 
 	m_PluginPath = m_AddonPath = m_SkinPath = m_Path;
