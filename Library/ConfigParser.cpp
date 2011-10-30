@@ -576,24 +576,13 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 {
 	static std::wstring result;
 
-	if (section == NULL)
-	{
-		section = L"";
-	}
-	if (key == NULL)
-	{
-		key = L"";
-	}
-	if (defValue == NULL)
-	{
-		defValue = L"";
-	}
-
 	// Clear last status
 	m_LastUsedStyle.clear();
 	m_LastReplaced = false;
 	m_LastDefaultUsed = false;
 
+	const std::wstring strSection = section;
+	const std::wstring strKey = key;
 	std::wstring strDefault = defValue;
 
 	// If the template is defined read the value first from there.
@@ -608,17 +597,17 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 				if (pos != std::wstring::npos)
 				{
 					// Trim white-space
-					std::wstring strSection((*iter), pos, (*iter).find_last_not_of(L" \t\r\n") - pos + 1);
+					std::wstring strStyleSection((*iter), pos, (*iter).find_last_not_of(L" \t\r\n") - pos + 1);
 
-					const std::wstring& strStyle = GetValue(strSection, key, strDefault);
+					const std::wstring& strStyle = GetValue(strStyleSection, strKey, strDefault);
 
 					//LogWithArgs(LOG_DEBUG, L"[%s] %s (from [%s]) : strDefault=%s (0x%p), strStyle=%s (0x%p)",
-					//	section, key, strSection.c_str(), strDefault.c_str(), &strDefault, strStyle.c_str(), &strStyle);
+					//	section, key, strStyleSection.c_str(), strDefault.c_str(), &strDefault, strStyle.c_str(), &strStyle);
 
 					if (&strStyle != &strDefault)
 					{
 						strDefault = strStyle;
-						m_LastUsedStyle = strSection;
+						m_LastUsedStyle = strStyleSection;
 						break;
 					}
 				}
@@ -626,7 +615,7 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		}
 	}
 
-	const std::wstring& strValue = GetValue(section, key, strDefault);
+	const std::wstring& strValue = GetValue(strSection, strKey, strDefault);
 	result = strValue;
 
 	if (m_LastUsedStyle.size() > 0)
@@ -645,14 +634,15 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		}
 	}
 
-	SetBuiltInVariable(L"CURRENTSECTION", section);  // Set temporarily
+	const std::wstring CURRENTSECTION = L"CURRENTSECTION";
+	SetBuiltInVariable(CURRENTSECTION, strSection);  // Set temporarily
 
 	if (ReplaceVariables(result))
 	{
 		m_LastReplaced = true;
 	}
 
-	SetBuiltInVariable(L"CURRENTSECTION", L"");  // Reset
+	SetBuiltInVariable(CURRENTSECTION, L"");  // Reset
 
 	if (bReplaceMeasures && ReplaceMeasures(result))
 	{
@@ -745,7 +735,7 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 	if (result.size() > 0 && result[0] == L'(' && result[result.size() - 1] == L')')
 	{
 		double resultValue = defValue;
-		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.substr(1, result.size() - 2).c_str()).c_str(), &resultValue);
+		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.c_str()).c_str(), &resultValue);
 		if (errMsg != NULL)
 		{
 			std::wstring error = L"ReadFormula: ";
@@ -771,7 +761,7 @@ bool CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
 	// Formulas must be surrounded by parenthesis
 	if (result.size() > 0 && result[0] == L'(' && result[result.size() - 1] == L')')
 	{
-		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.substr(1, result.size() - 2).c_str()).c_str(), resultValue);
+		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.c_str()).c_str(), resultValue);
 		if (errMsg != NULL)
 		{
 			std::wstring error = L"ReadFormula: ";

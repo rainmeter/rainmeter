@@ -108,6 +108,11 @@ LPCTSTR ReadConfigString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue)
 		CConfigParser* parser = Rainmeter->GetCurrentParser();
 		if (parser)
 		{
+			// NULL checking
+			if (section == NULL)  section  = L"";
+			if (key == NULL)      key      = L"";
+			if (defValue == NULL) defValue = L"";
+
 			return parser->ReadString(section, key, defValue, false).c_str();
 		}
 	}
