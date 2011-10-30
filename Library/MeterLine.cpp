@@ -305,7 +305,6 @@ bool CMeterLine::Draw(Graphics& graphics)
 		REAL Y, oldY;
 
 		const double scale = m_ScaleValues[counter] * H / maxValue;
-		const int size = (int)(*i).size();
 
 		int pos = m_CurrentPos;
 
