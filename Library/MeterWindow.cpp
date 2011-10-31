@@ -71,7 +71,6 @@ CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config,
 	m_Background(),
 	m_BackgroundSize(),
 	m_Window(),
-	m_ChildWindow(false),
 	m_MouseOver(false),
 	m_BackgroundMargins(),
 	m_DragMargins(),
@@ -108,7 +107,6 @@ CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config,
 	m_NativeTransparency(true),
 	m_AlphaValue(255),
 	m_FadeDuration(250),
-//	m_MeasuresToVariables(false),
 	m_WindowZPosition(ZPOSITION_NORMAL),
 	m_DynamicWindowSize(false),
 	m_ClickThrough(false),
@@ -581,84 +579,81 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 {
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
 
-	if (!m_ChildWindow)
+	HWND winPos = HWND_NOTOPMOST;
+	m_WindowZPosition = zPos;
+
+	switch (zPos)
 	{
-		HWND winPos = HWND_NOTOPMOST;
-		m_WindowZPosition = zPos;
+	case ZPOSITION_ONTOPMOST:
+	case ZPOSITION_ONTOP:
+		winPos = HWND_TOPMOST;
+		break;
 
-		switch (zPos)
+	case ZPOSITION_ONBOTTOM:
+		if (all)
 		{
-		case ZPOSITION_ONTOPMOST:
-		case ZPOSITION_ONTOP:
-			winPos = HWND_TOPMOST;
-			break;
+			if (CSystem::GetShowDesktop())
+			{
+				// Insert after the system window temporarily to keep order
+				winPos = CSystem::GetWindow();
+			}
+			else
+			{
+				// Insert after the helper window
+				winPos = CSystem::GetHelperWindow();
+			}
+		}
+		else
+		{
+			winPos = HWND_BOTTOM;
+		}
+		break;
 
-		case ZPOSITION_ONBOTTOM:
+	case ZPOSITION_ONDESKTOP:
+		if (CSystem::GetShowDesktop())
+		{
+			// Set WS_EX_TOPMOST flag
+			SetWindowPos(m_Window, HWND_TOPMOST, 0, 0, 0, 0, ZPOS_FLAGS);
+
+			winPos = CSystem::GetHelperWindow();
+
 			if (all)
 			{
-				if (CSystem::GetShowDesktop())
+				// Insert after the helper window
+			}
+			else
+			{
+				// Find the "backmost" topmost window
+				while (winPos = ::GetNextWindow(winPos, GW_HWNDPREV))
 				{
-					// Insert after the system window temporarily to keep order
-					winPos = CSystem::GetWindow();
+					if (GetWindowLong(winPos, GWL_EXSTYLE) & WS_EX_TOPMOST)
+					{
+						// Insert after the found window
+						if (0 != SetWindowPos(m_Window, winPos, 0, 0, 0, 0, ZPOS_FLAGS))
+						{
+							break;
+						}
+					}
 				}
-				else
-				{
-					// Insert after the helper window
-					winPos = CSystem::GetHelperWindow();
-				}
+				return;
+			}
+		}
+		else
+		{
+			if (all)
+			{
+				// Insert after the helper window
+				winPos = CSystem::GetHelperWindow();
 			}
 			else
 			{
 				winPos = HWND_BOTTOM;
 			}
-			break;
-
-		case ZPOSITION_ONDESKTOP:
-			if (CSystem::GetShowDesktop())
-			{
-				// Set WS_EX_TOPMOST flag
-				SetWindowPos(m_Window, HWND_TOPMOST, 0, 0, 0, 0, ZPOS_FLAGS);
-
-				winPos = CSystem::GetHelperWindow();
-
-				if (all)
-				{
-					// Insert after the helper window
-				}
-				else
-				{
-					// Find the "backmost" topmost window
-					while (winPos = ::GetNextWindow(winPos, GW_HWNDPREV))
-					{
-						if (GetWindowLong(winPos, GWL_EXSTYLE) & WS_EX_TOPMOST)
-						{
-							// Insert after the found window
-							if (0 != SetWindowPos(m_Window, winPos, 0, 0, 0, 0, ZPOS_FLAGS))
-							{
-								break;
-							}
-						}
-					}
-					return;
-				}
-			}
-			else
-			{
-				if (all)
-				{
-					// Insert after the helper window
-					winPos = CSystem::GetHelperWindow();
-				}
-				else
-				{
-					winPos = HWND_BOTTOM;
-				}
-			}
-			break;
 		}
-
-		SetWindowPos(m_Window, winPos, 0, 0, 0, 0, ZPOS_FLAGS);
+		break;
 	}
+
+	SetWindowPos(m_Window, winPos, 0, 0, 0, 0, ZPOS_FLAGS);
 }
 
 /*
@@ -1867,7 +1862,6 @@ void CMeterWindow::ReadConfig()
 	m_WindowStartHidden = false;
 	m_SavePosition = true;
 	m_SnapEdges = true;
-//	m_MeasuresToVariables = false;
 	m_NativeTransparency = true;
 	m_ClickThrough = false;
 	m_KeepOnScreen = true;
@@ -1917,7 +1911,6 @@ void CMeterWindow::ReadConfig()
 		m_WindowStartHidden = 0!=parser.ReadInt(section, L"StartHidden", m_WindowStartHidden);
 		m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", m_SavePosition);
 		m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", m_SnapEdges);
-//		m_MeasuresToVariables = 0!=parser.ReadInt(section, L"MeasuresToVariables", m_MeasuresToVariables);
 		m_NativeTransparency = 0!=parser.ReadInt(section, L"NativeTransparency", m_NativeTransparency);
 		m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", m_ClickThrough);
 		m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", m_KeepOnScreen);
@@ -2966,23 +2959,6 @@ void CMeterWindow::Update(bool nodraw)
 
 	// Post-updates
 	PostUpdate(bActiveTransition);
-
-//	if (m_MeasuresToVariables)	// BUG: LSSetVariable doens't seem to work for some reason.
-//	{
-//		std::list<CMeasure*>::iterator i = m_Measures.begin();
-//		for ( ; i != m_Measures.end(); i++)
-//		{
-//			const char* sz = (*i)->GetStringValue(AUTOSCALE_ON, 1, 1, false);
-//			if (sz && wcslen(sz) > 0)
-//			{
-//				WCHAR* wideSz = CMeter::ConvertToWide(sz);
-//				WCHAR* wideName = CMeter::ConvertToWide((*i)->GetName());
-//				LSSetVariable(wideName, wideSz);
-//				delete [] wideSz;
-//				delete [] wideName;
-//			}
-//		}
-//	}
 }
 
 /*
@@ -3060,17 +3036,6 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		Update(false);
 		CDialogAbout::UpdateMeasures(m_SkinName.c_str());
-
-		//if (m_KeepOnScreen)
-		//{
-		//	int x = m_ScreenX;
-		//	int y = m_ScreenY;
-		//	MapCoordsToScreen(x, y, m_WindowW, m_WindowH);
-		//	if (x != m_ScreenX || y != m_ScreenY)
-		//	{
-		//		MoveWindow(x, y);
-		//	}
-		//}
 	}
 	else if (wParam == TRANSITIONTIMER)
 	{
@@ -3171,20 +3136,6 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			UpdateTransparency((int)value, false);
 		}
 	}
-
-//	// TEST
-//	if (!m_ChildWindow)
-//	{
-//		RECT rect;
-//		GetWindowRect(m_Window, &rect);
-//		if (rect.left != m_WindowX && rect.top != m_WindowY)
-//		{
-//			LogWithArgs(LOG_DEBUG, L"Window position has been changed. Moving it back to the place it belongs.");
-//			SetWindowPos(m_Window, NULL, m_WindowX, m_WindowY, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
-//		}
-//	}
-
-	// ~TEST
 
 	return 0;
 }

@@ -258,14 +258,11 @@ bool CMeterImage::Draw(Graphics& graphics)
 		int drawW = m_W;
 		int drawH = m_H;
 
-		GUID guid;
 		if (drawW == imageW && drawH == imageH &&
-			m_ScaleMargins.left == 0 && m_ScaleMargins.top == 0 && m_ScaleMargins.right == 0 && m_ScaleMargins.bottom == 0 &&
-			GetTransformationMatrix().IsIdentity() &&
-			Ok == drawBitmap->GetRawFormat(&guid) && guid != ImageFormatMemoryBMP)
+			m_ScaleMargins.left == 0 && m_ScaleMargins.top == 0 && m_ScaleMargins.right == 0 && m_ScaleMargins.bottom == 0)
 		{
-			CachedBitmap cache(drawBitmap, &graphics);
-			graphics.DrawCachedBitmap(&cache, x, y);
+			Rect r(x, y, drawW, drawH);
+			graphics.DrawImage(drawBitmap, r, 0, 0, imageW, imageH, UnitPixel);
 		}
 		else if (m_Tile)
 		{
