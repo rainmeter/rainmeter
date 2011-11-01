@@ -85,7 +85,6 @@ CMeterString::CMeterString(CMeterWindow* meterWindow, const WCHAR* name) : CMete
 	m_Font(),
 	m_FontFamily(),
 	m_NumOfDecimals(-1),
-	m_DimensionsDefined(false),
 	m_Angle()
 {
 }
@@ -459,11 +458,6 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		throw CError(error, __LINE__, __FILE__);
 	}
 
-	if (parser.IsValueDefined(section, L"W") && parser.IsValueDefined(section, L"H"))
-	{
-		m_DimensionsDefined = true;
-	}
-
 	if (m_Initialized &&
 		(oldFontFace != m_FontFace ||
 		oldFontSize != m_FontSize ||
@@ -529,7 +523,7 @@ bool CMeterString::Update()
 			break;
 		}
 
-		if (!m_DimensionsDefined)
+		if (!m_WDefined && !m_HDefined)
 		{
 			// Calculate the text size
 			RectF rect;
@@ -636,10 +630,7 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 			graphics.TranslateTransform(-(Gdiplus::REAL)CMeter::GetX(), -y);
 		}
 
-		if (m_Effect == EFFECT_NONE)
-		{
-		}
-		else
+		if (m_Effect != EFFECT_NONE)
 		{
 			SolidBrush solidBrush(m_EffectColor);
 			RectF rcEffect(rcDest);

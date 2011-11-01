@@ -128,7 +128,7 @@ protected:
 	std::wstring m_CacheKey;
 
 	static const Gdiplus::ColorMatrix c_GreyScaleMatrix;
-	static const Gdiplus::ColorMatrix c_IdentifyMatrix;
+	static const Gdiplus::ColorMatrix c_IdentityMatrix;
 
 	static const WCHAR* c_DefaultConfigArray[ConfigCount];
 };

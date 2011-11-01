@@ -138,6 +138,8 @@ protected:
 	int	m_W;					// Width of the meter
 	int	m_H;					// Height of the meter
 	bool m_Hidden;				// Status of the meter
+	bool m_WDefined;
+	bool m_HDefined;
 	CMeter*	m_RelativeMeter;
 	bool m_DynamicVariables;		// If true, the measure contains dynamic variables
 

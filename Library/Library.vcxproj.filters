@@ -156,9 +156,6 @@
     <ClCompile Include="ccalc-0.5.1\strmap.c">
       <Filter>CCalc</Filter>
     </ClCompile>
-    <ClCompile Include="ccalc-0.5.1\wininit.c">
-      <Filter>CCalc</Filter>
-    </ClCompile>
     <ClCompile Include="lua\LuaManager.cpp">
       <Filter>Lua</Filter>
     </ClCompile>

@@ -39,7 +39,8 @@ std::unordered_map<std::wstring, std::wstring> CConfigParser::c_MonitorVariables
 CConfigParser::CConfigParser() :
 	m_Parser(MathParser_Create(NULL)),
 	m_LastReplaced(false),
-	m_LastDefaultUsed(false)
+	m_LastDefaultUsed(false),
+	m_LastValueDefined(false)
 {
 }
 
@@ -70,6 +71,12 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 	m_Sections.clear();
 	m_FoundSections.clear();
 	m_ListVariables.clear();
+
+	m_StyleTemplate.clear();
+	m_LastUsedStyle.clear();
+	m_LastReplaced = false;
+	m_LastDefaultUsed = false;
+	m_LastValueDefined = false;
 
 	// Set the built-in variables. Do this before the ini file is read so that the paths can be used with @include
 	SetBuiltInVariables(pRainmeter, meterWindow);
@@ -580,6 +587,7 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 	m_LastUsedStyle.clear();
 	m_LastReplaced = false;
 	m_LastDefaultUsed = false;
+	m_LastValueDefined = false;
 
 	const std::wstring strSection = section;
 	const std::wstring strKey = key;
@@ -634,19 +642,24 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		}
 	}
 
-	const std::wstring CURRENTSECTION = L"CURRENTSECTION";
-	SetBuiltInVariable(CURRENTSECTION, strSection);  // Set temporarily
-
-	if (ReplaceVariables(result))
+	if (result.size() > 0)
 	{
-		m_LastReplaced = true;
-	}
+		m_LastValueDefined = true;
 
-	SetBuiltInVariable(CURRENTSECTION, L"");  // Reset
+		const std::wstring CURRENTSECTION = L"CURRENTSECTION";
+		SetBuiltInVariable(CURRENTSECTION, strSection);  // Set temporarily
 
-	if (bReplaceMeasures && ReplaceMeasures(result))
-	{
-		m_LastReplaced = true;
+		if (ReplaceVariables(result))
+		{
+			m_LastReplaced = true;
+		}
+
+		SetBuiltInVariable(CURRENTSECTION, L"");  // Reset
+
+		if (bReplaceMeasures && ReplaceMeasures(result))
+		{
+			m_LastReplaced = true;
+		}
 	}
 
 	return result;

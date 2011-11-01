@@ -46,6 +46,8 @@ CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(met
 	m_W(),
 	m_H(),
 	m_Hidden(false),
+	m_WDefined(false),
+	m_HDefined(false),
 	m_RelativeMeter(),
 	m_DynamicVariables(false),
 	m_ToolTipWidth(),
@@ -358,8 +360,10 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 
 	m_W = (int)parser.ReadFormula(section, L"W", 1.0);
+	m_WDefined = parser.GetLastValueDefined();
 	if (m_W < 0) m_W = 0;
 	m_H = (int)parser.ReadFormula(section, L"H", 1.0);
+	m_HDefined = parser.GetLastValueDefined();
 	if (m_H < 0) m_H = 0;
 
 	if (!m_Initialized)

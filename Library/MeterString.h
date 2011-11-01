@@ -92,7 +92,6 @@ private:
 	Gdiplus::Font* m_Font;				// The font
 	Gdiplus::FontFamily* m_FontFamily;	// The font family
 	int m_NumOfDecimals;				// Number of decimals to be displayed
-	bool m_DimensionsDefined;
 	Gdiplus::REAL m_Angle;
 	Gdiplus::RectF m_Rect;
 

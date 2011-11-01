@@ -57,6 +57,8 @@ public:
 	const std::wstring& GetLastUsedStyle() { return m_LastUsedStyle; }
 	bool GetLastReplaced() { return m_LastReplaced; }
 	bool GetLastDefaultUsed() { return m_LastDefaultUsed; }
+	bool GetLastKeyDefined() { return !m_LastDefaultUsed; }
+	bool GetLastValueDefined() { return m_LastValueDefined; }
 
 	void ResetMonitorVariables(CMeterWindow* meterWindow = NULL);
 
@@ -119,6 +121,7 @@ private:
 	std::wstring m_LastUsedStyle;
 	bool m_LastReplaced;
 	bool m_LastDefaultUsed;
+	bool m_LastValueDefined;
 
 	std::vector<std::wstring> m_Sections;		// The sections must be an ordered array
 	std::unordered_set<std::wstring> m_FoundSections;

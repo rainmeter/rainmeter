@@ -34,8 +34,6 @@ using namespace Gdiplus;
 */
 CMeterImage::CMeterImage(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
 	m_NeedsRedraw(false),
-	m_WidthDefined(false),
-	m_HeightDefined(false),
 	m_PreserveAspectRatio(false),
 	m_Tile(false),
 	m_ScaleMargins()
@@ -89,16 +87,16 @@ void CMeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		int imageW = bitmap->GetWidth();
 		int imageH = bitmap->GetHeight();
 
-		if (m_WidthDefined)
+		if (m_WDefined)
 		{
-			if (!m_HeightDefined)
+			if (!m_HDefined)
 			{
 				m_H = (imageW == 0) ? 0 : (m_Tile) ? imageH : m_W * imageH / imageW;
 			}
 		}
 		else
 		{
-			if (m_HeightDefined)
+			if (m_HDefined)
 			{
 				m_W = (imageH == 0) ? 0 : (m_Tile) ? imageW : m_H * imageW / imageH;
 			}
@@ -145,15 +143,6 @@ void CMeterImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	static const RECT defMargins = {0};
 	m_ScaleMargins = parser.ReadRECT(section, L"ScaleMargins", defMargins);
-
-	if (parser.IsValueDefined(section, L"W"))
-	{
-		m_WidthDefined = true;
-	}
-	if (parser.IsValueDefined(section, L"H"))
-	{
-		m_HeightDefined = true;
-	}
 
 	// Read tinting configs
 	m_Image.ReadConfig(parser, section);
@@ -274,7 +263,7 @@ bool CMeterImage::Draw(Graphics& graphics)
 		}
 		else if (m_PreserveAspectRatio)
 		{
-			if (m_WidthDefined && m_HeightDefined)
+			if (m_WDefined && m_HDefined)
 			{
 				REAL imageRatio = imageW / (REAL)imageH;
 				REAL meterRatio = m_W / (REAL)m_H;

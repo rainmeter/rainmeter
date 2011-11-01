@@ -126,7 +126,7 @@ const Gdiplus::ColorMatrix CTintedImage::c_GreyScaleMatrix = {
 	  0.0f,   0.0f,   0.0f, 0.0f, 1.0f
 };
 
-const Gdiplus::ColorMatrix CTintedImage::c_IdentifyMatrix = {
+const Gdiplus::ColorMatrix CTintedImage::c_IdentityMatrix = {
 	1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 	0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
 	0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
@@ -162,7 +162,7 @@ CTintedImage::CTintedImage(const WCHAR* name, const WCHAR** configArray, bool di
 	m_Flip(RotateNoneFlipNone),
 	m_Rotate()
 {
-	*m_ColorMatrix = c_IdentifyMatrix;
+	*m_ColorMatrix = c_IdentityMatrix;
 }
 
 /*
@@ -317,7 +317,7 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 					}
 					if (!m_NeedsTinting)
 					{
-						if (m_GreyScale || !CompareColorMatrix(m_ColorMatrix, &c_IdentifyMatrix))
+						if (m_GreyScale || !CompareColorMatrix(m_ColorMatrix, &c_IdentityMatrix))
 						{
 							m_NeedsTinting = true;
 						}
@@ -442,7 +442,7 @@ void CTintedImage::ApplyCrop()
 */
 void CTintedImage::ApplyTint()
 {
-	bool useColorMatrix = !CompareColorMatrix(m_ColorMatrix, &c_IdentifyMatrix);
+	bool useColorMatrix = !CompareColorMatrix(m_ColorMatrix, &c_IdentityMatrix);
 
 	if (m_GreyScale || useColorMatrix)
 	{
@@ -651,7 +651,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	alpha = min(255, alpha);
 	alpha = max(0, alpha);
 
-	*m_ColorMatrix = c_IdentifyMatrix;
+	*m_ColorMatrix = c_IdentityMatrix;
 
 	// Read in the Color Matrix
 	// It has to be read in like this because it crashes when reading over 17 floats

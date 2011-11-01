@@ -104,15 +104,13 @@ void CMeterButton::Initialize()
 			}
 
 			// Separate the frames
-			Graphics desktopGraphics(GetDesktopWindow());
-
 			for (int i = 0; i < BUTTON_FRAMES; ++i)
 			{
 				Bitmap bitmapPart(m_W, m_H, PixelFormat32bppPARGB);
 				Graphics graphics(&bitmapPart);
 				Rect r(0, 0, m_W, m_H);
 
-				if (bitmap->GetHeight() > bitmap->GetWidth())
+				if (m_H > m_W)
 				{
 					graphics.DrawImage(bitmap, r, 0, m_H * i, m_W, m_H, UnitPixel);
 				}
