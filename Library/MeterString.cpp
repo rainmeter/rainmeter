@@ -523,7 +523,7 @@ bool CMeterString::Update()
 			break;
 		}
 
-		if (!m_WDefined && !m_HDefined)
+		if (!m_WDefined || !m_HDefined)
 		{
 			// Calculate the text size
 			RectF rect;
