@@ -2441,7 +2441,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 				h = max(h, m_BackgroundSize.cy);
 			}
 
-			Bitmap* background = new Bitmap(w, h, CTintedImage::AdjustNonAlphaPixelFormat(tempBackground));
+			Bitmap* background = new Bitmap(w, h, PixelFormat32bppPARGB);
 			Graphics graphics(background);
 
 			if (m_BackgroundMode == BGMODE_IMAGE)
@@ -2503,6 +2503,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 							Rect r(0, h - m.bottom, m.left, m.bottom);
 							graphics.DrawImage(tempBackground, r, 0, m_BackgroundSize.cy - m.bottom, m.left, m.bottom, UnitPixel);
 						}
+
 						// Bottom
 						Rect r(m.left, h - m.bottom, w - m.left - m.right, m.bottom);
 						graphics.DrawImage(tempBackground, r, m.left, m_BackgroundSize.cy - m.bottom, m_BackgroundSize.cx - m.left - m.right, m.bottom, UnitPixel);

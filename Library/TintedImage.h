@@ -85,9 +85,6 @@ public:
 	void DisposeImage();
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
-	static Gdiplus::PixelFormat AdjustNonAlphaPixelFormat(Gdiplus::Bitmap* bitmap, bool additionalCondition = true)
-		{ return (bitmap->GetPixelFormat() == PixelFormat24bppRGB && additionalCondition) ? PixelFormat24bppRGB : PixelFormat32bppPARGB; }
-
 protected:
 	enum CROPMODE
 	{

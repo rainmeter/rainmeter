@@ -28,7 +28,7 @@ using namespace Gdiplus;
 class ImageCache
 {
 public:
-	ImageCache(Bitmap* bitmap, HGLOBAL hBuffer) : m_Bitmap(bitmap), m_hBuffer(hBuffer), m_Ref(1) {}
+	ImageCache(Bitmap* bitmap) : m_Bitmap(bitmap), m_Ref(1) {}
 	~ImageCache() { Dispose(); }
 
 	void AddRef() { ++m_Ref; }
@@ -42,10 +42,9 @@ private:
 	ImageCache() {}
 	ImageCache(const ImageCache& cache) {}
 
-	void Dispose() { delete m_Bitmap; m_Bitmap = NULL; if (m_hBuffer) { ::GlobalFree(m_hBuffer); m_hBuffer = NULL; } }
+	void Dispose() { delete m_Bitmap; m_Bitmap = NULL; }
 
 	Bitmap* m_Bitmap;
-	HGLOBAL m_hBuffer;
 	int m_Ref;
 };
 
@@ -240,7 +239,7 @@ Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize,
 						hBuffer = NULL;
 					}
 					////////////////////////////////////////////
-					*ppCache = new ImageCache(bitmap, hBuffer);
+					*ppCache = new ImageCache(bitmap);
 					return bitmap;
 				}
 
@@ -380,7 +379,7 @@ void CTintedImage::ApplyCrop()
 	{
 		if (m_Crop.Width == 0 || m_Crop.Height == 0)
 		{
-			m_BitmapTint = new Bitmap(0, 0, PixelFormat24bppRGB);  // create dummy bitmap
+			m_BitmapTint = new Bitmap(0, 0, PixelFormat32bppPARGB);  // create dummy bitmap
 		}
 		else
 		{
@@ -419,8 +418,7 @@ void CTintedImage::ApplyCrop()
 			}
 
 			Rect r(0, 0, m_Crop.Width, m_Crop.Height);
-			m_BitmapTint = new Bitmap(r.Width, r.Height,
-				AdjustNonAlphaPixelFormat(m_Bitmap, x >= 0 && y >= 0 && (x + m_Crop.Width) <= imageW && (y + m_Crop.Height) <= imageH));
+			m_BitmapTint = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
 
 			Graphics graphics(m_BitmapTint);
 			graphics.DrawImage(m_Bitmap, r, x, y, r.Width, r.Height, UnitPixel);
@@ -489,7 +487,7 @@ Bitmap* CTintedImage::TurnGreyscale(Bitmap* source)
 
 	// We need a blank bitmap to paint our greyscale to in case of alpha
 	Rect r(0, 0, source->GetWidth(), source->GetHeight());
-	Bitmap* bitmap = new Bitmap(r.Width, r.Height, AdjustNonAlphaPixelFormat(source));
+	Bitmap* bitmap = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
 
 	Graphics graphics(bitmap);
 	graphics.DrawImage(source, r, 0, 0, r.Width, r.Height, UnitPixel, &ImgAttr);
@@ -551,7 +549,7 @@ void CTintedImage::ApplyTransform()
 		Bitmap* original = GetImage();
 
 		Rect r(0, 0, original->GetWidth(), original->GetHeight());
-		Bitmap* transform = new Bitmap(r.Width, r.Height, AdjustNonAlphaPixelFormat(original));
+		Bitmap* transform = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
 
 		Graphics graphics(transform);
 
