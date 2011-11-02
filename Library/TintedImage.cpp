@@ -225,25 +225,19 @@ Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize,
 				if (Ok == bitmap->GetLastStatus())
 				{
 					////////////////////////////////////////////
-					// Workaround to avoid image corruption with JPEG in some cases
-					if (CSystem::GetOSPlatform() < OSPLATFORM_7)
+					// Convert loaded image to faster blittable bitmap (may increase memory usage slightly)
 					{
-						GUID guid;
-						bitmap->GetRawFormat(&guid);
-						if (guid == ImageFormatJPEG)
+						Rect r(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
+						Bitmap* clone = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
 						{
-							Rect r(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
-							Bitmap* clone = new Bitmap(r.Width, r.Height, PixelFormat24bppRGB);
-							{
-								Graphics graphics(clone);
-								graphics.DrawImage(bitmap, r, 0, 0, r.Width, r.Height, UnitPixel);
-							}
-							delete bitmap;
-							bitmap = clone;
-
-							::GlobalFree(hBuffer);
-							hBuffer = NULL;
+							Graphics graphics(clone);
+							graphics.DrawImage(bitmap, r, 0, 0, r.Width, r.Height, UnitPixel);
 						}
+						delete bitmap;
+						bitmap = clone;
+
+						::GlobalFree(hBuffer);
+						hBuffer = NULL;
 					}
 					////////////////////////////////////////////
 					*ppCache = new ImageCache(bitmap, hBuffer);
