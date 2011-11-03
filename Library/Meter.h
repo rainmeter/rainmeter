@@ -73,14 +73,12 @@ public:
 
 	const std::wstring& GetToolTipText() { return m_ToolTipText; }
 	bool HasToolTip() { return m_ToolTipHandle != NULL; }
-	void SetToolTipHidden(bool b) { m_ToolTipHidden = b; }
 
 	void CreateToolTip(CMeterWindow* meterWindow);
 	void UpdateToolTip();
 
 	bool HasMouseAction() { return m_HasMouseAction; }
 	bool HasMouseActionCursor() { return m_MouseActionCursor; }
-	void SetMouseActionCursor(bool b) { m_MouseActionCursor = b; }
 
 	virtual void Hide();
 	virtual void Show();

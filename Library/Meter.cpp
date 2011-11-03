@@ -53,10 +53,10 @@ CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(met
 	m_ToolTipWidth(),
 	m_ToolTipDelay(),
 	m_ToolTipType(false),
-	m_ToolTipHidden(false),
+	m_ToolTipHidden(meterWindow ? meterWindow->GetMeterToolTipHidden() : false),
 	m_ToolTipHandle(),
 	m_HasMouseAction(false),
-	m_MouseActionCursor(true),
+	m_MouseActionCursor(meterWindow ? meterWindow->GetMeterMouseActionCursor() : true),
 	m_MouseOver(false),
 	m_RelativeX(POSITION_ABSOLUTE),
 	m_RelativeY(POSITION_ABSOLUTE),
@@ -360,14 +360,17 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 
 	m_W = (int)parser.ReadFormula(section, L"W", 1.0);
+	m_W = max(m_W, 0);
 	m_WDefined = parser.GetLastValueDefined();
-	if (m_W < 0) m_W = 0;
+
 	m_H = (int)parser.ReadFormula(section, L"H", 1.0);
+	m_H = max(m_H, 0);
 	m_HDefined = parser.GetLastValueDefined();
-	if (m_H < 0) m_H = 0;
 
 	if (!m_Initialized)
 	{
+		m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
+
 		m_Hidden = 0!=parser.ReadInt(section, L"Hidden", 0);
 	}
 	else
@@ -378,11 +381,6 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		{
 			m_Hidden = 0!=(int)parser.ParseDouble(result, 0.0, true);
 		}
-	}
-
-	if (!m_Initialized)
-	{
-		m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
 	}
 
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
@@ -403,19 +401,19 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_MouseOverAction = parser.ReadString(section, L"MouseOverAction", L"", false);
 	m_MouseLeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);
 
-	m_MouseActionCursor = 0!=parser.ReadInt(section, L"MouseActionCursor", m_MouseActionCursor);
+	m_MouseActionCursor = 0!=parser.ReadInt(section, L"MouseActionCursor", m_MeterWindow ? m_MeterWindow->GetMeterMouseActionCursor() : true);
 
 	m_HasMouseAction =
 		( !m_LeftMouseUpAction.empty() || !m_LeftMouseDownAction.empty() || !m_LeftMouseDoubleClickAction.empty()
 		|| !m_MiddleMouseUpAction.empty() || !m_MiddleMouseDownAction.empty() || !m_MiddleMouseDoubleClickAction.empty()
 		|| !m_RightMouseUpAction.empty() || !m_RightMouseDownAction.empty() || !m_RightMouseDoubleClickAction.empty() );
 
-	m_ToolTipText = parser.ReadString(section, L"ToolTipText", L"", true);
-	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"", true);
-	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"", true);
+	m_ToolTipText = parser.ReadString(section, L"ToolTipText", L"");
+	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"");
+	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"");
 	m_ToolTipWidth = (int)parser.ReadFormula(section, L"ToolTipWidth", 1000);
 	m_ToolTipType = 0!=parser.ReadInt(section, L"ToolTipType", 0);
-	m_ToolTipHidden = 0!=parser.ReadInt(section, L"ToolTipHidden", m_ToolTipHidden);
+	m_ToolTipHidden = 0!=parser.ReadInt(section, L"ToolTipHidden", m_MeterWindow ? m_MeterWindow->GetMeterToolTipHidden() : false);
 
 	int updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
 	if (updateDivider != m_UpdateDivider)

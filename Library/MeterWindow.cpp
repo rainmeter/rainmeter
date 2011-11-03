@@ -2260,9 +2260,6 @@ bool CMeterWindow::ReadSkin()
 					meter = CMeter::Create(meterName.c_str(), this, section);
 					if (meter)
 					{
-						meter->SetMouseActionCursor(m_MouseActionCursor);
-						meter->SetToolTipHidden(m_ToolTipHidden);
-
 						meter->ReadConfig(m_Parser);
 
 						m_Meters.push_back(meter);

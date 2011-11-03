@@ -235,6 +235,9 @@ public:
 	int GetUpdateCounter() { return m_UpdateCounter; }
 	int GetTransitionUpdate() { return m_TransitionUpdate; }
 
+	bool GetMeterToolTipHidden() { return m_ToolTipHidden; }
+	bool GetMeterMouseActionCursor() { return m_MouseActionCursor; }
+
 	void AddMeasureBang(const WCHAR* bang, int index, CMeasure* measure);
 
 	LRESULT OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam);
