@@ -28,13 +28,20 @@
 #include "RainmeterQuery.h"
 #include "../Version.h"
 
-#define TRAYTIMER 3
-
 #define RAINMETER_OFFICIAL		L"http://rainmeter.net/cms/"
 #define RAINMETER_MANUAL		L"http://rainmeter.net/cms/Manual"
 #define RAINMETER_MANUALBETA	L"http://rainmeter.net/cms/Manual_beta"
 
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
+
+enum TIMER
+{
+	TIMER_TRAY = 3
+};
+enum INTERVAL
+{
+	INTERVAL_TRAY = 1000
+};
 
 const UINT WM_TASKBARCREATED = ::RegisterWindowMessage(L"TaskbarCreated");
 
@@ -79,7 +86,7 @@ CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
 
 CTrayWindow::~CTrayWindow()
 {
-	KillTimer(m_Window, TRAYTIMER);
+	KillTimer(m_Window, TIMER_TRAY);
 	RemoveTrayIcon();
 
 	delete m_Bitmap;
@@ -263,7 +270,7 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 void CTrayWindow::ReadConfig(CConfigParser& parser)
 {
 	// Clear old Settings
-	KillTimer(m_Window, TRAYTIMER);
+	KillTimer(m_Window, TIMER_TRAY);
 
 	delete m_Measure;
 	m_Measure = NULL;
@@ -374,7 +381,7 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 
 		if (m_Measure)
 		{
-			SetTimer(m_Window, TRAYTIMER, 1000, NULL);		// Update the tray once per sec
+			SetTimer(m_Window, TIMER_TRAY, INTERVAL_TRAY, NULL);		// Update the tray once per sec
 		}
 	}
 	else

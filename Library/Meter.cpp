@@ -360,11 +360,9 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 
 	m_W = (int)parser.ReadFormula(section, L"W", 1.0);
-	m_W = max(m_W, 0);
 	m_WDefined = parser.GetLastValueDefined();
 
 	m_H = (int)parser.ReadFormula(section, L"H", 1.0);
-	m_H = max(m_H, 0);
 	m_HDefined = parser.GetLastValueDefined();
 
 	if (!m_Initialized)

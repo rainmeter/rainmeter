@@ -39,12 +39,22 @@
 
 using namespace Gdiplus;
 
-#define METERTIMER 1
-#define MOUSETIMER 2
-#define FADETIMER 3
-#define TRANSITIONTIMER 4
-
 #define SNAPDISTANCE 10
+
+enum TIMER
+{
+	TIMER_METER      = 1,
+	TIMER_MOUSE      = 2,
+	TIMER_FADE       = 3,
+	TIMER_TRANSITION = 4
+};
+enum INTERVAL
+{
+	INTERVAL_METER      = 1000,
+	INTERVAL_MOUSE      = 500,
+	INTERVAL_FADE       = 10,
+	INTERVAL_TRANSITION = 100
+};
 
 int CMeterWindow::c_InstanceCount = 0;
 
@@ -95,8 +105,8 @@ CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config,
 	m_AnchorScreenX(),
 	m_AnchorScreenY(),
 	m_WindowDraggable(true),
-	m_WindowUpdate(1000),
-	m_TransitionUpdate(100),
+	m_WindowUpdate(INTERVAL_METER),
+	m_TransitionUpdate(INTERVAL_TRANSITION),
 	m_ActiveTransition(false),
 	m_HasNetMeasures(false),
 	m_HasButtons(false),
@@ -160,10 +170,10 @@ CMeterWindow::~CMeterWindow()
 	WriteConfig();
 
 	// Kill the timer
-	KillTimer(m_Window, METERTIMER);
-	KillTimer(m_Window, MOUSETIMER);
-	KillTimer(m_Window, FADETIMER);
-	KillTimer(m_Window, TRANSITIONTIMER);
+	KillTimer(m_Window, TIMER_METER);
+	KillTimer(m_Window, TIMER_MOUSE);
+	KillTimer(m_Window, TIMER_FADE);
+	KillTimer(m_Window, TIMER_TRANSITION);
 
 	// Destroy the meters
 	std::list<CMeter*>::iterator j = m_Meters.begin();
@@ -333,10 +343,12 @@ void CMeterWindow::Refresh(bool init, bool all)
 		// WriteConfig(); //Not clear why this is needed and it messes up resolution changes
 
 		// Kill the timer
-		KillTimer(m_Window, METERTIMER);
-		KillTimer(m_Window, MOUSETIMER);
-		KillTimer(m_Window, FADETIMER);
-		KillTimer(m_Window, TRANSITIONTIMER);
+		KillTimer(m_Window, TIMER_METER);
+		KillTimer(m_Window, TIMER_MOUSE);
+		KillTimer(m_Window, TIMER_FADE);
+		KillTimer(m_Window, TIMER_TRANSITION);
+
+		m_ActiveTransition = false;
 
 		m_MouseOver = false;
 		SetMouseLeaveEvent(true);
@@ -426,13 +438,13 @@ void CMeterWindow::Refresh(bool init, bool all)
 	// Start the timers
 	if (m_WindowUpdate >= 0)
 	{
-		if (0 == SetTimer(m_Window, METERTIMER, m_WindowUpdate, NULL))
+		if (0 == SetTimer(m_Window, TIMER_METER, m_WindowUpdate, NULL))
 		{
 			throw CError(L"Unable to set timer!", __LINE__, __FILE__);
 		}
 	}
 
-	if (0 == SetTimer(m_Window, MOUSETIMER, 500, NULL))	// Mouse position is checked twice per sec
+	if (0 == SetTimer(m_Window, TIMER_MOUSE, INTERVAL_MOUSE, NULL))	// Mouse position is checked twice per sec
 	{
 		throw CError(L"Unable to set timer!", __LINE__, __FILE__);
 	}
@@ -681,12 +693,12 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		break;
 
 	case BANG_UPDATE:
-		KillTimer(m_Window, METERTIMER);  // Kill timer temporarily
+		KillTimer(m_Window, TIMER_METER);  // Kill timer temporarily
 		Update(false);
 		CDialogAbout::UpdateMeasures(m_SkinName.c_str());
 		if (m_WindowUpdate >= 0)
 		{
-			SetTimer(m_Window, METERTIMER, m_WindowUpdate, NULL);
+			SetTimer(m_Window, TIMER_METER, m_WindowUpdate, NULL);
 		}
 		break;
 
@@ -2111,8 +2123,8 @@ bool CMeterWindow::ReadSkin()
 	m_MouseLeaveAction = m_Parser.ReadString(L"Rainmeter", L"MouseLeaveAction", L"", false);
 	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"", false);
 
-	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", 1000);
-	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", 100);
+	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
+	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
 	m_MouseActionCursor = 0 != m_Parser.ReadInt(L"Rainmeter", L"MouseActionCursor", 1);
 	m_ToolTipHidden = 0 != m_Parser.ReadInt(L"Rainmeter", L"ToolTipHidden", 0);
 
@@ -2789,12 +2801,12 @@ void CMeterWindow::PostUpdate(bool bActiveTransition)
 	// Start/stop the transition timer if necessary
 	if (bActiveTransition && !m_ActiveTransition)
 	{
-		SetTimer(m_Window, TRANSITIONTIMER, m_TransitionUpdate, NULL);
+		SetTimer(m_Window, TIMER_TRANSITION, m_TransitionUpdate, NULL);
 		m_ActiveTransition = true;
 	}
 	else if (m_ActiveTransition && !bActiveTransition)
 	{
-		KillTimer(m_Window, TRANSITIONTIMER);
+		KillTimer(m_Window, TIMER_TRANSITION);
 		m_ActiveTransition = false;
 	}
 }
@@ -3030,37 +3042,12 @@ LRESULT CMeterWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (wParam == METERTIMER)
+	if (wParam == TIMER_METER)
 	{
 		Update(false);
 		CDialogAbout::UpdateMeasures(m_SkinName.c_str());
 	}
-	else if (wParam == TRANSITIONTIMER)
-	{
-		// Redraw only if there is active transition still going
-		bool bActiveTransition = false;
-		std::list<CMeter*>::const_iterator j = m_Meters.begin();
-		for ( ; j != m_Meters.end(); ++j)
-		{
-			if ((*j)->HasActiveTransition())
-			{
-				bActiveTransition = true;
-				break;
-			}
-		}
-
-		if (bActiveTransition)
-		{
-			Redraw();
-		}
-		else
-		{
-			// Stop the transition timer
-			KillTimer(m_Window, TRANSITIONTIMER);
-			m_ActiveTransition = false;
-		}
-	}
-	else if (wParam == MOUSETIMER)
+	else if (wParam == TIMER_MOUSE)
 	{
 		if (!m_Rainmeter->IsMenuActive() && !m_Dragging)
 		{
@@ -3101,7 +3088,32 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 		}
 	}
-	else if (wParam == FADETIMER)
+	else if (wParam == TIMER_TRANSITION)
+	{
+		// Redraw only if there is active transition still going
+		bool bActiveTransition = false;
+		std::list<CMeter*>::const_iterator j = m_Meters.begin();
+		for ( ; j != m_Meters.end(); ++j)
+		{
+			if ((*j)->HasActiveTransition())
+			{
+				bActiveTransition = true;
+				break;
+			}
+		}
+
+		if (bActiveTransition)
+		{
+			Redraw();
+		}
+		else
+		{
+			// Stop the transition timer
+			KillTimer(m_Window, TIMER_TRANSITION);
+			m_ActiveTransition = false;
+		}
+	}
+	else if (wParam == TIMER_FADE)
 	{
 		ULONGLONG ticks = CSystem::GetTickCount64();
 		if (m_FadeStartTime == 0)
@@ -3111,7 +3123,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		if (ticks - m_FadeStartTime > (ULONGLONG)m_FadeDuration)
 		{
-			KillTimer(m_Window, FADETIMER);
+			KillTimer(m_Window, TIMER_FADE);
 			m_FadeStartTime = 0;
 			if (m_FadeEndValue == 0)
 			{
@@ -3174,7 +3186,7 @@ void CMeterWindow::FadeWindow(int from, int to)
 			}
 		}
 
-		SetTimer(m_Window, FADETIMER, 10, NULL);
+		SetTimer(m_Window, TIMER_FADE, INTERVAL_FADE, NULL);
 	}
 }
 

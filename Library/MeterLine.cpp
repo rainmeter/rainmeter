@@ -71,7 +71,10 @@ void CMeterLine::Initialize()
 			{
 				m_AllValues.push_back(std::vector<double>());
 
-				m_AllValues.back().assign(m_W, 0.0);
+				if (m_W > 0)
+				{
+					m_AllValues.back().assign(m_W, 0.0);
+				}
 			}
 		}
 		else
@@ -80,13 +83,17 @@ void CMeterLine::Initialize()
 		}
 	}
 
-	if (num != (size_t)m_W)
+	if (m_W < 0 || num != (size_t)m_W)
 	{
 		if (m_CurrentPos >= m_W) m_CurrentPos = 0;
 
+		num = (m_W < 0) ? 0 : m_W;
 		for (size_t i = 0; i < allValuesSize; ++i)
 		{
-			m_AllValues[i].resize(m_W, 0.0);
+			if (num != m_AllValues[i].size())
+			{
+				m_AllValues[i].resize(num, 0.0);
+			}
 		}
 	}
 }
@@ -208,7 +215,7 @@ bool CMeterLine::Update()
 */
 bool CMeterLine::Draw(Graphics& graphics)
 {
-	if (!CMeter::Draw(graphics) || m_W == 0) return false;
+	if (!CMeter::Draw(graphics) || m_W <= 0) return false;
 
 	double maxValue = 0.0;
 	int counter = 0;
