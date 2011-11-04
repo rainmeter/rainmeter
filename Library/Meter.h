@@ -84,7 +84,7 @@ public:
 	virtual void Show();
 	bool IsHidden() { return m_Hidden; }
 
-	const Gdiplus::Matrix& GetTransformationMatrix() { return m_Transformation; }
+	const Gdiplus::Matrix* GetTransformationMatrix() { return m_Transformation; }
 
 	virtual bool HitTest(int x, int y);
 
@@ -126,7 +126,6 @@ protected:
 	static void ReadMeasureNames(CConfigParser& parser, const WCHAR* section, std::vector<std::wstring>& measureNames);
 	static bool ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str);
 
-	Gdiplus::Matrix m_Transformation;	// The transformation matrix
 	const std::wstring m_Name;			// Name of the meter
 	std::wstring m_MeasureName;	// Name of the measure this is bound to
 	CMeasure* m_Measure;		// Pointer to the measure this meter is bound to
@@ -140,6 +139,8 @@ protected:
 	bool m_HDefined;
 	CMeter*	m_RelativeMeter;
 	bool m_DynamicVariables;		// If true, the measure contains dynamic variables
+
+	Gdiplus::Matrix* m_Transformation;	// The transformation matrix
 
 	std::wstring m_StyleX;
 	std::wstring m_StyleY;

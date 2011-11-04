@@ -2759,10 +2759,11 @@ void CMeterWindow::Redraw()
 		std::list<CMeter*>::const_iterator j = m_Meters.begin();
 		for ( ; j != m_Meters.end(); ++j)
 		{
-			if (!(*j)->GetTransformationMatrix().IsIdentity())
+			const Matrix* matrix = (*j)->GetTransformationMatrix();
+			if (matrix && matrix->IsIdentity())
 			{
 				// Change the world matrix
-				graphics.SetTransform(&((*j)->GetTransformationMatrix()));
+				graphics.SetTransform(matrix);
 
 				(*j)->Draw(graphics);
 

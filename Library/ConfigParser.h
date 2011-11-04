@@ -51,7 +51,7 @@ public:
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
 	void DeleteValue(const std::wstring& strSection, const std::wstring& strKey);
 
-	void SetStyleTemplate(const std::wstring& strStyle) { m_StyleTemplate =  Tokenize(strStyle, L"|"); }
+	void SetStyleTemplate(const std::wstring& strStyle) { m_StyleTemplate =  Tokenize(strStyle, L"|"); Shrink(m_StyleTemplate); }
 	void ClearStyleTemplate() { m_StyleTemplate.clear(); }
 
 	const std::wstring& GetLastUsedStyle() { return m_LastUsedStyle; }
@@ -84,6 +84,7 @@ public:
 	bool ReplaceMeasures(std::wstring& result);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
+	static void Shrink(std::vector<std::wstring>& vec);
 	static double ParseDouble(const std::wstring& string, double defValue, bool rejectExp = false);
 	static Gdiplus::Color ParseColor(LPCTSTR string);
 	static Gdiplus::Rect ParseRect(LPCTSTR string);

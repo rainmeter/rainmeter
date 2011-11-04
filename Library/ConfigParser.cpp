@@ -599,26 +599,16 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		std::vector<std::wstring>::const_reverse_iterator iter = m_StyleTemplate.rbegin();
 		for ( ; iter != m_StyleTemplate.rend(); ++iter)
 		{
-			if ((*iter).size() > 0)
+			const std::wstring& strStyle = GetValue((*iter), strKey, strDefault);
+
+			//LogWithArgs(LOG_DEBUG, L"[%s] %s (from [%s]) : strDefault=%s (0x%p), strStyle=%s (0x%p)",
+			//	section, key, (*iter).c_str(), strDefault.c_str(), &strDefault, strStyle.c_str(), &strStyle);
+
+			if (&strStyle != &strDefault)
 			{
-				std::wstring::size_type pos = (*iter).find_first_not_of(L" \t\r\n");
-				if (pos != std::wstring::npos)
-				{
-					// Trim white-space
-					std::wstring strStyleSection((*iter), pos, (*iter).find_last_not_of(L" \t\r\n") - pos + 1);
-
-					const std::wstring& strStyle = GetValue(strStyleSection, strKey, strDefault);
-
-					//LogWithArgs(LOG_DEBUG, L"[%s] %s (from [%s]) : strDefault=%s (0x%p), strStyle=%s (0x%p)",
-					//	section, key, strStyleSection.c_str(), strDefault.c_str(), &strDefault, strStyle.c_str(), &strStyle);
-
-					if (&strStyle != &strDefault)
-					{
-						strDefault = strStyle;
-						m_LastUsedStyle = strStyleSection;
-						break;
-					}
-				}
+				strDefault = strStyle;
+				m_LastUsedStyle = (*iter);
+				break;
 			}
 		}
 	}
@@ -834,6 +824,39 @@ std::vector<std::wstring> CConfigParser::Tokenize(const std::wstring& str, const
 	}
 
 	return tokens;
+}
+
+/*
+** Shrink
+**
+** Trims empty element in vector and white-space in each string.
+**
+*/
+void CConfigParser::Shrink(std::vector<std::wstring>& vec)
+{
+	if (vec.size() > 0)
+	{
+		std::vector<std::wstring>::iterator iter = vec.begin();
+		while (iter != vec.end())
+		{
+			std::wstring::size_type pos = (*iter).find_first_not_of(L" \t\r\n");
+			if (pos != std::wstring::npos)
+			{
+				std::wstring::size_type lastPos = (*iter).find_last_not_of(L" \t\r\n");
+				if (pos != 0 || lastPos != ((*iter).size() - 1))
+				{
+					// Trim white-space
+					(*iter).assign((*iter), pos, lastPos - pos + 1);
+				}
+				++iter;
+			}
+			else
+			{
+				// Remove empty element
+				iter = vec.erase(iter);
+			}
+		}
+	}
 }
 
 /*

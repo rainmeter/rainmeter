@@ -50,6 +50,7 @@ CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(met
 	m_HDefined(false),
 	m_RelativeMeter(),
 	m_DynamicVariables(false),
+	m_Transformation(),
 	m_ToolTipWidth(),
 	m_ToolTipDelay(),
 	m_ToolTipType(false),
@@ -77,6 +78,8 @@ CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(met
 */
 CMeter::~CMeter()
 {
+	delete m_Transformation;
+
 	if (m_ToolTipHandle != NULL)
 	{
 		DestroyWindow(m_ToolTipHandle);
@@ -425,10 +428,22 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	std::vector<Gdiplus::REAL> matrix = parser.ReadFloats(section, L"TransformationMatrix");
 	if (matrix.size() == 6)
 	{
-		m_Transformation.SetElements(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+		if (m_Transformation)
+		{
+			m_Transformation->SetElements(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+		}
+		else
+		{
+			m_Transformation = new Matrix(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+		}
 	}
 	else if (!matrix.empty())
 	{
+		if (m_Transformation)
+		{
+			delete m_Transformation;
+			m_Transformation = NULL;
+		}
 		LogWithArgs(LOG_ERROR, L"Meter: Incorrect number of values in TransformationMatrix=%s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
 	}
 
