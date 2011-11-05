@@ -373,8 +373,6 @@ void CPlayerWMP::Uninitialize()
 */
 void CPlayerWMP::UpdateData()
 {
-	static bool clear = false;
-
 	if (m_Initialized)
 	{
 		// Get the volume

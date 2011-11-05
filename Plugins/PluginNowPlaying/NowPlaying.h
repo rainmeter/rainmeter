@@ -23,6 +23,13 @@
 
 struct ParentMeasure
 {
+	ParentMeasure() :
+		player(NULL),
+		childCount(1),
+		trackCount(0),
+		disableLeadingZero(false)
+	{}
+
 	UINT id;
 	UINT childCount;
 	UINT trackCount;
@@ -33,16 +40,17 @@ struct ParentMeasure
 	std::wstring trackChangeAction;
 	std::wstring playerPath;
 	bool disableLeadingZero;
-
-	ParentMeasure() : player(NULL) {}
 };
 
 struct ChildMeasure
 {
+	ChildMeasure() :
+		type(MEASURE_NONE),
+		parent(NULL)
+	{}
+
 	MEASURETYPE type;
 	ParentMeasure* parent;
-
-	ChildMeasure() : parent(NULL) {}
 };
 
 void SecondsToTime(UINT seconds, bool leadingZero, WCHAR* buffer);

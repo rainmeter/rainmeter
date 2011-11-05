@@ -33,6 +33,7 @@ CPlayer* CPlayerWinamp::c_Player = NULL;
 */
 CPlayerWinamp::CPlayerWinamp(WINAMPTYPE type) : CPlayer(),
 	m_Window(),
+	m_LastCheckTime(0),
 	m_UseUnicodeAPI(false),
 	m_PlayingStream(false),
 	m_WinampType(type),
@@ -123,7 +124,7 @@ void CPlayerWinamp::UpdateData()
 				if (m_WinampHandle) CloseHandle(m_WinampHandle);
 			}
 
-			if (!m_FilePath.empty())
+			if (m_State != PLAYER_STOPPED)
 			{
 				ClearData();
 			}
@@ -198,67 +199,66 @@ void CPlayerWinamp::UpdateData()
 				// Find cover if needed
 				if (m_Measures & MEASURE_COVER)
 				{
-					m_CoverPath = GetCacheFile();
-					if (!CCover::GetCached(m_CoverPath) &&
-						(tag && !CCover::GetEmbedded(fr, m_CoverPath)))
+					if (tag && CCover::GetEmbedded(fr, m_TempCoverPath))
 					{
-						std::wstring trackFolder = CCover::GetFileFolder(m_FilePath);
+						// Got everything, return
+						m_CoverPath = m_TempCoverPath;
+						return;
+					}
 
-						if (!m_Album.empty())
+					std::wstring trackFolder = CCover::GetFileFolder(m_FilePath);
+					if (!m_Album.empty())
+					{
+						// Winamp stores covers usually as %album%.jpg
+						std::wstring file = m_Album;
+						std::wstring::size_type end = file.length();
+						for (std::wstring::size_type pos = 0; pos < end; ++pos)
 						{
-							// Winamp stores covers usually as %album%.jpg
-							std::wstring file = m_Album;
-							std::wstring::size_type end = file.length();
-							for (std::wstring::size_type pos = 0; pos < end; ++pos)
+							// Replace reserved chars according to Winamp specs
+							switch (file[pos])
 							{
-								// Replace reserved chars according to Winamp specs
-								switch (file[pos])
-								{
-								case L'?':
-								case L'*':
-								case L'|':
-									file[pos] = L'_';
-									break;
+							case L'?':
+							case L'*':
+							case L'|':
+								file[pos] = L'_';
+								break;
 
-								case L'/':
-								case L'\\':
-								case L':':
-									file[pos] = L'-';
-									break;
+							case L'/':
+							case L'\\':
+							case L':':
+								file[pos] = L'-';
+								break;
 
-								case L'\"':
-									file[pos] = L'\'';
-									break;
+							case L'\"':
+								file[pos] = L'\'';
+								break;
 
-								case L'<':
-									file[pos] = L'(';
-									break;
+							case L'<':
+								file[pos] = L'(';
+								break;
 
-								case L'>':
-									file[pos] = L')';
-									break;
-								}
-							}
-
-							if (CCover::GetLocal(file, trackFolder, m_CoverPath))
-							{
-								// %album% art file found
-								return;
+							case L'>':
+								file[pos] = L')';
+								break;
 							}
 						}
 
-						if (!CCover::GetLocal(L"cover", trackFolder, m_CoverPath) &&
-							!CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
+						if (CCover::GetLocal(file, trackFolder, m_CoverPath))
 						{
-							// Nothing found
-							m_CoverPath.clear();
+							// %album% art file found
+							return;
 						}
 					}
-				}
 
-				if (tag)
+					if (!CCover::GetLocal(L"cover", trackFolder, m_CoverPath) &&
+						!CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
+					{
+						// Nothing found
+						m_CoverPath.clear();
+					}
+				}
+				else if (tag)
 				{
-					// Got metadata, return
 					return;
 				}
 			}
@@ -266,11 +266,7 @@ void CPlayerWinamp::UpdateData()
 			{
 				m_Rating = 0;
 				m_Duration = 0;
-				
-				if (m_Measures & MEASURE_COVER)
-				{
-					m_CoverPath.clear();
-				}
+				m_CoverPath.clear();
 			}
 		}
 		else if (!m_PlayingStream)

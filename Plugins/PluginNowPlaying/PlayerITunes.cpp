@@ -287,7 +287,7 @@ LRESULT CALLBACK CPlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 	case WM_TIMER:
 		if (wParam == TIMER_CHECKACTIVE)
 		{
-			if (!FindWindow(L"iTunes", L"iTunes"))
+			if (!FindWindow(L"iTunesApp", L"iTunes") && !FindWindow(L"iTunes", L"iTunes"))
 			{
 				player->m_iTunesActive = false;
 				KillTimer(hwnd, TIMER_CHECKACTIVE);
@@ -313,8 +313,7 @@ bool CPlayerITunes::CheckWindow()
 	{
 		m_LastCheckTime = time;
 
-		HWND wnd = FindWindow(L"ITWindow", L"iTunes");
-		if (wnd && !m_iTunesActive)
+		if ((FindWindow(L"iTunesApp", L"iTunes") || FindWindow(L"iTunes", L"iTunes")) && !m_iTunesActive)
 		{
 			m_iTunesActive = true;
 			Initialize();
@@ -387,46 +386,36 @@ void CPlayerITunes::OnTrackChange()
 
 				if (m_Measures & MEASURE_COVER)
 				{
-					m_CoverPath = GetCacheFile();
-					if (!CCover::GetCached(m_CoverPath))
+					m_CoverPath.clear();
+
+					// Check for embedded art through iTunes interface
+					IITArtworkCollection* artworkCollection;
+					hr = track->get_Artwork(&artworkCollection);
+
+					if (SUCCEEDED(hr))
 					{
-						// Art not in cache, check for embedded art through iTunes interface
-						IITArtworkCollection* artworkCollection;
-						hr = track->get_Artwork(&artworkCollection);
+						long count;
+						artworkCollection->get_Count(&count);
 
-						if (SUCCEEDED(hr))
+						if (count > 0)
 						{
-							long count;
-							artworkCollection->get_Count(&count);
+							IITArtwork* artwork;
+							hr = artworkCollection->get_Item(1, &artwork);
 
-							if (count > 0)
+							if (SUCCEEDED(hr))
 							{
-								IITArtwork* artwork;
-								hr = artworkCollection->get_Item(1, &artwork);
-
+								tmpStr = m_TempCoverPath.c_str();
+								hr = artwork->SaveArtworkToFile(tmpStr);
 								if (SUCCEEDED(hr))
 								{
-									tmpStr = m_CoverPath.c_str();
-									hr = artwork->SaveArtworkToFile(tmpStr);
-									if (FAILED(hr))
-									{
-										m_CoverPath.clear();
-									}
-
-									artwork->Release();
+									m_CoverPath = m_TempCoverPath;
 								}
-							}
-							else
-							{
-								m_CoverPath.clear();
-							}
 
-							artworkCollection->Release();
+								artwork->Release();
+							}
 						}
-						else
-						{
-							m_CoverPath.clear();
-						}
+
+						artworkCollection->Release();
 					}
 				}
 

@@ -34,6 +34,7 @@ enum PLAYSTATE
 
 enum MEASURETYPE
 {
+	MEASURE_NONE     = 0x00000000,
 	MEASURE_ARTIST   = 0x00000001,
 	MEASURE_TITLE    = 0x00000002,
 	MEASURE_ALBUM    = 0x00000004,
@@ -65,8 +66,7 @@ public:
 
 	bool IsInitialized() { return m_Initialized; }
 	UINT GetTrackCount() { return m_TrackCount; }
-	
-	std::wstring GetCacheFile();
+
 	void FindCover();
 	void FindLyrics();
 
@@ -104,6 +104,7 @@ protected:
 	UINT m_InstanceCount;
 	UINT m_UpdateCount;
 	UINT m_TrackCount;
+	std::wstring m_TempCoverPath;
 
 	INT m_Measures;
 	PLAYSTATE m_State;

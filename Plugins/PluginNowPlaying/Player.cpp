@@ -19,8 +19,6 @@
 #include "StdAfx.h"
 #include "Player.h"
 
-extern std::wstring g_CachePath;
-
 /*
 ** CPlayer
 **
@@ -42,6 +40,11 @@ CPlayer::CPlayer() :
 	m_Volume(),
 	m_InternetThread()
 {
+	// Get temporary file for cover art
+	WCHAR buffer[MAX_PATH];
+	GetTempPath(MAX_PATH, buffer);
+	GetTempFileName(buffer, L"cvr", 0, buffer);
+	m_TempCoverPath = buffer;
 }
 
 /*
@@ -112,35 +115,6 @@ void CPlayer::UpdateMeasure()
 }
 
 /*
-** GetCacheFile
-**
-** Creates escaped path to cache file (without extension)
-**
-*/
-std::wstring CPlayer::GetCacheFile()
-{
-	std::wstring path = g_CachePath;
-
-	if (m_Artist.empty() || m_Title.empty())
-	{
-		path += L"temp";
-	}
-	else
-	{
-		std::wstring name = m_Artist + L" - ";
-		name += m_Title;
-
-		// Replace reserved chars with _
-		std::wstring::size_type pos = 0;
-		while ((pos = name.find_first_of(L"\\/:*?\"<>|", pos)) != std::wstring::npos) name[pos] = L'_';
-
-		path += name;
-	}
-
-	return path;
-}
-
-/*
 ** FindCover
 **
 ** Default implementation for getting cover.
@@ -148,21 +122,20 @@ std::wstring CPlayer::GetCacheFile()
 */
 void CPlayer::FindCover()
 {
-	m_CoverPath = GetCacheFile();
-
-	if (!CCover::GetCached(m_CoverPath))
+	TagLib::FileRef fr(m_FilePath.c_str());
+	if (!fr.isNull() && CCover::GetEmbedded(fr, m_TempCoverPath))
 	{
-		TagLib::FileRef fr(m_FilePath.c_str());
-		if (fr.isNull() || !CCover::GetEmbedded(fr, m_CoverPath))
-		{
-			std::wstring trackFolder = CCover::GetFileFolder(m_FilePath);
+		m_CoverPath = m_TempCoverPath;
+	}
+	else
+	{
+		std::wstring trackFolder = CCover::GetFileFolder(m_FilePath);
 
-			if (!CCover::GetLocal(L"cover", trackFolder, m_CoverPath) &&
-				!CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
-			{
-				// Nothing found
-				m_CoverPath.clear();
-			}
+		if (!CCover::GetLocal(L"cover", trackFolder, m_CoverPath) &&
+			!CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
+		{
+			// Nothing found
+			m_CoverPath.clear();
 		}
 	}
 }

@@ -70,7 +70,7 @@ bool CCover::GetLocal(std::wstring filename, const std::wstring& folder, std::ws
 ** Attempts to extract cover art from audio files.
 **
 */
-bool CCover::GetEmbedded(const TagLib::FileRef& fr, std::wstring& target)
+bool CCover::GetEmbedded(const TagLib::FileRef& fr, const std::wstring& target)
 {
 	bool found = false;
 

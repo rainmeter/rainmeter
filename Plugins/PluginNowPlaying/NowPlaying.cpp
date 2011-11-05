@@ -30,7 +30,6 @@
 #include "PlayerWMP.h"
 
 static std::map<UINT, ChildMeasure*> g_Measures;
-std::wstring g_CachePath;
 std::wstring g_SettingsFile;
 HINSTANCE g_Instance = NULL;
 
@@ -42,15 +41,8 @@ HINSTANCE g_Instance = NULL;
 */
 UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
-	if (g_Measures.empty())
+	if (!g_Instance)
 	{
-		// Get path to temporary folder (for cover art cache)
-		WCHAR buffer[MAX_PATH];
-		GetTempPath(MAX_PATH, buffer);
-		wcscat(buffer, L"Rainmeter-Cache\\");
-		CreateDirectory(buffer, NULL);
-		g_CachePath = buffer;
-
 		// Get path to Plugins.ini (usually %APPDATA%\Rainmeter\Plugins.ini)
 		std::wstring str = PluginBridge(L"getconfig", iniFile);
 		if (!str.empty())
@@ -58,10 +50,6 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			str += L" \"SETTINGSPATH\"";
 			g_SettingsFile = PluginBridge(L"getvariable", str.c_str());
 			g_SettingsFile += L"Plugins.ini";
-		}
-		else
-		{
-			LSLog(LOG_ERROR, NULL, L"NowPlaying.dll: PluginBridge error");
 		}
 
 		g_Instance = instance;
@@ -168,7 +156,6 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			}
 
 			parent->id = id;
-			parent->childCount = 1;
 			parent->player->AddInstance();
 			parent->playerPath = ReadConfigString(section, L"PlayerPath", L"");
 			parent->trackChangeAction = ReadConfigString(section, L"TrackChangeAction", L"");
@@ -300,6 +287,7 @@ void Finalize(HMODULE instance, UINT id)
 
 		if (g_Measures.empty())
 		{
+			g_Instance = NULL;
 			CInternet::Finalize();
 		}
 	}
