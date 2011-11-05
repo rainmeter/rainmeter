@@ -21,6 +21,7 @@
 #include "Measure.h"
 #include "Error.h"
 #include "Rainmeter.h"
+#include "System.h"
 
 extern CRainmeter* Rainmeter;
 
@@ -129,8 +130,7 @@ void CMeterImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_Path = parser.ReadString(section, L"Path", L"");
 	if (!m_Path.empty())
 	{
-		WCHAR ch = m_Path[m_Path.length() - 1];
-		if (ch != L'\\' && ch != L'/')
+		if (!CSystem::IsPathSeparator(m_Path[m_Path.length() - 1]))
 		{
 			m_Path += L"\\";
 		}

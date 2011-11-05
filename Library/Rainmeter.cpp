@@ -865,7 +865,7 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 
 		ExpandEnvironmentVariables(iniFile);
 
-		if (iniFile.empty() || iniFile[iniFile.length() - 1] == L'\\')
+		if (iniFile.empty() || CSystem::IsPathSeparator(iniFile[iniFile.length() - 1]))
 		{
 			iniFile += L"Rainmeter.ini";
 		}
@@ -874,7 +874,7 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 			iniFile += L"\\Rainmeter.ini";
 		}
 
-		if (iniFile[0] != L'\\' && iniFile[0] != L'/' && iniFile.find_first_of(L':') == std::wstring::npos)
+		if (!CSystem::IsPathSeparator(iniFile[0]) && iniFile.find_first_of(L':') == std::wstring::npos)
 		{
 			// Make absolute path
 			iniFile.insert(0, m_Path);
@@ -990,8 +990,7 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 
 		if (!m_SkinPath.empty())
 		{
-			WCHAR ch = m_SkinPath[m_SkinPath.size() - 1];
-			if (ch != L'\\' && ch != L'/')
+			if (!CSystem::IsPathSeparator(m_SkinPath[m_SkinPath.size() - 1]))
 			{
 				m_SkinPath += L"\\";
 			}
@@ -1054,7 +1053,7 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 	{
 		m_Drive.assign(m_Path, 0, loc + 1);
 	}
-	else if (m_Path.length() >= 2 && (m_Path[0] == L'\\' || m_Path[0] == L'/') && (m_Path[1] == L'\\' || m_Path[1] == L'/'))
+	else if (CSystem::IsUNCPath(m_Path))
 	{
 		if ((loc = m_Path.find_first_of(L"\\/", 2)) != std::wstring::npos)
 		{

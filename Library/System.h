@@ -72,6 +72,10 @@ public:
 	static OSPLATFORM GetOSPlatform();
 	static ULONGLONG GetTickCount64();
 
+	static bool IsPathSeparator(WCHAR ch) { return (ch == L'\\' || ch == L'/'); }
+	static bool IsUNCPath(const std::wstring& path) { return (path.length() >= 2 && IsPathSeparator(path[0]) && IsPathSeparator(path[1])); }
+	static bool IsAbsolutePath(const std::wstring& path) { return (path.find(L":\\") != std::wstring::npos || path.find(L":/") != std::wstring::npos || IsUNCPath(path)); }
+
 	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = NULL, bool ignoreErrors = false);
 	static void ResetWorkingDirectory();
 

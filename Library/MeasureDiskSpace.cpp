@@ -19,6 +19,7 @@
 #include "StdAfx.h"
 #include "MeasureDiskSpace.h"
 #include "Rainmeter.h"
+#include "System.h"
 
 /*
 ** CMeasureDiskSpace
@@ -156,7 +157,7 @@ void CMeasureDiskSpace::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_OldTotalBytes = 0;
 		m_LabelName = L"";
 	}
-	else if (m_Drive[m_Drive.length() - 1] != L'\\')  // E.g. "C:"
+	else if (!CSystem::IsPathSeparator(m_Drive[m_Drive.length() - 1]))  // E.g. "C:"
 	{
 		m_Drive += L"\\";  // A trailing backslash is required.
 	}

@@ -5094,9 +5094,7 @@ std::wstring CMeterWindow::MakePathAbsolute(const std::wstring& path)
 {
 	std::wstring absolute;
 
-	if (path.empty() ||
-		path.find(L":\\") != std::wstring::npos || path.find(L":/") != std::wstring::npos ||
-		(path.length() >= 2 && (path[0] == L'\\' || path[0] == L'/') && (path[1] == L'\\' || path[1] == L'/')))  // UNC
+	if (path.empty() || CSystem::IsAbsolutePath(path))
 	{
 		absolute = path;	// It's already absolute path (or it's empty)
 	}

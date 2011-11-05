@@ -591,45 +591,41 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 
 	const std::wstring strSection = section;
 	const std::wstring strKey = key;
-	std::wstring strDefault = defValue;
-
-	// If the template is defined read the value first from there.
-	if (m_StyleTemplate.size() > 0)
-	{
-		std::vector<std::wstring>::const_reverse_iterator iter = m_StyleTemplate.rbegin();
-		for ( ; iter != m_StyleTemplate.rend(); ++iter)
-		{
-			const std::wstring& strStyle = GetValue((*iter), strKey, strDefault);
-
-			//LogWithArgs(LOG_DEBUG, L"[%s] %s (from [%s]) : strDefault=%s (0x%p), strStyle=%s (0x%p)",
-			//	section, key, (*iter).c_str(), strDefault.c_str(), &strDefault, strStyle.c_str(), &strStyle);
-
-			if (&strStyle != &strDefault)
-			{
-				strDefault = strStyle;
-				m_LastUsedStyle = (*iter);
-				break;
-			}
-		}
-	}
+	const std::wstring strDefault = defValue;
 
 	const std::wstring& strValue = GetValue(strSection, strKey, strDefault);
-	result = strValue;
-
-	if (m_LastUsedStyle.size() > 0)
+	if (&strValue == &strDefault)
 	{
-		if (&strValue != &strDefault)
+		// If the template is defined read the value from there.
+		if (m_StyleTemplate.size() > 0)
 		{
-			m_LastUsedStyle.clear();
+			std::vector<std::wstring>::const_reverse_iterator iter = m_StyleTemplate.rbegin();
+			for ( ; iter != m_StyleTemplate.rend(); ++iter)
+			{
+				const std::wstring& strStyleValue = GetValue((*iter), strKey, strDefault);
+
+				//LogWithArgs(LOG_DEBUG, L"StyleTemplate: [%s] %s (from [%s]) : strDefault=%s (0x%p), strStyleValue=%s (0x%p)",
+				//	section, key, (*iter).c_str(), strDefault.c_str(), &strDefault, strStyleValue.c_str(), &strStyleValue);
+
+				if (&strStyleValue != &strDefault)
+				{
+					result = strStyleValue;
+					m_LastUsedStyle = (*iter);
+					break;
+				}
+			}
+		}
+
+		if (m_LastUsedStyle.size() == 0)  // No template found
+		{
+			result = strDefault;
+			m_LastDefaultUsed = true;
+			return result;
 		}
 	}
 	else
 	{
-		if (&strValue == &strDefault)
-		{
-			m_LastDefaultUsed = true;
-			return result;
-		}
+		result = strValue;
 	}
 
 	if (result.size() > 0)
@@ -1144,6 +1140,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 	{
 		std::unordered_set<std::wstring> foundKeys;
 		bool isVariables = (_wcsicmp((*iter).c_str(), L"Variables") == 0);
+		bool isMetadata = (config == NULL && _wcsicmp((*iter).c_str(), L"Metadata") == 0);
 
 		// Read all "key=value" from the section
 		while (true)
@@ -1190,8 +1187,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 						{
 							ReadVariables();
 							ReplaceVariables(value);
-							if (value.find(L':') == std::wstring::npos &&
-								(valueLen < 2 || (value[0] != L'\\' && value[0] != L'/') || (value[1] != L'\\' && value[1] != L'/')))
+							if (!CSystem::IsAbsolutePath(value))
 							{
 								// It's a relative path so add the current path as a prefix
 								value.insert(0, CRainmeter::ExtractPath(iniFile));
@@ -1200,7 +1196,10 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 						}
 						else
 						{
-							SetValue((*iter), key, value);
+							if (!isMetadata)  // Uncache Metadata's key-value pair in the skin
+							{
+								SetValue((*iter), key, value);
+							}
 
 							if (isVariables)
 							{
