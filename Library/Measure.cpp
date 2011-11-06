@@ -699,32 +699,33 @@ void CMeasure::GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue
 		_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
 	}
 
-	int index = (autoScale == AUTOSCALE_1000 || autoScale == AUTOSCALE_1000K) ? AUTOSCALE_INDEX_1000 : AUTOSCALE_INDEX_1024;
+	const double* tblScale =
+		g_TblScale[(autoScale == AUTOSCALE_1000 || autoScale == AUTOSCALE_1000K) ? AUTOSCALE_INDEX_1000 : AUTOSCALE_INDEX_1024];
 
-	if (theValue > (g_TblScale[index][0] * 0.99))
+	if (theValue >= tblScale[0])
 	{
+		value = theValue / tblScale[0];
 		wcsncat_s(format, L" T", _TRUNCATE);
-		value = theValue / g_TblScale[index][0];
 	}
-	else if (theValue > (g_TblScale[index][1] * 0.99))
+	else if (theValue >= tblScale[1])
 	{
+		value = theValue / tblScale[1];
 		wcsncat_s(format, L" G", _TRUNCATE);
-		value = theValue / g_TblScale[index][1];
 	}
-	else if (theValue > (g_TblScale[index][2] * 0.99))
+	else if (theValue >= tblScale[2])
 	{
+		value = theValue / tblScale[2];
 		wcsncat_s(format, L" M", _TRUNCATE);
-		value = theValue / g_TblScale[index][2];
 	}
-	else if (autoScale == AUTOSCALE_1024K || autoScale == AUTOSCALE_1000K || theValue > (g_TblScale[index][3] * 0.99))
+	else if (autoScale == AUTOSCALE_1024K || autoScale == AUTOSCALE_1000K || theValue >= tblScale[3])
 	{
+		value = theValue / tblScale[3];
 		wcsncat_s(format, L" k", _TRUNCATE);
-		value = theValue / g_TblScale[index][3];
 	}
 	else
 	{
-		wcsncat_s(format, L" ", _TRUNCATE);
 		value = theValue;
+		wcsncat_s(format, L" ", _TRUNCATE);
 	}
 	_snwprintf_s(buffer, sizeInWords, _TRUNCATE, format, value);
 }
