@@ -349,8 +349,7 @@ void CPlayerITunes::OnTrackChange()
 {
 	IITTrack* track;
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
-
-	if (SUCCEEDED(hr))
+	if (SUCCEEDED(hr) && track)
 	{
 		CComBSTR tmpStr;
 		long tmpVal;
@@ -540,8 +539,7 @@ void CPlayerITunes::SetRating(int rating)
 {
 	IITTrack* track;
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
-
-	if (SUCCEEDED(hr))
+	if (SUCCEEDED(hr) && track)
 	{
 		rating *= 20;
 		track->put_Rating((long)rating);
@@ -570,7 +568,7 @@ void CPlayerITunes::SetShuffle(bool state)
 {
 	IITTrack* track;
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
-	if (SUCCEEDED(hr))
+	if (SUCCEEDED(hr) && track)
 	{
 		IITPlaylist* playlist;
 		hr = track->get_Playlist(&playlist);
@@ -597,7 +595,7 @@ void CPlayerITunes::SetRepeat(bool state)
 {
 	IITTrack* track;
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
-	if (SUCCEEDED(hr))
+	if (SUCCEEDED(hr) && track)
 	{
 		IITPlaylist* playlist;
 		hr = track->get_Playlist(&playlist);

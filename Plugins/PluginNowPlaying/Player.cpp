@@ -55,6 +55,8 @@ CPlayer::CPlayer() :
 */
 CPlayer::~CPlayer()
 {
+	DeleteFile(m_TempCoverPath.c_str());
+
 	if (m_InternetThread)
 	{
 		TerminateThread(m_InternetThread, 0);
