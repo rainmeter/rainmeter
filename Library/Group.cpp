@@ -27,12 +27,12 @@
 */
 void CGroup::InitializeGroup(const std::wstring& groups)
 {
-	if (groups != m_OldGroups)
+	if (wcscmp(groups.c_str(), m_OldGroups.c_str()) != 0)
 	{
 		m_OldGroups = groups;
 		m_Groups.clear();
 
-		if (groups.size() > 0)
+		if (!groups.empty())
 		{
 			std::vector<std::wstring> vGroups = CConfigParser::Tokenize(groups, L"|");
 
@@ -40,7 +40,7 @@ void CGroup::InitializeGroup(const std::wstring& groups)
 			for ( ; iter != vGroups.end(); ++iter)
 			{
 				std::wstring group = CreateGroup(*iter);
-				if (group.size() > 0)
+				if (!group.empty())
 				{
 					m_Groups.insert(group);
 				}

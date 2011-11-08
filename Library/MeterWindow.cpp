@@ -2563,15 +2563,12 @@ bool CMeterWindow::ResizeWindow(bool reset)
 
 	SetWindowSizeVariables(m_WindowW, m_WindowH);
 
-	// If Background is not set, take a copy from the desktop
-	if (m_Background == NULL)
+	if (!m_NativeTransparency)
 	{
-		if (m_BackgroundMode == BGMODE_COPY)
+		// If Background is not set, take a copy from the desktop
+		if (m_Background == NULL && m_BackgroundMode == BGMODE_COPY)
 		{
-			if (!m_NativeTransparency)
-			{
-				m_Background = GrabDesktop(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
-			}
+			m_Background = GrabDesktop(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
 		}
 	}
 

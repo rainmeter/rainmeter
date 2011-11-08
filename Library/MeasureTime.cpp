@@ -113,7 +113,7 @@ bool CMeasureTime::Update()
 
 	m_Time.QuadPart += m_DeltaTime.QuadPart;
 
-	if (m_Format.size() > 0)
+	if (!m_Format.empty())
 	{
 		// If there is some date format, parse the value from it instead
 		WCHAR* tmpSz = new WCHAR[MAX_LINE_LENGTH];
@@ -195,7 +195,7 @@ const WCHAR* CMeasureTime::GetStringValue(AUTOSCALE autoScale, double scale, int
 	today.tm_year = sysToday.wYear - 1900;
 
 	// Create the string
-	if (m_Format.size() > 0)
+	if (!m_Format.empty())
 	{
 		if (_wcsicmp(L"locale-time", m_Format.c_str()) == 0)
 		{

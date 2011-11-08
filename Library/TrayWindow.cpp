@@ -205,9 +205,9 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 			trayBitmap.GetHICON(&icon);
 			return icon;
 		}
-		else if (m_MeterType == TRAY_METER_TYPE_BITMAP && (m_Bitmap || m_TrayIcons.size() > 0))
+		else if (m_MeterType == TRAY_METER_TYPE_BITMAP && (m_Bitmap || !m_TrayIcons.empty()))
 		{
-			if (m_TrayIcons.size() > 0)
+			if (!m_TrayIcons.empty())
 			{
 				size_t frame = 0;
 				size_t frameCount = m_TrayIcons.size();

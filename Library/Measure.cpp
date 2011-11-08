@@ -349,16 +349,16 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 	{
 		std::wstring word1 = ExtractWord(buffer);
 		std::wstring sep = ExtractWord(buffer);
-		if (sep != L":") return false;
+		if (sep.size() != 1 || sep[0] != L':') return false;
 		std::wstring word2 = ExtractWord(buffer);
 
-		if (word1 != word2)
+		if (wcscmp(word1.c_str(), word2.c_str()) != 0)
 		{
 			m_Substitute.push_back(std::pair<std::wstring, std::wstring>(word1, word2));
 		}
 
-		sep = ExtractWord(buffer);
-		if (!sep.empty() && sep != L",") return false;
+		std::wstring sep2 = ExtractWord(buffer);
+		if (!sep2.empty() && (sep2.size() != 1 || sep2[0] != L',')) return false;
 	}
 	while (!buffer.empty());
 
@@ -374,12 +374,10 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 */
 std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 {
-	std::wstring::size_type end, len;
+	std::wstring::size_type end, len = buffer.size();
 	std::wstring ret;
 
-	if (buffer.empty()) return ret;
-
-	len = buffer.size();
+	if (len == 0) return ret;
 
 	// Remove whitespaces
 	end = 0;

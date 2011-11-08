@@ -1229,7 +1229,7 @@ void CSystem::GetIniFileMappingList(std::vector<std::wstring>& iniFileMappings)
 ** GetTemporaryFile
 **
 ** Prepares a temporary file if iniFile is included in the "IniFileMapping" entries.
-** If iniFile is not included, returns a empty string. If error occurred, returns "<>".
+** If iniFile is not included, returns a empty string. If error occurred, returns "?".
 ** Note that a temporary file must be deleted by caller.
 **
 */
@@ -1272,14 +1272,14 @@ std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileM
 					else  // temporary is reserved or failed
 					{
 						RemoveFile(temporary);
-						if (tmp.empty()) tmp = L"<>";
+						if (tmp.empty()) tmp = L"?";
 						return tmp;
 					}
 				}
 				else  // failed
 				{
 					LogWithArgs(LOG_ERROR, L"Unable to create temporary file to: %s", temporary.c_str());
-					return L"<>";
+					return L"?";
 				}
 			}
 		}

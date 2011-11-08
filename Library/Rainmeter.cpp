@@ -344,7 +344,7 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 			}
 		}
 
-		if (arg.size() > 0)
+		if (!arg.empty())
 		{
 			// Strip quotes
 			while ((pos = arg.find(L'"')) != std::wstring::npos)
@@ -652,7 +652,7 @@ void CRainmeter::RainmeterWriteKeyValue(const WCHAR* arg)
 		std::vector<std::wstring> iniFileMappings;
 		CSystem::GetIniFileMappingList(iniFileMappings);
 		std::wstring iniWrite = CSystem::GetTemporaryFile(iniFileMappings, iniFile);
-		if (iniWrite == L"<>")  // error occurred
+		if (iniWrite.size() == 1 && iniWrite[0] == L'?')  // error occurred
 		{
 			return;
 		}
