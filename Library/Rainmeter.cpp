@@ -2008,75 +2008,6 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 }
 
 /*
-** ParseCommand
-**
-** Replaces the measure names with the actual text values.
-**
-*/
-std::wstring CRainmeter::ParseCommand(const WCHAR* command, CMeterWindow* meterWindow)
-{
-	std::wstring strCommand = command;
-
-	if (_wcsnicmp(L"!execute", command, 8) == 0)
-	{
-		return strCommand;
-	}
-
-	// Find the [measures]
-	size_t start = 0, end = 0;
-	while (start != std::wstring::npos && end != std::wstring::npos)
-	{
-		start = strCommand.find(L'[', start);
-		if (start != std::wstring::npos)
-		{
-			end = strCommand.find(L']', start + 1);
-			if (end != std::wstring::npos)
-			{
-				std::wstring measureName = strCommand.substr(start + 1, end - (start + 1));
-				if (!measureName.empty() && measureName[0] != L'!')	// Ignore bangs
-				{
-					if (meterWindow)
-					{
-						if (strCommand[start + 1] == L'*' && strCommand[end - 1] == L'*')
-						{
-							strCommand.erase(start + 1, 1);
-							strCommand.erase(end - 2, 1);
-							start = end - 1;
-						}
-						else
-						{
-							const std::list<CMeasure*>& measures = meterWindow->GetMeasures();
-							std::list<CMeasure*>::const_iterator iter = measures.begin();
-							for ( ; iter != measures.end(); ++iter)
-							{
-								if (_wcsicmp((*iter)->GetName(), measureName.c_str()) == 0)
-								{
-									std::wstring value = (*iter)->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
-									strCommand.replace(start, (end - start) + 1, value);
-									start += value.length();
-									break;
-								}
-							}
-							if (iter == measures.end())
-							{
-								//LogWithArgs(LOG_WARNING, L"No such measure [%s] for execute string: %s", measureName.c_str(), command);
-								start = end + 1;
-							}
-						}
-					}
-				}
-				else
-				{
-					start = end + 1;
-				}
-			}
-		}
-	}
-
-	return strCommand;
-}
-
-/*
 ** ExecuteCommand
 **
 ** Runs the given command or bang
@@ -2084,9 +2015,11 @@ std::wstring CRainmeter::ParseCommand(const WCHAR* command, CMeterWindow* meterW
 */
 void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 {
-	if (command == NULL) return;
-
-	std::wstring strCommand = ParseCommand(command, meterWindow);
+	std::wstring strCommand = command;
+	if (meterWindow && _wcsnicmp(L"!execute", command, 8) != 0)
+	{
+		meterWindow->GetParser().ReplaceMeasures(strCommand);
+	}
 
 	if (!strCommand.empty())
 	{

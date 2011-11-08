@@ -159,7 +159,6 @@ public:
 	const std::wstring& GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
 	BOOL ExecuteBang(const std::wstring& bang, const std::wstring& arg, CMeterWindow* meterWindow);
-	std::wstring ParseCommand(const WCHAR* command, CMeterWindow* meterWindow);
 	void ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow);
 
 	void RefreshAll();
