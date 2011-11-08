@@ -55,8 +55,6 @@ CoreTempProxy proxy;
 
 eMeasureType convertStringToMeasureType(LPCWSTR i_String);
 bool areStringsEqual(LPCWSTR i_String1, LPCWSTR i_Strting2);
-double getValues(UINT i_Id);
-LPCTSTR getString(UINT i_Id);
 float getHighestTemp();
 
 /*
@@ -114,7 +112,40 @@ double Update2(UINT id)
 
 	if (proxy.GetData())
 	{
-		result = getValues(id);
+		switch (g_Types[id])
+		{
+		case MeasureTemperature:
+			result = proxy.GetTemp(g_Indexes[id]);
+			break;
+
+		case MeasureMaxTemperature:
+			result = getHighestTemp();
+			break;
+
+		case MeasureTjMax:
+			result = proxy.GetTjMax(g_Indexes[id]);
+			break;
+
+		case MeasureLoad:
+			result = proxy.GetCoreLoad(g_Indexes[id]);
+			break;
+
+		case MeasureVid:
+			result = proxy.GetVID();
+			break;
+
+		case MeasureCpuSpeed:
+			result = proxy.GetCPUSpeed();
+			break;
+
+		case MeasureBusSpeed:
+			result = proxy.GetFSBSpeed();
+			break;
+
+		case MeasureBusMultiplier:
+			result = proxy.GetMultiplier();
+			break;
+		}
 	}
 
 	return result;
@@ -122,7 +153,23 @@ double Update2(UINT id)
 
 LPCTSTR GetString(UINT id, UINT flags)
 {
-	return getString(id);
+	static WCHAR buffer[256];
+
+	switch (g_Types[id])
+	{
+	case MeasureVid:
+		_snwprintf_s(buffer, _TRUNCATE, L"%.4f", proxy.GetVID());
+		break;
+
+	case MeasureCpuName:
+		_snwprintf_s(buffer, _TRUNCATE, L"%S", proxy.GetCPUName());
+		break;
+
+	default:
+		return NULL;
+	}
+
+	return buffer;
 }
 
 /*
@@ -231,100 +278,4 @@ float getHighestTemp()
 	}
 
 	return temp;
-}
-
-double getValues(UINT i_Id)
-{
-	double value;
-
-	switch (g_Types[i_Id])
-	{
-	case MeasureTemperature:
-		value = proxy.GetTemp(g_Indexes[i_Id]);
-		break;
-
-	case MeasureMaxTemperature:
-		value = getHighestTemp();
-		break;
-
-	case MeasureTjMax:
-		value = proxy.GetTjMax(g_Indexes[i_Id]);
-		break;
-
-	case MeasureLoad:
-		value = proxy.GetCoreLoad(g_Indexes[i_Id]);
-		break;
-
-	case MeasureVid:
-		value = proxy.GetVID();
-		break;
-
-	case MeasureCpuSpeed:
-		value = proxy.GetCPUSpeed();
-		break;
-
-	case MeasureBusSpeed:
-		value = proxy.GetFSBSpeed();
-		break;
-
-	case MeasureBusMultiplier:
-		value = proxy.GetMultiplier();
-		break;
-
-	default:
-		value = 0;
-		break;
-	}
-
-	return value;
-}
-
-LPCTSTR getString(UINT i_Id)
-{
-	static TCHAR string[1000];
-
-	switch (g_Types[i_Id])
-	{
-	case MeasureTemperature:
-		_stprintf_s(string, L"%.0f", proxy.GetTemp(g_Indexes[i_Id]));
-		break;
-
-	case MeasureMaxTemperature:
-		_stprintf_s(string, L"%.0f", getHighestTemp());
-		break;
-
-	case MeasureTjMax:
-		_stprintf_s(string, L"%d", proxy.GetTjMax(g_Indexes[i_Id]));
-		break;
-
-	case MeasureLoad:
-		_stprintf_s(string, L"%d", proxy.GetCoreLoad(g_Indexes[i_Id]));
-		break;
-
-	case MeasureVid:
-		_stprintf_s(string, L"%.4f", proxy.GetVID());
-		break;
-
-	case MeasureCpuSpeed:
-		_stprintf_s(string, L"%.2f", proxy.GetCPUSpeed());
-		break;
-
-	case MeasureBusSpeed:
-		_stprintf_s(string, L"%.2f", proxy.GetFSBSpeed());
-		break;
-
-	case MeasureBusMultiplier:
-		_stprintf_s(string, L"%.1f", proxy.GetMultiplier());
-		break;
-
-	case MeasureCpuName:
-		_stprintf_s(string, L"%S", proxy.GetCPUName());
-		break;
-
-	default:
-		string[0] = '\0';
-		break;
-	}
-
-	return string;
 }
