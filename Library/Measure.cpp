@@ -207,7 +207,8 @@ bool CMeasure::MakePlainSubstitute(std::wstring& str, size_t index)
 			str.replace(pos, m_Substitute[index].first.length(), m_Substitute[index].second);
 			start = pos + m_Substitute[index].second.length();
 		}
-	} while (pos != std::wstring::npos);
+	}
+	while (pos != std::wstring::npos);
 
 	return true;
 }
@@ -313,7 +314,8 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 							utf8str.replace(start, length, result);
 							offset = start + result.length();
 						}
-					} while (true);
+					}
+					while (true);
 
 					// Release memory used for the compiled pattern
 					pcre_free(re);
@@ -343,7 +345,7 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 {
 	if (buffer.empty()) return true;
 
-	while (!buffer.empty())
+	do
 	{
 		std::wstring word1 = ExtractWord(buffer);
 		std::wstring sep = ExtractWord(buffer);
@@ -358,6 +360,7 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 		sep = ExtractWord(buffer);
 		if (!sep.empty() && sep != L",") return false;
 	}
+	while (!buffer.empty());
 
 	return true;
 }
@@ -772,11 +775,7 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, cons
 {
 	// Comparison is caseinsensitive
 
-	if (*measure == L'\0')
-	{
-		return NULL;
-	}
-	else if (_wcsicmp(L"CPU", measure) == 0)
+	if (_wcsicmp(L"CPU", measure) == 0)
 	{
 		return new CMeasureCPU(meterWindow, name);
 	}

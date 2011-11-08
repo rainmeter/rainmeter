@@ -56,6 +56,8 @@ int Initialize(HWND hWnd, HINSTANCE hInstance, LPCWSTR lpCmdLine)
 	}
 	catch (CError& error)
 	{
+		delete Rainmeter;
+		Rainmeter = NULL;
 		MessageBox(hWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 	}
 
@@ -70,11 +72,8 @@ int Initialize(HWND hWnd, HINSTANCE hInstance, LPCWSTR lpCmdLine)
 */
 void Quit()
 {
-	if (Rainmeter)
-	{
-		delete Rainmeter;
-		Rainmeter = NULL;
-	}
+	delete Rainmeter;
+	Rainmeter = NULL;
 }
 
 /*
@@ -787,7 +786,7 @@ CRainmeter::~CRainmeter()
 {
 	DeleteMeterWindow(NULL, false);	// This removes the window from the vector
 
-	if (m_TrayWindow) delete m_TrayWindow;
+	delete m_TrayWindow;
 
 	CSystem::Finalize();
 
@@ -1578,7 +1577,8 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 					++index;
 				}
 			}
-		} while (FindNextFile(hSearch, &fileData));
+		}
+		while (FindNextFile(hSearch, &fileData));
 
 		FindClose(hSearch);
 
@@ -1650,7 +1650,8 @@ void CRainmeter::ScanForThemes(const std::wstring& path)
 			{
 				m_Themes.push_back(fileData.cFileName);
 			}
-		} while (FindNextFile(hSearch, &fileData));
+		}
+		while (FindNextFile(hSearch, &fileData));
 
 		FindClose(hSearch);
 	}
@@ -3275,15 +3276,25 @@ void CRainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
 		if (strPath.find(L'%') != std::wstring::npos)
 		{
 			// Expand the environment variables
-			DWORD ret = ExpandEnvironmentStrings(strPath.c_str(), buffer, bufSize);
-			if (ret != 0 && ret < bufSize)
+			do
 			{
-				strPath = buffer;
+				DWORD ret = ExpandEnvironmentStrings(strPath.c_str(), buffer, bufSize);
+				if (ret == 0)  // Error
+				{
+					LogWithArgs(LOG_WARNING, L"Unable to expand environment strings in: %s", strPath.c_str());
+					break;
+				}
+				if (ret <= bufSize)  // Fits in the buffer
+				{
+					strPath = buffer;
+					break;
+				}
+
+				delete [] buffer;
+				bufSize = ret;
+				buffer = new WCHAR[bufSize];
 			}
-			else
-			{
-				LogWithArgs(LOG_WARNING, L"Unable to expand environment strings in: %s", strPath.c_str());
-			}
+			while (true);
 		}
 
 		delete [] buffer;

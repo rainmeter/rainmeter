@@ -131,7 +131,8 @@ bool CMeterBitmap::HitTest(int x, int y)
 				{
 					tmpValue /= realFrames;
 				}
-			} while (tmpValue > 0);
+			}
+			while (tmpValue > 0);
 		}
 
 		Rect rect(GetX(), GetY(), m_W * numOfNums + (numOfNums - 1) * m_Separation, m_H);
@@ -332,7 +333,8 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 				{
 					tmpValue /= m_FrameCount;
 				}
-			} while (tmpValue > 0);
+			}
+			while (tmpValue > 0);
 		}
 
 		// Blit the images
@@ -407,7 +409,8 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 				transitionValue /= realFrames;
 			}
 			--numOfNums;
-		} while (numOfNums > 0);
+		}
+		while (numOfNums > 0);
 	}
 	else
 	{

@@ -109,8 +109,9 @@ private:
 	static void SetMultiMonitorVariables(bool reset);
 	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(c_MonitorVariables, strVariable, strValue); }
 
-	static std::wstring StrToLower(const std::wstring& str) { std::wstring strTmp(str); std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower); return strTmp; }
-	static std::wstring StrToLower(const WCHAR* str) { std::wstring strTmp(str); std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower); return strTmp; }
+	static std::wstring StrToLower(const std::wstring& str) { std::wstring strTmp(str); return StrToLowerC(strTmp); }
+	static std::wstring StrToLower(const WCHAR* str) { std::wstring strTmp(str); return StrToLowerC(strTmp); }
+	static std::wstring& StrToLowerC(std::wstring& str) { std::transform(str.begin(), str.end(), str.begin(), ::towlower); return str; }
 
 	std::wstring m_Filename;
 
@@ -125,9 +126,10 @@ private:
 	bool m_LastValueDefined;
 
 	std::vector<std::wstring> m_Sections;		// The sections must be an ordered array
+	std::unordered_map<std::wstring, std::wstring> m_Values;
+
 	std::unordered_set<std::wstring> m_FoundSections;
 	std::vector<std::wstring> m_ListVariables;
-	std::unordered_map<std::wstring, std::wstring> m_Values;
 
 	std::unordered_map<std::wstring, std::wstring> m_BuiltInVariables;         // Built-in variables
 	std::unordered_map<std::wstring, std::wstring> m_Variables;                // User-defined variables

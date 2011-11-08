@@ -45,7 +45,7 @@ CMeterButton::CMeterButton(CMeterWindow* meterWindow, const WCHAR* name) : CMete
 	m_Bitmaps(),
 	m_State(BUTTON_STATE_NORMAL),
 	m_Clicked(false),
-	m_Executable(false)
+	m_Focus(false)
 {
 }
 
@@ -75,11 +75,8 @@ void CMeterButton::Initialize()
 
 	for (int i = 0; i < BUTTON_FRAMES; ++i)
 	{
-		if (m_Bitmaps[i])
-		{
-			delete m_Bitmaps[i];
-			m_Bitmaps[i] = NULL;
-		}
+		delete m_Bitmaps[i];
+		m_Bitmaps[i] = NULL;
 	}
 
 	// Load the bitmaps if defined
@@ -91,16 +88,19 @@ void CMeterButton::Initialize()
 		{
 			Bitmap* bitmap = m_Image.GetImage();
 
-			m_W = bitmap->GetWidth();
-			m_H = bitmap->GetHeight();
+			int bitmapW = bitmap->GetWidth();
+			int bitmapH = bitmap->GetHeight();
+
+			m_W = bitmapW;
+			m_H = bitmapH;
 
 			if (m_H > m_W)
 			{
-				m_H = m_H / BUTTON_FRAMES;
+				m_H /= BUTTON_FRAMES;
 			}
 			else
 			{
-				m_W = m_W / BUTTON_FRAMES;
+				m_W /= BUTTON_FRAMES;
 			}
 
 			// Separate the frames
@@ -110,7 +110,7 @@ void CMeterButton::Initialize()
 				Graphics graphics(&bitmapPart);
 				Rect r(0, 0, m_W, m_H);
 
-				if (m_H > m_W)
+				if (bitmapH > bitmapW)
 				{
 					graphics.DrawImage(bitmap, r, 0, m_H * i, m_W, m_H, UnitPixel);
 				}
@@ -269,13 +269,13 @@ bool CMeterButton::HitTest2(int px, int py, bool checkAlpha)
 	return false;
 }
 
-bool CMeterButton::MouseUp(POINT pos, CMeterWindow* window)
+bool CMeterButton::MouseUp(POINT pos, bool execute)
 {
 	if (m_State == BUTTON_STATE_DOWN)
 	{
-		if (window && m_Clicked && m_Executable && HitTest2(pos.x, pos.y, true))
+		if (execute && m_Clicked && m_Focus && HitTest2(pos.x, pos.y, true))
 		{
-			Rainmeter->ExecuteCommand(m_Command.c_str(), window);
+			Rainmeter->ExecuteCommand(m_Command.c_str(), m_MeterWindow);
 		}
 		m_State = BUTTON_STATE_NORMAL;
 		m_Clicked = false;
@@ -288,7 +288,7 @@ bool CMeterButton::MouseUp(POINT pos, CMeterWindow* window)
 
 bool CMeterButton::MouseDown(POINT pos)
 {
-	if (m_Executable && HitTest2(pos.x, pos.y, true))
+	if (m_Focus && HitTest2(pos.x, pos.y, true))
 	{
 		m_State = BUTTON_STATE_DOWN;
 		m_Clicked = true;
@@ -299,7 +299,7 @@ bool CMeterButton::MouseDown(POINT pos)
 
 bool CMeterButton::MouseMove(POINT pos)
 {
-	if (m_Clicked == true)
+	if (m_Clicked)
 	{
 		if (HitTest2(pos.x, pos.y, true))
 		{

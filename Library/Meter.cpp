@@ -54,10 +54,10 @@ CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(met
 	m_ToolTipWidth(),
 	m_ToolTipDelay(),
 	m_ToolTipType(false),
-	m_ToolTipHidden(meterWindow ? meterWindow->GetMeterToolTipHidden() : false),
+	m_ToolTipHidden(meterWindow->GetMeterToolTipHidden()),
 	m_ToolTipHandle(),
 	m_HasMouseAction(false),
-	m_MouseActionCursor(meterWindow ? meterWindow->GetMeterMouseActionCursor() : true),
+	m_MouseActionCursor(meterWindow->GetMeterMouseActionCursor()),
 	m_MouseOver(false),
 	m_RelativeX(POSITION_ABSOLUTE),
 	m_RelativeY(POSITION_ABSOLUTE),
@@ -107,7 +107,7 @@ void CMeter::Initialize()
 */
 int CMeter::GetX(bool abs)
 {
-	if (m_RelativeX != POSITION_ABSOLUTE && m_MeterWindow)
+	if (m_RelativeX != POSITION_ABSOLUTE)
 	{
 		if (m_RelativeMeter == NULL)
 		{
@@ -155,7 +155,7 @@ int CMeter::GetX(bool abs)
 */
 int CMeter::GetY(bool abs)
 {
-	if (m_RelativeY != POSITION_ABSOLUTE && m_MeterWindow)
+	if (m_RelativeY != POSITION_ABSOLUTE)
 	{
 		if (m_RelativeMeter == NULL)
 		{
@@ -402,7 +402,7 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_MouseOverAction = parser.ReadString(section, L"MouseOverAction", L"", false);
 	m_MouseLeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);
 
-	m_MouseActionCursor = 0!=parser.ReadInt(section, L"MouseActionCursor", m_MeterWindow ? m_MeterWindow->GetMeterMouseActionCursor() : true);
+	m_MouseActionCursor = 0!=parser.ReadInt(section, L"MouseActionCursor", m_MeterWindow->GetMeterMouseActionCursor());
 
 	m_HasMouseAction =
 		( !m_LeftMouseUpAction.empty() || !m_LeftMouseDownAction.empty() || !m_LeftMouseDoubleClickAction.empty()
@@ -414,7 +414,7 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"");
 	m_ToolTipWidth = (int)parser.ReadFormula(section, L"ToolTipWidth", 1000);
 	m_ToolTipType = 0!=parser.ReadInt(section, L"ToolTipType", 0);
-	m_ToolTipHidden = 0!=parser.ReadInt(section, L"ToolTipHidden", m_MeterWindow ? m_MeterWindow->GetMeterToolTipHidden() : false);
+	m_ToolTipHidden = 0!=parser.ReadInt(section, L"ToolTipHidden", m_MeterWindow->GetMeterToolTipHidden());
 
 	int updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
 	if (updateDivider != m_UpdateDivider)
@@ -439,11 +439,9 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else if (!matrix.empty())
 	{
-		if (m_Transformation)
-		{
-			delete m_Transformation;
-			m_Transformation = NULL;
-		}
+		delete m_Transformation;
+		m_Transformation = NULL;
+
 		LogWithArgs(LOG_ERROR, L"Meter: Incorrect number of values in TransformationMatrix=%s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
 	}
 
@@ -496,13 +494,17 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 */
 CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHAR* name)
 {
-	if (_wcsicmp(L"HISTOGRAM", meter) == 0)
-	{
-		return new CMeterHistogram(meterWindow, name);
-	}
-	else if (_wcsicmp(L"STRING", meter) == 0)
+	if (_wcsicmp(L"STRING", meter) == 0)
 	{
 		return new CMeterString(meterWindow, name);
+	}
+	else if (_wcsicmp(L"IMAGE", meter) == 0)
+	{
+		return new CMeterImage(meterWindow, name);
+	}
+	else if (_wcsicmp(L"HISTOGRAM", meter) == 0)
+	{
+		return new CMeterHistogram(meterWindow, name);
 	}
 	else if (_wcsicmp(L"BAR", meter) == 0)
 	{
@@ -511,10 +513,6 @@ CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHA
 	else if (_wcsicmp(L"BITMAP", meter) == 0)
 	{
 		return new CMeterBitmap(meterWindow, name);
-	}
-	else if (_wcsicmp(L"IMAGE", meter) == 0)
-	{
-		return new CMeterImage(meterWindow, name);
 	}
 	else if (_wcsicmp(L"LINE", meter) == 0)
 	{
@@ -613,7 +611,8 @@ void CMeter::ReadMeasureNames(CConfigParser& parser, const WCHAR* section, std::
 			loop = false;
 		}
 		++i;
-	} while(loop);
+	}
+	while(loop);
 }
 
 /*
@@ -646,7 +645,8 @@ bool CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std:
 					start = pos + stringValues[i - 1].length();
 					replaced = true;
 				}
-			} while (pos != std::wstring::npos);
+			}
+			while (pos != std::wstring::npos);
 		}
 	}
 
@@ -665,9 +665,10 @@ void CMeter::ReplaceToolTipMeasures(std::wstring& str)
 	if (!m_AllMeasures.empty())
 	{
 		// Get the values for the measures
-		for (size_t i = 0, isize = m_AllMeasures.size(); i < isize; ++i)
+		std::vector<CMeasure*>::const_iterator iter = m_AllMeasures.begin();
+		for ( ; iter != m_AllMeasures.end(); ++iter)
 		{
-			stringValues.push_back(m_AllMeasures[i]->GetStringValue(AUTOSCALE_ON, 1, 0, false));
+			stringValues.push_back((*iter)->GetStringValue(AUTOSCALE_ON, 1, 0, false));
 		}
 	}
 	else if (m_Measure != NULL)
@@ -692,6 +693,8 @@ void CMeter::ReplaceToolTipMeasures(std::wstring& str)
 */
 void CMeter::CreateToolTip(CMeterWindow* meterWindow)
 {
+	HWND hMeterWindow = m_MeterWindow->GetWindow();
+	HINSTANCE hInstance = m_MeterWindow->GetMainObject()->GetInstance();
 	DWORD style = WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP;
 
 	if (m_ToolTipType)
@@ -707,21 +710,16 @@ void CMeter::CreateToolTip(CMeterWindow* meterWindow)
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		m_MeterWindow->GetWindow(),
+		hMeterWindow,
 		NULL,
-		m_MeterWindow->GetMainObject()->GetInstance(),
+		hInstance,
 		NULL);
 
 	if (hwndTT)
 	{
 		SetWindowPos(hwndTT, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
-		TOOLINFO ti = {sizeof(TOOLINFO)};
-		ti.uFlags = TTF_SUBCLASS;
-		ti.hwnd = m_MeterWindow->GetWindow();
-		ti.hinst = m_MeterWindow->GetMainObject()->GetInstance();
-
-		ti.rect = GetMeterRect();
+		TOOLINFO ti = {sizeof(TOOLINFO), TTF_SUBCLASS, hMeterWindow, 0, GetMeterRect(), hInstance};
 
 		SendMessage(hwndTT, TTM_ADDTOOL, NULL, (LPARAM) (LPTOOLINFO) &ti);
 
@@ -759,23 +757,23 @@ void CMeter::UpdateToolTip()
 
 		if (!m_ToolTipIcon.empty())
 		{
-			if (!_wcsicmp(m_ToolTipIcon.c_str(), L"INFO"))
+			if (_wcsicmp(m_ToolTipIcon.c_str(), L"INFO") == 0)
 			{
 				hIcon = (HICON) TTI_INFO;
 			}
-			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"WARNING"))
+			else if (_wcsicmp(m_ToolTipIcon.c_str(), L"WARNING") == 0)
 			{
 				hIcon = (HICON) TTI_WARNING;
 			}
-			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"ERROR"))
+			else if (_wcsicmp(m_ToolTipIcon.c_str(), L"ERROR") == 0)
 			{
 				hIcon = (HICON) TTI_ERROR;
 			}
-			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"QUESTION"))
+			else if (_wcsicmp(m_ToolTipIcon.c_str(), L"QUESTION") == 0)
 			{
 				hIcon = LoadIcon(NULL, IDI_QUESTION);
 			}
-			else if (!_wcsicmp(m_ToolTipIcon.c_str(), L"SHIELD"))
+			else if (_wcsicmp(m_ToolTipIcon.c_str(), L"SHIELD") == 0)
 			{
 				hIcon = LoadIcon(NULL, IDI_SHIELD);
 			}

@@ -414,7 +414,8 @@ void CSystem::SetMultiMonitorInfo()
 				}
 			}
 			++dwDevice;
-		} while (EnumDisplayDevices(NULL, dwDevice, &dd, 0));
+		}
+		while (EnumDisplayDevices(NULL, dwDevice, &dd, 0));
 	}
 
 	if (monitors.empty())  // Failed to enumerate the non-mirroring monitors
@@ -653,7 +654,7 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 
 	if (GetClassName(hwnd, className, 64) > 0 &&
 		wcscmp(className, METERWINDOW_CLASS_NAME) == 0 &&
-		Rainmeter && (Window = Rainmeter->GetMeterWindow(hwnd)))
+		(Window = Rainmeter->GetMeterWindow(hwnd)))
 	{
 		ZPOSITION zPos = Window->GetWindowZPosition();
 		if (zPos == ZPOSITION_ONDESKTOP || zPos == ZPOSITION_ONBOTTOM)
@@ -696,46 +697,43 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 */
 void CSystem::ChangeZPosInOrder()
 {
-	if (Rainmeter)
+	bool logging = Rainmeter->GetDebug() && DEBUG_VERBOSE;
+	std::vector<CMeterWindow*> windowsInZOrder;
+
+	if (logging) Log(LOG_DEBUG, L"1: ----- BEFORE -----");
+
+	// Retrieve the Rainmeter's meter windows in Z-order
+	EnumWindows(MyEnumWindowsProc, (LPARAM)(&windowsInZOrder));
+
+	if (!c_ShowDesktop)
 	{
-		bool logging = Rainmeter->GetDebug() && DEBUG_VERBOSE;
-		std::vector<CMeterWindow*> windowsInZOrder;
-
-		if (logging) Log(LOG_DEBUG, L"1: ----- BEFORE -----");
-
-		// Retrieve the Rainmeter's meter windows in Z-order
-		EnumWindows(MyEnumWindowsProc, (LPARAM)(&windowsInZOrder));
-
-		if (!c_ShowDesktop)
-		{
-			// Reset ZPos in Z-order (Bottom)
-			std::vector<CMeterWindow*>::const_iterator iter = windowsInZOrder.begin(), iterEnd = windowsInZOrder.end();
-			for ( ; iter != iterEnd; ++iter)
-			{
-				if ((*iter)->GetWindowZPosition() == ZPOSITION_ONBOTTOM)
-				{
-					(*iter)->ChangeZPos(ZPOSITION_ONBOTTOM);  // reset
-				}
-			}
-		}
-
-		// Reset ZPos in Z-order (On Desktop)
+		// Reset ZPos in Z-order (Bottom)
 		std::vector<CMeterWindow*>::const_iterator iter = windowsInZOrder.begin(), iterEnd = windowsInZOrder.end();
 		for ( ; iter != iterEnd; ++iter)
 		{
-			if ((*iter)->GetWindowZPosition() == ZPOSITION_ONDESKTOP)
+			if ((*iter)->GetWindowZPosition() == ZPOSITION_ONBOTTOM)
 			{
-				(*iter)->ChangeZPos(ZPOSITION_ONDESKTOP);  // reset
+				(*iter)->ChangeZPos(ZPOSITION_ONBOTTOM);  // reset
 			}
 		}
+	}
 
-		if (logging)
+	// Reset ZPos in Z-order (On Desktop)
+	std::vector<CMeterWindow*>::const_iterator iter = windowsInZOrder.begin(), iterEnd = windowsInZOrder.end();
+	for ( ; iter != iterEnd; ++iter)
+	{
+		if ((*iter)->GetWindowZPosition() == ZPOSITION_ONDESKTOP)
 		{
-			Log(LOG_DEBUG, L"2: ----- AFTER -----");
-
-			// Log all windows in Z-order
-			EnumWindows(MyEnumWindowsProc, (LPARAM)NULL);
+			(*iter)->ChangeZPos(ZPOSITION_ONDESKTOP);  // reset
 		}
+	}
+
+	if (logging)
+	{
+		Log(LOG_DEBUG, L"2: ----- AFTER -----");
+
+		// Log all windows in Z-order
+		EnumWindows(MyEnumWindowsProc, (LPARAM)NULL);
 	}
 }
 
@@ -919,12 +917,12 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		case TIMER_NETSTATS:
 			CMeasureNet::UpdateIFTable();
 			CMeasureNet::UpdateStats();
-			if (Rainmeter) Rainmeter->WriteStats(false);
+			Rainmeter->WriteStats(false);
 
 			return 0;
 
 		case TIMER_DELETELATER:
-			if (Rainmeter) Rainmeter->ClearDeleteLaterList();
+			Rainmeter->ClearDeleteLaterList();
 			return 0;
 		}
 		break;
@@ -943,15 +941,12 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				CConfigParser::UpdateWorkareaVariables();
 			}
 
-			if (Rainmeter)
+			// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
+			const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+			std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
+			for ( ; iter != windows.end(); ++iter)
 			{
-				// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
-				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
-				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-				for ( ; iter != windows.end(); ++iter)
-				{
-					PostMessage((*iter).second->GetWindow(), WM_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
-				}
+				PostMessage((*iter).second->GetWindow(), WM_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
 			}
 		}
 		return 0;
@@ -1218,11 +1213,8 @@ void CSystem::GetIniFileMappingList(std::vector<std::wstring>& iniFileMappings)
 		WCHAR buffer[MAX_PATH];
 		DWORD index = 0, cch = MAX_PATH;
 
-		while (true)
+		while ((ret = RegEnumKeyEx(hKey, index++, buffer, &cch, NULL, NULL, NULL, NULL)) != ERROR_NO_MORE_ITEMS)
 		{
-			ret = RegEnumKeyEx(hKey, index++, buffer, &cch, NULL, NULL, NULL, NULL);
-			if (ret == ERROR_NO_MORE_ITEMS) break;
-
 			if (ret == ERROR_SUCCESS)
 			{
 				iniFileMappings.push_back(buffer);
@@ -1247,7 +1239,7 @@ std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileM
 
 	if (!iniFileMappings.empty())
 	{
-		std::wstring::size_type pos = iniFile.find_last_of(L'\\');
+		std::wstring::size_type pos = iniFile.find_last_of(L"\\/");
 		std::wstring filename;
 
 		if (pos != std::wstring::npos)
@@ -1259,9 +1251,10 @@ std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileM
 			filename = iniFile;
 		}
 
-		for (size_t i = 0, isize = iniFileMappings.size(); i < isize; ++i)
+		std::vector<std::wstring>::const_iterator iter = iniFileMappings.begin();
+		for ( ; iter != iniFileMappings.end(); ++iter)
 		{
-			if (_wcsicmp(iniFileMappings[i].c_str(), filename.c_str()) == 0)
+			if (_wcsicmp((*iter).c_str(), filename.c_str()) == 0)
 			{
 				WCHAR buffer[MAX_PATH];
 
@@ -1276,10 +1269,11 @@ std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileM
 					{
 						return temporary;
 					}
-					else  // alternate is reserved or failed
+					else  // temporary is reserved or failed
 					{
 						RemoveFile(temporary);
-						return tmp.empty() ? L"<>" : tmp;
+						if (tmp.empty()) tmp = L"<>";
+						return tmp;
 					}
 				}
 				else  // failed

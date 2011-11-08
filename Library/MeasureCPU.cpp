@@ -185,7 +185,8 @@ bool CMeasureCPU::Update()
 				buf = new BYTE[bufSize];
 			}
 			++loop;
-		} while (loop < 5);
+		}
+		while (loop < 5);
 
 		if (status != STATUS_SUCCESS)  // failed
 		{

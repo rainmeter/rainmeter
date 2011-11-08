@@ -185,9 +185,10 @@ bool CMeterImage::Update()
 					stringValues.push_back(val);
 
 					// Get the values for the other measures
-					for (size_t i = 0, isize = m_Measures.size(); i < isize; ++i)
+					std::vector<CMeasure*>::const_iterator iter = m_Measures.begin();
+					for ( ; iter != m_Measures.end(); ++iter)
 					{
-						stringValues.push_back(m_Measures[i]->GetStringValue(AUTOSCALE_OFF, 1, 0, false));
+						stringValues.push_back((*iter)->GetStringValue(AUTOSCALE_OFF, 1, 0, false));
 					}
 
 					m_ImageNameResult = m_ImageName;

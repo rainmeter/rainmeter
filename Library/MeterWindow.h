@@ -326,7 +326,7 @@ private:
 	void InitializeMeters();
 	void ShowWindowIfAppropriate();
 	HWND GetWindowFromPoint(POINT pos);
-	void HandleButtons(POINT pos, BUTTONPROC proc, CMeterWindow* meterWindow);
+	void HandleButtons(POINT pos, BUTTONPROC proc, bool execute = true);
 	void SetClickThrough(bool b);
 	void SetKeepOnScreen(bool b);
 	void SetWindowDraggable(bool b);

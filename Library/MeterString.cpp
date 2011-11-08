@@ -484,9 +484,10 @@ bool CMeterString::Update()
 		if (m_Measure) stringValues.push_back(m_Measure->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
 
 		// Get the values for the other measures
-		for (size_t i = 0, isize = m_Measures.size(); i < isize; ++i)
+		std::vector<CMeasure*>::const_iterator iter = m_Measures.begin();
+		for ( ; iter != m_Measures.end(); ++iter)
 		{
-			stringValues.push_back(m_Measures[i]->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
+			stringValues.push_back((*iter)->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
 		}
 
 		// Create the text

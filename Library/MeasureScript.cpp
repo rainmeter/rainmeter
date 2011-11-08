@@ -54,11 +54,8 @@ CMeasureScript::~CMeasureScript()
 
 void CMeasureScript::DeleteLuaScript()
 {
-	if (m_LuaScript)
-	{
-		delete m_LuaScript;
-		m_LuaScript = NULL;
-	}
+	delete m_LuaScript;
+	m_LuaScript = NULL;
 
 	m_HasInitializeFunction = false;
 	m_HasUpdateFunction = false;

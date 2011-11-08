@@ -83,16 +83,11 @@ void CMeterHistogram::DisposeBuffer()
 	m_MeterPos = 0;
 
 	// Delete buffers
-	if (m_PrimaryValues)
-	{
-		delete [] m_PrimaryValues;
-		m_PrimaryValues = NULL;
-	}
-	if (m_SecondaryValues)
-	{
-		delete [] m_SecondaryValues;
-		m_SecondaryValues = NULL;
-	}
+	delete [] m_PrimaryValues;
+	m_PrimaryValues = NULL;
+
+	delete [] m_SecondaryValues;
+	m_SecondaryValues = NULL;
 }
 
 /*

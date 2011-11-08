@@ -278,9 +278,10 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 	delete m_Bitmap;
 	m_Bitmap = NULL;
 
-	for (size_t i = 0, isize = m_TrayIcons.size(); i < isize; ++i)
+	std::vector<HICON>::const_iterator iter = m_TrayIcons.begin();
+	for ( ; iter != m_TrayIcons.end(); ++iter)
 	{
-		DestroyIcon(m_TrayIcons[i]);
+		DestroyIcon((*iter));
 	}
 	m_TrayIcons.clear();
 
@@ -353,7 +354,8 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 							hIcon = (HICON)LoadImage(NULL, buffer, IMAGE_ICON, TRAYICON_SIZE, TRAYICON_SIZE, LR_LOADFROMFILE);
 							if (hIcon) m_TrayIcons.push_back(hIcon);
 							if (imageName == buffer) break;
-						} while(hIcon != NULL);
+						}
+						while(hIcon != NULL);
 					}
 				}
 
@@ -365,9 +367,9 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 					Status status = m_Bitmap->GetLastStatus();
 					if (Ok != status)
 					{
-						LogWithArgs(LOG_WARNING, L"Bitmap image not found: %s", imageName.c_str());
 						delete m_Bitmap;
 						m_Bitmap = NULL;
+						LogWithArgs(LOG_WARNING, L"Bitmap image not found: %s", imageName.c_str());
 					}
 				}
 			}
@@ -411,7 +413,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		if (Rainmeter && tray)
+		if (tray)
 		{
 			if (wParam == ID_CONTEXT_MANAGE)
 			{
@@ -574,7 +576,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		break;
 
 	case WM_QUERY_RAINMETER:
-		if (Rainmeter && IsWindow((HWND)lParam))
+		if (IsWindow((HWND)lParam))
 		{
 			COPYDATASTRUCT cds;
 
@@ -760,7 +762,6 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		return 1;
 
 	case WM_COPYDATA:
-		if (Rainmeter)
 		{
 			COPYDATASTRUCT *cds = (COPYDATASTRUCT*) lParam;
 			if (cds->dwData == RAINMETER_QUERY_ID_SKIN_WINDOWHANDLE)
@@ -786,15 +787,11 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		break;
 
 	case WM_TRAY_DELAYED_REFRESH_ALL:
-		if (Rainmeter)
-		{
-			// Refresh all
-			Rainmeter->RefreshAll();
-		}
+		Rainmeter->RefreshAll();
 		return 0;
 
 	case WM_TRAY_DELAYED_EXECUTE:
-		if (Rainmeter && lParam)
+		if (lParam)
 		{
 			// Execute bang
 			WCHAR* bang = (WCHAR*)lParam;

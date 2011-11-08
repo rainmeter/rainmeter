@@ -37,11 +37,10 @@ public:
 	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 
 	bool MouseMove(POINT pos);
-	bool MouseUp(POINT pos, CMeterWindow* window);
+	bool MouseUp(POINT pos, bool execute);
 	bool MouseDown(POINT pos);
 
-	void SetExecutable(bool exec) { m_Executable = exec; }
-	bool IsExecutable() { return m_Executable; }
+	void SetFocus(bool f) { m_Focus = f; }
 
 private:
 	bool HitTest2(int px, int py, bool checkAlpha);
@@ -54,7 +53,7 @@ private:
 	std::wstring m_Command;	// Command to be executed
 	int m_State;
 	bool m_Clicked;
-	bool m_Executable;
+	bool m_Focus;
 };
 
 #endif
