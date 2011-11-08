@@ -1236,7 +1236,7 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 {
 	// LogWithArgs(LOG_DEBUG, L"[%s] %s=%s (size: %i)", strSection.c_str(), strKey.c_str(), strValue.c_str(), (int)m_Values.size());
 
-	std::wstring strTmp = strSection + L"::";
+	std::wstring strTmp = strSection + L"~";
 	strTmp += strKey;
 
 	m_Values[StrToLowerC(strTmp)] = strValue;
@@ -1252,7 +1252,7 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 */
 void CConfigParser::DeleteValue(const std::wstring& strSection, const std::wstring& strKey)
 {
-	std::wstring strTmp = strSection + L"::";
+	std::wstring strTmp = strSection + L"~";
 	strTmp += strKey;
 
 	std::unordered_map<std::wstring, std::wstring>::iterator iter = m_Values.find(StrToLowerC(strTmp));
@@ -1273,7 +1273,7 @@ void CConfigParser::DeleteValue(const std::wstring& strSection, const std::wstri
 */
 const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault)
 {
-	std::wstring strTmp = strSection + L"::";
+	std::wstring strTmp = strSection + L"~";
 	strTmp += strKey;
 
 	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToLowerC(strTmp));

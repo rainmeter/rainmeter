@@ -151,9 +151,9 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	else
 	{
 		std::wstring error = L"HKEY=" + keyname;
-		error += L" is not valid in measure [";
+		error += L" is not valid in [";
 		error += m_Name;
-		error += L"].";
+		error += L"]";
 		throw CError(error, __LINE__, __FILE__);
 	}
 

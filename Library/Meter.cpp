@@ -740,14 +740,14 @@ void CMeter::UpdateToolTip()
 	TOOLINFO ti = {sizeof(TOOLINFO)};
 	ti.hwnd = m_MeterWindow->GetWindow();
 
-	SendMessage(hwndTT, TTM_GETTOOLINFO, NULL, (LPARAM) (LPTOOLINFO) &ti);
+	SendMessage(hwndTT, TTM_GETTOOLINFO, NULL, (LPARAM)&ti);
 
 	std::wstring text = m_ToolTipText;
 	ReplaceToolTipMeasures(text);
-	ti.lpszText = (PTSTR) text.c_str();
+	ti.lpszText = (LPTSTR)text.c_str();
 	ti.rect = GetMeterRect();
 
-	SendMessage(hwndTT, TTM_SETTOOLINFO, NULL, (LPARAM) (LPTOOLINFO) &ti);
+	SendMessage(hwndTT, TTM_SETTOOLINFO, NULL, (LPARAM)&ti);
 	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, NULL, m_ToolTipWidth);
 
 	if (!m_ToolTipTitle.empty())
@@ -759,15 +759,15 @@ void CMeter::UpdateToolTip()
 		{
 			if (_wcsicmp(m_ToolTipIcon.c_str(), L"INFO") == 0)
 			{
-				hIcon = (HICON) TTI_INFO;
+				hIcon = (HICON)TTI_INFO;
 			}
 			else if (_wcsicmp(m_ToolTipIcon.c_str(), L"WARNING") == 0)
 			{
-				hIcon = (HICON) TTI_WARNING;
+				hIcon = (HICON)TTI_WARNING;
 			}
 			else if (_wcsicmp(m_ToolTipIcon.c_str(), L"ERROR") == 0)
 			{
-				hIcon = (HICON) TTI_ERROR;
+				hIcon = (HICON)TTI_ERROR;
 			}
 			else if (_wcsicmp(m_ToolTipIcon.c_str(), L"QUESTION") == 0)
 			{
@@ -779,14 +779,14 @@ void CMeter::UpdateToolTip()
 			}
 			else
 			{
-				hIcon = (HICON) LoadImage(NULL, m_ToolTipIcon.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+				hIcon = (HICON)LoadImage(NULL, m_ToolTipIcon.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
 				destroy = true;
 			}
 		}
 
 		text = m_ToolTipTitle;
 		ReplaceToolTipMeasures(text);
-		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM) text.c_str());
+		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM)text.c_str());
 
 		if (destroy)
 		{

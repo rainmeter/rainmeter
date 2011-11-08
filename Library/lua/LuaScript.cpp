@@ -215,31 +215,3 @@ void LuaScript::RunString(const char* str)
 		}
 	}
 }
-
-//void LuaScript::BindVariable(const char* p_strName, void* p_pValue, const char* p_strTypeName)
-//{
-//	PushTable();
-//
-//	/*
-//	// Push the variable name we want to put a value in.
-//	lua_pushstring(m_State, p_strName);
-//	// Push the value
-//	tolua_pushusertype(m_State, p_pValue, p_strTypeName);
-//	// Bind the variable
-//	lua_settable(m_State, -3);
-//
-//	// Pop our table off of the stack
-//	lua_pop(m_State, 1);
-//
-//	*/
-//
-//	// Push the variable name we want to put a value in.
-//	lua_pushstring(m_State, "SKIN");
-//	// Push the value
-//	tolua_pushusertype(m_State, p_pValue, "CMeterWindow");
-//	// Bind the variable
-//	lua_settable(m_State, -3);
-//
-//	//lua_pop(m_pLuaScript->GetState(), 1);
-//}
-//

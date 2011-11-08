@@ -833,9 +833,9 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, cons
 	// Error
 	std::wstring error = L"Measure=";
 	error += measure;
-	error += L" is not valid in section [";
+	error += L" is not valid in [";
 	error += name;
-	error += L"].";
+	error += L"]";
 	throw CError(error, __LINE__, __FILE__);
 
 	return NULL;

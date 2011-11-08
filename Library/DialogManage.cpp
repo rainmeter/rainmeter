@@ -405,9 +405,6 @@ void CDialogManage::CTabSkins::Initialize()
 	SetWindowLong(item, GWL_EXSTYLE, GetWindowLong(item, GWL_EXSTYLE) &~ WS_EX_CLIENTEDGE);
 	SetWindowPos(item, NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER); 
 
-	item = GetDlgItem(m_Window, IDC_MANAGESKINS_ADDMETADATA_LINK);
-	ShowWindow(item, SW_HIDE);
-
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_DISPLAYMONITOR_BUTTON);
 	tmpSz = GetString(ID_STR_DISPLAYMONITOR);
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)

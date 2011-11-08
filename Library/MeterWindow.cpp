@@ -3528,22 +3528,14 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			std::wstring command = m_SkinPath + m_SkinName;
 			command += L"\\";
 			command += m_SkinIniFile;
-			HANDLE file = CreateFile(command.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+			bool writable = CSystem::IsFileWritable(command.c_str());
 
 			command.insert(0, L" \"");
 			command.insert(0, m_Rainmeter->GetConfigEditor());
 			command += L"\"";
 
-			if (file == INVALID_HANDLE_VALUE)
-			{
-				// File is in protected location, so execute as admin
-				RunCommand(NULL, command.c_str(), SW_SHOWNORMAL, true);
-			}
-			else
-			{
-				CloseHandle(file);
-				RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
-			}
+			// Execute as admin if in protected location
+			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL, !writable);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_REFRESH)
 		{
