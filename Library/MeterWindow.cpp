@@ -839,7 +839,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		break;
 
 	case BANG_ZPOS:
-		ChangeZPos((ZPOSITION)_wtoi(arg));
+		SetWindowZPosition((ZPOSITION)_wtoi(arg));
 		break;
 
 	case BANG_CLICKTHROUGH:
