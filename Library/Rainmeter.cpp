@@ -3143,17 +3143,7 @@ void CRainmeter::SetDisableVersionCheck(bool check)
 
 void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 {
-	WritePrivateProfileString(L"Rainmeter", L"WriteTest", L"TRUE", m_IniFile.c_str());
-	WritePrivateProfileString(NULL, NULL, NULL, m_IniFile.c_str());	// FLUSH
-
-	WCHAR tmpSz[5];
-	bool bSuccess = (GetPrivateProfileString(L"Rainmeter", L"WriteTest", L"", tmpSz, 5, m_IniFile.c_str()) > 0);
-	if (bSuccess)
-	{
-		bSuccess = (wcscmp(L"TRUE", tmpSz) == 0);
-		WritePrivateProfileString(L"Rainmeter", L"WriteTest", NULL, m_IniFile.c_str());
-	}
-	if (!bSuccess)
+	if (!CSystem::IsFileWritable(m_IniFile.c_str()))
 	{
 		std::wstring error = GetString(ID_STR_SETTINGSNOTWRITABLE);
 

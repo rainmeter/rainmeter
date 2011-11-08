@@ -1035,6 +1035,24 @@ ULONGLONG CSystem::GetTickCount64()
 }
 
 /*
+** IsFileWritable
+**
+** Checks if file is writable.
+**
+*/
+bool CSystem::IsFileWritable(LPCWSTR file)
+{
+	HANDLE hFile = CreateFile(file, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+	if (hFile == INVALID_HANDLE_VALUE)
+	{
+		return false;
+	}
+
+	CloseHandle(hFile);
+	return true;
+}
+
+/*
 ** RmLoadLibrary
 **
 ** This function is a wrapper function for LoadLibrary().

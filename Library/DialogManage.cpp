@@ -957,22 +957,14 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			std::wstring command = Rainmeter->GetSkinPath() + m_SkinName;
 			command += L"\\";
 			command += m_FileName;
-			HANDLE file = CreateFile(command.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+			bool writable = CSystem::IsFileWritable(command.c_str());
 
 			command.insert(0, L" \"");
 			command.insert(0, Rainmeter->GetConfigEditor());
 			command += L"\"";
 
-			if (file == INVALID_HANDLE_VALUE)
-			{
-				// File is in protected location, so execute as admin
-				RunCommand(NULL, command.c_str(), SW_SHOWNORMAL, L"runas");
-			}
-			else
-			{
-				CloseHandle(file);
-				RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
-			}
+			// Execute as admin if in protected location
+			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL, !writable);
 		}
 		break;
 
@@ -1746,7 +1738,7 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			WCHAR buffer[16];
 			int sel = ComboBox_GetCurSel((HWND)lParam);
-			LCID lcid = ComboBox_GetItemData((HWND)lParam, sel);
+			LCID lcid = (LCID)ComboBox_GetItemData((HWND)lParam, sel);
 			_ultow(lcid, buffer, 10);
 			WritePrivateProfileString(L"Rainmeter", L"Language", buffer, Rainmeter->GetIniFile().c_str());
 
