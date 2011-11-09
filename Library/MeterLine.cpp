@@ -377,8 +377,8 @@ void CMeterLine::BindMeasure(const std::list<CMeasure*>& measures)
 			std::wstring error = L"The meter [" + m_Name;
 			error += L"] cannot be bound with [";
 			error += (*j);
-			error += L"]!";
-			throw CError(error, __LINE__, __FILE__);
+			error += L"]";
+			throw CError(error);
 		}
 	}
 	CMeter::SetAllMeasures(m_Measures);

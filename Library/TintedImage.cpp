@@ -626,10 +626,10 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 				std::wstring error = m_ConfigArray[ConfigIndexImageCrop];
 				error += L"=";
 				error += crop;
-				error += L" (origin) is not valid in meter [";
+				error += L" (origin) is not valid in [";
 				error += section;
-				error += L"].";
-				throw CError(error, __LINE__, __FILE__);
+				error += L"]";
+				throw CError(error);
 			}
 		}
 	}
@@ -734,10 +734,10 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		std::wstring error = m_ConfigArray[ConfigIndexImageFlip];
 		error += L"=";
 		error += flip;
-		error += L" is not valid in meter [";
+		error += L" is not valid in [";
 		error += section;
-		error += L"].";
-		throw CError(error, __LINE__, __FILE__);
+		error += L"]";
+		throw CError(error);
 	}
 
 	if (!m_DisableTransform)

@@ -84,9 +84,9 @@ bool CMeasureCalc::Update()
 	{
 		std::wstring error = L"Calc: ";
 		error += ConvertToWide(errMsg);
-		error += L" in measure [";
+		error += L" in [";
 		error += m_Name;
-		error += L"].";
+		error += L"]";
 		Log(LOG_ERROR, error.c_str());
 	}
 

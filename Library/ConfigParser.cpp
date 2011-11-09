@@ -744,9 +744,9 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 			error += ConvertToWide(errMsg);
 			error += L" in key \"";
 			error += key ? key : L"";
-			error += L"\" in section [";
+			error += L"\" in [";
 			error += section ? section : L"";
-			error += L"].";
+			error += L"]";
 			Log(LOG_ERROR, error.c_str());
 		}
 

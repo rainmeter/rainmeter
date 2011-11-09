@@ -25,17 +25,13 @@
 class CError
 {
 public:
-	CError(const std::wstring& String) : m_String(String), m_File(NULL) {}
-	CError(const WCHAR* String ) : m_String(String), m_File(NULL) {}
-	CError(const std::wstring& String, int Line, const char* File) : m_String(String), m_Line(Line), m_File(File) {}
-	CError(const WCHAR* String, int Line, const char* File) : m_String(String), m_Line(Line), m_File(File) {}
+	CError(const std::wstring& String) : m_String(String) {}
+	CError(const WCHAR* String ) : m_String(String) {}
 
 	const std::wstring& GetString(); 
 
 private:
 	std::wstring m_String;
-	int m_Line;
-	const char* m_File;
 };
 
 #endif

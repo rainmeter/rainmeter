@@ -836,7 +836,7 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, cons
 	error += L" is not valid in [";
 	error += name;
 	error += L"]";
-	throw CError(error, __LINE__, __FILE__);
+	throw CError(error);
 
 	return NULL;
 }

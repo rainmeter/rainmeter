@@ -279,7 +279,7 @@ void CMeterString::Initialize()
 			if (m_FontSize != 0)
 			{
 				std::wstring error = L"String: Unable to create font: " + m_FontFace;
-				throw CError(error, __LINE__, __FILE__);
+				throw CError(error);
 			}
 		}
 	}
@@ -378,10 +378,10 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	else
 	{
 		std::wstring error = L"StringAlign=" + align;
-		error += L" is not valid in meter [";
+		error += L" is not valid in [";
 		error += m_Name;
-		error += L"].";
-		throw CError(error, __LINE__, __FILE__);
+		error += L"]";
+		throw CError(error);
 	}
 
 	const std::wstring& stringCase = parser.ReadString(section, L"StringCase", L"NONE");
@@ -404,10 +404,10 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	else
 	{
 		std::wstring error = L"StringCase=" + stringCase;
-		error += L" is not valid in meter [";
+		error += L" is not valid in [";
 		error += m_Name;
-		error += L"].";
-		throw CError(error, __LINE__, __FILE__);
+		error += L"]";
+		throw CError(error);
 	}
 
 	const std::wstring& style = parser.ReadString(section, L"StringStyle", L"NORMAL");
@@ -430,10 +430,10 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	else
 	{
 		std::wstring error = L"StringStyle=" + style;
-		error += L" is not valid in meter [";
+		error += L" is not valid in [";
 		error += m_Name;
-		error += L"].";
-		throw CError(error, __LINE__, __FILE__);
+		error += L"]";
+		throw CError(error);
 	}
 
 	const std::wstring& effect = parser.ReadString(section, L"StringEffect", L"NONE");
@@ -452,10 +452,10 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	else
 	{
 		std::wstring error = L"StringEffect=" + effect;
-		error += L" is not valid in meter [";
+		error += L" is not valid in [";
 		error += m_Name;
-		error += L"].";
-		throw CError(error, __LINE__, __FILE__);
+		error += L"]";
+		throw CError(error);
 	}
 
 	if (m_Initialized &&
@@ -697,8 +697,8 @@ void CMeterString::BindMeasure(const std::list<CMeasure*>& measures)
 			std::wstring error = L"The meter [" + m_Name;
 			error += L"] cannot be bound with [";
 			error += (*j);
-			error += L"]!";
-			throw CError(error, __LINE__, __FILE__);
+			error += L"]";
+			throw CError(error);
 		}
 	}
 	CMeter::SetAllMeasures(m_Measures);

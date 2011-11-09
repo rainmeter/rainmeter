@@ -154,7 +154,7 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		error += L" is not valid in [";
 		error += m_Name;
 		error += L"]";
-		throw CError(error, __LINE__, __FILE__);
+		throw CError(error);
 	}
 
 	m_RegKeyName = parser.ReadString(section, L"RegKey", L"");

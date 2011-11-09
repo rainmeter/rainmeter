@@ -151,7 +151,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		{
 			std::wstring error = L"Plugin: \"" + m_PluginName;
 			error += L"\" not found";
-			throw CError(error, __LINE__, __FILE__);
+			throw CError(error);
 		}
 	}
 
@@ -167,8 +167,8 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		FreeLibrary(m_Plugin);
 
 		std::wstring error = L"Plugin: \"" + m_PluginName;
-		error += L"\" doesn't export Update() or GetString()!";
-		throw CError(error, __LINE__, __FILE__);
+		error += L"\" doesn't export Update() or GetString()";
+		throw CError(error);
 	}
 
 	// Initialize the plugin

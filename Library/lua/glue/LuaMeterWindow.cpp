@@ -100,7 +100,6 @@ static int MeterWindow_GetMeter(lua_State* L)
 	{
 		std::wstring error = L"Script: No such meter as ";
 		error += meterName;
-		error += L".";
 		Log(LOG_ERROR, error.c_str());
 		return 0;
 	}

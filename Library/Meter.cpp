@@ -462,8 +462,8 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 	if (m_MeasureName.empty())
 	{
 		std::wstring error = L"The meter [" + m_Name;
-		error += L"] is unbound!";
-		throw CError(error, __LINE__, __FILE__);
+		error += L"] is unbound";
+		throw CError(error);
 	}
 
 	// Go through the list and check it there is a measure for us
@@ -481,8 +481,8 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 	std::wstring error = L"The meter [" + m_Name;
 	error += L"] cannot be bound with [";
 	error += m_MeasureName;
-	error += L"]!";
-	throw CError(error, __LINE__, __FILE__);
+	error += L"]";
+	throw CError(error);
 }
 
 /*
@@ -534,10 +534,10 @@ CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHA
 	// Error
 	std::wstring error = L"Meter=";
 	error += meter;
-	error += L" is not valid in section [";
+	error += L" is not valid in [";
 	error += name;
-	error += L"].";
-	throw CError(error, __LINE__, __FILE__);
+	error += L"]";
+	throw CError(error);
 
 	return NULL;
 }

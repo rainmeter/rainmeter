@@ -255,7 +255,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 
 		if (err != 0 && ERROR_CLASS_ALREADY_EXISTS != err)
 		{
-			throw CError(L"Unable to register class!", __LINE__, __FILE__);
+			throw CError(L"Unable to register class");
 		}
 	}
 
@@ -274,7 +274,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 
 	if (m_Window == NULL)
 	{
-		throw CError(L"Unable to register window!", __LINE__, __FILE__);
+		throw CError(L"Unable to register window");
 	}
 
 	setlocale(LC_NUMERIC, "C");
@@ -441,13 +441,13 @@ void CMeterWindow::Refresh(bool init, bool all)
 	{
 		if (0 == SetTimer(m_Window, TIMER_METER, m_WindowUpdate, NULL))
 		{
-			throw CError(L"Unable to set timer!", __LINE__, __FILE__);
+			throw CError(L"Unable to set timer");
 		}
 	}
 
 	if (0 == SetTimer(m_Window, TIMER_MOUSE, INTERVAL_MOUSE, NULL))	// Mouse position is checked twice per sec
 	{
-		throw CError(L"Unable to set timer!", __LINE__, __FILE__);
+		throw CError(L"Unable to set timer");
 	}
 
 	m_Rainmeter->SetCurrentParser(NULL);
