@@ -1798,7 +1798,7 @@ void CMeterWindow::ScreenToWindow()
 	}
 	else
 	{
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", pixel);
+		_itow_s(pixel, buffer, 10);
 	}
 	if (m_WindowXFromRight == true)
 	{
@@ -1839,7 +1839,7 @@ void CMeterWindow::ScreenToWindow()
 	}
 	else
 	{
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", pixel);
+		_itow_s(pixel, buffer, 10);
 	}
 	if (m_WindowYFromBottom == true)
 	{
@@ -1901,7 +1901,7 @@ void CMeterWindow::ReadConfig()
 			{
 				value = 0.0;
 			}
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)value);
+			_itow_s((int)value, buffer, 10);
 			m_WindowX = buffer;
 		}
 		if (!m_WindowY.empty() && m_WindowY[0] == L'(' && m_WindowY[m_WindowY.size() - 1] == L')')
@@ -1910,7 +1910,7 @@ void CMeterWindow::ReadConfig()
 			{
 				value = 0.0;
 			}
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)value);
+			_itow_s((int)value, buffer, 10);
 			m_WindowY = buffer;
 		}
 
@@ -1978,13 +1978,13 @@ void CMeterWindow::WriteConfig(INT setting)
 
 		if (setting & SETTING_ALPHAVALUE)
 		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", m_AlphaValue);
+			_itow_s(m_AlphaValue, buffer, 10);
 			WritePrivateProfileString(section, L"AlphaValue", buffer, iniFile);
 		}
 
 		if (setting & SETTING_FADEDURATION)
 		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", m_FadeDuration);
+			_itow_s(m_FadeDuration, buffer, 10);
 			WritePrivateProfileString(section, L"FadeDuration", buffer, iniFile);
 		}
 
@@ -2000,7 +2000,7 @@ void CMeterWindow::WriteConfig(INT setting)
 
 		if (setting & SETTING_HIDEONMOUSEOVER)
 		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowHide);
+			_itow_s(m_WindowHide, buffer, 10);
 			WritePrivateProfileString(section, L"HideOnMouseOver", buffer, iniFile);
 		}
 
@@ -2026,7 +2026,7 @@ void CMeterWindow::WriteConfig(INT setting)
 
 		if (setting & SETTING_ALWAYSONTOP)
 		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", m_WindowZPosition);
+			_itow_s(m_WindowZPosition, buffer, 10);
 			WritePrivateProfileString(section, L"AlwaysOnTop", buffer, iniFile);
 		}
 	}
@@ -5033,9 +5033,9 @@ void CMeterWindow::SetWindowPositionVariables(int x, int y)
 {
 	WCHAR buffer[32];
 
-	_snwprintf_s(buffer, _TRUNCATE, L"%i", x);
+	_itow_s(x, buffer, 10);
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGX", buffer);
-	_snwprintf_s(buffer, _TRUNCATE, L"%i", y);
+	_itow_s(y, buffer, 10);
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGY", buffer);
 }
 
@@ -5049,9 +5049,9 @@ void CMeterWindow::SetWindowSizeVariables(int w, int h)
 {
 	WCHAR buffer[32];
 
-	_snwprintf_s(buffer, _TRUNCATE, L"%i", w);
+	_itow_s(w, buffer, 10);
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGWIDTH", buffer);
-	_snwprintf_s(buffer, _TRUNCATE, L"%i", h);
+	_itow_s(h, buffer, 10);
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGHEIGHT", buffer);
 }
 

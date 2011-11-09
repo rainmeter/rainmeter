@@ -224,16 +224,16 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
 
-	_snwprintf_s(buffer, _TRUNCATE, L"%i", workArea.left);
+	_itow_s(workArea.left, buffer, 10);
 	SetMonitorVariable(L"WORKAREAX", buffer);
 	SetMonitorVariable(L"PWORKAREAX", buffer);
-	_snwprintf_s(buffer, _TRUNCATE, L"%i", workArea.top);
+	_itow_s(workArea.top, buffer, 10);
 	SetMonitorVariable(L"WORKAREAY", buffer);
 	SetMonitorVariable(L"PWORKAREAY", buffer);
-	_snwprintf_s(buffer, _TRUNCATE, L"%i", workArea.right - workArea.left);
+	_itow_s(workArea.right - workArea.left, buffer, 10);
 	SetMonitorVariable(L"WORKAREAWIDTH", buffer);
 	SetMonitorVariable(L"PWORKAREAWIDTH", buffer);
-	_snwprintf_s(buffer, _TRUNCATE, L"%i", workArea.bottom - workArea.top);
+	_itow_s(workArea.bottom - workArea.top, buffer, 10);
 	SetMonitorVariable(L"WORKAREAHEIGHT", buffer);
 	SetMonitorVariable(L"PWORKAREAHEIGHT", buffer);
 
@@ -244,26 +244,26 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 		scrArea.right = GetSystemMetrics(SM_CXSCREEN);
 		scrArea.bottom = GetSystemMetrics(SM_CYSCREEN);
 
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", scrArea.left);
+		_itow_s(scrArea.left, buffer, 10);
 		SetMonitorVariable(L"SCREENAREAX", buffer);
 		SetMonitorVariable(L"PSCREENAREAX", buffer);
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", scrArea.top);
+		_itow_s(scrArea.top, buffer, 10);
 		SetMonitorVariable(L"SCREENAREAY", buffer);
 		SetMonitorVariable(L"PSCREENAREAY", buffer);
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", scrArea.right - scrArea.left);
+		_itow_s(scrArea.right - scrArea.left, buffer, 10);
 		SetMonitorVariable(L"SCREENAREAWIDTH", buffer);
 		SetMonitorVariable(L"PSCREENAREAWIDTH", buffer);
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", scrArea.bottom - scrArea.top);
+		_itow_s(scrArea.bottom - scrArea.top, buffer, 10);
 		SetMonitorVariable(L"SCREENAREAHEIGHT", buffer);
 		SetMonitorVariable(L"PSCREENAREAHEIGHT", buffer);
 
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", GetSystemMetrics(SM_XVIRTUALSCREEN));
+		_itow_s(GetSystemMetrics(SM_XVIRTUALSCREEN), buffer, 10);
 		SetMonitorVariable(L"VSCREENAREAX", buffer);
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", GetSystemMetrics(SM_YVIRTUALSCREEN));
+		_itow_s(GetSystemMetrics(SM_YVIRTUALSCREEN), buffer, 10);
 		SetMonitorVariable(L"VSCREENAREAY", buffer);
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", GetSystemMetrics(SM_CXVIRTUALSCREEN));
+		_itow_s(GetSystemMetrics(SM_CXVIRTUALSCREEN), buffer, 10);
 		SetMonitorVariable(L"VSCREENAREAWIDTH", buffer);
-		_snwprintf_s(buffer, _TRUNCATE, L"%i", GetSystemMetrics(SM_CYVIRTUALSCREEN));
+		_itow_s(GetSystemMetrics(SM_CYVIRTUALSCREEN), buffer, 10);
 		SetMonitorVariable(L"VSCREENAREAHEIGHT", buffer);
 	}
 
@@ -278,16 +278,16 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 
 			const RECT work = (monitors[i].active) ? monitors[i].work : workArea;
 
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", work.left);
+			_itow_s(work.left, buffer, 10);
 			_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAX@%i", (int)i + 1);
 			SetMonitorVariable(buffer2, buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", work.top);
+			_itow_s(work.top, buffer, 10);
 			_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAY@%i", (int)i + 1);
 			SetMonitorVariable(buffer2, buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", work.right - work.left);
+			_itow_s(work.right - work.left, buffer, 10);
 			_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAWIDTH@%i", (int)i + 1);
 			SetMonitorVariable(buffer2, buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", work.bottom - work.top);
+			_itow_s(work.bottom - work.top, buffer, 10);
 			_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAHEIGHT@%i", (int)i + 1);
 			SetMonitorVariable(buffer2, buffer);
 
@@ -295,16 +295,16 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 			{
 				const RECT screen = (monitors[i].active) ? monitors[i].screen : scrArea;
 
-				_snwprintf_s(buffer, _TRUNCATE, L"%i", screen.left);
+				_itow_s(screen.left, buffer, 10);
 				_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAX@%i", (int)i + 1);
 				SetMonitorVariable(buffer2, buffer);
-				_snwprintf_s(buffer, _TRUNCATE, L"%i", screen.top);
+				_itow_s(screen.top, buffer, 10);
 				_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAY@%i", (int)i + 1);
 				SetMonitorVariable(buffer2, buffer);
-				_snwprintf_s(buffer, _TRUNCATE, L"%i", screen.right - screen.left);
+				_itow_s(screen.right - screen.left, buffer, 10);
 				_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAWIDTH@%i", (int)i + 1);
 				SetMonitorVariable(buffer2, buffer);
-				_snwprintf_s(buffer, _TRUNCATE, L"%i", screen.bottom - screen.top);
+				_itow_s(screen.bottom - screen.top, buffer, 10);
 				_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAHEIGHT@%i", (int)i + 1);
 				SetMonitorVariable(buffer2, buffer);
 			}
@@ -356,13 +356,13 @@ void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 				s2 = monitors[screenIndex-1].screen.right - monitors[screenIndex-1].screen.left;
 			}
 
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", w1);
+			_itow_s(w1, buffer, 10);
 			SetBuiltInVariable(L"WORKAREAX", buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", w2);
+			_itow_s(w2, buffer, 10);
 			SetBuiltInVariable(L"WORKAREAWIDTH", buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", s1);
+			_itow_s(s1, buffer, 10);
 			SetBuiltInVariable(L"SCREENAREAX", buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", s2);
+			_itow_s(s2, buffer, 10);
 			SetBuiltInVariable(L"SCREENAREAWIDTH", buffer);
 
 			// Set Y / HEIGHT
@@ -389,13 +389,13 @@ void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 				s2 = monitors[screenIndex-1].screen.bottom - monitors[screenIndex-1].screen.top;
 			}
 
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", w1);
+			_itow_s(w1, buffer, 10);
 			SetBuiltInVariable(L"WORKAREAY", buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", w2);
+			_itow_s(w2, buffer, 10);
 			SetBuiltInVariable(L"WORKAREAHEIGHT", buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", s1);
+			_itow_s(s1, buffer, 10);
 			SetBuiltInVariable(L"SCREENAREAY", buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", s2);
+			_itow_s(s2, buffer, 10);
 			SetBuiltInVariable(L"SCREENAREAHEIGHT", buffer);
 		}
 		else
@@ -405,13 +405,13 @@ void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 			// Set default WORKAREA
 			SystemParametersInfo(SPI_GETWORKAREA, 0, &r, 0);
 
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", r.left);
+			_itow_s(r.left, buffer, 10);
 			SetBuiltInVariable(L"WORKAREAX", buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", r.top);
+			_itow_s(r.top, buffer, 10);
 			SetBuiltInVariable(L"WORKAREAY", buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", r.right - r.left);
+			_itow_s(r.right - r.left, buffer, 10);
 			SetBuiltInVariable(L"WORKAREAWIDTH", buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", r.bottom - r.top);
+			_itow_s(r.bottom - r.top, buffer, 10);
 			SetBuiltInVariable(L"WORKAREAHEIGHT", buffer);
 
 			// Set default SCREENAREA
@@ -420,13 +420,13 @@ void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 			r.right = GetSystemMetrics(SM_CXSCREEN);
 			r.bottom = GetSystemMetrics(SM_CYSCREEN);
 
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", r.left);
+			_itow_s(r.left, buffer, 10);
 			SetBuiltInVariable(L"SCREENAREAX", buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", r.top);
+			_itow_s(r.top, buffer, 10);
 			SetBuiltInVariable(L"SCREENAREAY", buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", r.right - r.left);
+			_itow_s(r.right - r.left, buffer, 10);
 			SetBuiltInVariable(L"SCREENAREAWIDTH", buffer);
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", r.bottom - r.top);
+			_itow_s(r.bottom - r.top, buffer, 10);
 			SetBuiltInVariable(L"SCREENAREAHEIGHT", buffer);
 		}
 	}

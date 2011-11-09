@@ -56,7 +56,7 @@ public:
 	virtual const WCHAR* GetStats();
 
 	const WCHAR* GetName() { return m_Name.c_str(); }
-	const char* GetANSIName() { return m_ANSIName.c_str(); }
+	const char* GetAsciiName() { return m_AsciiName.c_str(); }
 
 	void Disable() { m_Disabled = true; }
 	void Enable() { m_Disabled = false; }
@@ -101,7 +101,7 @@ protected:
 	double m_MaxValue;				// The maximum value (so far)
 	double m_Value;					// The current value
 	const std::wstring m_Name;				// Name of this Measure
-	const std::string m_ANSIName;				// Name of this Measure in ANSI
+	const std::string m_AsciiName;				// Name of this Measure in ANSI
 
 	std::vector< std::pair<std::wstring, std::wstring> > m_Substitute;	// Vec of substitute strings
 	bool m_RegExpSubstitute;

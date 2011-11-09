@@ -110,7 +110,7 @@ void CMeasureCalc::UpdateVariableMap(CMeterWindow& meterWindow)
 	std::list<CMeasure*>::const_iterator iter = measures.begin();
 	for ( ; iter != measures.end(); ++iter)
 	{
-		const char* name = (*iter)->GetANSIName();
+		const char* name = (*iter)->GetAsciiName();
 		double val = (*iter)->GetValue();
 
 		StrMap_AddString(c_VarMap, name, &val);
@@ -182,7 +182,7 @@ void CMeasureCalc::FormulaReplace()
 			int randNumber = m_LowBound + (int)(range * rand()/(RAND_MAX + 1.0));
 
 			WCHAR buffer[32];
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", randNumber);
+			_itow_s(randNumber, buffer, 10);
 
 			m_Formula.replace(loc, 6, buffer);
 			loc += wcslen(buffer);

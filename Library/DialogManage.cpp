@@ -512,12 +512,12 @@ void CDialogManage::CTabSkins::SetControls()
 
 		item = GetDlgItem(m_Window, IDC_MANAGESKINS_X_TEXT);
 		EnableWindow(item, TRUE);
-		_itow(m_SkinWindow->GetX(), buffer, 10);
+		_itow_s(m_SkinWindow->GetX(), buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetDlgItem(m_Window, IDC_MANAGESKINS_Y_TEXT);
 		EnableWindow(item, TRUE);
-		_itow(m_SkinWindow->GetY(), buffer, 10);
+		_itow_s(m_SkinWindow->GetY(), buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetDlgItem(m_Window, IDC_MANAGESKINS_DISPLAYMONITOR_BUTTON);
@@ -564,7 +564,7 @@ void CDialogManage::CTabSkins::SetControls()
 
 		item = GetDlgItem(m_Window, IDC_MANAGESKINS_LOADORDER_TEXT);
 		EnableWindow(item, TRUE);
-		_itow(Rainmeter->GetLoadOrder(m_SkinName), buffer, 10);
+		_itow_s(Rainmeter->GetLoadOrder(m_SkinName), buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetDlgItem(m_Window, IDC_MANAGESKINS_ONHOVER_COMBOBOX);
@@ -975,7 +975,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (x > m_SkinWindow->GetX())
 			{
-				_itow(m_SkinWindow->GetX(), buffer, 10);
+				_itow_s(m_SkinWindow->GetX(), buffer, 10);
 				Edit_SetText((HWND)lParam, buffer);
 			}
 		}
@@ -991,7 +991,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (y > m_SkinWindow->GetY())
 			{
-				_itow(m_SkinWindow->GetY(), buffer, 10);
+				_itow_s(m_SkinWindow->GetY(), buffer, 10);
 				Edit_SetText((HWND)lParam, buffer);
 			}
 		}
@@ -1023,7 +1023,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				m_IgnoreUpdate = true;
 				int value = _wtoi(buffer);
 
-				_itow(value, buffer, 10);
+				_itow_s(value, buffer, 10);
 				SetWindowText((HWND)lParam, buffer);
 
 				// Reset selection

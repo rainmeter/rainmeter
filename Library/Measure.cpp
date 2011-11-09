@@ -71,7 +71,7 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(meterWindow), m_Name(name), m_ANSIName(ConvertToAscii(name)),
+CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(meterWindow), m_Name(name), m_AsciiName(ConvertToAscii(name)),
 	m_DynamicVariables(false),
 	m_Invert(false),
 	m_LogMaxValue(false),
@@ -650,7 +650,7 @@ const WCHAR* CMeasure::GetStringValue(AUTOSCALE autoScale, double scale, int dec
 
 		if (decimals == 0)
 		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)val);
+			_itow_s((int)val, buffer, 10);
 		}
 		else
 		{

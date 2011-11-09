@@ -617,7 +617,7 @@ void CRainmeter::RainmeterWriteKeyValue(const WCHAR* arg)
 	{
 		const std::wstring& iniFile = subStrings[3];
 
-		if (iniFile.find(L"..\\") != std::string::npos || iniFile.find(L"../") != std::string::npos)
+		if (iniFile.find(L"..\\") != std::wstring::npos || iniFile.find(L"../") != std::wstring::npos)
 		{
 			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile.c_str());
 			return;
@@ -1080,8 +1080,7 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 	// Tray must exist before configs are read
 	m_TrayWindow = new CTrayWindow(m_Instance);
 
-	ScanForConfigs(m_SkinPath);
-	ScanForThemes(GetSettingsPath() + L"Themes");
+	ReloadSettings();
 
 	if (m_ConfigStrings.empty())
 	{
@@ -1089,14 +1088,7 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 	}
 
-	ReadGeneralSettings(m_IniFile);
-
 	WritePrivateProfileString(L"Rainmeter", L"CheckUpdate", NULL , m_IniFile.c_str());
-
-	if (!m_DisableVersionCheck)
-	{
-		CheckUpdate();
-	}
 
 	ResetStats();
 	ReadStats();
@@ -1110,7 +1102,12 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 	// Create meter windows for active configs
 	ActivateActiveConfigs();
 
-	return result;	// Alles OK
+	if (!m_DisableVersionCheck)
+	{
+		CheckUpdate();
+	}
+
+	return result;	// All is OK
 }
 
 /*
@@ -1256,7 +1253,7 @@ void CRainmeter::ToggleConfig(int configIndex, int iniIndex)
 void CRainmeter::WriteActive(const std::wstring& config, int iniIndex)
 {
 	WCHAR buffer[32];
-	_snwprintf_s(buffer, _TRUNCATE, L"%i", iniIndex + 1);
+	_itow_s(iniIndex + 1, buffer, 10);
 	WritePrivateProfileString(config.c_str(), L"Active", buffer, m_IniFile.c_str());
 }
 

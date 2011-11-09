@@ -645,7 +645,7 @@ void CMeasureNet::WriteStats(const WCHAR* iniFile, const WCHAR* statsDate)
 	AppendStatsValue(data, L"Since", statsDate);
 
 	// Add stats count
-	_snwprintf_s(buffer, _TRUNCATE, L"%i", (int)statsSize);
+	_itow_s((int)statsSize, buffer, 10);
 	AppendStatsValue(data, L"NetStatsCount", buffer);
 
 	// Add stats
