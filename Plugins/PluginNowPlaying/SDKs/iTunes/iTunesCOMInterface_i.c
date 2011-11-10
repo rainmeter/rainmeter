@@ -6,7 +6,7 @@
 
 
  /* File created by MIDL compiler version 6.00.0366 */
-/* at Wed Jun 25 17:02:20 2008
+/* at Wed Nov 05 13:21:00 2008
  */
 /* Compiler settings for iTunesCOMInterface.idl:
     Oicf, W1, Zp8, env=Win32 (32b run)

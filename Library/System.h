@@ -97,6 +97,8 @@ private:
 	static void ClearMultiMonitorInfo() { c_Monitors.monitors.clear(); }
 	static void UpdateWorkareaInfo();
 
+	static void SetOSPlatform();
+
 	static HWND GetDefaultShellWindow();
 	static HWND GetWorkerW();
 	static void ChangeZPosInOrder();

@@ -407,31 +407,31 @@ LPCTSTR GetString(UINT id, UINT flags)
 			return buffer;
 
 		case MEASURE_PROGRESS:
-			_itow(player->GetDuration() ? ((player->GetPosition() * 100) / player->GetDuration()) : 0, buffer, 10);
+			_itow_s(player->GetDuration() ? ((player->GetPosition() * 100) / player->GetDuration()) : 0, buffer, 10);
 			return buffer;
 
 		case MEASURE_RATING:
-			_itow(player->GetRating(), buffer, 10);
+			_itow_s(player->GetRating(), buffer, 10);
 			return buffer;
 
 		case MEASURE_VOLUME:
-			_itow(player->GetVolume(), buffer, 10);
+			_itow_s(player->GetVolume(), buffer, 10);
 			return buffer;
 
 		case MEASURE_STATE:
-			_itow(player->GetState(), buffer, 10);
+			_itow_s(player->GetState(), buffer, 10);
 			return buffer;
 
 		case MEASURE_STATUS:
-			_itow((int)player->IsInitialized(), buffer, 10);
+			_itow_s((int)player->IsInitialized(), buffer, 10);
 			return buffer;
 
 		case MEASURE_SHUFFLE:
-			_itow((int)player->GetShuffle(), buffer, 10);
+			_itow_s((int)player->GetShuffle(), buffer, 10);
 			return buffer;
 
 		case MEASURE_REPEAT:
-			_itow((int)player->GetRepeat(), buffer, 10);
+			_itow_s((int)player->GetRepeat(), buffer, 10);
 			return buffer;
 		}
 	}
@@ -440,7 +440,7 @@ LPCTSTR GetString(UINT id, UINT flags)
 		return L"Error: Invalid player name";
 	}
 
-	return L"";
+	return NULL;
 }
 
 /*

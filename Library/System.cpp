@@ -102,30 +102,7 @@ void CSystem::Initialize(HINSTANCE instance)
 	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 	SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 
-	OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
-	if (GetVersionEx((OSVERSIONINFO*)&osvi))
-	{
-		if (osvi.dwMajorVersion == 5)
-		{
-			// Not checking for osvi.dwMinorVersion >= 1 because Rainmeter won't run on pre-XP
-			c_Platform = OSPLATFORM_XP;
-		}
-		else if (osvi.dwMajorVersion == 6)
-		{
-			if (osvi.dwMinorVersion == 0)
-			{
-				c_Platform = OSPLATFORM_VISTA; // Vista, Server 2008
-			}
-			else
-			{
-				c_Platform = OSPLATFORM_7; // 7, Server 2008R2
-			}
-		}
-		else  // newer OS
-		{
-			c_Platform = OSPLATFORM_7;
-		}
-	}
+	SetOSPlatform();
 
 	c_Monitors.monitors.reserve(8);
 	SetMultiMonitorInfo();
@@ -560,6 +537,40 @@ void CSystem::UpdateWorkareaInfo()
 					info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
 					info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
 			}
+		}
+	}
+}
+
+/*
+** SetOSPlatform
+**
+** Sets the OS platform.
+**
+*/
+void CSystem::SetOSPlatform()
+{
+	OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
+	if (GetVersionEx((OSVERSIONINFO*)&osvi))
+	{
+		if (osvi.dwMajorVersion == 5)
+		{
+			// Not checking for osvi.dwMinorVersion >= 1 because Rainmeter won't run on pre-XP
+			c_Platform = OSPLATFORM_XP;
+		}
+		else if (osvi.dwMajorVersion == 6)
+		{
+			if (osvi.dwMinorVersion == 0)
+			{
+				c_Platform = OSPLATFORM_VISTA; // Vista, Server 2008
+			}
+			else
+			{
+				c_Platform = OSPLATFORM_7; // 7, Server 2008R2
+			}
+		}
+		else // newer OS
+		{
+			c_Platform = OSPLATFORM_7;
 		}
 	}
 }

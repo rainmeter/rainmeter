@@ -372,6 +372,27 @@ void CPlayerITunes::OnTrackChange()
 		tmpVal /= 20L;
 		m_Rating = (UINT)tmpVal;
 
+		IITPlaylist* playlist;
+		hr = track->get_Playlist(&playlist);
+		if (SUCCEEDED(hr))
+		{
+			VARIANT_BOOL shuffle;
+			hr = playlist->get_Shuffle(&shuffle);
+			if (SUCCEEDED(hr))
+			{
+				m_Shuffle = (bool)shuffle;
+			}
+
+			ITPlaylistRepeatMode repeat;
+			hr = playlist->get_SongRepeat(&repeat);
+			if (SUCCEEDED(hr))
+			{
+				m_Repeat = (bool)repeat;
+			}
+
+			playlist->Release();
+		}
+
 		IITFileOrCDTrack* file;
 		hr = track->QueryInterface(&file);
 		if (SUCCEEDED(hr))

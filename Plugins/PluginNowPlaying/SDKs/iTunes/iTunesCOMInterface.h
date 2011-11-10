@@ -4,7 +4,7 @@
 
 
  /* File created by MIDL compiler version 6.00.0366 */
-/* at Wed Jun 25 17:02:20 2008
+/* at Wed Nov 05 13:21:00 2008
  */
 /* Compiler settings for iTunesCOMInterface.idl:
     Oicf, W1, Zp8, env=Win32 (32b run)
@@ -263,7 +263,7 @@ void __RPC_USER MIDL_user_free( void * );
 typedef /* [public][v1_enum][uuid] */  DECLSPEC_UUID("4B73428D-2F56-4833-8E5D-65590E45FEAD") 
 enum __MIDL___MIDL_itf_iTunesCOMInterface_0000_0001
     {	kITTypeLibrary_MajorVersion	= 1,
-	kITTypeLibrary_MinorVersion	= 11
+	kITTypeLibrary_MinorVersion	= 12
     } 	ITVersion;
 
 typedef /* [public][v1_enum][uuid] */  DECLSPEC_UUID("4C25623B-F990-4ebd-8970-F29A70084B8C") 
@@ -12390,6 +12390,12 @@ EXTERN_C const IID IID_IITFileOrCDTrack;
         virtual /* [helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_Playlists( 
             /* [retval][out] */ IITPlaylistCollection **iPlaylistCollection) = 0;
         
+        virtual /* [helpstring][propput] */ HRESULT STDMETHODCALLTYPE put_Location( 
+            /* [in] */ BSTR location) = 0;
+        
+        virtual /* [helpstring][propget] */ HRESULT STDMETHODCALLTYPE get_ReleaseDate( 
+            /* [retval][out] */ DATE *releaseDate) = 0;
+        
     };
     
 #else 	/* C style interface */
@@ -12929,6 +12935,14 @@ EXTERN_C const IID IID_IITFileOrCDTrack;
             IITFileOrCDTrack * This,
             /* [retval][out] */ IITPlaylistCollection **iPlaylistCollection);
         
+        /* [helpstring][propput] */ HRESULT ( STDMETHODCALLTYPE *put_Location )( 
+            IITFileOrCDTrack * This,
+            /* [in] */ BSTR location);
+        
+        /* [helpstring][propget] */ HRESULT ( STDMETHODCALLTYPE *get_ReleaseDate )( 
+            IITFileOrCDTrack * This,
+            /* [retval][out] */ DATE *releaseDate);
+        
         END_INTERFACE
     } IITFileOrCDTrackVtbl;
 
@@ -13335,6 +13349,12 @@ EXTERN_C const IID IID_IITFileOrCDTrack;
 
 #define IITFileOrCDTrack_get_Playlists(This,iPlaylistCollection)	\
     (This)->lpVtbl -> get_Playlists(This,iPlaylistCollection)
+
+#define IITFileOrCDTrack_put_Location(This,location)	\
+    (This)->lpVtbl -> put_Location(This,location)
+
+#define IITFileOrCDTrack_get_ReleaseDate(This,releaseDate)	\
+    (This)->lpVtbl -> get_ReleaseDate(This,releaseDate)
 
 #endif /* COBJMACROS */
 
@@ -14030,6 +14050,30 @@ void __RPC_STUB IITFileOrCDTrack_get_RatingKind_Stub(
 
 
 void __RPC_STUB IITFileOrCDTrack_get_Playlists_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][propput] */ HRESULT STDMETHODCALLTYPE IITFileOrCDTrack_put_Location_Proxy( 
+    IITFileOrCDTrack * This,
+    /* [in] */ BSTR location);
+
+
+void __RPC_STUB IITFileOrCDTrack_put_Location_Stub(
+    IRpcStubBuffer *This,
+    IRpcChannelBuffer *_pRpcChannelBuffer,
+    PRPC_MESSAGE _pRpcMessage,
+    DWORD *_pdwStubPhase);
+
+
+/* [helpstring][propget] */ HRESULT STDMETHODCALLTYPE IITFileOrCDTrack_get_ReleaseDate_Proxy( 
+    IITFileOrCDTrack * This,
+    /* [retval][out] */ DATE *releaseDate);
+
+
+void __RPC_STUB IITFileOrCDTrack_get_ReleaseDate_Stub(
     IRpcStubBuffer *This,
     IRpcChannelBuffer *_pRpcChannelBuffer,
     PRPC_MESSAGE _pRpcMessage,

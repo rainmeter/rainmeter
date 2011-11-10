@@ -178,7 +178,7 @@ void CPlayerWinamp::UpdateData()
 				m_Shuffle = (bool)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_SHUFFLE);
 				m_Repeat = (bool)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_REPEAT);
 
-				TagLib::FileRef fr(wBuffer);
+				TagLib::FileRef fr(wBuffer, false);
 				TagLib::Tag* tag = fr.tag();
 				if (tag)
 				{
@@ -207,7 +207,7 @@ void CPlayerWinamp::UpdateData()
 					}
 
 					std::wstring trackFolder = CCover::GetFileFolder(m_FilePath);
-					if (!m_Album.empty())
+					if (tag && !m_Album.empty())
 					{
 						// Winamp stores covers usually as %album%.jpg
 						std::wstring file = m_Album;
@@ -257,7 +257,8 @@ void CPlayerWinamp::UpdateData()
 						m_CoverPath.clear();
 					}
 				}
-				else if (tag)
+
+				if (tag)
 				{
 					return;
 				}

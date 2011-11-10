@@ -124,7 +124,7 @@ void CPlayer::UpdateMeasure()
 */
 void CPlayer::FindCover()
 {
-	TagLib::FileRef fr(m_FilePath.c_str());
+	TagLib::FileRef fr(m_FilePath.c_str(), false);
 	if (!fr.isNull() && CCover::GetEmbedded(fr, m_TempCoverPath))
 	{
 		m_CoverPath = m_TempCoverPath;
