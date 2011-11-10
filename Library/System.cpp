@@ -102,6 +102,31 @@ void CSystem::Initialize(HINSTANCE instance)
 	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 	SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 
+	OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
+	if (GetVersionEx((OSVERSIONINFO*)&osvi))
+	{
+		if (osvi.dwMajorVersion == 5)
+		{
+			// Not checking for osvi.dwMinorVersion >= 1 because Rainmeter won't run on pre-XP
+			c_Platform = OSPLATFORM_XP;
+		}
+		else if (osvi.dwMajorVersion == 6)
+		{
+			if (osvi.dwMinorVersion == 0)
+			{
+				c_Platform = OSPLATFORM_VISTA; // Vista, Server 2008
+			}
+			else
+			{
+				c_Platform = OSPLATFORM_7; // 7, Server 2008R2
+			}
+		}
+		else  // newer OS
+		{
+			c_Platform = OSPLATFORM_7;
+		}
+	}
+
 	c_Monitors.monitors.reserve(8);
 	SetMultiMonitorInfo();
 
@@ -624,6 +649,33 @@ HWND CSystem::GetWorkerW()
 }
 
 /*
+** GetBackmostTopWindow
+**
+** Returns the first window whose position is not ZPOSITION_ONDESKTOP,
+** ZPOSITION_BOTTOM, or ZPOSITION_NORMAL.
+**
+*/
+HWND CSystem::GetBackmostTopWindow()
+{
+	HWND winPos = c_HelperWindow;
+
+	// Skip all ZPOSITION_ONDESKTOP, ZPOSITION_BOTTOM, and ZPOSITION_NORMAL windows
+	while (winPos = ::GetNextWindow(winPos, GW_HWNDPREV))
+	{
+		CMeterWindow* wnd = Rainmeter->GetMeterWindow(winPos);
+		if (!wnd ||
+			(wnd->GetWindowZPosition() != ZPOSITION_NORMAL && 
+			wnd->GetWindowZPosition() != ZPOSITION_ONDESKTOP &&
+			wnd->GetWindowZPosition() != ZPOSITION_ONBOTTOM))
+		{
+			break;
+		}
+	}
+
+	return winPos;
+}
+
+/*
 ** BelongToSameProcess
 **
 ** Checks whether the given windows belong to the same process.
@@ -657,7 +709,9 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 		(Window = Rainmeter->GetMeterWindow(hwnd)))
 	{
 		ZPOSITION zPos = Window->GetWindowZPosition();
-		if (zPos == ZPOSITION_ONDESKTOP || zPos == ZPOSITION_ONBOTTOM)
+		if (zPos == ZPOSITION_ONDESKTOP ||
+			(zPos == ZPOSITION_NORMAL && Rainmeter->IsNormalStayDesktop()) ||
+			zPos == ZPOSITION_ONBOTTOM)
 		{
 			if (lParam)
 			{
@@ -705,28 +759,30 @@ void CSystem::ChangeZPosInOrder()
 	// Retrieve the Rainmeter's meter windows in Z-order
 	EnumWindows(MyEnumWindowsProc, (LPARAM)(&windowsInZOrder));
 
-	if (!c_ShowDesktop)
+	auto resetZPos = [=](ZPOSITION zpos)
 	{
 		// Reset ZPos in Z-order (Bottom)
 		std::vector<CMeterWindow*>::const_iterator iter = windowsInZOrder.begin(), iterEnd = windowsInZOrder.end();
 		for ( ; iter != iterEnd; ++iter)
 		{
-			if ((*iter)->GetWindowZPosition() == ZPOSITION_ONBOTTOM)
+			if ((*iter)->GetWindowZPosition() == zpos)
 			{
-				(*iter)->ChangeZPos(ZPOSITION_ONBOTTOM);  // reset
+				(*iter)->ChangeZPos(zpos);  // reset
 			}
 		}
+	};
+
+	if (Rainmeter->IsNormalStayDesktop())
+	{
+		resetZPos(ZPOSITION_NORMAL);
 	}
 
-	// Reset ZPos in Z-order (On Desktop)
-	std::vector<CMeterWindow*>::const_iterator iter = windowsInZOrder.begin(), iterEnd = windowsInZOrder.end();
-	for ( ; iter != iterEnd; ++iter)
+	if (!c_ShowDesktop)
 	{
-		if ((*iter)->GetWindowZPosition() == ZPOSITION_ONDESKTOP)
-		{
-			(*iter)->ChangeZPos(ZPOSITION_ONDESKTOP);  // reset
-		}
+		resetZPos(ZPOSITION_ONBOTTOM);
 	}
+
+	resetZPos(ZPOSITION_ONDESKTOP);
 
 	if (logging)
 	{
@@ -839,6 +895,17 @@ bool CSystem::CheckDesktopState(HWND WorkerW)
 		PrepareHelperWindow(WorkerW);
 
 		ChangeZPosInOrder();
+
+		if (c_ShowDesktop)
+		{
+			KillTimer(c_Window, TIMER_SHOWDESKTOP);
+			SetTimer(c_Window, TIMER_SHOWDESKTOP, 100, NULL);
+		}
+		else
+		{
+			KillTimer(c_Window, TIMER_SHOWDESKTOP);
+			SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
+		}
 	}
 
 	return stateChanged;
@@ -953,59 +1020,6 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	}
 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
-}
-
-/*
-** GetOSPlatform
-**
-** Checks which OS you are running.
-**
-*/
-OSPLATFORM CSystem::GetOSPlatform()
-{
-	if (c_Platform == OSPLATFORM_UNKNOWN)
-	{
-		OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
-		if (!GetVersionEx((OSVERSIONINFO*)&osvi) || osvi.dwPlatformId != VER_PLATFORM_WIN32_NT)
-		{
-			c_Platform = OSPLATFORM_9X;
-		}
-		else
-		{
-			if (osvi.dwMajorVersion <= 4)  // NT4 or older
-			{
-				c_Platform = OSPLATFORM_NT4;
-			}
-			else if (osvi.dwMajorVersion == 5)  // 2000 / XP (x64 / Server 2003, R2)
-			{
-				if (osvi.dwMinorVersion == 0)
-				{
-					c_Platform = OSPLATFORM_2K;
-				}
-				else
-				{
-					c_Platform = OSPLATFORM_XP;
-				}
-			}
-			else if (osvi.dwMajorVersion == 6)  // Vista (Server 2008) / 7 (Server 2008R2)
-			{
-				if (osvi.dwMinorVersion == 0)
-				{
-					c_Platform = OSPLATFORM_VISTA;
-				}
-				else
-				{
-					c_Platform = OSPLATFORM_7;
-				}
-			}
-			else  // newer OS
-			{
-				c_Platform = OSPLATFORM_7;
-			}
-		}
-	}
-
-	return c_Platform;
 }
 
 /*

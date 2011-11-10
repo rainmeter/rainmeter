@@ -143,6 +143,8 @@ public:
 	bool GetDisableDragging() { return m_DisableDragging; }
 	void SetDisableDragging(bool dragging);
 
+	bool IsNormalStayDesktop() { return m_NormalStayDesktop; }
+
 	void AddAboutLogInfo(int level, LPCWSTR time, LPCWSTR message);
 	const std::list<LOG_INFO>& GetAboutLogData() { return m_LogData; }
 
@@ -241,6 +243,8 @@ private:
 	bool m_DesktopWorkAreaType;			// If true, DesktopWorkArea is treated as "margin"
 	std::map<UINT, RECT> m_DesktopWorkAreas;
 	std::vector<RECT> m_OldDesktopWorkAreas;
+
+	bool m_NormalStayDesktop;
 
 	bool m_MenuActive;
 

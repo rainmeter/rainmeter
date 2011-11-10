@@ -188,6 +188,7 @@ public:
 
 	void MoveWindow(int x, int y);
 	void ChangeZPos(ZPOSITION zPos, bool all = false);
+	void ChangeSingleZPos(ZPOSITION zPos, bool all = false);
 	void FadeWindow(int from, int to);
 
 	void ResizeBlur(const WCHAR* arg, int mode);

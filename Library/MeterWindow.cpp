@@ -41,6 +41,8 @@ using namespace Gdiplus;
 
 #define SNAPDISTANCE 10
 
+#define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
+
 enum TIMER
 {
 	TIMER_METER      = 1,
@@ -431,7 +433,11 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	ScreenToWindow();
 
-	if (all || oldZPos != m_WindowZPosition)
+	if (init)
+	{
+		ChangeSingleZPos(m_WindowZPosition, all);
+	}
+	else if (all || oldZPos != m_WindowZPosition)
 	{
 		ChangeZPos(m_WindowZPosition, all);
 	}
@@ -590,8 +596,6 @@ void CMeterWindow::MoveWindow(int x, int y)
 */
 void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 {
-#define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
-
 	HWND winPos = HWND_NOTOPMOST;
 	m_WindowZPosition = zPos;
 
@@ -622,12 +626,11 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 		}
 		break;
 
+	case ZPOSITION_NORMAL:
+		if (all || !Rainmeter->IsNormalStayDesktop()) break;
 	case ZPOSITION_ONDESKTOP:
 		if (CSystem::GetShowDesktop())
 		{
-			// Set WS_EX_TOPMOST flag
-			SetWindowPos(m_Window, HWND_TOPMOST, 0, 0, 0, 0, ZPOS_FLAGS);
-
 			winPos = CSystem::GetHelperWindow();
 
 			if (all)
@@ -667,6 +670,30 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 	}
 
 	SetWindowPos(m_Window, winPos, 0, 0, 0, 0, ZPOS_FLAGS);
+}
+
+/*
+** ChangeSingleZPos
+**
+** Sets the window's z-position in proper order.
+**
+*/
+void CMeterWindow::ChangeSingleZPos(ZPOSITION zPos, bool all)
+{
+	if (zPos == ZPOSITION_NORMAL && m_Rainmeter->IsNormalStayDesktop() && (!all || CSystem::GetShowDesktop()))
+	{
+		m_WindowZPosition = zPos;
+
+		// Set window on top of all other ZPOSITION_ONDESKTOP, ZPOSITION_BOTTOM, and ZPOSITION_NORMAL windows
+		SetWindowPos(m_Window, CSystem::GetBackmostTopWindow(), 0, 0, 0, 0, ZPOS_FLAGS);
+
+		// Bring window on top of other application windows
+		BringWindowToTop(m_Window);
+	}
+	else
+	{
+		ChangeZPos(zPos, all);
+	}
 }
 
 /*
@@ -3812,7 +3839,7 @@ void CMeterWindow::SetWindowHide(HIDEMODE hide)
 */
 void CMeterWindow::SetWindowZPosition(ZPOSITION zpos)
 {
-	ChangeZPos(zpos);
+	ChangeSingleZPos(zpos);
 	WriteConfig(SETTING_ALWAYSONTOP);
 }
 
@@ -3950,14 +3977,22 @@ LRESULT CMeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	LPWINDOWPOS wp=(LPWINDOWPOS)lParam;
+	LPWINDOWPOS wp = (LPWINDOWPOS)lParam;
 
 	if (!m_Refreshing)
 	{
-		if (m_WindowZPosition == ZPOSITION_ONBOTTOM || m_WindowZPosition == ZPOSITION_ONDESKTOP)
+		if (m_WindowZPosition == ZPOSITION_NORMAL && m_Rainmeter->IsNormalStayDesktop() && CSystem::GetShowDesktop())
 		{
-			// do not change the z-order. This keeps the window on bottom.
-			wp->flags|=SWP_NOZORDER;
+			if (!(wp->flags & (SWP_NOOWNERZORDER | SWP_NOACTIVATE)))
+			{
+				// Set window on top of all other ZPOSITION_ONDESKTOP, ZPOSITION_BOTTOM, and ZPOSITION_NORMAL windows
+				wp->hwndInsertAfter = CSystem::GetBackmostTopWindow();
+			}
+		}
+		else if (m_WindowZPosition == ZPOSITION_ONDESKTOP || m_WindowZPosition == ZPOSITION_ONBOTTOM)
+		{
+			// Do not change the z-order. This keeps the window on bottom.
+			wp->flags |= SWP_NOZORDER;
 		}
 	}
 

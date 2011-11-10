@@ -25,9 +25,6 @@
 enum OSPLATFORM
 {
 	OSPLATFORM_UNKNOWN = 0,
-	OSPLATFORM_9X,
-	OSPLATFORM_NT4,
-	OSPLATFORM_2K,
 	OSPLATFORM_XP,
 	OSPLATFORM_VISTA,
 	OSPLATFORM_7
@@ -59,17 +56,18 @@ public:
 	static void Initialize(HINSTANCE instance);
 	static void Finalize();
 
-	static HWND GetWindow() { return c_Window; }
-
 	static const MULTIMONITOR_INFO& GetMultiMonitorInfo() { return c_Monitors; }
 	static size_t GetMonitorCount();
 
 	static bool GetShowDesktop() { return c_ShowDesktop; }
 
+	static HWND GetWindow() { return c_Window; }
+	static HWND GetBackmostTopWindow();
+
 	static HWND GetHelperWindow() { return c_HelperWindow; }
 	static void PrepareHelperWindow(HWND WorkerW = GetWorkerW());
 
-	static OSPLATFORM GetOSPlatform();
+	static OSPLATFORM GetOSPlatform() { return c_Platform; }
 	static ULONGLONG GetTickCount64();
 
 	static bool IsPathSeparator(WCHAR ch) { return (ch == L'\\' || ch == L'/'); }

@@ -757,6 +757,7 @@ CRainmeter::CRainmeter() :
 	m_NewVersion(false),
 	m_DesktopWorkAreaChanged(false),
 	m_DesktopWorkAreaType(false),
+	m_NormalStayDesktop(true),
 	m_MenuActive(false),
 	m_DisableRDP(false),
 	m_DisableDragging(false),
@@ -2219,6 +2220,8 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	}
 
 	m_DesktopWorkAreaType = 0!=parser.ReadInt(L"Rainmeter", L"DesktopWorkAreaType", 0);
+
+	m_NormalStayDesktop = 0!=parser.ReadInt(L"Rainmeter", L"NormalStayDesktop", 1);
 
 	for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
 	{
