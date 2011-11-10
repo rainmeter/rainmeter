@@ -19,9 +19,6 @@
 #ifndef _DIALOGMANAGE_H_
 #define _DIALOGMANAGE_H_
 
-#include "MeterWindow.h"
-#include "Rainmeter.h"
-#include "TrayWindow.h"
 #include "Dialog.h"
 
 class CDialogManage : public CDialog

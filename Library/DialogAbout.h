@@ -19,8 +19,6 @@
 #ifndef _DIALOGABOUT_H_
 #define _DIALOGABOUT_H_
 
-#include "MeterWindow.h"
-#include "TrayWindow.h"
 #include "Dialog.h"
 
 class CDialogAbout : public CDialog

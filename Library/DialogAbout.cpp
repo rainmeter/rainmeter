@@ -20,6 +20,7 @@
 #include "Rainmeter.h"
 #include "System.h"
 #include "MeterWindow.h"
+#include "TrayWindow.h"
 #include "Measure.h"
 #include "resource.h"
 #include "DialogAbout.h"
