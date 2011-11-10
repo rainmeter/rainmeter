@@ -85,8 +85,8 @@ public:
 	static bool RemoveFile(const std::wstring& file);
 	static bool RemoveFolder(const std::wstring& strFolder);
 
-	static void GetIniFileMappingList(std::vector<std::wstring>& iniFileMappings);
-	static std::wstring GetTemporaryFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& iniFile);
+	static void UpdateIniFileMappingList();
+	static std::wstring GetTemporaryFile(const std::wstring& iniFile);
 
 private:
 	static void CALLBACK MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
@@ -118,6 +118,8 @@ private:
 	static OSPLATFORM c_Platform;
 
 	static std::wstring c_WorkingDirectory;
+
+	static std::vector<std::wstring> c_IniFileMappings;
 };
 
 #endif

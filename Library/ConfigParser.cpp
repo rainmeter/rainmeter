@@ -80,10 +80,9 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 	SetBuiltInVariables(pRainmeter, meterWindow);
 	ResetMonitorVariables(meterWindow);
 
-	std::vector<std::wstring> iniFileMappings;
-	CSystem::GetIniFileMappingList(iniFileMappings);
+	CSystem::UpdateIniFileMappingList();
 
-	ReadIniFile(iniFileMappings, m_Filename, config);
+	ReadIniFile(m_Filename, config);
 	ReadVariables();
 
 	// Clear and minimize
@@ -449,35 +448,35 @@ bool CConfigParser::ReplaceVariables(std::wstring& result)
 	}
 
 	// Check for variables (#VAR#)
-	size_t start = 0;
-	size_t end = std::wstring::npos;
-	size_t pos = std::wstring::npos;
+	size_t start = 0, end;
 	bool loop = true;
 
 	do
 	{
-		pos = result.find(L'#', start);
-		if (pos != std::wstring::npos)
+		start = result.find(L'#', start);
+		if (start != std::wstring::npos)
 		{
-			end = result.find(L'#', pos + 1);
+			size_t si = start + 1;
+			end = result.find(L'#', si);
 			if (end != std::wstring::npos)
 			{
-				if (result[pos + 1] == L'*' && result[end - 1] == L'*')
+				size_t ei = end - 1;
+				if (result[si] == L'*' && result[ei] == L'*')
 				{
-					result.erase(pos + 1, 1);
-					result.erase(end - 2, 1);
-					start = end - 1;
+					result.erase(ei, 1);
+					result.erase(si, 1);
+					start = ei;
 				}
 				else
 				{
-					std::wstring strVariable = result.substr(pos + 1, end - (pos + 1));
+					std::wstring strVariable = result.substr(si, end - si);
 					std::wstring strValue;
 
 					if (GetVariable(strVariable, strValue))
 					{
 						// Variable found, replace it with the value
-						result.replace(pos, end - pos + 1, strValue);
-						start = pos + strValue.length();
+						result.replace(start, end - start + 1, strValue);
+						start += strValue.length();
 						replaced = true;
 					}
 					else
@@ -513,40 +512,40 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 	// Check for measures ([Measure])
 	if (!m_Measures.empty())
 	{
-		size_t start = 0;
-		size_t end = std::wstring::npos;
-		size_t pos = std::wstring::npos;
-		size_t pos2 = std::wstring::npos;
+		size_t start = 0, end, next;
 		bool loop = true;
+
 		do
 		{
-			pos = result.find(L'[', start);
-			if (pos != std::wstring::npos)
+			start = result.find(L'[', start);
+			if (start != std::wstring::npos)
 			{
-				end = result.find(L']', pos + 1);
+				size_t si = start + 1;
+				end = result.find(L']', si);
 				if (end != std::wstring::npos)
 				{
-					pos2 = result.find(L'[', pos + 1);
-					if (pos2 == std::wstring::npos || end < pos2)
+					next = result.find(L'[', si);
+					if (next == std::wstring::npos || end < next)
 					{
-						if (result[pos + 1] == L'*' && result[end - 1] == L'*')
+						size_t ei = end - 1;
+						if (result[si] == L'*' && result[ei] == L'*')
 						{
-							result.erase(pos + 1, 1);
-							result.erase(end - 2, 1);
-							start = end - 1;
+							result.erase(ei, 1);
+							result.erase(si, 1);
+							start = ei;
 						}
 						else
 						{
-							std::wstring var = result.substr(pos + 1, end - (pos + 1));
+							std::wstring var = result.substr(si, end - si);
 
 							CMeasure* measure = GetMeasure(var);
 							if (measure)
 							{
-								std::wstring value = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
+								const std::wstring& value = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
 
 								// Measure found, replace it with the value
-								result.replace(pos, end - pos + 1, value);
-								start = pos + value.length();
+								result.replace(start, end - start + 1, value);
+								start += value.length();
 								replaced = true;
 							}
 							else
@@ -557,7 +556,7 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 					}
 					else
 					{
-						start = pos2;
+						start = next;
 					}
 				}
 				else
@@ -835,8 +834,8 @@ void CConfigParser::Shrink(std::vector<std::wstring>& vec)
 {
 	if (!vec.empty())
 	{
-		std::vector<std::wstring>::iterator iter = vec.begin();
-		while (iter != vec.end())
+		std::vector<std::wstring>::reverse_iterator iter = vec.rbegin();
+		while (iter != vec.rend())
 		{
 			std::wstring::size_type pos = (*iter).find_first_not_of(L" \t\r\n");
 			if (pos != std::wstring::npos)
@@ -852,7 +851,7 @@ void CConfigParser::Shrink(std::vector<std::wstring>& vec)
 			else
 			{
 				// Remove empty element
-				iter = vec.erase(iter);
+				vec.erase((++iter).base());
 			}
 		}
 	}
@@ -1042,7 +1041,7 @@ RECT CConfigParser::ParseRECT(LPCTSTR string)
 **
 ** \param iniFile The ini file to be read.
 */
-void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& iniFile, LPCTSTR config, int depth)
+void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int depth)
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
@@ -1058,7 +1057,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 	}
 
 	// Avoid "IniFileMapping"
-	std::wstring iniRead = CSystem::GetTemporaryFile(iniFileMappings, iniFile);
+	std::wstring iniRead = CSystem::GetTemporaryFile(iniFile);
 	bool temporary = (!iniRead.empty() && (iniRead.size() != 1 || iniRead[0] != L'?'));
 
 	if (temporary)
@@ -1196,7 +1195,7 @@ void CConfigParser::ReadIniFile(const std::vector<std::wstring>& iniFileMappings
 								// It's a relative path so add the current path as a prefix
 								value.insert(0, CRainmeter::ExtractPath(iniFile));
 							}
-							ReadIniFile(iniFileMappings, value, config, depth + 1);
+							ReadIniFile(value, config, depth + 1);
 						}
 						else
 						{

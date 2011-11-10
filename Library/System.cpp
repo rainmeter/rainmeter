@@ -36,9 +36,10 @@ enum TIMER
 };
 enum INTERVAL
 {
-	INTERVAL_SHOWDESKTOP = 250,
-	INTERVAL_NETSTATS    = 60000,
-	INTERVAL_DELETELATER = 1000
+	INTERVAL_SHOWDESKTOP    = 250,
+	INTERVAL_RESTOREWINDOWS = 100,
+	INTERVAL_NETSTATS       = 60000,
+	INTERVAL_DELETELATER    = 1000
 };
 
 MULTIMONITOR_INFO CSystem::c_Monitors = { 0 };
@@ -53,6 +54,8 @@ bool CSystem::c_ShowDesktop = false;
 OSPLATFORM CSystem::c_Platform = OSPLATFORM_UNKNOWN;
 
 std::wstring CSystem::c_WorkingDirectory;
+
+std::vector<std::wstring> CSystem::c_IniFileMappings;
 
 extern CRainmeter* Rainmeter;
 
@@ -909,12 +912,10 @@ bool CSystem::CheckDesktopState(HWND WorkerW)
 
 		if (c_ShowDesktop)
 		{
-			KillTimer(c_Window, TIMER_SHOWDESKTOP);
-			SetTimer(c_Window, TIMER_SHOWDESKTOP, 100, NULL);
+			SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_RESTOREWINDOWS, NULL);
 		}
 		else
 		{
-			KillTimer(c_Window, TIMER_SHOWDESKTOP);
 			SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
 		}
 	}
@@ -1240,30 +1241,65 @@ bool CSystem::RemoveFolder(const std::wstring& strFolder)
 }
 
 /*
-** GetIniFileMappingList
+** UpdateIniFileMappingList
 **
 ** Retrieves the "IniFileMapping" entries from Registry.
 **
 */
-void CSystem::GetIniFileMappingList(std::vector<std::wstring>& iniFileMappings)
+void CSystem::UpdateIniFileMappingList()
 {
-	HKEY hKey;
-	LONG ret;
+	static ULARGE_INTEGER s_LastWriteTime = {0};
 
-	ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\IniFileMapping", 0, KEY_ENUMERATE_SUB_KEYS, &hKey);
+	HKEY hKey;
+	LONG ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\IniFileMapping", 0, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS, &hKey);
 	if (ret == ERROR_SUCCESS)
 	{
-		WCHAR buffer[MAX_PATH];
-		DWORD index = 0, cch = MAX_PATH;
+		DWORD numSubKeys;
+		ULARGE_INTEGER ftLastWriteTime;
+		bool changed = false;
 
-		while ((ret = RegEnumKeyEx(hKey, index++, buffer, &cch, NULL, NULL, NULL, NULL)) != ERROR_NO_MORE_ITEMS)
+		ret = RegQueryInfoKey(hKey, NULL, NULL, NULL, &numSubKeys, NULL, NULL, NULL, NULL, NULL, NULL, (LPFILETIME)&ftLastWriteTime);
+		if (ret == ERROR_SUCCESS)
 		{
-			if (ret == ERROR_SUCCESS)
+			//LogWithArgs(LOG_DEBUG, L"IniFileMapping: numSubKeys=%u, ftLastWriteTime=%llu", numSubKeys, ftLastWriteTime.QuadPart);
+
+			if (ftLastWriteTime.QuadPart != s_LastWriteTime.QuadPart ||
+				numSubKeys != c_IniFileMappings.size())
 			{
-				iniFileMappings.push_back(buffer);
+				s_LastWriteTime.QuadPart = ftLastWriteTime.QuadPart;
+				if (numSubKeys > c_IniFileMappings.capacity())
+				{
+					c_IniFileMappings.reserve(numSubKeys);
+				}
+				changed = true;
 			}
-			cch = MAX_PATH;
 		}
+		else
+		{
+			s_LastWriteTime.QuadPart = 0;
+			changed = true;
+		}
+
+		if (changed)
+		{
+			if (!c_IniFileMappings.empty())
+			{
+				c_IniFileMappings.clear();
+			}
+
+			WCHAR buffer[MAX_PATH];
+			DWORD index = 0, cch = MAX_PATH;
+
+			while ((ret = RegEnumKeyEx(hKey, index++, buffer, &cch, NULL, NULL, NULL, NULL)) != ERROR_NO_MORE_ITEMS)
+			{
+				if (ret == ERROR_SUCCESS)
+				{
+					c_IniFileMappings.push_back(buffer);
+				}
+				cch = MAX_PATH;
+			}
+		}
+
 		RegCloseKey(hKey);
 	}
 }
@@ -1276,28 +1312,19 @@ void CSystem::GetIniFileMappingList(std::vector<std::wstring>& iniFileMappings)
 ** Note that a temporary file must be deleted by caller.
 **
 */
-std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& iniFile)
+std::wstring CSystem::GetTemporaryFile(const std::wstring& iniFile)
 {
 	std::wstring temporary;
 
-	if (!iniFileMappings.empty())
+	if (!c_IniFileMappings.empty())
 	{
 		std::wstring::size_type pos = iniFile.find_last_of(L"\\/");
-		std::wstring filename;
+		const WCHAR* filename = iniFile.c_str() + ((pos != std::wstring::npos) ? pos + 1 : 0);
 
-		if (pos != std::wstring::npos)
+		std::vector<std::wstring>::const_iterator iter = c_IniFileMappings.begin();
+		for ( ; iter != c_IniFileMappings.end(); ++iter)
 		{
-			filename.assign(iniFile, pos + 1, iniFile.length() - (pos + 1));
-		}
-		else
-		{
-			filename = iniFile;
-		}
-
-		std::vector<std::wstring>::const_iterator iter = iniFileMappings.begin();
-		for ( ; iter != iniFileMappings.end(); ++iter)
-		{
-			if (_wcsicmp((*iter).c_str(), filename.c_str()) == 0)
+			if (_wcsicmp((*iter).c_str(), filename) == 0)
 			{
 				WCHAR buffer[MAX_PATH];
 
@@ -1307,7 +1334,7 @@ std::wstring CSystem::GetTemporaryFile(const std::vector<std::wstring>& iniFileM
 				{
 					temporary = buffer;
 
-					std::wstring tmp = GetTemporaryFile(iniFileMappings, temporary);
+					std::wstring tmp = GetTemporaryFile(temporary);
 					if (tmp.empty() && CopyFiles(iniFile, temporary))
 					{
 						return temporary;

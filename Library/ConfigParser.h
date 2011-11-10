@@ -100,7 +100,7 @@ private:
 
 	CMeasure* GetMeasure(const std::wstring& name);
 
-	void ReadIniFile(const std::vector<std::wstring>& iniFileMappings, const std::wstring& strFileName, LPCTSTR config = NULL, int depth = 0);
+	void ReadIniFile(const std::wstring& strFileName, LPCTSTR config = NULL, int depth = 0);
 
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
 

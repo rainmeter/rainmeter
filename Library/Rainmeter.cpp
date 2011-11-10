@@ -649,9 +649,8 @@ void CRainmeter::RainmeterWriteKeyValue(const WCHAR* arg)
 		}
 
 		// Avoid "IniFileMapping"
-		std::vector<std::wstring> iniFileMappings;
-		CSystem::GetIniFileMappingList(iniFileMappings);
-		std::wstring iniWrite = CSystem::GetTemporaryFile(iniFileMappings, iniFile);
+		CSystem::UpdateIniFileMappingList();
+		std::wstring iniWrite = CSystem::GetTemporaryFile(iniFile);
 		if (iniWrite.size() == 1 && iniWrite[0] == L'?')  // error occurred
 		{
 			return;
@@ -869,7 +868,7 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 		{
 			iniFile += L"Rainmeter.ini";
 		}
-		else if (iniFile.length() <= 4 || _wcsicmp(iniFile.substr(iniFile.length() - 4).c_str(), L".ini") != 0)
+		else if (iniFile.length() <= 4 || _wcsicmp(iniFile.c_str() + (iniFile.length() - 4), L".ini") != 0)
 		{
 			iniFile += L"\\Rainmeter.ini";
 		}
@@ -912,7 +911,7 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 	// Set the log file and stats file location
 	m_LogFile = m_StatsFile = m_IniFile;
 	size_t logFileLen = m_LogFile.length();
-	if (logFileLen > 4 && _wcsicmp(m_LogFile.substr(logFileLen - 4).c_str(), L".ini") == 0)
+	if (logFileLen > 4 && _wcsicmp(m_LogFile.c_str() + (logFileLen - 4), L".ini") == 0)
 	{
 		m_LogFile.replace(logFileLen - 4, 4, L".log");
 		m_StatsFile.replace(logFileLen - 4, 4, L".stats");

@@ -114,7 +114,7 @@ int CMeterString::GetX(bool abs)
 		switch (m_Align)
 		{
 		case ALIGN_CENTER:
-			x = x - (m_W / 2);
+			x -= m_W / 2;
 			break;
 
 		case ALIGN_RIGHT:
