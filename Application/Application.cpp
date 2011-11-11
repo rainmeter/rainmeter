@@ -21,7 +21,6 @@
 #include <crtdbg.h>
 #include <string>
 #include <algorithm>
-#include "resource.h"
 #include "../Library/Rainmeter.h"
 
 #if defined _M_IX86

@@ -264,7 +264,7 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 	}
 
 	// Return the default icon if there is no valid measure
-	return LoadIcon(m_Instance, MAKEINTRESOURCE(IDI_TRAY));
+	return (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, 16, 16, LR_SHARED);
 }
 
 void CTrayWindow::ReadConfig(CConfigParser& parser)

@@ -598,14 +598,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Res\tray.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="res\window.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="Library.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>

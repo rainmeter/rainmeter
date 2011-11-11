@@ -245,7 +245,7 @@ INT_PTR CALLBACK CDialogAbout::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 
 INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
-	HICON hIcon = LoadIcon(Rainmeter->GetInstance(), MAKEINTRESOURCE(IDI_TRAY));
+	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, 16, 16, LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
 	if (wcscmp(GetString(ID_STR_ISRTL), L"1") == 0)
@@ -1030,7 +1030,7 @@ void CDialogAbout::CTabVersion::Initialize()
 	m_Initialized = true;
 
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTVERSION_RAINMETER_ICON);
-	HICON icon = LoadIcon(Rainmeter->GetInstance(), MAKEINTRESOURCE(IDI_WINDOW));
+	HICON icon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, 32, 32, LR_SHARED);
 	Static_SetIcon(item, icon);
 
 	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_VERSION_TEXT);

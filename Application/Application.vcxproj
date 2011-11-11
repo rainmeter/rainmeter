@@ -314,9 +314,6 @@ xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32\release\
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="resource.h" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Rainmeter.ico" />
   </ItemGroup>
   <ItemGroup>

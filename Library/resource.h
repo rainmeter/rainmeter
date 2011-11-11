@@ -3,8 +3,8 @@
 // Used by Library.rc
 //
 #define IDC_STATIC                                   -1
-#define IDI_TRAY                                     100
-#define IDI_WINDOW                                   101
+#define IDI_RAINMETER                                100
+#define IDI_TRAY                                     101
 #define IDR_CONTEXT_MENU                             102
 #define IDR_SKIN_MENU                                103
 #define IDR_MANAGESKINS_MENU                         104

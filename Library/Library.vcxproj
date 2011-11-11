@@ -924,10 +924,6 @@
     <ClInclude Include="lua\lua\lvm.h" />
     <ClInclude Include="lua\lua\lzio.h" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Res\tray.ico" />
-    <None Include="res\window.ico" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
