@@ -69,7 +69,7 @@ public:
 	};
 
 	CTintedImage(const WCHAR* name = L"Image", const WCHAR** configArray = c_DefaultConfigArray, bool disableTransform = false);
-	virtual ~CTintedImage();
+	~CTintedImage();
 
 	void ReadConfig(CConfigParser& parser, const WCHAR* section);
 

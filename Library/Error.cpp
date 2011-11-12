@@ -19,13 +19,4 @@
 #include "StdAfx.h"
 #include "Error.h"
 
-/*
-** GetString
-**
-** Returns the error string
-**
-*/
-const std::wstring& CError::GetString()
-{
-	return m_String;
-}
+// Leave this file as it is for history on Google code.

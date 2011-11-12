@@ -26,9 +26,9 @@ class CError
 {
 public:
 	CError(const std::wstring& String) : m_String(String) {}
-	CError(const WCHAR* String ) : m_String(String) {}
+	CError(const WCHAR* String) : m_String(String) {}
 
-	const std::wstring& GetString(); 
+	const std::wstring& GetString() { return m_String; }
 
 private:
 	std::wstring m_String;
