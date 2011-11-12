@@ -2246,7 +2246,7 @@ bool CMeterWindow::ReadSkin()
 	m_HasButtons = false;
 
 	// Get all the sections (i.e. different meters, measures and the other stuff)
-	std::vector<std::wstring>::const_iterator iter = m_Parser.GetSections().begin();
+	std::list<std::wstring>::const_iterator iter = m_Parser.GetSections().begin();
 	for ( ; iter != m_Parser.GetSections().end(); ++iter)
 	{
 		const WCHAR* section = (*iter).c_str();

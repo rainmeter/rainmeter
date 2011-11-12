@@ -77,8 +77,7 @@ public:
 	bool ReadFormula(const std::wstring& result, double* resultValue);
 
 	const std::wstring& GetFilename() { return m_Filename; }
-	const std::vector<std::wstring>& GetSections() { return m_Sections; }
-	bool IsSectionDefined(LPCTSTR section) { return m_FoundSections.find(StrToLower(section)) != m_FoundSections.end(); }
+	const std::list<std::wstring>& GetSections() { return m_Sections; }
 
 	bool ReplaceVariables(std::wstring& result);
 	bool ReplaceMeasures(std::wstring& result);
@@ -125,11 +124,11 @@ private:
 	bool m_LastDefaultUsed;
 	bool m_LastValueDefined;
 
-	std::vector<std::wstring> m_Sections;		// The sections must be an ordered array
+	std::list<std::wstring> m_Sections;		// The sections must be an ordered array
 	std::unordered_map<std::wstring, std::wstring> m_Values;
 
 	std::unordered_set<std::wstring> m_FoundSections;
-	std::vector<std::wstring> m_ListVariables;
+	std::list<std::wstring> m_ListVariables;
 
 	std::unordered_map<std::wstring, std::wstring> m_BuiltInVariables;         // Built-in variables
 	std::unordered_map<std::wstring, std::wstring> m_Variables;                // User-defined variables

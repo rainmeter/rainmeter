@@ -87,7 +87,7 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 
 	// Clear and minimize
 	std::unordered_set<std::wstring>().swap(m_FoundSections);
-	std::vector<std::wstring>().swap(m_ListVariables);
+	std::list<std::wstring>().swap(m_ListVariables);
 }
 
 /*
@@ -124,7 +124,7 @@ void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* me
 */
 void CConfigParser::ReadVariables()
 {
-	std::vector<std::wstring>::const_iterator iter = m_ListVariables.begin();
+	std::list<std::wstring>::const_iterator iter = m_ListVariables.begin();
 	for ( ; iter != m_ListVariables.end(); ++iter)
 	{
 		SetVariable((*iter), ReadString(L"Variables", (*iter).c_str(), L"", false));
@@ -1108,13 +1108,13 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 		{
 			if (*pos)
 			{
-				std::wstring strTmp = StrToLower(pos);
-				if (m_FoundSections.insert(strTmp).second)
+				std::wstring section = pos;
+				if (m_FoundSections.insert(StrToLower(section)).second)
 				{
-					m_Sections.push_back(pos);
+					m_Sections.push_back(section);
 				}
-				sections.push_back(pos);
-				pos += strTmp.size() + 1;
+				sections.push_back(section);
+				pos += section.size() + 1;
 			}
 			else  // Empty string
 			{
@@ -1125,15 +1125,16 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 	else
 	{
 		// Special case: Read only "Rainmeter" and specified section from "Rainmeter.ini"
-		sections.push_back(L"Rainmeter");
-		sections.push_back(config);
+		const std::wstring strRainmeter = L"Rainmeter";
+		const std::wstring strConfig = config;
+
+		sections.push_back(strRainmeter);
+		sections.push_back(strConfig);
 
 		if (depth == 0)  // Add once
 		{
-			m_Sections.push_back(L"Rainmeter");
-			m_Sections.push_back(config);
-			m_FoundSections.insert(L"rainmeter");
-			m_FoundSections.insert(StrToLower(config));
+			m_Sections.push_back(strRainmeter);
+			m_Sections.push_back(strConfig);
 		}
 	}
 
@@ -1167,24 +1168,28 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 		{
 			if (*pos)
 			{
-				std::wstring key = pos;
-				std::wstring::size_type len = key.length(), sep = key.find_first_of(L'=');
-				if (sep != std::wstring::npos && sep != 0)
+				size_t len = wcslen(pos);
+				WCHAR* sep = wmemchr(pos, L'=', len);
+				if (sep != NULL && sep != pos)
 				{
-					std::wstring value = key.substr(sep + 1, len - sep);
-					key.erase(sep);
+					size_t clen = sep - pos;  // key's length
 
+					std::wstring key(pos, clen);
 					if (foundKeys.insert(StrToLowerC(key)).second)
 					{
+						++sep;
+						clen = len - (clen + 1);  // value's length
+
 						// Trim surrounded quotes from value
-						std::wstring::size_type valueLen = value.length();
-						if (valueLen >= 2 && (
-							(value[0] == L'\"' && value[valueLen - 1] == L'\"') ||
-							(value[0] == L'\'' && value[valueLen - 1] == L'\'')))
+						if (clen >= 2 && (
+							(sep[0] == L'\"' && sep[clen - 1] == L'\"') ||
+							(sep[0] == L'\'' && sep[clen - 1] == L'\'')))
 						{
-							valueLen -= 2;
-							value.assign(value, 1, valueLen);
+							clen -= 2;
+							++sep;
 						}
+
+						std::wstring value(sep, clen);
 
 						if (wcsncmp(key.c_str(), L"@include", 8) == 0)
 						{

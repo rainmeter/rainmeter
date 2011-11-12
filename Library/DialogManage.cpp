@@ -1490,11 +1490,9 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 					CConfigParser parser;
 					parser.Initialize(path.c_str(), Rainmeter);
 
-					const std::vector<std::wstring>& sections = parser.GetSections();
-					std::vector<std::wstring>::const_iterator iter = sections.begin();
-
 					// Remove sections with Active=0
-					for ( ; iter != sections.end(); ++iter)
+					std::list<std::wstring>::const_iterator iter = parser.GetSections().begin();
+					for ( ; iter != parser.GetSections().end(); ++iter)
 					{
 						if (parser.GetValue(*iter, L"Active", L"") == L"0")
 						{

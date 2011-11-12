@@ -24,11 +24,11 @@
 #include <vector>
 #include <string>
 #include "Litestep.h"
+#include "ConfigParser.h"
 #include "MeterWindow.h"
 #include "Group.h"
 
 class CMeasure;
-class CConfigParser;
 
 class CMeter : public CGroup
 {
