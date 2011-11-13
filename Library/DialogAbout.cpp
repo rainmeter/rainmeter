@@ -781,7 +781,7 @@ void CDialogAbout::CTabMeasures::UpdateMeasureList(LPCTSTR entryName)
 			for ( ; j != measures.end(); ++j)
 			{
 				const WCHAR* name = (*j)->GetName();
-				const WCHAR* val = (*j)->GetStats();
+				std::wstring val = (*j)->GetStats();
 
 				WCHAR buffer[256];
 				double minVal = (*j)->GetMinValue();
@@ -809,10 +809,7 @@ void CDialogAbout::CTabMeasures::UpdateMeasureList(LPCTSTR entryName)
 					}
 
 					ListView_SetItemText(item, index, 1, (WCHAR*)range.c_str());
-					if (val)
-					{
-						ListView_SetItemText(item, index, 2, (WCHAR*)val);
-					}
+					ListView_SetItemText(item, index, 2, (WCHAR*)val.c_str());
 					++index;
 				}
 			}
