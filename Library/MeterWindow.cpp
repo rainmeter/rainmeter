@@ -4868,10 +4868,10 @@ LRESULT CALLBACK CMeterWindow::InitialWndProc(HWND hWnd, UINT uMsg, WPARAM wPara
 	if (uMsg == WM_NCCREATE)
 	{
 		CMeterWindow* window = (CMeterWindow*)((LPCREATESTRUCT)lParam)->lpCreateParams;
-		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG)window);
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)window);
 
 		// Change the window procedure over to MainWndProc now that GWLP_USERDATA is set
-		SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG)WndProc);
+		SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
 		return TRUE;
 	}
 
