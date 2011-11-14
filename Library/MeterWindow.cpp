@@ -246,7 +246,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 	// Register the windowclass
 	WNDCLASSEX wc = {sizeof(WNDCLASSEX)};
 	wc.style = CS_NOCLOSE | CS_DBLCLKS;
-	wc.lpfnWndProc = WndProc;
+	wc.lpfnWndProc = InitialWndProc;
 	wc.hInstance = m_Rainmeter->GetInstance();
 	wc.hCursor = NULL;  // The cursor should be controlled by using SetCursor() when needed.
 	wc.lpszClassName = METERWINDOW_CLASS_NAME;
@@ -3530,17 +3530,6 @@ LRESULT CMeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnCreate
-**
-** During window creation we do nothing.
-**
-*/
-LRESULT CMeterWindow::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	return 0;
-}
-
-/*
 ** OnCommand
 **
 ** Handle the menu commands.
@@ -4075,17 +4064,6 @@ void CMeterWindow::SnapToWindow(CMeterWindow* window, LPWINDOWPOS wp)
 		if ((wp->y + m_WindowH < SNAPDISTANCE + y) && (wp->y + m_WindowH > y - SNAPDISTANCE)) wp->y = y - m_WindowH;
 		if ((wp->y + m_WindowH < SNAPDISTANCE + y + h) && (wp->y + m_WindowH > y + h - SNAPDISTANCE)) wp->y = y + h - m_WindowH;
 	}
-}
-
-/*
-** OnDestroy
-**
-** During destruction of the window do nothing.
-**
-*/
-LRESULT CMeterWindow::OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	return 0;
 }
 
 /*
@@ -4826,34 +4804,16 @@ LRESULT CMeterWindow::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 /*
 ** WndProc
 **
-** The window procedure for the Meter
+** The main window procedure for the meter window.
 **
 */
 LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	CMeterWindow* Window = NULL;
-
-	if (uMsg == WM_CREATE)
-	{
-		// Fetch this window-object from the CreateStruct
-		Window=(CMeterWindow*)((LPCREATESTRUCT)lParam)->lpCreateParams;
-
-		SetProp(hWnd, L"RAINMETER", Window);
-	}
-	else if (uMsg == WM_DESTROY)
-	{
-		RemoveProp(hWnd, L"RAINMETER");
-	}
-	else
-	{
-		Window = (CMeterWindow*)GetProp(hWnd, L"RAINMETER");
-	}
+	CMeterWindow* window = (CMeterWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 	BEGIN_MESSAGEPROC
 	MESSAGE(OnPaint, WM_PAINT)
 	MESSAGE(OnMove, WM_MOVE)
-	MESSAGE(OnCreate, WM_CREATE)
-	MESSAGE(OnDestroy, WM_DESTROY)
 	MESSAGE(OnTimer, WM_TIMER)
 	MESSAGE(OnCommand, WM_COMMAND)
 	MESSAGE(OnSysCommand, WM_SYSCOMMAND)
@@ -4895,6 +4855,27 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnSettingChange, WM_SETTINGCHANGE)
 	MESSAGE(OnDisplayChange, WM_DISPLAYCHANGE)
 	END_MESSAGEPROC
+}
+
+/*
+** InitialWndProc
+**
+** The initial window procedure for the meter window. Passes control to WndProc after initial setup.
+**
+*/
+LRESULT CALLBACK CMeterWindow::InitialWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (uMsg == WM_NCCREATE)
+	{
+		CMeterWindow* window = (CMeterWindow*)((LPCREATESTRUCT)lParam)->lpCreateParams;
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG)window);
+
+		// Change the window procedure over to MainWndProc now that GWLP_USERDATA is set
+		SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG)WndProc);
+		return TRUE;
+	}
+
+	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
 /*

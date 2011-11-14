@@ -27,10 +27,10 @@
 #include "ConfigParser.h"
 #include "Group.h"
 
-#define BEGIN_MESSAGEPROC if (Window) { switch (uMsg) {
-#define MESSAGE(handler, msg) case msg: return Window->handler(uMsg, wParam, lParam);
+#define BEGIN_MESSAGEPROC switch (uMsg) {
+#define MESSAGE(handler, msg) case msg: return window->handler(uMsg, wParam, lParam);
 #define REJECT_MESSAGE(msg) case msg: return 0;
-#define END_MESSAGEPROC } } return DefWindowProc(hWnd, uMsg, wParam, lParam);
+#define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 #define WM_DELAYED_EXECUTE WM_APP + 0
 #define WM_DELAYED_REFRESH WM_APP + 1
@@ -254,11 +254,10 @@ public:
 
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK InitialWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnDestroy(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam);
