@@ -64,6 +64,7 @@ CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
 	wc.lpfnWndProc = (WNDPROC)WndProc;
 	wc.hInstance = instance;
 	wc.lpszClassName = L"RainmeterTrayClass";
+	wc.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, 32, 32, LR_SHARED);
 
 	RegisterClass(&wc);
 
