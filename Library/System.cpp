@@ -1180,11 +1180,14 @@ bool CSystem::CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, 
 	tmpFrom.append(1, L'\0');
 	tmpTo.append(1, L'\0');
 
-	SHFILEOPSTRUCT fo = {0};
-	fo.wFunc = bMove ? FO_MOVE : FO_COPY;
-	fo.pFrom = tmpFrom.c_str();
-	fo.pTo = tmpTo.c_str();
-	fo.fFlags = FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO;
+	SHFILEOPSTRUCT fo =
+	{
+		NULL,
+		bMove ? FO_MOVE : FO_COPY,
+		tmpFrom.c_str(),
+		tmpTo.c_str(),
+		FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO
+	};
 
 	int result = SHFileOperation(&fo);
 	if (result != 0)
@@ -1226,10 +1229,14 @@ bool CSystem::RemoveFolder(const std::wstring& strFolder)
 	// The strings must end with double nul
 	tmpFolder.append(1, L'\0');
 
-	SHFILEOPSTRUCT fo = {0};
-	fo.wFunc = FO_DELETE;
-	fo.pFrom = tmpFolder.c_str();
-	fo.fFlags = FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO;
+	SHFILEOPSTRUCT fo =
+	{
+		NULL,
+		FO_DELETE,
+		tmpFolder.c_str(),
+		NULL,
+		FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO
+	};
 
 	int result = SHFileOperation(&fo);
 	if (result != 0)
@@ -1287,7 +1294,7 @@ void CSystem::UpdateIniFileMappingList()
 				c_IniFileMappings.clear();
 			}
 
-			WCHAR buffer[MAX_PATH];
+			WCHAR* buffer = new WCHAR[MAX_PATH];
 			DWORD index = 0, cch = MAX_PATH;
 
 			while ((ret = RegEnumKeyEx(hKey, index++, buffer, &cch, NULL, NULL, NULL, NULL)) != ERROR_NO_MORE_ITEMS)
@@ -1298,6 +1305,8 @@ void CSystem::UpdateIniFileMappingList()
 				}
 				cch = MAX_PATH;
 			}
+
+			delete [] buffer;
 		}
 
 		RegCloseKey(hKey);
@@ -1326,31 +1335,36 @@ std::wstring CSystem::GetTemporaryFile(const std::wstring& iniFile)
 		{
 			if (_wcsicmp((*iter).c_str(), filename) == 0)
 			{
-				WCHAR buffer[MAX_PATH];
+				WCHAR* buffer = new WCHAR[MAX_PATH];
 
-				GetTempPath(MAX_PATH, buffer);
-				temporary = buffer;
-				if (GetTempFileName(temporary.c_str(), L"cfg", 0, buffer) != 0)
+				if (GetTempPath(MAX_PATH, buffer) != 0 &&
+					GetTempFileName(buffer, L"cfg", 0, buffer) != 0)
 				{
 					temporary = buffer;
 
 					std::wstring tmp = GetTemporaryFile(temporary);
-					if (tmp.empty() && CopyFiles(iniFile, temporary))
-					{
-						return temporary;
-					}
-					else  // temporary is reserved or failed
+					if (!tmp.empty() || !CopyFiles(iniFile, temporary))  // temporary is reserved or failed
 					{
 						RemoveFile(temporary);
-						if (tmp.empty()) tmp = L"?";
-						return tmp;
+
+						if (tmp.empty())
+						{
+							temporary = L"?";
+						}
+						else
+						{
+							temporary.swap(tmp);
+						}
 					}
 				}
 				else  // failed
 				{
 					LogWithArgs(LOG_ERROR, L"Unable to create temporary file to: %s", temporary.c_str());
-					return L"?";
+					temporary = L"?";
 				}
+
+				delete [] buffer;
+				break;
 			}
 		}
 	}

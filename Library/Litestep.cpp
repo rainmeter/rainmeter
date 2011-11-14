@@ -323,7 +323,7 @@ BOOL LogInternal(int nLevel, ULONGLONG elapsed, LPCTSTR pszMessage)
 	// The stub implementation
 	if (Rainmeter->GetLogging())
 	{
-		std::wstring logfile = Rainmeter->GetLogFile();
+		const std::wstring& logfile = Rainmeter->GetLogFile();
 		if (logFound == 0)
 		{
 			// Check if the file exists

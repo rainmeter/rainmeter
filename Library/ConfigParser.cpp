@@ -696,14 +696,8 @@ std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR ke
 	const std::wstring& string = ReadString(section, key, L"");
 	if (!string.empty())
 	{
-		std::wstring tmp = string;
-		if (tmp[tmp.length() - 1] != L';')
-		{
-			tmp += L";";
-		}
-
 		// Tokenize and parse the floats
-		std::vector<std::wstring> tokens = Tokenize(tmp, L";");
+		std::vector<std::wstring> tokens = Tokenize(string, L";");
 		std::vector<std::wstring>::const_iterator iter = tokens.begin();
 		for ( ; iter != tokens.end(); ++iter)
 		{

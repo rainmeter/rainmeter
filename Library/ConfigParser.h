@@ -51,7 +51,7 @@ public:
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
 	void DeleteValue(const std::wstring& strSection, const std::wstring& strKey);
 
-	void SetStyleTemplate(const std::wstring& strStyle) { m_StyleTemplate =  Tokenize(strStyle, L"|"); Shrink(m_StyleTemplate); }
+	void SetStyleTemplate(const std::wstring& strStyle) { Tokenize(strStyle, L"|").swap(m_StyleTemplate); Shrink(m_StyleTemplate); }
 	void ClearStyleTemplate() { m_StyleTemplate.clear(); }
 
 	const std::wstring& GetLastUsedStyle() { return m_LastUsedStyle; }
