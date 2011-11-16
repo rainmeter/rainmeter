@@ -591,7 +591,7 @@ void CMeasureNet::ReadStats(const WCHAR* iniFile, std::wstring& statsDate)
 	CConfigParser parser;
 	parser.Initialize(iniFile, NULL, NULL, L"Statistics");
 
-	std::wstring date = parser.ReadString(L"Statistics", L"Since", L"", false);
+	const std::wstring& date = parser.ReadString(L"Statistics", L"Since", L"", false);
 	if (!date.empty())
 	{
 		statsDate = date;

@@ -119,38 +119,39 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	CMeasure::ReadConfig(parser, section);
 
-	const std::wstring& keyname = parser.ReadString(section, L"RegHKey", L"HKEY_CURRENT_USER");
-	if (_wcsicmp(keyname.c_str(), L"HKEY_CLASSES_ROOT") == 0)
+	const WCHAR* keyname = parser.ReadString(section, L"RegHKey", L"HKEY_CURRENT_USER").c_str();
+	if (_wcsicmp(keyname, L"HKEY_CLASSES_ROOT") == 0)
 	{
 		m_HKey = HKEY_CLASSES_ROOT;
 	}
-	else if (_wcsicmp(keyname.c_str(), L"HKEY_CURRENT_CONFIG") == 0)
+	else if (_wcsicmp(keyname, L"HKEY_CURRENT_CONFIG") == 0)
 	{
 		m_HKey = HKEY_CURRENT_CONFIG;
 	}
-	else if (_wcsicmp(keyname.c_str(), L"HKEY_CURRENT_USER") == 0)
+	else if (_wcsicmp(keyname, L"HKEY_CURRENT_USER") == 0)
 	{
 		m_HKey = HKEY_CURRENT_USER;
 	}
-	else if (_wcsicmp(keyname.c_str(), L"HKEY_LOCAL_MACHINE") == 0)
+	else if (_wcsicmp(keyname, L"HKEY_LOCAL_MACHINE") == 0)
 	{
 		m_HKey = HKEY_LOCAL_MACHINE;
 	}
-	else if (_wcsicmp(keyname.c_str(), L"HKEY_CLASSES_ROOT") == 0)
+	else if (_wcsicmp(keyname, L"HKEY_CLASSES_ROOT") == 0)
 	{
 		m_HKey = HKEY_CLASSES_ROOT;
 	}
-	else if (_wcsicmp(keyname.c_str(), L"HKEY_PERFORMANCE_DATA") == 0)
+	else if (_wcsicmp(keyname, L"HKEY_PERFORMANCE_DATA") == 0)
 	{
 		m_HKey = HKEY_PERFORMANCE_DATA;
 	}
-	else if (_wcsicmp(keyname.c_str(), L"HKEY_DYN_DATA") == 0)
+	else if (_wcsicmp(keyname, L"HKEY_DYN_DATA") == 0)
 	{
 		m_HKey = HKEY_DYN_DATA;
 	}
 	else
 	{
-		std::wstring error = L"HKEY=" + keyname;
+		std::wstring error = L"HKEY=";
+		error += keyname;
 		error += L" is not valid in [";
 		error += m_Name;
 		error += L"]";

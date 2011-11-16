@@ -73,15 +73,15 @@ void CDialogAbout::Open(const WCHAR* name)
 
 	if (name)
 	{
-		if (_wcsnicmp(name, L"Measures", 8) == 0)
+		if (_wcsicmp(name, L"Measures") == 0)
 		{
 			tab = 1;
 		}
-		else if (_wcsnicmp(name, L"Plugins", 7) == 0)
+		else if (_wcsicmp(name, L"Plugins") == 0)
 		{
 			tab = 2;
 		}
-		else if (_wcsnicmp(name, L"Version", 7) == 0)
+		else if (_wcsicmp(name, L"Version") == 0)
 		{
 			tab = 3;
 		}

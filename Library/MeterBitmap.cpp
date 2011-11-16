@@ -196,22 +196,23 @@ void CMeterBitmap::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_TransitionFrameCount = parser.ReadInt(section, L"BitmapTransitionFrames", 0);
 
-	const std::wstring& align = parser.ReadString(section, L"BitmapAlign", L"LEFT");
-	if (_wcsicmp(align.c_str(), L"LEFT") == 0)
+	const WCHAR* align = parser.ReadString(section, L"BitmapAlign", L"LEFT").c_str();
+	if (_wcsicmp(align, L"LEFT") == 0)
 	{
 		m_Align = ALIGN_LEFT;
 	}
-	else if (_wcsicmp(align.c_str(), L"RIGHT") == 0)
+	else if (_wcsicmp(align, L"RIGHT") == 0)
 	{
 		m_Align = ALIGN_RIGHT;
 	}
-	else if (_wcsicmp(align.c_str(), L"CENTER") == 0)
+	else if (_wcsicmp(align, L"CENTER") == 0)
 	{
 		m_Align = ALIGN_CENTER;
 	}
 	else
 	{
-		std::wstring error = L"BitmapAlign=" + align;
+		std::wstring error = L"BitmapAlign=";
+		error += align;
 		error += L" is not valid in [";
 		error += m_Name;
 		error += L"]";

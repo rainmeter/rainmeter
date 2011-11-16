@@ -292,7 +292,7 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 	m_TrayIconEnabled = 0!=parser.ReadInt(L"Rainmeter", L"TrayIcon", 1);
 	if (m_TrayIconEnabled)
 	{
-		std::wstring measureName = parser.ReadString(L"TrayMeasure", L"Measure", L"");
+		const std::wstring& measureName = parser.ReadString(L"TrayMeasure", L"Measure", L"");
 
 		if (!measureName.empty())
 		{
@@ -317,18 +317,18 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 			Rainmeter->SetCurrentParser(oldParser);
 		}
 
-		std::wstring type = parser.ReadString(L"TrayMeasure", L"TrayMeter", m_Measure ? L"HISTOGRAM" : L"NONE");
-		if (_wcsicmp(type.c_str(), L"NONE") == 0)
+		const WCHAR* type = parser.ReadString(L"TrayMeasure", L"TrayMeter", m_Measure ? L"HISTOGRAM" : L"NONE").c_str();
+		if (_wcsicmp(type, L"NONE") == 0)
 		{
 			// Use main icon
 		}
-		else if (_wcsicmp(type.c_str(), L"HISTOGRAM") == 0)
+		else if (_wcsicmp(type, L"HISTOGRAM") == 0)
 		{
 			m_MeterType = TRAY_METER_TYPE_HISTOGRAM;
 			m_TrayColor1 = parser.ReadColor(L"TrayMeasure", L"TrayColor1", Color(0, 100, 0));
 			m_TrayColor2 = parser.ReadColor(L"TrayMeasure", L"TrayColor2", Color(0, 255, 0));
 		}
-		else if (_wcsicmp(type.c_str(), L"BITMAP") == 0)
+		else if (_wcsicmp(type, L"BITMAP") == 0)
 		{
 			m_MeterType = TRAY_METER_TYPE_BITMAP;
 
@@ -338,26 +338,22 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 			if (!imageName.empty())
 			{
 				imageName.insert(0, Rainmeter->GetSkinPath());
-				if (imageName.size() > 3)
+				if (_wcsicmp(imageName.c_str() + (imageName.size() - 4), L".ico") == 0)
 				{
-					std::wstring extension = imageName.substr(imageName.size() - 3);
-					if (extension == L"ico" || extension == L"ICO")
+					int count = 1;
+					HICON hIcon = NULL;
+
+					// Load the icons
+					do
 					{
-						int count = 1;
-						HICON hIcon = NULL;
+						WCHAR buffer[MAX_PATH];
+						_snwprintf_s(buffer, _TRUNCATE, imageName.c_str(), count++);
 
-						// Load the icons
-						do
-						{
-							WCHAR buffer[MAX_PATH];
-							_snwprintf_s(buffer, _TRUNCATE, imageName.c_str(), count++);
-
-							hIcon = (HICON)LoadImage(NULL, buffer, IMAGE_ICON, TRAYICON_SIZE, TRAYICON_SIZE, LR_LOADFROMFILE);
-							if (hIcon) m_TrayIcons.push_back(hIcon);
-							if (imageName == buffer) break;
-						}
-						while(hIcon != NULL);
+						hIcon = (HICON)LoadImage(NULL, buffer, IMAGE_ICON, TRAYICON_SIZE, TRAYICON_SIZE, LR_LOADFROMFILE);
+						if (hIcon) m_TrayIcons.push_back(hIcon);
+						if (imageName == buffer) break;
 					}
+					while(hIcon != NULL);
 				}
 
 				if (m_TrayIcons.empty())
@@ -377,7 +373,7 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 		}
 		else
 		{
-			LogWithArgs(LOG_ERROR, L"No such TrayMeter: %s", type.c_str());
+			LogWithArgs(LOG_ERROR, L"No such TrayMeter: %s", type);
 		}
 
 		AddTrayIcon();

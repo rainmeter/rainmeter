@@ -373,10 +373,11 @@ void CMeterImage::BindMeasure(const std::list<CMeasure*>& measures)
 	for (; j != m_MeasureNames.end(); ++j)
 	{
 		// Go through the list and check it there is a secondary measures for us
+		const WCHAR* name = (*j).c_str();
 		std::list<CMeasure*>::const_iterator i = measures.begin();
 		for ( ; i != measures.end(); ++i)
 		{
-			if (_wcsicmp((*i)->GetName(), (*j).c_str()) == 0)
+			if (_wcsicmp((*i)->GetName(), name) == 0)
 			{
 				m_Measures.push_back(*i);
 				break;

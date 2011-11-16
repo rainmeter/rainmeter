@@ -134,7 +134,7 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	// Read common configs
 	CMeasure::ReadConfig(parser, section);
 
-	std::wstring file = parser.ReadString(section, L"ScriptFile", L"");
+	const std::wstring& file = parser.ReadString(section, L"ScriptFile", L"");
 
 	if (!file.empty())
 	{
@@ -185,7 +185,7 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 						const char* strKey = lua_tostring(L, -1);
 
 						std::wstring wstrKey = ConvertToWide(strKey);
-						std::wstring wstrValue = parser.ReadString(section, wstrKey.c_str(), L"");
+						const std::wstring& wstrValue = parser.ReadString(section, wstrKey.c_str(), L"");
 
 						if (!wstrValue.empty())
 						{

@@ -91,7 +91,6 @@ public:
 private:
 	static void CALLBACK MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime);
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static BOOL DwmIsCompositionEnabled();
 
 	static void SetMultiMonitorInfo();
 	static void ClearMultiMonitorInfo() { c_Monitors.monitors.clear(); }

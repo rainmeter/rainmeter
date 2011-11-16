@@ -1137,14 +1137,15 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 	for ( ; iter != sections.end(); ++iter)
 	{
 		std::unordered_set<std::wstring> foundKeys;
-		bool isVariables = (_wcsicmp((*iter).c_str(), L"Variables") == 0);
-		bool isMetadata = (config == NULL && _wcsicmp((*iter).c_str(), L"Metadata") == 0);
+		const WCHAR* sectionName = (*iter).c_str();
+		bool isVariables = (_wcsicmp(sectionName, L"Variables") == 0);
+		bool isMetadata = (config == NULL && _wcsicmp(sectionName, L"Metadata") == 0);
 
 		// Read all "key=value" from the section
 		do
 		{
 			items[0] = 0;
-			DWORD res = GetPrivateProfileSection((*iter).c_str(), items, itemsSize, iniRead.c_str());
+			DWORD res = GetPrivateProfileSection(sectionName, items, itemsSize, iniRead.c_str());
 			if (res < itemsSize - 2)		// Fits in the buffer
 			{
 				epos = items + res;

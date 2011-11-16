@@ -72,11 +72,11 @@ void CDialogManage::Open(const WCHAR* name)
 
 	if (name)
 	{
-		if (_wcsnicmp(name, L"Themes", 6) == 0)
+		if (_wcsicmp(name, L"Themes") == 0)
 		{
 			tab = 1;
 		}
-		else if (_wcsnicmp(name, L"Settings", 8) == 0)
+		else if (_wcsicmp(name, L"Settings") == 0)
 		{
 			tab = 2;
 		}

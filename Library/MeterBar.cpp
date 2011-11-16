@@ -119,18 +119,19 @@ void CMeterBar::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_Flip = parser.ReadInt(section, L"Flip", 0) == 1;
 
-	const std::wstring& orientation = parser.ReadString(section, L"BarOrientation", L"VERTICAL");
-	if (_wcsicmp(L"VERTICAL", orientation.c_str()) == 0)
+	const WCHAR* orientation = parser.ReadString(section, L"BarOrientation", L"VERTICAL").c_str();
+	if (_wcsicmp(L"VERTICAL", orientation) == 0)
 	{
 		m_Orientation = VERTICAL;
 	}
-	else if (_wcsicmp(L"HORIZONTAL", orientation.c_str()) == 0)
+	else if (_wcsicmp(L"HORIZONTAL", orientation) == 0)
 	{
 		m_Orientation = HORIZONTAL;
 	}
 	else
 	{
-		std::wstring error = L"BarOrientation=" + orientation;
+		std::wstring error = L"BarOrientation=";
+		error += orientation;
 		error += L" is not valid in [";
 		error += m_Name;
 		error += L"]";

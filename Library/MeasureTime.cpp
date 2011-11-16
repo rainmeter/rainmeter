@@ -127,11 +127,12 @@ bool CMeasureTime::Update()
 
 		FileTimeToSystemTime(&ftToday, &sysToday);
 
-		if (_wcsicmp(L"locale-time", m_Format.c_str()) == 0)
+		const WCHAR* format = m_Format.c_str();
+		if (_wcsicmp(L"locale-time", format) == 0)
 		{
 			GetTimeFormat(LOCALE_USER_DEFAULT, 0, &sysToday, NULL, tmpSz, MAX_LINE_LENGTH);
 		}
-		else if (_wcsicmp(L"locale-date", m_Format.c_str()) == 0)
+		else if (_wcsicmp(L"locale-date", format) == 0)
 		{
 			GetDateFormat(LOCALE_USER_DEFAULT, 0, &sysToday, NULL, tmpSz, MAX_LINE_LENGTH);
 		}
@@ -148,7 +149,7 @@ bool CMeasureTime::Update()
 			today.tm_yday = GetYearDay(sysToday.wYear, sysToday.wMonth, sysToday.wDay);
 			today.tm_year = sysToday.wYear - 1900;
 
-			TimeToString(tmpSz, MAX_LINE_LENGTH, m_Format.c_str(), &today);
+			TimeToString(tmpSz, MAX_LINE_LENGTH, format, &today);
 		}
 
 		m_Value = wcstod(tmpSz, NULL);
@@ -197,17 +198,18 @@ const WCHAR* CMeasureTime::GetStringValue(AUTOSCALE autoScale, double scale, int
 	// Create the string
 	if (!m_Format.empty())
 	{
-		if (_wcsicmp(L"locale-time", m_Format.c_str()) == 0)
+		const WCHAR* format = m_Format.c_str();
+		if (_wcsicmp(L"locale-time", format) == 0)
 		{
 			GetTimeFormat(LOCALE_USER_DEFAULT, 0, &sysToday, NULL, tmpSz, MAX_LINE_LENGTH);
 		}
-		else if (_wcsicmp(L"locale-date", m_Format.c_str()) == 0)
+		else if (_wcsicmp(L"locale-date", format) == 0)
 		{
 			GetDateFormat(LOCALE_USER_DEFAULT, 0, &sysToday, NULL, tmpSz, MAX_LINE_LENGTH);
 		}
 		else
 		{
-			TimeToString(tmpSz, MAX_LINE_LENGTH, m_Format.c_str(), &today);
+			TimeToString(tmpSz, MAX_LINE_LENGTH, format, &today);
 		}
 	}
 	else
@@ -230,8 +232,8 @@ void CMeasureTime::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_Format = parser.ReadString(section, L"Format", L"");
 
-	std::wstring timezone = parser.ReadString(section, L"TimeZone", L"local");
-	if (_wcsicmp(L"local", timezone.c_str()) == 0)
+	const WCHAR* timezone = parser.ReadString(section, L"TimeZone", L"local").c_str();
+	if (_wcsicmp(L"local", timezone) == 0)
 	{
 		SYSTEMTIME sysLocalTime, sysUTCTime;
 		GetLocalTime(&sysLocalTime);
@@ -251,7 +253,7 @@ void CMeasureTime::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		double zone = wcstod(timezone.c_str(), NULL);
+		double zone = wcstod(timezone, NULL);
 		bool dst = 1 == parser.ReadInt(section, L"DaylightSavingTime", 1);
 
 		struct tm* today;

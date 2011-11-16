@@ -1109,7 +1109,7 @@ void CMeterWindow::ResizeBlur(const WCHAR* arg, int mode)
 	{
 		WCHAR* parseSz = _wcsdup(arg);
 		double val;
-		int type, x, y, w, h;
+		int type, x, y, w = 0, h = 0;
 
 		WCHAR* token = wcstok(parseSz, L",");
 		if (token)
@@ -1155,7 +1155,7 @@ void CMeterWindow::ResizeBlur(const WCHAR* arg, int mode)
 			case 1:
 				tempRegion = CreateRectRgn(x, y, w, h);
 				break;
-						
+
 			case 2:
 				token = wcstok(NULL, L",");
 				if (token)
@@ -2084,7 +2084,7 @@ bool CMeterWindow::ReadSkin()
 	SetWindowSizeVariables(0, 0);
 
 	// Global settings
-	std::wstring group = m_Parser.ReadString(L"Rainmeter", L"Group", L"");
+	const std::wstring& group = m_Parser.ReadString(L"Rainmeter", L"Group", L"");
 	if (!group.empty())
 	{
 		m_ConfigGroup += L"|";
@@ -2160,7 +2160,7 @@ bool CMeterWindow::ReadSkin()
 	{
 		if (0 != m_Parser.ReadInt(L"Rainmeter", L"Blur", 0))
 		{
-			std::wstring blurRegion = m_Parser.ReadString(L"Rainmeter", L"BlurRegion", L"", false);
+			std::wstring& blurRegion = (std::wstring&)m_Parser.ReadString(L"Rainmeter", L"BlurRegion", L"", false);
 
 			if (!blurRegion.empty())
 			{
@@ -2192,7 +2192,7 @@ bool CMeterWindow::ReadSkin()
 	}
 
 	// Checking for localfonts
-	std::wstring localFont = m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"");
+	std::wstring& localFont = (std::wstring&)m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"");
 	// If there is a local font we want to load it
 	if (!localFont.empty())
 	{
@@ -4981,27 +4981,25 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return TRUE;	// This meterwindow has been deactivated
 		}
 
-		std::wstring str = (const WCHAR*)pCopyDataStruct->lpData;
+		const WCHAR* str = (const WCHAR*)pCopyDataStruct->lpData;
 
-		if (_wcsnicmp(L"PLAY ", str.c_str(), 5) == 0 ||
-			_wcsnicmp(L"PLAYLOOP ", str.c_str(), 9) == 0 ||
-			_wcsnicmp(L"PLAYSTOP", str.c_str(), 8) == 0)
+		if (_wcsnicmp(L"PLAY ", str, 5) == 0 ||
+			_wcsnicmp(L"PLAYLOOP ", str, 9) == 0 ||
+			_wcsnicmp(L"PLAYSTOP", str, 8) == 0)
 		{
 			// Audio commands are special cases.
-			m_Rainmeter->ExecuteCommand(str.c_str(), this);
+			m_Rainmeter->ExecuteCommand(str, this);
 			return TRUE;
 		}
 
-		std::wstring bang;
-		std::wstring arg;
+		std::wstring bang, arg;
 
 		// Find the first space
-		std::wstring::size_type pos = str.find(' ');
-		if (pos != std::wstring::npos)
+		const WCHAR* pos = wcschr(str, L' ');
+		if (pos)
 		{
-			bang.assign(str, 0, pos);
-			str.erase(0, pos + 1);
-			arg = str;
+			bang.assign(str, 0, pos - str);
+			arg = pos + 1;
 		}
 		else
 		{
@@ -5116,10 +5114,11 @@ std::wstring CMeterWindow::GetSkinRootPath()
 
 CMeter* CMeterWindow::GetMeter(const std::wstring& meterName)
 {
+	const WCHAR* name = meterName.c_str();
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
-		if (_wcsicmp((*j)->GetName(), meterName.c_str()) == 0)
+		if (_wcsicmp((*j)->GetName(), name) == 0)
 		{
 			return (*j);
 		}
@@ -5129,10 +5128,11 @@ CMeter* CMeterWindow::GetMeter(const std::wstring& meterName)
 
 CMeasure* CMeterWindow::GetMeasure(const std::wstring& measureName)
 {
+	const WCHAR* name = measureName.c_str();
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
-		if (_wcsicmp((*i)->GetName(), measureName.c_str()) == 0)
+		if (_wcsicmp((*i)->GetName(), name) == 0)
 		{
 			return (*i);
 		}

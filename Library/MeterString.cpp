@@ -362,96 +362,100 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	m_Scale = wcstod(scale.c_str(), NULL);
 
-	const std::wstring& align = parser.ReadString(section, L"StringAlign", L"LEFT");
-	if (_wcsicmp(align.c_str(), L"LEFT") == 0)
+	const WCHAR* align = parser.ReadString(section, L"StringAlign", L"LEFT").c_str();
+	if (_wcsicmp(align, L"LEFT") == 0)
 	{
 		m_Align = ALIGN_LEFT;
 	}
-	else if (_wcsicmp(align.c_str(), L"RIGHT") == 0)
+	else if (_wcsicmp(align, L"RIGHT") == 0)
 	{
 		m_Align = ALIGN_RIGHT;
 	}
-	else if (_wcsicmp(align.c_str(), L"CENTER") == 0)
+	else if (_wcsicmp(align, L"CENTER") == 0)
 	{
 		m_Align = ALIGN_CENTER;
 	}
 	else
 	{
-		std::wstring error = L"StringAlign=" + align;
+		std::wstring error = L"StringAlign=";
+		error += align;
 		error += L" is not valid in [";
 		error += m_Name;
 		error += L"]";
 		throw CError(error);
 	}
 
-	const std::wstring& stringCase = parser.ReadString(section, L"StringCase", L"NONE");
-	if (_wcsicmp(stringCase.c_str(), L"NONE") == 0)
+	const WCHAR* stringCase = parser.ReadString(section, L"StringCase", L"NONE").c_str();
+	if (_wcsicmp(stringCase, L"NONE") == 0)
 	{
 		m_textCase = TEXTCASE_NONE;
 	}
-	else if (_wcsicmp(stringCase.c_str(), L"UPPER") == 0)
+	else if (_wcsicmp(stringCase, L"UPPER") == 0)
 	{
 		m_textCase = TEXTCASE_UPPER;
 	}
-	else if (_wcsicmp(stringCase.c_str(), L"LOWER") == 0)
+	else if (_wcsicmp(stringCase, L"LOWER") == 0)
 	{
 		m_textCase = TEXTCASE_LOWER;
 	}
-	else if (_wcsicmp(stringCase.c_str(), L"PROPER") == 0)
+	else if (_wcsicmp(stringCase, L"PROPER") == 0)
 	{
 		m_textCase = TEXTCASE_PROPER;
 	}
 	else
 	{
-		std::wstring error = L"StringCase=" + stringCase;
+		std::wstring error = L"StringCase=";
+		error += stringCase;
 		error += L" is not valid in [";
 		error += m_Name;
 		error += L"]";
 		throw CError(error);
 	}
 
-	const std::wstring& style = parser.ReadString(section, L"StringStyle", L"NORMAL");
-	if (_wcsicmp(style.c_str(), L"NORMAL") == 0)
+	const WCHAR* style = parser.ReadString(section, L"StringStyle", L"NORMAL").c_str();
+	if (_wcsicmp(style, L"NORMAL") == 0)
 	{
 		m_Style = NORMAL;
 	}
-	else if (_wcsicmp(style.c_str(), L"BOLD") == 0)
+	else if (_wcsicmp(style, L"BOLD") == 0)
 	{
 		m_Style = BOLD;
 	}
-	else if (_wcsicmp(style.c_str(), L"ITALIC") == 0)
+	else if (_wcsicmp(style, L"ITALIC") == 0)
 	{
 		m_Style = ITALIC;
 	}
-	else if (_wcsicmp(style.c_str(), L"BOLDITALIC") == 0)
+	else if (_wcsicmp(style, L"BOLDITALIC") == 0)
 	{
 		m_Style = BOLDITALIC;
 	}
 	else
 	{
-		std::wstring error = L"StringStyle=" + style;
+		std::wstring error = L"StringStyle=";
+		error += style;
 		error += L" is not valid in [";
 		error += m_Name;
 		error += L"]";
 		throw CError(error);
 	}
 
-	const std::wstring& effect = parser.ReadString(section, L"StringEffect", L"NONE");
-	if (_wcsicmp(effect.c_str(), L"NONE") == 0)
+	const WCHAR* effect = parser.ReadString(section, L"StringEffect", L"NONE").c_str();
+	if (_wcsicmp(effect, L"NONE") == 0)
 	{
 		m_Effect = EFFECT_NONE;
 	}
-	else if (_wcsicmp(effect.c_str(), L"SHADOW") == 0)
+	else if (_wcsicmp(effect, L"SHADOW") == 0)
 	{
 		m_Effect = EFFECT_SHADOW;
 	}
-	else if (_wcsicmp(effect.c_str(), L"BORDER") == 0)
+	else if (_wcsicmp(effect, L"BORDER") == 0)
 	{
 		m_Effect = EFFECT_BORDER;
 	}
 	else
 	{
-		std::wstring error = L"StringEffect=" + effect;
+		std::wstring error = L"StringEffect=";
+		error += effect;
 		error += L" is not valid in [";
 		error += m_Name;
 		error += L"]";
@@ -682,10 +686,11 @@ void CMeterString::BindMeasure(const std::list<CMeasure*>& measures)
 	for (; j != m_MeasureNames.end(); ++j)
 	{
 		// Go through the list and check it there is a secondary measures for us
+		const WCHAR* name = (*j).c_str();
 		std::list<CMeasure*>::const_iterator i = measures.begin();
 		for ( ; i != measures.end(); ++i)
 		{
-			if (_wcsicmp((*i)->GetName(), (*j).c_str()) == 0)
+			if (_wcsicmp((*i)->GetName(), name) == 0)
 			{
 				m_Measures.push_back(*i);
 				break;

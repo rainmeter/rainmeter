@@ -515,10 +515,11 @@ void CMeterHistogram::BindMeasure(const std::list<CMeasure*>& measures)
 	if (!m_SecondaryMeasureName.empty())
 	{
 		// Go through the list and check it there is a secondary measure for us
+		const WCHAR* name = m_SecondaryMeasureName.c_str();
 		std::list<CMeasure*>::const_iterator i = measures.begin();
 		for ( ; i != measures.end(); ++i)
 		{
-			if (_wcsicmp((*i)->GetName(), m_SecondaryMeasureName.c_str()) == 0)
+			if (_wcsicmp((*i)->GetName(), name) == 0)
 			{
 				m_SecondaryMeasure = (*i);
 				CMeter::SetAllMeasures(m_SecondaryMeasure);

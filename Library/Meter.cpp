@@ -467,10 +467,11 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 	}
 
 	// Go through the list and check it there is a measure for us
+	const WCHAR* measure = m_MeasureName.c_str();
 	std::list<CMeasure*>::const_iterator i = measures.begin();
 	for ( ; i != measures.end(); ++i)
 	{
-		if (_wcsicmp((*i)->GetName(), m_MeasureName.c_str()) == 0)
+		if (_wcsicmp((*i)->GetName(), measure) == 0)
 		{
 			m_Measure = (*i);
 			return;
@@ -757,29 +758,30 @@ void CMeter::UpdateToolTip()
 
 		if (!m_ToolTipIcon.empty())
 		{
-			if (_wcsicmp(m_ToolTipIcon.c_str(), L"INFO") == 0)
+			const WCHAR* tipIcon = m_ToolTipIcon.c_str();
+			if (_wcsicmp(tipIcon, L"INFO") == 0)
 			{
 				hIcon = (HICON)TTI_INFO;
 			}
-			else if (_wcsicmp(m_ToolTipIcon.c_str(), L"WARNING") == 0)
+			else if (_wcsicmp(tipIcon, L"WARNING") == 0)
 			{
 				hIcon = (HICON)TTI_WARNING;
 			}
-			else if (_wcsicmp(m_ToolTipIcon.c_str(), L"ERROR") == 0)
+			else if (_wcsicmp(tipIcon, L"ERROR") == 0)
 			{
 				hIcon = (HICON)TTI_ERROR;
 			}
-			else if (_wcsicmp(m_ToolTipIcon.c_str(), L"QUESTION") == 0)
+			else if (_wcsicmp(tipIcon, L"QUESTION") == 0)
 			{
 				hIcon = LoadIcon(NULL, IDI_QUESTION);
 			}
-			else if (_wcsicmp(m_ToolTipIcon.c_str(), L"SHIELD") == 0)
+			else if (_wcsicmp(tipIcon, L"SHIELD") == 0)
 			{
 				hIcon = LoadIcon(NULL, IDI_SHIELD);
 			}
 			else
 			{
-				hIcon = (HICON)LoadImage(NULL, m_ToolTipIcon.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+				hIcon = (HICON)LoadImage(NULL, tipIcon, IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
 				destroy = true;
 			}
 		}

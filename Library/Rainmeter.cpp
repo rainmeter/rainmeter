@@ -1209,10 +1209,10 @@ bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bo
 	else if (configIndex == -1 && meterWindow)
 	{
 		// Deactivate the config by using the meter window's config name
-		const std::wstring skinConfig = meterWindow->GetSkinName();
+		const WCHAR* skinConfig = meterWindow->GetSkinName().c_str();
 		for (size_t i = 0, isize = m_ConfigStrings.size(); i < isize; ++i)
 		{
-			if (_wcsicmp(skinConfig.c_str(), m_ConfigStrings[i].config.c_str()) == 0)
+			if (_wcsicmp(skinConfig, m_ConfigStrings[i].config.c_str()) == 0)
 			{
 				m_ConfigStrings[i].active = 0;
 				break;
@@ -1356,10 +1356,11 @@ bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
 
 CMeterWindow* CRainmeter::GetMeterWindow(const std::wstring& config)
 {
+	const WCHAR* configName = config.c_str();
 	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
 	for (; iter != m_Meters.end(); ++iter)
 	{
-		if (_wcsicmp((*iter).first.c_str(), config.c_str()) == 0)
+		if (_wcsicmp((*iter).first.c_str(), configName) == 0)
 		{
 			return (*iter).second;
 		}
@@ -1397,15 +1398,17 @@ CMeterWindow* CRainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
 
 std::pair<int, int> CRainmeter::GetMeterWindowIndex(const std::wstring& config, const std::wstring& iniFile)
 {
+	const WCHAR* configName = config.c_str();
 	std::pair<int, int> indexes;
 
 	for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
 	{
-		if (_wcsicmp(m_ConfigStrings[i].config.c_str(), config.c_str()) == 0)
+		if (_wcsicmp(m_ConfigStrings[i].config.c_str(), configName) == 0)
 		{
+			const WCHAR* iniFileName = iniFile.c_str();
 			for (int j = 0, jsize = (int)m_ConfigStrings[i].iniFiles.size(); j < jsize; ++j)
 			{
-				if (_wcsicmp(m_ConfigStrings[i].iniFiles[j].c_str(), iniFile.c_str()) == 0)
+				if (_wcsicmp(m_ConfigStrings[i].iniFiles[j].c_str(), iniFileName) == 0)
 				{
 					indexes = std::make_pair(i, j);
 					return indexes;
@@ -2200,7 +2203,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	m_DisableVersionCheck = 0!=parser.ReadInt(L"Rainmeter", L"DisableVersionCheck", 0);
 
-	std::wstring area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
+	const std::wstring& area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
 	if (!area.empty())
 	{
 		m_DesktopWorkAreas[0] = parser.ParseRECT(area.c_str());
@@ -2210,7 +2213,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	for (UINT i = 1; i <= CSystem::GetMonitorCount(); ++i)
 	{
 		_snwprintf_s(buffer, _TRUNCATE, L"DesktopWorkArea@%i", i);
-		area = parser.ReadString(L"Rainmeter", buffer, L"");
+		const std::wstring& area = parser.ReadString(L"Rainmeter", buffer, L"");
 		if (!area.empty())
 		{
 			m_DesktopWorkAreas[i] = parser.ParseRECT(area.c_str());
@@ -2224,7 +2227,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
 	{
-		int active  = parser.ReadInt(m_ConfigStrings[i].config.c_str(), L"Active", 0);
+		int active = parser.ReadInt(m_ConfigStrings[i].config.c_str(), L"Active", 0);
 
 		// Make sure there is a ini file available
 		if (active > 0 && active <= (int)m_ConfigStrings[i].iniFiles.size())
@@ -2363,6 +2366,7 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 		PreserveSetting(backup, L"Logging");
 		PreserveSetting(backup, L"DisableVersionCheck");
 		PreserveSetting(backup, L"Language");
+		PreserveSetting(backup, L"NormalStayDesktop");
 		PreserveSetting(backup, L"TrayExecuteL", false);
 		PreserveSetting(backup, L"TrayExecuteM", false);
 		PreserveSetting(backup, L"TrayExecuteR", false);
@@ -2923,10 +2927,11 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 		// Add the variants menu
 		if (variantsMenu)
 		{
+			const WCHAR* skin = skinName.c_str();
 			for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
 			{
 				const CONFIG& config = m_ConfigStrings[i];
-				if (_wcsicmp(config.config.c_str(), skinName.c_str()) == 0)
+				if (_wcsicmp(config.config.c_str(), skin) == 0)
 				{
 					for (int j = 0, jsize = (int)config.iniFiles.size(); j < jsize; ++j)
 					{

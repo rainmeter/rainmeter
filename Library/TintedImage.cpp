@@ -585,7 +585,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_Crop.X = m_Crop.Y = m_Crop.Width = m_Crop.Height = -1;
 		m_CropMode = CROPMODE_TL;
 
-		std::wstring crop = parser.ReadString(section, m_ConfigArray[ConfigIndexImageCrop], L"");
+		const std::wstring& crop = parser.ReadString(section, m_ConfigArray[ConfigIndexImageCrop], L"");
 		if (!crop.empty())
 		{
 			if (wcschr(crop.c_str(), L','))
@@ -712,20 +712,20 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_NeedsTinting = (oldGreyScale != m_GreyScale || !CompareColorMatrix(&oldColorMatrix, m_ColorMatrix));
 
-	std::wstring flip = parser.ReadString(section, m_ConfigArray[ConfigIndexImageFlip], L"NONE");
-	if (_wcsicmp(flip.c_str(), L"NONE") == 0)
+	const WCHAR* flip = parser.ReadString(section, m_ConfigArray[ConfigIndexImageFlip], L"NONE").c_str();
+	if (_wcsicmp(flip, L"NONE") == 0)
 	{
 		m_Flip = RotateNoneFlipNone;
 	}
-	else if (_wcsicmp(flip.c_str(), L"HORIZONTAL") == 0)
+	else if (_wcsicmp(flip, L"HORIZONTAL") == 0)
 	{
 		m_Flip = RotateNoneFlipX;
 	}
-	else if (_wcsicmp(flip.c_str(), L"VERTICAL") == 0)
+	else if (_wcsicmp(flip, L"VERTICAL") == 0)
 	{
 		m_Flip = RotateNoneFlipY;
 	}
-	else if (_wcsicmp(flip.c_str(), L"BOTH") == 0)
+	else if (_wcsicmp(flip, L"BOTH") == 0)
 	{
 		m_Flip = RotateNoneFlipXY;
 	}
