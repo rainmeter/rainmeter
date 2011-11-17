@@ -2160,9 +2160,9 @@ bool CMeterWindow::ReadSkin()
 	{
 		if (0 != m_Parser.ReadInt(L"Rainmeter", L"Blur", 0))
 		{
-			std::wstring& blurRegion = (std::wstring&)m_Parser.ReadString(L"Rainmeter", L"BlurRegion", L"", false);
+			const WCHAR* blurRegion = m_Parser.ReadString(L"Rainmeter", L"BlurRegion", L"", false).c_str();
 
-			if (!blurRegion.empty())
+			if (*blurRegion)
 			{
 				m_BlurMode = BLURMODE_REGION;
 				m_BlurRegion = CreateRectRgn(0, 0, 0, 0);	// Create empty region
@@ -2170,15 +2170,15 @@ bool CMeterWindow::ReadSkin()
 
 				do
 				{
-					ResizeBlur(blurRegion.c_str(), RGN_OR);
+					ResizeBlur(blurRegion, RGN_OR);
 
 					// Here we are checking to see if there are more than one blur region
 					// to be loaded. They will be named BlurRegion2, BlurRegion3, etc.
 					WCHAR tmpName[64];
 					_snwprintf_s(tmpName, _TRUNCATE, L"BlurRegion%i", ++i);
-					blurRegion = m_Parser.ReadString(L"Rainmeter", tmpName, L"");
+					blurRegion = m_Parser.ReadString(L"Rainmeter", tmpName, L"").c_str();
 				}
-				while (!blurRegion.empty());
+				while (*blurRegion);
 			}
 			else
 			{
@@ -2192,9 +2192,9 @@ bool CMeterWindow::ReadSkin()
 	}
 
 	// Checking for localfonts
-	std::wstring& localFont = (std::wstring&)m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"");
+	const WCHAR* localFont = m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"").c_str();
 	// If there is a local font we want to load it
-	if (!localFont.empty())
+	if (*localFont)
 	{
 		m_FontCollection = new PrivateFontCollection();
 		int i = 1;
@@ -2225,7 +2225,8 @@ bool CMeterWindow::ReadSkin()
 
 					if (nResults != Ok)
 					{
-						std::wstring error = L"Unable to load font file: " + localFont;
+						std::wstring error = L"Unable to load font file: ";
+						error += localFont;
 						Log(LOG_ERROR, error.c_str());
 					}
 				}
@@ -2235,9 +2236,9 @@ bool CMeterWindow::ReadSkin()
 			// to be loaded. They will be named LocalFont2, LocalFont3, etc.
 			WCHAR tmpName[64];
 			_snwprintf_s(tmpName, _TRUNCATE, L"LocalFont%i", ++i);
-			localFont = m_Parser.ReadString(L"Rainmeter", tmpName, L"");
+			localFont = m_Parser.ReadString(L"Rainmeter", tmpName, L"").c_str();
 		}
-		while (!localFont.empty());
+		while (*localFont);
 	}
 
 	// Create the meters and measures
