@@ -1148,10 +1148,10 @@ void CRainmeter::ActivateActiveConfigs()
 	std::multimap<int, int>::const_iterator iter = m_ConfigOrders.begin();
 	for ( ; iter != m_ConfigOrders.end(); ++iter)
 	{
-		const CONFIG& config = m_ConfigStrings[(*iter).second];
-		if (config.active > 0 && config.active <= (int)config.iniFiles.size())
+		const CONFIG& configS = m_ConfigStrings[(*iter).second];
+		if (configS.active > 0 && configS.active <= (int)configS.iniFiles.size())
 		{
-			ActivateConfig((*iter).second, config.active - 1);
+			ActivateConfig((*iter).second, configS.active - 1);
 		}
 	}
 }
@@ -1403,12 +1403,13 @@ std::pair<int, int> CRainmeter::GetMeterWindowIndex(const std::wstring& config, 
 
 	for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
 	{
-		if (_wcsicmp(m_ConfigStrings[i].config.c_str(), configName) == 0)
+		const CONFIG& configS = m_ConfigStrings[i];
+		if (_wcsicmp(configS.config.c_str(), configName) == 0)
 		{
 			const WCHAR* iniFileName = iniFile.c_str();
-			for (int j = 0, jsize = (int)m_ConfigStrings[i].iniFiles.size(); j < jsize; ++j)
+			for (int j = 0, jsize = (int)configS.iniFiles.size(); j < jsize; ++j)
 			{
-				if (_wcsicmp(m_ConfigStrings[i].iniFiles[j].c_str(), iniFileName) == 0)
+				if (_wcsicmp(configS.iniFiles[j].c_str(), iniFileName) == 0)
 				{
 					indexes = std::make_pair(i, j);
 					return indexes;
@@ -1430,10 +1431,11 @@ std::pair<int, int> CRainmeter::GetMeterWindowIndex(UINT menuCommand)
 		// Check which config was selected
 		for (size_t i = 0, isize = m_ConfigStrings.size(); i < isize; ++i)
 		{
-			if (menuCommand >= m_ConfigStrings[i].commandBase &&
-				menuCommand < (m_ConfigStrings[i].commandBase + m_ConfigStrings[i].iniFiles.size()))
+			const CONFIG& configS = m_ConfigStrings[i];
+			if (menuCommand >= configS.commandBase &&
+				menuCommand < (configS.commandBase + configS.iniFiles.size()))
 			{
-				indexes = std::make_pair(i, menuCommand - m_ConfigStrings[i].commandBase);
+				indexes = std::make_pair(i, menuCommand - configS.commandBase);
 				return indexes;
 			}
 		}
@@ -1442,7 +1444,6 @@ std::pair<int, int> CRainmeter::GetMeterWindowIndex(UINT menuCommand)
 	indexes = std::make_pair(-1, -1);  // error
 	return indexes;
 }
-
 
 CMeterWindow* CRainmeter::GetMeterWindow(HWND hwnd)
 {
@@ -1592,6 +1593,8 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 	{
 		base += L"\\";
 	}
+
+	menu.reserve(menu.size() + folders.size());
 
 	std::list<std::wstring>::const_iterator iter = folders.begin();
 	for ( ; iter != folders.end(); ++iter)
@@ -2227,15 +2230,16 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
 	{
-		int active = parser.ReadInt(m_ConfigStrings[i].config.c_str(), L"Active", 0);
+		CONFIG& configS = m_ConfigStrings[i];
+		int active = parser.ReadInt(configS.config.c_str(), L"Active", 0);
 
 		// Make sure there is a ini file available
-		if (active > 0 && active <= (int)m_ConfigStrings[i].iniFiles.size())
+		if (active > 0 && active <= (int)configS.iniFiles.size())
 		{
-			m_ConfigStrings[i].active = active;
+			configS.active = active;
 		}
 
-		int order = parser.ReadInt(m_ConfigStrings[i].config.c_str(), L"LoadOrder", 0);
+		int order = parser.ReadInt(configS.config.c_str(), L"LoadOrder", 0);
 		SetLoadOrder(i, order);
 	}
 }
@@ -2277,19 +2281,20 @@ void CRainmeter::RefreshAll()
 			const std::wstring& skinConfig = mw->GetSkinName();
 			for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
 			{
-				if (_wcsicmp(skinConfig.c_str(), m_ConfigStrings[i].config.c_str()) == 0)
+				CONFIG& configS = m_ConfigStrings[i];
+				if (_wcsicmp(skinConfig.c_str(), configS.config.c_str()) == 0)
 				{
 					found = 1;
 					const std::wstring& skinIniFile = mw->GetSkinIniFile();
-					for (int j = 0, jsize = (int)m_ConfigStrings[i].iniFiles.size(); j < jsize; ++j)
+					for (int j = 0, jsize = (int)configS.iniFiles.size(); j < jsize; ++j)
 					{
-						if (_wcsicmp(skinIniFile.c_str(), m_ConfigStrings[i].iniFiles[j].c_str()) == 0)
+						if (_wcsicmp(skinIniFile.c_str(), configS.iniFiles[j].c_str()) == 0)
 						{
 							found = 2;
-							if (m_ConfigStrings[i].active != j + 1)
+							if (configS.active != j + 1)
 							{
 								// Switch to new ini-file order
-								m_ConfigStrings[i].active = j + 1;
+								configS.active = j + 1;
 								WriteActive(skinConfig, j);
 							}
 							break;
@@ -2738,9 +2743,10 @@ HMENU CRainmeter::CreateConfigMenu(HMENU configMenu, const std::vector<CONFIGMEN
 		bool separator = false;
 		for (int i = 0, j = 0, isize = (int)configMenuData.size(); i < isize; ++i)
 		{
-			if (configMenuData[i].index == -1)
+			const CONFIGMENU& configMenuS = configMenuData[i];
+			if (configMenuS.index == -1)
 			{
-				HMENU submenu = CreateConfigMenu(NULL, configMenuData[i].children);
+				HMENU submenu = CreateConfigMenu(NULL, configMenuS.children);
 				if (submenu)
 				{
 					if (separator)
@@ -2750,13 +2756,13 @@ HMENU CRainmeter::CreateConfigMenu(HMENU configMenu, const std::vector<CONFIGMEN
 						++j;
 						separator = false;
 					}
-					InsertMenu(configMenu, i + j, MF_BYPOSITION | MF_POPUP, (UINT_PTR)submenu, configMenuData[i].name.c_str());
+					InsertMenu(configMenu, i + j, MF_BYPOSITION | MF_POPUP, (UINT_PTR)submenu, configMenuS.name.c_str());
 				}
 			}
 			else
 			{
-				CONFIG& config = m_ConfigStrings[configMenuData[i].index];
-				InsertMenu(configMenu, i, MF_BYPOSITION | ((config.active == i + 1) ? MF_CHECKED : MF_UNCHECKED), config.commandBase + i, configMenuData[i].name.c_str());
+				const CONFIG& configS = m_ConfigStrings[configMenuS.index];
+				InsertMenu(configMenu, i, MF_BYPOSITION | ((configS.active == i + 1) ? MF_CHECKED : MF_UNCHECKED), configS.commandBase + i, configMenuS.name.c_str());
 				separator = true;
 			}
 		}
@@ -2930,12 +2936,12 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 			const WCHAR* skin = skinName.c_str();
 			for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
 			{
-				const CONFIG& config = m_ConfigStrings[i];
-				if (_wcsicmp(config.config.c_str(), skin) == 0)
+				const CONFIG& configS = m_ConfigStrings[i];
+				if (_wcsicmp(configS.config.c_str(), skin) == 0)
 				{
-					for (int j = 0, jsize = (int)config.iniFiles.size(); j < jsize; ++j)
+					for (int j = 0, jsize = (int)configS.iniFiles.size(); j < jsize; ++j)
 					{
-						InsertMenu(variantsMenu, j, MF_BYPOSITION | ((config.active == j + 1) ? MF_CHECKED : MF_UNCHECKED), config.commandBase + j, config.iniFiles[j].c_str());
+						InsertMenu(variantsMenu, j, MF_BYPOSITION | ((configS.active == j + 1) ? MF_CHECKED : MF_UNCHECKED), configS.commandBase + j, configS.iniFiles[j].c_str());
 					}
 					break;
 				}

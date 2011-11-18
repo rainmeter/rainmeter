@@ -360,14 +360,14 @@ private:
 
 	HWND m_Window;								// Handle to the Rainmeter window
 
-	std::wstring m_RightMouseDownAction;		// Action to run when right mouse is pressed
 	std::wstring m_LeftMouseDownAction;			// Action to run when left mouse is pressed
+	std::wstring m_RightMouseDownAction;		// Action to run when right mouse is pressed
 	std::wstring m_MiddleMouseDownAction;		// Action to run when middle mouse is pressed
-	std::wstring m_RightMouseUpAction;			// Action to run when right mouse is released
 	std::wstring m_LeftMouseUpAction;			// Action to run when left mouse is released
+	std::wstring m_RightMouseUpAction;			// Action to run when right mouse is released
 	std::wstring m_MiddleMouseUpAction;			// Action to run when middle mouse is released
-	std::wstring m_RightMouseDoubleClickAction;	// Action to run when right mouse is double-clicked
 	std::wstring m_LeftMouseDoubleClickAction;	// Action to run when left mouse is double-clicked
+	std::wstring m_RightMouseDoubleClickAction;	// Action to run when right mouse is double-clicked
 	std::wstring m_MiddleMouseDoubleClickAction;	// Action to run when middle mouse is double-clicked
 	std::wstring m_MouseOverAction;				// Action to run when mouse goes over the window
 	std::wstring m_MouseLeaveAction;			// Action to run when mouse leaves the window

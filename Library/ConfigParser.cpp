@@ -668,7 +668,7 @@ void CConfigParser::AddMeasure(CMeasure* pMeasure)
 {
 	if (pMeasure)
 	{
-		m_Measures[StrToLower(pMeasure->GetName())] = pMeasure;
+		m_Measures[StrToLower(pMeasure->GetOriginalName())] = pMeasure;
 	}
 }
 

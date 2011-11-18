@@ -390,14 +390,14 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor);
 	m_SolidAngle = (Gdiplus::REAL)parser.ReadFloat(section, L"GradientAngle", 0.0);
 
-	m_RightMouseDownAction = parser.ReadString(section, L"RightMouseDownAction", L"", false);
 	m_LeftMouseDownAction = parser.ReadString(section, L"LeftMouseDownAction", L"", false);
+	m_RightMouseDownAction = parser.ReadString(section, L"RightMouseDownAction", L"", false);
 	m_MiddleMouseDownAction = parser.ReadString(section, L"MiddleMouseDownAction", L"", false);
-	m_RightMouseUpAction = parser.ReadString(section, L"RightMouseUpAction", L"", false);
 	m_LeftMouseUpAction = parser.ReadString(section, L"LeftMouseUpAction", L"", false);
+	m_RightMouseUpAction = parser.ReadString(section, L"RightMouseUpAction", L"", false);
 	m_MiddleMouseUpAction = parser.ReadString(section, L"MiddleMouseUpAction", L"", false);
-	m_RightMouseDoubleClickAction = parser.ReadString(section, L"RightMouseDoubleClickAction", L"", false);
 	m_LeftMouseDoubleClickAction = parser.ReadString(section, L"LeftMouseDoubleClickAction", L"", false);
+	m_RightMouseDoubleClickAction = parser.ReadString(section, L"RightMouseDoubleClickAction", L"", false);
 	m_MiddleMouseDoubleClickAction = parser.ReadString(section, L"MiddleMouseDoubleClickAction", L"", false);
 	m_MouseOverAction = parser.ReadString(section, L"MouseOverAction", L"", false);
 	m_MouseLeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);

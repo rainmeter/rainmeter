@@ -108,8 +108,8 @@ private:
 	static void SetMultiMonitorVariables(bool reset);
 	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(c_MonitorVariables, strVariable, strValue); }
 
-	static std::wstring StrToLower(const std::wstring& str) { std::wstring strTmp(str); return StrToLowerC(strTmp); }
-	static std::wstring StrToLower(const WCHAR* str) { std::wstring strTmp(str); return StrToLowerC(strTmp); }
+	static std::wstring StrToLower(const std::wstring& str) { std::wstring strTmp(str); StrToLowerC(strTmp); return strTmp; }
+	static std::wstring StrToLower(const WCHAR* str) { std::wstring strTmp(str); StrToLowerC(strTmp); return strTmp; }
 	static std::wstring& StrToLowerC(std::wstring& str) { std::transform(str.begin(), str.end(), str.begin(), ::towlower); return str; }
 
 	std::wstring m_Filename;

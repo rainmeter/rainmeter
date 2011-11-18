@@ -92,6 +92,7 @@ public:
 	bool IsMouseOver() { return m_MouseOver; }
 
 	const WCHAR* GetName() { return m_Name.c_str(); }
+	const std::wstring& GetOriginalName() { return m_Name; }
 
 	void ResetUpdateCounter() { m_UpdateCounter = m_UpdateDivider; }
 	int GetUpdateCounter() { return m_UpdateCounter; }
@@ -156,14 +157,14 @@ protected:
 
 	HWND m_ToolTipHandle;
 
-	std::wstring m_RightMouseDownAction;	// Actions for left and right and middle mouse buttons
-	std::wstring m_RightMouseUpAction;
-	std::wstring m_RightMouseDoubleClickAction;
-	std::wstring m_LeftMouseDownAction;
-	std::wstring m_LeftMouseUpAction;
-	std::wstring m_LeftMouseDoubleClickAction;
+	std::wstring m_LeftMouseDownAction;		// Actions for left/right/middle mouse buttons
+	std::wstring m_RightMouseDownAction;
 	std::wstring m_MiddleMouseDownAction;
+	std::wstring m_LeftMouseUpAction;
+	std::wstring m_RightMouseUpAction;
 	std::wstring m_MiddleMouseUpAction;
+	std::wstring m_LeftMouseDoubleClickAction;
+	std::wstring m_RightMouseDoubleClickAction;
 	std::wstring m_MiddleMouseDoubleClickAction;
 	std::wstring m_MouseOverAction;
 	std::wstring m_MouseLeaveAction;

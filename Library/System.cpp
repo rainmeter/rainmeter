@@ -107,7 +107,7 @@ void CSystem::Initialize(HINSTANCE instance)
 
 	SetOSPlatform();
 
-	c_Monitors.monitors.reserve(8);
+	c_Monitors.monitors.reserve(4);
 	SetMultiMonitorInfo();
 
 	WCHAR directory[MAX_PATH] = {0};

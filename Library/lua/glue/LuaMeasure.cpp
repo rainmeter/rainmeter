@@ -19,9 +19,9 @@ static int Measure_GetOption(lua_State* L)
 	CConfigParser& parser = meterWindow->GetParser();
 
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
-	strTmp = parser.GetValue(self->GetName(), strTmp, L"");
+	strTmp = parser.GetValue(self->GetOriginalName(), strTmp, L"");
 
-	parser.SetBuiltInVariable(L"CURRENTSECTION", self->GetName());  // Set temporarily
+	parser.SetBuiltInVariable(L"CURRENTSECTION", self->GetOriginalName());  // Set temporarily
 	parser.ReplaceVariables(strTmp);
 	parser.SetBuiltInVariable(L"CURRENTSECTION", L"");  // Reset
 	parser.ReplaceMeasures(strTmp);

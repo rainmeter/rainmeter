@@ -56,6 +56,7 @@ public:
 	virtual const WCHAR* GetStats();
 
 	const WCHAR* GetName() { return m_Name.c_str(); }
+	const std::wstring& GetOriginalName() { return m_Name; }
 	const char* GetAsciiName() { return m_AsciiName.c_str(); }
 
 	void Disable() { m_Disabled = true; }
