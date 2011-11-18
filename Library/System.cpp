@@ -597,8 +597,9 @@ HWND CSystem::GetDefaultShellWindow()
 		}
 		else
 		{
-			WCHAR className[16];
-			if (!(GetClassName(ShellW, className, 16) > 0 &&
+			const int classLen = _countof(L"Progman");
+			WCHAR className[classLen];
+			if (!(GetClassName(ShellW, className, classLen) > 0 &&
 				wcscmp(className, L"Progman") == 0))
 			{
 				ShellW = NULL;
@@ -634,8 +635,9 @@ HWND CSystem::GetWorkerW()
 			}
 			else
 			{
-				WCHAR className[16];
-				if (GetClassName(parent, className, 16) > 0 &&
+				const int classLen = _countof(L"WorkerW");
+				WCHAR className[classLen];
+				if (GetClassName(parent, className, classLen) > 0 &&
 					wcscmp(className, L"WorkerW") == 0)
 				{
 					return parent;
@@ -714,11 +716,12 @@ bool CSystem::BelongToSameProcess(HWND hwndA, HWND hwndB)
 BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
 	bool logging = Rainmeter->GetDebug() && DEBUG_VERBOSE;
-	WCHAR className[64];
+	const int classLen = _countof(METERWINDOW_CLASS_NAME) + (DEBUG_VERBOSE ? 32 : 0);
+	WCHAR className[classLen];
 	CMeterWindow* Window;
 	WCHAR flag;
 
-	if (GetClassName(hwnd, className, 64) > 0 &&
+	if (GetClassName(hwnd, className, classLen) > 0 &&
 		wcscmp(className, METERWINDOW_CLASS_NAME) == 0 &&
 		(Window = Rainmeter->GetMeterWindow(hwnd)))
 	{
@@ -773,7 +776,7 @@ void CSystem::ChangeZPosInOrder()
 	// Retrieve the Rainmeter's meter windows in Z-order
 	EnumWindows(MyEnumWindowsProc, (LPARAM)(&windowsInZOrder));
 
-	auto resetZPos = [=](ZPOSITION zpos)
+	auto resetZPos = [&](ZPOSITION zpos)
 	{
 		// Reset ZPos in Z-order (Bottom)
 		std::vector<CMeterWindow*>::const_iterator iter = windowsInZOrder.begin(), iterEnd = windowsInZOrder.end();
@@ -935,8 +938,9 @@ void CALLBACK CSystem::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, 
 	{
 		if (!c_ShowDesktop)
 		{
-			WCHAR className[16];
-			if (GetClassName(hwnd, className, 16) > 0 &&
+			const int classLen = _countof(L"WorkerW");
+			WCHAR className[classLen];
+			if (GetClassName(hwnd, className, classLen) > 0 &&
 				wcscmp(className, L"WorkerW") == 0 &&
 				BelongToSameProcess(GetDefaultShellWindow(), hwnd))
 			{
