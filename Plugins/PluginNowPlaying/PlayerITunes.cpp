@@ -233,11 +233,13 @@ void CPlayerITunes::Initialize()
 				m_State = PLAYER_PLAYING;
 				OnTrackChange();
 			}
-
-			long volume;
-			m_iTunes->get_SoundVolume(&volume);
-			m_Volume = (UINT)volume;
 		}
+
+		long volume;
+		m_iTunes->get_SoundVolume(&volume);
+		m_Volume = (UINT)volume;
+
+		OnDatabaseChange();
 	}
 	else
 	{
@@ -352,25 +354,18 @@ void CPlayerITunes::UpdateData()
 void CPlayerITunes::OnDatabaseChange()
 {
 	// Check the shuffle state. TODO: Find better way
-	IITTrack* track;
-	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
-	if (SUCCEEDED(hr) && track)
+	IITPlaylist* playlist;
+	HRESULT hr = m_iTunes->get_CurrentPlaylist(&playlist);
+	if (SUCCEEDED(hr) && playlist)
 	{
-		IITPlaylist* playlist;
-		hr = track->get_Playlist(&playlist);
+		VARIANT_BOOL shuffle;
+		hr = playlist->get_Shuffle(&shuffle);
 		if (SUCCEEDED(hr))
 		{
-			VARIANT_BOOL shuffle;
-			hr = playlist->get_Shuffle(&shuffle);
-			if (SUCCEEDED(hr))
-			{
-				m_Shuffle = (bool)shuffle;
-			}
-
-			playlist->Release();
+			m_Shuffle = (bool)shuffle;
 		}
 
-		track->Release();
+		playlist->Release();
 	}
 }
 

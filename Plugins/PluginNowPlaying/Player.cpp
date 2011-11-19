@@ -43,7 +43,7 @@ CPlayer::CPlayer() :
 	// Get temporary file for cover art
 	WCHAR buffer[MAX_PATH];
 	GetTempPath(MAX_PATH, buffer);
-	GetTempFileName(buffer, L"cvr", 0, buffer);
+	GetTempFileName(buffer, L"jpg", 0, buffer);
 	m_TempCoverPath = buffer;
 }
 
