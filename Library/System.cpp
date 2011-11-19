@@ -159,7 +159,8 @@ void CSystem::Finalize()
 	}
 }
 
-/* MyInfoEnumProc
+/*
+** MyInfoEnumProc
 **
 ** Retrieves the multi-monitor information.
 **
@@ -234,7 +235,8 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 	return TRUE;
 }
 
-/* GetMonitorCount
+/*
+** GetMonitorCount
 **
 ** Returns the number of monitors.
 **
@@ -248,7 +250,8 @@ size_t CSystem::GetMonitorCount()
 	return c_Monitors.monitors.size();
 }
 
-/* SetMultiMonitorInfo
+/*
+** SetMultiMonitorInfo
 **
 ** Sets the multi-monitor information.
 **
@@ -509,7 +512,8 @@ void CSystem::SetMultiMonitorInfo()
 	}
 }
 
-/* UpdateWorkareaInfo
+/*
+** UpdateWorkareaInfo
 **
 ** Updates the workarea information.
 **

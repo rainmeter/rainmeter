@@ -137,15 +137,12 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 
 		if (_sData == NULL) _sData = L"";
 
-		std::wstring sCommand = _sCommand;
-		std::transform(sCommand.begin(), sCommand.end(), sCommand.begin(), ::towlower);
-
 		// Command       GetConfig
 		// Data          unquoted full path and filename given to the plugin on initialize
 		//               (note: this is CaSe-SeNsItIvE!)
 		// Execution     none
 		// Result        the config name if found or a blank string if not
-		if (sCommand == L"getconfig")
+		if (_wcsicmp(_sCommand, L"GetConfig") == 0)
 		{
 			// returns the config name, lookup by INI file
 
@@ -165,7 +162,7 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 		// Data          [the config name]
 		// Execution     none
 		// Result        the HWND to the specified config window if found, 'error' otherwise
-		if (sCommand == L"getwindow")
+		if (_wcsicmp(_sCommand, L"GetWindow") == 0)
 		{
 			std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
 
@@ -189,7 +186,7 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 		// Data          [the config name]
 		// Execution     none
 		// Result        the value of the variable
-		if (sCommand == L"getvariable")
+		if (_wcsicmp(_sCommand, L"GetVariable") == 0)
 		{
 			std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
 
@@ -201,11 +198,8 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 				if (meterWindow)
 				{
 					const std::wstring& variable = subStrings[1];
-					std::wstring result_from_parser;
-
-					if (meterWindow->GetParser().GetVariable(variable, result_from_parser))
+					if (meterWindow->GetParser().GetVariable(variable, result))
 					{
-						result = result_from_parser;
 						return result.c_str();
 					}
 				}
@@ -218,7 +212,7 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 		// Data          [the config name] [variable data]
 		// Execution     the indicated variable is updated
 		// Result        'success' if the config was found, 'error' otherwise
-		if (sCommand == L"setvariable")
+		if (_wcsicmp(_sCommand, L"SetVariable") == 0)
 		{
 			std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
 
@@ -241,15 +235,6 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 				}
 			}
 
-			/*
-			result = L"er1/";
-			result += subStrings[0];
-			result += L"/";
-			TCHAR x[100];
-			_snwprintf_s(x, _TRUNCATE, L"%d", subStrings.size());
-			result += x;
-			return result.c_str();
-			*/
 			return L"error";
 		}
 
@@ -615,61 +600,63 @@ void CRainmeter::RainmeterWriteKeyValue(const WCHAR* arg)
 
 	if (subStrings.size() > 3)
 	{
-		const std::wstring& iniFile = subStrings[3];
+		const std::wstring& strIniFile = subStrings[3];
+		const WCHAR* iniFile = strIniFile.c_str();
 
-		if (iniFile.find(L"..\\") != std::wstring::npos || iniFile.find(L"../") != std::wstring::npos)
+		if (strIniFile.find(L"..\\") != std::wstring::npos || strIniFile.find(L"../") != std::wstring::npos)
 		{
-			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile.c_str());
+			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile);
 			return;
 		}
 
 		const std::wstring& skinPath = GetSkinPath();
 		const std::wstring settingsPath = GetSettingsPath();
 
-		if (_wcsnicmp(iniFile.c_str(), skinPath.c_str(), skinPath.size()) != 0 &&
-			_wcsnicmp(iniFile.c_str(), settingsPath.c_str(), settingsPath.size()) != 0)
+		if (_wcsnicmp(iniFile, skinPath.c_str(), skinPath.size()) != 0 &&
+			_wcsnicmp(iniFile, settingsPath.c_str(), settingsPath.size()) != 0)
 		{
-			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile.c_str());
+			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile);
 			return;
 		}
 
 		// Verify whether the file exists
-		if (_waccess(iniFile.c_str(), 0) == -1)
+		if (_waccess(iniFile, 0) == -1)
 		{
-			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: File not found: %s", iniFile.c_str());
+			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: File not found: %s", iniFile);
 			return;
 		}
 
 		// Verify whether the file is read-only
-		DWORD attr = GetFileAttributes(iniFile.c_str());
+		DWORD attr = GetFileAttributes(iniFile);
 		if (attr == -1 || (attr & FILE_ATTRIBUTE_READONLY))
 		{
-			LogWithArgs(LOG_WARNING, L"!WriteKeyValue: File is read-only: %s", iniFile.c_str());
+			LogWithArgs(LOG_WARNING, L"!WriteKeyValue: File is read-only: %s", iniFile);
 			return;
 		}
 
 		// Avoid "IniFileMapping"
 		CSystem::UpdateIniFileMappingList();
-		std::wstring iniWrite = CSystem::GetTemporaryFile(iniFile);
-		if (iniWrite.size() == 1 && iniWrite[0] == L'?')  // error occurred
+		std::wstring strIniWrite = CSystem::GetTemporaryFile(strIniFile);
+		if (strIniWrite.size() == 1 && strIniWrite[0] == L'?')  // error occurred
 		{
 			return;
 		}
 
-		bool temporary = !iniWrite.empty();
+		bool temporary = !strIniWrite.empty();
 
 		if (temporary)
 		{
-			if (GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+			if (GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile, strIniWrite.c_str());
 		}
 		else
 		{
-			if (GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s", iniFile.c_str());
-			iniWrite = iniFile;
+			if (GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s", iniFile);
+			strIniWrite = strIniFile;
 		}
 
-		const std::wstring& strSection = subStrings[0];
-		const std::wstring& strKey = subStrings[1];
+		const WCHAR* iniWrite = strIniWrite.c_str();
+		const WCHAR* section = subStrings[0].c_str();
+		const WCHAR* key = subStrings[1].c_str();
 		const std::wstring& strValue = subStrings[2];
 
 		bool formula = false;
@@ -690,33 +677,31 @@ void CRainmeter::RainmeterWriteKeyValue(const WCHAR* arg)
 					int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
 					CMeasure::RemoveTrailingZero(buffer, len);
 
-					const std::wstring& resultString = buffer;
-
-					write = WritePrivateProfileString(strSection.c_str(), strKey.c_str(), resultString.c_str(), iniWrite.c_str());
+					write = WritePrivateProfileString(section, key, buffer, iniWrite);
 				}
 			}
 		}
 
 		if (!formula)
 		{
-			write = WritePrivateProfileString(strSection.c_str(), strKey.c_str(), strValue.c_str(), iniWrite.c_str());
+			write = WritePrivateProfileString(section, key, strValue.c_str(), iniWrite);
 		}
 
 		if (temporary)
 		{
 			if (write != 0)
 			{
-				WritePrivateProfileString(NULL, NULL, NULL, iniWrite.c_str());  // FLUSH
+				WritePrivateProfileString(NULL, NULL, NULL, iniWrite);  // FLUSH
 
 				// Copy the file back
 				if (!CSystem::CopyFiles(iniWrite, iniFile))
 				{
-					LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to copy temporary file to original filepath: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+					LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to copy temporary file to original filepath: %s (Temp: %s)", iniFile, iniWrite);
 				}
 			}
 			else  // failed
 			{
-				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s (Temp: %s)", iniFile.c_str(), iniWrite.c_str());
+				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s (Temp: %s)", iniFile, iniWrite);
 			}
 
 			// Remove a temporary file
@@ -726,7 +711,7 @@ void CRainmeter::RainmeterWriteKeyValue(const WCHAR* arg)
 		{
 			if (write == 0)  // failed
 			{
-				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s", iniFile.c_str());
+				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s", iniFile);
 			}
 		}
 	}
@@ -1662,13 +1647,15 @@ void CRainmeter::ScanForThemes(const std::wstring& path)
 
 BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, CMeterWindow* meterWindow)
 {
+	const WCHAR* name = bang.c_str();
+	const WCHAR* args = arg.c_str();
+
 	// Skip "!Rainmeter" or "!"
-	LPCWSTR name = bang.c_str();
 	name += (_wcsnicmp(name, L"!Rainmeter", 10) == 0) ? 10 : 1;
 
 	if (_wcsicmp(name, L"Refresh") == 0)
 	{
-		BangWithArgs(BANG_REFRESH, arg.c_str(), 0);
+		BangWithArgs(BANG_REFRESH, args, 0);
 	}
 	else if (_wcsicmp(name, L"RefreshApp") == 0)
 	{
@@ -1677,267 +1664,267 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"Redraw") == 0)
 	{
-		BangWithArgs(BANG_REDRAW, arg.c_str(), 0);
+		BangWithArgs(BANG_REDRAW, args, 0);
 	}
 	else if (_wcsicmp(name, L"Update") == 0)
 	{
-		BangWithArgs(BANG_UPDATE, arg.c_str(), 0);
+		BangWithArgs(BANG_UPDATE, args, 0);
 	}
 	else if (_wcsicmp(name, L"Hide") == 0)
 	{
-		BangWithArgs(BANG_HIDE, arg.c_str(), 0);
+		BangWithArgs(BANG_HIDE, args, 0);
 	}
 	else if (_wcsicmp(name, L"Show") == 0)
 	{
-		BangWithArgs(BANG_SHOW, arg.c_str(), 0);
+		BangWithArgs(BANG_SHOW, args, 0);
 	}
 	else if (_wcsicmp(name, L"Toggle") == 0)
 	{
-		BangWithArgs(BANG_TOGGLE, arg.c_str(), 0);
+		BangWithArgs(BANG_TOGGLE, args, 0);
 	}
 	else if (_wcsicmp(name, L"HideFade") == 0)
 	{
-		BangWithArgs(BANG_HIDEFADE, arg.c_str(), 0);
+		BangWithArgs(BANG_HIDEFADE, args, 0);
 	}
 	else if (_wcsicmp(name, L"ShowFade") == 0)
 	{
-		BangWithArgs(BANG_SHOWFADE, arg.c_str(), 0);
+		BangWithArgs(BANG_SHOWFADE, args, 0);
 	}
 	else if (_wcsicmp(name, L"ToggleFade") == 0)
 	{
-		BangWithArgs(BANG_TOGGLEFADE, arg.c_str(), 0);
+		BangWithArgs(BANG_TOGGLEFADE, args, 0);
 	}
 	else if (_wcsicmp(name, L"HideMeter") == 0)
 	{
-		BangWithArgs(BANG_HIDEMETER, arg.c_str(), 1);
+		BangWithArgs(BANG_HIDEMETER, args, 1);
 	}
 	else if (_wcsicmp(name, L"ShowMeter") == 0)
 	{
-		BangWithArgs(BANG_SHOWMETER, arg.c_str(), 1);
+		BangWithArgs(BANG_SHOWMETER, args, 1);
 	}
 	else if (_wcsicmp(name, L"ToggleMeter") == 0)
 	{
-		BangWithArgs(BANG_TOGGLEMETER, arg.c_str(), 1);
+		BangWithArgs(BANG_TOGGLEMETER, args, 1);
 	}
 	else if (_wcsicmp(name, L"MoveMeter") == 0)
 	{
-		BangWithArgs(BANG_MOVEMETER, arg.c_str(), 3);
+		BangWithArgs(BANG_MOVEMETER, args, 3);
 	}
 	else if (_wcsicmp(name, L"UpdateMeter") == 0)
 	{
-		BangWithArgs(BANG_UPDATEMETER, arg.c_str(), 1);
+		BangWithArgs(BANG_UPDATEMETER, args, 1);
 	}
 	else if (_wcsicmp(name, L"DisableMeasure") == 0)
 	{
-		BangWithArgs(BANG_DISABLEMEASURE, arg.c_str(), 1);
+		BangWithArgs(BANG_DISABLEMEASURE, args, 1);
 	}
 	else if (_wcsicmp(name, L"EnableMeasure") == 0)
 	{
-		BangWithArgs(BANG_ENABLEMEASURE, arg.c_str(), 1);
+		BangWithArgs(BANG_ENABLEMEASURE, args, 1);
 	}
 	else if (_wcsicmp(name, L"ToggleMeasure") == 0)
 	{
-		BangWithArgs(BANG_TOGGLEMEASURE, arg.c_str(), 1);
+		BangWithArgs(BANG_TOGGLEMEASURE, args, 1);
 	}
 	else if (_wcsicmp(name, L"UpdateMeasure") == 0)
 	{
-		BangWithArgs(BANG_UPDATEMEASURE, arg.c_str(), 1);
+		BangWithArgs(BANG_UPDATEMEASURE, args, 1);
 	}
 	else if (_wcsicmp(name, L"CommandMeasure") == 0)
 	{
-		BangWithArgs(BANG_COMMANDMEASURE, arg.c_str(), 2);
+		BangWithArgs(BANG_COMMANDMEASURE, args, 2);
 	}
 	else if (_wcsicmp(name, L"ShowBlur") == 0)
 	{
-		BangWithArgs(BANG_SHOWBLUR, arg.c_str(), 0);
+		BangWithArgs(BANG_SHOWBLUR, args, 0);
 	}
 	else if (_wcsicmp(name, L"HideBlur") == 0)
 	{
-		BangWithArgs(BANG_HIDEBLUR, arg.c_str(), 0);
+		BangWithArgs(BANG_HIDEBLUR, args, 0);
 	}
 	else if (_wcsicmp(name, L"ToggleBlur") == 0)
 	{
-		BangWithArgs(BANG_TOGGLEBLUR, arg.c_str(), 0);
+		BangWithArgs(BANG_TOGGLEBLUR, args, 0);
 	}
 	else if (_wcsicmp(name, L"AddBlur") == 0)
 	{
-		BangWithArgs(BANG_ADDBLUR, arg.c_str(), 1);
+		BangWithArgs(BANG_ADDBLUR, args, 1);
 	}
 	else if (_wcsicmp(name, L"RemoveBlur") == 0)
 	{
-		BangWithArgs(BANG_REMOVEBLUR, arg.c_str(), 1);
+		BangWithArgs(BANG_REMOVEBLUR, args, 1);
 	}
 	else if (_wcsicmp(name, L"ActivateConfig") == 0)
 	{
-		RainmeterActivateConfig(arg.c_str());
+		RainmeterActivateConfig(args);
 	}
 	else if (_wcsicmp(name, L"DeactivateConfig") == 0)
 	{
-		RainmeterDeactivateConfig(arg.c_str());
+		RainmeterDeactivateConfig(args);
 	}
 	else if (_wcsicmp(name, L"ToggleConfig") == 0)
 	{
-		RainmeterToggleConfig(arg.c_str());
+		RainmeterToggleConfig(args);
 	}
 	else if (_wcsicmp(name, L"Move") == 0)
 	{
-		BangWithArgs(BANG_MOVE, arg.c_str(), 2);
+		BangWithArgs(BANG_MOVE, args, 2);
 	}
 	else if (_wcsicmp(name, L"ZPos") == 0 || _wcsicmp(name, L"ChangeZPos") == 0)	// For backwards compatibility
 	{
-		BangWithArgs(BANG_ZPOS, arg.c_str(), 1);
+		BangWithArgs(BANG_ZPOS, args, 1);
 	}
 	else if (_wcsicmp(name, L"ClickThrough") == 0)
 	{
-		BangWithArgs(BANG_CLICKTHROUGH, arg.c_str(), 1);
+		BangWithArgs(BANG_CLICKTHROUGH, args, 1);
 	}
 	else if (_wcsicmp(name, L"Draggable") == 0)
 	{
-		BangWithArgs(BANG_DRAGGABLE, arg.c_str(), 1);
+		BangWithArgs(BANG_DRAGGABLE, args, 1);
 	}
 	else if (_wcsicmp(name, L"SnapEdges") == 0)
 	{
-		BangWithArgs(BANG_SNAPEDGES, arg.c_str(), 1);
+		BangWithArgs(BANG_SNAPEDGES, args, 1);
 	}
 	else if (_wcsicmp(name, L"KeepOnScreen") == 0)
 	{
-		BangWithArgs(BANG_KEEPONSCREEN, arg.c_str(), 1);
+		BangWithArgs(BANG_KEEPONSCREEN, args, 1);
 	}
 	else if (_wcsicmp(name, L"SetTransparency") == 0)
 	{
-		BangWithArgs(BANG_SETTRANSPARENCY, arg.c_str(), 1);
+		BangWithArgs(BANG_SETTRANSPARENCY, args, 1);
 	}
 	else if (_wcsicmp(name, L"SetVariable") == 0)
 	{
-		BangWithArgs(BANG_SETVARIABLE, arg.c_str(), 2);
+		BangWithArgs(BANG_SETVARIABLE, args, 2);
 	}
 	else if (_wcsicmp(name, L"SetOption") == 0)
 	{
-		BangWithArgs(BANG_SETOPTION, arg.c_str(), 3);
+		BangWithArgs(BANG_SETOPTION, args, 3);
 	}
 	else if (_wcsicmp(name, L"RefreshGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_REFRESH, arg.c_str(), 0);
+		BangGroupWithArgs(BANG_REFRESH, args, 0);
 	}
 	else if (_wcsicmp(name, L"UpdateGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_UPDATE, arg.c_str(), 0);
+		BangGroupWithArgs(BANG_UPDATE, args, 0);
 	}
 	else if (_wcsicmp(name, L"RedrawGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_REDRAW, arg.c_str(), 0);
+		BangGroupWithArgs(BANG_REDRAW, args, 0);
 	}
 	else if (_wcsicmp(name, L"HideGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_HIDE, arg.c_str(), 0);
+		BangGroupWithArgs(BANG_HIDE, args, 0);
 	}
 	else if (_wcsicmp(name, L"ShowGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_SHOW, arg.c_str(), 0);
+		BangGroupWithArgs(BANG_SHOW, args, 0);
 	}
 	else if (_wcsicmp(name, L"ToggleGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_TOGGLE, arg.c_str(), 0);
+		BangGroupWithArgs(BANG_TOGGLE, args, 0);
 	}
 	else if (_wcsicmp(name, L"HideFadeGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_HIDEFADE, arg.c_str(), 0);
+		BangGroupWithArgs(BANG_HIDEFADE, args, 0);
 	}
 	else if (_wcsicmp(name, L"ShowFadeGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_SHOWFADE, arg.c_str(), 0);
+		BangGroupWithArgs(BANG_SHOWFADE, args, 0);
 	}
 	else if (_wcsicmp(name, L"ToggleFadeGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_TOGGLEFADE, arg.c_str(), 0);
+		BangGroupWithArgs(BANG_TOGGLEFADE, args, 0);
 	}
 	else if (_wcsicmp(name, L"HideMeterGroup") == 0)
 	{
-		BangWithArgs(BANG_HIDEMETERGROUP, arg.c_str(), 1);
+		BangWithArgs(BANG_HIDEMETERGROUP, args, 1);
 	}
 	else if (_wcsicmp(name, L"ShowMeterGroup") == 0)
 	{
-		BangWithArgs(BANG_SHOWMETERGROUP, arg.c_str(), 1);
+		BangWithArgs(BANG_SHOWMETERGROUP, args, 1);
 	}
 	else if (_wcsicmp(name, L"ToggleMeterGroup") == 0)
 	{
-		BangWithArgs(BANG_TOGGLEMETERGROUP, arg.c_str(), 1);
+		BangWithArgs(BANG_TOGGLEMETERGROUP, args, 1);
 	}
 	else if (_wcsicmp(name, L"UpdateMeterGroup") == 0)
 	{
-		BangWithArgs(BANG_UPDATEMETERGROUP, arg.c_str(), 1);
+		BangWithArgs(BANG_UPDATEMETERGROUP, args, 1);
 	}
 	else if (_wcsicmp(name, L"DisableMeasureGroup") == 0)
 	{
-		BangWithArgs(BANG_DISABLEMEASUREGROUP, arg.c_str(), 1);
+		BangWithArgs(BANG_DISABLEMEASUREGROUP, args, 1);
 	}
 	else if (_wcsicmp(name, L"EnableMeasureGroup") == 0)
 	{
-		BangWithArgs(BANG_ENABLEMEASUREGROUP, arg.c_str(), 1);
+		BangWithArgs(BANG_ENABLEMEASUREGROUP, args, 1);
 	}
 	else if (_wcsicmp(name, L"ToggleMeasureGroup") == 0)
 	{
-		BangWithArgs(BANG_TOGGLEMEASUREGROUP, arg.c_str(), 1);
+		BangWithArgs(BANG_TOGGLEMEASUREGROUP, args, 1);
 	}
 	else if (_wcsicmp(name, L"UpdateMeasureGroup") == 0)
 	{
-		BangWithArgs(BANG_UPDATEMEASUREGROUP, arg.c_str(), 1);
+		BangWithArgs(BANG_UPDATEMEASUREGROUP, args, 1);
 	}
 	else if (_wcsicmp(name, L"DeactivateConfigGroup") == 0)
 	{
-		RainmeterDeactivateConfigGroup(arg.c_str());
+		RainmeterDeactivateConfigGroup(args);
 	}
 	else if (_wcsicmp(name, L"ZPosGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_ZPOS, arg.c_str(), 1);
+		BangGroupWithArgs(BANG_ZPOS, args, 1);
 	}
 	else if (_wcsicmp(name, L"ClickThroughGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_CLICKTHROUGH, arg.c_str(), 1);
+		BangGroupWithArgs(BANG_CLICKTHROUGH, args, 1);
 	}
 	else if (_wcsicmp(name, L"DraggableGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_DRAGGABLE, arg.c_str(), 1);
+		BangGroupWithArgs(BANG_DRAGGABLE, args, 1);
 	}
 	else if (_wcsicmp(name, L"SnapEdgesGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_SNAPEDGES, arg.c_str(), 1);
+		BangGroupWithArgs(BANG_SNAPEDGES, args, 1);
 	}
 	else if (_wcsicmp(name, L"KeepOnScreenGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_KEEPONSCREEN, arg.c_str(), 1);
+		BangGroupWithArgs(BANG_KEEPONSCREEN, args, 1);
 	}
 	else if (_wcsicmp(name, L"SetTransparencyGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_SETTRANSPARENCY, arg.c_str(), 1);
+		BangGroupWithArgs(BANG_SETTRANSPARENCY, args, 1);
 	}
 	else if (_wcsicmp(name, L"SetVariableGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_SETVARIABLE, arg.c_str(), 2);
+		BangGroupWithArgs(BANG_SETVARIABLE, args, 2);
 	}
 	else if (_wcsicmp(name, L"SetOptionGroup") == 0)
 	{
-		BangWithArgs(BANG_SETOPTIONGROUP, arg.c_str(), 3);
+		BangWithArgs(BANG_SETOPTIONGROUP, args, 3);
 	}
 	else if (_wcsicmp(name, L"WriteKeyValue") == 0)
 	{
-		RainmeterWriteKeyValue(arg.c_str());
+		RainmeterWriteKeyValue(args);
 	}
 	else if (_wcsicmp(name, L"PluginBang") == 0)
 	{
-		BangWithArgs(BANG_PLUGIN, arg.c_str(), 1);
+		BangWithArgs(BANG_PLUGIN, args, 1);
 	}
 	else if (_wcsicmp(name, L"About") == 0)
 	{
-		CDialogAbout::Open(arg.c_str());
+		CDialogAbout::Open(args);
 	}
 	else if (_wcsicmp(name, L"Manage") == 0)
 	{
-		CDialogManage::Open(arg.c_str());
+		CDialogManage::Open(args);
 	}
 	else if (_wcsicmp(name, L"SkinMenu") == 0)
 	{
-		RainmeterSkinMenu(arg.c_str());
+		RainmeterSkinMenu(args);
 	}
 	else if (_wcsicmp(name, L"TrayMenu") == 0)
 	{
@@ -1960,7 +1947,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 		int count = 0;
 		for (size_t i = 0, isize = arg.size(); i < isize; ++i)
 		{
-			if (arg[i] == L'[')
+			if (args[i] == L'[')
 			{
 				if (count == 0)
 				{
@@ -1968,7 +1955,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 				}
 				++count;
 			}
-			else if (arg[i] == L']')
+			else if (args[i] == L']')
 			{
 				--count;
 
@@ -1977,21 +1964,22 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 					end = i;
 
 					std::wstring command = arg.substr(start + 1, end - (start + 1));
-					// trim leading whitespace
+					// Skip leading whitespace
 					std::wstring::size_type notwhite = command.find_first_not_of(L" \t\r\n");
-					command.erase(0, notwhite);
-					ExecuteCommand(command.c_str(), meterWindow);
+					ExecuteCommand(command.c_str() + notwhite, meterWindow);
 				}
 			}
-			else if (isize > (i + 2) &&
-				arg[i] == L'"' && arg[i + 1] == L'"' && arg[i + 2] == L'"')
+			else if (args[i] == L'"' && args[i + 1] == L'"' && args[i + 2] == L'"')
 			{
 				i += 3;
 
-				std::wstring::size_type pos = arg.find(L"\"\"\"", i);
-				if (pos != std::wstring::npos)
+				if (isize > i)
 				{
-					i = pos + 2;	// Skip "", loop will skip last "
+					std::wstring::size_type pos = arg.find(L"\"\"\"", i);
+					if (pos != std::wstring::npos)
+					{
+						i = pos + 2;	// Skip "", loop will skip last "
+					}
 				}
 			}
 		}
@@ -2278,24 +2266,24 @@ void CRainmeter::RefreshAll()
 		{
 			// Verify whether the cached information is valid
 			int found = 0;
-			const std::wstring& skinConfig = mw->GetSkinName();
+			const WCHAR* skinConfig = mw->GetSkinName().c_str();
 			for (int i = 0, isize = (int)m_ConfigStrings.size(); i < isize; ++i)
 			{
 				CONFIG& configS = m_ConfigStrings[i];
-				if (_wcsicmp(skinConfig.c_str(), configS.config.c_str()) == 0)
+				if (_wcsicmp(skinConfig, configS.config.c_str()) == 0)
 				{
 					found = 1;
-					const std::wstring& skinIniFile = mw->GetSkinIniFile();
+					const WCHAR* skinIniFile = mw->GetSkinIniFile().c_str();
 					for (int j = 0, jsize = (int)configS.iniFiles.size(); j < jsize; ++j)
 					{
-						if (_wcsicmp(skinIniFile.c_str(), configS.iniFiles[j].c_str()) == 0)
+						if (_wcsicmp(skinIniFile, configS.iniFiles[j].c_str()) == 0)
 						{
 							found = 2;
 							if (configS.active != j + 1)
 							{
 								// Switch to new ini-file order
 								configS.active = j + 1;
-								WriteActive(skinConfig, j);
+								WriteActive(mw->GetSkinName(), j);
 							}
 							break;
 						}
@@ -2305,7 +2293,7 @@ void CRainmeter::RefreshAll()
 					{
 						DeactivateConfig(mw, i);
 
-						std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinConfig.c_str(), skinIniFile.c_str());
+						std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinConfig, skinIniFile);
 						MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 					}
 					break;
@@ -2318,7 +2306,7 @@ void CRainmeter::RefreshAll()
 				{
 					DeactivateConfig(mw, -2);  // -2 = Deactivate the config forcibly
 
-					std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinConfig.c_str(), L"");
+					std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinConfig, L"");
 					MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 				}
 				continue;
@@ -2576,7 +2564,7 @@ void CRainmeter::WriteStats(bool bForce)
 void CRainmeter::ResetStats()
 {
 	// Set the stats-date string
-	struct tm *newtime;
+	struct tm* newtime;
 	time_t long_time;
 	time(&long_time);
 	newtime = localtime(&long_time);
@@ -3004,7 +2992,7 @@ void CRainmeter::CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow)
 			size_t len = wcslen(monitors[i].monitorName);
 			if (len > 32)
 			{
-				item += std::wstring(monitors[i].monitorName, 32);
+				item.append(monitors[i].monitorName, 32);
 				item += L"...";
 			}
 			else
