@@ -87,6 +87,7 @@ private:
 
 	void Initialize();
 	void Uninitialize();
+	void OnDatabaseChange();
 	void OnTrackChange();
 	void OnStateChange(bool playing);
 	void OnVolumeChange(int volume);

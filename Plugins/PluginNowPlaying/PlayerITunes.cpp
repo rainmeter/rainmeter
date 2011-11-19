@@ -82,6 +82,10 @@ HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Invoke(DISPID dispidMemb
 {
 	switch (dispidMember)
 	{
+	case ITEventDatabaseChanged:
+		m_Player->OnDatabaseChange();
+		break;
+
 	case ITEventPlayerPlay:
 		m_Player->OnStateChange(true);
 		m_Player->OnTrackChange();
@@ -340,6 +344,37 @@ void CPlayerITunes::UpdateData()
 }
 
 /*
+** OnDatabaseChange
+**
+** Called by iTunes event handler when the database is changed.
+**
+*/
+void CPlayerITunes::OnDatabaseChange()
+{
+	// Check the shuffle state. TODO: Find better way
+	IITTrack* track;
+	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
+	if (SUCCEEDED(hr) && track)
+	{
+		IITPlaylist* playlist;
+		hr = track->get_Playlist(&playlist);
+		if (SUCCEEDED(hr))
+		{
+			VARIANT_BOOL shuffle;
+			hr = playlist->get_Shuffle(&shuffle);
+			if (SUCCEEDED(hr))
+			{
+				m_Shuffle = (bool)shuffle;
+			}
+
+			playlist->Release();
+		}
+
+		track->Release();
+	}
+}
+
+/*
 ** OnTrackChange
 **
 ** Called by iTunes event handler on track change.
@@ -376,13 +411,6 @@ void CPlayerITunes::OnTrackChange()
 		hr = track->get_Playlist(&playlist);
 		if (SUCCEEDED(hr))
 		{
-			VARIANT_BOOL shuffle;
-			hr = playlist->get_Shuffle(&shuffle);
-			if (SUCCEEDED(hr))
-			{
-				m_Shuffle = (bool)shuffle;
-			}
-
 			ITPlaylistRepeatMode repeat;
 			hr = playlist->get_SongRepeat(&repeat);
 			if (SUCCEEDED(hr))

@@ -1969,17 +1969,14 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 					ExecuteCommand(command.c_str() + notwhite, meterWindow);
 				}
 			}
-			else if (args[i] == L'"' && args[i + 1] == L'"' && args[i + 2] == L'"')
+			else if (args[i] == L'"' && isize > (i + 2) && args[i + 1] == L'"' && args[i + 2] == L'"')
 			{
 				i += 3;
 
-				if (isize > i)
+				std::wstring::size_type pos = arg.find(L"\"\"\"", i);
+				if (pos != std::wstring::npos)
 				{
-					std::wstring::size_type pos = arg.find(L"\"\"\"", i);
-					if (pos != std::wstring::npos)
-					{
-						i = pos + 2;	// Skip "", loop will skip last "
-					}
+					i = pos + 2;	// Skip "", loop will skip last "
 				}
 			}
 		}
