@@ -1481,10 +1481,11 @@ void CRainmeter::SetLoadOrder(int configIndex, int order)
 
 int CRainmeter::GetLoadOrder(const std::wstring& config)
 {
+	const WCHAR* configName = config.c_str();
 	std::multimap<int, int>::const_iterator iter = m_ConfigOrders.begin();
 	for ( ; iter != m_ConfigOrders.end(); ++iter)
 	{
-		if (m_ConfigStrings[(*iter).second].config == config)
+		if (wcscmp(m_ConfigStrings[(*iter).second].config.c_str(), configName) == 0)
 		{
 			return (*iter).first;
 		}
@@ -1531,35 +1532,34 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 	{
 		CONFIG config;
 		config.config = base;
+		config.commandBase = ID_CONFIG_FIRST + index;
 		config.active = 0;
 
 		do
 		{
+			const std::wstring filename = fileData.cFileName;
+
 			if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
-				if (!(wcscmp(L"Backup", fileData.cFileName) == 0 && first) &&		// Skip the backup folder
-					wcscmp(L".", fileData.cFileName) != 0 &&
-					wcscmp(L"..", fileData.cFileName) != 0)
+				if (wcscmp(L".", fileData.cFileName) != 0 &&
+					wcscmp(L"..", fileData.cFileName) != 0 &&
+					!(first && wcscmp(L"Backup", fileData.cFileName) == 0))		// Skip the backup folder
 				{
-					folders.push_back(fileData.cFileName);
+					folders.push_back(filename);
 				}
 			}
 			else if (!first)
 			{
 				// Check whether the extension is ".ini"
-				size_t filenameLen = wcslen(fileData.cFileName);
+				size_t filenameLen = filename.size();
 				if (filenameLen >= 4 && _wcsicmp(fileData.cFileName + (filenameLen - 4), L".ini") == 0)
 				{
 					CONFIGMENU menuItem;
-					menuItem.name = fileData.cFileName;
+					menuItem.name = filename;
 					menuItem.index = m_ConfigStrings.size();
 					menu.push_back(menuItem);
 
-					if (config.iniFiles.empty())
-					{
-						config.commandBase = ID_CONFIG_FIRST + index;
-					}
-					config.iniFiles.push_back(fileData.cFileName);
+					config.iniFiles.push_back(filename);
 					++index;
 				}
 			}
