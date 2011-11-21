@@ -964,7 +964,7 @@ INT_PTR CALLBACK CDialogAbout::CTabPlugins::DlgProc(HWND hWnd, UINT uMsg, WPARAM
 ** Constructor.
 **
 */
-CDialogAbout::CTabVersion::CTabVersion(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTMEASURES_DIALOG, DlgProc)
+CDialogAbout::CTabVersion::CTabVersion(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTVERSION_DIALOG, DlgProc)
 {
 }
 
