@@ -241,7 +241,7 @@ INT_PTR CALLBACK CDialogAbout::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 
 INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
-	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, 16, 16, LR_SHARED);
+	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
 	if (wcscmp(GetString(ID_STR_ISRTL), L"1") == 0)

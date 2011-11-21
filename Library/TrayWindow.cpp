@@ -64,7 +64,7 @@ CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
 	wc.lpfnWndProc = (WNDPROC)WndProc;
 	wc.hInstance = instance;
 	wc.lpszClassName = L"RainmeterTrayClass";
-	wc.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, 32, 32, LR_SHARED);
+	wc.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_SHARED);
 
 	RegisterClass(&wc);
 
@@ -265,7 +265,7 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 	}
 
 	// Return the default icon if there is no valid measure
-	return (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, 16, 16, LR_SHARED);
+	return (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
 }
 
 void CTrayWindow::ReadConfig(CConfigParser& parser)
@@ -338,7 +338,8 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 			if (!imageName.empty())
 			{
 				imageName.insert(0, Rainmeter->GetSkinPath());
-				if (_wcsicmp(imageName.c_str() + (imageName.size() - 4), L".ico") == 0)
+				const WCHAR* imagePath = imageName.c_str();
+				if (_wcsicmp(imagePath + (imageName.size() - 4), L".ico") == 0)
 				{
 					int count = 1;
 					HICON hIcon = NULL;
@@ -347,11 +348,11 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 					do
 					{
 						WCHAR buffer[MAX_PATH];
-						_snwprintf_s(buffer, _TRUNCATE, imageName.c_str(), count++);
+						_snwprintf_s(buffer, _TRUNCATE, imagePath, count++);
 
 						hIcon = (HICON)LoadImage(NULL, buffer, IMAGE_ICON, TRAYICON_SIZE, TRAYICON_SIZE, LR_LOADFROMFILE);
 						if (hIcon) m_TrayIcons.push_back(hIcon);
-						if (imageName == buffer) break;
+						if (wcscmp(imagePath, buffer) == 0) break;
 					}
 					while(hIcon != NULL);
 				}
@@ -360,13 +361,13 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 				{
 					// No icons found so load as bitmap
 					delete m_Bitmap;
-					m_Bitmap = new Bitmap(imageName.c_str());
+					m_Bitmap = new Bitmap(imagePath);
 					Status status = m_Bitmap->GetLastStatus();
 					if (Ok != status)
 					{
 						delete m_Bitmap;
 						m_Bitmap = NULL;
-						LogWithArgs(LOG_WARNING, L"Bitmap image not found: %s", imageName.c_str());
+						LogWithArgs(LOG_WARNING, L"Bitmap image not found: %s", imagePath);
 					}
 				}
 			}
