@@ -40,10 +40,10 @@ CDialogAbout* CDialogAbout::c_Dialog = NULL;
 **
 */
 CDialogAbout::CDialogAbout(HWND wnd) : CDialog(wnd),
-	m_TabLog(),
-	m_TabMeasures(),
-	m_TabPlugins(),
-	m_TabVersion()
+	m_TabLog(wnd),
+	m_TabMeasures(wnd),
+	m_TabPlugins(wnd),
+	m_TabVersion(wnd)
 {
 }
 
@@ -55,10 +55,6 @@ CDialogAbout::CDialogAbout(HWND wnd) : CDialog(wnd),
 */
 CDialogAbout::~CDialogAbout()
 {
-	delete m_TabLog;
-	delete m_TabMeasures;
-	delete m_TabPlugins;
-	delete m_TabVersion;
 }
 
 /*
@@ -139,25 +135,25 @@ void CDialogAbout::ShowAboutLog()
 
 void CDialogAbout::AddLogItem(int level, LPCWSTR time, LPCWSTR message)
 {
-	if (c_Dialog && c_Dialog->m_TabLog && c_Dialog->m_TabLog->IsInitialized())
+	if (c_Dialog && c_Dialog->m_TabLog.IsInitialized())
 	{
-		c_Dialog->m_TabLog->AddItem(level, time, message);
+		c_Dialog->m_TabLog.AddItem(level, time, message);
 	}
 }
 
 void CDialogAbout::UpdateSkins()
 {
-	if (c_Dialog && c_Dialog->m_TabMeasures && c_Dialog->m_TabMeasures->IsInitialized())
+	if (c_Dialog && c_Dialog->m_TabMeasures.IsInitialized())
 	{
-		c_Dialog->m_TabMeasures->UpdateSkinList();
+		c_Dialog->m_TabMeasures.UpdateSkinList();
 	}
 }
 
-void CDialogAbout::UpdateMeasures(LPCTSTR entryName)
+void CDialogAbout::UpdateMeasures(CMeterWindow* meterWindow)
 {
-	if (c_Dialog && c_Dialog->m_TabMeasures && c_Dialog->m_TabMeasures->IsInitialized())
+	if (c_Dialog && c_Dialog->m_TabMeasures.IsInitialized())
 	{
-		c_Dialog->m_TabMeasures->UpdateMeasureList(entryName);
+		c_Dialog->m_TabMeasures.UpdateMeasureList(meterWindow);
 	}
 }
 
@@ -212,10 +208,10 @@ INT_PTR CALLBACK CDialogAbout::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 
 					w -= 48;
 					h -= 100;
-					c_Dialog->m_TabLog->Resize(w, h);
-					c_Dialog->m_TabMeasures->Resize(w, h);
-					c_Dialog->m_TabPlugins->Resize(w, h);
-					c_Dialog->m_TabVersion->Resize(w, h);
+					c_Dialog->m_TabLog.Resize(w, h);
+					c_Dialog->m_TabMeasures.Resize(w, h);
+					c_Dialog->m_TabPlugins.Resize(w, h);
+					c_Dialog->m_TabVersion.Resize(w, h);
 				}
 			}
 			return TRUE;
@@ -266,12 +262,6 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	tci.pszText = GetString(ID_STR_VERSION);
 	TabCtrl_InsertItem(item, 3, &tci);
 
-	HINSTANCE instance = Rainmeter->GetResourceInstance();
-	m_TabLog = new CTabLog(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTLOG_DIALOG), m_Window, CTabLog::DlgProc));
-	m_TabMeasures = new CTabMeasures(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTMEASURES_DIALOG), m_Window, CTabMeasures::DlgProc));
-	m_TabPlugins = new CTabPlugins(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTPLUGINS_DIALOG), m_Window, CTabPlugins::DlgProc));
-	m_TabVersion = new CTabVersion(CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUTVERSION_DIALOG), m_Window, CTabVersion::DlgProc));
-
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
 		// Use UI font (Segoe UI) on Vista+
@@ -316,19 +306,19 @@ INT_PTR CDialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 			int sel = TabCtrl_GetCurSel(nm->hwndFrom);
 			if (sel == 0)
 			{
-				tab = m_TabLog;
+				tab = &m_TabLog;
 			}
 			else if (sel == 1)
 			{
-				tab = m_TabMeasures;
+				tab = &m_TabMeasures;
 			}
 			else if (sel == 2)
 			{
-				tab = m_TabPlugins;
+				tab = &m_TabPlugins;
 			}
 			else // if (sel == 3)
 			{
-				tab = m_TabVersion;
+				tab = &m_TabVersion;
 			}
 
 			if (tab)
@@ -361,7 +351,7 @@ INT_PTR CDialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 ** Constructor.
 **
 */
-CDialogAbout::CTabLog::CTabLog(HWND wnd) : CTab(wnd),
+CDialogAbout::CTabLog::CTabLog(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTLOG_DIALOG, DlgProc),
 	m_Error(true),
 	m_Warning(true),
 	m_Notice(true),
@@ -540,7 +530,7 @@ INT_PTR CALLBACK CDialogAbout::CTabLog::DlgProc(HWND hWnd, UINT uMsg, WPARAM wPa
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		return c_Dialog->m_TabLog->OnCommand(wParam, lParam);
+		return c_Dialog->m_TabLog.OnCommand(wParam, lParam);
 	}
 
 	return FALSE;
@@ -597,7 +587,8 @@ INT_PTR CDialogAbout::CTabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 ** Constructor.
 **
 */
-CDialogAbout::CTabMeasures::CTabMeasures(HWND wnd) : CTab(wnd)
+CDialogAbout::CTabMeasures::CTabMeasures(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTMEASURES_DIALOG, DlgProc),
+	m_SkinWindow()
 {
 }
 
@@ -631,26 +622,7 @@ void CDialogAbout::CTabMeasures::Initialize()
 	lvc.pszText = GetString(ID_STR_VALUE);
 	ListView_InsertColumn(item, 2, &lvc);
 
-	// Add entries for each config
-	item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTBOX);
-	const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
-	std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-	for ( ; iter != windows.end(); ++iter)
-	{
-		CMeterWindow* meterWindow = (*iter).second;
-		const std::wstring& skinName = meterWindow->GetSkinName();
-		SendMessage(item, LB_ADDSTRING, NULL, (LPARAM)skinName.c_str());
-		size_t namelength = skinName.length();
-
-		int currwidth = (int)SendMessage(item, LB_GETHORIZONTALEXTENT, NULL, NULL);
-		if (6 * (int)namelength > currwidth)
-		{
-			SendMessage(item, LB_SETHORIZONTALEXTENT, 6 * namelength, NULL);
-		}
-	}
-
-	// Select first item
-	SendMessage(item, LB_SETCURSEL, 0, 0);
+	UpdateSkinList();
 }
 
 /*
@@ -685,148 +657,128 @@ void CDialogAbout::CTabMeasures::Resize(int w, int h)
 */
 void CDialogAbout::CTabMeasures::UpdateSkinList()
 {
-	WCHAR* selectedItemName = NULL;
-
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTBOX);
-	int selected = (int)SendMessage(item, LB_GETCURSEL, 0, 0);
-
-	// Get current selected entry
-	if (selected != LB_ERR)
-	{
-		int selectedItemLen = (int)SendMessage(item, LB_GETTEXTLEN, selected, 0);
-
-		if (selectedItemLen != LB_ERR)
-		{
-			selectedItemName = new WCHAR[selectedItemLen + 1];
-
-			if (LB_ERR != SendMessage(item, LB_GETTEXT, selected, (LPARAM)selectedItemName))
-			{
-				selectedItemName[selectedItemLen] = L'\0';
-			}
-			else
-			{
-				delete [] selectedItemName;
-				selectedItemName = NULL;
-			}
-		}
-	}
-
 	// Delete all entries
-	SendMessage(item, LB_RESETCONTENT, 0, 0);
+	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTBOX);
+	ListBox_ResetContent(item);
 
-	// TODO Move following to common
+	// Add entries for each skin
+	std::wstring::size_type maxLength = 0;
 	const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 	std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
+	bool found = false;
 	for ( ; iter != windows.end(); ++iter)
 	{
-		CMeterWindow* meterWindow = (*iter).second;
-		const std::wstring& skinName = meterWindow->GetSkinName();
-		SendMessage(item, LB_ADDSTRING, NULL, (LPARAM)skinName.c_str());
-		size_t namelength = skinName.length();
-
-		int currwidth = (int)SendMessage(item, LB_GETHORIZONTALEXTENT, NULL, NULL);
-		if (6 * (int)namelength > currwidth)
+		const std::wstring& skinName = (*iter).first;
+		std::wstring::size_type curLength = skinName.length();
+		if (curLength > maxLength)
 		{
-			SendMessage(item, LB_SETHORIZONTALEXTENT, 6 * namelength, NULL);
+			maxLength = curLength;
+		}
+		
+		const WCHAR* name = skinName.c_str();
+		int index = ListBox_AddString(item, name);
+		if (!found && m_SkinWindow == (*iter).second)
+		{
+			found = true;
+			m_SkinWindow = (*iter).second;
+			ListBox_SetCurSel(item, index);
 		}
 	}
 
-	if (selectedItemName != NULL)
+	ListBox_SetHorizontalExtent(item, 6 * maxLength);
+
+	if (!found)
 	{
-		int sel = 0;
-		SendMessage(item, LB_SETCURSEL, sel, 0);
-
-		const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
-		std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-		for ( ; iter != windows.end(); ++iter)
+		if (windows.empty())
 		{
-			if (_wcsicmp(selectedItemName, (*iter).first.c_str()) == 0)
-			{
-				SendMessage(item, LB_SETCURSEL, sel, 0);
-				break;
-			}
-			++sel;
+			m_SkinWindow = NULL;
+			item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
+			ListView_DeleteAllItems(item);
 		}
-
-		delete [] selectedItemName;
+		else
+		{
+			// Default to first skin
+			m_SkinWindow = (*windows.begin()).second;
+			ListBox_SetCurSel(item, 0);
+			UpdateMeasureList(m_SkinWindow);
+		}
 	}
 }
 
 /*
-** UpdateSkinList
+** UpdateMeasureList
 **
 ** Updates the list of measures and values.
 **
 */
-void CDialogAbout::CTabMeasures::UpdateMeasureList(LPCTSTR entryName)
+void CDialogAbout::CTabMeasures::UpdateMeasureList(CMeterWindow* meterWindow)
 {
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTBOX);
-	int selected = (int)SendMessage(item, LB_GETCURSEL, NULL, NULL);
-
-	const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
-	std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-	for (int i = 0; iter != windows.end(); ++i, ++iter)
+	if (!meterWindow)
 	{
-		if (i == selected &&
-			(entryName == NULL || _wcsicmp(entryName, (*iter).first.c_str()) == 0))
+		// Find selected skin
+		HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTBOX);
+		int selected = (int)SendMessage(item, LB_GETCURSEL, NULL, NULL);
+
+		const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+		std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
+		while (selected && iter != windows.end())
 		{
-			item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
-			SendMessage(item, WM_SETREDRAW, 0, 0);
-			int count = ListView_GetItemCount(item);
-			int index = 0;
-
-			CMeterWindow* meterWindow = (*iter).second;
-			const std::list<CMeasure*>& measures = meterWindow->GetMeasures();
-			std::list<CMeasure*>::const_iterator j = measures.begin();
-			for ( ; j != measures.end(); ++j)
-			{
-				const WCHAR* name = (*j)->GetName();
-				std::wstring val = (*j)->GetStats();
-
-				WCHAR buffer[256];
-				double minVal = (*j)->GetMinValue();
-				double maxVal = (*j)->GetMaxValue();
-				CMeasure::GetScaledValue(AUTOSCALE_ON, 1, minVal, buffer, _countof(buffer));
-				std::wstring range = buffer;
-				range += L" - ";
-				CMeasure::GetScaledValue(AUTOSCALE_ON, 1, maxVal, buffer, _countof(buffer));
-				range += buffer;
-
-				if (name && *name)
-				{
-					if (index < count)
-					{
-						ListView_SetItemText(item, index, 0, (WCHAR*)name);
-					}
-					else
-					{
-						LVITEM vitem;
-						vitem.mask = LVIF_TEXT;
-						vitem.iItem = index;
-						vitem.iSubItem = 0;
-						vitem.pszText = (WCHAR*)name;
-						ListView_InsertItem(item, &vitem);
-					}
-
-					ListView_SetItemText(item, index, 1, (WCHAR*)range.c_str());
-					ListView_SetItemText(item, index, 2, (WCHAR*)val.c_str());
-					++index;
-				}
-			}
-
-			if (count > index)
-			{
-				// Delete unnecessary items
-				for (int j = index; j < count; ++j)
-				{
-					ListView_DeleteItem(item, index);
-				}
-			}
-
-			SendMessage(item, WM_SETREDRAW, 1, 0);
-			break;
+			++iter;
+			--selected;
 		}
+
+		m_SkinWindow = (*iter).second;
 	}
+	else if (meterWindow != m_SkinWindow)
+	{
+		// Called by a skin other than currently visible one, so return
+		return;
+	}
+
+	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
+	SendMessage(item, WM_SETREDRAW, FALSE, 0);
+	int count = ListView_GetItemCount(item);
+	int index = 0;
+
+	const std::list<CMeasure*>& measures = m_SkinWindow->GetMeasures();
+	std::list<CMeasure*>::const_iterator j = measures.begin();
+	for ( ; j != measures.end(); ++j)
+	{
+		const WCHAR* name = (*j)->GetName();;
+		if (index < count)
+		{
+			ListView_SetItemText(item, index, 0, (WCHAR*)name);
+		}
+		else
+		{
+			LVITEM vitem;
+			vitem.mask = LVIF_TEXT;
+			vitem.iItem = index;
+			vitem.iSubItem = 0;
+			vitem.pszText = (WCHAR*)name;
+			ListView_InsertItem(item, &vitem);
+		}
+
+		WCHAR buffer[256];
+		CMeasure::GetScaledValue(AUTOSCALE_ON, 1, (*j)->GetMinValue(), buffer, _countof(buffer));
+		std::wstring range = buffer;
+		range += L" - ";
+		CMeasure::GetScaledValue(AUTOSCALE_ON, 1, (*j)->GetMaxValue(), buffer, _countof(buffer));
+		range += buffer;
+
+		ListView_SetItemText(item, index, 1, (WCHAR*)range.c_str());
+		ListView_SetItemText(item, index, 2, (WCHAR*)(*j)->GetStats());
+		++index;
+	}
+
+	// Delete unnecessary items
+	while (count > index)
+	{
+		ListView_DeleteItem(item, index);
+		--count;
+	}
+
+	SendMessage(item, WM_SETREDRAW, TRUE, 0);
 }
 
 /*
@@ -840,7 +792,7 @@ INT_PTR CALLBACK CDialogAbout::CTabMeasures::DlgProc(HWND hWnd, UINT uMsg, WPARA
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		return c_Dialog->m_TabMeasures->OnCommand(wParam, lParam);
+		return c_Dialog->m_TabMeasures.OnCommand(wParam, lParam);
 	}
 
 	return FALSE;
@@ -876,7 +828,7 @@ INT_PTR CDialogAbout::CTabMeasures::OnCommand(WPARAM wParam, LPARAM lParam)
 ** Constructor.
 **
 */
-CDialogAbout::CTabPlugins::CTabPlugins(HWND wnd) : CTab(wnd)
+CDialogAbout::CTabPlugins::CTabPlugins(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTPLUGINS_DIALOG, DlgProc)
 {
 }
 
@@ -1012,7 +964,7 @@ INT_PTR CALLBACK CDialogAbout::CTabPlugins::DlgProc(HWND hWnd, UINT uMsg, WPARAM
 ** Constructor.
 **
 */
-CDialogAbout::CTabVersion::CTabVersion(HWND wnd) : CTab(wnd)
+CDialogAbout::CTabVersion::CTabVersion(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTMEASURES_DIALOG, DlgProc)
 {
 }
 
@@ -1070,10 +1022,10 @@ INT_PTR CALLBACK CDialogAbout::CTabVersion::DlgProc(HWND hWnd, UINT uMsg, WPARAM
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		return c_Dialog->m_TabVersion->OnCommand(wParam, lParam);
+		return c_Dialog->m_TabVersion.OnCommand(wParam, lParam);
 
 	case WM_NOTIFY:
-		return c_Dialog->m_TabVersion->OnNotify(wParam, lParam);
+		return c_Dialog->m_TabVersion.OnNotify(wParam, lParam);
 	}
 
 	return FALSE;

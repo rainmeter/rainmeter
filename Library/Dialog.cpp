@@ -91,10 +91,10 @@ BOOL CALLBACK CDialog::SetFontProc(HWND hWnd, LPARAM lParam)
 ** Constructor.
 **
 */
-CTab::CTab(HWND wnd) : CDialog(wnd),
+CTab::CTab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc) : CDialog(CreateDialog(instance, MAKEINTRESOURCE(tabId), owner, tabProc)),
 	m_Initialized(false)
 {
-	EnableThemeDialogTexture(wnd, ETDT_ENABLETAB);
+	EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
 }
 
 /*

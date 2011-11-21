@@ -16,8 +16,8 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef _DIALOG_H_
-#define _DIALOG_H_
+#ifndef __DIALOG_H__
+#define __DIALOG_H__
 
 class CDialog
 {
@@ -49,7 +49,7 @@ public:
 	virtual void Resize(int w, int h) {}
 
 protected:
-	CTab(HWND wnd);
+	CTab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc);
 	virtual ~CTab();
 
 	bool m_Initialized;

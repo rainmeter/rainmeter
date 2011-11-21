@@ -16,8 +16,8 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef _DIALOGMANAGE_H_
-#define _DIALOGMANAGE_H_
+#ifndef __DIALOGMANAGE_H__
+#define __DIALOGMANAGE_H__
 
 #include "Dialog.h"
 
@@ -46,7 +46,7 @@ private:
 	class CTabSkins : public CTab
 	{
 	public:
-		CTabSkins(HWND window);
+		CTabSkins(HWND owner);
 
 		virtual void Initialize();
 
@@ -76,7 +76,7 @@ private:
 	class CTabThemes : public CTab
 	{
 	public:
-		CTabThemes(HWND window);
+		CTabThemes(HWND owner);
 
 		virtual void Initialize();
 
@@ -89,7 +89,7 @@ private:
 	class CTabSettings : public CTab
 	{
 	public:
-		CTabSettings(HWND window);
+		CTabSettings(HWND owner);
 
 		virtual void Initialize();
 
@@ -97,9 +97,9 @@ private:
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	};
 
-	CTabSkins* m_TabSkins;
-	CTabThemes* m_TabThemes;
-	CTabSettings* m_TabSettings;
+	CTabSkins m_TabSkins;
+	CTabThemes m_TabThemes;
+	CTabSettings m_TabSettings;
 };
 
 #endif

@@ -723,7 +723,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 	case BANG_UPDATE:
 		KillTimer(m_Window, TIMER_METER);  // Kill timer temporarily
 		Update(false);
-		CDialogAbout::UpdateMeasures(m_SkinName.c_str());
+		CDialogAbout::UpdateMeasures(this);
 		if (m_WindowUpdate >= 0)
 		{
 			SetTimer(m_Window, TIMER_METER, m_WindowUpdate, NULL);
@@ -798,7 +798,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 
 	case BANG_UPDATEMEASURE:
 		UpdateMeasure(arg);
-		CDialogAbout::UpdateMeasures(m_SkinName.c_str());
+		CDialogAbout::UpdateMeasures(this);
 		break;
 
 	case BANG_DISABLEMEASUREGROUP:
@@ -815,7 +815,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 
 	case BANG_UPDATEMEASUREGROUP:
 		UpdateMeasure(arg, true);
-		CDialogAbout::UpdateMeasures(m_SkinName.c_str());
+		CDialogAbout::UpdateMeasures(this);
 		break;
 
 	case BANG_SHOW:
@@ -3063,7 +3063,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (wParam == TIMER_METER)
 	{
 		Update(false);
-		CDialogAbout::UpdateMeasures(m_SkinName.c_str());
+		CDialogAbout::UpdateMeasures(this);
 	}
 	else if (wParam == TIMER_MOUSE)
 	{

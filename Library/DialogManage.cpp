@@ -41,9 +41,9 @@ CDialogManage* CDialogManage::c_Dialog = NULL;
 **
 */
 CDialogManage::CDialogManage(HWND wnd) : CDialog(wnd),
-	m_TabSkins(),
-	m_TabThemes(),
-	m_TabSettings()
+	m_TabSkins(wnd),
+	m_TabThemes(wnd),
+	m_TabSettings(wnd)
 {
 }
 
@@ -55,9 +55,6 @@ CDialogManage::CDialogManage(HWND wnd) : CDialog(wnd),
 */
 CDialogManage::~CDialogManage()
 {
-	delete m_TabSkins;
-	delete m_TabThemes;
-	delete m_TabSettings;
 }
 
 /*
@@ -128,13 +125,13 @@ void CDialogManage::OpenSkin(CMeterWindow* meterWindow)
 {
 	Open();
 
-	if (c_Dialog && c_Dialog->m_TabSkins)
+	if (c_Dialog)
 	{
 		std::wstring name = meterWindow->GetSkinName() + L"\\";
 		name += meterWindow->GetSkinIniFile();
 
-		HWND item = GetDlgItem(c_Dialog->m_TabSkins->GetWindow(), IDC_MANAGESKINS_SKINS_TREEVIEW);
-		c_Dialog->m_TabSkins->SelectTreeItem(item, TreeView_GetRoot(item), name.c_str());
+		HWND item = GetDlgItem(c_Dialog->m_TabSkins.GetWindow(), IDC_MANAGESKINS_SKINS_TREEVIEW);
+		c_Dialog->m_TabSkins.SelectTreeItem(item, TreeView_GetRoot(item), name.c_str());
 	}
 }
 
@@ -146,9 +143,9 @@ void CDialogManage::OpenSkin(CMeterWindow* meterWindow)
 */
 void CDialogManage::UpdateSkins(CMeterWindow* meterWindow, bool deleted)
 {
-	if (c_Dialog && c_Dialog->m_TabSkins && c_Dialog->m_TabSkins->IsInitialized())
+	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
 	{
-		c_Dialog->m_TabSkins->Update(meterWindow, deleted);
+		c_Dialog->m_TabSkins.Update(meterWindow, deleted);
 	}
 }
 
@@ -245,22 +242,17 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	tci.pszText = GetString(ID_STR_SETTINGS);
 	TabCtrl_InsertItem(item, 2, &tci);
 
-	HINSTANCE instance = Rainmeter->GetResourceInstance();
-	m_TabSkins = new CTabSkins(CreateDialog(instance, MAKEINTRESOURCE(IDD_MANAGESKINS_DIALOG), m_Window, CTabSkins::DlgProc));
-	m_TabThemes = new CTabThemes(CreateDialog(instance, MAKEINTRESOURCE(IDD_MANAGETHEMES_DIALOG), m_Window, CTabThemes::DlgProc));
-	m_TabSettings = new CTabSettings(CreateDialog(instance, MAKEINTRESOURCE(IDD_MANAGESETTINGS_DIALOG), m_Window, CTabSettings::DlgProc));
-
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
 		// Use UI font (Segoe UI) on Vista+
 		SetDialogFont();
 
 		// Use arrows instead of plus/minus in the tree for Vista+
-		item = GetDlgItem(m_TabSkins->GetWindow(), IDC_MANAGESKINS_SKINS_TREEVIEW);
+		item = GetDlgItem(m_TabSkins.GetWindow(), IDC_MANAGESKINS_SKINS_TREEVIEW);
 		SetWindowTheme(item, L"explorer", NULL);
 	}
 
-	item = GetDlgItem(m_TabSkins->GetWindow(), IDC_MANAGESKINS_FILE_TEXT);
+	item = GetDlgItem(m_TabSkins.GetWindow(), IDC_MANAGESKINS_FILE_TEXT);
 	SendMessage(item, WM_SETFONT, (WPARAM)m_FontBold, 0);
 
 	if (c_WindowPlacement.length == 0)
@@ -318,15 +310,15 @@ INT_PTR CDialogManage::OnNotify(WPARAM wParam, LPARAM lParam)
 			int sel = TabCtrl_GetCurSel(nm->hwndFrom);
 			if (sel == 0)
 			{
-				tab = m_TabSkins;
+				tab = &m_TabSkins;
 			}
 			else if (sel == 1)
 			{
-				tab = m_TabThemes;
+				tab = &m_TabThemes;
 			}
 			else // if (sel == 2)
 			{
-				tab = m_TabSettings;
+				tab = &m_TabSettings;
 			}
 
 			if (tab)
@@ -359,7 +351,7 @@ INT_PTR CDialogManage::OnNotify(WPARAM wParam, LPARAM lParam)
 ** Constructor.
 **
 */
-CDialogManage::CTabSkins::CTabSkins(HWND wnd) : CTab(wnd),
+CDialogManage::CTabSkins::CTabSkins(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_MANAGESKINS_DIALOG, DlgProc),
 	m_SkinWindow(),
 	m_HandleCommands(false),
 	m_IgnoreUpdate(false)
@@ -773,25 +765,23 @@ void CDialogManage::CTabSkins::ReadSkin()
 */
 void CDialogManage::CTabSkins::PopulateTree(HWND tree, TV_INSERTSTRUCT& tvi, const std::vector<CRainmeter::CONFIGMENU>& configMenuData)
 {
-	if (!configMenuData.empty())
+	for (int i = 0, isize = (int)configMenuData.size(); i < isize; ++i)
 	{
-		for (int i = 0, isize = (int)configMenuData.size(); i < isize; ++i)
+		const CRainmeter::CONFIGMENU& configMenuS = configMenuData[i];
+		if (configMenuS.index == -1)
 		{
-			if (configMenuData[i].index == -1)
-			{
-				tvi.item.iImage = tvi.item.iSelectedImage = 0;
-				tvi.item.pszText = const_cast<WCHAR*>(configMenuData[i].name.c_str());
-				HTREEITEM hOldParent = tvi.hParent;
-				tvi.hParent = (HTREEITEM)SendMessage(tree, TVM_INSERTITEM, 0, (LPARAM)&tvi);
-				PopulateTree(tree, tvi, configMenuData[i].children);
-				tvi.hParent = hOldParent;
-			}
-			else
-			{
-				tvi.item.iImage = tvi.item.iSelectedImage = 1;
-				tvi.item.pszText = const_cast<WCHAR*>(configMenuData[i].name.c_str());
-				SendMessage(tree, TVM_INSERTITEM, 0, (LPARAM)&tvi);
-			}
+			tvi.item.iImage = tvi.item.iSelectedImage = 0;
+			tvi.item.pszText =(WCHAR*)configMenuS.name.c_str();
+			HTREEITEM hOldParent = tvi.hParent;
+			tvi.hParent = (HTREEITEM)SendMessage(tree, TVM_INSERTITEM, 0, (LPARAM)&tvi);
+			PopulateTree(tree, tvi, configMenuS.children);
+			tvi.hParent = hOldParent;
+		}
+		else
+		{
+			tvi.item.iImage = tvi.item.iSelectedImage = 1;
+			tvi.item.pszText = (WCHAR*)configMenuS.name.c_str();
+			SendMessage(tree, TVM_INSERTITEM, 0, (LPARAM)&tvi);
 		}
 	}
 }
@@ -809,25 +799,24 @@ void CDialogManage::CTabSkins::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR
 	tvi.mask = TVIF_TEXT;
 	tvi.hItem = item;
 	tvi.pszText = buffer;
-	tvi.cchTextMax = MAX_PATH;
 
-	std::wstring tmpSz = name;
-	std::wstring::size_type pos = tmpSz.find_first_of(L'\\');
-	if (pos != std::wstring::npos)
+	const WCHAR* pos = wcschr(name, L'\\');
+	if (pos)
 	{
-		tmpSz.resize(pos);
+		const int folderLen = pos - name;
+		tvi.cchTextMax = folderLen + 1;		// Length of folder name plus 1 for NULL
 
 		// Find and expand the folder
 		do
 		{
 			TreeView_GetItem(tree, &tvi);
-			if (wcscmp(buffer, tmpSz.c_str()) == 0)
+			if (wcsncmp(buffer, name, folderLen) == 0)
 			{
 				if ((item = TreeView_GetChild(tree, tvi.hItem)) != NULL)
 				{
 					TreeView_Expand(tree, tvi.hItem, TVE_EXPAND);
-					name += tmpSz.length() + 1;
-					SelectTreeItem(tree, item, name);
+					++pos;	// Skip the slash
+					SelectTreeItem(tree, item, pos);
 				}
 
 				break;
@@ -837,6 +826,8 @@ void CDialogManage::CTabSkins::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR
 	}
 	else
 	{
+		tvi.cchTextMax = MAX_PATH;
+
 		// Find and select the file
 		do
 		{
@@ -862,10 +853,10 @@ INT_PTR CALLBACK CDialogManage::CTabSkins::DlgProc(HWND hWnd, UINT uMsg, WPARAM 
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		return c_Dialog->m_TabSkins->OnCommand(wParam, lParam);
+		return c_Dialog->m_TabSkins.OnCommand(wParam, lParam);
 
 	case WM_NOTIFY:
-		return c_Dialog->m_TabSkins->OnNotify(wParam, lParam);
+		return c_Dialog->m_TabSkins.OnNotify(wParam, lParam);
 	}
 
 	return FALSE;
@@ -1354,7 +1345,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 ** Constructor.
 **
 */
-CDialogManage::CTabThemes::CTabThemes(HWND wnd) : CTab(wnd)
+CDialogManage::CTabThemes::CTabThemes(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_MANAGETHEMES_DIALOG, DlgProc)
 {
 }
 
@@ -1387,7 +1378,7 @@ INT_PTR CALLBACK CDialogManage::CTabThemes::DlgProc(HWND hWnd, UINT uMsg, WPARAM
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		return c_Dialog->m_TabThemes->OnCommand(wParam, lParam);
+		return c_Dialog->m_TabThemes.OnCommand(wParam, lParam);
 	}
 
 	return FALSE;
@@ -1642,7 +1633,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 ** Constructor.
 **
 */
-CDialogManage::CTabSettings::CTabSettings(HWND wnd) : CTab(wnd)
+CDialogManage::CTabSettings::CTabSettings(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_MANAGESETTINGS_DIALOG, DlgProc)
 {
 }
 
@@ -1719,7 +1710,7 @@ INT_PTR CALLBACK CDialogManage::CTabSettings::DlgProc(HWND hWnd, UINT uMsg, WPAR
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		return c_Dialog->m_TabSettings->OnCommand(wParam, lParam);
+		return c_Dialog->m_TabSettings.OnCommand(wParam, lParam);
 	}
 
 	return FALSE;

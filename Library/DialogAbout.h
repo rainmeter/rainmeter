@@ -16,8 +16,8 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef _DIALOGABOUT_H_
-#define _DIALOGABOUT_H_
+#ifndef __DIALOGABOUT_H__
+#define __DIALOGABOUT_H__
 
 #include "Dialog.h"
 
@@ -38,7 +38,7 @@ public:
 
 	static void AddLogItem(int level, LPCWSTR time, LPCWSTR message);
 	static void UpdateSkins();
-	static void UpdateMeasures(LPCTSTR entryName = NULL);
+	static void UpdateMeasures(CMeterWindow* meterWindow);
 
 	static WINDOWPLACEMENT c_WindowPlacement;
 	static CDialogAbout* c_Dialog;
@@ -48,7 +48,7 @@ private:
 	class CTabLog : public CTab
 	{
 	public:
-		CTabLog(HWND window);
+		CTabLog(HWND owner);
 
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
@@ -69,7 +69,7 @@ private:
 	class CTabMeasures : public CTab
 	{
 	public:
-		CTabMeasures(HWND window);
+		CTabMeasures(HWND owner);
 
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
@@ -78,14 +78,17 @@ private:
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	
 		void UpdateSkinList();
-		void UpdateMeasureList(LPCTSTR entryName);
+		void UpdateMeasureList(CMeterWindow* meterWindow);
+
+	private:
+		CMeterWindow* m_SkinWindow;
 	};
 
 	// Plugins tab
 	class CTabPlugins : public CTab
 	{
 	public:
-		CTabPlugins(HWND window);
+		CTabPlugins(HWND owner);
 
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
@@ -101,7 +104,7 @@ private:
 	class CTabVersion : public CTab
 	{
 	public:
-		CTabVersion(HWND window);
+		CTabVersion(HWND owner);
 
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
@@ -110,11 +113,11 @@ private:
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	};
-	
-	CTabLog* m_TabLog;
-	CTabMeasures* m_TabMeasures;
-	CTabPlugins* m_TabPlugins;
-	CTabVersion* m_TabVersion;
+
+	CTabLog m_TabLog;
+	CTabMeasures m_TabMeasures;
+	CTabPlugins m_TabPlugins;
+	CTabVersion m_TabVersion;
 };
 
 #endif

@@ -120,15 +120,7 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	CMeasure::ReadConfig(parser, section);
 
 	const WCHAR* keyname = parser.ReadString(section, L"RegHKey", L"HKEY_CURRENT_USER").c_str();
-	if (_wcsicmp(keyname, L"HKEY_CLASSES_ROOT") == 0)
-	{
-		m_HKey = HKEY_CLASSES_ROOT;
-	}
-	else if (_wcsicmp(keyname, L"HKEY_CURRENT_CONFIG") == 0)
-	{
-		m_HKey = HKEY_CURRENT_CONFIG;
-	}
-	else if (_wcsicmp(keyname, L"HKEY_CURRENT_USER") == 0)
+	if (_wcsicmp(keyname, L"HKEY_CURRENT_USER") == 0)
 	{
 		m_HKey = HKEY_CURRENT_USER;
 	}
@@ -140,6 +132,10 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	{
 		m_HKey = HKEY_CLASSES_ROOT;
 	}
+	else if (_wcsicmp(keyname, L"HKEY_CURRENT_CONFIG") == 0)
+	{
+		m_HKey = HKEY_CURRENT_CONFIG;
+	}
 	else if (_wcsicmp(keyname, L"HKEY_PERFORMANCE_DATA") == 0)
 	{
 		m_HKey = HKEY_PERFORMANCE_DATA;
@@ -150,7 +146,7 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"HKEY=";
+		std::wstring error = L"RegHKey=";
 		error += keyname;
 		error += L" is not valid in [";
 		error += m_Name;
