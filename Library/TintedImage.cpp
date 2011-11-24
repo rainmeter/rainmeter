@@ -597,26 +597,30 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 				if (token)
 				{
 					m_Crop.X = _wtoi(token);
-				}
-				token = wcstok(NULL, L",");
-				if (token)
-				{
-					m_Crop.Y = _wtoi(token);
-				}
-				token = wcstok(NULL, L",");
-				if (token)
-				{
-					m_Crop.Width = _wtoi(token);
-				}
-				token = wcstok(NULL, L",");
-				if (token)
-				{
-					m_Crop.Height = _wtoi(token);
-				}
-				token = wcstok(NULL, L",");
-				if (token)
-				{
-					m_CropMode = (CROPMODE)_wtoi(token);
+
+					token = wcstok(NULL, L",");
+					if (token)
+					{
+						m_Crop.Y = _wtoi(token);
+
+						token = wcstok(NULL, L",");
+						if (token)
+						{
+							m_Crop.Width = _wtoi(token);
+
+							token = wcstok(NULL, L",");
+							if (token)
+							{
+								m_Crop.Height = _wtoi(token);
+
+								token = wcstok(NULL, L",");
+								if (token)
+								{
+									m_CropMode = (CROPMODE)_wtoi(token);
+								}
+							}
+						}
+					}
 				}
 				free(parseSz);
 			}

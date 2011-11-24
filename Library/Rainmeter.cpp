@@ -3182,16 +3182,17 @@ void CRainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
 			HRESULT hr = SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, buffer);
 			if (SUCCEEDED(hr))
 			{
-				std::wstring path = buffer;
+				size_t len = wcslen(buffer);
 				do
 				{
-					strPath.replace(pos, 9, path);
+					strPath.replace(pos, 9, buffer, len);
 				}
-				while ((pos = strPath.find(L"%APPDATA%", pos + path.length())) != std::wstring::npos);
+				while ((pos = strPath.find(L"%APPDATA%", pos + len)) != std::wstring::npos);
 			}
 		}
 
-		if (strPath.find(L'%') != std::wstring::npos)
+		if ((pos = strPath.find(L'%')) != std::wstring::npos &&
+			strPath.find(L'%', pos + 2) != std::wstring::npos)
 		{
 			// Expand the environment variables
 			do

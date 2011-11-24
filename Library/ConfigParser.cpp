@@ -633,15 +633,22 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 	{
 		m_LastValueDefined = true;
 
-		const std::wstring CURRENTSECTION = L"CURRENTSECTION";
-		SetBuiltInVariable(CURRENTSECTION, strSection);  // Set temporarily
-
-		if (ReplaceVariables(result))
+		if (result.find(L'#') != std::wstring::npos)
 		{
-			m_LastReplaced = true;
-		}
+			static const std::wstring CURRENTSECTION = L"CURRENTSECTION";
+			SetBuiltInVariable(CURRENTSECTION, strSection);  // Set temporarily
 
-		SetBuiltInVariable(CURRENTSECTION, L"");  // Reset
+			if (ReplaceVariables(result))
+			{
+				m_LastReplaced = true;
+			}
+
+			SetBuiltInVariable(CURRENTSECTION, L"");  // Reset
+		}
+		else
+		{
+			CRainmeter::ExpandEnvironmentVariables(result);
+		}
 
 		if (bReplaceMeasures && ReplaceMeasures(result))
 		{
@@ -791,7 +798,16 @@ RECT CConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
-	return (m_LastDefaultUsed) ? defValue : ParseRECT(result.c_str());
+	RECT r;
+	if (m_LastDefaultUsed)
+	{
+		r = defValue;
+	}
+	else
+	{
+		r = ParseRECT(result.c_str());
+	}
+	return r;
 }
 
 /*
@@ -903,7 +919,7 @@ double CConfigParser::ParseDouble(const std::wstring& string, double defValue, b
 ** hex-value.
 **
 */
-Color CConfigParser::ParseColor(LPCTSTR string)
+ARGB CConfigParser::ParseColor(LPCTSTR string)
 {
 	int R = 255, G = 255, B = 255, A = 255;
 
@@ -918,27 +934,30 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 			R = _wtoi(token);
 			R = max(R, 0);
 			R = min(R, 255);
-		}
-		token = wcstok(NULL, L",");
-		if (token)
-		{
-			G = _wtoi(token);
-			G = max(G, 0);
-			G = min(G, 255);
-		}
-		token = wcstok(NULL, L",");
-		if (token)
-		{
-			B = _wtoi(token);
-			B = max(B, 0);
-			B = min(B, 255);
-		}
-		token = wcstok(NULL, L",");
-		if (token)
-		{
-			A = _wtoi(token);
-			A = max(A, 0);
-			A = min(A, 255);
+
+			token = wcstok(NULL, L",");
+			if (token)
+			{
+				G = _wtoi(token);
+				G = max(G, 0);
+				G = min(G, 255);
+
+				token = wcstok(NULL, L",");
+				if (token)
+				{
+					B = _wtoi(token);
+					B = max(B, 0);
+					B = min(B, 255);
+
+					token = wcstok(NULL, L",");
+					if (token)
+					{
+						A = _wtoi(token);
+						A = max(A, 0);
+						A = min(A, 255);
+					}
+				}
+			}
 		}
 		free(parseSz);
 	}
@@ -960,7 +979,7 @@ Color CConfigParser::ParseColor(LPCTSTR string)
 		}
 	}
 
-	return Color(A, R, G, B);
+	return Color::MakeARGB(A, R, G, B);
 }
 
 /*
@@ -981,21 +1000,24 @@ void ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 		if (token)
 		{
 			v1 = _wtoi(token);
-		}
-		token = wcstok(NULL, L",");
-		if (token)
-		{
-			v2 = _wtoi(token);
-		}
-		token = wcstok(NULL, L",");
-		if (token)
-		{
-			v3 = _wtoi(token);
-		}
-		token = wcstok(NULL, L",");
-		if (token)
-		{
-			v4 = _wtoi(token);
+
+			token = wcstok(NULL, L",");
+			if (token)
+			{
+				v2 = _wtoi(token);
+
+				token = wcstok(NULL, L",");
+				if (token)
+				{
+					v3 = _wtoi(token);
+
+					token = wcstok(NULL, L",");
+					if (token)
+					{
+						v4 = _wtoi(token);
+					}
+				}
+			}
 		}
 		free(parseSz);
 	}

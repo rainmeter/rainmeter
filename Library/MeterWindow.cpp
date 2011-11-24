@@ -1116,34 +1116,34 @@ void CMeterWindow::ResizeBlur(const WCHAR* arg, int mode)
 		{
 			while (token[0] == L' ') ++token;
 			type = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
-		}
 
-		token = wcstok(NULL, L",");
-		if (token)
-		{
-			while (token[0] == L' ') ++token;
-			x = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
-		}
+			token = wcstok(NULL, L",");
+			if (token)
+			{
+				while (token[0] == L' ') ++token;
+				x = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
 
-		token = wcstok(NULL, L",");
-		if (token)
-		{
-			while (token[0] == L' ') ++token;
-			y = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
-		}
+				token = wcstok(NULL, L",");
+				if (token)
+				{
+					while (token[0] == L' ') ++token;
+					y = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
 
-		token = wcstok(NULL, L",");
-		if (token)
-		{
-			while (token[0] == L' ') ++token;
-			w = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
-		}
+					token = wcstok(NULL, L",");
+					if (token)
+					{
+						while (token[0] == L' ') ++token;
+						w = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
 
-		token = wcstok(NULL, L",");
-		if (token)
-		{
-			while (token[0] == L' ') ++token;
-			h = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
+						token = wcstok(NULL, L",");
+						if (token)
+						{
+							while (token[0] == L' ') ++token;
+							h = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
+						}
+					}
+				}
+			}
 		}
 
 		if (w && h)

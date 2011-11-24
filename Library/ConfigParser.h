@@ -85,7 +85,7 @@ public:
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static void Shrink(std::vector<std::wstring>& vec);
 	static double ParseDouble(const std::wstring& string, double defValue, bool rejectExp = false);
-	static Gdiplus::Color ParseColor(LPCTSTR string);
+	static Gdiplus::ARGB ParseColor(LPCTSTR string);
 	static Gdiplus::Rect ParseRect(LPCTSTR string);
 	static RECT ParseRECT(LPCTSTR string);
 
