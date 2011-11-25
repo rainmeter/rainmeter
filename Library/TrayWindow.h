@@ -23,6 +23,8 @@
 #include <gdiplus.h>
 #include <vector>
 
+typedef HRESULT (WINAPI * FPLOADICONMETRIC)(HINSTANCE hinst, PCWSTR pszName, int lims, HICON* phico);
+
 #define WM_TRAY_DELAYED_REFRESH_ALL WM_APP + 0
 #define WM_TRAY_DELAYED_EXECUTE     WM_APP + 1
 

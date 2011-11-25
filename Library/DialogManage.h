@@ -63,7 +63,7 @@ private:
 		void DisableControls(bool clear = false);
 		void ReadSkin();
 
-		static void PopulateTree(HWND tree, TV_INSERTSTRUCT& tvi, const std::vector<CRainmeter::CONFIGMENU>& configMenuData);
+		static void PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, const std::vector<CRainmeter::CONFIGMENU>& configMenuData);
 
 		std::wstring m_FileName;
 		std::wstring m_SkinName;

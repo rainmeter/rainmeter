@@ -25,11 +25,28 @@ public:
 	HWND GetWindow() { return m_Window; }
 
 protected:
+	class CTab
+	{
+	public:
+		HWND GetWindow() { return m_Window; }
+		bool IsInitialized() { return m_Initialized; }
+		void Activate();
+
+		virtual void Initialize() {}
+		virtual void Resize(int w, int h) {}
+
+	protected:
+		CTab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc);
+		virtual ~CTab();
+
+		HWND m_Window;
+		bool m_Initialized;
+	};
+
 	CDialog(HWND wnd);
 	virtual ~CDialog();
 
-	void SetRTL();
-
+	void SetDialogRTL();
 	void SetDialogFont();
 
 	HWND m_Window;
@@ -38,21 +55,6 @@ protected:
 
 private:
 	static BOOL CALLBACK SetFontProc(HWND hWnd, LPARAM lParam);
-};
-
-class CTab : public CDialog
-{
-public:
-	bool IsInitialized() { return m_Initialized; }
-
-	virtual void Initialize() {}
-	virtual void Resize(int w, int h) {}
-
-protected:
-	CTab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc);
-	virtual ~CTab();
-
-	bool m_Initialized;
 };
 
 #endif

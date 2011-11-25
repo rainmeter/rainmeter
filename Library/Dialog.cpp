@@ -57,7 +57,7 @@ CDialog::~CDialog()
 ** Enables RTL layout.
 **
 */
-void CDialog::SetRTL()
+void CDialog::SetDialogRTL()
 {
 	SetWindowLong(m_Window, GWL_EXSTYLE, GetWindowLong(m_Window, GWL_EXSTYLE) | WS_EX_LAYOUTRTL);
 }
@@ -91,7 +91,8 @@ BOOL CALLBACK CDialog::SetFontProc(HWND hWnd, LPARAM lParam)
 ** Constructor.
 **
 */
-CTab::CTab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc) : CDialog(CreateDialog(instance, MAKEINTRESOURCE(tabId), owner, tabProc)),
+CDialog::CTab::CTab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc) :
+	m_Window(CreateDialog(instance, MAKEINTRESOURCE(tabId), owner, tabProc)),
 	m_Initialized(false)
 {
 	EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
@@ -103,7 +104,23 @@ CTab::CTab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc) : CDialo
 ** Destructor.
 **
 */
-CTab::~CTab()
+CDialog::CTab::~CTab()
 {
 	DestroyWindow(m_Window);
+}
+
+/*
+** Activate
+**
+** Activates the tab.
+**
+*/
+void CDialog::CTab::Activate()
+{
+	if (!m_Initialized)
+	{
+		Initialize();
+	}
+
+	BringWindowToTop(m_Window);
 }

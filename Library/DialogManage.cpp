@@ -229,7 +229,7 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	if (wcscmp(GetString(ID_STR_ISRTL), L"1") == 0)
 	{
 		// Use RTL layout if using a RTL language
-		SetRTL();
+		SetDialogRTL();
 	}
 
 	HWND item = GetDlgItem(m_Window, IDC_MANAGE_TAB);
@@ -306,28 +306,18 @@ INT_PTR CDialogManage::OnNotify(WPARAM wParam, LPARAM lParam)
 	case IDC_MANAGE_TAB:
 		if (nm->code == TCN_SELCHANGE)
 		{
-			CTab* tab;
 			int sel = TabCtrl_GetCurSel(nm->hwndFrom);
 			if (sel == 0)
 			{
-				tab = &m_TabSkins;
+				m_TabSkins.Activate();
 			}
 			else if (sel == 1)
 			{
-				tab = &m_TabThemes;
+				m_TabThemes.Activate();
 			}
 			else // if (sel == 2)
 			{
-				tab = &m_TabSettings;
-			}
-
-			if (tab)
-			{
-				if (!tab->IsInitialized())
-				{
-					tab->Initialize();
-				}
-				BringWindowToTop(tab->GetWindow());
+				m_TabSettings.Activate();
 			}
 		}
 		break;
@@ -477,11 +467,10 @@ void CDialogManage::CTabSkins::Update(CMeterWindow* meterWindow, bool deleted)
 		HWND item = GetDlgItem(m_Window, IDC_MANAGESKINS_SKINS_TREEVIEW);
 		TreeView_DeleteAllItems(item);
 
-		TV_INSERTSTRUCT tvi = {0};
-		tvi.hParent = NULL;
-		tvi.hInsertAfter = TVI_LAST;
-		tvi.item.mask= TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-		tvi.item.iImage = tvi.item.iSelectedImage= 0;
+		TVINSERTSTRUCT tvi = {0};
+		tvi.hInsertAfter = TVI_FIRST;
+		tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
+		tvi.item.iImage = tvi.item.iSelectedImage = 0;
 		PopulateTree(item, tvi, Rainmeter->m_ConfigMenu);
 	}
 }
@@ -763,25 +752,24 @@ void CDialogManage::CTabSkins::ReadSkin()
 ** Populates the treeview with folders and skins.
 **
 */
-void CDialogManage::CTabSkins::PopulateTree(HWND tree, TV_INSERTSTRUCT& tvi, const std::vector<CRainmeter::CONFIGMENU>& configMenuData)
+void CDialogManage::CTabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, const std::vector<CRainmeter::CONFIGMENU>& configMenuData)
 {
-	for (int i = 0, isize = (int)configMenuData.size(); i < isize; ++i)
+	for (int i = (int)configMenuData.size() - 1; i >= 0; --i)
 	{
 		const CRainmeter::CONFIGMENU& configMenuS = configMenuData[i];
+		tvi.item.pszText =(WCHAR*)configMenuS.name.c_str();
 		if (configMenuS.index == -1)
 		{
 			tvi.item.iImage = tvi.item.iSelectedImage = 0;
-			tvi.item.pszText =(WCHAR*)configMenuS.name.c_str();
 			HTREEITEM hOldParent = tvi.hParent;
-			tvi.hParent = (HTREEITEM)SendMessage(tree, TVM_INSERTITEM, 0, (LPARAM)&tvi);
+			tvi.hParent = (HTREEITEM)TreeView_InsertItem(tree, &tvi);
 			PopulateTree(tree, tvi, configMenuS.children);
 			tvi.hParent = hOldParent;
 		}
 		else
 		{
 			tvi.item.iImage = tvi.item.iSelectedImage = 1;
-			tvi.item.pszText = (WCHAR*)configMenuS.name.c_str();
-			SendMessage(tree, TVM_INSERTITEM, 0, (LPARAM)&tvi);
+			TreeView_InsertItem(tree, &tvi);
 		}
 	}
 }

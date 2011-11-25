@@ -265,7 +265,24 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 	}
 
 	// Return the default icon if there is no valid measure
-	return (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
+	HINSTANCE hExe = GetModuleHandle(NULL);
+	HINSTANCE hComctl = GetModuleHandle(L"Comctl32");
+	if (hComctl)
+	{
+		// Try LoadIconMetric for better quality with high DPI
+		FPLOADICONMETRIC loadIconMetric = (FPLOADICONMETRIC)GetProcAddress(hComctl, "LoadIconMetric");
+		if (loadIconMetric)
+		{
+			HICON icon;
+			HRESULT hr = loadIconMetric(hExe, MAKEINTRESOURCE(IDI_RAINMETER), LIM_SMALL, &icon);
+			if (SUCCEEDED(hr))
+			{
+				return icon;
+			}
+		}
+	}
+
+	return (HICON)LoadImage(hExe, MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
 }
 
 void CTrayWindow::ReadConfig(CConfigParser& parser)

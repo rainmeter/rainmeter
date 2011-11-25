@@ -247,7 +247,7 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	if (wcscmp(GetString(ID_STR_ISRTL), L"1") == 0)
 	{
 		// Use RTL layout if using a RTL language
-		SetRTL();
+		SetDialogRTL();
 	}
 
 	HWND item = GetDlgItem(m_Window, IDC_ABOUT_TAB);
@@ -302,32 +302,22 @@ INT_PTR CDialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 	case IDC_ABOUT_TAB:
 		if (nm->code == TCN_SELCHANGE)
 		{
-			CTab* tab;
 			int sel = TabCtrl_GetCurSel(nm->hwndFrom);
 			if (sel == 0)
 			{
-				tab = &m_TabLog;
+				m_TabLog.Activate();
 			}
 			else if (sel == 1)
 			{
-				tab = &m_TabMeasures;
+				m_TabMeasures.Activate();
 			}
 			else if (sel == 2)
 			{
-				tab = &m_TabPlugins;
+				m_TabPlugins.Activate();
 			}
 			else // if (sel == 3)
 			{
-				tab = &m_TabVersion;
-			}
-
-			if (tab)
-			{
-				if (!tab->IsInitialized())
-				{
-					tab->Initialize();
-				}
-				BringWindowToTop(tab->GetWindow());
+				m_TabVersion.Activate();
 			}
 		}
 		break;
