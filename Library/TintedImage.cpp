@@ -358,6 +358,11 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		else
 		{
 			LogWithArgs(LOG_ERROR, L"%s: Unable to open: %s", m_ConfigName.c_str(), filename.c_str());
+
+			if (fileHandle != INVALID_HANDLE_VALUE)
+			{
+				CloseHandle(fileHandle);
+			}
 			DisposeImage();
 		}
 	}
