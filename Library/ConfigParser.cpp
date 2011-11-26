@@ -40,7 +40,8 @@ CConfigParser::CConfigParser() :
 	m_Parser(MathParser_Create(NULL)),
 	m_LastReplaced(false),
 	m_LastDefaultUsed(false),
-	m_LastValueDefined(false)
+	m_LastValueDefined(false),
+	m_CurrentSection()
 {
 }
 
@@ -76,6 +77,8 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 	m_LastDefaultUsed = false;
 	m_LastValueDefined = false;
 
+	m_CurrentSection = NULL;
+
 	// Set the built-in variables. Do this before the ini file is read so that the paths can be used with @include
 	SetBuiltInVariables(pRainmeter, meterWindow);
 	ResetMonitorVariables(meterWindow);
@@ -106,7 +109,6 @@ void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* me
 		SetBuiltInVariable(L"PLUGINSPATH", pRainmeter->GetPluginPath());
 		SetBuiltInVariable(L"CURRENTPATH", CRainmeter::ExtractPath(m_Filename));
 		SetBuiltInVariable(L"ADDONSPATH", pRainmeter->GetAddonPath());
-		SetBuiltInVariable(L"CRLF", L"\n");
 	}
 	if (meterWindow)
 	{
@@ -114,6 +116,12 @@ void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* me
 		SetBuiltInVariable(L"CURRENTCONFIG", meterWindow->GetSkinName());
 		SetBuiltInVariable(L"ROOTCONFIGPATH", meterWindow->GetSkinRootPath());
 	}
+
+	SetBuiltInVariable(L"CRLF", L"\n");
+
+	static const std::wstring CURRENTSECTION = L"CURRENTSECTION";
+	SetBuiltInVariable(CURRENTSECTION, L"");
+	m_CurrentSection = &((*m_BuiltInVariables.find(StrToLower(CURRENTSECTION))).second);  // shortcut
 }
 
 /*
@@ -461,7 +469,7 @@ bool CConfigParser::ReplaceVariables(std::wstring& result)
 			if (end != std::wstring::npos)
 			{
 				size_t ei = end - 1;
-				if (result[si] == L'*' && result[ei] == L'*')
+				if (si != ei && result[si] == L'*' && result[ei] == L'*')
 				{
 					result.erase(ei, 1);
 					result.erase(si, 1);
@@ -528,7 +536,7 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 					if (next == std::wstring::npos || end < next)
 					{
 						size_t ei = end - 1;
-						if (result[si] == L'*' && result[ei] == L'*')
+						if (si != ei && result[si] == L'*' && result[ei] == L'*')
 						{
 							result.erase(ei, 1);
 							result.erase(si, 1);
@@ -633,26 +641,28 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 	{
 		m_LastValueDefined = true;
 
-		if (result.find(L'#') != std::wstring::npos)
+		if (result.size() >= 3)
 		{
-			static const std::wstring CURRENTSECTION = L"CURRENTSECTION";
-			SetBuiltInVariable(CURRENTSECTION, strSection);  // Set temporarily
+			if (result.find(L'#') != std::wstring::npos)
+			{
+				m_CurrentSection->assign(strSection);  // Set temporarily
 
-			if (ReplaceVariables(result))
+				if (ReplaceVariables(result))
+				{
+					m_LastReplaced = true;
+				}
+
+				m_CurrentSection->clear();  // Reset
+			}
+			else
+			{
+				CRainmeter::ExpandEnvironmentVariables(result);
+			}
+
+			if (bReplaceMeasures && ReplaceMeasures(result))
 			{
 				m_LastReplaced = true;
 			}
-
-			SetBuiltInVariable(CURRENTSECTION, L"");  // Reset
-		}
-		else
-		{
-			CRainmeter::ExpandEnvironmentVariables(result);
-		}
-
-		if (bReplaceMeasures && ReplaceMeasures(result))
-		{
-			m_LastReplaced = true;
 		}
 	}
 
@@ -667,8 +677,8 @@ bool CConfigParser::IsKeyDefined(LPCTSTR section, LPCTSTR key)
 
 bool CConfigParser::IsValueDefined(LPCTSTR section, LPCTSTR key)
 {
-	const std::wstring& result = ReadString(section, key, L"", false);
-	return (!m_LastDefaultUsed && !result.empty());
+	ReadString(section, key, L"", false);
+	return m_LastValueDefined;
 }
 
 void CConfigParser::AddMeasure(CMeasure* pMeasure)
@@ -694,7 +704,7 @@ double CConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
-	return (m_LastDefaultUsed) ? defValue : ParseDouble(result, defValue);
+	return (m_LastDefaultUsed) ? defValue : ParseDouble(result.c_str(), defValue);
 }
 
 std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
@@ -708,7 +718,7 @@ std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR ke
 		std::vector<std::wstring>::const_iterator iter = tokens.begin();
 		for ( ; iter != tokens.end(); ++iter)
 		{
-			result.push_back((Gdiplus::REAL)ParseDouble((*iter), 0));
+			result.push_back((Gdiplus::REAL)ParseDouble((*iter).c_str(), 0.0));
 		}
 	}
 	return result;
@@ -718,14 +728,14 @@ int CConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
-	return (m_LastDefaultUsed) ? defValue : (int)ParseDouble(result, defValue, true);
+	return (m_LastDefaultUsed) ? defValue : ParseInt(result.c_str(), defValue);
 }
 
 unsigned int CConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, unsigned int defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
-	return (m_LastDefaultUsed) ? defValue : (unsigned int)ParseDouble(result, defValue, true);
+	return (m_LastDefaultUsed) ? defValue : ParseUInt(result.c_str(), defValue);
 }
 
 // Works as ReadFloat except if the value is surrounded by parenthesis in which case it tries to evaluate the formula
@@ -743,9 +753,9 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 			std::wstring error = L"ReadFormula: ";
 			error += ConvertToWide(errMsg);
 			error += L" in key \"";
-			error += key ? key : L"";
+			error += key;
 			error += L"\" in [";
-			error += section ? section : L"";
+			error += section;
 			error += L"]";
 			Log(LOG_ERROR, error.c_str());
 		}
@@ -753,12 +763,12 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 		return resultValue;
 	}
 
-	return (m_LastDefaultUsed) ? defValue : ParseDouble(result, defValue);
+	return (m_LastDefaultUsed) ? defValue : ParseDouble(result.c_str(), defValue);
 }
 
 // Returns true if the formula was read successfully, false for failure.
 // Pass a pointer to a double.
-bool CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
+bool CConfigParser::ParseFormula(const std::wstring& result, double* resultValue)
 {
 	// Formulas must be surrounded by parenthesis
 	if (!result.empty() && result[0] == L'(' && result[result.size() - 1] == L')')
@@ -766,7 +776,7 @@ bool CConfigParser::ReadFormula(const std::wstring& result, double* resultValue)
 		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.c_str()).c_str(), resultValue);
 		if (errMsg != NULL)
 		{
-			std::wstring error = L"ReadFormula: ";
+			std::wstring error = L"ParseFormula: ";
 			error += ConvertToWide(errMsg);
 			error += L": ";
 			error += result;
@@ -874,40 +884,59 @@ void CConfigParser::Shrink(std::vector<std::wstring>& vec)
 ** If the given string is invalid format or causes overflow/underflow, returns given default value.
 **
 */
-double CConfigParser::ParseDouble(const std::wstring& string, double defValue, bool rejectExp)
+double CConfigParser::ParseDouble(LPCTSTR string, double defValue)
 {
-	std::wstring::size_type pos;
-
-	// Ignore inline comments which start with ';'
-	if ((pos = string.find_first_of(L';')) != std::wstring::npos)
+	if (string && *string)
 	{
-		std::wstring temp(string, 0, pos);
-		return ParseDouble(temp, defValue, rejectExp);
-	}
-
-	if (rejectExp)
-	{
-		// Reject if the given string includes the exponential part
-		if (string.find_last_of(L"dDeE") != std::wstring::npos)
-		{
-			return defValue;
-		}
-	}
-
-	if ((pos = string.find_first_not_of(L" \t\r\n")) != std::wstring::npos)
-	{
-		// Trim white-space
-		std::wstring temp(string, pos, string.find_last_not_of(L" \t\r\n") - pos + 1);
-
-		WCHAR* end = NULL;
 		errno = 0;
-		double resultValue = wcstod(temp.c_str(), &end);
-		if (end && *end == L'\0' && errno != ERANGE)
+		double resultValue = wcstod(string, NULL);
+		if (errno != ERANGE)
 		{
 			return resultValue;
 		}
 	}
+	return defValue;
+}
 
+/*
+** ParseInt
+**
+** This is a helper method that parses the integer value from the given string.
+** If the given string is invalid format or causes overflow/underflow, returns given default value.
+**
+*/
+int CConfigParser::ParseInt(LPCTSTR string, int defValue)
+{
+	if (string && *string)
+	{
+		errno = 0;
+		int resultValue = wcstol(string, NULL, 10);
+		if (errno != ERANGE)
+		{
+			return resultValue;
+		}
+	}
+	return defValue;
+}
+
+/*
+** ParseUInt
+**
+** This is a helper method that parses the unsigned integer value from the given string.
+** If the given string is invalid format or causes overflow/underflow, returns given default value.
+**
+*/
+unsigned int CConfigParser::ParseUInt(LPCTSTR string, unsigned int defValue)
+{
+	if (string && *string)
+	{
+		errno = 0;
+		unsigned int resultValue = wcstoul(string, NULL, 10);
+		if (errno != ERANGE)
+		{
+			return resultValue;
+		}
+	}
 	return defValue;
 }
 
@@ -1198,9 +1227,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 						clen = len - (clen + 1);  // value's length
 
 						// Trim surrounded quotes from value
-						if (clen >= 2 && (
-							(sep[0] == L'\"' && sep[clen - 1] == L'\"') ||
-							(sep[0] == L'\'' && sep[clen - 1] == L'\'')))
+						if (clen >= 2 && (sep[0] == L'\"' || sep[0] == L'\'') && sep[clen - 1] == sep[0])
 						{
 							clen -= 2;
 							++sep;

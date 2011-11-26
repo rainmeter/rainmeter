@@ -142,7 +142,7 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		const std::wstring& result = parser.ReadString(section, L"Disabled", L"0");
 		if (parser.GetLastReplaced())
 		{
-			m_Disabled = 0!=(int)parser.ParseDouble(result, 0.0, true);
+			m_Disabled = 0!=parser.ParseInt(result.c_str(), 0);
 		}
 	}
 
@@ -172,17 +172,19 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_RegExpSubstitute = 0!=parser.ReadInt(section, L"RegExpSubstitute", 0);
 	std::wstring subs = parser.ReadString(section, L"Substitute", L"");
-	if (!subs.empty() &&
-		(subs[0] != L'\"' || subs[subs.length() - 1] != L'\'') &&
-		(subs[0] != L'\'' || subs[subs.length() - 1] != L'\"'))
+	if (!subs.empty())
 	{
-		// Add quotes since they are removed by the GetProfileString
-		subs.insert(0, L"\"");
-		subs.append(L"\"");
-	}
-	if (!ParseSubstitute(subs))
-	{
-		LogWithArgs(LOG_ERROR, L"Measure: Invalid Substitute=%s", subs.c_str());
+		if ((subs[0] != L'\"' || subs[subs.length() - 1] != L'\'') &&
+			(subs[0] != L'\'' || subs[subs.length() - 1] != L'\"'))
+		{
+			// Add quotes since they are removed by the GetProfileString
+			subs.insert(0, L"\"");
+			subs.append(L"\"");
+		}
+		if (!ParseSubstitute(subs))
+		{
+			LogWithArgs(LOG_ERROR, L"Measure: Invalid Substitute=%s", subs.c_str());
+		}
 	}
 
 	const std::wstring& group = parser.ReadString(section, L"Group", L"");

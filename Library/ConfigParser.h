@@ -74,7 +74,7 @@ public:
 	RECT ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue);
 	std::vector<Gdiplus::REAL> ReadFloats(LPCTSTR section, LPCTSTR key);
 
-	bool ReadFormula(const std::wstring& result, double* resultValue);
+	bool ParseFormula(const std::wstring& result, double* resultValue);
 
 	const std::wstring& GetFilename() { return m_Filename; }
 	const std::list<std::wstring>& GetSections() { return m_Sections; }
@@ -84,7 +84,9 @@ public:
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 	static void Shrink(std::vector<std::wstring>& vec);
-	static double ParseDouble(const std::wstring& string, double defValue, bool rejectExp = false);
+	static double ParseDouble(LPCTSTR string, double defValue);
+	static int ParseInt(LPCTSTR string, int defValue);
+	static unsigned int ParseUInt(LPCTSTR string, unsigned int defValue);
 	static Gdiplus::ARGB ParseColor(LPCTSTR string);
 	static Gdiplus::Rect ParseRect(LPCTSTR string);
 	static RECT ParseRECT(LPCTSTR string);
@@ -107,6 +109,7 @@ private:
 
 	static void SetMultiMonitorVariables(bool reset);
 	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(c_MonitorVariables, strVariable, strValue); }
+	static void SetMonitorVariable(const WCHAR* strVariable, const WCHAR* strValue) { SetVariable(c_MonitorVariables, strVariable, strValue); }
 
 	static std::wstring StrToLower(const std::wstring& str) { std::wstring strTmp(str); StrToLowerC(strTmp); return strTmp; }
 	static std::wstring StrToLower(const WCHAR* str) { std::wstring strTmp(str); StrToLowerC(strTmp); return strTmp; }
@@ -123,6 +126,8 @@ private:
 	bool m_LastReplaced;
 	bool m_LastDefaultUsed;
 	bool m_LastValueDefined;
+
+	std::wstring* m_CurrentSection;
 
 	std::list<std::wstring> m_Sections;		// The sections must be an ordered array
 	std::unordered_map<std::wstring, std::wstring> m_Values;

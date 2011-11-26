@@ -49,7 +49,6 @@ public:
 
 	void ReadConfig(CConfigParser& parser) { ReadConfig(parser, GetName()); }
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update() = 0;
 
@@ -87,6 +86,8 @@ public:
 	static CMeasure* Create(const WCHAR* measure, CMeterWindow* meterWindow, const WCHAR* name);
 
 protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+
 	virtual bool PreUpdate();
 	virtual bool PostUpdate();
 

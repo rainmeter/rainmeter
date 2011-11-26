@@ -23,11 +23,6 @@
 #include "Measure.h"
 #include <unordered_map>
 
-namespace Gdiplus
-{
-class Font;
-}
-
 class CMeterString : public CMeter
 {
 public:
@@ -36,7 +31,6 @@ public:
 
 	virtual int GetX(bool abs = false);
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	void SetText(const WCHAR* text) { m_Text = text; }
@@ -46,6 +40,9 @@ public:
 
 	static void FreeFontCache(Gdiplus::PrivateFontCollection* collection = NULL);
 	static void EnumerateInstalledFontFamilies();
+
+protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
 	enum TEXTSTYLE

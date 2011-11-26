@@ -28,6 +28,8 @@ public:
 	virtual ~CMeasureVirtualMemory();
 
 	virtual bool Update();
+
+protected:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:

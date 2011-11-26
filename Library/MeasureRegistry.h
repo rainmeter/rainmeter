@@ -27,9 +27,11 @@ public:
 	CMeasureRegistry(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureRegistry();
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
+
+protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
 	std::wstring m_RegKeyName;

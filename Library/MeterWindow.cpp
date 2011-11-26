@@ -900,7 +900,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 	case BANG_SETTRANSPARENCY:
 		if (arg != NULL)
 		{
-			m_AlphaValue = (int)CConfigParser::ParseDouble(arg, 255, true);
+			m_AlphaValue = CConfigParser::ParseInt(arg, 255);
 			m_AlphaValue = max(m_AlphaValue, 0);
 			m_AlphaValue = min(m_AlphaValue, 255);
 			UpdateTransparency(m_AlphaValue, false);
@@ -1003,7 +1003,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			double value;
 
 			// Formula read fine
-			if (m_Parser.ReadFormula(strValue, &value))
+			if (m_Parser.ParseFormula(strValue, &value))
 			{
 				WCHAR buffer[256];
 				int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
@@ -1115,31 +1115,31 @@ void CMeterWindow::ResizeBlur(const WCHAR* arg, int mode)
 		if (token)
 		{
 			while (token[0] == L' ') ++token;
-			type = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
+			type = (m_Parser.ParseFormula(token, &val)) ? (int)val : _wtoi(token);
 
 			token = wcstok(NULL, L",");
 			if (token)
 			{
 				while (token[0] == L' ') ++token;
-				x = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
+				x = (m_Parser.ParseFormula(token, &val)) ? (int)val : _wtoi(token);
 
 				token = wcstok(NULL, L",");
 				if (token)
 				{
 					while (token[0] == L' ') ++token;
-					y = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
+					y = (m_Parser.ParseFormula(token, &val)) ? (int)val : _wtoi(token);
 
 					token = wcstok(NULL, L",");
 					if (token)
 					{
 						while (token[0] == L' ') ++token;
-						w = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
+						w = (m_Parser.ParseFormula(token, &val)) ? (int)val : _wtoi(token);
 
 						token = wcstok(NULL, L",");
 						if (token)
 						{
 							while (token[0] == L' ') ++token;
-							h = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
+							h = (m_Parser.ParseFormula(token, &val)) ? (int)val : _wtoi(token);
 						}
 					}
 				}
@@ -1161,7 +1161,7 @@ void CMeterWindow::ResizeBlur(const WCHAR* arg, int mode)
 				if (token)
 				{
 					while (token[0] == L' ') ++token;
-					int r = (m_Parser.ReadFormula(token, &val)) ? (int)val : _wtoi(token);
+					int r = (m_Parser.ParseFormula(token, &val)) ? (int)val : _wtoi(token);
 					tempRegion = CreateRoundRectRgn(x, y, w, h, r, r);
 				}
 				break;
@@ -1924,7 +1924,7 @@ void CMeterWindow::ReadConfig()
 		double value;
 		if (!m_WindowX.empty() && m_WindowX[0] == L'(' && m_WindowX[m_WindowX.size() - 1] == L')')
 		{
-			if (!parser.ReadFormula(m_WindowX, &value))
+			if (!parser.ParseFormula(m_WindowX, &value))
 			{
 				value = 0.0;
 			}
@@ -1933,7 +1933,7 @@ void CMeterWindow::ReadConfig()
 		}
 		if (!m_WindowY.empty() && m_WindowY[0] == L'(' && m_WindowY[m_WindowY.size() - 1] == L')')
 		{
-			if (!parser.ReadFormula(m_WindowY, &value))
+			if (!parser.ParseFormula(m_WindowY, &value))
 			{
 				value = 0.0;
 			}

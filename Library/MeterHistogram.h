@@ -28,11 +28,13 @@ public:
 	CMeterHistogram(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterHistogram();
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 	virtual void BindMeasure(const std::list<CMeasure*>& measures);
+
+protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
 	void DisposeBuffer();

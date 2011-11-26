@@ -307,13 +307,13 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			}
 
 			double val;
-			if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && parser.ReadFormula(coord, &val))
+			if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && parser.ParseFormula(coord, &val))
 			{
 				m_X = (int)val;
 			}
 			else
 			{
-				m_X = (int)parser.ParseDouble(coord, 0.0);
+				m_X = (int)parser.ParseDouble(coord.c_str(), 0.0);
 			}
 		}
 		else
@@ -346,13 +346,13 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			}
 
 			double val;
-			if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && parser.ReadFormula(coord, &val))
+			if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && parser.ParseFormula(coord, &val))
 			{
 				m_Y = (int)val;
 			}
 			else
 			{
-				m_Y = (int)parser.ParseDouble(coord, 0.0);
+				m_Y = (int)parser.ParseDouble(coord.c_str(), 0.0);
 			}
 		}
 		else
@@ -380,7 +380,7 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_StyleHidden = parser.GetLastUsedStyle();
 		if (parser.GetLastReplaced() || !parser.GetLastDefaultUsed() && m_StyleHidden != oldStyleHidden)
 		{
-			m_Hidden = 0!=(int)parser.ParseDouble(result, 0.0, true);
+			m_Hidden = 0!=parser.ParseInt(result.c_str(), 0);
 		}
 	}
 

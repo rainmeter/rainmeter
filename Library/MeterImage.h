@@ -28,13 +28,15 @@ public:
 	CMeterImage(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterImage();
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 
 protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+
+private:
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
 	CTintedImage m_Image;

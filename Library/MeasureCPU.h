@@ -37,10 +37,12 @@ public:
 	CMeasureCPU(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureCPU();
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual bool Update();
 
 protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+
+private:
 	void CalcUsage(double idleTime, double systemTime);
 	void CalcAverageUsage(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* systemPerfInfo);
 

@@ -34,10 +34,12 @@ public:
 	CMeasurePlugin(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasurePlugin();
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 	virtual void ExecuteBang(const WCHAR* args);
+
+protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
 	std::wstring m_PluginName;

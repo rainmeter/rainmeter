@@ -30,11 +30,13 @@ public:
 
 	virtual bool HitTest(int x, int y);
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 	virtual bool HasActiveTransition();
+
+protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
 	CTintedImage m_Image;

@@ -27,11 +27,13 @@ public:
 	CMeterLine(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterLine();
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 	virtual void BindMeasure(const std::list<CMeasure*>& measures);
+
+protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
 	std::vector<std::wstring> m_MeasureNames;		// Name of the other measures

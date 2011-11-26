@@ -30,7 +30,6 @@ public:
 	CMeterButton(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterButton();
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
@@ -41,6 +40,9 @@ public:
 	bool MouseDown(POINT pos);
 
 	void SetFocus(bool f) { m_Focus = f; }
+
+protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
 	bool HitTest2(int px, int py, bool checkAlpha);

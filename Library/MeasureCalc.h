@@ -28,11 +28,13 @@ public:
 	CMeasureCalc(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureCalc();
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual bool Update();
 
 	static void UpdateVariableMap(CMeterWindow& meterWindow);
-	
+
+protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+
 private:
 	void FormulaReplace();
 	bool IsDelimiter(WCHAR ch);

@@ -38,7 +38,6 @@ public:
 
 	void ReadConfig(CConfigParser& parser) { ReadConfig(parser, GetName()); parser.ClearStyleTemplate(); }
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
@@ -119,6 +118,8 @@ protected:
 		POSITION_RELATIVE_TL,
 		POSITION_RELATIVE_BR
 	};
+
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 	void SetAllMeasures(CMeasure* measure);
 	void SetAllMeasures(const std::vector<CMeasure*>& measures);

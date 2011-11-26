@@ -668,7 +668,7 @@ void CRainmeter::RainmeterWriteKeyValue(const WCHAR* arg)
 			if (mw)
 			{
 				double value;
-				formula = mw->GetParser().ReadFormula(strValue, &value);
+				formula = mw->GetParser().ParseFormula(strValue, &value);
 
 				// Formula read fine
 				if (formula)
@@ -3170,13 +3170,16 @@ std::wstring CRainmeter::ExtractPath(const std::wstring& strFilePath)
 
 void CRainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
 {
-	if (strPath.find(L'%') != std::wstring::npos)
+	std::wstring::size_type pos;
+
+	if ((pos = strPath.find(L'%')) != std::wstring::npos &&
+		strPath.find(L'%', pos + 2) != std::wstring::npos)
 	{
 		DWORD bufSize = 4096;
 		WCHAR* buffer = new WCHAR[bufSize];	// lets hope the buffer is large enough...
 
 		// %APPDATA% is a special case
-		std::wstring::size_type pos = strPath.find(L"%APPDATA%");
+		pos = strPath.find(L"%APPDATA%", pos);
 		if (pos != std::wstring::npos)
 		{
 			HRESULT hr = SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, buffer);

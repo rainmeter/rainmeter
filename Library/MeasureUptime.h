@@ -29,6 +29,8 @@ public:
 
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
+
+protected:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:

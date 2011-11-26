@@ -28,10 +28,12 @@ public:
 	CMeterRotator(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterRotator();
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
+
+protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
 	CTintedImage m_Image;

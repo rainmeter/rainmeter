@@ -28,10 +28,12 @@ public:
 	CMeterBar(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterBar();
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
+
+protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
 	enum ORIENTATION

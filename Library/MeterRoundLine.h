@@ -27,9 +27,11 @@ public:
 	CMeterRoundLine(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterRoundLine();
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
+
+protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
 	bool m_Solid;

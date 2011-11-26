@@ -27,7 +27,6 @@ public:
 	CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureScript();
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 	virtual void Initialize();
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
@@ -36,6 +35,9 @@ public:
 	void DeleteLuaScript();
 
 protected:
+	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+
+private:
 	LuaScript* m_LuaScript;
 
 	bool m_HasInitializeFunction;
