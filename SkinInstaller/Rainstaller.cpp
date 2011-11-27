@@ -1125,6 +1125,7 @@ bool InstallComponents(RMSKIN_DATA* data)
 
 					result = unzGoToNextFile(ufile);
 					unzGetCurrentFileInfo(ufile, &ufi, cBuffer, MAX_PATH * 3, NULL, 0, NULL, 0);
+					MultiByteToWideChar(CP_ACP, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
 				} while (result == UNZ_OK && _wcsnicmp(filePath, L"Addons/", 7) == 0);
 				continue;
 			}
