@@ -141,7 +141,7 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		std::string scriptFile = ConvertToAscii(m_MeterWindow->MakePathAbsolute(file).c_str());
 
 		if (!m_Initialized ||
-			scriptFile != m_ScriptFile)
+			strcmp(scriptFile.c_str(), m_ScriptFile.c_str()) != 0)
 		{
 			DeleteLuaScript();
 

@@ -282,11 +282,10 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	std::wstring oldStyleX = m_StyleX;
 	std::wstring oldStyleY = m_StyleY;
-	std::wstring oldStyleHidden = m_StyleHidden;
 
 	std::wstring coord = parser.ReadString(section, L"X", L"0");
 	m_StyleX = parser.GetLastUsedStyle();
-	if (!m_Initialized || parser.GetLastReplaced() || !parser.GetLastDefaultUsed() && m_StyleX != oldStyleX)
+	if (!m_Initialized || parser.GetLastReplaced() || !parser.GetLastDefaultUsed() && wcscmp(m_StyleX.c_str(), oldStyleX.c_str()) != 0)
 	{
 		if (!coord.empty())
 		{
@@ -325,7 +324,7 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	coord = parser.ReadString(section, L"Y", L"0");
 	m_StyleY = parser.GetLastUsedStyle();
-	if (!m_Initialized || parser.GetLastReplaced() || !parser.GetLastDefaultUsed() && m_StyleY != oldStyleY)
+	if (!m_Initialized || parser.GetLastReplaced() || !parser.GetLastDefaultUsed() &&  wcscmp(m_StyleY.c_str(), oldStyleY.c_str()) != 0)
 	{
 		if (!coord.empty())
 		{
@@ -376,9 +375,11 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
+		std::wstring oldStyleHidden = m_StyleHidden;
+
 		const std::wstring& result = parser.ReadString(section, L"Hidden", L"0");
 		m_StyleHidden = parser.GetLastUsedStyle();
-		if (parser.GetLastReplaced() || !parser.GetLastDefaultUsed() && m_StyleHidden != oldStyleHidden)
+		if (parser.GetLastReplaced() || !parser.GetLastDefaultUsed() && wcscmp(m_StyleHidden.c_str(), oldStyleHidden.c_str()) != 0)
 		{
 			m_Hidden = 0!=parser.ParseInt(result.c_str(), 0);
 		}

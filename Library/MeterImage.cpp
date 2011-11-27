@@ -210,7 +210,7 @@ bool CMeterImage::Update()
 				m_ImageNameResult = m_MeterWindow->MakePathAbsolute(m_ImageNameResult);
 			}
 
-			LoadImage(m_ImageNameResult, oldResult != m_ImageNameResult);
+			LoadImage(m_ImageNameResult, (wcscmp(oldResult.c_str(), m_ImageNameResult.c_str()) != 0));
 			return true;
 		}
 		else if (m_NeedsRedraw)

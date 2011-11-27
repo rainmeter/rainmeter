@@ -143,7 +143,7 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_UpdateRandom = 0!=parser.ReadInt(section, L"UpdateRandom", 0);
 
 	if (!m_Initialized ||
-		m_FormulaHolder != m_Formula ||
+		wcscmp(m_FormulaHolder.c_str(), m_Formula.c_str()) != 0 ||
 		oldLowBound != m_LowBound ||
 		oldHighBound != m_HighBound ||
 		oldUpdateRandom != m_UpdateRandom)
@@ -183,9 +183,10 @@ void CMeasureCalc::FormulaReplace()
 
 			WCHAR buffer[32];
 			_itow_s(randNumber, buffer, 10);
+			size_t len = wcslen(buffer);
 
-			m_Formula.replace(loc, 6, buffer);
-			loc += wcslen(buffer);
+			m_Formula.replace(loc, 6, buffer, len);
+			loc += len;
 		}
 		else
 		{

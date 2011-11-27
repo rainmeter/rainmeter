@@ -273,9 +273,9 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			m_W = oldW;
 			m_H = oldH;
 
-			m_PrimaryNeedsReload = (oldPrimaryImageName != m_PrimaryImageName);
-			m_SecondaryNeedsReload = (oldSecondaryImageName != m_SecondaryImageName);
-			m_BothNeedsReload = (oldBothImageName != m_BothImageName);
+			m_PrimaryNeedsReload = (wcscmp(oldPrimaryImageName.c_str(), m_PrimaryImageName.c_str()) != 0);
+			m_SecondaryNeedsReload = (wcscmp(oldSecondaryImageName.c_str(), m_SecondaryImageName.c_str()) != 0);
+			m_BothNeedsReload = (wcscmp(oldBothImageName.c_str(), m_BothImageName.c_str()) != 0);
 
 			if (m_PrimaryNeedsReload ||
 				m_SecondaryNeedsReload ||

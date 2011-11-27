@@ -221,7 +221,7 @@ void CMeterBitmap::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	if (m_Initialized)
 	{
-		m_NeedsReload = (oldImageName != m_ImageName);
+		m_NeedsReload = (wcscmp(oldImageName.c_str(), m_ImageName.c_str()) != 0);
 
 		if (m_NeedsReload ||
 			m_Image.IsConfigsChanged())

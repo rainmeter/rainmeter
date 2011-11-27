@@ -463,7 +463,7 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 
 	if (m_Initialized &&
-		(oldFontFace != m_FontFace ||
+		(wcscmp(oldFontFace.c_str(), m_FontFace.c_str()) != 0 ||
 		oldFontSize != m_FontSize ||
 		oldStyle != m_Style))
 	{
