@@ -1596,8 +1596,8 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_MANAGETHEMES_BACKUP_BUTTON:
 		{
-			std::wstring command = L"\"" + Rainmeter->GetAddonPath();
-			command += L"RainBackup\\RainBackup.exe\"";
+			std::wstring command = L"\"" + Rainmeter->GetPath();
+			command += L"SkinInstaller.exe\" /BACKUP";
 			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
 		}
 		break;

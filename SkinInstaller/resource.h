@@ -1,0 +1,52 @@
+#define	IDC_STATIC                                   -1
+#define IDI_INSTALLER                                100
+#define IDB_INSTALLER                                101
+#define IDD_INSTALLER_DIALOG                         102
+#define IDD_INSTALLER_TAB                            103
+#define IDD_BACKUP_DIALOG                            104
+#define IDD_BACKUP_TABDIALOG                         105
+
+#define IDC_BACKUP_TAB                               1019
+#define IDC_BACKUP_FILE_TEXT                         1020
+#define IDC_BACKUP_BROWSE_BUTTON                     1021
+#define IDC_BACKUP_PROGRESS                          1022
+#define IDC_BACKUP_BACKUP_BUTTON                     1023
+#define IDC_BACKUP_DESCRIPTION_TEXT                  1024
+#define IDC_BACKUP_INPROGRESS_TEXT                   1025
+
+// Rainstaller
+#define IDC_BITMAP                              1000
+#define IDC_NAME_LABEL                          1001
+#define IDC_NAME_VALUE                          1002
+#define IDC_AUTHOR_LABEL                        1003
+#define IDC_AUTHOR_VALUE                        1004
+#define IDC_VERSION_LABEL                       1005
+#define IDC_VERSION_VALUE                       1006
+#define IDC_SKINS_LABEL                         1007
+#define IDC_SKINS_VALUE                         1008
+#define IDC_THEMES_LABEL                        1009
+#define IDC_THEMES_VALUE                        1010
+#define IDC_ADDONS_LABEL                        1011
+#define IDC_ADDONS_VALUE                        1012
+#define IDC_PLUGINS_LABEL                       1013
+#define IDC_PLUGINS_VALUE                       1014
+#define IDC_FONTS_LABEL                         1015
+#define IDC_FONTS_VALUE                         1016
+#define IDC_THEME_CHECKBOX                      1017
+#define IDC_LAUNCH_CHECKBOX                     1018
+#define IDC_BACKUP_LABEL                        1019
+#define IDC_PROGRESSBAR                         1020
+#define IDC_INSTALL_BUTTON                      1021
+#define IDC_CANCEL_BUTTON                       1022
+#define IDC_SEPERATOR                           1023
+#define IDC_WARNING_ICON                        1024
+
+#define IDD_RUNAS                               111
+#define IDC_CURRENT_BUTTON                      1100
+#define IDC_SPECIFIED_BUTTON                    1101
+#define IDC_KEY_ICON                            1102
+#define IDC_HELPTEXT                            1103
+#define IDC_USERNAME                            1104
+#define IDC_PASSWORD                            1105
+#define IDC_USERNAME_LABEL                      1107
+#define IDC_PASSWORD_LABEL                      1108
