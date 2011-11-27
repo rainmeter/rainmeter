@@ -44,9 +44,18 @@ struct GLOBALDATA
 	std::wstring iniFile;
 };
 
+enum OSPLATFORM
+{
+	OSPLATFORM_UNKNOWN = 0,
+	OSPLATFORM_XP,
+	OSPLATFORM_VISTA,
+	OSPLATFORM_7
+};
+
 bool CloseRainmeterIfActive();
 void LoadTheme(const WCHAR* name);
 void PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace = true);
+OSPLATFORM GetOSPlatform();
 
 bool IsRunning(const WCHAR* name, HANDLE* hMutex);
 bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove = false);

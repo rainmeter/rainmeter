@@ -245,6 +245,36 @@ bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMov
 	return SHFileOperation(&fo) != 0;
 }
 
+OSPLATFORM GetOSPlatform()
+{
+	OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
+	if (GetVersionEx((OSVERSIONINFO*)&osvi))
+	{
+		if (osvi.dwMajorVersion == 5)
+		{
+			// Not checking for osvi.dwMinorVersion >= 1 because Rainmeter won't run on pre-XP
+			return OSPLATFORM_XP;
+		}
+		else if (osvi.dwMajorVersion == 6)
+		{
+			if (osvi.dwMinorVersion == 0)
+			{
+				return OSPLATFORM_VISTA; // Vista, Server 2008
+			}
+			else
+			{
+				return OSPLATFORM_7; // 7, Server 2008R2
+			}
+		}
+		else // newer OS
+		{
+			return OSPLATFORM_7;
+		}
+	}
+
+	return OSPLATFORM_UNKNOWN;
+}
+
 std::string ConvertToAscii(LPCTSTR str)
 {
 	std::string szAscii;

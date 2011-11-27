@@ -105,8 +105,11 @@ INT_PTR CDialogBackup::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_INSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	// TODO CHECK VISTA
-	SetDialogFont();
+	if (GetOSPlatform() >= OSPLATFORM_VISTA)
+	{
+		// F-Secure et al. detect SetDialogFont() as malware..
+		//SetDialogFont();
+	}
 
 	HWND item = GetDlgItem(m_Window, IDC_BACKUP_TAB);
 	TCITEM tci = {0};
@@ -130,7 +133,10 @@ INT_PTR CDialogBackup::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDCLOSE:
 		if (m_ThreadHandle)
 		{
-			MessageBox(NULL, L"The backup is still in progress. Are you sure you want to cancel?", NULL, MB_YESNO | MB_TOPMOST | MB_ICONHAND);
+			if (IDYES != MessageBox(NULL, L"The backup is still in progress. Are you sure you want to cancel?", NULL, MB_YESNO | MB_TOPMOST | MB_ICONHAND))
+			{
+				break;
+			}
 		}
 		EndDialog(m_Window, 0);
 		break;
@@ -268,13 +274,13 @@ uLong filetime(const char *f,  tm_zip *tmzip, uLong *dt)
 		HANDLE hFind;
 		WIN32_FIND_DATAA ff32;
 
-		hFind = FindFirstFileA(f,&ff32);
+		hFind = FindFirstFileA(f, &ff32);
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
-		FileTimeToLocalFileTime(&(ff32.ftLastWriteTime),&ftLocal);
-		FileTimeToDosDateTime(&ftLocal,((LPWORD)dt)+1,((LPWORD)dt)+0);
-		FindClose(hFind);
-		ret = 1;
+			FileTimeToLocalFileTime(&(ff32.ftLastWriteTime),&ftLocal);
+			FileTimeToDosDateTime(&ftLocal,((LPWORD)dt)+1,((LPWORD)dt)+0);
+			FindClose(hFind);
+			ret = 1;
 		}
 	}
 	return ret;
@@ -285,7 +291,7 @@ bool CDialogBackup::AddFileToBackup(const char* realPath, const char* zipPath)
 	zip_fileinfo zi = {0};
 	filetime(realPath, &zi.tmz_date, &zi.dosDate);
 
-	int err = zipOpenNewFileInZip3(m_ZipFile, zipPath, &zi, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_DEFAULT_COMPRESSION, 0, -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY, NULL, 0);
+	int err = zipOpenNewFileInZip(m_ZipFile, zipPath, &zi, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_DEFAULT_COMPRESSION);
 	if (err != ZIP_OK) return false;
 
 	FILE* fin = fopen(realPath, "rb");
