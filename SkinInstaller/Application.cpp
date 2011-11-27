@@ -29,7 +29,7 @@ GLOBALDATA g_Data;
 */
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
-	bool loadTheme = (wcsncmp(lpCmdLine, L"/LOADTHEME ", 11) == 0);
+	bool loadTheme = (_wcsnicmp(lpCmdLine, L"/LoadTheme ", 11) == 0);
 	if (wcscmp(lpCmdLine, L"/BACKUP") != 0 && !loadTheme)
 	{
 		// Temporary solution until Rainstaller rewrite
@@ -169,25 +169,26 @@ void LoadTheme(const WCHAR* name)
 	theme += name;
 	std::wstring wallpaper = theme + L"\\RainThemes.bmp";
 	theme += L"\\Rainmeter.thm";
-	CopyFiles(theme, g_Data.iniFile);
-
-	PreserveSetting(backup, L"SkinPath");
-	PreserveSetting(backup, L"ConfigEditor");
-	PreserveSetting(backup, L"LogViewer");
-	PreserveSetting(backup, L"Logging");
-	PreserveSetting(backup, L"DisableVersionCheck");
-	PreserveSetting(backup, L"Language");
-	PreserveSetting(backup, L"NormalStayDesktop");
-	PreserveSetting(backup, L"TrayExecuteL", false);
-	PreserveSetting(backup, L"TrayExecuteM", false);
-	PreserveSetting(backup, L"TrayExecuteR", false);
-	PreserveSetting(backup, L"TrayExecuteDM", false);
-	PreserveSetting(backup, L"TrayExecuteDR", false);
-
-	// Set wallpaper if it exists
-	if (_waccess(wallpaper.c_str(), 0) != -1)
+	if (CopyFiles(theme, g_Data.iniFile))
 	{
-		SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)wallpaper.c_str(), SPIF_UPDATEINIFILE);
+		PreserveSetting(backup, L"SkinPath");
+		PreserveSetting(backup, L"ConfigEditor");
+		PreserveSetting(backup, L"LogViewer");
+		PreserveSetting(backup, L"Logging");
+		PreserveSetting(backup, L"DisableVersionCheck");
+		PreserveSetting(backup, L"Language");
+		PreserveSetting(backup, L"NormalStayDesktop");
+		PreserveSetting(backup, L"TrayExecuteL", false);
+		PreserveSetting(backup, L"TrayExecuteM", false);
+		PreserveSetting(backup, L"TrayExecuteR", false);
+		PreserveSetting(backup, L"TrayExecuteDM", false);
+		PreserveSetting(backup, L"TrayExecuteDR", false);
+
+		// Set wallpaper if it exists
+		if (_waccess(wallpaper.c_str(), 0) != -1)
+		{
+			SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)wallpaper.c_str(), SPIF_UPDATEINIFILE);
+		}
 	}
 }
 
