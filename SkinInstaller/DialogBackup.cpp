@@ -144,27 +144,34 @@ INT_PTR CDialogBackup::OnCommand(WPARAM wParam, LPARAM lParam)
 
 void CDialogBackup::StartBackup()
 {
-	HWND item = GetDlgItem(m_Window, IDC_BACKUP_BACKUP_BUTTON);
-	EnableWindow(item, FALSE);
-
-	item = GetDlgItem(m_TabBackup.GetWindow(), IDC_BACKUP_FILE_TEXT);
-	ShowWindow(item, SW_HIDE);
-
-	item = GetDlgItem(m_TabBackup.GetWindow(), IDC_BACKUP_BROWSE_BUTTON);
-	ShowWindow(item, SW_HIDE);
-
-	item = GetDlgItem(m_TabBackup.GetWindow(), IDC_BACKUP_INPROGRESS_TEXT);
-	ShowWindow(item, SW_SHOWNORMAL);
-
-	item = GetDlgItem(m_TabBackup.GetWindow(), IDC_BACKUP_PROGRESS);
-	ShowWindow(item, SW_SHOWNORMAL);
-	SendMessage(item, PBM_SETMARQUEE, (WPARAM)TRUE, 0);
-
-	m_ThreadHandle = (HANDLE)_beginthreadex(NULL, 0, BackupThreadProc, this, 0, NULL);
-	if (!m_ThreadHandle)
+	if (!CloseRainmeterIfActive())
 	{
-		MessageBox(m_Window, L"Unable to start backup.", L"Backup Rainmeter", MB_ERROR);
-		EndDialog(m_Window, 0);
+		MessageBox(m_Window, L"Unable to close Rainmeter.", L"Backup Rainmeter", MB_ERROR);
+	}
+	else
+	{
+		HWND item = GetDlgItem(m_Window, IDC_BACKUP_BACKUP_BUTTON);
+		EnableWindow(item, FALSE);
+
+		item = GetDlgItem(m_TabBackup.GetWindow(), IDC_BACKUP_FILE_TEXT);
+		ShowWindow(item, SW_HIDE);
+
+		item = GetDlgItem(m_TabBackup.GetWindow(), IDC_BACKUP_BROWSE_BUTTON);
+		ShowWindow(item, SW_HIDE);
+
+		item = GetDlgItem(m_TabBackup.GetWindow(), IDC_BACKUP_INPROGRESS_TEXT);
+		ShowWindow(item, SW_SHOWNORMAL);
+
+		item = GetDlgItem(m_TabBackup.GetWindow(), IDC_BACKUP_PROGRESS);
+		ShowWindow(item, SW_SHOWNORMAL);
+		SendMessage(item, PBM_SETMARQUEE, (WPARAM)TRUE, 0);
+
+		m_ThreadHandle = (HANDLE)_beginthreadex(NULL, 0, BackupThreadProc, this, 0, NULL);
+		if (!m_ThreadHandle)
+		{
+			MessageBox(m_Window, L"Unable to start backup.", L"Backup Rainmeter", MB_ERROR);
+			EndDialog(m_Window, 0);
+		}
 	}
 }
 

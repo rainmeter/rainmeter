@@ -93,7 +93,6 @@ void KeepVariables(const std::wstring& backupFolder, const std::wstring& skinsPa
 void LaunchRainmeter();
 
 int CompareVersions(const std::wstring& strA, const std::wstring& strB);
-bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove);
 std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
 std::wstring GetDotNETVersion();
 std::wstring GetFileVersion(const std::wstring& file);

@@ -1028,26 +1028,11 @@ bool IsDefaultAddon(LPCTSTR addon)
 */
 bool InstallComponents(RMSKIN_DATA* data)
 {
-	// Close Rainmeter.exe
-	HWND hwnd = FindWindow(L"DummyRainWClass", L"Rainmeter control window");
-	if (hwnd)
+	if (!CloseRainmeterIfActive())
 	{
-		DWORD pID, exitCode;
-		GetWindowThreadProcessId(hwnd, &pID);
-		HANDLE hProcess = OpenProcess(PROCESS_TERMINATE | SYNCHRONIZE, FALSE, pID);
-		PostMessage(hwnd, WM_DESTROY, 0, 0);
-
-		// Wait up to 5 seconds for Rainmeter to close
-		WaitForSingleObject(hProcess, 5000);
-		GetExitCodeProcess(hProcess, &exitCode);
-		CloseHandle(hProcess);
-
-		if (exitCode == STILL_ACTIVE)
-		{
-			std::wstring error = L"Failed to close Rainmeter.";
-			MessageBox(NULL, error.c_str(), APP_NAME, MB_ERROR);
-			return false;
-		}
+		std::wstring error = L"Failed to close Rainmeter.";
+		MessageBox(NULL, error.c_str(), APP_NAME, MB_ERROR);
+		return false;
 	}
 
 	int result;
@@ -1520,28 +1505,6 @@ unsigned __stdcall SetRunAsThread(void*)
 unsigned __stdcall CreateInstallThread(void* pParam)
 {
 	return InstallComponents((RMSKIN_DATA*)pParam) ? 0 : 1;
-}
-
-/*
-** Copies files and folders from one location to another (from Rainmeter.cpp)
-*/
-bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove)
-{
-	std::wstring tmpFrom(strFrom), tmpTo(strTo);
-
-	// The strings must end with double null
-	tmpFrom.append(L"0");
-	tmpFrom[tmpFrom.size() - 1] = L'\0';
-	tmpTo.append(L"0");
-	tmpTo[tmpTo.size() - 1] = L'\0';
-
-	SHFILEOPSTRUCT fo = {0};
-	fo.wFunc = bMove ? FO_MOVE : FO_COPY;
-	fo.pFrom = tmpFrom.c_str();
-	fo.pTo = tmpTo.c_str();
-	fo.fFlags = FOF_NO_UI | FOF_SILENT | FOF_NOCONFIRMATION;
-
-	return (SHFileOperation(&fo) != 0) ? false : true;
 }
 
 /*

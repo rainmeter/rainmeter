@@ -41,10 +41,15 @@ struct GLOBALDATA
 	std::wstring programPath;
 	std::wstring settingsPath;
 	std::wstring skinsPath;
+	std::wstring iniFile;
 };
 
-bool IsRunning(const WCHAR* name, HANDLE* hMutex);
+bool CloseRainmeterIfActive();
+void LoadTheme(const WCHAR* name);
+void PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace = true);
 
+bool IsRunning(const WCHAR* name, HANDLE* hMutex);
+bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove = false);
 std::string ConvertToAscii(LPCTSTR str);
 std::wstring ConvertToWide(LPCSTR str);
 
