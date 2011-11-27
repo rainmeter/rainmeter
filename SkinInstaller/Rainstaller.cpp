@@ -122,7 +122,7 @@ int Rainstaller(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, 
 	str += L"Rainmeter.exe";
 	if (_waccess(str.c_str(), 0) != 0)
 	{
-		std::wstring error = L"Unable to locate Rainmeter.\nRainstaller.exe needs to be in the \\Addons\\Rainstaller\\ folder.";
+		std::wstring error = L"Unable to locate Rainmeter.";
 		MessageBox(NULL, error.c_str(), APP_NAME, MB_ERROR);
 		return 1;
 	}

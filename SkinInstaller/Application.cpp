@@ -242,7 +242,7 @@ bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMov
 		FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO
 	};
 
-	return SHFileOperation(&fo) != 0;
+	return SHFileOperation(&fo) == 0;
 }
 
 OSPLATFORM GetOSPlatform()
