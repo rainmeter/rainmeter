@@ -1908,20 +1908,16 @@ void CMeterWindow::ReadConfig()
 	m_AutoSelectScreen = false;
 	m_AlphaValue = 255;
 	m_FadeDuration = 250;
-	m_ConfigGroup = L"";
+	m_ConfigGroup.clear();
 
 	CConfigParser parser;
 	parser.Initialize(iniFile.c_str(), m_Rainmeter, NULL, m_SkinName.c_str());
 
 	for (int i = 0; i < 2; ++i)
 	{
-		m_WindowX = parser.ReadString(section, L"WindowX", m_WindowX.c_str());
-		m_WindowY = parser.ReadString(section, L"WindowY", m_WindowY.c_str());
-		m_AnchorX = parser.ReadString(section, L"AnchorX", m_AnchorX.c_str());
-		m_AnchorY = parser.ReadString(section, L"AnchorY", m_AnchorY.c_str());
-
 		// Check if the window position should be read as a formula
 		double value;
+		m_WindowX = parser.ReadString(section, L"WindowX", m_WindowX.c_str());
 		if (!m_WindowX.empty() && m_WindowX[0] == L'(' && m_WindowX[m_WindowX.size() - 1] == L')')
 		{
 			if (!parser.ParseFormula(m_WindowX, &value))
@@ -1931,6 +1927,7 @@ void CMeterWindow::ReadConfig()
 			_itow_s((int)value, buffer, 10);
 			m_WindowX = buffer;
 		}
+		m_WindowY = parser.ReadString(section, L"WindowY", m_WindowY.c_str());
 		if (!m_WindowY.empty() && m_WindowY[0] == L'(' && m_WindowY[m_WindowY.size() - 1] == L')')
 		{
 			if (!parser.ParseFormula(m_WindowY, &value))
@@ -1940,6 +1937,9 @@ void CMeterWindow::ReadConfig()
 			_itow_s((int)value, buffer, 10);
 			m_WindowY = buffer;
 		}
+
+		m_AnchorX = parser.ReadString(section, L"AnchorX", m_AnchorX.c_str());
+		m_AnchorY = parser.ReadString(section, L"AnchorY", m_AnchorY.c_str());
 
 		int zPos = parser.ReadInt(section, L"AlwaysOnTop", m_WindowZPosition);
 		m_WindowZPosition = (zPos >= ZPOSITION_ONDESKTOP && zPos <= ZPOSITION_ONTOPMOST) ? (ZPOSITION)zPos : ZPOSITION_NORMAL;

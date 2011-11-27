@@ -155,7 +155,7 @@ void CMeasureDiskSpace::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_Value = 0.0;
 		m_MaxValue = 0.0;
 		m_OldTotalBytes = 0;
-		m_LabelName = L"";
+		m_LabelName.clear();
 	}
 	else if (!CSystem::IsPathSeparator(m_Drive[m_Drive.length() - 1]))  // E.g. "C:"
 	{

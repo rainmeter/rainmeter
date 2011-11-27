@@ -21,10 +21,17 @@ static int Measure_GetOption(lua_State* L)
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
 	strTmp = parser.GetValue(self->GetOriginalName(), strTmp, L"");
 
-	parser.SetBuiltInVariable(L"CURRENTSECTION", self->GetOriginalName());  // Set temporarily
-	parser.ReplaceVariables(strTmp);
-	parser.SetBuiltInVariable(L"CURRENTSECTION", L"");  // Reset
-	parser.ReplaceMeasures(strTmp);
+	if (strTmp.size() >= 3)
+	{
+		if (strTmp.find(L'#') != std::wstring::npos)
+		{
+			static const std::wstring CURRENTSECTION = L"CURRENTSECTION";
+			parser.SetBuiltInVariable(CURRENTSECTION, self->GetOriginalName());  // Set temporarily
+			parser.ReplaceVariables(strTmp);
+			parser.SetBuiltInVariable(CURRENTSECTION, L"");  // Reset
+		}
+		parser.ReplaceMeasures(strTmp);
+	}
 
 	LuaManager::PushWide(L, strTmp.c_str());
 	return 1;
