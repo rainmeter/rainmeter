@@ -82,10 +82,10 @@ static int MeterWindow_GetY(lua_State* L)
 static int MeterWindow_MakePathAbsolute(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const std::wstring path = LuaManager::ToWide(L, 2);
+	std::wstring path = LuaManager::ToWide(L, 2);
 
-	std::wstring val = self->MakePathAbsolute(path);
-	LuaManager::PushWide(L, val.c_str());
+	self->MakePathAbsolute(path);
+	LuaManager::PushWide(L, path.c_str());
 
 	return 1;
 }

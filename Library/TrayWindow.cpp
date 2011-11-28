@@ -342,8 +342,8 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 		else if (_wcsicmp(type, L"HISTOGRAM") == 0)
 		{
 			m_MeterType = TRAY_METER_TYPE_HISTOGRAM;
-			m_TrayColor1 = parser.ReadColor(L"TrayMeasure", L"TrayColor1", Color(0, 100, 0));
-			m_TrayColor2 = parser.ReadColor(L"TrayMeasure", L"TrayColor2", Color(0, 255, 0));
+			m_TrayColor1 = parser.ReadColor(L"TrayMeasure", L"TrayColor1", Color::MakeARGB(255, 0, 100, 0));
+			m_TrayColor2 = parser.ReadColor(L"TrayMeasure", L"TrayColor2", Color::MakeARGB(255, 0, 255, 0));
 		}
 		else if (_wcsicmp(type, L"BITMAP") == 0)
 		{

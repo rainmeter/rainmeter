@@ -65,7 +65,7 @@ void CMeterImage::Initialize()
 	{
 		m_ImageNameResult = m_Path;
 		m_ImageNameResult += m_ImageName;
-		m_ImageNameResult = m_MeterWindow->MakePathAbsolute(m_ImageNameResult);
+		m_MeterWindow->MakePathAbsolute(m_ImageNameResult);
 		LoadImage(m_ImageNameResult, true);
 	}
 }
@@ -207,7 +207,7 @@ bool CMeterImage::Update()
 			if (!m_ImageNameResult.empty())
 			{
 				m_ImageNameResult.insert(0, m_Path);
-				m_ImageNameResult = m_MeterWindow->MakePathAbsolute(m_ImageNameResult);
+				m_MeterWindow->MakePathAbsolute(m_ImageNameResult);
 			}
 
 			LoadImage(m_ImageNameResult, (wcscmp(oldResult.c_str(), m_ImageNameResult.c_str()) != 0));

@@ -25,42 +25,28 @@
 
 using namespace Gdiplus;
 
-class ImageCache
-{
-public:
-	ImageCache(Bitmap* bitmap) : m_Bitmap(bitmap), m_Ref(1) {}
-	~ImageCache() { Dispose(); }
-
-	void AddRef() { ++m_Ref; }
-	void Release() { if (m_Ref > 0) { --m_Ref; } if (m_Ref == 0) { Dispose(); } }
-
-	bool IsInvalid() { return m_Ref == 0; }
-	//int GetRef() { return m_Ref; }
-	Bitmap* GetCache() { return m_Bitmap; }
-
-private:
-	ImageCache() {}
-	ImageCache(const ImageCache& cache) {}
-
-	void Dispose() { delete m_Bitmap; m_Bitmap = NULL; }
-
-	Bitmap* m_Bitmap;
-	int m_Ref;
-};
 
 class ImageCachePool
 {
 public:
-	static std::wstring CreateKey(const std::wstring& fname, FILETIME ftime, DWORD fileSize)
+	static std::wstring CreateKey(const std::wstring& name, ULONGLONG time, DWORD size)
 	{
+		std::wstring key;
+
 		WCHAR buffer[MAX_PATH];
+		if (PathCanonicalize(buffer, name.c_str()))
+		{
+			key = buffer;
+		}
+		else
+		{
+			key = name;
+		}
+		std::transform(key.begin(), key.end(), key.begin(), ::towlower);
 
-		std::wstring key = (PathCanonicalize(buffer, fname.c_str())) ? buffer : fname;
-
-		_snwprintf_s(buffer, _TRUNCATE, L":%x%08x:%x", ftime.dwHighDateTime, ftime.dwLowDateTime, fileSize);
+		_snwprintf_s(buffer, _TRUNCATE, L":%llx:%x", time, size);
 		key += buffer;
 
-		std::transform(key.begin(), key.end(), key.begin(), ::towlower);
 		return key;
 	}
 
@@ -74,7 +60,7 @@ public:
 		return NULL;
 	}
 
-	static void AddCache(const std::wstring& key, ImageCache* cache)
+	static void AddCache(const std::wstring& key, Bitmap* bitmap)
 	{
 		std::unordered_map<std::wstring, ImageCache*>::const_iterator iter = c_CacheMap.find(key);
 		if (iter != c_CacheMap.end())
@@ -82,10 +68,10 @@ public:
 			(*iter).second->AddRef();
 			//LogWithArgs(LOG_DEBUG, L"* ADD: key=%s, ref=%i", key.c_str(), (*iter).second->GetRef());
 		}
-		else if (cache)
+		else
 		{
-			c_CacheMap[key] = cache;
-			//LogWithArgs(LOG_DEBUG, L"* ADD: key=%s, ref=%i", key.c_str(), cache->GetRef());
+			c_CacheMap[key] = new ImageCache(bitmap);
+			//LogWithArgs(LOG_DEBUG, L"* ADD: key=%s, ref=new", key.c_str());
 		}
 	}
 
@@ -108,9 +94,32 @@ public:
 	}
 
 private:
+	class ImageCache
+	{
+	public:
+		ImageCache(Bitmap* bitmap) : m_Bitmap(bitmap), m_Ref(1) {}
+		~ImageCache() { Dispose(); }
+
+		void AddRef() { ++m_Ref; }
+		void Release() { if (m_Ref > 0) { --m_Ref; } if (m_Ref == 0) { Dispose(); } }
+
+		bool IsInvalid() { return m_Ref == 0; }
+		//int GetRef() { return m_Ref; }
+		Bitmap* GetCache() { return m_Bitmap; }
+
+	private:
+		ImageCache() {}
+		ImageCache(const ImageCache& cache) {}
+
+		void Dispose() { delete m_Bitmap; m_Bitmap = NULL; }
+
+		Bitmap* m_Bitmap;
+		int m_Ref;
+	};
+
 	static std::unordered_map<std::wstring, ImageCache*> c_CacheMap;
 };
-std::unordered_map<std::wstring, ImageCache*> ImageCachePool::c_CacheMap;
+std::unordered_map<std::wstring, ImageCachePool::ImageCache*> ImageCachePool::c_CacheMap;
 
 
 #define PI	(3.14159265f)
@@ -157,11 +166,10 @@ CTintedImage::CTintedImage(const WCHAR* name, const WCHAR** configArray, bool di
 	m_Crop(-1, -1, -1, -1),
 	m_CropMode(CROPMODE_TL),
 	m_GreyScale(false),
-	m_ColorMatrix(new ColorMatrix),
+	m_ColorMatrix(new ColorMatrix(c_IdentityMatrix)),
 	m_Flip(RotateNoneFlipNone),
 	m_Rotate()
 {
-	*m_ColorMatrix = c_IdentityMatrix;
 }
 
 /*
@@ -203,7 +211,7 @@ void CTintedImage::DisposeImage()
 ** Loads the image from file handle
 **
 */
-Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize, ImageCache** ppCache)
+Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize)
 {
 	HGLOBAL hBuffer = ::GlobalAlloc(GMEM_MOVEABLE, fileSize);
 	if (hBuffer)
@@ -236,10 +244,8 @@ Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize,
 						bitmap = clone;
 
 						::GlobalFree(hBuffer);
-						hBuffer = NULL;
 					}
 					////////////////////////////////////////////
-					*ppCache = new ImageCache(bitmap);
 					return bitmap;
 				}
 
@@ -267,9 +273,8 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		std::wstring filename = imageName;
 
 		// Check extension and if it is missing, add .png
-		size_t pos = filename.find_last_of(L"\\");
-		if (pos == std::wstring::npos) pos = 0;
-		if (std::wstring::npos == filename.find(L'.', pos))
+		size_t pos = filename.rfind(L'\\');
+		if (filename.find(L'.', (pos == std::wstring::npos) ? 0 : pos + 1) == std::wstring::npos)
 		{
 			filename += L".png";
 		}
@@ -280,25 +285,24 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		if (fileHandle != INVALID_HANDLE_VALUE && (fileSize = GetFileSize(fileHandle, NULL)) != INVALID_FILE_SIZE)
 		{
 			// Compare the filename/timestamp/filesize to check if the file has been changed (don't load if it's not)
-			FILETIME tmpTime;
-			GetFileTime(fileHandle, NULL, NULL, &tmpTime);
-			std::wstring key = ImageCachePool::CreateKey(filename, tmpTime, fileSize);
+			ULONGLONG fileTime;
+			GetFileTime(fileHandle, NULL, NULL, (LPFILETIME)&fileTime);
+			std::wstring key = ImageCachePool::CreateKey(filename, fileTime, fileSize);
 
-			if (bLoadAlways || key != m_CacheKey)
+			if (bLoadAlways || wcscmp(key.c_str(), m_CacheKey.c_str()) != 0)
 			{
 				DisposeImage();
 
 				Bitmap* bitmap = ImageCachePool::GetCache(key);
-				ImageCache* cache = NULL;
 
 				m_Bitmap = (bitmap) ?
 					bitmap :
-					LoadImageFromFileHandle(fileHandle, fileSize, &cache);
+					LoadImageFromFileHandle(fileHandle, fileSize);
 
 				if (m_Bitmap)
 				{
 					m_CacheKey = key;
-					ImageCachePool::AddCache(key, cache);
+					ImageCachePool::AddCache(key, m_Bitmap);
 
 					// Check whether the new image needs tinting (or cropping, flipping, rotating)
 					if (!m_NeedsCrop)

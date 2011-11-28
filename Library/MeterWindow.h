@@ -243,7 +243,7 @@ public:
 
 	LRESULT OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	std::wstring MakePathAbsolute(const std::wstring& path);
+	void MakePathAbsolute(std::wstring& path);
 
 	Gdiplus::PrivateFontCollection* GetPrivateFontCollection() { return m_FontCollection; }
 

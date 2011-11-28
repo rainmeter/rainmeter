@@ -46,7 +46,6 @@
 	};
 
 class CConfigParser;
-class ImageCache;
 
 class CTintedImage
 {
@@ -99,7 +98,7 @@ protected:
 	void ApplyTint();
 	void ApplyTransform();
 
-	Gdiplus::Bitmap* LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize, ImageCache** ppCache);
+	Gdiplus::Bitmap* LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize);
 
 	static Gdiplus::Bitmap* TurnGreyscale(Gdiplus::Bitmap* source);
 	static bool CompareColorMatrix(const Gdiplus::ColorMatrix* a, const Gdiplus::ColorMatrix* b);

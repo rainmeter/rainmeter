@@ -218,7 +218,7 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_PrimaryImageName = parser.ReadString(section, L"PrimaryImage", L"");
 	if (!m_PrimaryImageName.empty())
 	{
-		m_PrimaryImageName = m_MeterWindow->MakePathAbsolute(m_PrimaryImageName);
+		m_MeterWindow->MakePathAbsolute(m_PrimaryImageName);
 
 		// Read tinting configs
 		m_PrimaryImage.ReadConfig(parser, section);
@@ -231,7 +231,7 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_SecondaryImageName = parser.ReadString(section, L"SecondaryImage", L"");
 	if (!m_SecondaryImageName.empty())
 	{
-		m_SecondaryImageName = m_MeterWindow->MakePathAbsolute(m_SecondaryImageName);
+		m_MeterWindow->MakePathAbsolute(m_SecondaryImageName);
 
 		// Read tinting configs
 		m_SecondaryImage.ReadConfig(parser, section);
@@ -244,7 +244,7 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_BothImageName = parser.ReadString(section, L"BothImage", L"");
 	if (!m_BothImageName.empty())
 	{
-		m_BothImageName = m_MeterWindow->MakePathAbsolute(m_BothImageName);
+		m_MeterWindow->MakePathAbsolute(m_BothImageName);
 
 		// Read tinting configs
 		m_BothImage.ReadConfig(parser, section);

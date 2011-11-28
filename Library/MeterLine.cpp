@@ -158,8 +158,8 @@ void CMeterLine::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0);
 	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
 	m_HorizontalLines = 0!=parser.ReadInt(section, L"HorizontalLines", 0);
-	m_HorizontalColor = parser.ReadColor(section, L"HorizontalColor", Color::Black);			// This is left here for backwards compatibility
-	m_HorizontalColor = parser.ReadColor(section, L"HorizontalLineColor", m_HorizontalColor);	// This is what it should be
+	ARGB color = parser.ReadColor(section, L"HorizontalColor", Color::Black);		// This is left here for backwards compatibility
+	m_HorizontalColor = parser.ReadColor(section, L"HorizontalLineColor", color);	// This is what it should be
 
 	if (m_Initialized &&
 		(oldLineCount != lineCount ||

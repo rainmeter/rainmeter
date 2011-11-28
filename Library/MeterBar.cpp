@@ -105,7 +105,7 @@ void CMeterBar::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_ImageName = parser.ReadString(section, L"BarImage", L"");
 	if (!m_ImageName.empty())
 	{
-		m_ImageName = m_MeterWindow->MakePathAbsolute(m_ImageName);
+		m_MeterWindow->MakePathAbsolute(m_ImageName);
 
 		// Read tinting configs
 		m_Image.ReadConfig(parser, section);

@@ -387,8 +387,8 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
 
-	m_SolidColor = parser.ReadColor(section, L"SolidColor", Color(0, 0, 0, 0));
-	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor);
+	m_SolidColor = parser.ReadColor(section, L"SolidColor", Color::MakeARGB(0, 0, 0, 0));
+	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor.GetValue());
 	m_SolidAngle = (Gdiplus::REAL)parser.ReadFloat(section, L"GradientAngle", 0.0);
 
 	m_LeftMouseDownAction = parser.ReadString(section, L"LeftMouseDownAction", L"", false);

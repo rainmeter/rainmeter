@@ -790,7 +790,7 @@ bool CConfigParser::ParseFormula(const std::wstring& result, double* resultValue
 	return false;
 }
 
-Color CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, const Color& defValue)
+ARGB CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, ARGB defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 

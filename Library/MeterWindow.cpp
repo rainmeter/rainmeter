@@ -2120,7 +2120,7 @@ bool CMeterWindow::ReadSkin()
 	m_SolidBevel = (BEVELTYPE)m_Parser.ReadInt(L"Rainmeter", L"BevelType", BEVELTYPE_NONE);
 
 	m_SolidColor = m_Parser.ReadColor(L"Rainmeter", L"SolidColor", Color::Gray);
-	m_SolidColor2 = m_Parser.ReadColor(L"Rainmeter", L"SolidColor2", m_SolidColor);
+	m_SolidColor2 = m_Parser.ReadColor(L"Rainmeter", L"SolidColor2", m_SolidColor.GetValue());
 	m_SolidAngle = (Gdiplus::REAL)m_Parser.ReadFloat(L"Rainmeter", L"GradientAngle", 0.0);
 
 	m_DynamicWindowSize = 0!=m_Parser.ReadInt(L"Rainmeter", L"DynamicWindowSize", 0);
@@ -2130,7 +2130,7 @@ bool CMeterWindow::ReadSkin()
 		m_BackgroundName = m_Parser.ReadString(L"Rainmeter", L"Background", L"");
 		if (!m_BackgroundName.empty())
 		{
-			m_BackgroundName = MakePathAbsolute(m_BackgroundName);
+			MakePathAbsolute(m_BackgroundName);
 		}
 		else
 		{
@@ -5076,23 +5076,22 @@ void CMeterWindow::SetWindowSizeVariables(int w, int h)
 ** Converts the path to absolute by adding the skin's path to it (unless it already is absolute).
 **
 */
-std::wstring CMeterWindow::MakePathAbsolute(const std::wstring& path)
+void CMeterWindow::MakePathAbsolute(std::wstring& path)
 {
-	std::wstring absolute;
-
 	if (path.empty() || CSystem::IsAbsolutePath(path))
 	{
-		absolute = path;	// It's already absolute path (or it's empty)
+		return;  // It's already absolute path (or it's empty)
 	}
 	else
 	{
+		std::wstring absolute;
+		absolute.reserve(m_SkinPath.size() + m_SkinName.size() + 1 + path.size());
 		absolute = m_SkinPath;
 		absolute += m_SkinName;
 		absolute += L"\\";
 		absolute += path;
+		absolute.swap(path);
 	}
-
-	return absolute;
 }
 
 std::wstring CMeterWindow::GetSkinRootPath()
