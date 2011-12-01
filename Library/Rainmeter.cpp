@@ -2511,22 +2511,29 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 */
 void CRainmeter::ReadStats()
 {
+	const WCHAR* statsFile = m_StatsFile.c_str();
+
 	// If m_StatsFile doesn't exist, create it and copy the stats section from m_IniFile
-	if (_waccess(m_StatsFile.c_str(), 0) == -1)
+	if (_waccess(statsFile, 0) == -1)
 	{
+		const WCHAR* iniFile = m_IniFile.c_str();
 		WCHAR* tmpSz = new WCHAR[SHRT_MAX];	// Max size returned by GetPrivateProfileSection()
 
-		if (GetPrivateProfileSection(L"Statistics", tmpSz, SHRT_MAX, m_IniFile.c_str()) > 0)
+		if (GetPrivateProfileSection(L"Statistics", tmpSz, SHRT_MAX, iniFile) > 0)
 		{
-			WritePrivateProfileSection(L"Statistics", tmpSz, m_StatsFile.c_str());
-			WritePrivateProfileString(L"Statistics", NULL, NULL, m_IniFile.c_str());
+			WritePrivateProfileString(L"Statistics", NULL, NULL, iniFile);
 		}
+		else
+		{
+			tmpSz[0] = tmpSz[1] = L'\0';
+		}
+		WritePrivateProfileSection(L"Statistics", tmpSz, statsFile);
 
 		delete [] tmpSz;
 	}
 
 	// Only Net measure has stats at the moment
-	CMeasureNet::ReadStats(m_StatsFile.c_str(), m_StatsDate);
+	CMeasureNet::ReadStats(statsFile, m_StatsDate);
 }
 
 /*
@@ -2546,9 +2553,10 @@ void CRainmeter::WriteStats(bool bForce)
 		lastWrite = ticks;
 
 		// Only Net measure has stats at the moment
-		CMeasureNet::WriteStats(m_StatsFile.c_str(), m_StatsDate.c_str());
+		const WCHAR* statsFile = m_StatsFile.c_str();
+		CMeasureNet::WriteStats(statsFile, m_StatsDate.c_str());
 
-		WritePrivateProfileString(NULL, NULL, NULL, m_StatsFile.c_str());
+		WritePrivateProfileString(NULL, NULL, NULL, statsFile);
 	}
 }
 
