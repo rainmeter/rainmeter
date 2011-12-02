@@ -35,7 +35,8 @@ protected:
 
 private:
 	std::wstring m_Drive;
-	std::wstring m_LabelName;
+	std::wstring m_DriveInfo;
+	bool m_Type;
 	bool m_Total;
 	bool m_Label;
 	bool m_IgnoreRemovable;

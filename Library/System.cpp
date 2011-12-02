@@ -1263,25 +1263,25 @@ bool CSystem::RemoveFolder(const std::wstring& strFolder)
 */
 void CSystem::UpdateIniFileMappingList()
 {
-	static ULARGE_INTEGER s_LastWriteTime = {0};
+	static ULONGLONG s_LastWriteTime = 0;
 
 	HKEY hKey;
 	LONG ret = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\IniFileMapping", 0, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS, &hKey);
 	if (ret == ERROR_SUCCESS)
 	{
 		DWORD numSubKeys;
-		ULARGE_INTEGER ftLastWriteTime;
+		ULONGLONG ftLastWriteTime;
 		bool changed = false;
 
 		ret = RegQueryInfoKey(hKey, NULL, NULL, NULL, &numSubKeys, NULL, NULL, NULL, NULL, NULL, NULL, (LPFILETIME)&ftLastWriteTime);
 		if (ret == ERROR_SUCCESS)
 		{
-			//LogWithArgs(LOG_DEBUG, L"IniFileMapping: numSubKeys=%u, ftLastWriteTime=%llu", numSubKeys, ftLastWriteTime.QuadPart);
+			//LogWithArgs(LOG_DEBUG, L"IniFileMapping: numSubKeys=%u, ftLastWriteTime=%llu", numSubKeys, ftLastWriteTime);
 
-			if (ftLastWriteTime.QuadPart != s_LastWriteTime.QuadPart ||
+			if (ftLastWriteTime != s_LastWriteTime ||
 				numSubKeys != c_IniFileMappings.size())
 			{
-				s_LastWriteTime.QuadPart = ftLastWriteTime.QuadPart;
+				s_LastWriteTime = ftLastWriteTime;
 				if (numSubKeys > c_IniFileMappings.capacity())
 				{
 					c_IniFileMappings.reserve(numSubKeys);
@@ -1291,7 +1291,7 @@ void CSystem::UpdateIniFileMappingList()
 		}
 		else
 		{
-			s_LastWriteTime.QuadPart = 0;
+			s_LastWriteTime = 0;
 			changed = true;
 		}
 

@@ -21,6 +21,19 @@
 #include "Rainmeter.h"
 #include "System.h"
 
+enum DRIVETYPE
+{
+	DRIVETYPE_ERROR       = 0,
+	DRIVETYPE_REMOVED     = 1,
+	DRIVETYPE_REMOVABLE   = 3,
+	DRIVETYPE_FIXED       = 4,
+	DRIVETYPE_NETWORK     = 5,
+	DRIVETYPE_CDROM       = 6,
+	DRIVETYPE_RAM         = 7,
+
+	DRIVETYPE_MAX         = DRIVETYPE_RAM
+};
+
 /*
 ** CMeasureDiskSpace
 **
@@ -28,6 +41,7 @@
 **
 */
 CMeasureDiskSpace::CMeasureDiskSpace(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+	m_Type(false),
 	m_Total(false),
 	m_Label(false),
 	m_IgnoreRemovable(true),
@@ -57,63 +71,101 @@ bool CMeasureDiskSpace::Update()
 
 	if (!m_Drive.empty())
 	{
-		BOOL sizeResult = FALSE;
-		ULARGE_INTEGER i64TotalBytes, i64FreeBytes;
+		const WCHAR* drive = m_Drive.c_str();
+		UINT type = GetDriveType(drive);
 
-		UINT type = GetDriveType(m_Drive.c_str());
-		if (type != DRIVE_NO_ROOT_DIR)
+		if (m_Type)
 		{
-			if (type != DRIVE_CDROM && (!m_IgnoreRemovable || type != DRIVE_REMOVABLE))	// Ignore CD-ROMS and removable drives
+			switch (type)
 			{
-				ULARGE_INTEGER i64FreeBytesToCaller;
-
-				UINT oldMode = SetErrorMode(0);
-				SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
-				SetLastError(ERROR_SUCCESS);
-				sizeResult = GetDiskFreeSpaceEx(m_Drive.c_str(), &i64FreeBytesToCaller, &i64TotalBytes, &i64FreeBytes);
-				SetErrorMode(oldMode);  // Reset
-			}
-		}
-
-		if (sizeResult)
-		{
-			m_Value = (double)(__int64)((m_Total) ? i64TotalBytes : i64FreeBytes).QuadPart;
-
-			if (i64TotalBytes.QuadPart != m_OldTotalBytes)
-			{
-				// Total size was changed, so set new max value.
-				m_MaxValue = (double)(__int64)i64TotalBytes.QuadPart;
-				m_OldTotalBytes = i64TotalBytes.QuadPart;
+			case DRIVE_UNKNOWN:
+			case DRIVE_NO_ROOT_DIR:
+				m_Value = DRIVETYPE_REMOVED;
+				m_DriveInfo = L"Removed";
+				break;
+			case DRIVE_REMOVABLE:
+				m_Value = DRIVETYPE_REMOVABLE;
+				m_DriveInfo = L"Removable";
+				break;
+			case DRIVE_FIXED:
+				m_Value = DRIVETYPE_FIXED;
+				m_DriveInfo = L"Fixed";
+				break;
+			case DRIVE_REMOTE:
+				m_Value = DRIVETYPE_NETWORK;
+				m_DriveInfo = L"Network";
+				break;
+			case DRIVE_CDROM:
+				m_Value = DRIVETYPE_CDROM;
+				m_DriveInfo = L"CDRom";
+				break;
+			case DRIVE_RAMDISK:
+				m_Value = DRIVETYPE_RAM;
+				m_DriveInfo = L"Ram";
+				break;
+			default:
+				m_Value = DRIVETYPE_ERROR;
+				m_DriveInfo = L"Error";
+				break;
 			}
 		}
 		else
 		{
-			m_Value = 0.0;
-			m_MaxValue = 0.0;
-			m_OldTotalBytes = 0;
-		}
-
-		if (m_Label)
-		{
-			BOOL labelResult = FALSE;
-			WCHAR volumeName[MAX_PATH] = {0};
+			BOOL sizeResult = FALSE;
+			ULONGLONG i64TotalBytes, i64FreeBytes;
 
 			if (type != DRIVE_NO_ROOT_DIR)
 			{
-				if (!m_IgnoreRemovable || type != DRIVE_REMOVABLE)	// Ignore removable drives
+				if (type != DRIVE_CDROM && (!m_IgnoreRemovable || type != DRIVE_REMOVABLE))	// Ignore CD-ROMS and removable drives
 				{
 					UINT oldMode = SetErrorMode(0);
 					SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
-					labelResult = GetVolumeInformation(m_Drive.c_str(), volumeName, MAX_PATH, NULL, NULL, NULL, NULL, 0);
+					SetLastError(ERROR_SUCCESS);
+					sizeResult = GetDiskFreeSpaceEx(drive, NULL, (PULARGE_INTEGER)&i64TotalBytes, (PULARGE_INTEGER)&i64FreeBytes);
 					SetErrorMode(oldMode);  // Reset
 				}
 			}
 
-			m_LabelName = (labelResult) ? volumeName : L"";
-		}
-		else if (!m_LabelName.empty())
-		{
-			m_LabelName.clear();
+			if (sizeResult)
+			{
+				m_Value = (double)(__int64)((m_Total) ? i64TotalBytes : i64FreeBytes);
+
+				if (i64TotalBytes != m_OldTotalBytes)
+				{
+					// Total size was changed, so set new max value.
+					m_MaxValue = (double)(__int64)i64TotalBytes;
+					m_OldTotalBytes = i64TotalBytes;
+				}
+			}
+			else
+			{
+				m_Value = 0.0;
+				m_MaxValue = 0.0;
+				m_OldTotalBytes = 0;
+			}
+
+			if (m_Label)
+			{
+				BOOL labelResult = FALSE;
+				WCHAR volumeName[MAX_PATH + 1];
+
+				if (type != DRIVE_NO_ROOT_DIR)
+				{
+					if (!m_IgnoreRemovable || type != DRIVE_REMOVABLE)	// Ignore removable drives
+					{
+						UINT oldMode = SetErrorMode(0);
+						SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
+						labelResult = GetVolumeInformation(drive, volumeName, MAX_PATH + 1, NULL, NULL, NULL, NULL, 0);
+						SetErrorMode(oldMode);  // Reset
+					}
+				}
+
+				m_DriveInfo = (labelResult) ? volumeName : L"";
+			}
+			else if (!m_DriveInfo.empty())
+			{
+				m_DriveInfo.clear();
+			}
 		}
 	}
 
@@ -128,9 +180,9 @@ bool CMeasureDiskSpace::Update()
 */
 const WCHAR* CMeasureDiskSpace::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
-	if (m_Label)
+	if (m_Type || m_Label)
 	{
-		return CheckSubstitute(m_LabelName.c_str());
+		return CheckSubstitute(m_DriveInfo.c_str());
 	}
 
 	return CMeasure::GetStringValue(autoScale, scale, decimals, percentual);
@@ -155,13 +207,14 @@ void CMeasureDiskSpace::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_Value = 0.0;
 		m_MaxValue = 0.0;
 		m_OldTotalBytes = 0;
-		m_LabelName.clear();
+		m_DriveInfo.clear();
 	}
 	else if (!CSystem::IsPathSeparator(m_Drive[m_Drive.length() - 1]))  // E.g. "C:"
 	{
 		m_Drive += L"\\";  // A trailing backslash is required.
 	}
 
+	m_Type = (1 == parser.ReadInt(section, L"Type", 0));
 	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
 	m_Label = (1 == parser.ReadInt(section, L"Label", 0));
 	m_IgnoreRemovable = (1 == parser.ReadInt(section, L"IgnoreRemovable", 1));
@@ -170,27 +223,26 @@ void CMeasureDiskSpace::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	if (!m_Initialized)
 	{
 		BOOL result = FALSE;
-		ULARGE_INTEGER i64TotalBytes;
+		ULONGLONG i64TotalBytes;
 
 		if (!m_Drive.empty())
 		{
-			UINT type = GetDriveType(m_Drive.c_str());
+			const WCHAR* drive = m_Drive.c_str();
+			UINT type = GetDriveType(drive);
 			if (type != DRIVE_NO_ROOT_DIR &&
 				type != DRIVE_CDROM && (!m_IgnoreRemovable || type != DRIVE_REMOVABLE))	// Ignore CD-ROMS and removable drives
 			{
-				ULARGE_INTEGER i64FreeBytesToCaller, i64FreeBytes;
-
 				UINT oldMode = SetErrorMode(0);
 				SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
-				result = GetDiskFreeSpaceEx(m_Drive.c_str(), &i64FreeBytesToCaller, &i64TotalBytes, &i64FreeBytes);
+				result = GetDiskFreeSpaceEx(drive, NULL, (PULARGE_INTEGER)&i64TotalBytes, NULL);
 				SetErrorMode(oldMode);  // Reset
 			}
 		}
 
 		if (result)
 		{
-			m_MaxValue = (double)(__int64)i64TotalBytes.QuadPart;
-			m_OldTotalBytes = i64TotalBytes.QuadPart;
+			m_MaxValue = (double)(__int64)i64TotalBytes;
+			m_OldTotalBytes = i64TotalBytes;
 		}
 		else
 		{
@@ -200,6 +252,14 @@ void CMeasureDiskSpace::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		m_MaxValue = oldMaxValue;
+		if (m_Type)
+		{
+			m_MaxValue = DRIVETYPE_MAX;
+			m_OldTotalBytes = 0;
+		}
+		else
+		{
+			m_MaxValue = oldMaxValue;
+		}
 	}
 }
