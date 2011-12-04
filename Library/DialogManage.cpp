@@ -127,7 +127,7 @@ void CDialogManage::OpenSkin(CMeterWindow* meterWindow)
 
 	if (c_Dialog)
 	{
-		std::wstring name = meterWindow->GetSkinName() + L"\\";
+		std::wstring name = meterWindow->GetSkinName() + L'\\';
 		name += meterWindow->GetSkinIniFile();
 
 		HWND item = GetDlgItem(c_Dialog->m_TabSkins.GetWindow(), IDC_MANAGESKINS_SKINS_TREEVIEW);
@@ -165,7 +165,7 @@ std::wstring GetTreeSelectionPath(HWND tree)
 	while ((tvi.hItem = TreeView_GetParent(tree, tvi.hItem)) != NULL)
 	{
 		TreeView_GetItem(tree, &tvi);
-		path.insert(0, L"\\");
+		path.insert(0, 1, L'\\');
 		path.insert(0, buffer);
 	}
 
@@ -278,7 +278,7 @@ INT_PTR CDialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			std::wstring command = Rainmeter->GetConfigEditor() + L" \"";
 			command += Rainmeter->GetIniFile();
-			command += L"\"";
+			command += L'"';
 			RunCommand(Rainmeter->GetTrayWindow()->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 		}
 		break;
@@ -661,7 +661,7 @@ void CDialogManage::CTabSkins::ReadSkin()
 	EnableWindow(item, TRUE);
 
 	std::wstring file = Rainmeter->GetSkinPath() + m_SkinName;
-	file += L"\\";
+	file += L'\\';
 	file += m_FileName;
 	m_SkinWindow = Rainmeter->GetMeterWindowByINI(file);
 	if (!m_SkinWindow)
@@ -869,7 +869,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			int index = 0;
 			for ( ; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
 			{
-				std::wstring name = ((*iter).second)->GetSkinName() + L"\\";
+				std::wstring name = ((*iter).second)->GetSkinName() + L'\\';
 				name += ((*iter).second)->GetSkinIniFile();
 				InsertMenu(menu, index, MF_BYPOSITION, ID_CONFIG_FIRST + index, name.c_str());
 				++index;
@@ -932,13 +932,13 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDC_MANAGESKINS_EDIT_BUTTON:
 		{
 			std::wstring command = Rainmeter->GetSkinPath() + m_SkinName;
-			command += L"\\";
+			command += L'\\';
 			command += m_FileName;
 			bool writable = CSystem::IsFileWritable(command.c_str());
 
 			command.insert(0, L" \"");
 			command.insert(0, Rainmeter->GetConfigEditor());
-			command += L"\"";
+			command += L'"';
 
 			// Execute as admin if in protected location
 			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL, !writable);
@@ -1125,9 +1125,9 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case ID_CONTEXT_MANAGESKINSMENU_OPENFOLDER:
 		{
 			HWND tree = GetDlgItem(m_Window, IDC_MANAGESKINS_SKINS_TREEVIEW);
-			std::wstring command = L"\"" + Rainmeter->GetSkinPath();
+			std::wstring command = L'"' + Rainmeter->GetSkinPath();
 			command += GetTreeSelectionPath(tree);
-			command += L"\"";
+			command += L'"';
 			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
 		}
 		break;
@@ -1142,7 +1142,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				if (i == index)
 				{
-					std::wstring name = ((*iter).second)->GetSkinName() + L"\\";
+					std::wstring name = ((*iter).second)->GetSkinName() + L'\\';
 					name += ((*iter).second)->GetSkinIniFile();
 
 					HWND item = GetDlgItem(m_Window, IDC_MANAGESKINS_SKINS_TREEVIEW);
@@ -1179,7 +1179,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 		if (nm->idFrom == IDC_MANAGESKINS_ADDMETADATA_LINK)
 		{
 			std::wstring file = Rainmeter->GetSkinPath() + m_SkinName;
-			file += L"\\";
+			file += L'\\';
 			file += m_FileName;
 			WritePrivateProfileString(L"Rainmeter", L"\r\n[Metadata]\r\nName=\r\nInformation=\r\nLicense=\r\nVersion", L"", file.c_str());
 			SendMessage(m_Window, WM_COMMAND, MAKEWPARAM(IDC_MANAGESKINS_EDIT_BUTTON, 0), 0);
@@ -1297,7 +1297,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				while ((tvi.hItem = TreeView_GetParent(nm->hwndFrom, tvi.hItem)) != NULL)
 				{
 					TreeView_GetItem(nm->hwndFrom, &tvi);
-					m_SkinName.insert(0, L"\\");
+					m_SkinName.insert(0, 1, L'\\');
 					m_SkinName.insert(0, buffer);
 				}
 
@@ -1596,7 +1596,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_MANAGETHEMES_BACKUP_BUTTON:
 		{
-			std::wstring command = L"\"" + Rainmeter->GetPath();
+			std::wstring command = L'"' + Rainmeter->GetPath();
 			command += L"SkinInstaller.exe\" /BACKUP";
 			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
 		}

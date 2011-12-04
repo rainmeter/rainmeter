@@ -209,7 +209,7 @@ HMODULE RmLoadSystemLibrary(LPCWSTR lpLibFileName)
 	if (GetSystemDirectory(buffer, MAX_PATH))
 	{
 		path = buffer;
-		path += L"\\";
+		path += L'\\';
 		path += lpLibFileName;
 
 		return LoadLibrary(path.c_str());

@@ -246,7 +246,7 @@ void CMeterString::Initialize()
 	REAL size = (REAL)m_FontSize * (96.0f / (REAL)dpi);
 
 	// Check if the font is in the cache and use it
-	cacheKey += L"-";
+	cacheKey += L'-';
 	cacheKey += FontPropertiesToString(size, style);
 	std::unordered_map<std::wstring, Gdiplus::Font*>::const_iterator iter2 = c_Fonts.find(cacheKey);
 	if (iter2 != c_Fonts.end())
@@ -381,7 +381,7 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		error += align;
 		error += L" is not valid in [";
 		error += m_Name;
-		error += L"]";
+		error += L']';
 		throw CError(error);
 	}
 
@@ -408,7 +408,7 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		error += stringCase;
 		error += L" is not valid in [";
 		error += m_Name;
-		error += L"]";
+		error += L']';
 		throw CError(error);
 	}
 
@@ -435,7 +435,7 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		error += style;
 		error += L" is not valid in [";
 		error += m_Name;
-		error += L"]";
+		error += L']';
 		throw CError(error);
 	}
 
@@ -458,7 +458,7 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		error += effect;
 		error += L" is not valid in [";
 		error += m_Name;
-		error += L"]";
+		error += L']';
 		throw CError(error);
 	}
 

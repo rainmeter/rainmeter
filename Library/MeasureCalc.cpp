@@ -86,7 +86,7 @@ bool CMeasureCalc::Update()
 		error += ConvertToWide(errMsg);
 		error += L" in [";
 		error += m_Name;
-		error += L"]";
+		error += L']';
 		Log(LOG_ERROR, error.c_str());
 	}
 

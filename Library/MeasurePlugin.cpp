@@ -105,7 +105,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_PluginName = parser.ReadString(section, L"Plugin", L"");
 
-	size_t pos = m_PluginName.rfind(L".");
+	size_t pos = m_PluginName.rfind(L'.');
 	if (pos == std::wstring::npos)
 	{
 		m_PluginName += L".dll";

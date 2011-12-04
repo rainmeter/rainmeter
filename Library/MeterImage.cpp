@@ -132,7 +132,7 @@ void CMeterImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	{
 		if (!CSystem::IsPathSeparator(m_Path[m_Path.length() - 1]))
 		{
-			m_Path += L"\\";
+			m_Path += L'\\';
 		}
 	}
 
@@ -389,7 +389,7 @@ void CMeterImage::BindMeasure(const std::list<CMeasure*>& measures)
 			std::wstring error = L"The meter [" + m_Name;
 			error += L"] cannot be bound with [";
 			error += (*j);
-			error += L"]";
+			error += L']';
 			throw CError(error);
 		}
 	}

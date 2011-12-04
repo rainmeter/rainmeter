@@ -86,8 +86,8 @@ CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config,
 	m_MouseOver(false),
 	m_BackgroundMargins(),
 	m_DragMargins(),
-	m_WindowX(L"0"),
-	m_WindowY(L"0"),
+	m_WindowX(1, L'0'),
+	m_WindowY(1, L'0'),
 	m_WindowXScreen(1),
 	m_WindowYScreen(1),
 	m_WindowXScreenDefined(false),
@@ -333,9 +333,9 @@ void CMeterWindow::Refresh(bool init, bool all)
 	m_Rainmeter->SetCurrentParser(&m_Parser);
 
 	std::wstring notice = L"Refreshing skin \"" + m_SkinName;
-	notice += L"\\";
+	notice += L'\\';
 	notice += m_SkinIniFile;
-	notice += L"\"";
+	notice += L'"';
 	Log(LOG_NOTICE, notice.c_str());
 
 	m_Refreshing = true;
@@ -956,7 +956,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 			std::wstring::size_type pos3;
 			do
 			{
-				pos3 = args.find(L'\"');
+				pos3 = args.find(L'"');
 				if (pos3 != std::wstring::npos)
 				{
 					args.erase(pos3, 1);
@@ -1892,10 +1892,10 @@ void CMeterWindow::ReadConfig()
 	const WCHAR* section = L"Rainmeter";
 
 	// Reset settings to the default value
-	m_WindowX = L"0";
-	m_WindowY = L"0";
-	m_AnchorX = L"0";
-	m_AnchorY = L"0";
+	m_WindowX = L'0';
+	m_WindowY = L'0';
+	m_AnchorX = L'0';
+	m_AnchorY = L'0';
 	m_WindowZPosition = ZPOSITION_NORMAL;
 	m_WindowDraggable = true;
 	m_WindowHide = HIDEMODE_NONE;
@@ -2068,7 +2068,7 @@ void CMeterWindow::WriteConfig(INT setting)
 bool CMeterWindow::ReadSkin()
 {
 	std::wstring iniFile = m_SkinPath + m_SkinName;
-	iniFile += L"\\";
+	iniFile += L'\\';
 	iniFile += m_SkinIniFile;
 
 	// Verify whether the file exists
@@ -2087,7 +2087,7 @@ bool CMeterWindow::ReadSkin()
 	const std::wstring& group = m_Parser.ReadString(L"Rainmeter", L"Group", L"");
 	if (!group.empty())
 	{
-		m_ConfigGroup += L"|";
+		m_ConfigGroup += L'|';
 		m_ConfigGroup += group;
 	}
 	InitializeGroup(m_ConfigGroup);
@@ -2213,7 +2213,7 @@ bool CMeterWindow::ReadSkin()
 			{
 				szFontFile = m_SkinPath; // Get the local path
 				szFontFile += m_SkinName;
-				szFontFile += L"\\";
+				szFontFile += L'\\';
 				szFontFile += localFont;
 				nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 
@@ -3543,13 +3543,13 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (wParam == ID_CONTEXT_SKINMENU_EDITSKIN)
 		{
 			std::wstring command = m_SkinPath + m_SkinName;
-			command += L"\\";
+			command += L'\\';
 			command += m_SkinIniFile;
 			bool writable = CSystem::IsFileWritable(command.c_str());
 
 			command.insert(0, L" \"");
 			command.insert(0, m_Rainmeter->GetConfigEditor());
-			command += L"\"";
+			command += L'"';
 
 			// Execute as admin if in protected location
 			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL, !writable);
@@ -3560,9 +3560,9 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_OPENSKINSFOLDER)
 		{
-			std::wstring command = L"\"" + m_SkinPath;
+			std::wstring command = L'"' + m_SkinPath;
 			command += m_SkinName;
-			command += L"\"";
+			command += L'"';
 			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_MANAGESKIN)
@@ -5017,9 +5017,9 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				arg += L" \"";
 				arg += m_SkinPath;
 				arg += m_SkinName;
-				arg += L"\\";
+				arg += L'\\';
 				arg += m_SkinIniFile;
-				arg += L"\"";
+				arg += L'"';
 			}
 		}
 
@@ -5028,7 +5028,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// another one doesn't matter.
 		arg += L" \"";
 		arg += m_SkinName;
-		arg += L"\"";
+		arg += L'"';
 
 		return m_Rainmeter->ExecuteBang(bang, arg, this);
 	}
@@ -5088,7 +5088,7 @@ void CMeterWindow::MakePathAbsolute(std::wstring& path)
 		absolute.reserve(m_SkinPath.size() + m_SkinName.size() + 1 + path.size());
 		absolute = m_SkinPath;
 		absolute += m_SkinName;
-		absolute += L"\\";
+		absolute += L'\\';
 		absolute += path;
 		absolute.swap(path);
 	}
@@ -5106,7 +5106,7 @@ std::wstring CMeterWindow::GetSkinRootPath()
 	else
 	{
 		path += m_SkinName;
-		path += L"\\";
+		path += L'\\';
 	}
 
 	return path;

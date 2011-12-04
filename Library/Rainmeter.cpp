@@ -149,9 +149,9 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 			CMeterWindow *meterWindow = Rainmeter->GetMeterWindowByINI(_sData);
 			if (meterWindow)
 			{
-				result = L"\"";
+				result = L'"';
 				result += meterWindow->GetSkinName();
-				result += L"\"";
+				result += L'"';
 				return result.c_str();
 			}
 
@@ -223,7 +223,7 @@ LPCTSTR PluginBridge(LPCTSTR _sCommand, LPCTSTR _sData)
 
 				for (size_t i = 1, isize = subStrings.size(); i < isize; ++i)
 				{
-					if (i != 1) arguments += L" ";
+					if (i != 1) arguments += L' ';
 					arguments += subStrings[i];
 				}
 
@@ -360,7 +360,7 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfAr
 	// Don't include the config name from the arg if there is one
 	for (size_t i = 0; i < numOfArgs; ++i)
 	{
-		if (i != 0) argument += L" ";
+		if (i != 0) argument += L' ';
 		if (i < subStringsSize)
 		{
 			argument += subStrings[i];
@@ -374,7 +374,7 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfAr
 			config = subStrings[numOfArgs];
 		}
 
-		if ((!config.empty()) && (config != L"*"))
+		if (!config.empty() && (config.size() != 1 || config[0] != L'*'))
 		{
 			// Config defined, so bang only that
 			CMeterWindow* meterWindow = GetMeterWindow(config);
@@ -422,14 +422,14 @@ void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t nu
 		std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
 		for (; iter != windows.end(); ++iter)
 		{
-			std::wstring argument = L"\"";
+			std::wstring argument(1, L'"');
 			for (size_t i = 0; i < numOfArgs; ++i)
 			{
 				argument += subStrings[i];
 				argument += L"\" \"";
 			}
 			argument += (*iter).second->GetSkinName();
-			argument += L"\"";
+			argument += L'"';
 			BangWithArgs(bang, argument.c_str(), numOfArgs);
 		}
 	}
@@ -835,13 +835,13 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 	{
 		// The command line defines the location of Rainmeter.ini (or whatever it calls it).
 		std::wstring iniFile = szPath;
-		if (iniFile[0] == L'\"')
+		if (iniFile[0] == L'"')
 		{
 			if (iniFile.length() == 1)
 			{
 				iniFile.clear();
 			}
-			else if (iniFile[iniFile.length() - 1] == L'\"')
+			else if (iniFile[iniFile.length() - 1] == L'"')
 			{
 				iniFile.assign(iniFile, 1, iniFile.length() - 2);
 			}
@@ -976,7 +976,7 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 		{
 			if (!CSystem::IsPathSeparator(m_SkinPath[m_SkinPath.size() - 1]))
 			{
-				m_SkinPath += L"\\";
+				m_SkinPath += L'\\';
 			}
 		}
 	}
@@ -1168,7 +1168,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 
 		// Verify whether the ini-file exists
 		std::wstring skinIniPath = skinPath + skinConfig;
-		skinIniPath += L"\\";
+		skinIniPath += L'\\';
 		skinIniPath += skinIniFile;
 
 		if (_waccess(skinIniPath.c_str(), 0) == -1)
@@ -1368,7 +1368,7 @@ CMeterWindow* CRainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
 		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
 		for (; iter != m_Meters.end(); ++iter)
 		{
-			std::wstring config_current = (*iter).second->GetSkinName() + L"\\";
+			std::wstring config_current = (*iter).second->GetSkinName() + L'\\';
 			config_current += (*iter).second->GetSkinIniFile();
 
 			if (_wcsicmp(config_current.c_str(), config_searching.c_str()) == 0)
@@ -1576,7 +1576,7 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 
 	if (!first)
 	{
-		base += L"\\";
+		base += L'\\';
 	}
 
 	menu.reserve(menu.size() + folders.size());
@@ -2066,7 +2066,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 
 						// Strip the quotes
 						std::wstring::size_type len = strCommand.length();
-						if (len >= 2 && strCommand[0] == L'\"' && strCommand[len - 1] == L'\"')
+						if (len >= 2 && strCommand[0] == L'"' && strCommand[len - 1] == L'"')
 						{
 							len -= 2;
 							strCommand.assign(strCommand, 1, len);
@@ -2135,22 +2135,13 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	{
 		// Get the program path associated with .ini files
 		DWORD cchOut = MAX_PATH;
-		buffer[0] = L'\0';
-
 		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".ini", L"open", buffer, &cchOut);
-		if (SUCCEEDED(hr) && cchOut > 0)
-		{
-			m_ConfigEditor = buffer;
-		}
-		else
-		{
-			m_ConfigEditor = L"Notepad";
-		}
+		m_ConfigEditor = (SUCCEEDED(hr) && cchOut > 0) ? buffer : L"Notepad";
 	}
-	if (!m_ConfigEditor.empty() && m_ConfigEditor[0] != L'\"')
+	if (!m_ConfigEditor.empty() && m_ConfigEditor[0] != L'"')
 	{
-		m_ConfigEditor.insert(0, L"\"");
-		m_ConfigEditor.append(L"\"");
+		m_ConfigEditor.insert(0, 1, L'"');
+		m_ConfigEditor += L'"';
 	}
 
 	m_LogViewer = parser.ReadString(L"Rainmeter", L"LogViewer", L"");
@@ -2158,22 +2149,13 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	{
 		// Get the program path associated with .log files
 		DWORD cchOut = MAX_PATH;
-		buffer[0] = L'\0';
-
 		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".log", L"open", buffer, &cchOut);
-		if (SUCCEEDED(hr) && cchOut > 0)
-		{
-			m_LogViewer = buffer;
-		}
-		else
-		{
-			m_LogViewer = L"Notepad";
-		}
+		m_LogViewer = (SUCCEEDED(hr) && cchOut > 0) ? buffer : L"Notepad";
 	}
-	if (!m_LogViewer.empty() && m_LogViewer[0] != L'\"')
+	if (!m_LogViewer.empty() && m_LogViewer[0] != L'"')
 	{
-		m_LogViewer.insert(0, L"\"");
-		m_LogViewer.append(L"\"");
+		m_LogViewer.insert(0, 1, L'"');
+		m_LogViewer += L'"';
 	}
 
 	if (m_Debug)

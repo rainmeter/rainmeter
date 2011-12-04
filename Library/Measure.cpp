@@ -174,12 +174,12 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	std::wstring subs = parser.ReadString(section, L"Substitute", L"");
 	if (!subs.empty())
 	{
-		if ((subs[0] != L'\"' || subs[subs.length() - 1] != L'\'') &&
-			(subs[0] != L'\'' || subs[subs.length() - 1] != L'\"'))
+		if ((subs[0] != L'"' || subs[subs.length() - 1] != L'\'') &&
+			(subs[0] != L'\'' || subs[subs.length() - 1] != L'"'))
 		{
 			// Add quotes since they are removed by the GetProfileString
-			subs.insert(0, L"\"");
-			subs.append(L"\"");
+			subs.insert(0, 1, L'"');
+			subs += L'"';
 		}
 		if (!ParseSubstitute(subs))
 		{
@@ -394,7 +394,7 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 		buffer.erase(0, end);
 		len = buffer.size();
 
-		if (buffer[0] == L'\"' || buffer[0] == L'\'')
+		if (buffer[0] == L'"' || buffer[0] == L'\'')
 		{
 			WCHAR quote = buffer[0];
 
@@ -837,7 +837,7 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, cons
 	error += measure;
 	error += L" is not valid in [";
 	error += name;
-	error += L"]";
+	error += L']';
 	throw CError(error);
 
 	return NULL;

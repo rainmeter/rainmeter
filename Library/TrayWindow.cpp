@@ -484,7 +484,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{
 				std::wstring command = Rainmeter->GetConfigEditor() + L" \"";
 				command += Rainmeter->GetIniFile();
-				command += L"\"";
+				command += L'"';
 				RunCommand(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 			}
 			else if (wParam == ID_CONTEXT_QUIT)
@@ -494,8 +494,8 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if (wParam == ID_CONTEXT_OPENSKINSFOLDER)
 			{
-				std::wstring command = L"\"" + Rainmeter->GetSkinPath();
-				command += L"\"";
+				std::wstring command = L'"' + Rainmeter->GetSkinPath();
+				command += L'"';
 				RunCommand(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 			}
 			else if ((wParam & 0x0ffff) >= ID_THEME_FIRST && (wParam & 0x0ffff) <= ID_THEME_LAST)

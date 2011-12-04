@@ -637,11 +637,11 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			if (m_CropMode < CROPMODE_TL || m_CropMode > CROPMODE_C)
 			{
 				std::wstring error = m_ConfigArray[ConfigIndexImageCrop];
-				error += L"=";
+				error += L'=';
 				error += crop;
 				error += L" (origin) is not valid in [";
 				error += section;
-				error += L"]";
+				error += L']';
 				throw CError(error);
 			}
 		}
@@ -745,11 +745,11 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	else
 	{
 		std::wstring error = m_ConfigArray[ConfigIndexImageFlip];
-		error += L"=";
+		error += L'=';
 		error += flip;
 		error += L" is not valid in [";
 		error += section;
-		error += L"]";
+		error += L']';
 		throw CError(error);
 	}
 

@@ -215,7 +215,7 @@ void CMeterBitmap::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		error += align;
 		error += L" is not valid in [";
 		error += m_Name;
-		error += L"]";
+		error += L']';
 		throw CError(error);
 	}
 

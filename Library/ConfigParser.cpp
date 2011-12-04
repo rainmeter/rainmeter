@@ -89,8 +89,8 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 	ReadVariables();
 
 	// Clear and minimize
-	std::unordered_set<std::wstring>().swap(m_FoundSections);
-	std::list<std::wstring>().swap(m_ListVariables);
+	m_FoundSections.clear();
+	m_ListVariables.clear();
 }
 
 /*
@@ -756,7 +756,7 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 			error += key;
 			error += L"\" in [";
 			error += section;
-			error += L"]";
+			error += L']';
 			Log(LOG_ERROR, error.c_str());
 		}
 
@@ -1117,6 +1117,9 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 
 	// Get all the sections (i.e. different meters)
 	std::list<std::wstring> sections;
+	std::unordered_set<std::wstring> unique;
+	std::wstring section, sectionKey;  // buffer
+
 	DWORD itemsSize = MAX_LINE_LENGTH;
 	WCHAR* items = new WCHAR[itemsSize];
 	WCHAR* pos = NULL;
@@ -1153,12 +1156,16 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 		{
 			if (*pos)
 			{
-				std::wstring section = pos;
-				if (m_FoundSections.insert(StrToLower(section)).second)
+				section = pos;
+				StrToLowerC(sectionKey.assign(section));
+				if (unique.insert(sectionKey).second)
 				{
-					m_Sections.push_back(section);
+					if (m_FoundSections.insert(sectionKey).second)
+					{
+						m_Sections.push_back(section);
+					}
+					sections.push_back(section);
 				}
-				sections.push_back(section);
 				pos += section.size() + 1;
 			}
 			else  // Empty string
@@ -1184,13 +1191,15 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 	}
 
 	// Read the keys and values
+	std::wstring key, value;  // buffer
 	std::list<std::wstring>::const_iterator iter = sections.begin();
 	for ( ; iter != sections.end(); ++iter)
 	{
-		std::unordered_set<std::wstring> foundKeys;
+		unique.clear();
+
 		const WCHAR* sectionName = (*iter).c_str();
 		bool isVariables = (_wcsicmp(sectionName, L"Variables") == 0);
-		bool isMetadata = (config == NULL && _wcsicmp(sectionName, L"Metadata") == 0);
+		bool isMetadata = (config == NULL && !isVariables && _wcsicmp(sectionName, L"Metadata") == 0);
 
 		// Read all "key=value" from the section
 		do
@@ -1220,21 +1229,20 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 				{
 					size_t clen = sep - pos;  // key's length
 
-					std::wstring key(pos, clen);
-					if (foundKeys.insert(StrToLowerC(key)).second)
+					StrToLowerC(key.assign(pos, clen));
+					if (unique.insert(key).second)
 					{
 						++sep;
 						clen = len - (clen + 1);  // value's length
 
 						// Trim surrounded quotes from value
-						if (clen >= 2 && (sep[0] == L'\"' || sep[0] == L'\'') && sep[clen - 1] == sep[0])
+						if (clen >= 2 && (sep[0] == L'"' || sep[0] == L'\'') && sep[clen - 1] == sep[0])
 						{
 							clen -= 2;
 							++sep;
 						}
 
-						std::wstring value(sep, clen);
-
+						value.assign(sep, clen);
 						if (wcsncmp(key.c_str(), L"@include", 8) == 0)
 						{
 							ReadVariables();
@@ -1251,11 +1259,11 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 							if (!isMetadata)  // Uncache Metadata's key-value pair in the skin
 							{
 								SetValue((*iter), key, value);
-							}
 
-							if (isVariables)
-							{
-								m_ListVariables.push_back(key);
+								if (isVariables)
+								{
+									m_ListVariables.push_back(key);
+								}
 							}
 						}
 					}
@@ -1268,6 +1276,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 			}
 		}
 	}
+
 	delete [] items;
 	if (temporary) CSystem::RemoveFile(iniRead);
 }
@@ -1284,7 +1293,10 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 {
 	// LogWithArgs(LOG_DEBUG, L"[%s] %s=%s (size: %i)", strSection.c_str(), strKey.c_str(), strValue.c_str(), (int)m_Values.size());
 
-	std::wstring strTmp = strSection + L"~";
+	std::wstring strTmp;
+	strTmp.reserve(strSection.size() + 1 + strKey.size());
+	strTmp += strSection;
+	strTmp += L'~';
 	strTmp += strKey;
 
 	m_Values[StrToLowerC(strTmp)] = strValue;
@@ -1300,7 +1312,10 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 */
 void CConfigParser::DeleteValue(const std::wstring& strSection, const std::wstring& strKey)
 {
-	std::wstring strTmp = strSection + L"~";
+	std::wstring strTmp;
+	strTmp.reserve(strSection.size() + 1 + strKey.size());
+	strTmp += strSection;
+	strTmp += L'~';
 	strTmp += strKey;
 
 	std::unordered_map<std::wstring, std::wstring>::iterator iter = m_Values.find(StrToLowerC(strTmp));
@@ -1321,14 +1336,12 @@ void CConfigParser::DeleteValue(const std::wstring& strSection, const std::wstri
 */
 const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault)
 {
-	std::wstring strTmp = strSection + L"~";
+	std::wstring strTmp;
+	strTmp.reserve(strSection.size() + 1 + strKey.size());
+	strTmp += strSection;
+	strTmp += L'~';
 	strTmp += strKey;
 
 	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToLowerC(strTmp));
-	if (iter != m_Values.end())
-	{
-		return (*iter).second;
-	}
-
-	return strDefault;
+	return (iter != m_Values.end()) ? (*iter).second : strDefault;
 }

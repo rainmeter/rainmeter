@@ -530,7 +530,7 @@ void CMeterHistogram::BindMeasure(const std::list<CMeasure*>& measures)
 		std::wstring error = L"The meter [" + m_Name;
 		error += L"] cannot be bound with [";
 		error += m_SecondaryMeasureName;
-		error += L"]";
+		error += L']';
 		throw CError(error);
 	}
 }

@@ -483,7 +483,7 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 	std::wstring error = L"The meter [" + m_Name;
 	error += L"] cannot be bound with [";
 	error += m_MeasureName;
-	error += L"]";
+	error += L']';
 	throw CError(error);
 }
 
@@ -538,7 +538,7 @@ CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHA
 	error += meter;
 	error += L" is not valid in [";
 	error += name;
-	error += L"]";
+	error += L']';
 	throw CError(error);
 
 	return NULL;

@@ -90,7 +90,7 @@ public:
 	std::pair<int, int> GetMeterWindowIndex(UINT menuCommand);
 
 	CMeterWindow* GetMeterWindow(HWND hwnd);
-	void GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group = L"");
+	void GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group = std::wstring());
 	std::map<std::wstring, CMeterWindow*>& GetAllMeterWindows() { return m_Meters; }
 	const std::vector<CONFIG>& GetAllConfigs() { return m_ConfigStrings; }
 	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; }

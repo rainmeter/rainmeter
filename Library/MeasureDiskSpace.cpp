@@ -211,7 +211,7 @@ void CMeasureDiskSpace::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else if (!CSystem::IsPathSeparator(m_Drive[m_Drive.length() - 1]))  // E.g. "C:"
 	{
-		m_Drive += L"\\";  // A trailing backslash is required.
+		m_Drive += L'\\';  // A trailing backslash is required.
 	}
 
 	m_Type = (1 == parser.ReadInt(section, L"Type", 0));

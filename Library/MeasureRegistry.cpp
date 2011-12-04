@@ -150,7 +150,7 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		error += keyname;
 		error += L" is not valid in [";
 		error += m_Name;
-		error += L"]";
+		error += L']';
 		throw CError(error);
 	}
 

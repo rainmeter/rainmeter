@@ -310,7 +310,7 @@ BOOL LogInternal(int nLevel, ULONGLONG elapsed, LPCTSTR pszMessage)
 
 	Rainmeter->AddAboutLogInfo(nLevel, buffer, pszMessage);
 
-	std::wstring message = L"(";
+	std::wstring message(1, L'(');
 	message += buffer;
 	message += L") ";
 	message += pszMessage;
@@ -374,7 +374,7 @@ BOOL LogInternal(int nLevel, ULONGLONG elapsed, LPCTSTR pszMessage)
 						break;
 					}
 
-					message += L"\n";
+					message += L'\n';
 					fputws(message.c_str(), logFile);
 					fclose(logFile);
 				}
