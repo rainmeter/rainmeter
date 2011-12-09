@@ -1308,7 +1308,7 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 
 	std::wstring strTmp;
 	strTmp.reserve(strSection.size() + 1 + strKey.size());
-	strTmp += strSection;
+	strTmp = strSection;
 	strTmp += L'~';
 	strTmp += strKey;
 
@@ -1327,7 +1327,7 @@ void CConfigParser::DeleteValue(const std::wstring& strSection, const std::wstri
 {
 	std::wstring strTmp;
 	strTmp.reserve(strSection.size() + 1 + strKey.size());
-	strTmp += strSection;
+	strTmp = strSection;
 	strTmp += L'~';
 	strTmp += strKey;
 
@@ -1351,7 +1351,7 @@ const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, cons
 {
 	std::wstring strTmp;
 	strTmp.reserve(strSection.size() + 1 + strKey.size());
-	strTmp += strSection;
+	strTmp = strSection;
 	strTmp += L'~';
 	strTmp += strKey;
 

@@ -247,7 +247,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 			std::string utf8str = ConvertToUTF8(buffer);
 			int* ovector = new int[OVECCOUNT];
 
-			for (size_t i = 0, isize = m_Substitute.size() ; i < isize ; i += 2)
+			for (size_t i = 0, isize = m_Substitute.size(); i < isize ; i += 2)
 			{
 				pcre* re;
 				const char* error;
@@ -298,9 +298,8 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 									size_t in_length = ovector[2 * j + 1] - ovector[2 * j];
 
 									char tmpName[64];
-									_snprintf_s(tmpName, _TRUNCATE, "\\%i", j);
 
-									size_t cut_length = strlen(tmpName);
+									size_t cut_length = _snprintf_s(tmpName, _TRUNCATE, "\\%i", j);;
 									size_t start = 0, pos;
 									do
 									{

@@ -46,7 +46,7 @@ public:
 	static void UpdateStats();
 	static void ResetStats();
 	static void ReadStats(const WCHAR* iniFile, std::wstring& statsDate);
-	static void WriteStats(const WCHAR* iniFile, const WCHAR* statsDate);
+	static void WriteStats(const WCHAR* iniFile, const std::wstring& statsDate);
 
 	static void InitializeNewApi();
 	static void FinalizeNewApi();
@@ -55,8 +55,6 @@ protected:
 	void ReadConfig(CConfigParser& parser, const WCHAR* section, CMeasureNet::NET net);
 	ULONG64 GetNetOctets(NET net);
 	ULONG64 GetNetStatsValue(NET net);
-
-	static void AppendStatsValue(std::wstring& data, const WCHAR* key, const WCHAR* value);
 
 	double m_CurrentTraffic;
 	double m_TrafficValue;

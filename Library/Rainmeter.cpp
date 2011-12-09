@@ -2478,8 +2478,8 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 					if (i != 0)
 					{
 						WCHAR buffer[64];
-						_snwprintf_s(buffer, _TRUNCATE, L"@%i", i);
-						format += buffer;
+						size_t len = _snwprintf_s(buffer, _TRUNCATE, L"@%i", i);
+						format.append(buffer, len);
 					}
 					format += L": L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)";
 					if (!result)
@@ -2550,7 +2550,7 @@ void CRainmeter::WriteStats(bool bForce)
 
 		// Only Net measure has stats at the moment
 		const WCHAR* statsFile = m_StatsFile.c_str();
-		CMeasureNet::WriteStats(statsFile, m_StatsDate.c_str());
+		CMeasureNet::WriteStats(statsFile, m_StatsDate);
 
 		WritePrivateProfileString(NULL, NULL, NULL, statsFile);
 	}
@@ -2987,13 +2987,13 @@ void CRainmeter::CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow)
 		for (int i = 0, isize = (int)monitors.size(); i < isize; ++i)
 		{
 			WCHAR buffer[64];
-			_snwprintf_s(buffer, _TRUNCATE, L"@%i: ", i + 1);
-			std::wstring item = buffer;
+			size_t len = _snwprintf_s(buffer, _TRUNCATE, L"@%i: ", i + 1);
 
-			size_t len = wcslen(monitors[i].monitorName);
-			if (len > 32)
+			std::wstring item(buffer, len);
+
+			if (monitors[i].monitorName.size() > 32)
 			{
-				item.append(monitors[i].monitorName, 32);
+				item.append(monitors[i].monitorName, 0, 32);
 				item += L"...";
 			}
 			else
@@ -3212,7 +3212,7 @@ void CRainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
 				}
 				if (ret <= bufSize)  // Fits in the buffer
 				{
-					strPath = buffer;
+					strPath.assign(buffer, ret - 1);
 					break;
 				}
 

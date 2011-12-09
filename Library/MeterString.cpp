@@ -723,8 +723,9 @@ void CMeterString::FreeFontCache(PrivateFontCollection* collection)
 	if (collection)
 	{
 		WCHAR buffer[32];
-		_snwprintf_s(buffer, _TRUNCATE, L"<%p>", collection);
-		prefix = buffer;
+		size_t len = _snwprintf_s(buffer, _TRUNCATE, L"<%p>", collection);
+
+		prefix.assign(buffer, len);
 		StringToLower(prefix);
 	}
 
@@ -774,8 +775,12 @@ void CMeterString::FreeFontCache(PrivateFontCollection* collection)
 std::wstring CMeterString::FontFaceToString(const std::wstring& fontFace, PrivateFontCollection* collection)
 {
 	WCHAR buffer[32];
-	_snwprintf_s(buffer, _TRUNCATE, L"<%p>", collection);
-	std::wstring strTmp = buffer + fontFace;
+	size_t len = _snwprintf_s(buffer, _TRUNCATE, L"<%p>", collection);
+
+	std::wstring strTmp;
+	strTmp.reserve(len + fontFace.size());
+	strTmp.assign(buffer, len);
+	strTmp += fontFace;
 	StringToLower(strTmp);
 	return strTmp;
 }
@@ -789,8 +794,9 @@ std::wstring CMeterString::FontFaceToString(const std::wstring& fontFace, Privat
 std::wstring CMeterString::FontPropertiesToString(REAL size, FontStyle style)
 {
 	WCHAR buffer[64];
-	_snwprintf_s(buffer, _TRUNCATE, L"%.1f-%i", size, (int)style);
-	return buffer;
+	size_t len = _snwprintf_s(buffer, _TRUNCATE, L"%.1f-%i", size, (int)style);
+
+	return std::wstring(buffer, len);
 }
 
 /*

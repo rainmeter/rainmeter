@@ -191,7 +191,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 	{
 		for (size_t i = 0, isize = m->monitors.size(); i < isize; ++i)
 		{
-			if (m->monitors[i].handle == NULL && _wcsnicmp(info.szDevice, m->monitors[i].deviceName, 32) == 0)
+			if (m->monitors[i].handle == NULL && _wcsicmp(info.szDevice, m->monitors[i].deviceName.c_str()) == 0)
 			{
 				m->monitors[i].handle = hMonitor;
 				m->monitors[i].screen = *lprcMonitor;
@@ -202,14 +202,14 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 	}
 	else  // use only EnumDisplayMonitors
 	{
-		MONITOR_INFO monitor = {0};
+		MONITOR_INFO monitor;
 		monitor.active = true;
 
 		monitor.handle = hMonitor;
 		monitor.screen = *lprcMonitor;
 		monitor.work = info.rcWork;
 
-		wcsncpy_s(monitor.deviceName, info.szDevice, _TRUNCATE);  // E.g. "\\.\DISPLAY1"
+		monitor.deviceName = info.szDevice;  // E.g. "\\.\DISPLAY1"
 
 		// Get the monitor name (E.g. "Generic Non-PnP Monitor")
 		DISPLAY_DEVICE ddm = {sizeof(DISPLAY_DEVICE)};
@@ -218,7 +218,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 		{
 			if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
 			{
-				wcsncpy_s(monitor.monitorName, ddm.DeviceString, _TRUNCATE);
+				monitor.monitorName.assign(ddm.DeviceString, wcsnlen(ddm.DeviceString, _countof(ddm.DeviceString)));
 				break;
 			}
 		}
@@ -287,9 +287,14 @@ void CSystem::SetMultiMonitorInfo()
 		{
 			std::wstring msg;
 
+			std::wstring deviceName(dd.DeviceName, wcsnlen(dd.DeviceName, _countof(dd.DeviceName)));
+			std::wstring deviceString;
+
 			if (logging)
 			{
-				Log(LOG_DEBUG, dd.DeviceName);
+				deviceString.assign(dd.DeviceString, wcsnlen(dd.DeviceString, _countof(dd.DeviceString)));
+
+				Log(LOG_DEBUG, deviceName.c_str());
 
 				if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE)
 				{
@@ -334,20 +339,20 @@ void CSystem::SetMultiMonitorInfo()
 				MONITOR_INFO monitor = {0};
 
 				monitor.handle = NULL;
-				wcsncpy_s(monitor.deviceName, dd.DeviceName, _TRUNCATE);  // E.g. "\\.\DISPLAY1"
+				monitor.deviceName = deviceName;  // E.g. "\\.\DISPLAY1"
 
 				// Get the monitor name (E.g. "Generic Non-PnP Monitor")
 				DISPLAY_DEVICE ddm = {sizeof(DISPLAY_DEVICE)};
 				DWORD dwMon = 0;
-				while (EnumDisplayDevices(dd.DeviceName, dwMon++, &ddm, 0))
+				while (EnumDisplayDevices(deviceName.c_str(), dwMon++, &ddm, 0))
 				{
 					if (ddm.StateFlags & DISPLAY_DEVICE_ACTIVE && ddm.StateFlags & DISPLAY_DEVICE_ATTACHED)
 					{
-						wcsncpy_s(monitor.monitorName, ddm.DeviceString, _TRUNCATE);
+						monitor.monitorName.assign(ddm.DeviceString, wcsnlen(ddm.DeviceString, _countof(ddm.DeviceString)));
 
 						if (logging)
 						{
-							LogWithArgs(LOG_DEBUG, L"  Name     : %s", ddm.DeviceString);
+							LogWithArgs(LOG_DEBUG, L"  Name     : %s", monitor.monitorName.c_str());
 						}
 						break;
 					}
@@ -355,7 +360,7 @@ void CSystem::SetMultiMonitorInfo()
 
 				if (logging)
 				{
-					LogWithArgs(LOG_DEBUG, L"  Adapter  : %s", dd.DeviceString);
+					LogWithArgs(LOG_DEBUG, L"  Adapter  : %s", deviceString.c_str());
 					LogWithArgs(LOG_DEBUG, L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
 				}
 
@@ -366,7 +371,7 @@ void CSystem::SetMultiMonitorInfo()
 					DEVMODE dm = {0};
 					dm.dmSize = sizeof(DEVMODE);
 
-					if (EnumDisplaySettings(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm))
+					if (EnumDisplaySettings(deviceName.c_str(), ENUM_CURRENT_SETTINGS, &dm))
 					{
 						POINT pos = {dm.dmPosition.x, dm.dmPosition.y};
 						monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTONULL);
@@ -417,7 +422,7 @@ void CSystem::SetMultiMonitorInfo()
 			{
 				if (logging)
 				{
-					LogWithArgs(LOG_DEBUG, L"  Adapter  : %s", dd.DeviceString);
+					LogWithArgs(LOG_DEBUG, L"  Adapter  : %s", deviceString.c_str());
 					LogWithArgs(LOG_DEBUG, L"  Flags    : %s(0x%08X)", msg.c_str(), dd.StateFlags);
 				}
 			}
@@ -448,16 +453,21 @@ void CSystem::SetMultiMonitorInfo()
 			Log(LOG_WARNING, L"Failed to enumerate monitors. Using dummy monitor info.");
 			c_Monitors.useEnumDisplayMonitors = false;
 
-			MONITOR_INFO monitor = {0};
-			wcsncpy_s(monitor.deviceName, L"DUMMY", _TRUNCATE);
+			MONITOR_INFO monitor;
+			monitor.active = true;
+
 			POINT pos = {0, 0};
 			monitor.handle = MonitorFromPoint(pos, MONITOR_DEFAULTTOPRIMARY);
 			monitor.screen.left = 0;
 			monitor.screen.top = 0;
 			monitor.screen.right = GetSystemMetrics(SM_CXSCREEN);
 			monitor.screen.bottom = GetSystemMetrics(SM_CYSCREEN);
-			SystemParametersInfo(SPI_GETWORKAREA, 0, &(monitor.work), 0);
-			monitor.active = true;
+			if (SystemParametersInfo(SPI_GETWORKAREA, 0, &(monitor.work), 0) == 0)  // failed
+			{
+				monitor.work = monitor.screen;
+			}
+
+			monitor.deviceName = L"DUMMY";
 
 			monitors.push_back(monitor);
 
@@ -498,14 +508,14 @@ void CSystem::SetMultiMonitorInfo()
 		{
 			if (monitors[i].active)
 			{
-				LogWithArgs(LOG_DEBUG, L"@%i: %s (active), MonitorName: %s", (int)i + 1, monitors[i].deviceName, monitors[i].monitorName);
+				LogWithArgs(LOG_DEBUG, L"@%i: %s (active), MonitorName: %s", (int)i + 1, monitors[i].deviceName.c_str(), monitors[i].monitorName.c_str());
 				LogWithArgs(LOG_DEBUG, L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 					monitors[i].screen.left, monitors[i].screen.top, monitors[i].screen.right, monitors[i].screen.bottom,
 					monitors[i].screen.right - monitors[i].screen.left, monitors[i].screen.bottom - monitors[i].screen.top);
 			}
 			else
 			{
-				LogWithArgs(LOG_DEBUG, L"@%i: %s (inactive), MonitorName: %s", (int)i + 1, monitors[i].deviceName, monitors[i].monitorName);
+				LogWithArgs(LOG_DEBUG, L"@%i: %s (inactive), MonitorName: %s", (int)i + 1, monitors[i].deviceName.c_str(), monitors[i].monitorName.c_str());
 			}
 		}
 		Log(LOG_DEBUG, L"------------------------------");

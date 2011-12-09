@@ -44,8 +44,8 @@ public:
 		}
 		std::transform(key.begin(), key.end(), key.begin(), ::towlower);
 
-		_snwprintf_s(buffer, _TRUNCATE, L":%llx:%x", time, size);
-		key += buffer;
+		size_t len = _snwprintf_s(buffer, _TRUNCATE, L":%llx:%x", time, size);
+		key.append(buffer, len);
 
 		return key;
 	}

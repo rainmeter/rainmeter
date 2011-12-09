@@ -36,8 +36,8 @@ struct MONITOR_INFO
 	HMONITOR handle;
 	RECT screen;
 	RECT work;
-	WCHAR deviceName[32];					//Device name (E.g. "\\.\DISPLAY1")
-	WCHAR monitorName[128];					//Monitor name (E.g. "Generic Non-PnP Monitor")
+	std::wstring deviceName;				//Device name (E.g. "\\.\DISPLAY1")
+	std::wstring monitorName;				//Monitor name (E.g. "Generic Non-PnP Monitor")
 };
 
 struct MULTIMONITOR_INFO

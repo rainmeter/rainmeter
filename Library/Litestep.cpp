@@ -306,12 +306,12 @@ BOOL LogInternal(int nLevel, ULONGLONG elapsed, LPCTSTR pszMessage)
 {
 	// Add timestamp
 	WCHAR buffer[128];
-	_snwprintf_s(buffer, _TRUNCATE, L"%02llu:%02llu:%02llu.%03llu", elapsed / (1000 * 60 * 60), (elapsed / (1000 * 60)) % 60, (elapsed / 1000) % 60, elapsed % 1000);
+	size_t len = _snwprintf_s(buffer, _TRUNCATE, L"%02llu:%02llu:%02llu.%03llu", elapsed / (1000 * 60 * 60), (elapsed / (1000 * 60)) % 60, (elapsed / 1000) % 60, elapsed % 1000);
 
 	Rainmeter->AddAboutLogInfo(nLevel, buffer, pszMessage);
 
 	std::wstring message(1, L'(');
-	message += buffer;
+	message.append(buffer, len);
 	message += L") ";
 	message += pszMessage;
 
