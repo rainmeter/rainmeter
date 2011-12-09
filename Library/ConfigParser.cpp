@@ -119,9 +119,9 @@ void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* me
 
 	SetBuiltInVariable(L"CRLF", L"\n");
 
-	static const std::wstring CURRENTSECTION = L"CURRENTSECTION";
+	const std::wstring CURRENTSECTION = StrToLower(L"CURRENTSECTION");
 	SetBuiltInVariable(CURRENTSECTION, L"");
-	m_CurrentSection = &((*m_BuiltInVariables.find(StrToLower(CURRENTSECTION))).second);  // shortcut
+	m_CurrentSection = &((*m_BuiltInVariables.find(CURRENTSECTION)).second);  // shortcut
 }
 
 /*
@@ -151,7 +151,17 @@ void CConfigParser::SetVariable(std::unordered_map<std::wstring, std::wstring>& 
 {
 	// LogWithArgs(LOG_DEBUG, L"Variable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), (int)variables.size());
 
-	variables[StrToLower(strVariable)] = strValue;
+	const std::wstring strTmp = StrToLower(strVariable);
+
+	variables[strTmp] = strValue;
+}
+void CConfigParser::SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const WCHAR* strVariable, const WCHAR* strValue)
+{
+	// LogWithArgs(LOG_DEBUG, L"Variable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), (int)variables.size());
+
+	const std::wstring strTmp = StrToLower(strVariable);
+
+	variables[strTmp] = strValue;
 }
 
 /**
@@ -163,7 +173,7 @@ void CConfigParser::SetVariable(std::unordered_map<std::wstring, std::wstring>& 
 */
 bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& strValue)
 {
-	std::wstring strTmp = StrToLower(strVariable);
+	const std::wstring strTmp = StrToLower(strVariable);
 
 	// #1: Built-in variables
 	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_BuiltInVariables.find(strTmp);
@@ -645,14 +655,14 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		{
 			if (result.find(L'#') != std::wstring::npos)
 			{
-				m_CurrentSection->assign(strSection);  // Set temporarily
+				SetCurrentSection(strSection);  // Set temporarily
 
 				if (ReplaceVariables(result))
 				{
 					m_LastReplaced = true;
 				}
 
-				m_CurrentSection->clear();  // Reset
+				ClearCurrentSection();  // Reset
 			}
 			else
 			{
@@ -1118,7 +1128,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 	// Get all the sections (i.e. different meters)
 	std::list<std::wstring> sections;
 	std::unordered_set<std::wstring> unique;
-	std::wstring section, sectionKey;  // buffer
+	std::wstring key, value;  // buffer
 
 	DWORD itemsSize = MAX_LINE_LENGTH;
 	WCHAR* items = new WCHAR[itemsSize];
@@ -1156,17 +1166,17 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 		{
 			if (*pos)
 			{
-				section = pos;
-				StrToLowerC(sectionKey.assign(section));
-				if (unique.insert(sectionKey).second)
+				value = pos;  // section name
+				StrToLowerC(key.assign(value));
+				if (unique.insert(key).second)
 				{
-					if (m_FoundSections.insert(sectionKey).second)
+					if (m_FoundSections.insert(key).second)
 					{
-						m_Sections.push_back(section);
+						m_Sections.push_back(value);
 					}
-					sections.push_back(section);
+					sections.push_back(value);
 				}
-				pos += section.size() + 1;
+				pos += value.size() + 1;
 			}
 			else  // Empty string
 			{
@@ -1191,7 +1201,6 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 	}
 
 	// Read the keys and values
-	std::wstring key, value;  // buffer
 	std::list<std::wstring>::const_iterator iter = sections.begin();
 	for ( ; iter != sections.end(); ++iter)
 	{
@@ -1242,22 +1251,26 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 							++sep;
 						}
 
-						value.assign(sep, clen);
 						if (wcsncmp(key.c_str(), L"@include", 8) == 0)
 						{
-							ReadVariables();
-							ReplaceVariables(value);
-							if (!CSystem::IsAbsolutePath(value))
+							if (clen > 0)
 							{
-								// It's a relative path so add the current path as a prefix
-								value.insert(0, CRainmeter::ExtractPath(iniFile));
+								value.assign(sep, clen);
+								ReadVariables();
+								ReplaceVariables(value);
+								if (!CSystem::IsAbsolutePath(value))
+								{
+									// It's a relative path so add the current path as a prefix
+									value.insert(0, CRainmeter::ExtractPath(iniFile));
+								}
+								ReadIniFile(value, config, depth + 1);
 							}
-							ReadIniFile(value, config, depth + 1);
 						}
 						else
 						{
 							if (!isMetadata)  // Uncache Metadata's key-value pair in the skin
 							{
+								value.assign(sep, clen);
 								SetValue((*iter), key, value);
 
 								if (isVariables)
@@ -1318,7 +1331,7 @@ void CConfigParser::DeleteValue(const std::wstring& strSection, const std::wstri
 	strTmp += L'~';
 	strTmp += strKey;
 
-	std::unordered_map<std::wstring, std::wstring>::iterator iter = m_Values.find(StrToLowerC(strTmp));
+	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToLowerC(strTmp));
 	if (iter != m_Values.end())
 	{
 		m_Values.erase(iter);

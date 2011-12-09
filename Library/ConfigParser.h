@@ -43,9 +43,13 @@ public:
 	void Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterWindow* meterWindow = NULL, LPCTSTR config = NULL);
 	void AddMeasure(CMeasure* pMeasure);
 
+	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_Variables, strVariable, strValue); }
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
-	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
+	void SetBuiltInVariable(const WCHAR* strVariable, const WCHAR* strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
+
+	void SetCurrentSection(const std::wstring& strSection) { m_CurrentSection->assign(strSection); }
+	void ClearCurrentSection() { m_CurrentSection->clear(); }
 
 	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
@@ -106,6 +110,7 @@ private:
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
 
 	static void SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue);
+	static void SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const WCHAR* strVariable, const WCHAR* strValue);
 
 	static void SetMultiMonitorVariables(bool reset);
 	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(c_MonitorVariables, strVariable, strValue); }

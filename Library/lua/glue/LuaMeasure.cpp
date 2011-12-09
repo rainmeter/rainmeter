@@ -25,10 +25,9 @@ static int Measure_GetOption(lua_State* L)
 	{
 		if (strTmp.find(L'#') != std::wstring::npos)
 		{
-			static const std::wstring CURRENTSECTION = L"CURRENTSECTION";
-			parser.SetBuiltInVariable(CURRENTSECTION, self->GetOriginalName());  // Set temporarily
+			parser.SetCurrentSection(self->GetOriginalName());  // Set temporarily
 			parser.ReplaceVariables(strTmp);
-			parser.SetBuiltInVariable(CURRENTSECTION, L"");  // Reset
+			parser.ClearCurrentSection();  // Reset
 		}
 		parser.ReplaceMeasures(strTmp);
 	}

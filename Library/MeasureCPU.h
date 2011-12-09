@@ -21,14 +21,6 @@
 
 #include "Measure.h"
 
-typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
-    LARGE_INTEGER IdleTime;
-    LARGE_INTEGER KernelTime;
-    LARGE_INTEGER UserTime;
-    LARGE_INTEGER Reserved1[2];
-    ULONG Reserved2;
-} SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION, *PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
-
 typedef LONG (WINAPI *PROCNTQSI)(UINT,PVOID,ULONG,PULONG);
 
 class CMeasureCPU : public CMeasure
@@ -44,7 +36,6 @@ protected:
 
 private:
 	void CalcUsage(double idleTime, double systemTime);
-	void CalcAverageUsage(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* systemPerfInfo);
 
 	bool m_FirstTime;
 

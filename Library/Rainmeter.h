@@ -57,6 +57,26 @@ public:
 		std::vector<std::wstring> iniFiles;
 		UINT commandBase;
 		int active;
+
+		CONFIG() {}
+		~CONFIG() {}
+
+		CONFIG(CONFIG&& r) :
+			config(std::move(r.config)),
+			iniFiles(std::move(r.iniFiles)),
+			commandBase(r.commandBase),
+			active(r.active)
+		{
+		}
+
+		CONFIG& operator=(CONFIG&& r)
+		{
+			config = std::move(r.config);
+			iniFiles = std::move(r.iniFiles);
+			commandBase = r.commandBase;
+			active = r.active;
+			return *this;
+		}
 	};
 
 	struct CONFIGMENU
@@ -64,6 +84,24 @@ public:
 		std::wstring name;
 		size_t index;
 		std::vector<CONFIGMENU> children;
+
+		CONFIGMENU() {}
+		~CONFIGMENU() {}
+
+		CONFIGMENU(CONFIGMENU&& r) :
+			name(std::move(r.name)),
+			index(r.index),
+			children(std::move(r.children))
+		{
+		}
+
+		CONFIGMENU& operator=(CONFIGMENU&& r)
+		{
+			name = std::move(r.name);
+			index = r.index;
+			children = std::move(r.children);
+			return *this;
+		}
 	};
 
 	struct LOG_INFO

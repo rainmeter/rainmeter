@@ -198,16 +198,15 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 */
 bool CMeasure::MakePlainSubstitute(std::wstring& str, size_t index)
 {
-	size_t start = 0;
-	size_t pos = std::wstring::npos;
+	size_t start = 0, pos;
 
 	do
 	{
-		pos = str.find(m_Substitute[index].first, start);
+		pos = str.find(m_Substitute[index], start);
 		if (pos != std::wstring::npos)
 		{
-			str.replace(pos, m_Substitute[index].first.length(), m_Substitute[index].second);
-			start = pos + m_Substitute[index].second.length();
+			str.replace(pos, m_Substitute[index].length(), m_Substitute[index + 1]);
+			start = pos + m_Substitute[index + 1].length();
 		}
 	}
 	while (pos != std::wstring::npos);
@@ -230,16 +229,16 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 		{
 			str = buffer;
 
-			for (size_t i = 0, isize = m_Substitute.size(); i < isize; ++i)
+			for (size_t i = 0, isize = m_Substitute.size(); i < isize; i += 2)
 			{
-				if (!m_Substitute[i].first.empty())
+				if (!m_Substitute[i].empty())
 				{
 					MakePlainSubstitute(str, i);
 				}
 				else if (str.empty())
 				{
 					// Empty result and empty substitute -> use second
-					str = m_Substitute[i].second;
+					str = m_Substitute[i + 1];
 				}
 			}
 		}
@@ -248,7 +247,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 			std::string utf8str = ConvertToUTF8(buffer);
 			int* ovector = new int[OVECCOUNT];
 
-			for (size_t i = 0, isize = m_Substitute.size() ; i < isize ; ++i)
+			for (size_t i = 0, isize = m_Substitute.size() ; i < isize ; i += 2)
 			{
 				pcre* re;
 				const char* error;
@@ -258,7 +257,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 				int offset = 0;
 
 				re = pcre_compile(
-					ConvertToUTF8(m_Substitute[i].first.c_str()).c_str(),   // the pattern
+					ConvertToUTF8(m_Substitute[i].c_str()).c_str(),   // the pattern
 					flags,						// default options
 					&error,						// for error message
 					&erroffset,					// for error offset
@@ -289,25 +288,30 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 						}
 						else
 						{
-							std::string result = ConvertToUTF8(m_Substitute[i].second.c_str());
+							std::string result = ConvertToUTF8(m_Substitute[i + 1].c_str());
 
 							if (rc > 1)
 							{
 								for (int j = rc - 1 ; j >= 0 ; --j)
 								{
-									size_t new_start = ovector[2*j];
-									size_t in_length = ovector[2*j+1] - ovector[2*j];
+									size_t new_start = ovector[2 * j];
+									size_t in_length = ovector[2 * j + 1] - ovector[2 * j];
 
 									char tmpName[64];
 									_snprintf_s(tmpName, _TRUNCATE, "\\%i", j);
 
 									size_t cut_length = strlen(tmpName);
-									size_t pos = result.find(tmpName);
-									while (pos != std::string::npos)
+									size_t start = 0, pos;
+									do
 									{
-										result.replace(pos, cut_length, utf8str, new_start, in_length);
-										pos = result.find(tmpName, pos + in_length);
+										pos = result.find(tmpName, start, cut_length);
+										if (pos != std::string::npos)
+										{
+											result.replace(pos, cut_length, utf8str, new_start, in_length);
+											start = pos + in_length;
+										}
 									}
+									while (pos != std::string::npos);
 								}
 							}
 
@@ -356,7 +360,8 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 
 		if (wcscmp(word1.c_str(), word2.c_str()) != 0)
 		{
-			m_Substitute.push_back(std::pair<std::wstring, std::wstring>(word1, word2));
+			m_Substitute.push_back(word1);
+			m_Substitute.push_back(word2);
 		}
 
 		std::wstring sep2 = ExtractWord(buffer);

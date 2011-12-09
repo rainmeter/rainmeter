@@ -316,10 +316,17 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 				arg.erase(0, pos + 1);
 
 				// Strip quotes
-				while ((pos = newStr.find(L'"')) != std::wstring::npos)
+				size_t start = 0;
+				do
 				{
-					newStr.erase(pos, 1);
+					pos = newStr.find(L'"', start);
+					if (pos != std::wstring::npos)
+					{
+						newStr.erase(pos, 1);
+						start = pos;
+					}
 				}
+				while (pos != std::wstring::npos);
 
 				result.push_back(newStr);
 			}
@@ -332,10 +339,17 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 		if (!arg.empty())
 		{
 			// Strip quotes
-			while ((pos = arg.find(L'"')) != std::wstring::npos)
+			size_t start = 0;
+			do
 			{
-				arg.erase(pos, 1);
+				pos = arg.find(L'"', start);
+				if (pos != std::wstring::npos)
+				{
+					arg.erase(pos, 1);
+					start = pos;
+				}
 			}
+			while (pos != std::wstring::npos);
 
 			result.push_back(arg);
 		}
@@ -1557,7 +1571,7 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 					CONFIGMENU menuItem;
 					menuItem.name = filename;
 					menuItem.index = m_ConfigStrings.size();
-					menu.push_back(menuItem);
+					menu.push_back(std::move(menuItem));
 
 					config.iniFiles.push_back(filename);
 					++index;
@@ -1570,7 +1584,7 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 
 		if (!config.iniFiles.empty())
 		{
-			m_ConfigStrings.push_back(config);
+			m_ConfigStrings.push_back(std::move(config));
 		}
 	}
 
@@ -1587,7 +1601,7 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 		CONFIGMENU menuItem;
 		menuItem.name = (*iter);
 		menuItem.index = -1;
-		menu.push_back(menuItem);
+		menu.push_back(std::move(menuItem));
 
 		if (!DontRecurse)
 		{

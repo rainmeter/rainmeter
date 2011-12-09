@@ -169,30 +169,35 @@ void CMeasureCalc::FormulaReplace()
 	//To implement random numbers the word "Random" in the string
 	//formula is being replaced by the random number value
 	m_Formula = m_FormulaHolder;
-	std::wstring::size_type loc = 0;
+	size_t start = 0, pos;
 
-	while ((loc = m_Formula.find_first_of(L"Rr", loc)) != std::wstring::npos)
+	do
 	{
-		if (_wcsnicmp(L"Random", m_Formula.c_str() + loc, 6) == 0 &&
-			(loc == 0 || IsDelimiter(*(m_Formula.c_str() + loc - 1))) &&
-			(loc == (m_Formula.length() - 6) || IsDelimiter(*(m_Formula.c_str() + loc + 6))))
+		pos = m_Formula.find_first_of(L"Rr", start);
+		if (pos != std::wstring::npos)
 		{
-			int range = (m_HighBound - m_LowBound) + 1;
-			srand((unsigned) rand());
-			int randNumber = m_LowBound + (int)(range * rand()/(RAND_MAX + 1.0));
+			if (_wcsnicmp(L"Random", m_Formula.c_str() + pos, 6) == 0 &&
+				(pos == 0 || IsDelimiter(*(m_Formula.c_str() + pos - 1))) &&
+				(pos == (m_Formula.length() - 6) || IsDelimiter(*(m_Formula.c_str() + pos + 6))))
+			{
+				int range = (m_HighBound - m_LowBound) + 1;
+				srand((unsigned) rand());
+				int randNumber = m_LowBound + (int)(range * rand() / (RAND_MAX + 1.0));
 
-			WCHAR buffer[32];
-			_itow_s(randNumber, buffer, 10);
-			size_t len = wcslen(buffer);
+				WCHAR buffer[32];
+				_itow_s(randNumber, buffer, 10);
+				size_t len = wcslen(buffer);
 
-			m_Formula.replace(loc, 6, buffer, len);
-			loc += len;
-		}
-		else
-		{
-			++loc;
+				m_Formula.replace(pos, 6, buffer, len);
+				start = pos + len;
+			}
+			else
+			{
+				start = pos + 1;
+			}
 		}
 	}
+	while (pos != std::wstring::npos);
 }
 
 /*

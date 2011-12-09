@@ -568,6 +568,7 @@ bool CMeter::Update()
 void CMeter::SetAllMeasures(CMeasure* measure)
 {
 	m_AllMeasures.clear();
+	m_AllMeasures.reserve(2);
 	m_AllMeasures.push_back(m_Measure);
 	m_AllMeasures.push_back(measure);
 }
@@ -580,6 +581,7 @@ void CMeter::SetAllMeasures(CMeasure* measure)
 void CMeter::SetAllMeasures(const std::vector<CMeasure*>& measures)
 {
 	m_AllMeasures.clear();
+	m_AllMeasures.reserve(1 + measures.size());
 	m_AllMeasures.push_back(m_Measure);
 
 	std::vector<CMeasure*>::const_iterator i = measures.begin();
@@ -635,15 +637,14 @@ bool CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std:
 		{
 			_snwprintf_s(buffer, _TRUNCATE, L"%%%i", (int)i);
 
-			size_t start = 0;
-			size_t pos = std::wstring::npos;
-
+			size_t len = wcslen(buffer);
+			size_t start = 0, pos;
 			do
 			{
-				pos = str.find(buffer, start);
+				pos = str.find(buffer, start, len);
 				if (pos != std::wstring::npos)
 				{
-					str.replace(pos, wcslen(buffer), stringValues[i - 1]);
+					str.replace(pos, len, stringValues[i - 1]);
 					start = pos + stringValues[i - 1].length();
 					replaced = true;
 				}

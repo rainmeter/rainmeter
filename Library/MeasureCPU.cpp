@@ -27,7 +27,14 @@
 
 #define SystemProcessorPerformanceInformation	8
 
-//#define Li2Double(x) ((double)((x).HighPart) * 4.294967296E9 + (double)((x).LowPart))
+typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
+    LARGE_INTEGER IdleTime;
+    LARGE_INTEGER KernelTime;
+    LARGE_INTEGER UserTime;
+    LARGE_INTEGER Reserved1[2];
+    ULONG Reserved2;
+} SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION, *PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
+
 #define Li2Double(x) ((double)((x).QuadPart))
 #define Ft2Double(x) ((double)((x).dwHighDateTime) * 4.294967296E9 + (double)((x).dwLowDateTime))
 
@@ -72,7 +79,7 @@ CMeasureCPU::CMeasureCPU(CMeterWindow* meterWindow, const WCHAR* name) : CMeasur
 	}
 	if (c_NumOfProcessors == 0)
 	{
-		SYSTEM_INFO systemInfo = {0};
+		SYSTEM_INFO systemInfo;
 		GetSystemInfo(&systemInfo);
 		c_NumOfProcessors = (int)systemInfo.dwNumberOfProcessors;
 	}
