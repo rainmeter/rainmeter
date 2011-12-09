@@ -20,8 +20,6 @@
 #include "MeasureCalc.h"
 #include "Rainmeter.h"
 
-using namespace std;
-
 hqStrMap* CMeasureCalc::c_VarMap = NULL;
 bool CMeasureCalc::c_RandSeeded = false;
 

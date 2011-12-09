@@ -366,7 +366,7 @@ void CDialogAbout::CTabLog::Initialize()
 
 	// Set folder/.ini icons for tree list
 	HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR32, 2, 10);
-	HMODULE hDLL = LoadLibrary(L"user32.dll");
+	HMODULE hDLL = GetModuleHandle(L"user32");
 
 	HICON hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(103), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 	ImageList_AddIcon(hImageList, hIcon);
@@ -379,8 +379,6 @@ void CDialogAbout::CTabLog::Initialize()
 	hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(104), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR); 
 	ImageList_AddIcon(hImageList, hIcon);
 	DeleteObject(hIcon);
-
-	FreeLibrary(hDLL);
 
 	ListView_SetImageList(item, (WPARAM)hImageList, LVSIL_SMALL);
 
@@ -757,7 +755,7 @@ void CDialogAbout::CTabMeasures::UpdateMeasureList(CMeterWindow* meterWindow)
 		range += buffer;
 
 		ListView_SetItemText(item, index, 1, (WCHAR*)range.c_str());
-		ListView_SetItemText(item, index, 2, (WCHAR*)(*j)->GetStats());
+		ListView_SetItemText(item, index, 2, (WCHAR*)(*j)->GetStringValue(AUTOSCALE_OFF, 1, -1, false));
 		++index;
 	}
 

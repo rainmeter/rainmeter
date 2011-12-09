@@ -760,16 +760,6 @@ void CMeasure::RemoveTrailingZero(WCHAR* str, int strLen)
 }
 
 /*
-** GetStats
-**
-** Returns the stats as string. The stats are shown in the About dialog.
-*/
-const WCHAR* CMeasure::GetStats()
-{
-	return GetStringValue(AUTOSCALE_OFF, 1, -1, false);
-}
-
-/*
 ** Create
 **
 ** Creates the given measure. This is the factory method for the measures.

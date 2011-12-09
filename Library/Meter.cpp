@@ -635,9 +635,7 @@ bool CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std:
 		// Create the actual text (i.e. replace %1, %2, .. with the measure texts)
 		for (size_t i = stringValues.size(); i > 0; --i)
 		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%%%i", (int)i);
-
-			size_t len = wcslen(buffer);
+			size_t len = _snwprintf_s(buffer, _TRUNCATE, L"%%%i", (int)i);
 			size_t start = 0, pos;
 			do
 			{

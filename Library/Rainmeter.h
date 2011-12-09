@@ -276,7 +276,7 @@ private:
 
 	bool m_DisableVersionCheck;
 	bool m_NewVersion;
-	
+
 	bool m_DesktopWorkAreaChanged;
 	bool m_DesktopWorkAreaType;			// If true, DesktopWorkArea is treated as "margin"
 	std::map<UINT, RECT> m_DesktopWorkAreas;

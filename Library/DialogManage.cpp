@@ -369,14 +369,12 @@ void CDialogManage::CTabSkins::Initialize()
 
 	// Load folder/.ini icons from shell32
 	HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR32, 2, 10);
-	HMODULE hDLL = LoadLibrary(L"shell32.dll");
+	HMODULE hDLL = GetModuleHandle(L"shell32");
 
 	HICON hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(4), IMAGE_ICON, 16, 16, LR_SHARED);
 	ImageList_AddIcon(hImageList, hIcon);
 	hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(151), IMAGE_ICON, 16, 16, LR_SHARED); 
 	ImageList_AddIcon(hImageList, hIcon);
-
-	FreeLibrary(hDLL);
 
 	// Apply icons and populate tree
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_SKINS_TREEVIEW);
@@ -1394,10 +1392,10 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (HIWORD(wParam) == EN_CHANGE)
 		{
 			WCHAR buffer[32];
-			Edit_GetText((HWND)lParam, buffer, 32);
+			int len = Edit_GetText((HWND)lParam, buffer, 32);
 
 			// Disable save button if no text or if name is "Backup"
-			BOOL state = (wcslen(buffer) != 0 && _wcsicmp(buffer, L"Backup") != 0);
+			BOOL state = (len > 0 && _wcsicmp(buffer, L"Backup") != 0);
 			EnableWindow(GetDlgItem(m_Window, IDC_MANAGETHEMES_SAVE_BUTTON), state);
 		}
 		break;

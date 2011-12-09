@@ -410,20 +410,7 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 
 LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	static CTrayWindow* tray = NULL;
-
-	if (uMsg == WM_CREATE)
-	{
-		tray=(CTrayWindow*)((LPCREATESTRUCT)lParam)->lpCreateParams;
-	}
-	else if (uMsg == WM_TASKBARCREATED)
-	{
-		if (tray && tray->IsTrayIconEnabled())
-		{
-			tray->RemoveTrayIcon();
-			tray->AddTrayIcon();
-		}
-	}
+	CTrayWindow* tray = Rainmeter->GetTrayWindow();
 
 	switch (uMsg)
 	{
@@ -778,15 +765,15 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 	case WM_COPYDATA:
 		{
-			COPYDATASTRUCT *cds = (COPYDATASTRUCT*) lParam;
+			COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lParam;
 			if (cds->dwData == RAINMETER_QUERY_ID_SKIN_WINDOWHANDLE)
 			{
-				std::wstring SkinName((LPTSTR) cds->lpData);
+				std::wstring SkinName((LPTSTR)cds->lpData);
 				std::map<std::wstring, CMeterWindow*> MeterWindows = Rainmeter->GetAllMeterWindows();
 				std::map<std::wstring, CMeterWindow*>::const_iterator iter = MeterWindows.find(SkinName);
 				if (iter != MeterWindows.end())
 				{
-					return (LRESULT) iter->second->GetWindow();
+					return (LRESULT)iter->second->GetWindow();
 				}
 				return NULL;
 			}
@@ -817,6 +804,17 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
+		break;
+
+	default:
+		if (uMsg == WM_TASKBARCREATED)
+		{
+			if (tray && tray->IsTrayIconEnabled())
+			{
+				tray->RemoveTrayIcon();
+				tray->AddTrayIcon();
+			}
+		}
 		break;
 	}
 

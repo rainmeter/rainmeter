@@ -1157,16 +1157,13 @@ void CSystem::SetClipboardText(const std::wstring& text)
 		if (hMem)
 		{
 			LPVOID data = GlobalLock(hMem);
-			if (data)
-			{
-				memcpy(data, text.c_str(), len * sizeof(WCHAR));
-				GlobalUnlock(hMem);
+			memcpy(data, text.c_str(), len * sizeof(WCHAR));
+			GlobalUnlock(hMem);
 
-				EmptyClipboard();
-				if (!SetClipboardData(CF_UNICODETEXT, hMem))
-				{
-					GlobalFree(hMem);
-				}
+			EmptyClipboard();
+			if (!SetClipboardData(CF_UNICODETEXT, hMem))
+			{
+				GlobalFree(hMem);
 			}
 		}
 
