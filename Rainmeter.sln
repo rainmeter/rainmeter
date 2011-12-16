@@ -51,6 +51,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginCoreTemp", "Plugins\P
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginNowPlaying", "Plugins\PluginNowPlaying\PluginNowPlaying.vcxproj", "{C7FECFCD-E6C6-4F95-BB9A-E1762B043969}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginProcess", "Plugins\PluginProcess\PluginProcess.vcxproj", "{05203741-CD80-4060-8218-EC5D1120FE3E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -248,6 +250,14 @@ Global
 		{C7FECFCD-E6C6-4F95-BB9A-E1762B043969}.Debug|x64.ActiveCfg = Debug|x64
 		{C7FECFCD-E6C6-4F95-BB9A-E1762B043969}.Release|Win32.ActiveCfg = Release|Win32
 		{C7FECFCD-E6C6-4F95-BB9A-E1762B043969}.Release|x64.ActiveCfg = Release|x64
+		{05203741-CD80-4060-8218-EC5D1120FE3E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{05203741-CD80-4060-8218-EC5D1120FE3E}.Debug|Win32.Build.0 = Debug|Win32
+		{05203741-CD80-4060-8218-EC5D1120FE3E}.Debug|x64.ActiveCfg = Debug|x64
+		{05203741-CD80-4060-8218-EC5D1120FE3E}.Debug|x64.Build.0 = Debug|x64
+		{05203741-CD80-4060-8218-EC5D1120FE3E}.Release|Win32.ActiveCfg = Release|Win32
+		{05203741-CD80-4060-8218-EC5D1120FE3E}.Release|Win32.Build.0 = Release|Win32
+		{05203741-CD80-4060-8218-EC5D1120FE3E}.Release|x64.ActiveCfg = Release|x64
+		{05203741-CD80-4060-8218-EC5D1120FE3E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
