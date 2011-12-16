@@ -107,8 +107,7 @@ INT_PTR CDialogBackup::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	if (GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
-		// F-Secure et al. detect SetDialogFont() as malware..
-		//SetDialogFont();
+		SetDialogFont();
 	}
 
 	HWND item = GetDlgItem(m_Window, IDC_BACKUP_TAB);
