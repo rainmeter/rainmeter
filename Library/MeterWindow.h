@@ -200,6 +200,7 @@ public:
 
 	CConfigParser& GetParser() { return m_Parser; }
 
+	const std::wstring& GetSkinAuthor() { return m_Author; }
 	const std::wstring& GetSkinName() { return m_SkinName; }
 	const std::wstring& GetSkinIniFile() { return m_SkinIniFile; }
 	std::wstring GetSkinRootPath();
@@ -374,6 +375,7 @@ private:
 
 	bool m_MouseOver;
 
+	std::wstring m_Author;						// Skin's author
 	std::wstring m_ConfigGroup;
 	std::wstring m_BackgroundName;				// Name of the background image
 	RECT m_BackgroundMargins;

@@ -21,19 +21,12 @@
 
 #include "Measure.h"
 
-typedef UINT (*INITIALIZE)(HMODULE, LPCTSTR, LPCTSTR, UINT);
+typedef UINT (*INITIALIZE)(HMODULE, LPCTSTR, LPCTSTR, UINT); 
 typedef VOID (*FINALIZE)(HMODULE, UINT);
-typedef UINT (*UPDATE)(UINT);
-typedef double (*UPDATE2)(UINT);
-typedef LPCTSTR (*GETSTRING)(UINT, UINT);
+typedef UINT (*UPDATE)(UINT); 
+typedef double (*UPDATE2)(UINT); 
+typedef LPCTSTR (*GETSTRING)(UINT, UINT); 
 typedef void (*EXECUTEBANG)(LPCTSTR, UINT);
-
-typedef void (*NEWINITIALIZE)(void*);
-typedef void (*NEWRELOAD)(void*, void*, double*);
-typedef void (*NEWFINALIZE)(void*);
-typedef double (*NEWUPDATE)(void*);
-typedef LPCWSTR (*NEWGETSTRING)(void*);
-typedef void (*NEWEXECUTEBANG)(void*, const WCHAR*);
 
 class CMeasurePlugin : public CMeasure
 {
@@ -49,30 +42,16 @@ protected:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
-	bool IsNewApi() { return m_ReloadFunc != NULL; }
-
 	std::wstring m_PluginName;
 	HMODULE m_Plugin;
+	UINT m_ID;
 
-	void* m_ReloadFunc;
-
-	union
-	{
-		struct
-		{
-			UINT m_ID;
-			bool m_Update2;
-		};
-
-		struct
-		{
-			void* m_PluginData;
-		};
-	};
-
-	void* m_UpdateFunc;
-	void* m_GetStringFunc;
-	void* m_ExecuteBangFunc;
+	INITIALIZE InitializeFunc;
+	FINALIZE FinalizeFunc;
+	UPDATE UpdateFunc;
+	UPDATE2 UpdateFunc2;
+	GETSTRING GetStringFunc;
+	EXECUTEBANG ExecuteBangFunc;
 };
 
 #endif

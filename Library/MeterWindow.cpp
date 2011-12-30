@@ -2110,6 +2110,8 @@ bool CMeterWindow::ReadSkin()
 		MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 	}
 
+	m_Author = m_Parser.ReadString(L"Rainmeter", L"Author", L"");
+
 	static const RECT defMargins = {0};
 	m_BackgroundMargins = m_Parser.ReadRECT(L"Rainmeter", L"BackgroundMargins", defMargins);
 	m_DragMargins = m_Parser.ReadRECT(L"Rainmeter", L"DragMargins", defMargins);

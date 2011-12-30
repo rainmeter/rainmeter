@@ -351,9 +351,6 @@
     <ClCompile Include="DialogManage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Export.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigParser.h">
@@ -363,6 +360,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Export.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Group.h">
@@ -591,9 +591,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DialogManage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Export.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -18,72 +18,117 @@
 
 #include <windows.h>
 #include <Psapi.h>
-#include <algorithm>
-#include <vector>
-#include "../../Library/RawString.h"
+#include <string>
+#include <map>
 #include "../../Library/Export.h"	// Rainmeter's exported functions
+
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+
+/* The exported functions */
+extern "C"
+{
+__declspec(dllexport) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
+__declspec(dllexport) void Finalize(HMODULE instance, UINT id);
+__declspec(dllexport) UINT Update(UINT id);
+__declspec(dllexport) UINT GetPluginVersion();
+__declspec(dllexport) LPCTSTR GetPluginAuthor();
+}
 
 struct MeasureData
 {
-	CRawString processName;
+	std::wstring processName;
 	bool isRunning;
 
 	MeasureData() : isRunning(false) {}
 };
 
+static std::map<UINT, MeasureData> g_Values;
 static UINT g_UpdateCount = 0;
-static std::vector<MeasureData*> g_Measures;
 
 void CheckProcesses();
 
-PLUGIN_EXPORT void Initialize(void** data)
+/*
+  This function is called when the measure is initialized.
+  The function must return the maximum value that can be measured.
+  The return value can also be 0, which means that Rainmeter will
+  track the maximum value automatically. The parameters for this
+  function are:
+
+  instance  The instance of this DLL
+  iniFile   The name of the ini-file (usually Rainmeter.ini)
+  section   The name of the section in the ini-file for this measure
+  id        The identifier for the measure. This is used to identify the measures that use the same plugin.
+*/
+UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
-	MeasureData* measure = new MeasureData;
-	g_Measures.push_back(measure);
+	MeasureData data;
 
-	*data = measure;
-}
-
-PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
-{
-	MeasureData* measure = (MeasureData*)data;
-
-	LPCWSTR value = RmReadString(rm, L"ProcessName", L"");
-	measure->processName = value;
-}
-
-PLUGIN_EXPORT double Update(void* data)
-{
-	MeasureData* measure = (MeasureData*)data;
-
-	// Updates the measure only once per combined updates of all measures
-	++g_UpdateCount;
-	if (g_UpdateCount >= g_Measures.size())
+	const WCHAR* value = ReadConfigString(section, L"ProcessName", L"");
+	if (*value)
 	{
-		CheckProcesses();
-		g_UpdateCount = 0;
+		data.processName = value;
+		g_Values[id] = std::move(data);
 	}
 
-	return (double)measure->isRunning;
+	return 1;
 }
 
-PLUGIN_EXPORT void Finalize(void* data)
+/*
+  This function is called when new value should be measured.
+  The function returns the new value.
+*/
+UINT Update(UINT id)
 {
-	MeasureData* measure = (MeasureData*)data;
-	std::vector<MeasureData*>::iterator iter = std::find(g_Measures.begin(), g_Measures.end(), measure);
-	g_Measures.erase(iter);
+	UINT result = 0;
 
-	delete measure;
+	std::map<UINT, MeasureData>::const_iterator iter = g_Values.find(id);
+	if (iter != g_Values.end())
+	{
+		// Updates the measure only once per combined updates of all measures
+		++g_UpdateCount;
+		if (g_UpdateCount >= g_Values.size())
+		{
+			CheckProcesses();
+			g_UpdateCount = 0;
+		}
+
+		result = (UINT)(*iter).second.isRunning;
+	}
+
+	return result;
+}
+
+/*
+  If the measure needs to free resources before quitting.
+  The plugin can export Finalize function, which is called
+  when Rainmeter quits (or refreshes).
+*/
+void Finalize(HMODULE instance, UINT id)
+{
+	std::map<UINT, MeasureData>::iterator iter = g_Values.find(id);
+	if (iter != g_Values.end())
+	{
+		g_Values.erase(iter);
+	}
+}
+
+UINT GetPluginVersion()
+{
+	return 1000;
+}
+
+LPCTSTR GetPluginAuthor()
+{
+	return L"Birunthan Mohanathas (poiru.net)";
 }
 
 void CheckProcesses()
 {
 	// Set everything to false
-	std::vector<MeasureData*>::iterator iter = g_Measures.begin();
-	for ( ; iter != g_Measures.end(); ++iter)
+	std::map<UINT, MeasureData>::iterator iter = g_Values.begin();
+	for ( ; iter != g_Values.end(); ++iter)
 	{
-		(*iter)->isRunning = false;
+		(*iter).second.isRunning = false;
 	}
 
 	int bufSize = 256;
@@ -106,12 +151,12 @@ void CheckProcesses()
 			WCHAR buffer[MAX_PATH];
 			if (GetModuleBaseName(hProcess, NULL, buffer, _countof(buffer)))
 			{
-				iter = g_Measures.begin();
-				for ( ; iter != g_Measures.end(); ++iter)
+				iter = g_Values.begin();
+				for ( ; iter != g_Values.end(); ++iter)
 				{
-					if (_wcsicmp(buffer, (*iter)->processName.c_str()) == 0)
+					if (_wcsicmp(buffer, (*iter).second.processName.c_str()) == 0)
 					{
-						(*iter)->isRunning = true;
+						(*iter).second.isRunning = true;
 					}
 				}
 			}

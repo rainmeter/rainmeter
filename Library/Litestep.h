@@ -23,14 +23,7 @@
 #include <comdef.h>
 #include <string>
 #include "Error.h"
-
-enum LOGLEVEL
-{
-	LOG_ERROR   = 1,
-	LOG_WARNING = 2,
-	LOG_NOTICE  = 3,
-	LOG_DEBUG   = 4
-};
+#include "Export.h"
 
 void InitalizeLitestep();
 void FinalizeLitestep();
@@ -45,7 +38,7 @@ std::string ConvertToUTF8(LPCWSTR str);
 std::wstring ConvertUTF8ToWide(LPCSTR str);
 
 void Log(int nLevel, const WCHAR* message);
-void LogWithArgs(int nLevel, const WCHAR* format, ...);
+void LogWithArgs(int nLevel, const WCHAR* format, ... );
 void LogError(CError& error);
 
 void RunCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, bool asAdmin = false);

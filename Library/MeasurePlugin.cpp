@@ -19,7 +19,6 @@
 #include "StdAfx.h"
 #include "MeasurePlugin.h"
 #include "Rainmeter.h"
-#include "Export.h"
 #include "System.h"
 #include "Error.h"
 
@@ -33,11 +32,13 @@ extern CRainmeter* Rainmeter;
 */
 CMeasurePlugin::CMeasurePlugin(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
 	m_Plugin(),
-	m_ReloadFunc(),
 	m_ID(),
-	m_UpdateFunc(),
-	m_GetStringFunc(),
-	m_ExecuteBangFunc()
+	InitializeFunc(),
+	UpdateFunc(),
+	UpdateFunc2(),
+	FinalizeFunc(),
+	GetStringFunc(),
+	ExecuteBangFunc()
 {
 	m_MaxValue = 0.0;
 }
@@ -52,16 +53,7 @@ CMeasurePlugin::~CMeasurePlugin()
 {
 	if (m_Plugin)
 	{
-		FARPROC finalizeFunc = GetProcAddress(m_Plugin, "Finalize");
-		if (IsNewApi())
-		{
-			((NEWFINALIZE)finalizeFunc)(m_PluginData);
-		}
-		else if (finalizeFunc)
-		{
-			((FINALIZE)finalizeFunc)(m_Plugin, m_ID);
-		}
-
+		if (FinalizeFunc) FinalizeFunc(m_Plugin, m_ID);
 		FreeLibrary(m_Plugin);
 	}
 }
@@ -76,20 +68,15 @@ bool CMeasurePlugin::Update()
 {
 	if (!CMeasure::PreUpdate()) return false;
 
-	if (IsNewApi())
+	if (UpdateFunc)
 	{
-		m_Value = ((NEWUPDATE)m_UpdateFunc)(m_PluginData);
+		// Update the plugin
+		m_Value = UpdateFunc(m_ID);
 	}
-	else if (m_UpdateFunc)
+	else if (UpdateFunc2)
 	{
-		if (m_Update2)
-		{
-			m_Value = ((UPDATE2)m_UpdateFunc)(m_ID);
-		}
-		else
-		{
-			m_Value = ((UPDATE)m_UpdateFunc)(m_ID);
-		}
+		// Update the plugin
+		m_Value = UpdateFunc2(m_ID);
 	}
 
 	// Reset to default
@@ -106,17 +93,13 @@ bool CMeasurePlugin::Update()
 */
 void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
-	static UINT id = 0;
+	static UINT id = 1;
 
 	CMeasure::ReadConfig(parser, section);
+
 	if (m_Initialized)
 	{
-		if (IsNewApi())
-		{
-			((NEWRELOAD)m_ReloadFunc)(m_PluginData, this, &m_MaxValue);
-		}
-		
-		// DynamicVariables doesn't work with old plugins
+		// DynamicVariables doesn't work with plugins, so stop here.
 		return;
 	}
 
@@ -135,9 +118,16 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	m_PluginName.insert(0, Rainmeter->GetPluginPath());
 
-	m_Plugin = CSystem::RmLoadLibrary(m_PluginName.c_str(), NULL);
+	DWORD err = 0;
+	m_Plugin = CSystem::RmLoadLibrary(m_PluginName.c_str(), &err);
+
 	if (m_Plugin == NULL)
 	{
+		if (Rainmeter->GetDebug())
+		{
+			LogWithArgs(LOG_ERROR, L"Plugin: Unable to load \"%s\" (%u)", m_PluginName.c_str(), err);
+		}
+
 		// Try to load from Rainmeter's folder
 		pos = m_PluginName.rfind(L'\\');
 		if (pos != std::wstring::npos)
@@ -145,7 +135,16 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			std::wstring pluginName = Rainmeter->GetPath();
 			pluginName.append(m_PluginName, pos + 1, m_PluginName.length() - (pos + 1));
 
-			m_Plugin = CSystem::RmLoadLibrary(pluginName.c_str(), NULL);
+			err = 0;
+			m_Plugin = CSystem::RmLoadLibrary(pluginName.c_str(), &err);
+
+			if (m_Plugin == NULL)
+			{
+				if (Rainmeter->GetDebug())
+				{
+					LogWithArgs(LOG_ERROR, L"Plugin: Unable to load \"%s\" (%u)", pluginName.c_str(), err);
+				}
+			}
 		}
 
 		if (m_Plugin == NULL)
@@ -156,50 +155,48 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		}
 	}
 
-	FARPROC initializeFunc = GetProcAddress(m_Plugin, "Initialize");
-	m_ReloadFunc = GetProcAddress(m_Plugin, "Reload");
-	m_UpdateFunc = GetProcAddress(m_Plugin, "Update");
-	m_GetStringFunc = GetProcAddress(m_Plugin, "GetString");
-	m_ExecuteBangFunc = GetProcAddress(m_Plugin, "ExecuteBang");
+	InitializeFunc = (INITIALIZE)GetProcAddress(m_Plugin, "Initialize");
+	FinalizeFunc = (FINALIZE)GetProcAddress(m_Plugin, "Finalize");
+	UpdateFunc = (UPDATE)GetProcAddress(m_Plugin, "Update");
+	UpdateFunc2 = (UPDATE2)GetProcAddress(m_Plugin, "Update2");
+	GetStringFunc = (GETSTRING)GetProcAddress(m_Plugin, "GetString");
+	ExecuteBangFunc = (EXECUTEBANG)GetProcAddress(m_Plugin, "ExecuteBang");
 
-	// Remove current directory from DLL search path
-	SetDllDirectory(L"");
-
-	if (IsNewApi())
+	if (UpdateFunc == NULL && UpdateFunc2 == NULL && GetStringFunc == NULL)
 	{
-		((NEWINITIALIZE)initializeFunc)(&m_PluginData);
-		((NEWRELOAD)m_ReloadFunc)(m_PluginData, this, &m_MaxValue);
+		FreeLibrary(m_Plugin);
+
+		std::wstring error = L"Plugin: \"" + m_PluginName;
+		error += L"\" doesn't export Update() or GetString()";
+		throw CError(error);
 	}
-	else
+
+	// Initialize the plugin
+	m_ID = id++;
+	if (InitializeFunc)
 	{
-		m_ID = id;
+		// Remove current directory from DLL search path
+		SetDllDirectory(L"");
 
-		if (!m_UpdateFunc)
-		{
-			m_UpdateFunc = GetProcAddress(m_Plugin, "Update2");
-			m_Update2 = true;
-		}
+		double maxValue;
+		maxValue = InitializeFunc(m_Plugin, parser.GetFilename().c_str(), section, m_ID);
 
-		double maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, parser.GetFilename().c_str(), section, m_ID);
+		// Reset to default
+		SetDllDirectory(L"");
+		CSystem::ResetWorkingDirectory();
 
 		const std::wstring& szMaxValue = parser.ReadString(section, L"MaxValue", L"");
 		if (szMaxValue.empty())
 		{
 			m_MaxValue = maxValue;
 		}
-
-		if (m_MaxValue == 0)
-		{
-			m_MaxValue = 1;
-			m_LogMaxValue = true;
-		}
 	}
 
-	// Reset to default
-	SetDllDirectory(L"");
-	CSystem::ResetWorkingDirectory();
-
-	++id;
+	if (m_MaxValue == 0)
+	{
+		m_MaxValue = 1;
+		m_LogMaxValue = true;
+	}
 }
 
 /*
@@ -210,18 +207,9 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 */
 const WCHAR* CMeasurePlugin::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
-	if (m_GetStringFunc)
+	if (GetStringFunc)
 	{
-		const WCHAR* ret;
-		if (IsNewApi())
-		{
-			ret = ((NEWGETSTRING)m_GetStringFunc)(m_PluginData);
-		}
-		else
-		{
-			ret = ((GETSTRING)m_GetStringFunc)(m_ID, 0);
-		}
-
+		const WCHAR* ret = GetStringFunc(m_ID, 0);
 		if (ret) return CheckSubstitute(ret);
 	}
 
@@ -236,16 +224,9 @@ const WCHAR* CMeasurePlugin::GetStringValue(AUTOSCALE autoScale, double scale, i
 */
 void CMeasurePlugin::ExecuteBang(const WCHAR* args)
 {
-	if (m_ExecuteBangFunc)
+	if (ExecuteBangFunc)
 	{
-		if (IsNewApi())
-		{
-			((NEWEXECUTEBANG)m_ExecuteBangFunc)(m_PluginData, args);
-		}
-		else
-		{
-			((EXECUTEBANG)m_ExecuteBangFunc)(args, m_ID);
-		}
+		ExecuteBangFunc(args, m_ID);
 	}
 	else
 	{
