@@ -69,14 +69,6 @@ enum RMGTYPE
 //
 
 #ifndef LIBRARY_EXPORTS
-enum LOGLEVEL
-{
-	LOG_ERROR   = 1,
-	LOG_WARNING = 2,
-	LOG_NOTICE  = 3,
-	LOG_DEBUG   = 4
-};
-
 __inline LPCWSTR RmReadPath(void* rm, LPCWSTR option, LPCWSTR defValue)
 {
 	LPCWSTR relativePath = RmReadString(rm, option, defValue, TRUE);
