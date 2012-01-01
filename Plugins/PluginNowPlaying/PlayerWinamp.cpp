@@ -17,6 +17,7 @@
 */
 
 #include "StdAfx.h"
+#include <cmath>
 #include "PlayerWinamp.h"
 #include "Winamp/wa_ipc.h"
 #include "Winamp/wa_cmd.h"
@@ -413,12 +414,9 @@ void CPlayerWinamp::SetRating(int rating)
 */
 void CPlayerWinamp::SetVolume(int volume)
 {
-	if (volume > 0 && volume < 100) ++volume;	// For proper scaling
-
 	// Winamp accepts volume in 0 - 255 range
-	volume *= 255;
-	volume /= 100;
-	SendMessage(m_Window, WM_WA_IPC, volume, IPC_SETVOLUME);
+	float fVolume = volume * 2.55f;
+	SendMessage(m_Window, WM_WA_IPC, (WPARAM)ceil(fVolume), IPC_SETVOLUME);
 }
 
 /*
