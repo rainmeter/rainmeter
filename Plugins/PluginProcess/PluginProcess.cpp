@@ -29,7 +29,7 @@ extern "C"
 {
 __declspec(dllexport) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
 __declspec(dllexport) void Finalize(HMODULE instance, UINT id);
-__declspec(dllexport) UINT Update(UINT id);
+__declspec(dllexport) double Update2(UINT id);
 __declspec(dllexport) UINT GetPluginVersion();
 __declspec(dllexport) LPCTSTR GetPluginAuthor();
 }
@@ -77,9 +77,9 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
   This function is called when new value should be measured.
   The function returns the new value.
 */
-UINT Update(UINT id)
+double Update2(UINT id)
 {
-	UINT result = 0;
+	double result = -1.0;
 
 	std::map<UINT, MeasureData>::const_iterator iter = g_Values.find(id);
 	if (iter != g_Values.end())
@@ -92,7 +92,7 @@ UINT Update(UINT id)
 			g_UpdateCount = 0;
 		}
 
-		result = (UINT)(*iter).second.isRunning ? 1 : -1;
+		result = (*iter).second.isRunning ? 1.0 : -1.0;
 	}
 
 	return result;
