@@ -92,7 +92,7 @@ UINT Update(UINT id)
 			g_UpdateCount = 0;
 		}
 
-		result = (UINT)(*iter).second.isRunning;
+		result = (UINT)(*iter).second.isRunning ? 1 : -1;
 	}
 
 	return result;
