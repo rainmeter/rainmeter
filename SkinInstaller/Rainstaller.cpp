@@ -576,7 +576,8 @@ bool ReadArchive()
 
 	// Get temp file path for the configuration file/bitmap
 	WCHAR tempFile[MAX_PATH];
-	ExpandEnvironmentStrings(L"%TEMP%\\~RainstallerData.TMP", tempFile, MAX_PATH);
+	GetTempPath(MAX_PATH, tempFile);
+	GetTempFileName(tempFile, L"dat", 0, tempFile);
 
 	char cBuffer[MAX_PATH * 3];
 	WCHAR buffer[MAX_PATH];
