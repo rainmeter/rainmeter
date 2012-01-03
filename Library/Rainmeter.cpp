@@ -1333,6 +1333,7 @@ bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
 			if (meterWindow == NULL)
 			{
 				// Delete all meter windows
+				CDialogManage::UpdateSkins((*iter).second, true);
 				delete (*iter).second;
 			}
 			else if ((*iter).second == meterWindow)
