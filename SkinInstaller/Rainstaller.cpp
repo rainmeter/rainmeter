@@ -1093,7 +1093,8 @@ bool InstallComponents(RMSKIN_DATA* data)
 						WritePrivateProfileString(L"Rainmeter", L"DisableRDP", NULL, filePath);
 						WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", NULL, filePath);
 						WritePrivateProfileString(L"Rainmeter", L"Logging", NULL, filePath);
-						WritePrivateProfileString(L"illustro", L"Version", NULL, filePath);
+						WritePrivateProfileString(L"Rainmeter", L"Language", NULL, filePath);
+						WritePrivateProfileString(L"Rainmeter", L"Debug", NULL, filePath);
 					}
 
 					result = unzGoToNextFile(ufile);
