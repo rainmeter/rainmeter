@@ -155,8 +155,8 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
 		case FOO_STATECHANGE:
 			{
-				PLAYSTATE ps = (PLAYSTATE)wParam;
-				if (ps == PLAYER_STOPPED)
+				StateType ps = (StateType)wParam;
+				if (ps == STATE_STOPPED)
 				{
 					player->ClearData();
 				}
@@ -199,9 +199,9 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
 			if (cds->dwData == FOO_TRACKCHANGE)
 			{
-				if (player->m_State != PLAYER_PLAYING)
+				if (player->m_State != STATE_PLAYING)
 				{
-					player->m_State = PLAYER_PLAYING;
+					player->m_State = STATE_PLAYING;
 				}
 
 				// In the format "TITLE ARTIST ALBUM LENGTH RATING" (seperated by \t)
@@ -331,7 +331,7 @@ void CPlayerFoobar::Pause()
 */
 void CPlayerFoobar::Play()
 {
-	SendMessage(m_FooWindow, WM_USER, 0, (m_State == PLAYER_PAUSED) ? FOO_PLAYPAUSE : FOO_PLAY);
+	SendMessage(m_FooWindow, WM_USER, 0, (m_State == STATE_PAUSED) ? FOO_PLAYPAUSE : FOO_PLAY);
 }
 
 /*

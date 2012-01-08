@@ -3,4 +3,7 @@
   <PropertyGroup Label="UserMacros">
     <COMPILER64>Windows7.1SDK</COMPILER64>
   </PropertyGroup>
+  <PropertyGroup Label="UserMacros" Condition="'$(SolutionName)'=='Rainmeter'">
+    <COMPILER64>v100</COMPILER64>
+  </PropertyGroup>
 </Project>

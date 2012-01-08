@@ -17,24 +17,10 @@
 */
 
 #include <windows.h>
-#include <tchar.h>
-#include <map>
-
+#include <wchar.h>
 #include "CoreTempProxy.h"
-
 #include "../../Library/Export.h"	// Rainmeter's exported functions
-
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
-
-extern "C"
-{
-	__declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
-	__declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-	__declspec( dllexport ) LPCTSTR GetString(UINT id, UINT flags);
-	__declspec( dllexport ) double Update2(UINT id);
-	__declspec( dllexport ) UINT GetPluginVersion();
-	__declspec( dllexport ) LPCTSTR GetPluginAuthor();
-}
 
 typedef enum eMeasureType
 {
@@ -49,73 +35,50 @@ typedef enum eMeasureType
 	MeasureCpuName
 };
 
-std::map<UINT, eMeasureType> g_Types;
-std::map<UINT, int> g_Indexes;
+struct MeasureData
+{
+	eMeasureType type;
+	int index;
+
+	MeasureData() : type(), index() {}
+};
+
 CoreTempProxy proxy;
 
 eMeasureType convertStringToMeasureType(LPCWSTR i_String);
 bool areStringsEqual(LPCWSTR i_String1, LPCWSTR i_Strting2);
 float getHighestTemp();
 
-/*
-  This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured.
-  The return value can also be 0, which means that Rainmeter will
-  track the maximum value automatically. The parameters for this
-  function are:
-
-  instance  The instance of this DLL
-  iniFile   The name of the ini-file (usually Rainmeter.ini)
-  section   The name of the section in the ini-file for this measure
-  id        The identifier for the measure. This is used to identify the measures that use the same plugin.
-*/
-UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
+PLUGIN_EXPORT void Initialize(void** data)
 {
-	/*
-	  Read our own settings from the ini-file
-	  The ReadConfigString can be used for this purpose. Plugins
-	  can also read the config some other way (e.g. with
-	  GetPrivateProfileInt, but in that case the variables
-	  do not work.
-	*/
-	LPCTSTR data = ReadConfigString(section, L"CoreTempType", L"Temperature");
-	if (data)
-	{
-		eMeasureType type = convertStringToMeasureType(data);
-
-		g_Types[id] = type;
-		if (type == MeasureTemperature || type == MeasureTjMax || type == MeasureLoad)
-		{
-			data = ReadConfigString(section, L"CoreTempIndex", L"0");
-			if (data)
-			{
-				g_Indexes[id] = _wtoi(data);
-			}
-			else
-			{
-				g_Indexes[id] = 0;
-				LSLog(LOG_WARNING, NULL, L"CoreTemp.dll: Selected CoreTempType requires CoreTempIndex, assuming 0");
-			}
-		}
-	}
-
-	return 0;
+	MeasureData* measure = new MeasureData;
+	*data = measure;
 }
 
-/*
-  This function is called when new value should be measured.
-  The function returns the new value.
-*/
-double Update2(UINT id)
+PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
+	MeasureData* measure = (MeasureData*)data;
+
+	LPCWSTR value = RmReadString(rm, L"CoreTempType", L"Temperature");
+	eMeasureType type = convertStringToMeasureType(value);
+
+	if (type == MeasureTemperature || type == MeasureTjMax || type == MeasureLoad)
+	{
+		measure->index = RmReadInt(rm, L"CoreTempIndex", 0);
+	}
+}
+
+PLUGIN_EXPORT double Update(void* data)
+{
+	MeasureData* measure = (MeasureData*)data;
 	double result = 0;
 
 	if (proxy.GetData())
 	{
-		switch (g_Types[id])
+		switch (measure->type)
 		{
 		case MeasureTemperature:
-			result = proxy.GetTemp(g_Indexes[id]);
+			result = proxy.GetTemp(measure->index);
 			break;
 
 		case MeasureMaxTemperature:
@@ -123,11 +86,11 @@ double Update2(UINT id)
 			break;
 
 		case MeasureTjMax:
-			result = proxy.GetTjMax(g_Indexes[id]);
+			result = proxy.GetTjMax(measure->index);
 			break;
 
 		case MeasureLoad:
-			result = proxy.GetCoreLoad(g_Indexes[id]);
+			result = proxy.GetCoreLoad(measure->index);
 			break;
 
 		case MeasureVid:
@@ -151,11 +114,12 @@ double Update2(UINT id)
 	return result;
 }
 
-LPCTSTR GetString(UINT id, UINT flags)
+PLUGIN_EXPORT LPCWSTR GetString(void* data)
 {
-	static WCHAR buffer[256];
+	MeasureData* measure = (MeasureData*)data;
+	static WCHAR buffer[128];
 
-	switch (g_Types[id])
+	switch (measure->type)
 	{
 	case MeasureVid:
 		_snwprintf_s(buffer, _TRUNCATE, L"%.4f", proxy.GetVID());
@@ -170,44 +134,6 @@ LPCTSTR GetString(UINT id, UINT flags)
 	}
 
 	return buffer;
-}
-
-/*
-  If the measure needs to free resources before quitting.
-  The plugin can export Finalize function, which is called
-  when Rainmeter quits (or refreshes).
-*/
-void Finalize(HMODULE instance, UINT id)
-{
-	std::map<UINT, eMeasureType>::iterator i1 = g_Types.find(id);
-	if (i1 != g_Types.end())
-	{
-		g_Types.erase(i1);
-	}
-
-	std::map<UINT, int>::iterator i2 = g_Indexes.find(id);
-	if (i2 != g_Indexes.end())
-	{
-		g_Indexes.erase(i2);
-	}
-}
-
-/*
-  Returns the version number of the plugin. The value
-  can be calculated like this: Major * 1000 + Minor.
-  So, e.g. 2.31 would be 2031.
-*/
-UINT GetPluginVersion()
-{
-	return 1000;
-}
-
-/*
-  Returns the author of the plugin for the about dialog.
-*/
-LPCTSTR GetPluginAuthor()
-{
-	return L"Arthur Liberman - ALCPU (arthur_liberman@hotmail.com)";
 }
 
 bool areStringsEqual(LPCWSTR i_String1, LPCWSTR i_Strting2)
@@ -258,7 +184,7 @@ eMeasureType convertStringToMeasureType(LPCWSTR i_String)
 	else
 	{
 		result = MeasureTemperature;
-		LSLog(LOG_WARNING, NULL, L"CoreTemp.dll: Invalid CoreTempType");
+		RmLog(LOG_WARNING, L"CoreTemp.dll: Invalid CoreTempType");
 	}
 
 	return result;

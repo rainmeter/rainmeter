@@ -37,7 +37,7 @@ void CInternet::Initialize()
 
 	if (!c_NetHandle)
 	{
-		LSLog(LOG_ERROR, NULL, L"NowPlaying.dll: Unable to open net handle");
+		RmLog(LOG_ERROR, L"NowPlaying.dll: Unable to open net handle");
 	}
 }
 

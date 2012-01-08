@@ -1,88 +1,35 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="pcre">
-      <UniqueIdentifier>{1ff2687f-eddb-4a75-8e79-16a5962f020b}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\Library\pcre-8.10\config.h">
-      <Filter>pcre</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Library\pcre-8.10\pcre.h">
-      <Filter>pcre</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Library\pcre-8.10\pcre_internal.h">
-      <Filter>pcre</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Library\pcre-8.10\ucp.h">
-      <Filter>pcre</Filter>
-    </ClInclude>
     <ClInclude Include="FolderInfo.h" />
+    <ClInclude Include="..\..\Library\pcre-8.10\config.h" />
+    <ClInclude Include="..\..\Library\pcre-8.10\pcre.h" />
+    <ClInclude Include="..\..\Library\pcre-8.10\pcre_internal.h" />
+    <ClInclude Include="..\..\Library\pcre-8.10\ucp.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_chartables.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_compile.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_config.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_dfa_exec.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_exec.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_fullinfo.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_get.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_globals.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_info.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_maketables.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_newline.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_ord2utf8.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_refcount.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_study.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_tables.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_try_flipped.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_ucd.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_valid_utf8.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_version.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_xclass.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
     <ClCompile Include="FolderInfo.cpp" />
     <ClCompile Include="FolderInfoPlugin.cpp" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_chartables.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_compile.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_config.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_dfa_exec.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_exec.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_fullinfo.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_get.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_globals.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_info.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_maketables.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_newline.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_ord2utf8.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_refcount.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_study.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_tables.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_try_flipped.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_ucd.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_valid_utf8.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_version.c" />
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_xclass.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PluginFolderInfo.rc" />

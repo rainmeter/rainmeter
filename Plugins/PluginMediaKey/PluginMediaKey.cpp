@@ -17,39 +17,17 @@
 */
 
 #include <windows.h>
-#include <string>
 #include "../../Library/Export.h"	// Rainmeter's exported functions
-
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
-
-/* The exported functions */
-extern "C"
-{
-__declspec( dllexport ) UINT Update(UINT id);
-__declspec( dllexport ) UINT GetPluginVersion();
-__declspec( dllexport ) LPCTSTR GetPluginAuthor();
-__declspec( dllexport ) void ExecuteBang(LPCTSTR args, UINT id);
-}
-
-void SendKey(WORD key);
-
-/*
-  This function is called when new value should be measured.
-  The function returns the new value.
-*/
-UINT Update(UINT id)
-{
-	return 0;
-}
 
 void SendKey(WORD key)
 {
 	KEYBDINPUT kbi;
-	kbi.wVk = key; // Provide your own
+	kbi.wVk = key;
 	kbi.wScan = 0;
-	kbi.dwFlags = 0;  // See docs for flags (mm keys may need Extended key flag)
+	kbi.dwFlags = 0;
 	kbi.time = 0;
-	kbi.dwExtraInfo = (ULONG_PTR) GetMessageExtraInfo();
+	kbi.dwExtraInfo = (ULONG_PTR)GetMessageExtraInfo();
 
 	INPUT input;
 	input.type = INPUT_KEYBOARD;
@@ -58,7 +36,7 @@ void SendKey(WORD key)
 	SendInput(1, &input, sizeof(INPUT));
 }
 
-void ExecuteBang(LPCTSTR args, UINT id)
+PLUGIN_EXPORT void ExecuteBang(LPCTSTR args, UINT id)
 {
 	if (_wcsicmp(args, L"NextTrack") == 0)
 	{
@@ -90,16 +68,6 @@ void ExecuteBang(LPCTSTR args, UINT id)
 	}
 	else
 	{
-		LSLog(LOG_WARNING, NULL, L"MediaKey.dll: Unknown bang");
+		RmLog(LOG_WARNING, L"MediaKey.dll: Unknown bang");
 	}
-}
-
-UINT GetPluginVersion()
-{
-	return 1000;
-}
-
-LPCTSTR GetPluginAuthor()
-{
-	return L"Birunthan Mohanathas (www.poiru.net)";
 }

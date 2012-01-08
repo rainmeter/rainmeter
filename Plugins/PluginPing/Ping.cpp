@@ -17,29 +17,13 @@
 */
 
 #include <windows.h>
-#include <math.h>
-#include <string>
-#include <map>
-#include <vector>
-#include <time.h>
 #include <Ipexport.h>
-#include <Windns.h>
-#include <stdlib.h>
+#include <Icmpapi.h>
 #include "../../Library/Export.h"	// Rainmeter's exported functions
 
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
-/* The exported functions */
-extern "C"
-{
-__declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
-__declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-__declspec( dllexport ) double Update2(UINT id);
-__declspec( dllexport ) UINT GetPluginVersion();
-__declspec( dllexport ) LPCTSTR GetPluginAuthor();
-}
-
-struct pingData
+struct MeasureData
 {
 	IPAddr destAddr;
 	DWORD timeout;
@@ -48,275 +32,164 @@ struct pingData
 	DWORD updateCounter;
 	HANDLE threadHandle;
 	double value;
+
+	MeasureData() :
+		destAddr(),
+		timeout(),
+		timeoutValue(),
+		updateRate(),
+		updateCounter(),
+		threadHandle(),
+		value()
+	{
+	}
 };
 
-typedef struct tagIPINFO
-{
-	u_char nTtl;			// Time To Live
-	u_char nTos;			// Type Of Service
-	u_char nIPFlags;		// IP flags
-	u_char nOptSize;		// Size of options data
-	u_char FAR* pOptions;	// Options data buffer
-
-} IPINFO;
-
-typedef IPINFO* PIPINFO;
-
-static std::map<UINT, pingData*> g_Values;
 static CRITICAL_SECTION g_CriticalSection;
-static bool g_Initialized = false;
-static HINSTANCE g_ICMPInstance = NULL;
+static UINT g_Instances = 0;
 
-typedef HANDLE (WINAPI *IcmpCreateFile)(VOID);
-typedef BOOL (WINAPI *IcmpCloseHandle)(HANDLE);
-typedef DWORD (WINAPI *IcmpSendEcho)(HANDLE, DWORD, LPVOID, WORD, PIPINFO, LPVOID, DWORD, DWORD);
-typedef DWORD (WINAPI *IcmpSendEcho2)(HANDLE, HANDLE, FARPROC, PVOID, IPAddr, LPVOID, WORD, PIP_OPTION_INFORMATION, LPVOID, DWORD, DWORD);
-
-static IcmpCreateFile g_IcmpCreateFile = NULL;
-static IcmpCloseHandle g_IcmpCloseHandle = NULL;
-static IcmpSendEcho g_IcmpSendEcho = NULL;
-static IcmpSendEcho2 g_IcmpSendEcho2 = NULL;
-
-std::string ConvertToAscii(LPCTSTR str)
+PLUGIN_EXPORT void Initialize(void** data)
 {
-	std::string szAscii;
+	MeasureData* measure = new MeasureData;
+	*data = measure;
 
-	if (str && *str)
-	{
-		int strLen = (int)wcslen(str);
-		int bufLen = WideCharToMultiByte(CP_ACP, 0, str, strLen, NULL, 0, NULL, NULL);
-		if (bufLen > 0)
-		{
-			szAscii.resize(bufLen);
-			WideCharToMultiByte(CP_ACP, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
-		}
-	}
-	return szAscii;
-}
-
-/*
-  This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured.
-  The return value can also be 0, which means that Rainmeter will
-  track the maximum value automatically. The parameters for this
-  function are:
-
-  instance  The instance of this DLL
-  iniFile   The name of the ini-file (usually Rainmeter.ini)
-  section   The name of the section in the ini-file for this measure
-  id        The identifier for the measure. This is used to identify the measures that use the same plugin.
-*/
-UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
-{
-	bool valid = false;
-	pingData* pData = new pingData;
-
-	if (!g_Initialized)
+	if (g_Instances == 0)
 	{
 		InitializeCriticalSection(&g_CriticalSection);
-
-		g_ICMPInstance = LoadLibrary(L"ICMP.DLL");
-
-		if (g_ICMPInstance)
-		{
-			g_IcmpCreateFile = (IcmpCreateFile)GetProcAddress(g_ICMPInstance, "IcmpCreateFile");
-			g_IcmpCloseHandle = (IcmpCloseHandle)GetProcAddress(g_ICMPInstance, "IcmpCloseHandle");
-			g_IcmpSendEcho = (IcmpSendEcho)GetProcAddress(g_ICMPInstance,"IcmpSendEcho");
-			g_IcmpSendEcho2 = (IcmpSendEcho2)GetProcAddress(g_ICMPInstance,"IcmpSendEcho2");
-		}
-
-		g_Initialized = true;
 	}
 
-	memset(pData, 0, sizeof(pingData));
+	++g_Instances;
+}
 
-	/* Read our own settings from the ini-file */
-	LPCTSTR data = ReadConfigString(section, L"DestAddress", NULL);
-	if (data)
+PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+{
+	MeasureData* measure = (MeasureData*)data;
+
+	LPCWSTR value = RmReadString(rm, L"DestAddress", L"");
+	if (*value)
 	{
-		std::string szData = ConvertToAscii(data);
-
-		pData->destAddr = inet_addr(szData.c_str());
-		if (pData->destAddr == INADDR_NONE)
+		int strLen = (int)wcslen(value) + 1;
+		int bufLen = WideCharToMultiByte(CP_ACP, 0, value, strLen, NULL, 0, NULL, NULL);
+		if (bufLen > 0)
 		{
-			WSADATA wsaData;
-			if (WSAStartup(0x0101, &wsaData) == 0)
-			{
-				LPHOSTENT pHost;
+			char* buffer = new char[bufLen];
+			WideCharToMultiByte(CP_ACP, 0, value, strLen, buffer, bufLen, NULL, NULL);
 
-				pHost = gethostbyname(szData.c_str());
-				if (pHost)
+			measure->destAddr = inet_addr(buffer);
+			if (measure->destAddr == INADDR_NONE)
+			{
+				WSADATA wsaData;
+				if (WSAStartup(0x0101, &wsaData) == 0)
 				{
-					pData->destAddr = *(DWORD*)pHost->h_addr;
+					LPHOSTENT pHost = gethostbyname(buffer);
+					if (pHost)
+					{
+						measure->destAddr = *(DWORD*)pHost->h_addr;
+					}
+					else
+					{
+						RmLog(LOG_WARNING, L"PingPlugin.dll: Unable to get host by name");
+					}
+
+					WSACleanup();
 				}
 				else
 				{
-					LSLog(LOG_WARNING, NULL, L"PingPlugin.dll: Unable to get host by name");
+					RmLog(LOG_WARNING, L"PingPlugin.dll: Unable to start WSA");
 				}
+			}
 
-				WSACleanup();
-			}
-			else
-			{
-				LSLog(LOG_WARNING, NULL, L"PingPlugin.dll: Unable to start WSA");
-			}
+			delete [] buffer;
 		}
-		valid = true;
 	}
 
-	data = ReadConfigString(section, L"UpdateRate", L"32");
-	if (data)
-	{
-		pData->updateRate = _wtoi(data);
-	}
-
-	data = ReadConfigString(section, L"Timeout", L"30000");
-	if (data)
-	{
-		pData->timeout = _wtoi(data);
-	}
-
-	data = ReadConfigString(section, L"TimeoutValue", L"30000");
-	if (data)
-	{
-		pData->timeoutValue = wcstod(data, NULL);
-	}
-
-	if (valid)
-	{
-		g_Values[id] = pData;
-	}
-
-	return pData->timeout;
+	measure->updateRate = RmReadInt(rm, L"UpdateRate", 32);
+	measure->timeout = RmReadInt(rm, L"Timeout", 30000);
+	measure->timeoutValue = RmReadDouble(rm, L"TimeoutValue", 30000.0);
 }
 
 DWORD WINAPI NetworkThreadProc(LPVOID pParam)
 {
-	if (g_IcmpCreateFile && g_IcmpCloseHandle && g_IcmpSendEcho)
+	MeasureData* measure = (MeasureData*)pParam;
+
+	const DWORD replySize = sizeof(ICMP_ECHO_REPLY) + 32;
+	BYTE* reply = new BYTE[replySize];
+
+	HANDLE hIcmpFile = IcmpCreateFile();
+
+	if (hIcmpFile != INVALID_HANDLE_VALUE)
 	{
-		pingData* pData = (pingData*)pParam;
-
-		const DWORD replySize = sizeof(ICMP_ECHO_REPLY) + 32;
-		BYTE* reply = new BYTE[replySize];
-
-		HANDLE hIcmpFile;
-		hIcmpFile = g_IcmpCreateFile();
-
-		if (hIcmpFile != INVALID_HANDLE_VALUE)
-		{
-			DWORD res = g_IcmpSendEcho(
-				hIcmpFile,
-				pData->destAddr,
-				NULL,
-				0,
-				NULL,
-				reply,
-				replySize,
-				pData->timeout);
-
-			g_IcmpCloseHandle(hIcmpFile);
-		}
-
-		EnterCriticalSection(&g_CriticalSection);
-		ICMP_ECHO_REPLY* pReply = (ICMP_ECHO_REPLY*)reply;
-		if (pReply->Status == IP_REQ_TIMED_OUT)
-		{
-			pData->value = pData->timeoutValue;
-		}
-		else
-		{
-			pData->value = pReply->RoundTripTime;
-		}
-
-		delete [] reply;
-		CloseHandle(pData->threadHandle);
-		pData->threadHandle = 0;
-		LeaveCriticalSection(&g_CriticalSection);
+		IcmpSendEcho(hIcmpFile, measure->destAddr, NULL, 0, NULL, reply, replySize, measure->timeout);
+		IcmpCloseHandle(hIcmpFile);
 	}
-	return 0;   // thread completed successfully
+
+	EnterCriticalSection(&g_CriticalSection);
+
+	ICMP_ECHO_REPLY* pReply = (ICMP_ECHO_REPLY*)reply;
+	if (pReply->Status == IP_REQ_TIMED_OUT)
+	{
+		measure->value = measure->timeoutValue;
+	}
+	else
+	{
+		measure->value = pReply->RoundTripTime;
+	}
+
+	delete [] reply;
+
+	CloseHandle(measure->threadHandle);
+	measure->threadHandle = NULL;
+
+	LeaveCriticalSection(&g_CriticalSection);
+
+	return 0;
 }
 
-/*
-This function is called when new value should be measured.
-The function returns the new value.
-*/
-double Update2(UINT id)
+PLUGIN_EXPORT double Update(void* data)
 {
+	MeasureData* measure = (MeasureData*)data;
 	double value = 0.0;
 
-	std::map<UINT, pingData*>::iterator i = g_Values.find(id);
-	if (i != g_Values.end())
+	EnterCriticalSection(&g_CriticalSection);
+	value = measure->value;
+	LeaveCriticalSection(&g_CriticalSection);
+
+	if (measure->threadHandle == NULL)
 	{
-		pingData* pData = (*i).second;
-
-		EnterCriticalSection(&g_CriticalSection);
-		value = pData->value;
-		LeaveCriticalSection(&g_CriticalSection);
-
-		if (pData->threadHandle == NULL)
+		if (measure->updateCounter == 0)
 		{
-			if (pData->updateCounter == 0)
-			{
-				// Launch a new thread to fetch the web data
-				DWORD id;
-				pData->threadHandle = CreateThread(NULL, 0, NetworkThreadProc, pData, 0, &id);
-			}
+			// Launch a new thread to fetch the web data
+			DWORD id;
+			measure->threadHandle = CreateThread(NULL, 0, NetworkThreadProc, measure, 0, &id);
+		}
 
-			pData->updateCounter++;
-			if (pData->updateCounter >= pData->updateRate)
-			{
-				pData->updateCounter = 0;
-			}
+		measure->updateCounter++;
+		if (measure->updateCounter >= measure->updateRate)
+		{
+			measure->updateCounter = 0;
 		}
 	}
+
 	return value;
 }
 
-/*
-  If the measure needs to free resources before quitting.
-  The plugin can export Finalize function, which is called
-  when Rainmeter quits (or refreshes).
-*/
-void Finalize(HMODULE instance, UINT id)
+PLUGIN_EXPORT void Finalize(void* data)
 {
-	std::map<UINT, pingData*>::iterator i1 = g_Values.find(id);
-	if (i1 != g_Values.end())
-	{
-		EnterCriticalSection(&g_CriticalSection);
-		if ((*i1).second->threadHandle)
-		{
-			// Should really wait until the thread finishes instead terminating it...
-			TerminateThread((*i1).second->threadHandle, 0);
-		}
-		LeaveCriticalSection(&g_CriticalSection);
+	MeasureData* measure = (MeasureData*)data;
 
-		delete (*i1).second;
-		g_Values.erase(i1);
+	EnterCriticalSection(&g_CriticalSection);
+	if (measure->threadHandle)
+	{
+		// Should really wait until the thread finishes instead terminating it...
+		TerminateThread(measure->threadHandle, 0);
+	}
+	LeaveCriticalSection(&g_CriticalSection);
+
+	--g_Instances;
+	if (g_Instances == 0)
+	{
+		DeleteCriticalSection(&g_CriticalSection);
 	}
 
-	// Last instance deletes the critical section
-	if (g_Values.empty())
-	{
-		if (g_ICMPInstance)
-		{
-			FreeLibrary(g_ICMPInstance);
-			g_ICMPInstance = NULL;
-		}
-
-		if (g_Initialized)
-		{
-			DeleteCriticalSection(&g_CriticalSection);
-			g_Initialized = false;
-		}
-	}
-}
-
-UINT GetPluginVersion()
-{
-	return 1002;
-}
-
-LPCTSTR GetPluginAuthor()
-{
-	return L"Rainy (rainy@iki.fi)";
+	delete measure;
 }

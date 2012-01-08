@@ -162,7 +162,7 @@ void CPlayer::FindLyrics()
 		}
 		else
 		{
-			LSLog(LOG_DEBUG, NULL, L"NowPlaying.dll: Failed to start lyrics thread");
+			RmLog(LOG_DEBUG, L"NowPlaying.dll: Failed to start lyrics thread");
 		}
 	}
 }
@@ -214,7 +214,7 @@ unsigned __stdcall CPlayer::LyricsThreadProc(void* pParam)
 */
 void CPlayer::ClearData()
 {
-	m_State = PLAYER_STOPPED;
+	m_State = STATE_STOPPED;
 	m_Artist.clear();
 	m_Album.clear();
 	m_Title.clear();

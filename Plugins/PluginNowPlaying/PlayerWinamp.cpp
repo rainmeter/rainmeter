@@ -125,7 +125,7 @@ void CPlayerWinamp::UpdateData()
 				if (m_WinampHandle) CloseHandle(m_WinampHandle);
 			}
 
-			if (m_State != PLAYER_STOPPED)
+			if (m_State != STATE_STOPPED)
 			{
 				ClearData();
 			}
@@ -135,7 +135,7 @@ void CPlayerWinamp::UpdateData()
 		}
 		else
 		{
-			m_State = (playing == 1) ? PLAYER_PLAYING : PLAYER_PAUSED;
+			m_State = (playing == 1) ? STATE_PLAYING : STATE_PAUSED;
 			m_Position = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETOUTPUTTIME) / 1000;		// ms to secs
 			m_Volume = (SendMessage(m_Window, WM_WA_IPC, -666, IPC_SETVOLUME) * 100) / 255;	// 0 - 255 to 0 - 100
 		}

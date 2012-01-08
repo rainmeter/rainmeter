@@ -224,13 +224,13 @@ void CPlayerITunes::Initialize()
 
 				if (position != 0)
 				{
-					m_State = PLAYER_PAUSED;
+					m_State = STATE_PAUSED;
 					OnTrackChange();
 				}
 			}
 			else if (state == ITPlayerStatePlaying)
 			{
-				m_State = PLAYER_PLAYING;
+				m_State = STATE_PLAYING;
 				OnTrackChange();
 			}
 		}
@@ -337,7 +337,7 @@ bool CPlayerITunes::CheckWindow()
 */
 void CPlayerITunes::UpdateData()
 {
-	if ((m_Initialized || CheckWindow()) && m_State != PLAYER_STOPPED)
+	if ((m_Initialized || CheckWindow()) && m_State != STATE_STOPPED)
 	{
 		long position;
 		m_iTunes->get_PlayerPosition(&position);
@@ -487,12 +487,12 @@ void CPlayerITunes::OnStateChange(bool playing)
 {
 	if (playing)
 	{
-		m_State = PLAYER_PLAYING;
+		m_State = STATE_PLAYING;
 	}
 	else
 	{
 		// Guess if paused or stopped from track time
-		m_State = (m_Position == 0) ? PLAYER_STOPPED : PLAYER_PAUSED;
+		m_State = (m_Position == 0) ? STATE_STOPPED : STATE_PAUSED;
 	}
 }
 

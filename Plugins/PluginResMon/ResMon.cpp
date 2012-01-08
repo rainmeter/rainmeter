@@ -26,26 +26,14 @@
 #define _WIN32_WINNT 0x0501
 
 #include <windows.h>
-#include <math.h>
-#include <map>
-#include <string>
+#include <stdio.h>
 #include <psapi.h>
+#include "../../Library/RawString.h"
 #include "../../Library/Export.h"	// Rainmeter's exported functions
-
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
-/* The exported functions */
-extern "C"
-{
-	__declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
-	__declspec( dllexport ) UINT Update(UINT id);
-	__declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-	__declspec( dllexport ) UINT GetPluginVersion();
-	__declspec( dllexport ) LPCTSTR GetPluginAuthor();
-}
-
 // system resources that can be counted
-enum COUNTER
+enum MEASURETYPE
 {
 	GDI_COUNT,
 	USER_COUNT,
@@ -53,138 +41,103 @@ enum COUNTER
 	WINDOW_COUNT
 };
 
-// list of counter types corresponding to gauges
-static std::map<UINT, COUNTER> g_Counters;
-static std::map<UINT, std::wstring> g_ProcessNames;
+struct MeasureData
+{
+	MEASURETYPE type;
+	CRawString process;
+
+	MeasureData() : type(GDI_COUNT) {}
+};
 
 // used to track the number of existing windows
 UINT g_WindowCount = 0;
 
-// count the child windows of a system window
-BOOL CALLBACK EnumChildProc ( HWND hWndChild, LPARAM lParam )
+// count the windows
+BOOL CALLBACK EnumWindowProc(HWND hWnd, LPARAM lParam)
 {
 	++g_WindowCount;
 	return TRUE;
 }
 
-// count the system windows
-BOOL CALLBACK EnumWindowProc ( HWND hWnd, LPARAM lParam )
+PLUGIN_EXPORT void Initialize(void** data)
 {
-	++g_WindowCount;
-	EnumChildWindows ( hWnd, EnumChildProc, lParam );
-	return TRUE;
+	MeasureData* measure = new MeasureData;
+	*data = measure;
 }
 
-/*
-  This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured.
-  The return value can also be 0, which means that Rainmeter will
-  track the maximum value automatically. The parameters for this
-  function are:
 
-  instance  The instance of this DLL
-  iniFile   The name of the ini-file (usually Rainmeter.ini)
-  section   The name of the section in the ini-file for this measure
-  id        The identifier for the measure. This is used to identify the measures that use the same plugin.
-*/
-UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
+PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
-	LPCTSTR type = ReadConfigString(section, L"ResCountType", L"GDI");
+	MeasureData* measure = (MeasureData*)data;
 
-	/* Read our own settings from the ini-file */
-	if (type)
+	LPCWSTR type = RmReadString(rm, L"ResCountType", L"GDI");
+	if (_wcsicmp(L"GDI", type) == 0)
 	{
-		if ( _wcsicmp ( L"GDI", type ) == 0 )
-		{
-			g_Counters[id] = GDI_COUNT;
-		}
-		else if ( _wcsicmp ( L"USER", type ) == 0 )
-		{
-			g_Counters[id] = USER_COUNT;
-		}
-		else if ( _wcsicmp ( L"HANDLE", type ) == 0 )
-		{
-			g_Counters[id] = HANDLE_COUNT;
-		}
-		else if ( _wcsicmp ( L"WINDOW", type ) == 0 )
-		{
-			g_Counters[id] = WINDOW_COUNT;
-		}
-		else
-		{
-			std::wstring error = L"ResMon.dll: GDICountType=";
-			error += type;
-			error += L" is not valid in [";
-			error += section;
-			error += L"]";
-			LSLog(LOG_ERROR, NULL, error.c_str());
-		}
+		measure->type = GDI_COUNT;
+	}
+	else if (_wcsicmp(L"USER", type) == 0)
+	{
+		measure->type = USER_COUNT;
+	}
+	else if (_wcsicmp(L"HANDLE", type) == 0)
+	{
+		measure->type = HANDLE_COUNT;
+	}
+	else if (_wcsicmp(L"WINDOW", type) == 0)
+	{
+		measure->type = WINDOW_COUNT;
+	}
+	else
+	{
+		WCHAR buffer[256];
+		_snwprintf_s(buffer, _TRUNCATE, L"ResMon.dll: GDICountType=%s is not valid in [%s]", type, RmGetMeasureName(rm));
+		RmLog(LOG_ERROR, buffer);
 	}
 
-	LPCTSTR process = ReadConfigString(section, L"ProcessName", L"");
-	if (process && wcslen(process) > 0)
-	{
-		g_ProcessNames[id] = process;
-	}
-
-	return 0;
+	measure->process = RmReadString(rm, L"ProcessName", L"");
 }
 
-/*
-  This function is called when new value should be measured.
-  The function returns the new value.
-*/
-UINT Update(UINT id)
+PLUGIN_EXPORT double Update(void* data)
 {
-	std::map<UINT, COUNTER>::iterator countItor = g_Counters.find ( id );
-	if ( countItor == g_Counters.end () )
-	{
-		return 0;
-	}
-
-	COUNTER counter = ( *countItor ).second;
+	MeasureData* measure = (MeasureData*)data;
 
 	// count the existing window objects
-	if ( counter == WINDOW_COUNT )
+	if (measure->type == WINDOW_COUNT)
 	{
 		g_WindowCount = 0;
-		EnumChildWindows ( NULL, EnumWindowProc, 0 );
+		EnumChildWindows(NULL, EnumWindowProc, 0);
 		return g_WindowCount;
 	}
 
-	const WCHAR* processName = NULL;
-	std::map<UINT, std::wstring>::iterator processItor = g_ProcessNames.find ( id );
-	if ( processItor != g_ProcessNames.end () )
-	{
-		processName = ((*processItor).second).c_str();
-	}
+	const WCHAR* processName = measure->process.c_str();
+	bool name = !measure->process.empty();
 
 	DWORD aProcesses[1024];
 	DWORD bytesNeeded;
 	WCHAR buffer[1024];
 	HMODULE hMod[1024];
-	DWORD   cbNeeded;
+	DWORD cbNeeded;
 
-	if ( !EnumProcesses ( aProcesses, sizeof ( aProcesses ), &bytesNeeded ) )
+	if (!EnumProcesses(aProcesses, sizeof(aProcesses), &bytesNeeded))
 	{
-		return 0;
+		return 0.0;
 	}
 
 	// step through the running processes
 	DWORD flags = PROCESS_QUERY_INFORMATION;
 
-	if (processName)
+	if (name)
 	{
 		flags |= PROCESS_VM_READ;
 	}
 
 	UINT resourceCount = 0;
-	for ( UINT i = 0; i < bytesNeeded / sizeof ( DWORD ); ++i )
+	for (UINT i = 0, isize = bytesNeeded / sizeof(DWORD); i < isize; ++i)
 	{
-		HANDLE hProcess = OpenProcess ( flags, true, aProcesses[i] );
-		if ( hProcess != NULL )
+		HANDLE hProcess = OpenProcess(flags, true, aProcesses[i]);
+		if (hProcess != NULL)
 		{
-			if (processName)
+			if (name)
 			{
 				if (EnumProcessModules(hProcess, hMod, sizeof(hMod), &cbNeeded))
 				{
@@ -192,70 +145,46 @@ UINT Update(UINT id)
 					{
 						if (_wcsicmp(buffer, processName) != 0)
 						{
-							CloseHandle ( hProcess );
+							CloseHandle(hProcess);
 							continue;
 						}
 					}
 					else
 					{
-						CloseHandle ( hProcess );
+						CloseHandle(hProcess);
 						continue;
 					}
 				}
 				else
 				{
-					CloseHandle ( hProcess );
+					CloseHandle(hProcess);
 					continue;
 				}
 			}
 
-			if ( counter == GDI_COUNT )
+			if (measure->type == GDI_COUNT)
 			{
-				resourceCount += GetGuiResources ( hProcess, GR_GDIOBJECTS );
+				resourceCount += GetGuiResources(hProcess, GR_GDIOBJECTS);
 			}
-			else if ( counter == USER_COUNT )
+			else if (measure->type == USER_COUNT)
 			{
-				resourceCount += GetGuiResources ( hProcess, GR_USEROBJECTS );
+				resourceCount += GetGuiResources(hProcess, GR_USEROBJECTS);
 			}
-			else if ( counter == HANDLE_COUNT )
+			else if (measure->type == HANDLE_COUNT)
 			{
 				DWORD tempHandleCount = 0;
-				GetProcessHandleCount ( hProcess, &tempHandleCount );
+				GetProcessHandleCount(hProcess, &tempHandleCount);
 				resourceCount += tempHandleCount;
 			}
 		}
-		CloseHandle ( hProcess );
+		CloseHandle(hProcess);
 	}
 
 	return resourceCount;
 }
 
-/*
-  If the measure needs to free resources before quitting.
-  The plugin can export Finalize function, which is called
-  when Rainmeter quits (or refreshes).
-*/
-void Finalize(HMODULE instance, UINT id)
+PLUGIN_EXPORT void Finalize(void* data)
 {
-	std::map<UINT, COUNTER>::iterator i1 = g_Counters.find(id);
-	if (i1 != g_Counters.end())
-	{
-		g_Counters.erase(i1);
-	}
-
-	std::map<UINT, std::wstring>::iterator i2 = g_ProcessNames.find(id);
-	if (i2 != g_ProcessNames.end())
-	{
-		g_ProcessNames.erase(i2);
-	}
-}
-
-UINT GetPluginVersion()
-{
-	return 1003;
-}
-
-LPCTSTR GetPluginAuthor()
-{
-	return L"David Negstad";
+	MeasureData* measure = (MeasureData*)data;
+	delete measure;
 }

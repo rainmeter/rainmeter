@@ -25,14 +25,14 @@
 #include "Internet.h"
 #include "Lyrics.h"
 
-enum PLAYSTATE
+enum StateType
 {
-	PLAYER_STOPPED,
-	PLAYER_PLAYING,
-	PLAYER_PAUSED
+	STATE_STOPPED,
+	STATE_PLAYING,
+	STATE_PAUSED
 };
 
-enum MEASURETYPE
+enum MeasureType
 {
 	MEASURE_NONE     = 0x00000000,
 	MEASURE_ARTIST   = 0x00000001,
@@ -64,8 +64,8 @@ public:
 	void AddMeasure(INT type);
 	virtual void UpdateData() = 0;
 
-	bool IsInitialized() { return m_Initialized; }
-	UINT GetTrackCount() { return m_TrackCount; }
+	bool IsInitialized() const { return m_Initialized; }
+	UINT GetTrackCount() const { return m_TrackCount; }
 
 	void FindCover();
 	void FindLyrics();
@@ -83,19 +83,19 @@ public:
 	virtual void OpenPlayer(std::wstring& path) {}
 	virtual void ClosePlayer() {}
 
-	PLAYSTATE GetState() { return m_State; }
-	LPCTSTR GetArtist() { return m_Artist.c_str(); }
-	LPCTSTR GetAlbum() { return m_Album.c_str(); }
-	LPCTSTR GetTitle() { return m_Title.c_str(); }
-	LPCTSTR GetLyrics() { return m_Lyrics.c_str(); }
-	LPCTSTR GetCoverPath() { return m_CoverPath.c_str(); }
-	LPCTSTR GetFilePath() { return m_FilePath.c_str(); }
-	UINT GetDuration() { return m_Duration; }
-	UINT GetPosition() { return m_Position; }
-	UINT GetRating() { return m_Rating; }
-	UINT GetVolume() { return m_Volume; }
-	bool GetShuffle() { return m_Shuffle; }
-	bool GetRepeat() { return m_Repeat; }
+	StateType GetState() const { return m_State; }
+	LPCTSTR GetArtist() const{ return m_Artist.c_str(); }
+	LPCTSTR GetAlbum() const{ return m_Album.c_str(); }
+	LPCTSTR GetTitle() const{ return m_Title.c_str(); }
+	LPCTSTR GetLyrics() const{ return m_Lyrics.c_str(); }
+	LPCTSTR GetCoverPath() const{ return m_CoverPath.c_str(); }
+	LPCTSTR GetFilePath() const{ return m_FilePath.c_str(); }
+	UINT GetDuration() const{ return m_Duration; }
+	UINT GetPosition() const{ return m_Position; }
+	UINT GetRating() const{ return m_Rating; }
+	UINT GetVolume() const{ return m_Volume; }
+	bool GetShuffle() const { return m_Shuffle; }
+	bool GetRepeat() const { return m_Repeat; }
 
 protected:
 	void ClearData();
@@ -107,7 +107,7 @@ protected:
 	std::wstring m_TempCoverPath;
 
 	INT m_Measures;
-	PLAYSTATE m_State;
+	StateType m_State;
 	std::wstring m_Artist;
 	std::wstring m_Title;
 	std::wstring m_Album;

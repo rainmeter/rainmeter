@@ -17,13 +17,12 @@
 */
 
 #include <windows.h>
-#include <math.h>
-#include <map>
-#include <string>
-#include <time.h>
 #include <Powrprof.h>
+#include <time.h>
+#include <errno.h>
+#include <crtdbg.h>
+#include "../../Library/RawString.h"
 #include "../../Library/Export.h"	// Rainmeter's exported functions
-
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 typedef struct _PROCESSOR_POWER_INFORMATION
@@ -36,20 +35,7 @@ typedef struct _PROCESSOR_POWER_INFORMATION
 	ULONG CurrentIdleState;
 } PROCESSOR_POWER_INFORMATION, *PPROCESSOR_POWER_INFORMATION;
 
-typedef LONG (WINAPI *FPCALLNTPOWERINFORMATION)(POWER_INFORMATION_LEVEL, PVOID, ULONG, PVOID, ULONG);
-
-/* The exported functions */
-extern "C"
-{
-__declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
-__declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-__declspec( dllexport ) LPCTSTR GetString(UINT id, UINT flags);
-__declspec( dllexport ) double Update2(UINT id);
-__declspec( dllexport ) UINT GetPluginVersion();
-__declspec( dllexport ) LPCTSTR GetPluginAuthor();
-}
-
-enum POWER_STATE
+enum MeasureType
 {
 	POWER_UNKNOWN,
 	POWER_ACLINE,
@@ -61,272 +47,187 @@ enum POWER_STATE
 	POWER_HZ
 };
 
-std::map<UINT, POWER_STATE> g_States;
-std::map<UINT, std::wstring> g_Formats;
-HINSTANCE hDLL = NULL;
-int g_Instances, g_NumOfProcessors = 0;
-FPCALLNTPOWERINFORMATION fpCallNtPowerInformation = NULL;
+struct MeasureData
+{
+	MeasureType type;
+	CRawString format;
+	
+	MeasureData() : type(POWER_UNKNOWN) {}
+};
+
+UINT g_NumOfProcessors = 0;
 
 void NullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved)
 {
 	// Do nothing.
 }
 
-/*
-  This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured.
-  The return value can also be 0, which means that Rainmeter will
-  track the maximum value automatically. The parameters for this
-  function are:
-
-  instance  The instance of this DLL
-  iniFile   The name of the ini-file (usually Rainmeter.ini)
-  section   The name of the section in the ini-file for this measure
-  id        The identifier for the measure. This is used to identify the measures that use the same plugin.
-*/
-UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
+PLUGIN_EXPORT void Initialize(void** data)
 {
-	g_Instances++;
-	if (hDLL == NULL)
+	MeasureData* measure = new MeasureData;
+	*data = measure;
+
+	if (!g_NumOfProcessors)
 	{
-		hDLL = LoadLibrary(L"powrprof.dll");
-		if (hDLL)
-		{
-			fpCallNtPowerInformation = (FPCALLNTPOWERINFORMATION)GetProcAddress(hDLL, "CallNtPowerInformation");
-		}
+		SYSTEM_INFO si;
+		GetSystemInfo(&si);
+		g_NumOfProcessors = (UINT)si.dwNumberOfProcessors;
 	}
-
-	POWER_STATE powerState = POWER_UNKNOWN;
-
-	SYSTEM_INFO systemInfo = {0};
-	GetSystemInfo(&systemInfo);
-	g_NumOfProcessors = (int)systemInfo.dwNumberOfProcessors;
-
-	/* Read our own settings from the ini-file */
-	LPCTSTR type = ReadConfigString(section, L"PowerState", L"");
-	if (type)
-	{
-		if (_wcsicmp(L"ACLINE", type) == 0)
-		{
-			powerState = POWER_ACLINE;
-		}
-		else if (_wcsicmp(L"STATUS", type) == 0)
-		{
-			powerState = POWER_STATUS;
-		}
-		else if (_wcsicmp(L"STATUS2", type) == 0)
-		{
-			powerState = POWER_STATUS2;
-		}
-		else if (_wcsicmp(L"LIFETIME", type) == 0)
-		{
-			powerState= POWER_LIFETIME;
-
-			LPCTSTR format = ReadConfigString(section, L"Format", L"%H:%M");
-			if (format)
-			{
-				g_Formats[id] = format;
-			}
-		}
-		else if (_wcsicmp(L"MHZ", type) == 0)
-		{
-			powerState= POWER_MHZ;
-		}
-		else if (_wcsicmp(L"HZ", type) == 0)
-		{
-			powerState= POWER_HZ;
-		}
-		else if (_wcsicmp(L"PERCENT", type) == 0)
-		{
-			powerState = POWER_PERCENT;
-		}
-
-		g_States[id] = powerState;
-	}
-
-	switch(powerState)
-	{
-	case POWER_ACLINE:
-		return 1;
-
-	case POWER_STATUS:
-		return 4;
-
-	case POWER_STATUS2:
-		return 255;
-
-	case POWER_LIFETIME:
-		{
-			SYSTEM_POWER_STATUS status;
-			if (GetSystemPowerStatus(&status))
-			{
-				return status.BatteryFullLifeTime;
-			}
-		}
-		break;
-
-	case POWER_PERCENT:
-		return 100;
-	}
-
-	return 0;
 }
 
-/*
-  This function is called when new value should be measured.
-  The function returns the new value.
-*/
-double Update2(UINT id)
+PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
-	SYSTEM_POWER_STATUS status;
-	if (GetSystemPowerStatus(&status))
+	MeasureData* measure = (MeasureData*)data;
+
+	LPCWSTR value = RmReadString(rm, L"PowerState", L"");
+	if (_wcsicmp(L"ACLINE", value) == 0)
 	{
-		std::map<UINT, POWER_STATE>::iterator i = g_States.find(id);
-		if (i != g_States.end())
+		measure->type = POWER_ACLINE;
+		*maxValue = 1.0;
+	}
+	else if (_wcsicmp(L"STATUS", value) == 0)
+	{
+		measure->type = POWER_STATUS;
+		*maxValue = 4.0;
+	}
+	else if (_wcsicmp(L"STATUS2", value) == 0)
+	{
+		measure->type = POWER_STATUS2;
+		*maxValue = 255.0;
+	}
+	else if (_wcsicmp(L"LIFETIME", value) == 0)
+	{
+		measure->type= POWER_LIFETIME;
+
+		value = RmReadString(rm, L"Format", L"%H:%M");
+		measure->format = value;
+
+		SYSTEM_POWER_STATUS sps;
+		if (GetSystemPowerStatus(&sps))
 		{
-			switch ((*i).second)
+			*maxValue = sps.BatteryFullLifeTime;
+		}
+	}
+	else if (_wcsicmp(L"MHZ", value) == 0)
+	{
+		measure->type = POWER_MHZ;
+	}
+	else if (_wcsicmp(L"HZ", value) == 0)
+	{
+		measure->type = POWER_HZ;
+	}
+	else if (_wcsicmp(L"PERCENT", value) == 0)
+	{
+		measure->type = POWER_PERCENT;
+		*maxValue = 100.0;
+	}
+}
+
+PLUGIN_EXPORT double Update(void* data)
+{
+	MeasureData* measure = (MeasureData*)data;
+
+	SYSTEM_POWER_STATUS sps;
+	if (GetSystemPowerStatus(&sps))
+	{
+		switch (measure->type)
+		{
+		case POWER_ACLINE:
+			return sps.ACLineStatus == 1 ? 1.0 : 0.0;
+
+		case POWER_STATUS:
+			if (sps.BatteryFlag & 128)
 			{
-			case POWER_ACLINE:
-				return status.ACLineStatus == 1 ? 1 : 0;
+				return 0.0;	// No battery
+			}
+			else if (sps.BatteryFlag & 8)
+			{
+				return 1.0;	// Charging
+			}
+			else if (sps.BatteryFlag & 4)
+			{
+				return 2.0;	// Critical
+			}
+			else if (sps.BatteryFlag & 2)
+			{
+				return 3.0;	// Low
+			}
+			else if (sps.BatteryFlag & 1)
+			{
+				return 4.0;	// High
+			}
+			break;
 
-			case POWER_STATUS:
-				if (status.BatteryFlag & 128)
-				{
-					return 0;	// No battery
-				}
-				else if (status.BatteryFlag & 8)
-				{
-					return 1;	// Charging
-				}
-				else if (status.BatteryFlag & 4)
-				{
-					return 2;	// Critical
-				}
-				else if (status.BatteryFlag & 2)
-				{
-					return 3;	// Low
-				}
-				else if (status.BatteryFlag & 1)
-				{
-					return 4;	// High
-				}
-				break;
+		case POWER_STATUS2:
+			return sps.BatteryFlag;
 
-			case POWER_STATUS2:
-				return status.BatteryFlag;
+		case POWER_LIFETIME:
+			return sps.BatteryLifeTime;
 
-			case POWER_LIFETIME:
-				return status.BatteryLifeTime;
+		case POWER_PERCENT:
+			return sps.BatteryLifePercent == 255 ? 100.0 : sps.BatteryLifePercent;
 
-			case POWER_PERCENT:
-				return status.BatteryLifePercent > 100 ? 100 : status.BatteryLifePercent;
-
-			case POWER_MHZ:
-			case POWER_HZ:
-				if (fpCallNtPowerInformation && g_NumOfProcessors > 0)
-				{
-					PROCESSOR_POWER_INFORMATION* ppi = new PROCESSOR_POWER_INFORMATION[g_NumOfProcessors];
-					memset(ppi, 0, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
-					fpCallNtPowerInformation(ProcessorInformation, NULL, 0, ppi, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
-					double value = ((*i).second == POWER_MHZ) ? ppi[0].CurrentMhz : ppi[0].CurrentMhz * 1000000.0;
-					delete [] ppi;
-					return value;
-				}
+		case POWER_MHZ:
+		case POWER_HZ:
+			if (g_NumOfProcessors > 0)
+			{
+				PROCESSOR_POWER_INFORMATION* ppi = new PROCESSOR_POWER_INFORMATION[g_NumOfProcessors];
+				memset(ppi, 0, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
+				CallNtPowerInformation(ProcessorInformation, NULL, 0, ppi, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
+				double value = (measure->type == POWER_MHZ) ? ppi[0].CurrentMhz : ppi[0].CurrentMhz * 1000000.0;
+				delete [] ppi;
+				return value;
 			}
 		}
 	}
 
-	return 0;
+	return 0.0;
 }
 
-/*
-  This function is called when the value should be
-  returned as a string.
-*/
-LPCTSTR GetString(UINT id, UINT flags)
+PLUGIN_EXPORT LPCWSTR GetString(void* data)
 {
 	static WCHAR buffer[128];
-	std::map<UINT, POWER_STATE>::iterator i = g_States.find(id);
-	if (i != g_States.end())
+	MeasureData* measure = (MeasureData*)data;
+
+	if (measure->type == POWER_LIFETIME)
 	{
-		if ((*i).second == POWER_LIFETIME)
+		SYSTEM_POWER_STATUS sps;
+		if (GetSystemPowerStatus(&sps))
 		{
-			SYSTEM_POWER_STATUS status;
-			if (GetSystemPowerStatus(&status))
+			// Change it to time string
+			if (sps.BatteryLifeTime == -1)
 			{
-				// Change it to time string
-				if (status.BatteryLifeTime == -1)
+				return L"Unknown";
+			}
+			else
+			{
+				tm time = {0};
+				time.tm_sec = sps.BatteryLifeTime % 60;
+				time.tm_min = (sps.BatteryLifeTime / 60) % 60;
+				time.tm_hour = sps.BatteryLifeTime / 60 / 60;
+
+				_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(NullCRTInvalidParameterHandler);
+				_CrtSetReportMode(_CRT_ASSERT, 0);
+
+				errno = 0;
+				wcsftime(buffer, 128, measure->format.c_str(), &time);
+				if (errno == EINVAL)
 				{
-					return L"Unknown";
+					buffer[0] = L'\0';
 				}
-				else
-				{
-					std::map<UINT, std::wstring>::iterator iter = g_Formats.find(id);
-					if (iter != g_Formats.end())
-					{
-						tm time = {0};
-						time.tm_sec = status.BatteryLifeTime % 60;
-						time.tm_min = (status.BatteryLifeTime / 60) % 60;
-						time.tm_hour = status.BatteryLifeTime / 60 / 60;
 
-						_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(NullCRTInvalidParameterHandler);
-						_CrtSetReportMode(_CRT_ASSERT, 0);
+				_set_invalid_parameter_handler(oldHandler);
 
-						errno = 0;
-						wcsftime(buffer, 128, (*iter).second.c_str(), &time);
-						if (errno == EINVAL)
-						{
-							buffer[0] = L'\0';
-						}
-
-						_set_invalid_parameter_handler(oldHandler);
-					}
-					else
-					{
-						wsprintf(buffer, L"%i:%02i:%02i", status.BatteryLifeTime / 60 / 60, (status.BatteryLifeTime / 60) % 60, status.BatteryLifeTime % 60);
-					}
-					return buffer;
-				}
+				return buffer;
 			}
 		}
 	}
+
 	return NULL;
 }
 
-/*
-  If the measure needs to free resources before quitting.
-  The plugin can export Finalize function, which is called
-  when Rainmeter quits (or refreshes).
-*/
-void Finalize(HMODULE instance, UINT id)
+PLUGIN_EXPORT void Finalize(void* data)
 {
-	std::map<UINT, POWER_STATE>::iterator i = g_States.find(id);
-	if (i != g_States.end())
-	{
-		g_States.erase(i);
-	}
-
-	std::map<UINT, std::wstring>::iterator i2 = g_Formats.find(id);
-	if (i2 != g_Formats.end())
-	{
-		g_Formats.erase(i2);
-	}
-
-	g_Instances--;
-	if (hDLL != NULL && g_Instances == 0)
-	{
-		FreeLibrary(hDLL);
-		hDLL = NULL;
-		fpCallNtPowerInformation = NULL;
-	}
-}
-
-UINT GetPluginVersion()
-{
-	return 1004;
-}
-
-LPCTSTR GetPluginAuthor()
-{
-	return L"Rainy (rainy@iki.fi)";
+	MeasureData* measure = (MeasureData*)data;
+	delete measure;
 }

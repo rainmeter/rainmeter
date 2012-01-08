@@ -116,15 +116,15 @@ void CPlayerWMP::CRemoteHost::PlayStateChange(long NewState)
 		break;
 
 	case wmppsPaused:
-		m_Player->m_State = PLAYER_PAUSED;
+		m_Player->m_State = STATE_PAUSED;
 		break;
 
 	case wmppsPlaying:
-		if (m_Player->m_State == PLAYER_STOPPED)
+		if (m_Player->m_State == STATE_STOPPED)
 		{
 			m_Player->m_TrackChanged = true;
 		}
-		m_Player->m_State = PLAYER_PLAYING;
+		m_Player->m_State = STATE_PLAYING;
 		break;
 
 	default:
@@ -329,14 +329,14 @@ void CPlayerWMP::Initialize()
 	m_IPlayer->get_playState(&state);
 	if (state == wmppsPlaying)
 	{
-		m_State = PLAYER_PLAYING;
+		m_State = STATE_PLAYING;
 	}
 	else if (state ==  wmppsPaused)
 	{
-		m_State = PLAYER_PAUSED;
+		m_State = STATE_PAUSED;
 	}
 
-	if (m_State != PLAYER_STOPPED)
+	if (m_State != STATE_STOPPED)
 	{
 		m_TrackChanged = true;
 	}
@@ -380,7 +380,7 @@ void CPlayerWMP::UpdateData()
 		m_ISettings->get_volume(&volume);
 		m_Volume = (UINT)volume;
 
-		if (m_State != PLAYER_STOPPED)
+		if (m_State != STATE_STOPPED)
 		{
 			double position;
 			m_IControls->get_currentPosition(&position);
@@ -520,7 +520,7 @@ void CPlayerWMP::Stop()
 {
 	m_IControls->stop();
 	// TODO: FIXME
-	m_State = PLAYER_STOPPED;
+	m_State = STATE_STOPPED;
 }
 
 /*
@@ -564,7 +564,7 @@ void CPlayerWMP::SetPosition(int position)
 */
 void CPlayerWMP::SetRating(int rating)
 {
-	if (m_State != PLAYER_STOPPED)
+	if (m_State != STATE_STOPPED)
 	{
 		CComPtr<IWMPMedia> spMedia;
 		m_IPlayer->get_currentMedia(&spMedia);

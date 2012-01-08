@@ -17,25 +17,13 @@
 */
 
 #include <windows.h>
-#include <math.h>
-#include <string>
-#include <map>
+#include <stdio.h>
 #include "../../Library/Export.h"	// Rainmeter's exported functions
 
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
-/* The exported functions */
-extern "C"
-{
-__declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
-__declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-__declspec( dllexport ) double Update2(UINT id);
-__declspec( dllexport ) UINT GetPluginVersion();
-__declspec( dllexport ) LPCTSTR GetPluginAuthor();
-}
 
-#pragma pack(1)
-
+#pragma pack(push, 1)
 struct SpeedFanData
 {
 	WORD version;
@@ -49,6 +37,7 @@ struct SpeedFanData
 	INT fans[32];
 	INT volts[32];
 };
+#pragma pack(pop)
 
 enum SensorType
 {
@@ -57,7 +46,7 @@ enum SensorType
 	TYPE_VOLT
 };
 
-enum TempScale
+enum ScaleType
 {
 	SCALE_SOURCE,
 	SCALE_CENTIGRADE,
@@ -65,166 +54,99 @@ enum TempScale
 	SCALE_KELVIN
 };
 
-bool ReadSharedData(SensorType type, TempScale scale, UINT number, double* value);
-
-static std::map<UINT, SensorType> g_Types;
-static std::map<UINT, TempScale> g_Scales;
-static std::map<UINT, UINT> g_Numbers;
-
-/*
-  This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured.
-  The return value can also be 0, which means that Rainmeter will
-  track the maximum value automatically. The parameters for this
-  function are:
-
-  instance  The instance of this DLL
-  iniFile   The name of the ini-file (usually Rainmeter.ini)
-  section   The name of the section in the ini-file for this measure
-  id        The identifier for the measure. This is used to identify the measures that use the same plugin.
-*/
-UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
+struct MeasureData
 {
-	/* Read our own settings from the ini-file */
-	LPCTSTR type = ReadConfigString(section, L"SpeedFanType", L"TEMPERATURE");
-	if (type)
-	{
-		if (_wcsicmp(L"TEMPERATURE", type) == 0)
-		{
-			g_Types[id] = TYPE_TEMP;
+	SensorType type;
+	ScaleType scale;
+	UINT number;
 
-			LPCTSTR scale = ReadConfigString(section, L"SpeedFanScale", L"C");
-			if (scale)
-			{
-				if (_wcsicmp(L"C", scale) == 0)
-				{
-					g_Scales[id] = SCALE_CENTIGRADE;
-				}
-				else if (_wcsicmp(L"F", scale) == 0)
-				{
-					g_Scales[id] = SCALE_FARENHEIT;
-				}
-				else if (_wcsicmp(L"K", scale) == 0)
-				{
-					g_Scales[id] = SCALE_KELVIN;
-				}
-				else
-				{
-					std::wstring error = L"SpeedFanPlugin.dll: SpeedFanScale=";
-					error += scale;
-					error += L" is not valid in [";
-					error += section;
-					error += L"]";
-					LSLog(LOG_ERROR, NULL, error.c_str());
-				}
-			}
-		}
-		else if (_wcsicmp(L"FAN", type) == 0)
+	MeasureData() : type(TYPE_TEMP), scale(SCALE_SOURCE), number() {}
+};
+
+void ReadSharedData(SensorType type, ScaleType scale, UINT number, double* value);
+
+PLUGIN_EXPORT void Initialize(void** data)
+{
+	MeasureData* measure = new MeasureData;
+	*data = measure;
+}
+
+PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+{
+	MeasureData* measure = (MeasureData*)data;
+
+	LPCWSTR type =  RmReadString(rm, L"SpeedFanType", L"TEMPERATURE");
+	if (_wcsicmp(L"TEMPERATURE", type) == 0)
+	{
+		measure->type = TYPE_TEMP;
+
+		LPCWSTR scale = RmReadString(rm, L"SpeedFanScale", L"C");
+		if (_wcsicmp(L"C", scale) == 0)
 		{
-			g_Types[id] = TYPE_FAN;
+			measure->scale = SCALE_CENTIGRADE;
 		}
-		else if (_wcsicmp(L"VOLTAGE", type) == 0)
+		else if (_wcsicmp(L"F", scale) == 0)
 		{
-			g_Types[id] = TYPE_VOLT;
+			measure->scale = SCALE_FARENHEIT;
+		}
+		else if (_wcsicmp(L"K", scale) == 0)
+		{
+			measure->scale = SCALE_KELVIN;
 		}
 		else
 		{
-			std::wstring error = L"SpeedFanPlugin.dll: SpeedFanType=";
-			error += type;
-			error += L" is not valid in [";
-			error += section;
-			error += L"]";
-			LSLog(LOG_ERROR, NULL, error.c_str());
+			WCHAR buffer[256];
+			_snwprintf_s(buffer, _TRUNCATE, L"SpeedFanPlugin.dll: SpeedFanScale=%s is not valid in [%s]", scale, RmGetMeasureName(rm));
+			RmLog(LOG_ERROR, buffer);
 		}
 	}
-
-	LPCTSTR data = ReadConfigString(section, L"SpeedFanNumber", L"0");
-	if (data)
+	else if (_wcsicmp(L"FAN", type) == 0)
 	{
-		g_Numbers[id] = _wtoi(data);
+		measure->type = TYPE_FAN;
 	}
-
-	return 0;
-}
-
-/*
-This function is called when new value should be measured.
-The function returns the new value.
-*/
-double Update2(UINT id)
-{
-	double value = 0.0;
-
-	std::map<UINT, SensorType>::const_iterator type = g_Types.find(id);
-	std::map<UINT, TempScale>::const_iterator scale = g_Scales.find(id);
-	std::map<UINT, UINT>::const_iterator number = g_Numbers.find(id);
-
-	if (type == g_Types.end() || number == g_Numbers.end())
+	else if (_wcsicmp(L"VOLTAGE", type) == 0)
 	{
-		return 0.0;		// No id in the map. How this can be ????
-	}
-
-	if ((*type).second == TYPE_TEMP)
-	{
-		if (scale != g_Scales.end() &&
-			ReadSharedData((*type).second, (*scale).second, (*number).second, &value))
-		{
-			return value;
-		}
+		measure->type = TYPE_VOLT;
 	}
 	else
 	{
-		if (ReadSharedData((*type).second, SCALE_SOURCE, (*number).second, &value))
-		{
-			return value;
-		}
+		WCHAR buffer[256];
+		_snwprintf_s(buffer, _TRUNCATE, L"SpeedFanPlugin.dll: SpeedFanType=%s is not valid in [%s]", type, RmGetMeasureName(rm));
+		RmLog(LOG_ERROR, buffer);
 	}
 
-	return 0.0;
+	measure->number = RmReadInt(rm, L"SpeedFanNumber", 0);
 }
 
-/*
-  If the measure needs to free resources before quitting.
-  The plugin can export Finalize function, which is called
-  when Rainmeter quits (or refreshes).
-*/
-void Finalize(HMODULE instance, UINT id)
+PLUGIN_EXPORT double Update(void* data)
 {
-	std::map<UINT, SensorType>::iterator i1 = g_Types.find(id);
-	if (i1 != g_Types.end())
-	{
-		g_Types.erase(i1);
-	}
+	MeasureData* measure = (MeasureData*)data;
+	double value = 0.0;
 
-	std::map<UINT, UINT>::iterator i2 = g_Numbers.find(id);
-	if (i2 != g_Numbers.end())
-	{
-		g_Numbers.erase(i2);
-	}
+	ReadSharedData(measure->type, measure->scale, measure->number, &value);
 
-	std::map<UINT, TempScale>::iterator i3 = g_Scales.find(id);
-	if (i3 != g_Scales.end())
-	{
-		g_Scales.erase(i3);
-	}
+	return value;
+}
+
+PLUGIN_EXPORT void Finalize(void* data)
+{
+	MeasureData* measure = (MeasureData*)data;
+	delete measure;
 }
 
 /*
   Get the data from shared memory.
 */
-bool ReadSharedData(SensorType type, TempScale scale, UINT number, double* value)
+void ReadSharedData(SensorType type, ScaleType scale, UINT number, double* value)
 {
-	SpeedFanData* ptr;
-	HANDLE hData;
+	HANDLE hData = OpenFileMapping(FILE_MAP_READ, FALSE, L"SFSharedMemory_ALM");
+	if (hData == NULL) return;
 
-	hData = OpenFileMapping(FILE_MAP_READ, FALSE, L"SFSharedMemory_ALM");
-	if (hData == NULL) return false;
-
-	ptr = (SpeedFanData*)MapViewOfFile(hData, FILE_MAP_READ, 0, 0, 0);
+	SpeedFanData* ptr = (SpeedFanData*)MapViewOfFile(hData, FILE_MAP_READ, 0, 0, 0);
 	if (ptr == 0)
 	{
 		CloseHandle(hData);
-		return false;
+		return;
 	}
 
 	if (ptr->version == 1)
@@ -267,21 +189,9 @@ bool ReadSharedData(SensorType type, TempScale scale, UINT number, double* value
 	}
 	else
 	{
-		LSLog(LOG_ERROR, NULL, L"SpeedFanPlugin.dll: Incorrect shared memory version");
+		RmLog(LOG_ERROR, L"SpeedFanPlugin.dll: Incorrect shared memory version");
 	}
 
 	UnmapViewOfFile(ptr);
 	CloseHandle(hData);
-
-	return true;
-}
-
-UINT GetPluginVersion()
-{
-	return 1002;
-}
-
-LPCTSTR GetPluginAuthor()
-{
-	return L"Rainy (rainy@iki.fi)";
 }

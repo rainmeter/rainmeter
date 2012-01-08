@@ -117,7 +117,7 @@ LRESULT CALLBACK CPlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 			if (playing)
 			{
 				++player->m_TrackCount;
-				player->m_State = PLAYER_PLAYING;
+				player->m_State = STATE_PLAYING;
 				data.erase(0, 3);	// Get rid of the status
 
 				// TODO: Handle invalid

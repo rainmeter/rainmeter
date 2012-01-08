@@ -110,7 +110,7 @@ void CPlayerSpotify::UpdateData()
 
 				if (track != m_Title || artist != m_Artist)
 				{
-					m_State = PLAYER_PLAYING;
+					m_State = STATE_PLAYING;
 					m_Title = track;
 					m_Artist = artist;
 					++m_TrackCount;
@@ -125,7 +125,7 @@ void CPlayerSpotify::UpdateData()
 		}
 		else if (IsWindow(m_Window))
 		{
-			m_State = PLAYER_PAUSED;
+			m_State = STATE_PAUSED;
 		}
 		else
 		{

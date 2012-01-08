@@ -124,8 +124,8 @@ void CPlayerAIMP::UpdateData()
 	}
 
 	// If initialized
-	m_State = (PLAYSTATE)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_Player);
-	if (m_State == PLAYER_STOPPED)
+	m_State = (StateType)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_Player);
+	if (m_State == STATE_STOPPED)
 	{
 		// Make sure AIMP is still active
 		if (!IsWindow(m_Window))
@@ -270,7 +270,7 @@ void CPlayerAIMP::SetPosition(int position)
 void CPlayerAIMP::SetRating(int rating)
 {
 	// Set rating through the AIMP Winamp API
-	if (m_State != PLAYER_STOPPED)
+	if (m_State != STATE_STOPPED)
 	{
 		SendMessage(m_WinampWindow, WM_WA_IPC, rating, IPC_SETRATING);
 		m_Rating = rating;

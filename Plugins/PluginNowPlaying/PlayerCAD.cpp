@@ -178,9 +178,9 @@ void CPlayerCAD::Initialize()
 		}
 
 		SendMessage(m_PlayerWindow, WM_USER, (WPARAM)m_Window, IPC_SET_CALLBACK_HWND);
-		m_State = (PLAYSTATE)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_STATE);
+		m_State = (StateType)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_STATE);
 
-		if (m_State != PLAYER_STOPPED)
+		if (m_State != STATE_STOPPED)
 		{
 			SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_CURRENT_TRACK);
 		}
@@ -235,8 +235,8 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 
 		case IPC_STATE_CHANGED_NOTIFICATION:
 			{
-				player->m_State = (PLAYSTATE)wParam;
-				if (player->m_State == PLAYER_STOPPED)
+				player->m_State = (StateType)wParam;
+				if (player->m_State == STATE_STOPPED)
 				{
 					player->ClearData();
 				}
@@ -363,9 +363,9 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 					{
 						player->m_Initialized = true;
 						player->m_ExtendedAPI = (classSz && wcscmp(classSz, L"CD Art Display IPC Class") == 0);
-						player->m_State = (PLAYSTATE)SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_STATE);
+						player->m_State = (StateType)SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_STATE);
 
-						if (player->m_State != PLAYER_STOPPED)
+						if (player->m_State != STATE_STOPPED)
 						{
 							PostMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_CURRENT_TRACK);
 						}
@@ -388,7 +388,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 */
 void CPlayerCAD::UpdateData()
 {
-	if (m_State != PLAYER_STOPPED)
+	if (m_State != STATE_STOPPED)
 	{
 		m_Position = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_POSITION);
 		m_Volume = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_VOLUME);

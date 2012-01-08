@@ -24,51 +24,37 @@
 struct ParentMeasure
 {
 	ParentMeasure() :
-		player(NULL),
-		childCount(1),
-		trackCount(0),
+		player(),
+		data(),
+		skin(),
+		ownerName(),
+		measureCount(1),
+		trackCount(1),
 		disableLeadingZero(false)
 	{}
 
-	UINT id;
-	UINT childCount;
-	UINT trackCount;
 	CPlayer* player;
-	HWND window;
-	std::wstring name;
-	std::wstring iniFile;
+	void* data;
+	void* skin;
+	LPCWSTR ownerName;
 	std::wstring trackChangeAction;
 	std::wstring playerPath;
+	UINT measureCount;
+	UINT trackCount;
 	bool disableLeadingZero;
 };
 
-struct ChildMeasure
+struct Measure
 {
-	ChildMeasure() :
-		type(MEASURE_NONE),
-		parent(NULL)
+	Measure() :
+		parent(),
+		type(MEASURE_NONE)
 	{}
 
-	MEASURETYPE type;
 	ParentMeasure* parent;
+	MeasureType type;
 };
 
 void SecondsToTime(UINT seconds, bool leadingZero, WCHAR* buffer);
-void ExecuteCommand(std::wstring& command, HWND wnd);
-bool BelongToSameProcess(HWND wnd);
-HWND FindMeterWindow(HWND parent);
-HWND FindMeterWindow(const std::wstring& iniFile);
-
-/* The exported functions */
-extern "C"
-{
-__declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
-__declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-__declspec( dllexport ) UINT Update(UINT id);
-__declspec( dllexport ) LPCTSTR GetString(UINT id, UINT flags);
-__declspec( dllexport ) LPCTSTR GetPluginAuthor();
-__declspec( dllexport ) UINT GetPluginVersion();
-__declspec( dllexport ) void ExecuteBang(LPCTSTR bang, UINT id);
-}
 
 #endif

@@ -17,40 +17,22 @@
 */
 
 #include <windows.h>
-#include <math.h>
 #include <string>
-#include <map>
 #include <vector>
 #include <time.h>
-#include <tchar.h>
 #include <shlwapi.h>
 #include "../../Library/Export.h"	// Rainmeter's exported functions
-
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
-/* The exported functions */
-extern "C"
-{
-__declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
-__declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-__declspec( dllexport ) double Update2(UINT id);
-__declspec( dllexport ) LPCTSTR GetString(UINT id, UINT flags);
-__declspec( dllexport ) UINT GetPluginVersion();
-__declspec( dllexport ) LPCTSTR GetPluginAuthor();
-}
+#define BUFFER_SIZE 4096
 
-struct quoteData
+struct MeasureData
 {
 	std::wstring pathname;
 	std::wstring separator;
-	std::vector<std::wstring> fileFilters;
 	std::vector<std::wstring> files;
 	std::wstring value;
 };
-
-void ScanFolder(quoteData& qData, bool bSubfolders, const std::wstring& path);
-
-static std::map<UINT, quoteData> g_Values;
 
 std::string ConvertToAscii(LPCTSTR str)
 {
@@ -58,15 +40,12 @@ std::string ConvertToAscii(LPCTSTR str)
 
 	if (str && *str)
 	{
-		int strLen = (int)wcslen(str) + 1;
+		int strLen = (int)wcslen(str);
 		int bufLen = WideCharToMultiByte(CP_ACP, 0, str, strLen, NULL, 0, NULL, NULL);
 		if (bufLen > 0)
 		{
-			char* tmpSz = new char[bufLen];
-			tmpSz[0] = 0;
-			WideCharToMultiByte(CP_ACP, 0, str, strLen, tmpSz, bufLen, NULL, NULL);
-			szAscii = tmpSz;
-			delete [] tmpSz;
+			szAscii.resize(bufLen);
+			WideCharToMultiByte(CP_ACP, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
 		}
 	}
 	return szAscii;
@@ -78,110 +57,18 @@ std::wstring ConvertToWide(LPCSTR str)
 
 	if (str && *str)
 	{
-		int strLen = (int)strlen(str) + 1;
+		int strLen = (int)strlen(str);
 		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
 		if (bufLen > 0)
 		{
-			WCHAR* wideSz = new WCHAR[bufLen];
-			wideSz[0] = 0;
-			MultiByteToWideChar(CP_ACP, 0, str, strLen, wideSz, bufLen);
-			szWide = wideSz;
-			delete [] wideSz;
+			szWide.resize(bufLen);
+			MultiByteToWideChar(CP_ACP, 0, str, strLen, &szWide[0], bufLen);
 		}
 	}
 	return szWide;
 }
 
-/*
-  This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured.
-  The return value can also be 0, which means that Rainmeter will
-  track the maximum value automatically. The parameters for this
-  function are:
-
-  instance  The instance of this DLL
-  iniFile   The name of the ini-file (usually Rainmeter.ini)
-  section   The name of the section in the ini-file for this measure
-  id        The identifier for the measure. This is used to identify the measures that use the same plugin.
-*/
-UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
-{
-	quoteData qData;
-	LPCTSTR data;
-	bool bSubfolders = false;
-
-	data = ReadConfigString(section, L"Subfolders", L"0");
-	if (data && _ttoi(data) == 1)
-	{
-		bSubfolders = true;
-	}
-
-	data = ReadConfigString(section, L"Separator", L"\n");
-	if (data)
-	{
-		qData.separator = data;
-	}
-
-	data = ReadConfigString(section, L"FileFilter", L"");
-	if (data && wcslen(data) > 0)
-	{
-		std::wstring ext = data;
-
-		size_t start = 0;
-		size_t pos = ext.find(L';');
-		while (pos != std::wstring::npos)
-		{
-			qData.fileFilters.push_back(ext.substr(start, pos - start));
-			start = pos + 1;
-			pos = ext.find(L';', pos + 1);
-		}
-		qData.fileFilters.push_back(ext.substr(start));
-
-		qData.separator = data;
-	}
-
-	/* Read our own settings from the ini-file */
-	data = ReadConfigString(section, L"PathName", L"");
-	if (data && wcslen(data) > 0)
-	{
-		qData.pathname = data;
-
-		if (qData.pathname.find(':') == -1)		// Not found
-		{
-			std::wstring path = iniFile;
-			size_t pos = path.rfind('\\');
-			if (pos >= 0)
-			{
-				path.erase(pos + 1);
-				qData.pathname = path + qData.pathname;
-			}
-		}
-
-		if (PathIsDirectory(qData.pathname.c_str()))
-		{
-			if (qData.pathname[qData.pathname.size() - 1] != L'\\')
-			{
-				qData.pathname += L"\\";
-			}
-
-			// Scan files
-			ScanFolder(qData, bSubfolders, qData.pathname);
-		}
-	}
-
-	if (!qData.pathname.empty())
-	{
-		g_Values[id] = qData;
-	}
-
-	// TODO: Random=0, load stuff sequentially (store to somewhere)
-
-	srand( (unsigned)time( NULL ) );
-
-	return 0;
-}
-
-void ScanFolder(quoteData& qData, bool bSubfolders, const std::wstring& path)
+void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& filters, bool bSubfolders, const std::wstring& path)
 {
 	// Get folder listing
 	WIN32_FIND_DATA fileData;      // Data structure describes the file found
@@ -196,264 +83,276 @@ void ScanFolder(quoteData& qData, bool bSubfolders, const std::wstring& path)
 
 		if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
-			if (bSubfolders)
+			if (bSubfolders &&
+				wcscmp(fileData.cFileName, L".") != 0 &&
+				wcscmp(fileData.cFileName, L"..") != 0)
 			{
-				if (wcscmp(fileData.cFileName, L".") != 0 && wcscmp(fileData.cFileName, L"..") != 0)
-				{
-					ScanFolder(qData, bSubfolders, path + fileData.cFileName + L"\\");
-				}
+				ScanFolder(files, filters, bSubfolders, path + fileData.cFileName + L"\\");
 			}
 		}
 		else
 		{
-			if (!qData.fileFilters.empty())
+			if (!filters.empty())
 			{
-				for (int i = 0; i < qData.fileFilters.size(); i++)
+				for (int i = 0; i < filters.size(); ++i)
 				{
-					if (!qData.fileFilters[i].empty() && PathMatchSpec(fileData.cFileName, qData.fileFilters[i].c_str()))
+					if (!filters[i].empty() && PathMatchSpec(fileData.cFileName, filters[i].c_str()))
 					{
-						qData.files.push_back(path + fileData.cFileName);
+						files.push_back(path + fileData.cFileName);
 						break;
 					}
 				}
 			}
 			else
 			{
-				qData.files.push_back(path + fileData.cFileName);
+				files.push_back(path + fileData.cFileName);
 			}
 		}
 	}
 	while (FindNextFile(hSearch, &fileData));
 }
 
-#define BUFFER_SIZE 4096
-
-/*
-This function is called when new value should be measured.
-The function returns the new value.
-*/
-double Update2(UINT id)
+PLUGIN_EXPORT void Initialize(void** data)
 {
-	std::map<UINT, quoteData>::iterator i = g_Values.find(id);
-	if (i != g_Values.end())
+	MeasureData* measure = new MeasureData;
+	*data = measure;
+}
+
+PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+{
+	MeasureData* measure = (MeasureData*)data;
+
+	measure->pathname = RmReadPath(rm, L"PathName", L"");
+
+	if (PathIsDirectory(measure->pathname.c_str()))
 	{
-		quoteData& qData = (*i).second;
-
-		if (qData.files.empty())
+		std::vector<std::wstring> fileFilters;
+		LPCWSTR filter = RmReadString(rm, L"FileFilter", L"");
+		if (*filter)
 		{
-			BYTE buffer[BUFFER_SIZE + 2];
-			buffer[BUFFER_SIZE] = 0;
+			std::wstring ext = filter;
 
-			// Read the file
-			FILE* file = _wfopen(qData.pathname.c_str(), L"r");
-			if (file)
+			size_t start = 0;
+			size_t pos = ext.find(L';');
+			while (pos != std::wstring::npos)
 			{
-				// Check if the file is unicode or ascii
-				fread(buffer, sizeof(WCHAR), 1, file);
+				fileFilters.push_back(ext.substr(start, pos - start));
+				start = pos + 1;
+				pos = ext.find(L';', pos + 1);
+			}
+			fileFilters.push_back(ext.substr(start));
+		}
 
-				fseek(file, 0, SEEK_END);
-				int size = ftell(file);
+		if (measure->pathname[measure->pathname.size() - 1] != L'\\')
+		{
+			measure->pathname += L"\\";
+		}
 
-				if (size > 0)
+		// Scan files
+		measure->files.clear();
+		bool bSubfolders = RmReadInt(rm, L"Subfolders", 1) == 1;
+		ScanFolder(measure->files, fileFilters, bSubfolders, measure->pathname);
+	}
+	else
+	{
+		measure->separator = RmReadString(rm, L"Separator", L"\n");
+	}
+
+	srand((unsigned)time(NULL));
+}
+
+PLUGIN_EXPORT double Update(void* data)
+{
+	MeasureData* measure = (MeasureData*)data;
+
+	if (measure->files.empty())
+	{
+		BYTE buffer[BUFFER_SIZE + 2];
+		buffer[BUFFER_SIZE] = 0;
+
+		// Read the file
+		FILE* file = _wfopen(measure->pathname.c_str(), L"r");
+		if (file)
+		{
+			// Check if the file is unicode or ascii
+			fread(buffer, sizeof(WCHAR), 1, file);
+
+			fseek(file, 0, SEEK_END);
+			long size = ftell(file);
+
+			if (size > 0)
+			{
+				// Go to a random place
+				int pos = rand() % size;
+				fseek(file, (pos / 2) * 2, SEEK_SET);
+
+				measure->value.clear();
+
+				if (0xFEFF == *(WCHAR*)buffer)
 				{
-					// Go to a random place
-					int pos = rand() % size;
-					fseek(file, (pos / 2) * 2, SEEK_SET);
+					// It's unicode
+					WCHAR* wBuffer = (WCHAR*)buffer;
 
-					qData.value.erase();
-
-					if (0xFEFF == *(WCHAR*)buffer)
+					// Read until we find the first separator
+					WCHAR* sepPos1 = NULL;
+					WCHAR* sepPos2 = NULL;
+					do
 					{
-						// It's unicode
-						WCHAR* wBuffer = (WCHAR*)buffer;
+						size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
+						buffer[len] = 0;
+						buffer[len + 1] = 0;
 
-						// Read until we find the first separator
-						WCHAR* sepPos1 = NULL;
-						WCHAR* sepPos2 = NULL;
-						do
+						sepPos1 = wcsstr(wBuffer, measure->separator.c_str());
+						if (sepPos1 == NULL)
 						{
-							size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-							buffer[len] = 0;
-							buffer[len + 1] = 0;
-
-							sepPos1 = wcsstr(wBuffer, qData.separator.c_str());
-							if (sepPos1 == NULL)
+							// The separator wasn't found
+							if (feof(file))
 							{
-								// The separator wasn't found
-								if (feof(file))
-								{
-									// End of file reached -> read from start
-									fseek(file, 2, SEEK_SET);
-									len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-									buffer[len] = 0;
-									buffer[len + 1] = 0;
-									sepPos1 = wBuffer;
-								}
-								// else continue reading
+								// End of file reached -> read from start
+								fseek(file, 2, SEEK_SET);
+								len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
+								buffer[len] = 0;
+								buffer[len + 1] = 0;
+								sepPos1 = wBuffer;
 							}
-							else
-							{
-								sepPos1 += qData.separator.size();
-							}
+							// else continue reading
 						}
-						while (sepPos1 == NULL);
-
-						// Find the second separator
-						do
+						else
 						{
-							sepPos2 = wcsstr(sepPos1, qData.separator.c_str());
-							if (sepPos2 == NULL)
-							{
-								// The separator wasn't found
-								if (feof(file))
-								{
-									// End of file reached -> read the rest
-									qData.value += sepPos1;
-									break;
-								}
-								else
-								{
-									qData.value += sepPos1;
-
-									// else continue reading
-									size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
-									buffer[len] = 0;
-									buffer[len + 1] = 0;
-									sepPos1 = wBuffer;
-								}
-							}
-							else
-							{
-								if (sepPos2)
-								{
-									*sepPos2 = 0;
-								}
-
-								// Read until we find the second separator
-								qData.value += sepPos1;
-							}
+							sepPos1 += measure->separator.size();
 						}
-						while (sepPos2 == NULL);
 					}
-					else
+					while (sepPos1 == NULL);
+
+					// Find the second separator
+					do
 					{
-						// It's ascii
-						char* aBuffer = (char*)buffer;
-
-						// Read until we find the first separator
-						char* sepPos1 = NULL;
-						char* sepPos2 = NULL;
-						do
+						sepPos2 = wcsstr(sepPos1, measure->separator.c_str());
+						if (sepPos2 == NULL)
 						{
-							size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-							aBuffer[len] = 0;
-
-							sepPos1 = strstr(aBuffer, ConvertToAscii(qData.separator.c_str()).c_str());
-							if (sepPos1 == NULL)
+							// The separator wasn't found
+							if (feof(file))
 							{
-								// The separator wasn't found
-								if (feof(file))
-								{
-									// End of file reached -> read from start
-									fseek(file, 0, SEEK_SET);
-									len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-									aBuffer[len] = 0;
-									sepPos1 = aBuffer;
-								}
+								// End of file reached -> read the rest
+								measure->value += sepPos1;
+								break;
+							}
+							else
+							{
+								measure->value += sepPos1;
+
 								// else continue reading
-							}
-							else
-							{
-								sepPos1 += qData.separator.size();
+								size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
+								buffer[len] = 0;
+								buffer[len + 1] = 0;
+								sepPos1 = wBuffer;
 							}
 						}
-						while (sepPos1 == NULL);
-
-						// Find the second separator
-						do
+						else
 						{
-							sepPos2 = strstr(sepPos1, ConvertToAscii(qData.separator.c_str()).c_str());
-							if (sepPos2 == NULL)
+							if (sepPos2)
 							{
-								// The separator wasn't found
-								if (feof(file))
-								{
-									// End of file reached -> read the rest
-									qData.value += ConvertToWide(sepPos1);
-									break;
-								}
-								else
-								{
-									qData.value += ConvertToWide(sepPos1);
-
-									// else continue reading
-									size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
-									aBuffer[len] = 0;
-									sepPos1 = aBuffer;
-								}
+								*sepPos2 = 0;
 							}
-							else
-							{
-								if (sepPos2)
-								{
-									*sepPos2 = 0;
-								}
 
-								// Read until we find the second separator
-								qData.value += ConvertToWide(sepPos1);
-							}
+							// Read until we find the second separator
+							measure->value += sepPos1;
 						}
-						while (sepPos2 == NULL);
 					}
+					while (sepPos2 == NULL);
 				}
+				else
+				{
+					// It's ascii
+					char* aBuffer = (char*)buffer;
 
-				fclose(file);
+					// Read until we find the first separator
+					char* sepPos1 = NULL;
+					char* sepPos2 = NULL;
+					do
+					{
+						size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+						aBuffer[len] = 0;
+
+						sepPos1 = strstr(aBuffer, ConvertToAscii(measure->separator.c_str()).c_str());
+						if (sepPos1 == NULL)
+						{
+							// The separator wasn't found
+							if (feof(file))
+							{
+								// End of file reached -> read from start
+								fseek(file, 0, SEEK_SET);
+								len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+								aBuffer[len] = 0;
+								sepPos1 = aBuffer;
+							}
+							// else continue reading
+						}
+						else
+						{
+							sepPos1 += measure->separator.size();
+						}
+					}
+					while (sepPos1 == NULL);
+
+					// Find the second separator
+					do
+					{
+						sepPos2 = strstr(sepPos1, ConvertToAscii(measure->separator.c_str()).c_str());
+						if (sepPos2 == NULL)
+						{
+							// The separator wasn't found
+							if (feof(file))
+							{
+								// End of file reached -> read the rest
+								measure->value += ConvertToWide(sepPos1);
+								break;
+							}
+							else
+							{
+								measure->value += ConvertToWide(sepPos1);
+
+								// else continue reading
+								size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
+								aBuffer[len] = 0;
+								sepPos1 = aBuffer;
+							}
+						}
+						else
+						{
+							if (sepPos2)
+							{
+								*sepPos2 = 0;
+							}
+
+							// Read until we find the second separator
+							measure->value += ConvertToWide(sepPos1);
+						}
+					}
+					while (sepPos2 == NULL);
+				}
 			}
+
+			fclose(file);
 		}
-		else
-		{
-			// Select the filename
-			if (qData.files.size() > 0)
-			{
-				qData.value = qData.files[rand() % qData.files.size()];
-			}
-		}
+	}
+	else
+	{
+		// Select the filename
+		measure->value = measure->files[rand() % measure->files.size()];
 	}
 
 	return 0;
 }
 
-LPCTSTR GetString(UINT id, UINT flags)
+PLUGIN_EXPORT LPCWSTR GetString(void* data)
 {
-	std::map<UINT, quoteData>::iterator i = g_Values.find(id);
-	if (i != g_Values.end())
-	{
-		return ((*i).second).value.c_str();
-	}
-
-	return NULL;
+	MeasureData* measure = (MeasureData*)data;
+	return measure->value.c_str();
 }
 
-/*
-  If the measure needs to free resources before quitting.
-  The plugin can export Finalize function, which is called
-  when Rainmeter quits (or refreshes).
-*/
-void Finalize(HMODULE instance, UINT id)
+PLUGIN_EXPORT void Finalize(void* data)
 {
-	std::map<UINT, quoteData>::iterator i1 = g_Values.find(id);
-	if (i1 != g_Values.end())
-	{
-		g_Values.erase(i1);
-	}
-}
-
-UINT GetPluginVersion()
-{
-	return 1001;
-}
-
-LPCTSTR GetPluginAuthor()
-{
-	return L"Rainy (rainy@iki.fi)";
+	MeasureData* measure = (MeasureData*)data;
+	delete measure;
 }

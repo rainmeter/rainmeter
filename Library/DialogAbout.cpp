@@ -869,13 +869,66 @@ void CDialogAbout::CTabPlugins::Initialize()
 
 		// Try to get the version and author
 		std::wstring tmpSz = Rainmeter->GetPluginPath() + fileData.cFileName;
+		const WCHAR* path = tmpSz.c_str();
+
+		vitem.iItem = index;
+		vitem.pszText = fileData.cFileName;
+
+		// Try to get version and author from file resources first
+		DWORD handle;
+		DWORD versionSize = GetFileVersionInfoSize(path, &handle);
+		if (versionSize)
+		{
+			bool found = false;
+			void* data = new BYTE[versionSize];
+			if (GetFileVersionInfo(path, 0, versionSize, data))
+			{
+				UINT len;
+				struct LANGCODEPAGE
+				{
+					WORD wLanguage;
+					WORD wCodePage;
+				} *lcp;
+
+				if (VerQueryValue(data, L"\\VarFileInfo\\Translation", (LPVOID*)&lcp, &len))
+				{
+					WCHAR key[64];
+					LPWSTR value;
+
+					_snwprintf_s(key, _TRUNCATE, L"\\StringFileInfo\\%04x%04x\\ProductName", lcp[0].wLanguage, lcp[0].wCodePage);
+					if (VerQueryValue(data, (LPTSTR)(LPCTSTR)key, (void**)&value, &len) &&
+						wcscmp(value, L"Rainmeter") == 0)
+					{
+						ListView_InsertItem(item, &vitem);
+						++index;
+						found = true;
+
+						_snwprintf_s(key, _TRUNCATE, L"\\StringFileInfo\\%04x%04x\\FileVersion", lcp[0].wLanguage, lcp[0].wCodePage);
+						if (VerQueryValue(data, (LPTSTR)(LPCTSTR)key, (void**)&value, &len))
+						{
+							ListView_SetItemText(item, vitem.iItem, 1, value);
+						}
+
+						_snwprintf_s(key, _TRUNCATE, L"\\StringFileInfo\\%04x%04x\\LegalCopyright", lcp[0].wLanguage, lcp[0].wCodePage);
+						if (VerQueryValue(data, (LPTSTR)(LPCTSTR)key, (void**)&value, &len))
+						{
+							ListView_SetItemText(item, vitem.iItem, 2, value);
+						}
+					}
+				}
+			}
+
+			delete [] data;
+			if (found) continue;
+		}
+
+		// Try old calling GetPluginVersion/GetPluginAuthor for backwards compatibility
 		DWORD err = 0;
-		HMODULE dll = CSystem::RmLoadLibrary(tmpSz.c_str(), &err, true);
+		HMODULE dll = CSystem::RmLoadLibrary(path, &err, true);
 		if (dll)
 		{
-			vitem.iItem = index;
-			vitem.pszText = fileData.cFileName;
 			ListView_InsertItem(item, &vitem);
+			++index;
 
 			GETPLUGINVERSION GetVersionFunc = (GETPLUGINVERSION)GetProcAddress(dll, "GetPluginVersion");
 			if (GetVersionFunc)
@@ -896,7 +949,6 @@ void CDialogAbout::CTabPlugins::Initialize()
 				}
 			}
 
-			++index;
 			FreeLibrary(dll);
 		}
 		else
