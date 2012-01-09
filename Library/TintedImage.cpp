@@ -60,7 +60,7 @@ public:
 		return NULL;
 	}
 
-	static void AddCache(const std::wstring& key, Bitmap* bitmap)
+	static void AddCache(const std::wstring& key, Bitmap* bitmap, HGLOBAL hBuffer)
 	{
 		std::unordered_map<std::wstring, ImageCache*>::const_iterator iter = c_CacheMap.find(key);
 		if (iter != c_CacheMap.end())
@@ -70,7 +70,7 @@ public:
 		}
 		else
 		{
-			c_CacheMap[key] = new ImageCache(bitmap);
+			c_CacheMap[key] = new ImageCache(bitmap, hBuffer);
 			//LogWithArgs(LOG_DEBUG, L"* ADD: key=%s, ref=new", key.c_str());
 		}
 	}
@@ -97,7 +97,7 @@ private:
 	class ImageCache
 	{
 	public:
-		ImageCache(Bitmap* bitmap) : m_Bitmap(bitmap), m_Ref(1) {}
+		ImageCache(Bitmap* bitmap, HGLOBAL hBuffer) : m_Bitmap(bitmap), m_hBuffer(hBuffer), m_Ref(1) {}
 		~ImageCache() { Dispose(); }
 
 		void AddRef() { ++m_Ref; }
@@ -111,9 +111,10 @@ private:
 		ImageCache() {}
 		ImageCache(const ImageCache& cache) {}
 
-		void Dispose() { delete m_Bitmap; m_Bitmap = NULL; }
+		void Dispose() { delete m_Bitmap; m_Bitmap = NULL; if (m_hBuffer) { ::GlobalFree(m_hBuffer); m_hBuffer = NULL; } }
 
 		Bitmap* m_Bitmap;
+		HGLOBAL m_hBuffer;
 		int m_Ref;
 	};
 
@@ -211,7 +212,7 @@ void CTintedImage::DisposeImage()
 ** Loads the image from file handle
 **
 */
-Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize)
+Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize, HGLOBAL* phBuffer)
 {
 	HGLOBAL hBuffer = ::GlobalAlloc(GMEM_MOVEABLE, fileSize);
 	if (hBuffer)
@@ -231,9 +232,11 @@ Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize)
 
 				if (Ok == bitmap->GetLastStatus())
 				{
-					////////////////////////////////////////////
-					// Convert loaded image to faster blittable bitmap (may increase memory usage slightly)
+					GUID guid;
+					if (Ok == bitmap->GetRawFormat(&guid) && guid != ImageFormatIcon)
 					{
+						////////////////////////////////////////////
+						// Convert loaded image to faster blittable bitmap (may increase memory usage slightly)
 						Rect r(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
 						Bitmap* clone = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
 						{
@@ -244,8 +247,10 @@ Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize)
 						bitmap = clone;
 
 						::GlobalFree(hBuffer);
+						hBuffer = NULL;
+						////////////////////////////////////////////
 					}
-					////////////////////////////////////////////
+					*phBuffer = hBuffer;
 					return bitmap;
 				}
 
@@ -256,6 +261,7 @@ Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize)
 		::GlobalFree(hBuffer);
 	}
 
+	*phBuffer = NULL;
 	return NULL;
 }
 
@@ -294,15 +300,16 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 				DisposeImage();
 
 				Bitmap* bitmap = ImageCachePool::GetCache(key);
+				HGLOBAL hBuffer = NULL;
 
 				m_Bitmap = (bitmap) ?
 					bitmap :
-					LoadImageFromFileHandle(fileHandle, fileSize);
+					LoadImageFromFileHandle(fileHandle, fileSize, &hBuffer);
 
 				if (m_Bitmap)
 				{
 					m_CacheKey = key;
-					ImageCachePool::AddCache(key, m_Bitmap);
+					ImageCachePool::AddCache(key, m_Bitmap, hBuffer);
 
 					// Check whether the new image needs tinting (or cropping, flipping, rotating)
 					if (!m_NeedsCrop)
