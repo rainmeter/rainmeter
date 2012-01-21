@@ -56,13 +56,6 @@ namespace Rainmeter
         [DllImport("Rainmeter.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
         private extern static unsafe int LSLog(int type, char* unused, char* message);
 
-        private enum RmGetType
-        {
-            MeasureName = 0,
-            Skin = 1,
-            SettingsFile = 2
-        }
-
         public enum LogType
         {
             Error = 1,
@@ -92,18 +85,25 @@ namespace Rainmeter
         public unsafe int ReadInt(string option, int defValue)
         {
             string value = ReadString(option, "");
-            return Convert.ToInt32(value);
+            try
+            {
+                return Convert.ToInt32(value);
+            }
+            catch
+            {
+                return defValue;
+            }
         }
 
         public unsafe string GetMeasureName()
         {
-            char* value = (char*)RmGet((void*)m_Rm, (int)RmGetType.MeasureName);
+            char* value = (char*)RmGet((void*)m_Rm, 0);
             return new string(value);
         }
 
         public unsafe IntPtr GetSkin()
         {
-            return (IntPtr)RmGet((void*)m_Rm, (int)RmGetType.Skin);
+            return (IntPtr)RmGet((void*)m_Rm, 1);
         }
 
         public static unsafe void Execute(IntPtr skin, string command)

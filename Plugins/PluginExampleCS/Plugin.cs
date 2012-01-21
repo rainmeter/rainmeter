@@ -53,7 +53,7 @@ namespace ExampleCS
         /// <summary>
         /// Called when the measure settings must be (re)read.
         /// </summary>
-        internal void Reload(Rainmeter.API rm)
+        internal void Reload(Rainmeter.API rm, ref double maxValue)
         {
             // Examples:
             //   string value = rm.ReadString("TestOption", "DefaultValue");
@@ -118,7 +118,7 @@ namespace ExampleCS
         public unsafe static void Reload(void* data, void* rm, double* maxValue)
         {
             IntPtr dataPtr = (IntPtr)data;
-            Measures[dataPtr].Reload(new Rainmeter.API((IntPtr)rm));
+            Measures[dataPtr].Reload(new Rainmeter.API((IntPtr)rm), ref *maxValue);
         }
 
 #if ExportUpdate
