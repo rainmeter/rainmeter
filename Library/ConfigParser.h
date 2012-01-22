@@ -28,7 +28,6 @@
 #include <unordered_map>
 #include <algorithm>
 #include <gdiplus.h>
-#include "ccalc-0.5.1/mparser.h"
 
 class CRainmeter;
 class CMeterWindow;
@@ -122,7 +121,6 @@ private:
 
 	std::wstring m_Filename;
 
-	hqMathParser* m_Parser;
 	std::unordered_map<std::wstring, CMeasure*> m_Measures;
 
 	std::vector<std::wstring> m_StyleTemplate;

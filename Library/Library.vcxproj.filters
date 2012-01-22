@@ -13,9 +13,6 @@
       <UniqueIdentifier>{2d6bf39d-48e1-4de3-8924-46c5666cb141}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
-    <Filter Include="CCalc">
-      <UniqueIdentifier>{1d914071-7b9c-400c-b7ab-76ac461a16f3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Lua">
       <UniqueIdentifier>{6570e2b7-2e40-4fba-a051-01de85760fea}</UniqueIdentifier>
     </Filter>
@@ -143,15 +140,6 @@
     </ClCompile>
     <ClCompile Include="UpdateCheck.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ccalc-0.5.1\lexer.c">
-      <Filter>CCalc</Filter>
-    </ClCompile>
-    <ClCompile Include="ccalc-0.5.1\mparser.c">
-      <Filter>CCalc</Filter>
-    </ClCompile>
-    <ClCompile Include="ccalc-0.5.1\strmap.c">
-      <Filter>CCalc</Filter>
     </ClCompile>
     <ClCompile Include="lua\LuaManager.cpp">
       <Filter>Lua</Filter>
@@ -354,6 +342,9 @@
     <ClCompile Include="Export.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MathParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigParser.h">
@@ -476,18 +467,6 @@
     <ClInclude Include="UpdateCheck.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ccalc-0.5.1\lexer.h">
-      <Filter>CCalc</Filter>
-    </ClInclude>
-    <ClInclude Include="ccalc-0.5.1\mparser.h">
-      <Filter>CCalc</Filter>
-    </ClInclude>
-    <ClInclude Include="ccalc-0.5.1\pack.h">
-      <Filter>CCalc</Filter>
-    </ClInclude>
-    <ClInclude Include="ccalc-0.5.1\strmap.h">
-      <Filter>CCalc</Filter>
-    </ClInclude>
     <ClInclude Include="lua\LuaManager.h">
       <Filter>Lua</Filter>
     </ClInclude>
@@ -594,6 +573,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Export.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RawString.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MathParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

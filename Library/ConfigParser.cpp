@@ -18,6 +18,7 @@
 
 #include "StdAfx.h"
 #include "ConfigParser.h"
+#include "MathParser.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
 #include "System.h"
@@ -37,7 +38,6 @@ std::unordered_map<std::wstring, std::wstring> CConfigParser::c_MonitorVariables
 **
 */
 CConfigParser::CConfigParser() :
-	m_Parser(MathParser_Create(NULL)),
 	m_LastReplaced(false),
 	m_LastDefaultUsed(false),
 	m_LastValueDefined(false),
@@ -53,7 +53,6 @@ CConfigParser::CConfigParser() :
 */
 CConfigParser::~CConfigParser()
 {
-	MathParser_Destroy(m_Parser);
 }
 
 /*
@@ -757,7 +756,7 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 	if (!result.empty() && result[0] == L'(' && result[result.size() - 1] == L')')
 	{
 		double resultValue = defValue;
-		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.c_str()).c_str(), &resultValue);
+		char* errMsg = MathParser::CheckParse(ConvertToAscii(result.c_str()).c_str(), &resultValue);
 		if (errMsg != NULL)
 		{
 			std::wstring error = L"ReadFormula: ";
@@ -783,7 +782,7 @@ bool CConfigParser::ParseFormula(const std::wstring& result, double* resultValue
 	// Formulas must be surrounded by parenthesis
 	if (!result.empty() && result[0] == L'(' && result[result.size() - 1] == L')')
 	{
-		char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(result.c_str()).c_str(), resultValue);
+		char* errMsg = MathParser::CheckParse(ConvertToAscii(result.c_str()).c_str(), resultValue);
 		if (errMsg != NULL)
 		{
 			std::wstring error = L"ParseFormula: ";

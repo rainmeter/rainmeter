@@ -19,8 +19,9 @@
 #include "StdAfx.h"
 #include "MeasureCalc.h"
 #include "Rainmeter.h"
+#include "MathParser.h"
 
-hqStrMap* CMeasureCalc::c_VarMap = NULL;
+CMeterWindow* CMeasureCalc::c_MeterWindow = NULL;
 bool CMeasureCalc::c_RandSeeded = false;
 
 /*
@@ -30,7 +31,6 @@ bool CMeasureCalc::c_RandSeeded = false;
 **
 */
 CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
-	m_Parser(MathParser_Create(NULL)),
 	m_LowBound(),
 	m_HighBound(100),
 	m_UpdateRandom(false)
@@ -52,13 +52,6 @@ CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow, const WCHAR* name) : CMeas
 */
 CMeasureCalc::~CMeasureCalc()
 {
-	MathParser_Destroy(m_Parser);
-
-	if (c_VarMap)
-	{
-		StrMap_Destroy(c_VarMap);
-		c_VarMap = NULL;
-	}
 }
 
 /*
@@ -71,13 +64,12 @@ bool CMeasureCalc::Update()
 {
 	if (!CMeasure::PreUpdate()) return false;
 
-	m_Parser->Parameters = c_VarMap;
 	if (m_UpdateRandom)
 	{
 		FormulaReplace();
 	}
 
-	char* errMsg = MathParser_Parse(m_Parser, ConvertToAscii(m_Formula.c_str()).c_str(), &m_Value);
+	char* errMsg = MathParser::Parse(ConvertToAscii(m_Formula.c_str()).c_str(), MatchMeasure, &m_Value);
 	if (errMsg != NULL)
 	{
 		std::wstring error = L"Calc: ";
@@ -91,32 +83,27 @@ bool CMeasureCalc::Update()
 	return PostUpdate();
 }
 
-void CMeasureCalc::UpdateVariableMap(CMeterWindow& meterWindow)
+int CMeasureCalc::MatchMeasure(const char* str, int len, double* value)
 {
-	// Delete the old map
-	if (c_VarMap)
-	{
-		StrMap_Destroy(c_VarMap);
-		c_VarMap = NULL;
-	}
-
-	// Create the variable map
-	c_VarMap = Strmap_Create(sizeof(double), 0);
-
-	const std::list<CMeasure*>& measures = meterWindow.GetMeasures();
+	const std::list<CMeasure*>& measures = c_MeterWindow->GetMeasures();
 
 	std::list<CMeasure*>::const_iterator iter = measures.begin();
 	for ( ; iter != measures.end(); ++iter)
 	{
-		const char* name = (*iter)->GetAsciiName();
-		double val = (*iter)->GetValue();
-
-		StrMap_AddString(c_VarMap, name, &val);
+		if (_strnicmp(str, (*iter)->GetAsciiName(), len) == 0)
+		{
+			*value = (*iter)->GetValue();
+			return 1;
+		}
 	}
 
-	// Add the counter
-	double counter = meterWindow.GetUpdateCounter();
-	StrMap_AddString(c_VarMap, "Counter", &counter);
+	if (_strnicmp(str, "counter", len) == 0)
+	{
+		*value = c_MeterWindow->GetUpdateCounter();
+		return 1;
+	}
+
+	return 0;
 }
 
 /*
@@ -153,6 +140,17 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		{
 			FormulaReplace();
 		}
+
+		char* errMsg = MathParser::Check(ConvertToAscii(m_Formula.c_str()).c_str());
+		if (errMsg != NULL)
+		{
+			std::wstring error = L"Calc: ";
+			error += ConvertToWide(errMsg);
+			error += L" in [";
+			error += m_Name;
+			error += L']';
+			throw CError(error);
+		}
 	}
 }
 
@@ -164,8 +162,8 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 */
 void CMeasureCalc::FormulaReplace()
 {
-	//To implement random numbers the word "Random" in the string
-	//formula is being replaced by the random number value
+	// To implement random numbers the word "Random" in the string
+	// formula is being replaced by the random number value
 	m_Formula = m_FormulaHolder;
 	size_t start = 0, pos;
 

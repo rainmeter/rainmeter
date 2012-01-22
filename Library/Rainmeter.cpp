@@ -23,6 +23,7 @@
 #include "Error.h"
 #include "DialogAbout.h"
 #include "DialogManage.h"
+#include "MathParser.h"
 #include "MeasureNet.h"
 #include "MeterString.h"
 #include "resource.h"
@@ -1067,6 +1068,7 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 	// Test that the Rainmeter.ini file is writable
 	TestSettingsFile(bDefaultIniLocation);
 
+	MathParser::Initialize();
 	CSystem::Initialize(hInstance);
 	CMeasureNet::InitializeNewApi();
 

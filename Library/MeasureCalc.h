@@ -20,7 +20,6 @@
 #define __MEASURECALC_H__
 
 #include "Measure.h"
-#include "ccalc-0.5.1/mparser.h"
 
 class CMeasureCalc : public CMeasure
 {
@@ -30,7 +29,7 @@ public:
 
 	virtual bool Update();
 
-	static void UpdateVariableMap(CMeterWindow& meterWindow);
+	static void SetCurrentMeterWindow(CMeterWindow* meterWindow) { c_MeterWindow = meterWindow; }
 
 protected:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
@@ -39,15 +38,16 @@ private:
 	void FormulaReplace();
 	bool IsDelimiter(WCHAR ch);
 
+	static int MatchMeasure(const char* str, int len, double* value);
+
 	std::wstring m_Formula;
 	std::wstring m_FormulaHolder;
-	hqMathParser* m_Parser;
 
 	int m_LowBound;
 	int m_HighBound;
 	bool m_UpdateRandom;
 
-	static hqStrMap* c_VarMap;
+	static CMeterWindow* c_MeterWindow;
 	static bool c_RandSeeded;
 };
 
