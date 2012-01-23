@@ -22,7 +22,7 @@
 #include "MeasureCalc.h"
 #include "MathParser.h"
 
-static const int MAX_STACK_SIZE = 32;
+static const int MAX_STACK_SIZE = 96;
 static const double M_E = 2.7182818284590452354;
 static const double M_PI = 3.14159265358979323846;
 
@@ -84,9 +84,9 @@ enum MathTokenType
 
 struct Operation
 {
-	void* proc;
-	BYTE prevTop;
-	OperationType type;
+	BYTE type;
+	BYTE funcIndex;
+	char prevTop;
 };
 
 struct Function
@@ -131,8 +131,8 @@ static const int FUNC_ROUND = 13;
 static const int FUNC_E = 18;
 static const int FUNC_PI = 19;
 
-static const Operation g_BrOp = { NULL, 0, OP_OBR };
-static const Operation g_NegOp = { (void*)&neg, 0, OP_FUNC_ONEARG };
+static const Operation g_BrOp = { OP_OBR, 0, 0};
+static const Operation g_NegOp = { OP_FUNC_ONEARG, 17, 0 };
 
 static const BYTE g_OpPriorities[OP_FUNC_MULTIARG + 1] =
 {
@@ -167,15 +167,15 @@ static const BYTE g_OpPriorities[OP_FUNC_MULTIARG + 1] =
 };
 
 static CharType GetCharType(WCHAR ch);
-static int GetFunction(const WCHAR* str, size_t len, void** data);
+static int GetFunction(const WCHAR* str, size_t len);
 static int FindSymbol(const WCHAR* str);
 
 struct Parser
 {
 	Operation opStack[MAX_STACK_SIZE];
 	double valStack[MAX_STACK_SIZE];
-	int opTop;
-	int valTop;
+	char opTop;
+	char valTop;
 	int obrDist;
 
 	Parser() : opTop(0), valTop(-1), obrDist(2) { opStack[0].type = OP_OBR; }
@@ -365,12 +365,10 @@ WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double* resul
 		case TOK_NAME:
 			{
 				Operation op;
-				int funcnum, namelen = lexer.nameLen;
-
 				if (lexer.nameLen <= FUNC_MAX_LEN &&
-					((funcnum = GetFunction(lexer.name, lexer.nameLen, (void**)&op.proc)) >= 0))
+					((op.funcIndex = GetFunction(lexer.name, lexer.nameLen)) >= 0))
 				{
-					switch (funcnum)
+					switch (op.funcIndex)
 					{
 					case FUNC_E:
 						parser.valStack[++parser.valTop] = M_E;
@@ -427,7 +425,7 @@ static WCHAR* Calc(Parser& parser)
 		int paramcnt = parser.valTop - op.prevTop;
 
 		parser.valTop = op.prevTop;
-		WCHAR* error = (*(MultiArgProc)op.proc)(paramcnt, &parser.valStack[parser.valTop + 1], &res);
+		WCHAR* error = (*(MultiArgProc)g_Functions[op.funcIndex].proc)(paramcnt, &parser.valStack[parser.valTop + 1], &res);
 		if (error) return error;
 
 		parser.valStack[++parser.valTop] = res;
@@ -459,7 +457,7 @@ static WCHAR* Calc(Parser& parser)
 	}
 	else if (op.type == OP_FUNC_ONEARG)
 	{
-		res = (*(OneArgProc)op.proc)(right);
+		res = (*(OneArgProc)g_Functions[op.funcIndex].proc)(right);
 	}
 	else
 	{
@@ -785,7 +783,7 @@ bool MathParser::IsDelimiter(WCHAR ch)
 	return type == CH_SYMBOL || type == CH_SEPARAT;
 }
 
-int GetFunction(const WCHAR* str, size_t len, void** data)
+int GetFunction(const WCHAR* str, size_t len)
 {
 	const int funcCount = sizeof(g_Functions) / sizeof(Function);
 	for (int i = 0; i < funcCount; ++i)
@@ -793,7 +791,6 @@ int GetFunction(const WCHAR* str, size_t len, void** data)
 		if (g_Functions[i].length == len &&
 			_wcsnicmp(str, g_Functions[i].name, len) == 0)
 		{
-			*data = g_Functions[i].proc;
 			return i;
 		}
 	}

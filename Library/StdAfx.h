@@ -22,28 +22,23 @@
 #define _WIN32_IE 0x0600
 
 #define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
 #include <crtdbg.h>
 
 // WINAPI
-#include <winsock2.h>
+#define WIN32_LEAN_AND_MEAN
 #include <ws2tcpip.h>
 #include <windows.h>
 #include <windowsx.h>
+#include <ole2.h>
 #include <gdiplus.h>
 #include <dwmapi.h>
 #include <comdef.h>
 #include <Iphlpapi.h>
-#include <commctrl.h>
-#include <shellapi.h>
 #include <Mmsystem.h>
+#include <Shellapi.h>
 #include <shlobj.h>
 #include <shlwapi.h>
 #include <Wininet.h>
-#include <winperf.h>
-#include <Windns.h>
-#include <Ipexport.h>
-#include <Powrprof.h>
 
 // STL
 #include <map>
@@ -52,22 +47,16 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <list>
-#include <sstream>
+#include <algorithm>
 #include <ctime>
 #include <cstdlib>
-#include <algorithm>
+#include <cstdio>
 #include <cctype>
+#include <cmath>
+#include <cerrno>
+#include <cassert>
 
 // RUNTIME
-#include <stdio.h>
-#include <errno.h>
-#include <time.h>
-#include <math.h>
-#include <time.h>
-#include <assert.h>
-#include <io.h>
-#include <stdarg.h>
 #include <process.h>
-#include <float.h>
 
 #endif
