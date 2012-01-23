@@ -756,11 +756,11 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 	if (!result.empty() && result[0] == L'(' && result[result.size() - 1] == L')')
 	{
 		double resultValue = defValue;
-		char* errMsg = MathParser::CheckParse(ConvertToAscii(result.c_str()).c_str(), &resultValue);
+		WCHAR* errMsg = MathParser::CheckParse(result.c_str(), &resultValue);
 		if (errMsg != NULL)
 		{
 			std::wstring error = L"ReadFormula: ";
-			error += ConvertToWide(errMsg);
+			error += errMsg;
 			error += L" in key \"";
 			error += key;
 			error += L"\" in [";
@@ -782,11 +782,11 @@ bool CConfigParser::ParseFormula(const std::wstring& result, double* resultValue
 	// Formulas must be surrounded by parenthesis
 	if (!result.empty() && result[0] == L'(' && result[result.size() - 1] == L')')
 	{
-		char* errMsg = MathParser::CheckParse(ConvertToAscii(result.c_str()).c_str(), resultValue);
+		WCHAR* errMsg = MathParser::CheckParse(result.c_str(), resultValue);
 		if (errMsg != NULL)
 		{
 			std::wstring error = L"ParseFormula: ";
-			error += ConvertToWide(errMsg);
+			error += errMsg;
 			error += L": ";
 			error += result;
 			Log(LOG_ERROR, error.c_str());

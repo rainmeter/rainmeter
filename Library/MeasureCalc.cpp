@@ -30,7 +30,6 @@ bool CMeasureCalc::c_RandSeeded = false;
 **
 */
 CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
-	m_Random(),
 	m_LowBound(),
 	m_HighBound(100),
 	m_UpdateRandom(false)
@@ -64,13 +63,11 @@ bool CMeasureCalc::Update()
 {
 	if (!CMeasure::PreUpdate()) return false;
 
-	if (m_UpdateRandom) UpdateRandom();
-
-	char* errMsg = MathParser::Parse(ConvertToAscii(m_Formula.c_str()).c_str(), this, &m_Value);
+	WCHAR* errMsg = MathParser::Parse(m_Formula.c_str(), this, &m_Value);
 	if (errMsg != NULL)
 	{
 		std::wstring error = L"Calc: ";
-		error += ConvertToWide(errMsg);
+		error += errMsg;
 		error += L" in [";
 		error += m_Name;
 		error += L']';
@@ -108,13 +105,16 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		oldHighBound != m_HighBound ||
 		oldUpdateRandom != m_UpdateRandom)
 	{
-		if (!m_UpdateRandom) UpdateRandom();
+		if (!m_UpdateRandom)
+		{
+			FormulaReplace();
+		}
 
-		char* errMsg = MathParser::Check(ConvertToAscii(m_Formula.c_str()).c_str());
+		WCHAR* errMsg = MathParser::Check(m_Formula.c_str());
 		if (errMsg != NULL)
 		{
 			std::wstring error = L"Calc: ";
-			error += ConvertToWide(errMsg);
+			error += errMsg;
 			error += L" in [";
 			error += m_Name;
 			error += L']';
@@ -122,38 +122,72 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		}
 	}
 }
+/*
+** FormulaReplace
+**
+** This replaces the word Random in the formula with a random number
+**
+*/
+void CMeasureCalc::FormulaReplace()
+{
+	size_t start = 0, pos;
+	do
+	{
+		pos = m_Formula.find_first_of(L"Rr", start);
+		if (pos != std::wstring::npos)
+		{
+			if (_wcsnicmp(L"random", m_Formula.c_str() + pos, 6) == 0 &&
+				(pos == 0 || MathParser::IsDelimiter((*(m_Formula.c_str() + pos - 1))) &&
+				(pos == (m_Formula.length() - 6) || MathParser::IsDelimiter((*(m_Formula.c_str() + pos + 6))))))
+			{
+				int randNumber = GetRandom();
 
-bool CMeasureCalc::GetMeasureValue(const char* str, int len, double* value)
+				WCHAR buffer[32];
+				_itow_s(randNumber, buffer, 10);
+				size_t len = wcslen(buffer);
+
+				m_Formula.replace(pos, 6, buffer, len);
+				start = pos + len;
+			}
+			else
+			{
+				start = pos + 1;
+			}
+		}
+	}
+	while (pos != std::wstring::npos);
+}
+bool CMeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value)
 {
 	const std::list<CMeasure*>& measures = m_MeterWindow->GetMeasures();
 
 	std::list<CMeasure*>::const_iterator iter = measures.begin();
 	for ( ; iter != measures.end(); ++iter)
 	{
-		if (_strnicmp(str, (*iter)->GetAsciiName(), len) == 0)
+		if (_wcsnicmp(str, (*iter)->GetName(), len) == 0)
 		{
 			*value = (*iter)->GetValue();
-			return 1;
+			return true;
 		}
 	}
 
-	if (_strnicmp(str, "counter", len) == 0)
+	if (_wcsnicmp(str, L"counter", len) == 0)
 	{
 		*value = m_MeterWindow->GetUpdateCounter();
-		return 1;
+		return true;
 	}
-	else if (_strnicmp(str, "random", len) == 0)
+	else if (_wcsnicmp(str, L"random", len) == 0)
 	{
-		*value = (double)m_Random;
-		return 1;
+		*value = GetRandom();
+		return true;
 	}
 
-	return 0;
+	return false;
 }
 
-void CMeasureCalc::UpdateRandom()
+int CMeasureCalc::GetRandom()
 {
 	int range = (m_HighBound - m_LowBound) + 1;
 	srand((unsigned)rand());
-	m_Random = m_LowBound + (int)(range * rand() / (RAND_MAX + 1.0));
+	return m_LowBound + (int)(range * rand() / (RAND_MAX + 1.0));
 }

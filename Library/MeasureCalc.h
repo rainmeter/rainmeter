@@ -29,20 +29,20 @@ public:
 
 	virtual bool Update();
 
-	bool GetMeasureValue(const char* str, int len, double* value);
+	bool GetMeasureValue(const WCHAR* str, int len, double* value);
 
 protected:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
-	void UpdateRandom();
+	void FormulaReplace();
+	int GetRandom();
 
 	std::wstring m_Formula;
 
-	int m_Random;
-
 	int m_LowBound;
 	int m_HighBound;
+
 	bool m_UpdateRandom;
 
 	static bool c_RandSeeded;

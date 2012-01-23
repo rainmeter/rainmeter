@@ -27,10 +27,10 @@ static const double M_E = 2.7182818284590452354;
 static const double M_PI = 3.14159265358979323846;
 
 typedef double (*OneArgProc)(double arg);
-typedef char* (*MultiArgProc)(int paramcnt, double* args, double* result);
+typedef WCHAR* (*MultiArgProc)(int paramcnt, double* args, double* result);
 typedef double (*FunctionProc)(double);
 
-typedef enum
+enum OperationType
 {
 	OP_SHL,
 	OP_SHR,
@@ -60,26 +60,19 @@ typedef enum
 	OP_COMMA,
 	OP_FUNC_ONEARG, // Special
 	OP_FUNC_MULTIARG // Special
-} OperationType;
+};
 
-typedef struct
+enum CharType
 {
-	void* Func;
-	char prevvalTop;
-	OperationType type;
-} Operation;
-
-typedef enum
-{
+	CH_UNKNOWN = 0x00,
 	CH_LETTER  = 0x01,
 	CH_DIGIT   = 0x02,
 	CH_SEPARAT = 0x04,
 	CH_SYMBOL  = 0x08,
-	CH_UNKNOWN = 0x7E,
 	CH_FINAL   = 0x7F
-} CharType;
+};
 
-typedef enum
+enum MathTokenType
 {
 	TOK_ERROR,
 	TOK_NONE,
@@ -87,87 +80,61 @@ typedef enum
 	TOK_FLOAT,
 	TOK_SYMBOL,
 	TOK_NAME
-} MathTokenType;
+};
 
-typedef struct
+struct Operation
 {
-	char* name;
+	void* proc;
+	BYTE prevTop;
+	OperationType type;
+};
+
+struct Function
+{
+	WCHAR* name;
 	FunctionProc proc;
-	unsigned char length;
-} Function;
-
-typedef struct
-{
-	const char* string;
-	const char* name;
-	size_t nameLen;
-	double extValue;
-	int intValue;
-	MathTokenType PrevTokenType;
-	CharType CharType;
-} Lexer;
-
-char eBrackets [] = "Unmatched brackets";
-char eSyntax   [] = "Syntax error";
-char eInternal [] = "Internal error";
-char eExtraOp  [] = "Extra operation";
-char eInfinity [] = "Infinity somewhere";
-char eInvArg   [] = "Invalid argument";
-char eUnknFunc [] = "\"%s\" is unknown";
-char eLogicErr [] = "Logical expression error";
-char eCalcErr  [] = "Calculation error";
-char eValSizErr[] = "Value too big for operation";
-char eInvPrmCnt[] = "Invalid function parameter count";
-char g_ErrorBuffer[128];
-
-static char* CalcToObr();
-static char* Calc();
-static int GetFunction(const char* str, size_t len, void** data);
-int FindSymbol(const char* str);
-
-static int Lexer_SetParseString(const char* str);
-static MathTokenType Lexer_GetNextToken();
+	BYTE length;
+};
 
 static double neg(double x);
 static double frac(double x);
 static double trunc(double x);
 static double sgn(double x);
-static char* round(int paramcnt, double* args, double* result);
+static WCHAR* round(int paramcnt, double* args, double* result);
 
 static Function g_Functions[] =
 {
-	{ "atan", &atan, 4 },
-	{ "cos", &cos, 3 },
-	{ "sin", &sin, 3 },
-	{ "tan", &tan, 3 },
-	{ "abs", &fabs, 3 },
-	{ "exp", &exp, 3 },
-	{ "ln", &log, 2 },
-	{ "log", &log10, 3 },
-	{ "sqrt", &sqrt, 4 },
-	{ "frac", &frac, 4 },
-	{ "trunc", &trunc, 5 },
-	{ "floor", &floor, 5 },
-	{ "ceil", &ceil, 4 },
-	{ "round", (FunctionProc)&round, 5 },
-	{ "asin", &asin, 4 },
-	{ "acos", &acos, 4 },
-	{ "sgn", &sgn, 4 },
-	{ "neg", &neg, 4 },
-	{ "e", NULL, 1 },
-	{ "pi", NULL, 2}
+	{ L"atan", &atan, 4 },
+	{ L"cos", &cos, 3 },
+	{ L"sin", &sin, 3 },
+	{ L"tan", &tan, 3 },
+	{ L"abs", &fabs, 3 },
+	{ L"exp", &exp, 3 },
+	{ L"ln", &log, 2 },
+	{ L"log", &log10, 3 },
+	{ L"sqrt", &sqrt, 4 },
+	{ L"frac", &frac, 4 },
+	{ L"trunc", &trunc, 5 },
+	{ L"floor", &floor, 5 },
+	{ L"ceil", &ceil, 4 },
+	{ L"round", (FunctionProc)&round, 5 },
+	{ L"asin", &asin, 4 },
+	{ L"acos", &acos, 4 },
+	{ L"sgn", &sgn, 4 },
+	{ L"neg", &neg, 4 },
+	{ L"e", NULL, 1 },
+	{ L"pi", NULL, 2}
 };
 
-static const int MAX_FUNC_LEN = 5;
+static const int FUNC_MAX_LEN = 5;
+static const int FUNC_ROUND = 13;
+static const int FUNC_E = 18;
+static const int FUNC_PI = 19;
 
-#define FUNC_ROUND	13
-#define FUNC_E		18
-#define FUNC_PI		19
+static const Operation g_BrOp = { NULL, 0, OP_OBR };
+static const Operation g_NegOp = { (void*)&neg, 0, OP_FUNC_ONEARG };
 
-static const Operation g_BrOp = { NULL, '0', OP_OBR };
-static const Operation g_NegOp = { (void*)&neg, '0', OP_FUNC_ONEARG };
-
-static const char g_OpPriorities[OP_FUNC_MULTIARG + 1] =
+static const BYTE g_OpPriorities[OP_FUNC_MULTIARG + 1] =
 {
 	5, // OP_SHL
 	5, // OP_SHR
@@ -199,46 +166,66 @@ static const char g_OpPriorities[OP_FUNC_MULTIARG + 1] =
 	6  // OP_FUNC_MULTIARG
 };
 
-static Operation g_OpStack[MAX_STACK_SIZE];
-static double g_ValStack[MAX_STACK_SIZE];
-static int g_OpTop = 0;
-static int g_ValTop = -1;
-static int g_ObrDist = 0;
-static CharType g_CharTypes[256] = {(CharType)0};
-static Lexer g_Lexer = {0};
+static CharType GetCharType(WCHAR ch);
+static int GetFunction(const WCHAR* str, size_t len, void** data);
+static int FindSymbol(const WCHAR* str);
 
-void MathParser::Initialize()
+struct Parser
 {
-	g_CharTypes['\0'] = CH_FINAL;
+	Operation opStack[MAX_STACK_SIZE];
+	double valStack[MAX_STACK_SIZE];
+	int opTop;
+	int valTop;
+	int obrDist;
 
-	g_CharTypes[' '] = g_CharTypes['\t'] = g_CharTypes['\n'] = CH_SEPARAT;
+	Parser() : opTop(0), valTop(-1), obrDist(2) { opStack[0].type = OP_OBR; }
+};
 
-	g_CharTypes['_'] = CH_LETTER;
-	for (int ch = 'A'; ch <= 'Z'; ++ch) g_CharTypes[ch] = CH_LETTER;
-	for (int ch = 'a'; ch <= 'z'; ++ch) g_CharTypes[ch] = CH_LETTER;
-	for (int ch = '0'; ch <= '9'; ++ch) g_CharTypes[ch] = CH_DIGIT;
+static WCHAR* CalcToObr(Parser& parser);
+static WCHAR* Calc(Parser& parser);
 
-	g_CharTypes['+'] = g_CharTypes['-'] = g_CharTypes['/'] = g_CharTypes['*'] =
-		g_CharTypes['~'] = g_CharTypes['('] = g_CharTypes[')'] = g_CharTypes['<'] = 
-		g_CharTypes['>'] = g_CharTypes['%'] = g_CharTypes['$'] = g_CharTypes[','] = 
-		g_CharTypes['?'] = g_CharTypes[':'] = g_CharTypes['='] = g_CharTypes['&'] = 
-		g_CharTypes['|'] = CH_SYMBOL;
-}
+struct Lexer
+{
+	const WCHAR* string;
+	const WCHAR* name;
+	size_t nameLen;
+	double extValue;
+	int intValue;
+	MathTokenType prevToken;
+	CharType charType;
 
-char* MathParser::Check(const char* formula)
+	Lexer(const WCHAR* str) : string(str), name(), nameLen(), extValue(), intValue(), prevToken(TOK_NONE), charType(GetCharType(*str)) {}
+};
+
+static MathTokenType GetNextToken(Lexer& lexer);
+
+WCHAR eBrackets [] = L"Unmatched brackets";
+WCHAR eSyntax   [] = L"Syntax error";
+WCHAR eInternal [] = L"Internal error";
+WCHAR eExtraOp  [] = L"Extra operation";
+WCHAR eInfinity [] = L"Infinity somewhere";
+WCHAR eInvArg   [] = L"Invalid argument";
+WCHAR eUnknFunc [] = L"\"%s\" is unknown";
+WCHAR eLogicErr [] = L"Logical expression error";
+WCHAR eCalcErr  [] = L"Calculation error";
+WCHAR eValSizErr[] = L"Value too big for operation";
+WCHAR eInvPrmCnt[] = L"Invalid function parameter count";
+WCHAR g_ErrorBuffer[128];
+
+WCHAR* MathParser::Check(const WCHAR* formula)
 {
 	int BrCnt = 0;
 
 	// Brackets Matching
 	while (*formula)
 	{
-		if (*formula == '(')
+		if (*formula == L'(')
 		{
 			++BrCnt;
 		}
-		else if (*formula == ')' && (--BrCnt < 0))
+		else if (*formula == L')')
 		{
-			return eBrackets;
+			--BrCnt;
 		}
 		++formula;
 	}
@@ -251,76 +238,82 @@ char* MathParser::Check(const char* formula)
 	return NULL;
 }
 
-char* MathParser::CheckParse(const char* formula, double* result)
+WCHAR* MathParser::CheckParse(const WCHAR* formula, double* result)
 {
-	char* ret = Check(formula);
-	if (ret) return ret;
-
-	ret = Parse(formula, NULL, result);
-	if (ret) return ret;
-
-	return NULL;
+	WCHAR* error = Check(formula);
+	if (!error)
+	{
+		error = Parse(formula, NULL, result);
+	}
+	return error;
 }
 
-char* MathParser::Parse(const char* formula, CMeasureCalc* calc, double* result)
+WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double* result)
 {
-	if (!formula || !*formula)
+	if (!*formula)
 	{
 		*result = 0.0;
 		return NULL;
 	}
 
-	Lexer_SetParseString(formula);
+	Parser parser;
+	Lexer lexer(formula);
 
-	g_OpTop = 0;
-	g_ValTop = -1;
-	g_OpStack[0].type = OP_OBR;
-	g_ObrDist = 2;
-
-	char* error;
-	MathTokenType token = Lexer_GetNextToken();
+	WCHAR* error;
 	for (;;)
 	{
-		--g_ObrDist;
+		MathTokenType token = GetNextToken(lexer);
+		--parser.obrDist;
 		switch (token)
 		{
 		case TOK_ERROR:
 			return eSyntax;
 
 		case TOK_FINAL:
-			if ((error = CalcToObr()) != NULL)
+			if ((error = CalcToObr(parser)) != NULL)
+			{
 				return error;
-			goto setResult;
+			}
+			else if (parser.opTop != -1 || parser.valTop != 0)
+			{
+				return eInternal;
+			}
+			else
+			{
+				// Done!
+				*result = parser.valStack[0];
+				return NULL;
+			}
+			break;
 
 		case TOK_FLOAT:
-			g_ValStack[++g_ValTop] = g_Lexer.extValue;
+			parser.valStack[++parser.valTop] = lexer.extValue;
 			break;
 
 		case TOK_SYMBOL:
-			switch (g_Lexer.intValue)
+			switch (lexer.intValue)
 			{
-			case OP_OBR:	// (
+			case OP_OBR:
 				{
-					g_OpStack[++g_OpTop] = g_BrOp;
-					g_ObrDist = 2;
+					parser.opStack[++parser.opTop] = g_BrOp;
+					parser.obrDist = 2;
 				}
 				break;
 
-			case OP_CBR:	//)
+			case OP_CBR:
 				{
-					if ((error = CalcToObr()) != NULL) return error;
+					if ((error = CalcToObr(parser)) != NULL) return error;
 				}
 				break;
 
-			case OP_COMMA:	// ,
+			case OP_COMMA:
 				{	
-					Operation* pOp;
-					if ((error = CalcToObr()) != NULL) return error;
+					if ((error = CalcToObr(parser)) != NULL) return error;
 						
-					if ((pOp = &g_OpStack[g_OpTop])->type == OP_FUNC_MULTIARG)
+					if (parser.opStack[parser.opTop].type == OP_FUNC_MULTIARG)
 					{
-						g_OpStack[++g_OpTop] = g_BrOp;
-						g_ObrDist = 2;
+						parser.opStack[++parser.opTop] = g_BrOp;
+						parser.obrDist = 2;
 					}
 					else
 					{
@@ -332,81 +325,86 @@ char* MathParser::Parse(const char* formula, CMeasureCalc* calc, double* result)
 			default:
 				{
 					Operation op;
-					op.type = (OperationType) g_Lexer.intValue;
+					op.type = (OperationType)lexer.intValue;
 					switch (op.type)
 					{
 					case OP_ADD:
-						if (g_ObrDist >= 1) goto nextToken;
+						if (parser.obrDist >= 1)
+						{
+							// Goto next token
+							continue;
+						}
 						break;
 
 					case OP_SUB:
-						if (g_ObrDist >= 1)
+						if (parser.obrDist >= 1)
 						{
-							g_OpStack[++g_OpTop] = g_NegOp;
-							goto nextToken;
+							parser.opStack[++parser.opTop] = g_NegOp;
+
+							// Goto next token
+							continue;
 						}
 						break;
 
 					case OP_LOGIC:
 					case OP_LOGIC_SEP:
-						g_ObrDist = 2;
+						parser.obrDist = 2;
 						break;
 					}
 
-					while (g_OpPriorities[op.type] <= g_OpPriorities[g_OpStack[g_OpTop].type])
+					while (g_OpPriorities[op.type] <= g_OpPriorities[parser.opStack[parser.opTop].type])
 					{
-						if ((error = Calc()) != NULL) return error;
+						if ((error = Calc(parser)) != NULL) return error;
 					}
-					g_OpStack[++g_OpTop] = op;
+					parser.opStack[++parser.opTop] = op;
 				}
 				break;
 			}
 			break;
 
-		case TOK_NAME: 
+		case TOK_NAME:
 			{
 				Operation op;
-				double dblval;
-				void* *func = NULL;
-				int funcnum, namelen = g_Lexer.nameLen;
+				int funcnum, namelen = lexer.nameLen;
 
-				if (g_Lexer.nameLen <= MAX_FUNC_LEN &&
-					((funcnum = GetFunction(g_Lexer.name, g_Lexer.nameLen, (void**)&op.Func)) >= 0))
+				if (lexer.nameLen <= FUNC_MAX_LEN &&
+					((funcnum = GetFunction(lexer.name, lexer.nameLen, (void**)&op.proc)) >= 0))
 				{
 					switch (funcnum)
 					{
 					case FUNC_E:
-						g_ValStack[++g_ValTop] = M_E;
+						parser.valStack[++parser.valTop] = M_E;
 						break;
 
 					case FUNC_PI:
-						g_ValStack[++g_ValTop] = M_PI;
+						parser.valStack[++parser.valTop] = M_PI;
 						break;
 
 					case FUNC_ROUND:
 						op.type = OP_FUNC_MULTIARG;
-						op.prevvalTop = g_ValTop;
-						g_OpStack[++g_OpTop] = op;
+						op.prevTop = parser.valTop;
+						parser.opStack[++parser.opTop] = op;
 						break;
 
 					default:	// Internal function
 						op.type = OP_FUNC_ONEARG;
-						g_OpStack[++g_OpTop] = op;
+						parser.opStack[++parser.opTop] = op;
 						break;
 					}
 				}
 				else
 				{
-					if (calc && calc->GetMeasureValue(g_Lexer.name, g_Lexer.nameLen, &dblval))
+					double dblval;
+					if (calc && calc->GetMeasureValue(lexer.name, lexer.nameLen, &dblval))
 					{
-						g_ValStack[++g_ValTop] = dblval;
+						parser.valStack[++parser.valTop] = dblval;
 						break;
 					}
 
-					char buffer[128 - _countof(eUnknFunc)];
-					strncpy_s(buffer, g_Lexer.name, g_Lexer.nameLen);
-					buffer[g_Lexer.nameLen] = '\0';
-					_snprintf_s(g_ErrorBuffer, _TRUNCATE, eUnknFunc, buffer);
+					WCHAR buffer[128 - _countof(eUnknFunc)];
+					wcsncpy_s(buffer, lexer.name, lexer.nameLen);
+					buffer[lexer.nameLen] = L'\0';
+					_snwprintf_s(g_ErrorBuffer, _TRUNCATE, eUnknFunc, buffer);
 					return g_ErrorBuffer;
 				}
 				break;
@@ -415,46 +413,37 @@ char* MathParser::Parse(const char* formula, CMeasureCalc* calc, double* result)
 		default:
 			return eSyntax;
 		}
-
-nextToken:
-		token = Lexer_GetNextToken();
 	}
-
-setResult:
-	if (g_OpTop != -1 || g_ValTop != 0) return eInternal;
-
-	*result = g_ValStack[0];
-	return NULL;
 }
 
-static char* Calc()
+static WCHAR* Calc(Parser& parser)
 {
 	double res;
-	Operation op = g_OpStack[g_OpTop--];
+	Operation op = parser.opStack[parser.opTop--];
 
 	// Multi-argument function
 	if (op.type == OP_FUNC_MULTIARG)
 	{
-		int paramcnt = g_ValTop - op.prevvalTop;
+		int paramcnt = parser.valTop - op.prevTop;
 
-		g_ValTop = op.prevvalTop;
-		char* error = (*(MultiArgProc)op.Func)(paramcnt, &g_ValStack[g_ValTop + 1], &res);
+		parser.valTop = op.prevTop;
+		WCHAR* error = (*(MultiArgProc)op.proc)(paramcnt, &parser.valStack[parser.valTop + 1], &res);
 		if (error) return error;
 
-		g_ValStack[++g_ValTop] = res;
+		parser.valStack[++parser.valTop] = res;
 		return NULL;
 	}
 	else if (op.type == OP_LOGIC)
 	{
 		return NULL; 
 	}
-	else if (g_ValTop < 0)
+	else if (parser.valTop < 0)
 	{
 		return eExtraOp;
 	}
 
 	// Right arg
-	double right = g_ValStack[g_ValTop--];
+	double right = parser.valStack[parser.valTop--];
 
 	// One arg operations
 	if (op.type == OP_NOT)
@@ -470,17 +459,17 @@ static char* Calc()
 	}
 	else if (op.type == OP_FUNC_ONEARG)
 	{
-		res = (*(OneArgProc)op.Func)(right);
+		res = (*(OneArgProc)op.proc)(right);
 	}
 	else
 	{
-		if (g_ValTop < 0)
+		if (parser.valTop < 0)
 		{
 			return eExtraOp;
 		}
 
 		// Left arg
-		double left = g_ValStack[g_ValTop--];
+		double left = parser.valStack[parser.valTop--];
 		switch (op.type)
 		{
 		case OP_SHL:
@@ -620,11 +609,11 @@ static char* Calc()
 			{
 				// needs three arguments
 				double ValLL;
-				if (g_OpTop < 0 || g_OpStack[g_OpTop--].type != OP_LOGIC)
+				if (parser.opTop < 0 || parser.opStack[parser.opTop--].type != OP_LOGIC)
 				{
 					return eLogicErr;
 				}
-				ValLL = g_ValStack[g_ValTop--];
+				ValLL = parser.valStack[parser.valTop--];
 				res = ValLL ? left : right;
 			}
 			break;
@@ -634,91 +623,31 @@ static char* Calc()
 		}
 	}
 
-	g_ValStack[++g_ValTop] = res;
+	parser.valStack[++parser.valTop] = res;
 	return NULL;
 }
 
-static char* CalcToObr()
+static WCHAR* CalcToObr(Parser& parser)
 {
-	while (g_OpStack[g_OpTop].type != OP_OBR)
+	while (parser.opStack[parser.opTop].type != OP_OBR)
 	{
-		char* error = Calc();
+		WCHAR* error = Calc(parser);
 		if (error) return error;
 	}
-	--g_OpTop;
+	--parser.opTop;
 	return NULL;
 }
 
-int GetFunction(const char* str, size_t len, void** data)
-{
-	const int funcCount = sizeof(g_Functions) / sizeof(Function);
-	for (int i = 0; i < funcCount; ++i)
-	{
-		if (g_Functions[i].length == len &&
-			_strnicmp(str, g_Functions[i].name, len) == 0)
-		{
-			*data = g_Functions[i].proc;
-			return i;
-		}
-	}
-
-	return -1;
-}
-
-int FindSymbol(const char* str)
-{
-	switch (str[0])
-	{
-	case '(':	return (int)OP_OBR;
-	case '+':	return OP_ADD;
-	case '-':	return OP_SUB;
-	case '*':	return (str[1] == '*') ? OP_POW : OP_MUL;
-	case '/':	return OP_DIV;
-	case '%':	return OP_MOD;
-	case '$':	return OP_UNK;
-	case '^':	return OP_XOR;
-	case '~':	return OP_NOT;
-	case '&':	return (str[1] == '&') ? OP_LOGIC_AND : OP_AND;
-	case '|':	return (str[1] == '|') ? OP_LOGIC_OR : OP_OR;
-	case '=':	return OP_EQU;
-	case '>':	return (str[1] == '>') ? OP_SHR : (str[1] == '=') ? OP_LOGIC_GEQ : OP_GREATER;
-	case '<':	return (str[1] == '>') ? OP_LOGIC_NEQ : (str[1] == '<') ? OP_SHL : (str[1] == '=') ? OP_LOGIC_LEQ : OP_SMALLER;
-	case '?':	return OP_LOGIC;
-	case ':':	return OP_LOGIC_SEP;
-	case ')':	return OP_CBR;
-	case ',':	return OP_COMMA;
-	}
-
-	return -1;
-}
-
-// -----------------------------------------------------------------------------------------------
-//  Lexer
-// -----------------------------------------------------------------------------------------------
-
-inline CharType CHARTYPEPP() { return g_CharTypes[(unsigned char)*++(g_Lexer.string)]; }
-inline CharType CHARTYPE() { return g_CharTypes[(unsigned char)*g_Lexer.string]; }
-
-int Lexer_SetParseString(const char* str)
-{
-	g_Lexer.PrevTokenType = TOK_NONE;
-	if (!str || !*str) return 0;
-
-	g_Lexer.string = str;
-	g_Lexer.CharType = CHARTYPE();
-	return 1;
-}
-
-MathTokenType Lexer_GetNextToken()
+MathTokenType GetNextToken(Lexer& lexer)
 {
 	MathTokenType result = TOK_ERROR;
 
-	while (g_Lexer.CharType == CH_SEPARAT)
+	while (lexer.charType == CH_SEPARAT)
 	{
-		g_Lexer.CharType = CHARTYPEPP();
+		lexer.charType = GetCharType(*++lexer.string);
 	}
 	
-	switch (g_Lexer.CharType)
+	switch (lexer.charType)
 	{
 	case CH_FINAL:
 		{
@@ -728,36 +657,36 @@ MathTokenType Lexer_GetNextToken()
 
 	case CH_LETTER:
 		{
-			g_Lexer.name = g_Lexer.string;
+			lexer.name = lexer.string;
 			do
 			{
-				g_Lexer.CharType = CHARTYPEPP();
+				lexer.charType = GetCharType(*++lexer.string);
 			}
-			while (g_Lexer.CharType <= CH_DIGIT);
+			while (lexer.charType <= CH_DIGIT);
 
-			g_Lexer.nameLen = g_Lexer.string - g_Lexer.name;
+			lexer.nameLen = lexer.string - lexer.name;
 			result = TOK_NAME;
 		}
 		break;
 
 	case CH_DIGIT:
 		{
-			char* newString;
-			if (g_Lexer.string[0] == '0')
+			WCHAR* newString;
+			if (lexer.string[0] == L'0')
 			{
 				bool valid = true;
-				switch (g_Lexer.string[1])
+				switch (lexer.string[1])
 				{
-				case 'x':	// Hexadecimal
-					g_Lexer.intValue = strtol(g_Lexer.string, &newString, 16);
+				case L'x':	// Hexadecimal
+					lexer.intValue = wcstol(lexer.string, &newString, 16);
 					break;
 
-				case 'o':	// Octal
-					g_Lexer.intValue = strtol(g_Lexer.string + 2, &newString, 8);
+				case L'o':	// Octal
+					lexer.intValue = wcstol(lexer.string + 2, &newString, 8);
 					break;
 
-				case 'b':	// Binary
-					g_Lexer.intValue = strtol(g_Lexer.string + 2, &newString, 2);
+				case L'b':	// Binary
+					lexer.intValue = wcstol(lexer.string + 2, &newString, 2);
 					break;
 
 				default:
@@ -767,11 +696,11 @@ MathTokenType Lexer_GetNextToken()
 
 				if (valid)
 				{
-					if (g_Lexer.string != newString)
+					if (lexer.string != newString)
 					{
-						g_Lexer.string = newString;
-						g_Lexer.CharType = CHARTYPE();
-						g_Lexer.extValue = g_Lexer.intValue;
+						lexer.string = newString;
+						lexer.charType = GetCharType(*lexer.string);
+						lexer.extValue = lexer.intValue;
 						result = TOK_FLOAT;
 					}
 					break;
@@ -779,11 +708,11 @@ MathTokenType Lexer_GetNextToken()
 			}
 
 			// Decimal
-			g_Lexer.extValue = strtod(g_Lexer.string, &newString);
-			if (g_Lexer.string != newString)
+			lexer.extValue = wcstod(lexer.string, &newString);
+			if (lexer.string != newString)
 			{
-				g_Lexer.string = newString;
-				g_Lexer.CharType = CHARTYPE();
+				lexer.string = newString;
+				lexer.charType = GetCharType(*lexer.string);
 				result = TOK_FLOAT;
 			}
 		}
@@ -791,16 +720,13 @@ MathTokenType Lexer_GetNextToken()
 
 	case CH_SYMBOL:
 		{
-			int sym = FindSymbol(g_Lexer.string);
+			int sym = FindSymbol(lexer.string);
 			if (sym >= 0)
 			{
-				g_Lexer.string += (sym == OP_POW ||
-					sym == OP_LOGIC_AND || sym == OP_LOGIC_OR ||
-					sym == OP_SHR || sym == OP_LOGIC_GEQ ||
-					sym == OP_LOGIC_NEQ || sym == OP_SHL || sym == OP_LOGIC_LEQ) ? 2 : 1;
+				lexer.string += (sym <= OP_LOGIC_OR) ? 2 : 1;
 
-				g_Lexer.CharType = CHARTYPE();
-				g_Lexer.intValue = sym;
+				lexer.charType = GetCharType(*lexer.string);
+				lexer.intValue = sym;
 				result = TOK_SYMBOL;
 			}
 		}
@@ -809,7 +735,97 @@ MathTokenType Lexer_GetNextToken()
 	default:
 		break;
 	}
-	return g_Lexer.PrevTokenType = result;
+	return lexer.prevToken = result;
+}
+
+CharType GetCharType(WCHAR ch)
+{
+	switch (ch)
+	{
+	case L'\0':
+		return CH_FINAL;
+
+	case L' ':
+	case L'\t':
+	case L'\n':
+		return CH_SEPARAT;
+
+	case L'_':
+		return CH_LETTER;
+
+	case L'+':
+	case L'-':
+	case L'/':
+	case L'*':
+	case L'~':
+	case L'(':
+	case L')':
+	case L'<':
+	case L'>':
+	case L'%':
+	case L'$':
+	case L',':
+	case L'?':
+	case L':':
+	case L'=':
+	case L'&':
+	case L'|':
+		return CH_SYMBOL;
+	}
+
+	if (iswalpha(ch)) return CH_LETTER;
+	if (iswdigit(ch)) return CH_DIGIT;
+
+	return CH_UNKNOWN;
+}
+
+bool MathParser::IsDelimiter(WCHAR ch)
+{
+	CharType type = GetCharType(ch);
+	return type == CH_SYMBOL || type == CH_SEPARAT;
+}
+
+int GetFunction(const WCHAR* str, size_t len, void** data)
+{
+	const int funcCount = sizeof(g_Functions) / sizeof(Function);
+	for (int i = 0; i < funcCount; ++i)
+	{
+		if (g_Functions[i].length == len &&
+			_wcsnicmp(str, g_Functions[i].name, len) == 0)
+		{
+			*data = g_Functions[i].proc;
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+int FindSymbol(const WCHAR* str)
+{
+	switch (str[0])
+	{
+	case L'(':	return (int)OP_OBR;
+	case L'+':	return OP_ADD;
+	case L'-':	return OP_SUB;
+	case L'*':	return (str[1] == L'*') ? OP_POW : OP_MUL;
+	case L'/':	return OP_DIV;
+	case L'%':	return OP_MOD;
+	case L'$':	return OP_UNK;
+	case L'^':	return OP_XOR;
+	case L'~':	return OP_NOT;
+	case L'&':	return (str[1] == L'&') ? OP_LOGIC_AND : OP_AND;
+	case L'|':	return (str[1] == L'|') ? OP_LOGIC_OR : OP_OR;
+	case L'=':	return OP_EQU;
+	case L'>':	return (str[1] == L'>') ? OP_SHR : (str[1] == L'=') ? OP_LOGIC_GEQ : OP_GREATER;
+	case L'<':	return (str[1] == L'>') ? OP_LOGIC_NEQ : (str[1] == L'<') ? OP_SHL : (str[1] == L'=') ? OP_LOGIC_LEQ : OP_SMALLER;
+	case L'?':	return OP_LOGIC;
+	case L':':	return OP_LOGIC_SEP;
+	case L')':	return OP_CBR;
+	case L',':	return OP_COMMA;
+	}
+
+	return -1;
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -838,7 +854,7 @@ static double neg(double x)
 }
 
 // "Advanced" round function; second argument - sharpness
-static char* round(int paramcnt, double* args, double* result)
+static WCHAR* round(int paramcnt, double* args, double* result)
 {
 	int sharpness;
 	if (paramcnt == 1)
