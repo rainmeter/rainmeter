@@ -1414,12 +1414,6 @@ void CMeterWindow::UpdateMeasure(const WCHAR* name, bool group)
 {
 	if (name == NULL || *name == 0) return;
 
-	// Pre-updates
-	if (!m_Measures.empty())
-	{
-		CMeasureCalc::SetCurrentMeterWindow(this);
-	}
-
 	bool bNetStats = m_HasNetMeasures;
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
@@ -2944,7 +2938,6 @@ void CMeterWindow::Update(bool nodraw)
 			CMeasureNet::UpdateIFTable();
 			CMeasureNet::UpdateStats();
 		}
-		CMeasureCalc::SetCurrentMeterWindow(this);
 
 		// Update all measures
 		std::list<CMeasure*>::const_iterator i = m_Measures.begin();

@@ -29,25 +29,22 @@ public:
 
 	virtual bool Update();
 
-	static void SetCurrentMeterWindow(CMeterWindow* meterWindow) { c_MeterWindow = meterWindow; }
+	bool GetMeasureValue(const char* str, int len, double* value);
 
 protected:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
-	void FormulaReplace();
-	bool IsDelimiter(WCHAR ch);
-
-	static int MatchMeasure(const char* str, int len, double* value);
+	void UpdateRandom();
 
 	std::wstring m_Formula;
-	std::wstring m_FormulaHolder;
+
+	int m_Random;
 
 	int m_LowBound;
 	int m_HighBound;
 	bool m_UpdateRandom;
 
-	static CMeterWindow* c_MeterWindow;
 	static bool c_RandSeeded;
 };
 

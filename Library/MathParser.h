@@ -21,15 +21,15 @@
 #ifndef __MATHPARSER_H__
 #define __MATHPARSER_H__
 
+class CMeasureCalc;
+
 namespace MathParser
 {
-	typedef int (*ParameterSearchProc)(const char* str, int len, double* value);
-
 	void Initialize();
 
 	char* Check(const char* formula);
 	char* CheckParse(const char* formula, double* result);
-	char* Parse(const char* formula, ParameterSearchProc searchProc, double* result);
+	char* Parse(const char* formula, CMeasureCalc* calc, double* result);
 };
 
 #endif

@@ -19,6 +19,7 @@
 // Heavily based on ccalc 0.5.1 by Walery Studennikov <hqsoftware@mail.ru>
 
 #include "StdAfx.h"
+#include "MeasureCalc.h"
 #include "MathParser.h"
 
 static const int MAX_STACK_SIZE = 32;
@@ -261,7 +262,7 @@ char* MathParser::CheckParse(const char* formula, double* result)
 	return NULL;
 }
 
-char* MathParser::Parse(const char* formula, ParameterSearchProc searchProc, double* result)
+char* MathParser::Parse(const char* formula, CMeasureCalc* calc, double* result)
 {
 	if (!formula || !*formula)
 	{
@@ -396,7 +397,7 @@ char* MathParser::Parse(const char* formula, ParameterSearchProc searchProc, dou
 				}
 				else
 				{
-					if (searchProc && (*searchProc)(g_Lexer.name, g_Lexer.nameLen, &dblval))
+					if (calc && calc->GetMeasureValue(g_Lexer.name, g_Lexer.nameLen, &dblval))
 					{
 						g_ValStack[++g_ValTop] = dblval;
 						break;

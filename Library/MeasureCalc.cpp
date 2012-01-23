@@ -21,7 +21,6 @@
 #include "Rainmeter.h"
 #include "MathParser.h"
 
-CMeterWindow* CMeasureCalc::c_MeterWindow = NULL;
 bool CMeasureCalc::c_RandSeeded = false;
 
 /*
@@ -31,6 +30,7 @@ bool CMeasureCalc::c_RandSeeded = false;
 **
 */
 CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+	m_Random(),
 	m_LowBound(),
 	m_HighBound(100),
 	m_UpdateRandom(false)
@@ -64,12 +64,9 @@ bool CMeasureCalc::Update()
 {
 	if (!CMeasure::PreUpdate()) return false;
 
-	if (m_UpdateRandom)
-	{
-		FormulaReplace();
-	}
+	if (m_UpdateRandom) UpdateRandom();
 
-	char* errMsg = MathParser::Parse(ConvertToAscii(m_Formula.c_str()).c_str(), MatchMeasure, &m_Value);
+	char* errMsg = MathParser::Parse(ConvertToAscii(m_Formula.c_str()).c_str(), this, &m_Value);
 	if (errMsg != NULL)
 	{
 		std::wstring error = L"Calc: ";
@@ -81,29 +78,6 @@ bool CMeasureCalc::Update()
 	}
 
 	return PostUpdate();
-}
-
-int CMeasureCalc::MatchMeasure(const char* str, int len, double* value)
-{
-	const std::list<CMeasure*>& measures = c_MeterWindow->GetMeasures();
-
-	std::list<CMeasure*>::const_iterator iter = measures.begin();
-	for ( ; iter != measures.end(); ++iter)
-	{
-		if (_strnicmp(str, (*iter)->GetAsciiName(), len) == 0)
-		{
-			*value = (*iter)->GetValue();
-			return 1;
-		}
-	}
-
-	if (_strnicmp(str, "counter", len) == 0)
-	{
-		*value = c_MeterWindow->GetUpdateCounter();
-		return 1;
-	}
-
-	return 0;
 }
 
 /*
@@ -121,6 +95,7 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	int oldHighBound = m_HighBound;
 	bool oldUpdateRandom = m_UpdateRandom;
 
+	std::wstring oldFormula = m_Formula;
 	m_Formula = parser.ReadString(section, L"Formula", L"");
 
 	m_LowBound = parser.ReadInt(section, L"LowBound", 0);
@@ -128,18 +103,12 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_UpdateRandom = 0!=parser.ReadInt(section, L"UpdateRandom", 0);
 
 	if (!m_Initialized ||
-		wcscmp(m_FormulaHolder.c_str(), m_Formula.c_str()) != 0 ||
+		wcscmp(m_Formula.c_str(), oldFormula.c_str()) != 0 ||
 		oldLowBound != m_LowBound ||
 		oldHighBound != m_HighBound ||
 		oldUpdateRandom != m_UpdateRandom)
 	{
-		// Hold onto the formula, we are going to change it
-		m_FormulaHolder = m_Formula;
-
-		if (!m_UpdateRandom)
-		{
-			FormulaReplace();
-		}
+		if (!m_UpdateRandom) UpdateRandom();
 
 		char* errMsg = MathParser::Check(ConvertToAscii(m_Formula.c_str()).c_str());
 		if (errMsg != NULL)
@@ -154,65 +123,37 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** FormulaReplace
-**
-** This replaces the word Random in m_Formula with a random number
-**
-*/
-void CMeasureCalc::FormulaReplace()
+bool CMeasureCalc::GetMeasureValue(const char* str, int len, double* value)
 {
-	// To implement random numbers the word "Random" in the string
-	// formula is being replaced by the random number value
-	m_Formula = m_FormulaHolder;
-	size_t start = 0, pos;
+	const std::list<CMeasure*>& measures = m_MeterWindow->GetMeasures();
 
-	do
+	std::list<CMeasure*>::const_iterator iter = measures.begin();
+	for ( ; iter != measures.end(); ++iter)
 	{
-		pos = m_Formula.find_first_of(L"Rr", start);
-		if (pos != std::wstring::npos)
+		if (_strnicmp(str, (*iter)->GetAsciiName(), len) == 0)
 		{
-			if (_wcsnicmp(L"Random", m_Formula.c_str() + pos, 6) == 0 &&
-				(pos == 0 || IsDelimiter(*(m_Formula.c_str() + pos - 1))) &&
-				(pos == (m_Formula.length() - 6) || IsDelimiter(*(m_Formula.c_str() + pos + 6))))
-			{
-				int range = (m_HighBound - m_LowBound) + 1;
-				srand((unsigned) rand());
-				int randNumber = m_LowBound + (int)(range * rand() / (RAND_MAX + 1.0));
-
-				WCHAR buffer[32];
-				_itow_s(randNumber, buffer, 10);
-				size_t len = wcslen(buffer);
-
-				m_Formula.replace(pos, 6, buffer, len);
-				start = pos + len;
-			}
-			else
-			{
-				start = pos + 1;
-			}
+			*value = (*iter)->GetValue();
+			return 1;
 		}
 	}
-	while (pos != std::wstring::npos);
+
+	if (_strnicmp(str, "counter", len) == 0)
+	{
+		*value = m_MeterWindow->GetUpdateCounter();
+		return 1;
+	}
+	else if (_strnicmp(str, "random", len) == 0)
+	{
+		*value = (double)m_Random;
+		return 1;
+	}
+
+	return 0;
 }
 
-/*
-** IsDelimiter
-**
-** Checks whether the given character is a operator or a delimiter.
-**
-*/
-bool CMeasureCalc::IsDelimiter(WCHAR ch)
+void CMeasureCalc::UpdateRandom()
 {
-	const WCHAR* symbols = L" \t\n()+-/*^~<>%$,?:=&|;";
-
-	for (const WCHAR* sch = symbols; *sch != L'\0'; ++sch)
-	{
-		if (ch == *sch)
-		{
-			return true;
-		}
-	}
-
-	return false;
+	int range = (m_HighBound - m_LowBound) + 1;
+	srand((unsigned)rand());
+	m_Random = m_LowBound + (int)(range * rand() / (RAND_MAX + 1.0));
 }
