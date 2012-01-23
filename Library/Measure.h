@@ -54,7 +54,6 @@ public:
 
 	const WCHAR* GetName() { return m_Name.c_str(); }
 	const std::wstring& GetOriginalName() { return m_Name; }
-	const char* GetAsciiName() { return m_AsciiName.c_str(); }
 
 	void Disable() { m_Disabled = true; }
 	void Enable() { m_Disabled = false; }
@@ -100,8 +99,7 @@ protected:
 	double m_MinValue;				// The minimum value (so far)
 	double m_MaxValue;				// The maximum value (so far)
 	double m_Value;					// The current value
-	const std::wstring m_Name;				// Name of this Measure
-	const std::string m_AsciiName;				// Name of this Measure in ANSI
+	const std::wstring m_Name;		// Name of this Measure
 
 	std::vector<std::wstring> m_Substitute;	// Vec of substitute strings
 	bool m_RegExpSubstitute;

@@ -122,6 +122,7 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		}
 	}
 }
+
 /*
 ** FormulaReplace
 **
@@ -157,6 +158,7 @@ void CMeasureCalc::FormulaReplace()
 	}
 	while (pos != std::wstring::npos);
 }
+
 bool CMeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value)
 {
 	const std::list<CMeasure*>& measures = m_MeterWindow->GetMeasures();
@@ -164,7 +166,8 @@ bool CMeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value)
 	std::list<CMeasure*>::const_iterator iter = measures.begin();
 	for ( ; iter != measures.end(); ++iter)
 	{
-		if (_wcsnicmp(str, (*iter)->GetName(), len) == 0)
+		if ((*iter)->GetOriginalName().length() == len &&
+			_wcsnicmp(str, (*iter)->GetName(), len) == 0)
 		{
 			*value = (*iter)->GetValue();
 			return true;
