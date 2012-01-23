@@ -203,14 +203,10 @@ WCHAR eBrackets [] = L"Unmatched brackets";
 WCHAR eSyntax   [] = L"Syntax error";
 WCHAR eInternal [] = L"Internal error";
 WCHAR eExtraOp  [] = L"Extra operation";
-WCHAR eInfinity [] = L"Infinity somewhere";
-WCHAR eInvArg   [] = L"Invalid argument";
+WCHAR eInfinity [] = L"Division by 0";
 WCHAR eUnknFunc [] = L"\"%s\" is unknown";
 WCHAR eLogicErr [] = L"Logical expression error";
-WCHAR eCalcErr  [] = L"Calculation error";
-WCHAR eValSizErr[] = L"Value too big for operation";
 WCHAR eInvPrmCnt[] = L"Invalid function parameter count";
-WCHAR g_ErrorBuffer[128];
 
 WCHAR* MathParser::Check(const WCHAR* formula)
 {
@@ -250,6 +246,8 @@ WCHAR* MathParser::CheckParse(const WCHAR* formula, double* result)
 
 WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double* result)
 {
+	static WCHAR errorBuffer[128];
+
 	if (!*formula)
 	{
 		*result = 0.0;
@@ -399,11 +397,9 @@ WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double* resul
 						break;
 					}
 
-					WCHAR buffer[128 - _countof(eUnknFunc)];
-					wcsncpy_s(buffer, lexer.name, lexer.nameLen);
-					buffer[lexer.nameLen] = L'\0';
-					_snwprintf_s(g_ErrorBuffer, _TRUNCATE, eUnknFunc, buffer);
-					return g_ErrorBuffer;
+					std::wstring name(lexer.name, lexer.nameLen);
+					_snwprintf_s(errorBuffer, _TRUNCATE, eUnknFunc, name.c_str());
+					return errorBuffer;
 				}
 				break;
 			}
@@ -420,7 +416,11 @@ static WCHAR* Calc(Parser& parser)
 	Operation op = parser.opStack[parser.opTop--];
 
 	// Multi-argument function
-	if (op.type == OP_FUNC_MULTIARG)
+	if (op.type == OP_LOGIC)
+	{
+		return NULL; 
+	}
+	else if (op.type == OP_FUNC_MULTIARG)
 	{
 		int paramcnt = parser.valTop - op.prevTop;
 
@@ -430,10 +430,6 @@ static WCHAR* Calc(Parser& parser)
 
 		parser.valStack[++parser.valTop] = res;
 		return NULL;
-	}
-	else if (op.type == OP_LOGIC)
-	{
-		return NULL; 
 	}
 	else if (parser.valTop < 0)
 	{
@@ -446,14 +442,7 @@ static WCHAR* Calc(Parser& parser)
 	// One arg operations
 	if (op.type == OP_NOT)
 	{
-		if (right >= INT_MIN && right <= INT_MAX)
-		{
-			res = ~((int)right);
-		}
-		else
-		{
-			return eValSizErr;
-		}
+		res = (double)(~((long long)right));
 	}
 	else if (op.type == OP_FUNC_ONEARG)
 	{
@@ -471,25 +460,11 @@ static WCHAR* Calc(Parser& parser)
 		switch (op.type)
 		{
 		case OP_SHL:
-			if (left >= INT_MIN && left <= INT_MAX && right >= INT_MIN && right <= INT_MAX)
-			{
-				res = (int)left << (int)right;
-			}
-			else
-			{
-				return eValSizErr;
-			}
+			res = (double)((long long)left << (long long)right);
 			break;
 
 		case OP_SHR:
-			if (left >= INT_MIN && left <= INT_MAX && right >= INT_MIN && right <= INT_MAX)
-			{
-				res = (int)left >> (int)right;
-			}
-			else
-			{
-				return eValSizErr;
-			}
+			res = (double)((long long)left >> (long long)right);
 			break;
 
 		case OP_POW:
@@ -559,36 +534,15 @@ static WCHAR* Calc(Parser& parser)
 			break;
 
 		case OP_XOR:
-			if (left >= INT_MIN && left <= INT_MAX && right >= INT_MIN && right <= INT_MAX)
-			{
-				res = (int)left ^ (int)right;
-			}
-			else
-			{
-				return eValSizErr;
-			}
+			res = (double)((long long)left ^ (long long)right);
 			break;
 
 		case OP_AND:
-			if (left >= INT_MIN && left <= INT_MAX && right >= INT_MIN && right <= INT_MAX)
-			{
-				res = (int)left & (int)right;
-			}
-			else
-			{
-				return eValSizErr;
-			}
+			res = (double)((long long)left & (long long)right);
 			break;
 
 		case OP_OR:
-			if (left >= INT_MIN && left <= INT_MAX && right >= INT_MIN && right <= INT_MAX)
-			{
-				res = (int)left | (int)right;
-			}
-			else
-			{
-				return eValSizErr;
-			}
+			res = (double)((long long)left | (long long)right);
 			break;
 
 		case OP_EQU:
@@ -605,14 +559,12 @@ static WCHAR* Calc(Parser& parser)
 
 		case OP_LOGIC_SEP:
 			{
-				// needs three arguments
-				double ValLL;
+				// Needs three arguments
 				if (parser.opTop < 0 || parser.opStack[parser.opTop--].type != OP_LOGIC)
 				{
 					return eLogicErr;
 				}
-				ValLL = parser.valStack[parser.valTop--];
-				res = ValLL ? left : right;
+				res = parser.valStack[parser.valTop--] ? left : right;
 			}
 			break;
 
@@ -802,7 +754,7 @@ int FindSymbol(const WCHAR* str)
 {
 	switch (str[0])
 	{
-	case L'(':	return (int)OP_OBR;
+	case L'(':	return OP_OBR;
 	case L'+':	return OP_ADD;
 	case L'-':	return OP_SUB;
 	case L'*':	return (str[1] == L'*') ? OP_POW : OP_MUL;
