@@ -136,15 +136,12 @@ LPCWSTR PluginBridge(LPCWSTR _sCommand, LPCWSTR _sData)
 
 	NULLCHECK(_sData);
 
-	std::wstring sCommand = _sCommand;
-	std::transform(sCommand.begin(), sCommand.end(), sCommand.begin(), ::towlower);
-
 	// Command       GetConfig
 	// Data          unquoted full path and filename given to the plugin on initialize
 	//               (note: this is CaSe-SeNsItIvE!)
 	// Execution     none
 	// Result        the config name if found or a blank string if not
-	if (sCommand == L"getconfig")
+	if (_wcsicmp(_sCommand, L"GetConfig") == 0)
 	{
 		// returns the config name, lookup by INI file
 
@@ -164,7 +161,7 @@ LPCWSTR PluginBridge(LPCWSTR _sCommand, LPCWSTR _sData)
 	// Data          [the config name]
 	// Execution     none
 	// Result        the HWND to the specified config window if found, 'error' otherwise
-	if (sCommand == L"getwindow")
+	if (_wcsicmp(_sCommand, L"GetWindow") == 0)
 	{
 		std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
 
@@ -189,7 +186,7 @@ LPCWSTR PluginBridge(LPCWSTR _sCommand, LPCWSTR _sData)
 	// Data          [the config name]
 	// Execution     none
 	// Result        the value of the variable
-	if (sCommand == L"getvariable")
+	if (_wcsicmp(_sCommand, L"GetVariable") == 0)
 	{
 		std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
 
@@ -201,11 +198,9 @@ LPCWSTR PluginBridge(LPCWSTR _sCommand, LPCWSTR _sData)
 			if (meterWindow)
 			{
 				const std::wstring& variable = subStrings[1];
-				std::wstring result_from_parser;
 
-				if (meterWindow->GetParser().GetVariable(variable, result_from_parser))
+				if (meterWindow->GetParser().GetVariable(variable, g_Buffer))
 				{
-					g_Buffer = result_from_parser;
 					return g_Buffer.c_str();
 				}
 			}
@@ -218,7 +213,7 @@ LPCWSTR PluginBridge(LPCWSTR _sCommand, LPCWSTR _sData)
 	// Data          [the config name] [variable data]
 	// Execution     the indicated variable is updated
 	// Result        'success' if the config was found, 'error' otherwise
-	if (sCommand == L"setvariable")
+	if (_wcsicmp(_sCommand, L"SetVariable") == 0)
 	{
 		std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
 

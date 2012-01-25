@@ -32,19 +32,16 @@ std::unordered_map<std::wstring, Gdiplus::Font*> CMeterString::c_Fonts;
 
 void StringToUpper(std::wstring& str)
 {
-	//change each element of the string to upper case
-	std::transform(str.begin(), str.end(), str.begin(), ::towupper);
+	_wcsupr(&str[0]);
 }
 
 void StringToLower(std::wstring& str)
 {
-	//change each element of the string to lower case
-	std::transform(str.begin(), str.end(), str.begin(), ::towlower);
+	_wcslwr(&str[0]);
 }
 
 void StringToProper(std::wstring& str)
 {
-	//change each element of the string to lower case
 	if (!str.empty())
 	{
 		str[0] = towupper(str[0]);

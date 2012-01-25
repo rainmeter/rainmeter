@@ -117,7 +117,7 @@ private:
 
 	static std::wstring StrToLower(const std::wstring& str) { std::wstring strTmp(str); StrToLowerC(strTmp); return strTmp; }
 	static std::wstring StrToLower(const WCHAR* str) { std::wstring strTmp(str); StrToLowerC(strTmp); return strTmp; }
-	static std::wstring& StrToLowerC(std::wstring& str) { std::transform(str.begin(), str.end(), str.begin(), ::towlower); return str; }
+	static std::wstring& StrToLowerC(std::wstring& str) { _wcslwr(&str[0]); return str; }
 
 	std::wstring m_Filename;
 

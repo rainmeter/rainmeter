@@ -70,7 +70,7 @@ std::wstring CGroup::CreateGroup(const std::wstring& str)
 		strTmp.assign(str, pos, str.find_last_not_of(L" \t\r\n") - pos + 1);
 
 		// Convert to lower
-		std::transform(strTmp.begin(), strTmp.end(), strTmp.begin(), ::towlower);
+		_wcslwr(&strTmp[0]);
 	}
 
 	return strTmp;

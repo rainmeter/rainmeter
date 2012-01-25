@@ -22,7 +22,6 @@
 #include "MeasureCalc.h"
 #include "MathParser.h"
 
-static const int MAX_STACK_SIZE = 96;
 static const double M_E = 2.7182818284590452354;
 static const double M_PI = 3.14159265358979323846;
 
@@ -172,8 +171,8 @@ static int FindSymbol(const WCHAR* str);
 
 struct Parser
 {
-	Operation opStack[MAX_STACK_SIZE];
-	double valStack[MAX_STACK_SIZE];
+	Operation opStack[96];
+	double valStack[64];
 	char opTop;
 	char valTop;
 	int obrDist;
@@ -210,28 +209,23 @@ WCHAR eInvPrmCnt[] = L"Invalid function parameter count";
 
 WCHAR* MathParser::Check(const WCHAR* formula)
 {
-	int BrCnt = 0;
+	int brackets = 0;
 
 	// Brackets Matching
 	while (*formula)
 	{
 		if (*formula == L'(')
 		{
-			++BrCnt;
+			++brackets;
 		}
 		else if (*formula == L')')
 		{
-			--BrCnt;
+			--brackets;
 		}
 		++formula;
 	}
 
-	if (BrCnt != 0)
-	{
-		return eBrackets;
-	}
-
-	return NULL;
+	return (brackets != 0) ? eBrackets : NULL;
 }
 
 WCHAR* MathParser::CheckParse(const WCHAR* formula, double* result)
@@ -260,6 +254,12 @@ WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double* resul
 	WCHAR* error;
 	for (;;)
 	{
+		if ((parser.opTop == _countof(parser.opStack) - 2) ||
+			(parser.valTop == _countof(parser.valStack) - 2))
+		{
+			return eInternal;
+		}
+
 		MathTokenType token = GetNextToken(lexer);
 		--parser.obrDist;
 		switch (token)
