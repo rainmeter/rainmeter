@@ -27,7 +27,6 @@ static const double M_PI = 3.14159265358979323846;
 
 typedef double (*OneArgProc)(double arg);
 typedef WCHAR* (*MultiArgProc)(int paramcnt, double* args, double* result);
-typedef double (*FunctionProc)(double);
 
 enum OperationType
 {
@@ -91,7 +90,7 @@ struct Operation
 struct Function
 {
 	WCHAR* name;
-	FunctionProc proc;
+	OneArgProc proc;
 	BYTE length;
 };
 
@@ -116,7 +115,7 @@ static Function g_Functions[] =
 	{ L"trunc", &trunc, 5 },
 	{ L"floor", &floor, 5 },
 	{ L"ceil", &ceil, 4 },
-	{ L"round", (FunctionProc)&round, 5 },
+	{ L"round", (OneArgProc)&round, 5 },
 	{ L"asin", &asin, 4 },
 	{ L"acos", &acos, 4 },
 	{ L"sgn", &sgn, 4 },
@@ -129,6 +128,7 @@ static const int FUNC_MAX_LEN = 5;
 static const int FUNC_ROUND = 13;
 static const int FUNC_E = 18;
 static const int FUNC_PI = 19;
+static const BYTE FUNC_INVALID = UCHAR_MAX;
 
 static const Operation g_BrOp = { OP_OBR, 0, 0};
 static const Operation g_NegOp = { OP_FUNC_ONEARG, 17, 0 };
@@ -166,7 +166,7 @@ static const BYTE g_OpPriorities[OP_FUNC_MULTIARG + 1] =
 };
 
 static CharType GetCharType(WCHAR ch);
-static int GetFunction(const WCHAR* str, size_t len);
+static BYTE GetFunctionIndex(const WCHAR* str, BYTE len);
 static int FindSymbol(const WCHAR* str);
 
 struct Parser
@@ -364,7 +364,7 @@ WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double* resul
 			{
 				Operation op;
 				if (lexer.nameLen <= FUNC_MAX_LEN &&
-					((op.funcIndex = GetFunction(lexer.name, lexer.nameLen)) >= 0))
+					((op.funcIndex = GetFunctionIndex(lexer.name, lexer.nameLen)) != FUNC_INVALID))
 				{
 					switch (op.funcIndex)
 					{
@@ -735,7 +735,7 @@ bool MathParser::IsDelimiter(WCHAR ch)
 	return type == CH_SYMBOL || type == CH_SEPARAT;
 }
 
-int GetFunction(const WCHAR* str, size_t len)
+BYTE GetFunctionIndex(const WCHAR* str, BYTE len)
 {
 	const int funcCount = sizeof(g_Functions) / sizeof(Function);
 	for (int i = 0; i < funcCount; ++i)
@@ -747,7 +747,7 @@ int GetFunction(const WCHAR* str, size_t len)
 		}
 	}
 
-	return -1;
+	return FUNC_INVALID;
 }
 
 int FindSymbol(const WCHAR* str)
