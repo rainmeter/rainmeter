@@ -478,7 +478,6 @@ void CMeasureNet::ReadConfig(CConfigParser& parser, const WCHAR* section, NET ne
 	{
 		netName = L"NetTotalSpeed";
 		value = Rainmeter->GetGlobalConfig().netInSpeed + Rainmeter->GetGlobalConfig().netOutSpeed;
-		CSystem::SetNetworkStatisticsTimer();
 	}
 
 	double maxValue = parser.ReadFloat(section, L"MaxValue", -1);
@@ -492,7 +491,12 @@ void CMeasureNet::ReadConfig(CConfigParser& parser, const WCHAR* section, NET ne
 	}
 
 	m_Interface = parser.ReadInt(section, L"Interface", 0);
+
 	m_Cumulative = 0!=parser.ReadInt(section, L"Cumulative", 0);
+	if (m_Cumulative)
+	{
+		CSystem::SetNetworkStatisticsTimer();
+	}
 
 	m_TrafficValue = parser.ReadFloat(section, L"TrafficValue", 0.0);
 	m_TrafficAction = parser.ReadString(section, L"TrafficAction", L"", false);
