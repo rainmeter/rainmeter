@@ -244,7 +244,7 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	if (wcscmp(GetString(ID_STR_ISRTL), L"1") == 0)
+	if (*GetString(ID_STR_ISRTL) == L'1')
 	{
 		// Use RTL layout if using a RTL language
 		SetDialogRTL();

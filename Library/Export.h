@@ -31,7 +31,7 @@
 //
 // Exported functions
 //
-EXTERN_C
+
 #ifdef __cplusplus
 LIBRARY_EXPORT LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures = TRUE);
 #else

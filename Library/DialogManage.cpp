@@ -226,7 +226,7 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	if (wcscmp(GetString(ID_STR_ISRTL), L"1") == 0)
+	if (*GetString(ID_STR_ISRTL) == L'1')
 	{
 		// Use RTL layout if using a RTL language
 		SetDialogRTL();
@@ -882,7 +882,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				TrackPopupMenu(
 					menu,
 					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					(wcscmp(GetString(ID_STR_ISRTL), L"1") == 0) ? r.right : r.left,
+					(*GetString(ID_STR_ISRTL) == L'1') ? r.right : r.left,
 					--r.bottom,
 					0,
 					m_Window,
@@ -1048,7 +1048,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				TrackPopupMenu(
 					subMenu,
 					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-					(wcscmp(GetString(ID_STR_ISRTL), L"1") == 0) ? r.right : r.left,
+					(*GetString(ID_STR_ISRTL) == L'1') ? r.right : r.left,
 					--r.bottom,
 					0,
 					m_Window,
@@ -1709,43 +1709,46 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDC_MANAGESETTINGS_LANGUAGE_COMBOBOX:
 		if (HIWORD(wParam) == CBN_SELCHANGE)
 		{
-			WCHAR buffer[16];
 			int sel = ComboBox_GetCurSel((HWND)lParam);
 			LCID lcid = (LCID)ComboBox_GetItemData((HWND)lParam, sel);
-			_ultow(lcid, buffer, 10);
-			WritePrivateProfileString(L"Rainmeter", L"Language", buffer, Rainmeter->GetIniFile().c_str());
-
-			std::wstring resource = Rainmeter->GetPath() + L"Languages\\";
-			resource += buffer;
-			resource += L".dll";
-			FreeLibrary(Rainmeter->m_ResourceInstance);
-			Rainmeter->m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-			Rainmeter->m_ResourceLCID = lcid;
-
-			if (CDialogAbout::c_Dialog)
+			if (lcid != Rainmeter->m_ResourceLCID)
 			{
-				int sel = TabCtrl_GetCurSel(GetDlgItem(CDialogAbout::c_Dialog->GetWindow(), IDC_ABOUT_TAB));
-				SendMessage(CDialogAbout::c_Dialog->GetWindow(), WM_DELAYED_CLOSE, 0, 0);
-				if (sel == 0)
-				{
-					ExecuteBang(L"!About"); // Delayed execute
-				}
-				else if (sel == 1)
-				{
-					ExecuteBang(L"!About Measures"); // Delayed execute
-				}
-				else if (sel == 2)
-				{
-					ExecuteBang(L"!About Plugins"); // Delayed execute
-				}
-				else //if (sel == 3)
-				{
-					ExecuteBang(L"!About Version"); // Delayed execute
-				}
-			}
+				WCHAR buffer[16];
+				_ultow(lcid, buffer, 10);
+				WritePrivateProfileString(L"Rainmeter", L"Language", buffer, Rainmeter->GetIniFile().c_str());
 
-			SendMessage(c_Dialog->GetWindow(), WM_DELAYED_CLOSE, 0, 0);
-			ExecuteBang(L"!Manage Settings"); // Delayed execute
+				std::wstring resource = Rainmeter->GetPath() + L"Languages\\";
+				resource += buffer;
+				resource += L".dll";
+				FreeLibrary(Rainmeter->m_ResourceInstance);
+				Rainmeter->m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+				Rainmeter->m_ResourceLCID = lcid;
+
+				if (CDialogAbout::c_Dialog)
+				{
+					int sel = TabCtrl_GetCurSel(GetDlgItem(CDialogAbout::c_Dialog->GetWindow(), IDC_ABOUT_TAB));
+					SendMessage(CDialogAbout::c_Dialog->GetWindow(), WM_DELAYED_CLOSE, 0, 0);
+					if (sel == 0)
+					{
+						ExecuteBang(L"!About"); // Delayed execute
+					}
+					else if (sel == 1)
+					{
+						ExecuteBang(L"!About Measures"); // Delayed execute
+					}
+					else if (sel == 2)
+					{
+						ExecuteBang(L"!About Plugins"); // Delayed execute
+					}
+					else //if (sel == 3)
+					{
+						ExecuteBang(L"!About Version"); // Delayed execute
+					}
+				}
+
+				SendMessage(c_Dialog->GetWindow(), WM_DELAYED_CLOSE, 0, 0);
+				ExecuteBang(L"!Manage Settings"); // Delayed execute
+			}
 		}
 		break;
 
