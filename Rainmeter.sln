@@ -18,13 +18,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginAdvancedCPU", "Plugin
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginCoreTemp", "Plugins\PluginCoreTemp\PluginCoreTemp.vcxproj", "{F32FA418-8DF4-4E94-B92B-EBD502F5DC07}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginExample", "Plugins\PluginExample\PluginExample.vcxproj", "{761BAD94-EA54-4DBD-9FF0-50FDAFECBE93}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginExampleCS", "Plugins\PluginExampleCS\PluginExampleCS.csproj", "{D31F73ED-3978-44FA-B599-49584BA30D3A}"
-	ProjectSection(ProjectDependencies) = postProject
-		{49D56CA5-54AB-45C9-A245-EAE588FCBFE1} = {49D56CA5-54AB-45C9-A245-EAE588FCBFE1}
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginFolderInfo", "Plugins\PluginFolderInfo\PluginFolderInfo.vcxproj", "{A221819D-4263-42AA-B22A-C022924842A7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginInputText", "Plugins\PluginInputText\PluginInputText.csproj", "{2CFEC79A-E39E-4FFD-ABC2-C4A69DD1E44D}"
@@ -130,22 +123,6 @@ Global
 		{F32FA418-8DF4-4E94-B92B-EBD502F5DC07}.Release|Win32.Build.0 = Release|Win32
 		{F32FA418-8DF4-4E94-B92B-EBD502F5DC07}.Release|x64.ActiveCfg = Release|x64
 		{F32FA418-8DF4-4E94-B92B-EBD502F5DC07}.Release|x64.Build.0 = Release|x64
-		{761BAD94-EA54-4DBD-9FF0-50FDAFECBE93}.Debug|Win32.ActiveCfg = Debug|Win32
-		{761BAD94-EA54-4DBD-9FF0-50FDAFECBE93}.Debug|Win32.Build.0 = Debug|Win32
-		{761BAD94-EA54-4DBD-9FF0-50FDAFECBE93}.Debug|x64.ActiveCfg = Debug|x64
-		{761BAD94-EA54-4DBD-9FF0-50FDAFECBE93}.Debug|x64.Build.0 = Debug|x64
-		{761BAD94-EA54-4DBD-9FF0-50FDAFECBE93}.Release|Win32.ActiveCfg = Release|Win32
-		{761BAD94-EA54-4DBD-9FF0-50FDAFECBE93}.Release|Win32.Build.0 = Release|Win32
-		{761BAD94-EA54-4DBD-9FF0-50FDAFECBE93}.Release|x64.ActiveCfg = Release|x64
-		{761BAD94-EA54-4DBD-9FF0-50FDAFECBE93}.Release|x64.Build.0 = Release|x64
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Debug|Win32.ActiveCfg = Debug|x86
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Debug|Win32.Build.0 = Debug|x86
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Debug|x64.ActiveCfg = Debug|x64
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Debug|x64.Build.0 = Debug|x64
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Release|Win32.ActiveCfg = Release|x86
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Release|Win32.Build.0 = Release|x86
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Release|x64.ActiveCfg = Release|x64
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Release|x64.Build.0 = Release|x64
 		{A221819D-4263-42AA-B22A-C022924842A7}.Debug|Win32.ActiveCfg = Debug|Win32
 		{A221819D-4263-42AA-B22A-C022924842A7}.Debug|Win32.Build.0 = Debug|Win32
 		{A221819D-4263-42AA-B22A-C022924842A7}.Debug|x64.ActiveCfg = Debug|x64

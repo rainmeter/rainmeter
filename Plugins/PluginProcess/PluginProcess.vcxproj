@@ -201,7 +201,6 @@
       <OutputFile>../../TestBench/x32/Release/Plugins/Process.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\Library\x32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\x32/Release/ProcessPlugin.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x32/Release/ProcessPlugin.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>

@@ -3,11 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual C# Express 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DllExporter", "Plugins\API\DllExporter\DllExporter.csproj", "{49D56CA5-54AB-45C9-A245-EAE588FCBFE1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginExampleCS", "Plugins\PluginExampleCS\PluginExampleCS.csproj", "{D31F73ED-3978-44FA-B599-49584BA30D3A}"
-	ProjectSection(ProjectDependencies) = postProject
-		{49D56CA5-54AB-45C9-A245-EAE588FCBFE1} = {49D56CA5-54AB-45C9-A245-EAE588FCBFE1}
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginInputText", "Plugins\PluginInputText\PluginInputText.csproj", "{2CFEC79A-E39E-4FFD-ABC2-C4A69DD1E44D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{49D56CA5-54AB-45C9-A245-EAE588FCBFE1} = {49D56CA5-54AB-45C9-A245-EAE588FCBFE1}
@@ -29,14 +24,6 @@ Global
 		{49D56CA5-54AB-45C9-A245-EAE588FCBFE1}.Release|x64.Build.0 = Release|x64
 		{49D56CA5-54AB-45C9-A245-EAE588FCBFE1}.Release|x86.ActiveCfg = Release|x86
 		{49D56CA5-54AB-45C9-A245-EAE588FCBFE1}.Release|x86.Build.0 = Release|x86
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Debug|x64.ActiveCfg = Debug|x64
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Debug|x64.Build.0 = Debug|x64
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Debug|x86.ActiveCfg = Debug|x86
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Debug|x86.Build.0 = Debug|x86
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Release|x64.ActiveCfg = Release|x64
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Release|x64.Build.0 = Release|x64
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Release|x86.ActiveCfg = Release|x86
-		{D31F73ED-3978-44FA-B599-49584BA30D3A}.Release|x86.Build.0 = Release|x86
 		{2CFEC79A-E39E-4FFD-ABC2-C4A69DD1E44D}.Debug|x64.ActiveCfg = Debug|x64
 		{2CFEC79A-E39E-4FFD-ABC2-C4A69DD1E44D}.Debug|x64.Build.0 = Debug|x64
 		{2CFEC79A-E39E-4FFD-ABC2-C4A69DD1E44D}.Debug|x86.ActiveCfg = Debug|x86

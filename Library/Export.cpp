@@ -29,7 +29,7 @@ extern CRainmeter* Rainmeter;
 
 static std::wstring g_Buffer;
 
-LPCWSTR RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
+LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
 {
 	NULLCHECK(option);
 	NULLCHECK(defValue);
@@ -39,7 +39,7 @@ LPCWSTR RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMea
 	return parser.ReadString(measure->GetName(), option, defValue, (bool)replaceMeasures).c_str();
 }
 
-double RmReadFormula(void* rm, LPCWSTR option, double defValue)
+double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 {
 	NULLCHECK(option);
 
@@ -48,7 +48,7 @@ double RmReadFormula(void* rm, LPCWSTR option, double defValue)
 	return parser.ReadFormula(measure->GetName(), option, defValue);
 }
 
-LPCWSTR RmPathToAbsolute(void* rm, LPCWSTR relativePath)
+LPCWSTR __stdcall RmPathToAbsolute(void* rm, LPCWSTR relativePath)
 {
 	NULLCHECK(relativePath);
 
@@ -58,7 +58,7 @@ LPCWSTR RmPathToAbsolute(void* rm, LPCWSTR relativePath)
 	return g_Buffer.c_str();
 }
 
-void* RmGet(void* rm, int type)
+void* __stdcall RmGet(void* rm, int type)
 {
 	CMeasurePlugin* measure = (CMeasurePlugin*)rm;
 
@@ -85,7 +85,7 @@ void* RmGet(void* rm, int type)
 	return NULL;
 }
 
-void RmExecute(void* skin, LPCWSTR command)
+void __stdcall RmExecute(void* skin, LPCWSTR command)
 {
 	CMeterWindow* mw = (CMeterWindow*)skin;
 

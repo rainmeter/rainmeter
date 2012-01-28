@@ -200,7 +200,6 @@
       <OutputFile>../../TestBench/x32/Release/Plugins/Win7AudioPlugin.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\Library\x32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\x32/Release/Win7AudioPlugin.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x32/Release/Win7AudioPlugin.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
@@ -246,7 +245,6 @@
       <OutputFile>../../TestBench/x64/Release/Plugins/Win7AudioPlugin.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\Library\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
       <ProgramDatabaseFile>.\x64/Release/Win7AudioPlugin.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x64/Release/Win7AudioPlugin.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>

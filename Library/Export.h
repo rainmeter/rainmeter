@@ -25,31 +25,26 @@
 #define LIBRARY_DECLSPEC __declspec(dllimport)
 #endif // LIBRARY_EXPORTS
 
-#ifdef __cplusplus
-#define LIBRARY_EXPORT extern "C" LIBRARY_DECLSPEC
-#define PLUGIN_EXPORT extern "C" __declspec(dllexport)
-#else
-#define LIBRARY_EXPORT LIBRARY_DECLSPEC
-#define PLUGIN_EXPORT __declspec(dllexport)
-#endif // __cplusplus
+#define LIBRARY_EXPORT EXTERN_C LIBRARY_DECLSPEC
+#define PLUGIN_EXPORT EXTERN_C __declspec(dllexport)
 
 //
 // Exported functions
 //
-
+EXTERN_C
 #ifdef __cplusplus
-LIBRARY_EXPORT LPCWSTR RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures = TRUE);
+LIBRARY_EXPORT LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures = TRUE);
 #else
-LIBRARY_EXPORT LPCWSTR RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures);
+LIBRARY_EXPORT LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures);
 #endif // __cplusplus
 
-LIBRARY_EXPORT double RmReadFormula(void* rm, LPCWSTR option, double defValue);
+LIBRARY_EXPORT double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue);
 
-LIBRARY_EXPORT LPCWSTR RmPathToAbsolute(void* rm, LPCWSTR relativePath);
+LIBRARY_EXPORT LPCWSTR __stdcall RmPathToAbsolute(void* rm, LPCWSTR relativePath);
 
-LIBRARY_EXPORT void RmExecute(void* skin, LPCWSTR command);
+LIBRARY_EXPORT void __stdcall RmExecute(void* skin, LPCWSTR command);
 
-LIBRARY_EXPORT void* RmGet(void* rm, int type);
+LIBRARY_EXPORT void* __stdcall RmGet(void* rm, int type);
 
 enum RmGetType
 {

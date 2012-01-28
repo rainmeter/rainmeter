@@ -1,0 +1,7 @@
+LIBRARY
+EXPORTS
+	RmReadString
+	RmReadFormula
+	RmPathToAbsolute
+	RmExecute
+	RmGet

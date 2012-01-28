@@ -124,6 +124,7 @@
       <ImportLibrary>.\x32/Debug/Rainmeter.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <DelayLoadDLLs>Winmm.dll;Version.dll</DelayLoadDLLs>
+      <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -168,6 +169,7 @@
       <ImportLibrary>.\x64/Debug/Rainmeter.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
       <DelayLoadDLLs>Winmm.dll;Version.dll</DelayLoadDLLs>
+      <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -210,7 +212,6 @@
       <OutputFile>../TestBench/x32/Release/Rainmeter.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>lua/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\x32/Release/Rainmeter.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x32/Release/Rainmeter.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
@@ -218,6 +219,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DelayLoadDLLs>Winmm.dll;Version.dll</DelayLoadDLLs>
+      <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -264,6 +266,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DelayLoadDLLs>Winmm.dll;Version.dll</DelayLoadDLLs>
+      <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -912,6 +915,9 @@
     <ClInclude Include="lua\lua\lundump.h" />
     <ClInclude Include="lua\lua\lvm.h" />
     <ClInclude Include="lua\lua\lzio.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Exports.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

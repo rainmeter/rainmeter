@@ -203,7 +203,6 @@
       <OutputFile>../../TestBench/x32/Release/Plugins/iTunesPlugin.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\Library\x32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\x32/Release/iTunesPlugin.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x32/Release/iTunesPlugin.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
@@ -250,7 +249,6 @@
       <OutputFile>../../TestBench/x64/Release/Plugins/iTunesPlugin.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\Library\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\x64/Release/iTunesPlugin.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x64/Release/iTunesPlugin.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>

@@ -206,7 +206,6 @@
       <OutputFile>../../TestBench/x32/Release/Plugins/NowPlaying.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\Library\x32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\x32/Release/NowPlaying.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x32/Release/NowPlaying.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
@@ -254,7 +253,6 @@
       <OutputFile>../../TestBench/x64/Release/Plugins/NowPlaying.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\Library\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
       <ProgramDatabaseFile>.\x64/Release/NowPlaying.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x64/Release/NowPlaying.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>

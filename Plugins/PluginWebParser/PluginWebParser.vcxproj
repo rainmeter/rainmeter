@@ -201,7 +201,6 @@
       <OutputFile>../../TestBench/x32/Release/Plugins/WebParser.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\Library\x32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\x32/Release/WebParser.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x32/Release/WebParser.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>

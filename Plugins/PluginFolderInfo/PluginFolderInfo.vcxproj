@@ -199,7 +199,6 @@
       <OutputFile>../../TestBench/x32/Release/Plugins/FolderInfo.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\Library\x32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\x32/Release/FolderInfo.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\x32/Release/FolderInfo.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
