@@ -124,7 +124,6 @@ void CSystem::Initialize(HINSTANCE instance)
 		WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
 
 	SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
-	SetTimer(c_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, NULL);
 	SetTimer(c_Window, TIMER_DELETELATER, INTERVAL_DELETELATER, NULL);
 }
 
@@ -157,6 +156,11 @@ void CSystem::Finalize()
 		DestroyWindow(c_Window);
 		c_Window = NULL;
 	}
+}
+
+void CSystem::SetNetworkStatisticsTimer()
+{
+	static bool set = SetTimer(c_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, NULL);
 }
 
 /*

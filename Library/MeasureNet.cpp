@@ -478,6 +478,7 @@ void CMeasureNet::ReadConfig(CConfigParser& parser, const WCHAR* section, NET ne
 	{
 		netName = L"NetTotalSpeed";
 		value = Rainmeter->GetGlobalConfig().netInSpeed + Rainmeter->GetGlobalConfig().netOutSpeed;
+		CSystem::SetNetworkStatisticsTimer();
 	}
 
 	double maxValue = parser.ReadFloat(section, L"MaxValue", -1);

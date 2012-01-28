@@ -30,7 +30,8 @@ typedef VOID (NETIOAPI_API_ * FPFREEMIBTABLE)(PVOID Memory);
 class CMeasureNet : public CMeasure
 {
 public:
-	enum NET {
+	enum NET
+	{
 		NET_IN,
 		NET_OUT,
 		NET_TOTAL
