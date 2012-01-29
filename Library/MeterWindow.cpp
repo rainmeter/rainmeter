@@ -949,6 +949,12 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		}
 		break;
 
+	case BANG_SETCLIP:
+		{
+			CSystem::SetClipboardText(arg);
+		}
+		break;
+
 	case BANG_PLUGIN:
 		{
 			std::wstring args = arg;

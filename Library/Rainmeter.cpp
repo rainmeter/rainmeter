@@ -1653,6 +1653,10 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	{
 		BangWithArgs(BANG_SETTRANSPARENCY, args, 1);
 	}
+	else if (_wcsicmp(name, L"SetClip") == 0)
+	{
+		BangWithArgs(BANG_SETCLIP, args, 1);
+	}
 	else if (_wcsicmp(name, L"SetVariable") == 0)
 	{
 		BangWithArgs(BANG_SETVARIABLE, args, 2);
