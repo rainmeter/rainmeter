@@ -20,12 +20,11 @@
 #define __EXPORT_H__
 
 #ifdef LIBRARY_EXPORTS
-#define LIBRARY_DECLSPEC __declspec(dllexport)
+#define LIBRARY_EXPORT EXTERN_C
 #else
-#define LIBRARY_DECLSPEC __declspec(dllimport)
+#define LIBRARY_EXPORT EXTERN_C __declspec(dllimport)
 #endif // LIBRARY_EXPORTS
 
-#define LIBRARY_EXPORT EXTERN_C LIBRARY_DECLSPEC
 #define PLUGIN_EXPORT EXTERN_C __declspec(dllexport)
 
 //
