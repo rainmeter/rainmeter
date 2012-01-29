@@ -4,4 +4,6 @@ EXPORTS
 	RmReadFormula
 	RmPathToAbsolute
 	RmExecute
-	RmGet
+	LSLog
+	ReadConfigString
+	PluginBridge
