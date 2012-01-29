@@ -1010,9 +1010,8 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 	if (configIndex >= 0 && configIndex < (int)m_ConfigStrings.size() &&
 		iniIndex >= 0 && iniIndex < (int)m_ConfigStrings[configIndex].iniFiles.size())
 	{
-		const std::wstring skinIniFile = m_ConfigStrings[configIndex].iniFiles[iniIndex];
-		const std::wstring skinConfig = m_ConfigStrings[configIndex].config;
-		const std::wstring& skinPath = m_SkinPath;
+		const std::wstring& skinIniFile = m_ConfigStrings[configIndex].iniFiles[iniIndex];
+		const std::wstring& skinConfig = m_ConfigStrings[configIndex].config;
 
 		// Verify that the config is not already active
 		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.find(skinConfig);
@@ -1031,7 +1030,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		}
 
 		// Verify whether the ini-file exists
-		std::wstring skinIniPath = skinPath + skinConfig;
+		std::wstring skinIniPath = m_SkinPath + skinConfig;
 		skinIniPath += L'\\';
 		skinIniPath += skinIniFile;
 
@@ -1045,7 +1044,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		m_ConfigStrings[configIndex].active = iniIndex + 1;
 		WriteActive(skinConfig, iniIndex);
 
-		CreateMeterWindow(skinPath, skinConfig, skinIniFile);
+		CreateMeterWindow(m_SkinPath, skinConfig, skinIniFile);
 	}
 }
 
