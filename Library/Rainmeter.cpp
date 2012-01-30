@@ -304,12 +304,12 @@ void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t nu
 }
 
 /*
-** RainmeterActivateConfig
+** Bang_ActivateConfig
 **
-** !RainmeterActivateConfig bang
+** !ActivateConfig bang
 **
 */
-void CRainmeter::RainmeterActivateConfig(const WCHAR* arg)
+void CRainmeter::Bang_ActivateConfig(const WCHAR* arg)
 {
 	std::vector<std::wstring> subStrings = ParseString(arg);
 
@@ -331,12 +331,12 @@ void CRainmeter::RainmeterActivateConfig(const WCHAR* arg)
 }
 
 /*
-** RainmeterDeactivateConfig
+** Bang_DeactivateConfig
 **
-** !RainmeterDeactivateConfig bang
+** !DeactivateConfig bang
 **
 */
-void CRainmeter::RainmeterDeactivateConfig(const WCHAR* arg)
+void CRainmeter::Bang_DeactivateConfig(const WCHAR* arg)
 {
 	std::vector<std::wstring> subStrings = ParseString(arg);
 
@@ -357,12 +357,12 @@ void CRainmeter::RainmeterDeactivateConfig(const WCHAR* arg)
 }
 
 /*
-** RainmeterToggleConfig
+** Bang_ToggleConfig
 **
-** !RainmeterToggleConfig bang
+** !ToggleConfig bang
 **
 */
-void CRainmeter::RainmeterToggleConfig(const WCHAR* arg)
+void CRainmeter::Bang_ToggleConfig(const WCHAR* arg)
 {
 	std::vector<std::wstring> subStrings = ParseString(arg);
 
@@ -376,7 +376,7 @@ void CRainmeter::RainmeterToggleConfig(const WCHAR* arg)
 		}
 
 		// If the config wasn't active, activate it
-		RainmeterActivateConfig(arg);
+		Bang_ActivateConfig(arg);
 	}
 	else
 	{
@@ -385,12 +385,12 @@ void CRainmeter::RainmeterToggleConfig(const WCHAR* arg)
 }
 
 /*
-** RainmeterDeactivateConfigGroup
+** Bang_DeactivateConfigGroup
 **
-** !RainmeterDeactivateConfigGroup bang
+** !DeactivateConfigGroup bang
 **
 */
-void CRainmeter::RainmeterDeactivateConfigGroup(const WCHAR* arg)
+void CRainmeter::Bang_DeactivateConfigGroup(const WCHAR* arg)
 {
 	std::vector<std::wstring> subStrings = ParseString(arg);
 
@@ -412,12 +412,32 @@ void CRainmeter::RainmeterDeactivateConfigGroup(const WCHAR* arg)
 }
 
 /*
-** RainmeterSkinMenu
+** Bang_SetClip
 **
-** !RainmeterSkinMenu bang
+** !SetClip bang
 **
 */
-void CRainmeter::RainmeterSkinMenu(const WCHAR* arg)
+void CRainmeter::Bang_SetClip(const WCHAR* arg)
+{
+	std::vector<std::wstring> subStrings = ParseString(arg);
+
+	if (!subStrings.empty())
+	{
+		CSystem::SetClipboardText(subStrings[0]);
+	}
+	else
+	{
+		Log(LOG_ERROR, L"!SetClip: Invalid parameter");
+	}
+}
+
+/*
+** Bang_SkinMenu
+**
+** !SkinMenu bang
+**
+*/
+void CRainmeter::Bang_SkinMenu(const WCHAR* arg)
 {
 	std::vector<std::wstring> subStrings = ParseString(arg);
 
@@ -440,12 +460,12 @@ void CRainmeter::RainmeterSkinMenu(const WCHAR* arg)
 }
 
 /*
-** RainmeterTrayMenu
+** Bang_TrayMenu
 **
-** !RainmeterTrayMenu bang
+** !TrayMenu bang
 **
 */
-void CRainmeter::RainmeterTrayMenu()
+void CRainmeter::Bang_TrayMenu()
 {
 	POINT pos;
 	GetCursorPos(&pos);
@@ -453,12 +473,12 @@ void CRainmeter::RainmeterTrayMenu()
 }
 
 /*
-** RainmeterWriteKeyValue
+** Bang_WriteKeyValue
 **
-** !RainmeterWriteKeyValue bang
+** !WriteKeyValue bang
 **
 */
-void CRainmeter::RainmeterWriteKeyValue(const WCHAR* arg)
+void CRainmeter::Bang_WriteKeyValue(const WCHAR* arg)
 {
 	std::vector<std::wstring> subStrings = ParseString(arg);
 
@@ -1615,15 +1635,15 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"ActivateConfig") == 0)
 	{
-		RainmeterActivateConfig(args);
+		Bang_ActivateConfig(args);
 	}
 	else if (_wcsicmp(name, L"DeactivateConfig") == 0)
 	{
-		RainmeterDeactivateConfig(args);
+		Bang_DeactivateConfig(args);
 	}
 	else if (_wcsicmp(name, L"ToggleConfig") == 0)
 	{
-		RainmeterToggleConfig(args);
+		Bang_ToggleConfig(args);
 	}
 	else if (_wcsicmp(name, L"Move") == 0)
 	{
@@ -1652,10 +1672,6 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	else if (_wcsicmp(name, L"SetTransparency") == 0)
 	{
 		BangWithArgs(BANG_SETTRANSPARENCY, args, 1);
-	}
-	else if (_wcsicmp(name, L"SetClip") == 0)
-	{
-		BangWithArgs(BANG_SETCLIP, args, 1);
 	}
 	else if (_wcsicmp(name, L"SetVariable") == 0)
 	{
@@ -1735,7 +1751,7 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"DeactivateConfigGroup") == 0)
 	{
-		RainmeterDeactivateConfigGroup(args);
+		Bang_DeactivateConfigGroup(args);
 	}
 	else if (_wcsicmp(name, L"ZPosGroup") == 0)
 	{
@@ -1771,11 +1787,15 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"WriteKeyValue") == 0)
 	{
-		RainmeterWriteKeyValue(args);
+		Bang_WriteKeyValue(args);
 	}
 	else if (_wcsicmp(name, L"PluginBang") == 0)
 	{
 		BangWithArgs(BANG_PLUGIN, args, 1);
+	}
+	else if (_wcsicmp(name, L"SetClip") == 0)
+	{
+		Bang_SetClip(args);
 	}
 	else if (_wcsicmp(name, L"About") == 0)
 	{
@@ -1787,11 +1807,11 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 	}
 	else if (_wcsicmp(name, L"SkinMenu") == 0)
 	{
-		RainmeterSkinMenu(args);
+		Bang_SkinMenu(args);
 	}
 	else if (_wcsicmp(name, L"TrayMenu") == 0)
 	{
-		RainmeterTrayMenu();
+		Bang_TrayMenu();
 	}
 	else if (_wcsicmp(name, L"ResetStats") == 0)
 	{

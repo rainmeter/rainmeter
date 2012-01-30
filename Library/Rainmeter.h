@@ -217,13 +217,14 @@ public:
 private:
 	void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
 	void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
-	void RainmeterActivateConfig(const WCHAR* arg);
-	void RainmeterDeactivateConfig(const WCHAR* arg);
-	void RainmeterToggleConfig(const WCHAR* arg);
-	void RainmeterDeactivateConfigGroup(const WCHAR* arg);
-	void RainmeterSkinMenu(const WCHAR* arg);
-	void RainmeterTrayMenu();
-	void RainmeterWriteKeyValue(const WCHAR* arg);
+	void Bang_ActivateConfig(const WCHAR* arg);
+	void Bang_DeactivateConfig(const WCHAR* arg);
+	void Bang_ToggleConfig(const WCHAR* arg);
+	void Bang_DeactivateConfigGroup(const WCHAR* arg);
+	void Bang_SetClip(const WCHAR* arg);
+	void Bang_SkinMenu(const WCHAR* arg);
+	void Bang_TrayMenu();
+	void Bang_WriteKeyValue(const WCHAR* arg);
 
 	void ActivateActiveConfigs();
 	void CreateMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile);
