@@ -132,7 +132,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 
 	if (_wcsicmp(command, L"GetConfig") == 0)
 	{
-		CMeterWindow *meterWindow = Rainmeter->GetMeterWindowByINI(data);
+		CMeterWindow* meterWindow = Rainmeter->GetMeterWindowByINI(data);
 		if (meterWindow)
 		{
 			g_Buffer = L"\"";
@@ -151,7 +151,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 		{
 			const std::wstring& config = subStrings[0];
 
-			CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
+			CMeterWindow* meterWindow = Rainmeter->GetMeterWindow(config);
 			if (meterWindow)
 			{
 				WCHAR buf1[64];
@@ -171,7 +171,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 		{
 			const std::wstring& config = subStrings[0];
 
-			CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
+			CMeterWindow* meterWindow = Rainmeter->GetMeterWindow(config);
 			if (meterWindow)
 			{
 				const std::wstring& variable = subStrings[1];
@@ -187,20 +187,15 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 	}
 	else if (_wcsicmp(command, L"SetVariable") == 0)
 	{
-		const WCHAR* pos = wcschr(data, L' ');
-		if (pos)
-		{
-			std::wstring config(data + 1, pos - 1);
-			std::vector<std::wstring> subStrings = CRainmeter::ParseString(pos);
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(data);
 
-			if (subStrings.size() == 2)
+		if (subStrings.size() == 3)
+		{
+			CMeterWindow* meterWindow = Rainmeter->GetMeterWindow(subStrings[0]);
+			if (meterWindow)
 			{
-				CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
-				if (meterWindow)
-				{
-					meterWindow->RunBang(BANG_SETVARIABLE, subStrings);
-					return L"success";
-				}
+				meterWindow->SetVariable(subStrings[1], subStrings[2]);
+				return L"success";
 			}
 		}
 

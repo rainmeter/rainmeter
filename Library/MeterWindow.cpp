@@ -843,9 +843,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 		break;
 
 	case BANG_MOVE:
-		{
-			MoveWindow(_wtoi(args[0].c_str()), _wtoi(args[1].c_str()));
-		}
+		MoveWindow(_wtoi(args[0].c_str()), _wtoi(args[1].c_str()));
 		break;
 
 	case BANG_ZPOS:
@@ -950,27 +948,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 		break;
 
 	case BANG_SETVARIABLE:
-		{
-			const std::wstring& variable = args[0];
-			const std::wstring& value = args[1];
-
-			// Formula read fine
-			double result;
-			if (m_Parser.ParseFormula(value, &result))
-			{
-				WCHAR buffer[256];
-				int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", result);
-				CMeasure::RemoveTrailingZero(buffer, len);
-
-				const std::wstring& resultString = buffer;
-
-				m_Parser.SetVariable(variable, resultString);
-			}
-			else
-			{
-				m_Parser.SetVariable(variable, value);
-			}
-		}
+		SetVariable(args[0], args[1]);
 		break;
 
 	case BANG_SETOPTION:
@@ -1382,6 +1360,31 @@ void CMeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 	}
 
 	if (!group) LogWithArgs(LOG_ERROR, L"!UpdateMeasure: [%s] not found in \"%s\"", measure, m_SkinName.c_str());
+}
+
+/*
+** SetVariable
+**
+** Sets variable to given value.
+**
+*/
+void CMeterWindow::SetVariable(const std::wstring& variable, const std::wstring& value)
+{
+	double result;
+	if (m_Parser.ParseFormula(value, &result))
+	{
+		WCHAR buffer[256];
+		int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", result);
+		CMeasure::RemoveTrailingZero(buffer, len);
+
+		const std::wstring& resultString = buffer;
+
+		m_Parser.SetVariable(variable, resultString);
+	}
+	else
+	{
+		m_Parser.SetVariable(variable, value);
+	}
 }
 
 /*

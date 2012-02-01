@@ -181,6 +181,7 @@ public:
 	void UpdateMeasure(const std::wstring& name, bool group = false);
 	void Refresh(bool init, bool all = false);
 	void Redraw();
+	void SetVariable(const std::wstring& variable, const std::wstring& value);
 	void SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group);
 
 	void SetMouseLeaveEvent(bool cancel);
