@@ -34,7 +34,7 @@ typedef void (*NEWRELOAD)(void*, void*, double*);
 typedef void (*NEWFINALIZE)(void*);
 typedef double (*NEWUPDATE)(void*);
 typedef LPCWSTR (*NEWGETSTRING)(void*);
-typedef void (*NEWEXECUTEBANG)(void*, const LPCWSTR);
+typedef void (*NEWEXECUTEBANG)(void*, LPCWSTR);
 
 class CMeasurePlugin : public CMeasure
 {
