@@ -248,26 +248,27 @@ const WCHAR* CMeasurePlugin::GetStringValue(AUTOSCALE autoScale, double scale, i
 }
 
 /*
-** ExecuteBang
+** Command
 **
 ** Sends a bang to the plugin
 **
 */
-void CMeasurePlugin::ExecuteBang(const WCHAR* args)
+void CMeasurePlugin::Command(const std::wstring& command)
 {
 	if (m_ExecuteBangFunc)
 	{
+		const WCHAR* str = command.c_str();
 		if (IsNewApi())
 		{
-			((NEWEXECUTEBANG)m_ExecuteBangFunc)(m_PluginData, args);
+			((NEWEXECUTEBANG)m_ExecuteBangFunc)(m_PluginData, str);
 		}
 		else
 		{
-			((EXECUTEBANG)m_ExecuteBangFunc)(args, m_ID);
+			((EXECUTEBANG)m_ExecuteBangFunc)(str, m_ID);
 		}
 	}
 	else
 	{
-		CMeasure::ExecuteBang(args);
+		CMeasure::Command(command);
 	}
 }

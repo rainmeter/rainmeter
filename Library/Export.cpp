@@ -88,13 +88,7 @@ void* __stdcall RmGet(void* rm, int type)
 void __stdcall RmExecute(void* skin, LPCWSTR command)
 {
 	CMeterWindow* mw = (CMeterWindow*)skin;
-
-	// Fake WM_COPYDATA message to deliver bang
-	COPYDATASTRUCT cds;
-	cds.cbData = 1;
-	cds.dwData = 1;
-	cds.lpData = (void*)command;
-	mw->OnCopyData(WM_COPYDATA, NULL, (LPARAM)&cds);
+	Rainmeter->ExecuteCommand(command, mw);
 }
 
 BOOL LSLog(int nLevel, LPCWSTR unused, LPCWSTR pszMessage)
@@ -127,25 +121,18 @@ LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue)
 }
 
 // Deprecated!
-LPCWSTR PluginBridge(LPCWSTR _sCommand, LPCWSTR _sData)
+LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 {
-	if (_sCommand == NULL || *_sCommand == L'\0')
+	if (command == NULL || *command == L'\0')
 	{
 		return L"noop";
 	}
 
-	NULLCHECK(_sData);
+	NULLCHECK(data);
 
-	// Command       GetConfig
-	// Data          unquoted full path and filename given to the plugin on initialize
-	//               (note: this is CaSe-SeNsItIvE!)
-	// Execution     none
-	// Result        the config name if found or a blank string if not
-	if (_wcsicmp(_sCommand, L"GetConfig") == 0)
+	if (_wcsicmp(command, L"GetConfig") == 0)
 	{
-		// returns the config name, lookup by INI file
-
-		CMeterWindow *meterWindow = Rainmeter->GetMeterWindowByINI(_sData);
+		CMeterWindow *meterWindow = Rainmeter->GetMeterWindowByINI(data);
 		if (meterWindow)
 		{
 			g_Buffer = L"\"";
@@ -156,14 +143,9 @@ LPCWSTR PluginBridge(LPCWSTR _sCommand, LPCWSTR _sData)
 
 		return L"";
 	}
-
-	// Command       GetWindow
-	// Data          [the config name]
-	// Execution     none
-	// Result        the HWND to the specified config window if found, 'error' otherwise
-	if (_wcsicmp(_sCommand, L"GetWindow") == 0)
+	else if (_wcsicmp(command, L"GetWindow") == 0)
 	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(data);
 
 		if (subStrings.size() >= 1)
 		{
@@ -181,14 +163,9 @@ LPCWSTR PluginBridge(LPCWSTR _sCommand, LPCWSTR _sData)
 
 		return L"error";
 	}
-
-	// Command       GetVariable
-	// Data          [the config name]
-	// Execution     none
-	// Result        the value of the variable
-	if (_wcsicmp(_sCommand, L"GetVariable") == 0)
+	else if (_wcsicmp(command, L"GetVariable") == 0)
 	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
+		std::vector<std::wstring> subStrings = CRainmeter::ParseString(data);
 
 		if (subStrings.size() >= 2)
 		{
@@ -208,31 +185,22 @@ LPCWSTR PluginBridge(LPCWSTR _sCommand, LPCWSTR _sData)
 
 		return L"";
 	}
-
-	// Command       SetVariable
-	// Data          [the config name] [variable data]
-	// Execution     the indicated variable is updated
-	// Result        'success' if the config was found, 'error' otherwise
-	if (_wcsicmp(_sCommand, L"SetVariable") == 0)
+	else if (_wcsicmp(command, L"SetVariable") == 0)
 	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(_sData);
-
-		if (subStrings.size() >= 2)
+		const WCHAR* pos = wcschr(data, L' ');
+		if (pos)
 		{
-			const std::wstring& config = subStrings[0];
-			std::wstring arguments;
+			std::wstring config(data + 1, pos - 1);
+			std::vector<std::wstring> subStrings = CRainmeter::ParseString(pos);
 
-			for (size_t i = 1, isize = subStrings.size(); i < isize; ++i)
+			if (subStrings.size() == 2)
 			{
-				if (i != 1) arguments += L" ";
-				arguments += subStrings[i];
-			}
-
-			CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
-			if (meterWindow)
-			{
-				meterWindow->RunBang(BANG_SETVARIABLE, arguments.c_str());
-				return L"success";
+				CMeterWindow *meterWindow = Rainmeter->GetMeterWindow(config);
+				if (meterWindow)
+				{
+					meterWindow->RunBang(BANG_SETVARIABLE, subStrings);
+					return L"success";
+				}
 			}
 		}
 

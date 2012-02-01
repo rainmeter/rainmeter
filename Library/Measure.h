@@ -62,7 +62,7 @@ public:
 	bool HasDynamicVariables() { return m_DynamicVariables; }
 	void SetDynamicVariables(bool b) { m_DynamicVariables = b; }
 
-	virtual void ExecuteBang(const WCHAR* args);
+	virtual void Command(const std::wstring& command);
 
 	double GetValue();
 	double GetRelativeValue();

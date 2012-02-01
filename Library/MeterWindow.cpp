@@ -74,7 +74,7 @@ extern CRainmeter* Rainmeter;
 ** Constructor
 **
 */
-CMeterWindow::CMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile) : m_SkinPath(path), m_SkinName(config), m_SkinIniFile(iniFile),
+CMeterWindow::CMeterWindow(const std::wstring& config, const std::wstring& iniFile) : m_SkinName(config), m_SkinIniFile(iniFile),
 	m_DoubleBuffer(),
 	m_DIBSectionBuffer(),
 	m_DIBSectionBufferPixels(),
@@ -699,14 +699,11 @@ void CMeterWindow::ChangeSingleZPos(ZPOSITION zPos, bool all)
 /*
 ** RunBang
 **
-** Runs the bang command
-**
+** Runs the bang command with the given arguments.
+** Correct number of arguments must be passed (or use CRainmeter::ExecuteBang).
 */
-void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
+void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& args)
 {
-	const WCHAR* pos = NULL;
-	const WCHAR* pos2 = NULL;
-
 	if (!m_Window) return;
 
 	switch (bang)
@@ -739,82 +736,82 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		break;
 
 	case BANG_TOGGLEBLUR:
-		RunBang(IsBlur() ? BANG_HIDEBLUR : BANG_SHOWBLUR, arg);
+		RunBang(IsBlur() ? BANG_HIDEBLUR : BANG_SHOWBLUR, args);
 		break;
 
 	case BANG_ADDBLUR:
-		ResizeBlur(arg, RGN_OR);
+		ResizeBlur(args[0], RGN_OR);
 		if (IsBlur()) ShowBlur();
 		break;
 
 	case BANG_REMOVEBLUR:
-		ResizeBlur(arg, RGN_DIFF);
+		ResizeBlur(args[0], RGN_DIFF);
 		if (IsBlur()) ShowBlur();
 		break;
 
 	case BANG_TOGGLEMETER:
-		ToggleMeter(arg);
+		ToggleMeter(args[0]);
 		break;
 
 	case BANG_SHOWMETER:
-		ShowMeter(arg);
+		ShowMeter(args[0]);
 		break;
 
 	case BANG_HIDEMETER:
-		HideMeter(arg);
+		HideMeter(args[0]);
 		break;
 
 	case BANG_UPDATEMETER:
-		UpdateMeter(arg);
+		UpdateMeter(args[0]);
 		break;
 
 	case BANG_TOGGLEMETERGROUP:
-		ToggleMeter(arg, true);
+		ToggleMeter(args[0], true);
 		break;
 
 	case BANG_SHOWMETERGROUP:
-		ShowMeter(arg, true);
+		ShowMeter(args[0], true);
 		break;
 
 	case BANG_HIDEMETERGROUP:
-		HideMeter(arg, true);
+		HideMeter(args[0], true);
 		break;
 
 	case BANG_UPDATEMETERGROUP:
-		UpdateMeter(arg, true);
+		UpdateMeter(args[0], true);
 		break;
 
 	case BANG_TOGGLEMEASURE:
-		ToggleMeasure(arg);
+		ToggleMeasure(args[0]);
 		break;
 
 	case BANG_ENABLEMEASURE:
-		EnableMeasure(arg);
+		EnableMeasure(args[0]);
 		break;
 
 	case BANG_DISABLEMEASURE:
-		DisableMeasure(arg);
+		DisableMeasure(args[0]);
 		break;
 
 	case BANG_UPDATEMEASURE:
-		UpdateMeasure(arg);
+		UpdateMeasure(args[0]);
 		CDialogAbout::UpdateMeasures(this);
 		break;
 
 	case BANG_DISABLEMEASUREGROUP:
-		DisableMeasure(arg, true);
+		DisableMeasure(args[0], true);
 		break;
 
 	case BANG_TOGGLEMEASUREGROUP:
-		ToggleMeasure(arg, true);
+		ToggleMeasure(args[0], true);
 		break;
 
 	case BANG_ENABLEMEASUREGROUP:
-		EnableMeasure(arg, true);
+		EnableMeasure(args[0], true);
 		break;
 
 	case BANG_UPDATEMEASUREGROUP:
-		UpdateMeasure(arg, true);
+		UpdateMeasure(args[0], true);
 		CDialogAbout::UpdateMeasures(this);
 		break;
 
@@ -830,77 +827,63 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		break;
 
 	case BANG_TOGGLE:
-		RunBang(m_Hidden ? BANG_SHOW : BANG_HIDE, arg);
+		RunBang(m_Hidden ? BANG_SHOW : BANG_HIDE, args);
 		break;
 
 	case BANG_SHOWFADE:
-		m_Hidden = false;
-		if (!IsWindowVisible(m_Window))
-		{
-			FadeWindow(0, (m_WindowHide == HIDEMODE_FADEOUT) ? 255 : m_AlphaValue);
-		}
+		ShowFade();
 		break;
 
 	case BANG_HIDEFADE:
-		m_Hidden = true;
-		if (IsWindowVisible(m_Window))
-		{
-			FadeWindow(m_AlphaValue, 0);
-		}
+		HideFade();
 		break;
 
 	case BANG_TOGGLEFADE:
-		RunBang(m_Hidden ? BANG_SHOWFADE : BANG_HIDEFADE, arg);
+		RunBang(m_Hidden ? BANG_SHOWFADE : BANG_HIDEFADE, args);
 		break;
 
 	case BANG_MOVE:
-		pos = wcschr(arg, L' ');
-		if (pos != NULL)
 		{
-			MoveWindow(_wtoi(arg), _wtoi(pos));
-		}
-		else
-		{
-			Log(LOG_ERROR, L"!Move: Invalid parameters");
+			MoveWindow(_wtoi(args[0].c_str()), _wtoi(args[1].c_str()));
 		}
 		break;
 
 	case BANG_ZPOS:
-		SetWindowZPosition((ZPOSITION)_wtoi(arg));
+		SetWindowZPosition((ZPOSITION)_wtoi(args[0].c_str()));
 		break;
 
 	case BANG_CLICKTHROUGH:
 		{
-			int f = _wtoi(arg);
+			int f = _wtoi(args[0].c_str());
 			SetClickThrough((f == -1) ? !m_ClickThrough : f);
 		}
 		break;
 
 	case BANG_DRAGGABLE:
 		{
-			int f = _wtoi(arg);
+			int f = _wtoi(args[0].c_str());
 			SetWindowDraggable((f == -1) ? !m_WindowDraggable : f);
 		}
 		break;
 
 	case BANG_SNAPEDGES:
 		{
-			int f = _wtoi(arg);
+			int f = _wtoi(args[0].c_str());
 			SetSnapEdges((f == -1) ? !m_SnapEdges : f);
 		}
 		break;
 
 	case BANG_KEEPONSCREEN:
 		{
-			int f = _wtoi(arg);
+			int f = _wtoi(args[0].c_str());
 			SetKeepOnScreen((f == -1) ? !m_KeepOnScreen : f);
 		}
 		break;
 
 	case BANG_SETTRANSPARENCY:
-		if (arg != NULL)
 		{
-			m_AlphaValue = CConfigParser::ParseInt(arg, 255);
+			const std::wstring& arg = args[0];
+			m_AlphaValue = CConfigParser::ParseInt(arg.c_str(), 255);
 			m_AlphaValue = max(m_AlphaValue, 0);
 			m_AlphaValue = min(m_AlphaValue, 255);
 			UpdateTransparency(m_AlphaValue, false);
@@ -908,80 +891,52 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		break;
 
 	case BANG_MOVEMETER:
-		pos = wcschr(arg, L' ');
-		if (pos != NULL)
-		{
-			pos2 = wcschr(pos + 1, L' ');
-			if (pos2 != NULL)
-			{
-				MoveMeter(_wtoi(arg), _wtoi(pos), pos2 + 1);
-				break;
-			}
-		}
-		Log(LOG_ERROR, L"!MoveMeter: Invalid parameters");
+		MoveMeter(args[2], _wtoi(args[0].c_str()), _wtoi(args[1].c_str()));
 		break;
 
 	case BANG_COMMANDMEASURE:
 		{
-			std::wstring args = arg;
-			std::wstring measure;
-			std::wstring::size_type pos3;
-
-			pos3 = args.find(L' ');
-			if (pos3 != std::wstring::npos)
+			const std::wstring& measure = args[0];
+			CMeasure* m = GetMeasure(measure);
+			if (m)
 			{
-				measure.assign(args, 0, pos3);
-				args.erase(0, ++pos3);
-
-				CMeasure* m = GetMeasure(measure);
-				if (m)
-				{
-					m->ExecuteBang(args.c_str());
-					return;
-				}
-
-				LogWithArgs(LOG_WARNING, L"!CommandMeasure: [%s] not found", measure.c_str());
+				m->Command(args[1]);
 			}
 			else
 			{
-				Log(LOG_ERROR, L"!CommandMeasure: Invalid parameters");
+				LogWithArgs(LOG_WARNING, L"!CommandMeasure: [%s] not found", measure.c_str());
 			}
 		}
 		break;
 
 	case BANG_PLUGIN:
 		{
-			std::wstring args = arg;
-			std::wstring measure;
-			std::wstring::size_type pos3;
-			do
+			std::wstring arg = args[0];
+			std::wstring::size_type pos;
+			while ((pos = arg.find(L'"')) != std::wstring::npos)
 			{
-				pos3 = args.find(L'"');
-				if (pos3 != std::wstring::npos)
-				{
-					args.erase(pos3, 1);
-				}
+				arg.erase(pos, 1);
 			}
-			while(pos3 != std::wstring::npos);
 
-			pos3 = args.find(L' ');
-			if (pos3 != std::wstring::npos)
+			std::wstring measure;
+			pos = arg.find(L' ');
+			if (pos != std::wstring::npos)
 			{
-				measure.assign(args, 0, pos3);
-				++pos3;
+				measure.assign(arg, 0, pos);
+				++pos;
 			}
 			else
 			{
-				measure = args;
+				measure = arg;
 			}
-			args.erase(0, pos3);
+			arg.erase(0, pos);
 
 			if (!measure.empty())
 			{
 				CMeasure* m = GetMeasure(measure);
 				if (m)
 				{
-					m->ExecuteBang(args.c_str());
+					m->Command(arg);
 					return;
 				}
 
@@ -995,41 +950,35 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const WCHAR* arg)
 		break;
 
 	case BANG_SETVARIABLE:
-		pos = wcschr(arg, L' ');
-		if (pos != NULL)
 		{
-			std::wstring strVariable(arg, pos - arg);
-			std::wstring strValue(pos + 1);
-			double value;
+			const std::wstring& variable = args[0];
+			const std::wstring& value = args[1];
 
 			// Formula read fine
-			if (m_Parser.ParseFormula(strValue, &value))
+			double result;
+			if (m_Parser.ParseFormula(value, &result))
 			{
 				WCHAR buffer[256];
-				int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
+				int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", result);
 				CMeasure::RemoveTrailingZero(buffer, len);
 
 				const std::wstring& resultString = buffer;
 
-				m_Parser.SetVariable(strVariable, resultString);
+				m_Parser.SetVariable(variable, resultString);
 			}
 			else
 			{
-				m_Parser.SetVariable(strVariable, strValue);
+				m_Parser.SetVariable(variable, value);
 			}
-		}
-		else
-		{
-			Log(LOG_ERROR, L"!SetVariable: Invalid parameters");
 		}
 		break;
 
 	case BANG_SETOPTION:
-		SetOption(arg, false);
+		SetOption(args[0], args[1], args[2], false);
 		break;
 
 	case BANG_SETOPTIONGROUP:
-		SetOption(arg, true);
+		SetOption(args[0], args[1], args[2], true);
 		break;
 	}
 }
@@ -1103,11 +1052,11 @@ void CMeterWindow::HideBlur()
 ** Adds to or removes from blur region
 **
 */
-void CMeterWindow::ResizeBlur(const WCHAR* arg, int mode)
+void CMeterWindow::ResizeBlur(const std::wstring& arg, int mode)
 {
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
-		WCHAR* parseSz = _wcsdup(arg);
+		WCHAR* parseSz = _wcsdup(arg.c_str());
 		double val;
 		int type, x, y, w = 0, h = 0;
 
@@ -1188,14 +1137,14 @@ void CMeterWindow::ResizeBlur(const WCHAR* arg, int mode)
 ** Shows the given meter
 **
 */
-void CMeterWindow::ShowMeter(const WCHAR* name, bool group)
+void CMeterWindow::ShowMeter(const std::wstring& name, bool group)
 {
-	if (name == NULL || *name == 0) return;
+	const WCHAR* meter = name.c_str();
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
-		if (CompareName((*j), name, group))
+		if (CompareName((*j), meter, group))
 		{
 			(*j)->Show();
 			m_ResetRegion = true;	// Need to recalculate the window region
@@ -1203,7 +1152,7 @@ void CMeterWindow::ShowMeter(const WCHAR* name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_NOTICE, L"!ShowMeter: [%s] not found in \"%s\"", name, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_NOTICE, L"!ShowMeter: [%s] not found in \"%s\"", meter, m_SkinName.c_str());
 }
 
 /*
@@ -1212,14 +1161,14 @@ void CMeterWindow::ShowMeter(const WCHAR* name, bool group)
 ** Hides the given meter
 **
 */
-void CMeterWindow::HideMeter(const WCHAR* name, bool group)
+void CMeterWindow::HideMeter(const std::wstring& name, bool group)
 {
-	if (name == NULL || *name == 0) return;
+	const WCHAR* meter = name.c_str();
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
-		if (CompareName((*j), name, group))
+		if (CompareName((*j), meter, group))
 		{
 			(*j)->Hide();
 			m_ResetRegion = true;	// Need to recalculate the windowregion
@@ -1227,7 +1176,7 @@ void CMeterWindow::HideMeter(const WCHAR* name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!HideMeter: [%s] not found in \"%s\"", name, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_ERROR, L"!HideMeter: [%s] not found in \"%s\"", meter, m_SkinName.c_str());
 }
 
 /*
@@ -1236,14 +1185,14 @@ void CMeterWindow::HideMeter(const WCHAR* name, bool group)
 ** Toggles the given meter
 **
 */
-void CMeterWindow::ToggleMeter(const WCHAR* name, bool group)
+void CMeterWindow::ToggleMeter(const std::wstring& name, bool group)
 {
-	if (name == NULL || *name == 0) return;
+	const WCHAR* meter = name.c_str();
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
-		if (CompareName((*j), name, group))
+		if (CompareName((*j), meter, group))
 		{
 			if ((*j)->IsHidden())
 			{
@@ -1258,7 +1207,7 @@ void CMeterWindow::ToggleMeter(const WCHAR* name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!ToggleMeter: [%s] not found in \"%s\"", name, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_ERROR, L"!ToggleMeter: [%s] not found in \"%s\"", meter, m_SkinName.c_str());
 }
 
 /*
@@ -1267,14 +1216,14 @@ void CMeterWindow::ToggleMeter(const WCHAR* name, bool group)
 ** Moves the given meter
 **
 */
-void CMeterWindow::MoveMeter(int x, int y, const WCHAR* name)
+void CMeterWindow::MoveMeter(const std::wstring& name, int x, int y)
 {
-	if (name == NULL || *name == 0) return;
+	const WCHAR* meter = name.c_str();
 
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
-		if (CompareName((*j), name, false))
+		if (CompareName((*j), meter, false))
 		{
 			(*j)->SetX(x);
 			(*j)->SetY(y);
@@ -1283,7 +1232,7 @@ void CMeterWindow::MoveMeter(int x, int y, const WCHAR* name)
 		}
 	}
 
-	LogWithArgs(LOG_ERROR, L"!MoveMeter: [%s] not found in \"%s\"", name, m_SkinName.c_str());
+	LogWithArgs(LOG_ERROR, L"!MoveMeter: [%s] not found in \"%s\"", meter, m_SkinName.c_str());
 }
 
 /*
@@ -1292,16 +1241,16 @@ void CMeterWindow::MoveMeter(int x, int y, const WCHAR* name)
 ** Updates the given meter
 **
 */
-void CMeterWindow::UpdateMeter(const WCHAR* name, bool group)
+void CMeterWindow::UpdateMeter(const std::wstring& name, bool group)
 {
-	if (name == NULL || *name == 0) return;
+	const WCHAR* meter = name.c_str();
 
 	bool bActiveTransition = false;
 	bool bContinue = true;
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
-		if (bContinue && CompareName((*j), name, group))
+		if (bContinue && CompareName((*j), meter, group))
 		{
 			UpdateMeter((*j), bActiveTransition, true);
 			m_ResetRegion = true;	// Need to recalculate the windowregion
@@ -1325,7 +1274,7 @@ void CMeterWindow::UpdateMeter(const WCHAR* name, bool group)
 	// Post-updates
 	PostUpdate(bActiveTransition);
 
-	if (!group && bContinue) LogWithArgs(LOG_ERROR, L"!UpdateMeter: [%s] not found in \"%s\"", name, m_SkinName.c_str());
+	if (!group && bContinue) LogWithArgs(LOG_ERROR, L"!UpdateMeter: [%s] not found in \"%s\"", meter, m_SkinName.c_str());
 }
 
 /*
@@ -1334,14 +1283,14 @@ void CMeterWindow::UpdateMeter(const WCHAR* name, bool group)
 ** Enables the given measure
 **
 */
-void CMeterWindow::EnableMeasure(const WCHAR* name, bool group)
+void CMeterWindow::EnableMeasure(const std::wstring& name, bool group)
 {
-	if (name == NULL || *name == 0) return;
+	const WCHAR* measure = name.c_str();
 
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
-		if (CompareName((*i), name, group))
+		if (CompareName((*i), measure, group))
 		{
 			(*i)->Enable();
 			if (!group) return;
@@ -1357,21 +1306,21 @@ void CMeterWindow::EnableMeasure(const WCHAR* name, bool group)
 ** Disables the given measure
 **
 */
-void CMeterWindow::DisableMeasure(const WCHAR* name, bool group)
+void CMeterWindow::DisableMeasure(const std::wstring& name, bool group)
 {
-	if (name == NULL || *name == 0) return;
+	const WCHAR* measure = name.c_str();
 
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
-		if (CompareName((*i), name, group))
+		if (CompareName((*i), measure, group))
 		{
 			(*i)->Disable();
 			if (!group) return;
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!DisableMeasure: [%s] not found in \"%s\"", name, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_ERROR, L"!DisableMeasure: [%s] not found in \"%s\"", measure, m_SkinName.c_str());
 }
 
 /*
@@ -1380,14 +1329,14 @@ void CMeterWindow::DisableMeasure(const WCHAR* name, bool group)
 ** Toggless the given measure
 **
 */
-void CMeterWindow::ToggleMeasure(const WCHAR* name, bool group)
+void CMeterWindow::ToggleMeasure(const std::wstring& name, bool group)
 {
-	if (name == NULL || *name == 0) return;
+	const WCHAR* measure = name.c_str();
 
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
-		if (CompareName((*i), name, group))
+		if (CompareName((*i), measure, group))
 		{
 			if ((*i)->IsDisabled())
 			{
@@ -1401,7 +1350,7 @@ void CMeterWindow::ToggleMeasure(const WCHAR* name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!ToggleMeasure: [%s] not found in \"%s\"", name, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_ERROR, L"!ToggleMeasure: [%s] not found in \"%s\"", measure, m_SkinName.c_str());
 }
 
 /*
@@ -1410,15 +1359,15 @@ void CMeterWindow::ToggleMeasure(const WCHAR* name, bool group)
 ** Updates the given measure
 **
 */
-void CMeterWindow::UpdateMeasure(const WCHAR* name, bool group)
+void CMeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 {
-	if (name == NULL || *name == 0) return;
+	const WCHAR* measure = name.c_str();
 
 	bool bNetStats = m_HasNetMeasures;
 	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
-		if (CompareName((*i), name, group))
+		if (CompareName((*i), measure, group))
 		{
 			if (bNetStats && dynamic_cast<CMeasureNet*>(*i) != NULL)
 			{
@@ -1432,7 +1381,7 @@ void CMeterWindow::UpdateMeasure(const WCHAR* name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!UpdateMeasure: [%s] not found in \"%s\"", name, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_ERROR, L"!UpdateMeasure: [%s] not found in \"%s\"", measure, m_SkinName.c_str());
 }
 
 /*
@@ -1441,61 +1390,34 @@ void CMeterWindow::UpdateMeasure(const WCHAR* name, bool group)
 ** Changes the property of a meter or measure.
 **
 */
-void CMeterWindow::SetOption(const WCHAR* arg, bool group)
+void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group)
 {
-	const WCHAR* pos = wcschr(arg, L' ');
-	if (pos != NULL)
+	if (group)
 	{
-		const WCHAR* pos2 = wcschr(pos + 1, L' ');
-		std::wstring section(arg, pos - arg);
-		std::wstring option(pos + 1, pos2);
-		std::wstring value(pos2 + 1);
-
-		if (group)
+		for (std::list<CMeter*>::const_iterator j = m_Meters.begin(); j != m_Meters.end(); ++j)
 		{
-			for (std::list<CMeter*>::const_iterator j = m_Meters.begin(); j != m_Meters.end(); ++j)
+			if ((*j)->BelongsToGroup(section))
 			{
-				if ((*j)->BelongsToGroup(section))
-				{
-					// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
-					(*j)->SetDynamicVariables(true);
+				// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
+				(*j)->SetDynamicVariables(true);
 
-					if (value.empty())
-					{
-						GetParser().DeleteValue((*j)->GetOriginalName(), option);
-					}
-					else
-					{
-						GetParser().SetValue((*j)->GetOriginalName(), option, value);
-					}
+				if (value.empty())
+				{
+					GetParser().DeleteValue((*j)->GetOriginalName(), option);
 				}
-			}
-
-			for (std::list<CMeasure*>::const_iterator i = m_Measures.begin(); i != m_Measures.end(); ++i)
-			{
-				if ((*i)->BelongsToGroup(section))
+				else
 				{
-					// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
-					(*i)->SetDynamicVariables(true);
-
-					if (value.empty())
-					{
-						GetParser().DeleteValue(section, option);
-					}
-					else
-					{
-						GetParser().SetValue(section, option, value);
-					}
+					GetParser().SetValue((*j)->GetOriginalName(), option, value);
 				}
 			}
 		}
-		else
+
+		for (std::list<CMeasure*>::const_iterator i = m_Measures.begin(); i != m_Measures.end(); ++i)
 		{
-			CMeter* meter = GetMeter(section);
-			if (meter)
+			if ((*i)->BelongsToGroup(section))
 			{
 				// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
-				meter->SetDynamicVariables(true);
+				(*i)->SetDynamicVariables(true);
 
 				if (value.empty())
 				{
@@ -1505,34 +1427,48 @@ void CMeterWindow::SetOption(const WCHAR* arg, bool group)
 				{
 					GetParser().SetValue(section, option, value);
 				}
-
-				return;
 			}
-
-			CMeasure* measure = GetMeasure(section);
-			if (measure)
-			{
-				// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
-				measure->SetDynamicVariables(true);
-
-				if (value.empty())
-				{
-					GetParser().DeleteValue(section, option);
-				}
-				else
-				{
-					GetParser().SetValue(section, option, value);
-				}
-
-				return;
-			}
-
-			// Is it a style?
 		}
 	}
 	else
 	{
-		Log(LOG_ERROR, L"!SetOption: Invalid parameters");
+		CMeter* meter = GetMeter(section);
+		if (meter)
+		{
+			// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
+			meter->SetDynamicVariables(true);
+
+			if (value.empty())
+			{
+				GetParser().DeleteValue(section, option);
+			}
+			else
+			{
+				GetParser().SetValue(section, option, value);
+			}
+
+			return;
+		}
+
+		CMeasure* measure = GetMeasure(section);
+		if (measure)
+		{
+			// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
+			measure->SetDynamicVariables(true);
+
+			if (value.empty())
+			{
+				GetParser().DeleteValue(section, option);
+			}
+			else
+			{
+				GetParser().SetValue(section, option, value);
+			}
+
+			return;
+		}
+
+		// Is it a style?
 	}
 }
 
@@ -2061,7 +1997,7 @@ void CMeterWindow::WriteConfig(INT setting)
 */
 bool CMeterWindow::ReadSkin()
 {
-	std::wstring iniFile = m_SkinPath + m_SkinName;
+	std::wstring iniFile = m_Rainmeter->GetSkinPath() + m_SkinName;
 	iniFile += L'\\';
 	iniFile += m_SkinIniFile;
 
@@ -2203,7 +2139,7 @@ bool CMeterWindow::ReadSkin()
 			// It wasn't found in the fonts folder, check the local folder
 			if (nResults != Ok)
 			{
-				szFontFile = m_SkinPath; // Get the local path
+				szFontFile = m_Rainmeter->GetSkinPath(); // Get the local path
 				szFontFile += m_SkinName;
 				szFontFile += L'\\';
 				szFontFile += localFont;
@@ -3199,6 +3135,24 @@ void CMeterWindow::FadeWindow(int from, int to)
 	}
 }
 
+void CMeterWindow::HideFade()
+{
+	m_Hidden = true;
+	if (IsWindowVisible(m_Window))
+	{
+		FadeWindow(m_AlphaValue, 0);
+	}
+}
+
+void CMeterWindow::ShowFade()
+{
+	m_Hidden = false;
+	if (!IsWindowVisible(m_Window))
+	{
+		FadeWindow(0, (m_WindowHide == HIDEMODE_FADEOUT) ? 255 : m_AlphaValue);
+	}
+}
+
 /*
 ** ShowWindowIfAppropriate
 **
@@ -3533,7 +3487,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (wParam == ID_CONTEXT_SKINMENU_EDITSKIN)
 		{
-			std::wstring command = m_SkinPath + m_SkinName;
+			std::wstring command = m_Rainmeter->GetSkinPath() + m_SkinName;
 			command += L'\\';
 			command += m_SkinIniFile;
 			bool writable = CSystem::IsFileWritable(command.c_str());
@@ -3551,7 +3505,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == ID_CONTEXT_SKINMENU_OPENSKINSFOLDER)
 		{
-			std::wstring command = L'"' + m_SkinPath;
+			std::wstring command = L'"' + m_Rainmeter->GetSkinPath();
 			command += m_SkinName;
 			command += L'"';
 			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
@@ -4889,6 +4843,7 @@ LRESULT CMeterWindow::OnDelayedExecute(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		OnCopyData(WM_COPYDATA, NULL, (LPARAM)&copyData);
 	}
+
 	return 0;
 }
 
@@ -4967,66 +4922,22 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 		}
-		if (!found)
+
+		if (found)
 		{
-			Log(LOG_WARNING, L"Unable to bang a deactivated config");
-			return TRUE;	// This meterwindow has been deactivated
-		}
-
-		const WCHAR* str = (const WCHAR*)pCopyDataStruct->lpData;
-
-		if (_wcsnicmp(L"PLAY ", str, 5) == 0 ||
-			_wcsnicmp(L"PLAYLOOP ", str, 9) == 0 ||
-			_wcsnicmp(L"PLAYSTOP", str, 8) == 0)
-		{
-			// Audio commands are special cases.
-			m_Rainmeter->ExecuteCommand(str, this);
-			return TRUE;
-		}
-
-		std::wstring bang, arg;
-
-		// Find the first space
-		const WCHAR* pos = wcschr(str, L' ');
-		if (pos)
-		{
-			bang.assign(str, 0, pos - str);
-			arg = pos + 1;
+			const WCHAR* command = (const WCHAR*)pCopyDataStruct->lpData;
+			m_Rainmeter->ExecuteCommand(command, this);
 		}
 		else
 		{
-			bang = str;
+			// This meterwindow has been deactivated
+			Log(LOG_WARNING, L"Unable to bang a deactivated config");
 		}
 
-		if (_wcsicmp(bang.c_str(), L"!RainmeterWriteKeyValue") == 0 ||
-			_wcsicmp(bang.c_str(), L"!WriteKeyValue") == 0)
-		{
-			// !RainmeterWriteKeyValue is a special case.
-			if (CRainmeter::ParseString(arg.c_str()).size() < 4)
-			{
-				// Add the current config filepath to the args
-				arg += L" \"";
-				arg += m_SkinPath;
-				arg += m_SkinName;
-				arg += L'\\';
-				arg += m_SkinIniFile;
-				arg += L'"';
-			}
-		}
-
-		// Add the current config name to the args. If it's not defined already
-		// the bang only affects this config, if there already is a config defined
-		// another one doesn't matter.
-		arg += L" \"";
-		arg += m_SkinName;
-		arg += L'"';
-
-		return m_Rainmeter->ExecuteBang(bang, arg, this);
+		return TRUE;
 	}
-	else
-	{
-		return FALSE;
-	}
+
+	return FALSE;
 }
 
 /*
@@ -5076,8 +4987,8 @@ void CMeterWindow::MakePathAbsolute(std::wstring& path)
 	else
 	{
 		std::wstring absolute;
-		absolute.reserve(m_SkinPath.size() + m_SkinName.size() + 1 + path.size());
-		absolute = m_SkinPath;
+		absolute.reserve(m_Rainmeter->GetSkinPath().size() + m_SkinName.size() + 1 + path.size());
+		absolute = m_Rainmeter->GetSkinPath();
 		absolute += m_SkinName;
 		absolute += L'\\';
 		absolute += path;

@@ -198,7 +198,7 @@ public:
 	const std::wstring& GetTrayExecuteDL() { return m_TrayExecuteDL; }
 	const std::wstring& GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
-	BOOL ExecuteBang(const std::wstring& bang, const std::wstring& arg, CMeterWindow* meterWindow);
+	void ExecuteBang(const std::wstring& name, std::wstring& arg, CMeterWindow* meterWindow);
 	void ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow);
 
 	void RefreshAll();
@@ -215,8 +215,8 @@ public:
 	friend class CDialogManage;
 
 private:
-	void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
-	void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs);
+	void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs, CMeterWindow* meterWindow);
+	void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs, CMeterWindow* meterWindow);
 	void Bang_ActivateConfig(const WCHAR* arg);
 	void Bang_DeactivateConfig(const WCHAR* arg);
 	void Bang_ToggleConfig(const WCHAR* arg);
@@ -224,10 +224,10 @@ private:
 	void Bang_SetClip(const WCHAR* arg);
 	void Bang_SkinMenu(const WCHAR* arg);
 	void Bang_TrayMenu();
-	void Bang_WriteKeyValue(const WCHAR* arg);
+	void Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow);
 
 	void ActivateActiveConfigs();
-	void CreateMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile);
+	void CreateMeterWindow(const std::wstring& config, const std::wstring& iniFile);
 	bool DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater);
 	void WriteActive(const std::wstring& config, int iniIndex);
 	void ScanForConfigs(const std::wstring& path);

@@ -27,14 +27,14 @@ typedef VOID (*FINALIZE)(HMODULE, UINT);
 typedef UINT (*UPDATE)(UINT);
 typedef double (*UPDATE2)(UINT);
 typedef LPCTSTR (*GETSTRING)(UINT, UINT);
-typedef void (*EXECUTEBANG)(LPCTSTR, UINT);
+typedef void (*EXECUTEBANG)(LPCWSTR, UINT);
 
 typedef void (*NEWINITIALIZE)(void*);
 typedef void (*NEWRELOAD)(void*, void*, double*);
 typedef void (*NEWFINALIZE)(void*);
 typedef double (*NEWUPDATE)(void*);
 typedef LPCWSTR (*NEWGETSTRING)(void*);
-typedef void (*NEWEXECUTEBANG)(void*, const WCHAR*);
+typedef void (*NEWEXECUTEBANG)(void*, const LPCWSTR);
 
 class CMeasurePlugin : public CMeasure
 {
@@ -44,7 +44,7 @@ public:
 
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
-	virtual void ExecuteBang(const WCHAR* args);
+	virtual void Command(const std::wstring& command);
 
 protected:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);

@@ -157,32 +157,31 @@ enum BANGCOMMAND
 class CRainmeter;
 class CMeasure;
 class CMeter;
-class CMeasureScript;
 
 class CMeterWindow : public CGroup
 {
 public:
-	CMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile);
+	CMeterWindow(const std::wstring& config, const std::wstring& iniFile);
 	~CMeterWindow();
 
 	int Initialize(CRainmeter& Rainmeter);
 
 	CRainmeter* GetMainObject() { return m_Rainmeter; }
 
-	void RunBang(BANGCOMMAND bang, const WCHAR* arg);
+	void RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& args);
 
-	void MoveMeter(int x, int y, const WCHAR* name);
-	void HideMeter(const WCHAR* name, bool group = false);
-	void ShowMeter(const WCHAR* name, bool group = false);
-	void ToggleMeter(const WCHAR* name, bool group = false);
-	void UpdateMeter(const WCHAR* name, bool group = false);
-	void DisableMeasure(const WCHAR* name, bool group = false);
-	void EnableMeasure(const WCHAR* name, bool group = false);
-	void ToggleMeasure(const WCHAR* name, bool group = false);
-	void UpdateMeasure(const WCHAR* name, bool group = false);
+	void HideMeter(const std::wstring& name, bool group = false);
+	void ShowMeter(const std::wstring& name, bool group = false);
+	void ToggleMeter(const std::wstring& name, bool group = false);
+	void MoveMeter(const std::wstring& name, int x, int y);
+	void UpdateMeter(const std::wstring& name, bool group = false);
+	void DisableMeasure(const std::wstring& name, bool group = false);
+	void EnableMeasure(const std::wstring& name, bool group = false);
+	void ToggleMeasure(const std::wstring& name, bool group = false);
+	void UpdateMeasure(const std::wstring& name, bool group = false);
 	void Refresh(bool init, bool all = false);
 	void Redraw();
-	void SetOption(const WCHAR* name, bool group);
+	void SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group);
 
 	void SetMouseLeaveEvent(bool cancel);
 
@@ -190,8 +189,10 @@ public:
 	void ChangeZPos(ZPOSITION zPos, bool all = false);
 	void ChangeSingleZPos(ZPOSITION zPos, bool all = false);
 	void FadeWindow(int from, int to);
+	void HideFade();
+	void ShowFade();
 
-	void ResizeBlur(const WCHAR* arg, int mode);
+	void ResizeBlur(const std::wstring& arg, int mode);
 	bool IsBlur() { return m_Blur; }
 	void SetBlur(bool b) { m_Blur = b; }
 
@@ -443,7 +444,6 @@ private:
 	std::list<CMeasure*> m_Measures;			// All the measures
 	std::list<CMeter*> m_Meters;				// All the meters
 
-	const std::wstring m_SkinPath;				// Path of the skin folder
 	const std::wstring m_SkinName;				// Name of the current skin folder
 	const std::wstring m_SkinIniFile;			// Name of the current skin iniFile
 

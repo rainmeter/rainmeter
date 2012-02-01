@@ -219,14 +219,14 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** ExecuteBang
+** Command
 **
-** Sends a bang to the measure.
+** Executes a custom bang.
 **
 */
-void CMeasureScript::ExecuteBang(const WCHAR* args)
+void CMeasureScript::Command(const std::wstring& command)
 {
-	std::string str = ConvertToAscii(args);
+	std::string str = ConvertToAscii(command.c_str());
 	m_LuaScript->RunString(str.c_str());
 }
 

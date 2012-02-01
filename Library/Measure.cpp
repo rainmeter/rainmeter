@@ -838,11 +838,12 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, cons
 }
 
 /*
-** ExecuteBang
+** Command
 **
-** Executes a custom bang
+** Executes a custom bang.
+**
 */
-void CMeasure::ExecuteBang(const WCHAR* args)
+void CMeasure::Command(const std::wstring& command)
 {
 	LogWithArgs(LOG_WARNING, L"!CommandMeasure: Not supported by [%s]", m_Name.c_str());
 }

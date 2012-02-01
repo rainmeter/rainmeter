@@ -214,51 +214,40 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 ** Parses Bang args
 **
 */
-void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
+void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs, CMeterWindow* meterWindow)
 {
 	std::vector<std::wstring> subStrings = ParseString(arg);
-	size_t subStringsSize = subStrings.size();
-	std::wstring config;
-	std::wstring argument;
-
-	// Don't include the config name from the arg if there is one
-	for (size_t i = 0; i < numOfArgs; ++i)
-	{
-		if (i != 0) argument += L' ';
-		if (i < subStringsSize)
-		{
-			argument += subStrings[i];
-		}
-	}
+	const size_t subStringsSize = subStrings.size();
 
 	if (subStringsSize >= numOfArgs)
 	{
-		if (subStringsSize > numOfArgs)
+		if (subStringsSize == numOfArgs && meterWindow)
 		{
-			config = subStrings[numOfArgs];
+			meterWindow->RunBang(bang, subStrings);
 		}
-
-		if (!config.empty() && (config.size() != 1 || config[0] != L'*'))
+		else // if (subStringsSize > numOfArgs)
 		{
-			// Config defined, so bang only that
-			CMeterWindow* meterWindow = GetMeterWindow(config);
-
-			if (meterWindow)
+			const std::wstring& config = subStrings[numOfArgs];
+			if (!config.empty() && (config.length() != 1 || config[0] != L'*'))
 			{
-				meterWindow->RunBang(bang, argument.c_str());
+				CMeterWindow* meterWindow = GetMeterWindow(config);
+				if (meterWindow)
+				{
+					meterWindow->RunBang(bang, subStrings);
+				}
+				else
+				{
+					LogWithArgs(LOG_ERROR,  L"Bang: Config \"%s\" not found", config.c_str());
+				}
 			}
 			else
 			{
-				LogWithArgs(LOG_ERROR,  L"Bang: Config \"%s\" not found", config.c_str());
-			}
-		}
-		else
-		{
-			// No config defined -> apply to all.
-			std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
-			for (; iter != m_Meters.end(); ++iter)
-			{
-				((*iter).second)->RunBang(bang, argument.c_str());
+				// No config defined -> apply to all.
+				std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
+				for (; iter != m_Meters.end(); ++iter)
+				{
+					((*iter).second)->RunBang(bang, subStrings);
+				}
 			}
 		}
 	}
@@ -274,7 +263,7 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfAr
 ** Parses Bang args for Group
 **
 */
-void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs)
+void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs, CMeterWindow* meterWindow)
 {
 	std::vector<std::wstring> subStrings = ParseString(arg);
 
@@ -294,7 +283,7 @@ void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t nu
 			}
 			argument += (*iter).second->GetSkinName();
 			argument += L'"';
-			BangWithArgs(bang, argument.c_str(), numOfArgs);
+			BangWithArgs(bang, argument.c_str(), numOfArgs, meterWindow);
 		}
 	}
 	else
@@ -478,9 +467,22 @@ void CRainmeter::Bang_TrayMenu()
 ** !WriteKeyValue bang
 **
 */
-void CRainmeter::Bang_WriteKeyValue(const WCHAR* arg)
+void CRainmeter::Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow)
 {
 	std::vector<std::wstring> subStrings = ParseString(arg);
+
+	if (subStrings.size() < 4)
+	{
+		if (!meterWindow) return;
+
+		// Add the config filepath to the args
+		std::wstring path;
+		path += m_SkinPath;
+		path += meterWindow->GetSkinName();
+		path += L'\\';
+		path += meterWindow->GetSkinIniFile();
+		subStrings.push_back(std::move(path));
+	}
 
 	if (subStrings.size() > 3)
 	{
@@ -1064,7 +1066,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		m_ConfigStrings[configIndex].active = iniIndex + 1;
 		WriteActive(skinConfig, iniIndex);
 
-		CreateMeterWindow(m_SkinPath, skinConfig, skinIniFile);
+		CreateMeterWindow(skinConfig, skinIniFile);
 	}
 }
 
@@ -1125,9 +1127,9 @@ void CRainmeter::WriteActive(const std::wstring& config, int iniIndex)
 	WritePrivateProfileString(config.c_str(), L"Active", buffer, m_IniFile.c_str());
 }
 
-void CRainmeter::CreateMeterWindow(const std::wstring& path, const std::wstring& config, const std::wstring& iniFile)
+void CRainmeter::CreateMeterWindow(const std::wstring& config, const std::wstring& iniFile)
 {
-	CMeterWindow* mw = new CMeterWindow(path, config, iniFile);
+	CMeterWindow* mw = new CMeterWindow(config, iniFile);
 
 	if (mw)
 	{
@@ -1186,7 +1188,7 @@ bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
 		if (meterWindow)
 		{
 			m_DelayDeleteList.push_back(meterWindow);
-			meterWindow->RunBang(BANG_HIDEFADE, NULL);	// Fade out the window
+			meterWindow->HideFade();
 		}
 	}
 	else
@@ -1524,309 +1526,311 @@ void CRainmeter::ScanForThemes(const std::wstring& path)
 	}
 }
 
-BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, CMeterWindow* meterWindow)
+void CRainmeter::ExecuteBang(const std::wstring& name, std::wstring& arg, CMeterWindow* meterWindow)
 {
-	const WCHAR* name = bang.c_str();
+	const WCHAR* bang = name.c_str();
 	const WCHAR* args = arg.c_str();
 
-	// Skip "!Rainmeter" or "!"
-	name += (_wcsnicmp(name, L"!Rainmeter", 10) == 0) ? 10 : 1;
-
-	if (_wcsicmp(name, L"Refresh") == 0)
+	if (_wcsnicmp(bang, L"Rainmeter", 9) == 0)
 	{
-		BangWithArgs(BANG_REFRESH, args, 0);
+		// Skip "Rainmeter"
+		bang += 9;
 	}
-	else if (_wcsicmp(name, L"RefreshApp") == 0)
+
+	if (_wcsicmp(bang, L"Refresh") == 0)
+	{
+		BangWithArgs(BANG_REFRESH, args, 0, meterWindow);
+	}
+	else if (_wcsicmp(bang, L"RefreshApp") == 0)
 	{
 		// Refresh needs to be delayed since it crashes if done during Update()
 		PostMessage(GetTrayWindow()->GetWindow(), WM_TRAY_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
 	}
-	else if (_wcsicmp(name, L"Redraw") == 0)
+	else if (_wcsicmp(bang, L"Redraw") == 0)
 	{
-		BangWithArgs(BANG_REDRAW, args, 0);
+		BangWithArgs(BANG_REDRAW, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"Update") == 0)
+	else if (_wcsicmp(bang, L"Update") == 0)
 	{
-		BangWithArgs(BANG_UPDATE, args, 0);
+		BangWithArgs(BANG_UPDATE, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"Hide") == 0)
+	else if (_wcsicmp(bang, L"Hide") == 0)
 	{
-		BangWithArgs(BANG_HIDE, args, 0);
+		BangWithArgs(BANG_HIDE, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"Show") == 0)
+	else if (_wcsicmp(bang, L"Show") == 0)
 	{
-		BangWithArgs(BANG_SHOW, args, 0);
+		BangWithArgs(BANG_SHOW, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"Toggle") == 0)
+	else if (_wcsicmp(bang, L"Toggle") == 0)
 	{
-		BangWithArgs(BANG_TOGGLE, args, 0);
+		BangWithArgs(BANG_TOGGLE, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"HideFade") == 0)
+	else if (_wcsicmp(bang, L"HideFade") == 0)
 	{
-		BangWithArgs(BANG_HIDEFADE, args, 0);
+		BangWithArgs(BANG_HIDEFADE, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ShowFade") == 0)
+	else if (_wcsicmp(bang, L"ShowFade") == 0)
 	{
-		BangWithArgs(BANG_SHOWFADE, args, 0);
+		BangWithArgs(BANG_SHOWFADE, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ToggleFade") == 0)
+	else if (_wcsicmp(bang, L"ToggleFade") == 0)
 	{
-		BangWithArgs(BANG_TOGGLEFADE, args, 0);
+		BangWithArgs(BANG_TOGGLEFADE, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"HideMeter") == 0)
+	else if (_wcsicmp(bang, L"HideMeter") == 0)
 	{
-		BangWithArgs(BANG_HIDEMETER, args, 1);
+		BangWithArgs(BANG_HIDEMETER, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ShowMeter") == 0)
+	else if (_wcsicmp(bang, L"ShowMeter") == 0)
 	{
-		BangWithArgs(BANG_SHOWMETER, args, 1);
+		BangWithArgs(BANG_SHOWMETER, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ToggleMeter") == 0)
+	else if (_wcsicmp(bang, L"ToggleMeter") == 0)
 	{
-		BangWithArgs(BANG_TOGGLEMETER, args, 1);
+		BangWithArgs(BANG_TOGGLEMETER, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"MoveMeter") == 0)
+	else if (_wcsicmp(bang, L"MoveMeter") == 0)
 	{
-		BangWithArgs(BANG_MOVEMETER, args, 3);
+		BangWithArgs(BANG_MOVEMETER, args, 3, meterWindow);
 	}
-	else if (_wcsicmp(name, L"UpdateMeter") == 0)
+	else if (_wcsicmp(bang, L"UpdateMeter") == 0)
 	{
-		BangWithArgs(BANG_UPDATEMETER, args, 1);
+		BangWithArgs(BANG_UPDATEMETER, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"DisableMeasure") == 0)
+	else if (_wcsicmp(bang, L"DisableMeasure") == 0)
 	{
-		BangWithArgs(BANG_DISABLEMEASURE, args, 1);
+		BangWithArgs(BANG_DISABLEMEASURE, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"EnableMeasure") == 0)
+	else if (_wcsicmp(bang, L"EnableMeasure") == 0)
 	{
-		BangWithArgs(BANG_ENABLEMEASURE, args, 1);
+		BangWithArgs(BANG_ENABLEMEASURE, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ToggleMeasure") == 0)
+	else if (_wcsicmp(bang, L"ToggleMeasure") == 0)
 	{
-		BangWithArgs(BANG_TOGGLEMEASURE, args, 1);
+		BangWithArgs(BANG_TOGGLEMEASURE, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"UpdateMeasure") == 0)
+	else if (_wcsicmp(bang, L"UpdateMeasure") == 0)
 	{
-		BangWithArgs(BANG_UPDATEMEASURE, args, 1);
+		BangWithArgs(BANG_UPDATEMEASURE, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"CommandMeasure") == 0)
+	else if (_wcsicmp(bang, L"CommandMeasure") == 0)
 	{
-		BangWithArgs(BANG_COMMANDMEASURE, args, 2);
+		BangWithArgs(BANG_COMMANDMEASURE, args, 2, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ShowBlur") == 0)
+	else if (_wcsicmp(bang, L"ShowBlur") == 0)
 	{
-		BangWithArgs(BANG_SHOWBLUR, args, 0);
+		BangWithArgs(BANG_SHOWBLUR, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"HideBlur") == 0)
+	else if (_wcsicmp(bang, L"HideBlur") == 0)
 	{
-		BangWithArgs(BANG_HIDEBLUR, args, 0);
+		BangWithArgs(BANG_HIDEBLUR, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ToggleBlur") == 0)
+	else if (_wcsicmp(bang, L"ToggleBlur") == 0)
 	{
-		BangWithArgs(BANG_TOGGLEBLUR, args, 0);
+		BangWithArgs(BANG_TOGGLEBLUR, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"AddBlur") == 0)
+	else if (_wcsicmp(bang, L"AddBlur") == 0)
 	{
-		BangWithArgs(BANG_ADDBLUR, args, 1);
+		BangWithArgs(BANG_ADDBLUR, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"RemoveBlur") == 0)
+	else if (_wcsicmp(bang, L"RemoveBlur") == 0)
 	{
-		BangWithArgs(BANG_REMOVEBLUR, args, 1);
+		BangWithArgs(BANG_REMOVEBLUR, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ActivateConfig") == 0)
+	else if (_wcsicmp(bang, L"ActivateConfig") == 0)
 	{
 		Bang_ActivateConfig(args);
 	}
-	else if (_wcsicmp(name, L"DeactivateConfig") == 0)
+	else if (_wcsicmp(bang, L"DeactivateConfig") == 0)
 	{
 		Bang_DeactivateConfig(args);
 	}
-	else if (_wcsicmp(name, L"ToggleConfig") == 0)
+	else if (_wcsicmp(bang, L"ToggleConfig") == 0)
 	{
 		Bang_ToggleConfig(args);
 	}
-	else if (_wcsicmp(name, L"Move") == 0)
+	else if (_wcsicmp(bang, L"Move") == 0)
 	{
-		BangWithArgs(BANG_MOVE, args, 2);
+		BangWithArgs(BANG_MOVE, args, 2, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ZPos") == 0 || _wcsicmp(name, L"ChangeZPos") == 0)	// For backwards compatibility
+	else if (_wcsicmp(bang, L"ZPos") == 0 || _wcsicmp(bang, L"ChangeZPos") == 0)	// For backwards compatibility
 	{
-		BangWithArgs(BANG_ZPOS, args, 1);
+		BangWithArgs(BANG_ZPOS, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ClickThrough") == 0)
+	else if (_wcsicmp(bang, L"ClickThrough") == 0)
 	{
-		BangWithArgs(BANG_CLICKTHROUGH, args, 1);
+		BangWithArgs(BANG_CLICKTHROUGH, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"Draggable") == 0)
+	else if (_wcsicmp(bang, L"Draggable") == 0)
 	{
-		BangWithArgs(BANG_DRAGGABLE, args, 1);
+		BangWithArgs(BANG_DRAGGABLE, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"SnapEdges") == 0)
+	else if (_wcsicmp(bang, L"SnapEdges") == 0)
 	{
-		BangWithArgs(BANG_SNAPEDGES, args, 1);
+		BangWithArgs(BANG_SNAPEDGES, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"KeepOnScreen") == 0)
+	else if (_wcsicmp(bang, L"KeepOnScreen") == 0)
 	{
-		BangWithArgs(BANG_KEEPONSCREEN, args, 1);
+		BangWithArgs(BANG_KEEPONSCREEN, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"SetTransparency") == 0)
+	else if (_wcsicmp(bang, L"SetTransparency") == 0)
 	{
-		BangWithArgs(BANG_SETTRANSPARENCY, args, 1);
+		BangWithArgs(BANG_SETTRANSPARENCY, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"SetVariable") == 0)
+	else if (_wcsicmp(bang, L"SetVariable") == 0)
 	{
-		BangWithArgs(BANG_SETVARIABLE, args, 2);
+		BangWithArgs(BANG_SETVARIABLE, args, 2, meterWindow);
 	}
-	else if (_wcsicmp(name, L"SetOption") == 0)
+	else if (_wcsicmp(bang, L"SetOption") == 0)
 	{
-		BangWithArgs(BANG_SETOPTION, args, 3);
+		BangWithArgs(BANG_SETOPTION, args, 3, meterWindow);
 	}
-	else if (_wcsicmp(name, L"RefreshGroup") == 0)
+	else if (_wcsicmp(bang, L"RefreshGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_REFRESH, args, 0);
+		BangGroupWithArgs(BANG_REFRESH, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"UpdateGroup") == 0)
+	else if (_wcsicmp(bang, L"UpdateGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_UPDATE, args, 0);
+		BangGroupWithArgs(BANG_UPDATE, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"RedrawGroup") == 0)
+	else if (_wcsicmp(bang, L"RedrawGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_REDRAW, args, 0);
+		BangGroupWithArgs(BANG_REDRAW, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"HideGroup") == 0)
+	else if (_wcsicmp(bang, L"HideGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_HIDE, args, 0);
+		BangGroupWithArgs(BANG_HIDE, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ShowGroup") == 0)
+	else if (_wcsicmp(bang, L"ShowGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_SHOW, args, 0);
+		BangGroupWithArgs(BANG_SHOW, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ToggleGroup") == 0)
+	else if (_wcsicmp(bang, L"ToggleGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_TOGGLE, args, 0);
+		BangGroupWithArgs(BANG_TOGGLE, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"HideFadeGroup") == 0)
+	else if (_wcsicmp(bang, L"HideFadeGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_HIDEFADE, args, 0);
+		BangGroupWithArgs(BANG_HIDEFADE, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ShowFadeGroup") == 0)
+	else if (_wcsicmp(bang, L"ShowFadeGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_SHOWFADE, args, 0);
+		BangGroupWithArgs(BANG_SHOWFADE, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ToggleFadeGroup") == 0)
+	else if (_wcsicmp(bang, L"ToggleFadeGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_TOGGLEFADE, args, 0);
+		BangGroupWithArgs(BANG_TOGGLEFADE, args, 0, meterWindow);
 	}
-	else if (_wcsicmp(name, L"HideMeterGroup") == 0)
+	else if (_wcsicmp(bang, L"HideMeterGroup") == 0)
 	{
-		BangWithArgs(BANG_HIDEMETERGROUP, args, 1);
+		BangWithArgs(BANG_HIDEMETERGROUP, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ShowMeterGroup") == 0)
+	else if (_wcsicmp(bang, L"ShowMeterGroup") == 0)
 	{
-		BangWithArgs(BANG_SHOWMETERGROUP, args, 1);
+		BangWithArgs(BANG_SHOWMETERGROUP, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ToggleMeterGroup") == 0)
+	else if (_wcsicmp(bang, L"ToggleMeterGroup") == 0)
 	{
-		BangWithArgs(BANG_TOGGLEMETERGROUP, args, 1);
+		BangWithArgs(BANG_TOGGLEMETERGROUP, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"UpdateMeterGroup") == 0)
+	else if (_wcsicmp(bang, L"UpdateMeterGroup") == 0)
 	{
-		BangWithArgs(BANG_UPDATEMETERGROUP, args, 1);
+		BangWithArgs(BANG_UPDATEMETERGROUP, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"DisableMeasureGroup") == 0)
+	else if (_wcsicmp(bang, L"DisableMeasureGroup") == 0)
 	{
-		BangWithArgs(BANG_DISABLEMEASUREGROUP, args, 1);
+		BangWithArgs(BANG_DISABLEMEASUREGROUP, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"EnableMeasureGroup") == 0)
+	else if (_wcsicmp(bang, L"EnableMeasureGroup") == 0)
 	{
-		BangWithArgs(BANG_ENABLEMEASUREGROUP, args, 1);
+		BangWithArgs(BANG_ENABLEMEASUREGROUP, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ToggleMeasureGroup") == 0)
+	else if (_wcsicmp(bang, L"ToggleMeasureGroup") == 0)
 	{
-		BangWithArgs(BANG_TOGGLEMEASUREGROUP, args, 1);
+		BangWithArgs(BANG_TOGGLEMEASUREGROUP, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"UpdateMeasureGroup") == 0)
+	else if (_wcsicmp(bang, L"UpdateMeasureGroup") == 0)
 	{
-		BangWithArgs(BANG_UPDATEMEASUREGROUP, args, 1);
+		BangWithArgs(BANG_UPDATEMEASUREGROUP, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"DeactivateConfigGroup") == 0)
+	else if (_wcsicmp(bang, L"DeactivateConfigGroup") == 0)
 	{
 		Bang_DeactivateConfigGroup(args);
 	}
-	else if (_wcsicmp(name, L"ZPosGroup") == 0)
+	else if (_wcsicmp(bang, L"ZPosGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_ZPOS, args, 1);
+		BangGroupWithArgs(BANG_ZPOS, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"ClickThroughGroup") == 0)
+	else if (_wcsicmp(bang, L"ClickThroughGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_CLICKTHROUGH, args, 1);
+		BangGroupWithArgs(BANG_CLICKTHROUGH, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"DraggableGroup") == 0)
+	else if (_wcsicmp(bang, L"DraggableGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_DRAGGABLE, args, 1);
+		BangGroupWithArgs(BANG_DRAGGABLE, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"SnapEdgesGroup") == 0)
+	else if (_wcsicmp(bang, L"SnapEdgesGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_SNAPEDGES, args, 1);
+		BangGroupWithArgs(BANG_SNAPEDGES, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"KeepOnScreenGroup") == 0)
+	else if (_wcsicmp(bang, L"KeepOnScreenGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_KEEPONSCREEN, args, 1);
+		BangGroupWithArgs(BANG_KEEPONSCREEN, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"SetTransparencyGroup") == 0)
+	else if (_wcsicmp(bang, L"SetTransparencyGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_SETTRANSPARENCY, args, 1);
+		BangGroupWithArgs(BANG_SETTRANSPARENCY, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"SetVariableGroup") == 0)
+	else if (_wcsicmp(bang, L"SetVariableGroup") == 0)
 	{
-		BangGroupWithArgs(BANG_SETVARIABLE, args, 2);
+		BangGroupWithArgs(BANG_SETVARIABLE, args, 2, meterWindow);
 	}
-	else if (_wcsicmp(name, L"SetOptionGroup") == 0)
+	else if (_wcsicmp(bang, L"SetOptionGroup") == 0)
 	{
-		BangWithArgs(BANG_SETOPTIONGROUP, args, 3);
+		BangWithArgs(BANG_SETOPTIONGROUP, args, 3, meterWindow);
 	}
-	else if (_wcsicmp(name, L"WriteKeyValue") == 0)
+	else if (_wcsicmp(bang, L"WriteKeyValue") == 0)
 	{
-		Bang_WriteKeyValue(args);
+		Bang_WriteKeyValue(args, meterWindow);
 	}
-	else if (_wcsicmp(name, L"PluginBang") == 0)
+	else if (_wcsicmp(bang, L"PluginBang") == 0)
 	{
-		BangWithArgs(BANG_PLUGIN, args, 1);
+		BangWithArgs(BANG_PLUGIN, args, 1, meterWindow);
 	}
-	else if (_wcsicmp(name, L"SetClip") == 0)
+	else if (_wcsicmp(bang, L"SetClip") == 0)
 	{
 		Bang_SetClip(args);
 	}
-	else if (_wcsicmp(name, L"About") == 0)
+	else if (_wcsicmp(bang, L"About") == 0)
 	{
 		CDialogAbout::Open(args);
 	}
-	else if (_wcsicmp(name, L"Manage") == 0)
+	else if (_wcsicmp(bang, L"Manage") == 0)
 	{
 		CDialogManage::Open(args);
 	}
-	else if (_wcsicmp(name, L"SkinMenu") == 0)
+	else if (_wcsicmp(bang, L"SkinMenu") == 0)
 	{
 		Bang_SkinMenu(args);
 	}
-	else if (_wcsicmp(name, L"TrayMenu") == 0)
+	else if (_wcsicmp(bang, L"TrayMenu") == 0)
 	{
 		Bang_TrayMenu();
 	}
-	else if (_wcsicmp(name, L"ResetStats") == 0)
+	else if (_wcsicmp(bang, L"ResetStats") == 0)
 	{
 		ResetStats();
 	}
-	else if (_wcsicmp(name, L"Quit") == 0)
+	else if (_wcsicmp(bang, L"Quit") == 0)
 	{
 		// Quit needs to be delayed since it crashes if done during Update()
 		PostMessage(GetTrayWindow()->GetWindow(), WM_COMMAND, MAKEWPARAM(ID_CONTEXT_QUIT, 0), (LPARAM)NULL);
 	}
-	else if (_wcsicmp(bang.c_str(), L"!Execute") == 0)
+	else if (_wcsicmp(name.c_str(), L"Execute") == 0)
 	{
 		// Special case for multibang execution
 		std::wstring::size_type start = std::wstring::npos;
-		std::wstring::size_type end = std::wstring::npos;
 		int count = 0;
 		for (size_t i = 0, isize = arg.size(); i < isize; ++i)
 		{
@@ -1844,12 +1848,13 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 
 				if (count == 0 && start != std::wstring::npos)
 				{
-					end = i;
+					// Change ] to NULL
+					arg[i] = L'\0';
 
-					std::wstring command = arg.substr(start + 1, end - (start + 1));
-					// Skip leading whitespace
-					std::wstring::size_type notwhite = command.find_first_not_of(L" \t\r\n");
-					ExecuteCommand(command.c_str() + notwhite, meterWindow);
+					// Skip whitespace
+					start = arg.find_first_not_of(L" \t\r\n", start + 1, 4);
+
+					ExecuteCommand(arg.c_str() + start, meterWindow);
 				}
 			}
 			else if (args[i] == L'"' && isize > (i + 2) && args[i + 1] == L'"' && args[i + 2] == L'"')
@@ -1864,18 +1869,15 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 			}
 		}
 	}
-	else if (_wcsicmp(name, L"LsBoxHook") == 0)
+	else if (_wcsicmp(bang, L"LsBoxHook") == 0)
 	{
 		// Deprecated.
 	}
 	else
 	{
-		std::wstring error = L"Unknown bang: " + bang;
+		std::wstring error = L"Unknown bang: " + name;
 		Log(LOG_ERROR, error.c_str());
-		return FALSE;
 	}
-
-	return TRUE;
 }
 
 /*
@@ -1886,94 +1888,79 @@ BOOL CRainmeter::ExecuteBang(const std::wstring& bang, const std::wstring& arg, 
 */
 void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 {
-	std::wstring strCommand = command;
-	if (meterWindow && _wcsnicmp(L"!execute", command, 8) != 0)
+	if (command[0] == L'!') // Bang
 	{
-		meterWindow->GetParser().ReplaceMeasures(strCommand);
-	}
+		++command;	// Skip "!"
+		std::wstring bang, arg;
 
-	if (!strCommand.empty())
-	{
-		command = strCommand.c_str();
-
-		if (command[0] == L'!') // Bang
+		// Find the first space
+		const WCHAR* pos = wcschr(command, L' ');
+		if (pos)
 		{
-			if (meterWindow)
-			{
-				// Fake WM_COPYDATA to deliver bangs
-				COPYDATASTRUCT cds;
-				cds.cbData = 1; // Size doesn't matter as long as not empty
-				cds.dwData = 1;
-				cds.lpData = (void*)command;
-				meterWindow->OnCopyData(WM_COPYDATA, NULL, (LPARAM)&cds);
-			}
-			else
-			{
-				std::wstring bang, arg;
-				size_t pos = strCommand.find(L' ');
-				if (pos != std::wstring::npos)
-				{
-					bang.assign(strCommand, 0, pos);
-					strCommand.erase(0, pos + 1);
-					arg = strCommand;
-				}
-				else
-				{
-					bang = strCommand;
-				}
-				ExecuteBang(bang, arg, meterWindow);
-			}
+			bang.assign(command, 0, pos - command);
+			arg.assign(pos + 1);
 		}
 		else
 		{
-			// Check for built-ins
-			if (_wcsnicmp(L"PLAY", command, 4) == 0)
-			{
-				if (command[4] == L' ' ||                      // PLAY
-					_wcsnicmp(L"LOOP ", &command[4], 5) == 0)  // PLAYLOOP
-				{
-					command += 4;	// Skip PLAY
-
-					DWORD flags = SND_FILENAME | SND_ASYNC;
-
-					if (command[0] != L' ')
-					{
-						flags |= SND_LOOP | SND_NODEFAULT;
-						command += 4;	// Skip LOOP
-					}
-
-					++command;	// Skip the space
-					if (command[0] != L'\0')
-					{
-						strCommand = command;
-
-						// Strip the quotes
-						std::wstring::size_type len = strCommand.length();
-						if (len >= 2 && strCommand[0] == L'"' && strCommand[len - 1] == L'"')
-						{
-							len -= 2;
-							strCommand.assign(strCommand, 1, len);
-						}
-
-						if (meterWindow)
-						{
-							meterWindow->MakePathAbsolute(strCommand);
-						}
-
-						PlaySound(strCommand.c_str(), NULL, flags);
-					}
-					return;
-				}
-				else if (_wcsnicmp(L"STOP", &command[4], 4) == 0)  // PLAYSTOP
-				{
-					PlaySound(NULL, NULL, SND_PURGE);
-					return;
-				}
-			}
-
-			// Run command
-			RunCommand(NULL, command, SW_SHOWNORMAL);
+			bang = command;
 		}
+
+		if (meterWindow && _wcsnicmp(L"Execute", command, 7) != 0)
+		{
+			meterWindow->GetParser().ReplaceMeasures(bang);
+		}
+
+		ExecuteBang(bang, arg, meterWindow);
+	}
+	else
+	{
+		// Check for built-ins
+		if (_wcsnicmp(L"PLAY", command, 4) == 0)
+		{
+			if (command[4] == L' ' ||                      // PLAY
+				_wcsnicmp(L"LOOP ", &command[4], 5) == 0)  // PLAYLOOP
+			{
+				command += 4;	// Skip PLAY
+
+				DWORD flags = SND_FILENAME | SND_ASYNC;
+
+				if (command[0] != L' ')
+				{
+					flags |= SND_LOOP | SND_NODEFAULT;
+					command += 4;	// Skip LOOP
+				}
+
+				++command;	// Skip the space
+				if (command[0] != L'\0')
+				{
+					std::wstring sound = command;
+
+					// Strip the quotes
+					std::wstring::size_type len = sound.length();
+					if (len >= 2 && sound[0] == L'"' && sound[len - 1] == L'"')
+					{
+						len -= 2;
+						sound.assign(sound, 1, len);
+					}
+
+					if (meterWindow)
+					{
+						meterWindow->MakePathAbsolute(sound);
+					}
+
+					PlaySound(sound.c_str(), NULL, flags);
+				}
+				return;
+			}
+			else if (_wcsnicmp(L"STOP", &command[4], 4) == 0)  // PLAYSTOP
+			{
+				PlaySound(NULL, NULL, SND_PURGE);
+				return;
+			}
+		}
+
+		// Run command
+		RunCommand(NULL, command, SW_SHOWNORMAL);
 	}
 }
 

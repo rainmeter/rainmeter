@@ -30,7 +30,7 @@ public:
 	virtual void Initialize();
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
-	virtual void ExecuteBang(const WCHAR* args);
+	virtual void Command(const std::wstring& command);
 
 	void DeleteLuaScript();
 
