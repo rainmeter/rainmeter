@@ -133,6 +133,8 @@ public:
 	const std::vector<CONFIG>& GetAllConfigs() { return m_ConfigStrings; }
 	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; }
 
+	bool DeleteMeterWindow(CMeterWindow* meterWindow);
+
 	void ActivateConfig(int configIndex, int iniIndex);
 	bool DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bool save = true);
 	void ToggleConfig(int configIndex, int iniIndex);
@@ -205,8 +207,6 @@ public:
 	void LoadTheme(const std::wstring& name);
 	void PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace = true);
 
-	void ClearDeleteLaterList();
-
 	static std::vector<std::wstring> ParseString(LPCTSTR str);
 	static std::wstring ExtractPath(const std::wstring& strFilePath);
 	static void ExpandEnvironmentVariables(std::wstring& strPath);
@@ -229,7 +229,6 @@ private:
 
 	void ActivateActiveConfigs();
 	void CreateMeterWindow(const std::wstring& config, const std::wstring& iniFile);
-	bool DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater);
 	void WriteActive(const std::wstring& config, int iniIndex);
 	void ScanForConfigs(const std::wstring& path);
 	void ScanForThemes(const std::wstring& path);
@@ -306,8 +305,6 @@ private:
 	LCID m_ResourceLCID;
 
 	ULONG_PTR m_GDIplusToken;
-
-	std::list<CMeterWindow*> m_DelayDeleteList;
 
 	GlobalConfig m_GlobalConfig;
 };

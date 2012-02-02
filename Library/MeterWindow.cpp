@@ -48,7 +48,8 @@ enum TIMER
 	TIMER_METER      = 1,
 	TIMER_MOUSE      = 2,
 	TIMER_FADE       = 3,
-	TIMER_TRANSITION = 4
+	TIMER_TRANSITION = 4,
+	TIMER_DEACTIVATE = 5
 };
 enum INTERVAL
 {
@@ -321,6 +322,18 @@ void CMeterWindow::IgnoreAeroPeek()
 }
 
 /*
+** Deactivate
+**
+** Unloads the skin with delay to avoid crash (and for fade to complete).
+**
+*/
+void CMeterWindow::Deactivate()
+{
+	HideFade();
+	SetTimer(m_Window, TIMER_DEACTIVATE, m_FadeDuration + 50, NULL);
+}
+
+/*
 ** Refresh
 **
 ** This deletes everything and rebuilds the config again.
@@ -343,9 +356,6 @@ void CMeterWindow::Refresh(bool init, bool all)
 	if (!init)
 	{
 		// First destroy everything
-		// WriteConfig(); //Not clear why this is needed and it messes up resolution changes
-
-		// Kill the timer
 		KillTimer(m_Window, TIMER_METER);
 		KillTimer(m_Window, TIMER_MOUSE);
 		KillTimer(m_Window, TIMER_FADE);
@@ -3094,6 +3104,14 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			UpdateTransparency((int)value, false);
 		}
 	}
+	else if (wParam == TIMER_DEACTIVATE)
+	{
+		if (m_FadeStartTime == 0)
+		{
+			KillTimer(m_Window, TIMER_DEACTIVATE);
+			Rainmeter->DeleteMeterWindow(this);
+		}
+	}
 
 	return 0;
 }
@@ -4796,7 +4814,6 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnMiddleButtonDoubleClick, WM_NCMBUTTONDBLCLK)
 	MESSAGE(OnWindowPosChanging, WM_WINDOWPOSCHANGING)
 	MESSAGE(OnCopyData, WM_COPYDATA)
-	MESSAGE(OnDelayedExecute, WM_DELAYED_EXECUTE)
 	MESSAGE(OnDelayedRefresh, WM_DELAYED_REFRESH)
 	MESSAGE(OnDelayedMove, WM_DELAYED_MOVE)
 	MESSAGE(OnDwmColorChange, WM_DWMCOLORIZATIONCOLORCHANGED)
@@ -4825,29 +4842,6 @@ LRESULT CALLBACK CMeterWindow::InitialWndProc(HWND hWnd, UINT uMsg, WPARAM wPara
 	}
 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
-}
-
-/*
-** OnDelayedExecute
-**
-** Handles delayed executes
-**
-*/
-LRESULT CMeterWindow::OnDelayedExecute(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	if (lParam)
-	{
-		LPCTSTR szExecute = (LPCTSTR)lParam;
-		COPYDATASTRUCT copyData;
-
-		copyData.dwData = 1;
-		copyData.cbData = (DWORD)((wcslen(szExecute) + 1) * sizeof(WCHAR));
-		copyData.lpData = (void*)szExecute;
-
-		OnCopyData(WM_COPYDATA, NULL, (LPARAM)&copyData);
-	}
-
-	return 0;
 }
 
 /*

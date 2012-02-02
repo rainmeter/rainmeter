@@ -655,7 +655,7 @@ CRainmeter::CRainmeter() :
 */
 CRainmeter::~CRainmeter()
 {
-	DeleteMeterWindow(NULL, false);	// This removes the window from the vector
+	DeleteMeterWindow(NULL);
 
 	delete m_TrayWindow;
 
@@ -1098,7 +1098,7 @@ bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bo
 			WriteActive(meterWindow->GetSkinName(), -1);
 		}
 
-		return DeleteMeterWindow(meterWindow, true);
+		meterWindow->Deactivate();
 	}
 	return false;
 }
@@ -1150,76 +1150,29 @@ void CRainmeter::CreateMeterWindow(const std::wstring& config, const std::wstrin
 	}
 }
 
-void CRainmeter::ClearDeleteLaterList()
+bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow)
 {
-	if (!m_DelayDeleteList.empty())
+	std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
+	for (; iter != m_Meters.end(); ++iter)
 	{
-		do
-		{
-			CMeterWindow* meterWindow = m_DelayDeleteList.front();
-
-			// Remove from the delete later list
-			m_DelayDeleteList.remove(meterWindow);
-
-			// Remove from the meter window list if it is still there
-			std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
-			for (; iter != m_Meters.end(); ++iter)
-			{
-				if ((*iter).second == meterWindow)
-				{
-					m_Meters.erase(iter);
-					break;
-				}
-			}
-
-			CDialogManage::UpdateSkins(meterWindow, true);
-			delete meterWindow;
-		}
-		while (!m_DelayDeleteList.empty());
-
-		CDialogAbout::UpdateSkins();
-	}
-}
-
-bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool bLater)
-{
-	if (bLater)
-	{
-		if (meterWindow)
-		{
-			m_DelayDeleteList.push_back(meterWindow);
-			meterWindow->HideFade();
-		}
-	}
-	else
-	{
-		if (meterWindow)
-		{
-			m_DelayDeleteList.remove(meterWindow);	// Remove the window from the delete later list if it is there
-		}
-
-		std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
-		for (; iter != m_Meters.end(); ++iter)
-		{
-			if (meterWindow == NULL)
-			{
-				// Delete all meter windows
-				CDialogManage::UpdateSkins((*iter).second, true);
-				delete (*iter).second;
-			}
-			else if ((*iter).second == meterWindow)
-			{
-				m_Meters.erase(iter);
-				delete meterWindow;
-
-				return true;
-			}
-		}
-
 		if (meterWindow == NULL)
 		{
-			m_Meters.clear();
+			// Delete all meter windows
+			CDialogManage::UpdateSkins((*iter).second, true);
+			delete (*iter).second;
 		}
+		else if ((*iter).second == meterWindow)
+		{
+			m_Meters.erase(iter);
+			delete meterWindow;
+
+			return true;
+		}
+	}
+
+	if (meterWindow == NULL)
+	{
+		m_Meters.clear();
 	}
 
 	return false;
@@ -2179,7 +2132,7 @@ void CRainmeter::RefreshAll()
 void CRainmeter::LoadTheme(const std::wstring& name)
 {
 	// Delete all meter windows
-	DeleteMeterWindow(NULL, false);
+	DeleteMeterWindow(NULL);
 
 	std::wstring backup = GetSettingsPath() + L"Themes\\Backup";
 	CreateDirectory(backup.c_str(), NULL);

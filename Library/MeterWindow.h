@@ -32,7 +32,6 @@
 #define REJECT_MESSAGE(msg) case msg: return 0;
 #define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
-#define WM_DELAYED_EXECUTE WM_APP + 0
 #define WM_DELAYED_REFRESH WM_APP + 1
 #define WM_DELAYED_MOVE    WM_APP + 3
 
@@ -179,6 +178,7 @@ public:
 	void EnableMeasure(const std::wstring& name, bool group = false);
 	void ToggleMeasure(const std::wstring& name, bool group = false);
 	void UpdateMeasure(const std::wstring& name, bool group = false);
+	void Deactivate();
 	void Refresh(bool init, bool all = false);
 	void Redraw();
 	void SetVariable(const std::wstring& variable, const std::wstring& value);
@@ -242,8 +242,6 @@ public:
 
 	void AddMeasureBang(const WCHAR* bang, int index, CMeasure* measure);
 
-	LRESULT OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam);
-
 	void MakePathAbsolute(std::wstring& path);
 
 	Gdiplus::PrivateFontCollection* GetPrivateFontCollection() { return m_FontCollection; }
@@ -280,9 +278,9 @@ protected:
 	LRESULT OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnDelayedExecute(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDwmColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam);

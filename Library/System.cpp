@@ -31,15 +31,13 @@
 enum TIMER
 {
 	TIMER_SHOWDESKTOP = 1,
-	TIMER_NETSTATS    = 2,
-	TIMER_DELETELATER = 3
+	TIMER_NETSTATS    = 2
 };
 enum INTERVAL
 {
 	INTERVAL_SHOWDESKTOP    = 250,
 	INTERVAL_RESTOREWINDOWS = 100,
-	INTERVAL_NETSTATS       = 60000,
-	INTERVAL_DELETELATER    = 1000
+	INTERVAL_NETSTATS       = 60000
 };
 
 MULTIMONITOR_INFO CSystem::c_Monitors = { 0 };
@@ -124,7 +122,6 @@ void CSystem::Initialize(HINSTANCE instance)
 		WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
 
 	SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
-	SetTimer(c_Window, TIMER_DELETELATER, INTERVAL_DELETELATER, NULL);
 }
 
 /*
@@ -137,7 +134,6 @@ void CSystem::Finalize()
 {
 	KillTimer(c_Window, TIMER_SHOWDESKTOP);
 	KillTimer(c_Window, TIMER_NETSTATS);
-	KillTimer(c_Window, TIMER_DELETELATER);
 
 	if (c_WinEventHook)
 	{
@@ -1019,11 +1015,6 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 			CMeasureNet::UpdateIFTable();
 			CMeasureNet::UpdateStats();
 			Rainmeter->WriteStats(false);
-
-			return 0;
-
-		case TIMER_DELETELATER:
-			Rainmeter->ClearDeleteLaterList();
 			return 0;
 		}
 		break;
