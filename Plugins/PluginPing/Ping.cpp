@@ -48,7 +48,7 @@ struct MeasureData
 static CRITICAL_SECTION g_CriticalSection;
 static UINT g_Instances = 0;
 
-PLUGIN_EXPORT void Initialize(void** data)
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
 	*data = measure;

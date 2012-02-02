@@ -180,7 +180,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 		if (initializeFunc)
 		{
-			((NEWINITIALIZE)initializeFunc)(&m_PluginData);
+			((NEWINITIALIZE)initializeFunc)(&m_PluginData, this);
 		}
 
 		((NEWRELOAD)m_ReloadFunc)(m_PluginData, this, &m_MaxValue);

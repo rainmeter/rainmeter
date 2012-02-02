@@ -62,7 +62,7 @@ void NullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* fu
 	// Do nothing.
 }
 
-PLUGIN_EXPORT void Initialize(void** data)
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
 	*data = measure;

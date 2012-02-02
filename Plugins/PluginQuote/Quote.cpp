@@ -112,7 +112,7 @@ void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& fil
 	while (FindNextFile(hSearch, &fileData));
 }
 
-PLUGIN_EXPORT void Initialize(void** data)
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
 	*data = measure;

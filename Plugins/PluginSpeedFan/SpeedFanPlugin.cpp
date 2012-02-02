@@ -65,7 +65,7 @@ struct MeasureData
 
 void ReadSharedData(SensorType type, ScaleType scale, UINT number, double* value);
 
-PLUGIN_EXPORT void Initialize(void** data)
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
 	*data = measure;

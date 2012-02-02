@@ -37,7 +37,7 @@ static std::vector<MeasureData*> g_Measures;
 
 void CheckProcesses();
 
-PLUGIN_EXPORT void Initialize(void** data)
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
 	g_Measures.push_back(measure);
@@ -75,6 +75,13 @@ PLUGIN_EXPORT void Finalize(void* data)
 	g_Measures.erase(iter);
 
 	delete measure;
+}
+
+PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR params[], int count)
+{
+	if (count >= 1) MessageBox(NULL, params[0], NULL, MB_OK | MB_TOPMOST);
+	if (count >= 2) MessageBox(NULL, params[1], NULL, MB_OK | MB_TOPMOST);
+	if (count >= 3) MessageBox(NULL, params[2], NULL, MB_OK | MB_TOPMOST);
 }
 
 void CheckProcesses()

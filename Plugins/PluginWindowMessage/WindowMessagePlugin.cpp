@@ -34,7 +34,7 @@ struct MeasureData
 	MeasureData() : wParam(), lParam(), uMsg() {}
 };
 
-PLUGIN_EXPORT void Initialize(void** data)
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
 	*data = measure;

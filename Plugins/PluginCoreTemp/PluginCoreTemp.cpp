@@ -49,7 +49,7 @@ eMeasureType convertStringToMeasureType(LPCWSTR i_String);
 bool areStringsEqual(LPCWSTR i_String1, LPCWSTR i_Strting2);
 float getHighestTemp();
 
-PLUGIN_EXPORT void Initialize(void** data)
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
 	*data = measure;

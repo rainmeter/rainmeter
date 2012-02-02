@@ -59,7 +59,7 @@ BOOL CALLBACK EnumWindowProc(HWND hWnd, LPARAM lParam)
 	return TRUE;
 }
 
-PLUGIN_EXPORT void Initialize(void** data)
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
 	*data = measure;

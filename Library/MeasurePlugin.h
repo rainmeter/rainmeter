@@ -29,7 +29,7 @@ typedef double (*UPDATE2)(UINT);
 typedef LPCTSTR (*GETSTRING)(UINT, UINT);
 typedef void (*EXECUTEBANG)(LPCWSTR, UINT);
 
-typedef void (*NEWINITIALIZE)(void*);
+typedef void (*NEWINITIALIZE)(void*, void*);
 typedef void (*NEWRELOAD)(void*, void*, double*);
 typedef void (*NEWFINALIZE)(void*);
 typedef double (*NEWUPDATE)(void*);
