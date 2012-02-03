@@ -3109,7 +3109,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (m_FadeStartTime == 0)
 		{
 			KillTimer(m_Window, TIMER_DEACTIVATE);
-			Rainmeter->DeleteMeterWindow(this);
+			Rainmeter->DeleteMeterWindow(this, true);
 		}
 	}
 

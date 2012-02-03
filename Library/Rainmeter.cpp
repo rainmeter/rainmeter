@@ -243,8 +243,8 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfAr
 			else
 			{
 				// No config defined -> apply to all.
-				std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
-				for (; iter != m_Meters.end(); ++iter)
+				std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
+				for (; iter != m_MeterWindows.end(); ++iter)
 				{
 					((*iter).second)->RunBang(bang, subStrings);
 				}
@@ -1036,8 +1036,8 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		const std::wstring& skinConfig = m_ConfigStrings[configIndex].config;
 
 		// Verify that the config is not already active
-		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.find(skinConfig);
-		if (iter != m_Meters.end())
+		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.find(skinConfig);
+		if (iter != m_MeterWindows.end())
 		{
 			if (((*iter).second)->GetSkinIniFile() == skinIniFile)
 			{
@@ -1070,7 +1070,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 	}
 }
 
-bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bool save)
+void CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bool save)
 {
 	if (configIndex >= 0 && configIndex < (int)m_ConfigStrings.size())
 	{
@@ -1100,7 +1100,6 @@ bool CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bo
 
 		meterWindow->Deactivate();
 	}
-	return false;
 }
 
 void CRainmeter::ToggleConfig(int configIndex, int iniIndex)
@@ -1133,7 +1132,7 @@ void CRainmeter::CreateMeterWindow(const std::wstring& config, const std::wstrin
 
 	if (mw)
 	{
-		m_Meters[config] = mw;
+		m_MeterWindows[config] = mw;
 
 		try
 		{
@@ -1150,10 +1149,10 @@ void CRainmeter::CreateMeterWindow(const std::wstring& config, const std::wstrin
 	}
 }
 
-bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow)
+void CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool force)
 {
-	std::map<std::wstring, CMeterWindow*>::iterator iter = m_Meters.begin();
-	for (; iter != m_Meters.end(); ++iter)
+	std::map<std::wstring, CMeterWindow*>::iterator iter = m_MeterWindows.begin();
+	for (; iter != m_MeterWindows.end(); ++iter)
 	{
 		if (meterWindow == NULL)
 		{
@@ -1163,26 +1162,27 @@ bool CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow)
 		}
 		else if ((*iter).second == meterWindow)
 		{
-			m_Meters.erase(iter);
+			m_MeterWindows.erase(iter);
 			delete meterWindow;
-
-			return true;
+			return;
 		}
 	}
 
 	if (meterWindow == NULL)
 	{
-		m_Meters.clear();
+		m_MeterWindows.clear();
 	}
-
-	return false;
+	else if (force)
+	{
+		delete meterWindow;
+	}
 }
 
 CMeterWindow* CRainmeter::GetMeterWindow(const std::wstring& config)
 {
 	const WCHAR* configName = config.c_str();
-	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
-	for (; iter != m_Meters.end(); ++iter)
+	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
+	for (; iter != m_MeterWindows.end(); ++iter)
 	{
 		if (_wcsicmp((*iter).first.c_str(), configName) == 0)
 		{
@@ -1199,8 +1199,8 @@ CMeterWindow* CRainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
 	{
 		const std::wstring config_searching = ini_searching.substr(m_SkinPath.length());
 
-		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
-		for (; iter != m_Meters.end(); ++iter)
+		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
+		for (; iter != m_MeterWindows.end(); ++iter)
 		{
 			std::wstring config_current = (*iter).second->GetSkinName() + L'\\';
 			config_current += (*iter).second->GetSkinIniFile();
@@ -1266,8 +1266,8 @@ std::pair<int, int> CRainmeter::GetMeterWindowIndex(UINT menuCommand)
 
 CMeterWindow* CRainmeter::GetMeterWindow(HWND hwnd)
 {
-	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
-	for (; iter != m_Meters.end(); ++iter)
+	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
+	for (; iter != m_MeterWindows.end(); ++iter)
 	{
 		if ((*iter).second->GetWindow() == hwnd)
 		{
@@ -1280,8 +1280,8 @@ CMeterWindow* CRainmeter::GetMeterWindow(HWND hwnd)
 
 void CRainmeter::GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group)
 {
-	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
-	for (; iter != m_Meters.end(); ++iter)
+	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
+	for (; iter != m_MeterWindows.end(); ++iter)
 	{
 		CMeterWindow* mw = (*iter).second;
 		if (mw && (group.empty() || mw->BelongsToGroup(group)))
@@ -2464,8 +2464,8 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 
 					// Create a menu for all active configs
 					int index = 0;
-					std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Meters.begin();
-					for (; iter != m_Meters.end(); ++iter)
+					std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
+					for (; iter != m_MeterWindows.end(); ++iter)
 					{
 						CMeterWindow* mw = ((*iter).second);
 						HMENU skinMenu = CreateSkinMenu(mw, index, configMenu);

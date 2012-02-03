@@ -129,14 +129,14 @@ public:
 
 	CMeterWindow* GetMeterWindow(HWND hwnd);
 	void GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group = std::wstring());
-	std::map<std::wstring, CMeterWindow*>& GetAllMeterWindows() { return m_Meters; }
+	std::map<std::wstring, CMeterWindow*>& GetAllMeterWindows() { return m_MeterWindows; }
 	const std::vector<CONFIG>& GetAllConfigs() { return m_ConfigStrings; }
 	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; }
 
-	bool DeleteMeterWindow(CMeterWindow* meterWindow);
+	void DeleteMeterWindow(CMeterWindow* meterWindow, bool force = false);
 
 	void ActivateConfig(int configIndex, int iniIndex);
-	bool DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bool save = true);
+	void DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bool save = true);
 	void ToggleConfig(int configIndex, int iniIndex);
 
 	const std::wstring& GetPath() { return m_Path; }
@@ -251,7 +251,7 @@ private:
 	std::vector<CONFIG> m_ConfigStrings;				// All configs found in the given folder
 	std::vector<CONFIGMENU> m_ConfigMenu;
 	std::multimap<int, int> m_ConfigOrders;
-	std::map<std::wstring, CMeterWindow*> m_Meters;		// The meter windows
+	std::map<std::wstring, CMeterWindow*> m_MeterWindows;
 	std::vector<std::wstring> m_Themes;
 
 	std::wstring m_Path;				// Path to the main folder
