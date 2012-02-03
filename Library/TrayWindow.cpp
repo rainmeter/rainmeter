@@ -580,184 +580,95 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	case WM_QUERY_RAINMETER:
 		if (IsWindow((HWND)lParam))
 		{
-			COPYDATASTRUCT cds;
+			auto sendCopyData = [&](const std::wstring& data)
+			{
+				COPYDATASTRUCT cds;
+				cds.dwData = wParam;
+				cds.cbData = (DWORD)((data.length() + 1) + sizeof(WCHAR));
+				cds.lpData = (PVOID)data.c_str();
+				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
+			};
 
 			if (wParam == RAINMETER_QUERY_ID_SKINS_PATH)
 			{
-				const std::wstring& path = Rainmeter->GetSkinPath();
-
-				cds.dwData = RAINMETER_QUERY_ID_SKINS_PATH;
-				cds.cbData = (DWORD)((path.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) path.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
+				sendCopyData(Rainmeter->GetSkinPath());
 				return 0;
 			}
 			else if (wParam == RAINMETER_QUERY_ID_SETTINGS_PATH)
 			{
-				std::wstring path = Rainmeter->GetSettingsPath();
-
-				cds.dwData = RAINMETER_QUERY_ID_SETTINGS_PATH;
-				cds.cbData = (DWORD)((path.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) path.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
+				sendCopyData(Rainmeter->GetSettingsPath());
 				return 0;
 			}
 			else if (wParam == RAINMETER_QUERY_ID_PLUGINS_PATH)
 			{
-				const std::wstring& path = Rainmeter->GetPluginPath();
-
-				cds.dwData = RAINMETER_QUERY_ID_PLUGINS_PATH;
-				cds.cbData = (DWORD)((path.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) path.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
+				sendCopyData(Rainmeter->GetPluginPath());
 				return 0;
 			}
 			else if (wParam == RAINMETER_QUERY_ID_PROGRAM_PATH)
 			{
-				const std::wstring& path = Rainmeter->GetPath();
-
-				cds.dwData = RAINMETER_QUERY_ID_PROGRAM_PATH;
-				cds.cbData = (DWORD)((path.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) path.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
+				sendCopyData(Rainmeter->GetPath());
 				return 0;
 			}
 			else if (wParam == RAINMETER_QUERY_ID_LOG_PATH)
 			{
-				const std::wstring& path = Rainmeter->GetLogFile();
-
-				cds.dwData = RAINMETER_QUERY_ID_LOG_PATH;
-				cds.cbData = (DWORD)((path.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) path.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
+				sendCopyData(Rainmeter->GetLogFile());
 				return 0;
 			}
 			else if (wParam == RAINMETER_QUERY_ID_CONFIG_EDITOR)
 			{
-				const std::wstring& editor = Rainmeter->GetConfigEditor();
-
-				cds.dwData = RAINMETER_QUERY_ID_CONFIG_EDITOR;
-				cds.cbData = (DWORD)((editor.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) editor.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
+				sendCopyData(Rainmeter->GetConfigEditor());
+				return 0;
+			}
+			else if (wParam == RAINMETER_QUERY_ID_STATS_DATE)
+			{
+				sendCopyData(Rainmeter->GetStatsDate());
+				return 0;
+			}
+			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_L)
+			{
+				sendCopyData(Rainmeter->GetTrayExecuteL());
+				return 0;
+			}
+			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_R)
+			{
+				sendCopyData(Rainmeter->GetTrayExecuteR());
+				return 0;
+			}
+			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_M)
+			{
+				sendCopyData(Rainmeter->GetTrayExecuteM());
+				return 0;
+			}
+			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_DL)
+			{
+				sendCopyData(Rainmeter->GetTrayExecuteDL());
+				return 0;
+			}
+			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_DR)
+			{
+				sendCopyData(Rainmeter->GetTrayExecuteDR());
+				return 0;
+			}
+			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_DM)
+			{
+				sendCopyData(Rainmeter->GetTrayExecuteDM());
 				return 0;
 			}
 			else if (wParam == RAINMETER_QUERY_ID_VERSION_CHECK)
 			{
 				UINT versioncheck = ((int)Rainmeter->GetDisableVersionCheck() * ((int)Rainmeter->GetDisableVersionCheck() + (int)Rainmeter->GetNewVersion()));
-
 				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)versioncheck);
-
 				return 0;
 			}
 			else if (wParam == RAINMETER_QUERY_ID_IS_DEBUGGING)
 			{
 				BOOL debug = Rainmeter->GetDebug();
-
 				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)debug);
-
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_STATS_DATE)
-			{
-				const std::wstring& date = Rainmeter->GetStatsDate();
-
-				cds.dwData = RAINMETER_QUERY_ID_STATS_DATE;
-				cds.cbData = (DWORD)((date.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) date.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_L)
-			{
-				const std::wstring& tray = Rainmeter->GetTrayExecuteL();
-
-				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_L;
-				cds.cbData = (DWORD)((tray.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) tray.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_R)
-			{
-				const std::wstring& tray = Rainmeter->GetTrayExecuteR();
-
-				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_R;
-				cds.cbData = (DWORD)((tray.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) tray.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_M)
-			{
-				const std::wstring& tray = Rainmeter->GetTrayExecuteM();
-
-				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_M;
-				cds.cbData = (DWORD)((tray.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) tray.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_DL)
-			{
-				const std::wstring& tray = Rainmeter->GetTrayExecuteDL();
-
-				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_DL;
-				cds.cbData = (DWORD)((tray.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) tray.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_DR)
-			{
-				const std::wstring& tray = Rainmeter->GetTrayExecuteDR();
-
-				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_DR;
-				cds.cbData = (DWORD)((tray.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) tray.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_DM)
-			{
-				const std::wstring& tray = Rainmeter->GetTrayExecuteDM();
-
-				cds.dwData = RAINMETER_QUERY_ID_TRAY_EX_DM;
-				cds.cbData = (DWORD)((tray.size() + 1) * sizeof(wchar_t));
-				cds.lpData = (LPVOID) tray.c_str();
-
-				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
-
 				return 0;
 			}
 			else if (wParam == RAINMETER_QUERY_ID_IS_LITESTEP)
 			{
 				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)0);
-
 				return 0;
 			}
 		}
@@ -768,12 +679,15 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lParam;
 			if (cds->dwData == RAINMETER_QUERY_ID_SKIN_WINDOWHANDLE)
 			{
-				std::wstring SkinName((LPTSTR)cds->lpData);
-				std::map<std::wstring, CMeterWindow*> MeterWindows = Rainmeter->GetAllMeterWindows();
-				std::map<std::wstring, CMeterWindow*>::const_iterator iter = MeterWindows.find(SkinName);
-				if (iter != MeterWindows.end())
+				LPCWSTR configName = (LPCWSTR)cds->lpData;
+				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
+				for ( ; iter != windows.end(); ++iter)
 				{
-					return (LRESULT)iter->second->GetWindow();
+					if (wcscmp((*iter).first.c_str(), configName) == 0)
+					{
+						return (LRESULT)(*iter).second->GetWindow();
+					}
 				}
 				return NULL;
 			}
