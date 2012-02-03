@@ -1163,8 +1163,8 @@ void CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool force)
 		else if ((*iter).second == meterWindow)
 		{
 			m_MeterWindows.erase(iter);
-			delete meterWindow;
-			return;
+			force = true;
+			break;
 		}
 	}
 
@@ -1174,6 +1174,7 @@ void CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool force)
 	}
 	else if (force)
 	{
+		CDialogManage::UpdateSkins(meterWindow, true);
 		delete meterWindow;
 	}
 }
