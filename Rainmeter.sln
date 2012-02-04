@@ -21,9 +21,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginFolderInfo", "Plugins\PluginFolderInfo\PluginFolderInfo.vcxproj", "{A221819D-4263-42AA-B22A-C022924842A7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginInputText", "Plugins\PluginInputText\PluginInputText.csproj", "{2CFEC79A-E39E-4FFD-ABC2-C4A69DD1E44D}"
-	ProjectSection(ProjectDependencies) = postProject
-		{49D56CA5-54AB-45C9-A245-EAE588FCBFE1} = {49D56CA5-54AB-45C9-A245-EAE588FCBFE1}
-	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginiTunes", "Plugins\PluginiTunes\PluginiTunes.vcxproj", "{A2DD3CBE-B140-4892-A875-24107FA52518}"
 EndProject
