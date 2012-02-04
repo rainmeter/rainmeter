@@ -1076,9 +1076,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 		}
 
 		// Release memory used for the compiled pattern
-		RmLog(LOG_ERROR, L"HERE");
 		pcre_free(re);
-		RmLog(LOG_ERROR, L"HERE2");
 	}
 	else
 	{
