@@ -10,9 +10,9 @@ EXPORTS
 	PluginBridge
 
 	; Private
-	pcre_compile		@9  NONAME
-	pcre_exec			@10 NONAME
-	pcre_study			@12 NONAME
-	Initialize			@13 NONAME
-	Quit				@14 NONAME
-	ExecuteBang			@15 NONAME
+	Initialize			@1 NONAME
+	Quit				@2 NONAME
+	ExecuteBang			@3 NONAME
+	pcre_compile		@4 NONAME
+	pcre_exec			@5 NONAME
+	pcre_study			@6 NONAME
