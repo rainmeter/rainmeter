@@ -136,6 +136,12 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 	return buffer;
 }
 
+PLUGIN_EXPORT void Finalize(void* data)
+{
+	MeasureData* measure = (MeasureData*)data;
+	delete measure;
+}
+
 bool areStringsEqual(LPCWSTR i_String1, LPCWSTR i_Strting2)
 {
 	return _wcsicmp(i_String1, i_Strting2) == 0;

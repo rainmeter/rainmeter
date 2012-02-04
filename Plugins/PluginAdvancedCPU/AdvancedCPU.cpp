@@ -305,6 +305,7 @@ void UpdateProcesses()
 				{
 					if (_wcsicmp(name, L"_Total") == 0)
 					{
+						delete pObjInst;
 						continue;
 					}
 
@@ -340,6 +341,7 @@ void UpdateProcesses()
 						delete pPerfCntr;
 					}
 				}
+
 				delete pObjInst;
 			}
 			delete pPerfObj;
