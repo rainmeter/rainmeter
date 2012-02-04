@@ -37,6 +37,7 @@ private:
 
 private:
 	void Clear();
+	void FreePcre();
 	void CalculateSize();
 	void SetPath(const wchar_t* aPath, const wchar_t* aIniPath);
 
@@ -77,8 +78,10 @@ public:
 	{
 		return myFolderCount;
 	}
-
+	
 	FolderInfo(const wchar_t* aPath, const wchar_t* aIniPath);
+	~FolderInfo();
+
 	void Update();
 }; // class FolderInfo
 

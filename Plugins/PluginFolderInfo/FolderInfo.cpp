@@ -3,7 +3,7 @@
 #include <list>
 
 namespace PluginFolderInfo {
-
+	
 FolderInfo::FolderInfo(const wchar_t* aPath, const wchar_t* aIniPath)
 {
 	mySubFolderFlag = false;
@@ -16,11 +16,29 @@ FolderInfo::FolderInfo(const wchar_t* aPath, const wchar_t* aIniPath)
 	SetPath(aPath, aIniPath);
 }
 
+FolderInfo::~FolderInfo()
+{
+	FreePcre();
+}
+
 void FolderInfo::Clear()
 {
 	mySize = 0;
 	myFileCount = 0;
 	myFolderCount = 0;
+}
+
+void FolderInfo::FreePcre()
+{
+	if (myRegExpFilter) {
+		pcre_free(myRegExpFilter);
+		myRegExpFilter = NULL;
+	}
+
+	if (myRegExpFilterExtra) {
+		pcre_free(myRegExpFilterExtra);
+		myRegExpFilterExtra = NULL;
+	}
 }
 
 void FolderInfo::SetPath(const wchar_t* aPath, const wchar_t* aIniPath)
@@ -122,11 +140,7 @@ void FolderInfo::CalculateSize()
 
 void FolderInfo::SetRegExpFilter(const wchar_t* aFilter)
 {
-	if (myRegExpFilter) {
-		pcre_free(myRegExpFilter);
-		myRegExpFilter = NULL;
-		myRegExpFilterExtra = NULL;
-	}
+	FreePcre();
 
 	if (aFilter == NULL) {
 		return;
@@ -144,6 +158,8 @@ void FolderInfo::SetRegExpFilter(const wchar_t* aFilter)
 	if (myRegExpFilter) {
 		myRegExpFilterExtra = pcre_study(myRegExpFilter, 0, &error);
 	}
+
+	delete [] buf;
 }
 
 } // namespace PluginFolderInfo

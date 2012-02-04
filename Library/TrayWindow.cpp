@@ -29,8 +29,7 @@
 #include "../Version.h"
 
 #define RAINMETER_OFFICIAL		L"http://rainmeter.net/cms/"
-#define RAINMETER_MANUAL		L"http://rainmeter.net/cms/Manual"
-#define RAINMETER_MANUALBETA	L"http://rainmeter.net/cms/Manual_beta"
+#define RAINMETER_HELP			L"http://rainmeter.net/cms/Support"
 
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
 
@@ -427,7 +426,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if (wParam == ID_CONTEXT_SHOW_HELP)
 			{
-				RunCommand(NULL, revision_beta ? RAINMETER_MANUALBETA : RAINMETER_MANUAL, SW_SHOWNORMAL);
+				RunCommand(NULL, RAINMETER_HELP, SW_SHOWNORMAL);
 			}
 			else if (wParam == ID_CONTEXT_NEW_VERSION)
 			{

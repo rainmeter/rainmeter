@@ -94,7 +94,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;PluginFolderInfo_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -134,7 +134,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;PluginFolderInfo_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -175,7 +175,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;PluginFolderInfo_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -221,7 +221,7 @@
       <AdditionalOptions>/GL  %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;PluginFolderInfo_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -260,246 +260,7 @@
     <ClInclude Include="FolderInfo.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_chartables.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_compile.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_config.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_dfa_exec.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_exec.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_fullinfo.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_get.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_globals.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_info.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_maketables.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_newline.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_ord2utf8.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_refcount.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_study.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_tables.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_try_flipped.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_ucd.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_valid_utf8.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_version.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_xclass.c">
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">EnableFastChecks</BasicRuntimeChecks>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_USRDLL;PluginFolderInfo_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8</PreprocessorDefinitions>
-    </ClCompile>
+    <ClCompile Include="..\..\Library\pcre-8.10\pcre_globals.c" />
     <ClCompile Include="FolderInfo.cpp" />
     <ClCompile Include="FolderInfoPlugin.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
