@@ -1248,8 +1248,8 @@ void CSystem::SetWallpaper(const std::wstring& wallpaper, const std::wstring& st
 				std::wstring file = Rainmeter->GetSettingsPath();
 				file += L"Wallpaper.bmp";
 
-				const CLSID jpegClsid = { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } };
-				if (bitmap->Save(file.c_str(), &jpegClsid) == Ok)
+				const CLSID bmpClsid = { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } };
+				if (bitmap->Save(file.c_str(), &bmpClsid) == Ok)
 				{
 					setWallpaperStyle();
 					SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)file.c_str(), SPIF_UPDATEINIFILE);
