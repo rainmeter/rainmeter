@@ -1861,7 +1861,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 
 		if (meterWindow && _wcsnicmp(L"Execute", command, 7) != 0)
 		{
-			meterWindow->GetParser().ReplaceMeasures(bang);
+			meterWindow->GetParser().ReplaceMeasures(arg);
 		}
 
 		ExecuteBang(bang, arg, meterWindow);
