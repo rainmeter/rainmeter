@@ -310,11 +310,14 @@ private:
 	GlobalConfig m_GlobalConfig;
 };
 
-extern "C"
-{
-	int Initialize(HWND hWnd, HINSTANCE hInstance, LPCWSTR lpCmdLine);
-	void Quit();
-	void ExecuteBang(LPCTSTR szBang);
-}
+#ifdef LIBRARY_EXPORTS
+#define EXPORT_PLUGIN EXTERN_C
+#else
+#define EXPORT_PLUGIN EXTERN_C __declspec(dllimport)
+#endif
+
+EXPORT_PLUGIN int Initialize(HWND hWnd, HINSTANCE hInstance, LPCWSTR lpCmdLine);
+EXPORT_PLUGIN void Quit();
+EXPORT_PLUGIN void ExecuteBang(LPCTSTR szBang);
 
 #endif
