@@ -88,7 +88,10 @@ void* __stdcall RmGet(void* rm, int type)
 void __stdcall RmExecute(void* skin, LPCWSTR command)
 {
 	CMeterWindow* mw = (CMeterWindow*)skin;
-	Rainmeter->ExecuteCommand(command, mw);
+	if (command)
+	{
+		Rainmeter->ExecuteCommand(command, mw);
+	}
 }
 
 BOOL LSLog(int nLevel, LPCWSTR unused, LPCWSTR pszMessage)

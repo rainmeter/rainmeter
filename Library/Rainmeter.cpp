@@ -1899,6 +1899,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 
 					if (meterWindow)
 					{
+						meterWindow->GetParser().ReplaceMeasures(sound);
 						meterWindow->MakePathAbsolute(sound);
 					}
 
@@ -1914,7 +1915,16 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 		}
 
 		// Run command
-		RunCommand(NULL, command, SW_SHOWNORMAL);
+		if (meterWindow)
+		{
+			std::wstring tmpSz = command;
+			meterWindow->GetParser().ReplaceMeasures(tmpSz);
+			RunCommand(NULL, tmpSz.c_str(), SW_SHOWNORMAL);
+		}
+		else
+		{
+			RunCommand(NULL, command, SW_SHOWNORMAL);
+		}
 	}
 }
 
