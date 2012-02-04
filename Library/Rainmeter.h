@@ -221,6 +221,7 @@ private:
 	void Bang_ToggleConfig(const WCHAR* arg);
 	void Bang_DeactivateConfigGroup(const WCHAR* arg);
 	void Bang_SetClip(const WCHAR* arg);
+	void Bang_SetWallpaper(const WCHAR* arg);
 	void Bang_SkinMenu(const WCHAR* arg);
 	void Bang_TrayMenu();
 	void Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow);
@@ -309,17 +310,11 @@ private:
 	GlobalConfig m_GlobalConfig;
 };
 
-#ifdef LIBRARY_EXPORTS
-#define EXPORT_PLUGIN __declspec(dllexport)
-#else
-#define EXPORT_PLUGIN __declspec(dllimport)
-#endif
-
 extern "C"
 {
-	EXPORT_PLUGIN int Initialize(HWND hWnd, HINSTANCE hInstance, LPCWSTR lpCmdLine);
-	EXPORT_PLUGIN void Quit();
-	EXPORT_PLUGIN void ExecuteBang(LPCTSTR szBang);
+	int Initialize(HWND hWnd, HINSTANCE hInstance, LPCWSTR lpCmdLine);
+	void Quit();
+	void ExecuteBang(LPCTSTR szBang);
 }
 
 #endif

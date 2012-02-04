@@ -421,6 +421,30 @@ void CRainmeter::Bang_SetClip(const WCHAR* arg)
 }
 
 /*
+** Bang_SetWallpaper
+**
+** !SetWallpaper bang
+**
+*/
+void CRainmeter::Bang_SetWallpaper(const WCHAR* arg)
+{
+	std::vector<std::wstring> subStrings = ParseString(arg);
+
+	if (subStrings.size() == 1)
+	{
+		CSystem::SetWallpaper(subStrings[0], L"");
+	}
+	else if (subStrings.size() == 2)
+	{
+		CSystem::SetWallpaper(subStrings[0], subStrings[1]);
+	}
+	else
+	{
+		Log(LOG_ERROR, L"!SetWallpaper: Invalid parameters");
+	}
+}
+
+/*
 ** Bang_SkinMenu
 **
 ** !SkinMenu bang
@@ -1755,6 +1779,10 @@ void CRainmeter::ExecuteBang(const std::wstring& name, std::wstring& arg, CMeter
 	else if (_wcsicmp(bang, L"SetClip") == 0)
 	{
 		Bang_SetClip(args);
+	}
+	else if (_wcsicmp(bang, L"SetWallpaper") == 0)
+	{
+		Bang_SetWallpaper(args);
 	}
 	else if (_wcsicmp(bang, L"About") == 0)
 	{
