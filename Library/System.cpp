@@ -1239,6 +1239,12 @@ void CSystem::SetWallpaper(const std::wstring& wallpaper, const std::wstring& st
 
 	if (!wallpaper.empty())
 	{
+		if (_waccess(wallpaper.c_str(), 0) == -1)
+		{
+			LogWithArgs(LOG_ERROR, L"!SetWallpaper: Unable to read file: %s", wallpaper.c_str());
+			return;
+		}
+
 		if (GetOSPlatform() < OSPLATFORM_7)
 		{
 			// Gotta convert to .bmp for pre-7
