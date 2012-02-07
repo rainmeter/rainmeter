@@ -217,12 +217,12 @@ private:
 	void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs, CMeterWindow* meterWindow);
 	void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs, CMeterWindow* meterWindow);
 	void Bang_ActivateConfig(const WCHAR* arg);
-	void Bang_DeactivateConfig(const WCHAR* arg);
+	void Bang_DeactivateConfig(const WCHAR* arg, CMeterWindow* meterWindow);
 	void Bang_ToggleConfig(const WCHAR* arg);
 	void Bang_DeactivateConfigGroup(const WCHAR* arg);
 	void Bang_SetClip(const WCHAR* arg);
 	void Bang_SetWallpaper(const WCHAR* arg);
-	void Bang_SkinMenu(const WCHAR* arg);
+	void Bang_SkinMenu(const WCHAR* arg, CMeterWindow* meterWindow);
 	void Bang_TrayMenu();
 	void Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow);
 

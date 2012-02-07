@@ -325,19 +325,23 @@ void CRainmeter::Bang_ActivateConfig(const WCHAR* arg)
 ** !DeactivateConfig bang
 **
 */
-void CRainmeter::Bang_DeactivateConfig(const WCHAR* arg)
+void CRainmeter::Bang_DeactivateConfig(const WCHAR* arg, CMeterWindow* meterWindow)
 {
 	std::vector<std::wstring> subStrings = ParseString(arg);
 
 	if (!subStrings.empty())
 	{
-		CMeterWindow* mw = GetMeterWindow(subStrings[0]);
-		if (mw)
+		meterWindow = GetMeterWindow(subStrings[0]);
+		if (!meterWindow)
 		{
-			DeactivateConfig(mw, -1);
+			LogWithArgs(LOG_WARNING, L"!DeactivateConfig: \"%s\" not active", subStrings[0].c_str());
 			return;
 		}
-		LogWithArgs(LOG_WARNING, L"!DeactivateConfig: \"%s\" not active", subStrings[0].c_str());
+	}
+
+	if (meterWindow)
+	{
+		DeactivateConfig(meterWindow, -1);
 	}
 	else
 	{
@@ -450,21 +454,25 @@ void CRainmeter::Bang_SetWallpaper(const WCHAR* arg)
 ** !SkinMenu bang
 **
 */
-void CRainmeter::Bang_SkinMenu(const WCHAR* arg)
+void CRainmeter::Bang_SkinMenu(const WCHAR* arg, CMeterWindow* meterWindow)
 {
 	std::vector<std::wstring> subStrings = ParseString(arg);
 
 	if (!subStrings.empty())
 	{
-		CMeterWindow* mw = GetMeterWindow(subStrings[0]);
-		if (mw)
+		meterWindow = GetMeterWindow(subStrings[0]);
+		if (!meterWindow)
 		{
-			POINT pos;
-			GetCursorPos(&pos);
-			ShowContextMenu(pos, mw);
+			LogWithArgs(LOG_WARNING, L"!SkinMenu: \"%s\" not active", subStrings[0].c_str());
 			return;
 		}
-		LogWithArgs(LOG_WARNING, L"!SkinMenu: \"%s\" not active", subStrings[0].c_str());
+	}
+
+	if (meterWindow)
+	{
+		POINT pos;
+		GetCursorPos(&pos);
+		ShowContextMenu(pos, meterWindow);
 	}
 	else
 	{
@@ -1622,7 +1630,7 @@ void CRainmeter::ExecuteBang(const std::wstring& name, std::wstring& arg, CMeter
 	}
 	else if (_wcsicmp(bang, L"DeactivateConfig") == 0)
 	{
-		Bang_DeactivateConfig(args);
+		Bang_DeactivateConfig(args, meterWindow);
 	}
 	else if (_wcsicmp(bang, L"ToggleConfig") == 0)
 	{
@@ -1794,7 +1802,7 @@ void CRainmeter::ExecuteBang(const std::wstring& name, std::wstring& arg, CMeter
 	}
 	else if (_wcsicmp(bang, L"SkinMenu") == 0)
 	{
-		Bang_SkinMenu(args);
+		Bang_SkinMenu(args, meterWindow);
 	}
 	else if (_wcsicmp(bang, L"TrayMenu") == 0)
 	{
