@@ -679,16 +679,8 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			if (cds->dwData == RAINMETER_QUERY_ID_SKIN_WINDOWHANDLE)
 			{
 				LPCWSTR configName = (LPCWSTR)cds->lpData;
-				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
-				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-				for ( ; iter != windows.end(); ++iter)
-				{
-					if (wcscmp((*iter).first.c_str(), configName) == 0)
-					{
-						return (LRESULT)(*iter).second->GetWindow();
-					}
-				}
-				return NULL;
+				CMeterWindow* mw = Rainmeter->GetMeterWindow(configName);
+				return (mw) ? (LRESULT)mw->GetWindow() : NULL;
 			}
 		}
 		return 1;

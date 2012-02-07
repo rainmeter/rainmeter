@@ -795,8 +795,8 @@ void CSystem::ChangeZPosInOrder()
 	auto resetZPos = [&](ZPOSITION zpos)
 	{
 		// Reset ZPos in Z-order (Bottom)
-		std::vector<CMeterWindow*>::const_iterator iter = windowsInZOrder.begin(), iterEnd = windowsInZOrder.end();
-		for ( ; iter != iterEnd; ++iter)
+		std::vector<CMeterWindow*>::const_iterator iter = windowsInZOrder.begin();
+		for ( ; iter != windowsInZOrder.end(); ++iter)
 		{
 			if ((*iter)->GetWindowZPosition() == zpos)
 			{
@@ -1036,9 +1036,8 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 			}
 
 			// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
-			const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
-			std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-			for ( ; iter != windows.end(); ++iter)
+			std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
+			for ( ; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
 			{
 				PostMessage((*iter).second->GetWindow(), WM_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
 			}
