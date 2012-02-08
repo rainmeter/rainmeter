@@ -1209,6 +1209,8 @@ void CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool force)
 		CDialogManage::UpdateSkins(meterWindow, true);
 		delete meterWindow;
 	}
+
+	CDialogAbout::UpdateSkins();
 }
 
 CMeterWindow* CRainmeter::GetMeterWindow(const std::wstring& config)
