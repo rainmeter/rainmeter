@@ -111,10 +111,25 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 		// Split the argument between first space.
 		// Or if string is in quotes, the after the second quote.
 
+		auto stripQuotes = [&](std::wstring& string)
+		{
+			size_t pos = 0;
+			do
+			{
+				pos = string.find(L'"', pos);
+				if (pos != std::wstring::npos)
+				{
+					string.erase(pos, 1);
+				}
+			}
+			while (pos != std::wstring::npos);
+		};
+
 		size_t pos;
 		std::wstring newStr;
 		while ((pos = arg.find_first_not_of(L' ')) != std::wstring::npos)
 		{
+			size_t extra = 1;
 			if (arg[pos] == L'"')
 			{
 				if (arg.size() > (pos + 2) &&
@@ -123,23 +138,12 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 					// Eat found quotes and finding ending """
 					arg.erase(0, pos + 3);
 
-					size_t extra = 4;
+					extra = 4;
 					if ((pos = arg.find(L"\"\"\" ")) == std::wstring::npos)
 					{
 						extra = 3;
-						pos = arg.find(L"\"\"\"");
+						pos = arg.rfind(L"\"\"\"");  // search backward
 					}
-
-					if (pos != std::wstring::npos)
-					{
-						newStr.assign(arg, 0, pos);
-						arg.erase(0, pos + extra);
-
-						result.push_back(newStr);
-					}
-
-					// Skip stripping quotes
-					continue;
 				}
 				else
 				{
@@ -163,44 +167,25 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 			if (pos != std::wstring::npos)
 			{
 				newStr.assign(arg, 0, pos);
-				arg.erase(0, pos + 1);
+				arg.erase(0, pos + extra);
 
-				// Strip quotes
-				size_t start = 0;
-				do
-				{
-					pos = newStr.find(L'"', start);
-					if (pos != std::wstring::npos)
-					{
-						newStr.erase(pos, 1);
-						start = pos;
-					}
-				}
-				while (pos != std::wstring::npos);
-
+				if (extra == 1) stripQuotes(newStr);
 				result.push_back(newStr);
 			}
 			else  // quote or space not found
 			{
+				newStr = arg;
+				arg.clear();
+
+				if (extra == 1) stripQuotes(newStr);
+				result.push_back(newStr);
 				break;
 			}
 		}
 
-		if (!arg.empty())
+		if (!arg.empty() && result.empty())
 		{
-			// Strip quotes
-			size_t start = 0;
-			do
-			{
-				pos = arg.find(L'"', start);
-				if (pos != std::wstring::npos)
-				{
-					arg.erase(pos, 1);
-					start = pos;
-				}
-			}
-			while (pos != std::wstring::npos);
-
+			stripQuotes(arg);
 			result.push_back(arg);
 		}
 	}
