@@ -60,9 +60,9 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	MeasureData* measure = (MeasureData*)data;
 
 	LPCWSTR value = RmReadString(rm, L"CoreTempType", L"Temperature");
-	eMeasureType type = convertStringToMeasureType(value);
+	measure->type = convertStringToMeasureType(value);
 
-	if (type == MeasureTemperature || type == MeasureTjMax || type == MeasureLoad)
+	if (measure->type == MeasureTemperature || measure->type == MeasureTjMax || measure->type == MeasureLoad)
 	{
 		measure->index = RmReadInt(rm, L"CoreTempIndex", 0);
 	}
