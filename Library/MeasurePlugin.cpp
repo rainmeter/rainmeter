@@ -144,7 +144,26 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	pluginName.insert(0, Rainmeter->GetPluginPath());
 
-	m_Plugin = CSystem::RmLoadLibrary(pluginName.c_str(), NULL);
+	// Canonicalize the path (Workaround for C# plugins)
+	{
+		pos = 0;
+		while ((pos = pluginName.find(L"\\\\", pos)) != std::wstring::npos)
+		{
+			pluginName.erase(pos, 1);
+		}
+
+		WCHAR buffer[MAX_PATH];
+		if (PathCanonicalize(buffer, pluginName.c_str()))
+		{
+			pluginName = buffer;
+		}
+		else
+		{
+			LogWithArgs(LOG_WARNING, L"Plugin: Failed to canonicalize plugin path: %s", pluginName.c_str());
+		}
+	}
+
+	m_Plugin = CSystem::RmLoadLibrary(pluginName.c_str());
 	if (m_Plugin == NULL)
 	{
 		// Try to load from Rainmeter's folder
@@ -154,7 +173,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			std::wstring pluginName2 = Rainmeter->GetPath();
 			pluginName2.append(pluginName, pos + 1, pluginName.length() - (pos + 1));
 
-			m_Plugin = CSystem::RmLoadLibrary(pluginName2.c_str(), NULL);
+			m_Plugin = CSystem::RmLoadLibrary(pluginName2.c_str());
 		}
 
 		if (m_Plugin == NULL)
