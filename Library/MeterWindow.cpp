@@ -2010,6 +2010,8 @@ void CMeterWindow::WriteConfig(INT setting)
 */
 bool CMeterWindow::ReadSkin()
 {
+	WCHAR buffer[128];
+
 	std::wstring iniFile = m_Rainmeter->GetSkinPath() + m_SkinName;
 	iniFile += L'\\';
 	iniFile += m_SkinIniFile;
@@ -2023,6 +2025,26 @@ bool CMeterWindow::ReadSkin()
 	}
 
 	m_Parser.Initialize(iniFile.c_str(), m_Rainmeter, this);
+
+	// Check the version
+	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
+	if (appVersion > RAINMETER_VERSION)
+	{
+		if (appVersion % 1000 != 0)
+		{
+			_snwprintf_s(buffer, _TRUNCATE, L"%u.%u.%u", appVersion / 1000000, (appVersion / 1000) % 1000, appVersion % 1000);
+		}
+		else
+		{
+			_snwprintf_s(buffer, _TRUNCATE, L"%u.%u", appVersion / 1000000, (appVersion / 1000) % 1000);
+		}
+
+		std::wstring text = GetFormattedString(ID_STR_NEWVERSIONREQUIRED, m_SkinName.c_str(), m_SkinIniFile.c_str(), buffer);
+		MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		return false;
+	}
+
+	// Initialize window variables
 	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
 	SetWindowSizeVariables(0, 0);
 
@@ -2034,24 +2056,6 @@ bool CMeterWindow::ReadSkin()
 		m_ConfigGroup += group;
 	}
 	InitializeGroup(m_ConfigGroup);
-
-	// Check the version
-	int appVersion = m_Parser.ReadInt(L"Rainmeter", L"AppVersion", 0);
-	if (appVersion > RAINMETER_VERSION)
-	{
-		WCHAR buffer[128];
-		if (appVersion % 1000 != 0)
-		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%i.%i.%i", appVersion / 1000000, (appVersion / 1000) % 1000, appVersion % 1000);
-		}
-		else
-		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%i.%i", appVersion / 1000000, (appVersion / 1000) % 1000);
-		}
-
-		std::wstring text = GetFormattedString(ID_STR_NEWVERSIONREQUIRED, m_SkinName.c_str(), m_SkinIniFile.c_str(), buffer);
-		MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
-	}
 
 	static const RECT defMargins = {0};
 	m_BackgroundMargins = m_Parser.ReadRECT(L"Rainmeter", L"BackgroundMargins", defMargins);
@@ -2115,9 +2119,8 @@ bool CMeterWindow::ReadSkin()
 
 					// Here we are checking to see if there are more than one blur region
 					// to be loaded. They will be named BlurRegion2, BlurRegion3, etc.
-					WCHAR tmpName[64];
-					_snwprintf_s(tmpName, _TRUNCATE, L"BlurRegion%i", ++i);
-					blurRegion = m_Parser.ReadString(L"Rainmeter", tmpName, L"").c_str();
+					_snwprintf_s(buffer, _TRUNCATE, L"BlurRegion%i", ++i);
+					blurRegion = m_Parser.ReadString(L"Rainmeter", buffer, L"").c_str();
 				}
 				while (*blurRegion);
 			}
@@ -2175,9 +2178,8 @@ bool CMeterWindow::ReadSkin()
 
 			// Here we are checking to see if there are more than one local font
 			// to be loaded. They will be named LocalFont2, LocalFont3, etc.
-			WCHAR tmpName[64];
-			_snwprintf_s(tmpName, _TRUNCATE, L"LocalFont%i", ++i);
-			localFont = m_Parser.ReadString(L"Rainmeter", tmpName, L"").c_str();
+			_snwprintf_s(buffer, _TRUNCATE, L"LocalFont%i", ++i);
+			localFont = m_Parser.ReadString(L"Rainmeter", buffer, L"").c_str();
 		}
 		while (*localFont);
 	}
