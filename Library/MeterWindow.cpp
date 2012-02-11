@@ -1434,11 +1434,11 @@ void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& op
 
 				if (value.empty())
 				{
-					GetParser().DeleteValue(section, option);
+					GetParser().DeleteValue((*i)->GetOriginalName(), option);
 				}
 				else
 				{
-					GetParser().SetValue(section, option, value);
+					GetParser().SetValue((*i)->GetOriginalName(), option, value);
 				}
 			}
 		}
