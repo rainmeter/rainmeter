@@ -83,6 +83,9 @@ public:
 	virtual void OpenPlayer(std::wstring& path) {}
 	virtual void ClosePlayer() {}
 
+	INT GetMeasures() const { return m_Measures; }
+	void SetMeasures(INT measures) { m_Measures = measures; }
+
 	StateType GetState() const { return m_State; }
 	LPCTSTR GetArtist() const{ return m_Artist.c_str(); }
 	LPCTSTR GetAlbum() const{ return m_Album.c_str(); }
@@ -107,6 +110,7 @@ protected:
 	std::wstring m_TempCoverPath;
 
 	INT m_Measures;
+
 	StateType m_State;
 	std::wstring m_Artist;
 	std::wstring m_Title;

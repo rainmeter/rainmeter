@@ -197,6 +197,8 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 		if (oldPlayer)
 		{
+			parent->player->SetMeasures(oldPlayer->GetMeasures());
+
 			// Remove instance here so that player doesn't have to reinitialize if PlayerName was
 			// not changed.
 			oldPlayer->RemoveInstance();
