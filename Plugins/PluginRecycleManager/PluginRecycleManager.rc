@@ -7,7 +7,7 @@
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,0
+ FILEVERSION 1,0,1,0
  PRODUCTVERSION PRODUCTVER
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -23,7 +23,7 @@ BEGIN
     BEGIN
         BLOCK "040904E4"
         BEGIN
-            VALUE "FileVersion", "1.0.0.0"
+            VALUE "FileVersion", "1.0.1.0"
             VALUE "LegalCopyright", "© 2010 - gschoppe"
             VALUE "OriginalFilename", "RecycleManager.dll"
             VALUE "ProductName", "Rainmeter"
