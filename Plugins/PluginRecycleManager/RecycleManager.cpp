@@ -34,7 +34,7 @@ struct MeasureData
 
 struct BinData
 {
-	FILETIME lastAccess;
+	FILETIME lastWrite;
 	HANDLE directory;
 	WCHAR drive;
 };
@@ -47,6 +47,7 @@ std::vector<BinData> g_BinData;
 double g_BinCount = 0;
 double g_BinSize = 0;
 
+UINT g_UpdateCount = 0;
 UINT g_InstanceCount = 0;
 HANDLE g_Thread = NULL;
 
@@ -83,8 +84,11 @@ PLUGIN_EXPORT double Update(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 
-	if (!g_Thread)
+	++g_UpdateCount;
+	if (g_UpdateCount > g_InstanceCount && !g_Thread)
 	{
+		g_UpdateCount = 0;
+
 		WCHAR buffer[128];
 		DWORD len = GetLogicalDriveStrings(128, buffer);
 
@@ -110,16 +114,16 @@ PLUGIN_EXPORT double Update(void* data)
 				*pos = DRIVE_HANDLED;
 				++iter;
 
-				if (data.lastAccess.dwHighDateTime != 0xFFFFFFFF &&
-					data.lastAccess.dwLowDateTime != 0xFFFFFFFF)
+				if (data.lastWrite.dwHighDateTime != 0xFFFFFFFF &&
+					data.lastWrite.dwLowDateTime != 0xFFFFFFFF)
 				{
-					FILETIME lastAccess;
-					GetFileTime(data.directory, NULL, &lastAccess, NULL);
-					if (data.lastAccess.dwHighDateTime != lastAccess.dwHighDateTime ||
-						data.lastAccess.dwLowDateTime != lastAccess.dwLowDateTime)
+					FILETIME lastWrite;
+					GetFileTime(data.directory, NULL, NULL, &lastWrite);
+					if (data.lastWrite.dwHighDateTime != lastWrite.dwHighDateTime ||
+						data.lastWrite.dwLowDateTime != lastWrite.dwLowDateTime)
 					{
-						data.lastAccess.dwHighDateTime = lastAccess.dwHighDateTime;
-						data.lastAccess.dwLowDateTime = lastAccess.dwLowDateTime;
+						data.lastWrite.dwHighDateTime = lastWrite.dwHighDateTime;
+						data.lastWrite.dwLowDateTime = lastWrite.dwLowDateTime;
 						changed = true;
 					}
 				}
@@ -142,20 +146,26 @@ PLUGIN_EXPORT double Update(void* data)
 			{
 				// New drive
 				BinData data = {0};
-				data.directory = GetRecycleBinHandle(buffer[i]);
 				data.drive = buffer[i];
-				data.lastAccess.dwHighDateTime =
-					data.lastAccess.dwLowDateTime = data.directory ? 0 : 0xFFFFFFFF;
-			
+
+				WCHAR drive[] = L"\0:\\";
+				drive[0] = buffer[i];
+				if (GetDriveType(drive) == DRIVE_FIXED)
+				{
+					data.directory = GetRecycleBinHandle(buffer[i]);
+				}
+
+				data.lastWrite.dwHighDateTime =
+					data.lastWrite.dwLowDateTime = data.directory ? 0 : 0xFFFFFFFF;
+
 				g_BinData.push_back(data);
 			}
 		}
 
 		if (changed)
 		{
-			g_Thread = (HANDLE)_beginthreadex(NULL, 64 * 1024, QueryRecycleBinThreadProc, NULL, 0, NULL);
+			g_Thread = (HANDLE)_beginthreadex(NULL, 0, QueryRecycleBinThreadProc, NULL, 0, NULL);
 		}
-
 	}
 
 	return measure->count ? g_BinCount : g_BinSize;
@@ -265,7 +275,9 @@ HANDLE GetRecycleBinHandle(WCHAR drive)
 			{
 				do
 				{
-					if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || (fd.cFileName[0] == L'.'))
+					if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
+						(fd.cFileName[0] == L'.') ||
+						(wcsnlen(fd.cFileName, 10) < 10))
 					{
 						continue;
 					}
