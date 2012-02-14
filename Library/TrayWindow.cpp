@@ -476,7 +476,6 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			else if (wParam == ID_CONTEXT_QUIT)
 			{
 				PostQuitMessage(0);
-				Quit();
 			}
 			else if (wParam == ID_CONTEXT_OPENSKINSFOLDER)
 			{
@@ -583,7 +582,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{
 				COPYDATASTRUCT cds;
 				cds.dwData = wParam;
-				cds.cbData = (DWORD)((data.length() + 1) + sizeof(WCHAR));
+				cds.cbData = (DWORD)((data.length() + 1) * sizeof(WCHAR));
 				cds.lpData = (PVOID)data.c_str();
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
 			};

@@ -177,6 +177,9 @@ INT_PTR CALLBACK CDialogAbout::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	{
 		switch (uMsg)
 		{
+		case WM_ACTIVATE:
+			return c_Dialog->OnActivate(wParam, lParam);
+
 		case WM_COMMAND:
 			return c_Dialog->OnCommand(wParam, lParam);
 
@@ -241,6 +244,9 @@ INT_PTR CALLBACK CDialogAbout::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 
 INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
+	HWND item = GetDlgItem(m_Window, IDCLOSE);
+	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
+
 	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
@@ -250,7 +256,7 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 		SetDialogRTL();
 	}
 
-	HWND item = GetDlgItem(m_Window, IDC_ABOUT_TAB);
+	item = GetDlgItem(m_Window, IDC_ABOUT_TAB);
 	TCITEM tci = {0};
 	tci.mask = TCIF_TEXT;
 	tci.pszText = GetString(ID_STR_LOG);
@@ -276,7 +282,7 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
-	return TRUE;
+	return FALSE;
 }
 
 INT_PTR CDialogAbout::OnCommand(WPARAM wParam, LPARAM lParam)
@@ -302,6 +308,12 @@ INT_PTR CDialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 	case IDC_ABOUT_TAB:
 		if (nm->code == TCN_SELCHANGE)
 		{
+			// Disable all tab windows first
+			EnableWindow(m_TabLog.GetWindow(), FALSE);
+			EnableWindow(m_TabMeasures.GetWindow(), FALSE);
+			EnableWindow(m_TabPlugins.GetWindow(), FALSE);
+			EnableWindow(m_TabVersion.GetWindow(), FALSE);
+
 			int sel = TabCtrl_GetCurSel(nm->hwndFrom);
 			if (sel == 0)
 			{

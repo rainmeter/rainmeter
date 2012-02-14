@@ -39,6 +39,9 @@
 #define WIDEN(x) WIDEN2(x)
 #define APPDATE WIDEN(__DATE__)
 
+#define RAINMETER_CLASS_NAME	L"DummyRainWClass"
+#define RAINMETER_WINDOW_NAME	L"Rainmeter control window"
+
 struct GlobalConfig
 {
 	double netInSpeed;
@@ -114,7 +117,8 @@ public:
 	CRainmeter();
 	~CRainmeter();
 
-	int Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath);
+	int Initialize(HINSTANCE hInstance, LPCWSTR szPath);
+	int MessagePump();
 
 	CConfigParser* GetCurrentParser() { return m_CurrentParser; }
 	void SetCurrentParser(CConfigParser* parser) { m_CurrentParser = parser; }
@@ -152,6 +156,8 @@ public:
 	const std::wstring& GetConfigEditor() { return m_ConfigEditor; }
 	const std::wstring& GetLogViewer() { return m_LogViewer; }
 	const std::wstring& GetStatsDate() { return m_StatsDate; }
+
+	HWND GetWindow() { return m_Window; }
 
 	HINSTANCE GetInstance() { return m_Instance; }
 	HINSTANCE GetResourceInstance() { return m_ResourceInstance; }
@@ -201,6 +207,7 @@ public:
 	const std::wstring& GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
 	void ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow);
+	void DelayedExecuteCommand(const WCHAR* command);
 
 	void RefreshAll();
 
@@ -214,6 +221,8 @@ public:
 	friend class CDialogManage;
 
 private:
+	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 	void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs, CMeterWindow* meterWindow);
 	void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs, CMeterWindow* meterWindow);
 	void Bang_ActivateConfig(const WCHAR* arg);
@@ -301,6 +310,8 @@ private:
 
 	CConfigParser* m_CurrentParser;
 
+	HWND m_Window;
+
 	HINSTANCE m_Instance;
 	HMODULE m_ResourceInstance;
 	LCID m_ResourceLCID;
@@ -316,8 +327,6 @@ private:
 #define EXPORT_PLUGIN EXTERN_C __declspec(dllimport)
 #endif
 
-EXPORT_PLUGIN int Initialize(HWND hWnd, HINSTANCE hInstance, LPCWSTR lpCmdLine);
-EXPORT_PLUGIN void Quit();
-EXPORT_PLUGIN void ExecuteBang(LPCTSTR szBang);
+EXPORT_PLUGIN int RainmeterMain(HINSTANCE Instance, LPWSTR cmdLine);
 
 #endif

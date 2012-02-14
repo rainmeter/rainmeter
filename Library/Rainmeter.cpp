@@ -36,62 +36,71 @@ using namespace Gdiplus;
 CRainmeter* Rainmeter; // The module
 
 /*
-** Initialize
+** RainmeterMain
 **
-** Initializes Rainmeter
+** Initializes Rainmeter.
 **
 */
-int Initialize(HWND hWnd, HINSTANCE hInstance, LPCWSTR lpCmdLine)
+int RainmeterMain(HINSTANCE hInstance, LPWSTR cmdLine)
 {
-	int result = 1;
-
-	try
+	HWND wnd = NULL;
+	while (wnd = FindWindowEx(NULL, wnd, RAINMETER_CLASS_NAME, RAINMETER_WINDOW_NAME))
 	{
-		Rainmeter = new CRainmeter;
+		COPYDATASTRUCT cds;
 
-		if (Rainmeter)
+		if (cmdLine && cmdLine[0] == L'!')
 		{
-			result = Rainmeter->Initialize(hWnd, hInstance, lpCmdLine);
+			// Deliver bang to existing Rainmeter instance
+			cds.dwData = 1;
+			cds.cbData = (DWORD)((wcslen(cmdLine) + 1) * sizeof(WCHAR));
+			cds.lpData = (PVOID)cmdLine;
+			SendMessage(wnd, WM_COPYDATA, NULL, (LPARAM)&cds);
+
+			return 0;
+		}
+		else
+		{
+			const WCHAR* fullCmdLine = GetCommandLine();
+
+			COPYDATASTRUCT cds;
+			cds.dwData = SIZE_MAX;
+			cds.cbData = (DWORD)((wcslen(fullCmdLine) + 1) * sizeof(WCHAR));
+			cds.lpData = (PVOID)fullCmdLine;
+
+			if (SendMessage(wnd, WM_COPYDATA, NULL, (LPARAM)&cds) == SIZE_MAX)
+			{
+				// An instance of Rainmeter with same command-line arguments already exists
+				return 1;
+			}
 		}
 	}
-	catch (CError& error)
+
+	// Avoid loading a dll from current directory
+	SetDllDirectory(L"");
+	
+	int ret = 1;
+	Rainmeter = new CRainmeter;
+	if (Rainmeter)
 	{
+		try
+		{
+			ret = Rainmeter->Initialize(hInstance, cmdLine);
+		}
+		catch (CError& error)
+		{
+			MessageBox(NULL, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		}
+
+		if (ret == 0)
+		{
+			ret = Rainmeter->MessagePump();
+		}
+
 		delete Rainmeter;
 		Rainmeter = NULL;
-		MessageBox(hWnd, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 	}
 
-	return result;
-}
-
-/*
-** Quit
-**
-** Quits Rainmeter.
-**
-*/
-void Quit()
-{
-	delete Rainmeter;
-	Rainmeter = NULL;
-}
-
-/*
-** ExecuteBang
-**
-** Runs a bang command. This is called from the main application
-** when a command is given as a command line argument.
-**
-*/
-void ExecuteBang(LPCTSTR szBang)
-{
-	if (szBang)
-	{
-		// ExecuteBang needs to be delayed since it crashes if done during processing.
-		// The receiver must free a given string buffer (lParam) by using free().
-		WCHAR* bang = _wcsdup(szBang);
-		PostMessage(Rainmeter->GetTrayWindow()->GetWindow(), WM_TRAY_DELAYED_EXECUTE, (WPARAM)NULL, (LPARAM)bang);
-	}
+	return ret;
 }
 
 /*
@@ -708,9 +717,31 @@ CRainmeter::~CRainmeter()
 ** May throw CErrors !!!!
 **
 */
-int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
+int CRainmeter::Initialize(HINSTANCE hInstance, LPCWSTR szPath)
 {
 	int result = 0;
+
+	WNDCLASS wc = {0};
+	wc.lpfnWndProc = (WNDPROC)MainWndProc;
+	wc.hInstance = hInstance;
+	wc.lpszClassName = RAINMETER_CLASS_NAME;
+	RegisterClass(&wc);
+
+	m_Window = CreateWindowEx(
+		WS_EX_TOOLWINDOW,
+		RAINMETER_CLASS_NAME,
+		RAINMETER_WINDOW_NAME,
+		WS_POPUP | WS_DISABLED,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		NULL,
+		NULL,
+		hInstance,
+		NULL);
+
+	if (!m_Window) return 1;
 
 	m_Instance = hInstance;
 
@@ -996,6 +1027,61 @@ int CRainmeter::Initialize(HWND hParent, HINSTANCE hInstance, LPCWSTR szPath)
 	}
 
 	return result;	// All is OK
+}
+
+int CRainmeter::MessagePump()
+{
+	MSG msg;
+	BOOL ret;
+
+	// Run the standard window message loop
+	while ((ret = GetMessage(&msg, NULL, 0, 0)) != 0)
+	{
+		if (ret == -1)
+		{
+			break;
+		}
+		else if (!CDialog::GetActiveDialog() || !IsDialogMessage(CDialog::GetActiveDialog(), &msg))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+
+	return (int)msg.wParam;
+}
+
+LRESULT CALLBACK CRainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+
+	case WM_COPYDATA:
+		{
+			COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lParam;
+			if (cds)
+			{
+				const WCHAR* data = (const WCHAR*)cds->lpData;
+				if (cds->dwData == 1 && (cds->cbData > 0))
+				{
+					Rainmeter->DelayedExecuteCommand(data);
+				}
+				else if (cds->dwData == SIZE_MAX && _wcsicmp(GetCommandLine(), data) == 0)
+				{
+					return SIZE_MAX;
+				}
+			}
+		}
+		break;
+
+	default:
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+
+	return 0;
 }
 
 /*
@@ -1949,6 +2035,19 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 			RunCommand(NULL, command, SW_SHOWNORMAL);
 		}
 	}
+}
+
+
+/*
+** DelayedExecuteCommand
+**
+** Executes command when current processing is done.
+**
+*/
+void CRainmeter::DelayedExecuteCommand(const WCHAR* command)
+{
+	WCHAR* bang = _wcsdup(command);
+	PostMessage(m_TrayWindow->GetWindow(), WM_TRAY_DELAYED_EXECUTE, (WPARAM)NULL, (LPARAM)bang);
 }
 
 /*

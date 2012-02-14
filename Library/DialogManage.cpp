@@ -192,6 +192,9 @@ INT_PTR CALLBACK CDialogManage::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	{
 		switch (uMsg)
 		{
+		case WM_ACTIVATE:
+			return c_Dialog->OnActivate(wParam, lParam);
+
 		case WM_COMMAND:
 			return c_Dialog->OnCommand(wParam, lParam);
 
@@ -223,6 +226,9 @@ INT_PTR CALLBACK CDialogManage::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
+	HWND item = GetDlgItem(m_Window, IDCLOSE);
+	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
+
 	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
@@ -232,7 +238,7 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 		SetDialogRTL();
 	}
 
-	HWND item = GetDlgItem(m_Window, IDC_MANAGE_TAB);
+	item = GetDlgItem(m_Window, IDC_MANAGE_TAB);
 	TCITEM tci = {0};
 	tci.mask = TCIF_TEXT;
 	tci.pszText = GetString(ID_STR_SKINS);
@@ -263,7 +269,7 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
-	return TRUE;
+	return FALSE;
 }
 
 INT_PTR CDialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
@@ -306,6 +312,11 @@ INT_PTR CDialogManage::OnNotify(WPARAM wParam, LPARAM lParam)
 	case IDC_MANAGE_TAB:
 		if (nm->code == TCN_SELCHANGE)
 		{
+			// Disable all tab windows first
+			EnableWindow(m_TabSkins.GetWindow(), FALSE);
+			EnableWindow(m_TabThemes.GetWindow(), FALSE);
+			EnableWindow(m_TabSettings.GetWindow(), FALSE);
+
 			int sel = TabCtrl_GetCurSel(nm->hwndFrom);
 			if (sel == 0)
 			{
@@ -1730,24 +1741,24 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 					SendMessage(CDialogAbout::c_Dialog->GetWindow(), WM_DELAYED_CLOSE, 0, 0);
 					if (sel == 0)
 					{
-						ExecuteBang(L"!About"); // Delayed execute
+						Rainmeter->DelayedExecuteCommand(L"!About");
 					}
 					else if (sel == 1)
 					{
-						ExecuteBang(L"!About Measures"); // Delayed execute
+						Rainmeter->DelayedExecuteCommand(L"!About Measures");
 					}
 					else if (sel == 2)
 					{
-						ExecuteBang(L"!About Plugins"); // Delayed execute
+						Rainmeter->DelayedExecuteCommand(L"!About Plugins");
 					}
 					else //if (sel == 3)
 					{
-						ExecuteBang(L"!About Version"); // Delayed execute
+						Rainmeter->DelayedExecuteCommand(L"!About Version");
 					}
 				}
 
 				SendMessage(c_Dialog->GetWindow(), WM_DELAYED_CLOSE, 0, 0);
-				ExecuteBang(L"!Manage Settings"); // Delayed execute
+				Rainmeter->DelayedExecuteCommand(L"!Manage Settings");
 			}
 		}
 		break;

@@ -10,9 +10,7 @@ EXPORTS
 	PluginBridge
 
 	; Private
-	Initialize			@1 NONAME
-	Quit				@2 NONAME
-	ExecuteBang			@3 NONAME
-	pcre_compile		@4 NONAME
-	pcre_exec			@5 NONAME
-	pcre_study			@6 NONAME
+	RainmeterMain		@1 NONAME
+	pcre_compile		@2 NONAME
+	pcre_exec			@3 NONAME
+	pcre_study			@4 NONAME

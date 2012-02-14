@@ -19,6 +19,8 @@
 #include "StdAfx.h"
 #include "Dialog.h"
 
+HWND CDialog::c_ActiveDialog = NULL;
+
 /*
 ** CDialog
 **
@@ -51,12 +53,12 @@ CDialog::~CDialog()
 	DeleteObject(m_FontBold);
 }
 
-/*
-** SetRTL
-**
-** Enables RTL layout.
-**
-*/
+INT_PTR CDialog::OnActivate(WPARAM wParam, LPARAM lParam)
+{
+	c_ActiveDialog = wParam ? m_Window : NULL;
+	return FALSE;
+}
+
 void CDialog::SetDialogRTL()
 {
 	SetWindowLong(m_Window, GWL_EXSTYLE, GetWindowLong(m_Window, GWL_EXSTYLE) | WS_EX_LAYOUTRTL);
@@ -122,5 +124,6 @@ void CDialog::CTab::Activate()
 		Initialize();
 	}
 
+	EnableWindow(m_Window, TRUE);
 	BringWindowToTop(m_Window);
 }
