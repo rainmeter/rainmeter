@@ -332,8 +332,11 @@ void LogInternal(int nLevel, ULONGLONG elapsed, LPCTSTR pszMessage)
 	message += L") ";
 	message += pszMessage;
 	message += L'\n';
-
+	
+#ifdef _DEBUG
 	_RPT0(_CRT_WARN, ConvertToAscii(message.c_str()).c_str());
+	if (!Rainmeter->GetLogging()) return;
+#endif
 
 	const WCHAR* logFile = Rainmeter->GetLogFile().c_str();
 	if (_waccess(logFile, 0) == -1)
