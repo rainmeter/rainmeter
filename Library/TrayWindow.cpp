@@ -434,7 +434,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if (wParam == ID_CONTEXT_REFRESH)
 			{
-				PostMessage(tray->GetWindow(), WM_TRAY_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
+				PostMessage(Rainmeter->GetWindow(), WM_RAINMETER_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
 			}
 			else if (wParam == ID_CONTEXT_SHOWLOGFILE)
 			{
@@ -691,20 +691,6 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			tray->ModifyTrayIcon(tray->m_Measure->GetRelativeValue());
 		}
 		break;
-
-	case WM_TRAY_DELAYED_REFRESH_ALL:
-		Rainmeter->RefreshAll();
-		return 0;
-
-	case WM_TRAY_DELAYED_EXECUTE:
-		if (lParam)
-		{
-			// Execute bang
-			WCHAR* bang = (WCHAR*)lParam;
-			Rainmeter->ExecuteCommand(bang, NULL);
-			free(bang);  // _wcsdup()
-		}
-		return 0;
 
 	case WM_DESTROY:
 		PostQuitMessage(0);

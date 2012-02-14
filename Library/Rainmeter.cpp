@@ -845,11 +845,6 @@ int CRainmeter::Initialize(HINSTANCE hInstance, LPCWSTR szPath)
 	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, m_IniFile.c_str());
 	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, m_IniFile.c_str());
 
-	if (m_Logging)
-	{
-		StartLogging();
-	}
-
 	// Determine the language resource to load
 	std::wstring resource = m_Path + L"Languages\\";
 	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) == 0)
@@ -876,11 +871,6 @@ int CRainmeter::Initialize(HINSTANCE hInstance, LPCWSTR szPath)
 		resource += L".dll";
 
 		m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-		if (!m_ResourceInstance)
-		{
-			resource.insert(0, L"Unable to load language: ");
-			Log(LOG_ERROR, resource.c_str());
-		}
 	}
 	if (!m_ResourceInstance)
 	{
@@ -893,6 +883,14 @@ int CRainmeter::Initialize(HINSTANCE hInstance, LPCWSTR szPath)
 		{
 			throw CError(L"Unable to load language library");
 		}
+	}
+
+	// Reset log file
+	CSystem::RemoveFile(m_LogFile);
+
+	if (m_Logging)
+	{
+		StartLogging();
 	}
 
 	m_PluginPath = m_AddonPath = m_SkinPath = m_Path;
@@ -1076,6 +1074,20 @@ LRESULT CALLBACK CRainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			}
 		}
 		break;
+
+	case WM_RAINMETER_DELAYED_REFRESH_ALL:
+		Rainmeter->RefreshAll();
+		return 0;
+
+	case WM_RAINMETER_DELAYED_EXECUTE:
+		if (lParam)
+		{
+			// Execute bang
+			WCHAR* bang = (WCHAR*)lParam;
+			Rainmeter->ExecuteCommand(bang, NULL);
+			free(bang);  // _wcsdup()
+		}
+		return 0;
 
 	default:
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -1603,7 +1615,7 @@ void CRainmeter::ExecuteBang(const std::wstring& name, std::wstring& arg, CMeter
 	else if (_wcsicmp(bang, L"RefreshApp") == 0)
 	{
 		// Refresh needs to be delayed since it crashes if done during Update()
-		PostMessage(GetTrayWindow()->GetWindow(), WM_TRAY_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
+		PostMessage(m_Window, WM_RAINMETER_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
 	}
 	else if (_wcsicmp(bang, L"Redraw") == 0)
 	{
@@ -2047,7 +2059,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 void CRainmeter::DelayedExecuteCommand(const WCHAR* command)
 {
 	WCHAR* bang = _wcsdup(command);
-	PostMessage(m_TrayWindow->GetWindow(), WM_TRAY_DELAYED_EXECUTE, (WPARAM)NULL, (LPARAM)bang);
+	PostMessage(m_Window, WM_RAINMETER_DELAYED_EXECUTE, (WPARAM)NULL, (LPARAM)bang);
 }
 
 /*
@@ -3000,17 +3012,15 @@ void CRainmeter::StartLogging()
 		if (file != INVALID_HANDLE_VALUE)
 		{
 			CloseHandle(file);
-			ResetLoggingFlag();	// Re-enable logging
 			SetLogging(true);
 
-			std::wstring text = GetFormattedString(ID_STR_LOGFILECREATED, m_LogFile.c_str());
-			MessageBox(NULL, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONINFORMATION);
+			// std::wstring text = GetFormattedString(ID_STR_LOGFILECREATED, m_LogFile.c_str());
+			// MessageBox(NULL, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONINFORMATION);
 		}
 		else
 		{
 			// Disable logging
 			SetLogging(false);
-			ResetLoggingFlag();
 	
 			std::wstring text = GetFormattedString(ID_STR_LOGFILECREATEFAIL, m_LogFile.c_str());
 			MessageBox(NULL, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
@@ -3038,8 +3048,6 @@ void CRainmeter::DeleteLogFile()
 		{
 			// Disable logging
 			SetLogging(false);
-			ResetLoggingFlag();
-
 			CSystem::RemoveFile(m_LogFile);
 		}
 	}

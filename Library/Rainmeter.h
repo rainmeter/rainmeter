@@ -42,6 +42,9 @@
 #define RAINMETER_CLASS_NAME	L"DummyRainWClass"
 #define RAINMETER_WINDOW_NAME	L"Rainmeter control window"
 
+#define WM_RAINMETER_DELAYED_REFRESH_ALL WM_APP + 0
+#define WM_RAINMETER_DELAYED_EXECUTE     WM_APP + 1
+
 struct GlobalConfig
 {
 	double netInSpeed;

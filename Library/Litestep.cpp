@@ -27,13 +27,6 @@ extern CRainmeter* Rainmeter;
 static CRITICAL_SECTION g_CsLog = {0};
 static CRITICAL_SECTION g_CsLogDelay = {0};
 
-static int logFound = 0;
-
-void ResetLoggingFlag()
-{
-	logFound = 0;
-}
-
 void InitalizeLitestep()
 {
 	InitializeCriticalSection(&g_CsLog);
@@ -302,7 +295,7 @@ std::wstring ConvertUTF8ToWide(LPCSTR str)
 	return szWide;
 }
 
-BOOL LogInternal(int nLevel, ULONGLONG elapsed, LPCTSTR pszMessage)
+void LogInternal(int nLevel, ULONGLONG elapsed, LPCTSTR pszMessage)
 {
 	// Add timestamp
 	WCHAR buffer[128];
@@ -310,79 +303,53 @@ BOOL LogInternal(int nLevel, ULONGLONG elapsed, LPCTSTR pszMessage)
 
 	Rainmeter->AddAboutLogInfo(nLevel, buffer, pszMessage);
 
-	std::wstring message(1, L'(');
+#ifndef _DEBUG
+	if (!Rainmeter->GetLogging()) return;
+#endif
+
+	std::wstring message;
+	switch (nLevel)
+	{
+	case LOG_ERROR:
+		message = L"ERRO";
+		break;
+
+	case LOG_WARNING:
+		message = L"WARN";
+		break;
+
+	case LOG_NOTICE:
+		message = L"NOTE";
+		break;
+
+	case LOG_DEBUG:
+		message = L"DBUG";
+		break;
+	}
+	
+	message += L" (";
 	message.append(buffer, len);
 	message += L") ";
 	message += pszMessage;
+	message += L'\n';
 
-#ifdef _DEBUG
 	_RPT0(_CRT_WARN, ConvertToAscii(message.c_str()).c_str());
-	_RPT0(_CRT_WARN, "\n");
-#endif
 
-	// The stub implementation
-	if (Rainmeter->GetLogging())
+	const WCHAR* logFile = Rainmeter->GetLogFile().c_str();
+	if (_waccess(logFile, 0) == -1)
 	{
-		const std::wstring& logfile = Rainmeter->GetLogFile();
-		if (logFound == 0)
+		// Disable logging if the file was deleted manually
+		Rainmeter->StopLogging();
+	}
+	else
+	{
+		FILE* file = _wfopen(logFile, L"a+, ccs=UTF-8");
+		if (file)
 		{
-			// Check if the file exists
-			if (_waccess(logfile.c_str(), 0) != -1)
-			{
-				logFound = 1;
-
-				// Clear the file
-				FILE* logFile = _wfopen(logfile.c_str(), L"w");
-				fclose(logFile);
-			}
-			else
-			{
-				logFound = 2;  // not found
-			}
-		}
-
-		if (logFound == 1)
-		{
-			if (_waccess(logfile.c_str(), 0) == -1)
-			{
-				// Disable logging if the file was deleted manually
-				Rainmeter->StopLogging();
-			}
-			else
-			{
-				FILE* logFile = _wfopen(logfile.c_str(), L"a+, ccs=UTF-8");
-				if (logFile)
-				{
-					message.insert(0, L": ");
-
-					switch (nLevel)
-					{
-					case LOG_ERROR:
-						message.insert(0, L"ERROR");
-						break;
-
-					case LOG_WARNING:
-						message.insert(0, L"WARNING");
-						break;
-
-					case LOG_NOTICE:
-						message.insert(0, L"NOTICE");
-						break;
-
-					case LOG_DEBUG:
-						message.insert(0, L"DEBUG");
-						break;
-					}
-
-					message += L'\n';
-					fputws(message.c_str(), logFile);
-					fclose(logFile);
-				}
-			}
+			fputws(message.c_str(), file);
+			fclose(file);
 		}
 	}
-
-	return TRUE;
 }
 
 BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
@@ -486,12 +453,12 @@ std::wstring GetFormattedString(UINT id, ...)
 	va_start(args, id);
 
 	DWORD len = FormatMessage(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-				  GetString(id),
-				  0,
-				  0,
-				  (LPWSTR)&pBuffer,
-				  0,
-				  &args);
+		GetString(id),
+		0,
+		0,
+		(LPWSTR)&pBuffer,
+		0,
+		&args);
 
 	va_end(args);
 
@@ -500,7 +467,7 @@ std::wstring GetFormattedString(UINT id, ...)
 	return tmpSz;
 }
 
-void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved)
+void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function, const wchar_t* file, unsigned int line, uintptr_t pReserved)
 {
 	// Do nothing.
 }

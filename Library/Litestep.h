@@ -35,8 +35,6 @@ enum LOGLEVEL
 void InitalizeLitestep();
 void FinalizeLitestep();
 
-void ResetLoggingFlag();
-
 HRGN BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF cTolerance);
 
 std::string ConvertToAscii(LPCTSTR str);
@@ -53,6 +51,6 @@ void RunCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, bool asAdmin = fals
 WCHAR* GetString(UINT id);
 std::wstring GetFormattedString(UINT id, ...);
 
-void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function,  const wchar_t* file, unsigned int line, uintptr_t pReserved);
+void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function, const wchar_t* file, unsigned int line, uintptr_t pReserved);
 
 #endif
