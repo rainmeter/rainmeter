@@ -43,6 +43,7 @@ struct BinData
 
 unsigned int __stdcall QueryRecycleBinThreadProc(void* pParam);
 HRESULT GetFolderCLSID(LPCWSTR pszPath, CLSID* pathCLSID);
+LPWSTR GetCurrentUserSid();
 HANDLE GetRecycleBinHandle(WCHAR drive, bool& isFAT);
 
 std::vector<BinData> g_BinData;
@@ -185,7 +186,6 @@ PLUGIN_EXPORT double Update(void* data)
 
 		if (changed)
 		{
-			RmLog(LOG_WARNING, L"g_UpdateCount");
 			g_UpdateCount = -8;
 			g_Thread = (HANDLE)_beginthreadex(NULL, 0, QueryRecycleBinThreadProc, NULL, 0, NULL);
 		}
