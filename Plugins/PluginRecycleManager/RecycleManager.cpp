@@ -154,6 +154,8 @@ PLUGIN_EXPORT double Update(void* data)
 						}
 						while (FindNextFile(hSearch, &fd));
 
+						FindClose(hSearch);
+
 						if (count != data.lastCount)
 						{
 							data.lastCount = count;
