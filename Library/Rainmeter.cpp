@@ -224,41 +224,36 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfAr
 
 	if (subStringsSize >= numOfArgs)
 	{
-		if (subStringsSize == numOfArgs)
+		if (subStringsSize == numOfArgs && meterWindow)
 		{
-			if (meterWindow)
-			{
-				meterWindow->RunBang(bang, subStrings);
-			}
-			else
-			{
-				Log(LOG_ERROR, L"Bang: Config not specified");
-			}
+			meterWindow->RunBang(bang, subStrings);
 		}
-		else  // if (subStringsSize > numOfArgs)
+		else
 		{
 			// Use the specified window instead of meterWindow parameter
-			const std::wstring& config = subStrings[numOfArgs];
-			if (!config.empty() && (config.length() != 1 || config[0] != L'*'))
+			if (subStringsSize > numOfArgs)
 			{
-				CMeterWindow* meterWindow = GetMeterWindow(config);
-				if (meterWindow)
+				const std::wstring& config = subStrings[numOfArgs];
+				if (!config.empty() && (config.length() != 1 || config[0] != L'*'))
 				{
-					meterWindow->RunBang(bang, subStrings);
-				}
-				else
-				{
-					LogWithArgs(LOG_ERROR,  L"Bang: Config \"%s\" not found", config.c_str());
+					CMeterWindow* meterWindow = GetMeterWindow(config);
+					if (meterWindow)
+					{
+						meterWindow->RunBang(bang, subStrings);
+					}
+					else
+					{
+						LogWithArgs(LOG_ERROR,  L"Bang: Config \"%s\" not found", config.c_str());
+					}
+					return;
 				}
 			}
-			else
+
+			// No config defined -> apply to all.
+			std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
+			for (; iter != m_MeterWindows.end(); ++iter)
 			{
-				// No config defined -> apply to all.
-				std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
-				for (; iter != m_MeterWindows.end(); ++iter)
-				{
-					((*iter).second)->RunBang(bang, subStrings);
-				}
+				((*iter).second)->RunBang(bang, subStrings);
 			}
 		}
 	}
