@@ -495,7 +495,7 @@ void CMeasureNet::ReadConfig(CConfigParser& parser, const WCHAR* section, NET ne
 	m_Cumulative = 0!=parser.ReadInt(section, L"Cumulative", 0);
 	if (m_Cumulative)
 	{
-		CSystem::SetNetworkStatisticsTimer();
+		Rainmeter->SetNetworkStatisticsTimer();
 	}
 
 	m_TrafficValue = parser.ReadFloat(section, L"TrafficValue", 0.0);

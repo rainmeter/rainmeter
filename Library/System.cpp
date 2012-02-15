@@ -32,14 +32,12 @@ using namespace Gdiplus;
 
 enum TIMER
 {
-	TIMER_SHOWDESKTOP = 1,
-	TIMER_NETSTATS    = 2
+	TIMER_SHOWDESKTOP = 1
 };
 enum INTERVAL
 {
 	INTERVAL_SHOWDESKTOP    = 250,
-	INTERVAL_RESTOREWINDOWS = 100,
-	INTERVAL_NETSTATS       = 60000
+	INTERVAL_RESTOREWINDOWS = 100
 };
 
 MULTIMONITOR_INFO CSystem::c_Monitors = { 0 };
@@ -135,7 +133,6 @@ void CSystem::Initialize(HINSTANCE instance)
 void CSystem::Finalize()
 {
 	KillTimer(c_Window, TIMER_SHOWDESKTOP);
-	KillTimer(c_Window, TIMER_NETSTATS);
 
 	if (c_WinEventHook)
 	{
@@ -154,11 +151,6 @@ void CSystem::Finalize()
 		DestroyWindow(c_Window);
 		c_Window = NULL;
 	}
-}
-
-void CSystem::SetNetworkStatisticsTimer()
-{
-	static bool set = SetTimer(c_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, NULL);
 }
 
 /*
@@ -1004,20 +996,12 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	{
 	case WM_WINDOWPOSCHANGING:
 		((LPWINDOWPOS)lParam)->flags |= SWP_NOZORDER;
-		return 0;
+		break;
 
 	case WM_TIMER:
-		switch (wParam)
+		if (wParam == TIMER_SHOWDESKTOP)
 		{
-		case TIMER_SHOWDESKTOP:
 			CheckDesktopState(GetWorkerW());
-			return 0;
-
-		case TIMER_NETSTATS:
-			CMeasureNet::UpdateIFTable();
-			CMeasureNet::UpdateStats();
-			Rainmeter->WriteStats(false);
-			return 0;
 		}
 		break;
 
@@ -1042,10 +1026,13 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				PostMessage((*iter).second->GetWindow(), WM_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
 			}
 		}
-		return 0;
+		break;
+
+	default:
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
-	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	return 0;
 }
 
 /*

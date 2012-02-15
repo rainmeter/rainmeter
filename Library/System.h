@@ -56,8 +56,6 @@ public:
 	static void Initialize(HINSTANCE instance);
 	static void Finalize();
 
-	static void SetNetworkStatisticsTimer();
-
 	static const MULTIMONITOR_INFO& GetMultiMonitorInfo() { return c_Monitors; }
 	static size_t GetMonitorCount();
 

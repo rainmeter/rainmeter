@@ -33,6 +33,15 @@
 
 using namespace Gdiplus;
 
+enum TIMER
+{
+	TIMER_NETSTATS    = 1
+};
+enum INTERVAL
+{
+	INTERVAL_NETSTATS = 120000
+};
+
 CRainmeter* Rainmeter; // The module
 
 /*
@@ -681,6 +690,8 @@ CRainmeter::CRainmeter() :
 */
 CRainmeter::~CRainmeter()
 {
+	KillTimer(m_Window, TIMER_NETSTATS);
+
 	DeleteMeterWindow(NULL);
 
 	delete m_TrayWindow;
@@ -1075,9 +1086,18 @@ LRESULT CALLBACK CRainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		}
 		break;
 
+	case WM_TIMER:
+		if (wParam == TIMER_NETSTATS)
+		{
+			CMeasureNet::UpdateIFTable();
+			CMeasureNet::UpdateStats();
+			Rainmeter->WriteStats(false);
+		}
+		break;
+
 	case WM_RAINMETER_DELAYED_REFRESH_ALL:
 		Rainmeter->RefreshAll();
-		return 0;
+		break;
 
 	case WM_RAINMETER_DELAYED_EXECUTE:
 		if (lParam)
@@ -1087,13 +1107,18 @@ LRESULT CALLBACK CRainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			Rainmeter->ExecuteCommand(bang, NULL);
 			free(bang);  // _wcsdup()
 		}
-		return 0;
+		break;
 
 	default:
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
 	return 0;
+}
+
+void CRainmeter::SetNetworkStatisticsTimer()
+{
+	static bool set = SetTimer(m_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, NULL);
 }
 
 /*
@@ -2489,7 +2514,7 @@ void CRainmeter::ReadStats()
 /*
 ** WriteStats
 **
-** Writes the statistics to the ini-file. If bForce is false the stats are written only once per minute.
+** Writes the statistics to the ini-file. If bForce is false the stats are written only once per an appropriate interval.
 **
 */
 void CRainmeter::WriteStats(bool bForce)
@@ -2498,7 +2523,7 @@ void CRainmeter::WriteStats(bool bForce)
 
 	ULONGLONG ticks = CSystem::GetTickCount64();
 
-	if (bForce || (lastWrite + 1000 * 60 < ticks))
+	if (bForce || (lastWrite + INTERVAL_NETSTATS < ticks))
 	{
 		lastWrite = ticks;
 

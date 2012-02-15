@@ -123,6 +123,8 @@ public:
 	int Initialize(HINSTANCE hInstance, LPCWSTR szPath);
 	int MessagePump();
 
+	void SetNetworkStatisticsTimer();
+
 	CConfigParser* GetCurrentParser() { return m_CurrentParser; }
 	void SetCurrentParser(CConfigParser* parser) { m_CurrentParser = parser; }
 
