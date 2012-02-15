@@ -57,7 +57,7 @@ int RainmeterMain(HINSTANCE hInstance, LPWSTR cmdLine)
 	{
 		COPYDATASTRUCT cds;
 
-		if (cmdLine && cmdLine[0] == L'!')
+		if (cmdLine[0] == L'!')
 		{
 			// Deliver bang to existing Rainmeter instance
 			cds.dwData = 1;
@@ -82,6 +82,14 @@ int RainmeterMain(HINSTANCE hInstance, LPWSTR cmdLine)
 				return 1;
 			}
 		}
+	}
+
+	if (cmdLine[0] == L'!' &&
+		_wcsicmp(L"!RainmeterQuit", cmdLine) != 0 &&
+		_wcsicmp(L"!Quit", cmdLine) != 0)
+	{
+		MessageBox(NULL, L"Unable to send bang: Rainmeter is not running.", L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
+		return 1;
 	}
 
 	// Avoid loading a dll from current directory

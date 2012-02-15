@@ -35,7 +35,12 @@ struct MeasureData
 
 struct BinData
 {
-	ULONGLONG lastWrite;
+	union
+	{
+		ULONGLONG lastWrite;
+		UINT lastCount;
+	};
+
 	HANDLE directory;
 	WCHAR drive;
 	bool isFAT;
@@ -129,22 +134,41 @@ PLUGIN_EXPORT double Update(void* data)
 			WCHAR* pos = wcschr(buffer, data.drive);
 			if (pos != NULL)
 			{
-				if (data.lastWrite != -1)
+				if (data.isFAT)
 				{
-					if (data.isFAT)
+					// FAT/FAT32 doesn't update directory last write time.
+					// Use directory content count instead.
+					WCHAR filter[] = L"\0:\\$RECYCLE.BIN\\*";
+					WCHAR filterXP[] = L"\0:\\RECYCLED\\*";
+					filter[0] = *pos;
+					filterXP[0] = *pos;
+
+					WIN32_FIND_DATA fd;
+					HANDLE hSearch = FindFirstFile(g_IsXP ? filterXP : filter, &fd);
+					if (hSearch != INVALID_HANDLE_VALUE)
 					{
-						// FAT/FAT32 doesn't update directory last write time.
-						// TODO: Fix me?
-					}
-					else
-					{
-						ULONGLONG lastWrite;
-						GetFileTime(data.directory, NULL, NULL, (FILETIME*)&lastWrite);
-						if (data.lastWrite != lastWrite)
+						UINT count = 0;
+						do
 						{
-							data.lastWrite = lastWrite;
+							++count;
+						}
+						while (FindNextFile(hSearch, &fd));
+
+						if (count != data.lastCount)
+						{
+							data.lastCount = count;
 							changed = true;
 						}
+					}
+				}
+				else if (data.directory)
+				{
+					ULONGLONG lastWrite;
+					GetFileTime(data.directory, NULL, NULL, (FILETIME*)&lastWrite);
+					if (data.lastWrite != lastWrite)
+					{
+						data.lastWrite = lastWrite;
+						changed = true;
 					}
 				}
 
@@ -177,8 +201,6 @@ PLUGIN_EXPORT double Update(void* data)
 				{
 					data.directory = GetRecycleBinHandle(buffer[i], data.isFAT);
 				}
-
-				data.lastWrite = (data.directory || data.isFAT) ? 0 : -1;
 
 				g_BinData.push_back(data);
 			}
@@ -307,12 +329,15 @@ HANDLE GetRecycleBinHandle(WCHAR drive, bool& isFAT)
 		return NULL;
 	}
 
-	isFAT = true;
 	if (wcscmp(filesystem, L"NTFS") == 0)
 	{
 		isFAT = false;
 	}
-	else if (wcscmp(filesystem, L"FAT") != 0 && wcscmp(filesystem, L"FAT32"))
+	else if (wcscmp(filesystem, L"FAT") == 0 || wcscmp(filesystem, L"FAT32") == 0)
+	{
+		isFAT = true;
+	}
+	else
 	{
 		RmLog(LOG_ERROR, L"RecycleManager.dll: Unsupported filesystem");
 		return NULL;
