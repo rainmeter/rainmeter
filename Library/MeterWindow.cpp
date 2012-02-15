@@ -1285,7 +1285,7 @@ void CMeterWindow::EnableMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!EnableMeasure: [%s] not found in \"%s\"", name, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_ERROR, L"!EnableMeasure: [%s] not found in \"%s\"", measure, m_SkinName.c_str());
 }
 
 /*
