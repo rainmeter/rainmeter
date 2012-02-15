@@ -224,12 +224,20 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfAr
 
 	if (subStringsSize >= numOfArgs)
 	{
-		if (subStringsSize == numOfArgs && meterWindow)
+		if (subStringsSize == numOfArgs)
 		{
-			meterWindow->RunBang(bang, subStrings);
+			if (meterWindow)
+			{
+				meterWindow->RunBang(bang, subStrings);
+			}
+			else
+			{
+				Log(LOG_ERROR, L"Bang: Config not specified");
+			}
 		}
-		else // if (subStringsSize > numOfArgs)
+		else  // if (subStringsSize > numOfArgs)
 		{
+			// Use the specified window instead of meterWindow parameter
 			const std::wstring& config = subStrings[numOfArgs];
 			if (!config.empty() && (config.length() != 1 || config[0] != L'*'))
 			{
