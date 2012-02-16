@@ -122,13 +122,13 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>if exist ..\testbench\x32\release\skins goto skip
-mkdir ..\testbench\x32\release\skins
-if not exist ..\testbench\x32\release\themes (mkdir ..\testbench\x32\release\themes)
+      <Command>if exist ..\testbench\x32\debug\skins goto skip
+mkdir ..\testbench\x32\debug\skins
+if not exist ..\testbench\x32\debug\themes (mkdir ..\testbench\x32\debug\themes)
 echo "Copying skins..."
-xcopy /Q /S /Y ..\Install\Skins ..\testbench\x32\release\skins
-xcopy /Q /S /Y ..\Install\Themes ..\testbench\x32\release\themes
-xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32\release\
+xcopy /Q /S /Y ..\Install\Skins ..\testbench\x32\debug\skins
+xcopy /Q /S /Y ..\Install\Themes ..\testbench\x32\debug\themes
+xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32\debug\
 :skip</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -166,19 +166,19 @@ xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32\release\
       <OutputFile>../TestBench/x64/Debug/Rainmeter.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>.\x32/Debug/Rainmeter.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>.\x64/Debug/Rainmeter.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>if exist ..\testbench\x32\release\skins goto skip
-mkdir ..\testbench\x32\release\skins
-if not exist ..\testbench\x32\release\themes (mkdir ..\testbench\x32\release\themes)
+      <Command>if exist ..\testbench\x64\debug\skins goto skip
+mkdir ..\testbench\x64\debug\skins
+if not exist ..\testbench\x64\debug\themes (mkdir ..\testbench\x64\debug\themes)
 echo "Copying skins..."
-xcopy /Q /S /Y ..\Install\Skins ..\testbench\x32\release\skins
-xcopy /Q /S /Y ..\Install\Themes ..\testbench\x32\release\themes
-xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32\release\
+xcopy /Q /S /Y ..\Install\Skins ..\testbench\x64\debug\skins
+xcopy /Q /S /Y ..\Install\Themes ..\testbench\x64\debug\themes
+xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x64\debug\
 :skip</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -249,7 +249,7 @@ xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32\release\
       </HeaderFileName>
     </Midl>
     <ClCompile>
-      <AdditionalOptions>/GL /GA  %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/GA %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_SECURE_SCL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -270,7 +270,6 @@ xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32\release\
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalOptions>/LTCG  %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>Rainmeter.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>../TestBench/x64/Release/Rainmeter.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -284,13 +283,13 @@ xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32\release\
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
     <PostBuildEvent>
-      <Command>if exist ..\testbench\x32\release\skins goto skip
-mkdir ..\testbench\x32\release\skins
-if not exist ..\testbench\x32\release\themes (mkdir ..\testbench\x32\release\themes)
+      <Command>if exist ..\testbench\x64\release\skins goto skip
+mkdir ..\testbench\x64\release\skins
+if not exist ..\testbench\x64\release\themes (mkdir ..\testbench\x64\release\themes)
 echo "Copying skins..."
-xcopy /Q /S /Y ..\Install\Skins ..\testbench\x32\release\skins
-xcopy /Q /S /Y ..\Install\Themes ..\testbench\x32\release\themes
-xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x32\release\
+xcopy /Q /S /Y ..\Install\Skins ..\testbench\x64\release\skins
+xcopy /Q /S /Y ..\Install\Themes ..\testbench\x64\release\themes
+xcopy /Q /S /Y ..\Install\Default.ini ..\testbench\x64\release\
 :skip</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
