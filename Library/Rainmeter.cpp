@@ -50,7 +50,7 @@ CRainmeter* Rainmeter; // The module
 ** Initializes Rainmeter.
 **
 */
-int RainmeterMain(HINSTANCE hInstance, LPWSTR cmdLine)
+int RainmeterMain(LPWSTR cmdLine)
 {
 	HWND wnd = NULL;
 	while (wnd = FindWindowEx(NULL, wnd, RAINMETER_CLASS_NAME, RAINMETER_WINDOW_NAME))
@@ -101,7 +101,7 @@ int RainmeterMain(HINSTANCE hInstance, LPWSTR cmdLine)
 	{
 		try
 		{
-			ret = Rainmeter->Initialize(hInstance, cmdLine);
+			ret = Rainmeter->Initialize(cmdLine);
 		}
 		catch (CError& error)
 		{
@@ -110,7 +110,7 @@ int RainmeterMain(HINSTANCE hInstance, LPWSTR cmdLine)
 
 		if (ret == 0)
 		{
-			ret = Rainmeter->MessagePump();
+			ret = Rainmeter->MessagePump();	
 		}
 
 		delete Rainmeter;
@@ -739,13 +739,15 @@ CRainmeter::~CRainmeter()
 ** May throw CErrors !!!!
 **
 */
-int CRainmeter::Initialize(HINSTANCE hInstance, LPCWSTR szPath)
+int CRainmeter::Initialize(LPCWSTR szPath)
 {
 	int result = 0;
 
+	m_Instance = GetModuleHandle(L"Rainmeter");
+
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = (WNDPROC)MainWndProc;
-	wc.hInstance = hInstance;
+	wc.hInstance = m_Instance;
 	wc.lpszClassName = RAINMETER_CLASS_NAME;
 	RegisterClass(&wc);
 
@@ -760,12 +762,10 @@ int CRainmeter::Initialize(HINSTANCE hInstance, LPCWSTR szPath)
 		CW_USEDEFAULT,
 		NULL,
 		NULL,
-		hInstance,
+		m_Instance,
 		NULL);
 
 	if (!m_Window) return 1;
-
-	m_Instance = hInstance;
 
 	WCHAR* tmpSzPath = new WCHAR[MAX_LINE_LENGTH];
 	GetModuleFileName(m_Instance, tmpSzPath, MAX_LINE_LENGTH);
@@ -1007,7 +1007,7 @@ int CRainmeter::Initialize(HINSTANCE hInstance, LPCWSTR szPath)
 	// Test that the Rainmeter.ini file is writable
 	TestSettingsFile(bDefaultIniLocation);
 
-	CSystem::Initialize(hInstance);
+	CSystem::Initialize(m_Instance);
 	CMeasureNet::InitializeNewApi();
 
 	if (m_Debug)

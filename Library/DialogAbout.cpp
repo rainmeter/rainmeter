@@ -490,7 +490,7 @@ void CDialogAbout::CTabLog::AddItem(int level, LPCWSTR time, LPCWSTR message)
 		break;
 
 	case LOG_WARNING:
-		if (!m_Error) return;
+		if (!m_Warning) return;
 		item = GetDlgItem(m_Window, IDC_ABOUTLOG_WARNING_CHECKBOX);
 		vitem.iImage = 1;
 		break;

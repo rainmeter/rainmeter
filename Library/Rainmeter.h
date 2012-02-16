@@ -120,7 +120,7 @@ public:
 	CRainmeter();
 	~CRainmeter();
 
-	int Initialize(HINSTANCE hInstance, LPCWSTR szPath);
+	int Initialize(LPCWSTR szPath);
 	int MessagePump();
 
 	void SetNetworkStatisticsTimer();
@@ -332,6 +332,6 @@ private:
 #define EXPORT_PLUGIN EXTERN_C __declspec(dllimport)
 #endif
 
-EXPORT_PLUGIN int RainmeterMain(HINSTANCE Instance, LPWSTR cmdLine);
+EXPORT_PLUGIN int RainmeterMain(LPWSTR cmdLine);
 
 #endif
