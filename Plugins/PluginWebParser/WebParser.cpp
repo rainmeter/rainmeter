@@ -247,268 +247,282 @@ std::wstring& DecodeReferences(std::wstring& str, int opt)
 
 void FillCharacterEntityReferences()
 {
+	struct CER
+	{
+		WCHAR* name;
+		WCHAR ch;
+	};
+
 	// List from:
 	// http://www.w3.org/TR/html4/sgml/entities.html
 	// http://www.w3.org/TR/xhtml1/#C_16
+	static CER entities[] =
+	{
+		// for markup-significant and internationalization characters
+		{ L"quot",		(WCHAR)34 },
+		{ L"amp",		(WCHAR)38 },
+		{ L"apos",		(WCHAR)39 },
+		{ L"lt",		(WCHAR)60 },
+		{ L"gt",		(WCHAR)62 },
+		{ L"OElig",		(WCHAR)338 },
+		{ L"oelig",		(WCHAR)339 },
+		{ L"Scaron",	(WCHAR)352 },
+		{ L"scaron",	(WCHAR)353 },
+		{ L"Yuml",		(WCHAR)376 },
+		{ L"circ",		(WCHAR)710 },
+		{ L"tilde",		(WCHAR)732 },
+		{ L"ensp",		(WCHAR)8194 },
+		{ L"emsp",		(WCHAR)8195 },
+		{ L"thinsp",	(WCHAR)8201 },
+		{ L"zwnj",		(WCHAR)8204 },
+		{ L"zwj",		(WCHAR)8205 },
+		{ L"lrm",		(WCHAR)8206 },
+		{ L"rlm",		(WCHAR)8207 },
+		{ L"ndash",		(WCHAR)8211 },
+		{ L"mdash",		(WCHAR)8212 },
+		{ L"lsquo",		(WCHAR)8216 },
+		{ L"rsquo",		(WCHAR)8217 },
+		{ L"sbquo",		(WCHAR)8218 },
+		{ L"ldquo",		(WCHAR)8220 },
+		{ L"rdquo",		(WCHAR)8221 },
+		{ L"bdquo",		(WCHAR)8222 },
+		{ L"dagger",	(WCHAR)8224 },
+		{ L"Dagger",	(WCHAR)8225 },
+		{ L"permil",	(WCHAR)8240 },
+		{ L"lsaquo",	(WCHAR)8249 },
+		{ L"rsaquo",	(WCHAR)8250 },
+		{ L"euro",		(WCHAR)8364 },
 
-	// for markup-significant and internationalization characters
-	g_CERs[L"quot"]		= (WCHAR)34;
-	g_CERs[L"amp"]		= (WCHAR)38;
-	g_CERs[L"apos"]		= (WCHAR)39;
-	g_CERs[L"lt"]		= (WCHAR)60;
-	g_CERs[L"gt"]		= (WCHAR)62;
-	g_CERs[L"OElig"]	= (WCHAR)338;
-	g_CERs[L"oelig"]	= (WCHAR)339;
-	g_CERs[L"Scaron"]	= (WCHAR)352;
-	g_CERs[L"scaron"]	= (WCHAR)353;
-	g_CERs[L"Yuml"]		= (WCHAR)376;
-	g_CERs[L"circ"]		= (WCHAR)710;
-	g_CERs[L"tilde"]	= (WCHAR)732;
-	g_CERs[L"ensp"]		= (WCHAR)8194;
-	g_CERs[L"emsp"]		= (WCHAR)8195;
-	g_CERs[L"thinsp"]	= (WCHAR)8201;
-	g_CERs[L"zwnj"]		= (WCHAR)8204;
-	g_CERs[L"zwj"]		= (WCHAR)8205;
-	g_CERs[L"lrm"]		= (WCHAR)8206;
-	g_CERs[L"rlm"]		= (WCHAR)8207;
-	g_CERs[L"ndash"]	= (WCHAR)8211;
-	g_CERs[L"mdash"]	= (WCHAR)8212;
-	g_CERs[L"lsquo"]	= (WCHAR)8216;
-	g_CERs[L"rsquo"]	= (WCHAR)8217;
-	g_CERs[L"sbquo"]	= (WCHAR)8218;
-	g_CERs[L"ldquo"]	= (WCHAR)8220;
-	g_CERs[L"rdquo"]	= (WCHAR)8221;
-	g_CERs[L"bdquo"]	= (WCHAR)8222;
-	g_CERs[L"dagger"]	= (WCHAR)8224;
-	g_CERs[L"Dagger"]	= (WCHAR)8225;
-	g_CERs[L"permil"]	= (WCHAR)8240;
-	g_CERs[L"lsaquo"]	= (WCHAR)8249;
-	g_CERs[L"rsaquo"]	= (WCHAR)8250;
-	g_CERs[L"euro"]		= (WCHAR)8364;
+		// for ISO 8859-1 characters
+		{ L"nbsp",		(WCHAR)160 },
+		{ L"iexcl",		(WCHAR)161 },
+		{ L"cent",		(WCHAR)162 },
+		{ L"pound",		(WCHAR)163 },
+		{ L"curren",	(WCHAR)164 },
+		{ L"yen",		(WCHAR)165 },
+		{ L"brvbar",	(WCHAR)166 },
+		{ L"sect",		(WCHAR)167 },
+		{ L"uml",		(WCHAR)168 },
+		{ L"copy",		(WCHAR)169 },
+		{ L"ordf",		(WCHAR)170 },
+		{ L"laquo",		(WCHAR)171 },
+		{ L"not",		(WCHAR)172 },
+		{ L"shy",		(WCHAR)173 },
+		{ L"reg",		(WCHAR)174 },
+		{ L"macr",		(WCHAR)175 },
+		{ L"deg",		(WCHAR)176 },
+		{ L"plusmn",	(WCHAR)177 },
+		{ L"sup2",		(WCHAR)178 },
+		{ L"sup3",		(WCHAR)179 },
+		{ L"acute",		(WCHAR)180 },
+		{ L"micro",		(WCHAR)181 },
+		{ L"para",		(WCHAR)182 },
+		{ L"middot",	(WCHAR)183 },
+		{ L"cedil",		(WCHAR)184 },
+		{ L"sup1",		(WCHAR)185 },
+		{ L"ordm",		(WCHAR)186 },
+		{ L"raquo",		(WCHAR)187 },
+		{ L"frac14",	(WCHAR)188 },
+		{ L"frac12",	(WCHAR)189 },
+		{ L"frac34",	(WCHAR)190 },
+		{ L"iquest",	(WCHAR)191 },
+		{ L"Agrave",	(WCHAR)192 },
+		{ L"Aacute",	(WCHAR)193 },
+		{ L"Acirc",		(WCHAR)194 },
+		{ L"Atilde",	(WCHAR)195 },
+		{ L"Auml",		(WCHAR)196 },
+		{ L"Aring",		(WCHAR)197 },
+		{ L"AElig",		(WCHAR)198 },
+		{ L"Ccedil",	(WCHAR)199 },
+		{ L"Egrave",	(WCHAR)200 },
+		{ L"Eacute",	(WCHAR)201 },
+		{ L"Ecirc",		(WCHAR)202 },
+		{ L"Euml",		(WCHAR)203 },
+		{ L"Igrave",	(WCHAR)204 },
+		{ L"Iacute",	(WCHAR)205 },
+		{ L"Icirc",		(WCHAR)206 },
+		{ L"Iuml",		(WCHAR)207 },
+		{ L"ETH",		(WCHAR)208 },
+		{ L"Ntilde",	(WCHAR)209 },
+		{ L"Ograve",	(WCHAR)210 },
+		{ L"Oacute",	(WCHAR)211 },
+		{ L"Ocirc",		(WCHAR)212 },
+		{ L"Otilde",	(WCHAR)213 },
+		{ L"Ouml",		(WCHAR)214 },
+		{ L"times",		(WCHAR)215 },
+		{ L"Oslash",	(WCHAR)216 },
+		{ L"Ugrave",	(WCHAR)217 },
+		{ L"Uacute",	(WCHAR)218 },
+		{ L"Ucirc",		(WCHAR)219 },
+		{ L"Uuml",		(WCHAR)220 },
+		{ L"Yacute",	(WCHAR)221 },
+		{ L"THORN",		(WCHAR)222 },
+		{ L"szlig",		(WCHAR)223 },
+		{ L"agrave",	(WCHAR)224 },
+		{ L"aacute",	(WCHAR)225 },
+		{ L"acirc",		(WCHAR)226 },
+		{ L"atilde",	(WCHAR)227 },
+		{ L"auml",		(WCHAR)228 },
+		{ L"aring",		(WCHAR)229 },
+		{ L"aelig",		(WCHAR)230 },
+		{ L"ccedil",	(WCHAR)231 },
+		{ L"egrave",	(WCHAR)232 },
+		{ L"eacute",	(WCHAR)233 },
+		{ L"ecirc",		(WCHAR)234 },
+		{ L"euml",		(WCHAR)235 },
+		{ L"igrave",	(WCHAR)236 },
+		{ L"iacute",	(WCHAR)237 },
+		{ L"icirc",		(WCHAR)238 },
+		{ L"iuml",		(WCHAR)239 },
+		{ L"eth",		(WCHAR)240 },
+		{ L"ntilde",	(WCHAR)241 },
+		{ L"ograve",	(WCHAR)242 },
+		{ L"oacute",	(WCHAR)243 },
+		{ L"ocirc",		(WCHAR)244 },
+		{ L"otilde",	(WCHAR)245 },
+		{ L"ouml",		(WCHAR)246 },
+		{ L"divide",	(WCHAR)247 },
+		{ L"oslash",	(WCHAR)248 },
+		{ L"ugrave",	(WCHAR)249 },
+		{ L"uacute",	(WCHAR)250 },
+		{ L"ucirc",		(WCHAR)251 },
+		{ L"uuml",		(WCHAR)252 },
+		{ L"yacute",	(WCHAR)253 },
+		{ L"thorn",		(WCHAR)254 },
+		{ L"yuml",		(WCHAR)255 },
 
-	// for ISO 8859-1 characters
-	g_CERs[L"nbsp"]		= (WCHAR)160;
-	g_CERs[L"iexcl"]	= (WCHAR)161;
-	g_CERs[L"cent"]		= (WCHAR)162;
-	g_CERs[L"pound"]	= (WCHAR)163;
-	g_CERs[L"curren"]	= (WCHAR)164;
-	g_CERs[L"yen"]		= (WCHAR)165;
-	g_CERs[L"brvbar"]	= (WCHAR)166;
-	g_CERs[L"sect"]		= (WCHAR)167;
-	g_CERs[L"uml"]		= (WCHAR)168;
-	g_CERs[L"copy"]		= (WCHAR)169;
-	g_CERs[L"ordf"]		= (WCHAR)170;
-	g_CERs[L"laquo"]	= (WCHAR)171;
-	g_CERs[L"not"]		= (WCHAR)172;
-	g_CERs[L"shy"]		= (WCHAR)173;
-	g_CERs[L"reg"]		= (WCHAR)174;
-	g_CERs[L"macr"]		= (WCHAR)175;
-	g_CERs[L"deg"]		= (WCHAR)176;
-	g_CERs[L"plusmn"]	= (WCHAR)177;
-	g_CERs[L"sup2"]		= (WCHAR)178;
-	g_CERs[L"sup3"]		= (WCHAR)179;
-	g_CERs[L"acute"]	= (WCHAR)180;
-	g_CERs[L"micro"]	= (WCHAR)181;
-	g_CERs[L"para"]		= (WCHAR)182;
-	g_CERs[L"middot"]	= (WCHAR)183;
-	g_CERs[L"cedil"]	= (WCHAR)184;
-	g_CERs[L"sup1"]		= (WCHAR)185;
-	g_CERs[L"ordm"]		= (WCHAR)186;
-	g_CERs[L"raquo"]	= (WCHAR)187;
-	g_CERs[L"frac14"]	= (WCHAR)188;
-	g_CERs[L"frac12"]	= (WCHAR)189;
-	g_CERs[L"frac34"]	= (WCHAR)190;
-	g_CERs[L"iquest"]	= (WCHAR)191;
-	g_CERs[L"Agrave"]	= (WCHAR)192;
-	g_CERs[L"Aacute"]	= (WCHAR)193;
-	g_CERs[L"Acirc"]	= (WCHAR)194;
-	g_CERs[L"Atilde"]	= (WCHAR)195;
-	g_CERs[L"Auml"]		= (WCHAR)196;
-	g_CERs[L"Aring"]	= (WCHAR)197;
-	g_CERs[L"AElig"]	= (WCHAR)198;
-	g_CERs[L"Ccedil"]	= (WCHAR)199;
-	g_CERs[L"Egrave"]	= (WCHAR)200;
-	g_CERs[L"Eacute"]	= (WCHAR)201;
-	g_CERs[L"Ecirc"]	= (WCHAR)202;
-	g_CERs[L"Euml"]		= (WCHAR)203;
-	g_CERs[L"Igrave"]	= (WCHAR)204;
-	g_CERs[L"Iacute"]	= (WCHAR)205;
-	g_CERs[L"Icirc"]	= (WCHAR)206;
-	g_CERs[L"Iuml"]		= (WCHAR)207;
-	g_CERs[L"ETH"]		= (WCHAR)208;
-	g_CERs[L"Ntilde"]	= (WCHAR)209;
-	g_CERs[L"Ograve"]	= (WCHAR)210;
-	g_CERs[L"Oacute"]	= (WCHAR)211;
-	g_CERs[L"Ocirc"]	= (WCHAR)212;
-	g_CERs[L"Otilde"]	= (WCHAR)213;
-	g_CERs[L"Ouml"]		= (WCHAR)214;
-	g_CERs[L"times"]	= (WCHAR)215;
-	g_CERs[L"Oslash"]	= (WCHAR)216;
-	g_CERs[L"Ugrave"]	= (WCHAR)217;
-	g_CERs[L"Uacute"]	= (WCHAR)218;
-	g_CERs[L"Ucirc"]	= (WCHAR)219;
-	g_CERs[L"Uuml"]		= (WCHAR)220;
-	g_CERs[L"Yacute"]	= (WCHAR)221;
-	g_CERs[L"THORN"]	= (WCHAR)222;
-	g_CERs[L"szlig"]	= (WCHAR)223;
-	g_CERs[L"agrave"]	= (WCHAR)224;
-	g_CERs[L"aacute"]	= (WCHAR)225;
-	g_CERs[L"acirc"]	= (WCHAR)226;
-	g_CERs[L"atilde"]	= (WCHAR)227;
-	g_CERs[L"auml"]		= (WCHAR)228;
-	g_CERs[L"aring"]	= (WCHAR)229;
-	g_CERs[L"aelig"]	= (WCHAR)230;
-	g_CERs[L"ccedil"]	= (WCHAR)231;
-	g_CERs[L"egrave"]	= (WCHAR)232;
-	g_CERs[L"eacute"]	= (WCHAR)233;
-	g_CERs[L"ecirc"]	= (WCHAR)234;
-	g_CERs[L"euml"]		= (WCHAR)235;
-	g_CERs[L"igrave"]	= (WCHAR)236;
-	g_CERs[L"iacute"]	= (WCHAR)237;
-	g_CERs[L"icirc"]	= (WCHAR)238;
-	g_CERs[L"iuml"]		= (WCHAR)239;
-	g_CERs[L"eth"]		= (WCHAR)240;
-	g_CERs[L"ntilde"]	= (WCHAR)241;
-	g_CERs[L"ograve"]	= (WCHAR)242;
-	g_CERs[L"oacute"]	= (WCHAR)243;
-	g_CERs[L"ocirc"]	= (WCHAR)244;
-	g_CERs[L"otilde"]	= (WCHAR)245;
-	g_CERs[L"ouml"]		= (WCHAR)246;
-	g_CERs[L"divide"]	= (WCHAR)247;
-	g_CERs[L"oslash"]	= (WCHAR)248;
-	g_CERs[L"ugrave"]	= (WCHAR)249;
-	g_CERs[L"uacute"]	= (WCHAR)250;
-	g_CERs[L"ucirc"]	= (WCHAR)251;
-	g_CERs[L"uuml"]		= (WCHAR)252;
-	g_CERs[L"yacute"]	= (WCHAR)253;
-	g_CERs[L"thorn"]	= (WCHAR)254;
-	g_CERs[L"yuml"]		= (WCHAR)255;
+		// for symbols, mathematical symbols, and Greek letters
+		{ L"fnof",		(WCHAR)402 },
+		{ L"Alpha",		(WCHAR)913 },
+		{ L"Beta",		(WCHAR)914 },
+		{ L"Gamma",		(WCHAR)915 },
+		{ L"Delta",		(WCHAR)916 },
+		{ L"Epsilon",	(WCHAR)917 },
+		{ L"Zeta",		(WCHAR)918 },
+		{ L"Eta",		(WCHAR)919 },
+		{ L"Theta",		(WCHAR)920 },
+		{ L"Iota",		(WCHAR)921 },
+		{ L"Kappa",		(WCHAR)922 },
+		{ L"Lambda",	(WCHAR)923 },
+		{ L"Mu",		(WCHAR)924 },
+		{ L"Nu",		(WCHAR)925 },
+		{ L"Xi",		(WCHAR)926 },
+		{ L"Omicron",	(WCHAR)927 },
+		{ L"Pi",		(WCHAR)928 },
+		{ L"Rho",		(WCHAR)929 },
+		{ L"Sigma",		(WCHAR)931 },
+		{ L"Tau",		(WCHAR)932 },
+		{ L"Upsilon",	(WCHAR)933 },
+		{ L"Phi",		(WCHAR)934 },
+		{ L"Chi",		(WCHAR)935 },
+		{ L"Psi",		(WCHAR)936 },
+		{ L"Omega",		(WCHAR)937 },
+		{ L"alpha",		(WCHAR)945 },
+		{ L"beta",		(WCHAR)946 },
+		{ L"gamma",		(WCHAR)947 },
+		{ L"delta",		(WCHAR)948 },
+		{ L"epsilon",	(WCHAR)949 },
+		{ L"zeta",		(WCHAR)950 },
+		{ L"eta",		(WCHAR)951 },
+		{ L"theta",		(WCHAR)952 },
+		{ L"iota",		(WCHAR)953 },
+		{ L"kappa",		(WCHAR)954 },
+		{ L"lambda",	(WCHAR)955 },
+		{ L"mu",		(WCHAR)956 },
+		{ L"nu",		(WCHAR)957 },
+		{ L"xi",		(WCHAR)958 },
+		{ L"omicron",	(WCHAR)959 },
+		{ L"pi",		(WCHAR)960 },
+		{ L"rho",		(WCHAR)961 },
+		{ L"sigmaf",	(WCHAR)962 },
+		{ L"sigma",		(WCHAR)963 },
+		{ L"tau",		(WCHAR)964 },
+		{ L"upsilon",	(WCHAR)965 },
+		{ L"phi",		(WCHAR)966 },
+		{ L"chi",		(WCHAR)967 },
+		{ L"psi",		(WCHAR)968 },
+		{ L"omega",		(WCHAR)969 },
+		{ L"thetasym",	(WCHAR)977 },
+		{ L"upsih",		(WCHAR)978 },
+		{ L"piv",		(WCHAR)982 },
+		{ L"bull",		(WCHAR)8226 },
+		{ L"hellip",	(WCHAR)8230 },
+		{ L"prime",		(WCHAR)8242 },
+		{ L"Prime",		(WCHAR)8243 },
+		{ L"oline",		(WCHAR)8254 },
+		{ L"frasl",		(WCHAR)8260 },
+		{ L"weierp",	(WCHAR)8472 },
+		{ L"image",		(WCHAR)8465 },
+		{ L"real",		(WCHAR)8476 },
+		{ L"trade",		(WCHAR)8482 },
+		{ L"alefsym",	(WCHAR)8501 },
+		{ L"larr",		(WCHAR)8592 },
+		{ L"uarr",		(WCHAR)8593 },
+		{ L"rarr",		(WCHAR)8594 },
+		{ L"darr",		(WCHAR)8595 },
+		{ L"harr",		(WCHAR)8596 },
+		{ L"crarr",		(WCHAR)8629 },
+		{ L"lArr",		(WCHAR)8656 },
+		{ L"uArr",		(WCHAR)8657 },
+		{ L"rArr",		(WCHAR)8658 },
+		{ L"dArr",		(WCHAR)8659 },
+		{ L"hArr",		(WCHAR)8660 },
+		{ L"forall",	(WCHAR)8704 },
+		{ L"part",		(WCHAR)8706 },
+		{ L"exist",		(WCHAR)8707 },
+		{ L"empty",		(WCHAR)8709 },
+		{ L"nabla",		(WCHAR)8711 },
+		{ L"isin",		(WCHAR)8712 },
+		{ L"notin",		(WCHAR)8713 },
+		{ L"ni",		(WCHAR)8715 },
+		{ L"prod",		(WCHAR)8719 },
+		{ L"sum",		(WCHAR)8721 },
+		{ L"minus",		(WCHAR)8722 },
+		{ L"lowast",	(WCHAR)8727 },
+		{ L"radic",		(WCHAR)8730 },
+		{ L"prop",		(WCHAR)8733 },
+		{ L"infin",		(WCHAR)8734 },
+		{ L"ang",		(WCHAR)8736 },
+		{ L"and",		(WCHAR)8743 },
+		{ L"or",		(WCHAR)8744 },
+		{ L"cap",		(WCHAR)8745 },
+		{ L"cup",		(WCHAR)8746 },
+		{ L"int",		(WCHAR)8747 },
+		{ L"there4",	(WCHAR)8756 },
+		{ L"sim",		(WCHAR)8764 },
+		{ L"cong",		(WCHAR)8773 },
+		{ L"asymp",		(WCHAR)8776 },
+		{ L"ne",		(WCHAR)8800 },
+		{ L"equiv",		(WCHAR)8801 },
+		{ L"le",		(WCHAR)8804 },
+		{ L"ge",		(WCHAR)8805 },
+		{ L"sub",		(WCHAR)8834 },
+		{ L"sup",		(WCHAR)8835 },
+		{ L"nsub",		(WCHAR)8836 },
+		{ L"sube",		(WCHAR)8838 },
+		{ L"supe",		(WCHAR)8839 },
+		{ L"oplus",		(WCHAR)8853 },
+		{ L"otimes",	(WCHAR)8855 },
+		{ L"perp",		(WCHAR)8869 },
+		{ L"sdot",		(WCHAR)8901 },
+		{ L"lceil",		(WCHAR)8968 },
+		{ L"rceil",		(WCHAR)8969 },
+		{ L"lfloor",	(WCHAR)8970 },
+		{ L"rfloor",	(WCHAR)8971 },
+		{ L"lang",		(WCHAR)9001 },
+		{ L"rang",		(WCHAR)9002 },
+		{ L"loz",		(WCHAR)9674 },
+		{ L"spades",	(WCHAR)9824 },
+		{ L"clubs",		(WCHAR)9827 },
+		{ L"hearts",	(WCHAR)9829 },
+		{ L"diams",		(WCHAR)9830 }
+	};
 
-	// for symbols, mathematical symbols, and Greek letters
-	g_CERs[L"fnof"]		= (WCHAR)402;
-	g_CERs[L"Alpha"]	= (WCHAR)913;
-	g_CERs[L"Beta"]		= (WCHAR)914;
-	g_CERs[L"Gamma"]	= (WCHAR)915;
-	g_CERs[L"Delta"]	= (WCHAR)916;
-	g_CERs[L"Epsilon"]	= (WCHAR)917;
-	g_CERs[L"Zeta"]		= (WCHAR)918;
-	g_CERs[L"Eta"]		= (WCHAR)919;
-	g_CERs[L"Theta"]	= (WCHAR)920;
-	g_CERs[L"Iota"]		= (WCHAR)921;
-	g_CERs[L"Kappa"]	= (WCHAR)922;
-	g_CERs[L"Lambda"]	= (WCHAR)923;
-	g_CERs[L"Mu"]		= (WCHAR)924;
-	g_CERs[L"Nu"]		= (WCHAR)925;
-	g_CERs[L"Xi"]		= (WCHAR)926;
-	g_CERs[L"Omicron"]	= (WCHAR)927;
-	g_CERs[L"Pi"]		= (WCHAR)928;
-	g_CERs[L"Rho"]		= (WCHAR)929;
-	g_CERs[L"Sigma"]	= (WCHAR)931;
-	g_CERs[L"Tau"]		= (WCHAR)932;
-	g_CERs[L"Upsilon"]	= (WCHAR)933;
-	g_CERs[L"Phi"]		= (WCHAR)934;
-	g_CERs[L"Chi"]		= (WCHAR)935;
-	g_CERs[L"Psi"]		= (WCHAR)936;
-	g_CERs[L"Omega"]	= (WCHAR)937;
-	g_CERs[L"alpha"]	= (WCHAR)945;
-	g_CERs[L"beta"]		= (WCHAR)946;
-	g_CERs[L"gamma"]	= (WCHAR)947;
-	g_CERs[L"delta"]	= (WCHAR)948;
-	g_CERs[L"epsilon"]	= (WCHAR)949;
-	g_CERs[L"zeta"]		= (WCHAR)950;
-	g_CERs[L"eta"]		= (WCHAR)951;
-	g_CERs[L"theta"]	= (WCHAR)952;
-	g_CERs[L"iota"]		= (WCHAR)953;
-	g_CERs[L"kappa"]	= (WCHAR)954;
-	g_CERs[L"lambda"]	= (WCHAR)955;
-	g_CERs[L"mu"]		= (WCHAR)956;
-	g_CERs[L"nu"]		= (WCHAR)957;
-	g_CERs[L"xi"]		= (WCHAR)958;
-	g_CERs[L"omicron"]	= (WCHAR)959;
-	g_CERs[L"pi"]		= (WCHAR)960;
-	g_CERs[L"rho"]		= (WCHAR)961;
-	g_CERs[L"sigmaf"]	= (WCHAR)962;
-	g_CERs[L"sigma"]	= (WCHAR)963;
-	g_CERs[L"tau"]		= (WCHAR)964;
-	g_CERs[L"upsilon"]	= (WCHAR)965;
-	g_CERs[L"phi"]		= (WCHAR)966;
-	g_CERs[L"chi"]		= (WCHAR)967;
-	g_CERs[L"psi"]		= (WCHAR)968;
-	g_CERs[L"omega"]	= (WCHAR)969;
-	g_CERs[L"thetasym"]	= (WCHAR)977;
-	g_CERs[L"upsih"]	= (WCHAR)978;
-	g_CERs[L"piv"]		= (WCHAR)982;
-	g_CERs[L"bull"]		= (WCHAR)8226;
-	g_CERs[L"hellip"]	= (WCHAR)8230;
-	g_CERs[L"prime"]	= (WCHAR)8242;
-	g_CERs[L"Prime"]	= (WCHAR)8243;
-	g_CERs[L"oline"]	= (WCHAR)8254;
-	g_CERs[L"frasl"]	= (WCHAR)8260;
-	g_CERs[L"weierp"]	= (WCHAR)8472;
-	g_CERs[L"image"]	= (WCHAR)8465;
-	g_CERs[L"real"]		= (WCHAR)8476;
-	g_CERs[L"trade"]	= (WCHAR)8482;
-	g_CERs[L"alefsym"]	= (WCHAR)8501;
-	g_CERs[L"larr"]		= (WCHAR)8592;
-	g_CERs[L"uarr"]		= (WCHAR)8593;
-	g_CERs[L"rarr"]		= (WCHAR)8594;
-	g_CERs[L"darr"]		= (WCHAR)8595;
-	g_CERs[L"harr"]		= (WCHAR)8596;
-	g_CERs[L"crarr"]	= (WCHAR)8629;
-	g_CERs[L"lArr"]		= (WCHAR)8656;
-	g_CERs[L"uArr"]		= (WCHAR)8657;
-	g_CERs[L"rArr"]		= (WCHAR)8658;
-	g_CERs[L"dArr"]		= (WCHAR)8659;
-	g_CERs[L"hArr"]		= (WCHAR)8660;
-	g_CERs[L"forall"]	= (WCHAR)8704;
-	g_CERs[L"part"]		= (WCHAR)8706;
-	g_CERs[L"exist"]	= (WCHAR)8707;
-	g_CERs[L"empty"]	= (WCHAR)8709;
-	g_CERs[L"nabla"]	= (WCHAR)8711;
-	g_CERs[L"isin"]		= (WCHAR)8712;
-	g_CERs[L"notin"]	= (WCHAR)8713;
-	g_CERs[L"ni"]		= (WCHAR)8715;
-	g_CERs[L"prod"]		= (WCHAR)8719;
-	g_CERs[L"sum"]		= (WCHAR)8721;
-	g_CERs[L"minus"]	= (WCHAR)8722;
-	g_CERs[L"lowast"]	= (WCHAR)8727;
-	g_CERs[L"radic"]	= (WCHAR)8730;
-	g_CERs[L"prop"]		= (WCHAR)8733;
-	g_CERs[L"infin"]	= (WCHAR)8734;
-	g_CERs[L"ang"]		= (WCHAR)8736;
-	g_CERs[L"and"]		= (WCHAR)8743;
-	g_CERs[L"or"]		= (WCHAR)8744;
-	g_CERs[L"cap"]		= (WCHAR)8745;
-	g_CERs[L"cup"]		= (WCHAR)8746;
-	g_CERs[L"int"]		= (WCHAR)8747;
-	g_CERs[L"there4"]	= (WCHAR)8756;
-	g_CERs[L"sim"]		= (WCHAR)8764;
-	g_CERs[L"cong"]		= (WCHAR)8773;
-	g_CERs[L"asymp"]	= (WCHAR)8776;
-	g_CERs[L"ne"]		= (WCHAR)8800;
-	g_CERs[L"equiv"]	= (WCHAR)8801;
-	g_CERs[L"le"]		= (WCHAR)8804;
-	g_CERs[L"ge"]		= (WCHAR)8805;
-	g_CERs[L"sub"]		= (WCHAR)8834;
-	g_CERs[L"sup"]		= (WCHAR)8835;
-	g_CERs[L"nsub"]		= (WCHAR)8836;
-	g_CERs[L"sube"]		= (WCHAR)8838;
-	g_CERs[L"supe"]		= (WCHAR)8839;
-	g_CERs[L"oplus"]	= (WCHAR)8853;
-	g_CERs[L"otimes"]	= (WCHAR)8855;
-	g_CERs[L"perp"]		= (WCHAR)8869;
-	g_CERs[L"sdot"]		= (WCHAR)8901;
-	g_CERs[L"lceil"]	= (WCHAR)8968;
-	g_CERs[L"rceil"]	= (WCHAR)8969;
-	g_CERs[L"lfloor"]	= (WCHAR)8970;
-	g_CERs[L"rfloor"]	= (WCHAR)8971;
-	g_CERs[L"lang"]		= (WCHAR)9001;
-	g_CERs[L"rang"]		= (WCHAR)9002;
-	g_CERs[L"loz"]		= (WCHAR)9674;
-	g_CERs[L"spades"]	= (WCHAR)9824;
-	g_CERs[L"clubs"]	= (WCHAR)9827;
-	g_CERs[L"hearts"]	= (WCHAR)9829;
-	g_CERs[L"diams"]	= (WCHAR)9830;
+	const int entityCount = _countof(entities);
+	for (int i = 0; i < entityCount; ++i)
+	{
+		g_CERs.insert(std::pair<std::wstring, WCHAR>(entities[i].name, entities[i].ch));
+	}
 
 	// for DEBUG
 	//std::map<std::wstring, WCHAR>::const_iterator iter = g_CERs.begin();
