@@ -180,6 +180,8 @@ PLUGIN_EXPORT double Update(void* data)
 			else
 			{
 				// Drive removed
+				changed = true;
+
 				if (data.directory)
 				{
 					CloseHandle(data.directory);

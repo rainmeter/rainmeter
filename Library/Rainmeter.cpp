@@ -267,6 +267,20 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfAr
 	}
 	else
 	{
+		// For backwards compatibility
+		if (bang == BANG_COMMANDMEASURE && subStringsSize >= 1)
+		{
+			std::wstring tmpSz = arg;
+			std::wstring::size_type pos = tmpSz.find_first_of(L' ');
+			if (pos != std::wstring::npos)
+			{
+				tmpSz.replace(pos, 1, L"\" \"");
+				BangWithArgs(bang, tmpSz.c_str(), numOfArgs, meterWindow);
+				Log(LOG_WARNING, L"!CommandMeasure: Two parameters required, only one given");
+				return;
+			}
+		}
+
 		Log(LOG_ERROR, L"Bang: Incorrect number of arugments");
 	}
 }
