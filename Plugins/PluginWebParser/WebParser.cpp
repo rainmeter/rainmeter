@@ -16,58 +16,43 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-// Note: To compile this you need the PCRE library (http://www.pcre.org/).
-// See: http://www.perldoc.com/perl5.8.0/pod/perlre.html
-
 #include <windows.h>
-#include <math.h>
 #include <string>
 #include <map>
 #include <vector>
+#include <algorithm>
 #include <Wininet.h>
 #include <shlwapi.h>
 #include <process.h>
 #include "../../Library/pcre-8.10/config.h"
 #include "../../Library/pcre-8.10/pcre.h"
-#include "../../Library/Export.h"	// Rainmeter's exported functions
-
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+#include "../API/RainmeterAPI.h"
 
-/* The exported functions */
-extern "C"
-{
-__declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
-__declspec( dllexport ) double Update2(UINT id);
-__declspec( dllexport ) LPCTSTR GetString(UINT id, UINT flags);
-__declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-__declspec( dllexport ) UINT GetPluginVersion();
-__declspec( dllexport ) LPCTSTR GetPluginAuthor();
-}
-
-struct UrlData
+struct MeasureData
 {
 	std::wstring url;
 	std::wstring regExp;
 	std::wstring resultString;
 	std::wstring errorString;
-	std::wstring proxy;
+	std::wstring finishAction;
+	std::wstring downloadFolder;
+	std::wstring downloadFile;
+	std::wstring downloadedFile;
+	std::wstring debugFileLocation;
+	LPCWSTR section;
+	void* skin;
+	HANDLE threadHandle;
+	HANDLE dlThreadHandle;
 	int codepage;
 	int stringIndex;
 	int stringIndex2;
 	int decodeCharacterReference;
+	int debug;
 	UINT updateRate;
 	UINT updateCounter;
-	std::wstring section;
-	std::wstring finishAction;
 	bool download;
 	bool forceReload;
-	std::wstring downloadFile;
-	std::wstring downloadedFile;
-	std::wstring iniFile;
-	int debug;
-	std::wstring debugFileLocation;
-	HANDLE threadHandle;
-	HANDLE dlThreadHandle;
 };
 
 BYTE* DownloadUrl(std::wstring& url, DWORD* dwSize, bool forceReload);
@@ -75,14 +60,14 @@ void ShowError(int lineNumber, WCHAR* errorMsg = NULL);
 unsigned __stdcall NetworkThreadProc(void* pParam);
 unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
 void Log(int level, const WCHAR* string);
-void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize);
+void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize);
 
 CRITICAL_SECTION g_CriticalSection;
-bool g_Initialized = false;
+UINT g_InstanceCount = 0;
 
-static std::map<UINT, UrlData*> g_UrlData;
+static std::vector<MeasureData*> g_Measures;
 static bool g_Debug = false;
-static HINTERNET hRootHandle = NULL;
+static HINTERNET g_InternetHandle = NULL;
 
 static std::map<std::wstring, WCHAR> g_CERs;
 
@@ -534,266 +519,162 @@ void FillCharacterEntityReferences()
 	//}
 }
 
-bool BelongToSameProcess(HWND wnd)
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
-	DWORD procId = 0;
-	GetWindowThreadProcessId(wnd, &procId);
+	MeasureData* measure = new MeasureData;
+	*data = measure;
+	g_Measures.push_back(measure);
 
-	return (procId == GetCurrentProcessId());
-}
+	measure->skin = RmGetSkin(rm);
 
-HWND FindMeterWindow(HWND parent)
-{
-	HWND wnd = NULL;
-
-	while (wnd = FindWindowEx(parent, wnd, L"RainmeterMeterWindow", NULL))
-	{
-		if (BelongToSameProcess(wnd))
-		{
-			return wnd;
-		}
-	}
-
-	return NULL;
-}
-
-HWND FindMeterWindow(const std::wstring& iniFile)
-{
-	std::wstring str = PluginBridge(L"getconfig", iniFile.c_str());
-	if (!str.empty())
-	{
-		str = PluginBridge(L"getwindow", str.c_str());
-		if (str != L"error")
-		{
-			return (HWND)UlongToPtr(wcstoul(str.c_str(), NULL, 10));
-		}
-	}
-
-	return FindMeterWindow(NULL);  // Use old way to find
-}
-
-/*
-  This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured.
-  The return value can also be 0, which means that Rainmeter will
-  track the maximum value automatically. The parameters for this
-  function are:
-
-  instance  The instance of this DLL
-  iniFile   The name of the ini-file (usually Rainmeter.ini)
-  section   The name of the section in the ini-file for this measure
-  id        The identifier for the measure. This is used to identify the measures that use the same plugin.
-*/
-UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
-{
-	LPCTSTR tmpSz;
-
-	if (!g_Initialized)
+	if (g_InstanceCount == 0)
 	{
 		InitializeCriticalSection(&g_CriticalSection);
 		FillCharacterEntityReferences();
-		g_Initialized = true;
+
+		LPCWSTR proxy = RmReadString(rm, L"ProxyServer", L"");
+		g_InternetHandle = InternetOpen(L"Rainmeter WebParser plugin",
+			*proxy ? INTERNET_OPEN_TYPE_PROXY : INTERNET_OPEN_TYPE_PRECONFIG,
+			*proxy ? proxy : NULL,
+			NULL,
+			0);
+
+		if (g_InternetHandle == NULL)
+		{
+			ShowError(__LINE__);
+		}
 	}
 
-	UrlData* data = new UrlData;
-	data->section = section;
-	data->decodeCharacterReference = 0;
-	data->updateRate = 600;
-	data->updateCounter = 0;
-	data->iniFile = iniFile;
+	++g_InstanceCount;
+}
+
+PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+{
+	MeasureData* measure = (MeasureData*)data;
+
+	if (!measure->url.empty())
+	{
+		// No support for DynamicVariables yet
+		return;
+	}
+
+	measure->section = RmGetMeasureName(rm);
+	measure->decodeCharacterReference = 0;
+	measure->updateRate = 600;
+	measure->updateCounter = 0;
 
 	/* Read our own settings from the ini-file */
 
-	data->url = ReadConfigString(section, L"Url", L"");
-	data->regExp = ReadConfigString(section, L"RegExp", L"");
-	data->finishAction = ReadConfigString(section, L"FinishAction", L"");
-	data->errorString = ReadConfigString(section, L"ErrorString", L"");
-	data->proxy = ReadConfigString(section, L"ProxyServer", L"");
-	data->downloadFile = ReadConfigString(section, L"DownloadFile", L"");
-	data->debugFileLocation = ReadConfigString(section, L"Debug2File", L"c:\\WebParserDump.txt");
+	measure->url = RmReadString(rm, L"Url", L"", FALSE);
+	measure->regExp = RmReadString(rm, L"RegExp", L"");
+	measure->finishAction = RmReadString(rm, L"FinishAction", L"");
+	measure->errorString = RmReadString(rm, L"ErrorString", L"");
 
-	if (data->debugFileLocation.find(L"\\") == std::wstring::npos)
+	measure->stringIndex = RmReadInt(rm, L"StringIndex", 0);
+	measure->stringIndex2 = RmReadInt(rm, L"StringIndex2", 0);
+	measure->decodeCharacterReference = RmReadInt(rm, L"DecodeCharacterReference", 0);
+	measure->updateRate = RmReadInt(rm, L"UpdateRate", 600);
+	measure->download = 1 == RmReadInt(rm, L"Download", 0);
+	measure->forceReload = 1 == RmReadInt(rm, L"ForceReload", 0);
+	measure->debug = RmReadInt(rm, L"Debug", 0);
+	measure->codepage = RmReadInt(rm, L"CodePage", 0);
+
+	if (measure->download)
 	{
-		std::wstring str = data->iniFile.substr(0,data->iniFile.find_last_of(L"\\")+1);
-		str += data->debugFileLocation;
-		Log(LOG_DEBUG, str.c_str());
-		data->debugFileLocation = str;
+		measure->downloadFolder = RmPathToAbsolute(rm, L"DownloadFile\\");
+		measure->downloadFile = RmReadString(rm, L"DownloadFile", L"");
+	}
+	else
+	{
+		measure->downloadFile.clear();
 	}
 
-	tmpSz = ReadConfigString(section, L"StringIndex", L"0");
-	if (tmpSz)
+	if (measure->debug == 2)
 	{
-		data->stringIndex = _wtoi(tmpSz);
+		measure->debugFileLocation = RmReadPath(rm, L"Debug2File", L"C:\\WebParserDump.txt");
+		Log(LOG_DEBUG, measure->debugFileLocation.c_str());
 	}
 
-	tmpSz = ReadConfigString(section, L"StringIndex2", L"0");
-	if (tmpSz)
-	{
-		data->stringIndex2 = _wtoi(tmpSz);
-	}
-
-	tmpSz = ReadConfigString(section, L"DecodeCharacterReference", L"0");
-	if (tmpSz)
-	{
-		data->decodeCharacterReference = _wtoi(tmpSz);
-	}
-
-	tmpSz = ReadConfigString(section, L"UpdateRate", L"600");
-	if (tmpSz && *tmpSz)
-	{
-		data->updateRate = _wtoi(tmpSz);
-	}
-
-	tmpSz = ReadConfigString(section, L"Download", L"0");
-	if (tmpSz)
-	{
-		data->download = 1 == _wtoi(tmpSz);
-	}
-
-	tmpSz = ReadConfigString(section, L"ForceReload", L"0");
-	if (tmpSz)
-	{
-		data->forceReload = 1 == _wtoi(tmpSz);
-	}
-
-	tmpSz = ReadConfigString(section, L"Debug", L"0");
-	if (tmpSz)
-	{
-		data->debug = _wtoi(tmpSz);
-	}
-
-	tmpSz = ReadConfigString(section, L"CodePage", L"0");
-	if (tmpSz)
-	{
-		data->codepage = _wtoi(tmpSz);
-	}
-
-	if (hRootHandle == NULL)
-	{
-		if (data->proxy.empty())
-		{
-			hRootHandle = InternetOpen(L"Rainmeter WebParser plugin",
-										INTERNET_OPEN_TYPE_PRECONFIG,
-										NULL,
-										NULL,
-										0);
-		}
-		else
-		{
-			hRootHandle = InternetOpen(L"Rainmeter WebParser plugin",
-										INTERNET_OPEN_TYPE_PROXY,
-										data->proxy.c_str(),
-										NULL,
-										0);
-		}
-
-		if (hRootHandle == NULL)
-		{
-			ShowError(__LINE__);
-			delete data;
-			return 0;
-		}
-	}
-
-	data->threadHandle = 0;
-	data->dlThreadHandle = 0;
-
-	// During initialization there is no threads yet so no need to do any locking
-	g_UrlData[id] = data;
-
-	return 0;
+	measure->threadHandle = 0;
+	measure->dlThreadHandle = 0;
 }
 
-/*
-  This function is called when new value should be measured.
-  The function returns the new value.
-*/
-double Update2(UINT id)
+PLUGIN_EXPORT double Update(void* data)
 {
+	MeasureData* measure = (MeasureData*)data;
 	double value = 0;
-	UrlData* urlData = NULL;
 
-	// Find the data for this instance (the data structure is not changed by anyone so this should be safe)
-	std::map<UINT, UrlData*>::iterator urlIter = g_UrlData.find(id);
-	if (urlIter != g_UrlData.end())
+	if (measure->download && measure->regExp.empty() && measure->url.find(L'[') == std::wstring::npos)
 	{
-		urlData = (*urlIter).second;
-	}
-
-	if (urlData)
-	{
-		if (urlData->download && urlData->regExp.empty() && urlData->url.find(L'[') == std::wstring::npos)
+		// If RegExp is empty download the file that is pointed by the Url
+		if (measure->dlThreadHandle == 0)
 		{
-			// If RegExp is empty download the file that is pointed by the Url
-			if (urlData->dlThreadHandle == 0)
+			if (measure->updateCounter == 0)
 			{
-				if (urlData->updateCounter == 0)
+				// Launch a new thread to fetch the web data
+				unsigned int id;
+				HANDLE threadHandle = (HANDLE)_beginthreadex(NULL, 0, NetworkDownloadThreadProc, measure, 0, &id);
+				if (threadHandle)
+				{
+					measure->dlThreadHandle = threadHandle;
+				}
+				else  // error
+				{
+					std::wstring log = L"WebParser.dll: [";
+					log += measure->section;
+					log += L"] Failed to begin download thread.";
+					Log(LOG_ERROR, log.c_str());
+				}
+			}
+
+			measure->updateCounter++;
+			if (measure->updateCounter >= measure->updateRate)
+			{
+				measure->updateCounter = 0;
+			}
+		}
+
+		// Else download the file pointed by the result string (this is done later)
+	}
+	else
+	{
+		// Make sure that the thread is not writing to the result at the same time
+		EnterCriticalSection(&g_CriticalSection);
+
+		if (!measure->resultString.empty())
+		{
+			value = wcstod(measure->resultString.c_str(), NULL);
+		}
+
+		LeaveCriticalSection(&g_CriticalSection);
+
+		if (measure->url.size() > 0 && measure->url.find(L'[') == std::wstring::npos)
+		{
+			// This is not a reference; need to update.
+			if (measure->threadHandle == 0 && measure->dlThreadHandle == 0)
+			{
+				if (measure->updateCounter == 0)
 				{
 					// Launch a new thread to fetch the web data
 					unsigned int id;
-					HANDLE threadHandle = (HANDLE)_beginthreadex(NULL, 0, NetworkDownloadThreadProc, urlData, 0, &id);
+					HANDLE threadHandle = (HANDLE)_beginthreadex(NULL, 0, NetworkThreadProc, measure, 0, &id);
 					if (threadHandle)
 					{
-						urlData->dlThreadHandle = threadHandle;
+						measure->threadHandle = threadHandle;
 					}
 					else  // error
 					{
 						std::wstring log = L"WebParser.dll: [";
-						log += urlData->section;
-						log += L"] Failed to begin download thread.";
+						log += measure->section;
+						log += L"] Failed to begin thread.";
 						Log(LOG_ERROR, log.c_str());
 					}
 				}
 
-				urlData->updateCounter++;
-				if (urlData->updateCounter >= urlData->updateRate)
+				measure->updateCounter++;
+				if (measure->updateCounter >= measure->updateRate)
 				{
-					urlData->updateCounter = 0;
-				}
-			}
-
-			// Else download the file pointed by the result string (this is done later)
-		}
-		else
-		{
-			// Make sure that the thread is not writing to the result at the same time
-			EnterCriticalSection(&g_CriticalSection);
-
-			if (!urlData->resultString.empty())
-			{
-				value = wcstod(urlData->resultString.c_str(), NULL);
-			}
-
-			LeaveCriticalSection(&g_CriticalSection);
-
-			if (urlData->url.size() > 0 && urlData->url.find(L'[') == std::wstring::npos)
-			{
-				// This is not a reference; need to update.
-				if (urlData->threadHandle == 0 && urlData->dlThreadHandle == 0)
-				{
-					if (urlData->updateCounter == 0)
-					{
-						// Launch a new thread to fetch the web data
-						unsigned int id;
-						HANDLE threadHandle = (HANDLE)_beginthreadex(NULL, 0, NetworkThreadProc, urlData, 0, &id);
-						if (threadHandle)
-						{
-							urlData->threadHandle = threadHandle;
-						}
-						else  // error
-						{
-							std::wstring log = L"WebParser.dll: [";
-							log += urlData->section;
-							log += L"] Failed to begin thread.";
-							Log(LOG_ERROR, log.c_str());
-						}
-					}
-
-					urlData->updateCounter++;
-					if (urlData->updateCounter >= urlData->updateRate)
-					{
-						urlData->updateCounter = 0;
-					}
+					measure->updateCounter = 0;
 				}
 			}
 		}
@@ -802,25 +683,21 @@ double Update2(UINT id)
 	return value;
 }
 
-
-
-/*
-  Thread that fetches the data from the net and parses the page.
-*/
+// Fetches the data from the net and parses the page
 unsigned __stdcall NetworkThreadProc(void* pParam)
 {
-	UrlData* urlData = (UrlData*)pParam;
+	MeasureData* measure = (MeasureData*)pParam;
 	DWORD dwSize = 0;
 
-	BYTE* data = DownloadUrl(urlData->url, &dwSize, urlData->forceReload);
+	BYTE* data = DownloadUrl(measure->url, &dwSize, measure->forceReload);
 
 	if (data)
 	{
-		if (urlData->debug == 2)
+		if (measure->debug == 2)
 		{
 			// Dump to a file
 
-			FILE* file = _wfopen(urlData->debugFileLocation.c_str(), L"wb");
+			FILE* file = _wfopen(measure->debugFileLocation.c_str(), L"wb");
 			if (file)
 			{
 				fwrite(data, sizeof(BYTE), dwSize, file);
@@ -829,27 +706,27 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 			else
 			{
 				std::wstring log = L"WebParser.dll: [";
-				log += urlData->section;
+				log += measure->section;
 				log += L"] Failed to dump debug data: ";
-				log += urlData->debugFileLocation;
+				log += measure->debugFileLocation;
 				Log(LOG_ERROR, log.c_str());
 			}
 		}
 
-		ParseData(urlData, (LPCSTR)data, dwSize);
+		ParseData(measure, (LPCSTR)data, dwSize);
 
 		delete [] data;
 	}
 
 	EnterCriticalSection(&g_CriticalSection);
-	CloseHandle(urlData->threadHandle);
-	urlData->threadHandle = 0;
+	CloseHandle(measure->threadHandle);
+	measure->threadHandle = 0;
 	LeaveCriticalSection(&g_CriticalSection);
 
 	return 0;   // thread completed successfully
 }
 
-void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
+void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 {
 	// Parse the value from the data
 	pcre* re;
@@ -859,14 +736,14 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 	int rc;
 	int flags = PCRE_UTF8;
 
-	if (urlData->codepage == 0)
+	if (measure->codepage == 0)
 	{
 		flags = 0;
 	}
 
 	// Compile the regular expression in the first argument
 	re = pcre_compile(
-		ConvertWideToUTF8(urlData->regExp.c_str()).c_str(),   // the pattern
+		ConvertWideToUTF8(measure->regExp.c_str()).c_str(),   // the pattern
 		flags,					  // default options
 		&error,               // for error message
 		&erroffset,           // for error offset
@@ -877,17 +754,17 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 		// Compilation succeeded: match the subject in the second argument
 		std::string utf8Data;
 
-		if (urlData->codepage == 1200)		// 1200 = UTF-16LE
+		if (measure->codepage == 1200)		// 1200 = UTF-16LE
 		{
 			// Must convert the data to utf8
 			utf8Data = ConvertWideToUTF8((LPCWSTR)parseData);
 			parseData = utf8Data.c_str();
 			dwSize = utf8Data.length();
 		}
-		else if (urlData->codepage != CP_UTF8 && urlData->codepage != 0)		// 0 = CP_ACP
+		else if (measure->codepage != CP_UTF8 && measure->codepage != 0)		// 0 = CP_ACP
 		{
 			// Must convert the data to utf8
-			utf8Data = ConvertAsciiToUTF8(parseData, urlData->codepage);
+			utf8Data = ConvertAsciiToUTF8(parseData, measure->codepage);
 			parseData = utf8Data.c_str();
 			dwSize = utf8Data.length();
 		}
@@ -909,15 +786,15 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 			{
 				// The output vector wasn't big enough
 				std::wstring log = L"WebParser.dll: [";
-				log += urlData->section;
+				log += measure->section;
 				log += L"] Too many substrings!";
 				Log(LOG_ERROR, log.c_str());
 			}
 			else
 			{
-				if (urlData->stringIndex < rc)
+				if (measure->stringIndex < rc)
 				{
-					if (urlData->debug != 0)
+					if (measure->debug != 0)
 					{
 						for (int i = 0; i < rc; ++i)
 						{
@@ -930,7 +807,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 							wsprintf(buffer, L"%2d", i);
 
 							std::wstring log = L"WebParser.dll: [";
-							log += urlData->section;
+							log += measure->section;
 							log += L"] (Index ";
 							log += buffer;
 							log += L") ";
@@ -939,62 +816,63 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 						}
 					}
 
-					const char* substring_start = parseData + ovector[2 * urlData->stringIndex];
-					int substring_length = ovector[2 * urlData->stringIndex + 1] - ovector[2 * urlData->stringIndex];
+					const char* substring_start = parseData + ovector[2 * measure->stringIndex];
+					int substring_length = ovector[2 * measure->stringIndex + 1] - ovector[2 * measure->stringIndex];
 
 					EnterCriticalSection(&g_CriticalSection);
 					std::string szResult(substring_start, substring_length);
-					urlData->resultString = DecodeReferences(ConvertUTF8ToWide(szResult.c_str()), urlData->decodeCharacterReference);
+					measure->resultString = DecodeReferences(ConvertUTF8ToWide(szResult.c_str()), measure->decodeCharacterReference);
 					LeaveCriticalSection(&g_CriticalSection);
 				}
 				else
 				{
 					std::wstring log = L"WebParser.dll: [";
-					log += urlData->section;
+					log += measure->section;
 					log += L"] Not enough substrings!";
 					Log(LOG_WARNING, log.c_str());
 
 					// Clear the old result
 					EnterCriticalSection(&g_CriticalSection);
-					urlData->resultString.clear();
-					if (urlData->download)
+					measure->resultString.clear();
+					if (measure->download)
 					{
-						if (urlData->downloadFile.empty())  // cache mode
+						if (measure->downloadFile.empty())  // cache mode
 						{
-							if (!urlData->downloadedFile.empty())
+							if (!measure->downloadedFile.empty())
 							{
 								// Delete old downloaded file
-								DeleteFile(urlData->downloadedFile.c_str());
+								DeleteFile(measure->downloadedFile.c_str());
 							}
 						}
-						urlData->downloadedFile.clear();
+						measure->downloadedFile.clear();
 					}
 					LeaveCriticalSection(&g_CriticalSection);
 				}
 
 				// Update the references
-				std::map<UINT, UrlData*>::iterator i = g_UrlData.begin();
+				std::vector<MeasureData*>::iterator i = g_Measures.begin();
 				std::wstring compareStr = L"[";
-				compareStr += urlData->section;
+				compareStr += measure->section;
 				compareStr += L"]";
-				for ( ; i != g_UrlData.end(); ++i)
+				for ( ; i != g_Measures.end(); ++i)
 				{
-					if ((((*i).second)->url.find(compareStr) != std::wstring::npos) && (urlData->iniFile == ((*i).second)->iniFile))
+					if (measure->skin == (*i)->skin &&
+						(*i)->url.find(compareStr) != std::wstring::npos)
 					{
-						if (((*i).second)->stringIndex < rc)
+						if ((*i)->stringIndex < rc)
 						{
-							const char* substring_start = parseData + ovector[2 * ((*i).second)->stringIndex];
-							int substring_length = ovector[2 * ((*i).second)->stringIndex + 1] - ovector[2 * ((*i).second)->stringIndex];
+							const char* substring_start = parseData + ovector[2 * (*i)->stringIndex];
+							int substring_length = ovector[2 * (*i)->stringIndex + 1] - ovector[2 * (*i)->stringIndex];
 
 							std::string szResult(substring_start, substring_length);
 
-							if (!((*i).second)->regExp.empty())
+							if (!(*i)->regExp.empty())
 							{
 								// Change the index and parse the substring
-								int index = (*i).second->stringIndex;
-								(*i).second->stringIndex = (*i).second->stringIndex2;
-								ParseData((*i).second, szResult.c_str(), szResult.length());
-								(*i).second->stringIndex = index;
+								int index = (*i)->stringIndex;
+								(*i)->stringIndex = (*i)->stringIndex2;
+								ParseData((*i), szResult.c_str(), szResult.length());
+								(*i)->stringIndex = index;
 							}
 							else
 							{
@@ -1003,25 +881,25 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 
 								// Substitude the [measure] with szResult
 								std::wstring wzResult = ConvertUTF8ToWide(szResult.c_str());
-								std::wstring wzUrl = ((*i).second)->url;
+								std::wstring wzUrl = (*i)->url;
 
 								wzUrl.replace(wzUrl.find(compareStr), compareStr.size(), wzResult);
-								((*i).second)->resultString = DecodeReferences(wzUrl, (*i).second->decodeCharacterReference);
+								(*i)->resultString = DecodeReferences(wzUrl, (*i)->decodeCharacterReference);
 
 								// Start download threads for the references
-								if (((*i).second)->download)
+								if ((*i)->download)
 								{
 									// Start the download thread
 									unsigned int id;
-									HANDLE threadHandle = (HANDLE)_beginthreadex(NULL, 0, NetworkDownloadThreadProc, ((*i).second), 0, &id);
+									HANDLE threadHandle = (HANDLE)_beginthreadex(NULL, 0, NetworkDownloadThreadProc, (*i), 0, &id);
 									if (threadHandle)
 									{
-										((*i).second)->dlThreadHandle = threadHandle;
+										(*i)->dlThreadHandle = threadHandle;
 									}
 									else  // error
 									{
 										std::wstring log = L"WebParser.dll: [";
-										log += (*i).second->section;
+										log += (*i)->section;
 										log += L"] Failed to begin download thread.";
 										Log(LOG_ERROR, log.c_str());
 									}
@@ -1033,24 +911,24 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 						else
 						{
 							std::wstring log = L"WebParser.dll: [";
-							log += (*i).second->section;
+							log += (*i)->section;
 							log += L"] Not enough substrings!";
 							Log(LOG_WARNING, log.c_str());
 
 							// Clear the old result
 							EnterCriticalSection(&g_CriticalSection);
-							((*i).second)->resultString.clear();
-							if ((*i).second->download)
+							(*i)->resultString.clear();
+							if ((*i)->download)
 							{
-								if ((*i).second->downloadFile.empty())  // cache mode
+								if ((*i)->downloadFile.empty())  // cache mode
 								{
-									if (!(*i).second->downloadedFile.empty())
+									if (!(*i)->downloadedFile.empty())
 									{
 										// Delete old downloaded file
-										DeleteFile((*i).second->downloadedFile.c_str());
+										DeleteFile((*i)->downloadedFile.c_str());
 									}
 								}
-								(*i).second->downloadedFile.clear();
+								(*i)->downloadedFile.clear();
 							}
 							LeaveCriticalSection(&g_CriticalSection);
 						}
@@ -1065,25 +943,25 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 			wsprintf(buffer, L"%d", rc);
 
 			std::wstring log = L"WebParser.dll: [";
-			log += urlData->section;
+			log += measure->section;
 			log += L"] Matching error! (";
 			log += buffer;
 			log += L")\n";
 			Log(LOG_ERROR, log.c_str());
 
 			EnterCriticalSection(&g_CriticalSection);
-			urlData->resultString = urlData->errorString;
+			measure->resultString = measure->errorString;
 
 			// Update the references
-			std::map<UINT, UrlData*>::iterator i = g_UrlData.begin();
+			std::vector<MeasureData*>::iterator i = g_Measures.begin();
 			std::wstring compareStr = L"[";
-			compareStr += urlData->section;
+			compareStr += measure->section;
 			compareStr += L"]";
-			for ( ; i != g_UrlData.end(); ++i)
+			for ( ; i != g_Measures.end(); ++i)
 			{
-				if ((((*i).second)->url.find(compareStr) != std::wstring::npos) && (urlData->iniFile == ((*i).second)->iniFile))
+				if (((*i)->url.find(compareStr) != std::wstring::npos) && (measure->skin == (*i)->skin))
 				{
-					((*i).second)->resultString = ((*i).second)->errorString;
+					(*i)->resultString = (*i)->errorString;
 				}
 			}
 			LeaveCriticalSection(&g_CriticalSection);
@@ -1099,7 +977,7 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 		wsprintf(buffer, L"%d", erroffset);
 
 		std::wstring log = L"WebParser.dll: [";
-		log += urlData->section;
+		log += measure->section;
 		log += L"] PCRE compilation failed at offset ";
 		log += buffer;
 		log += L": ";
@@ -1108,66 +986,52 @@ void ParseData(UrlData* urlData, LPCSTR parseData, DWORD dwSize)
 		Log(LOG_ERROR, log.c_str());
 	}
 
-	if (urlData->download)
+	if (measure->download)
 	{
 		// Start the download thread
 		unsigned int id;
-		HANDLE threadHandle = (HANDLE)_beginthreadex(NULL, 0, NetworkDownloadThreadProc, urlData, 0, &id);
+		HANDLE threadHandle = (HANDLE)_beginthreadex(NULL, 0, NetworkDownloadThreadProc, measure, 0, &id);
 		if (threadHandle)
 		{
-			urlData->dlThreadHandle = threadHandle;
+			measure->dlThreadHandle = threadHandle;
 		}
 		else  // error
 		{
 			std::wstring log = L"WebParser.dll: [";
-			log += urlData->section;
+			log += measure->section;
 			log += L"] Failed to begin download thread.";
 			Log(LOG_ERROR, log.c_str());
 		}
 	}
 	else
 	{
-		if (!urlData->finishAction.empty())
+		if (!measure->finishAction.empty())
 		{
-			HWND wnd = FindMeterWindow(urlData->iniFile);
-
-			if (wnd != NULL)
-			{
-				COPYDATASTRUCT copyData;
-
-				copyData.dwData = 1;
-				copyData.cbData = (DWORD)(urlData->finishAction.size() + 1) * sizeof(WCHAR);
-				copyData.lpData = (void*)urlData->finishAction.c_str();
-
-				// Send the bang to the Rainmeter window
-				SendMessage(wnd, WM_COPYDATA, (WPARAM)NULL, (LPARAM)&copyData);
-			}
+			RmExecute(measure->skin, measure->finishAction.c_str());
 		}
 	}
 }
 
-/*
-  Thread that downloads the file from the new.
-*/
+// Downloads file from the net
 unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 {
-	UrlData* urlData = (UrlData*)pParam;
-	const bool download = !urlData->downloadFile.empty();
+	MeasureData* measure = (MeasureData*)pParam;
+	const bool download = !measure->downloadFile.empty();
 	bool ready = false;
 
 	std::wstring url;
 
-	if (urlData->regExp.empty() && urlData->resultString.empty())
+	if (measure->regExp.empty() && measure->resultString.empty())
 	{
-		if (!urlData->url.empty() && urlData->url[0] != L'[')
+		if (!measure->url.empty() && measure->url[0] != L'[')
 		{
-			url = urlData->url;
+			url = measure->url;
 		}
 	}
 	else
 	{
 		EnterCriticalSection(&g_CriticalSection);
-		url = urlData->resultString;
+		url = measure->resultString;
 		LeaveCriticalSection(&g_CriticalSection);
 
 		std::wstring::size_type pos = url.find(L':');
@@ -1177,10 +1041,10 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			if (url[0] == L'/')
 			{
 				// Absolute path
-				pos = urlData->url.find(L'/', 7);	// Assume "http://" (=7)
+				pos = measure->url.find(L'/', 7);	// Assume "http://" (=7)
 				if (pos != std::wstring::npos)
 				{
-					std::wstring path(urlData->url.substr(0, pos));
+					std::wstring path(measure->url.substr(0, pos));
 					url = path + url;
 				}
 			}
@@ -1188,10 +1052,10 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			{
 				// Relative path
 
-				pos = urlData->url.rfind(L'/');
+				pos = measure->url.rfind(L'/');
 				if (pos != std::wstring::npos)
 				{
-					std::wstring path(urlData->url.substr(0, pos + 1));
+					std::wstring path(measure->url.substr(0, pos + 1));
 					url = path + url;
 				}
 			}
@@ -1206,7 +1070,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 
 		if (download)  // download mode
 		{
-			PathCanonicalize(buffer, urlData->downloadFile.c_str());
+			PathCanonicalize(buffer, measure->downloadFile.c_str());
 
 			std::wstring path = buffer;
 			std::wstring::size_type pos = path.find_first_not_of(L'\\');
@@ -1215,8 +1079,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 				path.erase(0, pos);
 			}
 
-			PathCanonicalize(buffer, urlData->iniFile.substr(0, urlData->iniFile.find_last_of(L'\\') + 1).c_str());  // "#CURRENTPATH#"
-			wcscat(buffer, L"DownloadFile\\");  // "#CURRENTPATH#DownloadFile\"
+			PathCanonicalize(buffer, measure->downloadFolder.c_str());
 			CreateDirectory(buffer, NULL);	// Make sure that the folder exists
 
 			wcscat(buffer, path.c_str());
@@ -1281,7 +1144,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 				ready = false;
 
 				log = L"WebParser.dll: [";
-				log += urlData->section;
+				log += measure->section;
 				log += L"] Directory does not exist: ";
 				log += directory;
 				Log(LOG_ERROR, log.c_str());
@@ -1291,7 +1154,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 				ready = false;
 
 				log = L"WebParser.dll: [";
-				log += urlData->section;
+				log += measure->section;
 				log += L"] Path is a directory, not a file: ";
 				log += fullpath;
 				Log(LOG_ERROR, log.c_str());
@@ -1304,7 +1167,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 					ready = false;
 
 					log = L"WebParser.dll: [";
-					log += urlData->section;
+					log += measure->section;
 					log += L"] File is READ-ONLY: ";
 					log += fullpath;
 					Log(LOG_ERROR, log.c_str());
@@ -1393,7 +1256,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 
 			// Write some log info
 			std::wstring log = L"WebParser.dll: [";
-			log += urlData->section;
+			log += measure->section;
 			log += L"] Downloading url ";
 			log += url;
 			log += L" to ";
@@ -1411,10 +1274,10 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 
 				if (!download)  // cache mode
 				{
-					if (!urlData->downloadedFile.empty())
+					if (!measure->downloadedFile.empty())
 					{
 						// Delete old downloaded file
-						DeleteFile(urlData->downloadedFile.c_str());
+						DeleteFile(measure->downloadedFile.c_str());
 					}
 				}
 
@@ -1427,25 +1290,13 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 						fullpath = buffer;
 					}
 				}
-				urlData->downloadedFile = fullpath;
+				measure->downloadedFile = fullpath;
 
 				LeaveCriticalSection(&g_CriticalSection);
 
-				if (!urlData->finishAction.empty())
+				if (!measure->finishAction.empty())
 				{
-					HWND wnd = FindMeterWindow(urlData->iniFile);
-
-					if (wnd != NULL)
-					{
-						COPYDATASTRUCT copyData;
-
-						copyData.dwData = 1;
-						copyData.cbData = (DWORD)(urlData->finishAction.size() + 1) * sizeof(WCHAR);
-						copyData.lpData = (void*)urlData->finishAction.c_str();
-
-						// Send the bang to the Rainmeter window
-						SendMessage(wnd, WM_COPYDATA, (WPARAM)NULL, (LPARAM)&copyData);
-					}
+					RmExecute(measure->skin, measure->finishAction.c_str());
 				}
 			}
 			else
@@ -1461,7 +1312,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 				wsprintf(buffer, L"result=0x%08X, COM=0x%08X", result, resultCoInitialize);
 
 				std::wstring log = L"WebParser.dll: [";
-				log += urlData->section;
+				log += measure->section;
 				log += L"] Download failed (";
 				log += buffer;
 				log += L"): ";
@@ -1477,7 +1328,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 		else
 		{
 			std::wstring log = L"WebParser.dll: [";
-			log += urlData->section;
+			log += measure->section;
 			log += L"] Download failed: ";
 			log += url;
 			Log(LOG_ERROR, log.c_str());
@@ -1486,7 +1337,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 	else
 	{
 		std::wstring log = L"WebParser.dll: [";
-		log += urlData->section;
+		log += measure->section;
 		log += L"] The url is empty.\n";
 		Log(LOG_ERROR, log.c_str());
 	}
@@ -1497,116 +1348,99 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 
 		if (!download) // cache mode
 		{
-			if (!urlData->downloadedFile.empty())
+			if (!measure->downloadedFile.empty())
 			{
 				// Delete old downloaded file
-				DeleteFile(urlData->downloadedFile.c_str());
+				DeleteFile(measure->downloadedFile.c_str());
 			}
 		}
 
 		// Clear old downloaded filename
-		urlData->downloadedFile.clear();
+		measure->downloadedFile.clear();
 
 		LeaveCriticalSection(&g_CriticalSection);
 	}
 
 	EnterCriticalSection(&g_CriticalSection);
-	CloseHandle(urlData->dlThreadHandle);
-	urlData->dlThreadHandle = 0;
+	CloseHandle(measure->dlThreadHandle);
+	measure->dlThreadHandle = 0;
 	LeaveCriticalSection(&g_CriticalSection);
 
 	return 0;   // thread completed successfully
 }
 
-/*
-  This function is called when the value should be
-  returned as a string.
-*/
-LPCTSTR GetString(UINT id, UINT flags)
+PLUGIN_EXPORT LPCWSTR GetString(void* data)
 {
+	MeasureData* measure = (MeasureData*)data;
 	static std::wstring resultString;
 
-	std::map<UINT, UrlData*>::iterator urlIter = g_UrlData.find(id);
-
-	if (urlIter != g_UrlData.end())
+	EnterCriticalSection(&g_CriticalSection);
+	if (measure->download)
 	{
-		EnterCriticalSection(&g_CriticalSection);
-		if (((*urlIter).second)->download)
-		{
-			resultString = ((*urlIter).second)->downloadedFile;
-		}
-		else
-		{
-			resultString = ((*urlIter).second)->resultString;
-		}
-		LeaveCriticalSection(&g_CriticalSection);
-
-		return resultString.c_str();
+		resultString = measure->downloadedFile;
 	}
+	else
+	{
+		resultString = measure->resultString;
+	}
+	LeaveCriticalSection(&g_CriticalSection);
 
-	return NULL;
+	return resultString.c_str();
 }
 
-/*
-  If the measure needs to free resources before quitting.
-  The plugin can export Finalize function, which is called
-  when Rainmeter quits (or refreshes).
-*/
-void Finalize(HMODULE instance, UINT id)
+PLUGIN_EXPORT void Finalize(void* data)
 {
-	std::map<UINT, UrlData*>::iterator urlIter = g_UrlData.find(id);
+	MeasureData* measure = (MeasureData*)data;
 
-	if (urlIter != g_UrlData.end())
+	if (measure->threadHandle)
 	{
-		if (((*urlIter).second)->threadHandle)
-		{
-			// Thread is killed inside critical section so that itself is not inside one when it is terminated
-			EnterCriticalSection(&g_CriticalSection);
+		// Thread is killed inside critical section so that itself is not inside one when it is terminated
+		EnterCriticalSection(&g_CriticalSection);
 
-			TerminateThread(((*urlIter).second)->threadHandle, 0);
-			(*urlIter).second->threadHandle = NULL;
+		TerminateThread(measure->threadHandle, 0);
+		measure->threadHandle = NULL;
 
-			LeaveCriticalSection(&g_CriticalSection);
-		}
-
-		if (((*urlIter).second)->dlThreadHandle)
-		{
-			// Thread is killed inside critical section so that itself is not inside one when it is terminated
-			EnterCriticalSection(&g_CriticalSection);
-
-			TerminateThread(((*urlIter).second)->dlThreadHandle, 0);
-			(*urlIter).second->dlThreadHandle = NULL;
-
-			LeaveCriticalSection(&g_CriticalSection);
-		}
-
-		if (((*urlIter).second)->downloadFile.empty())  // cache mode
-		{
-			if (!((*urlIter).second)->downloadedFile.empty())
-			{
-				// Delete the file
-				DeleteFile(((*urlIter).second)->downloadedFile.c_str());
-			}
-		}
-
-		delete (*urlIter).second;
-		g_UrlData.erase(urlIter);
+		LeaveCriticalSection(&g_CriticalSection);
 	}
 
-	if (g_UrlData.empty())
+	if (measure->dlThreadHandle)
+	{
+		// Thread is killed inside critical section so that itself is not inside one when it is terminated
+		EnterCriticalSection(&g_CriticalSection);
+
+		TerminateThread(measure->dlThreadHandle, 0);
+		measure->dlThreadHandle = NULL;
+
+		LeaveCriticalSection(&g_CriticalSection);
+	}
+
+	if (measure->downloadFile.empty())  // cache mode
+	{
+		if (!measure->downloadedFile.empty())
+		{
+			// Delete the file
+			DeleteFile(measure->downloadedFile.c_str());
+		}
+	}
+
+	delete measure;
+	std::vector<MeasureData*>::iterator iter = std::find(g_Measures.begin(), g_Measures.end(), measure);
+	g_Measures.erase(iter);
+
+	--g_InstanceCount;
+	if (g_InstanceCount == 0)
 	{
 		// Last one, close all handles
-		if (hRootHandle)
+		if (g_InternetHandle)
 		{
-			InternetCloseHandle(hRootHandle);
-			hRootHandle = NULL;
+			InternetCloseHandle(g_InternetHandle);
+			g_InternetHandle = NULL;
 		}
 
 		g_CERs.clear();
 
 		// Last instance deletes the critical section
 		DeleteCriticalSection(&g_CriticalSection);
-		g_Initialized = false;
 	}
 }
 
@@ -1634,13 +1468,13 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 		flags = INTERNET_FLAG_RELOAD;
 	}
 
-	hUrlDump = InternetOpenUrl(hRootHandle, url.c_str(), NULL, NULL, flags, 0);
+	hUrlDump = InternetOpenUrl(g_InternetHandle, url.c_str(), NULL, NULL, flags, 0);
 	if (hUrlDump == NULL)
 	{
 		if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
 		{
 			std::string urlACP = ConvertWideToAscii(url.c_str());
-			hUrlDump = InternetOpenUrlA(hRootHandle, urlACP.c_str(), NULL, NULL, flags, 0);
+			hUrlDump = InternetOpenUrlA(g_InternetHandle, urlACP.c_str(), NULL, NULL, flags, 0);
 		}
 
 		if (hUrlDump == NULL)
