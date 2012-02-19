@@ -608,23 +608,19 @@ void CRainmeter::Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow)
 		bool formula = false;
 		BOOL write = 0;
 
-		if (subStrings.size() > 4)
+		if (meterWindow)
 		{
-			CMeterWindow* mw = GetMeterWindow(subStrings[4]);
-			if (mw)
+			double value;
+			formula = meterWindow->GetParser().ParseFormula(strValue, &value);
+
+			// Formula read fine
+			if (formula)
 			{
-				double value;
-				formula = mw->GetParser().ParseFormula(strValue, &value);
+				WCHAR buffer[256];
+				int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
+				CMeasure::RemoveTrailingZero(buffer, len);
 
-				// Formula read fine
-				if (formula)
-				{
-					WCHAR buffer[256];
-					int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
-					CMeasure::RemoveTrailingZero(buffer, len);
-
-					write = WritePrivateProfileString(section, key, buffer, iniWrite);
-				}
+				write = WritePrivateProfileString(section, key, buffer, iniWrite);
 			}
 		}
 
