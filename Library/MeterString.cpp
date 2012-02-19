@@ -328,7 +328,7 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_NumOfDecimals = parser.ReadInt(section, L"NumOfDecimals", -1);
 
-	m_Angle = (Gdiplus::REAL)parser.ReadFloat(section, L"Angle", 0.0);
+	m_Angle = (Gdiplus::REAL)parser.ReadFormula(section, L"Angle", 0.0);
 
 	const std::wstring& autoscale = parser.ReadString(section, L"AutoScale", L"0");
 	int autoscaleValue = _wtoi(autoscale.c_str());

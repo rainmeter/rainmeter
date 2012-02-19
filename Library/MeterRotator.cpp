@@ -107,8 +107,8 @@ void CMeterRotator::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_OffsetX = parser.ReadFloat(section, L"OffsetX", 0.0);
 	m_OffsetY = parser.ReadFloat(section, L"OffsetY", 0.0);
-	m_StartAngle = parser.ReadFloat(section, L"StartAngle", 0.0);
-	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 6.2832);
+	m_StartAngle = parser.ReadFormula(section, L"StartAngle", 0.0);
+	m_RotationAngle = parser.ReadFormula(section, L"RotationAngle", 6.2832);
 
 	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", 0);		// Typo
 	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", m_ValueRemainder);

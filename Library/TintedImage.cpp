@@ -762,7 +762,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	if (!m_DisableTransform)
 	{
-		m_Rotate = (REAL)parser.ReadFloat(section, m_ConfigArray[ConfigIndexImageRotate], 0.0);
+		m_Rotate = (REAL)parser.ReadFormula(section, m_ConfigArray[ConfigIndexImageRotate], 0.0);
 	}
 
 	m_NeedsTransform = (oldFlip != m_Flip || oldRotate != m_Rotate);

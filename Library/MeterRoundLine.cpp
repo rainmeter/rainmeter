@@ -71,11 +71,11 @@ void CMeterRoundLine::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	// Read common configs
 	CMeter::ReadConfig(parser, section);
 
-	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
-	m_LineLength = parser.ReadFloat(section, L"LineLength", 20.0);
+	m_LineWidth = parser.ReadFormula(section, L"LineWidth", 1.0);
+	m_LineLength = parser.ReadFormula(section, L"LineLength", 20.0);
 	m_LineStart = parser.ReadFormula(section, L"LineStart", -1.0);
-	m_StartAngle = parser.ReadFloat(section, L"StartAngle", 0.0);
-	m_RotationAngle = parser.ReadFloat(section, L"RotationAngle", 6.2832);
+	m_StartAngle = parser.ReadFormula(section, L"StartAngle", 0.0);
+	m_RotationAngle = parser.ReadFormula(section, L"RotationAngle", 6.2832);
 	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", 0);		// Typo
 	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", m_ValueRemainder);
 	m_LineColor = parser.ReadColor(section, L"LineColor", Color::Black);
