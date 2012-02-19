@@ -266,9 +266,9 @@ unsigned int __stdcall QueryRecycleBinThreadProc(void* pParam)
 	g_BinCount = (double)rbi.i64NumItems;
 	g_BinSize = (double)rbi.i64Size;
 
+	CloseHandle(g_Thread);
 	g_Thread = NULL;
 
-	_endthreadex(0);
 	return 0;
 }
 

@@ -29,7 +29,7 @@ struct ParentMeasure
 		skin(),
 		ownerName(),
 		measureCount(1),
-		trackCount(1),
+		trackCount(0),
 		disableLeadingZero(false)
 	{}
 

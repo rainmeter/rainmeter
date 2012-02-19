@@ -28,11 +28,9 @@ BEGIN
     BEGIN
         BLOCK "040904E4"
         BEGIN
-            VALUE "FileDescription", "WebParser Plugin for Rainmeter"
             VALUE "FileVersion", "1.13.0.0"
-            VALUE "InternalName", "PluginWebParser"
-            VALUE "LegalCopyright", "Copyright (C) 2010 - Rainy"
-            VALUE "OriginalFilename", "PluginWebParser.dll"
+            VALUE "LegalCopyright", "© 2010 - Rainy"
+            VALUE "OriginalFilename", "WebParser.dll"
             VALUE "ProductName", "Rainmeter"
 #ifdef _WIN64
             VALUE "ProductVersion", STRPRODUCTVER " (64-bit)"
