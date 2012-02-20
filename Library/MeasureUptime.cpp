@@ -22,8 +22,6 @@
 #include "System.h"
 
 /*
-** CMeasureUptime
-**
 ** The constructor
 **
 */
@@ -33,8 +31,6 @@ CMeasureUptime::CMeasureUptime(CMeterWindow* meterWindow, const WCHAR* name) : C
 }
 
 /*
-** ~CMeasureUptime
-**
 ** The destructor
 **
 */
@@ -43,8 +39,6 @@ CMeasureUptime::~CMeasureUptime()
 }
 
 /*
-** ReadConfig
-**
 ** Reads the measure specific configs.
 **
 */
@@ -65,8 +59,6 @@ void CMeasureUptime::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Update
-**
 ** Updates the current uptime
 **
 */
@@ -81,8 +73,6 @@ bool CMeasureUptime::Update()
 }
 
 /*
-** GetStringValue
-**
 ** Returns the uptime as string.
 **
 */

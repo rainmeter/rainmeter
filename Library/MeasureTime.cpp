@@ -41,8 +41,6 @@ int GetYearDay(int year, int month, int day)
 }
 
 /*
-** CMeasureTime
-**
 ** The constructor
 **
 */
@@ -58,8 +56,6 @@ CMeasureTime::CMeasureTime(CMeterWindow* meterWindow, const WCHAR* name) : CMeas
 }
 
 /*
-** ~CMeasureTime
-**
 ** The destructor
 **
 */
@@ -68,8 +64,6 @@ CMeasureTime::~CMeasureTime()
 }
 
 /*
-** TimeToString
-**
 ** Converts given time to string.
 ** This function is a wrapper function for wcsftime.
 **
@@ -94,8 +88,6 @@ void CMeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, 
 }
 
 /*
-** Update
-**
 ** Updates the current time
 **
 */
@@ -166,8 +158,6 @@ bool CMeasureTime::Update()
 
 
 /*
-** GetStringValue
-**
 ** Returns the time as string.
 **
 */
@@ -221,8 +211,6 @@ const WCHAR* CMeasureTime::GetStringValue(AUTOSCALE autoScale, double scale, int
 }
 
 /*
-** ReadConfig
-**
 ** Reads the measure specific configs.
 **
 */

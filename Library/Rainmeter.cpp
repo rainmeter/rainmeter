@@ -45,8 +45,6 @@ enum INTERVAL
 CRainmeter* Rainmeter; // The module
 
 /*
-** RainmeterMain
-**
 ** Initializes Rainmeter.
 **
 */
@@ -121,8 +119,6 @@ int RainmeterMain(LPWSTR cmdLine)
 }
 
 /*
-** ParseString
-**
 ** Splits the given string into substrings
 **
 */
@@ -220,8 +216,6 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 }
 
 /*
-** BangWithArgs
-**
 ** Parses Bang args
 **
 */
@@ -286,8 +280,6 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfAr
 }
 
 /*
-** BangGroupWithArgs
-**
 ** Parses Bang args for Group
 **
 */
@@ -321,8 +313,6 @@ void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t nu
 }
 
 /*
-** Bang_ActivateConfig
-**
 ** !ActivateConfig bang
 **
 */
@@ -348,8 +338,6 @@ void CRainmeter::Bang_ActivateConfig(const WCHAR* arg)
 }
 
 /*
-** Bang_DeactivateConfig
-**
 ** !DeactivateConfig bang
 **
 */
@@ -378,8 +366,6 @@ void CRainmeter::Bang_DeactivateConfig(const WCHAR* arg, CMeterWindow* meterWind
 }
 
 /*
-** Bang_ToggleConfig
-**
 ** !ToggleConfig bang
 **
 */
@@ -406,8 +392,6 @@ void CRainmeter::Bang_ToggleConfig(const WCHAR* arg)
 }
 
 /*
-** Bang_DeactivateConfigGroup
-**
 ** !DeactivateConfigGroup bang
 **
 */
@@ -433,8 +417,6 @@ void CRainmeter::Bang_DeactivateConfigGroup(const WCHAR* arg)
 }
 
 /*
-** Bang_SetClip
-**
 ** !SetClip bang
 **
 */
@@ -453,8 +435,6 @@ void CRainmeter::Bang_SetClip(const WCHAR* arg)
 }
 
 /*
-** Bang_SetWallpaper
-**
 ** !SetWallpaper bang
 **
 */
@@ -477,8 +457,6 @@ void CRainmeter::Bang_SetWallpaper(const WCHAR* arg)
 }
 
 /*
-** Bang_SkinMenu
-**
 ** !SkinMenu bang
 **
 */
@@ -509,8 +487,6 @@ void CRainmeter::Bang_SkinMenu(const WCHAR* arg, CMeterWindow* meterWindow)
 }
 
 /*
-** Bang_TrayMenu
-**
 ** !TrayMenu bang
 **
 */
@@ -522,8 +498,6 @@ void CRainmeter::Bang_TrayMenu()
 }
 
 /*
-** Bang_WriteKeyValue
-**
 ** !WriteKeyValue bang
 **
 */
@@ -671,8 +645,6 @@ void CRainmeter::Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow)
 // -----------------------------------------------------------------------------------------------
 
 /*
-** CRainmeter
-**
 ** Constructor
 **
 */
@@ -704,8 +676,6 @@ CRainmeter::CRainmeter() :
 }
 
 /*
-** ~CRainmeter
-**
 ** Destructor
 **
 */
@@ -743,8 +713,6 @@ CRainmeter::~CRainmeter()
 }
 
 /*
-** Initialize
-**
 ** The main initialization function for the module.
 ** May throw CErrors !!!!
 **
@@ -1143,8 +1111,6 @@ void CRainmeter::SetNetworkStatisticsTimer()
 }
 
 /*
-** CreateDefaultConfigFile
-**
 ** Creates the default Rainmeter.ini file with illustro\System enabled.
 **
 */
@@ -1494,8 +1460,6 @@ int CRainmeter::GetLoadOrder(const std::wstring& config)
 }
 
 /*
-** ScanForConfigs
-**
 ** Scans all the subfolders and locates the ini-files.
 */
 void CRainmeter::ScanForConfigs(const std::wstring& path)
@@ -1604,8 +1568,6 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 }
 
 /*
-** ScanForThemes
-**
 ** Scans the given folder for themes
 */
 void CRainmeter::ScanForThemes(const std::wstring& path)
@@ -2002,8 +1964,6 @@ void CRainmeter::ExecuteBang(const std::wstring& name, std::wstring& arg, CMeter
 }
 
 /*
-** ExecuteCommand
-**
 ** Runs the given command or bang
 **
 */
@@ -2097,8 +2057,6 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 
 
 /*
-** DelayedExecuteCommand
-**
 ** Executes command when current processing is done.
 **
 */
@@ -2109,8 +2067,6 @@ void CRainmeter::DelayedExecuteCommand(const WCHAR* command)
 }
 
 /*
-** ReadGeneralSettings
-**
 ** Reads the general settings from the Rainmeter.ini file
 **
 */
@@ -2226,8 +2182,6 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 }
 
 /*
-** RefreshAll
-**
 ** Refreshes all active meter windows.
 ** Note: This function calls CMeterWindow::Refresh() directly for synchronization. Be careful about crash.
 **
@@ -2386,8 +2340,6 @@ void CRainmeter::PreserveSetting(const std::wstring& from, LPCTSTR key, bool rep
 }
 
 /*
-** UpdateDesktopWorkArea
-**
 ** Applies given DesktopWorkArea and DesktopWorkArea@n.
 **
 */
@@ -2500,8 +2452,6 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 }
 
 /*
-** ReadStats
-**
 ** Reads the statistics from the ini-file
 **
 */
@@ -2533,8 +2483,6 @@ void CRainmeter::ReadStats()
 }
 
 /*
-** WriteStats
-**
 ** Writes the statistics to the ini-file. If bForce is false the stats are written only once per an appropriate interval.
 **
 */
@@ -2557,8 +2505,6 @@ void CRainmeter::WriteStats(bool bForce)
 }
 
 /*
-** ResetStats
-**
 ** Clears the statistics
 **
 */
@@ -2577,8 +2523,6 @@ void CRainmeter::ResetStats()
 }
 
 /*
-** ShowContextMenu
-**
 ** Opens the context menu in given coordinates.
 **
 */

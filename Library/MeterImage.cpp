@@ -28,8 +28,6 @@ extern CRainmeter* Rainmeter;
 using namespace Gdiplus;
 
 /*
-** CMeterImage
-**
 ** The constructor
 **
 */
@@ -42,8 +40,6 @@ CMeterImage::CMeterImage(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(
 }
 
 /*
-** ~CMeterImage
-**
 ** The destructor
 **
 */
@@ -52,8 +48,6 @@ CMeterImage::~CMeterImage()
 }
 
 /*
-** Initialize
-**
 ** Load the image and get the dimensions of the meter from it.
 **
 */
@@ -71,8 +65,6 @@ void CMeterImage::Initialize()
 }
 
 /*
-** LoadImage
-**
 ** Loads the image from disk
 **
 */
@@ -111,8 +103,6 @@ void CMeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 }
 
 /*
-** ReadConfig
-**
 ** Read the meter-specific configs from the ini-file.
 **
 */
@@ -156,8 +146,6 @@ void CMeterImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Update
-**
 ** Updates the value(s) from the measures.
 **
 */
@@ -223,8 +211,6 @@ bool CMeterImage::Update()
 }
 
 /*
-** Draw
-**
 ** Draws the meter on the double buffer
 **
 */
@@ -358,8 +344,6 @@ bool CMeterImage::Draw(Graphics& graphics)
 }
 
 /*
-** BindMeasure
-**
 ** Overridden method. The Image meters need not to be bound on anything
 **
 */

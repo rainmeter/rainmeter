@@ -70,8 +70,6 @@ FPDWMISCOMPOSITIONENABLED CMeterWindow::c_DwmIsCompositionEnabled = NULL;
 extern CRainmeter* Rainmeter;
 
 /*
-** CMeterWindow
-**
 ** Constructor
 **
 */
@@ -163,8 +161,6 @@ CMeterWindow::CMeterWindow(const std::wstring& config, const std::wstring& iniFi
 }
 
 /*
-** ~CMeterWindow
-**
 ** Destructor
 **
 */
@@ -235,8 +231,6 @@ CMeterWindow::~CMeterWindow()
 }
 
 /*
-** Initialize
-**
 ** Initializes the window, creates the class and the window.
 **
 */
@@ -307,8 +301,6 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 }
 
 /*
-** IgnoreAeroPeek
-**
 ** Excludes this window from the Aero Peek.
 **
 */
@@ -322,8 +314,6 @@ void CMeterWindow::IgnoreAeroPeek()
 }
 
 /*
-** Deactivate
-**
 ** Unloads the skin with delay to avoid crash (and for fade to complete).
 **
 */
@@ -334,8 +324,6 @@ void CMeterWindow::Deactivate()
 }
 
 /*
-** Refresh
-**
 ** This deletes everything and rebuilds the config again.
 **
 */
@@ -581,8 +569,6 @@ void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 }
 
 /*
-** MoveWindow
-**
 ** Moves the window to a new place (on the virtual screen)
 **
 */
@@ -599,8 +585,6 @@ void CMeterWindow::MoveWindow(int x, int y)
 }
 
 /*
-** ChangeZPos
-**
 ** Sets the window's z-position
 **
 */
@@ -683,8 +667,6 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 }
 
 /*
-** ChangeSingleZPos
-**
 ** Sets the window's z-position in proper order.
 **
 */
@@ -707,8 +689,6 @@ void CMeterWindow::ChangeSingleZPos(ZPOSITION zPos, bool all)
 }
 
 /*
-** RunBang
-**
 ** Runs the bang command with the given arguments.
 ** Correct number of arguments must be passed (or use CRainmeter::ExecuteBang).
 */
@@ -972,8 +952,6 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 }
 
 /*
-** CompareName
-**
 ** This is a helper template that compares the given name to measure/meter's name.
 **
 */
@@ -984,8 +962,6 @@ bool CompareName(T* m, const WCHAR* name, bool group)
 }
 
 /*
-** ShowBlur
-**
 ** Enables blurring of the window background (using Aero)
 **
 */
@@ -1019,8 +995,6 @@ void CMeterWindow::ShowBlur()
 }
 
 /*
-** HideBlur
-**
 ** Disables Aero blur
 **
 */
@@ -1035,8 +1009,6 @@ void CMeterWindow::HideBlur()
 }
 
 /*
-** ResizeBlur
-**
 ** Adds to or removes from blur region
 **
 */
@@ -1120,8 +1092,6 @@ void CMeterWindow::ResizeBlur(const std::wstring& arg, int mode)
 }
 
 /*
-** ShowMeter
-**
 ** Shows the given meter
 **
 */
@@ -1144,8 +1114,6 @@ void CMeterWindow::ShowMeter(const std::wstring& name, bool group)
 }
 
 /*
-** HideMeter
-**
 ** Hides the given meter
 **
 */
@@ -1168,8 +1136,6 @@ void CMeterWindow::HideMeter(const std::wstring& name, bool group)
 }
 
 /*
-** ToggleMeter
-**
 ** Toggles the given meter
 **
 */
@@ -1199,8 +1165,6 @@ void CMeterWindow::ToggleMeter(const std::wstring& name, bool group)
 }
 
 /*
-** MoveMeter
-**
 ** Moves the given meter
 **
 */
@@ -1224,8 +1188,6 @@ void CMeterWindow::MoveMeter(const std::wstring& name, int x, int y)
 }
 
 /*
-** UpdateMeter
-**
 ** Updates the given meter
 **
 */
@@ -1266,8 +1228,6 @@ void CMeterWindow::UpdateMeter(const std::wstring& name, bool group)
 }
 
 /*
-** EnableMeasure
-**
 ** Enables the given measure
 **
 */
@@ -1289,8 +1249,6 @@ void CMeterWindow::EnableMeasure(const std::wstring& name, bool group)
 }
 
 /*
-** DisableMeasure
-**
 ** Disables the given measure
 **
 */
@@ -1312,8 +1270,6 @@ void CMeterWindow::DisableMeasure(const std::wstring& name, bool group)
 }
 
 /*
-** ToggleMeasure
-**
 ** Toggless the given measure
 **
 */
@@ -1342,8 +1298,6 @@ void CMeterWindow::ToggleMeasure(const std::wstring& name, bool group)
 }
 
 /*
-** UpdateMeasure
-**
 ** Updates the given measure
 **
 */
@@ -1373,8 +1327,6 @@ void CMeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 }
 
 /*
-** SetVariable
-**
 ** Sets variable to given value.
 **
 */
@@ -1398,8 +1350,6 @@ void CMeterWindow::SetVariable(const std::wstring& variable, const std::wstring&
 }
 
 /*
-** SetOption
-**
 ** Changes the property of a meter or measure.
 **
 */
@@ -1823,8 +1773,6 @@ void CMeterWindow::ScreenToWindow()
 }
 
 /*
-** ReadConfig
-**
 ** Reads the current config
 **
 */
@@ -1916,8 +1864,6 @@ void CMeterWindow::ReadConfig()
 }
 
 /*
-** WriteConfig
-**
 ** Writes the new settings to the config
 **
 */
@@ -2003,8 +1949,6 @@ void CMeterWindow::WriteConfig(INT setting)
 }
 
 /*
-** ReadSkin
-**
 ** Reads the skin config, creates the meters and measures and does the bindings.
 **
 */
@@ -2294,8 +2238,6 @@ bool CMeterWindow::ReadSkin()
 }
 
 /*
-** InitializeMeasures
-**
 ** Initializes all the measures
 **
 */
@@ -2317,8 +2259,6 @@ void CMeterWindow::InitializeMeasures()
 }
 
 /*
-** InitializeMeters
-**
 ** Initializes all the meters and the background
 **
 */
@@ -2348,8 +2288,6 @@ void CMeterWindow::InitializeMeters()
 }
 
 /*
-** ResizeWindow
-**
 ** Changes the size of the window and re-adjusts the background
 */
 bool CMeterWindow::ResizeWindow(bool reset)
@@ -2547,8 +2485,6 @@ bool CMeterWindow::ResizeWindow(bool reset)
 }
 
 /*
-** GrabDesktop
-**
 ** Grabs a part of the desktop
 */
 Bitmap* CMeterWindow::GrabDesktop(int x, int y, int w, int h)
@@ -2567,8 +2503,6 @@ Bitmap* CMeterWindow::GrabDesktop(int x, int y, int w, int h)
 }
 
 /*
-** CreateDoubleBuffer
-**
 ** Creates the back buffer bitmap.
 **
 */
@@ -2596,8 +2530,6 @@ void CMeterWindow::CreateDoubleBuffer(int cx, int cy)
 }
 
 /*
-** CreateRegion
-**
 ** Creates/Clears a window region
 **
 */
@@ -2631,8 +2563,6 @@ void CMeterWindow::CreateRegion(bool clear)
 }
 
 /*
-** Redraw
-**
 ** Redraws the meters and paints the window
 **
 */
@@ -2752,8 +2682,6 @@ void CMeterWindow::Redraw()
 }
 
 /*
-** PostUpdate
-**
 ** Updates the transition state
 **
 */
@@ -2773,8 +2701,6 @@ void CMeterWindow::PostUpdate(bool bActiveTransition)
 }
 
 /*
-** UpdateMeasure
-**
 ** Updates the given measure
 **
 */
@@ -2813,8 +2739,6 @@ bool CMeterWindow::UpdateMeasure(CMeasure* measure, bool force)
 }
 
 /*
-** UpdateMeter
-**
 ** Updates the given meter
 **
 */
@@ -2872,8 +2796,6 @@ bool CMeterWindow::UpdateMeter(CMeter* meter, bool& bActiveTransition, bool forc
 }
 
 /*
-** Update
-**
 ** Updates all the measures and redraws the meters
 **
 */
@@ -2932,8 +2854,6 @@ void CMeterWindow::Update(bool nodraw)
 }
 
 /*
-** UpdateTransparency
-**
 ** Updates the native Windows transparency
 */
 void CMeterWindow::UpdateTransparency(int alpha, bool reset)
@@ -2975,8 +2895,6 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 }
 
 /*
-** OnPaint
-**
 ** Repaints the window. This does not cause update of the measures.
 ** This handler is called if NativeTransparency is false.
 **
@@ -2994,8 +2912,6 @@ LRESULT CMeterWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnTimer
-**
 ** Handles the timers. The METERTIMER updates all the measures
 ** MOUSETIMER is used to hide/show the window.
 **
@@ -3177,8 +3093,6 @@ void CMeterWindow::ShowFade()
 }
 
 /*
-** ShowWindowIfAppropriate
-**
 ** Show the window if it is temporarily hidden.
 **
 */
@@ -3255,8 +3169,6 @@ void CMeterWindow::ShowWindowIfAppropriate()
 }
 
 /*
-** GetWindowFromPoint
-**
 ** Retrieves a handle to the window that contains the specified point.
 **
 */
@@ -3291,8 +3203,6 @@ HWND CMeterWindow::GetWindowFromPoint(POINT pos)
 }
 
 /*
-** HitTest
-**
 ** Checks if the given point is inside the window.
 **
 */
@@ -3316,8 +3226,6 @@ bool CMeterWindow::HitTest(int x, int y)
 }
 
 /*
-** HandleButtons
-**
 ** Handles all buttons and cursor.
 **
 */
@@ -3375,8 +3283,6 @@ void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 }
 
 /*
-** OnSetCursor
-**
 ** During setting the cursor do nothing.
 **
 */
@@ -3386,8 +3292,6 @@ LRESULT CMeterWindow::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnEnterMenuLoop
-**
 ** Enters context menu loop.
 **
 */
@@ -3400,8 +3304,6 @@ LRESULT CMeterWindow::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnMouseMove
-**
 ** When we get WM_MOUSEMOVE messages, hide the window as the mouse is over it.
 **
 */
@@ -3474,8 +3376,6 @@ LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnMouseLeave
-**
 ** When we get WM_MOUSELEAVE messages, run all leave actions.
 **
 */
@@ -3499,8 +3399,6 @@ LRESULT CMeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnCommand
-**
 ** Handle the menu commands.
 **
 */
@@ -3691,8 +3589,6 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** SetClickThrough
-**
 ** Helper function for setting ClickThrough
 **
 */
@@ -3718,8 +3614,6 @@ void CMeterWindow::SetClickThrough(bool b)
 }
 
 /*
-** SetKeepOnScreen
-**
 ** Helper function for setting KeepOnScreen
 **
 */
@@ -3741,8 +3635,6 @@ void CMeterWindow::SetKeepOnScreen(bool b)
 }
 
 /*
-** SetWindowDraggable
-**
 ** Helper function for setting WindowDraggable
 **
 */
@@ -3753,8 +3645,6 @@ void CMeterWindow::SetWindowDraggable(bool b)
 }
 
 /*
-** SetSavePosition
-**
 ** Helper function for setting SavePosition
 **
 */
@@ -3765,8 +3655,6 @@ void CMeterWindow::SetSavePosition(bool b)
 }
 
 /*
-** SetSnapEdges
-**
 ** Helper function for setting SnapEdges
 **
 */
@@ -3777,8 +3665,6 @@ void CMeterWindow::SetSnapEdges(bool b)
 }
 
 /*
-** SetWindowHide
-**
 ** Helper function for setting WindowHide
 **
 */
@@ -3790,8 +3676,6 @@ void CMeterWindow::SetWindowHide(HIDEMODE hide)
 }
 
 /*
-** SetWindowZPosition
-**
 ** Helper function for setting Position
 **
 */
@@ -3802,8 +3686,6 @@ void CMeterWindow::SetWindowZPosition(ZPOSITION zpos)
 }
 
 /*
-** OnSysCommand
-**
 ** Handle dragging the window
 **
 */
@@ -3860,8 +3742,6 @@ LRESULT CMeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnEnterSizeMove
-**
 ** Starts dragging
 **
 */
@@ -3879,8 +3759,6 @@ LRESULT CMeterWindow::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnExitSizeMove
-**
 ** Ends dragging
 **
 */
@@ -3890,8 +3768,6 @@ LRESULT CMeterWindow::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnNcHitTest
-**
 ** This is overwritten so that the window can be dragged
 **
 */
@@ -3928,8 +3804,6 @@ LRESULT CMeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnWindowPosChanging
-**
 ** Called when windows position is about to change
 **
 */
@@ -4035,8 +3909,6 @@ void CMeterWindow::SnapToWindow(CMeterWindow* window, LPWINDOWPOS wp)
 }
 
 /*
-** OnDwmColorChange
-**
 ** Disables blur when Aero transparency is disabled
 **
 */
@@ -4058,8 +3930,6 @@ LRESULT CMeterWindow::OnDwmColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnDwmCompositionChange
-**
 ** Disables blur when desktop composition is disabled
 **
 */
@@ -4080,8 +3950,6 @@ LRESULT CMeterWindow::OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lP
 }
 
 /*
-** BlurBehindWindow
-**
 ** Adds the blur region to the window
 **
 */
@@ -4109,8 +3977,6 @@ void CMeterWindow::BlurBehindWindow(BOOL fEnable)
 }
 
 /*
-** OnDisplayChange
-**
 ** During resolution changes do nothing.
 ** (OnDelayedMove function is used instead.)
 **
@@ -4121,8 +3987,6 @@ LRESULT CMeterWindow::OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnSettingChange
-**
 ** During setting changes do nothing.
 ** (OnDelayedMove function is used instead.)
 **
@@ -4133,8 +3997,6 @@ LRESULT CMeterWindow::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnLeftButtonDown
-**
 ** Runs the action when left mouse button is down
 **
 */
@@ -4167,8 +4029,6 @@ LRESULT CMeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnLeftButtonUp
-**
 ** Runs the action when left mouse button is up
 **
 */
@@ -4193,8 +4053,6 @@ LRESULT CMeterWindow::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnLeftButtonDoubleClick
-**
 ** Runs the action when left mouse button is double-clicked
 **
 */
@@ -4222,8 +4080,6 @@ LRESULT CMeterWindow::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM l
 }
 
 /*
-** OnRightButtonDown
-**
 ** Runs the action when right mouse button is down
 **
 */
@@ -4248,8 +4104,6 @@ LRESULT CMeterWindow::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnRightButtonUp
-**
 ** Runs the action when right mouse button is up
 **
 */
@@ -4273,8 +4127,6 @@ LRESULT CMeterWindow::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnRightButtonDoubleClick
-**
 ** Runs the action when right mouse button is double-clicked
 **
 */
@@ -4302,8 +4154,6 @@ LRESULT CMeterWindow::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM 
 }
 
 /*
-** OnMiddleButtonDown
-**
 ** Runs the action when middle mouse button is down
 **
 */
@@ -4328,8 +4178,6 @@ LRESULT CMeterWindow::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam
 }
 
 /*
-** OnMiddleButtonUp
-**
 ** Runs the action when middle mouse button is up
 **
 */
@@ -4354,8 +4202,6 @@ LRESULT CMeterWindow::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnMiddleButtonDoubleClick
-**
 ** Runs the action when middle mouse button is double-clicked
 **
 */
@@ -4383,8 +4229,6 @@ LRESULT CMeterWindow::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM
 }
 
 /*
-** OnContextMenu
-**
 ** Handles the context menu. The menu is recreated every time it is shown.
 **
 */
@@ -4425,8 +4269,6 @@ LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** DoAction
-**
 ** Executes the action if such are defined. Returns true, if action was executed.
 ** If the test is true, the action is not executed.
 **
@@ -4602,8 +4444,6 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 }
 
 /*
-** DoMoveAction
-**
 ** Executes the action if such are defined. Returns true, if meter/window which should be processed still may exist.
 **
 */
@@ -4745,8 +4585,6 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 }
 
 /*
-** OnMove
-**
 ** Stores the new place of the window, in screen coordinates.
 **
 */
@@ -4770,8 +4608,6 @@ LRESULT CMeterWindow::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** WndProc
-**
 ** The main window procedure for the meter window.
 **
 */
@@ -4825,8 +4661,6 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 }
 
 /*
-** InitialWndProc
-**
 ** The initial window procedure for the meter window. Passes control to WndProc after initial setup.
 **
 */
@@ -4846,8 +4680,6 @@ LRESULT CALLBACK CMeterWindow::InitialWndProc(HWND hWnd, UINT uMsg, WPARAM wPara
 }
 
 /*
-** OnDelayedRefresh
-**
 ** Handles delayed refresh
 **
 */
@@ -4865,8 +4697,6 @@ LRESULT CMeterWindow::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnDelayedMove
-**
 ** Handles delayed move
 **
 */
@@ -4896,8 +4726,6 @@ LRESULT CMeterWindow::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** OnCopyData
-**
 ** Handles bangs from the exe
 **
 */
@@ -4937,8 +4765,6 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** SetWindowPositionVariables
-**
 ** Sets up the window position variables.
 **
 */
@@ -4953,8 +4779,6 @@ void CMeterWindow::SetWindowPositionVariables(int x, int y)
 }
 
 /*
-** SetWindowSizeVariables
-**
 ** Sets up the window size variables.
 **
 */
@@ -4969,8 +4793,6 @@ void CMeterWindow::SetWindowSizeVariables(int w, int h)
 }
 
 /*
-** MakePathAbsolute
-**
 ** Converts the path to absolute by adding the skin's path to it (unless it already is absolute).
 **
 */

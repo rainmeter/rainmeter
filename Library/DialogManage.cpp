@@ -35,8 +35,6 @@ WINDOWPLACEMENT CDialogManage::c_WindowPlacement = {0};
 CDialogManage* CDialogManage::c_Dialog = NULL;
 
 /*
-** CDialogManage
-**
 ** Constructor.
 **
 */
@@ -48,8 +46,6 @@ CDialogManage::CDialogManage(HWND wnd) : CDialog(wnd),
 }
 
 /*
-** ~CDialogManage
-**
 ** Destructor.
 **
 */
@@ -58,8 +54,6 @@ CDialogManage::~CDialogManage()
 }
 
 /*
-** Open
-**
 ** Opens the Manage dialog by tab name.
 **
 */
@@ -83,8 +77,6 @@ void CDialogManage::Open(const WCHAR* name)
 }
 
 /*
-** Open
-**
 ** Opens the Manage dialog.
 **
 */
@@ -116,8 +108,6 @@ void CDialogManage::Open(int tab)
 }
 
 /*
-** OpenSkin
-**
 ** Opens the Manage dialog Skins tab with skin selected.
 **
 */
@@ -136,8 +126,6 @@ void CDialogManage::OpenSkin(CMeterWindow* meterWindow)
 }
 
 /*
-** UpdateSkins
-**
 ** Updates Skins tab.
 **
 */
@@ -173,8 +161,6 @@ std::wstring GetTreeSelectionPath(HWND tree)
 }
 
 /*
-** DlgProc
-**
 ** Dialog procedure for the Manage dialog.
 **
 */
@@ -347,8 +333,6 @@ INT_PTR CDialogManage::OnNotify(WPARAM wParam, LPARAM lParam)
 // -----------------------------------------------------------------------------------------------
 
 /*
-** CTabSkins
-**
 ** Constructor.
 **
 */
@@ -360,8 +344,6 @@ CDialogManage::CTabSkins::CTabSkins(HWND owner) : CTab(Rainmeter->GetResourceIns
 }
 
 /*
-** Initialize
-**
 ** Called when tab is displayed.
 **
 */
@@ -435,8 +417,6 @@ void CDialogManage::CTabSkins::Initialize()
 }
 
 /*
-** Update
-**
 ** Updates metadata and settings when changed.
 **
 */
@@ -756,8 +736,6 @@ void CDialogManage::CTabSkins::ReadSkin()
 }
 
 /*
-** PopulateTree
-**
 ** Populates the treeview with folders and skins.
 **
 */
@@ -784,8 +762,6 @@ void CDialogManage::CTabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, cons
 }
 
 /*
-** SelectTreeItem
-**
 ** Selects an item in the treeview.
 **
 */
@@ -840,8 +816,6 @@ void CDialogManage::CTabSkins::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR
 }
 
 /*
-** DlgProc
-**
 ** Dialog procedure for the Skins tab.
 **
 */
@@ -1337,8 +1311,6 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 // -----------------------------------------------------------------------------------------------
 
 /*
-** CTabThemes
-**
 ** Constructor.
 **
 */
@@ -1347,8 +1319,6 @@ CDialogManage::CTabThemes::CTabThemes(HWND owner) : CTab(Rainmeter->GetResourceI
 }
 
 /*
-** Initialize
-**
 ** Called when tab is displayed.
 **
 */
@@ -1365,8 +1335,6 @@ void CDialogManage::CTabThemes::Initialize()
 }
 
 /*
-** DlgProc
-**
 ** Dialog procedure for the Themes tab.
 **
 */
@@ -1625,8 +1593,6 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 // -----------------------------------------------------------------------------------------------
 
 /*
-** CTabSettings
-**
 ** Constructor.
 **
 */
@@ -1635,8 +1601,6 @@ CDialogManage::CTabSettings::CTabSettings(HWND owner) : CTab(Rainmeter->GetResou
 }
 
 /*
-** Initialize
-**
 ** Called when tab is displayed.
 **
 */
@@ -1697,8 +1661,6 @@ void CDialogManage::CTabSettings::Initialize()
 }
 
 /*
-** DlgProc
-**
 ** Dialog procedure for the Settings tab.
 **
 */

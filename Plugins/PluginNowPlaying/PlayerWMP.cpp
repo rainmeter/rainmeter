@@ -23,8 +23,6 @@ CPlayer* CPlayerWMP::c_Player = NULL;
 extern HINSTANCE g_Instance;
 
 /*
-** CRemoteHost
-**
 ** Constructor.
 **
 */
@@ -34,8 +32,6 @@ CPlayerWMP::CRemoteHost::CRemoteHost() :
 }
 
 /*
-** ~CRemoteHost
-**
 ** Destructor.
 **
 */
@@ -90,8 +86,6 @@ HRESULT CPlayerWMP::CRemoteHost::GetCustomUIMode(BSTR* pbstrFile)
 }
 
 /*
-** CurrentItemChange
-**
 ** Called when playing track changes.
 **
 */
@@ -101,8 +95,6 @@ void CPlayerWMP::CRemoteHost::CurrentItemChange(IDispatch* pdispMedia)
 }
 
 /*
-** PlayStateChange
-**
 ** Called when play state changes.
 **
 */
@@ -133,8 +125,6 @@ void CPlayerWMP::CRemoteHost::PlayStateChange(long NewState)
 }
 
 /*
-** SwitchedToControl
-**
 ** Called when WMP quits.
 **
 */
@@ -145,8 +135,6 @@ void CPlayerWMP::CRemoteHost::SwitchedToControl()
 }
 
 /*
-** CPlayerWMP
-**
 ** Constructor.
 **
 */
@@ -165,8 +153,6 @@ CPlayerWMP::CPlayerWMP() : CPlayer(),
 }
 
 /*
-** ~CPlayerWMP
-**
 ** Destructor.
 **
 */
@@ -178,8 +164,6 @@ CPlayerWMP::~CPlayerWMP()
 }
 
 /*
-** Create
-**
 ** Creates a shared class object.
 **
 */
@@ -194,8 +178,6 @@ CPlayer* CPlayerWMP::Create()
 }
 
 /*
-** Initialize
-**
 ** Set up the COM interface with WMP.
 **
 */
@@ -345,8 +327,6 @@ void CPlayerWMP::Initialize()
 }
 
 /*
-** Uninitialize
-**
 ** Close the interface with WMP.
 **
 */
@@ -366,8 +346,6 @@ void CPlayerWMP::Uninitialize()
 }
 
 /*
-** UpdateData
-**
 ** Called during each update of the main measure.
 **
 */
@@ -489,8 +467,6 @@ void CPlayerWMP::UpdateData()
 }
 
 /*
-** Pause
-**
 ** Handles the Pause bang.
 **
 */
@@ -500,8 +476,6 @@ void CPlayerWMP::Pause()
 }
 
 /*
-** Play
-**
 ** Handles the Play bang.
 **
 */
@@ -511,8 +485,6 @@ void CPlayerWMP::Play()
 }
 
 /*
-** Stop
-**
 ** Handles the Stop bang.
 **
 */
@@ -524,8 +496,6 @@ void CPlayerWMP::Stop()
 }
 
 /*
-** Next
-**
 ** Handles the Next bang.
 **
 */
@@ -535,8 +505,6 @@ void CPlayerWMP::Next()
 }
 
 /*
-** Previous
-**
 ** Handles the Previous bang.
 **
 */
@@ -546,8 +514,6 @@ void CPlayerWMP::Previous()
 }
 
 /*
-** SetPosition
-**
 ** Handles the SetPosition bang.
 **
 */
@@ -557,8 +523,6 @@ void CPlayerWMP::SetPosition(int position)
 }
 
 /*
-** SetRating
-**
 ** Handles the SetRating bang.
 **
 */
@@ -606,8 +570,6 @@ void CPlayerWMP::SetRating(int rating)
 }
 
 /*
-** SetVolume
-**
 ** Handles the SetVolume bang.
 **
 */
@@ -617,8 +579,6 @@ void CPlayerWMP::SetVolume(int volume)
 }
 
 /*
-** ClosePlayer
-**
 ** Handles the ClosePlayer bang.
 **
 */
@@ -633,8 +593,6 @@ void CPlayerWMP::ClosePlayer()
 }
 
 /*
-** OpenPlayer
-**
 ** Handles the OpenPlayer bang.
 **
 */

@@ -20,8 +20,6 @@
 #include "MeasureNetOut.h"
 
 /*
-** CMeasureNetOut
-**
 ** The constructor
 **
 */
@@ -32,8 +30,6 @@ CMeasureNetOut::CMeasureNetOut(CMeterWindow* meterWindow, const WCHAR* name) : C
 }
 
 /*
-** ~CMeasureNetOut
-**
 ** The destructor
 **
 */
@@ -42,8 +38,6 @@ CMeasureNetOut::~CMeasureNetOut()
 }
 
 /*
-** Update
-**
 ** Updates the current net out value.
 **
 */
@@ -89,8 +83,6 @@ bool CMeasureNetOut::Update()
 }
 
 /*
-** ReadConfig
-**
 ** Reads the measure specific configs.
 **
 */

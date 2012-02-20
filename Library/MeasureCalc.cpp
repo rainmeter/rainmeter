@@ -24,8 +24,6 @@
 bool CMeasureCalc::c_RandSeeded = false;
 
 /*
-** CMeasureCalc
-**
 ** The constructor
 **
 */
@@ -44,8 +42,6 @@ CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow, const WCHAR* name) : CMeas
 }
 
 /*
-** ~CMeasureCalc
-**
 ** The destructor
 **
 */
@@ -54,8 +50,6 @@ CMeasureCalc::~CMeasureCalc()
 }
 
 /*
-** Update
-**
 ** Updates the calculation
 **
 */
@@ -78,8 +72,6 @@ bool CMeasureCalc::Update()
 }
 
 /*
-** ReadConfig
-**
 ** Reads the measure specific configs.
 **
 */
@@ -124,8 +116,6 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** FormulaReplace
-**
 ** This replaces the word Random in the formula with a random number
 **
 */

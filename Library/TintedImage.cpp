@@ -146,8 +146,6 @@ const Gdiplus::ColorMatrix CTintedImage::c_IdentityMatrix = {
 CTintedImageHelper_DefineConfigArray(CTintedImage::c_DefaultConfigArray, L"");
 
 /*
-** CTintedImage
-**
 ** The constructor.
 **
 ** If disableTransform is true, following configs are ignored:
@@ -174,8 +172,6 @@ CTintedImage::CTintedImage(const WCHAR* name, const WCHAR** configArray, bool di
 }
 
 /*
-** ~CTintedImage
-**
 ** The destructor
 **
 */
@@ -187,8 +183,6 @@ CTintedImage::~CTintedImage()
 }
 
 /*
-** DisposeImage
-**
 ** Disposes the image buffers.
 **
 */
@@ -207,8 +201,6 @@ void CTintedImage::DisposeImage()
 }
 
 /*
-** LoadImageFromFileHandle
-**
 ** Loads the image from file handle
 **
 */
@@ -266,8 +258,6 @@ Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize,
 }
 
 /*
-** LoadImage
-**
 ** Loads the image from disk
 **
 */
@@ -384,8 +374,6 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 }
 
 /*
-** ApplyCrop
-**
 ** This will apply the cropping.
 **
 */
@@ -443,8 +431,6 @@ void CTintedImage::ApplyCrop()
 }
 
 /*
-** ApplyTint
-**
 ** This will apply the Greyscale matrix and the color tinting.
 **
 */
@@ -490,8 +476,6 @@ void CTintedImage::ApplyTint()
 }
 
 /*
-** TurnGreyscale
-**
 ** Turns the image greyscale by applying a greyscale color matrix.
 ** Note that the returned bitmap image must be freed by caller.
 **
@@ -512,8 +496,6 @@ Bitmap* CTintedImage::TurnGreyscale(Bitmap* source)
 }
 
 /*
-** ApplyTransform
-**
 ** This will apply the flipping and rotating.
 **
 */
@@ -581,8 +563,6 @@ void CTintedImage::ApplyTransform()
 }
 
 /*
-** ReadConfig
-**
 ** Read the meter-specific configs from the ini-file.
 **
 */
@@ -769,8 +749,6 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** CompareColorMatrix
-**
 ** Compares the two given color matrices.
 **
 */

@@ -24,8 +24,6 @@
 using namespace Gdiplus;
 
 /*
-** CMeterLine
-**
 ** The constructor
 **
 */
@@ -40,8 +38,6 @@ CMeterLine::CMeterLine(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(me
 }
 
 /*
-** ~CMeterLine
-**
 ** The destructor
 **
 */
@@ -50,8 +46,6 @@ CMeterLine::~CMeterLine()
 }
 
 /*
-** Initialize
-**
 ** create the buffer for the lines
 **
 */
@@ -99,8 +93,6 @@ void CMeterLine::Initialize()
 }
 
 /*
-** ReadConfig
-**
 ** Read the meter-specific configs from the ini-file.
 **
 */
@@ -170,8 +162,6 @@ void CMeterLine::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Update
-**
 ** Updates the value(s) from the measures.
 **
 */
@@ -208,8 +198,6 @@ bool CMeterLine::Update()
 }
 
 /*
-** Draw
-**
 ** Draws the meter on the double buffer
 **
 */
@@ -349,8 +337,6 @@ bool CMeterLine::Draw(Graphics& graphics)
 }
 
 /*
-** BindMeasure
-**
 ** Overwritten method to handle the other measure bindings.
 **
 */

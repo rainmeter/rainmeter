@@ -60,8 +60,6 @@ std::vector<std::wstring> CSystem::c_IniFileMappings;
 extern CRainmeter* Rainmeter;
 
 /*
-** Initialize
-**
 ** Creates a helper window to detect changes in the system.
 **
 */
@@ -127,8 +125,6 @@ void CSystem::Initialize(HINSTANCE instance)
 }
 
 /*
-** Finalize
-**
 ** Destroys a window.
 **
 */
@@ -157,8 +153,6 @@ void CSystem::Finalize()
 }
 
 /*
-** MyInfoEnumProc
-**
 ** Retrieves the multi-monitor information.
 **
 */
@@ -233,8 +227,6 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 }
 
 /*
-** GetMonitorCount
-**
 ** Returns the number of monitors.
 **
 */
@@ -248,8 +240,6 @@ size_t CSystem::GetMonitorCount()
 }
 
 /*
-** SetMultiMonitorInfo
-**
 ** Sets the multi-monitor information.
 **
 */
@@ -520,8 +510,6 @@ void CSystem::SetMultiMonitorInfo()
 }
 
 /*
-** UpdateWorkareaInfo
-**
 ** Updates the workarea information.
 **
 */
@@ -556,8 +544,6 @@ void CSystem::UpdateWorkareaInfo()
 }
 
 /*
-** SetOSPlatform
-**
 ** Sets the OS platform.
 **
 */
@@ -590,8 +576,6 @@ void CSystem::SetOSPlatform()
 }
 
 /*
-** GetDefaultShellWindow
-**
 ** Finds the Default Shell's window.
 **
 */
@@ -623,8 +607,6 @@ HWND CSystem::GetDefaultShellWindow()
 }
 
 /*
-** GetWorkerW
-**
 ** Finds the WorkerW window.
 ** If the WorkerW window is not active, returns NULL.
 **
@@ -676,8 +658,6 @@ HWND CSystem::GetWorkerW()
 }
 
 /*
-** GetBackmostTopWindow
-**
 ** Returns the first window whose position is not ZPOSITION_ONDESKTOP,
 ** ZPOSITION_BOTTOM, or ZPOSITION_NORMAL.
 **
@@ -703,8 +683,6 @@ HWND CSystem::GetBackmostTopWindow()
 }
 
 /*
-** BelongToSameProcess
-**
 ** Checks whether the given windows belong to the same process.
 **
 */
@@ -719,8 +697,6 @@ bool CSystem::BelongToSameProcess(HWND hwndA, HWND hwndB)
 }
 
 /*
-** MyEnumWindowsProc
-**
 ** Retrieves the Rainmeter's meter windows in Z-order.
 **
 */
@@ -772,8 +748,6 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 }
 
 /*
-** ChangeZPosInOrder
-**
 ** Arranges the meter window in Z-order.
 **
 */
@@ -822,8 +796,6 @@ void CSystem::ChangeZPosInOrder()
 }
 
 /*
-** PrepareHelperWindow
-**
 ** Moves the helper window to the reference position.
 **
 */
@@ -894,8 +866,6 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 }
 
 /*
-** CheckDesktopState
-**
 ** Changes the "Show Desktop" state.
 **
 */
@@ -938,8 +908,6 @@ bool CSystem::CheckDesktopState(HWND WorkerW)
 }
 
 /*
-** MyWinEventHook
-**
 ** The event hook procedure
 **
 */
@@ -978,8 +946,6 @@ void CALLBACK CSystem::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, 
 }
 
 /*
-** WndProc
-**
 ** The window procedure
 **
 */
@@ -1064,8 +1030,6 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 }
 
 /*
-** GetTickCount64
-**
 ** Retrieves the number of milliseconds that have elapsed since the system was started.
 ** In XP, returns the predictive value due to the 32bit limitation.
 **
@@ -1090,8 +1054,6 @@ ULONGLONG CSystem::GetTickCount64()
 }
 
 /*
-** IsFileWritable
-**
 ** Checks if file is writable.
 **
 */
@@ -1108,8 +1070,6 @@ bool CSystem::IsFileWritable(LPCWSTR file)
 }
 
 /*
-** RmLoadLibrary
-**
 ** This function is a wrapper function for LoadLibrary().
 **
 ** Avoids loading a DLL from current directory.
@@ -1145,8 +1105,6 @@ HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError, bool ignor
 }
 
 /*
-** ResetWorkingDirectory
-**
 ** Resets working directory to default.
 **
 */
@@ -1162,8 +1120,6 @@ void CSystem::ResetWorkingDirectory()
 }
 
 /*
-** SetClipboardText
-**
 ** Sets clipboard text to given string.
 **
 */
@@ -1193,8 +1149,6 @@ void CSystem::SetClipboardText(const std::wstring& text)
 }
 
 /*
-** SetWallpaper
-**
 ** Sets the system wallpapar.
 **
 */
@@ -1285,8 +1239,6 @@ void CSystem::SetWallpaper(const std::wstring& wallpaper, const std::wstring& st
 }
 
 /*
-** CopyFiles
-**
 ** Copies files and folders from one location to another.
 **
 */
@@ -1317,8 +1269,6 @@ bool CSystem::CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, 
 }
 
 /*
-** RemoveFile
-**
 ** Removes a file even if a file is read-only.
 **
 */
@@ -1335,8 +1285,6 @@ bool CSystem::RemoveFile(const std::wstring& file)
 }
 
 /*
-** RemoveFolder
-**
 ** Recursively removes folder.
 **
 */
@@ -1366,8 +1314,6 @@ bool CSystem::RemoveFolder(const std::wstring& strFolder)
 }
 
 /*
-** UpdateIniFileMappingList
-**
 ** Retrieves the "IniFileMapping" entries from Registry.
 **
 */
@@ -1432,8 +1378,6 @@ void CSystem::UpdateIniFileMappingList()
 }
 
 /*
-** GetTemporaryFile
-**
 ** Prepares a temporary file if iniFile is included in the "IniFileMapping" entries.
 ** If iniFile is not included, returns a empty string. If error occurred, returns "?".
 ** Note that a temporary file must be deleted by caller.

@@ -22,8 +22,6 @@
 CPlayer* CPlayerSpotify::c_Player = NULL;
 
 /*
-** CPlayerSpotify
-**
 ** Constructor.
 **
 */
@@ -34,8 +32,6 @@ CPlayerSpotify::CPlayerSpotify() : CPlayer(),
 }
 
 /*
-** ~CPlayerSpotify
-**
 ** Destructor.
 **
 */
@@ -45,8 +41,6 @@ CPlayerSpotify::~CPlayerSpotify()
 }
 
 /*
-** Create
-**
 ** Creates a shared class object.
 **
 */
@@ -61,8 +55,6 @@ CPlayer* CPlayerSpotify::Create()
 }
 
 /*
-** CheckWindow
-**
 ** Try to find Spotify periodically.
 **
 */
@@ -86,8 +78,6 @@ bool CPlayerSpotify::CheckWindow()
 }
 
 /*
-** UpdateData
-**
 ** Called during each update of the main measure.
 **
 */
@@ -136,8 +126,6 @@ void CPlayerSpotify::UpdateData()
 }
 
 /*
-** Play
-**
 ** Handles the Play bang.
 **
 */
@@ -147,8 +135,6 @@ void CPlayerSpotify::Play()
 }
 
 /*
-** Stop
-**
 ** Handles the Stop bang.
 **
 */
@@ -158,8 +144,6 @@ void CPlayerSpotify::Stop()
 }
 
 /*
-** Next
-**
 ** Handles the Next bang.
 **
 */
@@ -169,8 +153,6 @@ void CPlayerSpotify::Next()
 }
 
 /*
-** Previous
-**
 ** Handles the Previous bang.
 **
 */
@@ -181,8 +163,6 @@ void CPlayerSpotify::Previous()
 
 
 /*
-** ClosePlayer
-**
 ** Handles the ClosePlayer bang.
 **
 */
@@ -200,8 +180,6 @@ void CPlayerSpotify::ClosePlayer()
 }
 
 /*
-** OpenPlayer
-**
 ** Handles the OpenPlayer bang.
 **
 */

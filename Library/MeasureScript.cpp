@@ -25,8 +25,6 @@ const char* g_UpdateFunctionName = "Update";
 const char* g_GetStringFunctionName = "GetStringValue";
 
 /*
-** CMeasureScript
-**
 ** The constructor
 **
 */
@@ -41,8 +39,6 @@ CMeasureScript::CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name) : C
 }
 
 /*
-** ~CMeasureScript
-**
 ** The destructor
 **
 */
@@ -65,8 +61,6 @@ void CMeasureScript::DeleteLuaScript()
 }
 
 /*
-** Initialize
-**
 ** Initializes the measure.
 **
 */
@@ -81,8 +75,6 @@ void CMeasureScript::Initialize()
 }
 
 /*
-** Update
-**
 ** Updates the current disk free space value.
 **
 */
@@ -108,8 +100,6 @@ bool CMeasureScript::Update()
 }
 
 /*
-** GetStringValue
-**
 ** Returns the time as string.
 **
 */
@@ -124,8 +114,6 @@ const WCHAR* CMeasureScript::GetStringValue(AUTOSCALE autoScale, double scale, i
 }
 
 /*
-** ReadConfig
-**
 ** Reads the measure specific configs.
 **
 */
@@ -219,8 +207,6 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Command
-**
 ** Executes a custom bang.
 **
 */

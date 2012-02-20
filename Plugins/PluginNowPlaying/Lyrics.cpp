@@ -22,8 +22,6 @@
 #include "Lyrics.h"
 
 /*
-** GetFromInternet
-**
 ** Download lyrics from various serivces.
 **
 */
@@ -40,8 +38,6 @@ bool CLyrics::GetFromInternet(const std::wstring& artist, const std::wstring& ti
 }
 
 /*
-** GetFromWikia
-**
 ** Download lyrics from LyricWiki.
 **
 */
@@ -116,8 +112,6 @@ bool CLyrics::GetFromWikia(const std::wstring& artist, const std::wstring& title
 }
 
 /*
-** GetFromLYRDB
-**
 ** Download lyrics from LYRDB.
 **
 */
@@ -160,8 +154,6 @@ bool CLyrics::GetFromLYRDB(const std::wstring& artist, const std::wstring& title
 }
 
 /*
-** GetFromLetras
-**
 ** Download lyrics from Letras.
 **
 */

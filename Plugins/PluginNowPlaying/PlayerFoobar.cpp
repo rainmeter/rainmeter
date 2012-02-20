@@ -23,8 +23,6 @@ CPlayer* CPlayerFoobar::c_Player = NULL;
 extern HINSTANCE g_Instance;
 
 /*
-** CPlayerFoobar
-**
 ** Constructor.
 **
 */
@@ -37,8 +35,6 @@ CPlayerFoobar::CPlayerFoobar() : CPlayer(),
 }
 
 /*
-** ~CPlayerFoobar
-**
 ** Constructor.
 **
 */
@@ -49,8 +45,6 @@ CPlayerFoobar::~CPlayerFoobar()
 }
 
 /*
-** Create
-**
 ** Creates a shared class object.
 **
 */
@@ -65,8 +59,6 @@ CPlayer* CPlayerFoobar::Create()
 }
 
 /*
-** Initialize
-**
 ** Create receiver window.
 **
 */
@@ -111,8 +103,6 @@ void CPlayerFoobar::Initialize()
 }
 
 /*
-** Uninitialize
-**
 ** Destroy reciever window.
 **
 */
@@ -128,8 +118,6 @@ void CPlayerFoobar::Uninitialize()
 }
 
 /*
-** WndProc
-**
 ** Window procedure for the reciever window.
 **
 */
@@ -303,8 +291,6 @@ LRESULT CALLBACK CPlayerFoobar::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 }
 
 /*
-** UpdateData
-**
 ** Called during each update of the main measure.
 **
 */
@@ -313,8 +299,6 @@ void CPlayerFoobar::UpdateData()
 }
 
 /*
-** Pause
-**
 ** Handles the Pause bang.
 **
 */
@@ -324,8 +308,6 @@ void CPlayerFoobar::Pause()
 }
 
 /*
-** Play
-**
 ** Handles the Play bang.
 **
 */
@@ -335,8 +317,6 @@ void CPlayerFoobar::Play()
 }
 
 /*
-** Stop
-**
 ** Handles the Stop bang.
 **
 */
@@ -346,8 +326,6 @@ void CPlayerFoobar::Stop()
 }
 
 /*
-** Next
-**
 ** Handles the Next bang.
 **
 */
@@ -357,8 +335,6 @@ void CPlayerFoobar::Next()
 }
 
 /*
-** Previous
-**
 ** Handles the Previous bang.
 **
 */
@@ -368,8 +344,6 @@ void CPlayerFoobar::Previous()
 }
 
 /*
-** SetPosition
-**
 ** Handles the SetPosition bang.
 **
 */
@@ -379,8 +353,6 @@ void CPlayerFoobar::SetPosition(int position)
 }
 
 /*
-** SetShuffle
-**
 ** Handles the SetShuffle bang.
 **
 */
@@ -392,8 +364,6 @@ void CPlayerFoobar::SetShuffle(bool state)
 }
 
 /*
-** SetRepeat
-**
 ** Handles the SetRepeat bang.
 **
 */
@@ -405,8 +375,6 @@ void CPlayerFoobar::SetRepeat(bool state)
 }
 
 /*
-** SetVolume
-**
 ** Handles the SetVolume bang.
 **
 */
@@ -416,8 +384,6 @@ void CPlayerFoobar::SetVolume(int volume)
 }
 
 /*
-** ClosePlayer
-**
 ** Handles the ClosePlayer bang.
 **
 */
@@ -427,8 +393,6 @@ void CPlayerFoobar::ClosePlayer()
 }
 
 /*
-** OpenPlayer
-**
 ** Handles the OpenPlayer bang.
 **
 */

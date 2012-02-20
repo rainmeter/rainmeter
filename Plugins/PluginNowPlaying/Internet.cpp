@@ -22,8 +22,6 @@
 HINTERNET CInternet::c_NetHandle = NULL;
 
 /*
-** Initialize
-**
 ** Initialize internet handle and crtical section.
 **
 */
@@ -42,8 +40,6 @@ void CInternet::Initialize()
 }
 
 /*
-** Finalize
-**
 ** Close handles and delete critical section.
 **
 */
@@ -53,8 +49,6 @@ void CInternet::Finalize()
 }
 
 /*
-** DownloadUrl
-**
 ** Downloads given url and returns it as a string.
 **
 */
@@ -151,8 +145,6 @@ std::wstring CInternet::DownloadUrl(const std::wstring& url, int codepage)
 }
 
 /*
-** EncodeUrl
-**
 ** Encode reserved characters.
 **
 */
@@ -181,8 +173,6 @@ std::wstring CInternet::EncodeUrl(const std::wstring& url)
 }
 
 /*
-** DecodeReferences
-**
 ** Decodes numeric references.
 **
 */
@@ -253,8 +243,6 @@ void CInternet::DecodeReferences(std::wstring& str)
 }
 
 /*
-** ConvertToWide
-**
 ** Convert multibyte string to wide string.
 **
 */

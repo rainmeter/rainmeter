@@ -23,8 +23,6 @@ CPlayer* CPlayerITunes::c_Player = NULL;
 extern HINSTANCE g_Instance;
 
 /*
-** CEventHandler
-**
 ** Constructor.
 **
 */
@@ -42,8 +40,6 @@ CPlayerITunes::CEventHandler::CEventHandler(CPlayerITunes* player) :
 }
 
 /*
-** ~CEventHandler
-**
 ** Destructor.
 **
 */
@@ -113,8 +109,6 @@ HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Invoke(DISPID dispidMemb
 }
 
 /*
-** CPlayerITunes
-**
 ** Constructor.
 **
 */
@@ -147,8 +141,6 @@ CPlayerITunes::CPlayerITunes() : CPlayer(),
 }
 
 /*
-** ~CPlayerITunes
-**
 ** Destructor.
 **
 */
@@ -163,8 +155,6 @@ CPlayerITunes::~CPlayerITunes()
 }
 
 /*
-** Create
-**
 ** Creates a shared class object.
 **
 */
@@ -179,8 +169,6 @@ CPlayer* CPlayerITunes::Create()
 }
 
 /*
-** Initialize
-**
 ** Initialize iTunes COM interface and event handler.
 **
 */
@@ -248,8 +236,6 @@ void CPlayerITunes::Initialize()
 }
 
 /*
-** Uninitialize
-**
 ** Close iTunes COM interface.
 **
 */
@@ -266,8 +252,6 @@ void CPlayerITunes::Uninitialize()
 }
 
 /*
-** WndProc
-**
 ** Window procedure for the callback window.
 **
 */
@@ -307,8 +291,6 @@ LRESULT CALLBACK CPlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 }
 
 /*
-** CheckWindow
-**
 ** Try to find iTunes periodically.
 **
 */
@@ -330,8 +312,6 @@ bool CPlayerITunes::CheckWindow()
 }
 
 /*
-** UpdateData
-**
 ** Called during each update of the main measure.
 **
 */
@@ -346,8 +326,6 @@ void CPlayerITunes::UpdateData()
 }
 
 /*
-** OnDatabaseChange
-**
 ** Called by iTunes event handler when the database is changed.
 **
 */
@@ -370,8 +348,6 @@ void CPlayerITunes::OnDatabaseChange()
 }
 
 /*
-** OnTrackChange
-**
 ** Called by iTunes event handler on track change.
 **
 */
@@ -478,8 +454,6 @@ void CPlayerITunes::OnTrackChange()
 }
 
 /*
-** OnStateChange
-**
 ** Called by iTunes event handler on player state change.
 **
 */
@@ -497,8 +471,6 @@ void CPlayerITunes::OnStateChange(bool playing)
 }
 
 /*
-** OnVolumeChange
-**
 ** Called by iTunes event handler on volume change.
 **
 */
@@ -508,8 +480,6 @@ void CPlayerITunes::OnVolumeChange(int volume)
 }
 
 /*
-** Pause
-**
 ** Handles the Pause bang.
 **
 */
@@ -519,8 +489,6 @@ void CPlayerITunes::Pause()
 }
 
 /*
-** Play
-**
 ** Handles the Play bang.
 **
 */
@@ -530,8 +498,6 @@ void CPlayerITunes::Play()
 }
 
 /*
-** Stop
-**
 ** Handles the Stop bang.
 **
 */
@@ -541,8 +507,6 @@ void CPlayerITunes::Stop()
 }
 
 /*
-** Next
-**
 ** Handles the Next bang.
 **
 */
@@ -552,8 +516,6 @@ void CPlayerITunes::Next()
 }
 
 /*
-** Previous
-**
 ** Handles the Previous bang.
 **
 */
@@ -563,8 +525,6 @@ void CPlayerITunes::Previous()
 }
 
 /*
-** SetPosition
-**
 ** Handles the SetPosition bang.
 **
 */
@@ -574,8 +534,6 @@ void CPlayerITunes::SetPosition(int position)
 }
 
 /*
-** SetRating
-**
 ** Handles the SetRating bang.
 **
 */
@@ -592,8 +550,6 @@ void CPlayerITunes::SetRating(int rating)
 }
 
 /*
-** SetVolume
-**
 ** Handles the SetVolume bang.
 **
 */
@@ -603,8 +559,6 @@ void CPlayerITunes::SetVolume(int volume)
 }
 
 /*
-** SetShuffle
-**
 ** Handles the SetShuffle bang.
 **
 */
@@ -630,8 +584,6 @@ void CPlayerITunes::SetShuffle(bool state)
 }
 
 /*
-** SetRepeat
-**
 ** Handles the SetRepeat bang.
 **
 */
@@ -656,8 +608,6 @@ void CPlayerITunes::SetRepeat(bool state)
 }
 
 /*
-** ClosePlayer
-**
 ** Handles the ClosePlayer bang.
 **
 */
@@ -669,8 +619,6 @@ void CPlayerITunes::ClosePlayer()
 }
 
 /*
-** OpenPlayer
-**
 ** Handles the OpenPlayer bang.
 **
 */

@@ -31,8 +31,6 @@ CTintedImageHelper_DefineConfigArray(CMeterHistogram::c_SecondaryConfigArray, L"
 CTintedImageHelper_DefineConfigArray(CMeterHistogram::c_BothConfigArray, L"Both");
 
 /*
-** CMeterHistogram
-**
 ** The constructor
 **
 */
@@ -61,8 +59,6 @@ CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow, const WCHAR* name) :
 }
 
 /*
-** ~CMeterHistogram
-**
 ** The destructor
 **
 */
@@ -72,8 +68,6 @@ CMeterHistogram::~CMeterHistogram()
 }
 
 /*
-** DisposeBuffer
-**
 ** Disposes the buffers.
 **
 */
@@ -91,8 +85,6 @@ void CMeterHistogram::DisposeBuffer()
 }
 
 /*
-** Initialize
-**
 ** Load the images and calculate the dimensions of the meter from them.
 ** Or create the brushes if solid color histogram is used.
 **
@@ -185,8 +177,6 @@ void CMeterHistogram::Initialize()
 }
 
 /*
-** ReadConfig
-**
 ** Read the meter-specific configs from the ini-file.
 **
 */
@@ -291,8 +281,6 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Update
-**
 ** Updates the value(s) from the measures.
 **
 */
@@ -373,8 +361,6 @@ bool CMeterHistogram::Update()
 }
 
 /*
-** Draw
-**
 ** Draws the meter on the double buffer
 **
 */
@@ -503,8 +489,6 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 }
 
 /*
-** BindMeasure
-**
 ** Overwritten method to handle the secondary measure binding.
 **
 */

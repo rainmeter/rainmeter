@@ -32,8 +32,6 @@ using namespace Gdiplus;
 std::unordered_map<std::wstring, std::wstring> CConfigParser::c_MonitorVariables;
 
 /*
-** CConfigParser
-**
 ** The constructor
 **
 */
@@ -46,8 +44,6 @@ CConfigParser::CConfigParser() :
 }
 
 /*
-** ~CConfigParser
-**
 ** The destructor
 **
 */
@@ -55,11 +51,6 @@ CConfigParser::~CConfigParser()
 {
 }
 
-/*
-** Initialize
-**
-**
-*/
 void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterWindow* meterWindow, LPCTSTR config)
 {
 	m_Filename = filename;
@@ -92,11 +83,6 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 	m_ListVariables.clear();
 }
 
-/*
-** SetBuiltInVariables
-**
-**
-*/
 void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow)
 {
 	if (pRainmeter)
@@ -124,8 +110,6 @@ void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* me
 }
 
 /*
-** ReadVariables
-**
 ** Sets all user-defined variables.
 **
 */
@@ -205,11 +189,6 @@ bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& s
 	return false;
 }
 
-/*
-** ResetMonitorVariables
-**
-**
-*/
 void CConfigParser::ResetMonitorVariables(CMeterWindow* meterWindow)
 {
 	// Set the SCREENAREA/WORKAREA variables
@@ -223,8 +202,6 @@ void CConfigParser::ResetMonitorVariables(CMeterWindow* meterWindow)
 }
 
 /*
-** SetMultiMonitorVariables
-**
 ** Sets new values for the SCREENAREA/WORKAREA variables.
 **
 */
@@ -329,8 +306,6 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 }
 
 /*
-** SetAutoSelectedMonitorVariables
-**
 ** Sets new SCREENAREA/WORKAREA variables for present monitor.
 **
 */
@@ -592,11 +567,6 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 	return replaced;
 }
 
-/*
-** ReadString
-**
-**
-*/
 const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures)
 {
 	static std::wstring result;
@@ -830,8 +800,6 @@ RECT CConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
 }
 
 /*
-** Tokenize
-**
 ** Splits the string from the delimiters
 **
 ** http://www.digitalpeer.com/id/simple
@@ -854,8 +822,6 @@ std::vector<std::wstring> CConfigParser::Tokenize(const std::wstring& str, const
 }
 
 /*
-** Shrink
-**
 ** Trims empty element in vector and white-space in each string.
 **
 */
@@ -887,8 +853,6 @@ void CConfigParser::Shrink(std::vector<std::wstring>& vec)
 }
 
 /*
-** ParseDouble
-**
 ** This is a helper method that parses the floating-point value from the given string.
 ** If the given string is invalid format or causes overflow/underflow, returns given default value.
 **
@@ -908,8 +872,6 @@ double CConfigParser::ParseDouble(LPCTSTR string, double defValue)
 }
 
 /*
-** ParseInt
-**
 ** This is a helper method that parses the integer value from the given string.
 ** If the given string is invalid format or causes overflow/underflow, returns given default value.
 **
@@ -929,8 +891,6 @@ int CConfigParser::ParseInt(LPCTSTR string, int defValue)
 }
 
 /*
-** ParseUInt
-**
 ** This is a helper method that parses the unsigned integer value from the given string.
 ** If the given string is invalid format or causes overflow/underflow, returns given default value.
 **
@@ -950,8 +910,6 @@ unsigned int CConfigParser::ParseUInt(LPCTSTR string, unsigned int defValue)
 }
 
 /*
-** ParseColor
-**
 ** This is a helper method that parses the color values from the given string.
 ** The color can be supplied as three/four comma separated values or as one
 ** hex-value.
@@ -1021,8 +979,6 @@ ARGB CConfigParser::ParseColor(LPCTSTR string)
 }
 
 /*
-** ParseInt4
-**
 ** This is a helper template that parses four comma separated values from the given string.
 **
 */
@@ -1062,8 +1018,6 @@ void ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 }
 
 /*
-** ParseRect
-**
 ** This is a helper method that parses the Gdiplus::Rect values from the given string.
 ** The rect can be supplied as four comma separated values (X/Y/Width/Height).
 **
@@ -1076,8 +1030,6 @@ Rect CConfigParser::ParseRect(LPCTSTR string)
 }
 
 /*
-** ParseRECT
-**
 ** This is a helper method that parses the RECT values from the given string.
 ** The rect can be supplied as four comma separated values (left/top/right/bottom).
 **

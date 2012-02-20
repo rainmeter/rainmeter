@@ -26,8 +26,6 @@
 extern CRainmeter* Rainmeter;
 
 /*
-** CMeasureMemory
-**
 ** The constructor
 **
 */
@@ -45,8 +43,6 @@ CMeasurePlugin::CMeasurePlugin(CMeterWindow* meterWindow, const WCHAR* name) : C
 }
 
 /*
-** ~CMeasureMemory
-**
 ** The destructor
 **
 */
@@ -72,8 +68,6 @@ CMeasurePlugin::~CMeasurePlugin()
 }
 
 /*
-** Update
-**
 ** Gets the current value from the plugin
 **
 */
@@ -107,8 +101,6 @@ bool CMeasurePlugin::Update()
 }
 
 /*
-** ReadConfig
-**
 ** Reads the configs and loads & initializes the plugin
 **
 */
@@ -241,8 +233,6 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** GetStringValue
-**
 ** Gets the string value from the plugin.
 **
 */
@@ -267,8 +257,6 @@ const WCHAR* CMeasurePlugin::GetStringValue(AUTOSCALE autoScale, double scale, i
 }
 
 /*
-** Command
-**
 ** Sends a bang to the plugin
 **
 */

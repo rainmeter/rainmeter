@@ -22,8 +22,6 @@
 #include "Error.h"
 
 /*
-** CMeasureRegistry
-**
 ** The constructor
 **
 */
@@ -35,8 +33,6 @@ CMeasureRegistry::CMeasureRegistry(CMeterWindow* meterWindow, const WCHAR* name)
 }
 
 /*
-** ~CMeasureRegistry
-**
 ** The destructor
 **
 */
@@ -46,8 +42,6 @@ CMeasureRegistry::~CMeasureRegistry()
 }
 
 /*
-** Update
-**
 ** Gets the current value from the registry
 **
 */
@@ -110,8 +104,6 @@ bool CMeasureRegistry::Update()
 }
 
 /*
-** ReadConfig
-**
 ** Reads the measure specific configs.
 **
 */
@@ -169,8 +161,6 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** GetStringValue
-**
 ** If the measured registry value is a string display it. Otherwise convert the
 ** value to string as normal.
 **

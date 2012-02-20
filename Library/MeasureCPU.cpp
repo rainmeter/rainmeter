@@ -61,8 +61,6 @@ ULONG CMeasureCPU::c_BufferSize = 0;
 // );
 
 /*
-** CMeasureCPU
-**
 ** The constructor
 **
 */
@@ -86,8 +84,6 @@ CMeasureCPU::CMeasureCPU(CMeterWindow* meterWindow, const WCHAR* name) : CMeasur
 }
 
 /*
-** ~CMeasureCPU
-**
 ** The destructor
 **
 */
@@ -96,8 +92,6 @@ CMeasureCPU::~CMeasureCPU()
 }
 
 /*
-** ReadConfig
-**
 ** Reads the measure specific configs.
 **
 */
@@ -127,8 +121,6 @@ void CMeasureCPU::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Update
-**
 ** Updates the current CPU utilization value.
 **
 */
@@ -225,8 +217,6 @@ bool CMeasureCPU::Update()
 }
 
 /*
-** CalcUsage
-**
 ** Calculates the current CPU utilization value.
 **
 */

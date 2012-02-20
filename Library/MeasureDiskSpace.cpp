@@ -35,8 +35,6 @@ enum DRIVETYPE
 };
 
 /*
-** CMeasureDiskSpace
-**
 ** The constructor
 **
 */
@@ -50,8 +48,6 @@ CMeasureDiskSpace::CMeasureDiskSpace(CMeterWindow* meterWindow, const WCHAR* nam
 }
 
 /*
-** ~CMeasureDiskSpace
-**
 ** The destructor
 **
 */
@@ -60,8 +56,6 @@ CMeasureDiskSpace::~CMeasureDiskSpace()
 }
 
 /*
-** Update
-**
 ** Updates the current disk free space value.
 **
 */
@@ -172,8 +166,6 @@ bool CMeasureDiskSpace::Update()
 }
 
 /*
-** GetStringValue
-**
 ** Returns the time as string.
 **
 */
@@ -188,8 +180,6 @@ const WCHAR* CMeasureDiskSpace::GetStringValue(AUTOSCALE autoScale, double scale
 }
 
 /*
-** ReadConfig
-**
 ** Reads the measure specific configs.
 **
 */

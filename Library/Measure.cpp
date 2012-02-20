@@ -66,8 +66,6 @@ const int MEDIAN_SIZE = 7;
 extern CRainmeter* Rainmeter;
 
 /*
-** CMeasure
-**
 ** The constructor
 **
 */
@@ -96,8 +94,6 @@ CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow
 }
 
 /*
-** ~CMeasure
-**
 ** The destructor
 **
 */
@@ -106,8 +102,6 @@ CMeasure::~CMeasure()
 }
 
 /*
-** Initialize
-**
 ** Initializes the measure.
 **
 */
@@ -117,8 +111,6 @@ void CMeasure::Initialize()
 }
 
 /*
-** ReadConfig
-**
 ** Reads the common configs for all Measures. The inherited classes
 ** must call the base implementation if they overwrite this method.
 **
@@ -192,8 +184,6 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** MakePlainSubstitute
-**
 ** Substitues text using a straight find and replace method
 */
 bool CMeasure::MakePlainSubstitute(std::wstring& str, size_t index)
@@ -215,8 +205,6 @@ bool CMeasure::MakePlainSubstitute(std::wstring& str, size_t index)
 }
 
 /*
-** CheckSubstitute
-**
 ** Substitutes part of the text
 */
 const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
@@ -341,8 +329,6 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 }
 
 /*
-** ParseSubstitute
-**
 ** Reads the buffer for "Name":"Value"-pairs separated with comma and
 ** fills the map with the parsed data.
 */
@@ -372,8 +358,6 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 }
 
 /*
-** ExtractWord
-**
 ** Returns the first word from the buffer. The word can be inside quotes.
 ** If not, the separators are ' ', '\t', ',' and ':'. Whitespaces are removed
 ** and buffer _will_ be modified.
@@ -441,8 +425,6 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 }
 
 /*
-** PreUpdate
-**
 ** The base implementation of the update method. This includes the code
 ** that is common for all measures. This is called every time the measure
 ** is updated. The inherited classes must call the base implementation if
@@ -547,8 +529,6 @@ bool CMeasure::PreUpdate()
 }
 
 /*
-** PostUpdate
-**
 ** Does post measuring things to the value. All measures must call this
 ** after they have set the m_Value.
 **
@@ -582,8 +562,6 @@ bool CMeasure::PostUpdate()
 }
 
 /*
-** GetValue
-**
 ** Returns the value of the measure.
 **
 */
@@ -599,8 +577,6 @@ double CMeasure::GetValue()
 }
 
 /*
-** GetRelativeValue
-**
 ** Returns the relative value of the measure (0.0 - 1.0).
 **
 */
@@ -624,8 +600,6 @@ double CMeasure::GetRelativeValue()
 }
 
 /*
-** GetValueRange
-**
 ** Returns the value range.
 **
 */
@@ -635,8 +609,6 @@ double CMeasure::GetValueRange()
 }
 
 /*
-** GetStringValue
-**
 ** This method returns the value as text string. The actual value is
 ** get with GetValue() so we don't have to worry about m_Invert.
 **
@@ -759,8 +731,6 @@ void CMeasure::RemoveTrailingZero(WCHAR* str, int strLen)
 }
 
 /*
-** Create
-**
 ** Creates the given measure. This is the factory method for the measures.
 ** If new measures are implemented this method needs to be updated.
 **
@@ -838,8 +808,6 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, cons
 }
 
 /*
-** Command
-**
 ** Executes a custom bang.
 **
 */

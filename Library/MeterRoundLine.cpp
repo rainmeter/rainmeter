@@ -27,8 +27,6 @@ using namespace Gdiplus;
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0 / PI))
 
 /*
-** CMeterRoundLine
-**
 ** The constructor
 **
 */
@@ -51,8 +49,6 @@ CMeterRoundLine::CMeterRoundLine(CMeterWindow* meterWindow, const WCHAR* name) :
 }
 
 /*
-** ~CMeterRoundLine
-**
 ** The destructor
 **
 */
@@ -61,8 +57,6 @@ CMeterRoundLine::~CMeterRoundLine()
 }
 
 /*
-** ReadConfig
-**
 ** Read the meter-specific configs from the ini-file.
 **
 */
@@ -88,8 +82,6 @@ void CMeterRoundLine::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Update
-**
 ** Updates the value(s) from the measures.
 **
 */
@@ -115,8 +107,6 @@ bool CMeterRoundLine::Update()
 
 
 /*
-** Draw
-**
 ** Draws the meter on the double buffer
 **
 */

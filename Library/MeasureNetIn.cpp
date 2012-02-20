@@ -20,8 +20,6 @@
 #include "MeasureNetIn.h"
 
 /*
-** CMeasureNet
-**
 ** The constructor
 **
 */
@@ -32,8 +30,6 @@ CMeasureNetIn::CMeasureNetIn(CMeterWindow* meterWindow, const WCHAR* name) : CMe
 }
 
 /*
-** ~CMeasureNet
-**
 ** The destructor
 **
 */
@@ -42,8 +38,6 @@ CMeasureNetIn::~CMeasureNetIn()
 }
 
 /*
-** Update
-**
 ** Updates the current net in value.
 **
 */
@@ -89,8 +83,6 @@ bool CMeasureNetIn::Update()
 }
 
 /*
-** ReadConfig
-**
 ** Reads the measure specific configs.
 **
 */

@@ -20,8 +20,6 @@
 #include "Player.h"
 
 /*
-** CPlayer
-**
 ** Constructor.
 **
 */
@@ -48,8 +46,6 @@ CPlayer::CPlayer() :
 }
 
 /*
-** ~CPlayer
-**
 ** Destructor.
 **
 */
@@ -64,8 +60,6 @@ CPlayer::~CPlayer()
 }
 
 /*
-** AddInstance
-**
 ** Called during initialization of main measure.
 **
 */
@@ -75,8 +69,6 @@ void CPlayer::AddInstance()
 }
 
 /*
-** RemoveInstance
-**
 ** Called during destruction of main measure.
 **
 */
@@ -91,8 +83,6 @@ void CPlayer::RemoveInstance()
 }
 
 /*
-** AddMeasure
-**
 ** Called during initialization of any measure.
 **
 */
@@ -102,8 +92,6 @@ void CPlayer::AddMeasure(INT type)
 }
 
 /*
-** UpdateMeasure
-**
 ** Called during update of main measure.
 **
 */
@@ -117,8 +105,6 @@ void CPlayer::UpdateMeasure()
 }
 
 /*
-** FindCover
-**
 ** Default implementation for getting cover.
 **
 */
@@ -143,8 +129,6 @@ void CPlayer::FindCover()
 }
 
 /*
-** FindLyrics
-**
 ** Default implementation for getting lyrics.
 **
 */
@@ -168,8 +152,6 @@ void CPlayer::FindLyrics()
 }
 
 /*
-** LyricsThreadProc
-**
 ** Thread to download lyrics.
 **
 */
@@ -207,8 +189,6 @@ unsigned __stdcall CPlayer::LyricsThreadProc(void* pParam)
 }
 
 /*
-** ClearData
-**
 ** Clear track information.
 **
 */

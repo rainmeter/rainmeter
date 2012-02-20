@@ -61,8 +61,6 @@ void StringToProper(std::wstring& str)
 }
 
 /*
-** CMeterString
-**
 ** The constructor
 **
 */
@@ -87,8 +85,6 @@ CMeterString::CMeterString(CMeterWindow* meterWindow, const WCHAR* name) : CMete
 }
 
 /*
-** ~CMeterString
-**
 ** The destructor
 **
 */
@@ -97,8 +93,6 @@ CMeterString::~CMeterString()
 }
 
 /*
-** GetX
-**
 ** Returns the X-coordinate of the meter
 **
 */
@@ -129,8 +123,6 @@ int CMeterString::GetX(bool abs)
 
 
 /*
-** Initialize
-**
 ** Create the font that is used to draw the text.
 **
 */
@@ -283,8 +275,6 @@ void CMeterString::Initialize()
 }
 
 /*
-** ReadConfig
-**
 ** Read the meter-specific configs from the ini-file.
 **
 */
@@ -469,8 +459,6 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Update
-**
 ** Updates the value(s) from the measures.
 **
 */
@@ -548,8 +536,6 @@ bool CMeterString::Update()
 }
 
 /*
-** Draw
-**
 ** Draws the meter on the double buffer
 **
 */
@@ -561,8 +547,6 @@ bool CMeterString::Draw(Graphics& graphics)
 }
 
 /*
-** DrawString
-**
 ** Draws the string or calculates it's size
 **
 */
@@ -668,8 +652,6 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 }
 
 /*
-** BindMeasure
-**
 ** Overridden method. The string meters need not to be bound on anything
 **
 */
@@ -707,8 +689,6 @@ void CMeterString::BindMeasure(const std::list<CMeasure*>& measures)
 }
 
 /*
-** FreeFontCache
-**
 ** Static function which frees the font cache.
 ** If collection is not NULL, frees the private font cache.
 **
@@ -764,8 +744,6 @@ void CMeterString::FreeFontCache(PrivateFontCollection* collection)
 }
 
 /*
-** FontFaceToString
-**
 ** Static helper to convert font name to a string so it can be used as a key for the cache map.
 **
 */
@@ -783,8 +761,6 @@ std::wstring CMeterString::FontFaceToString(const std::wstring& fontFace, Privat
 }
 
 /*
-** FontPropertiesToString
-**
 ** Static helper to convert font properties to a string so it can be used as a key for the cache map.
 **
 */
@@ -797,8 +773,6 @@ std::wstring CMeterString::FontPropertiesToString(REAL size, FontStyle style)
 }
 
 /*
-** EnumerateInstalledFontFamilies
-**
 ** Static helper to log all installed font families.
 **
 */

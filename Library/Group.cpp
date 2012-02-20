@@ -20,11 +20,6 @@
 #include "Group.h"
 #include "ConfigParser.h"
 
-/*
-** InitializeGroup
-**
-**
-*/
 void CGroup::InitializeGroup(const std::wstring& groups)
 {
 	if (wcscmp(groups.c_str(), m_OldGroups.c_str()) != 0)
@@ -49,11 +44,6 @@ void CGroup::InitializeGroup(const std::wstring& groups)
 	}
 }
 
-/*
-** BelongsToGroup
-**
-**
-*/
 bool CGroup::BelongsToGroup(const std::wstring& group)
 {
 	return (m_Groups.find(CreateGroup(group)) != m_Groups.end());

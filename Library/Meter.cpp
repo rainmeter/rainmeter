@@ -34,8 +34,6 @@
 using namespace Gdiplus;
 
 /*
-** CMeter
-**
 ** The constructor
 **
 */
@@ -71,8 +69,6 @@ CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(met
 }
 
 /*
-** ~CMeter
-**
 ** The destructor
 **
 */
@@ -87,8 +83,6 @@ CMeter::~CMeter()
 }
 
 /*
-** Initialize
-**
 ** Initializes the meter. The base implementation just stores the pointer.
 ** Usually this method is overwritten by the inherited classes, which load
 ** bitmaps and such things during initialization.
@@ -100,8 +94,6 @@ void CMeter::Initialize()
 }
 
 /*
-** GetX
-**
 ** Returns the X-position of the meter.
 **
 */
@@ -148,8 +140,6 @@ int CMeter::GetX(bool abs)
 }
 
 /*
-** GetY
-**
 ** Returns the Y-position of the meter.
 **
 */
@@ -196,8 +186,6 @@ int CMeter::GetY(bool abs)
 }
 
 /*
-** GetMeterRect
-**
 ** Returns a RECT containing the dimensions of the meter within the MeterWindow
 **
 */
@@ -214,8 +202,6 @@ RECT CMeter::GetMeterRect()
 }
 
 /*
-** HitTest
-**
 ** Checks if the given point is inside the meter.
 **
 */
@@ -229,8 +215,6 @@ bool CMeter::HitTest(int x, int y)
 }
 
 /*
-** Show
-**
 ** Shows the meter and tooltip.
 **
 */
@@ -248,8 +232,6 @@ void CMeter::Show()
 }
 
 /*
-** Hide
-**
 ** Hides the meter and tooltip.
 **
 */
@@ -264,8 +246,6 @@ void CMeter::Hide()
 }
 
 /*
-** ReadConfig
-**
 ** Reads the meter-specific configs from the ini-file. The base implementation
 ** reads the common settings for all meters. The inherited classes must call
 ** the base implementation if they overwrite this method.
@@ -451,8 +431,6 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** BindMeasure
-**
 ** Binds this meter to the given measure. The same measure can be bound to
 ** several meters but one meter and only be bound to one measure.
 **
@@ -488,8 +466,6 @@ void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
 }
 
 /*
-** Create
-**
 ** Creates the given meter. This is the factory method for the meters.
 ** If new meters are implemented this method needs to be updated.
 **
@@ -545,8 +521,6 @@ CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHA
 }
 
 /*
-** Update
-**
 ** Updates the value(s) from the measures. Derived classes should
 ** only update if this returns true;
 */
@@ -561,8 +535,6 @@ bool CMeter::Update()
 }
 
 /*
-** SetAllMeasures
-**
 ** Creates a vector containing all the defined measures (for Histogram)
 */
 void CMeter::SetAllMeasures(CMeasure* measure)
@@ -574,8 +546,6 @@ void CMeter::SetAllMeasures(CMeasure* measure)
 }
 
 /*
-** SetAllMeasures
-**
 ** Creates a vector containing all the defined measures (for Image/Line/String)
 */
 void CMeter::SetAllMeasures(const std::vector<CMeasure*>& measures)
@@ -592,8 +562,6 @@ void CMeter::SetAllMeasures(const std::vector<CMeasure*>& measures)
 }
 
 /*
-** ReadMeasureNames
-**
 ** Reads measure names (MeasureName2 - MeasureName[N])
 */
 void CMeter::ReadMeasureNames(CConfigParser& parser, const WCHAR* section, std::vector<std::wstring>& measureNames)
@@ -620,8 +588,6 @@ void CMeter::ReadMeasureNames(CConfigParser& parser, const WCHAR* section, std::
 }
 
 /*
-** ReplaceMeasures
-**
 ** Replaces %1, %2 etc with the corresponding measure value
 */
 bool CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str)
@@ -655,8 +621,6 @@ bool CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std:
 }
 
 /*
-** ReplaceToolTipMeasures
-**
 ** Replaces %1, %2 etc with the corresponding measure value
 */
 void CMeter::ReplaceToolTipMeasures(std::wstring& str)
@@ -688,8 +652,6 @@ void CMeter::ReplaceToolTipMeasures(std::wstring& str)
 }
 
 /*
-** CreateToolTip
-**
 ** Does the initial construction of the ToolTip for the meter
 */
 void CMeter::CreateToolTip(CMeterWindow* meterWindow)
@@ -730,8 +692,6 @@ void CMeter::CreateToolTip(CMeterWindow* meterWindow)
 }
 
 /*
-** UpdateToolTip
-**
 ** Updates the ToolTip to match new values
 */
 void CMeter::UpdateToolTip()
@@ -807,8 +767,6 @@ void CMeter::UpdateToolTip()
 }
 
 /*
-** Draw
-**
 ** Draws the solid background & bevel if such are defined
 */
 bool CMeter::Draw(Graphics& graphics)
@@ -885,8 +843,6 @@ bool CMeter::Draw(Graphics& graphics)
 }
 
 /*
-** DrawBevel
-**
 ** Draws a bevel inside the given area
 */
 void CMeter::DrawBevel(Graphics& graphics, const Rect& rect, const Pen& light, const Pen& dark)

@@ -28,8 +28,6 @@ using namespace Gdiplus;
 extern CRainmeter* Rainmeter;
 
 /*
-** CMeterBitmap
-**
 ** The constructor
 **
 */
@@ -50,8 +48,6 @@ CMeterBitmap::CMeterBitmap(CMeterWindow* meterWindow, const WCHAR* name) : CMete
 }
 
 /*
-** ~CMeterBitmap
-**
 ** The destructor
 **
 */
@@ -60,8 +56,6 @@ CMeterBitmap::~CMeterBitmap()
 }
 
 /*
-** Initialize
-**
 ** Load the image and get the dimensions of the meter from it.
 **
 */
@@ -98,8 +92,6 @@ void CMeterBitmap::Initialize()
 }
 
 /*
-** HitTest
-**
 ** Checks if the given point is inside the meter.
 **
 */
@@ -159,8 +151,6 @@ bool CMeterBitmap::HitTest(int x, int y)
 }
 
 /*
-** ReadConfig
-**
 ** Read the meter-specific configs from the ini-file.
 **
 */
@@ -238,8 +228,6 @@ void CMeterBitmap::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Update
-**
 ** Updates the value(s) from the measures.
 **
 */
@@ -271,8 +259,6 @@ bool CMeterBitmap::Update()
 }
 
 /*
-** HasActiveTransition
-**
 ** Returns true if the meter has active transition animation.
 **
 */
@@ -286,8 +272,6 @@ bool CMeterBitmap::HasActiveTransition()
 }
 
 /*
-** Draw
-**
 ** Draws the meter on the double buffer
 **
 */

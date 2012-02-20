@@ -27,8 +27,6 @@ CPlayer* CPlayerWinamp::c_Player = NULL;
 // This player retrieves data through the Winamp IPC interface.
 
 /*
-** CPlayerWinamp
-**
 ** Constructor.
 **
 */
@@ -44,8 +42,6 @@ CPlayerWinamp::CPlayerWinamp(WINAMPTYPE type) : CPlayer(),
 }
 
 /*
-** ~CPlayerWinamp
-**
 ** Destructor.
 **
 */
@@ -56,8 +52,6 @@ CPlayerWinamp::~CPlayerWinamp()
 }
 
 /*
-** Create
-**
 ** Creates a shared class object.
 **
 */
@@ -72,8 +66,6 @@ CPlayer* CPlayerWinamp::Create(WINAMPTYPE type)
 }
 
 /*
-** CheckWindow
-**
 ** Try to find Winamp periodically.
 **
 */
@@ -106,8 +98,6 @@ bool CPlayerWinamp::CheckWindow()
 }
 
 /*
-** UpdateData
-**
 ** Called during each update of the main measure.
 **
 */
@@ -319,8 +309,6 @@ void CPlayerWinamp::UpdateData()
 }
 
 /*
-** Pause
-**
 ** Handles the Pause bang.
 **
 */
@@ -330,8 +318,6 @@ void CPlayerWinamp::Pause()
 }
 
 /*
-** Play
-**
 ** Handles the Play bang.
 **
 */
@@ -341,8 +327,6 @@ void CPlayerWinamp::Play()
 }
 
 /*
-** Stop
-**
 ** Handles the Stop bang.
 **
 */
@@ -352,8 +336,6 @@ void CPlayerWinamp::Stop()
 }
 
 /*
-** Next
-**
 ** Handles the Next bang.
 **
 */
@@ -363,8 +345,6 @@ void CPlayerWinamp::Next()
 }
 
 /*
-** Previous
-**
 ** Handles the Previous bang.
 **
 */
@@ -374,8 +354,6 @@ void CPlayerWinamp::Previous()
 }
 
 /*
-** SetPosition
-**
 ** Handles the SetPosition bang.
 **
 */
@@ -386,8 +364,6 @@ void CPlayerWinamp::SetPosition(int position)
 }
 
 /*
-** SetRating
-**
 ** Handles the SetRating bang.
 **
 */
@@ -407,8 +383,6 @@ void CPlayerWinamp::SetRating(int rating)
 }
 
 /*
-** SetVolume
-**
 ** Handles the SetVolume bang.
 **
 */
@@ -420,8 +394,6 @@ void CPlayerWinamp::SetVolume(int volume)
 }
 
 /*
-** SetShuffle
-**
 ** Handles the SetShuffle bang.
 **
 */
@@ -435,8 +407,6 @@ void CPlayerWinamp::SetShuffle(bool state)
 }
 
 /*
-** SetRepeat
-**
 ** Handles the SetRepeat bang.
 **
 */
@@ -450,8 +420,6 @@ void CPlayerWinamp::SetRepeat(bool state)
 }
 
 /*
-** ClosePlayer
-**
 ** Handles the ClosePlayer bang.
 **
 */
@@ -472,8 +440,6 @@ void CPlayerWinamp::ClosePlayer()
 }
 
 /*
-** OpenPlayer
-**
 ** Handles the OpenPlayer bang.
 **
 */

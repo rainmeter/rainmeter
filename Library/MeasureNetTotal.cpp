@@ -20,8 +20,6 @@
 #include "MeasureNetTotal.h"
 
 /*
-** CMeasureNetTotal
-**
 ** The constructor
 **
 */
@@ -32,8 +30,6 @@ CMeasureNetTotal::CMeasureNetTotal(CMeterWindow* meterWindow, const WCHAR* name)
 }
 
 /*
-** ~CMeasureNetTotal
-**
 ** The destructor
 **
 */
@@ -42,8 +38,6 @@ CMeasureNetTotal::~CMeasureNetTotal()
 }
 
 /*
-** Update
-**
 ** Updates the current net total value.
 **
 */
@@ -89,8 +83,6 @@ bool CMeasureNetTotal::Update()
 }
 
 /*
-** ReadConfig
-**
 ** Reads the measure specific configs.
 **
 */

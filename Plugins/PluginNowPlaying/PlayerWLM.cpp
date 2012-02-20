@@ -26,8 +26,6 @@ extern HINSTANCE g_Instance;
 // supported by OpenPandora, Last.fm, Media Player Classic, TTPlayer, Zune, etc.
 
 /*
-** CPlayerWLM
-**
 ** Constructor.
 **
 */
@@ -58,8 +56,6 @@ CPlayerWLM::CPlayerWLM() : CPlayer(),
 }
 
 /*
-** ~CPlayerWLM
-**
 ** Destructor.
 **
 */
@@ -71,8 +67,6 @@ CPlayerWLM::~CPlayerWLM()
 }
 
 /*
-** Create
-**
 ** Creates a shared class object.
 **
 */
@@ -169,8 +163,6 @@ void CPlayerWLM::SendKeyInput(WORD key)
 }
 
 /*
-** UpdateData
-**
 ** Called during each update of the main measure.
 **
 */
@@ -179,8 +171,6 @@ void CPlayerWLM::UpdateData()
 }
 
 /*
-** Play
-**
 ** Handles the Play bang.
 **
 */
@@ -190,8 +180,6 @@ void CPlayerWLM::Play()
 }
 
 /*
-** Stop
-**
 ** Handles the Stop bang.
 **
 */
@@ -201,8 +189,6 @@ void CPlayerWLM::Stop()
 }
 
 /*
-** Next
-**
 ** Handles the Next bang.
 **
 */
@@ -212,8 +198,6 @@ void CPlayerWLM::Next()
 }
 
 /*
-** Previous
-**
 ** Handles the Previous bang.
 **
 */

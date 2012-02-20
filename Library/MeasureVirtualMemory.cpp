@@ -21,8 +21,6 @@
 #include "ConfigParser.h"
 
 /*
-** CMeasureVirtualMemory
-**
 ** The constructor
 **
 */
@@ -32,8 +30,6 @@ CMeasureVirtualMemory::CMeasureVirtualMemory(CMeterWindow* meterWindow, const WC
 }
 
 /*
-** ~CMeasureVirtualMemory
-**
 ** The destructor
 **
 */
@@ -42,8 +38,6 @@ CMeasureVirtualMemory::~CMeasureVirtualMemory()
 }
 
 /*
-** Update
-**
 ** Updates the current virtual memory value.
 **
 */
@@ -68,8 +62,6 @@ bool CMeasureVirtualMemory::Update()
 }
 
 /*
-** ReadConfig
-**
 ** Reads the measure specific configs.
 **
 */

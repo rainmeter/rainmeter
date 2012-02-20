@@ -32,8 +32,6 @@ FPFREEMIBTABLE CMeasureNet::c_FreeMibTable = NULL;
 extern CRainmeter* Rainmeter;
 
 /*
-** CMeasureNet
-**
 ** The constructor. This is the base class for the net-meters.
 **
 */
@@ -46,8 +44,6 @@ CMeasureNet::CMeasureNet(CMeterWindow* meterWindow, const WCHAR* name) : CMeasur
 }
 
 /*
-** ~CMeasureNet
-**
 ** The destructor
 **
 */
@@ -56,8 +52,6 @@ CMeasureNet::~CMeasureNet()
 }
 
 /*
-** Update
-**
 ** Checks if Action should be executed.
 **
 */
@@ -83,8 +77,6 @@ bool CMeasureNet::Update()
 }
 
 /*
-** UpdateIFTable
-**
 ** Reads the tables for all net interfaces
 **
 */
@@ -260,8 +252,6 @@ void CMeasureNet::UpdateIFTable()
 }
 
 /*
-** GetNetOctets
-**
 ** Reads the amount of octets. This is the same for in, out and total.
 ** the net-parameter informs which inherited class called this method.
 **
@@ -380,8 +370,6 @@ ULONG64 CMeasureNet::GetNetOctets(NET net)
 }
 
 /*
-** GetNetStatsValue
-**
 ** Returns the stats value of the interface
 **
 */
@@ -453,8 +441,6 @@ ULONG64 CMeasureNet::GetNetStatsValue(NET net)
 }
 
 /*
-** ReadConfig
-**
 ** Reads the measure specific configs. This is the same for in, out and total.
 ** the net-parameter informs which inherited class called this method.
 **
@@ -513,8 +499,6 @@ void CMeasureNet::ReadConfig(CConfigParser& parser, const WCHAR* section, NET ne
 }
 
 /*
-** UpdateStats
-**
 ** Updates the statistics.
 **
 */
@@ -573,8 +557,6 @@ void CMeasureNet::UpdateStats()
 }
 
 /*
-** ResetStats
-**
 ** Resets the statistics.
 **
 */
@@ -584,8 +566,6 @@ void CMeasureNet::ResetStats()
 }
 
 /*
-** ReadStats
-**
 ** Reads statistics.
 **
 */
@@ -630,8 +610,6 @@ void CMeasureNet::ReadStats(const WCHAR* iniFile, std::wstring& statsDate)
 }
 
 /*
-** AppendStatsValue
-**
 ** Appends "key=value\0" to given string.
 **
 */
@@ -644,8 +622,6 @@ inline void AppendStatsValue(std::wstring& data, const WCHAR* key, size_t key_le
 }
 
 /*
-** WriteStats
-**
 ** Writes statistics.
 **
 */
@@ -699,8 +675,6 @@ void CMeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate
 }
 
 /*
-** InitializeNewApi
-**
 ** Prepares in order to use the new APIs which are available on Vista or newer.
 **
 */
@@ -729,8 +703,6 @@ void CMeasureNet::InitializeNewApi()
 }
 
 /*
-** FinalizeNewApi
-**
 ** Frees the resources.
 **
 */

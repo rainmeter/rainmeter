@@ -34,8 +34,6 @@ enum BUTTON_STATE
 };
 
 /*
-** CMeterButton
-**
 ** The constructor
 **
 */
@@ -50,8 +48,6 @@ CMeterButton::CMeterButton(CMeterWindow* meterWindow, const WCHAR* name) : CMete
 }
 
 /*
-** ~CMeterButton
-**
 ** The destructor
 **
 */
@@ -64,8 +60,6 @@ CMeterButton::~CMeterButton()
 }
 
 /*
-** Initialize
-**
 ** Load the image and get the dimensions of the meter from it.
 **
 */
@@ -129,8 +123,6 @@ void CMeterButton::Initialize()
 }
 
 /*
-** ReadConfig
-**
 ** Read the meter-specific configs from the ini-file.
 **
 */
@@ -178,8 +170,6 @@ void CMeterButton::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Update
-**
 ** Updates the value(s) from the measures.
 **
 */
@@ -189,8 +179,6 @@ bool CMeterButton::Update()
 }
 
 /*
-** Draw
-**
 ** Draws the meter on the double buffer
 **
 */
@@ -210,8 +198,6 @@ bool CMeterButton::Draw(Graphics& graphics)
 }
 
 /*
-** BindMeasure
-**
 ** Overridden method. The meters need not to be bound on anything
 **
 */
@@ -225,8 +211,6 @@ void CMeterButton::BindMeasure(const std::list<CMeasure*>& measures)
 }
 
 /*
-** HitTest2
-**
 ** Checks if the given point is inside the button.
 **
 */

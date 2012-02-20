@@ -21,8 +21,6 @@
 #include "ConfigParser.h"
 
 /*
-** CMeasurePhysicalMemory
-**
 ** The constructor
 **
 */
@@ -32,8 +30,6 @@ CMeasurePhysicalMemory::CMeasurePhysicalMemory(CMeterWindow* meterWindow, const 
 }
 
 /*
-** ~CMeasurePhysicalMemory
-**
 ** The destructor
 **
 */
@@ -42,8 +38,6 @@ CMeasurePhysicalMemory::~CMeasurePhysicalMemory()
 }
 
 /*
-** Update
-**
 ** Updates the current physical memory value.
 **
 */
@@ -67,8 +61,6 @@ bool CMeasurePhysicalMemory::Update()
 }
 
 /*
-** ReadConfig
-**
 ** Reads the measure specific configs.
 **
 */

@@ -28,8 +28,6 @@ using namespace Gdiplus;
 extern CRainmeter* Rainmeter;
 
 /*
-** CMeterBar
-**
 ** The constructor
 **
 */
@@ -45,8 +43,6 @@ CMeterBar::CMeterBar(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(mete
 }
 
 /*
-** ~CMeterBar
-**
 ** The destructor
 **
 */
@@ -55,8 +51,6 @@ CMeterBar::~CMeterBar()
 }
 
 /*
-** Initialize
-**
 ** Load the image or create the brush. If image is used get the dimensions
 ** of the meter from it.
 **
@@ -85,8 +79,6 @@ void CMeterBar::Initialize()
 }
 
 /*
-** ReadConfig
-**
 ** Read the meter-specific configs from the ini-file.
 **
 */
@@ -157,8 +149,6 @@ void CMeterBar::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Update
-**
 ** Updates the value(s) from the measures.
 **
 */
@@ -173,8 +163,6 @@ bool CMeterBar::Update()
 }
 
 /*
-** Draw
-**
 ** Draws the meter on the double buffer
 **
 */

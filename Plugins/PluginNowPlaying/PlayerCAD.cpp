@@ -28,8 +28,6 @@ extern HINSTANCE g_Instance;
 // MusicBee, VLC (with libcad plugin), and possibly others.
 
 /*
-** CPlayerCAD
-**
 ** Constructor.
 **
 */
@@ -42,8 +40,6 @@ CPlayerCAD::CPlayerCAD() : CPlayer(),
 }
 
 /*
-** ~CPlayerCAD
-**
 ** Constructor.
 **
 */
@@ -54,8 +50,6 @@ CPlayerCAD::~CPlayerCAD()
 }
 
 /*
-** Create
-**
 ** Creates a shared class object.
 **
 */
@@ -70,8 +64,6 @@ CPlayer* CPlayerCAD::Create()
 }
 
 /*
-** Initialize
-**
 ** Create receiver window.
 **
 */
@@ -188,8 +180,6 @@ void CPlayerCAD::Initialize()
 }
 
 /*
-** Uninitialize
-**
 ** Destroy reciever window.
 **
 */
@@ -200,8 +190,6 @@ void CPlayerCAD::Uninitialize()
 }
 
 /*
-** WndProc
-**
 ** Window procedure for the reciever window.
 **
 */
@@ -381,8 +369,6 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 }
 
 /*
-** UpdateData
-**
 ** Called during each update of the main measure.
 **
 */
@@ -396,8 +382,6 @@ void CPlayerCAD::UpdateData()
 }
 
 /*
-** Pause
-**
 ** Handles the Pause bang.
 **
 */
@@ -407,8 +391,6 @@ void CPlayerCAD::Pause()
 }
 
 /*
-** Play
-**
 ** Handles the Play bang.
 **
 */
@@ -418,8 +400,6 @@ void CPlayerCAD::Play()
 }
 
 /*
-** Stop
-**
 ** Handles the Stop bang.
 **
 */
@@ -429,8 +409,6 @@ void CPlayerCAD::Stop()
 }
 
 /*
-** Next
-**
 ** Handles the Next bang.
 **
 */
@@ -440,8 +418,6 @@ void CPlayerCAD::Next()
 }
 
 /*
-** Previous
-**
 ** Handles the Previous bang.
 **
 */
@@ -451,8 +427,6 @@ void CPlayerCAD::Previous()
 }
 
 /*
-** SetPosition
-**
 ** Handles the SetPosition bang.
 **
 */
@@ -462,8 +436,6 @@ void CPlayerCAD::SetPosition(int position)
 }
 
 /*
-** SetRating
-**
 ** Handles the SetVolume bang.
 **
 */
@@ -475,8 +447,6 @@ void CPlayerCAD::SetRating(int rating)
 }
 
 /*
-** SetVolume
-**
 ** Handles the SetVolume bang.
 **
 */
@@ -486,8 +456,6 @@ void CPlayerCAD::SetVolume(int volume)
 }
 
 /*
-** SetShuffle
-**
 ** Handles the SetShuffle bang.
 **
 */
@@ -498,8 +466,6 @@ void CPlayerCAD::SetShuffle(bool state)
 }
 
 /*
-** SetRepeat
-**
 ** Handles the SetRepeat bang.
 **
 */
@@ -510,8 +476,6 @@ void CPlayerCAD::SetRepeat(bool state)
 }
 
 /*
-** ClosePlayer
-**
 ** Handles the ClosePlayer bang.
 **
 */
@@ -524,8 +488,6 @@ void CPlayerCAD::ClosePlayer()
 }
 
 /*
-** OpenPlayer
-**
 ** Handles the OpenPlayer bang.
 **
 */

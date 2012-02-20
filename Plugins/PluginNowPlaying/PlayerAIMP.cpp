@@ -24,8 +24,6 @@
 CPlayer* CPlayerAIMP::c_Player = NULL;
 
 /*
-** CPlayerAIMP
-**
 ** Constructor.
 **
 */
@@ -41,8 +39,6 @@ CPlayerAIMP::CPlayerAIMP() : CPlayer(),
 }
 
 /*
-** ~CPlayerAIMP
-**
 ** Destructor.
 **
 */
@@ -54,8 +50,6 @@ CPlayerAIMP::~CPlayerAIMP()
 }
 
 /*
-** Create
-**
 ** Creates a shared class object.
 **
 */
@@ -70,8 +64,6 @@ CPlayer* CPlayerAIMP::Create()
 }
 
 /*
-** CheckWindow
-**
 ** Try to find AIMP periodically.
 **
 */
@@ -105,8 +97,6 @@ bool CPlayerAIMP::CheckWindow()
 }
 
 /*
-** UpdateData
-**
 ** Called during each update of the main measure.
 **
 */
@@ -196,8 +186,6 @@ void CPlayerAIMP::UpdateData()
 }
 
 /*
-** Pause
-**
 ** Handles the Pause bang.
 **
 */
@@ -207,8 +195,6 @@ void CPlayerAIMP::Pause()
 }
 
 /*
-** Play
-**
 ** Handles the Play bang.
 **
 */
@@ -218,8 +204,6 @@ void CPlayerAIMP::Play()
 }
 
 /*
-** Stop
-**
 ** Handles the Stop bang.
 **
 */
@@ -229,8 +213,6 @@ void CPlayerAIMP::Stop()
 }
 
 /*
-** Next
-**
 ** Handles the Next bang.
 **
 */
@@ -240,8 +222,6 @@ void CPlayerAIMP::Next()
 }
 
 /*
-** Previous
-**
 ** Handles the Previous bang.
 **
 */
@@ -251,8 +231,6 @@ void CPlayerAIMP::Previous()
 }
 
 /*
-** SetPosition
-**
 ** Handles the SetPosition bang.
 **
 */
@@ -262,8 +240,6 @@ void CPlayerAIMP::SetPosition(int position)
 }
 
 /*
-** SetRating
-**
 ** Handles the SetRating bang.
 **
 */
@@ -278,8 +254,6 @@ void CPlayerAIMP::SetRating(int rating)
 }
 
 /*
-** SetVolume
-**
 ** Handles the SetVolume bang.
 **
 */
@@ -289,8 +263,6 @@ void CPlayerAIMP::SetVolume(int volume)
 }
 
 /*
-** SetShuffle
-**
 ** Handles the SetShuffle bang.
 **
 */
@@ -301,8 +273,6 @@ void CPlayerAIMP::SetShuffle(bool state)
 }
 
 /*
-** SetRepeat
-**
 ** Handles the SetRepeat bang.
 **
 */
@@ -313,8 +283,6 @@ void CPlayerAIMP::SetRepeat(bool state)
 }
 
 /*
-** ClosePlayer
-**
 ** Handles the ClosePlayer bang.
 **
 */
@@ -324,8 +292,6 @@ void CPlayerAIMP::ClosePlayer()
 }
 
 /*
-** OpenPlayer
-**
 ** Handles the OpenPlayer bang.
 **
 */

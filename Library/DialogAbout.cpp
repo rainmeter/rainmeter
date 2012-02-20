@@ -34,8 +34,6 @@ WINDOWPLACEMENT CDialogAbout::c_WindowPlacement = {0};
 CDialogAbout* CDialogAbout::c_Dialog = NULL;
 
 /*
-** CDialogAbout
-**
 ** Constructor.
 **
 */
@@ -48,8 +46,6 @@ CDialogAbout::CDialogAbout(HWND wnd) : CDialog(wnd),
 }
 
 /*
-** ~CDialogAbout
-**
 ** Destructor.
 **
 */
@@ -58,8 +54,6 @@ CDialogAbout::~CDialogAbout()
 }
 
 /*
-** Open
-**
 ** Opens the About dialog by tab name.
 **
 */
@@ -88,8 +82,6 @@ void CDialogAbout::Open(const WCHAR* name)
 }
 
 /*
-** Open
-**
 ** Opens the About dialog.
 **
 */
@@ -121,8 +113,6 @@ void CDialogAbout::Open(int tab)
 }
 
 /*
-** ShowAboutLog
-**
 ** Shows log if dialog isn't already open.
 **
 */
@@ -159,8 +149,6 @@ void CDialogAbout::UpdateMeasures(CMeterWindow* meterWindow)
 }
 
 /*
-** DlgProc
-**
 ** Dialog procedure for the About dialog.
 **
 */
@@ -349,8 +337,6 @@ INT_PTR CDialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 // -----------------------------------------------------------------------------------------------
 
 /*
-** CTabLog
-**
 ** Constructor.
 **
 */
@@ -363,8 +349,6 @@ CDialogAbout::CTabLog::CTabLog(HWND owner) : CTab(Rainmeter->GetResourceInstance
 }
 
 /*
-** Initialize
-**
 ** Called when tab is displayed.
 **
 */
@@ -432,8 +416,6 @@ void CDialogAbout::CTabLog::Initialize()
 }
 
 /*
-** Resize
-**
 ** Resizes window and repositions controls.
 **
 */
@@ -467,8 +449,6 @@ void CDialogAbout::CTabLog::Resize(int w, int h)
 }
 
 /*
-** AddItem
-**
 ** Adds item to log.
 **
 */
@@ -521,8 +501,6 @@ void CDialogAbout::CTabLog::AddItem(int level, LPCWSTR time, LPCWSTR message)
 }
 
 /*
-** DlgProc
-**
 ** Dialog procedure for the log dialog.
 **
 */
@@ -583,8 +561,6 @@ INT_PTR CDialogAbout::CTabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 // -----------------------------------------------------------------------------------------------
 
 /*
-** CTabSkins
-**
 ** Constructor.
 **
 */
@@ -594,8 +570,6 @@ CDialogAbout::CTabSkins::CTabSkins(HWND owner) : CTab(Rainmeter->GetResourceInst
 }
 
 /*
-** Initialize
-**
 ** Called when tab is displayed.
 **
 */
@@ -640,8 +614,6 @@ void CDialogAbout::CTabSkins::Initialize()
 }
 
 /*
-** Resize
-**
 ** Resizes window and repositions controls.
 **
 */
@@ -664,8 +636,6 @@ void CDialogAbout::CTabSkins::Resize(int w, int h)
 }
 
 /*
-** UpdateSkinList
-**
 ** Updates the list of skins.
 **
 */
@@ -720,8 +690,6 @@ void CDialogAbout::CTabSkins::UpdateSkinList()
 }
 
 /*
-** UpdateMeasureList
-**
 ** Updates the list of measures and values.
 **
 */
@@ -817,8 +785,6 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 }
 
 /*
-** DlgProc
-**
 ** Dialog procedure for the measures dialog.
 **
 */
@@ -858,8 +824,6 @@ INT_PTR CDialogAbout::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 // -----------------------------------------------------------------------------------------------
 
 /*
-** CTabPlugins
-**
 ** Constructor.
 **
 */
@@ -868,8 +832,6 @@ CDialogAbout::CTabPlugins::CTabPlugins(HWND owner) : CTab(Rainmeter->GetResource
 }
 
 /*
-** Initialize
-**
 ** Called when tab is displayed.
 **
 */
@@ -1009,8 +971,6 @@ void CDialogAbout::CTabPlugins::Initialize()
 }
 
 /*
-** Resize
-**
 ** Resizes window and repositions controls.
 **
 */
@@ -1029,8 +989,6 @@ void CDialogAbout::CTabPlugins::Resize(int w, int h)
 }
 
 /*
-** DlgProc
-**
 ** Dialog procedure for the Plugins tab.
 **
 */
@@ -1046,8 +1004,6 @@ INT_PTR CALLBACK CDialogAbout::CTabPlugins::DlgProc(HWND hWnd, UINT uMsg, WPARAM
 // -----------------------------------------------------------------------------------------------
 
 /*
-** CTabVersion
-**
 ** Constructor.
 **
 */
@@ -1056,8 +1012,6 @@ CDialogAbout::CTabVersion::CTabVersion(HWND owner) : CTab(Rainmeter->GetResource
 }
 
 /*
-** Initialize
-**
 ** Called when tab is displayed.
 **
 */
@@ -1088,8 +1042,6 @@ void CDialogAbout::CTabVersion::Initialize()
 }
 
 /*
-** Resize
-**
 ** Resizes window and repositions controls.
 **
 */
@@ -1099,8 +1051,6 @@ void CDialogAbout::CTabVersion::Resize(int w, int h)
 }
 
 /*
-** DlgProc
-**
 ** Dialog procedure for the Version tab.
 **
 */

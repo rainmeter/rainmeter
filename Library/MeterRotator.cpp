@@ -31,8 +31,6 @@ using namespace Gdiplus;
 extern CRainmeter* Rainmeter;
 
 /*
-** CMeterRotator
-**
 ** The constructor
 **
 */
@@ -48,8 +46,6 @@ CMeterRotator::CMeterRotator(CMeterWindow* meterWindow, const WCHAR* name) : CMe
 }
 
 /*
-** ~CMeterRotator
-**
 ** The destructor
 **
 */
@@ -58,8 +54,6 @@ CMeterRotator::~CMeterRotator()
 }
 
 /*
-** Initialize
-**
 ** Load the image & configs.
 **
 */
@@ -79,8 +73,6 @@ void CMeterRotator::Initialize()
 }
 
 /*
-** ReadConfig
-**
 ** Read the meter-specific configs from the ini-file.
 **
 */
@@ -126,8 +118,6 @@ void CMeterRotator::ReadConfig(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Update
-**
 ** Updates the value(s) from the measures.
 **
 */
@@ -152,8 +142,6 @@ bool CMeterRotator::Update()
 
 
 /*
-** Draw
-**
 ** Draws the meter on the double buffer
 **
 */

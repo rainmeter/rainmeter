@@ -22,8 +22,6 @@
 HWND CDialog::c_ActiveDialog = NULL;
 
 /*
-** CDialog
-**
 ** Constructor.
 **
 */
@@ -42,8 +40,6 @@ CDialog::CDialog(HWND wnd) :
 }
 
 /*
-** CDialog
-**
 ** Destructor.
 **
 */
@@ -65,8 +61,6 @@ void CDialog::SetDialogRTL()
 }
 
 /*
-** SetDialogFont
-**
 ** Sets dialog font to UI font.
 **
 */
@@ -76,8 +70,6 @@ void CDialog::SetDialogFont()
 }
 
 /*
-** SetFontProc
-**
 ** Callback for EnumChildWindows().
 **
 */
@@ -88,8 +80,6 @@ BOOL CALLBACK CDialog::SetFontProc(HWND hWnd, LPARAM lParam)
 }
 
 /*
-** CTab
-**
 ** Constructor.
 **
 */
@@ -101,8 +91,6 @@ CDialog::CTab::CTab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc)
 }
 
 /*
-** CTab
-**
 ** Destructor.
 **
 */
@@ -112,8 +100,6 @@ CDialog::CTab::~CTab()
 }
 
 /*
-** Activate
-**
 ** Activates the tab.
 **
 */

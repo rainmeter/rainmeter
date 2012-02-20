@@ -22,8 +22,6 @@
 #include "../Rainmeter.h"
 
 /*
-** LuaScript
-**
 ** The constructor
 **
 */
@@ -80,8 +78,6 @@ LuaScript::LuaScript(lua_State* state, const char* file) : m_State(state),
 }
 
 /*
-** ~LuaScript
-**
 ** The destructor
 **
 */
@@ -91,8 +87,6 @@ LuaScript::~LuaScript()
 }
 
 /*
-** IsFunction
-**
 ** Checks if given function is defined in the script file.
 **
 */
@@ -121,8 +115,6 @@ bool LuaScript::IsFunction(const char* funcName)
 }
 
 /*
-** RunFunction
-**
 ** Runs given function in script file.
 **
 */
@@ -146,8 +138,6 @@ void LuaScript::RunFunction(const char* funcName)
 }
 
 /*
-** RunFunctionWithReturn
-**
 ** Runs given function in script file and stores the retruned number or string.
 **
 */
@@ -190,8 +180,6 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 }
 
 /*
-** RunString
-**
 ** Runs given string in the context of the script file.
 **
 */

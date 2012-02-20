@@ -20,8 +20,6 @@
 #include "Cover.h"
 
 /*
-** GetCached
-**
 ** Checks if cover art is in cache.
 **
 */
@@ -32,8 +30,6 @@ bool CCover::GetCached(std::wstring& path)
 }
 
 /*
-** GetLocal
-**
 ** Attemps to find local cover art in various formats.
 **
 */
@@ -65,8 +61,6 @@ bool CCover::GetLocal(std::wstring filename, const std::wstring& folder, std::ws
 }
 
 /*
-** GetEmbedded
-**
 ** Attempts to extract cover art from audio files.
 **
 */
@@ -131,8 +125,6 @@ bool CCover::GetEmbedded(const TagLib::FileRef& fr, const std::wstring& target)
 }
 
 /*
-** GetFileFolder
-**
 ** Returns path without filename.
 **
 */
@@ -148,8 +140,6 @@ std::wstring CCover::GetFileFolder(const std::wstring& file)
 }
 
 /*
-** ExtractAPE
-**
 ** Extracts cover art embedded in APE tags.
 **
 */
@@ -174,8 +164,6 @@ bool CCover::ExtractAPE(TagLib::APE::Tag* tag, const std::wstring& target)
 }
 
 /*
-** ExtractID3
-**
 ** Extracts cover art embedded in ID3v2 tags.
 **
 */
@@ -193,8 +181,6 @@ bool CCover::ExtractID3(TagLib::ID3v2::Tag* tag, const std::wstring& target)
 }
 
 /*
-** ExtractASF
-**
 ** Extracts cover art embedded in ASF/WMA files.
 **
 */
@@ -220,8 +206,6 @@ bool CCover::ExtractASF(TagLib::ASF::File* file, const std::wstring& target)
 }
 
 /*
-** ExtractFLAC
-**
 ** Extracts cover art embedded in FLAC files.
 **
 */
@@ -239,8 +223,6 @@ bool CCover::ExtractFLAC(TagLib::FLAC::File* file, const std::wstring& target)
 }
 
 /*
-** ExtractMP4
-**
 ** Extracts cover art embedded in MP4-like files.
 **
 */
@@ -260,8 +242,6 @@ bool CCover::ExtractMP4(TagLib::MP4::File* file, const std::wstring& target)
 }
 
 /*
-** WriteCover
-**
 ** Write cover data to file.
 **
 */
