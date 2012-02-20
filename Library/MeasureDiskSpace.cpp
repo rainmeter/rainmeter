@@ -120,7 +120,6 @@ bool CMeasureDiskSpace::Update()
 				{
 					UINT oldMode = SetErrorMode(0);
 					SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
-					SetLastError(ERROR_SUCCESS);
 					sizeResult = GetDiskFreeSpaceEx(drive, NULL, (PULARGE_INTEGER)&i64TotalBytes, (PULARGE_INTEGER)&i64FreeBytes);
 					SetErrorMode(oldMode);  // Reset
 				}

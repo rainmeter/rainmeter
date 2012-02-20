@@ -18,7 +18,7 @@
 
 #include <windows.h>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <algorithm>
 #include <Wininet.h>
@@ -69,7 +69,7 @@ static std::vector<MeasureData*> g_Measures;
 static bool g_Debug = false;
 static HINTERNET g_InternetHandle = NULL;
 
-static std::map<std::wstring, WCHAR> g_CERs;
+static std::unordered_map<std::wstring, WCHAR> g_CERs;
 
 #define OVECCOUNT 300    // should be a multiple of 3
 
@@ -217,7 +217,7 @@ std::wstring& DecodeReferences(std::wstring& str, int opt)
 
 				std::wstring name(str, pos, end - pos);
 
-				std::map<std::wstring, WCHAR>::const_iterator iter = g_CERs.find(name);
+				std::unordered_map<std::wstring, WCHAR>::const_iterator iter = g_CERs.find(name);
 				if (iter != g_CERs.end())
 				{
 					str.replace(start, end - start + 1, 1, (*iter).second);
@@ -504,6 +504,7 @@ void FillCharacterEntityReferences()
 	};
 
 	const int entityCount = _countof(entities);
+	g_CERs.rehash(entityCount);
 	for (int i = 0; i < entityCount; ++i)
 	{
 		g_CERs.insert(std::pair<std::wstring, WCHAR>(entities[i].name, entities[i].ch));

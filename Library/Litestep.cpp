@@ -355,17 +355,6 @@ void LogInternal(int nLevel, ULONGLONG elapsed, LPCTSTR pszMessage)
 	}
 }
 
-BOOL LSLog(int nLevel, LPCTSTR pszModule, LPCTSTR pszMessage)
-{
-	// Ignore LOG_DEBUG messages from plugins unless in debug mode
-	if (nLevel != LOG_DEBUG || Rainmeter->GetDebug())
-	{
-		Log(nLevel, pszMessage);
-	}
-
-	return TRUE;
-}
-
 void Log(int nLevel, const WCHAR* message)
 {
 	struct DELAYED_LOG_INFO
