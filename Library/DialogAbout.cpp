@@ -758,11 +758,11 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 	lvi.iSubItem = 0;
 	lvi.iItem = 0;
 
+	lvi.iGroupId = 0;
 	const std::list<CMeasure*>& measures = m_SkinWindow->GetMeasures();
 	std::list<CMeasure*>::const_iterator j = measures.begin();
 	for ( ; j != measures.end(); ++j)
 	{
-		lvi.iGroupId = 0;
 		lvi.pszText = (WCHAR*)(*j)->GetName();
 
 		if (lvi.iItem < count)
@@ -786,10 +786,10 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 		++lvi.iItem;
 	}
 
+	lvi.iGroupId = 1;
 	const auto& variables = m_SkinWindow->GetParser().GetVariables();
 	for (auto iter = variables.cbegin(); iter != variables.cend(); ++iter)
 	{
-		lvi.iGroupId = 1;
 		lvi.pszText = (WCHAR*)(*iter).first.c_str();
 
 		if (lvi.iItem < count)
@@ -801,6 +801,7 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 			ListView_InsertItem(item, &lvi);
 		}
 
+		ListView_SetItemText(item, lvi.iItem, 1, L"");
 		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)(*iter).second.c_str());
 		++lvi.iItem;
 	}
