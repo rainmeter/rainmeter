@@ -410,7 +410,7 @@ void LogWithArgs(int nLevel, const WCHAR* format, ...)
 	_CrtSetReportMode(_CRT_ASSERT, 0);
 
 	errno = 0;
-	_vsnwprintf_s( buffer, 4096, _TRUNCATE, format, args );
+	_vsnwprintf_s(buffer, 4096, _TRUNCATE, format, args);
 	if (errno != 0)
 	{
 		nLevel = LOG_ERROR;

@@ -47,6 +47,8 @@ public:
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
 	void SetBuiltInVariable(const WCHAR* strVariable, const WCHAR* strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
 
+	const std::unordered_map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }
+
 	void SetCurrentSection(const std::wstring& strSection) { m_CurrentSection->assign(strSection); }
 	void ClearCurrentSection() { m_CurrentSection->clear(); }
 

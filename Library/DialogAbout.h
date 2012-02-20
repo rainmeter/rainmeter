@@ -66,10 +66,10 @@ private:
 	};
 
 	// Measures tab
-	class CTabMeasures : public CTab
+	class CTabSkins : public CTab
 	{
 	public:
-		CTabMeasures(HWND owner);
+		CTabSkins(HWND owner);
 
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
@@ -115,7 +115,7 @@ private:
 	};
 
 	CTabLog m_TabLog;
-	CTabMeasures m_TabMeasures;
+	CTabSkins m_TabSkins;
 	CTabPlugins m_TabPlugins;
 	CTabVersion m_TabVersion;
 };

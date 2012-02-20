@@ -26,7 +26,7 @@ static const double M_E = 2.7182818284590452354;
 static const double M_PI = 3.14159265358979323846;
 
 typedef double (*OneArgProc)(double arg);
-typedef WCHAR* (*MultiArgProc)(int paramcnt, double* args, double* result);
+typedef const WCHAR* (*MultiArgProc)(int paramcnt, double* args, double* result);
 
 enum OperationType
 {
@@ -425,7 +425,7 @@ static const WCHAR* Calc(Parser& parser)
 		int paramcnt = parser.valTop - op.prevTop;
 
 		parser.valTop = op.prevTop;
-		WCHAR* error = (*(MultiArgProc)g_Functions[op.funcIndex].proc)(paramcnt, &parser.valStack[parser.valTop + 1], &res);
+		const WCHAR* error = (*(MultiArgProc)g_Functions[op.funcIndex].proc)(paramcnt, &parser.valStack[parser.valTop + 1], &res);
 		if (error) return error;
 
 		parser.valStack[++parser.valTop] = res;

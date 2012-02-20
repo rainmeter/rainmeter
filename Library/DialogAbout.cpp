@@ -41,7 +41,7 @@ CDialogAbout* CDialogAbout::c_Dialog = NULL;
 */
 CDialogAbout::CDialogAbout(HWND wnd) : CDialog(wnd),
 	m_TabLog(wnd),
-	m_TabMeasures(wnd),
+	m_TabSkins(wnd),
 	m_TabPlugins(wnd),
 	m_TabVersion(wnd)
 {
@@ -69,7 +69,8 @@ void CDialogAbout::Open(const WCHAR* name)
 
 	if (name)
 	{
-		if (_wcsicmp(name, L"Measures") == 0)
+		if (_wcsicmp(name, L"Skins") == 0 ||
+			_wcsicmp(name, L"Measures") == 0)	// For backwards compatibility
 		{
 			tab = 1;
 		}
@@ -143,17 +144,17 @@ void CDialogAbout::AddLogItem(int level, LPCWSTR time, LPCWSTR message)
 
 void CDialogAbout::UpdateSkins()
 {
-	if (c_Dialog && c_Dialog->m_TabMeasures.IsInitialized())
+	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
 	{
-		c_Dialog->m_TabMeasures.UpdateSkinList();
+		c_Dialog->m_TabSkins.UpdateSkinList();
 	}
 }
 
 void CDialogAbout::UpdateMeasures(CMeterWindow* meterWindow)
 {
-	if (c_Dialog && c_Dialog->m_TabMeasures.IsInitialized())
+	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
 	{
-		c_Dialog->m_TabMeasures.UpdateMeasureList(meterWindow);
+		c_Dialog->m_TabSkins.UpdateMeasureList(meterWindow);
 	}
 }
 
@@ -212,7 +213,7 @@ INT_PTR CALLBACK CDialogAbout::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 					w -= 48;
 					h -= 100;
 					c_Dialog->m_TabLog.Resize(w, h);
-					c_Dialog->m_TabMeasures.Resize(w, h);
+					c_Dialog->m_TabSkins.Resize(w, h);
 					c_Dialog->m_TabPlugins.Resize(w, h);
 					c_Dialog->m_TabVersion.Resize(w, h);
 				}
@@ -261,7 +262,7 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	tci.mask = TCIF_TEXT;
 	tci.pszText = GetString(ID_STR_LOG);
 	TabCtrl_InsertItem(item, 0, &tci);
-	tci.pszText = GetString(ID_STR_MEASURES);
+	tci.pszText = GetString(ID_STR_SKINS);
 	TabCtrl_InsertItem(item, 1, &tci);
 	tci.pszText = GetString(ID_STR_PLUGINS);
 	TabCtrl_InsertItem(item, 2, &tci);
@@ -310,7 +311,7 @@ INT_PTR CDialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 		{
 			// Disable all tab windows first
 			EnableWindow(m_TabLog.GetWindow(), FALSE);
-			EnableWindow(m_TabMeasures.GetWindow(), FALSE);
+			EnableWindow(m_TabSkins.GetWindow(), FALSE);
 			EnableWindow(m_TabPlugins.GetWindow(), FALSE);
 			EnableWindow(m_TabVersion.GetWindow(), FALSE);
 
@@ -321,7 +322,7 @@ INT_PTR CDialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 			}
 			else if (sel == 1)
 			{
-				m_TabMeasures.Activate();
+				m_TabSkins.Activate();
 			}
 			else if (sel == 2)
 			{
@@ -582,12 +583,12 @@ INT_PTR CDialogAbout::CTabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 // -----------------------------------------------------------------------------------------------
 
 /*
-** CTabMeasures
+** CTabSkins
 **
 ** Constructor.
 **
 */
-CDialogAbout::CTabMeasures::CTabMeasures(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTMEASURES_DIALOG, DlgProc),
+CDialogAbout::CTabSkins::CTabSkins(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTMEASURES_DIALOG, DlgProc),
 	m_SkinWindow()
 {
 }
@@ -598,17 +599,30 @@ CDialogAbout::CTabMeasures::CTabMeasures(HWND owner) : CTab(Rainmeter->GetResour
 ** Called when tab is displayed.
 **
 */
-void CDialogAbout::CTabMeasures::Initialize()
+void CDialogAbout::CTabSkins::Initialize()
 {
 	m_Initialized = true;
 
 	// Add columns to the list view	
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
-	ListView_SetExtendedListViewStyleEx(item, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+
+	LVGROUP lvg;
+	lvg.cbSize = sizeof(LVGROUP);
+	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
+	lvg.state = LVGS_NORMAL | LVGS_COLLAPSIBLE;
+	lvg.iGroupId = 0;
+	lvg.pszHeader = GetString(ID_STR_MEASURES);
+	ListView_InsertGroup(item, 0, &lvg);
+	lvg.iGroupId = 1;
+	lvg.pszHeader = L"Variables";	// FIXME
+	ListView_InsertGroup(item, 1, &lvg);
+
+	ListView_EnableGroupView(item, TRUE);
 
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
-	lvc.fmt = LVCFMT_LEFT;  // left-aligned column
+	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
 	lvc.cx = 120;
 	lvc.pszText = GetString(ID_STR_NAME);
@@ -631,7 +645,7 @@ void CDialogAbout::CTabMeasures::Initialize()
 ** Resizes window and repositions controls.
 **
 */
-void CDialogAbout::CTabMeasures::Resize(int w, int h)
+void CDialogAbout::CTabSkins::Resize(int w, int h)
 {
 	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
@@ -655,7 +669,7 @@ void CDialogAbout::CTabMeasures::Resize(int w, int h)
 ** Updates the list of skins.
 **
 */
-void CDialogAbout::CTabMeasures::UpdateSkinList()
+void CDialogAbout::CTabSkins::UpdateSkinList()
 {
 	// Delete all entries
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTBOX);
@@ -711,7 +725,7 @@ void CDialogAbout::CTabMeasures::UpdateSkinList()
 ** Updates the list of measures and values.
 **
 */
-void CDialogAbout::CTabMeasures::UpdateMeasureList(CMeterWindow* meterWindow)
+void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 {
 	if (!meterWindow)
 	{
@@ -739,12 +753,12 @@ void CDialogAbout::CTabMeasures::UpdateMeasureList(CMeterWindow* meterWindow)
 	SendMessage(item, WM_SETREDRAW, FALSE, 0);
 	int count = ListView_GetItemCount(item);
 	int index = 0;
-
+	
 	const std::list<CMeasure*>& measures = m_SkinWindow->GetMeasures();
 	std::list<CMeasure*>::const_iterator j = measures.begin();
 	for ( ; j != measures.end(); ++j)
 	{
-		const WCHAR* name = (*j)->GetName();;
+		const WCHAR* name = (*j)->GetName();
 		if (index < count)
 		{
 			ListView_SetItemText(item, index, 0, (WCHAR*)name);
@@ -752,7 +766,8 @@ void CDialogAbout::CTabMeasures::UpdateMeasureList(CMeterWindow* meterWindow)
 		else
 		{
 			LVITEM vitem;
-			vitem.mask = LVIF_TEXT;
+			vitem.mask = LVIF_TEXT | LVIF_GROUPID;
+			vitem.iGroupId = 0;
 			vitem.iItem = index;
 			vitem.iSubItem = 0;
 			vitem.pszText = (WCHAR*)name;
@@ -768,6 +783,29 @@ void CDialogAbout::CTabMeasures::UpdateMeasureList(CMeterWindow* meterWindow)
 
 		ListView_SetItemText(item, index, 1, (WCHAR*)range.c_str());
 		ListView_SetItemText(item, index, 2, (WCHAR*)(*j)->GetStringValue(AUTOSCALE_OFF, 1, -1, false));
+		++index;
+	}
+
+	const auto& variables = m_SkinWindow->GetParser().GetVariables();
+	for (auto iter = variables.cbegin(); iter != variables.cend(); ++iter)
+	{
+		const WCHAR* name = (*iter).first.c_str();
+		if (index < count)
+		{
+			ListView_SetItemText(item, index, 0, (WCHAR*)name);
+		}
+		else
+		{
+			LVITEM vitem;
+			vitem.mask = LVIF_TEXT | LVIF_GROUPID;
+			vitem.iGroupId = 1;
+			vitem.iItem = index;
+			vitem.iSubItem = 0;
+			vitem.pszText = (WCHAR*)name;
+			ListView_InsertItem(item, &vitem);
+		}
+
+		ListView_SetItemText(item, index, 2, (WCHAR*)(*iter).second.c_str());
 		++index;
 	}
 
@@ -787,18 +825,18 @@ void CDialogAbout::CTabMeasures::UpdateMeasureList(CMeterWindow* meterWindow)
 ** Dialog procedure for the measures dialog.
 **
 */
-INT_PTR CALLBACK CDialogAbout::CTabMeasures::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK CDialogAbout::CTabSkins::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		return c_Dialog->m_TabMeasures.OnCommand(wParam, lParam);
+		return c_Dialog->m_TabSkins.OnCommand(wParam, lParam);
 	}
 
 	return FALSE;
 }
 
-INT_PTR CDialogAbout::CTabMeasures::OnCommand(WPARAM wParam, LPARAM lParam)
+INT_PTR CDialogAbout::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
