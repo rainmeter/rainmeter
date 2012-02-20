@@ -2921,7 +2921,7 @@ void CMeterWindow::Update(bool nodraw)
 
 		// If our option is to disable when in an RDP session, then check if in an RDP session.
 		// Only redraw if we are not in a remote session
-		if (!m_Rainmeter->GetDisableRDP() || !GetSystemMetrics(SM_REMOTESESSION))
+		if (m_Rainmeter->IsRedrawable())
 		{
 			Redraw();
 		}

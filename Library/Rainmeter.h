@@ -190,6 +190,7 @@ public:
 	void DeleteLogFile();
 
 	bool GetDisableRDP() { return m_DisableRDP; }
+	bool IsRedrawable() { return (!GetDisableRDP() || !GetSystemMetrics(SM_REMOTESESSION)); }
 
 	bool GetDisableDragging() { return m_DisableDragging; }
 	void SetDisableDragging(bool dragging);

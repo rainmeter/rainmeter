@@ -32,12 +32,14 @@ using namespace Gdiplus;
 
 enum TIMER
 {
-	TIMER_SHOWDESKTOP = 1
+	TIMER_SHOWDESKTOP   = 1,
+	TIMER_RESUME        = 2
 };
 enum INTERVAL
 {
 	INTERVAL_SHOWDESKTOP    = 250,
-	INTERVAL_RESTOREWINDOWS = 100
+	INTERVAL_RESTOREWINDOWS = 100,
+	INTERVAL_RESUME         = 1000
 };
 
 MULTIMONITOR_INFO CSystem::c_Monitors = { 0 };
@@ -133,6 +135,7 @@ void CSystem::Initialize(HINSTANCE instance)
 void CSystem::Finalize()
 {
 	KillTimer(c_Window, TIMER_SHOWDESKTOP);
+	KillTimer(c_Window, TIMER_RESUME);
 
 	if (c_WinEventHook)
 	{
@@ -999,9 +1002,26 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		break;
 
 	case WM_TIMER:
-		if (wParam == TIMER_SHOWDESKTOP)
+		switch (wParam)
 		{
-			CheckDesktopState(GetWorkerW());
+		case TIMER_SHOWDESKTOP:
+			if (wParam == TIMER_SHOWDESKTOP)
+			{
+				CheckDesktopState(GetWorkerW());
+			}
+			break;
+
+		case TIMER_RESUME:
+			KillTimer(hWnd, TIMER_RESUME);
+			if (Rainmeter->IsRedrawable())
+			{
+				std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
+				for ( ; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
+				{
+					(*iter).second->RedrawWindow();
+				}
+			}
+			break;
 		}
 		break;
 
@@ -1027,6 +1047,14 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 			}
 		}
 		break;
+
+	case WM_POWERBROADCAST:
+		if (wParam == PBT_APMRESUMESUSPEND)
+		{
+			// Deliver PBT_APMRESUMESUSPEND event to all meter windows
+			SetTimer(hWnd, TIMER_RESUME, INTERVAL_RESUME, NULL);
+		}
+		return TRUE;
 
 	default:
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);

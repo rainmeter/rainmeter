@@ -181,6 +181,7 @@ public:
 	void Deactivate();
 	void Refresh(bool init, bool all = false);
 	void Redraw();
+	void RedrawWindow() { UpdateTransparency(m_TransparencyValue, false); }
 	void SetVariable(const std::wstring& variable, const std::wstring& value);
 	void SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group);
 
@@ -239,8 +240,6 @@ public:
 
 	bool GetMeterToolTipHidden() { return m_ToolTipHidden; }
 	bool GetMeterMouseActionCursor() { return m_MouseActionCursor; }
-
-	void AddMeasureBang(const WCHAR* bang, int index, CMeasure* measure);
 
 	void MakePathAbsolute(std::wstring& path);
 
