@@ -605,7 +605,7 @@ void CDialogAbout::CTabSkins::Initialize()
 
 	// Add columns to the list view	
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
-	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	LVGROUP lvg;
 	lvg.cbSize = sizeof(LVGROUP);
@@ -752,26 +752,26 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
 	SendMessage(item, WM_SETREDRAW, FALSE, 0);
 	int count = ListView_GetItemCount(item);
-	int index = 0;
-	
+
+	LVITEM lvi;
+	lvi.mask = LVIF_TEXT | LVIF_GROUPID;
+	lvi.iSubItem = 0;
+	lvi.iItem = 0;
+
 	const std::list<CMeasure*>& measures = m_SkinWindow->GetMeasures();
 	std::list<CMeasure*>::const_iterator j = measures.begin();
 	for ( ; j != measures.end(); ++j)
 	{
-		const WCHAR* name = (*j)->GetName();
-		if (index < count)
+		lvi.iGroupId = 0;
+		lvi.pszText = (WCHAR*)(*j)->GetName();
+
+		if (lvi.iItem < count)
 		{
-			ListView_SetItemText(item, index, 0, (WCHAR*)name);
+			ListView_SetItem(item, &lvi);
 		}
 		else
 		{
-			LVITEM vitem;
-			vitem.mask = LVIF_TEXT | LVIF_GROUPID;
-			vitem.iGroupId = 0;
-			vitem.iItem = index;
-			vitem.iSubItem = 0;
-			vitem.pszText = (WCHAR*)name;
-			ListView_InsertItem(item, &vitem);
+			ListView_InsertItem(item, &lvi);
 		}
 
 		WCHAR buffer[256];
@@ -781,38 +781,34 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 		CMeasure::GetScaledValue(AUTOSCALE_ON, 1, (*j)->GetMaxValue(), buffer, _countof(buffer));
 		range += buffer;
 
-		ListView_SetItemText(item, index, 1, (WCHAR*)range.c_str());
-		ListView_SetItemText(item, index, 2, (WCHAR*)(*j)->GetStringValue(AUTOSCALE_OFF, 1, -1, false));
-		++index;
+		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)range.c_str());
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)(*j)->GetStringValue(AUTOSCALE_OFF, 1, -1, false));
+		++lvi.iItem;
 	}
 
 	const auto& variables = m_SkinWindow->GetParser().GetVariables();
 	for (auto iter = variables.cbegin(); iter != variables.cend(); ++iter)
 	{
-		const WCHAR* name = (*iter).first.c_str();
-		if (index < count)
+		lvi.iGroupId = 1;
+		lvi.pszText = (WCHAR*)(*iter).first.c_str();
+
+		if (lvi.iItem < count)
 		{
-			ListView_SetItemText(item, index, 0, (WCHAR*)name);
+			ListView_SetItem(item, &lvi);
 		}
 		else
 		{
-			LVITEM vitem;
-			vitem.mask = LVIF_TEXT | LVIF_GROUPID;
-			vitem.iGroupId = 1;
-			vitem.iItem = index;
-			vitem.iSubItem = 0;
-			vitem.pszText = (WCHAR*)name;
-			ListView_InsertItem(item, &vitem);
+			ListView_InsertItem(item, &lvi);
 		}
 
-		ListView_SetItemText(item, index, 2, (WCHAR*)(*iter).second.c_str());
-		++index;
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)(*iter).second.c_str());
+		++lvi.iItem;
 	}
 
 	// Delete unnecessary items
-	while (count > index)
+	while (count > lvi.iItem)
 	{
-		ListView_DeleteItem(item, index);
+		ListView_DeleteItem(item, lvi.iItem);
 		--count;
 	}
 
