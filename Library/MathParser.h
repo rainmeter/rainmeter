@@ -25,9 +25,9 @@ class CMeasureCalc;
 
 namespace MathParser
 {
-	WCHAR* Check(const WCHAR* formula);
-	WCHAR* CheckParse(const WCHAR* formula, double* result);
-	WCHAR* Parse(const WCHAR* formula, CMeasureCalc* calc, double* result);
+	const WCHAR* Check(const WCHAR* formula);
+	const WCHAR* CheckedParse(const WCHAR* formula, double* result);
+	const WCHAR* Parse(const WCHAR* formula, CMeasureCalc* calc, double* result);
 
 	bool IsDelimiter(WCHAR ch);
 };

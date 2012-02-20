@@ -98,7 +98,7 @@ static double neg(double x);
 static double frac(double x);
 static double trunc(double x);
 static double sgn(double x);
-static WCHAR* round(int paramcnt, double* args, double* result);
+static const WCHAR* round(int paramcnt, double* args, double* result);
 
 static Function g_Functions[] =
 {
@@ -121,7 +121,7 @@ static Function g_Functions[] =
 	{ L"sgn", &sgn, 4 },
 	{ L"neg", &neg, 4 },
 	{ L"e", NULL, 1 },
-	{ L"pi", NULL, 2}
+	{ L"pi", NULL, 2 }
 };
 
 static const int FUNC_MAX_LEN = 5;
@@ -180,8 +180,8 @@ struct Parser
 	Parser() : opTop(0), valTop(-1), obrDist(2) { opStack[0].type = OP_OBR; }
 };
 
-static WCHAR* CalcToObr(Parser& parser);
-static WCHAR* Calc(Parser& parser);
+static const WCHAR* CalcToObr(Parser& parser);
+static const WCHAR* Calc(Parser& parser);
 
 struct Lexer
 {
@@ -198,16 +198,16 @@ struct Lexer
 
 static MathTokenType GetNextToken(Lexer& lexer);
 
-WCHAR eBrackets [] = L"Unmatched brackets";
-WCHAR eSyntax   [] = L"Syntax error";
-WCHAR eInternal [] = L"Internal error";
-WCHAR eExtraOp  [] = L"Extra operation";
-WCHAR eInfinity [] = L"Division by 0";
-WCHAR eUnknFunc [] = L"\"%s\" is unknown";
-WCHAR eLogicErr [] = L"Logical expression error";
-WCHAR eInvPrmCnt[] = L"Invalid function parameter count";
+const WCHAR* eBrackets = L"Unmatched brackets";
+const WCHAR* eSyntax = L"Syntax error";
+const WCHAR* eInternal = L"Internal error";
+const WCHAR* eExtraOp = L"Extra operation";
+const WCHAR* eInfinity = L"Division by 0";
+const WCHAR* eUnknFunc = L"\"%s\" is unknown";
+const WCHAR* eLogicErr = L"Logical expression error";
+const WCHAR* eInvPrmCnt = L"Invalid function parameter count";
 
-WCHAR* MathParser::Check(const WCHAR* formula)
+const WCHAR* MathParser::Check(const WCHAR* formula)
 {
 	int brackets = 0;
 
@@ -228,9 +228,9 @@ WCHAR* MathParser::Check(const WCHAR* formula)
 	return (brackets != 0) ? eBrackets : NULL;
 }
 
-WCHAR* MathParser::CheckParse(const WCHAR* formula, double* result)
+const WCHAR* MathParser::CheckedParse(const WCHAR* formula, double* result)
 {
-	WCHAR* error = Check(formula);
+	const WCHAR* error = Check(formula);
 	if (!error)
 	{
 		error = Parse(formula, NULL, result);
@@ -238,7 +238,7 @@ WCHAR* MathParser::CheckParse(const WCHAR* formula, double* result)
 	return error;
 }
 
-WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double* result)
+const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double* result)
 {
 	static WCHAR errorBuffer[128];
 
@@ -251,7 +251,7 @@ WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double* resul
 	Parser parser;
 	Lexer lexer(formula);
 
-	WCHAR* error;
+	const WCHAR* error;
 	for (;;)
 	{
 		if ((parser.opTop == _countof(parser.opStack) - 2) ||
@@ -410,7 +410,7 @@ WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double* resul
 	}
 }
 
-static WCHAR* Calc(Parser& parser)
+static const WCHAR* Calc(Parser& parser)
 {
 	double res;
 	Operation op = parser.opStack[parser.opTop--];
@@ -577,11 +577,11 @@ static WCHAR* Calc(Parser& parser)
 	return NULL;
 }
 
-static WCHAR* CalcToObr(Parser& parser)
+static const WCHAR* CalcToObr(Parser& parser)
 {
 	while (parser.opStack[parser.opTop].type != OP_OBR)
 	{
-		WCHAR* error = Calc(parser);
+		const WCHAR* error = Calc(parser);
 		if (error) return error;
 	}
 	--parser.opTop;
@@ -803,7 +803,7 @@ static double neg(double x)
 }
 
 // "Advanced" round function; second argument - sharpness
-static WCHAR* round(int paramcnt, double* args, double* result)
+static const WCHAR* round(int paramcnt, double* args, double* result)
 {
 	int sharpness;
 	if (paramcnt == 1)

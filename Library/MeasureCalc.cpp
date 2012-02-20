@@ -63,7 +63,7 @@ bool CMeasureCalc::Update()
 {
 	if (!CMeasure::PreUpdate()) return false;
 
-	WCHAR* errMsg = MathParser::Parse(m_Formula.c_str(), this, &m_Value);
+	const WCHAR* errMsg = MathParser::Parse(m_Formula.c_str(), this, &m_Value);
 	if (errMsg != NULL)
 	{
 		std::wstring error = L"Calc: ";
@@ -110,7 +110,7 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			FormulaReplace();
 		}
 
-		WCHAR* errMsg = MathParser::Check(m_Formula.c_str());
+		const WCHAR* errMsg = MathParser::Check(m_Formula.c_str());
 		if (errMsg != NULL)
 		{
 			std::wstring error = L"Calc: ";
