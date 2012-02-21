@@ -614,7 +614,7 @@ void CDialogAbout::CTabSkins::Initialize()
 	lvg.pszHeader = GetString(ID_STR_MEASURES);
 	ListView_InsertGroup(item, 0, &lvg);
 	lvg.iGroupId = 1;
-	lvg.pszHeader = L"Variables";	// FIXME
+	lvg.pszHeader = GetString(ID_STR_VARIABLES);
 	ListView_InsertGroup(item, 1, &lvg);
 
 	ListView_EnableGroupView(item, TRUE);

@@ -120,7 +120,7 @@
 #define ID_STR_THEMEALREADYEXISTS                    2034
 #define ID_STR_THEMESAVEFAIL                         2035
 #define ID_STR_THEMEDELETE                           2036
-#define ID_STR_LOGFILECREATED                        2037
+#define ID_STR_VARIABLES                             2037
 #define ID_STR_LOGFILECREATEFAIL                     2038
 #define ID_STR_LOGFILEDELETE                         2039
 #define ID_STR_NOAVAILABLESKINS                      2040
