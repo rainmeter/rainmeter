@@ -1145,6 +1145,37 @@ void CRainmeter::ReloadSettings()
 	ReadGeneralSettings(m_IniFile);
 }
 
+void CRainmeter::EditSettings()
+{
+	std::wstring command = m_ConfigEditor + L" \"";
+	command += m_IniFile;
+	command += L'"';
+	RunCommand(m_Window, command.c_str(), SW_SHOWNORMAL);
+}
+
+void CRainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniFile)
+{
+	std::wstring command = m_SkinPath + name;
+	command += L'\\';
+	command += iniFile;
+	bool writable = CSystem::IsFileWritable(command.c_str());
+
+	command.insert(0, L" \"");
+	command.insert(0, m_ConfigEditor);
+	command += L'"';
+
+	// Execute as admin if in protected location
+	RunCommand(m_Window, command.c_str(), SW_SHOWNORMAL, !writable);
+}
+
+void CRainmeter::OpenSkinFolder(const std::wstring& name)
+{
+	std::wstring command = L'"' + m_SkinPath;
+	if (!name.empty()) command += name;
+	command += L'"';
+	RunCommand(m_Window, command.c_str(), SW_SHOWNORMAL);
+}
+
 void CRainmeter::ActivateActiveConfigs()
 {
 	std::multimap<int, int>::const_iterator iter = m_ConfigOrders.begin();
@@ -3029,6 +3060,17 @@ void CRainmeter::StartLogging()
 void CRainmeter::StopLogging()
 {
 	SetLogging(false);
+}
+
+void CRainmeter::ShowLogFile()
+{
+	// Check if the file exists
+	if (_waccess(m_LogFile.c_str(), 0) != -1)
+	{
+		std::wstring command = m_LogViewer + L" ";
+		command += m_LogFile;
+		RunCommand(m_Window, command.c_str(), SW_SHOWNORMAL);
+	}
 }
 
 void CRainmeter::DeleteLogFile()

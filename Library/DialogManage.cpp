@@ -284,12 +284,7 @@ INT_PTR CDialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDC_EDITSETTINGS_BUTTON:
-		{
-			std::wstring command = Rainmeter->GetConfigEditor() + L" \"";
-			command += Rainmeter->GetIniFile();
-			command += L'"';
-			RunCommand(Rainmeter->GetTrayWindow()->GetWindow(), command.c_str(), SW_SHOWNORMAL);
-		}
+		Rainmeter->EditSettings();
 		break;
 
 	case IDC_OPENLOG_BUTTON:
@@ -918,19 +913,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDC_MANAGESKINS_EDIT_BUTTON:
-		{
-			std::wstring command = Rainmeter->GetSkinPath() + m_SkinName;
-			command += L'\\';
-			command += m_FileName;
-			bool writable = CSystem::IsFileWritable(command.c_str());
-
-			command.insert(0, L" \"");
-			command.insert(0, Rainmeter->GetConfigEditor());
-			command += L'"';
-
-			// Execute as admin if in protected location
-			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL, !writable);
-		}
+		Rainmeter->EditSkinFile(m_SkinName, m_FileName);
 		break;
 
 	case IDC_MANAGESKINS_X_TEXT:
@@ -1113,10 +1096,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDM_MANAGESKINSMENU_OPENFOLDER:
 		{
 			HWND tree = GetDlgItem(m_Window, IDC_MANAGESKINS_SKINS_TREEVIEW);
-			std::wstring command = L'"' + Rainmeter->GetSkinPath();
-			command += GetTreeSelectionPath(tree);
-			command += L'"';
-			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
+			Rainmeter->OpenSkinFolder(GetTreeSelectionPath(tree));
 		}
 		break;
 
@@ -1743,10 +1723,7 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDC_MANAGESETTINGS_SHOWLOGFILE_BUTTON:
-		{
-			std::wstring command = Rainmeter->GetLogViewer() + Rainmeter->GetLogFile();
-			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
-		}
+		Rainmeter->ShowLogFile();
 		break;
 
 	case IDC_MANAGESETTINGS_DELETELOGFILE_BUTTON:

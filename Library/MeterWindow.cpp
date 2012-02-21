@@ -3408,17 +3408,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (wParam == IDM_SKIN_EDITSKIN)
 		{
-			std::wstring command = m_Rainmeter->GetSkinPath() + m_SkinName;
-			command += L'\\';
-			command += m_SkinIniFile;
-			bool writable = CSystem::IsFileWritable(command.c_str());
-
-			command.insert(0, L" \"");
-			command.insert(0, m_Rainmeter->GetConfigEditor());
-			command += L'"';
-
-			// Execute as admin if in protected location
-			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL, !writable);
+			m_Rainmeter->EditSkinFile(m_SkinName, m_SkinIniFile);
 		}
 		else if (wParam == IDM_SKIN_REFRESH)
 		{
@@ -3426,10 +3416,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == IDM_SKIN_OPENSKINSFOLDER)
 		{
-			std::wstring command = L'"' + m_Rainmeter->GetSkinPath();
-			command += m_SkinName;
-			command += L'"';
-			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
+			m_Rainmeter->OpenSkinFolder(m_SkinName);
 		}
 		else if (wParam == IDM_SKIN_MANAGESKIN)
 		{

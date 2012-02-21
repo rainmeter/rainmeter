@@ -173,6 +173,9 @@ public:
 	GlobalConfig& GetGlobalConfig() { return m_GlobalConfig; }
 
 	void ReloadSettings();
+	void EditSettings();
+	void EditSkinFile(const std::wstring& name, const std::wstring& iniFile);
+	void OpenSkinFolder(const std::wstring& name = std::wstring());
 
 	void UpdateStats();
 	void ReadStats();
@@ -187,6 +190,7 @@ public:
 	bool GetLogging() { return m_Logging; }
 	void StartLogging();
 	void StopLogging();
+	void ShowLogFile();
 	void DeleteLogFile();
 
 	bool GetDisableRDP() { return m_DisableRDP; }

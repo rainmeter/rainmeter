@@ -438,13 +438,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if (wParam == IDM_SHOWLOGFILE)
 			{
-				// Check if the file exists
-				const std::wstring& log = Rainmeter->GetLogFile();
-				if (_waccess(log.c_str(), 0) != -1)
-				{
-					std::wstring command = Rainmeter->GetLogViewer() + log;
-					RunCommand(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
-				}
+				Rainmeter->ShowLogFile();
 			}
 			else if (wParam == IDM_STARTLOG)
 			{
@@ -468,10 +462,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if (wParam == IDM_EDITCONFIG)
 			{
-				std::wstring command = Rainmeter->GetConfigEditor() + L" \"";
-				command += Rainmeter->GetIniFile();
-				command += L'"';
-				RunCommand(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
+				Rainmeter->EditSettings();
 			}
 			else if (wParam == IDM_QUIT)
 			{
@@ -479,9 +470,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if (wParam == IDM_OPENSKINSFOLDER)
 			{
-				std::wstring command = L'"' + Rainmeter->GetSkinPath();
-				command += L'"';
-				RunCommand(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
+				Rainmeter->OpenSkinFolder();
 			}
 			else if ((wParam & 0x0ffff) >= ID_THEME_FIRST && (wParam & 0x0ffff) <= ID_THEME_LAST)
 			{
