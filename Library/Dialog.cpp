@@ -19,7 +19,8 @@
 #include "StdAfx.h"
 #include "Dialog.h"
 
-HWND CDialog::c_ActiveDialog = NULL;
+HWND CDialog::c_ActiveDialogWindow = NULL;
+HWND CDialog::c_ActiveTabWindow = NULL;
 
 /*
 ** Constructor.
@@ -51,7 +52,16 @@ CDialog::~CDialog()
 
 INT_PTR CDialog::OnActivate(WPARAM wParam, LPARAM lParam)
 {
-	c_ActiveDialog = wParam ? m_Window : NULL;
+	if (wParam)
+	{
+		c_ActiveDialogWindow = m_Window;
+		c_ActiveTabWindow = GetActiveTab().GetWindow();
+	}
+	else
+	{
+		c_ActiveDialogWindow = c_ActiveTabWindow = NULL;
+	}
+
 	return FALSE;
 }
 
@@ -105,6 +115,8 @@ CDialog::CTab::~CTab()
 */
 void CDialog::CTab::Activate()
 {
+	c_ActiveTabWindow = m_Window;
+
 	if (!m_Initialized)
 	{
 		Initialize();

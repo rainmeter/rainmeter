@@ -41,6 +41,9 @@ public:
 	static WINDOWPLACEMENT c_WindowPlacement;
 	static CDialogManage* c_Dialog;
 
+protected:
+	virtual CTab& GetActiveTab();
+
 private:
 	// Skins tab
 	class CTabSkins : public CTab

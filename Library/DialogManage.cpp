@@ -85,7 +85,7 @@ void CDialogManage::Open(int tab)
 	if (!c_Dialog)
 	{
 		HINSTANCE instance = Rainmeter->GetResourceInstance();
-		HWND owner = Rainmeter->GetTrayWindow()->GetWindow();
+		HWND owner = Rainmeter->GetWindow();
 		if (!CreateDialog(instance, MAKEINTRESOURCE(IDD_MANAGE_DIALOG), owner, DlgProc)) return;
 	}
 	else
@@ -158,6 +158,23 @@ std::wstring GetTreeSelectionPath(HWND tree)
 	}
 
 	return path;
+}
+
+CDialog::CTab& CDialogManage::GetActiveTab()
+{
+	int sel = TabCtrl_GetCurSel(GetDlgItem(m_Window, IDC_MANAGE_TAB));
+	if (sel == 0)
+	{
+		return m_TabSkins;
+	}
+	else if (sel == 1)
+	{
+		return m_TabThemes;
+	}
+	else // if (sel == 2)
+	{
+		return m_TabSettings;
+	}
 }
 
 /*
@@ -303,27 +320,15 @@ INT_PTR CDialogManage::OnNotify(WPARAM wParam, LPARAM lParam)
 			EnableWindow(m_TabThemes.GetWindow(), FALSE);
 			EnableWindow(m_TabSettings.GetWindow(), FALSE);
 
-			int sel = TabCtrl_GetCurSel(nm->hwndFrom);
-			if (sel == 0)
-			{
-				m_TabSkins.Activate();
-			}
-			else if (sel == 1)
-			{
-				m_TabThemes.Activate();
-			}
-			else // if (sel == 2)
-			{
-				m_TabSettings.Activate();
-			}
+			GetActiveTab().Activate();
 		}
 		break;
 
 	default:
-		return FALSE;
+		return 1;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -1083,7 +1088,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (HIWORD(wParam) == CBN_SELCHANGE)
 		{
 			m_IgnoreUpdate = true;
-			int sel = ComboBox_GetCurSel((HWND)lParam) + ID_CONTEXT_SKINMENU_TRANSPARENCY_0;
+			int sel = ComboBox_GetCurSel((HWND)lParam) + IDM_SKIN_TRANSPARENCY_0;
 			SendMessage(m_SkinWindow->GetWindow(), WM_COMMAND, sel, 0);
 		}
 		break;
@@ -1097,7 +1102,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case ID_CONTEXT_MANAGESKINSMENU_EXPAND:
+	case IDM_MANAGESKINSMENU_EXPAND:
 		{
 			HWND tree = GetDlgItem(m_Window, IDC_MANAGESKINS_SKINS_TREEVIEW);
 			HTREEITEM item = TreeView_GetSelection(tree);
@@ -1105,7 +1110,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case ID_CONTEXT_MANAGESKINSMENU_OPENFOLDER:
+	case IDM_MANAGESKINSMENU_OPENFOLDER:
 		{
 			HWND tree = GetDlgItem(m_Window, IDC_MANAGESKINS_SKINS_TREEVIEW);
 			std::wstring command = L'"' + Rainmeter->GetSkinPath();
@@ -1136,8 +1141,8 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				++i;
 			}
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT ||
-			wParam == ID_CONTEXT_SKINMENU_MONITOR_PRIMARY ||
+		else if (wParam == IDM_SKIN_MONITOR_AUTOSELECT ||
+			wParam == IDM_SKIN_MONITOR_PRIMARY ||
 			wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
 		{
 			if (m_SkinWindow)
@@ -1147,10 +1152,10 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			break;
 		}
 
-		return FALSE;
+		return 1;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
@@ -1207,28 +1212,28 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					{
 						// It's a folder
 						subMenu = GetSubMenu(menu, 0);
-						SetMenuDefaultItem(subMenu, ID_CONTEXT_MANAGESKINSMENU_EXPAND, MF_BYCOMMAND);
+						SetMenuDefaultItem(subMenu, IDM_MANAGESKINSMENU_EXPAND, MF_BYCOMMAND);
 
 						if (tvi.state & TVIS_EXPANDED)
 						{
 							mii.dwTypeData = GetString(ID_STR_COLLAPSE);
-							SetMenuItemInfo(subMenu, ID_CONTEXT_MANAGESKINSMENU_EXPAND, MF_BYCOMMAND, &mii);
+							SetMenuItemInfo(subMenu, IDM_MANAGESKINSMENU_EXPAND, MF_BYCOMMAND, &mii);
 						}
 					}
 					else
 					{
 						// It's a skin
 						subMenu = GetSubMenu(menu, 1);
-						SetMenuDefaultItem(subMenu, ID_CONTEXT_MANAGESKINSMENU_LOAD, MF_BYCOMMAND);
+						SetMenuDefaultItem(subMenu, IDM_MANAGESKINSMENU_LOAD, MF_BYCOMMAND);
 
 						if (m_SkinWindow)
 						{
 							mii.dwTypeData = GetString(ID_STR_UNLOAD);
-							SetMenuItemInfo(subMenu, ID_CONTEXT_MANAGESKINSMENU_LOAD, MF_BYCOMMAND, &mii);
+							SetMenuItemInfo(subMenu, IDM_MANAGESKINSMENU_LOAD, MF_BYCOMMAND, &mii);
 						}
 						else
 						{
-							EnableMenuItem(subMenu, ID_CONTEXT_MANAGESKINSMENU_REFRESH, MF_BYCOMMAND | MF_GRAYED);
+							EnableMenuItem(subMenu, IDM_MANAGESKINSMENU_REFRESH, MF_BYCOMMAND | MF_GRAYED);
 						}
 					}
 
@@ -1580,10 +1585,10 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	default:
-		return FALSE;
+		return 1;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -1707,7 +1712,7 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 					}
 					else if (sel == 1)
 					{
-						Rainmeter->DelayedExecuteCommand(L"!About Measures");
+						Rainmeter->DelayedExecuteCommand(L"!About Skins");
 					}
 					else if (sel == 2)
 					{
@@ -1775,8 +1780,8 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	default:
-		return FALSE;
+		return 1;
 	}
 
-	return TRUE;
+	return 0;
 }

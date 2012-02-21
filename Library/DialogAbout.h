@@ -43,6 +43,9 @@ public:
 	static WINDOWPLACEMENT c_WindowPlacement;
 	static CDialogAbout* c_Dialog;
 
+protected:
+	virtual CTab& GetActiveTab();
+
 private:
 	// Log tab
 	class CTabLog : public CTab

@@ -29,8 +29,6 @@ extern GLOBALDATA g_Data;
 CDialogBackup* CDialogBackup::c_Dialog = NULL;
 
 /*
-** CDialogBackup
-**
 ** Constructor.
 **
 */
@@ -43,8 +41,6 @@ CDialogBackup::CDialogBackup(HWND wnd) : CDialog(wnd),
 }
 
 /*
-** ~CDialogBackup
-**
 ** Destructor.
 **
 */
@@ -53,8 +49,6 @@ CDialogBackup::~CDialogBackup()
 }
 
 /*
-** Create
-**
 ** Creates the dialog.
 **
 */
@@ -63,9 +57,12 @@ void CDialogBackup::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_BACKUP_DIALOG), NULL, (DLGPROC)DlgProc, (LPARAM)lpCmdLine);
 }
 
+CDialog::CTab& CDialogBackup::GetActiveTab()
+{
+	return m_TabBackup;
+}
+
 /*
-** DlgProc
-**
 ** Dialog procedure for the About dialog.
 **
 */
@@ -404,8 +401,6 @@ bool CDialogBackup::AddFolderToBackup(const std::wstring& path, std::wstring bas
 // -----------------------------------------------------------------------------------------------
 
 /*
-** CTabBackup
-**
 ** Constructor.
 **
 */
@@ -414,8 +409,6 @@ CDialogBackup::CTabBackup::CTabBackup(HWND wnd) : CTab(GetModuleHandle(NULL), wn
 }
 
 /*
-** Initialize
-**
 ** Called when tab is displayed.
 **
 */
@@ -439,8 +432,6 @@ void CDialogBackup::CTabBackup::Initialize()
 }
 
 /*
-** DlgProc
-**
 ** Dialog procedure for the Version tab.
 **
 */

@@ -33,8 +33,6 @@
 #endif
 
 /*
-** wWinMain
-**
 ** Entry point.
 **
 */

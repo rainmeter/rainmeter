@@ -3406,7 +3406,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	try
 	{
-		if (wParam == ID_CONTEXT_SKINMENU_EDITSKIN)
+		if (wParam == IDM_SKIN_EDITSKIN)
 		{
 			std::wstring command = m_Rainmeter->GetSkinPath() + m_SkinName;
 			command += L'\\';
@@ -3420,126 +3420,126 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// Execute as admin if in protected location
 			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL, !writable);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_REFRESH)
+		else if (wParam == IDM_SKIN_REFRESH)
 		{
 			Refresh(false);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_OPENSKINSFOLDER)
+		else if (wParam == IDM_SKIN_OPENSKINSFOLDER)
 		{
 			std::wstring command = L'"' + m_Rainmeter->GetSkinPath();
 			command += m_SkinName;
 			command += L'"';
 			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_MANAGESKIN)
+		else if (wParam == IDM_SKIN_MANAGESKIN)
 		{
 			CDialogManage::OpenSkin(this);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_VERYTOPMOST)
+		else if (wParam == IDM_SKIN_VERYTOPMOST)
 		{
 			SetWindowZPosition(ZPOSITION_ONTOPMOST);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_TOPMOST)
+		else if (wParam == IDM_SKIN_TOPMOST)
 		{
 			SetWindowZPosition(ZPOSITION_ONTOP);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_BOTTOM)
+		else if (wParam == IDM_SKIN_BOTTOM)
 		{
 			SetWindowZPosition(ZPOSITION_ONBOTTOM);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_NORMAL)
+		else if (wParam == IDM_SKIN_NORMAL)
 		{
 			SetWindowZPosition(ZPOSITION_NORMAL);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_ONDESKTOP)
+		else if (wParam == IDM_SKIN_ONDESKTOP)
 		{
 			SetWindowZPosition(ZPOSITION_ONDESKTOP);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_KEEPONSCREEN)
+		else if (wParam == IDM_SKIN_KEEPONSCREEN)
 		{
 			SetKeepOnScreen(!m_KeepOnScreen);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_CLICKTHROUGH)
+		else if (wParam == IDM_SKIN_CLICKTHROUGH)
 		{
 			SetClickThrough(!m_ClickThrough);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_DRAGGABLE)
+		else if (wParam == IDM_SKIN_DRAGGABLE)
 		{
 			SetWindowDraggable(!m_WindowDraggable);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_HIDEONMOUSE)
+		else if (wParam == IDM_SKIN_HIDEONMOUSE)
 		{
 			SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_HIDE : HIDEMODE_NONE);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEIN)
+		else if (wParam == IDM_SKIN_TRANSPARENCY_FADEIN)
 		{
 			SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_FADEIN : HIDEMODE_NONE);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_TRANSPARENCY_FADEOUT)
+		else if (wParam == IDM_SKIN_TRANSPARENCY_FADEOUT)
 		{
 			SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_FADEOUT : HIDEMODE_NONE);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_REMEMBERPOSITION)
+		else if (wParam == IDM_SKIN_REMEMBERPOSITION)
 		{
 			SetSavePosition(!m_SavePosition);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_SNAPTOEDGES)
+		else if (wParam == IDM_SKIN_SNAPTOEDGES)
 		{
 			SetSnapEdges(!m_SnapEdges);
 		}
-		else if (wParam >= ID_CONTEXT_SKINMENU_TRANSPARENCY_0 && wParam <= ID_CONTEXT_SKINMENU_TRANSPARENCY_90)
+		else if (wParam >= IDM_SKIN_TRANSPARENCY_0 && wParam <= IDM_SKIN_TRANSPARENCY_90)
 		{
-			m_AlphaValue = (int)(255.0 - (wParam - ID_CONTEXT_SKINMENU_TRANSPARENCY_0) * (230.0 / (ID_CONTEXT_SKINMENU_TRANSPARENCY_90 - ID_CONTEXT_SKINMENU_TRANSPARENCY_0)));
+			m_AlphaValue = (int)(255.0 - (wParam - IDM_SKIN_TRANSPARENCY_0) * (230.0 / (IDM_SKIN_TRANSPARENCY_90 - IDM_SKIN_TRANSPARENCY_0)));
 			UpdateTransparency(m_AlphaValue, false);
 			WriteConfig(SETTING_ALPHAVALUE);
 		}
-		else if (wParam == ID_CONTEXT_CLOSESKIN)
+		else if (wParam == IDM_CLOSESKIN)
 		{
 			m_Rainmeter->DeactivateConfig(this, -1);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_FROMRIGHT)
+		else if (wParam == IDM_SKIN_FROMRIGHT)
 		{
 			m_WindowXFromRight = !m_WindowXFromRight;
 
 			ScreenToWindow();
 			WriteConfig(SETTING_WINDOWPOSITION);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_FROMBOTTOM)
+		else if (wParam == IDM_SKIN_FROMBOTTOM)
 		{
 			m_WindowYFromBottom = !m_WindowYFromBottom;
 
 			ScreenToWindow();
 			WriteConfig(SETTING_WINDOWPOSITION);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_XPERCENTAGE)
+		else if (wParam == IDM_SKIN_XPERCENTAGE)
 		{
 			m_WindowXPercentage = !m_WindowXPercentage;
 
 			ScreenToWindow();
 			WriteConfig(SETTING_WINDOWPOSITION);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_YPERCENTAGE)
+		else if (wParam == IDM_SKIN_YPERCENTAGE)
 		{
 			m_WindowYPercentage = !m_WindowYPercentage;
 
 			ScreenToWindow();
 			WriteConfig(SETTING_WINDOWPOSITION);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_MONITOR_AUTOSELECT)
+		else if (wParam == IDM_SKIN_MONITOR_AUTOSELECT)
 		{
 			m_AutoSelectScreen = !m_AutoSelectScreen;
 
 			ScreenToWindow();
 			WriteConfig(SETTING_WINDOWPOSITION | SETTING_AUTOSELECTSCREEN);
 		}
-		else if (wParam == ID_CONTEXT_SKINMENU_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
+		else if (wParam == IDM_SKIN_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
 		{
 			const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
 			const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
 
 			int screenIndex;
 			bool screenDefined;
-			if (wParam == ID_CONTEXT_SKINMENU_MONITOR_PRIMARY)
+			if (wParam == IDM_SKIN_MONITOR_PRIMARY)
 			{
 				screenIndex = multimonInfo.primary;
 				screenDefined = false;
@@ -3570,7 +3570,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			// Forward to tray window, which handles all the other commands
 			HWND tray = m_Rainmeter->GetTrayWindow()->GetWindow();
 
-			if (wParam == ID_CONTEXT_QUIT)
+			if (wParam == IDM_QUIT)
 			{
 				PostMessage(tray, WM_COMMAND, wParam, lParam);
 			}

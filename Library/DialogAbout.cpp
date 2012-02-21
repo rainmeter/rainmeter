@@ -90,7 +90,7 @@ void CDialogAbout::Open(int tab)
 	if (!c_Dialog)
 	{
 		HINSTANCE instance = Rainmeter->GetResourceInstance();
-		HWND owner = Rainmeter->GetTrayWindow()->GetWindow();
+		HWND owner = Rainmeter->GetWindow();
 		if (!CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUT_DIALOG), owner, DlgProc)) return;
 	}
 	else
@@ -145,6 +145,27 @@ void CDialogAbout::UpdateMeasures(CMeterWindow* meterWindow)
 	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
 	{
 		c_Dialog->m_TabSkins.UpdateMeasureList(meterWindow);
+	}
+}
+
+CDialog::CTab& CDialogAbout::GetActiveTab()
+{
+	int sel = TabCtrl_GetCurSel(GetDlgItem(m_Window, IDC_ABOUT_TAB));
+	if (sel == 0)
+	{
+		return m_TabLog;
+	}
+	else if (sel == 1)
+	{
+		return m_TabSkins;
+	}
+	else if (sel == 2)
+	{
+		return m_TabPlugins;
+	}
+	else // if (sel == 3)
+	{
+		return m_TabVersion;
 	}
 }
 
@@ -303,31 +324,15 @@ INT_PTR CDialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 			EnableWindow(m_TabPlugins.GetWindow(), FALSE);
 			EnableWindow(m_TabVersion.GetWindow(), FALSE);
 
-			int sel = TabCtrl_GetCurSel(nm->hwndFrom);
-			if (sel == 0)
-			{
-				m_TabLog.Activate();
-			}
-			else if (sel == 1)
-			{
-				m_TabSkins.Activate();
-			}
-			else if (sel == 2)
-			{
-				m_TabPlugins.Activate();
-			}
-			else // if (sel == 3)
-			{
-				m_TabVersion.Activate();
-			}
+			GetActiveTab().Activate();
 		}
 		break;
 
 	default:
-		return FALSE;
+		return 1;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -547,11 +552,27 @@ INT_PTR CDialogAbout::CTabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDM_COPY:
+		{
+			HWND item = GetFocus();
+			if (item == GetDlgItem(m_Window, IDC_ABOUTLOG_ITEMS_LISTVIEW))
+			{
+				int sel = ListView_GetNextItem(item, -1, LVNI_FOCUSED | LVNI_SELECTED);
+				if (sel != -1)
+				{
+					std::wstring tmpSz(512, L'0');
+					ListView_GetItemText(item, sel, 2, &tmpSz[0], 512);
+					CSystem::SetClipboardText(tmpSz);
+				}
+			}
+		}
+		break;
+
 	default:
-		return FALSE;
+		return 1;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -810,11 +831,27 @@ INT_PTR CDialogAbout::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDM_COPY:
+		{
+			HWND item = GetFocus();
+			if (item == GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW))
+			{
+				int sel = ListView_GetNextItem(item, -1, LVNI_FOCUSED | LVNI_SELECTED);
+				if (sel != -1)
+				{
+					std::wstring tmpSz(512, L'0');
+					ListView_GetItemText(item, sel, 2, &tmpSz[0], 512);
+					CSystem::SetClipboardText(tmpSz);
+				}
+			}
+		}
+		break;
+
 	default:
-		return FALSE;
+		return 1;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -1088,10 +1125,10 @@ INT_PTR CDialogAbout::CTabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	default:
-		return FALSE;
+		return 1;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 INT_PTR CDialogAbout::CTabVersion::OnNotify(WPARAM wParam, LPARAM lParam)

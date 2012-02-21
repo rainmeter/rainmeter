@@ -49,3 +49,13 @@ BEGIN
         VALUE "Translation", 0x409, 1252
     END
 END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_DIALOG_ACCELERATORS ACCELERATORS
+BEGIN
+    "^C", IDM_COPY
+END

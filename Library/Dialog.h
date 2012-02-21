@@ -24,7 +24,8 @@ class CDialog
 public:
 	HWND GetWindow() { return m_Window; }
 
-	static HWND GetActiveDialog() { return c_ActiveDialog; }
+	static HWND GetActiveDialogWindow() { return c_ActiveDialogWindow; }
+	static HWND GetActiveTabWindow() { return c_ActiveTabWindow; }
 
 protected:
 	class CTab
@@ -48,6 +49,8 @@ protected:
 	CDialog(HWND wnd);
 	virtual ~CDialog();
 
+	virtual CTab& GetActiveTab() = 0;
+
 	INT_PTR OnActivate(WPARAM wParam, LPARAM lParam);
 
 	void SetDialogRTL();
@@ -59,8 +62,9 @@ protected:
 
 private:
 	static BOOL CALLBACK SetFontProc(HWND hWnd, LPARAM lParam);
-
-	static HWND c_ActiveDialog;
+	
+	static HWND c_ActiveDialogWindow;
+	static HWND c_ActiveTabWindow;
 };
 
 #endif

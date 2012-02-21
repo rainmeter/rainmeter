@@ -416,27 +416,27 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	case WM_COMMAND:
 		if (tray)
 		{
-			if (wParam == ID_CONTEXT_MANAGE)
+			if (wParam == IDM_MANAGE)
 			{
 				CDialogManage::Open();
 			}
-			else if (wParam == ID_CONTEXT_ABOUT)
+			else if (wParam == IDM_ABOUT)
 			{
 				CDialogAbout::Open();
 			}
-			else if (wParam == ID_CONTEXT_SHOW_HELP)
+			else if (wParam == IDM_SHOW_HELP)
 			{
 				RunCommand(NULL, RAINMETER_HELP, SW_SHOWNORMAL);
 			}
-			else if (wParam == ID_CONTEXT_NEW_VERSION)
+			else if (wParam == IDM_NEW_VERSION)
 			{
 				RunCommand(NULL, RAINMETER_OFFICIAL, SW_SHOWNORMAL);
 			}
-			else if (wParam == ID_CONTEXT_REFRESH)
+			else if (wParam == IDM_REFRESH)
 			{
 				PostMessage(Rainmeter->GetWindow(), WM_RAINMETER_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
 			}
-			else if (wParam == ID_CONTEXT_SHOWLOGFILE)
+			else if (wParam == IDM_SHOWLOGFILE)
 			{
 				// Check if the file exists
 				const std::wstring& log = Rainmeter->GetLogFile();
@@ -446,38 +446,38 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 					RunCommand(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 				}
 			}
-			else if (wParam == ID_CONTEXT_STARTLOG)
+			else if (wParam == IDM_STARTLOG)
 			{
 				Rainmeter->StartLogging();
 			}
-			else if (wParam == ID_CONTEXT_STOPLOG)
+			else if (wParam == IDM_STOPLOG)
 			{
 				Rainmeter->StopLogging();
 			}
-			else if (wParam == ID_CONTEXT_DELETELOGFILE)
+			else if (wParam == IDM_DELETELOGFILE)
 			{
 				Rainmeter->DeleteLogFile();
 			}
-			else if (wParam == ID_CONTEXT_DEBUGLOG)
+			else if (wParam == IDM_DEBUGLOG)
 			{
 				Rainmeter->SetDebug(!Rainmeter->GetDebug());
 			}
-			else if (wParam == ID_CONTEXT_DISABLEDRAG)
+			else if (wParam == IDM_DISABLEDRAG)
 			{
 				Rainmeter->SetDisableDragging(!Rainmeter->GetDisableDragging());
 			}
-			else if (wParam == ID_CONTEXT_EDITCONFIG)
+			else if (wParam == IDM_EDITCONFIG)
 			{
 				std::wstring command = Rainmeter->GetConfigEditor() + L" \"";
 				command += Rainmeter->GetIniFile();
 				command += L'"';
 				RunCommand(tray->GetWindow(), command.c_str(), SW_SHOWNORMAL);
 			}
-			else if (wParam == ID_CONTEXT_QUIT)
+			else if (wParam == IDM_QUIT)
 			{
 				PostQuitMessage(0);
 			}
-			else if (wParam == ID_CONTEXT_OPENSKINSFOLDER)
+			else if (wParam == IDM_OPENSKINSFOLDER)
 			{
 				std::wstring command = L'"' + Rainmeter->GetSkinPath();
 				command += L'"';

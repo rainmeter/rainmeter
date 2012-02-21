@@ -34,6 +34,9 @@ public:
 
 	static CDialogBackup* c_Dialog;
 
+protected:
+	virtual CTab& GetActiveTab();
+
 private:
 	class CTabBackup : public CTab
 	{
