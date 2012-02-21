@@ -282,6 +282,11 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	{
 		// Use UI font (Segoe UI) on Vista+
 		SetDialogFont();
+
+		HWND item = GetDlgItem(m_TabLog.GetWindow(), IDC_ABOUTLOG_ITEMS_LISTVIEW);
+		SetWindowTheme(item, L"explorer", NULL);
+		item = GetDlgItem(m_TabSkins.GetWindow(), IDC_ABOUTSKINS_ITEMS_LISTVIEW);
+		SetWindowTheme(item, L"explorer", NULL);
 	}
 
 	if (c_WindowPlacement.length == 0)
@@ -361,10 +366,9 @@ void CDialogAbout::CTabLog::Initialize()
 {
 	m_Initialized = true;
 
-	// Add columns to the list view	
+	// Add columns to the list view
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTLOG_ITEMS_LISTVIEW);
-
-	ListView_SetExtendedListViewStyleEx(item, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	// Set folder/.ini icons for tree list
 	HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR32, 2, 10);
@@ -585,7 +589,7 @@ INT_PTR CDialogAbout::CTabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 ** Constructor.
 **
 */
-CDialogAbout::CTabSkins::CTabSkins(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTMEASURES_DIALOG, DlgProc),
+CDialogAbout::CTabSkins::CTabSkins(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTSKINS_DIALOG, DlgProc),
 	m_SkinWindow()
 {
 }
@@ -598,9 +602,9 @@ void CDialogAbout::CTabSkins::Initialize()
 {
 	m_Initialized = true;
 
-	// Add columns to the list view	
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
-	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+	// Add columns to the list view
+	HWND item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTVIEW);
+	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	LVGROUP lvg;
 	lvg.cbSize = sizeof(LVGROUP);
@@ -642,11 +646,11 @@ void CDialogAbout::CTabSkins::Resize(int w, int h)
 {
 	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTBOX);
+	HWND item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTBOX);
 	int wList = (w < 650) ? (w - 373) : 277;
 	SetWindowPos(item, NULL, 0, 0, wList, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
+	item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTVIEW);
 	SetWindowPos(item, NULL, (w < 650) ? (w - 365) : 285, 0, w - wList - 10, h, SWP_NOZORDER);
 
 	// Adjust third column
@@ -663,7 +667,7 @@ void CDialogAbout::CTabSkins::Resize(int w, int h)
 void CDialogAbout::CTabSkins::UpdateSkinList()
 {
 	// Delete all entries
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTBOX);
+	HWND item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTBOX);
 	ListBox_ResetContent(item);
 
 	// Add entries for each skin
@@ -697,7 +701,7 @@ void CDialogAbout::CTabSkins::UpdateSkinList()
 		if (windows.empty())
 		{
 			m_SkinWindow = NULL;
-			item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
+			item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTVIEW);
 			ListView_DeleteAllItems(item);
 		}
 		else
@@ -719,7 +723,7 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 	if (!meterWindow)
 	{
 		// Find selected skin
-		HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTBOX);
+		HWND item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTBOX);
 		int selected = (int)SendMessage(item, LB_GETCURSEL, NULL, NULL);
 
 		const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
@@ -738,7 +742,7 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 		return;
 	}
 
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW);
+	HWND item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTVIEW);
 	SendMessage(item, WM_SETREDRAW, FALSE, 0);
 	int count = ListView_GetItemCount(item);
 
@@ -824,7 +828,7 @@ INT_PTR CDialogAbout::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
-	case IDC_ABOUTMEASURES_ITEMS_LISTBOX:
+	case IDC_ABOUTSKINS_ITEMS_LISTBOX:
 		if (HIWORD(wParam) == LBN_SELCHANGE)
 		{
 			UpdateMeasureList(NULL);
@@ -834,7 +838,7 @@ INT_PTR CDialogAbout::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDM_COPY:
 		{
 			HWND item = GetFocus();
-			if (item == GetDlgItem(m_Window, IDC_ABOUTMEASURES_ITEMS_LISTVIEW))
+			if (item == GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTVIEW))
 			{
 				int sel = ListView_GetNextItem(item, -1, LVNI_FOCUSED | LVNI_SELECTED);
 				if (sel != -1)

@@ -10,7 +10,7 @@
 #define IDR_MANAGESKINS_MENU                         104
 #define IDD_ABOUT_DIALOG                             105
 #define IDD_ABOUTLOG_DIALOG                          106
-#define IDD_ABOUTMEASURES_DIALOG                     107
+#define IDD_ABOUTSKINS_DIALOG                        107
 #define IDD_ABOUTPLUGINS_DIALOG                      108
 #define IDD_ABOUTVERSION_DIALOG                      109
 #define IDD_MANAGE_DIALOG                            110
@@ -26,8 +26,8 @@
 #define IDC_ABOUTLOG_WARNING_CHECKBOX                1004
 #define IDC_ABOUTLOG_NOTICE_CHECKBOX                 1005
 #define IDC_ABOUTLOG_DEBUG_CHECKBOX                  1006
-#define IDC_ABOUTMEASURES_ITEMS_LISTBOX              1007
-#define IDC_ABOUTMEASURES_ITEMS_LISTVIEW             1008
+#define IDC_ABOUTSKINS_ITEMS_LISTBOX                 1007
+#define IDC_ABOUTSKINS_ITEMS_LISTVIEW                1008
 #define IDC_ABOUTPLUGINS_ITEMS_LISTVIEW              1009
 #define IDC_ABOUTVERSION_VERSION_TEXT                1010
 #define IDC_ABOUTVERSION_PATH_TEXT                   1011
