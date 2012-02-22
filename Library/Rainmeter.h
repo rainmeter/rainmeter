@@ -263,7 +263,7 @@ private:
 	HMENU CreateConfigMenu(HMENU configMenu, const std::vector<CONFIGMENU>& configMenuData);
 	void CreateThemeMenu(HMENU themeMenu);
 	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);
-	void CreateDefaultConfigFile(const std::wstring& strFile);
+	void CreateDefaultConfigFile();
 	void SetLogging(bool logging);
 	void TestSettingsFile(bool bDefaultIniLocation);
 

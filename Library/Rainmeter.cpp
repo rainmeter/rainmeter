@@ -661,8 +661,10 @@ CRainmeter::CRainmeter() :
 	m_DisableDragging(false),
 	m_Logging(false),
 	m_CurrentParser(),
+	m_Window(),
 	m_Instance(),
 	m_ResourceInstance(),
+	m_ResourceLCID(),
 	m_GDIplusToken(),
 	m_GlobalConfig()
 {
@@ -803,7 +805,7 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 		// If the ini file doesn't exist, create a default Rainmeter.ini file.
 		if (_waccess(m_IniFile.c_str(), 0) == -1)
 		{
-			CreateDefaultConfigFile(m_IniFile);
+			CreateDefaultConfigFile();
 		}
 		bDefaultIniLocation = true;
 	}
@@ -822,7 +824,7 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 			// If the ini file doesn't exist in the %APPDATA% either, create a default Rainmeter.ini file.
 			if (_waccess(m_IniFile.c_str(), 0) == -1)
 			{
-				CreateDefaultConfigFile(m_IniFile);
+				CreateDefaultConfigFile();
 			}
 		}
 	}
@@ -932,10 +934,6 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 				std::wstring strFrom(m_Path + L"Skins\\*.*");
 				std::wstring strTo(m_SkinPath);
 				CSystem::CopyFiles(strFrom, strTo);
-
-				// This shouldn't be copied
-				std::wstring strNote = strTo + L"Read me before copying skins here.txt";
-				CSystem::RemoveFile(strNote);
 
 				// Copy also the themes to the %APPDATA%
 				strFrom = std::wstring(m_Path + L"Themes\\*.*");
@@ -1122,23 +1120,23 @@ void CRainmeter::SetNetworkStatisticsTimer()
 ** Creates the default Rainmeter.ini file with illustro\System enabled.
 **
 */
-void CRainmeter::CreateDefaultConfigFile(const std::wstring& strFile)
+void CRainmeter::CreateDefaultConfigFile()
 {
-	size_t pos = strFile.find_last_of(L'\\');
+	size_t pos = m_IniFile.find_last_of(L'\\');
 	if (pos != std::wstring::npos)
 	{
-		std::wstring strPath(strFile, 0, pos);
+		std::wstring strPath(m_IniFile, 0, pos);
 		CreateDirectory(strPath.c_str(), NULL);
 	}
 
-	std::wstring defaultIni = GetPath() + L"Default.ini";
+	std::wstring defaultIni = GetPath() + L"Themes\\illustro default\\Rainmeter.thm";
 	if (_waccess(defaultIni.c_str(), 0) == -1)
 	{
-		WritePrivateProfileString(L"Rainmeter", L"\r\n[illustro\\System]\r\nActive", L"1", strFile.c_str());
+		WritePrivateProfileString(L"Rainmeter", L"\r\n[illustro\\System]\r\nActive", L"1", m_IniFile.c_str());
 	}
 	else
 	{
-		CSystem::CopyFiles(defaultIni, GetIniFile());
+		CSystem::CopyFiles(defaultIni, m_IniFile);
 	}
 }
 
