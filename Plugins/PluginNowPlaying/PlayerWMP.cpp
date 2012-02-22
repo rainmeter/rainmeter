@@ -364,16 +364,16 @@ void CPlayerWMP::UpdateData()
 			if (spMedia)
 			{
 				BSTR val;
-				spMedia->getItemInfo(L"Artist", &val);
+				spMedia->getItemInfo(CComBSTR(L"Artist"), &val);
 				m_Artist = val;
 
-				spMedia->getItemInfo(L"Title", &val);
+				spMedia->getItemInfo(CComBSTR(L"Title"), &val);
 				m_Title = val;
 
-				spMedia->getItemInfo(L"Album", &val);
+				spMedia->getItemInfo(CComBSTR(L"Album"), &val);
 				m_Album = val;
 
-				spMedia->getItemInfo(L"UserRating", &val);
+				spMedia->getItemInfo(CComBSTR(L"UserRating"), &val);
 				int rating = _wtoi(val);
 
 				if (rating > 75)
@@ -414,7 +414,7 @@ void CPlayerWMP::UpdateData()
 					// TODO: Fix temp solution
 					if (m_Measures & MEASURE_COVER || m_InstanceCount == 0)
 					{
-						spMedia->getItemInfo(L"WM/WMCollectionID", &val);
+						spMedia->getItemInfo(CComBSTR(L"WM/WMCollectionID"), &val);
 						targetPath.resize(targetPath.find_last_of(L'\\') + 1);
 						targetPath += L"AlbumArt_";
 						targetPath += val;
@@ -552,7 +552,7 @@ void CPlayerWMP::SetRating(int rating)
 				break;
 			}
 
-			spMedia->setItemInfo(L"UserRating", val);
+			spMedia->setItemInfo(CComBSTR(L"UserRating"), val);
 			m_Rating = rating;
 		}
 	}
