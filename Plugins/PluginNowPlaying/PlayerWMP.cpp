@@ -46,25 +46,14 @@ HRESULT CPlayerWMP::CRemoteHost::QueryService(REFGUID guidService, REFIID riid, 
 
 HRESULT CPlayerWMP::CRemoteHost::GetServiceType(BSTR* pbstrType)
 {
-	HRESULT hr = E_POINTER;
-	if (pbstrType)
-	{
-		*pbstrType = SysAllocString(L"RemoteNoDialogs");
-		hr = *pbstrType? S_OK : E_POINTER;
-	}
-	return hr;
+	*pbstrType = SysAllocString(L"RemoteNoDialogs");
+	return *pbstrType ? S_OK : E_POINTER;
 }
 
 HRESULT CPlayerWMP::CRemoteHost::GetApplicationName(BSTR* pbstrName)
 {
-	HRESULT hr = E_POINTER;
-	if (pbstrName)
-	{
-		CComBSTR bstrAppName = L"Rainmeter NowPlaying";
-		*pbstrName = bstrAppName.Detach();
-		hr = *pbstrName? S_OK : E_POINTER;
-	}
-	return hr;
+	*pbstrName = SysAllocString(L"Rainmeter NowPlaying");
+	return *pbstrName ? S_OK : E_POINTER;
 }
 
 HRESULT CPlayerWMP::CRemoteHost::GetScriptableObject(BSTR* pbstrName, IDispatch** ppDispatch)
@@ -262,7 +251,7 @@ void CPlayerWMP::Initialize()
 	// Create WMP control
 	if (SUCCEEDED(hr))
 	{
-		hr = spHost->CreateControl(CComBSTR(L"{6BF52A52-394A-11D3-B153-00C04F79FAA6}"), m_AxWindow->m_hWnd, NULL);
+		hr = spHost->CreateControl(L"{6BF52A52-394A-11D3-B153-00C04F79FAA6}", m_AxWindow->m_hWnd, NULL);
 	}
 
 	if (SUCCEEDED(hr))
@@ -367,7 +356,6 @@ void CPlayerWMP::UpdateData()
 
 		if (m_TrackChanged)
 		{
-			++m_TrackCount;
 			m_TrackChanged = false;
 
 			CComPtr<IWMPMedia> spMedia;
@@ -375,17 +363,17 @@ void CPlayerWMP::UpdateData()
 
 			if (spMedia)
 			{
-				CComBSTR val;
-				spMedia->getItemInfo(CComBSTR("Artist"), &val);
+				BSTR val;
+				spMedia->getItemInfo(L"Artist", &val);
 				m_Artist = val;
 
-				spMedia->getItemInfo(CComBSTR("Title"), &val);
+				spMedia->getItemInfo(L"Title", &val);
 				m_Title = val;
 
-				spMedia->getItemInfo(CComBSTR("Album"), &val);
+				spMedia->getItemInfo(L"Album", &val);
 				m_Album = val;
 
-				spMedia->getItemInfo(CComBSTR("UserRating"), &val);
+				spMedia->getItemInfo(L"UserRating", &val);
 				int rating = _wtoi(val);
 
 				if (rating > 75)
@@ -413,19 +401,20 @@ void CPlayerWMP::UpdateData()
 				spMedia->get_duration(&duration);
 				m_Duration = (UINT)duration;
 
-				CComBSTR url;
+				BSTR url;
 				spMedia->get_sourceURL(&url);
 				std::wstring targetPath = url;
 
 				if (targetPath != m_FilePath)
 				{
+					++m_TrackCount;
 					m_FilePath = targetPath;
 
 					// Find cover if needed
 					// TODO: Fix temp solution
 					if (m_Measures & MEASURE_COVER || m_InstanceCount == 0)
 					{
-						spMedia->getItemInfo(CComBSTR("WM/WMCollectionID"), &val);
+						spMedia->getItemInfo(L"WM/WMCollectionID", &val);
 						targetPath.resize(targetPath.find_last_of(L'\\') + 1);
 						targetPath += L"AlbumArt_";
 						targetPath += val;
@@ -535,7 +524,7 @@ void CPlayerWMP::SetRating(int rating)
 
 		if (spMedia)
 		{
-			CComBSTR val;
+			BSTR val;
 			switch (rating)
 			{
 			case 0:
@@ -558,12 +547,12 @@ void CPlayerWMP::SetRating(int rating)
 				val = L"75";
 				break;
 
-			case 5:
+			default: // case 5:
 				val = L"99";
 				break;
 			}
 
-			spMedia->setItemInfo(CComBSTR("UserRating"), val);
+			spMedia->setItemInfo(L"UserRating", val);
 			m_Rating = rating;
 		}
 	}

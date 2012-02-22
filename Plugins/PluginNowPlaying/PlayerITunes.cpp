@@ -357,7 +357,7 @@ void CPlayerITunes::OnTrackChange()
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
 	if (SUCCEEDED(hr) && track)
 	{
-		CComBSTR tmpStr;
+		BSTR tmpStr;
 		long tmpVal;
 
 		// Get metadata
@@ -423,7 +423,7 @@ void CPlayerITunes::OnTrackChange()
 
 							if (SUCCEEDED(hr))
 							{
-								tmpStr = m_TempCoverPath.c_str();
+								tmpStr = (BSTR)m_TempCoverPath.c_str();
 								hr = artwork->SaveArtworkToFile(tmpStr);
 								if (SUCCEEDED(hr))
 								{
