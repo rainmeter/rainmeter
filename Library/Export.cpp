@@ -90,7 +90,8 @@ void __stdcall RmExecute(void* skin, LPCWSTR command)
 	CMeterWindow* mw = (CMeterWindow*)skin;
 	if (command)
 	{
-		Rainmeter->ExecuteCommand(command, mw);
+		// WM_RAINMETER_EXECUTE used instead of ExecuteCommand for thread-safety
+		SendMessage(Rainmeter->GetWindow(), WM_RAINMETER_EXECUTE, (WPARAM)mw, (LPARAM)command);
 	}
 }
 

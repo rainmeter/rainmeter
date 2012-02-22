@@ -1102,6 +1102,10 @@ LRESULT CALLBACK CRainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		}
 		break;
 
+	case WM_RAINMETER_EXECUTE:
+		Rainmeter->ExecuteCommand((const WCHAR*)lParam, (CMeterWindow*)wParam);
+		break;
+
 	default:
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
@@ -2089,7 +2093,6 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 		}
 	}
 }
-
 
 /*
 ** Executes command when current processing is done.

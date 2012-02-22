@@ -700,7 +700,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 	{
 	case BANG_REFRESH:
 		// Refresh needs to be delayed since it crashes if done during Update()
-		PostMessage(m_Window, WM_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
+		PostMessage(m_Window, WM_METERWINDOW_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
 		break;
 
 	case BANG_REDRAW:
@@ -4638,8 +4638,8 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnMiddleButtonDoubleClick, WM_NCMBUTTONDBLCLK)
 	MESSAGE(OnWindowPosChanging, WM_WINDOWPOSCHANGING)
 	MESSAGE(OnCopyData, WM_COPYDATA)
-	MESSAGE(OnDelayedRefresh, WM_DELAYED_REFRESH)
-	MESSAGE(OnDelayedMove, WM_DELAYED_MOVE)
+	MESSAGE(OnDelayedRefresh, WM_METERWINDOW_DELAYED_REFRESH)
+	MESSAGE(OnDelayedMove, WM_METERWINDOW_DELAYED_MOVE)
 	MESSAGE(OnDwmColorChange, WM_DWMCOLORIZATIONCOLORCHANGED)
 	MESSAGE(OnDwmCompositionChange, WM_DWMCOMPOSITIONCHANGED)
 	MESSAGE(OnSettingChange, WM_SETTINGCHANGE)
@@ -4706,7 +4706,7 @@ LRESULT CMeterWindow::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	else
 	{
 		// With copy transparency we'll do a full refresh
-		PostMessage(m_Window, WM_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
+		PostMessage(m_Window, WM_METERWINDOW_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
 	}
 
 	return 0;

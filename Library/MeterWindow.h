@@ -32,8 +32,8 @@
 #define REJECT_MESSAGE(msg) case msg: return 0;
 #define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
-#define WM_DELAYED_REFRESH WM_APP + 1
-#define WM_DELAYED_MOVE    WM_APP + 3
+#define WM_METERWINDOW_DELAYED_REFRESH WM_APP + 1
+#define WM_METERWINDOW_DELAYED_MOVE    WM_APP + 3
 
 #define METERWINDOW_CLASS_NAME	L"RainmeterMeterWindow"
 
