@@ -747,9 +747,10 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 	int count = ListView_GetItemCount(item);
 
 	LVITEM lvi;
-	lvi.mask = LVIF_TEXT | LVIF_GROUPID;
+	lvi.mask = LVIF_TEXT | LVIF_GROUPID | LVIF_PARAM;
 	lvi.iSubItem = 0;
 	lvi.iItem = 0;
+	lvi.lParam = 0;
 
 	lvi.iGroupId = 0;
 	const std::list<CMeasure*>& measures = m_SkinWindow->GetMeasures();
@@ -779,11 +780,16 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 		++lvi.iItem;
 	}
 
+	int topIndex = ListView_GetTopIndex(item);
+	int countPerPage = ListView_GetCountPerPage(item);
+	int selIndex = ListView_GetNextItem(item, -1, LVNI_FOCUSED | LVNI_SELECTED);
+
 	lvi.iGroupId = 1;
 	const auto& variables = m_SkinWindow->GetParser().GetVariables();
 	for (auto iter = variables.cbegin(); iter != variables.cend(); ++iter)
 	{
 		lvi.pszText = (WCHAR*)(*iter).first.c_str();
+		lvi.lParam = (LPARAM)&(*iter).first;
 
 		if (lvi.iItem < count)
 		{
@@ -806,7 +812,30 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 		--count;
 	}
 
+	ListView_SortItems(item, ListSortProc, 0);
+
+	// Ensure that the visible same items are visible
+	ListView_EnsureVisible(item, topIndex - countPerPage + 1, FALSE);
+
+	if (selIndex != -1)
+	{
+		ListView_SetItemState(item, selIndex, LVIS_FOCUSED | LVNI_SELECTED, LVIS_FOCUSED | LVNI_SELECTED);
+	}
+
 	SendMessage(item, WM_SETREDRAW, TRUE, 0);
+}
+
+int CALLBACK CDialogAbout::CTabSkins::ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
+{
+	// Measures
+	if (!lParam1 && !lParam2) return 0;
+	if (!lParam1) return -1;
+	if (!lParam2) return 1;
+
+	// Variables
+	const std::wstring* str1 = (const std::wstring*)lParam1;
+	const std::wstring* str2 = (const std::wstring*)lParam2;
+	return wcscmp(str1->c_str(), str2->c_str());
 }
 
 /*

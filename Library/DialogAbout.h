@@ -84,6 +84,8 @@ private:
 		void UpdateMeasureList(CMeterWindow* meterWindow);
 
 	private:
+		static int CALLBACK ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+
 		CMeterWindow* m_SkinWindow;
 	};
 
