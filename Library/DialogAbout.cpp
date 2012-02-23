@@ -609,7 +609,7 @@ void CDialogAbout::CTabSkins::Initialize()
 	LVGROUP lvg;
 	lvg.cbSize = sizeof(LVGROUP);
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
-	lvg.state = LVGS_NORMAL | LVGS_COLLAPSIBLE;
+	lvg.state = (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA) ? LVGS_COLLAPSIBLE : LVGS_NORMAL;
 	lvg.iGroupId = 0;
 	lvg.pszHeader = GetString(ID_STR_MEASURES);
 	ListView_InsertGroup(item, 0, &lvg);
