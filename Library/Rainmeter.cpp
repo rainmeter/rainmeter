@@ -275,7 +275,7 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfAr
 			}
 		}
 
-		Log(LOG_ERROR, L"Bang: Incorrect number of arugments");
+		Log(LOG_ERROR, L"Bang: Incorrect number of arguments");
 	}
 }
 
