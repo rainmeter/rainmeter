@@ -23,7 +23,7 @@
 int LuaManager::c_RefCount = 0;
 lua_State* LuaManager::c_State = 0;
 
-void LuaManager::Init()
+void LuaManager::Initialize()
 {
 	if (c_State == NULL)
 	{
@@ -51,7 +51,7 @@ void LuaManager::Init()
 	++c_RefCount;
 }
 
-void LuaManager::CleanUp()
+void LuaManager::Finalize()
 {
 	if (c_RefCount > 0)
 	{
@@ -82,31 +82,6 @@ void LuaManager::ReportErrors(lua_State* L)
 	std::wstring str = L"Script: ";
 	str += ConvertToWide(error.c_str());
 	Log(LOG_ERROR, str.c_str());
-}
-
-void LuaManager::LuaLog(int nLevel, const char* format, ... )
-{
-	char* buffer = new char[4096];
-	va_list args;
-	va_start( args, format );
-
-	_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
-	_CrtSetReportMode(_CRT_ASSERT, 0);
-
-	errno = 0;
-	_vsnprintf_s( buffer, 4096, _TRUNCATE, format, args );
-	if (errno != 0)
-	{
-		_snprintf_s(buffer, 4096, _TRUNCATE, "Script: LuaLog internal error: %s", format);
-	}
-
-	_set_invalid_parameter_handler(oldHandler);
-
-	std::wstring str = ConvertToWide(buffer);
-	Log(nLevel, str.c_str());
-	va_end(args);
-
-	delete [] buffer;
 }
 
 void LuaManager::PushWide(lua_State* L, const WCHAR* str)

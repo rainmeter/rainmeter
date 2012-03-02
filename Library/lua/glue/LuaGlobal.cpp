@@ -53,7 +53,7 @@ static int Global_Log(lua_State* L)
 		lua_pop(L, 1);
 	}
 
-	LuaManager::LuaLog(LOG_DEBUG, message.c_str());
+	Log(LOG_DEBUG, ConvertToWide(message.c_str()).c_str());
 	return 0;
 }
 

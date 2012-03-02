@@ -35,7 +35,7 @@ CMeasureScript::CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name) : C
 	m_HasGetStringFunction(false),
 	m_ValueType(LUA_TNIL)
 {
-	LuaManager::Init();
+	LuaManager::Initialize();
 }
 
 /*
@@ -45,7 +45,7 @@ CMeasureScript::CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name) : C
 CMeasureScript::~CMeasureScript()
 {
 	DeleteLuaScript();
-	LuaManager::CleanUp();
+	LuaManager::Finalize();
 }
 
 void CMeasureScript::DeleteLuaScript()
