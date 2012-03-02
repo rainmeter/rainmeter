@@ -103,7 +103,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 						break;
 					}
 				}
-			
+
 				if (!measure->parent)
 				{
 					// The referenced section doesn't exist
@@ -171,23 +171,24 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		{
 			parent->player = CPlayerWinamp::Create(WA_WINAMP);
 		}
-		else if (_wcsicmp(L"WLM", str) == 0)
-		{
-			parent->player = CPlayerWLM::Create();
-		}
 		else if (_wcsicmp(L"WMP", str) == 0)
 		{
 			parent->player = CPlayerWMP::Create();
 		}
 		else
 		{
-			std::wstring error = L"NowPlaying.dll: Invalid PlayerName=";
-			error += str;
-			error += L" in [";
-			error += parent->ownerName;
-			error += L"]";
-			RmLog(LOG_ERROR, error.c_str());
-			return;
+			// Default to WLM
+			parent->player = CPlayerWLM::Create();
+
+			if (_wcsicmp(L"WLM", str) != 0)
+			{
+				std::wstring error = L"NowPlaying.dll: Invalid PlayerName=";
+				error += str;
+				error += L" in [";
+				error += parent->ownerName;
+				error += L"]";
+				RmLog(LOG_ERROR, error.c_str());
+			}
 		}
 
 		parent->player->AddInstance();
@@ -346,7 +347,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 {
 	Measure* measure = (Measure*)data;
 	ParentMeasure* parent = measure->parent;
-	if (!parent) return L"Invalid player";
+	if (!parent) return NULL;
 
 	const CPlayer* player = parent->player;
 	static WCHAR buffer[32];

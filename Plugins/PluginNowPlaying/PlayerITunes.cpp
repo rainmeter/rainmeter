@@ -423,8 +423,8 @@ void CPlayerITunes::OnTrackChange()
 
 							if (SUCCEEDED(hr))
 							{
-								tmpStr = (BSTR)m_TempCoverPath.c_str();
-								hr = artwork->SaveArtworkToFile(tmpStr);
+								CComBSTR coverPath = m_TempCoverPath.c_str();
+								hr = artwork->SaveArtworkToFile(coverPath);
 								if (SUCCEEDED(hr))
 								{
 									m_CoverPath = m_TempCoverPath;
