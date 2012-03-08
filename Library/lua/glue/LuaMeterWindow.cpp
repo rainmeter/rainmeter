@@ -22,90 +22,16 @@
 #include "../../MeterWindow.h"
 #include "../../MeterString.h"
 
-static int MeterWindow_MoveWindow(lua_State* L)
+static int MeterWindow_Bang(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	int x = (int)tolua_tonumber(L, 2, 0);
-	int y = (int)tolua_tonumber(L, 3, 0);
+	std::wstring strTmp = LuaManager::ToWide(L, 2);
 
-	self->MoveWindow(x, y);
+	CConfigParser& parser = self->GetParser();
+	parser.ReplaceVariables(strTmp);
+	self->GetMainObject()->ExecuteCommand(strTmp.c_str(), self);
 
 	return 0;
-}
-
-static int MeterWindow_FadeWindow(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	int from = (int)tolua_tonumber(L, 2, 0);
-	int to = (int)tolua_tonumber(L, 3, 0);
-	self->FadeWindow(from, to);
-
-	return 0;
-}
-
-static int MeterWindow_GetSkinName(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const std::wstring& val = self->GetSkinName();
-	LuaManager::PushWide(L, val.c_str());
-
-	return 1;
-}
-
-static int MeterWindow_GetSkinIniFile(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	const std::wstring& val = self->GetSkinIniFile();
-	LuaManager::PushWide(L, val.c_str());
-
-	return 1;
-}
-
-static int MeterWindow_GetW(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	int val = (int)self->GetW();
-	lua_pushnumber(L, (lua_Number)val);
-
-	return 1;
-}
-
-static int MeterWindow_GetH(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	int val = (int)self->GetH();
-	lua_pushnumber(L, (lua_Number)val);
-
-	return 1;
-}
-
-static int MeterWindow_GetX(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	int val = (int)self->GetX();
-	lua_pushnumber(L, (lua_Number)val);
-
-	return 1;
-}
-
-static int MeterWindow_GetY(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	int val = (int)self->GetY();
-	lua_pushnumber(L, (lua_Number)val);
-
-	return 1;
-}
-
-static int MeterWindow_MakePathAbsolute(lua_State* L)
-{
-	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
-	std::wstring path = LuaManager::ToWide(L, 2);
-
-	self->MakePathAbsolute(path);
-	LuaManager::PushWide(L, path.c_str());
-
-	return 1;
 }
 
 static int MeterWindow_GetMeter(lua_State* L)
@@ -165,16 +91,87 @@ static int MeterWindow_ReplaceVariables(lua_State* L)
 	return 1;
 }
 
-static int MeterWindow_Bang(lua_State* L)
+static int MeterWindow_ParseFormula(lua_State* L)
 {
 	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
 
-	CConfigParser& parser = self->GetParser();
-	parser.ReplaceVariables(strTmp);
-	self->GetMainObject()->ExecuteCommand(strTmp.c_str(), self);
+	double result;
+	if (self->GetParser().ParseFormula(strTmp, &result))
+	{
+		lua_pushnumber(L, result);
+		return 1;
+	}
 
 	return 0;
+}
+
+static int MeterWindow_MoveWindow(lua_State* L)
+{
+	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
+	int x = (int)tolua_tonumber(L, 2, 0);
+	int y = (int)tolua_tonumber(L, 3, 0);
+
+	self->MoveWindow(x, y);
+
+	return 0;
+}
+
+static int MeterWindow_FadeWindow(lua_State* L)
+{
+	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
+	int from = (int)tolua_tonumber(L, 2, 0);
+	int to = (int)tolua_tonumber(L, 3, 0);
+	self->FadeWindow(from, to);
+
+	return 0;
+}
+
+static int MeterWindow_GetW(lua_State* L)
+{
+	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
+	int val = (int)self->GetW();
+	lua_pushnumber(L, (lua_Number)val);
+
+	return 1;
+}
+
+static int MeterWindow_GetH(lua_State* L)
+{
+	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
+	int val = (int)self->GetH();
+	lua_pushnumber(L, (lua_Number)val);
+
+	return 1;
+}
+
+static int MeterWindow_GetX(lua_State* L)
+{
+	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
+	int val = (int)self->GetX();
+	lua_pushnumber(L, (lua_Number)val);
+
+	return 1;
+}
+
+static int MeterWindow_GetY(lua_State* L)
+{
+	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
+	int val = (int)self->GetY();
+	lua_pushnumber(L, (lua_Number)val);
+
+	return 1;
+}
+
+static int MeterWindow_MakePathAbsolute(lua_State* L)
+{
+	CMeterWindow* self = (CMeterWindow*)tolua_tousertype(L, 1, 0);
+	std::wstring path = LuaManager::ToWide(L, 2);
+
+	self->MakePathAbsolute(path);
+	LuaManager::PushWide(L, path.c_str());
+
+	return 1;
 }
 
 void LuaManager::RegisterMeterWindow(lua_State* L)
@@ -183,19 +180,18 @@ void LuaManager::RegisterMeterWindow(lua_State* L)
 	tolua_cclass(L, "CMeterWindow", "CMeterWindow", "", NULL);
 
 	tolua_beginmodule(L, "CMeterWindow");
+	tolua_function(L, "Bang", MeterWindow_Bang);
+	tolua_function(L, "GetMeter", MeterWindow_GetMeter);
+	tolua_function(L, "GetMeasure", MeterWindow_GetMeasure);
+	tolua_function(L, "GetVariable", MeterWindow_GetVariable);
+	tolua_function(L, "ReplaceVariables", MeterWindow_ReplaceVariables);
+	tolua_function(L, "ParseFormula", MeterWindow_ParseFormula);
 	tolua_function(L, "MoveWindow", MeterWindow_MoveWindow);
 	tolua_function(L, "FadeWindow", MeterWindow_FadeWindow);
-	tolua_function(L, "GetSkinName", MeterWindow_GetSkinName);
-	tolua_function(L, "GetSkinIniFile", MeterWindow_GetSkinIniFile);
 	tolua_function(L, "GetW", MeterWindow_GetW);
 	tolua_function(L, "GetH", MeterWindow_GetH);
 	tolua_function(L, "GetX", MeterWindow_GetX);
 	tolua_function(L, "GetY", MeterWindow_GetY);
 	tolua_function(L, "MakePathAbsolute", MeterWindow_MakePathAbsolute);
-	tolua_function(L, "GetMeter", MeterWindow_GetMeter);
-	tolua_function(L, "GetMeasure", MeterWindow_GetMeasure);
-	tolua_function(L, "GetVariable", MeterWindow_GetVariable);
-	tolua_function(L, "ReplaceVariables", MeterWindow_ReplaceVariables);
-	tolua_function(L, "Bang", MeterWindow_Bang);
 	tolua_endmodule(L);
 }

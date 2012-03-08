@@ -77,7 +77,7 @@ static int Measure_ReadFormula(lua_State* L)
 
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
 	double value = parser.ReadFormula(self->GetName(), strTmp.c_str(), tolua_tonumber(L, 3, 0));
-	
+
 	lua_pushnumber(L, value);
 	return 1;
 }
