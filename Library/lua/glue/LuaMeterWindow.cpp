@@ -172,7 +172,6 @@ static int MeterWindow_Bang(lua_State* L)
 
 	CConfigParser& parser = self->GetParser();
 	parser.ReplaceVariables(strTmp);
-	parser.ReplaceMeasures(strTmp);
 	self->GetMainObject()->ExecuteCommand(strTmp.c_str(), self);
 
 	return 0;

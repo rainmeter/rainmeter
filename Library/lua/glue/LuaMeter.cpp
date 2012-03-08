@@ -37,12 +37,7 @@ static int Meter_GetOption(lua_State* L)
 	CConfigParser& parser = meterWindow->GetParser();
 
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
-	strTmp = parser.GetValue(self->GetOriginalName(), strTmp, L"");
-
-	parser.SetBuiltInVariable(L"CURRENTSECTION", self->GetOriginalName());  // Set temporarily
-	parser.ReplaceVariables(strTmp);
-	parser.SetBuiltInVariable(L"CURRENTSECTION", L"");  // Reset
-	parser.ReplaceMeasures(strTmp);
+	strTmp = parser.ReadString(self->GetName(), strTmp.c_str(), L"");
 
 	LuaManager::PushWide(L, strTmp.c_str());
 	return 1;
