@@ -63,19 +63,6 @@ static int Measure_ReadNumber(lua_State* L)
 	CConfigParser& parser = meterWindow->GetParser();
 
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
-	double value = parser.ReadFloat(self->GetName(), strTmp.c_str(), tolua_tonumber(L, 3, 0));
-
-	lua_pushnumber(L, value);
-	return 1;
-}
-
-static int Measure_ReadFormula(lua_State* L)
-{
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
-	CMeterWindow* meterWindow = self->GetMeterWindow();
-	CConfigParser& parser = meterWindow->GetParser();
-
-	std::wstring strTmp = LuaManager::ToWide(L, 2);
 	double value = parser.ReadFormula(self->GetName(), strTmp.c_str(), tolua_tonumber(L, 3, 0));
 
 	lua_pushnumber(L, value);
@@ -167,7 +154,6 @@ void LuaManager::RegisterMeasure(lua_State* L)
 	tolua_function(L, "GetOption", Measure_GetOption);
 	tolua_function(L, "ReadString", Measure_ReadString);
 	tolua_function(L, "ReadNumber", Measure_ReadNumber);
-	tolua_function(L, "ReadFormula", Measure_ReadFormula);
 	tolua_function(L, "Disable", Measure_Disable);
 	tolua_function(L, "Enable", Measure_Enable);
 	tolua_function(L, "GetValue", Measure_GetValue);
