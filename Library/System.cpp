@@ -1154,57 +1154,6 @@ void CSystem::SetClipboardText(const std::wstring& text)
 */
 void CSystem::SetWallpaper(const std::wstring& wallpaper, const std::wstring& style)
 {
-	auto setWallpaperStyle = [&]()
-	{
-		if (!style.empty())
-		{
-			HKEY hKey;
-			if (RegOpenKeyEx(HKEY_CURRENT_USER, L"Control Panel\\Desktop", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS)
-			{
-				const WCHAR* wallStyle = NULL;
-				const WCHAR* wallTile = L"0";
-
-				const WCHAR* option = style.c_str();
-				if (_wcsicmp(option, L"CENTER") == 0)
-				{
-					wallStyle = L"0";
-				}
-				else if (_wcsicmp(option, L"TILE") == 0)
-				{
-					wallStyle = L"0";
-					wallTile = L"1";
-				}
-				else if (_wcsicmp(option, L"STRETCH") == 0)
-				{
-					wallStyle = L"2";
-				}
-				else if (GetOSPlatform() >= OSPLATFORM_7)
-				{
-					if (_wcsicmp(option, L"FIT") == 0)
-					{
-						wallStyle = L"6";
-					}
-					else if (_wcsicmp(option, L"FILL") == 0)
-					{
-						wallStyle = L"10";
-					}
-				}
-
-				if (wallStyle)
-				{
-					RegSetValueEx(hKey, L"WallpaperStyle", 0, REG_SZ, (const BYTE*)wallStyle, sizeof(WCHAR) * 2);
-					RegSetValueEx(hKey, L"TileWallpaper", 0, REG_SZ, (const BYTE*)wallTile, sizeof(WCHAR) * 2);
-				}
-				else
-				{
-					Log(LOG_ERROR, L"!SetWallpaper: Invalid style");
-				}
-
-				RegCloseKey(hKey);
-			}
-		}
-	};
-
 	if (!wallpaper.empty())
 	{
 		if (_waccess(wallpaper.c_str(), 0) == -1)
@@ -1213,27 +1162,65 @@ void CSystem::SetWallpaper(const std::wstring& wallpaper, const std::wstring& st
 			return;
 		}
 
-		if (GetOSPlatform() < OSPLATFORM_7)
+		Bitmap* bitmap = Bitmap::FromFile(wallpaper.c_str());
+		if (bitmap && bitmap->GetLastStatus() == Ok)
 		{
-			// Gotta convert to .bmp for pre-7
-			Bitmap* bitmap = Bitmap::FromFile(wallpaper.c_str());
-			if (bitmap && bitmap->GetLastStatus() == Ok)
-			{
-				std::wstring file = Rainmeter->GetSettingsPath();
-				file += L"Wallpaper.bmp";
+			std::wstring file = Rainmeter->GetSettingsPath();
+			file += L"Wallpaper.bmp";
 
-				const CLSID bmpClsid = { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } };
-				if (bitmap->Save(file.c_str(), &bmpClsid) == Ok)
+			const CLSID bmpClsid = { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } };
+			if (bitmap->Save(file.c_str(), &bmpClsid) == Ok)
+			{
+				if (!style.empty())
 				{
-					setWallpaperStyle();
-					SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)file.c_str(), SPIF_UPDATEINIFILE);
+					HKEY hKey;
+					if (RegOpenKeyEx(HKEY_CURRENT_USER, L"Control Panel\\Desktop", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS)
+					{
+						const WCHAR* wallStyle = NULL;
+						const WCHAR* wallTile = L"0";
+
+						const WCHAR* option = style.c_str();
+						if (_wcsicmp(option, L"CENTER") == 0)
+						{
+							wallStyle = L"0";
+						}
+						else if (_wcsicmp(option, L"TILE") == 0)
+						{
+							wallStyle = L"0";
+							wallTile = L"1";
+						}
+						else if (_wcsicmp(option, L"STRETCH") == 0)
+						{
+							wallStyle = L"2";
+						}
+						else if (GetOSPlatform() >= OSPLATFORM_7)
+						{
+							if (_wcsicmp(option, L"FIT") == 0)
+							{
+								wallStyle = L"6";
+							}
+							else if (_wcsicmp(option, L"FILL") == 0)
+							{
+								wallStyle = L"10";
+							}
+						}
+
+						if (wallStyle)
+						{
+							RegSetValueEx(hKey, L"WallpaperStyle", 0, REG_SZ, (const BYTE*)wallStyle, sizeof(WCHAR) * 2);
+							RegSetValueEx(hKey, L"TileWallpaper", 0, REG_SZ, (const BYTE*)wallTile, sizeof(WCHAR) * 2);
+						}
+						else
+						{
+							Log(LOG_ERROR, L"!SetWallpaper: Invalid style");
+						}
+
+						RegCloseKey(hKey);
+					}
 				}
+
+				SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)file.c_str(), SPIF_UPDATEINIFILE);
 			}
-		}
-		else
-		{
-			setWallpaperStyle();
-			SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)wallpaper.c_str(), SPIF_UPDATEINIFILE);
 		}
 	}
 }
