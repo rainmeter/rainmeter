@@ -833,8 +833,14 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 		break;
 
 	case BANG_MOVE:
-		MoveWindow(_wtoi(args[0].c_str()), _wtoi(args[1].c_str()));
-		break;
+		{
+			double value;
+			int x = m_Parser.ParseFormula(args[0], &value) ? (int)value : _wtoi(args[0].c_str());
+			int y = m_Parser.ParseFormula(args[1], &value) ? (int)value : _wtoi(args[1].c_str());
+
+			MoveWindow(x, y);
+			break;
+		}
 
 	case BANG_ZPOS:
 		SetWindowZPosition((ZPOSITION)_wtoi(args[0].c_str()));
@@ -879,8 +885,14 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 		break;
 
 	case BANG_MOVEMETER:
-		MoveMeter(args[2], _wtoi(args[0].c_str()), _wtoi(args[1].c_str()));
-		break;
+		{
+			double value;
+			int x = m_Parser.ParseFormula(args[0], &value) ? (int)value : _wtoi(args[0].c_str());
+			int y = m_Parser.ParseFormula(args[1], &value) ? (int)value : _wtoi(args[1].c_str());
+
+			MoveMeter(args[2], x, y);
+			break;
+		}
 
 	case BANG_COMMANDMEASURE:
 		{
