@@ -19,6 +19,7 @@
 #include "../../StdAfx.h"
 #include "../LuaManager.h"
 #include "../../Meter.h"
+#include "../../MeterString.h"
 
 static int Meter_GetName(lua_State* L)
 {
@@ -138,6 +139,19 @@ static int Meter_Show(lua_State* L)
 	return 0;
 }
 
+static int Meter_SetText(lua_State* L)
+{
+	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
+	
+	if (CMeterString* stringMeter = dynamic_cast<CMeterString*>(self))
+	{
+		std::wstring str = LuaManager::ToWide(L, 2);
+		stringMeter->SetText(str.c_str());
+	}
+
+	return 0;
+}
+
 void LuaManager::RegisterMeter(lua_State* L)
 {
 	tolua_usertype(L, "CMeter");
@@ -156,5 +170,6 @@ void LuaManager::RegisterMeter(lua_State* L)
 	tolua_function(L, "SetY", Meter_SetY);
 	tolua_function(L, "Hide", Meter_Hide);
 	tolua_function(L, "Show", Meter_Show);
+	tolua_function(L, "SetText", Meter_SetText);
 	tolua_endmodule(L);
 }

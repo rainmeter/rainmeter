@@ -153,9 +153,6 @@
     <ClCompile Include="lua\glue\LuaMeter.cpp">
       <Filter>Lua\glue</Filter>
     </ClCompile>
-    <ClCompile Include="lua\glue\LuaMeterString.cpp">
-      <Filter>Lua\glue</Filter>
-    </ClCompile>
     <ClCompile Include="lua\glue\LuaMeterWindow.cpp">
       <Filter>Lua\glue</Filter>
     </ClCompile>

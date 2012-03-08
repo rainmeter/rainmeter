@@ -122,14 +122,7 @@ static int MeterWindow_GetMeter(lua_State* L)
 		return 0;
 	}
 
-	if (CMeterString* stringMeter = dynamic_cast<CMeterString*>(meter))
-	{
-		tolua_pushusertype(L, stringMeter, "CMeterString");
-	}
-	else
-	{
-		tolua_pushusertype(L, meter, "CMeter");
-	}
+	tolua_pushusertype(L, meter, "CMeter");
 
 	return 1;
 }
