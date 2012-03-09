@@ -29,8 +29,7 @@ inline CMeasure* GetSelf(lua_State* L)
 static int GetName(lua_State* L)
 {
 	CMeasure* self = GetSelf(L);
-	const WCHAR* val = (const WCHAR*)self->GetName();
-	LuaManager::PushWide(L, val);
+	LuaManager::PushWide(L, self->GetName());
 
 	return 1;
 }
@@ -93,8 +92,7 @@ static int Enable(lua_State* L)
 static int GetValue(lua_State* L)
 {
 	CMeasure* self = GetSelf(L);
-	double val = (double)self->GetValue();
-	lua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, self->GetValue());
 
 	return 1;
 }
@@ -102,8 +100,7 @@ static int GetValue(lua_State* L)
 static int GetRelativeValue(lua_State* L)
 {
 	CMeasure* self = GetSelf(L);
-	double val = (double)self->GetRelativeValue();
-	lua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, self->GetRelativeValue());
 
 	return 1;
 }
@@ -111,8 +108,7 @@ static int GetRelativeValue(lua_State* L)
 static int GetValueRange(lua_State* L)
 {
 	CMeasure* self = GetSelf(L);
-	double val = (double)self->GetValueRange();
-	lua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, self->GetValueRange());
 
 	return 1;
 }
@@ -120,8 +116,7 @@ static int GetValueRange(lua_State* L)
 static int GetMinValue(lua_State* L)
 {
 	CMeasure* self = GetSelf(L);
-	double val = (double)self->GetMinValue();
-	lua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, self->GetMinValue());
 
 	return 1;
 }
@@ -129,8 +124,7 @@ static int GetMinValue(lua_State* L)
 static int GetMaxValue(lua_State* L)
 {
 	CMeasure* self = GetSelf(L);
-	double val = (double)self->GetMaxValue();
-	lua_pushnumber(L, (lua_Number)val);
+	lua_pushnumber(L, self->GetMaxValue());
 
 	return 1;
 }

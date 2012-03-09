@@ -79,7 +79,7 @@ public:
 	RECT ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue);
 	std::vector<Gdiplus::REAL> ReadFloats(LPCTSTR section, LPCTSTR key);
 
-	bool ParseFormula(const std::wstring& result, double* resultValue);
+	bool ParseFormula(const std::wstring& formula, double* resultValue);
 
 	const std::wstring& GetFilename() { return m_Filename; }
 	const std::list<std::wstring>& GetSections() { return m_Sections; }

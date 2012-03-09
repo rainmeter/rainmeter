@@ -29,8 +29,7 @@ inline CMeter* GetSelf(lua_State* L)
 static int GetName(lua_State* L)
 {
 	CMeter* self = GetSelf(L);
-	const WCHAR* val = (const WCHAR*)self->GetName();
-	LuaManager::PushWide(L, val);
+	LuaManager::PushWide(L, self->GetName());
 
 	return 1;
 }
@@ -138,7 +137,6 @@ static int Show(lua_State* L)
 static int SetText(lua_State* L)
 {
 	CMeter* self = GetSelf(L);
-	
 	if (CMeterString* stringMeter = dynamic_cast<CMeterString*>(self))
 	{
 		std::wstring str = LuaManager::ToWide(L, 2);

@@ -746,19 +746,18 @@ double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
 }
 
 // Returns true if the formula was read successfully, false for failure.
-// Pass a pointer to a double.
-bool CConfigParser::ParseFormula(const std::wstring& result, double* resultValue)
+bool CConfigParser::ParseFormula(const std::wstring& formula, double* resultValue)
 {
 	// Formulas must be surrounded by parenthesis
-	if (!result.empty() && result[0] == L'(' && result[result.size() - 1] == L')')
+	if (!formula.empty() && formula.front() == L'(' && formula.back() == L')')
 	{
-		const WCHAR* errMsg = MathParser::CheckedParse(result.c_str(), resultValue);
+		const WCHAR* errMsg = MathParser::CheckedParse(formula.c_str(), resultValue);
 		if (errMsg != NULL)
 		{
 			std::wstring error = L"ParseFormula: ";
 			error += errMsg;
 			error += L": ";
-			error += result;
+			error += formula;
 			Log(LOG_ERROR, error.c_str());
 			return false;
 		}

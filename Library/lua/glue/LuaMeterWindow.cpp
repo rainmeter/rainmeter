@@ -169,7 +169,7 @@ static int GetY(lua_State* L)
 
 static int MakePathAbsolute(lua_State* L)
 {
-	CMeterWindow* self = *(CMeterWindow**)lua_touserdata(L, 1);
+	CMeterWindow* self = GetSelf(L);
 	std::wstring path = LuaManager::ToWide(L, 2);
 	self->MakePathAbsolute(path);
 	LuaManager::PushWide(L, path.c_str());
