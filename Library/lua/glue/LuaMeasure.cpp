@@ -147,7 +147,7 @@ static int GetStringValue(lua_State* L)
 
 void LuaManager::RegisterMeasure(lua_State* L)
 {
-	const luaL_reg functions[] =
+	const luaL_Reg functions[] =
 	{
 		{ "GetName", GetName },
 		{ "GetOption", GetOption },

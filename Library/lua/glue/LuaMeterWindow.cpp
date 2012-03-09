@@ -179,7 +179,7 @@ static int MakePathAbsolute(lua_State* L)
 
 void LuaManager::RegisterMeterWindow(lua_State* L)
 {
-	const luaL_reg functions[] =
+	const luaL_Reg functions[] =
 	{
 		{ "Bang", Bang },
 		{ "GetMeter", GetMeter },

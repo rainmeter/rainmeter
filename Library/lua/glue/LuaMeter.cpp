@@ -148,7 +148,7 @@ static int SetText(lua_State* L)
 
 void LuaManager::RegisterMeter(lua_State* L)
 {
-	const luaL_reg functions[] =
+	const luaL_Reg functions[] =
 	{
 		{ "GetName", GetName },
 		{ "GetOption", GetOption },

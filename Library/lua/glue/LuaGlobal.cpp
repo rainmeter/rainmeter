@@ -20,7 +20,7 @@
 #include "../LuaManager.h"
 #include "../../Litestep.h"
 
-static int Global_Print(lua_State* L)
+static int Print(lua_State* L)
 {
 	// Modified version of luaB_print()
 	std::string message;
@@ -59,5 +59,5 @@ static int Global_Print(lua_State* L)
 
 void LuaManager::RegisterGlobal(lua_State* L)
 {
-	lua_register(L, "print", Global_Print);
+	lua_register(L, "print", Print);
 }
