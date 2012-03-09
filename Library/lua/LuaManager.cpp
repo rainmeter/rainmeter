@@ -43,8 +43,7 @@ void LuaManager::Initialize()
 			{ NULL, NULL }
 		};
 
-		const luaL_Reg* lib = lualibs;
-		for (; lib->func; lib++)
+		for (const luaL_Reg* lib = lualibs; lib->func; ++lib)
 		{
 			lua_pushcfunction(c_State, lib->func);
 			lua_pushstring(c_State, lib->name);

@@ -168,9 +168,6 @@
     <ClCompile Include="lua\lua\lcode.c">
       <Filter>Lua\Lua</Filter>
     </ClCompile>
-    <ClCompile Include="lua\lua\ldblib.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
     <ClCompile Include="lua\lua\ldebug.c">
       <Filter>Lua\Lua</Filter>
     </ClCompile>
@@ -184,9 +181,6 @@
       <Filter>Lua\Lua</Filter>
     </ClCompile>
     <ClCompile Include="lua\lua\lgc.c">
-      <Filter>Lua\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\lua\linit.c">
       <Filter>Lua\Lua</Filter>
     </ClCompile>
     <ClCompile Include="lua\lua\liolib.c">
