@@ -33,18 +33,12 @@ void LuaManager::Initialize()
 		// Load Lua base libraries
 		luaL_openlibs(c_State);
 
-		// Initialize tolua
-		tolua_open(c_State);
-
 		// Register custom types and functions
-		tolua_module(c_State, NULL, 0);
-		tolua_beginmodule(c_State, NULL);
 		RegisterGlobal(c_State);
 		RegisterMeasure(c_State);
 		RegisterMeasure(c_State);
 		RegisterMeter(c_State);
 		RegisterMeterWindow(c_State);
-		tolua_endmodule(c_State);
 	}
 
 	++c_RefCount;

@@ -22,9 +22,6 @@
     <Filter Include="Lua\Lua Headers">
       <UniqueIdentifier>{45f9e20c-cd34-4e18-84f2-9090ee108656}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Lua\tolua">
-      <UniqueIdentifier>{b3b45d6d-b775-470e-9882-82a231d0b209}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Lua\Lua">
       <UniqueIdentifier>{c8550e7b-009b-4e12-a55a-ed458d05bdad}</UniqueIdentifier>
     </Filter>
@@ -158,21 +155,6 @@
     </ClCompile>
     <ClCompile Include="lua\glue\LuaGlobal.cpp">
       <Filter>Lua\glue</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\tolua++\tolua_event.c">
-      <Filter>Lua\tolua</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\tolua++\tolua_is.c">
-      <Filter>Lua\tolua</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\tolua++\tolua_map.c">
-      <Filter>Lua\tolua</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\tolua++\tolua_push.c">
-      <Filter>Lua\tolua</Filter>
-    </ClCompile>
-    <ClCompile Include="lua\tolua++\tolua_to.c">
-      <Filter>Lua\tolua</Filter>
     </ClCompile>
     <ClCompile Include="lua\lua\lapi.c">
       <Filter>Lua\Lua</Filter>
@@ -475,12 +457,6 @@
     </ClInclude>
     <ClInclude Include="lua\lua\luaconf.h">
       <Filter>Lua\Lua Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="lua\include\tolua++.h">
-      <Filter>Lua\tolua</Filter>
-    </ClInclude>
-    <ClInclude Include="lua\tolua++\tolua_event.h">
-      <Filter>Lua\tolua</Filter>
     </ClInclude>
     <ClInclude Include="lua\lua\lapi.h">
       <Filter>Lua\Lua</Filter>

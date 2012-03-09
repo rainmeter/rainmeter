@@ -20,7 +20,7 @@
 #include "../LuaManager.h"
 #include "../../Litestep.h"
 
-static int Global_Log(lua_State* L)
+static int Global_Print(lua_State* L)
 {
 	// Modified version of luaB_print()
 	std::string message;
@@ -57,14 +57,7 @@ static int Global_Log(lua_State* L)
 	return 0;
 }
 
-static const luaL_reg TO_funcs[] =
-{
-	{ "LuaLog", Global_Log },
-	{ NULL, NULL }
-};
-
 void LuaManager::RegisterGlobal(lua_State* L)
 {
-	lua_register(L, "print", Global_Log);
-	luaL_register(L, "TO", TO_funcs);	// For backwards compatibility
+	lua_register(L, "print", Global_Print);
 }

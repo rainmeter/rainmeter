@@ -139,7 +139,7 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 			lua_State* L = LuaManager::GetState();
 			m_ScriptFile = scriptFile;
-			m_LuaScript = new LuaScript(LuaManager::GetState(), m_ScriptFile.c_str());
+			m_LuaScript = new LuaScript(m_ScriptFile.c_str());
 
 			if (m_LuaScript->IsInitialized())
 			{
@@ -152,25 +152,25 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 					LogWithArgs(LOG_WARNING, L"Script: Using deprecated GetStringValue() in [%s]", m_Name.c_str());
 				}
 
-				m_LuaScript->PushTable();
+				lua_rawgeti(LuaManager::GetState(), LUA_GLOBALSINDEX, m_LuaScript->GetRef());
 
-				// Push the variable name we want to put a value in.
-				lua_pushstring(L, "SELF");
-				// Push the value
-				tolua_pushusertype(L, this, "CMeasure");
-				// Bind the variable
-				lua_settable(L, -3);
+				*(CMeterWindow**)lua_newuserdata(L, sizeof(CMeterWindow*)) = m_MeterWindow;
+				lua_getglobal(L, "CMeterWindow");
+				lua_setmetatable(L, -2);
+				lua_setfield(L, -2, "SKIN");
 
-				lua_pushstring(L, "SKIN");
-				tolua_pushusertype(L, m_MeterWindow, "CMeterWindow");
-				lua_settable(L, -3);
+				*(CMeasure**)lua_newuserdata(L, sizeof(CMeasure*)) = this;
+				lua_getglobal(L, "CMeasure");
+				lua_setmetatable(L, -2);
+				lua_setfield(L, -2, "SELF");
 
-				// Look in the properties table for values to read from the section.
+				// For backwards compatibility
 				lua_getfield(L, -1, "PROPERTIES");
 				if (lua_isnil(L, -1) == 0)
 				{
 					lua_pushnil(L);
-
+					
+					// Look in the table for values to read from the section
 					while (lua_next(L, -2))
 					{
 						lua_pop(L, 1);

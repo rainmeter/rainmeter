@@ -21,18 +21,23 @@
 #include "../../Meter.h"
 #include "../../MeterString.h"
 
-static int Meter_GetName(lua_State* L)
+inline CMeter* GetSelf(lua_State* L)
 {
-	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
+	return *(CMeter**)lua_touserdata(L, 1);
+}
+
+static int GetName(lua_State* L)
+{
+	CMeter* self = GetSelf(L);
 	const WCHAR* val = (const WCHAR*)self->GetName();
 	LuaManager::PushWide(L, val);
 
 	return 1;
 }
 
-static int Meter_GetOption(lua_State* L)
+static int GetOption(lua_State* L)
 {
-	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
+	CMeter* self = GetSelf(L);
 	CMeterWindow* meterWindow = self->GetMeterWindow();
 	CConfigParser& parser = meterWindow->GetParser();
 
@@ -43,100 +48,96 @@ static int Meter_GetOption(lua_State* L)
 	return 1;
 }
 
-static int Meter_GetW(lua_State* L)
+static int GetW(lua_State* L)
 {
-	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
-	int val = (int)self->GetW();
-	lua_pushnumber(L, (lua_Number)val);
+	CMeter* self = GetSelf(L);
+	lua_pushnumber(L, self->GetW());
 
 	return 1;
 }
 
-static int Meter_GetH(lua_State* L)
+static int GetH(lua_State* L)
 {
-	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
-	int val = (int)self->GetH();
-	lua_pushnumber(L, (lua_Number)val);
+	CMeter* self = GetSelf(L);
+	lua_pushnumber(L, self->GetH());
 
 	return 1;
 
 }
 
-static int Meter_GetX(lua_State* L)
+static int GetX(lua_State* L)
 {
-	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
-	bool abs = ((bool)tolua_toboolean(L, 2, false));
-	int val = (int)self->GetX(abs);
-	lua_pushnumber(L, (lua_Number)val);
+	CMeter* self = GetSelf(L);
+	bool abs = (bool)lua_toboolean(L, 2);
+	lua_pushnumber(L, self->GetX(abs));
 
 	return 1;
 }
 
-static int Meter_GetY(lua_State* L)
+static int GetY(lua_State* L)
 {
-	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
-	bool abs = ((bool)tolua_toboolean(L, 2, false));
-	int val = (int)self->GetY(abs);
-	lua_pushnumber(L, (lua_Number)val);
+	CMeter* self = GetSelf(L);
+	bool abs = (bool)lua_toboolean(L, 2);
+	lua_pushnumber(L, self->GetY(abs));
 
 	return 1;
 }
 
-static int Meter_SetW(lua_State* L)
+static int SetW(lua_State* L)
 {
-	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
-	int w = (int)tolua_tonumber(L, 2, 0);
+	CMeter* self = GetSelf(L);
+	int w = (int)lua_tonumber(L, 2);
 	self->SetW(w);
 
 	return 0;
 }
 
-static int Meter_SetH(lua_State* L)
+static int SetH(lua_State* L)
 {
-	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
-	int h = (int)tolua_tonumber(L, 2, 0);
+	CMeter* self = GetSelf(L);
+	int h = (int)lua_tonumber(L, 2);
 	self->SetH(h);
 
 	return 0;
 }
 
-static int Meter_SetX(lua_State* L)
+static int SetX(lua_State* L)
 {
-	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
-	int x = (int)tolua_tonumber(L, 2, 0);
+	CMeter* self = GetSelf(L);
+	int x = (int)lua_tonumber(L, 2);
 	self->SetX(x);
 
 	return 0;
 }
 
-static int Meter_SetY(lua_State* L)
+static int SetY(lua_State* L)
 {
-	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
-	int y = (int)tolua_tonumber(L, 2, 0);
+	CMeter* self = GetSelf(L);
+	int y = (int)lua_tonumber(L, 2);
 	self->SetY(y);
 
 	return 0;
 }
 
-static int Meter_Hide(lua_State* L)
+static int Hide(lua_State* L)
 {
-	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
+	CMeter* self = GetSelf(L);
 	self->Hide();
 
 	return 0;
 }
 
-static int Meter_Show(lua_State* L)
+static int Show(lua_State* L)
 {
-	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
+	CMeter* self = GetSelf(L);
 	self->Show();
 
 	return 0;
 }
 
-static int Meter_SetText(lua_State* L)
+static int SetText(lua_State* L)
 {
-	CMeter* self = (CMeter*)tolua_tousertype(L, 1, 0);
+	CMeter* self = GetSelf(L);
 	
 	if (CMeterString* stringMeter = dynamic_cast<CMeterString*>(self))
 	{
@@ -149,22 +150,25 @@ static int Meter_SetText(lua_State* L)
 
 void LuaManager::RegisterMeter(lua_State* L)
 {
-	tolua_usertype(L, "CMeter");
-	tolua_cclass(L, "CMeter", "CMeter", "", NULL);
+	const luaL_reg functions[] =
+	{
+		{ "GetName", GetName },
+		{ "GetOption", GetOption },
+		{ "GetW", GetW },
+		{ "GetH", GetH },
+		{ "GetX", GetX },
+		{ "GetY", GetY },
+		{ "SetW", SetW },
+		{ "SetH", SetH },
+		{ "SetX", SetX },
+		{ "SetY", SetY },
+		{ "Hide", Hide },
+		{ "Show", Show },
+		{ "SetText", SetText },
+		{ NULL, NULL }
+	};
 
-	tolua_beginmodule(L, "CMeter");
-	tolua_function(L, "GetName", Meter_GetName);
-	tolua_function(L, "GetOption", Meter_GetOption);
-	tolua_function(L, "GetW", Meter_GetW);
-	tolua_function(L, "GetH", Meter_GetH);
-	tolua_function(L, "GetX", Meter_GetX);
-	tolua_function(L, "GetY", Meter_GetY);
-	tolua_function(L, "SetW", Meter_SetW);
-	tolua_function(L, "SetH", Meter_SetH);
-	tolua_function(L, "SetX", Meter_SetX);
-	tolua_function(L, "SetY", Meter_SetY);
-	tolua_function(L, "Hide", Meter_Hide);
-	tolua_function(L, "Show", Meter_Show);
-	tolua_function(L, "SetText", Meter_SetText);
-	tolua_endmodule(L);
+	luaL_register(L, "CMeter", functions);
+	lua_pushvalue(L, -1);
+	lua_setfield(L, -2, "__index");
 }

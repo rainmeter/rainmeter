@@ -20,7 +20,6 @@
 #define __LUAMANAGER_H__
 
 #include "lua.hpp"
-#include "tolua++.h"
 
 class LuaManager
 {

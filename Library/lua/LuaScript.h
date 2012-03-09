@@ -20,17 +20,16 @@
 #define __LUASCRIPT_H__
 
 #include "lua.hpp"
+#include "LuaManager.h"
 
 class LuaScript
 {
 public:
-	LuaScript(lua_State* state, const char* file);
+	LuaScript(const char* file);
 	~LuaScript();
 	
 	bool IsInitialized() { return m_Initialized; }
-
-	lua_State* GetState() { return m_State; }
-	void PushTable() { lua_rawgeti(m_State, LUA_GLOBALSINDEX, m_iRef); }
+	int GetRef() { return m_Ref; }
 
 	bool IsFunction(const char* funcName);
 	void RunFunction(const char* funcName);
@@ -38,9 +37,7 @@ public:
 	void RunString(const char* str);
 
 protected:
-	lua_State* m_State;
-
-	int m_iRef;
+	int m_Ref;
 	bool m_Initialized;
 };
 

@@ -21,18 +21,23 @@
 #include "../../Measure.h"
 #include "../../MeterWindow.h"
 
-static int Measure_GetName(lua_State* L)
+inline CMeasure* GetSelf(lua_State* L)
 {
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
+	return *(CMeasure**)lua_touserdata(L, 1);
+}
+
+static int GetName(lua_State* L)
+{
+	CMeasure* self = GetSelf(L);
 	const WCHAR* val = (const WCHAR*)self->GetName();
 	LuaManager::PushWide(L, val);
 
 	return 1;
 }
 
-static int Measure_GetOption(lua_State* L)
+static int GetOption(lua_State* L)
 {
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
+	CMeasure* self = GetSelf(L);
 	CMeterWindow* meterWindow = self->GetMeterWindow();
 	CConfigParser& parser = meterWindow->GetParser();
 
@@ -43,9 +48,9 @@ static int Measure_GetOption(lua_State* L)
 	return 1;
 }
 
-static int Measure_ReadString(lua_State* L)
+static int ReadString(lua_State* L)
 {
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
+	CMeasure* self = GetSelf(L);
 	CMeterWindow* meterWindow = self->GetMeterWindow();
 	CConfigParser& parser = meterWindow->GetParser();
 	
@@ -56,87 +61,89 @@ static int Measure_ReadString(lua_State* L)
 	return 1;
 }
 
-static int Measure_ReadNumber(lua_State* L)
+static int ReadNumber(lua_State* L)
 {
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
+	CMeasure* self = GetSelf(L);
 	CMeterWindow* meterWindow = self->GetMeterWindow();
 	CConfigParser& parser = meterWindow->GetParser();
 
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
-	double value = parser.ReadFormula(self->GetName(), strTmp.c_str(), tolua_tonumber(L, 3, 0));
+	double value = parser.ReadFormula(self->GetName(), strTmp.c_str(), lua_tonumber(L, 3));
 
 	lua_pushnumber(L, value);
 	return 1;
 }
 
-static int Measure_Disable(lua_State* L)
+static int Disable(lua_State* L)
 {
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
+	CMeasure* self = GetSelf(L);
 	self->Disable();
 
 	return 0;
 }
 
-static int Measure_Enable(lua_State* L)
+static int Enable(lua_State* L)
 {
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
+	CMeasure* self = GetSelf(L);
 	self->Enable();
 
 	return 0;
 }
 
-static int Measure_GetValue(lua_State* L)
+static int GetValue(lua_State* L)
 {
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
+	CMeasure* self = GetSelf(L);
 	double val = (double)self->GetValue();
 	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
 
-static int Measure_GetRelativeValue(lua_State* L)
+static int GetRelativeValue(lua_State* L)
 {
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
+	CMeasure* self = GetSelf(L);
 	double val = (double)self->GetRelativeValue();
 	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
 
-static int Measure_GetValueRange(lua_State* L)
+static int GetValueRange(lua_State* L)
 {
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
+	CMeasure* self = GetSelf(L);
 	double val = (double)self->GetValueRange();
 	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
 
-static int Measure_GetMinValue(lua_State* L)
+static int GetMinValue(lua_State* L)
 {
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
+	CMeasure* self = GetSelf(L);
 	double val = (double)self->GetMinValue();
 	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
 
-static int Measure_GetMaxValue(lua_State* L)
+static int GetMaxValue(lua_State* L)
 {
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
+	CMeasure* self = GetSelf(L);
 	double val = (double)self->GetMaxValue();
 	lua_pushnumber(L, (lua_Number)val);
 
 	return 1;
 }
 
-static int Measure_GetStringValue(lua_State* L)
+static int GetStringValue(lua_State* L)
 {
-	CMeasure* self = (CMeasure*)tolua_tousertype(L, 1, 0);
-	AUTOSCALE autoScale = ((AUTOSCALE)(int)tolua_tonumber(L, 2, AUTOSCALE_OFF));
-	double scale = (double)tolua_tonumber(L, 3, 1.0);
-	int decimals = (int)tolua_tonumber(L, 4, 0);
-	bool percentual = (bool)tolua_toboolean(L, 5, false);
+	CMeasure* self = GetSelf(L);
+
+	int top = lua_gettop(L);
+	AUTOSCALE autoScale = (top > 1) ? (AUTOSCALE)(int)lua_tonumber(L, 2) : AUTOSCALE_OFF;
+	double scale = (top > 2) ? lua_tonumber(L, 3) : 1.0;
+	int decimals = (int)lua_tonumber(L, 4);
+	bool percentual = lua_toboolean(L, 5);
 
 	const WCHAR* val = self->GetStringValue(autoScale, scale, decimals, percentual);
 	LuaManager::PushWide(L, val);
@@ -146,21 +153,24 @@ static int Measure_GetStringValue(lua_State* L)
 
 void LuaManager::RegisterMeasure(lua_State* L)
 {
-	tolua_usertype(L, "CMeasure");
-	tolua_cclass(L, "CMeasure", "CMeasure", "", NULL);
+	const luaL_reg functions[] =
+	{
+		{ "GetName", GetName },
+		{ "GetOption", GetOption },
+		{ "ReadString", ReadString },
+		{ "ReadNumber", ReadNumber },
+		{ "Disable", Disable },
+		{ "Enable", Enable },
+		{ "GetValue", GetValue },
+		{ "GetRelativeValue", GetRelativeValue },
+		{ "GetValueRange", GetValueRange },
+		{ "GetMinValue", GetMinValue },
+		{ "GetMaxValue", GetMaxValue },
+		{ "GetStringValue", GetStringValue },
+		{ NULL, NULL }
+	};
 
-	tolua_beginmodule(L, "CMeasure");
-	tolua_function(L, "GetName", Measure_GetName);
-	tolua_function(L, "GetOption", Measure_GetOption);
-	tolua_function(L, "ReadString", Measure_ReadString);
-	tolua_function(L, "ReadNumber", Measure_ReadNumber);
-	tolua_function(L, "Disable", Measure_Disable);
-	tolua_function(L, "Enable", Measure_Enable);
-	tolua_function(L, "GetValue", Measure_GetValue);
-	tolua_function(L, "GetRelativeValue", Measure_GetRelativeValue);
-	tolua_function(L, "GetValueRange", Measure_GetValueRange);
-	tolua_function(L, "GetMinValue", Measure_GetMinValue);
-	tolua_function(L, "GetMaxValue", Measure_GetMaxValue);
-	tolua_function(L, "GetStringValue", Measure_GetStringValue);
-	tolua_endmodule(L);
+	luaL_register(L, "CMeasure", functions);
+	lua_pushvalue(L, -1);
+	lua_setfield(L, -2, "__index");
 }

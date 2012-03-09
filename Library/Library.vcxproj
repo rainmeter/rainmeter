@@ -783,11 +783,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../../StdAfx.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="lua\tolua++\tolua_event.c" />
-    <ClCompile Include="lua\tolua++\tolua_is.c" />
-    <ClCompile Include="lua\tolua++\tolua_map.c" />
-    <ClCompile Include="lua\tolua++\tolua_push.c" />
-    <ClCompile Include="lua\tolua++\tolua_to.c" />
     <ClCompile Include="lua\lua\lapi.c" />
     <ClCompile Include="lua\lua\lauxlib.c" />
     <ClCompile Include="lua\lua\lbaselib.c" />
@@ -883,8 +878,6 @@
     <ClInclude Include="lua\LuaScript.h" />
     <ClInclude Include="lua\include\lua.hpp" />
     <ClInclude Include="lua\lua\luaconf.h" />
-    <ClInclude Include="lua\include\tolua++.h" />
-    <ClInclude Include="lua\tolua++\tolua_event.h" />
     <ClInclude Include="lua\lua\lapi.h" />
     <ClInclude Include="lua\lua\lauxlib.h" />
     <ClInclude Include="lua\lua\lcode.h" />
