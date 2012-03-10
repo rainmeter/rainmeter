@@ -28,7 +28,7 @@ void LuaManager::Initialize()
 	if (c_State == NULL)
 	{
 		// Initialize Lua
-		c_State = lua_open();
+		c_State = luaL_newstate();
 
 		// Initialize standard libraries except debug, modified from linit.c
 		const luaL_Reg lualibs[] =
@@ -52,7 +52,6 @@ void LuaManager::Initialize()
 
 		// Register custom types and functions
 		RegisterGlobal(c_State);
-		RegisterMeasure(c_State);
 		RegisterMeasure(c_State);
 		RegisterMeter(c_State);
 		RegisterMeterWindow(c_State);

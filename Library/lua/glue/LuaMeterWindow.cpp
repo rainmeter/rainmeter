@@ -200,4 +200,5 @@ void LuaManager::RegisterMeterWindow(lua_State* L)
 	luaL_register(L, "CMeterWindow", functions);
 	lua_pushvalue(L, -1);
 	lua_setfield(L, -2, "__index");
+	lua_pop(L, 1);
 }

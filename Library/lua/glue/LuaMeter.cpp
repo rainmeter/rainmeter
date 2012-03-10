@@ -169,4 +169,5 @@ void LuaManager::RegisterMeter(lua_State* L)
 	luaL_register(L, "CMeter", functions);
 	lua_pushvalue(L, -1);
 	lua_setfield(L, -2, "__index");
+	lua_pop(L, 1);
 }
