@@ -333,7 +333,7 @@
 ** CHANGE it to undefined as soon as your programs use only '...' to
 ** access vararg parameters (instead of the old 'arg' table).
 */
-#define LUA_COMPAT_VARARG
+#undef LUA_COMPAT_VARARG
 
 /*
 @@ LUA_COMPAT_MOD controls compatibility with old math.mod function.
@@ -348,7 +348,7 @@
 ** CHANGE it to 2 if you want the old behaviour, or undefine it to turn
 ** off the advisory error when nesting [[...]].
 */
-#define LUA_COMPAT_LSTR		1
+#undef LUA_COMPAT_LSTR
 
 /*
 @@ LUA_COMPAT_GFIND controls compatibility with old 'string.gfind' name.
