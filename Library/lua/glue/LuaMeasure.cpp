@@ -41,26 +41,13 @@ static int GetOption(lua_State* L)
 	CConfigParser& parser = meterWindow->GetParser();
 
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
-	strTmp = parser.ReadString(self->GetName(), strTmp.c_str(), L"");
-
-	LuaManager::PushWide(L, strTmp.c_str());
-	return 1;
-}
-
-static int ReadString(lua_State* L)
-{
-	CMeasure* self = GetSelf(L);
-	CMeterWindow* meterWindow = self->GetMeterWindow();
-	CConfigParser& parser = meterWindow->GetParser();
-	
-	std::wstring strTmp = LuaManager::ToWide(L, 2);
 	strTmp = parser.ReadString(self->GetName(), strTmp.c_str(), LuaManager::ToWide(L, 3).c_str());
 
 	LuaManager::PushWide(L, strTmp.c_str());
 	return 1;
 }
 
-static int ReadNumber(lua_State* L)
+static int GetNumberOption(lua_State* L)
 {
 	CMeasure* self = GetSelf(L);
 	CMeterWindow* meterWindow = self->GetMeterWindow();
@@ -151,8 +138,7 @@ void LuaManager::RegisterMeasure(lua_State* L)
 	{
 		{ "GetName", GetName },
 		{ "GetOption", GetOption },
-		{ "ReadString", ReadString },
-		{ "ReadNumber", ReadNumber },
+		{ "GetNumberOption", GetNumberOption },
 		{ "Disable", Disable },
 		{ "Enable", Enable },
 		{ "GetValue", GetValue },

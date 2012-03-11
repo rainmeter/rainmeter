@@ -152,7 +152,7 @@ void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
 					LogWithArgs(LOG_WARNING, L"Script: Using deprecated GetStringValue() in [%s]", m_Name.c_str());
 				}
 
-				lua_rawgeti(LuaManager::GetState(), LUA_GLOBALSINDEX, m_LuaScript->GetRef());
+				lua_rawgeti(L, LUA_GLOBALSINDEX, m_LuaScript->GetRef());
 
 				*(CMeterWindow**)lua_newuserdata(L, sizeof(CMeterWindow*)) = m_MeterWindow;
 				lua_getglobal(L, "CMeterWindow");
