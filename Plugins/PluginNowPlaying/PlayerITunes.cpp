@@ -378,6 +378,12 @@ void CPlayerITunes::OnTrackChange()
 		tmpVal /= 20L;
 		m_Rating = (UINT)tmpVal;
 
+		track->get_TrackNumber(&tmpVal);
+		m_Number = (UINT)tmpVal;
+
+		track->get_Year(&tmpVal);
+		m_Year = (UINT)tmpVal;
+
 		IITPlaylist* playlist;
 		hr = track->get_Playlist(&playlist);
 		if (SUCCEEDED(hr))

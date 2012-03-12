@@ -176,6 +176,8 @@ void CPlayerWinamp::UpdateData()
 					m_Artist = tag->artist().toWString();
 					m_Album = tag->album().toWString();
 					m_Title = tag->title().toWString();
+					m_Number = tag->track();
+					m_Year = tag->year();
 
 					if (m_Measures & MEASURE_LYRICS)
 					{

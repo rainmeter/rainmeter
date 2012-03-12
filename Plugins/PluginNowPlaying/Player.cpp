@@ -30,6 +30,8 @@ CPlayer::CPlayer() :
 	m_TrackCount(),
 	m_Measures(),
 	m_State(),
+	m_Number(1),
+	m_Year(),
 	m_Shuffle(false),
 	m_Repeat(false),
 	m_Duration(),
@@ -204,4 +206,6 @@ void CPlayer::ClearData()
 	m_Duration = 0;
 	m_Position = 0;
 	m_Rating = 0;
+	m_Number = 0;
+	m_Year = 0;
 }

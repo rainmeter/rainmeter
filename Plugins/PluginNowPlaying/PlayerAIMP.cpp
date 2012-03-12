@@ -164,8 +164,9 @@ void CPlayerAIMP::UpdateData()
 		stringData += info->nFileNameLen;
 		stringData += info->nGenreLen;
 		m_Title.assign(stringData, info->nTitleLen);
-		
+
 		m_Duration = info->nDuration / 1000;
+		m_Number = (UINT)info->nTrackID;
 
 		m_Shuffle = (bool)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_SHUFFLE);
 		m_Repeat = (bool)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_REPEAT);

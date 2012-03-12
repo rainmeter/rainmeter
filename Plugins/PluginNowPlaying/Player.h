@@ -49,7 +49,9 @@ enum MeasureType
 	MEASURE_STATE    = 0x00000800,
 	MEASURE_STATUS   = 0x00001000,
 	MEASURE_SHUFFLE  = 0x00002000,
-	MEASURE_REPEAT   = 0x00004000
+	MEASURE_REPEAT   = 0x00004000,
+	MEASURE_NUMBER   = 0x00008000,
+	MEASURE_YEAR     = 0x00010000
 };
 
 class CPlayer
@@ -87,16 +89,18 @@ public:
 	void SetMeasures(INT measures) { m_Measures = measures; }
 
 	StateType GetState() const { return m_State; }
-	LPCTSTR GetArtist() const{ return m_Artist.c_str(); }
-	LPCTSTR GetAlbum() const{ return m_Album.c_str(); }
-	LPCTSTR GetTitle() const{ return m_Title.c_str(); }
-	LPCTSTR GetLyrics() const{ return m_Lyrics.c_str(); }
-	LPCTSTR GetCoverPath() const{ return m_CoverPath.c_str(); }
-	LPCTSTR GetFilePath() const{ return m_FilePath.c_str(); }
-	UINT GetDuration() const{ return m_Duration; }
-	UINT GetPosition() const{ return m_Position; }
-	UINT GetRating() const{ return m_Rating; }
-	UINT GetVolume() const{ return m_Volume; }
+	LPCTSTR GetArtist() const { return m_Artist.c_str(); }
+	LPCTSTR GetAlbum() const { return m_Album.c_str(); }
+	LPCTSTR GetTitle() const { return m_Title.c_str(); }
+	LPCTSTR GetLyrics() const { return m_Lyrics.c_str(); }
+	LPCTSTR GetCoverPath() const { return m_CoverPath.c_str(); }
+	LPCTSTR GetFilePath() const { return m_FilePath.c_str(); }
+	UINT GetDuration() const { return m_Duration; }
+	UINT GetPosition() const { return m_Position; }
+	UINT GetRating() const { return m_Rating; }
+	UINT GetVolume() const { return m_Volume; }
+	UINT GetNumber() const { return m_Number; }
+	UINT GetYear() const { return m_Year; }
 	bool GetShuffle() const { return m_Shuffle; }
 	bool GetRepeat() const { return m_Repeat; }
 
@@ -122,6 +126,8 @@ protected:
 	UINT m_Position;				// Current position in seconds
 	UINT m_Rating;					// Track rating from 0 to 100
 	UINT m_Volume;					// Volume from 0 to 100
+	UINT m_Number;
+	UINT m_Year;
 	bool m_Shuffle;
 	bool m_Repeat;
 

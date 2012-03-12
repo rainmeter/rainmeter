@@ -271,6 +271,14 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		measure->type = MEASURE_FILE;
 	}
+	else if (_wcsicmp(L"NUMBER", str) == 0)
+	{
+		measure->type = MEASURE_NUMBER;
+	}
+	else if (_wcsicmp(L"YEAR", str) == 0)
+	{
+		measure->type = MEASURE_YEAR;
+	}
 	else
 	{
 		std::wstring error = L"NowPlaying.dll: Invalid PlayerType=";
@@ -328,16 +336,22 @@ PLUGIN_EXPORT double Update(void* data)
 		return player->GetVolume();
 
 	case MEASURE_STATE:
-		return (UINT)player->GetState();
+		return player->GetState();
 
 	case MEASURE_STATUS:
-		return (UINT)player->IsInitialized();
+		return player->IsInitialized();
 
 	case MEASURE_SHUFFLE:
-		return (UINT)player->GetShuffle();
+		return player->GetShuffle();
 
 	case MEASURE_REPEAT:
-		return (UINT)player->GetRepeat();
+		return player->GetRepeat();
+
+	case MEASURE_NUMBER:
+		return player->GetNumber();
+
+	case MEASURE_YEAR:
+		return player->GetYear();
 	}
 
 	return 0.0;

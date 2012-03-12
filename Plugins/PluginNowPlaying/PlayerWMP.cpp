@@ -397,6 +397,12 @@ void CPlayerWMP::UpdateData()
 					m_Rating = rating;
 				}
 
+				spMedia->getItemInfo(CComBSTR(L"WM/TrackNumber"), &val);
+				m_Number = (UINT)_wtoi(val);
+
+				spMedia->getItemInfo(CComBSTR(L"WM/Year"), &val);
+				m_Year = (UINT)_wtoi(val);
+
 				double duration;
 				spMedia->get_duration(&duration);
 				m_Duration = (UINT)duration;

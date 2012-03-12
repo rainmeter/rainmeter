@@ -275,43 +275,58 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				// TODO: Sent on track update?
 				++player->m_TrackCount;
 
-				std::wstring data = (WCHAR*)cds->lpData;
-				std::wstring::size_type len = data.find_first_of(L'\t');
-				player->m_Title.assign(data, 0, len);
-				data.erase(0, ++len);
+				WCHAR* data = (WCHAR*)cds->lpData;
+				WCHAR* pos;
+				UINT index = 1;
+				while ((pos = wcschr(data, '\t')) != NULL)
+				{
+					switch (index)
+					{
+					case 1:
+						player->m_Title.assign(data, pos - data);
+						break;
 
-				len = data.find_first_of(L'\t');
-				player->m_Artist.assign(data, 0, len);
-				data.erase(0, ++len);
+					case 2:
+						player->m_Artist.assign(data, pos - data);
+						break;
 
-				len = data.find_first_of(L'\t');
-				player->m_Album.assign(data, 0, len);
-				data.erase(0, ++len);
+					case 3:
+						player->m_Album.assign(data, pos - data);
+						break;
 
-				len = data.find_first_of(L'\t');			// Skip genre
-				len = data.find_first_of(L'\t', ++len);		// Skip year
-				len = data.find_first_of(L'\t', ++len);		// Skip comments
-				len = data.find_first_of(L'\t', ++len);		// Skip track no
-				data.erase(0, ++len);
+					case 5:
+						player->m_Year = (UINT)_wtoi(data);
+						break;
 
-				len = data.find_first_of(L'\t');
-				std::wstring tmpStr(data, 0, len);
-				player->m_Duration = _wtoi(tmpStr.c_str());
-				data.erase(0, ++len);
+					case 7:
+						player->m_Number = (UINT)_wtoi(data);
+						break;
 
-				len = data.find_first_of(L'\t');
-				player->m_FilePath.assign(data, 0, len);
-				data.erase(0, ++len);
+					case 8:
+						player->m_Duration = (UINT)_wtoi(data);
+						break;
 
-				len = data.find_first_of(L'\t');
-				tmpStr.assign(data, 0, len);
-				UINT rating = (_wtoi(tmpStr.c_str()) + 1) / 2;	// From 0 - 10 to 0 - 5
-				player->m_Rating = rating;
-				data.erase(0, ++len);
+					case 9:
+						player->m_FilePath.assign(data, pos - data);
+						break;
 
-				len = data.find_first_of(L'\t');
-				player->m_CoverPath.assign(data, 0, len);
-				data.erase(0, ++len);
+					case 10:
+						player->m_Rating = ((UINT)_wtoi(data) + 1) / 2;	// 0 - 10 -> 0 - 5
+						break;
+
+					case 11:
+						player->m_CoverPath.assign(data, pos - data);
+						break;
+					}
+
+					data = pos + 1;
+					++index;
+
+					if (index == 12)
+					{
+						break;
+					}
+				}
 
 				if (player->m_Measures & MEASURE_LYRICS)
 				{
@@ -436,7 +451,7 @@ void CPlayerCAD::SetPosition(int position)
 }
 
 /*
-** Handles the SetVolume bang.
+** Handles the SetRating bang.
 **
 */
 void CPlayerCAD::SetRating(int rating) 
