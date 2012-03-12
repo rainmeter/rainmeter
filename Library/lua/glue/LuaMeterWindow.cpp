@@ -106,13 +106,14 @@ static int ParseFormula(lua_State* L)
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
 
 	double result;
-	if (self->GetParser().ParseFormula(strTmp, &result))
+	if (!self->GetParser().ParseFormula(strTmp, &result))
 	{
-		lua_pushnumber(L, result);
-		return 1;
+		result = lua_tonumber(L, 2);
 	}
 
-	return 0;
+	lua_pushnumber(L, result);
+
+	return 1;
 }
 
 static int MoveWindow(lua_State* L)

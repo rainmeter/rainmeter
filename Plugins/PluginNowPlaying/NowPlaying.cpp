@@ -27,7 +27,6 @@
 #include "PlayerWinamp.h"
 #include "PlayerWLM.h"
 #include "PlayerWMP.h"
-#include "id3v1tag.h"
 
 static std::vector<ParentMeasure*> g_ParentMeasures;
 std::wstring g_SettingsFile;
@@ -42,10 +41,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 		// Disable DLL_THREAD_ATTACH and DLL_THREAD_DETACH notification calls
 		DisableThreadLibraryCalls(hinstDLL);
-		break;
-
-	case DLL_PROCESS_DETACH:
-		TagLib::ID3v1::Tag::setStringHandler(NULL);
 		break;
 	}
 

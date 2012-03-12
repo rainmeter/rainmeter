@@ -141,10 +141,18 @@ class ASF::File::HeaderExtensionObject : public ASF::File::BaseObject
 {
 public:
   List<ASF::File::BaseObject *> objects;
+  ~HeaderExtensionObject();
   ByteVector guid();
   void parse(ASF::File *file, uint size);
   ByteVector render(ASF::File *file);
 };
+
+ASF::File::HeaderExtensionObject::~HeaderExtensionObject()
+{
+  for(unsigned int i = 0; i < objects.size(); i++) {
+    delete objects[i];
+  }
+}
 
 void ASF::File::BaseObject::parse(ASF::File *file, unsigned int size)
 {
