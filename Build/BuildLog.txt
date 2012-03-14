@@ -1,0 +1,242 @@
+Microsoft (R) Build Engine version 4.0.30319.17379
+[Microsoft .NET Framework, version 4.0.30319.17379]
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Building the projects in this solution one at a time. To enable parallel build, please add the "/m" switch.
+Build started 26/03/2012 17:40:00.
+Project "D:\gittest\Rainmeter.sln" on node 1 (rebuild target(s)).
+ValidateSolutionConfiguration:
+  Building solution configuration "Release|Win32".
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Application\Application.vcxproj" (2) on node 1 (Rebuild target(s)).
+D:\gittest\Application\Application.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Application\Application.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Language\Language.vcxproj" (3) on node 1 (Rebuild target(s)).
+D:\gittest\Language\Language.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Language\Language.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\SkinInstaller\SkinInstaller.vcxproj" (4) on node 1 (Rebuild target(s)).
+D:\gittest\SkinInstaller\SkinInstaller.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\SkinInstaller\SkinInstaller.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\API\DllExporter\DllExporter.csproj" (5) on node 1 (Rebuild target(s)).
+CoreClean:
+  Deleting file "D:\gittest\Plugins\API\DllExporter\obj\x86\Release\DllExporter.csprojResolveAssemblyReference.cache".
+  Deleting file "D:\gittest\Plugins\API\DllExporter\obj\x86\Release\DllExporter.exe".
+CoreCompile:
+  C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Csc.exe /noconfig /nowarn:1607,1701,1702 /nostdlib+ /platform:x86 /errorreport:prompt /warn:4 /define:TRACE /highentropyva- /reference:C:\Windows\Microsoft.NET\Framework\v2.0.50727\mscorlib.dll /reference:C:\Windows\Microsoft.NET\Framework64\v2.0.50727\System.Data.dll /reference:C:\Windows\Microsoft.NET\Framework64\v2.0.50727\System.dll /reference:C:\Windows\Microsoft.NET\Framework64\v2.0.50727\System.Xml.dll /debug- /filealign:512 /optimize+ /out:obj\x86\Release\DllExporter.exe /target:exe /utf8output Program.cs AssemblyInfo.cs
+CopyFilesToOutputDirectory:
+  Copying file from "obj\x86\Release\DllExporter.exe" to "bin\Release\DllExporter.exe".
+  DllExporter -> D:\gittest\Plugins\API\DllExporter\bin\Release\DllExporter.exe
+PostBuildEvent:
+  move "D:\gittest\Plugins\API\DllExporter\bin\Release\DllExporter.exe" "D:\gittest\Plugins\API\DllExporter.exe"
+          1 file(s) moved.
+Done Building Project "D:\gittest\Plugins\API\DllExporter\DllExporter.csproj" (Rebuild target(s)).
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginAdvancedCPU\PluginAdvancedCPU.vcxproj" (6) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginAdvancedCPU\PluginAdvancedCPU.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginAdvancedCPU\PluginAdvancedCPU.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginCoreTemp\PluginCoreTemp.vcxproj" (7) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginCoreTemp\PluginCoreTemp.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginCoreTemp\PluginCoreTemp.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginFolderInfo\PluginFolderInfo.vcxproj" (8) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginFolderInfo\PluginFolderInfo.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginFolderInfo\PluginFolderInfo.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginInputText\PluginInputText.csproj" (9) on node 1 (Rebuild target(s)).
+CoreClean:
+  Deleting file "D:\gittest\TestBench\x32\Release\Plugins\InputText.dll".
+  Deleting file "D:\gittest\Plugins\PluginInputText\obj\x86\Release\PluginInputText.csprojResolveAssemblyReference.cache".
+  Deleting file "D:\gittest\Plugins\PluginInputText\obj\x86\Release\InputText.InputBox.resources".
+  Deleting file "D:\gittest\Plugins\PluginInputText\obj\x86\Release\PluginInputText.csproj.GenerateResource.Cache".
+  Deleting file "D:\gittest\Plugins\PluginInputText\obj\x86\Release\InputText.dll".
+CoreResGen:
+  C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Bin\ResGen.exe /useSourcePath /r:C:\Windows\Microsoft.NET\Framework\v2.0.50727\mscorlib.dll /r:C:\Windows\Microsoft.NET\Framework64\v2.0.50727\System.dll /r:C:\Windows\Microsoft.NET\Framework64\v2.0.50727\System.Drawing.dll /r:C:\Windows\Microsoft.NET\Framework64\v2.0.50727\System.Windows.Forms.dll /compile InputBox.resx,obj\x86\Release\InputText.InputBox.resources 
+CoreCompile:
+  C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Csc.exe /noconfig /unsafe+ /nowarn:1607,1701,1702 /nostdlib+ /platform:x86 /errorreport:prompt /warn:4 /define:TRACE /highentropyva- /reference:C:\Windows\Microsoft.NET\Framework\v2.0.50727\mscorlib.dll /reference:C:\Windows\Microsoft.NET\Framework64\v2.0.50727\System.dll /reference:C:\Windows\Microsoft.NET\Framework64\v2.0.50727\System.Drawing.dll /reference:C:\Windows\Microsoft.NET\Framework64\v2.0.50727\System.Windows.Forms.dll /debug- /filealign:512 /optimize+ /out:obj\x86\Release\InputText.dll /resource:obj\x86\Release\InputText.InputBox.resources /target:library /utf8output AssemblyInfo.cs Main.cs PluginCode.cs Rainmeter.cs InputBox.cs InputBox.designer.cs D:\gittest\Version.cs
+CopyFilesToOutputDirectory:
+  Copying file from "obj\x86\Release\InputText.dll" to "D:\gittest\TestBench\x32\Release\Plugins\InputText.dll".
+  PluginInputText -> D:\gittest\TestBench\x32\Release\Plugins\InputText.dll
+PostBuildEvent:
+  "D:\gittest\Plugins\API\DllExporter.exe" "Release" "x86" "D:\gittest\TestBench\x32\Release\Plugins\\" "InputText.dll" "C:\Windows\Microsoft.NET\Framework64\v2.0.50727\ilasm.exe" "bin\ildasm.exe"
+  
+  Unhandled Exception: System.ComponentModel.Win32Exception: The system cannot find the file specified
+     at System.Diagnostics.Process.StartWithCreateProcess(ProcessStartInfo startInfo)
+     at System.Diagnostics.Process.Start()
+     at DllExporter.Program.Main(String[] args)
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Microsoft.Common.targets(4209,5): error MSB3073: The command ""D:\gittest\Plugins\API\DllExporter.exe" "Release" "x86" "D:\gittest\TestBench\x32\Release\Plugins\\" "InputText.dll" "C:\Windows\Microsoft.NET\Framework64\v2.0.50727\ilasm.exe" "bin\ildasm.exe"" exited with code -532459699. [D:\gittest\Plugins\PluginInputText\PluginInputText.csproj]
+Done Building Project "D:\gittest\Plugins\PluginInputText\PluginInputText.csproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginiTunes\PluginiTunes.vcxproj" (10) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginiTunes\PluginiTunes.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginiTunes\PluginiTunes.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginMediaKey\PluginMediaKey.vcxproj" (11) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginMediaKey\PluginMediaKey.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginMediaKey\PluginMediaKey.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginNowPlaying\PluginNowPlaying.vcxproj" (12) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginNowPlaying\PluginNowPlaying.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginNowPlaying\PluginNowPlaying.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginPerfMon\PluginPerfMon.vcxproj" (13) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginPerfMon\PluginPerfMon.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginPerfMon\PluginPerfMon.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginPing\PluginPing.vcxproj" (14) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginPing\PluginPing.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginPing\PluginPing.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginPower\PluginPower.vcxproj" (15) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginPower\PluginPower.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginPower\PluginPower.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginProcess\PluginProcess.vcxproj" (16) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginProcess\PluginProcess.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginProcess\PluginProcess.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginQuote\PluginQuote.vcxproj" (17) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginQuote\PluginQuote.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginQuote\PluginQuote.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginRecycleManager\PluginRecycleManager.vcxproj" (18) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginRecycleManager\PluginRecycleManager.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginRecycleManager\PluginRecycleManager.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginResMon\PluginResMon.vcxproj" (19) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginResMon\PluginResMon.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginResMon\PluginResMon.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginSpeedFan\PluginSpeedFan.vcxproj" (20) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginSpeedFan\PluginSpeedFan.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginSpeedFan\PluginSpeedFan.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginSysInfo\PluginSysInfo.vcxproj" (21) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginSysInfo\PluginSysInfo.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginSysInfo\PluginSysInfo.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginVirtualDesktops\PluginVirtualDesktops.vcxproj" (22) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginVirtualDesktops\PluginVirtualDesktops.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginVirtualDesktops\PluginVirtualDesktops.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginWebParser\PluginWebParser.vcxproj" (23) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginWebParser\PluginWebParser.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginWebParser\PluginWebParser.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginWifiStatus\PluginWifiStatus.vcxproj" (24) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginWifiStatus\PluginWifiStatus.vcxproj(26,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginWifiStatus\PluginWifiStatus.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginWin7Audio\PluginWin7Audio.vcxproj" (25) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginWin7Audio\PluginWin7Audio.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginWin7Audio\PluginWin7Audio.vcxproj" (Rebuild target(s)) -- FAILED.
+Project "D:\gittest\Rainmeter.sln" (1) is building "D:\gittest\Plugins\PluginWindowMessage\PluginWindowMessage.vcxproj" (26) on node 1 (Rebuild target(s)).
+D:\gittest\Plugins\PluginWindowMessage\PluginWindowMessage.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+Done Building Project "D:\gittest\Plugins\PluginWindowMessage\PluginWindowMessage.vcxproj" (Rebuild target(s)) -- FAILED.
+Done Building Project "D:\gittest\Rainmeter.sln" (rebuild target(s)) -- FAILED.
+
+Build FAILED.
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Application\Application.vcxproj" (Rebuild target) (2) ->
+  D:\gittest\Application\Application.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Language\Language.vcxproj" (Rebuild target) (3) ->
+  D:\gittest\Language\Language.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\SkinInstaller\SkinInstaller.vcxproj" (Rebuild target) (4) ->
+  D:\gittest\SkinInstaller\SkinInstaller.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginAdvancedCPU\PluginAdvancedCPU.vcxproj" (Rebuild target) (6) ->
+  D:\gittest\Plugins\PluginAdvancedCPU\PluginAdvancedCPU.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginCoreTemp\PluginCoreTemp.vcxproj" (Rebuild target) (7) ->
+  D:\gittest\Plugins\PluginCoreTemp\PluginCoreTemp.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginFolderInfo\PluginFolderInfo.vcxproj" (Rebuild target) (8) ->
+  D:\gittest\Plugins\PluginFolderInfo\PluginFolderInfo.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginInputText\PluginInputText.csproj" (Rebuild target) (9) ->
+(PostBuildEvent target) -> 
+  C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Microsoft.Common.targets(4209,5): error MSB3073: The command ""D:\gittest\Plugins\API\DllExporter.exe" "Release" "x86" "D:\gittest\TestBench\x32\Release\Plugins\\" "InputText.dll" "C:\Windows\Microsoft.NET\Framework64\v2.0.50727\ilasm.exe" "bin\ildasm.exe"" exited with code -532459699. [D:\gittest\Plugins\PluginInputText\PluginInputText.csproj]
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginiTunes\PluginiTunes.vcxproj" (Rebuild target) (10) ->
+  D:\gittest\Plugins\PluginiTunes\PluginiTunes.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginMediaKey\PluginMediaKey.vcxproj" (Rebuild target) (11) ->
+  D:\gittest\Plugins\PluginMediaKey\PluginMediaKey.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginNowPlaying\PluginNowPlaying.vcxproj" (Rebuild target) (12) ->
+  D:\gittest\Plugins\PluginNowPlaying\PluginNowPlaying.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginPerfMon\PluginPerfMon.vcxproj" (Rebuild target) (13) ->
+  D:\gittest\Plugins\PluginPerfMon\PluginPerfMon.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginPing\PluginPing.vcxproj" (Rebuild target) (14) ->
+  D:\gittest\Plugins\PluginPing\PluginPing.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginPower\PluginPower.vcxproj" (Rebuild target) (15) ->
+  D:\gittest\Plugins\PluginPower\PluginPower.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginProcess\PluginProcess.vcxproj" (Rebuild target) (16) ->
+  D:\gittest\Plugins\PluginProcess\PluginProcess.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginQuote\PluginQuote.vcxproj" (Rebuild target) (17) ->
+  D:\gittest\Plugins\PluginQuote\PluginQuote.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginRecycleManager\PluginRecycleManager.vcxproj" (Rebuild target) (18) ->
+  D:\gittest\Plugins\PluginRecycleManager\PluginRecycleManager.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginResMon\PluginResMon.vcxproj" (Rebuild target) (19) ->
+  D:\gittest\Plugins\PluginResMon\PluginResMon.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginSpeedFan\PluginSpeedFan.vcxproj" (Rebuild target) (20) ->
+  D:\gittest\Plugins\PluginSpeedFan\PluginSpeedFan.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginSysInfo\PluginSysInfo.vcxproj" (Rebuild target) (21) ->
+  D:\gittest\Plugins\PluginSysInfo\PluginSysInfo.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginVirtualDesktops\PluginVirtualDesktops.vcxproj" (Rebuild target) (22) ->
+  D:\gittest\Plugins\PluginVirtualDesktops\PluginVirtualDesktops.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginWebParser\PluginWebParser.vcxproj" (Rebuild target) (23) ->
+  D:\gittest\Plugins\PluginWebParser\PluginWebParser.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginWifiStatus\PluginWifiStatus.vcxproj" (Rebuild target) (24) ->
+  D:\gittest\Plugins\PluginWifiStatus\PluginWifiStatus.vcxproj(26,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginWin7Audio\PluginWin7Audio.vcxproj" (Rebuild target) (25) ->
+  D:\gittest\Plugins\PluginWin7Audio\PluginWin7Audio.vcxproj(25,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+
+"D:\gittest\Rainmeter.sln" (rebuild target) (1) ->
+"D:\gittest\Plugins\PluginWindowMessage\PluginWindowMessage.vcxproj" (Rebuild target) (26) ->
+  D:\gittest\Plugins\PluginWindowMessage\PluginWindowMessage.vcxproj(24,3): error MSB4019: The imported project "C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\v110\Microsoft.Cpp.Default.props" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+
+    0 Warning(s)
+    24 Error(s)
+
+Time Elapsed 00:00:01.41

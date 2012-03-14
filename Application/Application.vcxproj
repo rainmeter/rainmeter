@@ -126,8 +126,8 @@
 mkdir ..\testbench\x32\debug\skins
 if not exist ..\testbench\x32\debug\themes (mkdir ..\testbench\x32\debug\themes)
 echo "Copying skins..."
-xcopy /Q /S /Y ..\Install\Skins ..\testbench\x32\debug\skins
-xcopy /Q /S /Y ..\Install\Themes ..\testbench\x32\debug\themes
+xcopy /Q /S /Y ..\Build\Skins ..\testbench\x32\debug\skins
+xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\debug\themes
 :skip</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -175,8 +175,8 @@ xcopy /Q /S /Y ..\Install\Themes ..\testbench\x32\debug\themes
 mkdir ..\testbench\x64\debug\skins
 if not exist ..\testbench\x64\debug\themes (mkdir ..\testbench\x64\debug\themes)
 echo "Copying skins..."
-xcopy /Q /S /Y ..\Install\Skins ..\testbench\x64\debug\skins
-xcopy /Q /S /Y ..\Install\Themes ..\testbench\x64\debug\themes
+xcopy /Q /S /Y ..\Build\Skins ..\testbench\x64\debug\skins
+xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\debug\themes
 :skip</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -230,8 +230,8 @@ xcopy /Q /S /Y ..\Install\Themes ..\testbench\x64\debug\themes
 mkdir ..\testbench\x32\release\skins
 if not exist ..\testbench\x32\release\themes (mkdir ..\testbench\x32\release\themes)
 echo "Copying skins..."
-xcopy /Q /S /Y ..\Install\Skins ..\testbench\x32\release\skins
-xcopy /Q /S /Y ..\Install\Themes ..\testbench\x32\release\themes
+xcopy /Q /S /Y ..\Build\Skins ..\testbench\x32\release\skins
+xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\release\themes
 :skip</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -284,8 +284,8 @@ xcopy /Q /S /Y ..\Install\Themes ..\testbench\x32\release\themes
 mkdir ..\testbench\x64\release\skins
 if not exist ..\testbench\x64\release\themes (mkdir ..\testbench\x64\release\themes)
 echo "Copying skins..."
-xcopy /Q /S /Y ..\Install\Skins ..\testbench\x64\release\skins
-xcopy /Q /S /Y ..\Install\Themes ..\testbench\x64\release\themes
+xcopy /Q /S /Y ..\Build\Skins ..\testbench\x64\release\skins
+xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\release\themes
 :skip</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
