@@ -814,7 +814,7 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 		HWND hwnd = WorkerW;
 		while (hwnd = ::GetNextWindow(hwnd, GW_HWNDPREV))
 		{
-			if (GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
+			if (GetWindowLongPtr(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
 			{
 				WCHAR className[64], windowText[64];
 
@@ -832,7 +832,7 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 					if (logging)
 					{
 						LogWithArgs(LOG_DEBUG, L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=0x%p (\"%s\" %s) - %s",
-							c_HelperWindow, WorkerW, hwnd, windowText, className, (GetWindowLong(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
+							c_HelperWindow, WorkerW, hwnd, windowText, className, (GetWindowLongPtr(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
 					}
 					return;
 				}
@@ -849,7 +849,7 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 		if (logging)
 		{
 			LogWithArgs(LOG_DEBUG, L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=HWND_TOPMOST - %s",
-				c_HelperWindow, WorkerW, (GetWindowLong(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
+				c_HelperWindow, WorkerW, (GetWindowLongPtr(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
 		}
 	}
 	else
@@ -860,7 +860,7 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 		if (logging)
 		{
 			LogWithArgs(LOG_DEBUG, L"System: HelperWindow: hwnd=0x%p (WorkerW=0x%p), hwndInsertAfter=HWND_BOTTOM - %s",
-				c_HelperWindow, WorkerW, (GetWindowLong(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
+				c_HelperWindow, WorkerW, (GetWindowLongPtr(c_HelperWindow, GWL_EXSTYLE) & WS_EX_TOPMOST) ? L"TOPMOST" : L"NORMAL");
 		}
 	}
 }

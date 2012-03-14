@@ -313,6 +313,24 @@ void CMeterWindow::IgnoreAeroPeek()
 	}
 }
 
+void CMeterWindow::AddWindowExStyle(LONG_PTR flag)
+{
+	LONG_PTR style = GetWindowLongPtr(m_Window, GWL_EXSTYLE);
+	if ((style & flag) == 0)
+	{
+		SetWindowLongPtr(m_Window, GWL_EXSTYLE, style | flag);
+	}
+}
+
+void CMeterWindow::RemoveWindowExStyle(LONG_PTR flag)
+{
+	LONG_PTR style = GetWindowLongPtr(m_Window, GWL_EXSTYLE);
+	if ((style & flag) != 0)
+	{
+		SetWindowLongPtr(m_Window, GWL_EXSTYLE, style & ~flag);
+	}
+}
+
 /*
 ** Unloads the skin with delay to avoid crash (and for fade to complete).
 **
@@ -400,11 +418,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 	InitializeMeters();
 
 	// Remove transparent flag
-	LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
-	if ((style & WS_EX_TRANSPARENT) != 0)
-	{
-		SetWindowLong(m_Window, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
-	}
+	RemoveWindowExStyle(WS_EX_TRANSPARENT);
 
 	m_Hidden = m_WindowStartHidden;
 
@@ -636,7 +650,7 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 				// Find the "backmost" topmost window
 				while (winPos = ::GetNextWindow(winPos, GW_HWNDPREV))
 				{
-					if (GetWindowLong(winPos, GWL_EXSTYLE) & WS_EX_TOPMOST)
+					if (GetWindowLongPtr(winPos, GWL_EXSTYLE) & WS_EX_TOPMOST)
 					{
 						// Insert after the found window
 						if (0 != SetWindowPos(m_Window, winPos, 0, 0, 0, 0, ZPOS_FLAGS))
@@ -2874,9 +2888,7 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 	{
 		if (reset)
 		{
-			// Add the window flag
-			LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
-			SetWindowLong(m_Window, GWL_EXSTYLE, style | WS_EX_LAYERED);
+			AddWindowExStyle(WS_EX_LAYERED);
 		}
 
 		BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
@@ -2888,7 +2900,14 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 		HDC dcMemory = CreateCompatibleDC(dcScreen);
 		SelectObject(dcMemory, m_DIBSectionBuffer);
 
-		UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+		BOOL ret = UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+		if (!ret)
+		{
+			// Retry after resetting WS_EX_LAYERED flag
+			RemoveWindowExStyle(WS_EX_LAYERED);
+			AddWindowExStyle(WS_EX_LAYERED);
+			UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+		}
 
 		ReleaseDC(0, dcScreen);
 		DeleteDC(dcMemory);
@@ -2899,9 +2918,7 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 	{
 		if (reset)
 		{
-			// Remove the window flag
-			LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
-			SetWindowLong(m_Window, GWL_EXSTYLE, style & ~WS_EX_LAYERED);
+			RemoveWindowExStyle(WS_EX_LAYERED);
 		}
 	}
 }
@@ -3129,11 +3146,7 @@ void CMeterWindow::ShowWindowIfAppropriate()
 		if (!inside || keyDown)
 		{
 			// If Alt, shift or control is down, remove the transparent flag
-			LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
-			if ((style & WS_EX_TRANSPARENT) != 0)
-			{
-				SetWindowLong(m_Window, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
-			}
+			RemoveWindowExStyle(WS_EX_TRANSPARENT);
 		}
 	}
 
@@ -3327,11 +3340,7 @@ LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (m_ClickThrough)
 		{
-			LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
-			if ((style & WS_EX_TRANSPARENT) == 0)
-			{
-				SetWindowLong(m_Window, GWL_EXSTYLE, style | WS_EX_TRANSPARENT);
-			}
+			AddWindowExStyle(WS_EX_TRANSPARENT);
 		}
 
 		if (!m_Hidden)
@@ -3366,8 +3375,8 @@ LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (!m_ClickThrough || keyDown)
 	{
 		POINT pos;
-		pos.x = (SHORT)LOWORD(lParam);
-		pos.y = (SHORT)HIWORD(lParam);
+		pos.x = GET_X_LPARAM(lParam);
+		pos.y = GET_Y_LPARAM(lParam);
 
 		if (uMsg == WM_NCMOUSEMOVE)
 		{
@@ -3599,11 +3608,7 @@ void CMeterWindow::SetClickThrough(bool b)
 	if (!m_ClickThrough)
 	{
 		// Remove transparent flag
-		LONG style = GetWindowLong(m_Window, GWL_EXSTYLE);
-		if ((style & WS_EX_TRANSPARENT) != 0)
-		{
-			SetWindowLong(m_Window, GWL_EXSTYLE, style & ~WS_EX_TRANSPARENT);
-		}
+		RemoveWindowExStyle(WS_EX_TRANSPARENT);
 	}
 
 	if (m_MouseOver)
@@ -3775,8 +3780,8 @@ LRESULT CMeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (m_WindowDraggable && !m_Rainmeter->GetDisableDragging())
 	{
 		POINT pos;
-		pos.x = (SHORT)LOWORD(lParam);
-		pos.y = (SHORT)HIWORD(lParam);
+		pos.x = GET_X_LPARAM(lParam);
+		pos.y = GET_Y_LPARAM(lParam);
 		MapWindowPoints(NULL, m_Window, &pos, 1);
 
 		int x1 = m_DragMargins.left;
@@ -4002,8 +4007,8 @@ LRESULT CMeterWindow::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT CMeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam);
-	pos.y = (SHORT)HIWORD(lParam);
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
 
 	if (uMsg == WM_NCLBUTTONDOWN)
 	{
@@ -4034,8 +4039,8 @@ LRESULT CMeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT CMeterWindow::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam);
-	pos.y = (SHORT)HIWORD(lParam);
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
 
 	if (uMsg == WM_NCLBUTTONUP)
 	{
@@ -4058,8 +4063,8 @@ LRESULT CMeterWindow::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT CMeterWindow::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam);
-	pos.y = (SHORT)HIWORD(lParam);
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
 
 	if (uMsg == WM_NCLBUTTONDBLCLK)
 	{
@@ -4085,8 +4090,8 @@ LRESULT CMeterWindow::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM l
 LRESULT CMeterWindow::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam);
-	pos.y = (SHORT)HIWORD(lParam);
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
 
 	if (uMsg == WM_NCRBUTTONDOWN)
 	{
@@ -4109,8 +4114,8 @@ LRESULT CMeterWindow::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT CMeterWindow::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam);
-	pos.y = (SHORT)HIWORD(lParam);
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
 
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
@@ -4132,8 +4137,8 @@ LRESULT CMeterWindow::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT CMeterWindow::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam);
-	pos.y = (SHORT)HIWORD(lParam);
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
 
 	if (uMsg == WM_NCRBUTTONDBLCLK)
 	{
@@ -4159,8 +4164,8 @@ LRESULT CMeterWindow::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM 
 LRESULT CMeterWindow::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam);
-	pos.y = (SHORT)HIWORD(lParam);
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
 
 	if (uMsg == WM_NCMBUTTONDOWN)
 	{
@@ -4183,8 +4188,8 @@ LRESULT CMeterWindow::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam
 LRESULT CMeterWindow::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam);
-	pos.y = (SHORT)HIWORD(lParam);
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
 
 	if (uMsg == WM_NCMBUTTONUP)
 	{
@@ -4207,8 +4212,8 @@ LRESULT CMeterWindow::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT CMeterWindow::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
-	pos.x = (SHORT)LOWORD(lParam);
-	pos.y = (SHORT)HIWORD(lParam);
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
 
 	if (uMsg == WM_NCMBUTTONDBLCLK)
 	{
@@ -4245,8 +4250,8 @@ LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	else
 	{
-		pos.x = (SHORT)LOWORD(lParam);
-		pos.y = (SHORT)HIWORD(lParam);
+		pos.x = GET_X_LPARAM(lParam);
+		pos.y = GET_Y_LPARAM(lParam);
 
 		// Transform the point to client rect
 		POINT posc = {pos.x - rect.left, pos.y - rect.top};
@@ -4593,8 +4598,8 @@ LRESULT CMeterWindow::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// and in parent-client coordinates for child windows.
 
 	// Store the new window position
-	m_ScreenX = (SHORT)LOWORD(lParam);
-	m_ScreenY = (SHORT)HIWORD(lParam);
+	m_ScreenX = GET_X_LPARAM(lParam);
+	m_ScreenY = GET_Y_LPARAM(lParam);
 
 	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
 

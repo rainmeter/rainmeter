@@ -67,7 +67,7 @@ INT_PTR CDialog::OnActivate(WPARAM wParam, LPARAM lParam)
 
 void CDialog::SetDialogRTL()
 {
-	SetWindowLong(m_Window, GWL_EXSTYLE, GetWindowLong(m_Window, GWL_EXSTYLE) | WS_EX_LAYOUTRTL);
+	SetWindowLongPtr(m_Window, GWL_EXSTYLE, GetWindowLongPtr(m_Window, GWL_EXSTYLE) | WS_EX_LAYOUTRTL);
 }
 
 /*

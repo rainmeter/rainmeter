@@ -336,6 +336,8 @@ private:
 	bool DoMoveAction(int x, int y, MOUSE mouse);
 	bool ResizeWindow(bool reset);
 	void IgnoreAeroPeek();
+	void AddWindowExStyle(LONG_PTR flag);
+	void RemoveWindowExStyle(LONG_PTR flag);
 	void BlurBehindWindow(BOOL fEnable);
 	void SetWindowPositionVariables(int x, int y);
 	void SetWindowSizeVariables(int w, int h);

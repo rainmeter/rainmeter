@@ -376,7 +376,7 @@ void CDialogManage::CTabSkins::Initialize()
 
 	// Get rid of the EDITTEXT control border
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_DESCRIPTION_TEXT);
-	SetWindowLong(item, GWL_EXSTYLE, GetWindowLong(item, GWL_EXSTYLE) &~ WS_EX_CLIENTEDGE);
+	SetWindowLongPtr(item, GWL_EXSTYLE, GetWindowLongPtr(item, GWL_EXSTYLE) &~ WS_EX_CLIENTEDGE);
 	SetWindowPos(item, NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER); 
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_DISPLAYMONITOR_BUTTON);
