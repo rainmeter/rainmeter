@@ -1,0 +1,9 @@
+/TestBench
+bin
+obj
+x32
+x64
+*.exe
+*.opensdf
+*.sdf
+*.user
