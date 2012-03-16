@@ -6,4 +6,5 @@ x64
 *.exe
 *.opensdf
 *.sdf
+*.suo
 *.user
