@@ -1,165 +1,178 @@
+/*
+  Copyright (C) 2010 Elestel
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
 #include "FolderInfo.h"
 #include <windows.h>
 #include <list>
+#include "../API/RainmeterAPI.h"
 
-namespace PluginFolderInfo {
-	
-FolderInfo::FolderInfo(const wchar_t* aPath, const wchar_t* aIniPath)
+#define UPDATE_TIME_MIN_MS 10000
+
+CFolderInfo::CFolderInfo(LPCWSTR path) :
+	m_InstanceCount(1),
+	m_Path(path),
+	m_IncludeSubFolders(false),
+	m_IncludeHiddenFiles(false),
+	m_IncludeSystemFiles(false),
+	m_Size(),
+	m_FileCount(),
+	m_FolderCount(),
+	m_RegExpFilter(),
+	m_LastUpdateTime()
 {
-	mySubFolderFlag = false;
-	myHiddenFileFlag = false;
-	mySystemFileFlag = false;
-	myRegExpFilter = NULL;
-	myRegExpFilterExtra = NULL;
-	myLastUpdateTime = 0;
-	Clear();
-	SetPath(aPath, aIniPath);
 }
 
-FolderInfo::~FolderInfo()
+CFolderInfo::~CFolderInfo()
 {
 	FreePcre();
 }
 
-void FolderInfo::Clear()
+void CFolderInfo::AddInstance()
 {
-	mySize = 0;
-	myFileCount = 0;
-	myFolderCount = 0;
+	++m_InstanceCount;
 }
 
-void FolderInfo::FreePcre()
+void CFolderInfo::RemoveInstance()
 {
-	if (myRegExpFilter) {
-		pcre_free(myRegExpFilter);
-		myRegExpFilter = NULL;
-	}
-
-	if (myRegExpFilterExtra) {
-		pcre_free(myRegExpFilterExtra);
-		myRegExpFilterExtra = NULL;
+	--m_InstanceCount;
+	if (m_InstanceCount == 0)
+	{
+		delete this;
 	}
 }
 
-void FolderInfo::SetPath(const wchar_t* aPath, const wchar_t* aIniPath)
+void CFolderInfo::Clear()
 {
-	if (!aPath || 0 == aPath[0]) {
-		myPath = L"";
-		return;
-	}
+	m_Size = 0;
+	m_FileCount = 0;
+	m_FolderCount = 0;
+}
 
-	myPath = aPath;
-	if (wcsncmp(aPath, L".\\", 2) == 0 || wcsncmp(aPath, L"..\\", 3) == 0) {
-		wchar_t* buf = new wchar_t[wcslen(aIniPath) + 1];
-		wcscpy(buf, aIniPath);
-		wchar_t* iniFileName = wcsrchr(buf, '\\');
-		if (iniFileName) {
-			iniFileName[1] = 0;
-			myPath = buf;
-			myPath += aPath;
+void CFolderInfo::FreePcre()
+{
+	if (m_RegExpFilter)
+	{
+		pcre_free(m_RegExpFilter);
+		m_RegExpFilter = NULL;
+	}
+}
+
+void CFolderInfo::Update()
+{
+	DWORD now = GetTickCount();
+	if (now - m_LastUpdateTime > UPDATE_TIME_MIN_MS)
+	{
+		Clear();
+
+		if (!m_Path.empty())
+		{
+			CalculateSize();
 		}
-		delete[] buf;
-	}
 
-	if (myPath[myPath.size() - 1] != L'\\') {
-		myPath += L"\\";
+		m_LastUpdateTime = now;
 	}
 }
 
-void FolderInfo::Update()
+void CFolderInfo::CalculateSize()
 {
-	Clear();
+	std::list<CRawString> folderQueue;
+	folderQueue.push_back(m_Path.c_str());
 
-	if (myPath.length() == 0) {
-		return;
-	}
-
-	CalculateSize();
-	myLastUpdateTime = GetTickCount();
-}
-
-void FolderInfo::CalculateSize()
-{
-	std::list<std::wstring> folderQueue;
-	folderQueue.push_back(myPath.c_str());
-
-	wchar_t searchPattern[MAX_PATH + 10];
-	wchar_t buffer[MAX_PATH];
+	WCHAR searchPattern[MAX_PATH + 10];
+	WCHAR buffer[MAX_PATH];
 	char utf8Buf[MAX_PATH * 3];
 	WIN32_FIND_DATA findData;
 	HANDLE findHandle;
-	while (!folderQueue.empty()) {
-		std::list<std::wstring>::reference ref = folderQueue.front();
+	while (!folderQueue.empty())
+	{
+		const CRawString& ref = folderQueue.front();
 		wsprintf(searchPattern, L"%s%s", ref.c_str(), L"\\*.*");
-		findHandle = ::FindFirstFile(searchPattern, &findData);
-		if (INVALID_HANDLE_VALUE == findHandle) {
+
+		findHandle = FindFirstFile(searchPattern, &findData);
+		if (INVALID_HANDLE_VALUE == findHandle)
+		{
 			folderQueue.pop_front();
 			continue;
 		}
 
-		do {
+		do
+		{
 			// special case for "." and ".."
 			if (wcscmp(findData.cFileName, L".") == 0 ||
-				wcscmp(findData.cFileName, L"..") == 0) {
+				wcscmp(findData.cFileName, L"..") == 0)
+			{
 				continue;
 			}
 
 			bool isFolder = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) > 0;
 
-			if (!myHiddenFileFlag && (findData.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)) {
+			if (!m_IncludeHiddenFiles && (findData.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN))
+			{
 				continue;
 			}
-			else if (!mySystemFileFlag && (findData.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM)) {
+			else if (!m_IncludeSystemFiles && (findData.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM))
+			{
 				continue;
 			}
-			else if (!isFolder && myRegExpFilter) {
+			else if (!isFolder && m_RegExpFilter)
+			{
 				int utf8BufLen = WideCharToMultiByte(CP_UTF8, 0, findData.cFileName, wcslen(findData.cFileName) + 1, utf8Buf, MAX_PATH * 3, NULL, NULL);
-				if (0 != pcre_exec(myRegExpFilter, myRegExpFilterExtra, utf8Buf, utf8BufLen, 0, 0, NULL, 0)) {
+				if (0 != pcre_exec(m_RegExpFilter, NULL, utf8Buf, utf8BufLen, 0, 0, NULL, 0))
+				{
 					continue;
 				}
 			}
 
-			if (isFolder) {
-				myFolderCount++;
-				if (mySubFolderFlag) {
+			if (isFolder)
+			{
+				m_FolderCount++;
+				if (m_IncludeSubFolders)
+				{
 					wsprintf(buffer, L"%s\\%s", ref.c_str(), findData.cFileName);
 					folderQueue.push_back(buffer);
 				}
 			}
-			else {
-				myFileCount++;
-				mySize += ((UINT64)findData.nFileSizeHigh << 32) + findData.nFileSizeLow;
+			else
+			{
+				m_FileCount++;
+				m_Size += ((UINT64)findData.nFileSizeHigh << 32) + findData.nFileSizeLow;
 			}
 		}
-		while (::FindNextFile(findHandle, &findData));
+		while (FindNextFile(findHandle, &findData));
 		FindClose(findHandle);
 
 		folderQueue.pop_front();
 	}
 }
 
-void FolderInfo::SetRegExpFilter(const wchar_t* aFilter)
+void CFolderInfo::SetRegExpFilter(LPCWSTR filter)
 {
 	FreePcre();
 
-	if (aFilter == NULL) {
-		return;
-	}
-
-	int filterLen = wcslen(aFilter) + 1;
-	int bufLen = WideCharToMultiByte(CP_UTF8, 0, aFilter, filterLen, NULL, 0, NULL, NULL);
+	int filterLen = wcslen(filter) + 1;
+	int bufLen = WideCharToMultiByte(CP_UTF8, 0, filter, filterLen, NULL, 0, NULL, NULL);
 
 	char* buf = new char[bufLen];
-	WideCharToMultiByte(CP_UTF8, 0, aFilter, filterLen, buf, bufLen, NULL, NULL);
+	WideCharToMultiByte(CP_UTF8, 0, filter, filterLen, buf, bufLen, NULL, NULL);
 
 	const char* error;
 	int erroffset;
-	myRegExpFilter = pcre_compile(buf, PCRE_UTF8, &error, &erroffset, NULL);
-	if (myRegExpFilter) {
-		myRegExpFilterExtra = pcre_study(myRegExpFilter, 0, &error);
-	}
+	m_RegExpFilter = pcre_compile(buf, PCRE_UTF8, &error, &erroffset, NULL);
 
 	delete [] buf;
 }
-
-} // namespace PluginFolderInfo

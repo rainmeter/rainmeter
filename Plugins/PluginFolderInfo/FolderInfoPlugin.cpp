@@ -17,216 +17,142 @@
 */
 
 #include <windows.h>
-#include "../../Library/Export.h"	// Rainmeter's exported functions
-
-#include <map>
+#include <vector>
+#include <algorithm>
 #include "FolderInfo.h"
-
+#include "../API/RainmeterAPI.h"
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
-#define UPDATE_TIME_MIN_MS 10000
-
-using namespace PluginFolderInfo;
-
-/* The exported functions */
-extern "C"
+enum MeasureType
 {
-	__declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
-	__declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-	__declspec( dllexport ) double Update2(UINT id);
-	__declspec( dllexport ) UINT GetPluginVersion();
-	__declspec( dllexport ) LPCTSTR GetPluginAuthor();
-}
-
-enum InfoType
-{
-	INFOTYPE_FOLDERSIZE,
-	INFOTYPE_FILECOUNT,
-	INFOTYPE_FOLDERCOUNT,
-
-	INFOTYPE_COUNT
+	MEASURE_FILECOUNT,
+	MEASURE_FOLDERCOUNT,
+	MEASURE_FOLDERSIZE
 };
 
-struct MeasureInfo
+struct MeasureData
 {
-	InfoType Type;
-	std::wstring Section;
-	FolderInfo* Folder;
+	LPCWSTR section;
+	CFolderInfo* folder;
+	MeasureType type;
 
-	MeasureInfo(const wchar_t* aSection)
+	MeasureData(LPCWSTR section) :
+		section(section),
+		folder(),
+		type(MEASURE_FILECOUNT)
 	{
-		Section = aSection;
-		Type = INFOTYPE_COUNT;
 	}
 };
 
-/* Couple of globals */
-typedef std::map<UINT, MeasureInfo*> MeasureIdMap; // measure ID -> MeasureInfo
-static MeasureIdMap sMeasures;
-typedef std::map<FolderInfo*, UINT> FolderInfoMap; // FolderInfo -> ref count
-static FolderInfoMap sFolderRefCount;
+std::vector<MeasureData*> g_Measures;
 
-static MeasureInfo* GetMeasureInfo(UINT aId)
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
-	MeasureIdMap::iterator it = sMeasures.find(aId);
-	if (it != sMeasures.end()) {
-		return it->second;
-	}
-	return NULL;
+	MeasureData* measure = new MeasureData(RmGetMeasureName(rm));
+	*data = measure;
+	g_Measures.push_back(measure);
 }
 
-static FolderInfo* GetFolderInfo(const wchar_t* aPath, const wchar_t* aIniPath)
+PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
-	int pathLen = wcslen(aPath);
-	if (pathLen > 2 && L'[' == aPath[0] && L']' == aPath[pathLen - 1]) {
-		MeasureIdMap::iterator it;
-		for (it = sMeasures.begin(); it != sMeasures.end(); it++) {
-			if (wcsncmp(&aPath[1], it->second->Section.c_str(), pathLen - 2) == 0) {
-				sFolderRefCount[it->second->Folder] = sFolderRefCount[it->second->Folder] + 1;
-				return it->second->Folder;
+	MeasureData* measure = (MeasureData*)data;
+
+	LPCWSTR str = RmReadString(rm, L"Folder", L"", FALSE);
+	if (*str == L'[')
+	{
+		CFolderInfo* oldFolder = measure->folder;
+		measure->folder = NULL;
+
+		int len = wcslen(str);
+		for (auto iter = g_Measures.cbegin(); iter != g_Measures.cend(); ++iter)
+		{
+			if (wcsncmp(&str[1], (*iter)->section, len - 2) == 0)
+			{
+				measure->folder = (*iter)->folder;
+				measure->folder->AddInstance();
 			}
 		}
-		return NULL;
-	}
 
-	FolderInfo* folderInfo = new FolderInfo(aPath, aIniPath);
-	sFolderRefCount[folderInfo] = 1;
-	return folderInfo;
-}
-
-/*
-  This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured.
-  The return value can also be 0, which means that Rainmeter will
-  track the maximum value automatically. The parameters for this
-  function are:
-
-  instance  The instance of this DLL
-  iniFile   The name of the ini-file (usually Rainmeter.ini)
-  section   The name of the section in the ini-file for this measure
-  id		The identifier for the measure. This is used to identify the measures that use the same plugin.
-*/
-UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
-{
-	MeasureInfo* measureInfo = new MeasureInfo(section);
-
-	const wchar_t* strFolder = ReadConfigString(section, L"Folder", L"");
-	measureInfo->Folder = GetFolderInfo(strFolder, iniFile);
-
-	const wchar_t* strInfoType = ReadConfigString(section, L"InfoType", L"");
-	if (_wcsicmp(strInfoType, L"FolderSize") == 0 || _wcsicmp(strInfoType, L"FolderSizeStr") == 0) {
-			measureInfo->Type = INFOTYPE_FOLDERSIZE;
-	}
-	else if (_wcsicmp(strInfoType, L"FolderCount") == 0 || _wcsicmp(strInfoType, L"FolderCountStr") == 0) {
-			measureInfo->Type = INFOTYPE_FOLDERCOUNT;
-	}
-	else if (_wcsicmp(strInfoType, L"FileCount") == 0 || _wcsicmp(strInfoType, L"FileCountStr") == 0) {
-			measureInfo->Type = INFOTYPE_FILECOUNT;
-	}
-
-	if (measureInfo->Folder) {
-		const wchar_t* strRegExpFilter = ReadConfigString(section, L"RegExpFilter", L"");
-		if (strRegExpFilter && wcslen(strRegExpFilter) > 0) {
-			measureInfo->Folder->SetRegExpFilter(strRegExpFilter);
+		if (oldFolder)
+		{
+			oldFolder->RemoveInstance();
 		}
-
-		const wchar_t* strIncludeSubFolders = ReadConfigString(section, L"IncludeSubFolders", L"");
-		if (wcscmp(strIncludeSubFolders, L"1") == 0) {
-			measureInfo->Folder->IncludeSubFolders(true);
-		}
-
-		const wchar_t* strShowHiddenFiles = ReadConfigString(section, L"IncludeHiddenFiles", L"");
-		if (wcscmp(strShowHiddenFiles, L"1") == 0) {
-			measureInfo->Folder->IncludeHiddenFiles(true);
-		}
-
-		const wchar_t* strShowSystemFiles = ReadConfigString(section, L"IncludeSystemFiles", L"");
-		if (wcscmp(strShowSystemFiles, L"1") == 0) {
-			measureInfo->Folder->IncludeSystemFiles(true);
-		}
-
-		measureInfo->Folder->Update();
 	}
-
-	sMeasures[id] = measureInfo;
-
-	return 0;
-}
-
-/*
-  This function is called when new value should be measured.
-  The function returns the new value.
-*/
-double Update2(UINT id)
-{
-	MeasureInfo* measureInfo = sMeasures[id];
-	if (!measureInfo->Folder) {
-		return 0;
-	}
-
-	DWORD now = GetTickCount();
-	if (now - measureInfo->Folder->GetLastUpdateTime() > UPDATE_TIME_MIN_MS) {
-		measureInfo->Folder->Update();
-	}
-
-	switch (measureInfo->Type)
+	else if (*str)
 	{
-	case INFOTYPE_FOLDERSIZE:
-		return (double)measureInfo->Folder->GetSize();
-		break;
+		LPCWSTR path = RmPathToAbsolute(rm, str);
+		if (!measure->folder || wcscmp(measure->folder->GetPath(), path) != 0)
+		{
+			if (measure->folder)
+			{
+				measure->folder->RemoveInstance();
+			}
 
-	case INFOTYPE_FILECOUNT:
-		return measureInfo->Folder->GetFileCount();
-		break;
+			measure->folder = new CFolderInfo(path);
 
-	case INFOTYPE_FOLDERCOUNT:
-		return measureInfo->Folder->GetFolderCount();
-		break;
-	}
-	return 0;
-}
-
-/*
-  If the measure needs to free resources before quitting.
-  The plugin can export Finalize function, which is called
-  when Rainmeter quits (or refreshes).
-*/
-void Finalize(HMODULE instance, UINT id)
-{
-	MeasureIdMap::iterator itm = sMeasures.find(id);
-	if (itm == sMeasures.end()) {
-		return;
-	}
-
-	MeasureInfo* measureInfo = itm->second;
-	sMeasures.erase(itm);
-	FolderInfoMap::iterator itf = sFolderRefCount.find(measureInfo->Folder);
-	if (itf != sFolderRefCount.end()) {
-		if (1 == itf->second) {
-			delete itf->first;
-			sFolderRefCount.erase(itf);
-		}
-		else {
-			itf->second = itf->second - 1;
+			str = RmReadString(rm, L"RegExpFilter", L"");
+			if (*str)
+			{
+				measure->folder->SetRegExpFilter(str);
+			}
+		
+			measure->folder->IncludeSubFolders((bool)RmReadInt(rm, L"IncludeSubFolders", 0));
+			measure->folder->IncludeHiddenFiles((bool)RmReadInt(rm, L"IncludeHiddenFiles", 0));
+			measure->folder->IncludeSystemFiles((bool)RmReadInt(rm, L"IncludeSystemFiles", 0));
 		}
 	}
-	delete measureInfo;
+
+	str = RmReadString(rm, L"InfoType", L"");
+	if (_wcsicmp(str, L"FolderSize") == 0 || _wcsicmp(str, L"FolderSizeStr") == 0)
+	{
+		measure->type = MEASURE_FOLDERSIZE;
+	}
+	else if (_wcsicmp(str, L"FolderCount") == 0 || _wcsicmp(str, L"FolderCountStr") == 0)
+	{
+		measure->type = MEASURE_FOLDERCOUNT;
+	}
+	else if (_wcsicmp(str, L"FileCount") == 0 || _wcsicmp(str, L"FileCountStr") == 0)
+	{
+		measure->type = MEASURE_FILECOUNT;
+	}
 }
 
-/*
-  Returns the version number of the plugin. The value
-  can be calculated like this: Major * 1000 + Minor.
-  So, e.g. 2.31 would be 2031.
-*/
-UINT GetPluginVersion()
+PLUGIN_EXPORT double Update(void* data)
 {
-	return 0003;
+	MeasureData* measure = (MeasureData*)data;
+	if (!measure->folder)
+	{
+		return 0.0;
+	}
+
+	measure->folder->Update();
+
+	switch (measure->type)
+	{
+	case MEASURE_FOLDERSIZE:
+		return measure->folder->GetSize();
+
+	case MEASURE_FILECOUNT:
+		return measure->folder->GetFileCount();
+
+	case MEASURE_FOLDERCOUNT:
+		return measure->folder->GetFolderCount();
+	}
+
+	return 0.0;
 }
 
-/*
-  Returns the author of the plugin for the about dialog.
-*/
-LPCTSTR GetPluginAuthor()
+PLUGIN_EXPORT void Finalize(void* data)
 {
-	return L"Elestel";
+	MeasureData* measure = (MeasureData*)data;
+
+	if (measure->folder)
+	{
+		measure->folder->RemoveInstance();
+	}
+
+	delete measure;
+
+	std::vector<MeasureData*>::iterator iter = std::find(g_Measures.begin(), g_Measures.end(), measure);
+	g_Measures.erase(iter);
 }
