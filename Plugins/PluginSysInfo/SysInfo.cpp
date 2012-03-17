@@ -99,6 +99,8 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
 	MeasureData* measure = (MeasureData*)data;
 
+	int defaultData = -1;
+
 	LPCTSTR type = RmReadString(rm, L"SysInfoType", L"");
 	if (_wcsicmp(L"COMPUTER_NAME", type) == 0)
 	{
@@ -130,18 +132,22 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 	else if (_wcsicmp(L"ADAPTER_DESCRIPTION", type) == 0)
 	{
+		defaultData = 0;
 		measure->type = MEASURE_ADAPTER_DESCRIPTION;
 	}
 	else if (_wcsicmp(L"NET_MASK", type) == 0)
 	{
+		defaultData = 0;
 		measure->type = MEASURE_NET_MASK;
 	}
 	else if (_wcsicmp(L"IP_ADDRESS", type) == 0)
 	{
+		defaultData = 0;
 		measure->type = MEASURE_IP_ADDRESS;
 	}
 	else if (_wcsicmp(L"GATEWAY_ADDRESS", type) == 0)
 	{
+		defaultData = 0;
 		measure->type = MEASURE_GATEWAY_ADDRESS;
 	}
 	else if (_wcsicmp(L"HOST_NAME", type) == 0)
@@ -207,7 +213,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		RmLog(LOG_ERROR, buffer);
 	}
 
-	measure->data = RmReadInt(rm, L"SysInfoData", -1);
+	measure->data = RmReadInt(rm, L"SysInfoData", defaultData);
 }
 
 PLUGIN_EXPORT LPCWSTR GetString(void* data)
@@ -270,12 +276,12 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 			PMIB_IPADDRTABLE ipTable = (PMIB_IPADDRTABLE)buffer;
 			if (measure->data >= 1000)
 			{
-				measure->data = measure->data-999;
+				measure->data = measure->data - 999;
 				for (UINT i = 0; i < ipTable->dwNumEntries; ++i)
 				{
 					if ((ipTable->table[i].wType) & MIB_IPADDR_DISCONNECTED) continue;
 					--measure->data;
-					if (measure->data==0)
+					if (measure->data == 0)
 					{
 						DWORD ip = ipTable->table[i].dwAddr;
 						wsprintf(buffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
