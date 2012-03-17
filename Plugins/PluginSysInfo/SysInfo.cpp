@@ -16,392 +16,340 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <math.h>
-#include <string>
-#include <map>
-#include <Ras.h>
 #include <Iphlpapi.h>
-#include "../../Library/Export.h"	// Rainmeter's exported functions
-
+#include <stdio.h>
+#include <stdlib.h>
+#include "../API/RainmeterAPI.h"
+#include "../../Library/Export.h"
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
-
-/* The exported functions */
-extern "C"
-{
-__declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
-__declspec( dllexport ) LPCTSTR GetString(UINT id, UINT flags);
-__declspec( dllexport ) double Update2(UINT id);
-__declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-__declspec( dllexport ) UINT GetPluginVersion();
-__declspec( dllexport ) LPCTSTR GetPluginAuthor();
-}
 
 typedef struct
 {
-	int count;						//Number of monitors
-	HMONITOR m_Monitors[32];		//Monitor info
-	RECT m_MonitorRect[32];			//Monitor rect on virtual screen
-	MONITORINFO m_MonitorInfo[32];	//Monitor information
+	int count;						// Number of monitors
+	HMONITOR m_Monitors[32];		// Monitor info
+	RECT m_MonitorRect[32];			// Monitor rect on virtual screen
+	MONITORINFO m_MonitorInfo[32];	// Monitor information
 } MULTIMONITOR_INFO;
 
-MULTIMONITOR_INFO m_Monitors = { 0 };
+MULTIMONITOR_INFO m_Monitors = {0};
 
-BOOL CheckConnection();
-void GetOSVersion(WCHAR* buffer);
-void GetOSBits(WCHAR* buffer);
-BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
-
-enum TYPE
+enum MeasureType
 {
-	COMPUTER_NAME,
-	USER_NAME,
-	WORK_AREA,
-	SCREEN_SIZE,
-	RAS_STATUS,
-	OS_VERSION,
-	OS_BITS,
-	ADAPTER_DESCRIPTION,
-	NET_MASK,
-	IP_ADDRESS,
-	GATEWAY_ADDRESS,
-	HOST_NAME,
-	DOMAIN_NAME,
-	DNS_SERVER,
-
-	WORK_AREA_TOP,
-	WORK_AREA_LEFT,
-	WORK_AREA_WIDTH,
-	WORK_AREA_HEIGHT,
-	SCREEN_WIDTH,
-	SCREEN_HEIGHT,
-	NUM_MONITORS,
-	VIRTUAL_SCREEN_TOP,
-	VIRTUAL_SCREEN_LEFT,
-	VIRTUAL_SCREEN_WIDTH,
-	VIRTUAL_SCREEN_HEIGHT,
+	MEASURE_COMPUTER_NAME,
+	MEASURE_USER_NAME,
+	MEASURE_WORK_AREA,
+	MEASURE_SCREEN_SIZE,
+	MEASURE_RAS_STATUS,
+	MEASURE_OS_VERSION,
+	MEASURE_OS_BITS,
+	MEASURE_ADAPTER_DESCRIPTION,
+	MEASURE_NET_MASK,
+	MEASURE_IP_ADDRESS,
+	MEASURE_GATEWAY_ADDRESS,
+	MEASURE_HOST_NAME,
+	MEASURE_DOMAIN_NAME,
+	MEASURE_DNS_SERVER,
+	MEASURE_WORK_AREA_TOP,
+	MEASURE_WORK_AREA_LEFT,
+	MEASURE_WORK_AREA_WIDTH,
+	MEASURE_WORK_AREA_HEIGHT,
+	MEASURE_SCREEN_WIDTH,
+	MEASURE_SCREEN_HEIGHT,
+	MEASURE_NUM_MONITORS,
+	MEASURE_VIRTUAL_SCREEN_TOP,
+	MEASURE_VIRTUAL_SCREEN_LEFT,
+	MEASURE_VIRTUAL_SCREEN_WIDTH,
+	MEASURE_VIRTUAL_SCREEN_HEIGHT
 };
 
-static std::map<UINT, TYPE> g_Types;
-static std::map<UINT, UINT> g_Datas;
-
-/*
-  This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured.
-  The return value can also be 0, which means that Rainmeter will
-  track the maximum value automatically. The parameters for this
-  function are:
-
-  instance  The instance of this DLL
-  iniFile   The name of the ini-file (usually Rainmeter.ini)
-  section   The name of the section in the ini-file for this measure
-  id        The identifier for the measure. This is used to identify the measures that use the same plugin.
-*/
-UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
+struct MeasureData
 {
-	/* Read our own settings from the ini-file */
-	LPCTSTR type = ReadConfigString(section, L"SysInfoType", L"");
-	if (type)
-	{
-		if (_wcsicmp(L"COMPUTER_NAME", type) == 0)
-		{
-			g_Types[id] = COMPUTER_NAME;
-		}
-		else if (_wcsicmp(L"USER_NAME", type) == 0)
-		{
-			g_Types[id] = USER_NAME;
-		}
-		else if (_wcsicmp(L"WORK_AREA", type) == 0)
-		{
-			g_Types[id] = WORK_AREA;
-		}
-		else if (_wcsicmp(L"SCREEN_SIZE", type) == 0)
-		{
-			g_Types[id] = SCREEN_SIZE;
-		}
-		else if (_wcsicmp(L"RAS_STATUS", type) == 0)
-		{
-			g_Types[id] = RAS_STATUS;
-		}
-		else if (_wcsicmp(L"OS_VERSION", type) == 0)
-		{
-			g_Types[id] = OS_VERSION;
-		}
-		else if (_wcsicmp(L"OS_BITS", type) == 0)
-		{
-			g_Types[id] = OS_BITS;
-		}
-		else if (_wcsicmp(L"ADAPTER_DESCRIPTION", type) == 0)
-		{
-			g_Types[id] = ADAPTER_DESCRIPTION;
-		}
-		else if (_wcsicmp(L"NET_MASK", type) == 0)
-		{
-			g_Types[id] = NET_MASK;
-		}
-		else if (_wcsicmp(L"IP_ADDRESS", type) == 0)
-		{
-			g_Types[id] = IP_ADDRESS;
-		}
-		else if (_wcsicmp(L"GATEWAY_ADDRESS", type) == 0)
-		{
-			g_Types[id] = GATEWAY_ADDRESS;
-		}
-		else if (_wcsicmp(L"HOST_NAME", type) == 0)
-		{
-			g_Types[id] = HOST_NAME;
-		}
-		else if (_wcsicmp(L"DOMAIN_NAME", type) == 0)
-		{
-			g_Types[id] = DOMAIN_NAME;
-		}
-		else if (_wcsicmp(L"DNS_SERVER", type) == 0)
-		{
-			g_Types[id] = DNS_SERVER;
-		}
-		else if (_wcsicmp(L"WORK_AREA_TOP", type) == 0)
-		{
-			g_Types[id] = WORK_AREA_TOP;
-		}
-		else if (_wcsicmp(L"WORK_AREA_LEFT", type) == 0)
-		{
-			g_Types[id] = WORK_AREA_LEFT;
-		}
-		else if (_wcsicmp(L"WORK_AREA_WIDTH", type) == 0)
-		{
-			g_Types[id] = WORK_AREA_WIDTH;
-		}
-		else if (_wcsicmp(L"WORK_AREA_HEIGHT", type) == 0)
-		{
-			g_Types[id] = WORK_AREA_HEIGHT;
-		}
-		else if (_wcsicmp(L"SCREEN_WIDTH", type) == 0)
-		{
-			g_Types[id] = SCREEN_WIDTH;
-		}
-		else if (_wcsicmp(L"SCREEN_HEIGHT", type) == 0)
-		{
-			g_Types[id] = SCREEN_HEIGHT;
-		}
-		else if (_wcsicmp(L"NUM_MONITORS", type) == 0)
-		{
-			g_Types[id] = NUM_MONITORS;
-		}
-		else if (_wcsicmp(L"VIRTUAL_SCREEN_TOP", type) == 0)
-		{
-			g_Types[id] = VIRTUAL_SCREEN_TOP;
-		}
-		else if (_wcsicmp(L"VIRTUAL_SCREEN_LEFT", type) == 0)
-		{
-			g_Types[id] = VIRTUAL_SCREEN_LEFT;
-		}
-		else if (_wcsicmp(L"VIRTUAL_SCREEN_WIDTH", type) == 0)
-		{
-			g_Types[id] = VIRTUAL_SCREEN_WIDTH;
-		}
-		else if (_wcsicmp(L"VIRTUAL_SCREEN_HEIGHT", type) == 0)
-		{
-			g_Types[id] = VIRTUAL_SCREEN_HEIGHT;
-		}
-		else
-		{
-			std::wstring error = L"SysInfo.dll: SysInfoType=";
-			error += type;
-			error += L" is not valid in [";
-			error += section;
-			error += L"]";
-			LSLog(LOG_ERROR, NULL, error.c_str());
-		}
-	}
+	MeasureType type;
+	int data;
 
-	LPCTSTR data = ReadConfigString(section, L"SysInfoData", L"0");
-	if (data)
-	{
-		g_Datas[id] = _wtoi(data);
-	}
+	MeasureData() : type(), data() {}
+};
 
-	return 0;
+LPCWSTR GetPlatformName();
+BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
+
+bool g_Initialized = false;
+
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
+{
+	MeasureData* measure = new MeasureData;
+	*data = measure;
+
+	if (!g_Initialized)
+	{
+		if (GetSystemMetrics(SM_CMONITORS) > 32)
+		{
+			LSLog(LOG_ERROR, NULL, L"SysInfo.dll: Max amount of monitors supported is 32.");
+		}
+
+		m_Monitors.count = 0;
+		EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)(&m_Monitors));
+		g_Initialized = true;
+	}
 }
 
-std::wstring ConvertToWide(LPCSTR str)
+PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
-	std::wstring szWide;
+	MeasureData* measure = (MeasureData*)data;
 
-	if (str && *str)
+	LPCTSTR type = RmReadString(rm, L"SysInfoType", L"");
+	if (_wcsicmp(L"COMPUTER_NAME", type) == 0)
 	{
-		int strLen = (int)strlen(str);
-		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
-		if (bufLen > 0)
-		{
-			szWide.resize(bufLen);
-			MultiByteToWideChar(CP_ACP, 0, str, strLen, &szWide[0], bufLen);
-		}
+		measure->type = MEASURE_COMPUTER_NAME;
 	}
-	return szWide;
-}
-
-/*
-  This function is called when the value should be
-  returned as a string.
-*/
-LPCTSTR GetString(UINT id, UINT flags)
-{
-	static WCHAR buffer[4096];
-	UINT data;
-	DWORD len = 4095;
-	std::map<UINT, TYPE>::iterator typeIter = g_Types.find(id);
-	std::map<UINT, UINT>::iterator dataIter = g_Datas.find(id);
-
-	if (typeIter == g_Types.end()) return NULL;
-	if (dataIter == g_Datas.end())
+	else if (_wcsicmp(L"USER_NAME", type) == 0)
 	{
-		data = 0;
+		measure->type = MEASURE_USER_NAME;
+	}
+	else if (_wcsicmp(L"WORK_AREA", type) == 0)
+	{
+		measure->type = MEASURE_WORK_AREA;
+	}
+	else if (_wcsicmp(L"SCREEN_SIZE", type) == 0)
+	{
+		measure->type = MEASURE_SCREEN_SIZE;
+	}
+	else if (_wcsicmp(L"RAS_STATUS", type) == 0)
+	{
+		measure->type = MEASURE_RAS_STATUS;
+	}
+	else if (_wcsicmp(L"OS_VERSION", type) == 0)
+	{
+		measure->type = MEASURE_OS_VERSION;
+	}
+	else if (_wcsicmp(L"OS_BITS", type) == 0)
+	{
+		measure->type = MEASURE_OS_BITS;
+	}
+	else if (_wcsicmp(L"ADAPTER_DESCRIPTION", type) == 0)
+	{
+		measure->type = MEASURE_ADAPTER_DESCRIPTION;
+	}
+	else if (_wcsicmp(L"NET_MASK", type) == 0)
+	{
+		measure->type = MEASURE_NET_MASK;
+	}
+	else if (_wcsicmp(L"IP_ADDRESS", type) == 0)
+	{
+		measure->type = MEASURE_IP_ADDRESS;
+	}
+	else if (_wcsicmp(L"GATEWAY_ADDRESS", type) == 0)
+	{
+		measure->type = MEASURE_GATEWAY_ADDRESS;
+	}
+	else if (_wcsicmp(L"HOST_NAME", type) == 0)
+	{
+		measure->type = MEASURE_HOST_NAME;
+	}
+	else if (_wcsicmp(L"DOMAIN_NAME", type) == 0)
+	{
+		measure->type = MEASURE_DOMAIN_NAME;
+	}
+	else if (_wcsicmp(L"DNS_SERVER", type) == 0)
+	{
+		measure->type = MEASURE_DNS_SERVER;
+	}
+	else if (_wcsicmp(L"WORK_AREA_TOP", type) == 0)
+	{
+		measure->type = MEASURE_WORK_AREA_TOP;
+	}
+	else if (_wcsicmp(L"WORK_AREA_LEFT", type) == 0)
+	{
+		measure->type = MEASURE_WORK_AREA_LEFT;
+	}
+	else if (_wcsicmp(L"WORK_AREA_WIDTH", type) == 0)
+	{
+		measure->type = MEASURE_WORK_AREA_WIDTH;
+	}
+	else if (_wcsicmp(L"WORK_AREA_HEIGHT", type) == 0)
+	{
+		measure->type = MEASURE_WORK_AREA_HEIGHT;
+	}
+	else if (_wcsicmp(L"SCREEN_WIDTH", type) == 0)
+	{
+		measure->type = MEASURE_SCREEN_WIDTH;
+	}
+	else if (_wcsicmp(L"SCREEN_HEIGHT", type) == 0)
+	{
+		measure->type = MEASURE_SCREEN_HEIGHT;
+	}
+	else if (_wcsicmp(L"NUM_MONITORS", type) == 0)
+	{
+		measure->type = MEASURE_NUM_MONITORS;
+	}
+	else if (_wcsicmp(L"VIRTUAL_SCREEN_TOP", type) == 0)
+	{
+		measure->type = MEASURE_VIRTUAL_SCREEN_TOP;
+	}
+	else if (_wcsicmp(L"VIRTUAL_SCREEN_LEFT", type) == 0)
+	{
+		measure->type = MEASURE_VIRTUAL_SCREEN_LEFT;
+	}
+	else if (_wcsicmp(L"VIRTUAL_SCREEN_WIDTH", type) == 0)
+	{
+		measure->type = MEASURE_VIRTUAL_SCREEN_WIDTH;
+	}
+	else if (_wcsicmp(L"VIRTUAL_SCREEN_HEIGHT", type) == 0)
+	{
+		measure->type = MEASURE_VIRTUAL_SCREEN_HEIGHT;
 	}
 	else
 	{
-		data = (*dataIter).second;
+		WCHAR buffer[256];
+		_snwprintf_s(buffer, _TRUNCATE, L"SysInfo.dll: SysInfoType=%s is not valid in [%s]", type, RmGetMeasureName(rm));
+		RmLog(LOG_ERROR, buffer);
 	}
 
-	switch((*typeIter).second)
+	measure->data = RmReadInt(rm, L"SysInfoData", -1);
+}
+
+PLUGIN_EXPORT LPCWSTR GetString(void* data)
+{
+	MeasureData* measure = (MeasureData*)data;
+
+	static WCHAR buffer[4096];
+	DWORD len = 4095;
+
+	auto convertToWide = [&](LPCSTR str)->LPCWSTR
 	{
-	case COMPUTER_NAME:
+		int strLen = (int)strlen(str);
+		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
+		MultiByteToWideChar(CP_ACP, 0, str, strLen, buffer, min(bufLen, 4095));
+		return buffer;
+	};
+
+	switch (measure->type)
+	{
+	case MEASURE_COMPUTER_NAME:
 		GetComputerName(buffer, &len);
 		return buffer;
 
-	case USER_NAME:
+	case MEASURE_USER_NAME:
 		GetUserName(buffer, &len);
 		return buffer;
 
-	case WORK_AREA:
+	case MEASURE_WORK_AREA:
 		wsprintf(buffer, L"%i x %i", GetSystemMetrics(SM_CXFULLSCREEN), GetSystemMetrics(SM_CYFULLSCREEN));
 		return buffer;
 
-	case SCREEN_SIZE:
+	case MEASURE_SCREEN_SIZE:
 		wsprintf(buffer, L"%i x %i", GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
 		return buffer;
 
-	case RAS_STATUS:
-		wsprintf(buffer, L"%s", CheckConnection()?"Online":"Offline");
-		return buffer;
+	case MEASURE_OS_VERSION:
+		return GetPlatformName();
 
-	case OS_VERSION:
-		GetOSVersion(buffer);
-		return buffer;
-
-	case OS_BITS:
-		GetOSBits(buffer);
-		return buffer;
-
-	case ADAPTER_DESCRIPTION:
+	case MEASURE_ADAPTER_DESCRIPTION:
 		if (ERROR_SUCCESS == GetAdaptersInfo((IP_ADAPTER_INFO*)buffer, &len))
 		{
 			PIP_ADAPTER_INFO info = (IP_ADAPTER_INFO*)buffer;
 			int i = 0;
 			while (info)
 			{
-				if (i == data)
+				if (i == measure->data)
 				{
-					wcscpy(buffer, ConvertToWide(info->Description).c_str());
-					return buffer;
+					return convertToWide(info->Description);
 				}
+
 				info = info->Next;
 				i++;
 			}
 		}
 		break;
 
-	case IP_ADDRESS:
+	case MEASURE_IP_ADDRESS:
 		if (NO_ERROR == GetIpAddrTable((PMIB_IPADDRTABLE)buffer, &len, FALSE))
 		{
 			PMIB_IPADDRTABLE ipTable = (PMIB_IPADDRTABLE)buffer;
-			if (data >= 1000)
+			if (measure->data >= 1000)
 			{
-				data = data-999;
-				for (UINT i=0; i<ipTable->dwNumEntries; i++)
+				measure->data = measure->data-999;
+				for (UINT i = 0; i < ipTable->dwNumEntries; ++i)
 				{
-					if ((ipTable->table[i].wType)&MIB_IPADDR_DISCONNECTED) continue;
-					data--;
-					if (data==0)
+					if ((ipTable->table[i].wType) & MIB_IPADDR_DISCONNECTED) continue;
+					--measure->data;
+					if (measure->data==0)
 					{
 						DWORD ip = ipTable->table[i].dwAddr;
-						wsprintf(buffer, L"%i.%i.%i.%i", ip%256, (ip>>8)%256, (ip>>16)%256, (ip>>24)%256);
+						wsprintf(buffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
 						return buffer;
 					}
 				}
 			}
-			else if (data < ipTable->dwNumEntries)
+			else if (measure->data < ipTable->dwNumEntries)
 			{
-				DWORD ip = ipTable->table[data].dwAddr;
-				wsprintf(buffer, L"%i.%i.%i.%i", ip%256, (ip>>8)%256, (ip>>16)%256, (ip>>24)%256);
+				DWORD ip = ipTable->table[measure->data].dwAddr;
+				wsprintf(buffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
 				return buffer;
 			}
 		}
-		wsprintf(buffer, L"");
-		return buffer;
-		break;
+		return L"";
 
-	case NET_MASK:
+	case MEASURE_NET_MASK:
 		if (NO_ERROR == GetIpAddrTable((PMIB_IPADDRTABLE)buffer, &len, FALSE))
 		{
 			PMIB_IPADDRTABLE ipTable = (PMIB_IPADDRTABLE)buffer;
-			if (data < ipTable->dwNumEntries)
+			if (measure->data < ipTable->dwNumEntries)
 			{
-				DWORD ip = ipTable->table[data].dwMask;
-				wsprintf(buffer, L"%i.%i.%i.%i", ip%256, (ip>>8)%256, (ip>>16)%256, (ip>>24)%256);
+				DWORD ip = ipTable->table[measure->data].dwMask;
+				wsprintf(buffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
 				return buffer;
 			}
 		}
 		break;
 
-	case GATEWAY_ADDRESS:
+	case MEASURE_GATEWAY_ADDRESS:
 		if (ERROR_SUCCESS == GetAdaptersInfo((IP_ADAPTER_INFO*)buffer, &len))
 		{
 			PIP_ADAPTER_INFO info = (IP_ADAPTER_INFO*)buffer;
 			int i = 0;
 			while (info)
 			{
-				if (i == data)
+				if (i == measure->data)
 				{
-					wcscpy(buffer, ConvertToWide(info->GatewayList.IpAddress.String).c_str());
-					return buffer;
+					return convertToWide(info->GatewayList.IpAddress.String);
 				}
 				info = info->Next;
-				i++;
+				++i;
 			}
 		}
 		break;
 
-	case HOST_NAME:
+	case MEASURE_HOST_NAME:
 		if (ERROR_SUCCESS == GetNetworkParams((PFIXED_INFO)buffer, &len))
 		{
 			PFIXED_INFO info = (PFIXED_INFO)buffer;
-			wcscpy(buffer, ConvertToWide(info->HostName).c_str());
-			return buffer;
+			return convertToWide(info->HostName);
 		}
 		break;
 
-	case DOMAIN_NAME:
+	case MEASURE_DOMAIN_NAME:
 		if (ERROR_SUCCESS == GetNetworkParams((PFIXED_INFO)buffer, &len))
 		{
 			PFIXED_INFO info = (PFIXED_INFO)buffer;
-			wcscpy(buffer, ConvertToWide(info->DomainName).c_str());
-			return buffer;
+			return convertToWide(info->DomainName);
 		}
 		break;
 
-	case DNS_SERVER:
+	case MEASURE_DNS_SERVER:
 		if (ERROR_SUCCESS == GetNetworkParams((PFIXED_INFO)buffer, &len))
 		{
 			PFIXED_INFO info = (PFIXED_INFO)buffer;
 			if (info->CurrentDnsServer)
 			{
-				wcscpy(buffer, ConvertToWide(info->CurrentDnsServer->IpAddress.String).c_str());
+				return convertToWide(info->CurrentDnsServer->IpAddress.String);
 			}
 			else
 			{
-				wcscpy(buffer, ConvertToWide(info->DnsServerList.IpAddress.String).c_str());
+				return convertToWide(info->DnsServerList.IpAddress.String);
 			}
-			return buffer;
 		}
 		break;
 	}
@@ -409,264 +357,126 @@ LPCTSTR GetString(UINT id, UINT flags)
 	return NULL;
 }
 
-/*
-  This function is called when new value should be measured.
-  The function returns the new value.
-*/
-double Update2(UINT id)
+PLUGIN_EXPORT double Update(void* data)
 {
-	UINT data;
-	std::map<UINT, TYPE>::iterator typeIter = g_Types.find(id);
-	std::map<UINT, UINT>::iterator dataIter = g_Datas.find(id);
+	MeasureData* measure = (MeasureData*)data;
 
-	if (typeIter == g_Types.end()) return NULL;
-	if (dataIter == g_Datas.end())
+	switch (measure->type)
 	{
-		data = 0;
-	}
-	else
-	{
-		data = (*dataIter).second;
-	}
-
-	if (data) //For speed purposes, only check if they specify a non-primary monitor.
-	{
-		if (GetSystemMetrics(SM_CMONITORS) > 32)
+	case MEASURE_OS_BITS:
 		{
-			LSLog(LOG_ERROR, NULL, L"SysInfo.dll: Max amount of monitors supported is 32.");
-			return 0.0;
+			SYSTEM_INFO si = {0};
+			GetNativeSystemInfo(&si);
+			return (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ||
+				si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_IA64) ? 64.0 : 32.0;
 		}
-		m_Monitors.count = 0;
-		EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)(&m_Monitors));
-	}
 
+	case MEASURE_WORK_AREA_WIDTH:
+		return (measure->data != -1)
+			? m_Monitors.m_MonitorInfo[measure->data - 1].rcWork.right - m_Monitors.m_MonitorInfo[measure->data - 1].rcWork.left
+			: GetSystemMetrics(SM_CXFULLSCREEN);
 
-	switch((*typeIter).second)
-	{
-	case WORK_AREA_WIDTH:
-		if (data)
-			return m_Monitors.m_MonitorInfo[data-1].rcWork.right-m_Monitors.m_MonitorInfo[data-1].rcWork.left;
-		else
-			return GetSystemMetrics(SM_CXFULLSCREEN);
-	case WORK_AREA_HEIGHT:
-		if (data)
-			return m_Monitors.m_MonitorInfo[data-1].rcWork.bottom-m_Monitors.m_MonitorInfo[data-1].rcWork.top;
-		else
-			return GetSystemMetrics(SM_CYFULLSCREEN);
-	case SCREEN_WIDTH:
-		if (data)
-			return m_Monitors.m_MonitorInfo[data-1].rcMonitor.right-m_Monitors.m_MonitorInfo[data-1].rcMonitor.left;
-		else
-			return GetSystemMetrics(SM_CXSCREEN);
-	case SCREEN_HEIGHT:
-		if (data)
-			return m_Monitors.m_MonitorInfo[data-1].rcMonitor.bottom-m_Monitors.m_MonitorInfo[data-1].rcMonitor.top;
-		else
-			return GetSystemMetrics(SM_CYSCREEN);
-	case VIRTUAL_SCREEN_WIDTH:
+	case MEASURE_WORK_AREA_HEIGHT:
+		return (measure->data != -1)
+			? m_Monitors.m_MonitorInfo[measure->data - 1].rcWork.bottom - m_Monitors.m_MonitorInfo[measure->data - 1].rcWork.top
+			: GetSystemMetrics(SM_CYFULLSCREEN);
+
+	case MEASURE_SCREEN_WIDTH:
+		return (measure->data != -1)
+			? m_Monitors.m_MonitorInfo[measure->data - 1].rcMonitor.right - m_Monitors.m_MonitorInfo[measure->data - 1].rcMonitor.left
+			: GetSystemMetrics(SM_CXSCREEN);
+
+	case MEASURE_SCREEN_HEIGHT:
+		return (measure->data != -1)
+			? m_Monitors.m_MonitorInfo[measure->data - 1].rcMonitor.bottom - m_Monitors.m_MonitorInfo[measure->data - 1].rcMonitor.top
+			: GetSystemMetrics(SM_CYSCREEN);
+
+	case MEASURE_VIRTUAL_SCREEN_WIDTH:
+
 		return GetSystemMetrics(SM_CXVIRTUALSCREEN);
-	case VIRTUAL_SCREEN_HEIGHT:
+	case MEASURE_VIRTUAL_SCREEN_HEIGHT:
 		return GetSystemMetrics(SM_CYVIRTUALSCREEN);
-	case NUM_MONITORS:
+
+	case MEASURE_NUM_MONITORS:
 		return GetSystemMetrics(SM_CMONITORS);
 
-	/* can be negative */
-	case WORK_AREA_TOP:
-		if (data)
-			return m_Monitors.m_MonitorInfo[data-1].rcWork.top;
-		else
-			return m_Monitors.m_MonitorInfo[0].rcWork.top;			// guessing that this is the primary monitor
-	case WORK_AREA_LEFT:
-		if (data)
-			return m_Monitors.m_MonitorInfo[data-1].rcWork.left;
-		else
-			return m_Monitors.m_MonitorInfo[0].rcWork.left;			// guessing that this is the primary monitor
-	case VIRTUAL_SCREEN_TOP:	// virtual coords
-		if (data)
-			return m_Monitors.m_MonitorInfo[data-1].rcMonitor.top;
-		else
-			return GetSystemMetrics(SM_YVIRTUALSCREEN);				// seems reasonable to return this if they don't specify a monitor
-	case VIRTUAL_SCREEN_LEFT:	// virtual coords
-		if (data)
-			return m_Monitors.m_MonitorInfo[data-1].rcMonitor.left;
-		else
-			return GetSystemMetrics(SM_XVIRTUALSCREEN);				// seems reasonable to return this if they don't specify a monitor
+	case MEASURE_WORK_AREA_TOP:
+		return (measure->data != -1)
+			? m_Monitors.m_MonitorInfo[measure->data - 1].rcWork.top
+			: m_Monitors.m_MonitorInfo[0].rcWork.top;
 
+	case MEASURE_WORK_AREA_LEFT:
+		return (measure->data != -1)
+			? m_Monitors.m_MonitorInfo[measure->data - 1].rcWork.left
+			: m_Monitors.m_MonitorInfo[0].rcWork.left;
+
+	case MEASURE_VIRTUAL_SCREEN_TOP:
+		return (measure->data != -1)
+			? m_Monitors.m_MonitorInfo[measure->data - 1].rcMonitor.top
+			: GetSystemMetrics(SM_YVIRTUALSCREEN);
+
+	case MEASURE_VIRTUAL_SCREEN_LEFT:
+		return (measure->data != -1)
+			? m_Monitors.m_MonitorInfo[measure->data - 1].rcMonitor.left
+			: GetSystemMetrics(SM_XVIRTUALSCREEN);
 	}
 
-	return NULL;
+	return 0.0;
 }
 
 BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
-	MULTIMONITOR_INFO *m = (MULTIMONITOR_INFO *)dwData;
+	MULTIMONITOR_INFO* m = (MULTIMONITOR_INFO*)dwData;
 	m->m_Monitors[m->count] = hMonitor;
-	memcpy(&(m->m_MonitorRect[m->count]),lprcMonitor,sizeof RECT);
-	m->m_MonitorInfo[m->count].cbSize = sizeof ( MONITORINFO );
-	GetMonitorInfo(hMonitor,&(m->m_MonitorInfo[m->count]));
-	m->count++;
+	memcpy(&(m->m_MonitorRect[m->count]), lprcMonitor, sizeof(RECT));
+	m->m_MonitorInfo[m->count].cbSize = sizeof(MONITORINFO);
+	GetMonitorInfo(hMonitor, &(m->m_MonitorInfo[m->count]));
+	++m->count;
 	return true;
 }
 
-/*
-  If the measure needs to free resources before quitting.
-  The plugin can export Finalize function, which is called
-  when Rainmeter quits (or refreshes).
-*/
-void Finalize(HMODULE instance, UINT id)
+PLUGIN_EXPORT void Finalize(void* data)
 {
-	std::map<UINT, TYPE>::iterator i1 = g_Types.find(id);
-	if (i1 != g_Types.end())
-	{
-		g_Types.erase(i1);
-	}
-
-	std::map<UINT, UINT>::iterator i2 = g_Datas.find(id);
-	if (i2 != g_Datas.end())
-	{
-		g_Datas.erase(i2);
-	}
+	MeasureData* measure = (MeasureData*)data;
+	delete measure;
 }
 
-/*
-  Fills the buffer with OS version
-*/
-void GetOSVersion(WCHAR* buffer)
+LPCWSTR GetPlatformName()
 {
-	OSVERSIONINFOEX version;
-	version.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-	GetVersionEx((OSVERSIONINFO*)&version);
-
-	if (version.dwPlatformId == VER_PLATFORM_WIN32_NT)
+	OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
+	if (GetVersionEx((OSVERSIONINFO*)&osvi))
 	{
-		if (version.dwMajorVersion <= 4)
+		if (osvi.dwMajorVersion == 5)
 		{
-			wcscpy(buffer, L"Windows NT");
-		}
-		else if (version.dwMajorVersion == 5)
-		{
-			if (version.dwMinorVersion == 2)
+			if (osvi.dwMinorVersion == 2)
 			{
-				wcscpy(buffer, L"Windows 2003");
+				return L"Windows 2003";
 			}
-			else if (version.dwMinorVersion == 1)
+			else if (osvi.dwMinorVersion == 1)
 			{
-				wcscpy(buffer, L"Windows XP");
-			}
-			else if (version.dwMinorVersion == 0)
-			{
-				wcscpy(buffer, L"Windows 2000");
-			}
-			else
-			{
-				wcscpy(buffer, L"Unknown");
+				return L"Windows XP";
 			}
 		}
 		else
 		{
-			if (version.dwMinorVersion == 1 && version.wProductType == VER_NT_WORKSTATION)
+			if (osvi.dwMinorVersion == 1 && osvi.wProductType == VER_NT_WORKSTATION)
 			{
-				wcscpy(buffer, L"Windows 7");
+				return L"Windows 7";
 			}
-			else if (version.dwMinorVersion == 1 && version.wProductType != VER_NT_WORKSTATION)
+			else if (osvi.dwMinorVersion == 1 && osvi.wProductType != VER_NT_WORKSTATION)
 			{
-				wcscpy(buffer, L"Windows Server 2008 R2");
+				return L"Windows Server 2008 R2";
 			}
-			else if (version.dwMinorVersion == 0 && version.wProductType == VER_NT_WORKSTATION)
+			else if (osvi.dwMinorVersion == 0 && osvi.wProductType == VER_NT_WORKSTATION)
 			{
-				wcscpy(buffer, L"Windows Vista");
+				return L"Windows Vista";
 			}
-			else if (version.dwMinorVersion == 0 && version.wProductType != VER_NT_WORKSTATION)
+			else if (osvi.dwMinorVersion == 0 && osvi.wProductType != VER_NT_WORKSTATION)
 			{
-				wcscpy(buffer, L"Windows Server 2008");
-			}
-			else
-			{
-				wcscpy(buffer, L"Unknown");
+				return L"Windows Server 2008";
 			}
 		}
 	}
-	else
-	{
-		if (version.dwMinorVersion < 10)
-		{
-			wcscpy(buffer, L"Windows 95");
-		}
-		else if (version.dwMinorVersion < 90)
-		{
-			wcscpy(buffer, L"Windows 98");
-		}
-		else
-		{
-			wcscpy(buffer, L"Windows ME");
-		}
-	}
-}
 
-void GetOSBits(WCHAR* buffer)
-{
-	SYSTEM_INFO systemInfo = {0};
-	GetNativeSystemInfo(&systemInfo);
-
-	if (systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ||
-		systemInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_IA64)
-	{
-		wcscpy(buffer, L"64");
-	}
-	else
-	{
-		wcscpy(buffer, L"32");
-	}
-}
-
-/*
-  Tests if there is a RAS connection or not. Don't know
-  If this works or not (especially on Win9x):-(
-*/
-BOOL CheckConnection()
-{
-	static HRASCONN g_hRasConn=NULL;
-	RASCONNSTATUS rasStatus;
-	LPRASCONN lpRasConn=NULL;
-	DWORD cbBuf=0;
-	DWORD cConn=1;
-	DWORD dwRet=0;
-
-	if (g_hRasConn==NULL) {
-		// Enumerate connections
-		cbBuf=sizeof(RASCONN);
-		if (((lpRasConn=(LPRASCONN)malloc((UINT)cbBuf))!= NULL)) {
-			lpRasConn->dwSize=sizeof(RASCONN);
-			if (0==RasEnumConnections(lpRasConn, &cbBuf, &cConn)) {
-				if (cConn!=0) {
-					g_hRasConn=lpRasConn->hrasconn;
-				}
-			}
-			free(lpRasConn);
-		}
-	}
-
-	if (g_hRasConn!=NULL) {
-		// get connection status
-		rasStatus.dwSize=sizeof(RASCONNSTATUS);
-		dwRet=RasGetConnectStatus(g_hRasConn, &rasStatus );
-		if (dwRet==0) {
-			// Check for connection
-			if (rasStatus.rasconnstate==RASCS_Connected) return TRUE;
-		} else {
-			g_hRasConn=NULL;
-		}
-	}
-
-	return FALSE;
-}
-
-UINT GetPluginVersion()
-{
-	return 1004;
-}
-
-LPCTSTR GetPluginAuthor()
-{
-	return L"Rainy (rainy@iki.fi) - Additions by Mordred (kbuffington@gmail.com)";
+	return L"Unknown";
 }
