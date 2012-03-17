@@ -34,6 +34,11 @@ public:
 	{
 	}
 
+	CRawString(const CRawString& rhs) :
+		m_String(str_alloc(rhs.c_str()))
+	{
+	}
+
 	~CRawString()
 	{
 		clear();
@@ -76,10 +81,6 @@ public:
 	}
 
 private:
-	CRawString(const CRawString& p)
-	{
-	}
-
 	WCHAR* str_alloc(const WCHAR* str)
 	{
 		return str ? _wcsdup(str) : NULL;
