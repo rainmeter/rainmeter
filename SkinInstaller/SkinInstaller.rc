@@ -1,5 +1,5 @@
+#include <Windows.h>
 #include "resource.h"
-#include "windows.h"
 #include "../Version.h"
 
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
@@ -11,7 +11,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3.0.0.0
+ FILEVERSION 3,0,0,0
  PRODUCTVERSION PRODUCTVER
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -22,11 +22,11 @@ VS_VERSION_INFO VERSIONINFO
  FILEOS 0x4L
  FILETYPE 0x1L
  FILESUBTYPE 0x0L
-BEGIN
+{
     BLOCK "StringFileInfo"
-    BEGIN
+    {
         BLOCK "040904E4"
-        BEGIN
+        {
             VALUE "FileDescription", "Rainstaller"
             VALUE "FileVersion", "3.0.0.0"
             VALUE "InternalName", "Rainstaller"
@@ -38,13 +38,13 @@ BEGIN
 #else
             VALUE "ProductVersion", STRPRODUCTVER " (32-bit)"
 #endif //_WIN64
-        END
-    END
+        }
+    }
     BLOCK "VarFileInfo"
-    BEGIN
+    {
         VALUE "Translation", 0x409, 1252
-    END
-END
+    }
+}
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -55,29 +55,29 @@ IDD_BACKUP_DIALOG DIALOGEX 0, 0, 280, 120
 STYLE DS_CENTER | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Backup Rainmeter"
 FONT 8, "MS Shell Dlg 2"
-BEGIN
+{
     CONTROL         "", IDC_BACKUP_TAB, "SysTabControl32", TCS_TABS | TCS_FIXEDWIDTH, 6, 6, 268, 91
     DEFPUSHBUTTON   "Start backup", IDC_BACKUP_BACKUP_BUTTON, 149, 101, 70, 14
     PUSHBUTTON      "Close", IDCLOSE, 224, 101, 50, 14
-END
+}
 
 IDD_BACKUP_TABDIALOG DIALOGEX 15, 30, 250, 58
 STYLE DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
 FONT 8, "MS Shell Dlg 2"
-BEGIN
+{
     LTEXT           "A backup allows you to save a complete copy of your setup, including skins and statistics.\n\nThe backup will be created at:", IDC_BACKUP_DESCRIPTION_TEXT, 0, 0, 245, 39
     EDITTEXT        IDC_BACKUP_FILE_TEXT, 0, 42, 220, 14, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "...", IDC_BACKUP_BROWSE_BUTTON, 225, 42, 25, 14, WS_TABSTOP
 
     LTEXT           "Backup in progress...\n\nThis may take several minutes to complete.", IDC_BACKUP_INPROGRESS_TEXT, 0, 0, 245, 39, NOT WS_VISIBLE
     CONTROL         "", IDC_BACKUP_PROGRESS, "msctls_progress32", PBS_MARQUEE | NOT WS_VISIBLE | WS_BORDER, 0, 42, 250, 11
-END
+}
 
 IDD_INSTALLER_DIALOG DIALOGEX 0, 0, 266, 240
 STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Rainstaller"
 FONT 8, "MS Shell Dlg 2"
-BEGIN
+{
     CONTROL         IDB_INSTALLER, IDC_BITMAP, STATIC, SS_BITMAP | WS_CHILD | WS_VISIBLE, 0, 0, 266, 37
     CONTROL         "", IDC_STATIC, STATIC, SS_ETCHEDHORZ | WS_CHILD | WS_VISIBLE, 0, 37, 270, 1
     GROUPBOX        "", IDC_STATIC, 7, 39, 252, 44
@@ -106,13 +106,13 @@ BEGIN
     CONTROL         "", IDC_SEPERATOR, STATIC, SS_ETCHEDHORZ | WS_CHILD | WS_VISIBLE, 0, 204, 270, 1
     ICON            "", IDC_WARNING_ICON, 8, 212, 20, 20
     LTEXT           "Components marked with an asterisk (*) will be replaced. Backups will be made should you want to restore.", IDC_BACKUP_LABEL, 38, 213, 220, 18
-END
+}
 
 IDD_RUNAS DIALOGEX 0, 0, 250, 145
 STYLE DS_MODALFRAME | DS_CENTER | DS_NOIDLEMSG | DS_SETFOREGROUND | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Run As..."
 FONT 8, "MS Shell Dlg 2"
-BEGIN
+{
     ICON            "", IDC_KEY_ICON, 7, 8, 20, 20
     LTEXT           "You do not have the necessary permissions to install the components. You need to run this program as a different administrative user in order to continue with the installation.", IDC_HELPTEXT, 38, 7, 204, 35
     CONTROL         "&Current user", IDC_CURRENT_BUTTON, "Button", BS_AUTORADIOBUTTON | WS_DISABLED, 20, 49, 218, 10
@@ -123,7 +123,7 @@ BEGIN
     EDITTEXT        IDC_PASSWORD, 63, 100, 175, 14, ES_PASSWORD | ES_AUTOHSCROLL
     DEFPUSHBUTTON   "&OK", IDOK, 132, 122, 50, 14
     PUSHBUTTON      "Ca&ncel", IDCANCEL, 188, 122, 50, 14
-END
+}
 
 /////////////////////////////////////////////////////////////////////////////
 //
