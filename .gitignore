@@ -1,8 +1,10 @@
 /TestBench
+/ipch
 bin
 obj
 x32
 x64
+Certificate.bat
 *.exe
 *.opensdf
 *.sdf
