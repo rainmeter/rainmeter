@@ -220,42 +220,43 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 
-	static WCHAR buffer[4096];
-	DWORD len = 4095;
+	static WCHAR sBuffer[256];
+	DWORD sBufferLen = _countof(sBuffer);
+
+	BYTE tmpBuffer[7168];
+	ULONG tmpBufferLen = _countof(tmpBuffer);
 
 	auto convertToWide = [&](LPCSTR str)->LPCWSTR
 	{
-		int strLen = (int)strlen(str);
-		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
-		MultiByteToWideChar(CP_ACP, 0, str, strLen, buffer, min(bufLen, 4095));
-		return buffer;
+		MultiByteToWideChar(CP_ACP, 0, str, -1, sBuffer, 256);
+		return sBuffer;
 	};
 
 	switch (measure->type)
 	{
 	case MEASURE_COMPUTER_NAME:
-		GetComputerName(buffer, &len);
-		return buffer;
+		GetComputerName(sBuffer, &sBufferLen);
+		return sBuffer;
 
 	case MEASURE_USER_NAME:
-		GetUserName(buffer, &len);
-		return buffer;
+		GetUserName(sBuffer, &sBufferLen);
+		return sBuffer;
 
 	case MEASURE_WORK_AREA:
-		wsprintf(buffer, L"%i x %i", GetSystemMetrics(SM_CXFULLSCREEN), GetSystemMetrics(SM_CYFULLSCREEN));
-		return buffer;
+		wsprintf(sBuffer, L"%i x %i", GetSystemMetrics(SM_CXFULLSCREEN), GetSystemMetrics(SM_CYFULLSCREEN));
+		return sBuffer;
 
 	case MEASURE_SCREEN_SIZE:
-		wsprintf(buffer, L"%i x %i", GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
-		return buffer;
+		wsprintf(sBuffer, L"%i x %i", GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+		return sBuffer;
 
 	case MEASURE_OS_VERSION:
 		return GetPlatformName();
 
 	case MEASURE_ADAPTER_DESCRIPTION:
-		if (ERROR_SUCCESS == GetAdaptersInfo((IP_ADAPTER_INFO*)buffer, &len))
+		if (ERROR_SUCCESS == GetAdaptersInfo((IP_ADAPTER_INFO*)tmpBuffer, &tmpBufferLen))
 		{
-			PIP_ADAPTER_INFO info = (IP_ADAPTER_INFO*)buffer;
+			PIP_ADAPTER_INFO info = (IP_ADAPTER_INFO*)tmpBuffer;
 			int i = 0;
 			while (info)
 			{
@@ -271,9 +272,9 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		break;
 
 	case MEASURE_IP_ADDRESS:
-		if (NO_ERROR == GetIpAddrTable((PMIB_IPADDRTABLE)buffer, &len, FALSE))
+		if (NO_ERROR == GetIpAddrTable((PMIB_IPADDRTABLE)tmpBuffer, &tmpBufferLen, FALSE))
 		{
-			PMIB_IPADDRTABLE ipTable = (PMIB_IPADDRTABLE)buffer;
+			PMIB_IPADDRTABLE ipTable = (PMIB_IPADDRTABLE)tmpBuffer;
 			if (measure->data >= 1000)
 			{
 				measure->data = measure->data - 999;
@@ -284,37 +285,37 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 					if (measure->data == 0)
 					{
 						DWORD ip = ipTable->table[i].dwAddr;
-						wsprintf(buffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
-						return buffer;
+						wsprintf(sBuffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
+						return sBuffer;
 					}
 				}
 			}
 			else if (measure->data < ipTable->dwNumEntries)
 			{
 				DWORD ip = ipTable->table[measure->data].dwAddr;
-				wsprintf(buffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
-				return buffer;
+				wsprintf(sBuffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
+				return sBuffer;
 			}
 		}
 		return L"";
 
 	case MEASURE_NET_MASK:
-		if (NO_ERROR == GetIpAddrTable((PMIB_IPADDRTABLE)buffer, &len, FALSE))
+		if (NO_ERROR == GetIpAddrTable((PMIB_IPADDRTABLE)tmpBuffer, &tmpBufferLen, FALSE))
 		{
-			PMIB_IPADDRTABLE ipTable = (PMIB_IPADDRTABLE)buffer;
+			PMIB_IPADDRTABLE ipTable = (PMIB_IPADDRTABLE)tmpBuffer;
 			if (measure->data < ipTable->dwNumEntries)
 			{
 				DWORD ip = ipTable->table[measure->data].dwMask;
-				wsprintf(buffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
-				return buffer;
+				wsprintf(sBuffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
+				return sBuffer;
 			}
 		}
 		break;
 
 	case MEASURE_GATEWAY_ADDRESS:
-		if (ERROR_SUCCESS == GetAdaptersInfo((IP_ADAPTER_INFO*)buffer, &len))
+		if (ERROR_SUCCESS == GetAdaptersInfo((IP_ADAPTER_INFO*)tmpBuffer, &tmpBufferLen))
 		{
-			PIP_ADAPTER_INFO info = (IP_ADAPTER_INFO*)buffer;
+			PIP_ADAPTER_INFO info = (IP_ADAPTER_INFO*)tmpBuffer;
 			int i = 0;
 			while (info)
 			{
@@ -329,25 +330,25 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		break;
 
 	case MEASURE_HOST_NAME:
-		if (ERROR_SUCCESS == GetNetworkParams((PFIXED_INFO)buffer, &len))
+		if (ERROR_SUCCESS == GetNetworkParams((PFIXED_INFO)tmpBuffer, &tmpBufferLen))
 		{
-			PFIXED_INFO info = (PFIXED_INFO)buffer;
+			PFIXED_INFO info = (PFIXED_INFO)tmpBuffer;
 			return convertToWide(info->HostName);
 		}
 		break;
 
 	case MEASURE_DOMAIN_NAME:
-		if (ERROR_SUCCESS == GetNetworkParams((PFIXED_INFO)buffer, &len))
+		if (ERROR_SUCCESS == GetNetworkParams((PFIXED_INFO)tmpBuffer, &tmpBufferLen))
 		{
-			PFIXED_INFO info = (PFIXED_INFO)buffer;
+			PFIXED_INFO info = (PFIXED_INFO)tmpBuffer;
 			return convertToWide(info->DomainName);
 		}
 		break;
 
 	case MEASURE_DNS_SERVER:
-		if (ERROR_SUCCESS == GetNetworkParams((PFIXED_INFO)buffer, &len))
+		if (ERROR_SUCCESS == GetNetworkParams((PFIXED_INFO)tmpBuffer, &tmpBufferLen))
 		{
-			PFIXED_INFO info = (PFIXED_INFO)buffer;
+			PFIXED_INFO info = (PFIXED_INFO)tmpBuffer;
 			if (info->CurrentDnsServer)
 			{
 				return convertToWide(info->CurrentDnsServer->IpAddress.String);
