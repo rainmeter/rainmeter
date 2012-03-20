@@ -9,4 +9,4 @@ To obtain the source code:
 *   Use svn (`svn checkout https://github.com/rainmeter/rainmeter/trunk rainmeter`)
 *   Download the [current snapshot](https://github.com/rainmeter/rainmeter/zipball/master) as a .zip archive.
 
-Refer to /Build/Instructions.txt for build instructions.
+Refer to `/Build/Instructions.txt` for build instructions.
