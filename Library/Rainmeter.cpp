@@ -510,9 +510,7 @@ void CRainmeter::Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow)
 		if (!meterWindow) return;
 
 		// Add the config filepath to the args
-		std::wstring path;
-		path += m_SkinPath;
-		path += meterWindow->GetSkinName();
+		std::wstring path = m_SkinPath + meterWindow->GetSkinName();
 		path += L'\\';
 		path += meterWindow->GetSkinIniFile();
 		subStrings.push_back(std::move(path));
@@ -610,7 +608,7 @@ void CRainmeter::Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow)
 				WritePrivateProfileString(NULL, NULL, NULL, iniWrite);  // FLUSH
 
 				// Copy the file back
-				if (!CSystem::CopyFiles(iniWrite, iniFile))
+				if (!CSystem::CopyFiles(strIniWrite, strIniFile))
 				{
 					LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to copy temporary file to original filepath: %s (Temp: %s)", iniFile, iniWrite);
 				}
@@ -621,7 +619,7 @@ void CRainmeter::Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow)
 			}
 
 			// Remove a temporary file
-			CSystem::RemoveFile(iniWrite);
+			CSystem::RemoveFile(strIniWrite);
 		}
 		else
 		{
@@ -747,21 +745,13 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 
 	if (!m_Window) return 1;
 
-	WCHAR* tmpSzPath = new WCHAR[MAX_LINE_LENGTH];
-	GetModuleFileName(m_Instance, tmpSzPath, MAX_LINE_LENGTH);
+	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
+	GetModuleFileName(m_Instance, buffer, MAX_LINE_LENGTH);
 
 	// Remove the module's name from the path
-	WCHAR* pos = wcsrchr(tmpSzPath, L'\\');
-	if (pos)
-	{
-		*(pos + 1) = L'\0';
-	}
-	else
-	{
-		tmpSzPath[0] = L'\0';
-	}
+	WCHAR* pos = wcsrchr(buffer, L'\\');
 
-	m_Path = tmpSzPath;
+	m_Path.assign(buffer, pos ? pos - buffer + 1 : 0);
 
 	InitalizeLitestep();
 
@@ -831,11 +821,11 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 
 	// Set the log file and stats file location
 	m_LogFile = m_StatsFile = m_IniFile;
-	size_t logFileLen = m_LogFile.length();
-	if (logFileLen > 4 && _wcsicmp(m_LogFile.c_str() + (logFileLen - 4), L".ini") == 0)
+	size_t len = m_LogFile.length();
+	if (len > 4 && _wcsicmp(m_LogFile.c_str() + (len - 4), L".ini") == 0)
 	{
-		m_LogFile.replace(logFileLen - 4, 4, L".log");
-		m_StatsFile.replace(logFileLen - 4, 4, L".stats");
+		m_LogFile.replace(len - 4, 4, L".log");
+		m_StatsFile.replace(len - 4, 4, L".stats");
 	}
 	else
 	{
@@ -849,7 +839,7 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 
 	// Determine the language resource to load
 	std::wstring resource = m_Path + L"Languages\\";
-	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) == 0)
+	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", buffer, MAX_LINE_LENGTH, m_IniFile.c_str()) == 0)
 	{
 		// Use whatever the user selected for the installer
 		DWORD size = MAX_LINE_LENGTH;
@@ -857,19 +847,19 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &hKey) == ERROR_SUCCESS)
 		{
 			DWORD type = 0;
-			if (RegQueryValueEx(hKey, L"Language", NULL, &type, (LPBYTE)tmpSzPath, (LPDWORD)&size) != ERROR_SUCCESS ||
+			if (RegQueryValueEx(hKey, L"Language", NULL, &type, (LPBYTE)buffer, (LPDWORD)&size) != ERROR_SUCCESS ||
 				type != REG_SZ)
 			{
-				tmpSzPath[0] = L'\0';
+				buffer[0] = L'\0';
 			}
 			RegCloseKey(hKey);
 		}
 	}
-	if (tmpSzPath[0] != L'\0')
+	if (buffer[0] != L'\0')
 	{
 		// Try selected language
-		m_ResourceLCID = wcstoul(tmpSzPath, NULL, 10);
-		resource += tmpSzPath;
+		m_ResourceLCID = wcstoul(buffer, NULL, 10);
+		resource += buffer;
 		resource += L".dll";
 
 		m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
@@ -901,14 +891,15 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 	m_SkinPath += L"Skins\\";
 
 	// Read the skin folder from the ini file
-	if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", tmpSzPath, MAX_LINE_LENGTH, m_IniFile.c_str()) > 0)
+	len = GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, MAX_LINE_LENGTH, m_IniFile.c_str());
+	if (len > 0)
 	{
-		m_SkinPath = tmpSzPath;
+		m_SkinPath.assign(buffer, len);
 		ExpandEnvironmentVariables(m_SkinPath);
 
 		if (!m_SkinPath.empty())
 		{
-			if (!CSystem::IsPathSeparator(m_SkinPath[m_SkinPath.size() - 1]))
+			if (!CSystem::IsPathSeparator(m_SkinPath[m_SkinPath.length() - 1]))
 			{
 				m_SkinPath += L'\\';
 			}
@@ -917,12 +908,12 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 	else if (bDefaultIniLocation)
 	{
 		// If the skin path is not defined in the Rainmeter.ini file use My Documents/Rainmeter/Skins
-		tmpSzPath[0] = L'\0';
-		HRESULT hr = SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, tmpSzPath);
+		buffer[0] = L'\0';
+		HRESULT hr = SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, buffer);
 		if (SUCCEEDED(hr))
 		{
 			// Make the folders if they don't exist yet
-			m_SkinPath = tmpSzPath;
+			m_SkinPath = buffer;
 			m_SkinPath += L"\\Rainmeter";
 			CreateDirectory(m_SkinPath.c_str(), NULL);
 			m_SkinPath += L"\\Skins\\";
@@ -936,8 +927,10 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 				CSystem::CopyFiles(strFrom, strTo);
 
 				// Copy also the themes to the %APPDATA%
-				strFrom = std::wstring(m_Path + L"Themes\\*.*");
-				strTo = std::wstring(GetSettingsPath() + L"Themes\\");
+				strFrom = m_Path;
+				strFrom += L"Themes\\*.*";
+				strTo = GetSettingsPath();
+				strTo += L"Themes\\";
 				CreateDirectory(strTo.c_str(), NULL);
 				CSystem::CopyFiles(strFrom, strTo);
 			}
@@ -950,8 +943,8 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 		WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), m_IniFile.c_str());
 	}
 
-	delete [] tmpSzPath;
-	tmpSzPath = NULL;
+	delete [] buffer;
+	buffer = NULL;
 
 	LogWithArgs(LOG_NOTICE, L"Path: %s", m_Path.c_str());
 	LogWithArgs(LOG_NOTICE, L"IniFile: %s", m_IniFile.c_str());
