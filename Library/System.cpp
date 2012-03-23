@@ -108,9 +108,9 @@ void CSystem::Initialize(HINSTANCE instance)
 	c_Monitors.monitors.reserve(4);
 	SetMultiMonitorInfo();
 
-	WCHAR directory[MAX_PATH] = {0};
-	GetCurrentDirectory(MAX_PATH, directory);
-	c_WorkingDirectory = directory;
+	WCHAR directory[MAX_PATH];
+	DWORD len = GetCurrentDirectory(MAX_PATH, directory);
+	c_WorkingDirectory.assign(directory, len <= MAX_PATH ? len : 0);
 
 	c_WinEventHook = SetWinEventHook(
 		EVENT_SYSTEM_FOREGROUND,
@@ -1113,9 +1113,10 @@ void CSystem::ResetWorkingDirectory()
 	WCHAR directory[MAX_PATH] = {0};
 	GetCurrentDirectory(MAX_PATH, directory);
 
-	if (_wcsicmp(directory, c_WorkingDirectory.c_str()) != 0)
+	const WCHAR* workDir = c_WorkingDirectory.c_str();
+	if (_wcsicmp(directory, workDir) != 0)
 	{
-		SetCurrentDirectory(c_WorkingDirectory.c_str());
+		SetCurrentDirectory(workDir);
 	}
 }
 

@@ -1727,7 +1727,7 @@ void CMeterWindow::ScreenToWindow()
 		screenx = monitors[m_WindowXScreen-1].screen.left;
 		screenw = monitors[m_WindowXScreen-1].screen.right - monitors[m_WindowXScreen-1].screen.left;
 	}
-	if (m_WindowXFromRight == true)
+	if (m_WindowXFromRight)
 	{
 		pixel = (screenx + screenw) - m_ScreenX;
 		pixel -= m_AnchorScreenX;
@@ -1737,7 +1737,7 @@ void CMeterWindow::ScreenToWindow()
 		pixel = m_ScreenX - screenx;
 		pixel += m_AnchorScreenX;
 	}
-	if (m_WindowXPercentage == true)
+	if (m_WindowXPercentage)
 	{
 		num = 100.0f * (float)pixel / (float)screenw;
 		_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", num);
@@ -1746,11 +1746,11 @@ void CMeterWindow::ScreenToWindow()
 	{
 		_itow_s(pixel, buffer, 10);
 	}
-	if (m_WindowXFromRight == true)
+	if (m_WindowXFromRight)
 	{
 		_snwprintf_s(buffer, _TRUNCATE, L"%sR", buffer);
 	}
-	if (m_WindowXScreenDefined == true)
+	if (m_WindowXScreenDefined)
 	{
 		_snwprintf_s(buffer, _TRUNCATE, L"%s@%i", buffer, m_WindowXScreen);
 	}
@@ -1768,7 +1768,7 @@ void CMeterWindow::ScreenToWindow()
 		screeny = monitors[m_WindowYScreen-1].screen.top;
 		screenh = monitors[m_WindowYScreen-1].screen.bottom - monitors[m_WindowYScreen-1].screen.top;
 	}
-	if (m_WindowYFromBottom == true)
+	if (m_WindowYFromBottom)
 	{
 		pixel = (screeny + screenh) - m_ScreenY;
 		pixel -= m_AnchorScreenY;
@@ -1778,7 +1778,7 @@ void CMeterWindow::ScreenToWindow()
 		pixel = m_ScreenY - screeny;
 		pixel += m_AnchorScreenY;
 	}
-	if (m_WindowYPercentage == true)
+	if (m_WindowYPercentage)
 	{
 		num = 100.0f * (float)pixel / (float)screenh;
 		_snwprintf_s(buffer, _TRUNCATE, L"%.5f%%", num);
@@ -1787,11 +1787,11 @@ void CMeterWindow::ScreenToWindow()
 	{
 		_itow_s(pixel, buffer, 10);
 	}
-	if (m_WindowYFromBottom == true)
+	if (m_WindowYFromBottom)
 	{
 		_snwprintf_s(buffer, _TRUNCATE, L"%sB", buffer);
 	}
-	if (m_WindowYScreenDefined == true)
+	if (m_WindowYScreenDefined)
 	{
 		_snwprintf_s(buffer, _TRUNCATE, L"%s@%i", buffer, m_WindowYScreen);
 	}
