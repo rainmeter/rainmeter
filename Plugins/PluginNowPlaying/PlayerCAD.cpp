@@ -315,7 +315,14 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 						break;
 
 					case 11:
-						player->m_CoverPath.assign(data, pos - data);
+						if (*data == L' ' && player->m_Measures & MEASURE_COVER)
+						{
+							player->FindCover();
+						}
+						else
+						{
+							player->m_CoverPath.assign(data, pos - data);
+						}
 						break;
 					}
 
