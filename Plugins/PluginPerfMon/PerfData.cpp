@@ -54,6 +54,8 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	measure->counterName = RmReadString(rm, L"PerfMonCounter", L"");
 	measure->instanceName = RmReadString(rm, L"PerfMonInstance", L"");
 	measure->difference = RmReadInt(rm, L"PerfMonDifference", 1) == 1;
+
+	*maxValue = 0.0;
 }
 
 PLUGIN_EXPORT double Update(void* data)

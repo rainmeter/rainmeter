@@ -39,7 +39,6 @@ CMeasurePlugin::CMeasurePlugin(CMeterWindow* meterWindow, const WCHAR* name) : C
 	m_GetStringFunc(),
 	m_ExecuteBangFunc()
 {
-	m_MaxValue = 0.0;
 }
 
 /*
@@ -206,23 +205,24 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			m_Update2 = true;
 		}
 
-		double maxValue = 0;
+		double oldMaxValue = m_MaxValue;
+
 		if (initializeFunc)
 		{
-			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, parser.GetFilename().c_str(), section, m_ID);
+			m_MaxValue = ((INITIALIZE)initializeFunc)(m_Plugin, parser.GetFilename().c_str(), section, m_ID);
 		}
 
 		const std::wstring& szMaxValue = parser.ReadString(section, L"MaxValue", L"");
-		if (szMaxValue.empty())
+		if (!szMaxValue.empty())
 		{
-			m_MaxValue = maxValue;
+			m_MaxValue = oldMaxValue;
 		}
+	}
 
-		if (m_MaxValue == 0)
-		{
-			m_MaxValue = 1;
-			m_LogMaxValue = true;
-		}
+	if (m_MaxValue == 0.0)
+	{
+		m_MaxValue = 1.0;
+		m_LogMaxValue = true;
 	}
 
 	// Reset to default
