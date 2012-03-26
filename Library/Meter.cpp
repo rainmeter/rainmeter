@@ -262,10 +262,11 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	std::wstring oldStyleX = m_StyleX;
 	std::wstring oldStyleY = m_StyleY;
+	std::wstring oldStyleHidden = m_StyleHidden;
 
 	std::wstring coord = parser.ReadString(section, L"X", L"0");
 	m_StyleX = parser.GetLastUsedStyle();
-	if (!m_Initialized || parser.GetLastReplaced() || !parser.GetLastDefaultUsed() && wcscmp(m_StyleX.c_str(), oldStyleX.c_str()) != 0)
+	if (!m_Initialized || parser.GetLastReplaced() || wcscmp(m_StyleX.c_str(), oldStyleX.c_str()) != 0)
 	{
 		if (!coord.empty())
 		{
@@ -304,7 +305,7 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	coord = parser.ReadString(section, L"Y", L"0");
 	m_StyleY = parser.GetLastUsedStyle();
-	if (!m_Initialized || parser.GetLastReplaced() || !parser.GetLastDefaultUsed() &&  wcscmp(m_StyleY.c_str(), oldStyleY.c_str()) != 0)
+	if (!m_Initialized || parser.GetLastReplaced() || wcscmp(m_StyleY.c_str(), oldStyleY.c_str()) != 0)
 	{
 		if (!coord.empty())
 		{
@@ -347,22 +348,16 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_H = (int)parser.ReadFormula(section, L"H", 1.0);
 	m_HDefined = parser.GetLastValueDefined();
 
+	const std::wstring& hidden = parser.ReadString(section, L"Hidden", L"0");
+	m_StyleHidden = parser.GetLastUsedStyle();
+	if (!m_Initialized || parser.GetLastReplaced() || wcscmp(m_StyleHidden.c_str(), oldStyleHidden.c_str()) != 0)
+	{
+		m_Hidden = 0!=parser.ParseInt(hidden.c_str(), 0);
+	}
+
 	if (!m_Initialized)
 	{
 		m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
-
-		m_Hidden = 0!=parser.ReadInt(section, L"Hidden", 0);
-	}
-	else
-	{
-		std::wstring oldStyleHidden = m_StyleHidden;
-
-		const std::wstring& result = parser.ReadString(section, L"Hidden", L"0");
-		m_StyleHidden = parser.GetLastUsedStyle();
-		if (parser.GetLastReplaced() || !parser.GetLastDefaultUsed() && wcscmp(m_StyleHidden.c_str(), oldStyleHidden.c_str()) != 0)
-		{
-			m_Hidden = 0!=parser.ParseInt(result.c_str(), 0);
-		}
 	}
 
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
