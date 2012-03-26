@@ -704,10 +704,10 @@ RainmeterIniDoesntExistLabel:
 	SetOutPath "$INSTDIR\Skins"
 	RMDir /r "$INSTDIR\Skins\illustro"
 	Delete "$INSTDIR\Skins\*.txt"
-	File /r /x .svn ".\Skins\*.*"
+	File /r /x .svn "..\Skins\*.*"
 
 	SetOutPath "$INSTDIR\Themes"
-	File /r /x .svn ".\Themes\*.*"
+	File /r /x .svn "..\Themes\*.*"
 
 	SetOutPath "$INSTDIR"
 
