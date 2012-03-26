@@ -257,7 +257,6 @@
     <ClInclude Include="ObjInst.h" />
     <ClInclude Include="ObjList.h" />
     <ClInclude Include="PerfCntr.h" />
-    <ClInclude Include="PerfData.h" />
     <ClInclude Include="PerfObj.h" />
     <ClInclude Include="PerfSnap.h" />
     <ClInclude Include="Titledb.h" />

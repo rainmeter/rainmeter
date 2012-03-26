@@ -40,7 +40,7 @@ struct MeasureData
 	MeasureData() :
 		oldValue(),
 		difference(false),
-		firstTime(false)
+		firstTime(true)
 	{
 	}
 };
@@ -56,29 +56,41 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
 	MeasureData* measure = (MeasureData*)data;
+	bool changed = false;
 
 	LPCWSTR value = RmReadString(rm, L"PerfMonObject", L"");
 	if (_wcsicmp(value, measure->objectName.c_str()) != 0)
 	{
 		measure->objectName = value;
-		measure->oldValue = 0;
+		changed = true;
 	}
 
 	value = RmReadString(rm, L"PerfMonCounter", L"");
 	if (_wcsicmp(value, measure->counterName.c_str()) != 0)
 	{
-		measure->objectName = value;
-		measure->oldValue = 0;
+		measure->counterName = value;
+		changed = true;
 	}
 
 	value = RmReadString(rm, L"PerfMonInstance", L"");
 	if (_wcsicmp(value, measure->instanceName.c_str()) != 0)
 	{
-		measure->objectName = value;
-		measure->oldValue = 0;
+		measure->instanceName = value;
+		changed = true;
 	}
 
-	measure->difference = RmReadInt(rm, L"PerfMonDifference", 1) == 1;
+	bool diff = RmReadInt(rm, L"PerfMonDifference", 1) == 1;
+	if (diff != measure->difference)
+	{
+		measure->difference = diff;
+		changed = true;
+	}
+
+	if (changed)
+	{
+		measure->oldValue = 0;
+		measure->firstTime = true;
+	}
 
 	*maxValue = 0.0;
 }
