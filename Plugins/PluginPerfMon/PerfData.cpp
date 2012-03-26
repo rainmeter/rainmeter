@@ -36,6 +36,13 @@ struct MeasureData
 	ULONGLONG oldValue;
 	bool difference;
 	bool firstTime;
+
+	MeasureData() :
+		oldValue(),
+		difference(false),
+		firstTime(false)
+	{
+	}
 };
 
 ULONGLONG GetPerfData(PCTSTR ObjectName, PCTSTR InstanceName, PCTSTR CounterName);
@@ -50,9 +57,27 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
 	MeasureData* measure = (MeasureData*)data;
 
-	measure->objectName = RmReadString(rm, L"PerfMonObject", L"");
-	measure->counterName = RmReadString(rm, L"PerfMonCounter", L"");
-	measure->instanceName = RmReadString(rm, L"PerfMonInstance", L"");
+	LPCWSTR value = RmReadString(rm, L"PerfMonObject", L"");
+	if (_wcsicmp(value, measure->objectName.c_str()) != 0)
+	{
+		measure->objectName = value;
+		measure->oldValue = 0;
+	}
+
+	value = RmReadString(rm, L"PerfMonCounter", L"");
+	if (_wcsicmp(value, measure->counterName.c_str()) != 0)
+	{
+		measure->objectName = value;
+		measure->oldValue = 0;
+	}
+
+	value = RmReadString(rm, L"PerfMonInstance", L"");
+	if (_wcsicmp(value, measure->instanceName.c_str()) != 0)
+	{
+		measure->objectName = value;
+		measure->oldValue = 0;
+	}
+
 	measure->difference = RmReadInt(rm, L"PerfMonDifference", 1) == 1;
 
 	*maxValue = 0.0;
