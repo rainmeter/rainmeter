@@ -77,17 +77,18 @@ void CPlayerCAD::Initialize()
 	RegisterClass(&wc);
 
 	// Create reciever window
-	m_Window = CreateWindow(L"NowPlayingCADClass",
-							L"CD Art Display 1.x Class",
-							WS_DISABLED,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							NULL,
-							NULL,
-							g_Instance,
-							this);
+	m_Window = CreateWindow(
+		L"NowPlayingCADClass",
+		L"CD Art Display 1.x Class",
+		WS_DISABLED,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		NULL,
+		NULL,
+		g_Instance,
+		this);
 
 	// Add WM_USER/WM_COPYDATA to allowed messages from lower level processes
 	HMODULE hUser32 = LoadLibrary(L"user32.dll");
@@ -315,7 +316,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 						break;
 
 					case 11:
-						if (*data == L' ' && player->m_Measures & MEASURE_COVER)
+						if (*data == L' ')
 						{
 							player->FindCover();
 						}

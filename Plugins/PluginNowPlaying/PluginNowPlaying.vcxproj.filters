@@ -246,9 +246,6 @@
     <ClCompile Include="PlayerCAD.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PlayerFoobar.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PlayerITunes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -295,9 +292,6 @@
     </ClInclude>
     <ClInclude Include="SDKs\CAD\cad_sdk.h">
       <Filter>SDKs\CD Art Display</Filter>
-    </ClInclude>
-    <ClInclude Include="PlayerFoobar.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PlayerCAD.h">
       <Filter>Header Files</Filter>

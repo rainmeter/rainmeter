@@ -30,7 +30,7 @@ CPlayer::CPlayer() :
 	m_TrackCount(),
 	m_Measures(),
 	m_State(),
-	m_Number(1),
+	m_Number(),
 	m_Year(),
 	m_Shuffle(false),
 	m_Repeat(false),

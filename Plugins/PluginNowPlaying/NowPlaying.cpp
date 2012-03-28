@@ -21,7 +21,6 @@
 #include "Internet.h"
 #include "PlayerAIMP.h"
 #include "PlayerCAD.h"
-#include "PlayerFoobar.h"
 #include "PlayerITunes.h"
 #include "PlayerSpotify.h"
 #include "PlayerWinamp.h"
@@ -148,7 +147,17 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		}
 		else if (_wcsicmp(L"foobar2000", str) == 0)
 		{
-			parent->player = CPlayerFoobar::Create();
+			HWND fooWindow = FindWindow(L"foo_rainmeter_class", NULL);
+			if (fooWindow)
+			{
+				const WCHAR* error = L"Your foobar2000 plugin is out of date.\n\nDo you want to update the plugin now?";
+				if (MessageBox(NULL, error, L"Rainmeter", MB_YESNO | MB_ICONINFORMATION | MB_TOPMOST) == IDYES)
+				{
+					ShellExecute(NULL, L"open", L"http://github.com/poiru/foo-cad#readme", NULL, NULL, SW_SHOWNORMAL);
+				}
+			}
+
+			parent->player = CPlayerCAD::Create();
 		}
 		else if (_wcsicmp(L"iTunes", str) == 0)
 		{

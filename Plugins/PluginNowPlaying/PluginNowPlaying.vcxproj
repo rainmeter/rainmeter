@@ -269,7 +269,6 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerAIMP.cpp" />
     <ClCompile Include="PlayerCAD.cpp" />
-    <ClCompile Include="PlayerFoobar.cpp" />
     <ClCompile Include="PlayerITunes.cpp" />
     <ClCompile Include="PlayerSpotify.cpp" />
     <ClCompile Include="PlayerWinamp.cpp" />
@@ -359,7 +358,6 @@
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerAIMP.h" />
     <ClInclude Include="PlayerCAD.h" />
-    <ClInclude Include="PlayerFoobar.h" />
     <ClInclude Include="PlayerITunes.h" />
     <ClInclude Include="PlayerSpotify.h" />
     <ClInclude Include="PlayerWinamp.h" />
