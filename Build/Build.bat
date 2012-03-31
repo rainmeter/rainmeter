@@ -7,8 +7,9 @@ set SUBWCREV=%PROGRAMFILES%\TortoiseSVN\bin\SubWCRev.exe
 set GIT=%PROGRAMFILES%\Git\bin\git.exe
 set VERSION=2.3.0
 set REVISION=1
+set ISBETA=true
 
-
+if "%1" == "RELEASE" set ISBETA=false
 if "%1" == "BUILDVERSION" goto BUILDVERSION
 echo Rainmeter Build
 echo ----------------------------------------------
@@ -25,11 +26,6 @@ if exist "%MAKENSIS%" goto NSISFOUND
 set MAKENSIS=%MAKENSIS:Program Files\=Program Files (x86)\%
 if not exist "%MAKENSIS%" echo ERROR: MakeNSIS.exe not found & goto END
 :NSISFOUND
-
-set ISBETA=true
-if "%1" == "RELEASE" (
-	set ISBETA=false
-)
 
 :BUILDVERSION
 
