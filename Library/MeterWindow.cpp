@@ -166,6 +166,11 @@ CMeterWindow::CMeterWindow(const std::wstring& config, const std::wstring& iniFi
 */
 CMeterWindow::~CMeterWindow()
 {
+	if (!m_OnCloseAction.empty())
+	{
+		m_Rainmeter->ExecuteCommand(m_OnCloseAction.c_str(), this);
+	}
+
 	WriteConfig();
 
 	// Kill the timer
@@ -2065,6 +2070,7 @@ bool CMeterWindow::ReadSkin()
 	m_MouseOverAction = m_Parser.ReadString(L"Rainmeter", L"MouseOverAction", L"", false);
 	m_MouseLeaveAction = m_Parser.ReadString(L"Rainmeter", L"MouseLeaveAction", L"", false);
 	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"", false);
+	m_OnCloseAction = m_Parser.ReadString(L"Rainmeter", L"OnCloseAction", L"", false);
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);

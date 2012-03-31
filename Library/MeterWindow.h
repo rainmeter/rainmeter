@@ -372,6 +372,7 @@ private:
 	std::wstring m_MouseOverAction;				// Action to run when mouse goes over the window
 	std::wstring m_MouseLeaveAction;			// Action to run when mouse leaves the window
 	std::wstring m_OnRefreshAction;				// Action to run when window is initialized
+	std::wstring m_OnCloseAction;				// Action to run when window is closed
 
 	bool m_MouseOver;
 
