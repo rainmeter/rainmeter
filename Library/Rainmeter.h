@@ -245,6 +245,7 @@ private:
 	void Bang_SkinMenu(const WCHAR* arg, CMeterWindow* meterWindow);
 	void Bang_TrayMenu();
 	void Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow);
+	void Bang_Log(const WCHAR* arg);
 
 	void ExecuteBang(const std::wstring& name, std::wstring& arg, CMeterWindow* meterWindow);
 

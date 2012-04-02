@@ -635,6 +635,44 @@ void CRainmeter::Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow)
 	}
 }
 
+/*
+** !Log bang
+**
+*/
+void CRainmeter::Bang_Log(const WCHAR* arg)
+{
+	std::vector<std::wstring> subStrings = ParseString(arg);
+
+	if (!subStrings.empty())
+	{
+		int level = LOG_NOTICE;
+
+		if (subStrings.size() > 1)
+		{
+			const WCHAR* type = subStrings[1].c_str();
+			if (_wcsicmp(type, L"ERROR") == 0)
+			{
+				level = LOG_ERROR;
+			}
+			else if (_wcsicmp(type, L"WARNING") == 0)
+			{
+				level = LOG_WARNING;
+			}
+			else if (_wcsicmp(type, L"DEBUG") == 0)
+			{
+				level = LOG_DEBUG;
+			}
+			else if (_wcsicmp(type, L"NOTICE") != 0)
+			{
+				Log(LOG_ERROR, L"!Log: Invalid type");
+				return;
+			}
+		}
+
+		Log(level, subStrings[0].c_str());
+	}
+}
+
 
 // -----------------------------------------------------------------------------------------------
 //
@@ -1934,6 +1972,10 @@ void CRainmeter::ExecuteBang(const std::wstring& name, std::wstring& arg, CMeter
 	else if (_wcsicmp(bang, L"ResetStats") == 0)
 	{
 		ResetStats();
+	}
+	else if (_wcsicmp(bang, L"Log") == 0)
+	{
+		Bang_Log(args);
 	}
 	else if (_wcsicmp(bang, L"Quit") == 0)
 	{
