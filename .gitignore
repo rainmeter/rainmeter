@@ -5,8 +5,10 @@ obj
 x32
 x64
 Certificate.bat
+*.docstates
 *.exe
 *.opensdf
 *.sdf
 *.suo
+*.txt
 *.user
