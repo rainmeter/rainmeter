@@ -425,6 +425,14 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 	case MEASURE_REPEAT:
 		_itow_s((int)player->GetRepeat(), buffer, 10);
 		return buffer;
+
+	case MEASURE_NUMBER:
+		_itow_s(player->GetNumber(), buffer, 10);
+		return buffer;
+
+	case MEASURE_YEAR:
+		_itow_s(player->GetYear(), buffer, 10);
+		return buffer;
 	}
 
 	return NULL;
