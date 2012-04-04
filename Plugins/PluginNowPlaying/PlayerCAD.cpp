@@ -34,7 +34,8 @@ extern HINSTANCE g_Instance;
 CPlayerCAD::CPlayerCAD() : CPlayer(),
 	m_Window(),
 	m_PlayerWindow(),
-	m_ExtendedAPI(false)
+	m_ExtendedAPI(false),
+	m_Open(false)
 {
 	Initialize();
 }
@@ -380,6 +381,17 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 						{
 							PostMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_CURRENT_TRACK);
 						}
+
+						if (player->m_Open)
+						{
+							if (wcscmp(windowSz, L"foobar2000") == 0)
+							{
+								// Activate foobar2000 in case it starts minimized
+								SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_SHOW_WINDOW);
+							}
+
+							player->m_Open = false;
+						}
 					}
 				}
 			}
@@ -518,14 +530,18 @@ void CPlayerCAD::OpenPlayer(std::wstring& path)
 {
 	if (!m_Initialized)
 	{
+		HINSTANCE ret = NULL;
+
 		if (!path.empty())
 		{
-			ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
+			ret = ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
 		}
 		else if (!m_PlayerPath.empty())
 		{
-			ShellExecute(NULL, L"open", m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
+			ret = ShellExecute(NULL, L"open", m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
 		}
+
+		m_Open = (ret > (HINSTANCE)32);
 	}
 	else
 	{

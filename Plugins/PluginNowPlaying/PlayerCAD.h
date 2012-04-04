@@ -60,6 +60,7 @@ private:
 	HWND m_PlayerWindow;
 	std::wstring m_PlayerPath;
 	bool m_ExtendedAPI;
+	bool m_Open;
 };
 
 #endif
