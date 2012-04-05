@@ -27,18 +27,19 @@ void CheckVersion(void* dummy)
 {
 	int version = 0;
 
-	HINTERNET hRootHandle = InternetOpen(L"Rainmeter",
-									INTERNET_OPEN_TYPE_PRECONFIG,
-									NULL,
-									NULL,
-									0);
+	HINTERNET hRootHandle = InternetOpen(
+		L"Rainmeter",
+		INTERNET_OPEN_TYPE_PRECONFIG,
+		NULL,
+		NULL,
+		0);
+
 	if (hRootHandle == NULL)
 	{
-		Log(LOG_ERROR, L"CheckUpdate: InternetOpen failed");
 		return;
 	}
 
-	HINTERNET hUrlDump = InternetOpenUrl(hRootHandle, L"http://rainmeter.googlecode.com/svn/version", NULL, NULL, INTERNET_FLAG_RESYNCHRONIZE, 0);
+	HINTERNET hUrlDump = InternetOpenUrl(hRootHandle, L"http://rainmeter.github.com/rainmeter/release", NULL, NULL, INTERNET_FLAG_RESYNCHRONIZE, 0);
 	if (hUrlDump)
 	{
 		DWORD dwSize;
@@ -79,15 +80,7 @@ void CheckVersion(void* dummy)
 				Rainmeter->SetNewVersion(false);
 			}
 		}
-		else
-		{
-			Log(LOG_ERROR, L"CheckUpdate: InternetReadFile failed");
-		}
 		InternetCloseHandle(hUrlDump);
-	}
-	else
-	{
-		Log(LOG_ERROR, L"CheckUpdate: InternetOpenUrl failed");
 	}
 
 	InternetCloseHandle(hRootHandle);
