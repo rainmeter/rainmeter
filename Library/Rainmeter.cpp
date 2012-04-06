@@ -2029,7 +2029,7 @@ void CRainmeter::ExecuteBang(const std::wstring& name, std::wstring& arg, CMeter
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"Invalid bang: ", name.c_str());
+		LogWithArgs(LOG_ERROR, L"Invalid bang: %s", name.c_str());
 	}
 }
 
