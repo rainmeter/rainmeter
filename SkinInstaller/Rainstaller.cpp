@@ -1368,10 +1368,8 @@ void LaunchRainmeter()
 			PreserveSetting(iniFile, backupFile, L"Rainmeter", L"Logging");
 			PreserveSetting(iniFile, backupFile, L"Rainmeter", L"DisableVersionCheck");
 			PreserveSetting(iniFile, backupFile, L"Rainmeter", L"Language");
-			PreserveSetting(iniFile, backupFile, L"Rainmeter", L"TrayExecuteL");
 			PreserveSetting(iniFile, backupFile, L"Rainmeter", L"TrayExecuteM");
 			PreserveSetting(iniFile, backupFile, L"Rainmeter", L"TrayExecuteR");
-			PreserveSetting(iniFile, backupFile, L"Rainmeter", L"TrayExecuteDL");
 			PreserveSetting(iniFile, backupFile, L"Rainmeter", L"TrayExecuteDM");
 			PreserveSetting(iniFile, backupFile, L"Rainmeter", L"TrayExecuteDR");
 		}

@@ -2205,10 +2205,8 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		LogWithArgs(LOG_NOTICE, L"LogViewer: %s", m_LogViewer.c_str());
 	}
 
-	m_TrayExecuteL = parser.ReadString(L"Rainmeter", L"TrayExecuteL", L"", false);
 	m_TrayExecuteR = parser.ReadString(L"Rainmeter", L"TrayExecuteR", L"", false);
 	m_TrayExecuteM = parser.ReadString(L"Rainmeter", L"TrayExecuteM", L"", false);
-	m_TrayExecuteDL = parser.ReadString(L"Rainmeter", L"TrayExecuteDL", L"", false);
 	m_TrayExecuteDR = parser.ReadString(L"Rainmeter", L"TrayExecuteDR", L"", false);
 	m_TrayExecuteDM = parser.ReadString(L"Rainmeter", L"TrayExecuteDM", L"", false);
 
@@ -2378,7 +2376,6 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 		PreserveSetting(backup, L"DisableVersionCheck");
 		PreserveSetting(backup, L"Language");
 		PreserveSetting(backup, L"NormalStayDesktop");
-		PreserveSetting(backup, L"TrayExecuteL", false);
 		PreserveSetting(backup, L"TrayExecuteM", false);
 		PreserveSetting(backup, L"TrayExecuteR", false);
 		PreserveSetting(backup, L"TrayExecuteDM", false);

@@ -210,11 +210,9 @@ public:
 	bool IsMenuActive() { return m_MenuActive; }
 	void ShowContextMenu(POINT pos, CMeterWindow* meterWindow);
 
-	const std::wstring& GetTrayExecuteL() { return m_TrayExecuteL; }
 	const std::wstring& GetTrayExecuteR() { return m_TrayExecuteR; }
 	const std::wstring& GetTrayExecuteM() { return m_TrayExecuteM; }
 	const std::wstring& GetTrayExecuteDR() { return m_TrayExecuteDR; }
-	const std::wstring& GetTrayExecuteDL() { return m_TrayExecuteDL; }
 	const std::wstring& GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
 	void ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow);
@@ -288,10 +286,8 @@ private:
 
 	std::wstring m_StatsDate;					// The date when stats gathering started
 
-	std::wstring m_TrayExecuteL;
 	std::wstring m_TrayExecuteR;
 	std::wstring m_TrayExecuteM;
-	std::wstring m_TrayExecuteDL;
 	std::wstring m_TrayExecuteDR;
 	std::wstring m_TrayExecuteDM;
 

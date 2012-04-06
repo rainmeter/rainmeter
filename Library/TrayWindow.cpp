@@ -101,10 +101,8 @@ CTrayWindow::~CTrayWindow()
 	if (m_Window) DestroyWindow(m_Window);
 }
 
-BOOL CTrayWindow::AddTrayIcon()
+void CTrayWindow::AddTrayIcon()
 {
-	BOOL res = FALSE;
-
 	if (m_TrayIcon)
 	{
 		DestroyIcon(m_TrayIcon);
@@ -123,15 +121,12 @@ BOOL CTrayWindow::AddTrayIcon()
 		tnid.hIcon = m_TrayIcon;
 		wcsncpy_s(tnid.szTip, L"Rainmeter", _TRUNCATE);
 
-		res = Shell_NotifyIcon(NIM_ADD, &tnid);
+		Shell_NotifyIcon(NIM_ADD, &tnid);
 	}
-	return res;
 }
 
-BOOL CTrayWindow::RemoveTrayIcon()
+void CTrayWindow::RemoveTrayIcon()
 {
-	BOOL res = FALSE;
-
 	if (m_TrayIcon)
 	{
 		NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
@@ -139,19 +134,15 @@ BOOL CTrayWindow::RemoveTrayIcon()
 		tnid.uID = IDI_TRAY;
 		tnid.uFlags = 0;
 
-		res = Shell_NotifyIcon(NIM_DELETE, &tnid);
+		Shell_NotifyIcon(NIM_DELETE, &tnid);
 
 		DestroyIcon(m_TrayIcon);
 		m_TrayIcon = NULL;
 	}
-
-	return res;
 }
 
-BOOL CTrayWindow::ModifyTrayIcon(double value)
+void CTrayWindow::ModifyTrayIcon(double value)
 {
-	BOOL res = FALSE;
-
 	if (m_TrayIcon)
 	{
 		DestroyIcon(m_TrayIcon);
@@ -166,8 +157,7 @@ BOOL CTrayWindow::ModifyTrayIcon(double value)
 	tnid.uFlags = NIF_ICON;
 	tnid.hIcon = m_TrayIcon;
 
-	res = Shell_NotifyIcon(NIM_MODIFY, &tnid);
-	return res;
+	Shell_NotifyIcon(NIM_MODIFY, &tnid);
 }
 
 HICON CTrayWindow::CreateTrayIcon(double value)
@@ -406,7 +396,6 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 	}
 }
 
-
 LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	CTrayWindow* tray = Rainmeter->GetTrayWindow();
@@ -521,20 +510,12 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 			switch (uMouseMsg)
 			{
-			case WM_LBUTTONDOWN:
-				bang = Rainmeter->GetTrayExecuteL();
-				break;
-
 			case WM_MBUTTONDOWN:
 				bang = Rainmeter->GetTrayExecuteM();
 				break;
 
 			case WM_RBUTTONDOWN:
 				bang = Rainmeter->GetTrayExecuteR();
-				break;
-
-			case WM_LBUTTONDBLCLK:
-				bang = Rainmeter->GetTrayExecuteDL();
 				break;
 
 			case WM_MBUTTONDBLCLK:
@@ -611,11 +592,6 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				sendCopyData(Rainmeter->GetStatsDate());
 				return 0;
 			}
-			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_L)
-			{
-				sendCopyData(Rainmeter->GetTrayExecuteL());
-				return 0;
-			}
 			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_R)
 			{
 				sendCopyData(Rainmeter->GetTrayExecuteR());
@@ -624,11 +600,6 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_M)
 			{
 				sendCopyData(Rainmeter->GetTrayExecuteM());
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_DL)
-			{
-				sendCopyData(Rainmeter->GetTrayExecuteDL());
 				return 0;
 			}
 			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_DR)
