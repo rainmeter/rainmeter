@@ -54,7 +54,7 @@ static int GetNumberOption(lua_State* L)
 	CConfigParser& parser = meterWindow->GetParser();
 
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
-	double value = parser.ReadFormula(self->GetName(), strTmp.c_str(), lua_tonumber(L, 3));
+	double value = parser.ReadFloat(self->GetName(), strTmp.c_str(), lua_tonumber(L, 3));
 
 	lua_pushnumber(L, value);
 	return 1;

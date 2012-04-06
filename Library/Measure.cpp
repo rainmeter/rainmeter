@@ -144,18 +144,18 @@ void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_UpdateCounter = m_UpdateDivider = updateDivider;
 	}
 
-	m_MinValue = parser.ReadFormula(section, L"MinValue", m_MinValue);
-	m_MaxValue = parser.ReadFormula(section, L"MaxValue", m_MaxValue);
+	m_MinValue = parser.ReadFloat(section, L"MinValue", m_MinValue);
+	m_MaxValue = parser.ReadFloat(section, L"MaxValue", m_MaxValue);
 
 	// The ifabove/ifbelow define actions that are ran when the value goes above/below the given number.
 
-	m_IfAboveValue = parser.ReadFormula(section, L"IfAboveValue", 0.0);
+	m_IfAboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0);
 	m_IfAboveAction = parser.ReadString(section, L"IfAboveAction", L"", false);
 
-	m_IfBelowValue = parser.ReadFormula(section, L"IfBelowValue", 0.0);
+	m_IfBelowValue = parser.ReadFloat(section, L"IfBelowValue", 0.0);
 	m_IfBelowAction = parser.ReadString(section, L"IfBelowAction", L"", false);
 
-	m_IfEqualValue = parser.ReadFormula(section, L"IfEqualValue", 0.0);
+	m_IfEqualValue = parser.ReadFloat(section, L"IfEqualValue", 0.0);
 	m_IfEqualAction = parser.ReadString(section, L"IfEqualAction", L"", false);
 
 	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0);

@@ -70,10 +70,9 @@ public:
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
 	bool IsKeyDefined(LPCTSTR section, LPCTSTR key);
 	bool IsValueDefined(LPCTSTR section, LPCTSTR key);
-	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
-	double ReadFormula(LPCTSTR section, LPCTSTR key, double defValue);
 	int ReadInt(LPCTSTR section, LPCTSTR key, int defValue);
 	unsigned int ReadUInt(LPCTSTR section, LPCTSTR key, unsigned int defValue);
+	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
 	Gdiplus::ARGB ReadColor(LPCTSTR section, LPCTSTR key, Gdiplus::ARGB defValue);
 	Gdiplus::Rect ReadRect(LPCTSTR section, LPCTSTR key, const Gdiplus::Rect& defValue);
 	RECT ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue);

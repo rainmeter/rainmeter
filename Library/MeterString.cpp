@@ -310,7 +310,7 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_FontFace = L"Arial";
 	}
 
-	m_FontSize = (int)parser.ReadFormula(section, L"FontSize", 10);
+	m_FontSize = (int)parser.ReadFloat(section, L"FontSize", 10);
 	if (m_FontSize < 0)
 	{
 		m_FontSize = 10;
@@ -318,7 +318,7 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_NumOfDecimals = parser.ReadInt(section, L"NumOfDecimals", -1);
 
-	m_Angle = (Gdiplus::REAL)parser.ReadFormula(section, L"Angle", 0.0);
+	m_Angle = (Gdiplus::REAL)parser.ReadFloat(section, L"Angle", 0.0);
 
 	const std::wstring& autoscale = parser.ReadString(section, L"AutoScale", L"0");
 	int autoscaleValue = _wtoi(autoscale.c_str());
@@ -339,15 +339,8 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 
 	const std::wstring& scale = parser.ReadString(section, L"Scale", L"1");
-	if (scale.find(L'.') == std::wstring::npos)
-	{
-		m_NoDecimals = true;
-	}
-	else
-	{
-		m_NoDecimals = false;
-	}
-	m_Scale = wcstod(scale.c_str(), NULL);
+	m_NoDecimals = (scale.find(L'.') == std::wstring::npos);
+	m_Scale = parser.ParseDouble(scale.c_str(), 1);
 
 	const WCHAR* align = parser.ReadString(section, L"StringAlign", L"LEFT").c_str();
 	if (_wcsicmp(align, L"LEFT") == 0)

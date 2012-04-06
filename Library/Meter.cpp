@@ -286,15 +286,7 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 				m_RelativeX = POSITION_ABSOLUTE;
 			}
 
-			double val;
-			if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && parser.ParseFormula(coord, &val))
-			{
-				m_X = (int)val;
-			}
-			else
-			{
-				m_X = (int)parser.ParseDouble(coord.c_str(), 0.0);
-			}
+			m_X = parser.ParseInt(coord.c_str(), 0);
 		}
 		else
 		{
@@ -325,15 +317,7 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 				m_RelativeY = POSITION_ABSOLUTE;
 			}
 
-			double val;
-			if (len >= 2 && coord[0] == L'(' && coord[len - 1] == L')' && parser.ParseFormula(coord, &val))
-			{
-				m_Y = (int)val;
-			}
-			else
-			{
-				m_Y = (int)parser.ParseDouble(coord.c_str(), 0.0);
-			}
+			m_Y = parser.ParseInt(coord.c_str(), 0);
 		}
 		else
 		{
@@ -342,10 +326,10 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		}
 	}
 
-	m_W = (int)parser.ReadFormula(section, L"W", 1.0);
+	m_W = parser.ReadInt(section, L"W", 1);
 	m_WDefined = parser.GetLastValueDefined();
 
-	m_H = (int)parser.ReadFormula(section, L"H", 1.0);
+	m_H = parser.ReadInt(section, L"H", 1);
 	m_HDefined = parser.GetLastValueDefined();
 
 	const std::wstring& hidden = parser.ReadString(section, L"Hidden", L"0");
@@ -388,7 +372,7 @@ void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_ToolTipText = parser.ReadString(section, L"ToolTipText", L"");
 	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"");
 	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"");
-	m_ToolTipWidth = (int)parser.ReadFormula(section, L"ToolTipWidth", 1000);
+	m_ToolTipWidth = (int)parser.ReadFloat(section, L"ToolTipWidth", 1000);
 	m_ToolTipType = 0!=parser.ReadInt(section, L"ToolTipType", 0);
 	m_ToolTipHidden = 0!=parser.ReadInt(section, L"ToolTipHidden", m_MeterWindow->GetMeterToolTipHidden());
 

@@ -592,27 +592,27 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 				token = wcstok(parseSz, L",");
 				if (token)
 				{
-					m_Crop.X = _wtoi(token);
+					m_Crop.X = parser.ParseInt(token, 0);
 
 					token = wcstok(NULL, L",");
 					if (token)
 					{
-						m_Crop.Y = _wtoi(token);
+						m_Crop.Y = parser.ParseInt(token, 0);
 
 						token = wcstok(NULL, L",");
 						if (token)
 						{
-							m_Crop.Width = _wtoi(token);
+							m_Crop.Width = parser.ParseInt(token, 0);
 
 							token = wcstok(NULL, L",");
 							if (token)
 							{
-								m_Crop.Height = _wtoi(token);
+								m_Crop.Height = parser.ParseInt(token, 0);
 
 								token = wcstok(NULL, L",");
 								if (token)
 								{
-									m_CropMode = (CROPMODE)_wtoi(token);
+									m_CropMode = (CROPMODE)parser.ParseInt(token, 0);
 								}
 							}
 						}
@@ -742,7 +742,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	if (!m_DisableTransform)
 	{
-		m_Rotate = (REAL)parser.ReadFormula(section, m_ConfigArray[ConfigIndexImageRotate], 0.0);
+		m_Rotate = (REAL)parser.ReadFloat(section, m_ConfigArray[ConfigIndexImageRotate], 0.0);
 	}
 
 	m_NeedsTransform = (oldFlip != m_Flip || oldRotate != m_Rotate);

@@ -45,7 +45,7 @@ double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 
 	CMeasurePlugin* measure = (CMeasurePlugin*)rm;
 	CConfigParser& parser = measure->GetMeterWindow()->GetParser();
-	return parser.ReadFormula(measure->GetName(), option, defValue);
+	return parser.ReadFloat(measure->GetName(), option, defValue);
 }
 
 LPCWSTR __stdcall RmPathToAbsolute(void* rm, LPCWSTR relativePath)

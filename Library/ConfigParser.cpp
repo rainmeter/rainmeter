@@ -679,13 +679,6 @@ CMeasure* CConfigParser::GetMeasure(const std::wstring& name)
 	return NULL;
 }
 
-double CConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
-{
-	const std::wstring& result = ReadString(section, key, L"");
-
-	return (m_LastDefaultUsed) ? defValue : ParseDouble(result.c_str(), defValue);
-}
-
 std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
 {
 	std::vector<Gdiplus::REAL> result;
@@ -707,42 +700,96 @@ int CConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
-	return (m_LastDefaultUsed) ? defValue : ParseInt(result.c_str(), defValue);
+	if (!m_LastDefaultUsed)
+	{
+		const WCHAR* string = result.c_str();
+		if (*string == L'(')
+		{
+			double dblValue;
+			const WCHAR* errMsg = MathParser::CheckedParse(string, &dblValue);
+			if (!errMsg)
+			{
+				return (int)dblValue;
+			}
+
+			LogWithArgs(LOG_ERROR, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+		}
+		else if (*string)
+		{
+			errno = 0;
+			int intValue = wcstol(string, NULL, 10);
+			if (errno != ERANGE)
+			{
+				return intValue;
+			}
+		}
+	}
+
+	return defValue;
 }
 
 unsigned int CConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, unsigned int defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
-	return (m_LastDefaultUsed) ? defValue : ParseUInt(result.c_str(), defValue);
+	if (!m_LastDefaultUsed)
+	{
+		const WCHAR* string = result.c_str();
+		if (*string == L'(')
+		{
+			double dblValue;
+			const WCHAR* errMsg = MathParser::CheckedParse(string, &dblValue);
+			if (!errMsg)
+			{
+				return (unsigned int)dblValue;
+			}
+
+			LogWithArgs(LOG_ERROR, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+		}
+		else if (*string)
+		{
+			errno = 0;
+			unsigned int uintValue = wcstoul(string, NULL, 10);
+			if (errno != ERANGE)
+			{
+				return uintValue;
+			}
+		}
+	}
+
+	return defValue;
 }
 
-// Works as ReadFloat except if the value is surrounded by parenthesis in which case it tries to evaluate the formula
-double CConfigParser::ReadFormula(LPCTSTR section, LPCTSTR key, double defValue)
+double CConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
-	// Formulas must be surrounded by parenthesis
-	if (!result.empty() && result[0] == L'(' && result[result.size() - 1] == L')')
+	if (!m_LastDefaultUsed)
 	{
-		double resultValue = defValue;
-		const WCHAR* errMsg = MathParser::CheckedParse(result.c_str(), &resultValue);
-		if (errMsg != NULL)
+		double value;
+		const WCHAR* string = result.c_str();
+		if (*string == L'(')
 		{
-			std::wstring error = L"ReadFormula: ";
-			error += errMsg;
-			error += L" in key \"";
-			error += key;
-			error += L"\" in [";
-			error += section;
-			error += L']';
-			Log(LOG_ERROR, error.c_str());
-		}
+			const WCHAR* errMsg = MathParser::CheckedParse(string, &value);
+			if (!errMsg)
+			{
+				return value;
+			}
 
-		return resultValue;
+			LogWithArgs(LOG_ERROR, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+		}
+		else if (*string)
+		{
+			errno = 0;
+			value = wcstod(string, NULL);
+			if (errno != ERANGE)
+			{
+				return value;
+			}
+		}
 	}
 
-	return (m_LastDefaultUsed) ? defValue : ParseDouble(result.c_str(), defValue);
+	return defValue;
 }
 
 // Returns true if the formula was read successfully, false for failure.
@@ -751,14 +798,11 @@ bool CConfigParser::ParseFormula(const std::wstring& formula, double* resultValu
 	// Formulas must be surrounded by parenthesis
 	if (!formula.empty() && formula[0] == L'(' && formula[formula.size() - 1] == L')')
 	{
-		const WCHAR* errMsg = MathParser::CheckedParse(formula.c_str(), resultValue);
+		const WCHAR* string = formula.c_str();
+		const WCHAR* errMsg = MathParser::CheckedParse(string, resultValue);
 		if (errMsg != NULL)
 		{
-			std::wstring error = L"ParseFormula: ";
-			error += errMsg;
-			error += L": ";
-			error += formula;
-			Log(LOG_ERROR, error.c_str());
+			LogWithArgs(LOG_ERROR, L"Formula: %s: %s", errMsg, string);
 			return false;
 		}
 
@@ -852,72 +896,111 @@ void CConfigParser::Shrink(std::vector<std::wstring>& vec)
 }
 
 /*
-** This is a helper method that parses the floating-point value from the given string.
+** Helper method that parses the floating-point value from the given string.
 ** If the given string is invalid format or causes overflow/underflow, returns given default value.
 **
 */
 double CConfigParser::ParseDouble(LPCTSTR string, double defValue)
 {
-	if (string && *string)
+	assert(string);
+
+	double value;
+	if (*string == L'(')
+	{
+		const WCHAR* errMsg = MathParser::CheckedParse(string, &value);
+		if (!errMsg)
+		{
+			return value;
+		}
+
+		LogWithArgs(LOG_ERROR, L"Formula: %s: %s", errMsg, string);
+	}
+	else if (*string)
 	{
 		errno = 0;
-		double resultValue = wcstod(string, NULL);
+		double value = wcstod(string, NULL);
 		if (errno != ERANGE)
 		{
-			return resultValue;
+			return value;
 		}
 	}
+
 	return defValue;
 }
 
 /*
-** This is a helper method that parses the integer value from the given string.
+** Helper method that parses the integer value from the given string.
 ** If the given string is invalid format or causes overflow/underflow, returns given default value.
 **
 */
 int CConfigParser::ParseInt(LPCTSTR string, int defValue)
 {
-	if (string && *string)
+	assert(string);
+
+	if (*string == L'(')
+	{
+		double dblValue;
+		const WCHAR* errMsg = MathParser::CheckedParse(string, &dblValue);
+		if (!errMsg)
+		{
+			return (int)dblValue;
+		}
+
+		LogWithArgs(LOG_ERROR, L"Formula: %s: %s", errMsg, string);
+	}
+	else if (*string)
 	{
 		errno = 0;
-		int resultValue = wcstol(string, NULL, 10);
+		int intValue = wcstol(string, NULL, 10);
 		if (errno != ERANGE)
 		{
-			return resultValue;
+			return intValue;
 		}
 	}
+
 	return defValue;
 }
 
 /*
-** This is a helper method that parses the unsigned integer value from the given string.
+** Helper method that parses the unsigned integer value from the given string.
 ** If the given string is invalid format or causes overflow/underflow, returns given default value.
 **
 */
 unsigned int CConfigParser::ParseUInt(LPCTSTR string, unsigned int defValue)
 {
-	if (string && *string)
+	assert(string);
+
+	if (*string == L'(')
+	{
+		double dblValue;
+		const WCHAR* errMsg = MathParser::CheckedParse(string, &dblValue);
+		if (!errMsg)
+		{
+			return (unsigned int)dblValue;
+		}
+
+		LogWithArgs(LOG_ERROR, L"Formula: %s: %s", errMsg, string);
+	}
+	else if (*string)
 	{
 		errno = 0;
-		unsigned int resultValue = wcstoul(string, NULL, 10);
+		unsigned int uintValue = wcstoul(string, NULL, 10);
 		if (errno != ERANGE)
 		{
-			return resultValue;
+			return uintValue;
 		}
 	}
+
 	return defValue;
 }
 
 /*
-** This is a helper method that parses the color values from the given string.
-** The color can be supplied as three/four comma separated values or as one
-** hex-value.
+** Helper template that parses four comma separated values from the given string.
 **
 */
-ARGB CConfigParser::ParseColor(LPCTSTR string)
+template <typename T>
+bool ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 {
-	int R = 255, G = 255, B = 255, A = 255;
-
 	if (wcschr(string, L','))
 	{
 		WCHAR* parseSz = _wcsdup(string);
@@ -926,37 +1009,44 @@ ARGB CConfigParser::ParseColor(LPCTSTR string)
 		token = wcstok(parseSz, L",");
 		if (token)
 		{
-			R = _wtoi(token);
-			R = max(R, 0);
-			R = min(R, 255);
+			v1 = CConfigParser::ParseInt(token, 0);
 
 			token = wcstok(NULL, L",");
 			if (token)
 			{
-				G = _wtoi(token);
-				G = max(G, 0);
-				G = min(G, 255);
+				v2 = CConfigParser::ParseInt(token, 0);
 
 				token = wcstok(NULL, L",");
 				if (token)
 				{
-					B = _wtoi(token);
-					B = max(B, 0);
-					B = min(B, 255);
+					v3 = CConfigParser::ParseInt(token, 0);
 
 					token = wcstok(NULL, L",");
 					if (token)
 					{
-						A = _wtoi(token);
-						A = max(A, 0);
-						A = min(A, 255);
+						v4 = CConfigParser::ParseInt(token, 0);
 					}
 				}
 			}
 		}
 		free(parseSz);
+		return true;
 	}
-	else
+
+	return false;
+}
+
+/*
+** Helper method that parses the color values from the given string.
+** The color can be supplied as three/four comma separated values or as one
+** hex-value.
+**
+*/
+ARGB CConfigParser::ParseColor(LPCTSTR string)
+{
+	int R = 255, G = 255, B = 255, A = 255;
+
+	if (!ParseInt4(string, R, G, B, A))
 	{
 		if (wcsncmp(string, L"0x", 2) == 0)
 		{
@@ -978,46 +1068,7 @@ ARGB CConfigParser::ParseColor(LPCTSTR string)
 }
 
 /*
-** This is a helper template that parses four comma separated values from the given string.
-**
-*/
-template <typename T>
-void ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
-{
-	if (wcschr(string, L','))
-	{
-		WCHAR* parseSz = _wcsdup(string);
-		WCHAR* token;
-
-		token = wcstok(parseSz, L",");
-		if (token)
-		{
-			v1 = _wtoi(token);
-
-			token = wcstok(NULL, L",");
-			if (token)
-			{
-				v2 = _wtoi(token);
-
-				token = wcstok(NULL, L",");
-				if (token)
-				{
-					v3 = _wtoi(token);
-
-					token = wcstok(NULL, L",");
-					if (token)
-					{
-						v4 = _wtoi(token);
-					}
-				}
-			}
-		}
-		free(parseSz);
-	}
-}
-
-/*
-** This is a helper method that parses the Gdiplus::Rect values from the given string.
+** Helper method that parses the Gdiplus::Rect values from the given string.
 ** The rect can be supplied as four comma separated values (X/Y/Width/Height).
 **
 */
@@ -1029,7 +1080,7 @@ Rect CConfigParser::ParseRect(LPCTSTR string)
 }
 
 /*
-** This is a helper method that parses the RECT values from the given string.
+** Helper method that parses the RECT values from the given string.
 ** The rect can be supplied as four comma separated values (left/top/right/bottom).
 **
 */

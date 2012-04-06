@@ -853,42 +853,40 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 
 	case BANG_MOVE:
 		{
-			double value;
-			int x = m_Parser.ParseFormula(args[0], &value) ? (int)value : _wtoi(args[0].c_str());
-			int y = m_Parser.ParseFormula(args[1], &value) ? (int)value : _wtoi(args[1].c_str());
-
+			int x = m_Parser.ParseInt(args[0].c_str(), 0);
+			int y = m_Parser.ParseInt(args[1].c_str(), 0);
 			MoveWindow(x, y);
 		}
 		break;
 
 	case BANG_ZPOS:
-		SetWindowZPosition((ZPOSITION)_wtoi(args[0].c_str()));
+		SetWindowZPosition((ZPOSITION)m_Parser.ParseInt(args[0].c_str(), 0));
 		break;
 
 	case BANG_CLICKTHROUGH:
 		{
-			int f = _wtoi(args[0].c_str());
+			int f = m_Parser.ParseInt(args[0].c_str(), 0);
 			SetClickThrough((f == -1) ? !m_ClickThrough : f);
 		}
 		break;
 
 	case BANG_DRAGGABLE:
 		{
-			int f = _wtoi(args[0].c_str());
+			int f = m_Parser.ParseInt(args[0].c_str(), 0);
 			SetWindowDraggable((f == -1) ? !m_WindowDraggable : f);
 		}
 		break;
 
 	case BANG_SNAPEDGES:
 		{
-			int f = _wtoi(args[0].c_str());
+			int f = m_Parser.ParseInt(args[0].c_str(), 0);
 			SetSnapEdges((f == -1) ? !m_SnapEdges : f);
 		}
 		break;
 
 	case BANG_KEEPONSCREEN:
 		{
-			int f = _wtoi(args[0].c_str());
+			int f = m_Parser.ParseInt(args[0].c_str(), 0);
 			SetKeepOnScreen((f == -1) ? !m_KeepOnScreen : f);
 		}
 		break;
@@ -905,10 +903,8 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 
 	case BANG_MOVEMETER:
 		{
-			double value;
-			int x = m_Parser.ParseFormula(args[0], &value) ? (int)value : _wtoi(args[0].c_str());
-			int y = m_Parser.ParseFormula(args[1], &value) ? (int)value : _wtoi(args[1].c_str());
-
+			int x = m_Parser.ParseInt(args[0].c_str(), 0);
+			int y = m_Parser.ParseInt(args[1].c_str(), 0);
 			MoveMeter(args[2], x, y);
 		}
 		break;
@@ -1048,38 +1044,37 @@ void CMeterWindow::ResizeBlur(const std::wstring& arg, int mode)
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
 		WCHAR* parseSz = _wcsdup(arg.c_str());
-		double val;
 		int type, x, y, w = 0, h = 0;
 
 		WCHAR* token = wcstok(parseSz, L",");
 		if (token)
 		{
 			while (token[0] == L' ') ++token;
-			type = (m_Parser.ParseFormula(token, &val)) ? (int)val : _wtoi(token);
+			type = m_Parser.ParseInt(token, 0);
 
 			token = wcstok(NULL, L",");
 			if (token)
 			{
 				while (token[0] == L' ') ++token;
-				x = (m_Parser.ParseFormula(token, &val)) ? (int)val : _wtoi(token);
+				x = m_Parser.ParseInt(token, 0);
 
 				token = wcstok(NULL, L",");
 				if (token)
 				{
 					while (token[0] == L' ') ++token;
-					y = (m_Parser.ParseFormula(token, &val)) ? (int)val : _wtoi(token);
+					y = m_Parser.ParseInt(token, 0);
 
 					token = wcstok(NULL, L",");
 					if (token)
 					{
 						while (token[0] == L' ') ++token;
-						w = (m_Parser.ParseFormula(token, &val)) ? (int)val : _wtoi(token);
+						w = m_Parser.ParseInt(token, 0);
 
 						token = wcstok(NULL, L",");
 						if (token)
 						{
 							while (token[0] == L' ') ++token;
-							h = (m_Parser.ParseFormula(token, &val)) ? (int)val : _wtoi(token);
+							h = m_Parser.ParseInt(token, 0);
 						}
 					}
 				}
@@ -1101,7 +1096,7 @@ void CMeterWindow::ResizeBlur(const std::wstring& arg, int mode)
 				if (token)
 				{
 					while (token[0] == L' ') ++token;
-					int r = (m_Parser.ParseFormula(token, &val)) ? (int)val : _wtoi(token);
+					int r =  m_Parser.ParseInt(token, 0);
 					tempRegion = CreateRoundRectRgn(x, y, w, h, r, r);
 				}
 				break;
@@ -1840,22 +1835,14 @@ void CMeterWindow::ReadConfig()
 		// Check if the window position should be read as a formula
 		double value;
 		m_WindowX = parser.ReadString(section, L"WindowX", m_WindowX.c_str());
-		if (!m_WindowX.empty() && m_WindowX[0] == L'(' && m_WindowX[m_WindowX.size() - 1] == L')')
+		if (parser.ParseFormula(m_WindowX, &value))
 		{
-			if (!parser.ParseFormula(m_WindowX, &value))
-			{
-				value = 0.0;
-			}
 			_itow_s((int)value, buffer, 10);
 			m_WindowX = buffer;
 		}
 		m_WindowY = parser.ReadString(section, L"WindowY", m_WindowY.c_str());
-		if (!m_WindowY.empty() && m_WindowY[0] == L'(' && m_WindowY[m_WindowY.size() - 1] == L')')
+		if (parser.ParseFormula(m_WindowY, &value))
 		{
-			if (!parser.ParseFormula(m_WindowY, &value))
-			{
-				value = 0.0;
-			}
 			_itow_s((int)value, buffer, 10);
 			m_WindowY = buffer;
 		}
