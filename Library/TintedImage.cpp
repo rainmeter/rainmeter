@@ -623,13 +623,8 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 			if (m_CropMode < CROPMODE_TL || m_CropMode > CROPMODE_C)
 			{
-				std::wstring error = m_ConfigArray[ConfigIndexImageCrop];
-				error += L'=';
-				error += crop;
-				error += L" (origin) is not valid in [";
-				error += section;
-				error += L']';
-				throw CError(error);
+				m_CropMode = CROPMODE_TL;
+				LogWithArgs(LOG_ERROR, L"%s=%s (origin) is not valid in [%s]",  m_ConfigArray[ConfigIndexImageCrop], crop, section);
 			}
 		}
 	}
@@ -731,13 +726,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = m_ConfigArray[ConfigIndexImageFlip];
-		error += L'=';
-		error += flip;
-		error += L" is not valid in [";
-		error += section;
-		error += L']';
-		throw CError(error);
+		LogWithArgs(LOG_ERROR, L"%s=%s (origin) is not valid in [%s]",  m_ConfigArray[ConfigIndexImageFlip], flip, section);
 	}
 
 	if (!m_DisableTransform)

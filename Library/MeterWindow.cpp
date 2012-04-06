@@ -157,6 +157,17 @@ CMeterWindow::CMeterWindow(const std::wstring& config, const std::wstring& iniFi
 		}
 	}
 
+	if (c_InstanceCount == 0)
+	{
+		WNDCLASSEX wc = {sizeof(WNDCLASSEX)};
+		wc.style = CS_NOCLOSE | CS_DBLCLKS;
+		wc.lpfnWndProc = InitialWndProc;
+		wc.hInstance = m_Rainmeter->GetInstance();
+		wc.hCursor = NULL;  // The cursor should be controlled by using SetCursor() when needed.
+		wc.lpszClassName = METERWINDOW_CLASS_NAME;
+		RegisterClassEx(&wc);
+	}
+
 	++c_InstanceCount;
 }
 
@@ -211,16 +222,7 @@ CMeterWindow::~CMeterWindow()
 
 	if (c_InstanceCount == 0)
 	{
-		BOOL Result;
-		int counter = 0;
-		do
-		{
-			// Wait for the window to die
-			Result = UnregisterClass(METERWINDOW_CLASS_NAME, m_Rainmeter->GetInstance());
-			Sleep(100);
-			++counter;
-		}
-		while(!Result && counter < 10);
+		UnregisterClass(METERWINDOW_CLASS_NAME, m_Rainmeter->GetInstance());
 
 		if (c_DwmInstance)
 		{
@@ -243,36 +245,19 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 {
 	m_Rainmeter = &Rainmeter;
 
-	// Register the windowclass
-	WNDCLASSEX wc = {sizeof(WNDCLASSEX)};
-	wc.style = CS_NOCLOSE | CS_DBLCLKS;
-	wc.lpfnWndProc = InitialWndProc;
-	wc.hInstance = m_Rainmeter->GetInstance();
-	wc.hCursor = NULL;  // The cursor should be controlled by using SetCursor() when needed.
-	wc.lpszClassName = METERWINDOW_CLASS_NAME;
-
-	if (!RegisterClassEx(&wc))
-	{
-		DWORD err = GetLastError();
-
-		if (err != 0 && ERROR_CLASS_ALREADY_EXISTS != err)
-		{
-			throw CError(L"Unable to register class");
-		}
-	}
-
-	m_Window = CreateWindowEx(WS_EX_TOOLWINDOW,
-							METERWINDOW_CLASS_NAME,
-							NULL,
-							WS_POPUP,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							NULL,
-							NULL,
-							m_Rainmeter->GetInstance(),
-							this);
+	m_Window = CreateWindowEx(
+		WS_EX_TOOLWINDOW,
+		METERWINDOW_CLASS_NAME,
+		NULL,
+		WS_POPUP,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		NULL,
+		NULL,
+		m_Rainmeter->GetInstance(),
+		this);
 
 	if (m_Window == NULL)
 	{
@@ -462,16 +447,10 @@ void CMeterWindow::Refresh(bool init, bool all)
 	// Start the timers
 	if (m_WindowUpdate >= 0)
 	{
-		if (0 == SetTimer(m_Window, TIMER_METER, m_WindowUpdate, NULL))
-		{
-			throw CError(L"Unable to set timer");
-		}
+		SetTimer(m_Window, TIMER_METER, m_WindowUpdate, NULL);
 	}
 
-	if (0 == SetTimer(m_Window, TIMER_MOUSE, INTERVAL_MOUSE, NULL))	// Mouse position is checked twice per sec
-	{
-		throw CError(L"Unable to set timer");
-	}
+	SetTimer(m_Window, TIMER_MOUSE, INTERVAL_MOUSE, NULL);
 
 	m_Rainmeter->SetCurrentParser(NULL);
 

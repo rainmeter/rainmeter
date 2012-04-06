@@ -191,8 +191,7 @@ void CMeterString::Initialize()
 				// It couldn't find the font family: Log it.
 				if (Ok != status)
 				{
-					std::wstring error = L"String: Unable to load font: " + m_FontFace;
-					Log(LOG_ERROR, error.c_str());
+					LogWithArgs(LOG_ERROR, L"String: Unable to load font: %s", m_FontFace.c_str());
 
 					delete m_FontFamily;
 					m_FontFamily = NULL;
@@ -357,12 +356,7 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"StringAlign=";
-		error += align;
-		error += L" is not valid in [";
-		error += m_Name;
-		error += L']';
-		throw CError(error);
+		LogWithArgs(LOG_ERROR, L"StringAlign=%s is not valid in [%s]", align, m_Name.c_str());
 	}
 
 	const WCHAR* stringCase = parser.ReadString(section, L"StringCase", L"NONE").c_str();
@@ -384,12 +378,7 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"StringCase=";
-		error += stringCase;
-		error += L" is not valid in [";
-		error += m_Name;
-		error += L']';
-		throw CError(error);
+		LogWithArgs(LOG_ERROR, L"StringCase=%s is not valid in [%s]", stringCase, m_Name.c_str());
 	}
 
 	const WCHAR* style = parser.ReadString(section, L"StringStyle", L"NORMAL").c_str();
@@ -411,12 +400,7 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"StringStyle=";
-		error += style;
-		error += L" is not valid in [";
-		error += m_Name;
-		error += L']';
-		throw CError(error);
+		LogWithArgs(LOG_ERROR, L"StringStyle=%s is not valid in [%s]", style, m_Name.c_str());
 	}
 
 	const WCHAR* effect = parser.ReadString(section, L"StringEffect", L"NONE").c_str();
@@ -434,12 +418,7 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"StringEffect=";
-		error += effect;
-		error += L" is not valid in [";
-		error += m_Name;
-		error += L']';
-		throw CError(error);
+		LogWithArgs(LOG_ERROR, L"StringEffect=%s is not valid in [%s]", effect, m_Name.c_str());
 	}
 
 	if (m_Initialized &&

@@ -27,7 +27,7 @@
 */
 CMeasureRegistry::CMeasureRegistry(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
 	m_RegKey(),
-	m_HKey()
+	m_HKey(HKEY_CURRENT_USER)
 {
 	m_MaxValue = 0.0;
 }
@@ -138,12 +138,7 @@ void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"RegHKey=";
-		error += keyname;
-		error += L" is not valid in [";
-		error += m_Name;
-		error += L']';
-		throw CError(error);
+		LogWithArgs(LOG_ERROR, L"RegHKey=%s is not valid in [%s]", keyname, m_Name.c_str());
 	}
 
 	m_RegKeyName = parser.ReadString(section, L"RegKey", L"");

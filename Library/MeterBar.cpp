@@ -122,12 +122,7 @@ void CMeterBar::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"BarOrientation=";
-		error += orientation;
-		error += L" is not valid in [";
-		error += m_Name;
-		error += L']';
-		throw CError(error);
+		LogWithArgs(LOG_ERROR, L"BarOrientation=%s is not valid in [%s]", orientation, m_Name.c_str());
 	}
 
 	if (m_Initialized)

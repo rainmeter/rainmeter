@@ -488,13 +488,7 @@ CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHA
 		return new CMeterButton(meterWindow, name);
 	}
 
-	// Error
-	std::wstring error = L"Meter=";
-	error += meter;
-	error += L" is not valid in [";
-	error += name;
-	error += L']';
-	throw CError(error);
+	LogWithArgs(LOG_ERROR, L"Meter=%s is not valid in [%s]", meter, name);
 
 	return NULL;
 }

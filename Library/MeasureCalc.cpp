@@ -60,12 +60,7 @@ bool CMeasureCalc::Update()
 	const WCHAR* errMsg = MathParser::Parse(m_Formula.c_str(), this, &m_Value);
 	if (errMsg != NULL)
 	{
-		std::wstring error = L"Calc: ";
-		error += errMsg;
-		error += L" in [";
-		error += m_Name;
-		error += L']';
-		Log(LOG_ERROR, error.c_str());
+		LogWithArgs(LOG_ERROR, L"Calc: %s in [%s]", errMsg, m_Name.c_str());
 	}
 
 	return PostUpdate();
@@ -105,12 +100,8 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		const WCHAR* errMsg = MathParser::Check(m_Formula.c_str());
 		if (errMsg != NULL)
 		{
-			std::wstring error = L"Calc: ";
-			error += errMsg;
-			error += L" in [";
-			error += m_Name;
-			error += L']';
-			throw CError(error);
+			LogWithArgs(LOG_ERROR, L"Calc: %s in [%s]", errMsg, m_Name.c_str());
+			m_Formula.clear();
 		}
 	}
 }

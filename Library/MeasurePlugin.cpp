@@ -169,9 +169,8 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 		if (m_Plugin == NULL)
 		{
-			std::wstring error = L"Plugin: \"" + pluginName;
-			error += L"\" not found";
-			throw CError(error);
+			LogWithArgs(LOG_ERROR, L"Plugin: \"%s\" not found", pluginName.c_str());
+			return;
 		}
 	}
 

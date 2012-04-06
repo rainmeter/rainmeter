@@ -201,12 +201,7 @@ void CMeterBitmap::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		std::wstring error = L"BitmapAlign=";
-		error += align;
-		error += L" is not valid in [";
-		error += m_Name;
-		error += L']';
-		throw CError(error);
+		LogWithArgs(LOG_ERROR, L"BitmapAlign=%s is not valid in [%s]", align, m_Name.c_str());
 	}
 
 	if (m_Initialized)

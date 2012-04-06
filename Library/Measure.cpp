@@ -796,13 +796,7 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, cons
 		return new CMeasureScript(meterWindow, name);
 	}
 
-	// Error
-	std::wstring error = L"Measure=";
-	error += measure;
-	error += L" is not valid in [";
-	error += name;
-	error += L']';
-	throw CError(error);
+	LogWithArgs(LOG_ERROR, L"Measure=%s is not valid in [%s]", measure, name);
 
 	return NULL;
 }
