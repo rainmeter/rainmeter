@@ -186,7 +186,7 @@ public:
 	bool GetDisableVersionCheck() { return m_DisableVersionCheck; }
 	void SetDisableVersionCheck(bool check);
 	bool GetNewVersion() { return m_NewVersion; }
-	void SetNewVersion(bool newver) { m_NewVersion = newver; }
+	void SetNewVersion() { m_NewVersion = true; }
 
 	bool GetLogging() { return m_Logging; }
 	void StartLogging();

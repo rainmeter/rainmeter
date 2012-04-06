@@ -752,7 +752,6 @@ CRainmeter::~CRainmeter()
 
 /*
 ** The main initialization function for the module.
-** May throw CErrors !!!!
 **
 */
 int CRainmeter::Initialize(LPCWSTR szPath)
@@ -1019,7 +1018,7 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 
 	if (m_Debug)
 	{
-		Log(LOG_DEBUG, L"Enumerating installed font families...");
+		Log(LOG_DEBUG, L"Enumerating font families...");
 		CMeterString::EnumerateInstalledFontFamilies();
 	}
 
@@ -2030,8 +2029,7 @@ void CRainmeter::ExecuteBang(const std::wstring& name, std::wstring& arg, CMeter
 	}
 	else
 	{
-		std::wstring error = L"Unknown bang: " + name;
-		Log(LOG_ERROR, error.c_str());
+		LogWithArgs(LOG_ERROR, L"Invalid bang: ", name.c_str());
 	}
 }
 

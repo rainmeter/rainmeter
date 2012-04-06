@@ -25,8 +25,6 @@ extern CRainmeter* Rainmeter;
 
 void CheckVersion(void* dummy)
 {
-	int version = 0;
-
 	HINTERNET hRootHandle = InternetOpen(
 		L"Rainmeter",
 		INTERNET_OPEN_TYPE_PRECONFIG,
@@ -46,38 +44,24 @@ void CheckVersion(void* dummy)
 		char buffer[16] = {0};	// 16 should be enough for the version number
 		if (InternetReadFile(hUrlDump, (LPVOID)buffer, 15, &dwSize))
 		{
-			std::string verStr = buffer;
-			size_t pos = verStr.find('.');
-			if (pos != std::wstring::npos)
+			int version = atoi(buffer) * 1000000;
+			char* pos = strchr(buffer, '.');
+			if (pos)
 			{
-				std::string verMajor = verStr.substr(0, pos);
-				std::string verMinor = verStr.substr(pos + 1);
+				++pos;	// Skip .
+				version += atoi(pos) * 1000;
 
-				version = atoi(verMajor.c_str()) * 1000000;
-
-				pos = verMinor.find('.');
-				if (pos != std::wstring::npos)
+				pos = strchr(pos, '.');
+				if (pos)
 				{
-					std::string verMinor1 = verMinor.substr(0, pos);
-					std::string verMinor2 = verMinor.substr(pos + 1);
-
-					version += atoi(verMinor1.c_str()) * 1000;
-					version += atoi(verMinor2.c_str());
-				}
-				else
-				{
-					version += atoi(verMinor.c_str()) * 1000;
+					++pos;	// Skip .
+					version += atoi(pos);
 				}
 			}
 
 			if (version > RAINMETER_VERSION)
 			{
-				Rainmeter->SetNewVersion(true);
-				Log(LOG_NOTICE, L"CheckUpdate: Update available");
-			}
-			else
-			{
-				Rainmeter->SetNewVersion(false);
+				Rainmeter->SetNewVersion();
 			}
 		}
 		InternetCloseHandle(hUrlDump);
@@ -88,5 +72,5 @@ void CheckVersion(void* dummy)
 
 void CheckUpdate()
 {
-	_beginthread(CheckVersion, 0, NULL );
+	_beginthread(CheckVersion, 0, NULL);
 }
