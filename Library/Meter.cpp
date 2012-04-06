@@ -33,6 +33,8 @@
 
 using namespace Gdiplus;
 
+extern CRainmeter* Rainmeter;
+
 /*
 ** The constructor
 **
@@ -630,7 +632,7 @@ void CMeter::ReplaceToolTipMeasures(std::wstring& str)
 void CMeter::CreateToolTip(CMeterWindow* meterWindow)
 {
 	HWND hMeterWindow = m_MeterWindow->GetWindow();
-	HINSTANCE hInstance = m_MeterWindow->GetMainObject()->GetInstance();
+	HINSTANCE hInstance = Rainmeter->GetInstance();
 	DWORD style = WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP;
 
 	if (m_ToolTipType)

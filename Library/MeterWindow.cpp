@@ -140,7 +140,6 @@ CMeterWindow::CMeterWindow(const std::wstring& config, const std::wstring& iniFi
 	m_ResetRegion(false),
 	m_UpdateCounter(),
 	m_MouseMoveCounter(),
-	m_Rainmeter(),
 	m_FontCollection(),
 	m_MouseActionCursor(true),
 	m_ToolTipHidden(false)
@@ -162,7 +161,7 @@ CMeterWindow::CMeterWindow(const std::wstring& config, const std::wstring& iniFi
 		WNDCLASSEX wc = {sizeof(WNDCLASSEX)};
 		wc.style = CS_NOCLOSE | CS_DBLCLKS;
 		wc.lpfnWndProc = InitialWndProc;
-		wc.hInstance = m_Rainmeter->GetInstance();
+		wc.hInstance = Rainmeter->GetInstance();
 		wc.hCursor = NULL;  // The cursor should be controlled by using SetCursor() when needed.
 		wc.lpszClassName = METERWINDOW_CLASS_NAME;
 		RegisterClassEx(&wc);
@@ -179,7 +178,7 @@ CMeterWindow::~CMeterWindow()
 {
 	if (!m_OnCloseAction.empty())
 	{
-		m_Rainmeter->ExecuteCommand(m_OnCloseAction.c_str(), this);
+		Rainmeter->ExecuteCommand(m_OnCloseAction.c_str(), this);
 	}
 
 	WriteConfig();
@@ -222,7 +221,7 @@ CMeterWindow::~CMeterWindow()
 
 	if (c_InstanceCount == 0)
 	{
-		UnregisterClass(METERWINDOW_CLASS_NAME, m_Rainmeter->GetInstance());
+		UnregisterClass(METERWINDOW_CLASS_NAME, Rainmeter->GetInstance());
 
 		if (c_DwmInstance)
 		{
@@ -241,10 +240,8 @@ CMeterWindow::~CMeterWindow()
 ** Initializes the window, creates the class and the window.
 **
 */
-int CMeterWindow::Initialize(CRainmeter& Rainmeter)
+int CMeterWindow::Initialize()
 {
-	m_Rainmeter = &Rainmeter;
-
 	m_Window = CreateWindowEx(
 		WS_EX_TOOLWINDOW,
 		METERWINDOW_CLASS_NAME,
@@ -256,7 +253,7 @@ int CMeterWindow::Initialize(CRainmeter& Rainmeter)
 		CW_USEDEFAULT,
 		NULL,
 		NULL,
-		m_Rainmeter->GetInstance(),
+		Rainmeter->GetInstance(),
 		this);
 
 	if (m_Window == NULL)
@@ -337,9 +334,9 @@ void CMeterWindow::Deactivate()
 */
 void CMeterWindow::Refresh(bool init, bool all)
 {
-	assert(m_Rainmeter != NULL);
+	assert(Rainmeter != NULL);
 
-	m_Rainmeter->SetCurrentParser(&m_Parser);
+	Rainmeter->SetCurrentParser(&m_Parser);
 
 	std::wstring notice = L"Refreshing skin \"" + m_SkinName;
 	notice += L'\\';
@@ -400,7 +397,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 	ReadConfig();	// Read the general settings
 	if (!ReadSkin())
 	{
-		m_Rainmeter->DeactivateConfig(this, -1);
+		Rainmeter->DeactivateConfig(this, -1);
 		return;
 	}
 
@@ -452,13 +449,13 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	SetTimer(m_Window, TIMER_MOUSE, INTERVAL_MOUSE, NULL);
 
-	m_Rainmeter->SetCurrentParser(NULL);
+	Rainmeter->SetCurrentParser(NULL);
 
 	m_Refreshing = false;
 
 	if (!m_OnRefreshAction.empty())
 	{
-		m_Rainmeter->ExecuteCommand(m_OnRefreshAction.c_str(), this);
+		Rainmeter->ExecuteCommand(m_OnRefreshAction.c_str(), this);
 	}
 }
 
@@ -670,7 +667,7 @@ void CMeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 */
 void CMeterWindow::ChangeSingleZPos(ZPOSITION zPos, bool all)
 {
-	if (zPos == ZPOSITION_NORMAL && m_Rainmeter->IsNormalStayDesktop() && (!all || CSystem::GetShowDesktop()))
+	if (zPos == ZPOSITION_NORMAL && Rainmeter->IsNormalStayDesktop() && (!all || CSystem::GetShowDesktop()))
 	{
 		m_WindowZPosition = zPos;
 
@@ -1784,7 +1781,7 @@ void CMeterWindow::ScreenToWindow()
 void CMeterWindow::ReadConfig()
 {
 	WCHAR buffer[32];
-	const std::wstring& iniFile = m_Rainmeter->GetIniFile();
+	const std::wstring& iniFile = Rainmeter->GetIniFile();
 	const WCHAR* section = L"Rainmeter";
 
 	// Reset settings to the default value
@@ -1807,7 +1804,7 @@ void CMeterWindow::ReadConfig()
 	m_ConfigGroup.clear();
 
 	CConfigParser parser;
-	parser.Initialize(iniFile.c_str(), m_Rainmeter, NULL, m_SkinName.c_str());
+	parser.Initialize(iniFile.c_str(), Rainmeter, NULL, m_SkinName.c_str());
 
 	for (int i = 0; i < 2; ++i)
 	{
@@ -1866,7 +1863,7 @@ void CMeterWindow::ReadConfig()
 */
 void CMeterWindow::WriteConfig(INT setting)
 {
-	const WCHAR* iniFile = m_Rainmeter->GetIniFile().c_str();
+	const WCHAR* iniFile = Rainmeter->GetIniFile().c_str();
 
 	if (*iniFile)
 	{
@@ -1953,7 +1950,7 @@ bool CMeterWindow::ReadSkin()
 {
 	WCHAR buffer[128];
 
-	std::wstring iniFile = m_Rainmeter->GetSkinPath() + m_SkinName;
+	std::wstring iniFile = Rainmeter->GetSkinPath() + m_SkinName;
 	iniFile += L'\\';
 	iniFile += m_SkinIniFile;
 
@@ -1965,7 +1962,7 @@ bool CMeterWindow::ReadSkin()
 		return false;
 	}
 
-	m_Parser.Initialize(iniFile.c_str(), m_Rainmeter, this);
+	m_Parser.Initialize(iniFile.c_str(), Rainmeter, this);
 
 	// Check the version
 	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
@@ -2090,14 +2087,14 @@ bool CMeterWindow::ReadSkin()
 			// We want to check the fonts folder first
 			// !!!!!!! - We may want to fix the method in which I get the path to
 			// Rainmeter/fonts
-			std::wstring szFontFile = m_Rainmeter->GetPath() + L"Fonts\\";
+			std::wstring szFontFile = Rainmeter->GetPath() + L"Fonts\\";
 			szFontFile += localFont;
 			Status nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 
 			// It wasn't found in the fonts folder, check the local folder
 			if (nResults != Ok)
 			{
-				szFontFile = m_Rainmeter->GetSkinPath(); // Get the local path
+				szFontFile = Rainmeter->GetSkinPath(); // Get the local path
 				szFontFile += m_SkinName;
 				szFontFile += L'\\';
 				szFontFile += localFont;
@@ -2841,7 +2838,7 @@ void CMeterWindow::Update(bool nodraw)
 
 		// If our option is to disable when in an RDP session, then check if in an RDP session.
 		// Only redraw if we are not in a remote session
-		if (m_Rainmeter->IsRedrawable())
+		if (Rainmeter->IsRedrawable())
 		{
 			Redraw();
 		}
@@ -2926,7 +2923,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	else if (wParam == TIMER_MOUSE)
 	{
-		if (!m_Rainmeter->IsMenuActive() && !m_Dragging)
+		if (!Rainmeter->IsMenuActive() && !m_Dragging)
 		{
 			ShowWindowIfAppropriate();
 
@@ -3401,7 +3398,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (wParam == IDM_SKIN_EDITSKIN)
 		{
-			m_Rainmeter->EditSkinFile(m_SkinName, m_SkinIniFile);
+			Rainmeter->EditSkinFile(m_SkinName, m_SkinIniFile);
 		}
 		else if (wParam == IDM_SKIN_REFRESH)
 		{
@@ -3409,7 +3406,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == IDM_SKIN_OPENSKINSFOLDER)
 		{
-			m_Rainmeter->OpenSkinFolder(m_SkinName);
+			Rainmeter->OpenSkinFolder(m_SkinName);
 		}
 		else if (wParam == IDM_SKIN_MANAGESKIN)
 		{
@@ -3475,7 +3472,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == IDM_CLOSESKIN)
 		{
-			m_Rainmeter->DeactivateConfig(this, -1);
+			Rainmeter->DeactivateConfig(this, -1);
 		}
 		else if (wParam == IDM_SKIN_FROMRIGHT)
 		{
@@ -3548,7 +3545,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		else
 		{
 			// Forward to tray window, which handles all the other commands
-			HWND tray = m_Rainmeter->GetTrayWindow()->GetWindow();
+			HWND tray = Rainmeter->GetTrayWindow()->GetWindow();
 
 			if (wParam == IDM_QUIT)
 			{
@@ -3749,7 +3746,7 @@ LRESULT CMeterWindow::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (m_WindowDraggable && !m_Rainmeter->GetDisableDragging())
+	if (m_WindowDraggable && !Rainmeter->GetDisableDragging())
 	{
 		POINT pos;
 		pos.x = GET_X_LPARAM(lParam);
@@ -3789,7 +3786,7 @@ LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lPara
 
 	if (!m_Refreshing)
 	{
-		if (m_WindowZPosition == ZPOSITION_NORMAL && m_Rainmeter->IsNormalStayDesktop() && CSystem::GetShowDesktop())
+		if (m_WindowZPosition == ZPOSITION_NORMAL && Rainmeter->IsNormalStayDesktop() && CSystem::GetShowDesktop())
 		{
 			if (!(wp->flags & (SWP_NOOWNERZORDER | SWP_NOACTIVATE)))
 			{
@@ -3830,8 +3827,8 @@ LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lPara
 				}
 
 				// Snap to other windows
-				std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Rainmeter->GetAllMeterWindows().begin();
-				for ( ; iter != m_Rainmeter->GetAllMeterWindows().end(); ++iter)
+				std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
+				for ( ; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
 				{
 					if ((*iter).second != this)
 					{
@@ -4239,7 +4236,7 @@ LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-	m_Rainmeter->ShowContextMenu(pos, this);
+	Rainmeter->ShowContextMenu(pos, this);
 
 	return 0;
 }
@@ -4265,7 +4262,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 			case MOUSE_LMB_DOWN:
 				if (!((*j)->GetLeftMouseDownAction().empty()))
 				{
-					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetLeftMouseDownAction().c_str(), this);
+					if (!test) Rainmeter->ExecuteCommand((*j)->GetLeftMouseDownAction().c_str(), this);
 					return true;
 				}
 				break;
@@ -4273,7 +4270,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 			case MOUSE_LMB_UP:
 				if (!((*j)->GetLeftMouseUpAction().empty()))
 				{
-					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetLeftMouseUpAction().c_str(), this);
+					if (!test) Rainmeter->ExecuteCommand((*j)->GetLeftMouseUpAction().c_str(), this);
 					return true;
 				}
 				break;
@@ -4281,7 +4278,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 			case MOUSE_LMB_DBLCLK:
 				if (!((*j)->GetLeftMouseDoubleClickAction().empty()))
 				{
-					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetLeftMouseDoubleClickAction().c_str(), this);
+					if (!test) Rainmeter->ExecuteCommand((*j)->GetLeftMouseDoubleClickAction().c_str(), this);
 					return true;
 				}
 				break;
@@ -4289,7 +4286,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 			case MOUSE_RMB_DOWN:
 				if (!((*j)->GetRightMouseDownAction().empty()))
 				{
-					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetRightMouseDownAction().c_str(), this);
+					if (!test) Rainmeter->ExecuteCommand((*j)->GetRightMouseDownAction().c_str(), this);
 					return true;
 				}
 				break;
@@ -4297,7 +4294,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 			case MOUSE_RMB_UP:
 				if (!((*j)->GetRightMouseUpAction().empty()))
 				{
-					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetRightMouseUpAction().c_str(), this);
+					if (!test) Rainmeter->ExecuteCommand((*j)->GetRightMouseUpAction().c_str(), this);
 					return true;
 				}
 				break;
@@ -4305,7 +4302,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 			case MOUSE_RMB_DBLCLK:
 				if (!((*j)->GetRightMouseDoubleClickAction().empty()))
 				{
-					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetRightMouseDoubleClickAction().c_str(), this);
+					if (!test) Rainmeter->ExecuteCommand((*j)->GetRightMouseDoubleClickAction().c_str(), this);
 					return true;
 				}
 				break;
@@ -4313,7 +4310,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 			case MOUSE_MMB_DOWN:
 				if (!((*j)->GetMiddleMouseDownAction().empty()))
 				{
-					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetMiddleMouseDownAction().c_str(), this);
+					if (!test) Rainmeter->ExecuteCommand((*j)->GetMiddleMouseDownAction().c_str(), this);
 					return true;
 				}
 				break;
@@ -4321,7 +4318,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 			case MOUSE_MMB_UP:
 				if (!((*j)->GetMiddleMouseUpAction().empty()))
 				{
-					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetMiddleMouseUpAction().c_str(), this);
+					if (!test) Rainmeter->ExecuteCommand((*j)->GetMiddleMouseUpAction().c_str(), this);
 					return true;
 				}
 				break;
@@ -4329,7 +4326,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 			case MOUSE_MMB_DBLCLK:
 				if (!((*j)->GetMiddleMouseDoubleClickAction().empty()))
 				{
-					if (!test) m_Rainmeter->ExecuteCommand((*j)->GetMiddleMouseDoubleClickAction().c_str(), this);
+					if (!test) Rainmeter->ExecuteCommand((*j)->GetMiddleMouseDoubleClickAction().c_str(), this);
 					return true;
 				}
 				break;
@@ -4345,7 +4342,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 		case MOUSE_LMB_DOWN:
 			if (!m_LeftMouseDownAction.empty())
 			{
-				if (!test) m_Rainmeter->ExecuteCommand(m_LeftMouseDownAction.c_str(), this);
+				if (!test) Rainmeter->ExecuteCommand(m_LeftMouseDownAction.c_str(), this);
 				return true;
 			}
 			break;
@@ -4353,7 +4350,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 		case MOUSE_LMB_UP:
 			if (!m_LeftMouseUpAction.empty())
 			{
-				if (!test) m_Rainmeter->ExecuteCommand(m_LeftMouseUpAction.c_str(), this);
+				if (!test) Rainmeter->ExecuteCommand(m_LeftMouseUpAction.c_str(), this);
 				return true;
 			}
 			break;
@@ -4361,7 +4358,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 		case MOUSE_LMB_DBLCLK:
 			if (!m_LeftMouseDoubleClickAction.empty())
 			{
-				if (!test) m_Rainmeter->ExecuteCommand(m_LeftMouseDoubleClickAction.c_str(), this);
+				if (!test) Rainmeter->ExecuteCommand(m_LeftMouseDoubleClickAction.c_str(), this);
 				return true;
 			}
 			break;
@@ -4369,7 +4366,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 		case MOUSE_RMB_DOWN:
 			if (!m_RightMouseDownAction.empty())
 			{
-				if (!test) m_Rainmeter->ExecuteCommand(m_RightMouseDownAction.c_str(), this);
+				if (!test) Rainmeter->ExecuteCommand(m_RightMouseDownAction.c_str(), this);
 				return true;
 			}
 			break;
@@ -4377,7 +4374,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 		case MOUSE_RMB_UP:
 			if (!m_RightMouseUpAction.empty())
 			{
-				if (!test) m_Rainmeter->ExecuteCommand(m_RightMouseUpAction.c_str(), this);
+				if (!test) Rainmeter->ExecuteCommand(m_RightMouseUpAction.c_str(), this);
 				return true;
 			}
 			break;
@@ -4385,7 +4382,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 		case MOUSE_RMB_DBLCLK:
 			if (!m_RightMouseDoubleClickAction.empty())
 			{
-				if (!test) m_Rainmeter->ExecuteCommand(m_RightMouseDoubleClickAction.c_str(), this);
+				if (!test) Rainmeter->ExecuteCommand(m_RightMouseDoubleClickAction.c_str(), this);
 				return true;
 			}
 			break;
@@ -4393,7 +4390,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 		case MOUSE_MMB_DOWN:
 			if (!m_MiddleMouseDownAction.empty())
 			{
-				if (!test) m_Rainmeter->ExecuteCommand(m_MiddleMouseDownAction.c_str(), this);
+				if (!test) Rainmeter->ExecuteCommand(m_MiddleMouseDownAction.c_str(), this);
 				return true;
 			}
 			break;
@@ -4401,7 +4398,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 		case MOUSE_MMB_UP:
 			if (!m_MiddleMouseUpAction.empty())
 			{
-				if (!test) m_Rainmeter->ExecuteCommand(m_MiddleMouseUpAction.c_str(), this);
+				if (!test) Rainmeter->ExecuteCommand(m_MiddleMouseUpAction.c_str(), this);
 				return true;
 			}
 			break;
@@ -4409,7 +4406,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 		case MOUSE_MMB_DBLCLK:
 			if (!m_MiddleMouseDoubleClickAction.empty())
 			{
-				if (!test) m_Rainmeter->ExecuteCommand(m_MiddleMouseDoubleClickAction.c_str(), this);
+				if (!test) Rainmeter->ExecuteCommand(m_MiddleMouseDoubleClickAction.c_str(), this);
 				return true;
 			}
 			break;
@@ -4445,7 +4442,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 					if (!m_MouseOverAction.empty())
 					{
 						UINT currCounter = m_MouseMoveCounter;
-						m_Rainmeter->ExecuteCommand(m_MouseOverAction.c_str(), this);
+						Rainmeter->ExecuteCommand(m_MouseOverAction.c_str(), this);
 						return (currCounter == m_MouseMoveCounter);
 					}
 				}
@@ -4481,7 +4478,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 						if (!((*j)->GetMouseOverAction().empty()))
 						{
 							UINT currCounter = m_MouseMoveCounter;
-							m_Rainmeter->ExecuteCommand((*j)->GetMouseOverAction().c_str(), this);
+							Rainmeter->ExecuteCommand((*j)->GetMouseOverAction().c_str(), this);
 							return (currCounter == m_MouseMoveCounter);
 						}
 					}
@@ -4509,7 +4506,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 
 					if (!((*j)->GetMouseLeaveAction().empty()))
 					{
-						m_Rainmeter->ExecuteCommand((*j)->GetMouseLeaveAction().c_str(), this);
+						Rainmeter->ExecuteCommand((*j)->GetMouseLeaveAction().c_str(), this);
 						return true;
 					}
 				}
@@ -4531,7 +4528,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 				if (!m_MouseOverAction.empty())
 				{
 					UINT currCounter = m_MouseMoveCounter;
-					m_Rainmeter->ExecuteCommand(m_MouseOverAction.c_str(), this);
+					Rainmeter->ExecuteCommand(m_MouseOverAction.c_str(), this);
 					return (currCounter == m_MouseMoveCounter);
 				}
 			}
@@ -4550,7 +4547,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 
 				if (!m_MouseLeaveAction.empty())
 				{
-					m_Rainmeter->ExecuteCommand(m_MouseLeaveAction.c_str(), this);
+					Rainmeter->ExecuteCommand(m_MouseLeaveAction.c_str(), this);
 					return true;
 				}
 			}
@@ -4713,8 +4710,8 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		// Check that we're still alive
 		bool found = false;
-		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_Rainmeter->GetAllMeterWindows().begin();
-		for ( ; iter != m_Rainmeter->GetAllMeterWindows().end(); ++iter)
+		std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
+		for ( ; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
 		{
 			if ((*iter).second == this)
 			{
@@ -4726,7 +4723,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (found)
 		{
 			const WCHAR* command = (const WCHAR*)pCopyDataStruct->lpData;
-			m_Rainmeter->ExecuteCommand(command, this);
+			Rainmeter->ExecuteCommand(command, this);
 		}
 		else
 		{
@@ -4781,8 +4778,8 @@ void CMeterWindow::MakePathAbsolute(std::wstring& path)
 	else
 	{
 		std::wstring absolute;
-		absolute.reserve(m_Rainmeter->GetSkinPath().size() + m_SkinName.size() + 1 + path.size());
-		absolute = m_Rainmeter->GetSkinPath();
+		absolute.reserve(Rainmeter->GetSkinPath().size() + m_SkinName.size() + 1 + path.size());
+		absolute = Rainmeter->GetSkinPath();
 		absolute += m_SkinName;
 		absolute += L'\\';
 		absolute += path;
@@ -4792,7 +4789,7 @@ void CMeterWindow::MakePathAbsolute(std::wstring& path)
 
 std::wstring CMeterWindow::GetSkinRootPath()
 {
-	std::wstring path = m_Rainmeter->GetSkinPath();
+	std::wstring path = Rainmeter->GetSkinPath();
 
 	std::wstring::size_type loc;
 	if ((loc = m_SkinName.find_first_of(L'\\')) != std::wstring::npos)

@@ -1331,7 +1331,7 @@ void CRainmeter::CreateMeterWindow(const std::wstring& config, const std::wstrin
 
 		try
 		{
-			mw->Initialize(*this);
+			mw->Initialize();
 
 			CDialogAbout::UpdateSkins();
 			CDialogManage::UpdateSkins(mw);

@@ -163,9 +163,7 @@ public:
 	CMeterWindow(const std::wstring& config, const std::wstring& iniFile);
 	~CMeterWindow();
 
-	int Initialize(CRainmeter& Rainmeter);
-
-	CRainmeter* GetMainObject() { return m_Rainmeter; }
+	int Initialize();
 
 	void RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& args);
 
@@ -450,8 +448,6 @@ private:
 
 	int m_UpdateCounter;
 	UINT m_MouseMoveCounter;
-
-	CRainmeter* m_Rainmeter;					// Pointer to the main object
 
 	Gdiplus::PrivateFontCollection* m_FontCollection;
 
