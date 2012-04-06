@@ -122,13 +122,10 @@ void CConfigParser::ReadVariables()
 	}
 }
 
-/**
+/*
 ** Sets a new value for the variable. The DynamicVariables must be set to 1 in the
 ** meter/measure for the changes to be applied.
 **
-** \param variables
-** \param strVariable
-** \param strValue
 */
 void CConfigParser::SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue)
 {
@@ -147,12 +144,9 @@ void CConfigParser::SetVariable(std::unordered_map<std::wstring, std::wstring>& 
 	variables[strTmp] = strValue;
 }
 
-/**
-** Gets a value for the variable.
+/*
+** Gets a value for the variable. Returns true if variable found.
 **
-** \param strVariable
-** \param strValue
-** \return true if variable is found
 */
 bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& strValue)
 {
@@ -423,10 +417,9 @@ void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 	}
 }
 
-/**
+/*
 ** Replaces environment and internal variables in the given string.
 **
-** \param result The string where the variables are returned. The string is modified.
 */
 bool CConfigParser::ReplaceVariables(std::wstring& result)
 {
@@ -492,10 +485,9 @@ bool CConfigParser::ReplaceVariables(std::wstring& result)
 	return replaced;
 }
 
-/**
+/*
 ** Replaces measures in the given string.
 **
-** \param result The string where the measure values are returned. The string is modified.
 */
 bool CConfigParser::ReplaceMeasures(std::wstring& result)
 {
@@ -1091,11 +1083,9 @@ RECT CConfigParser::ParseRECT(LPCTSTR string)
 	return r;
 }
 
-//==============================================================================
-/**
+/*
 ** Reads the given ini file and fills the m_Values and m_Keys maps.
 **
-** \param iniFile The ini file to be read.
 */
 void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int depth)
 {
@@ -1295,13 +1285,9 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 	if (temporary) CSystem::RemoveFile(iniRead);
 }
 
-//==============================================================================
-/**
+/*
 ** Sets the value for the key under the given section.
 **
-** \param strSection The name of the section.
-** \param strKey The name of the key.
-** \param strValue The value for the key.
 */
 void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue)
 {
@@ -1316,13 +1302,9 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 	m_Values[StrToLowerC(strTmp)] = strValue;
 }
 
-//==============================================================================
-/**
+/*
 ** Deletes the value for the key under the given section.
 **
-** \param strSection The name of the section.
-** \param strKey The name of the key.
-** \param strValue The value for the key.
 */
 void CConfigParser::DeleteValue(const std::wstring& strSection, const std::wstring& strKey)
 {
@@ -1339,14 +1321,9 @@ void CConfigParser::DeleteValue(const std::wstring& strSection, const std::wstri
 	}
 }
 
-//==============================================================================
-/**
+/*
 ** Returns the value for the key under the given section.
 **
-** \param strSection The name of the section.
-** \param strKey The name of the key.
-** \param strDefault The default value for the key.
-** \return The value for the key.
 */
 const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault)
 {

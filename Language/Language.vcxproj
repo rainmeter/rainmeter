@@ -108,8 +108,6 @@
       <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
       <NoEntryPoint>true</NoEntryPoint>
     </Link>
     <ResourceCompile>
@@ -139,8 +137,6 @@
       <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
       <NoEntryPoint>true</NoEntryPoint>
     </Link>
     <ResourceCompile>
