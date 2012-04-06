@@ -587,46 +587,10 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				sendCopyData(Rainmeter->GetConfigEditor());
 				return 0;
 			}
-			else if (wParam == RAINMETER_QUERY_ID_STATS_DATE)
-			{
-				sendCopyData(Rainmeter->GetStatsDate());
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_R)
-			{
-				sendCopyData(Rainmeter->GetTrayExecuteR());
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_M)
-			{
-				sendCopyData(Rainmeter->GetTrayExecuteM());
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_DR)
-			{
-				sendCopyData(Rainmeter->GetTrayExecuteDR());
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_TRAY_EX_DM)
-			{
-				sendCopyData(Rainmeter->GetTrayExecuteDM());
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_VERSION_CHECK)
-			{
-				UINT versioncheck = ((int)Rainmeter->GetDisableVersionCheck() * ((int)Rainmeter->GetDisableVersionCheck() + (int)Rainmeter->GetNewVersion()));
-				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)versioncheck);
-				return 0;
-			}
 			else if (wParam == RAINMETER_QUERY_ID_IS_DEBUGGING)
 			{
 				BOOL debug = Rainmeter->GetDebug();
 				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)debug);
-				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_IS_LITESTEP)
-			{
-				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)0);
 				return 0;
 			}
 		}

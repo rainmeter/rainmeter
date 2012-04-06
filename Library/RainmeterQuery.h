@@ -92,22 +92,13 @@ These Queries return a string in a wide char format
 #define RAINMETER_QUERY_ID_PROGRAM_PATH			4104
 #define RAINMETER_QUERY_ID_LOG_PATH				4105
 #define RAINMETER_QUERY_ID_CONFIG_EDITOR		4106
-#define RAINMETER_QUERY_ID_STATS_DATE			4108
-#define RAINMETER_QUERY_ID_TRAY_EX_L			4109
-#define RAINMETER_QUERY_ID_TRAY_EX_R			4110
-#define RAINMETER_QUERY_ID_TRAY_EX_M			4111
-#define RAINMETER_QUERY_ID_TRAY_EX_DL			4112
-#define RAINMETER_QUERY_ID_TRAY_EX_DR			4113
-#define RAINMETER_QUERY_ID_TRAY_EX_DM			4114
 
 /*
 These Queries return a numerical value in a direct message, the data 
 is stored in the lParam of the message sent to your window, and the msg section
 will contain WM_QUERY_RAINMETER_RETURN
 */
-#define RAINMETER_QUERY_ID_VERSION_CHECK		4115	//0 for disabled, 1 for checking, 2 for new version available
 #define RAINMETER_QUERY_ID_IS_DEBUGGING			4116
-#define RAINMETER_QUERY_ID_IS_LITESTEP			4117
 
 /*QUERY IDs used with WM_COPYDATA
 Usage: Send a WM_COPYDATA message to rainmeter via SendMessage().

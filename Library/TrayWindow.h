@@ -52,9 +52,9 @@ protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
-	BOOL AddTrayIcon();
-	BOOL RemoveTrayIcon();
-	BOOL ModifyTrayIcon(double value);
+	void AddTrayIcon();
+	void RemoveTrayIcon();
+	void ModifyTrayIcon(double value);
 	HICON CreateTrayIcon(double value);
 
 	HICON m_TrayIcon;
