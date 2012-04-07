@@ -201,13 +201,13 @@ const WCHAR* CMeasureTime::GetStringValue(AUTOSCALE autoScale, double scale, int
 		{
 			TimeToString(tmpSz, MAX_LINE_LENGTH, format, &today);
 		}
-
-		return CheckSubstitute(tmpSz);
 	}
 	else
 	{
-		return CMeasure::GetStringValue(autoScale, scale, decimals, percentual);
+		TimeToString(tmpSz, MAX_LINE_LENGTH, L"%H:%M:%S", &today);
 	}
+
+	return CheckSubstitute(tmpSz);
 }
 
 /*
