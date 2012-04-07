@@ -39,7 +39,7 @@ private:
 	int GetRandom();
 
 	std::wstring m_Formula;
-	bool m_ValidFormula;
+	bool m_ParseError;
 
 	int m_LowBound;
 	int m_HighBound;

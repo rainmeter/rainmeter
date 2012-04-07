@@ -28,7 +28,7 @@ bool CMeasureCalc::c_RandSeeded = false;
 **
 */
 CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
-	m_ValidFormula(false),
+	m_ParseError(false),
 	m_LowBound(),
 	m_HighBound(100),
 	m_UpdateRandom(false)
@@ -58,14 +58,18 @@ bool CMeasureCalc::Update()
 {
 	if (!CMeasure::PreUpdate()) return false;
 
-	if (m_ValidFormula)
+	const WCHAR* errMsg = MathParser::Parse(m_Formula.c_str(), this, &m_Value);
+	if (errMsg != NULL)
 	{
-		const WCHAR* errMsg = MathParser::Parse(m_Formula.c_str(), this, &m_Value);
-		if (errMsg != NULL)
+		if (!m_ParseError)
 		{
 			LogWithArgs(LOG_ERROR, L"Calc: %s in [%s]", errMsg, m_Name.c_str());
-			m_ValidFormula = false;
+			m_ParseError = true;
 		}
+	}
+	else
+	{
+		m_ParseError = false;
 	}
 
 	return PostUpdate();
@@ -106,11 +110,7 @@ void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		if (errMsg != NULL)
 		{
 			LogWithArgs(LOG_ERROR, L"Calc: %s in [%s]", errMsg, m_Name.c_str());
-			m_ValidFormula = false;
-		}
-		else
-		{
-			m_ValidFormula = true;
+			m_Formula.clear();
 		}
 	}
 }
