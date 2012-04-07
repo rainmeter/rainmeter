@@ -104,6 +104,4 @@ enum LOGLEVEL
 };
 #endif // LIBRARY_EXPORTS
 
-#define RmReadFormula _ReadFormula
-
 #endif
