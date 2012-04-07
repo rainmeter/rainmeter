@@ -90,9 +90,8 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		measure->oldValue = 0;
 		measure->firstTime = true;
+		*maxValue = 0.0;
 	}
-
-	*maxValue = 0.0;
 }
 
 PLUGIN_EXPORT double Update(void* data)

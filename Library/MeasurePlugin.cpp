@@ -183,6 +183,8 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	// Remove current directory from DLL search path
 	SetDllDirectory(L"");
 
+	double maxValue;
+
 	if (IsNewApi())
 	{
 		m_PluginData = (void*)id;
@@ -192,7 +194,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			((NEWINITIALIZE)initializeFunc)(&m_PluginData, this);
 		}
 
-		((NEWRELOAD)m_ReloadFunc)(m_PluginData, this, &m_MaxValue);
+		((NEWRELOAD)m_ReloadFunc)(m_PluginData, this, &maxValue);
 	}
 	else
 	{
@@ -204,24 +206,24 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			m_Update2 = true;
 		}
 
-		double oldMaxValue = m_MaxValue;
-
 		if (initializeFunc)
 		{
-			m_MaxValue = ((INITIALIZE)initializeFunc)(m_Plugin, parser.GetFilename().c_str(), section, m_ID);
-		}
-
-		const std::wstring& szMaxValue = parser.ReadString(section, L"MaxValue", L"");
-		if (!szMaxValue.empty())
-		{
-			m_MaxValue = oldMaxValue;
+			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, parser.GetFilename().c_str(), section, m_ID);
 		}
 	}
 
-	if (m_MaxValue == 0.0)
+	const std::wstring& szMaxValue = parser.ReadString(section, L"MaxValue", L"");
+	if (szMaxValue.empty())
 	{
-		m_MaxValue = 1.0;
-		m_LogMaxValue = true;
+		if (maxValue == 0.0)
+		{
+			m_MaxValue = 1.0;
+			m_LogMaxValue = true;
+		}
+		else
+		{
+			m_MaxValue = maxValue;
+		}
 	}
 
 	// Reset to default
