@@ -77,22 +77,14 @@ namespace Rainmeter
             return new string(value);
         }
 
-        public unsafe double ReadFormula(string option, double defValue)
+        public unsafe double ReadDouble(string option, double defValue)
         {
             return RmReadFormula((void*)m_Rm, ToUnsafe(option), defValue);
         }
 
         public unsafe int ReadInt(string option, int defValue)
         {
-            string value = ReadString(option, "");
-            try
-            {
-                return Convert.ToInt32(value);
-            }
-            catch
-            {
-                return defValue;
-            }
+            return (int)RmReadFormula((void*)m_Rm, ToUnsafe(option), defValue);
         }
 
         public unsafe string GetMeasureName()

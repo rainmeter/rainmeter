@@ -67,14 +67,12 @@ __inline LPCWSTR RmReadPath(void* rm, LPCWSTR option, LPCWSTR defValue)
 
 __inline int RmReadInt(void* rm, LPCWSTR option, int defValue)
 {
-	LPCWSTR value = RmReadString(rm, option, L"", TRUE);
-	return (*value) ? _wtoi(value) : defValue;
+	return (int)RmReadFormula(rm, option, defValue);
 }
 
 __inline double RmReadDouble(void* rm, LPCWSTR option, double defValue)
 {
-	LPCWSTR value = RmReadString(rm, option, L"", TRUE);
-	return (*value) ? wcstod(value, NULL) : defValue;
+	return RmReadFormula(rm, option, defValue);
 }
 
 __inline LPCWSTR RmGetMeasureName(void* rm)
@@ -105,5 +103,7 @@ enum LOGLEVEL
 	LOG_DEBUG   = 4
 };
 #endif // LIBRARY_EXPORTS
+
+#define RmReadFormula _ReadFormula
 
 #endif
