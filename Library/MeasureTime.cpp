@@ -76,7 +76,7 @@ void CMeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, 
 		_CrtSetReportMode(_CRT_ASSERT, 0);
 
 		errno = 0;
-		wcsftime(buf, bufLen, m_Format.c_str(), time);
+		wcsftime(buf, bufLen, format, time);
 		if (errno == EINVAL)
 		{
 			LogWithArgs(LOG_ERROR, L"Time: \"Format=%s\" invalid in [%s]", format, m_Name.c_str());
@@ -201,13 +201,13 @@ const WCHAR* CMeasureTime::GetStringValue(AUTOSCALE autoScale, double scale, int
 		{
 			TimeToString(tmpSz, MAX_LINE_LENGTH, format, &today);
 		}
+
+		return CheckSubstitute(tmpSz);
 	}
 	else
 	{
-		TimeToString(tmpSz, MAX_LINE_LENGTH, L"%H:%M:%S", &today);
+		return CMeasure::GetStringValue(autoScale, scale, decimals, percentual);
 	}
-
-	return CheckSubstitute(tmpSz);
 }
 
 /*
