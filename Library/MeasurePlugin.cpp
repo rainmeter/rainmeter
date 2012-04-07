@@ -183,7 +183,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	// Remove current directory from DLL search path
 	SetDllDirectory(L"");
 
-	double maxValue;
+	double maxValue = 0.0;
 
 	if (IsNewApi())
 	{
