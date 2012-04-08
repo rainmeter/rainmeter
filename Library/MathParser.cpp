@@ -94,10 +94,11 @@ struct Function
 	BYTE length;
 };
 
-static double neg(double x);
 static double frac(double x);
 static double trunc(double x);
+static double rad(double deg);
 static double sgn(double x);
+static double neg(double x);
 static const WCHAR* round(int paramcnt, double* args, double* result);
 
 static Function g_Functions[] =
@@ -118,20 +119,21 @@ static Function g_Functions[] =
 	{ L"round", (OneArgProc)&round, 5 },
 	{ L"asin", &asin, 4 },
 	{ L"acos", &acos, 4 },
-	{ L"sgn", &sgn, 4 },
-	{ L"neg", &neg, 4 },
+	{ L"rad", &rad, 3 },
+	{ L"sgn", &sgn, 3 },
+	{ L"neg", &neg, 3 },
 	{ L"e", NULL, 1 },
 	{ L"pi", NULL, 2 }
 };
 
 static const int FUNC_MAX_LEN = 5;
 static const int FUNC_ROUND = 13;
-static const int FUNC_E = 18;
-static const int FUNC_PI = 19;
+static const int FUNC_E = 19;
+static const int FUNC_PI = 20;
 static const BYTE FUNC_INVALID = UCHAR_MAX;
 
 static const Operation g_BrOp = { OP_OBR, 0, 0};
-static const Operation g_NegOp = { OP_FUNC_ONEARG, 17, 0 };
+static const Operation g_NegOp = { OP_FUNC_ONEARG, 18, 0 };
 
 static const BYTE g_OpPriorities[OP_FUNC_MULTIARG + 1] =
 {
@@ -790,6 +792,11 @@ static double frac(double x)
 static double trunc(double x)
 {
 	return (x >= 0.0) ? floor(x) : ceil(x);
+}
+
+static double rad(double deg)
+{
+	return (deg / 180.0) * M_PI;
 }
 
 static double sgn(double x)
