@@ -27,6 +27,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <algorithm>
+#include <cstdint>
 #include <gdiplus.h>
 
 class CRainmeter;
@@ -71,7 +72,8 @@ public:
 	bool IsKeyDefined(LPCTSTR section, LPCTSTR key);
 	bool IsValueDefined(LPCTSTR section, LPCTSTR key);
 	int ReadInt(LPCTSTR section, LPCTSTR key, int defValue);
-	unsigned int ReadUInt(LPCTSTR section, LPCTSTR key, unsigned int defValue);
+	uint32_t ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue);
+	uint64_t ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValue);
 	double ReadFloat(LPCTSTR section, LPCTSTR key, double defValue);
 	Gdiplus::ARGB ReadColor(LPCTSTR section, LPCTSTR key, Gdiplus::ARGB defValue);
 	Gdiplus::Rect ReadRect(LPCTSTR section, LPCTSTR key, const Gdiplus::Rect& defValue);
@@ -90,7 +92,8 @@ public:
 	static void Shrink(std::vector<std::wstring>& vec);
 	static double ParseDouble(LPCTSTR string, double defValue);
 	static int ParseInt(LPCTSTR string, int defValue);
-	static unsigned int ParseUInt(LPCTSTR string, unsigned int defValue);
+	static uint32_t ParseUInt(LPCTSTR string, uint32_t defValue);
+	static uint64_t ParseUInt64(LPCTSTR string, uint64_t defValue);
 	static Gdiplus::ARGB ParseColor(LPCTSTR string);
 	static Gdiplus::Rect ParseRect(LPCTSTR string);
 	static RECT ParseRECT(LPCTSTR string);

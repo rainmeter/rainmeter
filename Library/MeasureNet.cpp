@@ -571,7 +571,7 @@ void CMeasureNet::ResetStats()
 */
 void CMeasureNet::ReadStats(const WCHAR* iniFile, std::wstring& statsDate)
 {
-	WCHAR buffer[64];
+	WCHAR buffer[48];
 
 	CConfigParser parser;
 	parser.Initialize(iniFile, NULL, NULL, L"Statistics");
@@ -582,43 +582,43 @@ void CMeasureNet::ReadStats(const WCHAR* iniFile, std::wstring& statsDate)
 		statsDate = date;
 	}
 
-	int count = parser.ReadInt(L"Statistics", L"NetStatsCount", 0);
+	uint32_t count = parser.ReadUInt(L"Statistics", L"Count", 0);
+	if (parser.GetLastDefaultUsed())
+	{
+		count = parser.ReadUInt(L"Statistics", L"NetStatsCount", 0);
+	}
 
 	c_StatValues.clear();
 	c_StatValues.reserve(count * 2);
 
-	for (int i = 1; i <= count; ++i)
+	for (uint32_t i = 1; i <= count; ++i)
 	{
 		ULARGE_INTEGER value;
 
-		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInHigh%i", i);
-		value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0);
+		_snwprintf_s(buffer, _TRUNCATE, L"In%u", i);
+		value.QuadPart = parser.ReadUInt64(L"Statistics", buffer, 0);
+		if (parser.GetLastDefaultUsed())
+		{
+			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInHigh%u", i);
+			value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0);
 
-		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInLow%i", i);
-		value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0);
-
+			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsInLow%u", i);
+			value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0);
+		}
 		c_StatValues.push_back(value.QuadPart);
 
-		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutHigh%i", i);
-		value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0);
+		_snwprintf_s(buffer, _TRUNCATE, L"Out%u", i);
+		value.QuadPart = parser.ReadUInt64(L"Statistics", buffer, 0);
+		if (parser.GetLastDefaultUsed())
+		{
+			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutHigh%u", i);
+			value.HighPart = parser.ReadUInt(L"Statistics", buffer, 0);
 
-		_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutLow%i", i);
-		value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0);
-
+			_snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutLow%u", i);
+			value.LowPart = parser.ReadUInt(L"Statistics", buffer, 0);
+		}
 		c_StatValues.push_back(value.QuadPart);
 	}
-}
-
-/*
-** Appends "key=value\0" to given string.
-**
-*/
-inline void AppendStatsValue(std::wstring& data, const WCHAR* key, size_t key_len, const WCHAR* value, size_t value_len)
-{
-	data.append(key, key_len);
-	data += L'=';
-	data.append(value, value_len);
-	data += L'\0';
 }
 
 /*
@@ -627,47 +627,44 @@ inline void AppendStatsValue(std::wstring& data, const WCHAR* key, size_t key_le
 */
 void CMeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
 {
-	WCHAR buffer[64];
-	WCHAR buffer2[32];
-	size_t len, len2;
+	WCHAR buffer[48];
+	int len;
 
-	size_t statsSize = c_StatValues.size() / 2;
+	uint32_t count = c_StatValues.size() / 2;
 
 	// Reserve sufficient buffer for statistics
 	std::wstring data;
-	data.reserve((64 * 2) + 128 * statsSize);
+	data.reserve(48 * (2 + count));
 
 	// Add date
-	AppendStatsValue(data, L"Since", 5, statsDate.c_str(), statsDate.size());
+	data = L"Since=";
+	data += statsDate;
+	data += L'\0';
+
+	auto appendStatsValue = [&]()
+	{
+		data.append(buffer, len);
+		data += L'\0';
+	};
 
 	// Add stats count
-	len = _snwprintf_s(buffer, _TRUNCATE, L"%i", (int)statsSize);
-	AppendStatsValue(data, L"NetStatsCount", 13, buffer, len);
+	len = _snwprintf_s(buffer, _TRUNCATE, L"Count=%u", count);
+	appendStatsValue();
 
 	// Add stats
-	for (size_t i = 0; i < statsSize; ++i)
+	for (uint32_t i = 0; i < count; ++i)
 	{
-		ULARGE_INTEGER value;
+		if (c_StatValues[i * 2] > 0)
+		{
+			len  = _snwprintf_s(buffer, _TRUNCATE, L"In%u=%llu", i + 1, c_StatValues[i * 2]);
+			appendStatsValue();
+		}
 
-		value.QuadPart = c_StatValues[i * 2];
-
-		len  = _snwprintf_s(buffer, _TRUNCATE, L"NetStatsInHigh%i", (int)i + 1);
-		len2 = _snwprintf_s(buffer2, _TRUNCATE, L"%u", value.HighPart);
-		AppendStatsValue(data, buffer, len, buffer2, len2);
-
-		len  = _snwprintf_s(buffer, _TRUNCATE, L"NetStatsInLow%i", (int)i + 1);
-		len2 = _snwprintf_s(buffer2, _TRUNCATE, L"%u", value.LowPart);
-		AppendStatsValue(data, buffer, len, buffer2, len2);
-
-		value.QuadPart = c_StatValues[i * 2 + 1];
-
-		len  = _snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutHigh%i", (int)i + 1);
-		len2 = _snwprintf_s(buffer2, _TRUNCATE, L"%u", value.HighPart);
-		AppendStatsValue(data, buffer, len, buffer2, len2);
-
-		len  = _snwprintf_s(buffer, _TRUNCATE, L"NetStatsOutLow%i", (int)i + 1);
-		len2 = _snwprintf_s(buffer2, _TRUNCATE, L"%u", value.LowPart);
-		AppendStatsValue(data, buffer, len, buffer2, len2);
+		if (c_StatValues[i * 2 + 1] > 0)
+		{
+			len  = _snwprintf_s(buffer, _TRUNCATE, L"Out%u=%llu", i + 1, c_StatValues[i * 2 + 1]);
+			appendStatsValue();
+		}
 	}
 
 	// Write statistics

@@ -55,6 +55,7 @@
 #include <cmath>
 #include <cerrno>
 #include <cassert>
+#include <cstdint>
 
 // RUNTIME
 #include <process.h>

@@ -720,7 +720,7 @@ int CConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 	return defValue;
 }
 
-unsigned int CConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, unsigned int defValue)
+uint32_t CConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -733,7 +733,7 @@ unsigned int CConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, unsigned int 
 			const WCHAR* errMsg = MathParser::CheckedParse(string, &dblValue);
 			if (!errMsg)
 			{
-				return (unsigned int)dblValue;
+				return (uint32_t)dblValue;
 			}
 
 			LogWithArgs(LOG_ERROR, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
@@ -741,10 +741,42 @@ unsigned int CConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, unsigned int 
 		else if (*string)
 		{
 			errno = 0;
-			unsigned int uintValue = wcstoul(string, NULL, 10);
+			uint32_t uintValue = wcstoul(string, NULL, 10);
 			if (errno != ERANGE)
 			{
 				return uintValue;
+			}
+		}
+	}
+
+	return defValue;
+}
+
+uint64_t CConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValue)
+{
+	const std::wstring& result = ReadString(section, key, L"");
+
+	if (!m_LastDefaultUsed)
+	{
+		const WCHAR* string = result.c_str();
+		if (*string == L'(')
+		{
+			double dblValue;
+			const WCHAR* errMsg = MathParser::CheckedParse(string, &dblValue);
+			if (!errMsg)
+			{
+				return (uint64_t)dblValue;
+			}
+
+			LogWithArgs(LOG_ERROR, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+		}
+		else if (*string)
+		{
+			errno = 0;
+			uint64_t uint64Value = _wcstoui64(string, NULL, 10);
+			if (errno != ERANGE)
+			{
+				return uint64Value;
 			}
 		}
 	}
@@ -958,7 +990,7 @@ int CConfigParser::ParseInt(LPCTSTR string, int defValue)
 ** If the given string is invalid format or causes overflow/underflow, returns given default value.
 **
 */
-unsigned int CConfigParser::ParseUInt(LPCTSTR string, unsigned int defValue)
+uint32_t CConfigParser::ParseUInt(LPCTSTR string, uint32_t defValue)
 {
 	assert(string);
 
@@ -968,7 +1000,7 @@ unsigned int CConfigParser::ParseUInt(LPCTSTR string, unsigned int defValue)
 		const WCHAR* errMsg = MathParser::CheckedParse(string, &dblValue);
 		if (!errMsg)
 		{
-			return (unsigned int)dblValue;
+			return (uint32_t)dblValue;
 		}
 
 		LogWithArgs(LOG_ERROR, L"Formula: %s: %s", errMsg, string);
@@ -976,10 +1008,43 @@ unsigned int CConfigParser::ParseUInt(LPCTSTR string, unsigned int defValue)
 	else if (*string)
 	{
 		errno = 0;
-		unsigned int uintValue = wcstoul(string, NULL, 10);
+		uint32_t uintValue = wcstoul(string, NULL, 10);
 		if (errno != ERANGE)
 		{
 			return uintValue;
+		}
+	}
+
+	return defValue;
+}
+
+/*
+** Helper method that parses the 64bit unsigned integer value from the given string.
+** If the given string is invalid format or causes overflow/underflow, returns given default value.
+**
+*/
+uint64_t CConfigParser::ParseUInt64(LPCTSTR string, uint64_t defValue)
+{
+	assert(string);
+
+	if (*string == L'(')
+	{
+		double dblValue;
+		const WCHAR* errMsg = MathParser::CheckedParse(string, &dblValue);
+		if (!errMsg)
+		{
+			return (uint64_t)dblValue;
+		}
+
+		LogWithArgs(LOG_ERROR, L"Formula: %s: %s", errMsg, string);
+	}
+	else if (*string)
+	{
+		errno = 0;
+		uint64_t uint64Value = _wcstoui64(string, NULL, 10);
+		if (errno != ERANGE)
+		{
+			return uint64Value;
 		}
 	}
 
