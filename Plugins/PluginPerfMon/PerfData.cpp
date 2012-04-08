@@ -45,6 +45,8 @@ struct MeasureData
 	}
 };
 
+static CPerfTitleDatabase g_TitleCounter(PERF_TITLE_COUNTER);
+
 ULONGLONG GetPerfData(PCTSTR ObjectName, PCTSTR InstanceName, PCTSTR CounterName);
 
 PLUGIN_EXPORT void Initialize(void** data, void* rm)
@@ -133,14 +135,12 @@ PLUGIN_EXPORT void Finalize(void* data)
 
 ULONGLONG GetPerfData(LPCWSTR objectName, LPCWSTR instanceName, LPCWSTR counterName)
 {
-	static CPerfTitleDatabase s_CounterTitles(PERF_TITLE_COUNTER);
-
 	BYTE data[256];
 	WCHAR name[256];
 	ULONGLONG value = 0;
 
-	CPerfSnapshot snapshot(&s_CounterTitles);
-	CPerfObjectList objList(&snapshot, &s_CounterTitles);
+	CPerfSnapshot snapshot(&g_TitleCounter);
+	CPerfObjectList objList(&snapshot, &g_TitleCounter);
 
 	if (snapshot.TakeSnapshot(objectName))
 	{
