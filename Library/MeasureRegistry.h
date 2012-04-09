@@ -27,6 +27,8 @@ public:
 	CMeasureRegistry(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureRegistry();
 
+	virtual UINT GetTypeID() { return TypeID<CMeasureRegistry>(); }
+
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 

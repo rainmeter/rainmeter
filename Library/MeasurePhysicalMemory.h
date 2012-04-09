@@ -27,6 +27,8 @@ public:
 	CMeasurePhysicalMemory(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasurePhysicalMemory();
 
+	virtual UINT GetTypeID() { return TypeID<CMeasurePhysicalMemory>(); }
+
 	virtual bool Update();
 
 protected:

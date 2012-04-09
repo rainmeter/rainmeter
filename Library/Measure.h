@@ -47,6 +47,8 @@ public:
 	CMeasure(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasure();
 
+	virtual UINT GetTypeID() = 0;
+
 	void ReadConfig(CConfigParser& parser) { ReadConfig(parser, GetName()); }
 
 	virtual void Initialize();

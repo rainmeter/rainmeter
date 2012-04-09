@@ -29,6 +29,8 @@ public:
 	CMeasureCPU(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureCPU();
 
+	virtual UINT GetTypeID() { return TypeID<CMeasureCPU>(); }
+
 	virtual bool Update();
 
 protected:

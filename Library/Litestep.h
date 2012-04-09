@@ -35,6 +35,11 @@ enum LOGLEVEL
 void InitalizeLitestep();
 void FinalizeLitestep();
 
+UINT GetUniqueID();
+
+template <typename T>
+UINT TypeID() { static UINT id = GetUniqueID(); return id; }
+
 HRGN BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF cTolerance);
 
 std::string ConvertToAscii(LPCTSTR str);

@@ -28,6 +28,8 @@ public:
 	CMeterBar(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterBar();
 
+	virtual UINT GetTypeID() { return TypeID<CMeterBar>(); }
+
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);

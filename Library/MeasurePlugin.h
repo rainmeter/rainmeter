@@ -42,6 +42,8 @@ public:
 	CMeasurePlugin(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasurePlugin();
 
+	virtual UINT GetTypeID() { return TypeID<CMeasurePlugin>(); }
+
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 	virtual void Command(const std::wstring& command);

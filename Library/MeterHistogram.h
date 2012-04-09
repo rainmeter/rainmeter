@@ -28,6 +28,8 @@ public:
 	CMeterHistogram(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterHistogram();
 
+	virtual UINT GetTypeID() { return TypeID<CMeterHistogram>(); }
+
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);

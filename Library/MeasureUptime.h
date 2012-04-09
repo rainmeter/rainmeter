@@ -27,6 +27,8 @@ public:
 	CMeasureUptime(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureUptime();
 
+	virtual UINT GetTypeID() { return TypeID<CMeasureUptime>(); }
+
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 

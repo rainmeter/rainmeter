@@ -28,6 +28,8 @@ public:
 	CMeterBitmap(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterBitmap();
 
+	virtual UINT GetTypeID() { return TypeID<CMeterBitmap>(); }
+
 	virtual bool HitTest(int x, int y);
 
 	virtual void Initialize();

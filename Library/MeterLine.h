@@ -27,6 +27,8 @@ public:
 	CMeterLine(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterLine();
 
+	virtual UINT GetTypeID() { return TypeID<CMeterLine>(); }
+
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);

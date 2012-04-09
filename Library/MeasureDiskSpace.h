@@ -27,6 +27,8 @@ public:
 	CMeasureDiskSpace(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureDiskSpace();
 
+	virtual UINT GetTypeID() { return TypeID<CMeasureDiskSpace>(); }
+
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 

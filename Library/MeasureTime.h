@@ -27,6 +27,8 @@ public:
 	CMeasureTime(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureTime();
 
+	virtual UINT GetTypeID() { return TypeID<CMeasureTime>(); }
+
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 

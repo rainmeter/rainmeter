@@ -30,6 +30,8 @@ public:
 	CMeterButton(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterButton();
 
+	virtual UINT GetTypeID() { return TypeID<CMeterButton>(); }
+
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);

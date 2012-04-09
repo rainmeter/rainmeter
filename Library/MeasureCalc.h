@@ -27,6 +27,8 @@ public:
 	CMeasureCalc(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureCalc();
 
+	virtual UINT GetTypeID() { return TypeID<CMeasureCalc>(); }
+
 	virtual bool Update();
 
 	bool GetMeasureValue(const WCHAR* str, int len, double* value);

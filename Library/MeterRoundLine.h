@@ -27,6 +27,8 @@ public:
 	CMeterRoundLine(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterRoundLine();
 
+	virtual UINT GetTypeID() { return TypeID<CMeterRoundLine>(); }
+
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 

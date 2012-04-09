@@ -108,7 +108,7 @@ int RainmeterMain(LPWSTR cmdLine)
 
 		if (ret == 0)
 		{
-			ret = Rainmeter->MessagePump();	
+			ret = Rainmeter->MessagePump();
 		}
 
 		delete Rainmeter;

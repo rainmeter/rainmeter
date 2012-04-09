@@ -89,6 +89,7 @@
       <DisableSpecificWarnings>4530;4996</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>./zlib;./zlib/minizip</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -124,6 +125,7 @@
       <DisableSpecificWarnings>4244;4267;4530;4996</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>./zlib;./zlib/minizip</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -160,6 +162,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <AdditionalIncludeDirectories>./zlib;./zlib/minizip</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4267;4530;4996</DisableSpecificWarnings>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -191,6 +194,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>./zlib;./zlib/minizip</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4267;4530;4996</DisableSpecificWarnings>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>

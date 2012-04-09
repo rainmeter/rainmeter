@@ -27,6 +27,8 @@ public:
 	CMeasureVirtualMemory(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureVirtualMemory();
 
+	virtual UINT GetTypeID() { return TypeID<CMeasureVirtualMemory>(); }
+
 	virtual bool Update();
 
 protected:

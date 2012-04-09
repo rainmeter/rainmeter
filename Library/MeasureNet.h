@@ -39,6 +39,8 @@ public:
 
 	CMeasureNet(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureNet();
+
+	virtual UINT GetTypeID() { return TypeID<CMeasureNet>(); }
 	
 	virtual bool Update();
 

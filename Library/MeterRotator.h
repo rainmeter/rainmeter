@@ -28,6 +28,8 @@ public:
 	CMeterRotator(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterRotator();
 
+	virtual UINT GetTypeID() { return TypeID<CMeterRotator>(); }
+
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);

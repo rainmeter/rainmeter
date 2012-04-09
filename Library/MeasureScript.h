@@ -27,6 +27,8 @@ public:
 	CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureScript();
 
+	virtual UINT GetTypeID() { return TypeID<CMeasureScript>(); }
+
 	virtual void Initialize();
 	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);

@@ -137,10 +137,11 @@ static int Show(lua_State* L)
 static int SetText(lua_State* L)
 {
 	CMeter* self = GetSelf(L);
-	if (CMeterString* stringMeter = dynamic_cast<CMeterString*>(self))
+	if (self->GetTypeID() == TypeID<CMeterString>())
 	{
+		CMeterString* string = (CMeterString*)self;
 		std::wstring str = LuaManager::ToWide(L, 2);
-		stringMeter->SetText(str.c_str());
+		string->SetText(str.c_str());
 	}
 
 	return 0;

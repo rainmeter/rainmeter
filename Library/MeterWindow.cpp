@@ -1313,7 +1313,7 @@ void CMeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 	{
 		if (CompareName((*i), measure, group))
 		{
-			if (bNetStats && dynamic_cast<CMeasureNet*>(*i) != NULL)
+			if (bNetStats && (*i)->GetTypeID() && TypeID<CMeasureNet>())
 			{
 				CMeasureNet::UpdateIFTable();
 				CMeasureNet::UpdateStats();
@@ -1942,6 +1942,8 @@ void CMeterWindow::WriteConfig(INT setting)
 	}
 }
 
+#include "Timer.h"
+
 /*
 ** Reads the skin config, creates the meters and measures and does the bindings.
 **
@@ -2155,7 +2157,7 @@ bool CMeterWindow::ReadSkin()
 						m_Measures.push_back(measure);
 						m_Parser.AddMeasure(measure);
 
-						if (!m_HasNetMeasures && dynamic_cast<CMeasureNet*>(measure))
+						if (measure->GetTypeID() == TypeID<CMeasureNet>())
 						{
 							m_HasNetMeasures = true;
 						}
@@ -2186,7 +2188,7 @@ bool CMeterWindow::ReadSkin()
 
 						m_Meters.push_back(meter);
 
-						if (!m_HasButtons && dynamic_cast<CMeterButton*>(meter))
+						if (!m_HasButtons && meter->GetTypeID() == TypeID<CMeterButton>())
 						{
 							m_HasButtons = true;
 						}
@@ -3235,9 +3237,9 @@ void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 		if ((*j)->IsHidden()) continue;
 
 		CMeterButton* button = NULL;
-		if (m_HasButtons)
+		if (m_HasButtons && (*j)->GetTypeID() == TypeID<CMeterButton>())
 		{
-			button = dynamic_cast<CMeterButton*>(*j);
+			button = (CMeterButton*)(*j);
 			if (button)
 			{
 				switch (proc)
@@ -4449,9 +4451,9 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 
 				// Handle button
 				CMeterButton* button = NULL;
-				if (m_HasButtons)
+				if (m_HasButtons && (*j)->GetTypeID() == TypeID<CMeterButton>())
 				{
-					button = dynamic_cast<CMeterButton*>(*j);
+					button = (CMeterButton*)(*j);
 					if (button)
 					{
 						if (!buttonFound)
@@ -4492,13 +4494,10 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 				if ((*j)->IsMouseOver())
 				{
 					// Handle button
-					if (m_HasButtons)
+					if (m_HasButtons && (*j)->GetTypeID() == TypeID<CMeterButton>())
 					{
-						CMeterButton* button = dynamic_cast<CMeterButton*>(*j);
-						if (button)
-						{
-							button->SetFocus(false);
-						}
+						CMeterButton* button = (CMeterButton*)(*j);
+						button->SetFocus(false);
 					}
 
 					//LogWithArgs(LOG_DEBUG, L"MeterLeave: %s - [%s]", m_SkinName.c_str(), (*j)->GetName());

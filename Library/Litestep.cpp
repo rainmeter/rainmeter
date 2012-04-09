@@ -39,6 +39,12 @@ void FinalizeLitestep()
 	DeleteCriticalSection(&g_CsLogDelay);
 }
 
+UINT GetUniqueID()
+{
+	static UINT id = 0;
+	return id++;
+}
+
 HRGN BitmapToRegion(HBITMAP hbm, COLORREF clrTransp, COLORREF clrTolerance)
 {
 	HRGN hRgn = NULL;

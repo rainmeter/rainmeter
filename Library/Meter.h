@@ -36,6 +36,8 @@ public:
 	CMeter(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeter();
 
+	virtual UINT GetTypeID() = 0;
+
 	void ReadConfig(CConfigParser& parser) { ReadConfig(parser, GetName()); parser.ClearStyleTemplate(); }
 
 	virtual void Initialize();

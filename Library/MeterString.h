@@ -29,6 +29,8 @@ public:
 	CMeterString(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeterString();
 
+	virtual UINT GetTypeID() { return TypeID<CMeterString>(); }
+
 	virtual int GetX(bool abs = false);
 
 	virtual void Initialize();
