@@ -1942,8 +1942,6 @@ void CMeterWindow::WriteConfig(INT setting)
 	}
 }
 
-#include "Timer.h"
-
 /*
 ** Reads the skin config, creates the meters and measures and does the bindings.
 **
