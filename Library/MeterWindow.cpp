@@ -2798,7 +2798,7 @@ void CMeterWindow::Update(bool nodraw)
 {
 	++m_UpdateCounter;
 
-	if (!m_Measures.empty())
+	if (!nodraw && !m_Measures.empty())
 	{
 		// Pre-updates
 		if (m_HasNetMeasures)

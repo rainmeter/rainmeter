@@ -39,8 +39,6 @@ protected:
 private:
 	void CalcUsage(double idleTime, double systemTime);
 
-	bool m_FirstTime;
-
 	int m_Processor;
 
 	double m_OldTime[2];

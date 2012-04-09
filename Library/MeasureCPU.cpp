@@ -65,7 +65,6 @@ ULONG CMeasureCPU::c_BufferSize = 0;
 **
 */
 CMeasureCPU::CMeasureCPU(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
-	m_FirstTime(true),
 	m_Processor(),
 	m_OldTime()
 {
@@ -99,24 +98,12 @@ void CMeasureCPU::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	CMeasure::ReadConfig(parser, section);
 
-	int processor = parser.ReadInt(section, L"Processor", 0);
+	m_Processor = parser.ReadInt(section, L"Processor", 0);
 
-	if (processor < 0 || processor > c_NumOfProcessors)
+	if (m_Processor < 0 || m_Processor > c_NumOfProcessors)
 	{
-		LogWithArgs(LOG_WARNING, L"CPU: Processor=%i invalid in [%s]", processor, section);
-
-		processor = 0;
-	}
-
-	if (processor != m_Processor)
-	{
-		m_Processor = processor;
-		m_FirstTime = true;
-	}
-
-	if (m_FirstTime)
-	{
-		m_OldTime[0] = m_OldTime[1] = 0.0;
+		LogWithArgs(LOG_WARNING, L"CPU: Processor=%i invalid in [%s]", m_Processor, section);
+		m_Processor = 0;
 	}
 }
 
@@ -222,20 +209,11 @@ bool CMeasureCPU::Update()
 */
 void CMeasureCPU::CalcUsage(double idleTime, double systemTime)
 {
-	if (!m_FirstTime)
-	{
-		double dbCpuUsage;
+	// CurrentCpuUsage% = 100 - ((IdleTime / SystemTime) * 100)
+	double dbCpuUsage = 100.0 - ((idleTime - m_OldTime[0]) / (systemTime - m_OldTime[1])) * 100.0;
 
-		// CurrentCpuUsage% = 100 - ((IdleTime / SystemTime) * 100)
-		dbCpuUsage = 100.0 - ((idleTime - m_OldTime[0]) / (systemTime - m_OldTime[1])) * 100.0;
-
-		dbCpuUsage = min(dbCpuUsage, 100.0);
-		m_Value    = max(dbCpuUsage, 0.0);
-	}
-	else
-	{
-		m_FirstTime = false;
-	}
+	dbCpuUsage = min(dbCpuUsage, 100.0);
+	m_Value    = max(dbCpuUsage, 0.0);
 
 	// store new CPU's idle and system time
 	m_OldTime[0] = idleTime;
