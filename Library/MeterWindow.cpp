@@ -1313,7 +1313,7 @@ void CMeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 	{
 		if (CompareName((*i), measure, group))
 		{
-			if (bNetStats && (*i)->GetTypeID() && TypeID<CMeasureNet>())
+			if (bNetStats && (*i)->GetTypeID() == TypeID<CMeasureNet>())
 			{
 				CMeasureNet::UpdateIFTable();
 				CMeasureNet::UpdateStats();
