@@ -100,6 +100,7 @@
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
       <TargetMachine>MachineX86</TargetMachine>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
       <Command>if exist ..\testbench\x32\debug\skins goto skip
@@ -133,6 +134,7 @@ xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\debug\themes
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
       <TargetMachine>MachineX64</TargetMachine>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
       <Command>if exist ..\testbench\x64\debug\skins goto skip
@@ -169,6 +171,7 @@ xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\debug\themes
       <MergeSections>.rdata=.text</MergeSections>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
       <Command>if exist ..\testbench\x32\release\skins goto skip
@@ -204,6 +207,7 @@ xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\release\themes
       <MergeSections>.rdata=.text</MergeSections>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <PostBuildEvent>
       <Command>if exist ..\testbench\x64\release\skins goto skip

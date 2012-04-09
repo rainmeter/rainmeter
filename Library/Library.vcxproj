@@ -104,6 +104,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <DelayLoadDLLs>Winmm.dll;Version.dll</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -132,6 +133,7 @@
       <TargetMachine>MachineX64</TargetMachine>
       <DelayLoadDLLs>Winmm.dll;Version.dll</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -162,6 +164,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DelayLoadDLLs>Winmm.dll;Version.dll</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -189,6 +192,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <DelayLoadDLLs>Winmm.dll;Version.dll</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -103,6 +103,7 @@
       <AdditionalLibraryDirectories>..\..\Library\x32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Rainmeter.lib;PowrProf.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>PowrProf.dll</DelayLoadDLLs>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -130,6 +131,7 @@
       <AdditionalLibraryDirectories>..\..\Library\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>Rainmeter.lib;PowrProf.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>PowrProf.dll</DelayLoadDLLs>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

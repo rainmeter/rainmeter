@@ -177,6 +177,7 @@
       <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
       <AdditionalDependencies>Version.lib;UxTheme.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <Bscmake>
       <OutputFile>$(IntDir)SkinInstaller.bsc</OutputFile>
@@ -208,6 +209,7 @@
       <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
       <AdditionalDependencies>Version.lib;UxTheme.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <Bscmake>
       <OutputFile>$(IntDir)SkinInstaller.bsc</OutputFile>

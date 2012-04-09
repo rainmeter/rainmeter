@@ -91,6 +91,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <DisableSpecificWarnings>4018;4090;4114;4351;4786;4800;4996</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>.\sha2;.\taglib;.\taglib\toolkit;.\taglib\mpeg\id3v2\frames;.\taglib\ogg;.\taglib\asf;.\taglib\mp4;.\taglib\ogg\vorbis;.\taglib\ogg\flac;.\taglib\ogg\speex;.\taglib\riff;.\taglib\riff\wav;.\taglib\riff\aiff;.\taglib\flac;.\taglib\mpeg;.\taglib\mpeg\id3v1;.\taglib\mpeg\id3v2;.\taglib\mpc;.\taglib\ape;.\taglib\trueaudio;.\taglib\wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -103,6 +104,7 @@
       <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalDependencies>Rainmeter.lib;Psapi.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -129,6 +131,7 @@
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalDependencies>Rainmeter.lib;Psapi.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\Library\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
