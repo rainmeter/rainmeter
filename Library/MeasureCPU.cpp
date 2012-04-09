@@ -98,12 +98,18 @@ void CMeasureCPU::ReadConfig(CConfigParser& parser, const WCHAR* section)
 {
 	CMeasure::ReadConfig(parser, section);
 
-	m_Processor = parser.ReadInt(section, L"Processor", 0);
+	int processor = parser.ReadInt(section, L"Processor", 0);
 
-	if (m_Processor < 0 || m_Processor > c_NumOfProcessors)
+	if (processor < 0 || processor > c_NumOfProcessors)
 	{
 		LogWithArgs(LOG_WARNING, L"CPU: Processor=%i invalid in [%s]", m_Processor, section);
-		m_Processor = 0;
+		processor = 0;
+	}
+
+	if (processor != m_Processor)
+	{
+		m_Processor = processor;
+		m_OldTime[0] = m_OldTime[1] = 0.0;
 	}
 }
 
