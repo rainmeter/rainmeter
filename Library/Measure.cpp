@@ -83,9 +83,9 @@ CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow
 	m_IfEqualValue(),
 	m_IfAboveValue(),
 	m_IfBelowValue(),
-	m_IfEqualCommited(false),
-	m_IfAboveCommited(false),
-	m_IfBelowCommited(false),
+	m_IfEqualCommitted(false),
+	m_IfAboveCommitted(false),
+	m_IfBelowCommitted(false),
 	m_Disabled(false),
 	m_UpdateDivider(1),
 	m_UpdateCounter(1),
@@ -478,15 +478,15 @@ bool CMeasure::PreUpdate()
 		{
 			if ((int)m_Value == (int)m_IfEqualValue)
 			{
-				if (!m_IfEqualCommited)
+				if (!m_IfEqualCommitted)
 				{
-					m_IfEqualCommited = true;  // To avoid crashing by !RainmeterUpdate due to infinite loop
+					m_IfEqualCommitted = true;  // To avoid crashing by !Update due to infinite loop
 					Rainmeter->ExecuteCommand(m_IfEqualAction.c_str(), m_MeterWindow);
 				}
 			}
 			else
 			{
-				m_IfEqualCommited = false;
+				m_IfEqualCommitted = false;
 			}
 		}
 
@@ -495,15 +495,15 @@ bool CMeasure::PreUpdate()
 		{
 			if (m_Value > m_IfAboveValue)
 			{
-				if (!m_IfAboveCommited)
+				if (!m_IfAboveCommitted)
 				{
-					m_IfAboveCommited = true;  // To avoid crashing by !RainmeterUpdate due to infinite loop
+					m_IfAboveCommitted= true;  // To avoid crashing by !Update due to infinite loop
 					Rainmeter->ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
 				}
 			}
 			else
 			{
-				m_IfAboveCommited = false;
+				m_IfAboveCommitted = false;
 			}
 		}
 
@@ -512,15 +512,15 @@ bool CMeasure::PreUpdate()
 		{
 			if (m_Value < m_IfBelowValue)
 			{
-				if (!m_IfBelowCommited)
+				if (!m_IfBelowCommitted)
 				{
-					m_IfBelowCommited = true;  // To avoid crashing by !RainmeterUpdate due to infinite loop
+					m_IfBelowCommitted = true;  // To avoid crashing by !Update due to infinite loop
 					Rainmeter->ExecuteCommand(m_IfBelowAction.c_str(), m_MeterWindow);
 				}
 			}
 			else
 			{
-				m_IfBelowCommited = false;
+				m_IfBelowCommitted = false;
 			}
 		}
 	}

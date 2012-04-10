@@ -120,9 +120,9 @@ protected:
 	std::wstring m_IfEqualAction;	// The IfEqual action
 	std::wstring m_IfAboveAction;	// The IfAbove action
 	std::wstring m_IfBelowAction;	// The IfBelow action
-	bool m_IfEqualCommited;			// True when the IfEqual action is executed.
-	bool m_IfAboveCommited;			// True when the IfAbove action is executed.
-	bool m_IfBelowCommited;			// True when the IfBelow action is executed.
+	bool m_IfEqualCommitted;		// True when the IfEqual action is executed
+	bool m_IfAboveCommitted;		// True when the IfAbove action is executed
+	bool m_IfBelowCommitted;		// True when the IfBelow action is executed
 	bool m_Disabled;				// Status of the measure
 	int m_UpdateDivider;			// Divider for the update
 	int m_UpdateCounter;			// Current update counter
