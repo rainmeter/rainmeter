@@ -35,11 +35,13 @@ struct MeasureData
 	LPCWSTR section;
 	CFolderInfo* folder;
 	MeasureType type;
+	bool parent;
 
 	MeasureData(LPCWSTR section) :
 		section(section),
 		folder(),
-		type(MEASURE_FILECOUNT)
+		type(MEASURE_FILECOUNT),
+		parent(false)
 	{
 	}
 };
@@ -51,58 +53,41 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	MeasureData* measure = new MeasureData(RmGetMeasureName(rm));
 	*data = measure;
 	g_Measures.push_back(measure);
+
+	void* skin = RmGetSkin(rm);
+
+	LPCWSTR str = RmReadString(rm, L"Folder", L"", FALSE);
+	if (*str == L'[')
+	{
+		int len = wcslen(str);
+		for (auto iter = g_Measures.cbegin(); iter != g_Measures.cend(); ++iter)
+		{
+			if ((*iter)->folder &&
+				(*iter)->folder->GetSkin() == skin &&
+				wcsncmp(&str[1], (*iter)->section, len - 2) == 0)
+			{
+				measure->folder = (*iter)->folder;
+				measure->folder->AddInstance();
+				return;
+			}
+		}
+	}
+
+	measure->folder = new CFolderInfo(skin);
+	measure->parent = true;
 }
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
 	MeasureData* measure = (MeasureData*)data;
+	CFolderInfo* folder = measure->folder;
 
-	LPCWSTR str = RmReadString(rm, L"Folder", L"", FALSE);
-	if (*str == L'[')
+	if (!folder)
 	{
-		CFolderInfo* oldFolder = measure->folder;
-		measure->folder = NULL;
-
-		int len = wcslen(str);
-		for (auto iter = g_Measures.cbegin(); iter != g_Measures.cend(); ++iter)
-		{
-			if (wcsncmp(&str[1], (*iter)->section, len - 2) == 0)
-			{
-				measure->folder = (*iter)->folder;
-				measure->folder->AddInstance();
-			}
-		}
-
-		if (oldFolder)
-		{
-			oldFolder->RemoveInstance();
-		}
-	}
-	else if (*str)
-	{
-		LPCWSTR path = RmPathToAbsolute(rm, str);
-		if (!measure->folder || wcscmp(measure->folder->GetPath(), path) != 0)
-		{
-			if (measure->folder)
-			{
-				measure->folder->RemoveInstance();
-			}
-
-			measure->folder = new CFolderInfo(path);
-
-			str = RmReadString(rm, L"RegExpFilter", L"");
-			if (*str)
-			{
-				measure->folder->SetRegExpFilter(str);
-			}
-		
-			measure->folder->IncludeSubFolders((bool)RmReadInt(rm, L"IncludeSubFolders", 0));
-			measure->folder->IncludeHiddenFiles((bool)RmReadInt(rm, L"IncludeHiddenFiles", 0));
-			measure->folder->IncludeSystemFiles((bool)RmReadInt(rm, L"IncludeSystemFiles", 0));
-		}
+		return;
 	}
 
-	str = RmReadString(rm, L"InfoType", L"");
+	LPCWSTR str = RmReadString(rm, L"InfoType", L"");
 	if (_wcsicmp(str, L"FolderSize") == 0 || _wcsicmp(str, L"FolderSizeStr") == 0)
 	{
 		measure->type = MEASURE_FOLDERSIZE;
@@ -115,6 +100,19 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		measure->type = MEASURE_FILECOUNT;
 	}
+
+	if (measure->parent)
+	{
+		str = RmReadPath(rm, L"Folder", L"");
+		folder->SetPath(str);
+
+		str = RmReadString(rm, L"RegExpFilter", L"");
+		folder->SetRegExpFilter(str);
+		
+		folder->SetSubFolders(RmReadInt(rm, L"IncludeSubFolders", 0) == 1);
+		folder->SetHiddenFiles(RmReadInt(rm, L"IncludeHiddenFiles", 0) == 1);
+		folder->SetSystemFiles(RmReadInt(rm, L"IncludeSystemFiles", 0) == 1);
+	}
 }
 
 PLUGIN_EXPORT double Update(void* data)
@@ -125,7 +123,10 @@ PLUGIN_EXPORT double Update(void* data)
 		return 0.0;
 	}
 
-	measure->folder->Update();
+	if (measure->parent)
+	{
+		measure->folder->Update();
+	}
 
 	switch (measure->type)
 	{

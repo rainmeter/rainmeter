@@ -27,21 +27,20 @@
 class CFolderInfo
 {
 public:
-	CFolderInfo(LPCWSTR path);
+	CFolderInfo(void* ownerSkin);
 	~CFolderInfo();
 
 	void AddInstance();
 	void RemoveInstance();
 
+	void* GetSkin() { return m_Skin; }
 	DWORD GetLastUpdateTime() { return m_LastUpdateTime; }
 
+	void SetPath(LPCWSTR path);
 	void SetRegExpFilter(LPCWSTR filter);
-
-	void IncludeSubFolders(bool flag) { m_IncludeSubFolders = flag; }
-	void IncludeHiddenFiles(bool flag) { m_IncludeHiddenFiles = flag; }
-	void IncludeSystemFiles(bool flag) { m_IncludeSystemFiles = flag; }
-
-	LPCWSTR GetPath() { return m_Path.c_str(); }
+	void SetSubFolders(bool flag) { m_IncludeSubFolders = flag; }
+	void SetHiddenFiles(bool flag) { m_IncludeHiddenFiles = flag; }
+	void SetSystemFiles(bool flag) { m_IncludeSystemFiles = flag; }
 
 	UINT64 GetSize() { return m_Size; }
 	int GetFileCount() { return m_FileCount; }
@@ -55,6 +54,7 @@ private:
 	void CalculateSize();
 
 	UINT m_InstanceCount;
+	void* m_Skin;
 
 	CRawString m_Path;
 	bool m_IncludeSubFolders;

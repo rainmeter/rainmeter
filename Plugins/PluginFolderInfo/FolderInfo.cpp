@@ -23,9 +23,9 @@
 
 #define UPDATE_TIME_MIN_MS 10000
 
-CFolderInfo::CFolderInfo(LPCWSTR path) :
+CFolderInfo::CFolderInfo(void* ownerSkin) :
 	m_InstanceCount(1),
-	m_Path(path),
+	m_Skin(ownerSkin),
 	m_IncludeSubFolders(false),
 	m_IncludeHiddenFiles(false),
 	m_IncludeSystemFiles(false),
@@ -160,19 +160,33 @@ void CFolderInfo::CalculateSize()
 	}
 }
 
+void CFolderInfo::SetPath(LPCWSTR path)
+{
+	if (wcscmp(m_Path.c_str(), path) != 0)
+	{
+		m_Path = path;
+
+		// Force update next time
+		m_LastUpdateTime = 0;
+	}
+}
+
 void CFolderInfo::SetRegExpFilter(LPCWSTR filter)
 {
 	FreePcre();
 
-	int filterLen = wcslen(filter) + 1;
-	int bufLen = WideCharToMultiByte(CP_UTF8, 0, filter, filterLen, NULL, 0, NULL, NULL);
+	if (*filter)
+	{
+		int filterLen = wcslen(filter) + 1;
+		int bufLen = WideCharToMultiByte(CP_UTF8, 0, filter, filterLen, NULL, 0, NULL, NULL);
 
-	char* buf = new char[bufLen];
-	WideCharToMultiByte(CP_UTF8, 0, filter, filterLen, buf, bufLen, NULL, NULL);
+		char* buf = new char[bufLen];
+		WideCharToMultiByte(CP_UTF8, 0, filter, filterLen, buf, bufLen, NULL, NULL);
 
-	const char* error;
-	int erroffset;
-	m_RegExpFilter = pcre_compile(buf, PCRE_UTF8, &error, &erroffset, NULL);
+		const char* error;
+		int erroffset;
+		m_RegExpFilter = pcre_compile(buf, PCRE_UTF8, &error, &erroffset, NULL);
 
-	delete [] buf;
+		delete [] buf;
+	}
 }
