@@ -636,9 +636,9 @@ Section
 
 	SetOutPath "$INSTDIR"
 
-	FindWindow $0 "RainmeterTrayClass"
+	FindWindow $0 "DummyRainWClass" "Rainmeter control window"
 	${If} $0 != "0"
-		Exec '"$INSTDIR\Rainmeter.exe" !Quit'
+		SendMessage $0 ${WM_CLOSE} 0 0
 
 		; Wait up to for up to 5 seconds for Rainmeter to close
 		StrCpy $1 "0"
