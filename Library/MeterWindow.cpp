@@ -2813,6 +2813,8 @@ void CMeterWindow::Update(bool nodraw)
 		{
 			UpdateMeasure((*i), false);
 		}
+
+		CDialogAbout::UpdateMeasures(this);
 	}
 
 	// Update all meters
@@ -2919,7 +2921,6 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (wParam == TIMER_METER)
 	{
 		Update(false);
-		CDialogAbout::UpdateMeasures(this);
 	}
 	else if (wParam == TIMER_MOUSE)
 	{
