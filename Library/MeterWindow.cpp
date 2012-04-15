@@ -2798,20 +2798,23 @@ void CMeterWindow::Update(bool nodraw)
 {
 	++m_UpdateCounter;
 
-	if (!nodraw && !m_Measures.empty())
+	if (!nodraw)
 	{
-		// Pre-updates
-		if (m_HasNetMeasures)
+		if (!m_Measures.empty())
 		{
-			CMeasureNet::UpdateIFTable();
-			CMeasureNet::UpdateStats();
-		}
+			// Pre-updates
+			if (m_HasNetMeasures)
+			{
+				CMeasureNet::UpdateIFTable();
+				CMeasureNet::UpdateStats();
+			}
 
-		// Update all measures
-		std::list<CMeasure*>::const_iterator i = m_Measures.begin();
-		for ( ; i != m_Measures.end(); ++i)
-		{
-			UpdateMeasure((*i), false);
+			// Update all measures
+			std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+			for ( ; i != m_Measures.end(); ++i)
+			{
+				UpdateMeasure((*i), false);
+			}
 		}
 
 		CDialogAbout::UpdateMeasures(this);
