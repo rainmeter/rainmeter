@@ -705,7 +705,6 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 	case BANG_UPDATE:
 		KillTimer(m_Window, TIMER_METER);  // Kill timer temporarily
 		Update(false);
-		CDialogAbout::UpdateMeasures(this);
 		if (m_WindowUpdate >= 0)
 		{
 			SetTimer(m_Window, TIMER_METER, m_WindowUpdate, NULL);
