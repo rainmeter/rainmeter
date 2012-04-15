@@ -471,60 +471,6 @@ bool CMeasure::PreUpdate()
 		m_MinValue = min(m_MinValue, medianArray[MEDIAN_SIZE / 2]);
 	}
 
-	if (m_MeterWindow)
-	{
-		// Check the IfEqualValue
-		if (!m_IfEqualAction.empty())
-		{
-			if ((int)m_Value == (int)m_IfEqualValue)
-			{
-				if (!m_IfEqualCommitted)
-				{
-					m_IfEqualCommitted = true;  // To avoid crashing by !Update due to infinite loop
-					Rainmeter->ExecuteCommand(m_IfEqualAction.c_str(), m_MeterWindow);
-				}
-			}
-			else
-			{
-				m_IfEqualCommitted = false;
-			}
-		}
-
-		// Check the IfAboveValue
-		if (!m_IfAboveAction.empty())
-		{
-			if (m_Value > m_IfAboveValue)
-			{
-				if (!m_IfAboveCommitted)
-				{
-					m_IfAboveCommitted= true;  // To avoid crashing by !Update due to infinite loop
-					Rainmeter->ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
-				}
-			}
-			else
-			{
-				m_IfAboveCommitted = false;
-			}
-		}
-
-		// Check the IfBelowValue
-		if (!m_IfBelowAction.empty())
-		{
-			if (m_Value < m_IfBelowValue)
-			{
-				if (!m_IfBelowCommitted)
-				{
-					m_IfBelowCommitted = true;  // To avoid crashing by !Update due to infinite loop
-					Rainmeter->ExecuteCommand(m_IfBelowAction.c_str(), m_MeterWindow);
-				}
-			}
-			else
-			{
-				m_IfBelowCommitted = false;
-			}
-		}
-	}
-
 	return true;
 }
 
@@ -558,6 +504,58 @@ bool CMeasure::PostUpdate()
 		}
 		m_Value /= (double)averageValuesSize;
 	}
+
+	if (m_MeterWindow)
+	{
+		if (!m_IfEqualAction.empty())
+		{
+			if ((int)m_Value == (int)m_IfEqualValue)
+			{
+				if (!m_IfEqualCommitted)
+				{
+					m_IfEqualCommitted = true;  // To avoid crashing by !Update due to infinite loop
+					Rainmeter->ExecuteCommand(m_IfEqualAction.c_str(), m_MeterWindow);
+				}
+			}
+			else
+			{
+				m_IfEqualCommitted = false;
+			}
+		}
+
+		if (!m_IfAboveAction.empty())
+		{
+			if (m_Value > m_IfAboveValue)
+			{
+				if (!m_IfAboveCommitted)
+				{
+					m_IfAboveCommitted= true;  // To avoid crashing by !Update due to infinite loop
+					Rainmeter->ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
+				}
+			}
+			else
+			{
+				m_IfAboveCommitted = false;
+			}
+		}
+
+		if (!m_IfBelowAction.empty())
+		{
+			if (m_Value < m_IfBelowValue)
+			{
+				if (!m_IfBelowCommitted)
+				{
+					m_IfBelowCommitted = true;  // To avoid crashing by !Update due to infinite loop
+					Rainmeter->ExecuteCommand(m_IfBelowAction.c_str(), m_MeterWindow);
+				}
+			}
+			else
+			{
+				m_IfBelowCommitted = false;
+			}
+		}
+	}
+
 	return true;
 }
 
