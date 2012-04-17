@@ -40,8 +40,6 @@ UINT GetUniqueID();
 template <typename T>
 UINT TypeID() { static UINT id = GetUniqueID(); return id; }
 
-HRGN BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF cTolerance);
-
 std::string ConvertToAscii(LPCTSTR str);
 std::wstring ConvertToWide(LPCSTR str);
 std::string ConvertToUTF8(LPCWSTR str);

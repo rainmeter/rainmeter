@@ -409,7 +409,6 @@ void CMeterWindow::Refresh(bool init, bool all)
 	m_Hidden = m_WindowStartHidden;
 
 	// Set the window region
-	CreateRegion(true);	// Clear the region
 	UpdateTransparency(m_AlphaValue, true);  // Add/Remove layered flag
 	Update(false);
 
@@ -2483,39 +2482,6 @@ void CMeterWindow::CreateDoubleBuffer(int cx, int cy)
 }
 
 /*
-** Creates/Clears a window region
-**
-*/
-void CMeterWindow::CreateRegion(bool clear)
-{
-	if (clear)
-	{
-		SetWindowRgn(m_Window, NULL, TRUE);
-	}
-	else
-	{
-		HRGN region = NULL;
-
-		// Set window region if needed
-		if (!m_BackgroundName.empty())
-		{
-			if (m_WindowW != 0 && m_WindowH != 0)
-			{
-				HBITMAP background = NULL;
-				m_DoubleBuffer->GetHBITMAP(Color(255,0,255), &background);
-				if (background)
-				{
-					region = BitmapToRegion(background, RGB(255,0,255), 0x101010);
-					DeleteObject(background);
-				}
-			}
-		}
-
-		SetWindowRgn(m_Window, region, FALSE);
-	}
-}
-
-/*
 ** Redraws the meters and paints the window
 **
 */
@@ -2622,7 +2588,6 @@ void CMeterWindow::Redraw()
 
 	if (m_ResetRegion || !m_BackgroundName.empty())
 	{
-		CreateRegion(false);
 		m_ResetRegion = false;
 	}
 

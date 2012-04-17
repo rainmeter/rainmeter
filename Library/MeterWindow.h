@@ -302,7 +302,6 @@ private:
 
 	bool HitTest(int x, int y);
 
-	void CreateRegion(bool clear);
 	void GetSkinFolders(const std::wstring& folder);
 	void SnapToWindow(CMeterWindow* window, LPWINDOWPOS wp);
 	void MapCoordsToScreen(int& x, int& y, int w, int h);
