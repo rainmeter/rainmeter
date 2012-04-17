@@ -224,7 +224,6 @@ public:
 	int GetXScreen() { return m_WindowXScreen; }
 	int GetYScreen() { return m_WindowYScreen; }
 
-	bool GetNativeTransparency() { return m_NativeTransparency; }
 	bool GetClickThrough() { return m_ClickThrough; }
 	bool GetKeepOnScreen() { return m_KeepOnScreen; }
 	bool GetAutoSelectScreen() { return m_AutoSelectScreen; }
@@ -305,7 +304,6 @@ private:
 
 	void CreateRegion(bool clear);
 	void GetSkinFolders(const std::wstring& folder);
-	Gdiplus::Bitmap* GrabDesktop(int x, int y, int w, int h);
 	void SnapToWindow(CMeterWindow* window, LPWINDOWPOS wp);
 	void MapCoordsToScreen(int& x, int& y, int w, int h);
 	void WindowToScreen();
@@ -410,7 +408,6 @@ private:
 	bool m_WindowStartHidden;					// If true, the window is hidden at startup
 	bool m_SavePosition;						// If true, the window's position is saved
 	bool m_SnapEdges;							// If true, the window snaps to the edges of the screen when moved
-	bool m_NativeTransparency;					// If true, use the W2k/XP native transparency
 	int m_AlphaValue;							// The 'from' transparency value 0 - 255
 	int m_FadeDuration;							// Time it takes to fade the window
 	ZPOSITION m_WindowZPosition;				// Window's Z-position

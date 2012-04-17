@@ -2836,38 +2836,30 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 			}
 
 			// Tick the transparency
-			if (!meterWindow->GetNativeTransparency())
+			HMENU alphaMenu = GetSubMenu(settingsMenu, 1);
+			if (alphaMenu)
 			{
-				EnableMenuItem(settingsMenu, 1, MF_BYPOSITION | MF_GRAYED);  // "Transparency" menu
-				EnableMenuItem(settingsMenu, IDM_SKIN_CLICKTHROUGH, MF_BYCOMMAND | MF_GRAYED);
-			}
-			else
-			{
-				HMENU alphaMenu = GetSubMenu(settingsMenu, 1);
-				if (alphaMenu)
+				int value = (int)(10 - meterWindow->GetAlphaValue() / 25.5);
+				value = min(9, value);
+				value = max(0, value);
+				CheckMenuItem(alphaMenu, value, MF_BYPOSITION | MF_CHECKED);
+
+				switch (meterWindow->GetWindowHide())
 				{
-					int value = (int)(10 - meterWindow->GetAlphaValue() / 25.5);
-					value = min(9, value);
-					value = max(0, value);
-					CheckMenuItem(alphaMenu, value, MF_BYPOSITION | MF_CHECKED);
+				case HIDEMODE_FADEIN:
+					CheckMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_CHECKED);
+					EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
+					break;
 
-					switch (meterWindow->GetWindowHide())
-					{
-					case HIDEMODE_FADEIN:
-						CheckMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_CHECKED);
-						EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
-						break;
+				case HIDEMODE_FADEOUT:
+					CheckMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_CHECKED);
+					EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
+					break;
 
-					case HIDEMODE_FADEOUT:
-						CheckMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_CHECKED);
-						EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
-						break;
-
-					case HIDEMODE_HIDE:
-						EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
-						EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
-						break;
-					}
+				case HIDEMODE_HIDE:
+					EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
+					EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
+					break;
 				}
 			}
 

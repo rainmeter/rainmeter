@@ -115,7 +115,6 @@ CMeterWindow::CMeterWindow(const std::wstring& config, const std::wstring& iniFi
 	m_WindowStartHidden(false),
 	m_SavePosition(false),			// Must be false
 	m_SnapEdges(true),
-	m_NativeTransparency(true),
 	m_AlphaValue(255),
 	m_FadeDuration(250),
 	m_WindowZPosition(ZPOSITION_NORMAL),
@@ -1794,7 +1793,6 @@ void CMeterWindow::ReadConfig()
 	m_WindowStartHidden = false;
 	m_SavePosition = true;
 	m_SnapEdges = true;
-	m_NativeTransparency = true;
 	m_ClickThrough = false;
 	m_KeepOnScreen = true;
 	m_AutoSelectScreen = false;
@@ -1835,7 +1833,6 @@ void CMeterWindow::ReadConfig()
 		m_WindowStartHidden = 0!=parser.ReadInt(section, L"StartHidden", m_WindowStartHidden);
 		m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", m_SavePosition);
 		m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", m_SnapEdges);
-		m_NativeTransparency = 0!=parser.ReadInt(section, L"NativeTransparency", m_NativeTransparency);
 		m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", m_ClickThrough);
 		m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", m_KeepOnScreen);
 		m_AutoSelectScreen = 0!=parser.ReadInt(section, L"AutoSelectScreen", m_AutoSelectScreen);
@@ -2442,17 +2439,6 @@ bool CMeterWindow::ResizeWindow(bool reset)
 			m_WindowH = m_Background->GetHeight();
 			//Calculate the window position from the config parameters
 			WindowToScreen();
-
-			if (!m_NativeTransparency)
-			{
-				// Graph the desktop and place the background on top of it
-				Bitmap* desktop = GrabDesktop(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
-				Graphics graphics(desktop);
-				Rect r(0, 0, m_WindowW, m_WindowH);
-				graphics.DrawImage(m_Background, r, 0, 0, m_WindowW, m_WindowH, UnitPixel);
-				delete m_Background;
-				m_Background = desktop;
-			}
 		}
 
 		delete tintedBackground;
@@ -2466,34 +2452,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 
 	SetWindowSizeVariables(m_WindowW, m_WindowH);
 
-	if (!m_NativeTransparency)
-	{
-		// If Background is not set, take a copy from the desktop
-		if (m_Background == NULL && m_BackgroundMode == BGMODE_COPY)
-		{
-			m_Background = GrabDesktop(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
-		}
-	}
-
 	return true;
-}
-
-/*
-** Grabs a part of the desktop
-*/
-Bitmap* CMeterWindow::GrabDesktop(int x, int y, int w, int h)
-{
-	HDC desktopDC = GetDC(0);
-	HDC dc = CreateCompatibleDC(desktopDC);
-	HBITMAP desktopBM = CreateCompatibleBitmap(desktopDC, w, h);
-	HBITMAP oldBM = (HBITMAP)SelectObject(dc, desktopBM);
-	BitBlt(dc, 0, 0, w, h, desktopDC, x, y, SRCCOPY);
-	SelectObject(dc, oldBM);
-	DeleteDC(dc);
-	ReleaseDC(0, desktopDC);
-	Bitmap* background = new Bitmap(desktopBM, NULL);
-	DeleteObject(desktopBM);
-	return background;
 }
 
 /*
@@ -2552,7 +2511,7 @@ void CMeterWindow::CreateRegion(bool clear)
 			}
 		}
 
-		SetWindowRgn(m_Window, region, !m_NativeTransparency);
+		SetWindowRgn(m_Window, region, FALSE);
 	}
 }
 
@@ -2668,11 +2627,6 @@ void CMeterWindow::Redraw()
 	}
 
 	UpdateTransparency(m_TransparencyValue, false);
-
-	if (!m_NativeTransparency)
-	{
-		InvalidateRect(m_Window, NULL, FALSE);
-	}
 }
 
 /*
@@ -2857,43 +2811,33 @@ void CMeterWindow::Update(bool nodraw)
 */
 void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 {
-	if (m_NativeTransparency)
+	if (reset)
 	{
-		if (reset)
-		{
-			AddWindowExStyle(WS_EX_LAYERED);
-		}
-
-		BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
-		POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
-		POINT ptSrc = {0, 0};
-		SIZE szWindow = {m_DIBSectionBufferW, m_DIBSectionBufferH};
-
-		HDC dcScreen = GetDC(0);
-		HDC dcMemory = CreateCompatibleDC(dcScreen);
-		SelectObject(dcMemory, m_DIBSectionBuffer);
-
-		BOOL ret = UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
-		if (!ret)
-		{
-			// Retry after resetting WS_EX_LAYERED flag
-			RemoveWindowExStyle(WS_EX_LAYERED);
-			AddWindowExStyle(WS_EX_LAYERED);
-			UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
-		}
-
-		ReleaseDC(0, dcScreen);
-		DeleteDC(dcMemory);
-
-		m_TransparencyValue = alpha;
+		AddWindowExStyle(WS_EX_LAYERED);
 	}
-	else
+
+	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
+	POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
+	POINT ptSrc = {0, 0};
+	SIZE szWindow = {m_DIBSectionBufferW, m_DIBSectionBufferH};
+
+	HDC dcScreen = GetDC(0);
+	HDC dcMemory = CreateCompatibleDC(dcScreen);
+	SelectObject(dcMemory, m_DIBSectionBuffer);
+
+	BOOL ret = UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+	if (!ret)
 	{
-		if (reset)
-		{
-			RemoveWindowExStyle(WS_EX_LAYERED);
-		}
+		// Retry after resetting WS_EX_LAYERED flag
+		RemoveWindowExStyle(WS_EX_LAYERED);
+		AddWindowExStyle(WS_EX_LAYERED);
+		UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
 	}
+
+	ReleaseDC(0, dcScreen);
+	DeleteDC(dcMemory);
+
+	m_TransparencyValue = alpha;
 }
 
 /*
@@ -3037,7 +2981,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void CMeterWindow::FadeWindow(int from, int to)
 {
-	if (!m_NativeTransparency || m_FadeDuration == 0)
+	if (m_FadeDuration == 0)
 	{
 		if (to == 0)
 		{
@@ -3321,7 +3265,7 @@ LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch (m_WindowHide)
 			{
 			case HIDEMODE_HIDE:
-				if (!m_NativeTransparency || m_TransparencyValue == m_AlphaValue)
+				if (m_TransparencyValue == m_AlphaValue)
 				{
 					FadeWindow(m_AlphaValue, 0);
 				}
@@ -4675,25 +4619,17 @@ LRESULT CMeterWindow::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (m_NativeTransparency)
+	m_Parser.ResetMonitorVariables(this);
+
+	// Move the window to correct position
+	ResizeWindow(true);
+
+	if (m_KeepOnScreen)
 	{
-		m_Parser.ResetMonitorVariables(this);
-
-		// Move the window to correct position
-		ResizeWindow(true);
-
-		if (m_KeepOnScreen)
-		{
-			MapCoordsToScreen(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
-		}
-
-		SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, m_WindowW, m_WindowH, SWP_NOZORDER | SWP_NOACTIVATE);
+		MapCoordsToScreen(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
 	}
-	else
-	{
-		// With copy transparency we'll do a full refresh
-		PostMessage(m_Window, WM_METERWINDOW_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
-	}
+
+	SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, m_WindowW, m_WindowH, SWP_NOZORDER | SWP_NOACTIVATE);
 
 	return 0;
 }
