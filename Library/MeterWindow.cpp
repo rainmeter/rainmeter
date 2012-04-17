@@ -136,7 +136,7 @@ CMeterWindow::CMeterWindow(const std::wstring& config, const std::wstring& iniFi
 	m_TransparencyValue(),
 	m_Refreshing(false),
 	m_Hidden(false),
-	m_ResetRegion(false),
+	m_ResizeWindow(false),
 	m_UpdateCounter(),
 	m_MouseMoveCounter(),
 	m_FontCollection(),
@@ -409,7 +409,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 	m_Hidden = m_WindowStartHidden;
 
 	// Set the window region
-	UpdateTransparency(m_AlphaValue, true);  // Add/Remove layered flag
+	UpdateWindow(m_AlphaValue, true);  // Add/Remove layered flag
 	Update(false);
 
 	if (m_BlurMode == BLURMODE_NONE)
@@ -800,7 +800,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 	case BANG_SHOW:
 		m_Hidden = false;
 		ShowWindow(m_Window, SW_SHOWNOACTIVATE);
-		UpdateTransparency((m_WindowHide == HIDEMODE_FADEOUT) ? 255 : m_AlphaValue, false);
+		UpdateWindow((m_WindowHide == HIDEMODE_FADEOUT) ? 255 : m_AlphaValue, false);
 		break;
 
 	case BANG_HIDE:
@@ -870,7 +870,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 			m_AlphaValue = CConfigParser::ParseInt(arg.c_str(), 255);
 			m_AlphaValue = max(m_AlphaValue, 0);
 			m_AlphaValue = min(m_AlphaValue, 255);
-			UpdateTransparency(m_AlphaValue, false);
+			UpdateWindow(m_AlphaValue, false);
 		}
 		break;
 
@@ -1104,7 +1104,7 @@ void CMeterWindow::ShowMeter(const std::wstring& name, bool group)
 		if (CompareName((*j), meter, group))
 		{
 			(*j)->Show();
-			m_ResetRegion = true;	// Need to recalculate the window region
+			m_ResizeWindow = true;	// Need to recalculate the window region
 			if (!group) return;
 		}
 	}
@@ -1126,7 +1126,7 @@ void CMeterWindow::HideMeter(const std::wstring& name, bool group)
 		if (CompareName((*j), meter, group))
 		{
 			(*j)->Hide();
-			m_ResetRegion = true;	// Need to recalculate the windowregion
+			m_ResizeWindow = true;	// Need to recalculate the windowregion
 			if (!group) return;
 		}
 	}
@@ -1155,7 +1155,7 @@ void CMeterWindow::ToggleMeter(const std::wstring& name, bool group)
 			{
 				(*j)->Hide();
 			}
-			m_ResetRegion = true;	// Need to recalculate the window region
+			m_ResizeWindow = true;	// Need to recalculate the window region
 			if (!group) return;
 		}
 	}
@@ -1178,7 +1178,7 @@ void CMeterWindow::MoveMeter(const std::wstring& name, int x, int y)
 		{
 			(*j)->SetX(x);
 			(*j)->SetY(y);
-			m_ResetRegion = true;	// Need to recalculate the window region
+			m_ResizeWindow = true;	// Need to recalculate the window region
 			return;
 		}
 	}
@@ -1202,7 +1202,7 @@ void CMeterWindow::UpdateMeter(const std::wstring& name, bool group)
 		if (bContinue && CompareName((*j), meter, group))
 		{
 			UpdateMeter((*j), bActiveTransition, true);
-			m_ResetRegion = true;	// Need to recalculate the windowregion
+			m_ResizeWindow = true;	// Need to recalculate the window region
 			if (!group)
 			{
 				bContinue = false;
@@ -2487,9 +2487,10 @@ void CMeterWindow::CreateDoubleBuffer(int cx, int cy)
 */
 void CMeterWindow::Redraw()
 {
-	if (m_ResetRegion)
+	if (m_ResizeWindow)
 	{
 		ResizeWindow(false);
+		m_ResizeWindow = false;
 	}
 
 	// Create or clear the doublebuffer
@@ -2586,12 +2587,7 @@ void CMeterWindow::Redraw()
 		}
 	}
 
-	if (m_ResetRegion || !m_BackgroundName.empty())
-	{
-		m_ResetRegion = false;
-	}
-
-	UpdateTransparency(m_TransparencyValue, false);
+	UpdateWindow(m_TransparencyValue, false);
 }
 
 /*
@@ -2751,12 +2747,12 @@ void CMeterWindow::Update(bool nodraw)
 	}
 
 	// Redraw all meters
-	if (!nodraw && (bUpdate || m_ResetRegion || m_Refreshing))
+	if (!nodraw && (bUpdate || m_ResizeWindow || m_Refreshing))
 	{
 		if (m_DynamicWindowSize)
 		{
 			// Resize the window
-			m_ResetRegion = true;
+			m_ResizeWindow = true;
 		}
 
 		// If our option is to disable when in an RDP session, then check if in an RDP session.
@@ -2772,9 +2768,10 @@ void CMeterWindow::Update(bool nodraw)
 }
 
 /*
-** Updates the native Windows transparency
+** Updates the window contents
+**
 */
-void CMeterWindow::UpdateTransparency(int alpha, bool reset)
+void CMeterWindow::UpdateWindow(int alpha, bool reset)
 {
 	if (reset)
 	{
@@ -2803,23 +2800,6 @@ void CMeterWindow::UpdateTransparency(int alpha, bool reset)
 	DeleteDC(dcMemory);
 
 	m_TransparencyValue = alpha;
-}
-
-/*
-** Repaints the window. This does not cause update of the measures.
-** This handler is called if NativeTransparency is false.
-**
-*/
-LRESULT CMeterWindow::OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	PAINTSTRUCT ps;
-	HDC winDC = BeginPaint(m_Window, &ps);
-
-	Graphics graphics(winDC);
-	graphics.DrawImage(m_DoubleBuffer, 0, 0);
-
-	EndPaint(m_Window, &ps);
-	return 0;
 }
 
 /*
@@ -2917,7 +2897,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			else
 			{
-				UpdateTransparency(m_FadeEndValue, false);
+				UpdateWindow(m_FadeEndValue, false);
 			}
 		}
 		else
@@ -2929,7 +2909,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			value = min(value, 255);
 			value = max(value, 0);
 
-			UpdateTransparency((int)value, false);
+			UpdateWindow((int)value, false);
 		}
 	}
 	else if (wParam == TIMER_DEACTIVATE)
@@ -2956,7 +2936,7 @@ void CMeterWindow::FadeWindow(int from, int to)
 		{
 			if (m_FadeDuration == 0)
 			{
-				UpdateTransparency(to, false);
+				UpdateWindow(to, false);
 			}
 			if (from == 0)
 			{
@@ -2971,7 +2951,7 @@ void CMeterWindow::FadeWindow(int from, int to)
 	{
 		m_FadeStartValue = from;
 		m_FadeEndValue = to;
-		UpdateTransparency(from, false);
+		UpdateWindow(from, false);
 		if (from == 0)
 		{
 			if (!m_Hidden)
@@ -3379,7 +3359,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		else if (wParam >= IDM_SKIN_TRANSPARENCY_0 && wParam <= IDM_SKIN_TRANSPARENCY_90)
 		{
 			m_AlphaValue = (int)(255.0 - (wParam - IDM_SKIN_TRANSPARENCY_0) * (230.0 / (IDM_SKIN_TRANSPARENCY_90 - IDM_SKIN_TRANSPARENCY_0)));
-			UpdateTransparency(m_AlphaValue, false);
+			UpdateWindow(m_AlphaValue, false);
 			WriteConfig(SETTING_ALPHAVALUE);
 		}
 		else if (wParam == IDM_CLOSESKIN)
@@ -3556,7 +3536,7 @@ void CMeterWindow::SetSnapEdges(bool b)
 void CMeterWindow::SetWindowHide(HIDEMODE hide)
 {
 	m_WindowHide = hide;
-	UpdateTransparency(m_AlphaValue, false);
+	UpdateWindow(m_AlphaValue, false);
 	WriteConfig(SETTING_HIDEONMOUSEOVER);
 }
 
@@ -3608,7 +3588,7 @@ LRESULT CMeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		HandleButtons(pos, BUTTONPROC_UP, false);  // redraw only
 
 		// Workaround for the system that the window size is changed incorrectly when the window is dragged over the upper side of the virtual screen
-		UpdateTransparency(m_TransparencyValue, false);
+		UpdateWindow(m_TransparencyValue, false);
 	}
 	else  // not dragged
 	{
@@ -4498,7 +4478,6 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	CMeterWindow* window = (CMeterWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 	BEGIN_MESSAGEPROC
-	MESSAGE(OnPaint, WM_PAINT)
 	MESSAGE(OnMove, WM_MOVE)
 	MESSAGE(OnTimer, WM_TIMER)
 	MESSAGE(OnCommand, WM_COMMAND)

@@ -179,7 +179,7 @@ public:
 	void Deactivate();
 	void Refresh(bool init, bool all = false);
 	void Redraw();
-	void RedrawWindow() { UpdateTransparency(m_TransparencyValue, false); }
+	void RedrawWindow() { UpdateWindow(m_TransparencyValue, false); }
 	void SetVariable(const std::wstring& variable, const std::wstring& value);
 	void SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group);
 
@@ -251,7 +251,6 @@ protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK InitialWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	LRESULT OnPaint(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -311,7 +310,7 @@ private:
 	bool UpdateMeasure(CMeasure* measure, bool force);
 	bool UpdateMeter(CMeter* meter, bool& bActiveTransition, bool force);
 	void Update(bool nodraw);
-	void UpdateTransparency(int alpha, bool reset);
+	void UpdateWindow(int alpha, bool reset);
 	void ReadConfig();
 	void WriteConfig(INT setting = SETTING_ALL);
 	bool ReadSkin();
@@ -434,7 +433,7 @@ private:
 	bool m_Refreshing;							// This is true, when the meter is refreshing
 
 	bool m_Hidden;								// True, if Rainmeter is hidden
-	bool m_ResetRegion;							// If true, the window region is recalculated during the next update
+	bool m_ResizeWindow;						// If true, the window size is recalculated during the next update
 
 	std::list<CMeasure*> m_Measures;			// All the measures
 	std::list<CMeter*> m_Meters;				// All the meters
