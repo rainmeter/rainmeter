@@ -31,7 +31,6 @@ ReserveFile ".\UAC.dll"
 
 !include "MUI2.nsh"
 !include "x64.nsh"
-!include "ProcFunc.nsh"
 !include "FileFunc.nsh"
 !include "WordFunc.nsh"
 !include "WinVer.nsh"
@@ -636,27 +635,27 @@ Section
 
 	SetOutPath "$INSTDIR"
 
-	FindWindow $0 "DummyRainWClass" "Rainmeter control window"
-	${If} $0 != "0"
-		SendMessage $0 ${WM_CLOSE} 0 0
+	; Close Rainmeter (and wait up to five seconds)
+	${ForEach} $0 10 0 - 1
+		FindWindow $1 "DummyRainWClass" "Rainmeter control window"
+		${If} $1 == 0
+			${Break}
+		${EndIf}
 
-		; Wait up to for up to 5 seconds for Rainmeter to close
-		StrCpy $1 "0"
-		${DoWhile} ${ProcessExists} "Rainmeter.exe"
-			IntOp $1 $1 + 1
-			${If} $1 >= "10"
-				${If} ${Silent}
-					SetErrorLevel ${ERROR_CLOSEFAIL}
-					Quit
-				${Else}
-					MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" IDRETRY +2
-					Quit
-				${EndIf}
+		SendMessage $1 ${WM_CLOSE} 0 0
+
+		${If} $0 == 0
+			${If} ${Silent}
+				SetErrorLevel ${ERROR_CLOSEFAIL}
+				Quit
+			${Else}
+				MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" IDRETRY +2
+				Quit
 			${EndIf}
-			Sleep 500
-			SendMessage $0 ${WM_CLOSE} 0 0
-		${Loop}
-	${EndIf}
+		${EndIf}
+
+		Sleep 500
+	${Next}
 
 	; Check if Rainmeter.ini is located in the installation folder and
 	; if the installation folder is in Program Files
@@ -852,21 +851,27 @@ Function un.GetOptions
 FunctionEnd
 
 Section Uninstall
-	FindWindow $0 "RainmeterTrayClass"
-	${If} $0 != "0"
-		Exec '"$INSTDIR\Rainmeter.exe" !RainmeterQuit'
+	; Close Rainmeter (and wait up to five seconds)
+	${ForEach} $0 10 0 - 1
+		FindWindow $1 "DummyRainWClass" "Rainmeter control window"
+		${If} $1 == 0
+			${Break}
+		${EndIf}
 
-		; Wait up to for up to 5 seconds for Rainmeter to close
-		StrCpy $1 "0"
-		${DoWhile} ${ProcessExists} "Rainmeter.exe"
-			IntOp $1 $1 + 1
-			${If} $1 >= "10"
+		SendMessage $1 ${WM_CLOSE} 0 0
+
+		${If} $0 == 0
+			${If} ${Silent}
+				SetErrorLevel ${ERROR_CLOSEFAIL}
+				Quit
+			${Else}
 				MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" IDRETRY +2
 				Quit
 			${EndIf}
-			Sleep 500
-		${Loop}
-	${EndIf}
+		${EndIf}
+
+		Sleep 500
+	${Next}
 
 	RMDir /r "$TEMP\Rainmeter-Cache"
 	RMDir /r "$INSTDIR\Skins\Gnometer"
