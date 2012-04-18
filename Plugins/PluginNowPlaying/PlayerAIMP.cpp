@@ -121,15 +121,16 @@ void CPlayerAIMP::UpdateData()
 		if (!IsWindow(m_Window))
 		{
 			m_Initialized = false;
+			ClearData();
+
 			if (m_FileMap) UnmapViewOfFile(m_FileMap);
 			if (m_FileMapHandle) CloseHandle(m_FileMapHandle);
 		}
-
-		if (m_LastTitleSize != 0)
+		else if (m_State != STATE_STOPPED)
 		{
+			ClearData(false);
 			m_LastFileSize = 0;
 			m_LastTitleSize = 0;
-			ClearData();
 		}
 
 		// Don't continue if AIMP has quit or is stopped

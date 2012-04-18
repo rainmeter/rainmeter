@@ -112,12 +112,13 @@ void CPlayerWinamp::UpdateData()
 			if (!IsWindow(m_Window))
 			{
 				m_Initialized = false;
+				ClearData();
+
 				if (m_WinampHandle) CloseHandle(m_WinampHandle);
 			}
-
-			if (m_State != STATE_STOPPED)
+			else if (m_State != STATE_STOPPED)
 			{
-				ClearData();
+				ClearData(false);
 			}
 
 			// Don't continue if Winamp has quit or is stopped

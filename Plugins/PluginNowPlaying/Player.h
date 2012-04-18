@@ -105,7 +105,7 @@ public:
 	bool GetRepeat() const { return m_Repeat; }
 
 protected:
-	void ClearData();
+	void ClearData(bool all = true);
 
 	bool m_Initialized;
 	UINT m_InstanceCount;

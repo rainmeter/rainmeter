@@ -93,7 +93,7 @@ void CPlayerWMP::CRemoteHost::PlayStateChange(long NewState)
 	{
 	case wmppsStopped:
 	case wmppsMediaEnded:
-		m_Player->ClearData();
+		m_Player->ClearData(false);
 		break;
 
 	case wmppsPaused:

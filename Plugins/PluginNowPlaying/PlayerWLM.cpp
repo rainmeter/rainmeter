@@ -139,7 +139,7 @@ LRESULT CALLBACK CPlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 			}
 			else
 			{
-				player->ClearData();
+				player->ClearData(false);
 			}
 
 			return 0;

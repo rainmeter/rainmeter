@@ -455,7 +455,7 @@ void CPlayerITunes::OnTrackChange()
 	}
 	else
 	{
-		ClearData();
+		ClearData(false);
 	}
 }
 

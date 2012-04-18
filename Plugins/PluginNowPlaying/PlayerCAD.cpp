@@ -228,7 +228,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				player->m_State = (StateType)wParam;
 				if (player->m_State == STATE_STOPPED)
 				{
-					player->ClearData();
+					player->ClearData(false);
 				}
 				break;
 			}

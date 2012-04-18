@@ -194,7 +194,7 @@ unsigned __stdcall CPlayer::LyricsThreadProc(void* pParam)
 ** Clear track information.
 **
 */
-void CPlayer::ClearData()
+void CPlayer::ClearData(bool all)
 {
 	m_State = STATE_STOPPED;
 	m_Artist.clear();
@@ -208,4 +208,11 @@ void CPlayer::ClearData()
 	m_Rating = 0;
 	m_Number = 0;
 	m_Year = 0;
+
+	if (all)
+	{
+		m_Volume = 0;
+		m_Shuffle = false;
+		m_Repeat = false;
+	}
 }
