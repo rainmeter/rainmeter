@@ -1104,7 +1104,7 @@ void CMeterWindow::ShowMeter(const std::wstring& name, bool group)
 		if (CompareName((*j), meter, group))
 		{
 			(*j)->Show();
-			m_ResizeWindow = true;	// Need to recalculate the window region
+			m_ResizeWindow = true;	// Need to recalculate the window size
 			if (!group) return;
 		}
 	}
@@ -1126,7 +1126,7 @@ void CMeterWindow::HideMeter(const std::wstring& name, bool group)
 		if (CompareName((*j), meter, group))
 		{
 			(*j)->Hide();
-			m_ResizeWindow = true;	// Need to recalculate the windowregion
+			m_ResizeWindow = true;	// Need to recalculate the window size
 			if (!group) return;
 		}
 	}
@@ -1155,7 +1155,7 @@ void CMeterWindow::ToggleMeter(const std::wstring& name, bool group)
 			{
 				(*j)->Hide();
 			}
-			m_ResizeWindow = true;	// Need to recalculate the window region
+			m_ResizeWindow = true;	// Need to recalculate the window size
 			if (!group) return;
 		}
 	}
@@ -1178,7 +1178,7 @@ void CMeterWindow::MoveMeter(const std::wstring& name, int x, int y)
 		{
 			(*j)->SetX(x);
 			(*j)->SetY(y);
-			m_ResizeWindow = true;	// Need to recalculate the window region
+			m_ResizeWindow = true;	// Need to recalculate the window size
 			return;
 		}
 	}
@@ -1202,7 +1202,7 @@ void CMeterWindow::UpdateMeter(const std::wstring& name, bool group)
 		if (bContinue && CompareName((*j), meter, group))
 		{
 			UpdateMeter((*j), bActiveTransition, true);
-			m_ResizeWindow = true;	// Need to recalculate the window region
+			m_ResizeWindow = true;	// Need to recalculate the window size
 			if (!group)
 			{
 				bContinue = false;
