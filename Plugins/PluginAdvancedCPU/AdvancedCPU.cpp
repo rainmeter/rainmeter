@@ -17,43 +17,50 @@
 */
 
 #include <windows.h>
-#include "AdvancedCPU.h"
-#include <string>
 #include <vector>
-#include <map>
-#include "../../Library/Export.h"	// Rainmeter's exported functions
-
+#include "../PluginPerfMon/Titledb.h"
+#include "../PluginPerfMon/PerfSnap.h"
+#include "../PluginPerfMon/PerfObj.h"
+#include "../PluginPerfMon/PerfCntr.h"
+#include "../PluginPerfMon/ObjList.h"
+#include "../PluginPerfMon/ObjInst.h"
+#include "../API/RainmeterAPI.h"
+#include "../../Library/RawString.h"
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
-//ULONGLONG GetPerfData(PCTSTR ObjectName, PCTSTR InstanceName, PCTSTR CounterName);
-void UpdateProcesses();
-
-struct CPUMeasure
+struct MeasureData
 {
-	std::vector< std::wstring > includes;
-	std::vector< std::wstring > excludes;
+	std::vector<CRawString> includes;
+	std::vector<CRawString> excludes;
+	CRawString includesCache;
+	CRawString excludesCache;
 	int topProcess;
-	std::wstring topProcessName;
+	CRawString topProcessName;
 	LONGLONG topProcessValue;
+
+	MeasureData() :
+		topProcess(-1),
+		topProcessValue()
+	{
+	}
 };
 
 struct ProcessValues
 {
-	std::wstring name;
+	CRawString name;
 	LONGLONG oldValue;
 	LONGLONG newValue;
 	bool found;
 };
 
-static CPerfTitleDatabase g_CounterTitles( PERF_TITLE_COUNTER );
-std::vector< ProcessValues > g_Processes;
-static std::map<UINT, CPUMeasure*> g_CPUMeasures;
+static CPerfTitleDatabase g_CounterTitles(PERF_TITLE_COUNTER);
+std::vector<ProcessValues> g_Processes;
 
-void SplitName(WCHAR* names, std::vector< std::wstring >& splittedNames)
+void UpdateProcesses();
+
+void SplitName(WCHAR* names, std::vector<CRawString>& splittedNames)
 {
-	WCHAR* token;
-
-	token = wcstok(names, L";");
+	WCHAR* token = wcstok(names, L";");
 	while (token != NULL)
 	{
 		splittedNames.push_back(token);
@@ -61,60 +68,61 @@ void SplitName(WCHAR* names, std::vector< std::wstring >& splittedNames)
 	}
 }
 
-/*
-  This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured.
-  The return value can also be 0, which means that Rainmeter will
-  track the maximum value automatically. The parameters for this
-  function are:
-
-  instance  The instance of this DLL
-  iniFile   The name of the ini-file (usually Rainmeter.ini)
-  section   The name of the section in the ini-file for this measure
-  id        The identifier for the measure. This is used to identify the measures that use the same plugin.
-*/
-UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
-	WCHAR buffer[4096];
-	CPUMeasure* measure = new CPUMeasure;
-	measure->topProcess = 0;
-	measure->topProcessValue = 0;
-
-	LPCTSTR data = ReadConfigString(section, L"CPUInclude", L"");
-	if (data)
-	{
-		wcsncpy(buffer, data, 4096);
-		buffer[4095] = 0;
-		SplitName(buffer, measure->includes);
-	}
-
-	data = ReadConfigString(section, L"CPUExclude", L"");
-	if (data)
-	{
-		wcsncpy(buffer, data, 4096);
-		buffer[4095] = 0;
-		SplitName(buffer, measure->excludes);
-	}
-
-	measure->topProcess = 0;
-	data = ReadConfigString(section, L"TopProcess", L"0");
-	if (data)
-	{
-		measure->topProcess = _wtoi(data);
-	}
-
-	g_CPUMeasures[id] = measure;
-
-	return 10000000;	// The values are 100 * 100000
+	MeasureData* measure = new MeasureData;
+	*data = measure;
 }
 
-bool CheckProcess(CPUMeasure* measure, const std::wstring& name)
+PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+{
+	MeasureData* measure = (MeasureData*)data;
+	bool changed = false;
+
+	LPCWSTR value = RmReadString(rm, L"CPUInclude", L"");
+	if (_wcsicmp(value, measure->includesCache.c_str()) != 0)
+	{
+		measure->includesCache = value;
+		measure->includes.clear();
+
+		WCHAR* buffer = _wcsdup(value);
+		SplitName(buffer, measure->includes);
+		delete buffer;
+		changed = true;
+	}
+
+	value = RmReadString(rm, L"CPUExclude", L"");
+	if (_wcsicmp(value, measure->excludesCache.c_str()) != 0)
+	{
+		measure->excludesCache = value;
+		measure->excludes.clear();
+
+		WCHAR* buffer = _wcsdup(value);
+		SplitName(buffer, measure->excludes);
+		delete buffer;
+		changed = true;
+	}
+
+	int topProcess = RmReadInt(rm, L"TopProcess", 0);
+	if (topProcess != measure->topProcess)
+	{
+		measure->topProcess = topProcess;
+		changed = true;
+	}
+
+	if (changed)
+	{
+		*maxValue = 10000000;	// The values are 100 * 100000
+	}
+}
+
+bool CheckProcess(MeasureData* measure, const WCHAR* name)
 {
 	if (measure->includes.empty())
 	{
-		for (size_t i = 0; i < measure->excludes.size(); i++)
+		for (size_t i = 0; i < measure->excludes.size(); ++i)
 		{
-			if (_wcsicmp(measure->excludes[i].c_str(), name.c_str()) == 0)
+			if (_wcsicmp(measure->excludes[i].c_str(), name) == 0)
 			{
 				return false;		// Exclude
 			}
@@ -123,9 +131,9 @@ bool CheckProcess(CPUMeasure* measure, const std::wstring& name)
 	}
 	else
 	{
-		for (size_t i = 0; i < measure->includes.size(); i++)
+		for (size_t i = 0; i < measure->includes.size(); ++i)
 		{
-			if (_wcsicmp(measure->includes[i].c_str(), name.c_str()) == 0)
+			if (_wcsicmp(measure->includes[i].c_str(), name) == 0)
 			{
 				return true;	// Include
 			}
@@ -134,16 +142,32 @@ bool CheckProcess(CPUMeasure* measure, const std::wstring& name)
 	return false;
 }
 
-/*
-  This function is called when new value should be measured.
-  The function returns the new value.
-*/
-double Update2(UINT id)
+ULONGLONG _GetTickCount64()
 {
-	static DWORD oldTime = 0;
+	typedef ULONGLONG (WINAPI * FPGETTICKCOUNT64)();
+	static FPGETTICKCOUNT64 c_GetTickCount64 = (FPGETTICKCOUNT64)GetProcAddress(GetModuleHandle(L"kernel32"), "GetTickCount64");
+
+	if (c_GetTickCount64)
+	{
+		return c_GetTickCount64();
+	}
+	else
+	{
+		static ULONGLONG lastTicks = 0;
+		ULONGLONG ticks = GetTickCount();
+		while (ticks < lastTicks) ticks += 0x100000000;
+		lastTicks = ticks;
+		return ticks;
+	}
+}
+
+PLUGIN_EXPORT double Update(void* data)
+{
+	MeasureData* measure = (MeasureData*)data;
+	static ULONGLONG oldTime = 0;
 
 	// Only update twice per second
-	DWORD time = GetTickCount();
+	ULONGLONG time = _GetTickCount64();
 	if (oldTime == 0 || time - oldTime > 500)
 	{
 		UpdateProcesses();
@@ -152,125 +176,53 @@ double Update2(UINT id)
 
 	LONGLONG newValue = 0;
 
-	std::map<UINT, CPUMeasure*>::iterator i = g_CPUMeasures.find(id);
-	if (i != g_CPUMeasures.end())
+	for (size_t i = 0; i < g_Processes.size(); ++i)
 	{
-		CPUMeasure* measure = (*i).second;
-
-		if (measure)
+		// Check process include/exclude
+		if (CheckProcess(measure, g_Processes[i].name.c_str()))
 		{
-			for (size_t i = 0; i < g_Processes.size(); i++)
+			if (g_Processes[i].oldValue != 0)
 			{
-				// Check process include/exclude
-				if (CheckProcess(measure, g_Processes[i].name))
+				LONGLONG value = g_Processes[i].newValue - g_Processes[i].oldValue;
+
+				if (measure->topProcess == 0)
 				{
-					if (g_Processes[i].oldValue != 0)
+					// Add all values together
+					newValue += value;
+				}
+				else
+				{
+					// Find the top process
+					if (newValue < value)
 					{
-						if (measure->topProcess == 0)
-						{
-							// Add all values together
-							newValue += g_Processes[i].newValue - g_Processes[i].oldValue;
-						}
-						else
-						{
-							// Find the top process
-							if (newValue < g_Processes[i].newValue - g_Processes[i].oldValue)
-							{
-								newValue = g_Processes[i].newValue - g_Processes[i].oldValue;
-								measure->topProcessName = g_Processes[i].name;
-								measure->topProcessValue = newValue;
-							}
-						}
+						newValue = value;
+						measure->topProcessName = g_Processes[i].name;
+						measure->topProcessValue = newValue;
 					}
 				}
 			}
 		}
-
-//				LONGLONG newValue = 0;
-//				ULONGLONG longvalue = 0;
-//
-//				if (measure->includes.empty())
-//				{
-//					// First get the total CPU value
-//					longvalue = GetPerfData(L"Processor", L"_Total", L"% Processor Time");
-//					newValue = longvalue;
-//
-//					// Then substract the excluded processes
-//					std::vector< std::wstring >::iterator j = measure->excludes.begin();
-//					for ( ; j != measure->excludes.end(); j++)
-//					{
-//						longvalue = GetPerfData(L"Process", (*j).c_str(), L"% Processor Time");
-//						newValue += longvalue;		// Adding means actually substraction
-//					}
-//
-//					// Compare with the old value
-//					if (measure->oldValue != 0)
-//					{
-//						int val = 10000000 - (UINT)(newValue - measure->oldValue);
-//						if (val < 0) val = 0;
-//						value = val;
-//					}
-//					measure->oldValue = newValue;
-//				}
-//				else
-//				{
-//					// Add the included processes
-//					std::vector< std::wstring >::iterator j = measure->includes.begin();
-//					for ( ; j != measure->includes.end(); j++)
-//					{
-//						longvalue = GetPerfData(L"Process", (*j).c_str(), L"% Processor Time");
-//						newValue += longvalue;
-//					}
-//
-//					// Compare with the old value
-//					if (measure->oldValue != 0)
-//					{
-//						value = (UINT)(newValue - measure->oldValue);
-//					}
-//					measure->oldValue = newValue;
-//
-//				}
-//
-//		}
 	}
 
 	return (double)newValue;
 }
 
-/*
-  This function is called when the value should be
-  returned as a string.
-*/
-LPCTSTR GetString(UINT id, UINT flags)
+PLUGIN_EXPORT LPCWSTR GetString(void* data)
 {
-	std::map<UINT, CPUMeasure*>::iterator i = g_CPUMeasures.find(id);
-	if (i != g_CPUMeasures.end())
-	{
-		CPUMeasure* measure = (*i).second;
+	MeasureData* measure = (MeasureData*)data;
 
-		if (measure->topProcess == 2)
-		{
-			return measure->topProcessName.c_str();
-		}
+	if (measure->topProcess == 2)
+	{
+		return measure->topProcessName.c_str();
 	}
 
 	return NULL;
 }
 
-/*
-  If the measure needs to free resources before quitting.
-  The plugin can export Finalize function, which is called
-  when Rainmeter quits (or refreshes).
-*/
-void Finalize(HMODULE instance, UINT id)
+PLUGIN_EXPORT void Finalize(void* data)
 {
-	// delete the measure
-	std::map<UINT, CPUMeasure*>::iterator i = g_CPUMeasures.find(id);
-	if (i != g_CPUMeasures.end())
-	{
-		delete (*i).second;
-		g_CPUMeasures.erase(i);
-	}
+	MeasureData* measure = (MeasureData*)data;
+	delete measure;
 
 	CPerfSnapshot::CleanUp();
 }
@@ -280,24 +232,22 @@ void Finalize(HMODULE instance, UINT id)
 */
 void UpdateProcesses()
 {
-	CPerfObject* pPerfObj;
-	CPerfObjectInstance* pObjInst;
-	CPerfCounter* pPerfCntr;
 	BYTE data[256];
 	WCHAR name[256];
 
-	std::vector< ProcessValues > newProcesses;
+	std::vector<ProcessValues> newProcesses;
+	newProcesses.reserve(g_Processes.size());
 
 	CPerfSnapshot snapshot(&g_CounterTitles);
 	CPerfObjectList objList(&snapshot, &g_CounterTitles);
 
 	if (snapshot.TakeSnapshot(L"Process"))
 	{
-		pPerfObj = objList.GetPerfObject(L"Process");
+		CPerfObject* pPerfObj = objList.GetPerfObject(L"Process");
 
 		if (pPerfObj)
 		{
-			for (pObjInst = pPerfObj->GetFirstObjectInstance();
+			for (CPerfObjectInstance* pObjInst = pPerfObj->GetFirstObjectInstance();
 				pObjInst != NULL;
 				pObjInst = pPerfObj->GetNextObjectInstance())
 			{
@@ -309,7 +259,7 @@ void UpdateProcesses()
 						continue;
 					}
 
-					pPerfCntr = pObjInst->GetCounterByName(L"% Processor Time");
+					CPerfCounter* pPerfCntr = pObjInst->GetCounterByName(L"% Processor Time");
 					if (pPerfCntr != NULL)
 					{
 						pPerfCntr->GetData(data, 256, NULL);
@@ -319,11 +269,13 @@ void UpdateProcesses()
 							ProcessValues values;
 							values.name = name;
 							values.oldValue = 0;
+							values.newValue = *(ULONGLONG*)data;
+							values.found = false;
 
 							// Check if we can find the old value
-							for (size_t i = 0; i < g_Processes.size(); i++)
+							for (size_t i = 0; i < g_Processes.size(); ++i)
 							{
-								if (!g_Processes[i].found && g_Processes[i].name == name)
+								if (!g_Processes[i].found && _wcsicmp(g_Processes[i].name.c_str(), name) == 0)
 								{
 									values.oldValue = g_Processes[i].newValue;
 									g_Processes[i].found = true;
@@ -331,11 +283,7 @@ void UpdateProcesses()
 								}
 							}
 
-							values.newValue = *(ULONGLONG*)data;
-							values.found = false;
-							newProcesses.push_back(values);
-
-//							LSLog(LOG_DEBUG, NULL, name);		// DEBUG
+							newProcesses.push_back(std::move(values));
 						}
 
 						delete pPerfCntr;
@@ -344,21 +292,10 @@ void UpdateProcesses()
 
 				delete pObjInst;
 			}
+
 			delete pPerfObj;
 		}
 	}
 
-	g_Processes = newProcesses;
+	g_Processes = std::move(newProcesses);
 }
-
-
-UINT GetPluginVersion()
-{
-	return 1005;
-}
-
-LPCTSTR GetPluginAuthor()
-{
-	return L"Rainy (rainy@iki.fi)";
-}
-

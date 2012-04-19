@@ -267,7 +267,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AdvancedCPU.h" />
     <ClInclude Include="..\PluginPerfMon\MakePtr.h" />
   </ItemGroup>
   <ItemGroup>
