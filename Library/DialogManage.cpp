@@ -1474,23 +1474,9 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 				item = GetDlgItem(m_Window, IDC_MANAGETHEMES_LIST);
 				ListBox_AddString(item, theme.c_str());
 
-				// Add theme to vector
-				std::vector<std::wstring>& themes = Rainmeter->m_Themes;
-				if (!themes.empty())
-				{
-					std::vector<std::wstring>::iterator iter = themes.begin();
-					for ( ; iter != themes.end(); ++iter)
-					{
-						if (wcscmp(theme.c_str(), (*iter).c_str()) < 0)
-						{
-							themes.insert(iter, theme);
-							return TRUE;
-						}
-					}
-				}
-
-				// If themes empty or if name is alphabetically after vector contents
-				themes.push_back(theme);
+				path = Rainmeter->GetSettingsPath();
+				path += L"Themes\\";
+				Rainmeter->ScanForThemes(path);
 			}
 		}
 		break;
