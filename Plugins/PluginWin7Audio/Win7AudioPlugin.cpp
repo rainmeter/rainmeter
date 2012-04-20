@@ -17,36 +17,17 @@
 */
 
 #include <windows.h>
-#include <math.h>
 #include <string>
-#include <map>
 #include <vector>
-#include <time.h>
-
 #include <Mmdeviceapi.h>
 #include <Endpointvolume.h>
 #include <Functiondiscoverykeys_devpkey.h>
 #include "PolicyConfig.h"
-
-#include "../../Library/Export.h"	// Rainmeter's exported functions
-
+#include "../API/RainmeterAPI.h"
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 #define SAFE_RELEASE(punk)  \
 			  if ((punk) != NULL) { (punk)->Release(); (punk) = NULL; }
-
-/* The exported functions */
-extern "C"
-{
-__declspec( dllexport ) UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id);
-__declspec( dllexport ) void Finalize(HMODULE instance, UINT id);
-//__declspec( dllexport ) UINT Update(UINT id);
-__declspec( dllexport ) double Update2(UINT id);
-__declspec( dllexport ) LPCTSTR GetString(UINT id, UINT flags);
-__declspec( dllexport ) UINT GetPluginVersion();
-__declspec( dllexport ) LPCTSTR GetPluginAuthor();
-__declspec( dllexport ) void ExecuteBang(LPCTSTR args, UINT id);
-}
 
 static BOOL com_initialized = FALSE;
 static BOOL instance_created = FALSE;
@@ -84,7 +65,7 @@ bool InitCom()
 	if (!com_initialized) com_initialized = SUCCEEDED(CoInitialize(0));
 	if (!com_initialized)
 	{
-		LSLog(LOG_ERROR, NULL, L"Win7AudioPlugin.dll: COM initialization failed");
+		RmLog(LOG_ERROR, L"Win7AudioPlugin.dll: COM initialization failed");
 		return false;
 	}
 	HRESULT hr = CoCreateInstance(CLSID_MMDeviceEnumerator, 0, CLSCTX_ALL,
@@ -103,12 +84,12 @@ bool InitCom()
 
 			dbg_str += e_code;
 		}
-		LSLog(LOG_ERROR, NULL, dbg_str.c_str());
+		RmLog(LOG_ERROR, dbg_str.c_str());
 		return CleanUp() != 0;
 	}
 	if (S_OK != pEnumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &pCollection) || !pCollection)
 	{
-		LSLog(LOG_WARNING, NULL, L"Win7AudioPlugin.dll: Could not enumerate AudioEndpoints");
+		RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: Could not enumerate AudioEndpoints");
 		return CleanUp() != 0;
 	}
 	return true;
@@ -144,7 +125,7 @@ HRESULT RegisterDevice(PCWSTR devID)
 	}
 	catch (...)
 	{
-		LSLog(LOG_WARNING, NULL, L"Win7AudioPlugin.dll: RegisterDevice exception");
+		RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: RegisterDevice exception");
 		hr = S_FALSE;
 	}
 	UnInitCom();
@@ -153,7 +134,7 @@ HRESULT RegisterDevice(PCWSTR devID)
 
 std::wstring GetDefaultID()
 {
-	std::wstring id_default = L"";
+	std::wstring id_default;
 	IMMDevice * pEndpoint = 0;
 	try
 	{
@@ -162,14 +143,14 @@ std::wstring GetDefaultID()
 			LPWSTR pwszID = 0;
 			if (pEndpoint->GetId(&pwszID) == S_OK)
 			{
-				id_default = std::wstring(pwszID);
+				id_default = pwszID;
 			}
 			CoTaskMemFree(pwszID);
 		}
 	}
 	catch (...)
 	{
-		LSLog(LOG_WARNING, NULL, L"Win7AudioPlugin.dll: GetDefaultID exception");
+		RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: GetDefaultID exception");
 		id_default = L"Exception";
 	}
 	SAFE_RELEASE(pEndpoint)
@@ -206,7 +187,7 @@ bool GetWin7AudioState(const VolumeAction action)
 	}
 	catch (...)
 	{
-		LSLog(LOG_WARNING, NULL, L"Win7AudioPlugin.dll: ToggleMute exception");
+		RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: ToggleMute exception");
 	}
 	SAFE_RELEASE(pEndptVol)
 	SAFE_RELEASE(pEndpoint)
@@ -216,14 +197,13 @@ bool GetWin7AudioState(const VolumeAction action)
 
 UINT GetIndex()
 {
-
-	std::wstring id_default = L"";
+	std::wstring id_default;
 	if (InitCom()) id_default = GetDefaultID();
 	UnInitCom();
 
-	for (UINT i = 0; i < endpointIDs.size(); i++)
+	for (UINT i = 0; i < endpointIDs.size(); ++i)
 	{
-		if (endpointIDs[i].compare(id_default) == 0) return i + 1;
+		if (_wcsicmp(endpointIDs[i].c_str(), id_default.c_str()) == 0) return i + 1;
 	}
 	return 0;
 }
@@ -265,7 +245,7 @@ bool SetWin7Volume(UINT volume, int offset = 0)
 	}
 	catch (...)
 	{
-		LSLog(LOG_WARNING, NULL, L"Win7AudioPlugin.dll: SetVolume exception");
+		RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: SetVolume exception");
 	}
 	SAFE_RELEASE(pEndptVol)
 	SAFE_RELEASE(pEndpoint)
@@ -273,35 +253,23 @@ bool SetWin7Volume(UINT volume, int offset = 0)
 	return success;
 }
 
-/*
-  This function is called when the measure is initialized.
-  The function must return the maximum value that can be measured.
-  The return value can also be 0, which means that Rainmeter will
-  track the maximum value automatically. The parameters for this
-  function are:
-
-  instance  The instance of this DLL
-  iniFile   The name of the ini-file (usually Rainmeter.ini)
-  section   The name of the section in the ini-file for this measure
-  id        The identifier for the measure. This is used to identify the measures that use the same plugin.
-*/
-UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
+PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	if (!InitCom())
 	{
 		UnInitCom();
-		return 0;
+		return;
 	}
 
 	UINT count;
 	if (!pCollection || (S_OK != pCollection->GetCount(&count)))
 	{
 		UnInitCom();
-		return 0;
+		return;
 	}
 	endpointIDs = std::vector<std::wstring>(count);
 
-	for (UINT i = 0; i < count; i++)
+	for (UINT i = 0; i < count; ++i)
 	{
 		IMMDevice *pEndpoint = 0;
 
@@ -312,7 +280,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 			LPWSTR pwszID = 0;
 			if (pEndpoint->GetId(&pwszID) == S_OK)
 			{
-				endpointIDs[i] = std::wstring(pwszID);
+				endpointIDs[i] = pwszID;
 			}
 			CoTaskMemFree(pwszID);
 		}
@@ -320,32 +288,21 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 	}
 	UnInitCom();
 	GetWin7AudioState(INIT);
-	return 100;
 }
 
-/*
-  This function is called when new value should be measured.
-  The function returns the new value.
-*/
-//UINT Update(UINT id)
-//{
-//	GetWin7AudioState(GET_VOLUME);
-//	UINT volume = is_mute == TRUE ? 0 : static_cast<UINT>(master_volume * 100.0f + 0.5f);	// rounding up at 0.5
-//	return volume > 100 ? 100 : volume;
-//}
+PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
+{
+	*maxValue = 100;
+}
 
-/*
-This function is called when new value should be measured.
-The function returns the new value.
-*/
-double Update2(UINT id)
+PLUGIN_EXPORT double Update(void* data)
 {
 	GetWin7AudioState(GET_VOLUME);
 	double volume = is_mute == TRUE ? -1.0 : floor(master_volume * 100.0 + 0.5);	// rounding up at 0.5
 	return volume > 100.0 ? 100.0 : volume;
 }
 
-LPCTSTR GetString(UINT id, UINT flags)
+PLUGIN_EXPORT LPCWSTR GetString(void* data)
 {
 	static WCHAR result[256];
 	wsprintf(result, L"ERROR");
@@ -396,34 +353,19 @@ LPCTSTR GetString(UINT id, UINT flags)
 		}
 	} catch (...)
 	{
-		LSLog(LOG_WARNING, NULL, L"Win7AudioPlugin.dll: GetString exception");
+		RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: GetString exception");
 		wsprintf(result, L"Exception");
 	}
 	UnInitCom();
 	return result;
 }
 
-/*
-  If the measure needs to free resources before quitting.
-  The plugin can export Finalize function, which is called
-  when Rainmeter quits (or refreshes).
-*/
-void Finalize(HMODULE instance, UINT id)
+PLUGIN_EXPORT void Finalize(void* data)
 {
 	UnInitCom();
 }
 
-UINT GetPluginVersion()
-{
-	return 1006;
-}
-
-LPCTSTR GetPluginAuthor()
-{
-	return L"reiswaffel.deviantart.com";
-}
-
-void ExecuteBang(LPCTSTR args, UINT id)
+PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 {
 	std::wstring wholeBang = args;
 
@@ -441,7 +383,7 @@ void ExecuteBang(LPCTSTR args, UINT id)
 			{
 				if (endpointIDs.size() <= 0)
 				{
-					LSLog(LOG_WARNING, NULL, L"Win7AudioPlugin.dll: No device found");
+					RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: No device found");
 					return;
 				}
 				// set to endpoint [index-1]
@@ -451,7 +393,7 @@ void ExecuteBang(LPCTSTR args, UINT id)
 			}
 			else
 			{
-				LSLog(LOG_WARNING, NULL, L"Win7AudioPlugin.dll: Incorrect number of arguments for bang");
+				RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: Incorrect number of arguments for bang");
 			}
 		}
 		else if (_wcsicmp(bang.c_str(), L"SetVolume") == 0)
@@ -462,12 +404,12 @@ void ExecuteBang(LPCTSTR args, UINT id)
 			{
 				if (!SetWin7Volume(volume < 0 ? 0 : (volume > 100 ? 100 : (UINT)volume)))
 				{
-					LSLog(LOG_ERROR, NULL, L"Win7AudioPlugin.dll: Error setting volume");
+					RmLog(LOG_ERROR, L"Win7AudioPlugin.dll: Error setting volume");
 				}
 			}
 			else
 			{
-				LSLog(LOG_WARNING, NULL, L"Win7AudioPlugin.dll: Incorrect number of arguments for bang");
+				RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: Incorrect number of arguments for bang");
 			}
 		}
 		else if (_wcsicmp(bang.c_str(), L"ChangeVolume") == 0)
@@ -478,32 +420,32 @@ void ExecuteBang(LPCTSTR args, UINT id)
 			{
 				if (!SetWin7Volume(0, offset))
 				{
-					LSLog(LOG_ERROR, NULL, L"Win7AudioPlugin.dll: Error changing volume");
+					RmLog(LOG_ERROR, L"Win7AudioPlugin.dll: Error changing volume");
 				}
 			}
 			else
 			{
-				LSLog(LOG_WARNING, NULL, L"Win7AudioPlugin.dll: Incorrect number of arguments for bang");
+				RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: Incorrect number of arguments for bang");
 			}
 		}
 		else
 		{
-			LSLog(LOG_WARNING, NULL, L"Win7AudioPlugin.dll: Unknown bang");
+			RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: Unknown bang");
 		}
 
 	}
 	else if (_wcsicmp(wholeBang.c_str(), L"ToggleNext") == 0)
 	{
-		//LSLog(LOG_NOTICE, NULL, L"Win7AudioPlugin.dll: Next device.");
+		//RmLog(LOG_NOTICE, L"Win7AudioPlugin.dll: Next device.");
 		const UINT i = GetIndex();
 		if (i) RegisterDevice(endpointIDs[(i == endpointIDs.size()) ? 0 : i].c_str());
-		else LSLog(LOG_ERROR, NULL, L"Win7AudioPlugin.dll: Update error");
+		else RmLog(LOG_ERROR, L"Win7AudioPlugin.dll: Update error");
 	}
 	else if (_wcsicmp(wholeBang.c_str(), L"TogglePrevious") == 0)
 	{
 		const UINT i = GetIndex();
 		if (i) RegisterDevice(endpointIDs[(i == 1) ? endpointIDs.size() - 1 : i - 2].c_str());
-		else LSLog(LOG_ERROR, NULL, L"Win7AudioPlugin.dll: Update error");
+		else RmLog(LOG_ERROR, L"Win7AudioPlugin.dll: Update error");
 	}
 	else if (_wcsicmp(wholeBang.c_str(), L"ToggleMute") == 0)
 	{
@@ -525,6 +467,6 @@ void ExecuteBang(LPCTSTR args, UINT id)
 	}
 	else
 	{
-		LSLog(LOG_WARNING, NULL, L"Win7AudioPlugin.dll: Unknown bang");
+		RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: Unknown bang");
 	}
 }
