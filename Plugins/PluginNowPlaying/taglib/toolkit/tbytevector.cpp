@@ -23,7 +23,7 @@
  *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
-#include <ostream>
+#include <iostream>
 
 #include <tstring.h>
 #include <tdebug.h>
@@ -363,7 +363,7 @@ ByteVector ByteVector::mid(uint index, uint length) const
 
   ConstIterator endIt;
 
-  if(length < 0xffffffff && length + index < size())
+  if(length < size() - index)
     endIt = d->data.begin() + index + length;
   else
     endIt = d->data.end();

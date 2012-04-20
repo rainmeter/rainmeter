@@ -194,6 +194,19 @@ void RIFF::File::setChunkData(const ByteVector &name, const ByteVector &data)
 // private members
 ////////////////////////////////////////////////////////////////////////////////
 
+static bool isValidChunkID(const ByteVector &name)
+{
+  if(name.size() != 4) {
+    return false;
+  }
+  for(int i = 0; i < 4; i++) {
+    if(name[i] < 32 || name[i] > 127) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void RIFF::File::read()
 {
   bool bigEndian = (d->endianness == BigEndian);
@@ -207,8 +220,15 @@ void RIFF::File::read()
     ByteVector chunkName = readBlock(4);
     uint chunkSize = readBlock(4).toUInt(bigEndian);
 
+    if(!isValidChunkID(chunkName)) {
+      debug("RIFF::File::read() -- Chunk '" + chunkName + "' has invalid ID");
+      setValid(false);
+      break;
+    }
+
     if(tell() + chunkSize > uint(length())) {
-      // something wrong
+      debug("RIFF::File::read() -- Chunk '" + chunkName + "' has invalid size (larger than the file size)");
+      setValid(false);
       break;
     }
 

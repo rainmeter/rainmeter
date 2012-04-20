@@ -193,7 +193,7 @@ void APE::Properties::analyzeCurrent()
   uint blocksPerFrame = header.mid(4, 4).toUInt(false);
   uint finalFrameBlocks = header.mid(8, 4).toUInt(false);
   uint totalBlocks = totalFrames > 0 ? (totalFrames -  1) * blocksPerFrame + finalFrameBlocks : 0;
-  d->length = totalBlocks / d->sampleRate;
+  d->length = d->sampleRate > 0 ? totalBlocks / d->sampleRate : 0;
   d->bitrate = d->length > 0 ? ((d->streamLength * 8L) / d->length) / 1000 : 0;
 }
 

@@ -27,7 +27,7 @@
 #include "unicode.h"
 #include "tdebug.h"
 
-#include <ostream>
+#include <iostream>
 
 #include <string.h>
 

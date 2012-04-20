@@ -87,6 +87,11 @@ bool RIFF::AIFF::File::save()
     return false;
   }
 
+  if(!isValid()) {
+    debug("RIFF::AIFF::File::save() -- Trying to save invalid file.");
+    return false;
+  }
+
   setChunkData(d->tagChunkID, d->tag->render());
 
   return true;

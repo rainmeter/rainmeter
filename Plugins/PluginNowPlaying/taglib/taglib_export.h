@@ -15,8 +15,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
  *                                                                         *
  *   Alternatively, this file is available under the Mozilla Public        *
  *   License Version 1.1.  You may obtain a copy of the License at         *
@@ -26,18 +26,21 @@
 #ifndef TAGLIB_EXPORT_H
 #define TAGLIB_EXPORT_H
 
+#define TAGLIB_STATIC
 
-/*
-#if (defined(_WIN32) || defined(_WIN64)) && (!defined(MAKE_TAGLIB_STATIC))
-	#ifdef MAKE_TAGLIB_LIB
-		#define TAGLIB_EXPORT __declspec(dllexport)
-	#else
-		#define TAGLIB_EXPORT __declspec(dllimport)
-	#endif
+#if defined(TAGLIB_STATIC)
+#define TAGLIB_EXPORT
+#elif (defined(_WIN32) || defined(_WIN64))
+#ifdef MAKE_TAGLIB_LIB
+#define TAGLIB_EXPORT __declspec(dllexport)
 #else
-*/
-	#define TAGLIB_EXPORT
-//#endif
+#define TAGLIB_EXPORT __declspec(dllimport)
+#endif
+#elif defined(__GNUC__) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 1)
+#define TAGLIB_EXPORT __attribute__ ((visibility("default")))
+#else
+#define TAGLIB_EXPORT
+#endif
 
 #ifndef TAGLIB_NO_CONFIG
 #include "taglib_config.h"

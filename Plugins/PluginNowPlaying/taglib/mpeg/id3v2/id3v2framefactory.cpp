@@ -73,8 +73,9 @@ FrameFactory *FrameFactory::factory = 0;
 
 FrameFactory *FrameFactory::instance()
 {
-  static FrameFactory factory;
-  return &factory;
+  if(!factory)
+    factory = new FrameFactory;
+  return factory;
 }
 
 Frame *FrameFactory::createFrame(const ByteVector &data, bool synchSafeInts) const

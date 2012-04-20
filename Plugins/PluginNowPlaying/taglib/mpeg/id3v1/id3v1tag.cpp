@@ -51,8 +51,7 @@ public:
   static const StringHandler *stringHandler;
 };
 
-static const StringHandler defaultStringHandler;
-const ID3v1::StringHandler *ID3v1::Tag::TagPrivate::stringHandler = &defaultStringHandler;
+const ID3v1::StringHandler *ID3v1::Tag::TagPrivate::stringHandler = new StringHandler;
 
 ////////////////////////////////////////////////////////////////////////////////
 // StringHandler implementation
@@ -190,9 +189,7 @@ void ID3v1::Tag::setTrack(uint i)
 
 void ID3v1::Tag::setStringHandler(const StringHandler *handler)
 {
-  if(TagPrivate::stringHandler != &defaultStringHandler)
-    delete TagPrivate::stringHandler;
-
+  delete TagPrivate::stringHandler;
   TagPrivate::stringHandler = handler;
 }
 

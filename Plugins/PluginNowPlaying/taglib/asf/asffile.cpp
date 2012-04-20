@@ -327,7 +327,16 @@ void ASF::File::HeaderExtensionObject::parse(ASF::File *file, uint /*size*/)
   long long dataPos = 0;
   while(dataPos < dataSize) {
     ByteVector guid = file->readBlock(16);
-    long long size = file->readQWORD();
+    if(guid.size() != 16) {
+      file->setValid(false);
+      break;
+    }
+    bool ok;
+    long long size = file->readQWORD(&ok);
+    if(!ok) {
+      file->setValid(false);
+      break;
+    }
     BaseObject *obj;
     if(guid == metadataGuid) {
       obj = new MetadataObject();
@@ -397,19 +406,37 @@ void ASF::File::read(bool /*readProperties*/, Properties::ReadStyle /*properties
   ByteVector guid = readBlock(16);
   if(guid != headerGuid) {
     debug("ASF: Not an ASF file.");
+    setValid(false);
     return;
   }
 
   d->tag = new ASF::Tag();
   d->properties = new ASF::Properties();
 
-  d->size = readQWORD();
-  int numObjects = readDWORD();
+  bool ok;
+  d->size = readQWORD(&ok);
+  if(!ok) {
+    setValid(false);
+    return;
+  }
+  int numObjects = readDWORD(&ok);
+  if(!ok) {
+    setValid(false);
+    return;
+  }
   seek(2, Current);
 
   for(int i = 0; i < numObjects; i++) {
     ByteVector guid = readBlock(16);
-    long size = (long)readQWORD();
+    if(guid.size() != 16) {
+      setValid(false);
+      break;
+    }
+    long size = (long)readQWORD(&ok);
+    if(!ok) {
+      setValid(false);
+      break;
+    }
     BaseObject *obj;
     if(guid == filePropertiesGuid) {
       obj = new FilePropertiesObject();
@@ -437,7 +464,12 @@ void ASF::File::read(bool /*readProperties*/, Properties::ReadStyle /*properties
 bool ASF::File::save()
 {
   if(readOnly()) {
-    debug("ASF: File is read-only.");
+    debug("ASF::File::save() -- File is read only.");
+    return false;
+  }
+
+  if(!isValid()) {
+    debug("ASF::File::save() -- Trying to save invalid file.");
     return false;
   }
 
@@ -499,27 +531,47 @@ bool ASF::File::save()
 // protected members
 ////////////////////////////////////////////////////////////////////////////////
 
-int ASF::File::readBYTE()
+int ASF::File::readBYTE(bool *ok)
 {
   ByteVector v = readBlock(1);
+  if(v.size() != 1) {
+    if(ok) *ok = false;
+    return 0;
+  }
+  if(ok) *ok = true;
   return v[0];
 }
 
-int ASF::File::readWORD()
+int ASF::File::readWORD(bool *ok)
 {
   ByteVector v = readBlock(2);
+  if(v.size() != 2) {
+    if(ok) *ok = false;
+    return 0;
+  }
+  if(ok) *ok = true;
   return v.toUShort(false);
 }
 
-unsigned int ASF::File::readDWORD()
+unsigned int ASF::File::readDWORD(bool *ok)
 {
   ByteVector v = readBlock(4);
+  if(v.size() != 4) {
+    if(ok) *ok = false;
+    return 0;
+  }
+  if(ok) *ok = true;
   return v.toUInt(false);
 }
 
-long long ASF::File::readQWORD()
+long long ASF::File::readQWORD(bool *ok)
 {
   ByteVector v = readBlock(8);
+  if(v.size() != 8) {
+    if(ok) *ok = false;
+    return 0;
+  }
+  if(ok) *ok = true;
   return v.toLongLong(false);
 }
 
