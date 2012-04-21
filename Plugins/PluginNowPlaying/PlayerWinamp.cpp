@@ -165,8 +165,10 @@ void CPlayerWinamp::UpdateData()
 
 			if (!m_PlayingStream)
 			{
+				int duration = SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
+				m_Duration = (duration != -1) ? duration : 0;
+
 				m_Rating = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETRATING);
-				m_Duration = SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
 				m_Shuffle = (bool)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_SHUFFLE);
 				m_Repeat = (bool)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_REPEAT);
 
@@ -266,6 +268,12 @@ void CPlayerWinamp::UpdateData()
 		}
 		else if (!m_PlayingStream)
 		{
+			if (m_Duration == 0)
+			{
+				int duration = SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
+				m_Duration = (duration != -1) ? duration : 0;
+			}
+
 			return;
 		}
 
