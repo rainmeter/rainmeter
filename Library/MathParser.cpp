@@ -97,6 +97,7 @@ struct Function
 static double frac(double x);
 static double trunc(double x);
 static double rad(double deg);
+static double deg(double rad);
 static double sgn(double x);
 static double neg(double x);
 static const WCHAR* round(int paramcnt, double* args, double* result);
@@ -120,6 +121,7 @@ static Function g_Functions[] =
 	{ L"asin", &asin, 4 },
 	{ L"acos", &acos, 4 },
 	{ L"rad", &rad, 3 },
+	{ L"deg", &deg, 3 },
 	{ L"sgn", &sgn, 3 },
 	{ L"neg", &neg, 3 },
 	{ L"e", NULL, 1 },
@@ -797,6 +799,11 @@ static double trunc(double x)
 static double rad(double deg)
 {
 	return (deg / 180.0) * M_PI;
+}
+
+static double deg(double rad)
+{
+	return (rad / M_PI) * 180.0;
 }
 
 static double sgn(double x)
