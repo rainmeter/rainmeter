@@ -52,3 +52,4 @@ VS_VERSION_INFO VERSIONINFO
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_RAINMETER           ICON    DISCARDABLE     "Rainmeter.ico"
+IDI_TRAY                ICON    DISCARDABLE     "Tray.ico"

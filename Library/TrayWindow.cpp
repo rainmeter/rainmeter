@@ -263,7 +263,7 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 		if (loadIconMetric)
 		{
 			HICON icon;
-			HRESULT hr = loadIconMetric(hExe, MAKEINTRESOURCE(IDI_RAINMETER), LIM_SMALL, &icon);
+			HRESULT hr = loadIconMetric(hExe, MAKEINTRESOURCE(IDI_TRAY), LIM_SMALL, &icon);
 			if (SUCCEEDED(hr))
 			{
 				return icon;
@@ -271,7 +271,7 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 		}
 	}
 
-	return (HICON)LoadImage(hExe, MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
+	return (HICON)LoadImage(hExe, MAKEINTRESOURCE(IDI_TRAY), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
 }
 
 void CTrayWindow::ReadConfig(CConfigParser& parser)
