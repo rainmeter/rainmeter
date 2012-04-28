@@ -108,8 +108,6 @@ for /f "tokens=1,2,3 delims=," %%a in (..\Language\List) do (
 )
 >>".\Installer\Languages.nsh" echo ^^!define LANGUAGES "%LANGUAGES%"
 
-goto :eof
-
 :: Restore English
 echo #include "English.h"> "..\Language\Language.rc"
 echo #include "Resource.rc">> "..\Language\Language.rc"

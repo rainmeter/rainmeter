@@ -19,7 +19,7 @@ ${LangFileString} PORTABLEINST            "Εγκατάσταση Portable έκ�
 ${LangFileString} PORTABLEINSTDESC        "Μην το επιλέγετε αν δεν ξέρετε τί κάνει. Δεν θα δημιουργηθούν συντομεύσεις και η προέκταση .rmskin δεν θα εγγραφεί στο μητρώο. Οι βιβλιοθήκες Visual C++ 2010 και .NET 2.0 ίσως να χρειαστεί να εγκατασταθούν χειροκίνητα."
 ${LangFileString} AUTOSTARTUP             "Εκκίνηση του Rainmeter κατά την εκκίνηση του υπολογιστή."
 ${LangFileString} ADDITIONALOPTIONS       "Επιπλέον επιλογές."
-${LangFileString} INSTALL64BIT            "64-bit"
+${LangFileString} INSTALL64BIT            "Εγκαταστήστε την 64-bit έκδοση"
 ${LangFileString} UNSTALLOPTIONS          "Επιλογές απεγκατάστασης."
 ${LangFileString} UNSTALLOPTIONSDESC      "Επιλέξτε επιπλέον επιλογές."
 ${LangFileString} UNSTALLRAINMETER        "Απεγκατάσταση του Rainmeter"
