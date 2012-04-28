@@ -3,6 +3,8 @@
 !ifndef VER
  !define VER "0.0"
  !define REV "000"
+!else
+ !define INCLUDEFILES
 !endif
 !ifdef BETA
  !define OUTFILE "Rainmeter-${VER}-r${REV}-beta.exe"
@@ -60,40 +62,12 @@ Page custom PageOptions PageOptionsOnLeave
 UninstPage custom un.PageOptions un.GetOptions
 !insertmacro MUI_UNPAGE_INSTFILES
 
+; Include languages
 !macro IncludeLanguage LANGUAGE CUSTOMLANGUAGE
-	; Modified variant of the MUI_LANGUAGE macro in Localization.h
-	; Uses "EnglishLangName (LocalizedLangName)" instead of "LocalizedLangName" for the language selection dialog
-	!insertmacro MUI_INSERT
-
-	LoadLanguageFile "${NSISDIR}\Contrib\Language files\${LANGUAGE}.nlf"
-
-	; Include language file
-	!insertmacro LANGFILE_INCLUDE_WITHDEFAULT "${NSISDIR}\Contrib\Language files\${LANGUAGE}.nsh" "${NSISDIR}\Contrib\Language files\English.nsh"
-
-	;Add language to list of languages for selection dialog
-	!ifndef MUI_LANGDLL_LANGUAGES
-		!define MUI_LANGDLL_LANGUAGES "'${LANGFILE_${LANGUAGE}_NAME}' '${LANG_${LANGUAGE}}' "
-		!define MUI_LANGDLL_LANGUAGES_CP "'${LANGFILE_IDNAME} -  ${LANGFILE_${LANGUAGE}_NAME}' '${LANG_${LANGUAGE}}' '${LANG_${LANGUAGE}_CP}' "
-	!else
-		!ifdef MUI_LANGDLL_LANGUAGES_TEMP
-			!undef MUI_LANGDLL_LANGUAGES_TEMP
-		!endif
-		!define MUI_LANGDLL_LANGUAGES_TEMP "${MUI_LANGDLL_LANGUAGES}"
-		!undef MUI_LANGDLL_LANGUAGES
-
-		!ifdef MUI_LANGDLL_LANGUAGES_CP_TEMP
-			!undef MUI_LANGDLL_LANGUAGES_CP_TEMP
-		!endif
-		!define MUI_LANGDLL_LANGUAGES_CP_TEMP "${MUI_LANGDLL_LANGUAGES_CP}"
-		!undef MUI_LANGDLL_LANGUAGES_CP
-
-		!define MUI_LANGDLL_LANGUAGES "'${LANGFILE_${LANGUAGE}_NAME}' '${LANG_${LANGUAGE}}' ${MUI_LANGDLL_LANGUAGES_TEMP}"
-		!define MUI_LANGDLL_LANGUAGES_CP "'${LANGFILE_IDNAME} -  ${LANGFILE_${LANGUAGE}_NAME}' '${LANG_${LANGUAGE}}' '${LANG_${LANGUAGE}_CP}' ${MUI_LANGDLL_LANGUAGES_CP_TEMP}"
-	!endif
-
+	!insertmacro MUI_LANGUAGE ${LANGUAGE}
 	!insertmacro LANGFILE_INCLUDE "..\..\Language\${CUSTOMLANGUAGE}.nsh"
 !macroend
-
+!define IncludeLanguage "!insertmacro IncludeLanguage"
 !include "Languages.nsh"
 
 ; Error levels (for silent install)
@@ -150,7 +124,7 @@ Function .onInit
 			${OrIf} $0 != $LANGUAGE
 			${AndIf} $NonDefaultLanguage != 1
 				; New install or better match
-				LangDLL::LangDialog "$(^SetupCaption)" "Please select the installer language.$\n$(SELECTLANGUAGE)" AC ${MUI_LANGDLL_LANGUAGES_CP} ""
+				LangDLL::LangDialog "$(^SetupCaption)" "Please select the installer language.$\n$(SELECTLANGUAGE)" AC ${LANGUAGES} ""
 				Pop $0
 				${If} $0 == "cancel"
 					Abort
@@ -684,6 +658,7 @@ RainmeterIniDoesntExistLabel:
 	Delete "$INSTDIR\Rainmeter.chm"
 	Delete "$INSTDIR\Default.ini"
 
+!ifdef INCLUDEFILES
 	${If} $instArc == "x86"
 		!insertmacro InstallFiles "x32"
 	${Else}
@@ -703,6 +678,7 @@ RainmeterIniDoesntExistLabel:
 
 	SetOutPath "$INSTDIR\Themes"
 	File /r /x "..\Themes\*.*"
+!endif
 
 	SetOutPath "$INSTDIR"
 

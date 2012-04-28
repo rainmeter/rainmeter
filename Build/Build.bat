@@ -100,11 +100,10 @@ echo * Building languages
 for /f "tokens=1,2,3 delims=," %%a in (..\Language\List) do (
 	> "..\Language\Language.rc" echo #include "%%a.h"
 	>>"..\Language\Language.rc" echo #include "Resource.rc"
-	>>".\Installer\Languages.nsh" echo ^^!insertmacro IncludeLanguage "%%b" "%%a"
-
-	"msbuild.exe" /t:Language /p:Configuration=Release;Platform=Win32;TargetName=%%c ..\Rainmeter.sln > "BuildLog.txt"
-	if not %ERRORLEVEL% == 0 echo   ERROR: Building language %%a failed & goto END
+	>>".\Installer\Languages.nsh" echo ${IncludeLanguage} "%%b" "%%a"
+	set LANGUAGES='%%a -  ${LANGFILE_%%b_NAME}' '${LANG_%%b}' '${LANG_%%b_CP}' !LANGUAGES!
 )
+>>".\Installer\Languages.nsh" echo ^^!define LANGUAGES "%LANGUAGES%"
 
 :: Restore English
 echo #include "English.h"> "..\Language\Language.rc"
