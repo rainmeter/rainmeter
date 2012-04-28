@@ -22,6 +22,7 @@ BrandingText " "
 SetCompressor /SOLID lzma
 RequestExecutionLevel user
 InstallDirRegKey HKLM "SOFTWARE\Rainmeter" ""
+ShowInstDetails nevershow
 XPStyle on
 OutFile "..\${OUTFILE}"
 ReserveFile "${NSISDIR}\Plugins\LangDLL.dll"
@@ -36,7 +37,10 @@ ReserveFile ".\UAC.dll"
 !include "WinVer.nsh"
 !include "UAC.nsh"
 
+; Additional Windows definitions
 !define BCM_SETSHIELD 0x0000160c
+!define PF_XMMI_INSTRUCTIONS_AVAILABLE 6
+!define PF_XMMI64_INSTRUCTIONS_AVAILABLE 10
 
 !define MUI_HEADERIMAGE
 !define MUI_ICON ".\Icon.ico"
@@ -46,13 +50,10 @@ ReserveFile ".\UAC.dll"
 !define MUI_WELCOMEFINISHPAGE_BITMAP ".\Wizard.bmp"
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION FinishRun
+!define MUI_WELCOMEPAGE ; For language strings
 
-!define MUI_PAGE_CUSTOMFUNCTION_SHOW PageWelcomeOnShow
-!insertmacro MUI_PAGE_WELCOME
+Page custom PageWelcome PageWelcomeOnLeave
 Page custom PageOptions PageOptionsOnLeave
-!define MUI_PAGE_CUSTOMFUNCTION_SHOW PageDirectoryOnShow
-!define MUI_PAGE_CUSTOMFUNCTION_LEAVE PageDirectoryOnLeave
-!insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 
@@ -102,18 +103,11 @@ UninstPage custom un.PageOptions un.GetOptions
 !define ERROR_NOVCREDIST	6
 !define ERROR_CLOSEFAIL		7
 
-Var ctlDesktop
-Var ctlStartup
-Var ctlAllUsers
-Var ctlDelete
-Var ctlStandard
-Var ctlPortable
-Var ctlBit32
-Var ctlBit64
-Var instArc
-Var instType
-Var defLang
-
+Var NonDefaultLanguage
+Var AutoStartup
+Var Install64Bit
+Var InstallPortable
+Var un.DeleteAll
 
 ; Install
 ; --------------------------------------
@@ -148,78 +142,67 @@ Function .onInit
 			Quit
 		${EndIf}
 
-		StrCpy $R0 $LANGUAGE
-		StrCpy $defLang "0"
-		ReadRegDWORD $0 HKLM "SOFTWARE\Rainmeter" "NonDefault"
-		${If} $0 == 1
-			; Rainmeter already installed and user selected non-default language last time
-			ReadRegStr $0 HKLM "SOFTWARE\Rainmeter" "Language"
+		ReadRegStr $0 HKLM "SOFTWARE\Rainmeter" "Language"
+		ReadRegDWORD $NonDefaultLanguage HKLM "SOFTWARE\Rainmeter" "NonDefault"
+
+		${IfNot} ${Silent}
+			${If} $0 == ""
+			${OrIf} $0 != $LANGUAGE
+			${AndIf} $NonDefaultLanguage != 1
+				; New install or better match
+				LangDLL::LangDialog "$(^SetupCaption)" "Please select the installer language.$\n$(SELECTLANGUAGE)" AC ${MUI_LANGDLL_LANGUAGES_CP} ""
+				Pop $0
+				${If} $0 == "cancel"
+					Abort
+				${EndIf}
+
+				${If} $0 != $LANGUAGE
+					; User selected non-default language
+					StrCpy $NonDefaultLanguage 1
+				${EndIf}
+			${EndIf}
+
+			StrCpy $LANGUAGE $0
+		${Else}
 			${If} $0 != ""
 				StrCpy $LANGUAGE $0
 			${EndIf}
-		${EndIf}
 
-		${IfNot} ${Silent}
-			LangDLL::LangDialog "$(^SetupCaption)" "Please select the installer language.$\n$(SELECTLANGUAGE)" AC ${MUI_LANGDLL_LANGUAGES_CP} ""
-			Pop $LANGUAGE
-			${If} $LANGUAGE == "cancel"
-				Abort
-			${EndIf}
-
-			${If} $LANGUAGE == $R0
-				; User selected default language
-				StrCpy $defLang "1"
-			${EndIf}
-		${Else}
 			${GetParameters} $R1
 
 			ClearErrors
 			${GetOptions} $R1 "/LANGUAGE=" $0
 			${IfNot} ${Errors}
-				StrCpy $LANGUAGE $0
-			${EndIf}
-			${If} $LANGUAGE == $R0
-				; User selected default language
-				StrCpy $defLang "1"
-			${EndIf}
+				${If} $LANGUAGE != $0
+					StrCpy $NonDefaultLanguage 1
+				${EndIf}
 
-			${GetOptions} $R1 "/DESKTOPSHORTCUT=" $0
-			${If} $0 = 1
-				StrCpy $ctlDesktop "1"
+				StrCpy $LANGUAGE $0
 			${EndIf}
 
 			${GetOptions} $R1 "/STARTUP=" $0
 			${If} $0 = 1
-				StrCpy $ctlStartup "1"
-			${EndIf}
-
-			${GetOptions} $R1 "/ALLUSERS=" $0
-			${If} $0 = 1
-				StrCpy $ctlAllUsers "1"
+				StrCpy $AutoStartup 1
 			${EndIf}
 
 			${GetOptions} $R1 "/PORTABLE=" $0
 			${If} $0 = 1
-				StrCpy $instType "P"
+				StrCpy $InstallPortable 1
 			${Else}
 				${IfNot} ${UAC_IsAdmin}
 					SetErrorLevel ${ERROR_NOTADMIN}
 					Quit
 				${EndIf}
-
-				StrCpy $instType "S"
 			${EndIf}
 
 			${GetOptions} $R1 "/VERSION=" $0
 			${If} $0 = 64
-				StrCpy $instArc "x64"
+				StrCpy $Install64Bit 1
 
 				${If} $INSTDIR == ""
 					StrCpy $INSTDIR "$PROGRAMFILES64\Rainmeter"
 				${EndIf}
 			${Else}
-				StrCpy $instArc "x86"
-
 				${If} $INSTDIR == ""
 					StrCpy $INSTDIR "$PROGRAMFILES\Rainmeter"
 				${EndIf}
@@ -236,178 +219,243 @@ Function .onInit
 			${EndIf}
 		${EndIf}
 	${Else}
-		; Sync variables with user instance
-		!insertmacro UAC_AsUser_Call Function ExchangeVars ${UAC_SYNCREGISTERS}
-		StrCpy $instType "S"
-		StrCpy $ctlDesktop $0
-		StrCpy $ctlStartup $1
-		StrCpy $ctlAllUsers $2
-		StrCpy $instArc $3
-		StrCpy $defLang $4
-		StrCpy $LANGUAGE $5
+		; Exchange settings with user instance
+		!insertmacro UAC_AsUser_Call Function ExchangeSettings ${UAC_SYNCREGISTERS}
+		StrCpy $AutoStartup $1
+		StrCpy $Install64Bit $2
+		StrCpy $NonDefaultLanguage $3
+		StrCpy $LANGUAGE $4
 	${EndIf}
 FunctionEnd
 
-Function ExchangeVars
-	StrCpy $0 $ctlDesktop
-	StrCpy $1 $ctlStartup
-	StrCpy $2 $ctlAllUsers
-	StrCpy $3 $instArc
-	StrCpy $4 $defLang
-	StrCpy $5 $LANGUAGE
+Function ExchangeSettings
+	StrCpy $1 $AutoStartup
+	StrCpy $2 $Install64Bit
+	StrCpy $3 $NonDefaultLanguage
+	StrCpy $4 $LANGUAGE
 	HideWindow
 FunctionEnd
 
-Function PageWelcomeOnShow
-	; Skip to the directory page if we're the elevated process
+Function PageWelcome
 	${If} ${UAC_IsInnerInstance}
 		${If} ${UAC_IsAdmin}
-			SendMessage $HWNDPARENT "0x408" "2" ""
+			; Skip page
+			Abort
 		${Else}
 			MessageBox MB_OK|MB_ICONSTOP "$(ADMINERROR) (Inner)"
 			Quit
 		${EndIf}
 	${EndIf}
+
+	!insertmacro MUI_HEADER_TEXT "$(INSTALLOPTIONS)" "$(^ComponentsSubText1)"
+	nsDialogs::Create 1044
+	Pop $0
+	nsDialogs::SetRTL $(^RTL)
+	SetCtlColors $0 "" "${MUI_BGCOLOR}"
+
+	${NSD_CreateBitmap} 0u 0u 109u 193u ""
+	Pop $0
+	${NSD_SetImage} $0 $PLUGINSDIR\modern-wizard.bmp $R0
+
+	${NSD_CreateLabel} 120u 10u 195u 38u "$(MUI_TEXT_WELCOME_INFO_TITLE)"
+	Pop $0
+	SetCtlColors $0 "" "${MUI_BGCOLOR}"
+	CreateFont $1 "$(^Font)" "12" "700"
+	SendMessage $0 ${WM_SETFONT} $1 0
+
+	${NSD_CreateLabel} 120u 55u 195u 12u "$(^ComponentsSubText1)"
+	Pop $0
+	SetCtlColors $0 "" "${MUI_BGCOLOR}"
+
+	${NSD_CreateRadioButton} 120u 70u 205u 12u "$(STANDARDINST)"
+	Pop $R0
+	SetCtlColors $R0 "" "${MUI_BGCOLOR}"
+	${NSD_AddStyle} $R0 ${WS_GROUP}
+	SendMessage $R0 ${WM_SETFONT} $mui.Header.Text.Font 0
+
+	${NSD_CreateLabel} 132u 82u 185u 24u "$(STANDARDINSTDESC)"
+	Pop $0
+	SetCtlColors $0 "" "${MUI_BGCOLOR}"
+
+	${NSD_CreateRadioButton} 120u 106u 310u 12u "$(PORTABLEINST)"
+	Pop $R1
+	SetCtlColors $R1 "" "${MUI_BGCOLOR}"
+	${NSD_AddStyle} $R1 ${WS_TABSTOP}
+	SendMessage $R1 ${WM_SETFONT} $mui.Header.Text.Font 0
+
+	${NSD_CreateLabel} 132u 118u 185u 52u "$(PORTABLEINSTDESC)"
+	Pop $0
+	SetCtlColors $0 "" "${MUI_BGCOLOR}"
+
+	${If} $InstallPortable == 1
+		${NSD_Check} $R1
+	${Else}
+		${NSD_Check} $R0
+	${EndIf}
+
+	Call muiPageLoadFullWindow
+
+	nsDialogs::Show
+	${NSD_FreeImage} $R0
+FunctionEnd
+
+Function PageWelcomeOnLeave
+	${NSD_GetState} $R1 $InstallPortable
+	Call muiPageUnloadFullWindow
 FunctionEnd
 
 Function PageOptions
+	${If} ${UAC_IsInnerInstance}
+	${AndIf} ${UAC_IsAdmin}
+		; Skip page
+		Abort
+	${EndIf}
+
 	!insertmacro MUI_HEADER_TEXT "$(INSTALLOPTIONS)" "$(INSTALLOPTIONSDESC)"
 	nsDialogs::Create 1018
 	nsDialogs::SetRTL $(^RTL)
 
-	${NSD_CreateRadioButton} 0 0u 310u 12u "$(STANDARDINST)"
-	Pop $ctlStandard
-	${NSD_AddStyle} $ctlStandard ${WS_GROUP}
-	SendMessage $ctlStandard ${WM_SETFONT} $mui.Header.Text.Font 0
-	${NSD_OnClick} $ctlStandard setStandard
+	${NSD_CreateGroupBox} 0 0u -1u 36u "$(^DirSubText)"
 
-	${NSD_CreateLabel} 12u 12u 285u 12u "$(STANDARDINSTDESC)"
+	${NSD_CreateDirRequest} 6u 14u 232u 14u ""
+	Pop $R0
+	SendMessage $R0 ${EM_SETREADONLY} 1 0
+	${NSD_OnChange} $R0 PageOptionsDirectoryOnChange
 
-	${NSD_CreateRadioButton} 0 24u 310u 12u "$(PORTABLEINST)"
-	Pop $ctlPortable
-	${NSD_AddStyle} $ctlPortable ${WS_TABSTOP}
-	SendMessage $ctlPortable ${WM_SETFONT} $mui.Header.Text.Font 0
-	${NSD_OnClick} $ctlPortable setPortable
+	${NSD_CreateBrowseButton} 242u 14u 50u 14u "$(^BrowseBtn)"
+	Pop $R1
+	${NSD_OnClick} $R1 PageOptionsBrowseOnClick
 
-	${NSD_CreateLabel} 12u 36u 285u 32u "$(PORTABLEINSTDESC)"
-
-	${NSD_CreateGroupBox} 0 72u 200u 54u "$(ADDITIONALOPTIONS)"
-
-	Push $ctlDesktop
-	${NSD_CreateCheckbox} 6u 84u 190u 12u "$(DESKTOPSHORTCUT)"
-	Pop $ctlDesktop
-	Pop $0
-	StrCmp $0 "1" 0 +2
-		${NSD_Check} $ctlDesktop
-
-	Push $ctlAllUsers
-	${NSD_CreateCheckbox} 6u 96u 190u 12u "$(ALLUSERSSHORTCUT)"
-	Pop $ctlAllUsers
-	Pop $0
-	StrCmp $0 "1" 0 +2
-		${NSD_Check} $ctlAllUsers
-
-	Push $ctlStartup
-	${NSD_CreateCheckbox} 6u 108u 190u 12u "$(AUTOSTARTUP)"
-	Pop $ctlStartup
-	Pop $0
-	StrCmp $0 "1" 0 +2
-		${NSD_Check} $ctlStartup
-
-	${NSD_CreateGroupBox} 205u 72u 94u 40u "$(RAINMETERVERSION)"
-
-	${NSD_CreateRadioButton} 211u 82u 80u 12u "$(32BIT)"
-	Pop $ctlBit32
-	${NSD_AddStyle} $ctlBit32 ${WS_GROUP}
-
-	${NSD_CreateRadioButton} 211u 94u 80u 12u "$(64BIT)"
-	Pop $ctlBit64
-
-	ReadRegStr $0 HKLM "Software\Rainmeter" ""
-	${If} $0 == ""
-		${NSD_Check} $ctlStartup
-		${NSD_Check} $ctlAllUsers
+	; Set default directory
+	${If} $InstallPortable == 1
+		${GetRoot} "$WINDIR" $0
+		${NSD_SetText} $R0 "$0\Rainmeter"
+	${ElseIf} $INSTDIR != ""
+		; Disable Browse button if already installed
+		EnableWindow $R1 0
+		${NSD_SetText} $R0 "$INSTDIR"
 	${Else}
-		SetShellVarContext all
-		Call GetEnvPaths
-		StrCpy $R1 $1
-		StrCpy $R2 $2
-		StrCpy $R3 $3
-		SetShellVarContext current
-		!insertmacro UAC_AsUser_Call Function GetEnvPaths ${UAC_SYNCREGISTERS}
-
-		${If} ${FileExists} "$R1\Rainmeter\Rainmeter.lnk"
-			${NSD_Check} $ctlAllUsers
-		${EndIf}
-		${If} ${FileExists} "$R2\Rainmeter.lnk"
-		${OrIf} ${FileExists} "$2\Rainmeter.lnk"
-			${NSD_Check} $ctlStartup
-		${EndIf}
-		${If} ${FileExists} "$R3\Rainmeter.lnk"
-		${OrIf} ${FileExists} "$3\Rainmeter.lnk"
-			${NSD_Check} $ctlDesktop
+		; Fresh install
+		${If} ${RunningX64}
+			${NSD_SetText} $R0 "$PROGRAMFILES64\Rainmeter"
+			${NSD_Check} $R2
+		${Else}
+			${NSD_SetText} $R0 "$PROGRAMFILES\Rainmeter"
 		${EndIf}
 	${EndIf}
 
-	${If} $instType == "P"
-		${NSD_Check} $ctlPortable
-		Call SetPortable
+	StrCpy $1 0
+
+	${If} ${RunningX64}
+	${AndIf} $InstallPortable == 1
+	${OrIf} $INSTDIR == ""
+		${NSD_CreateCheckBox} 6u 54u 285u 12u "$(INSTALL64BIT)"
+		Pop $R2
+		StrCpy $1 30u
 	${Else}
-		Call SetStandard
-		${NSD_Check} $ctlStandard
+		StrCpy $R2 0
+	${EndIf}
+
+	${If} $InstallPortable != 1
+		${If} $1 == 0
+			StrCpy $0 54u
+			StrCpy $1 30u
+		${Else}
+			StrCpy $0 66u
+			StrCpy $1 42u
+		${EndIf}
+
+		${NSD_CreateCheckbox} 6u $0 285u 12u "$(AUTOSTARTUP)"
+		Pop $R3
+
+		${If} $INSTDIR == ""
+			${NSD_Check} $R3
+		${Else}
+			SetShellVarContext all
+			${If} ${FileExists} "$SMSTARTUP\Rainmeter.lnk"
+				${NSD_Check} $R3
+			${EndIf}
+
+			SetShellVarContext current
+			${If} ${FileExists} "$SMSTARTUP\Rainmeter.lnk"
+				${NSD_Check} $R3
+			${EndIf}
+		${EndIf}
+	${Else}
+		StrCpy $R3 0
+	${EndIf}
+
+	${If} $1 != 0
+		${NSD_CreateGroupBox} 0 42u -1u $1 "$(ADDITIONALOPTIONS)"
+	${EndIf}
+
+	; Change 'Next' to 'Install' if directory page will be skipped
+	GetDlgItem $0 $HWNDPARENT 1
+	${If} $INSTDIR != ""
+		${NSD_SetText} $0 "$(^InstallBtn)"
+	${EndIf}
+
+	; Show UAC shield on Install button if required
+	${If} $InstallPortable == 1
+		SendMessage $0 ${BCM_SETSHIELD} 0 0
+	${Else}
+		SendMessage $0 ${BCM_SETSHIELD} 0 1
+
+		; Hide Back button
+		GetDlgItem $0 $HWNDPARENT 3
+		ShowWindow $0 ${SW_HIDE}
 	${EndIf}
 
 	nsDialogs::Show
 FunctionEnd
 
-Function SetStandard
-	EnableWindow $ctlDesktop 1
-	EnableWindow $ctlAllUsers 1
-	EnableWindow $ctlStartup 1
+Function PageOptionsDirectoryOnChange
+	${NSD_GetText} $R0 $0
 
+	StrCpy $Install64Bit 0
 	${If} ${RunningX64}
-		${If} ${FileExists} "$INSTDIR\Rainmeter.exe"
-			MoreInfo::GetProductVersion "$INSTDIR\Rainmeter.exe"
+		${If} ${FileExists} "$0\Rainmeter.exe"
+			MoreInfo::GetProductVersion "$0\Rainmeter.exe"
 			Pop $0
 			StrCpy $0 $0 2 -7
+			${If} $0 == 64
+				StrCpy $Install64Bit 1
+			${EndIf}
 
-			${If} $0 == "32"
-				${NSD_Check} $ctlBit32
-				${NSD_UnCheck} $ctlBit64
-				EnableWindow $ctlBit64 0
-			${Else}
-				${NSD_Check} $ctlBit64
-				${NSD_UnCheck} $ctlBit32
-				EnableWindow $ctlBit32 0
+			${If} $InstallPortable == 1
+				${NSD_SetState} $R3 $Install64Bit
+				EnableWindow $R3 0
 			${EndIf}
 		${Else}
-			${NSD_Check} $ctlBit64
+			${If} $InstallPortable == 1
+				EnableWindow $R3 1
+			${EndIf}
 		${EndIf}
-	${Else}
-		${NSD_Check} $ctlBit32
-		${NSD_UnCheck} $ctlBit64
-		EnableWindow $ctlBit64 0
-	${EndIf}
-
-	${IfNot} ${UAC_IsAdmin}
-		GetDlgItem $0 $HWNDPARENT 1
-		SendMessage $0 ${BCM_SETSHIELD} 0 1
 	${EndIf}
 FunctionEnd
 
-Function SetPortable
-	EnableWindow $ctlDesktop 0
-	EnableWindow $ctlAllUsers 0
-	EnableWindow $ctlStartup 0
-	EnableWindow $ctlBit32 1
+Function PageOptionsBrowseOnClick
+	${NSD_GetText} $R0 $0
+	nsDialogs::SelectFolderDialog "$(^DirBrowseText)" $0
+	Pop $1
 
-	${If} ${RunningX64}
-		EnableWindow $ctlBit64 1
-	${Endif}
+	${If} $1 != error
+		${If} $InstallPortable == 1
+			ClearErrors
+			CreateDirectory "$1"
+			WriteINIStr "$1\writetest~.rm" "1" "1" "1"
 
-	${IfNot} ${UAC_IsAdmin}
-		GetDlgItem $0 $HWNDPARENT 1
-		SendMessage $0 ${BCM_SETSHIELD} 0 0
+			${If} ${Errors}
+				MessageBox MB_OK|MB_ICONEXCLAMATION "$(WRITEERROR)"
+			${Else}
+				${NSD_SetText} $R0 $1
+			${EndIf}
+
+			Delete "$0\writetest~.rm"
+			RMDir "$0"
+		${Else}
+			${NSD_SetText} $R0 $1
+		${EndIf}
 	${EndIf}
 FunctionEnd
 
@@ -415,25 +463,17 @@ Function PageOptionsOnLeave
 	GetDlgItem $0 $HWNDPARENT 1
 	EnableWindow $0 0
 
-	${NSD_GetState} $ctlDesktop $ctlDesktop
-	${NSD_GetState} $ctlStartup $ctlStartup
-	${NSD_GetState} $ctlAllUsers $ctlAllUsers
-
-	${NSD_GetState} $ctlStandard $0
-	${If} $0 == ${BST_CHECKED}
-		StrCpy $instType "S"
-	${Else}
-		StrCpy $instType "P"
+	${If} $R2 != 0
+		${NSD_GetState} $R2 $Install64Bit
 	${EndIf}
 
-	${NSD_GetState} $ctlBit32 $0
-	${If} $0 == ${BST_CHECKED}
-		StrCpy $instArc "x86"
-	${Else}
-		StrCpy $instArc "x64"
+	${If} $R3 != 0
+		${NSD_GetState} $R3 $AutoStartup
 	${EndIf}
 
-	${If} $instType == "S"
+	${NSD_GetText} $R0 $INSTDIR
+
+	${If} $InstallPortable != 1
 		${IfNot} ${UAC_IsAdmin}
 			; UAC_IsAdmin seems to return incorrect result sometimes. Recheck with UserInfo::GetAccountType to be sure.
 			UserInfo::GetAccountType
@@ -462,49 +502,6 @@ UAC_TryAgain:
 	${EndIf}
 FunctionEnd
 
-Function PageDirectoryOnShow
-	${If} $instType == "P"
-		${GetRoot} "$WINDIR" $0
-		${NSD_SetText} $mui.DirectoryPage.Directory "$0\Rainmeter"
-	${Else}
-		${If} $INSTDIR == ""
-			; Fresh install
-			${If} $instArc == "x86"
-				${If} ${RunningX64}
-					${NSD_SetText} $mui.DirectoryPage.Directory "$PROGRAMFILES32\Rainmeter"
-				${Else}
-					${NSD_SetText} $mui.DirectoryPage.Directory "$PROGRAMFILES\Rainmeter"
-				${EndIf}
-			${Else}
-				${NSD_SetText} $mui.DirectoryPage.Directory "$PROGRAMFILES64\Rainmeter"
-			${EndIf}
-		${Else}
-			; Upgrade install
-			EnableWindow $mui.DirectoryPage.Directory 0
-			EnableWindow $mui.DirectoryPage.BrowseButton 0
-
-			; Set focus on the Install button
-			GetDlgItem $0 $HWNDPARENT 1
-			System::Call "user32::SetFocus(i$0)"
-		${EndIf}
-	${EndIf}
-FunctionEnd
-
-Function PageDirectoryOnLeave
-	${If} $instType == "P"
-		ClearErrors
-		CreateDirectory "$INSTDIR"
-		WriteINIStr "$INSTDIR\_rainmeter_writetest.tmp" "1" "1" "1"
-
-		${If} ${Errors}
-			MessageBox MB_OK|MB_ICONEXCLAMATION "$(WRITEERROR)"
-			Abort
-		${EndIf}
-
-		Delete "$INSTDIR\_rainmeter_writetest.tmp"
-	${EndIf}
-FunctionEnd
-
 !macro InstallFiles DIR
 	File "..\..\TestBench\${DIR}\Release\Rainmeter.exe"
 	File "..\..\TestBench\${DIR}\Release\Rainmeter.dll"
@@ -514,33 +511,37 @@ FunctionEnd
 	File /x *Example*.dll "..\..\TestBench\${DIR}\Release\Plugins\*.dll"
 !macroend
 
-!macro RemoveShortcuts
-	; $1=$SMPROGRAMS, $2=$SMSTARTUP, $3=$DESKTOP
-	Delete "$1\Rainmeter\Rainmeter.lnk"
-	Delete "$1\Rainmeter\Rainmeter Help.lnk"
-	Delete "$1\Rainmeter\Rainmeter Help.URL"
-	Delete "$1\Rainmeter\Remove Rainmeter.lnk"
-	Delete "$1\Rainmeter\RainThemes.lnk"
-	Delete "$1\Rainmeter\RainThemes Help.lnk"
-	Delete "$1\Rainmeter\RainBrowser.lnk"
-	Delete "$1\Rainmeter\RainBackup.lnk"
-	Delete "$1\Rainmeter\Rainstaller.lnk"
-	Delete "$1\Rainmeter\Skin Installer.lnk"
-	Delete "$1\Rainmeter\Rainstaller Help.lnk"
-	RMDir "$1\Rainmeter"
-	Delete "$2\Rainmeter.lnk"
-	Delete "$3\Rainmeter.lnk"
+!macro RemoveStartMenuShortcuts STARTMENUPATH
+	Delete "${STARTMENUPATH}\Rainmeter.lnk"
+	Delete "${STARTMENUPATH}\Rainmeter Help.lnk"
+	Delete "${STARTMENUPATH}\Rainmeter Help.URL"
+	Delete "${STARTMENUPATH}\Remove Rainmeter.lnk"
+	Delete "${STARTMENUPATH}\RainThemes.lnk"
+	Delete "${STARTMENUPATH}\RainThemes Help.lnk"
+	Delete "${STARTMENUPATH}\RainBrowser.lnk"
+	Delete "${STARTMENUPATH}\RainBackup.lnk"
+	Delete "${STARTMENUPATH}\Rainstaller.lnk"
+	Delete "${STARTMENUPATH}\Skin Installer.lnk"
+	Delete "${STARTMENUPATH}\Rainstaller Help.lnk"
+	RMDir "${STARTMENUPATH}"
 !macroend
 
 Section
 	SetOutPath "$PLUGINSDIR"
 	SetShellVarContext current
 
-	${If} $instType == "S"
-		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$instArc" "Bld"
+	Var /GLOBAL InstArc
+	${If} $Install64Bit == 1
+		StrCpy $InstArc "x64"
+	${Else}
+		StrCpy $InstArc "x86"
+	${EndIf}
+
+	${If} $InstallPortable != 1
+		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$InstArc" "Bld"
 		${VersionCompare} "$0" "40219" $1
 
-		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$instArc" "Installed"
+		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$InstArc" "Installed"
 
 		; Download and install VC++ redist if required
 		${If} $1 == "2"
@@ -550,7 +551,7 @@ Section
 				Quit
 			${EndIf}
 
-			${If} $instArc == "x86"
+			${If} $Install64Bit != 1
 				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/C/6/D/C6D0FD4E-9E53-4897-9B91-836EBA2AACD3/vcredist_x86.exe" "$PLUGINSDIR\vcredist.exe"
 				Pop $0
 			${Else}
@@ -563,7 +564,7 @@ Section
 				; download from MS failed, try from rainmter.net
 				Delete "$PLUGINSDIR\vcredist.exe"
 
-				${If} $instArc == "x86"
+				${If} $Install64Bit != 1
 					NSISdl::download /TIMEOUT=30000 "http://rainmeter.net/redist/vc10SP1redist_x86.exe" "$PLUGINSDIR\vcredist.exe"
 					Pop $0
 				${Else}
@@ -593,7 +594,7 @@ Section
 		; Download and install .NET if required
 		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727" "Install"
 		${If} $0 != "1"
-			${If} $instArc == "x86"
+			${If} $Install64Bit != 1
 				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/5/6/7/567758a3-759e-473e-bf8f-52154438565a/dotnetfx.exe" "$PLUGINSDIR\dotnetfx.exe"
 			${Else}
 				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/a/3/f/a3f1bf98-18f3-4036-9b68-8e6de530ce0a/NetFx64.exe" "$PLUGINSDIR\dotnetfx.exe"
@@ -605,7 +606,7 @@ Section
 			${AndIf} $0 != "success"
 				Delete "$PLUGINSDIR\dotnetfx.exe"
 
-				${If} $instArc == "x86"
+				${If} $Install64Bit != 1
 					NSISdl::download /TIMEOUT=30000 "http://rainmeter.net/redist/dotnetfx.exe" "$PLUGINSDIR\dotnetfx.exe"
 				${Else}
 					NSISdl::download /TIMEOUT=30000 "http://rainmeter.net/redist/NetFx64.exe" "$PLUGINSDIR\dotnetfx.exe"
@@ -661,7 +662,7 @@ Section
 	; if the installation folder is in Program Files
 	${IfNot} ${Silent}
 	${AndIf} ${FileExists} "$INSTDIR\Rainmeter.ini"
-		${If} $instType == "S"
+		${If} $InstallPortable != 1
 			!ifdef X64
 				StrCmp $INSTDIR "$PROGRAMFILES64\Rainmeter" 0 RainmeterIniDoesntExistLabel
 			!else
@@ -703,22 +704,18 @@ RainmeterIniDoesntExistLabel:
 	SetOutPath "$INSTDIR\Skins"
 	RMDir /r "$INSTDIR\Skins\illustro"
 	Delete "$INSTDIR\Skins\*.txt"
-	File /r /x .svn "..\Skins\*.*"
+	File /r /x "..\Skins\*.*"
 
 	SetOutPath "$INSTDIR\Themes"
-	File /r /x .svn "..\Themes\*.*"
+	File /r /x "..\Themes\*.*"
 
 	SetOutPath "$INSTDIR"
 
-	${If} $instType == "S"
+	${If} $InstallPortable != 1
 		ReadRegStr $0 HKLM "SOFTWARE\Rainmeter" ""
 		WriteRegStr HKLM "SOFTWARE\Rainmeter" "" "$INSTDIR"
 		WriteRegStr HKLM "SOFTWARE\Rainmeter" "Language" "$LANGUAGE"
-		${If} $defLang == "1"
-			DeleteRegValue HKLM "SOFTWARE\Rainmeter" "NonDefault"
-		${Else}
-			WriteRegDWORD HKLM "SOFTWARE\Rainmeter" "NonDefault" 1
-		${EndIf}
+		WriteRegDWORD HKLM "SOFTWARE\Rainmeter" "NonDefault" $NonDefaultLanguage
 
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayName" "Rainmeter"
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayIcon" "$INSTDIR\Rainmeter.exe,0"
@@ -741,42 +738,23 @@ RainmeterIniDoesntExistLabel:
 
 		; Refresh shell icons if new install
 		${If} $0 == ""
-			System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
+			${RefreshShellIcons}
 		${EndIf}
 
-		; Remove all shortcuts
-		${If} $ctlAllUsers == "1"
-			SetShellVarContext current
-			Call GetEnvPaths
-			!insertmacro RemoveShortcuts
-			!insertmacro UAC_AsUser_Call Function GetEnvPaths ${UAC_SYNCREGISTERS}
-			!insertmacro RemoveShortcuts
-			SetShellVarContext all
-			Call GetEnvPaths
-			!insertmacro RemoveShortcuts
-		${Else}
-			SetShellVarContext all
-			Call GetEnvPaths
-			!insertmacro RemoveShortcuts
-			SetShellVarContext current
-			Call GetEnvPaths
-			!insertmacro RemoveShortcuts
-			!insertmacro UAC_AsUser_Call Function GetEnvPaths ${UAC_SYNCREGISTERS}
-			!insertmacro RemoveShortcuts
+		; Remove all start menu shortcuts
+		SetShellVarContext all
+		Call RemoveStartMenuShortcuts
+
+		CreateShortcut "$SMPROGRAMS\Rainmeter.lnk" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR\Rainmeter.exe" 0
+
+		SetShellVarContext current
+		Call RemoveStartMenuShortcuts
+
+		${If} $AutoStartup == 1
+			!insertmacro UAC_AsUser_Call Function CreateStartupShortcut ${UAC_SYNCREGISTERS}
 		${EndIf}
 
-		; Create shortcuts ($1=$SMPROGRAMS, $2=$SMSTARTUP, $3=$DESKTOP)
-		CreateDirectory "$1\Rainmeter"
-		CreateShortCut "$1\Rainmeter\Rainmeter.lnk" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR\Rainmeter.exe" 0
-
-		SetOutPath "$INSTDIR"
-		${If} $ctlStartup == "1"
-			CreateShortCut  "$2\Rainmeter.lnk" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR\Rainmeter.exe" 0
-		${EndIf}
-
-		${If} $ctlDesktop == "1"
-			CreateShortCut  "$3\Rainmeter.lnk" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR\Rainmeter.exe" 0
-		${EndIf}
+		!insertmacro UAC_AsUser_Call Function RemoveStartMenuShortcuts ${UAC_SYNCREGISTERS}
 
 		WriteUninstaller "$INSTDIR\uninst.exe"
 	${Else}
@@ -788,10 +766,12 @@ RainmeterIniDoesntExistLabel:
 	${EndIf}
 SectionEnd
 
-Function GetEnvPaths
-	StrCpy $1 $SMPROGRAMS
-	StrCpy $2 $SMSTARTUP
-	StrCpy $3 $DESKTOP
+Function RemoveStartMenuShortcuts
+	!insertmacro RemoveStartMenuShortcuts "$SMPROGRAMS\Rainmeter"
+FunctionEnd
+
+Function CreateStartupShortcut
+	CreateShortcut  "$SMSTARTUP\Rainmeter.lnk" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR\Rainmeter.exe" 0
 FunctionEnd
 
 Function FinishRun
@@ -839,7 +819,7 @@ Function un.PageOptions
 	${NSD_Check} $0
 
 	${NSD_CreateCheckbox} 0 15u 70% 12u "$(UNSTALLSETTINGS)"
-	Pop $ctlDelete
+	Pop $R0
 
 	${NSD_CreateLabel} 16 26u 95% 12u "$(UNSTALLSETTINGSDESC)"
 
@@ -847,7 +827,7 @@ Function un.PageOptions
 FunctionEnd
 
 Function un.GetOptions
-	${NSD_GetState} $ctlDelete $ctlDelete
+	${NSD_GetState} $R0 $un.DeleteAll
 FunctionEnd
 
 Section Uninstall
@@ -894,7 +874,7 @@ Section Uninstall
 	RMDir /r "$INSTDIR\Themes"
 	Delete "$INSTDIR\*.*"
 
-	${If} $ctlDelete == "1"
+	${If} $un.DeleteAll == 1
 		RMDir /r "$INSTDIR\Skins"
 		RMDir /r "$INSTDIR\Addons"
 		RMDir /r "$INSTDIR\Plugins"
@@ -907,36 +887,34 @@ Section Uninstall
 	RMDir /r "$APPDATA\Rainstaller"
 
 	SetShellVarContext current
-	Call un.GetEnvPaths
-	!insertmacro RemoveShortcuts
-	${If} $ctlDelete == "1"
+	Call un.RemoveShortcuts
+	${If} $un.DeleteAll == 1
 		RMDir /r "$APPDATA\Rainmeter"
 		RMDir /r "$DOCUMENTS\Rainmeter\Skins"
 		RMDir "$DOCUMENTS\Rainmeter"
 		RMDir /r "$1\Rainmeter"
 	${EndIf}
 	
-	!insertmacro UAC_AsUser_Call Function un.GetEnvPaths ${UAC_SYNCREGISTERS}
-	!insertmacro RemoveShortcuts
-	${If} $ctlDelete == "1"
+	!insertmacro UAC_AsUser_Call Function un.RemoveShortcuts ${UAC_SYNCREGISTERS}
+	${If} $un.DeleteAll == 1
 		RMDir /r "$APPDATA\Rainmeter"
 		RMDir /r "$DOCUMENTS\Rainmeter\Skins"
 		RMDir "$DOCUMENTS\Rainmeter"
 	${EndIf}
 
 	SetShellVarContext all
-	Call un.GetEnvPaths
-	!insertmacro RemoveShortcuts
+	Call un.RemoveShortcuts
+	Delete "$SMPROGRAMS\Rainmeter.lnk"
 
 	DeleteRegKey HKLM "SOFTWARE\Rainmeter"
 	DeleteRegKey HKCR ".rmskin"
 	DeleteRegKey HKCR "Rainmeter skin"
 	DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter"
-	System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
+	${RefreshShellIcons}
 SectionEnd
 
-Function un.GetEnvPaths
-	StrCpy $1 $SMPROGRAMS
-	StrCpy $2 $SMSTARTUP
-	StrCpy $3 $DESKTOP
+Function un.RemoveShortcuts
+	!insertmacro RemoveStartMenuShortcuts "$SMPROGRAMS\Rainmeter"
+	Delete "$SMSTARTUP\Rainmeter.lnk"
+	Delete "$DESKTOP\Rainmeter.lnk"
 FunctionEnd
