@@ -344,6 +344,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 	Log(LOG_NOTICE, notice.c_str());
 
 	m_Refreshing = true;
+	m_ResizeWindow = true;
 
 	if (!init)
 	{

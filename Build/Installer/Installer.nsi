@@ -683,7 +683,7 @@ RainmeterIniDoesntExistLabel:
 	Delete "$INSTDIR\Rainmeter.exe.config"
 	Delete "$INSTDIR\Rainmeter.chm"
 	Delete "$INSTDIR\Default.ini"
-/*
+
 	${If} $instArc == "x86"
 		!insertmacro InstallFiles "x32"
 	${Else}
@@ -705,7 +705,7 @@ RainmeterIniDoesntExistLabel:
 	File /r /x "..\Themes\*.*"
 
 	SetOutPath "$INSTDIR"
-*/
+
 	${If} $InstallPortable != 1
 		ReadRegStr $0 HKLM "SOFTWARE\Rainmeter" ""
 		WriteRegStr HKLM "SOFTWARE\Rainmeter" "" "$INSTDIR"
