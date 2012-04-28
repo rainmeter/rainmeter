@@ -268,29 +268,29 @@ Function PageWelcome
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
 
 	${NSD_CreateRadioButton} 120u 70u 205u 12u "$(STANDARDINST)"
-	Pop $R0
-	SetCtlColors $R0 "" "${MUI_BGCOLOR}"
-	${NSD_AddStyle} $R0 ${WS_GROUP}
-	SendMessage $R0 ${WM_SETFONT} $mui.Header.Text.Font 0
+	Pop $R1
+	SetCtlColors $R1 "" "${MUI_BGCOLOR}"
+	${NSD_AddStyle} $R1 ${WS_GROUP}
+	SendMessage $R1 ${WM_SETFONT} $mui.Header.Text.Font 0
 
 	${NSD_CreateLabel} 132u 82u 185u 24u "$(STANDARDINSTDESC)"
 	Pop $0
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
 
 	${NSD_CreateRadioButton} 120u 106u 310u 12u "$(PORTABLEINST)"
-	Pop $R1
-	SetCtlColors $R1 "" "${MUI_BGCOLOR}"
-	${NSD_AddStyle} $R1 ${WS_TABSTOP}
-	SendMessage $R1 ${WM_SETFONT} $mui.Header.Text.Font 0
+	Pop $R2
+	SetCtlColors $R2 "" "${MUI_BGCOLOR}"
+	${NSD_AddStyle} $R2 ${WS_TABSTOP}
+	SendMessage $R2 ${WM_SETFONT} $mui.Header.Text.Font 0
 
 	${NSD_CreateLabel} 132u 118u 185u 52u "$(PORTABLEINSTDESC)"
 	Pop $0
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
 
 	${If} $InstallPortable == 1
-		${NSD_Check} $R1
+		${NSD_Check} $R2
 	${Else}
-		${NSD_Check} $R0
+		${NSD_Check} $R1
 	${EndIf}
 
 	Call muiPageLoadFullWindow
@@ -300,7 +300,7 @@ Function PageWelcome
 FunctionEnd
 
 Function PageWelcomeOnLeave
-	${NSD_GetState} $R1 $InstallPortable
+	${NSD_GetState} $R2 $InstallPortable
 	Call muiPageUnloadFullWindow
 FunctionEnd
 
@@ -389,13 +389,8 @@ Function PageOptions
 		${NSD_CreateGroupBox} 0 42u -1u $1 "$(ADDITIONALOPTIONS)"
 	${EndIf}
 
-	; Change 'Next' to 'Install' if directory page will be skipped
+	; Show UAC shield on Install button if requiredd
 	GetDlgItem $0 $HWNDPARENT 1
-	${If} $INSTDIR != ""
-		${NSD_SetText} $0 "$(^InstallBtn)"
-	${EndIf}
-
-	; Show UAC shield on Install button if required
 	${If} $InstallPortable == 1
 		SendMessage $0 ${BCM_SETSHIELD} 0 0
 	${Else}
@@ -688,7 +683,7 @@ RainmeterIniDoesntExistLabel:
 	Delete "$INSTDIR\Rainmeter.exe.config"
 	Delete "$INSTDIR\Rainmeter.chm"
 	Delete "$INSTDIR\Default.ini"
-
+/*
 	${If} $instArc == "x86"
 		!insertmacro InstallFiles "x32"
 	${Else}
@@ -710,7 +705,7 @@ RainmeterIniDoesntExistLabel:
 	File /r /x "..\Themes\*.*"
 
 	SetOutPath "$INSTDIR"
-
+*/
 	${If} $InstallPortable != 1
 		ReadRegStr $0 HKLM "SOFTWARE\Rainmeter" ""
 		WriteRegStr HKLM "SOFTWARE\Rainmeter" "" "$INSTDIR"
