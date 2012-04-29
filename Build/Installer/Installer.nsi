@@ -650,6 +650,8 @@ Section
 				${If} $0 == 1
 					; Copy succeeded
 					Delete "$INSTDIR\Rainmeter.ini"
+				${Else}
+					MessageBox MB_OK|MB_ICONSTOP "$(SETTINGSMOVEERROR)"
 				${EndIf}
 SkipIniMove:
 			${EndIf}
@@ -751,7 +753,6 @@ Function CopyIniToAppData
 	CopyFiles /SILENT "$INSTDIR\Rainmeter.ini" "$APPDATA\Rainmeter\Rainmeter.ini"
 	${If} ${Errors}
 		StrCpy $0 0
-		MessageBox MB_OK|MB_ICONSTOP "$(SETTINGSMOVEERROR)"
 	${EndIf}
 FunctionEnd
 
