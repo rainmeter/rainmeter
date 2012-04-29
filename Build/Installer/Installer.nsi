@@ -385,7 +385,7 @@ Function PageOptionsDirectoryOnChange
 	GetDlgItem $1 $HWNDPARENT 1
 	${GetRoot} $0 $2
 	${DriveSpace} "$2\" "/D=F /S=M" $3
-	${If} $3 < REQUIREDSPACE
+	${If} $3 < ${REQUIREDSPACE}
 		EnableWindow $1 0
 	${Else}
 		EnableWindow $1 1
@@ -556,9 +556,9 @@ Section
 				ExecWait '"$PLUGINSDIR\vcredist.exe" /q /norestart' $0
 				Delete "$PLUGINSDIR\vcredist.exe"
 
-				${If} $0 == "3010"
+				${If} $0 == 3010
 					SetRebootFlag true
-				${ElseIf} $0 != "0"
+				${ElseIf} $0 != 0
 					MessageBox MB_OK|MB_ICONSTOP "$(VCINSTERROR)"
 					Quit
 				${EndIf}
@@ -598,9 +598,9 @@ Section
 				ExecWait '"$PLUGINSDIR\dotnetfx.exe" /q:a /c:"install /q"' $0
 				Delete "$PLUGINSDIR\dotnetfx.exe"
 
-				${If} $0 == "3010"
+				${If} $0 == 3010
 					SetRebootFlag true
-				${ElseIf} $0 != "0"
+				${ElseIf} $0 != 0
 					MessageBox MB_OK|MB_ICONSTOP "$(DOTNETINSTERROR)"
 					Quit
 				${EndIf}
@@ -637,22 +637,21 @@ Section
 		Sleep 500
 	${Next}
 
-	; Check if Rainmeter.ini is located in the installation folder and
-	; if the installation folder is in Program Files
+	; Move Rainmeter.ini to %APPDATA% if needed
 	${IfNot} ${Silent}
 	${AndIf} ${FileExists} "$INSTDIR\Rainmeter.ini"
 		${If} $InstallPortable != 1
-			!ifdef X64
-				StrCmp $INSTDIR "$PROGRAMFILES64\Rainmeter" 0 RainmeterIniDoesntExistLabel
-			!else
-				StrCmp $INSTDIR "$PROGRAMFILES\Rainmeter" 0 RainmeterIniDoesntExistLabel
-			!endif
-
-			MessageBox MB_YESNO|MB_ICONEXCLAMATION "$(SETTINGSFILEERROR)" IDNO RainmeterIniDoesntExistLabel
-			CreateDirectory $APPDATA\Rainmeter
-			Rename "$INSTDIR\Rainmeter.ini" "$APPDATA\Rainmeter\Rainmeter.ini"
-			${If} ${Errors}
-				MessageBox MB_OK|MB_ICONSTOP "$(SETTINGSMOVEERROR)"
+			${If} $Install64Bit == 1
+			${AndIf} "$INSTDIR" == "$PROGRAMFILES64\Rainmeter"
+			${OrIf} "$INSTDIR" == "$PROGRAMFILES\Rainmeter"
+				MessageBox MB_YESNO|MB_ICONEXCLAMATION "$(SETTINGSFILEERROR)" IDNO SkipIniMove
+				StrCpy $0 1
+				!insertmacro UAC_AsUser_Call Function CopyIniToAppData ${UAC_SYNCREGISTERS}
+				${If} $0 == 1
+					; Copy succeeded
+					Delete "$INSTDIR\Rainmeter.ini"
+				${EndIf}
+SkipIniMove:
 			${EndIf}
 		${Else}
 			ReadINIStr $0 "$INSTDIR\Rainmeter.ini" "Rainmeter" "SkinPath"
@@ -662,7 +661,6 @@ Section
 		${EndIf}
 	${EndIf}
 
-RainmeterIniDoesntExistLabel:
 	SetOutPath "$INSTDIR"
 	Delete "$INSTDIR\Rainmeter.exe.config"
 	Delete "$INSTDIR\Rainmeter.chm"
@@ -746,6 +744,16 @@ RainmeterIniDoesntExistLabel:
 		WriteINIStr "$INSTDIR\Rainmeter.ini" "Rainmeter" "Language" "$LANGUAGE"
 	${EndIf}
 SectionEnd
+
+Function CopyIniToAppData
+	ClearErrors
+	CreateDirectory "$APPDATA\Rainmeter"
+	CopyFiles /SILENT "$INSTDIR\Rainmeter.ini" "$APPDATA\Rainmeter\Rainmeter.ini"
+	${If} ${Errors}
+		StrCpy $0 0
+		MessageBox MB_OK|MB_ICONSTOP "$(SETTINGSMOVEERROR)"
+	${EndIf}
+FunctionEnd
 
 Function RemoveStartMenuShortcuts
 	!insertmacro RemoveStartMenuShortcuts "$SMPROGRAMS\Rainmeter"
