@@ -130,6 +130,9 @@
 #define ID_STR_NOMETERSINSKIN                        2044
 #define ID_STR_INCLUDEINFINITELOOP                   2045
 #define ID_STR_ABOUTRAINMETER                        2046
+#define ID_STR_WELCOME                               2047
+#define ID_STR_CLICKTOMANAGE                         2048
+#define ID_STR_CLICKTODOWNLOAD                       2049
 
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002

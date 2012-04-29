@@ -19,7 +19,7 @@ ${LangFileString} PORTABLEINST            "Портативна установк
 ${LangFileString} PORTABLEINSTDESC        "Не вибирайте це, якщо ви не знаєте, що ви робите. Ярлики не будуть створені і. rmskin розширення буде не зареєстровано. Може знадобитися вручну встановити Visual C++ 2010 і .NET 2.0 бібліотеки."
 ${LangFileString} AUTOSTARTUP             "Запускати Rainmeter при старті системи"
 ${LangFileString} ADDITIONALOPTIONS       "Додаткові налаштування"
-${LangFileString} INSTALL64BIT            "64-біт"
+${LangFileString} INSTALL64BIT            "Встановити 64-розрядну версію"
 ${LangFileString} UNSTALLOPTIONS          "Настройки Видалення"
 ${LangFileString} UNSTALLOPTIONSDESC      "Виберіть будь-які додаткові опції"
 ${LangFileString} UNSTALLRAINMETER        "Видалити Rainmeter"
