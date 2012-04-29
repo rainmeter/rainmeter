@@ -726,7 +726,11 @@ SkipIniMove:
 		SetShellVarContext all
 		Call RemoveStartMenuShortcuts
 
-		CreateShortcut "$SMPROGRAMS\Rainmeter.lnk" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR\Rainmeter.exe" 0
+		StrCpy $0 "$SMPROGRAMS\Rainmeter.lnk"
+		${If} ${FileExists} "$SMPROGRAMS\Rainmeter"
+			StrCpy $0 "$SMPROGRAMS\Rainmeter\Rainmeter.lnk"
+		${EndIf}
+		CreateShortcut "$0" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR\Rainmeter.exe" 0
 
 		SetShellVarContext current
 		Call RemoveStartMenuShortcuts
