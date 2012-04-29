@@ -1,5 +1,12 @@
 !verbose 3
 !addplugindir ".\"
+!include "MUI2.nsh"
+!include "x64.nsh"
+!include "FileFunc.nsh"
+!include "WordFunc.nsh"
+!include "WinVer.nsh"
+!include "UAC.nsh"
+
 !ifndef VER
  !define VER "0.0"
  !define REV "000"
@@ -32,12 +39,14 @@ ReserveFile "${NSISDIR}\Plugins\nsDialogs.dll"
 ReserveFile "${NSISDIR}\Plugins\System.dll"
 ReserveFile ".\UAC.dll"
 
-!include "MUI2.nsh"
-!include "x64.nsh"
-!include "FileFunc.nsh"
-!include "WordFunc.nsh"
-!include "WinVer.nsh"
-!include "UAC.nsh"
+!define REQUIREDSPACE 5 ; Minimum required space for install (in MB)
+
+; Error levels (for silent install)
+!define ERROR_UNSUPPORTED	3
+!define ERROR_NOTADMIN		4
+!define ERROR_WRITEFAIL		5
+!define ERROR_NOVCREDIST	6
+!define ERROR_CLOSEFAIL		7
 
 ; Additional Windows definitions
 !define BCM_SETSHIELD 0x0000160c
@@ -70,13 +79,6 @@ UninstPage custom un.PageOptions un.GetOptions
 !define IncludeLanguage "!insertmacro IncludeLanguage"
 !include "Languages.nsh"
 
-; Error levels (for silent install)
-!define ERROR_UNSUPPORTED	3
-!define ERROR_NOTADMIN		4
-!define ERROR_WRITEFAIL		5
-!define ERROR_NOVCREDIST	6
-!define ERROR_CLOSEFAIL		7
-
 Var NonDefaultLanguage
 Var AutoStartup
 Var Install64Bit
@@ -92,27 +94,24 @@ Function .onInit
 
 	${IfNot} ${UAC_IsInnerInstance}
 		${If} ${IsWin2000}
-			${If} ${Silent}
-				SetErrorLevel ${ERROR_UNSUPPORTED}
-			${Else}
+			${IfNot} ${Silent}
 				MessageBox MB_OK|MB_ICONINFORMATION "$(WIN2KERROR)"
 			${EndIf}
+			SetErrorLevel ${ERROR_UNSUPPORTED}
 			Quit
 		${ElseIf} ${IsWinXP}
 		${AndIf} ${AtMostServicePack} 1
-			${If} ${Silent}
-				SetErrorLevel ${ERROR_UNSUPPORTED}
-			${Else}
+			${IfNot} ${Silent}
 				MessageBox MB_OK|MB_ICONINFORMATION "$(WINXPS2ERROR)"
 			${EndIf}
+			SetErrorLevel ${ERROR_UNSUPPORTED}
 			Quit
 		${ElseIf} ${IsWin2003}
 		${AndIf} ${AtMostServicePack} 0
-			${If} ${Silent}
-				SetErrorLevel ${ERROR_UNSUPPORTED}
-			${Else}
+			${IfNot} ${Silent}
 				MessageBox MB_OK|MB_ICONINFORMATION "$(WIN2003SP1ERROR)"
 			${EndIf}
+			SetErrorLevel ${ERROR_UNSUPPORTED}
 			Quit
 		${EndIf}
 
@@ -184,8 +183,9 @@ Function .onInit
 
 			ClearErrors
 			CreateDirectory "$INSTDIR"
-			WriteINIStr "$INSTDIR\_rainmeter_writetest.tmp" "1" "1" "1"
-			Delete "$INSTDIR\_rainmeter_writetest.tmp"
+			WriteINIStr "$INSTDIR\writetest~.rm" "1" "1" "1"
+			Delete "$INSTDIR\writetest~.rm"
+			RMDir "$INSTDIR"
 
 			${If} ${Errors}
 				SetErrorLevel ${ERROR_WRITEFAIL}
@@ -229,7 +229,7 @@ Function PageWelcome
 
 	${NSD_CreateBitmap} 0u 0u 109u 193u ""
 	Pop $0
-	${NSD_SetImage} $0 $PLUGINSDIR\modern-wizard.bmp $R0
+	${NSD_SetImage} $0 "$PLUGINSDIR\modern-wizard.bmp" $R0
 
 	${NSD_CreateLabel} 120u 10u 195u 38u "$(MUI_TEXT_WELCOME_INFO_TITLE)"
 	Pop $0
@@ -381,6 +381,16 @@ FunctionEnd
 Function PageOptionsDirectoryOnChange
 	${NSD_GetText} $R0 $0
 
+	; Disable Install button if not enough space
+	GetDlgItem $1 $HWNDPARENT 1
+	${GetRoot} $0 $2
+	${DriveSpace} "$2\" "/D=F /S=M" $3
+	${If} $3 < REQUIREDSPACE
+		EnableWindow $1 0
+	${Else}
+		EnableWindow $1 1
+	${EndIf}
+
 	StrCpy $Install64Bit 0
 	${If} ${RunningX64}
 		${If} ${FileExists} "$0\Rainmeter.exe"
@@ -391,13 +401,13 @@ Function PageOptionsDirectoryOnChange
 				StrCpy $Install64Bit 1
 			${EndIf}
 
-			${If} $InstallPortable == 1
-				${NSD_SetState} $R3 $Install64Bit
-				EnableWindow $R3 0
+			${If} $R2 != 0
+				${NSD_SetState} $R2 $Install64Bit
+				EnableWindow $R2 0
 			${EndIf}
 		${Else}
-			${If} $InstallPortable == 1
-				EnableWindow $R3 1
+			${If} $R2 != 0
+				EnableWindow $R2 1
 			${EndIf}
 		${EndIf}
 	${EndIf}
@@ -839,7 +849,6 @@ Section Uninstall
 	RMDir /r "$INSTDIR\Addons\Rainstaller"
 	RMDir "$INSTDIR\Addons"
 	Delete "$INSTDIR\Plugins\*.*"
-	Delete "$INSTDIR\Plugins\Dependencies\*.*"
 	RMDir "$INSTDIR\Plugins"
 	RMDir /r "$INSTDIR\Languages"
 	RMDir /r "$INSTDIR\Themes"
