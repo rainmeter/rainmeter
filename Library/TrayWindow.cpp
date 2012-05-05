@@ -50,16 +50,16 @@ extern CRainmeter* Rainmeter;
 using namespace Gdiplus;
 
 CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
-	m_TrayIcon(),
+	m_Icon(),
 	m_Measure(),
 	m_MeterType(TRAY_METER_TYPE_HISTOGRAM),
-	m_TrayColor1(0, 100, 0),
-	m_TrayColor2(0, 255, 0),
+	m_Color1(0, 100, 0),
+	m_Color2(0, 255, 0),
 	m_Bitmap(),
-	m_TrayValues(),
-	m_TrayPos(),
+	m_Values(),
+	m_Pos(),
 	m_Notification(TRAY_NOTIFICATION_NONE),
-	m_TrayIconEnabled(true)
+	m_IconEnabled(true)
 {
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = (WNDPROC)WndProc;
@@ -94,33 +94,33 @@ CTrayWindow::~CTrayWindow()
 	delete m_Bitmap;
 	delete m_Measure;
 
-	for (size_t i = 0, isize = m_TrayIcons.size(); i < isize; ++i)
+	for (size_t i = 0, isize = m_Icons.size(); i < isize; ++i)
 	{
-		DestroyIcon(m_TrayIcons[i]);
+		DestroyIcon(m_Icons[i]);
 	}
-	m_TrayIcons.clear();
+	m_Icons.clear();
 
 	if (m_Window) DestroyWindow(m_Window);
 }
 
 void CTrayWindow::AddTrayIcon()
 {
-	if (m_TrayIcon)
+	if (m_Icon)
 	{
-		DestroyIcon(m_TrayIcon);
-		m_TrayIcon = NULL;
+		DestroyIcon(m_Icon);
+		m_Icon = NULL;
 	}
 
-	m_TrayIcon = CreateTrayIcon(0);
+	m_Icon = CreateTrayIcon(0);
 
-	if (m_TrayIcon)
+	if (m_Icon)
 	{
 		NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 		tnid.hWnd = m_Window;
 		tnid.uID = IDI_TRAY;
 		tnid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
 		tnid.uCallbackMessage = WM_TRAY_NOTIFYICON;
-		tnid.hIcon = m_TrayIcon;
+		tnid.hIcon = m_Icon;
 		wcsncpy_s(tnid.szTip, L"Rainmeter", _TRUNCATE);
 
 		Shell_NotifyIcon(NIM_ADD, &tnid);
@@ -129,7 +129,7 @@ void CTrayWindow::AddTrayIcon()
 
 void CTrayWindow::RemoveTrayIcon()
 {
-	if (m_TrayIcon)
+	if (m_Icon)
 	{
 		NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 		tnid.hWnd = m_Window;
@@ -138,26 +138,26 @@ void CTrayWindow::RemoveTrayIcon()
 
 		Shell_NotifyIcon(NIM_DELETE, &tnid);
 
-		DestroyIcon(m_TrayIcon);
-		m_TrayIcon = NULL;
+		DestroyIcon(m_Icon);
+		m_Icon = NULL;
 	}
 }
 
 void CTrayWindow::ModifyTrayIcon(double value)
 {
-	if (m_TrayIcon)
+	if (m_Icon)
 	{
-		DestroyIcon(m_TrayIcon);
-		m_TrayIcon = NULL;
+		DestroyIcon(m_Icon);
+		m_Icon = NULL;
 	}
 
-	m_TrayIcon = CreateTrayIcon(value);
+	m_Icon = CreateTrayIcon(value);
 
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
 	tnid.uID = IDI_TRAY;
 	tnid.uFlags = NIF_ICON;
-	tnid.hIcon = m_TrayIcon;
+	tnid.hIcon = m_Icon;
 
 	Shell_NotifyIcon(NIM_MODIFY, &tnid);
 }
@@ -168,8 +168,8 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 	{
 		if (m_MeterType == TRAY_METER_TYPE_HISTOGRAM)
 		{
-			m_TrayValues[m_TrayPos] = value;
-			m_TrayPos = (m_TrayPos + 1) % TRAYICON_SIZE;
+			m_Values[m_Pos] = value;
+			m_Pos = (m_Pos + 1) % TRAYICON_SIZE;
 
 			Bitmap trayBitmap(TRAYICON_SIZE, TRAYICON_SIZE);
 			Graphics graphics(&trayBitmap);
@@ -184,31 +184,31 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 			for (int i = 0; i < TRAYICON_SIZE; ++i)
 			{
 				points[i + 1].X = i;
-				points[i + 1].Y = (int)(TRAYICON_SIZE * (1.0 - m_TrayValues[(m_TrayPos + i) % TRAYICON_SIZE]));
+				points[i + 1].Y = (int)(TRAYICON_SIZE * (1.0 - m_Values[(m_Pos + i) % TRAYICON_SIZE]));
 			}
 
-			SolidBrush brush(m_TrayColor1);
+			SolidBrush brush(m_Color1);
 			graphics.FillRectangle(&brush, 0, 0, TRAYICON_SIZE, TRAYICON_SIZE);
 
-			SolidBrush brush2(m_TrayColor2);
+			SolidBrush brush2(m_Color2);
 			graphics.FillPolygon(&brush2, points, TRAYICON_SIZE + 2);
 
 			HICON icon;
 			trayBitmap.GetHICON(&icon);
 			return icon;
 		}
-		else if (m_MeterType == TRAY_METER_TYPE_BITMAP && (m_Bitmap || !m_TrayIcons.empty()))
+		else if (m_MeterType == TRAY_METER_TYPE_BITMAP && (m_Bitmap || !m_Icons.empty()))
 		{
-			if (!m_TrayIcons.empty())
+			if (!m_Icons.empty())
 			{
 				size_t frame = 0;
-				size_t frameCount = m_TrayIcons.size();
+				size_t frameCount = m_Icons.size();
 
 				// Select the correct frame linearly
 				frame = (size_t)(value * frameCount);
 				frame = min((frameCount - 1), frame);
 
-				return CopyIcon(m_TrayIcons[frame]);
+				return CopyIcon(m_Icons[frame]);
 			}
 			else
 			{
@@ -317,18 +317,18 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 	delete m_Bitmap;
 	m_Bitmap = NULL;
 
-	std::vector<HICON>::const_iterator iter = m_TrayIcons.begin();
-	for ( ; iter != m_TrayIcons.end(); ++iter)
+	std::vector<HICON>::const_iterator iter = m_Icons.begin();
+	for ( ; iter != m_Icons.end(); ++iter)
 	{
 		DestroyIcon((*iter));
 	}
-	m_TrayIcons.clear();
+	m_Icons.clear();
 
 	m_MeterType = TRAY_METER_TYPE_NONE;
 
 	// Read tray settings
-	m_TrayIconEnabled = 0!=parser.ReadInt(L"Rainmeter", L"TrayIcon", 1);
-	if (m_TrayIconEnabled)
+	m_IconEnabled = 0!=parser.ReadInt(L"Rainmeter", L"TrayIcon", 1);
+	if (m_IconEnabled)
 	{
 		const std::wstring& measureName = parser.ReadString(L"TrayMeasure", L"Measure", L"");
 
@@ -363,8 +363,8 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 		else if (_wcsicmp(type, L"HISTOGRAM") == 0)
 		{
 			m_MeterType = TRAY_METER_TYPE_HISTOGRAM;
-			m_TrayColor1 = parser.ReadColor(L"TrayMeasure", L"TrayColor1", Color::MakeARGB(255, 0, 100, 0));
-			m_TrayColor2 = parser.ReadColor(L"TrayMeasure", L"TrayColor2", Color::MakeARGB(255, 0, 255, 0));
+			m_Color1 = parser.ReadColor(L"TrayMeasure", L"TrayColor1", Color::MakeARGB(255, 0, 100, 0));
+			m_Color2 = parser.ReadColor(L"TrayMeasure", L"TrayColor2", Color::MakeARGB(255, 0, 255, 0));
 		}
 		else if (_wcsicmp(type, L"BITMAP") == 0)
 		{
@@ -389,13 +389,13 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 						_snwprintf_s(buffer, _TRUNCATE, imagePath, count++);
 
 						hIcon = (HICON)LoadImage(NULL, buffer, IMAGE_ICON, TRAYICON_SIZE, TRAYICON_SIZE, LR_LOADFROMFILE);
-						if (hIcon) m_TrayIcons.push_back(hIcon);
+						if (hIcon) m_Icons.push_back(hIcon);
 						if (wcscmp(imagePath, buffer) == 0) break;
 					}
 					while(hIcon != NULL);
 				}
 
-				if (m_TrayIcons.empty())
+				if (m_Icons.empty())
 				{
 					// No icons found so load as bitmap
 					delete m_Bitmap;

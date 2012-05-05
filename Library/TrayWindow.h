@@ -46,7 +46,7 @@ public:
 
 	void ReadConfig(CConfigParser& parser);
 	HWND GetWindow() { return m_Window; }
-	bool IsTrayIconEnabled() { return m_TrayIconEnabled; }
+	bool IsTrayIconEnabled() { return m_IconEnabled; }
 
 	void ShowWelcomeNotification();
 	void ShowUpdateNotification(const WCHAR* newVersion);
@@ -69,24 +69,24 @@ private:
 
 	void ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const WCHAR* text);
 
-	HICON m_TrayIcon;
+	HICON m_Icon;
 	HWND m_Window;
 	HINSTANCE m_Instance;
 	CMeasure* m_Measure;
 
 	TRAY_METER_TYPE m_MeterType;
-	Gdiplus::Color m_TrayColor1;
-	Gdiplus::Color m_TrayColor2;
+	Gdiplus::Color m_Color1;
+	Gdiplus::Color m_Color2;
 	Gdiplus::Bitmap* m_Bitmap;
 
-	std::vector<HICON> m_TrayIcons;
+	std::vector<HICON> m_Icons;
 
-	double m_TrayValues[TRAYICON_SIZE];
-	int m_TrayPos;
+	double m_Values[TRAYICON_SIZE];
+	int m_Pos;
 
 	TRAY_NOTIFICATION m_Notification;
 
-	bool m_TrayIconEnabled;
+	bool m_IconEnabled;
 };
 
 #endif
