@@ -23,8 +23,6 @@
 #include <gdiplus.h>
 #include <vector>
 
-typedef HRESULT (WINAPI * FPLOADICONMETRIC)(HINSTANCE hinst, PCWSTR pszName, int lims, HICON* phico);
-
 #define WM_TRAY_NOTIFYICON WM_USER + 101
 #define TRAYICON_SIZE 16
 
@@ -69,11 +67,12 @@ private:
 	void ModifyTrayIcon(double value);
 	HICON CreateTrayIcon(double value);
 
+	HICON LoadResourceIcon(LPCWSTR name, bool large = false);
+
 	void ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const WCHAR* text);
 
 	HICON m_Icon;
 	HWND m_Window;
-	HINSTANCE m_Instance;
 	CMeasure* m_Measure;
 
 	TRAY_METER_TYPE m_MeterType;

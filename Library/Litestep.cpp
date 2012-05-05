@@ -337,6 +337,36 @@ std::wstring GetFormattedString(UINT id, ...)
 	return tmpSz;
 }
 
+HICON GetIcon(UINT id, bool large)
+{
+	typedef HRESULT (WINAPI * FPLOADICONMETRIC)(HINSTANCE hinst, PCWSTR pszName, int lims, HICON* phico);
+
+	HINSTANCE hExe = GetModuleHandle(NULL);
+	HINSTANCE hComctl = GetModuleHandle(L"Comctl32");
+	if (hComctl)
+	{
+		// Try LoadIconMetric for better quality with high DPI
+		FPLOADICONMETRIC loadIconMetric = (FPLOADICONMETRIC)GetProcAddress(hComctl, "LoadIconMetric");
+		if (loadIconMetric)
+		{
+			HICON icon;
+			HRESULT hr = loadIconMetric(hExe, MAKEINTRESOURCE(id), large ? LIM_LARGE : LIM_SMALL, &icon);
+			if (SUCCEEDED(hr))
+			{
+				return icon;
+			}
+		}
+	}
+
+	return (HICON)LoadImage(
+		hExe,
+		MAKEINTRESOURCE(id),
+		IMAGE_ICON,
+		GetSystemMetrics(large ? SM_CXICON : SM_CXSMICON),
+		GetSystemMetrics(large ? SM_CYICON : SM_CYSMICON),
+		LR_SHARED);
+}
+
 void RmNullCRTInvalidParameterHandler(const wchar_t* expression, const wchar_t* function, const wchar_t* file, unsigned int line, uintptr_t pReserved)
 {
 	// Do nothing.

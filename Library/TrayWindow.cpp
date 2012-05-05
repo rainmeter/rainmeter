@@ -24,6 +24,7 @@
 #include "Rainmeter.h"
 #include "DialogAbout.h"
 #include "DialogManage.h"
+#include "System.h"
 #include "Error.h"
 #include "RainmeterQuery.h"
 #include "resource.h"
@@ -86,7 +87,7 @@ void CTrayWindow::Initialize()
 	wc.lpfnWndProc = (WNDPROC)WndProc;
 	wc.hInstance = Rainmeter->GetInstance();
 	wc.lpszClassName = L"RainmeterTrayClass";
-	wc.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_SHARED);
+	wc.hIcon = GetIcon(IDI_RAINMETER);
 
 	RegisterClass(&wc);
 
@@ -260,24 +261,7 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 	}
 
 	// Return the default icon if there is no valid measure
-	HINSTANCE hExe = GetModuleHandle(NULL);
-	HINSTANCE hComctl = GetModuleHandle(L"Comctl32");
-	if (hComctl)
-	{
-		// Try LoadIconMetric for better quality with high DPI
-		FPLOADICONMETRIC loadIconMetric = (FPLOADICONMETRIC)GetProcAddress(hComctl, "LoadIconMetric");
-		if (loadIconMetric)
-		{
-			HICON icon;
-			HRESULT hr = loadIconMetric(hExe, MAKEINTRESOURCE(IDI_TRAY), LIM_SMALL, &icon);
-			if (SUCCEEDED(hr))
-			{
-				return icon;
-			}
-		}
-	}
-
-	return (HICON)LoadImage(hExe, MAKEINTRESOURCE(IDI_TRAY), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
+	return GetIcon(IDI_TRAY);
 }
 
 void CTrayWindow::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const WCHAR* text)
@@ -290,9 +274,14 @@ void CTrayWindow::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, con
 		nid.uFlags = NIF_INFO;
 		nid.uTimeout = 30000;
 		nid.dwInfoFlags = NIIF_USER;
-		nid.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, 32, 32, LR_SHARED);
 		wcsncpy_s(nid.szInfoTitle, title, _TRUNCATE);
 		wcsncpy_s(nid.szInfo, text, _TRUNCATE);
+
+		if (CSystem::GetOSPlatform() > OSPLATFORM_VISTA)
+		{
+			nid.dwInfoFlags |= NIIF_LARGE_ICON;
+			nid.hBalloonIcon = GetIcon(IDI_RAINMETER, true);
+		}
 
 		if (Shell_NotifyIcon(NIM_MODIFY, &nid))
 		{

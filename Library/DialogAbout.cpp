@@ -257,7 +257,7 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HWND item = GetDlgItem(m_Window, IDCLOSE);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
 
-	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
+	HICON hIcon = GetIcon(IDI_RAINMETER);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
 	if (*GetString(ID_STR_ISRTL) == L'1')
@@ -1084,7 +1084,7 @@ void CDialogAbout::CTabVersion::Initialize()
 	m_Initialized = true;
 
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTVERSION_RAINMETER_ICON);
-	HICON icon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, 32, 32, LR_SHARED);
+	HICON icon = GetIcon(IDI_RAINMETER, true);
 	Static_SetIcon(item, icon);
 
 	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_VERSION_TEXT);
