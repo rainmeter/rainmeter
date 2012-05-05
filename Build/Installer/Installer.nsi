@@ -293,7 +293,6 @@ Function PageOptions
 
 	${NSD_CreateDirRequest} 6u 14u 232u 14u ""
 	Pop $R0
-	SendMessage $R0 ${EM_SETREADONLY} 1 0
 	${NSD_OnChange} $R0 PageOptionsDirectoryOnChange
 
 	${NSD_CreateBrowseButton} 242u 14u 50u 14u "$(^BrowseBtn)"
@@ -304,17 +303,21 @@ Function PageOptions
 	${If} $InstallPortable == 1
 		${GetRoot} "$WINDIR" $0
 		${NSD_SetText} $R0 "$0\Rainmeter"
-	${ElseIf} $INSTDIR != ""
-		; Disable Browse button if already installed
-		EnableWindow $R1 0
-		${NSD_SetText} $R0 "$INSTDIR"
 	${Else}
-		; Fresh install
-		${If} ${RunningX64}
-			${NSD_SetText} $R0 "$PROGRAMFILES64\Rainmeter"
-			${NSD_Check} $R2
+		; Disable Directory editbox and Browse button if already installed
+		SendMessage $R0 ${EM_SETREADONLY} 1 0
+
+		${If} $INSTDIR != ""
+			EnableWindow $R1 0
+			${NSD_SetText} $R0 "$INSTDIR"
 		${Else}
-			${NSD_SetText} $R0 "$PROGRAMFILES\Rainmeter"
+			; Fresh install
+			${If} ${RunningX64}
+				${NSD_SetText} $R0 "$PROGRAMFILES64\Rainmeter"
+				${NSD_Check} $R2
+			${Else}
+				${NSD_SetText} $R0 "$PROGRAMFILES\Rainmeter"
+			${EndIf}
 		${EndIf}
 	${EndIf}
 
@@ -417,28 +420,29 @@ Function PageOptionsBrowseOnClick
 	${NSD_GetText} $R0 $0
 	nsDialogs::SelectFolderDialog "$(^DirBrowseText)" $0
 	Pop $1
-
 	${If} $1 != error
-		${If} $InstallPortable == 1
-			ClearErrors
-			CreateDirectory "$1"
-			WriteINIStr "$1\writetest~.rm" "1" "1" "1"
-
-			${If} ${Errors}
-				MessageBox MB_OK|MB_ICONEXCLAMATION "$(WRITEERROR)"
-			${Else}
-				${NSD_SetText} $R0 $1
-			${EndIf}
-
-			Delete "$0\writetest~.rm"
-			RMDir "$0"
-		${Else}
-			${NSD_SetText} $R0 $1
-		${EndIf}
+		${NSD_SetText} $R0 $1
 	${EndIf}
 FunctionEnd
 
 Function PageOptionsOnLeave
+	; Verify that selected folder is writable
+	${NSD_GetText} $R0 $0
+	${If} $InstallPortable == 1
+		ClearErrors
+		CreateDirectory "$0"
+		WriteINIStr "$0\writetest~.rm" "1" "1" "1"
+
+		${If} ${Errors}
+			Delete "$0\writetest~.rm"
+			RMDir "$0"
+			MessageBox MB_OK|MB_ICONEXCLAMATION "$(WRITEERROR)"
+			Abort
+		${EndIf}
+	${EndIf}
+
+	StrCpy $INSTDIR $0
+
 	GetDlgItem $0 $HWNDPARENT 1
 	EnableWindow $0 0
 
@@ -449,8 +453,6 @@ Function PageOptionsOnLeave
 	${If} $R3 != 0
 		${NSD_GetState} $R3 $AutoStartup
 	${EndIf}
-
-	${NSD_GetText} $R0 $INSTDIR
 
 	${If} $InstallPortable != 1
 		${IfNot} ${UAC_IsAdmin}
