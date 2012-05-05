@@ -19,6 +19,7 @@
 #include "StdAfx.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
+#include "TrayWindow.h"
 #include "../Version.h"
 
 extern CRainmeter* Rainmeter;
@@ -41,27 +42,47 @@ void CheckVersion(void* dummy)
 	if (hUrlDump)
 	{
 		DWORD dwSize;
-		char buffer[16] = {0};	// 16 should be enough for the version number
-		if (InternetReadFile(hUrlDump, (LPVOID)buffer, 15, &dwSize))
+		char urlData[16] = {0};
+		if (InternetReadFile(hUrlDump, (LPVOID)urlData, sizeof(urlData) - 1, &dwSize))
 		{
-			int version = atoi(buffer) * 1000000;
-			char* pos = strchr(buffer, '.');
-			if (pos)
+			auto parseVersion = [](const WCHAR* str)->int
 			{
-				++pos;	// Skip .
-				version += atoi(pos) * 1000;
-
-				pos = strchr(pos, '.');
+				int version = _wtoi(str) * 1000000;
+				const WCHAR* pos = wcschr(str, L'.');
 				if (pos)
 				{
 					++pos;	// Skip .
-					version += atoi(pos);
-				}
-			}
+					version += _wtoi(pos) * 1000;
 
-			if (version > RAINMETER_VERSION)
+					pos = wcschr(pos, '.');
+					if (pos)
+					{
+						++pos;	// Skip .
+						version += _wtoi(pos);
+					}
+				}
+				return version;
+			};
+
+			std::wstring tmpSz = ConvertToWide(urlData);
+			const WCHAR* version = tmpSz.c_str();
+
+			int availableVersion = parseVersion(version);
+			if (availableVersion > RAINMETER_VERSION)
 			{
 				Rainmeter->SetNewVersion();
+
+				WCHAR buffer[32];
+				const WCHAR* dataFile = Rainmeter->GetDataFile().c_str();
+				GetPrivateProfileString(L"Rainmeter", L"LastCheck", L"0", buffer, _countof(buffer), dataFile);
+
+				// Show tray notification only once per new version
+				int lastVersion = parseVersion(buffer);
+				if (availableVersion > lastVersion)
+				{
+					Rainmeter->GetTrayWindow()->ShowUpdateNotification(version);
+					WritePrivateProfileString(L"Rainmeter", L"LastCheck", version, dataFile);
+				}
 			}
 		}
 		InternetCloseHandle(hUrlDump);
