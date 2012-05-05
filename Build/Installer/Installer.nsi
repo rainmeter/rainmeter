@@ -53,11 +53,8 @@ ReserveFile ".\UAC.dll"
 !define PF_XMMI_INSTRUCTIONS_AVAILABLE 6
 !define PF_XMMI64_INSTRUCTIONS_AVAILABLE 10
 
-!define MUI_HEADERIMAGE
 !define MUI_ICON ".\Icon.ico"
 !define MUI_UNICON ".\Icon.ico"
-!define MUI_HEADERIMAGE_BITMAP ".\Header.bmp"
-!define MUI_HEADERIMAGE_UNBITMAP ".\Header.bmp"
 !define MUI_WELCOMEFINISHPAGE_BITMAP ".\Wizard.bmp"
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION FinishRun
