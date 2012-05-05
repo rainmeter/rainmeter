@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "'Rainmeter' ${VER} reikia 'Windows 20
 ${LangFileString} ADMINERROR              "Turite turėti administratoriaus teises."
 ${LangFileString} LOGONERROR              "Registravimosi tarnyba neveikia."
 ${LangFileString} UACERROR                "Nepavyko sukelti teisių."
-${LangFileString} WRITEERROR              "Kilnojamas 'Rainmeter' privalo būti įdiegtas į vietą su pilna skaitymo ir rašymo prieiga (normaliam vartotojui).$\nJei norite įdiegti 'Rainmeter' į '$INSTDIR', grįžkite ir pasirinkite 'Standartinis įdiegimas'.$\n$\nPriešingu atveju, paieškokite kitą vietą su pilna skaitymo ir rašymo prieiga."
+${LangFileString} WRITEERROR              "Kilnojamas 'Rainmeter' privalo būti įdiegtas į vietą su pilna skaitymo ir rašymo prieiga (normaliam vartotojui).$\nJei norite įdiegti 'Rainmeter' į '$0', grįžkite ir pasirinkite 'Standartinis įdiegimas'.$\n$\nPriešingu atveju, paieškokite kitą vietą su pilna skaitymo ir rašymo prieiga."
 ${LangFileString} VCINSTERROR             "'Visual C++' $instArc diegimas buvo nesėkmingas, klaidos kodas $0.$\n$\nGalbūt norėsite atsisiųsti Visual C++ 2010 SP1 $instArc platinimo paketą rankiniu būdu šiuo adresu http://rainmeter.net/redist$\n$\nPaspauskite Gerai, kad išeitumėte."
 ${LangFileString} DOTNETINSTERROR         "'.NET' $instArc diegimas buvo nesėkmingas, klaidos kodas $0.$\n$\nGalbūt norėsite atsisiųsti '.NET' $instArc platinimo paketą rankiniu būdu šiuo adresu http://rainmeter.net/redist$\n$\nPaspauskite Gerai, kad išeitumėte."
 ${LangFileString} RAINMETERCLOSEERROR     "Nepavyko uždaryti 'Rainmeter'.$\n$\nPrašome rankiniu būdu uždaryti 'Rainmeter' ir bandyti dar kartą įdiegti."

@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "לריינמטר ${VER} נדרשת ג
 ${LangFileString} ADMINERROR              "נדרשות הרשאות ניהוליות."
 ${LangFileString} LOGONERROR              "שירות החיבור אינו מופעל."
 ${LangFileString} UACERROR                "אינו מצליח לעלות."
-${LangFileString} WRITEERROR              "הגירסא הניידת של ריינמטר חייבת להיות מותקנת במיקום עם הרשאות קריאה וכתיבה (כמשתמש רגיל).$\nIf אם תרצה להתקין את ריינמטר ב- '$INSTDIR', חזור אחורה ובחר 'התקנה רגילה'.$\n$\nאחרת, בחר מיקום אחר בעת הרשאות קריאה וכתיבה מלאות."
+${LangFileString} WRITEERROR              "הגירסא הניידת של ריינמטר חייבת להיות מותקנת במיקום עם הרשאות קריאה וכתיבה (כמשתמש רגיל).$\nIf אם תרצה להתקין את ריינמטר ב- '$0', חזור אחורה ובחר 'התקנה רגילה'.$\n$\nאחרת, בחר מיקום אחר בעת הרשאות קריאה וכתיבה מלאות."
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc נכשל בהתקנה עם קוד שגיאה $0.$\n$\n תצטרך להוריד את חבילת Visual C++ 2010 SP1 $instArc redistributable ידנית מ- http://rainmeter.net/redist$\n$\n לחץ OK כדי לצאת."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc נכשל בהתקנה עם קוד שגיאה $0.$\n$\nתצטרך להוריד את חבילת .NET $instArc ידנית מ- from http://rainmeter.net/redist$\n$\nלחץ OK כדי לצאת."
 ${LangFileString} RAINMETERCLOSEERROR     "נכשל בסגירת ריינמטר.$\n$\nאנא סגור את ריינמטר ידנית ונסה שוב."

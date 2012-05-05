@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} wymaga wersji Window
 ${LangFileString} ADMINERROR              "Potrzebne uprawnienia administratora."
 ${LangFileString} LOGONERROR              "Usługa logowania nie uruchomiona."
 ${LangFileString} UACERROR                "Nie można podnieść."
-${LangFileString} WRITEERROR              "Przenośny Rainmeter musi być zainstalowany w lokalizacji z pełnymi uprawnieniami do odczytu i zapisu (jako zwykły użytkownik).$\nJeżeli chcesz zapisać Rainmeter w '$INSTDIR', wróć i wybierz 'Instalacja standardowa'.$\n$\nW przeciwnym wypadku, wybierz inną lokalizację z pełnymi uprawnieniami do odczytu i zapisu."
+${LangFileString} WRITEERROR              "Przenośny Rainmeter musi być zainstalowany w lokalizacji z pełnymi uprawnieniami do odczytu i zapisu (jako zwykły użytkownik).$\nJeżeli chcesz zapisać Rainmeter w '$0', wróć i wybierz 'Instalacja standardowa'.$\n$\nW przeciwnym wypadku, wybierz inną lokalizację z pełnymi uprawnieniami do odczytu i zapisu."
 ${LangFileString} VCINSTERROR             "Instalacja Visual C++ $instArc nieudana. Kod błędu $0.$\n$\nMożesz spróbować pobrać pakiet Visual C++ 2010 SP1 $instArc ręcznie z http://rainmeter.net/redist$\n$\nNaciśnij OK żeby wyjść."
 ${LangFileString} DOTNETINSTERROR         "Instalacja .NET $instArc nieudana. Kod błędu $0.$\n$\nMożesz spróbować pobrać pakiet .NET $instArc ręcznie z http://rainmeter.net/redist$\n$\nNaciśnij OK żeby wyjść."
 ${LangFileString} RAINMETERCLOSEERROR     "Nie udało się zamknąć Rainmeter.$\n$\nZamknij Rainmeter ręcznie i spróbuj ponownie."

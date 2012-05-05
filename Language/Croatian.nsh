@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} zahtjeva Windows 200
 ${LangFileString} ADMINERROR              "Potrebne su adminstrativne ovlasti."
 ${LangFileString} LOGONERROR              "Logon servis nije pokrenut."
 ${LangFileString} UACERROR                "Nije moguće uzdići prava."
-${LangFileString} WRITEERROR              "Prijenosni Rainmeter mora biti instaliran u lokaciju s punim pravima čitanja i pisanja (kao običan korisnik).$\nUkoliko želite instalirati Rainmeter u '$INSTDIR', vratite se i izaberite 'Standardna instalacija'.$\n$\nInače, nađite drugu lokaciju s punim pravima čitanja i pisanja."
+${LangFileString} WRITEERROR              "Prijenosni Rainmeter mora biti instaliran u lokaciju s punim pravima čitanja i pisanja (kao običan korisnik).$\nUkoliko želite instalirati Rainmeter u '$0', vratite se i izaberite 'Standardna instalacija'.$\n$\nInače, nađite drugu lokaciju s punim pravima čitanja i pisanja."
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc instalacija nije uspjela s kodom greške $0.$\n$\nPokušajte ručno skinuti Visual C++ 2010 SP1 $instArc redistributable package sa http://rainmeter.net/redist$\n$\nKliknite OK za izlaz."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc instalacija nije uspjela s kodom greške $0.$\n$\nPokušajte skinuti .NET $instArc redistributable package ručno sa http://rainmeter.net/redist$\n$\nPritisnite OK za izlaz."
 ${LangFileString} RAINMETERCLOSEERROR     "Gašenje Rainmetera nije uspjelo.$\n$\nMolimo vas ručno ugasite Rainmeter i pokušajte ponovo."

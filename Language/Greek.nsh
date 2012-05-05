@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Το Rainmeter ${VER} απαιτεί 
 ${LangFileString} ADMINERROR              "Χρειάζονται δικαιώματα διαχειριστή."
 ${LangFileString} LOGONERROR              "Η υπηρεσία Logon δεν λειτουργεί."
 ${LangFileString} UACERROR                "Λάθος UAC. Αδύνατον να συνεχίσει."
-${LangFileString} WRITEERROR              "Η έκδοση Portable Rainmeter πρέπει να εγκατασταθεί σε μέσο με πλήρη δικαιώματα read/write (σαν απλός χρήστης).$\nΑν θέλετε να εγκαταστήσετε το Rainmeter στο '$INSTDIR', πηγαίνετε πίσω και διαλέξτε 'Standard installation'.$\n$\nή, διαλέξτε άλλο μέσο με πλήρη δικαιώματα read/write."
+${LangFileString} WRITEERROR              "Η έκδοση Portable Rainmeter πρέπει να εγκατασταθεί σε μέσο με πλήρη δικαιώματα read/write (σαν απλός χρήστης).$\nΑν θέλετε να εγκαταστήσετε το Rainmeter στο '$0', πηγαίνετε πίσω και διαλέξτε 'Standard installation'.$\n$\nή, διαλέξτε άλλο μέσο με πλήρη δικαιώματα read/write."
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc η εγκατάσταση απέτυχε με κωδικό λάθους $0.$\n$\nΊσως να πρέπει να κατεβάσετε τη Visual C++ 2010 SP1 $instArc redistributable package χειροκίνητα από τη διεύθυνση http://rainmeter.net/redist$\n$\nΠατήστε OK για έξοδο."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc η εγκατάσταση απέτυχε με κωδικό λάθους $0.$\n$\nΊσως να πρέπει να κατεβάσετε τη .NET $instArc redistributable package χειροκίνητα από τη διεύθυνση http://rainmeter.net/redist$\n$\nΠατήστε OK για έξοδο."
 ${LangFileString} RAINMETERCLOSEERROR     "Απέτυχε το κλείσιμο του Rainmeter.$\n$\nΠαρακαλώ κλείστε το Rainmeter χειροκίνητα και δοκιμάστε ξανά."

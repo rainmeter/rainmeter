@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} membutuhkan Windows 
 ${LangFileString} ADMINERROR              "Adminstrative rights dibutuhkan."
 ${LangFileString} LOGONERROR              "Logon service tidak berjalan."
 ${LangFileString} UACERROR                "Tak dapat meningkatkan."
-${LangFileString} WRITEERROR              "Portable Rainmeter harus di instal pada lokasi dengan full read and write access (as normal user).$\njika Anda mau menginstal Rainmeter pada '$INSTDIR', kembali dan pilih 'Standard installation'.$\n$\nAtau, cari lokasi lain dengan full read and write access."
+${LangFileString} WRITEERROR              "Portable Rainmeter harus di instal pada lokasi dengan full read and write access (as normal user).$\njika Anda mau menginstal Rainmeter pada '$0', kembali dan pilih 'Standard installation'.$\n$\nAtau, cari lokasi lain dengan full read and write access."
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc instal gagal dengan kode galat $0.$\n$\nAnda mungkin mau coba unduh secara manual paket Visual C++ 2010 SP1 $instArc redistributable dari http://rainmeter.net/redist$\n$\nTekan OK untuk keluar."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc instal gagal dengan kode galat $0.$\n$\nAnda mungkin mau coba unduh secara manual paket Visual .Net $instArc redistributable dari http://rainmeter.net/redist$\n$\nTekan OK untuk keluar."
 ${LangFileString} RAINMETERCLOSEERROR     "Failed to close Rainmeter.$\n$\nPlease close Rainmeter manually and try again."

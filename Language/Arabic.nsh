@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "هذه النسخة ${VER} تتطلب
 ${LangFileString} ADMINERROR              "صلاحيات إدارية مطلوبة."
 ${LangFileString} LOGONERROR              "خدمة تسجيل الدخول لا تعمل."
 ${LangFileString} UACERROR                "غير قادر على التنشيط."
-${LangFileString} WRITEERROR              "يجب تثبيت النسخة المحمولة في مكان ذو وصول كامل للقراءة و الكتابة .$\nإذا أرت تثبيت البرنامج في '$INSTDIR', ارجع و اختر تثبيت قياسي.$\n$\nأو اختر مكان آخر ذو وصول كامل للقراءة و الكتابة."
+${LangFileString} WRITEERROR              "يجب تثبيت النسخة المحمولة في مكان ذو وصول كامل للقراءة و الكتابة .$\nإذا أرت تثبيت البرنامج في '$0', ارجع و اختر تثبيت قياسي.$\n$\nأو اختر مكان آخر ذو وصول كامل للقراءة و الكتابة."
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc فشل التثبيت مع رمز الخطأ $0.$\n$\nقد تحتاج تنزيل حزمة فيجوال سي بلس بلس $instArc يدوياً من http://rainmeter.net/redist$\n$\nاضغط موافق للخروج."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc فشل التثبيت مع رمز الخطأ $0.$\n$\nقد تحتاج تنزيل حزمة the .NET $instArc يدوياً من http://rainmeter.net/redist$\n$\nاضغط موافق للخروج."
 ${LangFileString} RAINMETERCLOSEERROR     "فشل إغلاق البرنامج.$\n$\nالرجاء إغلاق البرنامج يدوياً و المحاولة مرة أخرى."

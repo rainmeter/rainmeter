@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} benötigt Windows 20
 ${LangFileString} ADMINERROR              "Benötigt Adminstratorrechte."
 ${LangFileString} LOGONERROR              "Logon Service läuft nicht."
 ${LangFileString} UACERROR                "Ausführen mit erweiterten Rechten fehlgeschlagen."
-${LangFileString} WRITEERROR              "Die portable Rainmeter-Version muss in einen Ordner mit vollem Lese- und Schreibzugriff intalliert werden (als normaler Benutzer).$\nFalls Sie Rainmeter in '$INSTDIR' installieren wollen, gehen Sie zurück und wählen 'Standardinstallation'.$\n$\nAndernfalls, suchen Sie einen anderen Ordner auf den Sie vollen Lese- und Schreibzugriff haben."
+${LangFileString} WRITEERROR              "Die portable Rainmeter-Version muss in einen Ordner mit vollem Lese- und Schreibzugriff intalliert werden (als normaler Benutzer).$\nFalls Sie Rainmeter in '$0' installieren wollen, gehen Sie zurück und wählen 'Standardinstallation'.$\n$\nAndernfalls, suchen Sie einen anderen Ordner auf den Sie vollen Lese- und Schreibzugriff haben."
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc Installation fehlgeschlagen mit Fehlercode $0.$\n$\nSie können versuchen das  Visual C++ 2010 SP1 $instArc redistributable Paket manuell von http://rainmeter.net/redist zu laden$\n$\nZum Schließen drücken Sie OK."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc Installation fehlgeschlagen mit Fehlercode $0.$\n$\nSie können versuchen das .NET $instArc redistributable Paket manuell von http://rainmeter.net/redist zu laden$\n$\nZum Schließen drücken Sie OK."
 ${LangFileString} RAINMETERCLOSEERROR     "Schließen von Rainmeter fehlgeschlagen.$\n$\nBitte Rainmeter manuell schließen und neu versuchen."

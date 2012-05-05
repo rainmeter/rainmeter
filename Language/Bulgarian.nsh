@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} изисква Windo
 ${LangFileString} ADMINERROR              "Нужни са административни права."
 ${LangFileString} LOGONERROR              "Услугата Logon service не е стартирана."
 ${LangFileString} UACERROR                "Unable to elevate."
-${LangFileString} WRITEERROR              "Портативната инсталация на Rainmeter може да се осъществи само в папка с пълни права за четене и писане (като нормален потребител).$\nАко искате да инсталирате Rainmeter в '$INSTDIR', се върнете обратно и изберете 'Стандартна инсталация'.$\n$\nВ противен случай посочете папка с пълен достъп (писане/четене)."
+${LangFileString} WRITEERROR              "Портативната инсталация на Rainmeter може да се осъществи само в папка с пълни права за четене и писане (като нормален потребител).$\nАко искате да инсталирате Rainmeter в '$0', се върнете обратно и изберете 'Стандартна инсталация'.$\n$\nВ противен случай посочете папка с пълен достъп (писане/четене)."
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc инсталацията е неуспешна с код за грешка $0.$\n$\nПрепоръчваме ви да свалите ръчно Visual C++ 2010 SP1 $instArc пакета от  http://rainmeter.net/redist$\n$\nНатиснете OK за да излезете."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc инсталацията е неуспешна с код за грешка $0.$\n$\nПрепоръчваме ви да свалите ръчно .NET $instArc пакета от http://rainmeter.net/redist$\n$\nНатиснете OK за да излезете."
 ${LangFileString} RAINMETERCLOSEERROR     "Rainmeter не може да бъде затворен.$\n$\nМоля, затворете Rainmeter ръчно и опитайте отново."

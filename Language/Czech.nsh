@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} vyžaduje Windows 20
 ${LangFileString} ADMINERROR              "Požadováno administrátorské oprávnění."
 ${LangFileString} LOGONERROR              "Služba přihlášení není spuštěna."
 ${LangFileString} UACERROR                "Nelze povýšit."
-${LangFileString} WRITEERROR              "Přenosný Rainmeter musí být instalován do umístění s plným oprávněním čtení i zápisu (jako běžný uživatel).$\nPokud chcete instalovat Rainmeter do '$INSTDIR', jděte zpět a vyberte 'Standardní instalace'.$\n$\nPřípadně vyberte jiné umístění s plným oprávněním čtení i zápisu."
+${LangFileString} WRITEERROR              "Přenosný Rainmeter musí být instalován do umístění s plným oprávněním čtení i zápisu (jako běžný uživatel).$\nPokud chcete instalovat Rainmeter do '$0', jděte zpět a vyberte 'Standardní instalace'.$\n$\nPřípadně vyberte jiné umístění s plným oprávněním čtení i zápisu."
 ${LangFileString} VCINSTERROR             "Instalace Visual C++ $instArc selhala s chybovým kódem $0.$\n$\nMůžete zkusit stáhnout Visual C++ 2010 SP1 $instArc redistributable package ručně z http://rainmeter.net/redist$\n$\nStiskněte OK pro konec."
 ${LangFileString} DOTNETINSTERROR         "Instalace .NET $instArc selhala s chybovým kódem $0.$\n$\nMůžete zkusit stáhnout .NET $instArc redistributable package ručně z http://rainmeter.net/redist$\n$\nStiskněte OK pro konec."
 ${LangFileString} RAINMETERCLOSEERROR     "Ukončení Rainmeteru selhalo.$\n$\nProsím ukončete Rainmeter ručně a zkuste to znovu."

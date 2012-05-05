@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "A Rainmeter ${VER} telepítéséhez W
 ${LangFileString} ADMINERROR              "Rendszergazdai engedély szükséges"
 ${LangFileString} LOGONERROR              "A bejelentkezési szolgáltatás nem fut."
 ${LangFileString} UACERROR                "Jogosultságemelés nem lehetséges"
-${LangFileString} WRITEERROR              "A Rainmeter hordozható verzióját teljes írási és olvasási hozzáféréssel rendelkező helyre kell telepíteni (normál felhasználóként).$\nHa a Rainmetert a(z) '$INSTDIR' mappába szeretnéd telepíteni, akkor lépj vissza és válaszd a 'Szabványos telepítés'-t.$\n$\nEgyébként válassz egy másik helyet teljes írási és olvasási hozzáféréssel.  "
+${LangFileString} WRITEERROR              "A Rainmeter hordozható verzióját teljes írási és olvasási hozzáféréssel rendelkező helyre kell telepíteni (normál felhasználóként).$\nHa a Rainmetert a(z) '$0' mappába szeretnéd telepíteni, akkor lépj vissza és válaszd a 'Szabványos telepítés'-t.$\n$\nEgyébként válassz egy másik helyet teljes írási és olvasási hozzáféréssel.  "
 ${LangFileString} VCINSTERROR             "A Visual C++ $instArc telepítése sikertelen, hibakód: $0$\n$\nPróbáld meg a Visual C++ 2010 SP1 $instArc terjeszthető csomag manuális letöltését a http://rainmeter.net/redist webhelyről.$\n$\nKattints az OK-ra a kilépéshez."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc telepítése sikertelen, hibakód: $0$\n$\nPróbáld meg a .NET $instArc terjeszthető csomag manuális letöltését a http://rainmeter.net/redist webhelyről.$\n$\nKattints az OK-ra a kilépéshez."
 ${LangFileString} RAINMETERCLOSEERROR     "A Rainmeter bezárása sikertelen volt.$\n$\nKérlek zárd be a Rainmetert manuálisan, majd próbáld újra."

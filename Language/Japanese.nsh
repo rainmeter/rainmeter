@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} を動作させる�
 ${LangFileString} ADMINERROR              "管理者権限が必要です。"
 ${LangFileString} LOGONERROR              "ログオンサービスが起動していません。"
 ${LangFileString} UACERROR                "権限の昇格に失敗しました。"
-${LangFileString} WRITEERROR              "ポータブル版 Rainmeter をインストールするには、標準ユーザーとしての完全なファイルの読み書き権限を必要とします。$\nRainmeter を '$INSTDIR' へインストールするには、前に戻り、[標準インストール] を選択してください。$\n$\nまたは、完全なファイルの読み書き権限のある別の場所を選択してください。"
+${LangFileString} WRITEERROR              "ポータブル版 Rainmeter をインストールするには、標準ユーザーとしての完全なファイルの読み書き権限を必要とします。$\nRainmeter を '$0' へインストールするには、前に戻り、[標準インストール] を選択してください。$\n$\nまたは、完全なファイルの読み書き権限のある別の場所を選択してください。"
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc のインストールに失敗しました。(エラー$0)$\n$\n必要であれば、Visual C++ 2010 SP1 $instArc ランタイムを http://rainmeter.net/redist からダウンロードすることができます。$\n$\n[OK] を押すと終了します。"
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc のインストールに失敗しました。(エラー$0)$\n$\n必要であれば、.NET $instArc ランタイムを http://rainmeter.net/redist からダウンロードすることができます。$\n$\n[OK] を押すと終了します。"
 ${LangFileString} RAINMETERCLOSEERROR     "Rainmeter の終了に失敗しました。$\n$\nRainmeter を手動で終了した後にもう一度お試しください。"

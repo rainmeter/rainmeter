@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} Windows 2003 SP1 vey
 ${LangFileString} ADMINERROR              "Yönetici hakları gerektirir."
 ${LangFileString} LOGONERROR              "Giriş servisi çalışmıyor."
 ${LangFileString} UACERROR                "Yükseltilemiyor."
-${LangFileString} WRITEERROR              "Taşınabilir Rainmeter, (normal kullanıcı olarak) tam yazma ve okuma haklarının olduğu bir dizine kurulmalıdır.$\nEğer Rainmeter'ı '$INSTDIR' dizinine kurmak istiyorsanız, geri dönüp 'Standart kurulum'u seçin.$\n$\nAksi hallerde tam yazma ve okuma hakları olan bir dizin seçin."
+${LangFileString} WRITEERROR              "Taşınabilir Rainmeter, (normal kullanıcı olarak) tam yazma ve okuma haklarının olduğu bir dizine kurulmalıdır.$\nEğer Rainmeter'ı '$0' dizinine kurmak istiyorsanız, geri dönüp 'Standart kurulum'u seçin.$\n$\nAksi hallerde tam yazma ve okuma hakları olan bir dizin seçin."
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc kurulumu $0 hata kodu ile sonlandı.$\n$\nVisual C++ 2010 SP1 $instArc dağıtım paketini http://rainmeter.net/redist adresinden kendiniz indirmek isteyebilirsiniz.$\n$\nÇıkmak için Tamam tuşuna basın."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc kurulumu $0 hata kodu ile sonlandı.$\n$\nVisual C++ 2010 SP1 $instArc dağıtım paketini http://rainmeter.net/redist adresinden kendiniz indirmek isteyebilirsiniz.$\n$\nÇıkmak için Tamam tuşuna basın."
 ${LangFileString} RAINMETERCLOSEERROR     "Rainmeter kapatılamadı.$\n$\nLütfen Rainmeter'i elle kapatıp yeniden deneyiniz."

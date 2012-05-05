@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} požaduje systém Wi
 ${LangFileString} ADMINERROR              "Požadované práva administrátora."
 ${LangFileString} LOGONERROR              "Služba prihlasovania nie je aktívna."
 ${LangFileString} UACERROR                "Zakázaný prístup."
-${LangFileString} WRITEERROR              "Portable Rainmeter musí byť nainštalovaný do priečinka s plnou podporou čítania a zápisu (ako normálny používateľ).$\nAk chcete nainštalovať Rainmeter do '$INSTDIR', choďte späť a zadajte 'Štandardná inštalácia'.$\n$\nAlebo zadajte iný priečinok s plnou podporou čítania a zápisu."
+${LangFileString} WRITEERROR              "Portable Rainmeter musí byť nainštalovaný do priečinka s plnou podporou čítania a zápisu (ako normálny používateľ).$\nAk chcete nainštalovať Rainmeter do '$0', choďte späť a zadajte 'Štandardná inštalácia'.$\n$\nAlebo zadajte iný priečinok s plnou podporou čítania a zápisu."
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc inštalácia zlyhala s chybovým kódom $0.$\n$\nSkúste stiahnuť Visual C++ 2010 SP1 $instArc redistributable package manuálne z http://rainmeter.net/redist$\n$\nStlačte OK pre ukončenie."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc inštalácia zlyhala s chybovým kódom $0.$\n$\nSkúste stiahnuť .NET $instArc redistributable package manuálne z http://rainmeter.net/redist$\n$\nStlačte OK pre ukončenie."
 ${LangFileString} RAINMETERCLOSEERROR     "Nemožno ukončiť Rainmeter.$\n$\nProsím zatvorte Rainmeter manuálne a skúste znova."

@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} zahteva Windows 2003
 ${LangFileString} ADMINERROR              "Potrebne so administratorske pravice."
 ${LangFileString} LOGONERROR              "Servis za prijavo ni zagnan."
 ${LangFileString} UACERROR                "Ne morem dvigniti pravic."
-${LangFileString} WRITEERROR              "Prenosni Rainmeter mora biti nameščen na v mapo s polnim dostopom za branje in pisanje (kot navaden uporabnik).$\nČe želite namestiti Rainmeter v '$INSTDIR', se vrnite in izberite 'Standardna namestitev'.$\n$\nV nasprotnem primeru izberite mapo s polnim dostopom do branja in pisanja."
+${LangFileString} WRITEERROR              "Prenosni Rainmeter mora biti nameščen na v mapo s polnim dostopom za branje in pisanje (kot navaden uporabnik).$\nČe želite namestiti Rainmeter v '$0', se vrnite in izberite 'Standardna namestitev'.$\n$\nV nasprotnem primeru izberite mapo s polnim dostopom do branja in pisanja."
 ${LangFileString} VCINSTERROR             "Namestiev Visual C++ $instArc ni uspela. Koda napake je $0.$\n$\nLahko poskusite posneti in ročno namestiti Visual C++ 2010 SP1 $instArc redistributable package s strani http://rainmeter.net/redist$\n$\nKliknite  OK za izhod."
 ${LangFileString} DOTNETINSTERROR         "Namestitev .NET $instArc ni uspela. Koda napake je $0.$\n$\nLahko poskusite posneti in ročno namestiti .NET $instArc redistributable package s strani http://rainmeter.net/redist$\n$\nKliknite  OK za izhod."
 ${LangFileString} RAINMETERCLOSEERROR     "Ne morem zapreti Rainmetra.$\n$\nProsim, zaprite Rainmeter ročno in poskusite znova."

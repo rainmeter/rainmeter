@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} yêu cầu Windows 2
 ${LangFileString} ADMINERROR              "Yêu cầu quyền Admin."
 ${LangFileString} LOGONERROR              "Truy cập hệ thống không hoạt động."
 ${LangFileString} UACERROR                "Không thể nâng cấp."
-${LangFileString} WRITEERROR              "Portable Rainmeter phải được cài đặt tại địa chỉ có thể đọc và viết được (tức là sử dụng bình thường).$\nNếu bạn muốn cài đặt Rainmeter tại '$INSTDIR', quay lại và chọn 'Cài đặt thông thường'.$\n$\nCòn không, tìm một địa chỉ nào đó có thể đọc và viết được."
+${LangFileString} WRITEERROR              "Portable Rainmeter phải được cài đặt tại địa chỉ có thể đọc và viết được (tức là sử dụng bình thường).$\nNếu bạn muốn cài đặt Rainmeter tại '$0', quay lại và chọn 'Cài đặt thông thường'.$\n$\nCòn không, tìm một địa chỉ nào đó có thể đọc và viết được."
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc đã cài đặt thất bại error code $0.$\n$\nBạn có muốn thử tải bằng tay Visual C++ 2010 SP1 $instArc đã được đóng gói phân phối từ http://rainmeter.net/redist$\n$\nẤn OK để thoát."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc đã cài đặt thất bại error code $0.$\n$\nBạn có muốn thử tải bằng tay .NET $instArc đã được đóng gói phân phối từ http://rainmeter.net/redist$\n$\nẤn OK để thoát."
 ${LangFileString} RAINMETERCLOSEERROR     "Thất bại khi đóng Rainmeter.$\n$\nVui lòng đóng Rainmeter bằng tay và thử lại."

@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} requer Windows 2003 
 ${LangFileString} ADMINERROR              "Direitos administrativos são necessários."
 ${LangFileString} LOGONERROR              "Serviço de login não está sendo executado."
 ${LangFileString} UACERROR                "Não foi possível elevar."
-${LangFileString} WRITEERROR              "Rainmeter Portable deve ser instalado em um local com total acesso a criação e edição de arquivos (como usuário comum). $\nSe você deseja instalar o Rainmeter em '$INSTDIR', volte e selecione 'Instalação Padrão'. $\n$\nOu procure outro local com total acesso a criação e edição de arquivos."
+${LangFileString} WRITEERROR              "Rainmeter Portable deve ser instalado em um local com total acesso a criação e edição de arquivos (como usuário comum). $\nSe você deseja instalar o Rainmeter em '$0', volte e selecione 'Instalação Padrão'. $\n$\nOu procure outro local com total acesso a criação e edição de arquivos."
 ${LangFileString} VCINSTERROR             "Visual C++$instArc falha na instalação, código de erro $0.$\n$\nVocê pode desejar baixar o Visual C++ 2010 SP1 $instArc manualmente em http://rainmeter.net/redist$\n$\nPressione OK para sair."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc falha na instalação, código de erro $0.$\n$\nVocê pode desejar baixar o .NET $instArc manualmente em http://rainmeter.net/redist$\n$\nPressione OK para sair."
 ${LangFileString} RAINMETERCLOSEERROR     "Falha ao encerrar o Rainmeter. $\n$\nPor favor, feche o Rainmeter manualmente e tente novamente."

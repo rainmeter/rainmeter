@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} requires Windows 200
 ${LangFileString} ADMINERROR              "Adminstrative rights required."
 ${LangFileString} LOGONERROR              "Logon service not running."
 ${LangFileString} UACERROR                "Unable to elevate."
-${LangFileString} WRITEERROR              "Portable Rainmeter must be installed into a location with full read and write access (as normal user).$\nIf you want to install Rainmeter into '$INSTDIR', go back and select 'Standard installation'.$\n$\nOtherwise, browse for another location with full read and write access."
+${LangFileString} WRITEERROR              "Portable Rainmeter must be installed into a location with full read and write access (as normal user).$\nIf you want to install Rainmeter into '$0', go back and select 'Standard installation'.$\n$\nOtherwise, browse for another location with full read and write access."
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc install failed with error code $0.$\n$\nYou might want to try downloading the Visual C++ 2010 SP1 $instArc redistributable package manually from http://rainmeter.net/redist$\n$\nPress OK to exit."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc install failed with error code $0.$\n$\nYou might want to try downloading the .NET $instArc redistributable package manually from http://rainmeter.net/redist$\n$\nPress OK to exit."
 ${LangFileString} RAINMETERCLOSEERROR     "Failed to close Rainmeter.$\n$\nPlease close Rainmeter manually and try again."

@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} tarvitsee Windows 20
 ${LangFileString} ADMINERROR              "Tarvitaan järjestelmänvalvojan oikeudet."
 ${LangFileString} LOGONERROR              "Kirjautumispalvelu ei ole käynnissä."
 ${LangFileString} UACERROR                "UAC korottaminen epäonnistui."
-${LangFileString} WRITEERROR              "Siirrettävä Rainmeter on asennettava sijaintiin johon on sekä kirjoitus- että lukuoikeudet (normaalikäyttäjänä).$\nJos haluat asentaa ohjelman Rainmeter kohteeseen '$INSTDIR', palaa takaisin ja valitse 'Normaali asennus'.$\n$\nMuussa tapauksessa valitse sijainti johon on täydet luku- ja kirjoitusoikeudet."
+${LangFileString} WRITEERROR              "Siirrettävä Rainmeter on asennettava sijaintiin johon on sekä kirjoitus- että lukuoikeudet (normaalikäyttäjänä).$\nJos haluat asentaa ohjelman Rainmeter kohteeseen '$0', palaa takaisin ja valitse 'Normaali asennus'.$\n$\nMuussa tapauksessa valitse sijainti johon on täydet luku- ja kirjoitusoikeudet."
 ${LangFileString} VCINSTERROR             "Kirjaston Visual C++ $instArc asennus epäonnistui virhekoodilla $0.$\n$\nKoita ladata Visual C++ 2010 SP1 $instArc uudelleenjaeltava paketti käsin osoitteesta http://rainmeter.net/redist$\n$\nPaina OK poistuaksesi."
 ${LangFileString} DOTNETINSTERROR         "Kirjaston .NET $instArc asennus epäonnistui virhekoodilla $0.$\n$\nKoita ladata .NET $instArc uudelleenjaeltava paketti käsin osoitteesta http://rainmeter.net/redist$\n$\nPaina OK poistuaksesi."
 ${LangFileString} RAINMETERCLOSEERROR     "Rainmeter:n sulkeminen epäonnistui.$\n$\nSulje Rainmeter käsin ja yritä uudelleen."

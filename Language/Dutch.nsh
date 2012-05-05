@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} Vereist Windows 2003
 ${LangFileString} ADMINERROR              "Adminstrative rechten zijn noodzakelijk."
 ${LangFileString} LOGONERROR              "Logon dienst loopt niet."
 ${LangFileString} UACERROR                "Onbekwaam om op te heffen."
-${LangFileString} WRITEERROR              "Draagbare Rainmeter moet in een locatie met volledige lees en schrijfrechten zijn geÃ¯nstalleerd worden  (als normale gebruiker) .$\nAls u wilt installeren Rainmeter in '$INSTDIR', ga terug en selecteer 'Normale installatie' die .$\n$\nAnders, voor nog een locatie met volledige lezing en schrijfrecten schrijft toe."
+${LangFileString} WRITEERROR              "Draagbare Rainmeter moet in een locatie met volledige lees en schrijfrechten zijn geÃ¯nstalleerd worden  (als normale gebruiker) .$\nAls u wilt installeren Rainmeter in '$0', ga terug en selecteer 'Normale installatie' die .$\n$\nAnders, voor nog een locatie met volledige lezing en schrijfrecten schrijft toe."
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc installeer mislukt met foutcode $0.$\n$\nU kunt de Visuele C willen proberen downloaden Visual C++ 2010 SP1 $instArc redistributable pakket handmatig van http://rainmeter.net/redist$\n$\nDruk op OK op te sluiten."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc installeer mislukt met foutcode $0.$\n$\nU kunt proberen om het downloaden van het .NET $instArc redistributable pakket handmatig via http://rainmeter.net/redist$\n$\nDruk op OK op te sluiten."
 ${LangFileString} RAINMETERCLOSEERROR     "Mislukt om Rainmeter te sluiten.$\n$\nSluit alstublieft Rainmeter handmatig en probeer opnieuw."

@@ -4,7 +4,7 @@ ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} requiert Windows 200
 ${LangFileString} ADMINERROR              "Droits administratifs requis."
 ${LangFileString} LOGONERROR              "Le service Logon n'est pas démarré."
 ${LangFileString} UACERROR                "Impossible d'élever les privilèges."
-${LangFileString} WRITEERROR              "Rainmeter version portable doit être installé dans un dossier à accès total(en tant qu'utilisateur normal).$\nSi vous voulez installer Rainmeter dans le dossier '$INSTDIR', faites Précédent et sélectionnez 'Installation normale'.$\n$\nSinon, parcourez un autre emplacement avec un accès total."
+${LangFileString} WRITEERROR              "Rainmeter version portable doit être installé dans un dossier à accès total(en tant qu'utilisateur normal).$\nSi vous voulez installer Rainmeter dans le dossier '$0', faites Précédent et sélectionnez 'Installation normale'.$\n$\nSinon, parcourez un autre emplacement avec un accès total."
 ${LangFileString} VCINSTERROR             "Visual C++ $instArc l'installation a échoué avec le code d'erreur $0.$\n$\nVous pourriez essayer de télécharger le progiciel redistribuable Visual C++ 2010 SP1 $instArc manuellement à http://rainmeter.net/redist$\n$\nOK pour quitter."
 ${LangFileString} DOTNETINSTERROR         ".NET $instArc l'installation a échoué avec le code d'erreur $0.$\n$\nVous pourriez essayer de télécharger le progiciel redistribuable .NET $instArc manuellement à http://rainmeter.net/redist$\n$\nOK pour quitter."
 ${LangFileString} RAINMETERCLOSEERROR     "La fermeture de Rainmeter a échoué.$\n$\nVeuillez fermer Rainmeter manuellement et réessayer."
