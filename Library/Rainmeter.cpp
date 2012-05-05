@@ -1033,7 +1033,8 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 	}
 
 	// Tray must exist before configs are read
-	m_TrayWindow = new CTrayWindow(m_Instance);
+	m_TrayWindow = new CTrayWindow();
+	m_TrayWindow->Initialize();
 
 	ReloadSettings();
 

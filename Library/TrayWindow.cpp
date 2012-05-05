@@ -49,7 +49,7 @@ extern CRainmeter* Rainmeter;
 
 using namespace Gdiplus;
 
-CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
+CTrayWindow::CTrayWindow() :
 	m_Icon(),
 	m_Measure(),
 	m_MeterType(TRAY_METER_TYPE_HISTOGRAM),
@@ -61,29 +61,6 @@ CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
 	m_Notification(TRAY_NOTIFICATION_NONE),
 	m_IconEnabled(true)
 {
-	WNDCLASS wc = {0};
-	wc.lpfnWndProc = (WNDPROC)WndProc;
-	wc.hInstance = instance;
-	wc.lpszClassName = L"RainmeterTrayClass";
-	wc.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_SHARED);
-
-	RegisterClass(&wc);
-
-	m_Window = CreateWindowEx(
-		WS_EX_TOOLWINDOW,
-		L"RainmeterTrayClass",
-		NULL,
-		WS_POPUP | WS_DISABLED,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		NULL,
-		NULL,
-		instance,
-		this);
-
-	SetWindowPos(m_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 }
 
 CTrayWindow::~CTrayWindow()
@@ -101,6 +78,33 @@ CTrayWindow::~CTrayWindow()
 	m_Icons.clear();
 
 	if (m_Window) DestroyWindow(m_Window);
+}
+
+void CTrayWindow::Initialize()
+{
+	WNDCLASS wc = {0};
+	wc.lpfnWndProc = (WNDPROC)WndProc;
+	wc.hInstance = Rainmeter->GetInstance();
+	wc.lpszClassName = L"RainmeterTrayClass";
+	wc.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), LR_SHARED);
+
+	RegisterClass(&wc);
+
+	m_Window = CreateWindowEx(
+		WS_EX_TOOLWINDOW,
+		L"RainmeterTrayClass",
+		NULL,
+		WS_POPUP | WS_DISABLED,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		NULL,
+		NULL,
+		wc.hInstance,
+		this);
+
+	SetWindowPos(m_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 }
 
 void CTrayWindow::AddTrayIcon()
@@ -437,100 +441,97 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		if (tray)
+		if (wParam == IDM_MANAGE)
 		{
-			if (wParam == IDM_MANAGE)
-			{
-				CDialogManage::Open();
-			}
-			else if (wParam == IDM_ABOUT)
-			{
-				CDialogAbout::Open();
-			}
-			else if (wParam == IDM_SHOW_HELP)
-			{
-				RunCommand(NULL, RAINMETER_HELP, SW_SHOWNORMAL);
-			}
-			else if (wParam == IDM_NEW_VERSION)
-			{
-				RunCommand(NULL, RAINMETER_OFFICIAL, SW_SHOWNORMAL);
-			}
-			else if (wParam == IDM_REFRESH)
-			{
-				PostMessage(Rainmeter->GetWindow(), WM_RAINMETER_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
-			}
-			else if (wParam == IDM_SHOWLOGFILE)
-			{
-				Rainmeter->ShowLogFile();
-			}
-			else if (wParam == IDM_STARTLOG)
-			{
-				Rainmeter->StartLogging();
-			}
-			else if (wParam == IDM_STOPLOG)
-			{
-				Rainmeter->StopLogging();
-			}
-			else if (wParam == IDM_DELETELOGFILE)
-			{
-				Rainmeter->DeleteLogFile();
-			}
-			else if (wParam == IDM_DEBUGLOG)
-			{
-				Rainmeter->SetDebug(!Rainmeter->GetDebug());
-			}
-			else if (wParam == IDM_DISABLEDRAG)
-			{
-				Rainmeter->SetDisableDragging(!Rainmeter->GetDisableDragging());
-			}
-			else if (wParam == IDM_EDITCONFIG)
-			{
-				Rainmeter->EditSettings();
-			}
-			else if (wParam == IDM_QUIT)
-			{
-				PostQuitMessage(0);
-			}
-			else if (wParam == IDM_OPENSKINSFOLDER)
-			{
-				Rainmeter->OpenSkinFolder();
-			}
-			else if ((wParam & 0x0ffff) >= ID_THEME_FIRST && (wParam & 0x0ffff) <= ID_THEME_LAST)
-			{
-				int pos = (wParam & 0x0ffff) - ID_THEME_FIRST;
+			CDialogManage::Open();
+		}
+		else if (wParam == IDM_ABOUT)
+		{
+			CDialogAbout::Open();
+		}
+		else if (wParam == IDM_SHOW_HELP)
+		{
+			RunCommand(NULL, RAINMETER_HELP, SW_SHOWNORMAL);
+		}
+		else if (wParam == IDM_NEW_VERSION)
+		{
+			RunCommand(NULL, RAINMETER_OFFICIAL, SW_SHOWNORMAL);
+		}
+		else if (wParam == IDM_REFRESH)
+		{
+			PostMessage(Rainmeter->GetWindow(), WM_RAINMETER_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
+		}
+		else if (wParam == IDM_SHOWLOGFILE)
+		{
+			Rainmeter->ShowLogFile();
+		}
+		else if (wParam == IDM_STARTLOG)
+		{
+			Rainmeter->StartLogging();
+		}
+		else if (wParam == IDM_STOPLOG)
+		{
+			Rainmeter->StopLogging();
+		}
+		else if (wParam == IDM_DELETELOGFILE)
+		{
+			Rainmeter->DeleteLogFile();
+		}
+		else if (wParam == IDM_DEBUGLOG)
+		{
+			Rainmeter->SetDebug(!Rainmeter->GetDebug());
+		}
+		else if (wParam == IDM_DISABLEDRAG)
+		{
+			Rainmeter->SetDisableDragging(!Rainmeter->GetDisableDragging());
+		}
+		else if (wParam == IDM_EDITCONFIG)
+		{
+			Rainmeter->EditSettings();
+		}
+		else if (wParam == IDM_QUIT)
+		{
+			PostQuitMessage(0);
+		}
+		else if (wParam == IDM_OPENSKINSFOLDER)
+		{
+			Rainmeter->OpenSkinFolder();
+		}
+		else if ((wParam & 0x0ffff) >= ID_THEME_FIRST && (wParam & 0x0ffff) <= ID_THEME_LAST)
+		{
+			int pos = (wParam & 0x0ffff) - ID_THEME_FIRST;
 
-				const std::vector<std::wstring>& themes = Rainmeter->GetAllThemes();
-				if (pos >= 0 && pos < (int)themes.size())
-				{
-					Rainmeter->LoadTheme(themes[pos]);
-				}
-			}
-			else if ((wParam & 0x0ffff) >= ID_CONFIG_FIRST && (wParam & 0x0ffff) <= ID_CONFIG_LAST)
+			const std::vector<std::wstring>& themes = Rainmeter->GetAllThemes();
+			if (pos >= 0 && pos < (int)themes.size())
 			{
-				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex((UINT)(wParam & 0x0ffff));
-				if (indexes.first != -1 && indexes.second != -1)
-				{
-					Rainmeter->ToggleConfig(indexes.first, indexes.second);
-				}
+				Rainmeter->LoadTheme(themes[pos]);
 			}
-			else
+		}
+		else if ((wParam & 0x0ffff) >= ID_CONFIG_FIRST && (wParam & 0x0ffff) <= ID_CONFIG_LAST)
+		{
+			std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex((UINT)(wParam & 0x0ffff));
+			if (indexes.first != -1 && indexes.second != -1)
 			{
-				// Forward the message to correct window
-				int index = (int)(wParam >> 16);
-				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+				Rainmeter->ToggleConfig(indexes.first, indexes.second);
+			}
+		}
+		else
+		{
+			// Forward the message to correct window
+			int index = (int)(wParam >> 16);
+			const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
 
-				if (index < (int)windows.size())
+			if (index < (int)windows.size())
+			{
+				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
+				for ( ; iter != windows.end(); ++iter)
 				{
-					std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-					for ( ; iter != windows.end(); ++iter)
+					--index;
+					if (index < 0)
 					{
-						--index;
-						if (index < 0)
-						{
-							CMeterWindow* meterWindow = (*iter).second;
-							SendMessage(meterWindow->GetWindow(), WM_COMMAND, wParam & 0x0FFFF, NULL);
-							break;
-						}
+						CMeterWindow* meterWindow = (*iter).second;
+						SendMessage(meterWindow->GetWindow(), WM_COMMAND, wParam & 0x0FFFF, NULL);
+						break;
 					}
 				}
 			}
@@ -660,7 +661,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		return 1;
 
 	case WM_TIMER:
-		if (tray && tray->m_Measure)
+		if (tray->m_Measure)
 		{
 			tray->m_Measure->Update();
 			tray->ModifyTrayIcon(tray->m_Measure->GetRelativeValue());
@@ -674,7 +675,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	default:
 		if (uMsg == WM_TASKBARCREATED)
 		{
-			if (tray && tray->IsTrayIconEnabled())
+			if (tray->IsTrayIconEnabled())
 			{
 				tray->RemoveTrayIcon();
 				tray->AddTrayIcon();

@@ -41,8 +41,10 @@ class CMeasure;
 class CTrayWindow
 {
 public:
-	CTrayWindow(HINSTANCE instance);
+	CTrayWindow();
 	~CTrayWindow();
+
+	void Initialize();
 
 	void ReadConfig(CConfigParser& parser);
 	HWND GetWindow() { return m_Window; }
