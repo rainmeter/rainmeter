@@ -21,7 +21,6 @@
 #include "CAD/cad_sdk.h"
 
 CPlayer* CPlayerCAD::c_Player = NULL;
-extern std::wstring g_SettingsFile;
 extern HINSTANCE g_Instance;
 
 // This player emulates the CD Art Display IPC interface, which is supported by
@@ -117,7 +116,7 @@ void CPlayerCAD::Initialize()
 	}
 
 	WCHAR buffer[MAX_PATH];
-	LPCTSTR file = g_SettingsFile.c_str();
+	LPCTSTR file = RmGetSettingsFile();
 
 	// Read saved settings
 	GetPrivateProfileString(L"NowPlaying.dll", L"ClassName", NULL, buffer, MAX_PATH, file);
@@ -363,7 +362,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 
 					LPCTSTR classSz = className.empty() ? NULL : className.c_str();
 					LPCTSTR windowSz = windowName.empty() ? NULL : windowName.c_str();
-					LPCTSTR file = g_SettingsFile.c_str();
+					LPCTSTR file = RmGetSettingsFile();
 
 					WritePrivateProfileString(L"NowPlaying.dll", L"ClassName", classSz, file);
 					WritePrivateProfileString(L"NowPlaying.dll", L"WindowName", windowSz, file);

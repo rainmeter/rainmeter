@@ -67,8 +67,6 @@ private:
 	void ModifyTrayIcon(double value);
 	HICON CreateTrayIcon(double value);
 
-	HICON LoadResourceIcon(LPCWSTR name, bool large = false);
-
 	void ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const WCHAR* text);
 
 	HICON m_Icon;

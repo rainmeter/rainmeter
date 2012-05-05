@@ -28,7 +28,7 @@
 #include "PlayerWMP.h"
 
 static std::vector<ParentMeasure*> g_ParentMeasures;
-std::wstring g_SettingsFile;
+bool g_Initialized = false;
 HINSTANCE g_Instance = NULL;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -51,10 +51,10 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	Measure* measure = new Measure;
 	*data = measure;
 
-	if (g_SettingsFile.empty())
+	if (!g_Initialized)
 	{
-		g_SettingsFile = RmGetSettingsFile();
 		CInternet::Initialize();
+		g_Initialized = true;
 	}
 }
 
