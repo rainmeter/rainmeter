@@ -731,12 +731,17 @@ SkipIniMove:
 		${EndIf}
 		CreateShortcut "$0" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR\Rainmeter.exe" 0
 
+		${If} $AutoStartup == 1
+			${If} ${FileExists} "$SMSTARTUP\Rainmeter.lnk"
+				; Remove user shortcut to prevent duplicate with all users shortcut
+				!insertmacro UAC_AsUser_Call Function RemoveUserStartupShortcut ${UAC_SYNCREGISTERS}
+			${Else}
+				!insertmacro UAC_AsUser_Call Function CreateUserStartupShortcut ${UAC_SYNCREGISTERS}
+			${EndIf}
+		${EndIf}
+
 		SetShellVarContext current
 		Call RemoveStartMenuShortcuts
-
-		${If} $AutoStartup == 1
-			!insertmacro UAC_AsUser_Call Function CreateStartupShortcut ${UAC_SYNCREGISTERS}
-		${EndIf}
 
 		!insertmacro UAC_AsUser_Call Function RemoveStartMenuShortcuts ${UAC_SYNCREGISTERS}
 
@@ -763,8 +768,14 @@ Function RemoveStartMenuShortcuts
 	!insertmacro RemoveStartMenuShortcuts "$SMPROGRAMS\Rainmeter"
 FunctionEnd
 
-Function CreateStartupShortcut
-	CreateShortcut  "$SMSTARTUP\Rainmeter.lnk" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR\Rainmeter.exe" 0
+Function CreateUserStartupShortcut
+	SetShellVarContext current
+	CreateShortcut "$SMSTARTUP\Rainmeter.lnk" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR\Rainmeter.exe" 0
+FunctionEnd
+
+Function RemoveUserStartupShortcut
+	SetShellVarContext current
+	Delete "$SMSTARTUP\Rainmeter.lnk"
 FunctionEnd
 
 Function FinishRun
