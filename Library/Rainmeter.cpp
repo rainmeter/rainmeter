@@ -856,27 +856,37 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 		}
 	}
 
-	// Set the log file and stats file location
-	m_LogFile = m_StatsFile = m_IniFile;
-	size_t len = m_LogFile.length();
-	if (len > 4 && _wcsicmp(m_LogFile.c_str() + (len - 4), L".ini") == 0)
+	const WCHAR* iniFile = m_IniFile.c_str();
+
+	// Set file locations
 	{
-		m_LogFile.replace(len - 4, 4, L".log");
-		m_StatsFile.replace(len - 4, 4, L".stats");
-	}
-	else
-	{
-		m_LogFile += L".log";	// Append the extension so that we don't accidentally overwrite the ini file
+		size_t len = m_IniFile.length();
+		if (len > 4 && _wcsicmp(m_IniFile.c_str() + (len - 4), L".ini") == 0)
+		{
+			len -= 4;
+		}
+
+		m_LogFile.assign(m_IniFile, 0, len);
+		m_DataFile = m_StatsFile = m_LogFile;
+		m_LogFile += L".log";
 		m_StatsFile += L".stats";
+		m_DataFile += L".data";
+	}
+
+	bool dataFileCreated = false;
+	if (_waccess(m_DataFile.c_str(), 0) == -1)
+	{
+		dataFileCreated = true;
+		CreateDataFile();
 	}
 
 	// Read Logging settings beforehand
-	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, m_IniFile.c_str());
-	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, m_IniFile.c_str());
+	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, iniFile);
+	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, iniFile);
 
 	// Determine the language resource to load
 	std::wstring resource = m_Path + L"Languages\\";
-	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", buffer, MAX_LINE_LENGTH, m_IniFile.c_str()) == 0)
+	if (GetPrivateProfileString(L"Rainmeter", L"Language", L"", buffer, MAX_LINE_LENGTH, iniFile) == 0)
 	{
 		// Use whatever the user selected for the installer
 		DWORD size = MAX_LINE_LENGTH;
@@ -928,7 +938,7 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 	m_SkinPath += L"Skins\\";
 
 	// Read the skin folder from the ini file
-	len = GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, MAX_LINE_LENGTH, m_IniFile.c_str());
+	size_t len = GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, MAX_LINE_LENGTH, iniFile);
 	if (len > 0)
 	{
 		m_SkinPath.assign(buffer, len);
@@ -977,14 +987,14 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 			Log(LOG_WARNING, L"Documents folder not found");
 		}
 
-		WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), m_IniFile.c_str());
+		WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), iniFile);
 	}
 
 	delete [] buffer;
 	buffer = NULL;
 
 	LogWithArgs(LOG_NOTICE, L"Path: %s", m_Path.c_str());
-	LogWithArgs(LOG_NOTICE, L"IniFile: %s", m_IniFile.c_str());
+	LogWithArgs(LOG_NOTICE, L"IniFile: %s", iniFile);
 	LogWithArgs(LOG_NOTICE, L"SkinPath: %s", m_SkinPath.c_str());
 
 	// Extract volume path from program path
@@ -1033,8 +1043,6 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 	}
 
-	WritePrivateProfileString(L"Rainmeter", L"CheckUpdate", NULL , m_IniFile.c_str());
-
 	ResetStats();
 	ReadStats();
 
@@ -1047,7 +1055,11 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 	// Create meter windows for active configs
 	ActivateActiveConfigs();
 
-	if (!m_DisableVersionCheck)
+	if (dataFileCreated)
+	{
+		m_TrayWindow->ShowWelcomeNotification();
+	}
+	else if (!m_DisableVersionCheck)
 	{
 		CheckUpdate();
 	}
@@ -1167,6 +1179,29 @@ void CRainmeter::CreateDefaultConfigFile()
 	else
 	{
 		CSystem::CopyFiles(defaultIni, m_IniFile);
+	}
+}
+
+void CRainmeter::CreateDataFile()
+{
+	std::wstring tmpSz = GetSettingsPath();
+	tmpSz += L"Plugins.ini";
+
+	const WCHAR* pluginsFile = tmpSz.c_str();
+	const WCHAR* dataFile = m_DataFile.c_str();
+
+	if (_waccess(pluginsFile, 0) == 0)
+	{
+		_wrename(pluginsFile, dataFile);
+	}
+	else
+	{
+		// Create empty file
+		HANDLE file = CreateFile(dataFile, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (file != INVALID_HANDLE_VALUE)
+		{
+			CloseHandle(file);
+		}
 	}
 }
 

@@ -76,9 +76,7 @@ void* __stdcall RmGet(void* rm, int type)
 
 	case RMG_SETTINGSFILE:
 		{
-			g_Buffer = Rainmeter->GetSettingsPath();
-			g_Buffer += L"Plugins.ini";
-			return (void*)g_Buffer.c_str();
+			return (void*)Rainmeter->GetDataFile().c_str();
 		}
 	}
 

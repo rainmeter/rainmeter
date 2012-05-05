@@ -151,6 +151,7 @@ public:
 
 	const std::wstring& GetPath() { return m_Path; }
 	const std::wstring& GetIniFile() { return m_IniFile; }
+	const std::wstring& GetDataFile() { return m_DataFile; }
 	const std::wstring& GetLogFile() { return m_LogFile; }
 	const std::wstring& GetSkinPath() { return m_SkinPath; }
 	const std::wstring& GetPluginPath() { return m_PluginPath; }
@@ -263,6 +264,7 @@ private:
 	void CreateThemeMenu(HMENU themeMenu);
 	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);
 	void CreateDefaultConfigFile();
+	void CreateDataFile();
 	void SetLogging(bool logging);
 	void TestSettingsFile(bool bDefaultIniLocation);
 
@@ -274,13 +276,14 @@ private:
 	std::map<std::wstring, CMeterWindow*> m_MeterWindows;
 	std::vector<std::wstring> m_Themes;
 
-	std::wstring m_Path;				// Path to the main folder
-	std::wstring m_IniFile;				// The main ini file
-	std::wstring m_StatsFile;			// The statistics ini file
-	std::wstring m_LogFile;				// The log file
-	std::wstring m_SkinPath;			// Path to the folder where the skins are
-	std::wstring m_PluginPath;			// Path to the folder where the plugins are
-	std::wstring m_AddonPath;			// Path to the folder where the addons are
+	std::wstring m_Path;
+	std::wstring m_IniFile;
+	std::wstring m_DataFile;
+	std::wstring m_StatsFile;
+	std::wstring m_LogFile;
+	std::wstring m_SkinPath;
+	std::wstring m_PluginPath;
+	std::wstring m_AddonPath;
 
 	std::wstring m_Drive;
 
