@@ -136,7 +136,7 @@ CMeterWindow::CMeterWindow(const std::wstring& config, const std::wstring& iniFi
 	m_TransparencyValue(),
 	m_Refreshing(false),
 	m_Hidden(false),
-	m_ResizeWindow(false),
+	m_ResizeWindow(RESIZEMODE_NONE),
 	m_UpdateCounter(),
 	m_MouseMoveCounter(),
 	m_FontCollection(),
@@ -344,7 +344,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 	Log(LOG_NOTICE, notice.c_str());
 
 	m_Refreshing = true;
-	m_ResizeWindow = true;
+	SetResizeWindowMode(RESIZEMODE_RESET);
 
 	if (!init)
 	{
@@ -411,7 +411,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	// Set the window region
 	UpdateWindow(m_AlphaValue, true);  // Add/Remove layered flag
-	Update(false);
+	Update(true);
 
 	if (m_BlurMode == BLURMODE_NONE)
 	{
@@ -1105,7 +1105,7 @@ void CMeterWindow::ShowMeter(const std::wstring& name, bool group)
 		if (CompareName((*j), meter, group))
 		{
 			(*j)->Show();
-			m_ResizeWindow = true;	// Need to recalculate the window size
+			SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
 			if (!group) return;
 		}
 	}
@@ -1127,7 +1127,7 @@ void CMeterWindow::HideMeter(const std::wstring& name, bool group)
 		if (CompareName((*j), meter, group))
 		{
 			(*j)->Hide();
-			m_ResizeWindow = true;	// Need to recalculate the window size
+			SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
 			if (!group) return;
 		}
 	}
@@ -1156,7 +1156,7 @@ void CMeterWindow::ToggleMeter(const std::wstring& name, bool group)
 			{
 				(*j)->Hide();
 			}
-			m_ResizeWindow = true;	// Need to recalculate the window size
+			SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
 			if (!group) return;
 		}
 	}
@@ -1179,7 +1179,7 @@ void CMeterWindow::MoveMeter(const std::wstring& name, int x, int y)
 		{
 			(*j)->SetX(x);
 			(*j)->SetY(y);
-			m_ResizeWindow = true;	// Need to recalculate the window size
+			SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
 			return;
 		}
 	}
@@ -1203,7 +1203,7 @@ void CMeterWindow::UpdateMeter(const std::wstring& name, bool group)
 		if (bContinue && CompareName((*j), meter, group))
 		{
 			UpdateMeter((*j), bActiveTransition, true);
-			m_ResizeWindow = true;	// Need to recalculate the window size
+			SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
 			if (!group)
 			{
 				bContinue = false;
@@ -2250,7 +2250,7 @@ void CMeterWindow::InitializeMeasures()
 }
 
 /*
-** Initializes all the meters and the background
+** Initializes all the meters
 **
 */
 void CMeterWindow::InitializeMeters()
@@ -2273,9 +2273,6 @@ void CMeterWindow::InitializeMeters()
 			(*j)->CreateToolTip(this);
 		}
 	}
-
-	Update(true);
-	ResizeWindow(true);
 }
 
 /*
@@ -2490,8 +2487,8 @@ void CMeterWindow::Redraw()
 {
 	if (m_ResizeWindow)
 	{
-		ResizeWindow(false);
-		m_ResizeWindow = false;
+		ResizeWindow(m_ResizeWindow == RESIZEMODE_RESET);
+		SetResizeWindowMode(RESIZEMODE_NONE);
 	}
 
 	// Create or clear the doublebuffer
@@ -2624,7 +2621,7 @@ bool CMeterWindow::UpdateMeasure(CMeasure* measure, bool force)
 	}
 
 	int updateDivider = measure->GetUpdateDivider();
-	if (updateDivider >= 0 || force || m_Refreshing)
+	if (updateDivider >= 0 || force)
 	{
 		if (measure->HasDynamicVariables() &&
 			(measure->GetUpdateCounter() + 1) >= updateDivider)
@@ -2662,7 +2659,7 @@ bool CMeterWindow::UpdateMeter(CMeter* meter, bool& bActiveTransition, bool forc
 	}
 
 	int updateDivider = meter->GetUpdateDivider();
-	if (updateDivider >= 0 || force || m_Refreshing)
+	if (updateDivider >= 0 || force)
 	{
 		if (meter->HasDynamicVariables() &&
 			(meter->GetUpdateCounter() + 1) >= updateDivider)
@@ -2709,31 +2706,28 @@ bool CMeterWindow::UpdateMeter(CMeter* meter, bool& bActiveTransition, bool forc
 ** Updates all the measures and redraws the meters
 **
 */
-void CMeterWindow::Update(bool nodraw)
+void CMeterWindow::Update(bool refresh)
 {
 	++m_UpdateCounter;
 
-	if (!nodraw)
+	if (!m_Measures.empty())
 	{
-		if (!m_Measures.empty())
+		// Pre-updates
+		if (m_HasNetMeasures)
 		{
-			// Pre-updates
-			if (m_HasNetMeasures)
-			{
-				CMeasureNet::UpdateIFTable();
-				CMeasureNet::UpdateStats();
-			}
-
-			// Update all measures
-			std::list<CMeasure*>::const_iterator i = m_Measures.begin();
-			for ( ; i != m_Measures.end(); ++i)
-			{
-				UpdateMeasure((*i), false);
-			}
+			CMeasureNet::UpdateIFTable();
+			CMeasureNet::UpdateStats();
 		}
 
-		CDialogAbout::UpdateMeasures(this);
+		// Update all measures
+		std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+		for ( ; i != m_Measures.end(); ++i)
+		{
+			UpdateMeasure((*i), refresh);
+		}
 	}
+
+	CDialogAbout::UpdateMeasures(this);
 
 	// Update all meters
 	bool bActiveTransition = false;
@@ -2741,19 +2735,19 @@ void CMeterWindow::Update(bool nodraw)
 	std::list<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
-		if (UpdateMeter((*j), bActiveTransition, false))
+		if (UpdateMeter((*j), bActiveTransition, refresh))
 		{
 			bUpdate = true;
 		}
 	}
 
 	// Redraw all meters
-	if (!nodraw && (bUpdate || m_ResizeWindow || m_Refreshing))
+	if (bUpdate || m_ResizeWindow || refresh)
 	{
 		if (m_DynamicWindowSize)
 		{
 			// Resize the window
-			m_ResizeWindow = true;
+			SetResizeWindowMode(RESIZEMODE_CHECK);
 		}
 
 		// If our option is to disable when in an RDP session, then check if in an RDP session.

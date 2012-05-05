@@ -299,6 +299,15 @@ private:
 		SETTING_ALL              = 0xFFFFFFFF
 	};
 
+	enum RESIZEMODE
+	{
+		RESIZEMODE_NONE = 0,
+		RESIZEMODE_CHECK,
+		RESIZEMODE_RESET
+	};
+
+	void SetResizeWindowMode(RESIZEMODE mode) { if (m_ResizeWindow != RESIZEMODE_RESET || mode != RESIZEMODE_CHECK) m_ResizeWindow = mode; }
+
 	bool HitTest(int x, int y);
 
 	void GetSkinFolders(const std::wstring& folder);
@@ -309,7 +318,7 @@ private:
 	void PostUpdate(bool bActiveTransition);
 	bool UpdateMeasure(CMeasure* measure, bool force);
 	bool UpdateMeter(CMeter* meter, bool& bActiveTransition, bool force);
-	void Update(bool nodraw);
+	void Update(bool refresh);
 	void UpdateWindow(int alpha, bool reset);
 	void ReadConfig();
 	void WriteConfig(INT setting = SETTING_ALL);
@@ -433,7 +442,7 @@ private:
 	bool m_Refreshing;							// This is true, when the meter is refreshing
 
 	bool m_Hidden;								// True, if Rainmeter is hidden
-	bool m_ResizeWindow;						// If true, the window size is recalculated during the next update
+	RESIZEMODE m_ResizeWindow;					// If needed, the window size is recalculated during the next update
 
 	std::list<CMeasure*> m_Measures;			// All the measures
 	std::list<CMeter*> m_Meters;				// All the meters
