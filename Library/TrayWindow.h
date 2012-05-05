@@ -48,14 +48,26 @@ public:
 	HWND GetWindow() { return m_Window; }
 	bool IsTrayIconEnabled() { return m_TrayIconEnabled; }
 
+	void ShowWelcomeNotification();
+	void ShowUpdateNotification(const WCHAR* newVersion);
+
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
+	enum TRAY_NOTIFICATION
+	{
+		TRAY_NOTIFICATION_NONE,
+		TRAY_NOTIFICATION_WELCOME,
+		TRAY_NOTIFICATION_UPDATE
+	};
+
 	void AddTrayIcon();
 	void RemoveTrayIcon();
 	void ModifyTrayIcon(double value);
 	HICON CreateTrayIcon(double value);
+
+	void ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const WCHAR* text);
 
 	HICON m_TrayIcon;
 	HWND m_Window;
@@ -71,6 +83,8 @@ private:
 
 	double m_TrayValues[TRAYICON_SIZE];
 	int m_TrayPos;
+
+	TRAY_NOTIFICATION m_Notification;
 
 	bool m_TrayIconEnabled;
 };

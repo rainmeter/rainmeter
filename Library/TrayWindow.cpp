@@ -26,6 +26,7 @@
 #include "DialogManage.h"
 #include "Error.h"
 #include "RainmeterQuery.h"
+#include "resource.h"
 #include "../Version.h"
 
 #define RAINMETER_OFFICIAL		L"http://rainmeter.net/cms/"
@@ -57,6 +58,7 @@ CTrayWindow::CTrayWindow(HINSTANCE instance) : m_Instance(instance),
 	m_Bitmap(),
 	m_TrayValues(),
 	m_TrayPos(),
+	m_Notification(TRAY_NOTIFICATION_NONE),
 	m_TrayIconEnabled(true)
 {
 	WNDCLASS wc = {0};
@@ -272,6 +274,36 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 	}
 
 	return (HICON)LoadImage(hExe, MAKEINTRESOURCE(IDI_TRAY), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
+}
+
+void CTrayWindow::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const WCHAR* text)
+{
+	if (m_Notification == TRAY_NOTIFICATION_NONE)
+	{
+		m_Notification = id;
+
+		NOTIFYICONDATA nid = {sizeof(NOTIFYICONDATA)};
+		nid.hWnd = m_Window;
+		nid.uID = IDI_TRAY;
+		nid.uFlags = NIF_INFO;
+		nid.uTimeout = 30000;
+		nid.dwInfoFlags = NIIF_USER;
+		nid.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, 32, 32, LR_SHARED);
+		wcsncpy_s(nid.szInfoTitle, title, _TRUNCATE);
+		wcsncpy_s(nid.szInfo, text, _TRUNCATE);
+		Shell_NotifyIcon(NIM_MODIFY, &nid);
+	}
+}
+
+void CTrayWindow::ShowWelcomeNotification()
+{
+	ShowNotification(TRAY_NOTIFICATION_WELCOME, GetString(ID_STR_WELCOME), GetString(ID_STR_CLICKTOMANAGE));
+}
+
+void CTrayWindow::ShowUpdateNotification(const WCHAR* newVersion)
+{
+	std::wstring text = GetFormattedString(ID_STR_CLICKTODOWNLOAD, newVersion);
+	ShowNotification(TRAY_NOTIFICATION_UPDATE, GetString(ID_STR_UPDATEAVAILABLE), text.c_str());
 }
 
 void CTrayWindow::ReadConfig(CConfigParser& parser)
@@ -541,6 +573,23 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			else if (uMouseMsg == WM_LBUTTONDOWN || uMouseMsg == WM_LBUTTONDBLCLK)
 			{
 				CDialogManage::Open();
+			}
+			else if (uMouseMsg == NIN_BALLOONUSERCLICK)
+			{
+				if (tray->m_Notification == TRAY_NOTIFICATION_WELCOME)
+				{
+					CDialogManage::Open();
+				}
+				else if (tray->m_Notification == TRAY_NOTIFICATION_UPDATE)
+				{
+					RunCommand(NULL, RAINMETER_OFFICIAL, SW_SHOWNORMAL);
+				}
+
+				tray->m_Notification = TRAY_NOTIFICATION_NONE;
+			}
+			else if (uMouseMsg == NIN_BALLOONHIDE || uMouseMsg == NIN_BALLOONTIMEOUT)
+			{
+				tray->m_Notification = TRAY_NOTIFICATION_NONE;
 			}
 		}
 		break;
