@@ -280,8 +280,6 @@ void CTrayWindow::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, con
 {
 	if (m_Notification == TRAY_NOTIFICATION_NONE)
 	{
-		m_Notification = id;
-
 		NOTIFYICONDATA nid = {sizeof(NOTIFYICONDATA)};
 		nid.hWnd = m_Window;
 		nid.uID = IDI_TRAY;
@@ -291,7 +289,11 @@ void CTrayWindow::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, con
 		nid.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RAINMETER), IMAGE_ICON, 32, 32, LR_SHARED);
 		wcsncpy_s(nid.szInfoTitle, title, _TRUNCATE);
 		wcsncpy_s(nid.szInfo, text, _TRUNCATE);
-		Shell_NotifyIcon(NIM_MODIFY, &nid);
+
+		if (Shell_NotifyIcon(NIM_MODIFY, &nid))
+		{
+			m_Notification = id;
+		}
 	}
 }
 
