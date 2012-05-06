@@ -246,7 +246,7 @@ private:
 	void Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow);
 	void Bang_Log(const WCHAR* arg);
 
-	void ExecuteBang(const std::wstring& name, std::wstring& arg, CMeterWindow* meterWindow);
+	void ExecuteBang(const WCHAR* bang, const WCHAR* args, CMeterWindow* meterWindow);
 
 	void ActivateActiveConfigs();
 	void CreateMeterWindow(const std::wstring& config, const std::wstring& iniFile);

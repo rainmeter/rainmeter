@@ -1708,17 +1708,8 @@ void CRainmeter::ScanForThemes(const std::wstring& path)
 	}
 }
 
-void CRainmeter::ExecuteBang(const std::wstring& name, std::wstring& arg, CMeterWindow* meterWindow)
+void CRainmeter::ExecuteBang(const WCHAR* bang, const WCHAR* args, CMeterWindow* meterWindow)
 {
-	const WCHAR* bang = name.c_str();
-	const WCHAR* args = arg.c_str();
-
-	if (_wcsnicmp(bang, L"Rainmeter", 9) == 0)
-	{
-		// Skip "Rainmeter"
-		bang += 9;
-	}
-
 	if (_wcsicmp(bang, L"Refresh") == 0)
 	{
 		BangWithArgs(BANG_REFRESH, args, 0, meterWindow);
@@ -2017,55 +2008,13 @@ void CRainmeter::ExecuteBang(const std::wstring& name, std::wstring& arg, CMeter
 		// Quit needs to be delayed since it crashes if done during Update()
 		PostMessage(GetTrayWindow()->GetWindow(), WM_COMMAND, MAKEWPARAM(IDM_QUIT, 0), (LPARAM)NULL);
 	}
-	else if (_wcsicmp(name.c_str(), L"Execute") == 0)
-	{
-		// Special case for multibang execution
-		std::wstring::size_type start = std::wstring::npos;
-		int count = 0;
-		for (size_t i = 0, isize = arg.size(); i < isize; ++i)
-		{
-			if (args[i] == L'[')
-			{
-				if (count == 0)
-				{
-					start = i;
-				}
-				++count;
-			}
-			else if (args[i] == L']')
-			{
-				--count;
-
-				if (count == 0 && start != std::wstring::npos)
-				{
-					// Change ] to NULL
-					arg[i] = L'\0';
-
-					// Skip whitespace
-					start = arg.find_first_not_of(L" \t\r\n", start + 1, 4);
-
-					ExecuteCommand(arg.c_str() + start, meterWindow);
-				}
-			}
-			else if (args[i] == L'"' && isize > (i + 2) && args[i + 1] == L'"' && args[i + 2] == L'"')
-			{
-				i += 3;
-
-				std::wstring::size_type pos = arg.find(L"\"\"\"", i);
-				if (pos != std::wstring::npos)
-				{
-					i = pos + 2;	// Skip "", loop will skip last "
-				}
-			}
-		}
-	}
 	else if (_wcsicmp(bang, L"LsBoxHook") == 0)
 	{
 		// Deprecated.
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"Invalid bang: %s", name.c_str());
+		LogWithArgs(LOG_ERROR, L"Invalid bang: !%s", bang);
 	}
 }
 
@@ -2075,29 +2024,89 @@ void CRainmeter::ExecuteBang(const std::wstring& name, std::wstring& arg, CMeter
 */
 void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 {
-	if (command[0] == L'!') // Bang
+	if (command[0] == L'!')	// Bang
 	{
 		++command;	// Skip "!"
-		std::wstring bang, arg;
 
-		// Find the first space
-		const WCHAR* pos = wcschr(command, L' ');
-		if (pos)
+		if (_wcsnicmp(L"Execute", command, 7) == 0)
 		{
-			bang.assign(command, 0, pos - command);
-			arg.assign(pos + 1);
+			command += 7;
+			command = wcschr(command, L'[');
+			if (!command) return;
 		}
 		else
 		{
-			bang = command;
-		}
+			std::wstring bang, arg;
 
-		if (meterWindow && _wcsnicmp(L"Execute", command, 7) != 0)
+			if (_wcsnicmp(command, L"Rainmeter", 9) == 0)
+			{
+				// Skip "Rainmeter" for backwards compatibility
+				command += 9;
+			}
+
+			// Find the first space
+			const WCHAR* pos = wcschr(command, L' ');
+			if (pos)
+			{
+				bang.assign(command, 0, pos - command);
+				arg.assign(pos + 1);
+			}
+			else
+			{
+				bang = command;
+			}
+
+			if (meterWindow)
+			{
+				meterWindow->GetParser().ReplaceMeasures(arg);
+			}
+
+			ExecuteBang(bang.c_str(), arg.c_str(), meterWindow);
+			return;
+		}
+	}
+
+	if (command[0] == L'[' && command[1] == L'!')	// Multi-bang
+	{
+		std::wstring bangs = command;
+		std::wstring::size_type start = std::wstring::npos;
+		int count = 0;
+		for (size_t i = 0, isize = bangs.size(); i < isize; ++i)
 		{
-			meterWindow->GetParser().ReplaceMeasures(arg);
-		}
+			if (bangs[i] == L'[')
+			{
+				if (count == 0)
+				{
+					start = i;
+				}
+				++count;
+			}
+			else if (bangs[i] == L']')
+			{
+				--count;
 
-		ExecuteBang(bang, arg, meterWindow);
+				if (count == 0 && start != std::wstring::npos)
+				{
+					// Change ] to NULL
+					bangs[i] = L'\0';
+
+					// Skip whitespace
+					start = bangs.find_first_not_of(L" \t\r\n", start + 1, 4);
+
+					ExecuteCommand(bangs.c_str() + start, meterWindow);
+				}
+			}
+			else if (bangs[i] == L'"' && isize > (i + 2) && bangs[i + 1] == L'"' && bangs[i + 2] == L'"')
+			{
+				i += 3;
+
+				std::wstring::size_type pos = bangs.find(L"\"\"\"", i);
+				if (pos != std::wstring::npos)
+				{
+					i = pos + 2;	// Skip "", loop will skip last "
+				}
+			}
+		}
 	}
 	else
 	{
