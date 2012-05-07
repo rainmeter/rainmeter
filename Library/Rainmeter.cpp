@@ -2068,9 +2068,9 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 
 	if (command[0] == L'[')	// Multi-bang
 	{
-		std::wstring bangs = &command[1];
+		std::wstring bangs = command;
 		std::wstring::size_type start = 0;
-		int count = 1;
+		int count = 0;
 		for (size_t i = 0, isize = bangs.size(); i < isize; ++i)
 		{
 			if (bangs[i] == L'[')
