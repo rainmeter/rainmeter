@@ -224,7 +224,7 @@ public:
 	void LoadTheme(const std::wstring& name);
 	void PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace = true);
 
-	static std::vector<std::wstring> ParseString(LPCTSTR str);
+	static std::vector<std::wstring> ParseString(LPCTSTR str, CConfigParser* parser = NULL);
 	static std::wstring ExtractPath(const std::wstring& strFilePath);
 	static void ExpandEnvironmentVariables(std::wstring& strPath);
 
@@ -233,20 +233,20 @@ public:
 private:
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	void BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs, CMeterWindow* meterWindow);
-	void BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs, CMeterWindow* meterWindow);
-	void Bang_ActivateConfig(const WCHAR* arg);
-	void Bang_DeactivateConfig(const WCHAR* arg, CMeterWindow* meterWindow);
-	void Bang_ToggleConfig(const WCHAR* arg);
-	void Bang_DeactivateConfigGroup(const WCHAR* arg);
-	void Bang_SetClip(const WCHAR* arg);
-	void Bang_SetWallpaper(const WCHAR* arg);
-	void Bang_SkinMenu(const WCHAR* arg, CMeterWindow* meterWindow);
+	void BangWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& args, size_t numOfArgs, CMeterWindow* meterWindow);
+	void BangGroupWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& args, size_t numOfArgs, CMeterWindow* meterWindow);
+	void Bang_ActivateConfig(std::vector<std::wstring>& args);
+	void Bang_DeactivateConfig(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
+	void Bang_ToggleConfig(std::vector<std::wstring>& args);
+	void Bang_DeactivateConfigGroup(std::vector<std::wstring>& args);
+	void Bang_SetClip(std::vector<std::wstring>& args);
+	void Bang_SetWallpaper(std::vector<std::wstring>& args);
+	void Bang_SkinMenu(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
 	void Bang_TrayMenu();
-	void Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow);
-	void Bang_Log(const WCHAR* arg);
+	void Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
+	void Bang_Log(std::vector<std::wstring>& args);
 
-	void ExecuteBang(const WCHAR* bang, const WCHAR* args, CMeterWindow* meterWindow);
+	void ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, CMeterWindow* meterWindow);
 
 	void ActivateActiveConfigs();
 	void CreateMeterWindow(const std::wstring& config, const std::wstring& iniFile);

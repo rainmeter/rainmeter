@@ -122,7 +122,7 @@ int RainmeterMain(LPWSTR cmdLine)
 ** Splits the given string into substrings
 **
 */
-std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
+std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str, CConfigParser* parser)
 {
 	std::vector<std::wstring> result;
 
@@ -133,18 +133,28 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 		// Split the argument between first space.
 		// Or if string is in quotes, the after the second quote.
 
-		auto stripQuotes = [&](std::wstring& string)
+		auto addResult = [&](std::wstring& string, bool stripQuotes)
 		{
-			size_t pos = 0;
-			do
+			if (stripQuotes)
 			{
-				pos = string.find(L'"', pos);
-				if (pos != std::wstring::npos)
+				size_t pos = 0;
+				do
 				{
-					string.erase(pos, 1);
+					pos = string.find(L'"', pos);
+					if (pos != std::wstring::npos)
+					{
+						string.erase(pos, 1);
+					}
 				}
+				while (pos != std::wstring::npos);
 			}
-			while (pos != std::wstring::npos);
+
+			if (parser)
+			{
+				parser->ReplaceMeasures(string);
+			}
+
+			result.push_back(string);
 		};
 
 		size_t pos;
@@ -191,24 +201,21 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 				newStr.assign(arg, 0, pos);
 				arg.erase(0, pos + extra);
 
-				if (extra == 1) stripQuotes(newStr);
-				result.push_back(newStr);
+				addResult(newStr, extra == 1);
 			}
 			else  // quote or space not found
 			{
 				newStr = arg;
 				arg.clear();
 
-				if (extra == 1) stripQuotes(newStr);
-				result.push_back(newStr);
+				addResult(newStr, extra == 1);
 				break;
 			}
 		}
 
 		if (!arg.empty() && result.empty())
 		{
-			stripQuotes(arg);
-			result.push_back(arg);
+			addResult(arg, true);
 		}
 	}
 
@@ -219,29 +226,28 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str)
 ** Parses Bang args
 **
 */
-void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs, CMeterWindow* meterWindow)
+void CRainmeter::BangWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& args, size_t numOfArgs, CMeterWindow* meterWindow)
 {
-	std::vector<std::wstring> subStrings = ParseString(arg);
-	const size_t subStringsSize = subStrings.size();
+	const size_t argsCount = args.size();
 
-	if (subStringsSize >= numOfArgs)
+	if (argsCount >= numOfArgs)
 	{
-		if (subStringsSize == numOfArgs && meterWindow)
+		if (argsCount == numOfArgs && meterWindow)
 		{
-			meterWindow->RunBang(bang, subStrings);
+			meterWindow->RunBang(bang, args);
 		}
 		else
 		{
 			// Use the specified window instead of meterWindow parameter
-			if (subStringsSize > numOfArgs)
+			if (argsCount > numOfArgs)
 			{
-				const std::wstring& config = subStrings[numOfArgs];
+				const std::wstring& config = args[numOfArgs];
 				if (!config.empty() && (config.length() != 1 || config[0] != L'*'))
 				{
 					CMeterWindow* meterWindow = GetMeterWindow(config);
 					if (meterWindow)
 					{
-						meterWindow->RunBang(bang, subStrings);
+						meterWindow->RunBang(bang, args);
 					}
 					else
 					{
@@ -255,22 +261,25 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfAr
 			std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
 			for (; iter != m_MeterWindows.end(); ++iter)
 			{
-				((*iter).second)->RunBang(bang, subStrings);
+				((*iter).second)->RunBang(bang, args);
 			}
 		}
 	}
 	else
 	{
 		// For backwards compatibility
-		if (bang == BANG_COMMANDMEASURE && subStringsSize >= 1)
+		if (bang == BANG_COMMANDMEASURE && argsCount >= 1)
 		{
-			std::wstring tmpSz = arg;
-			std::wstring::size_type pos = tmpSz.find_first_of(L' ');
+			std::wstring& firstArg = args[0];
+			std::wstring::size_type pos = firstArg.find_first_of(L' ');
 			if (pos != std::wstring::npos)
 			{
-				tmpSz.replace(pos, 1, L"\" \"");
-				BangWithArgs(bang, tmpSz.c_str(), numOfArgs, meterWindow);
+				std::wstring newArg = firstArg.substr(0, pos);
+				firstArg.erase(0, pos + 1);
+				args.insert(args.begin(), newArg);
+
 				Log(LOG_WARNING, L"!CommandMeasure: Two parameters required, only one given");
+				BangWithArgs(bang, args, numOfArgs, meterWindow);
 				return;
 			}
 		}
@@ -283,27 +292,20 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfAr
 ** Parses Bang args for Group
 **
 */
-void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t numOfArgs, CMeterWindow* meterWindow)
+void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& args, size_t numOfArgs, CMeterWindow* meterWindow)
 {
-	std::vector<std::wstring> subStrings = ParseString(arg);
-
-	if (subStrings.size() > numOfArgs)
+	if (args.size() > numOfArgs)
 	{
 		std::multimap<int, CMeterWindow*> windows;
-		GetMeterWindowsByLoadOrder(windows, subStrings[numOfArgs]);
+		GetMeterWindowsByLoadOrder(windows, args[numOfArgs]);
 
 		std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+		args.push_back(std::wstring());
+		std::wstring& lastArg = args.back();
 		for (; iter != windows.end(); ++iter)
 		{
-			std::wstring argument(1, L'"');
-			for (size_t i = 0; i < numOfArgs; ++i)
-			{
-				argument += subStrings[i];
-				argument += L"\" \"";
-			}
-			argument += (*iter).second->GetSkinName();
-			argument += L'"';
-			BangWithArgs(bang, argument.c_str(), numOfArgs, meterWindow);
+			lastArg = (*iter).second->GetSkinName();
+			BangWithArgs(bang, args, numOfArgs, meterWindow);
 		}
 	}
 	else
@@ -316,19 +318,17 @@ void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, const WCHAR* arg, size_t nu
 ** !ActivateConfig bang
 **
 */
-void CRainmeter::Bang_ActivateConfig(const WCHAR* arg)
+void CRainmeter::Bang_ActivateConfig(std::vector<std::wstring>& args)
 {
-	std::vector<std::wstring> subStrings = ParseString(arg);
-
-	if (subStrings.size() > 1)
+	if (args.size() > 1)
 	{
-		std::pair<int, int> indexes = GetMeterWindowIndex(subStrings[0], subStrings[1]);
+		std::pair<int, int> indexes = GetMeterWindowIndex(args[0], args[1]);
 		if (indexes.first != -1 && indexes.second != -1)
 		{
 			ActivateConfig(indexes.first, indexes.second);
 			return;
 		}
-		LogWithArgs(LOG_ERROR, L"!ActivateConfig: \"%s\\%s\" not found", subStrings[0].c_str(), subStrings[1].c_str());
+		LogWithArgs(LOG_ERROR, L"!ActivateConfig: \"%s\\%s\" not found", args[0].c_str(), args[1].c_str());
 	}
 	else
 	{
@@ -341,16 +341,14 @@ void CRainmeter::Bang_ActivateConfig(const WCHAR* arg)
 ** !DeactivateConfig bang
 **
 */
-void CRainmeter::Bang_DeactivateConfig(const WCHAR* arg, CMeterWindow* meterWindow)
+void CRainmeter::Bang_DeactivateConfig(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
 {
-	std::vector<std::wstring> subStrings = ParseString(arg);
-
-	if (!subStrings.empty())
+	if (!args.empty())
 	{
-		meterWindow = GetMeterWindow(subStrings[0]);
+		meterWindow = GetMeterWindow(args[0]);
 		if (!meterWindow)
 		{
-			LogWithArgs(LOG_WARNING, L"!DeactivateConfig: \"%s\" not active", subStrings[0].c_str());
+			LogWithArgs(LOG_WARNING, L"!DeactivateConfig: \"%s\" not active", args[0].c_str());
 			return;
 		}
 	}
@@ -369,13 +367,11 @@ void CRainmeter::Bang_DeactivateConfig(const WCHAR* arg, CMeterWindow* meterWind
 ** !ToggleConfig bang
 **
 */
-void CRainmeter::Bang_ToggleConfig(const WCHAR* arg)
+void CRainmeter::Bang_ToggleConfig(std::vector<std::wstring>& args)
 {
-	std::vector<std::wstring> subStrings = ParseString(arg);
-
-	if (subStrings.size() >= 2)
+	if (args.size() >= 2)
 	{
-		CMeterWindow* mw = GetMeterWindow(subStrings[0]);
+		CMeterWindow* mw = GetMeterWindow(args[0]);
 		if (mw)
 		{
 			DeactivateConfig(mw, -1);
@@ -383,7 +379,7 @@ void CRainmeter::Bang_ToggleConfig(const WCHAR* arg)
 		}
 
 		// If the config wasn't active, activate it
-		Bang_ActivateConfig(arg);
+		Bang_ActivateConfig(args);
 	}
 	else
 	{
@@ -395,14 +391,12 @@ void CRainmeter::Bang_ToggleConfig(const WCHAR* arg)
 ** !DeactivateConfigGroup bang
 **
 */
-void CRainmeter::Bang_DeactivateConfigGroup(const WCHAR* arg)
+void CRainmeter::Bang_DeactivateConfigGroup(std::vector<std::wstring>& args)
 {
-	std::vector<std::wstring> subStrings = ParseString(arg);
-
-	if (!subStrings.empty())
+	if (!args.empty())
 	{
 		std::multimap<int, CMeterWindow*> windows;
-		GetMeterWindowsByLoadOrder(windows, subStrings[0]);
+		GetMeterWindowsByLoadOrder(windows, args[0]);
 
 		std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
 		for (; iter != windows.end(); ++iter)
@@ -420,13 +414,11 @@ void CRainmeter::Bang_DeactivateConfigGroup(const WCHAR* arg)
 ** !SetClip bang
 **
 */
-void CRainmeter::Bang_SetClip(const WCHAR* arg)
+void CRainmeter::Bang_SetClip(std::vector<std::wstring>& args)
 {
-	std::vector<std::wstring> subStrings = ParseString(arg);
-
-	if (!subStrings.empty())
+	if (!args.empty())
 	{
-		CSystem::SetClipboardText(subStrings[0]);
+		CSystem::SetClipboardText(args[0]);
 	}
 	else
 	{
@@ -438,17 +430,15 @@ void CRainmeter::Bang_SetClip(const WCHAR* arg)
 ** !SetWallpaper bang
 **
 */
-void CRainmeter::Bang_SetWallpaper(const WCHAR* arg)
+void CRainmeter::Bang_SetWallpaper(std::vector<std::wstring>& args)
 {
-	std::vector<std::wstring> subStrings = ParseString(arg);
-
-	if (subStrings.size() == 1)
+	if (args.size() == 1)
 	{
-		CSystem::SetWallpaper(subStrings[0], L"");
+		CSystem::SetWallpaper(args[0], L"");
 	}
-	else if (subStrings.size() == 2)
+	else if (args.size() == 2)
 	{
-		CSystem::SetWallpaper(subStrings[0], subStrings[1]);
+		CSystem::SetWallpaper(args[0], args[1]);
 	}
 	else
 	{
@@ -460,16 +450,14 @@ void CRainmeter::Bang_SetWallpaper(const WCHAR* arg)
 ** !SkinMenu bang
 **
 */
-void CRainmeter::Bang_SkinMenu(const WCHAR* arg, CMeterWindow* meterWindow)
+void CRainmeter::Bang_SkinMenu(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
 {
-	std::vector<std::wstring> subStrings = ParseString(arg);
-
-	if (!subStrings.empty())
+	if (!args.empty())
 	{
-		meterWindow = GetMeterWindow(subStrings[0]);
+		meterWindow = GetMeterWindow(args[0]);
 		if (!meterWindow)
 		{
-			LogWithArgs(LOG_WARNING, L"!SkinMenu: \"%s\" not active", subStrings[0].c_str());
+			LogWithArgs(LOG_WARNING, L"!SkinMenu: \"%s\" not active", args[0].c_str());
 			return;
 		}
 	}
@@ -501,11 +489,9 @@ void CRainmeter::Bang_TrayMenu()
 ** !WriteKeyValue bang
 **
 */
-void CRainmeter::Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow)
+void CRainmeter::Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
 {
-	std::vector<std::wstring> subStrings = ParseString(arg);
-
-	if (subStrings.size() < 4)
+	if (args.size() < 4)
 	{
 		if (!meterWindow) return;
 
@@ -513,12 +499,12 @@ void CRainmeter::Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow)
 		std::wstring path = m_SkinPath + meterWindow->GetSkinName();
 		path += L'\\';
 		path += meterWindow->GetSkinIniFile();
-		subStrings.push_back(std::move(path));
+		args.push_back(std::move(path));
 	}
 
-	if (subStrings.size() > 3)
+	if (args.size() > 3)
 	{
-		const std::wstring& strIniFile = subStrings[3];
+		const std::wstring& strIniFile = args[3];
 		const WCHAR* iniFile = strIniFile.c_str();
 
 		if (strIniFile.find(L"..\\") != std::wstring::npos || strIniFile.find(L"../") != std::wstring::npos)
@@ -573,9 +559,9 @@ void CRainmeter::Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow)
 		}
 
 		const WCHAR* iniWrite = strIniWrite.c_str();
-		const WCHAR* section = subStrings[0].c_str();
-		const WCHAR* key = subStrings[1].c_str();
-		const std::wstring& strValue = subStrings[2];
+		const WCHAR* section = args[0].c_str();
+		const WCHAR* key = args[1].c_str();
+		const std::wstring& strValue = args[2];
 
 		bool formula = false;
 		BOOL write = 0;
@@ -639,17 +625,15 @@ void CRainmeter::Bang_WriteKeyValue(const WCHAR* arg, CMeterWindow* meterWindow)
 ** !Log bang
 **
 */
-void CRainmeter::Bang_Log(const WCHAR* arg)
+void CRainmeter::Bang_Log(std::vector<std::wstring>& args)
 {
-	std::vector<std::wstring> subStrings = ParseString(arg);
-
-	if (!subStrings.empty())
+	if (!args.empty())
 	{
 		int level = LOG_NOTICE;
 
-		if (subStrings.size() > 1)
+		if (args.size() > 1)
 		{
-			const WCHAR* type = subStrings[1].c_str();
+			const WCHAR* type = args[1].c_str();
 			if (_wcsicmp(type, L"ERROR") == 0)
 			{
 				level = LOG_ERROR;
@@ -669,7 +653,7 @@ void CRainmeter::Bang_Log(const WCHAR* arg)
 			}
 		}
 
-		Log(level, subStrings[0].c_str());
+		Log(level, args[0].c_str());
 	}
 }
 
@@ -1708,7 +1692,7 @@ void CRainmeter::ScanForThemes(const std::wstring& path)
 	}
 }
 
-void CRainmeter::ExecuteBang(const WCHAR* bang, const WCHAR* args, CMeterWindow* meterWindow)
+void CRainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, CMeterWindow* meterWindow)
 {
 	if (_wcsicmp(bang, L"Refresh") == 0)
 	{
@@ -1981,11 +1965,11 @@ void CRainmeter::ExecuteBang(const WCHAR* bang, const WCHAR* args, CMeterWindow*
 	}
 	else if (_wcsicmp(bang, L"About") == 0)
 	{
-		CDialogAbout::Open(args);
+		CDialogAbout::Open(args.empty() ? L"" : args[0].c_str());
 	}
 	else if (_wcsicmp(bang, L"Manage") == 0)
 	{
-		CDialogManage::Open(args);
+		CDialogManage::Open(args.empty() ? L"" : args[0].c_str());
 	}
 	else if (_wcsicmp(bang, L"SkinMenu") == 0)
 	{
@@ -2036,32 +2020,28 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 		}
 		else
 		{
-			std::wstring bang, arg;
-
 			if (_wcsnicmp(command, L"Rainmeter", 9) == 0)
 			{
 				// Skip "Rainmeter" for backwards compatibility
 				command += 9;
 			}
 
+			std::wstring bang;
+			std::vector<std::wstring> args;
+
 			// Find the first space
 			const WCHAR* pos = wcschr(command, L' ');
 			if (pos)
 			{
 				bang.assign(command, 0, pos - command);
-				arg.assign(pos + 1);
+				args = ParseString(pos + 1, &meterWindow->GetParser());
 			}
 			else
 			{
 				bang = command;
 			}
 
-			if (meterWindow)
-			{
-				meterWindow->GetParser().ReplaceMeasures(arg);
-			}
-
-			ExecuteBang(bang.c_str(), arg.c_str(), meterWindow);
+			ExecuteBang(bang.c_str(), args, meterWindow);
 			return;
 		}
 	}
@@ -2069,7 +2049,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 	if (command[0] == L'[')	// Multi-bang
 	{
 		std::wstring bangs = command;
-		std::wstring::size_type start = 0;
+		std::wstring::size_type start = std::wstring::npos;
 		int count = 0;
 		for (size_t i = 0, isize = bangs.size(); i < isize; ++i)
 		{
