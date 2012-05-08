@@ -44,15 +44,20 @@ static int Bang(lua_State* L)
 	}
 	else
 	{
-		std::vector<std::wstring> args;
-		for (int i = 3; i <= top; ++i)
+		const WCHAR* bangSz = bang.c_str();
+		if (*bangSz == L'!')
 		{
-			std::wstring tmpSz = LuaManager::ToWide(L, i);
-			parser.ReplaceVariables(tmpSz);
-			args.push_back(tmpSz);
-		}
+			++bangSz;	// Skip "!"
+			std::vector<std::wstring> args;
+			for (int i = 3; i <= top; ++i)
+			{
+				std::wstring tmpSz = LuaManager::ToWide(L, i);
+				parser.ReplaceVariables(tmpSz);
+				args.push_back(tmpSz);
+			}
 
-		Rainmeter->ExecuteBang(bang.c_str(), args, self);
+			Rainmeter->ExecuteBang(bangSz, args, self);
+		}
 	}
 
 	return 0;
