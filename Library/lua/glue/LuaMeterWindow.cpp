@@ -32,11 +32,28 @@ inline CMeterWindow* GetSelf(lua_State* L)
 static int Bang(lua_State* L)
 {
 	CMeterWindow* self = GetSelf(L);
-	std::wstring strTmp = LuaManager::ToWide(L, 2);
-
 	CConfigParser& parser = self->GetParser();
-	parser.ReplaceVariables(strTmp);
-	Rainmeter->ExecuteCommand(strTmp.c_str(), self);
+
+	std::wstring bang = LuaManager::ToWide(L, 2);
+
+	int top = lua_gettop(L);
+	if (top == 2)	// 1 argument
+	{
+		parser.ReplaceVariables(bang);
+		Rainmeter->ExecuteCommand(bang.c_str(), self);
+	}
+	else
+	{
+		std::vector<std::wstring> args;
+		for (int i = 3; i <= top; ++i)
+		{
+			std::wstring tmpSz = LuaManager::ToWide(L, i);
+			parser.ReplaceVariables(tmpSz);
+			args.push_back(tmpSz);
+		}
+
+		Rainmeter->ExecuteBang(bang.c_str(), args, self);
+	}
 
 	return 0;
 }

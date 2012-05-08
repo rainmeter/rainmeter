@@ -216,6 +216,7 @@ public:
 	const std::wstring& GetTrayExecuteDR() { return m_TrayExecuteDR; }
 	const std::wstring& GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
+	void ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, CMeterWindow* meterWindow);
 	void ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow);
 	void DelayedExecuteCommand(const WCHAR* command);
 
@@ -245,8 +246,6 @@ private:
 	void Bang_TrayMenu();
 	void Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
 	void Bang_Log(std::vector<std::wstring>& args);
-
-	void ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, CMeterWindow* meterWindow);
 
 	void ActivateActiveConfigs();
 	void CreateMeterWindow(const std::wstring& config, const std::wstring& iniFile);
