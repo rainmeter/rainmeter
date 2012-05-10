@@ -316,28 +316,6 @@ Function PageOptions
 	Pop $R1
 	${NSD_OnClick} $R1 PageOptionsBrowseOnClick
 
-	; Set default directory
-	${If} $InstallPortable == 1
-		${GetRoot} "$WINDIR" $0
-		${NSD_SetText} $R0 "$0\Rainmeter"
-	${Else}
-		; Disable Directory editbox and Browse button if already installed
-		SendMessage $R0 ${EM_SETREADONLY} 1 0
-
-		${If} $INSTDIR != ""
-			EnableWindow $R1 0
-			${NSD_SetText} $R0 "$INSTDIR"
-		${Else}
-			; Fresh install
-			${If} ${RunningX64}
-				${NSD_SetText} $R0 "$PROGRAMFILES64\Rainmeter"
-				${NSD_Check} $R2
-			${Else}
-				${NSD_SetText} $R0 "$PROGRAMFILES\Rainmeter"
-			${EndIf}
-		${EndIf}
-	${EndIf}
-
 	StrCpy $1 0
 
 	${If} ${RunningX64}
@@ -381,6 +359,28 @@ Function PageOptions
 
 	${If} $1 != 0
 		${NSD_CreateGroupBox} 0 42u -1u $1 "$(ADDITIONALOPTIONS)"
+	${EndIf}
+
+	; Set default directory
+	${If} $InstallPortable == 1
+		${GetRoot} "$WINDIR" $0
+		${NSD_SetText} $R0 "$0\Rainmeter"
+	${Else}
+		; Disable Directory editbox and Browse button if already installed
+		SendMessage $R0 ${EM_SETREADONLY} 1 0
+
+		${If} $INSTDIR != ""
+			EnableWindow $R1 0
+			${NSD_SetText} $R0 "$INSTDIR"
+		${Else}
+			; Fresh install
+			${If} ${RunningX64}
+				${NSD_SetText} $R0 "$PROGRAMFILES64\Rainmeter"
+				${NSD_Check} $R2
+			${Else}
+				${NSD_SetText} $R0 "$PROGRAMFILES\Rainmeter"
+			${EndIf}
+		${EndIf}
 	${EndIf}
 
 	; Show UAC shield on Install button if requiredd
