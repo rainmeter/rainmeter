@@ -214,6 +214,7 @@ Function .onInit
 		StrCpy $Install64Bit $2
 		StrCpy $NonDefaultLanguage $3
 		StrCpy $LANGUAGE $4
+		StrCpy $INSTDIR $5
 	${EndIf}
 FunctionEnd
 
@@ -222,6 +223,7 @@ Function ExchangeSettings
 	StrCpy $2 $Install64Bit
 	StrCpy $3 $NonDefaultLanguage
 	StrCpy $4 $LANGUAGE
+	StrCpy $5 $INSTDIR
 	HideWindow
 FunctionEnd
 
@@ -681,6 +683,16 @@ SkipIniMove:
 	${EndIf}
 
 	SetOutPath "$INSTDIR"
+
+	; Remove Rainmeter files mistakenly installed to root of Windows drive (old installer bug)
+	${GetRoot} "$WINDIR" $0
+	${If} ${FileExists} "$0\Rainmeter.exe"
+	${AndIfNot} ${FileExists} "$0\Plugins"
+		Delete "$0\Rainmeter.exe"
+		Delete "$0\Rainmeter.dll"
+		Delete "$0\SkinInstaller.exe"
+	${EndIf}
+
 	Delete "$INSTDIR\Rainmeter.exe.config"
 	Delete "$INSTDIR\Rainmeter.chm"
 	Delete "$INSTDIR\Default.ini"
