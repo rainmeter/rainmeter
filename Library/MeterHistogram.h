@@ -42,18 +42,18 @@ private:
 	void DisposeBuffer();
 
 	std::wstring m_SecondaryMeasureName;	// Name of the secondary measure
-	CMeasure* m_SecondaryMeasure;		// Pointer ot the secondary measure
+	CMeasure* m_SecondaryMeasure;			// Pointer ot the secondary measure
 	Gdiplus::Color m_PrimaryColor;			// Color of the primary histogram
-	Gdiplus::Color m_SecondaryColor;			// Color of the secondary histogram
+	Gdiplus::Color m_SecondaryColor;		// Color of the secondary histogram
 	Gdiplus::Color m_BothColor;				// Color when the both histograms overlap
 
-	int m_MeterPos;						// Position of the meter (i.e. where the new value should be placed)
+	int m_MeterPos;							// Position of the meter (i.e. where the new value should be placed)
 	bool m_Autoscale;
 	bool m_Flip;
 
 	std::wstring m_PrimaryImageName;		// Name of the primary image for bitmap histograms
-	std::wstring m_SecondaryImageName;	// Name of the secondary image for bitmap histograms
-	std::wstring m_BothImageName;		// Name of the image for overlapping histograms
+	std::wstring m_SecondaryImageName;		// Name of the secondary image for bitmap histograms
+	std::wstring m_BothImageName;			// Name of the image for overlapping histograms
 
 	CTintedImage m_PrimaryImage;			// The primary bitmap
 	CTintedImage m_SecondaryImage;			// The secondary bitmap
@@ -71,7 +71,10 @@ private:
 	double m_MaxSecondaryValue;
 	double m_MinSecondaryValue;
 
-	bool m_WidthChanged;
+	bool m_SizeChanged;
+	
+	bool m_GraphStartLeft;					// Start graph to the Left or Right(default)
+	bool m_GraphHorizontalOrientation;		// Horizontal or Vertical(default)
 
 	static const WCHAR* c_PrimaryConfigArray[CTintedImage::ConfigCount];
 	static const WCHAR* c_SecondaryConfigArray[CTintedImage::ConfigCount];

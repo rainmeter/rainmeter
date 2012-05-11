@@ -33,7 +33,9 @@ CMeterLine::CMeterLine(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(me
 	m_Flip(false),
 	m_LineWidth(1.0),
 	m_HorizontalColor(Color::Black),
-	m_CurrentPos()
+	m_CurrentPos(),
+	m_GraphStartLeft(false),
+	m_GraphHorizontalOrientation(false)
 {
 }
 
@@ -56,6 +58,7 @@ void CMeterLine::Initialize()
 	size_t colorsSize = m_Colors.size();
 	size_t allValuesSize = m_AllValues.size();
 	size_t num = (allValuesSize > 0) ? m_AllValues[0].size() : 0;
+	int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
 
 	if (colorsSize != allValuesSize)
 	{
@@ -65,9 +68,9 @@ void CMeterLine::Initialize()
 			{
 				m_AllValues.push_back(std::vector<double>());
 
-				if (m_W > 0)
+				if (maxSize > 0)
 				{
-					m_AllValues.back().assign(m_W, 0.0);
+					m_AllValues.back().assign(maxSize, 0.0);
 				}
 			}
 		}
@@ -77,11 +80,11 @@ void CMeterLine::Initialize()
 		}
 	}
 
-	if (m_W < 0 || num != (size_t)m_W)
+	if (maxSize < 0 || num != (size_t)maxSize)
 	{
-		if (m_CurrentPos >= m_W) m_CurrentPos = 0;
+		if (m_CurrentPos >= maxSize) m_CurrentPos = 0;
 
-		num = (m_W < 0) ? 0 : m_W;
+		num = (maxSize < 0) ? 0 : maxSize;
 		for (size_t i = 0; i < allValuesSize; ++i)
 		{
 			if (num != m_AllValues[i].size())
@@ -154,10 +157,59 @@ void CMeterLine::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_HorizontalColor = parser.ReadColor(section, L"HorizontalLineColor", color);	// This is what it should be
 
 	if (m_Initialized &&
-		(oldLineCount != lineCount ||
-		oldW != m_W))
+		(oldLineCount != lineCount || oldW != m_W))
 	{
 		Initialize();
+	}
+
+	const WCHAR* graph = parser.ReadString(section, L"GraphStart", L"RIGHT").c_str();
+	if (_wcsicmp(graph, L"RIGHT") == 0)
+	{
+		m_GraphStartLeft = false;
+	}
+	else if (_wcsicmp(graph, L"LEFT") ==  0)
+	{
+		m_GraphStartLeft = true;
+	}
+	else
+	{
+		LogWithArgs(LOG_ERROR, L"StartFrom=%s is not valid in [%s]", graph, m_Name.c_str());
+	}
+
+	graph = parser.ReadString(section, L"GraphOrientation", L"VERTICAL").c_str();
+	if (_wcsicmp(graph, L"VERTICAL") == 0)
+	{
+		// Restart graph
+		if (m_GraphHorizontalOrientation)
+		{
+			m_GraphHorizontalOrientation = false;
+			m_AllValues.clear();
+			Initialize();
+			m_CurrentPos = 0;
+		}
+		else
+		{
+			m_GraphHorizontalOrientation = false;
+		}
+	}
+	else if (_wcsicmp(graph, L"HORIZONTAL") ==  0)
+	{
+		// Restart graph
+		if (!m_GraphHorizontalOrientation)
+		{
+			m_GraphHorizontalOrientation = true;
+			m_AllValues.clear();
+			Initialize();
+			m_CurrentPos = 0;
+		}
+		else
+		{
+			m_GraphHorizontalOrientation = true;
+		}
+	}
+	else
+	{
+		LogWithArgs(LOG_ERROR, L"GraphOrientation=%s is not valid in [%s]", graph, m_Name.c_str());
 	}
 }
 
@@ -169,7 +221,9 @@ bool CMeterLine::Update()
 {
 	if (CMeter::Update() && m_Measure)
 	{
-		if (m_W > 0)
+		int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
+
+		if (maxSize > 0)
 		{
 			// Collect the values
 			if (!m_Measure->IsDisabled())
@@ -190,7 +244,7 @@ bool CMeterLine::Update()
 			}
 
 			++m_CurrentPos;
-			if (m_CurrentPos >= m_W) m_CurrentPos = 0;
+			if (m_CurrentPos >= maxSize) m_CurrentPos = 0;
 		}
 		return true;
 	}
@@ -203,7 +257,8 @@ bool CMeterLine::Update()
 */
 bool CMeterLine::Draw(Graphics& graphics)
 {
-	if (!CMeter::Draw(graphics) || m_W <= 0) return false;
+	int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
+	if (!CMeter::Draw(graphics) || maxSize <= 0) return false;
 
 	double maxValue = 0.0;
 	int counter = 0;
@@ -291,46 +346,136 @@ bool CMeterLine::Draw(Graphics& graphics)
 	}
 
 	// Draw all the lines
-	const REAL H = m_H - 1.0f;
-	counter = 0;
-	std::vector< std::vector<double> >::const_iterator i = m_AllValues.begin();
-	for (; i != m_AllValues.end(); ++i)
+
+	if (m_GraphHorizontalOrientation)
 	{
-		// Draw a line
-		REAL Y, oldY;
-
-		const double scale = m_ScaleValues[counter] * H / maxValue;
-
-		int pos = m_CurrentPos;
-
-		oldY = (REAL)((*i)[pos] * scale);
-		oldY = min(oldY, H);
-		oldY = max(oldY, 0.0f);
-		oldY = y + ((m_Flip) ? oldY : H - oldY);
-
-		// Cache all lines
-		GraphicsPath path;
-		for (int j = x + 1, R = x + m_W; j < R; ++j)
+		const REAL W = m_W - 1.0f;
+		counter = 0;
+		std::vector< std::vector<double> >::const_iterator i = m_AllValues.begin();
+		for (; i != m_AllValues.end(); ++i)
 		{
-			++pos;
-			if (pos >= m_W) pos = 0;
+			// Draw a line
+			REAL X, oldX;
 
-			Y = (REAL)((*i)[pos] * scale);
-			Y = min(Y, H);
-			Y = max(Y, 0.0f);
-			Y = y + ((m_Flip) ? Y : H - Y);
+			const double scale = m_ScaleValues[counter] * W / maxValue;
 
-			path.AddLine((REAL)(j - 1), oldY, (REAL)j, Y);
+			int pos = m_CurrentPos;
 
-			oldY = Y;
+			oldX = (REAL)((*i)[pos] * scale);
+			oldX = min(oldX, W);
+			oldX = max(oldX, 0.0f);
+			oldX = x + (m_GraphStartLeft ? oldX : W - oldX);
+
+			// Cache all lines
+			GraphicsPath path;
+		
+			if (!m_Flip)
+			{
+				for (int j = y + 1, R = y + m_H; j < R; ++j)
+				{
+					++pos;
+					if (pos >= m_H) pos = 0;
+
+					X = (REAL)((*i)[pos] * scale);
+					X = min(X, W);
+					X = max(X, 0.0f);
+					X = x + (m_GraphStartLeft ? X : W - X);
+
+					path.AddLine(oldX, (REAL)(j - 1), X, (REAL)j);
+
+					oldX = X;
+				}
+			}
+			else
+			{
+				for (int j = y + m_H, R = y + 1; j > R; --j)
+				{
+					++pos;
+					if (pos >= m_H) pos = 0;
+
+					X = (REAL)((*i)[pos] * scale);
+					X = min(X, W);
+					X = max(X, 0.0f);
+					X = x + (m_GraphStartLeft ? X : W - X);
+
+					path.AddLine(oldX, (REAL)(j - 1), X, (REAL)(j - 2));
+
+					oldX = X;
+				}
+			}
+
+			// Draw cached lines
+			Pen pen(m_Colors[counter], (REAL)m_LineWidth);
+			pen.SetLineJoin(LineJoinBevel);
+			graphics.DrawPath(&pen, &path);
+
+			++counter;
 		}
+	}
+	else
+	{
+		const REAL H = m_H - 1.0f;
+		counter = 0;
+		std::vector< std::vector<double> >::const_iterator i = m_AllValues.begin();
+		for (; i != m_AllValues.end(); ++i)
+		{
+			// Draw a line
+			REAL Y, oldY;
 
-		// Draw cached lines
-		Pen pen(m_Colors[counter], (REAL)m_LineWidth);
-		pen.SetLineJoin(LineJoinBevel);
-		graphics.DrawPath(&pen, &path);
+			const double scale = m_ScaleValues[counter] * H / maxValue;
 
-		++counter;
+			int pos = m_CurrentPos;
+
+			oldY = (REAL)((*i)[pos] * scale);
+			oldY = min(oldY, H);
+			oldY = max(oldY, 0.0f);
+			oldY = y + (m_Flip ? oldY : H - oldY);
+
+			// Cache all lines
+			GraphicsPath path;
+		
+			if (!m_GraphStartLeft)
+			{
+				for (int j = x + 1, R = x + m_W; j < R; ++j)
+				{
+					++pos;
+					if (pos >= m_W) pos = 0;
+
+					Y = (REAL)((*i)[pos] * scale);
+					Y = min(Y, H);
+					Y = max(Y, 0.0f);
+					Y = y + (m_Flip ? Y : H - Y);
+
+					path.AddLine((REAL)(j - 1), oldY, (REAL)j, Y);
+
+					oldY = Y;
+				}
+			}
+			else
+			{
+				for (int j = x + m_W, R = x + 1; j > R; --j)
+				{
+					++pos;
+					if (pos >= m_W) pos = 0;
+
+					Y = (REAL)((*i)[pos] * scale);
+					Y = min(Y, H);
+					Y = max(Y, 0.0f);
+					Y = y + (m_Flip ? Y : H - Y);
+
+					path.AddLine((REAL)(j - 1), oldY, (REAL)(j - 2), Y);
+
+					oldY = Y;
+				}
+			}
+
+			// Draw cached lines
+			Pen pen(m_Colors[counter], (REAL)m_LineWidth);
+			pen.SetLineJoin(LineJoinBevel);
+			graphics.DrawPath(&pen, &path);
+
+			++counter;
+		}
 	}
 
 	return true;

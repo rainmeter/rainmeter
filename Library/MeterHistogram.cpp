@@ -54,7 +54,9 @@ CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow, const WCHAR* name) :
 	m_MinPrimaryValue(),
 	m_MaxSecondaryValue(1.0),
 	m_MinSecondaryValue(),
-	m_WidthChanged(true)
+	m_SizeChanged(true),
+	m_GraphStartLeft(false),
+	m_GraphHorizontalOrientation(false)
 {
 }
 
@@ -112,15 +114,16 @@ void CMeterHistogram::Initialize()
 			if (m_PrimaryImage.IsLoaded())
 			{
 				int oldW = m_W;
+				int oldH = m_H;
 
 				Bitmap* bitmap = m_PrimaryImage.GetImage();
 
 				m_W = bitmap->GetWidth();
 				m_H = bitmap->GetHeight();
 
-				if (oldW != m_W)
+				if (oldW != m_W || oldH != m_H)
 				{
-					m_WidthChanged = true;
+					m_SizeChanged = true;
 				}
 			}
 		}
@@ -154,25 +157,24 @@ void CMeterHistogram::Initialize()
 	{
 		DisposeBuffer();
 
-		m_WidthChanged = false;
+		m_SizeChanged = false;
 	}
-	else if (m_WidthChanged)
+	else if (m_SizeChanged)
 	{
 		DisposeBuffer();
 
 		// Create buffers for values
-		if (m_W > 0)
+		if (m_W > 0 || m_H > 0)
 		{
-			m_PrimaryValues = new double[m_W];
-			memset(m_PrimaryValues, 0, sizeof(double) * m_W);
+			int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
+			m_PrimaryValues = new double[maxSize]();
 			if (m_SecondaryMeasure)
 			{
-				m_SecondaryValues = new double[m_W];
-				memset(m_SecondaryValues, 0, sizeof(double) * m_W);
+				m_SecondaryValues = new double[maxSize]();
 			}
 		}
 
-		m_WidthChanged = false;
+		m_SizeChanged = false;
 	}
 }
 
@@ -251,9 +253,9 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	{
 		if (m_PrimaryImageName.empty())
 		{
-			if (oldW != m_W)
+			if (oldW != m_W || oldH != m_H)
 			{
-				m_WidthChanged = true;
+				m_SizeChanged = true;
 				Initialize();  // Reload the image
 			}
 		}
@@ -278,6 +280,72 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			}
 		}
 	}
+
+	const WCHAR* graph = parser.ReadString(section, L"GraphStart", L"RIGHT").c_str();
+	if (_wcsicmp(graph, L"RIGHT") == 0)
+	{
+		m_GraphStartLeft = false;
+	}
+	else if (_wcsicmp(graph, L"LEFT") ==  0)
+	{
+		m_GraphStartLeft = true;
+	}
+	else
+	{
+		LogWithArgs(LOG_ERROR, L"GraphStart=%s is not valid in [%s]", graph, m_Name.c_str());
+	}
+
+	graph = parser.ReadString(section, L"GraphOrientation", L"VERTICAL").c_str();
+	if (_wcsicmp(graph, L"VERTICAL") == 0)
+	{
+		// Restart graph
+		if (m_GraphHorizontalOrientation)
+		{
+			m_GraphHorizontalOrientation = false;
+			DisposeBuffer();
+
+			// Create buffers for values
+			if (m_W > 0)
+			{
+				m_PrimaryValues = new double[m_W]();
+				if (m_SecondaryMeasure)
+				{
+					m_SecondaryValues = new double[m_W]();
+				}
+			}
+		}
+		else
+		{
+			m_GraphHorizontalOrientation = false;
+		}
+	}
+	else if (_wcsicmp(graph, L"HORIZONTAL") ==  0)
+	{
+		// Restart graph
+		if (!m_GraphHorizontalOrientation)
+		{
+			m_GraphHorizontalOrientation = true;
+			DisposeBuffer();
+
+			// Create buffers for values
+			if (m_H > 0)
+			{
+				m_PrimaryValues = new double[m_H]();
+				if (m_SecondaryMeasure)
+				{
+					m_SecondaryValues = new double[m_H]();
+				}
+			}
+		}
+		else
+		{
+			m_GraphHorizontalOrientation = true;
+		}
+	}
+	else
+	{
+		LogWithArgs(LOG_ERROR, L"GraphOrientation=%s is not valid in [%s]", graph, m_Name.c_str());
+	}
 }
 
 /*
@@ -297,8 +365,9 @@ bool CMeterHistogram::Update()
 		}
 
 		++m_MeterPos;
-		m_MeterPos %= m_W;
-
+		int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
+		m_MeterPos %= maxSize;
+		
 		m_MaxPrimaryValue = m_Measure->GetMaxValue();
 		m_MinPrimaryValue = m_Measure->GetMinValue();
 		m_MaxSecondaryValue = 0.0;
@@ -314,7 +383,7 @@ bool CMeterHistogram::Update()
 			// Go through all values and find the max
 
 			double newValue = 0.0;
-			for (int i = 0; i < m_W; ++i)
+			for (int i = 0; i < maxSize; ++i)
 			{
 				newValue = max(newValue, m_PrimaryValues[i]);
 			}
@@ -335,7 +404,7 @@ bool CMeterHistogram::Update()
 
 			if (m_SecondaryMeasure && m_SecondaryValues)
 			{
-				for (int i = 0; i < m_W; ++i)
+				for (int i = 0; i < maxSize; ++i)
 				{
 					newValue = max(newValue, m_SecondaryValues[i]);
 				}
@@ -381,63 +450,157 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 	int x = GetX();
 	int y = GetY();
 
-	for (int i = 0; i < m_W; ++i)
+	// Default values (GraphStart=Right, GraphOrientation=Vertical)
+	int i;
+	int startValue = 0;
+	int* endValueLHS = &i;
+	int* endValueRHS = &m_W;
+	int step = 1;
+	int endValue = -1; //(should be 0, but need to simulate <=)
+
+	// GraphStart=Left, GraphOrientation=Vertical
+	if (m_GraphStartLeft && !m_GraphHorizontalOrientation)
 	{
-		double value = (m_MaxPrimaryValue == 0.0) ?
-			  0.0
-			: m_PrimaryValues[(i + m_MeterPos) % m_W] / m_MaxPrimaryValue;
-		value -= m_MinPrimaryValue;
-		int primaryBarHeight = (int)(m_H * value);
-		primaryBarHeight = min(m_H, primaryBarHeight);
-		primaryBarHeight = max(0, primaryBarHeight);
+		startValue = m_W - 1;
+		endValueLHS = &endValue;
+		endValueRHS = &i;
+		step = -1;
+	}
+	else if (m_GraphHorizontalOrientation && !m_Flip)
+	{
+		endValueRHS = &m_H;
+	}
+	else if (m_GraphHorizontalOrientation && m_Flip)
+	{
+		startValue = m_H - 1;
+		endValueLHS = &endValue;
+		endValueRHS = &i;
+		step = -1;
+	}
 
-		if (m_SecondaryMeasure)
+	// Horizontal or Vertical graph
+	if (m_GraphHorizontalOrientation)
+	{
+		for (i = startValue; *endValueLHS < *endValueRHS; i += step)
 		{
-			value = (m_MaxSecondaryValue == 0.0) ?
+			double value = (m_MaxPrimaryValue == 0.0) ?
 				  0.0
-				: m_SecondaryValues[(i + m_MeterPos) % m_W] / m_MaxSecondaryValue;
-			value -= m_MinSecondaryValue;
-			int secondaryBarHeight = (int)(m_H * value);
-			secondaryBarHeight = min(m_H, secondaryBarHeight);
-			secondaryBarHeight = max(0, secondaryBarHeight);
+				: m_PrimaryValues[(i + (m_MeterPos % m_H)) % m_H] / m_MaxPrimaryValue;
+			value -= m_MinPrimaryValue;
+			int primaryBarHeight = (int)(m_W * value);
+			primaryBarHeight = min(m_W, primaryBarHeight);
+			primaryBarHeight = max(0, primaryBarHeight);
 
-			// Check which measured value is higher
-			int bothBarHeight = min(primaryBarHeight, secondaryBarHeight);
-
-			// Cache image/color rectangle for the both lines
+			if (m_SecondaryMeasure)
 			{
-				Rect& r = (m_Flip) ?
-					  Rect(x + i, y, 1, bothBarHeight)
-					: Rect(x + i, y + m_H - bothBarHeight, 1, bothBarHeight);
+				value = (m_MaxSecondaryValue == 0.0) ?
+					  0.0
+					: m_SecondaryValues[(i + m_MeterPos) % m_H] / m_MaxSecondaryValue;
+				value -= m_MinSecondaryValue;
+				int secondaryBarHeight = (int)(m_W * value);
+				secondaryBarHeight = min(m_W, secondaryBarHeight);
+				secondaryBarHeight = max(0, secondaryBarHeight);
 
-				bothPath.AddRectangle(r);  // cache
-			}
+				// Check which measured value is higher
+				int bothBarHeight = min(primaryBarHeight, secondaryBarHeight);
 
-			// Cache the image/color rectangle for the rest
-			if (secondaryBarHeight > primaryBarHeight)
-			{
-				Rect& r = (m_Flip) ?
-					  Rect(x + i, y + bothBarHeight, 1, secondaryBarHeight - bothBarHeight)
-					: Rect(x + i, y + m_H - secondaryBarHeight, 1, secondaryBarHeight - bothBarHeight);
+				// Cache image/color rectangle for the both lines
+				{
+					Rect& r = m_GraphStartLeft ?
+						  Rect(x, y + startValue + (step * i), bothBarHeight, 1)
+						: Rect(x + m_W - bothBarHeight, y + startValue + (step * i), bothBarHeight, 1);
 
-				secondaryPath.AddRectangle(r);  // cache
+					bothPath.AddRectangle(r);  // cache
+				}
+
+				// Cache the image/color rectangle for the rest
+				if (secondaryBarHeight > primaryBarHeight)
+				{
+					Rect& r = m_GraphStartLeft ?
+						  Rect(x + bothBarHeight, y + startValue + (step * i), secondaryBarHeight - bothBarHeight, 1)
+						: Rect(x + m_W - secondaryBarHeight, y + startValue + (step * i), secondaryBarHeight - bothBarHeight, 1);
+
+					secondaryPath.AddRectangle(r);  // cache
+				}
+				else
+				{
+					Rect& r = m_GraphStartLeft ?
+						  Rect(x + bothBarHeight, y + startValue + (step * i), primaryBarHeight - bothBarHeight, 1)
+						: Rect(x + m_W - primaryBarHeight, y + startValue + (step * i), primaryBarHeight - bothBarHeight, 1);
+
+					primaryPath.AddRectangle(r);  // cache
+				}
 			}
 			else
 			{
-				Rect& r = (m_Flip) ?
-					  Rect(x + i, y + bothBarHeight, 1, primaryBarHeight - bothBarHeight)
-					: Rect(x + i, y + m_H - primaryBarHeight, 1, primaryBarHeight - bothBarHeight);
+				Rect& r = m_GraphStartLeft ?
+					  Rect(x, y + startValue + (step * i), primaryBarHeight, 1)
+					: Rect(x + m_W - primaryBarHeight, y + startValue + (step * i), primaryBarHeight, 1);
 
 				primaryPath.AddRectangle(r);  // cache
 			}
 		}
-		else
+	}
+	else	// GraphOrientation=Vertical
+	{
+		for (i = startValue; *endValueLHS < *endValueRHS; i += step)
 		{
-			Rect& r = (m_Flip) ?
-				  Rect(x + i, y, 1, primaryBarHeight)
-				: Rect(x + i, y + m_H - primaryBarHeight, 1, primaryBarHeight);
+			double value = (m_MaxPrimaryValue == 0.0) ?
+				  0.0
+				: m_PrimaryValues[(i + m_MeterPos) % m_W] / m_MaxPrimaryValue;
+			value -= m_MinPrimaryValue;
+			int primaryBarHeight = (int)(m_H * value);
+			primaryBarHeight = min(m_H, primaryBarHeight);
+			primaryBarHeight = max(0, primaryBarHeight);
 
-			primaryPath.AddRectangle(r);  // cache
+			if (m_SecondaryMeasure)
+			{
+				value = (m_MaxSecondaryValue == 0.0) ?
+					  0.0
+					: m_SecondaryValues[(i + m_MeterPos) % m_W] / m_MaxSecondaryValue;
+				value -= m_MinSecondaryValue;
+				int secondaryBarHeight = (int)(m_H * value);
+				secondaryBarHeight = min(m_H, secondaryBarHeight);
+				secondaryBarHeight = max(0, secondaryBarHeight);
+
+				// Check which measured value is higher
+				int bothBarHeight = min(primaryBarHeight, secondaryBarHeight);
+
+				// Cache image/color rectangle for the both lines
+				{
+					Rect& r = m_Flip ?
+						  Rect(x + startValue + (step * i), y, 1, bothBarHeight)
+						: Rect(x + startValue + (step * i), y + m_H - bothBarHeight, 1, bothBarHeight);
+
+					bothPath.AddRectangle(r);  // cache
+				}
+
+				// Cache the image/color rectangle for the rest
+				if (secondaryBarHeight > primaryBarHeight)
+				{
+					Rect& r = m_Flip ?
+						  Rect(x + startValue + (step * i), y + bothBarHeight, 1, secondaryBarHeight - bothBarHeight)
+						: Rect(x + startValue + (step * i), y + m_H - secondaryBarHeight, 1, secondaryBarHeight - bothBarHeight);
+
+					secondaryPath.AddRectangle(r);  // cache
+				}
+				else
+				{
+					Rect& r = m_Flip ?
+						  Rect(x + startValue + (step * i), y + bothBarHeight, 1, primaryBarHeight - bothBarHeight)
+						: Rect(x + startValue + (step * i), y + m_H - primaryBarHeight, 1, primaryBarHeight - bothBarHeight);
+
+					primaryPath.AddRectangle(r);  // cache
+				}
+			}
+			else
+			{
+				Rect& r = m_Flip ?
+					  Rect(x + startValue + (step * i), y, 1, primaryBarHeight)
+					: Rect(x + startValue + (step * i), y + m_H - primaryBarHeight, 1, primaryBarHeight);
+
+				primaryPath.AddRectangle(r);  // cache
+			}
 		}
 	}
 

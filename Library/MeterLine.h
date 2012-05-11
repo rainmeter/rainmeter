@@ -48,10 +48,13 @@ private:
 	bool m_HorizontalLines;							// If true, horizontal lines will ba drawn on the meter
 	bool m_Flip;
 	double m_LineWidth;
-	Gdiplus::Color m_HorizontalColor;						// Color of the horizontal lines
+	Gdiplus::Color m_HorizontalColor;				// Color of the horizontal lines
 
-	std::vector< std::vector<double> > m_AllValues;			// All the values to be drawn
-	int m_CurrentPos;												// Place of the current value
+	std::vector< std::vector<double> > m_AllValues;	// All the values to be drawn
+	int m_CurrentPos;								// Place of the current value
+
+	bool m_GraphStartLeft;							// Start graph to the Left or Right(default)
+	bool m_GraphHorizontalOrientation;				// Horizontal or Vertical(default)
 };
 
 #endif
