@@ -205,10 +205,8 @@ std::vector<std::wstring> CRainmeter::ParseString(LPCTSTR str, CConfigParser* pa
 			}
 			else  // quote or space not found
 			{
-				newStr = arg;
+				addResult(arg, extra == 1);
 				arg.clear();
-
-				addResult(newStr, extra == 1);
 				break;
 			}
 		}
@@ -2033,7 +2031,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 			if (pos)
 			{
 				bang.assign(command, 0, pos - command);
-				args = ParseString(pos + 1, &meterWindow->GetParser());
+				args = ParseString(pos + 1, meterWindow ? &meterWindow->GetParser() : NULL);
 			}
 			else
 			{
