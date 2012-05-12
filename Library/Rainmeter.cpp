@@ -299,13 +299,12 @@ void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& 
 		std::multimap<int, CMeterWindow*> windows;
 		GetMeterWindowsByLoadOrder(windows, args[numOfArgs]);
 
+		args.resize(numOfArgs);	// Remove extra parameters (including group)
+
 		std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
-		args.push_back(std::wstring());
-		std::wstring& lastArg = args.back();
 		for (; iter != windows.end(); ++iter)
 		{
-			lastArg = (*iter).second->GetSkinName();
-			BangWithArgs(bang, args, numOfArgs, meterWindow);
+			BangWithArgs(bang, args, numOfArgs, (*iter).second);
 		}
 	}
 	else
