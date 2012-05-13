@@ -48,11 +48,12 @@ void StringToProper(std::wstring& str)
 {
 	if (!str.empty())
 	{
-		LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, &str[0], 1, &str[0], 1);
+		WCHAR* srcAndDest = &str[0];
+		LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, srcAndDest, 1, srcAndDest, 1);
 
 		for (size_t i = 1; i < str.length(); ++i)
 		{
-			WCHAR* srcAndDest = &str[i];
+			srcAndDest = &str[i];
 			LCMapString(LOCALE_USER_DEFAULT, (str[i - 1] == L' ') ? LCMAP_UPPERCASE : LCMAP_LOWERCASE, srcAndDest, 1, srcAndDest, 1);
 		}
 	}

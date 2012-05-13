@@ -1604,7 +1604,7 @@ void CDialogManage::CTabSettings::Initialize()
 				GetLocaleInfo(lcid, LOCALE_SNATIVELANGUAGENAME, fd.cFileName, MAX_PATH);
 
 				// Some native language names don't start with a uppercase char..
-				fd.cFileName[0] = towupper(fd.cFileName[0]);
+				LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, &fd.cFileName[0], 1, &fd.cFileName[0], 1);
 				text += fd.cFileName;
 
 				int index = ComboBox_AddString(item, text.c_str());

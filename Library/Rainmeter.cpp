@@ -1174,7 +1174,7 @@ void CRainmeter::CreateDataFile()
 
 	if (_waccess(pluginsFile, 0) == 0)
 	{
-		_wrename(pluginsFile, dataFile);
+		MoveFile(pluginsFile, dataFile);
 	}
 	else
 	{
