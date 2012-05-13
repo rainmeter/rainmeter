@@ -32,30 +32,28 @@ std::unordered_map<std::wstring, Gdiplus::Font*> CMeterString::c_Fonts;
 
 void StringToUpper(std::wstring& str)
 {
-	_wcsupr(&str[0]);
+	WCHAR* srcAndDest = &str[0];
+	int strAndDestLen = (int)str.length();
+	LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, srcAndDest, strAndDestLen, srcAndDest, strAndDestLen);
 }
 
 void StringToLower(std::wstring& str)
 {
-	_wcslwr(&str[0]);
+	WCHAR* srcAndDest = &str[0];
+	int strAndDestLen = (int)str.length();
+	LCMapString(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, srcAndDest, strAndDestLen, srcAndDest, strAndDestLen);
 }
 
 void StringToProper(std::wstring& str)
 {
 	if (!str.empty())
 	{
-		str[0] = towupper(str[0]);
+		LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, &str[0], 1, &str[0], 1);
 
 		for (size_t i = 1; i < str.length(); ++i)
 		{
-			if (str[i-1] == L' ')
-			{
-				str[i] = towupper(str[i]);
-			}
-			else
-			{
-				str[i] = towlower(str[i]);
-			}
+			WCHAR* srcAndDest = &str[i];
+			LCMapString(LOCALE_USER_DEFAULT, (str[i - 1] == L' ') ? LCMAP_UPPERCASE : LCMAP_LOWERCASE, srcAndDest, 1, srcAndDest, 1);
 		}
 	}
 }
