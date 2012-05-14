@@ -217,7 +217,7 @@ public:
 	const std::wstring& GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
 	void ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, CMeterWindow* meterWindow);
-	void ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow);
+	void ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow, bool multi = true);
 	void DelayedExecuteCommand(const WCHAR* command);
 
 	void RefreshAll();

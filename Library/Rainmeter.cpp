@@ -2003,7 +2003,7 @@ void CRainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args,
 ** Runs the given command or bang
 **
 */
-void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
+void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow, bool multi)
 {
 	if (command[0] == L'!')	// Bang
 	{
@@ -2043,7 +2043,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 		}
 	}
 
-	if (command[0] == L'[')	// Multi-bang
+	if (multi && command[0] == L'[')	// Multi-bang
 	{
 		std::wstring bangs = command;
 		std::wstring::size_type start = std::wstring::npos;
@@ -2070,7 +2070,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow)
 					// Skip whitespace
 					start = bangs.find_first_not_of(L" \t\r\n", start + 1, 4);
 
-					ExecuteCommand(bangs.c_str() + start, meterWindow);
+					ExecuteCommand(bangs.c_str() + start, meterWindow, false);
 				}
 			}
 			else if (bangs[i] == L'"' && isize > (i + 2) && bangs[i + 1] == L'"' && bangs[i + 2] == L'"')
