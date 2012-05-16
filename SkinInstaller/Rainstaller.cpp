@@ -1006,6 +1006,7 @@ bool IsDefaultPlugin(LPCTSTR plugin)
 			_wcsicmp(plugin, L"PerfMon.dll") == 0 ||
 			_wcsicmp(plugin, L"PingPlugin.dll") == 0 ||
 			_wcsicmp(plugin, L"PowerPlugin.dll") == 0 ||
+			_wcsicmp(plugin, L"Process.dll") == 0 ||
 			_wcsicmp(plugin, L"QuotePlugin.dll") == 0 ||
 			_wcsicmp(plugin, L"RecycleManager.dll") == 0 ||
 			_wcsicmp(plugin, L"ResMon.dll") == 0 ||
@@ -1128,6 +1129,7 @@ bool InstallComponents(RMSKIN_DATA* data)
 					result = unzGoToNextFile(ufile);
 					unzGetCurrentFileInfo(ufile, &ufi, cBuffer, MAX_PATH * 3, NULL, 0, NULL, 0);
 					MultiByteToWideChar(CP_ACP, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
+					while (WCHAR* pos = wcschr(buffer, L'\\')) *pos = L'/';
 				} while (result == UNZ_OK && _wcsnicmp(filePath, L"Addons/", 7) == 0);
 				continue;
 			}
@@ -1232,6 +1234,7 @@ bool InstallComponents(RMSKIN_DATA* data)
 					result = unzGoToNextFile(ufile);
 					unzGetCurrentFileInfo(ufile, &ufi, cBuffer, MAX_PATH * 3, NULL, 0, NULL, 0);
 					MultiByteToWideChar(CP_ACP, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
+					while (WCHAR* pos = wcschr(buffer, L'\\')) *pos = L'/';
 				} while (result == UNZ_OK && _wcsnicmp(filePath, PLUGINS_ROOT, 14) == 0);
 				continue;
 			}
@@ -1257,6 +1260,7 @@ bool BackupComponent(const std::wstring& backupFolder, const std::wstring& list,
 
 		tmpTo += backupFolder;
 		CreateDirectory(tmpTo.c_str(), NULL);
+		tmpTo += L'\\';
 
 		for (unsigned int i = 0; i < vecSize; ++i)
 		{
@@ -1264,6 +1268,7 @@ bool BackupComponent(const std::wstring& backupFolder, const std::wstring& list,
 			{
 				vec[i].resize(vec[i].length() - 1);	// Get rid of trailing asterisk
 				tmpFrom += vec[i];
+				tmpTo += vec[i];
 
 				if (!CopyFiles(tmpFrom.c_str(), tmpTo.c_str(), true))
 				{
@@ -1276,6 +1281,7 @@ bool BackupComponent(const std::wstring& backupFolder, const std::wstring& list,
 				}
 
 				tmpFrom.resize(tmpFrom.length() - vec[i].length());
+				tmpTo.resize(tmpTo.length() - vec[i].length());
 			}
 		}
 	}
