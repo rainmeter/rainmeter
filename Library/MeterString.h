@@ -32,6 +32,7 @@ public:
 	virtual UINT GetTypeID() { return TypeID<CMeterString>(); }
 
 	virtual int GetX(bool abs = false);
+	virtual int GetY(bool abs = false);
 
 	virtual void Initialize();
 	virtual bool Update();

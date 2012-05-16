@@ -103,15 +103,21 @@ int CMeterString::GetX(bool abs)
 	{
 		switch (m_Align)
 		{
-		case ALIGN_CENTER:
+		case ALIGN_CENTER:			// Same as ALIGN_CENTERTOP
+		case ALIGN_CENTERBOTTOM:
+		case ALIGN_CENTERCENTER:
 			x -= m_W / 2;
 			break;
 
-		case ALIGN_RIGHT:
+		case ALIGN_RIGHT:			// Same as ALIGN_RIGHTTOP
+		case ALIGN_RIGHTBOTTOM:
+		case ALIGN_RIGHTCENTER:
 			x -= m_W;
 			break;
 
-		case ALIGN_LEFT:
+		case ALIGN_LEFT:			// Same as ALIGN_LEFTTOP
+		case ALIGN_LEFTBOTTOM:
+		case ALIGN_LEFTCENTER:
 			// This is already correct
 			break;
 		}
@@ -120,6 +126,34 @@ int CMeterString::GetX(bool abs)
 	return x;
 }
 
+/*
+** Returns the Y-coordinate of the meter
+**
+*/
+int CMeterString::GetY(bool abs)
+{
+	int y = CMeter::GetY();
+
+	if (!abs)
+	{
+		switch (m_Align)
+		{
+		case ALIGN_LEFTCENTER:
+		case ALIGN_RIGHTCENTER:
+		case ALIGN_CENTERCENTER:
+			y -= m_H / 2;
+			break;
+
+		case ALIGN_LEFTBOTTOM:
+		case ALIGN_RIGHTBOTTOM:
+		case ALIGN_CENTERBOTTOM:
+			y -= m_H;
+			break;
+		}
+	}
+
+	return y;
+}
 
 /*
 ** Create the font that is used to draw the text.
@@ -341,17 +375,41 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_Scale = parser.ParseDouble(scale.c_str(), 1);
 
 	const WCHAR* align = parser.ReadString(section, L"StringAlign", L"LEFT").c_str();
-	if (_wcsicmp(align, L"LEFT") == 0)
+	if (_wcsicmp(align, L"LEFT") == 0 || _wcsicmp(align, L"LEFTTOP") == 0)
 	{
 		m_Align = ALIGN_LEFT;
 	}
-	else if (_wcsicmp(align, L"RIGHT") == 0)
+	else if (_wcsicmp(align, L"RIGHT") == 0 || _wcsicmp(align, L"RIGHTTOP") == 0)
 	{
 		m_Align = ALIGN_RIGHT;
 	}
-	else if (_wcsicmp(align, L"CENTER") == 0)
+	else if (_wcsicmp(align, L"CENTER") == 0 || _wcsicmp(align, L"CENTERTOP") == 0)
 	{
 		m_Align = ALIGN_CENTER;
+	}
+	else if (_wcsicmp(align, L"LEFTBOTTOM") == 0)
+	{
+		m_Align = ALIGN_LEFTBOTTOM;
+	}
+	else if (_wcsicmp(align, L"RIGHTBOTTOM") == 0)
+	{
+		m_Align = ALIGN_RIGHTBOTTOM;
+	}
+	else if (_wcsicmp(align, L"CENTERBOTTOM") == 0)
+	{
+		m_Align = ALIGN_CENTERBOTTOM;
+	}
+	else if (_wcsicmp(align, L"LEFTCENTER") == 0)
+	{
+		m_Align = ALIGN_LEFTCENTER;
+	}
+	else if (_wcsicmp(align, L"RIGHTCENTER") == 0)
+	{
+		m_Align = ALIGN_RIGHTCENTER;
+	}
+	else if (_wcsicmp(align, L"CENTERCENTER") == 0)
+	{
+		m_Align = ALIGN_CENTERCENTER;
 	}
 	else
 	{
@@ -541,16 +599,49 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 
 	switch (m_Align)
 	{
-	case ALIGN_CENTER:
+	case ALIGN_CENTERCENTER:
 		stringFormat.SetAlignment(StringAlignmentCenter);
+		stringFormat.SetLineAlignment(StringAlignmentCenter);
 		break;
 
-	case ALIGN_RIGHT:
+	case ALIGN_RIGHTCENTER:
 		stringFormat.SetAlignment(StringAlignmentFar);
+		stringFormat.SetLineAlignment(StringAlignmentCenter);
 		break;
 
-	case ALIGN_LEFT:
+	case ALIGN_LEFTCENTER:
 		stringFormat.SetAlignment(StringAlignmentNear);
+		stringFormat.SetLineAlignment(StringAlignmentCenter);
+		break;
+
+	case ALIGN_CENTERBOTTOM:
+		stringFormat.SetAlignment(StringAlignmentCenter);
+		stringFormat.SetLineAlignment(StringAlignmentFar);
+		break;
+
+	case ALIGN_RIGHTBOTTOM:
+		stringFormat.SetAlignment(StringAlignmentFar);
+		stringFormat.SetLineAlignment(StringAlignmentFar);
+		break;
+
+	case ALIGN_LEFTBOTTOM:
+		stringFormat.SetAlignment(StringAlignmentNear);
+		stringFormat.SetLineAlignment(StringAlignmentFar);
+		break;
+
+	case ALIGN_CENTER:	// Same as CenterTop
+		stringFormat.SetAlignment(StringAlignmentCenter);
+		stringFormat.SetLineAlignment(StringAlignmentNear);
+		break;
+
+	case ALIGN_RIGHT:	// Same as RightTop
+		stringFormat.SetAlignment(StringAlignmentFar);
+		stringFormat.SetLineAlignment(StringAlignmentNear);
+		break;
+
+	case ALIGN_LEFT:	// Same as LeftTop
+		stringFormat.SetAlignment(StringAlignmentNear);
+		stringFormat.SetLineAlignment(StringAlignmentNear);
 		break;
 	}
 
