@@ -372,8 +372,6 @@ namespace InputText
         #region Send a bang to Rainmeter (prepends a '!' if necessary)
         public static void Bang(string sBang)
         {
-            if (!sBang.StartsWith("!"))
-                sBang = "!" + sBang;
             System.Diagnostics.Process.Start(System.Windows.Forms.Application.ExecutablePath, sBang);
         }
         #endregion
