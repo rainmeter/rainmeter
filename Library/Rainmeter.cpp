@@ -55,7 +55,7 @@ int RainmeterMain(LPWSTR cmdLine)
 	{
 		COPYDATASTRUCT cds;
 
-		if (cmdLine[0] == L'!')
+		if (cmdLine[0] == L'!' || cmdLine[0] == L'[')
 		{
 			// Deliver bang to existing Rainmeter instance
 			cds.dwData = 1;
@@ -82,7 +82,7 @@ int RainmeterMain(LPWSTR cmdLine)
 		}
 	}
 
-	if (cmdLine[0] == L'!' &&
+	if ((cmdLine[0] == L'!' || cmdLine[0] == L'[') &&
 		_wcsicmp(L"!RainmeterQuit", cmdLine) != 0 &&
 		_wcsicmp(L"!Quit", cmdLine) != 0)
 	{
