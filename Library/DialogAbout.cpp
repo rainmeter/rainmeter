@@ -371,7 +371,7 @@ void CDialogAbout::CTabLog::Initialize()
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	// Set folder/.ini icons for tree list
-	HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR32, 2, 10);
+	HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR32, 3, 1);
 	HMODULE hDLL = GetModuleHandle(L"user32");
 
 	HICON hIcon = (HICON)LoadImage(hDLL, MAKEINTRESOURCE(103), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
@@ -494,7 +494,7 @@ void CDialogAbout::CTabLog::AddItem(int level, LPCWSTR time, LPCWSTR message)
 	case LOG_DEBUG:
 		if (!m_Debug) return;
 		item = GetDlgItem(m_Window, IDC_ABOUTLOG_DEBUG_CHECKBOX);
-		vitem.iImage = -1;
+		vitem.iImage = I_IMAGENONE;
 		break;
 	}
 
