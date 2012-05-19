@@ -1307,7 +1307,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 							++sep;
 						}
 
-						if (wcsncmp(key.c_str(), L"@include", 8) == 0)
+						if (wcsncmp(key.c_str(), L"@INCLUDE", 8) == 0)
 						{
 							if (clen > 0)
 							{
