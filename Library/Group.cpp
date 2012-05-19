@@ -59,8 +59,7 @@ std::wstring CGroup::CreateGroup(const std::wstring& str)
 		// Trim white-space
 		strTmp.assign(str, pos, str.find_last_not_of(L" \t\r\n") - pos + 1);
 
-		// Convert to lower
-		_wcslwr(&strTmp[0]);
+		_wcsupr(&strTmp[0]);
 	}
 
 	return strTmp;

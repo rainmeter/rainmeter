@@ -46,7 +46,6 @@ public:
 	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_Variables, strVariable, strValue); }
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
-	void SetBuiltInVariable(const WCHAR* strVariable, const WCHAR* strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
 
 	const std::unordered_map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }
 
@@ -119,9 +118,9 @@ private:
 	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(c_MonitorVariables, strVariable, strValue); }
 	static void SetMonitorVariable(const WCHAR* strVariable, const WCHAR* strValue) { SetVariable(c_MonitorVariables, strVariable, strValue); }
 
-	static std::wstring StrToLower(const std::wstring& str) { std::wstring strTmp(str); StrToLowerC(strTmp); return strTmp; }
-	static std::wstring StrToLower(const WCHAR* str) { std::wstring strTmp(str); StrToLowerC(strTmp); return strTmp; }
-	static std::wstring& StrToLowerC(std::wstring& str) { _wcslwr(&str[0]); return str; }
+	static std::wstring StrToUpper(const std::wstring& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
+	static std::wstring StrToUpper(const WCHAR* str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
+	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
 
 	std::wstring m_Filename;
 

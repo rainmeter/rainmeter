@@ -42,7 +42,7 @@ public:
 		{
 			key = name;
 		}
-		_wcslwr(&key[0]);
+		_wcsupr(&key[0]);
 
 		size_t len = _snwprintf_s(buffer, _TRUNCATE, L":%llx:%x", time, size);
 		key.append(buffer, len);

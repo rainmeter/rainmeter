@@ -2070,9 +2070,8 @@ bool CMeterWindow::ReadSkin()
 		}
 	}
 
-	// Checking for localfonts
+	// Load local fonts
 	const WCHAR* localFont = m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"").c_str();
-	// If there is a local font we want to load it
 	if (*localFont)
 	{
 		m_FontCollection = new PrivateFontCollection();
@@ -2080,34 +2079,22 @@ bool CMeterWindow::ReadSkin()
 
 		do
 		{
-			// We want to check the fonts folder first
-			// !!!!!!! - We may want to fix the method in which I get the path to
-			// Rainmeter/fonts
+			// Try program folder first
 			std::wstring szFontFile = Rainmeter->GetPath() + L"Fonts\\";
 			szFontFile += localFont;
 			Status nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 
-			// It wasn't found in the fonts folder, check the local folder
 			if (nResults != Ok)
 			{
-				szFontFile = Rainmeter->GetSkinPath(); // Get the local path
-				szFontFile += m_SkinName;
-				szFontFile += L'\\';
-				szFontFile += localFont;
+				szFontFile = localFont;
+				MakePathAbsolute(szFontFile);
 				nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
 
-				// The font wasn't found, check full path.
 				if (nResults != Ok)
 				{
-					szFontFile = localFont;
-					nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
-
-					if (nResults != Ok)
-					{
-						std::wstring error = L"Unable to load font file: ";
-						error += localFont;
-						Log(LOG_ERROR, error.c_str());
-					}
+					std::wstring error = L"Unable to load font file: ";
+					error += localFont;
+					Log(LOG_ERROR, error.c_str());
 				}
 			}
 

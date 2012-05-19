@@ -104,7 +104,7 @@ void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* me
 
 	SetBuiltInVariable(L"CRLF", L"\n");
 
-	const std::wstring CURRENTSECTION = StrToLower(L"CURRENTSECTION");
+	const std::wstring CURRENTSECTION = L"CURRENTSECTION";
 	SetBuiltInVariable(CURRENTSECTION, L"");
 	m_CurrentSection = &((*m_BuiltInVariables.find(CURRENTSECTION)).second);  // shortcut
 }
@@ -131,7 +131,7 @@ void CConfigParser::SetVariable(std::unordered_map<std::wstring, std::wstring>& 
 {
 	// LogWithArgs(LOG_DEBUG, L"Variable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), (int)variables.size());
 
-	const std::wstring strTmp = StrToLower(strVariable);
+	const std::wstring strTmp = StrToUpper(strVariable);
 
 	variables[strTmp] = strValue;
 }
@@ -139,7 +139,7 @@ void CConfigParser::SetVariable(std::unordered_map<std::wstring, std::wstring>& 
 {
 	// LogWithArgs(LOG_DEBUG, L"Variable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), (int)variables.size());
 
-	const std::wstring strTmp = StrToLower(strVariable);
+	const std::wstring strTmp = StrToUpper(strVariable);
 
 	variables[strTmp] = strValue;
 }
@@ -150,7 +150,7 @@ void CConfigParser::SetVariable(std::unordered_map<std::wstring, std::wstring>& 
 */
 bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& strValue)
 {
-	const std::wstring strTmp = StrToLower(strVariable);
+	const std::wstring strTmp = StrToUpper(strVariable);
 
 	// #1: Built-in variables
 	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_BuiltInVariables.find(strTmp);
@@ -656,13 +656,13 @@ void CConfigParser::AddMeasure(CMeasure* pMeasure)
 {
 	if (pMeasure)
 	{
-		m_Measures[StrToLower(pMeasure->GetOriginalName())] = pMeasure;
+		m_Measures[StrToUpper(pMeasure->GetOriginalName())] = pMeasure;
 	}
 }
 
 CMeasure* CConfigParser::GetMeasure(const std::wstring& name)
 {
-	std::unordered_map<std::wstring, CMeasure*>::const_iterator iter = m_Measures.find(StrToLower(name));
+	std::unordered_map<std::wstring, CMeasure*>::const_iterator iter = m_Measures.find(StrToUpper(name));
 	if (iter != m_Measures.end())
 	{
 		return (*iter).second;
@@ -1223,7 +1223,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 			if (*pos)
 			{
 				value = pos;  // section name
-				StrToLowerC(key.assign(value));
+				StrToUpperC(key.assign(value));
 				if (unique.insert(key).second)
 				{
 					if (m_FoundSections.insert(key).second)
@@ -1294,7 +1294,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 				{
 					size_t clen = sep - pos;  // key's length
 
-					StrToLowerC(key.assign(pos, clen));
+					StrToUpperC(key.assign(pos, clen));
 					if (unique.insert(key).second)
 					{
 						++sep;
@@ -1364,7 +1364,7 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 	strTmp += L'~';
 	strTmp += strKey;
 
-	m_Values[StrToLowerC(strTmp)] = strValue;
+	m_Values[StrToUpperC(strTmp)] = strValue;
 }
 
 /*
@@ -1379,7 +1379,7 @@ void CConfigParser::DeleteValue(const std::wstring& strSection, const std::wstri
 	strTmp += L'~';
 	strTmp += strKey;
 
-	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToLowerC(strTmp));
+	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToUpperC(strTmp));
 	if (iter != m_Values.end())
 	{
 		m_Values.erase(iter);
@@ -1398,6 +1398,6 @@ const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, cons
 	strTmp += L'~';
 	strTmp += strKey;
 
-	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToLowerC(strTmp));
+	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_Values.find(StrToUpperC(strTmp));
 	return (iter != m_Values.end()) ? (*iter).second : strDefault;
 }
