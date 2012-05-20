@@ -269,7 +269,7 @@ private:
 
 	CTrayWindow* m_TrayWindow;
 
-	std::vector<CONFIG> m_ConfigStrings;				// All configs found in the given folder
+	std::vector<CONFIG> m_ConfigStrings;
 	std::vector<CONFIGMENU> m_ConfigMenu;
 	std::multimap<int, int> m_ConfigOrders;
 	std::map<std::wstring, CMeterWindow*> m_MeterWindows;
@@ -286,7 +286,7 @@ private:
 
 	std::wstring m_Drive;
 
-	std::wstring m_StatsDate;					// The date when stats gathering started
+	std::wstring m_StatsDate;
 
 	std::wstring m_TrayExecuteR;
 	std::wstring m_TrayExecuteM;
@@ -299,7 +299,7 @@ private:
 	bool m_NewVersion;
 
 	bool m_DesktopWorkAreaChanged;
-	bool m_DesktopWorkAreaType;			// If true, DesktopWorkArea is treated as "margin"
+	bool m_DesktopWorkAreaType;
 	std::map<UINT, RECT> m_DesktopWorkAreas;
 	std::vector<RECT> m_OldDesktopWorkAreas;
 

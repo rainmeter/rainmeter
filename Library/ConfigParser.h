@@ -132,16 +132,16 @@ private:
 
 	std::wstring* m_CurrentSection;
 
-	std::list<std::wstring> m_Sections;		// The sections must be an ordered array
+	std::list<std::wstring> m_Sections;		// Ordered section
 	std::unordered_map<std::wstring, std::wstring> m_Values;
 
 	std::unordered_set<std::wstring> m_FoundSections;
 	std::list<std::wstring> m_ListVariables;
 
-	std::unordered_map<std::wstring, std::wstring> m_BuiltInVariables;         // Built-in variables
-	std::unordered_map<std::wstring, std::wstring> m_Variables;                // User-defined variables
+	std::unordered_map<std::wstring, std::wstring> m_BuiltInVariables;
+	std::unordered_map<std::wstring, std::wstring> m_Variables;
 
-	static std::unordered_map<std::wstring, std::wstring> c_MonitorVariables;  // Monitor variables
+	static std::unordered_map<std::wstring, std::wstring> c_MonitorVariables;
 };
 
 #endif

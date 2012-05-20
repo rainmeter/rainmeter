@@ -50,11 +50,11 @@ private:
 	bool HitTest2(int px, int py, bool checkAlpha);
 
 	CTintedImage m_Image;
-	std::wstring m_ImageName;	// Name of the image
+	std::wstring m_ImageName;
 	bool m_NeedsReload;
 
-	Gdiplus::CachedBitmap* m_Bitmaps[BUTTON_FRAMES];	// The cached bitmaps
-	std::wstring m_Command;	// Command to be executed
+	Gdiplus::CachedBitmap* m_Bitmaps[BUTTON_FRAMES];	// Cached bitmaps
+	std::wstring m_Command;
 	int m_State;
 	bool m_Clicked;
 	bool m_Focus;

@@ -36,18 +36,18 @@ struct MONITOR_INFO
 	HMONITOR handle;
 	RECT screen;
 	RECT work;
-	std::wstring deviceName;				//Device name (E.g. "\\.\DISPLAY1")
-	std::wstring monitorName;				//Monitor name (E.g. "Generic Non-PnP Monitor")
+	std::wstring deviceName;				// Device name (E.g. "\\.\DISPLAY1")
+	std::wstring monitorName;				// Monitor name (E.g. "Generic Non-PnP Monitor")
 };
 
 struct MULTIMONITOR_INFO
 {
-	bool useEnumDisplayDevices;				//If true, use EnumDisplayDevices function to obtain the multi-monitor information
-	bool useEnumDisplayMonitors;			//If true, use EnumDisplayMonitors function to obtain the multi-monitor information
+	bool useEnumDisplayDevices;				// If true, use EnumDisplayDevices function to obtain the multi-monitor information
+	bool useEnumDisplayMonitors;			// If true, use EnumDisplayMonitors function to obtain the multi-monitor information
 
-	int vsT, vsL, vsH, vsW;					//Coordinates of the top-left corner (vsT,vsL) and size (vsH,vsW) of the virtual screen
-	int primary;							//Index of the primary monitor
-	std::vector<MONITOR_INFO> monitors;		//Monitor information
+	int vsT, vsL, vsH, vsW;					// Coordinates of the top-left corner (vsT,vsL) and size (vsH,vsW) of the virtual screen
+	int primary;							// Index of the primary monitor
+	std::vector<MONITOR_INFO> monitors;
 };
 
 class CSystem
@@ -111,7 +111,7 @@ private:
 
 	static HWINEVENTHOOK c_WinEventHook;
 
-	static MULTIMONITOR_INFO c_Monitors;		// Multi-Monitor info
+	static MULTIMONITOR_INFO c_Monitors;
 
 	static bool c_ShowDesktop;
 

@@ -360,35 +360,35 @@ private:
 	int m_DIBSectionBufferW;
 	int m_DIBSectionBufferH;
 
-	Gdiplus::Bitmap* m_Background;				// The background bitmap
+	Gdiplus::Bitmap* m_Background;
 	SIZE m_BackgroundSize;
 
-	HWND m_Window;								// Handle to the Rainmeter window
+	HWND m_Window;
 
-	std::wstring m_LeftMouseDownAction;			// Action to run when left mouse is pressed
-	std::wstring m_RightMouseDownAction;		// Action to run when right mouse is pressed
-	std::wstring m_MiddleMouseDownAction;		// Action to run when middle mouse is pressed
-	std::wstring m_LeftMouseUpAction;			// Action to run when left mouse is released
-	std::wstring m_RightMouseUpAction;			// Action to run when right mouse is released
-	std::wstring m_MiddleMouseUpAction;			// Action to run when middle mouse is released
-	std::wstring m_LeftMouseDoubleClickAction;	// Action to run when left mouse is double-clicked
-	std::wstring m_RightMouseDoubleClickAction;	// Action to run when right mouse is double-clicked
-	std::wstring m_MiddleMouseDoubleClickAction;	// Action to run when middle mouse is double-clicked
-	std::wstring m_MouseOverAction;				// Action to run when mouse goes over the window
-	std::wstring m_MouseLeaveAction;			// Action to run when mouse leaves the window
-	std::wstring m_OnRefreshAction;				// Action to run when window is initialized
-	std::wstring m_OnCloseAction;				// Action to run when window is closed
+	std::wstring m_LeftMouseDownAction;
+	std::wstring m_RightMouseDownAction;
+	std::wstring m_MiddleMouseDownAction;
+	std::wstring m_LeftMouseUpAction;
+	std::wstring m_RightMouseUpAction;
+	std::wstring m_MiddleMouseUpAction;
+	std::wstring m_LeftMouseDoubleClickAction;
+	std::wstring m_RightMouseDoubleClickAction;
+	std::wstring m_MiddleMouseDoubleClickAction;
+	std::wstring m_MouseOverAction;
+	std::wstring m_MouseLeaveAction;
+	std::wstring m_OnRefreshAction;
+	std::wstring m_OnCloseAction;
 
 	bool m_MouseOver;
 
 	std::wstring m_ConfigGroup;
-	std::wstring m_BackgroundName;				// Name of the background image
+	std::wstring m_BackgroundName;
 	RECT m_BackgroundMargins;
 	RECT m_DragMargins;
-	std::wstring m_WindowX;						// Window's X-position in config file
-	std::wstring m_WindowY;						// Window's Y-position in config file
-	std::wstring m_AnchorX;						// Anchor's X-position in config file
-	std::wstring m_AnchorY;						// Anchor's Y-position in config file
+	std::wstring m_WindowX;
+	std::wstring m_WindowY;
+	std::wstring m_AnchorX;
+	std::wstring m_AnchorY;
 	int m_WindowXScreen;
 	int m_WindowYScreen;
 	bool m_WindowXScreenDefined;
@@ -397,60 +397,60 @@ private:
 	bool m_WindowYFromBottom;
 	bool m_WindowXPercentage;
 	bool m_WindowYPercentage;
-	int m_WindowW;								// Window's Width
-	int m_WindowH;								// Window's Height
-	int m_ScreenX;								// Window's X-postion on the virtual screen 
-	int m_ScreenY;								// Window's Y-postion on the virtual screen
+	int m_WindowW;
+	int m_WindowH;
+	int m_ScreenX;								// X-postion on the virtual screen 
+	int m_ScreenY;								// Y-postion on the virtual screen
 	bool m_AnchorXFromRight;
 	bool m_AnchorYFromBottom;
 	bool m_AnchorXPercentage;
 	bool m_AnchorYPercentage;
-	int m_AnchorScreenX;						// Window's anchor X-postion 
-	int m_AnchorScreenY;						// Window's anchor Y-postion
-	bool m_WindowDraggable;						// True, if window can be moved
-	int m_WindowUpdate;							// Measure update frequency
-	int m_TransitionUpdate;						// Transition redraw frequency
+	int m_AnchorScreenX;
+	int m_AnchorScreenY;
+	bool m_WindowDraggable;
+	int m_WindowUpdate;
+	int m_TransitionUpdate;
 	bool m_ActiveTransition;
 	bool m_HasNetMeasures;
 	bool m_HasButtons;
-	HIDEMODE m_WindowHide;						// If true, the window is hidden when mouse is over it
-	bool m_WindowStartHidden;					// If true, the window is hidden at startup
-	bool m_SavePosition;						// If true, the window's position is saved
-	bool m_SnapEdges;							// If true, the window snaps to the edges of the screen when moved
-	int m_AlphaValue;							// The 'from' transparency value 0 - 255
-	int m_FadeDuration;							// Time it takes to fade the window
-	ZPOSITION m_WindowZPosition;				// Window's Z-position
-	bool m_DynamicWindowSize;					// 
-	bool m_ClickThrough;						// 
-	bool m_KeepOnScreen;						// 
-	bool m_AutoSelectScreen;					//
-	bool m_Dragging;							//
-	bool m_Dragged;								//
-	BGMODE m_BackgroundMode;					// The background mode
-	Gdiplus::Color m_SolidColor;				// Color of the solid background
-	Gdiplus::Color m_SolidColor2;				// Color of the solid background
-	Gdiplus::REAL m_SolidAngle;					//
-	BEVELTYPE m_SolidBevel;						// The type of the bevel
+	HIDEMODE m_WindowHide;
+	bool m_WindowStartHidden;
+	bool m_SavePosition;
+	bool m_SnapEdges;
+	int m_AlphaValue;
+	int m_FadeDuration;	
+	ZPOSITION m_WindowZPosition;
+	bool m_DynamicWindowSize;
+	bool m_ClickThrough;
+	bool m_KeepOnScreen;
+	bool m_AutoSelectScreen;
+	bool m_Dragging;
+	bool m_Dragged;
+	BGMODE m_BackgroundMode;
+	Gdiplus::Color m_SolidColor;
+	Gdiplus::Color m_SolidColor2;
+	Gdiplus::REAL m_SolidAngle;
+	BEVELTYPE m_SolidBevel;
 
-	bool m_Blur;								// If true, Aero blur is active
-	BLURMODE m_BlurMode;						// The blur mode
-	HRGN m_BlurRegion;							// Handle to the blur region
+	bool m_Blur;
+	BLURMODE m_BlurMode;
+	HRGN m_BlurRegion;
 
 	ULONGLONG m_FadeStartTime;
 	int m_FadeStartValue;
 	int m_FadeEndValue;
 	int m_TransparencyValue;
 
-	bool m_Refreshing;							// This is true, when the meter is refreshing
+	bool m_Refreshing;
 
-	bool m_Hidden;								// True, if Rainmeter is hidden
-	RESIZEMODE m_ResizeWindow;					// If needed, the window size is recalculated during the next update
+	bool m_Hidden;
+	RESIZEMODE m_ResizeWindow;
 
-	std::list<CMeasure*> m_Measures;			// All the measures
-	std::list<CMeter*> m_Meters;				// All the meters
+	std::list<CMeasure*> m_Measures;
+	std::list<CMeter*> m_Meters;
 
-	const std::wstring m_SkinName;				// Name of the current skin folder
-	const std::wstring m_SkinIniFile;			// Name of the current skin iniFile
+	const std::wstring m_SkinName;
+	const std::wstring m_SkinIniFile;
 
 	bool m_ResourcesFolder;
 

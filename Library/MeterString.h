@@ -73,25 +73,25 @@ private:
 
 	bool DrawString(Gdiplus::Graphics& graphics, Gdiplus::RectF* rect);
 
-	Gdiplus::Color m_Color;				// The color of the text
-	Gdiplus::Color m_EffectColor;		// The color of the text effect
-	std::wstring m_Postfix;				// The postfix of the text
-	std::wstring m_Prefix;				// The prefix of the text
-	std::wstring m_Text;				// The text
-	std::wstring m_FontFace;			// name of the font face
-	AUTOSCALE m_AutoScale;				// true, if the value should be autoscaled
-	METER_ALIGNMENT m_Align;			// Alignment of the text
-	TEXTSTYLE m_Style;					// Style of the text
-	TEXTEFFECT m_Effect;				// Text effect
-	TEXTCASE m_textCase;				// Case of the text
-	int m_FontSize;						// Size of the fonts
-	double m_Scale;						// Scaling if autoscale is not used
-	bool m_NoDecimals;					// Number of decimals to use
-	bool m_Percentual;					// True, if the value should be given as %
-	bool m_ClipString;					// True, the text is clipped in borders (adds ellipsis to the end of the string)
-	Gdiplus::Font* m_Font;				// The font
-	Gdiplus::FontFamily* m_FontFamily;	// The font family
-	int m_NumOfDecimals;				// Number of decimals to be displayed
+	Gdiplus::Color m_Color;
+	Gdiplus::Color m_EffectColor;
+	std::wstring m_Postfix;
+	std::wstring m_Prefix;
+	std::wstring m_Text;
+	std::wstring m_FontFace;
+	AUTOSCALE m_AutoScale;
+	METER_ALIGNMENT m_Align;
+	TEXTSTYLE m_Style;
+	TEXTEFFECT m_Effect;
+	TEXTCASE m_Case;
+	int m_FontSize;
+	double m_Scale;
+	bool m_NoDecimals;
+	bool m_Percentual;
+	bool m_ClipString;
+	Gdiplus::Font* m_Font;
+	Gdiplus::FontFamily* m_FontFamily;
+	int m_NumOfDecimals;
 	Gdiplus::REAL m_Angle;
 	Gdiplus::RectF m_Rect;
 
@@ -108,12 +108,3 @@ private:
 };
 
 #endif
-
-/*
-E	eksa	10^18
-P	peta	10^15
-T	tera	10^12
-G	giga	10^9
-M	mega	10^6
-k	kilo	10^3
-*/	

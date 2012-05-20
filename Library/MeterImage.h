@@ -42,12 +42,12 @@ private:
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
 	CTintedImage m_Image;
-	std::wstring m_ImageName;			// Name of the image
-	std::wstring m_ImageNameResult;		// Name of the image (as absolute path)
+	std::wstring m_ImageName;
+	std::wstring m_ImageNameResult;		// Image name as absolute path
 	std::wstring m_Path;
 
 	bool m_NeedsRedraw;
-	bool m_PreserveAspectRatio;			// If true, aspect ratio of the image is preserved when the image is scaled
+	bool m_PreserveAspectRatio;
 	bool m_Tile;
 
 	RECT m_ScaleMargins;

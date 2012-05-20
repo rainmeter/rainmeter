@@ -45,11 +45,11 @@ private:
 	};
 
 	CTintedImage m_Image;
-	std::wstring m_ImageName;	// Name of the bar-image
+	std::wstring m_ImageName;
 	bool m_NeedsReload;
 
-	Gdiplus::Color m_Color;			// Color of the bar
-	ORIENTATION m_Orientation;	// Orientation (i.e. the growth direction)
+	Gdiplus::Color m_Color;
+	ORIENTATION m_Orientation;	// Growth direction
 	double m_Value;
 	int m_Border;
 	bool m_Flip;

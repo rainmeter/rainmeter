@@ -136,21 +136,21 @@ protected:
 	static void ReadMeasureNames(CConfigParser& parser, const WCHAR* section, std::vector<std::wstring>& measureNames);
 	static bool ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str);
 
-	const std::wstring m_Name;			// Name of the meter
-	std::wstring m_MeasureName;	// Name of the measure this is bound to
-	CMeasure* m_Measure;		// Pointer to the measure this meter is bound to
+	const std::wstring m_Name;
+	std::wstring m_MeasureName;	// Name of bound measure
+	CMeasure* m_Measure;		// Pointer to bound measure
 	std::vector<CMeasure*> m_AllMeasures;
-	int	m_X;					// X-position of the meter
-	int	m_Y;					// Y-position of the meter
-	int	m_W;					// Width of the meter
-	int	m_H;					// Height of the meter
-	bool m_Hidden;				// Status of the meter
+	int m_X;
+	int m_Y;
+	int m_W;
+	int m_H;
+	bool m_Hidden;
 	bool m_WDefined;
 	bool m_HDefined;
 	CMeter*	m_RelativeMeter;
-	bool m_DynamicVariables;		// If true, the measure contains dynamic variables
+	bool m_DynamicVariables;
 
-	Gdiplus::Matrix* m_Transformation;	// The transformation matrix
+	Gdiplus::Matrix* m_Transformation;
 
 	std::wstring m_StyleX;
 	std::wstring m_StyleY;
@@ -166,7 +166,7 @@ protected:
 
 	HWND m_ToolTipHandle;
 
-	std::wstring m_LeftMouseDownAction;		// Actions for left/right/middle mouse buttons
+	std::wstring m_LeftMouseDownAction;
 	std::wstring m_RightMouseDownAction;
 	std::wstring m_MiddleMouseDownAction;
 	std::wstring m_LeftMouseUpAction;
@@ -185,14 +185,14 @@ protected:
 	METER_POSITION m_RelativeX;
 	METER_POSITION m_RelativeY;
 
-	int m_UpdateDivider;			// Divider for the update
-	int m_UpdateCounter;			// Current update counter
+	int m_UpdateDivider;
+	int m_UpdateCounter;
 
 	BEVELTYPE m_SolidBevel;
 	Gdiplus::Color m_SolidColor;
 	Gdiplus::Color m_SolidColor2;
 	Gdiplus::REAL m_SolidAngle;
-	bool m_AntiAlias;				// If true, the line is antialiased
+	bool m_AntiAlias;
 	bool m_Initialized;
 
 	CMeterWindow* m_MeterWindow;

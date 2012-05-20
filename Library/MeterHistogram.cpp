@@ -38,16 +38,16 @@ CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow, const WCHAR* name) :
 	m_SecondaryMeasure(),
 	m_PrimaryColor(Color::Green),
 	m_SecondaryColor(Color::Red),
-	m_BothColor(Color::Yellow),
+	m_OverlapColor(Color::Yellow),
 	m_MeterPos(),
 	m_Autoscale(false),
 	m_Flip(false),
 	m_PrimaryImage(L"PrimaryImage", c_PrimaryConfigArray),
 	m_SecondaryImage(L"SecondaryImage", c_SecondaryConfigArray),
-	m_BothImage(L"BothImage", c_BothConfigArray),
+	m_OverlapImage(L"BothImage", c_BothConfigArray),
 	m_PrimaryNeedsReload(false),
 	m_SecondaryNeedsReload(false),
-	m_BothNeedsReload(false),
+	m_OverlapNeedsReload(false),
 	m_PrimaryValues(),
 	m_SecondaryValues(),
 	m_MaxPrimaryValue(1.0),
@@ -96,13 +96,13 @@ void CMeterHistogram::Initialize()
 	CMeter::Initialize();
 
 	// A sanity check
-	if (m_SecondaryMeasure && !m_PrimaryImageName.empty() && (m_BothImageName.empty() || m_SecondaryImageName.empty()))
+	if (m_SecondaryMeasure && !m_PrimaryImageName.empty() && (m_OverlapImageName.empty() || m_SecondaryImageName.empty()))
 	{
 		Log(LOG_WARNING, L"Histogram: SecondaryImage and BothImage not defined");
 
 		m_PrimaryImage.DisposeImage();
 		m_SecondaryImage.DisposeImage();
-		m_BothImage.DisposeImage();
+		m_OverlapImage.DisposeImage();
 	}
 	else
 	{
@@ -141,19 +141,19 @@ void CMeterHistogram::Initialize()
 			m_SecondaryImage.DisposeImage();
 		}
 
-		if (!m_BothImageName.empty())
+		if (!m_OverlapImageName.empty())
 		{
-			m_BothImage.LoadImage(m_BothImageName, m_BothNeedsReload);
+			m_OverlapImage.LoadImage(m_OverlapImageName, m_OverlapNeedsReload);
 		}
-		else if (m_BothImage.IsLoaded())
+		else if (m_OverlapImage.IsLoaded())
 		{
-			m_BothImage.DisposeImage();
+			m_OverlapImage.DisposeImage();
 		}
 	}
 
 	if ((!m_PrimaryImageName.empty() && !m_PrimaryImage.IsLoaded()) ||
 		(!m_SecondaryImageName.empty() && !m_SecondaryImage.IsLoaded()) ||
-		(!m_BothImageName.empty() && !m_BothImage.IsLoaded()))
+		(!m_OverlapImageName.empty() && !m_OverlapImage.IsLoaded()))
 	{
 		DisposeBuffer();
 
@@ -187,7 +187,7 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldPrimaryImageName = m_PrimaryImageName;
 	std::wstring oldSecondaryImageName = m_SecondaryImageName;
-	std::wstring oldBothImageName = m_BothImageName;
+	std::wstring oldBothImageName = m_OverlapImageName;
 	int oldW = m_W;
 	int oldH = m_H;
 
@@ -196,7 +196,7 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_PrimaryColor = parser.ReadColor(section, L"PrimaryColor", Color::Green);
 	m_SecondaryColor = parser.ReadColor(section, L"SecondaryColor", Color::Red);
-	m_BothColor = parser.ReadColor(section, L"BothColor", Color::Yellow);
+	m_OverlapColor = parser.ReadColor(section, L"BothColor", Color::Yellow);
 
 	if (!m_Initialized && !m_MeasureName.empty())
 	{
@@ -233,17 +233,17 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_SecondaryImage.ClearConfigFlags();
 	}
 
-	m_BothImageName = parser.ReadString(section, L"BothImage", L"");
-	if (!m_BothImageName.empty())
+	m_OverlapImageName = parser.ReadString(section, L"BothImage", L"");
+	if (!m_OverlapImageName.empty())
 	{
-		m_MeterWindow->MakePathAbsolute(m_BothImageName);
+		m_MeterWindow->MakePathAbsolute(m_OverlapImageName);
 
 		// Read tinting configs
-		m_BothImage.ReadConfig(parser, section);
+		m_OverlapImage.ReadConfig(parser, section);
 	}
 	else
 	{
-		m_BothImage.ClearConfigFlags();
+		m_OverlapImage.ClearConfigFlags();
 	}
 
 	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0);
@@ -267,14 +267,14 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 			m_PrimaryNeedsReload = (wcscmp(oldPrimaryImageName.c_str(), m_PrimaryImageName.c_str()) != 0);
 			m_SecondaryNeedsReload = (wcscmp(oldSecondaryImageName.c_str(), m_SecondaryImageName.c_str()) != 0);
-			m_BothNeedsReload = (wcscmp(oldBothImageName.c_str(), m_BothImageName.c_str()) != 0);
+			m_OverlapNeedsReload = (wcscmp(oldBothImageName.c_str(), m_OverlapImageName.c_str()) != 0);
 
 			if (m_PrimaryNeedsReload ||
 				m_SecondaryNeedsReload ||
-				m_BothNeedsReload ||
+				m_OverlapNeedsReload ||
 				m_PrimaryImage.IsConfigsChanged() ||
 				m_SecondaryImage.IsConfigsChanged() ||
-				m_BothImage.IsConfigsChanged())
+				m_OverlapImage.IsConfigsChanged())
 			{
 				Initialize();  // Reload the image
 			}
@@ -445,7 +445,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 
 	Bitmap* primaryBitmap = m_PrimaryImage.GetImage();
 	Bitmap* secondaryBitmap = m_SecondaryImage.GetImage();
-	Bitmap* bothBitmap = m_BothImage.GetImage();
+	Bitmap* bothBitmap = m_OverlapImage.GetImage();
 
 	int x = GetX();
 	int y = GetY();
@@ -643,7 +643,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 		}
 		else
 		{
-			SolidBrush brush(m_BothColor);
+			SolidBrush brush(m_OverlapColor);
 			graphics.FillPath(&brush, &bothPath);
 		}
 	}

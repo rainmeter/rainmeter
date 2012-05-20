@@ -41,27 +41,27 @@ protected:
 private:
 	void DisposeBuffer();
 
-	std::wstring m_SecondaryMeasureName;	// Name of the secondary measure
-	CMeasure* m_SecondaryMeasure;			// Pointer ot the secondary measure
-	Gdiplus::Color m_PrimaryColor;			// Color of the primary histogram
-	Gdiplus::Color m_SecondaryColor;		// Color of the secondary histogram
-	Gdiplus::Color m_BothColor;				// Color when the both histograms overlap
+	std::wstring m_SecondaryMeasureName;
+	CMeasure* m_SecondaryMeasure;
+	Gdiplus::Color m_PrimaryColor;
+	Gdiplus::Color m_SecondaryColor;
+	Gdiplus::Color m_OverlapColor;
 
-	int m_MeterPos;							// Position of the meter (i.e. where the new value should be placed)
+	int m_MeterPos;							// New value placement position
 	bool m_Autoscale;
 	bool m_Flip;
 
-	std::wstring m_PrimaryImageName;		// Name of the primary image for bitmap histograms
-	std::wstring m_SecondaryImageName;		// Name of the secondary image for bitmap histograms
-	std::wstring m_BothImageName;			// Name of the image for overlapping histograms
+	std::wstring m_PrimaryImageName;
+	std::wstring m_SecondaryImageName;
+	std::wstring m_OverlapImageName;
 
-	CTintedImage m_PrimaryImage;			// The primary bitmap
-	CTintedImage m_SecondaryImage;			// The secondary bitmap
-	CTintedImage m_BothImage;				// The overlap bitmap
+	CTintedImage m_PrimaryImage;
+	CTintedImage m_SecondaryImage;
+	CTintedImage m_OverlapImage;
 
 	bool m_PrimaryNeedsReload;
 	bool m_SecondaryNeedsReload;
-	bool m_BothNeedsReload;
+	bool m_OverlapNeedsReload;
 
 	double* m_PrimaryValues;
 	double* m_SecondaryValues;
@@ -73,8 +73,8 @@ private:
 
 	bool m_SizeChanged;
 	
-	bool m_GraphStartLeft;					// Start graph to the Left or Right(default)
-	bool m_GraphHorizontalOrientation;		// Horizontal or Vertical(default)
+	bool m_GraphStartLeft;
+	bool m_GraphHorizontalOrientation;
 
 	static const WCHAR* c_PrimaryConfigArray[CTintedImage::ConfigCount];
 	static const WCHAR* c_SecondaryConfigArray[CTintedImage::ConfigCount];

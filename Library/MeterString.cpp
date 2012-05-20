@@ -70,7 +70,7 @@ CMeterString::CMeterString(CMeterWindow* meterWindow, const WCHAR* name) : CMete
 	m_Align(ALIGN_LEFT),
 	m_Style(NORMAL),
 	m_Effect(EFFECT_NONE),
-	m_textCase(TEXTCASE_NONE),
+	m_Case(TEXTCASE_NONE),
 	m_FontSize(10),
 	m_Scale(1.0),
 	m_NoDecimals(true),
@@ -419,19 +419,19 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	const WCHAR* stringCase = parser.ReadString(section, L"StringCase", L"NONE").c_str();
 	if (_wcsicmp(stringCase, L"NONE") == 0)
 	{
-		m_textCase = TEXTCASE_NONE;
+		m_Case = TEXTCASE_NONE;
 	}
 	else if (_wcsicmp(stringCase, L"UPPER") == 0)
 	{
-		m_textCase = TEXTCASE_UPPER;
+		m_Case = TEXTCASE_UPPER;
 	}
 	else if (_wcsicmp(stringCase, L"LOWER") == 0)
 	{
-		m_textCase = TEXTCASE_LOWER;
+		m_Case = TEXTCASE_LOWER;
 	}
 	else if (_wcsicmp(stringCase, L"PROPER") == 0)
 	{
-		m_textCase = TEXTCASE_PROPER;
+		m_Case = TEXTCASE_PROPER;
 	}
 	else
 	{
@@ -529,7 +529,7 @@ bool CMeterString::Update()
 		}
 		if (!m_Postfix.empty()) m_String += m_Postfix;
 
-		switch (m_textCase)
+		switch (m_Case)
 		{
 		case TEXTCASE_UPPER:
 			StringToUpper(m_String);

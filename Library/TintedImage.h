@@ -24,9 +24,7 @@
 #include <string>
 
 /*
-** CTintedImageHelper_DefineConfigArray macro
-**
-** This is a helper macro to define the array of the config item.
+** Helper macro to define the array of the config item.
 ** It's necessary to give a string literal to the prefix parameter.
 **
 */
@@ -103,8 +101,8 @@ protected:
 	static Gdiplus::Bitmap* TurnGreyscale(Gdiplus::Bitmap* source);
 	static bool CompareColorMatrix(const Gdiplus::ColorMatrix* a, const Gdiplus::ColorMatrix* b);
 
-	Gdiplus::Bitmap* m_Bitmap;			// The bitmap
-	Gdiplus::Bitmap* m_BitmapTint;		// The tinted bitmap
+	Gdiplus::Bitmap* m_Bitmap;
+	Gdiplus::Bitmap* m_BitmapTint;		// Tinted bitmap
 
 	const std::wstring m_ConfigName;
 	const WCHAR** m_ConfigArray;

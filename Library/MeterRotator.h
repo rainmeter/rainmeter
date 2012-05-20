@@ -39,7 +39,7 @@ protected:
 
 private:
 	CTintedImage m_Image;
-	std::wstring m_ImageName;		// Name of the image
+	std::wstring m_ImageName;
 	bool m_NeedsReload;
 
 	double m_OffsetX;

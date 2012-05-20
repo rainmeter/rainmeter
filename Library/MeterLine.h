@@ -38,23 +38,23 @@ protected:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 private:
-	std::vector<std::wstring> m_MeasureNames;		// Name of the other measures
-	std::vector<CMeasure*> m_Measures;				// Pointer ot the other measures
+	std::vector<std::wstring> m_MeasureNames;
+	std::vector<CMeasure*> m_Measures;
 
-	std::vector<Gdiplus::Color> m_Colors;			// Color of the histograms
-	std::vector<double> m_ScaleValues;				// The scale values for the measures
+	std::vector<Gdiplus::Color> m_Colors;
+	std::vector<double> m_ScaleValues;
 
-	bool m_Autoscale;								// If true, the meter is automatically adjusted to show all values
-	bool m_HorizontalLines;							// If true, horizontal lines will ba drawn on the meter
+	bool m_Autoscale;
+	bool m_HorizontalLines;
 	bool m_Flip;
 	double m_LineWidth;
-	Gdiplus::Color m_HorizontalColor;				// Color of the horizontal lines
+	Gdiplus::Color m_HorizontalColor;
 
-	std::vector< std::vector<double> > m_AllValues;	// All the values to be drawn
-	int m_CurrentPos;								// Place of the current value
+	std::vector< std::vector<double> > m_AllValues;
+	int m_CurrentPos;
 
-	bool m_GraphStartLeft;							// Start graph to the Left or Right(default)
-	bool m_GraphHorizontalOrientation;				// Horizontal or Vertical(default)
+	bool m_GraphStartLeft;
+	bool m_GraphHorizontalOrientation;
 };
 
 #endif
