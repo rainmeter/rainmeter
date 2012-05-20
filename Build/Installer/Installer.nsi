@@ -637,7 +637,10 @@ Section
 	; Close Rainmeter (and wait up to five seconds)
 	${ForEach} $0 10 0 - 1
 		FindWindow $1 "DummyRainWClass" "Rainmeter control window"
+		ClearErrors
+		Delete "$INSTDIR\Rainmeter.exe"
 		${If} $1 == 0
+		${AndIfNot} ${Errors}
 			${Break}
 		${EndIf}
 
@@ -868,7 +871,10 @@ Section Uninstall
 	; Close Rainmeter (and wait up to five seconds)
 	${ForEach} $0 10 0 - 1
 		FindWindow $1 "DummyRainWClass" "Rainmeter control window"
+		ClearErrors
+		Delete "$INSTDIR\Rainmeter.exe"
 		${If} $1 == 0
+		${AndIfNot} ${Errors}
 			${Break}
 		${EndIf}
 
