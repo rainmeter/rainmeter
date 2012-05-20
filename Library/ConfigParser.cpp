@@ -51,10 +51,8 @@ CConfigParser::~CConfigParser()
 {
 }
 
-void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterWindow* meterWindow, LPCTSTR config)
+void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meterWindow, LPCTSTR config)
 {
-	m_Filename = filename;
-
 	m_Measures.clear();
 	m_Sections.clear();
 	m_Values.clear();
@@ -70,12 +68,19 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 	m_CurrentSection = NULL;
 
 	// Set the built-in variables. Do this before the ini file is read so that the paths can be used with @include
-	SetBuiltInVariables(pRainmeter, meterWindow);
+	SetBuiltInVariables(filename, meterWindow);
 	ResetMonitorVariables(meterWindow);
 
 	CSystem::UpdateIniFileMappingList();
 
-	ReadIniFile(m_Filename, config);
+	std::wstring resourcePath;
+	if (meterWindow)
+	{
+		resourcePath = meterWindow->GetSkinRootPath();
+		resourcePath += L"@Resources\\";
+	}
+
+	ReadIniFile(filename, resourcePath, config);
 	ReadVariables();
 
 	// Clear and minimize
@@ -83,18 +88,16 @@ void CConfigParser::Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterW
 	m_ListVariables.clear();
 }
 
-void CConfigParser::SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow)
+void CConfigParser::SetBuiltInVariables(const std::wstring& filename, CMeterWindow* meterWindow)
 {
-	if (pRainmeter)
-	{
-		SetBuiltInVariable(L"PROGRAMPATH", pRainmeter->GetPath());
-		SetBuiltInVariable(L"PROGRAMDRIVE", pRainmeter->GetDrive());
-		SetBuiltInVariable(L"SETTINGSPATH", pRainmeter->GetSettingsPath());
-		SetBuiltInVariable(L"SKINSPATH", pRainmeter->GetSkinPath());
-		SetBuiltInVariable(L"PLUGINSPATH", pRainmeter->GetPluginPath());
-		SetBuiltInVariable(L"CURRENTPATH", CRainmeter::ExtractPath(m_Filename));
-		SetBuiltInVariable(L"ADDONSPATH", pRainmeter->GetAddonPath());
-	}
+	SetBuiltInVariable(L"PROGRAMPATH", Rainmeter->GetPath());
+	SetBuiltInVariable(L"PROGRAMDRIVE", Rainmeter->GetDrive());
+	SetBuiltInVariable(L"SETTINGSPATH", Rainmeter->GetSettingsPath());
+	SetBuiltInVariable(L"SKINSPATH", Rainmeter->GetSkinPath());
+	SetBuiltInVariable(L"PLUGINSPATH", Rainmeter->GetPluginPath());
+	SetBuiltInVariable(L"CURRENTPATH", CRainmeter::ExtractPath(filename));
+	SetBuiltInVariable(L"ADDONSPATH", Rainmeter->GetAddonPath());
+
 	if (meterWindow)
 	{
 		SetBuiltInVariable(L"CURRENTFILE", meterWindow->GetSkinIniFile());
@@ -1152,7 +1155,7 @@ RECT CConfigParser::ParseRECT(LPCTSTR string)
 ** Reads the given ini file and fills the m_Values and m_Keys maps.
 **
 */
-void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int depth)
+void CConfigParser::ReadIniFile(const std::wstring& iniFile, const std::wstring& resourcePath, LPCTSTR config, int depth)
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
@@ -1316,10 +1319,18 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 								ReplaceVariables(value);
 								if (!CSystem::IsAbsolutePath(value))
 								{
-									// It's a relative path so add the current path as a prefix
-									value.insert(0, CRainmeter::ExtractPath(iniFile));
+									if (!resourcePath.empty() &&
+										value[0] == L'@' && value[1] == L'\\')	// value[1] == L'\0' if value.size() == 1
+									{
+										value.replace(0, 2, resourcePath);
+									}
+									else
+									{
+										// Relative to the ini folder
+										value.insert(0, CRainmeter::ExtractPath(iniFile));
+									}
 								}
-								ReadIniFile(value, config, depth + 1);
+								ReadIniFile(value, resourcePath, config, depth + 1);
 							}
 						}
 						else

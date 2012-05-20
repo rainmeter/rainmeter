@@ -203,6 +203,7 @@ public:
 
 	const std::wstring& GetSkinName() { return m_SkinName; }
 	const std::wstring& GetSkinIniFile() { return m_SkinIniFile; }
+	std::wstring GetSkinFilePath();
 	std::wstring GetSkinRootPath();
 
 	std::list<CMeasure*>& GetMeasures() { return m_Measures; }
@@ -449,6 +450,8 @@ private:
 
 	const std::wstring m_SkinName;				// Name of the current skin folder
 	const std::wstring m_SkinIniFile;			// Name of the current skin iniFile
+
+	bool m_ResourcesFolder;
 
 	int m_UpdateCounter;
 	UINT m_MouseMoveCounter;

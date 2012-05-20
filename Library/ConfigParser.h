@@ -40,7 +40,7 @@ public:
 	CConfigParser();
 	~CConfigParser();
 
-	void Initialize(LPCTSTR filename, CRainmeter* pRainmeter, CMeterWindow* meterWindow = NULL, LPCTSTR config = NULL);
+	void Initialize(const std::wstring& filename, CMeterWindow* meterWindow = NULL, LPCTSTR config = NULL);
 	void AddMeasure(CMeasure* pMeasure);
 
 	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
@@ -81,7 +81,6 @@ public:
 
 	bool ParseFormula(const std::wstring& formula, double* resultValue);
 
-	const std::wstring& GetFilename() { return m_Filename; }
 	const std::list<std::wstring>& GetSections() { return m_Sections; }
 
 	bool ReplaceVariables(std::wstring& result);
@@ -101,13 +100,13 @@ public:
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
 
 private:
-	void SetBuiltInVariables(CRainmeter* pRainmeter, CMeterWindow* meterWindow);
+	void SetBuiltInVariables(const std::wstring& filename, CMeterWindow* meterWindow);
 
 	void ReadVariables();
 
 	CMeasure* GetMeasure(const std::wstring& name);
 
-	void ReadIniFile(const std::wstring& strFileName, LPCTSTR config = NULL, int depth = 0);
+	void ReadIniFile(const std::wstring& iniFile, const std::wstring& resourcePath, LPCTSTR config = NULL, int depth = 0);
 
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
 
@@ -121,8 +120,6 @@ private:
 	static std::wstring StrToUpper(const std::wstring& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring StrToUpper(const WCHAR* str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
-
-	std::wstring m_Filename;
 
 	std::unordered_map<std::wstring, CMeasure*> m_Measures;
 

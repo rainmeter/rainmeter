@@ -48,7 +48,7 @@ public:
 
 	static void UpdateStats();
 	static void ResetStats();
-	static void ReadStats(const WCHAR* iniFile, std::wstring& statsDate);
+	static void ReadStats(const std::wstring& iniFile, std::wstring& statsDate);
 	static void WriteStats(const WCHAR* iniFile, const std::wstring& statsDate);
 
 	static void InitializeNewApi();

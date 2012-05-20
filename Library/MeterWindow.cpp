@@ -137,6 +137,7 @@ CMeterWindow::CMeterWindow(const std::wstring& config, const std::wstring& iniFi
 	m_Refreshing(false),
 	m_Hidden(false),
 	m_ResizeWindow(RESIZEMODE_NONE),
+	m_ResourcesFolder(false),
 	m_UpdateCounter(),
 	m_MouseMoveCounter(),
 	m_FontCollection(),
@@ -1801,7 +1802,7 @@ void CMeterWindow::ReadConfig()
 	m_ConfigGroup.clear();
 
 	CConfigParser parser;
-	parser.Initialize(iniFile.c_str(), Rainmeter, NULL, m_SkinName.c_str());
+	parser.Initialize(iniFile, NULL, m_SkinName.c_str());
 
 	for (int i = 0; i < 2; ++i)
 	{
@@ -1958,7 +1959,18 @@ bool CMeterWindow::ReadSkin()
 		return false;
 	}
 
-	m_Parser.Initialize(iniFile.c_str(), Rainmeter, this);
+	std::wstring::size_type suiteLen;
+	if ((suiteLen = m_SkinName.find_first_of(L'\\')) == std::wstring::npos)
+	{
+		suiteLen = m_SkinName.size();
+	}
+
+	std::wstring resourcePath = Rainmeter->GetSkinPath();
+	resourcePath.append(m_SkinName, 0, suiteLen);
+	resourcePath += L"\\@Resources\\";
+	m_ResourcesFolder = (_waccess(resourcePath.c_str(), 0) == 0);
+
+	m_Parser.Initialize(iniFile, this);
 
 	// Check the version
 	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
@@ -2052,8 +2064,7 @@ bool CMeterWindow::ReadSkin()
 				{
 					ResizeBlur(blurRegion, RGN_OR);
 
-					// Here we are checking to see if there are more than one blur region
-					// to be loaded. They will be named BlurRegion2, BlurRegion3, etc.
+					// Check for BlurRegion2, BlurRegion3, etc.
 					_snwprintf_s(buffer, _TRUNCATE, L"BlurRegion%i", ++i);
 					blurRegion = m_Parser.ReadString(L"Rainmeter", buffer, L"").c_str();
 				}
@@ -2070,36 +2081,73 @@ bool CMeterWindow::ReadSkin()
 		}
 	}
 
+	// Load fonts in Resources folder
+	if (m_ResourcesFolder)
+	{
+		WIN32_FIND_DATA fd;
+		resourcePath += L"Fonts\\*";
+
+		HANDLE find = FindFirstFileEx(
+			resourcePath.c_str(),
+			(CSystem::GetOSPlatform() >= OSPLATFORM_7) ? FindExInfoBasic : FindExInfoStandard,
+			&fd,
+			FindExSearchNameMatch,
+			NULL,
+			0);
+
+		if (find != INVALID_HANDLE_VALUE)
+		{
+			m_FontCollection = new PrivateFontCollection();
+
+			do
+			{
+				if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+				{
+					std::wstring file(resourcePath, 0, resourcePath.length() - 1);
+					file += fd.cFileName;
+					Status status = m_FontCollection->AddFontFile(file.c_str());
+					if (status != Ok)
+					{
+						std::wstring error = L"Unable to load font: ";
+						error += file.c_str();
+						Log(LOG_ERROR, error.c_str());
+					}
+				}
+			}
+			while (FindNextFile(find, &fd));
+		}
+	}
+
 	// Load local fonts
 	const WCHAR* localFont = m_Parser.ReadString(L"Rainmeter", L"LocalFont", L"").c_str();
 	if (*localFont)
 	{
-		m_FontCollection = new PrivateFontCollection();
-		int i = 1;
+		if (!m_FontCollection)
+		{
+			m_FontCollection = new PrivateFontCollection();
+		}
 
+		int i = 1;
 		do
 		{
 			// Try program folder first
 			std::wstring szFontFile = Rainmeter->GetPath() + L"Fonts\\";
 			szFontFile += localFont;
-			Status nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
-
-			if (nResults != Ok)
+			Status status = m_FontCollection->AddFontFile(szFontFile.c_str());
+			if (status != Ok)
 			{
 				szFontFile = localFont;
 				MakePathAbsolute(szFontFile);
-				nResults = m_FontCollection->AddFontFile(szFontFile.c_str());
-
-				if (nResults != Ok)
+				status = m_FontCollection->AddFontFile(szFontFile.c_str());
+				if (status != Ok)
 				{
-					std::wstring error = L"Unable to load font file: ";
+					std::wstring error = L"Unable to load font: ";
 					error += localFont;
 					Log(LOG_ERROR, error.c_str());
 				}
 			}
 
-			// Here we are checking to see if there are more than one local font
-			// to be loaded. They will be named LocalFont2, LocalFont3, etc.
+			// Check for LocalFont2, LocalFont3, etc.
 			_snwprintf_s(buffer, _TRUNCATE, L"LocalFont%i", ++i);
 			localFont = m_Parser.ReadString(L"Rainmeter", buffer, L"").c_str();
 		}
@@ -4640,13 +4688,42 @@ void CMeterWindow::MakePathAbsolute(std::wstring& path)
 	else
 	{
 		std::wstring absolute;
-		absolute.reserve(Rainmeter->GetSkinPath().size() + m_SkinName.size() + 1 + path.size());
-		absolute = Rainmeter->GetSkinPath();
-		absolute += m_SkinName;
-		absolute += L'\\';
-		absolute += path;
+
+		if (m_ResourcesFolder && (path[0] == L'@' && path[1] == L'\\'))	// path[1] == L'\0' if path.size() == 1
+		{
+			const std::wstring::size_type resourcesLen = 13;	// Count of "\\@Resources\\"
+
+			std::wstring::size_type suiteLen;
+			if ((suiteLen = m_SkinName.find_first_of(L'\\')) == std::wstring::npos)
+			{
+				suiteLen = m_SkinName.size();
+			}
+
+			absolute.reserve(Rainmeter->GetSkinPath().size() + suiteLen + resourcesLen + (path.size() - 2));
+			absolute = Rainmeter->GetSkinPath();
+			absolute.append(m_SkinName, 0, suiteLen);
+			absolute += L"\\@Resources\\";
+			absolute.append(path, 2, path.length() - 1);
+		}
+		else
+		{
+			absolute.reserve(Rainmeter->GetSkinPath().size() + m_SkinName.size() + 1 + path.size());
+			absolute = Rainmeter->GetSkinPath();
+			absolute += m_SkinName;
+			absolute += L'\\';
+			absolute += path;
+		}
+
 		absolute.swap(path);
 	}
+}
+
+std::wstring CMeterWindow::GetSkinFilePath()
+{
+	std::wstring file = Rainmeter->GetSkinPath() + m_SkinName;
+	file += L'\\';
+	file += m_SkinIniFile;
+	return file;
 }
 
 std::wstring CMeterWindow::GetSkinRootPath()

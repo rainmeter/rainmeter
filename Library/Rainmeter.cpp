@@ -1552,10 +1552,10 @@ void CRainmeter::ScanForConfigs(const std::wstring& path)
 	m_ConfigMenu.clear();
 	m_ConfigOrders.clear();
 
-	ScanForConfigsRecursive(path, L"", 0, m_ConfigMenu, false);
+	ScanForConfigsRecursive(path, L"", 0, m_ConfigMenu);
 }
 
-int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse)
+int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool rootSkinFolder)
 {
 	WIN32_FIND_DATA fileData;      // Data structure describes the file found
 	HANDLE hSearch;                // Search handle returned by FindFirstFile
@@ -1589,7 +1589,8 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 			{
 				if (wcscmp(L".", fileData.cFileName) != 0 &&
 					wcscmp(L"..", fileData.cFileName) != 0 &&
-					!(first && wcscmp(L"Backup", fileData.cFileName) == 0))		// Skip the backup folder
+					!(first && wcscmp(L"Backup", fileData.cFileName) == 0) &&
+					!(rootSkinFolder && wcscmp(L"@Resources", fileData.cFileName) == 0))
 				{
 					folders.push_back(filename);
 				}
@@ -1635,16 +1636,13 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 		menuItem.index = -1;
 		menu.push_back(std::move(menuItem));
 
-		if (!DontRecurse)
-		{
-			std::vector<CONFIGMENU>::iterator iter2 = menu.end() - 1;
-			index = ScanForConfigsRecursive(path, base + (*iter), index, (*iter2).children, false);
+		std::vector<CONFIGMENU>::iterator iter2 = menu.end() - 1;
+		index = ScanForConfigsRecursive(path, base + (*iter), index, (*iter2).children, base.empty());
 
-			// Remove menu item if it has no child
-			if ((*iter2).children.empty())
-			{
-				menu.erase(iter2);
-			}
+		// Remove menu item if it has no child
+		if ((*iter2).children.empty())
+		{
+			menu.erase(iter2);
 		}
 	}
 
@@ -2169,7 +2167,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_DesktopWorkAreas.clear();
 
 	CConfigParser parser;
-	parser.Initialize(iniFile.c_str(), this);
+	parser.Initialize(iniFile, NULL, NULL);
 
 	// Read Logging settings
 	m_Logging = 0!=parser.ReadInt(L"Rainmeter", L"Logging", 0);
@@ -2567,7 +2565,7 @@ void CRainmeter::ReadStats()
 	}
 
 	// Only Net measure has stats at the moment
-	CMeasureNet::ReadStats(statsFile, m_StatsDate);
+	CMeasureNet::ReadStats(m_StatsFile, m_StatsDate);
 }
 
 /*

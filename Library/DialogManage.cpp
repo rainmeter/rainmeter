@@ -1429,7 +1429,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 				if (Button_GetCheck(item) == BST_CHECKED)
 				{
 					CConfigParser parser;
-					parser.Initialize(path.c_str(), Rainmeter);
+					parser.Initialize(path);
 
 					// Remove sections with Active=0
 					std::list<std::wstring>::const_iterator iter = parser.GetSections().begin();

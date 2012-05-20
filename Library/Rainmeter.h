@@ -258,7 +258,7 @@ private:
 	void UpdateDesktopWorkArea(bool reset);
 	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU configMenu);
 	void ChangeSkinIndex(HMENU subMenu, int index);
-	int ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool DontRecurse);
+	int ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool rootSkinFolder = false);
 	HMENU CreateConfigMenu(HMENU configMenu, const std::vector<CONFIGMENU>& configMenuData);
 	void CreateThemeMenu(HMENU themeMenu);
 	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);

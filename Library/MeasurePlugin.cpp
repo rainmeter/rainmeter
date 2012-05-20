@@ -208,7 +208,7 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 		if (initializeFunc)
 		{
-			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, parser.GetFilename().c_str(), section, m_ID);
+			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_MeterWindow->GetSkinFilePath().c_str(), section, m_ID);
 		}
 	}
 

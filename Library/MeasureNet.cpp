@@ -569,12 +569,12 @@ void CMeasureNet::ResetStats()
 ** Reads statistics.
 **
 */
-void CMeasureNet::ReadStats(const WCHAR* iniFile, std::wstring& statsDate)
+void CMeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 {
 	WCHAR buffer[48];
 
 	CConfigParser parser;
-	parser.Initialize(iniFile, NULL, NULL, L"Statistics");
+	parser.Initialize(iniFile, NULL, L"Statistics");
 
 	const std::wstring& date = parser.ReadString(L"Statistics", L"Since", L"", false);
 	if (!date.empty())
