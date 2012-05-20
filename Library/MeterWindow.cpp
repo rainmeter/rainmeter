@@ -137,7 +137,6 @@ CMeterWindow::CMeterWindow(const std::wstring& config, const std::wstring& iniFi
 	m_Refreshing(false),
 	m_Hidden(false),
 	m_ResizeWindow(RESIZEMODE_NONE),
-	m_ResourcesFolder(false),
 	m_UpdateCounter(),
 	m_MouseMoveCounter(),
 	m_FontCollection(),
@@ -1947,9 +1946,7 @@ bool CMeterWindow::ReadSkin()
 {
 	WCHAR buffer[128];
 
-	std::wstring iniFile = Rainmeter->GetSkinPath() + m_SkinName;
-	iniFile += L'\\';
-	iniFile += m_SkinIniFile;
+	std::wstring iniFile = GetSkinFilePath();
 
 	// Verify whether the file exists
 	if (_waccess(iniFile.c_str(), 0) == -1)
@@ -1960,7 +1957,7 @@ bool CMeterWindow::ReadSkin()
 	}
 
 	std::wstring resourcePath = GetSkinResourcesPath();
-	m_ResourcesFolder = (_waccess(resourcePath.c_str(), 0) == 0);
+	bool hasResourcesFolder = (_waccess(resourcePath.c_str(), 0) == 0);
 
 	m_Parser.Initialize(iniFile, this, NULL, &resourcePath);
 
@@ -2074,7 +2071,7 @@ bool CMeterWindow::ReadSkin()
 	}
 
 	// Load fonts in Resources folder
-	if (m_ResourcesFolder)
+	if (hasResourcesFolder)
 	{
 		WIN32_FIND_DATA fd;
 		resourcePath += L"Fonts\\*";
@@ -4681,7 +4678,7 @@ void CMeterWindow::MakePathAbsolute(std::wstring& path)
 	{
 		std::wstring absolute;
 
-		if (m_ResourcesFolder && (path[0] == L'@' && path[1] == L'\\'))	// path[1] == L'\0' if path.size() == 1
+		if (path[0] == L'@' && path[1] == L'\\')	// path[1] == L'\0' if path.size() == 1
 		{
 			const std::wstring::size_type resourcesLen = 13;	// Count of "\\@Resources\\"
 

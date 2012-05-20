@@ -449,10 +449,8 @@ private:
 	std::list<CMeasure*> m_Measures;
 	std::list<CMeter*> m_Meters;
 
-	const std::wstring m_SkinName;
-	const std::wstring m_SkinIniFile;
-
-	bool m_ResourcesFolder;
+	const std::wstring& m_SkinName;
+	const std::wstring& m_SkinIniFile;
 
 	int m_UpdateCounter;
 	UINT m_MouseMoveCounter;

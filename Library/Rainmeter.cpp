@@ -493,10 +493,7 @@ void CRainmeter::Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindo
 		if (!meterWindow) return;
 
 		// Add the config filepath to the args
-		std::wstring path = m_SkinPath + meterWindow->GetSkinName();
-		path += L'\\';
-		path += meterWindow->GetSkinIniFile();
-		args.push_back(std::move(path));
+		args.push_back(meterWindow->GetSkinFilePath());
 	}
 
 	if (args.size() > 3)
@@ -1250,7 +1247,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.find(skinConfig);
 		if (iter != m_MeterWindows.end())
 		{
-			if (((*iter).second)->GetSkinIniFile() == skinIniFile)
+			if (&((*iter).second)->GetSkinIniFile() == &skinIniFile)
 			{
 				LogWithArgs(LOG_WARNING, L"!ActivateConfig: \"%s\" already active", skinConfig.c_str());
 				return;
