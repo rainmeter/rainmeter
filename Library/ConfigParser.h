@@ -40,7 +40,7 @@ public:
 	CConfigParser();
 	~CConfigParser();
 
-	void Initialize(const std::wstring& filename, CMeterWindow* meterWindow = NULL, LPCTSTR config = NULL);
+	void Initialize(const std::wstring& filename, CMeterWindow* meterWindow = NULL, LPCTSTR config = NULL, const std::wstring* includePath = NULL);
 	void AddMeasure(CMeasure* pMeasure);
 
 	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
@@ -106,7 +106,7 @@ private:
 
 	CMeasure* GetMeasure(const std::wstring& name);
 
-	void ReadIniFile(const std::wstring& iniFile, const std::wstring& resourcePath, LPCTSTR config = NULL, int depth = 0);
+	void ReadIniFile(const std::wstring& iniFile, const std::wstring* includePath, LPCTSTR config = NULL, int depth = 0);
 
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
 

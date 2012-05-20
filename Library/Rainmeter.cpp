@@ -2136,6 +2136,14 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow,
 		{
 			std::wstring tmpSz = command;
 			meterWindow->GetParser().ReplaceMeasures(tmpSz);
+
+			std::wstring::size_type pos = tmpSz.find_first_not_of(L" \t\"");
+			if (pos != std::wstring::npos &&
+				tmpSz[pos] == L'@' && tmpSz[pos + 1] == L'\\')	// tmpSz[pos + 1] == L'\0' if tmpSz.size() == 1
+			{
+				tmpSz.replace(pos, 2, meterWindow->GetSkinResourcesPath());
+			}
+
 			RunCommand(NULL, tmpSz.c_str(), SW_SHOWNORMAL);
 		}
 		else

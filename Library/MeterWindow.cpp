@@ -1959,18 +1959,10 @@ bool CMeterWindow::ReadSkin()
 		return false;
 	}
 
-	std::wstring::size_type suiteLen;
-	if ((suiteLen = m_SkinName.find_first_of(L'\\')) == std::wstring::npos)
-	{
-		suiteLen = m_SkinName.size();
-	}
-
-	std::wstring resourcePath = Rainmeter->GetSkinPath();
-	resourcePath.append(m_SkinName, 0, suiteLen);
-	resourcePath += L"\\@Resources\\";
+	std::wstring resourcePath = GetSkinResourcesPath();
 	m_ResourcesFolder = (_waccess(resourcePath.c_str(), 0) == 0);
 
-	m_Parser.Initialize(iniFile, this);
+	m_Parser.Initialize(iniFile, this, NULL, &resourcePath);
 
 	// Check the version
 	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
@@ -4741,6 +4733,13 @@ std::wstring CMeterWindow::GetSkinRootPath()
 		path += L'\\';
 	}
 
+	return path;
+}
+
+std::wstring CMeterWindow::GetSkinResourcesPath()
+{
+	std::wstring path = GetSkinRootPath();
+	path += L"@Resources\\";
 	return path;
 }
 

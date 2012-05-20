@@ -205,6 +205,7 @@ public:
 	const std::wstring& GetSkinIniFile() { return m_SkinIniFile; }
 	std::wstring GetSkinFilePath();
 	std::wstring GetSkinRootPath();
+	std::wstring GetSkinResourcesPath();
 
 	std::list<CMeasure*>& GetMeasures() { return m_Measures; }
 	std::list<CMeter*>& GetMeters() { return m_Meters; }

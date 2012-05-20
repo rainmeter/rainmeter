@@ -51,7 +51,7 @@ CConfigParser::~CConfigParser()
 {
 }
 
-void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meterWindow, LPCTSTR config)
+void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meterWindow, LPCTSTR config, const std::wstring* includePath)
 {
 	m_Measures.clear();
 	m_Sections.clear();
@@ -73,14 +73,7 @@ void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meter
 
 	CSystem::UpdateIniFileMappingList();
 
-	std::wstring resourcePath;
-	if (meterWindow)
-	{
-		resourcePath = meterWindow->GetSkinRootPath();
-		resourcePath += L"@Resources\\";
-	}
-
-	ReadIniFile(filename, resourcePath, config);
+	ReadIniFile(filename, includePath, config);
 	ReadVariables();
 
 	// Clear and minimize
@@ -1155,7 +1148,7 @@ RECT CConfigParser::ParseRECT(LPCTSTR string)
 ** Reads the given ini file and fills the m_Values and m_Keys maps.
 **
 */
-void CConfigParser::ReadIniFile(const std::wstring& iniFile, const std::wstring& resourcePath, LPCTSTR config, int depth)
+void CConfigParser::ReadIniFile(const std::wstring& iniFile, const std::wstring* includePath, LPCTSTR config, int depth)
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
@@ -1319,10 +1312,10 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, const std::wstring&
 								ReplaceVariables(value);
 								if (!CSystem::IsAbsolutePath(value))
 								{
-									if (!resourcePath.empty() &&
+									if (includePath &&
 										value[0] == L'@' && value[1] == L'\\')	// value[1] == L'\0' if value.size() == 1
 									{
-										value.replace(0, 2, resourcePath);
+										value.replace(0, 2, *includePath);
 									}
 									else
 									{
@@ -1330,7 +1323,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, const std::wstring&
 										value.insert(0, CRainmeter::ExtractPath(iniFile));
 									}
 								}
-								ReadIniFile(value, resourcePath, config, depth + 1);
+								ReadIniFile(value, includePath, config, depth + 1);
 							}
 						}
 						else
