@@ -104,7 +104,6 @@ void CConfigParser::SetBuiltInVariables(const std::wstring& filename, const std:
 	SetBuiltInVariable(CURRENTSECTION, L"");
 	m_CurrentSection = &((*m_BuiltInVariables.find(CURRENTSECTION)).second);  // shortcut
 
-	// Following built-in variables are overridable by normal variable.
 	if (resourcePath)
 	{
 		SetVariable(L"@", *resourcePath);
