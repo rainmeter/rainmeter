@@ -91,11 +91,6 @@ void CConfigParser::SetBuiltInVariables(const std::wstring& filename, const std:
 	SetBuiltInVariable(L"CURRENTPATH", CRainmeter::ExtractPath(filename));
 	SetBuiltInVariable(L"ADDONSPATH", Rainmeter->GetAddonPath());
 
-	if (resourcePath)
-	{
-		SetBuiltInVariable(L"@", *resourcePath);
-	}
-
 	if (meterWindow)
 	{
 		SetBuiltInVariable(L"CURRENTFILE", meterWindow->GetSkinIniFile());
@@ -108,6 +103,12 @@ void CConfigParser::SetBuiltInVariables(const std::wstring& filename, const std:
 	const std::wstring CURRENTSECTION = L"CURRENTSECTION";
 	SetBuiltInVariable(CURRENTSECTION, L"");
 	m_CurrentSection = &((*m_BuiltInVariables.find(CURRENTSECTION)).second);  // shortcut
+
+	// Following built-in variables are overridable by normal variable.
+	if (resourcePath)
+	{
+		SetVariable(L"@", *resourcePath);
+	}
 }
 
 /*
