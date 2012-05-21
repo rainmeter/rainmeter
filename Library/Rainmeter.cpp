@@ -427,15 +427,20 @@ void CRainmeter::Bang_SetClip(std::vector<std::wstring>& args)
 ** !SetWallpaper bang
 **
 */
-void CRainmeter::Bang_SetWallpaper(std::vector<std::wstring>& args)
+void CRainmeter::Bang_SetWallpaper(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
 {
-	if (args.size() == 1)
+	const size_t argsSize = args.size();
+	if (argsSize >= 1 && argsSize <= 2)
 	{
-		CSystem::SetWallpaper(args[0], L"");
-	}
-	else if (args.size() == 2)
-	{
-		CSystem::SetWallpaper(args[0], args[1]);
+		std::wstring& file = args[0];
+		const std::wstring& style = (argsSize == 2) ? args[1] : L"";
+
+		if (meterWindow)
+		{
+			meterWindow->MakePathAbsolute(file);
+		}
+
+		CSystem::SetWallpaper(file, style);
 	}
 	else
 	{
