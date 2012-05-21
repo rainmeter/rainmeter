@@ -51,7 +51,7 @@ CConfigParser::~CConfigParser()
 {
 }
 
-void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meterWindow, LPCTSTR config, const std::wstring* includePath)
+void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meterWindow, LPCTSTR config, const std::wstring* resourcePath)
 {
 	m_Measures.clear();
 	m_Sections.clear();
@@ -68,12 +68,12 @@ void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meter
 	m_CurrentSection = NULL;
 
 	// Set the built-in variables. Do this before the ini file is read so that the paths can be used with @include
-	SetBuiltInVariables(filename, meterWindow);
+	SetBuiltInVariables(filename, resourcePath, meterWindow);
 	ResetMonitorVariables(meterWindow);
 
 	CSystem::UpdateIniFileMappingList();
 
-	ReadIniFile(filename, includePath, config);
+	ReadIniFile(filename, config);
 	ReadVariables();
 
 	// Clear and minimize
@@ -81,7 +81,7 @@ void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meter
 	m_ListVariables.clear();
 }
 
-void CConfigParser::SetBuiltInVariables(const std::wstring& filename, CMeterWindow* meterWindow)
+void CConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, CMeterWindow* meterWindow)
 {
 	SetBuiltInVariable(L"PROGRAMPATH", Rainmeter->GetPath());
 	SetBuiltInVariable(L"PROGRAMDRIVE", Rainmeter->GetDrive());
@@ -90,6 +90,11 @@ void CConfigParser::SetBuiltInVariables(const std::wstring& filename, CMeterWind
 	SetBuiltInVariable(L"PLUGINSPATH", Rainmeter->GetPluginPath());
 	SetBuiltInVariable(L"CURRENTPATH", CRainmeter::ExtractPath(filename));
 	SetBuiltInVariable(L"ADDONSPATH", Rainmeter->GetAddonPath());
+
+	if (resourcePath)
+	{
+		SetBuiltInVariable(L"@", *resourcePath);
+	}
 
 	if (meterWindow)
 	{
@@ -1148,7 +1153,7 @@ RECT CConfigParser::ParseRECT(LPCTSTR string)
 ** Reads the given ini file and fills the m_Values and m_Keys maps.
 **
 */
-void CConfigParser::ReadIniFile(const std::wstring& iniFile, const std::wstring* includePath, LPCTSTR config, int depth)
+void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int depth)
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
@@ -1312,18 +1317,10 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, const std::wstring*
 								ReplaceVariables(value);
 								if (!CSystem::IsAbsolutePath(value))
 								{
-									if (includePath &&
-										value[0] == L'@' && value[1] == L'\\')	// value[1] == L'\0' if value.size() == 1
-									{
-										value.replace(0, 2, *includePath);
-									}
-									else
-									{
-										// Relative to the ini folder
-										value.insert(0, CRainmeter::ExtractPath(iniFile));
-									}
+									// Relative to the ini folder
+									value.insert(0, CRainmeter::ExtractPath(iniFile));
 								}
-								ReadIniFile(value, includePath, config, depth + 1);
+								ReadIniFile(value, config, depth + 1);
 							}
 						}
 						else

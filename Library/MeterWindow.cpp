@@ -4677,32 +4677,11 @@ void CMeterWindow::MakePathAbsolute(std::wstring& path)
 	else
 	{
 		std::wstring absolute;
-
-		if (path[0] == L'@' && path[1] == L'\\')	// path[1] == L'\0' if path.size() == 1
-		{
-			const std::wstring::size_type resourcesLen = 13;	// Count of "\\@Resources\\"
-
-			std::wstring::size_type suiteLen;
-			if ((suiteLen = m_SkinName.find_first_of(L'\\')) == std::wstring::npos)
-			{
-				suiteLen = m_SkinName.size();
-			}
-
-			absolute.reserve(Rainmeter->GetSkinPath().size() + suiteLen + resourcesLen + (path.size() - 2));
-			absolute = Rainmeter->GetSkinPath();
-			absolute.append(m_SkinName, 0, suiteLen);
-			absolute += L"\\@Resources\\";
-			absolute.append(path, 2, path.length() - 1);
-		}
-		else
-		{
-			absolute.reserve(Rainmeter->GetSkinPath().size() + m_SkinName.size() + 1 + path.size());
-			absolute = Rainmeter->GetSkinPath();
-			absolute += m_SkinName;
-			absolute += L'\\';
-			absolute += path;
-		}
-
+		absolute.reserve(Rainmeter->GetSkinPath().size() + m_SkinName.size() + 1 + path.size());
+		absolute = Rainmeter->GetSkinPath();
+		absolute += m_SkinName;
+		absolute += L'\\';
+		absolute += path;
 		absolute.swap(path);
 	}
 }
