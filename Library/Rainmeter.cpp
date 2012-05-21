@@ -1253,7 +1253,7 @@ void CRainmeter::ActivateConfig(int configIndex, int iniIndex)
 		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.find(skinConfig);
 		if (iter != m_MeterWindows.end())
 		{
-			if (&((*iter).second)->GetSkinIniFile() == &skinIniFile)
+			if (((*iter).second)->GetSkinIniFile() == skinIniFile)
 			{
 				LogWithArgs(LOG_WARNING, L"!ActivateConfig: \"%s\" already active", skinConfig.c_str());
 				return;
