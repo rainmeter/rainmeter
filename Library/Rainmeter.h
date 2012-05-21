@@ -241,7 +241,7 @@ private:
 	void Bang_ToggleConfig(std::vector<std::wstring>& args);
 	void Bang_DeactivateConfigGroup(std::vector<std::wstring>& args);
 	void Bang_SetClip(std::vector<std::wstring>& args);
-	void Bang_SetWallpaper(std::vector<std::wstring>& args);
+	void Bang_SetWallpaper(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
 	void Bang_SkinMenu(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
 	void Bang_TrayMenu();
 	void Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindow* meterWindow);

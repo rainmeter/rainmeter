@@ -488,130 +488,131 @@ void CRainmeter::Bang_TrayMenu()
 */
 void CRainmeter::Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
 {
-	if (args.size() < 4)
+	if (args.size() == 3 && meterWindow)
 	{
-		if (!meterWindow) return;
-
 		// Add the config filepath to the args
 		args.push_back(meterWindow->GetSkinFilePath());
 	}
-
-	if (args.size() > 3)
+	else if (args.size() < 4)
 	{
-		const std::wstring& strIniFile = args[3];
-		const WCHAR* iniFile = strIniFile.c_str();
+		Log(LOG_ERROR, L"!WriteKeyValue: Invalid parameters");
+		return;
+	}
 
-		if (strIniFile.find(L"..\\") != std::wstring::npos || strIniFile.find(L"../") != std::wstring::npos)
-		{
-			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile);
-			return;
-		}
+	std::wstring& strIniFile = args[3];
+	if (meterWindow)
+	{
+		meterWindow->MakePathAbsolute(strIniFile);
+	}
 
-		const std::wstring& skinPath = GetSkinPath();
-		const std::wstring settingsPath = GetSettingsPath();
+	const WCHAR* iniFile = strIniFile.c_str();
 
-		if (_wcsnicmp(iniFile, skinPath.c_str(), skinPath.size()) != 0 &&
-			_wcsnicmp(iniFile, settingsPath.c_str(), settingsPath.size()) != 0)
-		{
-			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile);
-			return;
-		}
+	if (strIniFile.find(L"..\\") != std::wstring::npos || strIniFile.find(L"../") != std::wstring::npos)
+	{
+		LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile);
+		return;
+	}
 
-		// Verify whether the file exists
-		if (_waccess(iniFile, 0) == -1)
-		{
-			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: File not found: %s", iniFile);
-			return;
-		}
+	const std::wstring& skinPath = GetSkinPath();
+	const std::wstring settingsPath = GetSettingsPath();
 
-		// Verify whether the file is read-only
-		DWORD attr = GetFileAttributes(iniFile);
-		if (attr == -1 || (attr & FILE_ATTRIBUTE_READONLY))
-		{
-			LogWithArgs(LOG_WARNING, L"!WriteKeyValue: File is read-only: %s", iniFile);
-			return;
-		}
+	if (_wcsnicmp(iniFile, skinPath.c_str(), skinPath.size()) != 0 &&
+		_wcsnicmp(iniFile, settingsPath.c_str(), settingsPath.size()) != 0)
+	{
+		LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile);
+		return;
+	}
 
-		// Avoid "IniFileMapping"
-		CSystem::UpdateIniFileMappingList();
-		std::wstring strIniWrite = CSystem::GetTemporaryFile(strIniFile);
-		if (strIniWrite.size() == 1 && strIniWrite[0] == L'?')  // error occurred
-		{
-			return;
-		}
+	// Verify whether the file exists
+	if (_waccess(iniFile, 0) == -1)
+	{
+		LogWithArgs(LOG_ERROR, L"!WriteKeyValue: File not found: %s", iniFile);
+		return;
+	}
 
-		bool temporary = !strIniWrite.empty();
+	// Verify whether the file is read-only
+	DWORD attr = GetFileAttributes(iniFile);
+	if (attr == -1 || (attr & FILE_ATTRIBUTE_READONLY))
+	{
+		LogWithArgs(LOG_WARNING, L"!WriteKeyValue: File is read-only: %s", iniFile);
+		return;
+	}
 
-		if (temporary)
-		{
-			if (GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile, strIniWrite.c_str());
-		}
-		else
-		{
-			if (GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s", iniFile);
-			strIniWrite = strIniFile;
-		}
+	// Avoid "IniFileMapping"
+	CSystem::UpdateIniFileMappingList();
+	std::wstring strIniWrite = CSystem::GetTemporaryFile(strIniFile);
+	if (strIniWrite.size() == 1 && strIniWrite[0] == L'?')  // error occurred
+	{
+		return;
+	}
 
-		const WCHAR* iniWrite = strIniWrite.c_str();
-		const WCHAR* section = args[0].c_str();
-		const WCHAR* key = args[1].c_str();
-		const std::wstring& strValue = args[2];
+	bool temporary = !strIniWrite.empty();
 
-		bool formula = false;
-		BOOL write = 0;
-
-		if (meterWindow)
-		{
-			double value;
-			formula = meterWindow->GetParser().ParseFormula(strValue, &value);
-
-			// Formula read fine
-			if (formula)
-			{
-				WCHAR buffer[256];
-				int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
-				CMeasure::RemoveTrailingZero(buffer, len);
-
-				write = WritePrivateProfileString(section, key, buffer, iniWrite);
-			}
-		}
-
-		if (!formula)
-		{
-			write = WritePrivateProfileString(section, key, strValue.c_str(), iniWrite);
-		}
-
-		if (temporary)
-		{
-			if (write != 0)
-			{
-				WritePrivateProfileString(NULL, NULL, NULL, iniWrite);  // FLUSH
-
-				// Copy the file back
-				if (!CSystem::CopyFiles(strIniWrite, strIniFile))
-				{
-					LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to copy temporary file to original filepath: %s (Temp: %s)", iniFile, iniWrite);
-				}
-			}
-			else  // failed
-			{
-				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s (Temp: %s)", iniFile, iniWrite);
-			}
-
-			// Remove a temporary file
-			CSystem::RemoveFile(strIniWrite);
-		}
-		else
-		{
-			if (write == 0)  // failed
-			{
-				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s", iniFile);
-			}
-		}
+	if (temporary)
+	{
+		if (GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile, strIniWrite.c_str());
 	}
 	else
 	{
-		Log(LOG_ERROR, L"!WriteKeyValue: Invalid parameters");
+		if (GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s", iniFile);
+		strIniWrite = strIniFile;
+	}
+
+	const WCHAR* iniWrite = strIniWrite.c_str();
+	const WCHAR* section = args[0].c_str();
+	const WCHAR* key = args[1].c_str();
+	const std::wstring& strValue = args[2];
+
+	bool formula = false;
+	BOOL write = 0;
+
+	if (meterWindow)
+	{
+		double value;
+		formula = meterWindow->GetParser().ParseFormula(strValue, &value);
+
+		// Formula read fine
+		if (formula)
+		{
+			WCHAR buffer[256];
+			int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
+			CMeasure::RemoveTrailingZero(buffer, len);
+
+			write = WritePrivateProfileString(section, key, buffer, iniWrite);
+		}
+	}
+
+	if (!formula)
+	{
+		write = WritePrivateProfileString(section, key, strValue.c_str(), iniWrite);
+	}
+
+	if (temporary)
+	{
+		if (write != 0)
+		{
+			WritePrivateProfileString(NULL, NULL, NULL, iniWrite);  // FLUSH
+
+			// Copy the file back
+			if (!CSystem::CopyFiles(strIniWrite, strIniFile))
+			{
+				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to copy temporary file to original filepath: %s (Temp: %s)", iniFile, iniWrite);
+			}
+		}
+		else  // failed
+		{
+			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s (Temp: %s)", iniFile, iniWrite);
+		}
+
+		// Remove a temporary file
+		CSystem::RemoveFile(strIniWrite);
+	}
+	else
+	{
+		if (write == 0)  // failed
+		{
+			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s", iniFile);
+		}
 	}
 }
 
@@ -1953,7 +1954,7 @@ void CRainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args,
 	}
 	else if (_wcsicmp(bang, L"SetWallpaper") == 0)
 	{
-		Bang_SetWallpaper(args);
+		Bang_SetWallpaper(args, meterWindow);
 	}
 	else if (_wcsicmp(bang, L"About") == 0)
 	{
