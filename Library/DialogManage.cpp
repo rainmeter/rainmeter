@@ -1395,6 +1395,8 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			std::wstring theme = buffer;
 			std::wstring path = Rainmeter->GetSettingsPath() + L"Themes\\";
+			CreateDirectory(path.c_str(), 0);
+
 			path += theme;
 			bool alreadyExists = (_waccess(path.c_str(), 0) != -1);
 			if (alreadyExists)
