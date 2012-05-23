@@ -949,21 +949,22 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 			CreateDirectory(m_SkinPath.c_str(), NULL);
 			m_SkinPath += L"\\Skins\\";
 			DWORD result = CreateDirectory(m_SkinPath.c_str(), NULL);
-			if (result != 0)
+			if (result)
 			{
 				// The folder was created successfully which means that it wasn't available yet.
 				// Copy the default skin to the Skins folder
-				std::wstring strFrom(m_Path + L"Skins\\*.*");
-				std::wstring strTo(m_SkinPath);
-				CSystem::CopyFiles(strFrom, strTo);
+				std::wstring from = m_Path + L"Skins\\*.*";
+				CSystem::CopyFiles(from, m_SkinPath);
+			}
 
-				// Copy also the themes to the %APPDATA%
-				strFrom = m_Path;
-				strFrom += L"Themes\\*.*";
-				strTo = GetSettingsPath();
-				strTo += L"Themes\\";
-				CreateDirectory(strTo.c_str(), NULL);
-				CSystem::CopyFiles(strFrom, strTo);
+			std::wstring themesPath = GetSettingsPath();
+			themesPath += L"Themes\\";
+			result = CreateDirectory(themesPath.c_str(), NULL);
+			if (result)
+			{
+				// Copy themes to %APPDATA%
+				std::wstring from = m_Path + L"Themes\\*.*";
+				CSystem::CopyFiles(from, themesPath);
 			}
 		}
 		else
