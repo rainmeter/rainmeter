@@ -63,39 +63,46 @@ int RainmeterMain(LPWSTR cmdLine)
 			SendMessage(wnd, WM_COPYDATA, NULL, (LPARAM)&cds);
 			return 0;
 		}
-		else if (_wcsicmp(L"!RainmeterQuit", cmdLine) != 0 &&
-			_wcsicmp(L"!Quit", cmdLine) != 0)
+
+		return 1;
+	}
+	else if (cmdLine[0] == L'"')
+	{
+		// Strip quotes
+		++cmdLine;
+		WCHAR* pos = wcsrchr(cmdLine, L'"');
+		if (pos)
 		{
-			return 1;
+			*pos = L'\0';
 		}
 	}
 
 	// Avoid loading a dll from current directory
 	SetDllDirectory(L"");
-	
-	int ret = 1;
-	Rainmeter = new CRainmeter;
-	if (Rainmeter)
-	{
-		if (!Rainmeter->IsAlreadyRunning())
-		{
-			try
-			{
-				ret = Rainmeter->Initialize(cmdLine);
-			}
-			catch (CError& error)
-			{
-				MessageBox(NULL, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
-			}
 
+	int ret = 1;
+
+	HANDLE mutex;
+	if (CRainmeter::CreateInstanceMutex(&mutex, cmdLine))
+	{
+		Rainmeter = new CRainmeter;
+		if (Rainmeter)
+		{
+			ret = Rainmeter->Initialize(cmdLine);
 			if (ret == 0)
 			{
 				ret = Rainmeter->MessagePump();
 			}
+
+			delete Rainmeter;
+			Rainmeter = NULL;
 		}
 
-		delete Rainmeter;
-		Rainmeter = NULL;
+		ReleaseMutex(mutex);
+	}
+	else
+	{
+		// Rainmeter already started
 	}
 
 	return ret;
@@ -665,7 +672,6 @@ CRainmeter::CRainmeter() :
 	m_Logging(false),
 	m_CurrentParser(),
 	m_Window(),
-	m_Mutex(),
 	m_Instance(),
 	m_ResourceInstance(),
 	m_ResourceLCID(),
@@ -711,7 +717,6 @@ CRainmeter::~CRainmeter()
 
 	FinalizeLitestep();
 
-	if (m_Mutex) ReleaseMutex(m_Mutex);
 	if (m_ResourceInstance) FreeLibrary(m_ResourceInstance);
 
 	CoUninitialize();
@@ -723,10 +728,8 @@ CRainmeter::~CRainmeter()
 ** The main initialization function for the module.
 **
 */
-int CRainmeter::Initialize(LPCWSTR szPath)
+int CRainmeter::Initialize(LPCWSTR iniPath)
 {
-	int result = 0;
-
 	m_Instance = GetModuleHandle(L"Rainmeter");
 
 	WNDCLASS wc = {0};
@@ -756,29 +759,16 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 
 	// Remove the module's name from the path
 	WCHAR* pos = wcsrchr(buffer, L'\\');
-
 	m_Path.assign(buffer, pos ? pos - buffer + 1 : 0);
 
 	InitalizeLitestep();
 
 	bool bDefaultIniLocation = false;
 
-	if (*szPath)
+	if (*iniPath)
 	{
 		// The command line defines the location of Rainmeter.ini (or whatever it calls it).
-		std::wstring iniFile = szPath;
-		if (iniFile[0] == L'"')
-		{
-			if (iniFile.length() == 1)
-			{
-				iniFile.clear();
-			}
-			else if (iniFile[iniFile.length() - 1] == L'"')
-			{
-				iniFile.assign(iniFile, 1, iniFile.length() - 2);
-			}
-		}
-
+		std::wstring iniFile = iniPath;
 		ExpandEnvironmentVariables(iniFile);
 
 		if (iniFile.empty() || CSystem::IsPathSeparator(iniFile[iniFile.length() - 1]))
@@ -889,7 +879,8 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 		m_ResourceLCID = 1033;
 		if (!m_ResourceInstance)
 		{
-			throw CError(L"Unable to load language library");
+			MessageBox(NULL, L"Unable to load language library", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			return 1;
 		}
 	}
 
@@ -1035,10 +1026,10 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 		CheckUpdate();
 	}
 
-	return result;	// All is OK
+	return 0;	// All is OK
 }
 
-bool CRainmeter::IsAlreadyRunning()
+bool CRainmeter::CreateInstanceMutex(HANDLE* mutex, LPCWSTR iniPath)
 {
 	typedef struct
 	{
@@ -1081,10 +1072,9 @@ bool CRainmeter::IsAlreadyRunning()
 			}
 			*pos = L'\0';
 
-			m_Mutex = CreateMutex(NULL, FALSE, mutexName);
-			if (GetLastError() == ERROR_ALREADY_EXISTS)
+			*mutex = CreateMutex(NULL, FALSE, mutexName);
+			if (GetLastError() != ERROR_ALREADY_EXISTS)
 			{
-				m_Mutex = NULL;
 				return true;
 			}
 		}
