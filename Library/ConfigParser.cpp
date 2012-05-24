@@ -83,26 +83,29 @@ void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meter
 
 void CConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, CMeterWindow* meterWindow)
 {
-	SetBuiltInVariable(L"PROGRAMPATH", Rainmeter->GetPath());
-	SetBuiltInVariable(L"PROGRAMDRIVE", Rainmeter->GetDrive());
-	SetBuiltInVariable(L"SETTINGSPATH", Rainmeter->GetSettingsPath());
-	SetBuiltInVariable(L"SKINSPATH", Rainmeter->GetSkinPath());
-	SetBuiltInVariable(L"PLUGINSPATH", Rainmeter->GetPluginPath());
-	SetBuiltInVariable(L"CURRENTPATH", CRainmeter::ExtractPath(filename));
-	SetBuiltInVariable(L"ADDONSPATH", Rainmeter->GetAddonPath());
+	auto insertVariable = [&](const WCHAR* name, std::wstring value)
+	{
+		return m_BuiltInVariables.insert(std::make_pair(name, value));
+	};
+
+	insertVariable(L"PROGRAMPATH", Rainmeter->GetPath());
+	insertVariable(L"PROGRAMDRIVE", Rainmeter->GetDrive());
+	insertVariable(L"SETTINGSPATH", Rainmeter->GetSettingsPath());
+	insertVariable(L"SKINSPATH", Rainmeter->GetSkinPath());
+	insertVariable(L"PLUGINSPATH", Rainmeter->GetPluginPath());
+	insertVariable(L"CURRENTPATH", CRainmeter::ExtractPath(filename));
+	insertVariable(L"ADDONSPATH", Rainmeter->GetAddonPath());
 
 	if (meterWindow)
 	{
-		SetBuiltInVariable(L"CURRENTFILE", meterWindow->GetSkinIniFile());
-		SetBuiltInVariable(L"CURRENTCONFIG", meterWindow->GetSkinName());
-		SetBuiltInVariable(L"ROOTCONFIGPATH", meterWindow->GetSkinRootPath());
+		insertVariable(L"CURRENTFILE", meterWindow->GetSkinIniFile());
+		insertVariable(L"CURRENTCONFIG", meterWindow->GetSkinName());
+		insertVariable(L"ROOTCONFIGPATH", meterWindow->GetSkinRootPath());
 	}
 
-	SetBuiltInVariable(L"CRLF", L"\n");
+	insertVariable(L"CRLF", L"\n");
 
-	const std::wstring CURRENTSECTION = L"CURRENTSECTION";
-	SetBuiltInVariable(CURRENTSECTION, L"");
-	m_CurrentSection = &((*m_BuiltInVariables.find(CURRENTSECTION)).second);  // shortcut
+	m_CurrentSection = &(insertVariable(L"CURRENTSECTION", L"").first->second);	// shortcut
 
 	if (resourcePath)
 	{
