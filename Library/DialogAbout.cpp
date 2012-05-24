@@ -784,8 +784,18 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 	const auto& variables = m_SkinWindow->GetParser().GetVariables();
 	for (auto iter = variables.cbegin(); iter != variables.cend(); ++iter)
 	{
-		lvi.pszText = (WCHAR*)(*iter).first.c_str();
-		lvi.lParam = (LPARAM)lvi.pszText;
+		const WCHAR* name = (*iter).first.c_str();
+		lvi.lParam = (LPARAM)name;
+
+		if (wcscmp(name, L"@") == 0)
+		{
+			// Ignore reserved variables
+			continue;
+		}
+
+		std::wstring tmpStr = (*iter).first;
+		wcslwr(&tmpStr[0]);
+		lvi.pszText = (WCHAR*)tmpStr.c_str();
 
 		if (lvi.iItem < count)
 		{
