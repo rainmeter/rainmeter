@@ -122,7 +122,7 @@ public:
 	~CRainmeter();
 
 	int Initialize(LPCWSTR iniPath);
-	static bool CreateInstanceMutex(HANDLE* mutex, LPCWSTR iniPath);
+	bool IsAlreadyRunning();
 	int MessagePump();
 
 	void SetNetworkStatisticsTimer();
@@ -323,6 +323,7 @@ private:
 
 	HWND m_Window;
 
+	HANDLE m_Mutex;
 	HINSTANCE m_Instance;
 	HMODULE m_ResourceInstance;
 	LCID m_ResourceLCID;

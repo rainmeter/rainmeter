@@ -82,27 +82,17 @@ int RainmeterMain(LPWSTR cmdLine)
 
 	int ret = 1;
 
-	HANDLE mutex;
-	if (CRainmeter::CreateInstanceMutex(&mutex, cmdLine))
+	Rainmeter = new CRainmeter;
+	if (Rainmeter)
 	{
-		Rainmeter = new CRainmeter;
-		if (Rainmeter)
+		ret = Rainmeter->Initialize(cmdLine);
+		if (ret == 0)
 		{
-			ret = Rainmeter->Initialize(cmdLine);
-			if (ret == 0)
-			{
-				ret = Rainmeter->MessagePump();
-			}
-
-			delete Rainmeter;
-			Rainmeter = NULL;
+			ret = Rainmeter->MessagePump();
 		}
 
-		ReleaseMutex(mutex);
-	}
-	else
-	{
-		// Rainmeter already started
+		delete Rainmeter;
+		Rainmeter = NULL;
 	}
 
 	return ret;
@@ -672,6 +662,7 @@ CRainmeter::CRainmeter() :
 	m_Logging(false),
 	m_CurrentParser(),
 	m_Window(),
+	m_Mutex(),
 	m_Instance(),
 	m_ResourceInstance(),
 	m_ResourceLCID(),
@@ -718,6 +709,7 @@ CRainmeter::~CRainmeter()
 	FinalizeLitestep();
 
 	if (m_ResourceInstance) FreeLibrary(m_ResourceInstance);
+	if (m_Mutex) ReleaseMutex(m_Mutex);
 
 	CoUninitialize();
 
@@ -730,6 +722,60 @@ CRainmeter::~CRainmeter()
 */
 int CRainmeter::Initialize(LPCWSTR iniPath)
 {
+	InitalizeLitestep();
+
+	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
+	GetModuleFileName(m_Instance, buffer, MAX_LINE_LENGTH);
+
+	// Remove the module's name from the path
+	WCHAR* pos = wcsrchr(buffer, L'\\');
+	m_Path.assign(buffer, pos ? pos - buffer + 1 : 0);
+
+	bool bDefaultIniLocation = false;
+	if (*iniPath)
+	{
+		// The command line defines the location of Rainmeter.ini (or whatever it calls it).
+		std::wstring iniFile = iniPath;
+		ExpandEnvironmentVariables(iniFile);
+
+		if (iniFile.empty() || CSystem::IsPathSeparator(iniFile[iniFile.length() - 1]))
+		{
+			iniFile += L"Rainmeter.ini";
+		}
+		else if (iniFile.length() <= 4 || _wcsicmp(iniFile.c_str() + (iniFile.length() - 4), L".ini") != 0)
+		{
+			iniFile += L"\\Rainmeter.ini";
+		}
+
+		if (!CSystem::IsPathSeparator(iniFile[0]) && iniFile.find_first_of(L':') == std::wstring::npos)
+		{
+			// Make absolute path
+			iniFile.insert(0, m_Path);
+		}
+
+		m_IniFile = iniFile;
+		bDefaultIniLocation = true;
+	}
+	else
+	{
+		m_IniFile = m_Path;
+		m_IniFile += L"Rainmeter.ini";
+
+		// If the ini file doesn't exist in the program folder store it to the %APPDATA% instead so that things work better in Vista/Win7
+		if (_waccess(m_IniFile.c_str(), 0) == -1)
+		{
+			m_IniFile = L"%APPDATA%\\Rainmeter\\Rainmeter.ini";
+			ExpandEnvironmentVariables(m_IniFile);
+			bDefaultIniLocation = true;
+		}
+	}
+
+	if (IsAlreadyRunning())
+	{
+		// Instance already running with same .ini file
+		return 1;
+	}
+
 	m_Instance = GetModuleHandle(L"Rainmeter");
 
 	WNDCLASS wc = {0};
@@ -754,68 +800,13 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 
 	if (!m_Window) return 1;
 
-	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
-	GetModuleFileName(m_Instance, buffer, MAX_LINE_LENGTH);
-
-	// Remove the module's name from the path
-	WCHAR* pos = wcsrchr(buffer, L'\\');
-	m_Path.assign(buffer, pos ? pos - buffer + 1 : 0);
-
-	InitalizeLitestep();
-
-	bool bDefaultIniLocation = false;
-
-	if (*iniPath)
-	{
-		// The command line defines the location of Rainmeter.ini (or whatever it calls it).
-		std::wstring iniFile = iniPath;
-		ExpandEnvironmentVariables(iniFile);
-
-		if (iniFile.empty() || CSystem::IsPathSeparator(iniFile[iniFile.length() - 1]))
-		{
-			iniFile += L"Rainmeter.ini";
-		}
-		else if (iniFile.length() <= 4 || _wcsicmp(iniFile.c_str() + (iniFile.length() - 4), L".ini") != 0)
-		{
-			iniFile += L"\\Rainmeter.ini";
-		}
-
-		if (!CSystem::IsPathSeparator(iniFile[0]) && iniFile.find_first_of(L':') == std::wstring::npos)
-		{
-			// Make absolute path
-			iniFile.insert(0, m_Path);
-		}
-
-		m_IniFile = iniFile;
-
-		// If the ini file doesn't exist, create a default Rainmeter.ini file.
-		if (_waccess(m_IniFile.c_str(), 0) == -1)
-		{
-			CreateDefaultConfigFile();
-		}
-		bDefaultIniLocation = true;
-	}
-	else
-	{
-		m_IniFile = m_Path;
-		m_IniFile += L"Rainmeter.ini";
-
-		// If the ini file doesn't exist in the program folder store it to the %APPDATA% instead so that things work better in Vista/Win7
-		if (_waccess(m_IniFile.c_str(), 0) == -1)
-		{
-			m_IniFile = L"%APPDATA%\\Rainmeter\\Rainmeter.ini";
-			ExpandEnvironmentVariables(m_IniFile);
-			bDefaultIniLocation = true;
-
-			// If the ini file doesn't exist in the %APPDATA% either, create a default Rainmeter.ini file.
-			if (_waccess(m_IniFile.c_str(), 0) == -1)
-			{
-				CreateDefaultConfigFile();
-			}
-		}
-	}
-
 	const WCHAR* iniFile = m_IniFile.c_str();
+
+	// Create a default Rainmeter.ini file if needed
+	if (_waccess(iniFile, 0) == -1)
+	{
+		CreateDefaultConfigFile();
+	}
 
 	// Set file locations
 	{
@@ -1029,7 +1020,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 	return 0;	// All is OK
 }
 
-bool CRainmeter::CreateInstanceMutex(HANDLE* mutex, LPCWSTR iniPath)
+bool CRainmeter::IsAlreadyRunning()
 {
 	typedef struct
 	{
@@ -1043,6 +1034,8 @@ bool CRainmeter::CreateInstanceMutex(HANDLE* mutex, LPCWSTR iniPath)
 	typedef void (WINAPI * FPMD5UPDATE)(MD5_CTX* context, const unsigned char* input, unsigned int inlen);
 	typedef void (WINAPI * FPMD5FINAL)(MD5_CTX* context);
 
+	bool alreadyRunning = false;
+
 	// Create MD5 digest from command line
 	HMODULE cryptDll = CSystem::RmLoadLibrary(L"cryptdll.dll");
 	if (cryptDll)
@@ -1052,12 +1045,12 @@ bool CRainmeter::CreateInstanceMutex(HANDLE* mutex, LPCWSTR iniPath)
 		FPMD5FINAL MD5Final = (FPMD5FINAL)GetProcAddress(cryptDll, "MD5Final");
 		if (MD5Init && MD5Update && MD5Final)
 		{
-			std::wstring cmdLine = GetCommandLine();
-			_wcsupr(&cmdLine[0]);
+			std::wstring data = m_IniFile;
+			_wcsupr(&data[0]);
 
 			MD5_CTX ctx = {0};
 			MD5Init(&ctx);
-			MD5Update(&ctx, (LPBYTE)&cmdLine[0], cmdLine.length() * sizeof(WCHAR));
+			MD5Update(&ctx, (LPBYTE)&data[0], data.length() * sizeof(WCHAR));
 			MD5Final(&ctx);
 			FreeLibrary(cryptDll);
 
@@ -1072,17 +1065,18 @@ bool CRainmeter::CreateInstanceMutex(HANDLE* mutex, LPCWSTR iniPath)
 			}
 			*pos = L'\0';
 
-			*mutex = CreateMutex(NULL, FALSE, mutexName);
-			if (GetLastError() != ERROR_ALREADY_EXISTS)
+			m_Mutex = CreateMutex(NULL, FALSE, mutexName);
+			if (GetLastError() == ERROR_ALREADY_EXISTS)
 			{
-				return true;
+				alreadyRunning = true;
+				m_Mutex = NULL;
 			}
 		}
 
 		FreeLibrary(cryptDll);
 	}
 
-	return false;
+	return alreadyRunning;
 }
 
 int CRainmeter::MessagePump()
