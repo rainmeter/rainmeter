@@ -50,44 +50,24 @@ CRainmeter* Rainmeter; // The module
 */
 int RainmeterMain(LPWSTR cmdLine)
 {
-	HWND wnd = NULL;
-	while (wnd = FindWindowEx(NULL, wnd, RAINMETER_CLASS_NAME, RAINMETER_WINDOW_NAME))
+	if (cmdLine[0] == L'!' || cmdLine[0] == L'[')
 	{
-		COPYDATASTRUCT cds;
-
-		if (cmdLine[0] == L'!' || cmdLine[0] == L'[')
+		HWND wnd = FindWindow(RAINMETER_CLASS_NAME, RAINMETER_WINDOW_NAME);
+		if (wnd)
 		{
 			// Deliver bang to existing Rainmeter instance
+			COPYDATASTRUCT cds;
 			cds.dwData = 1;
 			cds.cbData = (DWORD)((wcslen(cmdLine) + 1) * sizeof(WCHAR));
 			cds.lpData = (PVOID)cmdLine;
 			SendMessage(wnd, WM_COPYDATA, NULL, (LPARAM)&cds);
-
 			return 0;
 		}
-		else
+		else if (_wcsicmp(L"!RainmeterQuit", cmdLine) != 0 &&
+			_wcsicmp(L"!Quit", cmdLine) != 0)
 		{
-			const WCHAR* fullCmdLine = GetCommandLine();
-
-			COPYDATASTRUCT cds;
-			cds.dwData = SIZE_MAX;
-			cds.cbData = (DWORD)((wcslen(fullCmdLine) + 1) * sizeof(WCHAR));
-			cds.lpData = (PVOID)fullCmdLine;
-
-			if (SendMessage(wnd, WM_COPYDATA, NULL, (LPARAM)&cds) == SIZE_MAX)
-			{
-				// An instance of Rainmeter with same command-line arguments already exists
-				return 1;
-			}
+			return 1;
 		}
-	}
-
-	if ((cmdLine[0] == L'!' || cmdLine[0] == L'[') &&
-		_wcsicmp(L"!RainmeterQuit", cmdLine) != 0 &&
-		_wcsicmp(L"!Quit", cmdLine) != 0)
-	{
-		MessageBox(NULL, L"Unable to send bang: Rainmeter is not running.", L"Rainmeter", MB_OK | MB_TOPMOST | MB_ICONERROR);
-		return 1;
 	}
 
 	// Avoid loading a dll from current directory
@@ -97,18 +77,21 @@ int RainmeterMain(LPWSTR cmdLine)
 	Rainmeter = new CRainmeter;
 	if (Rainmeter)
 	{
-		try
+		if (!Rainmeter->IsAlreadyRunning())
 		{
-			ret = Rainmeter->Initialize(cmdLine);
-		}
-		catch (CError& error)
-		{
-			MessageBox(NULL, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
-		}
+			try
+			{
+				ret = Rainmeter->Initialize(cmdLine);
+			}
+			catch (CError& error)
+			{
+				MessageBox(NULL, error.GetString().c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			}
 
-		if (ret == 0)
-		{
-			ret = Rainmeter->MessagePump();
+			if (ret == 0)
+			{
+				ret = Rainmeter->MessagePump();
+			}
 		}
 
 		delete Rainmeter;
@@ -682,6 +665,7 @@ CRainmeter::CRainmeter() :
 	m_Logging(false),
 	m_CurrentParser(),
 	m_Window(),
+	m_Mutex(),
 	m_Instance(),
 	m_ResourceInstance(),
 	m_ResourceLCID(),
@@ -727,6 +711,7 @@ CRainmeter::~CRainmeter()
 
 	FinalizeLitestep();
 
+	if (m_Mutex) ReleaseMutex(m_Mutex);
 	if (m_ResourceInstance) FreeLibrary(m_ResourceInstance);
 
 	CoUninitialize();
@@ -1053,6 +1038,63 @@ int CRainmeter::Initialize(LPCWSTR szPath)
 	return result;	// All is OK
 }
 
+bool CRainmeter::IsAlreadyRunning()
+{
+	typedef struct
+	{
+		ULONG i[2];
+		ULONG buf[4];
+		unsigned char in[64];
+		unsigned char digest[16];
+	} MD5_CTX;
+
+	typedef void (WINAPI * FPMD5INIT)(MD5_CTX* context);
+	typedef void (WINAPI * FPMD5UPDATE)(MD5_CTX* context, const unsigned char* input, unsigned int inlen);
+	typedef void (WINAPI * FPMD5FINAL)(MD5_CTX* context);
+
+	// Create MD5 digest from command line
+	HMODULE cryptDll = CSystem::RmLoadLibrary(L"cryptdll.dll");
+	if (cryptDll)
+	{
+		FPMD5INIT MD5Init = (FPMD5INIT)GetProcAddress(cryptDll, "MD5Init");
+		FPMD5UPDATE MD5Update = (FPMD5UPDATE)GetProcAddress(cryptDll, "MD5Update");
+		FPMD5FINAL MD5Final = (FPMD5FINAL)GetProcAddress(cryptDll, "MD5Final");
+		if (MD5Init && MD5Update && MD5Final)
+		{
+			std::wstring cmdLine = GetCommandLine();
+			_wcsupr(&cmdLine[0]);
+
+			MD5_CTX ctx = {0};
+			MD5Init(&ctx);
+			MD5Update(&ctx, (LPBYTE)&cmdLine[0], cmdLine.length() * sizeof(WCHAR));
+			MD5Final(&ctx);
+			FreeLibrary(cryptDll);
+
+			// Convert MD5 digest to mutex string (e.g. "Rainmeter0123456789abcdef0123456789abcdef")
+			const WCHAR hexChars[] = L"0123456789abcdef";
+			WCHAR mutexName[64] = L"Rainmeter";
+			WCHAR* pos = mutexName + (_countof(L"Rainmeter") - 1);
+			for (size_t i = 0; i < 16; ++i)
+			{
+				*(pos++) = hexChars[ctx.digest[i] >> 4];
+				*(pos++) = hexChars[ctx.digest[i] & 0xF];
+			}
+			*pos = L'\0';
+
+			m_Mutex = CreateMutex(NULL, FALSE, mutexName);
+			if (GetLastError() == ERROR_ALREADY_EXISTS)
+			{
+				m_Mutex = NULL;
+				return true;
+			}
+		}
+
+		FreeLibrary(cryptDll);
+	}
+
+	return false;
+}
+
 int CRainmeter::MessagePump()
 {
 	MSG msg;
@@ -1096,10 +1138,6 @@ LRESULT CALLBACK CRainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 				if (cds->dwData == 1 && (cds->cbData > 0))
 				{
 					Rainmeter->DelayedExecuteCommand(data);
-				}
-				else if (cds->dwData == SIZE_MAX && _wcsicmp(GetCommandLine(), data) == 0)
-				{
-					return SIZE_MAX;
 				}
 			}
 		}
