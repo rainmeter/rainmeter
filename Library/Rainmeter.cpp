@@ -811,7 +811,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 	// Set file locations
 	{
 		size_t len = m_IniFile.length();
-		if (len > 4 && _wcsicmp(m_IniFile.c_str() + (len - 4), L".ini") == 0)
+		if (len > 4 && _wcsicmp(iniFile + (len - 4), L".ini") == 0)
 		{
 			len -= 4;
 		}
@@ -1222,33 +1222,24 @@ void CRainmeter::ReloadSettings()
 
 void CRainmeter::EditSettings()
 {
-	std::wstring command = m_ConfigEditor + L" \"";
-	command += m_IniFile;
-	command += L'"';
-	RunCommand(m_Window, command.c_str(), SW_SHOWNORMAL);
+	RunFile(m_ConfigEditor.c_str(), m_IniFile.c_str());
 }
 
 void CRainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniFile)
 {
-	std::wstring command = m_SkinPath + name;
-	command += L'\\';
-	command += iniFile;
-	bool writable = CSystem::IsFileWritable(command.c_str());
-
-	command.insert(0, L" \"");
-	command.insert(0, m_ConfigEditor);
-	command += L'"';
+	std::wstring args = m_SkinPath + name;
+	args += L'\\';
+	args += iniFile;
+	bool writable = CSystem::IsFileWritable(args.c_str());
 
 	// Execute as admin if in protected location
-	RunCommand(m_Window, command.c_str(), SW_SHOWNORMAL, !writable);
+	RunFile(m_ConfigEditor.c_str(), args.c_str(), !writable);
 }
 
 void CRainmeter::OpenSkinFolder(const std::wstring& name)
 {
-	std::wstring command = L'"' + m_SkinPath;
-	if (!name.empty()) command += name;
-	command += L'"';
-	RunCommand(m_Window, command.c_str(), SW_SHOWNORMAL);
+	std::wstring folder = m_SkinPath + name;
+	RunFile(folder.c_str());
 }
 
 void CRainmeter::ActivateActiveConfigs()
@@ -2158,16 +2149,12 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow,
 		}
 
 		// Run command
+		std::wstring tmpSz = command;
 		if (meterWindow)
 		{
-			std::wstring tmpSz = command;
 			meterWindow->GetParser().ReplaceMeasures(tmpSz);
-			RunCommand(NULL, tmpSz.c_str(), SW_SHOWNORMAL);
 		}
-		else
-		{
-			RunCommand(NULL, command, SW_SHOWNORMAL);
-		}
+		RunCommand(tmpSz);
 	}
 }
 
@@ -2223,11 +2210,6 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".ini", L"open", buffer, &cchOut);
 		m_ConfigEditor = (SUCCEEDED(hr) && cchOut > 0) ? buffer : L"Notepad";
 	}
-	if (!m_ConfigEditor.empty() && m_ConfigEditor[0] != L'"')
-	{
-		m_ConfigEditor.insert(0, 1, L'"');
-		m_ConfigEditor += L'"';
-	}
 
 	m_LogViewer = parser.ReadString(L"Rainmeter", L"LogViewer", L"");
 	if (m_LogViewer.empty())
@@ -2236,11 +2218,6 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		DWORD cchOut = MAX_PATH;
 		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".log", L"open", buffer, &cchOut);
 		m_LogViewer = (SUCCEEDED(hr) && cchOut > 0) ? buffer : L"Notepad";
-	}
-	if (!m_LogViewer.empty() && m_LogViewer[0] != L'"')
-	{
-		m_LogViewer.insert(0, 1, L'"');
-		m_LogViewer += L'"';
 	}
 
 	if (m_Debug)
@@ -3099,24 +3076,22 @@ void CRainmeter::ChangeSkinIndex(HMENU menu, int index)
 void CRainmeter::StartLogging()
 {
 	// Check if the file exists
-	if (_waccess(m_LogFile.c_str(), 0) == -1)
+	const WCHAR* logFile = m_LogViewer.c_str();
+	if (_waccess(logFile, 0) == -1)
 	{
 		// Create log file
-		HANDLE file = CreateFile(m_LogFile.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE file = CreateFile(logFile, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (file != INVALID_HANDLE_VALUE)
 		{
 			CloseHandle(file);
 			SetLogging(true);
-
-			// std::wstring text = GetFormattedString(ID_STR_LOGFILECREATED, m_LogFile.c_str());
-			// MessageBox(NULL, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONINFORMATION);
 		}
 		else
 		{
 			// Disable logging
 			SetLogging(false);
 	
-			std::wstring text = GetFormattedString(ID_STR_LOGFILECREATEFAIL, m_LogFile.c_str());
+			std::wstring text = GetFormattedString(ID_STR_LOGFILECREATEFAIL, logFile);
 			MessageBox(NULL, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 		}
 	}
@@ -3134,20 +3109,20 @@ void CRainmeter::StopLogging()
 void CRainmeter::ShowLogFile()
 {
 	// Check if the file exists
-	if (_waccess(m_LogFile.c_str(), 0) != -1)
+	const WCHAR* logFile = m_LogViewer.c_str();
+	if (_waccess(logFile, 0) != -1)
 	{
-		std::wstring command = m_LogViewer + L" ";
-		command += m_LogFile;
-		RunCommand(m_Window, command.c_str(), SW_SHOWNORMAL);
+		RunFile(m_LogViewer.c_str(), logFile);
 	}
 }
 
 void CRainmeter::DeleteLogFile()
 {
 	// Check if the file exists
-	if (_waccess(m_LogFile.c_str(), 0) != -1)
+	const WCHAR* logFile = m_LogViewer.c_str();
+	if (_waccess(logFile, 0) != -1)
 	{
-		std::wstring text = GetFormattedString(ID_STR_LOGFILEDELETE, m_LogFile.c_str());
+		std::wstring text = GetFormattedString(ID_STR_LOGFILEDELETE, logFile);
 		int res = MessageBox(NULL, text.c_str(), APPNAME, MB_YESNO | MB_TOPMOST | MB_ICONQUESTION);
 		if (res == IDYES)
 		{

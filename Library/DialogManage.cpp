@@ -1497,12 +1497,11 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			int sel = ListBox_GetCurSel(item);
 			const std::vector<std::wstring>& themes = Rainmeter->GetAllThemes();
 
-			std::wstring command = Rainmeter->GetConfigEditor() + L" \"";
-			command += Rainmeter->GetSettingsPath();
-			command += L"Themes\\";
-			command += themes[sel];
-			command += L"\\Rainmeter.thm\"";
-			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
+			std::wstring args = Rainmeter->GetSettingsPath();
+			args += L"Themes\\";
+			args += themes[sel];
+			args += L"\\Rainmeter.thm";
+			RunFile(Rainmeter->GetConfigEditor().c_str(), args.c_str());
 		}
 		break;
 
@@ -1546,9 +1545,8 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_MANAGETHEMES_BACKUP_BUTTON:
 		{
-			std::wstring command = L'"' + Rainmeter->GetPath();
-			command += L"SkinInstaller.exe\" /BACKUP";
-			RunCommand(NULL, command.c_str(), SW_SHOWNORMAL);
+			std::wstring file = Rainmeter->GetPath() + L"SkinInstaller.exe";
+			RunFile(file.c_str(), L"/BACKUP");
 		}
 		break;
 

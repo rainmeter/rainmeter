@@ -49,7 +49,8 @@ void Log(int nLevel, const WCHAR* message);
 void LogWithArgs(int nLevel, const WCHAR* format, ...);
 void LogError(CError& error);
 
-void RunCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, bool asAdmin = false);
+void RunCommand(std::wstring command);
+void RunFile(const WCHAR* file, const WCHAR* args = NULL, bool asAdmin = false);
 
 WCHAR* GetString(UINT id);
 std::wstring GetFormattedString(UINT id, ...);

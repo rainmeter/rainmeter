@@ -45,17 +45,12 @@ UINT GetUniqueID()
 	return id++;
 }
 
-void RunCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, bool asAdmin)
+void RunCommand(std::wstring command)
 {
-	// The stub implementation (some of this code is taken from lsapi.cpp)
-	if (szCommand == NULL || *szCommand == 0) return;
-
 	std::wstring args;
-	std::wstring command = szCommand;
 
 	size_t notwhite = command.find_first_not_of(L" \t\r\n");
 	command.erase(0, notwhite);
-	if (command.empty()) return;
 
 	size_t quotePos = command.find(L'"');
 	if (quotePos == 0)
@@ -81,25 +76,27 @@ void RunCommand(HWND Owner, LPCTSTR szCommand, int nShowCmd, bool asAdmin)
 		}
 	}
 
-	if (!command.empty())
+	RunFile(command.c_str(), args.c_str());
+}
+
+void RunFile(const WCHAR* file, const WCHAR* args, bool asAdmin)
+{
+	SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
+	si.hwnd = NULL;
+	si.lpVerb = asAdmin ? L"runas" : L"open";
+	si.lpFile = file;
+	si.nShow = SW_SHOWNORMAL;
+
+	DWORD type = GetFileAttributes(si.lpFile);
+	if (type & FILE_ATTRIBUTE_DIRECTORY && type != 0xFFFFFFFF)
 	{
-		LPCWSTR szVerb = asAdmin ? L"runas" : L"open";
-		DWORD type = GetFileAttributes(command.c_str());
-		if (type & FILE_ATTRIBUTE_DIRECTORY && type != 0xFFFFFFFF)
-		{
-			ShellExecute(Owner, szVerb, command.c_str(), NULL, NULL, nShowCmd ? nShowCmd : SW_SHOWNORMAL);
-			return;
-		}
-
-		std::wstring dir = CRainmeter::ExtractPath(command);
-
-		SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
-		si.hwnd = Owner;
-		si.lpVerb = szVerb;
-		si.lpFile = command.c_str();
-		si.lpParameters = args.c_str();
+		ShellExecute(si.hwnd, si.lpVerb, si.lpFile, NULL, NULL, si.nShow);
+	}
+	else
+	{
+		std::wstring dir = CRainmeter::ExtractPath(file);
 		si.lpDirectory = dir.c_str();
-		si.nShow = nShowCmd ? nShowCmd : SW_SHOWNORMAL;
+		si.lpParameters = args;
 		si.fMask = SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI;
 		ShellExecuteEx(&si);
 	}
