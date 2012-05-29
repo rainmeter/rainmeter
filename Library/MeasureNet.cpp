@@ -205,37 +205,34 @@ void CMeasureNet::UpdateIFTable()
 
 					for (size_t i = 0; i < c_NumOfTables; ++i)
 					{
-						std::string desc((char*)ifTable->table[i].bDescr, ifTable->table[i].dwDescrLen);
-
-						std::wstring type;
+						const WCHAR* type = L"";
 						switch (ifTable->table[i].dwType)
 						{
 						case IF_TYPE_ETHERNET_CSMACD:
-							type += L"Ethernet";
+							type = L"Ethernet";
 							break;
 						case IF_TYPE_PPP:
-							type += L"PPP";
+							type = L"PPP";
 							break;
 						case IF_TYPE_SOFTWARE_LOOPBACK:
-							type += L"Loopback";
+							type = L"Loopback";
 							break;
 						case IF_TYPE_IEEE80211:
-							type += L"IEEE802.11";
+							type = L"IEEE802.11";
 							break;
 						case IF_TYPE_TUNNEL:
-							type += L"Tunnel";
+							type = L"Tunnel";
 							break;
 						case IF_TYPE_IEEE1394:
-							type += L"IEEE1394";
+							type = L"IEEE1394";
 							break;
 						default:
-							type += L"Other";
+							type = L"Other";
 							break;
 						}
 
-						LogWithArgs(LOG_DEBUG, L"%i: %s", (int)i + 1, ConvertToWide(desc.c_str()).c_str());
-						LogWithArgs(LOG_DEBUG, L"  Type=%s(%i)",
-							type.c_str(), ifTable->table[i].dwType);
+						LogWithArgs(LOG_DEBUG, L"%i: %.*S", (int)i + 1, ifTable->table[i].dwDescrLen, (char*)ifTable->table[i].bDescr);
+						LogWithArgs(LOG_DEBUG, L"  Type=%s(%i)", type, ifTable->table[i].dwType);
 					}
 					Log(LOG_DEBUG, L"------------------------------");
 				}

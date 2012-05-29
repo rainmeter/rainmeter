@@ -277,19 +277,19 @@ void Log(int nLevel, const WCHAR* message)
 
 void LogWithArgs(int nLevel, const WCHAR* format, ...)
 {
-	WCHAR* buffer = new WCHAR[4096];
+	WCHAR* buffer = new WCHAR[1024];
 	va_list args;
-	va_start( args, format );
+	va_start(args, format);
 
 	_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
 	_CrtSetReportMode(_CRT_ASSERT, 0);
 
 	errno = 0;
-	_vsnwprintf_s(buffer, 4096, _TRUNCATE, format, args);
+	_vsnwprintf_s(buffer, 1024, _TRUNCATE, format, args);
 	if (errno != 0)
 	{
 		nLevel = LOG_ERROR;
-		_snwprintf_s(buffer, 4096, _TRUNCATE, L"LogWithArgs internal error: %s", format);
+		_snwprintf_s(buffer, 1024, _TRUNCATE, L"Internal error: %s", format);
 	}
 
 	_set_invalid_parameter_handler(oldHandler);
