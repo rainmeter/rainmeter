@@ -48,7 +48,7 @@ public:
 	virtual void Command(const std::wstring& command);
 
 protected:
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:

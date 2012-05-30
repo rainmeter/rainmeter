@@ -310,7 +310,7 @@ void CMeterString::Initialize()
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	// Store the current font values so we know if the font needs to be updated
 	std::wstring oldFontFace = m_FontFace;
@@ -318,7 +318,7 @@ void CMeterString::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	TEXTSTYLE oldStyle = m_Style;
 
 	// Read common configs
-	CMeter::ReadConfig(parser, section);
+	CMeter::ReadOptions(parser, section);
 
 	// Check for extra measures
 	if (!m_Initialized && !m_MeasureName.empty())

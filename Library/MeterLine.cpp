@@ -99,7 +99,7 @@ void CMeterLine::Initialize()
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CMeterLine::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	WCHAR tmpName[64];
 
@@ -108,7 +108,7 @@ void CMeterLine::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	int oldW = m_W;
 
 	// Read common configs
-	CMeter::ReadConfig(parser, section);
+	CMeter::ReadOptions(parser, section);
 
 	int lineCount = parser.ReadInt(section, L"LineCount", 1);
 

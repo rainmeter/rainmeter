@@ -322,7 +322,7 @@ private:
 	bool UpdateMeter(CMeter* meter, bool& bActiveTransition, bool force);
 	void Update(bool refresh);
 	void UpdateWindow(int alpha, bool reset);
-	void ReadConfig();
+	void ReadOptions();
 	void WriteConfig(INT setting = SETTING_ALL);
 	bool ReadSkin();
 	void InitializeMeasures();

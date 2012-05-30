@@ -60,9 +60,9 @@ void CMeasurePhysicalMemory::UpdateValue()
 ** Reads the measure specific configs.
 **
 */
-void CMeasurePhysicalMemory::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeasurePhysicalMemory::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadConfig(parser, section);
+	CMeasure::ReadOptions(parser, section);
 
 	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
 

@@ -75,9 +75,9 @@ void CMeasureCalc::UpdateValue()
 ** Reads the measure specific configs.
 **
 */
-void CMeasureCalc::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeasureCalc::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadConfig(parser, section);
+	CMeasure::ReadOptions(parser, section);
 
 	// Store the current values so we know if the value needs to be updated
 	int oldLowBound = m_LowBound;

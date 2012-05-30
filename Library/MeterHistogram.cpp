@@ -182,7 +182,7 @@ void CMeterHistogram::Initialize()
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldPrimaryImageName = m_PrimaryImageName;
@@ -192,7 +192,7 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	int oldH = m_H;
 
 	// Read common configs
-	CMeter::ReadConfig(parser, section);
+	CMeter::ReadOptions(parser, section);
 
 	m_PrimaryColor = parser.ReadColor(section, L"PrimaryColor", Color::Green);
 	m_SecondaryColor = parser.ReadColor(section, L"SecondaryColor", Color::Red);
@@ -213,7 +213,7 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_MeterWindow->MakePathAbsolute(m_PrimaryImageName);
 
 		// Read tinting configs
-		m_PrimaryImage.ReadConfig(parser, section);
+		m_PrimaryImage.ReadOptions(parser, section);
 	}
 	else
 	{
@@ -226,7 +226,7 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_MeterWindow->MakePathAbsolute(m_SecondaryImageName);
 
 		// Read tinting configs
-		m_SecondaryImage.ReadConfig(parser, section);
+		m_SecondaryImage.ReadOptions(parser, section);
 	}
 	else
 	{
@@ -239,7 +239,7 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_MeterWindow->MakePathAbsolute(m_OverlapImageName);
 
 		// Read tinting configs
-		m_OverlapImage.ReadConfig(parser, section);
+		m_OverlapImage.ReadOptions(parser, section);
 	}
 	else
 	{

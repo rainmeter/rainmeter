@@ -49,7 +49,7 @@ public:
 
 	virtual UINT GetTypeID() = 0;
 
-	void ReadConfig(CConfigParser& parser) { ReadConfig(parser, GetName()); }
+	void ReadOptions(CConfigParser& parser) { ReadOptions(parser, GetName()); }
 
 	virtual void Initialize();
 	bool Update();
@@ -85,7 +85,7 @@ public:
 	static CMeasure* Create(const WCHAR* measure, CMeterWindow* meterWindow, const WCHAR* name);
 
 protected:
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue() = 0;
 
 	bool ParseSubstitute(std::wstring buffer);

@@ -438,7 +438,7 @@ ULONG64 CMeasureNet::GetNetStatsValue(NET net)
 ** the net-parameter informs which inherited class called this method.
 **
 */
-void CMeasureNet::ReadConfig(CConfigParser& parser, const WCHAR* section, NET net)
+void CMeasureNet::ReadOptions(CConfigParser& parser, const WCHAR* section, NET net)
 {
 	double value;
 	const WCHAR* netName = NULL;

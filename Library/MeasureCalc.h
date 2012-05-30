@@ -32,7 +32,7 @@ public:
 	bool GetMeasureValue(const WCHAR* str, int len, double* value);
 
 protected:
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:

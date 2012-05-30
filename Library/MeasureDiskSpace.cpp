@@ -179,11 +179,11 @@ const WCHAR* CMeasureDiskSpace::GetStringValue(AUTOSCALE autoScale, double scale
 ** Reads the measure specific configs.
 **
 */
-void CMeasureDiskSpace::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeasureDiskSpace::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	double oldMaxValue = m_MaxValue;
 
-	CMeasure::ReadConfig(parser, section);
+	CMeasure::ReadOptions(parser, section);
 
 	m_Drive = parser.ReadString(section, L"Drive", L"C:\\");
 	if (m_Drive.empty())

@@ -253,7 +253,7 @@ void CMeter::Hide()
 ** the base implementation if they overwrite this method.
 **
 */
-void CMeter::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	// The MeterStyle defines a template where the values are read if the meter doesn't have it itself
 	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");

@@ -45,7 +45,7 @@ public:
 	static void EnumerateInstalledFontFamilies();
 
 protected:
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 
 private:
 	enum TEXTSTYLE

@@ -44,7 +44,7 @@ public:
 
 	void Initialize();
 
-	void ReadConfig(CConfigParser& parser);
+	void ReadOptions(CConfigParser& parser);
 	HWND GetWindow() { return m_Window; }
 	bool IsTrayIconEnabled() { return m_IconEnabled; }
 

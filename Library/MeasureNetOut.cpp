@@ -82,8 +82,8 @@ void CMeasureNetOut::UpdateValue()
 ** Reads the measure specific configs.
 **
 */
-void CMeasureNetOut::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeasureNetOut::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadConfig(parser, section);
-	CMeasureNet::ReadConfig(parser, section, NET_OUT);
+	CMeasure::ReadOptions(parser, section);
+	CMeasureNet::ReadOptions(parser, section, NET_OUT);
 }

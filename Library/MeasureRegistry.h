@@ -32,7 +32,7 @@ public:
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 
 protected:
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:

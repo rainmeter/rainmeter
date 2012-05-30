@@ -44,7 +44,7 @@ public:
 	void SetFocus(bool f) { m_Focus = f; }
 
 protected:
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 
 private:
 	bool HitTest2(int px, int py, bool checkAlpha);

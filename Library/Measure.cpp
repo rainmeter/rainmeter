@@ -115,7 +115,7 @@ void CMeasure::Initialize()
 ** must call the base implementation if they overwrite this method.
 **
 */
-void CMeasure::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	// Clear substitutes to prevent from being added more than once.
 	if (!m_Substitute.empty())

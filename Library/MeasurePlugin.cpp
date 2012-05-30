@@ -99,11 +99,11 @@ void CMeasurePlugin::UpdateValue()
 ** Reads the configs and loads & initializes the plugin
 **
 */
-void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	static UINT id = 0;
 
-	CMeasure::ReadConfig(parser, section);
+	CMeasure::ReadOptions(parser, section);
 
 	if (m_Initialized)
 	{

@@ -154,7 +154,7 @@ bool CMeterBitmap::HitTest(int x, int y)
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CMeterBitmap::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeterBitmap::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
@@ -162,7 +162,7 @@ void CMeterBitmap::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	int oldH = m_H;
 
 	// Read common configs
-	CMeter::ReadConfig(parser, section);
+	CMeter::ReadOptions(parser, section);
 
 	m_ImageName = parser.ReadString(section, L"BitmapImage", L"");
 	if (!m_ImageName.empty())
@@ -170,7 +170,7 @@ void CMeterBitmap::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_MeterWindow->MakePathAbsolute(m_ImageName);
 
 		// Read tinting configs
-		m_Image.ReadConfig(parser, section);
+		m_Image.ReadOptions(parser, section);
 	}
 	else
 	{

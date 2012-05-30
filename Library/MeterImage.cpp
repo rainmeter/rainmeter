@@ -106,10 +106,10 @@ void CMeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CMeterImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeterImage::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	// Read common configs
-	CMeter::ReadConfig(parser, section);
+	CMeter::ReadOptions(parser, section);
 
 	// Check for extra measures
 	if (!m_Initialized && !m_MeasureName.empty())
@@ -135,7 +135,7 @@ void CMeterImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	m_ScaleMargins = parser.ReadRECT(section, L"ScaleMargins", defMargins);
 
 	// Read tinting configs
-	m_Image.ReadConfig(parser, section);
+	m_Image.ReadOptions(parser, section);
 
 	if (m_Initialized &&
 		!m_Measure && !m_DynamicVariables)

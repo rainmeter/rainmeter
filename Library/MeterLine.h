@@ -35,7 +35,7 @@ public:
 	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 
 protected:
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 
 private:
 	std::vector<std::wstring> m_MeasureNames;

@@ -36,7 +36,7 @@ public:
 	void DeleteLuaScript();
 
 protected:
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:

@@ -2174,7 +2174,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	if (m_TrayWindow)
 	{
-		m_TrayWindow->ReadConfig(parser);
+		m_TrayWindow->ReadOptions(parser);
 	}
 
 	m_GlobalConfig.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", 0.0);

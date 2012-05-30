@@ -110,10 +110,10 @@ const WCHAR* CMeasureScript::GetStringValue(AUTOSCALE autoScale, double scale, i
 ** Reads the measure specific configs.
 **
 */
-void CMeasureScript::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	// Read common configs
-	CMeasure::ReadConfig(parser, section);
+	CMeasure::ReadOptions(parser, section);
 
 	std::wstring file = parser.ReadString(section, L"ScriptFile", L"");
 

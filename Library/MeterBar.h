@@ -35,7 +35,7 @@ public:
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 
 protected:
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 
 private:
 	enum ORIENTATION

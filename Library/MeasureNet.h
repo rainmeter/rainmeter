@@ -53,7 +53,7 @@ public:
 	static void FinalizeNewApi();
 
 protected:
-	void ReadConfig(CConfigParser& parser, const WCHAR* section, CMeasureNet::NET net);
+	void ReadOptions(CConfigParser& parser, const WCHAR* section, CMeasureNet::NET net);
 	void UpdateValue();
 
 	ULONG64 GetNetOctets(NET net);

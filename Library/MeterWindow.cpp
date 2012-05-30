@@ -394,7 +394,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 	ZPOSITION oldZPos = m_WindowZPosition;
 
 	//TODO: Should these be moved to a Reload command instead of hitting the disk on every refresh
-	ReadConfig();	// Read the general settings
+	ReadOptions();	// Read the general settings
 	if (!ReadSkin())
 	{
 		Rainmeter->DeactivateConfig(this, -1);
@@ -1361,7 +1361,7 @@ void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& op
 		{
 			if ((*j)->BelongsToGroup(section))
 			{
-				// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
+				// Force DynamicVariables temporarily (it will reset back to original setting in ReadOptions())
 				(*j)->SetDynamicVariables(true);
 
 				if (value.empty())
@@ -1379,7 +1379,7 @@ void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& op
 		{
 			if ((*i)->BelongsToGroup(section))
 			{
-				// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
+				// Force DynamicVariables temporarily (it will reset back to original setting in ReadOptions())
 				(*i)->SetDynamicVariables(true);
 
 				if (value.empty())
@@ -1398,7 +1398,7 @@ void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& op
 		CMeter* meter = GetMeter(section);
 		if (meter)
 		{
-			// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
+			// Force DynamicVariables temporarily (it will reset back to original setting in ReadOptions())
 			meter->SetDynamicVariables(true);
 
 			if (value.empty())
@@ -1416,7 +1416,7 @@ void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& op
 		CMeasure* measure = GetMeasure(section);
 		if (measure)
 		{
-			// Force DynamicVariables temporarily (it will reset back to original setting in ReadConfig())
+			// Force DynamicVariables temporarily (it will reset back to original setting in ReadOptions())
 			measure->SetDynamicVariables(true);
 
 			if (value.empty())
@@ -1776,7 +1776,7 @@ void CMeterWindow::ScreenToWindow()
 ** Reads the current config
 **
 */
-void CMeterWindow::ReadConfig()
+void CMeterWindow::ReadOptions()
 {
 	WCHAR buffer[32];
 	const std::wstring& iniFile = Rainmeter->GetIniFile();
@@ -2170,7 +2170,7 @@ bool CMeterWindow::ReadSkin()
 					measure = CMeasure::Create(measureName.c_str(), this, section);
 					if (measure)
 					{
-						measure->ReadConfig(m_Parser);
+						measure->ReadOptions(m_Parser);
 
 						m_Measures.push_back(measure);
 						m_Parser.AddMeasure(measure);
@@ -2202,7 +2202,7 @@ bool CMeterWindow::ReadSkin()
 					meter = CMeter::Create(meterName.c_str(), this, section);
 					if (meter)
 					{
-						meter->ReadConfig(m_Parser);
+						meter->ReadOptions(m_Parser);
 
 						m_Meters.push_back(meter);
 
@@ -2338,7 +2338,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 	{
 		// Load the background
 		CTintedImage* tintedBackground = new CTintedImage(L"Background");
-		tintedBackground->ReadConfig(m_Parser, L"Rainmeter");
+		tintedBackground->ReadOptions(m_Parser, L"Rainmeter");
 		tintedBackground->LoadImage(m_BackgroundName, true);
 
 		if (!tintedBackground->IsLoaded())
@@ -2652,7 +2652,7 @@ bool CMeterWindow::UpdateMeasure(CMeasure* measure, bool force)
 		{
 			try
 			{
-				measure->ReadConfig(m_Parser);
+				measure->ReadOptions(m_Parser);
 			}
 			catch (CError& error)
 			{
@@ -2690,7 +2690,7 @@ bool CMeterWindow::UpdateMeter(CMeter* meter, bool& bActiveTransition, bool forc
 		{
 			try
 			{
-				meter->ReadConfig(m_Parser);
+				meter->ReadOptions(m_Parser);
 			}
 			catch (CError& error)
 			{

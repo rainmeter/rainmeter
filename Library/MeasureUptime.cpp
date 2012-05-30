@@ -42,9 +42,9 @@ CMeasureUptime::~CMeasureUptime()
 ** Reads the measure specific configs.
 **
 */
-void CMeasureUptime::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeasureUptime::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadConfig(parser, section);
+	CMeasure::ReadOptions(parser, section);
 
 	m_Format = parser.ReadString(section, L"Format", L"%4!i!d %3!i!:%2!02i!");
 

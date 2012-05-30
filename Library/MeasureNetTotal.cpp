@@ -82,8 +82,8 @@ void CMeasureNetTotal::UpdateValue()
 ** Reads the measure specific configs.
 **
 */
-void CMeasureNetTotal::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeasureNetTotal::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadConfig(parser, section);
-	CMeasureNet::ReadConfig(parser, section, NET_TOTAL);
+	CMeasure::ReadOptions(parser, section);
+	CMeasureNet::ReadOptions(parser, section, NET_TOTAL);
 }

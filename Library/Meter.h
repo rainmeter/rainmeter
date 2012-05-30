@@ -38,7 +38,7 @@ public:
 
 	virtual UINT GetTypeID() = 0;
 
-	void ReadConfig(CConfigParser& parser) { ReadConfig(parser, GetName()); parser.ClearStyleTemplate(); }
+	void ReadOptions(CConfigParser& parser) { ReadOptions(parser, GetName()); parser.ClearStyleTemplate(); }
 
 	virtual void Initialize();
 	virtual bool Update();
@@ -127,7 +127,7 @@ protected:
 		POSITION_RELATIVE_BR
 	};
 
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 
 	void SetAllMeasures(CMeasure* measure);
 	void SetAllMeasures(const std::vector<CMeasure*>& measures);

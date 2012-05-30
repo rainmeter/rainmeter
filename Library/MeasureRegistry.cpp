@@ -104,9 +104,9 @@ void CMeasureRegistry::UpdateValue()
 ** Reads the measure specific configs.
 **
 */
-void CMeasureRegistry::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeasureRegistry::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadConfig(parser, section);
+	CMeasure::ReadOptions(parser, section);
 
 	const WCHAR* keyname = parser.ReadString(section, L"RegHKey", L"HKEY_CURRENT_USER").c_str();
 	if (_wcsicmp(keyname, L"HKEY_CURRENT_USER") == 0)

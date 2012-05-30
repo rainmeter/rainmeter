@@ -68,7 +68,7 @@ public:
 	CTintedImage(const WCHAR* name = L"Image", const WCHAR** configArray = c_DefaultOptionArray, bool disableTransform = false);
 	~CTintedImage();
 
-	void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	void ReadOptions(CConfigParser& parser, const WCHAR* section);
 
 	bool IsLoaded() { return (m_Bitmap != NULL); }
 	bool IsTinted() { return (m_BitmapTint != NULL); }

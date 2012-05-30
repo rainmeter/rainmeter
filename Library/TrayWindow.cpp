@@ -301,7 +301,7 @@ void CTrayWindow::ShowUpdateNotification(const WCHAR* newVersion)
 	ShowNotification(TRAY_NOTIFICATION_UPDATE, GetString(ID_STR_UPDATEAVAILABLE), text.c_str());
 }
 
-void CTrayWindow::ReadConfig(CConfigParser& parser)
+void CTrayWindow::ReadOptions(CConfigParser& parser)
 {
 	// Clear old Settings
 	KillTimer(m_Window, TIMER_TRAY);
@@ -337,7 +337,7 @@ void CTrayWindow::ReadConfig(CConfigParser& parser)
 				m_Measure = CMeasure::Create(measureName.c_str(), NULL, L"TrayMeasure");
 				if (m_Measure)
 				{
-					m_Measure->ReadConfig(parser);
+					m_Measure->ReadOptions(parser);
 				}
 			}
 			catch (CError& error)

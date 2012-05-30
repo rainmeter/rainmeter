@@ -94,9 +94,9 @@ CMeasureCPU::~CMeasureCPU()
 ** Reads the measure specific configs.
 **
 */
-void CMeasureCPU::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeasureCPU::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadConfig(parser, section);
+	CMeasure::ReadOptions(parser, section);
 
 	int processor = parser.ReadInt(section, L"Processor", 0);
 

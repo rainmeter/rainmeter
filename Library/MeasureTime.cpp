@@ -210,9 +210,9 @@ const WCHAR* CMeasureTime::GetStringValue(AUTOSCALE autoScale, double scale, int
 ** Reads the measure specific configs.
 **
 */
-void CMeasureTime::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CMeasureTime::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadConfig(parser, section);
+	CMeasure::ReadOptions(parser, section);
 
 	m_Format = parser.ReadString(section, L"Format", L"");
 

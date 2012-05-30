@@ -566,7 +566,7 @@ void CTintedImage::ApplyTransform()
 ** Read the meter-specific configs from the ini-file.
 **
 */
-void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
+void CTintedImage::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be tinted or transformed
 	Rect oldCrop = m_Crop;

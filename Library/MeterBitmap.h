@@ -38,7 +38,7 @@ public:
 	virtual bool HasActiveTransition();
 
 protected:
-	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 
 private:
 	CTintedImage m_Image;
