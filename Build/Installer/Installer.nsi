@@ -501,6 +501,7 @@ UAC_TryAgain:
 FunctionEnd
 
 !macro InstallFiles DIR
+	SetOutPath "$INSTDIR"
 	File "..\..\TestBench\${DIR}\Release\Rainmeter.exe"
 	File "..\..\TestBench\${DIR}\Release\Rainmeter.dll"
 	File "..\..\TestBench\${DIR}\Release\SkinInstaller.exe"
@@ -700,6 +701,13 @@ SkipIniMove:
 	Delete "$INSTDIR\Rainmeter.chm"
 	Delete "$INSTDIR\Default.ini"
 
+	${If} $InstallPortable != 1
+	${AndIfNot} ${FileExists} "$INSTDIR\Defaults"
+		SetOutPath "$INSTDIR\Defaults"
+		Rename "$INSTDIR\Skins" "$INSTDIR\Defaults\Skins"
+		Rename "$INSTDIR\Themes" "$INSTDIR\Defaults\Themes"
+	${EndIf}
+
 !ifdef INCLUDEFILES
 	${If} $instArc == "x86"
 		!insertmacro InstallFiles "x32"
@@ -713,12 +721,12 @@ SkipIniMove:
 
 	RMDir /r "$INSTDIR\Addons\Rainstaller"
 
-	SetOutPath "$INSTDIR\Skins"
+	SetOutPath "$INSTDIR\Defaults\Skins"
 	RMDir /r "$INSTDIR\Skins\illustro"
 	Delete "$INSTDIR\Skins\*.txt"
 	File /r "..\Skins\*.*"
 
-	SetOutPath "$INSTDIR\Themes"
+	SetOutPath "$INSTDIR\Defaults\Themes"
 	File /r "..\Themes\*.*"
 !endif
 

@@ -802,12 +802,6 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 
 	const WCHAR* iniFile = m_IniFile.c_str();
 
-	// Create a default Rainmeter.ini file if needed
-	if (_waccess(iniFile, 0) == -1)
-	{
-		CreateDefaultConfigFile();
-	}
-
 	// Set file locations
 	{
 		size_t len = m_IniFile.length();
@@ -829,10 +823,6 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 		dataFileCreated = true;
 		CreateDataFile();
 	}
-
-	// Read Logging settings beforehand
-	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, iniFile);
-	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, iniFile);
 
 	// Determine the language resource to load
 	std::wstring resource = m_Path + L"Languages\\";
@@ -878,20 +868,19 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 	// Reset log file
 	CSystem::RemoveFile(m_LogFile);
 
+	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, iniFile);
+	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, iniFile);
+
 	if (m_Logging)
 	{
 		StartLogging();
 	}
 
-	m_PluginPath = m_AddonPath = m_SkinPath = m_Path;
-	m_PluginPath += L"Plugins\\";
-	m_AddonPath += L"Addons\\";
-	m_SkinPath += L"Skins\\";
-
-	// Read the skin folder from the ini file
+	// Get skin folder path
 	size_t len = GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, MAX_LINE_LENGTH, iniFile);
 	if (len > 0)
 	{
+		// Try Rainmeter.ini first
 		m_SkinPath.assign(buffer, len);
 		ExpandEnvironmentVariables(m_SkinPath);
 
@@ -903,43 +892,45 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 			}
 		}
 	}
-	else if (bDefaultIniLocation)
+	else if (bDefaultIniLocation &&
+		SUCCEEDED(SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, buffer)))
 	{
-		// If the skin path is not defined in the Rainmeter.ini file use My Documents/Rainmeter/Skins
-		buffer[0] = L'\0';
-		HRESULT hr = SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, buffer);
-		if (SUCCEEDED(hr))
+		// Use My Documents/Rainmeter/Skins
+		m_SkinPath = buffer;
+		m_SkinPath += L"\\Rainmeter\\";
+		CreateDirectory(m_SkinPath.c_str(), NULL);
+		m_SkinPath += L"Skins\\";
+		DWORD result = CreateDirectory(m_SkinPath.c_str(), NULL);
+		if (result)
 		{
-			// Make the folders if they don't exist yet
-			m_SkinPath = buffer;
-			m_SkinPath += L"\\Rainmeter";
-			CreateDirectory(m_SkinPath.c_str(), NULL);
-			m_SkinPath += L"\\Skins\\";
-			DWORD result = CreateDirectory(m_SkinPath.c_str(), NULL);
-			if (result)
-			{
-				// The folder was created successfully which means that it wasn't available yet.
-				// Copy the default skin to the Skins folder
-				std::wstring from = m_Path + L"Skins\\*.*";
-				CSystem::CopyFiles(from, m_SkinPath);
-			}
-
-			std::wstring themesPath = GetSettingsPath();
-			themesPath += L"Themes\\";
-			result = CreateDirectory(themesPath.c_str(), NULL);
-			if (result)
-			{
-				// Copy themes to %APPDATA%
-				std::wstring from = m_Path + L"Themes\\*.*";
-				CSystem::CopyFiles(from, themesPath);
-			}
+			// Folder just created, so copy default skins there
+			std::wstring from = GetDefaultSkinPath();
+			from += L"*.*";
+			CSystem::CopyFiles(from, m_SkinPath);
 		}
-		else
+
+		std::wstring themesPath = GetSettingsPath();
+		themesPath += L"Themes\\";
+		result = CreateDirectory(themesPath.c_str(), NULL);
+		if (result)
 		{
-			Log(LOG_WARNING, L"Documents folder not found");
+			// Copy themes to %APPDATA%
+			std::wstring from = GetDefaultThemePath();
+			from += L"*.*";
+			CSystem::CopyFiles(from, themesPath);
 		}
 
 		WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), iniFile);
+	}
+	else
+	{
+		m_SkinPath = m_Path + L"Skins\\";
+	}
+
+	// Create a default Rainmeter.ini file if needed
+	if (_waccess(iniFile, 0) == -1)
+	{
+		CreateDefaultConfigFile();
 	}
 
 	delete [] buffer;
@@ -1166,10 +1157,6 @@ void CRainmeter::SetNetworkStatisticsTimer()
 	static bool set = SetTimer(m_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, NULL);
 }
 
-/*
-** Creates the default Rainmeter.ini file with illustro\System enabled.
-**
-*/
 void CRainmeter::CreateDefaultConfigFile()
 {
 	size_t pos = m_IniFile.find_last_of(L'\\');
@@ -1179,15 +1166,9 @@ void CRainmeter::CreateDefaultConfigFile()
 		CreateDirectory(strPath.c_str(), NULL);
 	}
 
-	std::wstring defaultIni = GetPath() + L"Themes\\illustro default\\Rainmeter.thm";
-	if (_waccess(defaultIni.c_str(), 0) == -1)
-	{
-		WritePrivateProfileString(L"Rainmeter", L"\r\n[illustro\\System]\r\nActive", L"1", m_IniFile.c_str());
-	}
-	else
-	{
-		CSystem::CopyFiles(defaultIni, m_IniFile);
-	}
+	std::wstring defaultIni = GetDefaultThemePath();
+	defaultIni += L"illustro default\\Rainmeter.thm";
+	CSystem::CopyFiles(defaultIni, m_IniFile);
 }
 
 void CRainmeter::CreateDataFile()

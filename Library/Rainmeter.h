@@ -155,9 +155,12 @@ public:
 	const std::wstring& GetDataFile() { return m_DataFile; }
 	const std::wstring& GetLogFile() { return m_LogFile; }
 	const std::wstring& GetSkinPath() { return m_SkinPath; }
-	const std::wstring& GetPluginPath() { return m_PluginPath; }
-	const std::wstring& GetAddonPath() { return m_AddonPath; }
 	std::wstring GetSettingsPath() { return ExtractPath(m_IniFile); }
+	std::wstring GetPluginPath() { return m_Path + L"Plugins\\"; }
+	std::wstring GetAddonPath() { return m_Path + L"Addons\\"; }
+
+	std::wstring GetDefaultSkinPath() { return m_Path + L"Defaults\\Skins\\"; }
+	std::wstring GetDefaultThemePath() { return m_Path + L"Defaults\\Themes\\"; }
 
 	const std::wstring& GetDrive() { return m_Drive; }
 
@@ -282,8 +285,6 @@ private:
 	std::wstring m_StatsFile;
 	std::wstring m_LogFile;
 	std::wstring m_SkinPath;
-	std::wstring m_PluginPath;
-	std::wstring m_AddonPath;
 
 	std::wstring m_Drive;
 
