@@ -120,58 +120,23 @@ void CMeasurePlugin::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		return;
 	}
 
-	std::wstring pluginName = parser.ReadString(section, L"Plugin", L"");
-
-	size_t pos = pluginName.rfind(L'.');
-	if (pos == std::wstring::npos)
-	{
-		pluginName += L".dll";
-	}
-
-	pos = pluginName.rfind(L'\\');
+	const std::wstring& plugin = parser.ReadString(section, L"Plugin", L"");
+	std::wstring pluginFile = Rainmeter->GetPluginPath();
+	size_t pos = plugin.rfind(L'\\');
 	if (pos != std::wstring::npos)
 	{
-		pluginName.insert(0, L"..\\");
+		pluginFile.append(plugin, pos, plugin.length() - pos);
 	}
-	pluginName.insert(0, Rainmeter->GetPluginPath());
-
-	// Canonicalize the path (Workaround for C# plugins)
+	else
 	{
-		pos = 0;
-		while ((pos = pluginName.find(L"\\\\", pos)) != std::wstring::npos)
-		{
-			pluginName.erase(pos, 1);
-		}
-
-		WCHAR buffer[MAX_PATH];
-		if (PathCanonicalize(buffer, pluginName.c_str()))
-		{
-			pluginName = buffer;
-		}
-		else
-		{
-			LogWithArgs(LOG_WARNING, L"Plugin: Failed to canonicalize plugin path: %s", pluginName.c_str());
-		}
+		pluginFile += plugin;
 	}
 
-	m_Plugin = CSystem::RmLoadLibrary(pluginName.c_str());
+	m_Plugin = CSystem::RmLoadLibrary(pluginFile.c_str());
 	if (m_Plugin == NULL)
 	{
-		// Try to load from Rainmeter's folder
-		pos = pluginName.rfind(L'\\');
-		if (pos != std::wstring::npos)
-		{
-			std::wstring pluginName2 = Rainmeter->GetPath();
-			pluginName2.append(pluginName, pos + 1, pluginName.length() - (pos + 1));
-
-			m_Plugin = CSystem::RmLoadLibrary(pluginName2.c_str());
-		}
-
-		if (m_Plugin == NULL)
-		{
-			LogWithArgs(LOG_ERROR, L"Plugin: \"%s\" not found", pluginName.c_str());
-			return;
-		}
+		LogWithArgs(LOG_ERROR, L"Plugin: \"%s\" not found", pluginFile.c_str());
+		return;
 	}
 
 	FARPROC initializeFunc = GetProcAddress(m_Plugin, "Initialize");
