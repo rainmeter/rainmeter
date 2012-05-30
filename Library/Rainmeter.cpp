@@ -3172,7 +3172,8 @@ void CRainmeter::SetDisableVersionCheck(bool check)
 
 void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 {
-	if (!CSystem::IsFileWritable(m_IniFile.c_str()))
+	const WCHAR* iniFile = m_IniFile.c_str();
+	if (!CSystem::IsFileWritable(iniFile))
 	{
 		std::wstring error = GetString(ID_STR_SETTINGSNOTWRITABLE);
 
@@ -3181,11 +3182,11 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 			std::wstring strTarget = L"%APPDATA%\\Rainmeter\\";
 			ExpandEnvironmentVariables(strTarget);
 
-			error += GetFormattedString(ID_STR_SETTINGSMOVEFILE, m_IniFile.c_str(), strTarget.c_str());
+			error += GetFormattedString(ID_STR_SETTINGSMOVEFILE, iniFile, strTarget.c_str());
 		}
 		else
 		{
-			error += GetFormattedString(ID_STR_SETTINGSREADONLY, m_IniFile.c_str());
+			error += GetFormattedString(ID_STR_SETTINGSREADONLY, iniFile);
 		}
 
 		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_ICONERROR);
