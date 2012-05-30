@@ -143,7 +143,7 @@ const Gdiplus::ColorMatrix CTintedImage::c_IdentityMatrix = {
 	0.0f, 0.0f, 0.0f, 0.0f, 1.0f
 };
 
-CTintedImageHelper_DefineConfigArray(CTintedImage::c_DefaultConfigArray, L"");
+CTintedImageHelper_DefineOptionArray(CTintedImage::c_DefaultOptionArray, L"");
 
 /*
 ** The constructor.
@@ -154,8 +154,8 @@ CTintedImageHelper_DefineConfigArray(CTintedImage::c_DefaultConfigArray, L"");
 **
 */
 CTintedImage::CTintedImage(const WCHAR* name, const WCHAR** configArray, bool disableTransform) : m_DisableTransform(disableTransform),
-	m_ConfigName(name ? name : L"Image"),
-	m_ConfigArray(configArray ? configArray : c_DefaultConfigArray),
+	m_Name(name ? name : L"Image"),
+	m_OptionArray(configArray ? configArray : c_DefaultOptionArray),
 
 	m_Bitmap(),
 	m_BitmapTint(),
@@ -326,7 +326,7 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 				}
 				else
 				{
-					LogWithArgs(LOG_ERROR, L"%s: Unable to load: %s", m_ConfigName.c_str(), filename.c_str());
+					LogWithArgs(LOG_ERROR, L"%s: Unable to load: %s", m_Name, filename.c_str());
 				}
 			}
 			CloseHandle(fileHandle);
@@ -358,7 +358,7 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		}
 		else
 		{
-			LogWithArgs(LOG_ERROR, L"%s: Unable to open: %s", m_ConfigName.c_str(), filename.c_str());
+			LogWithArgs(LOG_ERROR, L"%s: Unable to open: %s", m_Name, filename.c_str());
 
 			if (fileHandle != INVALID_HANDLE_VALUE)
 			{
@@ -581,7 +581,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_Crop.X = m_Crop.Y = m_Crop.Width = m_Crop.Height = -1;
 		m_CropMode = CROPMODE_TL;
 
-		const std::wstring& crop = parser.ReadString(section, m_ConfigArray[ConfigIndexImageCrop], L"");
+		const std::wstring& crop = parser.ReadString(section, m_OptionArray[OptionIndexImageCrop], L"");
 		if (!crop.empty())
 		{
 			if (wcschr(crop.c_str(), L','))
@@ -624,17 +624,17 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			if (m_CropMode < CROPMODE_TL || m_CropMode > CROPMODE_C)
 			{
 				m_CropMode = CROPMODE_TL;
-				LogWithArgs(LOG_ERROR, L"%s=%s (origin) is not valid in [%s]",  m_ConfigArray[ConfigIndexImageCrop], crop, section);
+				LogWithArgs(LOG_ERROR, L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageCrop], crop, section);
 			}
 		}
 	}
 
 	m_NeedsCrop = (oldCrop.X != m_Crop.X || oldCrop.Y != m_Crop.Y || oldCrop.Width != m_Crop.Width || oldCrop.Height != m_Crop.Height || oldCropMode != m_CropMode);
 
-	m_GreyScale = 0!=parser.ReadInt(section, m_ConfigArray[ConfigIndexGreyscale], 0);
+	m_GreyScale = 0!=parser.ReadInt(section, m_OptionArray[OptionIndexGreyscale], 0);
 
-	Color tint = parser.ReadColor(section, m_ConfigArray[ConfigIndexImageTint], Color::White);
-	int alpha = parser.ReadInt(section, m_ConfigArray[ConfigIndexImageAlpha], tint.GetAlpha());  // for backwards compatibility
+	Color tint = parser.ReadColor(section, m_OptionArray[OptionIndexImageTint], Color::White);
+	int alpha = parser.ReadInt(section, m_OptionArray[OptionIndexImageAlpha], tint.GetAlpha());  // for backwards compatibility
 	alpha = min(255, alpha);
 	alpha = max(0, alpha);
 
@@ -644,7 +644,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	// It has to be read in like this because it crashes when reading over 17 floats
 	// at one time. The parser does it fine, but after putting the returned values
 	// into the Color Matrix the next time the parser is used it crashes.
-	std::vector<Gdiplus::REAL> matrix1 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix1]);
+	std::vector<Gdiplus::REAL> matrix1 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix1]);
 	if (matrix1.size() == 5)
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
@@ -657,7 +657,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_ColorMatrix->m[0][0] = (REAL)tint.GetRed() / 255.0f;
 	}
 
-	std::vector<Gdiplus::REAL> matrix2 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix2]);
+	std::vector<Gdiplus::REAL> matrix2 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix2]);
 	if (matrix2.size() == 5)
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
@@ -670,7 +670,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_ColorMatrix->m[1][1] = (REAL)tint.GetGreen() / 255.0f;
 	}
 
-	std::vector<Gdiplus::REAL> matrix3 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix3]);
+	std::vector<Gdiplus::REAL> matrix3 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix3]);
 	if (matrix3.size() == 5)
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
@@ -683,7 +683,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_ColorMatrix->m[2][2] = (REAL)tint.GetBlue() / 255.0f;
 	}
 
-	std::vector<Gdiplus::REAL> matrix4 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix4]);
+	std::vector<Gdiplus::REAL> matrix4 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix4]);
 	if (matrix4.size() == 5)
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 0.
@@ -696,7 +696,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_ColorMatrix->m[3][3] = (REAL)alpha / 255.0f;
 	}
 
-	std::vector<Gdiplus::REAL> matrix5 = parser.ReadFloats(section, m_ConfigArray[ConfigIndexColorMatrix5]);
+	std::vector<Gdiplus::REAL> matrix5 = parser.ReadFloats(section, m_OptionArray[OptionIndexColorMatrix5]);
 	if (matrix5.size() == 5)
 	{
 		for (int i = 0; i < 4; ++i)  // The fifth column must be 1.
@@ -707,7 +707,7 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 
 	m_NeedsTinting = (oldGreyScale != m_GreyScale || !CompareColorMatrix(&oldColorMatrix, m_ColorMatrix));
 
-	const WCHAR* flip = parser.ReadString(section, m_ConfigArray[ConfigIndexImageFlip], L"NONE").c_str();
+	const WCHAR* flip = parser.ReadString(section, m_OptionArray[OptionIndexImageFlip], L"NONE").c_str();
 	if (_wcsicmp(flip, L"NONE") == 0)
 	{
 		m_Flip = RotateNoneFlipNone;
@@ -726,12 +726,12 @@ void CTintedImage::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"%s=%s (origin) is not valid in [%s]",  m_ConfigArray[ConfigIndexImageFlip], flip, section);
+		LogWithArgs(LOG_ERROR, L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageFlip], flip, section);
 	}
 
 	if (!m_DisableTransform)
 	{
-		m_Rotate = (REAL)parser.ReadFloat(section, m_ConfigArray[ConfigIndexImageRotate], 0.0);
+		m_Rotate = (REAL)parser.ReadFloat(section, m_OptionArray[OptionIndexImageRotate], 0.0);
 	}
 
 	m_NeedsTransform = (oldFlip != m_Flip || oldRotate != m_Rotate);

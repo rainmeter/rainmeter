@@ -28,7 +28,7 @@
 ** It's necessary to give a string literal to the prefix parameter.
 **
 */
-#define CTintedImageHelper_DefineConfigArray(name, prefix) \
+#define CTintedImageHelper_DefineOptionArray(name, prefix) \
 	const WCHAR* (name)[CTintedImage::ConfigCount] = { \
 		prefix  L"ImageCrop", \
 		prefix  L"Greyscale", \
@@ -48,32 +48,32 @@ class CConfigParser;
 class CTintedImage
 {
 public:
-	enum ConfigIndex
+	enum OptionIndex
 	{
-		ConfigIndexImageCrop = 0,
-		ConfigIndexGreyscale,
-		ConfigIndexImageTint,
-		ConfigIndexImageAlpha,
-		ConfigIndexColorMatrix1,
-		ConfigIndexColorMatrix2,
-		ConfigIndexColorMatrix3,
-		ConfigIndexColorMatrix4,
-		ConfigIndexColorMatrix5,
-		ConfigIndexImageFlip,
-		ConfigIndexImageRotate,
+		OptionIndexImageCrop = 0,
+		OptionIndexGreyscale,
+		OptionIndexImageTint,
+		OptionIndexImageAlpha,
+		OptionIndexColorMatrix1,
+		OptionIndexColorMatrix2,
+		OptionIndexColorMatrix3,
+		OptionIndexColorMatrix4,
+		OptionIndexColorMatrix5,
+		OptionIndexImageFlip,
+		OptionIndexImageRotate,
 
 		ConfigCount
 	};
 
-	CTintedImage(const WCHAR* name = L"Image", const WCHAR** configArray = c_DefaultConfigArray, bool disableTransform = false);
+	CTintedImage(const WCHAR* name = L"Image", const WCHAR** configArray = c_DefaultOptionArray, bool disableTransform = false);
 	~CTintedImage();
 
 	void ReadConfig(CConfigParser& parser, const WCHAR* section);
 
 	bool IsLoaded() { return (m_Bitmap != NULL); }
 	bool IsTinted() { return (m_BitmapTint != NULL); }
-	bool IsConfigsChanged() { return m_NeedsCrop || m_NeedsTinting || m_NeedsTransform; }
-	void ClearConfigFlags() { m_NeedsCrop = m_NeedsTinting = m_NeedsTransform = false; }
+	bool IsOptionsChanged() { return m_NeedsCrop || m_NeedsTinting || m_NeedsTransform; }
+	void ClearOptionFlags() { m_NeedsCrop = m_NeedsTinting = m_NeedsTransform = false; }
 
 	Gdiplus::Bitmap* GetOriginalImage() { return m_Bitmap; }
 	Gdiplus::Bitmap* GetTintedImage() { return m_BitmapTint; }
@@ -104,8 +104,8 @@ protected:
 	Gdiplus::Bitmap* m_Bitmap;
 	Gdiplus::Bitmap* m_BitmapTint;		// Tinted bitmap
 
-	const std::wstring m_ConfigName;
-	const WCHAR** m_ConfigArray;
+	const WCHAR* m_Name;
+	const WCHAR** m_OptionArray;
 	const bool m_DisableTransform;
 
 	bool m_NeedsCrop;
@@ -124,7 +124,7 @@ protected:
 	static const Gdiplus::ColorMatrix c_GreyScaleMatrix;
 	static const Gdiplus::ColorMatrix c_IdentityMatrix;
 
-	static const WCHAR* c_DefaultConfigArray[ConfigCount];
+	static const WCHAR* c_DefaultOptionArray[ConfigCount];
 };
 
 #endif

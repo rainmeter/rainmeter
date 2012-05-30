@@ -174,7 +174,7 @@ void CMeterBitmap::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		m_Image.ClearConfigFlags();
+		m_Image.ClearOptionFlags();
 	}
 
 	m_FrameCount = parser.ReadInt(section, L"BitmapFrames", 1);
@@ -209,7 +209,7 @@ void CMeterBitmap::ReadConfig(CConfigParser& parser, const WCHAR* section)
 		m_NeedsReload = (wcscmp(oldImageName.c_str(), m_ImageName.c_str()) != 0);
 
 		if (m_NeedsReload ||
-			m_Image.IsConfigsChanged())
+			m_Image.IsOptionsChanged())
 		{
 			Initialize();  // Reload the image
 		}

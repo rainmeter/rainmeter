@@ -26,9 +26,9 @@ using namespace Gdiplus;
 
 extern CRainmeter* Rainmeter;
 
-CTintedImageHelper_DefineConfigArray(CMeterHistogram::c_PrimaryConfigArray, L"Primary");
-CTintedImageHelper_DefineConfigArray(CMeterHistogram::c_SecondaryConfigArray, L"Secondary");
-CTintedImageHelper_DefineConfigArray(CMeterHistogram::c_BothConfigArray, L"Both");
+CTintedImageHelper_DefineOptionArray(CMeterHistogram::c_PrimaryOptionArray, L"Primary");
+CTintedImageHelper_DefineOptionArray(CMeterHistogram::c_SecondaryOptionArray, L"Secondary");
+CTintedImageHelper_DefineOptionArray(CMeterHistogram::c_BothOptionArray, L"Both");
 
 /*
 ** The constructor
@@ -42,9 +42,9 @@ CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow, const WCHAR* name) :
 	m_MeterPos(),
 	m_Autoscale(false),
 	m_Flip(false),
-	m_PrimaryImage(L"PrimaryImage", c_PrimaryConfigArray),
-	m_SecondaryImage(L"SecondaryImage", c_SecondaryConfigArray),
-	m_OverlapImage(L"BothImage", c_BothConfigArray),
+	m_PrimaryImage(L"PrimaryImage", c_PrimaryOptionArray),
+	m_SecondaryImage(L"SecondaryImage", c_SecondaryOptionArray),
+	m_OverlapImage(L"BothImage", c_BothOptionArray),
 	m_PrimaryNeedsReload(false),
 	m_SecondaryNeedsReload(false),
 	m_OverlapNeedsReload(false),
@@ -217,7 +217,7 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		m_PrimaryImage.ClearConfigFlags();
+		m_PrimaryImage.ClearOptionFlags();
 	}
 
 	m_SecondaryImageName = parser.ReadString(section, L"SecondaryImage", L"");
@@ -230,7 +230,7 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		m_SecondaryImage.ClearConfigFlags();
+		m_SecondaryImage.ClearOptionFlags();
 	}
 
 	m_OverlapImageName = parser.ReadString(section, L"BothImage", L"");
@@ -243,7 +243,7 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		m_OverlapImage.ClearConfigFlags();
+		m_OverlapImage.ClearOptionFlags();
 	}
 
 	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0);
@@ -272,9 +272,9 @@ void CMeterHistogram::ReadConfig(CConfigParser& parser, const WCHAR* section)
 			if (m_PrimaryNeedsReload ||
 				m_SecondaryNeedsReload ||
 				m_OverlapNeedsReload ||
-				m_PrimaryImage.IsConfigsChanged() ||
-				m_SecondaryImage.IsConfigsChanged() ||
-				m_OverlapImage.IsConfigsChanged())
+				m_PrimaryImage.IsOptionsChanged() ||
+				m_SecondaryImage.IsOptionsChanged() ||
+				m_OverlapImage.IsOptionsChanged())
 			{
 				Initialize();  // Reload the image
 			}
