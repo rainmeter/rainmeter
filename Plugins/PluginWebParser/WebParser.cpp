@@ -568,7 +568,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 	measure->url = RmReadString(rm, L"Url", L"", FALSE);
 	measure->regExp = RmReadString(rm, L"RegExp", L"");
-	measure->finishAction = RmReadString(rm, L"FinishAction", L"");
+	measure->finishAction = RmReadString(rm, L"FinishAction", L"", FALSE);
 	measure->errorString = RmReadString(rm, L"ErrorString", L"");
 
 	measure->stringIndex = RmReadInt(rm, L"StringIndex", 0);
