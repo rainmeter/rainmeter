@@ -424,85 +424,74 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 	return ret;
 }
 
-/*
-** The base implementation of the update method. This includes the code
-** that is common for all measures. This is called every time the measure
-** is updated. The inherited classes must call the base implementation if
-** they overwrite this method. If this method returns false, the update
-** needs not to be done.
-**
-*/
-bool CMeasure::PreUpdate()
+bool CMeasure::Update()
 {
-	if (IsDisabled())
+	bool update = !IsDisabled();
+
+	if (update)
 	{
-		m_Value = 0.0;	// Disable measures return 0 as value
-		return false;
+		// Only update the counter if the divider
+		++m_UpdateCounter;
+		if (m_UpdateCounter < m_UpdateDivider) return false;
+		m_UpdateCounter = 0;
+
+		// If we're logging the maximum value of the measure, check if
+		// the new value is greater than the old one, and update if necessary.
+		if (m_LogMaxValue)
+		{
+			if (m_MedianMaxValues.empty())
+			{
+				m_MedianMaxValues.resize(MEDIAN_SIZE, 0);
+				m_MedianMinValues.resize(MEDIAN_SIZE, 0);
+			}
+
+			m_MedianMaxValues[m_MedianPos] = m_Value;
+			m_MedianMinValues[m_MedianPos] = m_Value;
+			++m_MedianPos;
+			m_MedianPos %= MEDIAN_SIZE;
+
+			std::vector<double> medianArray;
+
+			medianArray = m_MedianMaxValues;
+			std::sort(medianArray.begin(), medianArray.end());
+			m_MaxValue = max(m_MaxValue, medianArray[MEDIAN_SIZE / 2]);
+
+			medianArray = m_MedianMinValues;
+			std::sort(medianArray.begin(), medianArray.end());
+			m_MinValue = min(m_MinValue, medianArray[MEDIAN_SIZE / 2]);
+		}
+
+		// Call derived method to update value
+		UpdateValue();
+
+		if (m_AverageSize > 0)
+		{
+			size_t averageValuesSize = m_AverageValues.size();
+
+			if (m_AverageSize != averageValuesSize)
+			{
+				m_AverageValues.resize(m_AverageSize, m_Value);
+				averageValuesSize = m_AverageValues.size();
+				if (m_AveragePos >= averageValuesSize) m_AveragePos = 0;
+			}
+			m_AverageValues[m_AveragePos] = m_Value;
+
+			++m_AveragePos;
+			m_AveragePos %= averageValuesSize;
+
+			// Calculate the average value
+			m_Value = 0;
+			for (size_t i = 0; i < averageValuesSize; ++i)
+			{
+				m_Value += m_AverageValues[i];
+			}
+			m_Value /= (double)averageValuesSize;
+		}
 	}
-
-	// Only update the counter if the divider
-	++m_UpdateCounter;
-	if (m_UpdateCounter < m_UpdateDivider) return false;
-	m_UpdateCounter = 0;
-
-	// If we're logging the maximum value of the measure, check if
-	// the new value is greater than the old one, and update if necessary.
-	if (m_LogMaxValue)
+	else
 	{
-		if (m_MedianMaxValues.empty())
-		{
-			m_MedianMaxValues.resize(MEDIAN_SIZE, 0);
-			m_MedianMinValues.resize(MEDIAN_SIZE, 0);
-		}
-
-		m_MedianMaxValues[m_MedianPos] = m_Value;
-		m_MedianMinValues[m_MedianPos] = m_Value;
-		++m_MedianPos;
-		m_MedianPos %= MEDIAN_SIZE;
-
-		std::vector<double> medianArray;
-
-		medianArray = m_MedianMaxValues;
-		std::sort(medianArray.begin(), medianArray.end());
-		m_MaxValue = max(m_MaxValue, medianArray[MEDIAN_SIZE / 2]);
-
-		medianArray = m_MedianMinValues;
-		std::sort(medianArray.begin(), medianArray.end());
-		m_MinValue = min(m_MinValue, medianArray[MEDIAN_SIZE / 2]);
-	}
-
-	return true;
-}
-
-/*
-** Does post measuring things to the value. All measures must call this
-** after they have set the m_Value.
-**
-*/
-bool CMeasure::PostUpdate()
-{
-	if (m_AverageSize > 0)
-	{
-		size_t averageValuesSize = m_AverageValues.size();
-
-		if (m_AverageSize != averageValuesSize)
-		{
-			m_AverageValues.resize(m_AverageSize, m_Value);
-			averageValuesSize = m_AverageValues.size();
-			if (m_AveragePos >= averageValuesSize) m_AveragePos = 0;
-		}
-		m_AverageValues[m_AveragePos] = m_Value;
-
-		++m_AveragePos;
-		m_AveragePos %= averageValuesSize;
-
-		// Calculate the average value
-		m_Value = 0;
-		for (size_t i = 0; i < averageValuesSize; ++i)
-		{
-			m_Value += m_AverageValues[i];
-		}
-		m_Value /= (double)averageValuesSize;
+		// Disabled measures have 0 as value
+		m_Value = 0.0;
 	}
 
 	if (m_MeterWindow)
@@ -513,7 +502,7 @@ bool CMeasure::PostUpdate()
 			{
 				if (!m_IfEqualCommitted)
 				{
-					m_IfEqualCommitted = true;  // To avoid crashing by !Update due to infinite loop
+					m_IfEqualCommitted = true;	// To avoid infinite loop from !Update
 					Rainmeter->ExecuteCommand(m_IfEqualAction.c_str(), m_MeterWindow);
 				}
 			}
@@ -529,7 +518,7 @@ bool CMeasure::PostUpdate()
 			{
 				if (!m_IfAboveCommitted)
 				{
-					m_IfAboveCommitted= true;  // To avoid crashing by !Update due to infinite loop
+					m_IfAboveCommitted= true;	// To avoid infinite loop from !Update
 					Rainmeter->ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
 				}
 			}
@@ -545,7 +534,7 @@ bool CMeasure::PostUpdate()
 			{
 				if (!m_IfBelowCommitted)
 				{
-					m_IfBelowCommitted = true;  // To avoid crashing by !Update due to infinite loop
+					m_IfBelowCommitted = true;	// To avoid infinite loop from !Update
 					Rainmeter->ExecuteCommand(m_IfBelowAction.c_str(), m_MeterWindow);
 				}
 			}
@@ -556,7 +545,7 @@ bool CMeasure::PostUpdate()
 		}
 	}
 
-	return true;
+	return update;
 }
 
 /*

@@ -55,10 +55,8 @@ CMeasureNet::~CMeasureNet()
 ** Checks if Action should be executed.
 **
 */
-bool CMeasureNet::Update()
+void CMeasureNet::UpdateValue()
 {
-	if (!CMeasure::PreUpdate()) return false;
-
 	if (m_MeterWindow)
 	{
 		if (!m_TrafficAction.empty())
@@ -72,8 +70,6 @@ bool CMeasureNet::Update()
 			m_CurrentTraffic += m_Value;
 		}
 	}
-
-	return PostUpdate();
 }
 
 /*

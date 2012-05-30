@@ -31,10 +31,9 @@ public:
 
 	virtual UINT GetTypeID() { return TypeID<CMeasureCPU>(); }
 
-	virtual bool Update();
-
 protected:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void UpdateValue();
 
 private:
 	void CalcUsage(double idleTime, double systemTime);

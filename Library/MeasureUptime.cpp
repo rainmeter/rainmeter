@@ -62,14 +62,10 @@ void CMeasureUptime::ReadConfig(CConfigParser& parser, const WCHAR* section)
 ** Updates the current uptime
 **
 */
-bool CMeasureUptime::Update()
+void CMeasureUptime::UpdateValue()
 {
-	if (!CMeasure::PreUpdate()) return false;
-
 	ULONGLONG ticks = CSystem::GetTickCount64();
 	m_Value = (double)(__int64)(ticks / 1000);
-
-	return PostUpdate();
 }
 
 /*

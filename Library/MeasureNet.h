@@ -41,8 +41,6 @@ public:
 	virtual ~CMeasureNet();
 
 	virtual UINT GetTypeID() { return TypeID<CMeasureNet>(); }
-	
-	virtual bool Update();
 
 	static void UpdateIFTable();
 
@@ -56,6 +54,8 @@ public:
 
 protected:
 	void ReadConfig(CConfigParser& parser, const WCHAR* section, CMeasureNet::NET net);
+	void UpdateValue();
+
 	ULONG64 GetNetOctets(NET net);
 	ULONG64 GetNetStatsValue(NET net);
 

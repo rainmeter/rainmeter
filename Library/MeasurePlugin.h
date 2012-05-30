@@ -44,12 +44,12 @@ public:
 
 	virtual UINT GetTypeID() { return TypeID<CMeasurePlugin>(); }
 
-	virtual bool Update();
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 	virtual void Command(const std::wstring& command);
 
 protected:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void UpdateValue();
 
 private:
 	bool IsNewApi() { return m_ReloadFunc != NULL; }

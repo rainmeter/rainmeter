@@ -41,11 +41,9 @@ CMeasureNetOut::~CMeasureNetOut()
 ** Updates the current net out value.
 **
 */
-bool CMeasureNetOut::Update()
+void CMeasureNetOut::UpdateValue()
 {
-	if (!CMeasureNet::PreUpdate()) return false;
-
-	if (c_Table == NULL) return false;
+	if (c_Table == NULL) return;
 
 	if (m_Cumulative)
 	{
@@ -78,8 +76,6 @@ bool CMeasureNetOut::Update()
 
 		m_Value = (double)(__int64)value;
 	}
-
-	return PostUpdate();
 }
 
 /*

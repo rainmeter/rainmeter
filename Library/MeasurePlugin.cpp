@@ -70,10 +70,8 @@ CMeasurePlugin::~CMeasurePlugin()
 ** Gets the current value from the plugin
 **
 */
-bool CMeasurePlugin::Update()
+void CMeasurePlugin::UpdateValue()
 {
-	if (!CMeasure::PreUpdate()) return false;
-
 	if (m_UpdateFunc)
 	{
 		if (IsNewApi())
@@ -95,8 +93,6 @@ bool CMeasurePlugin::Update()
 		// Reset to default
 		CSystem::ResetWorkingDirectory();
 	}
-
-	return PostUpdate();
 }
 
 /*

@@ -45,10 +45,8 @@ CMeasureRegistry::~CMeasureRegistry()
 ** Gets the current value from the registry
 **
 */
-bool CMeasureRegistry::Update()
+void CMeasureRegistry::UpdateValue()
 {
-	if (!CMeasure::PreUpdate()) return false;
-
 	if (m_RegKey != NULL)
 	{
 		DWORD size = 4096;
@@ -99,8 +97,6 @@ bool CMeasureRegistry::Update()
 	{
 		RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
 	}
-
-	return PostUpdate();
 }
 
 /*

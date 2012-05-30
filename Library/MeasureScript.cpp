@@ -78,13 +78,8 @@ void CMeasureScript::Initialize()
 ** Updates the current disk free space value.
 **
 */
-bool CMeasureScript::Update()
+void CMeasureScript::UpdateValue()
 {
-	if (!CMeasure::PreUpdate())
-	{
-		return false;
-	}
-
 	if (m_HasUpdateFunction)
 	{
 		m_ValueType = m_LuaScript->RunFunctionWithReturn(g_UpdateFunctionName, m_Value, m_StringValue);
@@ -95,8 +90,6 @@ bool CMeasureScript::Update()
 			m_ValueType = m_LuaScript->RunFunctionWithReturn(g_GetStringFunctionName, m_Value, m_StringValue);
 		}
 	}
-
-	return PostUpdate();
 }
 
 /*

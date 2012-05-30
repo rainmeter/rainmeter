@@ -41,11 +41,9 @@ CMeasureNetTotal::~CMeasureNetTotal()
 ** Updates the current net total value.
 **
 */
-bool CMeasureNetTotal::Update()
+void CMeasureNetTotal::UpdateValue()
 {
-	if (!CMeasureNet::PreUpdate()) return false;
-
-	if (c_Table == NULL) return false;
+	if (c_Table == NULL) return;
 
 	if (m_Cumulative)
 	{
@@ -78,8 +76,6 @@ bool CMeasureNetTotal::Update()
 
 		m_Value = (double)(__int64)value;
 	}
-
-	return PostUpdate();
 }
 
 /*

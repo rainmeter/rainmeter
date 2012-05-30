@@ -41,10 +41,8 @@ CMeasurePhysicalMemory::~CMeasurePhysicalMemory()
 ** Updates the current physical memory value.
 **
 */
-bool CMeasurePhysicalMemory::Update()
+void CMeasurePhysicalMemory::UpdateValue()
 {
-	if (!CMeasure::PreUpdate()) return false;
-
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
 	GlobalMemoryStatusEx(&stat);
@@ -56,8 +54,6 @@ bool CMeasurePhysicalMemory::Update()
 	{
 		m_Value = (double)(__int64)(stat.ullTotalPhys - stat.ullAvailPhys);
 	}
-
-	return PostUpdate();
 }
 
 /*

@@ -41,11 +41,9 @@ CMeasureNetIn::~CMeasureNetIn()
 ** Updates the current net in value.
 **
 */
-bool CMeasureNetIn::Update()
+void CMeasureNetIn::UpdateValue()
 {
-	if (!CMeasureNet::PreUpdate()) return false;
-
-	if (c_Table == NULL) return false;
+	if (c_Table == NULL) return;
 
 	if (m_Cumulative)
 	{
@@ -78,8 +76,6 @@ bool CMeasureNetIn::Update()
 
 		m_Value = (double)(__int64)value;
 	}
-
-	return PostUpdate();
 }
 
 /*

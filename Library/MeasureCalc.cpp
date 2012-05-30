@@ -54,10 +54,8 @@ CMeasureCalc::~CMeasureCalc()
 ** Updates the calculation
 **
 */
-bool CMeasureCalc::Update()
+void CMeasureCalc::UpdateValue()
 {
-	if (!CMeasure::PreUpdate()) return false;
-
 	const WCHAR* errMsg = MathParser::Parse(m_Formula.c_str(), this, &m_Value);
 	if (errMsg != NULL)
 	{
@@ -71,8 +69,6 @@ bool CMeasureCalc::Update()
 	{
 		m_ParseError = false;
 	}
-
-	return PostUpdate();
 }
 
 /*

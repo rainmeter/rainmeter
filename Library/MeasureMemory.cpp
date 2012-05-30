@@ -41,10 +41,8 @@ CMeasureMemory::~CMeasureMemory()
 ** Updates the current total memory value.
 **
 */
-bool CMeasureMemory::Update()
+void CMeasureMemory::UpdateValue()
 {
-	if (!CMeasure::PreUpdate()) return false;
-
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
 	GlobalMemoryStatusEx(&stat);		// Doesn't measure values > 4GB. Should use GlobalMemoryStatusEx instead, but that requires Win2k.
@@ -56,8 +54,6 @@ bool CMeasureMemory::Update()
 	{
 		m_Value = (double)(__int64)(stat.ullTotalPageFile + stat.ullTotalPhys - stat.ullAvailPageFile - stat.ullAvailPhys);
 	}
-
-	return PostUpdate();
 }
 
 /*

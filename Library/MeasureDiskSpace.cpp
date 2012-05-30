@@ -59,10 +59,8 @@ CMeasureDiskSpace::~CMeasureDiskSpace()
 ** Updates the current disk free space value.
 **
 */
-bool CMeasureDiskSpace::Update()
+void CMeasureDiskSpace::UpdateValue()
 {
-	if (!CMeasure::PreUpdate()) return false;
-
 	if (!m_Drive.empty())
 	{
 		const WCHAR* drive = m_Drive.c_str();
@@ -161,8 +159,6 @@ bool CMeasureDiskSpace::Update()
 			}
 		}
 	}
-
-	return PostUpdate();
 }
 
 /*

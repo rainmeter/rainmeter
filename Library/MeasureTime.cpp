@@ -91,10 +91,8 @@ void CMeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, 
 ** Updates the current time
 **
 */
-bool CMeasureTime::Update()
+void CMeasureTime::UpdateValue()
 {
-	if (!CMeasure::PreUpdate()) return false;
-
 	FILETIME ftUTCTime;
 	GetSystemTimeAsFileTime(&ftUTCTime);
 
@@ -152,8 +150,6 @@ bool CMeasureTime::Update()
 	{
 		m_Value = (double)(m_Time.QuadPart / 10000000);
 	}
-
-	return PostUpdate();
 }
 
 

@@ -29,12 +29,11 @@ public:
 
 	virtual UINT GetTypeID() { return TypeID<CMeasureCalc>(); }
 
-	virtual bool Update();
-
 	bool GetMeasureValue(const WCHAR* str, int len, double* value);
 
 protected:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void UpdateValue();
 
 private:
 	void FormulaReplace();

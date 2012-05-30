@@ -52,7 +52,7 @@ public:
 	void ReadConfig(CConfigParser& parser) { ReadConfig(parser, GetName()); }
 
 	virtual void Initialize();
-	virtual bool Update() = 0;
+	bool Update();
 
 	const WCHAR* GetName() { return m_Name.c_str(); }
 	const std::wstring& GetOriginalName() { return m_Name; }
@@ -86,9 +86,7 @@ public:
 
 protected:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
-
-	virtual bool PreUpdate();
-	virtual bool PostUpdate();
+	virtual void UpdateValue() = 0;
 
 	bool ParseSubstitute(std::wstring buffer);
 	std::wstring ExtractWord(std::wstring& buffer);

@@ -41,13 +41,11 @@ CMeasureVirtualMemory::~CMeasureVirtualMemory()
 ** Updates the current virtual memory value.
 **
 */
-bool CMeasureVirtualMemory::Update()
+void CMeasureVirtualMemory::UpdateValue()
 {
-	if (!CMeasure::PreUpdate()) return false;
-
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
-	GlobalMemoryStatusEx(&stat);		// Doesn't measure values > 4GB. Should use GlobalMemoryStatusEx instead, but that requires Win2k.
+	GlobalMemoryStatusEx(&stat);
 	if (m_Total)
 	{
 		m_Value = (double)(__int64)stat.ullTotalPageFile;
@@ -56,9 +54,6 @@ bool CMeasureVirtualMemory::Update()
 	{
 		m_Value = (double)(__int64)(stat.ullTotalPageFile - stat.ullAvailPageFile);
 	}
-
-
-	return PostUpdate();
 }
 
 /*

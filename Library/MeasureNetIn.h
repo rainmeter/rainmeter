@@ -27,10 +27,9 @@ public:
 	CMeasureNetIn(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureNetIn();
 
-	virtual bool Update();
-
 protected:
 	virtual void ReadConfig(CConfigParser& parser, const WCHAR* section);
+	virtual void UpdateValue();
 
 private:
 	bool m_FirstTime;
