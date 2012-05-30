@@ -19,9 +19,6 @@
     <Filter Include="Lua\glue">
       <UniqueIdentifier>{941dce28-a314-4492-befb-5770432c98bf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Lua\Lua Headers">
-      <UniqueIdentifier>{45f9e20c-cd34-4e18-84f2-9090ee108656}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Lua\Lua">
       <UniqueIdentifier>{c8550e7b-009b-4e12-a55a-ed458d05bdad}</UniqueIdentifier>
     </Filter>
@@ -446,12 +443,6 @@
     <ClInclude Include="lua\LuaScript.h">
       <Filter>Lua</Filter>
     </ClInclude>
-    <ClInclude Include="lua\include\lua.hpp">
-      <Filter>Lua\Lua Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="lua\lua\luaconf.h">
-      <Filter>Lua\Lua Headers</Filter>
-    </ClInclude>
     <ClInclude Include="lua\lua\lapi.h">
       <Filter>Lua\Lua</Filter>
     </ClInclude>
@@ -547,6 +538,9 @@
     </ClInclude>
     <ClInclude Include="MathParser.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lua\lua\luaconf.h">
+      <Filter>Lua\Lua</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

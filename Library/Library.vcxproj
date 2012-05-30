@@ -449,7 +449,6 @@
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="lua\LuaManager.h" />
     <ClInclude Include="lua\LuaScript.h" />
-    <ClInclude Include="lua\include\lua.hpp" />
     <ClInclude Include="lua\lua\luaconf.h" />
     <ClInclude Include="lua\lua\lapi.h" />
     <ClInclude Include="lua\lua\lauxlib.h" />

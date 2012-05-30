@@ -45,7 +45,7 @@ void CMeasureMemory::UpdateValue()
 {
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
-	GlobalMemoryStatusEx(&stat);		// Doesn't measure values > 4GB. Should use GlobalMemoryStatusEx instead, but that requires Win2k.
+	GlobalMemoryStatusEx(&stat);
 	if (m_Total)
 	{
 		m_Value = (double)(__int64)(stat.ullTotalPageFile + stat.ullTotalPhys);

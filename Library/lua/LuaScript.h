@@ -19,7 +19,6 @@
 #ifndef __LUASCRIPT_H__
 #define __LUASCRIPT_H__
 
-#include "lua.hpp"
 #include "LuaManager.h"
 
 class LuaScript

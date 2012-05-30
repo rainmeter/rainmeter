@@ -53,18 +53,19 @@ void CMeasureRegistry::UpdateValue()
 		WCHAR* data = new WCHAR[size];
 		DWORD type = 0;
 
-		if (RegQueryValueEx(m_RegKey,
-						m_RegValueName.c_str(),
-						NULL,
-						(LPDWORD)&type,
-						(LPBYTE)data,
-						(LPDWORD)&size) == ERROR_SUCCESS)
+		if (RegQueryValueEx(
+				m_RegKey,
+				m_RegValueName.c_str(),
+				NULL,
+				(LPDWORD)&type,
+				(LPBYTE)data,
+				(LPDWORD)&size) == ERROR_SUCCESS)
 		{
 			switch (type)
 			{
 			case REG_DWORD:
 				m_Value = *((LPDWORD)data);
-				m_StringValue.erase();
+				m_StringValue.clear();
 				break;
 
 			case REG_SZ:
@@ -76,18 +77,18 @@ void CMeasureRegistry::UpdateValue()
 
 			case REG_QWORD:
 				m_Value = (double)((LARGE_INTEGER*)data)->QuadPart;
-				m_StringValue.erase();
+				m_StringValue.clear();
 				break;
 
 			default:	// Other types are not supported
 				m_Value = 0.0;
-				m_StringValue.erase();
+				m_StringValue.clear();
 			}
 		}
 		else
 		{
 			m_Value = 0.0;
-			m_StringValue.erase();
+			m_StringValue.clear();
 			RegOpenKeyEx(m_HKey, m_RegKeyName.c_str(), 0, KEY_READ, &m_RegKey);
 		}
 

@@ -19,7 +19,12 @@
 #ifndef __LUAMANAGER_H__
 #define __LUAMANAGER_H__
 
-#include "lua.hpp"
+extern "C"
+{
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+}
 
 class LuaManager
 {
