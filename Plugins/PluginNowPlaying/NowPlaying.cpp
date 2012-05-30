@@ -196,8 +196,8 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		}
 
 		parent->player->AddInstance();
-		parent->playerPath = RmReadString(rm, L"PlayerPath", L"", TRUE);
-		parent->trackChangeAction = RmReadString(rm, L"TrackChangeAction", L"", TRUE);
+		parent->playerPath = RmReadString(rm, L"PlayerPath", L"");
+		parent->trackChangeAction = RmReadString(rm, L"TrackChangeAction", L"", FALSE);
 		parent->disableLeadingZero = RmReadInt(rm, L"DisableLeadingZero", 0);
 
 		if (oldPlayer)
