@@ -3076,7 +3076,7 @@ void CRainmeter::ChangeSkinIndex(HMENU menu, int index)
 void CRainmeter::StartLogging()
 {
 	// Check if the file exists
-	const WCHAR* logFile = m_LogViewer.c_str();
+	const WCHAR* logFile = m_LogFile.c_str();
 	if (_waccess(logFile, 0) == -1)
 	{
 		// Create log file
@@ -3109,7 +3109,7 @@ void CRainmeter::StopLogging()
 void CRainmeter::ShowLogFile()
 {
 	// Check if the file exists
-	const WCHAR* logFile = m_LogViewer.c_str();
+	const WCHAR* logFile = m_LogFile.c_str();
 	if (_waccess(logFile, 0) != -1)
 	{
 		RunFile(m_LogViewer.c_str(), logFile);
@@ -3119,7 +3119,7 @@ void CRainmeter::ShowLogFile()
 void CRainmeter::DeleteLogFile()
 {
 	// Check if the file exists
-	const WCHAR* logFile = m_LogViewer.c_str();
+	const WCHAR* logFile = m_LogFile.c_str();
 	if (_waccess(logFile, 0) != -1)
 	{
 		std::wstring text = GetFormattedString(ID_STR_LOGFILEDELETE, logFile);
