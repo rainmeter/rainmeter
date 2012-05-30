@@ -1230,27 +1230,25 @@ void CSystem::SetWallpaper(const std::wstring& wallpaper, const std::wstring& st
 ** Copies files and folders from one location to another.
 **
 */
-bool CSystem::CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove)
+bool CSystem::CopyFiles(std::wstring from, std::wstring to, bool bMove)
 {
-	std::wstring tmpFrom(strFrom), tmpTo(strTo);
-
-	// The strings must end with double nul
-	tmpFrom.append(1, L'\0');
-	tmpTo.append(1, L'\0');
+	// The strings must end with double \0
+	from.append(1, L'\0');
+	to.append(1, L'\0');
 
 	SHFILEOPSTRUCT fo =
 	{
 		NULL,
 		bMove ? FO_MOVE : FO_COPY,
-		tmpFrom.c_str(),
-		tmpTo.c_str(),
+		from.c_str(),
+		to.c_str(),
 		FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO
 	};
 
 	int result = SHFileOperation(&fo);
 	if (result != 0)
 	{
-		LogWithArgs(LOG_ERROR, L"Unable to copy files from %s to %s (%i)", strFrom.c_str(), strTo.c_str(), result);
+		LogWithArgs(LOG_ERROR, L"Copy error: From %s to %s (%i)", from.c_str(), to.c_str(), result);
 		return false;
 	}
 	return true;

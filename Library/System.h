@@ -82,7 +82,7 @@ public:
 	static void SetClipboardText(const std::wstring& text);
 	static void SetWallpaper(const std::wstring& wallpaper, const std::wstring& style);
 
-	static bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove = false);
+	static bool CopyFiles(std::wstring from, std::wstring to, bool bMove = false);
 	static bool RemoveFile(const std::wstring& file);
 	static bool RemoveFolder(const std::wstring& strFolder);
 

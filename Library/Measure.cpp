@@ -254,7 +254,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 				if (re == NULL)
 				{
 					MakePlainSubstitute(str, i);
-					LogWithArgs(LOG_NOTICE, L"%S", error);
+					LogWithArgs(LOG_NOTICE, L"Substitute: %S", error);
 				}
 				else
 				{
