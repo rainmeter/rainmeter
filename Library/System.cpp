@@ -68,14 +68,13 @@ void CSystem::Initialize(HINSTANCE instance)
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = (WNDPROC)WndProc;
 	wc.hInstance = instance;
-	wc.lpszClassName = L"RainmeterSystemClass";
-
-	RegisterClass(&wc);
+	wc.lpszClassName = L"RainmeterSystem";
+	ATOM className = RegisterClass(&wc);
 
 	c_Window = CreateWindowEx(
 		WS_EX_TOOLWINDOW,
-		L"RainmeterSystemClass",
-		L"SystemWindow",
+		MAKEINTATOM(className),
+		L"System",
 		WS_POPUP | WS_DISABLED,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -88,8 +87,8 @@ void CSystem::Initialize(HINSTANCE instance)
 
 	c_HelperWindow = CreateWindowEx(
 		WS_EX_TOOLWINDOW,
-		L"RainmeterSystemClass",
-		L"PositioningHelperWindow",
+		MAKEINTATOM(className),
+		L"PositioningHelper",
 		WS_POPUP | WS_DISABLED,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -875,7 +874,7 @@ bool CSystem::CheckDesktopState(HWND WorkerW)
 
 	if (WorkerW && IsWindowVisible(WorkerW))
 	{
-		hwnd = FindWindowEx(NULL, WorkerW, L"RainmeterSystemClass", L"SystemWindow");
+		hwnd = FindWindowEx(NULL, WorkerW, L"RainmeterSystem", L"System");
 	}
 
 	bool stateChanged = (hwnd && !c_ShowDesktop) || (!hwnd && c_ShowDesktop);

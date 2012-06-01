@@ -782,11 +782,11 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 	wc.lpfnWndProc = (WNDPROC)MainWndProc;
 	wc.hInstance = m_Instance;
 	wc.lpszClassName = RAINMETER_CLASS_NAME;
-	RegisterClass(&wc);
+	ATOM className = RegisterClass(&wc);
 
 	m_Window = CreateWindowEx(
 		WS_EX_TOOLWINDOW,
-		RAINMETER_CLASS_NAME,
+		MAKEINTATOM(className),
 		RAINMETER_WINDOW_NAME,
 		WS_POPUP | WS_DISABLED,
 		CW_USEDEFAULT,
