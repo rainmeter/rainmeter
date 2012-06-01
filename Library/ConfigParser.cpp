@@ -260,8 +260,8 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 
 	if (CSystem::GetMonitorCount() > 0)
 	{
-		const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
-		const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
+		const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
+		const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
 
 		for (size_t i = 0, isize = monitors.size(); i < isize; ++i)
 		{
@@ -318,8 +318,8 @@ void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 			int w1, w2, s1, s2;
 			int screenIndex;
 
-			const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
-			const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
+			const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
+			const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
 
 			// Set X / WIDTH
 			screenIndex = multimonInfo.primary;

@@ -2515,8 +2515,8 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 	}
 	else
 	{
-		const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
-		const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
+		const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
+		const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
 
 		if (m_OldDesktopWorkAreas.empty())
 		{
@@ -2589,7 +2589,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 
 	if (changed && CSystem::GetWindow())
 	{
-		// Update CSystem::MULTIMONITOR_INFO for for work area variables
+		// Update CSystem::MultiMonitorInfo for for work area variables
 		SendMessageTimeout(CSystem::GetWindow(), WM_SETTINGCHANGE, SPI_SETWORKAREA, 0, SMTO_ABORTIFHUNG, 1000, NULL);
 	}
 }
@@ -2654,7 +2654,7 @@ void CRainmeter::WriteStats(bool bForce)
 void CRainmeter::ResetStats()
 {
 	// Set the stats-date string
-	struct tm* newtime;
+	tm* newtime;
 	time_t long_time;
 	time(&long_time);
 	newtime = localtime(&long_time);
@@ -3051,8 +3051,8 @@ void CRainmeter::CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow)
 	// for the "Specified monitor" (@n)
 	if (CSystem::GetMonitorCount() > 0)
 	{
-		const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
-		const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
+		const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
+		const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
 
 		for (int i = 0, isize = (int)monitors.size(); i < isize; ++i)
 		{

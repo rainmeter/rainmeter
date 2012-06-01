@@ -1450,8 +1450,8 @@ void CMeterWindow::WindowToScreen()
 	float num;
 	int screenx, screeny, screenh, screenw;
 
-	const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
-	const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
+	const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
+	const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
 
 	// Clear position flags
 	m_WindowXScreen = m_WindowYScreen = multimonInfo.primary; // Default to primary screen
@@ -1648,8 +1648,8 @@ void CMeterWindow::ScreenToWindow()
 	float num;
 	int screenx, screeny, screenh, screenw;
 
-	const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
-	const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
+	const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
+	const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
 
 	if (monitors.empty())
 	{
@@ -3419,8 +3419,8 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == IDM_SKIN_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
 		{
-			const MULTIMONITOR_INFO& multimonInfo = CSystem::GetMultiMonitorInfo();
-			const std::vector<MONITOR_INFO>& monitors = multimonInfo.monitors;
+			const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
+			const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
 
 			int screenIndex;
 			bool screenDefined;

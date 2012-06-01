@@ -30,7 +30,7 @@ enum OSPLATFORM
 	OSPLATFORM_7
 };
 
-struct MONITOR_INFO
+struct MonitorInfo
 {
 	bool active;
 	HMONITOR handle;
@@ -40,14 +40,14 @@ struct MONITOR_INFO
 	std::wstring monitorName;				// Monitor name (E.g. "Generic Non-PnP Monitor")
 };
 
-struct MULTIMONITOR_INFO
+struct MultiMonitorInfo
 {
 	bool useEnumDisplayDevices;				// If true, use EnumDisplayDevices function to obtain the multi-monitor information
 	bool useEnumDisplayMonitors;			// If true, use EnumDisplayMonitors function to obtain the multi-monitor information
 
 	int vsT, vsL, vsH, vsW;					// Coordinates of the top-left corner (vsT,vsL) and size (vsH,vsW) of the virtual screen
 	int primary;							// Index of the primary monitor
-	std::vector<MONITOR_INFO> monitors;
+	std::vector<MonitorInfo> monitors;
 };
 
 class CSystem
@@ -56,7 +56,7 @@ public:
 	static void Initialize(HINSTANCE instance);
 	static void Finalize();
 
-	static const MULTIMONITOR_INFO& GetMultiMonitorInfo() { return c_Monitors; }
+	static const MultiMonitorInfo& GetMultiMonitorInfo() { return c_Monitors; }
 	static size_t GetMonitorCount();
 
 	static bool GetShowDesktop() { return c_ShowDesktop; }
@@ -111,7 +111,7 @@ private:
 
 	static HWINEVENTHOOK c_WinEventHook;
 
-	static MULTIMONITOR_INFO c_Monitors;
+	static MultiMonitorInfo c_Monitors;
 
 	static bool c_ShowDesktop;
 

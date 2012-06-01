@@ -42,7 +42,7 @@ enum INTERVAL
 	INTERVAL_RESUME         = 1000
 };
 
-MULTIMONITOR_INFO CSystem::c_Monitors = { 0 };
+MultiMonitorInfo CSystem::c_Monitors = { 0 };
 
 HWND CSystem::c_Window = NULL;
 HWND CSystem::c_HelperWindow = NULL;
@@ -158,7 +158,7 @@ void CSystem::Finalize()
 */
 BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
-	MULTIMONITOR_INFO* m = (MULTIMONITOR_INFO*)dwData;
+	MultiMonitorInfo* m = (MultiMonitorInfo*)dwData;
 
 	MONITORINFOEX info;
 	info.cbSize = sizeof(MONITORINFOEX);
@@ -193,7 +193,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 	}
 	else  // use only EnumDisplayMonitors
 	{
-		MONITOR_INFO monitor;
+		MonitorInfo monitor;
 		monitor.active = true;
 
 		monitor.handle = hMonitor;
@@ -245,7 +245,7 @@ size_t CSystem::GetMonitorCount()
 */
 void CSystem::SetMultiMonitorInfo()
 {
-	std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
+	std::vector<MonitorInfo>& monitors = c_Monitors.monitors;
 	bool logging = Rainmeter->GetDebug();
 
 	c_Monitors.vsT = GetSystemMetrics(SM_YVIRTUALSCREEN);
@@ -323,7 +323,7 @@ void CSystem::SetMultiMonitorInfo()
 
 			if ((dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) == 0)
 			{
-				MONITOR_INFO monitor = {0};
+				MonitorInfo monitor = {0};
 
 				monitor.handle = NULL;
 				monitor.deviceName = deviceName;  // E.g. "\\.\DISPLAY1"
@@ -440,7 +440,7 @@ void CSystem::SetMultiMonitorInfo()
 			Log(LOG_WARNING, L"Failed to enumerate monitors. Using dummy monitor info.");
 			c_Monitors.useEnumDisplayMonitors = false;
 
-			MONITOR_INFO monitor;
+			MonitorInfo monitor;
 			monitor.active = true;
 
 			POINT pos = {0, 0};
@@ -515,7 +515,7 @@ void CSystem::SetMultiMonitorInfo()
 */
 void CSystem::UpdateWorkareaInfo()
 {
-	std::vector<MONITOR_INFO>& monitors = c_Monitors.monitors;
+	std::vector<MonitorInfo>& monitors = c_Monitors.monitors;
 
 	if (monitors.empty())
 	{

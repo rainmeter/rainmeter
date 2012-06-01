@@ -36,7 +36,7 @@ protected:
 	virtual void UpdateValue();
 
 private:
-	void TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const struct tm* time);
+	void TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const tm* time);
 
 	std::wstring m_Format;
 	LARGE_INTEGER m_DeltaTime;

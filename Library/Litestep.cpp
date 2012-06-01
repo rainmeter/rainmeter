@@ -232,13 +232,13 @@ void LogInternal(int nLevel, ULONGLONG elapsed, LPCTSTR pszMessage)
 
 void Log(int nLevel, const WCHAR* message)
 {
-	struct DELAYED_LogInfo
+	struct DelayedLogInfo
 	{
 		int level;
 		ULONGLONG elapsed;
 		std::wstring message;
 	};
-	static std::list<DELAYED_LogInfo> c_LogDelay;
+	static std::list<DelayedLogInfo> c_LogDelay;
 
 	static ULONGLONG startTime = CSystem::GetTickCount64();
 	ULONGLONG elapsed = CSystem::GetTickCount64() - startTime;
@@ -250,7 +250,7 @@ void Log(int nLevel, const WCHAR* message)
 
 		while (!c_LogDelay.empty())
 		{
-			DELAYED_LogInfo& logInfo = c_LogDelay.front();
+			DelayedLogInfo& logInfo = c_LogDelay.front();
 			LogInternal(logInfo.level, logInfo.elapsed, logInfo.message.c_str());
 
 			c_LogDelay.erase(c_LogDelay.begin());
@@ -268,7 +268,7 @@ void Log(int nLevel, const WCHAR* message)
 		// Queue the message
 		EnterCriticalSection(&g_CsLogDelay);
 
-		DELAYED_LogInfo logInfo = {nLevel, elapsed, message};
+		DelayedLogInfo logInfo = {nLevel, elapsed, message};
 		c_LogDelay.push_back(logInfo);
 
 		LeaveCriticalSection(&g_CsLogDelay);
