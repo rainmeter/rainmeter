@@ -58,55 +58,33 @@ class CTrayWindow;
 class CRainmeter
 {
 public:
-	struct CONFIG 
-	{
-		std::wstring config;
-		std::vector<std::wstring> iniFiles;
-		UINT commandBase;
-		int active;
-
-		CONFIG() {}
-		~CONFIG() {}
-
-		CONFIG(CONFIG&& r) :
-			config(std::move(r.config)),
-			iniFiles(std::move(r.iniFiles)),
-			commandBase(r.commandBase),
-			active(r.active)
-		{
-		}
-
-		CONFIG& operator=(CONFIG&& r)
-		{
-			config = std::move(r.config);
-			iniFiles = std::move(r.iniFiles);
-			commandBase = r.commandBase;
-			active = r.active;
-			return *this;
-		}
-	};
-
-	struct CONFIGMENU
+	struct SkinFolder 
 	{
 		std::wstring name;
-		size_t index;
-		std::vector<CONFIGMENU> children;
+		std::vector<std::wstring> files;
+		UINT commandBase;
+		int16_t active;
+		int16_t level;
 
-		CONFIGMENU() {}
-		~CONFIGMENU() {}
+		SkinFolder() {}
+		~SkinFolder() {}
 
-		CONFIGMENU(CONFIGMENU&& r) :
+		SkinFolder(SkinFolder&& r) :
 			name(std::move(r.name)),
-			index(r.index),
-			children(std::move(r.children))
+			files(std::move(r.files)),
+			commandBase(r.commandBase),
+			active(r.active),
+			level(r.level)
 		{
 		}
 
-		CONFIGMENU& operator=(CONFIGMENU&& r)
+		SkinFolder& operator=(SkinFolder&& r)
 		{
 			name = std::move(r.name);
-			index = r.index;
-			children = std::move(r.children);
+			files = std::move(r.files);
+			commandBase = r.commandBase;
+			active = r.active;
+			level = r.level;
 			return *this;
 		}
 	};
@@ -141,14 +119,18 @@ public:
 	CMeterWindow* GetMeterWindow(HWND hwnd);
 	void GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group = std::wstring());
 	std::map<std::wstring, CMeterWindow*>& GetAllMeterWindows() { return m_MeterWindows; }
-	const std::vector<CONFIG>& GetAllConfigs() { return m_ConfigStrings; }
+
+	std::wstring GetSkinFolderPath(int folderIndex);
+	int FindSkinFolderIndex(const std::wstring& folderPath);
+
+	const std::vector<SkinFolder>& GetSkinFolders() { return m_SkinFolders; }
 	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; }
 
 	void DeleteMeterWindow(CMeterWindow* meterWindow, bool force = false);
 
-	void ActivateConfig(int configIndex, int iniIndex);
-	void DeactivateConfig(CMeterWindow* meterWindow, int configIndex, bool save = true);
-	void ToggleConfig(int configIndex, int iniIndex);
+	void ActivateConfig(int folderIndex, int fileIndex);
+	void DeactivateConfig(CMeterWindow* meterWindow, int folderIndex, bool save = true);
+	void ToggleConfig(int folderIndex, int fileIndex);
 
 	const std::wstring& GetPath() { return m_Path; }
 	const std::wstring& GetIniFile() { return m_IniFile; }
@@ -253,17 +235,20 @@ private:
 
 	void ActivateActiveConfigs();
 	void CreateMeterWindow(const std::wstring& config, const std::wstring& iniFile);
-	void WriteActive(const std::wstring& config, int iniIndex);
+	void WriteActive(const std::wstring& config, int fileIndex);
 	void ScanForConfigs(const std::wstring& path);
 	void ScanForThemes(const std::wstring& path);
 	void ReadGeneralSettings(const std::wstring& iniFile);
-	void SetLoadOrder(int configIndex, int order);
+	void SetLoadOrder(int folderIndex, int order);
 	int GetLoadOrder(const std::wstring& config);
 	void UpdateDesktopWorkArea(bool reset);
 	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU configMenu);
 	void ChangeSkinIndex(HMENU subMenu, int index);
-	int ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, std::vector<CONFIGMENU>& menu, bool rootSkinFolder = false);
-	HMENU CreateConfigMenu(HMENU configMenu, const std::vector<CONFIGMENU>& configMenuData);
+	int ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, UINT level);
+	
+	void CreateAllSkinsMenu(HMENU skinMenu) { CreateAllSkinsMenuRecursive(skinMenu, 0); }
+	int CreateAllSkinsMenuRecursive(HMENU skinMenu, int index);
+
 	void CreateThemeMenu(HMENU themeMenu);
 	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);
 	void CreateDefaultConfigFile();
@@ -273,8 +258,7 @@ private:
 
 	CTrayWindow* m_TrayWindow;
 
-	std::vector<CONFIG> m_ConfigStrings;
-	std::vector<CONFIGMENU> m_ConfigMenu;
+	std::vector<SkinFolder> m_SkinFolders;
 	std::multimap<int, int> m_ConfigOrders;
 	std::map<std::wstring, CMeterWindow*> m_MeterWindows;
 	std::vector<std::wstring> m_Themes;

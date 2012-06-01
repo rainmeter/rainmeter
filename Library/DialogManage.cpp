@@ -457,10 +457,10 @@ void CDialogManage::CTabSkins::Update(CMeterWindow* meterWindow, bool deleted)
 		TreeView_DeleteAllItems(item);
 
 		TVINSERTSTRUCT tvi = {0};
-		tvi.hInsertAfter = TVI_FIRST;
+		tvi.hInsertAfter = TVI_LAST;
 		tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 		tvi.item.iImage = tvi.item.iSelectedImage = 0;
-		PopulateTree(item, tvi, Rainmeter->m_ConfigMenu);
+		PopulateTree(item, tvi);
 	}
 }
 
@@ -739,26 +739,47 @@ void CDialogManage::CTabSkins::ReadSkin()
 ** Populates the treeview with folders and skins.
 **
 */
-void CDialogManage::CTabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, const std::vector<CRainmeter::CONFIGMENU>& configMenuData)
+int CDialogManage::CTabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index)
 {
-	for (int i = (int)configMenuData.size() - 1; i >= 0; --i)
+	int initialLevel = Rainmeter->m_SkinFolders[index].level;
+
+	const size_t max = Rainmeter->m_SkinFolders.size();
+	while (index < max)
 	{
-		const CRainmeter::CONFIGMENU& configMenuS = configMenuData[i];
-		tvi.item.pszText =(WCHAR*)configMenuS.name.c_str();
-		if (configMenuS.index == -1)
+		const CRainmeter::SkinFolder& folder = Rainmeter->m_SkinFolders[index];
+		if (folder.level != initialLevel)
 		{
-			tvi.item.iImage = tvi.item.iSelectedImage = 0;
-			HTREEITEM hOldParent = tvi.hParent;
-			tvi.hParent = (HTREEITEM)TreeView_InsertItem(tree, &tvi);
-			PopulateTree(tree, tvi, configMenuS.children);
-			tvi.hParent = hOldParent;
+			return index - 1;
 		}
-		else
+
+		HTREEITEM oldParent = tvi.hParent;
+
+		// Add folder
+		tvi.item.iImage = tvi.item.iSelectedImage = 0;
+		tvi.item.pszText = (WCHAR*)folder.name.c_str();
+		tvi.hParent = TreeView_InsertItem(tree, &tvi);
+
+		// Add subfolders
+		if ((index + 1) < max &&
+			Rainmeter->m_SkinFolders[index + 1].level == initialLevel + 1)
 		{
-			tvi.item.iImage = tvi.item.iSelectedImage = 1;
+			index = PopulateTree(tree, tvi, index + 1);
+		}
+
+		// Add files
+		tvi.item.iImage = tvi.item.iSelectedImage = 1;
+		for (int i = 0, isize = (int)folder.files.size(); i < isize; ++i)
+		{
+			tvi.item.pszText = (WCHAR*)folder.files[i].c_str();
 			TreeView_InsertItem(tree, &tvi);
 		}
+
+		tvi.hParent = oldParent;
+
+		++index;
 	}
+
+	return index;
 }
 
 /*
