@@ -1628,6 +1628,7 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 		NULL,
 		0);
 
+	bool foundFiles = false;
 	if (hSearch != INVALID_HANDLE_VALUE)
 	{
 		SkinFolder folder;
@@ -1635,7 +1636,6 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 		folder.active = 0;
 		folder.level = level;
 
-		bool foundFiles = false;
 		do
 		{
 			const std::wstring filename = fileData.cFileName;
@@ -1689,7 +1689,7 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 
 	if (!subfolders.empty())
 	{
-		bool emptyFolders = true;
+		bool popFolder = !foundFiles;
 
 		std::list<std::wstring>::const_iterator iter = subfolders.begin();
 		for ( ; iter != subfolders.end(); ++iter)
@@ -1697,13 +1697,13 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 			int newIndex = ScanForConfigsRecursive(path, base + (*iter), index, level + 1);
 			if (newIndex != index)
 			{
-				emptyFolders = false;
+				popFolder = false;
 			}
 
 			index = newIndex;
 		}
 
-		if (emptyFolders)
+		if (popFolder)
 		{
 			m_SkinFolders.pop_back();
 		}
