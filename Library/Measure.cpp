@@ -426,9 +426,7 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 
 bool CMeasure::Update()
 {
-	bool update = !IsDisabled();
-
-	if (update)
+	if (!m_Disabled)
 	{
 		// Only update the counter if the divider
 		++m_UpdateCounter;
@@ -487,65 +485,66 @@ bool CMeasure::Update()
 			}
 			m_Value /= (double)averageValuesSize;
 		}
+
+		if (m_MeterWindow)
+		{
+			if (!m_IfEqualAction.empty())
+			{
+				if ((int)m_Value == (int)m_IfEqualValue)
+				{
+					if (!m_IfEqualCommitted)
+					{
+						m_IfEqualCommitted = true;	// To avoid infinite loop from !Update
+						Rainmeter->ExecuteCommand(m_IfEqualAction.c_str(), m_MeterWindow);
+					}
+				}
+				else
+				{
+					m_IfEqualCommitted = false;
+				}
+			}
+
+			if (!m_IfAboveAction.empty())
+			{
+				if (m_Value > m_IfAboveValue)
+				{
+					if (!m_IfAboveCommitted)
+					{
+						m_IfAboveCommitted= true;	// To avoid infinite loop from !Update
+						Rainmeter->ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
+					}
+				}
+				else
+				{
+					m_IfAboveCommitted = false;
+				}
+			}
+
+			if (!m_IfBelowAction.empty())
+			{
+				if (m_Value < m_IfBelowValue)
+				{
+					if (!m_IfBelowCommitted)
+					{
+						m_IfBelowCommitted = true;	// To avoid infinite loop from !Update
+						Rainmeter->ExecuteCommand(m_IfBelowAction.c_str(), m_MeterWindow);
+					}
+				}
+				else
+				{
+					m_IfBelowCommitted = false;
+				}
+			}
+		}
+
+		return true;
 	}
 	else
 	{
 		// Disabled measures have 0 as value
 		m_Value = 0.0;
+		return false;
 	}
-
-	if (m_MeterWindow)
-	{
-		if (!m_IfEqualAction.empty())
-		{
-			if ((int)m_Value == (int)m_IfEqualValue)
-			{
-				if (!m_IfEqualCommitted)
-				{
-					m_IfEqualCommitted = true;	// To avoid infinite loop from !Update
-					Rainmeter->ExecuteCommand(m_IfEqualAction.c_str(), m_MeterWindow);
-				}
-			}
-			else
-			{
-				m_IfEqualCommitted = false;
-			}
-		}
-
-		if (!m_IfAboveAction.empty())
-		{
-			if (m_Value > m_IfAboveValue)
-			{
-				if (!m_IfAboveCommitted)
-				{
-					m_IfAboveCommitted= true;	// To avoid infinite loop from !Update
-					Rainmeter->ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
-				}
-			}
-			else
-			{
-				m_IfAboveCommitted = false;
-			}
-		}
-
-		if (!m_IfBelowAction.empty())
-		{
-			if (m_Value < m_IfBelowValue)
-			{
-				if (!m_IfBelowCommitted)
-				{
-					m_IfBelowCommitted = true;	// To avoid infinite loop from !Update
-					Rainmeter->ExecuteCommand(m_IfBelowAction.c_str(), m_MeterWindow);
-				}
-			}
-			else
-			{
-				m_IfBelowCommitted = false;
-			}
-		}
-	}
-
-	return update;
 }
 
 /*
