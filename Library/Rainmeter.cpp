@@ -2839,8 +2839,13 @@ int CRainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 			int fileCount = (int)folder.files.size();
 			for ( ; fileIndex < fileCount; ++fileIndex)
 			{
-				UINT flags = MF_STRING | MF_BYPOSITION | ((folder.active == fileIndex + 1) ? MF_CHECKED : MF_UNCHECKED);
-				InsertMenu(subMenu, fileIndex, flags, folder.commandBase, folder.files[fileIndex].c_str());
+				InsertMenu(subMenu, fileIndex, MF_STRING | MF_BYPOSITION, folder.commandBase + fileIndex, folder.files[fileIndex].c_str());
+			}
+
+			if (folder.active)
+			{
+				UINT checkPos = folder.active - 1;
+				CheckMenuRadioItem(subMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
 			}
 
 			if (hasSubfolder && fileIndex != 0)
@@ -2877,27 +2882,8 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 			HMENU posMenu = GetSubMenu(settingsMenu, 0);
 			if (posMenu)
 			{
-				switch (meterWindow->GetWindowZPosition())
-				{
-				case ZPOSITION_ONDESKTOP:
-					CheckMenuItem(posMenu, IDM_SKIN_ONDESKTOP, MF_BYCOMMAND | MF_CHECKED);
-					break;
-
-				case ZPOSITION_ONBOTTOM:
-					CheckMenuItem(posMenu, IDM_SKIN_BOTTOM, MF_BYCOMMAND | MF_CHECKED);
-					break;
-
-				case ZPOSITION_ONTOP:
-					CheckMenuItem(posMenu, IDM_SKIN_TOPMOST, MF_BYCOMMAND | MF_CHECKED);
-					break;
-
-				case ZPOSITION_ONTOPMOST:
-					CheckMenuItem(posMenu, IDM_SKIN_VERYTOPMOST, MF_BYCOMMAND | MF_CHECKED);
-					break;
-
-				default:
-					CheckMenuItem(posMenu, IDM_SKIN_NORMAL, MF_BYCOMMAND | MF_CHECKED);
-				}
+				UINT checkPos = IDM_SKIN_NORMAL - (UINT)meterWindow->GetWindowZPosition();
+				CheckMenuRadioItem(posMenu, checkPos, checkPos, checkPos, MF_BYCOMMAND);
 
 				if (meterWindow->GetXFromRight()) CheckMenuItem(posMenu, IDM_SKIN_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
 				if (meterWindow->GetYFromBottom()) CheckMenuItem(posMenu, IDM_SKIN_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
@@ -2915,10 +2901,10 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 			HMENU alphaMenu = GetSubMenu(settingsMenu, 1);
 			if (alphaMenu)
 			{
-				int value = (int)(10 - meterWindow->GetAlphaValue() / 25.5);
-				value = min(9, value);
-				value = max(0, value);
-				CheckMenuItem(alphaMenu, value, MF_BYPOSITION | MF_CHECKED);
+				UINT checkPos = (UINT)(10 - meterWindow->GetAlphaValue() / 25.5);
+				checkPos = min(9, checkPos);
+				checkPos = max(0, checkPos);
+				CheckMenuRadioItem(alphaMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
 
 				switch (meterWindow->GetWindowHide())
 				{
@@ -2939,7 +2925,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 				}
 			}
 
-			// Tick the configs
+			// Tick the settings
 			switch (meterWindow->GetWindowHide())
 			{
 			case HIDEMODE_HIDE:
@@ -3001,9 +2987,15 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 		if (variantsMenu)
 		{
 			const SkinFolder& folder = m_SkinFolders[FindSkinFolderIndex(skinName)];
-			for (int i = 0, jsize = (int)folder.files.size(); i < jsize; ++i)
+			for (int i = 0, isize = (int)folder.files.size(); i < isize; ++i)
 			{
-				InsertMenu(variantsMenu, i, MF_BYPOSITION | ((folder.active == i + 1) ? MF_CHECKED : MF_UNCHECKED), folder.commandBase + i, folder.files[i].c_str());
+				InsertMenu(variantsMenu, i, MF_BYPOSITION, folder.commandBase + i, folder.files[i].c_str());
+			}
+
+			if (folder.active)
+			{
+				UINT checkPos = folder.active - 1;
+				CheckMenuRadioItem(variantsMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
 			}
 		}
 
