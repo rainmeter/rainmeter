@@ -351,14 +351,17 @@ void CDialogManage::CTabSkins::Initialize()
 {
 	m_Initialized = true;
 
-	std::wstring tmpSz = GetString(ID_STR_ACTIVESKINS);
+	BUTTON_SPLITINFO bsi;
+	bsi.mask = BCSIF_SIZE;
+	bsi.size.cx = 20;
+	bsi.size.cy = 14;
+
+	HWND item = GetDlgItem(m_Window, IDC_MANAGESKINS_ACTIVESKINS_BUTTON);
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
-		// Arrow down
-		tmpSz += L" \x25BE";
+		Button_SetStyle(item, BS_SPLITBUTTON, TRUE);
+		Button_SetSplitInfo(item, &bsi);
 	}
-	HWND item = GetDlgItem(m_Window, IDC_MANAGESKINS_ACTIVESKINS_BUTTON);
-	SetWindowText(item, tmpSz.c_str());
 
 	// Load folder/.ini icons from shell32
 	HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR32, 2, 10);
@@ -380,13 +383,11 @@ void CDialogManage::CTabSkins::Initialize()
 	SetWindowPos(item, NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER); 
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_DISPLAYMONITOR_BUTTON);
-	tmpSz = GetString(ID_STR_DISPLAYMONITOR);
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
-		// Arrow down
-		tmpSz += L" \x25BE";
+		Button_SetStyle(item, BS_SPLITBUTTON, TRUE);
+		Button_SetSplitInfo(item, &bsi);
 	}
-	SetWindowText(item, tmpSz.c_str());
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_TRANSPARENCY_COMBOBOX);
 	ComboBox_AddString(item, L"0%");
@@ -1300,6 +1301,16 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			}
 
 			m_HandleCommands = true;
+		}
+		break;
+
+	case BCN_DROPDOWN:
+		{
+			NMHDR* hdr = &((NMBCDROPDOWN*)lParam)->hdr;
+
+			// Unpush the drop-down button part and simulate click
+			Button_SetDropDownState(hdr->hwndFrom, FALSE);
+			SendMessage(hdr->hwndFrom, BM_CLICK, 0, 0);
 		}
 		break;
 
