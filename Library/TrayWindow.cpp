@@ -501,7 +501,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex((UINT)(wParam & 0x0ffff));
 			if (indexes.first != -1 && indexes.second != -1)
 			{
-				Rainmeter->ToggleConfig(indexes.first, indexes.second);
+				Rainmeter->ToggleSkin(indexes.first, indexes.second);
 			}
 		}
 		else
@@ -625,7 +625,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 			else if (wParam == RAINMETER_QUERY_ID_CONFIG_EDITOR)
 			{
-				sendCopyData(Rainmeter->GetConfigEditor());
+				sendCopyData(Rainmeter->GetSkinEditor());
 				return 0;
 			}
 			else if (wParam == RAINMETER_QUERY_ID_IS_DEBUGGING)
@@ -642,8 +642,8 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lParam;
 			if (cds->dwData == RAINMETER_QUERY_ID_SKIN_WINDOWHANDLE)
 			{
-				LPCWSTR configName = (LPCWSTR)cds->lpData;
-				CMeterWindow* mw = Rainmeter->GetMeterWindow(configName);
+				LPCWSTR folderPath = (LPCWSTR)cds->lpData;
+				CMeterWindow* mw = Rainmeter->GetMeterWindow(folderPath);
 				return (mw) ? (LRESULT)mw->GetWindow() : NULL;
 			}
 		}

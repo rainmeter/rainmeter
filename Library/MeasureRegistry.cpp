@@ -101,7 +101,7 @@ void CMeasureRegistry::UpdateValue()
 }
 
 /*
-** Reads the measure specific configs.
+** Read the options specified in the ini file.
 **
 */
 void CMeasureRegistry::ReadOptions(CConfigParser& parser, const WCHAR* section)

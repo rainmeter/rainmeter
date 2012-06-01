@@ -179,7 +179,7 @@ void CMeterHistogram::Initialize()
 }
 
 /*
-** Read the meter-specific configs from the ini-file.
+** Read the options specified in the ini file.
 **
 */
 void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
@@ -191,7 +191,6 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	int oldW = m_W;
 	int oldH = m_H;
 
-	// Read common configs
 	CMeter::ReadOptions(parser, section);
 
 	m_PrimaryColor = parser.ReadColor(section, L"PrimaryColor", Color::Green);
@@ -212,7 +211,7 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	{
 		m_MeterWindow->MakePathAbsolute(m_PrimaryImageName);
 
-		// Read tinting configs
+		// Read tinting options
 		m_PrimaryImage.ReadOptions(parser, section);
 	}
 	else
@@ -225,7 +224,7 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	{
 		m_MeterWindow->MakePathAbsolute(m_SecondaryImageName);
 
-		// Read tinting configs
+		// Read tinting options
 		m_SecondaryImage.ReadOptions(parser, section);
 	}
 	else
@@ -238,7 +237,7 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	{
 		m_MeterWindow->MakePathAbsolute(m_OverlapImageName);
 
-		// Read tinting configs
+		// Read tinting options
 		m_OverlapImage.ReadOptions(parser, section);
 	}
 	else

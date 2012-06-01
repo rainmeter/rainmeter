@@ -151,7 +151,7 @@ bool CMeterBitmap::HitTest(int x, int y)
 }
 
 /*
-** Read the meter-specific configs from the ini-file.
+** Read the options specified in the ini file.
 **
 */
 void CMeterBitmap::ReadOptions(CConfigParser& parser, const WCHAR* section)
@@ -161,7 +161,6 @@ void CMeterBitmap::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	int oldW = m_W;
 	int oldH = m_H;
 
-	// Read common configs
 	CMeter::ReadOptions(parser, section);
 
 	m_ImageName = parser.ReadString(section, L"BitmapImage", L"");
@@ -169,7 +168,7 @@ void CMeterBitmap::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	{
 		m_MeterWindow->MakePathAbsolute(m_ImageName);
 
-		// Read tinting configs
+		// Read tinting options
 		m_Image.ReadOptions(parser, section);
 	}
 	else

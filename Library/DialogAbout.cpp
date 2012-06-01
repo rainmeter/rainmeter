@@ -405,7 +405,7 @@ void CDialogAbout::CTabLog::Initialize()
 	ListView_InsertColumn(item, 2, &lvc);
 
 	// Add stored entires
-	std::list<CRainmeter::LOG_INFO>::const_iterator iter = Rainmeter->GetAboutLogData().begin();
+	std::list<CRainmeter::LogInfo>::const_iterator iter = Rainmeter->GetAboutLogData().begin();
 	for ( ; iter != Rainmeter->GetAboutLogData().end(); ++iter)
 	{
 		AddItem((*iter).level, (*iter).timestamp.c_str(), (*iter).message.c_str());

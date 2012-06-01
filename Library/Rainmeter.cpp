@@ -219,23 +219,23 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& args,
 			// Use the specified window instead of meterWindow parameter
 			if (argsCount > numOfArgs)
 			{
-				const std::wstring& config = args[numOfArgs];
-				if (!config.empty() && (config.length() != 1 || config[0] != L'*'))
+				const std::wstring& folderPath = args[numOfArgs];
+				if (!folderPath.empty() && (folderPath.length() != 1 || folderPath[0] != L'*'))
 				{
-					CMeterWindow* meterWindow = GetMeterWindow(config);
+					CMeterWindow* meterWindow = GetMeterWindow(folderPath);
 					if (meterWindow)
 					{
 						meterWindow->RunBang(bang, args);
 					}
 					else
 					{
-						LogWithArgs(LOG_ERROR,  L"Bang: Config \"%s\" not found", config.c_str());
+						LogWithArgs(LOG_ERROR,  L"Bang: Skin \"%s\" not found", folderPath.c_str());
 					}
 					return;
 				}
 			}
 
-			// No config defined -> apply to all.
+			// No skin defined -> apply to all.
 			std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
 			for (; iter != m_MeterWindows.end(); ++iter)
 			{
@@ -295,14 +295,14 @@ void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& 
 ** !ActivateConfig bang
 **
 */
-void CRainmeter::Bang_ActivateConfig(std::vector<std::wstring>& args)
+void CRainmeter::Bang_ActivateSkin(std::vector<std::wstring>& args)
 {
 	if (args.size() > 1)
 	{
 		std::pair<int, int> indexes = GetMeterWindowIndex(args[0], args[1]);
 		if (indexes.first != -1 && indexes.second != -1)
 		{
-			ActivateConfig(indexes.first, indexes.second);
+			ActivateSkin(indexes.first, indexes.second);
 			return;
 		}
 		LogWithArgs(LOG_ERROR, L"!ActivateConfig: \"%s\\%s\" not found", args[0].c_str(), args[1].c_str());
@@ -318,7 +318,7 @@ void CRainmeter::Bang_ActivateConfig(std::vector<std::wstring>& args)
 ** !DeactivateConfig bang
 **
 */
-void CRainmeter::Bang_DeactivateConfig(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
+void CRainmeter::Bang_DeactivateSkin(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
 {
 	if (!args.empty())
 	{
@@ -332,7 +332,7 @@ void CRainmeter::Bang_DeactivateConfig(std::vector<std::wstring>& args, CMeterWi
 
 	if (meterWindow)
 	{
-		DeactivateConfig(meterWindow, -1);
+		DeactivateSkin(meterWindow, -1);
 	}
 	else
 	{
@@ -344,19 +344,19 @@ void CRainmeter::Bang_DeactivateConfig(std::vector<std::wstring>& args, CMeterWi
 ** !ToggleConfig bang
 **
 */
-void CRainmeter::Bang_ToggleConfig(std::vector<std::wstring>& args)
+void CRainmeter::Bang_ToggleSkin(std::vector<std::wstring>& args)
 {
 	if (args.size() >= 2)
 	{
 		CMeterWindow* mw = GetMeterWindow(args[0]);
 		if (mw)
 		{
-			DeactivateConfig(mw, -1);
+			DeactivateSkin(mw, -1);
 			return;
 		}
 
-		// If the config wasn't active, activate it
-		Bang_ActivateConfig(args);
+		// If the skin wasn't active, activate it
+		Bang_ActivateSkin(args);
 	}
 	else
 	{
@@ -368,7 +368,7 @@ void CRainmeter::Bang_ToggleConfig(std::vector<std::wstring>& args)
 ** !DeactivateConfigGroup bang
 **
 */
-void CRainmeter::Bang_DeactivateConfigGroup(std::vector<std::wstring>& args)
+void CRainmeter::Bang_DeactivateSkinGroup(std::vector<std::wstring>& args)
 {
 	if (!args.empty())
 	{
@@ -378,7 +378,7 @@ void CRainmeter::Bang_DeactivateConfigGroup(std::vector<std::wstring>& args)
 		std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
 		for (; iter != windows.end(); ++iter)
 		{
-			DeactivateConfig((*iter).second, -1);
+			DeactivateSkin((*iter).second, -1);
 		}
 	}
 	else
@@ -475,8 +475,8 @@ void CRainmeter::Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindo
 {
 	if (args.size() == 3 && meterWindow)
 	{
-		// Add the config filepath to the args
-		args.push_back(meterWindow->GetSkinFilePath());
+		// Add the skin file path to the args
+		args.push_back(meterWindow->GetFilePath());
 	}
 	else if (args.size() < 4)
 	{
@@ -667,7 +667,7 @@ CRainmeter::CRainmeter() :
 	m_ResourceInstance(),
 	m_ResourceLCID(),
 	m_GDIplusToken(),
-	m_GlobalConfig()
+	m_GlobalOptions()
 {
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
@@ -930,7 +930,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 	// Create a default Rainmeter.ini file if needed
 	if (_waccess(iniFile, 0) == -1)
 	{
-		CreateDefaultConfigFile();
+		CreateOptionsFile();
 	}
 
 	delete [] buffer;
@@ -975,7 +975,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 		CMeterString::EnumerateInstalledFontFamilies();
 	}
 
-	// Tray must exist before configs are read
+	// Tray must exist before skins are read
 	m_TrayWindow = new CTrayWindow();
 	m_TrayWindow->Initialize();
 
@@ -996,8 +996,8 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 		UpdateDesktopWorkArea(false);
 	}
 
-	// Create meter windows for active configs
-	ActivateActiveConfigs();
+	// Create meter windows for active skins
+	ActivateActiveSkins();
 
 	if (dataFileCreated)
 	{
@@ -1157,7 +1157,7 @@ void CRainmeter::SetNetworkStatisticsTimer()
 	static bool set = SetTimer(m_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, NULL);
 }
 
-void CRainmeter::CreateDefaultConfigFile()
+void CRainmeter::CreateOptionsFile()
 {
 	size_t pos = m_IniFile.find_last_of(L'\\');
 	if (pos != std::wstring::npos)
@@ -1196,14 +1196,14 @@ void CRainmeter::CreateDataFile()
 
 void CRainmeter::ReloadSettings()
 {
-	ScanForConfigs(m_SkinPath);
+	ScanForSkins(m_SkinPath);
 	ScanForThemes(GetSettingsPath() + L"Themes");
 	ReadGeneralSettings(m_IniFile);
 }
 
 void CRainmeter::EditSettings()
 {
-	RunFile(m_ConfigEditor.c_str(), m_IniFile.c_str());
+	RunFile(m_SkinEditor.c_str(), m_IniFile.c_str());
 }
 
 void CRainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniFile)
@@ -1214,83 +1214,83 @@ void CRainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniF
 	bool writable = CSystem::IsFileWritable(args.c_str());
 
 	// Execute as admin if in protected location
-	RunFile(m_ConfigEditor.c_str(), args.c_str(), !writable);
+	RunFile(m_SkinEditor.c_str(), args.c_str(), !writable);
 }
 
 void CRainmeter::OpenSkinFolder(const std::wstring& name)
 {
-	std::wstring folder = m_SkinPath + name;
-	RunFile(folder.c_str());
+	std::wstring folderPath = m_SkinPath + name;
+	RunFile(folderPath.c_str());
 }
 
-void CRainmeter::ActivateActiveConfigs()
+void CRainmeter::ActivateActiveSkins()
 {
-	std::multimap<int, int>::const_iterator iter = m_ConfigOrders.begin();
-	for ( ; iter != m_ConfigOrders.end(); ++iter)
+	std::multimap<int, int>::const_iterator iter = m_SkinOrders.begin();
+	for ( ; iter != m_SkinOrders.end(); ++iter)
 	{
-		const SkinFolder& folder = m_SkinFolders[(*iter).second];
-		if (folder.active > 0 && folder.active <= (int)folder.files.size())
+		const SkinFolder& skinFolder = m_SkinFolders[(*iter).second];
+		if (skinFolder.active > 0 && skinFolder.active <= (int)skinFolder.files.size())
 		{
-			ActivateConfig((*iter).second, folder.active - 1);
+			ActivateSkin((*iter).second, skinFolder.active - 1);
 		}
 	}
 }
 
-void CRainmeter::ActivateConfig(int folderIndex, int fileIndex)
+void CRainmeter::ActivateSkin(int folderIndex, int fileIndex)
 {
 	if (folderIndex >= 0 && folderIndex < (int)m_SkinFolders.size() &&
 		fileIndex >= 0 && fileIndex < (int)m_SkinFolders[folderIndex].files.size())
 	{
-		const SkinFolder& folder = m_SkinFolders[folderIndex];
-		const std::wstring& skinFile = folder.files[fileIndex];
-		const WCHAR* file = skinFile.c_str();
+		const SkinFolder& skinFolder = m_SkinFolders[folderIndex];
+		const std::wstring& file = skinFolder.files[fileIndex];
+		const WCHAR* fileSz = file.c_str();
 
-		std::wstring skinFolder = GetSkinFolderPath(folderIndex);
+		std::wstring folderPath = GetFolderPath(folderIndex);
 
-		// Verify that the config is not already active
-		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.find(skinFolder);
+		// Verify that the skin is not already active
+		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.find(folderPath);
 		if (iter != m_MeterWindows.end())
 		{
-			if (wcscmp(((*iter).second)->GetSkinIniFile().c_str(), file) == 0)
+			if (wcscmp(((*iter).second)->GetFileName().c_str(), fileSz) == 0)
 			{
-				LogWithArgs(LOG_WARNING, L"!ActivateConfig: \"%s\" already active", skinFolder.c_str());
+				LogWithArgs(LOG_WARNING, L"!ActivateConfig: \"%s\" already active", folderPath.c_str());
 				return;
 			}
 			else
 			{
-				// Deactivate the existing config
-				DeactivateConfig((*iter).second, folderIndex);
+				// Deactivate the existing skin
+				DeactivateSkin((*iter).second, folderIndex);
 			}
 		}
 
 		// Verify whether the ini-file exists
-		std::wstring skinIniPath = m_SkinPath + skinFolder;
+		std::wstring skinIniPath = m_SkinPath + folderPath;
 		skinIniPath += L'\\';
-		skinIniPath += skinFile;
+		skinIniPath += file;
 
 		if (_waccess(skinIniPath.c_str(), 0) == -1)
 		{
-			std::wstring message = GetFormattedString(ID_STR_UNABLETOACTIVATESKIN, skinFolder.c_str(), file);
+			std::wstring message = GetFormattedString(ID_STR_UNABLETOACTIVATESKIN, folderPath.c_str(), fileSz);
 			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 			return;
 		}
 
 		m_SkinFolders[folderIndex].active = fileIndex + 1;
-		WriteActive(skinFolder, fileIndex);
+		WriteActive(folderPath, fileIndex);
 
-		CreateMeterWindow(skinFolder, skinFile);
+		CreateMeterWindow(folderPath, file);
 	}
 }
 
-void CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int folderIndex, bool save)
+void CRainmeter::DeactivateSkin(CMeterWindow* meterWindow, int folderIndex, bool save)
 {
 	if (folderIndex >= 0 && folderIndex < (int)m_SkinFolders.size())
 	{
-		m_SkinFolders[folderIndex].active = 0;	// Deactivate the config
+		m_SkinFolders[folderIndex].active = 0;	// Deactivate the skin
 	}
 	else if (folderIndex == -1 && meterWindow)
 	{
-		folderIndex = FindSkinFolderIndex(meterWindow->GetSkinName());
+		folderIndex = FindSkinFolderIndex(meterWindow->GetFolderPath());
 		if (folderIndex != -1)
 		{
 			m_SkinFolders[folderIndex].active = 0;
@@ -1301,45 +1301,45 @@ void CRainmeter::DeactivateConfig(CMeterWindow* meterWindow, int folderIndex, bo
 	{
 		if (save)
 		{
-			// Disable the config in the ini-file
-			WriteActive(meterWindow->GetSkinName(), -1);
+			// Disable the skin in the ini-file
+			WriteActive(meterWindow->GetFolderPath(), -1);
 		}
 
 		meterWindow->Deactivate();
 	}
 }
 
-void CRainmeter::ToggleConfig(int folderIndex, int fileIndex)
+void CRainmeter::ToggleSkin(int folderIndex, int fileIndex)
 {
 	if (folderIndex >= 0 && folderIndex < (int)m_SkinFolders.size() &&
 		fileIndex >= 0 && fileIndex < (int)m_SkinFolders[folderIndex].files.size())
 	{
 		if (m_SkinFolders[folderIndex].active == fileIndex + 1)
 		{
-			CMeterWindow* meterWindow = Rainmeter->GetMeterWindow(GetSkinFolderPath(folderIndex));
-			DeactivateConfig(meterWindow, folderIndex);
+			CMeterWindow* meterWindow = Rainmeter->GetMeterWindow(GetFolderPath(folderIndex));
+			DeactivateSkin(meterWindow, folderIndex);
 		}
 		else
 		{
-			ActivateConfig(folderIndex, fileIndex);
+			ActivateSkin(folderIndex, fileIndex);
 		}
 	}
 }
 
-void CRainmeter::WriteActive(const std::wstring& config, int fileIndex)
+void CRainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
 {
 	WCHAR buffer[32];
 	_itow_s(fileIndex + 1, buffer, 10);
-	WritePrivateProfileString(config.c_str(), L"Active", buffer, m_IniFile.c_str());
+	WritePrivateProfileString(folderPath.c_str(), L"Active", buffer, m_IniFile.c_str());
 }
 
-void CRainmeter::CreateMeterWindow(const std::wstring& config, const std::wstring& iniFile)
+void CRainmeter::CreateMeterWindow(const std::wstring& folderPath, const std::wstring& file)
 {
-	CMeterWindow* mw = new CMeterWindow(config, iniFile);
+	CMeterWindow* mw = new CMeterWindow(folderPath, file);
 
 	if (mw)
 	{
-		m_MeterWindows[config] = mw;
+		m_MeterWindows.insert(std::make_pair(folderPath, mw));
 
 		try
 		{
@@ -1350,7 +1350,7 @@ void CRainmeter::CreateMeterWindow(const std::wstring& config, const std::wstrin
 		}
 		catch (CError& error)
 		{
-			DeactivateConfig(mw, -1);
+			DeactivateSkin(mw, -1);
 			LogError(error);
 		}
 	}
@@ -1388,13 +1388,13 @@ void CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool force)
 	CDialogAbout::UpdateSkins();
 }
 
-CMeterWindow* CRainmeter::GetMeterWindow(const std::wstring& config)
+CMeterWindow* CRainmeter::GetMeterWindow(const std::wstring& folderPath)
 {
-	const WCHAR* configName = config.c_str();
+	const WCHAR* folderSz = folderPath.c_str();
 	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
 	for (; iter != m_MeterWindows.end(); ++iter)
 	{
-		if (_wcsicmp((*iter).first.c_str(), configName) == 0)
+		if (_wcsicmp((*iter).first.c_str(), folderSz) == 0)
 		{
 			return (*iter).second;
 		}
@@ -1412,8 +1412,8 @@ CMeterWindow* CRainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
 		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
 		for (; iter != m_MeterWindows.end(); ++iter)
 		{
-			std::wstring config_current = (*iter).second->GetSkinName() + L'\\';
-			config_current += (*iter).second->GetSkinIniFile();
+			std::wstring config_current = (*iter).second->GetFolderPath() + L'\\';
+			config_current += (*iter).second->GetFileName();
 
 			if (_wcsicmp(config_current.c_str(), config_searching.c_str()) == 0)
 			{
@@ -1425,17 +1425,17 @@ CMeterWindow* CRainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
 	return NULL;
 }
 
-std::pair<int, int> CRainmeter::GetMeterWindowIndex(const std::wstring& config, const std::wstring& iniFile)
+std::pair<int, int> CRainmeter::GetMeterWindowIndex(const std::wstring& folderPath, const std::wstring& file)
 {
-	int index = FindSkinFolderIndex(config);
+	int index = FindSkinFolderIndex(folderPath);
 	if (index != -1)
 	{
-		const SkinFolder& folder = m_SkinFolders[index];
+		const SkinFolder& skinFolder = m_SkinFolders[index];
 
-		const WCHAR* fileSz = iniFile.c_str();
-		for (int i = 0, isize = (int)folder.files.size(); i < isize; ++i)
+		const WCHAR* fileSz = file.c_str();
+		for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
 		{
-			if (_wcsicmp(folder.files[i].c_str(), fileSz) == 0)
+			if (_wcsicmp(skinFolder.files[i].c_str(), fileSz) == 0)
 			{
 				return std::make_pair(index, i);
 			}
@@ -1451,14 +1451,14 @@ std::pair<int, int> CRainmeter::GetMeterWindowIndex(UINT menuCommand)
 
 	if (menuCommand >= ID_CONFIG_FIRST && menuCommand <= ID_CONFIG_LAST)
 	{
-		// Check which config was selected
+		// Check which skin was selected
 		for (size_t i = 0, isize = m_SkinFolders.size(); i < isize; ++i)
 		{
-			const SkinFolder& folder = m_SkinFolders[i];
-			if (menuCommand >= folder.commandBase &&
-				menuCommand < (folder.commandBase + folder.files.size()))
+			const SkinFolder& skinFolder = m_SkinFolders[i];
+			if (menuCommand >= skinFolder.commandBase &&
+				menuCommand < (skinFolder.commandBase + skinFolder.files.size()))
 			{
-				indexes = std::make_pair(i, menuCommand - folder.commandBase);
+				indexes = std::make_pair(i, menuCommand - skinFolder.commandBase);
 				return indexes;
 			}
 		}
@@ -1499,11 +1499,11 @@ void CRainmeter::GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& w
 ** Returns the skin folder path relative to the skin folder (e.g. illustro\Clock).
 **
 */
-std::wstring CRainmeter::GetSkinFolderPath(int folderIndex)
+std::wstring CRainmeter::GetFolderPath(int folderIndex)
 {
-	const SkinFolder& folder = m_SkinFolders[folderIndex];
-	std::wstring path = folder.name;
-	for (int i = folder.level - 1, index = folderIndex; i >= 1; --i)
+	const SkinFolder& skinFolder = m_SkinFolders[folderIndex];
+	std::wstring path = skinFolder.name;
+	for (int i = skinFolder.level - 1, index = folderIndex; i >= 1; --i)
 	{
 		while (m_SkinFolders[index].level != i)
 		{
@@ -1527,10 +1527,10 @@ int CRainmeter::FindSkinFolderIndex(const std::wstring& folderPath)
 		int level = 1;
 		for (int i = 0, isize = (int)m_SkinFolders.size(); i < isize; ++i)
 		{
-			const SkinFolder& folder = m_SkinFolders[i];
-			if (folder.level == level)
+			const SkinFolder& skinFolder = m_SkinFolders[i];
+			if (skinFolder.level == level)
 			{
-				if (folder.name.length() == len && _wcsnicmp(folder.name.c_str(), path, len) == 0)
+				if (skinFolder.name.length() == len && _wcsnicmp(skinFolder.name.c_str(), path, len) == 0)
 				{
 					path += len;
 					if (*path)
@@ -1548,7 +1548,7 @@ int CRainmeter::FindSkinFolderIndex(const std::wstring& folderPath)
 					++level;
 				}
 			}
-			else if (folder.level < level)
+			else if (skinFolder.level < level)
 			{
 				break;
 			}
@@ -1560,14 +1560,14 @@ int CRainmeter::FindSkinFolderIndex(const std::wstring& folderPath)
 
 void CRainmeter::SetLoadOrder(int folderIndex, int order)
 {
-	std::multimap<int, int>::iterator iter = m_ConfigOrders.begin();
-	for ( ; iter != m_ConfigOrders.end(); ++iter)
+	std::multimap<int, int>::iterator iter = m_SkinOrders.begin();
+	for ( ; iter != m_SkinOrders.end(); ++iter)
 	{
 		if ((*iter).second == folderIndex)  // already exists
 		{
 			if ((*iter).first != order)
 			{
-				m_ConfigOrders.erase(iter);
+				m_SkinOrders.erase(iter);
 				break;
 			}
 			else
@@ -1577,16 +1577,16 @@ void CRainmeter::SetLoadOrder(int folderIndex, int order)
 		}
 	}
 
-	m_ConfigOrders.insert(std::pair<int, int>(order, folderIndex));
+	m_SkinOrders.insert(std::pair<int, int>(order, folderIndex));
 }
 
-int CRainmeter::GetLoadOrder(const std::wstring& config)
+int CRainmeter::GetLoadOrder(const std::wstring& folderPath)
 {
-	int index = FindSkinFolderIndex(config);
+	int index = FindSkinFolderIndex(folderPath);
 	if (index != -1)
 	{
-		std::multimap<int, int>::const_iterator iter = m_ConfigOrders.begin();
-		for ( ; iter != m_ConfigOrders.end(); ++iter)
+		std::multimap<int, int>::const_iterator iter = m_SkinOrders.begin();
+		for ( ; iter != m_SkinOrders.end(); ++iter)
 		{
 			if ((*iter).second == index)
 			{
@@ -1602,15 +1602,15 @@ int CRainmeter::GetLoadOrder(const std::wstring& config)
 /*
 ** Scans all the subfolders and locates the ini-files.
 */
-void CRainmeter::ScanForConfigs(const std::wstring& path)
+void CRainmeter::ScanForSkins(const std::wstring& path)
 {
 	m_SkinFolders.clear();
-	m_ConfigOrders.clear();
+	m_SkinOrders.clear();
 
-	ScanForConfigsRecursive(path, L"", 0, 0);
+	ScanForSkinsRecursive(path, L"", 0, 0);
 }
 
-int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, UINT level)
+int CRainmeter::ScanForSkinsRecursive(const std::wstring& path, std::wstring base, int index, UINT level)
 {
 	WIN32_FIND_DATA fileData;      // Data structure describes the file found
 	HANDLE hSearch;                // Search handle returned by FindFirstFile
@@ -1631,10 +1631,10 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 	bool foundFiles = false;
 	if (hSearch != INVALID_HANDLE_VALUE)
 	{
-		SkinFolder folder;
-		folder.commandBase = ID_CONFIG_FIRST + index;
-		folder.active = 0;
-		folder.level = level;
+		SkinFolder skinFolder;
+		skinFolder.commandBase = ID_CONFIG_FIRST + index;
+		skinFolder.active = 0;
+		skinFolder.level = level;
 
 		do
 		{
@@ -1657,7 +1657,7 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 				if (filenameLen >= 4 && _wcsicmp(fileData.cFileName + (filenameLen - 4), L".ini") == 0)
 				{
 					foundFiles = true;
-					folder.files.push_back(filename);
+					skinFolder.files.push_back(filename);
 					++index;
 				}
 			}
@@ -1670,15 +1670,15 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 		{
 			if (level == 1)
 			{
-				folder.name = base;
+				skinFolder.name = base;
 			}
 			else
 			{
 				std::wstring::size_type pos = base.rfind(L'\\') + 1;
-				folder.name.assign(base, pos, base.length() - pos);
+				skinFolder.name.assign(base, pos, base.length() - pos);
 			}
 
-			m_SkinFolders.push_back(std::move(folder));
+			m_SkinFolders.push_back(std::move(skinFolder));
 		}
 	}
 
@@ -1694,7 +1694,7 @@ int CRainmeter::ScanForConfigsRecursive(const std::wstring& path, std::wstring b
 		std::list<std::wstring>::const_iterator iter = subfolders.begin();
 		for ( ; iter != subfolders.end(); ++iter)
 		{
-			int newIndex = ScanForConfigsRecursive(path, base + (*iter), index, level + 1);
+			int newIndex = ScanForSkinsRecursive(path, base + (*iter), index, level + 1);
 			if (newIndex != index)
 			{
 				popFolder = false;
@@ -1855,15 +1855,15 @@ void CRainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args,
 	}
 	else if (_wcsicmp(bang, L"ActivateConfig") == 0)
 	{
-		Bang_ActivateConfig(args);
+		Bang_ActivateSkin(args);
 	}
 	else if (_wcsicmp(bang, L"DeactivateConfig") == 0)
 	{
-		Bang_DeactivateConfig(args, meterWindow);
+		Bang_DeactivateSkin(args, meterWindow);
 	}
 	else if (_wcsicmp(bang, L"ToggleConfig") == 0)
 	{
-		Bang_ToggleConfig(args);
+		Bang_ToggleSkin(args);
 	}
 	else if (_wcsicmp(bang, L"Move") == 0)
 	{
@@ -1971,7 +1971,7 @@ void CRainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args,
 	}
 	else if (_wcsicmp(bang, L"DeactivateConfigGroup") == 0)
 	{
-		Bang_DeactivateConfigGroup(args);
+		Bang_DeactivateSkinGroup(args);
 	}
 	else if (_wcsicmp(bang, L"ZPosGroup") == 0)
 	{
@@ -2242,19 +2242,19 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		m_TrayWindow->ReadOptions(parser);
 	}
 
-	m_GlobalConfig.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", 0.0);
-	m_GlobalConfig.netOutSpeed = parser.ReadFloat(L"Rainmeter", L"NetOutSpeed", 0.0);
+	m_GlobalOptions.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", 0.0);
+	m_GlobalOptions.netOutSpeed = parser.ReadFloat(L"Rainmeter", L"NetOutSpeed", 0.0);
 
 	m_DisableDragging = 0!=parser.ReadInt(L"Rainmeter", L"DisableDragging", 0);
 	m_DisableRDP = 0!=parser.ReadInt(L"Rainmeter", L"DisableRDP", 0);
 
-	m_ConfigEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"");
-	if (m_ConfigEditor.empty())
+	m_SkinEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"");
+	if (m_SkinEditor.empty())
 	{
 		// Get the program path associated with .ini files
 		DWORD cchOut = MAX_PATH;
 		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".ini", L"open", buffer, &cchOut);
-		m_ConfigEditor = (SUCCEEDED(hr) && cchOut > 0) ? buffer : L"Notepad";
+		m_SkinEditor = (SUCCEEDED(hr) && cchOut > 0) ? buffer : L"Notepad";
 	}
 
 	m_LogViewer = parser.ReadString(L"Rainmeter", L"LogViewer", L"");
@@ -2268,7 +2268,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	if (m_Debug)
 	{
-		LogWithArgs(LOG_NOTICE, L"ConfigEditor: %s", m_ConfigEditor.c_str());
+		LogWithArgs(LOG_NOTICE, L"ConfigEditor: %s", m_SkinEditor.c_str());
 		LogWithArgs(LOG_NOTICE, L"LogViewer: %s", m_LogViewer.c_str());
 	}
 
@@ -2317,13 +2317,13 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 			continue;
 		}
 
-		SkinFolder& folder = m_SkinFolders[index];
+		SkinFolder& skinFolder = m_SkinFolders[index];
 
 		// Make sure there is a ini file available
 		int active = parser.ReadInt(section, L"Active", 0);
-		if (active > 0 && active <= (int)folder.files.size())
+		if (active > 0 && active <= (int)skinFolder.files.size())
 		{
-			folder.active = active;
+			skinFolder.active = active;
 		}
 
 		int order = parser.ReadInt(section, L"LoadOrder", 0);
@@ -2361,27 +2361,27 @@ void CRainmeter::RefreshAll()
 		CMeterWindow* mw = (*iter).second;
 		if (mw)
 		{
-			const WCHAR* skinFolder = mw->GetSkinName().c_str();
+			const WCHAR* skinFolder = mw->GetFolderPath().c_str();
 
 			// Verify whether the cached information is valid
-			int index = FindSkinFolderIndex(mw->GetSkinName());
+			int index = FindSkinFolderIndex(mw->GetFolderPath());
 			if (index != -1)
 			{
-				SkinFolder& folder = m_SkinFolders[index];
+				SkinFolder& skinFolder = m_SkinFolders[index];
 
-				const WCHAR* skinIniFile = mw->GetSkinIniFile().c_str();
+				const WCHAR* skinIniFile = mw->GetFileName().c_str();
 
 				bool found = false;
-				for (int i = 0, isize = (int)folder.files.size(); i < isize; ++i)
+				for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
 				{
-					if (_wcsicmp(skinIniFile, folder.files[i].c_str()) == 0)
+					if (_wcsicmp(skinIniFile, skinFolder.files[i].c_str()) == 0)
 					{
 						found = true;
-						if (folder.active != i + 1)
+						if (skinFolder.active != i + 1)
 						{
 							// Switch to new ini-file order
-							folder.active = i + 1;
-							WriteActive(mw->GetSkinName(), i);
+							skinFolder.active = i + 1;
+							WriteActive(mw->GetFolderPath(), i);
 						}
 						break;
 					}
@@ -2389,7 +2389,7 @@ void CRainmeter::RefreshAll()
 
 				if (!found)
 				{
-					DeactivateConfig(mw, index);
+					DeactivateSkin(mw, index);
 
 					std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolder, skinIniFile);
 					MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
@@ -2397,7 +2397,7 @@ void CRainmeter::RefreshAll()
 			}
 			else
 			{
-				DeactivateConfig(mw, -2);  // -2 = Deactivate the config forcibly
+				DeactivateSkin(mw, -2);  // -2 = Force deactivate
 
 				std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolder, L"");
 				MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
@@ -2465,8 +2465,8 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 
 	ReloadSettings();
 
-	// Create meter windows for active configs
-	ActivateActiveConfigs();
+	// Create meter windows for active skins
+	ActivateActiveSkins();
 }
 
 void CRainmeter::PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace)
@@ -2701,18 +2701,18 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					CheckMenuItem(subMenu, IDM_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
 				}
 
-				HMENU configMenu = GetSubMenu(subMenu, 4);
-				if (configMenu)
+				HMENU skinMenu = GetSubMenu(subMenu, 4);
+				if (skinMenu)
 				{
 					if (!m_SkinFolders.empty())
 					{
-						DeleteMenu(configMenu, 0, MF_BYPOSITION);  // "No skins available" menuitem
-						CreateAllSkinsMenu(configMenu);
+						DeleteMenu(skinMenu, 0, MF_BYPOSITION);  // "No skins available" menuitem
+						CreateAllSkinsMenu(skinMenu);
 					}
 
 					if (m_DisableDragging)
 					{
-						CheckMenuItem(configMenu, IDM_DISABLEDRAG, MF_BYCOMMAND | MF_CHECKED);
+						CheckMenuItem(skinMenu, IDM_DISABLEDRAG, MF_BYCOMMAND | MF_CHECKED);
 					}
 				}
 
@@ -2729,7 +2729,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				if (meterWindow)
 				{
 					HMENU rainmeterMenu = subMenu;
-					subMenu = CreateSkinMenu(meterWindow, 0, configMenu);
+					subMenu = CreateSkinMenu(meterWindow, 0, skinMenu);
 
 					WCHAR buffer[256];
 					GetMenuString(menu, 0, buffer, 256, MF_BYPOSITION);
@@ -2740,18 +2740,18 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				{
 					InsertMenu(subMenu, 12, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 
-					// Create a menu for all active configs
+					// Create a menu for all active skins
 					int index = 0;
 					std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
 					for (; iter != m_MeterWindows.end(); ++iter)
 					{
 						CMeterWindow* mw = ((*iter).second);
-						HMENU skinMenu = CreateSkinMenu(mw, index, configMenu);
-						InsertMenu(subMenu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetSkinName().c_str());
+						HMENU menu = CreateSkinMenu(mw, index, skinMenu);
+						InsertMenu(subMenu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)menu, mw->GetFolderPath().c_str());
 						++index;
 					}
 
-					// Put Update notifications in the Tray menu
+					// Add update notification item
 					if (m_NewVersion)
 					{
 						InsertMenu(subMenu, 0, MF_BYPOSITION, IDM_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE));
@@ -2815,8 +2815,8 @@ int CRainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 	const size_t max = Rainmeter->m_SkinFolders.size();
 	while (index < max)
 	{
-		const SkinFolder& folder = Rainmeter->m_SkinFolders[index];
-		if (folder.level != initialLevel)
+		const SkinFolder& skinFolder = Rainmeter->m_SkinFolders[index];
+		if (skinFolder.level != initialLevel)
 		{
 			return index - 1;
 		}
@@ -2824,7 +2824,7 @@ int CRainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 		HMENU subMenu = CreatePopupMenu();
 
 		// Add current folder
-		InsertMenu(skinMenu, menuIndex, MF_POPUP | MF_BYPOSITION, (UINT_PTR)subMenu, folder.name.c_str());
+		InsertMenu(skinMenu, menuIndex, MF_POPUP | MF_BYPOSITION, (UINT_PTR)subMenu, skinFolder.name.c_str());
 
 		// Add subfolders
 		const bool hasSubfolder = (index + 1) < max && m_SkinFolders[index + 1].level == initialLevel + 1;
@@ -2836,15 +2836,15 @@ int CRainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 		// Add files
 		{
 			int fileIndex = 0;
-			int fileCount = (int)folder.files.size();
+			int fileCount = (int)skinFolder.files.size();
 			for ( ; fileIndex < fileCount; ++fileIndex)
 			{
-				InsertMenu(subMenu, fileIndex, MF_STRING | MF_BYPOSITION, folder.commandBase + fileIndex, folder.files[fileIndex].c_str());
+				InsertMenu(subMenu, fileIndex, MF_STRING | MF_BYPOSITION, skinFolder.commandBase + fileIndex, skinFolder.files[fileIndex].c_str());
 			}
 
-			if (folder.active)
+			if (skinFolder.active)
 			{
-				UINT checkPos = folder.active - 1;
+				UINT checkPos = skinFolder.active - 1;
 				CheckMenuRadioItem(subMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
 			}
 
@@ -2861,7 +2861,7 @@ int CRainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 	return index;
 }
 
-HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU configMenu)
+HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU menu)
 {
 	HMENU skinMenu = LoadMenu(m_ResourceInstance, MAKEINTRESOURCE(IDR_SKIN_MENU));
 
@@ -2969,7 +2969,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 		}
 
 		// Add the name of the Skin to the menu
-		const std::wstring& skinName = meterWindow->GetSkinName();
+		const std::wstring& skinName = meterWindow->GetFolderPath();
 		ModifyMenu(skinMenu, IDM_SKIN_OPENSKINSFOLDER, MF_BYCOMMAND, IDM_SKIN_OPENSKINSFOLDER, skinName.c_str());
 		SetMenuDefaultItem(skinMenu, IDM_SKIN_OPENSKINSFOLDER, FALSE);
 
@@ -2986,24 +2986,24 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 		// Add the variants menu
 		if (variantsMenu)
 		{
-			const SkinFolder& folder = m_SkinFolders[FindSkinFolderIndex(skinName)];
-			for (int i = 0, isize = (int)folder.files.size(); i < isize; ++i)
+			const SkinFolder& skinFolder = m_SkinFolders[FindSkinFolderIndex(skinName)];
+			for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
 			{
-				InsertMenu(variantsMenu, i, MF_BYPOSITION, folder.commandBase + i, folder.files[i].c_str());
+				InsertMenu(variantsMenu, i, MF_BYPOSITION, skinFolder.commandBase + i, skinFolder.files[i].c_str());
 			}
 
-			if (folder.active)
+			if (skinFolder.active)
 			{
-				UINT checkPos = folder.active - 1;
+				UINT checkPos = skinFolder.active - 1;
 				CheckMenuRadioItem(variantsMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
 			}
 		}
 
-		// Add config's root menu
-		int itemCount = GetMenuItemCount(configMenu);
+		// Add skin root menu
+		int itemCount = GetMenuItemCount(menu);
 		if (itemCount > 0)
 		{
-			std::wstring root = meterWindow->GetSkinName();
+			std::wstring root = meterWindow->GetFolderPath();
 			std::wstring::size_type pos = root.find_first_of(L'\\');
 			if (pos != std::wstring::npos)
 			{
@@ -3012,18 +3012,18 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU con
 
 			for (int i = 0; i < itemCount; ++i)
 			{
-				UINT state = GetMenuState(configMenu, i, MF_BYPOSITION);
+				UINT state = GetMenuState(menu, i, MF_BYPOSITION);
 				if (state == 0xFFFFFFFF || (state & MF_POPUP) == 0) break;
 
 				WCHAR buffer[MAX_PATH];
-				if (GetMenuString(configMenu, i, buffer, MAX_PATH, MF_BYPOSITION))
+				if (GetMenuString(menu, i, buffer, MAX_PATH, MF_BYPOSITION))
 				{
 					if (_wcsicmp(root.c_str(), buffer) == 0)
 					{
-						HMENU configRootMenu = GetSubMenu(configMenu, i);
-						if (configRootMenu)
+						HMENU skinRootMenu = GetSubMenu(menu, i);
+						if (skinRootMenu)
 						{
-							InsertMenu(skinMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)configRootMenu, root.c_str());
+							InsertMenu(skinMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinRootMenu, root.c_str());
 						}
 						break;
 					}
@@ -3079,7 +3079,6 @@ void CRainmeter::CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow)
 		}
 	}
 
-	// Tick the configs
 	if (!screenDefined)
 	{
 		CheckMenuItem(monitorMenu, IDM_SKIN_MONITOR_PRIMARY, MF_BYCOMMAND | MF_CHECKED);
@@ -3181,7 +3180,7 @@ void CRainmeter::DeleteLogFile()
 void CRainmeter::AddAboutLogInfo(int level, LPCWSTR time, LPCWSTR message)
 {
 	// Store 20 last items
-	LOG_INFO logInfo = {level, time, message};
+	LogInfo logInfo = {level, time, message};
 	m_LogData.push_back(logInfo);
 	if (m_LogData.size() > 20)
 	{

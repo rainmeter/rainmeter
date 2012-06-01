@@ -117,8 +117,8 @@ void CDialogManage::OpenSkin(CMeterWindow* meterWindow)
 
 	if (c_Dialog)
 	{
-		std::wstring name = meterWindow->GetSkinName() + L'\\';
-		name += meterWindow->GetSkinIniFile();
+		std::wstring name = meterWindow->GetFolderPath() + L'\\';
+		name += meterWindow->GetFileName();
 
 		HWND item = GetDlgItem(c_Dialog->m_TabSkins.GetWindow(), IDC_MANAGESKINS_SKINS_TREEVIEW);
 		c_Dialog->m_TabSkins.SelectTreeItem(item, TreeView_GetRoot(item), name.c_str());
@@ -444,8 +444,8 @@ void CDialogManage::CTabSkins::Update(CMeterWindow* meterWindow, bool deleted)
 			}
 			m_HandleCommands = true;
 		}
-		else if (wcscmp(meterWindow->GetSkinName().c_str(), m_SkinName.c_str()) == 0 &&
-				 wcscmp(meterWindow->GetSkinIniFile().c_str(), m_FileName.c_str()) == 0)
+		else if (wcscmp(meterWindow->GetFolderPath().c_str(), m_SkinFolderPath.c_str()) == 0 &&
+				 wcscmp(meterWindow->GetFileName().c_str(), m_SkinFileName.c_str()) == 0)
 		{
 			ReadSkin();
 		}
@@ -535,7 +535,7 @@ void CDialogManage::CTabSkins::SetControls()
 
 		item = GetDlgItem(m_Window, IDC_MANAGESKINS_LOADORDER_TEXT);
 		EnableWindow(item, TRUE);
-		_itow_s(Rainmeter->GetLoadOrder(m_SkinName), buffer, 10);
+		_itow_s(Rainmeter->GetLoadOrder(m_SkinFolderPath), buffer, 10);
 		SetWindowText(item, buffer);
 
 		item = GetDlgItem(m_Window, IDC_MANAGESKINS_ONHOVER_COMBOBOX);
@@ -641,17 +641,17 @@ void CDialogManage::CTabSkins::DisableControls(bool clear)
 void CDialogManage::CTabSkins::ReadSkin()
 {
 	HWND item = GetDlgItem(m_Window, IDC_MANAGESKINS_FILE_TEXT);
-	SetWindowText(item, m_FileName.c_str());
+	SetWindowText(item, m_SkinFileName.c_str());
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_CONFIG_TEXT);
-	SetWindowText(item, m_SkinName.c_str());
+	SetWindowText(item, m_SkinFolderPath.c_str());
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_EDIT_BUTTON);
 	EnableWindow(item, TRUE);
 
-	std::wstring file = Rainmeter->GetSkinPath() + m_SkinName;
+	std::wstring file = Rainmeter->GetSkinPath() + m_SkinFolderPath;
 	file += L'\\';
-	file += m_FileName;
+	file += m_SkinFileName;
 	m_SkinWindow = Rainmeter->GetMeterWindowByINI(file);
 	if (!m_SkinWindow)
 	{
@@ -746,8 +746,8 @@ int CDialogManage::CTabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int i
 	const size_t max = Rainmeter->m_SkinFolders.size();
 	while (index < max)
 	{
-		const CRainmeter::SkinFolder& folder = Rainmeter->m_SkinFolders[index];
-		if (folder.level != initialLevel)
+		const CRainmeter::SkinFolder& skinFolder = Rainmeter->m_SkinFolders[index];
+		if (skinFolder.level != initialLevel)
 		{
 			return index - 1;
 		}
@@ -756,7 +756,7 @@ int CDialogManage::CTabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int i
 
 		// Add folder
 		tvi.item.iImage = tvi.item.iSelectedImage = 0;
-		tvi.item.pszText = (WCHAR*)folder.name.c_str();
+		tvi.item.pszText = (WCHAR*)skinFolder.name.c_str();
 		tvi.hParent = TreeView_InsertItem(tree, &tvi);
 
 		// Add subfolders
@@ -768,9 +768,9 @@ int CDialogManage::CTabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int i
 
 		// Add files
 		tvi.item.iImage = tvi.item.iSelectedImage = 1;
-		for (int i = 0, isize = (int)folder.files.size(); i < isize; ++i)
+		for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
 		{
-			tvi.item.pszText = (WCHAR*)folder.files[i].c_str();
+			tvi.item.pszText = (WCHAR*)skinFolder.files[i].c_str();
 			TreeView_InsertItem(tree, &tvi);
 		}
 
@@ -873,8 +873,8 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			int index = 0;
 			for ( ; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
 			{
-				std::wstring name = ((*iter).second)->GetSkinName() + L'\\';
-				name += ((*iter).second)->GetSkinIniFile();
+				std::wstring name = ((*iter).second)->GetFolderPath() + L'\\';
+				name += ((*iter).second)->GetFileName();
 				InsertMenu(menu, index, MF_BYPOSITION, ID_CONFIG_FIRST + index, name.c_str());
 				++index;
 			}
@@ -905,10 +905,10 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (!m_SkinWindow)
 			{
 				// Skin not active, load
-				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(m_SkinName, m_FileName);
+				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(m_SkinFolderPath, m_SkinFileName);
 				if (indexes.first != -1 && indexes.second != -1)
 				{
-					Rainmeter->ActivateConfig(indexes.first, indexes.second);
+					Rainmeter->ActivateSkin(indexes.first, indexes.second);
 
 					// Fake selection change to update controls
 					NMHDR nm;
@@ -921,7 +921,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			else
 			{
 				m_HandleCommands = false;
-				Rainmeter->DeactivateConfig(m_SkinWindow, -1);
+				Rainmeter->DeactivateSkin(m_SkinWindow, -1);
 			}
 		}
 		break;
@@ -934,7 +934,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDC_MANAGESKINS_EDIT_BUTTON:
-		Rainmeter->EditSkinFile(m_SkinName, m_FileName);
+		Rainmeter->EditSkinFile(m_SkinFolderPath, m_SkinFileName);
 		break;
 
 	case IDC_MANAGESKINS_X_TEXT:
@@ -1001,7 +1001,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				// Reset selection
 				Edit_SetSel((HWND)lParam, LOWORD(sel), HIWORD(sel));
 
-				WritePrivateProfileString(m_SkinName.c_str(), L"LoadOrder", buffer, Rainmeter->GetIniFile().c_str());
+				WritePrivateProfileString(m_SkinFolderPath.c_str(), L"LoadOrder", buffer, Rainmeter->GetIniFile().c_str());
 				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(m_SkinWindow);
 				if (indexes.first != -1)
 				{
@@ -1131,8 +1131,8 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			{
 				if (i == index)
 				{
-					std::wstring name = ((*iter).second)->GetSkinName() + L'\\';
-					name += ((*iter).second)->GetSkinIniFile();
+					std::wstring name = ((*iter).second)->GetFolderPath() + L'\\';
+					name += ((*iter).second)->GetFileName();
 
 					HWND item = GetDlgItem(m_Window, IDC_MANAGESKINS_SKINS_TREEVIEW);
 					SelectTreeItem(item, TreeView_GetRoot(item), name.c_str());
@@ -1167,9 +1167,9 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 	case NM_CLICK:
 		if (nm->idFrom == IDC_MANAGESKINS_ADDMETADATA_LINK)
 		{
-			std::wstring file = Rainmeter->GetSkinPath() + m_SkinName;
+			std::wstring file = Rainmeter->GetSkinPath() + m_SkinFolderPath;
 			file += L'\\';
-			file += m_FileName;
+			file += m_SkinFileName;
 			WritePrivateProfileString(L"Rainmeter", L"\r\n[Metadata]\r\nName=\r\nInformation=\r\nLicense=\r\nVersion", L"", file.c_str());
 			SendMessage(m_Window, WM_COMMAND, MAKEWPARAM(IDC_MANAGESKINS_EDIT_BUTTON, 0), 0);
 			ShowWindow(nm->hwndFrom, SW_HIDE);
@@ -1177,7 +1177,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case NM_DBLCLK:
-		if (nm->idFrom == IDC_MANAGESKINS_SKINS_TREEVIEW && !m_FileName.empty())
+		if (nm->idFrom == IDC_MANAGESKINS_SKINS_TREEVIEW && !m_SkinFileName.empty())
 		{
 			OnCommand(MAKEWPARAM(IDC_MANAGESKINS_LOAD_BUTTON, 0), 0);
 		}
@@ -1209,7 +1209,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 					mii.cbSize = sizeof(MENUITEMINFO);
 					mii.fMask = MIIM_STRING;
 
-					if (m_FileName.empty())
+					if (m_SkinFileName.empty())
 					{
 						// It's a folder
 						subMenu = GetSubMenu(menu, 0);
@@ -1259,8 +1259,8 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 		if (nm->idFrom == IDC_MANAGESKINS_SKINS_TREEVIEW)
 		{
 			m_SkinWindow = NULL;
-			m_FileName.clear();
-			m_SkinName.clear();
+			m_SkinFileName.clear();
+			m_SkinFolderPath.clear();
 
 			// Temporarily disable handling commands
 			m_HandleCommands = false;
@@ -1278,19 +1278,19 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			if (tvi.cChildren == 0)
 			{
 				// Current selection is file
-				m_FileName = buffer;
+				m_SkinFileName = buffer;
 				tvi.mask = TVIF_TEXT;
 			
-				// Loop through parents to get config
-				m_SkinName.clear();
+				// Loop through parents to get skin folder
+				m_SkinFolderPath.clear();
 				while ((tvi.hItem = TreeView_GetParent(nm->hwndFrom, tvi.hItem)) != NULL)
 				{
 					TreeView_GetItem(nm->hwndFrom, &tvi);
-					m_SkinName.insert(0, 1, L'\\');
-					m_SkinName.insert(0, buffer);
+					m_SkinFolderPath.insert(0, 1, L'\\');
+					m_SkinFolderPath.insert(0, buffer);
 				}
 
-				m_SkinName.resize(m_SkinName.length() - 1);  // Get rid of trailing slash
+				m_SkinFolderPath.resize(m_SkinFolderPath.length() - 1);  // Get rid of trailing slash
 
 				ReadSkin();
 			}
@@ -1522,7 +1522,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			args += L"Themes\\";
 			args += themes[sel];
 			args += L"\\Rainmeter.thm";
-			RunFile(Rainmeter->GetConfigEditor().c_str(), args.c_str());
+			RunFile(Rainmeter->GetSkinEditor().c_str(), args.c_str());
 		}
 		break;
 

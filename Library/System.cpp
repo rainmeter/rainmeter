@@ -732,7 +732,7 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 		if (logging)
 		{
 			LogWithArgs(LOG_DEBUG, L"%c [%c] 0x%p : %s (Name: \"%s\", zPos=%i)",
-				flag, IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetSkinName().c_str(), (int)zPos);
+				flag, IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className, Window->GetFolderPath().c_str(), (int)zPos);
 		}
 	}
 	else

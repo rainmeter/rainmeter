@@ -57,12 +57,11 @@ CMeterRoundLine::~CMeterRoundLine()
 }
 
 /*
-** Read the meter-specific configs from the ini-file.
+** Read the options specified in the ini file.
 **
 */
 void CMeterRoundLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
-	// Read common configs
 	CMeter::ReadOptions(parser, section);
 
 	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);

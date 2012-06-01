@@ -39,7 +39,7 @@ CMeasureUptime::~CMeasureUptime()
 }
 
 /*
-** Reads the measure specific configs.
+** Read the options specified in the ini file.
 **
 */
 void CMeasureUptime::ReadOptions(CConfigParser& parser, const WCHAR* section)

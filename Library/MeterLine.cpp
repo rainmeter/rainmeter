@@ -96,7 +96,7 @@ void CMeterLine::Initialize()
 }
 
 /*
-** Read the meter-specific configs from the ini-file.
+** Read the options specified in the ini file.
 **
 */
 void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
@@ -107,7 +107,6 @@ void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	int oldLineCount = (int)m_Colors.size();
 	int oldW = m_W;
 
-	// Read common configs
 	CMeter::ReadOptions(parser, section);
 
 	int lineCount = parser.ReadInt(section, L"LineCount", 1);

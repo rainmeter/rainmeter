@@ -160,7 +160,7 @@ class CMeter;
 class CMeterWindow : public CGroup
 {
 public:
-	CMeterWindow(const std::wstring& config, const std::wstring& iniFile);
+	CMeterWindow(const std::wstring& folderPath, const std::wstring& file);
 	~CMeterWindow();
 
 	int Initialize();
@@ -201,11 +201,11 @@ public:
 
 	CConfigParser& GetParser() { return m_Parser; }
 
-	const std::wstring& GetSkinName() { return m_SkinName; }
-	const std::wstring& GetSkinIniFile() { return m_SkinIniFile; }
-	std::wstring GetSkinFilePath();
-	std::wstring GetSkinRootPath();
-	std::wstring GetSkinResourcesPath();
+	const std::wstring& GetFolderPath() { return m_FolderPath; }
+	const std::wstring& GetFileName() { return m_FileName; }
+	std::wstring GetFilePath();
+	std::wstring GetRootPath();
+	std::wstring GetResourcesPath();
 
 	std::list<CMeasure*>& GetMeasures() { return m_Measures; }
 	std::list<CMeter*>& GetMeters() { return m_Meters; }
@@ -284,21 +284,21 @@ protected:
 	LRESULT OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
-	enum SETTING
+	enum OPTION
 	{
-		SETTING_WINDOWPOSITION   = 0x00000001,
-		SETTING_ALPHAVALUE       = 0x00000002,
-		SETTING_FADEDURATION     = 0x00000004,
-		SETTING_CLICKTHROUGH     = 0x00000008,
-		SETTING_WINDOWDRAGGABLE  = 0x00000010,
-		SETTING_HIDEONMOUSEOVER  = 0x00000020,
-		SETTING_SAVEPOSITION     = 0x00000040,
-		SETTING_SNAPEDGES        = 0x00000080,
-		SETTING_KEEPONSCREEN     = 0x00000100,
-		SETTING_AUTOSELECTSCREEN = 0x00000200,
-		SETTING_ALWAYSONTOP      = 0x00000400,
+		OPTION_POSITION         = 0x00000001,
+		OPTION_ALPHAVALUE       = 0x00000002,
+		OPTION_FADEDURATION     = 0x00000004,
+		OPTION_CLICKTHROUGH     = 0x00000008,
+		OPTION_DRAGGABLE        = 0x00000010,
+		OPTION_HIDEONMOUSEOVER  = 0x00000020,
+		OPTION_SAVEPOSITION     = 0x00000040,
+		OPTION_SNAPEDGES        = 0x00000080,
+		OPTION_KEEPONSCREEN     = 0x00000100,
+		OPTION_AUTOSELECTSCREEN = 0x00000200,
+		OPTION_ALWAYSONTOP      = 0x00000400,
 
-		SETTING_ALL              = 0xFFFFFFFF
+		OPTION_ALL              = 0xFFFFFFFF
 	};
 
 	enum RESIZEMODE
@@ -312,7 +312,6 @@ private:
 
 	bool HitTest(int x, int y);
 
-	void GetSkinFolders(const std::wstring& folder);
 	void SnapToWindow(CMeterWindow* window, LPWINDOWPOS wp);
 	void MapCoordsToScreen(int& x, int& y, int w, int h);
 	void WindowToScreen();
@@ -323,7 +322,7 @@ private:
 	void Update(bool refresh);
 	void UpdateWindow(int alpha, bool reset);
 	void ReadOptions();
-	void WriteOptions(INT setting = SETTING_ALL);
+	void WriteOptions(INT setting = OPTION_ALL);
 	bool ReadSkin();
 	void InitializeMeasures();
 	void InitializeMeters();
@@ -381,7 +380,7 @@ private:
 
 	bool m_MouseOver;
 
-	std::wstring m_ConfigGroup;
+	std::wstring m_SkinGroup;
 	std::wstring m_BackgroundName;
 	RECT m_BackgroundMargins;
 	RECT m_DragMargins;
@@ -449,8 +448,8 @@ private:
 	std::list<CMeasure*> m_Measures;
 	std::list<CMeter*> m_Meters;
 
-	const std::wstring m_SkinName;
-	const std::wstring m_SkinIniFile;
+	const std::wstring m_FolderPath;
+	const std::wstring m_FileName;
 
 	int m_UpdateCounter;
 	UINT m_MouseMoveCounter;

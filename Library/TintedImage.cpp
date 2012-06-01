@@ -148,14 +148,12 @@ CTintedImageHelper_DefineOptionArray(CTintedImage::c_DefaultOptionArray, L"");
 /*
 ** The constructor.
 **
-** If disableTransform is true, following configs are ignored:
-**  - ImageCrop
-**  - ImageRotate
+** If disableTransform is true, ImageCrop and ImageRotate are ignored.
 **
 */
-CTintedImage::CTintedImage(const WCHAR* name, const WCHAR** configArray, bool disableTransform) : m_DisableTransform(disableTransform),
+CTintedImage::CTintedImage(const WCHAR* name, const WCHAR** optionArray, bool disableTransform) : m_DisableTransform(disableTransform),
 	m_Name(name ? name : L"Image"),
-	m_OptionArray(configArray ? configArray : c_DefaultOptionArray),
+	m_OptionArray(optionArray ? optionArray : c_DefaultOptionArray),
 
 	m_Bitmap(),
 	m_BitmapTint(),
@@ -563,7 +561,7 @@ void CTintedImage::ApplyTransform()
 }
 
 /*
-** Read the meter-specific configs from the ini-file.
+** Read the meter-specific options from the ini-file.
 **
 */
 void CTintedImage::ReadOptions(CConfigParser& parser, const WCHAR* section)

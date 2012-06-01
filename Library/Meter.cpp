@@ -248,9 +248,8 @@ void CMeter::Hide()
 }
 
 /*
-** Reads the meter-specific configs from the ini-file. The base implementation
-** reads the common settings for all meters. The inherited classes must call
-** the base implementation if they overwrite this method.
+** Read the common options specified in the ini file. The inherited classes must
+** call this base implementation if they overwrite this method.
 **
 */
 void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)

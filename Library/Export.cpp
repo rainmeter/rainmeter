@@ -138,7 +138,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 		if (meterWindow)
 		{
 			g_Buffer = L"\"";
-			g_Buffer += meterWindow->GetSkinName();
+			g_Buffer += meterWindow->GetFolderPath();
 			g_Buffer += L"\"";
 			return g_Buffer.c_str();
 		}

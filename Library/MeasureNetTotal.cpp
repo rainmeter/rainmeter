@@ -79,7 +79,7 @@ void CMeasureNetTotal::UpdateValue()
 }
 
 /*
-** Reads the measure specific configs.
+** Read the options specified in the ini file.
 **
 */
 void CMeasureNetTotal::ReadOptions(CConfigParser& parser, const WCHAR* section)

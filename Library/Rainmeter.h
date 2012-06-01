@@ -46,7 +46,7 @@
 #define WM_RAINMETER_DELAYED_EXECUTE     WM_APP + 1
 #define WM_RAINMETER_EXECUTE             WM_APP + 2
 
-struct GlobalConfig
+struct GlobalOptions
 {
 	double netInSpeed;
 	double netOutSpeed;
@@ -89,7 +89,7 @@ public:
 		}
 	};
 
-	struct LOG_INFO
+	struct LogInfo
 	{
 		int level;
 		std::wstring timestamp;
@@ -110,27 +110,27 @@ public:
 
 	CTrayWindow* GetTrayWindow() { return m_TrayWindow; }
 
-	CMeterWindow* GetMeterWindow(const std::wstring& config);
+	CMeterWindow* GetMeterWindow(const std::wstring& folderPath);
 	CMeterWindow* GetMeterWindowByINI(const std::wstring& ini_searching);
-	std::pair<int, int> GetMeterWindowIndex(const std::wstring& config, const std::wstring& iniFile);
-	std::pair<int, int> GetMeterWindowIndex(CMeterWindow* meterWindow) { return GetMeterWindowIndex(meterWindow->GetSkinName(), meterWindow->GetSkinIniFile()); }
+	std::pair<int, int> GetMeterWindowIndex(const std::wstring& folderPath, const std::wstring& file);
+	std::pair<int, int> GetMeterWindowIndex(CMeterWindow* meterWindow) { return GetMeterWindowIndex(meterWindow->GetFolderPath(), meterWindow->GetFileName()); }
 	std::pair<int, int> GetMeterWindowIndex(UINT menuCommand);
 
 	CMeterWindow* GetMeterWindow(HWND hwnd);
 	void GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group = std::wstring());
 	std::map<std::wstring, CMeterWindow*>& GetAllMeterWindows() { return m_MeterWindows; }
 
-	std::wstring GetSkinFolderPath(int folderIndex);
+	std::wstring GetFolderPath(int folderIndex);
 	int FindSkinFolderIndex(const std::wstring& folderPath);
 
-	const std::vector<SkinFolder>& GetSkinFolders() { return m_SkinFolders; }
+	const std::vector<SkinFolder>& GetFolders() { return m_SkinFolders; }
 	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; }
 
 	void DeleteMeterWindow(CMeterWindow* meterWindow, bool force = false);
 
-	void ActivateConfig(int folderIndex, int fileIndex);
-	void DeactivateConfig(CMeterWindow* meterWindow, int folderIndex, bool save = true);
-	void ToggleConfig(int folderIndex, int fileIndex);
+	void ActivateSkin(int folderIndex, int fileIndex);
+	void DeactivateSkin(CMeterWindow* meterWindow, int folderIndex, bool save = true);
+	void ToggleSkin(int folderIndex, int fileIndex);
 
 	const std::wstring& GetPath() { return m_Path; }
 	const std::wstring& GetIniFile() { return m_IniFile; }
@@ -146,7 +146,7 @@ public:
 
 	const std::wstring& GetDrive() { return m_Drive; }
 
-	const std::wstring& GetConfigEditor() { return m_ConfigEditor; }
+	const std::wstring& GetSkinEditor() { return m_SkinEditor; }
 	const std::wstring& GetLogViewer() { return m_LogViewer; }
 	const std::wstring& GetStatsDate() { return m_StatsDate; }
 
@@ -158,7 +158,7 @@ public:
 
 	bool GetDebug() { return m_Debug; }
 
-	GlobalConfig& GetGlobalConfig() { return m_GlobalConfig; }
+	GlobalOptions& GetGlobalOptions() { return m_GlobalOptions; }
 
 	void ReloadSettings();
 	void EditSettings();
@@ -190,7 +190,7 @@ public:
 	bool IsNormalStayDesktop() { return m_NormalStayDesktop; }
 
 	void AddAboutLogInfo(int level, LPCWSTR time, LPCWSTR message);
-	const std::list<LOG_INFO>& GetAboutLogData() { return m_LogData; }
+	const std::list<LogInfo>& GetAboutLogData() { return m_LogData; }
 
 	void SetDebug(bool debug);
 
@@ -222,10 +222,10 @@ private:
 
 	void BangWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& args, size_t numOfArgs, CMeterWindow* meterWindow);
 	void BangGroupWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& args, size_t numOfArgs, CMeterWindow* meterWindow);
-	void Bang_ActivateConfig(std::vector<std::wstring>& args);
-	void Bang_DeactivateConfig(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
-	void Bang_ToggleConfig(std::vector<std::wstring>& args);
-	void Bang_DeactivateConfigGroup(std::vector<std::wstring>& args);
+	void Bang_ActivateSkin(std::vector<std::wstring>& args);
+	void Bang_DeactivateSkin(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
+	void Bang_ToggleSkin(std::vector<std::wstring>& args);
+	void Bang_DeactivateSkinGroup(std::vector<std::wstring>& args);
 	void Bang_SetClip(std::vector<std::wstring>& args);
 	void Bang_SetWallpaper(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
 	void Bang_SkinMenu(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
@@ -233,25 +233,25 @@ private:
 	void Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
 	void Bang_Log(std::vector<std::wstring>& args);
 
-	void ActivateActiveConfigs();
-	void CreateMeterWindow(const std::wstring& config, const std::wstring& iniFile);
-	void WriteActive(const std::wstring& config, int fileIndex);
-	void ScanForConfigs(const std::wstring& path);
+	void ActivateActiveSkins();
+	void CreateMeterWindow(const std::wstring& folderPath, const std::wstring& file);
+	void WriteActive(const std::wstring& folderPath, int fileIndex);
+	void ScanForSkins(const std::wstring& path);
 	void ScanForThemes(const std::wstring& path);
 	void ReadGeneralSettings(const std::wstring& iniFile);
 	void SetLoadOrder(int folderIndex, int order);
-	int GetLoadOrder(const std::wstring& config);
+	int GetLoadOrder(const std::wstring& folderPath);
 	void UpdateDesktopWorkArea(bool reset);
-	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU configMenu);
+	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU menu);
 	void ChangeSkinIndex(HMENU subMenu, int index);
-	int ScanForConfigsRecursive(const std::wstring& path, std::wstring base, int index, UINT level);
+	int ScanForSkinsRecursive(const std::wstring& path, std::wstring base, int index, UINT level);
 	
 	void CreateAllSkinsMenu(HMENU skinMenu) { CreateAllSkinsMenuRecursive(skinMenu, 0); }
 	int CreateAllSkinsMenuRecursive(HMENU skinMenu, int index);
 
 	void CreateThemeMenu(HMENU themeMenu);
 	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);
-	void CreateDefaultConfigFile();
+	void CreateOptionsFile();
 	void CreateDataFile();
 	void SetLogging(bool logging);
 	void TestSettingsFile(bool bDefaultIniLocation);
@@ -259,7 +259,7 @@ private:
 	CTrayWindow* m_TrayWindow;
 
 	std::vector<SkinFolder> m_SkinFolders;
-	std::multimap<int, int> m_ConfigOrders;
+	std::multimap<int, int> m_SkinOrders;
 	std::map<std::wstring, CMeterWindow*> m_MeterWindows;
 	std::vector<std::wstring> m_Themes;
 
@@ -299,9 +299,9 @@ private:
 
 	bool m_Logging;
 
-	std::list<LOG_INFO> m_LogData;
+	std::list<LogInfo> m_LogData;
 
-	std::wstring m_ConfigEditor;
+	std::wstring m_SkinEditor;
 	std::wstring m_LogViewer;
 
 	CConfigParser* m_CurrentParser;
@@ -315,7 +315,7 @@ private:
 
 	ULONG_PTR m_GDIplusToken;
 
-	GlobalConfig m_GlobalConfig;
+	GlobalOptions m_GlobalOptions;
 };
 
 #ifdef LIBRARY_EXPORTS

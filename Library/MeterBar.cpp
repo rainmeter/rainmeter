@@ -79,7 +79,7 @@ void CMeterBar::Initialize()
 }
 
 /*
-** Read the meter-specific configs from the ini-file.
+** Read the options specified in the ini file.
 **
 */
 void CMeterBar::ReadOptions(CConfigParser& parser, const WCHAR* section)
@@ -89,7 +89,6 @@ void CMeterBar::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	int oldW = m_W;
 	int oldH = m_H;
 
-	// Read common configs
 	CMeter::ReadOptions(parser, section);
 
 	m_Color = parser.ReadColor(section, L"BarColor", Color::Green);
@@ -99,7 +98,7 @@ void CMeterBar::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	{
 		m_MeterWindow->MakePathAbsolute(m_ImageName);
 
-		// Read tinting configs
+		// Read tinting options
 		m_Image.ReadOptions(parser, section);
 	}
 	else

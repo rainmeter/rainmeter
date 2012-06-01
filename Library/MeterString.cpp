@@ -307,7 +307,7 @@ void CMeterString::Initialize()
 }
 
 /*
-** Read the meter-specific configs from the ini-file.
+** Read the options specified in the ini file.
 **
 */
 void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
@@ -317,7 +317,6 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	int oldFontSize = m_FontSize;
 	TEXTSTYLE oldStyle = m_Style;
 
-	// Read common configs
 	CMeter::ReadOptions(parser, section);
 
 	// Check for extra measures

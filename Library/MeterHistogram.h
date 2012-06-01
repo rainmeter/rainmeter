@@ -76,9 +76,9 @@ private:
 	bool m_GraphStartLeft;
 	bool m_GraphHorizontalOrientation;
 
-	static const WCHAR* c_PrimaryOptionArray[CTintedImage::ConfigCount];
-	static const WCHAR* c_SecondaryOptionArray[CTintedImage::ConfigCount];
-	static const WCHAR* c_BothOptionArray[CTintedImage::ConfigCount];
+	static const WCHAR* c_PrimaryOptionArray[CTintedImage::OptionCount];
+	static const WCHAR* c_SecondaryOptionArray[CTintedImage::OptionCount];
+	static const WCHAR* c_BothOptionArray[CTintedImage::OptionCount];
 };
 
 #endif

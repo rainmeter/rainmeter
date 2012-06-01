@@ -111,8 +111,8 @@ void CMeasure::Initialize()
 }
 
 /*
-** Reads the common configs for all Measures. The inherited classes
-** must call the base implementation if they overwrite this method.
+** Read the common options specified in the ini file. The inherited classes must
+** call this base implementation if they overwrite this method.
 **
 */
 void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)

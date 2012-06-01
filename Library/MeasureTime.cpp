@@ -207,7 +207,7 @@ const WCHAR* CMeasureTime::GetStringValue(AUTOSCALE autoScale, double scale, int
 }
 
 /*
-** Reads the measure specific configs.
+** Read the options specified in the ini file.
 **
 */
 void CMeasureTime::ReadOptions(CConfigParser& parser, const WCHAR* section)

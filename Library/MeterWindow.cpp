@@ -73,7 +73,7 @@ extern CRainmeter* Rainmeter;
 ** Constructor
 **
 */
-CMeterWindow::CMeterWindow(const std::wstring& config, const std::wstring& iniFile) : m_SkinName(config), m_SkinIniFile(iniFile),
+CMeterWindow::CMeterWindow(const std::wstring& folderPath, const std::wstring& file) : m_FolderPath(folderPath), m_FileName(file),
 	m_DoubleBuffer(),
 	m_DIBSectionBuffer(),
 	m_DIBSectionBufferPixels(),
@@ -326,7 +326,7 @@ void CMeterWindow::Deactivate()
 }
 
 /*
-** This deletes everything and rebuilds the config again.
+** Rebuilds the skin.
 **
 */
 void CMeterWindow::Refresh(bool init, bool all)
@@ -335,9 +335,9 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	Rainmeter->SetCurrentParser(&m_Parser);
 
-	std::wstring notice = L"Refreshing skin \"" + m_SkinName;
+	std::wstring notice = L"Refreshing skin \"" + m_FolderPath;
 	notice += L'\\';
-	notice += m_SkinIniFile;
+	notice += m_FileName;
 	notice += L'"';
 	Log(LOG_NOTICE, notice.c_str());
 
@@ -395,7 +395,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 	ReadOptions();	// Read the general settings
 	if (!ReadSkin())
 	{
-		Rainmeter->DeactivateConfig(this, -1);
+		Rainmeter->DeactivateSkin(this, -1);
 		return;
 	}
 
@@ -572,7 +572,7 @@ void CMeterWindow::MoveWindow(int x, int y)
 
 	if (m_SavePosition)
 	{
-		WriteOptions(SETTING_WINDOWPOSITION);
+		WriteOptions(OPTION_POSITION);
 	}
 }
 
@@ -1108,7 +1108,7 @@ void CMeterWindow::ShowMeter(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_NOTICE, L"!ShowMeter: [%s] not found in \"%s\"", meter, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_NOTICE, L"!ShowMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
 }
 
 /*
@@ -1130,7 +1130,7 @@ void CMeterWindow::HideMeter(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!HideMeter: [%s] not found in \"%s\"", meter, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_ERROR, L"!HideMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
 }
 
 /*
@@ -1159,7 +1159,7 @@ void CMeterWindow::ToggleMeter(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!ToggleMeter: [%s] not found in \"%s\"", meter, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_ERROR, L"!ToggleMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
 }
 
 /*
@@ -1182,7 +1182,7 @@ void CMeterWindow::MoveMeter(const std::wstring& name, int x, int y)
 		}
 	}
 
-	LogWithArgs(LOG_ERROR, L"!MoveMeter: [%s] not found in \"%s\"", meter, m_SkinName.c_str());
+	LogWithArgs(LOG_ERROR, L"!MoveMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
 }
 
 /*
@@ -1222,7 +1222,7 @@ void CMeterWindow::UpdateMeter(const std::wstring& name, bool group)
 	// Post-updates
 	PostUpdate(bActiveTransition);
 
-	if (!group && bContinue) LogWithArgs(LOG_ERROR, L"!UpdateMeter: [%s] not found in \"%s\"", meter, m_SkinName.c_str());
+	if (!group && bContinue) LogWithArgs(LOG_ERROR, L"!UpdateMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
 }
 
 /*
@@ -1243,7 +1243,7 @@ void CMeterWindow::EnableMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!EnableMeasure: [%s] not found in \"%s\"", measure, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_ERROR, L"!EnableMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
 }
 
 /*
@@ -1264,7 +1264,7 @@ void CMeterWindow::DisableMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!DisableMeasure: [%s] not found in \"%s\"", measure, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_ERROR, L"!DisableMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
 }
 
 /*
@@ -1292,7 +1292,7 @@ void CMeterWindow::ToggleMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!ToggleMeasure: [%s] not found in \"%s\"", measure, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_ERROR, L"!ToggleMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
 }
 
 /*
@@ -1321,7 +1321,7 @@ void CMeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!UpdateMeasure: [%s] not found in \"%s\"", measure, m_SkinName.c_str());
+	if (!group) LogWithArgs(LOG_ERROR, L"!UpdateMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
 }
 
 /*
@@ -1433,9 +1433,8 @@ void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& op
 	}
 }
 
-/* WindowToScreen
-**
-** Calculates the screen cordinates from the WindowX/Y config
+/*
+** Calculates the screen cordinates from the WindowX/Y options
 **
 */
 void CMeterWindow::WindowToScreen()
@@ -1771,14 +1770,14 @@ void CMeterWindow::ScreenToWindow()
 }
 
 /*
-** Reads the current config
+** Reads the skin options from Rainmeter.ini
 **
 */
 void CMeterWindow::ReadOptions()
 {
 	WCHAR buffer[32];
 
-	const WCHAR* section = m_SkinName.c_str();
+	const WCHAR* section = m_FolderPath.c_str();
 	CConfigParser parser;
 	parser.Initialize(Rainmeter->GetIniFile(), NULL, section);
 
@@ -1794,14 +1793,14 @@ void CMeterWindow::ReadOptions()
 	// Check if the window position should be read as a formula
 	double value;
 	m_WindowX = parser.ReadString(section, L"WindowX", L"0");
-	addWriteFlag(SETTING_WINDOWPOSITION);
+	addWriteFlag(OPTION_POSITION);
 	if (parser.ParseFormula(m_WindowX, &value))
 	{
 		_itow_s((int)value, buffer, 10);
 		m_WindowX = buffer;
 	}
 	m_WindowY = parser.ReadString(section, L"WindowY", L"0");
-	addWriteFlag(SETTING_WINDOWPOSITION);
+	addWriteFlag(OPTION_POSITION);
 	if (parser.ParseFormula(m_WindowY, &value))
 	{
 		_itow_s((int)value, buffer, 10);
@@ -1812,23 +1811,23 @@ void CMeterWindow::ReadOptions()
 	m_AnchorY = parser.ReadString(section, L"AnchorY", L"0");
 
 	int zPos = parser.ReadInt(section, L"AlwaysOnTop", ZPOSITION_NORMAL);
-	addWriteFlag(SETTING_ALWAYSONTOP);
+	addWriteFlag(OPTION_ALWAYSONTOP);
 	m_WindowZPosition = (zPos >= ZPOSITION_ONDESKTOP && zPos <= ZPOSITION_ONTOPMOST) ? (ZPOSITION)zPos : ZPOSITION_NORMAL;
 
 	int hideMode = parser.ReadInt(section, L"HideOnMouseOver", HIDEMODE_NONE);
 	m_WindowHide = (hideMode >= HIDEMODE_NONE && hideMode <= HIDEMODE_FADEOUT) ? (HIDEMODE)hideMode : HIDEMODE_NONE;
 
 	m_WindowDraggable = 0!=parser.ReadInt(section, L"Draggable", 1);
-	addWriteFlag(SETTING_WINDOWDRAGGABLE);
+	addWriteFlag(OPTION_DRAGGABLE);
 
 	m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", 1);
-	addWriteFlag(SETTING_SNAPEDGES);
+	addWriteFlag(OPTION_SNAPEDGES);
 
 	m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", 0);
-	addWriteFlag(SETTING_CLICKTHROUGH);
+	addWriteFlag(OPTION_CLICKTHROUGH);
 
 	m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", 1);
-	addWriteFlag(SETTING_KEEPONSCREEN);
+	addWriteFlag(OPTION_KEEPONSCREEN);
 
 	m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", 1);
 	m_WindowStartHidden = 0!=parser.ReadInt(section, L"StartHidden", 0);
@@ -1840,7 +1839,7 @@ void CMeterWindow::ReadOptions()
 
 	m_FadeDuration = parser.ReadInt(section, L"FadeDuration", 250);
 
-	m_ConfigGroup = parser.ReadString(section, L"Group", L"");
+	m_SkinGroup = parser.ReadString(section, L"Group", L"");
 
 	if (writeFlags != 0)
 	{
@@ -1852,7 +1851,7 @@ void CMeterWindow::ReadOptions()
 }
 
 /*
-** Writes the new settings to the config
+** Writes the specified options to Rainmeter.ini
 **
 */
 void CMeterWindow::WriteOptions(INT setting)
@@ -1862,14 +1861,14 @@ void CMeterWindow::WriteOptions(INT setting)
 	if (*iniFile)
 	{
 		WCHAR buffer[32];
-		const WCHAR* section = m_SkinName.c_str();
+		const WCHAR* section = m_FolderPath.c_str();
 
-		if (setting != SETTING_ALL)
+		if (setting != OPTION_ALL)
 		{
 			CDialogManage::UpdateSkins(this);
 		}
 
-		if (setting & SETTING_WINDOWPOSITION)
+		if (setting & OPTION_POSITION)
 		{
 			// If position needs to be save, do so.
 			if (m_SavePosition)
@@ -1880,55 +1879,55 @@ void CMeterWindow::WriteOptions(INT setting)
 			}
 		}
 
-		if (setting & SETTING_ALPHAVALUE)
+		if (setting & OPTION_ALPHAVALUE)
 		{
 			_itow_s(m_AlphaValue, buffer, 10);
 			WritePrivateProfileString(section, L"AlphaValue", buffer, iniFile);
 		}
 
-		if (setting & SETTING_FADEDURATION)
+		if (setting & OPTION_FADEDURATION)
 		{
 			_itow_s(m_FadeDuration, buffer, 10);
 			WritePrivateProfileString(section, L"FadeDuration", buffer, iniFile);
 		}
 
-		if (setting & SETTING_CLICKTHROUGH)
+		if (setting & OPTION_CLICKTHROUGH)
 		{
 			WritePrivateProfileString(section, L"ClickThrough", m_ClickThrough ? L"1" : L"0", iniFile);
 		}
 
-		if (setting & SETTING_WINDOWDRAGGABLE)
+		if (setting & OPTION_DRAGGABLE)
 		{
 			WritePrivateProfileString(section, L"Draggable", m_WindowDraggable ? L"1" : L"0", iniFile);
 		}
 
-		if (setting & SETTING_HIDEONMOUSEOVER)
+		if (setting & OPTION_HIDEONMOUSEOVER)
 		{
 			_itow_s(m_WindowHide, buffer, 10);
 			WritePrivateProfileString(section, L"HideOnMouseOver", buffer, iniFile);
 		}
 
-		if (setting & SETTING_SAVEPOSITION)
+		if (setting & OPTION_SAVEPOSITION)
 		{
 			WritePrivateProfileString(section, L"SavePosition", m_SavePosition ? L"1" : L"0", iniFile);
 		}
 
-		if (setting & SETTING_SNAPEDGES)
+		if (setting & OPTION_SNAPEDGES)
 		{
 			WritePrivateProfileString(section, L"SnapEdges", m_SnapEdges ? L"1" : L"0", iniFile);
 		}
 
-		if (setting & SETTING_KEEPONSCREEN)
+		if (setting & OPTION_KEEPONSCREEN)
 		{
 			WritePrivateProfileString(section, L"KeepOnScreen", m_KeepOnScreen ? L"1" : L"0", iniFile);
 		}
 
-		if (setting & SETTING_AUTOSELECTSCREEN)
+		if (setting & OPTION_AUTOSELECTSCREEN)
 		{
 			WritePrivateProfileString(section, L"AutoSelectScreen", m_AutoSelectScreen ? L"1" : L"0", iniFile);
 		}
 
-		if (setting & SETTING_ALWAYSONTOP)
+		if (setting & OPTION_ALWAYSONTOP)
 		{
 			_itow_s(m_WindowZPosition, buffer, 10);
 			WritePrivateProfileString(section, L"AlwaysOnTop", buffer, iniFile);
@@ -1937,24 +1936,24 @@ void CMeterWindow::WriteOptions(INT setting)
 }
 
 /*
-** Reads the skin config, creates the meters and measures and does the bindings.
+** Reads the skin file and creates the meters and measures.
 **
 */
 bool CMeterWindow::ReadSkin()
 {
 	WCHAR buffer[128];
 
-	std::wstring iniFile = GetSkinFilePath();
+	std::wstring iniFile = GetFilePath();
 
 	// Verify whether the file exists
 	if (_waccess(iniFile.c_str(), 0) == -1)
 	{
-		std::wstring message = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, m_SkinName.c_str(), m_SkinIniFile.c_str());
+		std::wstring message = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, m_FolderPath.c_str(), m_FileName.c_str());
 		MessageBox(m_Window, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		return false;
 	}
 
-	std::wstring resourcePath = GetSkinResourcesPath();
+	std::wstring resourcePath = GetResourcesPath();
 	bool hasResourcesFolder = (_waccess(resourcePath.c_str(), 0) == 0);
 
 	m_Parser.Initialize(iniFile, this, NULL, &resourcePath);
@@ -1972,7 +1971,7 @@ bool CMeterWindow::ReadSkin()
 			_snwprintf_s(buffer, _TRUNCATE, L"%u.%u", appVersion / 1000000, (appVersion / 1000) % 1000);
 		}
 
-		std::wstring text = GetFormattedString(ID_STR_NEWVERSIONREQUIRED, m_SkinName.c_str(), m_SkinIniFile.c_str(), buffer);
+		std::wstring text = GetFormattedString(ID_STR_NEWVERSIONREQUIRED, m_FolderPath.c_str(), m_FileName.c_str(), buffer);
 		MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		return false;
 	}
@@ -1985,10 +1984,10 @@ bool CMeterWindow::ReadSkin()
 	const std::wstring& group = m_Parser.ReadString(L"Rainmeter", L"Group", L"");
 	if (!group.empty())
 	{
-		m_ConfigGroup += L'|';
-		m_ConfigGroup += group;
+		m_SkinGroup += L'|';
+		m_SkinGroup += group;
 	}
-	InitializeGroup(m_ConfigGroup);
+	InitializeGroup(m_SkinGroup);
 
 	static const RECT defMargins = {0};
 	m_BackgroundMargins = m_Parser.ReadRECT(L"Rainmeter", L"BackgroundMargins", defMargins);
@@ -2226,7 +2225,7 @@ bool CMeterWindow::ReadSkin()
 
 	if (m_Meters.empty())
 	{
-		std::wstring text = GetFormattedString(ID_STR_NOMETERSINSKIN, m_SkinName.c_str(), m_SkinIniFile.c_str());
+		std::wstring text = GetFormattedString(ID_STR_NOMETERSINSKIN, m_FolderPath.c_str(), m_FileName.c_str());
 		MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
 		return false;
 	}
@@ -2456,7 +2455,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 			// Get the size form the background bitmap
 			m_WindowW = m_Background->GetWidth();
 			m_WindowH = m_Background->GetHeight();
-			//Calculate the window position from the config parameters
+
 			WindowToScreen();
 		}
 
@@ -3307,7 +3306,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		if (wParam == IDM_SKIN_EDITSKIN)
 		{
-			Rainmeter->EditSkinFile(m_SkinName, m_SkinIniFile);
+			Rainmeter->EditSkinFile(m_FolderPath, m_FileName);
 		}
 		else if (wParam == IDM_SKIN_REFRESH)
 		{
@@ -3315,7 +3314,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == IDM_SKIN_OPENSKINSFOLDER)
 		{
-			Rainmeter->OpenSkinFolder(m_SkinName);
+			Rainmeter->OpenSkinFolder(m_FolderPath);
 		}
 		else if (wParam == IDM_SKIN_MANAGESKIN)
 		{
@@ -3377,46 +3376,46 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			m_AlphaValue = (int)(255.0 - (wParam - IDM_SKIN_TRANSPARENCY_0) * (230.0 / (IDM_SKIN_TRANSPARENCY_90 - IDM_SKIN_TRANSPARENCY_0)));
 			UpdateWindow(m_AlphaValue, false);
-			WriteOptions(SETTING_ALPHAVALUE);
+			WriteOptions(OPTION_ALPHAVALUE);
 		}
 		else if (wParam == IDM_CLOSESKIN)
 		{
-			Rainmeter->DeactivateConfig(this, -1);
+			Rainmeter->DeactivateSkin(this, -1);
 		}
 		else if (wParam == IDM_SKIN_FROMRIGHT)
 		{
 			m_WindowXFromRight = !m_WindowXFromRight;
 
 			ScreenToWindow();
-			WriteOptions(SETTING_WINDOWPOSITION);
+			WriteOptions(OPTION_POSITION);
 		}
 		else if (wParam == IDM_SKIN_FROMBOTTOM)
 		{
 			m_WindowYFromBottom = !m_WindowYFromBottom;
 
 			ScreenToWindow();
-			WriteOptions(SETTING_WINDOWPOSITION);
+			WriteOptions(OPTION_POSITION);
 		}
 		else if (wParam == IDM_SKIN_XPERCENTAGE)
 		{
 			m_WindowXPercentage = !m_WindowXPercentage;
 
 			ScreenToWindow();
-			WriteOptions(SETTING_WINDOWPOSITION);
+			WriteOptions(OPTION_POSITION);
 		}
 		else if (wParam == IDM_SKIN_YPERCENTAGE)
 		{
 			m_WindowYPercentage = !m_WindowYPercentage;
 
 			ScreenToWindow();
-			WriteOptions(SETTING_WINDOWPOSITION);
+			WriteOptions(OPTION_POSITION);
 		}
 		else if (wParam == IDM_SKIN_MONITOR_AUTOSELECT)
 		{
 			m_AutoSelectScreen = !m_AutoSelectScreen;
 
 			ScreenToWindow();
-			WriteOptions(SETTING_WINDOWPOSITION | SETTING_AUTOSELECTSCREEN);
+			WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
 		}
 		else if (wParam == IDM_SKIN_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
 		{
@@ -3448,7 +3447,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 				m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
 				ScreenToWindow();
-				WriteOptions(SETTING_WINDOWPOSITION | SETTING_AUTOSELECTSCREEN);
+				WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
 			}
 		}
 		else
@@ -3481,7 +3480,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 void CMeterWindow::SetClickThrough(bool b)
 {
 	m_ClickThrough = b;
-	WriteOptions(SETTING_CLICKTHROUGH);
+	WriteOptions(OPTION_CLICKTHROUGH);
 
 	if (!m_ClickThrough)
 	{
@@ -3502,7 +3501,7 @@ void CMeterWindow::SetClickThrough(bool b)
 void CMeterWindow::SetKeepOnScreen(bool b)
 {
 	m_KeepOnScreen = b;
-	WriteOptions(SETTING_KEEPONSCREEN);
+	WriteOptions(OPTION_KEEPONSCREEN);
 
 	if (m_KeepOnScreen)
 	{
@@ -3523,7 +3522,7 @@ void CMeterWindow::SetKeepOnScreen(bool b)
 void CMeterWindow::SetWindowDraggable(bool b)
 {
 	m_WindowDraggable = b;
-	WriteOptions(SETTING_WINDOWDRAGGABLE);
+	WriteOptions(OPTION_DRAGGABLE);
 }
 
 /*
@@ -3533,7 +3532,7 @@ void CMeterWindow::SetWindowDraggable(bool b)
 void CMeterWindow::SetSavePosition(bool b)
 {
 	m_SavePosition = b;
-	WriteOptions(SETTING_WINDOWPOSITION | SETTING_SAVEPOSITION);
+	WriteOptions(OPTION_POSITION | OPTION_SAVEPOSITION);
 }
 
 /*
@@ -3543,7 +3542,7 @@ void CMeterWindow::SetSavePosition(bool b)
 void CMeterWindow::SetSnapEdges(bool b)
 {
 	m_SnapEdges = b;
-	WriteOptions(SETTING_SNAPEDGES);
+	WriteOptions(OPTION_SNAPEDGES);
 }
 
 /*
@@ -3554,7 +3553,7 @@ void CMeterWindow::SetWindowHide(HIDEMODE hide)
 {
 	m_WindowHide = hide;
 	UpdateWindow(m_AlphaValue, false);
-	WriteOptions(SETTING_HIDEONMOUSEOVER);
+	WriteOptions(OPTION_HIDEONMOUSEOVER);
 }
 
 /*
@@ -3564,7 +3563,7 @@ void CMeterWindow::SetWindowHide(HIDEMODE hide)
 void CMeterWindow::SetWindowZPosition(ZPOSITION zpos)
 {
 	ChangeSingleZPos(zpos);
-	WriteOptions(SETTING_ALWAYSONTOP);
+	WriteOptions(OPTION_ALWAYSONTOP);
 }
 
 /*
@@ -3591,10 +3590,9 @@ LRESULT CMeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		ScreenToWindow();
 
-		// Write the new place of the window to config file
 		if (m_SavePosition)
 		{
-			WriteOptions(SETTING_WINDOWPOSITION);
+			WriteOptions(OPTION_POSITION);
 		}
 
 		POINT pos;
@@ -4344,7 +4342,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 				if (!m_MouseOver)
 				{
 					// If the mouse is over a meter it's also over the main window
-					//LogWithArgs(LOG_DEBUG, L"@Enter: %s", m_SkinName.c_str());
+					//LogWithArgs(LOG_DEBUG, L"@Enter: %s", m_FolderPath.c_str());
 					m_MouseOver = true;
 					SetMouseLeaveEvent(false);
 
@@ -4381,7 +4379,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 						!((*j)->GetMouseLeaveAction().empty()) ||
 						button)
 					{
-						//LogWithArgs(LOG_DEBUG, L"MeterEnter: %s - [%s]", m_SkinName.c_str(), (*j)->GetName());
+						//LogWithArgs(LOG_DEBUG, L"MeterEnter: %s - [%s]", m_FolderPath.c_str(), (*j)->GetName());
 						(*j)->SetMouseOver(true);
 
 						if (!((*j)->GetMouseOverAction().empty()))
@@ -4407,7 +4405,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 						button->SetFocus(false);
 					}
 
-					//LogWithArgs(LOG_DEBUG, L"MeterLeave: %s - [%s]", m_SkinName.c_str(), (*j)->GetName());
+					//LogWithArgs(LOG_DEBUG, L"MeterLeave: %s - [%s]", m_FolderPath.c_str(), (*j)->GetName());
 					(*j)->SetMouseOver(false);
 
 					if (!((*j)->GetMouseLeaveAction().empty()))
@@ -4427,7 +4425,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 		{
 			if (!m_MouseOver)
 			{
-				//LogWithArgs(LOG_DEBUG, L"Enter: %s", m_SkinName.c_str());
+				//LogWithArgs(LOG_DEBUG, L"Enter: %s", m_FolderPath.c_str());
 				m_MouseOver = true;
 				SetMouseLeaveEvent(false);
 
@@ -4447,7 +4445,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 			// Mouse leave happens when the mouse is outside the window
 			if (m_MouseOver)
 			{
-				//LogWithArgs(LOG_DEBUG, L"Leave: %s", m_SkinName.c_str());
+				//LogWithArgs(LOG_DEBUG, L"Leave: %s", m_FolderPath.c_str());
 				m_MouseOver = false;
 				SetMouseLeaveEvent(true);
 
@@ -4625,7 +4623,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		else
 		{
 			// This meterwindow has been deactivated
-			Log(LOG_WARNING, L"Unable to bang a deactivated config");
+			Log(LOG_WARNING, L"Unable to bang unloaded skin");
 		}
 
 		return TRUE;
@@ -4675,44 +4673,44 @@ void CMeterWindow::MakePathAbsolute(std::wstring& path)
 	else
 	{
 		std::wstring absolute;
-		absolute.reserve(Rainmeter->GetSkinPath().size() + m_SkinName.size() + 1 + path.size());
+		absolute.reserve(Rainmeter->GetSkinPath().size() + m_FolderPath.size() + 1 + path.size());
 		absolute = Rainmeter->GetSkinPath();
-		absolute += m_SkinName;
+		absolute += m_FolderPath;
 		absolute += L'\\';
 		absolute += path;
 		absolute.swap(path);
 	}
 }
 
-std::wstring CMeterWindow::GetSkinFilePath()
+std::wstring CMeterWindow::GetFilePath()
 {
-	std::wstring file = Rainmeter->GetSkinPath() + m_SkinName;
+	std::wstring file = Rainmeter->GetSkinPath() + m_FolderPath;
 	file += L'\\';
-	file += m_SkinIniFile;
+	file += m_FileName;
 	return file;
 }
 
-std::wstring CMeterWindow::GetSkinRootPath()
+std::wstring CMeterWindow::GetRootPath()
 {
 	std::wstring path = Rainmeter->GetSkinPath();
 
 	std::wstring::size_type loc;
-	if ((loc = m_SkinName.find_first_of(L'\\')) != std::wstring::npos)
+	if ((loc = m_FolderPath.find_first_of(L'\\')) != std::wstring::npos)
 	{
-		path.append(m_SkinName, 0, loc + 1);
+		path.append(m_FolderPath, 0, loc + 1);
 	}
 	else
 	{
-		path += m_SkinName;
+		path += m_FolderPath;
 		path += L'\\';
 	}
 
 	return path;
 }
 
-std::wstring CMeterWindow::GetSkinResourcesPath()
+std::wstring CMeterWindow::GetResourcesPath()
 {
-	std::wstring path = GetSkinRootPath();
+	std::wstring path = GetRootPath();
 	path += L"@Resources\\";
 	return path;
 }

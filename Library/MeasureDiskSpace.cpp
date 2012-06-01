@@ -176,7 +176,7 @@ const WCHAR* CMeasureDiskSpace::GetStringValue(AUTOSCALE autoScale, double scale
 }
 
 /*
-** Reads the measure specific configs.
+** Read the options specified in the ini file.
 **
 */
 void CMeasureDiskSpace::ReadOptions(CConfigParser& parser, const WCHAR* section)

@@ -123,7 +123,7 @@ void CMeterButton::Initialize()
 }
 
 /*
-** Read the meter-specific configs from the ini-file.
+** Read the options specified in the ini file.
 **
 */
 void CMeterButton::ReadOptions(CConfigParser& parser, const WCHAR* section)
@@ -133,7 +133,6 @@ void CMeterButton::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	int oldW = m_W;
 	int oldH = m_H;
 
-	// Read common configs
 	CMeter::ReadOptions(parser, section);
 
 	m_ImageName = parser.ReadString(section, L"ButtonImage", L"");
@@ -141,7 +140,7 @@ void CMeterButton::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	{
 		m_MeterWindow->MakePathAbsolute(m_ImageName);
 
-		// Read tinting configs
+		// Read tinting options
 		m_Image.ReadOptions(parser, section);
 	}
 	else

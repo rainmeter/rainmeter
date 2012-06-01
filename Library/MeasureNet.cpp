@@ -434,8 +434,7 @@ ULONG64 CMeasureNet::GetNetStatsValue(NET net)
 }
 
 /*
-** Reads the measure specific configs. This is the same for in, out and total.
-** the net-parameter informs which inherited class called this method.
+** Read the options specified in the ini file. Base implementation for In/Out/Total.
 **
 */
 void CMeasureNet::ReadOptions(CConfigParser& parser, const WCHAR* section, NET net)
@@ -446,17 +445,17 @@ void CMeasureNet::ReadOptions(CConfigParser& parser, const WCHAR* section, NET n
 	if (net == NET_IN)
 	{
 		netName = L"NetInSpeed";
-		value = Rainmeter->GetGlobalConfig().netInSpeed;
+		value = Rainmeter->GetGlobalOptions().netInSpeed;
 	}
 	else if (net == NET_OUT)
 	{
 		netName = L"NetOutSpeed";
-		value = Rainmeter->GetGlobalConfig().netOutSpeed;
+		value = Rainmeter->GetGlobalOptions().netOutSpeed;
 	}
 	else
 	{
 		netName = L"NetTotalSpeed";
-		value = Rainmeter->GetGlobalConfig().netInSpeed + Rainmeter->GetGlobalConfig().netOutSpeed;
+		value = Rainmeter->GetGlobalOptions().netInSpeed + Rainmeter->GetGlobalOptions().netOutSpeed;
 	}
 
 	double maxValue = parser.ReadFloat(section, L"MaxValue", -1);

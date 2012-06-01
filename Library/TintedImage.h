@@ -24,12 +24,11 @@
 #include <string>
 
 /*
-** Helper macro to define the array of the config item.
-** It's necessary to give a string literal to the prefix parameter.
+** Helper macro to define an array of option names. A prefix must be given.
 **
 */
 #define CTintedImageHelper_DefineOptionArray(name, prefix) \
-	const WCHAR* (name)[CTintedImage::ConfigCount] = { \
+	const WCHAR* (name)[CTintedImage::OptionCount] = { \
 		prefix  L"ImageCrop", \
 		prefix  L"Greyscale", \
 		prefix  L"ImageTint", \
@@ -62,10 +61,10 @@ public:
 		OptionIndexImageFlip,
 		OptionIndexImageRotate,
 
-		ConfigCount
+		OptionCount
 	};
 
-	CTintedImage(const WCHAR* name = L"Image", const WCHAR** configArray = c_DefaultOptionArray, bool disableTransform = false);
+	CTintedImage(const WCHAR* name = L"Image", const WCHAR** optionArray = c_DefaultOptionArray, bool disableTransform = false);
 	~CTintedImage();
 
 	void ReadOptions(CConfigParser& parser, const WCHAR* section);
@@ -124,7 +123,7 @@ protected:
 	static const Gdiplus::ColorMatrix c_GreyScaleMatrix;
 	static const Gdiplus::ColorMatrix c_IdentityMatrix;
 
-	static const WCHAR* c_DefaultOptionArray[ConfigCount];
+	static const WCHAR* c_DefaultOptionArray[OptionCount];
 };
 
 #endif

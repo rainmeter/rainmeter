@@ -54,7 +54,7 @@ CMeterRotator::~CMeterRotator()
 }
 
 /*
-** Load the image & configs.
+** Load the image.
 **
 */
 void CMeterRotator::Initialize()
@@ -73,7 +73,7 @@ void CMeterRotator::Initialize()
 }
 
 /*
-** Read the meter-specific configs from the ini-file.
+** Read the options specified in the ini file.
 **
 */
 void CMeterRotator::ReadOptions(CConfigParser& parser, const WCHAR* section)
@@ -81,7 +81,6 @@ void CMeterRotator::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 
-	// Read common configs
 	CMeter::ReadOptions(parser, section);
 
 	m_ImageName = parser.ReadString(section, L"ImageName", L"");
@@ -89,7 +88,7 @@ void CMeterRotator::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	{
 		m_MeterWindow->MakePathAbsolute(m_ImageName);
 
-		// Read tinting configs
+		// Read tinting options
 		m_Image.ReadOptions(parser, section);
 	}
 	else

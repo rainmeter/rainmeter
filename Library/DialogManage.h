@@ -68,8 +68,8 @@ private:
 
 		static int PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index = 0);
 
-		std::wstring m_FileName;
-		std::wstring m_SkinName;
+		std::wstring m_SkinFileName;
+		std::wstring m_SkinFolderPath;
 		CMeterWindow* m_SkinWindow;
 		bool m_HandleCommands;
 		bool m_IgnoreUpdate;

@@ -51,7 +51,7 @@ CConfigParser::~CConfigParser()
 {
 }
 
-void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meterWindow, LPCTSTR config, const std::wstring* resourcePath)
+void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meterWindow, LPCTSTR skinSection, const std::wstring* resourcePath)
 {
 	m_Measures.clear();
 	m_Sections.clear();
@@ -73,7 +73,7 @@ void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meter
 
 	CSystem::UpdateIniFileMappingList();
 
-	ReadIniFile(filename, config);
+	ReadIniFile(filename, skinSection);
 	ReadVariables();
 
 	// Clear and minimize
@@ -98,9 +98,9 @@ void CConfigParser::SetBuiltInVariables(const std::wstring& filename, const std:
 
 	if (meterWindow)
 	{
-		insertVariable(L"CURRENTFILE", meterWindow->GetSkinIniFile());
-		insertVariable(L"CURRENTCONFIG", meterWindow->GetSkinName());
-		insertVariable(L"ROOTCONFIGPATH", meterWindow->GetSkinRootPath());
+		insertVariable(L"CURRENTFILE", meterWindow->GetFileName());
+		insertVariable(L"CURRENTCONFIG", meterWindow->GetFolderPath());
+		insertVariable(L"ROOTCONFIGPATH", meterWindow->GetRootPath());
 	}
 
 	insertVariable(L"CRLF", L"\n");
@@ -1156,7 +1156,7 @@ RECT CConfigParser::ParseRECT(LPCTSTR string)
 ** Reads the given ini file and fills the m_Values and m_Keys maps.
 **
 */
-void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int depth)
+void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection, int depth)
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
@@ -1195,7 +1195,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 	WCHAR* pos = NULL;
 	WCHAR* epos = NULL;
 
-	if (config == NULL)
+	if (skinSection == NULL)
 	{
 		// Get all the sections
 		do
@@ -1248,15 +1248,15 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 	{
 		// Special case: Read only "Rainmeter" and specified section from "Rainmeter.ini"
 		const std::wstring strRainmeter = L"Rainmeter";
-		const std::wstring strConfig = config;
+		const std::wstring strFolder = skinSection;
 
 		sections.push_back(strRainmeter);
-		sections.push_back(strConfig);
+		sections.push_back(strFolder);
 
 		if (depth == 0)  // Add once
 		{
 			m_Sections.push_back(strRainmeter);
-			m_Sections.push_back(strConfig);
+			m_Sections.push_back(strFolder);
 		}
 	}
 
@@ -1268,7 +1268,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 
 		const WCHAR* sectionName = (*iter).c_str();
 		bool isVariables = (_wcsicmp(sectionName, L"Variables") == 0);
-		bool isMetadata = (config == NULL && !isVariables && _wcsicmp(sectionName, L"Metadata") == 0);
+		bool isMetadata = (skinSection == NULL && !isVariables && _wcsicmp(sectionName, L"Metadata") == 0);
 
 		// Read all "key=value" from the section
 		do
@@ -1323,7 +1323,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR config, int
 									// Relative to the ini folder
 									value.insert(0, CRainmeter::ExtractPath(iniFile));
 								}
-								ReadIniFile(value, config, depth + 1);
+								ReadIniFile(value, skinSection, depth + 1);
 							}
 						}
 						else

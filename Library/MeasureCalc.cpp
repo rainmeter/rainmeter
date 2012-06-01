@@ -72,7 +72,7 @@ void CMeasureCalc::UpdateValue()
 }
 
 /*
-** Reads the measure specific configs.
+** Read the options specified in the ini file.
 **
 */
 void CMeasureCalc::ReadOptions(CConfigParser& parser, const WCHAR* section)

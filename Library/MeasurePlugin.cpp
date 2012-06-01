@@ -96,7 +96,7 @@ void CMeasurePlugin::UpdateValue()
 }
 
 /*
-** Reads the configs and loads & initializes the plugin
+** Reads the options and loads the plugin
 **
 */
 void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
@@ -169,7 +169,7 @@ void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 		if (initializeFunc)
 		{
-			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_MeterWindow->GetSkinFilePath().c_str(), section, m_ID);
+			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_MeterWindow->GetFilePath().c_str(), section, m_ID);
 		}
 	}
 
