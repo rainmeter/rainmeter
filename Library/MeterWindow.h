@@ -323,7 +323,7 @@ private:
 	void Update(bool refresh);
 	void UpdateWindow(int alpha, bool reset);
 	void ReadOptions();
-	void WriteConfig(INT setting = SETTING_ALL);
+	void WriteOptions(INT setting = SETTING_ALL);
 	bool ReadSkin();
 	void InitializeMeasures();
 	void InitializeMeters();

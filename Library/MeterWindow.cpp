@@ -180,8 +180,6 @@ CMeterWindow::~CMeterWindow()
 		Rainmeter->ExecuteCommand(m_OnCloseAction.c_str(), this);
 	}
 
-	WriteConfig();
-
 	// Kill the timer
 	KillTimer(m_Window, TIMER_METER);
 	KillTimer(m_Window, TIMER_MOUSE);
@@ -574,7 +572,7 @@ void CMeterWindow::MoveWindow(int x, int y)
 
 	if (m_SavePosition)
 	{
-		WriteConfig(SETTING_WINDOWPOSITION);
+		WriteOptions(SETTING_WINDOWPOSITION);
 	}
 }
 
@@ -1779,74 +1777,74 @@ void CMeterWindow::ScreenToWindow()
 void CMeterWindow::ReadOptions()
 {
 	WCHAR buffer[32];
-	const std::wstring& iniFile = Rainmeter->GetIniFile();
-	const WCHAR* section = L"Rainmeter";
 
-	// Reset settings to the default value
-	m_WindowX = L'0';
-	m_WindowY = L'0';
-	m_AnchorX = L'0';
-	m_AnchorY = L'0';
-	m_WindowZPosition = ZPOSITION_NORMAL;
-	m_WindowDraggable = true;
-	m_WindowHide = HIDEMODE_NONE;
-	m_WindowStartHidden = false;
-	m_SavePosition = true;
-	m_SnapEdges = true;
-	m_ClickThrough = false;
-	m_KeepOnScreen = true;
-	m_AutoSelectScreen = false;
-	m_AlphaValue = 255;
-	m_FadeDuration = 250;
-	m_ConfigGroup.clear();
-
+	const WCHAR* section = m_SkinName.c_str();
 	CConfigParser parser;
-	parser.Initialize(iniFile, NULL, m_SkinName.c_str());
+	parser.Initialize(Rainmeter->GetIniFile(), NULL, section);
 
-	for (int i = 0; i < 2; ++i)
+	INT writeFlags = 0;
+	auto addWriteFlag = [&](INT flag)
 	{
-		// Check if the window position should be read as a formula
-		double value;
-		m_WindowX = parser.ReadString(section, L"WindowX", m_WindowX.c_str());
-		if (parser.ParseFormula(m_WindowX, &value))
+		if (parser.GetLastDefaultUsed())
 		{
-			_itow_s((int)value, buffer, 10);
-			m_WindowX = buffer;
+			writeFlags |= flag;
 		}
-		m_WindowY = parser.ReadString(section, L"WindowY", m_WindowY.c_str());
-		if (parser.ParseFormula(m_WindowY, &value))
-		{
-			_itow_s((int)value, buffer, 10);
-			m_WindowY = buffer;
-		}
+	};
 
-		m_AnchorX = parser.ReadString(section, L"AnchorX", m_AnchorX.c_str());
-		m_AnchorY = parser.ReadString(section, L"AnchorY", m_AnchorY.c_str());
+	// Check if the window position should be read as a formula
+	double value;
+	m_WindowX = parser.ReadString(section, L"WindowX", L"0");
+	addWriteFlag(SETTING_WINDOWPOSITION);
+	if (parser.ParseFormula(m_WindowX, &value))
+	{
+		_itow_s((int)value, buffer, 10);
+		m_WindowX = buffer;
+	}
+	m_WindowY = parser.ReadString(section, L"WindowY", L"0");
+	addWriteFlag(SETTING_WINDOWPOSITION);
+	if (parser.ParseFormula(m_WindowY, &value))
+	{
+		_itow_s((int)value, buffer, 10);
+		m_WindowY = buffer;
+	}
 
-		int zPos = parser.ReadInt(section, L"AlwaysOnTop", m_WindowZPosition);
-		m_WindowZPosition = (zPos >= ZPOSITION_ONDESKTOP && zPos <= ZPOSITION_ONTOPMOST) ? (ZPOSITION)zPos : ZPOSITION_NORMAL;
+	m_AnchorX = parser.ReadString(section, L"AnchorX", L"0");
+	m_AnchorY = parser.ReadString(section, L"AnchorY", L"0");
 
-		int hideMode = parser.ReadInt(section, L"HideOnMouseOver", m_WindowHide);
-		m_WindowHide = (hideMode >= HIDEMODE_NONE && hideMode <= HIDEMODE_FADEOUT) ? (HIDEMODE)hideMode : HIDEMODE_NONE;
+	int zPos = parser.ReadInt(section, L"AlwaysOnTop", ZPOSITION_NORMAL);
+	addWriteFlag(SETTING_ALWAYSONTOP);
+	m_WindowZPosition = (zPos >= ZPOSITION_ONDESKTOP && zPos <= ZPOSITION_ONTOPMOST) ? (ZPOSITION)zPos : ZPOSITION_NORMAL;
 
-		m_WindowDraggable = 0!=parser.ReadInt(section, L"Draggable", m_WindowDraggable);
-		m_WindowStartHidden = 0!=parser.ReadInt(section, L"StartHidden", m_WindowStartHidden);
-		m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", m_SavePosition);
-		m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", m_SnapEdges);
-		m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", m_ClickThrough);
-		m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", m_KeepOnScreen);
-		m_AutoSelectScreen = 0!=parser.ReadInt(section, L"AutoSelectScreen", m_AutoSelectScreen);
+	int hideMode = parser.ReadInt(section, L"HideOnMouseOver", HIDEMODE_NONE);
+	m_WindowHide = (hideMode >= HIDEMODE_NONE && hideMode <= HIDEMODE_FADEOUT) ? (HIDEMODE)hideMode : HIDEMODE_NONE;
 
-		m_AlphaValue = parser.ReadInt(section, L"AlphaValue", m_AlphaValue);
-		m_AlphaValue = max(m_AlphaValue, 0);
-		m_AlphaValue = min(m_AlphaValue, 255);
+	m_WindowDraggable = 0!=parser.ReadInt(section, L"Draggable", 1);
+	addWriteFlag(SETTING_WINDOWDRAGGABLE);
 
-		m_FadeDuration = parser.ReadInt(section, L"FadeDuration", m_FadeDuration);
+	m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", 1);
+	addWriteFlag(SETTING_SNAPEDGES);
 
-		m_ConfigGroup = parser.ReadString(section, L"Group", m_ConfigGroup.c_str());
+	m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", 0);
+	addWriteFlag(SETTING_CLICKTHROUGH);
 
-		// On the second loop override settings from the skin's section
-		section = m_SkinName.c_str();
+	m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", 1);
+	addWriteFlag(SETTING_KEEPONSCREEN);
+
+	m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", 1);
+	m_WindowStartHidden = 0!=parser.ReadInt(section, L"StartHidden", 0);
+	m_AutoSelectScreen = 0!=parser.ReadInt(section, L"AutoSelectScreen", 0);
+
+	m_AlphaValue = parser.ReadInt(section, L"AlphaValue", 255);
+	m_AlphaValue = max(m_AlphaValue, 0);
+	m_AlphaValue = min(m_AlphaValue, 255);
+
+	m_FadeDuration = parser.ReadInt(section, L"FadeDuration", 250);
+
+	m_ConfigGroup = parser.ReadString(section, L"Group", L"");
+
+	if (writeFlags != 0)
+	{
+		WriteOptions(writeFlags);
 	}
 
 	// Set WindowXScreen/WindowYScreen temporarily
@@ -1857,7 +1855,7 @@ void CMeterWindow::ReadOptions()
 ** Writes the new settings to the config
 **
 */
-void CMeterWindow::WriteConfig(INT setting)
+void CMeterWindow::WriteOptions(INT setting)
 {
 	const WCHAR* iniFile = Rainmeter->GetIniFile().c_str();
 
@@ -3379,7 +3377,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			m_AlphaValue = (int)(255.0 - (wParam - IDM_SKIN_TRANSPARENCY_0) * (230.0 / (IDM_SKIN_TRANSPARENCY_90 - IDM_SKIN_TRANSPARENCY_0)));
 			UpdateWindow(m_AlphaValue, false);
-			WriteConfig(SETTING_ALPHAVALUE);
+			WriteOptions(SETTING_ALPHAVALUE);
 		}
 		else if (wParam == IDM_CLOSESKIN)
 		{
@@ -3390,35 +3388,35 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			m_WindowXFromRight = !m_WindowXFromRight;
 
 			ScreenToWindow();
-			WriteConfig(SETTING_WINDOWPOSITION);
+			WriteOptions(SETTING_WINDOWPOSITION);
 		}
 		else if (wParam == IDM_SKIN_FROMBOTTOM)
 		{
 			m_WindowYFromBottom = !m_WindowYFromBottom;
 
 			ScreenToWindow();
-			WriteConfig(SETTING_WINDOWPOSITION);
+			WriteOptions(SETTING_WINDOWPOSITION);
 		}
 		else if (wParam == IDM_SKIN_XPERCENTAGE)
 		{
 			m_WindowXPercentage = !m_WindowXPercentage;
 
 			ScreenToWindow();
-			WriteConfig(SETTING_WINDOWPOSITION);
+			WriteOptions(SETTING_WINDOWPOSITION);
 		}
 		else if (wParam == IDM_SKIN_YPERCENTAGE)
 		{
 			m_WindowYPercentage = !m_WindowYPercentage;
 
 			ScreenToWindow();
-			WriteConfig(SETTING_WINDOWPOSITION);
+			WriteOptions(SETTING_WINDOWPOSITION);
 		}
 		else if (wParam == IDM_SKIN_MONITOR_AUTOSELECT)
 		{
 			m_AutoSelectScreen = !m_AutoSelectScreen;
 
 			ScreenToWindow();
-			WriteConfig(SETTING_WINDOWPOSITION | SETTING_AUTOSELECTSCREEN);
+			WriteOptions(SETTING_WINDOWPOSITION | SETTING_AUTOSELECTSCREEN);
 		}
 		else if (wParam == IDM_SKIN_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
 		{
@@ -3450,7 +3448,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 				m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
 				ScreenToWindow();
-				WriteConfig(SETTING_WINDOWPOSITION | SETTING_AUTOSELECTSCREEN);
+				WriteOptions(SETTING_WINDOWPOSITION | SETTING_AUTOSELECTSCREEN);
 			}
 		}
 		else
@@ -3483,7 +3481,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 void CMeterWindow::SetClickThrough(bool b)
 {
 	m_ClickThrough = b;
-	WriteConfig(SETTING_CLICKTHROUGH);
+	WriteOptions(SETTING_CLICKTHROUGH);
 
 	if (!m_ClickThrough)
 	{
@@ -3504,7 +3502,7 @@ void CMeterWindow::SetClickThrough(bool b)
 void CMeterWindow::SetKeepOnScreen(bool b)
 {
 	m_KeepOnScreen = b;
-	WriteConfig(SETTING_KEEPONSCREEN);
+	WriteOptions(SETTING_KEEPONSCREEN);
 
 	if (m_KeepOnScreen)
 	{
@@ -3525,7 +3523,7 @@ void CMeterWindow::SetKeepOnScreen(bool b)
 void CMeterWindow::SetWindowDraggable(bool b)
 {
 	m_WindowDraggable = b;
-	WriteConfig(SETTING_WINDOWDRAGGABLE);
+	WriteOptions(SETTING_WINDOWDRAGGABLE);
 }
 
 /*
@@ -3535,7 +3533,7 @@ void CMeterWindow::SetWindowDraggable(bool b)
 void CMeterWindow::SetSavePosition(bool b)
 {
 	m_SavePosition = b;
-	WriteConfig(SETTING_WINDOWPOSITION | SETTING_SAVEPOSITION);
+	WriteOptions(SETTING_WINDOWPOSITION | SETTING_SAVEPOSITION);
 }
 
 /*
@@ -3545,7 +3543,7 @@ void CMeterWindow::SetSavePosition(bool b)
 void CMeterWindow::SetSnapEdges(bool b)
 {
 	m_SnapEdges = b;
-	WriteConfig(SETTING_SNAPEDGES);
+	WriteOptions(SETTING_SNAPEDGES);
 }
 
 /*
@@ -3556,7 +3554,7 @@ void CMeterWindow::SetWindowHide(HIDEMODE hide)
 {
 	m_WindowHide = hide;
 	UpdateWindow(m_AlphaValue, false);
-	WriteConfig(SETTING_HIDEONMOUSEOVER);
+	WriteOptions(SETTING_HIDEONMOUSEOVER);
 }
 
 /*
@@ -3566,7 +3564,7 @@ void CMeterWindow::SetWindowHide(HIDEMODE hide)
 void CMeterWindow::SetWindowZPosition(ZPOSITION zpos)
 {
 	ChangeSingleZPos(zpos);
-	WriteConfig(SETTING_ALWAYSONTOP);
+	WriteOptions(SETTING_ALWAYSONTOP);
 }
 
 /*
@@ -3596,7 +3594,7 @@ LRESULT CMeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Write the new place of the window to config file
 		if (m_SavePosition)
 		{
-			WriteConfig(SETTING_WINDOWPOSITION);
+			WriteOptions(SETTING_WINDOWPOSITION);
 		}
 
 		POINT pos;
