@@ -76,7 +76,10 @@ void RunCommand(std::wstring command)
 		}
 	}
 
-	RunFile(command.c_str(), args.c_str());
+	if (!command.empty())
+	{
+		RunFile(command.c_str(), args.c_str());
+	}
 }
 
 void RunFile(const WCHAR* file, const WCHAR* args, bool asAdmin)
