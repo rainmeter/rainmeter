@@ -176,7 +176,7 @@ bool CMeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value)
 
 int CMeasureCalc::GetRandom()
 {
-	int range = (m_HighBound - m_LowBound) + 1;
+	double range = (m_HighBound - m_LowBound) + 1;
 	srand((unsigned)rand());
 	return m_LowBound + (int)(range * rand() / (RAND_MAX + 1.0));
 }
