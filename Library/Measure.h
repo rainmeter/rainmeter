@@ -57,7 +57,7 @@ public:
 	const WCHAR* GetName() { return m_Name.c_str(); }
 	const std::wstring& GetOriginalName() { return m_Name; }
 
-	void Disable() { m_Disabled = true; }
+	void Disable();
 	void Enable() { m_Disabled = false; }
 	bool IsDisabled() { return m_Disabled; }
 

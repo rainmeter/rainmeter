@@ -547,6 +547,28 @@ bool CMeasure::Update()
 	}
 }
 
+void CMeasure::Disable()
+{
+	m_Disabled = true;
+
+	// IfActions are not checked when disabled, so set committed state to false if
+	// condition is not met with value = 0
+	if ((int)m_IfEqualValue != 0)
+	{
+		m_IfEqualCommitted = false;
+	}
+
+	if (m_IfAboveValue <= 0.0)
+	{
+		m_IfAboveCommitted = false;
+	}
+
+	if (m_IfBelowValue >= 0.0)
+	{
+		m_IfBelowCommitted = false;
+	}
+}
+
 /*
 ** Returns the value of the measure.
 **
