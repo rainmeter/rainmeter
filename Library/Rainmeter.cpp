@@ -1339,7 +1339,7 @@ void CRainmeter::CreateMeterWindow(const std::wstring& folderPath, const std::ws
 
 	if (mw)
 	{
-		m_MeterWindows.insert(std::make_pair(folderPath, mw));
+		m_MeterWindows[folderPath] = mw;
 
 		try
 		{
