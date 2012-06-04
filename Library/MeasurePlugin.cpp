@@ -118,7 +118,7 @@ void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	const std::wstring& plugin = parser.ReadString(section, L"Plugin", L"");
 	std::wstring pluginFile = Rainmeter->GetPluginPath();
-	size_t pos = plugin.rfind(L'\\');
+	size_t pos = plugin.find_last_of(L"\\/");
 	if (pos != std::wstring::npos)
 	{
 		pluginFile.append(plugin, pos, plugin.length() - pos);
