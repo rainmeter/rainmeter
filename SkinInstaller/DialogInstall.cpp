@@ -406,17 +406,20 @@ bool CDialogInstall::ReadPackage()
 			const std::wstring item(path, pos - path);
 			const WCHAR* itemSz = item.c_str();
 
-			if (_wcsicmp(component, L"Skins") == 0)
+			if (_wcsicmp(component, L"Skins") == 0 &&
+				!IsIgnoredSkin(itemSz))
 			{
 				m_PackageSkins.insert(item);
 			}
 			else if (_wcsicmp(component, L"Themes") == 0 &&
-				_wcsicmp(extension, L".thm") == 0)
+				_wcsicmp(extension, L".thm") == 0 &&
+				!IsIgnoredTheme(itemSz))
 			{
 				m_PackageThemes.insert(item);
 			}
 			else if (_wcsicmp(component, L"Addons") == 0 &&
-				m_PackageFormat == PackageFormat::Old)
+				m_PackageFormat == PackageFormat::Old &&
+				!IsIgnoredAddon(itemSz))
 			{
 				m_PackageAddons.insert(item);
 			}
@@ -425,7 +428,11 @@ bool CDialogInstall::ReadPackage()
 				_wcsicmp(extension, L".dll") == 0 &&
 				!wcschr(pos + 1, L'\\'))
 			{
-				m_PackagePlugins.insert(item);
+				const std::wstring plugin(pos + 1);
+				if (!IsIgnoredPlugin(plugin.c_str()))
+				{
+					m_PackagePlugins.insert(plugin);
+				}
 			}
 		}
 		else
@@ -630,9 +637,13 @@ bool CDialogInstall::InstallPackage()
 				_wcsicmp(extension, L".dll") == 0 &&
 				!wcschr(pos + 1, L'\\'))
 			{
-				path = pos + 1;
-				targetPath = g_Data.settingsPath;
-				targetPath += L"Plugins\\";
+				const std::wstring plugin(pos + 1);
+				if (m_PackagePlugins.find(plugin) != m_PackagePlugins.end())
+				{
+					path = pos + 1;
+					targetPath = g_Data.settingsPath;
+					targetPath += L"Plugins\\";
+				}
 			}
 
 			if (!targetPath.empty())
@@ -677,24 +688,11 @@ bool CDialogInstall::InstallPackage()
 
 void CDialogInstall::BeginInstall()
 {
-	if (!CloseRainmeterIfActive())
-	{
-		MessageBox(m_Window, L"Unable to close Rainmeter.", L"Rainmeter S Rainmeter", MB_ERROR);
-		return;
-	}
-
 	WCHAR buffer[64];
 	SYSTEMTIME lt;
 	GetLocalTime(&lt);
 	int len = _snwprintf_s(buffer, _TRUNCATE, L"%02d.%02d.%02d %02d.%02d-%02d", lt.wYear, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond);
 	m_InstallTime.assign(buffer, len);
-
-	m_InstallThread = (HANDLE)_beginthreadex(NULL, 0, InstallThread, this, 0, NULL);
-	if (!m_InstallThread)
-	{
-		MessageBox(m_Window, L"Unable to start backup.", L"Backup Rainmeter", MB_ERROR);
-		return;
-	}
 
 	HWND item = GetDlgItem(m_Window, IDC_INSTALL_ADVANCED_BUTTON);
 	EnableWindow(item, FALSE);
@@ -705,9 +703,6 @@ void CDialogInstall::BeginInstall()
 	item = GetDlgItem(m_Window, IDCLOSE);
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_COMPONENTS_LIST);
-	EnableWindow(item, FALSE);
-
 	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_THEME_CHECKBOX);
 	if (Button_GetCheck(item) == BST_UNCHECKED)
 	{
@@ -716,33 +711,77 @@ void CDialogInstall::BeginInstall()
 	}
 	EnableWindow(item, FALSE);
 
+	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_COMPONENTS_LIST);
+	{
+		// Remove unchecked items from the component sets
+		LVITEM lvi;
+		lvi.mask = LVIF_GROUPID | LVIF_PARAM;
+		lvi.iSubItem = 0;
+		lvi.iItem = 0;
+
+		int itemCount = ListView_GetItemCount(item);
+		for (; lvi.iItem < itemCount; ++lvi.iItem)
+		{
+			ListView_GetItem(item, &lvi);
+
+			std::set<std::wstring>* component = NULL;
+			switch (lvi.iGroupId)
+			{
+			case 0: component = &m_PackageSkins;   break;
+			case 1: component = &m_PackageThemes;  break;
+			case 2: component = &m_PackageAddons;  break;
+			case 3: component = &m_PackagePlugins; break;
+			}
+
+			BOOL checked = ListView_GetCheckState(item, lvi.iItem);
+			if (component && !checked)
+			{
+				component->erase(*(std::wstring*)lvi.lParam);
+			}
+		}
+	}
+	EnableWindow(item, FALSE);
+
 	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_INPROGRESS_TEXT);
 	ShowWindow(item, SW_SHOWNORMAL);
 
 	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_PROGRESS);
 	ShowWindow(item, SW_SHOWNORMAL);
-
 	SendMessage(item, PBM_SETMARQUEE, (WPARAM)TRUE, 0);
+
+	m_InstallThread = (HANDLE)_beginthreadex(NULL, 0, InstallThread, this, 0, NULL);
+	if (!m_InstallThread)
+	{
+		MessageBox(m_Window, L"Unable to start install.", L"Rainmeter Skin Installer", MB_ERROR);
+		EndDialog(m_Window, 0);
+	}
 }
 
 unsigned __stdcall CDialogInstall::InstallThread(void* pParam)
 {
 	CDialogInstall* dialog = (CDialogInstall*)pParam;
 
-	if (!dialog->InstallPackage())
+	if (!CloseRainmeterIfActive())
 	{
-		if (dialog->m_ErrorMessage.empty())
+		MessageBox(dialog->m_Window, L"Unable to close Rainmeter.", L"Rainmeter Skin Installer", MB_ERROR);
+	}
+	else
+	{
+		if (!dialog->InstallPackage())
 		{
-			dialog->m_ErrorMessage = L"Unknown error.";
+			if (dialog->m_ErrorMessage.empty())
+			{
+				dialog->m_ErrorMessage = L"Unknown error.";
+			}
+
+			MessageBox(dialog->m_Window, dialog->m_ErrorMessage.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
+
+			dialog->m_LoadSkins.clear();
+			dialog->m_LoadTheme.clear();
 		}
 
-		MessageBox(NULL, dialog->m_ErrorMessage.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
-
-		dialog->m_LoadSkins.clear();
-		dialog->m_LoadTheme.clear();
+		dialog->LaunchRainmeter();
 	}
-
-	dialog->LaunchRainmeter();
 
 	EndDialog(dialog->GetWindow(), 0);
 	return 0;
@@ -894,6 +933,48 @@ void CDialogInstall::LaunchRainmeter()
 			ShellExecuteEx(&sei);
 		}
 	}
+}
+
+bool CDialogInstall::IsIgnoredSkin(const WCHAR* name)
+{
+	return _wcsicmp(name, L"Backup") == 0;
+}
+
+bool CDialogInstall::IsIgnoredTheme(const WCHAR* name)
+{
+	return _wcsicmp(name, L"Backup") == 0;
+}
+
+bool CDialogInstall::IsIgnoredAddon(const WCHAR* name)
+{
+	return _wcsicmp(name, L"Backup") == 0 ||
+		_wcsicmp(name, L"Rainstaller") == 0 ||
+		_wcsicmp(name, L"RainBackup") == 0;
+}
+
+bool CDialogInstall::IsIgnoredPlugin(const WCHAR* name)
+{
+	return _wcsicmp(name, L"AdvancedCPU.dll") == 0 ||
+		_wcsicmp(name, L"CoreTemp.dll") == 0 ||
+		_wcsicmp(name, L"FolderInfo.dll") == 0 ||
+		_wcsicmp(name, L"InputText.dll") == 0 ||
+		_wcsicmp(name, L"iTunesPlugin.dll") == 0 ||
+		_wcsicmp(name, L"MediaKey.dll") == 0 ||
+		_wcsicmp(name, L"NowPlaying.dll") == 0 ||
+		_wcsicmp(name, L"PerfMon.dll") == 0 ||
+		_wcsicmp(name, L"PingPlugin.dll") == 0 ||
+		_wcsicmp(name, L"PowerPlugin.dll") == 0 ||
+		_wcsicmp(name, L"Process.dll") == 0 ||
+		_wcsicmp(name, L"QuotePlugin.dll") == 0 ||
+		_wcsicmp(name, L"RecycleManager.dll") == 0 ||
+		_wcsicmp(name, L"ResMon.dll") == 0 ||
+		_wcsicmp(name, L"SpeedFanPlugin.dll") == 0 ||
+		_wcsicmp(name, L"SysInfo.dll") == 0 ||
+		_wcsicmp(name, L"VirtualDesktops.dll") == 0 ||
+		_wcsicmp(name, L"WebParser.dll") == 0 ||
+		_wcsicmp(name, L"WifiStatus.dll") == 0 ||
+		_wcsicmp(name, L"Win7AudioPlugin.dll") == 0 ||
+		_wcsicmp(name, L"WindowMessagePlugin.dll") == 0;
 }
 
 /*
@@ -1095,8 +1176,6 @@ void CDialogInstall::CTabInstall::Initialize()
 	LVITEM lvi;
 	lvi.mask = LVIF_TEXT | LVIF_GROUPID | LVIF_PARAM;
 	lvi.iSubItem = 0;
-	lvi.iItem = 0;
-	lvi.lParam = 0;
 
 	auto addComponent = [&](const WCHAR* name, const std::set<std::wstring>& items, const std::wstring& path, int groupId)
 	{
@@ -1109,6 +1188,7 @@ void CDialogInstall::CTabInstall::Initialize()
 		for (auto iter = items.cbegin(); iter != items.cend(); ++iter)
 		{
 			lvi.pszText = (WCHAR*)(*iter).c_str();
+			lvi.lParam = (LPARAM)&(*iter);
 			ListView_InsertItem(item, &lvi);
 			ListView_SetCheckState(item, lvi.iItem, TRUE);
 
@@ -1149,27 +1229,5 @@ void CDialogInstall::CTabInstall::Initialize()
 
 INT_PTR CALLBACK CDialogInstall::CTabInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	switch (uMsg)
-	{
-	case WM_COMMAND:
-		return c_Dialog->m_TabInstall.OnCommand(wParam, lParam);
-	}
-
 	return FALSE;
-}
-
-INT_PTR CDialogInstall::CTabInstall::OnCommand(WPARAM wParam, LPARAM lParam)
-{
-	switch (LOWORD(wParam))
-	{
-	case IDC_BACKUP_BROWSE_BUTTON:
-		{
-		}
-		break;
-
-	default:
-		return FALSE;
-	}
-
-	return TRUE;
 }

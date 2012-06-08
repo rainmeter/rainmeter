@@ -48,7 +48,6 @@ private:
 		virtual void Initialize();
 
 		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	};
 
 	enum Timer
@@ -88,6 +87,11 @@ private:
 
 	void LaunchRainmeter();
 	void KeepVariables();
+	
+	static bool IsIgnoredSkin(const WCHAR* name);
+	static bool IsIgnoredTheme(const WCHAR* name);
+	static bool IsIgnoredAddon(const WCHAR* name);
+	static bool IsIgnoredPlugin(const WCHAR* name);
 
 	static int CompareVersions(const std::wstring& strA, const std::wstring& strB);
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
