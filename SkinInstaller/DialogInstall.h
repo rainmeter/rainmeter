@@ -1,0 +1,125 @@
+/*
+  Copyright (C) 2012 Birunthan Mohanathas
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
+#ifndef SKININSTALLER_DIALOGINSTALL_H_
+#define SKININSTALLER_DIALOGINSTALL_H_
+
+#include <string>
+#include "unzip.h"
+#include "../Library/Dialog.h"
+
+class CDialogInstall : public CDialog
+{
+public:
+	static void Create(HINSTANCE hInstance, LPWSTR lpCmdLine);
+
+	static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
+	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+
+	static void LoadTheme(const std::wstring& name, bool setWallpaper);
+
+	static CDialogInstall* c_Dialog;
+
+protected:
+	virtual CTab& GetActiveTab();
+
+private:
+	class CTabInstall : public CTab
+	{
+	public:
+		CTabInstall(HWND window);
+
+		virtual void Initialize();
+
+		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+	};
+
+	enum Timer
+	{
+		Thread = 1
+	};
+
+	enum PackageFormat
+	{
+		None,
+		New,
+		Old
+	};
+
+	enum PackageFlag
+	{
+		Backup    = 0x0001
+	};
+
+	struct PackageFooter
+	{
+		__int64 size;
+		BYTE flags;
+		char key[7];
+	};
+
+	CDialogInstall(HWND wnd, const WCHAR* file);
+	virtual ~CDialogInstall();
+
+	bool ReadPackage();
+	bool ReadOptions(const WCHAR* file);
+	bool InstallPackage();
+	void BeginInstall();
+	bool ExtractCurrentFile(const std::wstring& fileName);
+
+	static unsigned __stdcall InstallThread(void* pParam);
+
+	void LaunchRainmeter();
+	void KeepVariables();
+
+	static int CompareVersions(const std::wstring& strA, const std::wstring& strB);
+	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
+	static bool CreateDirectoryRecursive(const std::wstring& path);
+	static std::wstring GetFileVersionString(const WCHAR* fileName);
+	static std::wstring GetDotNetVersionString();
+	static std::wstring GetWindowsVersionString();
+
+	CTabInstall m_TabInstall;
+
+	HANDLE m_InstallThread;
+	std::wstring m_InstallTime;
+
+	std::wstring m_ErrorMessage;
+
+	bool m_BackupPackage;
+
+	unzFile m_PackageUnzFile;
+	std::wstring m_PackageFileName;
+	std::wstring m_PackageRoot;
+	PackageFormat m_PackageFormat;
+	std::set<std::wstring> m_PackageSkins;
+	std::set<std::wstring> m_PackageThemes;
+	std::set<std::wstring> m_PackageAddons;
+	std::set<std::wstring> m_PackageFonts;
+	std::set<std::wstring> m_PackagePlugins;
+
+	// Package options
+	bool m_MergeSkins;
+	std::vector<std::wstring> m_VariablesFiles;
+	std::vector<std::wstring> m_LoadSkins;
+	std::wstring m_LoadTheme;
+};
+
+#endif

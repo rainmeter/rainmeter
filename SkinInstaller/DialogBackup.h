@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef _DIALOGBACKUP_H_
-#define _DIALOGBACKUP_H_
+#ifndef SKININSTALLER_DIALOGBACKUP_H_
+#define SKININSTALLER_DIALOGBACKUP_H_
 
 #include <string>
 #include "zip.h"

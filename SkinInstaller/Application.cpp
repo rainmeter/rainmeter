@@ -18,11 +18,11 @@
 
 #include "StdAfx.h"
 #include "DialogBackup.h"
+#include "DialogInstall.h"
 #include "resource.h"
 #include "Application.h"
-#include "Rainstaller.h"
 
-GLOBALDATA g_Data;
+GlobalData g_Data;
 
 /*
 ** Entry point
@@ -30,15 +30,22 @@ GLOBALDATA g_Data;
 */
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
-	bool loadTheme = (_wcsnicmp(lpCmdLine, L"/LoadTheme ", 11) == 0);
-	if (wcscmp(lpCmdLine, L"/BACKUP") != 0 && !loadTheme)
-	{
-		// Temporary solution until Rainstaller rewrite
-		return Rainstaller(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
-	}
-
 	// Avoid loading a dll from current directory
 	SetDllDirectory(L"");
+
+	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	InitCommonControls();
+
+	if (lpCmdLine[0] == L'"')
+	{
+		// Strip quotes
+		++lpCmdLine;
+		WCHAR* pos = wcsrchr(lpCmdLine, L'"');
+		if (pos)
+		{
+			*pos = L'\0';
+		}
+	}
 
 	WCHAR buffer[MAX_PATH];
 	GetModuleFileName(hInstance, buffer, MAX_PATH);
@@ -95,39 +102,36 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		}
 	}
 
-	if (loadTheme)
+	if (_wcsnicmp(lpCmdLine, L"/LoadTheme ", 11) == 0)
 	{
-		// Skip "/LOADTHEME "
+		// Skip "/LoadTheme "
 		lpCmdLine += 11;
 
 		if (CloseRainmeterIfActive() && *lpCmdLine)
 		{
-			LoadTheme(lpCmdLine);
+			CDialogInstall::LoadTheme(lpCmdLine, true);
 
 			std::wstring file = g_Data.programPath + L"Rainmeter.exe";
 			SHELLEXECUTEINFO sei = {0};
 			sei.cbSize = sizeof(SHELLEXECUTEINFO);
 			sei.fMask = SEE_MASK_UNICODE;
 			sei.lpFile = file.c_str();
+			sei.lpDirectory = g_Data.programPath.c_str();
 			sei.nShow = SW_SHOWNORMAL;
 			ShellExecuteEx(&sei);
 		}
 
 		return 0;
 	}
-
-	// Check whether Rainstaller.exe is already running and bring it to front if so
-	HANDLE hMutex;
-	if (IsRunning(L"RmSkinInstallerMutex", &hMutex))
+	else if (wcscmp(lpCmdLine, L"/BACKUP") == 0)
 	{
-		HWND hwnd = FindWindow(L"#32770", L"Backup Rainmeter");
-		SetForegroundWindow(hwnd);
-		return 0;
+		CDialogBackup::Create(hInstance, lpCmdLine);
+	}
+	else
+	{
+		CDialogInstall::Create(hInstance, lpCmdLine);
 	}
 
-	CDialogBackup::Create(hInstance, lpCmdLine);
-
-	ReleaseMutex(hMutex);
 	return 0;
 }
 
@@ -154,56 +158,6 @@ bool CloseRainmeterIfActive()
 	}
 
 	return true;
-}
-
-void LoadTheme(const WCHAR* name)
-{
-	std::wstring backup = g_Data.settingsPath + L"Themes\\Backup";
-	CreateDirectory(backup.c_str(), NULL);
-	backup += L"\\Rainmeter.thm";
-
-	// Make a copy of current Rainmeter.ini
-	CopyFiles(g_Data.iniFile, backup);
-
-	// Replace Rainmeter.ini with theme
-	std::wstring theme = g_Data.settingsPath + L"Themes\\";
-	theme += name;
-	std::wstring wallpaper = theme + L"\\RainThemes.bmp";
-	theme += L"\\Rainmeter.thm";
-	if (CopyFiles(theme, g_Data.iniFile))
-	{
-		PreserveSetting(backup, L"SkinPath");
-		PreserveSetting(backup, L"ConfigEditor");
-		PreserveSetting(backup, L"LogViewer");
-		PreserveSetting(backup, L"Logging");
-		PreserveSetting(backup, L"DisableVersionCheck");
-		PreserveSetting(backup, L"Language");
-		PreserveSetting(backup, L"NormalStayDesktop");
-		PreserveSetting(backup, L"TrayExecuteL", false);
-		PreserveSetting(backup, L"TrayExecuteM", false);
-		PreserveSetting(backup, L"TrayExecuteR", false);
-		PreserveSetting(backup, L"TrayExecuteDM", false);
-		PreserveSetting(backup, L"TrayExecuteDR", false);
-
-		// Set wallpaper if it exists
-		if (_waccess(wallpaper.c_str(), 0) != -1)
-		{
-			SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)wallpaper.c_str(), SPIF_UPDATEINIFILE);
-		}
-	}
-}
-
-void PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace)
-{
-	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
-
-	if ((replace || GetPrivateProfileString(L"Rainmeter", key, L"", buffer, 4, g_Data.iniFile.c_str()) == 0) &&
-		GetPrivateProfileString(L"Rainmeter", key, L"", buffer, MAX_LINE_LENGTH, from.c_str()) > 0)
-	{
-		WritePrivateProfileString(L"Rainmeter", key, buffer, g_Data.iniFile.c_str());
-	}
-
-	delete buffer;
 }
 
 // -----------------------------------------------------------------------------------------------

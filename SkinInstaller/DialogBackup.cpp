@@ -24,7 +24,7 @@
 
 #define WM_DELAYED_CLOSE WM_APP + 0
 
-extern GLOBALDATA g_Data;
+extern GlobalData g_Data;
 
 CDialogBackup* CDialogBackup::c_Dialog = NULL;
 
@@ -54,7 +54,17 @@ CDialogBackup::~CDialogBackup()
 */
 void CDialogBackup::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 {
-	DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_BACKUP_DIALOG), NULL, (DLGPROC)DlgProc, (LPARAM)lpCmdLine);
+	HANDLE hMutex;
+	if (IsRunning(L"RainmeterBackup", &hMutex))
+	{
+		HWND hwnd = FindWindow(L"#32770", L"Backup Rainmeter");
+		SetForegroundWindow(hwnd);
+	}
+	else
+	{
+		DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_BACKUP_DIALOG), NULL, (DLGPROC)DlgProc, (LPARAM)lpCmdLine);
+		ReleaseMutex(hMutex);
+	}
 }
 
 CDialog::CTab& CDialogBackup::GetActiveTab()
@@ -99,7 +109,7 @@ INT_PTR CALLBACK CDialogBackup::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 INT_PTR CDialogBackup::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
-	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_INSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
+	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_SKININSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
 	if (GetOSPlatform() >= OSPLATFORM_VISTA)

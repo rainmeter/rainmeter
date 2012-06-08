@@ -20,22 +20,27 @@
 #define __STDAFX_H__
 
 // WINAPI
-#include <windows.h>
-#include <windowsx.h>
-#include <shlobj.h>
-#include <shlwapi.h>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <Windowsx.h>
+#include <Commdlg.h>
+#include <Shlobj.h>
+#include <Shlwapi.h>
+#include <Shellapi.h>
+#include <Wininet.h>
 
 // STL
 #include <string>
 #include <vector>
 #include <list>
+#include <set>
+#include <vector>
 #include <ctime>
 #include <cstdlib>
+#include <cerrno>
 #include <cctype>
 
 // RUNTIME
-#include <stdio.h>
-#include <errno.h>
 #include <process.h>
 
 #endif
