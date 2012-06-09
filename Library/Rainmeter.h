@@ -257,7 +257,7 @@ private:
 	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);
 	void CreateOptionsFile();
 	void CreateDataFile();
-	void CreateComponentFolders();
+	void CreateComponentFolders(bool defaultIniLocation);
 	void SetLogging(bool logging);
 	void TestSettingsFile(bool bDefaultIniLocation);
 

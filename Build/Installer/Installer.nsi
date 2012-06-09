@@ -506,6 +506,11 @@ FunctionEnd
 	File "..\..\TestBench\${DIR}\Release\Rainmeter.dll"
 	File "..\..\TestBench\${DIR}\Release\SkinInstaller.exe"
 
+	${If} $InstallPortable != 1
+		File "..\..\TestBench\${DIR}\Release\Launcher.exe"
+		SetFileAttributes "$INSTDIR\Launcher.exe" HIDDEN
+	${EndIf}
+
 	SetOutPath "$INSTDIR\Plugins"
 	File /x *Example*.dll "..\..\TestBench\${DIR}\Release\Plugins\*.dll"
 !macroend

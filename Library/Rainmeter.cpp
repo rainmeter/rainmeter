@@ -911,7 +911,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 	}
 
 	// Create user skins, themes, addons, and plugins folders if needed
-	CreateComponentFolders();
+	CreateComponentFolders(bDefaultIniLocation);
 
 	// Create a default Rainmeter.ini file if needed
 	if (_waccess(iniFile, 0) == -1)
@@ -1180,7 +1180,7 @@ void CRainmeter::CreateDataFile()
 	}
 }
 
-void CRainmeter::CreateComponentFolders()
+void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 {
 	if (CreateDirectory(m_SkinPath.c_str(), NULL))
 	{
@@ -1200,23 +1200,37 @@ void CRainmeter::CreateComponentFolders()
 		}
 	}
 
-	path = GetUserPluginPath();
-	if (_waccess(path.c_str(), 0) == -1)
+	if (defaultIniLocation)
 	{
-		std::wstring from = GetDefaultPluginPath();
-		if (_waccess(from.c_str(), 0) != -1)
+		path = GetUserPluginPath();
+		if (_waccess(path.c_str(), 0) == -1)
 		{
-			CSystem::CopyFiles(from, m_SettingsPath);
+			std::wstring from = GetDefaultPluginPath();
+			if (_waccess(from.c_str(), 0) != -1)
+			{
+				CSystem::CopyFiles(from, m_SettingsPath);
+			}
 		}
-	}
 
-	path = GetAddonPath();
-	if (_waccess(path.c_str(), 0) == -1)
-	{
-		std::wstring from = GetDefaultAddonPath();
-		if (_waccess(from.c_str(), 0) != -1)
+		path = GetAddonPath();
+		if (_waccess(path.c_str(), 0) == -1)
 		{
-			CSystem::CopyFiles(from, m_SettingsPath);
+			std::wstring from = GetDefaultAddonPath();
+			if (_waccess(from.c_str(), 0) != -1)
+			{
+				CSystem::CopyFiles(from, m_SettingsPath);
+			}
+		}
+
+		path = m_SettingsPath;
+		path += L"Rainmeter.exe";
+		if (_waccess(path.c_str(), 0) == -1)
+		{
+			// Create a hidden dummy Rainmeter.exe into SettingsPath for old addon
+			// using relative path to Rainmeter.exe
+			std::wstring from = m_Path + L"Launcher.exe";
+			CSystem::CopyFiles(from, path);
+			SetFileAttributes(path.c_str(), FILE_ATTRIBUTE_HIDDEN);
 		}
 	}
 }
