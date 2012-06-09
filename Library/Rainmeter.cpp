@@ -804,6 +804,8 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 
 	// Set file locations
 	{
+		m_SettingsPath = ExtractPath(m_IniFile);
+
 		size_t len = m_IniFile.length();
 		if (len > 4 && _wcsicmp(iniFile + (len - 4), L".ini") == 0)
 		{
@@ -900,25 +902,6 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 		m_SkinPath += L"\\Rainmeter\\";
 		CreateDirectory(m_SkinPath.c_str(), NULL);
 		m_SkinPath += L"Skins\\";
-		DWORD result = CreateDirectory(m_SkinPath.c_str(), NULL);
-		if (result)
-		{
-			// Folder just created, so copy default skins there
-			std::wstring from = GetDefaultSkinPath();
-			from += L"*.*";
-			CSystem::CopyFiles(from, m_SkinPath);
-		}
-
-		std::wstring themesPath = GetSettingsPath();
-		themesPath += L"Themes\\";
-		result = CreateDirectory(themesPath.c_str(), NULL);
-		if (result)
-		{
-			// Copy themes to %APPDATA%
-			std::wstring from = GetDefaultThemePath();
-			from += L"*.*";
-			CSystem::CopyFiles(from, themesPath);
-		}
 
 		WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), iniFile);
 	}
@@ -926,6 +909,9 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 	{
 		m_SkinPath = m_Path + L"Skins\\";
 	}
+
+	// Create user skins, themes, addons, and plugins folders if needed
+	CreateComponentFolders();
 
 	// Create a default Rainmeter.ini file if needed
 	if (_waccess(iniFile, 0) == -1)
@@ -1194,10 +1180,51 @@ void CRainmeter::CreateDataFile()
 	}
 }
 
+void CRainmeter::CreateComponentFolders()
+{
+	if (CreateDirectory(m_SkinPath.c_str(), NULL))
+	{
+		// Folder just created, so copy default skins there
+		std::wstring from = GetDefaultSkinPath();
+		from += L"*.*";
+		CSystem::CopyFiles(from, m_SkinPath);
+	}
+
+	std::wstring path = GetThemePath();
+	if (_waccess(path.c_str(), 0) == -1)
+	{
+		std::wstring from = GetDefaultThemePath();
+		if (_waccess(from.c_str(), 0) != -1)
+		{
+			CSystem::CopyFiles(from, m_SettingsPath);
+		}
+	}
+
+	path = GetUserPluginPath();
+	if (_waccess(path.c_str(), 0) == -1)
+	{
+		std::wstring from = GetDefaultPluginPath();
+		if (_waccess(from.c_str(), 0) != -1)
+		{
+			CSystem::CopyFiles(from, m_SettingsPath);
+		}
+	}
+
+	path = GetAddonPath();
+	if (_waccess(path.c_str(), 0) == -1)
+	{
+		std::wstring from = GetDefaultAddonPath();
+		if (_waccess(from.c_str(), 0) != -1)
+		{
+			CSystem::CopyFiles(from, m_SettingsPath);
+		}
+	}
+}
+
 void CRainmeter::ReloadSettings()
 {
 	ScanForSkins(m_SkinPath);
-	ScanForThemes(GetSettingsPath() + L"Themes");
+	ScanForThemes(GetThemePath());
 	ReadGeneralSettings(m_IniFile);
 }
 
@@ -1339,6 +1366,7 @@ void CRainmeter::CreateMeterWindow(const std::wstring& folderPath, const std::ws
 
 	if (mw)
 	{
+		// Note: May modify existing key
 		m_MeterWindows[folderPath] = mw;
 
 		try

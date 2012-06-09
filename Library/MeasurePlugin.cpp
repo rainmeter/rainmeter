@@ -117,22 +117,30 @@ void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 
 	const std::wstring& plugin = parser.ReadString(section, L"Plugin", L"");
-	std::wstring pluginFile = Rainmeter->GetPluginPath();
 	size_t pos = plugin.find_last_of(L"\\/");
+	std::wstring pluginName;
 	if (pos != std::wstring::npos)
 	{
-		pluginFile.append(plugin, pos, plugin.length() - pos);
+		pluginName.assign(plugin, pos, plugin.length() - pos);
 	}
 	else
 	{
-		pluginFile += plugin;
+		pluginName = plugin;
 	}
 
+	// First try from program path
+	std::wstring pluginFile = Rainmeter->GetPluginPath() + pluginName;
 	m_Plugin = CSystem::RmLoadLibrary(pluginFile.c_str());
-	if (m_Plugin == NULL)
+	if (!m_Plugin)
 	{
-		LogWithArgs(LOG_ERROR, L"Plugin: \"%s\" not found", pluginFile.c_str());
-		return;
+		// Try from settings path
+		pluginFile = Rainmeter->GetUserPluginPath() + pluginName;
+		m_Plugin = CSystem::RmLoadLibrary(pluginFile.c_str());
+		if (!m_Plugin)
+		{
+			LogWithArgs(LOG_ERROR, L"Plugin: \"%s\" not found", pluginName.c_str());
+			return;
+		}
 	}
 
 	FARPROC initializeFunc = GetProcAddress(m_Plugin, "Initialize");

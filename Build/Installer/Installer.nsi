@@ -697,15 +697,27 @@ SkipIniMove:
 		Delete "$0\SkinInstaller.exe"
 	${EndIf}
 
+	; Cleanup old stuff
 	Delete "$INSTDIR\Rainmeter.exe.config"
 	Delete "$INSTDIR\Rainmeter.chm"
 	Delete "$INSTDIR\Default.ini"
+	RMDir /r "$INSTDIR\Addons\Rainstaller"
+	RMDir /r "$INSTDIR\Addons\RainBackup"
 
 	${If} $InstallPortable != 1
-	${AndIfNot} ${FileExists} "$INSTDIR\Defaults"
-		SetOutPath "$INSTDIR\Defaults"
+		CreateDirectory "$INSTDIR\Defaults"
 		Rename "$INSTDIR\Skins" "$INSTDIR\Defaults\Skins"
 		Rename "$INSTDIR\Themes" "$INSTDIR\Defaults\Themes"
+
+		${If} ${FileExists} "$INSTDIR\Addons\Backup"
+		${OrIf} ${FileExists} "$INSTDIR\Plugins\Backup"
+			CreateDirectory "$INSTDIR\Defaults\Backup"
+			Rename "$INSTDIR\Addons\Backup" "$INSTDIR\Defaults\Backup\Addons"
+			Rename "$INSTDIR\Plugins\Backup" "$INSTDIR\Defaults\Backup\Plugins"
+		${EndIf}
+
+		Rename "$INSTDIR\Addons" "$INSTDIR\Defaults\Addons"
+		${Locate} "$INSTDIR\Plugins" "/L=F /M=*.dll /G=0" "MoveNonDefaultPlugins"
 	${EndIf}
 
 !ifdef INCLUDEFILES
@@ -718,8 +730,6 @@ SkipIniMove:
 	RMDir /r "$INSTDIR\Languages"
 	SetOutPath "$INSTDIR\Languages"
 	File "..\..\TestBench\x32\Release\Languages\*.*"
-
-	RMDir /r "$INSTDIR\Addons\Rainstaller"
 
 	SetOutPath "$INSTDIR\Defaults\Skins"
 	RMDir /r "$INSTDIR\Skins\illustro"
@@ -803,6 +813,35 @@ Function CopyIniToAppData
 	${If} ${Errors}
 		StrCpy $0 0
 	${EndIf}
+FunctionEnd
+
+Function MoveNonDefaultPlugins
+	${If} $R7 != "AdvancedCPU.dll"
+	${AndIf} $R7 != "CoreTemp.dll"
+	${AndIf} $R7 != "FolderInfo.dll"
+	${AndIf} $R7 != "InputText.dll"
+	${AndIf} $R7 != "iTunesPlugin.dll"
+	${AndIf} $R7 != "MediaKey.dll"
+	${AndIf} $R7 != "NowPlaying.dll"
+	${AndIf} $R7 != "PerfMon.dll"
+	${AndIf} $R7 != "PingPlugin.dll"
+	${AndIf} $R7 != "PowerPlugin.dll"
+	${AndIf} $R7 != "Process.dll"
+	${AndIf} $R7 != "QuotePlugin.dll"
+	${AndIf} $R7 != "RecycleManager.dll"
+	${AndIf} $R7 != "ResMon.dll"
+	${AndIf} $R7 != "SpeedFanPlugin.dll"
+	${AndIf} $R7 != "SysInfo.dll"
+	${AndIf} $R7 != "VirtualDesktops.dll"
+	${AndIf} $R7 != "WebParser.dll"
+	${AndIf} $R7 != "WifiStatus.dll"
+	${AndIf} $R7 != "Win7AudioPlugin.dll"
+	${AndIf} $R7 != "WindowMessagePlugin.dll"
+		CreateDirectory "$INSTDIR\Defaults\Plugins"
+		Rename "$R9" "$INSTDIR\Defaults\Plugins\$R7"
+	${EndIf}
+
+	Push $0
 FunctionEnd
 
 Function RemoveStartMenuShortcuts
@@ -901,34 +940,19 @@ Section Uninstall
 		Sleep 500
 	${Next}
 
-	RMDir /r "$TEMP\Rainmeter-Cache"
-	RMDir /r "$INSTDIR\Skins\Gnometer"
-	RMDir /r "$INSTDIR\Skins\Tranquil"
-	RMDir /r "$INSTDIR\Skins\Enigma"
-	RMDir /r "$INSTDIR\Skins\Arcs"
-	RMDir /r "$INSTDIR\Skins\illustro"
-	Delete "$INSTDIR\Skins\*.txt"
-	RMDir "$INSTDIR\Skins"
-
-	RMDir /r "$INSTDIR\Addons\RainThemes"
-	RMDir /r "$INSTDIR\Addons\RainBrowser"
-	RMDir /r "$INSTDIR\Addons\RainBackup"
-	RMDir /r "$INSTDIR\Addons\Rainstaller"
-	RMDir "$INSTDIR\Addons"
-	Delete "$INSTDIR\Plugins\*.*"
-	RMDir "$INSTDIR\Plugins"
+	RMDir /r "$INSTDIR\Defaults"
 	RMDir /r "$INSTDIR\Languages"
-	RMDir /r "$INSTDIR\Themes"
-	Delete "$INSTDIR\*.*"
+	RMDir /r "$INSTDIR\Plugins"
+	Delete "$INSTDIR\Rainmeter.dll"
+	Delete "$INSTDIR\Rainmeter.exe"
+	Delete "$INSTDIR\SkinInstaller.exe"
+	RMDir "$INSTDIR"
 
 	${If} $un.DeleteAll == 1
 		RMDir /r "$INSTDIR\Skins"
 		RMDir /r "$INSTDIR\Addons"
-		RMDir /r "$INSTDIR\Plugins"
 		RMDir /r "$INSTDIR\Fonts"
 	${EndIf}
-
-	RMDir "$INSTDIR"
 
 	SetShellVarContext all
 	RMDir /r "$APPDATA\Rainstaller"

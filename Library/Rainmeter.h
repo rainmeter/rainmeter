@@ -136,13 +136,17 @@ public:
 	const std::wstring& GetIniFile() { return m_IniFile; }
 	const std::wstring& GetDataFile() { return m_DataFile; }
 	const std::wstring& GetLogFile() { return m_LogFile; }
+	const std::wstring& GetSettingsPath() { return m_SettingsPath; }
 	const std::wstring& GetSkinPath() { return m_SkinPath; }
-	std::wstring GetSettingsPath() { return ExtractPath(m_IniFile); }
+	std::wstring GetThemePath() { return m_SettingsPath + L"Themes\\"; }
 	std::wstring GetPluginPath() { return m_Path + L"Plugins\\"; }
-	std::wstring GetAddonPath() { return m_Path + L"Addons\\"; }
+	std::wstring GetUserPluginPath() { return m_SettingsPath + L"Plugins\\"; }
+	std::wstring GetAddonPath() { return m_SettingsPath + L"Addons\\"; }
 
 	std::wstring GetDefaultSkinPath() { return m_Path + L"Defaults\\Skins\\"; }
 	std::wstring GetDefaultThemePath() { return m_Path + L"Defaults\\Themes\\"; }
+	std::wstring GetDefaultPluginPath() { return m_Path + L"Defaults\\Plugins\\"; }
+	std::wstring GetDefaultAddonPath() { return m_Path + L"Defaults\\Addons\\"; }
 
 	const std::wstring& GetDrive() { return m_Drive; }
 
@@ -253,6 +257,7 @@ private:
 	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);
 	void CreateOptionsFile();
 	void CreateDataFile();
+	void CreateComponentFolders();
 	void SetLogging(bool logging);
 	void TestSettingsFile(bool bDefaultIniLocation);
 
@@ -268,6 +273,7 @@ private:
 	std::wstring m_DataFile;
 	std::wstring m_StatsFile;
 	std::wstring m_LogFile;
+	std::wstring m_SettingsPath;
 	std::wstring m_SkinPath;
 
 	std::wstring m_Drive;

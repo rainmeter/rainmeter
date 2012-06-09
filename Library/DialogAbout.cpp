@@ -937,111 +937,112 @@ void CDialogAbout::CTabPlugins::Initialize()
 	vitem.iItem = 0;
 	vitem.iSubItem = 0;
 
-	// Scan for plugins
-	WIN32_FIND_DATA fileData;      // Data structure describes the file found
-	HANDLE hSearch;                // Search handle returned by FindFirstFile
-
-	std::wstring files = Rainmeter->GetPluginPath() + L"*.dll";
-
-	// Start searching for .ini files in the given directory.
-	hSearch = FindFirstFile(files.c_str(), &fileData);
-	int index = 0;
-	do
+	auto findPlugins = [&](const std::wstring& path)
 	{
-		if (hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
+		std::wstring filter = path + L"*.dll";
 
-		// Try to get the version and author
-		std::wstring tmpSz = Rainmeter->GetPluginPath() + fileData.cFileName;
-		const WCHAR* path = tmpSz.c_str();
-
-		vitem.iItem = index;
-		vitem.pszText = fileData.cFileName;
-
-		// Try to get version and author from file resources first
-		DWORD handle;
-		DWORD versionSize = GetFileVersionInfoSize(path, &handle);
-		if (versionSize)
+		WIN32_FIND_DATA fd;
+		HANDLE hSearch = FindFirstFile(filter.c_str(), &fd);
+		int index = 0;
+		do
 		{
-			bool found = false;
-			void* data = new BYTE[versionSize];
-			if (GetFileVersionInfo(path, 0, versionSize, data))
+			if (hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
+
+			// Try to get the version and author
+			std::wstring tmpSz = path + fd.cFileName;
+			const WCHAR* path = tmpSz.c_str();
+
+			vitem.iItem = index;
+			vitem.pszText = fd.cFileName;
+
+			// Try to get version and author from file resources first
+			DWORD handle;
+			DWORD versionSize = GetFileVersionInfoSize(path, &handle);
+			if (versionSize)
 			{
-				UINT len;
-				struct LANGCODEPAGE
+				bool found = false;
+				void* data = new BYTE[versionSize];
+				if (GetFileVersionInfo(path, 0, versionSize, data))
 				{
-					WORD wLanguage;
-					WORD wCodePage;
-				} *lcp;
-
-				if (VerQueryValue(data, L"\\VarFileInfo\\Translation", (LPVOID*)&lcp, &len))
-				{
-					WCHAR key[64];
-					LPWSTR value;
-
-					_snwprintf_s(key, _TRUNCATE, L"\\StringFileInfo\\%04x%04x\\ProductName", lcp[0].wLanguage, lcp[0].wCodePage);
-					if (VerQueryValue(data, (LPTSTR)(LPCTSTR)key, (void**)&value, &len) &&
-						wcscmp(value, L"Rainmeter") == 0)
+					UINT len;
+					struct LANGCODEPAGE
 					{
-						ListView_InsertItem(item, &vitem);
-						++index;
-						found = true;
+						WORD wLanguage;
+						WORD wCodePage;
+					} *lcp;
 
-						_snwprintf_s(key, _TRUNCATE, L"\\StringFileInfo\\%04x%04x\\FileVersion", lcp[0].wLanguage, lcp[0].wCodePage);
-						if (VerQueryValue(data, (LPTSTR)(LPCTSTR)key, (void**)&value, &len))
-						{
-							ListView_SetItemText(item, vitem.iItem, 1, value);
-						}
+					if (VerQueryValue(data, L"\\VarFileInfo\\Translation", (LPVOID*)&lcp, &len))
+					{
+						WCHAR key[64];
+						LPWSTR value;
 
-						_snwprintf_s(key, _TRUNCATE, L"\\StringFileInfo\\%04x%04x\\LegalCopyright", lcp[0].wLanguage, lcp[0].wCodePage);
-						if (VerQueryValue(data, (LPTSTR)(LPCTSTR)key, (void**)&value, &len))
+						_snwprintf_s(key, _TRUNCATE, L"\\StringFileInfo\\%04x%04x\\ProductName", lcp[0].wLanguage, lcp[0].wCodePage);
+						if (VerQueryValue(data, (LPTSTR)(LPCTSTR)key, (void**)&value, &len) &&
+							wcscmp(value, L"Rainmeter") == 0)
 						{
-							ListView_SetItemText(item, vitem.iItem, 2, value);
+							ListView_InsertItem(item, &vitem);
+							++index;
+							found = true;
+
+							_snwprintf_s(key, _TRUNCATE, L"\\StringFileInfo\\%04x%04x\\FileVersion", lcp[0].wLanguage, lcp[0].wCodePage);
+							if (VerQueryValue(data, (LPTSTR)(LPCTSTR)key, (void**)&value, &len))
+							{
+								ListView_SetItemText(item, vitem.iItem, 1, value);
+							}
+
+							_snwprintf_s(key, _TRUNCATE, L"\\StringFileInfo\\%04x%04x\\LegalCopyright", lcp[0].wLanguage, lcp[0].wCodePage);
+							if (VerQueryValue(data, (LPTSTR)(LPCTSTR)key, (void**)&value, &len))
+							{
+								ListView_SetItemText(item, vitem.iItem, 2, value);
+							}
 						}
 					}
 				}
+
+				delete [] data;
+				if (found) continue;
 			}
 
-			delete [] data;
-			if (found) continue;
-		}
-
-		// Try old calling GetPluginVersion/GetPluginAuthor for backwards compatibility
-		DWORD err = 0;
-		HMODULE dll = CSystem::RmLoadLibrary(path, &err, true);
-		if (dll)
-		{
-			ListView_InsertItem(item, &vitem);
-			++index;
-
-			GETPLUGINVERSION GetVersionFunc = (GETPLUGINVERSION)GetProcAddress(dll, "GetPluginVersion");
-			if (GetVersionFunc)
+			// Try old calling GetPluginVersion/GetPluginAuthor for backwards compatibility
+			DWORD err = 0;
+			HMODULE dll = CSystem::RmLoadLibrary(path, &err, true);
+			if (dll)
 			{
-				UINT version = GetVersionFunc();
-				WCHAR buffer[64];
-				_snwprintf_s(buffer, _TRUNCATE, L"%u.%u", version / 1000, version % 1000);
-				ListView_SetItemText(item, vitem.iItem, 1, buffer);
-			}
+				ListView_InsertItem(item, &vitem);
+				++index;
 
-			GETPLUGINAUTHOR GetAuthorFunc = (GETPLUGINAUTHOR)GetProcAddress(dll, "GetPluginAuthor");
-			if (GetAuthorFunc)
-			{
-				LPCTSTR author = GetAuthorFunc();
-				if (author && *author)
+				GETPLUGINVERSION GetVersionFunc = (GETPLUGINVERSION)GetProcAddress(dll, "GetPluginVersion");
+				if (GetVersionFunc)
 				{
-					ListView_SetItemText(item, vitem.iItem, 2, (LPWSTR)author);
+					UINT version = GetVersionFunc();
+					WCHAR buffer[64];
+					_snwprintf_s(buffer, _TRUNCATE, L"%u.%u", version / 1000, version % 1000);
+					ListView_SetItemText(item, vitem.iItem, 1, buffer);
 				}
+
+				GETPLUGINAUTHOR GetAuthorFunc = (GETPLUGINAUTHOR)GetProcAddress(dll, "GetPluginAuthor");
+				if (GetAuthorFunc)
+				{
+					LPCTSTR author = GetAuthorFunc();
+					if (author && *author)
+					{
+						ListView_SetItemText(item, vitem.iItem, 2, (LPWSTR)author);
+					}
+				}
+
+				FreeLibrary(dll);
 			}
-
-			FreeLibrary(dll);
+			else
+			{
+				LogWithArgs(LOG_ERROR, L"Unable to load plugin: %s (%u)", tmpSz.c_str(), err);
+			}
 		}
-		else
-		{
-			LogWithArgs(LOG_ERROR, L"Unable to load plugin: %s (%u)", tmpSz.c_str(), err);
-		}
-	}
-	while (FindNextFile(hSearch, &fileData));
+		while (FindNextFile(hSearch, &fd));
+		FindClose(hSearch);
+	};
 
-	FindClose(hSearch);
+	findPlugins(Rainmeter->GetPluginPath());
+	findPlugins(Rainmeter->GetUserPluginPath());
 }
 
 /*
