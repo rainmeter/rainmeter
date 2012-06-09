@@ -137,29 +137,6 @@ void CDialogManage::UpdateSkins(CMeterWindow* meterWindow, bool deleted)
 	}
 }
 
-std::wstring GetTreeSelectionPath(HWND tree)
-{
-	WCHAR buffer[MAX_PATH];
-
-	// Get current selection name
-	TVITEM tvi = {0};
-	tvi.hItem = TreeView_GetSelection(tree);
-	tvi.mask = TVIF_TEXT;
-	tvi.pszText = buffer;
-	tvi.cchTextMax = MAX_PATH;
-	TreeView_GetItem(tree, &tvi);
-	
-	std::wstring path = buffer;
-	while ((tvi.hItem = TreeView_GetParent(tree, tvi.hItem)) != NULL)
-	{
-		TreeView_GetItem(tree, &tvi);
-		path.insert(0, 1, L'\\');
-		path.insert(0, buffer);
-	}
-
-	return path;
-}
-
 CDialog::CTab& CDialogManage::GetActiveTab()
 {
 	int sel = TabCtrl_GetCurSel(GetDlgItem(m_Window, IDC_MANAGE_TAB));
@@ -734,6 +711,29 @@ void CDialogManage::CTabSkins::ReadSkin()
 	}
 
 	delete [] buffer;
+}
+
+std::wstring CDialogManage::CTabSkins::GetTreeSelectionPath(HWND tree)
+{
+	WCHAR buffer[MAX_PATH];
+
+	// Get current selection name
+	TVITEM tvi = {0};
+	tvi.hItem = TreeView_GetSelection(tree);
+	tvi.mask = TVIF_TEXT;
+	tvi.pszText = buffer;
+	tvi.cchTextMax = MAX_PATH;
+	TreeView_GetItem(tree, &tvi);
+	
+	std::wstring path = buffer;
+	while ((tvi.hItem = TreeView_GetParent(tree, tvi.hItem)) != NULL)
+	{
+		TreeView_GetItem(tree, &tvi);
+		path.insert(0, 1, L'\\');
+		path.insert(0, buffer);
+	}
+
+	return path;
 }
 
 /*

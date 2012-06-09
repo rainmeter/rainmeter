@@ -66,6 +66,7 @@ private:
 		void DisableControls(bool clear = false);
 		void ReadSkin();
 
+		static std::wstring GetTreeSelectionPath(HWND tree);
 		static int PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index = 0);
 
 		std::wstring m_SkinFileName;

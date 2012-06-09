@@ -951,6 +951,7 @@ Section Uninstall
 	Delete "$INSTDIR\Rainmeter.dll"
 	Delete "$INSTDIR\Rainmeter.exe"
 	Delete "$INSTDIR\SkinInstaller.exe"
+	Delete "$INSTDIR\Launcher.exe"
 	RMDir "$INSTDIR"
 
 	${If} $un.DeleteAll == 1
