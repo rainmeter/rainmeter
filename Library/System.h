@@ -84,7 +84,7 @@ public:
 
 	static bool CopyFiles(std::wstring from, std::wstring to, bool bMove = false);
 	static bool RemoveFile(const std::wstring& file);
-	static bool RemoveFolder(const std::wstring& strFolder);
+	static bool RemoveFolder(std::wstring folder);
 
 	static void UpdateIniFileMappingList();
 	static std::wstring GetTemporaryFile(const std::wstring& iniFile);

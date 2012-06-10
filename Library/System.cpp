@@ -1165,8 +1165,7 @@ void CSystem::SetWallpaper(const std::wstring& wallpaper, const std::wstring& st
 		Bitmap* bitmap = Bitmap::FromFile(wallpaper.c_str());
 		if (bitmap && bitmap->GetLastStatus() == Ok)
 		{
-			std::wstring file = Rainmeter->GetSettingsPath();
-			file += L"Wallpaper.bmp";
+			std::wstring file = Rainmeter->GetSettingsPath() + L"Wallpaper.bmp";
 
 			const CLSID bmpClsid = { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } };
 			if (bitmap->Save(file.c_str(), &bmpClsid) == Ok)
@@ -1273,18 +1272,16 @@ bool CSystem::RemoveFile(const std::wstring& file)
 ** Recursively removes folder.
 **
 */
-bool CSystem::RemoveFolder(const std::wstring& strFolder)
+bool CSystem::RemoveFolder(std::wstring folder)
 {
-	std::wstring tmpFolder(strFolder);
-
 	// The strings must end with double nul
-	tmpFolder.append(1, L'\0');
+	folder.append(1, L'\0');
 
 	SHFILEOPSTRUCT fo =
 	{
 		NULL,
 		FO_DELETE,
-		tmpFolder.c_str(),
+		folder.c_str(),
 		NULL,
 		FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO
 	};
@@ -1292,7 +1289,7 @@ bool CSystem::RemoveFolder(const std::wstring& strFolder)
 	int result = SHFileOperation(&fo);
 	if (result != 0)
 	{
-		LogWithArgs(LOG_ERROR, L"Unable to delete folder %s (%i)", strFolder.c_str(), result);
+		LogWithArgs(LOG_ERROR, L"Unable to delete folder %s (%i)", folder.c_str(), result);
 		return false;
 	}
 	return true;
