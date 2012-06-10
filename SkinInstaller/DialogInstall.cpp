@@ -581,6 +581,28 @@ bool CDialogInstall::ReadOptions(const WCHAR* file)
 		}
 	}
 
+	if (GetPrivateProfileString(section, newFormat ? L"LoadType" : L"LaunchType", L"", buffer, MAX_LINE_LENGTH, file) > 0)
+	{
+		bool loadSkin = _wcsicmp(buffer, newFormat ? L"Skin" : L"Load") == 0;
+
+		GetPrivateProfileString(section, newFormat ? L"Load" : L"LaunchCommand", L"", buffer, MAX_LINE_LENGTH, file);
+		if (loadSkin)
+		{
+			if (newFormat)
+			{
+				m_LoadSkins.push_back(buffer);
+			}
+			else
+			{
+				m_LoadSkins = Tokenize(buffer, L"|");
+			}
+		}
+		else
+		{
+			m_LoadTheme = buffer;
+		}
+	}
+
 	if (newFormat)
 	{
 		if (GetPrivateProfileString(section, L"MinimumDotNET", L"", buffer, MAX_LINE_LENGTH, file) > 0 &&
@@ -600,31 +622,43 @@ bool CDialogInstall::ReadOptions(const WCHAR* file)
 			return false;
 		}
 	}
-	else
-	{
-		if (GetPrivateProfileString(section, L"LaunchType", L"", buffer, MAX_LINE_LENGTH, file) > 0)
-		{
-			bool loadSkins = _wcsicmp(buffer, L"load") == 0;
-
-			GetPrivateProfileString(section, L"LaunchCommand", L"", buffer, MAX_LINE_LENGTH, file);
-			if (loadSkins)
-			{
-				m_LoadSkins = Tokenize(buffer, L"|");
-			}
-			else
-			{
-				m_LoadTheme = buffer;
-			}
-		}
-
-		return true;
-	}
 
 	return true;
 }
 
 bool CDialogInstall::InstallPackage()
 {
+	if (!m_MergeSkins && m_BackupSkins)
+	{
+		// Move skins into backup folder
+		for (auto iter = m_PackageSkins.cbegin(); iter != m_PackageSkins.cend(); ++iter)
+		{
+			std::wstring from = g_Data.skinsPath + *iter;
+			std::wstring to = g_Data.skinsPath + L"Backup\\";
+			CreateDirectory(to.c_str(), NULL);
+			to += *iter;
+			to += L'\0';	// For SHFileOperation
+
+			// Delete current backup
+			SHFILEOPSTRUCT fo =
+			{
+				NULL,
+				FO_DELETE,
+				to.c_str(),
+				NULL,
+				FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO
+			};
+			SHFileOperation(&fo);
+
+			if (!CopyFiles(from, to, true))
+			{
+				m_ErrorMessage = L"Unable to move to:\n";
+				m_ErrorMessage += to;
+				return false;
+			}
+		}
+	}
+
 	WCHAR buffer[MAX_PATH];
 
 	// Helper to sets buffer with current file name
@@ -641,19 +675,6 @@ bool CDialogInstall::InstallPackage()
 
 		return false;
 	};
-
-	if (!m_MergeSkins && m_BackupSkins)
-	{
-		// Move skins into backup folder
-		for (auto iter = m_PackageSkins.cbegin(); iter != m_PackageSkins.cend(); ++iter)
-		{
-			std::wstring from = g_Data.skinsPath + *iter;
-			std::wstring to = g_Data.skinsPath + L"Backup\\";
-			CreateDirectory(to.c_str(), NULL);
-			to += *iter;
-			CopyFiles(from, to, true);
-		}
-	}
 
 	unzGoToFirstFile(m_PackageUnzFile);
 	const WCHAR* root = m_PackageRoot.c_str();
