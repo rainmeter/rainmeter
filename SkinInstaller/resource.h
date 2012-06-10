@@ -5,6 +5,7 @@
 #define IDD_INSTALL_TAB                              103
 #define IDD_BACKUP_DIALOG                            104
 #define IDD_BACKUP_TABDIALOG                         105
+#define IDR_INSTALL_MENU                             106
 
 #define IDC_BACKUP_TAB                               1019
 #define IDC_BACKUP_FILE_TEXT                         1020
@@ -26,3 +27,7 @@
 #define IDC_INSTALLTAB_THEME_CHECKBOX                1004
 #define IDC_INSTALLTAB_INPROGRESS_TEXT               1005
 #define IDC_INSTALLTAB_PROGRESS                      1006
+
+#define IDM_INSTALL_BACKUPSKINS                      4200
+#define IDM_INSTALL_SYSTEMFONTS                      4201
+#define IDM_INSTALL_FORMAT                           4202

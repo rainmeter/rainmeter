@@ -31,6 +31,7 @@ public:
 	static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
 	static void LoadTheme(const std::wstring& name, bool setWallpaper);
 
@@ -89,7 +90,7 @@ private:
 
 	void LaunchRainmeter();
 	void KeepVariables();
-	
+
 	static bool IsIgnoredSkin(const WCHAR* name);
 	static bool IsIgnoredTheme(const WCHAR* name);
 	static bool IsIgnoredAddon(const WCHAR* name);
@@ -105,11 +106,8 @@ private:
 	CTabInstall m_TabInstall;
 
 	HANDLE m_InstallThread;
-	std::wstring m_InstallTime;
 
 	std::wstring m_ErrorMessage;
-
-	bool m_BackupPackage;
 
 	unzFile m_PackageUnzFile;
 	std::wstring m_PackageFileName;
@@ -121,8 +119,9 @@ private:
 	std::set<std::wstring> m_PackageFonts;
 	std::set<std::wstring> m_PackagePlugins;
 
-	// Package options
+	bool m_BackupSkins;
 	bool m_MergeSkins;
+	bool m_SystemFonts;
 	std::vector<std::wstring> m_VariablesFiles;
 	std::vector<std::wstring> m_LoadSkins;
 	std::wstring m_LoadTheme;

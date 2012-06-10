@@ -47,6 +47,22 @@ VS_VERSION_INFO VERSIONINFO
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// Menu
+//
+
+IDR_INSTALL_MENU MENU
+{
+    POPUP " "
+    {
+        MENUITEM "Backup skins",                 IDM_INSTALL_BACKUPSKINS
+        MENUITEM "Install fonts to system",      IDM_INSTALL_SYSTEMFONTS, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM " ",                            IDM_INSTALL_FORMAT, GRAYED
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // Dialog
 //
 
@@ -80,7 +96,7 @@ FONT 8, "MS Shell Dlg 2"
     CONTROL         IDB_INSTALLHEADER, IDC_INSTALL_HEADER_BITMAP, STATIC, SS_BITMAP | WS_CHILD | WS_VISIBLE, 0, 0, 266, 37
     CONTROL         "", IDC_STATIC, STATIC, SS_ETCHEDHORZ | WS_CHILD | WS_VISIBLE, 0, 37, 270, 1
     CONTROL         "", IDC_INSTALL_TAB, "SysTabControl32", TCS_TABS | TCS_FIXEDWIDTH, 6, 42, 254, 205
-//    PUSHBUTTON      "Advanced", IDC_INSTALL_ADVANCED_BUTTON, 6, 251, 70, 14
+    PUSHBUTTON      "Advanced", IDC_INSTALL_ADVANCED_BUTTON, 6, 251, 70, 14
     DEFPUSHBUTTON   "Install", IDC_INSTALL_INSTALL_BUTTON, 155, 251, 50, 14
     PUSHBUTTON      "Cancel", IDCLOSE, 210, 251, 50, 14
 }

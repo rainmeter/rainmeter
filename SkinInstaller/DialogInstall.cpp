@@ -46,11 +46,12 @@ inline bool IsWin32Build()
 CDialogInstall::CDialogInstall(HWND wnd, const WCHAR* file) : CDialog(wnd),
 	m_TabInstall(wnd),
 	m_InstallThread(),
-	m_BackupPackage(false),
 	m_PackageUnzFile(),
 	m_PackageFileName(file),
 	m_PackageFormat(PackageFormat::Old),
-	m_MergeSkins(false)
+	m_BackupSkins(true),
+	m_MergeSkins(false),
+	m_SystemFonts(false)
 {
 }
 
@@ -188,6 +189,47 @@ INT_PTR CDialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
+	case IDC_INSTALL_ADVANCED_BUTTON:
+		{
+			RECT r;
+			GetWindowRect((HWND)lParam, &r);
+			HMENU menu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_INSTALL_MENU));
+			HMENU subMenu = GetSubMenu(menu, 0);
+
+			if (m_PackageSkins.empty() || m_MergeSkins)
+			{
+				EnableMenuItem(subMenu, IDM_INSTALL_BACKUPSKINS, MF_BYCOMMAND | MF_GRAYED);
+			}
+			else
+			{
+				CheckMenuItem(subMenu, IDM_INSTALL_BACKUPSKINS, (m_BackupSkins ? MF_CHECKED : MF_UNCHECKED) | MF_BYCOMMAND);
+			}
+
+			if (m_PackageFonts.empty())
+			{
+				EnableMenuItem(subMenu, IDM_INSTALL_SYSTEMFONTS, MF_BYCOMMAND | MF_GRAYED);
+			}
+			else
+			{
+				CheckMenuItem(subMenu, IDM_INSTALL_SYSTEMFONTS, (m_SystemFonts ? MF_CHECKED : MF_UNCHECKED) | MF_BYCOMMAND);
+			}
+
+			const WCHAR* formatName = m_PackageFormat == PackageFormat::New ? L"New format" : L"Old format";
+			ModifyMenu(subMenu, IDM_INSTALL_FORMAT, MF_STRING | MF_GRAYED | MF_BYCOMMAND, IDM_INSTALL_FORMAT, formatName);
+
+			TrackPopupMenu(
+				subMenu,
+				TPM_RIGHTBUTTON | TPM_LEFTALIGN,
+				r.left,
+				--r.bottom,
+				0,
+				m_Window,
+				NULL);
+
+			DestroyMenu(menu);
+		}
+		break;
+
 	case IDC_INSTALL_INSTALL_BUTTON:
 		BeginInstall();
 		break;
@@ -196,6 +238,36 @@ INT_PTR CDialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (!m_InstallThread)
 		{
 			EndDialog(m_Window, 0);
+		}
+		break;
+
+	case IDM_INSTALL_BACKUPSKINS:
+		m_BackupSkins = !m_BackupSkins;
+		break;
+
+	case IDM_INSTALL_SYSTEMFONTS:
+		m_SystemFonts = !m_SystemFonts;
+		break;
+
+	default:
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+INT_PTR CDialogInstall::OnNotify(WPARAM wParam, LPARAM lParam)
+{
+	LPNMHDR nm = (LPNMHDR)lParam;
+	switch (nm->code)
+	{
+	case BCN_DROPDOWN:
+		{
+			NMHDR* hdr = &((NMBCDROPDOWN*)lParam)->hdr;
+
+			// Unpush the drop-down button part and simulate click
+			Button_SetDropDownState(hdr->hwndFrom, FALSE);
+			SendMessage(hdr->hwndFrom, BM_CLICK, 0, 0);
 		}
 		break;
 
@@ -280,7 +352,7 @@ bool CDialogInstall::ReadPackage()
 
 			if (footer.flags)
 			{
-				m_BackupPackage = footer.flags & PackageFlag::Backup;
+				m_BackupSkins = !(footer.flags & PackageFlag::Backup);
 			}
 		}
 	}
@@ -476,6 +548,14 @@ bool CDialogInstall::ReadOptions(const WCHAR* file)
 	}
 	Static_SetText(GetDlgItem(window, IDC_INSTALLTAB_NAME_TEXT), buffer);
 
+	if (!newFormat)
+	{
+		// Determine if skins need to backed up based on name
+		int s;
+		int scanned = swscanf(buffer, L"Backup-%d.%d.%d-%d.%d.rmskin", &s, &s, &s, &s, &s);
+		m_BackupSkins = scanned != 5;
+	}
+
 	GetPrivateProfileString(section, L"Author", L"", buffer, 64, file);
 	Static_SetText(GetDlgItem(window, IDC_INSTALLTAB_AUTHOR_TEXT), buffer);
 
@@ -562,15 +642,14 @@ bool CDialogInstall::InstallPackage()
 		return false;
 	};
 
-	// Move skins into backup folder
-	if (!m_MergeSkins)
+	if (!m_MergeSkins && m_BackupSkins)
 	{
+		// Move skins into backup folder
 		for (auto iter = m_PackageSkins.cbegin(); iter != m_PackageSkins.cend(); ++iter)
 		{
 			std::wstring from = g_Data.skinsPath + *iter;
 			std::wstring to = g_Data.skinsPath + L"Backup\\";
-			to += m_InstallTime;
-			to += L'\\';
+			CreateDirectory(to.c_str(), NULL);
 			to += *iter;
 			CopyFiles(from, to, true);
 		}
@@ -688,12 +767,6 @@ bool CDialogInstall::InstallPackage()
 
 void CDialogInstall::BeginInstall()
 {
-	WCHAR buffer[64];
-	SYSTEMTIME lt;
-	GetLocalTime(&lt);
-	int len = _snwprintf_s(buffer, _TRUNCATE, L"%02d.%02d.%02d %02d.%02d-%02d", lt.wYear, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond);
-	m_InstallTime.assign(buffer, len);
-
 	HWND item = GetDlgItem(m_Window, IDC_INSTALL_ADVANCED_BUTTON);
 	EnableWindow(item, FALSE);
 
@@ -796,8 +869,6 @@ void CDialogInstall::KeepVariables()
 	for (int i = 0, isize = m_VariablesFiles.size(); i < isize; ++i)
 	{
 		std::wstring fromPath = g_Data.skinsPath + L"Backup\\";
-		fromPath += m_InstallTime;
-		fromPath += L'\\';
 		fromPath += m_VariablesFiles[i];
 		std::wstring toPath = g_Data.skinsPath + m_VariablesFiles[i];
 
@@ -1196,7 +1267,7 @@ void CDialogInstall::CTabInstall::Initialize()
 			WCHAR* text = L"Add";
 			if (_waccess(itemPath.c_str(), 0) != -1)
 			{
-				text = (groupId == 0) ? L"Backup and replace" : L"Replace";
+				text = (groupId == 0 && c_Dialog->m_BackupSkins) ? L"Backup and replace" : L"Replace";
 			}
 			ListView_SetItemText(item, lvi.iItem, 1, text);
 
