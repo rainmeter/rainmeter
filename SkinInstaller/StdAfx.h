@@ -24,6 +24,7 @@
 #include <Windows.h>
 #include <Windowsx.h>
 #include <Commdlg.h>
+#include <Lmcons.h>
 #include <Shlobj.h>
 #include <Shlwapi.h>
 #include <Shellapi.h>

@@ -19,6 +19,7 @@
 #include "StdAfx.h"
 #include "Application.h"
 #include "DialogBackup.h"
+#include "DialogInstall.h"
 #include "resource.h"
 #include "../Version.h"
 
@@ -190,10 +191,9 @@ void CDialogBackup::StartBackup()
 bool CDialogBackup::CreateBackup()
 {
 	m_WriteBuffer = new char[c_WriteBufferSize];
-	
-	std::wstring addonsPath = g_Data.programPath + L"Addons";
-	std::wstring fontsPath = g_Data.programPath + L"Fonts";
-	std::wstring pluginsPath = g_Data.programPath + L"Plugins";
+
+	std::wstring addonsPath = g_Data.settingsPath + L"Addons";
+	std::wstring pluginsPath = g_Data.settingsPath + L"Plugins";
 	std::wstring themesPath = g_Data.settingsPath + L"Themes";
 	std::wstring skinsPath = g_Data.skinsPath;
 
@@ -207,9 +207,26 @@ bool CDialogBackup::CreateBackup()
 		return false;
 	}
 
+	// Create and add the options file
+	{
+		WCHAR tempFile[MAX_PATH];
+		GetTempPath(MAX_PATH, tempFile);
+		GetTempFileName(tempFile, L"ini", 0, tempFile);
+
+		WCHAR userName[UNLEN + 1];
+		DWORD userNameSize = UNLEN + 1;
+		GetUserName(userName, &userNameSize);
+
+		WritePrivateProfileString(L"rmskin", L"Name", L"Backup", tempFile);
+		WritePrivateProfileString(L"rmskin", L"Author", userName, tempFile);
+		WritePrivateProfileString(L"rmskin", L"Version", m_BackupTime.c_str(), tempFile);
+		WritePrivateProfileString(L"rmskin", L"MinimumRainmeter", L"2.3", tempFile);
+		AddFileToBackup(ConvertToAscii(tempFile).c_str(), "RMSKIN.ini");
+		DeleteFile(tempFile);
+	}
+
 	if ((_waccess(addonsPath.c_str(), 0) == 0 && !AddFolderToBackup(addonsPath, L"", "Addons", true)) ||
-		(_waccess(fontsPath.c_str(), 0) == 0 && !AddFolderToBackup(themesPath, L"", "Fonts", true)) ||
-		(_waccess(skinsPath.c_str(), 0) == 0 && !AddFolderToBackup(skinsPath, L"", "Skins", true)) ||
+		//(_waccess(skinsPath.c_str(), 0) == 0 && !AddFolderToBackup(skinsPath, L"", "Skins", true)) ||
 		(_waccess(themesPath.c_str(), 0) == 0 && !AddFolderToBackup(themesPath, L"", "Themes", true)) ||
 #ifdef _WIN64
 		(_waccess(pluginsPath.c_str(), 0) == 0 && !AddFolderToBackup(pluginsPath, L"", "Plugins\\64bit", false)))
@@ -221,28 +238,20 @@ bool CDialogBackup::CreateBackup()
 		return false;
 	}
 
-	// Create and add the config file
-	WCHAR tempFile[MAX_PATH];
-	GetTempPath(MAX_PATH, tempFile);
-	GetTempFileName(tempFile, L"ini", 0, tempFile);
-
-	std::wstring tmpSz = m_TargetFile;
-	std::wstring::size_type pos = m_TargetFile.find_last_of(L'\\');
-	if (pos != std::wstring::npos)
-	{
-		tmpSz.erase(0, ++pos);
-	}
-
-	WritePrivateProfileString(L"Rainstaller", L"Name", tmpSz.c_str(), tempFile);
-	WritePrivateProfileString(L"Rainstaller", L"RainmeterFonts", L"1", tempFile);
-	WritePrivateProfileString(L"Rainstaller", L"MinRainmeterVer", L"2.2", tempFile);
-	AddFileToBackup(ConvertToAscii(tempFile).c_str(), "Rainstaller.cfg");
-	DeleteFile(tempFile);
-
 	if (zipClose(m_ZipFile, NULL) != ZIP_OK)
 	{
 		MessageBox(NULL, L"Unable to access backup .rmskin file.", NULL, MB_OK | MB_TOPMOST);
 		return false;
+	}
+
+	// Add footer
+	FILE* file = _wfopen(m_TargetFile.c_str(), L"r+b");
+	if (file)
+	{
+		fseek(file, 0, SEEK_END);
+		CDialogInstall::PackageFooter footer = { _ftelli64(file), CDialogInstall::PackageFlag::Backup, "RMSKIN" };
+		fwrite(&footer, sizeof(footer), 1, file);
+		fclose(file);
 	}
 
 	delete m_WriteBuffer;
@@ -431,10 +440,16 @@ void CDialogBackup::CTabBackup::Initialize()
 	if (SUCCEEDED(hr))
 	{
 		c_Dialog->m_TargetFile = buffer;
+
 		SYSTEMTIME lt;
 		GetLocalTime(&lt);
-		_snwprintf_s(buffer, _TRUNCATE, L"\\Backup-%02d.%02d.%02d-%02d.%02d.rmskin", lt.wYear, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute);
-		c_Dialog->m_TargetFile += buffer;
+		_snwprintf_s(buffer, _TRUNCATE, L"%02d.%02d.%02d-%02d.%02d", lt.wYear, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute);
+
+		c_Dialog->m_BackupTime = buffer;
+
+		c_Dialog->m_TargetFile += L"\\Backup-";
+		c_Dialog->m_TargetFile += c_Dialog->m_BackupTime;
+		c_Dialog->m_TargetFile += L".rmskin";
 
 		HWND item = GetDlgItem(m_Window, IDC_BACKUP_FILE_TEXT);
 		SetWindowText(item, c_Dialog->m_TargetFile.c_str());

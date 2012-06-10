@@ -264,7 +264,7 @@ bool CDialogInstall::ReadPackage()
 		__int64 fileSize = 0;
 		if (file)
 		{
-			fseek(file, sizeof(footer), SEEK_END);
+			fseek(file, -(long)sizeof(footer), SEEK_END);
 			fileSize = _ftelli64(file);
 			fread(&footer, sizeof(footer), 1, file);
 			fclose(file);
@@ -331,15 +331,15 @@ bool CDialogInstall::ReadPackage()
 		if (!path)
 		{
 			path = buffer;
-
+		}
+		else
+		{
 			if (m_PackageFormat == PackageFormat::New)
 			{
 				// New package files must be in root of archive
 				continue;
 			}
-		}
-		else
-		{
+
 			++path;	// Skip slash
 		}
 

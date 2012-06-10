@@ -62,6 +62,7 @@ private:
 	CTabBackup m_TabBackup;
 
 	std::wstring m_TargetFile;
+	std::wstring m_BackupTime;
 
 	HANDLE m_ThreadHandle;
 

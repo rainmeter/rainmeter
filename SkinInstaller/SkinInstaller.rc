@@ -64,12 +64,12 @@ IDD_BACKUP_TABDIALOG DIALOGEX 15, 30, 250, 58
 STYLE DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
 FONT 8, "MS Shell Dlg 2"
 {
-    LTEXT           "A backup allows you to save a complete copy of your setup, including skins and statistics.\n\nThe backup will be created at:", IDC_BACKUP_DESCRIPTION_TEXT, 0, 0, 245, 39
+    LTEXT           "A backup allows you to save a complete copy of your current Rainmeter skins and themes.\n\nThe backup will be created at:", IDC_BACKUP_DESCRIPTION_TEXT, 0, 0, 245, 39
     EDITTEXT        IDC_BACKUP_FILE_TEXT, 0, 42, 220, 14, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "...", IDC_BACKUP_BROWSE_BUTTON, 225, 42, 25, 14, WS_TABSTOP
 
-    LTEXT           "Backup in progress...", IDC_BACKUP_INPROGRESS_TEXT, 0, 0, 245, 9, NOT WS_VISIBLE
-    CONTROL         "", IDC_BACKUP_PROGRESS, "msctls_progress32", PBS_MARQUEE | NOT WS_VISIBLE | WS_BORDER, 0, 42, 250, 11
+    LTEXT           "Backup in progress...", IDC_BACKUP_INPROGRESS_TEXT, 0, 0, 245, 39, NOT WS_VISIBLE
+    CONTROL         "", IDC_BACKUP_PROGRESS, "msctls_progress32", PBS_MARQUEE | NOT WS_VISIBLE | WS_BORDER, 0, 15, 250, 11
 }
 
 IDD_INSTALL_DIALOG DIALOGEX 0, 0, 266, 270
