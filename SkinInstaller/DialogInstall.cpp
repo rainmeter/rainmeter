@@ -133,7 +133,10 @@ INT_PTR CALLBACK CDialogInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			return c_Dialog->OnCommand(wParam, lParam);
 
 		case WM_CLOSE:
-			EndDialog(hWnd, 0);
+			if (!c_Dialog->m_InstallThread)
+			{
+				EndDialog(hWnd, 0);
+			}
 			return TRUE;
 
 		case WM_DESTROY:
@@ -794,6 +797,10 @@ bool CDialogInstall::InstallPackage()
 
 void CDialogInstall::BeginInstall()
 {
+	// Disable X button
+	HMENU systemMenu = GetSystemMenu(m_Window, FALSE);
+	EnableMenuItem(systemMenu, SC_CLOSE, MF_BYCOMMAND | MF_GRAYED | MF_DISABLED);
+
 	HWND item = GetDlgItem(m_Window, IDC_INSTALL_ADVANCED_BUTTON);
 	EnableWindow(item, FALSE);
 
@@ -869,8 +876,8 @@ UINT __stdcall CDialogInstall::InstallThread(void* pParam)
 
 		if (!dialog->InstallPackage())
 		{
-			SetWindowText(progressText, L"Installation stopped");
-			SendMessage(progressBar, PBM_SETMARQUEE, (WPARAM)FALSE, 0);
+			ShowWindow(progressText, SW_HIDE);
+			ShowWindow(progressBar, SW_HIDE);
 
 			if (dialog->m_ErrorMessage.empty())
 			{
@@ -1299,8 +1306,16 @@ void CDialogInstall::CTabInstall::Initialize()
 {
 	HWND item = GetDlgItem(m_Window, IDC_INSTALLTAB_COMPONENTS_LIST);
 
-	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_CHECKBOXES | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT);
+	DWORD extendedFlags = LVS_EX_CHECKBOXES | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT;
+
+	if (GetOSPlatform() >= OSPLATFORM_VISTA)
+	{
+		extendedFlags |= LVS_EX_DOUBLEBUFFER;
+		SetWindowTheme(item, L"explorer", NULL);
+	}
+
 	ListView_EnableGroupView(item, TRUE);
+	ListView_SetExtendedListViewStyleEx(item, 0, extendedFlags);
 
 	// Add columns
 	LVCOLUMN lvc;

@@ -28,6 +28,7 @@
 #include <Shlobj.h>
 #include <Shlwapi.h>
 #include <Shellapi.h>
+#include <Uxtheme.h>
 #include <Wininet.h>
 
 // STL
