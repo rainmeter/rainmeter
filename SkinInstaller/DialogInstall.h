@@ -84,9 +84,10 @@ private:
 	bool ReadOptions(const WCHAR* file);
 	bool InstallPackage();
 	void BeginInstall();
+	static UINT __stdcall InstallThread(void* pParam);
 	bool ExtractCurrentFile(const std::wstring& fileName);
 
-	static unsigned __stdcall InstallThread(void* pParam);
+	bool IsPackageBlacklisted();
 
 	void LaunchRainmeter();
 	void KeepVariables();

@@ -628,6 +628,12 @@ bool CDialogInstall::ReadOptions(const WCHAR* file)
 
 bool CDialogInstall::InstallPackage()
 {
+	if (IsPackageBlacklisted())
+	{
+		m_ErrorMessage = L"This package has been identified as malware by the Rainmeter Team and will not be installed.";
+		return false;
+	}
+
 	if (!m_MergeSkins && m_BackupSkins)
 	{
 		// Move skins into backup folder
@@ -836,13 +842,6 @@ void CDialogInstall::BeginInstall()
 	}
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_INPROGRESS_TEXT);
-	ShowWindow(item, SW_SHOWNORMAL);
-
-	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_PROGRESS);
-	ShowWindow(item, SW_SHOWNORMAL);
-	SendMessage(item, PBM_SETMARQUEE, (WPARAM)TRUE, 0);
-
 	m_InstallThread = (HANDLE)_beginthreadex(NULL, 0, InstallThread, this, 0, NULL);
 	if (!m_InstallThread)
 	{
@@ -851,7 +850,7 @@ void CDialogInstall::BeginInstall()
 	}
 }
 
-unsigned __stdcall CDialogInstall::InstallThread(void* pParam)
+UINT __stdcall CDialogInstall::InstallThread(void* pParam)
 {
 	CDialogInstall* dialog = (CDialogInstall*)pParam;
 
@@ -861,12 +860,23 @@ unsigned __stdcall CDialogInstall::InstallThread(void* pParam)
 	}
 	else
 	{
+		HWND progressText = GetDlgItem(dialog->m_TabInstall.GetWindow(), IDC_INSTALLTAB_INPROGRESS_TEXT);
+		ShowWindow(progressText, SW_SHOWNORMAL);
+
+		HWND progressBar = GetDlgItem(dialog->m_TabInstall.GetWindow(), IDC_INSTALLTAB_PROGRESS);
+		ShowWindow(progressBar, SW_SHOWNORMAL);
+		SendMessage(progressBar, PBM_SETMARQUEE, (WPARAM)TRUE, 0);
+
 		if (!dialog->InstallPackage())
 		{
+			SetWindowText(progressText, L"Installation stopped");
+			SendMessage(progressBar, PBM_SETMARQUEE, (WPARAM)FALSE, 0);
+
 			if (dialog->m_ErrorMessage.empty())
 			{
 				dialog->m_ErrorMessage = L"Unknown error.";
 			}
+			dialog->m_ErrorMessage += L"\n\nClick OK to close Skin Installer.";
 
 			MessageBox(dialog->m_Window, dialog->m_ErrorMessage.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
 
@@ -879,6 +889,52 @@ unsigned __stdcall CDialogInstall::InstallThread(void* pParam)
 
 	EndDialog(dialog->GetWindow(), 0);
 	return 0;
+}
+
+bool CDialogInstall::IsPackageBlacklisted()
+{
+	std::string fileName = ConvertToAscii(PathFindFileName(m_PackageFileName.c_str()));
+	const char* fileNameSz = fileName.c_str();
+
+	const char* regex = "(?siU)^.*_by_([0-9A-Za-z\\-]+)-d[0-9a-z]{6}\\.rmskin$";
+	const char* error;
+	int errorOffset;
+	pcre* re = pcre_compile(regex, PCRE_UTF8, &error, &errorOffset, NULL);
+
+	int offsets[6];
+	bool match = pcre_exec(re, NULL, fileNameSz, fileName.length(), 0, 0, offsets, _countof(offsets)) == 2;
+	pcre_free(re);
+	if (!match)
+	{
+		return false;
+	}
+
+	bool isBlacklisted = false;
+
+	// Author is the 2nd substring
+	std::string author(fileNameSz + offsets[2], offsets[3] - offsets[2]);
+	std::wstring url = L"http://blacklist.rainmeter.googlecode.com/git/user/" + ConvertToWide(author.c_str());
+
+	HINTERNET internet = InternetOpen(L"Mozilla/5.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+	if (internet)
+	{
+		DWORD openFlags = INTERNET_FLAG_NO_COOKIES | INTERNET_FLAG_NO_UI;
+		HINTERNET internetUrl = InternetOpenUrl(internet, url.c_str(), NULL, 0, openFlags, 0);
+		if (internetUrl)
+		{
+			DWORD queryFlags = HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER;
+			DWORD statusCode;
+			DWORD size = sizeof(DWORD);
+			BOOL query = HttpQueryInfo(internetUrl, queryFlags, &statusCode, &size, NULL);
+			InternetCloseHandle(internetUrl);
+
+			isBlacklisted = query && statusCode == HTTP_STATUS_OK;
+		}
+
+		InternetCloseHandle(internet);
+	}
+
+	return isBlacklisted;
 }
 
 void CDialogInstall::KeepVariables()
