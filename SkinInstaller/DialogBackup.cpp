@@ -226,7 +226,7 @@ bool CDialogBackup::CreateBackup()
 	}
 
 	if ((_waccess(addonsPath.c_str(), 0) == 0 && !AddFolderToBackup(addonsPath, L"", "Addons", true)) ||
-		//(_waccess(skinsPath.c_str(), 0) == 0 && !AddFolderToBackup(skinsPath, L"", "Skins", true)) ||
+		(_waccess(skinsPath.c_str(), 0) == 0 && !AddFolderToBackup(skinsPath, L"", "Skins", true)) ||
 		(_waccess(themesPath.c_str(), 0) == 0 && !AddFolderToBackup(themesPath, L"", "Themes", true)) ||
 #ifdef _WIN64
 		(_waccess(pluginsPath.c_str(), 0) == 0 && !AddFolderToBackup(pluginsPath, L"", "Plugins\\64bit", false)))
@@ -371,7 +371,8 @@ bool CDialogBackup::AddFolderToBackup(const std::wstring& path, std::wstring bas
 		{
 			if (wcscmp(L".", fd.cFileName) != 0 &&
 				wcscmp(L"..", fd.cFileName) != 0 &&
-				wcscmp(L"Backup", fd.cFileName) != 0)
+				wcscmp(L"Backup", fd.cFileName) != 0 &&
+				wcscmp(L"@Backup", fd.cFileName) != 0)
 			{
 				folders.push_back(fd.cFileName);
 			}
@@ -443,7 +444,7 @@ void CDialogBackup::CTabBackup::Initialize()
 
 		SYSTEMTIME lt;
 		GetLocalTime(&lt);
-		_snwprintf_s(buffer, _TRUNCATE, L"%02d.%02d.%02d-%02d.%02d", lt.wYear, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute);
+		_snwprintf_s(buffer, _TRUNCATE, L"%04d.%02d.%02d-%02d.%02d", lt.wYear, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute);
 
 		c_Dialog->m_BackupTime = buffer;
 

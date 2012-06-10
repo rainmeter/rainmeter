@@ -1165,8 +1165,7 @@ void CSystem::SetWallpaper(const std::wstring& wallpaper, const std::wstring& st
 		Bitmap* bitmap = Bitmap::FromFile(wallpaper.c_str());
 		if (bitmap && bitmap->GetLastStatus() == Ok)
 		{
-			std::wstring file = Rainmeter->GetSettingsPath();
-			file += L"Wallpaper.bmp";
+			std::wstring file = Rainmeter->GetSettingsPath() + L"Wallpaper.bmp";
 
 			const CLSID bmpClsid = { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } };
 			if (bitmap->Save(file.c_str(), &bmpClsid) == Ok)

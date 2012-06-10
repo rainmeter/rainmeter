@@ -240,8 +240,8 @@ private:
 	void ActivateActiveSkins();
 	void CreateMeterWindow(const std::wstring& folderPath, const std::wstring& file);
 	void WriteActive(const std::wstring& folderPath, int fileIndex);
-	void ScanForSkins(const std::wstring& path);
-	void ScanForThemes(const std::wstring& path);
+	void ScanForSkins();
+	void ScanForThemes();
 	void ReadGeneralSettings(const std::wstring& iniFile);
 	void SetLoadOrder(int folderIndex, int order);
 	int GetLoadOrder(const std::wstring& folderPath);

@@ -1426,7 +1426,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			Edit_GetText(item, buffer, MAX_PATH);
 
 			std::wstring theme = buffer;
-			std::wstring path = Rainmeter->GetSettingsPath() + L"Themes\\";
+			std::wstring path = Rainmeter->GetThemePath();
 			CreateDirectory(path.c_str(), 0);
 
 			path += theme;
@@ -1508,9 +1508,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 				item = GetDlgItem(m_Window, IDC_MANAGETHEMES_LIST);
 				ListBox_AddString(item, theme.c_str());
 
-				path = Rainmeter->GetSettingsPath();
-				path += L"Themes\\";
-				Rainmeter->ScanForThemes(path);
+				Rainmeter->ScanForThemes();
 			}
 		}
 		break;
@@ -1529,8 +1527,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			int sel = ListBox_GetCurSel(item);
 			const std::vector<std::wstring>& themes = Rainmeter->GetAllThemes();
 
-			std::wstring args = Rainmeter->GetSettingsPath();
-			args += L"Themes\\";
+			std::wstring args = Rainmeter->GetThemePath();
 			args += themes[sel];
 			args += L"\\Rainmeter.thm";
 			RunFile(Rainmeter->GetSkinEditor().c_str(), args.c_str());
@@ -1550,7 +1547,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 				break;
 			}
 
-			std::wstring folder = Rainmeter->GetSettingsPath() + L"Themes\\";
+			std::wstring folder = Rainmeter->GetThemePath();
 			folder += themes[sel];
 
 			if (CSystem::RemoveFolder(folder))

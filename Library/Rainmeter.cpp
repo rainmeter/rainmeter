@@ -498,11 +498,8 @@ void CRainmeter::Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindo
 		return;
 	}
 
-	const std::wstring& skinPath = GetSkinPath();
-	const std::wstring settingsPath = GetSettingsPath();
-
-	if (_wcsnicmp(iniFile, skinPath.c_str(), skinPath.size()) != 0 &&
-		_wcsnicmp(iniFile, settingsPath.c_str(), settingsPath.size()) != 0)
+	if (_wcsnicmp(iniFile, m_SkinPath.c_str(), m_SkinPath.size()) != 0 &&
+		_wcsnicmp(iniFile, m_SettingsPath.c_str(), m_SettingsPath.size()) != 0)
 	{
 		LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile);
 		return;
@@ -910,14 +907,14 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 		m_SkinPath = m_Path + L"Skins\\";
 	}
 
-	// Create user skins, themes, addons, and plugins folders if needed
-	CreateComponentFolders(bDefaultIniLocation);
-
 	// Create a default Rainmeter.ini file if needed
 	if (_waccess(iniFile, 0) == -1)
 	{
 		CreateOptionsFile();
 	}
+
+	// Create user skins, themes, addons, and plugins folders if needed
+	CreateComponentFolders(bDefaultIniLocation);
 
 	delete [] buffer;
 	buffer = NULL;
@@ -1145,12 +1142,7 @@ void CRainmeter::SetNetworkStatisticsTimer()
 
 void CRainmeter::CreateOptionsFile()
 {
-	size_t pos = m_IniFile.find_last_of(L'\\');
-	if (pos != std::wstring::npos)
-	{
-		std::wstring strPath(m_IniFile, 0, pos);
-		CreateDirectory(strPath.c_str(), NULL);
-	}
+	CreateDirectory(m_SettingsPath.c_str(), NULL);
 
 	std::wstring defaultIni = GetDefaultThemePath();
 	defaultIni += L"illustro default\\Rainmeter.thm";
@@ -1159,8 +1151,7 @@ void CRainmeter::CreateOptionsFile()
 
 void CRainmeter::CreateDataFile()
 {
-	std::wstring tmpSz = GetSettingsPath();
-	tmpSz += L"Plugins.ini";
+	std::wstring tmpSz = m_SettingsPath + L"Plugins.ini";
 
 	const WCHAR* pluginsFile = tmpSz.c_str();
 	const WCHAR* dataFile = m_DataFile.c_str();
@@ -1237,8 +1228,8 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 
 void CRainmeter::ReloadSettings()
 {
-	ScanForSkins(m_SkinPath);
-	ScanForThemes(GetThemePath());
+	ScanForSkins();
+	ScanForThemes();
 	ReadGeneralSettings(m_IniFile);
 }
 
@@ -1644,12 +1635,12 @@ int CRainmeter::GetLoadOrder(const std::wstring& folderPath)
 /*
 ** Scans all the subfolders and locates the ini-files.
 */
-void CRainmeter::ScanForSkins(const std::wstring& path)
+void CRainmeter::ScanForSkins()
 {
 	m_SkinFolders.clear();
 	m_SkinOrders.clear();
 
-	ScanForSkinsRecursive(path, L"", 0, 0);
+	ScanForSkinsRecursive(m_SkinPath, L"", 0, 0);
 }
 
 int CRainmeter::ScanForSkinsRecursive(const std::wstring& path, std::wstring base, int index, UINT level)
@@ -1686,7 +1677,7 @@ int CRainmeter::ScanForSkinsRecursive(const std::wstring& path, std::wstring bas
 			{
 				if (wcscmp(L".", fileData.cFileName) != 0 &&
 					wcscmp(L"..", fileData.cFileName) != 0 &&
-					!(level == 0 && wcscmp(L"Backup", fileData.cFileName) == 0) &&
+					!(level == 0 && wcscmp(L"@Backup", fileData.cFileName) == 0) &&
 					!(level == 1 && wcscmp(L"@Resources", fileData.cFileName) == 0))
 				{
 					subfolders.push_back(filename);
@@ -1757,7 +1748,7 @@ int CRainmeter::ScanForSkinsRecursive(const std::wstring& path, std::wstring bas
 /*
 ** Scans the given folder for themes
 */
-void CRainmeter::ScanForThemes(const std::wstring& path)
+void CRainmeter::ScanForThemes()
 {
 	m_Themes.clear();
 
@@ -1765,7 +1756,8 @@ void CRainmeter::ScanForThemes(const std::wstring& path)
 	HANDLE hSearch;                // Search handle returned by FindFirstFile
 
 	// Scan for folders
-	std::wstring folders = path + L"\\*";
+	std::wstring folders = GetThemePath();
+	folders += L'*';
 
 	hSearch = FindFirstFileEx(
 		folders.c_str(),
@@ -2465,7 +2457,8 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 	// Delete all meter windows
 	DeleteMeterWindow(NULL);
 
-	std::wstring backup = GetSettingsPath() + L"Themes\\Backup";
+	std::wstring backup = GetThemePath();
+	backup += L"Backup";
 	CreateDirectory(backup.c_str(), NULL);
 	backup += L"\\Rainmeter.thm";
 
@@ -2480,7 +2473,7 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 		CSystem::CopyFiles(m_IniFile, backup);
 
 		// Replace Rainmeter.ini with theme
-		std::wstring theme = GetSettingsPath() + L"Themes\\";
+		std::wstring theme = GetThemePath();
 		theme += name;
 		std::wstring wallpaper = theme + L"\\RainThemes.bmp";
 		theme += L"\\Rainmeter.thm";
