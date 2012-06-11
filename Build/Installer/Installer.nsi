@@ -506,11 +506,6 @@ FunctionEnd
 	File "..\..\TestBench\${DIR}\Release\Rainmeter.dll"
 	File "..\..\TestBench\${DIR}\Release\SkinInstaller.exe"
 
-	${If} $InstallPortable != 1
-		File "..\..\TestBench\${DIR}\Release\Launcher.exe"
-		SetFileAttributes "$INSTDIR\Launcher.exe" HIDDEN
-	${EndIf}
-
 	SetOutPath "$INSTDIR\Plugins"
 	File /x *Example*.dll "..\..\TestBench\${DIR}\Release\Plugins\*.dll"
 !macroend
@@ -706,6 +701,7 @@ SkipIniMove:
 	Delete "$INSTDIR\Rainmeter.exe.config"
 	Delete "$INSTDIR\Rainmeter.chm"
 	Delete "$INSTDIR\Default.ini"
+	Delete "$INSTDIR\Launcher.exe"
 	RMDir /r "$INSTDIR\Addons\Rainstaller"
 	RMDir /r "$INSTDIR\Addons\RainBackup"
 
@@ -951,7 +947,6 @@ Section Uninstall
 	Delete "$INSTDIR\Rainmeter.dll"
 	Delete "$INSTDIR\Rainmeter.exe"
 	Delete "$INSTDIR\SkinInstaller.exe"
-	Delete "$INSTDIR\Launcher.exe"
 	RMDir "$INSTDIR"
 
 	${If} $un.DeleteAll == 1

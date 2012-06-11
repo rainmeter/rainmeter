@@ -77,7 +77,6 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Process</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Process</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Process</TargetName>
-    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

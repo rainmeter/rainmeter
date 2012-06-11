@@ -78,7 +78,6 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NowPlaying</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NowPlaying</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NowPlaying</TargetName>
-    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

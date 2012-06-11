@@ -721,6 +721,8 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 {
 	InitalizeLitestep();
 
+	m_Instance = GetModuleHandle(L"Rainmeter");
+
 	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
 	GetModuleFileName(m_Instance, buffer, MAX_LINE_LENGTH);
 
@@ -772,8 +774,6 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 		// Instance already running with same .ini file
 		return 1;
 	}
-
-	m_Instance = GetModuleHandle(L"Rainmeter");
 
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = (WNDPROC)MainWndProc;
@@ -1215,13 +1215,30 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 
 		path = m_SettingsPath;
 		path += L"Rainmeter.exe";
-		if (_waccess(path.c_str(), 0) == -1)
+		const WCHAR* pathSz = path.c_str();
+		if (_waccess(pathSz, 0) == -1)
 		{
-			// Create a hidden dummy Rainmeter.exe into SettingsPath for old addon
+			// Create a hidden stub Rainmeter.exe into SettingsPath for old addon
 			// using relative path to Rainmeter.exe
-			std::wstring from = m_Path + L"Launcher.exe";
+			std::wstring from = m_Path + L"Rainmeter.exe";
 			CSystem::CopyFiles(from, path);
-			SetFileAttributes(path.c_str(), FILE_ATTRIBUTE_HIDDEN);
+
+			// Get rid of all resources from the stub executable
+			HANDLE stub = BeginUpdateResource(pathSz, TRUE);
+
+			// Add the manifest of Rainmeter.dll to the stub
+			HRSRC manifest = FindResource(m_Instance, MAKEINTRESOURCE(2), RT_MANIFEST);
+			DWORD manifestSize = SizeofResource(m_Instance, manifest);
+			HGLOBAL	manifestLoad = LoadResource(m_Instance, manifest);
+			void* manifestLoadData = LockResource(manifestLoad);
+			if (manifestLoadData)
+			{
+				LANGID langID = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
+				UpdateResource(stub, RT_MANIFEST, MAKEINTRESOURCE(1), langID, manifestLoadData, manifestSize);
+			}
+
+			EndUpdateResource(stub, FALSE);
+			SetFileAttributes(pathSz, FILE_ATTRIBUTE_HIDDEN);
 		}
 	}
 }

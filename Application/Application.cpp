@@ -20,6 +20,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <crtdbg.h>
 #include <Windows.h>
+#include <ShellAPI.h>
 #include "../Library/Rainmeter.h"
 
 #if defined _M_IX86
@@ -41,5 +42,33 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	//_CrtSetBreakAlloc(000);
 
-	return RainmeterMain(lpCmdLine);
+	HRSRC iconResource = FindResource(hInstance, MAKEINTRESOURCE(1), RT_ICON);
+	if (iconResource)
+	{
+		// Call RainmeterMain from Rainmeter.dll. Since Rainmeter.dll is delay-loaded, this will cause
+		// crash if Rainmeter.dll is not found.
+		return RainmeterMain(lpCmdLine);
+	}
+	else
+	{
+		// Stub prodecure. If icon resources have been removed, try to launch the actual Rainmeter.exe.
+		HKEY hKey;
+		const REGSAM desiredSam = KEY_QUERY_VALUE | KEY_WOW64_32KEY;
+		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", 0, desiredSam, &hKey) == ERROR_SUCCESS)
+		{
+			const DWORD size = MAX_PATH;
+			WCHAR buffer[size];
+			DWORD type = 0;
+			if (RegQueryValueEx(hKey, NULL , NULL, &type, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS &&
+				type == REG_SZ)
+			{
+				SetCurrentDirectory(buffer);
+				wcscat(buffer, L"\\Rainmeter.exe");
+				ShellExecute(NULL, L"open", buffer, lpCmdLine, NULL, SW_SHOWNORMAL);
+			}
+			RegCloseKey(hKey);
+		}
+
+		return 0;
+	}
 }

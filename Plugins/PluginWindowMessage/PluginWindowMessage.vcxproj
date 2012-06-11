@@ -77,7 +77,6 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WindowMessagePlugin</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WindowMessagePlugin</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WindowMessagePlugin</TargetName>
-    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

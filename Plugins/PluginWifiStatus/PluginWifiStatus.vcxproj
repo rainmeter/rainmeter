@@ -79,7 +79,6 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">WifiStatus</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WifiStatus</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WifiStatus</TargetName>
-    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

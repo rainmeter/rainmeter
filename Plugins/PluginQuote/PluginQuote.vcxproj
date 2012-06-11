@@ -77,7 +77,6 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">QuotePlugin</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">QuotePlugin</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">QuotePlugin</TargetName>
-    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

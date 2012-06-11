@@ -78,7 +78,6 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Win7AudioPlugin</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Win7AudioPlugin</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Win7AudioPlugin</TargetName>
-    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

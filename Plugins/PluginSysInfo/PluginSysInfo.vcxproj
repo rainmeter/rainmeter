@@ -77,7 +77,6 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">SysInfo</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">SysInfo</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">SysInfo</TargetName>
-    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

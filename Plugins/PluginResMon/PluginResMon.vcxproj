@@ -77,7 +77,6 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ResMon</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ResMon</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ResMon</TargetName>
-    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
