@@ -78,6 +78,7 @@
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MediaKey</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MediaKey</TargetName>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">MediaKey</TargetName>
+    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
