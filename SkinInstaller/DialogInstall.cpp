@@ -49,6 +49,7 @@ CDialogInstall::CDialogInstall(HWND wnd, const WCHAR* file) : CDialog(wnd),
 	m_PackageUnzFile(),
 	m_PackageFileName(file),
 	m_PackageFormat(PackageFormat::Old),
+	m_BackupPackage(false),
 	m_BackupSkins(true),
 	m_MergeSkins(false),
 	m_SystemFonts(false)
@@ -199,7 +200,7 @@ INT_PTR CDialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 			HMENU menu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_INSTALL_MENU));
 			HMENU subMenu = GetSubMenu(menu, 0);
 
-			if (m_PackageSkins.empty() || m_MergeSkins)
+			if (m_PackageSkins.empty() || m_MergeSkins || m_BackupPackage)
 			{
 				EnableMenuItem(subMenu, IDM_INSTALL_BACKUPSKINS, MF_BYCOMMAND | MF_GRAYED);
 			}
@@ -355,7 +356,7 @@ bool CDialogInstall::ReadPackage()
 
 			if (footer.flags)
 			{
-				m_BackupSkins = !(footer.flags & PackageFlag::Backup);
+				m_BackupPackage = !(footer.flags & PackageFlag::Backup);
 			}
 		}
 	}
@@ -556,7 +557,7 @@ bool CDialogInstall::ReadOptions(const WCHAR* file)
 		// Determine if skins need to backed up based on name
 		int s;
 		int scanned = swscanf(buffer, L"Backup-%d.%d.%d-%d.%d.rmskin", &s, &s, &s, &s, &s);
-		m_BackupSkins = scanned != 5;
+		m_BackupPackage = scanned == 5;
 	}
 
 	GetPrivateProfileString(section, L"Author", L"", buffer, 64, file);
@@ -637,33 +638,50 @@ bool CDialogInstall::InstallPackage()
 		return false;
 	}
 
-	if (!m_MergeSkins && m_BackupSkins)
+	if ((!m_MergeSkins && m_BackupSkins) || m_BackupPackage)
 	{
 		// Move skins into backup folder
 		for (auto iter = m_PackageSkins.cbegin(); iter != m_PackageSkins.cend(); ++iter)
 		{
 			std::wstring from = g_Data.skinsPath + *iter;
-			std::wstring to = g_Data.skinsPath + L"Backup\\";
-			CreateDirectory(to.c_str(), NULL);
-			to += *iter;
-			to += L'\0';	// For SHFileOperation
+			if (_waccess(from.c_str(), 0) == -1)
+			{
+				continue;
+			}
 
-			// Delete current backup
 			SHFILEOPSTRUCT fo =
 			{
 				NULL,
 				FO_DELETE,
-				to.c_str(),
+				NULL,
 				NULL,
 				FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO
 			};
-			SHFileOperation(&fo);
 
-			if (!CopyFiles(from, to, true))
+			if (m_BackupPackage)
 			{
-				m_ErrorMessage = L"Unable to move to:\n";
-				m_ErrorMessage += to;
-				return false;
+				// Remove current skin
+				from += L'\0';
+				fo.pFrom = from.c_str();
+				SHFileOperation(&fo);
+			}
+			else
+			{
+				std::wstring to = g_Data.skinsPath + L"Backup\\";
+				CreateDirectory(to.c_str(), NULL);
+
+				// Delete current backup
+				to += *iter;
+				to += L'\0';
+				fo.pFrom = to.c_str();
+				SHFileOperation(&fo);
+
+				if (!CopyFiles(from, to, true))
+				{
+					m_ErrorMessage = L"Unable to move to:\n";
+					m_ErrorMessage += to;
+					return false;
+				}
 			}
 		}
 	}
@@ -727,13 +745,6 @@ bool CDialogInstall::InstallPackage()
 			{
 				targetPath = g_Data.skinsPath;
 			}
-			else if (_wcsicmp(component, L"Themes") == 0 &&
-				_wcsicmp(extension, L".thm") == 0 &&
-				m_PackageThemes.find(item) != m_PackageThemes.end())
-			{
-				targetPath = g_Data.settingsPath;
-				targetPath += L"Themes\\";
-			}
 			else if (_wcsicmp(component, L"Addons") == 0 &&
 				m_PackageFormat == PackageFormat::Old &&
 				m_PackageAddons.find(item) != m_PackageAddons.end())
@@ -759,6 +770,29 @@ bool CDialogInstall::InstallPackage()
 			{
 				targetPath += path;
 				error = !ExtractCurrentFile(targetPath);
+			}
+			else if (_wcsicmp(component, L"Themes") == 0 &&
+				_wcsicmp(extension, L".thm") == 0 &&
+				m_PackageThemes.find(item) != m_PackageThemes.end())
+			{
+				targetPath = g_Data.settingsPath;
+				targetPath += L"Themes\\";
+				targetPath += path;
+				error = !ExtractCurrentFile(targetPath);
+				if (!error)
+				{
+					// Remove user specific options
+					const WCHAR* theme = targetPath.c_str();
+					WritePrivateProfileString(L"Rainmeter", L"SkinPath", NULL, theme);
+					WritePrivateProfileString(L"Rainmeter", L"Language", NULL, theme);
+					WritePrivateProfileString(L"Rainmeter", L"Logging", NULL, theme);
+					WritePrivateProfileString(L"Rainmeter", L"ConfigEditor", NULL, theme);
+					WritePrivateProfileString(L"Rainmeter", L"LogViewer", NULL, theme);
+					WritePrivateProfileString(L"Rainmeter", L"DisableDragging", NULL, theme);
+					WritePrivateProfileString(L"Rainmeter", L"DisableRDP", NULL, theme);
+					WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", NULL, theme);
+					WritePrivateProfileString(L"Rainmeter", L"Debug", NULL, theme);
+				}
 			}
 		}
 		else
@@ -1359,7 +1393,8 @@ void CDialogInstall::CTabInstall::Initialize()
 			WCHAR* text = L"Add";
 			if (_waccess(itemPath.c_str(), 0) != -1)
 			{
-				text = (groupId == 0 && c_Dialog->m_BackupSkins) ? L"Backup and replace" : L"Replace";
+				bool backup = groupId == 0 && c_Dialog->m_BackupSkins && !c_Dialog->m_BackupPackage;
+				text = backup ? L"Backup and replace" : L"Replace";
 			}
 			ListView_SetItemText(item, lvi.iItem, 1, text);
 

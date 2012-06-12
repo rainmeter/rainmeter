@@ -877,7 +877,8 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 
 	// Get skin folder path
 	size_t len = GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, MAX_LINE_LENGTH, iniFile);
-	if (len > 0)
+	if (len > 0 &&
+		_waccess(buffer, 0) != -1)	// Temporary fix
 	{
 		// Try Rainmeter.ini first
 		m_SkinPath.assign(buffer, len);

@@ -120,6 +120,7 @@ private:
 	std::set<std::wstring> m_PackageFonts;
 	std::set<std::wstring> m_PackagePlugins;
 
+	bool m_BackupPackage;
 	bool m_BackupSkins;
 	bool m_MergeSkins;
 	bool m_SystemFonts;
