@@ -621,8 +621,7 @@ void CDialogManage::CTabSkins::ReadSkin()
 	HWND item = GetDlgItem(m_Window, IDC_MANAGESKINS_FILE_TEXT);
 	SetWindowText(item, m_SkinFileName.c_str());
 
-	item = GetDlgItem(m_Window, IDC_MANAGESKINS_CONFIG_TEXT);
-	SetWindowText(item, m_SkinFolderPath.c_str());
+	PathSetDlgItemPath(m_Window, IDC_MANAGESKINS_CONFIG_TEXT, m_SkinFolderPath.c_str());
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_EDIT_BUTTON);
 	EnableWindow(item, TRUE);
@@ -1390,8 +1389,8 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			WCHAR buffer[32];
 			int len = Edit_GetText((HWND)lParam, buffer, 32);
 
-			// Disable save button if no text or if name is "Backup"
-			BOOL state = (len > 0 && _wcsicmp(buffer, L"Backup") != 0);
+			// Disable save button if no text or if backup
+			BOOL state = (len > 0 && _wcsicmp(buffer, L"@Backup") != 0);
 			EnableWindow(GetDlgItem(m_Window, IDC_MANAGETHEMES_SAVE_BUTTON), state);
 		}
 		break;
