@@ -669,7 +669,7 @@ bool CDialogInstall::InstallPackage()
 			}
 			else
 			{
-				std::wstring to = g_Data.skinsPath + L"Backup\\";
+				std::wstring to = g_Data.skinsPath + L"@Backup\\";
 				CreateDirectory(to.c_str(), NULL);
 
 				// Delete current backup
@@ -988,7 +988,7 @@ void CDialogInstall::KeepVariables()
 
 	for (int i = 0, isize = m_VariablesFiles.size(); i < isize; ++i)
 	{
-		std::wstring fromPath = g_Data.skinsPath + L"Backup\\";
+		std::wstring fromPath = g_Data.skinsPath + L"@Backup\\";
 		fromPath += m_VariablesFiles[i];
 		std::wstring toPath = g_Data.skinsPath + m_VariablesFiles[i];
 
@@ -1026,7 +1026,7 @@ void CDialogInstall::LoadTheme(const std::wstring& name, bool setWallpaper)
 {
 	// Take a copy of current Rainmeter.ini before doing anything
 	std::wstring backupFile = g_Data.settingsPath;
-	backupFile += L"Themes\\Backup\\";
+	backupFile += L"Themes\\@Backup\\";
 	CreateDirectory(backupFile.c_str(), NULL);
 	backupFile += L"Rainmeter.thm";
 	CopyFiles(g_Data.iniFile, backupFile, false);
@@ -1128,12 +1128,14 @@ void CDialogInstall::LaunchRainmeter()
 
 bool CDialogInstall::IsIgnoredSkin(const WCHAR* name)
 {
-	return _wcsicmp(name, L"Backup") == 0;
+	return _wcsicmp(name, L"Backup") == 0 ||
+		_wcsicmp(name, L"@Backup") == 0;
 }
 
 bool CDialogInstall::IsIgnoredTheme(const WCHAR* name)
 {
-	return _wcsicmp(name, L"Backup") == 0;
+	return _wcsicmp(name, L"Backup") == 0 ||
+		_wcsicmp(name, L"@Backup") == 0;
 }
 
 bool CDialogInstall::IsIgnoredAddon(const WCHAR* name)

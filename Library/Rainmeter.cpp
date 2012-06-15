@@ -1174,6 +1174,8 @@ void CRainmeter::CreateDataFile()
 
 void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 {
+	std::wstring path;
+
 	if (CreateDirectory(m_SkinPath.c_str(), NULL))
 	{
 		// Folder just created, so copy default skins there
@@ -1181,14 +1183,34 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 		from += L"*.*";
 		CSystem::CopyFiles(from, m_SkinPath);
 	}
+	else
+	{
+		path = m_SkinPath;
+		path += L"Backup";
+		if (_waccess(path.c_str(), 0) != -1)
+		{
+			std::wstring newPath = m_SkinPath + L"@Backup";
+			MoveFile(path.c_str(), newPath.c_str());
+		}
+	}
 
-	std::wstring path = GetThemePath();
+	path = GetThemePath();
 	if (_waccess(path.c_str(), 0) == -1)
 	{
 		std::wstring from = GetDefaultThemePath();
 		if (_waccess(from.c_str(), 0) != -1)
 		{
 			CSystem::CopyFiles(from, m_SettingsPath);
+		}
+	}
+	else
+	{
+		path += L"Backup";
+		if (_waccess(path.c_str(), 0) != -1)
+		{
+			std::wstring newPath = GetThemePath();
+			newPath += L"@Backup";
+			MoveFile(path.c_str(), newPath.c_str());
 		}
 	}
 
@@ -1695,6 +1717,7 @@ int CRainmeter::ScanForSkinsRecursive(const std::wstring& path, std::wstring bas
 			{
 				if (wcscmp(L".", fileData.cFileName) != 0 &&
 					wcscmp(L"..", fileData.cFileName) != 0 &&
+					!(level == 0 && wcscmp(L"@Backup", fileData.cFileName) == 0) &&
 					!(level == 0 && wcscmp(L"Backup", fileData.cFileName) == 0) &&
 					!(level == 1 && wcscmp(L"@Resources", fileData.cFileName) == 0))
 				{
@@ -2476,11 +2499,11 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 	DeleteMeterWindow(NULL);
 
 	std::wstring backup = GetThemePath();
-	backup += L"Backup";
+	backup += L"@Backup";
 	CreateDirectory(backup.c_str(), NULL);
 	backup += L"\\Rainmeter.thm";
 
-	if (_wcsicmp(name.c_str(), L"Backup") == 0)
+	if (_wcsicmp(name.c_str(), L"@Backup") == 0)
 	{
 		// Just load the backup
 		CSystem::CopyFiles(backup, m_IniFile);
