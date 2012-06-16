@@ -32,10 +32,10 @@ CDialogInstall* CDialogInstall::c_Dialog = NULL;
 
 inline bool IsWin32Build()
 {
-#ifdef _WIN32
-	return true;
-#else
+#ifdef _WIN64
 	return false;
+#else
+	return true;
 #endif
 }
 
