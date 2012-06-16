@@ -1571,13 +1571,6 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case IDC_MANAGETHEMES_BACKUP_BUTTON:
-		{
-			std::wstring file = Rainmeter->GetPath() + L"SkinInstaller.exe";
-			RunFile(file.c_str(), L"/BACKUP");
-		}
-		break;
-
 	default:
 		return 1;
 	}
