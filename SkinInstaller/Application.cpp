@@ -17,12 +17,20 @@
 */
 
 #include "StdAfx.h"
-#include "DialogBackup.h"
+#include "DialogPackage.h"
 #include "DialogInstall.h"
 #include "resource.h"
 #include "Application.h"
 
 GlobalData g_Data;
+
+OsNameVersion g_OsNameVersions[] =
+{
+	{ L"XP", L"5.1" },
+	{ L"Vista", L"6.0" },
+	{ L"7", L"6.1" },
+//	{ L"8", L"6.2" }
+};
 
 /*
 ** Entry point
@@ -90,14 +98,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 			else
 			{
 				std::wstring error = L"SkinPath not found.\nMake sure that Rainmeter has been run at least once.";
-				MessageBox(NULL, error.c_str(), L"Backup Rainmeter", MB_ERROR);
+				MessageBox(NULL, error.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
 				return 1;
 			}
 		}
 		else
 		{
 			std::wstring error = L"Rainmeter.ini not found.\nMake sure that Rainmeter has been run at least once.";
-			MessageBox(NULL, error.c_str(), L"Backup Rainmeter", MB_ERROR);
+			MessageBox(NULL, error.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
 			return 1;
 		}
 	}
@@ -107,7 +115,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		// Skip "/LoadTheme "
 		lpCmdLine += 11;
 
-		if (CloseRainmeterIfActive() && *lpCmdLine)
+		if (*lpCmdLine && CloseRainmeterIfActive())
 		{
 			CDialogInstall::LoadTheme(lpCmdLine, true);
 
@@ -123,9 +131,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		return 0;
 	}
-	else if (wcscmp(lpCmdLine, L"/BACKUP") == 0)
+	else if (wcscmp(lpCmdLine, L"/Packager") == 0)
 	{
-		CDialogBackup::Create(hInstance, lpCmdLine);
+		CDialogPackage::Create(hInstance, lpCmdLine);
 	}
 	else
 	{

@@ -40,6 +40,12 @@ struct GlobalData
 	std::wstring iniFile;
 };
 
+struct OsNameVersion
+{
+	const WCHAR* name;
+	const WCHAR* version;
+};
+
 enum OSPLATFORM
 {
 	OSPLATFORM_UNKNOWN = 0,

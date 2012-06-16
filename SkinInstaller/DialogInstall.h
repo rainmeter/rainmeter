@@ -41,7 +41,7 @@ protected:
 	virtual CTab& GetActiveTab();
 
 private:
-	friend class CDialogBackup;
+	friend class CDialogPackage;
 
 	class CTabInstall : public CTab
 	{

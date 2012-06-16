@@ -24,6 +24,7 @@
 #include <Windows.h>
 #include <Windowsx.h>
 #include <Commdlg.h>
+#include <Imagehlp.h>
 #include <Lmcons.h>
 #include <Shlobj.h>
 #include <Shlwapi.h>
@@ -36,6 +37,7 @@
 #include <vector>
 #include <list>
 #include <set>
+#include <map>
 #include <vector>
 #include <ctime>
 #include <cstdlib>

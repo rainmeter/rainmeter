@@ -27,9 +27,6 @@
     <ClCompile Include="Application.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DialogBackup.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="StdAfx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -87,15 +84,15 @@
     <ClCompile Include="..\Library\pcre-8.10\pcre_globals.c">
       <Filter>pcre</Filter>
     </ClCompile>
+    <ClCompile Include="DialogPackage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Application.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DialogBackup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StdAfx.h">
@@ -154,6 +151,9 @@
     </ClInclude>
     <ClInclude Include="..\Library\pcre-8.10\config.h">
       <Filter>pcre</Filter>
+    </ClInclude>
+    <ClInclude Include="DialogPackage.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
