@@ -49,12 +49,15 @@ protected:
 	CDialog(HWND wnd);
 	virtual ~CDialog();
 
-	virtual CTab& GetActiveTab() = 0;
+	virtual HWND GetActiveWindow() { return m_Window; }
 
 	INT_PTR OnActivate(WPARAM wParam, LPARAM lParam);
 
-	void SetDialogRTL();
-	void SetDialogFont();
+	void SetDialogRTL(HWND window);
+	void SetDialogRTL() { SetDialogRTL(m_Window); }
+
+	void SetDialogFont(HWND window);
+	void SetDialogFont() { SetDialogFont(m_Window); }
 
 	HWND m_Window;
 	HFONT m_Font;

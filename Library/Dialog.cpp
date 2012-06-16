@@ -55,7 +55,7 @@ INT_PTR CDialog::OnActivate(WPARAM wParam, LPARAM lParam)
 	if (wParam)
 	{
 		c_ActiveDialogWindow = m_Window;
-		c_ActiveTabWindow = GetActiveTab().GetWindow();
+		c_ActiveTabWindow = GetActiveWindow();
 	}
 	else
 	{
@@ -65,18 +65,18 @@ INT_PTR CDialog::OnActivate(WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-void CDialog::SetDialogRTL()
+void CDialog::SetDialogRTL(HWND window)
 {
-	SetWindowLongPtr(m_Window, GWL_EXSTYLE, GetWindowLongPtr(m_Window, GWL_EXSTYLE) | WS_EX_LAYOUTRTL);
+	SetWindowLongPtr(window, GWL_EXSTYLE, GetWindowLongPtr(window, GWL_EXSTYLE) | WS_EX_LAYOUTRTL);
 }
 
 /*
 ** Sets dialog font to UI font.
 **
 */
-void CDialog::SetDialogFont()
+void CDialog::SetDialogFont(HWND window)
 {
-	EnumChildWindows(m_Window, SetFontProc, (WPARAM)m_Font);
+	EnumChildWindows(window, SetFontProc, (WPARAM)m_Font);
 }
 
 /*

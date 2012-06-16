@@ -42,7 +42,7 @@ public:
 	static CDialogManage* c_Dialog;
 
 protected:
-	virtual CTab& GetActiveTab();
+	virtual HWND GetActiveWindow() { return GetActiveTab().GetWindow(); }
 
 private:
 	// Skins tab
@@ -100,6 +100,8 @@ private:
 		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	};
+
+	CTab& GetActiveTab();
 
 	CTabSkins m_TabSkins;
 	CTabThemes m_TabThemes;

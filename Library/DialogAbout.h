@@ -44,7 +44,7 @@ public:
 	static CDialogAbout* c_Dialog;
 
 protected:
-	virtual CTab& GetActiveTab();
+	virtual HWND GetActiveWindow() { return GetActiveTab().GetWindow(); }
 
 private:
 	// Log tab
@@ -118,6 +118,8 @@ private:
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	};
+
+	CTab& GetActiveTab();
 
 	CTabLog m_TabLog;
 	CTabSkins m_TabSkins;
