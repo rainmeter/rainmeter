@@ -249,7 +249,7 @@ bool CDialogPackage::CreatePackage()
 	WritePrivateProfileString(L"rmskin", L"MinimumWindows", m_MinimumWindows.c_str(), tempFile);
 
 	// Create archive and add options file and header bitmap
-	m_ZipFile = zipOpen(ConvertToAscii(m_TargetFile.c_str()).c_str(), 0);
+	m_ZipFile = zipOpen(ConvertToAscii(m_TargetFile.c_str()).c_str(), APPEND_STATUS_CREATE);
 
 	auto cleanup = [&]()->bool
 	{
@@ -259,11 +259,11 @@ bool CDialogPackage::CreatePackage()
 
 	if (!m_ZipFile ||
 		!AddFileToPackage(ConvertToAscii(tempFile).c_str(), "RMSKIN.ini") ||
-		!(!c_Dialog->m_HeaderFile.empty() && AddFileToPackage(ConvertToAscii(c_Dialog->m_HeaderFile.c_str()).c_str(), "RMSKIN.bmp")))
+		(!c_Dialog->m_HeaderFile.empty() && !AddFileToPackage(ConvertToAscii(c_Dialog->m_HeaderFile.c_str()).c_str(), "RMSKIN.bmp")))
 	{
 		std::wstring error = L"Unable to create package.";
 		error += L"\n\nClick OK to close Packager.";
-		MessageBox(m_Window, error.c_str(), L"Rainmeter Packager", MB_OK | MB_TOPMOST);
+		MessageBox(NULL, error.c_str(), L"Rainmeter Packager", MB_ERROR);
 		DeleteFile(tempFile);
 		return cleanup();
 	}
@@ -292,7 +292,7 @@ bool CDialogPackage::CreatePackage()
 			error += (*iter).first;
 			error += L"'.";
 			error += L"\n\nClick OK to close Packager.";
-			MessageBox(m_Window, error.c_str(), L"Rainmeter Packager", MB_OK | MB_TOPMOST);
+			MessageBox(NULL, error.c_str(), L"Rainmeter Packager", MB_ERROR);
 			return cleanup();
 		}
 	}
@@ -312,7 +312,7 @@ bool CDialogPackage::CreatePackage()
 				error += (*iter).first;
 				error += L"'.";
 				error += L"\n\nClick OK to close Packager.";
-				MessageBox(m_Window, error.c_str(), L"Rainmeter Packager", MB_OK | MB_TOPMOST);
+				MessageBox(NULL, error.c_str(), L"Rainmeter Packager", MB_ERROR);
 				return cleanup();
 			}
 		}
@@ -332,7 +332,7 @@ bool CDialogPackage::CreatePackage()
 	{
 		std::wstring error = L"Unable to create package.";
 		error += L"\n\nClick OK to close Packager.";
-		MessageBox(m_Window, error.c_str(), L"Rainmeter Packager", MB_OK | MB_TOPMOST);
+		MessageBox(NULL, error.c_str(), L"Rainmeter Packager", MB_ERROR);
 		return false;
 	}
 
@@ -350,7 +350,7 @@ unsigned __stdcall CDialogPackage::PackagerThreadProc(void* pParam)
 //		SendMessage(item, PBM_SETMARQUEE, (WPARAM)FALSE, 0);
 
 		FlashWindow(dialog->m_Window, TRUE);
-		MessageBox(dialog->m_Window, L"The .rmskin file has been successfully created.", L"Rainmeter Packager", MB_OK | MB_ICONINFORMATION);
+		MessageBox(NULL, L"The .rmskin file has been successfully created.", L"Rainmeter Packager", MB_OK | MB_ICONINFORMATION);
 	}
 	else
 	{
@@ -463,12 +463,12 @@ bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring b
 			ret = AddFileToPackage(asciiFile.c_str(), zipFile.c_str());
 			if (!ret)
 			{
-				std::wstring error = L"Error adding file:\n\n";
+				std::wstring error = L"Error adding file:\n";
 				error += path;
 				error += base;
-				error += L"\\";
 				error += fd.cFileName;
-				MessageBox(m_Window, error.c_str(), L"Rainmeter Packager", MB_OK | MB_TOPMOST);
+				error += L"\n\nClick OK to close Packager.";
+				MessageBox(NULL, error.c_str(), L"Rainmeter Packager", MB_ERROR);
 				break;
 			}
 		}
