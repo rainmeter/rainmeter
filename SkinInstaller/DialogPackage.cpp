@@ -282,8 +282,8 @@ bool CDialogPackage::CreatePackage()
 	for (auto iter = m_ThemeFolders.cbegin(); iter != m_ThemeFolders.cend(); ++iter)
 	{
 		std::wstring realPath = (*iter).second + L"Rainmeter.thm";
-		std::wstring zipPath = L"Themes\\" + (*iter).first;
-		zipPath += L"\\Rainmeter.thm";
+		std::wstring zipPath = L"Layouts\\" + (*iter).first;
+		zipPath += L"\\Rainmeter.ini";
 		if (!AddFileToPackage(realPath.c_str(), zipPath.c_str()))
 		{
 			std::wstring error = L"Error adding theme '";

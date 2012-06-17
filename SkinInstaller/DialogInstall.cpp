@@ -489,8 +489,8 @@ bool CDialogInstall::ReadPackage()
 			{
 				m_PackageSkins.insert(item);
 			}
-			else if (_wcsicmp(component, L"Themes") == 0 &&
-				_wcsicmp(extension, L".thm") == 0 &&
+			else if (_wcsicmp(component, m_PackageFormat == PackageFormat::Old ? L"Themes" : L"Layouts") == 0 &&
+				_wcsicmp(extension, m_PackageFormat == PackageFormat::Old ? L".thm" : L".ini") == 0 &&
 				!IsIgnoredTheme(itemSz))
 			{
 				m_PackageThemes.insert(item);
@@ -773,10 +773,15 @@ bool CDialogInstall::InstallPackage()
 				targetPath += path;
 				error = !ExtractCurrentFile(targetPath);
 			}
-			else if (_wcsicmp(component, L"Themes") == 0 &&
-				_wcsicmp(extension, L".thm") == 0 &&
+			else if (_wcsicmp(component, m_PackageFormat == PackageFormat::New ? L"Layouts" : L"Themes") == 0 &&
+				_wcsicmp(extension, m_PackageFormat == PackageFormat::New ? L".ini" : L".thm") == 0 &&
 				m_PackageThemes.find(item) != m_PackageThemes.end())
 			{
+				if (m_PackageFormat == PackageFormat::New)
+				{
+					wcscpy_s(extension, 5, L".thm");
+				}
+
 				targetPath = g_Data.settingsPath;
 				targetPath += L"Themes\\";
 				targetPath += path;
