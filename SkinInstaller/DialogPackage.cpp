@@ -258,21 +258,21 @@ bool CDialogPackage::CreatePackage()
 	};
 
 	if (!m_ZipFile ||
-		!AddFileToPackage(ConvertToAscii(tempFile).c_str(), "RMSKIN.ini") ||
-		(!c_Dialog->m_HeaderFile.empty() && !AddFileToPackage(ConvertToAscii(c_Dialog->m_HeaderFile.c_str()).c_str(), "RMSKIN.bmp")))
+		!AddFileToPackage(tempFile, L"RMSKIN.ini") ||
+		(!c_Dialog->m_HeaderFile.empty() && !AddFileToPackage(c_Dialog->m_HeaderFile.c_str(), L"RMSKIN.bmp")))
 	{
 		std::wstring error = L"Unable to create package.";
 		error += L"\n\nClick OK to close Packager.";
-		MessageBox(NULL, error.c_str(), L"Rainmeter Skin Packager", MB_ERROR);
+		MessageBox(c_Dialog->GetWindow(), error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
 		DeleteFile(tempFile);
 		return cleanup();
 	}
 
 	// Add skin
 	{
-		std::string zipPrefix = "Skins\\";
-		zipPrefix += ConvertToAscii(m_SkinFolder.first.c_str());
-		if (!AddFolderToPackage(m_SkinFolder.second, L"", zipPrefix.c_str(), true))
+		std::wstring zipPrefix = L"Skins\\" + m_SkinFolder.first;
+		zipPrefix += L'\\';
+		if (!AddFolderToPackage(m_SkinFolder.second, L"", zipPrefix.c_str()))
 		{
 			return cleanup();
 		}
@@ -281,18 +281,16 @@ bool CDialogPackage::CreatePackage()
 	// Add themes
 	for (auto iter = m_ThemeFolders.cbegin(); iter != m_ThemeFolders.cend(); ++iter)
 	{
-		std::string realPath = ConvertToAscii((*iter).second.c_str());
-		realPath += "Rainmeter.thm";
-		std::string zipPath = "Themes\\";
-		zipPath += ConvertToAscii((*iter).first.c_str());
-		zipPath += "\\Rainmeter.thm";
+		std::wstring realPath = (*iter).second + L"Rainmeter.thm";
+		std::wstring zipPath = L"Themes\\" + (*iter).first;
+		zipPath += L"\\Rainmeter.thm";
 		if (!AddFileToPackage(realPath.c_str(), zipPath.c_str()))
 		{
 			std::wstring error = L"Error adding theme '";
 			error += (*iter).first;
 			error += L"'.";
 			error += L"\n\nClick OK to close Packager.";
-			MessageBox(NULL, error.c_str(), L"Rainmeter Skin Packager", MB_ERROR);
+			MessageBox(c_Dialog->GetWindow(), error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
 			return cleanup();
 		}
 	}
@@ -303,16 +301,15 @@ bool CDialogPackage::CreatePackage()
 		// Add 32bit and 64bit versions
 		for (int i = 0; i < 2; ++i)
 		{
-			std::string realPath = ConvertToAscii((i == 0) ? (*iter).second.first.c_str() : (*iter).second.second.c_str());
-			std::string zipPath = (i == 0) ? "Plugins\\32bit\\" : "Plugins\\64bit\\";
-			zipPath += ConvertToAscii((*iter).first.c_str());
+			const std::wstring& realPath = (i == 0) ? (*iter).second.first : (*iter).second.second;
+			std::wstring zipPath = ((i == 0) ? L"Plugins\\32bit\\" : L"Plugins\\64bit\\") + (*iter).first;
 			if (!AddFileToPackage(realPath.c_str(), zipPath.c_str()))
 			{
 				std::wstring error = L"Error adding plugin '";
 				error += (*iter).first;
 				error += L"'.";
 				error += L"\n\nClick OK to close Packager.";
-				MessageBox(NULL, error.c_str(), L"Rainmeter Skin Packager", MB_ERROR);
+				MessageBox(c_Dialog->GetWindow(), error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
 				return cleanup();
 			}
 		}
@@ -332,7 +329,7 @@ bool CDialogPackage::CreatePackage()
 	{
 		std::wstring error = L"Unable to create package.";
 		error += L"\n\nClick OK to close Packager.";
-		MessageBox(NULL, error.c_str(), L"Rainmeter Skin Packager", MB_ERROR);
+		MessageBox(c_Dialog->GetWindow(), error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -343,9 +340,6 @@ unsigned __stdcall CDialogPackage::PackagerThreadProc(void* pParam)
 {
 	CDialogPackage* dialog = (CDialogPackage*)pParam;
 
-	// Wait a bit so new style MessageBox dialogs work
-	Sleep(100);
-
 	if (dialog->CreatePackage())
 	{
 		// Stop the progress bar
@@ -353,7 +347,10 @@ unsigned __stdcall CDialogPackage::PackagerThreadProc(void* pParam)
 //		SendMessage(item, PBM_SETMARQUEE, (WPARAM)FALSE, 0);
 
 		FlashWindow(dialog->m_Window, TRUE);
-		MessageBox(NULL, L"The .rmskin file has been successfully created.", L"Rainmeter Skin Packager", MB_OK | MB_ICONINFORMATION);
+
+		std::wstring message = L"The skin package has been successfully created.";
+		message += L"\n\nClick OK to close Packager.";
+		MessageBox(c_Dialog->GetWindow(), message.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONINFORMATION);
 	}
 	else
 	{
@@ -365,84 +362,84 @@ unsigned __stdcall CDialogPackage::PackagerThreadProc(void* pParam)
 	return 0;
 }
 
-bool CDialogPackage::AddFileToPackage(const char* realPath, const char* zipPath)
+bool CDialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath)
 {
+	HANDLE file = CreateFile(filePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, NULL);
+	if (file == INVALID_HANDLE_VALUE)
+	{
+		return false;
+	}
+
+	// Set zip file time
 	zip_fileinfo zi = {0};
+	FILETIME lastWriteTime;
+	FILETIME localTime;
+	GetFileTime(file, NULL, NULL, &lastWriteTime);
+	FileTimeToLocalFileTime(&lastWriteTime, &localTime);
+	FileTimeToDosDateTime(&localTime, ((LPWORD)&zi.dosDate) + 1, ((LPWORD)&zi.dosDate) + 0);
 
-	FILETIME ftLocal;
-	WIN32_FIND_DATAA ff32;
-	HANDLE hFind = FindFirstFileA(realPath, &ff32);
-	if (hFind != INVALID_HANDLE_VALUE)
+	std::string zipPathAscii = ConvertToAscii(zipPath);
+	int open = zipOpenNewFileInZip(m_ZipFile, zipPathAscii.c_str(), &zi, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_DEFAULT_COMPRESSION);
+	if (open != ZIP_OK)
 	{
-		FileTimeToLocalFileTime(&ff32.ftLastWriteTime, &ftLocal);
-		FileTimeToDosDateTime(&ftLocal, ((LPWORD)&zi.dosDate) + 1, ((LPWORD)&zi.dosDate) + 0);
-		FindClose(hFind);
+		return false;
 	}
 
-	int err = zipOpenNewFileInZip(m_ZipFile, zipPath, &zi, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_DEFAULT_COMPRESSION);
-	if (err != ZIP_OK) return false;
-
-	FILE* fin = fopen(realPath, "rb");
-	if (fin)
+	bool result = true;
+	do
 	{
-		size_t readSize;
-		do
+		const DWORD bufferSize = 16 * 1024;
+		BYTE buffer[bufferSize];
+		DWORD readSize;
+		if (!ReadFile(file, buffer, bufferSize, &readSize, NULL))
 		{
-			const size_t bufferSize = 16 * 1024;
-			BYTE buffer[bufferSize];
-			readSize = fread(buffer, 1, bufferSize, fin);
-			if (readSize < bufferSize && feof(fin) == 0)
-			{
-				err = ZIP_ERRNO;
-			}
-			else if (readSize > 0)
-			{
-				err = zipWriteInFileInZip(m_ZipFile, buffer, (UINT)readSize);
-				if (err < 0)
-				{
-					err = ZIP_ERRNO;
-				}
-			}
+			result = false;
 		}
-		while ((err == ZIP_OK) && (readSize > 0));
-
-		fclose(fin);
+		else if (readSize != 0)
+		{
+			result = zipWriteInFileInZip(m_ZipFile, buffer, (UINT)readSize) == ZIP_OK;
+		}
+		else
+		{
+			// EOF
+			break;
+		}
 	}
-	else
-	{
-		err = ZIP_ERRNO;
-	}
+	while (result);
 
-	if (zipCloseFileInZip(m_ZipFile) != ZIP_OK) return false;
+	CloseHandle(file);
 
-	return err == ZIP_OK;
+	return zipCloseFileInZip(m_ZipFile) == ZIP_OK && result;
 }
 
-bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring base, const char* zipPrefix, bool recursive)
+bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring base, const WCHAR* zipPrefix)
 {
-	std::wstring filter = path + base;
-	std::string asciiBase = ConvertToAscii(filter.c_str());
-	filter += L'*';
+	std::wstring currentPath = path + base;
+	currentPath += L'*';
 
 	WIN32_FIND_DATA fd;
 	HANDLE hFind = FindFirstFileEx(
-		filter.c_str(),
+		currentPath.c_str(),
 		FindExInfoStandard,
 		&fd,
 		FindExSearchNameMatch,
 		NULL,
 		0);
 
-	if (hFind == INVALID_HANDLE_VALUE) return false;
+	if (hFind == INVALID_HANDLE_VALUE)
+	{
+		return false;
+	}
 
-	bool ret = true;
+	currentPath.pop_back();	// Remove *
 
+	bool result = true;
 	std::list<std::wstring> folders;
 	do
 	{
 		if (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN)
 		{
-			// Ignore hidden folders
+			// Ignore hidden files and folders
 			continue;
 		}
 
@@ -455,19 +452,19 @@ bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring b
 		}
 		else
 		{
-			std::string asciiFile = asciiBase + ConvertToAscii(fd.cFileName);
-			std::string zipFile = zipPrefix;
-			zipFile += &asciiFile[path.length() - 1];
+			std::wstring filePath = currentPath + fd.cFileName;
+			std::wstring zipPath = zipPrefix;
+			zipPath.append(filePath, path.length(), filePath.length() - path.length());
 
-			ret = AddFileToPackage(asciiFile.c_str(), zipFile.c_str());
-			if (!ret)
+			result = AddFileToPackage(filePath.c_str(), zipPath.c_str());
+			if (!result)
 			{
 				std::wstring error = L"Error adding file:\n";
 				error += path;
 				error += base;
 				error += fd.cFileName;
 				error += L"\n\nClick OK to close Packager.";
-				MessageBox(NULL, error.c_str(), L"Rainmeter Skin Packager", MB_ERROR);
+				MessageBox(c_Dialog->GetWindow(), error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
 				break;
 			}
 		}
@@ -475,20 +472,19 @@ bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring b
 	while (FindNextFile(hFind, &fd));
 	FindClose(hFind);
 
-	if (recursive && ret)
+	if (result)
 	{
-		base += L'\\';
 		std::list<std::wstring>::const_iterator iter = folders.begin();
 		for ( ; iter != folders.end(); ++iter)
 		{
 			std::wstring newBase = base + (*iter);
 			newBase += L'\\';
-			ret = AddFolderToPackage(path, newBase, zipPrefix, recursive);
-			if (!ret) break;
+			result = AddFolderToPackage(path, newBase, zipPrefix);
+			if (!result) break;
 		}
 	}
 
-	return ret;
+	return result;
 }
 
 std::wstring CDialogPackage::SelectFolder(HWND parent, const std::wstring& existingPath)

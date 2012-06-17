@@ -81,8 +81,8 @@ private:
 	bool CreatePackage();
 	static unsigned __stdcall PackagerThreadProc(void* pParam);
 
-	bool AddFileToPackage(const char* realPath, const char* zipPath);
-	bool AddFolderToPackage(const std::wstring& path, std::wstring base, const char* zipPrefix, bool recursive);
+	bool AddFileToPackage(const WCHAR* realPath, const WCHAR* zipPath);
+	bool AddFolderToPackage(const std::wstring& path, std::wstring base, const WCHAR* zipPrefix);
 
 	static std::wstring SelectFolder(HWND parent, const std::wstring& existingPath);
 	static INT_PTR CALLBACK SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
