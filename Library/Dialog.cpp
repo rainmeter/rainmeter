@@ -79,14 +79,48 @@ void CDialog::SetDialogFont(HWND window)
 	EnumChildWindows(window, SetFontProc, (WPARAM)m_Font);
 }
 
-/*
-** Callback for EnumChildWindows().
-**
-*/
 BOOL CALLBACK CDialog::SetFontProc(HWND hWnd, LPARAM lParam)
 {
 	SendMessage(hWnd, WM_SETFONT, (WPARAM)lParam, 0);
 	return TRUE;
+}
+
+/*
+** Subclass button control to draw arrow on the right.
+**
+*/
+void CDialog::SetMenuButton(HWND button)
+{
+	SetWindowSubclass(button, MenuButtonProc, NULL, NULL);
+}
+
+LRESULT CALLBACK CDialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+	switch (uMsg)
+	{
+	case WM_PAINT:
+		{
+			DefSubclassProc(hWnd, uMsg, wParam, lParam);
+
+			// Draw arrow on top of the button
+			HDC dc = GetDC(hWnd);
+			RECT buttonRect;
+			GetClientRect(hWnd, &buttonRect);
+
+			int arrowX = buttonRect.right - 18;
+			int arroyY = buttonRect.top + 4;
+			RECT arrowRect = { arrowX, arroyY, arrowX + 14, arroyY + 14 };		
+
+			const WORD DFCS_MENUARROWDOWN = 0x0010;	// Undocumented	
+			DWORD drawFlags = DFCS_TRANSPARENT | DFCS_MENUARROWDOWN | (IsWindowEnabled(hWnd) ? 0 : DFCS_INACTIVE);
+			DrawFrameControl(dc, &arrowRect, DFC_MENU, drawFlags);
+			ReleaseDC(hWnd, dc);
+			return 0;
+		}
+		break;
+	}
+
+    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
 /*

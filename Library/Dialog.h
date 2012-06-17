@@ -59,12 +59,15 @@ protected:
 	void SetDialogFont(HWND window);
 	void SetDialogFont() { SetDialogFont(m_Window); }
 
+	static void SetMenuButton(HWND button);
+
 	HWND m_Window;
 	HFONT m_Font;
 	HFONT m_FontBold;
 
 private:
 	static BOOL CALLBACK SetFontProc(HWND hWnd, LPARAM lParam);
+	static LRESULT CALLBACK MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 	
 	static HWND c_ActiveDialogWindow;
 	static HWND c_ActiveTabWindow;
