@@ -48,7 +48,7 @@ CDialogPackage::~CDialogPackage()
 void CDialogPackage::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 {
 	HANDLE hMutex;
-	if (IsRunning(L"RainmeterBackup", &hMutex))
+	if (IsRunning(L"Rainmeter Skin Packager", &hMutex))
 	{
 		HWND hwnd = FindWindow(L"#32770", L"Rainmeter Skin Packager");
 		SetForegroundWindow(hwnd);
@@ -552,10 +552,14 @@ INT_PTR CALLBACK CDialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARA
 			{
 				HWND item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_EXISTING_COMBO);
 				EnableWindow(item, TRUE);
+				int sel = ComboBox_GetCurSel(item);
 				item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT);
 				EnableWindow(item, FALSE);
 				item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_CUSTOMBROWSE_BUTTON);
 				EnableWindow(item, FALSE);
+
+				item = GetDlgItem(hWnd, IDCLOSE);
+				EnableWindow(item, sel != -1);
 			}
 			break;
 

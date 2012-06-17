@@ -99,7 +99,7 @@ void CDialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	}
 
 	HANDLE hMutex;
-	if (IsRunning(L"RainmeterSkinInstaller", &hMutex))
+	if (IsRunning(L"Rainmeter Skin Installer", &hMutex))
 	{
 		HWND hwnd = FindWindow(L"#32770", L"Rainmeter Skin Installer");
 		SetForegroundWindow(hwnd);

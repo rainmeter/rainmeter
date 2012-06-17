@@ -256,15 +256,15 @@ INT_PTR CDialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
-	case IDC_REFRESHALL_BUTTON:
+	case IDC_MANAGE_REFRESHALL_BUTTON:
 		Rainmeter->RefreshAll();
 		break;
 
-	case IDC_EDITSETTINGS_BUTTON:
+	case IDC_MANAGE_EDITSETTINGS_BUTTON:
 		Rainmeter->EditSettings();
 		break;
 
-	case IDC_OPENLOG_BUTTON:
+	case IDC_MANAGE_OPENLOG_BUTTON:
 		CDialogAbout::Open();
 		break;
 
@@ -1165,7 +1165,12 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 	switch (nm->code)
 	{
 	case NM_CLICK:
-		if (nm->idFrom == IDC_MANAGESKINS_ADDMETADATA_LINK)
+		if (nm->idFrom == IDC_MANAGESKINS_CREATEPACKAGE_LINK)
+		{
+			std::wstring file = Rainmeter->GetPath() + L"SkinInstaller.exe";
+			RunFile(file.c_str(), L"/Packager");
+		}
+		else if (nm->idFrom == IDC_MANAGESKINS_ADDMETADATA_LINK)
 		{
 			std::wstring file = Rainmeter->GetSkinPath() + m_SkinFolderPath;
 			file += L'\\';

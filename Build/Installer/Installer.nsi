@@ -760,13 +760,15 @@ SkipIniMove:
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VER} r${REV}"
 !endif
 
-		WriteRegStr HKCR ".rmskin" "" "Rainmeter skin"
-		WriteRegStr HKCR "Rainmeter skin" "" "Rainmeter skin file"
-		WriteRegStr HKCR "Rainmeter skin\shell" "" "open"
-		WriteRegStr HKCR "Rainmeter skin\DefaultIcon" "" "$INSTDIR\SkinInstaller.exe,0"
-		WriteRegStr HKCR "Rainmeter skin\shell\open\command" "" '"$INSTDIR\SkinInstaller.exe" %1'
-		WriteRegStr HKCR "Rainmeter skin\shell\edit" "" "Install Rainmeter skin"
-		WriteRegStr HKCR "Rainmeter skin\shell\edit\command" "" '"$INSTDIR\SkinInstaller.exe" %1'
+		; Create .rmskin association
+		WriteRegStr HKCR ".rmskin" "" "Rainmeter.SkinInstaller"
+		DeleteRegKey HKCR "Rainmeter skin"	; Old key
+		WriteRegStr HKCR "Rainmeter.SkinInstaller" "" "Rainmeter Skin Installer"
+		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell" "" "open"
+		WriteRegStr HKCR "Rainmeter.SkinInstaller\DefaultIcon" "" "$INSTDIR\SkinInstaller.exe,0"
+		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell\open\command" "" '"$INSTDIR\SkinInstaller.exe" %1'
+		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell\edit" "" "Install Rainmeter skin"
+		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell\edit\command" "" '"$INSTDIR\SkinInstaller.exe" %1'
 
 		; Refresh shell icons if new install
 		${If} $0 == ""
