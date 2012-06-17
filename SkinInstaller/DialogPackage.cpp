@@ -263,7 +263,7 @@ bool CDialogPackage::CreatePackage()
 	{
 		std::wstring error = L"Unable to create package.";
 		error += L"\n\nClick OK to close Packager.";
-		MessageBox(c_Dialog->GetWindow(), error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
+		MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
 		DeleteFile(tempFile);
 		return cleanup();
 	}
@@ -290,7 +290,7 @@ bool CDialogPackage::CreatePackage()
 			error += (*iter).first;
 			error += L"'.";
 			error += L"\n\nClick OK to close Packager.";
-			MessageBox(c_Dialog->GetWindow(), error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
+			MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
 			return cleanup();
 		}
 	}
@@ -309,7 +309,7 @@ bool CDialogPackage::CreatePackage()
 				error += (*iter).first;
 				error += L"'.";
 				error += L"\n\nClick OK to close Packager.";
-				MessageBox(c_Dialog->GetWindow(), error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
+				MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
 				return cleanup();
 			}
 		}
@@ -329,7 +329,7 @@ bool CDialogPackage::CreatePackage()
 	{
 		std::wstring error = L"Unable to create package.";
 		error += L"\n\nClick OK to close Packager.";
-		MessageBox(c_Dialog->GetWindow(), error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
+		MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -460,11 +460,9 @@ bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring b
 			if (!result)
 			{
 				std::wstring error = L"Error adding file:\n";
-				error += path;
-				error += base;
-				error += fd.cFileName;
+				error += filePath;
 				error += L"\n\nClick OK to close Packager.";
-				MessageBox(c_Dialog->GetWindow(), error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
+				MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
 				break;
 			}
 		}
@@ -887,31 +885,24 @@ INT_PTR CDialogPackage::CTabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDC_PACKAGEINFO_NAME_EDIT:
-		if (HIWORD(wParam) == EN_CHANGE)
-		{
-			WCHAR buffer[64];
-			int len = GetWindowText((HWND)lParam, buffer, _countof(buffer));
-			c_Dialog->m_Name.assign(buffer, len);
-			c_Dialog->SetNextButtonState();
-		}
-		break;
-
 	case IDC_PACKAGEINFO_AUTHOR_EDIT:
-		if (HIWORD(wParam) == EN_CHANGE)
-		{
-			WCHAR buffer[64];
-			int len = GetWindowText((HWND)lParam, buffer, _countof(buffer));
-			c_Dialog->m_Author.assign(buffer, len);
-			c_Dialog->SetNextButtonState();
-		}
-		break;
-
 	case IDC_PACKAGEINFO_VERSION_EDIT:
 		if (HIWORD(wParam) == EN_CHANGE)
 		{
 			WCHAR buffer[64];
 			int len = GetWindowText((HWND)lParam, buffer, _countof(buffer));
-			c_Dialog->m_Version	.assign(buffer, len);
+			if (LOWORD(wParam) == IDC_PACKAGEINFO_NAME_EDIT)
+			{
+				c_Dialog->m_Name.assign(buffer, len);
+			}
+			else if (LOWORD(wParam) == IDC_PACKAGEINFO_AUTHOR_EDIT)
+			{
+				c_Dialog->m_Author.assign(buffer, len);
+			}
+			else // if (LOWORD(wParam) == IDC_PACKAGEINFO_VERSION_EDIT)
+			{
+				c_Dialog->m_Version.assign(buffer, len);
+			}
 			c_Dialog->SetNextButtonState();
 		}
 		break;
@@ -959,28 +950,29 @@ void CDialogPackage::CTabOptions::Initialize()
 {
 	m_Initialized = true;
 
-	std::wstring fileName = c_Dialog->m_Name + L'_';
-	fileName += c_Dialog->m_Version;
-
-	// Escape reserved chars
-	for (int i = 0, isize = (int)fileName.length(); i < isize; ++i)
-	{
-		if (wcschr(L"\\/:*?\"<>|", fileName[i]))
-		{
-			fileName[i] = L'_';
-		}
-	}
-	
 	WCHAR buffer[MAX_PATH];
 	SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, SHGFP_TYPE_CURRENT, buffer);
 
 	c_Dialog->m_TargetFile = buffer;
 	c_Dialog->m_TargetFile += L'\\';
-	c_Dialog->m_TargetFile += fileName;
+	int pos = (int)c_Dialog->m_TargetFile.length() + 1;
+	c_Dialog->m_TargetFile += c_Dialog->m_Name;
+	c_Dialog->m_TargetFile += L'_';
+	c_Dialog->m_TargetFile += c_Dialog->m_Version;
+
+	// Escape reserved chars
+	for (int i = pos, isize = (int)c_Dialog->m_TargetFile.length(); i < isize; ++i)
+	{
+		if (wcschr(L"\\/:*?\"<>|", c_Dialog->m_TargetFile[i]))
+		{
+			c_Dialog->m_TargetFile[i] = L'_';
+		}
+	}
+
 	c_Dialog->m_TargetFile += L".rmskin";
 
 	HWND item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_FILE_EDIT);
-	SetWindowText(item, c_Dialog->m_TargetFile.c_str());
+	SetWindowText(item,c_Dialog->m_TargetFile.c_str());
 
 	item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_LOADTHEME_RADIO);
 	if (c_Dialog->m_ThemeFolders.empty())
@@ -1077,7 +1069,7 @@ INT_PTR CDialogPackage::CTabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			HWND item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_LOADSKIN_EDIT);
 			ShowWindow(item, SW_SHOWNORMAL);
-			
+
 			WCHAR buffer[MAX_PATH];
 			GetWindowText(item, buffer, _countof(buffer));
 			c_Dialog->m_Load = buffer;
@@ -1098,7 +1090,7 @@ INT_PTR CDialogPackage::CTabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 			ShowWindow(item, SW_HIDE);
 			item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_LOADTHEME_COMBO);
 			ShowWindow(item, SW_SHOWNORMAL);
-			
+
 			WCHAR buffer[MAX_PATH];
 			GetWindowText(item, buffer, _countof(buffer));
 			c_Dialog->m_Load = buffer;
@@ -1131,6 +1123,7 @@ INT_PTR CDialogPackage::CTabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 					// Skip everything before actual skin folder
 					const WCHAR* folderPath = buffer + c_Dialog->m_SkinFolder.second.length() - c_Dialog->m_SkinFolder.first.length() - 1;
 					SetWindowText(item, folderPath);
+					c_Dialog->m_Load = folderPath;
 				}
 			}
 		}
@@ -1141,8 +1134,8 @@ INT_PTR CDialogPackage::CTabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			WCHAR buffer[32];
 			GetWindowText((HWND)lParam, buffer, _countof(buffer));
-			
-			// Get selection
+
+			// Get caret position
 			DWORD sel = Edit_GetSel((HWND)lParam);
 
 			// Only allow numbers and period
@@ -1157,12 +1150,12 @@ INT_PTR CDialogPackage::CTabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 				{
 					*version = L'\0';
 					SetWindowText((HWND)lParam, buffer);
+
+					// Reset caret position
+					Edit_SetSel((HWND)lParam, LOWORD(sel), HIWORD(sel));
 					break;
 				}
 			}
-
-			// Reset selection
-			Edit_SetSel((HWND)lParam, LOWORD(sel), HIWORD(sel));
 
 			c_Dialog->m_MinimumRainmeter = buffer;
 		}
