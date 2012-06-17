@@ -833,6 +833,11 @@ bool CDialogInstall::InstallPackage()
 	}
 	while (unzGoToNextFile(m_PackageUnzFile) == UNZ_OK);
 
+	if (!m_MergeSkins && m_BackupSkins)
+	{
+		KeepVariables();
+	}
+
 	return true;
 }
 
@@ -996,7 +1001,8 @@ void CDialogInstall::KeepVariables()
 		std::wstring fromPath = g_Data.skinsPath + L"@Backup\\";
 		fromPath += m_VariablesFiles[i];
 		std::wstring toPath = g_Data.skinsPath + m_VariablesFiles[i];
-
+		MessageBox(NULL, fromPath.c_str(), L"TEST!", MB_OK | MB_TOPMOST);
+		MessageBox(NULL, toPath.c_str(), L"TEST!", MB_OK | MB_TOPMOST);
 		unsigned int count = GetPrivateProfileSection(L"Variables", keyname, 32767, fromPath.c_str());
 
 		if ((_waccess(fromPath.c_str(), 0) == 0) && (_waccess(toPath.c_str(), 0) == 0)
