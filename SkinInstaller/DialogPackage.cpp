@@ -231,7 +231,7 @@ bool CDialogPackage::CreatePackage()
 
 	if (!c_Dialog->m_Load.empty())
 	{
-		WritePrivateProfileString(L"rmskin", L"LoadType", c_Dialog->m_LoadTheme ? L"Theme" : L"Skin", tempFile);
+		WritePrivateProfileString(L"rmskin", L"LoadType", c_Dialog->m_LoadTheme ? L"Layout" : L"Skin", tempFile);
 		WritePrivateProfileString(L"rmskin", L"Load", c_Dialog->m_Load.c_str(), tempFile);
 	}
 
@@ -1238,7 +1238,7 @@ INT_PTR CDialogPackage::CTabAdvanced::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			int length = GetWindowTextLength((HWND)lParam);
 			c_Dialog->m_VariableFiles.resize(length);
-			GetWindowText((HWND)lParam, &c_Dialog->m_VariableFiles[0], length);
+			GetWindowText((HWND)lParam, &c_Dialog->m_VariableFiles[0], length + 1);
 		}
 		break;
 
