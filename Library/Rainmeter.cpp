@@ -884,12 +884,9 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 		m_SkinPath.assign(buffer, len);
 		ExpandEnvironmentVariables(m_SkinPath);
 
-		if (!m_SkinPath.empty())
+		if (!m_SkinPath.empty() && !CSystem::IsPathSeparator(m_SkinPath[m_SkinPath.length() - 1]))
 		{
-			if (!CSystem::IsPathSeparator(m_SkinPath[m_SkinPath.length() - 1]))
-			{
-				m_SkinPath += L'\\';
-			}
+			m_SkinPath += L'\\';
 		}
 	}
 	else if (bDefaultIniLocation &&

@@ -489,8 +489,8 @@ bool CDialogInstall::ReadPackage()
 			{
 				m_PackageSkins.insert(item);
 			}
-			else if (_wcsicmp(component, m_PackageFormat == PackageFormat::Old ? L"Themes" : L"Layouts") == 0 &&
-				_wcsicmp(extension, m_PackageFormat == PackageFormat::Old ? L".thm" : L".ini") == 0 &&
+			else if (_wcsicmp(component, m_PackageFormat == PackageFormat::New ? L"Layouts" : L"Themes") == 0 &&
+				_wcsicmp(extension, m_PackageFormat == PackageFormat::New ? L".ini" : L".thm") == 0 &&
 				!IsIgnoredTheme(itemSz))
 			{
 				m_PackageThemes.insert(item);

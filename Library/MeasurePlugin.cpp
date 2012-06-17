@@ -129,12 +129,14 @@ void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 
 	// First try from program path
-	std::wstring pluginFile = Rainmeter->GetPluginPath() + pluginName;
+	std::wstring pluginFile = Rainmeter->GetPluginPath();
+	pluginFile += pluginName;
 	m_Plugin = CSystem::RmLoadLibrary(pluginFile.c_str());
 	if (!m_Plugin)
 	{
 		// Try from settings path
-		pluginFile = Rainmeter->GetUserPluginPath() + pluginName;
+		pluginFile = Rainmeter->GetUserPluginPath();
+		pluginFile += pluginName;
 		m_Plugin = CSystem::RmLoadLibrary(pluginFile.c_str());
 		if (!m_Plugin)
 		{
