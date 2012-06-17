@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2011 Birunthan Mohanathas
+  Copyright (C) 2012 Birunthan Mohanathas
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -50,7 +50,7 @@ void CDialogPackage::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	HANDLE hMutex;
 	if (IsRunning(L"RainmeterBackup", &hMutex))
 	{
-		HWND hwnd = FindWindow(L"#32770", L"Rainmeter Packager");
+		HWND hwnd = FindWindow(L"#32770", L"Rainmeter Skin Packager");
 		SetForegroundWindow(hwnd);
 	}
 	else
@@ -168,7 +168,7 @@ INT_PTR CDialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			m_PackagerThread = (HANDLE)_beginthreadex(NULL, 0, PackagerThreadProc, this, 0, NULL);
 			if (!m_PackagerThread)
 			{
-				MessageBox(m_Window, L"Unknown error.", L"Rainmeter Packager", MB_ERROR);
+				MessageBox(m_Window, L"Unknown error.", L"Rainmeter Skin Packager", MB_ERROR);
 				EndDialog(m_Window, 0);
 			}
 		}
@@ -263,7 +263,7 @@ bool CDialogPackage::CreatePackage()
 	{
 		std::wstring error = L"Unable to create package.";
 		error += L"\n\nClick OK to close Packager.";
-		MessageBox(NULL, error.c_str(), L"Rainmeter Packager", MB_ERROR);
+		MessageBox(NULL, error.c_str(), L"Rainmeter Skin Packager", MB_ERROR);
 		DeleteFile(tempFile);
 		return cleanup();
 	}
@@ -292,7 +292,7 @@ bool CDialogPackage::CreatePackage()
 			error += (*iter).first;
 			error += L"'.";
 			error += L"\n\nClick OK to close Packager.";
-			MessageBox(NULL, error.c_str(), L"Rainmeter Packager", MB_ERROR);
+			MessageBox(NULL, error.c_str(), L"Rainmeter Skin Packager", MB_ERROR);
 			return cleanup();
 		}
 	}
@@ -312,7 +312,7 @@ bool CDialogPackage::CreatePackage()
 				error += (*iter).first;
 				error += L"'.";
 				error += L"\n\nClick OK to close Packager.";
-				MessageBox(NULL, error.c_str(), L"Rainmeter Packager", MB_ERROR);
+				MessageBox(NULL, error.c_str(), L"Rainmeter Skin Packager", MB_ERROR);
 				return cleanup();
 			}
 		}
@@ -332,7 +332,7 @@ bool CDialogPackage::CreatePackage()
 	{
 		std::wstring error = L"Unable to create package.";
 		error += L"\n\nClick OK to close Packager.";
-		MessageBox(NULL, error.c_str(), L"Rainmeter Packager", MB_ERROR);
+		MessageBox(NULL, error.c_str(), L"Rainmeter Skin Packager", MB_ERROR);
 		return false;
 	}
 
@@ -343,6 +343,9 @@ unsigned __stdcall CDialogPackage::PackagerThreadProc(void* pParam)
 {
 	CDialogPackage* dialog = (CDialogPackage*)pParam;
 
+	// Wait a bit so new style MessageBox dialogs work
+	Sleep(100);
+
 	if (dialog->CreatePackage())
 	{
 		// Stop the progress bar
@@ -350,7 +353,7 @@ unsigned __stdcall CDialogPackage::PackagerThreadProc(void* pParam)
 //		SendMessage(item, PBM_SETMARQUEE, (WPARAM)FALSE, 0);
 
 		FlashWindow(dialog->m_Window, TRUE);
-		MessageBox(NULL, L"The .rmskin file has been successfully created.", L"Rainmeter Packager", MB_OK | MB_ICONINFORMATION);
+		MessageBox(NULL, L"The .rmskin file has been successfully created.", L"Rainmeter Skin Packager", MB_OK | MB_ICONINFORMATION);
 	}
 	else
 	{
@@ -418,10 +421,6 @@ bool CDialogPackage::AddFileToPackage(const char* realPath, const char* zipPath)
 bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring base, const char* zipPrefix, bool recursive)
 {
 	std::wstring filter = path + base;
-	if (!base.empty())
-	{
-		filter += L'\\';
-	}
 	std::string asciiBase = ConvertToAscii(filter.c_str());
 	filter += L'*';
 
@@ -458,7 +457,7 @@ bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring b
 		{
 			std::string asciiFile = asciiBase + ConvertToAscii(fd.cFileName);
 			std::string zipFile = zipPrefix;
-			zipFile += &asciiFile[path.length()];
+			zipFile += &asciiFile[path.length() - 1];
 
 			ret = AddFileToPackage(asciiFile.c_str(), zipFile.c_str());
 			if (!ret)
@@ -468,7 +467,7 @@ bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring b
 				error += base;
 				error += fd.cFileName;
 				error += L"\n\nClick OK to close Packager.";
-				MessageBox(NULL, error.c_str(), L"Rainmeter Packager", MB_ERROR);
+				MessageBox(NULL, error.c_str(), L"Rainmeter Skin Packager", MB_ERROR);
 				break;
 			}
 		}
@@ -482,7 +481,9 @@ bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring b
 		std::list<std::wstring>::const_iterator iter = folders.begin();
 		for ( ; iter != folders.end(); ++iter)
 		{
-			ret = AddFolderToPackage(path, base + (*iter), zipPrefix, recursive);
+			std::wstring newBase = base + (*iter);
+			newBase += L'\\';
+			ret = AddFolderToPackage(path, newBase, zipPrefix, recursive);
 			if (!ret) break;
 		}
 	}
@@ -683,11 +684,12 @@ INT_PTR CALLBACK CDialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARA
 				OPENFILENAME ofn = { sizeof(OPENFILENAME) };
 				ofn.Flags = OFN_FILEMUSTEXIST;
 				ofn.lpstrFilter = L"Plugins (.dll)\0*.dll";
+				ofn.lpstrTitle = L"Select plugin file";
+				ofn.lpstrDefExt = L"dll";
 				ofn.nFilterIndex = 0;
 				ofn.lpstrFile = buffer;
 				ofn.nMaxFile = _countof(buffer);
-				ofn.lpstrTitle = L"Select plugin file";
-				ofn.lpstrDefExt = L"dll";
+				ofn.hwndOwner = c_Dialog->GetWindow();
 
 				if (!GetOpenFileName(&ofn))
 				{
@@ -707,7 +709,7 @@ INT_PTR CALLBACK CDialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARA
 						const WCHAR* otherName = PathFindFileName(x32 ? plugins->second.c_str() : plugins->first.c_str());
 						if (*otherName && _wcsicmp(otherName, PathFindFileName(buffer)) != 0)
 						{
-							MessageBox(hWnd, L"Plugins must have same name.", L"Rainmeter Packager", MB_OK | MB_TOPMOST);
+							MessageBox(hWnd, L"Plugins must have same name.", L"Rainmeter Skin Packager", MB_OK | MB_TOPMOST);
 							break;
 						}
 
@@ -724,7 +726,7 @@ INT_PTR CALLBACK CDialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARA
 					} 
 				}
 
-				MessageBox(hWnd, L"Invalid plugin.", L"Rainmeter Packager", MB_OK | MB_TOPMOST);
+				MessageBox(hWnd, L"Invalid plugin.", L"Rainmeter Skin Packager", MB_OK | MB_TOPMOST);
 			}
 			break;
 
@@ -961,7 +963,7 @@ void CDialogPackage::CTabOptions::Initialize()
 {
 	m_Initialized = true;
 
-	std::wstring fileName = c_Dialog->m_Author + L'_';
+	std::wstring fileName = c_Dialog->m_Name + L'_';
 	fileName += c_Dialog->m_Version;
 
 	// Escape reserved chars
@@ -994,6 +996,9 @@ void CDialogPackage::CTabOptions::Initialize()
 	}
 	else
 	{
+		c_Dialog->m_LoadTheme = true;
+		c_Dialog->m_Load = (*c_Dialog->m_ThemeFolders.cbegin()).first;
+
 		Button_SetCheck(item, BST_CHECKED);
 
 		item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_LOADTHEME_COMBO);

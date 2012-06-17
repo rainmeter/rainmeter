@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2011 Birunthan Mohanathas
+  Copyright (C) 2012 Birunthan Mohanathas
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef SKININSTALLER_DIALOGBACKUP_H_
-#define SKININSTALLER_DIALOGBACKUP_H_
+#ifndef SKININSTALLER_DIALOGPACKAGE_H_
+#define SKININSTALLER_DIALOGPACKAGE_H_
 
 #include <string>
 #include "zip.h"
