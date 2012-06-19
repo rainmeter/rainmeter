@@ -373,12 +373,13 @@ bool CDialogInstall::ReadPackage()
 		return false;
 	}
 
-	// Temporary file to extract the options file and header bitmap
-	WCHAR tempFile[MAX_PATH];
-	GetTempPath(MAX_PATH, tempFile);
-	GetTempFileName(tempFile, L"dat", 0, tempFile);
-
 	WCHAR buffer[MAX_PATH];
+
+	// Get temporary file to extract the options file and header bitmap
+	GetTempPath(MAX_PATH, buffer);
+	GetTempFileName(buffer, L"dat", 0, buffer);
+	std::wstring tempFile = buffer;
+	const WCHAR* tempFileSz = tempFile.c_str();
 
 	// Helper to sets buffer with current file name
 	auto getFileInfo = [&]()->bool
@@ -421,25 +422,18 @@ bool CDialogInstall::ReadPackage()
 			++path;	// Skip slash
 		}
 
-		if (_wcsicmp(path, m_PackageFormat == PackageFormat::New ? L"RMSKIN.bmp" : L"Rainstaller.bmp") == 0)
+		if (_wcsicmp(path, m_PackageFormat == PackageFormat::New ? L"RMSKIN.ini" : L"Rainstaller.cfg") == 0)
 		{
-			if (!ExtractCurrentFile(tempFile))
+			if (ExtractCurrentFile(tempFile))
 			{
-				break;
+				optionsFound = ReadOptions(tempFileSz);
+				DeleteFile(tempFileSz);
 			}
 
-			HBITMAP header = (HBITMAP)LoadImage(NULL, tempFile, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-			SendMessage(GetDlgItem(m_Window, IDC_INSTALL_HEADER_BITMAP), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)header);
-		}
-		else if (_wcsicmp(path, m_PackageFormat == PackageFormat::New ? L"RMSKIN.ini" : L"Rainstaller.cfg") == 0)
-		{
-			optionsFound = ExtractCurrentFile(tempFile) && ReadOptions(tempFile);
 			break;
 		}
 	}
 	while (unzGoToNextFile(m_PackageUnzFile) == UNZ_OK);
-
-	DeleteFile(tempFile);
 
 	if (!optionsFound)
 	{
@@ -473,6 +467,19 @@ bool CDialogInstall::ReadPackage()
 		}
 		else
 		{
+			if (_wcsicmp(component, m_PackageFormat == PackageFormat::New ? L"RMSKIN.bmp" : L"Rainstaller.bmp") == 0)
+			{
+				if (!ExtractCurrentFile(tempFile))
+				{
+					return false;
+				}
+
+				HBITMAP bitmap = (HBITMAP)LoadImage(NULL, tempFileSz, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+				HWND header = GetDlgItem(m_Window, IDC_INSTALL_HEADER_BITMAP);
+				SendMessage(header, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)bitmap);
+				DeleteFile(tempFileSz);
+			}
+
 			continue;
 		}
 

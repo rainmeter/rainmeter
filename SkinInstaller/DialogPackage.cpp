@@ -258,8 +258,8 @@ bool CDialogPackage::CreatePackage()
 	};
 
 	if (!m_ZipFile ||
-		!AddFileToPackage(tempFile, L"RMSKIN.ini") ||
-		(!c_Dialog->m_HeaderFile.empty() && !AddFileToPackage(c_Dialog->m_HeaderFile.c_str(), L"RMSKIN.bmp")))
+		(!c_Dialog->m_HeaderFile.empty() && !AddFileToPackage(c_Dialog->m_HeaderFile.c_str(), L"RMSKIN.bmp")) ||
+		!AddFileToPackage(tempFile, L"RMSKIN.ini"))
 	{
 		std::wstring error = L"Unable to create package.";
 		error += L"\n\nClick OK to close Packager.";
