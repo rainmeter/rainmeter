@@ -937,11 +937,14 @@ void CDialogAbout::CTabPlugins::Initialize()
 
 		WIN32_FIND_DATA fd;
 		HANDLE hSearch = FindFirstFile(filter.c_str(), &fd);
+		if (hSearch == INVALID_HANDLE_VALUE)
+		{
+			return;
+		}
+
 		int index = 0;
 		do
 		{
-			if (hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
-
 			// Try to get the version and author
 			std::wstring tmpSz = path + fd.cFileName;
 			const WCHAR* path = tmpSz.c_str();

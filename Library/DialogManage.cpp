@@ -1583,45 +1583,43 @@ void CDialogManage::CTabSettings::Initialize()
 
 	// Scan for languages
 	HWND item = GetDlgItem(m_Window, IDC_MANAGESETTINGS_LANGUAGE_COMBOBOX);
-	WIN32_FIND_DATA fd;      // Data structure describes the file found
-	HANDLE hSearch;          // Search handle returned by FindFirstFile
 
 	std::wstring files = Rainmeter->GetPath() + L"Languages\\*.dll";
-	hSearch = FindFirstFile(files.c_str(), &fd);
-	do
+	WIN32_FIND_DATA fd;
+	HANDLE hSearch = FindFirstFile(files.c_str(), &fd);
+	if (hSearch != INVALID_HANDLE_VALUE)
 	{
-		if (hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
-
-		WCHAR* pos = wcschr(fd.cFileName, L'.');
-		if (pos)
+		do
 		{
-			LCID lcid = (LCID)wcstoul(fd.cFileName, &pos, 10);
-			if (pos != fd.cFileName &&
-				_wcsicmp(pos, L".dll") == 0 &&
-				GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, fd.cFileName, MAX_PATH) > 0)
+			WCHAR* pos = wcschr(fd.cFileName, L'.');
+			if (pos)
 			{
-				// Strip brackets in language name
-				std::wstring text = fd.cFileName;
-				text += L" - ";
-				GetLocaleInfo(lcid, LOCALE_SNATIVELANGUAGENAME, fd.cFileName, MAX_PATH);
-
-				// Some native language names don't start with a uppercase char..
-				LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, &fd.cFileName[0], 1, &fd.cFileName[0], 1);
-				text += fd.cFileName;
-
-				int index = ComboBox_AddString(item, text.c_str());
-				ComboBox_SetItemData(item, index, (LPARAM)lcid);
-
-				if (lcid == Rainmeter->GetResourceLCID())
+				LCID lcid = (LCID)wcstoul(fd.cFileName, &pos, 10);
+				if (pos != fd.cFileName &&
+					_wcsicmp(pos, L".dll") == 0 &&
+					GetLocaleInfo(lcid, LOCALE_SENGLISHLANGUAGENAME, fd.cFileName, MAX_PATH) > 0)
 				{
-					ComboBox_SetCurSel(item, index);
+					// Strip brackets in language name
+					std::wstring text = fd.cFileName;
+					text += L" - ";
+
+					GetLocaleInfo(lcid, LOCALE_SNATIVELANGUAGENAME, fd.cFileName, MAX_PATH);
+					text += fd.cFileName;
+
+					int index = ComboBox_AddString(item, text.c_str());
+					ComboBox_SetItemData(item, index, (LPARAM)lcid);
+
+					if (lcid == Rainmeter->GetResourceLCID())
+					{
+						ComboBox_SetCurSel(item, index);
+					}
 				}
 			}
 		}
-	}
-	while (FindNextFile(hSearch, &fd));
+		while (FindNextFile(hSearch, &fd));
 
-	FindClose(hSearch);
+		FindClose(hSearch);
+	}
 
 	Button_SetCheck(GetDlgItem(m_Window, IDC_MANAGESETTINGS_CHECKUPDATES_CHECKBOX), !Rainmeter->GetDisableVersionCheck());
 	Button_SetCheck(GetDlgItem(m_Window, IDC_MANAGESETTINGS_LOCKSKINS_CHECKBOX), Rainmeter->GetDisableDragging());
