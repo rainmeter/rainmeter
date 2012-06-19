@@ -799,6 +799,12 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 
 	const WCHAR* iniFile = m_IniFile.c_str();
 
+	// Create a default Rainmeter.ini file if needed
+	if (_waccess(iniFile, 0) == -1)
+	{
+		CreateOptionsFile();
+	}
+
 	// Set file locations
 	{
 		m_SettingsPath = ExtractPath(m_IniFile);
@@ -821,6 +827,17 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 	{
 		dataFileCreated = true;
 		CreateDataFile();
+	}
+
+	// Reset log file
+	CSystem::RemoveFile(m_LogFile);
+
+	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, iniFile);
+	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, iniFile);
+
+	if (m_Logging)
+	{
+		StartLogging();
 	}
 
 	// Determine the language resource to load
@@ -864,17 +881,6 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 		}
 	}
 
-	// Reset log file
-	CSystem::RemoveFile(m_LogFile);
-
-	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, iniFile);
-	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, iniFile);
-
-	if (m_Logging)
-	{
-		StartLogging();
-	}
-
 	// Get skin folder path
 	size_t len = GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, MAX_LINE_LENGTH, iniFile);
 	if (len > 0 &&
@@ -903,12 +909,6 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 	else
 	{
 		m_SkinPath = m_Path + L"Skins\\";
-	}
-
-	// Create a default Rainmeter.ini file if needed
-	if (_waccess(iniFile, 0) == -1)
-	{
-		CreateOptionsFile();
 	}
 
 	// Create user skins, themes, addons, and plugins folders if needed
