@@ -65,11 +65,6 @@ INT_PTR CDialog::OnActivate(WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-void CDialog::SetDialogRTL(HWND window)
-{
-	SetWindowLongPtr(window, GWL_EXSTYLE, GetWindowLongPtr(window, GWL_EXSTYLE) | WS_EX_LAYOUTRTL);
-}
-
 /*
 ** Sets dialog font to UI font.
 **

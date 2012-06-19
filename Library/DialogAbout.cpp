@@ -260,12 +260,6 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = GetIcon(IDI_RAINMETER);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	if (*GetString(ID_STR_ISRTL) == L'1')
-	{
-		// Use RTL layout if using a RTL language
-		SetDialogRTL();
-	}
-
 	item = GetDlgItem(m_Window, IDC_ABOUT_TAB);
 	TCITEM tci = {0};
 	tci.mask = TCIF_TEXT;

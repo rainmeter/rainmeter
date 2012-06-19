@@ -53,9 +53,6 @@ protected:
 
 	INT_PTR OnActivate(WPARAM wParam, LPARAM lParam);
 
-	void SetDialogRTL(HWND window);
-	void SetDialogRTL() { SetDialogRTL(m_Window); }
-
 	void SetDialogFont(HWND window);
 	void SetDialogFont() { SetDialogFont(m_Window); }
 
