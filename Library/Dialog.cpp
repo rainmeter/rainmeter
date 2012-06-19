@@ -95,27 +95,31 @@ LRESULT CALLBACK CDialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	{
 	case WM_PAINT:
 		{
-			DefSubclassProc(hWnd, uMsg, wParam, lParam);
+			LRESULT result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
 
 			// Draw arrow on top of the button
-			HDC dc = GetDC(hWnd);
 			RECT buttonRect;
 			GetClientRect(hWnd, &buttonRect);
-
 			int arrowX = buttonRect.right - 18;
-			int arroyY = buttonRect.top + 4;
-			RECT arrowRect = { arrowX, arroyY, arrowX + 14, arroyY + 14 };		
+			int arrowY = buttonRect.top + 4;
+			RECT arrowRect = { arrowX, arrowY, arrowX + 14, arrowY + 14 };
 
-			const WORD DFCS_MENUARROWDOWN = 0x0010;	// Undocumented	
+			HDC dc = GetDC(hWnd);
+			const WORD DFCS_MENUARROWDOWN = 0x0010;	// Undocumented
 			DWORD drawFlags = DFCS_TRANSPARENT | DFCS_MENUARROWDOWN | (IsWindowEnabled(hWnd) ? 0 : DFCS_INACTIVE);
 			DrawFrameControl(dc, &arrowRect, DFC_MENU, drawFlags);
 			ReleaseDC(hWnd, dc);
-			return 0;
+
+			return result;
 		}
+		break;
+
+	case WM_NCDESTROY:
+		RemoveWindowSubclass(hWnd, MenuButtonProc, uIdSubclass);
 		break;
 	}
 
-    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
 /*
