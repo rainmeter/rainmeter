@@ -1949,7 +1949,7 @@ bool CMeterWindow::ReadSkin()
 	if (_waccess(iniFile.c_str(), 0) == -1)
 	{
 		std::wstring message = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, m_FolderPath.c_str(), m_FileName.c_str());
-		MessageBox(m_Window, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		Rainmeter->ShowMessage(m_Window, message.c_str(), MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
 
@@ -1972,7 +1972,7 @@ bool CMeterWindow::ReadSkin()
 		}
 
 		std::wstring text = GetFormattedString(ID_STR_NEWVERSIONREQUIRED, m_FolderPath.c_str(), m_FileName.c_str(), buffer);
-		MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		Rainmeter->ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
 
@@ -2226,7 +2226,7 @@ bool CMeterWindow::ReadSkin()
 	if (m_Meters.empty())
 	{
 		std::wstring text = GetFormattedString(ID_STR_NOMETERSINSKIN, m_FolderPath.c_str(), m_FileName.c_str());
-		MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+		Rainmeter->ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
 	else

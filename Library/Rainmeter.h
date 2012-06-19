@@ -198,6 +198,8 @@ public:
 
 	void SetDebug(bool debug);
 
+	int ShowMessage(HWND parent, const WCHAR* text, UINT type);
+
 	bool IsMenuActive() { return m_MenuActive; }
 	void ShowContextMenu(POINT pos, CMeterWindow* meterWindow);
 

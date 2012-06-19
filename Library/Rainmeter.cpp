@@ -965,7 +965,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 	if (m_SkinFolders.empty())
 	{
 		std::wstring error = GetFormattedString(ID_STR_NOAVAILABLESKINS, m_SkinPath.c_str());
-		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		ShowMessage(NULL, error.c_str(), MB_OK | MB_ICONERROR);
 	}
 
 	ResetStats();
@@ -1340,7 +1340,7 @@ void CRainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		if (_waccess(skinIniPath.c_str(), 0) == -1)
 		{
 			std::wstring message = GetFormattedString(ID_STR_UNABLETOACTIVATESKIN, folderPath.c_str(), fileSz);
-			MessageBox(NULL, message.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+			ShowMessage(NULL, message.c_str(), MB_OK | MB_ICONEXCLAMATION);
 			return;
 		}
 
@@ -2464,7 +2464,7 @@ void CRainmeter::RefreshAll()
 					DeactivateSkin(mw, index);
 
 					std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolder, skinIniFile);
-					MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+					ShowMessage(NULL, error.c_str(), MB_OK | MB_ICONEXCLAMATION);
 				}
 			}
 			else
@@ -2472,7 +2472,7 @@ void CRainmeter::RefreshAll()
 				DeactivateSkin(mw, -2);  // -2 = Force deactivate
 
 				std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolder, L"");
-				MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONEXCLAMATION);
+				ShowMessage(NULL, error.c_str(), MB_OK | MB_ICONEXCLAMATION);
 			}
 
 			try
@@ -2739,6 +2739,22 @@ void CRainmeter::ResetStats()
 }
 
 /*
+** Wraps MessageBox(). Sets RTL flag if necessary.
+**
+*/
+int CRainmeter::ShowMessage(HWND parent, const WCHAR* text, UINT type)
+{
+	type |= MB_TOPMOST;
+
+	if (*GetString(ID_STR_ISRTL) == L'1')
+	{
+		type |= MB_RTLREADING;
+	}
+
+	return MessageBox(parent, text, APPNAME, type);
+};
+
+/*
 ** Opens the context menu in given coordinates.
 **
 */
@@ -2858,14 +2874,13 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 
 				// Show context menu
 				TrackPopupMenu(
-				  subMenu,
-				  TPM_RIGHTBUTTON | TPM_LEFTALIGN,
-				  pos.x,
-				  pos.y,
-				  0,
-				  hWnd,
-				  NULL
-				);
+					subMenu,
+					TPM_RIGHTBUTTON | TPM_LEFTALIGN | (*GetString(ID_STR_ISRTL) == L'1' ? TPM_LAYOUTRTL : 0),
+					pos.x,
+					pos.y,
+					0,
+					hWnd,
+					NULL);
 
 				if (meterWindow)
 				{
@@ -3209,7 +3224,7 @@ void CRainmeter::StartLogging()
 			SetLogging(false);
 	
 			std::wstring text = GetFormattedString(ID_STR_LOGFILECREATEFAIL, logFile);
-			MessageBox(NULL, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			ShowMessage(NULL, text.c_str(), MB_OK | MB_ICONERROR);
 		}
 	}
 	else
@@ -3240,7 +3255,7 @@ void CRainmeter::DeleteLogFile()
 	if (_waccess(logFile, 0) != -1)
 	{
 		std::wstring text = GetFormattedString(ID_STR_LOGFILEDELETE, logFile);
-		int res = MessageBox(NULL, text.c_str(), APPNAME, MB_YESNO | MB_TOPMOST | MB_ICONQUESTION);
+		int res = ShowMessage(NULL, text.c_str(), MB_YESNO | MB_ICONQUESTION);
 		if (res == IDYES)
 		{
 			// Disable logging
@@ -3306,7 +3321,7 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 			error += GetFormattedString(ID_STR_SETTINGSREADONLY, iniFile);
 		}
 
-		MessageBox(NULL, error.c_str(), APPNAME, MB_OK | MB_ICONERROR);
+		ShowMessage(NULL, error.c_str(), MB_OK | MB_ICONERROR);
 	}
 }
 

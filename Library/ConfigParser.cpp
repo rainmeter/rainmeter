@@ -1160,7 +1160,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
-		MessageBox(NULL, GetString(ID_STR_INCLUDEINFINITELOOP), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		Rainmeter->ShowMessage(NULL, GetString(ID_STR_INCLUDEINFINITELOOP), MB_OK | MB_ICONERROR);
 		return;
 	}
 

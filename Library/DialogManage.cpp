@@ -1414,7 +1414,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (alreadyExists)
 			{
 				std::wstring text = GetFormattedString(ID_STR_THEMEALREADYEXISTS, theme.c_str());
-				if (MessageBox(m_Window, text.c_str(), APPNAME, MB_ICONWARNING | MB_YESNO | MB_TOPMOST) != IDYES)
+				if (Rainmeter->ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_YESNO) != IDYES)
 				{
 					// Cancel
 					break;
@@ -1434,7 +1434,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 				if (!CSystem::CopyFiles(Rainmeter->GetIniFile(), path))
 				{
 					std::wstring text = GetFormattedString(ID_STR_THEMESAVEFAIL, path.c_str());
-					MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+					Rainmeter->ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONERROR);
 					break;
 				}
 
@@ -1476,7 +1476,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 				if (file == INVALID_HANDLE_VALUE)
 				{
 					std::wstring text = GetFormattedString(ID_STR_THEMESAVEFAIL, path.c_str());
-					MessageBox(m_Window, text.c_str(), APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+					Rainmeter->ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONERROR);
 					break;
 				}
 
@@ -1521,7 +1521,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			std::vector<std::wstring>& themes = const_cast<std::vector<std::wstring>&>(Rainmeter->GetAllThemes());
 
 			std::wstring text = GetFormattedString(ID_STR_THEMEDELETE, themes[sel].c_str());
-			if (MessageBox(m_Window, text.c_str(), APPNAME, MB_ICONQUESTION | MB_YESNO | MB_TOPMOST) != IDYES)
+			if (Rainmeter->ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 			{
 				// Cancel
 				break;
