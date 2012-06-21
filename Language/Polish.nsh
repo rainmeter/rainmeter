@@ -10,7 +10,7 @@ ${LangFileString} DOTNETINSTERROR         "Instalacja .NET $instArc nieudana. Ko
 ${LangFileString} RAINMETERCLOSEERROR     "Nie udało się zamknąć Rainmeter.$\n$\nZamknij Rainmeter ręcznie i spróbuj ponownie."
 ${LangFileString} SETTINGSFILEERROR       "Plik konfiguracyjny (Rainmeter.ini) jest umieszczony w folderze instalacyjnym. Trzymanie go w tej lokalizacji może powodować problemy jeżeli z aplikacji korzysta wielu użytkowników lub gdy któryś z nich ma ograniczone uprawnienia.$\n$\nCzy chcesz przenieść plik do folderu danych aplikacji?"
 ${LangFileString} SETTINGSMOVEERROR       "Nie można przenieść pliku '$INSTDIR\Rainmeter.ini' do '$APPDATA\Rainmeter\Rainmeter.ini'."
-${LangFileString} SELECTLANGUAGE          "Please select the installer language."
+${LangFileString} SELECTLANGUAGE          "Proszę wybrać język instalacji."
 ${LangFileString} INSTALLOPTIONS          "Opcje instalacji"
 ${LangFileString} INSTALLOPTIONSDESC      "Wybierz dodatkowe opcje instalacji"
 ${LangFileString} STANDARDINST            "Standardowa instalacja (zalecane)"
