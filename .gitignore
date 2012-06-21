@@ -5,6 +5,7 @@ obj
 x32
 x64
 Certificate.bat
+*.aps
 *.docstates
 *.exe
 *.opensdf
