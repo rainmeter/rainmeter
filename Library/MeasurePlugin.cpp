@@ -134,10 +134,13 @@ void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_Plugin = CSystem::RmLoadLibrary(pluginFile.c_str());
 	if (!m_Plugin)
 	{
-		// Try from settings path
-		pluginFile = Rainmeter->GetUserPluginPath();
-		pluginFile += pluginName;
-		m_Plugin = CSystem::RmLoadLibrary(pluginFile.c_str());
+		if (Rainmeter->HasUserPluginPath())
+		{
+			// Try from settings path
+			pluginFile = Rainmeter->GetUserPluginPath();
+			pluginFile += pluginName;
+			m_Plugin = CSystem::RmLoadLibrary(pluginFile.c_str());
+		}
 		if (!m_Plugin)
 		{
 			LogWithArgs(LOG_ERROR, L"Plugin: \"%s\" not found", pluginName.c_str());

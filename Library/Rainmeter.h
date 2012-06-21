@@ -143,6 +143,8 @@ public:
 	std::wstring GetUserPluginPath() { return m_SettingsPath + L"Plugins\\"; }
 	std::wstring GetAddonPath() { return m_SettingsPath + L"Addons\\"; }
 
+	bool HasUserPluginPath() { return (_wcsicmp(m_Path.c_str(), m_SettingsPath.c_str()) != 0); }
+
 	std::wstring GetDefaultSkinPath() { return m_Path + L"Defaults\\Skins\\"; }
 	std::wstring GetDefaultThemePath() { return m_Path + L"Defaults\\Themes\\"; }
 	std::wstring GetDefaultPluginPath() { return m_Path + L"Defaults\\Plugins\\"; }

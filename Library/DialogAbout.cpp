@@ -1039,7 +1039,10 @@ void CDialogAbout::CTabPlugins::Initialize()
 	};
 
 	findPlugins(Rainmeter->GetPluginPath());
-	findPlugins(Rainmeter->GetUserPluginPath());
+	if (Rainmeter->HasUserPluginPath())
+	{
+		findPlugins(Rainmeter->GetUserPluginPath());
+	}
 }
 
 /*
