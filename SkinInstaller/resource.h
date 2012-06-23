@@ -1,4 +1,4 @@
-#define	IDC_STATIC                                   -1
+#define IDC_STATIC                                   -1
 #define IDI_SKININSTALLER                            100
 #define IDB_INSTALLHEADER                            101
 #define IDD_INSTALL_DIALOG                           102
@@ -36,6 +36,7 @@
 #define IDC_PACKAGEINFO_ADDTHEME_BUTTON              1005
 #define IDC_PACKAGEINFO_ADDPLUGIN_BUTTON             1006
 #define IDC_PACKAGEINFO_REMOVE_BUTTON                1007
+#define IDC_PACKAGEINFO_WHATIS_LINK                  1008
 
 #define IDC_PACKAGEOPTIONS_FILE_EDIT                 1000
 #define IDC_PACKAGEOPTIONS_FILEBROWSE_BUTTON         1001
@@ -54,6 +55,7 @@
 #define IDC_PACKAGEADVANCED_HEADERROWSE_BUTTON       1001
 #define IDC_PACKAGEADVANCED_VARIABLEFILES_EDIT       1002
 #define IDC_PACKAGEADVANCED_MERGESKINS_CHECK         1003
+#define IDC_PACKAGEADVANCED_HELP_LINK                1004
 
 #define IDC_PACKAGESELECTFOLDER_EXISTING_RADIO       1000
 #define IDC_PACKAGESELECTFOLDER_EXISTING_COMBO       1001

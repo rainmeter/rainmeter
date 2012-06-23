@@ -1008,7 +1008,12 @@ INT_PTR CDialogPackage::CTabInfo::OnNotify(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case NM_CLICK:
-		c_Dialog->ShowHelp();
+		{
+			if (nm->idFrom == IDC_PACKAGEINFO_WHATIS_LINK)
+			{
+				c_Dialog->ShowHelp();
+			}
+		}
 		break;
 
 	default:
@@ -1281,7 +1286,7 @@ INT_PTR CALLBACK CDialogPackage::CTabAdvanced::DlgProc(HWND hWnd, UINT uMsg, WPA
 		return c_Dialog->m_TabAdvanced.OnCommand(wParam, lParam);
 
 	case WM_NOTIFY:
-		return c_Dialog->m_TabInfo.OnNotify(wParam, lParam);	// Redirect to m_TabInfo
+		return c_Dialog->m_TabAdvanced.OnNotify(wParam, lParam);
 	}
 
 	return FALSE;
@@ -1325,6 +1330,27 @@ INT_PTR CDialogPackage::CTabAdvanced::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_PACKAGEADVANCED_MERGESKINS_CHECK:
 		c_Dialog->m_MergeSkins = !c_Dialog->m_MergeSkins;
+		break;
+
+	default:
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+INT_PTR CDialogPackage::CTabAdvanced::OnNotify(WPARAM wParam, LPARAM lParam)
+{
+	LPNMHDR nm = (LPNMHDR)lParam;
+	switch (nm->code)
+	{
+	case NM_CLICK:
+		{
+			if (nm->idFrom == IDC_PACKAGEADVANCED_HELP_LINK)
+			{
+				c_Dialog->ShowHelp();
+			}
+		}
 		break;
 
 	default:
