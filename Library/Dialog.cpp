@@ -91,12 +91,12 @@ void CDialog::SetMenuButton(HWND button)
 
 LRESULT CALLBACK CDialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
+	LRESULT result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
+
 	switch (uMsg)
 	{
 	case WM_PAINT:
 		{
-			LRESULT result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
-
 			// Draw arrow on top of the button
 			RECT buttonRect;
 			GetClientRect(hWnd, &buttonRect);
@@ -109,9 +109,22 @@ LRESULT CALLBACK CDialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			DWORD drawFlags = DFCS_TRANSPARENT | DFCS_MENUARROWDOWN | (IsWindowEnabled(hWnd) ? 0 : DFCS_INACTIVE);
 			DrawFrameControl(dc, &arrowRect, DFC_MENU, drawFlags);
 			ReleaseDC(hWnd, dc);
-
-			return result;
 		}
+		break;
+
+	case WM_GETTEXT:
+		{
+			// Append 3 spaces to the button text to move text to the left so
+			// that it looks better with BS_CENTER.
+			WCHAR* str = (WCHAR*)lParam + result;
+			str[0] = str[1] = str[2] = L' ';
+			str[3] = '\0';
+			result += 3;
+		}
+		break;
+
+	case WM_GETTEXTLENGTH:
+		result += 3;
 		break;
 
 	case WM_NCDESTROY:
@@ -119,7 +132,7 @@ LRESULT CALLBACK CDialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		break;
 	}
 
-	return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+	return result;
 }
 
 /*
