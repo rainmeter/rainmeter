@@ -234,7 +234,7 @@ INT_PTR CDialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 		BeginInstall();
 		break;
 
-	case IDCLOSE:
+	case IDCANCEL:
 		if (!m_InstallThread)
 		{
 			EndDialog(m_Window, 0);
@@ -844,17 +844,13 @@ bool CDialogInstall::InstallPackage()
 
 void CDialogInstall::BeginInstall()
 {
-	// Disable X button
-	HMENU systemMenu = GetSystemMenu(m_Window, FALSE);
-	EnableMenuItem(systemMenu, SC_CLOSE, MF_BYCOMMAND | MF_GRAYED | MF_DISABLED);
-
 	HWND item = GetDlgItem(m_Window, IDC_INSTALL_ADVANCED_BUTTON);
 	EnableWindow(item, FALSE);
 
 	item = GetDlgItem(m_Window, IDC_INSTALL_INSTALL_BUTTON);
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_Window, IDCLOSE);
+	item = GetDlgItem(m_Window, IDCANCEL);
 	EnableWindow(item, FALSE);
 
 	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_THEME_CHECKBOX);

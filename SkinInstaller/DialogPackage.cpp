@@ -98,7 +98,12 @@ INT_PTR CALLBACK CDialogPackage::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			return c_Dialog->OnNotify(wParam, lParam);
 
 		case WM_CLOSE:
-			EndDialog(hWnd, 0);
+			{
+				if (!c_Dialog->m_PackagerThread)
+				{
+					EndDialog(hWnd, 0);
+				}
+			}
 			return TRUE;
 
 		case WM_DESTROY:
@@ -158,12 +163,22 @@ INT_PTR CDialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			HWND item = GetDlgItem(m_Window, IDC_PACKAGE_CREATEPACKAGE_BUTTON);
 			EnableWindow(item, FALSE);
 
-			//item = GetDlgItem(m_TabInfo.GetWindow(), IDC_PACKAGE_INPROGRESS_TEXT);
-			//ShowWindow(item, SW_SHOWNORMAL);
+			item = GetDlgItem(m_Window, IDCANCEL);
+			EnableWindow(item, FALSE);
 
-			//item = GetDlgItem(m_TabInfo.GetWindow(), IDC_PACKAGE_PROGRESS);
-			//ShowWindow(item, SW_SHOWNORMAL);
-			//SendMessage(item, PBM_SETMARQUEE, (WPARAM)TRUE, 0);
+			m_TabOptions.Activate();
+			item = GetDlgItem(m_Window, IDC_PACKAGE_TAB);
+			TabCtrl_SetCurSel(item, 0);
+			EnableWindow(item, FALSE);
+			EnableWindow(m_TabOptions.GetWindow(), FALSE);
+			EnableWindow(m_TabAdvanced.GetWindow(), FALSE);
+
+			item = GetDlgItem(m_TabOptions.GetWindow(), IDC_INSTALLTAB_CREATING_TEXT);
+			ShowWindow(item, SW_SHOWNORMAL);
+
+			item = GetDlgItem(m_TabOptions.GetWindow(), IDC_INSTALLTAB_CREATING_BAR);
+			ShowWindow(item, SW_SHOWNORMAL);
+			SendMessage(item, PBM_SETMARQUEE, (WPARAM)TRUE, 0);
 
 			m_PackagerThread = (HANDLE)_beginthreadex(NULL, 0, PackagerThreadProc, this, 0, NULL);
 			if (!m_PackagerThread)
@@ -343,8 +358,8 @@ unsigned __stdcall CDialogPackage::PackagerThreadProc(void* pParam)
 	if (dialog->CreatePackage())
 	{
 		// Stop the progress bar
-//		HWND item = GetDlgItem(dialog->m_Window, IDC_PACKAGE_PROGRESS);
-//		SendMessage(item, PBM_SETMARQUEE, (WPARAM)FALSE, 0);
+		HWND item = GetDlgItem(dialog->m_TabOptions.GetWindow(), IDC_INSTALLTAB_CREATING_BAR);
+		SendMessage(item, PBM_SETMARQUEE, (WPARAM)FALSE, 0);
 
 		FlashWindow(dialog->m_Window, TRUE);
 
