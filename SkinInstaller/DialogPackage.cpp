@@ -174,7 +174,7 @@ INT_PTR CDialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case IDCLOSE:
+	case IDCANCEL:
 		if (!m_PackagerThread)
 		{
 			EndDialog(m_Window, 0);
@@ -214,7 +214,7 @@ INT_PTR CDialogPackage::OnNotify(WPARAM wParam, LPARAM lParam)
 
 void CDialogPackage::SetNextButtonState()
 {
-	BOOL state = !(m_Name.empty() || m_Author.empty() || m_Version.empty() || m_SkinFolder.second.empty());
+	BOOL state = !(m_Name.empty() || m_Author.empty() || m_SkinFolder.second.empty());
 	EnableWindow(GetDlgItem(m_Window, IDC_PACKAGE_NEXT_BUTTON), state);
 }
 
@@ -485,6 +485,17 @@ bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring b
 	return result;
 }
 
+void CDialogPackage::ShowHelp()
+{
+	std::wstring url = L"http://rainmeter.net/cms/UsingApplication-SkinPackager";
+	if (revision_beta)
+	{
+		url += L"_beta";
+	}
+
+	ShellExecute(m_Window, L"open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
+}
+
 std::wstring CDialogPackage::SelectFolder(HWND parent, const std::wstring& existingPath)
 {
 	LPCWSTR dialog = MAKEINTRESOURCE(IDD_PACKAGESELECTFOLDER_DIALOG);
@@ -558,7 +569,7 @@ INT_PTR CALLBACK CDialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARA
 				item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_CUSTOMBROWSE_BUTTON);
 				EnableWindow(item, FALSE);
 
-				item = GetDlgItem(hWnd, IDCLOSE);
+				item = GetDlgItem(hWnd, IDCANCEL);
 				EnableWindow(item, sel != -1);
 			}
 			break;
@@ -586,7 +597,7 @@ INT_PTR CALLBACK CDialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARA
 				DWORD attributes = GetFileAttributes(buffer);
 				BOOL state = (attributes != INVALID_FILE_ATTRIBUTES &&
 					attributes & FILE_ATTRIBUTE_DIRECTORY);
-				EnableWindow(GetDlgItem(hWnd, IDCLOSE), state);
+				EnableWindow(GetDlgItem(hWnd, IDCANCEL), state);
 			}
 			break;
 
@@ -607,7 +618,7 @@ INT_PTR CALLBACK CDialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARA
 			}
 			break;
 
-		case IDCLOSE:
+		case IDCANCEL:
 			{
 				WCHAR buffer[MAX_PATH];
 				HWND item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_EXISTING_RADIO);
@@ -718,7 +729,7 @@ INT_PTR CALLBACK CDialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARA
 						if (!plugins->first.empty() && !plugins->second.empty())
 						{
 							// Enable Add button if both plugins have been selected
-							EnableWindow(GetDlgItem(hWnd, IDCLOSE), TRUE);
+							EnableWindow(GetDlgItem(hWnd, IDCANCEL), TRUE);
 						}
 						break;
 					} 
@@ -728,7 +739,7 @@ INT_PTR CALLBACK CDialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARA
 			}
 			break;
 
-		case IDCLOSE:
+		case IDCANCEL:
 			EndDialog(hWnd, 1);
 			break;
 		}
@@ -760,13 +771,13 @@ void CDialogPackage::CTabInfo::Initialize()
 	m_Initialized = true;
 
 	HWND item = GetDlgItem(m_Window, IDC_INSTALLTAB_NAME_TEXT);
-	Edit_SetCueBannerText(item, L"Specify name");
+	Edit_SetCueBannerText(item, L"...");
 
 	item = GetDlgItem(m_Window, IDC_INSTALLTAB_AUTHOR_TEXT);
-	Edit_SetCueBannerText(item, L"Specify author");
+	Edit_SetCueBannerText(item, L"...");
 
 	item = GetDlgItem(m_Window, IDC_INSTALLTAB_VERSION_TEXT);
-	Edit_SetCueBannerText(item, L"Specify version");
+	Edit_SetCueBannerText(item, L"...");
 
 	item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
 
@@ -786,7 +797,7 @@ void CDialogPackage::CTabInfo::Initialize()
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 	lvc.fmt = LVCFMT_LEFT;
 	lvc.iSubItem = 0;
-	lvc.cx = 395;
+	lvc.cx = 252;
 	lvc.pszText = L"Name";
 	ListView_InsertColumn(item, 0, &lvc);
 
@@ -888,6 +899,50 @@ INT_PTR CDialogPackage::CTabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDC_PACKAGEINFO_REMOVE_BUTTON:
+		{
+			HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
+			int sel = ListView_GetNextItem(item, -1, LVNI_FOCUSED | LVNI_SELECTED);
+			if (sel != -1)
+			{
+				WCHAR buffer[MAX_PATH];
+
+				// Remove unchecked items from the component sets
+				LVITEM lvi;
+				lvi.mask = LVIF_GROUPID | LVIF_TEXT;
+				lvi.iSubItem = 0;
+				lvi.iItem = sel;
+				lvi.pszText = buffer;
+				lvi.cchTextMax = _countof(buffer);
+				ListView_GetItem(item, &lvi);
+
+				ListView_DeleteItem(item, sel);
+
+				const std::wstring name = buffer;
+				switch (lvi.iGroupId)
+				{
+				case 0:
+					{
+						item = GetDlgItem(m_Window, IDC_PACKAGEINFO_ADDSKIN_BUTTON);
+						EnableWindow(item, TRUE);
+						c_Dialog->m_SkinFolder.first.clear();
+						c_Dialog->m_SkinFolder.second.clear();
+						c_Dialog->SetNextButtonState();
+					}
+					break;
+
+				case 1:
+					c_Dialog->m_ThemeFolders.erase(c_Dialog->m_ThemeFolders.find(name));
+					break;
+
+				case 2:
+					c_Dialog->m_PluginFolders.erase(c_Dialog->m_PluginFolders.find(name));
+					break;
+				}
+			}
+		}
+		break;
+
 	case IDC_PACKAGEINFO_NAME_EDIT:
 	case IDC_PACKAGEINFO_AUTHOR_EDIT:
 	case IDC_PACKAGEINFO_VERSION_EDIT:
@@ -924,13 +979,21 @@ INT_PTR CDialogPackage::CTabInfo::OnNotify(WPARAM wParam, LPARAM lParam)
 	LPNMHDR nm = (LPNMHDR)lParam;
 	switch (nm->code)
 	{
-	case LVN_GETEMPTYMARKUP:
+	case LVN_ITEMCHANGED:
 		{
-			NMLVEMPTYMARKUP* lvem = (NMLVEMPTYMARKUP*)lParam;
-			lvem->dwFlags = EMF_CENTERED;
-			wcscpy_s(lvem->szMarkup, L"Use the buttons below to add components to the .rmskin.");
-			SetWindowLongPtr(m_Window, DWLP_MSGRESULT, TRUE);
+			NMLISTVIEW* nmlv = (NMLISTVIEW*)lParam;
+			if (nm->idFrom == IDC_PACKAGEINFO_COMPONENTS_LIST)
+			{
+				BOOL selected = (nmlv->uNewState & LVIS_SELECTED);
+
+				HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_REMOVE_BUTTON);
+				EnableWindow(item, selected);
+			}
 		}
+		break;
+
+	case NM_CLICK:
+		c_Dialog->ShowHelp();
 		break;
 
 	default:
@@ -1201,6 +1264,9 @@ INT_PTR CALLBACK CDialogPackage::CTabAdvanced::DlgProc(HWND hWnd, UINT uMsg, WPA
 	{
 	case WM_COMMAND:
 		return c_Dialog->m_TabAdvanced.OnCommand(wParam, lParam);
+
+	case WM_NOTIFY:
+		return c_Dialog->m_TabInfo.OnNotify(wParam, lParam);	// Redirect to m_TabInfo
 	}
 
 	return FALSE;

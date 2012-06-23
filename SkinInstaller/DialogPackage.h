@@ -84,6 +84,8 @@ private:
 	bool AddFileToPackage(const WCHAR* realPath, const WCHAR* zipPath);
 	bool AddFolderToPackage(const std::wstring& path, std::wstring base, const WCHAR* zipPrefix);
 
+	void ShowHelp();
+
 	static std::wstring SelectFolder(HWND parent, const std::wstring& existingPath);
 	static INT_PTR CALLBACK SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

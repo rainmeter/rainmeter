@@ -158,16 +158,10 @@ INT_PTR CDialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	if (GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
 		SetDialogFont();
-
-		BUTTON_SPLITINFO bsi;
-		bsi.mask = BCSIF_SIZE;
-		bsi.size.cx = 20;
-		bsi.size.cy = 14;
-
-		HWND item = GetDlgItem(m_Window, IDC_INSTALL_ADVANCED_BUTTON);
-		Button_SetStyle(item, BS_SPLITBUTTON, TRUE);
-		Button_SetSplitInfo(item, &bsi);
 	}
+
+	HWND item = GetDlgItem(m_Window, IDC_INSTALL_ADVANCED_BUTTON);
+	CDialog::SetMenuButton(item);
 
 	if (ReadPackage())
 	{
@@ -1345,7 +1339,7 @@ std::wstring CDialogInstall::GetWindowsVersionString()
 
 // -----------------------------------------------------------------------------------------------
 //
-//                                Backup tab
+//                                Install tab
 //
 // -----------------------------------------------------------------------------------------------
 
