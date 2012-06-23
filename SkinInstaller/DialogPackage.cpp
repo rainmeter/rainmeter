@@ -569,7 +569,7 @@ INT_PTR CALLBACK CDialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARA
 				item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_CUSTOMBROWSE_BUTTON);
 				EnableWindow(item, FALSE);
 
-				item = GetDlgItem(hWnd, IDCANCEL);
+				item = GetDlgItem(hWnd, IDOK);
 				EnableWindow(item, sel != -1);
 			}
 			break;
@@ -597,7 +597,7 @@ INT_PTR CALLBACK CDialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARA
 				DWORD attributes = GetFileAttributes(buffer);
 				BOOL state = (attributes != INVALID_FILE_ATTRIBUTES &&
 					attributes & FILE_ATTRIBUTE_DIRECTORY);
-				EnableWindow(GetDlgItem(hWnd, IDCANCEL), state);
+				EnableWindow(GetDlgItem(hWnd, IDOK), state);
 			}
 			break;
 
@@ -618,7 +618,7 @@ INT_PTR CALLBACK CDialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARA
 			}
 			break;
 
-		case IDCANCEL:
+		case IDOK:
 			{
 				WCHAR buffer[MAX_PATH];
 				HWND item = GetDlgItem(hWnd, IDC_PACKAGESELECTFOLDER_EXISTING_RADIO);
@@ -729,7 +729,7 @@ INT_PTR CALLBACK CDialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARA
 						if (!plugins->first.empty() && !plugins->second.empty())
 						{
 							// Enable Add button if both plugins have been selected
-							EnableWindow(GetDlgItem(hWnd, IDCANCEL), TRUE);
+							EnableWindow(GetDlgItem(hWnd, IDOK), TRUE);
 						}
 						break;
 					} 
@@ -739,7 +739,7 @@ INT_PTR CALLBACK CDialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARA
 			}
 			break;
 
-		case IDCANCEL:
+		case IDOK:
 			EndDialog(hWnd, 1);
 			break;
 		}
