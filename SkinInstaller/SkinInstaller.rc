@@ -174,8 +174,7 @@ STYLE DS_CENTER | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Rainmeter Skin Installer"
 FONT 8, "MS Shell Dlg 2"
 {
-    CONTROL         IDB_INSTALLHEADER, IDC_INSTALL_HEADER_BITMAP, STATIC, SS_BITMAP | WS_CHILD | WS_VISIBLE, 0, 0, 266, 37
-    CONTROL         "", IDC_STATIC, STATIC, SS_ETCHEDHORZ | WS_CHILD | WS_VISIBLE, 0, 37, 270, 1
+    CONTROL         0, IDC_INSTALL_HEADER_BITMAP, STATIC, SS_BITMAP | WS_CHILD | WS_VISIBLE, 0, 0, 266, 37
     CONTROL         "", IDC_INSTALL_TAB, "SysTabControl32", TCS_TABS | TCS_FIXEDWIDTH, 6, 42, 254, 185
     PUSHBUTTON      "Advanced", IDC_INSTALL_ADVANCED_BUTTON, 6, 231, 70, 14
     DEFPUSHBUTTON   "Install", IDC_INSTALL_INSTALL_BUTTON, 155, 231, 50, 14
@@ -199,13 +198,6 @@ FONT 8, "MS Shell Dlg 2"
     LTEXT           "Installing...", IDC_INSTALLTAB_INPROGRESS_TEXT, 0, 0, 236, 60, NOT WS_VISIBLE
     CONTROL         "", IDC_INSTALLTAB_PROGRESS, "msctls_progress32", PBS_MARQUEE | NOT WS_VISIBLE | WS_BORDER, 0, 15, 236, 11
 }
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Bitmap
-//
-
-IDB_INSTALLHEADER           BITMAP                  "res/Rainstaller.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //

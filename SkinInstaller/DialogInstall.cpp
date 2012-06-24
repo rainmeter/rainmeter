@@ -45,6 +45,7 @@ inline bool IsWin32Build()
 */
 CDialogInstall::CDialogInstall(HWND wnd, const WCHAR* file) : CDialog(wnd),
 	m_TabInstall(wnd),
+	m_HeaderBitmap(),
 	m_InstallThread(),
 	m_PackageUnzFile(),
 	m_PackageFileName(file),
@@ -165,6 +166,33 @@ INT_PTR CDialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	if (ReadPackage())
 	{
+		item = GetDlgItem(m_Window, IDC_INSTALL_HEADER_BITMAP);
+		if (m_HeaderBitmap)
+		{
+			SendMessage(item, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)m_HeaderBitmap);
+		}
+		else
+		{
+			RECT r;
+			GetClientRect(item, &r);
+			ShowWindow(item, SW_HIDE);
+			int yDiff = r.bottom;
+
+			// Move all controls on the main dialog up to "fill" header area.
+			int controlIds[] = { IDC_INSTALL_TAB, IDC_INSTALL_ADVANCED_BUTTON, IDC_INSTALL_INSTALL_BUTTON, IDCANCEL, 0 };
+			for (int i = 0; i < _countof(controlIds); ++i)
+			{
+				HWND control = controlIds[i] ? GetDlgItem(m_Window, controlIds[i]) : m_TabInstall.GetWindow();
+				GetWindowRect(control, &r);
+				MapWindowPoints(NULL, m_Window, (POINT*)&r, sizeof(RECT) / sizeof(POINT));
+				MoveWindow(control, r.left, r.top - yDiff, r.right - r.left, r.bottom - r.top, TRUE);
+			}
+
+			// Remove blank area at the bottom of the dialog and center it.
+			GetWindowRect(m_Window, &r);
+			MoveWindow(m_Window, r.left, r.top + (yDiff / 2), r.right - r.left, r.bottom - r.top - yDiff, TRUE);
+		}
+
 		m_TabInstall.Activate();
 	}
 	else
@@ -468,9 +496,7 @@ bool CDialogInstall::ReadPackage()
 					return false;
 				}
 
-				HBITMAP bitmap = (HBITMAP)LoadImage(NULL, tempFileSz, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-				HWND header = GetDlgItem(m_Window, IDC_INSTALL_HEADER_BITMAP);
-				SendMessage(header, STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)bitmap);
+				m_HeaderBitmap = (HBITMAP)LoadImage(NULL, tempFileSz, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 				DeleteFile(tempFileSz);
 			}
 

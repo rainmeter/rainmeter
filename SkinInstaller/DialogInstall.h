@@ -106,6 +106,8 @@ private:
 
 	CTabInstall m_TabInstall;
 
+	HBITMAP m_HeaderBitmap;
+
 	HANDLE m_InstallThread;
 
 	std::wstring m_ErrorMessage;
