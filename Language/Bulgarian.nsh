@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Не използвайте тази 
 ${LangFileString} AUTOSTARTUP             "Стартирай Rainmeter с Windows"
 ${LangFileString} ADDITIONALOPTIONS       "Допълнителни опции"
 ${LangFileString} INSTALL64BIT            "64-битова"
+${LangFileString} SENDINFORMATION         "Send information about your computer"
+${LangFileString} SENDINFORMATIONDESC     "Your computer's Windows version, language, and hardware capabilities will be reported once during installation to improve Rainmeter. No personal information will be sent."
 ${LangFileString} UNSTALLOPTIONS          "Опции за деинсталация"
 ${LangFileString} UNSTALLOPTIONSDESC      "Посочете допълнителни опции"
 ${LangFileString} UNSTALLRAINMETER        "Деинсталирай Rainmeter"

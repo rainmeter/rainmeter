@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "אין לבחור באפשרות זו
 ${LangFileString} AUTOSTARTUP             "הפעל את ריינמטר אוטומטית עם עליית חלונות"
 ${LangFileString} ADDITIONALOPTIONS       "אפשרויות נוספות"
 ${LangFileString} INSTALL64BIT            "התקן גירסאת 64 סיביות"
+${LangFileString} SENDINFORMATION         "שלח מידע אודות המחשב"
+${LangFileString} SENDINFORMATIONDESC     "גירסאת חלונות, השפה ויכולות החומרה ידווחו פעם אחת בזמן ההתקנה כדי לאפשר שיפור של ריינמטר. לא ישלח מידע אישי."
 ${LangFileString} UNSTALLOPTIONS          "אפשרויות הסרה"
 ${LangFileString} UNSTALLOPTIONSDESC      "בחר אפשרויות נוספות"
 ${LangFileString} UNSTALLRAINMETER        "הסר את ריינמטר"

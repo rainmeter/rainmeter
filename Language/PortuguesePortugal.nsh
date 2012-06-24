@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Não seleciones isto a não ser que s
 ${LangFileString} AUTOSTARTUP             "Ligar o Rainmeter ao ligar o computador"
 ${LangFileString} ADDITIONALOPTIONS       "Opções adicionais"
 ${LangFileString} INSTALL64BIT            "Instalar versão 64-bits"
+${LangFileString} SENDINFORMATION         "Enviar informações sobre este computador"
+${LangFileString} SENDINFORMATIONDESC     "A versão do Windows do seu computador e as capacidades do seu hardware serão enviadas uma vez durante a instalação do para melhorar o Rainmeter. Nenhuma informação pessoal será enviada."
 ${LangFileString} UNSTALLOPTIONS          "Opções de desinstalação"
 ${LangFileString} UNSTALLOPTIONSDESC      "Selecionar opções adicionais"
 ${LangFileString} UNSTALLRAINMETER        "Desinstalar Rainmeter"

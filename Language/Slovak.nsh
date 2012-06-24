@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Nevyberajte túto možnosť pokiaľ n
 ${LangFileString} AUTOSTARTUP             "Spustiť Rainmeter pri štarte Windowsu"
 ${LangFileString} ADDITIONALOPTIONS       "Ďalšie možnosti"
 ${LangFileString} INSTALL64BIT            "Inštalovať 64-bitovú verziu"
+${LangFileString} SENDINFORMATION         "Odoslať informácie o počítači"
+${LangFileString} SENDINFORMATIONDESC     "Vaša verzia Windowsu, jazykové rozhranie a hardvérové možnosti budú odoslané jeden krát počas inštalácie na zlepšenie programu Rainmeter. Nebudú odoslané žiadne súkromné informácie."
 ${LangFileString} UNSTALLOPTIONS          "Možnosti odinštalácie"
 ${LangFileString} UNSTALLOPTIONSDESC      "Zvoľte ďalšie možnosti"
 ${LangFileString} UNSTALLRAINMETER        "Odinštalovať Rainmeter"

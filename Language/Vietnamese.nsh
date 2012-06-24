@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Không chọn nếu như bạn không
 ${LangFileString} AUTOSTARTUP             "Chạy Rainmeter cùng window"
 ${LangFileString} ADDITIONALOPTIONS       "Lựa chọn bổ sung"
 ${LangFileString} INSTALL64BIT            "Cài đặt phiên bản 64 bit"
+${LangFileString} SENDINFORMATION         "Gửi đi thông tin của máy tính"
+${LangFileString} SENDINFORMATIONDESC     "Phiên bản của Window, ngôn ngữ, và hiệu năng phần cứng sẽ được gửi đi một lần trong quá trình cài đặt để giúp Rainmeter hoàn thiện hơn. Sẽ không có bất kỳ thông tin cá nhân nào bị gửi đi."
 ${LangFileString} UNSTALLOPTIONS          "Tùy chọn gỡ cài đặt"
 ${LangFileString} UNSTALLOPTIONSDESC      "Chọn và thêm các lựa chọn bổ sung"
 ${LangFileString} UNSTALLRAINMETER        "Gỡ cài đặt Rainmeter"

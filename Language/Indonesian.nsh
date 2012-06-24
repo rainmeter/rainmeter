@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Jangan pilih ini kecuali Anda tahu ya
 ${LangFileString} AUTOSTARTUP             "Jalankan Rainmeter saat startup"
 ${LangFileString} ADDITIONALOPTIONS       "Opsi-opsi tambahan"
 ${LangFileString} INSTALL64BIT            "64-bit"
+${LangFileString} SENDINFORMATION         "Send information about your computer"
+${LangFileString} SENDINFORMATIONDESC     "Your computer's Windows version, language, and hardware capabilities will be reported once during installation to improve Rainmeter. No personal information will be sent."
 ${LangFileString} UNSTALLOPTIONS          "Opsi-opsi penidakpasangan"
 ${LangFileString} UNSTALLOPTIONSDESC      "Pilih opsi-opsi tambahan lainnya"
 ${LangFileString} UNSTALLRAINMETER        "Penidakpasang Rainmeter"

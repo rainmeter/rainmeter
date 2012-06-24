@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "لا تختر هذا إلا إذا ك
 ${LangFileString} AUTOSTARTUP             "تشغيل البرنامج عند بدء التشغيل"
 ${LangFileString} ADDITIONALOPTIONS       "خيارات إضافية"
 ${LangFileString} INSTALL64BIT            "تثبيت نسخة 64-بت"
+${LangFileString} SENDINFORMATION         "إرسال معلومات حول الكمبيوتر"
+${LangFileString} SENDINFORMATIONDESC     "إصدار ويندوز و اللغة و قدرات المكونات المادية الخاصة بجهازك سيتم إرسال تقرير بها مرة واحدة أثناء التثبيت لتحسين البرنامج. لن يتم إرسال معلومات شخصية"
 ${LangFileString} UNSTALLOPTIONS          "خيارات إلغاء التثبيت"
 ${LangFileString} UNSTALLOPTIONSDESC      "تحديد أي خيارات إضافية"
 ${LangFileString} UNSTALLRAINMETER        "إزالة Rainmeter"

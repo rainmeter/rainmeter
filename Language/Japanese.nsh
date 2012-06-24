@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "この項目を理解している場�
 ${LangFileString} AUTOSTARTUP             "Windows の起動時に Rainmeter を起動する"
 ${LangFileString} ADDITIONALOPTIONS       "追加の設定"
 ${LangFileString} INSTALL64BIT            "64 ビット版をインストール"
+${LangFileString} SENDINFORMATION         "コンピューターに関する情報を送信する"
+${LangFileString} SENDINFORMATIONDESC     "Rainmeter の改善のため、インストール時に Windows のバージョン、言語、ハードウェアの機能に関する情報を送信します。個人情報は収集されません。"
 ${LangFileString} UNSTALLOPTIONS          "アンインストールの設定"
 ${LangFileString} UNSTALLOPTIONSDESC      "追加の設定を選択"
 ${LangFileString} UNSTALLRAINMETER        "Rainmeter をアンインストール"

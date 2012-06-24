@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "如果你不了解該選項，請不�
 ${LangFileString} AUTOSTARTUP             "開機時執行 Rainmeter"
 ${LangFileString} ADDITIONALOPTIONS       "附加選項"
 ${LangFileString} INSTALL64BIT            "安裝 64 位元版本"
+${LangFileString} SENDINFORMATION         "傳送電腦資訊"
+${LangFileString} SENDINFORMATIONDESC     "Rainmeter 安裝程式會在安裝過程中將你的 Windows 版本、語言以及硬體效能等資訊回報給我們，以幫助我們改善 Rainmeter 變得更好。資訊回報不會傳送你的任何個人資訊。"
 ${LangFileString} UNSTALLOPTIONS          "移除選項"
 ${LangFileString} UNSTALLOPTIONSDESC      "選擇所有附加選項"
 ${LangFileString} UNSTALLRAINMETER        "移除 Rainmeter"

@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Ne válaszd ki, csak ha tudod mit csi
 ${LangFileString} AUTOSTARTUP             "Rainmeter indítása a Windowssal"
 ${LangFileString} ADDITIONALOPTIONS       "További beállítások"
 ${LangFileString} INSTALL64BIT            "64 bites verzió telepítése"
+${LangFileString} SENDINFORMATION         "Információ küldése a számítógépről"
+${LangFileString} SENDINFORMATIONDESC     "A számítógéped Windows verziója, nyelve és hardver felépítését feldolgozzuk a telepítés során, a Rainmeter fejlesztése céljából. Semmilyen személyes információ nem kerül elküldésre."
 ${LangFileString} UNSTALLOPTIONS          "Eltávolítási beállítások"
 ${LangFileString} UNSTALLOPTIONSDESC      "További beállítások kiválasztása"
 ${LangFileString} UNSTALLRAINMETER        "Rainmeter eltávolítása"

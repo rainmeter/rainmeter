@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Одаберите ову опциј�
 ${LangFileString} AUTOSTARTUP             "Покрени Rainmeter заједно са системом"
 ${LangFileString} ADDITIONALOPTIONS       "Додатне опције"
 ${LangFileString} INSTALL64BIT            "Инсталирај 64-битну верзију"
+${LangFileString} SENDINFORMATION         "Пошаљи информације о рачунару"
+${LangFileString} SENDINFORMATIONDESC     "Следеће информације о рачунару ће бити послати током инсталације, а у циљу побољшања Rainmeter-а: верзија Windows-а, језик и могућности хардвера. Лични подаци неће бити послати."
 ${LangFileString} UNSTALLOPTIONS          "Опције деинсталације"
 ${LangFileString} UNSTALLOPTIONSDESC      "Одаберите додатне опције"
 ${LangFileString} UNSTALLRAINMETER        "Деинсталирај Rainmeter"

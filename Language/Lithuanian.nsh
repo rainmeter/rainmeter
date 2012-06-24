@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Nežymėkite, nebent žinote ką daro
 ${LangFileString} AUTOSTARTUP             "Įkelti 'Rainmeter' paleidus operacinę sistemą"
 ${LangFileString} ADDITIONALOPTIONS       "Papildomi parametrai"
 ${LangFileString} INSTALL64BIT            "Įdiegti 64 bitų versiją"
+${LangFileString} SENDINFORMATION         "Siųsti informaciją apie kompiuterį"
+${LangFileString} SENDINFORMATIONDESC     "Kokia jūsų kompiuterio Windows versija, kalba, bei apie įrangos pajėgumus informacija bus išsiųsta tik diegimo metu ir bus naudojama Rainmeter tobulinimui. Jokia asmeninė informacija nebus išsiųsta."
 ${LangFileString} UNSTALLOPTIONS          "Pašalinimo parametrai"
 ${LangFileString} UNSTALLOPTIONSDESC      "Pasirinkite bet kokius papildomus parametrus"
 ${LangFileString} UNSTALLRAINMETER        "Pašalinti 'Rainmeter'"

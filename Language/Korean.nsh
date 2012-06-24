@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "이 항목을 알지 못한다면 선
 ${LangFileString} AUTOSTARTUP             "Windows를 시작 시 레인미터 실행"
 ${LangFileString} ADDITIONALOPTIONS       "추가 옵션"
 ${LangFileString} INSTALL64BIT            "64비트 버전 설치"
+${LangFileString} SENDINFORMATION         "컴퓨터 정보 보내기"
+${LangFileString} SENDINFORMATIONDESC     "레인미터를 향상시키기 위해 사용자 컴퓨터의 윈도우 버전, 언어, 그리고 하드웨어 호환성이 설치 중 단 한번 보고됩니다. 개인 정보는 보내지 않습니다."
 ${LangFileString} UNSTALLOPTIONS          "제거 옵션"
 ${LangFileString} UNSTALLOPTIONSDESC      "다른 추가 옵션을 선택하세요"
 ${LangFileString} UNSTALLRAINMETER        "레인미터 제거"

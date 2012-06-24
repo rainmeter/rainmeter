@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Μην το επιλέγετε αν �
 ${LangFileString} AUTOSTARTUP             "Εκκίνηση του Rainmeter κατά την εκκίνηση του υπολογιστή."
 ${LangFileString} ADDITIONALOPTIONS       "Επιπλέον επιλογές."
 ${LangFileString} INSTALL64BIT            "Εγκαταστήστε την 64-bit έκδοση"
+${LangFileString} SENDINFORMATION         "Αποστείλετε πληροφορίες σχετικά με τον υπολογιστή"
+${LangFileString} SENDINFORMATIONDESC     "Η έκδοση Windows του υπολογιστή σας, η γλώσσα και οι δυνατότητες του hardware θα γνωστοποιηθούν στο Rainmeter μία μόνο φορά κατά την εγκατάσταση του, για την βελτίωση της ανάπτυξης του. Καμία προσωπική πληροφορία δεν θα αποσταλεί."
 ${LangFileString} UNSTALLOPTIONS          "Επιλογές απεγκατάστασης."
 ${LangFileString} UNSTALLOPTIONSDESC      "Επιλέξτε επιπλέον επιλογές."
 ${LangFileString} UNSTALLRAINMETER        "Απεγκατάσταση του Rainmeter"

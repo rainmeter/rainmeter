@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Neizvēlieties šo, ja jūs nezinat k
 ${LangFileString} AUTOSTARTUP             "Palaist Rainmeter līdz ar sistēmas ieslēgšanu"
 ${LangFileString} ADDITIONALOPTIONS       "Papildu opcijas"
 ${LangFileString} INSTALL64BIT            "64-bit"
+${LangFileString} SENDINFORMATION         "Send information about your computer"
+${LangFileString} SENDINFORMATIONDESC     "Your computer's Windows version, language, and hardware capabilities will be reported once during installation to improve Rainmeter. No personal information will be sent."
 ${LangFileString} UNSTALLOPTIONS          "Atinstalēšanas opcijas"
 ${LangFileString} UNSTALLOPTIONSDESC      "Izvēlieties jebkuras papildu opcijas"
 ${LangFileString} UNSTALLRAINMETER        "Atinstalēt Rainmeter programu"

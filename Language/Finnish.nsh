@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Jätä tämä valitsematta ellet ole 
 ${LangFileString} AUTOSTARTUP             "Aloita Rainmeter käynnistyksessä"
 ${LangFileString} ADDITIONALOPTIONS       "Lisäasetukset"
 ${LangFileString} INSTALL64BIT            "Asenna 64-bittinen versio"
+${LangFileString} SENDINFORMATION         "Lähetä tietoja tietokoneestasi"
+${LangFileString} SENDINFORMATIONDESC     "Tietokoneesi Windows version ja kielen sekä laitteiston ominaisuudet raportoidaan kerran asennuksen aikana Rainmeterin parantamiseksi. Henkilökohtaisia tietoja ei lähetetä."
 ${LangFileString} UNSTALLOPTIONS          "Poista asetukset"
 ${LangFileString} UNSTALLOPTIONSDESC      "Valitse lisäasetukset"
 ${LangFileString} UNSTALLRAINMETER        "Poista Rainmeter"

@@ -371,11 +371,11 @@ Function PageOptions
 	${EndIf}
 
 !ifndef BETA
-	${NSD_CreateCheckbox} 6u 92u 285u 12u "Send computer information"
+	${NSD_CreateCheckbox} 6u 92u 285u 12u "$(SENDINFORMATION)"
 	Pop $R4
 	${NSD_Check} $R4
 
-	${NSD_CreateLabel} 17u 105u -20u 43u "Your computer's Windows version, language, and hardware capabilities will be reported once during installation to improve Rainmeter. No personal information will be sent."
+	${NSD_CreateLabel} 17u 105u -20u 43u "$(SENDINFORMATIONDESC)"
 	Pop $0
 !endif
 

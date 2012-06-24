@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Ne sélectionnez pas ceci à moins qu
 ${LangFileString} AUTOSTARTUP             "Démarrer automatiquement avec Windows"
 ${LangFileString} ADDITIONALOPTIONS       "Options additionnelles"
 ${LangFileString} INSTALL64BIT            "Installer la version 64-bits"
+${LangFileString} SENDINFORMATION         "Envoyer des informations à propos de l'ordinateur"
+${LangFileString} SENDINFORMATIONDESC     "La version de Windows, le langage, ainsi que les informations sur le matériel de votre ordinateur seront envoyées durant l'installation pour améliorer Rainmeter. Aucune information personnelle ne sera envoyée."
 ${LangFileString} UNSTALLOPTIONS          "Options de désinstallation"
 ${LangFileString} UNSTALLOPTIONSDESC      "Sélectionner une option additionnelle"
 ${LangFileString} UNSTALLRAINMETER        "Désinstaller Rainmeter"

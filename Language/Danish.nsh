@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Vælg ikke dette med mindre du ved hv
 ${LangFileString} AUTOSTARTUP             "Start Rainmeter ved opstart"
 ${LangFileString} ADDITIONALOPTIONS       "Yderligere indstillinger"
 ${LangFileString} INSTALL64BIT            "Installer 64-bit version"
+${LangFileString} SENDINFORMATION         "Send information about your computer"
+${LangFileString} SENDINFORMATIONDESC     "Your computer's Windows version, language, and hardware capabilities will be reported once during installation to improve Rainmeter. No personal information will be sent."
 ${LangFileString} UNSTALLOPTIONS          "Afinstallationsindstillinger"
 ${LangFileString} UNSTALLOPTIONSDESC      "Vælg yderligere indstillinger"
 ${LangFileString} UNSTALLRAINMETER        "Afinstaller Rainmeter"

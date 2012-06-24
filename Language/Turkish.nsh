@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Eğer ne yaptığınızı tam olarak 
 ${LangFileString} AUTOSTARTUP             "Rainmeter'ı başlangıçta çalıştır"
 ${LangFileString} ADDITIONALOPTIONS       "Ek Seçenekler"
 ${LangFileString} INSTALL64BIT            "64-bit sürümü kur"
+${LangFileString} SENDINFORMATION         "Bilgisayar hakkındaki bilgileri gönder"
+${LangFileString} SENDINFORMATIONDESC     "Bilgisayarınızın Windows sürümü, dili ve donanım kapasitesi Rainmeter'ı geliştirmek için kurulum esnasında bir kez rapor edilecektir. Herhangi bir kişisel bilgi gönderilmeyecektir."
 ${LangFileString} UNSTALLOPTIONS          "Kaldırma seçenekleri"
 ${LangFileString} UNSTALLOPTIONSDESC      "Herhangi bir ek seçeneği seçin"
 ${LangFileString} UNSTALLRAINMETER        "Rainmeter'ı kaldır"

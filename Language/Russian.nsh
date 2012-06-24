@@ -20,6 +20,8 @@ ${LangFileString} PORTABLEINSTDESC        "Не выбирайте это, ес�
 ${LangFileString} AUTOSTARTUP             "Запускать Rainmeter при старте системы"
 ${LangFileString} ADDITIONALOPTIONS       "Дополнительные настройки"
 ${LangFileString} INSTALL64BIT            "Установить 64-разрядную версию"
+${LangFileString} SENDINFORMATION         "Отправить информацию о компьютере"
+${LangFileString} SENDINFORMATIONDESC     "Версия Windows, язык а также возможности оборудования, будут отправлены единажды во время установки для улучшения Rainmeter. Никакие личные данные не будут отправлены."
 ${LangFileString} UNSTALLOPTIONS          "Настройки Удаления"
 ${LangFileString} UNSTALLOPTIONSDESC      "Выберите любые дополнительные опции"
 ${LangFileString} UNSTALLRAINMETER        "Удалить Rainmeter"
