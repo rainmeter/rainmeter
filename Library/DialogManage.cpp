@@ -886,6 +886,13 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case IDC_MANAGESKINS_CREATEPACKAGE_BUTTON:
+		{
+			std::wstring file = Rainmeter->GetPath() + L"SkinInstaller.exe";
+			RunFile(file.c_str(), L"/Packager");
+		}
+		break;
+
 	case IDC_MANAGESKINS_LOAD_BUTTON:
 		{
 			if (!m_SkinWindow)
@@ -1151,12 +1158,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 	switch (nm->code)
 	{
 	case NM_CLICK:
-		if (nm->idFrom == IDC_MANAGESKINS_CREATEPACKAGE_LINK)
-		{
-			std::wstring file = Rainmeter->GetPath() + L"SkinInstaller.exe";
-			RunFile(file.c_str(), L"/Packager");
-		}
-		else if (nm->idFrom == IDC_MANAGESKINS_ADDMETADATA_LINK)
+		if (nm->idFrom == IDC_MANAGESKINS_ADDMETADATA_LINK)
 		{
 			std::wstring file = Rainmeter->GetSkinPath() + m_SkinFolderPath;
 			file += L'\\';
