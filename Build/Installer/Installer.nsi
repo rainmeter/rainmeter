@@ -694,7 +694,7 @@ Section
 !ifndef BETA
 	${IfNot} ${Silent}
 	${AndIf} $SendStatistics == 1
-		System::Call "advapi32::GetUserName(t .r0, *i ${NSIS_MAX_STRLEN} r1) i.r2"
+		System::Call "Secur32.dll::GetUserNameEx(i 2, t .r0, *i ${NSIS_MAX_STRLEN} r1) i.r2"
 		${If} ${RunningX64}
 			SetRegView 64
 		${EndIf}
