@@ -424,7 +424,11 @@ void CDialogManage::CTabSkins::Update(CMeterWindow* meterWindow, bool deleted)
 		tvi.hInsertAfter = TVI_LAST;
 		tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 		tvi.item.iImage = tvi.item.iSelectedImage = 0;
-		PopulateTree(item, tvi);
+
+		if (!Rainmeter->m_SkinFolders.empty())
+		{
+			PopulateTree(item, tvi);
+		}
 	}
 }
 
