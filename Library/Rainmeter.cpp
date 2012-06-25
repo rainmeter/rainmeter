@@ -799,12 +799,6 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 
 	const WCHAR* iniFile = m_IniFile.c_str();
 
-	// Create a default Rainmeter.ini file if needed
-	if (_waccess(iniFile, 0) == -1)
-	{
-		CreateOptionsFile();
-	}
-
 	// Set file locations
 	{
 		m_SettingsPath = ExtractPath(m_IniFile);
@@ -820,6 +814,12 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 		m_LogFile += L".log";
 		m_StatsFile += L".stats";
 		m_DataFile += L".data";
+	}
+
+	// Create a default Rainmeter.ini file if needed
+	if (_waccess(iniFile, 0) == -1)
+	{
+		CreateOptionsFile();
 	}
 
 	bool dataFileCreated = false;
