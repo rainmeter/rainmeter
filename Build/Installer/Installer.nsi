@@ -203,9 +203,9 @@ Function .onInit
 			CreateDirectory "$INSTDIR"
 			WriteINIStr "$INSTDIR\writetest~.rm" "1" "1" "1"
 			Delete "$INSTDIR\writetest~.rm"
-			RMDir "$INSTDIR"
 
 			${If} ${Errors}
+				RMDir "$INSTDIR"
 				SetErrorLevel ${ERROR_WRITEFAIL}
 				Quit
 			${EndIf}
@@ -467,13 +467,15 @@ Function PageOptionsOnLeave
 		ClearErrors
 		CreateDirectory "$0"
 		WriteINIStr "$0\writetest~.rm" "1" "1" "1"
+		Delete "$0\writetest~.rm"
 
 		${If} ${Errors}
-			Delete "$0\writetest~.rm"
 			RMDir "$0"
 			MessageBox MB_OK|MB_ICONEXCLAMATION "$(WRITEERROR)"
 			Abort
 		${EndIf}
+
+		RMDir "$0"
 	${EndIf}
 
 	StrCpy $INSTDIR $0
