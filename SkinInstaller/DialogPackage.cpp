@@ -379,50 +379,60 @@ unsigned __stdcall CDialogPackage::PackagerThreadProc(void* pParam)
 
 bool CDialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath)
 {
-	HANDLE file = CreateFile(filePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, NULL);
-	if (file == INVALID_HANDLE_VALUE)
+	std::string zipPathAscii = ConvertToAscii(zipPath);
+	for (int i = 0, isize = zipPathAscii.length(); i < isize; ++i)
 	{
-		return false;
+		if (zipPathAscii[i] == '\\')
+		{
+			zipPathAscii[i] = '/';
+		}
 	}
 
-	// Set zip file time
-	zip_fileinfo zi = {0};
-	FILETIME lastWriteTime;
-	FILETIME localTime;
-	GetFileTime(file, NULL, NULL, &lastWriteTime);
-	FileTimeToLocalFileTime(&lastWriteTime, &localTime);
-	FileTimeToDosDateTime(&localTime, ((LPWORD)&zi.dosDate) + 1, ((LPWORD)&zi.dosDate) + 0);
-
-	std::string zipPathAscii = ConvertToAscii(zipPath);
-	int open = zipOpenNewFileInZip(m_ZipFile, zipPathAscii.c_str(), &zi, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_DEFAULT_COMPRESSION);
+	int open = zipOpenNewFileInZip(m_ZipFile, zipPathAscii.c_str(), NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_DEFAULT_COMPRESSION);
 	if (open != ZIP_OK)
 	{
 		return false;
 	}
 
 	bool result = true;
-	do
+
+	if (filePath)
 	{
-		const DWORD bufferSize = 16 * 1024;
-		BYTE buffer[bufferSize];
-		DWORD readSize;
-		if (!ReadFile(file, buffer, bufferSize, &readSize, NULL))
+		HANDLE file = CreateFile(filePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, NULL);
+		if (file == INVALID_HANDLE_VALUE)
 		{
 			result = false;
 		}
-		else if (readSize != 0)
-		{
-			result = zipWriteInFileInZip(m_ZipFile, buffer, (UINT)readSize) == ZIP_OK;
-		}
 		else
 		{
-			// EOF
-			break;
+			do
+			{
+				const DWORD bufferSize = 16 * 1024;
+				BYTE buffer[bufferSize];
+				DWORD readSize;
+				if (!ReadFile(file, buffer, bufferSize, &readSize, NULL))
+				{
+					result = false;
+				}
+				else if (readSize != 0)
+				{
+					result = zipWriteInFileInZip(m_ZipFile, buffer, (UINT)readSize) == ZIP_OK;
+				}
+				else
+				{
+					// EOF
+					break;
+				}
+			}
+			while (result);
+
+			CloseHandle(file);
 		}
 	}
-	while (result);
-
-	CloseHandle(file);
+	else
+	{
+		// Directory entry, so nothing needs to be written.
+	}
 
 	return zipCloseFileInZip(m_ZipFile) == ZIP_OK && result;
 }
@@ -449,6 +459,7 @@ bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring b
 	currentPath.pop_back();	// Remove *
 
 	bool result = true;
+	bool filesAdded = false;
 	std::list<std::wstring> folders;
 	do
 	{
@@ -480,6 +491,8 @@ bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring b
 				MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
 				break;
 			}
+
+			filesAdded = true;
 		}
 	}
 	while (FindNextFile(hFind, &fd));
@@ -487,6 +500,14 @@ bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring b
 
 	if (result)
 	{
+		if (!filesAdded && folders.empty())
+		{
+			// Add directory entry if folder is empty.
+			std::wstring zipPath = zipPrefix;
+			zipPath.append(currentPath, path.length(), currentPath.length() - path.length());
+			AddFileToPackage(NULL, zipPath.c_str());
+		}
+
 		std::list<std::wstring>::const_iterator iter = folders.begin();
 		for ( ; iter != folders.end(); ++iter)
 		{
