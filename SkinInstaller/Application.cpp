@@ -98,6 +98,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 			if (GetPrivateProfileString(L"Rainmeter", L"SkinPath", L"", buffer, MAX_LINE_LENGTH, buffer) > 0)
 			{
 				g_Data.skinsPath = buffer;
+				if (g_Data.skinsPath.back() != L'\\' || g_Data.skinsPath.back() != L'/')
+				{
+					g_Data.skinsPath += L'\\';
+				}
 			}
 			else
 			{
