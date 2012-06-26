@@ -5,7 +5,7 @@ set VCVARSALL=%PROGRAMFILES%\Microsoft Visual Studio 10.0\VC\vcvarsall.bat
 set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
 set SUBWCREV=%PROGRAMFILES%\TortoiseSVN\bin\SubWCRev.exe
 set GIT=%PROGRAMFILES%\Git\bin\git.exe
-set VERSION=2.3.0
+set VERSION=2.4.0
 set REVISION=1
 set ISBETA=true
 
