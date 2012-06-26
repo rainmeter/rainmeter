@@ -68,7 +68,8 @@ void CheckVersion(void* dummy)
 			const WCHAR* version = tmpSz.c_str();
 
 			int availableVersion = parseVersion(version);
-			if (availableVersion > RAINMETER_VERSION)
+			if (availableVersion > RAINMETER_VERSION ||
+				(revision_beta && availableVersion == RAINMETER_VERSION))
 			{
 				Rainmeter->SetNewVersion();
 
