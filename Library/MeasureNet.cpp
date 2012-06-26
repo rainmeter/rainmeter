@@ -105,36 +105,33 @@ void CMeasureNet::UpdateIFTable()
 
 				for (size_t i = 0; i < c_NumOfTables; ++i)
 				{
-					std::wstring type;
+					const WCHAR* type = L"Other";
 					switch (ifTable->Table[i].Type)
 					{
 					case IF_TYPE_ETHERNET_CSMACD:
-						type += L"Ethernet";
+						type = L"Ethernet";
 						break;
 					case IF_TYPE_PPP:
-						type += L"PPP";
+						type = L"PPP";
 						break;
 					case IF_TYPE_SOFTWARE_LOOPBACK:
-						type += L"Loopback";
+						type = L"Loopback";
 						break;
 					case IF_TYPE_IEEE80211:
-						type += L"IEEE802.11";
+						type = L"IEEE802.11";
 						break;
 					case IF_TYPE_TUNNEL:
-						type += L"Tunnel";
+						type = L"Tunnel";
 						break;
 					case IF_TYPE_IEEE1394:
-						type += L"IEEE1394";
-						break;
-					default:
-						type += L"Other";
+						type = L"IEEE1394";
 						break;
 					}
 
 					LogWithArgs(LOG_DEBUG, L"%i: %s", (int)i + 1, ifTable->Table[i].Description);
 					LogWithArgs(LOG_DEBUG, L"  Alias: %s", ifTable->Table[i].Alias);
 					LogWithArgs(LOG_DEBUG, L"  Type=%s(%i), Hardware=%s, Filter=%s",
-						type.c_str(), ifTable->Table[i].Type,
+						type, ifTable->Table[i].Type,
 						(ifTable->Table[i].InterfaceAndOperStatusFlags.HardwareInterface == 1) ? L"Yes" : L"No",
 						(ifTable->Table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) ? L"Yes" : L"No");
 				}
