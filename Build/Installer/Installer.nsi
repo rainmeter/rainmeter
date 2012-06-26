@@ -50,6 +50,7 @@ SetCompressor /SOLID lzma
 RequestExecutionLevel user
 InstallDirRegKey HKLM "SOFTWARE\Rainmeter" ""
 ShowInstDetails nevershow
+AllowSkipFiles off
 XPStyle on
 OutFile "..\${OUTFILE}"
 ReserveFile "${NSISDIR}\Plugins\LangDLL.dll"
@@ -1022,16 +1023,15 @@ Section Uninstall
 	RMDir /r "$INSTDIR\Defaults"
 	RMDir /r "$INSTDIR\Languages"
 	RMDir /r "$INSTDIR\Plugins"
+	RMDir /r "$INSTDIR\Skins"
+	RMDir /r "$INSTDIR\Addons"
+	RMDir /r "$INSTDIR\Fonts"
 	Delete "$INSTDIR\Rainmeter.dll"
 	Delete "$INSTDIR\Rainmeter.exe"
 	Delete "$INSTDIR\SkinInstaller.exe"
-	RMDir "$INSTDIR"
+	Delete "$INSTDIR\uninst.exe"
 
-	${If} $un.DeleteAll == 1
-		RMDir /r "$INSTDIR\Skins"
-		RMDir /r "$INSTDIR\Addons"
-		RMDir /r "$INSTDIR\Fonts"
-	${EndIf}
+	RMDir "$INSTDIR"
 
 	SetShellVarContext all
 	RMDir /r "$APPDATA\Rainstaller"
@@ -1058,7 +1058,7 @@ Section Uninstall
 
 	DeleteRegKey HKLM "SOFTWARE\Rainmeter"
 	DeleteRegKey HKCR ".rmskin"
-	DeleteRegKey HKCR "Rainmeter skin"
+	DeleteRegKey HKCR "Rainmeter.SkinInstaller"
 	DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter"
 	${RefreshShellIcons}
 SectionEnd
