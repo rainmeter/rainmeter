@@ -23,6 +23,7 @@
 #include <ShlObj.h>
 #include <process.h>
 #include <vector>
+#include "../../Library/RawString.h"
 #include "../../Library/Export.h"	// Rainmeter's exported functions
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
@@ -41,7 +42,7 @@ struct BinData
 		UINT lastCount;
 	};
 
-	HANDLE directory;
+	CRawString directory;
 	WCHAR drive;
 	bool isFAT;
 };
@@ -49,7 +50,7 @@ struct BinData
 unsigned int __stdcall QueryRecycleBinThreadProc(void* pParam);
 HRESULT GetFolderCLSID(LPCWSTR pszPath, CLSID* pathCLSID);
 LPWSTR GetCurrentUserSid();
-HANDLE GetRecycleBinHandle(WCHAR drive, bool& isFAT);
+CRawString GetRecycleBinHandle(WCHAR drive, bool& isFAT);
 
 std::vector<BinData> g_BinData;
 double g_BinCount = 0;
@@ -163,14 +164,28 @@ PLUGIN_EXPORT double Update(void* data)
 						}
 					}
 				}
-				else if (data.directory)
+				else if (!data.directory.empty())
 				{
-					ULONGLONG lastWrite;
-					GetFileTime(data.directory, NULL, NULL, (FILETIME*)&lastWrite);
-					if (data.lastWrite != lastWrite)
+					HANDLE bin = CreateFile(
+						data.directory.c_str(),
+						GENERIC_READ,
+						FILE_SHARE_READ | FILE_SHARE_WRITE,
+						NULL,
+						OPEN_EXISTING,
+						FILE_FLAG_BACKUP_SEMANTICS,
+						NULL);
+
+					if (bin)
 					{
-						data.lastWrite = lastWrite;
-						changed = true;
+						ULONGLONG lastWrite;
+						GetFileTime(bin, NULL, NULL, (FILETIME*)&lastWrite);
+						if (data.lastWrite != lastWrite)
+						{
+							data.lastWrite = lastWrite;
+							changed = true;
+						}
+
+						CloseHandle(bin);
 					}
 				}
 
@@ -181,12 +196,6 @@ PLUGIN_EXPORT double Update(void* data)
 			{
 				// Drive removed
 				changed = true;
-
-				if (data.directory)
-				{
-					CloseHandle(data.directory);
-				}
-
 				iter = g_BinData.erase(iter);
 			}
 		}
@@ -196,7 +205,8 @@ PLUGIN_EXPORT double Update(void* data)
 			if (buffer[i] != DRIVE_HANDLED)
 			{
 				// New drive
-				BinData data = {0};
+				g_BinData.push_back(BinData());
+				BinData& data = g_BinData.back();
 				data.drive = buffer[i];
 
 				WCHAR drive[] = L"\0:\\";
@@ -205,8 +215,6 @@ PLUGIN_EXPORT double Update(void* data)
 				{
 					data.directory = GetRecycleBinHandle(buffer[i], data.isFAT);
 				}
-
-				g_BinData.push_back(data);
 			}
 		}
 
@@ -228,14 +236,6 @@ PLUGIN_EXPORT void Finalize(void* data)
 	--g_InstanceCount;
 	if (g_InstanceCount == 0)
 	{
-		for (auto iter = g_BinData.cbegin(); iter != g_BinData.cend(); ++iter)
-		{
-			if ((*iter).directory)
-			{
-				CloseHandle((*iter).directory);
-			}
-		}
-
 		WaitForSingleObject(g_Thread, INFINITE);
 	}
 }
@@ -322,7 +322,7 @@ LPWSTR GetCurrentUserSid()
 	return sidStr;
 }
 
-HANDLE GetRecycleBinHandle(WCHAR drive, bool& isFAT)
+CRawString GetRecycleBinHandle(WCHAR drive, bool& isFAT)
 {
 	WCHAR search[] = L"\0:\\";
 	search[0] = drive;
@@ -357,7 +357,8 @@ HANDLE GetRecycleBinHandle(WCHAR drive, bool& isFAT)
 		binFolder = L"$RECYCLE.BIN";
 	}
 
-	HANDLE hDir = NULL;
+	bool found = false;
+
 	WCHAR binPath[MAX_PATH];
 	_snwprintf_s(binPath, _TRUNCATE, L"%s%s\\", search, binFolder);
 
@@ -370,7 +371,7 @@ HANDLE GetRecycleBinHandle(WCHAR drive, bool& isFAT)
 			if (_waccess(binPath, 0) != -1)
 			{
 				isFAT = true;
-				return hDir;
+				found = true;
 			}
 		}
 		else
@@ -389,14 +390,7 @@ HANDLE GetRecycleBinHandle(WCHAR drive, bool& isFAT)
 					HRESULT hr = GetFolderCLSID(binPath, &id);
 					if (SUCCEEDED(hr) && IsEqualGUID(CLSID_RecycleBin, id))
 					{
-						hDir = CreateFile(
-							binPath,
-							GENERIC_READ,
-							FILE_SHARE_READ | FILE_SHARE_WRITE,
-							NULL,
-							OPEN_EXISTING,
-							FILE_FLAG_BACKUP_SEMANTICS,
-							NULL);
+						found = true;
 					}
 				}
 
@@ -405,6 +399,13 @@ HANDLE GetRecycleBinHandle(WCHAR drive, bool& isFAT)
 		}
 	}
 
-	if (!hDir) RmLog(LOG_ERROR, L"RecycleManager.dll: Unable to find bin");
-	return hDir;
+	if (!found)
+	{
+		RmLog(LOG_ERROR, L"RecycleManager.dll: Unable to find bin");
+		return NULL;
+	}
+	else
+	{
+		return binPath;
+	}
 }
