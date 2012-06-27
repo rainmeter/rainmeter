@@ -53,7 +53,25 @@ struct MeasureData
 	UINT updateCounter;
 	bool download;
 	bool forceReload;
+
+	MeasureData() :
+		skin(),
+		threadHandle(),
+		dlThreadHandle(),
+		codepage(),
+		stringIndex(),
+		stringIndex2(),
+		decodeCharacterReference(),
+		debug(),
+		updateRate(),
+		updateCounter(),
+		download(),
+		forceReload()
+	{
+	}
 };
+
+const int lol = sizeof(MeasureData);
 
 BYTE* DownloadUrl(std::wstring& url, DWORD* dwSize, bool forceReload);
 void ShowError(int lineNumber, WCHAR* errorMsg = NULL);
@@ -560,9 +578,6 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 
 	measure->section = RmGetMeasureName(rm);
-	measure->decodeCharacterReference = 0;
-	measure->updateRate = 600;
-	measure->updateCounter = 0;
 
 	/* Read our own settings from the ini-file */
 
@@ -595,9 +610,6 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		measure->debugFileLocation = RmReadPath(rm, L"Debug2File", L"C:\\WebParserDump.txt");
 		Log(LOG_DEBUG, measure->debugFileLocation.c_str());
 	}
-
-	measure->threadHandle = 0;
-	measure->dlThreadHandle = 0;
 }
 
 PLUGIN_EXPORT double Update(void* data)
