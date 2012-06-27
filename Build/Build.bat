@@ -5,8 +5,12 @@ set VCVARSALL=%PROGRAMFILES%\Microsoft Visual Studio 10.0\VC\vcvarsall.bat
 set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
 set SUBWCREV=%PROGRAMFILES%\TortoiseSVN\bin\SubWCRev.exe
 set GIT=%PROGRAMFILES%\Git\bin\git.exe
-set VERSION=2.4.0
-set REVISION=1
+
+:: Set VERSION_REVISION to non-zero value to override
+set VERSION_MAJOR=2
+set VERSION_MINOR=4
+set VERSION_SUBMINOR=0
+set VERSION_REVISION=0
 set ISBETA=true
 
 if "%1" == "RELEASE" set ISBETA=false
@@ -32,14 +36,15 @@ if not exist "%MAKENSIS%" echo ERROR: MakeNSIS.exe not found & goto END
 if exist "..\.svn" goto SVN
 if exist "..\..\.svn" goto SVN
 if not exist "..\.git" goto UPDATEVERSION
+if not "%VERSION_REVISION%" == "0" goto UPDATEVERSION
 
 :: git
 if exist "%GIT%" goto GITFOUND
 set GIT=%GIT:Program Files\=Program Files (x86)\%
 if not exist "%GIT%" echo ERROR: git.exe not found & goto END
 :GITFOUND
-set /a REVISION=0
-for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --all`) do set /a REVISION+=1
+set /a VERSION_REVISION=0
+for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --all`) do set /a VERSION_REVISION+=1
 goto UPDATEVERSION
 
 :: svn
@@ -48,19 +53,21 @@ if exist "%SUBWCREV%" goto SUBWCREVFOUND
 set SUBWCREV=%SUBWCREV:Program Files\=Program Files (x86)\%
 if not exist "%SUBWCREV%" echo ERROR: SubWCRev.exe (TortoiseSVN) not found & goto END
 :SUBWCREVFOUND
-for /f "usebackq tokens=5 delims= " %%G in (`"%SUBWCREV%" ..\`) do set REVISION=%%G
+for /f "usebackq tokens=5 delims= " %%G in (`"%SUBWCREV%" ..\`) do set VERSION_REVISION=%%G
 
 :UPDATEVERSION
 
+set VERSION=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%.%VERSION_REVISION%
+
 :: Update Version.h
 > "..\Version.h" echo #pragma once
->>"..\Version.h" echo #define FILEVER %VERSION:~0,1%,%VERSION:~2,1%,%VERSION:~4,1%,%REVISION%
+>>"..\Version.h" echo #define FILEVER %VERSION%
 >>"..\Version.h" echo #define PRODUCTVER FILEVER
->>"..\Version.h" echo #define STRFILEVER "%VERSION%.%REVISION%"
+>>"..\Version.h" echo #define STRFILEVER "%VERSION%"
 >>"..\Version.h" echo #define STRPRODUCTVER STRFILEVER
->>"..\Version.h" echo #define APPVERSION L"%VERSION%"
->>"..\Version.h" echo #define RAINMETER_VERSION ((%VERSION:~0,1% * 1000000) + (%VERSION:~2,1% * 1000) + %VERSION:~4,1%)
->>"..\Version.h" echo const int revision_number = %REVISION%;
+>>"..\Version.h" echo #define APPVERSION L"%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%"
+>>"..\Version.h" echo #define RAINMETER_VERSION ((%VERSION_MAJOR% * 1000000) + (%VERSION_MINOR% * 1000) + %VERSION_SUBMINOR%)
+>>"..\Version.h" echo const int revision_number = %VERSION_REVISION%;
 >>"..\Version.h" echo const bool revision_beta = %ISBETA%;
 
 :: Update Version.cs
@@ -69,9 +76,9 @@ for /f "usebackq tokens=5 delims= " %%G in (`"%SUBWCREV%" ..\`) do set REVISION=
 >>"..\Version.cs" echo     public class Version
 >>"..\Version.cs" echo     {
 >>"..\Version.cs" echo #if X64
->>"..\Version.cs" echo         public const string Informational = "%VERSION%.%REVISION% (64-bit)";
+>>"..\Version.cs" echo         public const string Informational = "%VERSION% (64-bit)";
 >>"..\Version.cs" echo #else
->>"..\Version.cs" echo         public const string Informational = "%VERSION%.%REVISION% (32-bit)";
+>>"..\Version.cs" echo         public const string Informational = "%VERSION% (32-bit)";
 >>"..\Version.cs" echo #endif
 >>"..\Version.cs" echo     }
 >>"..\Version.cs" echo }
@@ -81,7 +88,7 @@ if "%1" == "BUILDVERSION" goto :eof
 echo * Updated Version.h
 
 :: Set vcbuild environment variables and begin build
-echo * Starting build for %VERSION% r%REVISION%
+echo * Starting build for %VERSION%
 
 :: Build Library
 echo * Building 32-bit projects
@@ -137,10 +144,14 @@ if not "%CERTFILE%" == "" (
 
 :: Build installer
 echo * Building installer
+
+set INSTALLER_VERSION=%VERSION_MAJOR%.%VERSION_MINOR%
+if not "%VERSION_SUBMINOR%" == "0" set INSTALLER_VERSION=!INSTALLER_VERSION!.%VERSION_SUBMINOR%
+
 if "%1" == "RELEASE" (
-	"%MAKENSIS%" /DREV="%REVISION%" /DVER="%VERSION:~0,1%.%VERSION:~2,1%" .\Installer\Installer.nsi > "BuildLog.txt"
+	"%MAKENSIS%" /DREV="%VERSION_REVISION%" /DVER="%INSTALLER_VERSION%" .\Installer\Installer.nsi > "BuildLog.txt"
 ) else (
-	"%MAKENSIS%" /DBETA /DREV="%REVISION%" /DVER="%VERSION:~0,1%.%VERSION:~2,1%" .\Installer\Installer.nsi > "BuildLog.txt"
+	"%MAKENSIS%" /DBETA /DREV="%VERSION_REVISION%" /DVER="%INSTALLER_VERSION%" .\Installer\Installer.nsi > "BuildLog.txt"
 )
 if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Building installer failed & goto END
 
@@ -148,9 +159,9 @@ if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Building installer failed & 
 if not "%CERTFILE%" == "" (
 	echo * Signing installer
 	if "%1" == "RELEASE" (
-		%SIGNTOOL% Rainmeter-%VERSION:~0,1%.%VERSION:~2,1%.exe > BuildLog.txt
+		%SIGNTOOL% Rainmeter-%INSTALLER_VERSION%.exe > BuildLog.txt
 	) else (
-		%SIGNTOOL% Rainmeter-%VERSION:~0,1%.%VERSION:~2,1%-r%REVISION%-beta.exe > BuildLog.txt
+		%SIGNTOOL% Rainmeter-%INSTALLER_VERSION%-r%VERSION_REVISION%-beta.exe > BuildLog.txt
 	)
 	if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing installer failed & goto END
 )
