@@ -245,7 +245,7 @@ public:
 	Gdiplus::PrivateFontCollection* GetPrivateFontCollection() { return m_FontCollection; }
 
 	CMeter* GetMeter(const std::wstring& meterName);
-	CMeasure* GetMeasure(const std::wstring& measureName);
+	CMeasure* GetMeasure(const std::wstring& measureName) { return m_Parser.GetMeasure(measureName); }
 
 	friend class CDialogManage;
 

@@ -4728,17 +4728,3 @@ CMeter* CMeterWindow::GetMeter(const std::wstring& meterName)
 	}
 	return NULL;
 }
-
-CMeasure* CMeterWindow::GetMeasure(const std::wstring& measureName)
-{
-	const WCHAR* name = measureName.c_str();
-	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
-	for ( ; i != m_Measures.end(); ++i)
-	{
-		if (_wcsicmp((*i)->GetName(), name) == 0)
-		{
-			return (*i);
-		}
-	}
-	return NULL;
-}

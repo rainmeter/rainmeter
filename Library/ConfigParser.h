@@ -41,7 +41,9 @@ public:
 	~CConfigParser();
 
 	void Initialize(const std::wstring& filename, CMeterWindow* meterWindow = NULL, LPCTSTR skinSection = NULL, const std::wstring* resourcePath = NULL);
+
 	void AddMeasure(CMeasure* pMeasure);
+	CMeasure* GetMeasure(const std::wstring& name);
 
 	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_Variables, strVariable, strValue); }
@@ -103,8 +105,6 @@ private:
 	void SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, CMeterWindow* meterWindow);
 
 	void ReadVariables();
-
-	CMeasure* GetMeasure(const std::wstring& name);
 
 	void ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection = NULL, int depth = 0);
 
