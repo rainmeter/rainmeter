@@ -50,7 +50,7 @@ struct BinData
 unsigned int __stdcall QueryRecycleBinThreadProc(void* pParam);
 HRESULT GetFolderCLSID(LPCWSTR pszPath, CLSID* pathCLSID);
 LPWSTR GetCurrentUserSid();
-CRawString GetRecycleBinHandle(WCHAR drive, bool& isFAT);
+CRawString GetRecycleBinDirectory(WCHAR drive, bool& isFAT);
 
 std::vector<BinData> g_BinData;
 double g_BinCount = 0;
@@ -213,7 +213,7 @@ PLUGIN_EXPORT double Update(void* data)
 				drive[0] = buffer[i];
 				if (GetDriveType(drive) == DRIVE_FIXED)
 				{
-					data.directory = GetRecycleBinHandle(buffer[i], data.isFAT);
+					data.directory = GetRecycleBinDirectory(buffer[i], data.isFAT);
 				}
 			}
 		}
@@ -322,7 +322,7 @@ LPWSTR GetCurrentUserSid()
 	return sidStr;
 }
 
-CRawString GetRecycleBinHandle(WCHAR drive, bool& isFAT)
+CRawString GetRecycleBinDirectory(WCHAR drive, bool& isFAT)
 {
 	WCHAR search[] = L"\0:\\";
 	search[0] = drive;
