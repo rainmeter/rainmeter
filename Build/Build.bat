@@ -61,7 +61,7 @@ set VERSION=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%.%VERSION_REVISION
 
 :: Update Version.h
 > "..\Version.h" echo #pragma once
->>"..\Version.h" echo #define FILEVER %VERSION%
+>>"..\Version.h" echo #define FILEVER %VERSION_MAJOR%,%VERSION_MINOR%,%VERSION_SUBMINOR%,%VERSION_REVISION%
 >>"..\Version.h" echo #define PRODUCTVER FILEVER
 >>"..\Version.h" echo #define STRFILEVER "%VERSION%"
 >>"..\Version.h" echo #define STRPRODUCTVER STRFILEVER
