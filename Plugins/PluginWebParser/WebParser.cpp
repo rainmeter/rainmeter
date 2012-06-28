@@ -71,8 +71,6 @@ struct MeasureData
 	}
 };
 
-const int lol = sizeof(MeasureData);
-
 BYTE* DownloadUrl(std::wstring& url, DWORD* dwSize, bool forceReload);
 void ShowError(int lineNumber, WCHAR* errorMsg = NULL);
 unsigned __stdcall NetworkThreadProc(void* pParam);
