@@ -201,8 +201,7 @@ INT_PTR CDialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 		{
 			m_ErrorMessage = L"Invalid package:\n";
 			m_ErrorMessage += PathFindFileName(m_PackageFileName.c_str());
-			m_ErrorMessage += L"\n\nWARNING: If this package was downloaded from deviantART, do not download anything else from the author! "
-				L"Links in the deviation description are likely to lead to malware files.";
+			m_ErrorMessage += L"\n\nThe Skin Packager tool must be used to create valid .rmskin packages.";
 		}
 
 		MessageBox(NULL, m_ErrorMessage.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
