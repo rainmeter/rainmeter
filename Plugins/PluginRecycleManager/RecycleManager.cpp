@@ -25,7 +25,6 @@
 #include <vector>
 #include "../../Library/RawString.h"
 #include "../../Library/Export.h"	// Rainmeter's exported functions
-#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 struct MeasureData
 {
@@ -60,7 +59,28 @@ bool g_IsXP = false;
 
 int g_UpdateCount = 0;
 int g_InstanceCount = 0;
-HANDLE g_Thread = NULL;
+bool g_Thread = false;
+bool g_FreeInstanceInThread = false;
+CRITICAL_SECTION g_CriticalSection;
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+	switch (fdwReason)
+	{
+	case DLL_PROCESS_ATTACH:
+		InitializeCriticalSection(&g_CriticalSection);
+
+		// Disable DLL_THREAD_ATTACH and DLL_THREAD_DETACH notification calls
+		DisableThreadLibraryCalls(hinstDLL);
+		break;
+
+	case DLL_PROCESS_DETACH:
+		DeleteCriticalSection(&g_CriticalSection);
+		break;
+	}
+
+	return TRUE;
+}
 
 PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
@@ -109,7 +129,8 @@ PLUGIN_EXPORT double Update(void* data)
 	MeasureData* measure = (MeasureData*)data;
 
 	++g_UpdateCount;
-	if (g_UpdateCount > g_InstanceCount && !g_Thread)
+	if (g_UpdateCount > g_InstanceCount &&
+		TryEnterCriticalSection(&g_CriticalSection))
 	{
 		g_UpdateCount = 0;
 
@@ -218,11 +239,18 @@ PLUGIN_EXPORT double Update(void* data)
 			}
 		}
 
-		if (changed)
+		if (changed && !g_Thread)
 		{
 			g_UpdateCount = -8;
-			g_Thread = (HANDLE)_beginthreadex(NULL, 0, QueryRecycleBinThreadProc, NULL, 0, NULL);
+			HANDLE thread = (HANDLE)_beginthreadex(NULL, 0, QueryRecycleBinThreadProc, NULL, 0, NULL);
+			if (thread)
+			{
+				CloseHandle(thread);
+				g_Thread = true;
+			}
 		}
+
+		LeaveCriticalSection(&g_CriticalSection);
 	}
 
 	return measure->count ? g_BinCount : g_BinSize;
@@ -236,7 +264,17 @@ PLUGIN_EXPORT void Finalize(void* data)
 	--g_InstanceCount;
 	if (g_InstanceCount == 0)
 	{
-		WaitForSingleObject(g_Thread, INFINITE);
+		EnterCriticalSection(&g_CriticalSection);
+		if (g_Thread && !g_FreeInstanceInThread)
+		{
+			// Increment ref count of this module so that it will not be unloaded prior to
+			// thread completion.
+			DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS;
+			HMODULE module;
+			GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
+			g_FreeInstanceInThread = true;
+		}
+		LeaveCriticalSection(&g_CriticalSection);
 	}
 }
 
@@ -266,8 +304,24 @@ unsigned int __stdcall QueryRecycleBinThreadProc(void* pParam)
 	g_BinCount = (double)rbi.i64NumItems;
 	g_BinSize = (double)rbi.i64Size;
 
-	CloseHandle(g_Thread);
-	g_Thread = NULL;
+	EnterCriticalSection(&g_CriticalSection);
+	HMODULE module = NULL;
+	if (g_FreeInstanceInThread)
+	{
+		DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
+		GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
+		g_FreeInstanceInThread = false;
+	}
+
+	g_Thread = false;
+	LeaveCriticalSection(&g_CriticalSection);
+
+	if (module)
+	{
+		// Decrement the ref count and possibly unload the module if this is
+		// the last instance.
+		FreeLibraryAndExitThread(module, 0);
+	}
 
 	return 0;
 }
