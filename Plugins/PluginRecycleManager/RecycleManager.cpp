@@ -46,7 +46,7 @@ struct BinData
 	bool isFAT;
 };
 
-unsigned int __stdcall QueryRecycleBinThreadProc(void* pParam);
+DWORD WINAPI QueryRecycleBinThreadProc(void* pParam);
 HRESULT GetFolderCLSID(LPCWSTR pszPath, CLSID* pathCLSID);
 LPWSTR GetCurrentUserSid();
 CRawString GetRecycleBinDirectory(WCHAR drive, bool& isFAT);
@@ -242,7 +242,9 @@ PLUGIN_EXPORT double Update(void* data)
 		if (changed && !g_Thread)
 		{
 			g_UpdateCount = -8;
-			HANDLE thread = (HANDLE)_beginthreadex(NULL, 0, QueryRecycleBinThreadProc, NULL, 0, NULL);
+
+			DWORD id;
+			HANDLE thread = CreateThread(NULL, 0, QueryRecycleBinThreadProc, NULL, 0, &id);
 			if (thread)
 			{
 				CloseHandle(thread);
@@ -296,7 +298,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 	}
 }
 
-unsigned int __stdcall QueryRecycleBinThreadProc(void* pParam)
+DWORD WINAPI QueryRecycleBinThreadProc(void* pParam)
 {
 	SHQUERYRBINFO rbi = {0};
 	rbi.cbSize = sizeof(SHQUERYRBINFO);
