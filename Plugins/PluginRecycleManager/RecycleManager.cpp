@@ -300,6 +300,8 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 
 DWORD WINAPI QueryRecycleBinThreadProc(void* pParam)
 {
+	// NOTE: Do not use CRT function (since thread was created by CreateThread())!
+
 	SHQUERYRBINFO rbi = {0};
 	rbi.cbSize = sizeof(SHQUERYRBINFO);
 	SHQueryRecycleBin(NULL, &rbi);
@@ -383,8 +385,16 @@ CRawString GetRecycleBinDirectory(WCHAR drive, bool& isFAT)
 	WCHAR search[] = L"\0:\\";
 	search[0] = drive;
 
+	// Prevent the system from displaying message box.
+	UINT oldMode = SetErrorMode(0);
+	SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);
+
 	WCHAR filesystem[16];
-	if (!GetVolumeInformation(search, NULL, 0, NULL, NULL, NULL, filesystem, _countof(filesystem)))
+	BOOL volumeResult = GetVolumeInformation(search, NULL, 0, NULL, NULL, NULL, filesystem, _countof(filesystem)));
+
+	SetErrorMode(oldMode);
+
+	if (!volumeResult)
 	{
 		return NULL;
 	}
