@@ -187,6 +187,10 @@ PLUGIN_EXPORT double Update(void* data)
 				}
 				else if (!data.directory.empty())
 				{
+					// Prevent the system from displaying message box.
+					UINT oldMode = SetErrorMode(0);
+					SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);
+
 					HANDLE bin = CreateFile(
 						data.directory.c_str(),
 						GENERIC_READ,
@@ -208,6 +212,8 @@ PLUGIN_EXPORT double Update(void* data)
 
 						CloseHandle(bin);
 					}
+
+					SetErrorMode(oldMode);
 				}
 
 				*pos = DRIVE_HANDLED;
@@ -367,9 +373,7 @@ LPWSTR GetCurrentUserSid()
 		if (GetTokenInformation(hToken, TokenUser, buf, dwBufSize, &dwBufSize))
 		{
 			TOKEN_USER* tu = (TOKEN_USER*)buf;
-			if (ConvertSidToStringSid(tu->User.Sid, &sidStr))
-			{
-			}
+			ConvertSidToStringSid(tu->User.Sid, &sidStr);
 		}
 
 		delete [] buf;
@@ -385,14 +389,8 @@ CRawString GetRecycleBinDirectory(WCHAR drive, bool& isFAT)
 	WCHAR search[] = L"\0:\\";
 	search[0] = drive;
 
-	// Prevent the system from displaying message box.
-	UINT oldMode = SetErrorMode(0);
-	SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);
-
 	WCHAR filesystem[16];
 	BOOL volumeResult = GetVolumeInformation(search, NULL, 0, NULL, NULL, NULL, filesystem, _countof(filesystem));
-
-	SetErrorMode(oldMode);
 
 	if (!volumeResult)
 	{
