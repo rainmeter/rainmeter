@@ -18,12 +18,10 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include <Sddl.h>
 #include <ShellAPI.h>
-#include <ShlObj.h>
 #include <process.h>
-#include <vector>
-#include "../../Library/RawString.h"
+#include <cstdio>
+#include <cstdlib>
 #include "../../Library/Export.h"	// Rainmeter's exported functions
 
 struct MeasureData
@@ -33,29 +31,11 @@ struct MeasureData
 	MeasureData() : count(false) {}
 };
 
-struct BinData
-{
-	union
-	{
-		ULONGLONG lastWrite;
-		UINT lastCount;
-	};
-
-	CRawString directory;
-	WCHAR drive;
-	bool isFAT;
-};
-
 DWORD WINAPI QueryRecycleBinThreadProc(void* pParam);
-HRESULT GetFolderCLSID(LPCWSTR pszPath, CLSID* pathCLSID);
-LPWSTR GetCurrentUserSid();
-CRawString GetRecycleBinDirectory(WCHAR drive, bool& isFAT);
+bool HasRecycleBinChanged();
 
-std::vector<BinData> g_BinData;
 double g_BinCount = 0;
 double g_BinSize = 0;
-
-bool g_IsXP = false;
 
 int g_UpdateCount = 0;
 int g_InstanceCount = 0;
@@ -87,19 +67,6 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	MeasureData* measure = new MeasureData;
 	*data = measure;
 
-	if (g_InstanceCount == 0)
-	{
-		OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
-		if (GetVersionEx((OSVERSIONINFO*)&osvi))
-		{
-			if (osvi.dwMajorVersion == 5)
-			{
-				// Not checking for osvi.dwMinorVersion >= 1 because we won't run on pre-XP
-				g_IsXP = true;
-			}
-		}
-	}
-
 	++g_InstanceCount;
 }
 
@@ -128,133 +95,30 @@ PLUGIN_EXPORT double Update(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 
-	++g_UpdateCount;
-	if (g_UpdateCount > g_InstanceCount &&
-		TryEnterCriticalSection(&g_CriticalSection))
+	if (TryEnterCriticalSection(&g_CriticalSection))
 	{
-		g_UpdateCount = 0;
-
-		WCHAR buffer[128];
-		DWORD len = GetLogicalDriveStrings(128, buffer);
-
-		// Convert "A:\\\0B:\\\0" -> "AB\0"
-		int index = 0;
-		for (int i = 0; i < len; i += 4)
+		if (!g_Thread)
 		{
-			buffer[index] = buffer[i];
-			++index;
-		}
-		buffer[index] = L'\0';
-
-		const WCHAR DRIVE_HANDLED = 1;
-		bool changed = false;
-		auto iter = g_BinData.begin();
-		while (iter != g_BinData.end())
-		{
-			BinData& data = (*iter);
-
-			WCHAR* pos = wcschr(buffer, data.drive);
-			if (pos != NULL)
+			++g_UpdateCount;
+			if (g_UpdateCount > g_InstanceCount)
 			{
-				if (data.isFAT)
+				if (HasRecycleBinChanged())
 				{
-					// FAT/FAT32 doesn't update directory last write time.
-					// Use directory content count instead.
-					WCHAR filter[] = L"\0:\\$RECYCLE.BIN\\*";
-					WCHAR filterXP[] = L"\0:\\RECYCLED\\*";
-					filter[0] = *pos;
-					filterXP[0] = *pos;
+					// Delay next check.
+					g_UpdateCount = g_InstanceCount * -2;
 
-					WIN32_FIND_DATA fd;
-					HANDLE hSearch = FindFirstFile(g_IsXP ? filterXP : filter, &fd);
-					if (hSearch != INVALID_HANDLE_VALUE)
+					DWORD id;
+					HANDLE thread = CreateThread(NULL, 0, QueryRecycleBinThreadProc, NULL, 0, &id);
+					if (thread)
 					{
-						UINT count = 0;
-						do
-						{
-							++count;
-						}
-						while (FindNextFile(hSearch, &fd));
-
-						FindClose(hSearch);
-
-						if (count != data.lastCount)
-						{
-							data.lastCount = count;
-							changed = true;
-						}
+						CloseHandle(thread);
+						g_Thread = true;
 					}
 				}
-				else if (!data.directory.empty())
+				else
 				{
-					// Prevent the system from displaying message box.
-					UINT oldMode = SetErrorMode(0);
-					SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);
-
-					HANDLE bin = CreateFile(
-						data.directory.c_str(),
-						GENERIC_READ,
-						FILE_SHARE_READ | FILE_SHARE_WRITE,
-						NULL,
-						OPEN_EXISTING,
-						FILE_FLAG_BACKUP_SEMANTICS,
-						NULL);
-
-					if (bin)
-					{
-						ULONGLONG lastWrite;
-						GetFileTime(bin, NULL, NULL, (FILETIME*)&lastWrite);
-						if (data.lastWrite != lastWrite)
-						{
-							data.lastWrite = lastWrite;
-							changed = true;
-						}
-
-						CloseHandle(bin);
-					}
-
-					SetErrorMode(oldMode);
+					g_UpdateCount = 0;
 				}
-
-				*pos = DRIVE_HANDLED;
-				++iter;
-			}
-			else
-			{
-				// Drive removed
-				changed = true;
-				iter = g_BinData.erase(iter);
-			}
-		}
-
-		for (int i = 0; i < index; ++i)
-		{
-			if (buffer[i] != DRIVE_HANDLED)
-			{
-				// New drive
-				g_BinData.push_back(BinData());
-				BinData& data = g_BinData.back();
-				data.drive = buffer[i];
-
-				WCHAR drive[] = L"\0:\\";
-				drive[0] = buffer[i];
-				if (GetDriveType(drive) == DRIVE_FIXED)
-				{
-					data.directory = GetRecycleBinDirectory(buffer[i], data.isFAT);
-				}
-			}
-		}
-
-		if (changed && !g_Thread)
-		{
-			g_UpdateCount = -8;
-
-			DWORD id;
-			HANDLE thread = CreateThread(NULL, 0, QueryRecycleBinThreadProc, NULL, 0, &id);
-			if (thread)
-			{
-				CloseHandle(thread);
-				g_Thread = true;
 			}
 		}
 
@@ -336,140 +200,80 @@ DWORD WINAPI QueryRecycleBinThreadProc(void* pParam)
 	return 0;
 }
 
-HRESULT GetFolderCLSID(LPCWSTR path, CLSID* clsid)
+bool HasRecycleBinChanged()
 {
-	LPITEMIDLIST pidl;
-	HRESULT hr = SHParseDisplayName(path, NULL, &pidl, 0, NULL);
-	if (SUCCEEDED(hr))
-	{
-		IShellFolder* sf;
-		LPCITEMIDLIST pidlLast;
-		hr = SHBindToParent(pidl, IID_IShellFolder, (void**)&sf, &pidlLast);
-		if (SUCCEEDED(hr))
-		{
-			SHDESCRIPTIONID did;
-			hr = SHGetDataFromIDList(sf, pidlLast, SHGDFIL_DESCRIPTIONID, &did, sizeof(did));
-			*clsid = did.clsid;
+	static DWORD s_LastVolumeCount = 0;
+	static ULONGLONG s_LastWriteTime = 0;
 
-			sf->Release();
+	bool changed = false;
+
+	// Check if items have been added to recycle bin since last check.
+	HKEY volumeKey;
+	const WCHAR* subKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\BitBucket\\Volume";
+	LSTATUS ls = RegOpenKeyEx(HKEY_CURRENT_USER, subKey, 0, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS, &volumeKey);
+	if (ls == ERROR_SUCCESS)
+	{
+		DWORD volumeCount = 0;
+		RegQueryInfoKey(volumeKey, NULL, NULL, NULL, &volumeCount, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+		if (volumeCount != s_LastVolumeCount)
+		{
+			s_LastVolumeCount = volumeCount;
+			changed = true;
 		}
 
-		CoTaskMemFree(pidl);
-	}
-	return hr;
-}
+		WCHAR buffer[64];
+		DWORD bufferSize = _countof(buffer);
+		DWORD index = 0;
 
-// Return value must be freed with LocalFree
-LPWSTR GetCurrentUserSid()
-{
-	LPWSTR sidStr = NULL;
-	HANDLE hToken;
-	if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
-	{
-		DWORD dwBufSize = 0;
-		GetTokenInformation(hToken, TokenUser, NULL, 0, &dwBufSize);
-		BYTE* buf = new BYTE[dwBufSize];
-
-		if (GetTokenInformation(hToken, TokenUser, buf, dwBufSize, &dwBufSize))
+		while ((ls = RegEnumKeyEx(volumeKey, index, buffer, &bufferSize, NULL, NULL, NULL, NULL)) == ERROR_SUCCESS)
 		{
-			TOKEN_USER* tu = (TOKEN_USER*)buf;
-			ConvertSidToStringSid(tu->User.Sid, &sidStr);
-		}
-
-		delete [] buf;
-
-		CloseHandle(hToken);
-	}
-
-	return sidStr;
-}
-
-CRawString GetRecycleBinDirectory(WCHAR drive, bool& isFAT)
-{
-	WCHAR search[] = L"\0:\\";
-	search[0] = drive;
-
-	WCHAR filesystem[16];
-	BOOL volumeResult = GetVolumeInformation(search, NULL, 0, NULL, NULL, NULL, filesystem, _countof(filesystem));
-
-	if (!volumeResult)
-	{
-		return NULL;
-	}
-
-	if (wcscmp(filesystem, L"NTFS") == 0)
-	{
-		isFAT = false;
-	}
-	else if (wcscmp(filesystem, L"FAT") == 0 || wcscmp(filesystem, L"FAT32") == 0)
-	{
-		isFAT = true;
-	}
-	else
-	{
-		RmLog(LOG_ERROR, L"RecycleManager.dll: Unsupported filesystem");
-		return NULL;
-	}
-
-	const WCHAR* binFolder;
-	if (g_IsXP)
-	{
-		binFolder = isFAT ? L"RECYCLED" : L"RECYCLER";
-	}
-	else
-	{
-		binFolder = L"$RECYCLE.BIN";
-	}
-
-	bool found = false;
-
-	WCHAR binPath[MAX_PATH];
-	_snwprintf_s(binPath, _TRUNCATE, L"%s%s\\", search, binFolder);
-
-	DWORD binAttributes = GetFileAttributes(binPath);
-	if (binAttributes != INVALID_FILE_ATTRIBUTES &&
-		binAttributes & (FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_DIRECTORY))
-	{
-		if (isFAT)
-		{
-			if (_waccess(binPath, 0) != -1)
+			HKEY volumeSubKey;
+			ls = RegOpenKeyEx(volumeKey, buffer, 0, KEY_QUERY_VALUE, &volumeSubKey);
+			if (ls == ERROR_SUCCESS)
 			{
-				isFAT = true;
-				found = true;
-			}
-		}
-		else
-		{
-			// Get the correct, SID-specific bin for NTFS
-			LPWSTR currentSid = GetCurrentUserSid();
-			if (currentSid)
-			{
-				wcscat(binPath, currentSid);
-				binAttributes = GetFileAttributes(binPath);
-
-				if (binAttributes != INVALID_FILE_ATTRIBUTES &&
-					binAttributes & FILE_ATTRIBUTE_DIRECTORY)
+				ULONGLONG lastWriteTime;
+				ls = RegQueryInfoKey(volumeSubKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, (FILETIME*)&lastWriteTime);
+				if (ls == ERROR_SUCCESS)
 				{
-					CLSID id;
-					HRESULT hr = GetFolderCLSID(binPath, &id);
-					if (SUCCEEDED(hr) && IsEqualGUID(CLSID_RecycleBin, id))
+					if (lastWriteTime > s_LastWriteTime)
 					{
-						found = true;
+						s_LastWriteTime = lastWriteTime;
+						changed = true;
 					}
+
+					RegCloseKey(volumeSubKey);
+				}
+			}
+
+			bufferSize = _countof(buffer);
+			++index;
+		}
+
+		RegCloseKey(volumeKey);
+	}
+
+	if (!changed)
+	{
+		// Check if recycle bin has been emptied.
+		HKEY iconKey;
+		const WCHAR* subKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CLSID\\{645FF040-5081-101B-9F08-00AA002F954E}\\DefaultIcon";
+		ls = RegOpenKeyEx(HKEY_CURRENT_USER, subKey, 0, KEY_QUERY_VALUE, &iconKey);
+		if (ls == ERROR_SUCCESS)
+		{
+			ULONGLONG lastWriteTime;
+			ls = RegQueryInfoKey(iconKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, (FILETIME*)&lastWriteTime);
+			if (ls == ERROR_SUCCESS)
+			{
+				if (lastWriteTime > s_LastWriteTime)
+				{
+					s_LastWriteTime = lastWriteTime;
+					changed = true;
 				}
 
-				LocalFree(currentSid);
+				RegCloseKey(iconKey);
 			}
 		}
 	}
 
-	if (!found)
-	{
-		RmLog(LOG_ERROR, L"RecycleManager.dll: Unable to find bin");
-		return NULL;
-	}
-	else
-	{
-		return binPath;
-	}
+	return changed;
 }
