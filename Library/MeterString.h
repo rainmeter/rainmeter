@@ -75,8 +75,6 @@ private:
 
 	Gdiplus::Color m_Color;
 	Gdiplus::Color m_EffectColor;
-	std::wstring m_Postfix;
-	std::wstring m_Prefix;
 	std::wstring m_Text;
 	std::wstring m_FontFace;
 	AUTOSCALE m_AutoScale;
