@@ -651,8 +651,7 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 	else
 	{
 		stringFormat.SetTrimming(StringTrimmingNone);
-		stringFormat.SetFormatFlags(StringFormatFlagsNoClip | StringFormatFlagsNoWrap |
-			StringFormatFlagsMeasureTrailingSpaces);
+		stringFormat.SetFormatFlags(StringFormatFlagsNoClip | StringFormatFlagsNoWrap);
 	}
 
 	CharacterRange range(0, stringLen);
