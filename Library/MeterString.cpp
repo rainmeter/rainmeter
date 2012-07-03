@@ -548,7 +548,6 @@ bool CMeterString::Update()
 			Graphics graphics(m_MeterWindow->GetDoubleBuffer());
 			if (DrawString(graphics, &rect))
 			{
-	LogWithArgs(LOG_ERROR, L"%f - %s", (double)rect.Width, m_Name.c_str());
 				m_W = (int)rect.Width;
 				m_H = (int)rect.Height;
 			}
