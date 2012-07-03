@@ -328,9 +328,9 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_Color = parser.ReadColor(section, L"FontColor", Color::Black);
 	m_EffectColor = parser.ReadColor(section, L"FontEffectColor", Color::Black);
 
-	m_Text = parser.ReadString(section, L"Prefix", L"");
-	m_Text += parser.ReadString(section, L"Text", L"");
-	m_Text += parser.ReadString(section, L"Postfix", L"");
+	m_Prefix = parser.ReadString(section, L"Prefix", L"");
+	m_Postfix = parser.ReadString(section, L"Postfix", L"");
+	m_Text = parser.ReadString(section, L"Text", L"");
 
 	m_Percentual = 0!=parser.ReadInt(section, L"Percentual", 0);
 	m_ClipString = 0!=parser.ReadInt(section, L"ClipString", 0);
@@ -507,11 +507,26 @@ bool CMeterString::Update()
 			stringValues.push_back((*iter)->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
 		}
 
-		m_String = m_Text;
-		if (!stringValues.empty())
+		// Create the text
+		m_String = m_Prefix;
+		if (m_Text.empty())
 		{
-			ReplaceMeasures(stringValues, m_String);
+			if (!stringValues.empty())
+			{
+				m_String += stringValues[0];
+			}
 		}
+		else if (!stringValues.empty())
+		{
+			std::wstring tmpText = m_Text;
+			ReplaceMeasures(stringValues, tmpText);
+			m_String += tmpText;
+		}
+		else
+		{
+			m_String += m_Text;
+		}
+		if (!m_Postfix.empty()) m_String += m_Postfix;
 
 		switch (m_Case)
 		{
