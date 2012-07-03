@@ -240,9 +240,9 @@ bool HasRecycleBinChanged()
 						s_LastWriteTime = lastWriteTime;
 						changed = true;
 					}
-
-					RegCloseKey(volumeSubKey);
 				}
+
+				RegCloseKey(volumeSubKey);
 			}
 
 			bufferSize = _countof(buffer);
@@ -269,9 +269,9 @@ bool HasRecycleBinChanged()
 					s_LastWriteTime = lastWriteTime;
 					changed = true;
 				}
-
-				RegCloseKey(iconKey);
 			}
+
+			RegCloseKey(iconKey);
 		}
 	}
 
