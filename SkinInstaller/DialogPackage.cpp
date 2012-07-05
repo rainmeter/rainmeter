@@ -849,7 +849,7 @@ void CDialogPackage::CTabInfo::Initialize()
 	lvg.pszHeader = L"Themes";
 	ListView_InsertGroup(item, -1, &lvg);
 	lvg.iGroupId = 2;
-	lvg.pszHeader = L"Plguins";
+	lvg.pszHeader = L"Plugins";
 	ListView_InsertGroup(item, -1, &lvg);
 }
 
