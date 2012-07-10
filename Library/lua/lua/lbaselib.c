@@ -446,23 +446,23 @@ static int luaB_newproxy (lua_State *L) {
 
 static const luaL_Reg base_funcs[] = {
   {"assert", luaB_assert},
-  {"collectgarbage", luaB_collectgarbage},
+//  {"collectgarbage", luaB_collectgarbage},
   {"dofile", luaB_dofile},
   {"error", luaB_error},
-  {"gcinfo", luaB_gcinfo},
-  {"getfenv", luaB_getfenv},
+//  {"gcinfo", luaB_gcinfo},
+//  {"getfenv", luaB_getfenv},
   {"getmetatable", luaB_getmetatable},
   {"loadfile", luaB_loadfile},
   {"load", luaB_load},
   {"loadstring", luaB_loadstring},
   {"next", luaB_next},
   {"pcall", luaB_pcall},
-  {"print", luaB_print},
+//  {"print", luaB_print},
   {"rawequal", luaB_rawequal},
   {"rawget", luaB_rawget},
   {"rawset", luaB_rawset},
   {"select", luaB_select},
-  {"setfenv", luaB_setfenv},
+//  {"setfenv", luaB_setfenv},
   {"setmetatable", luaB_setmetatable},
   {"tonumber", luaB_tonumber},
   {"tostring", luaB_tostring},
@@ -647,7 +647,7 @@ static void base_open (lua_State *L) {
 
 LUALIB_API int luaopen_base (lua_State *L) {
   base_open(L);
-  luaL_register(L, LUA_COLIBNAME, co_funcs);
+//  luaL_register(L, LUA_COLIBNAME, co_funcs);
   return 2;
 }
 

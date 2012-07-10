@@ -202,14 +202,15 @@ static int os_difftime (lua_State *L) {
 
 
 static int os_setlocale (lua_State *L) {
-  static const int cat[] = {LC_ALL, LC_COLLATE, LC_CTYPE, LC_MONETARY,
-                      LC_NUMERIC, LC_TIME};
-  static const char *const catnames[] = {"all", "collate", "ctype", "monetary",
-     "numeric", "time", NULL};
-  const char *l = luaL_optstring(L, 1, NULL);
-  int op = luaL_checkoption(L, 2, "all", catnames);
-  lua_pushstring(L, setlocale(cat[op], l));
-  return 1;
+//  static const int cat[] = {LC_ALL, LC_COLLATE, LC_CTYPE, LC_MONETARY,
+//                      LC_NUMERIC, LC_TIME};
+//  static const char *const catnames[] = {"all", "collate", "ctype", "monetary",
+//     "numeric", "time", NULL};
+//  const char *l = luaL_optstring(L, 1, NULL);
+//  int op = luaL_checkoption(L, 2, "all", catnames);
+//  lua_pushstring(L, setlocale(cat[op], l));
+//  return 1;
+  return 0;
 }
 
 
@@ -222,7 +223,7 @@ static const luaL_Reg syslib[] = {
   {"date",      os_date},
   {"difftime",  os_difftime},
   {"execute",   os_execute},
-  {"exit",      os_exit},
+//  {"exit",      os_exit},
   {"getenv",    os_getenv},
   {"remove",    os_remove},
   {"rename",    os_rename},

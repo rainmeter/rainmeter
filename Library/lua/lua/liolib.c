@@ -484,7 +484,7 @@ static const luaL_Reg iolib[] = {
   {"lines", io_lines},
   {"open", io_open},
   {"output", io_output},
-  {"popen", io_popen},
+//  {"popen", io_popen},
   {"read", io_read},
   {"tmpfile", io_tmpfile},
   {"type", io_type},
@@ -543,14 +543,14 @@ LUALIB_API int luaopen_io (lua_State *L) {
   luaL_register(L, LUA_IOLIBNAME, iolib);
   /* create (and set) default files */
   newfenv(L, io_noclose);  /* close function for default files */
-  createstdfile(L, stdin, IO_INPUT, "stdin");
-  createstdfile(L, stdout, IO_OUTPUT, "stdout");
-  createstdfile(L, stderr, 0, "stderr");
+//  createstdfile(L, stdin, IO_INPUT, "stdin");
+//  createstdfile(L, stdout, IO_OUTPUT, "stdout");
+//  createstdfile(L, stderr, 0, "stderr");
   lua_pop(L, 1);  /* pop environment for default files */
-  lua_getfield(L, -1, "popen");
-  newfenv(L, io_pclose);  /* create environment for 'popen' */
-  lua_setfenv(L, -2);  /* set fenv for 'popen' */
-  lua_pop(L, 1);  /* pop 'popen' */
+//  lua_getfield(L, -1, "popen");
+//  newfenv(L, io_pclose);  /* create environment for 'popen' */
+//  lua_setfenv(L, -2);  /* set fenv for 'popen' */
+//  lua_pop(L, 1);  /* pop 'popen' */
   return 1;
 }
 

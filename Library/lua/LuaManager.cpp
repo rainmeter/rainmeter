@@ -30,25 +30,7 @@ void LuaManager::Initialize()
 		// Initialize Lua
 		c_State = luaL_newstate();
 
-		// Initialize standard libraries except debug, modified from linit.c
-		const luaL_Reg lualibs[] =
-		{
-			{ "", luaopen_base },
-			{ LUA_LOADLIBNAME, luaopen_package },
-			{ LUA_TABLIBNAME, luaopen_table },
-			{ LUA_IOLIBNAME, luaopen_io },
-			{ LUA_OSLIBNAME, luaopen_os },
-			{ LUA_STRLIBNAME, luaopen_string },
-			{ LUA_MATHLIBNAME, luaopen_math },
-			{ NULL, NULL }
-		};
-
-		for (const luaL_Reg* lib = lualibs; lib->func; ++lib)
-		{
-			lua_pushcfunction(c_State, lib->func);
-			lua_pushstring(c_State, lib->name);
-			lua_call(c_State, 1, 0);
-		}
+		luaL_openlibs(c_State);
 
 		// Register custom types and functions
 		RegisterGlobal(c_State);
