@@ -2433,8 +2433,6 @@ void CRainmeter::RefreshAll()
 		CMeterWindow* mw = (*iter).second;
 		if (mw)
 		{
-			const WCHAR* skinFolder = mw->GetFolderPath().c_str();
-
 			// Verify whether the cached information is valid
 			int index = FindSkinFolderIndex(mw->GetFolderPath());
 			if (index != -1)
@@ -2461,18 +2459,24 @@ void CRainmeter::RefreshAll()
 
 				if (!found)
 				{
+					const WCHAR* skinFolderPath = mw->GetFolderPath().c_str();
+					std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolderPath, skinIniFile);
+
 					DeactivateSkin(mw, index);
 
-					std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolder, skinIniFile);
 					ShowMessage(NULL, error.c_str(), MB_OK | MB_ICONEXCLAMATION);
+					continue;
 				}
 			}
 			else
 			{
+				const WCHAR* skinFolderPath = mw->GetFolderPath().c_str();
+				std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolderPath, L"");
+
 				DeactivateSkin(mw, -2);  // -2 = Force deactivate
 
-				std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolder, L"");
 				ShowMessage(NULL, error.c_str(), MB_OK | MB_ICONEXCLAMATION);
+				continue;
 			}
 
 			try
