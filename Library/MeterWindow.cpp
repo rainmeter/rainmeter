@@ -2101,6 +2101,8 @@ bool CMeterWindow::ReadSkin()
 				}
 			}
 			while (FindNextFile(find, &fd));
+
+			FindClose(find);
 		}
 	}
 
