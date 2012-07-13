@@ -25,15 +25,62 @@
 ** The constructor
 **
 */
-LuaScript::LuaScript(const char* file) :
+LuaScript::LuaScript(const WCHAR* scriptFile) :
 	m_Ref(LUA_NOREF),
-	m_Initialized(true)
+	m_Initialized(false)
 {
 	lua_State* L = LuaManager::GetState();
-	int result = luaL_loadfile(L, file);
 
-	// If the file loaded okay.
-	if (result == 0)
+	FILE* file = _wfopen(scriptFile, L"rb");
+	if (!file)
+	{
+		return;
+	}
+
+	fseek(file, 0, SEEK_END);
+	long fileSize = ftell(file);
+	if (fileSize < 3)
+	{
+		return;
+	}
+
+	int load = 0;
+	std::string scriptName = ConvertToUTF8(wcsrchr(scriptFile, L'\\') + 1);
+	const char* scriptNameSz = scriptName.c_str();
+
+	BYTE* fileData = new BYTE[fileSize];
+	fseek(file, 0, SEEK_SET);
+	fread(fileData, fileSize, 1, file);
+
+	if (fileData[0] == 0xEF && fileData[1] == 0xBB && fileData[2] == 0xBF)
+	{
+		// Has UTF8 BOM, so assume that data is already in UTF8.
+		const char* utf8Data = (char*)fileData + 3;
+		int utf8Size = fileSize - 3;
+
+		load = luaL_loadbuffer(L, utf8Data, utf8Size, scriptNameSz);
+		delete [] fileData;
+	}
+	else
+	{
+		// Convert the file contents first to WCHAR with respect to the current
+		// code page and then to UTF8 in order to preserve code page specific chars.
+
+		int wideSize = MultiByteToWideChar(CP_ACP, 0, (char*)fileData, fileSize, NULL, 0);
+		WCHAR* wideData = new WCHAR[wideSize];
+		MultiByteToWideChar(CP_ACP, 0, (char*)fileData, fileSize, wideData, wideSize);
+		delete [] fileData;
+
+		int utf8Size = WideCharToMultiByte(CP_UTF8, 0, wideData, wideSize, NULL, 0, NULL, NULL);
+		char* utf8Data = new char[utf8Size];
+		WideCharToMultiByte(CP_UTF8, 0, wideData, wideSize, utf8Data, utf8Size, NULL, NULL);
+		delete [] wideData;
+
+		load = luaL_loadbuffer(L, utf8Data, utf8Size, scriptNameSz);
+		delete [] utf8Data;
+	}
+
+	if (load == 0)
 	{
 		// Create the table this script will reside in
 		lua_newtable(L);
@@ -60,11 +107,12 @@ LuaScript::LuaScript(const char* file) :
 		lua_setfenv(L, -2);
 
 		// Execute the Lua script
-		result = lua_pcall(L, 0, 0, 0);
-
-		if (result)
+		if (lua_pcall(L, 0, 0, 0) == 0)
 		{
-			m_Initialized = false;
+			m_Initialized = true;
+		}
+		else
+		{
 			LuaManager::ReportErrors(L);
 
 			luaL_unref(L, LUA_GLOBALSINDEX, m_Ref);
@@ -73,9 +121,10 @@ LuaScript::LuaScript(const char* file) :
 	}
 	else
 	{
-		m_Initialized = false;
 		LuaManager::ReportErrors(L);
 	}
+
+	fclose(file);
 }
 
 /*
@@ -174,7 +223,7 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 			else if (type == LUA_TSTRING)
 			{
 				const char* str = lua_tostring(L, -1);
-				strValue = ConvertToWide(str);
+				strValue = ConvertUTF8ToWide(str);
 				numValue = strtod(str, NULL);
 			}
 

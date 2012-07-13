@@ -50,7 +50,7 @@ private:
 
 	std::wstring m_StringValue;
 
-	std::string m_ScriptFile;
+	std::wstring m_ScriptFile;
 };
 
 #endif

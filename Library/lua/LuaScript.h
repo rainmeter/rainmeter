@@ -24,7 +24,7 @@
 class LuaScript
 {
 public:
-	LuaScript(const char* file);
+	LuaScript(const WCHAR* scriptFile);
 	~LuaScript();
 	
 	bool IsInitialized() { return m_Initialized; }

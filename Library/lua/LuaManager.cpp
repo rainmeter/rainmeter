@@ -61,27 +61,15 @@ void LuaManager::ReportErrors(lua_State* L)
 	const char* error = lua_tostring(L, -1);
 	lua_pop(L, 1);
 
-	const char* pos = error + 4; // Skip the drive
-
-	// Get rid of everything up to the filename
-	while (*pos != ':')
-	{
-		if (*pos == '\\')
-		{
-			error = pos + 1;
-		}
-		++pos;
-	}
-
 	LogWithArgs(LOG_ERROR, L"Script: %S", error);
 }
 
 void LuaManager::PushWide(lua_State* L, const WCHAR* str)
 {
-	lua_pushstring(L, ConvertToAscii(str).c_str());
+	lua_pushstring(L, ConvertToUTF8(str).c_str());
 }
 
 std::wstring LuaManager::ToWide(lua_State* L, int narg)
 {
-	return ConvertToWide(lua_tostring(L, narg));
+	return ConvertUTF8ToWide(lua_tostring(L, narg));
 }
