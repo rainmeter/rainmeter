@@ -19,7 +19,6 @@
 #include "StdAfx.h"
 #include "ConfigParser.h"
 #include "MeterWindow.h"
-#include "System.h"
 #include "Litestep.h"
 #include "Mouse.h"
 
@@ -51,13 +50,14 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWind
 	m_LeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);
 
 	const WCHAR* mouseCursor = parser.ReadString(section, L"MouseActionCursor", L"").c_str();
-	if (_wcsicmp(mouseCursor, L"HAND") == 0 ||
-		wcscmp(mouseCursor, L"1") == 0)  // For backwards compatibility
+	int mouseCursorInt = CConfigParser::ParseInt(mouseCursor, -1);  // For backwards compatibility
+	if (mouseCursorInt == 1 ||
+		_wcsicmp(mouseCursor, L"HAND") == 0)
 	{
 		m_CursorType = MOUSECURSOR_HAND;
 	}
-	else if (_wcsicmp(mouseCursor, L"ARROW") == 0 ||
-		wcscmp(mouseCursor, L"0") == 0)  // For backwards compatibility
+	else if (mouseCursorInt == 0 ||
+		_wcsicmp(mouseCursor, L"ARROW") == 0)
 	{
 		m_CursorType = MOUSECURSOR_ARROW;
 	}
@@ -81,7 +81,7 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWind
 	{
 		m_CursorType = MOUSECURSOR_PEN;
 	}
-	else if (*mouseCursor)
+	else if (*mouseCursor && wcschr(mouseCursor, L'.'))
 	{
 		// Load custom cursor
 		std::wstring cursorPath = meterWindow->GetResourcesPath();
