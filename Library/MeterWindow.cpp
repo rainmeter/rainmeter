@@ -4304,7 +4304,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 	{
 		if (action == MOUSE_LEAVE)
 		{
-			// Mouse leave happens when the action is outside the window
+			// Mouse leave happens when the mouse is outside the window
 			if (m_MouseOver)
 			{
 				//LogWithArgs(LOG_DEBUG, L"Leave: %s", m_FolderPath.c_str());
