@@ -50,7 +50,10 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWind
 	m_LeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);
 
 	const WCHAR* mouseCursor = parser.ReadString(section, L"MouseActionCursor", L"").c_str();
-	int mouseCursorInt = CConfigParser::ParseInt(mouseCursor, -1);  // For backwards compatibility
+
+	// For backwards compatibility
+	int mouseCursorInt = (*mouseCursor == L'(') ? CConfigParser::ParseInt(mouseCursor, 0) : -1;
+
 	if (mouseCursorInt == 1 ||
 		_wcsicmp(mouseCursor, L"HAND") == 0)
 	{
@@ -81,7 +84,7 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWind
 	{
 		m_CursorType = MOUSECURSOR_PEN;
 	}
-	else if (*mouseCursor && wcschr(mouseCursor, L'.'))
+	else if (wcschr(mouseCursor, L'.'))
 	{
 		// Load custom cursor
 		std::wstring cursorPath = meterWindow->GetResourcesPath();
