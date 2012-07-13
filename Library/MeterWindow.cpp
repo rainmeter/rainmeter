@@ -390,8 +390,6 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	ZPOSITION oldZPos = m_WindowZPosition;
 
-	//TODO: Should these be moved to a Reload command instead of hitting the disk on every refresh
-	ReadOptions();	// Read the general settings
 	if (!ReadSkin())
 	{
 		Rainmeter->DeactivateSkin(this, -1);
@@ -1838,7 +1836,14 @@ void CMeterWindow::ReadOptions()
 
 	m_FadeDuration = parser.ReadInt(section, L"FadeDuration", 250);
 
-	m_SkinGroup = parser.ReadString(section, L"Group", L"");
+	std::wstring skinGroup = parser.ReadString(section, L"Group", L"");
+	const std::wstring& group = m_Parser.ReadString(L"Rainmeter", L"Group", L"");
+	if (!group.empty())
+	{
+		skinGroup += L'|';
+		skinGroup += group;
+	}
+	InitializeGroup(skinGroup);
 
 	if (writeFlags != 0)
 	{
@@ -1957,6 +1962,9 @@ bool CMeterWindow::ReadSkin()
 
 	m_Parser.Initialize(iniFile, this, NULL, &resourcePath);
 
+	// Read options from Rainmeter.ini.
+	ReadOptions();
+
 	// Check the version
 	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
 	if (appVersion > RAINMETER_VERSION)
@@ -1978,15 +1986,6 @@ bool CMeterWindow::ReadSkin()
 	// Initialize window variables
 	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
 	SetWindowSizeVariables(0, 0);
-
-	// Global settings
-	const std::wstring& group = m_Parser.ReadString(L"Rainmeter", L"Group", L"");
-	if (!group.empty())
-	{
-		m_SkinGroup += L'|';
-		m_SkinGroup += group;
-	}
-	InitializeGroup(m_SkinGroup);
 
 	static const RECT defMargins = {0};
 	m_BackgroundMargins = m_Parser.ReadRECT(L"Rainmeter", L"BackgroundMargins", defMargins);

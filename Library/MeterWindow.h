@@ -357,7 +357,6 @@ private:
 	std::wstring m_OnRefreshAction;
 	std::wstring m_OnCloseAction;
 
-	std::wstring m_SkinGroup;
 	std::wstring m_BackgroundName;
 	RECT m_BackgroundMargins;
 	RECT m_DragMargins;
