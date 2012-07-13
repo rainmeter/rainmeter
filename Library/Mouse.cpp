@@ -86,27 +86,28 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWind
 	}
 	else if (wcschr(mouseCursor, L'.'))
 	{
-		// Load custom cursor
+		m_CursorType = MOUSECURSOR_CUSTOM;
+	}
+	else
+	{
+		// Inherit from [Rainmeter].
+		m_CursorType = meterWindow->GetMouse().m_CursorType;
+		if (m_CursorType == MOUSECURSOR_CUSTOM)
+		{
+			mouseCursor = meterWindow->GetParser().ReadString(L"Rainmeter", L"MouseActionCursor", L"").c_str();;
+		}
+	}
+
+	if (m_CursorType == MOUSECURSOR_CUSTOM)
+	{
 		std::wstring cursorPath = meterWindow->GetResourcesPath();
 		cursorPath += L"Cursors\\";
 		cursorPath += mouseCursor;
 		m_CustomCursor = LoadCursorFromFile(cursorPath.c_str());
-		if (m_CustomCursor)
-		{
-			m_CursorType = MOUSECURSOR_CUSTOM;
-		}
-		else
+		if (!m_CustomCursor)
 		{
 			m_CursorType = MOUSECURSOR_ARROW;
 			LogWithArgs(LOG_ERROR, L"Invalid cursor: %s", cursorPath.c_str());
-		}
-	}
-	else
-	{
-		m_CursorType = meterWindow->GetMouse().m_CursorType;
-		if (meterWindow->GetMouse().m_CustomCursor)
-		{
-			m_CustomCursor = CopyCursor(meterWindow->GetMouse().m_CustomCursor);
 		}
 	}
 }
