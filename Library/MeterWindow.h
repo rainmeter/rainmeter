@@ -26,6 +26,7 @@
 #include <list>
 #include "ConfigParser.h"
 #include "Group.h"
+#include "Mouse.h"
 
 #define BEGIN_MESSAGEPROC switch (uMsg) {
 #define MESSAGE(handler, msg) case msg: return window->handler(uMsg, wParam, lParam);
@@ -41,21 +42,6 @@ typedef HRESULT (WINAPI * FPDWMENABLEBLURBEHINDWINDOW)(HWND hWnd, const DWM_BLUR
 typedef HRESULT (WINAPI * FPDWMGETCOLORIZATIONCOLOR)(DWORD* pcrColorization, BOOL* pfOpaqueBlend);
 typedef HRESULT (WINAPI * FPDWMSETWINDOWATTRIBUTE)(HWND hwnd, DWORD dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
 typedef HRESULT (WINAPI * FPDWMISCOMPOSITIONENABLED)(BOOL* pfEnabled);
-
-enum MOUSE
-{
-	MOUSE_LMB_DOWN,
-	MOUSE_LMB_UP,
-	MOUSE_LMB_DBLCLK,
-	MOUSE_RMB_DOWN,
-	MOUSE_RMB_UP,
-	MOUSE_RMB_DBLCLK,
-	MOUSE_MMB_DOWN,
-	MOUSE_MMB_UP,
-	MOUSE_MMB_DBLCLK,
-	MOUSE_OVER,
-	MOUSE_LEAVE
-};
 
 enum BUTTONPROC
 {
@@ -238,7 +224,8 @@ public:
 	int GetTransitionUpdate() { return m_TransitionUpdate; }
 
 	bool GetMeterToolTipHidden() { return m_ToolTipHidden; }
-	bool GetMeterMouseActionCursor() { return m_MouseActionCursor; }
+
+	const CMouse& GetMouse() { return m_Mouse; }
 
 	void MakePathAbsolute(std::wstring& path);
 
@@ -336,8 +323,8 @@ private:
 	void SetSnapEdges(bool b);
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zpos);
-	bool DoAction(int x, int y, MOUSE mouse, bool test);
-	bool DoMoveAction(int x, int y, MOUSE mouse);
+	bool DoAction(int x, int y, MOUSEACTION action, bool test);
+	bool DoMoveAction(int x, int y, MOUSEACTION action);
 	bool ResizeWindow(bool reset);
 	void IgnoreAeroPeek();
 	void AddWindowExStyle(LONG_PTR flag);
@@ -364,21 +351,11 @@ private:
 
 	HWND m_Window;
 
-	std::wstring m_LeftMouseDownAction;
-	std::wstring m_RightMouseDownAction;
-	std::wstring m_MiddleMouseDownAction;
-	std::wstring m_LeftMouseUpAction;
-	std::wstring m_RightMouseUpAction;
-	std::wstring m_MiddleMouseUpAction;
-	std::wstring m_LeftMouseDoubleClickAction;
-	std::wstring m_RightMouseDoubleClickAction;
-	std::wstring m_MiddleMouseDoubleClickAction;
-	std::wstring m_MouseOverAction;
-	std::wstring m_MouseLeaveAction;
+	CMouse m_Mouse;
+	bool m_MouseOver;
+
 	std::wstring m_OnRefreshAction;
 	std::wstring m_OnCloseAction;
-
-	bool m_MouseOver;
 
 	std::wstring m_SkinGroup;
 	std::wstring m_BackgroundName;
@@ -456,7 +433,6 @@ private:
 
 	Gdiplus::PrivateFontCollection* m_FontCollection;
 
-	bool m_MouseActionCursor;
 	bool m_ToolTipHidden;
 
 	static int c_InstanceCount;

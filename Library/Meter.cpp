@@ -57,7 +57,6 @@ CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(met
 	m_ToolTipHidden(meterWindow->GetMeterToolTipHidden()),
 	m_ToolTipHandle(),
 	m_HasMouseAction(false),
-	m_MouseActionCursor(meterWindow->GetMeterMouseActionCursor()),
 	m_MouseOver(false),
 	m_RelativeX(POSITION_ABSOLUTE),
 	m_RelativeY(POSITION_ABSOLUTE),
@@ -351,24 +350,14 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor.GetValue());
 	m_SolidAngle = (Gdiplus::REAL)parser.ReadFloat(section, L"GradientAngle", 0.0);
 
-	m_LeftMouseDownAction = parser.ReadString(section, L"LeftMouseDownAction", L"", false);
-	m_RightMouseDownAction = parser.ReadString(section, L"RightMouseDownAction", L"", false);
-	m_MiddleMouseDownAction = parser.ReadString(section, L"MiddleMouseDownAction", L"", false);
-	m_LeftMouseUpAction = parser.ReadString(section, L"LeftMouseUpAction", L"", false);
-	m_RightMouseUpAction = parser.ReadString(section, L"RightMouseUpAction", L"", false);
-	m_MiddleMouseUpAction = parser.ReadString(section, L"MiddleMouseUpAction", L"", false);
-	m_LeftMouseDoubleClickAction = parser.ReadString(section, L"LeftMouseDoubleClickAction", L"", false);
-	m_RightMouseDoubleClickAction = parser.ReadString(section, L"RightMouseDoubleClickAction", L"", false);
-	m_MiddleMouseDoubleClickAction = parser.ReadString(section, L"MiddleMouseDoubleClickAction", L"", false);
-	m_MouseOverAction = parser.ReadString(section, L"MouseOverAction", L"", false);
-	m_MouseLeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);
-
-	m_MouseActionCursor = 0!=parser.ReadInt(section, L"MouseActionCursor", m_MeterWindow->GetMeterMouseActionCursor());
+	m_Mouse.ReadOptions(parser, section, m_MeterWindow);
 
 	m_HasMouseAction =
-		( !m_LeftMouseUpAction.empty() || !m_LeftMouseDownAction.empty() || !m_LeftMouseDoubleClickAction.empty()
-		|| !m_MiddleMouseUpAction.empty() || !m_MiddleMouseDownAction.empty() || !m_MiddleMouseDoubleClickAction.empty()
-		|| !m_RightMouseUpAction.empty() || !m_RightMouseDownAction.empty() || !m_RightMouseDoubleClickAction.empty() );
+		!(m_Mouse.GetLeftUpAction().empty() && m_Mouse.GetLeftDownAction().empty() &&
+		m_Mouse.GetLeftDoubleClickAction().empty() && m_Mouse.GetMiddleUpAction().empty() &&
+		m_Mouse.GetMiddleDownAction().empty() && m_Mouse.GetMiddleDoubleClickAction().empty() &&
+		m_Mouse.GetRightUpAction().empty() && m_Mouse.GetRightDownAction().empty() &&
+		m_Mouse.GetRightDoubleClickAction().empty());
 
 	m_ToolTipText = parser.ReadString(section, L"ToolTipText", L"");
 	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"");

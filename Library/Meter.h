@@ -60,26 +60,14 @@ public:
 	void SetX(int x) { m_X = x; m_RelativeX = POSITION_ABSOLUTE; }
 	void SetY(int y) { m_Y = y; m_RelativeY = POSITION_ABSOLUTE; }
 
-	const std::wstring& GetRightMouseDownAction() { return m_RightMouseDownAction; }
-	const std::wstring& GetRightMouseUpAction() { return m_RightMouseUpAction; }
-	const std::wstring& GetRightMouseDoubleClickAction() { return m_RightMouseDoubleClickAction; }
-	const std::wstring& GetLeftMouseDownAction() { return m_LeftMouseDownAction; }
-	const std::wstring& GetLeftMouseUpAction() { return m_LeftMouseUpAction; }
-	const std::wstring& GetLeftMouseDoubleClickAction() { return m_LeftMouseDoubleClickAction; }
-	const std::wstring& GetMiddleMouseDownAction() { return m_MiddleMouseDownAction; }
-	const std::wstring& GetMiddleMouseUpAction() { return m_MiddleMouseUpAction; }
-	const std::wstring& GetMiddleMouseDoubleClickAction() { return m_MiddleMouseDoubleClickAction; }
-	const std::wstring& GetMouseOverAction() { return m_MouseOverAction; }
-	const std::wstring& GetMouseLeaveAction() { return m_MouseLeaveAction; }
+	const CMouse& GetMouse() { return m_Mouse; }
+	bool HasMouseAction() { return m_HasMouseAction; }
 
 	const std::wstring& GetToolTipText() { return m_ToolTipText; }
 	bool HasToolTip() { return m_ToolTipHandle != NULL; }
 
 	void CreateToolTip(CMeterWindow* meterWindow);
 	void UpdateToolTip();
-
-	bool HasMouseAction() { return m_HasMouseAction; }
-	bool HasMouseActionCursor() { return m_MouseActionCursor; }
 
 	virtual void Hide();
 	virtual void Show();
@@ -166,22 +154,10 @@ protected:
 
 	HWND m_ToolTipHandle;
 
-	std::wstring m_LeftMouseDownAction;
-	std::wstring m_RightMouseDownAction;
-	std::wstring m_MiddleMouseDownAction;
-	std::wstring m_LeftMouseUpAction;
-	std::wstring m_RightMouseUpAction;
-	std::wstring m_MiddleMouseUpAction;
-	std::wstring m_LeftMouseDoubleClickAction;
-	std::wstring m_RightMouseDoubleClickAction;
-	std::wstring m_MiddleMouseDoubleClickAction;
-	std::wstring m_MouseOverAction;
-	std::wstring m_MouseLeaveAction;
-	
+	CMouse m_Mouse;
 	bool m_HasMouseAction;
-	bool m_MouseActionCursor;
-
 	bool m_MouseOver;
+
 	METER_POSITION m_RelativeX;
 	METER_POSITION m_RelativeY;
 

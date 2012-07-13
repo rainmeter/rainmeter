@@ -286,6 +286,9 @@
     <ClCompile Include="MeterWindow.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Mouse.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="pcre-8.10\pcre_chartables.c" />
     <ClCompile Include="pcre-8.10\pcre_compile.c" />
     <ClCompile Include="pcre-8.10\pcre_config.c" />
@@ -422,6 +425,7 @@
     <ClInclude Include="MeterRoundLine.h" />
     <ClInclude Include="MeterString.h" />
     <ClInclude Include="MeterWindow.h" />
+    <ClInclude Include="Mouse.h" />
     <ClInclude Include="pcre-8.10\config.h" />
     <ClInclude Include="pcre-8.10\pcre.h" />
     <ClInclude Include="pcre-8.10\pcre_internal.h" />

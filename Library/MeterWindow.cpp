@@ -140,7 +140,6 @@ CMeterWindow::CMeterWindow(const std::wstring& folderPath, const std::wstring& f
 	m_UpdateCounter(),
 	m_MouseMoveCounter(),
 	m_FontCollection(),
-	m_MouseActionCursor(true),
 	m_ToolTipHidden(false)
 {
 	if (!c_DwmInstance && CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
@@ -2015,23 +2014,13 @@ bool CMeterWindow::ReadSkin()
 		}
 	}
 
-	m_LeftMouseDownAction = m_Parser.ReadString(L"Rainmeter", L"LeftMouseDownAction", L"", false);
-	m_RightMouseDownAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseDownAction", L"", false);
-	m_MiddleMouseDownAction = m_Parser.ReadString(L"Rainmeter", L"MiddleMouseDownAction", L"", false);
-	m_LeftMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"LeftMouseUpAction", L"", false);
-	m_RightMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseUpAction", L"", false);
-	m_MiddleMouseUpAction = m_Parser.ReadString(L"Rainmeter", L"MiddleMouseUpAction", L"", false);
-	m_LeftMouseDoubleClickAction = m_Parser.ReadString(L"Rainmeter", L"LeftMouseDoubleClickAction", L"", false);
-	m_RightMouseDoubleClickAction = m_Parser.ReadString(L"Rainmeter", L"RightMouseDoubleClickAction", L"", false);
-	m_MiddleMouseDoubleClickAction = m_Parser.ReadString(L"Rainmeter", L"MiddleMouseDoubleClickAction", L"", false);
-	m_MouseOverAction = m_Parser.ReadString(L"Rainmeter", L"MouseOverAction", L"", false);
-	m_MouseLeaveAction = m_Parser.ReadString(L"Rainmeter", L"MouseLeaveAction", L"", false);
+	m_Mouse.ReadOptions(m_Parser, L"Rainmeter", this);
+
 	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"", false);
 	m_OnCloseAction = m_Parser.ReadString(L"Rainmeter", L"OnCloseAction", L"", false);
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
-	m_MouseActionCursor = 0 != m_Parser.ReadInt(L"Rainmeter", L"MouseActionCursor", 1);
 	m_ToolTipHidden = 0 != m_Parser.ReadInt(L"Rainmeter", L"ToolTipHidden", 0);
 
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
@@ -3136,7 +3125,7 @@ bool CMeterWindow::HitTest(int x, int y)
 void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 {
 	bool redraw = false;
-	bool drawCursor = false;
+	HCURSOR cursor = NULL;
 
 	std::list<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
 	for ( ; j != m_Meters.rend(); ++j)
@@ -3168,12 +3157,12 @@ void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 			}
 		}
 
-		if (!drawCursor)
+		if (!cursor &&
+			((*j)->HasMouseAction() || button) &&
+			(*j)->GetMouse().GetCursorType() != MOUSECURSOR_ARROW &&
+			(*j)->HitTest(pos.x, pos.y))
 		{
-			if ((*j)->HasMouseActionCursor() && (*j)->HitTest(pos.x, pos.y))
-			{
-				drawCursor = ((*j)->HasMouseAction() || button);
-			}
+			cursor = (*j)->GetMouse().GetCursor();
 		}
 	}
 
@@ -3182,8 +3171,12 @@ void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 		Redraw();
 	}
 
-	// Set cursor
-	SetCursor(LoadCursor(NULL, drawCursor ? IDC_HAND : IDC_ARROW));
+	if (!cursor)
+	{
+		cursor = LoadCursor(NULL, IDC_ARROW);
+	}
+
+	SetCursor(cursor);
 }
 
 /*
@@ -4155,8 +4148,10 @@ LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** If the test is true, the action is not executed.
 **
 */
-bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
+bool CMeterWindow::DoAction(int x, int y, MOUSEACTION action, bool test)
 {
+	const WCHAR* command = NULL;
+
 	// Check if the hitpoint was over some meter
 	std::list<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
 	for ( ; j != m_Meters.rend(); ++j)
@@ -4164,162 +4159,27 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 		// Hidden meters are ignored
 		if ((*j)->IsHidden()) continue;
 
-		if ((*j)->HitTest(x, y))
+		const WCHAR* meterCommand = (*j)->GetMouse().GetActionCommand(action);
+		if (meterCommand && (*j)->HitTest(x, y))
 		{
-			switch (mouse)
-			{
-			case MOUSE_LMB_DOWN:
-				if (!((*j)->GetLeftMouseDownAction().empty()))
-				{
-					if (!test) Rainmeter->ExecuteCommand((*j)->GetLeftMouseDownAction().c_str(), this);
-					return true;
-				}
-				break;
-
-			case MOUSE_LMB_UP:
-				if (!((*j)->GetLeftMouseUpAction().empty()))
-				{
-					if (!test) Rainmeter->ExecuteCommand((*j)->GetLeftMouseUpAction().c_str(), this);
-					return true;
-				}
-				break;
-
-			case MOUSE_LMB_DBLCLK:
-				if (!((*j)->GetLeftMouseDoubleClickAction().empty()))
-				{
-					if (!test) Rainmeter->ExecuteCommand((*j)->GetLeftMouseDoubleClickAction().c_str(), this);
-					return true;
-				}
-				break;
-
-			case MOUSE_RMB_DOWN:
-				if (!((*j)->GetRightMouseDownAction().empty()))
-				{
-					if (!test) Rainmeter->ExecuteCommand((*j)->GetRightMouseDownAction().c_str(), this);
-					return true;
-				}
-				break;
-
-			case MOUSE_RMB_UP:
-				if (!((*j)->GetRightMouseUpAction().empty()))
-				{
-					if (!test) Rainmeter->ExecuteCommand((*j)->GetRightMouseUpAction().c_str(), this);
-					return true;
-				}
-				break;
-
-			case MOUSE_RMB_DBLCLK:
-				if (!((*j)->GetRightMouseDoubleClickAction().empty()))
-				{
-					if (!test) Rainmeter->ExecuteCommand((*j)->GetRightMouseDoubleClickAction().c_str(), this);
-					return true;
-				}
-				break;
-
-			case MOUSE_MMB_DOWN:
-				if (!((*j)->GetMiddleMouseDownAction().empty()))
-				{
-					if (!test) Rainmeter->ExecuteCommand((*j)->GetMiddleMouseDownAction().c_str(), this);
-					return true;
-				}
-				break;
-
-			case MOUSE_MMB_UP:
-				if (!((*j)->GetMiddleMouseUpAction().empty()))
-				{
-					if (!test) Rainmeter->ExecuteCommand((*j)->GetMiddleMouseUpAction().c_str(), this);
-					return true;
-				}
-				break;
-
-			case MOUSE_MMB_DBLCLK:
-				if (!((*j)->GetMiddleMouseDoubleClickAction().empty()))
-				{
-					if (!test) Rainmeter->ExecuteCommand((*j)->GetMiddleMouseDoubleClickAction().c_str(), this);
-					return true;
-				}
-				break;
-			}
+			command = meterCommand;
+			break;
 		}
 	}
 
-	if (HitTest(x, y))
+	if (!command && HitTest(x, y))
 	{
-		// If no meters caused actions, do the default actions
-		switch (mouse)
+		command = m_Mouse.GetActionCommand(action);
+	}
+
+	if (command)
+	{
+		if (!test)
 		{
-		case MOUSE_LMB_DOWN:
-			if (!m_LeftMouseDownAction.empty())
-			{
-				if (!test) Rainmeter->ExecuteCommand(m_LeftMouseDownAction.c_str(), this);
-				return true;
-			}
-			break;
-
-		case MOUSE_LMB_UP:
-			if (!m_LeftMouseUpAction.empty())
-			{
-				if (!test) Rainmeter->ExecuteCommand(m_LeftMouseUpAction.c_str(), this);
-				return true;
-			}
-			break;
-
-		case MOUSE_LMB_DBLCLK:
-			if (!m_LeftMouseDoubleClickAction.empty())
-			{
-				if (!test) Rainmeter->ExecuteCommand(m_LeftMouseDoubleClickAction.c_str(), this);
-				return true;
-			}
-			break;
-
-		case MOUSE_RMB_DOWN:
-			if (!m_RightMouseDownAction.empty())
-			{
-				if (!test) Rainmeter->ExecuteCommand(m_RightMouseDownAction.c_str(), this);
-				return true;
-			}
-			break;
-
-		case MOUSE_RMB_UP:
-			if (!m_RightMouseUpAction.empty())
-			{
-				if (!test) Rainmeter->ExecuteCommand(m_RightMouseUpAction.c_str(), this);
-				return true;
-			}
-			break;
-
-		case MOUSE_RMB_DBLCLK:
-			if (!m_RightMouseDoubleClickAction.empty())
-			{
-				if (!test) Rainmeter->ExecuteCommand(m_RightMouseDoubleClickAction.c_str(), this);
-				return true;
-			}
-			break;
-
-		case MOUSE_MMB_DOWN:
-			if (!m_MiddleMouseDownAction.empty())
-			{
-				if (!test) Rainmeter->ExecuteCommand(m_MiddleMouseDownAction.c_str(), this);
-				return true;
-			}
-			break;
-
-		case MOUSE_MMB_UP:
-			if (!m_MiddleMouseUpAction.empty())
-			{
-				if (!test) Rainmeter->ExecuteCommand(m_MiddleMouseUpAction.c_str(), this);
-				return true;
-			}
-			break;
-
-		case MOUSE_MMB_DBLCLK:
-			if (!m_MiddleMouseDoubleClickAction.empty())
-			{
-				if (!test) Rainmeter->ExecuteCommand(m_MiddleMouseDoubleClickAction.c_str(), this);
-				return true;
-			}
-			break;
+			Rainmeter->ExecuteCommand(command, this);
 		}
+
+		return true;
 	}
 
 	return false;
@@ -4329,7 +4189,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSE mouse, bool test)
 ** Executes the action if such are defined. Returns true, if meter/window which should be processed still may exist.
 **
 */
-bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
+bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 {
 	bool buttonFound = false;
 
@@ -4339,7 +4199,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 	{
 		if (!(*j)->IsHidden() && (*j)->HitTest(x, y))
 		{
-			if (mouse == MOUSE_OVER)
+			if (action == MOUSE_OVER)
 			{
 				if (!m_MouseOver)
 				{
@@ -4348,10 +4208,10 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 					m_MouseOver = true;
 					SetMouseLeaveEvent(false);
 
-					if (!m_MouseOverAction.empty())
+					if (!m_Mouse.GetOverAction().empty())
 					{
 						UINT currCounter = m_MouseMoveCounter;
-						Rainmeter->ExecuteCommand(m_MouseOverAction.c_str(), this);
+						Rainmeter->ExecuteCommand(m_Mouse.GetOverAction().c_str(), this);
 						return (currCounter == m_MouseMoveCounter);
 					}
 				}
@@ -4377,17 +4237,17 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 
 				if (!(*j)->IsMouseOver())
 				{
-					if (!((*j)->GetMouseOverAction().empty()) ||
-						!((*j)->GetMouseLeaveAction().empty()) ||
+					if (!((*j)->GetMouse().GetOverAction().empty()) ||
+						!((*j)->GetMouse().GetLeaveAction().empty()) ||
 						button)
 					{
 						//LogWithArgs(LOG_DEBUG, L"MeterEnter: %s - [%s]", m_FolderPath.c_str(), (*j)->GetName());
 						(*j)->SetMouseOver(true);
 
-						if (!((*j)->GetMouseOverAction().empty()))
+						if (!((*j)->GetMouse().GetOverAction().empty()))
 						{
 							UINT currCounter = m_MouseMoveCounter;
-							Rainmeter->ExecuteCommand((*j)->GetMouseOverAction().c_str(), this);
+							Rainmeter->ExecuteCommand((*j)->GetMouse().GetOverAction().c_str(), this);
 							return (currCounter == m_MouseMoveCounter);
 						}
 					}
@@ -4396,7 +4256,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 		}
 		else
 		{
-			if (mouse == MOUSE_LEAVE)
+			if (action == MOUSE_LEAVE)
 			{
 				if ((*j)->IsMouseOver())
 				{
@@ -4410,9 +4270,9 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 					//LogWithArgs(LOG_DEBUG, L"MeterLeave: %s - [%s]", m_FolderPath.c_str(), (*j)->GetName());
 					(*j)->SetMouseOver(false);
 
-					if (!((*j)->GetMouseLeaveAction().empty()))
+					if (!((*j)->GetMouse().GetLeaveAction().empty()))
 					{
-						Rainmeter->ExecuteCommand((*j)->GetMouseLeaveAction().c_str(), this);
+						Rainmeter->ExecuteCommand((*j)->GetMouse().GetLeaveAction().c_str(), this);
 						return true;
 					}
 				}
@@ -4423,7 +4283,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 	if (HitTest(x, y))
 	{
 		// If no meters caused actions, do the default actions
-		if (mouse == MOUSE_OVER)
+		if (action == MOUSE_OVER)
 		{
 			if (!m_MouseOver)
 			{
@@ -4431,10 +4291,10 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 				m_MouseOver = true;
 				SetMouseLeaveEvent(false);
 
-				if (!m_MouseOverAction.empty())
+				if (!m_Mouse.GetOverAction().empty())
 				{
 					UINT currCounter = m_MouseMoveCounter;
-					Rainmeter->ExecuteCommand(m_MouseOverAction.c_str(), this);
+					Rainmeter->ExecuteCommand(m_Mouse.GetOverAction().c_str(), this);
 					return (currCounter == m_MouseMoveCounter);
 				}
 			}
@@ -4442,18 +4302,18 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSE mouse)
 	}
 	else
 	{
-		if (mouse == MOUSE_LEAVE)
+		if (action == MOUSE_LEAVE)
 		{
-			// Mouse leave happens when the mouse is outside the window
+			// Mouse leave happens when the action is outside the window
 			if (m_MouseOver)
 			{
 				//LogWithArgs(LOG_DEBUG, L"Leave: %s", m_FolderPath.c_str());
 				m_MouseOver = false;
 				SetMouseLeaveEvent(true);
 
-				if (!m_MouseLeaveAction.empty())
+				if (!m_Mouse.GetLeaveAction().empty())
 				{
-					Rainmeter->ExecuteCommand(m_MouseLeaveAction.c_str(), this);
+					Rainmeter->ExecuteCommand(m_Mouse.GetLeaveAction().c_str(), this);
 					return true;
 				}
 			}
