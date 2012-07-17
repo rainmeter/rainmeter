@@ -52,14 +52,10 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWind
 
 	m_CursorState = 0!=parser.ReadInt(section, L"MouseActionCursor", meterWindow->GetMouse().GetCursorState());
 
-	const WCHAR* mouseCursor = parser.ReadString(section, L"MouseActionCursorName", L"").c_str();
+	const WCHAR* mouseCursor = parser.ReadString(section, L"MouseActionCursorName", L"HAND").c_str();
 	if (_wcsicmp(mouseCursor, L"HAND") == 0)
 	{
 		m_CursorType = MOUSECURSOR_HAND;
-	}
-	else if (_wcsicmp(mouseCursor, L"ARROW") == 0)
-	{
-		m_CursorType = MOUSECURSOR_ARROW;
 	}
 	else if (_wcsicmp(mouseCursor, L"TEXT") == 0)
 	{
