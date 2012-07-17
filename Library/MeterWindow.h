@@ -139,6 +139,13 @@ enum BANGCOMMAND
 	BANG_SETOPTIONGROUP
 };
 
+enum RESIZEMODE
+{
+	RESIZEMODE_NONE = 0,
+	RESIZEMODE_CHECK,
+	RESIZEMODE_RESET
+};
+
 class CRainmeter;
 class CMeasure;
 class CMeter;
@@ -181,6 +188,8 @@ public:
 	void ResizeBlur(const std::wstring& arg, int mode);
 	bool IsBlur() { return m_Blur; }
 	void SetBlur(bool b) { m_Blur = b; }
+
+	void SetResizeWindowMode(RESIZEMODE mode) { if (m_ResizeWindow != RESIZEMODE_RESET || mode != RESIZEMODE_CHECK) m_ResizeWindow = mode; }
 
 	Gdiplus::Bitmap* GetDoubleBuffer() { return m_DoubleBuffer; }
 	HWND GetWindow() { return m_Window; }
@@ -287,15 +296,6 @@ private:
 
 		OPTION_ALL              = 0xFFFFFFFF
 	};
-
-	enum RESIZEMODE
-	{
-		RESIZEMODE_NONE = 0,
-		RESIZEMODE_CHECK,
-		RESIZEMODE_RESET
-	};
-
-	void SetResizeWindowMode(RESIZEMODE mode) { if (m_ResizeWindow != RESIZEMODE_RESET || mode != RESIZEMODE_CHECK) m_ResizeWindow = mode; }
 
 	bool HitTest(int x, int y);
 

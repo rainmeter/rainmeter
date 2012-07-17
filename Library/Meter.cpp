@@ -251,6 +251,7 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		parser.SetStyleTemplate(style);
 	}
 
+	int oldX = m_X;
 	std::wstring& x = (std::wstring&)parser.ReadString(section, L"X", L"0");
 	if (!x.empty())
 	{
@@ -278,6 +279,7 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		m_RelativeX = POSITION_ABSOLUTE;
 	}
 
+	int oldY = m_Y;
 	std::wstring& y = (std::wstring&)parser.ReadString(section, L"Y", L"0");
 	if (!y.empty())
 	{
@@ -311,7 +313,13 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_H = parser.ReadInt(section, L"H", 1);
 	m_HDefined = parser.GetLastValueDefined();
 
+	bool oldHidden = m_Hidden;
 	m_Hidden = 0!=parser.ReadInt(section, L"Hidden", 0);
+
+	if (oldX != m_X || oldY != m_Y || oldHidden != m_Hidden)
+	{
+		m_MeterWindow->SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
+	}
 
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
 
