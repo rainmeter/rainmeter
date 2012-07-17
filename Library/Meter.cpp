@@ -149,6 +149,28 @@ int CMeter::GetY(bool abs)
 	return m_Y;
 }
 
+void CMeter::SetX(int x)
+{
+	m_X = x;
+	m_RelativeX = POSITION_ABSOLUTE;
+
+	// Change the option as well to avoid reset in ReadOptions().
+	WCHAR buffer[32];
+	_itow_s(x, buffer, 10);
+	m_MeterWindow->GetParser().SetValue(m_Name, L"X", buffer);
+}
+
+void CMeter::SetY(int y)
+{
+	m_Y = y;
+	m_RelativeY = POSITION_ABSOLUTE;
+
+	// Change the option as well to avoid reset in ReadOptions().
+	WCHAR buffer[32];
+	_itow_s(y, buffer, 10);
+	m_MeterWindow->GetParser().SetValue(m_Name, L"Y", buffer);
+}
+
 /*
 ** Returns a RECT containing the dimensions of the meter within the MeterWindow
 **
@@ -186,6 +208,9 @@ void CMeter::Show()
 {
 	m_Hidden = false;
 
+	// Change the option as well to avoid reset in ReadOptions().
+	m_MeterWindow->GetParser().SetValue(m_Name, L"Hidden", L"0");
+
 	if (m_ToolTipHandle != NULL)
 	{
 		if (!m_ToolTipHidden)
@@ -202,6 +227,9 @@ void CMeter::Show()
 void CMeter::Hide()
 {
 	m_Hidden = true;
+
+	// Change the option as well to avoid reset in ReadOptions().
+	m_MeterWindow->GetParser().SetValue(m_Name, L"Hidden", L"1");
 
 	if (m_ToolTipHandle != NULL)
 	{
@@ -223,70 +251,58 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		parser.SetStyleTemplate(style);
 	}
 
-	std::wstring oldStyleX = m_StyleX;
-	std::wstring oldStyleY = m_StyleY;
-	std::wstring oldStyleHidden = m_StyleHidden;
-
-	std::wstring coord = parser.ReadString(section, L"X", L"0");
-	m_StyleX = parser.GetLastUsedStyle();
-	if (!m_Initialized || parser.GetLastReplaced() || wcscmp(m_StyleX.c_str(), oldStyleX.c_str()) != 0)
+	std::wstring& x = (std::wstring&)parser.ReadString(section, L"X", L"0");
+	if (!x.empty())
 	{
-		if (!coord.empty())
+		WCHAR lastChar = x[x.size() - 1];
+		if (lastChar == L'r')
 		{
-			WCHAR lastChar = coord[coord.size() - 1];
-			if (lastChar == L'r')
-			{
-				m_RelativeX = POSITION_RELATIVE_TL;
-				coord.pop_back();
-			}
-			else if (lastChar == L'R')
-			{
-				m_RelativeX = POSITION_RELATIVE_BR;
-				coord.pop_back();
-			}
-			else
-			{
-				m_RelativeX = POSITION_ABSOLUTE;
-			}
-
-			m_X = parser.ParseInt(coord.c_str(), 0);
+			m_RelativeX = POSITION_RELATIVE_TL;
+			x.pop_back();
+		}
+		else if (lastChar == L'R')
+		{
+			m_RelativeX = POSITION_RELATIVE_BR;
+			x.pop_back();
 		}
 		else
 		{
-			m_X = 0;
 			m_RelativeX = POSITION_ABSOLUTE;
 		}
+
+		m_X = parser.ParseInt(x.c_str(), 0);
+	}
+	else
+	{
+		m_X = 0;
+		m_RelativeX = POSITION_ABSOLUTE;
 	}
 
-	coord = parser.ReadString(section, L"Y", L"0");
-	m_StyleY = parser.GetLastUsedStyle();
-	if (!m_Initialized || parser.GetLastReplaced() || wcscmp(m_StyleY.c_str(), oldStyleY.c_str()) != 0)
+	std::wstring& y = (std::wstring&)parser.ReadString(section, L"Y", L"0");
+	if (!y.empty())
 	{
-		if (!coord.empty())
+		WCHAR lastChar = y[y.size() - 1];
+		if (lastChar == L'r')
 		{
-			WCHAR lastChar = coord[coord.size() - 1];
-			if (lastChar == L'r')
-			{
-				m_RelativeY = POSITION_RELATIVE_TL;
-				coord.pop_back();
-			}
-			else if (lastChar == L'R')
-			{
-				m_RelativeY = POSITION_RELATIVE_BR;
-				coord.pop_back();
-			}
-			else
-			{
-				m_RelativeY = POSITION_ABSOLUTE;
-			}
-
-			m_Y = parser.ParseInt(coord.c_str(), 0);
+			m_RelativeY = POSITION_RELATIVE_TL;
+			y.pop_back();
+		}
+		else if (lastChar == L'R')
+		{
+			m_RelativeY = POSITION_RELATIVE_BR;
+			y.pop_back();
 		}
 		else
 		{
-			m_Y = 0;
 			m_RelativeY = POSITION_ABSOLUTE;
 		}
+
+		m_Y = parser.ParseInt(y.c_str(), 0);
+	}
+	else
+	{
+		m_Y = 0;
+		m_RelativeY = POSITION_ABSOLUTE;
 	}
 
 	m_W = parser.ReadInt(section, L"W", 1);
@@ -295,12 +311,7 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_H = parser.ReadInt(section, L"H", 1);
 	m_HDefined = parser.GetLastValueDefined();
 
-	const std::wstring& hidden = parser.ReadString(section, L"Hidden", L"0");
-	m_StyleHidden = parser.GetLastUsedStyle();
-	if (!m_Initialized || parser.GetLastReplaced() || wcscmp(m_StyleHidden.c_str(), oldStyleHidden.c_str()) != 0)
-	{
-		m_Hidden = 0!=parser.ParseInt(hidden.c_str(), 0);
-	}
+	m_Hidden = 0!=parser.ReadInt(section, L"Hidden", 0);
 
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
 

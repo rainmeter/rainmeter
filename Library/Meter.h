@@ -58,8 +58,8 @@ public:
 
 	void SetW(int w) { m_W = w; }
 	void SetH(int h) { m_H = h; }
-	void SetX(int x) { m_X = x; m_RelativeX = POSITION_ABSOLUTE; }
-	void SetY(int y) { m_Y = y; m_RelativeY = POSITION_ABSOLUTE; }
+	void SetX(int x);
+	void SetY(int y);
 
 	const CMouse& GetMouse() { return m_Mouse; }
 	bool HasMouseAction() { return m_HasMouseAction; }
@@ -137,10 +137,6 @@ protected:
 	bool m_DynamicVariables;
 
 	Gdiplus::Matrix* m_Transformation;
-
-	std::wstring m_StyleX;
-	std::wstring m_StyleY;
-	std::wstring m_StyleHidden;
 
 	std::wstring m_ToolTipText;
 	std::wstring m_ToolTipTitle;
