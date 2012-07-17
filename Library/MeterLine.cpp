@@ -469,7 +469,7 @@ bool CMeterLine::Draw(Graphics& graphics)
 */
 void CMeterLine::BindMeasures(CConfigParser& parser, const WCHAR* section)
 {
-	if (BindPrimaryMeasure(parser, section, true))
+	if (BindPrimaryMeasure(parser, section, false))
 	{
 		BindSecondaryMeasures(parser, section);
 	}

@@ -447,6 +447,12 @@ bool CMeter::Update()
 */
 bool CMeter::BindPrimaryMeasure(CConfigParser& parser, const WCHAR* section, bool optional)
 {
+	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
+	if (!style.empty())
+	{
+		parser.SetStyleTemplate(style);
+	}
+
 	const std::wstring& measureName = parser.ReadString(section, L"MeasureName", L"");
 
 	// The meter is not bound to anything

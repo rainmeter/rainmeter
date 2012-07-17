@@ -653,7 +653,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 */
 void CMeterHistogram::BindMeasures(CConfigParser& parser, const WCHAR* section)
 {
-	if (BindPrimaryMeasure(parser, section, true))
+	if (BindPrimaryMeasure(parser, section, false))
 	{
 		const std::wstring* secondaryMeasure = &parser.ReadString(section, L"MeasureName2", L"");
 		if (secondaryMeasure->empty())
