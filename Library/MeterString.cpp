@@ -319,12 +319,6 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	CMeter::ReadOptions(parser, section);
 
-	// Check for extra measures
-	if (!m_Initialized && !m_MeasureName.empty())
-	{
-		ReadMeasureNames(parser, section, m_MeasureNames);
-	}
-
 	m_Color = parser.ReadColor(section, L"FontColor", Color::Black);
 	m_EffectColor = parser.ReadColor(section, L"FontEffectColor", Color::Black);
 
@@ -494,13 +488,9 @@ bool CMeterString::Update()
 {
 	if (CMeter::Update())
 	{
-		std::vector<std::wstring> stringValues;
-
 		int decimals = (m_NumOfDecimals != -1) ? m_NumOfDecimals : (m_NoDecimals && (m_Percentual || m_AutoScale == AUTOSCALE_OFF)) ? 0 : 1;
 
-		if (m_Measure) stringValues.push_back(m_Measure->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
-
-		// Get the values for the other measures
+		std::vector<std::wstring> stringValues;
 		std::vector<CMeasure*>::const_iterator iter = m_Measures.begin();
 		for ( ; iter != m_Measures.end(); ++iter)
 		{
@@ -716,37 +706,12 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 ** Overridden method. The string meters need not to be bound on anything
 **
 */
-void CMeterString::BindMeasure(const std::list<CMeasure*>& measures)
+void CMeterString::BindMeasures(CConfigParser& parser, const WCHAR* section)
 {
-	if (m_MeasureName.empty()) return;	// Allow NULL measure binding
-
-	CMeter::BindMeasure(measures);
-
-	std::vector<std::wstring>::const_iterator j = m_MeasureNames.begin();
-	for (; j != m_MeasureNames.end(); ++j)
+	if (BindPrimaryMeasure(parser, section, true))
 	{
-		// Go through the list and check it there is a secondary measures for us
-		const WCHAR* name = (*j).c_str();
-		std::list<CMeasure*>::const_iterator i = measures.begin();
-		for ( ; i != measures.end(); ++i)
-		{
-			if (_wcsicmp((*i)->GetName(), name) == 0)
-			{
-				m_Measures.push_back(*i);
-				break;
-			}
-		}
-
-		if (i == measures.end())
-		{
-			std::wstring error = L"The meter [" + m_Name;
-			error += L"] cannot be bound with [";
-			error += (*j);
-			error += L"]";
-			throw CError(error);
-		}
+		BindSecondaryMeasures(parser, section);
 	}
-	CMeter::SetAllMeasures(m_Measures);
 }
 
 /*

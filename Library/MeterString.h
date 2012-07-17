@@ -38,7 +38,6 @@ public:
 	virtual bool Update();
 	void SetText(const WCHAR* text) { m_Text = text; }
 	virtual bool Draw(Gdiplus::Graphics& graphics);
-	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 	Gdiplus::RectF GetRect() { return m_Rect; }
 
 	static void FreeFontCache(Gdiplus::PrivateFontCollection* collection = NULL);
@@ -46,6 +45,7 @@ public:
 
 protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
 
 private:
 	enum TEXTSTYLE
@@ -96,9 +96,6 @@ private:
 	Gdiplus::RectF m_Rect;
 
 	std::wstring m_String;
-
-	std::vector<std::wstring> m_MeasureNames;
-	std::vector<CMeasure*> m_Measures;
 
 	static std::wstring FontFaceToString(const std::wstring& fontFace, Gdiplus::PrivateFontCollection* collection);
 	static std::wstring FontPropertiesToString(Gdiplus::REAL size, Gdiplus::FontStyle style);

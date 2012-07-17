@@ -55,7 +55,7 @@ void CMeterImage::Initialize()
 {
 	CMeter::Initialize();
 
-	if (!m_Measure && !m_DynamicVariables && !m_ImageName.empty())
+	if (m_Measures.empty() && !m_DynamicVariables && !m_ImageName.empty())
 	{
 		m_ImageNameResult = m_Path;
 		m_ImageNameResult += m_ImageName;
@@ -110,12 +110,6 @@ void CMeterImage::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	CMeter::ReadOptions(parser, section);
 
-	// Check for extra measures
-	if (!m_Initialized && !m_MeasureName.empty())
-	{
-		ReadMeasureNames(parser, section, m_MeasureNames);
-	}
-
 	m_Path = parser.ReadString(section, L"Path", L"");
 	if (!m_Path.empty())
 	{
@@ -136,8 +130,7 @@ void CMeterImage::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	// Read tinting options
 	m_Image.ReadOptions(parser, section);
 
-	if (m_Initialized &&
-		!m_Measure && !m_DynamicVariables)
+	if (m_Initialized && m_Measures.empty() && !m_DynamicVariables)
 	{
 		Initialize();
 		m_NeedsRedraw = true;
@@ -152,14 +145,14 @@ bool CMeterImage::Update()
 {
 	if (CMeter::Update())
 	{
-		if (m_Measure || m_DynamicVariables)
+		if (!m_Measures.empty() || m_DynamicVariables)
 		{
 			// Store the current values so we know if the image needs to be updated
 			std::wstring oldResult = m_ImageNameResult;
 
-			if (m_Measure)  // read from the measures
+			if (!m_Measures.empty())  // read from the measures
 			{
-				std::wstring val = m_Measure->GetStringValue(AUTOSCALE_OFF, 1, 0, false);
+				std::wstring val = m_Measures[0]->GetStringValue(AUTOSCALE_OFF, 1, 0, false);
 
 				if (m_ImageName.empty())
 				{
@@ -346,35 +339,10 @@ bool CMeterImage::Draw(Graphics& graphics)
 ** Overridden method. The Image meters need not to be bound on anything
 **
 */
-void CMeterImage::BindMeasure(const std::list<CMeasure*>& measures)
+void CMeterImage::BindMeasures(CConfigParser& parser, const WCHAR* section)
 {
-	if (m_MeasureName.empty()) return;	// Allow NULL measure binding
-
-	CMeter::BindMeasure(measures);
-
-	std::vector<std::wstring>::const_iterator j = m_MeasureNames.begin();
-	for (; j != m_MeasureNames.end(); ++j)
+	if (BindPrimaryMeasure(parser, section, true))
 	{
-		// Go through the list and check it there is a secondary measures for us
-		const WCHAR* name = (*j).c_str();
-		std::list<CMeasure*>::const_iterator i = measures.begin();
-		for ( ; i != measures.end(); ++i)
-		{
-			if (_wcsicmp((*i)->GetName(), name) == 0)
-			{
-				m_Measures.push_back(*i);
-				break;
-			}
-		}
-
-		if (i == measures.end())
-		{
-			std::wstring error = L"The meter [" + m_Name;
-			error += L"] cannot be bound with [";
-			error += (*j);
-			error += L']';
-			throw CError(error);
-		}
+		BindSecondaryMeasures(parser, section);
 	}
-	CMeter::SetAllMeasures(m_Measures);
 }

@@ -33,10 +33,10 @@ public:
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
-	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 
 protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
 
 private:
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
@@ -53,7 +53,6 @@ private:
 	RECT m_ScaleMargins;
 
 	std::vector<std::wstring> m_MeasureNames;
-	std::vector<CMeasure*> m_Measures;
 };
 
 #endif

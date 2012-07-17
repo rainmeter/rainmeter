@@ -148,9 +148,9 @@ void CMeterBar::ReadOptions(CConfigParser& parser, const WCHAR* section)
 */
 bool CMeterBar::Update()
 {
-	if (CMeter::Update() && m_Measure)
+	if (CMeter::Update() && !m_Measures.empty())
 	{
-		m_Value = m_Measure->GetRelativeValue();
+		m_Value = m_Measures[0]->GetRelativeValue();
 		return true;
 	}
 	return false;

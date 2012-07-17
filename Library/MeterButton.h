@@ -35,7 +35,6 @@ public:
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
-	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 
 	bool MouseMove(POINT pos);
 	bool MouseUp(POINT pos, bool execute);
@@ -45,6 +44,7 @@ public:
 
 protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
 
 private:
 	bool HitTest2(int px, int py, bool checkAlpha);

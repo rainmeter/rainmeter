@@ -227,9 +227,10 @@ void CMeterBitmap::ReadOptions(CConfigParser& parser, const WCHAR* section)
 */
 bool CMeterBitmap::Update()
 {
-	if (CMeter::Update() && m_Measure)
+	if (CMeter::Update() && !m_Measures.empty())
 	{
-		double value = (m_Extend) ? m_Measure->GetValue() : m_Measure->GetRelativeValue();
+		CMeasure* measure = m_Measures[0];
+		double value = (m_Extend) ? measure->GetValue() : measure->GetRelativeValue();
 
 		if (m_TransitionFrameCount > 0)
 		{

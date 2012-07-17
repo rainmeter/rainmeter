@@ -137,15 +137,6 @@ void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		}
 
 		m_ScaleValues.push_back(parser.ReadFloat(section, tmpName, 1.0));
-
-		if (!m_Initialized && !m_MeasureName.empty())
-		{
-			if (i != 0)
-			{
-				_snwprintf_s(tmpName, _TRUNCATE, L"MeasureName%i", i + 1);
-				m_MeasureNames.push_back(parser.ReadString(section, tmpName, L""));
-			}
-		}
 	}
 
 	m_Flip = 0!=parser.ReadInt(section, L"Flip", 0);
@@ -218,21 +209,13 @@ void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 */
 bool CMeterLine::Update()
 {
-	if (CMeter::Update() && m_Measure)
+	if (CMeter::Update() && !m_Measures.empty())
 	{
 		int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
 
 		if (maxSize > 0)
 		{
-			// Collect the values
-			if (!m_Measure->IsDisabled())
-			{
-				double value = m_Measure->GetValue();
-
-				m_AllValues[0][m_CurrentPos] = value;
-			}
-
-			int counter = 1;
+			int counter = 0;
 			std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
 			for ( ; i != m_Measures.end(); ++i)
 			{
@@ -296,9 +279,9 @@ bool CMeterLine::Draw(Graphics& graphics)
 	}
 	else
 	{
-		if (m_Measure)
+		if (!m_Measures.empty())
 		{
-			maxValue = m_Measure->GetMaxValue();
+			double maxValue = m_Measures[0]->GetMaxValue();
 
 			std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
 			for (; i != m_Measures.end(); ++i)
@@ -484,33 +467,10 @@ bool CMeterLine::Draw(Graphics& graphics)
 ** Overwritten method to handle the other measure bindings.
 **
 */
-void CMeterLine::BindMeasure(const std::list<CMeasure*>& measures)
+void CMeterLine::BindMeasures(CConfigParser& parser, const WCHAR* section)
 {
-	CMeter::BindMeasure(measures);
-
-	std::vector<std::wstring>::const_iterator j = m_MeasureNames.begin();
-	for (; j != m_MeasureNames.end(); ++j)
+	if (BindPrimaryMeasure(parser, section, true))
 	{
-		// Go through the list and check it there is a secondary measure for us
-		const WCHAR* name = (*j).c_str();
-		std::list<CMeasure*>::const_iterator i = measures.begin();
-		for ( ; i != measures.end(); ++i)
-		{
-			if (_wcsicmp((*i)->GetName(), name) == 0)
-			{
-				m_Measures.push_back(*i);
-				break;
-			}
-		}
-
-		if (i == measures.end())
-		{
-			std::wstring error = L"The meter [" + m_Name;
-			error += L"] cannot be bound with [";
-			error += (*j);
-			error += L']';
-			throw CError(error);
-		}
+		BindSecondaryMeasures(parser, section);
 	}
-	CMeter::SetAllMeasures(m_Measures);
 }

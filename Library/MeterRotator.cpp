@@ -122,17 +122,18 @@ void CMeterRotator::ReadOptions(CConfigParser& parser, const WCHAR* section)
 */
 bool CMeterRotator::Update()
 {
-	if (CMeter::Update() && m_Measure)
+	if (CMeter::Update() && !m_Measures.empty())
 	{
+		CMeasure* measure = m_Measures[0];
 		if (m_ValueRemainder > 0)
 		{
-			LONGLONG time = (LONGLONG)m_Measure->GetValue();
+			LONGLONG time = (LONGLONG)measure->GetValue();
 			m_Value = (double)(time % m_ValueRemainder);
 			m_Value /= (double)m_ValueRemainder;
 		}
 		else
 		{
-			m_Value = m_Measure->GetRelativeValue();
+			m_Value = measure->GetRelativeValue();
 		}
 		return true;
 	}

@@ -40,7 +40,6 @@ extern CRainmeter* Rainmeter;
 **
 */
 CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(meterWindow), m_Name(name),
-	m_Measure(),
 	m_X(),
 	m_Y(),
 	m_W(),
@@ -339,11 +338,6 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		m_Hidden = 0!=parser.ParseInt(hidden.c_str(), 0);
 	}
 
-	if (!m_Initialized)
-	{
-		m_MeasureName = parser.ReadString(section, L"MeasureName", L"");
-	}
-
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
 
 	m_SolidColor = parser.ReadColor(section, L"SolidColor", Color::MakeARGB(0, 0, 0, 0));
@@ -404,34 +398,9 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** several meters but one meter and only be bound to one measure.
 **
 */
-void CMeter::BindMeasure(const std::list<CMeasure*>& measures)
+void CMeter::BindMeasures(CConfigParser& parser, const WCHAR* section)
 {
-	// The meter is not bound to anything
-	if (m_MeasureName.empty())
-	{
-		std::wstring error = L"The meter [" + m_Name;
-		error += L"] is unbound";
-		throw CError(error);
-	}
-
-	// Go through the list and check it there is a measure for us
-	const WCHAR* measure = m_MeasureName.c_str();
-	std::list<CMeasure*>::const_iterator i = measures.begin();
-	for ( ; i != measures.end(); ++i)
-	{
-		if (_wcsicmp((*i)->GetName(), measure) == 0)
-		{
-			m_Measure = (*i);
-			return;
-		}
-	}
-
-	// Error :)
-	std::wstring error = L"The meter [" + m_Name;
-	error += L"] cannot be bound with [";
-	error += m_MeasureName;
-	error += L']';
-	throw CError(error);
+	BindPrimaryMeasure(parser, section, false);
 }
 
 /*
@@ -498,56 +467,61 @@ bool CMeter::Update()
 }
 
 /*
-** Creates a vector containing all the defined measures (for Histogram)
+** Reads and binds the primary MeasureName.
+**
 */
-void CMeter::SetAllMeasures(CMeasure* measure)
+bool CMeter::BindPrimaryMeasure(CConfigParser& parser, const WCHAR* section, bool optional)
 {
-	m_AllMeasures.clear();
-	m_AllMeasures.reserve(2);
-	m_AllMeasures.push_back(m_Measure);
-	m_AllMeasures.push_back(measure);
+	const std::wstring& measureName = parser.ReadString(section, L"MeasureName", L"");
+
+	// The meter is not bound to anything
+	CMeasure* measure = parser.GetMeasure(measureName);
+	if (measure)
+	{
+		m_Measures.push_back(measure);
+		return true;
+	}
+	else if (!optional)
+	{
+		LogWithArgs(LOG_ERROR, L"MeasureName=%s is not valid in [%s]", measureName.c_str(), section);
+	}
+
+	return false;
 }
 
 /*
-** Creates a vector containing all the defined measures (for Image/Line/String)
+** Reads and binds secondary measures (MeasureName2 - MeasureNameN).
+**
 */
-void CMeter::SetAllMeasures(const std::vector<CMeasure*>& measures)
+void CMeter::BindSecondaryMeasures(CConfigParser& parser, const WCHAR* section)
 {
-	m_AllMeasures.clear();
-	m_AllMeasures.reserve(1 + measures.size());
-	m_AllMeasures.push_back(m_Measure);
-
-	std::vector<CMeasure*>::const_iterator i = measures.begin();
-	for ( ; i != measures.end(); ++i)
+	if (!m_Measures.empty())
 	{
-		m_AllMeasures.push_back(*i);
-	}
-}
+		WCHAR tmpName[64];
 
-/*
-** Reads measure names (MeasureName2 - MeasureName[N])
-*/
-void CMeter::ReadMeasureNames(CConfigParser& parser, const WCHAR* section, std::vector<std::wstring>& measureNames)
-{
-	WCHAR tmpName[64];
+		int i = 2;
+		do
+		{
+			_snwprintf_s(tmpName, _TRUNCATE, L"MeasureName%i", i);
+			const std::wstring& measureName = parser.ReadString(section, tmpName, L"");
+			CMeasure* measure = parser.GetMeasure(measureName);
+			if (measure)
+			{
+				m_Measures.push_back(measure);
+			}
+			else
+			{
+				if (!measureName.empty())
+				{
+					LogWithArgs(LOG_ERROR, L"MeasureName%i=%s is not valid in [%s]", i, measureName.c_str(), section);
+				}
 
-	int i = 2;
-	bool loop = true;
-	do
-	{
-		_snwprintf_s(tmpName, _TRUNCATE, L"MeasureName%i", i);
-		const std::wstring& measure = parser.ReadString(section, tmpName, L"");
-		if (!measure.empty())
-		{
-			measureNames.push_back(measure);
+				break;
+			}
+			++i;
 		}
-		else
-		{
-			loop = false;
-		}
-		++i;
+		while (true);
 	}
-	while(loop);
 }
 
 /*
@@ -590,26 +564,15 @@ void CMeter::ReplaceToolTipMeasures(std::wstring& str)
 {
 	std::vector<std::wstring> stringValues;
 
-	if (!m_AllMeasures.empty())
+	if (!m_Measures.empty())
 	{
 		// Get the values for the measures
-		std::vector<CMeasure*>::const_iterator iter = m_AllMeasures.begin();
-		for ( ; iter != m_AllMeasures.end(); ++iter)
+		std::vector<CMeasure*>::const_iterator iter = m_Measures.begin();
+		for ( ; iter != m_Measures.end(); ++iter)
 		{
 			stringValues.push_back((*iter)->GetStringValue(AUTOSCALE_ON, 1, 0, false));
 		}
-	}
-	else if (m_Measure != NULL)
-	{
-		stringValues.push_back(m_Measure->GetStringValue(AUTOSCALE_ON, 1, 0, false));
-	}
-	else
-	{
-		return;
-	}
 
-	if (!stringValues.empty())
-	{
 		ReplaceMeasures(stringValues, str);
 	}
 }

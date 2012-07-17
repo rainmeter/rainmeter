@@ -35,7 +35,6 @@ CTintedImageHelper_DefineOptionArray(CMeterHistogram::c_BothOptionArray, L"Both"
 **
 */
 CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
-	m_SecondaryMeasure(),
 	m_PrimaryColor(Color::Green),
 	m_SecondaryColor(Color::Red),
 	m_OverlapColor(Color::Yellow),
@@ -95,8 +94,10 @@ void CMeterHistogram::Initialize()
 {
 	CMeter::Initialize();
 
+	CMeasure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
+
 	// A sanity check
-	if (m_SecondaryMeasure && !m_PrimaryImageName.empty() && (m_OverlapImageName.empty() || m_SecondaryImageName.empty()))
+	if (secondaryMeasure && !m_PrimaryImageName.empty() && (m_OverlapImageName.empty() || m_SecondaryImageName.empty()))
 	{
 		Log(LOG_WARNING, L"Histogram: SecondaryImage and BothImage not defined");
 
@@ -168,7 +169,7 @@ void CMeterHistogram::Initialize()
 		{
 			int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
 			m_PrimaryValues = new double[maxSize]();
-			if (m_SecondaryMeasure)
+			if (secondaryMeasure)
 			{
 				m_SecondaryValues = new double[maxSize]();
 			}
@@ -196,15 +197,6 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_PrimaryColor = parser.ReadColor(section, L"PrimaryColor", Color::Green);
 	m_SecondaryColor = parser.ReadColor(section, L"SecondaryColor", Color::Red);
 	m_OverlapColor = parser.ReadColor(section, L"BothColor", Color::Yellow);
-
-	if (!m_Initialized && !m_MeasureName.empty())
-	{
-		m_SecondaryMeasureName = parser.ReadString(section, L"MeasureName2", L"");
-		if (m_SecondaryMeasureName.empty())
-		{
-			m_SecondaryMeasureName = parser.ReadString(section, L"SecondaryMeasureName", L"");
-		}
-	}
 
 	m_PrimaryImageName = parser.ReadString(section, L"PrimaryImage", L"");
 	if (!m_PrimaryImageName.empty())
@@ -307,7 +299,7 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 			if (m_W > 0)
 			{
 				m_PrimaryValues = new double[m_W]();
-				if (m_SecondaryMeasure)
+				if (m_Measures.size() >= 2)
 				{
 					m_SecondaryValues = new double[m_W]();
 				}
@@ -330,7 +322,7 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 			if (m_H > 0)
 			{
 				m_PrimaryValues = new double[m_H]();
-				if (m_SecondaryMeasure)
+				if (m_Measures.size() >= 2)
 				{
 					m_SecondaryValues = new double[m_H]();
 				}
@@ -353,28 +345,31 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 */
 bool CMeterHistogram::Update()
 {
-	if (CMeter::Update() && m_Measure && m_PrimaryValues)
+	if (CMeter::Update() && !m_Measures.empty() && m_PrimaryValues)
 	{
-		// Gather values
-		m_PrimaryValues[m_MeterPos] = m_Measure->GetValue();
+		CMeasure* measure = m_Measures[0];
+		CMeasure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
 
-		if (m_SecondaryMeasure && m_SecondaryValues)
+		// Gather values
+		m_PrimaryValues[m_MeterPos] = measure->GetValue();
+
+		if (secondaryMeasure && m_SecondaryValues)
 		{
-			m_SecondaryValues[m_MeterPos] = m_SecondaryMeasure->GetValue();
+			m_SecondaryValues[m_MeterPos] = secondaryMeasure->GetValue();
 		}
 
 		++m_MeterPos;
 		int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
 		m_MeterPos %= maxSize;
 		
-		m_MaxPrimaryValue = m_Measure->GetMaxValue();
-		m_MinPrimaryValue = m_Measure->GetMinValue();
+		m_MaxPrimaryValue = measure->GetMaxValue();
+		m_MinPrimaryValue = measure->GetMinValue();
 		m_MaxSecondaryValue = 0.0;
 		m_MinSecondaryValue = 0.0;
-		if (m_SecondaryMeasure)
+		if (secondaryMeasure)
 		{
-			m_MaxSecondaryValue = m_SecondaryMeasure->GetMaxValue();
-			m_MinSecondaryValue = m_SecondaryMeasure->GetMinValue();
+			m_MaxSecondaryValue = secondaryMeasure->GetMaxValue();
+			m_MinSecondaryValue = secondaryMeasure->GetMinValue();
 		}
 
 		if (m_Autoscale)
@@ -401,7 +396,7 @@ bool CMeterHistogram::Update()
 				}
 			}
 
-			if (m_SecondaryMeasure && m_SecondaryValues)
+			if (secondaryMeasure && m_SecondaryValues)
 			{
 				for (int i = 0; i < maxSize; ++i)
 				{
@@ -435,8 +430,10 @@ bool CMeterHistogram::Update()
 bool CMeterHistogram::Draw(Graphics& graphics)
 {
 	if (!CMeter::Draw(graphics) ||
-		(m_Measure && !m_PrimaryValues) ||
-		(m_SecondaryMeasure && !m_SecondaryValues)) return false;
+		(m_Measures.size() >= 1 && !m_PrimaryValues) ||
+		(m_Measures.size() >= 2 && !m_SecondaryValues)) return false;
+
+	CMeasure* secondaryMeasure = m_Measures[1];
 
 	GraphicsPath primaryPath;
 	GraphicsPath secondaryPath;
@@ -490,7 +487,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 			primaryBarHeight = min(m_W, primaryBarHeight);
 			primaryBarHeight = max(0, primaryBarHeight);
 
-			if (m_SecondaryMeasure)
+			if (secondaryMeasure)
 			{
 				value = (m_MaxSecondaryValue == 0.0) ?
 					  0.0
@@ -552,7 +549,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 			primaryBarHeight = min(m_H, primaryBarHeight);
 			primaryBarHeight = max(0, primaryBarHeight);
 
-			if (m_SecondaryMeasure)
+			if (secondaryMeasure)
 			{
 				value = (m_MaxSecondaryValue == 0.0) ?
 					  0.0
@@ -617,7 +614,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 		SolidBrush brush(m_PrimaryColor);
 		graphics.FillPath(&brush, &primaryPath);
 	}
-	if (m_SecondaryMeasure)
+	if (secondaryMeasure)
 	{
 		if (secondaryBitmap)
 		{
@@ -654,29 +651,25 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 ** Overwritten method to handle the secondary measure binding.
 **
 */
-void CMeterHistogram::BindMeasure(const std::list<CMeasure*>& measures)
+void CMeterHistogram::BindMeasures(CConfigParser& parser, const WCHAR* section)
 {
-	CMeter::BindMeasure(measures);
-
-	if (!m_SecondaryMeasureName.empty())
+	if (BindPrimaryMeasure(parser, section, true))
 	{
-		// Go through the list and check it there is a secondary measure for us
-		const WCHAR* name = m_SecondaryMeasureName.c_str();
-		std::list<CMeasure*>::const_iterator i = measures.begin();
-		for ( ; i != measures.end(); ++i)
+		const std::wstring* secondaryMeasure = &parser.ReadString(section, L"MeasureName2", L"");
+		if (secondaryMeasure->empty())
 		{
-			if (_wcsicmp((*i)->GetName(), name) == 0)
-			{
-				m_SecondaryMeasure = (*i);
-				CMeter::SetAllMeasures(m_SecondaryMeasure);
-				return;
-			}
+			// For backwards compatibility.
+			secondaryMeasure = &parser.ReadString(section, L"SecondaryMeasureName", L"");
 		}
 
-		std::wstring error = L"The meter [" + m_Name;
-		error += L"] cannot be bound with [";
-		error += m_SecondaryMeasureName;
-		error += L']';
-		throw CError(error);
+		CMeasure* measure = parser.GetMeasure(*secondaryMeasure);
+		if (measure)
+		{
+			m_Measures.push_back(measure);
+		}
+		else
+		{
+			LogWithArgs(LOG_ERROR, L"MeasureName%i=%s is not valid in [%s]", 2, secondaryMeasure->c_str(), section);
+		}
 	}
 }

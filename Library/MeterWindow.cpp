@@ -2225,14 +2225,7 @@ bool CMeterWindow::ReadSkin()
 		std::list<CMeter*>::const_iterator j = m_Meters.begin();
 		for ( ; j != m_Meters.end(); ++j)
 		{
-			try
-			{
-				(*j)->BindMeasure(m_Measures);
-			}
-			catch (CError& error)
-			{
-				LogError(error);
-			}
+			(*j)->BindMeasures(m_Parser);
 		}
 	}
 

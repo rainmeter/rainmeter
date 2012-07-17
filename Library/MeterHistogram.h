@@ -33,16 +33,14 @@ public:
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
-	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 
 protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
 
 private:
 	void DisposeBuffer();
 
-	std::wstring m_SecondaryMeasureName;
-	CMeasure* m_SecondaryMeasure;
 	Gdiplus::Color m_PrimaryColor;
 	Gdiplus::Color m_SecondaryColor;
 	Gdiplus::Color m_OverlapColor;

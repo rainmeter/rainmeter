@@ -39,11 +39,11 @@ public:
 	virtual UINT GetTypeID() = 0;
 
 	void ReadOptions(CConfigParser& parser) { ReadOptions(parser, GetName()); parser.ClearStyleTemplate(); }
+	void BindMeasures(CConfigParser& parser) { BindMeasures(parser, GetName()); }
 
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
-	virtual void BindMeasure(const std::list<CMeasure*>& measures);
 	virtual bool HasActiveTransition() { return false; }
 	
 	bool HasDynamicVariables() { return m_DynamicVariables; }
@@ -116,18 +116,16 @@ protected:
 	};
 
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
 
-	void SetAllMeasures(CMeasure* measure);
-	void SetAllMeasures(const std::vector<CMeasure*>& measures);
+	bool BindPrimaryMeasure(CConfigParser& parser, const WCHAR* section, bool optional);
+	void BindSecondaryMeasures(CConfigParser& parser, const WCHAR* section);
+
 	void ReplaceToolTipMeasures(std::wstring& str);
-
-	static void ReadMeasureNames(CConfigParser& parser, const WCHAR* section, std::vector<std::wstring>& measureNames);
 	static bool ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str);
 
 	const std::wstring m_Name;
-	std::wstring m_MeasureName;	// Name of bound measure
-	CMeasure* m_Measure;		// Pointer to bound measure
-	std::vector<CMeasure*> m_AllMeasures;
+	std::vector<CMeasure*> m_Measures;
 	int m_X;
 	int m_Y;
 	int m_W;
