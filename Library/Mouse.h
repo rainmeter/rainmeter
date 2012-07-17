@@ -56,6 +56,7 @@ public:
 
 	MOUSECURSOR GetCursorType() const { return m_CursorType; }
 	HCURSOR GetCursor() const;
+	bool GetCursorState() const {return m_CursorState; }
 
 	void DestroyCustomCursor();
 
@@ -88,6 +89,7 @@ private:
 
 	MOUSECURSOR m_CursorType;
 	HCURSOR m_CustomCursor;
+	bool m_CursorState;
 };
 
 #endif

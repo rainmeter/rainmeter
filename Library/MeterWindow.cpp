@@ -3158,7 +3158,7 @@ void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 
 		if (!cursor &&
 			((*j)->HasMouseAction() || button) &&
-			(*j)->GetMouse().GetCursorType() != MOUSECURSOR_ARROW &&
+			(*j)->GetMouse().GetCursorState() &&
 			(*j)->HitTest(pos.x, pos.y))
 		{
 			cursor = (*j)->GetMouse().GetCursor();

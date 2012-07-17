@@ -24,7 +24,8 @@
 
 CMouse::CMouse() :
 	m_CursorType(MOUSECURSOR_HAND),
-	m_CustomCursor()
+	m_CustomCursor(),
+	m_CursorState(true)
 {
 }
 
@@ -49,18 +50,14 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWind
 	m_OverAction = parser.ReadString(section, L"MouseOverAction", L"", false);
 	m_LeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);
 
-	const WCHAR* mouseCursor = parser.ReadString(section, L"MouseActionCursor", L"").c_str();
+	m_CursorState = 0!=parser.ReadInt(section, L"MouseActionCursor", meterWindow->GetMouse().GetCursorState());
 
-	// For backwards compatibility
-	int mouseCursorInt = (*mouseCursor == L'(') ? CConfigParser::ParseInt(mouseCursor, 0) : -1;
-
-	if (mouseCursorInt == 1 ||
-		_wcsicmp(mouseCursor, L"HAND") == 0)
+	const WCHAR* mouseCursor = parser.ReadString(section, L"MouseActionCursorName", L"").c_str();
+	if (_wcsicmp(mouseCursor, L"HAND") == 0)
 	{
 		m_CursorType = MOUSECURSOR_HAND;
 	}
-	else if (mouseCursorInt == 0 ||
-		_wcsicmp(mouseCursor, L"ARROW") == 0)
+	else if (_wcsicmp(mouseCursor, L"ARROW") == 0)
 	{
 		m_CursorType = MOUSECURSOR_ARROW;
 	}
@@ -91,10 +88,10 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWind
 	else
 	{
 		// Inherit from [Rainmeter].
-		m_CursorType = meterWindow->GetMouse().m_CursorType;
+		m_CursorType = meterWindow->GetMouse().GetCursorType();
 		if (m_CursorType == MOUSECURSOR_CUSTOM)
 		{
-			mouseCursor = meterWindow->GetParser().ReadString(L"Rainmeter", L"MouseActionCursor", L"").c_str();;
+			mouseCursor = meterWindow->GetParser().ReadString(L"Rainmeter", L"MouseActionCursorName", L"").c_str();
 		}
 	}
 
