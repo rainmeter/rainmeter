@@ -51,8 +51,6 @@ private:
 	bool m_Tile;
 
 	RECT m_ScaleMargins;
-
-	std::vector<std::wstring> m_MeasureNames;
 };
 
 #endif

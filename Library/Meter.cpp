@@ -51,7 +51,6 @@ CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(met
 	m_DynamicVariables(false),
 	m_Transformation(),
 	m_ToolTipWidth(),
-	m_ToolTipDelay(),
 	m_ToolTipType(false),
 	m_ToolTipHidden(meterWindow->GetMeterToolTipHidden()),
 	m_ToolTipHandle(),

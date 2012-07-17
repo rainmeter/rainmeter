@@ -146,7 +146,6 @@ protected:
 	std::wstring m_ToolTipTitle;
 	std::wstring m_ToolTipIcon;
 	unsigned int m_ToolTipWidth;
-	unsigned int m_ToolTipDelay;
 	bool m_ToolTipType;
 	bool m_ToolTipHidden;
 
