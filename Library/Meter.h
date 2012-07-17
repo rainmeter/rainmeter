@@ -26,6 +26,7 @@
 #include "Litestep.h"
 #include "ConfigParser.h"
 #include "MeterWindow.h"
+#include "Measure.h"
 #include "Group.h"
 
 class CMeasure;
@@ -121,8 +122,7 @@ protected:
 	bool BindPrimaryMeasure(CConfigParser& parser, const WCHAR* section, bool optional);
 	void BindSecondaryMeasures(CConfigParser& parser, const WCHAR* section);
 
-	void ReplaceToolTipMeasures(std::wstring& str);
-	static bool ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str);
+	bool ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale = AUTOSCALE_ON, double scale = 1.0, int decimals = 0, bool percentual = false);
 
 	const std::wstring m_Name;
 	std::vector<CMeasure*> m_Measures;

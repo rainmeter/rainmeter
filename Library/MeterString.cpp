@@ -490,27 +490,20 @@ bool CMeterString::Update()
 	{
 		int decimals = (m_NumOfDecimals != -1) ? m_NumOfDecimals : (m_NoDecimals && (m_Percentual || m_AutoScale == AUTOSCALE_OFF)) ? 0 : 1;
 
-		std::vector<std::wstring> stringValues;
-		std::vector<CMeasure*>::const_iterator iter = m_Measures.begin();
-		for ( ; iter != m_Measures.end(); ++iter)
-		{
-			stringValues.push_back((*iter)->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual));
-		}
-
 		// Create the text
 		m_String = m_Prefix;
-		if (m_Text.empty())
+		if (!m_Measures.empty())
 		{
-			if (!stringValues.empty())
+			if (m_Text.empty())
 			{
-				m_String += stringValues[0];
+				m_String += m_Measures[0]->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual);
 			}
-		}
-		else if (!stringValues.empty())
-		{
-			std::wstring tmpText = m_Text;
-			ReplaceMeasures(stringValues, tmpText);
-			m_String += tmpText;
+			else
+			{
+				std::wstring tmpText = m_Text;
+				ReplaceMeasures(tmpText, m_AutoScale, m_Scale, decimals, m_Percentual);
+				m_String += tmpText;
+			}
 		}
 		else
 		{

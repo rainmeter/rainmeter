@@ -525,9 +525,10 @@ void CMeter::BindSecondaryMeasures(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Replaces %1, %2 etc with the corresponding measure value
+** Replaces %1, %2, ... with the corresponding measure value.
+**
 */
-bool CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std::wstring& str)
+bool CMeter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	bool replaced = false;
 
@@ -535,18 +536,21 @@ bool CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std:
 	{
 		WCHAR buffer[64];
 
-		// Create the actual text (i.e. replace %1, %2, .. with the measure texts)
-		for (size_t i = stringValues.size(); i > 0; --i)
+		for (size_t i = m_Measures.size(); i > 0; --i)
 		{
 			size_t len = _snwprintf_s(buffer, _TRUNCATE, L"%%%i", (int)i);
 			size_t start = 0, pos;
+
+			const WCHAR* measureValue = m_Measures[i - 1]->GetStringValue(autoScale, scale, decimals, percentual);
+			int measureValueLen = wcslen(measureValue);
+
 			do
 			{
 				pos = str.find(buffer, start, len);
 				if (pos != std::wstring::npos)
 				{
-					str.replace(pos, len, stringValues[i - 1]);
-					start = pos + stringValues[i - 1].length();
+					str.replace(pos, len, measureValue, measureValueLen);
+					start = pos + measureValueLen;
 					replaced = true;
 				}
 			}
@@ -555,26 +559,6 @@ bool CMeter::ReplaceMeasures(const std::vector<std::wstring>& stringValues, std:
 	}
 
 	return replaced;
-}
-
-/*
-** Replaces %1, %2 etc with the corresponding measure value
-*/
-void CMeter::ReplaceToolTipMeasures(std::wstring& str)
-{
-	std::vector<std::wstring> stringValues;
-
-	if (!m_Measures.empty())
-	{
-		// Get the values for the measures
-		std::vector<CMeasure*>::const_iterator iter = m_Measures.begin();
-		for ( ; iter != m_Measures.end(); ++iter)
-		{
-			stringValues.push_back((*iter)->GetStringValue(AUTOSCALE_ON, 1, 0, false));
-		}
-
-		ReplaceMeasures(stringValues, str);
-	}
 }
 
 /*
@@ -630,7 +614,7 @@ void CMeter::UpdateToolTip()
 	SendMessage(hwndTT, TTM_GETTOOLINFO, NULL, (LPARAM)&ti);
 
 	std::wstring text = m_ToolTipText;
-	ReplaceToolTipMeasures(text);
+	ReplaceMeasures(text);
 	ti.lpszText = (LPTSTR)text.c_str();
 	ti.rect = GetMeterRect();
 
@@ -673,7 +657,7 @@ void CMeter::UpdateToolTip()
 		}
 
 		text = m_ToolTipTitle;
-		ReplaceToolTipMeasures(text);
+		ReplaceMeasures(text);
 		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM)text.c_str());
 
 		if (destroy)

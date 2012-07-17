@@ -152,30 +152,17 @@ bool CMeterImage::Update()
 
 			if (!m_Measures.empty())  // read from the measures
 			{
-				std::wstring val = m_Measures[0]->GetStringValue(AUTOSCALE_OFF, 1, 0, false);
-
 				if (m_ImageName.empty())
 				{
-					m_ImageNameResult = val;
+					m_ImageNameResult = m_Measures[0]->GetStringValue(AUTOSCALE_OFF, 1, 0, false);
 				}
 				else
 				{
-					std::vector<std::wstring> stringValues;
-
-					stringValues.push_back(val);
-
-					// Get the values for the other measures
-					std::vector<CMeasure*>::const_iterator iter = m_Measures.begin();
-					for ( ; iter != m_Measures.end(); ++iter)
-					{
-						stringValues.push_back((*iter)->GetStringValue(AUTOSCALE_OFF, 1, 0, false));
-					}
-
 					m_ImageNameResult = m_ImageName;
-					if (!ReplaceMeasures(stringValues, m_ImageNameResult))
+					if (!ReplaceMeasures(m_ImageNameResult))
 					{
 						// ImageName doesn't contain any measures, so use the result of MeasureName.
-						m_ImageNameResult = val;
+						m_ImageNameResult = m_Measures[0]->GetStringValue(AUTOSCALE_OFF, 1, 0, false);
 					}
 				}
 			}
