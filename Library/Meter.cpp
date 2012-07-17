@@ -82,14 +82,31 @@ CMeter::~CMeter()
 }
 
 /*
-** Initializes the meter. The base implementation just stores the pointer.
-** Usually this method is overwritten by the inherited classes, which load
-** bitmaps and such things during initialization.
+** Initializes the meter. Usually this method is overwritten by the inherited
+** classes, which load bitmaps and such things during initialization.
 **
 */
 void CMeter::Initialize()
 {
 	m_Initialized = true;
+
+	if (!m_RelativeMeter)
+	{
+		const std::list<CMeter*>& meters = m_MeterWindow->GetMeters();
+		for (auto iter = meters.cbegin(); iter != meters.cend(); ++iter)
+		{
+			if (*iter == this)
+			{
+				if (iter != meters.begin())
+				{
+					--iter;
+					m_RelativeMeter = (*iter);
+				}
+
+				break;
+			}
+		}
+	}
 }
 
 /*
@@ -98,41 +115,15 @@ void CMeter::Initialize()
 */
 int CMeter::GetX(bool abs)
 {
-	if (m_RelativeX != POSITION_ABSOLUTE)
+	if (m_RelativeX != POSITION_ABSOLUTE && m_RelativeMeter)
 	{
-		if (m_RelativeMeter == NULL)
+		if (m_RelativeX == POSITION_RELATIVE_TL)
 		{
-			const std::list<CMeter*>& meters = m_MeterWindow->GetMeters();
-			std::list<CMeter*>::const_iterator iter = meters.begin();
-
-			// Find this meter
-			for ( ; iter != meters.end(); ++iter)
-			{
-				if (*iter == this && iter != meters.begin())
-				{
-					--iter;
-					m_RelativeMeter = (*iter);
-					if (m_RelativeX == POSITION_RELATIVE_TL)
-					{
-						return m_RelativeMeter->GetX(true) + m_X;
-					}
-					else
-					{
-						return m_RelativeMeter->GetX(true) + m_RelativeMeter->GetW() + m_X;
-					}
-				}
-			}
+			return m_RelativeMeter->GetX(true) + m_X;
 		}
 		else
 		{
-			if (m_RelativeX == POSITION_RELATIVE_TL)
-			{
-				return m_RelativeMeter->GetX(true) + m_X;
-			}
-			else
-			{
-				return m_RelativeMeter->GetX(true) + m_RelativeMeter->GetW() + m_X;
-			}
+			return m_RelativeMeter->GetX(true) + m_RelativeMeter->GetW() + m_X;
 		}
 	}
 	return m_X;
@@ -144,41 +135,15 @@ int CMeter::GetX(bool abs)
 */
 int CMeter::GetY(bool abs)
 {
-	if (m_RelativeY != POSITION_ABSOLUTE)
+	if (m_RelativeY != POSITION_ABSOLUTE && m_RelativeMeter)
 	{
-		if (m_RelativeMeter == NULL)
+		if (m_RelativeY == POSITION_RELATIVE_TL)
 		{
-			const std::list<CMeter*>& meters = m_MeterWindow->GetMeters();
-			std::list<CMeter*>::const_iterator iter = meters.begin();
-
-			// Find this meter
-			for ( ; iter != meters.end(); ++iter)
-			{
-				if (*iter == this && iter != meters.begin())
-				{
-					--iter;
-					m_RelativeMeter = (*iter);
-					if (m_RelativeY == POSITION_RELATIVE_TL)
-					{
-						return m_RelativeMeter->GetY() + m_Y;
-					}
-					else
-					{
-						return m_RelativeMeter->GetY() + m_RelativeMeter->GetH() + m_Y;
-					}
-				}
-			}
+			return m_RelativeMeter->GetY() + m_Y;
 		}
 		else
 		{
-			if (m_RelativeY == POSITION_RELATIVE_TL)
-			{
-				return m_RelativeMeter->GetY() + m_Y;
-			}
-			else
-			{
-				return m_RelativeMeter->GetY() + m_RelativeMeter->GetH() + m_Y;
-			}
+			return m_RelativeMeter->GetY() + m_RelativeMeter->GetH() + m_Y;
 		}
 	}
 	return m_Y;
@@ -268,16 +233,16 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	{
 		if (!coord.empty())
 		{
-			size_t len = coord.size();
-			if (coord[len - 1] == L'r')
+			WCHAR lastChar = coord[coord.size() - 1];
+			if (lastChar == L'r')
 			{
 				m_RelativeX = POSITION_RELATIVE_TL;
-				coord.erase(--len);
+				coord.pop_back();
 			}
-			else if (coord[len - 1] == L'R')
+			else if (lastChar == L'R')
 			{
 				m_RelativeX = POSITION_RELATIVE_BR;
-				coord.erase(--len);
+				coord.pop_back();
 			}
 			else
 			{
@@ -299,16 +264,16 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	{
 		if (!coord.empty())
 		{
-			size_t len = coord.size();
-			if (coord[len - 1] == L'r')
+			WCHAR lastChar = coord[coord.size() - 1];
+			if (lastChar == L'r')
 			{
-				m_RelativeY = POSITION_RELATIVE_TL;
-				coord.erase(--len);
+				m_RelativeX = POSITION_RELATIVE_TL;
+				coord.pop_back();
 			}
-			else if (coord[len - 1] == L'R')
+			else if (lastChar == L'R')
 			{
-				m_RelativeY = POSITION_RELATIVE_BR;
-				coord.erase(--len);
+				m_RelativeX = POSITION_RELATIVE_BR;
+				coord.pop_back();
 			}
 			else
 			{
