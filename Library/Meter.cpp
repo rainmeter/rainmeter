@@ -267,12 +267,12 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 			WCHAR lastChar = coord[coord.size() - 1];
 			if (lastChar == L'r')
 			{
-				m_RelativeX = POSITION_RELATIVE_TL;
+				m_RelativeY = POSITION_RELATIVE_TL;
 				coord.pop_back();
 			}
 			else if (lastChar == L'R')
 			{
-				m_RelativeX = POSITION_RELATIVE_BR;
+				m_RelativeY = POSITION_RELATIVE_BR;
 				coord.pop_back();
 			}
 			else
