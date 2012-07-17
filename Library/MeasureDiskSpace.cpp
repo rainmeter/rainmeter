@@ -43,6 +43,7 @@ CMeasureDiskSpace::CMeasureDiskSpace(CMeterWindow* meterWindow, const WCHAR* nam
 	m_Total(false),
 	m_Label(false),
 	m_IgnoreRemovable(true),
+	m_DiskQuota(false),
 	m_OldTotalBytes()
 {
 }
@@ -112,7 +113,14 @@ void CMeasureDiskSpace::UpdateValue()
 				{
 					UINT oldMode = SetErrorMode(0);
 					SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
-					sizeResult = GetDiskFreeSpaceEx(drive, NULL, (PULARGE_INTEGER)&i64TotalBytes, (PULARGE_INTEGER)&i64FreeBytes);
+					if (!m_DiskQuota)
+					{
+						sizeResult = GetDiskFreeSpaceEx(drive, NULL, (PULARGE_INTEGER)&i64TotalBytes, (PULARGE_INTEGER)&i64FreeBytes);
+					}
+					else
+					{
+						sizeResult = GetDiskFreeSpaceEx(drive, (PULARGE_INTEGER)&i64FreeBytes, (PULARGE_INTEGER)&i64TotalBytes, NULL);
+					}
 					SetErrorMode(oldMode);  // Reset
 				}
 			}
@@ -203,7 +211,8 @@ void CMeasureDiskSpace::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
 	m_Label = (1 == parser.ReadInt(section, L"Label", 0));
 	m_IgnoreRemovable = (1 == parser.ReadInt(section, L"IgnoreRemovable", 1));
-
+	m_DiskQuota = (1 == parser.ReadInt(section, L"DiskQuota", 0));
+	
 	// Set the m_MaxValue
 	if (!m_Initialized)
 	{

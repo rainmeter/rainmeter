@@ -42,6 +42,7 @@ private:
 	bool m_Total;
 	bool m_Label;
 	bool m_IgnoreRemovable;
+	bool m_DiskQuota;
 
 	ULONGLONG m_OldTotalBytes;
 };
