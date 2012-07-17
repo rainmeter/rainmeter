@@ -61,7 +61,6 @@ public:
 	void SetStyleTemplate(const std::wstring& strStyle) { static const std::wstring delim(1, L'|'); Tokenize(strStyle, delim).swap(m_StyleTemplate); Shrink(m_StyleTemplate); }
 	void ClearStyleTemplate() { m_StyleTemplate.clear(); }
 
-	const std::wstring& GetLastUsedStyle() { return m_LastUsedStyle; }
 	bool GetLastReplaced() { return m_LastReplaced; }
 	bool GetLastDefaultUsed() { return m_LastDefaultUsed; }
 	bool GetLastKeyDefined() { return !m_LastDefaultUsed; }
@@ -125,7 +124,6 @@ private:
 
 	std::vector<std::wstring> m_StyleTemplate;
 
-	std::wstring m_LastUsedStyle;
 	bool m_LastReplaced;
 	bool m_LastDefaultUsed;
 	bool m_LastValueDefined;

@@ -60,7 +60,6 @@ void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meter
 	m_Variables.clear();
 
 	m_StyleTemplate.clear();
-	m_LastUsedStyle.clear();
 	m_LastReplaced = false;
 	m_LastDefaultUsed = false;
 	m_LastValueDefined = false;
@@ -568,7 +567,6 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 	static std::wstring result;
 
 	// Clear last status
-	m_LastUsedStyle.clear();
 	m_LastReplaced = false;
 	m_LastDefaultUsed = false;
 	m_LastValueDefined = false;
@@ -580,27 +578,26 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 	const std::wstring& strValue = GetValue(strSection, strKey, strDefault);
 	if (&strValue == &strDefault)
 	{
+		bool foundStyleValue = false;
+
 		// If the template is defined read the value from there.
-		if (!m_StyleTemplate.empty())
+		std::vector<std::wstring>::const_reverse_iterator iter = m_StyleTemplate.rbegin();
+		for ( ; iter != m_StyleTemplate.rend(); ++iter)
 		{
-			std::vector<std::wstring>::const_reverse_iterator iter = m_StyleTemplate.rbegin();
-			for ( ; iter != m_StyleTemplate.rend(); ++iter)
+			const std::wstring& strStyleValue = GetValue((*iter), strKey, strDefault);
+
+			//LogWithArgs(LOG_DEBUG, L"StyleTemplate: [%s] %s (from [%s]) : strDefault=%s (0x%p), strStyleValue=%s (0x%p)",
+			//	section, key, (*iter).c_str(), strDefault.c_str(), &strDefault, strStyleValue.c_str(), &strStyleValue);
+
+			if (&strStyleValue != &strDefault)
 			{
-				const std::wstring& strStyleValue = GetValue((*iter), strKey, strDefault);
-
-				//LogWithArgs(LOG_DEBUG, L"StyleTemplate: [%s] %s (from [%s]) : strDefault=%s (0x%p), strStyleValue=%s (0x%p)",
-				//	section, key, (*iter).c_str(), strDefault.c_str(), &strDefault, strStyleValue.c_str(), &strStyleValue);
-
-				if (&strStyleValue != &strDefault)
-				{
-					result = strStyleValue;
-					m_LastUsedStyle = (*iter);
-					break;
-				}
+				result = strStyleValue;
+				foundStyleValue = true;
+				break;
 			}
 		}
 
-		if (m_LastUsedStyle.empty())  // No template found
+		if (!foundStyleValue)
 		{
 			result = strDefault;
 			m_LastDefaultUsed = true;
