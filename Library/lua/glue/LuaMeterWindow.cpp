@@ -74,10 +74,13 @@ static int GetMeter(lua_State* L)
 		*(CMeter**)lua_newuserdata(L, sizeof(CMeter*)) = meter;
 		lua_getglobal(L, "CMeter");
 		lua_setmetatable(L, -2);
-		return 1;
+	}
+	else
+	{
+		lua_pushnil(L);
 	}
 
-	return 0;
+	return 1;
 }
 
 static int GetMeasure(lua_State* L)
@@ -91,10 +94,13 @@ static int GetMeasure(lua_State* L)
 		*(CMeasure**)lua_newuserdata(L, sizeof(CMeasure*)) = measure;
 		lua_getglobal(L, "CMeasure");
 		lua_setmetatable(L, -2);
-		return 1;
+	}
+	else
+	{
+		lua_pushnil(L);
 	}
 
-	return 0;
+	return 1;
 }
 
 static int GetVariable(lua_State* L)
@@ -105,10 +111,13 @@ static int GetVariable(lua_State* L)
 	if (self->GetParser().GetVariable(strTmp, strTmp))
 	{
 		LuaManager::PushWide(L, strTmp.c_str());
-		return 1;
+	}
+	else
+	{
+		lua_pushnil(L);
 	}
 
-	return 0;
+	return 1;
 }
 
 static int ReplaceVariables(lua_State* L)
