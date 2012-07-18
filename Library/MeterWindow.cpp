@@ -2174,15 +2174,6 @@ bool CMeterWindow::ReadSkin()
 		}
 	}
 
-	// Initialize measures. This is a separate loop to avoid errors caused by
-	// referencing not-yet-existent [measures] in the options.
-	for (auto iter = measures.cbegin(); iter != measures.cend(); ++iter)
-	{
-		CMeasure* measure = *iter;
-		measure->ReadOptions(m_Parser);
-		measure->Initialize();
-	}
-
 	// Initialize meters.
 	m_Meters.reserve(meters.size());
 	CMeter* prevMeter = NULL;
@@ -2206,6 +2197,15 @@ bool CMeterWindow::ReadSkin()
 		}
 
 		prevMeter = meter;
+	}
+
+	// Initialize measures. This is a separate loop to avoid errors caused by
+	// referencing not-yet-existent [measures] in the options.
+	for (auto iter = measures.cbegin(); iter != measures.cend(); ++iter)
+	{
+		CMeasure* measure = *iter;
+		measure->ReadOptions(m_Parser);
+		measure->Initialize();
 	}
 
 	if (m_Meters.empty())
