@@ -65,6 +65,7 @@ void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meter
 	m_LastValueDefined = false;
 
 	m_CurrentSection = NULL;
+	m_SectionInsertPos = m_Sections.end();
 
 	// Set the built-in variables. Do this before the ini file is read so that the paths can be used with @include
 	SetBuiltInVariables(filename, resourcePath, meterWindow);
@@ -78,6 +79,7 @@ void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meter
 	// Clear and minimize
 	m_FoundSections.clear();
 	m_ListVariables.clear();
+	m_SectionInsertPos = m_Sections.end();
 }
 
 void CConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, CMeterWindow* meterWindow)
@@ -1229,7 +1231,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 				{
 					if (m_FoundSections.insert(key).second)
 					{
-						m_Sections.push_back(value);
+						m_Sections.insert(m_SectionInsertPos, value);
 					}
 					sections.push_back(value);
 				}
@@ -1266,6 +1268,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 		const WCHAR* sectionName = (*iter).c_str();
 		bool isVariables = (_wcsicmp(sectionName, L"Variables") == 0);
 		bool isMetadata = (skinSection == NULL && !isVariables && _wcsicmp(sectionName, L"Metadata") == 0);
+		bool resetInsertPos = true;
 
 		// Read all "key=value" from the section
 		do
@@ -1320,6 +1323,20 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 									// Relative to the ini folder
 									value.insert(0, CRainmeter::ExtractPath(iniFile));
 								}
+
+								if (resetInsertPos)
+								{
+									for (auto it = m_Sections.cbegin(); it != m_Sections.cend(); ++it)
+									{
+										if (_wcsicmp((*it).c_str(), sectionName) == 0)
+										{
+											m_SectionInsertPos = ++it;
+											resetInsertPos = false;
+											break;
+										}
+									}
+								}
+
 								ReadIniFile(value, skinSection, depth + 1);
 							}
 						}
