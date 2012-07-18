@@ -40,7 +40,6 @@ public:
 	virtual UINT GetTypeID() = 0;
 
 	void ReadOptions(CConfigParser& parser) { ReadOptions(parser, GetName()); parser.ClearStyleTemplate(); }
-	void BindMeasures(CConfigParser& parser) { BindMeasures(parser, GetName()); parser.ClearStyleTemplate(); }
 
 	virtual void Initialize();
 	virtual bool Update();

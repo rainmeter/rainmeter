@@ -147,9 +147,9 @@ void CMeasureCalc::FormulaReplace()
 
 bool CMeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value)
 {
-	const std::list<CMeasure*>& measures = m_MeterWindow->GetMeasures();
+	const std::vector<CMeasure*>& measures = m_MeterWindow->GetMeasures();
 
-	std::list<CMeasure*>::const_iterator iter = measures.begin();
+	std::vector<CMeasure*>::const_iterator iter = measures.begin();
 	for ( ; iter != measures.end(); ++iter)
 	{
 		if ((*iter)->GetOriginalName().length() == len &&

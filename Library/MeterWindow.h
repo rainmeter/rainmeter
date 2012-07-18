@@ -202,8 +202,8 @@ public:
 	std::wstring GetRootPath();
 	std::wstring GetResourcesPath();
 
-	std::list<CMeasure*>& GetMeasures() { return m_Measures; }
-	std::list<CMeter*>& GetMeters() { return m_Meters; }
+	const std::vector<CMeasure*>& GetMeasures() { return m_Measures; }
+	const std::vector<CMeter*>& GetMeters() { return m_Meters; }
 
 	ZPOSITION GetWindowZPosition() { return m_WindowZPosition; }
 	bool GetXPercentage() { return m_WindowXPercentage; }
@@ -421,8 +421,8 @@ private:
 	bool m_Hidden;
 	RESIZEMODE m_ResizeWindow;
 
-	std::list<CMeasure*> m_Measures;
-	std::list<CMeter*> m_Meters;
+	std::vector<CMeasure*> m_Measures;
+	std::vector<CMeter*> m_Meters;
 
 	const std::wstring m_FolderPath;
 	const std::wstring m_FileName;

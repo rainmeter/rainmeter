@@ -747,8 +747,8 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 	lvi.lParam = 0;
 
 	lvi.iGroupId = 0;
-	const std::list<CMeasure*>& measures = m_SkinWindow->GetMeasures();
-	std::list<CMeasure*>::const_iterator j = measures.begin();
+	const std::vector<CMeasure*>& measures = m_SkinWindow->GetMeasures();
+	std::vector<CMeasure*>::const_iterator j = measures.begin();
 	for ( ; j != measures.end(); ++j)
 	{
 		lvi.pszText = (WCHAR*)(*j)->GetName();

@@ -92,7 +92,7 @@ void CMeter::Initialize()
 
 	if (!m_RelativeMeter)
 	{
-		const std::list<CMeter*>& meters = m_MeterWindow->GetMeters();
+		const std::vector<CMeter*>& meters = m_MeterWindow->GetMeters();
 		for (auto iter = meters.cbegin(); iter != meters.cend(); ++iter)
 		{
 			if (*iter == this)
@@ -249,6 +249,11 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	if (!style.empty())
 	{
 		parser.SetStyleTemplate(style);
+	}
+
+	if (!m_Initialized)
+	{
+		BindMeasures(parser, section);
 	}
 
 	int oldX = m_X;
@@ -455,12 +460,6 @@ bool CMeter::Update()
 */
 bool CMeter::BindPrimaryMeasure(CConfigParser& parser, const WCHAR* section, bool optional)
 {
-	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
-	if (!style.empty())
-	{
-		parser.SetStyleTemplate(style);
-	}
-
 	const std::wstring& measureName = parser.ReadString(section, L"MeasureName", L"");
 
 	// The meter is not bound to anything

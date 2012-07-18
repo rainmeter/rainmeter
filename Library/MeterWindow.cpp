@@ -186,14 +186,14 @@ CMeterWindow::~CMeterWindow()
 	KillTimer(m_Window, TIMER_TRANSITION);
 
 	// Destroy the meters
-	std::list<CMeter*>::iterator j = m_Meters.begin();
+	std::vector<CMeter*>::iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
 		delete (*j);
 	}
 
 	// Destroy the measures
-	std::list<CMeasure*>::iterator i = m_Measures.begin();
+	std::vector<CMeasure*>::iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
 		delete (*i);
@@ -356,14 +356,14 @@ void CMeterWindow::Refresh(bool init, bool all)
 		m_MouseOver = false;
 		SetMouseLeaveEvent(true);
 
-		std::list<CMeasure*>::iterator i = m_Measures.begin();
+		std::vector<CMeasure*>::iterator i = m_Measures.begin();
 		for ( ; i != m_Measures.end(); ++i)
 		{
 			delete (*i);
 		}
 		m_Measures.clear();
 
-		std::list<CMeter*>::iterator j = m_Meters.begin();
+		std::vector<CMeter*>::iterator j = m_Meters.begin();
 		for ( ; j != m_Meters.end(); ++j)
 		{
 			delete (*j);
@@ -1094,7 +1094,7 @@ void CMeterWindow::ShowMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
 
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	std::vector<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (CompareName((*j), meter, group))
@@ -1116,7 +1116,7 @@ void CMeterWindow::HideMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
 
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	std::vector<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (CompareName((*j), meter, group))
@@ -1138,7 +1138,7 @@ void CMeterWindow::ToggleMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
 
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	std::vector<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (CompareName((*j), meter, group))
@@ -1167,7 +1167,7 @@ void CMeterWindow::MoveMeter(const std::wstring& name, int x, int y)
 {
 	const WCHAR* meter = name.c_str();
 
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	std::vector<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (CompareName((*j), meter, false))
@@ -1192,7 +1192,7 @@ void CMeterWindow::UpdateMeter(const std::wstring& name, bool group)
 
 	bool bActiveTransition = false;
 	bool bContinue = true;
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	std::vector<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (bContinue && CompareName((*j), meter, group))
@@ -1230,7 +1230,7 @@ void CMeterWindow::EnableMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
 
-	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+	std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
 		if (CompareName((*i), measure, group))
@@ -1251,7 +1251,7 @@ void CMeterWindow::DisableMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
 
-	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+	std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
 		if (CompareName((*i), measure, group))
@@ -1272,7 +1272,7 @@ void CMeterWindow::ToggleMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
 
-	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+	std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
 		if (CompareName((*i), measure, group))
@@ -1301,7 +1301,7 @@ void CMeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 	const WCHAR* measure = name.c_str();
 
 	bool bNetStats = m_HasNetMeasures;
-	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+	std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
 		if (CompareName((*i), measure, group))
@@ -1352,7 +1352,7 @@ void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& op
 {
 	if (group)
 	{
-		for (std::list<CMeter*>::const_iterator j = m_Meters.begin(); j != m_Meters.end(); ++j)
+		for (std::vector<CMeter*>::const_iterator j = m_Meters.begin(); j != m_Meters.end(); ++j)
 		{
 			if ((*j)->BelongsToGroup(section))
 			{
@@ -1370,7 +1370,7 @@ void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& op
 			}
 		}
 
-		for (std::list<CMeasure*>::const_iterator i = m_Measures.begin(); i != m_Measures.end(); ++i)
+		for (std::vector<CMeasure*>::const_iterator i = m_Measures.begin(); i != m_Measures.end(); ++i)
 		{
 			if ((*i)->BelongsToGroup(section))
 			{
@@ -2130,12 +2130,9 @@ bool CMeterWindow::ReadSkin()
 		while (*localFont);
 	}
 
-	// Create the meters and measures
-
-	m_HasNetMeasures = false;
-	m_HasButtons = false;
-
-	// Get all the sections (i.e. different meters, measures and the other stuff)
+	// Create all meters and measures.
+	std::list<CMeter*> meters;
+	std::list<CMeasure*> measures;
 	std::list<std::wstring>::const_iterator iter = m_Parser.GetSections().begin();
 	for ( ; iter != m_Parser.GetSections().end(); ++iter)
 	{
@@ -2145,34 +2142,13 @@ bool CMeterWindow::ReadSkin()
 			_wcsicmp(L"Variables", section) != 0 &&
 			_wcsicmp(L"Metadata", section) != 0)
 		{
-			// Check if the item is a meter or a measure (or perhaps something else)
 			const std::wstring& measureName = m_Parser.ReadString(section, L"Measure", L"", false);
 			if (!measureName.empty())
 			{
-				// It's a measure
-				CMeasure* measure = NULL;
-
-				try
+				CMeasure* measure = CMeasure::Create(measureName.c_str(), this, section);
+				if (measure)
 				{
-					measure = CMeasure::Create(measureName.c_str(), this, section);
-					if (measure)
-					{
-						measure->ReadOptions(m_Parser);
-
-						m_Measures.push_back(measure);
-						m_Parser.AddMeasure(measure);
-
-						if (measure->GetTypeID() == TypeID<CMeasureNet>())
-						{
-							m_HasNetMeasures = true;
-						}
-					}
-				}
-				catch (CError& error)
-				{
-					delete measure;
-					measure = NULL;
-					LogError(error);
+					measures.push_back(measure);
 				}
 
 				continue;
@@ -2182,34 +2158,65 @@ bool CMeterWindow::ReadSkin()
 			if (!meterName.empty())
 			{
 				// It's a meter
-				CMeter* meter = NULL;
-
-				try
+				CMeter* meter = CMeter::Create(meterName.c_str(), this, section);
+				if (meter)
 				{
-					meter = CMeter::Create(meterName.c_str(), this, section);
-					if (meter)
-					{
-						meter->ReadOptions(m_Parser);
-
-						m_Meters.push_back(meter);
-
-						if (!m_HasButtons && meter->GetTypeID() == TypeID<CMeterButton>())
-						{
-							m_HasButtons = true;
-						}
-					}
-				}
-				catch (CError& error)
-				{
-					delete meter;
-					meter = NULL;
-					LogError(error);
+					meters.push_back(meter);
 				}
 
 				continue;
 			}
+		}
+	}
 
-			// If it's not a meter or measure it will be ignored
+	m_HasNetMeasures = false;
+	m_HasButtons = false;
+
+	// Measures must be created first to avoid errors in meters referencing measures.
+	m_Measures.reserve(measures.size());
+	for (auto iter = measures.cbegin(); iter != measures.cend(); ++iter)
+	{
+		CMeasure* measure = *iter;
+
+		try
+		{
+			measure->ReadOptions(m_Parser);
+			m_Measures.push_back(measure);
+			m_Parser.AddMeasure(measure);
+
+			if (measure->GetTypeID() == TypeID<CMeasureNet>())
+			{
+				m_HasNetMeasures = true;
+			}
+		}
+		catch (CError& error)
+		{
+			delete measure;
+			measure = NULL;
+			LogError(error);
+		}
+	}
+
+	m_Meters.reserve(meters.size());
+	for (auto iter = meters.cbegin(); iter != meters.cend(); ++iter)
+	{
+		CMeter* meter = *iter;
+
+		try
+		{
+			meter->ReadOptions(m_Parser);
+			m_Meters.push_back(meter);
+
+			if (!m_HasButtons && meter->GetTypeID() == TypeID<CMeterButton>())
+			{
+				m_HasButtons = true;
+			}
+		}
+		catch (CError& error)
+		{
+			delete meter;
+			meter = NULL;
+			LogError(error);
 		}
 	}
 
@@ -2218,15 +2225,6 @@ bool CMeterWindow::ReadSkin()
 		std::wstring text = GetFormattedString(ID_STR_NOMETERSINSKIN, m_FolderPath.c_str(), m_FileName.c_str());
 		Rainmeter->ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
 		return false;
-	}
-	else
-	{
-		// Bind the meters to the measures
-		std::list<CMeter*>::const_iterator j = m_Meters.begin();
-		for ( ; j != m_Meters.end(); ++j)
-		{
-			(*j)->BindMeasures(m_Parser);
-		}
 	}
 
 	return true;
@@ -2239,7 +2237,7 @@ bool CMeterWindow::ReadSkin()
 void CMeterWindow::InitializeMeasures()
 {
 	// Initalize all measures
-	std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+	std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
 	for ( ; i != m_Measures.end(); ++i)
 	{
 		try
@@ -2260,7 +2258,7 @@ void CMeterWindow::InitializeMeasures()
 void CMeterWindow::InitializeMeters()
 {
 	// Initalize all meters
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	std::vector<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
 		try
@@ -2288,7 +2286,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 	int h = m_BackgroundMargins.top;
 
 	// Get the largest meter point
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	std::vector<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
 		int mr = (*j)->GetX() + (*j)->GetW();
@@ -2568,7 +2566,7 @@ void CMeterWindow::Redraw()
 		}
 
 		// Draw the meters
-		std::list<CMeter*>::const_iterator j = m_Meters.begin();
+		std::vector<CMeter*>::const_iterator j = m_Meters.begin();
 		for ( ; j != m_Meters.end(); ++j)
 		{
 			const Matrix* matrix = (*j)->GetTransformationMatrix();
@@ -2724,7 +2722,7 @@ void CMeterWindow::Update(bool refresh)
 		}
 
 		// Update all measures
-		std::list<CMeasure*>::const_iterator i = m_Measures.begin();
+		std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
 		for ( ; i != m_Measures.end(); ++i)
 		{
 			UpdateMeasure((*i), refresh);
@@ -2736,7 +2734,7 @@ void CMeterWindow::Update(bool refresh)
 	// Update all meters
 	bool bActiveTransition = false;
 	bool bUpdate = false;
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	std::vector<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (UpdateMeter((*j), bActiveTransition, refresh))
@@ -2857,7 +2855,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		// Redraw only if there is active transition still going
 		bool bActiveTransition = false;
-		std::list<CMeter*>::const_iterator j = m_Meters.begin();
+		std::vector<CMeter*>::const_iterator j = m_Meters.begin();
 		for ( ; j != m_Meters.end(); ++j)
 		{
 			if ((*j)->HasActiveTransition())
@@ -3119,7 +3117,7 @@ void CMeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 	bool redraw = false;
 	HCURSOR cursor = NULL;
 
-	std::list<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
+	std::vector<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
 	for ( ; j != m_Meters.rend(); ++j)
 	{
 		// Hidden meters are ignored
@@ -4145,7 +4143,7 @@ bool CMeterWindow::DoAction(int x, int y, MOUSEACTION action, bool test)
 	const WCHAR* command = NULL;
 
 	// Check if the hitpoint was over some meter
-	std::list<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
+	std::vector<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
 	for ( ; j != m_Meters.rend(); ++j)
 	{
 		// Hidden meters are ignored
@@ -4186,7 +4184,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 	bool buttonFound = false;
 
 	// Check if the hitpoint was over some meter
-	std::list<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
+	std::vector<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
 	for ( ; j != m_Meters.rend(); ++j)
 	{
 		if (!(*j)->IsHidden() && (*j)->HitTest(x, y))
@@ -4572,7 +4570,7 @@ std::wstring CMeterWindow::GetResourcesPath()
 CMeter* CMeterWindow::GetMeter(const std::wstring& meterName)
 {
 	const WCHAR* name = meterName.c_str();
-	std::list<CMeter*>::const_iterator j = m_Meters.begin();
+	std::vector<CMeter*>::const_iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
 	{
 		if (_wcsicmp((*j)->GetName(), name) == 0)
