@@ -233,10 +233,7 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		parser.SetStyleTemplate(style);
 	}
 
-	if (!m_Initialized)
-	{
-		BindMeasures(parser, section);
-	}
+	BindMeasures(parser, section);
 
 	int oldX = m_X;
 	std::wstring& x = (std::wstring&)parser.ReadString(section, L"X", L"0");
@@ -437,14 +434,16 @@ bool CMeter::Update()
 }
 
 /*
-** Reads and binds the primary MeasureName.
+** Reads and binds the primary MeasureName. This must always be called in overridden
+** BindMeasures() implementations.
 **
 */
 bool CMeter::BindPrimaryMeasure(CConfigParser& parser, const WCHAR* section, bool optional)
 {
+	m_Measures.clear();
+
 	const std::wstring& measureName = parser.ReadString(section, L"MeasureName", L"");
 
-	// The meter is not bound to anything
 	CMeasure* measure = parser.GetMeasure(measureName);
 	if (measure)
 	{

@@ -125,18 +125,7 @@ void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	m_Invert = 0!=parser.ReadInt(section, L"InvertMeasure", 0);
 
-	if (!m_Initialized)
-	{
-		m_Disabled = 0!=parser.ReadInt(section, L"Disabled", 0);
-	}
-	else
-	{
-		const std::wstring& result = parser.ReadString(section, L"Disabled", L"0");
-		if (parser.GetLastReplaced())
-		{
-			m_Disabled = 0!=parser.ParseInt(result.c_str(), 0);
-		}
-	}
+	m_Disabled = 0!=parser.ReadInt(section, L"Disabled", 0);
 
 	int updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
 	if (updateDivider != m_UpdateDivider)
@@ -181,6 +170,22 @@ void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	const std::wstring& group = parser.ReadString(section, L"Group", L"");
 	InitializeGroup(group);
+}
+
+void CMeasure::Disable()
+{
+	m_Disabled = true;
+
+	// Change the option as well to avoid reset in ReadOptions().
+	m_MeterWindow->GetParser().SetValue(m_Name, L"Disabled", L"1");
+}
+
+void CMeasure::Enable()
+{
+	m_Disabled = false;
+
+	// Change the option as well to avoid reset in ReadOptions().
+	m_MeterWindow->GetParser().SetValue(m_Name, L"Disabled", L"0");
 }
 
 /*
