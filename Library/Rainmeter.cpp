@@ -83,17 +83,14 @@ int RainmeterMain(LPWSTR cmdLine)
 	int ret = 1;
 
 	Rainmeter = new CRainmeter;
-	if (Rainmeter)
+	ret = Rainmeter->Initialize(cmdLine);
+	if (ret == 0)
 	{
-		ret = Rainmeter->Initialize(cmdLine);
-		if (ret == 0)
-		{
-			ret = Rainmeter->MessagePump();
-		}
-
-		delete Rainmeter;
-		Rainmeter = NULL;
+		ret = Rainmeter->MessagePump();
 	}
+
+	delete Rainmeter;
+	Rainmeter = NULL;
 
 	return ret;
 }
@@ -1406,24 +1403,13 @@ void CRainmeter::CreateMeterWindow(const std::wstring& folderPath, const std::ws
 {
 	CMeterWindow* mw = new CMeterWindow(folderPath, file);
 
-	if (mw)
-	{
-		// Note: May modify existing key
-		m_MeterWindows[folderPath] = mw;
+	// Note: May modify existing key
+	m_MeterWindows[folderPath] = mw;
 
-		try
-		{
-			mw->Initialize();
+	mw->Initialize();
 
-			CDialogAbout::UpdateSkins();
-			CDialogManage::UpdateSkins(mw);
-		}
-		catch (CError& error)
-		{
-			DeactivateSkin(mw, -1);
-			LogError(error);
-		}
-	}
+	CDialogAbout::UpdateSkins();
+	CDialogManage::UpdateSkins(mw);
 }
 
 void CRainmeter::DeleteMeterWindow(CMeterWindow* meterWindow, bool force)

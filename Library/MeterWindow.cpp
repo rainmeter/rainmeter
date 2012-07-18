@@ -236,7 +236,7 @@ CMeterWindow::~CMeterWindow()
 ** Initializes the window, creates the class and the window.
 **
 */
-int CMeterWindow::Initialize()
+void CMeterWindow::Initialize()
 {
 	m_Window = CreateWindowEx(
 		WS_EX_TOOLWINDOW,
@@ -251,11 +251,6 @@ int CMeterWindow::Initialize()
 		NULL,
 		Rainmeter->GetInstance(),
 		this);
-
-	if (m_Window == NULL)
-	{
-		throw CError(L"Unable to register window");
-	}
 
 	setlocale(LC_NUMERIC, "C");
 
@@ -277,10 +272,6 @@ int CMeterWindow::Initialize()
 			FadeWindow(0, m_AlphaValue);
 		}
 	}
-
-	Log(LOG_NOTICE, L"Initialization successful");
-
-	return 0;
 }
 
 /*
@@ -395,9 +386,6 @@ void CMeterWindow::Refresh(bool init, bool all)
 		Rainmeter->DeactivateSkin(this, -1);
 		return;
 	}
-
-	InitializeMeasures();
-	InitializeMeters();
 
 	// Remove transparent flag
 	RemoveWindowExStyle(WS_EX_TRANSPARENT);
@@ -2172,51 +2160,47 @@ bool CMeterWindow::ReadSkin()
 	m_HasNetMeasures = false;
 	m_HasButtons = false;
 
-	// Measures must be created first to avoid errors in meters referencing measures.
+	// Add measures to containers.
 	m_Measures.reserve(measures.size());
 	for (auto iter = measures.cbegin(); iter != measures.cend(); ++iter)
 	{
 		CMeasure* measure = *iter;
+		m_Measures.push_back(measure);
+		m_Parser.AddMeasure(measure);
 
-		try
+		if (measure->GetTypeID() == TypeID<CMeasureNet>())
 		{
-			measure->ReadOptions(m_Parser);
-			m_Measures.push_back(measure);
-			m_Parser.AddMeasure(measure);
-
-			if (measure->GetTypeID() == TypeID<CMeasureNet>())
-			{
-				m_HasNetMeasures = true;
-			}
-		}
-		catch (CError& error)
-		{
-			delete measure;
-			measure = NULL;
-			LogError(error);
+			m_HasNetMeasures = true;
 		}
 	}
 
+	// Initialize measures. This is a separate loop to avoid errors caused by
+	// referencing not-yet-existent [measures] referencing in the options.
+	for (auto iter = measures.cbegin(); iter != measures.cend(); ++iter)
+	{
+		CMeasure* measure = *iter;
+		measure->ReadOptions(m_Parser);
+		measure->Initialize();
+	}
+
+	// Initialize meters.
 	m_Meters.reserve(meters.size());
 	for (auto iter = meters.cbegin(); iter != meters.cend(); ++iter)
 	{
 		CMeter* meter = *iter;
+		m_Meters.push_back(meter);
 
-		try
+		meter->ReadOptions(m_Parser);
+		meter->Initialize();
+
+		if (!meter->GetToolTipText().empty())
 		{
-			meter->ReadOptions(m_Parser);
-			m_Meters.push_back(meter);
-
-			if (!m_HasButtons && meter->GetTypeID() == TypeID<CMeterButton>())
-			{
-				m_HasButtons = true;
-			}
+			meter->CreateToolTip(this);
 		}
-		catch (CError& error)
+
+		if (!m_HasButtons && meter->GetTypeID() == TypeID<CMeterButton>())
 		{
-			delete meter;
-			meter = NULL;
-			LogError(error);
+			m_HasButtons = true;
 		}
 	}
 
@@ -2228,53 +2212,6 @@ bool CMeterWindow::ReadSkin()
 	}
 
 	return true;
-}
-
-/*
-** Initializes all the measures
-**
-*/
-void CMeterWindow::InitializeMeasures()
-{
-	// Initalize all measures
-	std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
-	for ( ; i != m_Measures.end(); ++i)
-	{
-		try
-		{
-			(*i)->Initialize();
-		}
-		catch (CError& error)
-		{
-			LogError(error);
-		}
-	}
-}
-
-/*
-** Initializes all the meters
-**
-*/
-void CMeterWindow::InitializeMeters()
-{
-	// Initalize all meters
-	std::vector<CMeter*>::const_iterator j = m_Meters.begin();
-	for ( ; j != m_Meters.end(); ++j)
-	{
-		try
-		{
-			(*j)->Initialize();
-		}
-		catch (CError& error)
-		{
-			LogError(error);
-		}
-
-		if (!(*j)->GetToolTipText().empty())
-		{
-			(*j)->CreateToolTip(this);
-		}
-	}
 }
 
 /*

@@ -299,8 +299,7 @@ void CMeterString::Initialize()
 
 			if (m_FontSize != 0)
 			{
-				std::wstring error = L"String: Unable to create font: " + m_FontFace;
-				throw CError(error);
+				LogWithArgs(LOG_ERROR, L"String: Invalid font: %s", m_FontFace.c_str());
 			}
 		}
 	}

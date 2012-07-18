@@ -156,7 +156,7 @@ public:
 	CMeterWindow(const std::wstring& folderPath, const std::wstring& file);
 	~CMeterWindow();
 
-	int Initialize();
+	void Initialize();
 
 	void RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& args);
 
@@ -311,8 +311,6 @@ private:
 	void ReadOptions();
 	void WriteOptions(INT setting = OPTION_ALL);
 	bool ReadSkin();
-	void InitializeMeasures();
-	void InitializeMeters();
 	void ShowWindowIfAppropriate();
 	HWND GetWindowFromPoint(POINT pos);
 	void HandleButtons(POINT pos, BUTTONPROC proc, bool execute = true);
