@@ -2175,7 +2175,7 @@ bool CMeterWindow::ReadSkin()
 	}
 
 	// Initialize measures. This is a separate loop to avoid errors caused by
-	// referencing not-yet-existent [measures] referencing in the options.
+	// referencing not-yet-existent [measures] in the options.
 	for (auto iter = measures.cbegin(); iter != measures.cend(); ++iter)
 	{
 		CMeasure* measure = *iter;
@@ -2185,6 +2185,7 @@ bool CMeterWindow::ReadSkin()
 
 	// Initialize meters.
 	m_Meters.reserve(meters.size());
+	CMeter* prevMeter = NULL;
 	for (auto iter = meters.cbegin(); iter != meters.cend(); ++iter)
 	{
 		CMeter* meter = *iter;
@@ -2192,6 +2193,7 @@ bool CMeterWindow::ReadSkin()
 
 		meter->ReadOptions(m_Parser);
 		meter->Initialize();
+		meter->SetRelativeMeter(prevMeter);
 
 		if (!meter->GetToolTipText().empty())
 		{
@@ -2202,6 +2204,8 @@ bool CMeterWindow::ReadSkin()
 		{
 			m_HasButtons = true;
 		}
+
+		prevMeter = meter;
 	}
 
 	if (m_Meters.empty())

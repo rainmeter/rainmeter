@@ -89,24 +89,6 @@ CMeter::~CMeter()
 void CMeter::Initialize()
 {
 	m_Initialized = true;
-
-	if (!m_RelativeMeter)
-	{
-		const std::vector<CMeter*>& meters = m_MeterWindow->GetMeters();
-		for (auto iter = meters.cbegin(); iter != meters.cend(); ++iter)
-		{
-			if (*iter == this)
-			{
-				if (iter != meters.begin())
-				{
-					--iter;
-					m_RelativeMeter = (*iter);
-				}
-
-				break;
-			}
-		}
-	}
 }
 
 /*

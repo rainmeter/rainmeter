@@ -60,6 +60,8 @@ public:
 	void SetX(int x);
 	void SetY(int y);
 
+	void SetRelativeMeter(CMeter* meter) { m_RelativeMeter = meter; }
+
 	const CMouse& GetMouse() { return m_Mouse; }
 	bool HasMouseAction() { return m_HasMouseAction; }
 
