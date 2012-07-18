@@ -1307,7 +1307,7 @@ void CRainmeter::ActivateSkin(int folderIndex, int fileIndex)
 	if (folderIndex >= 0 && folderIndex < (int)m_SkinFolders.size() &&
 		fileIndex >= 0 && fileIndex < (int)m_SkinFolders[folderIndex].files.size())
 	{
-		const SkinFolder& skinFolder = m_SkinFolders[folderIndex];
+		SkinFolder& skinFolder = m_SkinFolders[folderIndex];
 		const std::wstring& file = skinFolder.files[fileIndex];
 		const WCHAR* fileSz = file.c_str();
 
@@ -1341,8 +1341,12 @@ void CRainmeter::ActivateSkin(int folderIndex, int fileIndex)
 			return;
 		}
 
-		m_SkinFolders[folderIndex].active = fileIndex + 1;
-		WriteActive(folderPath, fileIndex);
+		if (skinFolder.active != fileIndex + 1)
+		{
+			// Write only if changed.
+			skinFolder.active = fileIndex + 1;
+			WriteActive(folderPath, fileIndex);
+		}
 
 		CreateMeterWindow(folderPath, file);
 	}
