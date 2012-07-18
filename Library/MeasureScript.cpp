@@ -30,7 +30,6 @@ const char* g_GetStringFunctionName = "GetStringValue";
 */
 CMeasureScript::CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
 	m_LuaScript(),
-	m_HasInitializeFunction(false),
 	m_HasUpdateFunction(false),
 	m_HasGetStringFunction(false),
 	m_ValueType(LUA_TNIL)
@@ -53,25 +52,10 @@ void CMeasureScript::DeleteLuaScript()
 	delete m_LuaScript;
 	m_LuaScript = NULL;
 
-	m_HasInitializeFunction = false;
 	m_HasUpdateFunction = false;
 	m_HasGetStringFunction = false;
 
 	m_ScriptFile.clear();
-}
-
-/*
-** Initializes the measure.
-**
-*/
-void CMeasureScript::Initialize()
-{
-	CMeasure::Initialize();
-
-	if (m_HasInitializeFunction)
-	{
-		m_LuaScript->RunFunction(g_InitializeFunctionName);
-	}
 }
 
 /*
@@ -134,7 +118,7 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 			if (m_LuaScript->IsInitialized())
 			{
-				m_HasInitializeFunction = m_LuaScript->IsFunction(g_InitializeFunctionName);
+				bool hasInitializeFunction = m_LuaScript->IsFunction(g_InitializeFunctionName);
 				m_HasUpdateFunction = m_LuaScript->IsFunction(g_UpdateFunctionName);
 				m_HasGetStringFunction = m_LuaScript->IsFunction(g_GetStringFunctionName);  // For backwards compatbility
 
@@ -180,6 +164,11 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 				// Pop PROPERTIES table and our table
 				lua_pop(L, 2);
+
+				if (hasInitializeFunction)
+				{
+					m_LuaScript->RunFunction(g_InitializeFunctionName);
+				}
 			}
 			else
 			{
