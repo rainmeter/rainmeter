@@ -787,7 +787,7 @@ void CDialogManage::CTabSkins::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR
 	const WCHAR* pos = wcschr(name, L'\\');
 	if (pos)
 	{
-		const int folderLen = pos - name;
+		const int folderLen = (int)(pos - name);
 		tvi.cchTextMax = folderLen + 1;		// Length of folder name plus 1 for NULL
 
 		// Find and expand the folder
