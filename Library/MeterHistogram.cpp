@@ -667,9 +667,5 @@ void CMeterHistogram::BindMeasures(CConfigParser& parser, const WCHAR* section)
 		{
 			m_Measures.push_back(measure);
 		}
-		else
-		{
-			LogWithArgs(LOG_ERROR, L"MeasureName%i=%s is not valid in [%s]", 2, secondaryMeasure->c_str(), section);
-		}
 	}
 }
