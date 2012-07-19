@@ -294,7 +294,21 @@ void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& 
 */
 void CRainmeter::Bang_ActivateSkin(std::vector<std::wstring>& args)
 {
-	if (args.size() > 1)
+	if (args.size() == 1)
+	{
+		int index = FindSkinFolderIndex(args[0]);
+		if (index != -1)
+		{
+			const SkinFolder& skinFolder = m_SkinFolders[index];
+			if (!(skinFolder.active == 1 && skinFolder.files.size() == 1))
+			{
+				// Activate the next index.
+				ActivateSkin(index, (skinFolder.active < skinFolder.files.size()) ? skinFolder.active : 0);
+			}
+			return;
+		}
+	}
+	else if (args.size() > 1)
 	{
 		std::pair<int, int> indexes = GetMeterWindowIndex(args[0], args[1]);
 		if (indexes.first != -1 && indexes.second != -1)
@@ -302,13 +316,9 @@ void CRainmeter::Bang_ActivateSkin(std::vector<std::wstring>& args)
 			ActivateSkin(indexes.first, indexes.second);
 			return;
 		}
-		LogWithArgs(LOG_ERROR, L"!ActivateConfig: \"%s\\%s\" not found", args[0].c_str(), args[1].c_str());
 	}
-	else
-	{
-		// If we got this far, something went wrong
-		Log(LOG_ERROR, L"!ActivateConfig: Invalid parameters");
-	}
+
+	Log(LOG_ERROR, L"!ActivateConfig: Invalid parameters");
 }
 
 /*
