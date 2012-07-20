@@ -1326,13 +1326,24 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 
 								if (resetInsertPos)
 								{
-									for (auto it = m_Sections.cbegin(); it != m_Sections.cend(); ++it)
+									auto jt = iter;
+									if (++jt == sections.end())  // Special case: @include was used in the last section of the current file
 									{
-										if (_wcsicmp((*it).c_str(), sectionName) == 0)
+										// Set the insertion place to the last
+										m_SectionInsertPos = m_Sections.end();
+										resetInsertPos = false;
+									}
+									else
+									{
+										// Find the appropriate insertion place
+										for (auto it = m_Sections.cbegin(); it != m_Sections.cend(); ++it)
 										{
-											m_SectionInsertPos = ++it;
-											resetInsertPos = false;
-											break;
+											if (_wcsicmp((*it).c_str(), sectionName) == 0)
+											{
+												m_SectionInsertPos = ++it;
+												resetInsertPos = false;
+												break;
+											}
 										}
 									}
 								}
