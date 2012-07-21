@@ -106,14 +106,15 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		{
 			m_MeterWindow->MakePathAbsolute(file);
 		}
+		std::string scriptFile = ConvertToAscii(file.c_str());
 
 		if (!m_Initialized ||
-			wcscmp(file.c_str(), m_ScriptFile.c_str()) != 0)
+			strcmp(scriptFile.c_str(), m_ScriptFile.c_str()) != 0)
 		{
 			DeleteLuaScript();
 
 			lua_State* L = LuaManager::GetState();
-			m_ScriptFile = file;
+			m_ScriptFile = scriptFile;
 			m_LuaScript = new LuaScript(m_ScriptFile.c_str());
 
 			if (m_LuaScript->IsInitialized())
@@ -156,7 +157,10 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 						if (!wstrValue.empty())
 						{
-							LuaManager::PushWide(L, wstrValue.c_str());
+							std::string strStrVal = ConvertToAscii(wstrValue.c_str());
+							const char* strValue = strStrVal.c_str();
+
+							lua_pushstring(L, strValue);
 							lua_setfield(L, -3, strKey);
 						}
 					}
@@ -189,7 +193,7 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 */
 void CMeasureScript::Command(const std::wstring& command)
 {
-	std::string str = ConvertToUTF8(command.c_str());
+	std::string str = ConvertToAscii(command.c_str());
 	m_LuaScript->RunString(str.c_str());
 }
 

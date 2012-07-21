@@ -53,7 +53,7 @@ static int Print(lua_State* L)
 		lua_pop(L, 1);
 	}
 
-	Log(LOG_DEBUG, ConvertUTF8ToWide(message.c_str()).c_str());
+	Log(LOG_DEBUG, ConvertToWide(message.c_str()).c_str());
 	return 0;
 }
 

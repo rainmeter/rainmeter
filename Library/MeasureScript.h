@@ -48,7 +48,7 @@ private:
 
 	std::wstring m_StringValue;
 
-	std::wstring m_ScriptFile;
+	std::string m_ScriptFile;
 };
 
 #endif
