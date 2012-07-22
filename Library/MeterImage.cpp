@@ -159,7 +159,7 @@ bool CMeterImage::Update()
 				else
 				{
 					m_ImageNameResult = m_ImageName;
-					if (!ReplaceMeasures(m_ImageNameResult))
+					if (!ReplaceMeasures(m_ImageNameResult, AUTOSCALE_OFF))
 					{
 						// ImageName doesn't contain any measures, so use the result of MeasureName.
 						m_ImageNameResult = m_Measures[0]->GetStringValue(AUTOSCALE_OFF, 1, 0, false);
