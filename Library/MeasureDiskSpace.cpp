@@ -43,7 +43,7 @@ CMeasureDiskSpace::CMeasureDiskSpace(CMeterWindow* meterWindow, const WCHAR* nam
 	m_Total(false),
 	m_Label(false),
 	m_IgnoreRemovable(true),
-	m_DiskQuota(false),
+	m_DiskQuota(true),
 	m_OldTotalBytes()
 {
 }
@@ -211,7 +211,7 @@ void CMeasureDiskSpace::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
 	m_Label = (1 == parser.ReadInt(section, L"Label", 0));
 	m_IgnoreRemovable = (1 == parser.ReadInt(section, L"IgnoreRemovable", 1));
-	m_DiskQuota = (1 == parser.ReadInt(section, L"DiskQuota", 0));
+	m_DiskQuota = (1 == parser.ReadInt(section, L"DiskQuota", 1));
 	
 	// Set the m_MaxValue
 	if (!m_Initialized)
