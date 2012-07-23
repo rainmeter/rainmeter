@@ -113,29 +113,19 @@ Function .onInit
 
 	${IfNot} ${UAC_IsInnerInstance}
 		${If} ${IsWin2000}
-			${IfNot} ${Silent}
-				MessageBox MB_OK|MB_ICONINFORMATION "$(WIN2KERROR)"
-			${EndIf}
-			SetErrorLevel ${ERROR_UNSUPPORTED}
-			Quit
-		${ElseIf} ${IsWinXP}
+		${OrIf} ${IsWinXP}
 		${AndIf} ${AtMostServicePack} 1
-			${IfNot} ${Silent}
-				MessageBox MB_OK|MB_ICONINFORMATION "$(WINXPS2ERROR)"
-			${EndIf}
-			SetErrorLevel ${ERROR_UNSUPPORTED}
-			Quit
-		${ElseIf} ${IsWin2003}
+		${OrIf} ${IsWin2003}
 		${AndIf} ${AtMostServicePack} 0
 			${IfNot} ${Silent}
-				MessageBox MB_OK|MB_ICONINFORMATION "$(WIN2003SP1ERROR)"
+				MessageBox MB_OK|MB_ICONSTOP "Windows XP SP2 or later is required to install Rainmeter ${VER}."
 			${EndIf}
 			SetErrorLevel ${ERROR_UNSUPPORTED}
 			Quit
 		${EndIf}
 
 		System::Call 'kernel32::IsProcessorFeaturePresent(i${PF_XMMI_INSTRUCTIONS_AVAILABLE})i.r0'
-		${If} $0 == 0
+		${If} $0 = 0
 			${IfNot} ${Silent}
 				MessageBox MB_OK|MB_ICONSTOP "A Pentium III or later processor is required to install Rainmeter ${VER}."
 			${EndIf}
@@ -148,7 +138,7 @@ Function .onInit
 
 		${IfNot} ${Silent}
 			${If} $0 == ""
-			${OrIf} $0 != $LANGUAGE
+			${OrIf} $0 <> $LANGUAGE
 			${AndIf} $NonDefaultLanguage != 1
 				; New install or better match
 				LangDLL::LangDialog "$(^SetupCaption)" "Please select the installer language.$\n$(SELECTLANGUAGE)" AC ${LANGUAGES} ""
@@ -157,7 +147,7 @@ Function .onInit
 					Abort
 				${EndIf}
 
-				${If} $0 != $LANGUAGE
+				${If} $0 <> $LANGUAGE
 					; User selected non-default language
 					StrCpy $NonDefaultLanguage 1
 				${EndIf}
@@ -297,7 +287,7 @@ Function PageWelcome
 	Pop $0
 	SetCtlColors $0 "" "${MUI_BGCOLOR}"
 
-	${If} $InstallPortable == 1
+	${If} $InstallPortable = 1
 		${NSD_Check} $R2
 	${Else}
 		${NSD_Check} $R1
@@ -338,7 +328,7 @@ Function PageOptions
 	StrCpy $1 0
 
 	${If} ${RunningX64}
-	${AndIf} $InstallPortable == 1
+	${AndIf} $InstallPortable = 1
 	${OrIf} $INSTDIR == ""
 		${NSD_CreateCheckBox} 6u 54u 285u 12u "$(INSTALL64BIT)"
 		Pop $R2
@@ -347,8 +337,8 @@ Function PageOptions
 		StrCpy $R2 0
 	${EndIf}
 
-	${If} $InstallPortable != 1
-		${If} $1 == 0
+	${If} $InstallPortable <> 1
+		${If} $1 = 0
 			StrCpy $0 54u
 			StrCpy $1 30u
 		${Else}
@@ -376,7 +366,7 @@ Function PageOptions
 		StrCpy $R3 0
 	${EndIf}
 
-	${If} $1 != 0
+	${If} $1 <> 0
 		${NSD_CreateGroupBox} 0 42u -1u $1 "$(ADDITIONALOPTIONS)"
 	${EndIf}
 
@@ -390,7 +380,7 @@ Function PageOptions
 !endif
 
 	; Set default directory
-	${If} $InstallPortable == 1
+	${If} $InstallPortable = 1
 		${GetRoot} "$WINDIR" $0
 		${NSD_SetText} $R0 "$0\Rainmeter"
 	${Else}
@@ -413,7 +403,7 @@ Function PageOptions
 
 	; Show UAC shield on Install button if requiredd
 	GetDlgItem $0 $HWNDPARENT 1
-	${If} $InstallPortable == 1
+	${If} $InstallPortable = 1
 		SendMessage $0 ${BCM_SETSHIELD} 0 0
 	${Else}
 		SendMessage $0 ${BCM_SETSHIELD} 0 1
@@ -473,7 +463,7 @@ FunctionEnd
 Function PageOptionsOnLeave
 	; Verify that selected folder is writable
 	${NSD_GetText} $R0 $0
-	${If} $InstallPortable == 1
+	${If} $InstallPortable = 1
 		ClearErrors
 		CreateDirectory "$0"
 		WriteINIStr "$0\writetest~.rm" "1" "1" "1"
@@ -514,7 +504,7 @@ Function PageOptionsOnLeave
 	${EndIf}
 !endif
 
-	${If} $InstallPortable != 1
+	${If} $InstallPortable <> 1
 		${IfNot} ${UAC_IsAdmin}
 			; UAC_IsAdmin seems to return incorrect result sometimes. Recheck with UserInfo::GetAccountType to be sure.
 			UserInfo::GetAccountType
@@ -573,27 +563,27 @@ Section
 	SetShellVarContext current
 
 	Var /GLOBAL InstArc
-	${If} $Install64Bit == 1
+	${If} $Install64Bit = 1
 		StrCpy $InstArc "x64"
 	${Else}
 		StrCpy $InstArc "x86"
 	${EndIf}
 
-	${If} $InstallPortable != 1
+	${If} $InstallPortable <> 1
 		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$InstArc" "Bld"
 		${VersionCompare} "$0" "40219" $1
 
 		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$InstArc" "Installed"
 
 		; Download and install VC++ redist if required
-		${If} $1 == "2"
-		${OrIf} $2 != "1"
+		${If} $1 = 2
+		${OrIf} $2 <> 1
 			${If} ${Silent}
 				SetErrorLevel ${ERROR_NOVCREDIST}
 				Quit
 			${EndIf}
 
-			${If} $Install64Bit != 1
+			${If} $Install64Bit <> 1
 				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/C/6/D/C6D0FD4E-9E53-4897-9B91-836EBA2AACD3/vcredist_x86.exe" "$PLUGINSDIR\vcredist.exe"
 				Pop $0
 			${Else}
@@ -606,7 +596,7 @@ Section
 				; download from MS failed, try from rainmter.net
 				Delete "$PLUGINSDIR\vcredist.exe"
 
-				${If} $Install64Bit != 1
+				${If} $Install64Bit <> 1
 					NSISdl::download /TIMEOUT=30000 "http://rainmeter.net/redist/vc10SP1redist_x86.exe" "$PLUGINSDIR\vcredist.exe"
 					Pop $0
 				${Else}
@@ -619,9 +609,9 @@ Section
 				ExecWait '"$PLUGINSDIR\vcredist.exe" /q /norestart' $0
 				Delete "$PLUGINSDIR\vcredist.exe"
 
-				${If} $0 == 3010
+				${If} $0 = 3010
 					SetRebootFlag true
-				${ElseIf} $0 != 0
+				${ElseIf} $0 <> 0
 					MessageBox MB_OK|MB_ICONSTOP "$(VCINSTERROR)"
 					Quit
 				${EndIf}
@@ -635,8 +625,8 @@ Section
 
 		; Download and install .NET if required
 		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727" "Install"
-		${If} $0 != "1"
-			${If} $Install64Bit != 1
+		${If} $0 <> 1
+			${If} $Install64Bit <> 1
 				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/5/6/7/567758a3-759e-473e-bf8f-52154438565a/dotnetfx.exe" "$PLUGINSDIR\dotnetfx.exe"
 			${Else}
 				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/a/3/f/a3f1bf98-18f3-4036-9b68-8e6de530ce0a/NetFx64.exe" "$PLUGINSDIR\dotnetfx.exe"
@@ -648,7 +638,7 @@ Section
 			${AndIf} $0 != "success"
 				Delete "$PLUGINSDIR\dotnetfx.exe"
 
-				${If} $Install64Bit != 1
+				${If} $Install64Bit <> 1
 					NSISdl::download /TIMEOUT=30000 "http://rainmeter.net/redist/dotnetfx.exe" "$PLUGINSDIR\dotnetfx.exe"
 				${Else}
 					NSISdl::download /TIMEOUT=30000 "http://rainmeter.net/redist/NetFx64.exe" "$PLUGINSDIR\dotnetfx.exe"
@@ -661,9 +651,9 @@ Section
 				ExecWait '"$PLUGINSDIR\dotnetfx.exe" /q:a /c:"install /q"' $0
 				Delete "$PLUGINSDIR\dotnetfx.exe"
 
-				${If} $0 == 3010
+				${If} $0 = 3010
 					SetRebootFlag true
-				${ElseIf} $0 != 0
+				${ElseIf} $0 <> 0
 					MessageBox MB_OK|MB_ICONSTOP "$(DOTNETINSTERROR)"
 					Quit
 				${EndIf}
@@ -683,14 +673,14 @@ Section
 		FindWindow $1 "DummyRainWClass" "Rainmeter control window"
 		ClearErrors
 		Delete "$INSTDIR\Rainmeter.exe"
-		${If} $1 == 0
+		${If} $1 = 0
 		${AndIfNot} ${Errors}
 			${Break}
 		${EndIf}
 
 		SendMessage $1 ${WM_CLOSE} 0 0
 
-		${If} $0 == 0
+		${If} $0 = 0
 			${If} ${Silent}
 				SetErrorLevel ${ERROR_CLOSEFAIL}
 				Quit
@@ -705,7 +695,7 @@ Section
 
 !ifndef BETA
 	${IfNot} ${Silent}
-	${AndIf} $SendStatistics == 1
+	${AndIf} $SendStatistics = 1
 		System::Call "Secur32.dll::GetUserNameEx(i 2, t .r0, *i ${NSIS_MAX_STRLEN} r1) i.r2"
 		${If} ${RunningX64}
 			SetRegView 64
@@ -721,16 +711,14 @@ Section
 		${WinVerGetMinor} $R2
 		${WinVerGetServicePackLevel} $R3
 
-		System::Call 'kernel32::LoadLibrary(t"d2d1.dll")i.r0'
-		${If} $0 <> 0
+		System::Call 'kernel32::LoadLibrary(t"d2d1.dll")i.R4'
+		${If} $R4 <> 0
 			StrCpy $R4 "1"
-			System::Call 'kernel32::FreeLibrary(i r0)'
-		${Else}
-			StrCpy $R4 "0"
+			System::Call 'kernel32::FreeLibrary(i R4)'
 		${EndIf}
 
-		System::Call 'kernel32::IsProcessorFeaturePresent(i${PF_XMMI64_INSTRUCTIONS_AVAILABLE})i.r6'
-		${If} $6 != 0
+		System::Call 'kernel32::IsProcessorFeaturePresent(i${PF_XMMI64_INSTRUCTIONS_AVAILABLE})i.R5'
+		${If} $R5 <> 0
 			StrCpy $R5 "1"
 		${EndIf}
 
@@ -744,14 +732,14 @@ Section
 	; Move Rainmeter.ini to %APPDATA% if needed
 	${IfNot} ${Silent}
 	${AndIf} ${FileExists} "$INSTDIR\Rainmeter.ini"
-		${If} $InstallPortable != 1
-			${If} $Install64Bit == 1
+		${If} $InstallPortable <> 1
+			${If} $Install64Bit = 1
 			${AndIf} "$INSTDIR" == "$PROGRAMFILES64\Rainmeter"
 			${OrIf} "$INSTDIR" == "$PROGRAMFILES\Rainmeter"
 				MessageBox MB_YESNO|MB_ICONEXCLAMATION "$(SETTINGSFILEERROR)" IDNO SkipIniMove
 				StrCpy $0 1
 				!insertmacro UAC_AsUser_Call Function CopyIniToAppData ${UAC_SYNCREGISTERS}
-				${If} $0 == 1
+				${If} $0 = 1
 					; Copy succeeded
 					Delete "$INSTDIR\Rainmeter.ini"
 				${Else}
@@ -786,7 +774,7 @@ SkipIniMove:
 	RMDir /r "$INSTDIR\Addons\Rainstaller"
 	RMDir /r "$INSTDIR\Addons\RainBackup"
 
-	${If} $InstallPortable != 1
+	${If} $InstallPortable <> 1
 		CreateDirectory "$INSTDIR\Defaults"
 		Rename "$INSTDIR\Skins" "$INSTDIR\Defaults\Skins"
 		Rename "$INSTDIR\Themes" "$INSTDIR\Defaults\Themes"
@@ -824,7 +812,7 @@ SkipIniMove:
 
 	SetOutPath "$INSTDIR"
 
-	${If} $InstallPortable != 1
+	${If} $InstallPortable <> 1
 		ReadRegStr $0 HKLM "SOFTWARE\Rainmeter" ""
 		WriteRegStr HKLM "SOFTWARE\Rainmeter" "" "$INSTDIR"
 		WriteRegStr HKLM "SOFTWARE\Rainmeter" "Language" "$LANGUAGE"
@@ -875,7 +863,7 @@ SkipIniMove:
 		${EndIf}
 		CreateShortcut "$0" "$INSTDIR\Rainmeter.exe" "" "$INSTDIR\Rainmeter.exe" 0
 
-		${If} $AutoStartup == 1
+		${If} $AutoStartup = 1
 			${If} ${FileExists} "$SMSTARTUP\Rainmeter.lnk"
 				; Remove user shortcut to prevent duplicate with all users shortcut
 				!insertmacro UAC_AsUser_Call Function RemoveUserStartupShortcut ${UAC_SYNCREGISTERS}
@@ -1013,14 +1001,14 @@ Section Uninstall
 		FindWindow $1 "DummyRainWClass" "Rainmeter control window"
 		ClearErrors
 		Delete "$INSTDIR\Rainmeter.exe"
-		${If} $1 == 0
+		${If} $1 = 0
 		${AndIfNot} ${Errors}
 			${Break}
 		${EndIf}
 
 		SendMessage $1 ${WM_CLOSE} 0 0
 
-		${If} $0 == 0
+		${If} $0 = 0
 			${If} ${Silent}
 				SetErrorLevel ${ERROR_CLOSEFAIL}
 				Quit
@@ -1051,7 +1039,7 @@ Section Uninstall
 
 	SetShellVarContext current
 	Call un.RemoveShortcuts
-	${If} $un.DeleteAll == 1
+	${If} $un.DeleteAll = 1
 		RMDir /r "$APPDATA\Rainmeter"
 		RMDir /r "$DOCUMENTS\Rainmeter\Skins"
 		RMDir "$DOCUMENTS\Rainmeter"
@@ -1059,7 +1047,7 @@ Section Uninstall
 	${EndIf}
 	
 	!insertmacro UAC_AsUser_Call Function un.RemoveShortcuts ${UAC_SYNCREGISTERS}
-	${If} $un.DeleteAll == 1
+	${If} $un.DeleteAll = 1
 		RMDir /r "$APPDATA\Rainmeter"
 		RMDir /r "$DOCUMENTS\Rainmeter\Skins"
 		RMDir "$DOCUMENTS\Rainmeter"
