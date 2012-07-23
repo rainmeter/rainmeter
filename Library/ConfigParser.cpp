@@ -1260,12 +1260,11 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 	}
 
 	// Read the keys and values
-	std::list<std::wstring>::const_iterator iter = sections.begin();
-	for ( ; iter != sections.end(); ++iter)
+	for (auto it = sections.cbegin(); it != sections.cend(); ++it)
 	{
 		unique.clear();
 
-		const WCHAR* sectionName = (*iter).c_str();
+		const WCHAR* sectionName = (*it).c_str();
 		bool isVariables = (_wcsicmp(sectionName, L"Variables") == 0);
 		bool isMetadata = (skinSection == NULL && !isVariables && _wcsicmp(sectionName, L"Metadata") == 0);
 		bool resetInsertPos = true;
@@ -1326,7 +1325,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 
 								if (resetInsertPos)
 								{
-									auto jt = iter;
+									auto jt = it;
 									if (++jt == sections.end())  // Special case: @include was used in the last section of the current file
 									{
 										// Set the insertion place to the last
@@ -1336,11 +1335,11 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 									else
 									{
 										// Find the appropriate insertion place
-										for (auto it = m_Sections.cbegin(); it != m_Sections.cend(); ++it)
+										for (jt = m_Sections.cbegin(); jt != m_Sections.cend(); ++jt)
 										{
-											if (_wcsicmp((*it).c_str(), sectionName) == 0)
+											if (_wcsicmp((*jt).c_str(), sectionName) == 0)
 											{
-												m_SectionInsertPos = ++it;
+												m_SectionInsertPos = ++jt;
 												resetInsertPos = false;
 												break;
 											}
@@ -1356,7 +1355,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 							if (!isMetadata)  // Uncache Metadata's key-value pair in the skin
 							{
 								value.assign(sep, clen);
-								SetValue((*iter), key, value);
+								SetValue((*it), key, value);
 
 								if (isVariables)
 								{
