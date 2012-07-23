@@ -433,7 +433,7 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 		(m_Measures.size() >= 1 && !m_PrimaryValues) ||
 		(m_Measures.size() >= 2 && !m_SecondaryValues)) return false;
 
-	CMeasure* secondaryMeasure = m_Measures[1];
+	CMeasure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
 
 	GraphicsPath primaryPath;
 	GraphicsPath secondaryPath;
