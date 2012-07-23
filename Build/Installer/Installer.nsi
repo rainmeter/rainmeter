@@ -134,6 +134,15 @@ Function .onInit
 			Quit
 		${EndIf}
 
+		System::Call 'kernel32::IsProcessorFeaturePresent(i${PF_XMMI_INSTRUCTIONS_AVAILABLE})i.r0'
+		${If} $0 == 0
+			${IfNot} ${Silent}
+				MessageBox MB_OK|MB_ICONSTOP "A Pentium III or later processor is required to install Rainmeter ${VER}."
+			${EndIf}
+			SetErrorLevel ${ERROR_UNSUPPORTED}
+			Quit
+		${EndIf}
+
 		ReadRegStr $0 HKLM "SOFTWARE\Rainmeter" "Language"
 		ReadRegDWORD $NonDefaultLanguage HKLM "SOFTWARE\Rainmeter" "NonDefault"
 
@@ -720,19 +729,14 @@ Section
 			StrCpy $R4 "0"
 		${EndIf}
 
-		System::Call 'kernel32::IsProcessorFeaturePresent(i${PF_XMMI_INSTRUCTIONS_AVAILABLE})i.r5'
-		${If} $5 != 0
+		System::Call 'kernel32::IsProcessorFeaturePresent(i${PF_XMMI64_INSTRUCTIONS_AVAILABLE})i.r6'
+		${If} $6 != 0
 			StrCpy $R5 "1"
 		${EndIf}
 
-		System::Call 'kernel32::IsProcessorFeaturePresent(i${PF_XMMI64_INSTRUCTIONS_AVAILABLE})i.r6'
-		${If} $6 != 0
-			StrCpy $R6 "1"
-		${EndIf}
+		System::Call 'kernel32::GetUserDefaultUILanguage() i.R6'
 
-		System::Call 'kernel32::GetUserDefaultUILanguage() i.R7'
-
-		NSISdl::download_quiet /TIMEOUT=30000 "http://rainmeter.net/stat/${VER}.php?id=$R0&vmj=$R1&vmi=$R2&vsp=$R3&d2d=$R4&sse=$R5&sse2=$R6&uilang=$R7&lang=$LANGUAGE" "$PLUGINSDIR\_"
+		NSISdl::download_quiet /TIMEOUT=30000 "http://rainmeter.net/stat/${VER}.php?id=$R0&vmj=$R1&vmi=$R2&vsp=$R3&d2d=$R4&sse2=$R5&uilang=$R6&lang=$LANGUAGE" "$PLUGINSDIR\_"
 		Delete "$PLUGINSDIR\_"
 	${EndIf}
 !endif
