@@ -281,7 +281,7 @@ bool CMeterLine::Draw(Graphics& graphics)
 	{
 		if (!m_Measures.empty())
 		{
-			double maxValue = m_Measures[0]->GetMaxValue();
+			maxValue = m_Measures[0]->GetMaxValue();
 
 			std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
 			for (; i != m_Measures.end(); ++i)
