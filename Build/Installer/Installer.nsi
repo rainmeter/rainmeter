@@ -851,6 +851,15 @@ SkipIniMove:
 		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell\edit" "" "Install Rainmeter skin"
 		WriteRegStr HKCR "Rainmeter.SkinInstaller\shell\edit\command" "" '"$INSTDIR\SkinInstaller.exe" %1'
 
+		; If .inc isn't associated, use the .ini association for it.
+		ReadRegStr $1 HKCR ".inc" ""
+		${If} $1 == ""
+			ReadRegStr $1 HKCR ".ini" ""
+			${If} $1 != ""
+				WriteRegStr HKCR ".inc" "" "$1"
+			${EndIf}
+		${EndIf}
+
 		; Refresh shell icons if new install
 		${If} $0 == ""
 			${RefreshShellIcons}
