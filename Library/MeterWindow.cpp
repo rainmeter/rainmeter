@@ -1093,7 +1093,7 @@ void CMeterWindow::ShowMeter(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_NOTICE, L"!ShowMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
+	if (!group) LogWithArgs(LOG_ERROR, L"!ShowMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
 }
 
 /*
