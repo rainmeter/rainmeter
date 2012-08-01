@@ -292,8 +292,6 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 
 	bool oldWDefined = m_WDefined;
-	bool oldHDefined = m_HDefined;
-
 	m_W = parser.ReadInt(section, L"W", m_W);
 	m_WDefined = parser.GetLastValueDefined();
 	if (!m_WDefined && oldWDefined)
@@ -302,6 +300,7 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		parser.SetValue(section, L"W", L"0");
 	}
 	
+	bool oldHDefined = m_HDefined;
 	m_H = parser.ReadInt(section, L"H", m_H);
 	m_HDefined = parser.GetLastValueDefined();
 	if (!m_HDefined && oldHDefined)

@@ -207,41 +207,47 @@ bool CConfigParser::GetSectionVariables(const std::wstring& strVariable, std::ws
 		CMeasure* measure = m_MeterWindow->GetMeasure(strToken[0]);
 		if (measure)
 		{
-			_snwprintf_s(buffer, _TRUNCATE, L"%lli", (LONGLONG)measure->GetValue());
-			strValue = buffer;
+			int len = _snwprintf_s(buffer, _TRUNCATE, L"%lli", (LONGLONG)measure->GetValue());
+			strValue.assign(buffer, len);
 			return true;
 		}
 	}
 	else if (strToken.size() == 2)
 	{
-		std::wstring args = strToken[1];
+		auto stripSpaces = [](std::wstring& str)
+		{
+			// Strip off leading and trailing spaces
+			size_t startPos = str.find_first_not_of(L" \t");
+			size_t endPos = str.find_last_not_of(L" \t");
+			if (std::wstring::npos != startPos || std::wstring::npos != endPos)
+			{
+				str = str.substr(startPos, endPos - startPos + 1);
+			}
+		};
 
-		// strip off leading and trailing spaces
-		size_t startPos = args.find_first_not_of(L" \t");
-		size_t endPos = args.find_last_not_of(L" \t");
-		if (std::wstring::npos != startPos || std::wstring::npos != endPos)
-			args = args.substr(startPos, endPos - startPos + 1);
+		std::wstring args = strToken[1];
+		stripSpaces(args);
 
 		// Check meters first
 		//  Format: [MeterName:X]
 		CMeter* meter = m_MeterWindow->GetMeter(strToken[0]);
 		if (meter)
 		{
-			WCHAR buffer[MAX_LINE_LENGTH];
+			const WCHAR* arg = args.c_str();
 
-			if (_wcsicmp(args.c_str(), L"X") == 0)
+			if (_wcsicmp(arg, L"X") == 0)
 			{
 				_itow_s(meter->GetX(), buffer, 10);
 			}
-			else if (_wcsicmp(args.c_str(), L"Y") == 0)
+			else if (_wcsicmp(arg, L"Y") == 0)
 			{
 				_itow_s(meter->GetY(), buffer, 10);
 			}
-			else if (_wcsicmp(args.c_str(), L"W") == 0)
+			else if (_wcsicmp(arg, L"W") == 0)
 			{
 				_itow_s(meter->GetW(), buffer, 10);
 			}
-			else if (_wcsicmp(args.c_str(), L"H") == 0)
+			else if (_wcsicmp(arg, L"H") == 0)
 			{
 				_itow_s(meter->GetH(), buffer, 10);
 			}
@@ -266,46 +272,37 @@ bool CConfigParser::GetSectionVariables(const std::wstring& strVariable, std::ws
 			WCHAR format[32];
 
 			std::vector<std::wstring> measureOptions = Tokenize(args, L",");
+			std::wstring tempStr;
 
-			if (_wcsicmp(measureOptions[0].c_str(), L"%") == 0)  // Percentual
+			if (wcscmp(measureOptions[0].c_str(), L"%") == 0)  // Percentual
 			{
 				percentual = true;
 			}
-			else if (_wcsicmp(measureOptions[0].substr(0,1).c_str(), L"/") == 0)  // Scale
+			else if (!measureOptions[0].empty() && measureOptions[0][0] == L'/')  // Scale
 			{
-				std::wstring tempScale = measureOptions[0].substr(1, measureOptions[0].length() - 1);
+				tempStr = measureOptions[0].substr(1, measureOptions[0].length() - 1);
+				stripSpaces(tempStr);
 
-				// strip off leading and trailing spaces
-				size_t startPos = tempScale.find_first_not_of(L" \t");
-				size_t endPos = tempScale.find_last_not_of(L" \t");
-				if ((std::wstring::npos != startPos) || (std::wstring::npos != endPos))
+				errno = 0;
+				scale = _wtoi(tempStr.c_str());
+
+				if (errno == EINVAL)
 				{
-					tempScale = tempScale.substr(startPos, endPos - startPos + 1);
-				}
-
-				scale = _wtoi(tempScale.c_str());
-
-				// _wtoi returns 0 if there is an error.
-				if (scale == 0 && tempScale != L"0")
 					scale = 1.0;
+				}
 			}
 			else  // NumOfDecimals
 			{
-				std::wstring tempStr = measureOptions[0];
-				
-				// strip off leading and trailing spaces
-				size_t startPos = tempStr.find_first_not_of(L" \t");
-				size_t endPos = tempStr.find_last_not_of(L" \t");
-				if ((std::wstring::npos != startPos) || (std::wstring::npos != endPos))
-				{
-					tempStr = tempStr.substr(startPos, endPos - startPos + 1);
-				}
+				tempStr = measureOptions[0];
+				stripSpaces(tempStr);
 
+				errno = 0;
 				numOfDecimals = _wtoi(tempStr.c_str());
 
-				// _wtoi returns 0 if there is an error.
-				if ((numOfDecimals == 0 && tempStr != L"0") || numOfDecimals < -1)
+				if (errno == EINVAL || numOfDecimals < -1)
+				{
 					numOfDecimals = -1;
+				}
 
 				foundDecimal = true;
 			}
@@ -313,21 +310,17 @@ bool CConfigParser::GetSectionVariables(const std::wstring& strVariable, std::ws
 			// NumOfDecimals (for Percentual and Scale)
 			if (measureOptions.size() == 2 && !foundDecimal)
 			{
-				std::wstring tempStr = measureOptions[1];
+				tempStr = measureOptions[1];
+				stripSpaces(tempStr);
 				
-				// strip off leading and trailing spaces
-				size_t startPos = tempStr.find_first_not_of(L" \t");
-				size_t endPos = tempStr.find_last_not_of(L" \t");
-				if ((std::wstring::npos != startPos) || (std::wstring::npos != endPos))
-				{
-					tempStr = tempStr.substr(startPos, endPos - startPos + 1);
-				}
-
+				errno = 0;
 				numOfDecimals = _wtoi(tempStr.c_str());
 
 				// _wtoi returns 0 if there is an error.
-				if ((numOfDecimals == 0 && tempStr != L"0") || numOfDecimals < -1)
+				if (errno == EINVAL || numOfDecimals < -1)
+				{
 					numOfDecimals = -1;
+				}
 			}
 
 			if (percentual)
