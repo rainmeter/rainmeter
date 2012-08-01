@@ -126,6 +126,7 @@ static int ReplaceVariables(lua_State* L)
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
 
 	self->GetParser().ReplaceVariables(strTmp);
+	self->GetParser().ReplaceMeasures(strTmp);
 	LuaManager::PushWide(L, strTmp.c_str());
 
 	return 1;
