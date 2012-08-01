@@ -198,6 +198,7 @@ bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& s
 bool CConfigParser::GetSectionVariables(const std::wstring& strVariable, std::wstring& strValue)
 {
 	WCHAR buffer[MAX_LINE_LENGTH];
+	int len;
 
 	std::vector<std::wstring> strToken = Tokenize(strVariable, L":");
 
@@ -207,7 +208,7 @@ bool CConfigParser::GetSectionVariables(const std::wstring& strVariable, std::ws
 		CMeasure* measure = m_MeterWindow->GetMeasure(strToken[0]);
 		if (measure)
 		{
-			int len = _snwprintf_s(buffer, _TRUNCATE, L"%lli", (LONGLONG)measure->GetValue());
+			len = _snwprintf_s(buffer, _TRUNCATE, L"%lli", (LONGLONG)measure->GetValue());
 			strValue.assign(buffer, len);
 			return true;
 		}
@@ -280,11 +281,11 @@ bool CConfigParser::GetSectionVariables(const std::wstring& strVariable, std::ws
 			}
 			else if (!measureOptions[0].empty() && measureOptions[0][0] == L'/')  // Scale
 			{
-				tempStr = measureOptions[0].substr(1, measureOptions[0].length() - 1);
-				stripSpaces(tempStr);
+				std::wstring tempScale = measureOptions[0].substr(1, measureOptions[0].length() - 1);  // RVO
+				stripSpaces(tempScale);
 
 				errno = 0;
-				scale = _wtoi(tempStr.c_str());
+				scale = _wtoi(tempScale.c_str());
 
 				if (errno == EINVAL)
 				{
@@ -323,6 +324,8 @@ bool CConfigParser::GetSectionVariables(const std::wstring& strVariable, std::ws
 				}
 			}
 
+			len = 0;
+
 			if (percentual)
 			{
 				double val = 100.0 * measure->GetRelativeValue();
@@ -330,11 +333,12 @@ bool CConfigParser::GetSectionVariables(const std::wstring& strVariable, std::ws
 				if (numOfDecimals <= 0)
 				{
 					_itow_s((int)val, buffer, 10);
+					len = (int)wcslen(buffer);
 				}
 				else
 				{
 					_snwprintf_s(format, _TRUNCATE, L"%%.%if", numOfDecimals);
-					_snwprintf_s(buffer, _TRUNCATE, format, val);
+					len = _snwprintf_s(buffer, _TRUNCATE, format, val);
 				}
 			}
 			else
@@ -344,21 +348,22 @@ bool CConfigParser::GetSectionVariables(const std::wstring& strVariable, std::ws
 				if (numOfDecimals == 0)
 				{
 					val += (val >= 0) ? 0.5 : -0.5;
-					_snwprintf_s(buffer, _TRUNCATE, L"%lli", (LONGLONG)val);
+					len = _snwprintf_s(buffer, _TRUNCATE, L"%lli", (LONGLONG)val);
 				}
 				else if (numOfDecimals < 0)
 				{
-					int len = _snwprintf_s(buffer, _TRUNCATE, L"%.15f", val);
+					len = _snwprintf_s(buffer, _TRUNCATE, L"%.15f", val);
 					measure->RemoveTrailingZero(buffer, len);
+					len = (int)wcslen(buffer);
 				}
 				else
 				{
 					_snwprintf_s(format, _TRUNCATE, L"%%.%if", numOfDecimals);
-					_snwprintf_s(buffer, _TRUNCATE, format, val);
+					len = _snwprintf_s(buffer, _TRUNCATE, format, val);
 				}
 			}
-					
-			strValue = buffer;
+
+			strValue.assign(buffer, len);
 			return true;
 		}
 	}
