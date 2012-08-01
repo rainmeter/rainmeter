@@ -33,6 +33,7 @@
 class CRainmeter;
 class CMeterWindow;
 class CMeasure;
+class CMeter;
 
 class CConfigParser
 {
@@ -109,6 +110,8 @@ private:
 
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
 
+	bool GetSectionVariables(const std::wstring& strVariable, std::wstring& strValue);
+
 	static void SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue);
 	static void SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const WCHAR* strVariable, const WCHAR* strValue);
 
@@ -139,6 +142,8 @@ private:
 
 	std::unordered_map<std::wstring, std::wstring> m_BuiltInVariables;
 	std::unordered_map<std::wstring, std::wstring> m_Variables;
+
+	CMeterWindow* m_MeterWindow;
 
 	static std::unordered_map<std::wstring, std::wstring> c_MonitorVariables;
 };

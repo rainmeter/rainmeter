@@ -42,8 +42,8 @@ extern CRainmeter* Rainmeter;
 CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(meterWindow), m_Name(name),
 	m_X(),
 	m_Y(),
-	m_W(),
-	m_H(),
+	m_W(0),
+	m_H(0),
 	m_Hidden(false),
 	m_WDefined(false),
 	m_HDefined(false),
@@ -291,11 +291,24 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		m_RelativeY = POSITION_ABSOLUTE;
 	}
 
-	m_W = parser.ReadInt(section, L"W", 1);
-	m_WDefined = parser.GetLastValueDefined();
+	bool oldWDefined = m_WDefined;
+	bool oldHDefined = m_HDefined;
 
-	m_H = parser.ReadInt(section, L"H", 1);
+	m_W = parser.ReadInt(section, L"W", m_W);
+	m_WDefined = parser.GetLastValueDefined();
+	if (!m_WDefined && oldWDefined)
+	{
+		m_W = 0;
+		parser.SetValue(section, L"W", L"0");
+	}
+	
+	m_H = parser.ReadInt(section, L"H", m_H);
 	m_HDefined = parser.GetLastValueDefined();
+	if (!m_HDefined && oldHDefined)
+	{
+		m_H = 0;
+		parser.SetValue(section, L"H", L"0");
+	}
 
 	bool oldHidden = m_Hidden;
 	m_Hidden = 0!=parser.ReadInt(section, L"Hidden", 0);

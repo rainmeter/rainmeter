@@ -23,6 +23,7 @@
 #include "Rainmeter.h"
 #include "System.h"
 #include "Measure.h"
+#include "Meter.h"
 #include "resource.h"
 
 extern CRainmeter* Rainmeter;
@@ -80,6 +81,8 @@ void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meter
 	m_FoundSections.clear();
 	m_ListVariables.clear();
 	m_SectionInsertPos = m_Sections.end();
+
+	m_MeterWindow = meterWindow;
 }
 
 void CConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, CMeterWindow* meterWindow)
@@ -185,6 +188,188 @@ bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& s
 	}
 
 	// Not found
+	return false;
+}
+
+/*
+** Meter/Measure psuedo-variables. [MeasureName:] returns numeric value of measure.
+**  ie. [MeterName:X], [MeasureName:], [MeasureName:%, 2], [MeasureName:3]
+*/
+bool CConfigParser::GetSectionVariables(const std::wstring& strVariable, std::wstring& strValue)
+{
+	WCHAR buffer[MAX_LINE_LENGTH];
+
+	std::vector<std::wstring> strToken = Tokenize(strVariable, L":");
+
+	if (strToken.size() == 1 && !m_Measures.empty())
+	{
+		// [MeasureName:] returns number value
+		CMeasure* measure = m_MeterWindow->GetMeasure(strToken[0]);
+		if (measure)
+		{
+			_snwprintf_s(buffer, _TRUNCATE, L"%lli", (LONGLONG)measure->GetValue());
+			strValue = buffer;
+			return true;
+		}
+	}
+	else if (strToken.size() == 2)
+	{
+		std::wstring args = strToken[1];
+
+		// strip off leading and trailing spaces
+		size_t startPos = args.find_first_not_of(L" \t");
+		size_t endPos = args.find_last_not_of(L" \t");
+		if (std::wstring::npos != startPos || std::wstring::npos != endPos)
+			args = args.substr(startPos, endPos - startPos + 1);
+
+		// Check meters first
+		//  Format: [MeterName:X]
+		CMeter* meter = m_MeterWindow->GetMeter(strToken[0]);
+		if (meter)
+		{
+			WCHAR buffer[MAX_LINE_LENGTH];
+
+			if (_wcsicmp(args.c_str(), L"X") == 0)
+			{
+				_itow_s(meter->GetX(), buffer, 10);
+			}
+			else if (_wcsicmp(args.c_str(), L"Y") == 0)
+			{
+				_itow_s(meter->GetY(), buffer, 10);
+			}
+			else if (_wcsicmp(args.c_str(), L"W") == 0)
+			{
+				_itow_s(meter->GetW(), buffer, 10);
+			}
+			else if (_wcsicmp(args.c_str(), L"H") == 0)
+			{
+				_itow_s(meter->GetH(), buffer, 10);
+			}
+			else
+			{
+				return false;
+			}
+
+			strValue = buffer;
+			return true;
+		}	
+
+		// Check measures
+		//  Format: [MeasureName:/1000,2] [MeasureName:%,2] [MeasureName:10]
+		CMeasure* measure = m_MeterWindow->GetMeasure(strToken[0]);
+		if (measure)
+		{
+			double scale = 1.0;
+			int numOfDecimals = -1;
+			bool foundDecimal = false;
+			bool percentual = false;
+			WCHAR format[32];
+
+			std::vector<std::wstring> measureOptions = Tokenize(args, L",");
+
+			if (_wcsicmp(measureOptions[0].c_str(), L"%") == 0)  // Percentual
+			{
+				percentual = true;
+			}
+			else if (_wcsicmp(measureOptions[0].substr(0,1).c_str(), L"/") == 0)  // Scale
+			{
+				std::wstring tempScale = measureOptions[0].substr(1, measureOptions[0].length() - 1);
+
+				// strip off leading and trailing spaces
+				size_t startPos = tempScale.find_first_not_of(L" \t");
+				size_t endPos = tempScale.find_last_not_of(L" \t");
+				if ((std::wstring::npos != startPos) || (std::wstring::npos != endPos))
+				{
+					tempScale = tempScale.substr(startPos, endPos - startPos + 1);
+				}
+
+				scale = _wtoi(tempScale.c_str());
+
+				// _wtoi returns 0 if there is an error.
+				if (scale == 0 && tempScale != L"0")
+					scale = 1.0;
+			}
+			else  // NumOfDecimals
+			{
+				std::wstring tempStr = measureOptions[0];
+				
+				// strip off leading and trailing spaces
+				size_t startPos = tempStr.find_first_not_of(L" \t");
+				size_t endPos = tempStr.find_last_not_of(L" \t");
+				if ((std::wstring::npos != startPos) || (std::wstring::npos != endPos))
+				{
+					tempStr = tempStr.substr(startPos, endPos - startPos + 1);
+				}
+
+				numOfDecimals = _wtoi(tempStr.c_str());
+
+				// _wtoi returns 0 if there is an error.
+				if ((numOfDecimals == 0 && tempStr != L"0") || numOfDecimals < -1)
+					numOfDecimals = -1;
+
+				foundDecimal = true;
+			}
+
+			// NumOfDecimals (for Percentual and Scale)
+			if (measureOptions.size() == 2 && !foundDecimal)
+			{
+				std::wstring tempStr = measureOptions[1];
+				
+				// strip off leading and trailing spaces
+				size_t startPos = tempStr.find_first_not_of(L" \t");
+				size_t endPos = tempStr.find_last_not_of(L" \t");
+				if ((std::wstring::npos != startPos) || (std::wstring::npos != endPos))
+				{
+					tempStr = tempStr.substr(startPos, endPos - startPos + 1);
+				}
+
+				numOfDecimals = _wtoi(tempStr.c_str());
+
+				// _wtoi returns 0 if there is an error.
+				if ((numOfDecimals == 0 && tempStr != L"0") || numOfDecimals < -1)
+					numOfDecimals = -1;
+			}
+
+			if (percentual)
+			{
+				double val = 100.0 * measure->GetRelativeValue();
+
+				if (numOfDecimals <= 0)
+				{
+					_itow_s((int)val, buffer, 10);
+				}
+				else
+				{
+					_snwprintf_s(format, _TRUNCATE, L"%%.%if", numOfDecimals);
+					_snwprintf_s(buffer, _TRUNCATE, format, val);
+				}
+			}
+			else
+			{
+				double val = measure->GetValue() / scale;
+
+				if (numOfDecimals == 0)
+				{
+					val += (val >= 0) ? 0.5 : -0.5;
+					_snwprintf_s(buffer, _TRUNCATE, L"%lli", (LONGLONG)val);
+				}
+				else if (numOfDecimals < 0)
+				{
+					int len = _snwprintf_s(buffer, _TRUNCATE, L"%.15f", val);
+					measure->RemoveTrailingZero(buffer, len);
+				}
+				else
+				{
+					_snwprintf_s(format, _TRUNCATE, L"%%.%if", numOfDecimals);
+					_snwprintf_s(buffer, _TRUNCATE, format, val);
+				}
+			}
+					
+			strValue = buffer;
+			return true;
+		}
+	}
+	
 	return false;
 }
 
@@ -498,40 +683,47 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 {
 	bool replaced = false;
 
-	// Check for measures ([Measure])
-	if (!m_Measures.empty())
-	{
-		size_t start = 0, end, next;
-		bool loop = true;
+	size_t start = 0, end, next;
+	bool loop = true;
 
-		do
+	do
+	{
+		start = result.find(L'[', start);
+		if (start != std::wstring::npos)
 		{
-			start = result.find(L'[', start);
-			if (start != std::wstring::npos)
+			size_t si = start + 1;
+			end = result.find(L']', si);
+			if (end != std::wstring::npos)
 			{
-				size_t si = start + 1;
-				end = result.find(L']', si);
-				if (end != std::wstring::npos)
+				next = result.find(L'[', si);
+				if (next == std::wstring::npos || end < next)
 				{
-					next = result.find(L'[', si);
-					if (next == std::wstring::npos || end < next)
+					size_t ei = end - 1;
+					if (si != ei && result[si] == L'*' && result[ei] == L'*')
 					{
-						size_t ei = end - 1;
-						if (si != ei && result[si] == L'*' && result[ei] == L'*')
+						result.erase(ei, 1);
+						result.erase(si, 1);
+						start = ei;
+					}
+					else
+					{
+						std::wstring var = result.substr(si, end - si);
+
+						CMeasure* measure = GetMeasure(var);
+						if (measure)
 						{
-							result.erase(ei, 1);
-							result.erase(si, 1);
-							start = ei;
+							const std::wstring& value = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
+
+							// Measure found, replace it with the value
+							result.replace(start, end - start + 1, value);
+							start += value.length();
+							replaced = true;
 						}
 						else
 						{
-							std::wstring var = result.substr(si, end - si);
-
-							CMeasure* measure = GetMeasure(var);
-							if (measure)
+							std::wstring value;
+							if (GetSectionVariables(var, value))
 							{
-								const std::wstring& value = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
-
 								// Measure found, replace it with the value
 								result.replace(start, end - start + 1, value);
 								start += value.length();
@@ -543,14 +735,10 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 							}
 						}
 					}
-					else
-					{
-						start = next;
-					}
 				}
 				else
 				{
-					loop = false;
+					start = next;
 				}
 			}
 			else
@@ -558,9 +746,13 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 				loop = false;
 			}
 		}
-		while (loop);
+		else
+		{
+			loop = false;
+		}
 	}
-
+	while (loop);
+	
 	return replaced;
 }
 
