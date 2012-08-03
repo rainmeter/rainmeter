@@ -294,19 +294,17 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	bool oldWDefined = m_WDefined;
 	m_W = parser.ReadInt(section, L"W", m_W);
 	m_WDefined = parser.GetLastValueDefined();
-	if (!m_WDefined && oldWDefined)
+	if (!m_WDefined && oldWDefined && IsFixedSize())
 	{
 		m_W = 0;
-		parser.SetValue(section, L"W", L"0");
 	}
 	
 	bool oldHDefined = m_HDefined;
 	m_H = parser.ReadInt(section, L"H", m_H);
 	m_HDefined = parser.GetLastValueDefined();
-	if (!m_HDefined && oldHDefined)
+	if (!m_HDefined && oldHDefined && IsFixedSize())
 	{
 		m_H = 0;
-		parser.SetValue(section, L"H", L"0");
 	}
 
 	bool oldHidden = m_Hidden;

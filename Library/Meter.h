@@ -120,6 +120,8 @@ protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
 
+	virtual bool IsFixedSize() { return true; }
+
 	bool BindPrimaryMeasure(CConfigParser& parser, const WCHAR* section, bool optional);
 	void BindSecondaryMeasures(CConfigParser& parser, const WCHAR* section);
 

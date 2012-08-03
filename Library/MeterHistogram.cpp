@@ -165,9 +165,10 @@ void CMeterHistogram::Initialize()
 		DisposeBuffer();
 
 		// Create buffers for values
-		if (m_W > 0 || m_H > 0)
+		if (m_W >= 0 || m_H >= 0)
 		{
 			int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
+			maxSize = (maxSize == 0) ? 1 : maxSize;
 			m_PrimaryValues = new double[maxSize]();
 			if (secondaryMeasure)
 			{
@@ -360,6 +361,7 @@ bool CMeterHistogram::Update()
 
 		++m_MeterPos;
 		int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
+		maxSize = (maxSize == 0) ? 1 : maxSize;
 		m_MeterPos %= maxSize;
 		
 		m_MaxPrimaryValue = measure->GetMaxValue();
