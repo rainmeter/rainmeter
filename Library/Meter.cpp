@@ -292,7 +292,7 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 
 	bool oldWDefined = m_WDefined;
-	m_W = parser.ReadInt(section, L"W", m_W);
+	m_W = IsFixedSize(true) ? parser.ReadInt(section, L"W", m_W) : m_W;
 	m_WDefined = parser.GetLastValueDefined();
 	if (!m_WDefined && oldWDefined && IsFixedSize())
 	{
@@ -300,7 +300,7 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	
 	bool oldHDefined = m_HDefined;
-	m_H = parser.ReadInt(section, L"H", m_H);
+	m_H = IsFixedSize(true) ? parser.ReadInt(section, L"H", m_H) : m_H;
 	m_HDefined = parser.GetLastValueDefined();
 	if (!m_HDefined && oldHDefined && IsFixedSize())
 	{

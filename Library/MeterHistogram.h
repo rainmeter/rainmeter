@@ -38,7 +38,7 @@ protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
 
-	virtual bool IsFixedSize() { return m_PrimaryImageName.empty(); }
+	virtual bool IsFixedSize(bool overwrite = false) { return m_PrimaryImageName.empty(); }
 
 private:
 	void DisposeBuffer();

@@ -37,7 +37,7 @@ public:
 protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 
-	virtual bool IsFixedSize() { return m_ImageName.empty(); }
+	virtual bool IsFixedSize(bool overwrite = false) { return m_ImageName.empty(); }
 
 private:
 	enum ORIENTATION

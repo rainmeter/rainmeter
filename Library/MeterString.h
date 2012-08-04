@@ -47,7 +47,7 @@ protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
 
-	virtual bool IsFixedSize() { return false; }
+	virtual bool IsFixedSize(bool overwrite = false) { return overwrite; }
 
 private:
 	enum TEXTSTYLE
