@@ -627,22 +627,15 @@ double CMeasure::GetValueRange()
 */
 const WCHAR* CMeasure::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
-	static WCHAR buffer[MAX_LINE_LENGTH];
+	static WCHAR buffer[128];
 	WCHAR format[32];
 
 	if (percentual)
 	{
 		double val = 100.0 * GetRelativeValue();
 
-		if (decimals == 0)
-		{
-			_itow_s((int)val, buffer, 10);
-		}
-		else
-		{
-			_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
-			_snwprintf_s(buffer, _TRUNCATE, format, val);
-		}
+		_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
+		_snwprintf_s(buffer, _TRUNCATE, format, val);
 	}
 	else if (autoScale != AUTOSCALE_OFF)
 	{
@@ -652,12 +645,7 @@ const WCHAR* CMeasure::GetStringValue(AUTOSCALE autoScale, double scale, int dec
 	{
 		double val = GetValue() / scale;
 
-		if (decimals == 0)
-		{
-			val += (val >= 0) ? 0.5 : -0.5;
-			_snwprintf_s(buffer, _TRUNCATE, L"%lli", (LONGLONG)val);
-		}
-		else if (decimals == -1)
+		if (decimals == -1)
 		{
 			int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", val);
 			RemoveTrailingZero(buffer, len);

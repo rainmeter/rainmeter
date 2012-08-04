@@ -681,75 +681,63 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 {
 	bool replaced = false;
 
-	size_t start = 0, end, next;
-	bool loop = true;
-
-	do
+	size_t start = 0;
+	while ((start = result.find(L'[', start)) != std::wstring::npos)
 	{
-		start = result.find(L'[', start);
-		if (start != std::wstring::npos)
+		size_t si = start + 1;
+		size_t end = result.find(L']', si);
+		if (end == std::wstring::npos)
 		{
-			size_t si = start + 1;
-			end = result.find(L']', si);
-			if (end != std::wstring::npos)
+			break;
+		}
+
+		size_t next = result.find(L'[', si);
+		if (next == std::wstring::npos || end < next)
+		{
+			size_t ei = end - 1;
+			if (si != ei && result[si] == L'*' && result[ei] == L'*')
 			{
-				next = result.find(L'[', si);
-				if (next == std::wstring::npos || end < next)
-				{
-					size_t ei = end - 1;
-					if (si != ei && result[si] == L'*' && result[ei] == L'*')
-					{
-						result.erase(ei, 1);
-						result.erase(si, 1);
-						start = ei;
-					}
-					else
-					{
-						std::wstring var = result.substr(si, end - si);
-
-						CMeasure* measure = GetMeasure(var);
-						if (measure)
-						{
-							const std::wstring& value = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
-
-							// Measure found, replace it with the value
-							result.replace(start, end - start + 1, value);
-							start += value.length();
-							replaced = true;
-						}
-						else
-						{
-							std::wstring value;
-							if (GetSectionVariables(var, value))
-							{
-								// Measure found, replace it with the value
-								result.replace(start, end - start + 1, value);
-								start += value.length();
-								replaced = true;
-							}
-							else
-							{
-								start = end;
-							}
-						}
-					}
-				}
-				else
-				{
-					start = next;
-				}
+				result.erase(ei, 1);
+				result.erase(si, 1);
+				start = ei;
 			}
 			else
 			{
-				loop = false;
+				std::wstring var = result.substr(si, end - si);
+
+				CMeasure* measure = GetMeasure(var);
+				if (measure)
+				{
+					const WCHAR* value = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
+					size_t valueLen = wcslen(value);
+
+					// Measure found, replace it with the value
+					result.replace(start, end - start + 1, value, valueLen);
+					start += valueLen;
+					replaced = true;
+				}
+				else
+				{
+					std::wstring value;
+					if (GetSectionVariables(var, value))
+					{
+						// Measure found, replace it with the value
+						result.replace(start, end - start + 1, value);
+						start += value.length();
+						replaced = true;
+					}
+					else
+					{
+						start = end;
+					}
+				}
 			}
 		}
 		else
 		{
-			loop = false;
+			start = next;
 		}
 	}
-	while (loop);
 	
 	return replaced;
 }
