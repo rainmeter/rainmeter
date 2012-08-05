@@ -2181,9 +2181,6 @@ bool CMeterWindow::ReadSkin()
 	{
 		CMeter* meter = *iter;
 		m_Meters.push_back(meter);
-
-		meter->ReadOptions(m_Parser);
-		meter->Initialize();
 		meter->SetRelativeMeter(prevMeter);
 
 		if (!meter->GetToolTipText().empty())
@@ -2199,13 +2196,22 @@ bool CMeterWindow::ReadSkin()
 		prevMeter = meter;
 	}
 
-	// Initialize measures. This is a separate loop to avoid errors caused by
-	// referencing not-yet-existent [measures] in the options.
+	// Initialize measures. Separate loop to avoid errors caused by
+	// referencing nonexistent [measures] in the measure options.
 	for (auto iter = measures.cbegin(); iter != measures.cend(); ++iter)
 	{
 		CMeasure* measure = *iter;
 		measure->ReadOptions(m_Parser);
 		measure->Initialize();
+	}
+
+	// Initialize meters. Separate loop to avoid errors caused by referencing
+	// nonexistent [Measures:] in the meter options. (Dynamic Section Variables)
+	for (auto iter = meters.cbegin(); iter != meters.cend(); ++iter)
+	{
+		CMeter* meter = *iter;
+		meter->ReadOptions(m_Parser);
+		meter->Initialize();
 	}
 
 	if (m_Meters.empty())
