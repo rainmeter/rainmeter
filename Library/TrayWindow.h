@@ -62,7 +62,10 @@ private:
 		TRAY_NOTIFICATION_UPDATE
 	};
 
-	void AddTrayIcon();
+	bool AddTrayIcon();
+	bool IsTrayIconReady();
+	void TryAddTrayIcon();
+	void CheckTrayIcon();
 	void RemoveTrayIcon();
 	void ModifyTrayIcon(double value);
 	HICON CreateTrayIcon(double value);

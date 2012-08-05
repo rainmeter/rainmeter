@@ -37,11 +37,13 @@
 
 enum TIMER
 {
-	TIMER_TRAY = 3
+	TIMER_ADDTRAYICON = 1,
+	TIMER_TRAYMEASURE = 3
 };
 enum INTERVAL
 {
-	INTERVAL_TRAY = 1000
+	INTERVAL_ADDTRAYICON = 3000,
+	INTERVAL_TRAYMEASURE = 1000
 };
 
 const UINT WM_TASKBARCREATED = ::RegisterWindowMessage(L"TaskbarCreated");
@@ -66,7 +68,8 @@ CTrayWindow::CTrayWindow() :
 
 CTrayWindow::~CTrayWindow()
 {
-	KillTimer(m_Window, TIMER_TRAY);
+	KillTimer(m_Window, TIMER_ADDTRAYICON);
+	KillTimer(m_Window, TIMER_TRAYMEASURE);
 	RemoveTrayIcon();
 
 	delete m_Bitmap;
@@ -108,8 +111,36 @@ void CTrayWindow::Initialize()
 	SetWindowPos(m_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 }
 
-void CTrayWindow::AddTrayIcon()
+bool CTrayWindow::AddTrayIcon()
 {
+	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
+	tnid.hWnd = m_Window;
+	tnid.uID = IDI_TRAY;
+	tnid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+	tnid.uCallbackMessage = WM_TRAY_NOTIFYICON;
+	tnid.hIcon = m_Icon;
+	wcsncpy_s(tnid.szTip, APPNAME, _TRUNCATE);
+
+	return (Shell_NotifyIcon(NIM_ADD, &tnid) || GetLastError() != ERROR_TIMEOUT);
+}
+
+bool CTrayWindow::IsTrayIconReady()
+{
+	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
+	tnid.hWnd = m_Window;
+	tnid.uID = IDI_TRAY;
+
+	return Shell_NotifyIcon(NIM_MODIFY, &tnid);
+}
+
+void CTrayWindow::TryAddTrayIcon()
+{
+	if (IsTrayIconReady())
+	{
+		ModifyTrayIcon(0);
+		return;
+	}
+
 	if (m_Icon)
 	{
 		DestroyIcon(m_Icon);
@@ -118,31 +149,31 @@ void CTrayWindow::AddTrayIcon()
 
 	m_Icon = CreateTrayIcon(0);
 
-	if (m_Icon)
+	if (!AddTrayIcon())
 	{
-		NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
-		tnid.hWnd = m_Window;
-		tnid.uID = IDI_TRAY;
-		tnid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
-		tnid.uCallbackMessage = WM_TRAY_NOTIFYICON;
-		tnid.hIcon = m_Icon;
-		wcsncpy_s(tnid.szTip, L"Rainmeter", _TRUNCATE);
+		SetTimer(m_Window, TIMER_ADDTRAYICON, INTERVAL_ADDTRAYICON, NULL);
+	}
+}
 
-		Shell_NotifyIcon(NIM_ADD, &tnid);
+void CTrayWindow::CheckTrayIcon()
+{
+	if (IsTrayIconReady() || AddTrayIcon())
+	{
+		KillTimer(m_Window, TIMER_ADDTRAYICON);
 	}
 }
 
 void CTrayWindow::RemoveTrayIcon()
 {
+	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
+	tnid.hWnd = m_Window;
+	tnid.uID = IDI_TRAY;
+	tnid.uFlags = 0;
+
+	Shell_NotifyIcon(NIM_DELETE, &tnid);
+
 	if (m_Icon)
 	{
-		NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
-		tnid.hWnd = m_Window;
-		tnid.uID = IDI_TRAY;
-		tnid.uFlags = 0;
-
-		Shell_NotifyIcon(NIM_DELETE, &tnid);
-
 		DestroyIcon(m_Icon);
 		m_Icon = NULL;
 	}
@@ -198,7 +229,7 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 			SolidBrush brush2(m_Color2);
 			graphics.FillPolygon(&brush2, points, TRAYICON_SIZE + 2);
 
-			HICON icon;
+			HICON icon = NULL;
 			trayBitmap.GetHICON(&icon);
 			return icon;
 		}
@@ -253,7 +284,7 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 				Rect r(0, 0, TRAYICON_SIZE, TRAYICON_SIZE);
 				graphics.DrawImage(m_Bitmap, r, newX, newY, TRAYICON_SIZE, TRAYICON_SIZE, UnitPixel);
 
-				HICON icon;
+				HICON icon = NULL;
 				trayBitmap.GetHICON(&icon);
 				return icon;
 			}
@@ -304,7 +335,8 @@ void CTrayWindow::ShowUpdateNotification(const WCHAR* newVersion)
 void CTrayWindow::ReadOptions(CConfigParser& parser)
 {
 	// Clear old Settings
-	KillTimer(m_Window, TIMER_TRAY);
+	KillTimer(m_Window, TIMER_ADDTRAYICON);
+	KillTimer(m_Window, TIMER_TRAYMEASURE);
 
 	delete m_Measure;
 	m_Measure = NULL;
@@ -410,11 +442,11 @@ void CTrayWindow::ReadOptions(CConfigParser& parser)
 			LogWithArgs(LOG_ERROR, L"No such TrayMeter: %s", type);
 		}
 
-		AddTrayIcon();
+		TryAddTrayIcon();
 
 		if (m_Measure)
 		{
-			SetTimer(m_Window, TIMER_TRAY, INTERVAL_TRAY, NULL);		// Update the tray once per sec
+			SetTimer(m_Window, TIMER_TRAYMEASURE, INTERVAL_TRAYMEASURE, NULL);  // Update the tray once per sec
 		}
 	}
 	else
@@ -650,10 +682,17 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		return 1;
 
 	case WM_TIMER:
-		if (tray->m_Measure)
+		if (wParam == TIMER_TRAYMEASURE)
 		{
-			tray->m_Measure->Update();
-			tray->ModifyTrayIcon(tray->m_Measure->GetRelativeValue());
+			if (tray->m_Measure)
+			{
+				tray->m_Measure->Update();
+				tray->ModifyTrayIcon(tray->m_Measure->GetRelativeValue());
+			}
+		}
+		else if (wParam == TIMER_ADDTRAYICON)
+		{
+			tray->CheckTrayIcon();
 		}
 		break;
 
@@ -667,7 +706,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			if (tray->IsTrayIconEnabled())
 			{
 				tray->RemoveTrayIcon();
-				tray->AddTrayIcon();
+				tray->TryAddTrayIcon();
 			}
 		}
 		break;
