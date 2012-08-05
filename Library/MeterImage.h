@@ -38,7 +38,7 @@ protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
 	
-	virtual bool IsFixedSize(bool overwrite = false) { return m_ImageNameResult.empty(); }
+	virtual bool IsFixedSize(bool overwrite = false) { return overwrite ? true : m_ImageNameResult.empty(); }
 
 private:
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
