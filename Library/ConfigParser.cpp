@@ -275,7 +275,7 @@ bool CConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& 
 				}
 			}
 
-			int decimals = decimalsSz && *decimalsSz ? _wtoi(decimalsSz) : 15;
+			int decimals = decimalsSz && *decimalsSz ? _wtoi(decimalsSz) : 10;
 			double value = percentual ? measure->GetRelativeValue() * 100.0 : measure->GetValue() / scale;
 
 			WCHAR format[32];
