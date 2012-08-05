@@ -2183,11 +2183,6 @@ bool CMeterWindow::ReadSkin()
 		m_Meters.push_back(meter);
 		meter->SetRelativeMeter(prevMeter);
 
-		if (!meter->GetToolTipText().empty())
-		{
-			meter->CreateToolTip(this);
-		}
-
 		if (!m_HasButtons && meter->GetTypeID() == TypeID<CMeterButton>())
 		{
 			m_HasButtons = true;
@@ -2212,6 +2207,11 @@ bool CMeterWindow::ReadSkin()
 		CMeter* meter = *iter;
 		meter->ReadOptions(m_Parser);
 		meter->Initialize();
+
+		if (!meter->GetToolTipText().empty())
+		{
+			meter->CreateToolTip(this);
+		}
 	}
 
 	if (m_Meters.empty())
