@@ -108,9 +108,10 @@ static int GetVariable(lua_State* L)
 	CMeterWindow* self = GetSelf(L);
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
 
-	if (self->GetParser().GetVariable(strTmp, strTmp))
+	const std::wstring* value = self->GetParser().GetVariable(strTmp);
+	if (value)
 	{
-		LuaManager::PushWide(L, strTmp.c_str());
+		LuaManager::PushWide(L, (*value).c_str());
 	}
 	else
 	{

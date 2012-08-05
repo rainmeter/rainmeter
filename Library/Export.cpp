@@ -178,9 +178,10 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 			{
 				const std::wstring& variable = subStrings[1];
 
-				if (meterWindow->GetParser().GetVariable(variable, g_Buffer))
+				const std::wstring* value = meterWindow->GetParser().GetVariable(variable);
+				if (value)
 				{
-					return g_Buffer.c_str();
+					return (*value).c_str();
 				}
 			}
 		}

@@ -153,10 +153,10 @@ void CConfigParser::SetVariable(std::unordered_map<std::wstring, std::wstring>& 
 }
 
 /*
-** Gets a value for the variable. Returns true if variable found.
+** Gets a value for the variable. Returns NULL if not found.
 **
 */
-bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& strValue)
+const std::wstring* CConfigParser::GetVariable(const std::wstring& strVariable)
 {
 	const std::wstring strTmp = StrToUpper(strVariable);
 
@@ -164,31 +164,24 @@ bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& s
 	std::unordered_map<std::wstring, std::wstring>::const_iterator iter = m_BuiltInVariables.find(strTmp);
 	if (iter != m_BuiltInVariables.end())
 	{
-		// Built-in variable found
-		strValue = (*iter).second;
-		return true;
+		return &(*iter).second;
 	}
 
 	// #2: Monitor variables
 	iter = c_MonitorVariables.find(strTmp);
 	if (iter != c_MonitorVariables.end())
 	{
-		// SCREENAREA/WORKAREA variable found
-		strValue = (*iter).second;
-		return true;
+		return &(*iter).second;
 	}
 
 	// #3: User-defined variables
 	iter = m_Variables.find(strTmp);
 	if (iter != m_Variables.end())
 	{
-		// Variable found
-		strValue = (*iter).second;
-		return true;
+		return &(*iter).second;
 	}
 
-	// Not found
-	return false;
+	return NULL;
 }
 
 /*
@@ -577,13 +570,12 @@ bool CConfigParser::ReplaceVariables(std::wstring& result)
 				else
 				{
 					std::wstring strVariable = result.substr(si, end - si);
-					std::wstring strValue;
-
-					if (GetVariable(strVariable, strValue))
+					const std::wstring* value = GetVariable(strVariable);
+					if (value)
 					{
 						// Variable found, replace it with the value
-						result.replace(start, end - start + 1, strValue);
-						start += strValue.length();
+						result.replace(start, end - start + 1, *value);
+						start += (*value).length();
 						replaced = true;
 					}
 					else

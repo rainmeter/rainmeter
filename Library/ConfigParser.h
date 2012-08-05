@@ -46,7 +46,7 @@ public:
 	void AddMeasure(CMeasure* pMeasure);
 	CMeasure* GetMeasure(const std::wstring& name);
 
-	bool GetVariable(const std::wstring& strVariable, std::wstring& strValue);
+	const std::wstring* GetVariable(const std::wstring& strVariable);
 	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_Variables, strVariable, strValue); }
 	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
 
