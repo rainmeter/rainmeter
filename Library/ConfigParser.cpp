@@ -264,7 +264,7 @@ bool CConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& 
 			else if (*selectorSz == L'/')  // Scale
 			{
 				errno = 0;
-				scale = _wtoi(selectorSz);
+				scale = _wtoi(selectorSz + 1);
 				if (errno == EINVAL)
 				{
 					scale = 1.0;
