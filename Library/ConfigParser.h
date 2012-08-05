@@ -110,7 +110,7 @@ private:
 
 	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
 
-	bool GetSectionVariables(const std::wstring& strVariable, std::wstring& strValue);
+	bool GetSectionVariable(std::wstring& strVariable, std::wstring& strValue);
 
 	static void SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue);
 	static void SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const WCHAR* strVariable, const WCHAR* strValue);

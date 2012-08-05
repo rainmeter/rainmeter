@@ -192,63 +192,42 @@ bool CConfigParser::GetVariable(const std::wstring& strVariable, std::wstring& s
 }
 
 /*
-** Meter/Measure psuedo-variables. [MeasureName:] returns numeric value of measure.
-**  ie. [MeterName:X], [MeasureName:], [MeasureName:%, 2], [MeasureName:3]
+** Gets the value of a section variable. Returns true if strValue is set.
+** The selector is stripped from strVariable.
+**
 */
-bool CConfigParser::GetSectionVariables(const std::wstring& strVariable, std::wstring& strValue)
+bool CConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue)
 {
-	WCHAR buffer[MAX_LINE_LENGTH];
-	int len;
-
-	std::vector<std::wstring> strToken = Tokenize(strVariable, L":");
-
-	if (strToken.size() == 1 && !m_Measures.empty())
+	size_t colonPos = strVariable.find_last_of(L':');
+	if (colonPos == std::wstring::npos)
 	{
-		// [MeasureName:] returns number value
-		CMeasure* measure = m_MeterWindow->GetMeasure(strToken[0]);
-		if (measure)
-		{
-			len = _snwprintf_s(buffer, _TRUNCATE, L"%lli", (LONGLONG)measure->GetValue());
-			strValue.assign(buffer, len);
-			return true;
-		}
+		return false;
 	}
-	else if (strToken.size() == 2)
+
+	const std::wstring selector = strVariable.substr(colonPos + 1);
+	const WCHAR* selectorSz = selector.c_str();
+	strVariable.resize(colonPos);
+
+	if (!selector.empty() && iswalpha(selectorSz[0]))
 	{
-		auto stripSpaces = [](std::wstring& str)
-		{
-			// Strip off leading and trailing spaces
-			size_t startPos = str.find_first_not_of(L" \t");
-			size_t endPos = str.find_last_not_of(L" \t");
-			if (std::wstring::npos != startPos || std::wstring::npos != endPos)
-			{
-				str = str.substr(startPos, endPos - startPos + 1);
-			}
-		};
-
-		std::wstring args = strToken[1];
-		stripSpaces(args);
-
-		// Check meters first
-		//  Format: [MeterName:X]
-		CMeter* meter = m_MeterWindow->GetMeter(strToken[0]);
+		// [Meter:X], [Meter:Y], [Meter:W], [Meter:H]
+		CMeter* meter = m_MeterWindow->GetMeter(strVariable);
 		if (meter)
 		{
-			const WCHAR* arg = args.c_str();
-
-			if (_wcsicmp(arg, L"X") == 0)
+			WCHAR buffer[32];
+			if (_wcsicmp(selectorSz, L"X") == 0)
 			{
 				_itow_s(meter->GetX(), buffer, 10);
 			}
-			else if (_wcsicmp(arg, L"Y") == 0)
+			else if (_wcsicmp(selectorSz, L"Y") == 0)
 			{
 				_itow_s(meter->GetY(), buffer, 10);
 			}
-			else if (_wcsicmp(arg, L"W") == 0)
+			else if (_wcsicmp(selectorSz, L"W") == 0)
 			{
 				_itow_s(meter->GetW(), buffer, 10);
 			}
-			else if (_wcsicmp(arg, L"H") == 0)
+			else if (_wcsicmp(selectorSz, L"H") == 0)
 			{
 				_itow_s(meter->GetH(), buffer, 10);
 			}
@@ -259,111 +238,66 @@ bool CConfigParser::GetSectionVariables(const std::wstring& strVariable, std::ws
 
 			strValue = buffer;
 			return true;
-		}	
-
-		// Check measures
-		//  Format: [MeasureName:/1000,2] [MeasureName:%,2] [MeasureName:10]
-		CMeasure* measure = m_MeterWindow->GetMeasure(strToken[0]);
+		}
+	}
+	else
+	{
+		// Number: [Measure:], [Measure:dec]
+		// Percentual: [Measure:%], [Measure:%, dec]
+		// Scale: [Measure:/scale], [Measure:/scale, dec]
+		CMeasure* measure = m_MeterWindow->GetMeasure(strVariable);
 		if (measure)
 		{
 			double scale = 1.0;
-			int numOfDecimals = -1;
-			bool foundDecimal = false;
 			bool percentual = false;
-			WCHAR format[32];
 
-			std::vector<std::wstring> measureOptions = Tokenize(args, L",");
-			std::wstring tempStr;
+			const WCHAR* decimalsSz = wcschr(selectorSz, L',');
+			if (decimalsSz)
+			{
+				++decimalsSz;
+			}
 
-			if (wcscmp(measureOptions[0].c_str(), L"%") == 0)  // Percentual
+			if (*selectorSz == L'%')  // Percentual
 			{
 				percentual = true;
 			}
-			else if (!measureOptions[0].empty() && measureOptions[0][0] == L'/')  // Scale
+			else if (*selectorSz == L'/')  // Scale
 			{
-				std::wstring tempScale = measureOptions[0].substr(1, measureOptions[0].length() - 1);  // RVO
-				stripSpaces(tempScale);
-
 				errno = 0;
-				scale = _wtoi(tempScale.c_str());
-
+				scale = _wtoi(selectorSz);
 				if (errno == EINVAL)
 				{
 					scale = 1.0;
 				}
 			}
-			else  // NumOfDecimals
-			{
-				tempStr = measureOptions[0];
-				stripSpaces(tempStr);
-
-				errno = 0;
-				numOfDecimals = _wtoi(tempStr.c_str());
-
-				if (errno == EINVAL || numOfDecimals < -1)
-				{
-					numOfDecimals = -1;
-				}
-
-				foundDecimal = true;
-			}
-
-			// NumOfDecimals (for Percentual and Scale)
-			if (measureOptions.size() == 2 && !foundDecimal)
-			{
-				tempStr = measureOptions[1];
-				stripSpaces(tempStr);
-				
-				errno = 0;
-				numOfDecimals = _wtoi(tempStr.c_str());
-
-				// _wtoi returns 0 if there is an error.
-				if (errno == EINVAL || numOfDecimals < -1)
-				{
-					numOfDecimals = -1;
-				}
-			}
-
-			len = 0;
-
-			if (percentual)
-			{
-				double val = 100.0 * measure->GetRelativeValue();
-
-				if (numOfDecimals <= 0)
-				{
-					_itow_s((int)val, buffer, 10);
-					len = (int)wcslen(buffer);
-				}
-				else
-				{
-					_snwprintf_s(format, _TRUNCATE, L"%%.%if", numOfDecimals);
-					len = _snwprintf_s(buffer, _TRUNCATE, format, val);
-				}
-			}
 			else
 			{
-				double val = measure->GetValue() / scale;
-
-				if (numOfDecimals == 0)
+				if (decimalsSz)
 				{
-					val += (val >= 0) ? 0.5 : -0.5;
-					len = _snwprintf_s(buffer, _TRUNCATE, L"%lli", (LONGLONG)val);
-				}
-				else if (numOfDecimals < 0)
-				{
-					len = _snwprintf_s(buffer, _TRUNCATE, L"%.15f", val);
-					measure->RemoveTrailingZero(buffer, len);
-					len = (int)wcslen(buffer);
+					return false;
 				}
 				else
 				{
-					_snwprintf_s(format, _TRUNCATE, L"%%.%if", numOfDecimals);
-					len = _snwprintf_s(buffer, _TRUNCATE, format, val);
+					decimalsSz = selectorSz;
 				}
 			}
 
-			strValue.assign(buffer, len);
+			int decimals = decimalsSz && *decimalsSz ? _wtoi(decimalsSz) : 15;
+			double value = percentual ? measure->GetRelativeValue() * 100.0 : measure->GetValue() / scale;
+
+			WCHAR format[32];
+			WCHAR buffer[128];
+			_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
+			int bufferLen = _snwprintf_s(buffer, _TRUNCATE, format, value);
+			
+			if (!decimalsSz)
+			{
+				// Remove trailing zeros if decimal count was not specified.
+				measure->RemoveTrailingZero(buffer, bufferLen);
+				bufferLen = (int)wcslen(buffer);
+			}
+
+			strValue.assign(buffer, bufferLen);
 			return true;
 		}
 	}
@@ -719,9 +653,9 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 				else
 				{
 					std::wstring value;
-					if (GetSectionVariables(var, value))
+					if (GetSectionVariable(var, value))
 					{
-						// Measure found, replace it with the value
+						// Replace section variable with the value.
 						result.replace(start, end - start + 1, value);
 						start += value.length();
 						replaced = true;
