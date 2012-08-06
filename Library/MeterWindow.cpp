@@ -2191,17 +2191,8 @@ bool CMeterWindow::ReadSkin()
 		prevMeter = meter;
 	}
 
-	// Initialize measures. Separate loop to avoid errors caused by
-	// referencing nonexistent [measures] in the measure options.
-	for (auto iter = measures.cbegin(); iter != measures.cend(); ++iter)
-	{
-		CMeasure* measure = *iter;
-		measure->ReadOptions(m_Parser);
-		measure->Initialize();
-	}
-
-	// Initialize meters. Separate loop to avoid errors caused by referencing
-	// nonexistent [Measures:] in the meter options. (Dynamic Section Variables)
+	// Initialize meters. Separate loop to avoid errors caused with section
+	// variables for nonexistent measures/meters.
 	for (auto iter = meters.cbegin(); iter != meters.cend(); ++iter)
 	{
 		CMeter* meter = *iter;
@@ -2212,6 +2203,15 @@ bool CMeterWindow::ReadSkin()
 		{
 			meter->CreateToolTip(this);
 		}
+	}
+
+	// Initialize measures. Separate loop to avoid errors caused by
+	// referencing nonexistent [measures] in the measure options.
+	for (auto iter = measures.cbegin(); iter != measures.cend(); ++iter)
+	{
+		CMeasure* measure = *iter;
+		measure->ReadOptions(m_Parser);
+		measure->Initialize();
 	}
 
 	if (m_Meters.empty())
