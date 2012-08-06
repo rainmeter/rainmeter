@@ -2119,10 +2119,10 @@ bool CMeterWindow::ReadSkin()
 	}
 
 	// Create all meters and measures.
-	std::list<CMeter*> meters;
-	std::list<CMeasure*> measures;
-	std::list<std::wstring>::const_iterator iter = m_Parser.GetSections().begin();
-	for ( ; iter != m_Parser.GetSections().end(); ++iter)
+	m_HasNetMeasures = false;
+	m_HasButtons = false;
+	CMeter* prevMeter = NULL;
+	for (auto iter = m_Parser.GetSections().cbegin(); iter != m_Parser.GetSections().cend(); ++iter)
 	{
 		const WCHAR* section = (*iter).c_str();
 
@@ -2136,7 +2136,13 @@ bool CMeterWindow::ReadSkin()
 				CMeasure* measure = CMeasure::Create(measureName.c_str(), this, section);
 				if (measure)
 				{
-					measures.push_back(measure);
+					m_Measures.push_back(measure);
+					m_Parser.AddMeasure(measure);
+
+					if (measure->GetTypeID() == TypeID<CMeasureNet>())
+					{
+						m_HasNetMeasures = true;
+					}
 				}
 
 				continue;
@@ -2149,7 +2155,15 @@ bool CMeterWindow::ReadSkin()
 				CMeter* meter = CMeter::Create(meterName.c_str(), this, section);
 				if (meter)
 				{
-					meters.push_back(meter);
+					m_Meters.push_back(meter);
+					meter->SetRelativeMeter(prevMeter);
+
+					if (!m_HasButtons && meter->GetTypeID() == TypeID<CMeterButton>())
+					{
+						m_HasButtons = true;
+					}
+
+					prevMeter = meter;
 				}
 
 				continue;
@@ -2157,43 +2171,9 @@ bool CMeterWindow::ReadSkin()
 		}
 	}
 
-	m_HasNetMeasures = false;
-	m_HasButtons = false;
-
-	// Add measures to containers.
-	m_Measures.reserve(measures.size());
-	for (auto iter = measures.cbegin(); iter != measures.cend(); ++iter)
-	{
-		CMeasure* measure = *iter;
-		m_Measures.push_back(measure);
-		m_Parser.AddMeasure(measure);
-
-		if (measure->GetTypeID() == TypeID<CMeasureNet>())
-		{
-			m_HasNetMeasures = true;
-		}
-	}
-
-	// Initialize meters.
-	m_Meters.reserve(meters.size());
-	CMeter* prevMeter = NULL;
-	for (auto iter = meters.cbegin(); iter != meters.cend(); ++iter)
-	{
-		CMeter* meter = *iter;
-		m_Meters.push_back(meter);
-		meter->SetRelativeMeter(prevMeter);
-
-		if (!m_HasButtons && meter->GetTypeID() == TypeID<CMeterButton>())
-		{
-			m_HasButtons = true;
-		}
-
-		prevMeter = meter;
-	}
-
 	// Initialize meters. Separate loop to avoid errors caused with section
 	// variables for nonexistent measures/meters.
-	for (auto iter = meters.cbegin(); iter != meters.cend(); ++iter)
+	for (auto iter = m_Meters.cbegin(); iter != m_Meters.cend(); ++iter)
 	{
 		CMeter* meter = *iter;
 		meter->ReadOptions(m_Parser);
@@ -2207,7 +2187,7 @@ bool CMeterWindow::ReadSkin()
 
 	// Initialize measures. Separate loop to avoid errors caused by
 	// referencing nonexistent [measures] in the measure options.
-	for (auto iter = measures.cbegin(); iter != measures.cend(); ++iter)
+	for (auto iter = m_Measures.cbegin(); iter != m_Measures.cend(); ++iter)
 	{
 		CMeasure* measure = *iter;
 		measure->ReadOptions(m_Parser);
