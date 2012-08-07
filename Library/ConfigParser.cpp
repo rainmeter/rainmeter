@@ -201,7 +201,9 @@ bool CConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& 
 	const WCHAR* selectorSz = selector.c_str();
 	strVariable.resize(colonPos);
 
-	if (!selector.empty() && iswalpha(selectorSz[0]))
+	bool isKeySelector = (!selector.empty() && iswalpha(selectorSz[0]));
+
+	if (isKeySelector)
 	{
 		// [Meter:X], [Meter:Y], [Meter:W], [Meter:H]
 		CMeter* meter = m_MeterWindow->GetMeter(strVariable);
@@ -233,66 +235,140 @@ bool CConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& 
 			return true;
 		}
 	}
+
+	// Number: [Measure:], [Measure:dec]
+	// Percentual: [Measure:%], [Measure:%, dec]
+	// Scale: [Measure:/scale], [Measure:/scale, dec]
+	// Max/Min: [Measure:MaxValue], [Measure:MaxValue:/scale, dec] ('%' cannot be used)
+	enum VALUETYPE
+	{
+		RAW        = 0,
+		PERCENTUAL = 1,
+		MAX        = 2,
+		MIN        = 3
+	} valueType = RAW;
+
+	if (isKeySelector)
+	{
+		if (_wcsicmp(selectorSz, L"MaxValue") == 0)
+		{
+			valueType = MAX;
+		}
+		else if (_wcsicmp(selectorSz, L"MinValue") == 0)
+		{
+			valueType = MIN;
+		}
+		else
+		{
+			return false;
+		}
+
+		selectorSz = L"";
+	}
 	else
 	{
-		// Number: [Measure:], [Measure:dec]
-		// Percentual: [Measure:%], [Measure:%, dec]
-		// Scale: [Measure:/scale], [Measure:/scale, dec]
-		CMeasure* measure = m_MeterWindow->GetMeasure(strVariable);
-		if (measure)
+		colonPos = strVariable.find_last_of(L':');
+		if (colonPos != std::wstring::npos)
 		{
-			double scale = 1.0;
-			bool percentual = false;
+			do
+			{
+				const WCHAR* keySelectorSz = strVariable.c_str() + colonPos + 1;
 
-			const WCHAR* decimalsSz = wcschr(selectorSz, L',');
-			if (decimalsSz)
-			{
-				++decimalsSz;
-			}
-
-			if (*selectorSz == L'%')  // Percentual
-			{
-				percentual = true;
-			}
-			else if (*selectorSz == L'/')  // Scale
-			{
-				errno = 0;
-				scale = _wtoi(selectorSz + 1);
-				if (errno == EINVAL)
+				if (_wcsicmp(keySelectorSz, L"MaxValue") == 0)
 				{
-					scale = 1.0;
+					valueType = MAX;
 				}
-			}
-			else
-			{
-				if (decimalsSz)
+				else if (_wcsicmp(keySelectorSz, L"MinValue") == 0)
 				{
-					return false;
+					valueType = MIN;
 				}
 				else
 				{
-					decimalsSz = selectorSz;
+					// Section name contains ':' ?
+					break;
 				}
+
+				strVariable.resize(colonPos);
 			}
-
-			int decimals = decimalsSz && *decimalsSz ? _wtoi(decimalsSz) : 10;
-			double value = percentual ? measure->GetRelativeValue() * 100.0 : measure->GetValue() / scale;
-
-			WCHAR format[32];
-			WCHAR buffer[128];
-			_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
-			int bufferLen = _snwprintf_s(buffer, _TRUNCATE, format, value);
-			
-			if (!decimalsSz)
-			{
-				// Remove trailing zeros if decimal count was not specified.
-				measure->RemoveTrailingZero(buffer, bufferLen);
-				bufferLen = (int)wcslen(buffer);
-			}
-
-			strValue.assign(buffer, bufferLen);
-			return true;
+			while (0);
 		}
+	}
+
+	CMeasure* measure = m_MeterWindow->GetMeasure(strVariable);
+	if (measure)
+	{
+		double scale = 1.0;
+
+		const WCHAR* decimalsSz = wcschr(selectorSz, L',');
+		if (decimalsSz)
+		{
+			++decimalsSz;
+		}
+
+		if (*selectorSz == L'%')  // Percentual
+		{
+			if (valueType == MAX || valueType == MIN)  // '%' cannot be used with MAX/MIN value
+			{
+				return false;
+			}
+
+			valueType = PERCENTUAL;
+		}
+		else if (*selectorSz == L'/')  // Scale
+		{
+			errno = 0;
+			scale = _wtoi(selectorSz + 1);
+			if (errno == EINVAL)
+			{
+				scale = 1.0;
+			}
+		}
+		else
+		{
+			if (decimalsSz)
+			{
+				return false;
+			}
+
+			decimalsSz = selectorSz;
+		}
+
+		double value = (valueType == PERCENTUAL) ? measure->GetRelativeValue() * 100.0
+			: (valueType == MAX) ? measure->GetMaxValue() / scale
+			: (valueType == MIN) ? measure->GetMinValue() / scale
+			: measure->GetValue() / scale;
+		int decimals = 10;
+
+		if (decimalsSz)
+		{
+			while (iswspace(*decimalsSz)) ++decimalsSz;
+
+			if (*decimalsSz)
+			{
+				decimals = _wtoi(decimalsSz);
+				decimals = max(0, decimals);
+				decimals = min(32, decimals);
+			}
+			else
+			{
+				decimalsSz = NULL;
+			}
+		}
+
+		WCHAR format[32];
+		WCHAR buffer[128];
+		_snwprintf_s(format, _TRUNCATE, L"%%.%if", decimals);
+		int bufferLen = _snwprintf_s(buffer, _TRUNCATE, format, value);
+			
+		if (!decimalsSz)
+		{
+			// Remove trailing zeros if decimal count was not specified.
+			measure->RemoveTrailingZero(buffer, bufferLen);
+			bufferLen = (int)wcslen(buffer);
+		}
+
+		strValue.assign(buffer, bufferLen);
+		return true;
 	}
 	
 	return false;
