@@ -44,12 +44,12 @@ void CGroup::InitializeGroup(const std::wstring& groups)
 	}
 }
 
-bool CGroup::BelongsToGroup(const std::wstring& group)
+bool CGroup::BelongsToGroup(const std::wstring& group) const
 {
 	return (m_Groups.find(CreateGroup(group)) != m_Groups.end());
 }
 
-std::wstring CGroup::CreateGroup(const std::wstring& str)
+std::wstring CGroup::CreateGroup(const std::wstring& str) const
 {
 	std::wstring strTmp;
 

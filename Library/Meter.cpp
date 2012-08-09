@@ -39,7 +39,7 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(meterWindow), m_Name(name),
+CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : CSection(name), m_MeterWindow(meterWindow),
 	m_X(),
 	m_Y(),
 	m_W(0),
@@ -48,7 +48,6 @@ CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(met
 	m_WDefined(false),
 	m_HDefined(false),
 	m_RelativeMeter(),
-	m_DynamicVariables(false),
 	m_Transformation(),
 	m_ToolTipWidth(),
 	m_ToolTipType(false),
@@ -58,8 +57,6 @@ CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(met
 	m_MouseOver(false),
 	m_RelativeX(POSITION_ABSOLUTE),
 	m_RelativeY(POSITION_ABSOLUTE),
-	m_UpdateDivider(1),
-	m_UpdateCounter(1),
 	m_SolidBevel(BEVELTYPE_NONE),
 	m_SolidAngle(),
 	m_AntiAlias(false),

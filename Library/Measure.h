@@ -23,7 +23,7 @@
 #include <vector>
 #include <string>
 #include "Litestep.h"
-#include "Group.h"
+#include "Section.h"
 
 enum AUTOSCALE
 {
@@ -41,28 +41,19 @@ class CMeter;
 class CMeterWindow;
 class CConfigParser;
 
-class CMeasure : public CGroup
+class CMeasure : public CSection
 {
 public:
-	CMeasure(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasure();
-
-	virtual UINT GetTypeID() = 0;
 
 	void ReadOptions(CConfigParser& parser) { ReadOptions(parser, GetName()); }
 
 	virtual void Initialize();
 	bool Update();
 
-	const WCHAR* GetName() { return m_Name.c_str(); }
-	const std::wstring& GetOriginalName() { return m_Name; }
-
 	void Disable();
 	void Enable();
 	bool IsDisabled() { return m_Disabled; }
-
-	bool HasDynamicVariables() { return m_DynamicVariables; }
-	void SetDynamicVariables(bool b) { m_DynamicVariables = b; }
 
 	virtual void Command(const std::wstring& command);
 
@@ -71,10 +62,6 @@ public:
 	double GetValueRange();
 	double GetMinValue() { return m_MinValue; }
 	double GetMaxValue() { return m_MaxValue; }
-
-	void ResetUpdateCounter() { m_UpdateCounter = m_UpdateDivider; }
-	int GetUpdateCounter() { return m_UpdateCounter; }
-	int GetUpdateDivider() { return m_UpdateDivider; }
 
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 	static void GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords);
@@ -85,6 +72,8 @@ public:
 	static CMeasure* Create(const WCHAR* measure, CMeterWindow* meterWindow, const WCHAR* name);
 
 protected:
+	CMeasure(CMeterWindow* meterWindow, const WCHAR* name);
+
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue() = 0;
 
@@ -93,13 +82,11 @@ protected:
 	const WCHAR* CheckSubstitute(const WCHAR* buffer);
 	bool MakePlainSubstitute(std::wstring& str, size_t index);
 
-	bool m_DynamicVariables;		// If true, the measure contains dynamic variables
 	bool m_Invert;					// If true, the value should be inverted
 	bool m_LogMaxValue;				// If true, The maximum & minimum values are logged
 	double m_MinValue;				// The minimum value (so far)
 	double m_MaxValue;				// The maximum value (so far)
 	double m_Value;					// The current value
-	const std::wstring m_Name;		// Name of this Measure
 
 	std::vector<std::wstring> m_Substitute;	// Vec of substitute strings
 	bool m_RegExpSubstitute;
@@ -122,8 +109,6 @@ protected:
 	bool m_IfAboveCommitted;		// True when the IfAbove action is executed
 	bool m_IfBelowCommitted;		// True when the IfBelow action is executed
 	bool m_Disabled;				// Status of the measure
-	int m_UpdateDivider;			// Divider for the update
-	int m_UpdateCounter;			// Current update counter
 	bool m_Initialized;
 
 	CMeterWindow* m_MeterWindow;

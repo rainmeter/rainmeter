@@ -436,6 +436,7 @@
     <ClInclude Include="RainmeterQuery.h" />
     <ClInclude Include="RawString.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Section.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="TintedImage.h" />

@@ -26,18 +26,15 @@
 #include "Litestep.h"
 #include "ConfigParser.h"
 #include "MeterWindow.h"
+#include "Section.h"
 #include "Measure.h"
-#include "Group.h"
 
 class CMeasure;
 
-class CMeter : public CGroup
+class CMeter : public CSection
 {
 public:
-	CMeter(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeter();
-
-	virtual UINT GetTypeID() = 0;
 
 	void ReadOptions(CConfigParser& parser) { ReadOptions(parser, GetName()); parser.ClearStyleTemplate(); }
 
@@ -45,9 +42,6 @@ public:
 	virtual bool Update();
 	virtual bool Draw(Gdiplus::Graphics& graphics);
 	virtual bool HasActiveTransition() { return false; }
-	
-	bool HasDynamicVariables() { return m_DynamicVariables; }
-	void SetDynamicVariables(bool b) { m_DynamicVariables = b; }
 
 	virtual int GetW() { return m_Hidden ? 0 : m_W; }
 	virtual int GetH() { return m_Hidden ? 0 : m_H; }
@@ -82,13 +76,6 @@ public:
 	void SetMouseOver(bool over) { m_MouseOver = over; }
 	bool IsMouseOver() { return m_MouseOver; }
 
-	const WCHAR* GetName() { return m_Name.c_str(); }
-	const std::wstring& GetOriginalName() { return m_Name; }
-
-	void ResetUpdateCounter() { m_UpdateCounter = m_UpdateDivider; }
-	int GetUpdateCounter() { return m_UpdateCounter; }
-	int GetUpdateDivider() { return m_UpdateDivider; }
-
 	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
 
 	static CMeter* Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHAR* name);
@@ -117,6 +104,8 @@ protected:
 		POSITION_RELATIVE_BR
 	};
 
+	CMeter(CMeterWindow* meterWindow, const WCHAR* name);
+
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
 
@@ -127,7 +116,6 @@ protected:
 
 	bool ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale = AUTOSCALE_ON, double scale = 1.0, int decimals = 0, bool percentual = false);
 
-	const std::wstring m_Name;
 	std::vector<CMeasure*> m_Measures;
 	int m_X;
 	int m_Y;
@@ -137,7 +125,6 @@ protected:
 	bool m_WDefined;
 	bool m_HDefined;
 	CMeter*	m_RelativeMeter;
-	bool m_DynamicVariables;
 
 	Gdiplus::Matrix* m_Transformation;
 
@@ -156,9 +143,6 @@ protected:
 
 	METER_POSITION m_RelativeX;
 	METER_POSITION m_RelativeY;
-
-	int m_UpdateDivider;
-	int m_UpdateCounter;
 
 	BEVELTYPE m_SolidBevel;
 	Gdiplus::Color m_SolidColor;

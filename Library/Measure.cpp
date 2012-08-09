@@ -69,8 +69,7 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(meterWindow), m_Name(name),
-	m_DynamicVariables(false),
+CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : CSection(name), m_MeterWindow(meterWindow),
 	m_Invert(false),
 	m_LogMaxValue(false),
 	m_MinValue(),
@@ -87,8 +86,6 @@ CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow
 	m_IfAboveCommitted(false),
 	m_IfBelowCommitted(false),
 	m_Disabled(false),
-	m_UpdateDivider(1),
-	m_UpdateCounter(1),
 	m_Initialized(false)
 {
 }

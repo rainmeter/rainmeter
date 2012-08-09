@@ -25,16 +25,17 @@
 class CGroup
 {
 public:
-	bool BelongsToGroup(const std::wstring& group);
+	virtual ~CGroup() {}
+
+	bool BelongsToGroup(const std::wstring& group) const;
 
 protected:
 	CGroup() {}
-	virtual ~CGroup() {}
 
 	void InitializeGroup(const std::wstring& groups);
 
 private:
-	std::wstring CreateGroup(const std::wstring& str);
+	std::wstring CreateGroup(const std::wstring& str) const;
 
 	std::unordered_set<std::wstring> m_Groups;
 	std::wstring m_OldGroups;

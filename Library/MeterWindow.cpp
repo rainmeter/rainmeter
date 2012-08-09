@@ -936,16 +936,6 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 }
 
 /*
-** This is a helper template that compares the given name to measure/meter's name.
-**
-*/
-template <class T>
-bool CompareName(T* m, const WCHAR* name, bool group)
-{
-	return (group) ? m->BelongsToGroup(name) : (_wcsicmp(m->GetName(), name) == 0);
-}
-
-/*
 ** Enables blurring of the window background (using Aero)
 **
 */
@@ -1072,6 +1062,15 @@ void CMeterWindow::ResizeBlur(const std::wstring& arg, int mode)
 		}
 		free(parseSz);
 	}
+}
+
+/*
+** Helper function that compares the given name to section's name.
+**
+*/
+bool CompareName(const CSection* section, const WCHAR* name, bool group)
+{
+	return (group) ? section->BelongsToGroup(name) : (_wcsicmp(section->GetName(), name) == 0);
 }
 
 /*
