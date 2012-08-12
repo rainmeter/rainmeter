@@ -27,6 +27,10 @@
 CMeasurePhysicalMemory::CMeasurePhysicalMemory(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
 	m_Total(false)
 {
+	MEMORYSTATUSEX stat;
+	stat.dwLength = sizeof(MEMORYSTATUSEX);
+	GlobalMemoryStatusEx(&stat);
+	m_MaxValue = (double)(__int64)stat.ullTotalPhys;
 }
 
 /*
@@ -43,15 +47,12 @@ CMeasurePhysicalMemory::~CMeasurePhysicalMemory()
 */
 void CMeasurePhysicalMemory::UpdateValue()
 {
-	MEMORYSTATUSEX stat;
-	stat.dwLength = sizeof(MEMORYSTATUSEX);
-	GlobalMemoryStatusEx(&stat);
-	if (m_Total)
+	if (!m_Total)
 	{
-		m_Value = (double)(__int64)stat.ullTotalPhys;
-	}
-	else
-	{
+		MEMORYSTATUSEX stat;
+		stat.dwLength = sizeof(MEMORYSTATUSEX);
+		GlobalMemoryStatusEx(&stat);
+
 		m_Value = (double)(__int64)(stat.ullTotalPhys - stat.ullAvailPhys);
 	}
 }
@@ -62,13 +63,14 @@ void CMeasurePhysicalMemory::UpdateValue()
 */
 void CMeasurePhysicalMemory::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
+	double oldMaxValue = m_MaxValue;
 	CMeasure::ReadOptions(parser, section);
+	m_MaxValue = oldMaxValue;
 
 	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
-
-	MEMORYSTATUSEX stat;
-	stat.dwLength = sizeof(MEMORYSTATUSEX);
-	GlobalMemoryStatusEx(&stat);
-	m_MaxValue = (double)(__int64)stat.ullTotalPhys;
+	if (m_Total)
+	{
+		m_Value = m_MaxValue;
+	}
 }
 
