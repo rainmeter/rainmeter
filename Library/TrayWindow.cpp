@@ -364,19 +364,10 @@ void CTrayWindow::ReadOptions(CConfigParser& parser)
 			CConfigParser* oldParser = Rainmeter->GetCurrentParser();
 			Rainmeter->SetCurrentParser(&parser);
 
-			try
+			m_Measure = CMeasure::Create(measureName.c_str(), NULL, L"TrayMeasure");
+			if (m_Measure)
 			{
-				m_Measure = CMeasure::Create(measureName.c_str(), NULL, L"TrayMeasure");
-				if (m_Measure)
-				{
-					m_Measure->ReadOptions(parser);
-				}
-			}
-			catch (CError& error)
-			{
-				delete m_Measure;
-				m_Measure = NULL;
-				LogError(error);
+				m_Measure->ReadOptions(parser);
 			}
 
 			Rainmeter->SetCurrentParser(oldParser);

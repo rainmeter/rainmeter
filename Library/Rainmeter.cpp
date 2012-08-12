@@ -2479,14 +2479,7 @@ void CRainmeter::RefreshAll()
 				continue;
 			}
 
-			try
-			{
-				mw->Refresh(false, true);
-			}
-			catch (CError& error)
-			{
-				LogError(error);
-			}
+			mw->Refresh(false, true);
 		}
 	}
 

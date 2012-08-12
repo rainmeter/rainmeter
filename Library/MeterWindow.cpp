@@ -2554,14 +2554,7 @@ bool CMeterWindow::UpdateMeasure(CMeasure* measure, bool force)
 		if (measure->HasDynamicVariables() &&
 			(measure->GetUpdateCounter() + 1) >= updateDivider)
 		{
-			try
-			{
-				measure->ReadOptions(m_Parser);
-			}
-			catch (CError& error)
-			{
-				LogError(error);
-			}
+			measure->ReadOptions(m_Parser);
 		}
 
 		if (measure->Update())
@@ -2592,14 +2585,7 @@ bool CMeterWindow::UpdateMeter(CMeter* meter, bool& bActiveTransition, bool forc
 		if (meter->HasDynamicVariables() &&
 			(meter->GetUpdateCounter() + 1) >= updateDivider)
 		{
-			try
-			{
-				meter->ReadOptions(m_Parser);
-			}
-			catch (CError& error)
-			{
-				LogError(error);
-			}
+			meter->ReadOptions(m_Parser);
 		}
 
 		if (meter->Update())
@@ -3213,172 +3199,165 @@ LRESULT CMeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	try
+	if (wParam == IDM_SKIN_EDITSKIN)
 	{
-		if (wParam == IDM_SKIN_EDITSKIN)
-		{
-			Rainmeter->EditSkinFile(m_FolderPath, m_FileName);
-		}
-		else if (wParam == IDM_SKIN_REFRESH)
-		{
-			Refresh(false);
-		}
-		else if (wParam == IDM_SKIN_OPENSKINSFOLDER)
-		{
-			Rainmeter->OpenSkinFolder(m_FolderPath);
-		}
-		else if (wParam == IDM_SKIN_MANAGESKIN)
-		{
-			CDialogManage::OpenSkin(this);
-		}
-		else if (wParam == IDM_SKIN_VERYTOPMOST)
-		{
-			SetWindowZPosition(ZPOSITION_ONTOPMOST);
-		}
-		else if (wParam == IDM_SKIN_TOPMOST)
-		{
-			SetWindowZPosition(ZPOSITION_ONTOP);
-		}
-		else if (wParam == IDM_SKIN_BOTTOM)
-		{
-			SetWindowZPosition(ZPOSITION_ONBOTTOM);
-		}
-		else if (wParam == IDM_SKIN_NORMAL)
-		{
-			SetWindowZPosition(ZPOSITION_NORMAL);
-		}
-		else if (wParam == IDM_SKIN_ONDESKTOP)
-		{
-			SetWindowZPosition(ZPOSITION_ONDESKTOP);
-		}
-		else if (wParam == IDM_SKIN_KEEPONSCREEN)
-		{
-			SetKeepOnScreen(!m_KeepOnScreen);
-		}
-		else if (wParam == IDM_SKIN_CLICKTHROUGH)
-		{
-			SetClickThrough(!m_ClickThrough);
-		}
-		else if (wParam == IDM_SKIN_DRAGGABLE)
-		{
-			SetWindowDraggable(!m_WindowDraggable);
-		}
-		else if (wParam == IDM_SKIN_HIDEONMOUSE)
-		{
-			SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_HIDE : HIDEMODE_NONE);
-		}
-		else if (wParam == IDM_SKIN_TRANSPARENCY_FADEIN)
-		{
-			SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_FADEIN : HIDEMODE_NONE);
-		}
-		else if (wParam == IDM_SKIN_TRANSPARENCY_FADEOUT)
-		{
-			SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_FADEOUT : HIDEMODE_NONE);
-		}
-		else if (wParam == IDM_SKIN_REMEMBERPOSITION)
-		{
-			SetSavePosition(!m_SavePosition);
-		}
-		else if (wParam == IDM_SKIN_SNAPTOEDGES)
-		{
-			SetSnapEdges(!m_SnapEdges);
-		}
-		else if (wParam >= IDM_SKIN_TRANSPARENCY_0 && wParam <= IDM_SKIN_TRANSPARENCY_90)
-		{
-			m_AlphaValue = (int)(255.0 - (wParam - IDM_SKIN_TRANSPARENCY_0) * (230.0 / (IDM_SKIN_TRANSPARENCY_90 - IDM_SKIN_TRANSPARENCY_0)));
-			UpdateWindow(m_AlphaValue, false);
-			WriteOptions(OPTION_ALPHAVALUE);
-		}
-		else if (wParam == IDM_CLOSESKIN)
-		{
-			Rainmeter->DeactivateSkin(this, -1);
-		}
-		else if (wParam == IDM_SKIN_FROMRIGHT)
-		{
-			m_WindowXFromRight = !m_WindowXFromRight;
+		Rainmeter->EditSkinFile(m_FolderPath, m_FileName);
+	}
+	else if (wParam == IDM_SKIN_REFRESH)
+	{
+		Refresh(false);
+	}
+	else if (wParam == IDM_SKIN_OPENSKINSFOLDER)
+	{
+		Rainmeter->OpenSkinFolder(m_FolderPath);
+	}
+	else if (wParam == IDM_SKIN_MANAGESKIN)
+	{
+		CDialogManage::OpenSkin(this);
+	}
+	else if (wParam == IDM_SKIN_VERYTOPMOST)
+	{
+		SetWindowZPosition(ZPOSITION_ONTOPMOST);
+	}
+	else if (wParam == IDM_SKIN_TOPMOST)
+	{
+		SetWindowZPosition(ZPOSITION_ONTOP);
+	}
+	else if (wParam == IDM_SKIN_BOTTOM)
+	{
+		SetWindowZPosition(ZPOSITION_ONBOTTOM);
+	}
+	else if (wParam == IDM_SKIN_NORMAL)
+	{
+		SetWindowZPosition(ZPOSITION_NORMAL);
+	}
+	else if (wParam == IDM_SKIN_ONDESKTOP)
+	{
+		SetWindowZPosition(ZPOSITION_ONDESKTOP);
+	}
+	else if (wParam == IDM_SKIN_KEEPONSCREEN)
+	{
+		SetKeepOnScreen(!m_KeepOnScreen);
+	}
+	else if (wParam == IDM_SKIN_CLICKTHROUGH)
+	{
+		SetClickThrough(!m_ClickThrough);
+	}
+	else if (wParam == IDM_SKIN_DRAGGABLE)
+	{
+		SetWindowDraggable(!m_WindowDraggable);
+	}
+	else if (wParam == IDM_SKIN_HIDEONMOUSE)
+	{
+		SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_HIDE : HIDEMODE_NONE);
+	}
+	else if (wParam == IDM_SKIN_TRANSPARENCY_FADEIN)
+	{
+		SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_FADEIN : HIDEMODE_NONE);
+	}
+	else if (wParam == IDM_SKIN_TRANSPARENCY_FADEOUT)
+	{
+		SetWindowHide((m_WindowHide == HIDEMODE_NONE) ? HIDEMODE_FADEOUT : HIDEMODE_NONE);
+	}
+	else if (wParam == IDM_SKIN_REMEMBERPOSITION)
+	{
+		SetSavePosition(!m_SavePosition);
+	}
+	else if (wParam == IDM_SKIN_SNAPTOEDGES)
+	{
+		SetSnapEdges(!m_SnapEdges);
+	}
+	else if (wParam >= IDM_SKIN_TRANSPARENCY_0 && wParam <= IDM_SKIN_TRANSPARENCY_90)
+	{
+		m_AlphaValue = (int)(255.0 - (wParam - IDM_SKIN_TRANSPARENCY_0) * (230.0 / (IDM_SKIN_TRANSPARENCY_90 - IDM_SKIN_TRANSPARENCY_0)));
+		UpdateWindow(m_AlphaValue, false);
+		WriteOptions(OPTION_ALPHAVALUE);
+	}
+	else if (wParam == IDM_CLOSESKIN)
+	{
+		Rainmeter->DeactivateSkin(this, -1);
+	}
+	else if (wParam == IDM_SKIN_FROMRIGHT)
+	{
+		m_WindowXFromRight = !m_WindowXFromRight;
 
-			ScreenToWindow();
-			WriteOptions(OPTION_POSITION);
-		}
-		else if (wParam == IDM_SKIN_FROMBOTTOM)
+		ScreenToWindow();
+		WriteOptions(OPTION_POSITION);
+	}
+	else if (wParam == IDM_SKIN_FROMBOTTOM)
+	{
+		m_WindowYFromBottom = !m_WindowYFromBottom;
+
+		ScreenToWindow();
+		WriteOptions(OPTION_POSITION);
+	}
+	else if (wParam == IDM_SKIN_XPERCENTAGE)
+	{
+		m_WindowXPercentage = !m_WindowXPercentage;
+
+		ScreenToWindow();
+		WriteOptions(OPTION_POSITION);
+	}
+	else if (wParam == IDM_SKIN_YPERCENTAGE)
+	{
+		m_WindowYPercentage = !m_WindowYPercentage;
+
+		ScreenToWindow();
+		WriteOptions(OPTION_POSITION);
+	}
+	else if (wParam == IDM_SKIN_MONITOR_AUTOSELECT)
+	{
+		m_AutoSelectScreen = !m_AutoSelectScreen;
+
+		ScreenToWindow();
+		WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
+	}
+	else if (wParam == IDM_SKIN_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
+	{
+		const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
+		const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
+
+		int screenIndex;
+		bool screenDefined;
+		if (wParam == IDM_SKIN_MONITOR_PRIMARY)
 		{
-			m_WindowYFromBottom = !m_WindowYFromBottom;
-
-			ScreenToWindow();
-			WriteOptions(OPTION_POSITION);
-		}
-		else if (wParam == IDM_SKIN_XPERCENTAGE)
-		{
-			m_WindowXPercentage = !m_WindowXPercentage;
-
-			ScreenToWindow();
-			WriteOptions(OPTION_POSITION);
-		}
-		else if (wParam == IDM_SKIN_YPERCENTAGE)
-		{
-			m_WindowYPercentage = !m_WindowYPercentage;
-
-			ScreenToWindow();
-			WriteOptions(OPTION_POSITION);
-		}
-		else if (wParam == IDM_SKIN_MONITOR_AUTOSELECT)
-		{
-			m_AutoSelectScreen = !m_AutoSelectScreen;
-
-			ScreenToWindow();
-			WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
-		}
-		else if (wParam == IDM_SKIN_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
-		{
-			const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
-			const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
-
-			int screenIndex;
-			bool screenDefined;
-			if (wParam == IDM_SKIN_MONITOR_PRIMARY)
-			{
-				screenIndex = multimonInfo.primary;
-				screenDefined = false;
-			}
-			else
-			{
-				screenIndex = (wParam & 0x0ffff) - ID_MONITOR_FIRST;
-				screenDefined = true;
-			}
-
-			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() && monitors[screenIndex-1].active))
-			{
-				if (m_AutoSelectScreen)
-				{
-					m_AutoSelectScreen = false;
-				}
-
-				m_WindowXScreen = m_WindowYScreen = screenIndex;
-				m_WindowXScreenDefined = m_WindowYScreenDefined = screenDefined;
-
-				m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
-				ScreenToWindow();
-				WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
-			}
+			screenIndex = multimonInfo.primary;
+			screenDefined = false;
 		}
 		else
 		{
-			// Forward to tray window, which handles all the other commands
-			HWND tray = Rainmeter->GetTrayWindow()->GetWindow();
+			screenIndex = (wParam & 0x0ffff) - ID_MONITOR_FIRST;
+			screenDefined = true;
+		}
 
-			if (wParam == IDM_QUIT)
+		if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() && monitors[screenIndex-1].active))
+		{
+			if (m_AutoSelectScreen)
 			{
-				PostMessage(tray, WM_COMMAND, wParam, lParam);
+				m_AutoSelectScreen = false;
 			}
-			else
-			{
-				SendMessage(tray, WM_COMMAND, wParam, lParam);
-			}
+
+			m_WindowXScreen = m_WindowYScreen = screenIndex;
+			m_WindowXScreenDefined = m_WindowYScreenDefined = screenDefined;
+
+			m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
+			ScreenToWindow();
+			WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
 		}
 	}
-	catch (CError& error)
+	else
 	{
-		LogError(error);
+		// Forward to tray window, which handles all the other commands
+		HWND tray = Rainmeter->GetTrayWindow()->GetWindow();
+
+		if (wParam == IDM_QUIT)
+		{
+			PostMessage(tray, WM_COMMAND, wParam, lParam);
+		}
+		else
+		{
+			SendMessage(tray, WM_COMMAND, wParam, lParam);
+		}
 	}
 
 	return 0;
@@ -4339,14 +4318,7 @@ LRESULT CALLBACK CMeterWindow::InitialWndProc(HWND hWnd, UINT uMsg, WPARAM wPara
 */
 LRESULT CMeterWindow::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	try
-	{
-		Refresh(false);
-	}
-	catch (CError& error)
-	{
-		LogError(error);
-	}
+	Refresh(false);
 	return 0;
 }
 
