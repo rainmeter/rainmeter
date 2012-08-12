@@ -1074,16 +1074,8 @@ bool CSystem::IsFileWritable(LPCWSTR file)
 ** Avoids loading a DLL from current directory.
 **
 */
-HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError, bool ignoreErrors)
+HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError)
 {
-	UINT oldMode;
-
-	if (ignoreErrors)
-	{
-		oldMode = SetErrorMode(0);
-		SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
-	}
-
 	// Remove current directory from DLL search path
 	SetDllDirectory(L"");
 
@@ -1093,11 +1085,6 @@ HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError, bool ignor
 	if (dwError)
 	{
 		*dwError = GetLastError();
-	}
-
-	if (ignoreErrors)
-	{
-		SetErrorMode(oldMode);  // Reset
 	}
 
 	return hLib;

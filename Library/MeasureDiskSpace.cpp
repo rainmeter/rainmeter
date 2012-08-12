@@ -107,21 +107,17 @@ void CMeasureDiskSpace::UpdateValue()
 			BOOL sizeResult = FALSE;
 			ULONGLONG i64TotalBytes, i64FreeBytes;
 
-			if (type != DRIVE_NO_ROOT_DIR)
+			if (type != DRIVE_NO_ROOT_DIR &&
+				type != DRIVE_CDROM &&
+				(!m_IgnoreRemovable || type != DRIVE_REMOVABLE))  // Ignore CD-ROMS and removable drives
 			{
-				if (type != DRIVE_CDROM && (!m_IgnoreRemovable || type != DRIVE_REMOVABLE))	// Ignore CD-ROMS and removable drives
+				if (!m_DiskQuota)
 				{
-					UINT oldMode = SetErrorMode(0);
-					SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
-					if (!m_DiskQuota)
-					{
-						sizeResult = GetDiskFreeSpaceEx(drive, NULL, (PULARGE_INTEGER)&i64TotalBytes, (PULARGE_INTEGER)&i64FreeBytes);
-					}
-					else
-					{
-						sizeResult = GetDiskFreeSpaceEx(drive, (PULARGE_INTEGER)&i64FreeBytes, (PULARGE_INTEGER)&i64TotalBytes, NULL);
-					}
-					SetErrorMode(oldMode);  // Reset
+					sizeResult = GetDiskFreeSpaceEx(drive, NULL, (PULARGE_INTEGER)&i64TotalBytes, (PULARGE_INTEGER)&i64FreeBytes);
+				}
+				else
+				{
+					sizeResult = GetDiskFreeSpaceEx(drive, (PULARGE_INTEGER)&i64FreeBytes, (PULARGE_INTEGER)&i64TotalBytes, NULL);
 				}
 			}
 
@@ -148,15 +144,10 @@ void CMeasureDiskSpace::UpdateValue()
 				BOOL labelResult = FALSE;
 				WCHAR volumeName[MAX_PATH + 1];
 
-				if (type != DRIVE_NO_ROOT_DIR)
+				if (type != DRIVE_NO_ROOT_DIR &&
+					(!m_IgnoreRemovable || type != DRIVE_REMOVABLE))  // Ignore removable drives
 				{
-					if (!m_IgnoreRemovable || type != DRIVE_REMOVABLE)	// Ignore removable drives
-					{
-						UINT oldMode = SetErrorMode(0);
-						SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
-						labelResult = GetVolumeInformation(drive, volumeName, MAX_PATH + 1, NULL, NULL, NULL, NULL, 0);
-						SetErrorMode(oldMode);  // Reset
-					}
+					labelResult = GetVolumeInformation(drive, volumeName, MAX_PATH + 1, NULL, NULL, NULL, NULL, 0);
 				}
 
 				m_DriveInfo = (labelResult) ? volumeName : L"";
@@ -224,12 +215,10 @@ void CMeasureDiskSpace::ReadOptions(CConfigParser& parser, const WCHAR* section)
 			const WCHAR* drive = m_Drive.c_str();
 			UINT type = GetDriveType(drive);
 			if (type != DRIVE_NO_ROOT_DIR &&
-				type != DRIVE_CDROM && (!m_IgnoreRemovable || type != DRIVE_REMOVABLE))	// Ignore CD-ROMS and removable drives
+				type != DRIVE_CDROM &&
+				(!m_IgnoreRemovable || type != DRIVE_REMOVABLE))  // Ignore CD-ROMS and removable drives
 			{
-				UINT oldMode = SetErrorMode(0);
-				SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);  // Prevent the system from displaying message box
 				result = GetDiskFreeSpaceEx(drive, NULL, (PULARGE_INTEGER)&i64TotalBytes, NULL);
-				SetErrorMode(oldMode);  // Reset
 			}
 		}
 

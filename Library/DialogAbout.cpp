@@ -1002,7 +1002,7 @@ void CDialogAbout::CTabPlugins::Initialize()
 
 			// Try old calling GetPluginVersion/GetPluginAuthor for backwards compatibility
 			DWORD err = 0;
-			HMODULE dll = CSystem::RmLoadLibrary(path, &err, true);
+			HMODULE dll = CSystem::RmLoadLibrary(path, &err);
 			if (dll)
 			{
 				ListView_InsertItem(item, &vitem);

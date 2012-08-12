@@ -76,7 +76,7 @@ public:
 
 	static bool IsFileWritable(LPCWSTR file);
 
-	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = NULL, bool ignoreErrors = false);
+	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = NULL);
 	static void ResetWorkingDirectory();
 
 	static void SetClipboardText(const std::wstring& text);
