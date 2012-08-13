@@ -118,11 +118,11 @@ int CMeter::GetY(bool abs)
 	{
 		if (m_RelativeY == POSITION_RELATIVE_TL)
 		{
-			return m_RelativeMeter->GetY() + m_Y;
+			return m_RelativeMeter->GetY(true) + m_Y;
 		}
 		else
 		{
-			return m_RelativeMeter->GetY() + m_RelativeMeter->GetH() + m_Y;
+			return m_RelativeMeter->GetY(true) + m_RelativeMeter->GetH() + m_Y;
 		}
 	}
 	return m_Y;
