@@ -2170,6 +2170,13 @@ bool CMeterWindow::ReadSkin()
 		}
 	}
 
+	if (m_Meters.empty())
+	{
+		std::wstring text = GetFormattedString(ID_STR_NOMETERSINSKIN, m_FolderPath.c_str(), m_FileName.c_str());
+		Rainmeter->ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
+		return false;
+	}
+
 	// Initialize meters. Separate loop to avoid errors caused with section
 	// variables for nonexistent measures/meters.
 	for (auto iter = m_Meters.cbegin(); iter != m_Meters.cend(); ++iter)
@@ -2193,12 +2200,13 @@ bool CMeterWindow::ReadSkin()
 		measure->Initialize();
 	}
 
-	if (m_Meters.empty())
+	// Set window size (and CURRENTCONFIGWIDTH/HEIGHT) temporarily
+	for (auto iter = m_Meters.cbegin(); iter != m_Meters.cend(); ++iter)
 	{
-		std::wstring text = GetFormattedString(ID_STR_NOMETERSINSKIN, m_FolderPath.c_str(), m_FileName.c_str());
-		Rainmeter->ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
-		return false;
+		bool bActiveTransition = true;  // Do not track the change of ActiveTransition
+		UpdateMeter(*iter, bActiveTransition, true);
 	}
+	ResizeWindow(true);
 
 	return true;
 }
