@@ -47,12 +47,17 @@ CMeasureVirtualMemory::~CMeasureVirtualMemory()
 */
 void CMeasureVirtualMemory::UpdateValue()
 {
-	if (!m_Total)
-	{
-		MEMORYSTATUSEX stat;
-		stat.dwLength = sizeof(MEMORYSTATUSEX);
-		GlobalMemoryStatusEx(&stat);
+	MEMORYSTATUSEX stat;
+	stat.dwLength = sizeof(MEMORYSTATUSEX);
+	GlobalMemoryStatusEx(&stat);
+	m_MaxValue = (double)(__int64)stat.ullTotalPageFile;
 
+	if (m_Total)
+	{
+		m_Value = m_MaxValue;
+	}
+	else
+	{
 		m_Value = (double)(__int64)(stat.ullTotalPageFile - stat.ullAvailPageFile);
 	}
 }
@@ -68,9 +73,5 @@ void CMeasureVirtualMemory::ReadOptions(CConfigParser& parser, const WCHAR* sect
 	m_MaxValue = oldMaxValue;
 
 	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
-	if (m_Total)
-	{
-		m_Value = m_MaxValue;
-	}
 }
 
