@@ -87,11 +87,7 @@ void CMeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, 
 	}
 }
 
-/*
-** Updates the current time
-**
-*/
-void CMeasureTime::UpdateValue()
+void CMeasureTime::FillCurrentTime()
 {
 	FILETIME ftUTCTime;
 	GetSystemTimeAsFileTime(&ftUTCTime);
@@ -102,6 +98,15 @@ void CMeasureTime::UpdateValue()
 	m_Time.LowPart = ftUTCTime.dwLowDateTime;
 
 	m_Time.QuadPart += m_DeltaTime.QuadPart;
+}
+
+/*
+** Updates the current time
+**
+*/
+void CMeasureTime::UpdateValue()
+{
+	FillCurrentTime();
 
 	if (!m_Format.empty())
 	{
@@ -257,5 +262,11 @@ void CMeasureTime::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		{
 			m_DeltaTime.QuadPart = (LONGLONG)(zone * 3600) * 10000000;
 		}
+	}
+
+	if (!m_Initialized)
+	{
+		// Initialize m_Time to avoid causing EINVAL in TimeToString() until calling UpdateValue()
+		FillCurrentTime();
 	}
 }

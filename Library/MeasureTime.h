@@ -37,6 +37,7 @@ protected:
 
 private:
 	void TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const tm* time);
+	void FillCurrentTime();
 
 	std::wstring m_Format;
 	LARGE_INTEGER m_DeltaTime;
