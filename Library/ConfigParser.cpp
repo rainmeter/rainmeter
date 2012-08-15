@@ -40,7 +40,8 @@ CConfigParser::CConfigParser() :
 	m_LastReplaced(false),
 	m_LastDefaultUsed(false),
 	m_LastValueDefined(false),
-	m_CurrentSection()
+	m_CurrentSection(),
+	m_MeterWindow()
 {
 }
 
@@ -54,6 +55,8 @@ CConfigParser::~CConfigParser()
 
 void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meterWindow, LPCTSTR skinSection, const std::wstring* resourcePath)
 {
+	m_MeterWindow = meterWindow;
+
 	m_Measures.clear();
 	m_Sections.clear();
 	m_Values.clear();
@@ -81,8 +84,6 @@ void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meter
 	m_FoundSections.clear();
 	m_ListVariables.clear();
 	m_SectionInsertPos = m_Sections.end();
-
-	m_MeterWindow = meterWindow;
 }
 
 void CConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, CMeterWindow* meterWindow)
