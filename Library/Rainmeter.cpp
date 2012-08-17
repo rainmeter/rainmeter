@@ -1283,7 +1283,8 @@ void CRainmeter::ReloadSettings()
 
 void CRainmeter::EditSettings()
 {
-	RunFile(m_SkinEditor.c_str(), m_IniFile.c_str());
+	std::wstring file = L"\"" + m_IniFile + L"\"";
+	RunFile(m_SkinEditor.c_str(), file.c_str());
 }
 
 void CRainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniFile)
@@ -1292,6 +1293,8 @@ void CRainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniF
 	args += L'\\';
 	args += iniFile;
 	bool writable = CSystem::IsFileWritable(args.c_str());
+
+	args = L"\"" + args + L"\"";
 
 	// Execute as admin if in protected location
 	RunFile(m_SkinEditor.c_str(), args.c_str(), !writable);
