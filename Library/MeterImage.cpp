@@ -33,8 +33,7 @@ using namespace Gdiplus;
 */
 CMeterImage::CMeterImage(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
 	m_NeedsRedraw(false),
-	m_PreserveAspectRatio(false),
-	m_Tile(false),
+	m_DrawMode(DRAWMODE_NONE),
 	m_ScaleMargins()
 {
 }
@@ -84,14 +83,14 @@ void CMeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		{
 			if (!m_HDefined)
 			{
-				m_H = (imageW == 0) ? 0 : (m_Tile) ? imageH : m_W * imageH / imageW;
+				m_H = (imageW == 0) ? 0 : (m_DrawMode == DRAWMODE_TILE) ? imageH : m_W * imageH / imageW;
 			}
 		}
 		else
 		{
 			if (m_HDefined)
 			{
-				m_W = (imageH == 0) ? 0 : (m_Tile) ? imageW : m_H * imageW / imageH;
+				m_W = (imageH == 0) ? 0 : (m_DrawMode == DRAWMODE_TILE) ? imageW : m_H * imageW / imageH;
 			}
 			else
 			{
@@ -121,8 +120,28 @@ void CMeterImage::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	m_ImageName = parser.ReadString(section, L"ImageName", L"");
 
-	m_PreserveAspectRatio = 0!=parser.ReadInt(section, L"PreserveAspectRatio", 0);
-	m_Tile = 0!=parser.ReadInt(section, L"Tile", 0);
+	int mode = parser.ReadInt(section, L"Tile", 0);
+	if (mode != 0)
+	{
+		m_DrawMode = DRAWMODE_TILE;
+	}
+	else
+	{
+		mode = parser.ReadInt(section, L"PreserveAspectRatio", 0);
+		switch (mode)
+		{
+		case 0:
+			m_DrawMode = DRAWMODE_NONE;
+			break;
+		case 1:
+		default:
+			m_DrawMode = DRAWMODE_KEEPRATIO;
+			break;
+		case 2:
+			m_DrawMode = DRAWMODE_KEEPRATIOANDCROP;
+			break;
+		}
+	}
 
 	static const RECT defMargins = {0};
 	m_ScaleMargins = parser.ReadRECT(section, L"ScaleMargins", defMargins);
@@ -219,7 +238,7 @@ bool CMeterImage::Draw(Graphics& graphics)
 			Rect r(x, y, drawW, drawH);
 			graphics.DrawImage(drawBitmap, r, 0, 0, imageW, imageH, UnitPixel);
 		}
-		else if (m_Tile)
+		else if (m_DrawMode == DRAWMODE_TILE)
 		{
 			ImageAttributes imgAttr;
 			imgAttr.SetWrapMode(WrapModeTile);
@@ -227,31 +246,51 @@ bool CMeterImage::Draw(Graphics& graphics)
 			Rect r(x, y, drawW, drawH);
 			graphics.DrawImage(drawBitmap, r, 0, 0, drawW, drawH, UnitPixel, &imgAttr);
 		}
-		else if (m_PreserveAspectRatio)
+		else if (m_DrawMode == DRAWMODE_KEEPRATIO || m_DrawMode == DRAWMODE_KEEPRATIOANDCROP)
 		{
+			int cropX = 0;
+			int cropY = 0;
+			int cropW = imageW;
+			int cropH = imageH;
+
 			if (m_WDefined && m_HDefined)
 			{
 				REAL imageRatio = imageW / (REAL)imageH;
 				REAL meterRatio = m_W / (REAL)m_H;
 
-				if (imageRatio >= meterRatio)
+				if (imageRatio != meterRatio)
 				{
-					drawW = m_W;
-					drawH = m_W * imageH / imageW;
+					if (m_DrawMode == DRAWMODE_KEEPRATIO)
+					{
+						if (imageRatio > meterRatio)
+						{
+							drawH = m_W * imageH / imageW;
+							y += (m_H - drawH) / 2;
+						}
+						else
+						{
+							drawW = m_H * imageW / imageH;
+							x += (m_W - drawW) / 2;
+						}
+					}
+					else
+					{
+						if (imageRatio > meterRatio)
+						{
+							cropW = (int)(imageH * meterRatio);
+							cropX = (imageW - cropW) / 2;
+						}
+						else
+						{
+							cropH = (int)(imageW / meterRatio);
+							cropY = (imageH - cropH) / 2;
+						}
+					}
 				}
-				else
-				{
-					drawW = m_H * imageW / imageH;
-					drawH = m_H;
-				}
-
-				// Centering
-				x += (m_W - drawW) / 2;
-				y += (m_H - drawH) / 2;
 			}
 
 			Rect r(x, y, drawW, drawH);
-			graphics.DrawImage(drawBitmap, r, 0, 0, imageW, imageH, UnitPixel);
+			graphics.DrawImage(drawBitmap, r, cropX, cropY, cropW, cropH, UnitPixel);
 		}
 		else
 		{

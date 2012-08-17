@@ -41,6 +41,14 @@ protected:
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite ? true : m_ImageNameResult.empty(); }
 
 private:
+	enum DRAWMODE
+	{
+		DRAWMODE_NONE = 0,
+		DRAWMODE_TILE,
+		DRAWMODE_KEEPRATIO,
+		DRAWMODE_KEEPRATIOANDCROP
+	};
+
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
 	CTintedImage m_Image;
@@ -49,8 +57,7 @@ private:
 	std::wstring m_Path;
 
 	bool m_NeedsRedraw;
-	bool m_PreserveAspectRatio;
-	bool m_Tile;
+	DRAWMODE m_DrawMode;
 
 	RECT m_ScaleMargins;
 };
