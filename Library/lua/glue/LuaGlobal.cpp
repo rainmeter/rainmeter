@@ -57,7 +57,23 @@ static int Print(lua_State* L)
 	return 0;
 }
 
+static int tolua_cast(lua_State* L)
+{
+	// Simply push first argument onto stack.
+	lua_pushvalue(L, 1);
+	return 1;
+}
+
 void LuaManager::RegisterGlobal(lua_State* L)
 {
 	lua_register(L, "print", Print);
+
+	// Register tolua.cast() for backwards compatibility.
+	const luaL_Reg toluaFuncs[] =
+	{
+		{ "cast", tolua_cast },
+		{ NULL, NULL }
+	};
+
+	luaL_register(L, "tolua", toluaFuncs);
 }
