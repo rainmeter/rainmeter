@@ -153,7 +153,6 @@ public:
 	const std::wstring& GetDrive() { return m_Drive; }
 
 	const std::wstring& GetSkinEditor() { return m_SkinEditor; }
-	const std::wstring& GetLogViewer() { return m_LogViewer; }
 	const std::wstring& GetStatsDate() { return m_StatsDate; }
 
 	HWND GetWindow() { return m_Window; }
@@ -312,7 +311,6 @@ private:
 	std::list<LogInfo> m_LogData;
 
 	std::wstring m_SkinEditor;
-	std::wstring m_LogViewer;
 
 	CConfigParser* m_CurrentParser;
 

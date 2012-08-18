@@ -1283,18 +1283,18 @@ void CRainmeter::ReloadSettings()
 
 void CRainmeter::EditSettings()
 {
-	std::wstring file = L'\"' + m_IniFile;
-	file += L'\"';
+	std::wstring file = L'"' + m_IniFile;
+	file += L'"';
 	RunFile(m_SkinEditor.c_str(), file.c_str());
 }
 
 void CRainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniFile)
 {
-	std::wstring args = L'\"' + m_SkinPath;
+	std::wstring args = L'"' + m_SkinPath;
 	args += name;
 	args += L'\\';
 	args += iniFile;
-	args += L'\"';
+	args += L'"';
 	RunFile(m_SkinEditor.c_str(), args.c_str());
 }
 
@@ -2334,19 +2334,9 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		m_SkinEditor = (SUCCEEDED(hr) && cchOut > 0) ? buffer : L"Notepad";
 	}
 
-	m_LogViewer = parser.ReadString(L"Rainmeter", L"LogViewer", L"");
-	if (m_LogViewer.empty())
-	{
-		// Get the program path associated with .log files
-		DWORD cchOut = MAX_PATH;
-		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".log", L"open", buffer, &cchOut);
-		m_LogViewer = (SUCCEEDED(hr) && cchOut > 0) ? buffer : L"Notepad";
-	}
-
 	if (m_Debug)
 	{
 		LogWithArgs(LOG_NOTICE, L"ConfigEditor: %s", m_SkinEditor.c_str());
-		LogWithArgs(LOG_NOTICE, L"LogViewer: %s", m_LogViewer.c_str());
 	}
 
 	m_TrayExecuteR = parser.ReadString(L"Rainmeter", L"TrayExecuteR", L"", false);
@@ -3242,10 +3232,10 @@ void CRainmeter::StopLogging()
 
 void CRainmeter::ShowLogFile()
 {
-	std::wstring logFile = L'\"' + m_LogFile;
-	logFile += L'\"';
+	std::wstring logFile = L'"' + m_LogFile;
+	logFile += L'"';
 
-	RunFile(m_LogViewer.c_str(), logFile.c_str());
+	RunFile(m_SkinEditor.c_str(), logFile.c_str());
 }
 
 void CRainmeter::DeleteLogFile()
