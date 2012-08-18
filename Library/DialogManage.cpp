@@ -1513,9 +1513,10 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			int sel = ListBox_GetCurSel(item);
 			const std::vector<std::wstring>& themes = Rainmeter->GetAllThemes();
 
-			std::wstring args = Rainmeter->GetThemePath();
+			std::wstring args = L"\"" + Rainmeter->GetThemePath();
 			args += themes[sel];
 			args += L"\\Rainmeter.thm";
+			args += L'"';
 			RunFile(Rainmeter->GetSkinEditor().c_str(), args.c_str());
 		}
 		break;

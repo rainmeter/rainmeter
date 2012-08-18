@@ -50,7 +50,7 @@ void LogWithArgs(int nLevel, const WCHAR* format, ...);
 void LogError(CError& error);
 
 void RunCommand(std::wstring command);
-void RunFile(const WCHAR* file, const WCHAR* args = NULL, bool asAdmin = false);
+void RunFile(const WCHAR* file, const WCHAR* args = NULL);
 
 WCHAR* GetString(UINT id);
 std::wstring GetFormattedString(UINT id, ...);

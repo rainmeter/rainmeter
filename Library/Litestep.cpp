@@ -82,11 +82,10 @@ void RunCommand(std::wstring command)
 	}
 }
 
-void RunFile(const WCHAR* file, const WCHAR* args, bool asAdmin)
+void RunFile(const WCHAR* file, const WCHAR* args)
 {
 	SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
-	si.hwnd = NULL;
-	si.lpVerb = asAdmin ? L"runas" : L"open";
+	si.lpVerb = L"open";
 	si.lpFile = file;
 	si.nShow = SW_SHOWNORMAL;
 
