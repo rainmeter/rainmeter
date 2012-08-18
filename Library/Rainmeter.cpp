@@ -1283,17 +1283,18 @@ void CRainmeter::ReloadSettings()
 
 void CRainmeter::EditSettings()
 {
-	std::wstring file = L"\"" + m_IniFile;
-	file += L'"';
+	std::wstring file = L'\"' + m_IniFile;
+	file += L'\"';
 	RunFile(m_SkinEditor.c_str(), file.c_str());
 }
 
 void CRainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniFile)
 {
-	std::wstring args = L"\"" + m_SkinPath;
+	std::wstring args = L'\"' + m_SkinPath;
 	args += name;
 	args += L'\\';
 	args += iniFile;
+	args += L'\"';
 	RunFile(m_SkinEditor.c_str(), args.c_str());
 }
 
@@ -3241,12 +3242,10 @@ void CRainmeter::StopLogging()
 
 void CRainmeter::ShowLogFile()
 {
-	// Check if the file exists
-	const WCHAR* logFile = m_LogFile.c_str();
-	if (_waccess(logFile, 0) != -1)
-	{
-		RunFile(m_LogViewer.c_str(), logFile);
-	}
+	std::wstring logFile = L'\"' + m_LogFile;
+	logFile += L'\"';
+
+	RunFile(m_LogViewer.c_str(), logFile.c_str());
 }
 
 void CRainmeter::DeleteLogFile()
