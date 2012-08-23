@@ -71,7 +71,7 @@ void CMeasureRegistry::UpdateValue()
 			case REG_SZ:
 			case REG_EXPAND_SZ:
 			case REG_MULTI_SZ:
-				m_Value = 0.0;
+				m_Value = wcstod(data, NULL);
 				m_StringValue = data;
 				break;
 
