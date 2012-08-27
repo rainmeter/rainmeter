@@ -77,10 +77,10 @@ void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& fil
 	std::wstring searchPath = path + L"*";
 
 	hSearch = FindFirstFile(searchPath.c_str(), &fileData);
+	if (hSearch == INVALID_HANDLE_VALUE) return;    // No more files found
+
 	do
 	{
-		if (hSearch == INVALID_HANDLE_VALUE) break;    // No more files found
-
 		if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
 			if (bSubfolders &&
@@ -110,6 +110,8 @@ void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& fil
 		}
 	}
 	while (FindNextFile(hSearch, &fileData));
+
+	FindClose(hSearch);
 }
 
 PLUGIN_EXPORT void Initialize(void** data, void* rm)
