@@ -42,6 +42,8 @@ private:
 	std::wstring m_Format;
 	LARGE_INTEGER m_DeltaTime;
 	LARGE_INTEGER m_Time;
+
+	double m_TimeStamp;
 };
 
 #endif

@@ -46,7 +46,8 @@ int GetYearDay(int year, int month, int day)
 */
 CMeasureTime::CMeasureTime(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
 	m_DeltaTime(),
-	m_Time()
+	m_Time(),
+	m_TimeStamp(-1)
 {
 	/* Set time zone from TZ environment variable. If TZ is not set,
 	 * the operating system is queried to obtain the default value
@@ -89,15 +90,22 @@ void CMeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, 
 
 void CMeasureTime::FillCurrentTime()
 {
-	FILETIME ftUTCTime;
-	GetSystemTimeAsFileTime(&ftUTCTime);
+	if (m_TimeStamp < 0.0)
+	{
+		FILETIME ftUTCTime;
+		GetSystemTimeAsFileTime(&ftUTCTime);
 
-	// Modify the ltime to match the current timezone
-	// This way we can use the value also for the clock
-	m_Time.HighPart = ftUTCTime.dwHighDateTime;
-	m_Time.LowPart = ftUTCTime.dwLowDateTime;
+		// Modify the ltime to match the current timezone
+		// This way we can use the value also for the clock
+		m_Time.HighPart = ftUTCTime.dwHighDateTime;
+		m_Time.LowPart = ftUTCTime.dwLowDateTime;
 
-	m_Time.QuadPart += m_DeltaTime.QuadPart;
+		m_Time.QuadPart += m_DeltaTime.QuadPart;
+	}
+	else
+	{
+		m_Time.QuadPart = (LONGLONG)(m_TimeStamp * 10000000);
+	}
 }
 
 /*
@@ -220,6 +228,8 @@ void CMeasureTime::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	CMeasure::ReadOptions(parser, section);
 
 	m_Format = parser.ReadString(section, L"Format", L"");
+
+	m_TimeStamp = parser.ReadFloat(section, L"TimeStamp", -1);
 
 	const WCHAR* timezone = parser.ReadString(section, L"TimeZone", L"local").c_str();
 	if (_wcsicmp(L"local", timezone) == 0)
