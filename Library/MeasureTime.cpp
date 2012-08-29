@@ -22,20 +22,13 @@
 
 int GetYearDay(int year, int month, int day)
 {
-	int yearDay = 0;
-	UINT dates[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+	static const int dates[] = {  0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
+	int yearDay = dates[month - 1] + day;
 
-	for (int i = 0; i < month - 1; ++i)
-	{
-		yearDay += dates[i];
-	}
-
-	if (month > 2 && ((((year % 4) == 0) && ((year % 100) != 0)) || (year  % 400) == 0))
+	if (month > 2 && ((((year % 4) == 0) && ((year % 100) != 0)) || (year % 400) == 0))
 	{
 		++yearDay;
 	}
-
-	yearDay += day;
 
 	return yearDay - 1;
 }
@@ -231,47 +224,54 @@ void CMeasureTime::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	m_TimeStamp = parser.ReadFloat(section, L"TimeStamp", -1);
 
-	const WCHAR* timezone = parser.ReadString(section, L"TimeZone", L"local").c_str();
-	if (_wcsicmp(L"local", timezone) == 0)
+	if (m_TimeStamp < 0.0)
 	{
-		SYSTEMTIME sysLocalTime, sysUTCTime;
-		GetLocalTime(&sysLocalTime);
-		GetSystemTime(&sysUTCTime);
-
-		FILETIME ftLocalTime, ftUTCTime;
-		SystemTimeToFileTime(&sysLocalTime, &ftLocalTime);
-		SystemTimeToFileTime(&sysUTCTime, &ftUTCTime);
-
-		LARGE_INTEGER largeInt1, largeInt2;
-		largeInt1.HighPart = ftLocalTime.dwHighDateTime;
-		largeInt1.LowPart = ftLocalTime.dwLowDateTime;
-		largeInt2.HighPart = ftUTCTime.dwHighDateTime;
-		largeInt2.LowPart = ftUTCTime.dwLowDateTime;
-
-		m_DeltaTime.QuadPart = largeInt1.QuadPart - largeInt2.QuadPart;
-	}
-	else
-	{
-		double zone = wcstod(timezone, NULL);
-		bool dst = 1 == parser.ReadInt(section, L"DaylightSavingTime", 1);
-
-		struct tm* today;
-		time_t now;
-		time(&now);
-		today = localtime(&now);
-
-		if (dst && today->tm_isdst)
+		const WCHAR* timezone = parser.ReadString(section, L"TimeZone", L"local").c_str();
+		if (_wcsicmp(L"local", timezone) == 0)
 		{
-			// Add DST
-			TIME_ZONE_INFORMATION tzi;
-			GetTimeZoneInformation(&tzi);
+			SYSTEMTIME sysLocalTime, sysUTCTime;
+			GetLocalTime(&sysLocalTime);
+			GetSystemTime(&sysUTCTime);
 
-			m_DeltaTime.QuadPart = (LONGLONG)((zone * 3600) - tzi.DaylightBias * 60) * 10000000;
+			FILETIME ftLocalTime, ftUTCTime;
+			SystemTimeToFileTime(&sysLocalTime, &ftLocalTime);
+			SystemTimeToFileTime(&sysUTCTime, &ftUTCTime);
+
+			LARGE_INTEGER largeInt1, largeInt2;
+			largeInt1.HighPart = ftLocalTime.dwHighDateTime;
+			largeInt1.LowPart = ftLocalTime.dwLowDateTime;
+			largeInt2.HighPart = ftUTCTime.dwHighDateTime;
+			largeInt2.LowPart = ftUTCTime.dwLowDateTime;
+
+			m_DeltaTime.QuadPart = largeInt1.QuadPart - largeInt2.QuadPart;
 		}
 		else
 		{
-			m_DeltaTime.QuadPart = (LONGLONG)(zone * 3600) * 10000000;
+			double zone = wcstod(timezone, NULL);
+			bool dst = 1 == parser.ReadInt(section, L"DaylightSavingTime", 1);
+
+			struct tm* today;
+			time_t now;
+			time(&now);
+			today = localtime(&now);
+
+			if (dst && today->tm_isdst)
+			{
+				// Add DST
+				TIME_ZONE_INFORMATION tzi;
+				GetTimeZoneInformation(&tzi);
+
+				m_DeltaTime.QuadPart = (LONGLONG)((zone * 3600) - tzi.DaylightBias * 60) * 10000000;
+			}
+			else
+			{
+				m_DeltaTime.QuadPart = (LONGLONG)(zone * 3600) * 10000000;
+			}
 		}
+	}
+	else
+	{
+		m_DeltaTime.QuadPart = 0;
 	}
 
 	if (!m_Initialized)
