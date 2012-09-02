@@ -21,14 +21,14 @@
 #include "../../Measure.h"
 #include "../../MeterWindow.h"
 
-inline CMeasure* GetSelf(lua_State* L)
-{
-	return *(CMeasure**)lua_touserdata(L, 1);
-}
+#define DECLARE_SELF(L) \
+	void* selfData = lua_touserdata(L, 1); \
+	if (!selfData) return 0; \
+	CMeasure* self = *(CMeasure**)selfData;
 
 static int GetName(lua_State* L)
 {
-	CMeasure* self = GetSelf(L);
+	DECLARE_SELF(L)
 	LuaManager::PushWide(L, self->GetName());
 
 	return 1;
@@ -36,7 +36,7 @@ static int GetName(lua_State* L)
 
 static int GetOption(lua_State* L)
 {
-	CMeasure* self = GetSelf(L);
+	DECLARE_SELF(L)
 	CMeterWindow* meterWindow = self->GetMeterWindow();
 	CConfigParser& parser = meterWindow->GetParser();
 
@@ -49,7 +49,7 @@ static int GetOption(lua_State* L)
 
 static int GetNumberOption(lua_State* L)
 {
-	CMeasure* self = GetSelf(L);
+	DECLARE_SELF(L)
 	CMeterWindow* meterWindow = self->GetMeterWindow();
 	CConfigParser& parser = meterWindow->GetParser();
 
@@ -62,7 +62,7 @@ static int GetNumberOption(lua_State* L)
 
 static int Disable(lua_State* L)
 {
-	CMeasure* self = GetSelf(L);
+	DECLARE_SELF(L)
 	self->Disable();
 
 	return 0;
@@ -70,7 +70,7 @@ static int Disable(lua_State* L)
 
 static int Enable(lua_State* L)
 {
-	CMeasure* self = GetSelf(L);
+	DECLARE_SELF(L)
 	self->Enable();
 
 	return 0;
@@ -78,7 +78,7 @@ static int Enable(lua_State* L)
 
 static int GetValue(lua_State* L)
 {
-	CMeasure* self = GetSelf(L);
+	DECLARE_SELF(L)
 	lua_pushnumber(L, self->GetValue());
 
 	return 1;
@@ -86,7 +86,7 @@ static int GetValue(lua_State* L)
 
 static int GetRelativeValue(lua_State* L)
 {
-	CMeasure* self = GetSelf(L);
+	DECLARE_SELF(L)
 	lua_pushnumber(L, self->GetRelativeValue());
 
 	return 1;
@@ -94,7 +94,7 @@ static int GetRelativeValue(lua_State* L)
 
 static int GetValueRange(lua_State* L)
 {
-	CMeasure* self = GetSelf(L);
+	DECLARE_SELF(L)
 	lua_pushnumber(L, self->GetValueRange());
 
 	return 1;
@@ -102,7 +102,7 @@ static int GetValueRange(lua_State* L)
 
 static int GetMinValue(lua_State* L)
 {
-	CMeasure* self = GetSelf(L);
+	DECLARE_SELF(L)
 	lua_pushnumber(L, self->GetMinValue());
 
 	return 1;
@@ -110,7 +110,7 @@ static int GetMinValue(lua_State* L)
 
 static int GetMaxValue(lua_State* L)
 {
-	CMeasure* self = GetSelf(L);
+	DECLARE_SELF(L)
 	lua_pushnumber(L, self->GetMaxValue());
 
 	return 1;
@@ -118,7 +118,7 @@ static int GetMaxValue(lua_State* L)
 
 static int GetStringValue(lua_State* L)
 {
-	CMeasure* self = GetSelf(L);
+	DECLARE_SELF(L)
 
 	int top = lua_gettop(L);
 	AUTOSCALE autoScale = (top > 1) ? (AUTOSCALE)(int)lua_tonumber(L, 2) : AUTOSCALE_OFF;

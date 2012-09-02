@@ -24,14 +24,14 @@
 
 extern CRainmeter* Rainmeter;
 
-inline CMeterWindow* GetSelf(lua_State* L)
-{
-	return *(CMeterWindow**)lua_touserdata(L, 1);
-}
+#define DECLARE_SELF(L) \
+	void* selfData = lua_touserdata(L, 1); \
+	if (!selfData) return 0; \
+	CMeterWindow* self = *(CMeterWindow**)selfData;
 
 static int Bang(lua_State* L)
 {
-	CMeterWindow* self = GetSelf(L);
+	DECLARE_SELF(L)
 	CConfigParser& parser = self->GetParser();
 
 	std::wstring bang = LuaManager::ToWide(L, 2);
@@ -65,7 +65,7 @@ static int Bang(lua_State* L)
 
 static int GetMeter(lua_State* L)
 {
-	CMeterWindow* self = GetSelf(L);
+	DECLARE_SELF(L)
 	const std::wstring meterName = LuaManager::ToWide(L, 2);
 
 	CMeter* meter = self->GetMeter(meterName);
@@ -85,7 +85,7 @@ static int GetMeter(lua_State* L)
 
 static int GetMeasure(lua_State* L)
 {
-	CMeterWindow* self = GetSelf(L);
+	DECLARE_SELF(L)
 	const std::wstring measureName = LuaManager::ToWide(L, 2);
 
 	CMeasure* measure = self->GetMeasure(measureName);
@@ -105,7 +105,7 @@ static int GetMeasure(lua_State* L)
 
 static int GetVariable(lua_State* L)
 {
-	CMeterWindow* self = GetSelf(L);
+	DECLARE_SELF(L)
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
 
 	const std::wstring* value = self->GetParser().GetVariable(strTmp);
@@ -123,7 +123,7 @@ static int GetVariable(lua_State* L)
 
 static int ReplaceVariables(lua_State* L)
 {
-	CMeterWindow* self = GetSelf(L);
+	DECLARE_SELF(L)
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
 
 	self->GetParser().ReplaceVariables(strTmp);
@@ -135,7 +135,7 @@ static int ReplaceVariables(lua_State* L)
 
 static int ParseFormula(lua_State* L)
 {
-	CMeterWindow* self = GetSelf(L);
+	DECLARE_SELF(L)
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
 
 	double result;
@@ -151,7 +151,7 @@ static int ParseFormula(lua_State* L)
 
 static int MoveWindow(lua_State* L)
 {
-	CMeterWindow* self = GetSelf(L);
+	DECLARE_SELF(L)
 	int x = (int)lua_tonumber(L, 2);
 	int y = (int)lua_tonumber(L, 3);
 	self->MoveWindow(x, y);
@@ -161,7 +161,7 @@ static int MoveWindow(lua_State* L)
 
 static int FadeWindow(lua_State* L)
 {
-	CMeterWindow* self = GetSelf(L);
+	DECLARE_SELF(L)
 	int from = (int)lua_tonumber(L, 2);
 	int to = (int)lua_tonumber(L, 3);
 	self->FadeWindow(from, to);
@@ -171,7 +171,7 @@ static int FadeWindow(lua_State* L)
 
 static int GetW(lua_State* L)
 {
-	CMeterWindow* self = GetSelf(L);
+	DECLARE_SELF(L)
 	lua_pushnumber(L, self->GetW());
 
 	return 1;
@@ -179,7 +179,7 @@ static int GetW(lua_State* L)
 
 static int GetH(lua_State* L)
 {
-	CMeterWindow* self = GetSelf(L);
+	DECLARE_SELF(L)
 	lua_pushnumber(L, self->GetH());
 
 	return 1;
@@ -187,7 +187,7 @@ static int GetH(lua_State* L)
 
 static int GetX(lua_State* L)
 {
-	CMeterWindow* self = GetSelf(L);
+	DECLARE_SELF(L)
 	lua_pushnumber(L, self->GetX());
 
 	return 1;
@@ -195,7 +195,7 @@ static int GetX(lua_State* L)
 
 static int GetY(lua_State* L)
 {
-	CMeterWindow* self = GetSelf(L);
+	DECLARE_SELF(L)
 	lua_pushnumber(L, self->GetY());
 
 	return 1;
@@ -203,7 +203,7 @@ static int GetY(lua_State* L)
 
 static int MakePathAbsolute(lua_State* L)
 {
-	CMeterWindow* self = GetSelf(L);
+	DECLARE_SELF(L)
 	std::wstring path = LuaManager::ToWide(L, 2);
 	self->MakePathAbsolute(path);
 	LuaManager::PushWide(L, path.c_str());

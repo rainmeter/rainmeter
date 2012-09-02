@@ -21,14 +21,14 @@
 #include "../../Meter.h"
 #include "../../MeterString.h"
 
-inline CMeter* GetSelf(lua_State* L)
-{
-	return *(CMeter**)lua_touserdata(L, 1);
-}
+#define DECLARE_SELF(L) \
+	void* selfData = lua_touserdata(L, 1); \
+	if (!selfData) return 0; \
+	CMeter* self = *(CMeter**)selfData;
 
 static int GetName(lua_State* L)
 {
-	CMeter* self = GetSelf(L);
+	DECLARE_SELF(L)
 	LuaManager::PushWide(L, self->GetName());
 
 	return 1;
@@ -36,7 +36,7 @@ static int GetName(lua_State* L)
 
 static int GetOption(lua_State* L)
 {
-	CMeter* self = GetSelf(L);
+	DECLARE_SELF(L)
 	CMeterWindow* meterWindow = self->GetMeterWindow();
 	CConfigParser& parser = meterWindow->GetParser();
 
@@ -49,7 +49,7 @@ static int GetOption(lua_State* L)
 
 static int GetW(lua_State* L)
 {
-	CMeter* self = GetSelf(L);
+	DECLARE_SELF(L)
 	lua_pushnumber(L, self->GetW());
 
 	return 1;
@@ -57,7 +57,7 @@ static int GetW(lua_State* L)
 
 static int GetH(lua_State* L)
 {
-	CMeter* self = GetSelf(L);
+	DECLARE_SELF(L)
 	lua_pushnumber(L, self->GetH());
 
 	return 1;
@@ -66,7 +66,7 @@ static int GetH(lua_State* L)
 
 static int GetX(lua_State* L)
 {
-	CMeter* self = GetSelf(L);
+	DECLARE_SELF(L)
 	bool abs = (bool)lua_toboolean(L, 2);
 	lua_pushnumber(L, self->GetX(abs));
 
@@ -75,7 +75,7 @@ static int GetX(lua_State* L)
 
 static int GetY(lua_State* L)
 {
-	CMeter* self = GetSelf(L);
+	DECLARE_SELF(L)
 	bool abs = (bool)lua_toboolean(L, 2);
 	lua_pushnumber(L, self->GetY(abs));
 
@@ -84,7 +84,7 @@ static int GetY(lua_State* L)
 
 static int SetW(lua_State* L)
 {
-	CMeter* self = GetSelf(L);
+	DECLARE_SELF(L)
 	int w = (int)lua_tonumber(L, 2);
 	self->SetW(w);
 
@@ -93,7 +93,7 @@ static int SetW(lua_State* L)
 
 static int SetH(lua_State* L)
 {
-	CMeter* self = GetSelf(L);
+	DECLARE_SELF(L)
 	int h = (int)lua_tonumber(L, 2);
 	self->SetH(h);
 
@@ -102,7 +102,7 @@ static int SetH(lua_State* L)
 
 static int SetX(lua_State* L)
 {
-	CMeter* self = GetSelf(L);
+	DECLARE_SELF(L)
 	int x = (int)lua_tonumber(L, 2);
 	self->SetX(x);
 
@@ -111,7 +111,7 @@ static int SetX(lua_State* L)
 
 static int SetY(lua_State* L)
 {
-	CMeter* self = GetSelf(L);
+	DECLARE_SELF(L)
 	int y = (int)lua_tonumber(L, 2);
 	self->SetY(y);
 
@@ -120,7 +120,7 @@ static int SetY(lua_State* L)
 
 static int Hide(lua_State* L)
 {
-	CMeter* self = GetSelf(L);
+	DECLARE_SELF(L)
 	self->Hide();
 
 	return 0;
@@ -128,7 +128,7 @@ static int Hide(lua_State* L)
 
 static int Show(lua_State* L)
 {
-	CMeter* self = GetSelf(L);
+	DECLARE_SELF(L)
 	self->Show();
 
 	return 0;
@@ -136,7 +136,7 @@ static int Show(lua_State* L)
 
 static int SetText(lua_State* L)
 {
-	CMeter* self = GetSelf(L);
+	DECLARE_SELF(L)
 	if (self->GetTypeID() == TypeID<CMeterString>())
 	{
 		CMeterString* string = (CMeterString*)self;
