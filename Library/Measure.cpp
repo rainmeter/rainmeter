@@ -246,7 +246,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 				int flags = PCRE_UTF8;
 				int offset = 0;
 
-				if (m_Substitute[i] == L"")
+				if (m_Substitute[i].empty())
 				{
 					m_Substitute[i] = L"^$";
 				}
