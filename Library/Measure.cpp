@@ -347,6 +347,11 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 
 		if (wcscmp(word1.c_str(), word2.c_str()) != 0)
 		{
+			if (m_RegExpSubstitute && word1.empty())
+			{
+				word1 = L"^$";
+			}
+
 			m_Substitute.push_back(word1);
 			m_Substitute.push_back(word2);
 		}
@@ -422,11 +427,6 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 	}
 
 	buffer.erase(0, end);
-
-	if (m_RegExpSubstitute && ret.empty())
-	{
-		ret = L"^$";
-	}
 
 	return ret;
 }
