@@ -246,6 +246,11 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 				int flags = PCRE_UTF8;
 				int offset = 0;
 
+				if (m_Substitute[i] == L"")
+				{
+					m_Substitute[i] = L"^$";
+				}
+
 				re = pcre_compile(
 					ConvertToUTF8(m_Substitute[i].c_str()).c_str(),   // the pattern
 					flags,						// default options
