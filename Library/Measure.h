@@ -99,7 +99,7 @@ protected:
 	UINT m_AveragePos;
 	UINT m_AverageSize;
 
-	double m_IfEqualValue;			// The limit for the IfEqual action
+	int64_t m_IfEqualValue;			// The limit for the IfEqual action
 	double m_IfAboveValue;			// The limit for the IfAbove action
 	double m_IfBelowValue;			// The limit for the IfBelow action
 	std::wstring m_IfEqualAction;	// The IfEqual action

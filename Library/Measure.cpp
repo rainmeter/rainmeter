@@ -141,7 +141,7 @@ void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_IfBelowValue = parser.ReadFloat(section, L"IfBelowValue", 0.0);
 	m_IfBelowAction = parser.ReadString(section, L"IfBelowAction", L"", false);
 
-	m_IfEqualValue = parser.ReadFloat(section, L"IfEqualValue", 0.0);
+	m_IfEqualValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0);
 	m_IfEqualAction = parser.ReadString(section, L"IfEqualAction", L"", false);
 
 	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0);
@@ -497,7 +497,7 @@ bool CMeasure::Update()
 		{
 			if (!m_IfEqualAction.empty())
 			{
-				if ((int)m_Value == (int)m_IfEqualValue)
+				if ((int64_t)m_Value == m_IfEqualValue)
 				{
 					if (!m_IfEqualCommitted)
 					{
@@ -552,7 +552,7 @@ bool CMeasure::Update()
 		m_Value = 0.0;
 
 		// Set IfAction committed state to false if condition is not met with value = 0
-		if ((int)m_IfEqualValue != 0)
+		if (m_IfEqualValue != 0)
 		{
 			m_IfEqualCommitted = false;
 		}
