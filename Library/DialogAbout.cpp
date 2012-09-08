@@ -1150,8 +1150,8 @@ INT_PTR CDialogAbout::CTabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDC_ABOUTVERSION_COPY_BUTTON:
 		{
 			WCHAR tmpSz[64];
-			_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
-			std::wstring text = tmpSz;
+			int len = _snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
+			std::wstring text(tmpSz, len);
 			text += L"\nPath: ";
 			text += Rainmeter->GetPath();
 			text += L"\nIniFile: ";

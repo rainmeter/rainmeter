@@ -331,7 +331,7 @@ std::wstring GetFormattedString(UINT id, ...)
 
 	va_end(args);
 
-	std::wstring tmpSz(len ? pBuffer : L"");
+	std::wstring tmpSz(len ? pBuffer : L"", len);
 	if (pBuffer) LocalFree(pBuffer);
 	return tmpSz;
 }
