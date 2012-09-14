@@ -399,8 +399,8 @@ PLUGIN_EXPORT double Update(void* data)
 			: GetSystemMetrics(SM_CYSCREEN);
 
 	case MEASURE_VIRTUAL_SCREEN_WIDTH:
-
 		return GetSystemMetrics(SM_CXVIRTUALSCREEN);
+
 	case MEASURE_VIRTUAL_SCREEN_HEIGHT:
 		return GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
@@ -466,7 +466,15 @@ LPCWSTR GetPlatformName()
 		}
 		else
 		{
-			if (osvi.dwMinorVersion == 1 && osvi.wProductType == VER_NT_WORKSTATION)
+			if (osvi.dwMinorVersion == 2 && osvi.wProductType == VER_NT_WORKSTATION)
+			{
+				return L"Windows 8";
+			}
+			else if (osvi.dwMinorVersion == 2 && osvi.wProductType != VER_NT_WORKSTATION)
+			{
+				return L"Windows Server 2012";
+			}
+			else if (osvi.dwMinorVersion == 1 && osvi.wProductType == VER_NT_WORKSTATION)
 			{
 				return L"Windows 7";
 			}
