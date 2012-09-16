@@ -133,7 +133,7 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 		IcmpCloseHandle(hIcmpFile);
 
 		ICMP_ECHO_REPLY* reply = (ICMP_ECHO_REPLY*)buffer;
-		value = (reply->Status == IP_REQ_TIMED_OUT) ? measure->timeoutValue : reply->RoundTripTime;
+		value = (reply->Status != IP_SUCCESS) ? measure->timeoutValue : reply->RoundTripTime;
 	}
 
 	HMODULE module = NULL;
