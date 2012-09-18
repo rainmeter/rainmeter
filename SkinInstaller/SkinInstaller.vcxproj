@@ -105,6 +105,9 @@
     <BuildLog>
       <Path>$(IntDir)\$(MSBuildProjectName).log</Path>
     </BuildLog>
+    <Manifest>
+      <AdditionalManifestFiles>..\Application\Application.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <MASM>
@@ -140,6 +143,9 @@
     <BuildLog>
       <Path>$(IntDir)\$(MSBuildProjectName).log</Path>
     </BuildLog>
+    <Manifest>
+      <AdditionalManifestFiles>..\Application\Application.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <MASM>
@@ -174,6 +180,9 @@
     <Bscmake>
       <OutputFile>$(IntDir)SkinInstaller.bsc</OutputFile>
     </Bscmake>
+    <Manifest>
+      <AdditionalManifestFiles>..\Application\Application.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <MASM>
@@ -206,6 +215,9 @@
     <Bscmake>
       <OutputFile>$(IntDir)SkinInstaller.bsc</OutputFile>
     </Bscmake>
+    <Manifest>
+      <AdditionalManifestFiles>..\Application\Application.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Library\Dialog.cpp" />

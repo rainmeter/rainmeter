@@ -109,6 +109,9 @@ xcopy /Q /S /Y ..\Build\Skins ..\testbench\x32\debug\skins
 xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\debug\themes
 :skip</Command>
     </PostBuildEvent>
+    <Manifest>
+      <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -144,6 +147,9 @@ xcopy /Q /S /Y ..\Build\Skins ..\testbench\x64\debug\skins
 xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\debug\themes
 :skip</Command>
     </PostBuildEvent>
+    <Manifest>
+      <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -183,6 +189,9 @@ xcopy /Q /S /Y ..\Build\Skins ..\testbench\x32\release\skins
 xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\release\themes
 :skip</Command>
     </PostBuildEvent>
+    <Manifest>
+      <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -220,6 +229,9 @@ xcopy /Q /S /Y ..\Build\Skins ..\testbench\x64\release\skins
 xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\release\themes
 :skip</Command>
     </PostBuildEvent>
+    <Manifest>
+      <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
