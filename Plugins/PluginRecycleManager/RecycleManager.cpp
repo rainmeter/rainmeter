@@ -43,6 +43,8 @@ bool g_Thread = false;
 bool g_FreeInstanceInThread = false;
 CRITICAL_SECTION g_CriticalSection;
 
+bool g_IsPlatformXP = false;
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
 	switch (fdwReason)
@@ -66,6 +68,15 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
 	*data = measure;
+
+	if (g_InstanceCount == 0)
+	{
+		OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
+		GetVersionEx((OSVERSIONINFO*)&osvi);
+
+		// Not checking for osvi.dwMinorVersion >= 1 because pre-XP is not supported.
+		g_IsPlatformXP = (osvi.dwMajorVersion == 5);
+	}
 
 	++g_InstanceCount;
 }
@@ -209,7 +220,9 @@ bool HasRecycleBinChanged()
 
 	// Check if items have been added to recycle bin since last check.
 	HKEY volumeKey;
-	const WCHAR* subKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\BitBucket\\Volume";
+	const WCHAR* subKey = g_IsPlatformXP ?
+		L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\BitBucket" :
+		L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\BitBucket\\Volume";
 	LSTATUS ls = RegOpenKeyEx(HKEY_CURRENT_USER, subKey, 0, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS, &volumeKey);
 	if (ls == ERROR_SUCCESS)
 	{
