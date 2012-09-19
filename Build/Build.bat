@@ -44,7 +44,7 @@ set GIT=%GIT:Program Files\=Program Files (x86)\%
 if not exist "%GIT%" echo ERROR: git.exe not found & goto END
 :GITFOUND
 set /a VERSION_REVISION=0
-for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --all`) do set /a VERSION_REVISION+=1
+for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --all --count`) do set VERSION_REVISION=%%G
 goto UPDATEVERSION
 
 :: svn
