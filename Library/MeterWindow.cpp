@@ -1337,41 +1337,36 @@ void CMeterWindow::SetVariable(const std::wstring& variable, const std::wstring&
 */
 void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group)
 {
+	auto setValue = [&](CSection* section, const std::wstring& option, const std::wstring& value)
+	{
+		// Force DynamicVariables temporarily (until next ReadOptions()).
+		section->SetDynamicVariables(true);
+
+		if (value.empty())
+		{
+			m_Parser.DeleteValue(section->GetOriginalName(), option);
+		}
+		else
+		{
+			m_Parser.SetValue(section->GetOriginalName(), option, value);
+		}
+	};
+
 	if (group)
 	{
-		for (std::vector<CMeter*>::const_iterator j = m_Meters.begin(); j != m_Meters.end(); ++j)
+		for (auto j = m_Meters.begin(); j != m_Meters.end(); ++j)
 		{
 			if ((*j)->BelongsToGroup(section))
 			{
-				// Force DynamicVariables temporarily (it will reset back to original setting in ReadOptions())
-				(*j)->SetDynamicVariables(true);
-
-				if (value.empty())
-				{
-					GetParser().DeleteValue((*j)->GetOriginalName(), option);
-				}
-				else
-				{
-					GetParser().SetValue((*j)->GetOriginalName(), option, value);
-				}
+				setValue(*j, option, value);
 			}
 		}
 
-		for (std::vector<CMeasure*>::const_iterator i = m_Measures.begin(); i != m_Measures.end(); ++i)
+		for (auto i = m_Measures.begin(); i != m_Measures.end(); ++i)
 		{
 			if ((*i)->BelongsToGroup(section))
 			{
-				// Force DynamicVariables temporarily (it will reset back to original setting in ReadOptions())
-				(*i)->SetDynamicVariables(true);
-
-				if (value.empty())
-				{
-					GetParser().DeleteValue((*i)->GetOriginalName(), option);
-				}
-				else
-				{
-					GetParser().SetValue((*i)->GetOriginalName(), option, value);
-				}
+				setValue(*i, option, value);
 			}
 		}
 	}
@@ -1380,36 +1375,14 @@ void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& op
 		CMeter* meter = GetMeter(section);
 		if (meter)
 		{
-			// Force DynamicVariables temporarily (it will reset back to original setting in ReadOptions())
-			meter->SetDynamicVariables(true);
-
-			if (value.empty())
-			{
-				GetParser().DeleteValue(section, option);
-			}
-			else
-			{
-				GetParser().SetValue(section, option, value);
-			}
-
+			setValue(meter, option, value);
 			return;
 		}
 
-		CMeasure* measure = GetMeasure(section);
+		CMeter* measure = GetMeter(section);
 		if (measure)
 		{
-			// Force DynamicVariables temporarily (it will reset back to original setting in ReadOptions())
-			measure->SetDynamicVariables(true);
-
-			if (value.empty())
-			{
-				GetParser().DeleteValue(section, option);
-			}
-			else
-			{
-				GetParser().SetValue(section, option, value);
-			}
-
+			setValue(measure, option, value);
 			return;
 		}
 
