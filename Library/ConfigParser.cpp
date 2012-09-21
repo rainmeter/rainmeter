@@ -131,26 +131,15 @@ void CConfigParser::ReadVariables()
 	}
 }
 
-/*
-** Sets a new value for the variable. The DynamicVariables must be set to 1 in the
-** meter/measure for the changes to be applied.
-**
-*/
-void CConfigParser::SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const std::wstring& strVariable, const std::wstring& strValue)
+void CConfigParser::SetVariable(std::wstring strVariable, const std::wstring& strValue)
 {
-	// LogWithArgs(LOG_DEBUG, L"Variable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), (int)variables.size());
-
-	const std::wstring strTmp = StrToUpper(strVariable);
-
-	variables[strTmp] = strValue;
+	StrToUpperC(strVariable);
+	m_Variables[strVariable] = strValue;
 }
-void CConfigParser::SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const WCHAR* strVariable, const WCHAR* strValue)
+
+void CConfigParser::SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue)
 {
-	// LogWithArgs(LOG_DEBUG, L"Variable: %s=%s (size=%i)", strVariable.c_str(), strValue.c_str(), (int)variables.size());
-
-	const std::wstring strTmp = StrToUpper(strVariable);
-
-	variables[strTmp] = strValue;
+	m_BuiltInVariables[strVariable] = strValue;
 }
 
 /*
@@ -393,6 +382,11 @@ void CConfigParser::ResetMonitorVariables(CMeterWindow* meterWindow)
 */
 void CConfigParser::SetMultiMonitorVariables(bool reset)
 {
+	auto setMonitorVariable = [&](const WCHAR* variable, const WCHAR* value)
+	{
+		c_MonitorVariables[variable] = value;
+	};
+
 	WCHAR buffer[32];
 	RECT workArea, scrArea;
 
@@ -404,17 +398,17 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
 
 	_itow_s(workArea.left, buffer, 10);
-	SetMonitorVariable(L"WORKAREAX", buffer);
-	SetMonitorVariable(L"PWORKAREAX", buffer);
+	setMonitorVariable(L"WORKAREAX", buffer);
+	setMonitorVariable(L"PWORKAREAX", buffer);
 	_itow_s(workArea.top, buffer, 10);
-	SetMonitorVariable(L"WORKAREAY", buffer);
-	SetMonitorVariable(L"PWORKAREAY", buffer);
+	setMonitorVariable(L"WORKAREAY", buffer);
+	setMonitorVariable(L"PWORKAREAY", buffer);
 	_itow_s(workArea.right - workArea.left, buffer, 10);
-	SetMonitorVariable(L"WORKAREAWIDTH", buffer);
-	SetMonitorVariable(L"PWORKAREAWIDTH", buffer);
+	setMonitorVariable(L"WORKAREAWIDTH", buffer);
+	setMonitorVariable(L"PWORKAREAWIDTH", buffer);
 	_itow_s(workArea.bottom - workArea.top, buffer, 10);
-	SetMonitorVariable(L"WORKAREAHEIGHT", buffer);
-	SetMonitorVariable(L"PWORKAREAHEIGHT", buffer);
+	setMonitorVariable(L"WORKAREAHEIGHT", buffer);
+	setMonitorVariable(L"PWORKAREAHEIGHT", buffer);
 
 	if (reset)
 	{
@@ -424,26 +418,26 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 		scrArea.bottom = GetSystemMetrics(SM_CYSCREEN);
 
 		_itow_s(scrArea.left, buffer, 10);
-		SetMonitorVariable(L"SCREENAREAX", buffer);
-		SetMonitorVariable(L"PSCREENAREAX", buffer);
+		setMonitorVariable(L"SCREENAREAX", buffer);
+		setMonitorVariable(L"PSCREENAREAX", buffer);
 		_itow_s(scrArea.top, buffer, 10);
-		SetMonitorVariable(L"SCREENAREAY", buffer);
-		SetMonitorVariable(L"PSCREENAREAY", buffer);
+		setMonitorVariable(L"SCREENAREAY", buffer);
+		setMonitorVariable(L"PSCREENAREAY", buffer);
 		_itow_s(scrArea.right - scrArea.left, buffer, 10);
-		SetMonitorVariable(L"SCREENAREAWIDTH", buffer);
-		SetMonitorVariable(L"PSCREENAREAWIDTH", buffer);
+		setMonitorVariable(L"SCREENAREAWIDTH", buffer);
+		setMonitorVariable(L"PSCREENAREAWIDTH", buffer);
 		_itow_s(scrArea.bottom - scrArea.top, buffer, 10);
-		SetMonitorVariable(L"SCREENAREAHEIGHT", buffer);
-		SetMonitorVariable(L"PSCREENAREAHEIGHT", buffer);
+		setMonitorVariable(L"SCREENAREAHEIGHT", buffer);
+		setMonitorVariable(L"PSCREENAREAHEIGHT", buffer);
 
 		_itow_s(GetSystemMetrics(SM_XVIRTUALSCREEN), buffer, 10);
-		SetMonitorVariable(L"VSCREENAREAX", buffer);
+		setMonitorVariable(L"VSCREENAREAX", buffer);
 		_itow_s(GetSystemMetrics(SM_YVIRTUALSCREEN), buffer, 10);
-		SetMonitorVariable(L"VSCREENAREAY", buffer);
+		setMonitorVariable(L"VSCREENAREAY", buffer);
 		_itow_s(GetSystemMetrics(SM_CXVIRTUALSCREEN), buffer, 10);
-		SetMonitorVariable(L"VSCREENAREAWIDTH", buffer);
+		setMonitorVariable(L"VSCREENAREAWIDTH", buffer);
 		_itow_s(GetSystemMetrics(SM_CYVIRTUALSCREEN), buffer, 10);
-		SetMonitorVariable(L"VSCREENAREAHEIGHT", buffer);
+		setMonitorVariable(L"VSCREENAREAHEIGHT", buffer);
 	}
 
 	if (CSystem::GetMonitorCount() > 0)
@@ -459,16 +453,16 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 
 			_itow_s(work.left, buffer, 10);
 			_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAX@%i", (int)i + 1);
-			SetMonitorVariable(buffer2, buffer);
+			setMonitorVariable(buffer2, buffer);
 			_itow_s(work.top, buffer, 10);
 			_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAY@%i", (int)i + 1);
-			SetMonitorVariable(buffer2, buffer);
+			setMonitorVariable(buffer2, buffer);
 			_itow_s(work.right - work.left, buffer, 10);
 			_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAWIDTH@%i", (int)i + 1);
-			SetMonitorVariable(buffer2, buffer);
+			setMonitorVariable(buffer2, buffer);
 			_itow_s(work.bottom - work.top, buffer, 10);
 			_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAHEIGHT@%i", (int)i + 1);
-			SetMonitorVariable(buffer2, buffer);
+			setMonitorVariable(buffer2, buffer);
 
 			if (reset)
 			{
@@ -476,16 +470,16 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 
 				_itow_s(screen.left, buffer, 10);
 				_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAX@%i", (int)i + 1);
-				SetMonitorVariable(buffer2, buffer);
+				setMonitorVariable(buffer2, buffer);
 				_itow_s(screen.top, buffer, 10);
 				_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAY@%i", (int)i + 1);
-				SetMonitorVariable(buffer2, buffer);
+				setMonitorVariable(buffer2, buffer);
 				_itow_s(screen.right - screen.left, buffer, 10);
 				_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAWIDTH@%i", (int)i + 1);
-				SetMonitorVariable(buffer2, buffer);
+				setMonitorVariable(buffer2, buffer);
 				_itow_s(screen.bottom - screen.top, buffer, 10);
 				_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAHEIGHT@%i", (int)i + 1);
-				SetMonitorVariable(buffer2, buffer);
+				setMonitorVariable(buffer2, buffer);
 			}
 		}
 	}

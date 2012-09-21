@@ -47,8 +47,8 @@ public:
 	CMeasure* GetMeasure(const std::wstring& name);
 
 	const std::wstring* GetVariable(const std::wstring& strVariable);
-	void SetVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_Variables, strVariable, strValue); }
-	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(m_BuiltInVariables, strVariable, strValue); }
+	void SetVariable(std::wstring strVariable, const std::wstring& strValue);
+	void SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue);
 
 	const std::unordered_map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }
 
@@ -116,8 +116,7 @@ private:
 	static void SetVariable(std::unordered_map<std::wstring, std::wstring>& variables, const WCHAR* strVariable, const WCHAR* strValue);
 
 	static void SetMultiMonitorVariables(bool reset);
-	static void SetMonitorVariable(const std::wstring& strVariable, const std::wstring& strValue) { SetVariable(c_MonitorVariables, strVariable, strValue); }
-	static void SetMonitorVariable(const WCHAR* strVariable, const WCHAR* strValue) { SetVariable(c_MonitorVariables, strVariable, strValue); }
+	static void SetMonitorVariable(const WCHAR* strVariable, const WCHAR* strValue);
 
 	static std::wstring StrToUpper(const std::wstring& str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring StrToUpper(const WCHAR* str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
