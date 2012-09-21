@@ -54,16 +54,12 @@ public:
 
 protected:
 	void ReadOptions(CConfigParser& parser, const WCHAR* section, CMeasureNet::NET net);
-	void UpdateValue();
 
 	ULONG64 GetNetOctets(NET net);
 	ULONG64 GetNetStatsValue(NET net);
 
-	double m_CurrentTraffic;
-	double m_TrafficValue;
 	UINT m_Interface;
 	bool m_Cumulative;
-	std::wstring m_TrafficAction;
 
 	static std::vector<ULONG64> c_OldStatValues;
 	static std::vector<ULONG64> c_StatValues;

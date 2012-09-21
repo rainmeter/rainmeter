@@ -36,8 +36,6 @@ extern CRainmeter* Rainmeter;
 **
 */
 CMeasureNet::CMeasureNet(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
-	m_CurrentTraffic(),
-	m_TrafficValue(),
 	m_Interface(),
 	m_Cumulative(false)
 {
@@ -49,27 +47,6 @@ CMeasureNet::CMeasureNet(CMeterWindow* meterWindow, const WCHAR* name) : CMeasur
 */
 CMeasureNet::~CMeasureNet()
 {
-}
-
-/*
-** Checks if Action should be executed.
-**
-*/
-void CMeasureNet::UpdateValue()
-{
-	if (m_MeterWindow)
-	{
-		if (!m_TrafficAction.empty())
-		{
-			if (m_CurrentTraffic > m_TrafficValue)
-			{
-				m_CurrentTraffic = 0;
-				Rainmeter->ExecuteCommand(m_TrafficAction.c_str(), m_MeterWindow);
-			}
-
-			m_CurrentTraffic += m_Value;
-		}
-	}
 }
 
 /*
@@ -472,9 +449,6 @@ void CMeasureNet::ReadOptions(CConfigParser& parser, const WCHAR* section, NET n
 	{
 		Rainmeter->SetNetworkStatisticsTimer();
 	}
-
-	m_TrafficValue = parser.ReadFloat(section, L"TrafficValue", 0.0);
-	m_TrafficAction = parser.ReadString(section, L"TrafficAction", L"", false);
 
 	if (maxValue == 0)
 	{
