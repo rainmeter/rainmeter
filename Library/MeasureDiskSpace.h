@@ -37,7 +37,7 @@ protected:
 
 private:
 	std::wstring m_Drive;
-	std::wstring m_DriveInfo;
+	std::wstring m_StringValue;
 	bool m_Type;
 	bool m_Total;
 	bool m_Label;

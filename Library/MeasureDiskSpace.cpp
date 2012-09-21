@@ -74,31 +74,31 @@ void CMeasureDiskSpace::UpdateValue()
 			case DRIVE_UNKNOWN:
 			case DRIVE_NO_ROOT_DIR:
 				m_Value = DRIVETYPE_REMOVED;
-				m_DriveInfo = L"Removed";
+				m_StringValue = L"Removed";
 				break;
 			case DRIVE_REMOVABLE:
 				m_Value = DRIVETYPE_REMOVABLE;
-				m_DriveInfo = L"Removable";
+				m_StringValue = L"Removable";
 				break;
 			case DRIVE_FIXED:
 				m_Value = DRIVETYPE_FIXED;
-				m_DriveInfo = L"Fixed";
+				m_StringValue = L"Fixed";
 				break;
 			case DRIVE_REMOTE:
 				m_Value = DRIVETYPE_NETWORK;
-				m_DriveInfo = L"Network";
+				m_StringValue = L"Network";
 				break;
 			case DRIVE_CDROM:
 				m_Value = DRIVETYPE_CDROM;
-				m_DriveInfo = L"CDRom";
+				m_StringValue = L"CDRom";
 				break;
 			case DRIVE_RAMDISK:
 				m_Value = DRIVETYPE_RAM;
-				m_DriveInfo = L"Ram";
+				m_StringValue = L"Ram";
 				break;
 			default:
 				m_Value = DRIVETYPE_ERROR;
-				m_DriveInfo = L"Error";
+				m_StringValue = L"Error";
 				break;
 			}
 		}
@@ -150,11 +150,11 @@ void CMeasureDiskSpace::UpdateValue()
 					labelResult = GetVolumeInformation(drive, volumeName, MAX_PATH + 1, NULL, NULL, NULL, NULL, 0);
 				}
 
-				m_DriveInfo = (labelResult) ? volumeName : L"";
+				m_StringValue = (labelResult) ? volumeName : L"";
 			}
-			else if (!m_DriveInfo.empty())
+			else if (!m_StringValue.empty())
 			{
-				m_DriveInfo.clear();
+				m_StringValue.clear();
 			}
 		}
 	}
@@ -168,7 +168,7 @@ const WCHAR* CMeasureDiskSpace::GetStringValue(AUTOSCALE autoScale, double scale
 {
 	if (m_Type || m_Label)
 	{
-		return CheckSubstitute(m_DriveInfo.c_str());
+		return CheckSubstitute(m_StringValue.c_str());
 	}
 
 	return CMeasure::GetStringValue(autoScale, scale, decimals, percentual);
@@ -191,7 +191,7 @@ void CMeasureDiskSpace::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		m_Value = 0.0;
 		m_MaxValue = 0.0;
 		m_OldTotalBytes = 0;
-		m_DriveInfo.clear();
+		m_StringValue.clear();
 	}
 	else if (!CSystem::IsPathSeparator(m_Drive[m_Drive.length() - 1]))  // E.g. "C:"
 	{
