@@ -1379,7 +1379,7 @@ void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& op
 			return;
 		}
 
-		CMeter* measure = GetMeter(section);
+		CMeasure* measure = GetMeasure(section);
 		if (measure)
 		{
 			setValue(measure, option, value);
