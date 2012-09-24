@@ -247,7 +247,7 @@ void CMeasureTime::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		}
 		else
 		{
-			double zone = wcstod(timezone, NULL);
+			double zone = parser.ParseDouble(timezone, 0.0);
 			bool dst = 1 == parser.ReadInt(section, L"DaylightSavingTime", 1);
 
 			struct tm* today;
