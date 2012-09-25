@@ -282,7 +282,17 @@ void CMeterString::Initialize()
 		}
 		else
 		{
-			m_Font = new Gdiplus::Font(FontFamily::GenericSansSerif (), size, style);
+			// Use Arial if installed, else use a generic font
+			FontFamily fFamily(L"Arial");
+
+			if (fFamily.IsAvailable())
+			{
+				m_Font = new Gdiplus::Font(&fFamily, size, style);
+			}
+			else
+			{
+				m_Font = new Gdiplus::Font(FontFamily::GenericSansSerif(), size, style);
+			}
 		}
 
 		Status status = m_Font->GetLastStatus();
