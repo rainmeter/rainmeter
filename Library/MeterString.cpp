@@ -318,6 +318,11 @@ void CMeterString::Initialize()
 			}
 		}
 	}
+
+	if (defaultFont != m_Font)
+	{
+		delete defaultFont;
+	}
 }
 
 /*
