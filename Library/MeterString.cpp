@@ -162,7 +162,7 @@ int CMeterString::GetY(bool abs)
 void CMeterString::Initialize()
 {
 	CMeter::Initialize();
-
+	
 	// Check if the font family is in the cache and use it
 	std::wstring cacheKey;
 	std::wstring systemFontFaceKey = FontFaceToString(m_FontFace, NULL);
@@ -224,7 +224,7 @@ void CMeterString::Initialize()
 				// It couldn't find the font family: Log it.
 				if (Ok != status)
 				{
-					LogWithArgs(LOG_ERROR, L"String: Unable to load font: %s", m_FontFace.c_str());
+					LogWithArgs(LOG_ERROR, L"Unable to load font: %s", m_FontFace.c_str());
 
 					delete m_FontFamily;
 					m_FontFamily = NULL;
@@ -266,6 +266,18 @@ void CMeterString::Initialize()
 
 	REAL size = (REAL)m_FontSize * (96.0f / (REAL)dpi);
 
+	// Set font defaults
+	FontFamily defaultFamily(L"Arial");
+	Gdiplus::Font* defaultFont;
+	if (defaultFamily.IsAvailable())
+	{
+		defaultFont = new Gdiplus::Font(&defaultFamily, size, style);
+	}
+	else
+	{
+		defaultFont = new Gdiplus::Font(FontFamily::GenericSansSerif(), size, style);
+	}
+
 	// Check if the font is in the cache and use it
 	cacheKey += L'-';
 	cacheKey += FontPropertiesToString(size, style);
@@ -282,17 +294,7 @@ void CMeterString::Initialize()
 		}
 		else
 		{
-			// Use Arial if installed, else use a generic font
-			FontFamily fFamily(L"Arial");
-
-			if (fFamily.IsAvailable())
-			{
-				m_Font = new Gdiplus::Font(&fFamily, size, style);
-			}
-			else
-			{
-				m_Font = new Gdiplus::Font(FontFamily::GenericSansSerif(), size, style);
-			}
+			m_Font = defaultFont;
 		}
 
 		Status status = m_Font->GetLastStatus();
@@ -304,12 +306,15 @@ void CMeterString::Initialize()
 		}
 		else
 		{
-			delete m_Font;
-			m_Font = NULL;
+			m_Font = defaultFont;
 
-			if (m_FontSize != 0)
+			if (FontStyleNotFound == status)
 			{
-				LogWithArgs(LOG_ERROR, L"String: Invalid font: %s", m_FontFace.c_str());
+				LogWithArgs(LOG_ERROR, L"Invalid StringStyle for font: %s", m_FontFace.c_str());
+			}
+			else
+			{
+				LogWithArgs(LOG_ERROR, L"Invalid font: %s", m_FontFace.c_str());
 			}
 		}
 	}
