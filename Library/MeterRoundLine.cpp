@@ -166,3 +166,12 @@ bool CMeterRoundLine::Draw(Graphics& graphics)
 
 	return true;
 }
+
+/*
+** Overridden method. The roundline meters need not to be bound on anything
+**
+*/
+void CMeterRoundLine::BindMeasures(CConfigParser& parser, const WCHAR* section)
+{
+	BindPrimaryMeasure(parser, section, true);
+}
