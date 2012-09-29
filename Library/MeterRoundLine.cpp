@@ -86,8 +86,14 @@ void CMeterRoundLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 */
 bool CMeterRoundLine::Update()
 {
-	if (CMeter::Update() && !m_Measures.empty())
+	if (CMeter::Update())
 	{
+		if (m_Measures.empty())
+		{
+			m_Value = 1.0;
+			return true;
+		}
+
 		CMeasure* measure = m_Measures[0];
 		if (m_ValueRemainder > 0)
 		{
@@ -159,4 +165,13 @@ bool CMeterRoundLine::Draw(Graphics& graphics)
 	}
 
 	return true;
+}
+
+/*
+** Overridden method. The roundline meters need not to be bound on anything
+**
+*/
+void CMeterRoundLine::BindMeasures(CConfigParser& parser, const WCHAR* section)
+{
+	BindPrimaryMeasure(parser, section, true);
 }

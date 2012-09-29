@@ -34,6 +34,7 @@ public:
 
 protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
 
 private:
 	bool m_Solid;
