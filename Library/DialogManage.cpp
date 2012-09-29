@@ -630,7 +630,10 @@ void CDialogManage::CTabSkins::ReadSkin()
 	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_AUTHOR_TEXT);
-	GetPrivateProfileString(L"Rainmeter", L"Author", NULL, buffer, MAX_LINE_LENGTH, file.c_str());
+	if (GetPrivateProfileString(L"Rainmeter", L"Author", NULL, buffer, MAX_LINE_LENGTH, file.c_str()) == 0)
+	{
+		GetPrivateProfileString(L"Metadata", L"Author", NULL, buffer, MAX_LINE_LENGTH, file.c_str());
+	}
 	SetWindowText(item, buffer);
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_ADDMETADATA_LINK);
@@ -1167,7 +1170,17 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			std::wstring file = Rainmeter->GetSkinPath() + m_SkinFolderPath;
 			file += L'\\';
 			file += m_SkinFileName;
-			WritePrivateProfileString(L"Rainmeter", L"\r\n[Metadata]\r\nName=\r\nInformation=\r\nLicense=\r\nVersion", L"", file.c_str());
+			WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
+			std::wstring text;
+			if (GetPrivateProfileString(L"Rainmeter", L"Author", NULL, buffer, MAX_LINE_LENGTH, file.c_str()) > 0)
+			{
+				text = L"\r\n[Metadata]\r\nName=\r\nInformation=\r\nLicense=\r\nVersion";
+			}
+			else
+			{
+				text = L"\r\n[Metadata]\r\nAuthor=\r\nName=\r\nInformation=\r\nLicense=\r\nVersion";
+			}
+			WritePrivateProfileString(L"Rainmeter",text.c_str(), L"", file.c_str());
 			SendMessage(m_Window, WM_COMMAND, MAKEWPARAM(IDC_MANAGESKINS_EDIT_BUTTON, 0), 0);
 			ShowWindow(nm->hwndFrom, SW_HIDE);
 		}
