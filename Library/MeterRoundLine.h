@@ -50,6 +50,7 @@ private:
 	double m_LineLengthShift;
 	UINT m_ValueRemainder;
 	Gdiplus::Color m_LineColor;
+	double m_UserValue;
 	double m_Value;
 };
 

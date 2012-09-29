@@ -44,6 +44,7 @@ CMeterRoundLine::CMeterRoundLine(CMeterWindow* meterWindow, const WCHAR* name) :
 	m_LineLengthShift(),
 	m_ValueRemainder(),
 	m_LineColor(Color::Black),
+	m_UserValue(),
 	m_Value()
 {
 }
@@ -78,6 +79,7 @@ void CMeterRoundLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_CntrlLineLength = 0!=parser.ReadInt(section, L"ControlLength", 0);
 	m_LineStartShift = parser.ReadFloat(section, L"StartShift", 0.0);
 	m_LineLengthShift = parser.ReadFloat(section, L"LengthShift", 0.0);
+	m_UserValue = parser.ReadFloat(section, L"Value", 1.0);
 }
 
 /*
@@ -90,7 +92,7 @@ bool CMeterRoundLine::Update()
 	{
 		if (m_Measures.empty())
 		{
-			m_Value = 1.0;
+			m_Value = m_UserValue;
 			return true;
 		}
 
