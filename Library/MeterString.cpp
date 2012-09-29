@@ -266,18 +266,6 @@ void CMeterString::Initialize()
 
 	REAL size = (REAL)m_FontSize * (96.0f / (REAL)dpi);
 
-	// Set font defaults
-	FontFamily defaultFamily(L"Arial");
-	Gdiplus::Font* defaultFont;
-	if (defaultFamily.IsAvailable())
-	{
-		defaultFont = new Gdiplus::Font(&defaultFamily, size, style);
-	}
-	else
-	{
-		defaultFont = new Gdiplus::Font(FontFamily::GenericSansSerif(), size, style);
-	}
-
 	// Check if the font is in the cache and use it
 	cacheKey += L'-';
 	cacheKey += FontPropertiesToString(size, style);
@@ -288,40 +276,49 @@ void CMeterString::Initialize()
 	}
 	else
 	{
-		if (m_FontFamily)
-		{
-			m_Font = new Gdiplus::Font(m_FontFamily, size, style);
-		}
-		else
-		{
-			m_Font = defaultFont;
-		}
+		m_Font = NULL;
 
-		Status status = m_Font->GetLastStatus();
-		if (Ok == status)
+		if (m_FontSize != 0)
 		{
-			// Cache
-			//LogWithArgs(LOG_DEBUG, L"FontCache-Add: %s", cacheKey.c_str());
-			c_Fonts[cacheKey] = m_Font;
-		}
-		else
-		{
-			m_Font = defaultFont;
-
-			if (FontStyleNotFound == status)
+			if (m_FontFamily)
 			{
-				LogWithArgs(LOG_ERROR, L"Invalid StringStyle for font: %s", m_FontFace.c_str());
+				m_Font = new Gdiplus::Font(m_FontFamily, size, style);
+				Status status = m_Font->GetLastStatus();
+
+				if (Ok != status)
+				{
+					if (FontStyleNotFound == status)
+					{
+						LogWithArgs(LOG_ERROR, L"Invalid StringStyle for font: %s", m_FontFace.c_str());
+					}
+					else
+					{
+						LogWithArgs(LOG_ERROR, L"Invalid font: %s", m_FontFace.c_str());
+					}
+
+					delete m_Font;
+					m_Font = NULL;
+				}
 			}
-			else
+
+			if (m_Font == NULL)
 			{
-				LogWithArgs(LOG_ERROR, L"Invalid font: %s", m_FontFace.c_str());
+				// Use default font ("Arial" or GenericSansSerif)
+				m_Font = new Gdiplus::Font(L"Arial", size, style);
+				if (Ok != m_Font->GetLastStatus())
+				{
+					delete m_Font;
+					m_Font = NULL;
+				}
+			}
+
+			if (m_Font)
+			{
+				// Cache
+				//LogWithArgs(LOG_DEBUG, L"FontCache-Add: %s", cacheKey.c_str());
+				c_Fonts[cacheKey] = m_Font;
 			}
 		}
-	}
-
-	if (defaultFont != m_Font)
-	{
-		delete defaultFont;
 	}
 }
 
