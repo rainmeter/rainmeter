@@ -86,8 +86,14 @@ void CMeterRoundLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 */
 bool CMeterRoundLine::Update()
 {
-	if (CMeter::Update() && !m_Measures.empty())
+	if (CMeter::Update())
 	{
+		if (m_Measures.empty())
+		{
+			m_Value = 1.0;
+			return true;
+		}
+
 		CMeasure* measure = m_Measures[0];
 		if (m_ValueRemainder > 0)
 		{
