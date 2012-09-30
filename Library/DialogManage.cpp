@@ -1174,8 +1174,8 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			file += m_SkinFileName;
 			const WCHAR* str = L"\r\n"  // Hack to add below [Rainmeter].
 				L"[Metadata]\r\n"
-				L"Author=\r\n"
 				L"Name=\r\n"
+				L"Author=\r\n"
 				L"Information=\r\n"
 				L"License=\r\n"
 				L"Version";
