@@ -628,42 +628,43 @@ void CDialogManage::CTabSkins::ReadSkin()
 	SetControls();
 
 	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
+	const WCHAR* fileSz = fileSz;
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_AUTHOR_TEXT);
-	if (GetPrivateProfileString(L"Metadata", L"Author", NULL, buffer, MAX_LINE_LENGTH, file.c_str()) == 0)
+	if (GetPrivateProfileString(L"Metadata", L"Author", NULL, buffer, MAX_LINE_LENGTH, fileSz) == 0)
 	{
 		// For backwards compatibility.
-		GetPrivateProfileString(L"Rainmeter", L"Author", NULL, buffer, MAX_LINE_LENGTH, file.c_str());
+		GetPrivateProfileString(L"Rainmeter", L"Author", NULL, buffer, MAX_LINE_LENGTH, fileSz);
 	}
 	SetWindowText(item, buffer);
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_ADDMETADATA_LINK);
-	if (GetPrivateProfileSection(L"Metadata", buffer, 8, file.c_str()) > 0)
+	if (GetPrivateProfileSection(L"Metadata", buffer, 8, fileSz) > 0)
 	{
 		ShowWindow(item, SW_HIDE);
 
 		// Set metadata
 		item = GetDlgItem(m_Window, IDC_MANAGESKINS_VERSION_TEXT);
-		GetPrivateProfileString(L"Metadata", L"Version", NULL, buffer, MAX_LINE_LENGTH, file.c_str());
+		GetPrivateProfileString(L"Metadata", L"Version", NULL, buffer, MAX_LINE_LENGTH, fileSz);
 		SetWindowText(item, buffer);
 
 		item = GetDlgItem(m_Window, IDC_MANAGESKINS_LICENSE_TEXT);
-		GetPrivateProfileString(L"Metadata", L"License", NULL, buffer, MAX_LINE_LENGTH, file.c_str());
+		GetPrivateProfileString(L"Metadata", L"License", NULL, buffer, MAX_LINE_LENGTH, fileSz);
 		SetWindowText(item, buffer);
 
 		item = GetDlgItem(m_Window, IDC_MANAGESKINS_DESCRIPTION_TEXT);
 		std::wstring text;
-		if (GetPrivateProfileString(L"Metadata", L"Information", NULL, buffer, MAX_LINE_LENGTH, file.c_str()) > 0)
+		if (GetPrivateProfileString(L"Metadata", L"Information", NULL, buffer, MAX_LINE_LENGTH, fileSz) > 0)
 		{
 			text = buffer;
 		}
 		else
 		{
 			// For backwards compatibility
-			GetPrivateProfileString(L"Metadata", L"Description", NULL, buffer, MAX_LINE_LENGTH, file.c_str());
+			GetPrivateProfileString(L"Metadata", L"Description", NULL, buffer, MAX_LINE_LENGTH, fileSz);
 			text = buffer;
 
-			if (GetPrivateProfileString(L"Metadata", L"Instructions", NULL, buffer, MAX_LINE_LENGTH, file.c_str()) > 0)
+			if (GetPrivateProfileString(L"Metadata", L"Instructions", NULL, buffer, MAX_LINE_LENGTH, fileSz) > 0)
 			{
 				text += L"\r\n\r\n";
 				text += buffer;
