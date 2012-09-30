@@ -628,7 +628,7 @@ void CDialogManage::CTabSkins::ReadSkin()
 	SetControls();
 
 	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
-	const WCHAR* fileSz = fileSz;
+	const WCHAR* fileSz = file.c_str();
 
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_AUTHOR_TEXT);
 	if (GetPrivateProfileString(L"Metadata", L"Author", NULL, buffer, MAX_LINE_LENGTH, fileSz) == 0)
