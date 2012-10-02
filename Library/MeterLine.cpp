@@ -163,7 +163,7 @@ void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"StartFrom=%s is not valid in [%s]", graph, m_Name.c_str());
+		LogWithArgs(LOG_ERROR, L"GraphStart=%s is not valid in [%s]", graph, m_Name.c_str());
 	}
 
 	graph = parser.ReadString(section, L"GraphOrientation", L"VERTICAL").c_str();
