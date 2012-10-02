@@ -1240,7 +1240,7 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 						file = layoutFolder + L"RainThemes.bmp";
 						if (_waccess(file.c_str(), 0) != -1)
 						{
-							std::wstring newFile = layoutFolder + L"Wallpaper.ini";
+							std::wstring newFile = layoutFolder + L"Wallpaper.bmp";
 							MoveFile(file.c_str(), newFile.c_str());
 						}
 					}
