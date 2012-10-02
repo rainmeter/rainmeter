@@ -104,14 +104,14 @@ private:
 	std::wstring m_Author;
 	std::wstring m_Version;
 	std::pair<std::wstring, std::wstring> m_SkinFolder;
-	std::map<std::wstring, std::wstring> m_ThemeFolders;
+	std::map<std::wstring, std::wstring> m_LayoutFolders;
 	std::map<std::wstring, std::pair<std::wstring, std::wstring>> m_PluginFolders;
 
 	// Options tab
 	std::wstring m_TargetFile;
 	std::wstring m_MinimumRainmeter;
 	std::wstring m_MinimumWindows;
-	bool m_LoadTheme;
+	bool m_LoadLayout;
 	std::wstring m_Load;
 
 	// Advanced tab

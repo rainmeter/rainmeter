@@ -125,7 +125,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		if (*lpCmdLine && CloseRainmeterIfActive())
 		{
-			CDialogInstall::LoadTheme(lpCmdLine, true);
+			CDialogInstall::LoadLayout(lpCmdLine, true);
 
 			std::wstring file = g_Data.programPath + L"Rainmeter.exe";
 			SHELLEXECUTEINFO sei = {0};

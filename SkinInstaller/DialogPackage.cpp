@@ -34,7 +34,7 @@ CDialogPackage::CDialogPackage(HWND wnd) : CDialog(wnd),
 	m_TabInfo(wnd),
 	m_TabOptions(wnd),
 	m_TabAdvanced(wnd),
-	m_LoadTheme(false),
+	m_LoadLayout(false),
 	m_MergeSkins(false),
 	m_PackagerThread(),
 	m_ZipFile()
@@ -246,7 +246,7 @@ bool CDialogPackage::CreatePackage()
 
 	if (!c_Dialog->m_Load.empty())
 	{
-		WritePrivateProfileString(L"rmskin", L"LoadType", c_Dialog->m_LoadTheme ? L"Layout" : L"Skin", tempFile);
+		WritePrivateProfileString(L"rmskin", L"LoadType", c_Dialog->m_LoadLayout ? L"Layout" : L"Skin", tempFile);
 		WritePrivateProfileString(L"rmskin", L"Load", c_Dialog->m_Load.c_str(), tempFile);
 	}
 
@@ -293,15 +293,15 @@ bool CDialogPackage::CreatePackage()
 		}
 	}
 
-	// Add themes
-	for (auto iter = m_ThemeFolders.cbegin(); iter != m_ThemeFolders.cend(); ++iter)
+	// Add layouts
+	for (auto iter = m_LayoutFolders.cbegin(); iter != m_LayoutFolders.cend(); ++iter)
 	{
-		std::wstring realPath = (*iter).second + L"Rainmeter.thm";
+		std::wstring realPath = (*iter).second + L"Rainmeter.ini";
 		std::wstring zipPath = L"Layouts\\" + (*iter).first;
 		zipPath += L"\\Rainmeter.ini";
 		if (!AddFileToPackage(realPath.c_str(), zipPath.c_str()))
 		{
-			std::wstring error = L"Error adding theme '";
+			std::wstring error = L"Error adding layout '";
 			error += (*iter).first;
 			error += L"'.";
 			error += L"\n\nClick OK to close Packager.";
@@ -846,7 +846,7 @@ void CDialogPackage::CTabInfo::Initialize()
 	lvg.pszHeader = L"Skin";
 	ListView_InsertGroup(item, -1, &lvg);
 	lvg.iGroupId = 1;
-	lvg.pszHeader = L"Themes";
+	lvg.pszHeader = L"Layouts";
 	ListView_InsertGroup(item, -1, &lvg);
 	lvg.iGroupId = 2;
 	lvg.pszHeader = L"Plugins";
@@ -896,18 +896,18 @@ INT_PTR CDialogPackage::CTabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_PACKAGEINFO_ADDTHEME_BUTTON:
 		{
-			std::wstring folder = SelectFolder(m_Window, g_Data.settingsPath + L"Themes\\");
+			std::wstring folder = SelectFolder(m_Window, g_Data.settingsPath + L"Layouts\\");
 			if (!folder.empty())
 			{
 				std::wstring name = PathFindFileName(folder.c_str());
 				name.pop_back();	// Remove slash
 
-				if (c_Dialog->m_ThemeFolders.insert(std::make_pair(name, folder)).second)
+				if (c_Dialog->m_LayoutFolders.insert(std::make_pair(name, folder)).second)
 				{
 					HWND item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
 					LVITEM lvi;
 					lvi.mask = LVIF_TEXT | LVIF_GROUPID;
-					lvi.iItem = c_Dialog->m_ThemeFolders.size() + 1;
+					lvi.iItem = c_Dialog->m_LayoutFolders.size() + 1;
 					lvi.iSubItem = 0;
 					lvi.iGroupId = 1;
 					lvi.pszText = (WCHAR*)name.c_str();
@@ -968,7 +968,7 @@ INT_PTR CDialogPackage::CTabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 					break;
 
 				case 1:
-					c_Dialog->m_ThemeFolders.erase(c_Dialog->m_ThemeFolders.find(name));
+					c_Dialog->m_LayoutFolders.erase(c_Dialog->m_LayoutFolders.find(name));
 					break;
 
 				case 2:
@@ -1083,7 +1083,7 @@ void CDialogPackage::CTabOptions::Initialize()
 	SetWindowText(item,c_Dialog->m_TargetFile.c_str());
 
 	item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_LOADTHEME_RADIO);
-	if (c_Dialog->m_ThemeFolders.empty())
+	if (c_Dialog->m_LayoutFolders.empty())
 	{
 		EnableWindow(item, FALSE);
 
@@ -1092,15 +1092,15 @@ void CDialogPackage::CTabOptions::Initialize()
 	}
 	else
 	{
-		c_Dialog->m_LoadTheme = true;
-		c_Dialog->m_Load = (*c_Dialog->m_ThemeFolders.cbegin()).first;
+		c_Dialog->m_LoadLayout = true;
+		c_Dialog->m_Load = (*c_Dialog->m_LayoutFolders.cbegin()).first;
 
 		Button_SetCheck(item, BST_CHECKED);
 
 		item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_LOADTHEME_COMBO);
 		ShowWindow(item, SW_SHOWNORMAL);
 
-		for (auto iter = c_Dialog->m_ThemeFolders.cbegin(); iter != c_Dialog->m_ThemeFolders.cend(); ++iter)
+		for (auto iter = c_Dialog->m_LayoutFolders.cbegin(); iter != c_Dialog->m_LayoutFolders.cend(); ++iter)
 		{
 			ComboBox_AddString(item, (*iter).first.c_str());
 		}
@@ -1181,7 +1181,7 @@ INT_PTR CDialogPackage::CTabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 			WCHAR buffer[MAX_PATH];
 			GetWindowText(item, buffer, _countof(buffer));
 			c_Dialog->m_Load = buffer;
-			c_Dialog->m_LoadTheme = false;
+			c_Dialog->m_LoadLayout = false;
 
 			item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_LOADSKINBROWSE_BUTTON);
 			ShowWindow(item, SW_SHOWNORMAL);
@@ -1202,7 +1202,7 @@ INT_PTR CDialogPackage::CTabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 			WCHAR buffer[MAX_PATH];
 			GetWindowText(item, buffer, _countof(buffer));
 			c_Dialog->m_Load = buffer;
-			c_Dialog->m_LoadTheme = true;
+			c_Dialog->m_LoadLayout = true;
 		}
 		break;
 

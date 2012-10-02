@@ -517,9 +517,9 @@ bool CDialogInstall::ReadPackage()
 			}
 			else if (_wcsicmp(component, m_PackageFormat == PackageFormat::New ? L"Layouts" : L"Themes") == 0 &&
 				_wcsicmp(extension, m_PackageFormat == PackageFormat::New ? L".ini" : L".thm") == 0 &&
-				!IsIgnoredTheme(itemSz))
+				!IsIgnoredLayout(itemSz))
 			{
-				m_PackageThemes.insert(item);
+				m_PackageLayouts.insert(item);
 			}
 			else if (_wcsicmp(component, L"Addons") == 0 &&
 				m_PackageFormat == PackageFormat::Old &&
@@ -561,7 +561,7 @@ bool CDialogInstall::ReadPackage()
 		m_PackageFonts.clear();
 	}
 
-	return !(m_PackageSkins.empty() && m_PackageThemes.empty() &&
+	return !(m_PackageSkins.empty() && m_PackageLayouts.empty() &&
 		m_PackageAddons.empty() && m_PackageFonts.empty() && m_PackagePlugins.empty());
 }
 
@@ -631,7 +631,7 @@ bool CDialogInstall::ReadOptions(const WCHAR* file)
 		}
 		else
 		{
-			m_LoadTheme = buffer;
+			m_LoadLayout = buffer;
 		}
 	}
 
@@ -801,30 +801,30 @@ bool CDialogInstall::InstallPackage()
 			}
 			else if (_wcsicmp(component, m_PackageFormat == PackageFormat::New ? L"Layouts" : L"Themes") == 0 &&
 				_wcsicmp(extension, m_PackageFormat == PackageFormat::New ? L".ini" : L".thm") == 0 &&
-				m_PackageThemes.find(item) != m_PackageThemes.end())
+				m_PackageLayouts.find(item) != m_PackageLayouts.end())
 			{
-				if (m_PackageFormat == PackageFormat::New)
+				if (m_PackageFormat == PackageFormat::Old)
 				{
-					wcscpy_s(extension, 5, L".thm");
+					wcscpy_s(extension, 5, L".ini");
 				}
 
 				targetPath = g_Data.settingsPath;
-				targetPath += L"Themes\\";
+				targetPath += L"Layouts\\";
 				targetPath += path;
 				error = !ExtractCurrentFile(targetPath);
 				if (!error)
 				{
 					// Remove user specific options
-					const WCHAR* theme = targetPath.c_str();
-					WritePrivateProfileString(L"Rainmeter", L"SkinPath", NULL, theme);
-					WritePrivateProfileString(L"Rainmeter", L"Language", NULL, theme);
-					WritePrivateProfileString(L"Rainmeter", L"Logging", NULL, theme);
-					WritePrivateProfileString(L"Rainmeter", L"ConfigEditor", NULL, theme);
-					WritePrivateProfileString(L"Rainmeter", L"LogViewer", NULL, theme);
-					WritePrivateProfileString(L"Rainmeter", L"DisableDragging", NULL, theme);
-					WritePrivateProfileString(L"Rainmeter", L"DisableRDP", NULL, theme);
-					WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", NULL, theme);
-					WritePrivateProfileString(L"Rainmeter", L"Debug", NULL, theme);
+					const WCHAR* layout = targetPath.c_str();
+					WritePrivateProfileString(L"Rainmeter", L"SkinPath", NULL, layout);
+					WritePrivateProfileString(L"Rainmeter", L"Language", NULL, layout);
+					WritePrivateProfileString(L"Rainmeter", L"Logging", NULL, layout);
+					WritePrivateProfileString(L"Rainmeter", L"ConfigEditor", NULL, layout);
+					WritePrivateProfileString(L"Rainmeter", L"LogViewer", NULL, layout);
+					WritePrivateProfileString(L"Rainmeter", L"DisableDragging", NULL, layout);
+					WritePrivateProfileString(L"Rainmeter", L"DisableRDP", NULL, layout);
+					WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", NULL, layout);
+					WritePrivateProfileString(L"Rainmeter", L"Debug", NULL, layout);
 				}
 			}
 		}
@@ -881,7 +881,7 @@ void CDialogInstall::BeginInstall()
 	item = GetDlgItem(m_TabInstall.GetWindow(), IDC_INSTALLTAB_THEME_CHECKBOX);
 	if (Button_GetCheck(item) == BST_UNCHECKED)
 	{
-		m_LoadTheme.clear();
+		m_LoadLayout.clear();
 		m_LoadSkins.clear();
 	}
 	EnableWindow(item, FALSE);
@@ -903,7 +903,7 @@ void CDialogInstall::BeginInstall()
 			switch (lvi.iGroupId)
 			{
 			case 0: component = &m_PackageSkins;   break;
-			case 1: component = &m_PackageThemes;  break;
+			case 1: component = &m_PackageLayouts; break;
 			case 2: component = &m_PackageAddons;  break;
 			case 3: component = &m_PackagePlugins; break;
 			}
@@ -956,7 +956,7 @@ UINT __stdcall CDialogInstall::InstallThread(void* pParam)
 			MessageBox(dialog->m_Window, dialog->m_ErrorMessage.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
 
 			dialog->m_LoadSkins.clear();
-			dialog->m_LoadTheme.clear();
+			dialog->m_LoadLayout.clear();
 		}
 
 		dialog->LaunchRainmeter();
@@ -1054,13 +1054,13 @@ void CDialogInstall::KeepVariables()
 	}
 }
 
-void CDialogInstall::LoadTheme(const std::wstring& name, bool setWallpaper)
+void CDialogInstall::LoadLayout(const std::wstring& name, bool setWallpaper)
 {
 	// Take a copy of current Rainmeter.ini before doing anything
 	std::wstring backupFile = g_Data.settingsPath;
-	backupFile += L"Themes\\@Backup\\";
+	backupFile += L"Layouts\\@Backup\\";
 	CreateDirectory(backupFile.c_str(), NULL);
-	backupFile += L"Rainmeter.thm";
+	backupFile += L"Rainmeter.ini";
 	CopyFiles(g_Data.iniFile, backupFile, false);
 
 	if (name.empty())
@@ -1068,14 +1068,14 @@ void CDialogInstall::LoadTheme(const std::wstring& name, bool setWallpaper)
 		return;
 	}
 
-	std::wstring themeFile = g_Data.settingsPath;
-	themeFile += L"Themes\\";
-	themeFile += name;
-	std::wstring wallpaperFile = themeFile + L"\\RainThemes.bmp";
-	themeFile += L"\\Rainmeter.thm";
-	if (_waccess(themeFile.c_str(), 0) != -1)
+	std::wstring layoutFile = g_Data.settingsPath;
+	layoutFile += L"Layouts\\";
+	layoutFile += name;
+	std::wstring wallpaperFile = layoutFile + L"\\Wallpaper.bmp";
+	layoutFile += L"\\Rainmeter.ini";
+	if (_waccess(layoutFile.c_str(), 0) != -1)
 	{
-		CopyFiles(themeFile, g_Data.iniFile, false);
+		CopyFiles(layoutFile, g_Data.iniFile, false);
 
 		const WCHAR* iniFileSz = g_Data.iniFile.c_str();
 		const WCHAR* backupFileSz = backupFile.c_str();
@@ -1112,8 +1112,8 @@ void CDialogInstall::LoadTheme(const std::wstring& name, bool setWallpaper)
 
 void CDialogInstall::LaunchRainmeter()
 {
-	// Backup Rainmeter.ini and load theme (if specified)
-	LoadTheme(m_LoadTheme, false);
+	// Backup Rainmeter.ini and load layout (if specified)
+	LoadLayout(m_LoadLayout, false);
 
 	// Execute Rainmeter and wait up to a minute for it process all messages
 	std::wstring rainmeterExe = g_Data.programPath + L"Rainmeter.exe";
@@ -1164,7 +1164,7 @@ bool CDialogInstall::IsIgnoredSkin(const WCHAR* name)
 		_wcsicmp(name, L"@Backup") == 0;
 }
 
-bool CDialogInstall::IsIgnoredTheme(const WCHAR* name)
+bool CDialogInstall::IsIgnoredLayout(const WCHAR* name)
 {
 	return _wcsicmp(name, L"Backup") == 0 ||
 		_wcsicmp(name, L"@Backup") == 0;
@@ -1439,12 +1439,12 @@ void CDialogInstall::CTabInstall::Initialize()
 	};
 
 	addComponent(L"Skins", c_Dialog->m_PackageSkins, g_Data.skinsPath, 0);
-	addComponent(L"Themes", c_Dialog->m_PackageThemes, g_Data.settingsPath + L"Themes\\", 1);
+	addComponent(L"Layouts", c_Dialog->m_PackageLayouts, g_Data.settingsPath + L"Layouts\\", 1);
 	addComponent(L"Addons", c_Dialog->m_PackageAddons, g_Data.settingsPath + L"Addons\\", 2);
 	addComponent(L"Plugins", c_Dialog->m_PackagePlugins, g_Data.settingsPath + L"Plugins\\", 3);
 
 	item = GetDlgItem(m_Window, IDC_INSTALLTAB_THEME_CHECKBOX);
-	if (!c_Dialog->m_LoadTheme.empty())
+	if (!c_Dialog->m_LoadLayout.empty())
 	{
 		Button_SetCheck(item, BST_CHECKED);
 	}

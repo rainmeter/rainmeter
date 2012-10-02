@@ -40,7 +40,7 @@ CDialogManage* CDialogManage::c_Dialog = NULL;
 */
 CDialogManage::CDialogManage(HWND wnd) : CDialog(wnd),
 	m_TabSkins(wnd),
-	m_TabThemes(wnd),
+	m_TabLayouts(wnd),
 	m_TabSettings(wnd)
 {
 }
@@ -63,7 +63,8 @@ void CDialogManage::Open(const WCHAR* name)
 
 	if (name)
 	{
-		if (_wcsicmp(name, L"Themes") == 0)
+		if (_wcsicmp(name, L"Layouts") == 0 ||
+			_wcsicmp(name, L"Themes") == 0)  // For backwards compatibility.
 		{
 			tab = 1;
 		}
@@ -146,7 +147,7 @@ CDialog::CTab& CDialogManage::GetActiveTab()
 	}
 	else if (sel == 1)
 	{
-		return m_TabThemes;
+		return m_TabLayouts;
 	}
 	else // if (sel == 2)
 	{
@@ -283,7 +284,7 @@ INT_PTR CDialogManage::OnNotify(WPARAM wParam, LPARAM lParam)
 		{
 			// Disable all tab windows first
 			EnableWindow(m_TabSkins.GetWindow(), FALSE);
-			EnableWindow(m_TabThemes.GetWindow(), FALSE);
+			EnableWindow(m_TabLayouts.GetWindow(), FALSE);
 			EnableWindow(m_TabSettings.GetWindow(), FALSE);
 
 			GetActiveTab().Activate();
@@ -1321,7 +1322,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 // -----------------------------------------------------------------------------------------------
 //
-//                                Themes tab
+//                                Layouts tab
 //
 // -----------------------------------------------------------------------------------------------
 
@@ -1329,7 +1330,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 ** Constructor.
 **
 */
-CDialogManage::CTabThemes::CTabThemes(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_MANAGETHEMES_DIALOG, DlgProc)
+CDialogManage::CTabLayouts::CTabLayouts(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_MANAGETHEMES_DIALOG, DlgProc)
 {
 }
 
@@ -1337,34 +1338,34 @@ CDialogManage::CTabThemes::CTabThemes(HWND owner) : CTab(Rainmeter->GetResourceI
 ** Called when tab is displayed.
 **
 */
-void CDialogManage::CTabThemes::Initialize()
+void CDialogManage::CTabLayouts::Initialize()
 {
 	m_Initialized = true;
 
 	HWND item  = GetDlgItem(m_Window, IDC_MANAGETHEMES_LIST);
-	const std::vector<std::wstring>& themes = Rainmeter->GetAllThemes();
-	for (int i = 0, isize = themes.size(); i < isize; ++i)
+	const std::vector<std::wstring>& layouts = Rainmeter->GetAllLayouts();
+	for (int i = 0, isize = layouts.size(); i < isize; ++i)
 	{
-		ListBox_AddString(item, themes[i].c_str());
+		ListBox_AddString(item, layouts[i].c_str());
 	}
 }
 
 /*
-** Dialog procedure for the Themes tab.
+** Dialog procedure for the Layouts tab.
 **
 */
-INT_PTR CALLBACK CDialogManage::CTabThemes::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK CDialogManage::CTabLayouts::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		return c_Dialog->m_TabThemes.OnCommand(wParam, lParam);
+		return c_Dialog->m_TabLayouts.OnCommand(wParam, lParam);
 	}
 
 	return FALSE;
 }
 
-INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
+INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
@@ -1407,12 +1408,12 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 				item = GetDlgItem(m_Window, IDC_MANAGETHEMES_EDIT_BUTTON);
 				EnableWindow(item, TRUE);
 				
-				const std::vector<std::wstring>& themes = Rainmeter->GetAllThemes();
+				const std::vector<std::wstring>& layouts = Rainmeter->GetAllLayouts();
 				item  = GetDlgItem(m_Window, IDC_MANAGETHEMES_LIST);
 				int sel = ListBox_GetCurSel(item);
 				
 				item = GetDlgItem(m_Window, IDC_MANAGETHEMES_NAME_TEXT);
-				Edit_SetText(item, themes[sel].c_str());
+				Edit_SetText(item, layouts[sel].c_str());
 			}
 		}
 		break;
@@ -1423,15 +1424,15 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			HWND item = GetDlgItem(m_Window, IDC_MANAGETHEMES_NAME_TEXT);
 			Edit_GetText(item, buffer, MAX_PATH);
 
-			std::wstring theme = buffer;
-			std::wstring path = Rainmeter->GetThemePath();
+			std::wstring layout = buffer;
+			std::wstring path = Rainmeter->GetLayoutPath();
 			CreateDirectory(path.c_str(), 0);
 
-			path += theme;
+			path += layout;
 			bool alreadyExists = (_waccess(path.c_str(), 0) != -1);
 			if (alreadyExists)
 			{
-				std::wstring text = GetFormattedString(ID_STR_THEMEALREADYEXISTS, theme.c_str());
+				std::wstring text = GetFormattedString(ID_STR_THEMEALREADYEXISTS, layout.c_str());
 				if (Rainmeter->ShowMessage(m_Window, text.c_str(), MB_ICONWARNING | MB_YESNO) != IDYES)
 				{
 					// Cancel
@@ -1444,7 +1445,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 				CreateDirectory(path.c_str(), NULL);
 			}
 
-			path += L"\\Rainmeter.thm";
+			path += L"\\Rainmeter.ini";
 
 			item = GetDlgItem(m_Window, IDC_MANAGETHEMES_EMPTYTHEME_CHECKBOX);
 			if (Button_GetCheck(item) != BST_CHECKED)
@@ -1482,14 +1483,14 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 					if (SystemParametersInfo(SPI_GETDESKWALLPAPER, MAX_PATH, &buffer, 0))
 					{
 						std::wstring::size_type pos = path.find_last_of(L'\\');
-						path.replace(pos + 1, path.length() - pos - 1, L"RainThemes.bmp");
+						path.replace(pos + 1, path.length() - pos - 1, L"Wallpaper.bmp");
 						CSystem::CopyFiles((std::wstring)buffer, path);
 					}
 				}
 			}
 			else
 			{
-				// Create empty theme
+				// Create empty layout
 				HANDLE file = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 				if (file == INVALID_HANDLE_VALUE)
 				{
@@ -1504,9 +1505,9 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (!alreadyExists)
 			{
 				item = GetDlgItem(m_Window, IDC_MANAGETHEMES_LIST);
-				ListBox_AddString(item, theme.c_str());
+				ListBox_AddString(item, layout.c_str());
 
-				Rainmeter->ScanForThemes();
+				Rainmeter->ScanForLayouts();
 			}
 		}
 		break;
@@ -1515,7 +1516,7 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			HWND item  = GetDlgItem(m_Window, IDC_MANAGETHEMES_LIST);
 			int sel = ListBox_GetCurSel(item);
-			Rainmeter->LoadTheme(Rainmeter->m_Themes[sel]);
+			Rainmeter->LoadLayout(Rainmeter->m_Layouts[sel]);
 		}
 		break;
 
@@ -1523,11 +1524,11 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			HWND item  = GetDlgItem(m_Window, IDC_MANAGETHEMES_LIST);
 			int sel = ListBox_GetCurSel(item);
-			const std::vector<std::wstring>& themes = Rainmeter->GetAllThemes();
+			const std::vector<std::wstring>& layouts = Rainmeter->GetAllLayouts();
 
-			std::wstring args = L"\"" + Rainmeter->GetThemePath();
-			args += themes[sel];
-			args += L"\\Rainmeter.thm";
+			std::wstring args = L"\"" + Rainmeter->GetLayoutPath();
+			args += layouts[sel];
+			args += L"\\Rainmeter.ini";
 			args += L'"';
 			RunFile(Rainmeter->GetSkinEditor().c_str(), args.c_str());
 		}
@@ -1537,29 +1538,29 @@ INT_PTR CDialogManage::CTabThemes::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			HWND item  = GetDlgItem(m_Window, IDC_MANAGETHEMES_LIST);
 			int sel = ListBox_GetCurSel(item);
-			std::vector<std::wstring>& themes = const_cast<std::vector<std::wstring>&>(Rainmeter->GetAllThemes());
+			std::vector<std::wstring>& layouts = const_cast<std::vector<std::wstring>&>(Rainmeter->GetAllLayouts());
 
-			std::wstring text = GetFormattedString(ID_STR_THEMEDELETE, themes[sel].c_str());
+			std::wstring text = GetFormattedString(ID_STR_THEMEDELETE, layouts[sel].c_str());
 			if (Rainmeter->ShowMessage(m_Window, text.c_str(), MB_ICONQUESTION | MB_YESNO) != IDYES)
 			{
 				// Cancel
 				break;
 			}
 
-			std::wstring folder = Rainmeter->GetThemePath();
-			folder += themes[sel];
+			std::wstring folder = Rainmeter->GetLayoutPath();
+			folder += layouts[sel];
 
 			if (CSystem::RemoveFolder(folder))
 			{
 				ListBox_DeleteString(item, sel);
 
-				// Remove theme from vector
-				std::vector<std::wstring>::iterator iter = themes.begin();
-				for ( ; iter != themes.end(); ++iter)
+				// Remove layout from vector
+				std::vector<std::wstring>::iterator iter = layouts.begin();
+				for ( ; iter != layouts.end(); ++iter)
 				{
-					if (wcscmp(themes[sel].c_str(), (*iter).c_str()) == 0)
+					if (wcscmp(layouts[sel].c_str(), (*iter).c_str()) == 0)
 					{
-						themes.erase(iter);
+						layouts.erase(iter);
 						break;
 					}
 				}

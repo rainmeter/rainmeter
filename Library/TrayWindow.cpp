@@ -513,10 +513,10 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		{
 			int pos = (wParam & 0x0ffff) - ID_THEME_FIRST;
 
-			const std::vector<std::wstring>& themes = Rainmeter->GetAllThemes();
-			if (pos >= 0 && pos < (int)themes.size())
+			const std::vector<std::wstring>& layouts = Rainmeter->GetAllLayouts();
+			if (pos >= 0 && pos < (int)layouts.size())
 			{
-				Rainmeter->LoadTheme(themes[pos]);
+				Rainmeter->LoadLayout(layouts[pos]);
 			}
 		}
 		else if ((wParam & 0x0ffff) >= ID_CONFIG_FIRST && (wParam & 0x0ffff) <= ID_CONFIG_LAST)

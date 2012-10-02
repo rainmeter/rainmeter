@@ -76,11 +76,11 @@ private:
 		bool m_IgnoreUpdate;
 	};
 
-	// Themes tab
-	class CTabThemes : public CTab
+	// Layouts tab
+	class CTabLayouts : public CTab
 	{
 	public:
-		CTabThemes(HWND owner);
+		CTabLayouts(HWND owner);
 
 		virtual void Initialize();
 
@@ -104,7 +104,7 @@ private:
 	CTab& GetActiveTab();
 
 	CTabSkins m_TabSkins;
-	CTabThemes m_TabThemes;
+	CTabLayouts m_TabLayouts;
 	CTabSettings m_TabSettings;
 };
 

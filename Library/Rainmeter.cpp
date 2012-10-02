@@ -922,7 +922,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 		m_SkinPath = m_Path + L"Skins\\";
 	}
 
-	// Create user skins, themes, addons, and plugins folders if needed
+	// Create user skins, layouts, addons, and plugins folders if needed
 	CreateComponentFolders(bDefaultIniLocation);
 
 	delete [] buffer;
@@ -1153,8 +1153,8 @@ void CRainmeter::CreateOptionsFile()
 {
 	CreateDirectory(m_SettingsPath.c_str(), NULL);
 
-	std::wstring defaultIni = GetDefaultThemePath();
-	defaultIni += L"illustro default\\Rainmeter.thm";
+	std::wstring defaultIni = GetDefaultLayoutPath();
+	defaultIni += L"illustro default\\Rainmeter.ini";
 	CSystem::CopyFiles(defaultIni, m_IniFile);
 }
 
@@ -1202,13 +1202,61 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 		}
 	}
 
-	path = GetThemePath();
+	path = GetLayoutPath();
 	if (_waccess(path.c_str(), 0) == -1)
 	{
-		std::wstring from = GetDefaultThemePath();
-		if (_waccess(from.c_str(), 0) != -1)
+		// TODO: If Skin Installer creates Layouts first, old Themes is not migrated.
+
+		std::wstring themesPath = m_SettingsPath + L"Themes";
+		if (_waccess(themesPath.c_str(), 0) != -1)
 		{
-			CSystem::CopyFiles(from, m_SettingsPath);
+			// Migrate Themes into Layouts for backwards compatibility and rename
+			// Rainmeter.thm to Rainmeter.ini and RainThemes.bmp to Wallpaper.bmp.
+			MoveFile(themesPath.c_str(), path.c_str());
+
+			path += L'*';  // For FindFirstFile.
+			WIN32_FIND_DATA fd;
+			HANDLE hFind = FindFirstFile(path.c_str(), &fd);
+			path.pop_back();  // Remove '*'.
+
+			if (hFind != INVALID_HANDLE_VALUE)
+			{
+				do
+				{
+					if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
+						wcscmp(L".", fd.cFileName) != 0 &&
+						wcscmp(L"..", fd.cFileName) != 0)
+					{
+						std::wstring layoutFolder = path + fd.cFileName;
+						layoutFolder += L'\\';
+
+						std::wstring file = layoutFolder + L"Rainmeter.thm";
+						if (_waccess(file.c_str(), 0) != -1)
+						{
+							std::wstring newFile = layoutFolder + L"Rainmeter.ini";
+							MoveFile(file.c_str(), newFile.c_str());
+						}
+
+						file = layoutFolder + L"RainThemes.bmp";
+						if (_waccess(file.c_str(), 0) != -1)
+						{
+							std::wstring newFile = layoutFolder + L"Wallpaper.ini";
+							MoveFile(file.c_str(), newFile.c_str());
+						}
+					}
+				}
+				while (FindNextFile(hFind, &fd));
+
+				FindClose(hFind);
+			}
+		}
+		else
+		{
+			std::wstring from = GetDefaultLayoutPath();
+			if (_waccess(from.c_str(), 0) != -1)
+			{
+				CSystem::CopyFiles(from, m_SettingsPath);
+			}
 		}
 	}
 	else
@@ -1216,7 +1264,7 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 		path += L"Backup";
 		if (_waccess(path.c_str(), 0) != -1)
 		{
-			std::wstring newPath = GetThemePath();
+			std::wstring newPath = GetLayoutPath();
 			newPath += L"@Backup";
 			MoveFile(path.c_str(), newPath.c_str());
 		}
@@ -1277,7 +1325,7 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 void CRainmeter::ReloadSettings()
 {
 	ScanForSkins();
-	ScanForThemes();
+	ScanForLayouts();
 	ReadGeneralSettings(m_IniFile);
 }
 
@@ -1789,17 +1837,17 @@ int CRainmeter::ScanForSkinsRecursive(const std::wstring& path, std::wstring bas
 }
 
 /*
-** Scans the given folder for themes
+** Scans the given folder for layouts
 */
-void CRainmeter::ScanForThemes()
+void CRainmeter::ScanForLayouts()
 {
-	m_Themes.clear();
+	m_Layouts.clear();
 
 	WIN32_FIND_DATA fileData;      // Data structure describes the file found
 	HANDLE hSearch;                // Search handle returned by FindFirstFile
 
 	// Scan for folders
-	std::wstring folders = GetThemePath();
+	std::wstring folders = GetLayoutPath();
 	folders += L'*';
 
 	hSearch = FindFirstFileEx(
@@ -1818,7 +1866,7 @@ void CRainmeter::ScanForThemes()
 				wcscmp(L".", fileData.cFileName) != 0 &&
 				wcscmp(L"..", fileData.cFileName) != 0)
 			{
-				m_Themes.push_back(fileData.cFileName);
+				m_Layouts.push_back(fileData.cFileName);
 			}
 		}
 		while (FindNextFile(hSearch, &fileData));
@@ -2482,15 +2530,15 @@ void CRainmeter::RefreshAll()
 	CDialogManage::UpdateSkins(NULL);
 }
 
-void CRainmeter::LoadTheme(const std::wstring& name)
+void CRainmeter::LoadLayout(const std::wstring& name)
 {
 	// Delete all meter windows
 	DeleteMeterWindow(NULL);
 
-	std::wstring backup = GetThemePath();
+	std::wstring backup = GetLayoutPath();
 	backup += L"@Backup";
 	CreateDirectory(backup.c_str(), NULL);
-	backup += L"\\Rainmeter.thm";
+	backup += L"\\Rainmeter.ini";
 
 	if (_wcsicmp(name.c_str(), L"@Backup") == 0)
 	{
@@ -2502,12 +2550,12 @@ void CRainmeter::LoadTheme(const std::wstring& name)
 		// Make a copy of current Rainmeter.ini
 		CSystem::CopyFiles(m_IniFile, backup);
 
-		// Replace Rainmeter.ini with theme
-		std::wstring theme = GetThemePath();
-		theme += name;
-		std::wstring wallpaper = theme + L"\\RainThemes.bmp";
-		theme += L"\\Rainmeter.thm";
-		CSystem::CopyFiles(theme, GetIniFile());
+		// Replace Rainmeter.ini with layout
+		std::wstring layout = GetLayoutPath();
+		layout += name;
+		std::wstring wallpaper = layout + L"\\Wallpaper.bmp";
+		layout += L"\\Rainmeter.ini";
+		CSystem::CopyFiles(layout, GetIniFile());
 
 		PreserveSetting(backup, L"SkinPath");
 		PreserveSetting(backup, L"ConfigEditor");
@@ -2797,13 +2845,13 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 					}
 				}
 
-				HMENU themeMenu = GetSubMenu(subMenu, 5);
-				if (themeMenu)
+				HMENU layoutMenu = GetSubMenu(subMenu, 5);
+				if (layoutMenu)
 				{
-					if (!m_Themes.empty())
+					if (!m_Layouts.empty())
 					{
-						DeleteMenu(themeMenu, 0, MF_BYPOSITION);  // "No themes available" menuitem
-						CreateThemeMenu(themeMenu);
+						DeleteMenu(layoutMenu, 0, MF_BYPOSITION);  // "No layouts available" menuitem
+						CreateLayoutMenu(layoutMenu);
 					}
 				}
 
@@ -3115,11 +3163,11 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 	return skinMenu;
 }
 
-void CRainmeter::CreateThemeMenu(HMENU themeMenu)
+void CRainmeter::CreateLayoutMenu(HMENU layoutMenu)
 {
-	for (size_t i = 0, isize = m_Themes.size(); i < isize; ++i)
+	for (size_t i = 0, isize = m_Layouts.size(); i < isize; ++i)
 	{
-		InsertMenu(themeMenu, i, MF_BYPOSITION, ID_THEME_FIRST + i, m_Themes[i].c_str());
+		InsertMenu(layoutMenu, i, MF_BYPOSITION, ID_THEME_FIRST + i, m_Layouts[i].c_str());
 	}
 }
 

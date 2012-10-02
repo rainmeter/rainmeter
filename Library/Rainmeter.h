@@ -124,7 +124,7 @@ public:
 	int FindSkinFolderIndex(const std::wstring& folderPath);
 
 	const std::vector<SkinFolder>& GetFolders() { return m_SkinFolders; }
-	const std::vector<std::wstring>& GetAllThemes() { return m_Themes; }
+	const std::vector<std::wstring>& GetAllLayouts() { return m_Layouts; }
 
 	void DeleteMeterWindow(CMeterWindow* meterWindow, bool force = false);
 
@@ -138,7 +138,7 @@ public:
 	const std::wstring& GetLogFile() { return m_LogFile; }
 	const std::wstring& GetSettingsPath() { return m_SettingsPath; }
 	const std::wstring& GetSkinPath() { return m_SkinPath; }
-	std::wstring GetThemePath() { return m_SettingsPath + L"Themes\\"; }
+	std::wstring GetLayoutPath() { return m_SettingsPath + L"Layouts\\"; }
 	std::wstring GetPluginPath() { return m_Path + L"Plugins\\"; }
 	std::wstring GetUserPluginPath() { return m_SettingsPath + L"Plugins\\"; }
 	std::wstring GetAddonPath() { return m_SettingsPath + L"Addons\\"; }
@@ -146,7 +146,7 @@ public:
 	bool HasUserPluginPath() { return (_wcsicmp(m_Path.c_str(), m_SettingsPath.c_str()) != 0); }
 
 	std::wstring GetDefaultSkinPath() { return m_Path + L"Defaults\\Skins\\"; }
-	std::wstring GetDefaultThemePath() { return m_Path + L"Defaults\\Themes\\"; }
+	std::wstring GetDefaultLayoutPath() { return m_Path + L"Defaults\\Layouts\\"; }
 	std::wstring GetDefaultPluginPath() { return m_Path + L"Defaults\\Plugins\\"; }
 	std::wstring GetDefaultAddonPath() { return m_Path + L"Defaults\\Addons\\"; }
 
@@ -215,7 +215,7 @@ public:
 
 	void RefreshAll();
 
-	void LoadTheme(const std::wstring& name);
+	void LoadLayout(const std::wstring& name);
 	void PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace = true);
 
 	static std::vector<std::wstring> ParseString(LPCTSTR str, CConfigParser* parser = NULL);
@@ -244,7 +244,7 @@ private:
 	void CreateMeterWindow(const std::wstring& folderPath, const std::wstring& file);
 	void WriteActive(const std::wstring& folderPath, int fileIndex);
 	void ScanForSkins();
-	void ScanForThemes();
+	void ScanForLayouts();
 	void ReadGeneralSettings(const std::wstring& iniFile);
 	void SetLoadOrder(int folderIndex, int order);
 	int GetLoadOrder(const std::wstring& folderPath);
@@ -256,7 +256,7 @@ private:
 	void CreateAllSkinsMenu(HMENU skinMenu) { CreateAllSkinsMenuRecursive(skinMenu, 0); }
 	int CreateAllSkinsMenuRecursive(HMENU skinMenu, int index);
 
-	void CreateThemeMenu(HMENU themeMenu);
+	void CreateLayoutMenu(HMENU layoutMenu);
 	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);
 	void CreateOptionsFile();
 	void CreateDataFile();
@@ -269,7 +269,7 @@ private:
 	std::vector<SkinFolder> m_SkinFolders;
 	std::multimap<int, int> m_SkinOrders;
 	std::map<std::wstring, CMeterWindow*> m_MeterWindows;
-	std::vector<std::wstring> m_Themes;
+	std::vector<std::wstring> m_Layouts;
 
 	std::wstring m_Path;
 	std::wstring m_IniFile;

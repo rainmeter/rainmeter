@@ -33,7 +33,7 @@ public:
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
-	static void LoadTheme(const std::wstring& name, bool setWallpaper);
+	static void LoadLayout(const std::wstring& name, bool setWallpaper);
 
 	static CDialogInstall* c_Dialog;
 
@@ -93,7 +93,7 @@ private:
 	void KeepVariables();
 
 	static bool IsIgnoredSkin(const WCHAR* name);
-	static bool IsIgnoredTheme(const WCHAR* name);
+	static bool IsIgnoredLayout(const WCHAR* name);
 	static bool IsIgnoredAddon(const WCHAR* name);
 	static bool IsIgnoredPlugin(const WCHAR* name);
 
@@ -117,7 +117,7 @@ private:
 	std::wstring m_PackageRoot;
 	PackageFormat m_PackageFormat;
 	std::set<std::wstring> m_PackageSkins;
-	std::set<std::wstring> m_PackageThemes;
+	std::set<std::wstring> m_PackageLayouts;
 	std::set<std::wstring> m_PackageAddons;
 	std::set<std::wstring> m_PackageFonts;
 	std::set<std::wstring> m_PackagePlugins;
@@ -128,7 +128,7 @@ private:
 	bool m_SystemFonts;
 	std::vector<std::wstring> m_VariablesFiles;
 	std::vector<std::wstring> m_LoadSkins;
-	std::wstring m_LoadTheme;
+	std::wstring m_LoadLayout;
 };
 
 #endif
