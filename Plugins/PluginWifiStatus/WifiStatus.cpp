@@ -139,16 +139,21 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	if (g_hClient == NULL) return;
 
 	MeasureData* measure = (MeasureData*)data;
-	WCHAR buffer[256];
+	WCHAR buffer[128];
 	bool changed = false;
+
+	int value = 0;
+	auto logValueError = [&](const WCHAR* option)
+	{
+		_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: %s=%i not valid", option, value);
+		RmLog(LOG_ERROR, buffer);
+	};
 
 	// Select a WLAN interface, default 0.
 	int value = RmReadInt(rm, L"WifiIntfID", 0);
 	if (value >= (int)g_pIntfList->dwNumberOfItems)
 	{
-		_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: Adapter (WifiIntfID=%i) not valid.", value);
-		RmLog(LOG_ERROR, buffer);
-
+		logValueError(L"WifiIntfID");
 		value = 0;
 	}
 	g_pInterface = &g_pIntfList->InterfaceInfo[value];
@@ -157,9 +162,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	value = RmReadInt(rm, L"WifiListStyle", 0);
 	if (value < 0 || value > 3)
 	{
-		_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: WifiListStyle=%i not valid.", value);
-		RmLog(LOG_WARNING, buffer);
-
+		logValueError(L"WifiListStyle");
 		value = 0;
 	}
 	measure->listStyle = value;
@@ -168,9 +171,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	value = RmReadInt(rm, L"WifiListLimit", 5);
 	if (value <= 0)
 	{
-		_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: WifiListLimit=%i not valid.", data);
-		RmLog(LOG_WARNING, buffer);
-
+		logValueError(L"WifiListLimit");
 		value = 5;
 	}
 	measure->listMax = value;
@@ -204,7 +205,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 	else
 	{
-		_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: WifiInfoType=%s not valid.", type);
+		_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: WifiInfoType=%s not valid", type);
 		RmLog(LOG_ERROR, buffer);
 	}
 	if (infoType != measure->type)
