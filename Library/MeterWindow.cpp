@@ -1926,11 +1926,11 @@ bool CMeterWindow::ReadSkin()
 	// Read options from Rainmeter.ini.
 	ReadOptions();
 
-	std::wstring context = m_Parser.ReadString(L"Rainmeter", L"ContextTitle", L"");
-	if (!context.empty())
+	std::wstring cTitle = m_Parser.ReadString(L"Rainmeter", L"ContextTitle", L"");
+	if (!cTitle.empty())
 	{
-		context = m_Parser.ReadString(L"Rainmeter", L"ContextAction", L"");
-		if (!context.empty())
+		std::wstring cAction = m_Parser.ReadString(L"Rainmeter", L"ContextAction", L"");
+		if (!cAction.empty() || _wcsicmp(cTitle.c_str(), L"SEPARATOR") == 0)
 		{
 			m_HasCustomContextMenu = true;
 		}
