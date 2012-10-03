@@ -140,7 +140,8 @@ CMeterWindow::CMeterWindow(const std::wstring& folderPath, const std::wstring& f
 	m_UpdateCounter(),
 	m_MouseMoveCounter(),
 	m_FontCollection(),
-	m_ToolTipHidden(false)
+	m_ToolTipHidden(false),
+	m_HasCustomContextMenu(false)
 {
 	if (!c_DwmInstance && CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
@@ -1925,6 +1926,16 @@ bool CMeterWindow::ReadSkin()
 	// Read options from Rainmeter.ini.
 	ReadOptions();
 
+	std::wstring context = m_Parser.ReadString(L"Rainmeter", L"ContextTitle", L"");
+	if (!context.empty())
+	{
+		context = m_Parser.ReadString(L"Rainmeter", L"ContextAction", L"");
+		if (!context.empty())
+		{
+			m_HasCustomContextMenu = true;
+		}
+	}
+
 	// Check the version
 	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
 	if (appVersion > RAINMETER_VERSION)
@@ -3324,6 +3335,28 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
 			ScreenToWindow();
 			WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
+		}
+	}
+	else if (wParam >= IDM_SKIN_CUSTOMCONTEXTMENU_FIRST && wParam <= IDM_SKIN_CUSTOMCONTEXTMENU_LAST)
+	{
+		std::wstring action;
+
+		int position = (int)wParam - IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + 1;
+		if (position == 1)
+		{
+			action = m_Parser.ReadString(L"Rainmeter", L"ContextAction", L"");
+		}
+		else
+		{
+			WCHAR buffer[128];
+
+			_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", position);
+			action = m_Parser.ReadString(L"Rainmeter", buffer, L"");
+		}
+
+		if (!action.empty())
+		{
+			Rainmeter->ExecuteCommand(action.c_str(), this);
 		}
 	}
 	else

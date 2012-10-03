@@ -197,6 +197,9 @@
 #define IDM_MANAGESKINSMENU_EDIT                     4058
 #define IDM_COPY                                     4059
 
+#define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
+#define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9014
+
 #define ID_CONFIG_EDIT                               30000
 #define ID_CONFIG_FIRST                              30001
 #define ID_CONFIG_LAST                               40000
