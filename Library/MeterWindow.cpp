@@ -3344,14 +3344,14 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		int position = (int)wParam - IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + 1;
 		if (position == 1)
 		{
-			action = m_Parser.ReadString(L"Rainmeter", L"ContextAction", L"");
+			action = m_Parser.ReadString(L"Rainmeter", L"ContextAction", L"", false);
 		}
 		else
 		{
 			WCHAR buffer[128];
 
 			_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", position);
-			action = m_Parser.ReadString(L"Rainmeter", buffer, L"");
+			action = m_Parser.ReadString(L"Rainmeter", buffer, L"", false);
 		}
 
 		if (!action.empty())

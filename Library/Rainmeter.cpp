@@ -3160,7 +3160,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 			}
 		}
 
-		// Add custom actions to the context menu.
+		// Add custom actions to the context menu
 		if (meterWindow->HasCustomContextMenu())
 		{
 			// Read context menu titles (also read the actions)
@@ -3170,14 +3170,14 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 			WCHAR buffer[128];
 			int i = 1;
 
-			while(!contextTitle.empty() && 
-				 (!contextAction.empty() || _wcsicmp(contextTitle.c_str(), L"SEPARATOR") == 0) &&
-				 (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i - 1) <= IDM_SKIN_CUSTOMCONTEXTMENU_LAST) // Set maximum context items in resource.h
+			while (!contextTitle.empty() && 
+			      (!contextAction.empty() || _wcsicmp(contextTitle.c_str(), L"SEPARATOR") == 0) &&
+			      (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i - 1) <= IDM_SKIN_CUSTOMCONTEXTMENU_LAST) // Set maximum context items in resource.h
 			{
 				// Trim long titles
 				if (contextTitle.size() > 30)
 				{
-					contextTitle = contextTitle.substr(0, 27) + L"...";
+					contextTitle.replace(27, contextTitle.size() - 27, L"...");
 				}
 
 				cTitles.push_back(contextTitle);
@@ -3192,7 +3192,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 			size_t titleSize = cTitles.size();
 			if (titleSize <= 3)
 			{
-				for (size_t i = 0; i < titleSize; i++)
+				for (size_t i = 0; i < titleSize; ++i)
 				{
 					if (_wcsicmp(cTitles[i].c_str(), L"SEPARATOR") == 0)
 					{
@@ -3200,7 +3200,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 					}
 					else
 					{
-						InsertMenu(skinMenu, i + 1, MF_BYPOSITION | MF_STRING, IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i, cTitles[i].c_str());
+						InsertMenu(skinMenu, i + 1, MF_BYPOSITION | MF_STRING, (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i), cTitles[i].c_str());
 					}
 				}
 			}
@@ -3209,7 +3209,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 				HMENU customMenu = CreatePopupMenu();
 				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)customMenu, L"Skin Actions");
 				
-				for (size_t i = 0; i < titleSize; i++)
+				for (size_t i = 0; i < titleSize; ++i)
 				{
 					if (_wcsicmp(cTitles[i].c_str(), L"SEPARATOR") == 0)
 					{
@@ -3217,7 +3217,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 					}
 					else
 					{
-						AppendMenu(customMenu, MF_BYPOSITION | MF_STRING, IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i, cTitles[i].c_str());
+						AppendMenu(customMenu, MF_BYPOSITION | MF_STRING, (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i), cTitles[i].c_str());
 					}
 				}
 			}
@@ -3289,22 +3289,29 @@ void CRainmeter::CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow)
 
 void CRainmeter::ChangeSkinIndex(HMENU menu, int index)
 {
-	int count = GetMenuItemCount(menu);
-
-	for (int i = 0; i < count; ++i)
+	if (index > 0)
 	{
-		HMENU subMenu = GetSubMenu(menu, i);
-		if (subMenu)
+		int count = GetMenuItemCount(menu);
+
+		for (int i = 0; i < count; ++i)
 		{
-			ChangeSkinIndex(subMenu, index);
-		}
-		else
-		{
-			WCHAR buffer[256];
-			GetMenuString(menu, i, buffer, 256, MF_BYPOSITION);
-			UINT id = GetMenuItemID(menu, i);
-			UINT flags = GetMenuState(menu, i, MF_BYPOSITION);
-			ModifyMenu(menu, i, MF_BYPOSITION | flags, id | (index << 16), buffer);
+			HMENU subMenu = GetSubMenu(menu, i);
+			if (subMenu)
+			{
+				ChangeSkinIndex(subMenu, index);
+			}
+			else
+			{
+				MENUITEMINFO mii = {sizeof(MENUITEMINFO)};
+				mii.fMask = MIIM_FTYPE | MIIM_ID;
+				GetMenuItemInfo(menu, i, TRUE, &mii);
+				if ((mii.fType & MFT_SEPARATOR) == 0)
+				{
+					mii.wID |= (index << 16);
+					mii.fMask = MIIM_ID;
+					SetMenuItemInfo(menu, i, TRUE, &mii);
+				}
+			}
 		}
 	}
 }
