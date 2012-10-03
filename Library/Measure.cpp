@@ -481,7 +481,7 @@ bool CMeasure::Update()
 			m_MedianPos %= MEDIAN_SIZE;
 
 			auto medianArray = m_MedianValues;
-			std::sort(&medianArray[0], &medianArray[MEDIAN_SIZE]);
+			std::sort(&medianArray.data()[0], &medianArray.data()[MEDIAN_SIZE]);  // Workaround for "Debug" build mode
 
 			double medianValue = medianArray[MEDIAN_SIZE / 2];
 			m_MaxValue = max(m_MaxValue, medianValue);
