@@ -91,8 +91,7 @@ protected:
 	std::vector<std::wstring> m_Substitute;	// Vec of substitute strings
 	bool m_RegExpSubstitute;
 
-	std::vector<double> m_MedianMaxValues;	// The values for the median filtering
-	std::vector<double> m_MedianMinValues;	// The values for the median filtering
+	std::vector<double> m_MedianValues;	// The values for the median filtering
 	UINT m_MedianPos;				// Position in the median array, where the new value is placed
 
 	std::vector<double> m_AverageValues;

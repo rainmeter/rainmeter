@@ -450,14 +450,19 @@ void CMeasureNet::ReadOptions(CConfigParser& parser, const WCHAR* section, NET n
 		Rainmeter->SetNetworkStatisticsTimer();
 	}
 
-	if (maxValue == 0)
+	if (maxValue == 0.0)
 	{
-		m_MaxValue = 1;
-		m_LogMaxValue = true;
+		if (!m_LogMaxValue)
+		{
+			m_MaxValue = 1.0;
+			m_LogMaxValue = true;
+			m_MedianValues.clear();
+		}
 	}
 	else
 	{
 		m_MaxValue = maxValue / 8;
+		m_LogMaxValue = false;
 	}
 }
 

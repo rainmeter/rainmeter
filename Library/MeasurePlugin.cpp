@@ -193,14 +193,12 @@ void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		{
 			m_MaxValue = 1.0;
 			m_LogMaxValue = true;
-
-			// Plugin options changed, so reset
-			m_MedianMaxValues.clear();
-			m_MedianMinValues.clear();
+			m_MedianValues.clear();
 		}
 		else
 		{
 			m_MaxValue = maxValue;
+			m_LogMaxValue = false;
 		}
 	}
 

@@ -509,41 +509,46 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		{
 			Rainmeter->OpenSkinFolder();
 		}
-		else if ((wParam & 0x0ffff) >= ID_THEME_FIRST && (wParam & 0x0ffff) <= ID_THEME_LAST)
-		{
-			int pos = (wParam & 0x0ffff) - ID_THEME_FIRST;
-
-			const std::vector<std::wstring>& layouts = Rainmeter->GetAllLayouts();
-			if (pos >= 0 && pos < (int)layouts.size())
-			{
-				Rainmeter->LoadLayout(layouts[pos]);
-			}
-		}
-		else if ((wParam & 0x0ffff) >= ID_CONFIG_FIRST && (wParam & 0x0ffff) <= ID_CONFIG_LAST)
-		{
-			std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex((UINT)(wParam & 0x0ffff));
-			if (indexes.first != -1 && indexes.second != -1)
-			{
-				Rainmeter->ToggleSkin(indexes.first, indexes.second);
-			}
-		}
 		else
 		{
-			// Forward the message to correct window
-			int index = (int)(wParam >> 16);
-			const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+			UINT mID = wParam & 0x0FFFF;
 
-			if (index < (int)windows.size())
+			if (mID >= ID_THEME_FIRST && mID <= ID_THEME_LAST)
 			{
-				std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-				for ( ; iter != windows.end(); ++iter)
+				int pos = mID - ID_THEME_FIRST;
+
+				const std::vector<std::wstring>& layouts = Rainmeter->GetAllLayouts();
+				if (pos >= 0 && pos < (int)layouts.size())
 				{
-					--index;
-					if (index < 0)
+					Rainmeter->LoadLayout(layouts[pos]);
+				}
+			}
+			else if (mID >= ID_CONFIG_FIRST && mID <= ID_CONFIG_LAST)
+			{
+				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(mID);
+				if (indexes.first != -1 && indexes.second != -1)
+				{
+					Rainmeter->ToggleSkin(indexes.first, indexes.second);
+				}
+			}
+			else
+			{
+				// Forward the message to correct window
+				int index = (int)(wParam >> 16);
+				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+
+				if (index < (int)windows.size())
+				{
+					std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
+					for ( ; iter != windows.end(); ++iter)
 					{
-						CMeterWindow* meterWindow = (*iter).second;
-						SendMessage(meterWindow->GetWindow(), WM_COMMAND, wParam & 0x0FFFF, NULL);
-						break;
+						--index;
+						if (index < 0)
+						{
+							CMeterWindow* meterWindow = (*iter).second;
+							SendMessage(meterWindow->GetWindow(), WM_COMMAND, mID, NULL);
+							break;
+						}
 					}
 				}
 			}

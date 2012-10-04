@@ -61,7 +61,7 @@ static const double g_TblScale[2][4] = {
 	}
 };
 
-const int MEDIAN_SIZE = 7;
+const int MEDIAN_SIZE = 3;
 
 extern CRainmeter* Rainmeter;
 
@@ -440,32 +440,6 @@ bool CMeasure::Update()
 		if (m_UpdateCounter < m_UpdateDivider) return false;
 		m_UpdateCounter = 0;
 
-		// If we're logging the maximum value of the measure, check if
-		// the new value is greater than the old one, and update if necessary.
-		if (m_LogMaxValue)
-		{
-			if (m_MedianMaxValues.empty())
-			{
-				m_MedianMaxValues.resize(MEDIAN_SIZE, 0);
-				m_MedianMinValues.resize(MEDIAN_SIZE, 0);
-			}
-
-			m_MedianMaxValues[m_MedianPos] = m_Value;
-			m_MedianMinValues[m_MedianPos] = m_Value;
-			++m_MedianPos;
-			m_MedianPos %= MEDIAN_SIZE;
-
-			std::vector<double> medianArray;
-
-			medianArray = m_MedianMaxValues;
-			std::sort(medianArray.begin(), medianArray.end());
-			m_MaxValue = max(m_MaxValue, medianArray[MEDIAN_SIZE / 2]);
-
-			medianArray = m_MedianMinValues;
-			std::sort(medianArray.begin(), medianArray.end());
-			m_MinValue = min(m_MinValue, medianArray[MEDIAN_SIZE / 2]);
-		}
-
 		// Call derived method to update value
 		UpdateValue();
 
@@ -485,12 +459,33 @@ bool CMeasure::Update()
 			m_AveragePos %= averageValuesSize;
 
 			// Calculate the average value
-			m_Value = 0;
+			double value = 0;
 			for (size_t i = 0; i < averageValuesSize; ++i)
 			{
-				m_Value += m_AverageValues[i];
+				value += m_AverageValues[i];
 			}
-			m_Value /= (double)averageValuesSize;
+			m_Value = value / (double)averageValuesSize;
+		}
+
+		// If we're logging the maximum value of the measure, check if
+		// the new value is greater than the old one, and update if necessary.
+		if (m_LogMaxValue)
+		{
+			if (m_MedianValues.empty())
+			{
+				m_MedianValues.resize(MEDIAN_SIZE, 0);
+			}
+
+			m_MedianValues[m_MedianPos] = m_Value;
+			++m_MedianPos;
+			m_MedianPos %= MEDIAN_SIZE;
+
+			auto medianArray = m_MedianValues;
+			std::sort(&medianArray.data()[0], &medianArray.data()[MEDIAN_SIZE]);  // Workaround for "Debug" build mode
+
+			double medianValue = medianArray[MEDIAN_SIZE / 2];
+			m_MaxValue = max(m_MaxValue, medianValue);
+			m_MinValue = min(m_MinValue, medianValue);
 		}
 
 		if (m_MeterWindow)
