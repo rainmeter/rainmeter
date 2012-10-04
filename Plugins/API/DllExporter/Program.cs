@@ -43,7 +43,7 @@ namespace DllExporter
 
             // Disassemble
             Process ildasmProc = new Process();
-            string ildasmArgs = string.Format("/nobar /output={0} {1}", targetIlName, targetDllName);
+            string ildasmArgs = string.Format("/nobar /output=\"{0}\" \"{1}\"", targetIlName, targetDllName);
             ildasmProc.StartInfo = new ProcessStartInfo(ildasmPath, ildasmArgs);
             ildasmProc.StartInfo.UseShellExecute = false;
             ildasmProc.StartInfo.CreateNoWindow = false;
@@ -129,8 +129,8 @@ namespace DllExporter
 
             // Reassemble
             Process ilasmProc = new Process();
-            string resource = hasResource ? string.Format("/resource={0} ", targetResName) : "";
-            string ilasmArgs = string.Format("/nologo /quiet /dll {0} {1} /output={2} {3}{4}", isDebug ? "/debug /pdb" : "/optimize", is64 ? "/x64 /PE64" : "", targetDllName, resource, targetIlName);
+            string resource = hasResource ? string.Format("/resource=\"{0}\"", targetResName) : "";
+            string ilasmArgs = string.Format("/nologo /quiet /dll {0} {1} /output=\"{2}\" {3} \"{4}\"", isDebug ? "/debug /pdb" : "/optimize", is64 ? "/x64 /PE64" : "", targetDllName, resource, targetIlName);
             ilasmProc.StartInfo = new ProcessStartInfo(ilasmPath, ilasmArgs);
             ilasmProc.StartInfo.UseShellExecute = false;
             ilasmProc.StartInfo.CreateNoWindow = false;
