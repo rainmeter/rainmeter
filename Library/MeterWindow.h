@@ -234,8 +234,6 @@ public:
 
 	bool GetMeterToolTipHidden() { return m_ToolTipHidden; }
 
-	bool HasCustomContextMenu() { return m_HasCustomContextMenu; }
-
 	const CMouse& GetMouse() { return m_Mouse; }
 
 	void MakePathAbsolute(std::wstring& path);
@@ -433,8 +431,6 @@ private:
 	Gdiplus::PrivateFontCollection* m_FontCollection;
 
 	bool m_ToolTipHidden;
-
-	bool m_HasCustomContextMenu;
 
 	static int c_InstanceCount;
 

@@ -140,8 +140,7 @@ CMeterWindow::CMeterWindow(const std::wstring& folderPath, const std::wstring& f
 	m_UpdateCounter(),
 	m_MouseMoveCounter(),
 	m_FontCollection(),
-	m_ToolTipHidden(false),
-	m_HasCustomContextMenu(false)
+	m_ToolTipHidden(false)
 {
 	if (!c_DwmInstance && CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
@@ -1387,6 +1386,19 @@ void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& op
 			return;
 		}
 
+		// ContextTitle and ContextAction in [Rainmeter] are dynamic
+		if ((_wcsicmp(section.c_str(), L"Rainmeter") == 0) && (wcsnicmp(option.c_str(), L"Context", 7) == 0))
+		{
+			if (value.empty())
+			{
+				m_Parser.DeleteValue(section, option);
+			}
+			else
+			{
+				m_Parser.SetValue(section, option, value);
+			}
+		}
+
 		// Is it a style?
 	}
 }
@@ -1925,16 +1937,6 @@ bool CMeterWindow::ReadSkin()
 
 	// Read options from Rainmeter.ini.
 	ReadOptions();
-
-	std::wstring cTitle = m_Parser.ReadString(L"Rainmeter", L"ContextTitle", L"");
-	if (!cTitle.empty())
-	{
-		std::wstring cAction = m_Parser.ReadString(L"Rainmeter", L"ContextAction", L"");
-		if (!cAction.empty() || _wcsicmp(cTitle.c_str(), L"SEPARATOR") == 0)
-		{
-			m_HasCustomContextMenu = true;
-		}
-	}
 
 	// Check the version
 	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);

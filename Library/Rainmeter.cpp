@@ -3161,12 +3161,13 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 		}
 
 		// Add custom actions to the context menu
-		if (meterWindow->HasCustomContextMenu())
+		std::wstring contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextTitle", L"");
+		std::wstring contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextAction", L"");
+		
+		if (!contextTitle.empty() && (!contextAction.empty() || _wcsicmp(contextTitle.c_str(), L"SEPARATOR") == 0))
 		{
 			// Read context menu titles (also read the actions)
 			std::vector<std::wstring> cTitles;
-			std::wstring contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextTitle", L"");
-			std::wstring contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextAction", L"");
 			WCHAR buffer[128];
 			int i = 1;
 
@@ -3192,22 +3193,28 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 			size_t titleSize = cTitles.size();
 			if (titleSize <= 3)
 			{
+				size_t position = 0;
 				for (size_t i = 0; i < titleSize; ++i)
 				{
 					if (_wcsicmp(cTitles[i].c_str(), L"SEPARATOR") == 0)
 					{
-						InsertMenu(skinMenu, i + 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+						// Separators not allowed in main top-level menu
+						--position;
 					}
 					else
 					{
-						InsertMenu(skinMenu, i + 1, MF_BYPOSITION | MF_STRING, (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i), cTitles[i].c_str());
+						InsertMenu(skinMenu, position + 1, MF_BYPOSITION | MF_STRING, (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i), cTitles[i].c_str());
 					}
+
+					++position;
 				}
+
+				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, NULL, L"Custom skin actions:");
 			}
 			else
 			{
 				HMENU customMenu = CreatePopupMenu();
-				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)customMenu, L"Skin Actions");
+				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)customMenu, L"Custom skin actions");
 				
 				for (size_t i = 0; i < titleSize; ++i)
 				{
@@ -3221,6 +3228,8 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 					}
 				}
 			}
+
+			InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 		}
 	}
 
