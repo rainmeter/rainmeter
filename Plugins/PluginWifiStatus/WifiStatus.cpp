@@ -150,7 +150,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	};
 
 	// Select a WLAN interface, default 0.
-	int value = RmReadInt(rm, L"WifiIntfID", 0);
+	value = RmReadInt(rm, L"WifiIntfID", 0);
 	if (value >= (int)g_pIntfList->dwNumberOfItems)
 	{
 		logValueError(L"WifiIntfID");
