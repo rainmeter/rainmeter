@@ -3209,7 +3209,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 					++position;
 				}
 
-				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, NULL, L"Custom skin actions:");
+				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, NULL, L"Custom skin actions");
 			}
 			else
 			{
