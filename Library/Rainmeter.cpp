@@ -3163,10 +3163,8 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 		// Add custom actions to the context menu
 		std::wstring contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextTitle", L"");
 		std::wstring contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextAction", L"");
-		
 		if (!contextTitle.empty() && (!contextAction.empty() || _wcsicmp(contextTitle.c_str(), L"SEPARATOR") == 0))
 		{
-			// Read context menu titles (also read the actions)
 			std::vector<std::wstring> cTitles;
 			WCHAR buffer[128];
 			int i = 1;
@@ -3189,7 +3187,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 				contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
 			}
 
-			// Build a sub-menu if more than one item
+			// Build a sub-menu if more than three items
 			size_t titleSize = cTitles.size();
 			if (titleSize <= 3)
 			{
@@ -3209,7 +3207,11 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 					++position;
 				}
 
-				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, NULL, L"Custom skin actions");
+				if (position != 0)
+				{
+					InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, NULL, L"Custom skin actions");
+					InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+				}
 			}
 			else
 			{
@@ -3227,9 +3229,9 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 						AppendMenu(customMenu, MF_BYPOSITION | MF_STRING, (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i), cTitles[i].c_str());
 					}
 				}
-			}
 
-			InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+			}
 		}
 	}
 
