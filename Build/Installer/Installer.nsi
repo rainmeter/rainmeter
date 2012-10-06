@@ -932,6 +932,7 @@ Function MoveNonDefaultPlugins
 	${AndIf} $R7 != "Win7AudioPlugin.dll"
 	${AndIf} $R7 != "WindowMessagePlugin.dll"
 		CreateDirectory "$INSTDIR\Defaults\Plugins"
+		Delete "$INSTDIR\Defaults\Plugins\$R7"
 		Rename "$R9" "$INSTDIR\Defaults\Plugins\$R7"
 	${EndIf}
 
