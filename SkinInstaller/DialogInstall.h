@@ -33,8 +33,6 @@ public:
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
-	static void LoadLayout(const std::wstring& name, bool setWallpaper);
-
 	static CDialogInstall* c_Dialog;
 
 protected:

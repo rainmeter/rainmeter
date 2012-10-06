@@ -99,7 +99,7 @@ public:
 	CRainmeter();
 	~CRainmeter();
 
-	int Initialize(LPCWSTR iniPath);
+	int Initialize(LPCWSTR iniPath, LPCWSTR layout);
 	bool IsAlreadyRunning();
 	int MessagePump();
 
@@ -215,7 +215,7 @@ public:
 
 	void RefreshAll();
 
-	void LoadLayout(const std::wstring& name);
+	bool LoadLayout(const std::wstring& name);
 	void PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace = true);
 
 	static std::vector<std::wstring> ParseString(LPCTSTR str, CConfigParser* parser = NULL);
@@ -233,6 +233,7 @@ private:
 	void Bang_DeactivateSkin(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
 	void Bang_ToggleSkin(std::vector<std::wstring>& args);
 	void Bang_DeactivateSkinGroup(std::vector<std::wstring>& args);
+	void Bang_LoadLayout(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
 	void Bang_SetClip(std::vector<std::wstring>& args);
 	void Bang_SetWallpaper(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
 	void Bang_SkinMenu(std::vector<std::wstring>& args, CMeterWindow* meterWindow);

@@ -50,6 +50,11 @@ CRainmeter* Rainmeter; // The module
 */
 int RainmeterMain(LPWSTR cmdLine)
 {
+	// Avoid loading a dll from current directory
+	SetDllDirectory(L"");
+
+	const WCHAR* layout = NULL;
+
 	if (cmdLine[0] == L'!' || cmdLine[0] == L'[')
 	{
 		HWND wnd = FindWindow(RAINMETER_CLASS_NAME, RAINMETER_WINDOW_NAME);
@@ -64,7 +69,15 @@ int RainmeterMain(LPWSTR cmdLine)
 			return 0;
 		}
 
-		return 1;
+		// Disallow everything except !LoadLayout.
+		if (_wcsnicmp(cmdLine, L"!LoadLayout ", 11) == 0)
+		{
+			layout = cmdLine + 11;  // Skip "!LoadLayout ".
+		}
+		else
+		{
+			return 1;
+		}
 	}
 	else if (cmdLine[0] == L'"')
 	{
@@ -77,13 +90,10 @@ int RainmeterMain(LPWSTR cmdLine)
 		}
 	}
 
-	// Avoid loading a dll from current directory
-	SetDllDirectory(L"");
-
-	int ret = 1;
+	const WCHAR* iniFile = (*cmdLine && !layout) ? cmdLine : NULL;
 
 	Rainmeter = new CRainmeter;
-	ret = Rainmeter->Initialize(cmdLine);
+	int ret = Rainmeter->Initialize(iniFile, layout);
 	if (ret == 0)
 	{
 		ret = Rainmeter->MessagePump();
@@ -391,6 +401,30 @@ void CRainmeter::Bang_DeactivateSkinGroup(std::vector<std::wstring>& args)
 	else
 	{
 		Log(LOG_ERROR, L"!DeactivateConfigGroup: Invalid parameters");
+	}
+}
+
+/*
+** !LoadLayout bang
+**
+*/
+void CRainmeter::Bang_LoadLayout(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
+{
+	if (args.size() == 1)
+	{
+		if (meterWindow)
+		{
+			// Delay to avoid loading theme in the middle of an update.
+			std::wstring command = L"!LoadLayout \"";
+			command += args[0];
+			command += L'"';
+			Rainmeter->DelayedExecuteCommand(command.c_str());
+		}
+		else
+		{
+			// Not called from a skin (or called with delay).
+			LoadLayout(args[0]);
+		}
 	}
 }
 
@@ -728,7 +762,7 @@ CRainmeter::~CRainmeter()
 ** The main initialization function for the module.
 **
 */
-int CRainmeter::Initialize(LPCWSTR iniPath)
+int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 {
 	InitalizeLitestep();
 
@@ -742,7 +776,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 	m_Path.assign(buffer, pos ? pos - buffer + 1 : 0);
 
 	bool bDefaultIniLocation = false;
-	if (*iniPath)
+	if (iniPath)
 	{
 		// The command line defines the location of Rainmeter.ini (or whatever it calls it).
 		std::wstring iniFile = iniPath;
@@ -988,8 +1022,17 @@ int CRainmeter::Initialize(LPCWSTR iniPath)
 		UpdateDesktopWorkArea(false);
 	}
 
-	// Create meter windows for active skins
-	ActivateActiveSkins();
+	bool layoutLoaded = false;
+	if (layout)
+	{
+		std::vector<std::wstring> args = ParseString(layout);
+		layoutLoaded = (args.size() == 1 && LoadLayout(args[0]));
+	}
+
+	if (!layoutLoaded)
+	{
+		ActivateActiveSkins();
+	}
 
 	if (dataFileCreated)
 	{
@@ -2138,6 +2181,10 @@ void CRainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args,
 	{
 		BangWithArgs(BANG_PLUGIN, args, 1, meterWindow);
 	}
+	else if (_wcsicmp(bang, L"LoadLayout") == 0)
+	{
+		Bang_LoadLayout(args, meterWindow);
+	}
 	else if (_wcsicmp(bang, L"SetClip") == 0)
 	{
 		Bang_SetClip(args);
@@ -2530,8 +2577,19 @@ void CRainmeter::RefreshAll()
 	CDialogManage::UpdateSkins(NULL);
 }
 
-void CRainmeter::LoadLayout(const std::wstring& name)
+bool CRainmeter::LoadLayout(const std::wstring& name)
 {
+	// Replace Rainmeter.ini with layout
+	std::wstring layout = GetLayoutPath();
+	layout += name;
+	std::wstring wallpaper = layout + L"\\Wallpaper.bmp";
+	layout += L"\\Rainmeter.ini";
+
+	if (_waccess(layout.c_str(), 0) == -1)
+	{
+		return false;
+	}
+
 	// Delete all meter windows
 	DeleteMeterWindow(NULL);
 
@@ -2540,23 +2598,17 @@ void CRainmeter::LoadLayout(const std::wstring& name)
 	CreateDirectory(backup.c_str(), NULL);
 	backup += L"\\Rainmeter.ini";
 
-	if (_wcsicmp(name.c_str(), L"@Backup") == 0)
-	{
-		// Just load the backup
-		CSystem::CopyFiles(backup, m_IniFile);
-	}
-	else
+	bool backupLayout = (_wcsicmp(name.c_str(), L"@Backup") == 0);
+	if (!backupLayout)
 	{
 		// Make a copy of current Rainmeter.ini
 		CSystem::CopyFiles(m_IniFile, backup);
+	}
 
-		// Replace Rainmeter.ini with layout
-		std::wstring layout = GetLayoutPath();
-		layout += name;
-		std::wstring wallpaper = layout + L"\\Wallpaper.bmp";
-		layout += L"\\Rainmeter.ini";
-		CSystem::CopyFiles(layout, GetIniFile());
+	CSystem::CopyFiles(layout, m_IniFile);
 
+	if (!backupLayout)
+	{
 		PreserveSetting(backup, L"SkinPath");
 		PreserveSetting(backup, L"ConfigEditor");
 		PreserveSetting(backup, L"LogViewer");
@@ -2580,6 +2632,8 @@ void CRainmeter::LoadLayout(const std::wstring& name)
 
 	// Create meter windows for active skins
 	ActivateActiveSkins();
+
+	return true;
 }
 
 void CRainmeter::PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace)

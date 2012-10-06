@@ -1054,78 +1054,24 @@ void CDialogInstall::KeepVariables()
 	}
 }
 
-void CDialogInstall::LoadLayout(const std::wstring& name, bool setWallpaper)
-{
-	// Take a copy of current Rainmeter.ini before doing anything
-	std::wstring backupFile = g_Data.settingsPath;
-	backupFile += L"Layouts\\@Backup\\";
-	CreateDirectory(backupFile.c_str(), NULL);
-	backupFile += L"Rainmeter.ini";
-	CopyFiles(g_Data.iniFile, backupFile, false);
-
-	if (name.empty())
-	{
-		return;
-	}
-
-	std::wstring layoutFile = g_Data.settingsPath;
-	layoutFile += L"Layouts\\";
-	layoutFile += name;
-	std::wstring wallpaperFile = layoutFile + L"\\Wallpaper.bmp";
-	layoutFile += L"\\Rainmeter.ini";
-	if (_waccess(layoutFile.c_str(), 0) != -1)
-	{
-		CopyFiles(layoutFile, g_Data.iniFile, false);
-
-		const WCHAR* iniFileSz = g_Data.iniFile.c_str();
-		const WCHAR* backupFileSz = backupFile.c_str();
-
-		auto preserveOption = [&](LPCTSTR section, LPCTSTR key)
-		{
-			WCHAR buffer[MAX_LINE_LENGTH];
-			if (GetPrivateProfileString(section, key, L"", buffer, MAX_LINE_LENGTH, iniFileSz) == 0 &&
-				GetPrivateProfileString(section, key, L"", buffer, MAX_LINE_LENGTH, backupFileSz) > 0)
-			{
-				WritePrivateProfileString(section, key, buffer, iniFileSz);
-			}
-		};
-
-		preserveOption(L"Rainmeter", L"SkinPath");
-		preserveOption(L"Rainmeter", L"ConfigEditor");
-		preserveOption(L"Rainmeter", L"LogViewer");
-		preserveOption(L"Rainmeter", L"Logging");
-		preserveOption(L"Rainmeter", L"DisableVersionCheck");
-		preserveOption(L"Rainmeter", L"Language");
-		preserveOption(L"Rainmeter", L"TrayExecuteM");
-		preserveOption(L"Rainmeter", L"TrayExecuteR");
-		preserveOption(L"Rainmeter", L"TrayExecuteDM");
-		preserveOption(L"Rainmeter", L"TrayExecuteDR");
-
-		// Set wallpaper if it exists
-		const WCHAR* wallpaperFileSz = wallpaperFile.c_str();
-		if (_waccess(wallpaperFileSz, 0) != -1)
-		{
-			SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)wallpaperFileSz, SPIF_UPDATEINIFILE);
-		}
-	}
-}
-
 void CDialogInstall::LaunchRainmeter()
 {
-	// Backup Rainmeter.ini and load layout (if specified)
-	LoadLayout(m_LoadLayout, false);
-
 	// Execute Rainmeter and wait up to a minute for it process all messages
 	std::wstring rainmeterExe = g_Data.programPath + L"Rainmeter.exe";
+	std::wstring args;
+	if (!m_LoadLayout.empty())
+	{
+		args += L"!LoadLayout \"";
+		args += m_LoadLayout;
+		args += L'"';
+	}
 
 	SHELLEXECUTEINFO sei = {0};
 	sei.cbSize = sizeof(SHELLEXECUTEINFO);
 	sei.fMask = SEE_MASK_WAITFORINPUTIDLE | SEE_MASK_UNICODE;
-	sei.hwnd = NULL;
-	sei.lpVerb = NULL;
 	sei.lpFile = rainmeterExe.c_str();
+	sei.lpParameters = args.c_str();
 	sei.lpDirectory = g_Data.programPath.c_str();
-	sei.lpParameters = NULL;
 	sei.nShow = SW_SHOWNORMAL;
 	ShellExecuteEx(&sei);
 

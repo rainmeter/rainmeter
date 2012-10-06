@@ -120,22 +120,20 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 	if (_wcsnicmp(lpCmdLine, L"/LoadTheme ", 11) == 0)
 	{
-		// Skip "/LoadTheme "
-		lpCmdLine += 11;
+		// For backwards compatibility.
+		std::wstring args = L"!LoadLayout \"";
+		args += &lpCmdLine[11];  // Skip "/LoadTheme ".
+		args += L'"';
 
-		if (*lpCmdLine && CloseRainmeterIfActive())
-		{
-			CDialogInstall::LoadLayout(lpCmdLine, true);
-
-			std::wstring file = g_Data.programPath + L"Rainmeter.exe";
-			SHELLEXECUTEINFO sei = {0};
-			sei.cbSize = sizeof(SHELLEXECUTEINFO);
-			sei.fMask = SEE_MASK_UNICODE;
-			sei.lpFile = file.c_str();
-			sei.lpDirectory = g_Data.programPath.c_str();
-			sei.nShow = SW_SHOWNORMAL;
-			ShellExecuteEx(&sei);
-		}
+		std::wstring file = g_Data.programPath + L"Rainmeter.exe";
+		SHELLEXECUTEINFO sei = {0};
+		sei.cbSize = sizeof(SHELLEXECUTEINFO);
+		sei.fMask = SEE_MASK_UNICODE;
+		sei.lpFile = file.c_str();
+		sei.lpParameters = args.c_str();
+		sei.lpDirectory = g_Data.programPath.c_str();
+		sei.nShow = SW_SHOWNORMAL;
+		ShellExecuteEx(&sei);
 
 		return 0;
 	}
