@@ -70,7 +70,7 @@ int RainmeterMain(LPWSTR cmdLine)
 		}
 
 		// Disallow everything except !LoadLayout.
-		if (_wcsnicmp(cmdLine, L"!LoadLayout ", 13) == 0)
+		if (_wcsnicmp(cmdLine, L"!LoadLayout ", 12) == 0)
 		{
 			layout = cmdLine + 11;  // Skip "!LoadLayout ".
 		}
