@@ -32,14 +32,14 @@ public:
 	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 	virtual void Command(const std::wstring& command);
 
-	void DeleteLuaScript();
+	void UninitializeLuaScript();
 
 protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:
-	LuaScript* m_LuaScript;
+	LuaScript m_LuaScript;
 
 	bool m_HasUpdateFunction;
 	bool m_HasGetStringFunction;
@@ -48,7 +48,7 @@ private:
 
 	std::wstring m_StringValue;
 
-	std::string m_ScriptFile;
+	std::wstring m_ScriptFile;
 };
 
 #endif

@@ -29,7 +29,6 @@ const char* g_GetStringFunctionName = "GetStringValue";
 **
 */
 CMeasureScript::CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
-	m_LuaScript(),
 	m_HasUpdateFunction(false),
 	m_HasGetStringFunction(false),
 	m_ValueType(LUA_TNIL)
@@ -43,19 +42,16 @@ CMeasureScript::CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name) : C
 */
 CMeasureScript::~CMeasureScript()
 {
-	DeleteLuaScript();
+	UninitializeLuaScript();
 	LuaManager::Finalize();
 }
 
-void CMeasureScript::DeleteLuaScript()
+void CMeasureScript::UninitializeLuaScript()
 {
-	delete m_LuaScript;
-	m_LuaScript = NULL;
+	m_LuaScript.Uninitialize();
 
 	m_HasUpdateFunction = false;
 	m_HasGetStringFunction = false;
-
-	m_ScriptFile.clear();
 }
 
 /*
@@ -66,12 +62,12 @@ void CMeasureScript::UpdateValue()
 {
 	if (m_HasUpdateFunction)
 	{
-		m_ValueType = m_LuaScript->RunFunctionWithReturn(g_UpdateFunctionName, m_Value, m_StringValue);
+		m_ValueType = m_LuaScript.RunFunctionWithReturn(g_UpdateFunctionName, m_Value, m_StringValue);
 
 		if (m_ValueType == LUA_TNIL && m_HasGetStringFunction)
 		{
 			// For backwards compatbility
-			m_ValueType = m_LuaScript->RunFunctionWithReturn(g_GetStringFunctionName, m_Value, m_StringValue);
+			m_ValueType = m_LuaScript.RunFunctionWithReturn(g_GetStringFunctionName, m_Value, m_StringValue);
 		}
 	}
 }
@@ -98,37 +94,34 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	CMeasure::ReadOptions(parser, section);
 
-	std::wstring file = parser.ReadString(section, L"ScriptFile", L"");
-
-	if (!file.empty())
+	std::wstring scriptFile = parser.ReadString(section, L"ScriptFile", L"");
+	if (!scriptFile.empty())
 	{
 		if (m_MeterWindow)
 		{
-			m_MeterWindow->MakePathAbsolute(file);
+			m_MeterWindow->MakePathAbsolute(scriptFile);
 		}
-		std::string scriptFile = ConvertToAscii(file.c_str());
 
 		if (!m_Initialized ||
-			strcmp(scriptFile.c_str(), m_ScriptFile.c_str()) != 0)
+			wcscmp(scriptFile.c_str(), m_ScriptFile.c_str()) != 0)
 		{
-			DeleteLuaScript();
+			UninitializeLuaScript();
 
 			lua_State* L = LuaManager::GetState();
 			m_ScriptFile = scriptFile;
-			m_LuaScript = new LuaScript(m_ScriptFile.c_str());
 
-			if (m_LuaScript->IsInitialized())
+			if (m_LuaScript.Initialize(m_ScriptFile.c_str()))
 			{
-				bool hasInitializeFunction = m_LuaScript->IsFunction(g_InitializeFunctionName);
-				m_HasUpdateFunction = m_LuaScript->IsFunction(g_UpdateFunctionName);
-				m_HasGetStringFunction = m_LuaScript->IsFunction(g_GetStringFunctionName);  // For backwards compatbility
+				bool hasInitializeFunction = m_LuaScript.IsFunction(g_InitializeFunctionName);
+				m_HasUpdateFunction = m_LuaScript.IsFunction(g_UpdateFunctionName);
+				m_HasGetStringFunction = m_LuaScript.IsFunction(g_GetStringFunctionName);  // For backwards compatbility
 
 				if (m_HasGetStringFunction)
 				{
 					LogWithArgs(LOG_WARNING, L"Script: Using deprecated GetStringValue() in [%s]", m_Name.c_str());
 				}
 
-				lua_rawgeti(L, LUA_GLOBALSINDEX, m_LuaScript->GetRef());
+				lua_rawgeti(L, LUA_GLOBALSINDEX, m_LuaScript.GetRef());
 
 				*(CMeterWindow**)lua_newuserdata(L, sizeof(CMeterWindow*)) = m_MeterWindow;
 				lua_getglobal(L, "CMeterWindow");
@@ -171,20 +164,17 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 				if (hasInitializeFunction)
 				{
-					m_LuaScript->RunFunction(g_InitializeFunctionName);
+					m_LuaScript.RunFunction(g_InitializeFunctionName);
 				}
-			}
-			else
-			{
-				DeleteLuaScript();
+
+				// Valid script.
+				return;
 			}
 		}
 	}
-	else
-	{
-		LogWithArgs(LOG_ERROR, L"Script: File not valid in [%s]", m_Name.c_str());
-		DeleteLuaScript();
-	}
+
+	LogWithArgs(LOG_ERROR, L"Script: File not valid in [%s]", m_Name.c_str());
+	UninitializeLuaScript();
 }
 
 /*
@@ -194,7 +184,7 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 void CMeasureScript::Command(const std::wstring& command)
 {
 	std::string str = ConvertToAscii(command.c_str());
-	m_LuaScript->RunString(str.c_str());
+	m_LuaScript.RunString(str.c_str());
 }
 
 //static void stackDump(lua_State *L)

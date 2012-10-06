@@ -24,10 +24,13 @@
 class LuaScript
 {
 public:
-	LuaScript(const char* file);
+	LuaScript();
 	~LuaScript();
-	
-	bool IsInitialized() { return m_Initialized; }
+
+	bool Initialize(const WCHAR* scriptFile);
+	void Uninitialize();
+
+	bool IsInitialized() { return m_Ref != LUA_NOREF; }
 	int GetRef() { return m_Ref; }
 
 	bool IsFunction(const char* funcName);
@@ -37,7 +40,6 @@ public:
 
 protected:
 	int m_Ref;
-	bool m_Initialized;
 };
 
 #endif
