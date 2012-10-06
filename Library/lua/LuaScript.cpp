@@ -39,14 +39,14 @@ LuaScript::~LuaScript()
 	Uninitialize();
 }
 
-bool LuaScript::Initialize(const WCHAR* scriptFile)
+bool LuaScript::Initialize(const std::wstring& scriptFile)
 {
 	assert(!IsInitialized());
 
 	lua_State* L = LuaManager::GetState();
 
 	// Load file into a buffer as luaL_loadfile does not support Unicode paths.
-	FILE* file = _wfopen(scriptFile, L"rb");
+	FILE* file = _wfopen(scriptFile.c_str(), L"rb");
 	if (!file)
 	{
 		return false;
@@ -59,8 +59,7 @@ bool LuaScript::Initialize(const WCHAR* scriptFile)
 	fseek(file, 0, SEEK_SET);
 	fread(fileData, fileSize, 1, file);
 
-	std::string scriptName = ConvertToUTF8(wcsrchr(scriptFile, L'\\') + 1);
-	int load = luaL_loadbuffer(L, fileData, fileSize, scriptName.c_str());
+	int load = luaL_loadbuffer(L, fileData, fileSize, "");
 	delete [] fileData;
 
 	if (load == 0)
@@ -93,17 +92,18 @@ bool LuaScript::Initialize(const WCHAR* scriptFile)
 		int result = lua_pcall(L, 0, 0, 0);
 		if (result == 0)
 		{
+			m_File = scriptFile;
 			return true;
 		}
 		else
 		{
-			LuaManager::ReportErrors(L);
+			LuaManager::ReportErrors(L, scriptFile);
 			Uninitialize();
 		}
 	}
 	else
 	{
-		LuaManager::ReportErrors(L);
+		LuaManager::ReportErrors(L, scriptFile);
 	}
 
 	return false;
@@ -117,6 +117,7 @@ void LuaScript::Uninitialize()
 	{
 		luaL_unref(L, LUA_GLOBALSINDEX, m_Ref);
 		m_Ref = LUA_NOREF;
+		m_File.clear();
 	}
 }
 
@@ -167,7 +168,7 @@ void LuaScript::RunFunction(const char* funcName)
 
 		if (lua_pcall(L, 0, 0, 0))
 		{
-			LuaManager::ReportErrors(L);
+			LuaManager::ReportErrors(L, m_File);
 		}
 
 		lua_pop(L, 1);
@@ -193,7 +194,7 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 
 		if (lua_pcall(L, 0, 1, 0))
 		{
-			LuaManager::ReportErrors(L);
+			LuaManager::ReportErrors(L, m_File);
 			lua_pop(L, 1);
 		}
 		else
@@ -230,7 +231,7 @@ void LuaScript::RunString(const char* str)
 		// Load the string as a Lua chunk
 		if (luaL_loadstring(L, str))
 		{
-			LuaManager::ReportErrors(L);
+			LuaManager::ReportErrors(L, m_File);
 		}
 
 		// Push our table onto the stack
@@ -241,7 +242,7 @@ void LuaScript::RunString(const char* str)
 
 		if (lua_pcall(L, 0, 0, 0))
 		{
-			LuaManager::ReportErrors(L);
+			LuaManager::ReportErrors(L, m_File);
 		}
 	}
 }

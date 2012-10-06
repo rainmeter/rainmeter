@@ -103,14 +103,12 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		}
 
 		if (!m_Initialized ||
-			wcscmp(scriptFile.c_str(), m_ScriptFile.c_str()) != 0)
+			wcscmp(scriptFile.c_str(), m_LuaScript.GetFile().c_str()) != 0)
 		{
 			UninitializeLuaScript();
 
 			lua_State* L = LuaManager::GetState();
-			m_ScriptFile = scriptFile;
-
-			if (m_LuaScript.Initialize(m_ScriptFile.c_str()))
+			if (m_LuaScript.Initialize(scriptFile))
 			{
 				bool hasInitializeFunction = m_LuaScript.IsFunction(g_InitializeFunctionName);
 				m_HasUpdateFunction = m_LuaScript.IsFunction(g_UpdateFunctionName);

@@ -56,24 +56,21 @@ void LuaManager::Finalize()
 	}
 }
 
-void LuaManager::ReportErrors(lua_State* L)
+void LuaManager::ReportErrors(lua_State* L, const std::wstring& file)
 {
 	const char* error = lua_tostring(L, -1);
 	lua_pop(L, 1);
 
-	const char* pos = error + 4; // Skip the drive
-
-	// Get rid of everything up to the filename
-	while (*pos != ':')
+	// Skip "[string ...]".
+	const char* pos = strchr(error, ':');
+	if (pos)
 	{
-		if (*pos == '\\')
-		{
-			error = pos + 1;
-		}
-		++pos;
+		error = pos;
 	}
 
-	LogWithArgs(LOG_ERROR, L"Script: %S", error);
+	std::wstring str(file, file.find_last_of(L'\\') + 1);
+	str += ConvertToWide(error);
+	LogWithArgs(LOG_ERROR, L"Script: %s", str.c_str());
 }
 
 void LuaManager::PushWide(lua_State* L, const WCHAR* str)

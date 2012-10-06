@@ -27,11 +27,12 @@ public:
 	LuaScript();
 	~LuaScript();
 
-	bool Initialize(const WCHAR* scriptFile);
+	bool Initialize(const std::wstring& scriptFile);
 	void Uninitialize();
-
 	bool IsInitialized() { return m_Ref != LUA_NOREF; }
+
 	int GetRef() { return m_Ref; }
+	const std::wstring& GetFile() { return m_File; }
 
 	bool IsFunction(const char* funcName);
 	void RunFunction(const char* funcName);
@@ -40,6 +41,8 @@ public:
 
 protected:
 	int m_Ref;
+
+	std::wstring m_File;
 };
 
 #endif
