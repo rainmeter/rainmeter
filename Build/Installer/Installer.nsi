@@ -777,7 +777,10 @@ SkipIniMove:
 	${If} $InstallPortable <> 1
 		CreateDirectory "$INSTDIR\Defaults"
 		Rename "$INSTDIR\Skins" "$INSTDIR\Defaults\Skins"
-		Rename "$INSTDIR\Themes" "$INSTDIR\Defaults\Themes"
+
+		Rename "$INSTDIR\Themes" "$INSTDIR\Defaults\Layouts"
+		Rename "$INSTDIR\Defaults\Themes" "$INSTDIR\Defaults\Layouts"
+		${Locate} "$INSTDIR\Defaults\Layouts" "/L=F /M=Rainmeter.thm /G=1" "RenameToRainmeterIni"
 
 		${If} ${FileExists} "$INSTDIR\Addons\Backup"
 		${OrIf} ${FileExists} "$INSTDIR\Plugins\Backup"
@@ -806,7 +809,7 @@ SkipIniMove:
 	Delete "$INSTDIR\Skins\*.txt"
 	File /r "..\Skins\*.*"
 
-	SetOutPath "$INSTDIR\Defaults\Themes"
+	SetOutPath "$INSTDIR\Defaults\Layouts"
 	File /r "..\Themes\*.*"
 !endif
 
@@ -880,7 +883,7 @@ SkipIniMove:
 		WriteUninstaller "$INSTDIR\uninst.exe"
 	${Else}
 		${IfNot} ${FileExists} "Rainmeter.ini"
-			CopyFiles /SILENT "$INSTDIR\Themes\illustro default\Rainmeter.thm" "$INSTDIR\Rainmeter.ini"
+			CopyFiles /SILENT "$INSTDIR\Layouts\illustro default\Rainmeter.ini" "$INSTDIR\Rainmeter.ini"
 		${EndIf}
 
 		WriteINIStr "$INSTDIR\Rainmeter.ini" "Rainmeter" "Language" "$LANGUAGE"
@@ -894,6 +897,16 @@ Function CopyIniToAppData
 	${If} ${Errors}
 		StrCpy $0 0
 	${EndIf}
+FunctionEnd
+
+Function RenameToRainmeterIni
+	${If} ${FileExists} "$R8\Rainmeter.ini"
+		Delete "$R8\Rainmeter.thm"
+	${Else}
+		Rename "$R9" "$R8\Rainmeter.ini"
+	${EndIf}
+
+	Push $0
 FunctionEnd
 
 Function MoveNonDefaultPlugins
