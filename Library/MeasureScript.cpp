@@ -169,6 +169,11 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 				return;
 			}
 		}
+		else if (m_LuaScript.IsInitialized())
+		{
+			// Already initialized.
+			return;
+		}
 	}
 
 	LogWithArgs(LOG_ERROR, L"Script: File not valid in [%s]", m_Name.c_str());
