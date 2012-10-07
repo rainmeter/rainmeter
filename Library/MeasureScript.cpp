@@ -55,7 +55,7 @@ void CMeasureScript::UninitializeLuaScript()
 }
 
 /*
-** Updates the current disk free space value.
+** Runs the function "Update()" in the script.
 **
 */
 void CMeasureScript::UpdateValue()
@@ -73,7 +73,7 @@ void CMeasureScript::UpdateValue()
 }
 
 /*
-** Returns the time as string.
+** Returns the value as a string.
 **
 */
 const WCHAR* CMeasureScript::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
