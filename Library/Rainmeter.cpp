@@ -1248,8 +1248,6 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 	path = GetLayoutPath();
 	if (_waccess(path.c_str(), 0) == -1)
 	{
-		// TODO: If Skin Installer creates Layouts first, old Themes is not migrated.
-
 		std::wstring themesPath = m_SettingsPath + L"Themes";
 		if (_waccess(themesPath.c_str(), 0) != -1)
 		{

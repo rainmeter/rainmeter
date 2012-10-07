@@ -118,6 +118,56 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		}
 	}
 
+	std::wstring layoutsPath = g_Data.settingsPath + L"Layouts\\";
+	if (_waccess(layoutsPath.c_str(), 0) == -1)
+	{
+		// Migrate Themes into Layouts for backwards compatibility and rename
+		// Rainmeter.thm to Rainmeter.ini and RainThemes.bmp to Wallpaper.bmp.
+		std::wstring themesPath = g_Data.settingsPath + L"Themes";
+		if (_waccess(themesPath.c_str(), 0) != -1)
+		{
+			// Migrate Themes into Layouts for backwards compatibility and rename
+			// Rainmeter.thm to Rainmeter.ini and RainThemes.bmp to Wallpaper.bmp.
+			MoveFile(themesPath.c_str(), layoutsPath.c_str());
+
+			layoutsPath += L'*';  // For FindFirstFile.
+			WIN32_FIND_DATA fd;
+			HANDLE hFind = FindFirstFile(layoutsPath.c_str(), &fd);
+			layoutsPath.pop_back();  // Remove '*'.
+
+			if (hFind != INVALID_HANDLE_VALUE)
+			{
+				do
+				{
+					if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
+						wcscmp(L".", fd.cFileName) != 0 &&
+						wcscmp(L"..", fd.cFileName) != 0)
+					{
+						std::wstring layoutFolder = layoutsPath + fd.cFileName;
+						layoutFolder += L'\\';
+
+						std::wstring file = layoutFolder + L"Rainmeter.thm";
+						if (_waccess(file.c_str(), 0) != -1)
+						{
+							std::wstring newFile = layoutFolder + L"Rainmeter.ini";
+							MoveFile(file.c_str(), newFile.c_str());
+						}
+
+						file = layoutFolder + L"RainThemes.bmp";
+						if (_waccess(file.c_str(), 0) != -1)
+						{
+							std::wstring newFile = layoutFolder + L"Wallpaper.bmp";
+							MoveFile(file.c_str(), newFile.c_str());
+						}
+					}
+				}
+				while (FindNextFile(hFind, &fd));
+
+				FindClose(hFind);
+			}
+		}
+	}
+
 	if (_wcsnicmp(lpCmdLine, L"/LoadTheme ", 11) == 0)
 	{
 		// For backwards compatibility.
