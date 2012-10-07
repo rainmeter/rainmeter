@@ -3215,16 +3215,21 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 		}
 
 		// Add custom actions to the context menu
+		auto isTitleSeparator = [](const std::wstring& title)
+		{
+			return title.find_first_not_of(L'-') == std::wstring::npos;
+		};
+
 		std::wstring contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextTitle", L"");
 		std::wstring contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextAction", L"");
-		if (!contextTitle.empty() && (!contextAction.empty() || _wcsicmp(contextTitle.c_str(), L"SEPARATOR") == 0))
+		if (!contextTitle.empty() && (!contextAction.empty() || isTitleSeparator(contextTitle)))
 		{
 			std::vector<std::wstring> cTitles;
 			WCHAR buffer[128];
 			int i = 1;
 
 			while (!contextTitle.empty() && 
-			      (!contextAction.empty() || _wcsicmp(contextTitle.c_str(), L"SEPARATOR") == 0) &&
+			      (!contextAction.empty() || isTitleSeparator(contextTitle)) &&
 			      (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i - 1) <= IDM_SKIN_CUSTOMCONTEXTMENU_LAST) // Set maximum context items in resource.h
 			{
 				// Trim long titles
@@ -3248,7 +3253,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 				size_t position = 0;
 				for (size_t i = 0; i < titleSize; ++i)
 				{
-					if (_wcsicmp(cTitles[i].c_str(), L"SEPARATOR") == 0)
+					if (isTitleSeparator(cTitles[i]))
 					{
 						// Separators not allowed in main top-level menu
 						--position;
@@ -3274,7 +3279,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 				
 				for (size_t i = 0; i < titleSize; ++i)
 				{
-					if (_wcsicmp(cTitles[i].c_str(), L"SEPARATOR") == 0)
+					if (isTitleSeparator(cTitles[i]))
 					{
 						AppendMenu(customMenu, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 					}
