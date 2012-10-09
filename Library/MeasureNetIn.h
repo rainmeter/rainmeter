@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef __METERNET_H__
-#define __METERNET_H__
+#ifndef __MEASURENETIN_H__
+#define __MEASURENETIN_H__
 
 #include "MeasureNet.h"
 
@@ -26,14 +26,6 @@ class CMeasureNetIn : public CMeasureNet
 public:
 	CMeasureNetIn(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureNetIn();
-
-protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
-	virtual void UpdateValue();
-
-private:
-	bool m_FirstTime;
-	ULONG64 m_InOctets;
 };
 
 #endif

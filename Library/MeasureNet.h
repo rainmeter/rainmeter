@@ -30,16 +30,6 @@ typedef VOID (NETIOAPI_API_ * FPFREEMIBTABLE)(PVOID Memory);
 class CMeasureNet : public CMeasure
 {
 public:
-	enum NET
-	{
-		NET_IN,
-		NET_OUT,
-		NET_TOTAL
-	};
-
-	CMeasureNet(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeasureNet();
-
 	virtual UINT GetTypeID() { return TypeID<CMeasureNet>(); }
 
 	static void UpdateIFTable();
@@ -53,12 +43,28 @@ public:
 	static void FinalizeNewApi();
 
 protected:
-	void ReadOptions(CConfigParser& parser, const WCHAR* section, CMeasureNet::NET net);
+	enum NET
+	{
+		NET_IN,
+		NET_OUT,
+		NET_TOTAL
+	};
 
+	CMeasureNet(CMeterWindow* meterWindow, const WCHAR* name, NET type);
+	virtual ~CMeasureNet();
+
+	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void UpdateValue();
+
+private:
 	ULONG64 GetNetOctets(NET net);
 	ULONG64 GetNetStatsValue(NET net);
 
+	NET m_Net;
 	UINT m_Interface;
+
+	ULONG64 m_Octets;
+	bool m_FirstTime;
 	bool m_Cumulative;
 
 	static std::vector<ULONG64> c_OldStatValues;

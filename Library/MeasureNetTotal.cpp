@@ -23,9 +23,7 @@
 ** The constructor
 **
 */
-CMeasureNetTotal::CMeasureNetTotal(CMeterWindow* meterWindow, const WCHAR* name) : CMeasureNet(meterWindow, name),
-	m_FirstTime(true),
-	m_TotalOctets()
+CMeasureNetTotal::CMeasureNetTotal(CMeterWindow* meterWindow, const WCHAR* name) : CMeasureNet(meterWindow, name, NET_TOTAL)
 {
 }
 
@@ -35,55 +33,4 @@ CMeasureNetTotal::CMeasureNetTotal(CMeterWindow* meterWindow, const WCHAR* name)
 */
 CMeasureNetTotal::~CMeasureNetTotal()
 {
-}
-
-/*
-** Updates the current net total value.
-**
-*/
-void CMeasureNetTotal::UpdateValue()
-{
-	if (c_Table == NULL) return;
-
-	if (m_Cumulative)
-	{
-		m_Value = (double)(__int64)GetNetStatsValue(NET_TOTAL);
-	}
-	else
-	{
-		ULONG64 value = 0;
-
-		if (!m_FirstTime)
-		{
-			value = GetNetOctets(NET_TOTAL);
-			if (value > m_TotalOctets)
-			{
-				ULONG64 tmpValue = value;
-				value -= m_TotalOctets;
-				m_TotalOctets = tmpValue;
-			}
-			else
-			{
-				m_TotalOctets = value;
-				value = 0;
-			}
-		}
-		else
-		{
-			m_TotalOctets = GetNetOctets(NET_TOTAL);
-			m_FirstTime = false;
-		}
-
-		m_Value = (double)(__int64)value;
-	}
-}
-
-/*
-** Read the options specified in the ini file.
-**
-*/
-void CMeasureNetTotal::ReadOptions(CConfigParser& parser, const WCHAR* section)
-{
-	CMeasure::ReadOptions(parser, section);
-	CMeasureNet::ReadOptions(parser, section, NET_TOTAL);
 }

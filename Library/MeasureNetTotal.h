@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef __METERNETTOTAL_H__
-#define __METERNETTOTAL_H__
+#ifndef __MEASURENETTOTAL_H__
+#define __MEASURENETTOTAL_H__
 
 #include "MeasureNet.h"
 
@@ -26,14 +26,6 @@ class CMeasureNetTotal : public CMeasureNet
 public:
 	CMeasureNetTotal(CMeterWindow* meterWindow, const WCHAR* name);
 	virtual ~CMeasureNetTotal();
-
-protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
-	virtual void UpdateValue();
-
-private:
-	bool m_FirstTime;
-	ULONG64 m_TotalOctets;
 };
 
 #endif

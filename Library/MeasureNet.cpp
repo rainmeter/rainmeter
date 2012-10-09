@@ -35,8 +35,11 @@ extern CRainmeter* Rainmeter;
 ** The constructor. This is the base class for the net-meters.
 **
 */
-CMeasureNet::CMeasureNet(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+CMeasureNet::CMeasureNet(CMeterWindow* meterWindow, const WCHAR* name, NET type) : CMeasure(meterWindow, name),
+	m_Net(type),
 	m_Interface(),
+	m_Octets(),
+	m_FirstTime(true),
 	m_Cumulative(false)
 {
 }
@@ -408,25 +411,68 @@ ULONG64 CMeasureNet::GetNetStatsValue(NET net)
 }
 
 /*
-** Read the options specified in the ini file. Base implementation for In/Out/Total.
+** Updates the current value.
 **
 */
-void CMeasureNet::ReadOptions(CConfigParser& parser, const WCHAR* section, NET net)
+void CMeasureNet::UpdateValue()
 {
+	if (c_Table == NULL) return;
+
+	if (m_Cumulative)
+	{
+		m_Value = (double)(__int64)GetNetStatsValue(m_Net);
+	}
+	else
+	{
+		ULONG64 value = 0;
+
+		if (!m_FirstTime)
+		{
+			value = GetNetOctets(m_Net);
+			if (value > m_Octets)
+			{
+				ULONG64 tmpValue = value;
+				value -= m_Octets;
+				m_Octets = tmpValue;
+			}
+			else
+			{
+				m_Octets = value;
+				value = 0;
+			}
+		}
+		else
+		{
+			m_Octets = GetNetOctets(m_Net);
+			m_FirstTime = false;
+		}
+
+		m_Value = (double)(__int64)value;
+	}
+}
+
+/*
+** Read the options specified in the ini file.
+**
+*/
+void CMeasureNet::ReadOptions(CConfigParser& parser, const WCHAR* section)
+{
+	CMeasure::ReadOptions(parser, section);
+
 	double value;
 	const WCHAR* netName = NULL;
 
-	if (net == NET_IN)
+	if (m_Net == NET_IN)
 	{
 		netName = L"NetInSpeed";
 		value = Rainmeter->GetGlobalOptions().netInSpeed;
 	}
-	else if (net == NET_OUT)
+	else if (m_Net == NET_OUT)
 	{
 		netName = L"NetOutSpeed";
 		value = Rainmeter->GetGlobalOptions().netOutSpeed;
 	}
-	else
+	else // if (m_Net == NET_TOTAL)
 	{
 		netName = L"NetTotalSpeed";
 		value = Rainmeter->GetGlobalOptions().netInSpeed + Rainmeter->GetGlobalOptions().netOutSpeed;

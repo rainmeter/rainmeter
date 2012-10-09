@@ -23,9 +23,7 @@
 ** The constructor
 **
 */
-CMeasureNetIn::CMeasureNetIn(CMeterWindow* meterWindow, const WCHAR* name) : CMeasureNet(meterWindow, name),
-	m_FirstTime(true),
-	m_InOctets()
+CMeasureNetIn::CMeasureNetIn(CMeterWindow* meterWindow, const WCHAR* name) : CMeasureNet(meterWindow, name, NET_IN)
 {
 }
 
@@ -36,55 +34,3 @@ CMeasureNetIn::CMeasureNetIn(CMeterWindow* meterWindow, const WCHAR* name) : CMe
 CMeasureNetIn::~CMeasureNetIn()
 {
 }
-
-/*
-** Updates the current net in value.
-**
-*/
-void CMeasureNetIn::UpdateValue()
-{
-	if (c_Table == NULL) return;
-
-	if (m_Cumulative)
-	{
-		m_Value = (double)(__int64)GetNetStatsValue(NET_IN);
-	}
-	else
-	{
-		ULONG64 value = 0;
-
-		if (!m_FirstTime)
-		{
-			value = GetNetOctets(NET_IN);
-			if (value > m_InOctets)
-			{
-				ULONG64 tmpValue = value;
-				value -= m_InOctets;
-				m_InOctets = tmpValue;
-			}
-			else
-			{
-				m_InOctets = value;
-				value = 0;
-			}
-		}
-		else
-		{
-			m_InOctets = GetNetOctets(NET_IN);
-			m_FirstTime = false;
-		}
-
-		m_Value = (double)(__int64)value;
-	}
-}
-
-/*
-** Read the options specified in the ini file.
-**
-*/
-void CMeasureNetIn::ReadOptions(CConfigParser& parser, const WCHAR* section)
-{
-	CMeasure::ReadOptions(parser, section);
-	CMeasureNet::ReadOptions(parser, section, NET_IN);
-}
-
