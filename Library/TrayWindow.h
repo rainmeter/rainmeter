@@ -88,6 +88,8 @@ private:
 
 	TRAY_NOTIFICATION m_Notification;
 
+	bool m_TrayContextMenuEnabled;
+
 	bool m_IconEnabled;
 };
 

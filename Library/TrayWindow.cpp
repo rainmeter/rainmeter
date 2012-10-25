@@ -62,6 +62,7 @@ CTrayWindow::CTrayWindow() :
 	m_Values(),
 	m_Pos(),
 	m_Notification(TRAY_NOTIFICATION_NONE),
+	m_TrayContextMenuEnabled(true),
 	m_IconEnabled(true)
 {
 }
@@ -553,7 +554,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				}
 			}
 		}
-		return 0;	// Don't send WM_COMMANDS any further
+		break;	// Don't send WM_COMMANDS any further
 
 	case WM_TRAY_NOTIFYICON:
 		{
@@ -579,18 +580,26 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				break;
 			}
 
-			if (!IsCtrlKeyDown() &&   // Ctrl is pressed, so only run default action
-				!bang.empty())
+			if (!bang.empty() &&
+				!IsCtrlKeyDown())   // Ctrl is pressed, so only run default action
 			{
 				Rainmeter->ExecuteCommand(bang.c_str(), NULL);
+				tray->m_TrayContextMenuEnabled = (uMouseMsg != WM_RBUTTONDOWN);
 			}
 			else if (uMouseMsg == WM_RBUTTONDOWN)
 			{
-				POINT point;
-				GetCursorPos(&point);
-				Rainmeter->ShowContextMenu(point, NULL);
+				tray->m_TrayContextMenuEnabled = true;
 			}
-			else if (uMouseMsg == WM_LBUTTONDOWN || uMouseMsg == WM_LBUTTONDBLCLK)
+			else if (uMouseMsg == WM_RBUTTONUP)
+			{
+				if (tray->m_TrayContextMenuEnabled)
+				{
+					POINT point;
+					GetCursorPos(&point);
+					Rainmeter->ShowContextMenu(point, NULL);
+				}
+			}
+			else if (uMouseMsg == WM_LBUTTONUP || uMouseMsg == WM_LBUTTONDBLCLK)
 			{
 				CDialogManage::Open();
 			}
@@ -705,8 +714,8 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				tray->TryAddTrayIcon();
 			}
 		}
-		break;
+		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
-	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+	return 0;
 }
