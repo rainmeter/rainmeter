@@ -31,7 +31,7 @@
 #include "../Version.h"
 
 #define RAINMETER_OFFICIAL		L"http://rainmeter.net/cms/"
-#define RAINMETER_HELP			L"http://rainmeter.net/cms/Support"
+#define RAINMETER_HELP			L"http://docs.rainmeter.net/"
 
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
 
