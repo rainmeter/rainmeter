@@ -724,7 +724,12 @@ Section
 
 		System::Call 'kernel32::GetUserDefaultUILanguage() i.R6'
 
-		NSISdl::download_quiet /TIMEOUT=30000 "http://rainmeter.net/stat/${VER}.php?id=$R0&vmj=$R1&vmi=$R2&vsp=$R3&d2d=$R4&sse2=$R5&uilang=$R6&lang=$LANGUAGE" "$PLUGINSDIR\_"
+		StrCpy $R7 "$Install64Bit"
+		${If} $R7 <> 1
+			StrCpy $R7 "0"
+		${EndIf}
+
+		NSISdl::download_quiet /TIMEOUT=30000 "http://rainmeter.net/stat/${VER}.php?id=$R0&vmj=$R1&vmi=$R2&vsp=$R3&d2d=$R4&sse2=$R5&uilang=$R6&64bit=$R7&lang=$LANGUAGE" "$PLUGINSDIR\_"
 		Delete "$PLUGINSDIR\_"
 	${EndIf}
 !endif
