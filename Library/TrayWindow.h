@@ -47,6 +47,7 @@ public:
 	void ReadOptions(CConfigParser& parser);
 	HWND GetWindow() { return m_Window; }
 	bool IsTrayIconEnabled() { return m_IconEnabled; }
+	void SetTrayIcon(bool state);
 
 	void ShowWelcomeNotification();
 	void ShowUpdateNotification(const WCHAR* newVersion);

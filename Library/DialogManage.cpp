@@ -26,6 +26,7 @@
 #include "DialogManage.h"
 #include "DialogAbout.h"
 #include "../Version.h"
+#include <Commdlg.h>
 
 #define WM_DELAYED_CLOSE WM_APP + 0
 
@@ -265,6 +266,28 @@ INT_PTR CDialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDCLOSE:
 		PostMessage(m_Window, WM_DELAYED_CLOSE, 0, 0);
+		break;
+
+	case IDC_MANAGE_HELP_BUTTON:
+		{
+			std::wstring url = L"http://docs.rainmeter.net/";
+
+			HWND hwnd = c_Dialog->GetActiveTabWindow();
+			if (hwnd == m_TabSkins.GetWindow())
+			{
+				url.append(L"manual/user-interface/manage#SkinsTab");
+			}
+			else if (hwnd == m_TabLayouts.GetWindow())
+			{
+				url.append(L"/manual/user-interface/manage#LayoutsTab");
+			}
+			else if (hwnd == m_TabSettings.GetWindow())
+			{
+				url.append(L"/manual/user-interface/manage#SettingsTab");
+			}
+		
+			ShellExecute(m_Window, L"open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
+		}
 		break;
 
 	default:
@@ -1649,6 +1672,12 @@ void CDialogManage::CTabSettings::Initialize()
 	BOOL isLogFile = (_waccess(Rainmeter->GetLogFile().c_str(), 0) != -1);
 	EnableWindow(GetDlgItem(m_Window, IDC_MANAGESETTINGS_SHOWLOGFILE_BUTTON), isLogFile);
 	EnableWindow(GetDlgItem(m_Window, IDC_MANAGESETTINGS_DELETELOGFILE_BUTTON), isLogFile);
+
+	Edit_SetText(GetDlgItem(m_Window, IDC_MANAGESETTINGS_SKINPATH_TEXT), Rainmeter->GetSkinPath().c_str());
+	Edit_SetText(GetDlgItem(m_Window, IDC_MANAGESETTINGS_CONFIGEDITOR_TEXT), Rainmeter->GetSkinEditor().c_str());
+
+	bool iconEnabled = Rainmeter->GetTrayWindow()->IsTrayIconEnabled();
+	Button_SetCheck(GetDlgItem(m_Window, IDC_MANAGESETTINGS_TRAYICON_CHECKBOX), iconEnabled);
 }
 
 /*
@@ -1760,6 +1789,75 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_MANAGESETTINGS_VERBOSELOGGING_CHECKBOX:
 		Rainmeter->SetDebug(!Rainmeter->GetDebug());
+		break;
+
+	case IDC_MANAGESETTINGS_SKINPATH_TEXT:
+		if (HIWORD(wParam) == EN_CHANGE)
+		{
+			WCHAR buffer[MAX_LINE_LENGTH];
+			std::wstring skinPath = (GetWindowText((HWND)lParam, buffer, MAX_LINE_LENGTH) > 0) ? buffer : Rainmeter->GetSkinPath();
+			Rainmeter->SetSkinPath(skinPath);
+		}
+		break;
+
+	case IDC_MANAGESETTINGS_SKINPATH_BUTTON:
+		{
+			WCHAR buffer[MAX_PATH];
+			WCHAR* temp;
+			BROWSEINFO bi = {0};
+			bi.hwndOwner = c_Dialog->GetWindow();
+			bi.lpszTitle = L"Select a new Skins folder:\r\n\r\nNote: Changes take place next time you load Rainmeter.";
+			bi.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+						
+			PIDLIST_ABSOLUTE pidl = SHBrowseForFolder(&bi);
+			if (pidl && SHGetPathFromIDList(pidl, buffer))
+			{
+				temp = wcscat(buffer, L"\\");
+				Edit_SetText(GetDlgItem(m_Window, IDC_MANAGESETTINGS_SKINPATH_TEXT), temp);
+				CoTaskMemFree(pidl);
+			}
+		}
+		break;
+
+	case IDC_MANAGESETTINGS_CONFIGEDITOR_TEXT:
+		if (HIWORD(wParam) == EN_CHANGE)
+		{
+			WCHAR buffer[MAX_LINE_LENGTH];
+			std::wstring editor = (GetWindowText((HWND)lParam, buffer, MAX_LINE_LENGTH) > 0) ? buffer : L"";
+			Rainmeter->SetSkinEditor(editor);
+		}
+		break;
+
+	case IDC_MANAGESETTINGS_CONFIGEDITOR_BUTTON:
+		{
+			WCHAR buffer[MAX_PATH];
+			buffer[0] = L'\0';
+			
+			std::wstring editor = Rainmeter->GetSkinEditor();
+			editor = editor.substr(0, editor.find_last_of(L"/\\")).c_str(); 
+
+			OPENFILENAME ofn = { sizeof(OPENFILENAME) };
+			ofn.Flags = OFN_FILEMUSTEXIST;
+			ofn.lpstrFilter = L"Executable File (.exe)\0*.exe";
+			ofn.lpstrTitle = L"Select executable file";
+			ofn.lpstrDefExt = L"exe";
+			ofn.lpstrInitialDir = editor.c_str();
+			ofn.nFilterIndex = 0;
+			ofn.lpstrFile = buffer;
+			ofn.nMaxFile = _countof(buffer);
+			ofn.hwndOwner = c_Dialog->GetWindow();
+
+			if (!GetOpenFileName(&ofn))
+			{
+				break;
+			}
+
+			Edit_SetText(GetDlgItem(m_Window, IDC_MANAGESETTINGS_CONFIGEDITOR_TEXT), buffer);
+		}
+		break;	
+
+	case IDC_MANAGESETTINGS_TRAYICON_CHECKBOX:
+		Rainmeter->GetTrayWindow()->SetTrayIcon(!Rainmeter->GetTrayWindow()->IsTrayIconEnabled());
 		break;
 
 	default:

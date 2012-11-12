@@ -333,6 +333,25 @@ void CTrayWindow::ShowUpdateNotification(const WCHAR* newVersion)
 	ShowNotification(TRAY_NOTIFICATION_UPDATE, GetString(ID_STR_UPDATEAVAILABLE), text.c_str());
 }
 
+void CTrayWindow::SetTrayIcon(bool state)
+{
+	std::wstring iniFile = Rainmeter->GetIniFile();
+
+	if (state)
+	{
+		// Delete the key from Rainmeter.ini
+		WritePrivateProfileString(L"Rainmeter", L"TrayIcon", NULL, iniFile.c_str());
+	}
+	else
+	{
+		WritePrivateProfileString(L"Rainmeter", L"TrayIcon", L"0", iniFile.c_str());
+	}
+
+	CConfigParser parser;
+	parser.Initialize(iniFile, NULL, NULL);
+	ReadOptions(parser);
+}
+
 void CTrayWindow::ReadOptions(CConfigParser& parser)
 {
 	// Clear old Settings

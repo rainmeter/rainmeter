@@ -1498,6 +1498,30 @@ void CRainmeter::ToggleSkin(int folderIndex, int fileIndex)
 	}
 }
 
+void CRainmeter::SetSkinPath(std::wstring skinPath)
+{
+	WritePrivateProfileString(L"Rainmeter", L"SkinPath", skinPath.c_str(), m_IniFile.c_str());
+}
+
+void CRainmeter::SetSkinEditor(std::wstring editor)
+{
+	LPCWSTR tmp = editor.empty() ? NULL : editor.c_str();
+	if (!tmp)
+	{
+		// Get the program path associated with .ini files
+		WCHAR buffer[MAX_PATH];
+		DWORD cchOut = MAX_PATH;
+		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".ini", L"open", buffer, &cchOut);
+		m_SkinEditor = (SUCCEEDED(hr) && cchOut > 0) ? buffer : L"Notepad";
+	}
+	else
+	{
+		m_SkinEditor = editor;
+	}
+
+	WritePrivateProfileString(L"Rainmeter", L"ConfigEditor", tmp, m_IniFile.c_str());
+}
+
 void CRainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
 {
 	WCHAR buffer[32];
