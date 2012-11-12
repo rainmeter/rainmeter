@@ -768,7 +768,9 @@ INT_PTR CALLBACK CDialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARA
 							EnableWindow(GetDlgItem(hWnd, IDOK), TRUE);
 						}
 						break;
-					} 
+					}
+
+					ImageUnload(loadedImage);
 				}
 
 				MessageBox(hWnd, L"Invalid plugin.", L"Rainmeter Skin Packager", MB_OK | MB_TOPMOST);
