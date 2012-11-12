@@ -746,8 +746,10 @@ INT_PTR CALLBACK CDialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARA
 				LOADED_IMAGE* loadedImage = ImageLoad(ConvertToAscii(buffer).c_str(), NULL);
 				if (loadedImage)
 				{
-					if ((x32 && loadedImage->FileHeader->FileHeader.Machine == IMAGE_FILE_MACHINE_I386) ||
-						(!x32 && loadedImage->FileHeader->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64))
+					WORD machine = loadedImage->FileHeader->FileHeader.Machine;
+					ImageUnload(loadedImage);
+
+					if ((x32 && machine == IMAGE_FILE_MACHINE_I386) || (!x32 && machine == IMAGE_FILE_MACHINE_AMD64))
 					{
 						// Check if same name as other DLL
 						auto plugins = (std::pair<std::wstring, std::wstring>*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
@@ -769,8 +771,6 @@ INT_PTR CALLBACK CDialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARA
 						}
 						break;
 					}
-
-					ImageUnload(loadedImage);
 				}
 
 				MessageBox(hWnd, L"Invalid plugin.", L"Rainmeter Skin Packager", MB_OK | MB_TOPMOST);
