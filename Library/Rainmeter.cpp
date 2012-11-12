@@ -24,6 +24,7 @@
 #include "DialogAbout.h"
 #include "DialogManage.h"
 #include "MeasureNet.h"
+#include "MeasureCPU.h"
 #include "MeterString.h"
 #include "resource.h"
 #include "UpdateCheck.h"
@@ -738,9 +739,9 @@ CRainmeter::~CRainmeter()
 	CMeasureNet::UpdateStats();
 	WriteStats(true);
 
-	CMeasureNet::FinalizeNewApi();
-
-	CMeterString::FreeFontCache();
+	CMeasureNet::FinalizeStatic();
+	CMeasureCPU::FinalizeStatic();
+	CMeterString::FinalizeStatic();
 
 	// Change the work area back
 	if (m_DesktopWorkAreaChanged)
@@ -993,13 +994,10 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	TestSettingsFile(bDefaultIniLocation);
 
 	CSystem::Initialize(m_Instance);
-	CMeasureNet::InitializeNewApi();
 
-	if (m_Debug)
-	{
-		Log(LOG_DEBUG, L"Enumerating font families...");
-		CMeterString::EnumerateInstalledFontFamilies();
-	}
+	CMeasureNet::InitializeStatic();
+	CMeasureCPU::InitializeStatic();
+	CMeterString::InitializeStatic();
 
 	// Tray must exist before skins are read
 	m_TrayWindow = new CTrayWindow();

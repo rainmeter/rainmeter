@@ -689,7 +689,7 @@ void CMeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate
 ** Prepares in order to use the new APIs which are available on Vista or newer.
 **
 */
-void CMeasureNet::InitializeNewApi()
+void CMeasureNet::InitializeStatic()
 {
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
@@ -717,7 +717,7 @@ void CMeasureNet::InitializeNewApi()
 ** Frees the resources.
 **
 */
-void CMeasureNet::FinalizeNewApi()
+void CMeasureNet::FinalizeStatic()
 {
 	if (c_GetIfTable2)
 	{

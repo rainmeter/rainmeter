@@ -30,6 +30,8 @@ std::unordered_map<std::wstring, Gdiplus::Font*> CMeterString::c_Fonts;
 #define PI	(3.14159265f)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0f / PI))
 
+extern CRainmeter* Rainmeter;
+
 void StringToUpper(std::wstring& str)
 {
 	WCHAR* srcAndDest = &str[0];
@@ -859,4 +861,20 @@ void CMeterString::EnumerateInstalledFontFamilies()
 	{
 		Log(LOG_ERROR, L"Font enumeration: InstalledFontCollection failed");
 	}
+}
+
+void CMeterString::InitializeStatic()
+{
+	if (Rainmeter->GetDebug())
+	{
+		Log(LOG_DEBUG, L"------------------------------");
+		Log(LOG_DEBUG, L"* Font families:");
+		EnumerateInstalledFontFamilies();
+		Log(LOG_DEBUG, L"------------------------------");
+	}
+}
+
+void CMeterString::FinalizeStatic()
+{
+	FreeFontCache();
 }

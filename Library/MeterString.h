@@ -43,6 +43,9 @@ public:
 	static void FreeFontCache(Gdiplus::PrivateFontCollection* collection = NULL);
 	static void EnumerateInstalledFontFamilies();
 
+	static void InitializeStatic();
+	static void FinalizeStatic();
+
 protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);

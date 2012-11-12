@@ -21,7 +21,7 @@
 
 #include "Measure.h"
 
-typedef LONG (WINAPI *PROCNTQSI)(UINT,PVOID,ULONG,PULONG);
+typedef LONG (WINAPI *FPNTQSI)(UINT, PVOID, ULONG, PULONG);
 
 class CMeasureCPU : public CMeasure
 {
@@ -30,6 +30,9 @@ public:
 	virtual ~CMeasureCPU();
 
 	virtual UINT GetTypeID() { return TypeID<CMeasureCPU>(); }
+
+	static void InitializeStatic();
+	static void FinalizeStatic();
 
 protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
@@ -42,7 +45,7 @@ private:
 
 	double m_OldTime[2];
 
-	static PROCNTQSI c_NtQuerySystemInformation;
+	static FPNTQSI c_NtQuerySystemInformation;
 
 	static int c_NumOfProcessors;
 	static ULONG c_BufferSize;

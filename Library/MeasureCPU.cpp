@@ -38,7 +38,7 @@ typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
 #define Li2Double(x) ((double)((x).QuadPart))
 #define Ft2Double(x) ((double)((x).dwHighDateTime) * 4.294967296E9 + (double)((x).dwLowDateTime))
 
-PROCNTQSI CMeasureCPU::c_NtQuerySystemInformation = NULL;
+FPNTQSI CMeasureCPU::c_NtQuerySystemInformation = NULL;
 int CMeasureCPU::c_NumOfProcessors = 0;
 ULONG CMeasureCPU::c_BufferSize = 0;
 
@@ -69,17 +69,6 @@ CMeasureCPU::CMeasureCPU(CMeterWindow* meterWindow, const WCHAR* name) : CMeasur
 	m_OldTime()
 {
 	m_MaxValue = 100.0;
-
-	if (c_NtQuerySystemInformation == NULL)
-	{
-		c_NtQuerySystemInformation = (PROCNTQSI)GetProcAddress(GetModuleHandle(L"ntdll"), "NtQuerySystemInformation");
-	}
-	if (c_NumOfProcessors == 0)
-	{
-		SYSTEM_INFO systemInfo;
-		GetSystemInfo(&systemInfo);
-		c_NumOfProcessors = (int)systemInfo.dwNumberOfProcessors;
-	}
 }
 
 /*
@@ -189,7 +178,7 @@ void CMeasureCPU::UpdateValue()
 				c_BufferSize = bufSize;
 			}
 
-			SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* systemPerfInfo = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION*)buf;
+			PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION systemPerfInfo = (PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)buf;
 
 			int processor = m_Processor - 1;
 
@@ -216,4 +205,17 @@ void CMeasureCPU::CalcUsage(double idleTime, double systemTime)
 	// store new CPU's idle and system time
 	m_OldTime[0] = idleTime;
 	m_OldTime[1] = systemTime;
+}
+
+void CMeasureCPU::InitializeStatic()
+{
+	c_NtQuerySystemInformation = (FPNTQSI)GetProcAddress(GetModuleHandle(L"ntdll"), "NtQuerySystemInformation");
+
+	SYSTEM_INFO systemInfo;
+	GetSystemInfo(&systemInfo);
+	c_NumOfProcessors = (int)systemInfo.dwNumberOfProcessors;
+}
+
+void CMeasureCPU::FinalizeStatic()
+{
 }

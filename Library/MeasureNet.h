@@ -39,8 +39,8 @@ public:
 	static void ReadStats(const std::wstring& iniFile, std::wstring& statsDate);
 	static void WriteStats(const WCHAR* iniFile, const std::wstring& statsDate);
 
-	static void InitializeNewApi();
-	static void FinalizeNewApi();
+	static void InitializeStatic();
+	static void FinalizeStatic();
 
 protected:
 	enum NET
