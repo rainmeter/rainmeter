@@ -1505,20 +1505,11 @@ void CRainmeter::SetSkinPath(const std::wstring& skinPath)
 
 void CRainmeter::SetSkinEditor(const std::wstring& path)
 {
-	assert(!path.empty());
-
-	const WCHAR* pathSz = path.c_str();
-	WCHAR buffer[MAX_PATH];
-	DWORD cchOut = MAX_PATH;
-	HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".ini", L"open", buffer, &cchOut);
-	if (SUCCEEDED(hr) && _wcsicmp(pathSz, buffer) == 0)
+	if (!path.empty())
 	{
-		// The selected editor and the associated editor is the same, so remove from Rainmeter.ini.
-		pathSz = NULL;
+		m_SkinEditor = path;
+		WritePrivateProfileString(L"Rainmeter", L"ConfigEditor", path.c_str(), m_IniFile.c_str());
 	}
-
-	m_SkinEditor = path;
-	WritePrivateProfileString(L"Rainmeter", L"ConfigEditor", pathSz, m_IniFile.c_str());
 }
 
 void CRainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
