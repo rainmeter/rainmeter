@@ -1799,9 +1799,11 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDC_MANAGESETTINGS_SKINPATH_TEXT:
 		if (HIWORD(wParam) == EN_CHANGE)
 		{
-			WCHAR buffer[MAX_LINE_LENGTH];
-			std::wstring skinPath = (GetWindowText((HWND)lParam, buffer, MAX_LINE_LENGTH) > 0) ? buffer : Rainmeter->GetSkinPath();
-			Rainmeter->SetSkinPath(skinPath);
+			WCHAR buffer[MAX_PATH];
+			if (GetWindowText((HWND)lParam, buffer, _countof(buffer)) > 0)
+			{
+				Rainmeter->SetSkinPath(buffer);
+			}
 		}
 		break;
 
