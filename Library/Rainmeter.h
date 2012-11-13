@@ -154,7 +154,7 @@ public:
 	const std::wstring& GetDrive() { return m_Drive; }
 
 	const std::wstring& GetSkinEditor() { return m_SkinEditor; }
-	void SetSkinEditor(const std::wstring& editor);
+	void SetSkinEditor(const std::wstring& path);
 	const std::wstring& GetStatsDate() { return m_StatsDate; }
 
 	HWND GetWindow() { return m_Window; }

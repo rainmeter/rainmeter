@@ -1503,23 +1503,22 @@ void CRainmeter::SetSkinPath(const std::wstring& skinPath)
 	WritePrivateProfileString(L"Rainmeter", L"SkinPath", skinPath.c_str(), m_IniFile.c_str());
 }
 
-void CRainmeter::SetSkinEditor(const std::wstring& editor)
+void CRainmeter::SetSkinEditor(const std::wstring& path)
 {
-	LPCWSTR tmp = editor.empty() ? NULL : editor.c_str();
-	if (!tmp)
+	assert(!path.empty());
+
+	const WCHAR* pathSz = path.c_str();
+	WCHAR buffer[MAX_PATH];
+	DWORD cchOut = MAX_PATH;
+	HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".ini", L"open", buffer, &cchOut);
+	if (SUCCEEDED(hr) && _wcsicmp(pathSz, buffer) == 0)
 	{
-		// Get the program path associated with .ini files
-		WCHAR buffer[MAX_PATH];
-		DWORD cchOut = MAX_PATH;
-		HRESULT hr = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, L".ini", L"open", buffer, &cchOut);
-		m_SkinEditor = (SUCCEEDED(hr) && cchOut > 0) ? buffer : L"Notepad";
-	}
-	else
-	{
-		m_SkinEditor = editor;
+		// The selected editor and the associated editor is the same, so remove from Rainmeter.ini.
+		pathSz = NULL;
 	}
 
-	WritePrivateProfileString(L"Rainmeter", L"ConfigEditor", tmp, m_IniFile.c_str());
+	m_SkinEditor = path;
+	WritePrivateProfileString(L"Rainmeter", L"ConfigEditor", pathSz, m_IniFile.c_str());
 }
 
 void CRainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)

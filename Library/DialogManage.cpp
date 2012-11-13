@@ -1827,9 +1827,11 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDC_MANAGESETTINGS_CONFIGEDITOR_TEXT:
 		if (HIWORD(wParam) == EN_CHANGE)
 		{
-			WCHAR buffer[MAX_LINE_LENGTH];
-			std::wstring editor = (GetWindowText((HWND)lParam, buffer, MAX_LINE_LENGTH) > 0) ? buffer : L"";
-			Rainmeter->SetSkinEditor(editor);
+			WCHAR buffer[MAX_PATH];
+			if (GetWindowText((HWND)lParam, buffer, _countof(buffer)) > 0)
+			{
+				Rainmeter->SetSkinEditor(buffer);
+			}
 		}
 		break;
 
