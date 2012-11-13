@@ -358,8 +358,6 @@ CDialogAbout::CTabLog::CTabLog(HWND owner) : CTab(Rainmeter->GetResourceInstance
 */
 void CDialogAbout::CTabLog::Initialize()
 {
-	m_Initialized = true;
-
 	// Add columns to the list view
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTLOG_ITEMS_LISTVIEW);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
@@ -416,6 +414,8 @@ void CDialogAbout::CTabLog::Initialize()
 
 	item = GetDlgItem(m_Window, IDC_ABOUTLOG_DEBUG_CHECKBOX);
 	Button_SetCheck(item, BST_CHECKED);
+
+	m_Initialized = true;
 }
 
 /*
@@ -594,8 +594,6 @@ CDialogAbout::CTabSkins::CTabSkins(HWND owner) : CTab(Rainmeter->GetResourceInst
 */
 void CDialogAbout::CTabSkins::Initialize()
 {
-	m_Initialized = true;
-
 	// Add columns to the list view
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTVIEW);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
@@ -630,6 +628,8 @@ void CDialogAbout::CTabSkins::Initialize()
 	ListView_InsertColumn(item, 2, &lvc);
 
 	UpdateSkinList();
+
+	m_Initialized = true;
 }
 
 /*
@@ -905,8 +905,6 @@ CDialogAbout::CTabPlugins::CTabPlugins(HWND owner) : CTab(Rainmeter->GetResource
 */
 void CDialogAbout::CTabPlugins::Initialize()
 {
-	m_Initialized = true;
-
 	// Add columns to the list view
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTPLUGINS_ITEMS_LISTVIEW);
 
@@ -1043,6 +1041,8 @@ void CDialogAbout::CTabPlugins::Initialize()
 	{
 		findPlugins(Rainmeter->GetUserPluginPath());
 	}
+
+	m_Initialized = true;
 }
 
 /*
@@ -1092,8 +1092,6 @@ CDialogAbout::CTabVersion::CTabVersion(HWND owner) : CTab(Rainmeter->GetResource
 */
 void CDialogAbout::CTabVersion::Initialize()
 {
-	m_Initialized = true;
-
 	HWND item = GetDlgItem(m_Window, IDC_ABOUTVERSION_RAINMETER_ICON);
 	HICON icon = GetIcon(IDI_RAINMETER, true);
 	Static_SetIcon(item, icon);
@@ -1114,6 +1112,8 @@ void CDialogAbout::CTabVersion::Initialize()
 	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_SKINPATH_TEXT);
 	text = L"SkinPath: " + Rainmeter->GetSkinPath();
 	SetWindowText(item, text.c_str());
+
+	m_Initialized = true;
 }
 
 /*

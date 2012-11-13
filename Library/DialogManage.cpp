@@ -345,8 +345,6 @@ CDialogManage::CTabSkins::CTabSkins(HWND owner) : CTab(Rainmeter->GetResourceIns
 */
 void CDialogManage::CTabSkins::Initialize()
 {
-	m_Initialized = true;
-
 	BUTTON_SPLITINFO bsi;
 	bsi.mask = BCSIF_SIZE;
 	bsi.size.cx = 20;
@@ -370,7 +368,7 @@ void CDialogManage::CTabSkins::Initialize()
 	// Apply icons and populate tree
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_SKINS_TREEVIEW);
 	TreeView_SetImageList(item, hImageList, TVSIL_NORMAL);
-	UpdateSkins(NULL);
+	Update(NULL, false);
 
 	// Get rid of the EDITTEXT control border
 	item = GetDlgItem(m_Window, IDC_MANAGESKINS_DESCRIPTION_TEXT);
@@ -402,6 +400,7 @@ void CDialogManage::CTabSkins::Initialize()
 	ComboBox_AddString(item, GetString(ID_STR_FADEIN));
 	ComboBox_AddString(item, GetString(ID_STR_FADEOUT));
 
+	m_Initialized = true;
 	m_HandleCommands = true;
 }
 
@@ -878,7 +877,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	if (!m_HandleCommands)
 	{
-		// Values are being changed/reset, no need to apply changes
+		// Values are being changed/reset, no need to apply changes.
 		return FALSE;
 	}
 
@@ -1364,14 +1363,14 @@ CDialogManage::CTabLayouts::CTabLayouts(HWND owner) : CTab(Rainmeter->GetResourc
 */
 void CDialogManage::CTabLayouts::Initialize()
 {
-	m_Initialized = true;
-
 	HWND item  = GetDlgItem(m_Window, IDC_MANAGETHEMES_LIST);
 	const std::vector<std::wstring>& layouts = Rainmeter->GetAllLayouts();
 	for (int i = 0, isize = layouts.size(); i < isize; ++i)
 	{
 		ListBox_AddString(item, layouts[i].c_str());
 	}
+
+	m_Initialized = true;
 }
 
 /*
@@ -1623,8 +1622,6 @@ CDialogManage::CTabSettings::CTabSettings(HWND owner) : CTab(Rainmeter->GetResou
 */
 void CDialogManage::CTabSettings::Initialize()
 {
-	m_Initialized = true;
-
 	// Scan for languages
 	HWND item = GetDlgItem(m_Window, IDC_MANAGESETTINGS_LANGUAGE_COMBOBOX);
 
@@ -1679,6 +1676,8 @@ void CDialogManage::CTabSettings::Initialize()
 
 	bool iconEnabled = Rainmeter->GetTrayWindow()->IsTrayIconEnabled();
 	Button_SetCheck(GetDlgItem(m_Window, IDC_MANAGESETTINGS_TRAYICON_CHECKBOX), iconEnabled);
+
+	m_Initialized = true;
 }
 
 /*
@@ -1698,6 +1697,11 @@ INT_PTR CALLBACK CDialogManage::CTabSettings::DlgProc(HWND hWnd, UINT uMsg, WPAR
 
 INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 {
+	if (!m_Initialized)
+	{
+		return FALSE;
+	}
+
 	switch (LOWORD(wParam))
 	{
 	case IDC_MANAGESETTINGS_LANGUAGE_COMBOBOX:
