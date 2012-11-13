@@ -1498,12 +1498,12 @@ void CRainmeter::ToggleSkin(int folderIndex, int fileIndex)
 	}
 }
 
-void CRainmeter::SetSkinPath(std::wstring skinPath)
+void CRainmeter::SetSkinPath(const std::wstring& skinPath)
 {
 	WritePrivateProfileString(L"Rainmeter", L"SkinPath", skinPath.c_str(), m_IniFile.c_str());
 }
 
-void CRainmeter::SetSkinEditor(std::wstring editor)
+void CRainmeter::SetSkinEditor(const std::wstring& editor)
 {
 	LPCWSTR tmp = editor.empty() ? NULL : editor.c_str();
 	if (!tmp)

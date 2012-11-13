@@ -138,7 +138,7 @@ public:
 	const std::wstring& GetLogFile() { return m_LogFile; }
 	const std::wstring& GetSettingsPath() { return m_SettingsPath; }
 	const std::wstring& GetSkinPath() { return m_SkinPath; }
-	void SetSkinPath(std::wstring skinPath);
+	void SetSkinPath(const std::wstring& skinPath);
 	std::wstring GetLayoutPath() { return m_SettingsPath + L"Layouts\\"; }
 	std::wstring GetPluginPath() { return m_Path + L"Plugins\\"; }
 	std::wstring GetUserPluginPath() { return m_SettingsPath + L"Plugins\\"; }
@@ -154,7 +154,7 @@ public:
 	const std::wstring& GetDrive() { return m_Drive; }
 
 	const std::wstring& GetSkinEditor() { return m_SkinEditor; }
-	void SetSkinEditor(std::wstring editor);
+	void SetSkinEditor(const std::wstring& editor);
 	const std::wstring& GetStatsDate() { return m_StatsDate; }
 
 	HWND GetWindow() { return m_Window; }

@@ -270,22 +270,23 @@ INT_PTR CDialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_MANAGE_HELP_BUTTON:
 		{
-			std::wstring url = L"http://docs.rainmeter.net/";
+			std::wstring url = L"http://docs.rainmeter.net/manual/user-interface/manage#";
 
 			HWND hwnd = c_Dialog->GetActiveTabWindow();
 			if (hwnd == m_TabSkins.GetWindow())
 			{
-				url.append(L"manual/user-interface/manage#SkinsTab");
+				url += L"Skins";
 			}
 			else if (hwnd == m_TabLayouts.GetWindow())
 			{
-				url.append(L"/manual/user-interface/manage#LayoutsTab");
+				url  += L"Layouts";
 			}
-			else if (hwnd == m_TabSettings.GetWindow())
+			else // if (hwnd == m_TabSettings.GetWindow())
 			{
-				url.append(L"/manual/user-interface/manage#SettingsTab");
+				url += L"Settings";
 			}
-		
+
+			url += L"Tab";
 			ShellExecute(m_Window, L"open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
 		}
 		break;
