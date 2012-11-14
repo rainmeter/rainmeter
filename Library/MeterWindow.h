@@ -261,6 +261,8 @@ protected:
 	LRESULT OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -271,6 +273,9 @@ protected:
 	LRESULT OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -278,6 +283,7 @@ protected:
 	LRESULT OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
 	enum OPTION
@@ -354,6 +360,8 @@ private:
 
 	std::wstring m_OnRefreshAction;
 	std::wstring m_OnCloseAction;
+	std::wstring m_OnFocusAction;
+	std::wstring m_OnUnfocusAction;
 
 	std::wstring m_BackgroundName;
 	RECT m_BackgroundMargins;

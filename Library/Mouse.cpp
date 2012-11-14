@@ -49,6 +49,16 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWind
 	m_MiddleDoubleClickAction = parser.ReadString(section, L"MiddleMouseDoubleClickAction", L"", false);
 	m_OverAction = parser.ReadString(section, L"MouseOverAction", L"", false);
 	m_LeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);
+	m_MouseScrollDownAction = parser.ReadString(section, L"MouseScrollDownAction", L"", false);
+	m_MouseScrollUpAction = parser.ReadString(section, L"MouseScrollUpAction", L"", false);
+	m_MouseScrollLeftAction = parser.ReadString(section, L"MouseScrollLeftAction", L"", false);
+	m_MouseScrollRightAction = parser.ReadString(section, L"MouseScrollRightAction", L"", false);
+	m_X1DownAction = parser.ReadString(section, L"X1MouseDownAction", L"", false);
+	m_X1UpAction = parser.ReadString(section, L"X1MouseUpAction", L"", false);
+	m_X1DoubleClickAction = parser.ReadString(section, L"X1MouseDoubleClickAction", L"", false);
+	m_X2DownAction = parser.ReadString(section, L"X2MouseDownAction", L"", false);
+	m_X2UpAction = parser.ReadString(section, L"X2MouseUpAction", L"", false);
+	m_X2DoubleClickAction = parser.ReadString(section, L"X2MouseDoubleClickAction", L"", false);
 
 	m_CursorState = 0!=parser.ReadInt(section, L"MouseActionCursor", meterWindow->GetMouse().GetCursorState());
 
@@ -189,6 +199,46 @@ const WCHAR* CMouse::GetActionCommand(MOUSEACTION action) const
 	case MOUSE_MMB_DBLCLK:
 		command = m_MiddleDoubleClickAction.c_str();
 		break;
+
+	case MOUSE_MW_DOWN:
+		command = m_MouseScrollDownAction.c_str();
+		break;
+
+	case MOUSE_MW_UP:
+		command = m_MouseScrollUpAction.c_str();
+		break;
+
+	case MOUSE_MW_LEFT:
+		command = m_MouseScrollLeftAction.c_str();
+		break;
+
+	case MOUSE_MW_RIGHT:
+		command = m_MouseScrollRightAction.c_str();
+		break;
+
+	case MOUSE_X1MB_DOWN:
+		command = m_X1DownAction.c_str();
+		break;
+
+	case MOUSE_X1MB_UP:
+		command = m_X1UpAction.c_str();
+		break;
+
+	case MOUSE_X1MB_DBLCLK:
+		command = m_X1DoubleClickAction.c_str();
+		break;
+
+	case MOUSE_X2MB_DOWN:
+		command = m_X2DownAction.c_str();
+		break;
+
+	case MOUSE_X2MB_UP:
+		command = m_X2UpAction.c_str();
+		break;
+
+	case MOUSE_X2MB_DBLCLK:
+		command = m_X2DoubleClickAction.c_str();
+		break;	
 	}
 
 	return *command ? command : NULL;

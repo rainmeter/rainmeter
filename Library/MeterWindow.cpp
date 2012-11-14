@@ -1990,6 +1990,8 @@ bool CMeterWindow::ReadSkin()
 
 	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"", false);
 	m_OnCloseAction = m_Parser.ReadString(L"Rainmeter", L"OnCloseAction", L"", false);
+	m_OnFocusAction = m_Parser.ReadString(L"Rainmeter", L"OnFocusAction", L"", false);
+	m_OnUnfocusAction = m_Parser.ReadString(L"Rainmeter", L"OnUnfocusAction", L"", false);
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
@@ -3188,6 +3190,64 @@ LRESULT CMeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
+** When we get WM_MOUSEWHEEL messages.
+**
+*/
+LRESULT CMeterWindow::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+
+	POINT pos;
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
+
+	MapWindowPoints(NULL, m_Window, &pos, 1);
+
+	// Handle buttons
+	HandleButtons(pos, BUTTONPROC_MOVE);
+
+	if (delta < 0)
+	{
+		DoAction(pos.x, pos.y, MOUSE_MW_DOWN, false);
+	}
+	else
+	{
+		DoAction(pos.x, pos.y, MOUSE_MW_UP, false);
+	}
+
+	return 0;
+}
+
+/*
+** When we get WM_MOUSEHWHEEL messages.
+**
+*/
+LRESULT CMeterWindow::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+
+	POINT pos;
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
+
+	MapWindowPoints(NULL, m_Window, &pos, 1);
+
+	// Handle buttons
+	HandleButtons(pos, BUTTONPROC_MOVE);
+
+	if (delta < 0)
+	{
+		DoAction(pos.x, pos.y, MOUSE_MW_LEFT, false);
+	}
+	else
+	{
+		DoAction(pos.x, pos.y, MOUSE_MW_RIGHT, false);
+	}
+
+	return 0;
+}
+
+/*
 ** Handle the menu commands.
 **
 */
@@ -4015,6 +4075,127 @@ LRESULT CMeterWindow::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM
 }
 
 /*
+** Runs the action when a X mouse button is down
+**
+*/
+LRESULT CMeterWindow::OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	POINT pos;
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
+
+	if (uMsg == WM_NCXBUTTONDOWN)
+	{
+		// Transform the point to client rect
+		MapWindowPoints(NULL, m_Window, &pos, 1);
+	}
+
+	// Handle buttons
+	HandleButtons(pos, BUTTONPROC_MOVE);
+
+	if (GET_XBUTTON_WPARAM (wParam) == XBUTTON1)
+	{
+		DoAction(pos.x, pos.y, MOUSE_X1MB_DOWN, false);
+	}
+	else if (GET_XBUTTON_WPARAM (wParam) == XBUTTON2)
+	{
+		DoAction(pos.x, pos.y, MOUSE_X2MB_DOWN, false);
+	}
+
+	return 0;
+}
+
+/*
+** Runs the action when a X mouse button is up
+**
+*/
+LRESULT CMeterWindow::OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	POINT pos;
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
+
+	if (uMsg == WM_NCXBUTTONUP)
+	{
+		// Transform the point to client rect
+		MapWindowPoints(NULL, m_Window, &pos, 1);
+	}
+
+	// Handle buttons
+	HandleButtons(pos, BUTTONPROC_MOVE);
+
+	if (GET_XBUTTON_WPARAM (wParam) == XBUTTON1)
+	{
+		DoAction(pos.x, pos.y, MOUSE_X1MB_UP, false);
+	}
+	else if (GET_XBUTTON_WPARAM (wParam) == XBUTTON2)
+	{
+		DoAction(pos.x, pos.y, MOUSE_X2MB_UP, false);
+	}
+
+	return 0;
+}
+
+/*
+** Runs the action when a X mouse button is double-clicked
+**
+*/
+LRESULT CMeterWindow::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	POINT pos;
+	pos.x = GET_X_LPARAM(lParam);
+	pos.y = GET_Y_LPARAM(lParam);
+
+	if (uMsg == WM_NCXBUTTONDBLCLK)
+	{
+		// Transform the point to client rect
+		MapWindowPoints(NULL, m_Window, &pos, 1);
+	}
+
+	// Handle buttons
+	HandleButtons(pos, BUTTONPROC_MOVE);
+
+	if (GET_XBUTTON_WPARAM (wParam) == XBUTTON1 &&
+		!DoAction(pos.x, pos.y, MOUSE_X1MB_DBLCLK, false))
+	{
+		DoAction(pos.x, pos.y, MOUSE_X1MB_DOWN, false);
+	}
+	else if (GET_XBUTTON_WPARAM (wParam) == XBUTTON2 &&
+		!DoAction(pos.x, pos.y, MOUSE_X2MB_DBLCLK, false))
+	{
+		DoAction(pos.x, pos.y, MOUSE_X2MB_DOWN, false);
+	}
+
+	return 0;
+}
+
+/*
+** Runs the action when the MeterWindow gets or loses focus
+**
+*/
+LRESULT CMeterWindow::OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_SETFOCUS:
+		if (!m_OnFocusAction.empty())
+		{
+			Rainmeter->ExecuteCommand(m_OnFocusAction.c_str(), this);
+		}
+		break;
+
+	case WM_KILLFOCUS:
+		if (!m_OnUnfocusAction.empty())
+		{
+			Rainmeter->ExecuteCommand(m_OnUnfocusAction.c_str(), this);
+		}
+		break;
+	}
+
+	return 0;
+}
+
+/*
 ** Handles the context menu. The menu is recreated every time it is shown.
 **
 */
@@ -4279,6 +4460,8 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnMouseMove, WM_NCMOUSEMOVE)
 	MESSAGE(OnMouseLeave, WM_MOUSELEAVE)
 	MESSAGE(OnMouseLeave, WM_NCMOUSELEAVE)
+	MESSAGE(OnMouseScrollMove, WM_MOUSEWHEEL)
+	MESSAGE(OnMouseHScrollMove, WM_MOUSEHWHEEL)
 	MESSAGE(OnContextMenu, WM_CONTEXTMENU)
 	MESSAGE(OnRightButtonDown, WM_NCRBUTTONDOWN)
 	MESSAGE(OnRightButtonDown, WM_RBUTTONDOWN)
@@ -4298,6 +4481,12 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnMiddleButtonUp, WM_NCMBUTTONUP)
 	MESSAGE(OnMiddleButtonDoubleClick, WM_MBUTTONDBLCLK)
 	MESSAGE(OnMiddleButtonDoubleClick, WM_NCMBUTTONDBLCLK)
+	MESSAGE(OnXButtonDown, WM_XBUTTONDOWN);
+	MESSAGE(OnXButtonDown, WM_NCXBUTTONDOWN);
+	MESSAGE(OnXButtonUp, WM_XBUTTONUP);
+	MESSAGE(OnXButtonUp, WM_NCXBUTTONUP);
+	MESSAGE(OnXButtonDoubleClick, WM_XBUTTONDBLCLK);
+	MESSAGE(OnXButtonDoubleClick, WM_NCXBUTTONDBLCLK);
 	MESSAGE(OnWindowPosChanging, WM_WINDOWPOSCHANGING)
 	MESSAGE(OnCopyData, WM_COPYDATA)
 	MESSAGE(OnDelayedRefresh, WM_METERWINDOW_DELAYED_REFRESH)
@@ -4306,6 +4495,8 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnDwmCompositionChange, WM_DWMCOMPOSITIONCHANGED)
 	MESSAGE(OnSettingChange, WM_SETTINGCHANGE)
 	MESSAGE(OnDisplayChange, WM_DISPLAYCHANGE)
+	MESSAGE(OnSetWindowFocus, WM_SETFOCUS)
+	MESSAGE(OnSetWindowFocus, WM_KILLFOCUS)
 	END_MESSAGEPROC
 }
 

@@ -31,7 +31,17 @@ enum MOUSEACTION
 	MOUSE_MMB_UP,
 	MOUSE_MMB_DBLCLK,
 	MOUSE_OVER,
-	MOUSE_LEAVE
+	MOUSE_LEAVE,
+	MOUSE_MW_DOWN,
+	MOUSE_MW_UP,
+	MOUSE_MW_LEFT,
+	MOUSE_MW_RIGHT,
+	MOUSE_X1MB_DOWN,
+	MOUSE_X1MB_UP,
+	MOUSE_X1MB_DBLCLK,
+	MOUSE_X2MB_DOWN,
+	MOUSE_X2MB_UP,
+	MOUSE_X2MB_DBLCLK
 };
 
 enum MOUSECURSOR
@@ -73,6 +83,16 @@ public:
 	const std::wstring& GetMiddleDoubleClickAction() const { return m_MiddleDoubleClickAction; }
 	const std::wstring& GetOverAction() const { return m_OverAction; }
 	const std::wstring& GetLeaveAction() const { return m_LeaveAction; }
+	const std::wstring& GetMouseScrollUpAction() const { return m_MouseScrollUpAction; }
+	const std::wstring& GetMouseScrollDownAction() const { return m_MouseScrollDownAction; }
+	const std::wstring& GetMouseScrollLeftAction() const { return m_MouseScrollLeftAction; }
+	const std::wstring& GetMouseScrollRightAction() const { return m_MouseScrollRightAction; }
+	const std::wstring& GetX1DownAction() const { return m_X1DownAction; }
+	const std::wstring& GetX1UpAction() const { return m_X1UpAction; }
+	const std::wstring& GetX1DoubleClickAction() const { return m_X1DoubleClickAction; }
+	const std::wstring& GetX2DownAction() const { return m_X2DownAction; }
+	const std::wstring& GetX2UpAction() const { return m_X2UpAction; }
+	const std::wstring& GetX2DoubleClickAction() const { return m_X2DoubleClickAction; }
 
 private:
 	std::wstring m_LeftDownAction;
@@ -86,6 +106,16 @@ private:
 	std::wstring m_MiddleDoubleClickAction;
 	std::wstring m_OverAction;
 	std::wstring m_LeaveAction;
+	std::wstring m_MouseScrollDownAction;
+	std::wstring m_MouseScrollUpAction;
+	std::wstring m_MouseScrollLeftAction;
+	std::wstring m_MouseScrollRightAction;
+	std::wstring m_X1DownAction;
+	std::wstring m_X1UpAction;
+	std::wstring m_X1DoubleClickAction;
+	std::wstring m_X2DownAction;
+	std::wstring m_X2UpAction;
+	std::wstring m_X2DoubleClickAction;
 
 	MOUSECURSOR m_CursorType;
 	HCURSOR m_CustomCursor;
