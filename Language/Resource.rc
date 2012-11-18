@@ -1,5 +1,4 @@
 #include <windows.h>
-#include <CommCtrl.h>
 #include "../Library/resource.h"
 #include "../Version.h"
 
