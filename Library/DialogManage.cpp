@@ -1671,7 +1671,6 @@ void CDialogManage::CTabSettings::Initialize()
 	EnableWindow(GetDlgItem(m_Window, IDC_MANAGESETTINGS_SHOWLOGFILE_BUTTON), isLogFile);
 	EnableWindow(GetDlgItem(m_Window, IDC_MANAGESETTINGS_DELETELOGFILE_BUTTON), isLogFile);
 
-	Edit_SetText(GetDlgItem(m_Window, IDC_MANAGESETTINGS_SKINPATH_TEXT), Rainmeter->GetSkinPath().c_str());
 	Edit_SetText(GetDlgItem(m_Window, IDC_MANAGESETTINGS_CONFIGEDITOR_TEXT), Rainmeter->GetSkinEditor().c_str());
 
 	bool iconEnabled = Rainmeter->GetTrayWindow()->IsTrayIconEnabled();
@@ -1794,36 +1793,6 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_MANAGESETTINGS_VERBOSELOGGING_CHECKBOX:
 		Rainmeter->SetDebug(!Rainmeter->GetDebug());
-		break;
-
-	case IDC_MANAGESETTINGS_SKINPATH_TEXT:
-		if (HIWORD(wParam) == EN_CHANGE)
-		{
-			WCHAR buffer[MAX_PATH];
-			if (GetWindowText((HWND)lParam, buffer, _countof(buffer)) > 0)
-			{
-				Rainmeter->SetSkinPath(buffer);
-			}
-		}
-		break;
-
-	case IDC_MANAGESETTINGS_SKINPATH_BUTTON:
-		{
-			WCHAR buffer[MAX_PATH];
-			WCHAR* temp;
-			BROWSEINFO bi = {0};
-			bi.hwndOwner = c_Dialog->GetWindow();
-			bi.lpszTitle = L"Select a new Skins folder:\r\n\r\nNote: Changes take place next time you load Rainmeter.";
-			bi.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
-						
-			PIDLIST_ABSOLUTE pidl = SHBrowseForFolder(&bi);
-			if (pidl && SHGetPathFromIDList(pidl, buffer))
-			{
-				temp = wcscat(buffer, L"\\");
-				Edit_SetText(GetDlgItem(m_Window, IDC_MANAGESETTINGS_SKINPATH_TEXT), temp);
-				CoTaskMemFree(pidl);
-			}
-		}
 		break;
 
 	case IDC_MANAGESETTINGS_CONFIGEDITOR_TEXT:
