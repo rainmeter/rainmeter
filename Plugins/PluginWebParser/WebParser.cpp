@@ -604,8 +604,8 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 
 	if (measure->debug == 2)
-	{
-		measure->debugFileLocation = RmReadPath(rm, L"Debug2File", L"C:\\WebParserDump.txt");
+	{		
+		measure->debugFileLocation = RmReadPath(rm, L"Debug2File", L"WebParserDump.txt");
 		Log(LOG_DEBUG, measure->debugFileLocation.c_str());
 	}
 }
