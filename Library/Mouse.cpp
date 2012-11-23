@@ -51,6 +51,11 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWind
 	m_LeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);
 	m_MouseScrollDownAction = parser.ReadString(section, L"MouseScrollDownAction", L"", false);
 	m_MouseScrollUpAction = parser.ReadString(section, L"MouseScrollUpAction", L"", false);
+	if (!m_MouseScrollDownAction.empty() || !m_MouseScrollUpAction.empty())
+	{
+		meterWindow->SetHasMouseScrollAction();
+	}
+
 	m_MouseScrollLeftAction = parser.ReadString(section, L"MouseScrollLeftAction", L"", false);
 	m_MouseScrollRightAction = parser.ReadString(section, L"MouseScrollRightAction", L"", false);
 	m_X1DownAction = parser.ReadString(section, L"X1MouseDownAction", L"", false);

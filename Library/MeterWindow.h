@@ -179,6 +179,7 @@ public:
 	void SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group);
 
 	void SetMouseLeaveEvent(bool cancel);
+	void SetHasMouseScrollAction() { m_HasMouseScrollAction = true; }
 
 	void MoveWindow(int x, int y);
 	void ChangeZPos(ZPOSITION zPos, bool all = false);
@@ -334,6 +335,8 @@ private:
 	bool DoMoveAction(int x, int y, MOUSEACTION action);
 	bool ResizeWindow(bool reset);
 	void IgnoreAeroPeek();
+	void RegisterMouseInput();
+	void UnregisterMouseInput();
 	void AddWindowExStyle(LONG_PTR flag);
 	void RemoveWindowExStyle(LONG_PTR flag);
 	void BlurBehindWindow(BOOL fEnable);
@@ -360,6 +363,8 @@ private:
 
 	CMouse m_Mouse;
 	bool m_MouseOver;
+	bool m_MouseInputRegistered;
+	bool m_HasMouseScrollAction;
 
 	std::wstring m_OnRefreshAction;
 	std::wstring m_OnCloseAction;
@@ -402,7 +407,7 @@ private:
 	bool m_SavePosition;
 	bool m_SnapEdges;
 	int m_AlphaValue;
-	int m_FadeDuration;	
+	int m_FadeDuration;
 	ZPOSITION m_WindowZPosition;
 	bool m_DynamicWindowSize;
 	bool m_ClickThrough;

@@ -83,6 +83,8 @@ CMeterWindow::CMeterWindow(const std::wstring& folderPath, const std::wstring& f
 	m_BackgroundSize(),
 	m_Window(),
 	m_MouseOver(false),
+	m_MouseInputRegistered(false),
+	m_HasMouseScrollAction(false),
 	m_BackgroundMargins(),
 	m_DragMargins(),
 	m_WindowX(1, L'0'),
@@ -185,6 +187,8 @@ CMeterWindow::~CMeterWindow()
 	KillTimer(m_Window, TIMER_FADE);
 	KillTimer(m_Window, TIMER_TRANSITION);
 
+	UnregisterMouseInput();
+
 	// Destroy the meters
 	std::vector<CMeter*>::iterator j = m_Meters.begin();
 	for ( ; j != m_Meters.end(); ++j)
@@ -272,16 +276,6 @@ void CMeterWindow::Initialize()
 			FadeWindow(0, m_AlphaValue);
 		}
 	}
-
-	RAWINPUTDEVICE raw[1];
-	raw[0].usUsagePage = 0x01;
-	raw[0].usUsage = 0x02;
-	raw[0].dwFlags = RIDEV_INPUTSINK;
-	raw[0].hwndTarget = m_Window;
-	if (!RegisterRawInputDevices(raw, 1, sizeof(raw[0])))
-	{
-		Log(LOG_WARNING, L"Error registering raw input mouse device.");
-	}
 }
 
 /*
@@ -294,6 +288,40 @@ void CMeterWindow::IgnoreAeroPeek()
 	{
 		BOOL bValue = TRUE;
 		c_DwmSetWindowAttribute(m_Window, DWMWA_EXCLUDED_FROM_PEEK, &bValue, sizeof(bValue));
+	}
+}
+
+/*
+** Registers to receive WM_INPUT for the mouse events.
+**
+*/
+void CMeterWindow::RegisterMouseInput()
+{
+	if (!m_MouseInputRegistered && m_HasMouseScrollAction)
+	{
+		RAWINPUTDEVICE rid;
+		rid.usUsagePage = 0x01;
+		rid.usUsage = 0x02;  // HID mouse
+		rid.dwFlags = RIDEV_INPUTSINK;
+		rid.hwndTarget = m_Window;
+		if (RegisterRawInputDevices(&rid, 1, sizeof(rid)))
+		{
+			m_MouseInputRegistered = true;
+		}
+	}
+}
+
+void CMeterWindow::UnregisterMouseInput()
+{
+	if (m_MouseInputRegistered)
+	{
+		RAWINPUTDEVICE rid;
+		rid.usUsagePage = 0x01;
+		rid.usUsage = 0x02;  // HID mouse
+		rid.dwFlags = RIDEV_REMOVE;
+		rid.hwndTarget = m_Window;
+		RegisterRawInputDevices(&rid, 1, sizeof(rid));
+		m_MouseInputRegistered = false;
 	}
 }
 
@@ -4309,6 +4337,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 					//LogWithArgs(LOG_DEBUG, L"@Enter: %s", m_FolderPath.c_str());
 					m_MouseOver = true;
 					SetMouseLeaveEvent(false);
+					RegisterMouseInput();
 
 					if (!m_Mouse.GetOverAction().empty())
 					{
@@ -4392,6 +4421,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 				//LogWithArgs(LOG_DEBUG, L"Enter: %s", m_FolderPath.c_str());
 				m_MouseOver = true;
 				SetMouseLeaveEvent(false);
+				RegisterMouseInput();
 
 				if (!m_Mouse.GetOverAction().empty())
 				{
@@ -4412,6 +4442,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 				//LogWithArgs(LOG_DEBUG, L"Leave: %s", m_FolderPath.c_str());
 				m_MouseOver = false;
 				SetMouseLeaveEvent(true);
+				UnregisterMouseInput();
 
 				if (!m_Mouse.GetLeaveAction().empty())
 				{
