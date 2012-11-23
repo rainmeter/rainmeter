@@ -3233,7 +3233,14 @@ LRESULT CMeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+	if (uMsg == WM_MOUSEWHEEL)  // If sent through WM_INPUT, uMsg is WM_INPUT.
+	{
+		// Fix for Notepad++, which sends WM_MOUSEWHEEL to unfocused windows.
+		if (m_Window != GetFocus())
+		{
+			return 0;
+		}
+	}
 
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -3244,14 +3251,8 @@ LRESULT CMeterWindow::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
-	if (delta < 0)
-	{
-		DoAction(pos.x, pos.y, MOUSE_MW_DOWN, false);
-	}
-	else
-	{
-		DoAction(pos.x, pos.y, MOUSE_MW_UP, false);
-	}
+	const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+	DoAction(pos.x, pos.y, (delta < 0) ? MOUSE_MW_DOWN : MOUSE_MW_UP, false);
 
 	return 0;
 }
@@ -3262,8 +3263,6 @@ LRESULT CMeterWindow::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int delta = GET_WHEEL_DELTA_WPARAM(wParam);
-
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
@@ -3273,14 +3272,8 @@ LRESULT CMeterWindow::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
-	if (delta < 0)
-	{
-		DoAction(pos.x, pos.y, MOUSE_MW_LEFT, false);
-	}
-	else
-	{
-		DoAction(pos.x, pos.y, MOUSE_MW_RIGHT, false);
-	}
+	const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+	DoAction(pos.x, pos.y, (delta < 0) ? MOUSE_MW_LEFT : MOUSE_MW_RIGHT, false);
 
 	return 0;
 }
@@ -4466,29 +4459,29 @@ LRESULT CMeterWindow::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	GetCursorPos(&pos);
 	HWND hwnd = WindowFromPoint(pos);
 
-	// Only process RAW data if the mouse is over a meter window that does not have focus
-	if (Rainmeter->GetMeterWindow(hwnd) && hwnd != GetForegroundWindow())
+	// Only process for unfocused skin window.
+	if (m_Window == hwnd && m_Window != GetFocus())
 	{
 		RAWINPUT ri;
 		UINT riSize = sizeof(ri);
 		GetRawInputData((HRAWINPUT)lParam, RID_INPUT, &ri, &riSize, sizeof(RAWINPUTHEADER));
 		if (ri.header.dwType == RIM_TYPEMOUSE) 
 		{
-			WPARAM wparam = MAKEWPARAM(0, HIWORD((short)ri.data.mouse.usButtonData));
-			LPARAM lparam = MAKELPARAM(pos.x, pos.y);
+			WPARAM wheelDelta = MAKEWPARAM(0, HIWORD((short)ri.data.mouse.usButtonData));
+			LPARAM wheelPos = MAKELPARAM(pos.x, pos.y);
 
 			if (ri.data.mouse.usButtonFlags == RI_MOUSE_WHEEL)
 			{
-				PostMessage(hwnd, WM_MOUSEWHEEL, wparam, lparam);
+				OnMouseScrollMove(WM_INPUT, wheelDelta, wheelPos);
 			}
 			else if (ri.data.mouse.usButtonFlags == RI_MOUSE_HORIZONTAL_WHEEL)
 			{
-				PostMessage(hwnd, WM_MOUSEHWHEEL, wparam, lparam);
+				OnMouseHScrollMove(WM_MOUSEHWHEEL, wheelDelta, wheelPos);
 			}
 		}
 	}
 
-    return 0;
+	return 0;
 }
 
 /*
