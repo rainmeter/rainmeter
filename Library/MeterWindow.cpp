@@ -4469,28 +4469,23 @@ LRESULT CMeterWindow::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Only process RAW data if the mouse is over a meter window that does not have focus
 	if (Rainmeter->GetMeterWindow(hwnd) && hwnd != GetForegroundWindow())
 	{
-		UINT dwSize;
-		LPBYTE lpb = new BYTE[48];
-
-		GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER));
-
-		RAWINPUT* raw = (RAWINPUT*)lpb;
-		if (raw->header.dwType == RIM_TYPEMOUSE) 
+		RAWINPUT ri;
+		UINT riSize = sizeof(ri);
+		GetRawInputData((HRAWINPUT)lParam, RID_INPUT, &ri, &riSize, sizeof(RAWINPUTHEADER));
+		if (ri.header.dwType == RIM_TYPEMOUSE) 
 		{
-			WPARAM wparam = MAKEWPARAM(0, HIWORD((short)raw->data.mouse.usButtonData));
+			WPARAM wparam = MAKEWPARAM(0, HIWORD((short)ri.data.mouse.usButtonData));
 			LPARAM lparam = MAKELPARAM(pos.x, pos.y);
 
-			if (raw->data.mouse.usButtonFlags == RI_MOUSE_WHEEL)
+			if (ri.data.mouse.usButtonFlags == RI_MOUSE_WHEEL)
 			{
 				PostMessage(hwnd, WM_MOUSEWHEEL, wparam, lparam);
 			}
-			else if (raw->data.mouse.usButtonFlags == RI_MOUSE_HORIZONTAL_WHEEL)
+			else if (ri.data.mouse.usButtonFlags == RI_MOUSE_HORIZONTAL_WHEEL)
 			{
 				PostMessage(hwnd, WM_MOUSEHWHEEL, wparam, lparam);
 			}
 		}
-
-		delete[] lpb;
 	}
 
     return 0;
