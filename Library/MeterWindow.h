@@ -38,6 +38,8 @@
 
 #define METERWINDOW_CLASS_NAME	L"RainmeterMeterWindow"
 
+#define RI_MOUSE_HORIZONTAL_WHEEL 0x0800
+
 typedef HRESULT (WINAPI * FPDWMENABLEBLURBEHINDWINDOW)(HWND hWnd, const DWM_BLURBEHIND* pBlurBehind);
 typedef HRESULT (WINAPI * FPDWMGETCOLORIZATIONCOLOR)(DWORD* pcrColorization, BOOL* pfOpaqueBlend);
 typedef HRESULT (WINAPI * FPDWMSETWINDOWATTRIBUTE)(HWND hwnd, DWORD dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
@@ -249,6 +251,7 @@ protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK InitialWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+	LRESULT OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam);

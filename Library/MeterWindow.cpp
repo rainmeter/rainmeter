@@ -272,6 +272,16 @@ void CMeterWindow::Initialize()
 			FadeWindow(0, m_AlphaValue);
 		}
 	}
+
+	RAWINPUTDEVICE raw[1];
+	raw[0].usUsagePage = 0x01;
+	raw[0].usUsage = 0x02;
+	raw[0].dwFlags = RIDEV_INPUTSINK;
+	raw[0].hwndTarget = m_Window;
+	if (!RegisterRawInputDevices(raw, 1, sizeof(raw[0])))
+	{
+		Log(LOG_WARNING, L"Error registering raw input mouse device.");
+	}
 }
 
 /*
@@ -4416,6 +4426,46 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 }
 
 /*
+** Sends mouse wheel messages to the window if the window does not have focus.
+**
+*/
+LRESULT CMeterWindow::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	POINT pos;
+	GetCursorPos(&pos);
+	HWND hwnd = WindowFromPoint(pos);
+
+	// Only process RAW data if the mouse is over a meter window that does not have focus
+	if (Rainmeter->GetMeterWindow(hwnd) && hwnd != GetForegroundWindow())
+	{
+		UINT dwSize;
+		LPBYTE lpb = new BYTE[48];
+
+		GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER));
+
+		RAWINPUT* raw = (RAWINPUT*)lpb;
+		if (raw->header.dwType == RIM_TYPEMOUSE) 
+		{
+			WPARAM wparam = MAKEWPARAM(0, HIWORD((short)raw->data.mouse.usButtonData));
+			LPARAM lparam = MAKELPARAM(pos.x, pos.y);
+
+			if (raw->data.mouse.usButtonFlags == RI_MOUSE_WHEEL)
+			{
+				PostMessage(hwnd, WM_MOUSEWHEEL, wparam, lparam);
+			}
+			else if (raw->data.mouse.usButtonFlags == RI_MOUSE_HORIZONTAL_WHEEL)
+			{
+				PostMessage(hwnd, WM_MOUSEHWHEEL, wparam, lparam);
+			}
+		}
+
+		delete[] lpb;
+	}
+
+    return 0;
+}
+
+/*
 ** Stores the new place of the window, in screen coordinates.
 **
 */
@@ -4447,6 +4497,7 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	CMeterWindow* window = (CMeterWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 	BEGIN_MESSAGEPROC
+	MESSAGE(OnMouseInput, WM_INPUT)
 	MESSAGE(OnMove, WM_MOVE)
 	MESSAGE(OnTimer, WM_TIMER)
 	MESSAGE(OnCommand, WM_COMMAND)
