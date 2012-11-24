@@ -106,7 +106,7 @@ mkdir ..\testbench\x32\debug\Skins
 if not exist ..\testbench\x32\debug\Layouts (mkdir ..\testbench\x32\debug\Layouts)
 echo "Copying skins..."
 xcopy /Q /S /Y ..\Build\Skins ..\testbench\x32\debug\Skins
-xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\debug\Layoutss
+xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\debug\Layouts
 :skip</Command>
     </PostBuildEvent>
     <Manifest>
