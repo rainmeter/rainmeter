@@ -604,9 +604,8 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{
 				if (tray->m_TrayContextMenuEnabled)
 				{
-					POINT point;
-					GetCursorPos(&point);
-					Rainmeter->ShowContextMenu(point, NULL);
+					POINT pos = CSystem::GetCursorPosition();
+					Rainmeter->ShowContextMenu(pos, NULL);
 				}
 			}
 			else if (uMouseMsg == WM_LBUTTONUP || uMouseMsg == WM_LBUTTONDBLCLK)

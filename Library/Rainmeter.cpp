@@ -488,8 +488,7 @@ void CRainmeter::Bang_SkinMenu(std::vector<std::wstring>& args, CMeterWindow* me
 
 	if (meterWindow)
 	{
-		POINT pos;
-		GetCursorPos(&pos);
+		POINT pos = CSystem::GetCursorPosition();
 		ShowContextMenu(pos, meterWindow);
 	}
 	else
@@ -504,8 +503,7 @@ void CRainmeter::Bang_SkinMenu(std::vector<std::wstring>& args, CMeterWindow* me
 */
 void CRainmeter::Bang_TrayMenu()
 {
-	POINT pos;
-	GetCursorPos(&pos);
+	POINT pos = CSystem::GetCursorPosition();
 	ShowContextMenu(pos, NULL);
 }
 

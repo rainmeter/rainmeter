@@ -1219,8 +1219,7 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 	case NM_RCLICK:
 		if (nm->idFrom == IDC_MANAGESKINS_SKINS_TREEVIEW)
 		{
-			POINT pt;
-			GetCursorPos(&pt);
+			POINT pt = CSystem::GetCursorPosition();
 
 			TVHITTESTINFO ht;
 			ht.pt = pt;

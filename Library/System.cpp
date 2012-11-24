@@ -1053,6 +1053,17 @@ ULONGLONG CSystem::GetTickCount64()
 }
 
 /*
+** Gets the cursor position in last message retrieved by GetMessage().
+**
+*/
+POINT CSystem::GetCursorPosition()
+{
+	DWORD pos = GetMessagePos();
+	POINT pt = { GET_X_LPARAM(pos), GET_Y_LPARAM(pos) };
+	return pt;
+}
+
+/*
 ** Checks if file is writable.
 **
 */

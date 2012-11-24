@@ -69,6 +69,7 @@ public:
 
 	static OSPLATFORM GetOSPlatform() { return c_Platform; }
 	static ULONGLONG GetTickCount64();
+	static POINT GetCursorPosition();
 
 	static bool IsPathSeparator(WCHAR ch) { return (ch == L'\\' || ch == L'/'); }
 	static bool IsUNCPath(const std::wstring& path) { return (path.length() >= 2 && IsPathSeparator(path[0]) && IsPathSeparator(path[1])); }

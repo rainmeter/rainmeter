@@ -2769,8 +2769,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			if (m_MouseOver)
 			{
-				POINT pos;
-				GetCursorPos(&pos);
+				POINT pos = CSystem::GetCursorPosition();
 
 				if (!m_ClickThrough)
 				{
@@ -2933,8 +2932,7 @@ void CMeterWindow::ShowWindowIfAppropriate()
 {
 	bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
 
-	POINT pos;
-	GetCursorPos(&pos);
+	POINT pos = CSystem::GetCursorPosition();
 	POINT posScr = pos;
 
 	MapWindowPoints(NULL, m_Window, &pos, 1);
@@ -3210,8 +3208,7 @@ LRESULT CMeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT CMeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	POINT pos;
-	GetCursorPos(&pos);
+	POINT pos = CSystem::GetCursorPosition();
 	HWND hWnd = WindowFromPoint(pos);
 	if (!hWnd || (hWnd != m_Window && GetParent(hWnd) != m_Window))  // ignore tooltips
 	{
@@ -3592,8 +3589,7 @@ LRESULT CMeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			WriteOptions(OPTION_POSITION);
 		}
 
-		POINT pos;
-		GetCursorPos(&pos);
+		POINT pos = CSystem::GetCursorPosition();
 		MapWindowPoints(NULL, m_Window, &pos, 1);
 
 		// Handle buttons
@@ -4455,8 +4451,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 */
 LRESULT CMeterWindow::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	POINT pos;
-	GetCursorPos(&pos);
+	POINT pos = CSystem::GetCursorPosition();
 	HWND hwnd = WindowFromPoint(pos);
 
 	// Only process for unfocused skin window.
