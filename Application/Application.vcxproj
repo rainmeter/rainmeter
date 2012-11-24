@@ -101,12 +101,12 @@
       <DelayLoadDLLs>Rainmeter.dll</DelayLoadDLLs>
     </Link>
     <PostBuildEvent>
-      <Command>if exist ..\testbench\x32\debug\skins goto skip
-mkdir ..\testbench\x32\debug\skins
-if not exist ..\testbench\x32\debug\themes (mkdir ..\testbench\x32\debug\themes)
+      <Command>if exist ..\testbench\x32\debug\Skins goto skip
+mkdir ..\testbench\x32\debug\Skins
+if not exist ..\testbench\x32\debug\Layouts (mkdir ..\testbench\x32\debug\Layouts)
 echo "Copying skins..."
-xcopy /Q /S /Y ..\Build\Skins ..\testbench\x32\debug\skins
-xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\debug\themes
+xcopy /Q /S /Y ..\Build\Skins ..\testbench\x32\debug\Skins
+xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\debug\Layoutss
 :skip</Command>
     </PostBuildEvent>
     <Manifest>
@@ -139,12 +139,12 @@ xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\debug\themes
       <DelayLoadDLLs>Rainmeter.dll</DelayLoadDLLs>
     </Link>
     <PostBuildEvent>
-      <Command>if exist ..\testbench\x64\debug\skins goto skip
-mkdir ..\testbench\x64\debug\skins
-if not exist ..\testbench\x64\debug\themes (mkdir ..\testbench\x64\debug\themes)
+      <Command>if exist ..\testbench\x64\debug\Skins goto skip
+mkdir ..\testbench\x64\debug\Skins
+if not exist ..\testbench\x64\debug\Layouts (mkdir ..\testbench\x64\debug\Layouts)
 echo "Copying skins..."
-xcopy /Q /S /Y ..\Build\Skins ..\testbench\x64\debug\skins
-xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\debug\themes
+xcopy /Q /S /Y ..\Build\Skins ..\testbench\x64\debug\Skins
+xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\debug\Layouts
 :skip</Command>
     </PostBuildEvent>
     <Manifest>
@@ -181,12 +181,12 @@ xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\debug\themes
       <DelayLoadDLLs>Rainmeter.dll</DelayLoadDLLs>
     </Link>
     <PostBuildEvent>
-      <Command>if exist ..\testbench\x32\release\skins goto skip
-mkdir ..\testbench\x32\release\skins
-if not exist ..\testbench\x32\release\themes (mkdir ..\testbench\x32\release\themes)
+      <Command>if exist ..\testbench\x32\release\Skins goto skip
+mkdir ..\testbench\x32\release\Skins
+if not exist ..\testbench\x32\release\Layouts (mkdir ..\testbench\x32\release\Layouts)
 echo "Copying skins..."
-xcopy /Q /S /Y ..\Build\Skins ..\testbench\x32\release\skins
-xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\release\themes
+xcopy /Q /S /Y ..\Build\Skins ..\testbench\x32\release\Skins
+xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\release\Layouts
 :skip</Command>
     </PostBuildEvent>
     <Manifest>
@@ -221,12 +221,12 @@ xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\release\themes
       <DelayLoadDLLs>Rainmeter.dll</DelayLoadDLLs>
     </Link>
     <PostBuildEvent>
-      <Command>if exist ..\testbench\x64\release\skins goto skip
-mkdir ..\testbench\x64\release\skins
-if not exist ..\testbench\x64\release\themes (mkdir ..\testbench\x64\release\themes)
+      <Command>if exist ..\testbench\x64\release\Skins goto skip
+mkdir ..\testbench\x64\release\Skins
+if not exist ..\testbench\x64\release\Layouts (mkdir ..\testbench\x64\release\Layouts)
 echo "Copying skins..."
-xcopy /Q /S /Y ..\Build\Skins ..\testbench\x64\release\skins
-xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\release\themes
+xcopy /Q /S /Y ..\Build\Skins ..\testbench\x64\release\Skins
+xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\release\Layouts
 :skip</Command>
     </PostBuildEvent>
     <Manifest>
