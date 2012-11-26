@@ -65,7 +65,8 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWind
 	m_X2UpAction = parser.ReadString(section, L"X2MouseUpAction", L"", false);
 	m_X2DoubleClickAction = parser.ReadString(section, L"X2MouseDoubleClickAction", L"", false);
 
-	m_CursorState = 0!=parser.ReadInt(section, L"MouseActionCursor", meterWindow->GetMouse().GetCursorState());
+	const bool defaultState = (section == L"Rainmeter") ? true : meterWindow->GetMouse().GetCursorState();
+	m_CursorState = 0!=parser.ReadInt(section, L"MouseActionCursor", defaultState);
 
 	const WCHAR* defaultMouseCursor = (section == L"Rainmeter") ? L"HAND" : L"";
 	const WCHAR* mouseCursor = parser.ReadString(section, L"MouseActionCursorName", defaultMouseCursor).c_str();
