@@ -41,29 +41,31 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWind
 	m_LeftDownAction = parser.ReadString(section, L"LeftMouseDownAction", L"", false);
 	m_RightDownAction = parser.ReadString(section, L"RightMouseDownAction", L"", false);
 	m_MiddleDownAction = parser.ReadString(section, L"MiddleMouseDownAction", L"", false);
+	m_X1DownAction = parser.ReadString(section, L"X1MouseDownAction", L"", false);
+	m_X2DownAction = parser.ReadString(section, L"X2MouseDownAction", L"", false);
 	m_LeftUpAction = parser.ReadString(section, L"LeftMouseUpAction", L"", false);
 	m_RightUpAction = parser.ReadString(section, L"RightMouseUpAction", L"", false);
 	m_MiddleUpAction = parser.ReadString(section, L"MiddleMouseUpAction", L"", false);
+	m_X1UpAction = parser.ReadString(section, L"X1MouseUpAction", L"", false);
+	m_X2UpAction = parser.ReadString(section, L"X2MouseUpAction", L"", false);
 	m_LeftDoubleClickAction = parser.ReadString(section, L"LeftMouseDoubleClickAction", L"", false);
 	m_RightDoubleClickAction = parser.ReadString(section, L"RightMouseDoubleClickAction", L"", false);
 	m_MiddleDoubleClickAction = parser.ReadString(section, L"MiddleMouseDoubleClickAction", L"", false);
+	m_X1DoubleClickAction = parser.ReadString(section, L"X1MouseDoubleClickAction", L"", false);	
+	m_X2DoubleClickAction = parser.ReadString(section, L"X2MouseDoubleClickAction", L"", false);
+
 	m_OverAction = parser.ReadString(section, L"MouseOverAction", L"", false);
 	m_LeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);
+
 	m_MouseScrollDownAction = parser.ReadString(section, L"MouseScrollDownAction", L"", false);
 	m_MouseScrollUpAction = parser.ReadString(section, L"MouseScrollUpAction", L"", false);
-	if (!m_MouseScrollDownAction.empty() || !m_MouseScrollUpAction.empty())
+	m_MouseScrollLeftAction = parser.ReadString(section, L"MouseScrollLeftAction", L"", false);
+	m_MouseScrollRightAction = parser.ReadString(section, L"MouseScrollRightAction", L"", false);
+	if (!m_MouseScrollDownAction.empty() || !m_MouseScrollUpAction.empty() ||
+		!m_MouseScrollLeftAction.empty() || !m_MouseScrollRightAction.empty())
 	{
 		meterWindow->SetHasMouseScrollAction();
 	}
-
-	m_MouseScrollLeftAction = parser.ReadString(section, L"MouseScrollLeftAction", L"", false);
-	m_MouseScrollRightAction = parser.ReadString(section, L"MouseScrollRightAction", L"", false);
-	m_X1DownAction = parser.ReadString(section, L"X1MouseDownAction", L"", false);
-	m_X1UpAction = parser.ReadString(section, L"X1MouseUpAction", L"", false);
-	m_X1DoubleClickAction = parser.ReadString(section, L"X1MouseDoubleClickAction", L"", false);
-	m_X2DownAction = parser.ReadString(section, L"X2MouseDownAction", L"", false);
-	m_X2UpAction = parser.ReadString(section, L"X2MouseUpAction", L"", false);
-	m_X2DoubleClickAction = parser.ReadString(section, L"X2MouseDoubleClickAction", L"", false);
 
 	const bool defaultState = (section == L"Rainmeter") ? true : meterWindow->GetMouse().GetCursorState();
 	m_CursorState = 0!=parser.ReadInt(section, L"MouseActionCursor", defaultState);
