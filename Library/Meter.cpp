@@ -327,7 +327,12 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		m_Mouse.GetLeftDoubleClickAction().empty() && m_Mouse.GetMiddleUpAction().empty() &&
 		m_Mouse.GetMiddleDownAction().empty() && m_Mouse.GetMiddleDoubleClickAction().empty() &&
 		m_Mouse.GetRightUpAction().empty() && m_Mouse.GetRightDownAction().empty() &&
-		m_Mouse.GetRightDoubleClickAction().empty());
+		m_Mouse.GetRightDoubleClickAction().empty() && m_Mouse.GetX1UpAction().empty() &&
+		m_Mouse.GetX1DownAction().empty() && m_Mouse.GetX1DoubleClickAction().empty() &&
+		m_Mouse.GetX2UpAction().empty() && m_Mouse.GetX2DownAction().empty() &&
+		m_Mouse.GetX2DoubleClickAction().empty() && m_Mouse.GetMouseScrollDownAction().empty() &&
+		m_Mouse.GetMouseScrollLeftAction().empty() && m_Mouse.GetMouseScrollRightAction().empty() &&
+		m_Mouse.GetMouseScrollUpAction().empty());
 
 	m_ToolTipText = parser.ReadString(section, L"ToolTipText", L"");
 	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"");
