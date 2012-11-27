@@ -346,6 +346,7 @@ private:
 	void ShowBlur();
 	void HideBlur();
 
+	void Dispose(bool refresh);
 	void CreateDoubleBuffer(int cx, int cy);
 
 	CConfigParser m_Parser;

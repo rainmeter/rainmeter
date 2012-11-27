@@ -181,41 +181,7 @@ CMeterWindow::~CMeterWindow()
 		Rainmeter->ExecuteCommand(m_OnCloseAction.c_str(), this);
 	}
 
-	// Kill the timer
-	KillTimer(m_Window, TIMER_METER);
-	KillTimer(m_Window, TIMER_MOUSE);
-	KillTimer(m_Window, TIMER_FADE);
-	KillTimer(m_Window, TIMER_TRANSITION);
-
-	UnregisterMouseInput();
-
-	// Destroy the meters
-	std::vector<CMeter*>::iterator j = m_Meters.begin();
-	for ( ; j != m_Meters.end(); ++j)
-	{
-		delete (*j);
-	}
-
-	// Destroy the measures
-	std::vector<CMeasure*>::iterator i = m_Measures.begin();
-	for ( ; i != m_Measures.end(); ++i)
-	{
-		delete (*i);
-	}
-
-	delete m_Background;
-	delete m_DoubleBuffer;
-	if (m_DIBSectionBuffer) DeleteObject(m_DIBSectionBuffer);
-
-	if (m_BlurRegion) DeleteObject(m_BlurRegion);
-
-	if (m_Window) DestroyWindow(m_Window);
-
-	if (m_FontCollection)
-	{
-		CMeterString::FreeFontCache(m_FontCollection);
-		delete m_FontCollection;
-	}
+	Dispose(false);
 
 	--c_InstanceCount;
 
@@ -232,6 +198,78 @@ CMeterWindow::~CMeterWindow()
 			c_DwmGetColorizationColor = NULL;
 			c_DwmSetWindowAttribute = NULL;
 			c_DwmIsCompositionEnabled = NULL;
+		}
+	}
+}
+
+/*
+** Kills timers/hooks and disposes buffers
+**
+*/
+void CMeterWindow::Dispose(bool refresh)
+{
+	// Kill the timer/hook
+	KillTimer(m_Window, TIMER_METER);
+	KillTimer(m_Window, TIMER_MOUSE);
+	KillTimer(m_Window, TIMER_FADE);
+	KillTimer(m_Window, TIMER_TRANSITION);
+
+	UnregisterMouseInput();
+
+	m_ActiveTransition = false;
+
+	m_MouseOver = false;
+	SetMouseLeaveEvent(true);
+
+	// Destroy the meters
+	for (auto j = m_Meters.begin(); j != m_Meters.end(); ++j)
+	{
+		delete (*j);
+	}
+	m_Meters.clear();
+
+	// Destroy the measures
+	for (auto i = m_Measures.begin(); i != m_Measures.end(); ++i)
+	{
+		delete (*i);
+	}
+	m_Measures.clear();
+
+	delete m_Background;
+	m_Background = NULL;
+
+	m_BackgroundSize.cx = m_BackgroundSize.cy = 0;
+	m_BackgroundName.clear();
+
+	if (m_BlurRegion)
+	{
+		DeleteObject(m_BlurRegion);
+		m_BlurRegion = NULL;
+	}
+
+	if (m_FontCollection)
+	{
+		CMeterString::FreeFontCache(m_FontCollection);
+		delete m_FontCollection;
+		m_FontCollection = NULL;
+	}
+
+	if (!refresh)
+	{
+		// Destroy double buffers and window
+		delete m_DoubleBuffer;
+		m_DoubleBuffer = NULL;
+
+		if (m_DIBSectionBuffer)
+		{
+			DeleteObject(m_DIBSectionBuffer);
+			m_DIBSectionBuffer = NULL;
+		}
+
+		if (m_Window)
+		{
+			DestroyWindow(m_Window);
+			m_Window = NULL;
 		}
 	}
 }
@@ -374,47 +412,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	if (!init)
 	{
-		// First destroy everything
-		KillTimer(m_Window, TIMER_METER);
-		KillTimer(m_Window, TIMER_MOUSE);
-		KillTimer(m_Window, TIMER_FADE);
-		KillTimer(m_Window, TIMER_TRANSITION);
-
-		m_ActiveTransition = false;
-
-		m_MouseOver = false;
-		SetMouseLeaveEvent(true);
-
-		std::vector<CMeasure*>::iterator i = m_Measures.begin();
-		for ( ; i != m_Measures.end(); ++i)
-		{
-			delete (*i);
-		}
-		m_Measures.clear();
-
-		std::vector<CMeter*>::iterator j = m_Meters.begin();
-		for ( ; j != m_Meters.end(); ++j)
-		{
-			delete (*j);
-		}
-		m_Meters.clear();
-
-		delete m_Background;
-		m_Background = NULL;
-
-		m_BackgroundSize.cx = m_BackgroundSize.cy = 0;
-
-		m_BackgroundName.erase();
-
-		if (m_BlurRegion) DeleteObject(m_BlurRegion);
-		m_BlurRegion = NULL;
-
-		if (m_FontCollection)
-		{
-			CMeterString::FreeFontCache(m_FontCollection);
-			delete m_FontCollection;
-			m_FontCollection = NULL;
-		}
+		Dispose(true);
 	}
 
 	ZPOSITION oldZPos = m_WindowZPosition;
