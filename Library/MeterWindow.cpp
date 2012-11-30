@@ -1212,13 +1212,19 @@ void CMeterWindow::MoveMeter(const std::wstring& name, int x, int y)
 void CMeterWindow::UpdateMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
+	bool all = false;
+
+	if (!group && meter[0] == L'*' && meter[1] == L'\0')  // Allow [!UpdateMeter *]
+	{
+		all = true;
+		group = true;
+	}
 
 	bool bActiveTransition = false;
 	bool bContinue = true;
-	std::vector<CMeter*>::const_iterator j = m_Meters.begin();
-	for ( ; j != m_Meters.end(); ++j)
+	for (auto j = m_Meters.cbegin(); j != m_Meters.cend(); ++j)
 	{
-		if (bContinue && CompareName((*j), meter, group))
+		if (all || (bContinue && CompareName((*j), meter, group)))
 		{
 			UpdateMeter((*j), bActiveTransition, true);
 			SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
@@ -1322,12 +1328,18 @@ void CMeterWindow::ToggleMeasure(const std::wstring& name, bool group)
 void CMeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
+	bool all = false;
+
+	if (!group && measure[0] == L'*' && measure[1] == L'\0')  // Allow [!UpdateMeasure *]
+	{
+		all = true;
+		group = true;
+	}
 
 	bool bNetStats = m_HasNetMeasures;
-	std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
-	for ( ; i != m_Measures.end(); ++i)
+	for (auto i = m_Measures.cbegin(); i != m_Measures.cend(); ++i)
 	{
-		if (CompareName((*i), measure, group))
+		if (all || CompareName((*i), measure, group))
 		{
 			if (bNetStats && (*i)->GetTypeID() == TypeID<CMeasureNet>())
 			{
