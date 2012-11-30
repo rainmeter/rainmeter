@@ -17,6 +17,7 @@
 */
 
 #include "StdAfx.h"
+#include "../Common/MenuTemplate.h"
 #include "Rainmeter.h"
 #include "System.h"
 #include "MeterWindow.h"
@@ -1052,21 +1053,26 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDC_MANAGESKINS_DISPLAYMONITOR_BUTTON:
 		{
-			HMENU menu = LoadMenu(Rainmeter->GetResourceInstance(), MAKEINTRESOURCE(IDR_SKIN_MENU));
+			static const MenuTemplate s_Menu[] =
+			{
+				MENU_ITEM(IDM_SKIN_MONITOR_PRIMARY, ID_STR_USEDEFAULTMONITOR),
+				MENU_ITEM(ID_MONITOR_FIRST, ID_STR_VIRTUALSCREEN),
+				MENU_SEPARATOR(),
+				MENU_SEPARATOR(),
+				MENU_ITEM(IDM_SKIN_MONITOR_AUTOSELECT, ID_STR_AUTOSELECTMONITOR)
+			};
+
+			HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 			if (menu)
 			{
-				HMENU subMenu = GetSubMenu(menu, 0);	// Skin menu
-				subMenu = GetSubMenu(subMenu, 4); // Settings menu
-				subMenu = GetSubMenu(subMenu, 0); // Position menu
-				subMenu = GetSubMenu(subMenu, 0); // Display monitor menu
-				Rainmeter->CreateMonitorMenu(subMenu, m_SkinWindow);
+				Rainmeter->CreateMonitorMenu(menu, m_SkinWindow);
 
 				RECT r;
 				GetWindowRect((HWND)lParam, &r);
 
 				// Show context menu
 				TrackPopupMenu(
-					subMenu,
+					menu,
 					TPM_RIGHTBUTTON | TPM_LEFTALIGN,
 					(*GetString(ID_STR_ISRTL) == L'1') ? r.right : r.left,
 					--r.bottom,
@@ -1233,46 +1239,58 @@ INT_PTR CDialogManage::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 				tvi.hItem = TreeView_GetSelection(nm->hwndFrom);
 				tvi.mask = TVIF_STATE;
 
-				HMENU menu = LoadMenu(Rainmeter->GetResourceInstance(), MAKEINTRESOURCE(IDR_MANAGESKINS_MENU));
-				if (menu && TreeView_GetItem(nm->hwndFrom, &tvi))
+				if (TreeView_GetItem(nm->hwndFrom, &tvi))
 				{
-					HMENU subMenu;
+					HMENU menu = NULL;
 					MENUITEMINFO mii = {0};
 					mii.cbSize = sizeof(MENUITEMINFO);
 					mii.fMask = MIIM_STRING;
 
 					if (m_SkinFileName.empty())
 					{
-						// It's a folder
-						subMenu = GetSubMenu(menu, 0);
-						SetMenuDefaultItem(subMenu, IDM_MANAGESKINSMENU_EXPAND, MF_BYCOMMAND);
+						// Folder menu.
+						static const MenuTemplate s_Menu[] =
+						{
+							MENU_ITEM(IDM_MANAGESKINSMENU_EXPAND, ID_STR_EXPAND),
+							MENU_ITEM(IDM_MANAGESKINSMENU_OPENFOLDER, ID_STR_OPENFOLDER),
+						};
+
+						menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
+						SetMenuDefaultItem(menu, IDM_MANAGESKINSMENU_EXPAND, MF_BYCOMMAND);
 
 						if (tvi.state & TVIS_EXPANDED)
 						{
 							mii.dwTypeData = GetString(ID_STR_COLLAPSE);
-							SetMenuItemInfo(subMenu, IDM_MANAGESKINSMENU_EXPAND, MF_BYCOMMAND, &mii);
+							SetMenuItemInfo(menu, IDM_MANAGESKINSMENU_EXPAND, MF_BYCOMMAND, &mii);
 						}
 					}
 					else
 					{
-						// It's a skin
-						subMenu = GetSubMenu(menu, 1);
-						SetMenuDefaultItem(subMenu, IDM_MANAGESKINSMENU_LOAD, MF_BYCOMMAND);
+						// Skin menu.
+						static const MenuTemplate s_Menu[] =
+						{
+							MENU_ITEM(IDM_MANAGESKINSMENU_LOAD, ID_STR_LOAD),
+							MENU_ITEM(IDM_MANAGESKINSMENU_REFRESH, ID_STR_REFRESH),
+							MENU_ITEM(IDM_MANAGESKINSMENU_EDIT, ID_STR_EDIT),
+						};
+
+						menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
+						SetMenuDefaultItem(menu, IDM_MANAGESKINSMENU_LOAD, MF_BYCOMMAND);
 
 						if (m_SkinWindow)
 						{
 							mii.dwTypeData = GetString(ID_STR_UNLOAD);
-							SetMenuItemInfo(subMenu, IDM_MANAGESKINSMENU_LOAD, MF_BYCOMMAND, &mii);
+							SetMenuItemInfo(menu, IDM_MANAGESKINSMENU_LOAD, MF_BYCOMMAND, &mii);
 						}
 						else
 						{
-							EnableMenuItem(subMenu, IDM_MANAGESKINSMENU_REFRESH, MF_BYCOMMAND | MF_GRAYED);
+							EnableMenuItem(menu, IDM_MANAGESKINSMENU_REFRESH, MF_BYCOMMAND | MF_GRAYED);
 						}
 					}
 
 					// Show context menu
 					TrackPopupMenu(
-						subMenu,
+						menu,
 						TPM_RIGHTBUTTON | TPM_LEFTALIGN,
 						pt.x,
 						pt.y,

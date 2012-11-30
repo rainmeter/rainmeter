@@ -17,6 +17,7 @@
 */
 
 #include "StdAfx.h"
+#include "../Common/MenuTemplate.h"
 #include "Rainmeter.h"
 #include "TrayWindow.h"
 #include "System.h"
@@ -2862,137 +2863,161 @@ int CRainmeter::ShowMessage(HWND parent, const WCHAR* text, UINT type)
 */
 void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 {
+	static const MenuTemplate s_Menu[] =
+	{
+		MENU_ITEM(IDM_MANAGE, ID_STR_MANAGE),
+		MENU_ITEM(IDM_ABOUT, ID_STR_ABOUT),
+		MENU_ITEM(IDM_SHOW_HELP, ID_STR_HELP),
+		MENU_SEPARATOR(),
+		MENU_SUBMENU(ID_STR_SKINS,
+			MENU_ITEM_GRAYED(0, ID_STR_NOTHEMES),
+			MENU_SEPARATOR(),
+			MENU_ITEM(IDM_OPENSKINSFOLDER, ID_STR_REFRESHSKIN),
+			MENU_ITEM(IDM_DISABLEDRAG, ID_STR_REFRESHSKIN)),
+		MENU_SUBMENU(ID_STR_THEMES,
+			MENU_ITEM_GRAYED(0, ID_STR_STAYTOPMOST)),
+		MENU_SEPARATOR(),
+		MENU_ITEM(IDM_EDITCONFIG, ID_STR_EDITSETTINGS),
+		MENU_ITEM(IDM_REFRESH, ID_STR_REFRESHALL),
+		MENU_SEPARATOR(),
+		MENU_SUBMENU(ID_STR_LOGGING,
+			MENU_ITEM(IDM_SHOWLOGFILE, ID_STR_SHOWLOGFILE),
+			MENU_SEPARATOR(),
+			MENU_ITEM(IDM_STARTLOG, ID_STR_STARTLOGGING),
+			MENU_ITEM(IDM_STOPLOG, ID_STR_STOPLOGGING),
+			MENU_SEPARATOR(),
+			MENU_ITEM(IDM_DELETELOGFILE, ID_STR_DELETELOGFILE),
+			MENU_ITEM(IDM_DEBUGLOG, ID_STR_DEBUGMODE)),
+		MENU_SEPARATOR(),
+		MENU_ITEM(IDM_QUIT, ID_STR_EXIT)
+	};
+
 	if (!m_MenuActive)
 	{
 		m_MenuActive = true;
 
 		// Show context menu, if no actions were executed
-		HMENU menu = LoadMenu(m_ResourceInstance, MAKEINTRESOURCE(IDR_CONTEXT_MENU));
-
+		HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 		if (menu)
 		{
-			HMENU subMenu = GetSubMenu(menu, 0);
-			if (subMenu)
+			SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
+
+			if (_waccess(m_LogFile.c_str(), 0) == -1)
 			{
-				SetMenuDefaultItem(subMenu, IDM_MANAGE, MF_BYCOMMAND);
+				EnableMenuItem(menu, IDM_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(menu, IDM_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(menu, IDM_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
+			}
+			else
+			{
+				EnableMenuItem(menu, (m_Logging) ? IDM_STARTLOG : IDM_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
+			}
 
-				if (_waccess(m_LogFile.c_str(), 0) == -1)
-				{
-					EnableMenuItem(subMenu, IDM_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
-					EnableMenuItem(subMenu, IDM_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
-					EnableMenuItem(subMenu, IDM_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
-				}
-				else
-				{
-					EnableMenuItem(subMenu, (m_Logging) ? IDM_STARTLOG : IDM_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
-				}
+			if (m_Debug)
+			{
+				CheckMenuItem(menu, IDM_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
+			}
 
-				if (m_Debug)
+			HMENU allSkinsMenu = GetSubMenu(menu, 4);
+			if (allSkinsMenu)
+			{
+				if (!m_SkinFolders.empty())
 				{
-					CheckMenuItem(subMenu, IDM_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
-				}
-
-				HMENU skinMenu = GetSubMenu(subMenu, 4);
-				if (skinMenu)
-				{
-					if (!m_SkinFolders.empty())
-					{
-						DeleteMenu(skinMenu, 0, MF_BYPOSITION);  // "No skins available" menuitem
-						CreateAllSkinsMenu(skinMenu);
-					}
-
-					if (m_DisableDragging)
-					{
-						CheckMenuItem(skinMenu, IDM_DISABLEDRAG, MF_BYCOMMAND | MF_CHECKED);
-					}
+					DeleteMenu(allSkinsMenu, 0, MF_BYPOSITION);  // "No skins available" menuitem
+					CreateAllSkinsMenu(allSkinsMenu);
 				}
 
-				HMENU layoutMenu = GetSubMenu(subMenu, 5);
-				if (layoutMenu)
+				if (m_DisableDragging)
 				{
-					if (!m_Layouts.empty())
-					{
-						DeleteMenu(layoutMenu, 0, MF_BYPOSITION);  // "No layouts available" menuitem
-						CreateLayoutMenu(layoutMenu);
-					}
-				}
-
-				if (meterWindow)
-				{
-					HMENU rainmeterMenu = subMenu;
-					subMenu = CreateSkinMenu(meterWindow, 0, skinMenu);
-
-					WCHAR buffer[256];
-					GetMenuString(menu, 0, buffer, 256, MF_BYPOSITION);
-
-					InsertMenu(subMenu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_POPUP, (UINT_PTR)rainmeterMenu, buffer);
-					InsertMenu(subMenu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_SEPARATOR, 0, NULL);
-				}
-				else
-				{
-					InsertMenu(subMenu, 12, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-
-					// Create a menu for all active skins
-					int index = 0;
-					std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
-					for (; iter != m_MeterWindows.end(); ++iter)
-					{
-						CMeterWindow* mw = ((*iter).second);
-						HMENU menu = CreateSkinMenu(mw, index, skinMenu);
-						InsertMenu(subMenu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)menu, mw->GetFolderPath().c_str());
-						++index;
-					}
-
-					// Add update notification item
-					if (m_NewVersion)
-					{
-						InsertMenu(subMenu, 0, MF_BYPOSITION, IDM_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE));
-						HiliteMenuItem(GetTrayWindow()->GetWindow(), subMenu, 0, MF_BYPOSITION | MF_HILITE);
-						InsertMenu(subMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-					}
-				}
-
-				HWND hWnd = WindowFromPoint(pos);
-				if (hWnd != NULL)
-				{
-					CMeterWindow* mw = GetMeterWindow(hWnd);
-					if (mw)
-					{
-						// Cancel the mouse event beforehand
-						mw->SetMouseLeaveEvent(true);
-					}
-				}
-
-				// Set the window to foreground
-				hWnd = meterWindow ? meterWindow->GetWindow() : m_TrayWindow->GetWindow();
-				HWND hWndForeground = GetForegroundWindow();
-				if (hWndForeground != hWnd)
-				{
-					DWORD foregroundThreadID = GetWindowThreadProcessId(hWndForeground, NULL);
-					DWORD currentThreadID = GetCurrentThreadId();
-					AttachThreadInput(currentThreadID, foregroundThreadID, TRUE);
-					SetForegroundWindow(hWnd);
-					AttachThreadInput(currentThreadID, foregroundThreadID, FALSE);
-				}
-
-				// Show context menu
-				TrackPopupMenu(
-					subMenu,
-					TPM_RIGHTBUTTON | TPM_LEFTALIGN | (*GetString(ID_STR_ISRTL) == L'1' ? TPM_LAYOUTRTL : 0),
-					pos.x,
-					pos.y,
-					0,
-					hWnd,
-					NULL);
-
-				if (meterWindow)
-				{
-					DestroyMenu(subMenu);
+					CheckMenuItem(allSkinsMenu, IDM_DISABLEDRAG, MF_BYCOMMAND | MF_CHECKED);
 				}
 			}
 
-			DestroyMenu(menu);
+			HMENU layoutMenu = GetSubMenu(menu, 5);
+			if (layoutMenu)
+			{
+				if (!m_Layouts.empty())
+				{
+					DeleteMenu(layoutMenu, 0, MF_BYPOSITION);  // "No layouts available" menuitem
+					CreateLayoutMenu(layoutMenu);
+				}
+			}
+
+			if (meterWindow)
+			{
+				HMENU rainmeterMenu = menu;
+				menu = CreateSkinMenu(meterWindow, 0, allSkinsMenu);
+
+				WCHAR buffer[256];
+				GetMenuString(menu, 0, buffer, 256, MF_BYPOSITION);
+
+				InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_POPUP, (UINT_PTR)rainmeterMenu, buffer);
+				InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_SEPARATOR, 0, NULL);
+			}
+			else
+			{
+				InsertMenu(menu, 12, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+
+				// Create a menu for all active skins
+				int index = 0;
+				std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
+				for (; iter != m_MeterWindows.end(); ++iter)
+				{
+					CMeterWindow* mw = ((*iter).second);
+					HMENU skinMenu = CreateSkinMenu(mw, index, allSkinsMenu);
+					InsertMenu(menu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetFolderPath().c_str());
+					++index;
+				}
+
+				// Add update notification item
+				if (m_NewVersion)
+				{
+					InsertMenu(menu, 0, MF_BYPOSITION, IDM_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE));
+					HiliteMenuItem(GetTrayWindow()->GetWindow(), menu, 0, MF_BYPOSITION | MF_HILITE);
+					InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+				}
+			}
+
+			HWND hWnd = WindowFromPoint(pos);
+			if (hWnd != NULL)
+			{
+				CMeterWindow* mw = GetMeterWindow(hWnd);
+				if (mw)
+				{
+					// Cancel the mouse event beforehand
+					mw->SetMouseLeaveEvent(true);
+				}
+			}
+
+			// Set the window to foreground
+			hWnd = meterWindow ? meterWindow->GetWindow() : m_TrayWindow->GetWindow();
+			HWND hWndForeground = GetForegroundWindow();
+			if (hWndForeground != hWnd)
+			{
+				DWORD foregroundThreadID = GetWindowThreadProcessId(hWndForeground, NULL);
+				DWORD currentThreadID = GetCurrentThreadId();
+				AttachThreadInput(currentThreadID, foregroundThreadID, TRUE);
+				SetForegroundWindow(hWnd);
+				AttachThreadInput(currentThreadID, foregroundThreadID, FALSE);
+			}
+
+			// Show context menu
+			TrackPopupMenu(
+				menu,
+				TPM_RIGHTBUTTON | TPM_LEFTALIGN | (*GetString(ID_STR_ISRTL) == L'1' ? TPM_LAYOUTRTL : 0),
+				pos.x,
+				pos.y,
+				0,
+				hWnd,
+				NULL);
+
+			if (meterWindow)
+			{
+				DestroyMenu(menu);
+			}
 		}
+
+		DestroyMenu(menu);
 
 		m_MenuActive = false;
 	}
@@ -3054,16 +3079,62 @@ int CRainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 
 HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU menu)
 {
-	HMENU skinMenu = LoadMenu(m_ResourceInstance, MAKEINTRESOURCE(IDR_SKIN_MENU));
-
-	if (skinMenu)
+	static const MenuTemplate s_Menu[] =
 	{
-		HMENU subSkinMenu = GetSubMenu(skinMenu, 0);
-		RemoveMenu(skinMenu, 0, MF_BYPOSITION);
-		DestroyMenu(skinMenu);
-		skinMenu = subSkinMenu;
-	}
+		MENU_ITEM(IDM_SKIN_OPENSKINSFOLDER, 0),
+		MENU_SEPARATOR(),
+		MENU_SUBMENU(ID_STR_VARIANTS,
+			MENU_SEPARATOR()),
+		MENU_SEPARATOR(),
+		MENU_SUBMENU(ID_STR_SETTINGS,
+			MENU_SUBMENU(ID_STR_POSITION,
+				MENU_SUBMENU(ID_STR_DISPLAYMONITOR,
+					MENU_ITEM(IDM_SKIN_MONITOR_PRIMARY, ID_STR_USEDEFAULTMONITOR),
+					MENU_ITEM(ID_MONITOR_FIRST, ID_STR_VIRTUALSCREEN),
+					MENU_SEPARATOR(),
+					MENU_SEPARATOR(),
+					MENU_ITEM(IDM_SKIN_MONITOR_AUTOSELECT, ID_STR_AUTOSELECTMONITOR)),
+				MENU_SEPARATOR(),
+				MENU_ITEM(IDM_SKIN_VERYTOPMOST, ID_STR_STAYTOPMOST),
+				MENU_ITEM(IDM_SKIN_TOPMOST, ID_STR_TOPMOST),
+				MENU_ITEM(IDM_SKIN_NORMAL, ID_STR_NORMAL),
+				MENU_ITEM(IDM_SKIN_BOTTOM, ID_STR_BOTTOM),
+				MENU_ITEM(IDM_SKIN_ONDESKTOP, ID_STR_ONDESKTOP),
+				MENU_SEPARATOR(),
+				MENU_ITEM(IDM_SKIN_FROMRIGHT, ID_STR_FROMRIGHT),
+				MENU_ITEM(IDM_SKIN_FROMBOTTOM, ID_STR_FROMBOTTOM),
+				MENU_ITEM(IDM_SKIN_XPERCENTAGE, ID_STR_XASPERCENTAGE),
+				MENU_ITEM(IDM_SKIN_YPERCENTAGE, ID_STR_YASPERCENTAGE)),
+			MENU_SUBMENU(ID_STR_TRANSPARENCY,
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_0, ID_STR_0PERCENT),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_10, ID_STR_10PERCENT),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_20, ID_STR_20PERCENT),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_30, ID_STR_30PERCENT),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_40, ID_STR_40PERCENT),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_50, ID_STR_50PERCENT),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_60, ID_STR_60PERCENT),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_70, ID_STR_70PERCENT),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_80, ID_STR_80PERCENT),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_90, ID_STR_90PERCENT),
+				MENU_SEPARATOR(),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_FADEIN, ID_STR_FADEIN),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_FADEOUT, ID_STR_FADEOUT)),
+			MENU_SEPARATOR(),
+			MENU_ITEM(IDM_SKIN_HIDEONMOUSE, ID_STR_HIDEONMOUSEOVER),
+			MENU_ITEM(IDM_SKIN_DRAGGABLE, ID_STR_DRAGGABLE),
+			MENU_ITEM(IDM_SKIN_REMEMBERPOSITION, ID_STR_SAVEPOSITION),
+			MENU_ITEM(IDM_SKIN_SNAPTOEDGES, ID_STR_SNAPTOEDGES),
+			MENU_ITEM(IDM_SKIN_CLICKTHROUGH, ID_STR_CLICKTHROUGH),
+			MENU_ITEM(IDM_SKIN_KEEPONSCREEN, ID_STR_KEEPONSCREEN)),
+		MENU_SEPARATOR(),
+		MENU_ITEM(IDM_SKIN_MANAGESKIN, ID_STR_MANAGESKIN),
+		MENU_ITEM(IDM_SKIN_EDITSKIN, ID_STR_EDITSKIN),
+		MENU_ITEM(IDM_SKIN_REFRESH, ID_STR_REFRESHSKIN),
+		MENU_SEPARATOR(),
+		MENU_ITEM(IDM_CLOSESKIN, ID_STR_UNLOADSKIN)
+	};
 
+	HMENU skinMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 	if (skinMenu)
 	{
 		// Tick the position

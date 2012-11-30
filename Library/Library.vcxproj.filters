@@ -25,6 +25,9 @@
     <Filter Include="pcre">
       <UniqueIdentifier>{5866a61e-ec27-469c-a8f0-2a45ce141f60}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{3fcdd272-ad7a-4e06-a1bc-ff114498ccee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConfigParser.cpp">
@@ -321,6 +324,9 @@
     <ClCompile Include="Mouse.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\MenuTemplate.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigParser.h">
@@ -553,6 +559,9 @@
     </ClInclude>
     <ClInclude Include="Section.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\MenuTemplate.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -185,6 +185,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Common\MenuTemplate.cpp" />
     <ClCompile Include="ConfigParser.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -390,6 +391,7 @@
     <ResourceCompile Include="Library.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\MenuTemplate.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="DialogAbout.h" />
