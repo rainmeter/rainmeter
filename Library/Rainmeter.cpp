@@ -2948,10 +2948,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 				HMENU rainmeterMenu = menu;
 				menu = CreateSkinMenu(meterWindow, 0, allSkinsMenu);
 
-				WCHAR buffer[256];
-				GetMenuString(menu, 0, buffer, 256, MF_BYPOSITION);
-
-				InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_POPUP, (UINT_PTR)rainmeterMenu, buffer);
+				InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_POPUP, (UINT_PTR)rainmeterMenu, L"Rainmeter");
 				InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_SEPARATOR, 0, NULL);
 			}
 			else
