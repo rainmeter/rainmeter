@@ -25,6 +25,9 @@
 // Shared base class for CDialog and CTab.
 class CBaseDialog
 {
+public:
+	HWND GetControl(WORD id) { return GetDlgItem(m_Window, id); }
+
 protected:
 	CBaseDialog();
 	virtual ~CBaseDialog() {}

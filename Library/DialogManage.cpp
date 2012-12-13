@@ -96,7 +96,7 @@ void CDialogManage::Open(int tab)
 	NMHDR nm;
 	nm.code = TCN_SELCHANGE;
 	nm.idFrom = Id_Tab;
-	nm.hwndFrom = GetDlgItem(c_Dialog->m_Window, Id_Tab);
+	nm.hwndFrom = c_Dialog->GetControl(Id_Tab);
 	TabCtrl_SetCurSel(nm.hwndFrom, tab);
 	c_Dialog->OnNotify(0, (LPARAM)&nm);
 }
@@ -114,7 +114,7 @@ void CDialogManage::OpenSkin(CMeterWindow* meterWindow)
 		std::wstring name = meterWindow->GetFolderPath() + L'\\';
 		name += meterWindow->GetFileName();
 
-		HWND item = GetDlgItem(c_Dialog->m_TabSkins.GetWindow(), CTabSkins::Id_SkinsTreeView);
+		HWND item = c_Dialog->m_TabSkins.GetControl(CTabSkins::Id_SkinsTreeView);
 		c_Dialog->m_TabSkins.SelectTreeItem(item, TreeView_GetRoot(item), name.c_str());
 	}
 }
@@ -133,7 +133,7 @@ void CDialogManage::UpdateSkins(CMeterWindow* meterWindow, bool deleted)
 
 CDialog::CTab& CDialogManage::GetActiveTab()
 {
-	int sel = TabCtrl_GetCurSel(GetDlgItem(m_Window, Id_Tab));
+	int sel = TabCtrl_GetCurSel(GetControl(Id_Tab));
 	if (sel == 0)
 	{
 		return m_TabSkins;
@@ -188,6 +188,9 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	const ControlTemplate::Control s_Controls[] =
 	{
+		CT_TAB(Id_Tab, 0,
+			6, 6, 488, 293,
+			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, WS_EX_CONTROLPARENT),
 		CT_BUTTON(Id_RefreshAllButton, ID_STR_REFRESHALL,
 			5, 303, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
@@ -202,15 +205,12 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_CloseButton, ID_STR_CLOSE,
 			444, 303, 50, 14,
-			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
-		CT_TAB(Id_Tab, 0,
-			6, 6, 488, 293,
-			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0) // Last for correct tab order.
+			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0)
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), m_Font, GetString);
 
-	HWND item = GetDlgItem(m_Window, Id_Tab);
+	HWND item = GetControl(Id_Tab);
 	m_TabSkins.Create(item);
 	m_TabLayouts.Create(item);
 	m_TabSettings.Create(item);
@@ -227,16 +227,16 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = GetIcon(IDI_RAINMETER);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	item = GetDlgItem(m_Window, Id_CloseButton);
+	item = GetControl(Id_CloseButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
 
-	item = GetDlgItem(m_TabSkins.GetWindow(), CTabSkins::Id_FileLabel);
+	item = m_TabSkins.GetControl(CTabSkins::Id_FileLabel);
 	SendMessage(item, WM_SETFONT, (WPARAM)m_FontBold, 0);
 
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
 		// Use arrows instead of plus/minus in the tree for Vista+
-		item = GetDlgItem(m_TabSkins.GetWindow(), CTabSkins::Id_SkinsTreeView);
+		item = m_TabSkins.GetControl(CTabSkins::Id_SkinsTreeView);
 		SetWindowTheme(item, L"explorer", NULL);
 	}
 
@@ -473,10 +473,10 @@ void CDialogManage::CTabSkins::Initialize()
 	bsi.size.cx = 20;
 	bsi.size.cy = 14;
 
-	HWND item = GetDlgItem(m_Window, Id_ActiveSkinsButton);
+	HWND item = GetControl(Id_ActiveSkinsButton);
 	CDialog::SetMenuButton(item);
 
-	item = GetDlgItem(m_Window, Id_DisplayMonitorButton);
+	item = GetControl(Id_DisplayMonitorButton);
 	CDialog::SetMenuButton(item);
 
 	// Load folder/.ini icons from shell32
@@ -489,16 +489,16 @@ void CDialogManage::CTabSkins::Initialize()
 	ImageList_AddIcon(hImageList, hIcon);
 
 	// Apply icons and populate tree
-	item = GetDlgItem(m_Window, Id_SkinsTreeView);
+	item = GetControl(Id_SkinsTreeView);
 	TreeView_SetImageList(item, hImageList, TVSIL_NORMAL);
 	Update(NULL, false);
 
 	// Get rid of the EDITTEXT control border
-	item = GetDlgItem(m_Window, Id_DescriptionLabel);
+	item = GetControl(Id_DescriptionLabel);
 	SetWindowLongPtr(item, GWL_EXSTYLE, GetWindowLongPtr(item, GWL_EXSTYLE) &~ WS_EX_CLIENTEDGE);
 	SetWindowPos(item, NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER); 
 
-	item = GetDlgItem(m_Window, Id_TransparencyDropDownList);
+	item = GetControl(Id_TransparencyDropDownList);
 	ComboBox_AddString(item, L"0%");
 	ComboBox_AddString(item, L"10%");
 	ComboBox_AddString(item, L"20%");
@@ -510,14 +510,14 @@ void CDialogManage::CTabSkins::Initialize()
 	ComboBox_AddString(item, L"80%");
 	ComboBox_AddString(item, L"90%");
 
-	item = GetDlgItem(m_Window, Id_ZPositionDropDownList);
+	item = GetControl(Id_ZPositionDropDownList);
 	ComboBox_AddString(item, GetString(ID_STR_ONDESKTOP));
 	ComboBox_AddString(item, GetString(ID_STR_BOTTOM));
 	ComboBox_AddString(item, GetString(ID_STR_NORMAL));
 	ComboBox_AddString(item, GetString(ID_STR_TOPMOST));
 	ComboBox_AddString(item, GetString(ID_STR_STAYTOPMOST));
 
-	item = GetDlgItem(m_Window, Id_OnHoverDropDownList);
+	item = GetControl(Id_OnHoverDropDownList);
 	ComboBox_AddString(item, GetString(ID_STR_DONOTHING));
 	ComboBox_AddString(item, GetString(ID_STR_HIDE));
 	ComboBox_AddString(item, GetString(ID_STR_FADEIN));
@@ -564,7 +564,7 @@ void CDialogManage::CTabSkins::Update(CMeterWindow* meterWindow, bool deleted)
 	else
 	{
 		// Populate tree
-		HWND item = GetDlgItem(m_Window, Id_SkinsTreeView);
+		HWND item = GetControl(Id_SkinsTreeView);
 		TreeView_DeleteAllItems(item);
 
 		TVINSERTSTRUCT tvi = {0};
@@ -583,33 +583,33 @@ void CDialogManage::CTabSkins::SetControls()
 {
 	WCHAR buffer[64];
 
-	HWND item = GetDlgItem(m_Window, Id_EditButton);
+	HWND item = GetControl(Id_EditButton);
 	EnableWindow(item, TRUE);
 
-	item = GetDlgItem(m_Window, Id_LoadButton);
+	item = GetControl(Id_LoadButton);
 	EnableWindow(item, TRUE);
 
 	if (m_SkinWindow)
 	{
 		SetWindowText(item, GetString(ID_STR_UNLOAD));
 
-		item = GetDlgItem(m_Window, Id_RefreshButton);
+		item = GetControl(Id_RefreshButton);
 		EnableWindow(item, TRUE);
 
-		item = GetDlgItem(m_Window, Id_XPositionEdit);
+		item = GetControl(Id_XPositionEdit);
 		EnableWindow(item, TRUE);
 		_itow_s(m_SkinWindow->GetX(), buffer, 10);
 		SetWindowText(item, buffer);
 
-		item = GetDlgItem(m_Window, Id_YPositionEdit);
+		item = GetControl(Id_YPositionEdit);
 		EnableWindow(item, TRUE);
 		_itow_s(m_SkinWindow->GetY(), buffer, 10);
 		SetWindowText(item, buffer);
 
-		item = GetDlgItem(m_Window, Id_DisplayMonitorButton);
+		item = GetControl(Id_DisplayMonitorButton);
 		EnableWindow(item, TRUE);
 
-		item = GetDlgItem(m_Window, Id_DraggableCheckBox);
+		item = GetControl(Id_DraggableCheckBox);
 		if (Rainmeter->GetDisableDragging())
 		{
 			EnableWindow(item, FALSE);
@@ -621,39 +621,39 @@ void CDialogManage::CTabSkins::SetControls()
 			Button_SetCheck(item, m_SkinWindow->GetWindowDraggable());
 		}
 
-		item = GetDlgItem(m_Window, Id_ClickThroughCheckBox);
+		item = GetControl(Id_ClickThroughCheckBox);
 		EnableWindow(item, TRUE);
 		Button_SetCheck(item, m_SkinWindow->GetClickThrough());
 
-		item = GetDlgItem(m_Window, Id_KeepOnScreenCheckBox);
+		item = GetControl(Id_KeepOnScreenCheckBox);
 		EnableWindow(item, TRUE);
 		Button_SetCheck(item, m_SkinWindow->GetKeepOnScreen());
 
-		item = GetDlgItem(m_Window, Id_SavePositionCheckBox);
+		item = GetControl(Id_SavePositionCheckBox);
 		EnableWindow(item, TRUE);
 		Button_SetCheck(item, m_SkinWindow->GetSavePosition());
 
-		item = GetDlgItem(m_Window, Id_SnapToEdgesCheckBox);
+		item = GetControl(Id_SnapToEdgesCheckBox);
 		EnableWindow(item, TRUE);
 		Button_SetCheck(item, m_SkinWindow->GetSnapEdges());
 
-		item = GetDlgItem(m_Window, Id_TransparencyDropDownList);
+		item = GetControl(Id_TransparencyDropDownList);
 		EnableWindow(item, TRUE);
 		int value = (int)(10 - m_SkinWindow->GetAlphaValue() / 25.5);
 		value = min(9, value);
 		value = max(0, value);
 		ComboBox_SetCurSel(item, value);
 
-		item = GetDlgItem(m_Window, Id_ZPositionDropDownList);
+		item = GetControl(Id_ZPositionDropDownList);
 		EnableWindow(item, TRUE);
 		ComboBox_SetCurSel(item, m_SkinWindow->GetWindowZPosition() + 2);
 
-		item = GetDlgItem(m_Window, Id_LoadOrderEdit);
+		item = GetControl(Id_LoadOrderEdit);
 		EnableWindow(item, TRUE);
 		_itow_s(Rainmeter->GetLoadOrder(m_SkinFolderPath), buffer, 10);
 		SetWindowText(item, buffer);
 
-		item = GetDlgItem(m_Window, Id_OnHoverDropDownList);
+		item = GetControl(Id_OnHoverDropDownList);
 		EnableWindow(item, TRUE);
 		ComboBox_SetCurSel(item, m_SkinWindow->GetWindowHide());
 	}
@@ -665,36 +665,36 @@ void CDialogManage::CTabSkins::SetControls()
 
 void CDialogManage::CTabSkins::DisableControls(bool clear)
 {
-	HWND item = GetDlgItem(m_Window, Id_LoadButton);
+	HWND item = GetControl(Id_LoadButton);
 	SetWindowText(item, GetString(ID_STR_LOAD));
 
 	if (clear)
 	{
 		EnableWindow(item, FALSE);
 
-		item = GetDlgItem(m_Window, Id_EditButton);
+		item = GetControl(Id_EditButton);
 		EnableWindow(item, FALSE);
 		
-		item = GetDlgItem(m_Window, Id_FileLabel);
+		item = GetControl(Id_FileLabel);
 		SetWindowText(item, GetString(ID_STR_ELLIPSIS));
 
-		item = GetDlgItem(m_Window, Id_ConfigLabel);
+		item = GetControl(Id_ConfigLabel);
 		SetWindowText(item, L"");
 
-		item = GetDlgItem(m_Window, Id_AuthorLabel);
+		item = GetControl(Id_AuthorLabel);
 		SetWindowText(item, L"");
 
-		item = GetDlgItem(m_Window, Id_VersionLabel);
+		item = GetControl(Id_VersionLabel);
 		SetWindowText(item, L"");
 
-		item = GetDlgItem(m_Window, Id_LicenseLabel);
+		item = GetControl(Id_LicenseLabel);
 		SetWindowText(item, L"");
 
-		item = GetDlgItem(m_Window, Id_DescriptionLabel);
+		item = GetControl(Id_DescriptionLabel);
 		SetWindowText(item, L"");
 		ShowScrollBar(item, SB_VERT, FALSE);
 
-		item = GetDlgItem(m_Window, Id_AddMetadataLink);
+		item = GetControl(Id_AddMetadataLink);
 		ShowWindow(item, SW_HIDE);
 	}
 	else
@@ -702,65 +702,65 @@ void CDialogManage::CTabSkins::DisableControls(bool clear)
 		EnableWindow(item, TRUE);
 	}
 
-	item = GetDlgItem(m_Window, Id_RefreshButton);
+	item = GetControl(Id_RefreshButton);
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_Window, Id_XPositionEdit);
+	item = GetControl(Id_XPositionEdit);
 	SetWindowText(item, L"");
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_Window, Id_YPositionEdit);
+	item = GetControl(Id_YPositionEdit);
 	SetWindowText(item, L"");
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_Window, Id_DisplayMonitorButton);
+	item = GetControl(Id_DisplayMonitorButton);
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_Window, Id_DraggableCheckBox);
-	EnableWindow(item, FALSE);
-	Button_SetCheck(item, BST_UNCHECKED);
-
-	item = GetDlgItem(m_Window, Id_ClickThroughCheckBox);
+	item = GetControl(Id_DraggableCheckBox);
 	EnableWindow(item, FALSE);
 	Button_SetCheck(item, BST_UNCHECKED);
 
-	item = GetDlgItem(m_Window, Id_KeepOnScreenCheckBox);
+	item = GetControl(Id_ClickThroughCheckBox);
 	EnableWindow(item, FALSE);
 	Button_SetCheck(item, BST_UNCHECKED);
 
-	item = GetDlgItem(m_Window, Id_SavePositionCheckBox);
+	item = GetControl(Id_KeepOnScreenCheckBox);
 	EnableWindow(item, FALSE);
 	Button_SetCheck(item, BST_UNCHECKED);
 
-	item = GetDlgItem(m_Window, Id_SnapToEdgesCheckBox);
+	item = GetControl(Id_SavePositionCheckBox);
 	EnableWindow(item, FALSE);
 	Button_SetCheck(item, BST_UNCHECKED);
 
-	item = GetDlgItem(m_Window, Id_TransparencyDropDownList);
+	item = GetControl(Id_SnapToEdgesCheckBox);
+	EnableWindow(item, FALSE);
+	Button_SetCheck(item, BST_UNCHECKED);
+
+	item = GetControl(Id_TransparencyDropDownList);
 	EnableWindow(item, FALSE);
 	ComboBox_SetCurSel(item, -1);
 
-	item = GetDlgItem(m_Window, Id_ZPositionDropDownList);
+	item = GetControl(Id_ZPositionDropDownList);
 	EnableWindow(item, FALSE);
 	ComboBox_SetCurSel(item, -1);
 
-	item = GetDlgItem(m_Window, Id_LoadOrderEdit);
+	item = GetControl(Id_LoadOrderEdit);
 	SetWindowText(item, L"");
 	EnableWindow(item, FALSE);
 
-	item = GetDlgItem(m_Window, Id_OnHoverDropDownList);
+	item = GetControl(Id_OnHoverDropDownList);
 	EnableWindow(item, FALSE);
 	ComboBox_SetCurSel(item, -1);
 }
 
 void CDialogManage::CTabSkins::ReadSkin()
 {
-	HWND item = GetDlgItem(m_Window, Id_FileLabel);
+	HWND item = GetControl(Id_FileLabel);
 	SetWindowText(item, m_SkinFileName.c_str());
 
 	PathSetDlgItemPath(m_Window, Id_ConfigLabel, m_SkinFolderPath.c_str());
 
-	item = GetDlgItem(m_Window, Id_EditButton);
+	item = GetControl(Id_EditButton);
 	EnableWindow(item, TRUE);
 
 	std::wstring file = Rainmeter->GetSkinPath() + m_SkinFolderPath;
@@ -777,7 +777,7 @@ void CDialogManage::CTabSkins::ReadSkin()
 	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
 	const WCHAR* fileSz = file.c_str();
 
-	item = GetDlgItem(m_Window, Id_AuthorLabel);
+	item = GetControl(Id_AuthorLabel);
 	if (GetPrivateProfileString(L"Metadata", L"Author", NULL, buffer, MAX_LINE_LENGTH, fileSz) == 0)
 	{
 		// For backwards compatibility.
@@ -785,21 +785,21 @@ void CDialogManage::CTabSkins::ReadSkin()
 	}
 	SetWindowText(item, buffer);
 
-	item = GetDlgItem(m_Window, Id_AddMetadataLink);
+	item = GetControl(Id_AddMetadataLink);
 	if (GetPrivateProfileSection(L"Metadata", buffer, 8, fileSz) > 0)
 	{
 		ShowWindow(item, SW_HIDE);
 
 		// Set metadata
-		item = GetDlgItem(m_Window, Id_VersionLabel);
+		item = GetControl(Id_VersionLabel);
 		GetPrivateProfileString(L"Metadata", L"Version", NULL, buffer, MAX_LINE_LENGTH, fileSz);
 		SetWindowText(item, buffer);
 
-		item = GetDlgItem(m_Window, Id_LicenseLabel);
+		item = GetControl(Id_LicenseLabel);
 		GetPrivateProfileString(L"Metadata", L"License", NULL, buffer, MAX_LINE_LENGTH, fileSz);
 		SetWindowText(item, buffer);
 
-		item = GetDlgItem(m_Window, Id_DescriptionLabel);
+		item = GetControl(Id_DescriptionLabel);
 		std::wstring text;
 		if (GetPrivateProfileString(L"Metadata", L"Information", NULL, buffer, MAX_LINE_LENGTH, fileSz) > 0)
 		{
@@ -840,13 +840,13 @@ void CDialogManage::CTabSkins::ReadSkin()
 	{
 		ShowWindow(item, SW_SHOWNORMAL);
 
-		item = GetDlgItem(m_Window, Id_VersionLabel);
+		item = GetControl(Id_VersionLabel);
 		SetWindowText(item, L"");
 
-		item = GetDlgItem(m_Window, Id_LicenseLabel);
+		item = GetControl(Id_LicenseLabel);
 		SetWindowText(item, L"");
 
-		item = GetDlgItem(m_Window, Id_DescriptionLabel);
+		item = GetControl(Id_DescriptionLabel);
 		SetWindowText(item, L"");
 		ShowScrollBar(item, SB_VERT, FALSE);
 	}
@@ -1059,7 +1059,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 					NMHDR nm;
 					nm.code = TVN_SELCHANGED;
 					nm.idFrom = Id_SkinsTreeView;
-					nm.hwndFrom = GetDlgItem(m_Window, Id_SkinsTreeView);
+					nm.hwndFrom = GetControl(Id_SkinsTreeView);
 					OnNotify(0, (LPARAM)&nm);
 				}
 			}
@@ -1258,7 +1258,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDM_MANAGESKINSMENU_EXPAND:
 		{
-			HWND tree = GetDlgItem(m_Window, Id_SkinsTreeView);
+			HWND tree = GetControl(Id_SkinsTreeView);
 			HTREEITEM item = TreeView_GetSelection(tree);
 			TreeView_Expand(tree, item, TVE_TOGGLE);
 		}
@@ -1266,7 +1266,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case IDM_MANAGESKINSMENU_OPENFOLDER:
 		{
-			HWND tree = GetDlgItem(m_Window, Id_SkinsTreeView);
+			HWND tree = GetControl(Id_SkinsTreeView);
 			Rainmeter->OpenSkinFolder(GetTreeSelectionPath(tree));
 		}
 		break;
@@ -1284,7 +1284,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 					std::wstring name = ((*iter).second)->GetFolderPath() + L'\\';
 					name += ((*iter).second)->GetFileName();
 
-					HWND item = GetDlgItem(m_Window, Id_SkinsTreeView);
+					HWND item = GetControl(Id_SkinsTreeView);
 					SelectTreeItem(item, TreeView_GetRoot(item), name.c_str());
 					break;
 				}
@@ -1545,7 +1545,7 @@ void CDialogManage::CTabLayouts::Create(HWND owner)
 
 void CDialogManage::CTabLayouts::Initialize()
 {
-	HWND item  = GetDlgItem(m_Window, Id_List);
+	HWND item  = GetControl(Id_List);
 	const std::vector<std::wstring>& layouts = Rainmeter->GetAllLayouts();
 	for (int i = 0, isize = layouts.size(); i < isize; ++i)
 	{
@@ -1574,11 +1574,11 @@ INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			BOOL state = !(Button_GetCheck((HWND)lParam) == BST_CHECKED);
 
-			HWND item = GetDlgItem(m_Window, Id_ExcludeUnusedSkinsCheckBox);
+			HWND item = GetControl(Id_ExcludeUnusedSkinsCheckBox);
 			EnableWindow(item, state);
 			Button_SetCheck(item, BST_UNCHECKED);
 
-			item = GetDlgItem(m_Window, Id_IncludeWallpaperCheckBox);
+			item = GetControl(Id_IncludeWallpaperCheckBox);
 			EnableWindow(item, state);
 			Button_SetCheck(item, BST_UNCHECKED);
 		}
@@ -1592,7 +1592,7 @@ INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			// Disable save button if no text or if backup
 			BOOL state = (len > 0 && _wcsicmp(buffer, L"@Backup") != 0);
-			EnableWindow(GetDlgItem(m_Window, Id_SaveButton), state);
+			EnableWindow(GetControl(Id_SaveButton), state);
 		}
 		break;
 
@@ -1602,18 +1602,18 @@ INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			// Ignore clicks that don't hit items
 			if (ListBox_GetCurSel((HWND)lParam) != LB_ERR)
 			{
-				HWND item = GetDlgItem(m_Window, Id_LoadButton);
+				HWND item = GetControl(Id_LoadButton);
 				EnableWindow(item, TRUE);
-				item = GetDlgItem(m_Window, Id_DeleteButton);
+				item = GetControl(Id_DeleteButton);
 				EnableWindow(item, TRUE);
-				item = GetDlgItem(m_Window, Id_EditButton);
+				item = GetControl(Id_EditButton);
 				EnableWindow(item, TRUE);
 				
 				const std::vector<std::wstring>& layouts = Rainmeter->GetAllLayouts();
-				item  = GetDlgItem(m_Window, Id_List);
+				item  = GetControl(Id_List);
 				int sel = ListBox_GetCurSel(item);
 				
-				item = GetDlgItem(m_Window, Id_NameLabel);
+				item = GetControl(Id_NameLabel);
 				Edit_SetText(item, layouts[sel].c_str());
 			}
 		}
@@ -1622,7 +1622,7 @@ INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_SaveButton:
 		{
 			WCHAR buffer[MAX_PATH];
-			HWND item = GetDlgItem(m_Window, Id_NameLabel);
+			HWND item = GetControl(Id_NameLabel);
 			Edit_GetText(item, buffer, MAX_PATH);
 
 			std::wstring layout = buffer;
@@ -1648,7 +1648,7 @@ INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			path += L"\\Rainmeter.ini";
 
-			item = GetDlgItem(m_Window, Id_SaveEmptyThemeCheckBox);
+			item = GetControl(Id_SaveEmptyThemeCheckBox);
 			if (Button_GetCheck(item) != BST_CHECKED)
 			{
 				if (!CSystem::CopyFiles(Rainmeter->GetIniFile(), path))
@@ -1659,7 +1659,7 @@ INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 				}
 
 				// Exclude unused skins
-				item = GetDlgItem(m_Window, Id_ExcludeUnusedSkinsCheckBox);
+				item = GetControl(Id_ExcludeUnusedSkinsCheckBox);
 				if (Button_GetCheck(item) == BST_CHECKED)
 				{
 					CConfigParser parser;
@@ -1677,7 +1677,7 @@ INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 				}
 
 				// Save wallpaper
-				item = GetDlgItem(m_Window, Id_IncludeWallpaperCheckBox);
+				item = GetControl(Id_IncludeWallpaperCheckBox);
 				if (Button_GetCheck(item) == BST_CHECKED)
 				{
 					// Get current wallpaper
@@ -1705,7 +1705,7 @@ INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (!alreadyExists)
 			{
-				item = GetDlgItem(m_Window, Id_List);
+				item = GetControl(Id_List);
 				ListBox_AddString(item, layout.c_str());
 
 				Rainmeter->ScanForLayouts();
@@ -1715,7 +1715,7 @@ INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case Id_LoadButton:
 		{
-			HWND item  = GetDlgItem(m_Window, Id_List);
+			HWND item  = GetControl(Id_List);
 			int sel = ListBox_GetCurSel(item);
 			Rainmeter->LoadLayout(Rainmeter->m_Layouts[sel]);
 		}
@@ -1723,7 +1723,7 @@ INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case Id_EditButton:
 		{
-			HWND item  = GetDlgItem(m_Window, Id_List);
+			HWND item  = GetControl(Id_List);
 			int sel = ListBox_GetCurSel(item);
 			const std::vector<std::wstring>& layouts = Rainmeter->GetAllLayouts();
 
@@ -1737,7 +1737,7 @@ INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case Id_DeleteButton:
 		{
-			HWND item  = GetDlgItem(m_Window, Id_List);
+			HWND item  = GetControl(Id_List);
 			int sel = ListBox_GetCurSel(item);
 			std::vector<std::wstring>& layouts = const_cast<std::vector<std::wstring>&>(Rainmeter->GetAllLayouts());
 
@@ -1766,9 +1766,9 @@ INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 					}
 				}
 
-				EnableWindow(GetDlgItem(m_Window, Id_LoadButton), FALSE);
-				EnableWindow(GetDlgItem(m_Window, Id_DeleteButton), FALSE);
-				EnableWindow(GetDlgItem(m_Window, Id_EditButton), FALSE);
+				EnableWindow(GetControl(Id_LoadButton), FALSE);
+				EnableWindow(GetControl(Id_DeleteButton), FALSE);
+				EnableWindow(GetControl(Id_EditButton), FALSE);
 			}
 		}
 		break;
@@ -1857,7 +1857,7 @@ void CDialogManage::CTabSettings::Create(HWND owner)
 void CDialogManage::CTabSettings::Initialize()
 {
 	// Scan for languages
-	HWND item = GetDlgItem(m_Window, Id_LanguageDropDownList);
+	HWND item = GetControl(Id_LanguageDropDownList);
 
 	std::wstring files = Rainmeter->GetPath() + L"Languages\\*.dll";
 	WIN32_FIND_DATA fd;
@@ -1896,19 +1896,19 @@ void CDialogManage::CTabSettings::Initialize()
 		FindClose(hSearch);
 	}
 
-	Button_SetCheck(GetDlgItem(m_Window, Id_CheckForUpdatesCheckBox), !Rainmeter->GetDisableVersionCheck());
-	Button_SetCheck(GetDlgItem(m_Window, Id_LockSkinsCheckBox), Rainmeter->GetDisableDragging());
-	Button_SetCheck(GetDlgItem(m_Window, Id_LogToFileCheckBox), Rainmeter->GetLogging());
-	Button_SetCheck(GetDlgItem(m_Window, Id_VerboseLoggingCheckbox), Rainmeter->GetDebug());
+	Button_SetCheck(GetControl(Id_CheckForUpdatesCheckBox), !Rainmeter->GetDisableVersionCheck());
+	Button_SetCheck(GetControl(Id_LockSkinsCheckBox), Rainmeter->GetDisableDragging());
+	Button_SetCheck(GetControl(Id_LogToFileCheckBox), Rainmeter->GetLogging());
+	Button_SetCheck(GetControl(Id_VerboseLoggingCheckbox), Rainmeter->GetDebug());
 
 	BOOL isLogFile = (_waccess(Rainmeter->GetLogFile().c_str(), 0) != -1);
-	EnableWindow(GetDlgItem(m_Window, Id_ShowLogFileButton), isLogFile);
-	EnableWindow(GetDlgItem(m_Window, Id_DeleteLogFileButton), isLogFile);
+	EnableWindow(GetControl(Id_ShowLogFileButton), isLogFile);
+	EnableWindow(GetControl(Id_DeleteLogFileButton), isLogFile);
 
-	Edit_SetText(GetDlgItem(m_Window, Id_EditorEdit), Rainmeter->GetSkinEditor().c_str());
+	Edit_SetText(GetControl(Id_EditorEdit), Rainmeter->GetSkinEditor().c_str());
 
 	bool iconEnabled = Rainmeter->GetTrayWindow()->IsTrayIconEnabled();
-	Button_SetCheck(GetDlgItem(m_Window, Id_ShowTrayIconCheckBox), iconEnabled);
+	Button_SetCheck(GetControl(Id_ShowTrayIconCheckBox), iconEnabled);
 
 	m_Initialized = true;
 }
@@ -1953,7 +1953,7 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 				if (CDialogAbout::c_Dialog)
 				{
-					int sel = TabCtrl_GetCurSel(GetDlgItem(CDialogAbout::c_Dialog->GetWindow(), CDialogManage::Id_Tab));
+					int sel = TabCtrl_GetCurSel(CDialogAbout::c_Dialog->GetControl(CDialogManage::Id_Tab));
 					SendMessage(CDialogAbout::c_Dialog->GetWindow(), WM_CLOSE, 0, 0);
 					if (sel == 0)
 					{
@@ -1999,9 +1999,9 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		Rainmeter->DeleteLogFile();
 		if (_waccess(Rainmeter->GetLogFile().c_str(), 0) == -1)
 		{
-			Button_SetCheck(GetDlgItem(m_Window, Id_LogToFileCheckBox), BST_UNCHECKED);
-			EnableWindow(GetDlgItem(m_Window, Id_ShowLogFileButton), FALSE);
-			EnableWindow(GetDlgItem(m_Window, Id_DeleteLogFileButton), FALSE);
+			Button_SetCheck(GetControl(Id_LogToFileCheckBox), BST_UNCHECKED);
+			EnableWindow(GetControl(Id_ShowLogFileButton), FALSE);
+			EnableWindow(GetControl(Id_DeleteLogFileButton), FALSE);
 		}
 		break;
 
@@ -2015,8 +2015,8 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 			Rainmeter->StartLogging();
 			if (_waccess(Rainmeter->GetLogFile().c_str(), 0) != -1)
 			{
-				EnableWindow(GetDlgItem(m_Window, Id_ShowLogFileButton), TRUE);
-				EnableWindow(GetDlgItem(m_Window, Id_DeleteLogFileButton), TRUE);
+				EnableWindow(GetControl(Id_ShowLogFileButton), TRUE);
+				EnableWindow(GetControl(Id_DeleteLogFileButton), TRUE);
 			}
 		}
 		break;
@@ -2060,7 +2060,7 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 				break;
 			}
 
-			Edit_SetText(GetDlgItem(m_Window, Id_EditorEdit), buffer);
+			Edit_SetText(GetControl(Id_EditorEdit), buffer);
 		}
 		break;	
 

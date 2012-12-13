@@ -69,7 +69,7 @@ void CDialogAbout::Open(int tab)
 	NMHDR nm;
 	nm.code = TCN_SELCHANGE;
 	nm.idFrom = Id_Tab;
-	nm.hwndFrom = GetDlgItem(c_Dialog->m_Window, Id_Tab);
+	nm.hwndFrom = c_Dialog->GetControl(Id_Tab);
 	TabCtrl_SetCurSel(nm.hwndFrom, tab);
 	c_Dialog->OnNotify(0, (LPARAM)&nm);
 }
@@ -140,7 +140,7 @@ void CDialogAbout::UpdateMeasures(CMeterWindow* meterWindow)
 
 CDialog::CTab& CDialogAbout::GetActiveTab()
 {
-	int sel = TabCtrl_GetCurSel(GetDlgItem(m_Window, Id_Tab));
+	int sel = TabCtrl_GetCurSel(GetControl(Id_Tab));
 	if (sel == 0)
 	{
 		return m_TabLog;
@@ -191,10 +191,10 @@ INT_PTR CDialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				int h = HIWORD(lParam);
 				RECT r;
 
-				HWND item = GetDlgItem(m_Window, Id_Tab);
+				HWND item = GetControl(Id_Tab);
 				SetWindowPos(item, NULL, 0, 0, w - 18, h - 47, SWP_NOMOVE | SWP_NOZORDER);
 
-				item = GetDlgItem(m_Window, Id_CloseButton);
+				item = GetControl(Id_CloseButton);
 				GetClientRect(item, &r);
 				SetWindowPos(item, NULL, w - r.right - 9, h - r.bottom - 8, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
@@ -239,7 +239,7 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	CreateControls(s_Controls, _countof(s_Controls), m_Font, GetString);
 
-	HWND item = GetDlgItem(m_Window, Id_Tab);
+	HWND item = GetControl(Id_Tab);
 	m_TabLog.Create(item);
 	m_TabSkins.Create(item);
 	m_TabPlugins.Create(item);
@@ -259,14 +259,14 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = GetIcon(IDI_RAINMETER);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	item = GetDlgItem(m_Window, Id_CloseButton);
+	item = GetControl(Id_CloseButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
 
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
-		item = GetDlgItem(m_TabLog.GetWindow(), CTabLog::Id_ItemsListView);
+		item = m_TabLog.GetControl(CTabLog::Id_ItemsListView);
 		SetWindowTheme(item, L"explorer", NULL);
-		item = GetDlgItem(m_TabSkins.GetWindow(), CTabSkins::Id_ItemsListView);
+		item = m_TabSkins.GetControl(CTabSkins::Id_ItemsListView);
 		SetWindowTheme(item, L"explorer", NULL);
 	}
 
@@ -371,7 +371,7 @@ void CDialogAbout::CTabLog::Create(HWND owner)
 void CDialogAbout::CTabLog::Initialize()
 {
 	// Add columns to the list view
-	HWND item = GetDlgItem(m_Window, Id_ItemsListView);
+	HWND item = GetControl(Id_ItemsListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	// Set folder/.ini icons for tree list
@@ -415,16 +415,16 @@ void CDialogAbout::CTabLog::Initialize()
 		AddItem((*iter).level, (*iter).timestamp.c_str(), (*iter).message.c_str());
 	}
 
-	item = GetDlgItem(m_Window, Id_ErrorCheckBox);
+	item = GetControl(Id_ErrorCheckBox);
 	Button_SetCheck(item, BST_CHECKED);
 
-	item = GetDlgItem(m_Window, Id_WarningCheckBox);
+	item = GetControl(Id_WarningCheckBox);
 	Button_SetCheck(item, BST_CHECKED);
 
-	item = GetDlgItem(m_Window, Id_NoticeCheckBox);
+	item = GetControl(Id_NoticeCheckBox);
 	Button_SetCheck(item, BST_CHECKED);
 
-	item = GetDlgItem(m_Window, Id_DebugCheckBox);
+	item = GetControl(Id_DebugCheckBox);
 	Button_SetCheck(item, BST_CHECKED);
 
 	m_Initialized = true;
@@ -439,21 +439,21 @@ void CDialogAbout::CTabLog::Resize(int w, int h)
 	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	RECT r;
-	HWND item = GetDlgItem(m_Window, Id_ErrorCheckBox);
+	HWND item = GetControl(Id_ErrorCheckBox);
 	GetClientRect(item, &r);
 
 	SetWindowPos(item, NULL, 0, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
-	item = GetDlgItem(m_Window, Id_WarningCheckBox);
+	item = GetControl(Id_WarningCheckBox);
 	SetWindowPos(item, NULL, r.right, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
-	item = GetDlgItem(m_Window, Id_NoticeCheckBox);
+	item = GetControl(Id_NoticeCheckBox);
 	SetWindowPos(item, NULL, r.right * 2, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
-	item = GetDlgItem(m_Window, Id_DebugCheckBox);
+	item = GetControl(Id_DebugCheckBox);
 	SetWindowPos(item, NULL, r.right * 3, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
-	item = GetDlgItem(m_Window, Id_ItemsListView);
+	item = GetControl(Id_ItemsListView);
 	SetWindowPos(item, NULL, 0, 0, w, h - r.bottom - 7, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust third colum
@@ -481,31 +481,31 @@ void CDialogAbout::CTabLog::AddItem(int level, LPCWSTR time, LPCWSTR message)
 	{
 	case LOG_ERROR:
 		if (!m_Error) return;
-		item = GetDlgItem(m_Window, Id_ErrorCheckBox);
+		item = GetControl(Id_ErrorCheckBox);
 		vitem.iImage = 0;
 		break;
 
 	case LOG_WARNING:
 		if (!m_Warning) return;
-		item = GetDlgItem(m_Window, Id_WarningCheckBox);
+		item = GetControl(Id_WarningCheckBox);
 		vitem.iImage = 1;
 		break;
 
 	case LOG_NOTICE:
 		if (!m_Notice) return;
-		item = GetDlgItem(m_Window, Id_NoticeCheckBox);
+		item = GetControl(Id_NoticeCheckBox);
 		vitem.iImage = 2;
 		break;
 
 	case LOG_DEBUG:
 		if (!m_Debug) return;
-		item = GetDlgItem(m_Window, Id_DebugCheckBox);
+		item = GetControl(Id_DebugCheckBox);
 		vitem.iImage = I_IMAGENONE;
 		break;
 	}
 
 	GetWindowText(item, buffer, 32);
-	item = GetDlgItem(m_Window, Id_ItemsListView);
+	item = GetControl(Id_ItemsListView);
 	ListView_InsertItem(item, &vitem);
 	ListView_SetItemText(item, vitem.iItem, 1, (WCHAR*)time);
 	ListView_SetItemText(item, vitem.iItem, 2, (WCHAR*)message);
@@ -632,7 +632,7 @@ void CDialogAbout::CTabSkins::Create(HWND owner)
 void CDialogAbout::CTabSkins::Initialize()
 {
 	// Add columns to the list view
-	HWND item = GetDlgItem(m_Window, Id_ItemsListView);
+	HWND item = GetControl(Id_ItemsListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	LVGROUP lvg;
@@ -677,11 +677,11 @@ void CDialogAbout::CTabSkins::Resize(int w, int h)
 {
 	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	HWND item = GetDlgItem(m_Window, Id_SkinsListBox);
+	HWND item = GetControl(Id_SkinsListBox);
 	int wList = (w < 650) ? (w - 373) : 277;
 	SetWindowPos(item, NULL, 0, 0, wList, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	item = GetDlgItem(m_Window, Id_ItemsListView);
+	item = GetControl(Id_ItemsListView);
 	SetWindowPos(item, NULL, (w < 650) ? (w - 365) : 285, 0, w - wList - 10, h, SWP_NOZORDER);
 
 	// Adjust third column
@@ -698,7 +698,7 @@ void CDialogAbout::CTabSkins::Resize(int w, int h)
 void CDialogAbout::CTabSkins::UpdateSkinList()
 {
 	// Delete all entries
-	HWND item = GetDlgItem(m_Window, Id_SkinsListBox);
+	HWND item = GetControl(Id_SkinsListBox);
 	ListBox_ResetContent(item);
 
 	// Add entries for each skin
@@ -732,7 +732,7 @@ void CDialogAbout::CTabSkins::UpdateSkinList()
 		if (windows.empty())
 		{
 			m_SkinWindow = NULL;
-			item = GetDlgItem(m_Window, Id_ItemsListView);
+			item = GetControl(Id_ItemsListView);
 			ListView_DeleteAllItems(item);
 		}
 		else
@@ -754,7 +754,7 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 	if (!meterWindow)
 	{
 		// Find selected skin
-		HWND item = GetDlgItem(m_Window, Id_SkinsListBox);
+		HWND item = GetControl(Id_SkinsListBox);
 		int selected = (int)SendMessage(item, LB_GETCURSEL, NULL, NULL);
 
 		const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
@@ -773,7 +773,7 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 		return;
 	}
 
-	HWND item = GetDlgItem(m_Window, Id_ItemsListView);
+	HWND item = GetControl(Id_ItemsListView);
 	SendMessage(item, WM_SETREDRAW, FALSE, 0);
 	int count = ListView_GetItemCount(item);
 
@@ -901,7 +901,7 @@ INT_PTR CDialogAbout::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDM_COPY:
 		{
 			HWND item = GetFocus();
-			if (item == GetDlgItem(m_Window, Id_ItemsListView))
+			if (item == GetControl(Id_ItemsListView))
 			{
 				int sel = ListView_GetNextItem(item, -1, LVNI_FOCUSED | LVNI_SELECTED);
 				if (sel != -1)
@@ -976,7 +976,7 @@ void CDialogAbout::CTabPlugins::Create(HWND owner)
 void CDialogAbout::CTabPlugins::Initialize()
 {
 	// Add columns to the list view
-	HWND item = GetDlgItem(m_Window, Id_ItemsListView);
+	HWND item = GetControl(Id_ItemsListView);
 
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
@@ -1123,7 +1123,7 @@ void CDialogAbout::CTabPlugins::Resize(int w, int h)
 {
 	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	HWND item = GetDlgItem(m_Window, Id_ItemsListView);
+	HWND item = GetControl(Id_ItemsListView);
 	SetWindowPos(item, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust third colum
@@ -1187,24 +1187,24 @@ void CDialogAbout::CTabVersion::Create(HWND owner)
 
 void CDialogAbout::CTabVersion::Initialize()
 {
-	HWND item = GetDlgItem(m_Window, Id_AppIcon);
+	HWND item = GetControl(Id_AppIcon);
 	HICON icon = GetIcon(IDI_RAINMETER, true);
 	Static_SetIcon(item, icon);
 
-	item = GetDlgItem(m_Window, Id_VersionLabel);
+	item = GetControl(Id_VersionLabel);
 	WCHAR tmpSz[64];
 	_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
 	SetWindowText(item, tmpSz);
 
-	item = GetDlgItem(m_Window, Id_PathLabel);
+	item = GetControl(Id_PathLabel);
 	std::wstring text = L"Path: " + Rainmeter->GetPath();
 	SetWindowText(item, text.c_str());
 
-	item = GetDlgItem(m_Window, Id_IniFileLabel);
+	item = GetControl(Id_IniFileLabel);
 	text = L"IniFile: " + Rainmeter->GetIniFile();
 	SetWindowText(item, text.c_str());
 
-	item = GetDlgItem(m_Window, Id_SkinPathLabel);
+	item = GetControl(Id_SkinPathLabel);
 	text = L"SkinPath: " + Rainmeter->GetSkinPath();
 	SetWindowText(item, text.c_str());
 
