@@ -26,8 +26,6 @@
 #include "DialogAbout.h"
 #include "../Version.h"
 
-#define WM_DELAYED_CLOSE WM_APP + 0
-
 extern CRainmeter* Rainmeter;
 
 WINDOWPLACEMENT CDialogAbout::c_WindowPlacement = {0};
@@ -37,11 +35,7 @@ CDialogAbout* CDialogAbout::c_Dialog = NULL;
 ** Constructor.
 **
 */
-CDialogAbout::CDialogAbout(HWND wnd) : CDialog(wnd),
-	m_TabLog(wnd),
-	m_TabSkins(wnd),
-	m_TabPlugins(wnd),
-	m_TabVersion(wnd)
+CDialogAbout::CDialogAbout() : CDialog()
 {
 }
 
@@ -51,6 +45,33 @@ CDialogAbout::CDialogAbout(HWND wnd) : CDialog(wnd),
 */
 CDialogAbout::~CDialogAbout()
 {
+}
+
+/*
+** Opens the About dialog.
+**
+*/
+void CDialogAbout::Open(int tab)
+{
+	if (!c_Dialog)
+	{
+		c_Dialog = new CDialogAbout();
+	}
+
+	c_Dialog->ShowDialogWindow(
+		GetString(ID_STR_ABOUTRAINMETER),
+		0, 0, 400, 210,
+		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
+		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT,
+		Rainmeter->GetWindow());
+
+	// Fake WM_NOTIFY to change tab
+	NMHDR nm;
+	nm.code = TCN_SELCHANGE;
+	nm.idFrom = Id_Tab;
+	nm.hwndFrom = GetDlgItem(c_Dialog->m_Window, Id_Tab);
+	TabCtrl_SetCurSel(nm.hwndFrom, tab);
+	c_Dialog->OnNotify(0, (LPARAM)&nm);
 }
 
 /*
@@ -79,37 +100,6 @@ void CDialogAbout::Open(const WCHAR* name)
 	}
 
 	Open(tab);
-}
-
-/*
-** Opens the About dialog.
-**
-*/
-void CDialogAbout::Open(int tab)
-{
-	if (!c_Dialog)
-	{
-		HINSTANCE instance = Rainmeter->GetResourceInstance();
-		HWND owner = Rainmeter->GetWindow();
-		if (!CreateDialog(instance, MAKEINTRESOURCE(IDD_ABOUT_DIALOG), owner, DlgProc)) return;
-	}
-	else
-	{
-		if (!IsZoomed(c_Dialog->m_Window))
-		{
-			ShowWindow(c_Dialog->m_Window, SW_SHOWNORMAL);
-		}
-	}
-
-	SetForegroundWindow(c_Dialog->m_Window);
-
-	// Fake WM_NOTIFY to change tab
-	NMHDR nm;
-	nm.code = TCN_SELCHANGE;
-	nm.idFrom = IDC_ABOUT_TAB;
-	nm.hwndFrom = GetDlgItem(c_Dialog->m_Window, IDC_ABOUT_TAB);
-	TabCtrl_SetCurSel(nm.hwndFrom, tab);
-	c_Dialog->OnNotify(0, (LPARAM)&nm);
 }
 
 /*
@@ -150,7 +140,7 @@ void CDialogAbout::UpdateMeasures(CMeterWindow* meterWindow)
 
 CDialog::CTab& CDialogAbout::GetActiveTab()
 {
-	int sel = TabCtrl_GetCurSel(GetDlgItem(m_Window, IDC_ABOUT_TAB));
+	int sel = TabCtrl_GetCurSel(GetDlgItem(m_Window, Id_Tab));
 	if (sel == 0)
 	{
 		return m_TabLog;
@@ -169,84 +159,67 @@ CDialog::CTab& CDialogAbout::GetActiveTab()
 	}
 }
 
-/*
-** Dialog procedure for the About dialog.
-**
-*/
-INT_PTR CALLBACK CDialogAbout::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CDialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (!c_Dialog)
+	switch (uMsg)
 	{
-		if (uMsg == WM_INITDIALOG)
+	case WM_INITDIALOG:
+		return OnInitDialog(wParam, lParam);
+
+	case WM_ACTIVATE:
+		return OnActivate(wParam, lParam);
+
+	case WM_COMMAND:
+		return OnCommand(wParam, lParam);
+
+	case WM_NOTIFY:
+		return OnNotify(wParam, lParam);
+
+	case WM_GETMINMAXINFO:
 		{
-			c_Dialog = new CDialogAbout(hWnd);
-			return c_Dialog->OnInitDialog(wParam, lParam);
+			MINMAXINFO* mmi = (MINMAXINFO*)lParam;
+			mmi->ptMinTrackSize.x = 550;
+			mmi->ptMinTrackSize.y = 350;
 		}
-	}
-	else
-	{
-		switch (uMsg)
+		return TRUE;
+
+	case WM_SIZE:
 		{
-		case WM_ACTIVATE:
-			return c_Dialog->OnActivate(wParam, lParam);
-
-		case WM_COMMAND:
-			return c_Dialog->OnCommand(wParam, lParam);
-
-		case WM_NOTIFY:
-			return c_Dialog->OnNotify(wParam, lParam);
-
-		case WM_GETMINMAXINFO:
+			if (wParam != SIZE_MINIMIZED)
 			{
-				MINMAXINFO* mmi = (MINMAXINFO*)lParam;
-				mmi->ptMinTrackSize.x = 550;
-				mmi->ptMinTrackSize.y = 350;
+				int w = LOWORD(lParam);
+				int h = HIWORD(lParam);
+				RECT r;
+
+				HWND item = GetDlgItem(m_Window, Id_Tab);
+				SetWindowPos(item, NULL, 0, 0, w - 18, h - 47, SWP_NOMOVE | SWP_NOZORDER);
+
+				item = GetDlgItem(m_Window, Id_CloseButton);
+				GetClientRect(item, &r);
+				SetWindowPos(item, NULL, w - r.right - 9, h - r.bottom - 8, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+
+				w -= 48;
+				h -= 100;
+				m_TabLog.Resize(w, h);
+				m_TabSkins.Resize(w, h);
+				m_TabPlugins.Resize(w, h);
+				m_TabVersion.Resize(w, h);
 			}
-			return TRUE;
+		}
+		return TRUE;
 
-		case WM_SIZE:
-			{
-				if (wParam != SIZE_MINIMIZED)
-				{
-					int w = LOWORD(lParam);
-					int h = HIWORD(lParam);
-					RECT r;
-
-					HWND item = GetDlgItem(hWnd, IDC_ABOUT_TAB);
-					SetWindowPos(item, NULL, 0, 0, w - 18, h - 47, SWP_NOMOVE | SWP_NOZORDER);
-
-					item = GetDlgItem(hWnd, IDCLOSE);
-					GetClientRect(item, &r);
-					SetWindowPos(item, NULL, w - r.right - 9, h - r.bottom - 8, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
-					w -= 48;
-					h -= 100;
-					c_Dialog->m_TabLog.Resize(w, h);
-					c_Dialog->m_TabSkins.Resize(w, h);
-					c_Dialog->m_TabPlugins.Resize(w, h);
-					c_Dialog->m_TabVersion.Resize(w, h);
-				}
-			}
-			return TRUE;
-
-		case WM_CLOSE:
-			PostMessage(hWnd, WM_DELAYED_CLOSE, 0, 0);
-			return TRUE;
-
-		case WM_DESTROY:
-			delete c_Dialog;
-			c_Dialog = NULL;
-			return FALSE;
-
-		case WM_DELAYED_CLOSE:
-			GetWindowPlacement(hWnd, &c_WindowPlacement);
+	case WM_CLOSE:
+		{
+			GetWindowPlacement(m_Window, &c_WindowPlacement);
 			if (c_WindowPlacement.showCmd == SW_SHOWMINIMIZED)
 			{
 				c_WindowPlacement.showCmd = SW_SHOWNORMAL;
 			}
-			DestroyWindow(hWnd);
-			return TRUE;
+
+			delete c_Dialog;
+			c_Dialog = NULL;
 		}
+		return TRUE;
 	}
 
 	return FALSE;
@@ -254,13 +227,24 @@ INT_PTR CALLBACK CDialogAbout::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 
 INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
-	HWND item = GetDlgItem(m_Window, IDCLOSE);
-	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
+	static const ControlTemplate::Control s_Controls[] =
+	{
+		CT_TAB(Id_Tab, 0,
+			6, 6, 388, 181,
+			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, WS_EX_CONTROLPARENT),
+		CT_BUTTON(Id_CloseButton, ID_STR_CLOSE,
+			344, 191, 50, 14,
+			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0)
+	};
 
-	HICON hIcon = GetIcon(IDI_RAINMETER);
-	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+	CreateControls(s_Controls, _countof(s_Controls), m_Font, GetString);
 
-	item = GetDlgItem(m_Window, IDC_ABOUT_TAB);
+	HWND item = GetDlgItem(m_Window, Id_Tab);
+	m_TabLog.Create(item);
+	m_TabSkins.Create(item);
+	m_TabPlugins.Create(item);
+	m_TabVersion.Create(item);
+
 	TCITEM tci = {0};
 	tci.mask = TCIF_TEXT;
 	tci.pszText = GetString(ID_STR_LOG);
@@ -272,14 +256,17 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	tci.pszText = GetString(ID_STR_VERSION);
 	TabCtrl_InsertItem(item, 3, &tci);
 
+	HICON hIcon = GetIcon(IDI_RAINMETER);
+	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+
+	item = GetDlgItem(m_Window, Id_CloseButton);
+	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
+
 	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
-		// Use UI font (Segoe UI) on Vista+
-		SetDialogFont();
-
-		HWND item = GetDlgItem(m_TabLog.GetWindow(), IDC_ABOUTLOG_ITEMS_LISTVIEW);
+		item = GetDlgItem(m_TabLog.GetWindow(), CTabLog::Id_ItemsListView);
 		SetWindowTheme(item, L"explorer", NULL);
-		item = GetDlgItem(m_TabSkins.GetWindow(), IDC_ABOUTSKINS_ITEMS_LISTVIEW);
+		item = GetDlgItem(m_TabSkins.GetWindow(), CTabSkins::Id_ItemsListView);
 		SetWindowTheme(item, L"explorer", NULL);
 	}
 
@@ -288,18 +275,17 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 		c_WindowPlacement.length = sizeof(WINDOWPLACEMENT);
 		GetWindowPlacement(m_Window, &c_WindowPlacement);
 	}
-
 	SetWindowPlacement(m_Window, &c_WindowPlacement);
 
-	return FALSE;
+	return TRUE;
 }
 
 INT_PTR CDialogAbout::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
-	case IDCLOSE:
-		PostMessage(m_Window, WM_DELAYED_CLOSE, 0, 0);
+	case Id_CloseButton:
+		PostMessage(m_Window, WM_CLOSE, 0, 0);
 		break;
 
 	default:
@@ -314,7 +300,7 @@ INT_PTR CDialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 	LPNMHDR nm = (LPNMHDR)lParam;
 	switch (nm->idFrom)
 	{
-	case IDC_ABOUT_TAB:
+	case Id_Tab:
 		if (nm->code == TCN_SELCHANGE)
 		{
 			// Disable all tab windows first
@@ -344,12 +330,38 @@ INT_PTR CDialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 ** Constructor.
 **
 */
-CDialogAbout::CTabLog::CTabLog(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTLOG_DIALOG, DlgProc),
+CDialogAbout::CTabLog::CTabLog() : CTab(),
 	m_Error(true),
 	m_Warning(true),
 	m_Notice(true),
 	m_Debug(true)
 {
+}
+
+void CDialogAbout::CTabLog::Create(HWND owner)
+{
+	CTab::CreateTabWindow(9, 24, 370, 148, owner);
+
+	static const ControlTemplate::Control s_Controls[] =
+	{
+		CT_LISTVIEW(Id_ItemsListView, 0,
+			0, 0, 368, 135,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_ICON | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0),
+		CT_CHECKBOX(Id_ErrorCheckBox, ID_STR_ERROR,
+			0, 139, 70, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_CHECKBOX(Id_WarningCheckBox, ID_STR_WARNING,
+			70, 139, 70, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_CHECKBOX(Id_NoticeCheckBox, ID_STR_NOTICE,
+			140, 139, 70, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_CHECKBOX(Id_DebugCheckBox, ID_STR_DEBUG,
+			210, 139, 70, 9,
+			WS_VISIBLE | WS_TABSTOP, 0)
+	};
+
+	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
 }
 
 /*
@@ -359,7 +371,7 @@ CDialogAbout::CTabLog::CTabLog(HWND owner) : CTab(Rainmeter->GetResourceInstance
 void CDialogAbout::CTabLog::Initialize()
 {
 	// Add columns to the list view
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTLOG_ITEMS_LISTVIEW);
+	HWND item = GetDlgItem(m_Window, Id_ItemsListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	// Set folder/.ini icons for tree list
@@ -403,16 +415,16 @@ void CDialogAbout::CTabLog::Initialize()
 		AddItem((*iter).level, (*iter).timestamp.c_str(), (*iter).message.c_str());
 	}
 
-	item = GetDlgItem(m_Window, IDC_ABOUTLOG_ERROR_CHECKBOX);
+	item = GetDlgItem(m_Window, Id_ErrorCheckBox);
 	Button_SetCheck(item, BST_CHECKED);
 
-	item = GetDlgItem(m_Window, IDC_ABOUTLOG_WARNING_CHECKBOX);
+	item = GetDlgItem(m_Window, Id_WarningCheckBox);
 	Button_SetCheck(item, BST_CHECKED);
 
-	item = GetDlgItem(m_Window, IDC_ABOUTLOG_NOTICE_CHECKBOX);
+	item = GetDlgItem(m_Window, Id_NoticeCheckBox);
 	Button_SetCheck(item, BST_CHECKED);
 
-	item = GetDlgItem(m_Window, IDC_ABOUTLOG_DEBUG_CHECKBOX);
+	item = GetDlgItem(m_Window, Id_DebugCheckBox);
 	Button_SetCheck(item, BST_CHECKED);
 
 	m_Initialized = true;
@@ -427,21 +439,21 @@ void CDialogAbout::CTabLog::Resize(int w, int h)
 	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	RECT r;
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTLOG_ERROR_CHECKBOX);
+	HWND item = GetDlgItem(m_Window, Id_ErrorCheckBox);
 	GetClientRect(item, &r);
 
 	SetWindowPos(item, NULL, 0, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
-	item = GetDlgItem(m_Window, IDC_ABOUTLOG_WARNING_CHECKBOX);
+	item = GetDlgItem(m_Window, Id_WarningCheckBox);
 	SetWindowPos(item, NULL, r.right, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
-	item = GetDlgItem(m_Window, IDC_ABOUTLOG_NOTICE_CHECKBOX);
+	item = GetDlgItem(m_Window, Id_NoticeCheckBox);
 	SetWindowPos(item, NULL, r.right * 2, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
-	item = GetDlgItem(m_Window, IDC_ABOUTLOG_DEBUG_CHECKBOX);
+	item = GetDlgItem(m_Window, Id_DebugCheckBox);
 	SetWindowPos(item, NULL, r.right * 3, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
-	item = GetDlgItem(m_Window, IDC_ABOUTLOG_ITEMS_LISTVIEW);
+	item = GetDlgItem(m_Window, Id_ItemsListView);
 	SetWindowPos(item, NULL, 0, 0, w, h - r.bottom - 7, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust third colum
@@ -469,31 +481,31 @@ void CDialogAbout::CTabLog::AddItem(int level, LPCWSTR time, LPCWSTR message)
 	{
 	case LOG_ERROR:
 		if (!m_Error) return;
-		item = GetDlgItem(m_Window, IDC_ABOUTLOG_ERROR_CHECKBOX);
+		item = GetDlgItem(m_Window, Id_ErrorCheckBox);
 		vitem.iImage = 0;
 		break;
 
 	case LOG_WARNING:
 		if (!m_Warning) return;
-		item = GetDlgItem(m_Window, IDC_ABOUTLOG_WARNING_CHECKBOX);
+		item = GetDlgItem(m_Window, Id_WarningCheckBox);
 		vitem.iImage = 1;
 		break;
 
 	case LOG_NOTICE:
 		if (!m_Notice) return;
-		item = GetDlgItem(m_Window, IDC_ABOUTLOG_NOTICE_CHECKBOX);
+		item = GetDlgItem(m_Window, Id_NoticeCheckBox);
 		vitem.iImage = 2;
 		break;
 
 	case LOG_DEBUG:
 		if (!m_Debug) return;
-		item = GetDlgItem(m_Window, IDC_ABOUTLOG_DEBUG_CHECKBOX);
+		item = GetDlgItem(m_Window, Id_DebugCheckBox);
 		vitem.iImage = I_IMAGENONE;
 		break;
 	}
 
 	GetWindowText(item, buffer, 32);
-	item = GetDlgItem(m_Window, IDC_ABOUTLOG_ITEMS_LISTVIEW);
+	item = GetDlgItem(m_Window, Id_ItemsListView);
 	ListView_InsertItem(item, &vitem);
 	ListView_SetItemText(item, vitem.iItem, 1, (WCHAR*)time);
 	ListView_SetItemText(item, vitem.iItem, 2, (WCHAR*)message);
@@ -503,16 +515,15 @@ void CDialogAbout::CTabLog::AddItem(int level, LPCWSTR time, LPCWSTR message)
 	}
 }
 
-/*
-** Dialog procedure for the log dialog.
-**
-*/
-INT_PTR CALLBACK CDialogAbout::CTabLog::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CDialogAbout::CTabLog::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		return c_Dialog->m_TabLog.OnCommand(wParam, lParam);
+		return OnCommand(wParam, lParam);
+
+	case WM_NOTIFY:
+		return OnNotify(wParam, lParam);
 	}
 
 	return FALSE;
@@ -522,47 +533,31 @@ INT_PTR CDialogAbout::CTabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
-	case IDC_ABOUTLOG_ERROR_CHECKBOX:
+	case Id_ErrorCheckBox:
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
 			m_Error = !m_Error;
 		}
 		break;
 
-	case IDC_ABOUTLOG_WARNING_CHECKBOX:
+	case Id_WarningCheckBox:
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
 			m_Warning = !m_Warning;
 		}
 		break;
 
-	case IDC_ABOUTLOG_NOTICE_CHECKBOX:
+	case Id_NoticeCheckBox:
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
 			m_Notice = !m_Notice;
 		}
 		break;
 
-	case IDC_ABOUTLOG_DEBUG_CHECKBOX:
+	case Id_DebugCheckBox:
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
 			m_Debug = !m_Debug;
-		}
-		break;
-
-	case IDM_COPY:
-		{
-			HWND item = GetFocus();
-			if (item == GetDlgItem(m_Window, IDC_ABOUTLOG_ITEMS_LISTVIEW))
-			{
-				int sel = ListView_GetNextItem(item, -1, LVNI_FOCUSED | LVNI_SELECTED);
-				if (sel != -1)
-				{
-					std::wstring tmpSz(512, L'0');
-					ListView_GetItemText(item, sel, 2, &tmpSz[0], 512);
-					CSystem::SetClipboardText(tmpSz);
-				}
-			}
 		}
 		break;
 
@@ -571,6 +566,35 @@ INT_PTR CDialogAbout::CTabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 
 	return 0;
+}
+
+INT_PTR CDialogAbout::CTabLog::OnNotify(WPARAM wParam, LPARAM lParam)
+{
+	LPNMHDR nm = (LPNMHDR)lParam;
+	switch (nm->code)
+	{
+	case LVN_KEYDOWN:
+		{
+			NMLVKEYDOWN* lvkd = (NMLVKEYDOWN*)nm;
+			if (lvkd->wVKey == 0x43 && // C key.
+				IsCtrlKeyDown())
+			{
+				int sel = ListView_GetNextItem(nm->hwndFrom, -1, LVNI_FOCUSED | LVNI_SELECTED);
+				if (sel != -1)
+				{
+					std::wstring tmpSz(512, L'0');
+					ListView_GetItemText(nm->hwndFrom, sel, 2, &tmpSz[0], 512);
+					CSystem::SetClipboardText(tmpSz);
+				}
+			}
+		}
+		break;
+
+	default:
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -583,19 +607,32 @@ INT_PTR CDialogAbout::CTabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 ** Constructor.
 **
 */
-CDialogAbout::CTabSkins::CTabSkins(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTSKINS_DIALOG, DlgProc),
+CDialogAbout::CTabSkins::CTabSkins() : CTab(),
 	m_SkinWindow()
 {
 }
 
-/*
-** Called when tab is displayed.
-**
-*/
+void CDialogAbout::CTabSkins::Create(HWND owner)
+{
+	CTab::CreateTabWindow(9, 24, 370, 148, owner);
+
+	static const ControlTemplate::Control s_Controls[] =
+	{
+		CT_LISTBOX(Id_SkinsListBox, 0,
+			0, 0, 120, 148,
+			WS_VISIBLE | WS_TABSTOP | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE),
+		CT_LISTVIEW(Id_ItemsListView, 0,
+			125, 0, 242, 148,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0)
+	};
+
+	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
+}
+
 void CDialogAbout::CTabSkins::Initialize()
 {
 	// Add columns to the list view
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTVIEW);
+	HWND item = GetDlgItem(m_Window, Id_ItemsListView);
 	ListView_SetExtendedListViewStyleEx(item, 0, LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
 	LVGROUP lvg;
@@ -640,11 +677,11 @@ void CDialogAbout::CTabSkins::Resize(int w, int h)
 {
 	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTBOX);
+	HWND item = GetDlgItem(m_Window, Id_SkinsListBox);
 	int wList = (w < 650) ? (w - 373) : 277;
 	SetWindowPos(item, NULL, 0, 0, wList, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTVIEW);
+	item = GetDlgItem(m_Window, Id_ItemsListView);
 	SetWindowPos(item, NULL, (w < 650) ? (w - 365) : 285, 0, w - wList - 10, h, SWP_NOZORDER);
 
 	// Adjust third column
@@ -661,7 +698,7 @@ void CDialogAbout::CTabSkins::Resize(int w, int h)
 void CDialogAbout::CTabSkins::UpdateSkinList()
 {
 	// Delete all entries
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTBOX);
+	HWND item = GetDlgItem(m_Window, Id_SkinsListBox);
 	ListBox_ResetContent(item);
 
 	// Add entries for each skin
@@ -695,7 +732,7 @@ void CDialogAbout::CTabSkins::UpdateSkinList()
 		if (windows.empty())
 		{
 			m_SkinWindow = NULL;
-			item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTVIEW);
+			item = GetDlgItem(m_Window, Id_ItemsListView);
 			ListView_DeleteAllItems(item);
 		}
 		else
@@ -717,7 +754,7 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 	if (!meterWindow)
 	{
 		// Find selected skin
-		HWND item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTBOX);
+		HWND item = GetDlgItem(m_Window, Id_SkinsListBox);
 		int selected = (int)SendMessage(item, LB_GETCURSEL, NULL, NULL);
 
 		const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
@@ -736,7 +773,7 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 		return;
 	}
 
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTVIEW);
+	HWND item = GetDlgItem(m_Window, Id_ItemsListView);
 	SendMessage(item, WM_SETREDRAW, FALSE, 0);
 	int count = ListView_GetItemCount(item);
 
@@ -836,16 +873,15 @@ int CALLBACK CDialogAbout::CTabSkins::ListSortProc(LPARAM lParam1, LPARAM lParam
 	return wcscmp((const WCHAR*)lParam1, (const WCHAR*)lParam2);
 }
 
-/*
-** Dialog procedure for the measures dialog.
-**
-*/
-INT_PTR CALLBACK CDialogAbout::CTabSkins::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CDialogAbout::CTabSkins::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		return c_Dialog->m_TabSkins.OnCommand(wParam, lParam);
+		return OnCommand(wParam, lParam);
+
+	case WM_NOTIFY:
+		return OnNotify(wParam, lParam);
 	}
 
 	return FALSE;
@@ -855,7 +891,7 @@ INT_PTR CDialogAbout::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
-	case IDC_ABOUTSKINS_ITEMS_LISTBOX:
+	case Id_SkinsListBox:
 		if (HIWORD(wParam) == LBN_SELCHANGE)
 		{
 			UpdateMeasureList(NULL);
@@ -865,7 +901,7 @@ INT_PTR CDialogAbout::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case IDM_COPY:
 		{
 			HWND item = GetFocus();
-			if (item == GetDlgItem(m_Window, IDC_ABOUTSKINS_ITEMS_LISTVIEW))
+			if (item == GetDlgItem(m_Window, Id_ItemsListView))
 			{
 				int sel = ListView_GetNextItem(item, -1, LVNI_FOCUSED | LVNI_SELECTED);
 				if (sel != -1)
@@ -885,28 +921,62 @@ INT_PTR CDialogAbout::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+INT_PTR CDialogAbout::CTabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
+{
+	LPNMHDR nm = (LPNMHDR)lParam;
+	switch (nm->code)
+	{
+	case LVN_KEYDOWN:
+		{
+			NMLVKEYDOWN* lvkd = (NMLVKEYDOWN*)nm;
+			if (lvkd->wVKey == 0x43 && IsCtrlKeyDown()) // CTRL + C.
+			{
+				int sel = ListView_GetNextItem(nm->hwndFrom, -1, LVNI_FOCUSED | LVNI_SELECTED);
+				if (sel != -1)
+				{
+					std::wstring tmpSz(512, L'0');
+					ListView_GetItemText(nm->hwndFrom, sel, 2, &tmpSz[0], 512);
+					CSystem::SetClipboardText(tmpSz);
+				}
+			}
+		}
+		break;
+
+	default:
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 // -----------------------------------------------------------------------------------------------
 //
 //                                Plugins tab
 //
 // -----------------------------------------------------------------------------------------------
 
-/*
-** Constructor.
-**
-*/
-CDialogAbout::CTabPlugins::CTabPlugins(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTPLUGINS_DIALOG, DlgProc)
+CDialogAbout::CTabPlugins::CTabPlugins() : CTab()
 {
 }
 
-/*
-** Called when tab is displayed.
-**
-*/
+void CDialogAbout::CTabPlugins::Create(HWND owner)
+{
+	CTab::CreateTabWindow(9, 24, 370, 148, owner);
+
+	static const ControlTemplate::Control s_Controls[] =
+	{
+		CT_LISTVIEW(Id_ItemsListView, 0,
+			0, 0, 368, 148,
+			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0)
+	};
+
+	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
+}
+
 void CDialogAbout::CTabPlugins::Initialize()
 {
 	// Add columns to the list view
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTPLUGINS_ITEMS_LISTVIEW);
+	HWND item = GetDlgItem(m_Window, Id_ItemsListView);
 
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
@@ -1053,7 +1123,7 @@ void CDialogAbout::CTabPlugins::Resize(int w, int h)
 {
 	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTPLUGINS_ITEMS_LISTVIEW);
+	HWND item = GetDlgItem(m_Window, Id_ItemsListView);
 	SetWindowPos(item, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust third colum
@@ -1061,15 +1131,6 @@ void CDialogAbout::CTabPlugins::Resize(int w, int h)
 	lvc.mask = LVCF_WIDTH;
 	lvc.cx = w - 242;
 	ListView_SetColumn(item, 2, &lvc);
-}
-
-/*
-** Dialog procedure for the Plugins tab.
-**
-*/
-INT_PTR CALLBACK CDialogAbout::CTabPlugins::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	return FALSE;
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -1082,34 +1143,68 @@ INT_PTR CALLBACK CDialogAbout::CTabPlugins::DlgProc(HWND hWnd, UINT uMsg, WPARAM
 ** Constructor.
 **
 */
-CDialogAbout::CTabVersion::CTabVersion(HWND owner) : CTab(Rainmeter->GetResourceInstance(), owner, IDD_ABOUTVERSION_DIALOG, DlgProc)
+CDialogAbout::CTabVersion::CTabVersion() : CTab()
 {
 }
 
-/*
-** Called when tab is displayed.
-**
-*/
+void CDialogAbout::CTabVersion::Create(HWND owner)
+{
+	CTab::CreateTabWindow(9, 24, 370, 148, owner);
+
+	// FIXME: Temporary hack.
+	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
+
+	const ControlTemplate::Control s_Controls[] =
+	{
+		CT_ICON(Id_AppIcon, 0,
+			0, 8, 24, 24,
+			WS_VISIBLE, 0),
+		CT_LABEL(Id_VersionLabel, 0,
+			28, 0, 300, 9,
+			WS_VISIBLE, 0),
+		CT_LINKLABEL(Id_HomeLink, ID_STR_GETLATESTVERSION,
+			28, 13, 300, 9,
+			WS_VISIBLE, 0),
+		CT_LINKLABEL(Id_LicenseLink, ID_STR_COPYRIGHTNOTICE,
+			28, 26, 300, 9,
+			WS_VISIBLE, 0),
+		CT_LABEL(Id_PathLabel, 0,
+			0, 43, 360, 9,
+			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
+		CT_LABEL(Id_IniFileLabel, 0,
+			0, 56, 360, 9,
+			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
+		CT_LABEL(Id_SkinPathLabel, 0,
+			0, 69, 360, 9,
+			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
+		CT_BUTTON(Id_CopyButton, ID_STR_COPYTOCLIPBOARD,
+			0, 85, buttonWidth + 25, 14,
+			WS_VISIBLE | WS_TABSTOP, 0)
+	};
+
+	CreateControls(s_Controls, _countof(s_Controls), c_Dialog->m_Font, GetString);
+}
+
 void CDialogAbout::CTabVersion::Initialize()
 {
-	HWND item = GetDlgItem(m_Window, IDC_ABOUTVERSION_RAINMETER_ICON);
+	HWND item = GetDlgItem(m_Window, Id_AppIcon);
 	HICON icon = GetIcon(IDI_RAINMETER, true);
 	Static_SetIcon(item, icon);
 
-	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_VERSION_TEXT);
+	item = GetDlgItem(m_Window, Id_VersionLabel);
 	WCHAR tmpSz[64];
 	_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
 	SetWindowText(item, tmpSz);
 
-	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_PATH_TEXT);
+	item = GetDlgItem(m_Window, Id_PathLabel);
 	std::wstring text = L"Path: " + Rainmeter->GetPath();
 	SetWindowText(item, text.c_str());
 
-	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_INIFILE_TEXT);
+	item = GetDlgItem(m_Window, Id_IniFileLabel);
 	text = L"IniFile: " + Rainmeter->GetIniFile();
 	SetWindowText(item, text.c_str());
 
-	item = GetDlgItem(m_Window, IDC_ABOUTVERSION_SKINPATH_TEXT);
+	item = GetDlgItem(m_Window, Id_SkinPathLabel);
 	text = L"SkinPath: " + Rainmeter->GetSkinPath();
 	SetWindowText(item, text.c_str());
 
@@ -1125,19 +1220,15 @@ void CDialogAbout::CTabVersion::Resize(int w, int h)
 	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 }
 
-/*
-** Dialog procedure for the Version tab.
-**
-*/
-INT_PTR CALLBACK CDialogAbout::CTabVersion::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CDialogAbout::CTabVersion::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		return c_Dialog->m_TabVersion.OnCommand(wParam, lParam);
+		return OnCommand(wParam, lParam);
 
 	case WM_NOTIFY:
-		return c_Dialog->m_TabVersion.OnNotify(wParam, lParam);
+		return OnNotify(wParam, lParam);
 	}
 
 	return FALSE;
@@ -1147,7 +1238,7 @@ INT_PTR CDialogAbout::CTabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
-	case IDC_ABOUTVERSION_COPY_BUTTON:
+	case Id_CopyButton:
 		{
 			WCHAR tmpSz[64];
 			int len = _snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
@@ -1175,7 +1266,14 @@ INT_PTR CDialogAbout::CTabVersion::OnNotify(WPARAM wParam, LPARAM lParam)
 	switch (nm->code)
 	{
 	case NM_CLICK:
-		RunFile(((PNMLINK)lParam)->item.szUrl);
+		if (nm->idFrom == Id_HomeLink)
+		{
+			RunFile(L"http://rainmeter.net");
+		}
+		else if (nm->idFrom == Id_HomeLink)
+		{
+			RunFile(L"http://gnu.org/licenses");
+		}
 		break;
 
 	default:

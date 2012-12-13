@@ -19,15 +19,14 @@
 #ifndef __DIALOGMANAGE_H__
 #define __DIALOGMANAGE_H__
 
-#include "Dialog.h"
+#include "../Common/Dialog.h"
 
 class CDialogManage : public CDialog
 {
 public:
-	CDialogManage(HWND window);
+	CDialogManage();
 	virtual ~CDialogManage();
 
-	static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
@@ -42,24 +41,55 @@ public:
 	static CDialogManage* c_Dialog;
 
 protected:
-	virtual HWND GetActiveWindow() { return GetActiveTab().GetWindow(); }
+	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
 	// Skins tab
 	class CTabSkins : public CTab
 	{
 	public:
-		CTabSkins(HWND owner);
+		enum Id
+		{
+			Id_ActiveSkinsButton = 100,
+			Id_SkinsTreeView,
+			Id_CreateSkinPackageButton,
+			Id_FileLabel,
+			Id_ConfigLabel,
+			Id_LoadButton,
+			Id_RefreshButton,
+			Id_EditButton,
+			Id_AuthorLabel,
+			Id_VersionLabel,
+			Id_LicenseLabel,
+			Id_DescriptionLabel,
+			Id_AddMetadataLink,
+			Id_XPositionEdit,
+			Id_YPositionEdit,
+			Id_ZPositionDropDownList,
+			Id_LoadOrderEdit,
+			Id_OnHoverDropDownList,
+			Id_TransparencyDropDownList,
+			Id_DisplayMonitorButton,
+			Id_DraggableCheckBox,
+			Id_ClickThroughCheckBox,
+			Id_KeepOnScreenCheckBox,
+			Id_SavePositionCheckBox,
+			Id_SnapToEdgesCheckBox
+		};
 
+		CTabSkins();
+
+		void Create(HWND owner);
 		virtual void Initialize();
-
-		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
-		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 		void Update(CMeterWindow* meterWindow, bool deleted);
 
 		static void SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR name);
+
+	protected:
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 	private:
 		void SetControls();
@@ -80,11 +110,26 @@ private:
 	class CTabLayouts : public CTab
 	{
 	public:
-		CTabLayouts(HWND owner);
+		enum Id
+		{
+			Id_List = 100,
+			Id_LoadButton,
+			Id_DeleteButton,
+			Id_EditButton,
+			Id_SaveButton,
+			Id_SaveEmptyThemeCheckBox,
+			Id_ExcludeUnusedSkinsCheckBox,
+			Id_IncludeWallpaperCheckBox,
+			Id_NameLabel
+		};
 
+		CTabLayouts();
+
+		void Create(HWND owner);
 		virtual void Initialize();
 
-		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	protected:
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	};
 	
@@ -92,12 +137,39 @@ private:
 	class CTabSettings : public CTab
 	{
 	public:
-		CTabSettings(HWND owner);
+		enum Id
+		{
+			Id_CheckForUpdatesCheckBox = 100,
+			Id_LockSkinsCheckBox,
+			Id_ResetStatisticsButton,
+			Id_LogToFileCheckBox,
+			Id_VerboseLoggingCheckbox,
+			Id_ShowLogFileButton,
+			Id_DeleteLogFileButton,
+			Id_LanguageDropDownList,
+			Id_EditorEdit,
+			Id_EditorBrowseButton,
+			Id_ShowTrayIconCheckBox
+		};
 
+		CTabSettings();
+
+		void Create(HWND owner);
 		virtual void Initialize();
 
-		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	protected:
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+	};
+
+	enum Id
+	{
+		Id_CloseButton = IDCLOSE,
+		Id_Tab = 100,
+		Id_RefreshAllButton,
+		Id_EditSettingsButton,
+		Id_OpenLogButton,
+		Id_HelpButton
 	};
 
 	CTab& GetActiveTab();
@@ -108,4 +180,3 @@ private:
 };
 
 #endif
-

@@ -306,9 +306,6 @@
     <ClCompile Include="pcre-8.10\pcre_xclass.c">
       <Filter>pcre</Filter>
     </ClCompile>
-    <ClCompile Include="Dialog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="DialogAbout.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -323,6 +320,12 @@
     </ClCompile>
     <ClCompile Include="Mouse.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Dialog.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\ControlTemplate.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\Common\MenuTemplate.cpp">
       <Filter>Common</Filter>
@@ -533,9 +536,6 @@
     <ClInclude Include="pcre-8.10\ucp.h">
       <Filter>pcre</Filter>
     </ClInclude>
-    <ClInclude Include="Dialog.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DialogAbout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -559,6 +559,12 @@
     </ClInclude>
     <ClInclude Include="Section.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Dialog.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\ControlTemplate.h">
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\MenuTemplate.h">
       <Filter>Common</Filter>

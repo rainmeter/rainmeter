@@ -19,21 +19,20 @@
 #ifndef __DIALOGABOUT_H__
 #define __DIALOGABOUT_H__
 
-#include "Dialog.h"
+#include "../Common/Dialog.h"
 
 class CDialogAbout : public CDialog
 {
 public:
-	CDialogAbout(HWND window);
+	CDialogAbout();
 	virtual ~CDialogAbout();
 
-	static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
-	static void Open(const WCHAR* name);
 	static void Open(int tab = 0);
+	static void Open(const WCHAR* name);
 	static void ShowAboutLog();
 
 	static void AddLogItem(int level, LPCWSTR time, LPCWSTR message);
@@ -44,22 +43,34 @@ public:
 	static CDialogAbout* c_Dialog;
 
 protected:
-	virtual HWND GetActiveWindow() { return GetActiveTab().GetWindow(); }
+	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
 	// Log tab
 	class CTabLog : public CTab
 	{
 	public:
-		CTabLog(HWND owner);
+		enum Id
+		{
+			Id_ItemsListView = 100,
+			Id_ErrorCheckBox,
+			Id_WarningCheckBox,
+			Id_NoticeCheckBox,
+			Id_DebugCheckBox
+		};
 
+		CTabLog();
+
+		void Create(HWND owner);
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
 
-		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
-
 		void AddItem(int level, LPCWSTR time, LPCWSTR message);
+
+	protected:
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
 	private:
 		bool m_Error;
@@ -72,16 +83,25 @@ private:
 	class CTabSkins : public CTab
 	{
 	public:
-		CTabSkins(HWND owner);
+		enum Id
+		{
+			Id_SkinsListBox = 100,
+			Id_ItemsListView
+		};
 
+		CTabSkins();
+
+		void Create(HWND owner);
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
-
-		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	
 		void UpdateSkinList();
 		void UpdateMeasureList(CMeterWindow* meterWindow);
+
+	protected:
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
 	private:
 		static int CALLBACK ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
@@ -93,12 +113,16 @@ private:
 	class CTabPlugins : public CTab
 	{
 	public:
-		CTabPlugins(HWND owner);
+		enum Id
+		{
+			Id_ItemsListView = 100
+		};
 
+		CTabPlugins();
+
+		void Create(HWND owner);
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
-
-		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	private:
 		typedef LPCTSTR (*GETPLUGINAUTHOR)();
@@ -109,14 +133,34 @@ private:
 	class CTabVersion : public CTab
 	{
 	public:
-		CTabVersion(HWND owner);
+		enum Id
+		{
+			Id_AppIcon = 100,
+			Id_VersionLabel,
+			Id_HomeLink,
+			Id_LicenseLink,
+			Id_PathLabel,
+			Id_IniFileLabel,
+			Id_SkinPathLabel,
+			Id_CopyButton
+		};
 
+		CTabVersion();
+
+		void Create(HWND owner);
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
 
-		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	protected:
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+	};
+
+	enum Id
+	{
+		Id_CloseButton = IDCLOSE,
+		Id_Tab = 100
 	};
 
 	CTab& GetActiveTab();

@@ -185,11 +185,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Common\ControlTemplate.cpp" />
+    <ClCompile Include="..\Common\Dialog.cpp" />
     <ClCompile Include="..\Common\MenuTemplate.cpp" />
     <ClCompile Include="ConfigParser.cpp">
-      <PrecompiledHeader>Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="Dialog.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="DialogAbout.cpp">
@@ -391,9 +390,10 @@
     <ResourceCompile Include="Library.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\ControlTemplate.h" />
+    <ClInclude Include="..\Common\Dialog.h" />
     <ClInclude Include="..\Common\MenuTemplate.h" />
     <ClInclude Include="ConfigParser.h" />
-    <ClInclude Include="Dialog.h" />
     <ClInclude Include="DialogAbout.h" />
     <ClInclude Include="DisableThreadLibraryCalls.h" />
     <ClInclude Include="Error.h" />

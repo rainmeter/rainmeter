@@ -1107,8 +1107,6 @@ int CRainmeter::MessagePump()
 	MSG msg;
 	BOOL ret;
 
-	HACCEL hAccel = LoadAccelerators(m_Instance, MAKEINTRESOURCE(IDR_DIALOG_ACCELERATORS));
-
 	// Run the standard window message loop
 	while ((ret = GetMessage(&msg, NULL, 0, 0)) != 0)
 	{
@@ -1116,9 +1114,8 @@ int CRainmeter::MessagePump()
 		{
 			break;
 		}
-		else if (!CDialog::GetActiveDialogWindow() ||
-			!TranslateAccelerator(CDialog::GetActiveTabWindow(), hAccel, &msg) ||
-			!IsDialogMessage(CDialog::GetActiveDialogWindow(), &msg))
+
+		if (!CDialog::HandleMessage(msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
