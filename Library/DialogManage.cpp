@@ -1951,10 +1951,10 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 				Rainmeter->m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
 				Rainmeter->m_ResourceLCID = lcid;
 
-				if (CDialogAbout::c_Dialog)
+				if (CDialogAbout::GetDialog())
 				{
-					int sel = TabCtrl_GetCurSel(CDialogAbout::c_Dialog->GetControl(CDialogManage::Id_Tab));
-					SendMessage(CDialogAbout::c_Dialog->GetWindow(), WM_CLOSE, 0, 0);
+					int sel = TabCtrl_GetCurSel(CDialogAbout::GetDialog()->GetControl(CDialogManage::Id_Tab));
+					SendMessage(CDialogAbout::GetDialog()->GetWindow(), WM_CLOSE, 0, 0);
 					if (sel == 0)
 					{
 						Rainmeter->DelayedExecuteCommand(L"!About");

@@ -27,9 +27,7 @@ public:
 	CDialogAbout();
 	virtual ~CDialogAbout();
 
-	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
-	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
-	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+	static CDialog* GetDialog() { return c_Dialog; }
 
 	static void Open(int tab = 0);
 	static void Open(const WCHAR* name);
@@ -39,11 +37,11 @@ public:
 	static void UpdateSkins();
 	static void UpdateMeasures(CMeterWindow* meterWindow);
 
-	static WINDOWPLACEMENT c_WindowPlacement;
-	static CDialogAbout* c_Dialog;
-
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
+	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
+	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 private:
 	// Log tab
@@ -169,6 +167,9 @@ private:
 	CTabSkins m_TabSkins;
 	CTabPlugins m_TabPlugins;
 	CTabVersion m_TabVersion;
+
+	static WINDOWPLACEMENT c_WindowPlacement;
+	static CDialogAbout* c_Dialog;
 };
 
 #endif
