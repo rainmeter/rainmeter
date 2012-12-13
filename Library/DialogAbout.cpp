@@ -620,7 +620,7 @@ void CDialogAbout::CTabSkins::Create(HWND owner)
 	{
 		CT_LISTBOX(Id_SkinsListBox, 0,
 			0, 0, 120, 148,
-			WS_VISIBLE | WS_TABSTOP | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE),
+			WS_VISIBLE | WS_TABSTOP | LBS_NOTIFY | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL, WS_EX_CLIENTEDGE),
 		CT_LISTVIEW(Id_ItemsListView, 0,
 			125, 0, 242, 148,
 			WS_VISIBLE | WS_TABSTOP | WS_BORDER | LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER, 0)
@@ -895,22 +895,6 @@ INT_PTR CDialogAbout::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (HIWORD(wParam) == LBN_SELCHANGE)
 		{
 			UpdateMeasureList(NULL);
-		}
-		break;
-
-	case IDM_COPY:
-		{
-			HWND item = GetFocus();
-			if (item == GetControl(Id_ItemsListView))
-			{
-				int sel = ListView_GetNextItem(item, -1, LVNI_FOCUSED | LVNI_SELECTED);
-				if (sel != -1)
-				{
-					std::wstring tmpSz(512, L'0');
-					ListView_GetItemText(item, sel, 2, &tmpSz[0], 512);
-					CSystem::SetClipboardText(tmpSz);
-				}
-			}
 		}
 		break;
 
