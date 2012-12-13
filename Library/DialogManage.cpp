@@ -188,9 +188,6 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	const ControlTemplate::Control s_Controls[] =
 	{
-		CT_TAB(Id_Tab, 0,
-			6, 6, 488, 293,
-			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, WS_EX_CONTROLPARENT),
 		CT_BUTTON(Id_RefreshAllButton, ID_STR_REFRESHALL,
 			5, 303, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
@@ -205,15 +202,18 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_CloseButton, ID_STR_CLOSE,
 			444, 303, 50, 14,
-			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0)
+			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
+		CT_TAB(Id_Tab, 0,
+			6, 6, 488, 293,
+			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)  // Last for correct tab order.
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), m_Font, GetString);
 
 	HWND item = GetControl(Id_Tab);
-	m_TabSkins.Create(item);
-	m_TabLayouts.Create(item);
-	m_TabSettings.Create(item);
+	m_TabSkins.Create(m_Window);
+	m_TabLayouts.Create(m_Window);
+	m_TabSettings.Create(m_Window);
 
 	TCITEM tci = {0};
 	tci.mask = TCIF_TEXT;
@@ -344,7 +344,7 @@ CDialogManage::CTabSkins::CTabSkins() : CTab(),
 
 void CDialogManage::CTabSkins::Create(HWND owner)
 {
-	CTab::CreateTabWindow(9, 24, 470, 260, owner);
+	CTab::CreateTabWindow(15, 30, 470, 260, owner);
 
 	// FIXME: Temporary hack.
 	short labelWidth = (short)_wtoi(GetString(ID_STR_NUM_LABELWIDTH));
@@ -1494,7 +1494,7 @@ CDialogManage::CTabLayouts::CTabLayouts() : CTab()
 
 void CDialogManage::CTabLayouts::Create(HWND owner)
 {
-	CTab::CreateTabWindow(9, 24, 470, 260, owner);
+	CTab::CreateTabWindow(15, 30, 470, 260, owner);
 
 	static const ControlTemplate::Control s_Controls[] =
 	{
@@ -1796,7 +1796,7 @@ CDialogManage::CTabSettings::CTabSettings() : CTab()
 
 void CDialogManage::CTabSettings::Create(HWND owner)
 {
-	CTab::CreateTabWindow(9, 24, 470, 260, owner);
+	CTab::CreateTabWindow(15, 30, 470, 260, owner);
 
 	// FIXME: Temporary hack.
 	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));

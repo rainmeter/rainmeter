@@ -229,21 +229,21 @@ INT_PTR CDialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	static const ControlTemplate::Control s_Controls[] =
 	{
-		CT_TAB(Id_Tab, 0,
-			6, 6, 388, 181,
-			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, WS_EX_CONTROLPARENT),
 		CT_BUTTON(Id_CloseButton, ID_STR_CLOSE,
 			344, 191, 50, 14,
-			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0)
+			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
+		CT_TAB(Id_Tab, 0,
+			6, 6, 388, 181,
+			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)  // Last for correct tab order.
 	};
 
 	CreateControls(s_Controls, _countof(s_Controls), m_Font, GetString);
 
 	HWND item = GetControl(Id_Tab);
-	m_TabLog.Create(item);
-	m_TabSkins.Create(item);
-	m_TabPlugins.Create(item);
-	m_TabVersion.Create(item);
+	m_TabLog.Create(m_Window);
+	m_TabSkins.Create(m_Window);
+	m_TabPlugins.Create(m_Window);
+	m_TabVersion.Create(m_Window);
 
 	TCITEM tci = {0};
 	tci.mask = TCIF_TEXT;
@@ -340,7 +340,7 @@ CDialogAbout::CTabLog::CTabLog() : CTab(),
 
 void CDialogAbout::CTabLog::Create(HWND owner)
 {
-	CTab::CreateTabWindow(9, 24, 370, 148, owner);
+	CTab::CreateTabWindow(15, 30, 370, 148, owner);
 
 	static const ControlTemplate::Control s_Controls[] =
 	{
@@ -614,7 +614,7 @@ CDialogAbout::CTabSkins::CTabSkins() : CTab(),
 
 void CDialogAbout::CTabSkins::Create(HWND owner)
 {
-	CTab::CreateTabWindow(9, 24, 370, 148, owner);
+	CTab::CreateTabWindow(15, 30, 370, 148, owner);
 
 	static const ControlTemplate::Control s_Controls[] =
 	{
@@ -961,7 +961,7 @@ CDialogAbout::CTabPlugins::CTabPlugins() : CTab()
 
 void CDialogAbout::CTabPlugins::Create(HWND owner)
 {
-	CTab::CreateTabWindow(9, 24, 370, 148, owner);
+	CTab::CreateTabWindow(15, 30, 370, 148, owner);
 
 	static const ControlTemplate::Control s_Controls[] =
 	{
@@ -1149,7 +1149,7 @@ CDialogAbout::CTabVersion::CTabVersion() : CTab()
 
 void CDialogAbout::CTabVersion::Create(HWND owner)
 {
-	CTab::CreateTabWindow(9, 24, 370, 148, owner);
+	CTab::CreateTabWindow(15, 30, 370, 148, owner);
 
 	// FIXME: Temporary hack.
 	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
