@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
+using Microsoft.Build.Utilities;
 
 namespace DllExporter
 {
@@ -33,8 +34,24 @@ namespace DllExporter
             string targetDllName = targetDirectory + args[3];
             string targetIlName = targetDllName + ".il";
             string targetResName = targetDllName + ".res";
-            string ilasmPath = args[4];
-            string ildasmPath = args[5];
+
+            string ilasmPath = ToolLocationHelper.GetPathToDotNetFrameworkFile("ilasm.exe", TargetDotNetFrameworkVersion.Version20);
+            if (!System.IO.File.Exists(ilasmPath))
+            {
+                Console.WriteLine("DllExporter error: ilasm.exe not found");
+                return 1;
+            }
+
+            string ildasmPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\Microsoft SDKs\Windows\v7.0A\Bin\ildasm.exe");
+            if (!System.IO.File.Exists(ildasmPath))
+            {
+                ildasmPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles(x86)%\Microsoft SDKs\Windows\v7.0A\Bin\ildasm.exe");
+                if (!System.IO.File.Exists(ildasmPath))
+                {
+                    Console.WriteLine("DllExporter error: ildasm.exe not found");
+                    return 1;
+                }
+            }
 
             System.IO.Directory.SetCurrentDirectory(targetDirectory);
 
