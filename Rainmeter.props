@@ -23,17 +23,21 @@
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v110_xp</PlatformToolset>
   </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
+
   <PropertyGroup Condition="'$(Platform)'=='Win32'">
     <OutDir>$(SolutionDir)TestBench\x32\$(Configuration)\</OutDir>
     <IntDir>.\x32\$(Configuration)\</IntDir>
   </PropertyGroup>
+
   <PropertyGroup Condition="'$(Platform)'=='x64'">
     <OutDir>$(SolutionDir)TestBench\x64\$(Configuration)\</OutDir>
     <IntDir>.\x64\$(Configuration)\</IntDir>

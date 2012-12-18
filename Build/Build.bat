@@ -92,11 +92,11 @@ echo * Starting build for %VERSION%
 
 :: Build Library
 echo * Building 32-bit projects
-"msbuild.exe" /t:rebuild /p:Configuration=Release;Platform=Win32 /m ..\Rainmeter.sln > "BuildLog.txt"
+"msbuild.exe" /t:rebuild /p:Configuration=Release;Platform=Win32 /v:q /m ..\Rainmeter.sln > "BuildLog.txt"
 if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Build failed & goto END
 
 echo * Building 64-bit projects
-"msbuild.exe" /t:rebuild /p:Configuration=Release;Platform=x64 /m ..\Rainmeter.sln > "BuildLog.txt"
+"msbuild.exe" /t:rebuild /p:Configuration=Release;Platform=x64 /v:q /m ..\Rainmeter.sln > "BuildLog.txt"
 if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Build failed & goto END
 
 :BUILDLANGUAGES
@@ -110,7 +110,7 @@ for /f "tokens=1,2,3 delims=," %%a in (..\Language\List) do (
 	>>".\Installer\Languages.nsh" echo ${IncludeLanguage} "%%b" "%%a"
 	set LANGUAGES='%%a -  ${LANGFILE_%%b_NAME}' '${LANG_%%b}' '${LANG_%%b_CP}' !LANGUAGES!
 
-	"msbuild.exe" /t:Language /p:Configuration=Release;Platform=Win32;TargetName=%%c ..\Rainmeter.sln > "BuildLog.txt"
+	"msbuild.exe" /t:Language /p:Configuration=Release;Platform=Win32;TargetName=%%c /v:q ..\Rainmeter.sln > "BuildLog.txt"
 	if not %ERRORLEVEL% == 0 echo   ERROR: Building language %%a failed & goto END
 )
 >>".\Installer\Languages.nsh" echo ^^!define LANGUAGES "%LANGUAGES%"
