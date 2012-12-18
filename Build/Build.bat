@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-set VCVARSALL=%PROGRAMFILES%\Microsoft Visual Studio 10.0\VC\vcvarsall.bat
+set VCVARSALL=%PROGRAMFILES%\Microsoft Visual Studio 11.0\VC\vcvarsall.bat
 set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
 set SUBWCREV=%PROGRAMFILES%\TortoiseSVN\bin\SubWCRev.exe
 set GIT=%PROGRAMFILES%\Git\bin\git.exe

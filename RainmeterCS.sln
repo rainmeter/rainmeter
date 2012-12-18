@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C# Express 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DllExporter", "Plugins\API\DllExporter\DllExporter.csproj", "{49D56CA5-54AB-45C9-A245-EAE588FCBFE1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginInputText", "Plugins\PluginInputText\PluginInputText.csproj", "{2CFEC79A-E39E-4FFD-ABC2-C4A69DD1E44D}"

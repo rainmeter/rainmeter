@@ -1,5 +1,6 @@
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C++ Express 2010
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Application", "Application\Application.vcxproj", "{D2A0903C-E760-4134-AE61-3D55BF8F760C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Language", "Language\Language.vcxproj", "{6BE6F228-B741-4DA9-9FBC-E9F2A7BD483A}"
