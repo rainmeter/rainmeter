@@ -215,14 +215,11 @@ bool CMeterLine::Update()
 
 		if (maxSize > 0)
 		{
+			int allValuesSize = (int)m_AllValues.size();
 			int counter = 0;
-			std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
-			for ( ; i != m_Measures.end(); ++i)
+			for (auto i = m_Measures.cbegin(); counter < allValuesSize && i != m_Measures.cend(); ++i, ++counter)
 			{
-				double value = (*i)->GetValue();
-
-				m_AllValues[counter][m_CurrentPos] = value;
-				++counter;
+				m_AllValues[counter][m_CurrentPos] = (*i)->GetValue();
 			}
 
 			++m_CurrentPos;
