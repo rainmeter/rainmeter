@@ -7,9 +7,6 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(SolutionDir)\Rainmeter.props" />
-  <PropertyGroup>
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
@@ -26,9 +23,10 @@
     </ClCompile>
     <Link>
       <NoEntryPoint>true</NoEntryPoint>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <ResourceCompile>
-      <PreprocessorDefinitions>_UNICODE;UNICODE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <NullTerminateStrings>true</NullTerminateStrings>
     </ResourceCompile>
   </ItemDefinitionGroup>
@@ -39,7 +37,7 @@
       <NoEntryPoint>true</NoEntryPoint>
     </Link>
     <ResourceCompile>
-      <PreprocessorDefinitions>_UNICODE;UNICODE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <NullTerminateStrings>true</NullTerminateStrings>
     </ResourceCompile>
   </ItemDefinitionGroup>
@@ -49,9 +47,10 @@
     </ClCompile>
     <Link>
       <NoEntryPoint>true</NoEntryPoint>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <ResourceCompile>
-      <PreprocessorDefinitions>_UNICODE;UNICODE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <NullTerminateStrings>true</NullTerminateStrings>
     </ResourceCompile>
   </ItemDefinitionGroup>
@@ -62,7 +61,7 @@
       <NoEntryPoint>true</NoEntryPoint>
     </Link>
     <ResourceCompile>
-      <PreprocessorDefinitions>_UNICODE;UNICODE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <NullTerminateStrings>true</NullTerminateStrings>
     </ResourceCompile>
   </ItemDefinitionGroup>
