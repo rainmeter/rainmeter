@@ -86,6 +86,26 @@ void CMeterHistogram::DisposeBuffer()
 }
 
 /*
+** Creates the buffers.
+**
+*/
+void CMeterHistogram::CreateBuffer()
+{
+	DisposeBuffer();
+
+	// Create buffers for values
+	int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
+	if (maxSize > 0)
+	{
+		m_PrimaryValues = new double[maxSize]();
+		if (m_Measures.size() >= 2)
+		{
+			m_SecondaryValues = new double[maxSize]();
+		}
+	}
+}
+
+/*
 ** Load the images and calculate the dimensions of the meter from them.
 ** Or create the brushes if solid color histogram is used.
 **
@@ -114,15 +134,15 @@ void CMeterHistogram::Initialize()
 
 			if (m_PrimaryImage.IsLoaded())
 			{
-				int oldW = m_W;
-				int oldH = m_H;
+				int oldSize = m_GraphHorizontalOrientation ? m_H : m_W;
 
 				Bitmap* bitmap = m_PrimaryImage.GetImage();
 
 				m_W = bitmap->GetWidth();
 				m_H = bitmap->GetHeight();
 
-				if (oldW != m_W || oldH != m_H)
+				int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
+				if (oldSize != maxSize)
 				{
 					m_SizeChanged = true;
 				}
@@ -162,19 +182,7 @@ void CMeterHistogram::Initialize()
 	}
 	else if (m_SizeChanged)
 	{
-		DisposeBuffer();
-
-		// Create buffers for values
-		if (m_W >= 0 || m_H >= 0)
-		{
-			int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
-			maxSize = (maxSize == 0) ? 1 : maxSize;
-			m_PrimaryValues = new double[maxSize]();
-			if (secondaryMeasure)
-			{
-				m_SecondaryValues = new double[maxSize]();
-			}
-		}
+		CreateBuffer();
 
 		m_SizeChanged = false;
 	}
@@ -192,6 +200,7 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	std::wstring oldBothImageName = m_OverlapImageName;
 	int oldW = m_W;
 	int oldH = m_H;
+	bool oldGraphHorizontalOrientation = m_GraphHorizontalOrientation;
 
 	CMeter::ReadOptions(parser, section);
 
@@ -241,38 +250,6 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0);
 	m_Flip = 0!=parser.ReadInt(section, L"Flip", 0);
 
-	if (m_Initialized)
-	{
-		if (m_PrimaryImageName.empty())
-		{
-			if (oldW != m_W || oldH != m_H)
-			{
-				m_SizeChanged = true;
-				Initialize();  // Reload the image
-			}
-		}
-		else
-		{
-			// Reset to old dimensions
-			m_W = oldW;
-			m_H = oldH;
-
-			m_PrimaryNeedsReload = (wcscmp(oldPrimaryImageName.c_str(), m_PrimaryImageName.c_str()) != 0);
-			m_SecondaryNeedsReload = (wcscmp(oldSecondaryImageName.c_str(), m_SecondaryImageName.c_str()) != 0);
-			m_OverlapNeedsReload = (wcscmp(oldBothImageName.c_str(), m_OverlapImageName.c_str()) != 0);
-
-			if (m_PrimaryNeedsReload ||
-				m_SecondaryNeedsReload ||
-				m_OverlapNeedsReload ||
-				m_PrimaryImage.IsOptionsChanged() ||
-				m_SecondaryImage.IsOptionsChanged() ||
-				m_OverlapImage.IsOptionsChanged())
-			{
-				Initialize();  // Reload the image
-			}
-		}
-	}
-
 	const WCHAR* graph = parser.ReadString(section, L"GraphStart", L"RIGHT").c_str();
 	if (_wcsicmp(graph, L"RIGHT") == 0)
 	{
@@ -290,53 +267,54 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	graph = parser.ReadString(section, L"GraphOrientation", L"VERTICAL").c_str();
 	if (_wcsicmp(graph, L"VERTICAL") == 0)
 	{
-		// Restart graph
-		if (m_GraphHorizontalOrientation)
-		{
-			m_GraphHorizontalOrientation = false;
-			DisposeBuffer();
-
-			// Create buffers for values
-			if (m_W > 0)
-			{
-				m_PrimaryValues = new double[m_W]();
-				if (m_Measures.size() >= 2)
-				{
-					m_SecondaryValues = new double[m_W]();
-				}
-			}
-		}
-		else
-		{
-			m_GraphHorizontalOrientation = false;
-		}
+		m_GraphHorizontalOrientation = false;
 	}
 	else if (_wcsicmp(graph, L"HORIZONTAL") ==  0)
 	{
-		// Restart graph
-		if (!m_GraphHorizontalOrientation)
-		{
-			m_GraphHorizontalOrientation = true;
-			DisposeBuffer();
-
-			// Create buffers for values
-			if (m_H > 0)
-			{
-				m_PrimaryValues = new double[m_H]();
-				if (m_Measures.size() >= 2)
-				{
-					m_SecondaryValues = new double[m_H]();
-				}
-			}
-		}
-		else
-		{
-			m_GraphHorizontalOrientation = true;
-		}
+		m_GraphHorizontalOrientation = true;
 	}
 	else
 	{
 		LogWithArgs(LOG_ERROR, L"GraphOrientation=%s is not valid in [%s]", graph, m_Name.c_str());
+	}
+
+	if (m_Initialized)
+	{
+		if (m_PrimaryImageName.empty())
+		{
+			int oldSize = oldGraphHorizontalOrientation ? oldH : oldW;
+			int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
+			if (oldSize != maxSize || oldGraphHorizontalOrientation != m_GraphHorizontalOrientation)
+			{
+				m_SizeChanged = true;
+				Initialize();  // Reload the image
+			}
+		}
+		else
+		{
+			// Reset to old dimensions
+			m_W = oldW;
+			m_H = oldH;
+
+			m_PrimaryNeedsReload = (wcscmp(oldPrimaryImageName.c_str(), m_PrimaryImageName.c_str()) != 0);
+			m_SecondaryNeedsReload = (wcscmp(oldSecondaryImageName.c_str(), m_SecondaryImageName.c_str()) != 0);
+			m_OverlapNeedsReload = (wcscmp(oldBothImageName.c_str(), m_OverlapImageName.c_str()) != 0);
+			m_SizeChanged = (oldGraphHorizontalOrientation != m_GraphHorizontalOrientation);
+
+			if (m_PrimaryNeedsReload ||
+				m_SecondaryNeedsReload ||
+				m_OverlapNeedsReload ||
+				m_PrimaryImage.IsOptionsChanged() ||
+				m_SecondaryImage.IsOptionsChanged() ||
+				m_OverlapImage.IsOptionsChanged())
+			{
+				Initialize();  // Reload the image
+			}
+			else if (m_SizeChanged)
+			{
+				CreateBuffer();
+			}
+		}
 	}
 }
 
@@ -346,76 +324,79 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 */
 bool CMeterHistogram::Update()
 {
-	if (CMeter::Update() && !m_Measures.empty() && m_PrimaryValues)
+	if (CMeter::Update() && !m_Measures.empty())
 	{
-		CMeasure* measure = m_Measures[0];
-		CMeasure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
-
-		// Gather values
-		m_PrimaryValues[m_MeterPos] = measure->GetValue();
-
-		if (secondaryMeasure && m_SecondaryValues)
-		{
-			m_SecondaryValues[m_MeterPos] = secondaryMeasure->GetValue();
-		}
-
-		++m_MeterPos;
 		int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
-		maxSize = (maxSize == 0) ? 1 : maxSize;
-		m_MeterPos %= maxSize;
-		
-		m_MaxPrimaryValue = measure->GetMaxValue();
-		m_MinPrimaryValue = measure->GetMinValue();
-		m_MaxSecondaryValue = 0.0;
-		m_MinSecondaryValue = 0.0;
-		if (secondaryMeasure)
+
+		if (maxSize > 0)  // m_PrimaryValues is not NULL
 		{
-			m_MaxSecondaryValue = secondaryMeasure->GetMaxValue();
-			m_MinSecondaryValue = secondaryMeasure->GetMinValue();
-		}
+			CMeasure* measure = m_Measures[0];
+			CMeasure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
 
-		if (m_Autoscale)
-		{
-			// Go through all values and find the max
-
-			double newValue = 0.0;
-			for (int i = 0; i < maxSize; ++i)
-			{
-				newValue = max(newValue, m_PrimaryValues[i]);
-			}
-
-			// Scale the value up to nearest power of 2
-			if (newValue > DBL_MAX / 2.0)
-			{
-				m_MaxPrimaryValue = DBL_MAX;
-			}
-			else
-			{
-				m_MaxPrimaryValue = 2.0;
-				while (m_MaxPrimaryValue < newValue)
-				{
-					m_MaxPrimaryValue *= 2.0;
-				}
-			}
+			// Gather values
+			m_PrimaryValues[m_MeterPos] = measure->GetValue();
 
 			if (secondaryMeasure && m_SecondaryValues)
 			{
+				m_SecondaryValues[m_MeterPos] = secondaryMeasure->GetValue();
+			}
+
+			++m_MeterPos;
+			m_MeterPos %= maxSize;
+
+			m_MaxPrimaryValue = measure->GetMaxValue();
+			m_MinPrimaryValue = measure->GetMinValue();
+			m_MaxSecondaryValue = 0.0;
+			m_MinSecondaryValue = 0.0;
+			if (secondaryMeasure)
+			{
+				m_MaxSecondaryValue = secondaryMeasure->GetMaxValue();
+				m_MinSecondaryValue = secondaryMeasure->GetMinValue();
+			}
+
+			if (m_Autoscale)
+			{
+				// Go through all values and find the max
+
+				double newValue = 0.0;
 				for (int i = 0; i < maxSize; ++i)
 				{
-					newValue = max(newValue, m_SecondaryValues[i]);
+					newValue = max(newValue, m_PrimaryValues[i]);
 				}
 
 				// Scale the value up to nearest power of 2
 				if (newValue > DBL_MAX / 2.0)
 				{
-					m_MaxSecondaryValue = DBL_MAX;
+					m_MaxPrimaryValue = DBL_MAX;
 				}
 				else
 				{
-					m_MaxSecondaryValue = 2.0;
-					while (m_MaxSecondaryValue < newValue)
+					m_MaxPrimaryValue = 2.0;
+					while (m_MaxPrimaryValue < newValue)
 					{
-						m_MaxSecondaryValue *= 2.0;
+						m_MaxPrimaryValue *= 2.0;
+					}
+				}
+
+				if (secondaryMeasure && m_SecondaryValues)
+				{
+					for (int i = 0; i < maxSize; ++i)
+					{
+						newValue = max(newValue, m_SecondaryValues[i]);
+					}
+
+					// Scale the value up to nearest power of 2
+					if (newValue > DBL_MAX / 2.0)
+					{
+						m_MaxSecondaryValue = DBL_MAX;
+					}
+					else
+					{
+						m_MaxSecondaryValue = 2.0;
+						while (m_MaxSecondaryValue < newValue)
+						{
+							m_MaxSecondaryValue *= 2.0;
+						}
 					}
 				}
 			}

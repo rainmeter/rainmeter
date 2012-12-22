@@ -42,6 +42,7 @@ protected:
 
 private:
 	void DisposeBuffer();
+	void CreateBuffer();
 
 	Gdiplus::Color m_PrimaryColor;
 	Gdiplus::Color m_SecondaryColor;

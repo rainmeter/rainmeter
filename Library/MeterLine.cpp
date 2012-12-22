@@ -105,7 +105,8 @@ void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	// Store the current number of lines so we know if the buffer needs to be updated
 	int oldLineCount = (int)m_Colors.size();
-	int oldW = m_W;
+	int oldSize = m_GraphHorizontalOrientation ? m_H : m_W;
+	bool oldGraphHorizontalOrientation = m_GraphHorizontalOrientation;
 
 	CMeter::ReadOptions(parser, section);
 
@@ -146,12 +147,6 @@ void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	ARGB color = parser.ReadColor(section, L"HorizontalColor", Color::Black);		// This is left here for backwards compatibility
 	m_HorizontalColor = parser.ReadColor(section, L"HorizontalLineColor", color);	// This is what it should be
 
-	if (m_Initialized &&
-		(oldLineCount != lineCount || oldW != m_W))
-	{
-		Initialize();
-	}
-
 	const WCHAR* graph = parser.ReadString(section, L"GraphStart", L"RIGHT").c_str();
 	if (_wcsicmp(graph, L"RIGHT") == 0)
 	{
@@ -169,37 +164,26 @@ void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	graph = parser.ReadString(section, L"GraphOrientation", L"VERTICAL").c_str();
 	if (_wcsicmp(graph, L"VERTICAL") == 0)
 	{
-		// Restart graph
-		if (m_GraphHorizontalOrientation)
-		{
-			m_GraphHorizontalOrientation = false;
-			m_AllValues.clear();
-			Initialize();
-			m_CurrentPos = 0;
-		}
-		else
-		{
-			m_GraphHorizontalOrientation = false;
-		}
+		m_GraphHorizontalOrientation = false;
 	}
 	else if (_wcsicmp(graph, L"HORIZONTAL") ==  0)
 	{
-		// Restart graph
-		if (!m_GraphHorizontalOrientation)
-		{
-			m_GraphHorizontalOrientation = true;
-			m_AllValues.clear();
-			Initialize();
-			m_CurrentPos = 0;
-		}
-		else
-		{
-			m_GraphHorizontalOrientation = true;
-		}
+		m_GraphHorizontalOrientation = true;
 	}
 	else
 	{
 		LogWithArgs(LOG_ERROR, L"GraphOrientation=%s is not valid in [%s]", graph, m_Name.c_str());
+	}
+
+	if (m_Initialized)
+	{
+		int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
+		if (oldLineCount != lineCount || oldSize != maxSize || oldGraphHorizontalOrientation != m_GraphHorizontalOrientation)
+		{
+			m_AllValues.clear();
+			m_CurrentPos = 0;
+			Initialize();
+		}
 	}
 }
 
