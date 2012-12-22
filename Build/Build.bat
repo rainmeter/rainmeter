@@ -23,7 +23,13 @@ if exist "%VCVARSALL%" goto VCFOUND
 set VCVARSALL=%VCVARSALL:Program Files\=Program Files (x86)\%
 if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & goto END
 :VCFOUND
+
 call "%VCVARSALL%" x86 > nul
+if exist "Certificate.bat" call "Certificate.bat" > nul
+
+set MSBUILD="msbuild.exe" /p:VisualStudioVersion=11.0
+set SIGNTOOL="signtool.exe" sign /t http://time.certum.pl /f "%CERTFILE%" /p "%CERTKEY%"
+
 if "%1" == "BUILDLANGUAGES" goto BUILDLANGUAGES
 
 if exist "%MAKENSIS%" goto NSISFOUND
@@ -92,11 +98,11 @@ echo * Starting build for %VERSION%
 
 :: Build Library
 echo * Building 32-bit projects
-"msbuild.exe" /t:rebuild /p:Configuration=Release;Platform=Win32 /v:q /m ..\Rainmeter.sln > "BuildLog.txt"
+%MSBUILD% /t:rebuild /p:Configuration=Release;Platform=Win32 /v:q /m ..\Rainmeter.sln > "BuildLog.txt"
 if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Build failed & goto END
 
 echo * Building 64-bit projects
-"msbuild.exe" /t:rebuild /p:Configuration=Release;Platform=x64 /v:q /m ..\Rainmeter.sln > "BuildLog.txt"
+%MSBUILD% /t:rebuild /p:Configuration=Release;Platform=x64 /v:q /m ..\Rainmeter.sln > "BuildLog.txt"
 if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Build failed & goto END
 
 :BUILDLANGUAGES
@@ -110,7 +116,7 @@ for /f "tokens=1,2,3 delims=," %%a in (..\Language\List) do (
 	>>".\Installer\Languages.nsh" echo ${IncludeLanguage} "%%b" "%%a"
 	set LANGUAGES='%%a -  ${LANGFILE_%%b_NAME}' '${LANG_%%b}' '${LANG_%%b_CP}' !LANGUAGES!
 
-	"msbuild.exe" /t:Language /p:Configuration=Release;Platform=Win32;TargetName=%%c /v:q ..\Rainmeter.sln > "BuildLog.txt"
+	%MSBUILD% /t:Language /p:Configuration=Release;Platform=Win32;TargetName=%%c /v:q ..\Rainmeter.sln > "BuildLog.txt"
 	if not %ERRORLEVEL% == 0 echo   ERROR: Building language %%a failed & goto END
 )
 >>".\Installer\Languages.nsh" echo ^^!define LANGUAGES "%LANGUAGES%"
@@ -127,11 +133,6 @@ if "%1" == "BUILDLANGUAGES" (
 )
 
 :: Sign binaries
-if exist "Certificate.bat" (
-	call "Certificate.bat" > nul
-)
-set SIGNTOOL="signtool.exe" sign /t http://time.certum.pl /f "%CERTFILE%" /p "%CERTKEY%"
-
 if not "%CERTFILE%" == "" (
 	echo * Signing binaries
 	for %%Z in (Rainmeter.dll Rainmeter.exe SkinInstaller.exe) do (
