@@ -25,65 +25,66 @@
 static const double M_E = 2.7182818284590452354;
 static const double M_PI = 3.14159265358979323846;
 
-typedef double (*OneArgProc)(double arg);
-typedef const WCHAR* (*MultiArgProc)(int paramcnt, double* args, double* result);
+typedef double (*SingleArgFunction)(double arg);
+typedef const WCHAR* (*MultiArgFunction)(int paramcnt, double* args, double* result);
 
-enum OperationType
+enum class Operator : uint8_t
 {
-	OP_SHL,
-	OP_SHR,
-	OP_POW,
-	OP_LOGIC_NEQ,
-	OP_LOGIC_GEQ,
-	OP_LOGIC_LEQ,
-	OP_LOGIC_AND,
-	OP_LOGIC_OR,
-	OP_OBR,
-	OP_ADD,
-	OP_SUB,
-	OP_MUL,
-	OP_DIV,
-	OP_MOD,
-	OP_UNK,
-	OP_XOR,
-	OP_NOT,
-	OP_AND,
-	OP_OR,
-	OP_EQU,
-	OP_GREATER,
-	OP_SMALLER,
-	OP_LOGIC,
-	OP_LOGIC_SEP,
-	OP_CBR,
-	OP_COMMA,
-	OP_FUNC_ONEARG, // Special
-	OP_FUNC_MULTIARG // Special
+	ShiftLeft,
+	ShiftRight,
+	Power,
+	NotEqual,
+	GreatorOrEqual,
+	LessOrEqual,
+	LogicalAND,
+	LogicalOR,
+	OpeningBracket,
+	Addition,
+	Subtraction,
+	Multiplication,
+	Division,
+	Modulo,
+	UNK,
+	BitwiseXOR,
+	BitwiseNOT,
+	BitwiseAND,
+	BitwiseOR,
+	Equal,
+	Greater,
+	Less,
+	Conditional,
+	ConditionalSeparator,
+	ClosingBracket,
+	Comma,
+	SingleArgFunction,
+	MultiArgFunction,
+	Invalid // Must be last.
 };
 
-enum CharType
+enum class CharType
 {
-	CH_UNKNOWN = 0x00,
-	CH_LETTER  = 0x01,
-	CH_DIGIT   = 0x02,
-	CH_SEPARAT = 0x04,
-	CH_SYMBOL  = 0x08,
-	CH_MINUS   = 0x10,
-	CH_FINAL   = 0x7F
+	Unknown     = 0x00,
+	Letter      = 0x01,
+	Digit       = 0x02,
+	Separator   = 0x04,
+	Symbol      = 0x08,
+	MinusSymbol = 0x10,
+	Final       = 0x7F
 };
 
-enum MathTokenType
+enum class Token
 {
-	TOK_ERROR,
-	TOK_NONE,
-	TOK_FINAL,
-	TOK_FLOAT,
-	TOK_SYMBOL,
-	TOK_NAME
+	Error,
+	None,
+	Final,
+	Float,
+	Symbol,
+	Name
 };
 
 struct Operation
 {
-	BYTE type;
+	Operator type;
 	BYTE funcIndex;
 	char prevTop;
 };
@@ -91,7 +92,7 @@ struct Operation
 struct Function
 {
 	WCHAR* name;
-	OneArgProc proc;
+	SingleArgFunction proc;
 	BYTE length;
 };
 
@@ -117,7 +118,7 @@ static Function g_Functions[] =
 	{ L"trunc", &trunc, 5 },
 	{ L"floor", &floor, 5 },
 	{ L"ceil", &ceil, 4 },
-	{ L"round", (OneArgProc)&round, 5 },
+	{ L"round", (SingleArgFunction)&round, 5 },
 	{ L"asin", &asin, 4 },
 	{ L"acos", &acos, 4 },
 	{ L"rad", &rad, 3 },
@@ -133,44 +134,44 @@ static const int FUNC_E = 19;
 static const int FUNC_PI = 20;
 static const BYTE FUNC_INVALID = UCHAR_MAX;
 
-static const Operation g_BrOp = { OP_OBR, 0, 0};
-static const Operation g_NegOp = { OP_FUNC_ONEARG, 18, 0 };
+static const Operation g_BrOp = { Operator::OpeningBracket, 0, 0};
+static const Operation g_NegOp = { Operator::SingleArgFunction, 18, 0 };
 
-static const BYTE g_OpPriorities[OP_FUNC_MULTIARG + 1] =
+static const BYTE g_OpPriorities[Operator::Invalid] =
 {
-	5, // OP_SHL
-	5, // OP_SHR
-	5, // OP_POW
-	2, // OP_LOGIC_NEQ
-	2, // OP_LOGIC_GEQ
-	2, // OP_LOGIC_LEQ
-	2, // OP_LOGIC_AND
-	2, // OP_LOGIC_OR
-	0, // OP_OBR
-	3, // OP_ADD
-	3, // OP_SUB
-	4, // OP_MUL
-	4, // OP_DIV
-	4, // OP_MOD
-	4, // OP_UNK
-	5, // OP_XOR
-	5, // OP_NOT
-	5, // OP_AND
-	5, // OP_OR
-	2, // OP_EQU
-	2, // OP_GREATER
-	2, // OP_SMALLER
-	1, // OP_LOGIC
-	2, // OP_LOGIC_SEP
-	0, // OP_CBR
-	2, // OP_COMMA
-	6, // OP_FUNC_ONEARG
-	6  // OP_FUNC_MULTIARG
+	5, // Operator::ShiftLeft
+	5, // Operator::ShiftRight
+	5, // Operator::Power
+	2, // Operator::NotEqual
+	2, // Operator::GreatorOrEqual
+	2, // Operator::LessOrEqual
+	2, // Operator::LogicalAND
+	2, // Operator::LogicalOR
+	0, // Operator::OpeningBracket
+	3, // Operator::Addition
+	3, // Operator::Subtraction
+	4, // Operator::Multiplication
+	4, // Operator::Division
+	4, // Operator::Modulo
+	4, // Operator::UNK
+	5, // Operator::BitwiseXOR
+	5, // Operator::BitwiseNOT
+	5, // Operator::BitwiseAND
+	5, // Operator::BitwiseOR
+	2, // Operator::Equal
+	2, // Operator::Greater
+	2, // Operator::Less
+	1, // Operator::Conditional
+	2, // Operator::ConditionalSeparator
+	0, // Operator::ClosingBracket
+	2, // Operator::Comma
+	6, // Operator::SingleArgFunction
+	6  // Operator::MultiArgFunction
 };
 
 static CharType GetCharType(WCHAR ch);
 static BYTE GetFunctionIndex(const WCHAR* str, BYTE len);
-static int FindSymbol(const WCHAR* str);
+static Operator GetOperator(const WCHAR* str);
 
 struct Parser
 {
@@ -180,7 +181,7 @@ struct Parser
 	char valTop;
 	int obrDist;
 
-	Parser() : opTop(0), valTop(-1), obrDist(2) { opStack[0].type = OP_OBR; }
+	Parser() : opTop(0), valTop(-1), obrDist(2) { opStack[0].type = Operator::OpeningBracket; }
 };
 
 static const WCHAR* CalcToObr(Parser& parser);
@@ -193,13 +194,13 @@ struct Lexer
 	size_t nameLen;
 	double extValue;
 	int intValue;
-	MathTokenType prevToken;
+	Token prevToken;
 	CharType charType;
 
-	Lexer(const WCHAR* str) : string(str), name(), nameLen(), extValue(), intValue(), prevToken(TOK_NONE), charType(GetCharType(*str)) {}
+	Lexer(const WCHAR* str) : string(str), name(), nameLen(), extValue(), intValue(), prevToken(Token::None), charType(GetCharType(*str)) {}
 };
 
-static MathTokenType GetNextToken(Lexer& lexer);
+static Token GetNextToken(Lexer& lexer);
 
 const WCHAR* eBrackets = L"Unmatched brackets";
 const WCHAR* eSyntax = L"Syntax error";
@@ -263,14 +264,14 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double*
 			return eInternal;
 		}
 
-		MathTokenType token = GetNextToken(lexer);
+		Token token = GetNextToken(lexer);
 		--parser.obrDist;
 		switch (token)
 		{
-		case TOK_ERROR:
+		case Token::Error:
 			return eSyntax;
 
-		case TOK_FINAL:
+		case Token::Final:
 			if ((error = CalcToObr(parser)) != NULL)
 			{
 				return error;
@@ -287,31 +288,31 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double*
 			}
 			break;
 
-		case TOK_FLOAT:
+		case Token::Float:
 			parser.valStack[++parser.valTop] = lexer.extValue;
 			break;
 
-		case TOK_SYMBOL:
+		case Token::Symbol:
 			switch (lexer.intValue)
 			{
-			case OP_OBR:
+			case Operator::OpeningBracket:
 				{
 					parser.opStack[++parser.opTop] = g_BrOp;
 					parser.obrDist = 2;
 				}
 				break;
 
-			case OP_CBR:
+			case Operator::ClosingBracket:
 				{
 					if ((error = CalcToObr(parser)) != NULL) return error;
 				}
 				break;
 
-			case OP_COMMA:
+			case Operator::Comma:
 				{	
 					if ((error = CalcToObr(parser)) != NULL) return error;
 						
-					if (parser.opStack[parser.opTop].type == OP_FUNC_MULTIARG)
+					if (parser.opStack[parser.opTop].type == Operator::MultiArgFunction)
 					{
 						parser.opStack[++parser.opTop] = g_BrOp;
 						parser.obrDist = 2;
@@ -326,10 +327,10 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double*
 			default:
 				{
 					Operation op;
-					op.type = (OperationType)lexer.intValue;
+					op.type = (Operator)lexer.intValue;
 					switch (op.type)
 					{
-					case OP_ADD:
+					case Operator::Addition:
 						if (parser.obrDist >= 1)
 						{
 							// Goto next token
@@ -337,7 +338,7 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double*
 						}
 						break;
 
-					case OP_SUB:
+					case Operator::Subtraction:
 						if (parser.obrDist >= 1)
 						{
 							parser.opStack[++parser.opTop] = g_NegOp;
@@ -347,13 +348,13 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double*
 						}
 						break;
 
-					case OP_LOGIC:
-					case OP_LOGIC_SEP:
+					case Operator::Conditional:
+					case Operator::ConditionalSeparator:
 						parser.obrDist = 2;
 						break;
 					}
 
-					while (g_OpPriorities[op.type] <= g_OpPriorities[parser.opStack[parser.opTop].type])
+					while (g_OpPriorities[(int)op.type] <= g_OpPriorities[(int)parser.opStack[parser.opTop].type])
 					{
 						if ((error = Calc(parser)) != NULL) return error;
 					}
@@ -363,7 +364,7 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double*
 			}
 			break;
 
-		case TOK_NAME:
+		case Token::Name:
 			{
 				Operation op;
 				if (lexer.nameLen <= FUNC_MAX_LEN &&
@@ -380,13 +381,13 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double*
 						break;
 
 					case FUNC_ROUND:
-						op.type = OP_FUNC_MULTIARG;
+						op.type = Operator::MultiArgFunction;
 						op.prevTop = parser.valTop;
 						parser.opStack[++parser.opTop] = op;
 						break;
 
 					default:	// Internal function
-						op.type = OP_FUNC_ONEARG;
+						op.type = Operator::SingleArgFunction;
 						parser.opStack[++parser.opTop] = op;
 						break;
 					}
@@ -419,16 +420,16 @@ static const WCHAR* Calc(Parser& parser)
 	Operation op = parser.opStack[parser.opTop--];
 
 	// Multi-argument function
-	if (op.type == OP_LOGIC)
+	if (op.type == Operator::Conditional)
 	{
 		return NULL; 
 	}
-	else if (op.type == OP_FUNC_MULTIARG)
+	else if (op.type == Operator::MultiArgFunction)
 	{
 		int paramcnt = parser.valTop - op.prevTop;
 
 		parser.valTop = op.prevTop;
-		const WCHAR* error = (*(MultiArgProc)g_Functions[op.funcIndex].proc)(paramcnt, &parser.valStack[parser.valTop + 1], &res);
+		const WCHAR* error = (*(MultiArgFunction)g_Functions[op.funcIndex].proc)(paramcnt, &parser.valStack[parser.valTop + 1], &res);
 		if (error) return error;
 
 		parser.valStack[++parser.valTop] = res;
@@ -443,13 +444,13 @@ static const WCHAR* Calc(Parser& parser)
 	double right = parser.valStack[parser.valTop--];
 
 	// One arg operations
-	if (op.type == OP_NOT)
+	if (op.type == Operator::BitwiseNOT)
 	{
 		res = (double)(~((long long)right));
 	}
-	else if (op.type == OP_FUNC_ONEARG)
+	else if (op.type == Operator::SingleArgFunction)
 	{
-		res = (*(OneArgProc)g_Functions[op.funcIndex].proc)(right);
+		res = (*(SingleArgFunction)g_Functions[op.funcIndex].proc)(right);
 	}
 	else
 	{
@@ -462,51 +463,51 @@ static const WCHAR* Calc(Parser& parser)
 		double left = parser.valStack[parser.valTop--];
 		switch (op.type)
 		{
-		case OP_SHL:
+		case Operator::ShiftLeft:
 			res = (double)((long long)left << (long long)right);
 			break;
 
-		case OP_SHR:
+		case Operator::ShiftRight:
 			res = (double)((long long)left >> (long long)right);
 			break;
 
-		case OP_POW:
+		case Operator::Power:
 			res = pow(left, right);
 			break;
 
-		case OP_LOGIC_NEQ:
+		case Operator::NotEqual:
 			res = left != right;
 			break;
 
-		case OP_LOGIC_GEQ:
+		case Operator::GreatorOrEqual:
 			res = left >= right;
 			break;
 
-		case OP_LOGIC_LEQ:
+		case Operator::LessOrEqual:
 			res = left <= right;
 			break;
 
-		case OP_LOGIC_AND:
+		case Operator::LogicalAND:
 			res = left && right;
 			break;
 
-		case OP_LOGIC_OR:
+		case Operator::LogicalOR:
 			res = left || right;
 			break;
 
-		case OP_ADD:
+		case Operator::Addition:
 			res = left + right;
 			break;
 
-		case OP_SUB:
+		case Operator::Subtraction:
 			res = left - right;
 			break;
 
-		case OP_MUL:
+		case Operator::Multiplication:
 			res = left*  right;
 			break;
 
-		case OP_DIV:
+		case Operator::Division:
 			if (right == 0.0)
 			{
 				return eInfinity;
@@ -517,11 +518,11 @@ static const WCHAR* Calc(Parser& parser)
 			}
 			break;
 
-		case OP_MOD:
+		case Operator::Modulo:
 			res = fmod(left, right);
 			break;
 
-		case OP_UNK:
+		case Operator::UNK:
 			if (left <= 0)
 			{
 				res = 0.0;
@@ -536,34 +537,34 @@ static const WCHAR* Calc(Parser& parser)
 			}
 			break;
 
-		case OP_XOR:
+		case Operator::BitwiseXOR:
 			res = (double)((long long)left ^ (long long)right);
 			break;
 
-		case OP_AND:
+		case Operator::BitwiseAND:
 			res = (double)((long long)left & (long long)right);
 			break;
 
-		case OP_OR:
+		case Operator::BitwiseOR:
 			res = (double)((long long)left | (long long)right);
 			break;
 
-		case OP_EQU:
+		case Operator::Equal:
 			res = left == right;
 			break;
 
-		case OP_GREATER:
+		case Operator::Greater:
 			res = left > right;
 			break;
 
-		case OP_SMALLER:
+		case Operator::Less:
 			res = left < right;
 			break;
 
-		case OP_LOGIC_SEP:
+		case Operator::ConditionalSeparator:
 			{
 				// Needs three arguments
-				if (parser.opTop < 0 || parser.opStack[parser.opTop--].type != OP_LOGIC)
+				if (parser.opTop < 0 || parser.opStack[parser.opTop--].type != Operator::Conditional)
 				{
 					return eLogicErr;
 				}
@@ -582,7 +583,7 @@ static const WCHAR* Calc(Parser& parser)
 
 static const WCHAR* CalcToObr(Parser& parser)
 {
-	while (parser.opStack[parser.opTop].type != OP_OBR)
+	while (parser.opStack[parser.opTop].type != Operator::OpeningBracket)
 	{
 		const WCHAR* error = Calc(parser);
 		if (error) return error;
@@ -591,44 +592,44 @@ static const WCHAR* CalcToObr(Parser& parser)
 	return NULL;
 }
 
-MathTokenType GetNextToken(Lexer& lexer)
+Token GetNextToken(Lexer& lexer)
 {
-	MathTokenType result = TOK_ERROR;
+	Token result = Token::Error;
 
-	while (lexer.charType == CH_SEPARAT)
+	while (lexer.charType == CharType::Separator)
 	{
 		lexer.charType = GetCharType(*++lexer.string);
 	}
 
-	if (lexer.charType == CH_MINUS)
+	if (lexer.charType == CharType::MinusSymbol)
 	{
 		// If the - sign follows a symbol, it is treated as a (negative) number.
-		lexer.charType = (lexer.prevToken == TOK_SYMBOL) ? CH_DIGIT : CH_SYMBOL;
+		lexer.charType = (lexer.prevToken == Token::Symbol) ? CharType::Digit : CharType::Symbol;
 	}
 
 	switch (lexer.charType)
 	{
-	case CH_FINAL:
+	case CharType::Final:
 		{
-			result = TOK_FINAL;
+			result = Token::Final;
 		}
 		break;
 
-	case CH_LETTER:
+	case CharType::Letter:
 		{
 			lexer.name = lexer.string;
 			do
 			{
 				lexer.charType = GetCharType(*++lexer.string);
 			}
-			while (lexer.charType <= CH_DIGIT);
+			while (lexer.charType <= CharType::Digit);
 
 			lexer.nameLen = lexer.string - lexer.name;
-			result = TOK_NAME;
+			result = Token::Name;
 		}
 		break;
 
-	case CH_DIGIT:
+	case CharType::Digit:
 		{
 			WCHAR* newString;
 			if (lexer.string[0] == L'0')
@@ -660,7 +661,7 @@ MathTokenType GetNextToken(Lexer& lexer)
 						lexer.string = newString;
 						lexer.charType = GetCharType(*lexer.string);
 						lexer.extValue = lexer.intValue;
-						result = TOK_FLOAT;
+						result = Token::Float;
 					}
 					break;
 				}
@@ -672,21 +673,21 @@ MathTokenType GetNextToken(Lexer& lexer)
 			{
 				lexer.string = newString;
 				lexer.charType = GetCharType(*lexer.string);
-				result = TOK_FLOAT;
+				result = Token::Float;
 			}
 		}
 		break;
 
-	case CH_SYMBOL:
+	case CharType::Symbol:
 		{
-			int sym = FindSymbol(lexer.string);
-			if (sym >= 0)
+			Operator oper = GetOperator(lexer.string);
+			if (oper != Operator::Invalid)
 			{
-				lexer.string += (sym <= OP_LOGIC_OR) ? 2 : 1;
+				lexer.string += ((int)oper <= (int)Operator::LogicalOR) ? 2 : 1;
 
 				lexer.charType = GetCharType(*lexer.string);
-				lexer.intValue = sym;
-				result = TOK_SYMBOL;
+				lexer.intValue = (int)oper;
+				result = Token::Symbol;
 			}
 		}
 		break;
@@ -702,18 +703,18 @@ CharType GetCharType(WCHAR ch)
 	switch (ch)
 	{
 	case L'\0':
-		return CH_FINAL;
+		return CharType::Final;
 
 	case L' ':
 	case L'\t':
 	case L'\n':
-		return CH_SEPARAT;
+		return CharType::Separator;
 
 	case L'_':
-		return CH_LETTER;
+		return CharType::Letter;
 
 	case L'-':
-		return CH_MINUS;
+		return CharType::MinusSymbol;
 
 	case L'+':
 	case L'/':
@@ -731,19 +732,19 @@ CharType GetCharType(WCHAR ch)
 	case L'=':
 	case L'&':
 	case L'|':
-		return CH_SYMBOL;
+		return CharType::Symbol;
 	}
 
-	if (iswalpha(ch)) return CH_LETTER;
-	if (iswdigit(ch)) return CH_DIGIT;
+	if (iswalpha(ch)) return CharType::Letter;
+	if (iswdigit(ch)) return CharType::Digit;
 
-	return CH_UNKNOWN;
+	return CharType::Unknown;
 }
 
 bool MathParser::IsDelimiter(WCHAR ch)
 {
 	CharType type = GetCharType(ch);
-	return type == CH_SYMBOL || type == CH_SEPARAT;
+	return type == CharType::Symbol || type == CharType::Separator;
 }
 
 BYTE GetFunctionIndex(const WCHAR* str, BYTE len)
@@ -761,31 +762,66 @@ BYTE GetFunctionIndex(const WCHAR* str, BYTE len)
 	return FUNC_INVALID;
 }
 
-int FindSymbol(const WCHAR* str)
+Operator GetOperator(const WCHAR* str)
 {
 	switch (str[0])
 	{
-	case L'(':	return OP_OBR;
-	case L'+':	return OP_ADD;
-	case L'-':	return OP_SUB;
-	case L'*':	return (str[1] == L'*') ? OP_POW : OP_MUL;
-	case L'/':	return OP_DIV;
-	case L'%':	return OP_MOD;
-	case L'$':	return OP_UNK;
-	case L'^':	return OP_XOR;
-	case L'~':	return OP_NOT;
-	case L'&':	return (str[1] == L'&') ? OP_LOGIC_AND : OP_AND;
-	case L'|':	return (str[1] == L'|') ? OP_LOGIC_OR : OP_OR;
-	case L'=':	return OP_EQU;
-	case L'>':	return (str[1] == L'>') ? OP_SHR : (str[1] == L'=') ? OP_LOGIC_GEQ : OP_GREATER;
-	case L'<':	return (str[1] == L'>') ? OP_LOGIC_NEQ : (str[1] == L'<') ? OP_SHL : (str[1] == L'=') ? OP_LOGIC_LEQ : OP_SMALLER;
-	case L'?':	return OP_LOGIC;
-	case L':':	return OP_LOGIC_SEP;
-	case L')':	return OP_CBR;
-	case L',':	return OP_COMMA;
+	case L'(':
+		return Operator::OpeningBracket;
+
+	case L'+':
+		return Operator::Addition;
+
+	case L'-':
+		return Operator::Subtraction;
+
+	case L'*':
+		return (str[1] == L'*') ? Operator::Power : Operator::Multiplication;
+
+	case L'/':
+		return Operator::Division;
+
+	case L'%':
+		return Operator::Modulo;
+
+	case L'$':
+		return Operator::UNK;
+
+	case L'^':
+		return Operator::BitwiseXOR;
+
+	case L'~':
+		return Operator::BitwiseNOT;
+
+	case L'&':
+		return (str[1] == L'&') ? Operator::LogicalAND : Operator::BitwiseAND;
+
+	case L'|':
+		return (str[1] == L'|') ? Operator::LogicalOR : Operator::BitwiseOR;
+
+	case L'=':
+		return Operator::Equal;
+
+	case L'>':
+		return (str[1] == L'>') ? Operator::ShiftRight : (str[1] == L'=') ? Operator::GreatorOrEqual : Operator::Greater;
+
+	case L'<':
+		return (str[1] == L'>') ? Operator::NotEqual : (str[1] == L'<') ? Operator::ShiftLeft : (str[1] == L'=') ? Operator::LessOrEqual : Operator::Less;
+
+	case L'?':
+		return Operator::Conditional;
+
+	case L':':
+		return Operator::ConditionalSeparator;
+
+	case L')':
+		return Operator::ClosingBracket;
+
+	case L',':
+		return Operator::Comma;
 	}
 
-	return -1;
+	return Operator::Invalid;
 }
 
 // -----------------------------------------------------------------------------------------------
