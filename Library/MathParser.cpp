@@ -67,6 +67,7 @@ enum CharType
 	CH_DIGIT   = 0x02,
 	CH_SEPARAT = 0x04,
 	CH_SYMBOL  = 0x08,
+	CH_MINUS   = 0x10,
 	CH_FINAL   = 0x7F
 };
 
@@ -598,7 +599,13 @@ MathTokenType GetNextToken(Lexer& lexer)
 	{
 		lexer.charType = GetCharType(*++lexer.string);
 	}
-	
+
+	if (lexer.charType == CH_MINUS)
+	{
+		// If the - sign follows a symbol, it is treated as a (negative) number.
+		lexer.charType = (lexer.prevToken == TOK_SYMBOL) ? CH_DIGIT : CH_SYMBOL;
+	}
+
 	switch (lexer.charType)
 	{
 	case CH_FINAL:
@@ -705,8 +712,10 @@ CharType GetCharType(WCHAR ch)
 	case L'_':
 		return CH_LETTER;
 
-	case L'+':
 	case L'-':
+		return CH_MINUS;
+
+	case L'+':
 	case L'/':
 	case L'*':
 	case L'~':
