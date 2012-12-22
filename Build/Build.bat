@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-set VCVARSALL=%PROGRAMFILES%\Microsoft Visual Studio 11.0\VC\vcvarsall.bat
+set VCVARSALL=%VS110COMNTOOLS%..\..\VC\vcvarsall.bat
 set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
 set SUBWCREV=%PROGRAMFILES%\TortoiseSVN\bin\SubWCRev.exe
 set GIT=%PROGRAMFILES%\Git\bin\git.exe
@@ -19,15 +19,11 @@ echo Rainmeter Build
 echo ----------------------------------------------
 echo.
 
-if exist "%VCVARSALL%" goto VCFOUND
-set VCVARSALL=%VCVARSALL:Program Files\=Program Files (x86)\%
 if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & goto END
-:VCFOUND
-
 call "%VCVARSALL%" x86 > nul
-if exist "Certificate.bat" call "Certificate.bat" > nul
+set MSBUILD="msbuild.exe" /p:PlatformToolset=v110;VisualStudioVersion=11.0
 
-set MSBUILD="msbuild.exe" /p:VisualStudioVersion=11.0
+if exist "Certificate.bat" call "Certificate.bat" > nul
 set SIGNTOOL="signtool.exe" sign /t http://time.certum.pl /f "%CERTFILE%" /p "%CERTKEY%"
 
 if "%1" == "BUILDLANGUAGES" goto BUILDLANGUAGES
