@@ -144,7 +144,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 EXTERN_C int WINAPI Main()
 {
 	int result = wWinMain(NULL, NULL, NULL, 0);
-	TerminateProcess(GetCurrentProcess(), result);
+	ExitProcess(result);
 	return 0;  // Never reached.
 }
 #endif
