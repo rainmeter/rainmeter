@@ -77,8 +77,8 @@ enum class Token
 	Error,
 	None,
 	Final,
-	Float,
-	Symbol,
+	Operator,
+	Number,
 	Name
 };
 
@@ -176,7 +176,7 @@ static Operator GetOperator(const WCHAR* str);
 struct Parser
 {
 	Operation opStack[96];
-	double valStack[64];
+	double numStack[64];
 	char opTop;
 	char valTop;
 	int obrDist;
@@ -192,12 +192,17 @@ struct Lexer
 	const WCHAR* string;
 	const WCHAR* name;
 	size_t nameLen;
-	double extValue;
-	int intValue;
-	Token prevToken;
+
+	Token token;
+	union
+	{
+		Operator oper;  // token == Token::Operator
+		double num;  // token == Token::Number
+	} value;
+
 	CharType charType;
 
-	Lexer(const WCHAR* str) : string(str), name(), nameLen(), extValue(), intValue(), prevToken(Token::None), charType(GetCharType(*str)) {}
+	Lexer(const WCHAR* str) : string(str), name(), nameLen(), value(), token(Token::None), charType(GetCharType(*str)) {}
 };
 
 static Token GetNextToken(Lexer& lexer);
@@ -259,7 +264,7 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double*
 	for (;;)
 	{
 		if ((parser.opTop == _countof(parser.opStack) - 2) ||
-			(parser.valTop == _countof(parser.valStack) - 2))
+			(parser.valTop == _countof(parser.numStack) - 2))
 		{
 			return eInternal;
 		}
@@ -283,17 +288,17 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double*
 			else
 			{
 				// Done!
-				*result = parser.valStack[0];
+				*result = parser.numStack[0];
 				return NULL;
 			}
 			break;
 
-		case Token::Float:
-			parser.valStack[++parser.valTop] = lexer.extValue;
+		case Token::Number:
+			parser.numStack[++parser.valTop] = lexer.value.num;
 			break;
 
-		case Token::Symbol:
-			switch (lexer.intValue)
+		case Token::Operator:
+			switch (lexer.value.oper)
 			{
 			case Operator::OpeningBracket:
 				{
@@ -309,7 +314,7 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double*
 				break;
 
 			case Operator::Comma:
-				{	
+				{
 					if ((error = CalcToObr(parser)) != NULL) return error;
 						
 					if (parser.opStack[parser.opTop].type == Operator::MultiArgFunction)
@@ -327,7 +332,7 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double*
 			default:
 				{
 					Operation op;
-					op.type = (Operator)lexer.intValue;
+					op.type = lexer.value.oper;
 					switch (op.type)
 					{
 					case Operator::Addition:
@@ -373,11 +378,11 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double*
 					switch (op.funcIndex)
 					{
 					case FUNC_E:
-						parser.valStack[++parser.valTop] = M_E;
+						parser.numStack[++parser.valTop] = M_E;
 						break;
 
 					case FUNC_PI:
-						parser.valStack[++parser.valTop] = M_PI;
+						parser.numStack[++parser.valTop] = M_PI;
 						break;
 
 					case FUNC_ROUND:
@@ -397,7 +402,7 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double*
 					double dblval;
 					if (calc && calc->GetMeasureValue(lexer.name, lexer.nameLen, &dblval))
 					{
-						parser.valStack[++parser.valTop] = dblval;
+						parser.numStack[++parser.valTop] = dblval;
 						break;
 					}
 
@@ -429,10 +434,10 @@ static const WCHAR* Calc(Parser& parser)
 		int paramcnt = parser.valTop - op.prevTop;
 
 		parser.valTop = op.prevTop;
-		const WCHAR* error = (*(MultiArgFunction)g_Functions[op.funcIndex].proc)(paramcnt, &parser.valStack[parser.valTop + 1], &res);
+		const WCHAR* error = (*(MultiArgFunction)g_Functions[op.funcIndex].proc)(paramcnt, &parser.numStack[parser.valTop + 1], &res);
 		if (error) return error;
 
-		parser.valStack[++parser.valTop] = res;
+		parser.numStack[++parser.valTop] = res;
 		return NULL;
 	}
 	else if (parser.valTop < 0)
@@ -441,7 +446,7 @@ static const WCHAR* Calc(Parser& parser)
 	}
 
 	// Right arg
-	double right = parser.valStack[parser.valTop--];
+	double right = parser.numStack[parser.valTop--];
 
 	// One arg operations
 	if (op.type == Operator::BitwiseNOT)
@@ -460,7 +465,7 @@ static const WCHAR* Calc(Parser& parser)
 		}
 
 		// Left arg
-		double left = parser.valStack[parser.valTop--];
+		double left = parser.numStack[parser.valTop--];
 		switch (op.type)
 		{
 		case Operator::ShiftLeft:
@@ -568,7 +573,7 @@ static const WCHAR* Calc(Parser& parser)
 				{
 					return eLogicErr;
 				}
-				res = parser.valStack[parser.valTop--] ? left : right;
+				res = parser.numStack[parser.valTop--] ? left : right;
 			}
 			break;
 
@@ -577,7 +582,7 @@ static const WCHAR* Calc(Parser& parser)
 		}
 	}
 
-	parser.valStack[++parser.valTop] = res;
+	parser.numStack[++parser.valTop] = res;
 	return NULL;
 }
 
@@ -594,8 +599,6 @@ static const WCHAR* CalcToObr(Parser& parser)
 
 Token GetNextToken(Lexer& lexer)
 {
-	Token result = Token::Error;
-
 	while (lexer.charType == CharType::Separator)
 	{
 		lexer.charType = GetCharType(*++lexer.string);
@@ -604,28 +607,27 @@ Token GetNextToken(Lexer& lexer)
 	if (lexer.charType == CharType::MinusSymbol)
 	{
 		// If the - sign follows a symbol, it is treated as a (negative) number.
-		lexer.charType = (lexer.prevToken == Token::Symbol) ? CharType::Digit : CharType::Symbol;
+		lexer.charType = (lexer.token == Token::Operator) ? CharType::Digit : CharType::Symbol;
 	}
 
 	switch (lexer.charType)
 	{
 	case CharType::Final:
 		{
-			result = Token::Final;
+			lexer.token = Token::Final;
 		}
 		break;
 
 	case CharType::Letter:
 		{
+			lexer.token = Token::Name;
 			lexer.name = lexer.string;
+			lexer.nameLen = lexer.string - lexer.name;
 			do
 			{
 				lexer.charType = GetCharType(*++lexer.string);
 			}
 			while (lexer.charType <= CharType::Digit);
-
-			lexer.nameLen = lexer.string - lexer.name;
-			result = Token::Name;
 		}
 		break;
 
@@ -635,18 +637,19 @@ Token GetNextToken(Lexer& lexer)
 			if (lexer.string[0] == L'0')
 			{
 				bool valid = true;
+				int num = 0;
 				switch (lexer.string[1])
 				{
 				case L'x':	// Hexadecimal
-					lexer.intValue = wcstol(lexer.string, &newString, 16);
+					num = wcstol(lexer.string, &newString, 16);
 					break;
 
 				case L'o':	// Octal
-					lexer.intValue = wcstol(lexer.string + 2, &newString, 8);
+					num = wcstol(lexer.string + 2, &newString, 8);
 					break;
 
 				case L'b':	// Binary
-					lexer.intValue = wcstol(lexer.string + 2, &newString, 2);
+					num = wcstol(lexer.string + 2, &newString, 2);
 					break;
 
 				default:
@@ -658,22 +661,23 @@ Token GetNextToken(Lexer& lexer)
 				{
 					if (lexer.string != newString)
 					{
+						lexer.token = Token::Number;
+						lexer.value.num = num;
 						lexer.string = newString;
 						lexer.charType = GetCharType(*lexer.string);
-						lexer.extValue = lexer.intValue;
-						result = Token::Float;
 					}
 					break;
 				}
 			}
 
 			// Decimal
-			lexer.extValue = wcstod(lexer.string, &newString);
+			double num = wcstod(lexer.string, &newString);
 			if (lexer.string != newString)
 			{
+				lexer.token = Token::Number;
+				lexer.value.num = num;
 				lexer.string = newString;
 				lexer.charType = GetCharType(*lexer.string);
-				result = Token::Float;
 			}
 		}
 		break;
@@ -683,19 +687,20 @@ Token GetNextToken(Lexer& lexer)
 			Operator oper = GetOperator(lexer.string);
 			if (oper != Operator::Invalid)
 			{
+				lexer.token = Token::Operator;
+				lexer.value.oper = oper;
 				lexer.string += ((int)oper <= (int)Operator::LogicalOR) ? 2 : 1;
-
 				lexer.charType = GetCharType(*lexer.string);
-				lexer.intValue = (int)oper;
-				result = Token::Symbol;
 			}
 		}
 		break;
 
 	default:
+		lexer.token = Token::Error;
 		break;
 	}
-	return lexer.prevToken = result;
+
+	return lexer.token;
 }
 
 CharType GetCharType(WCHAR ch)
