@@ -21,23 +21,102 @@
 #include <crtdbg.h>
 #include <Windows.h>
 #include <ShellAPI.h>
-#include "../Library/Rainmeter.h"
+
+EXTERN_C IMAGE_DOS_HEADER __ImageBase;
+
+typedef int (*RainmeterMainFunc)(WCHAR* args);
+
+HINSTANCE LoadRainmeterLibrary()
+{
+	const int bufferSize = MAX_PATH;
+	WCHAR buffer[bufferSize];
+	int bufferLen = GetModuleFileName(NULL, buffer, bufferSize);
+	if (bufferLen == 0 || bufferLen == bufferSize)
+	{
+		return NULL;
+	}
+
+	// Change extension from .exe to .dll.
+	buffer[bufferLen - 3] = L'd';
+	buffer[bufferLen - 2] = L'l';
+	buffer[bufferLen - 1] = L'l';
+
+	return LoadLibrary(buffer);
+}
+
+WCHAR* GetCommandLineArguments()
+{
+	LPWSTR args = GetCommandLine();
+
+	// Skip past (quoted) application path in cmdLine.
+	if (*args == L'"')
+	{
+		++args;  // Skip leading quote.
+		while (*args && *args != L'"')
+		{
+			++args;
+		}
+		++args;  // Skip trailing quote.
+	}
+	else
+	{
+		while (*args && *args != L' ')
+		{
+			++args;
+		}
+	}
+
+	// Skip leading whitespace (similar to CRT implementation).
+	while (*args && *args <= L' ')
+	{
+		++args;
+	}
+
+	return args;
+}
 
 /*
-** Entry point.
+** Entry point. In Release builds, the entry point is Main() since the CRT is not used.
 **
 */
-int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
+#ifdef _DEBUG
+int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
+#else
+EXTERN_C int WINAPI Main()
+#endif
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	//_CrtSetBreakAlloc(000);
 
-	HRSRC iconResource = FindResource(hInstance, MAKEINTRESOURCE(1), RT_ICON);
+	HINSTANCE instance = (HINSTANCE)&__ImageBase;
+	WCHAR* args = GetCommandLineArguments();
+
+	HRSRC iconResource = FindResource(instance, MAKEINTRESOURCE(1), RT_ICON);
 	if (iconResource)
 	{
-		// Call RainmeterMain from Rainmeter.dll. Since Rainmeter.dll is delay-loaded, this will cause
-		// crash if Rainmeter.dll is not found.
-		return RainmeterMain(lpCmdLine);
+		// Initialize Rainmeter.
+		HINSTANCE libInstance = LoadRainmeterLibrary();
+		if (libInstance)
+		{
+			auto rainmeterMain = (RainmeterMainFunc)GetProcAddress(libInstance, MAKEINTRESOURCEA(1));
+			int result = rainmeterMain(args);
+			FreeLibrary(libInstance);
+			return result;
+		}
+		else
+		{
+			WCHAR buffer[128];
+			int arch = 32;
+#ifdef _WIN64
+			arch = 64;
+#endif
+			const WCHAR* error = L"Rainmeter.dll (%i-bit) error %i.\n\nDo you want to view help online?";
+			wsprintf(buffer, error, arch, GetLastError());
+			if (MessageBox(NULL, buffer, L"Rainmeter", MB_YESNO | MB_ICONERROR) == IDYES)
+			{
+				ShellExecute(NULL, L"open", L"http://rainmeter.net/dllerror", NULL, NULL, SW_SHOWNORMAL); 
+			}
+		}
 	}
 	else
 	{
@@ -53,12 +132,14 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmd
 				type == REG_SZ)
 			{
 				SetCurrentDirectory(buffer);
-				wcscat(buffer, L"\\Rainmeter.exe");
-				ShellExecute(NULL, L"open", buffer, lpCmdLine, NULL, SW_SHOWNORMAL);
+				lstrcat(buffer, L"\\Rainmeter.exe");
+				ShellExecute(NULL, L"open", buffer, args, NULL, SW_SHOWNORMAL);
 			}
 			RegCloseKey(hKey);
 		}
 
 		return 0;
 	}
+
+	return 1;
 }

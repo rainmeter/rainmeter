@@ -21,7 +21,6 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
-      <DelayLoadDLLs>Rainmeter.dll</DelayLoadDLLs>
     </Link>
     <PostBuildEvent>
       <Command>if exist ..\testbench\x32\debug\Skins goto skip
@@ -43,7 +42,6 @@ xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\debug\Layouts
     <Link>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
-      <DelayLoadDLLs>Rainmeter.dll</DelayLoadDLLs>
     </Link>
     <PostBuildEvent>
       <Command>if exist ..\testbench\x64\debug\Skins goto skip
@@ -61,12 +59,14 @@ xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\debug\Layouts
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <DisableSpecificWarnings>4018;4090;4114;4267;4351;4786;4800;4996</DisableSpecificWarnings>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>..\Library\x32\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
-      <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
-      <DelayLoadDLLs>Rainmeter.dll</DelayLoadDLLs>
+      <EntryPointSymbol>Main</EntryPointSymbol>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>if exist ..\testbench\x32\release\Skins goto skip
@@ -85,12 +85,14 @@ xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\release\Layouts
     <ClCompile>
       <AdditionalOptions>/GA %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4018;4090;4114;4267;4351;4786;4800;4996</DisableSpecificWarnings>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>..\Library\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
-      <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
-      <DelayLoadDLLs>Rainmeter.dll</DelayLoadDLLs>
+      <EntryPointSymbol>Main</EntryPointSymbol>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>if exist ..\testbench\x64\release\Skins goto skip
