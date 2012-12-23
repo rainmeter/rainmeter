@@ -46,7 +46,7 @@ HINSTANCE LoadRainmeterLibrary()
 
 WCHAR* GetCommandLineArguments()
 {
-	LPWSTR args = GetCommandLine();
+	WCHAR* args = GetCommandLine();
 
 	// Skip past (quoted) application path in cmdLine.
 	if (*args == L'"')
@@ -79,11 +79,7 @@ WCHAR* GetCommandLineArguments()
 ** Entry point. In Release builds, the entry point is Main() since the CRT is not used.
 **
 */
-#ifdef _DEBUG
 int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
-#else
-EXTERN_C int WINAPI Main()
-#endif
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	//_CrtSetBreakAlloc(000);
@@ -143,3 +139,12 @@ EXTERN_C int WINAPI Main()
 
 	return 1;
 }
+
+#ifndef _DEBUG
+EXTERN_C int WINAPI Main()
+{
+	int result = wWinMain(NULL, NULL, NULL, 0);
+	TerminateProcess(GetCurrentProcess(), result);
+	return 0;  // Never reached.
+}
+#endif
