@@ -607,7 +607,12 @@ Token GetNextToken(Lexer& lexer)
 	if (lexer.charType == CharType::MinusSymbol)
 	{
 		// If the - sign follows a symbol, it is treated as a (negative) number.
-		lexer.charType = (lexer.token == Token::Operator) ? CharType::Digit : CharType::Symbol;
+		lexer.charType = CharType::Symbol;
+		if (lexer.token == Token::Operator &&
+			lexer.value.oper != Operator::ClosingBracket)  // Special case for e.g. (5)-2.
+		{
+			lexer.charType = CharType::Digit;
+		}
 	}
 
 	switch (lexer.charType)
