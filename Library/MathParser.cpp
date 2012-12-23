@@ -627,12 +627,12 @@ Token GetNextToken(Lexer& lexer)
 		{
 			lexer.token = Token::Name;
 			lexer.name = lexer.string;
-			lexer.nameLen = lexer.string - lexer.name;
 			do
 			{
 				lexer.charType = GetCharType(*++lexer.string);
 			}
 			while (lexer.charType <= CharType::Digit);
+			lexer.nameLen = lexer.string - lexer.name;
 		}
 		break;
 
