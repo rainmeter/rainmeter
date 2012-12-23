@@ -20,6 +20,7 @@
 #define __DIALOGMANAGE_H__
 
 #include "../Common/Dialog.h"
+#include "resource.h"
 
 class CDialogManage : public CDialog
 {
@@ -53,9 +54,6 @@ private:
 			Id_CreateSkinPackageButton,
 			Id_FileLabel,
 			Id_ConfigLabel,
-			Id_LoadButton,
-			Id_RefreshButton,
-			Id_EditButton,
 			Id_AuthorLabel,
 			Id_VersionLabel,
 			Id_LicenseLabel,
@@ -72,7 +70,11 @@ private:
 			Id_ClickThroughCheckBox,
 			Id_KeepOnScreenCheckBox,
 			Id_SavePositionCheckBox,
-			Id_SnapToEdgesCheckBox
+			Id_SnapToEdgesCheckBox,
+
+			Id_LoadButton    = IDM_MANAGESKINSMENU_LOAD,
+			Id_RefreshButton = IDM_MANAGESKINSMENU_REFRESH,
+			Id_EditButton    = IDM_MANAGESKINSMENU_EDIT
 		};
 
 		CTabSkins();
