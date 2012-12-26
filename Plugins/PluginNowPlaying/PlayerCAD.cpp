@@ -383,7 +383,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 
 						if (player->m_Open)
 						{
-							if (wcscmp(windowSz, L"foobar2000") == 0)
+							if (windowSz && wcscmp(windowSz, L"foobar2000") == 0)
 							{
 								// Activate foobar2000 in case it starts minimized
 								SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_SHOW_WINDOW);
