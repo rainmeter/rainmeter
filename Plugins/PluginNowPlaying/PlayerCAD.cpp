@@ -341,6 +341,14 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 					player->FindLyrics();
 				}
 			}
+			else if (cds->dwData == IPC_NEW_COVER_NOTIFICATION)
+			{
+				WCHAR* data = (WCHAR*)cds->lpData;
+				if (data)
+				{
+					player->m_CoverPath.assign(data);
+				}
+			}
 			else if (cds->dwData == IPC_REGISTER_NOTIFICATION && !player->m_Initialized)
 			{
 				std::wstring data = (WCHAR*)cds->lpData;
