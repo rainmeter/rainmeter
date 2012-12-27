@@ -207,7 +207,7 @@ bool CMeterLine::Update()
 			}
 
 			++m_CurrentPos;
-			if (m_CurrentPos >= maxSize) m_CurrentPos = 0;
+			m_CurrentPos %= maxSize;
 		}
 		return true;
 	}
@@ -230,13 +230,11 @@ bool CMeterLine::Draw(Graphics& graphics)
 	if (m_Autoscale)
 	{
 		double newValue = 0;
-		std::vector< std::vector<double> >::const_iterator i = m_AllValues.begin();
 		counter = 0;
-		for (; i != m_AllValues.end(); ++i)
+		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
 			double scale = m_ScaleValues[counter];
-			std::vector<double>::const_iterator j = (*i).begin();
-			for (; j != (*i).end(); ++j)
+			for (auto j = (*i).cbegin(); j != (*i).cend(); ++j)
 			{
 				double val = (*j) * scale;
 				newValue = max(newValue, val);
@@ -260,16 +258,10 @@ bool CMeterLine::Draw(Graphics& graphics)
 	}
 	else
 	{
-		if (!m_Measures.empty())
+		for (auto i = m_Measures.cbegin(); i != m_Measures.cend(); ++i)
 		{
-			maxValue = m_Measures[0]->GetMaxValue();
-
-			std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
-			for (; i != m_Measures.end(); ++i)
-			{
-				double val = (*i)->GetMaxValue();
-				maxValue = max(maxValue, val);
-			}
+			double val = (*i)->GetMaxValue();
+			maxValue = max(maxValue, val);
 		}
 
 		if (maxValue == 0.0)
@@ -314,8 +306,7 @@ bool CMeterLine::Draw(Graphics& graphics)
 	{
 		const REAL W = m_W - 1.0f;
 		counter = 0;
-		std::vector< std::vector<double> >::const_iterator i = m_AllValues.begin();
-		for (; i != m_AllValues.end(); ++i)
+		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
 			// Draw a line
 			REAL X, oldX;
@@ -324,10 +315,15 @@ bool CMeterLine::Draw(Graphics& graphics)
 
 			int pos = m_CurrentPos;
 
-			oldX = (REAL)((*i)[pos] * scale);
-			oldX = min(oldX, W);
-			oldX = max(oldX, 0.0f);
-			oldX = x + (m_GraphStartLeft ? oldX : W - oldX);
+			auto calcX = [&](REAL& _x)
+			{
+				_x = (REAL)((*i)[pos] * scale);
+				_x = min(_x, W);
+				_x = max(_x, 0.0f);
+				_x = x + (m_GraphStartLeft ? _x : W - _x);
+			};
+
+			calcX(oldX);
 
 			// Cache all lines
 			GraphicsPath path;
@@ -337,12 +333,9 @@ bool CMeterLine::Draw(Graphics& graphics)
 				for (int j = y + 1, R = y + m_H; j < R; ++j)
 				{
 					++pos;
-					if (pos >= m_H) pos = 0;
+					pos %= m_H;
 
-					X = (REAL)((*i)[pos] * scale);
-					X = min(X, W);
-					X = max(X, 0.0f);
-					X = x + (m_GraphStartLeft ? X : W - X);
+					calcX(X);
 
 					path.AddLine(oldX, (REAL)(j - 1), X, (REAL)j);
 
@@ -354,12 +347,9 @@ bool CMeterLine::Draw(Graphics& graphics)
 				for (int j = y + m_H, R = y + 1; j > R; --j)
 				{
 					++pos;
-					if (pos >= m_H) pos = 0;
+					pos %= m_H;
 
-					X = (REAL)((*i)[pos] * scale);
-					X = min(X, W);
-					X = max(X, 0.0f);
-					X = x + (m_GraphStartLeft ? X : W - X);
+					calcX(X);
 
 					path.AddLine(oldX, (REAL)(j - 1), X, (REAL)(j - 2));
 
@@ -379,8 +369,7 @@ bool CMeterLine::Draw(Graphics& graphics)
 	{
 		const REAL H = m_H - 1.0f;
 		counter = 0;
-		std::vector< std::vector<double> >::const_iterator i = m_AllValues.begin();
-		for (; i != m_AllValues.end(); ++i)
+		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
 			// Draw a line
 			REAL Y, oldY;
@@ -389,10 +378,15 @@ bool CMeterLine::Draw(Graphics& graphics)
 
 			int pos = m_CurrentPos;
 
-			oldY = (REAL)((*i)[pos] * scale);
-			oldY = min(oldY, H);
-			oldY = max(oldY, 0.0f);
-			oldY = y + (m_Flip ? oldY : H - oldY);
+			auto calcY = [&](REAL& _y)
+			{
+				_y = (REAL)((*i)[pos] * scale);
+				_y = min(_y, H);
+				_y = max(_y, 0.0f);
+				_y = y + (m_Flip ? _y : H - _y);
+			};
+
+			calcY(oldY);
 
 			// Cache all lines
 			GraphicsPath path;
@@ -402,12 +396,9 @@ bool CMeterLine::Draw(Graphics& graphics)
 				for (int j = x + 1, R = x + m_W; j < R; ++j)
 				{
 					++pos;
-					if (pos >= m_W) pos = 0;
+					pos %= m_W;
 
-					Y = (REAL)((*i)[pos] * scale);
-					Y = min(Y, H);
-					Y = max(Y, 0.0f);
-					Y = y + (m_Flip ? Y : H - Y);
+					calcY(Y);
 
 					path.AddLine((REAL)(j - 1), oldY, (REAL)j, Y);
 
@@ -419,12 +410,9 @@ bool CMeterLine::Draw(Graphics& graphics)
 				for (int j = x + m_W, R = x + 1; j > R; --j)
 				{
 					++pos;
-					if (pos >= m_W) pos = 0;
+					pos %= m_W;
 
-					Y = (REAL)((*i)[pos] * scale);
-					Y = min(Y, H);
-					Y = max(Y, 0.0f);
-					Y = y + (m_Flip ? Y : H - Y);
+					calcY(Y);
 
 					path.AddLine((REAL)(j - 1), oldY, (REAL)(j - 2), Y);
 

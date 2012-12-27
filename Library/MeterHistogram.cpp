@@ -438,23 +438,29 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 	int endValue = -1; //(should be 0, but need to simulate <=)
 
 	// GraphStart=Left, GraphOrientation=Vertical
-	if (m_GraphStartLeft && !m_GraphHorizontalOrientation)
+	if (!m_GraphHorizontalOrientation)
 	{
-		startValue = m_W - 1;
-		endValueLHS = &endValue;
-		endValueRHS = &i;
-		step = -1;
+		if (m_GraphStartLeft)
+		{
+			startValue = m_W - 1;
+			endValueLHS = &endValue;
+			endValueRHS = &i;
+			step = -1;
+		}
 	}
-	else if (m_GraphHorizontalOrientation && !m_Flip)
+	else
 	{
-		endValueRHS = &m_H;
-	}
-	else if (m_GraphHorizontalOrientation && m_Flip)
-	{
-		startValue = m_H - 1;
-		endValueLHS = &endValue;
-		endValueRHS = &i;
-		step = -1;
+		if (!m_Flip)
+		{
+			endValueRHS = &m_H;
+		}
+		else
+		{
+			startValue = m_H - 1;
+			endValueLHS = &endValue;
+			endValueRHS = &i;
+			step = -1;
+		}
 	}
 
 	// Horizontal or Vertical graph
