@@ -570,12 +570,42 @@ Section
 	${EndIf}
 
 	${If} $InstallPortable <> 1
-		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$InstArc" "Bld"
-		${VersionCompare} "$0" "40219" $1
+		; Download and install VC++ 2012 redist if required
+		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Libraries\Extended\$InstArc" "Bld"
+		${VersionCompare} "$0" "51106" $1
+		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Libraries\Extended\$InstArc" "Installed"
+		${If} $1 = 2
+		${OrIf} $2 <> 1
+			${If} ${Silent}
+				SetErrorLevel ${ERROR_NOVCREDIST}
+				Quit
+			${EndIf}
 
-		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$InstArc" "Installed"
+			NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU1/vcredist_$InstArc.exe" "$PLUGINSDIR\vcredist.exe"
+			Pop $0
+
+			${If} $0 == "success"
+				ExecWait '"$PLUGINSDIR\vcredist.exe" /q /norestart' $0
+				Delete "$PLUGINSDIR\vcredist.exe"
+
+				${If} $0 = 3010
+					SetRebootFlag true
+				${ElseIf} $0 <> 0
+					MessageBox MB_OK|MB_ICONSTOP "$(VCINSTERROR)"
+					Quit
+				${EndIf}
+			${ElseIf} $0 == "cancel"
+				Quit
+			${Else}
+				MessageBox MB_OK|MB_ICONSTOP "$(VCINSTERROR)"
+				Quit
+			${EndIf}
+		${EndIf}
 
 		; Download and install VC++ 2010 redist if required
+		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$InstArc" "Bld"
+		${VersionCompare} "$0" "40219" $1
+		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$InstArc" "Installed"
 		${If} $1 = 2
 		${OrIf} $2 <> 1
 			${If} ${Silent}
