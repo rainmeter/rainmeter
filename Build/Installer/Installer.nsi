@@ -575,7 +575,7 @@ Section
 
 		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$InstArc" "Installed"
 
-		; Download and install VC++ redist if required
+		; Download and install VC++ 2010 redist if required
 		${If} $1 = 2
 		${OrIf} $2 <> 1
 			${If} ${Silent}
@@ -585,25 +585,10 @@ Section
 
 			${If} $Install64Bit <> 1
 				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/C/6/D/C6D0FD4E-9E53-4897-9B91-836EBA2AACD3/vcredist_x86.exe" "$PLUGINSDIR\vcredist.exe"
-				Pop $0
 			${Else}
 				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/A/8/0/A80747C3-41BD-45DF-B505-E9710D2744E0/vcredist_x64.exe" "$PLUGINSDIR\vcredist.exe"
-				Pop $0
 			${EndIf}
-
-			${If} $0 != "cancel"
-			${AndIf} $0 != "success"
-				; download from MS failed, try from rainmter.net
-				Delete "$PLUGINSDIR\vcredist.exe"
-
-				${If} $Install64Bit <> 1
-					NSISdl::download /TIMEOUT=30000 "http://rainmeter.net/redist/vc10SP1redist_x86.exe" "$PLUGINSDIR\vcredist.exe"
-					Pop $0
-				${Else}
-					NSISdl::download /TIMEOUT=30000 "http://rainmeter.net/redist/vc10SP1redist_x64.exe" "$PLUGINSDIR\vcredist.exe"
-					Pop $0
-				${EndIf}
-			${EndIf}
+			Pop $0
 
 			${If} $0 == "success"
 				ExecWait '"$PLUGINSDIR\vcredist.exe" /q /norestart' $0
@@ -631,21 +616,7 @@ Section
 			${Else}
 				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/a/3/f/a3f1bf98-18f3-4036-9b68-8e6de530ce0a/NetFx64.exe" "$PLUGINSDIR\dotnetfx.exe"
 			${EndIf}
-
 			Pop $0
-
-			${If} $0 != "cancel"
-			${AndIf} $0 != "success"
-				Delete "$PLUGINSDIR\dotnetfx.exe"
-
-				${If} $Install64Bit <> 1
-					NSISdl::download /TIMEOUT=30000 "http://rainmeter.net/redist/dotnetfx.exe" "$PLUGINSDIR\dotnetfx.exe"
-				${Else}
-					NSISdl::download /TIMEOUT=30000 "http://rainmeter.net/redist/NetFx64.exe" "$PLUGINSDIR\dotnetfx.exe"
-				${EndIf}
-
-				Pop $0
-			${EndIf}
 
 			${If} $0 == "success"
 				ExecWait '"$PLUGINSDIR\dotnetfx.exe" /q:a /c:"install /q"' $0
