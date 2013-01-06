@@ -573,7 +573,7 @@ Section
 		; Download and install VC++ 2012 redist if required
 		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Libraries\Extended\$InstArc" "Bld"
 		${VersionCompare} "$0" "51106" $1
-		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Libraries\Extended\$InstArc" "Installed"
+		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Libraries\Extended\$InstArc" "Install"
 		${If} $1 = 2
 		${OrIf} $2 <> 1
 			${If} ${Silent}
