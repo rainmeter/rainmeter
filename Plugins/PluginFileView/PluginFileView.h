@@ -180,7 +180,7 @@ struct ChildMeasure
 		date(DTYPE_MODIFIED),
 		iconSize(IS_LARGE),
 		iconPath(L""),
-		index(0),
+		index(1),
 		ignoreCount(false),
 		needsIcon(true),
 		value(0.0),

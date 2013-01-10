@@ -175,7 +175,9 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		child->parent->children.push_back(child);
 	}
 
-	child->index = RmReadInt(rm, L"Index", 0);
+	int index = RmReadInt(rm, L"Index", 1) - 1;
+	child->index = index >= 0 ? index : 1;
+
 	child->ignoreCount = 0!=RmReadInt(rm, L"IgnoreCount", 0);
 
 	LPCWSTR type = RmReadString(rm, L"Type", L"FOLDERPATH");
