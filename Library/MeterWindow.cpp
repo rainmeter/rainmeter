@@ -2040,6 +2040,7 @@ bool CMeterWindow::ReadSkin()
 	m_OnCloseAction = m_Parser.ReadString(L"Rainmeter", L"OnCloseAction", L"", false);
 	m_OnFocusAction = m_Parser.ReadString(L"Rainmeter", L"OnFocusAction", L"", false);
 	m_OnUnfocusAction = m_Parser.ReadString(L"Rainmeter", L"OnUnfocusAction", L"", false);
+	m_OnUpdateAction = m_Parser.ReadString(L"Rainmeter", L"OnUpdateAction", L"", false);
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
@@ -2681,7 +2682,14 @@ void CMeterWindow::Update(bool refresh)
 		std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
 		for ( ; i != m_Measures.end(); ++i)
 		{
-			UpdateMeasure((*i), refresh);
+			if (UpdateMeasure((*i), refresh))
+			{
+				std::wstring updateAction = (*i)->GetOnUpdateAction();
+				if (!updateAction.empty())
+				{
+					Rainmeter->ExecuteCommand(updateAction.c_str(), this);
+				}
+			}
 		}
 	}
 
@@ -2696,6 +2704,12 @@ void CMeterWindow::Update(bool refresh)
 		if (UpdateMeter((*j), bActiveTransition, refresh))
 		{
 			bUpdate = true;
+
+			std::wstring updateAction = (*j)->GetOnUpdateAction();
+			if (!updateAction.empty())
+			{
+				Rainmeter->ExecuteCommand(updateAction.c_str(), this);
+			}
 		}
 	}
 
@@ -2718,6 +2732,11 @@ void CMeterWindow::Update(bool refresh)
 
 	// Post-updates
 	PostUpdate(bActiveTransition);
+
+	if (!m_OnUpdateAction.empty())
+	{
+		Rainmeter->ExecuteCommand(m_OnUpdateAction.c_str(), this);
+	}
 }
 
 /*

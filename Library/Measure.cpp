@@ -144,6 +144,8 @@ void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_IfEqualValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0);
 	m_IfEqualAction = parser.ReadString(section, L"IfEqualAction", L"", false);
 
+	m_OnUpdateAction = parser.ReadString(section, L"OnUpdateAction", L"", false);
+
 	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0);
 
 	m_DynamicVariables = 0!=parser.ReadInt(section, L"DynamicVariables", 0);

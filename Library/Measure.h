@@ -67,6 +67,8 @@ public:
 	static void GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords);
 	static void RemoveTrailingZero(WCHAR* str, int strLen);
 
+	std::wstring GetOnUpdateAction() { return m_OnUpdateAction; }
+
 	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
 
 	static CMeasure* Create(const WCHAR* measure, CMeterWindow* meterWindow, const WCHAR* name);
@@ -109,6 +111,8 @@ protected:
 	bool m_IfBelowCommitted;		// True when the IfBelow action is executed
 	bool m_Disabled;				// Status of the measure
 	bool m_Initialized;
+
+	std::wstring m_OnUpdateAction;
 
 	CMeterWindow* m_MeterWindow;
 };

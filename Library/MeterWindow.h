@@ -371,6 +371,7 @@ private:
 	std::wstring m_OnCloseAction;
 	std::wstring m_OnFocusAction;
 	std::wstring m_OnUnfocusAction;
+	std::wstring m_OnUpdateAction;
 
 	std::wstring m_BackgroundName;
 	RECT m_BackgroundMargins;

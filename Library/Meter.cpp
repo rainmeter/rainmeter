@@ -320,6 +320,8 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor.GetValue());
 	m_SolidAngle = (Gdiplus::REAL)parser.ReadFloat(section, L"GradientAngle", 0.0);
 
+	m_OnUpdateAction = parser.ReadString(section, L"OnUpdateAction", L"", false);
+
 	m_Mouse.ReadOptions(parser, section, m_MeterWindow);
 
 	m_HasMouseAction =
