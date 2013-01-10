@@ -18,6 +18,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginAdvancedCPU", "Plugin
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginCoreTemp", "Plugins\PluginCoreTemp\PluginCoreTemp.vcxproj", "{F32FA418-8DF4-4E94-B92B-EBD502F5DC07}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginFileView", "Plugins\PluginFileView\PluginFileView.vcxproj", "{64FDEE97-6B7E-40E5-A489-ECA322825BC8}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginFolderInfo", "Plugins\PluginFolderInfo\PluginFolderInfo.vcxproj", "{A221819D-4263-42AA-B22A-C022924842A7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginInputText", "Plugins\PluginInputText\PluginInputText.csproj", "{2CFEC79A-E39E-4FFD-ABC2-C4A69DD1E44D}"
@@ -120,6 +122,14 @@ Global
 		{F32FA418-8DF4-4E94-B92B-EBD502F5DC07}.Release|Win32.Build.0 = Release|Win32
 		{F32FA418-8DF4-4E94-B92B-EBD502F5DC07}.Release|x64.ActiveCfg = Release|x64
 		{F32FA418-8DF4-4E94-B92B-EBD502F5DC07}.Release|x64.Build.0 = Release|x64
+		{64FDEE97-6B7E-40E5-A489-ECA322825BC8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{64FDEE97-6B7E-40E5-A489-ECA322825BC8}.Debug|Win32.Build.0 = Debug|Win32
+		{64FDEE97-6B7E-40E5-A489-ECA322825BC8}.Debug|x64.ActiveCfg = Debug|x64
+		{64FDEE97-6B7E-40E5-A489-ECA322825BC8}.Debug|x64.Build.0 = Debug|x64
+		{64FDEE97-6B7E-40E5-A489-ECA322825BC8}.Release|Win32.ActiveCfg = Release|Win32
+		{64FDEE97-6B7E-40E5-A489-ECA322825BC8}.Release|Win32.Build.0 = Release|Win32
+		{64FDEE97-6B7E-40E5-A489-ECA322825BC8}.Release|x64.ActiveCfg = Release|x64
+		{64FDEE97-6B7E-40E5-A489-ECA322825BC8}.Release|x64.Build.0 = Release|x64
 		{A221819D-4263-42AA-B22A-C022924842A7}.Debug|Win32.ActiveCfg = Debug|Win32
 		{A221819D-4263-42AA-B22A-C022924842A7}.Debug|Win32.Build.0 = Debug|Win32
 		{A221819D-4263-42AA-B22A-C022924842A7}.Debug|x64.ActiveCfg = Debug|x64
