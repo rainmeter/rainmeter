@@ -86,7 +86,9 @@ CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : CSection(name
 	m_IfAboveCommitted(false),
 	m_IfBelowCommitted(false),
 	m_Disabled(false),
-	m_Initialized(false)
+	m_Initialized(false),
+	m_OldValue(0.0),
+	m_OldStringValue(L"")
 {
 }
 
@@ -145,6 +147,7 @@ void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_IfEqualAction = parser.ReadString(section, L"IfEqualAction", L"", false);
 
 	m_OnUpdateAction = parser.ReadString(section, L"OnUpdateAction", L"", false);
+	m_OnChangeAction = parser.ReadString(section, L"OnChangeAction", L"", false);
 
 	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0);
 

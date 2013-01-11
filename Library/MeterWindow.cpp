@@ -2689,6 +2689,17 @@ void CMeterWindow::Update(bool refresh)
 				{
 					Rainmeter->ExecuteCommand(updateAction.c_str(), this);
 				}
+
+				double newValue = (*i)->GetValue();
+				const WCHAR* newStringValue = (*i)->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
+				std::wstring changeAction = (*i)->GetOnChangeAction();
+
+				if (((*i)->GetOldValue() != newValue || (*i)->GetOldStringValue() != newStringValue) && !changeAction.empty())
+				{
+					(*i)->SetOldValue(newValue);
+					(*i)->SetOldStringValue(newStringValue);
+					Rainmeter->ExecuteCommand(changeAction.c_str(), this);
+				}
 			}
 		}
 	}

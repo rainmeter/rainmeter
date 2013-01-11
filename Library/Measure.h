@@ -69,6 +69,12 @@ public:
 
 	std::wstring GetOnUpdateAction() { return m_OnUpdateAction; }
 
+	std::wstring GetOnChangeAction() { return m_OnChangeAction; }
+	void SetOldValue(double value) { m_OldValue = value; }
+	double GetOldValue() { return m_OldValue; }
+	void SetOldStringValue(std::wstring value) { m_OldStringValue = value; }
+	std::wstring GetOldStringValue() { return m_OldStringValue; }
+
 	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
 
 	static CMeasure* Create(const WCHAR* measure, CMeterWindow* meterWindow, const WCHAR* name);
@@ -113,6 +119,10 @@ protected:
 	bool m_Initialized;
 
 	std::wstring m_OnUpdateAction;
+
+	std::wstring m_OnChangeAction;
+	double m_OldValue;
+	std::wstring m_OldStringValue;
 
 	CMeterWindow* m_MeterWindow;
 };
