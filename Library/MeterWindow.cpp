@@ -1227,6 +1227,13 @@ void CMeterWindow::UpdateMeter(const std::wstring& name, bool group)
 		if (all || (bContinue && CompareName((*j), meter, group)))
 		{
 			UpdateMeter((*j), bActiveTransition, true);
+
+			std::wstring updateAction = (*j)->GetOnUpdateAction();
+			if (!updateAction.empty())
+			{
+				Rainmeter->ExecuteCommand(updateAction.c_str(), this);
+			}
+
 			SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
 			if (!group)
 			{
@@ -1349,6 +1356,13 @@ void CMeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 			}
 
 			UpdateMeasure((*i), true);
+
+			std::wstring updateAction = (*i)->GetOnUpdateAction();
+			if (!updateAction.empty())
+			{
+				Rainmeter->ExecuteCommand(updateAction.c_str(), this);
+			}
+
 			if (!group) return;
 		}
 	}
