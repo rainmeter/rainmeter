@@ -88,8 +88,7 @@ CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : CSection(name
 	m_Disabled(false),
 	m_Initialized(false),
 	m_OldValue(0.0),
-	m_OldStringValue(L""),
-	m_SkipFirstChange(true)
+	m_OldStringValue(L"")
 {
 }
 

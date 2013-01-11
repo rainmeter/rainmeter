@@ -2693,13 +2693,11 @@ void CMeterWindow::Update(bool refresh)
 				double newValue = (*i)->GetValue();
 				const WCHAR* newStringValue = (*i)->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
 				std::wstring changeAction = (*i)->GetOnChangeAction();
-				bool skip = (*i)->GetFirstChange();
 
-				if (skip)
+				if (refresh)
 				{
 					(*i)->SetOldValue(newValue);
 					(*i)->SetOldStringValue(newStringValue);
-					(*i)->SetFirstChange(false);
 				}
 				else if (((*i)->GetOldValue() != newValue || (*i)->GetOldStringValue() != newStringValue) && !changeAction.empty())
 				{

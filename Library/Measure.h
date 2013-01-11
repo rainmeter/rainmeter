@@ -74,8 +74,6 @@ public:
 	double GetOldValue() { return m_OldValue; }
 	void SetOldStringValue(std::wstring value) { m_OldStringValue = value; }
 	std::wstring GetOldStringValue() { return m_OldStringValue; }
-	void SetFirstChange(bool value) { m_SkipFirstChange = value; }
-	bool GetFirstChange() { return m_SkipFirstChange; }
 
 	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
 
@@ -125,7 +123,6 @@ protected:
 	std::wstring m_OnChangeAction;
 	double m_OldValue;
 	std::wstring m_OldStringValue;
-	bool m_SkipFirstChange;
 
 	CMeterWindow* m_MeterWindow;
 };
