@@ -23,10 +23,12 @@
 #include <string>
 #include "Group.h"
 
+class CMeterWindow;
+
 class CSection : public CGroup
 {
 public:
-	virtual ~CSection() {};
+	virtual ~CSection();
 
 	virtual UINT GetTypeID() = 0;
 
@@ -41,9 +43,10 @@ public:
 	int GetUpdateDivider() const { return m_UpdateDivider; }
 
 	const std::wstring& GetOnUpdateAction() { return m_OnUpdateAction; }
+	void DoUpdateAction();
 
 protected:
-	CSection(const WCHAR* name) : m_Name(name), m_DynamicVariables(false), m_UpdateDivider(1), m_UpdateCounter(1) {}
+	CSection(CMeterWindow* meterWindow, const WCHAR* name);
 
 	const std::wstring m_Name;		// Name of this Section
 
@@ -52,6 +55,8 @@ protected:
 	int m_UpdateCounter;			// Current update counter
 
 	std::wstring m_OnUpdateAction;
+
+	CMeterWindow* m_MeterWindow;
 };
 
 #endif

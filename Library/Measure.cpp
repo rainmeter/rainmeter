@@ -69,7 +69,7 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : CSection(name), m_MeterWindow(meterWindow),
+CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : CSection(meterWindow, name),
 	m_Invert(false),
 	m_LogMaxValue(false),
 	m_MinValue(),
@@ -87,8 +87,8 @@ CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : CSection(name
 	m_IfBelowCommitted(false),
 	m_Disabled(false),
 	m_Initialized(false),
-	m_OldValue(0.0),
-	m_OldStringValue(L"")
+	m_OldValue(),
+	m_OldValueInitialized(false)
 {
 }
 
@@ -724,6 +724,36 @@ void CMeasure::RemoveTrailingZero(WCHAR* str, int strLen)
 				str[strLen] = L'\0';
 			}
 			break;
+		}
+	}
+}
+
+/*
+** Execute OnChangeAction if action is set
+**
+*/
+void CMeasure::DoChangeAction()
+{
+	if (!m_OldValueInitialized)
+	{
+		double newValue = GetValue();
+		const WCHAR* newStringValue = GetStringValue(AUTOSCALE_OFF, 1, -1, false);
+
+		m_OldValue = newValue;
+		m_OldStringValue = newStringValue;
+		m_OldValueInitialized = true;
+	}
+	else if (!m_OnChangeAction.empty())
+	{
+		double newValue = GetValue();
+		const WCHAR* newStringValue = GetStringValue(AUTOSCALE_OFF, 1, -1, false);
+
+		if (m_OldValue != newValue || wcscmp(m_OldStringValue.c_str(), newStringValue) != 0)
+		{
+			m_OldValue = newValue;
+			m_OldStringValue = newStringValue;
+
+			Rainmeter->ExecuteCommand(m_OnChangeAction.c_str(), m_MeterWindow);
 		}
 	}
 }

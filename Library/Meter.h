@@ -150,8 +150,6 @@ protected:
 	Gdiplus::REAL m_SolidAngle;
 	bool m_AntiAlias;
 	bool m_Initialized;
-
-	CMeterWindow* m_MeterWindow;
 };
 
 #endif

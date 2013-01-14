@@ -1228,7 +1228,7 @@ void CMeterWindow::UpdateMeter(const std::wstring& name, bool group)
 		{
 			if (UpdateMeter((*j), bActiveTransition, true))
 			{
-				DoUpdateAction((*j));
+				(*j)->DoUpdateAction();
 			}
 
 			SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
@@ -1354,8 +1354,8 @@ void CMeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 
 			if (UpdateMeasure((*i), true))
 			{
-				DoUpdateAction((*i));
-				//DoChangeAction((*i), false);  // TODO: Check that this is the first update or not
+				(*i)->DoUpdateAction();
+				(*i)->DoChangeAction();
 			}
 
 			if (!group) return;
@@ -2678,6 +2678,11 @@ void CMeterWindow::Update(bool refresh)
 {
 	++m_UpdateCounter;
 
+#ifdef DEBUG_PERF_UPDATE
+	_QPC(s1);
+	__int64 e1;
+#endif
+
 	if (!m_Measures.empty())
 	{
 		// Pre-updates
@@ -2687,19 +2692,33 @@ void CMeterWindow::Update(bool refresh)
 			CMeasureNet::UpdateStats();
 		}
 
+#ifdef DEBUG_PERF_UPDATE
+		e1 = QPC();
+#endif
+
 		// Update all measures
 		std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
 		for ( ; i != m_Measures.end(); ++i)
 		{
 			if (UpdateMeasure((*i), refresh))
 			{
-				DoUpdateAction((*i));
-				DoChangeAction((*i), refresh);
+				(*i)->DoUpdateAction();
+				(*i)->DoChangeAction();
 			}
 		}
 	}
+#ifdef DEBUG_PERF_UPDATE
+	else
+	{
+		e1 = QPC();
+	}
+#endif
 
 	CDialogAbout::UpdateMeasures(this);
+
+#ifdef DEBUG_PERF_UPDATE
+	_QPC(e2);
+#endif
 
 	// Update all meters
 	bool bActiveTransition = false;
@@ -2711,9 +2730,15 @@ void CMeterWindow::Update(bool refresh)
 		{
 			bUpdate = true;
 
-			DoUpdateAction((*j));
+			(*j)->DoUpdateAction();
 		}
 	}
+
+#ifdef DEBUG_PERF_UPDATE
+	_QPC(e3);
+	double q1 = QPCms(s1,e1), q2 = QPCms(e1,e2), q3 = QPCms(e2,e3);
+	DebugString(L"Update: %.5f [ms] (PreUpdate: %.5f / Measure: %.5f / Meter: %.5f) :: %s", q1 + q2 + q3, q1, q2, q3, m_FolderPath.c_str());
+#endif
 
 	// Redraw all meters
 	if (bUpdate || m_ResizeWindow || refresh)
@@ -2738,40 +2763,6 @@ void CMeterWindow::Update(bool refresh)
 	if (!m_OnUpdateAction.empty())
 	{
 		Rainmeter->ExecuteCommand(m_OnUpdateAction.c_str(), this);
-	}
-}
-
-void CMeterWindow::DoUpdateAction(CSection* section)
-{
-	const std::wstring& updateAction = section->GetOnUpdateAction();
-	if (!updateAction.empty())
-	{
-		Rainmeter->ExecuteCommand(updateAction.c_str(), this);
-	}
-}
-
-void CMeterWindow::DoChangeAction(CMeasure* measure, bool first)
-{
-	const std::wstring& changeAction = measure->GetOnChangeAction();
-	if (first)
-	{
-		double newValue = measure->GetValue();
-		const WCHAR* newStringValue = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
-
-		measure->SetOldValue(newValue);
-		measure->SetOldStringValue(newStringValue);
-	}
-	else if (!changeAction.empty())
-	{
-		double newValue = measure->GetValue();
-		const WCHAR* newStringValue = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
-
-		if (measure->GetOldValue() != newValue || wcscmp(measure->GetOldStringValue().c_str(), newStringValue) != 0)
-		{
-			measure->SetOldValue(newValue);
-			measure->SetOldStringValue(newStringValue);
-			Rainmeter->ExecuteCommand(changeAction.c_str(), this);
-		}
 	}
 }
 

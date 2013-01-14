@@ -39,7 +39,7 @@ extern CRainmeter* Rainmeter;
 ** The constructor
 **
 */
-CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : CSection(name), m_MeterWindow(meterWindow),
+CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : CSection(meterWindow, name),
 	m_X(),
 	m_Y(),
 	m_W(0),

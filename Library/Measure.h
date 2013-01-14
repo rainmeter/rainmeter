@@ -68,10 +68,7 @@ public:
 	static void RemoveTrailingZero(WCHAR* str, int strLen);
 
 	const std::wstring& GetOnChangeAction() { return m_OnChangeAction; }
-	void SetOldValue(double value) { m_OldValue = value; }
-	double GetOldValue() { return m_OldValue; }
-	void SetOldStringValue(std::wstring value) { m_OldStringValue = value; }
-	const std::wstring& GetOldStringValue() { return m_OldStringValue; }
+	void DoChangeAction();
 
 	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
 
@@ -119,8 +116,7 @@ protected:
 	std::wstring m_OnChangeAction;
 	double m_OldValue;
 	std::wstring m_OldStringValue;
-
-	CMeterWindow* m_MeterWindow;
+	bool m_OldValueInitialized;
 };
 
 #endif
