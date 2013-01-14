@@ -67,13 +67,11 @@ public:
 	static void GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords);
 	static void RemoveTrailingZero(WCHAR* str, int strLen);
 
-	std::wstring GetOnUpdateAction() { return m_OnUpdateAction; }
-
-	std::wstring GetOnChangeAction() { return m_OnChangeAction; }
+	const std::wstring& GetOnChangeAction() { return m_OnChangeAction; }
 	void SetOldValue(double value) { m_OldValue = value; }
 	double GetOldValue() { return m_OldValue; }
 	void SetOldStringValue(std::wstring value) { m_OldStringValue = value; }
-	std::wstring GetOldStringValue() { return m_OldStringValue; }
+	const std::wstring& GetOldStringValue() { return m_OldStringValue; }
 
 	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
 
@@ -117,8 +115,6 @@ protected:
 	bool m_IfBelowCommitted;		// True when the IfBelow action is executed
 	bool m_Disabled;				// Status of the measure
 	bool m_Initialized;
-
-	std::wstring m_OnUpdateAction;
 
 	std::wstring m_OnChangeAction;
 	double m_OldValue;

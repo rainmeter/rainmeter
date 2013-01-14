@@ -25,6 +25,7 @@
 #include <string>
 #include <list>
 #include "ConfigParser.h"
+#include "Section.h"
 #include "Group.h"
 #include "Mouse.h"
 
@@ -317,6 +318,8 @@ private:
 	bool UpdateMeasure(CMeasure* measure, bool force);
 	bool UpdateMeter(CMeter* meter, bool& bActiveTransition, bool force);
 	void Update(bool refresh);
+	void DoUpdateAction(CSection* section);
+	void DoChangeAction(CMeasure* measure, bool first);
 	void UpdateWindow(int alpha, bool reset);
 	void ReadOptions();
 	void WriteOptions(INT setting = OPTION_ALL);

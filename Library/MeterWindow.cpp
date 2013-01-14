@@ -1226,12 +1226,9 @@ void CMeterWindow::UpdateMeter(const std::wstring& name, bool group)
 	{
 		if (all || (bContinue && CompareName((*j), meter, group)))
 		{
-			UpdateMeter((*j), bActiveTransition, true);
-
-			std::wstring updateAction = (*j)->GetOnUpdateAction();
-			if (!updateAction.empty())
+			if (UpdateMeter((*j), bActiveTransition, true))
 			{
-				Rainmeter->ExecuteCommand(updateAction.c_str(), this);
+				DoUpdateAction((*j));
 			}
 
 			SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
@@ -1355,12 +1352,10 @@ void CMeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 				bNetStats = false;
 			}
 
-			UpdateMeasure((*i), true);
-
-			std::wstring updateAction = (*i)->GetOnUpdateAction();
-			if (!updateAction.empty())
+			if (UpdateMeasure((*i), true))
 			{
-				Rainmeter->ExecuteCommand(updateAction.c_str(), this);
+				DoUpdateAction((*i));
+				//DoChangeAction((*i), false);  // TODO: Check that this is the first update or not
 			}
 
 			if (!group) return;
@@ -2698,27 +2693,8 @@ void CMeterWindow::Update(bool refresh)
 		{
 			if (UpdateMeasure((*i), refresh))
 			{
-				std::wstring updateAction = (*i)->GetOnUpdateAction();
-				if (!updateAction.empty())
-				{
-					Rainmeter->ExecuteCommand(updateAction.c_str(), this);
-				}
-
-				double newValue = (*i)->GetValue();
-				const WCHAR* newStringValue = (*i)->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
-				std::wstring changeAction = (*i)->GetOnChangeAction();
-
-				if (refresh)
-				{
-					(*i)->SetOldValue(newValue);
-					(*i)->SetOldStringValue(newStringValue);
-				}
-				else if (((*i)->GetOldValue() != newValue || (*i)->GetOldStringValue() != newStringValue) && !changeAction.empty())
-				{
-					(*i)->SetOldValue(newValue);
-					(*i)->SetOldStringValue(newStringValue);
-					Rainmeter->ExecuteCommand(changeAction.c_str(), this);
-				}
+				DoUpdateAction((*i));
+				DoChangeAction((*i), refresh);
 			}
 		}
 	}
@@ -2735,11 +2711,7 @@ void CMeterWindow::Update(bool refresh)
 		{
 			bUpdate = true;
 
-			std::wstring updateAction = (*j)->GetOnUpdateAction();
-			if (!updateAction.empty())
-			{
-				Rainmeter->ExecuteCommand(updateAction.c_str(), this);
-			}
+			DoUpdateAction((*j));
 		}
 	}
 
@@ -2766,6 +2738,40 @@ void CMeterWindow::Update(bool refresh)
 	if (!m_OnUpdateAction.empty())
 	{
 		Rainmeter->ExecuteCommand(m_OnUpdateAction.c_str(), this);
+	}
+}
+
+void CMeterWindow::DoUpdateAction(CSection* section)
+{
+	const std::wstring& updateAction = section->GetOnUpdateAction();
+	if (!updateAction.empty())
+	{
+		Rainmeter->ExecuteCommand(updateAction.c_str(), this);
+	}
+}
+
+void CMeterWindow::DoChangeAction(CMeasure* measure, bool first)
+{
+	const std::wstring& changeAction = measure->GetOnChangeAction();
+	if (first)
+	{
+		double newValue = measure->GetValue();
+		const WCHAR* newStringValue = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
+
+		measure->SetOldValue(newValue);
+		measure->SetOldStringValue(newStringValue);
+	}
+	else if (!changeAction.empty())
+	{
+		double newValue = measure->GetValue();
+		const WCHAR* newStringValue = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
+
+		if (measure->GetOldValue() != newValue || wcscmp(measure->GetOldStringValue().c_str(), newStringValue) != 0)
+		{
+			measure->SetOldValue(newValue);
+			measure->SetOldStringValue(newStringValue);
+			Rainmeter->ExecuteCommand(changeAction.c_str(), this);
+		}
 	}
 }
 

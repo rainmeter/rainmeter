@@ -40,6 +40,8 @@ public:
 	int GetUpdateCounter() const { return m_UpdateCounter; }
 	int GetUpdateDivider() const { return m_UpdateDivider; }
 
+	const std::wstring& GetOnUpdateAction() { return m_OnUpdateAction; }
+
 protected:
 	CSection(const WCHAR* name) : m_Name(name), m_DynamicVariables(false), m_UpdateDivider(1), m_UpdateCounter(1) {}
 
@@ -48,6 +50,8 @@ protected:
 	bool m_DynamicVariables;		// If true, the section contains dynamic variables
 	int m_UpdateDivider;			// Divider for the update
 	int m_UpdateCounter;			// Current update counter
+
+	std::wstring m_OnUpdateAction;
 };
 
 #endif

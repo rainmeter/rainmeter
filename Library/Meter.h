@@ -76,8 +76,6 @@ public:
 	void SetMouseOver(bool over) { m_MouseOver = over; }
 	bool IsMouseOver() { return m_MouseOver; }
 
-	std::wstring GetOnUpdateAction() { return m_OnUpdateAction; }
-
 	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
 
 	static CMeter* Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHAR* name);
@@ -152,8 +150,6 @@ protected:
 	Gdiplus::REAL m_SolidAngle;
 	bool m_AntiAlias;
 	bool m_Initialized;
-
-	std::wstring m_OnUpdateAction;
 
 	CMeterWindow* m_MeterWindow;
 };
