@@ -2678,11 +2678,6 @@ void CMeterWindow::Update(bool refresh)
 {
 	++m_UpdateCounter;
 
-#ifdef DEBUG_PERF_UPDATE
-	_QPC(s1);
-	__int64 e1;
-#endif
-
 	if (!m_Measures.empty())
 	{
 		// Pre-updates
@@ -2691,10 +2686,6 @@ void CMeterWindow::Update(bool refresh)
 			CMeasureNet::UpdateIFTable();
 			CMeasureNet::UpdateStats();
 		}
-
-#ifdef DEBUG_PERF_UPDATE
-		e1 = QPC();
-#endif
 
 		// Update all measures
 		std::vector<CMeasure*>::const_iterator i = m_Measures.begin();
@@ -2707,18 +2698,8 @@ void CMeterWindow::Update(bool refresh)
 			}
 		}
 	}
-#ifdef DEBUG_PERF_UPDATE
-	else
-	{
-		e1 = QPC();
-	}
-#endif
 
 	CDialogAbout::UpdateMeasures(this);
-
-#ifdef DEBUG_PERF_UPDATE
-	_QPC(e2);
-#endif
 
 	// Update all meters
 	bool bActiveTransition = false;
@@ -2733,12 +2714,6 @@ void CMeterWindow::Update(bool refresh)
 			(*j)->DoUpdateAction();
 		}
 	}
-
-#ifdef DEBUG_PERF_UPDATE
-	_QPC(e3);
-	double q1 = QPCms(s1,e1), q2 = QPCms(e1,e2), q3 = QPCms(e2,e3);
-	DebugString(L"Update: %.5f [ms] (PreUpdate: %.5f / Measure: %.5f / Meter: %.5f) :: %s", q1 + q2 + q3, q1, q2, q3, m_FolderPath.c_str());
-#endif
 
 	// Redraw all meters
 	if (bUpdate || m_ResizeWindow || refresh)
