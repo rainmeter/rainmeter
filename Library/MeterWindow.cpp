@@ -82,6 +82,7 @@ CMeterWindow::CMeterWindow(const std::wstring& folderPath, const std::wstring& f
 	m_Background(),
 	m_BackgroundSize(),
 	m_Window(),
+	m_Mouse(this),
 	m_MouseOver(false),
 	m_MouseInputRegistered(false),
 	m_HasMouseScrollAction(false),
@@ -215,6 +216,7 @@ void CMeterWindow::Dispose(bool refresh)
 	KillTimer(m_Window, TIMER_TRANSITION);
 
 	UnregisterMouseInput();
+	m_HasMouseScrollAction = false;
 
 	m_ActiveTransition = false;
 
@@ -2043,7 +2045,7 @@ bool CMeterWindow::ReadSkin()
 		}
 	}
 
-	m_Mouse.ReadOptions(m_Parser, L"Rainmeter", this);
+	m_Mouse.ReadOptions(m_Parser, L"Rainmeter");
 
 	m_OnRefreshAction = m_Parser.ReadString(L"Rainmeter", L"OnRefreshAction", L"", false);
 	m_OnCloseAction = m_Parser.ReadString(L"Rainmeter", L"OnCloseAction", L"", false);
@@ -4300,7 +4302,7 @@ LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 bool CMeterWindow::DoAction(int x, int y, MOUSEACTION action, bool test)
 {
-	std::wstring command = L"";
+	std::wstring command;
 
 	// Check if the hitpoint was over some meter
 	std::vector<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
@@ -4309,17 +4311,20 @@ bool CMeterWindow::DoAction(int x, int y, MOUSEACTION action, bool test)
 		// Hidden meters are ignored
 		if ((*j)->IsHidden()) continue;
 
-		std::wstring meterCommand = (*j)->GetMouse().GetActionCommand(action);
-		if (!meterCommand.empty() && (*j)->HitTest(x, y))
+		const CMouse& mouse = (*j)->GetMouse();
+		if (mouse.HasActionCommand(action) && (*j)->HitTest(x, y))
 		{
-			command = meterCommand;
+			command = mouse.GetActionCommand(action);
 			break;
 		}
 	}
 
-	if (command.empty() && HitTest(x, y))
+	if (command.empty())
 	{
-		command = m_Mouse.GetActionCommand(action).c_str();
+		if (m_Mouse.HasActionCommand(action) && HitTest(x, y))
+		{
+			command = m_Mouse.GetActionCommand(action);
+		}
 	}
 
 	if (!command.empty())
@@ -4388,17 +4393,18 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 
 				if (!(*j)->IsMouseOver())
 				{
-					if (!((*j)->GetMouse().GetOverAction().empty()) ||
-						!((*j)->GetMouse().GetLeaveAction().empty()) ||
+					const CMouse& mouse = (*j)->GetMouse();
+					if (!mouse.GetOverAction().empty() ||
+						!mouse.GetLeaveAction().empty() ||
 						button)
 					{
 						//LogWithArgs(LOG_DEBUG, L"MeterEnter: %s - [%s]", m_FolderPath.c_str(), (*j)->GetName());
 						(*j)->SetMouseOver(true);
 
-						if (!((*j)->GetMouse().GetOverAction().empty()))
+						if (!mouse.GetOverAction().empty())
 						{
 							UINT currCounter = m_MouseMoveCounter;
-							Rainmeter->ExecuteCommand((*j)->GetMouse().GetOverAction().c_str(), this);
+							Rainmeter->ExecuteCommand(mouse.GetOverAction().c_str(), this);
 							return (currCounter == m_MouseMoveCounter);
 						}
 					}
@@ -4421,9 +4427,10 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 					//LogWithArgs(LOG_DEBUG, L"MeterLeave: %s - [%s]", m_FolderPath.c_str(), (*j)->GetName());
 					(*j)->SetMouseOver(false);
 
-					if (!((*j)->GetMouse().GetLeaveAction().empty()))
+					const CMouse& mouse = (*j)->GetMouse();
+					if (!mouse.GetLeaveAction().empty())
 					{
-						Rainmeter->ExecuteCommand((*j)->GetMouse().GetLeaveAction().c_str(), this);
+						Rainmeter->ExecuteCommand(mouse.GetLeaveAction().c_str(), this);
 						return true;
 					}
 				}

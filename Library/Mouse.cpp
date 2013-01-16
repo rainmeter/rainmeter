@@ -23,11 +23,10 @@
 #include "Litestep.h"
 #include "Mouse.h"
 
-CMouse::CMouse() :
+CMouse::CMouse(CMeterWindow* meterWindow, CMeter* meter) : m_MeterWindow(meterWindow), m_Meter(meter),
 	m_CursorType(MOUSECURSOR_HAND),
 	m_CustomCursor(),
-	m_CursorState(true),
-	m_MeterWindow()
+	m_CursorState(true)
 {
 }
 
@@ -36,43 +35,36 @@ CMouse::~CMouse()
 	DestroyCustomCursor();
 }
 
-void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWindow* meterWindow)
+void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
-	m_MeterWindow = meterWindow;
-	m_MeterName = section;
-
 	DestroyCustomCursor();
 
-	m_LeftDownAction = parser.ReadString(section, L"LeftMouseDownAction", L"", false);
-	m_RightDownAction = parser.ReadString(section, L"RightMouseDownAction", L"", false);
-	m_MiddleDownAction = parser.ReadString(section, L"MiddleMouseDownAction", L"", false);
-	m_X1DownAction = parser.ReadString(section, L"X1MouseDownAction", L"", false);
-	m_X2DownAction = parser.ReadString(section, L"X2MouseDownAction", L"", false);
-	m_LeftUpAction = parser.ReadString(section, L"LeftMouseUpAction", L"", false);
-	m_RightUpAction = parser.ReadString(section, L"RightMouseUpAction", L"", false);
-	m_MiddleUpAction = parser.ReadString(section, L"MiddleMouseUpAction", L"", false);
-	m_X1UpAction = parser.ReadString(section, L"X1MouseUpAction", L"", false);
-	m_X2UpAction = parser.ReadString(section, L"X2MouseUpAction", L"", false);
-	m_LeftDoubleClickAction = parser.ReadString(section, L"LeftMouseDoubleClickAction", L"", false);
-	m_RightDoubleClickAction = parser.ReadString(section, L"RightMouseDoubleClickAction", L"", false);
-	m_MiddleDoubleClickAction = parser.ReadString(section, L"MiddleMouseDoubleClickAction", L"", false);
-	m_X1DoubleClickAction = parser.ReadString(section, L"X1MouseDoubleClickAction", L"", false);	
-	m_X2DoubleClickAction = parser.ReadString(section, L"X2MouseDoubleClickAction", L"", false);
+	m_MouseActions[MOUSE_LMB_UP]      = parser.ReadString(section, L"LeftMouseUpAction", L"", false);
+	m_MouseActions[MOUSE_LMB_DOWN]    = parser.ReadString(section, L"LeftMouseDownAction", L"", false);
+	m_MouseActions[MOUSE_LMB_DBLCLK]  = parser.ReadString(section, L"LeftMouseDoubleClickAction", L"", false);
+	m_MouseActions[MOUSE_MMB_UP]      = parser.ReadString(section, L"MiddleMouseUpAction", L"", false);
+	m_MouseActions[MOUSE_MMB_DOWN]    = parser.ReadString(section, L"MiddleMouseDownAction", L"", false);
+	m_MouseActions[MOUSE_MMB_DBLCLK]  = parser.ReadString(section, L"MiddleMouseDoubleClickAction", L"", false);
+	m_MouseActions[MOUSE_RMB_UP]      = parser.ReadString(section, L"RightMouseUpAction", L"", false);
+	m_MouseActions[MOUSE_RMB_DOWN]    = parser.ReadString(section, L"RightMouseDownAction", L"", false);
+	m_MouseActions[MOUSE_RMB_DBLCLK]  = parser.ReadString(section, L"RightMouseDoubleClickAction", L"", false);
+	m_MouseActions[MOUSE_X1MB_UP]     = parser.ReadString(section, L"X1MouseUpAction", L"", false);
+	m_MouseActions[MOUSE_X1MB_DOWN]   = parser.ReadString(section, L"X1MouseDownAction", L"", false);
+	m_MouseActions[MOUSE_X1MB_DBLCLK] = parser.ReadString(section, L"X1MouseDoubleClickAction", L"", false);
+	m_MouseActions[MOUSE_X2MB_UP]     = parser.ReadString(section, L"X2MouseUpAction", L"", false);
+	m_MouseActions[MOUSE_X2MB_DOWN]   = parser.ReadString(section, L"X2MouseDownAction", L"", false);
+	m_MouseActions[MOUSE_X2MB_DBLCLK] = parser.ReadString(section, L"X2MouseDoubleClickAction", L"", false);
 
-	m_OverAction = parser.ReadString(section, L"MouseOverAction", L"", false);
-	m_LeaveAction = parser.ReadString(section, L"MouseLeaveAction", L"", false);
+	m_MouseActions[MOUSE_MW_UP]       = parser.ReadString(section, L"MouseScrollUpAction", L"", false);
+	m_MouseActions[MOUSE_MW_DOWN]     = parser.ReadString(section, L"MouseScrollDownAction", L"", false);
+	m_MouseActions[MOUSE_MW_LEFT]     = parser.ReadString(section, L"MouseScrollLeftAction", L"", false);
+	m_MouseActions[MOUSE_MW_RIGHT]    = parser.ReadString(section, L"MouseScrollRightAction", L"", false);
 
-	m_MouseScrollDownAction = parser.ReadString(section, L"MouseScrollDownAction", L"", false);
-	m_MouseScrollUpAction = parser.ReadString(section, L"MouseScrollUpAction", L"", false);
-	m_MouseScrollLeftAction = parser.ReadString(section, L"MouseScrollLeftAction", L"", false);
-	m_MouseScrollRightAction = parser.ReadString(section, L"MouseScrollRightAction", L"", false);
-	if (!m_MouseScrollDownAction.empty() || !m_MouseScrollUpAction.empty() ||
-		!m_MouseScrollLeftAction.empty() || !m_MouseScrollRightAction.empty())
-	{
-		meterWindow->SetHasMouseScrollAction();
-	}
+	m_MouseActions[MOUSE_OVER]        = parser.ReadString(section, L"MouseOverAction", L"", false);
+	m_MouseActions[MOUSE_LEAVE]       = parser.ReadString(section, L"MouseLeaveAction", L"", false);
 
-	const bool defaultState = (section == L"Rainmeter") ? true : meterWindow->GetMouse().GetCursorState();
+	if (HasScrollAction())	{		m_MeterWindow->SetHasMouseScrollAction();	}
+	const bool defaultState = (section == L"Rainmeter") ? true : m_MeterWindow->GetMouse().GetCursorState();
 	m_CursorState = 0!=parser.ReadInt(section, L"MouseActionCursor", defaultState);
 
 	const WCHAR* defaultMouseCursor = (section == L"Rainmeter") ? L"HAND" : L"";
@@ -108,16 +100,16 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWind
 	else
 	{
 		// Inherit from [Rainmeter].
-		m_CursorType = meterWindow->GetMouse().GetCursorType();
+		m_CursorType = m_MeterWindow->GetMouse().GetCursorType();
 		if (m_CursorType == MOUSECURSOR_CUSTOM)
 		{
-			mouseCursor = meterWindow->GetParser().ReadString(L"Rainmeter", L"MouseActionCursorName", L"").c_str();
+			mouseCursor = m_MeterWindow->GetParser().ReadString(L"Rainmeter", L"MouseActionCursorName", L"").c_str();
 		}
 	}
 
 	if (m_CursorType == MOUSECURSOR_CUSTOM)
 	{
-		std::wstring cursorPath = meterWindow->GetResourcesPath();
+		std::wstring cursorPath = m_MeterWindow->GetResourcesPath();
 		cursorPath += L"Cursors\\";
 		cursorPath += mouseCursor;
 		m_CustomCursor = LoadCursorFromFile(cursorPath.c_str());
@@ -173,89 +165,8 @@ HCURSOR CMouse::GetCursor() const
 
 std::wstring CMouse::GetActionCommand(MOUSEACTION action) const
 {
-	std::wstring command = L"";
-
-	switch (action)
-	{
-	case MOUSE_LMB_DOWN:
-		command = m_LeftDownAction;
-		break;
-
-	case MOUSE_LMB_UP:
-		command = m_LeftUpAction;
-		break;
-
-	case MOUSE_LMB_DBLCLK:
-		command = m_LeftDoubleClickAction;
-		break;
-
-	case MOUSE_RMB_DOWN:
-		command = m_RightDownAction;
-		break;
-
-	case MOUSE_RMB_UP:
-		command = m_RightUpAction;
-		break;
-
-	case MOUSE_RMB_DBLCLK:
-		command = m_RightDoubleClickAction;
-		break;
-
-	case MOUSE_MMB_DOWN:
-		command = m_MiddleDownAction;
-		break;
-
-	case MOUSE_MMB_UP:
-		command = m_MiddleUpAction;
-		break;
-
-	case MOUSE_MMB_DBLCLK:
-		command = m_MiddleDoubleClickAction;
-		break;
-
-	case MOUSE_MW_DOWN:
-		command = m_MouseScrollDownAction;
-		break;
-
-	case MOUSE_MW_UP:
-		command = m_MouseScrollUpAction;
-		break;
-
-	case MOUSE_MW_LEFT:
-		command = m_MouseScrollLeftAction;
-		break;
-
-	case MOUSE_MW_RIGHT:
-		command = m_MouseScrollRightAction;
-		break;
-
-	case MOUSE_X1MB_DOWN:
-		command = m_X1DownAction;
-		break;
-
-	case MOUSE_X1MB_UP:
-		command = m_X1UpAction;
-		break;
-
-	case MOUSE_X1MB_DBLCLK:
-		command = m_X1DoubleClickAction;
-		break;
-
-	case MOUSE_X2MB_DOWN:
-		command = m_X2DownAction;
-		break;
-
-	case MOUSE_X2MB_UP:
-		command = m_X2UpAction;
-		break;
-
-	case MOUSE_X2MB_DBLCLK:
-		command = m_X2DoubleClickAction;
-		break;
-	}
-
+	std::wstring command = m_MouseActions[action];
 	ReplaceMouseVariables(command);
-
 	return command;
 }
 
@@ -319,21 +230,19 @@ void CMouse::ReplaceMouseVariables(std::wstring& result) const
 	while (loop);
 }
 
-std::wstring CMouse::GetMouseVariable(std::wstring variable) const
+std::wstring CMouse::GetMouseVariable(const std::wstring& variable) const
 {
-	std::wstring result = L"";
+	std::wstring result;
 
 	POINT pt;
 	GetCursorPos(&pt);
 
-	CMeter* meter = m_MeterWindow->GetMeter(m_MeterName);
-
 	if (_wcsnicmp(variable.c_str(), L"MOUSEX", 6) == 0)
 	{
-		double xOffset = (double)(m_MeterWindow->GetX() + (meter ? meter->GetX() : 0) - 1);
+		double xOffset = (double)(m_MeterWindow->GetX() + (m_Meter ? m_Meter->GetX() : 0) - 1);
 		if (_wcsicmp(variable.c_str(), L"MOUSEX:%") == 0)
 		{
-			xOffset = ((pt.x - xOffset) / (meter ? meter->GetW() : m_MeterWindow->GetW())) * 100;
+			xOffset = ((pt.x - xOffset) / (m_Meter ? m_Meter->GetW() : m_MeterWindow->GetW())) * 100;
 			result = std::to_wstring((int)xOffset);
 		}
 		else
@@ -343,10 +252,10 @@ std::wstring CMouse::GetMouseVariable(std::wstring variable) const
 	}
 	else if (_wcsnicmp(variable.c_str(), L"MOUSEY", 6) == 0)
 	{
-		double yOffset = (double)(m_MeterWindow->GetY() + (meter ? meter->GetY() : 0) - 1);
+		double yOffset = (double)(m_MeterWindow->GetY() + (m_Meter ? m_Meter->GetY() : 0) - 1);
 		if (_wcsicmp(variable.c_str(), L"MOUSEY:%") == 0)
 		{
-			yOffset = ((pt.y - yOffset) / (meter ? meter->GetH() : m_MeterWindow->GetH())) * 100;
+			yOffset = ((pt.y - yOffset) / (m_Meter ? m_Meter->GetH() : m_MeterWindow->GetH())) * 100;
 			result = std::to_wstring((int)yOffset);
 		}
 		else

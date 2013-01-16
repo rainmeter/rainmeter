@@ -53,6 +53,7 @@ CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : CSection(meterWin
 	m_ToolTipType(false),
 	m_ToolTipHidden(meterWindow->GetMeterToolTipHidden()),
 	m_ToolTipHandle(),
+	m_Mouse(meterWindow, this),
 	m_HasMouseAction(false),
 	m_MouseOver(false),
 	m_RelativeX(POSITION_ABSOLUTE),
@@ -322,19 +323,8 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	m_OnUpdateAction = parser.ReadString(section, L"OnUpdateAction", L"", false);
 
-	m_Mouse.ReadOptions(parser, section, m_MeterWindow);
-
-	m_HasMouseAction =
-		!(m_Mouse.GetLeftUpAction().empty() && m_Mouse.GetLeftDownAction().empty() &&
-		m_Mouse.GetLeftDoubleClickAction().empty() && m_Mouse.GetMiddleUpAction().empty() &&
-		m_Mouse.GetMiddleDownAction().empty() && m_Mouse.GetMiddleDoubleClickAction().empty() &&
-		m_Mouse.GetRightUpAction().empty() && m_Mouse.GetRightDownAction().empty() &&
-		m_Mouse.GetRightDoubleClickAction().empty() && m_Mouse.GetX1UpAction().empty() &&
-		m_Mouse.GetX1DownAction().empty() && m_Mouse.GetX1DoubleClickAction().empty() &&
-		m_Mouse.GetX2UpAction().empty() && m_Mouse.GetX2DownAction().empty() &&
-		m_Mouse.GetX2DoubleClickAction().empty() && m_Mouse.GetMouseScrollDownAction().empty() &&
-		m_Mouse.GetMouseScrollLeftAction().empty() && m_Mouse.GetMouseScrollRightAction().empty() &&
-		m_Mouse.GetMouseScrollUpAction().empty());
+	m_Mouse.ReadOptions(parser, section);
+	m_HasMouseAction = m_Mouse.HasButtonAction() || m_Mouse.HasScrollAction();
 
 	m_ToolTipText = parser.ReadString(section, L"ToolTipText", L"");
 	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"");
