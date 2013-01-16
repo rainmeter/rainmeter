@@ -63,7 +63,11 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_MouseActions[MOUSE_OVER]        = parser.ReadString(section, L"MouseOverAction", L"", false);
 	m_MouseActions[MOUSE_LEAVE]       = parser.ReadString(section, L"MouseLeaveAction", L"", false);
 
-	if (HasScrollAction())	{		m_MeterWindow->SetHasMouseScrollAction();	}
+	if (HasScrollAction())
+	{
+		m_MeterWindow->SetHasMouseScrollAction();
+	}
+
 	const bool defaultState = (section == L"Rainmeter") ? true : m_MeterWindow->GetMouse().GetCursorState();
 	m_CursorState = 0!=parser.ReadInt(section, L"MouseActionCursor", defaultState);
 
