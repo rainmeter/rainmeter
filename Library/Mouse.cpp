@@ -233,34 +233,42 @@ void CMouse::ReplaceMouseVariables(std::wstring& result) const
 std::wstring CMouse::GetMouseVariable(const std::wstring& variable) const
 {
 	std::wstring result;
+	LPCWSTR var = variable.c_str();
+	WCHAR buffer[32];
 
 	POINT pt;
 	GetCursorPos(&pt);
 
-	if (_wcsnicmp(variable.c_str(), L"MOUSEX", 6) == 0)
+	if (_wcsnicmp(var, L"MOUSEX", 6) == 0)
 	{
-		double xOffset = (double)(m_MeterWindow->GetX() + (m_Meter ? m_Meter->GetX() : 0) - 1);
-		if (_wcsicmp(variable.c_str(), L"MOUSEX:%") == 0)
+		var += 6;
+		int xOffset = m_MeterWindow->GetX() + (m_Meter ? m_Meter->GetX() : 0);
+		if (wcscmp(var, L":%") == 0)  // $MOUSEX:%$
 		{
-			xOffset = ((pt.x - xOffset) / (m_Meter ? m_Meter->GetW() : m_MeterWindow->GetW())) * 100;
-			result = std::to_wstring((int)xOffset);
+			xOffset = (int)(((pt.x - xOffset + 1) / (double)(m_Meter ? m_Meter->GetW() : m_MeterWindow->GetW())) * 100);
+			_itow_s(xOffset, buffer, 10);
+			result = buffer;
 		}
-		else
+		else if (*var == L'\0')  // $MOUSEX$
 		{
-			result = std::to_wstring((long)(pt.x - xOffset));
+			_itow_s(pt.x - xOffset, buffer, 10);
+			result = buffer;
 		}
 	}
-	else if (_wcsnicmp(variable.c_str(), L"MOUSEY", 6) == 0)
+	else if (_wcsnicmp(var, L"MOUSEY", 6) == 0)
 	{
-		double yOffset = (double)(m_MeterWindow->GetY() + (m_Meter ? m_Meter->GetY() : 0) - 1);
-		if (_wcsicmp(variable.c_str(), L"MOUSEY:%") == 0)
+		var += 6;
+		int yOffset = m_MeterWindow->GetY() + (m_Meter ? m_Meter->GetY() : 0);
+		if (wcscmp(var, L":%") == 0)  // $MOUSEY:%$
 		{
-			yOffset = ((pt.y - yOffset) / (m_Meter ? m_Meter->GetH() : m_MeterWindow->GetH())) * 100;
-			result = std::to_wstring((int)yOffset);
+			yOffset = (int)(((pt.y - yOffset + 1) / (double)(m_Meter ? m_Meter->GetH() : m_MeterWindow->GetH())) * 100);
+			_itow_s(yOffset, buffer, 10);
+			result = buffer;
 		}
-		else
+		else if (*var == L'\0')  // $MOUSEY$
 		{
-			result = std::to_wstring((long)(pt.y - yOffset));
+			_itow_s(pt.y - yOffset, buffer, 10);
+			result = buffer;
 		}
 	}
 
