@@ -19,13 +19,15 @@
 #include "StdAfx.h"
 #include "ConfigParser.h"
 #include "MeterWindow.h"
+#include "Meter.h"
 #include "Litestep.h"
 #include "Mouse.h"
 
 CMouse::CMouse() :
 	m_CursorType(MOUSECURSOR_HAND),
 	m_CustomCursor(),
-	m_CursorState(true)
+	m_CursorState(true),
+	m_MeterWindow()
 {
 }
 
@@ -36,6 +38,9 @@ CMouse::~CMouse()
 
 void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section, CMeterWindow* meterWindow)
 {
+	m_MeterWindow = meterWindow;
+	m_MeterName = section;
+
 	DestroyCustomCursor();
 
 	m_LeftDownAction = parser.ReadString(section, L"LeftMouseDownAction", L"", false);
@@ -166,90 +171,92 @@ HCURSOR CMouse::GetCursor() const
 	return LoadCursor(NULL, name);
 }
 
-const WCHAR* CMouse::GetActionCommand(MOUSEACTION action) const
+std::wstring CMouse::GetActionCommand(MOUSEACTION action) const
 {
-	const WCHAR* command = NULL;
+	std::wstring command = L"";
 
 	switch (action)
 	{
 	case MOUSE_LMB_DOWN:
-		command = m_LeftDownAction.c_str();
+		command = m_LeftDownAction;
 		break;
 
 	case MOUSE_LMB_UP:
-		command = m_LeftUpAction.c_str();
+		command = m_LeftUpAction;
 		break;
 
 	case MOUSE_LMB_DBLCLK:
-		command = m_LeftDoubleClickAction.c_str();
+		command = m_LeftDoubleClickAction;
 		break;
 
 	case MOUSE_RMB_DOWN:
-		command = m_RightDownAction.c_str();
+		command = m_RightDownAction;
 		break;
 
 	case MOUSE_RMB_UP:
-		command = m_RightUpAction.c_str();
+		command = m_RightUpAction;
 		break;
 
 	case MOUSE_RMB_DBLCLK:
-		command = m_RightDoubleClickAction.c_str();
+		command = m_RightDoubleClickAction;
 		break;
 
 	case MOUSE_MMB_DOWN:
-		command = m_MiddleDownAction.c_str();
+		command = m_MiddleDownAction;
 		break;
 
 	case MOUSE_MMB_UP:
-		command = m_MiddleUpAction.c_str();
+		command = m_MiddleUpAction;
 		break;
 
 	case MOUSE_MMB_DBLCLK:
-		command = m_MiddleDoubleClickAction.c_str();
+		command = m_MiddleDoubleClickAction;
 		break;
 
 	case MOUSE_MW_DOWN:
-		command = m_MouseScrollDownAction.c_str();
+		command = m_MouseScrollDownAction;
 		break;
 
 	case MOUSE_MW_UP:
-		command = m_MouseScrollUpAction.c_str();
+		command = m_MouseScrollUpAction;
 		break;
 
 	case MOUSE_MW_LEFT:
-		command = m_MouseScrollLeftAction.c_str();
+		command = m_MouseScrollLeftAction;
 		break;
 
 	case MOUSE_MW_RIGHT:
-		command = m_MouseScrollRightAction.c_str();
+		command = m_MouseScrollRightAction;
 		break;
 
 	case MOUSE_X1MB_DOWN:
-		command = m_X1DownAction.c_str();
+		command = m_X1DownAction;
 		break;
 
 	case MOUSE_X1MB_UP:
-		command = m_X1UpAction.c_str();
+		command = m_X1UpAction;
 		break;
 
 	case MOUSE_X1MB_DBLCLK:
-		command = m_X1DoubleClickAction.c_str();
+		command = m_X1DoubleClickAction;
 		break;
 
 	case MOUSE_X2MB_DOWN:
-		command = m_X2DownAction.c_str();
+		command = m_X2DownAction;
 		break;
 
 	case MOUSE_X2MB_UP:
-		command = m_X2UpAction.c_str();
+		command = m_X2UpAction;
 		break;
 
 	case MOUSE_X2MB_DBLCLK:
-		command = m_X2DoubleClickAction.c_str();
-		break;	
+		command = m_X2DoubleClickAction;
+		break;
 	}
 
-	return *command ? command : NULL;
+	ReplaceMouseVariables(command);
+
+	return command;
 }
 
 void CMouse::DestroyCustomCursor()
@@ -259,4 +266,94 @@ void CMouse::DestroyCustomCursor()
 		DestroyCursor(m_CustomCursor);
 		m_CustomCursor = NULL;
 	}
+}
+
+void CMouse::ReplaceMouseVariables(std::wstring& result) const
+{
+	// Check for variables ($VAR$)
+	size_t start = 0, end;
+	bool loop = true;
+
+	do
+	{
+		start = result.find(L'$', start);
+		if (start != std::wstring::npos)
+		{
+			size_t si = start + 1;
+			end = result.find(L'$', si);
+			if (end != std::wstring::npos)
+			{
+				size_t ei = end - 1;
+				if (si != ei && result[si] == L'*' && result[ei] == L'*')
+				{
+					result.erase(ei, 1);
+					result.erase(si, 1);
+					start = ei;
+				}
+				else
+				{
+					std::wstring strVariable = result.substr(si, end - si);
+					std::wstring value = GetMouseVariable(strVariable);
+					if (!value.empty())
+					{
+						// Variable found, replace it with the value
+						result.replace(start, end - start + 1, value);
+						start += value.length();
+					}
+					else
+					{
+						start = end;
+					}
+				}
+			}
+			else
+			{
+				loop = false;
+			}
+		}
+		else
+		{
+			loop = false;
+		}
+	}
+	while (loop);
+}
+
+std::wstring CMouse::GetMouseVariable(std::wstring variable) const
+{
+	std::wstring result = L"";
+
+	POINT pt;
+	GetCursorPos(&pt);
+
+	CMeter* meter = m_MeterWindow->GetMeter(m_MeterName);
+
+	if (_wcsnicmp(variable.c_str(), L"MOUSEX", 6) == 0)
+	{
+		double xOffset = (double)(m_MeterWindow->GetX() + (meter ? meter->GetX() : 0) - 1);
+		if (_wcsicmp(variable.c_str(), L"MOUSEX:%") == 0)
+		{
+			xOffset = ((pt.x - xOffset) / (meter ? meter->GetW() : m_MeterWindow->GetW())) * 100;
+			result = std::to_wstring((int)xOffset);
+		}
+		else
+		{
+			result = std::to_wstring((long)(pt.x - xOffset));
+		}
+	}
+	else if (_wcsnicmp(variable.c_str(), L"MOUSEY", 6) == 0)
+	{
+		double yOffset = (double)(m_MeterWindow->GetY() + (meter ? meter->GetY() : 0) - 1);
+		if (_wcsicmp(variable.c_str(), L"MOUSEY:%") == 0)
+		{
+			yOffset = ((pt.y - yOffset) / (meter ? meter->GetH() : m_MeterWindow->GetH())) * 100;
+			result = std::to_wstring((int)yOffset);
+		}
+		else
+		{
+			result = std::to_wstring((long)(pt.y - yOffset));
+		}
+	}
+
+	return result;
 }

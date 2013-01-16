@@ -70,7 +70,7 @@ public:
 
 	void DestroyCustomCursor();
 
-	const WCHAR* GetActionCommand(MOUSEACTION action) const;
+	std::wstring GetActionCommand(MOUSEACTION action) const;
 
 	const std::wstring& GetRightDownAction() const { return m_RightDownAction; }
 	const std::wstring& GetRightUpAction() const { return m_RightUpAction; }
@@ -95,6 +95,9 @@ public:
 	const std::wstring& GetX2DoubleClickAction() const { return m_X2DoubleClickAction; }
 
 private:
+	void ReplaceMouseVariables(std::wstring& result) const;
+	std::wstring GetMouseVariable(std::wstring variable) const;
+
 	std::wstring m_LeftDownAction;
 	std::wstring m_RightDownAction;
 	std::wstring m_MiddleDownAction;
@@ -120,6 +123,9 @@ private:
 	MOUSECURSOR m_CursorType;
 	HCURSOR m_CustomCursor;
 	bool m_CursorState;
+
+	CMeterWindow* m_MeterWindow;
+	std::wstring m_MeterName;
 };
 
 #endif

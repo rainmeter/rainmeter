@@ -4300,7 +4300,7 @@ LRESULT CMeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 bool CMeterWindow::DoAction(int x, int y, MOUSEACTION action, bool test)
 {
-	const WCHAR* command = NULL;
+	std::wstring command = L"";
 
 	// Check if the hitpoint was over some meter
 	std::vector<CMeter*>::const_reverse_iterator j = m_Meters.rbegin();
@@ -4309,24 +4309,24 @@ bool CMeterWindow::DoAction(int x, int y, MOUSEACTION action, bool test)
 		// Hidden meters are ignored
 		if ((*j)->IsHidden()) continue;
 
-		const WCHAR* meterCommand = (*j)->GetMouse().GetActionCommand(action);
-		if (meterCommand && (*j)->HitTest(x, y))
+		std::wstring meterCommand = (*j)->GetMouse().GetActionCommand(action);
+		if (!meterCommand.empty() && (*j)->HitTest(x, y))
 		{
 			command = meterCommand;
 			break;
 		}
 	}
 
-	if (!command && HitTest(x, y))
+	if (command.empty() && HitTest(x, y))
 	{
-		command = m_Mouse.GetActionCommand(action);
+		command = m_Mouse.GetActionCommand(action).c_str();
 	}
 
-	if (command)
+	if (!command.empty())
 	{
 		if (!test)
 		{
-			Rainmeter->ExecuteCommand(command, this);
+			Rainmeter->ExecuteCommand(command.c_str(), this);
 		}
 
 		return true;
