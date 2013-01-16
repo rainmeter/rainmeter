@@ -111,6 +111,7 @@ struct ParentMeasure
 	bool showSystem;
 	bool hideExtension;
 	std::vector<std::wstring> extensions;	// only show these extensions
+	std::wstring finishAction;
 
 	// Internal values
 	std::vector<ChildMeasure*> children;
@@ -143,6 +144,7 @@ struct ParentMeasure
 		showSystem(false),
 		hideExtension(false),
 		extensions(),
+		finishAction(),
 		children(NULL),
 		files(NULL),
 		skin(NULL),

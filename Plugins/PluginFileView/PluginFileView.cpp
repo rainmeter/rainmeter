@@ -167,6 +167,8 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		child->parent->extensions = Tokenize(RmReadString(rm, L"Extensions", L""), L";");
 
 		child->parent->wildcardSearch = RmReadString(rm, L"WildcardSearch", L"*");
+
+		child->parent->finishAction = RmReadString(rm, L"FinishAction", L"", false);
 	}
 
 	auto iter = std::find(child->parent->children.begin(), child->parent->children.end(), child);
@@ -874,6 +876,11 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 	CloseHandle(parent->thread);
 	parent->thread = NULL;
 	LeaveCriticalSection(&g_CriticalSection);
+
+	if (!parent->finishAction.empty())
+	{
+		RmExecute(parent->skin, parent->finishAction.c_str());
+	}
 
 	_endthreadex(0);
 	return 0;
