@@ -550,6 +550,12 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 		FillCharacterEntityReferences();
 
 		LPCWSTR proxy = RmReadString(rm, L"ProxyServer", L"");
+		
+		if (_wcsnicmp(proxy, L"none", 4) == 0)
+		{
+			proxy = NULL;
+		}
+		
 		g_InternetHandle = InternetOpen(L"Rainmeter WebParser plugin",
 			*proxy ? INTERNET_OPEN_TYPE_PROXY : INTERNET_OPEN_TYPE_PRECONFIG,
 			*proxy ? proxy : NULL,
