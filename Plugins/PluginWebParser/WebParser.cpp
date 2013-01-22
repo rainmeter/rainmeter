@@ -75,7 +75,6 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwSize, bool forceReload);
 void ShowError(int lineNumber, WCHAR* errorMsg = NULL);
 unsigned __stdcall NetworkThreadProc(void* pParam);
 unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
-void Log(int level, const WCHAR* string);
 void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize);
 
 CRITICAL_SECTION g_CriticalSection;
@@ -532,7 +531,7 @@ void FillCharacterEntityReferences()
 	//{
 	//	WCHAR buffer[64];
 	//	wsprintf(buffer, L"%s - %c", (*iter).first.c_str(), (*iter).second);
-	//	Log(buffer);
+	//	RmLog(LOG_DEBUG, buffer);
 	//}
 }
 
@@ -606,7 +605,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	if (measure->debug == 2)
 	{		
 		measure->debugFileLocation = RmReadPath(rm, L"Debug2File", L"WebParserDump.txt");
-		Log(LOG_DEBUG, measure->debugFileLocation.c_str());
+		RmLog(LOG_DEBUG, measure->debugFileLocation.c_str());
 	}
 }
 
@@ -634,7 +633,7 @@ PLUGIN_EXPORT double Update(void* data)
 					std::wstring log = L"WebParser.dll: [";
 					log += measure->section;
 					log += L"] Failed to begin download thread.";
-					Log(LOG_ERROR, log.c_str());
+					RmLog(LOG_ERROR, log.c_str());
 				}
 			}
 
@@ -678,7 +677,7 @@ PLUGIN_EXPORT double Update(void* data)
 						std::wstring log = L"WebParser.dll: [";
 						log += measure->section;
 						log += L"] Failed to begin thread.";
-						Log(LOG_ERROR, log.c_str());
+						RmLog(LOG_ERROR, log.c_str());
 					}
 				}
 
@@ -720,7 +719,7 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 				log += measure->section;
 				log += L"] Failed to dump debug data: ";
 				log += measure->debugFileLocation;
-				Log(LOG_ERROR, log.c_str());
+				RmLog(LOG_ERROR, log.c_str());
 			}
 		}
 
@@ -799,7 +798,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 				std::wstring log = L"WebParser.dll: [";
 				log += measure->section;
 				log += L"] Too many substrings!";
-				Log(LOG_ERROR, log.c_str());
+				RmLog(LOG_ERROR, log.c_str());
 			}
 			else
 			{
@@ -823,7 +822,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 							log += buffer;
 							log += L") ";
 							log += ConvertUTF8ToWide(tmpStr.c_str());
-							Log(LOG_DEBUG, log.c_str());
+							RmLog(LOG_DEBUG, log.c_str());
 						}
 					}
 
@@ -840,7 +839,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 					std::wstring log = L"WebParser.dll: [";
 					log += measure->section;
 					log += L"] Not enough substrings!";
-					Log(LOG_WARNING, log.c_str());
+					RmLog(LOG_WARNING, log.c_str());
 
 					// Clear the old result
 					EnterCriticalSection(&g_CriticalSection);
@@ -912,7 +911,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 										std::wstring log = L"WebParser.dll: [";
 										log += (*i)->section;
 										log += L"] Failed to begin download thread.";
-										Log(LOG_ERROR, log.c_str());
+										RmLog(LOG_ERROR, log.c_str());
 									}
 								}
 
@@ -924,7 +923,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 							std::wstring log = L"WebParser.dll: [";
 							log += (*i)->section;
 							log += L"] Not enough substrings!";
-							Log(LOG_WARNING, log.c_str());
+							RmLog(LOG_WARNING, log.c_str());
 
 							// Clear the old result
 							EnterCriticalSection(&g_CriticalSection);
@@ -958,7 +957,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 			log += L"] Matching error! (";
 			log += buffer;
 			log += L")\n";
-			Log(LOG_ERROR, log.c_str());
+			RmLog(LOG_ERROR, log.c_str());
 
 			EnterCriticalSection(&g_CriticalSection);
 			measure->resultString = measure->errorString;
@@ -994,7 +993,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 		log += L": ";
 		log += ConvertAsciiToWide(error);
 		log += L"\n";
-		Log(LOG_ERROR, log.c_str());
+		RmLog(LOG_ERROR, log.c_str());
 	}
 
 	if (measure->download)
@@ -1011,7 +1010,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 			std::wstring log = L"WebParser.dll: [";
 			log += measure->section;
 			log += L"] Failed to begin download thread.";
-			Log(LOG_ERROR, log.c_str());
+			RmLog(LOG_ERROR, log.c_str());
 		}
 	}
 	else
@@ -1158,7 +1157,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 				log += measure->section;
 				log += L"] Directory does not exist: ";
 				log += directory;
-				Log(LOG_ERROR, log.c_str());
+				RmLog(LOG_ERROR, log.c_str());
 			}
 			else if (PathIsDirectory(fullpath.c_str()))
 			{
@@ -1168,7 +1167,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 				log += measure->section;
 				log += L"] Path is a directory, not a file: ";
 				log += fullpath;
-				Log(LOG_ERROR, log.c_str());
+				RmLog(LOG_ERROR, log.c_str());
 			}
 			else if (PathFileExists(fullpath.c_str()))
 			{
@@ -1181,7 +1180,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 					log += measure->section;
 					log += L"] File is READ-ONLY: ";
 					log += fullpath;
-					Log(LOG_ERROR, log.c_str());
+					RmLog(LOG_ERROR, log.c_str());
 				}
 			}
 		}
@@ -1273,7 +1272,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			log += L" to ";
 			log += fullpath;
 			log += L"\n";
-			Log(LOG_DEBUG, log.c_str());
+			RmLog(LOG_DEBUG, log.c_str());
 
 			HRESULT resultCoInitialize = CoInitialize(NULL);  // requires before calling URLDownloadToFile function
 
@@ -1328,7 +1327,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 				log += buffer;
 				log += L"): ";
 				log += url;
-				Log(LOG_ERROR, log.c_str());
+				RmLog(LOG_ERROR, log.c_str());
 			}
 
 			if (SUCCEEDED(resultCoInitialize))
@@ -1342,7 +1341,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			log += measure->section;
 			log += L"] Download failed: ";
 			log += url;
-			Log(LOG_ERROR, log.c_str());
+			RmLog(LOG_ERROR, log.c_str());
 		}
 	}
 	else
@@ -1350,7 +1349,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 		std::wstring log = L"WebParser.dll: [";
 		log += measure->section;
 		log += L"] The url is empty.\n";
-		Log(LOG_ERROR, log.c_str());
+		RmLog(LOG_ERROR, log.c_str());
 	}
 
 	if (!ready) // download failed
@@ -1471,7 +1470,7 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 	const int CHUNK_SIZE = 8192;
 
 	std::wstring err = L"WebParser.dll: Fetching: " + url;
-	Log(LOG_DEBUG, err.c_str());
+	RmLog(LOG_DEBUG, err.c_str());
 
 	DWORD flags = INTERNET_FLAG_RESYNCHRONIZE;
 	if (forceReload)
@@ -1643,15 +1642,7 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 		err += errorMsg;
 	}
 
-	Log(LOG_ERROR, err.c_str());
-}
-
-/*
-  Writes the log to a file
-*/
-void Log(int level, const WCHAR* string)
-{
-	LSLog(level, NULL, string);
+	RmLog(LOG_ERROR, err.c_str());
 }
 
 UINT GetPluginVersion()
