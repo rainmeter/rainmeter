@@ -29,6 +29,175 @@
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 #include "../API/RainmeterAPI.h"
 
+void ShowError(int lineNumber, WCHAR* errorMsg = NULL);
+
+class ProxyCachePool
+{
+public:
+	ProxyCachePool(LPCWSTR globalProxyName = NULL) :
+		m_GlobalProxyName((globalProxyName && *globalProxyName) ? globalProxyName : L"/auto")
+	{
+		m_GlobalProxyCache = new ProxyCache(CreateProxy(m_GlobalProxyName.c_str()), true);
+
+		_wcslwr(&m_GlobalProxyName[0]);
+		m_CacheMap[m_GlobalProxyName] = m_GlobalProxyCache;
+		//DebugLog(L"* ADD-GLOBAL: key=%s, handle=0x%p, ref=new", m_GlobalProxyName.c_str(), m_GlobalProxyCache->GetCache());
+	}
+
+	~ProxyCachePool()
+	{
+		for (auto iter = m_CacheMap.begin(); iter != m_CacheMap.end(); ++iter)
+		{
+			ProxyCache* cache = (*iter).second;
+			//DebugLog(L"* FORCE-REMOVE: key=%s, global=%i, ref=%i", (*iter).first.c_str(), cache->IsGlobal(), cache->GetRef());
+			delete cache;
+		}
+	}
+
+	HINTERNET GetCache(const std::wstring& proxyName)
+	{
+		ProxyCache* cache = NULL;
+
+		if (proxyName.empty())
+		{
+			// Use global proxy setting
+			cache = m_GlobalProxyCache;
+		}
+		else
+		{
+			std::wstring key = proxyName;
+			_wcslwr(&key[0]);
+
+			auto iter = m_CacheMap.find(key);
+			if (iter != m_CacheMap.end())
+			{
+				cache = (*iter).second;
+			}
+			else  // cache not found
+			{
+				// Create new proxy
+				ProxyCache* cache = new ProxyCache(CreateProxy(proxyName.c_str()));
+				m_CacheMap[key] = cache;
+				//DebugLog(L"* ADD: key=%s, handle=0x%p, ref=new", key.c_str(), cache->GetCache());
+				return cache->GetCache();
+			}
+		}
+
+		// Use proxy cache
+		cache->AddRef();
+		//DebugLog(L"* ADD-REF: key=%s, handle=0x%p, global=%i, ref=%i",
+		//	cache->IsGlobal() ? m_GlobalProxyName.c_str() : proxyName.c_str(), cache->GetCache(), cache->IsGlobal(), cache->GetRef());
+		return cache->GetCache();
+	}
+
+	void RemoveCache(const std::wstring& proxyName)
+	{
+		std::wstring key = proxyName.empty() ? m_GlobalProxyName : proxyName;
+
+		if (!proxyName.empty())
+		{
+			_wcslwr(&key[0]);
+		}
+
+		auto iter = m_CacheMap.find(key);
+		if (iter != m_CacheMap.end())
+		{
+			ProxyCache* cache = (*iter).second;
+			cache->Release();
+			//DebugLog(L"* REMOVE: key=%s, global=%i, ref=%i", key.c_str(), cache->IsGlobal(), cache->GetRef());
+
+			if (cache->IsInvalid())
+			{
+				//DebugLog(L"* EMPTY-ERASE: key=%s", key.c_str());
+				m_CacheMap.erase(iter);
+				delete cache;
+			}
+		}
+	}
+
+private:
+	HINTERNET CreateProxy(LPCWSTR proxyName)
+	{
+		DWORD proxyType;
+		LPCWSTR proxyServer;
+
+		if (_wcsicmp(proxyName, L"/auto") == 0)
+		{
+			proxyType = INTERNET_OPEN_TYPE_PRECONFIG;
+			proxyServer = NULL;
+		}
+		else if (_wcsicmp(proxyName, L"/none") == 0)
+		{
+			proxyType = INTERNET_OPEN_TYPE_DIRECT;
+			proxyServer = NULL;
+		}
+		else
+		{
+			proxyType = INTERNET_OPEN_TYPE_PROXY;
+			proxyServer = proxyName;
+		}
+
+		HINTERNET handle = InternetOpen(L"Rainmeter WebParser plugin",
+			proxyType,
+			proxyServer,
+			NULL,
+			0);
+
+		if (handle)
+		{
+			WCHAR buffer[256];
+			_snwprintf_s(buffer, _TRUNCATE, L"WebParser: ProxyServer=\"%s\" (type=%s, handle=0x%p)",
+				proxyName,
+				proxyType == INTERNET_OPEN_TYPE_PRECONFIG ? L"PRECONFIG" : proxyType == INTERNET_OPEN_TYPE_DIRECT ? L"DIRECT" : L"PROXY",
+				handle);
+			RmLog(LOG_DEBUG, buffer);
+		}
+		else
+		{
+			ShowError(__LINE__);
+		}
+
+		return handle;
+	}
+
+	class ProxyCache
+	{
+	public:
+		ProxyCache(HINTERNET handle, bool isGlobal = false) : m_Handle(handle), m_IsGlobal(isGlobal), m_Ref(1) {}
+		~ProxyCache() { Dispose(); }
+
+		void AddRef() { if (!IsInvalid()) { ++m_Ref; } }
+		void Release() { if (m_Ref > 0) { --m_Ref; } if (IsInvalid()) { Dispose(); } }
+
+		bool IsGlobal() { return m_IsGlobal; }
+		bool IsInvalid() { return (m_Ref <= 0 && !IsGlobal()); }
+		//int GetRef() { return m_Ref; }
+		HINTERNET GetCache() { return m_Handle; }
+
+	private:
+		ProxyCache() {}
+		ProxyCache(const ProxyCache& cache) {}
+
+		void Dispose() { if (m_Handle) { InternetCloseHandle(m_Handle); m_Handle = NULL; } }
+
+		HINTERNET m_Handle;
+		bool m_IsGlobal;
+		int m_Ref;
+	};
+
+	std::unordered_map<std::wstring, ProxyCache*> m_CacheMap;
+	ProxyCache* m_GlobalProxyCache;
+	std::wstring m_GlobalProxyName;
+};
+
+struct ProxySetting
+{
+	std::wstring server;
+	HINTERNET handle;
+
+	ProxySetting() : handle() {}
+};
+
 struct MeasureData
 {
 	std::wstring url;
@@ -42,6 +211,7 @@ struct MeasureData
 	std::wstring debugFileLocation;
 	LPCWSTR section;
 	void* skin;
+	ProxySetting proxy;
 	HANDLE threadHandle;
 	HANDLE dlThreadHandle;
 	int codepage;
@@ -71,18 +241,17 @@ struct MeasureData
 	}
 };
 
-BYTE* DownloadUrl(std::wstring& url, DWORD* dwSize, bool forceReload);
-void ShowError(int lineNumber, WCHAR* errorMsg = NULL);
+BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dwSize, bool forceReload);
 unsigned __stdcall NetworkThreadProc(void* pParam);
 unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
 void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize);
 
 CRITICAL_SECTION g_CriticalSection;
+ProxyCachePool* g_ProxyCachePool = NULL;
 UINT g_InstanceCount = 0;
 
 static std::vector<MeasureData*> g_Measures;
 static bool g_Debug = false;
-static HINTERNET g_InternetHandle = NULL;
 
 static std::unordered_map<std::wstring, WCHAR> g_CERs;
 
@@ -535,6 +704,44 @@ void FillCharacterEntityReferences()
 	//}
 }
 
+void SetupGlobalProxySetting()
+{
+	if (!g_ProxyCachePool)
+	{
+		WCHAR buffer[MAX_PATH] = {0};
+		LPCWSTR file = RmGetSettingsFile();
+
+		GetPrivateProfileString(L"WebParser.dll", L"ProxyServer", NULL, buffer, MAX_PATH, file);
+		g_ProxyCachePool = new ProxyCachePool(buffer);
+	}
+}
+
+void ClearGlobalProxySetting()
+{
+	delete g_ProxyCachePool;
+	g_ProxyCachePool = NULL;
+}
+
+void SetupProxySetting(ProxySetting& setting, void* rm)
+{
+	if (g_ProxyCachePool)
+	{
+		setting.server = RmReadString(rm, L"ProxyServer", L"");
+		setting.handle = g_ProxyCachePool->GetCache(setting.server);
+	}
+}
+
+void ClearProxySetting(ProxySetting& setting)
+{
+	if (g_ProxyCachePool)
+	{
+		g_ProxyCachePool->RemoveCache(setting.server);
+	}
+
+	setting.handle = NULL;
+	setting.server.clear();
+}
+
 PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
@@ -548,18 +755,10 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 		InitializeCriticalSection(&g_CriticalSection);
 		FillCharacterEntityReferences();
 
-		LPCWSTR proxy = RmReadString(rm, L"ProxyServer", L"");
-		g_InternetHandle = InternetOpen(L"Rainmeter WebParser plugin",
-			*proxy ? INTERNET_OPEN_TYPE_PROXY : INTERNET_OPEN_TYPE_PRECONFIG,
-			*proxy ? proxy : NULL,
-			NULL,
-			0);
-
-		if (g_InternetHandle == NULL)
-		{
-			ShowError(__LINE__);
-		}
+		SetupGlobalProxySetting();
 	}
+
+	SetupProxySetting(measure->proxy, rm);  // No support for DynamicVariables
 
 	++g_InstanceCount;
 }
@@ -699,7 +898,7 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 	MeasureData* measure = (MeasureData*)pParam;
 	DWORD dwSize = 0;
 
-	BYTE* data = DownloadUrl(measure->url, &dwSize, measure->forceReload);
+	BYTE* data = DownloadUrl(measure->proxy.handle, measure->url, &dwSize, measure->forceReload);
 
 	if (data)
 	{
@@ -1433,6 +1632,8 @@ PLUGIN_EXPORT void Finalize(void* data)
 		}
 	}
 
+	ClearProxySetting(measure->proxy);
+
 	delete measure;
 	std::vector<MeasureData*>::iterator iter = std::find(g_Measures.begin(), g_Measures.end(), measure);
 	g_Measures.erase(iter);
@@ -1441,11 +1642,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 	if (g_InstanceCount == 0)
 	{
 		// Last one, close all handles
-		if (g_InternetHandle)
-		{
-			InternetCloseHandle(g_InternetHandle);
-			g_InternetHandle = NULL;
-		}
+		ClearGlobalProxySetting();
 
 		g_CERs.clear();
 
@@ -1458,7 +1655,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 	Downloads the given url and returns the webpage as dynamically allocated string.
 	You need to delete the returned string after use!
 */
-BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
+BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dwDataSize, bool forceReload)
 {
 	HINTERNET hUrlDump;
 	DWORD dwSize;
@@ -1478,13 +1675,13 @@ BYTE* DownloadUrl(std::wstring& url, DWORD* dwDataSize, bool forceReload)
 		flags = INTERNET_FLAG_RELOAD;
 	}
 
-	hUrlDump = InternetOpenUrl(g_InternetHandle, url.c_str(), NULL, NULL, flags, 0);
+	hUrlDump = InternetOpenUrl(handle, url.c_str(), NULL, NULL, flags, 0);
 	if (hUrlDump == NULL)
 	{
 		if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
 		{
 			std::string urlACP = ConvertWideToAscii(url.c_str());
-			hUrlDump = InternetOpenUrlA(g_InternetHandle, urlACP.c_str(), NULL, NULL, flags, 0);
+			hUrlDump = InternetOpenUrlA(handle, urlACP.c_str(), NULL, NULL, flags, 0);
 		}
 
 		if (hUrlDump == NULL)
@@ -1647,7 +1844,7 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 
 UINT GetPluginVersion()
 {
-	return 1013;
+	return 1014;
 }
 
 LPCTSTR GetPluginAuthor()
