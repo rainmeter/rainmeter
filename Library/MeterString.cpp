@@ -361,10 +361,14 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	else if (_wcsicmp(clipping, L"AUTO") == 0)
 	{
 		m_ClipType = CLIP_AUTO;
-	}
 
-	m_ClipStringW = parser.ReadInt(section, L"ClipStringW", -1);
-	m_ClipStringH = parser.ReadInt(section, L"ClipStringH", -1);
+		m_ClipStringW = parser.ReadInt(section, L"ClipStringW", -1);
+		m_ClipStringH = parser.ReadInt(section, L"ClipStringH", -1);
+	}
+	else
+	{
+		LogWithArgs(LOG_ERROR, L"ClipString=%s is not valid in [%s]", clipping, m_Name.c_str());
+	}
 
 	m_FontFace = parser.ReadString(section, L"FontFace", L"Arial");
 	if (m_FontFace.empty())
@@ -674,7 +678,7 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 	else
 	{
 		// Special case
-		if (m_WDefined && m_HDefined && m_ClipType == CLIP_AUTO)
+		if (m_ClipType == CLIP_AUTO && m_WDefined && m_HDefined)
 		{
 			stringFormat.SetTrimming(StringTrimmingEllipsisCharacter);
 			stringFormat.SetFormatFlags(StringFormatFlagsNoClip);
@@ -786,7 +790,6 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 					}
 				}
 			}
-
 		}
 	}
 	else
