@@ -76,6 +76,13 @@ private:
 		TEXTCASE_PROPER
 	};
 
+	enum CLIPTYPE
+	{
+		CLIP_OFF,
+		CLIP_ON,
+		CLIP_AUTO
+	};
+
 	bool DrawString(Gdiplus::Graphics& graphics, Gdiplus::RectF* rect);
 
 	Gdiplus::Color m_Color;
@@ -93,7 +100,10 @@ private:
 	double m_Scale;
 	bool m_NoDecimals;
 	bool m_Percentual;
-	bool m_ClipString;
+	CLIPTYPE m_ClipType;
+	bool m_NeedsClipping;
+	int m_ClipStringW;
+	int m_ClipStringH;
 	Gdiplus::Font* m_Font;
 	Gdiplus::FontFamily* m_FontFamily;
 	int m_NumOfDecimals;

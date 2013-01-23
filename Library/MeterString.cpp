@@ -77,7 +77,10 @@ CMeterString::CMeterString(CMeterWindow* meterWindow, const WCHAR* name) : CMete
 	m_Scale(1.0),
 	m_NoDecimals(true),
 	m_Percentual(true),
-	m_ClipString(false),
+	m_ClipType(CLIP_OFF),
+	m_NeedsClipping(false),
+	m_ClipStringW(-1),
+	m_ClipStringH(-1),
 	m_Font(),
 	m_FontFamily(),
 	m_NumOfDecimals(-1),
@@ -345,7 +348,23 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_Text = parser.ReadString(section, L"Text", L"");
 
 	m_Percentual = 0!=parser.ReadInt(section, L"Percentual", 0);
-	m_ClipString = 0!=parser.ReadInt(section, L"ClipString", 0);
+
+	const WCHAR* clipping = parser.ReadString(section, L"ClipString", L"OFF").c_str();
+	if (_wcsicmp(clipping, L"OFF") == 0 || _wcsicmp(clipping, L"0") == 0)
+	{
+		m_ClipType = CLIP_OFF;
+	}
+	else if (_wcsicmp(clipping, L"ON") == 0 || _wcsicmp(clipping, L"1") == 0)
+	{
+		m_ClipType = CLIP_ON;
+	}
+	else if (_wcsicmp(clipping, L"AUTO") == 0)
+	{
+		m_ClipType = CLIP_AUTO;
+	}
+
+	m_ClipStringW = parser.ReadInt(section, L"ClipStringW", -1);
+	m_ClipStringH = parser.ReadInt(section, L"ClipStringH", -1);
 
 	m_FontFace = parser.ReadString(section, L"FontFace", L"Arial");
 	if (m_FontFace.empty())
@@ -645,18 +664,27 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 		break;
 	}
 
-	if (m_ClipString)
+	CharacterRange range(0, stringLen);
+	stringFormat.SetMeasurableCharacterRanges(1, &range);
+
+	if (m_ClipType == CLIP_ON || (m_NeedsClipping && m_ClipType == CLIP_AUTO))
 	{
 		stringFormat.SetTrimming(StringTrimmingEllipsisCharacter);
 	}
 	else
 	{
-		stringFormat.SetTrimming(StringTrimmingNone);
-		stringFormat.SetFormatFlags(StringFormatFlagsNoClip | StringFormatFlagsNoWrap);
+		// Special case
+		if (m_WDefined && m_HDefined && m_ClipType == CLIP_AUTO)
+		{
+			stringFormat.SetTrimming(StringTrimmingEllipsisCharacter);
+			stringFormat.SetFormatFlags(StringFormatFlagsNoClip);
+		}
+		else
+		{
+			stringFormat.SetTrimming(StringTrimmingNone);
+			stringFormat.SetFormatFlags(StringFormatFlagsNoClip | StringFormatFlagsNoWrap);
+		}
 	}
-
-	CharacterRange range(0, stringLen);
-	stringFormat.SetMeasurableCharacterRanges(1, &range);
 
 	REAL x = (REAL)GetX();
 	REAL y = (REAL)GetY();
@@ -664,7 +692,102 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 	if (rect)
 	{
 		PointF pos(x, y);
-		graphics.MeasureString(string, stringLen, m_Font, pos, &stringFormat, rect);
+		Status status = graphics.MeasureString(string, stringLen, m_Font, pos, &stringFormat, rect);
+
+		if (m_ClipType == CLIP_AUTO && status == Ok)
+		{
+			// Set initial clipping
+			m_NeedsClipping = false;
+			stringFormat.SetTrimming(StringTrimmingNone);
+			stringFormat.SetFormatFlags(StringFormatFlagsNoClip);
+
+			REAL w, h;
+			bool updateSize = true;
+
+			if (m_WDefined)
+			{
+				w = (REAL)m_W;
+				h = rect->Height;
+				m_NeedsClipping = true;
+			}
+			else if (m_HDefined)
+			{
+				if (m_ClipStringW == -1)
+				{
+					rect->Height = (REAL)m_H;
+					updateSize = false;
+				}
+				else
+				{
+					if (rect->Width > m_ClipStringW)
+					{
+						w = (REAL)m_ClipStringW;
+						m_NeedsClipping = true;
+					}
+					else
+					{
+						w = rect->Width;
+					}
+
+					h = (REAL)m_H;
+				}
+			}
+			else
+			{
+				if (m_ClipStringW == -1)
+				{
+					updateSize = false;
+				}
+				else if (m_ClipStringH == -1)
+				{
+					if (rect->Width > m_ClipStringW)
+					{
+						w = (REAL)m_ClipStringW;
+						m_NeedsClipping = true;
+					}
+					else
+					{
+						w = rect->Width;
+					}
+
+					h = rect->Height;
+				}
+				else
+				{
+					if (rect->Width > m_ClipStringW)
+					{
+						w = (REAL)m_ClipStringW;
+						m_NeedsClipping = true;
+					}
+					else
+					{
+						w = rect->Width;
+					}
+
+					h = rect->Height;
+				}
+			}
+
+			if (updateSize)
+			{
+				int lines = 0;
+				RectF layout(x, y, w, h);
+
+				status = graphics.MeasureString(string, stringLen, m_Font, layout, &stringFormat, &layout, NULL, &lines);
+
+				if (status == Ok && lines != 0)
+				{
+					rect->Width = w;
+					rect->Height = h * (REAL)lines;
+
+					if ((m_ClipStringH != -1 && rect->Height > m_ClipStringH) || (m_HDefined && rect->Height > (REAL)m_H))
+					{
+						rect->Height = (REAL)(m_HDefined ? m_H : m_ClipStringH);
+					}
+				}
+			}
+
+		}
 	}
 	else
 	{
