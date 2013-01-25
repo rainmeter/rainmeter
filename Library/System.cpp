@@ -591,7 +591,7 @@ HWND CSystem::GetDefaultShellWindow()
 		}
 		else
 		{
-			const int classLen = _countof(L"Progman");
+			const int classLen = _countof(L"Progman") + 1;
 			WCHAR className[classLen];
 			if (!(GetClassName(ShellW, className, classLen) > 0 &&
 				wcscmp(className, L"Progman") == 0))
@@ -627,7 +627,7 @@ HWND CSystem::GetWorkerW()
 			}
 			else
 			{
-				const int classLen = _countof(L"WorkerW");
+				const int classLen = _countof(L"WorkerW") + 1;
 				WCHAR className[classLen];
 				if (GetClassName(parent, className, classLen) > 0 &&
 					wcscmp(className, L"WorkerW") == 0)
@@ -702,7 +702,7 @@ bool CSystem::BelongToSameProcess(HWND hwndA, HWND hwndB)
 BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
 	bool logging = Rainmeter->GetDebug() && DEBUG_VERBOSE;
-	const int classLen = _countof(METERWINDOW_CLASS_NAME) + (DEBUG_VERBOSE ? 32 : 0);
+	const int classLen = _countof(METERWINDOW_CLASS_NAME) + (DEBUG_VERBOSE ? 32 : 1);
 	WCHAR className[classLen];
 	CMeterWindow* Window;
 	WCHAR flag;
@@ -916,7 +916,7 @@ void CALLBACK CSystem::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, 
 	{
 		if (!c_ShowDesktop)
 		{
-			const int classLen = _countof(L"WorkerW");
+			const int classLen = _countof(L"WorkerW") + 1;
 			WCHAR className[classLen];
 			if (GetClassName(hwnd, className, classLen) > 0 &&
 				wcscmp(className, L"WorkerW") == 0 &&
