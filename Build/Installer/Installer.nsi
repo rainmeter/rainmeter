@@ -571,9 +571,15 @@ Section
 
 	${If} $InstallPortable <> 1
 		; Download and install VC++ 2012 redist if required
-		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Libraries\Extended\$InstArc" "Bld"
+		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Runtimes\$InstArc" "Bld"
+		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Runtimes\$InstArc" "Installed"
+		${If} $0 == ""
+			; Some VS installs do not appear to have the "VC\Runtimes" node.
+			ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Libraries\Extended\$InstArc" "Bld"
+			ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Libraries\Extended\$InstArc" "Install"
+		${EndIf}
+
 		${VersionCompare} "$0" "51106" $1
-		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Libraries\Extended\$InstArc" "Install"
 		${If} $1 = 2
 		${OrIf} $2 <> 1
 			${If} ${Silent}
