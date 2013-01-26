@@ -349,24 +349,25 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	m_Percentual = 0!=parser.ReadInt(section, L"Percentual", 0);
 
-	const WCHAR* clipping = parser.ReadString(section, L"ClipString", L"OFF").c_str();
-	if (_wcsicmp(clipping, L"OFF") == 0 || _wcsicmp(clipping, L"0") == 0)
+	int clipping = parser.ReadInt(section, L"ClipString", 0);
+	switch (clipping)
 	{
-		m_ClipType = CLIP_OFF;
-	}
-	else if (_wcsicmp(clipping, L"ON") == 0 || _wcsicmp(clipping, L"1") == 0)
-	{
-		m_ClipType = CLIP_ON;
-	}
-	else if (_wcsicmp(clipping, L"AUTO") == 0)
-	{
+	case 2:
 		m_ClipType = CLIP_AUTO;
 
 		m_ClipStringW = parser.ReadInt(section, L"ClipStringW", -1);
 		m_ClipStringH = parser.ReadInt(section, L"ClipStringH", -1);
-	}
-	else
-	{
+		break;
+
+	case 1:
+		m_ClipType = CLIP_ON;
+		break;
+
+	case 0:
+		m_ClipType = CLIP_OFF;
+		break;
+
+	default:
 		LogWithArgs(LOG_ERROR, L"ClipString=%s is not valid in [%s]", clipping, m_Name.c_str());
 	}
 
