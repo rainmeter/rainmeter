@@ -235,7 +235,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 		std::wstring temp = L"icon";
 		WCHAR buffer[MAX_PATH];
-		_itow_s(child->index, buffer, 10);
+		_itow_s(child->index + 1, buffer, 10);
 		temp += buffer;
 		temp += L".ico";		
 		child->iconPath = RmReadPath(rm, L"IconPath", temp.c_str());
