@@ -273,7 +273,7 @@ std::string ConvertAsciiToUTF8(LPCSTR str, int strLen, int codepage)
 	return szUTF8;
 }
 
-std::wstring& DecodeReferences(std::wstring& str, int opt)
+void DecodeReferences(std::wstring& str, int opt)
 {
 	// (opt <= 0 || opt > 3) : Do nothing.
 	// (opt == 1)            : Decode both numeric character references and character entity references.
@@ -357,8 +357,6 @@ std::wstring& DecodeReferences(std::wstring& str, int opt)
 			}
 		}
 	}
-
-	return str;
 }
 
 void FillCharacterEntityReferences()
@@ -778,7 +776,7 @@ PLUGIN_EXPORT double Update(void* data)
 				{
 					std::wstring log = L"WebParser.dll: [";
 					log += measure->section;
-					log += L"] Failed to begin download thread.";
+					log += L"] Failed to begin download thread";
 					RmLog(LOG_ERROR, log.c_str());
 				}
 			}
@@ -822,7 +820,7 @@ PLUGIN_EXPORT double Update(void* data)
 					{
 						std::wstring log = L"WebParser.dll: [";
 						log += measure->section;
-						log += L"] Failed to begin thread.";
+						log += L"] Failed to begin thread";
 						RmLog(LOG_ERROR, log.c_str());
 					}
 				}
@@ -1052,7 +1050,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 									{
 										std::wstring log = L"WebParser.dll: [";
 										log += (*i)->section;
-										log += L"] Failed to begin download thread.";
+										log += L"] Failed to begin download thread";
 										RmLog(LOG_ERROR, log.c_str());
 									}
 								}
@@ -1098,7 +1096,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 			log += measure->section;
 			log += L"] Matching error! (";
 			log += buffer;
-			log += L")\n";
+			log += L')';
 			RmLog(LOG_ERROR, log.c_str());
 
 			EnterCriticalSection(&g_CriticalSection);
@@ -1134,7 +1132,6 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 		log += buffer;
 		log += L": ";
 		log += StringUtil::Widen(error);
-		log += L"\n";
 		RmLog(LOG_ERROR, log.c_str());
 	}
 
@@ -1151,7 +1148,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 		{
 			std::wstring log = L"WebParser.dll: [";
 			log += measure->section;
-			log += L"] Failed to begin download thread.";
+			log += L"] Failed to begin download thread";
 			RmLog(LOG_ERROR, log.c_str());
 		}
 	}
@@ -1413,7 +1410,6 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			log += url;
 			log += L" to ";
 			log += fullpath;
-			log += L"\n";
 			RmLog(LOG_DEBUG, log.c_str());
 
 			HRESULT resultCoInitialize = CoInitialize(NULL);  // requires before calling URLDownloadToFile function
@@ -1490,7 +1486,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 	{
 		std::wstring log = L"WebParser.dll: [";
 		log += measure->section;
-		log += L"] The url is empty.\n";
+		log += L"] Url is empty";
 		RmLog(LOG_ERROR, log.c_str());
 	}
 
@@ -1741,7 +1737,7 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 
 			err += L" (ErrorCode=";
 			err += buffer;
-			err += L")";
+			err += L')';
 		}
 		else
 		{
@@ -1774,7 +1770,7 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 			wsprintf(buffer, L"%i", dwErr);
 			err += L" (ErrorCode=";
 			err += buffer;
-			err += L")";
+			err += L')';
 		}
 	}
 	else
@@ -1783,14 +1779,4 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 	}
 
 	RmLog(LOG_ERROR, err.c_str());
-}
-
-UINT GetPluginVersion()
-{
-	return 1014;
-}
-
-LPCTSTR GetPluginAuthor()
-{
-	return L"Rainy (rainy@iki.fi)";
 }
