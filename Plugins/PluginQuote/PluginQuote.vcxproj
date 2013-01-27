@@ -55,7 +55,11 @@
     <ResourceCompile Include="PluginQuote.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Common\StringUtil.cpp" />
     <ClCompile Include="Quote.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Common\StringUtil.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

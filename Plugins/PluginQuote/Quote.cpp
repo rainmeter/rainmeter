@@ -21,8 +21,9 @@
 #include <vector>
 #include <time.h>
 #include <shlwapi.h>
-#include "../../Library/Export.h"	// Rainmeter's exported functions
+#include "../API/RainmeterAPI.h"
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+#include "../../Common/StringUtil.h"
 
 #define BUFFER_SIZE 4096
 
@@ -33,40 +34,6 @@ struct MeasureData
 	std::vector<std::wstring> files;
 	std::wstring value;
 };
-
-std::string ConvertToAscii(LPCTSTR str)
-{
-	std::string szAscii;
-
-	if (str && *str)
-	{
-		int strLen = (int)wcslen(str);
-		int bufLen = WideCharToMultiByte(CP_ACP, 0, str, strLen, NULL, 0, NULL, NULL);
-		if (bufLen > 0)
-		{
-			szAscii.resize(bufLen);
-			WideCharToMultiByte(CP_ACP, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
-		}
-	}
-	return szAscii;
-}
-
-std::wstring ConvertToWide(LPCSTR str)
-{
-	std::wstring szWide;
-
-	if (str && *str)
-	{
-		int strLen = (int)strlen(str);
-		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
-		if (bufLen > 0)
-		{
-			szWide.resize(bufLen);
-			MultiByteToWideChar(CP_ACP, 0, str, strLen, &szWide[0], bufLen);
-		}
-	}
-	return szWide;
-}
 
 void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& filters, bool bSubfolders, const std::wstring& path)
 {
@@ -268,6 +235,9 @@ PLUGIN_EXPORT double Update(void* data)
 					// It's ascii
 					char* aBuffer = (char*)buffer;
 
+					const std::string separator = StringUtil::Narrow(measure->separator);
+					const char* separatorSz = separator.c_str();
+
 					// Read until we find the first separator
 					char* sepPos1 = NULL;
 					char* sepPos2 = NULL;
@@ -276,7 +246,7 @@ PLUGIN_EXPORT double Update(void* data)
 						size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
 						aBuffer[len] = 0;
 
-						sepPos1 = strstr(aBuffer, ConvertToAscii(measure->separator.c_str()).c_str());
+						sepPos1 = strstr(aBuffer, separatorSz);
 						if (sepPos1 == NULL)
 						{
 							// The separator wasn't found
@@ -292,7 +262,7 @@ PLUGIN_EXPORT double Update(void* data)
 						}
 						else
 						{
-							sepPos1 += measure->separator.size();
+							sepPos1 += separator.size();
 						}
 					}
 					while (sepPos1 == NULL);
@@ -300,19 +270,19 @@ PLUGIN_EXPORT double Update(void* data)
 					// Find the second separator
 					do
 					{
-						sepPos2 = strstr(sepPos1, ConvertToAscii(measure->separator.c_str()).c_str());
+						sepPos2 = strstr(sepPos1, separatorSz);
 						if (sepPos2 == NULL)
 						{
 							// The separator wasn't found
 							if (feof(file))
 							{
 								// End of file reached -> read the rest
-								measure->value += ConvertToWide(sepPos1);
+								measure->value += StringUtil::Widen(sepPos1);
 								break;
 							}
 							else
 							{
-								measure->value += ConvertToWide(sepPos1);
+								measure->value += StringUtil::Widen(sepPos1);
 
 								// else continue reading
 								size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
@@ -328,7 +298,7 @@ PLUGIN_EXPORT double Update(void* data)
 							}
 
 							// Read until we find the second separator
-							measure->value += ConvertToWide(sepPos1);
+							measure->value += StringUtil::Widen(sepPos1);
 						}
 					}
 					while (sepPos2 == NULL);
