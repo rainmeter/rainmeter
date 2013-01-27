@@ -1605,11 +1605,11 @@ std::pair<int, int> CRainmeter::GetMeterWindowIndex(const std::wstring& folderPa
 		const SkinFolder& skinFolder = m_SkinFolders[index];
 
 		const WCHAR* fileSz = file.c_str();
-		for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
+		for (size_t i = 0, isize = skinFolder.files.size(); i < isize; ++i)
 		{
 			if (_wcsicmp(skinFolder.files[i].c_str(), fileSz) == 0)
 			{
-				return std::make_pair(index, i);
+				return std::make_pair(index, (int)i);
 			}
 		}
 	}
@@ -1619,8 +1619,6 @@ std::pair<int, int> CRainmeter::GetMeterWindowIndex(const std::wstring& folderPa
 
 std::pair<int, int> CRainmeter::GetMeterWindowIndex(UINT menuCommand)
 {
-	std::pair<int, int> indexes;
-
 	if (menuCommand >= ID_CONFIG_FIRST && menuCommand <= ID_CONFIG_LAST)
 	{
 		// Check which skin was selected
@@ -1630,14 +1628,12 @@ std::pair<int, int> CRainmeter::GetMeterWindowIndex(UINT menuCommand)
 			if (menuCommand >= skinFolder.commandBase &&
 				menuCommand < (skinFolder.commandBase + skinFolder.files.size()))
 			{
-				indexes = std::make_pair(i, menuCommand - skinFolder.commandBase);
-				return indexes;
+				return std::make_pair((int)i, (int)(menuCommand - skinFolder.commandBase));
 			}
 		}
 	}
 
-	indexes = std::make_pair(-1, -1);  // error
-	return indexes;
+	return std::make_pair(-1, -1);  // error;
 }
 
 CMeterWindow* CRainmeter::GetMeterWindow(HWND hwnd)
