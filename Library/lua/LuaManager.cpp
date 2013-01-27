@@ -75,8 +75,14 @@ void LuaManager::ReportErrors(lua_State* L, const std::wstring& file)
 
 void LuaManager::PushWide(lua_State* L, const WCHAR* str)
 {
-	const std::string tmpStr = StringUtil::Narrow(str);
-	lua_pushlstring(L, tmpStr.c_str(), tmpStr.length());
+	const std::string narrowStr = StringUtil::Narrow(str);
+	lua_pushlstring(L, narrowStr.c_str(), narrowStr.length());
+}
+
+void LuaManager::PushWide(lua_State* L, const std::wstring& str)
+{
+	const std::string narrowStr = StringUtil::Narrow(str);
+	lua_pushlstring(L, narrowStr.c_str(), narrowStr.length());
 }
 
 std::wstring LuaManager::ToWide(lua_State* L, int narg)

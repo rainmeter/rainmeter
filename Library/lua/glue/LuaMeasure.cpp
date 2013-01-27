@@ -43,7 +43,7 @@ static int GetOption(lua_State* L)
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
 	strTmp = parser.ReadString(self->GetName(), strTmp.c_str(), LuaManager::ToWide(L, 3).c_str());
 
-	LuaManager::PushWide(L, strTmp.c_str());
+	LuaManager::PushWide(L, strTmp);
 	return 1;
 }
 

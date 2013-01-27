@@ -37,6 +37,7 @@ public:
 	static void ReportErrors(lua_State* L, const std::wstring& file);
 
 	static void PushWide(lua_State* L, const WCHAR* str);
+	static void PushWide(lua_State* L, const std::wstring& str);
 	static std::wstring ToWide(lua_State* L, int narg);
 
 protected:

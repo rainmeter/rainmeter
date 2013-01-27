@@ -111,7 +111,7 @@ static int GetVariable(lua_State* L)
 	const std::wstring* value = self->GetParser().GetVariable(strTmp);
 	if (value)
 	{
-		LuaManager::PushWide(L, (*value).c_str());
+		LuaManager::PushWide(L, *value);
 	}
 	else
 	{
@@ -128,7 +128,7 @@ static int ReplaceVariables(lua_State* L)
 
 	self->GetParser().ReplaceVariables(strTmp);
 	self->GetParser().ReplaceMeasures(strTmp);
-	LuaManager::PushWide(L, strTmp.c_str());
+	LuaManager::PushWide(L, strTmp);
 
 	return 1;
 }
@@ -206,7 +206,7 @@ static int MakePathAbsolute(lua_State* L)
 	DECLARE_SELF(L)
 	std::wstring path = LuaManager::ToWide(L, 2);
 	self->MakePathAbsolute(path);
-	LuaManager::PushWide(L, path.c_str());
+	LuaManager::PushWide(L, path);
 
 	return 1;
 }
