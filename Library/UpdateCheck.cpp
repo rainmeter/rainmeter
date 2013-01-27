@@ -64,7 +64,7 @@ void CheckVersion(void* dummy)
 				return version;
 			};
 
-			std::wstring tmpSz = ConvertToWide(urlData);
+			std::wstring tmpSz = StringUtil::Widen(urlData);
 			const WCHAR* version = tmpSz.c_str();
 
 			int availableVersion = parseVersion(version);

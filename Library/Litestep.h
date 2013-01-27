@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <comdef.h>
 #include <string>
+#include "../Common/StringUtil.h"
 #include "Error.h"
 
 enum LOGLEVEL
@@ -39,11 +40,6 @@ UINT GetUniqueID();
 
 template <typename T>
 UINT TypeID() { static UINT id = GetUniqueID(); return id; }
-
-std::string ConvertToAscii(LPCTSTR str);
-std::wstring ConvertToWide(LPCSTR str);
-std::string ConvertToUTF8(LPCWSTR str);
-std::wstring ConvertUTF8ToWide(LPCSTR str);
 
 void Log(int nLevel, const WCHAR* message);
 void LogWithArgs(int nLevel, const WCHAR* format, ...);

@@ -104,74 +104,6 @@ void RunFile(const WCHAR* file, const WCHAR* args)
 	}
 }
 
-std::string ConvertToAscii(LPCTSTR str)
-{
-	std::string szAscii;
-
-	if (str && *str)
-	{
-		int strLen = (int)wcslen(str);
-		int bufLen = WideCharToMultiByte(CP_ACP, 0, str, strLen, NULL, 0, NULL, NULL);
-		if (bufLen > 0)
-		{
-			szAscii.resize(bufLen);
-			WideCharToMultiByte(CP_ACP, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
-		}
-	}
-	return szAscii;
-}
-
-std::wstring ConvertToWide(LPCSTR str)
-{
-	std::wstring szWide;
-
-	if (str && *str)
-	{
-		int strLen = (int)strlen(str);
-		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
-		if (bufLen > 0)
-		{
-			szWide.resize(bufLen);
-			MultiByteToWideChar(CP_ACP, 0, str, strLen, &szWide[0], bufLen);
-		}
-	}
-	return szWide;
-}
-
-std::string ConvertToUTF8(LPCWSTR str)
-{
-	std::string szAscii;
-
-	if (str && *str)
-	{
-		int strLen = (int)wcslen(str);
-		int bufLen = WideCharToMultiByte(CP_UTF8, 0, str, strLen, NULL, 0, NULL, NULL);
-		if (bufLen > 0)
-		{
-			szAscii.resize(bufLen);
-			WideCharToMultiByte(CP_UTF8, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
-		}
-	}
-	return szAscii;
-}
-
-std::wstring ConvertUTF8ToWide(LPCSTR str)
-{
-	std::wstring szWide;
-
-	if (str && *str)
-	{
-		int strLen = (int)strlen(str);
-		int bufLen = MultiByteToWideChar(CP_UTF8, 0, str, strLen, NULL, 0);
-		if (bufLen > 0)
-		{
-			szWide.resize(bufLen);
-			MultiByteToWideChar(CP_UTF8, 0, str, strLen, &szWide[0], bufLen);
-		}
-	}
-	return szWide;
-}
-
 void LogInternal(int nLevel, ULONGLONG elapsed, LPCTSTR pszMessage)
 {
 	// Add timestamp
@@ -211,7 +143,7 @@ void LogInternal(int nLevel, ULONGLONG elapsed, LPCTSTR pszMessage)
 	message += L'\n';
 	
 #ifdef _DEBUG
-	_RPT0(_CRT_WARN, ConvertToAscii(message.c_str()).c_str());
+	_RPT0(_CRT_WARN, StringUtil::Narrow(message).c_str());
 	if (!Rainmeter->GetLogging()) return;
 #endif
 

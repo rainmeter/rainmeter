@@ -69,16 +69,19 @@ void LuaManager::ReportErrors(lua_State* L, const std::wstring& file)
 	}
 
 	std::wstring str(file, file.find_last_of(L'\\') + 1);
-	str += ConvertToWide(error);
+	str += StringUtil::Widen(error);
 	LogWithArgs(LOG_ERROR, L"Script: %s", str.c_str());
 }
 
 void LuaManager::PushWide(lua_State* L, const WCHAR* str)
 {
-	lua_pushstring(L, ConvertToAscii(str).c_str());
+	const std::string tmpStr = StringUtil::Narrow(str);
+	lua_pushlstring(L, tmpStr.c_str(), tmpStr.length());
 }
 
 std::wstring LuaManager::ToWide(lua_State* L, int narg)
 {
-	return ConvertToWide(lua_tostring(L, narg));
+	size_t strLen = 0;
+	const char* str = lua_tolstring(L, narg, &strLen);
+	return StringUtil::Widen(str, (int)strLen);
 }

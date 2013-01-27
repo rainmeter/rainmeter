@@ -239,7 +239,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 		}
 		else // Contains a RegEx
 		{
-			std::string utf8str = ConvertToUTF8(buffer);
+			std::string utf8str = StringUtil::NarrowUTF8(buffer);
 			int* ovector = new int[OVECCOUNT];
 
 			for (size_t i = 0, isize = m_Substitute.size(); i < isize ; i += 2)
@@ -252,7 +252,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 				int offset = 0;
 
 				re = pcre_compile(
-					ConvertToUTF8(m_Substitute[i].c_str()).c_str(),   // the pattern
+					StringUtil::NarrowUTF8(m_Substitute[i]).c_str(),   // the pattern
 					flags,						// default options
 					&error,						// for error message
 					&erroffset,					// for error offset
@@ -283,7 +283,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 						}
 						else
 						{
-							std::string result = ConvertToUTF8(m_Substitute[i + 1].c_str());
+							std::string result = StringUtil::NarrowUTF8(m_Substitute[i + 1]);
 
 							if (rc > 1)
 							{
@@ -324,7 +324,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 
 			delete [] ovector;
 
-			str = ConvertUTF8ToWide(utf8str.c_str());
+			str = StringUtil::WidenUTF8(utf8str);
 		}
 
 		return str.c_str();

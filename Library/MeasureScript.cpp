@@ -143,12 +143,12 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 						lua_pop(L, 1);
 						const char* strKey = lua_tostring(L, -1);
 
-						std::wstring wstrKey = ConvertToWide(strKey);
+						std::wstring wstrKey = StringUtil::Widen(strKey);
 						const std::wstring& wstrValue = parser.ReadString(section, wstrKey.c_str(), L"");
 
 						if (!wstrValue.empty())
 						{
-							std::string strStrVal = ConvertToAscii(wstrValue.c_str());
+							std::string strStrVal = StringUtil::Narrow(wstrValue);
 							const char* strValue = strStrVal.c_str();
 
 							lua_pushstring(L, strValue);
@@ -186,7 +186,7 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 */
 void CMeasureScript::Command(const std::wstring& command)
 {
-	std::string str = ConvertToAscii(command.c_str());
+	std::string str = StringUtil::Narrow(command);
 	m_LuaScript.RunString(str.c_str());
 }
 
