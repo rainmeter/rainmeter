@@ -52,12 +52,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Common\StringUtil.h" />
     <ClInclude Include="..\..\Library\pcre-8.10\config.h" />
     <ClInclude Include="..\..\Library\pcre-8.10\pcre.h" />
     <ClInclude Include="..\..\Library\pcre-8.10\pcre_internal.h" />
     <ClInclude Include="..\..\Library\pcre-8.10\ucp.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Common\StringUtil.cpp" />
     <ClCompile Include="..\..\Library\pcre-8.10\pcre_globals.c" />
     <ClCompile Include="WebParser.cpp" />
   </ItemGroup>

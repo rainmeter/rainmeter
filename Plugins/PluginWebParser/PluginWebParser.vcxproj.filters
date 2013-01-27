@@ -4,6 +4,9 @@
     <Filter Include="pcre">
       <UniqueIdentifier>{15b74478-8fbf-4a89-b1ed-5488d059708c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{a7ff5ecc-efd3-476f-83b8-d5a327f487b5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Library\pcre-8.10\config.h">
@@ -18,11 +21,17 @@
     <ClInclude Include="..\..\Library\pcre-8.10\ucp.h">
       <Filter>pcre</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Common\StringUtil.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WebParser.cpp" />
     <ClCompile Include="..\..\Library\pcre-8.10\pcre_globals.c">
       <Filter>pcre</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\StringUtil.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

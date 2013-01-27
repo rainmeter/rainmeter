@@ -27,6 +27,7 @@
 #include "../../Library/pcre-8.10/config.h"
 #include "../../Library/pcre-8.10/pcre.h"
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
+#include "../../Common/StringUtil.h"
 #include "../API/RainmeterAPI.h"
 
 void ShowError(int lineNumber, WCHAR* errorMsg = NULL);
@@ -257,70 +258,16 @@ static std::unordered_map<std::wstring, WCHAR> g_CERs;
 
 #define OVECCOUNT 300    // should be a multiple of 3
 
-std::wstring ConvertToWide(LPCSTR str, int codepage)
-{
-	std::wstring szWide;
-
-	if (str && *str)
-	{
-		int strLen = (int)strlen(str);
-		int bufLen = MultiByteToWideChar(codepage, 0, str, strLen, NULL, 0);
-		if (bufLen > 0)
-		{
-			szWide.resize(bufLen);
-			MultiByteToWideChar(codepage, 0, str, strLen, &szWide[0], bufLen);
-		}
-	}
-	return szWide;
-}
-
-std::string ConvertToAscii(LPCWSTR str, int codepage)
-{
-	std::string szAscii;
-
-	if (str && *str)
-	{
-		int strLen = (int)wcslen(str);
-		int bufLen = WideCharToMultiByte(codepage, 0, str, strLen, NULL, 0, NULL, NULL);
-		if (bufLen > 0)
-		{
-			szAscii.resize(bufLen);
-			WideCharToMultiByte(codepage, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
-		}
-	}
-	return szAscii;
-}
-
-std::string ConvertWideToAscii(LPCWSTR str)
-{
-	return ConvertToAscii(str, CP_ACP);
-}
-
-std::wstring ConvertAsciiToWide(LPCSTR str)
-{
-	return ConvertToWide(str, CP_ACP);
-}
-
-std::wstring ConvertUTF8ToWide(LPCSTR str)
-{
-	return ConvertToWide(str, CP_UTF8);
-}
-
-std::string ConvertWideToUTF8(LPCWSTR str)
-{
-	return ConvertToAscii(str, CP_UTF8);
-}
-
-std::string ConvertAsciiToUTF8(LPCSTR str, int codepage)
+std::string ConvertAsciiToUTF8(LPCSTR str, int strLen, int codepage)
 {
 	std::string szUTF8;
 
 	if (str && *str)
 	{
-		std::wstring wide = ConvertToWide(str, codepage);
+		std::wstring wide = StringUtil::Widen(str, strLen, codepage);
 		if (!wide.empty())
 		{
-			szUTF8.swap(ConvertWideToUTF8(wide.c_str()));
+			szUTF8.swap(StringUtil::NarrowUTF8(wide));
 		}
 	}
 	return szUTF8;
@@ -952,7 +899,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 
 	// Compile the regular expression in the first argument
 	re = pcre_compile(
-		ConvertWideToUTF8(measure->regExp.c_str()).c_str(),   // the pattern
+		StringUtil::NarrowUTF8(measure->regExp).c_str(),   // the pattern
 		flags,					  // default options
 		&error,               // for error message
 		&erroffset,           // for error offset
@@ -966,14 +913,14 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 		if (measure->codepage == 1200)		// 1200 = UTF-16LE
 		{
 			// Must convert the data to utf8
-			utf8Data = ConvertWideToUTF8((LPCWSTR)parseData);
+			utf8Data = StringUtil::NarrowUTF8((LPCWSTR)parseData, dwSize);
 			parseData = utf8Data.c_str();
 			dwSize = utf8Data.length();
 		}
 		else if (measure->codepage != CP_UTF8 && measure->codepage != 0)		// 0 = CP_ACP
 		{
 			// Must convert the data to utf8
-			utf8Data = ConvertAsciiToUTF8(parseData, measure->codepage);
+			utf8Data = ConvertAsciiToUTF8(parseData, dwSize, measure->codepage);
 			parseData = utf8Data.c_str();
 			dwSize = utf8Data.length();
 		}
@@ -1010,7 +957,6 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 							const char* substring_start = parseData + ovector[2 * i];
 							int substring_length = ovector[2 * i + 1] - ovector[2 * i];
 							substring_length = min(substring_length, 256);
-							std::string tmpStr(substring_start, substring_length);
 
 							WCHAR buffer[32];
 							wsprintf(buffer, L"%2d", i);
@@ -1020,7 +966,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 							log += L"] (Index ";
 							log += buffer;
 							log += L") ";
-							log += ConvertUTF8ToWide(tmpStr.c_str());
+							log += StringUtil::WidenUTF8(substring_start, substring_length);
 							RmLog(LOG_DEBUG, log.c_str());
 						}
 					}
@@ -1029,8 +975,8 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 					int substring_length = ovector[2 * measure->stringIndex + 1] - ovector[2 * measure->stringIndex];
 
 					EnterCriticalSection(&g_CriticalSection);
-					std::string szResult(substring_start, substring_length);
-					measure->resultString = DecodeReferences(ConvertUTF8ToWide(szResult.c_str()), measure->decodeCharacterReference);
+					measure->resultString = StringUtil::WidenUTF8(substring_start, substring_length);
+					DecodeReferences(measure->resultString, measure->decodeCharacterReference);
 					LeaveCriticalSection(&g_CriticalSection);
 				}
 				else
@@ -1073,14 +1019,12 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 							const char* substring_start = parseData + ovector[2 * (*i)->stringIndex];
 							int substring_length = ovector[2 * (*i)->stringIndex + 1] - ovector[2 * (*i)->stringIndex];
 
-							std::string szResult(substring_start, substring_length);
-
 							if (!(*i)->regExp.empty())
 							{
 								// Change the index and parse the substring
 								int index = (*i)->stringIndex;
 								(*i)->stringIndex = (*i)->stringIndex2;
-								ParseData((*i), szResult.c_str(), szResult.length());
+								ParseData((*i), substring_start, substring_length);
 								(*i)->stringIndex = index;
 							}
 							else
@@ -1088,12 +1032,11 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 								// Set the result
 								EnterCriticalSection(&g_CriticalSection);
 
-								// Substitude the [measure] with szResult
-								std::wstring wzResult = ConvertUTF8ToWide(szResult.c_str());
-								std::wstring wzUrl = (*i)->url;
-
-								wzUrl.replace(wzUrl.find(compareStr), compareStr.size(), wzResult);
-								(*i)->resultString = DecodeReferences(wzUrl, (*i)->decodeCharacterReference);
+								// Substitude the [measure] with result
+								std::wstring result = StringUtil::WidenUTF8(substring_start, substring_length);
+								(*i)->resultString = (*i)->url;
+								(*i)->resultString.replace((*i)->resultString.find(compareStr), compareStr.size(), result);
+								DecodeReferences((*i)->resultString, (*i)->decodeCharacterReference);
 
 								// Start download threads for the references
 								if ((*i)->download)
@@ -1190,7 +1133,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 		log += L"] PCRE compilation failed at offset ";
 		log += buffer;
 		log += L": ";
-		log += ConvertAsciiToWide(error);
+		log += StringUtil::Widen(error);
 		log += L"\n";
 		RmLog(LOG_ERROR, log.c_str());
 	}
@@ -1680,7 +1623,7 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dwDataSize, bool f
 	{
 		if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
 		{
-			std::string urlACP = ConvertWideToAscii(url.c_str());
+			const std::string urlACP = StringUtil::Narrow(url);
 			hUrlDump = InternetOpenUrlA(handle, urlACP.c_str(), NULL, NULL, flags, 0);
 		}
 
