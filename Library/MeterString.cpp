@@ -672,23 +672,15 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 	CharacterRange range(0, stringLen);
 	stringFormat.SetMeasurableCharacterRanges(1, &range);
 
-	if (m_ClipType == CLIP_ON || (m_NeedsClipping && m_ClipType == CLIP_AUTO))
+	if (m_ClipType == CLIP_ON || (m_NeedsClipping && m_ClipType == CLIP_AUTO) ||
+		m_ClipType == CLIP_AUTO && m_WDefined && m_HDefined)
 	{
 		stringFormat.SetTrimming(StringTrimmingEllipsisCharacter);
 	}
 	else
 	{
-		// Special case
-		if (m_ClipType == CLIP_AUTO && m_WDefined && m_HDefined)
-		{
-			stringFormat.SetTrimming(StringTrimmingEllipsisCharacter);
-			stringFormat.SetFormatFlags(StringFormatFlagsNoClip);
-		}
-		else
-		{
-			stringFormat.SetTrimming(StringTrimmingNone);
-			stringFormat.SetFormatFlags(StringFormatFlagsNoClip | StringFormatFlagsNoWrap);
-		}
+		stringFormat.SetTrimming(StringTrimmingNone);
+		stringFormat.SetFormatFlags(StringFormatFlagsNoClip | StringFormatFlagsNoWrap);
 	}
 
 	REAL x = (REAL)GetX();
@@ -719,8 +711,15 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 			{
 				if (m_ClipStringW == -1)
 				{
+					// Text does not fit in defined height, clip it
+					if (rect->Height > (REAL)m_H)
+					{
+						m_NeedsClipping = true;
+					}
+
 					rect->Height = (REAL)m_H;
 					updateSize = false;
+
 				}
 				else
 				{
@@ -741,6 +740,13 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 			{
 				if (m_ClipStringW == -1)
 				{
+					// Clip text if already larger than ClipStringH
+					if (m_ClipStringH != -1 && rect->Height > (REAL)m_ClipStringH)
+					{
+						m_NeedsClipping = true;
+						rect->Height = (REAL)m_ClipStringH;
+					}
+
 					updateSize = false;
 				}
 				else if (m_ClipStringH == -1)
@@ -783,9 +789,9 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 				if (status == Ok && lines != 0)
 				{
 					rect->Width = w;
-					rect->Height = h * (REAL)lines;
+					rect->Height = layout.Height;
 
-					if ((m_ClipStringH != -1 && rect->Height > m_ClipStringH) || (m_HDefined && rect->Height > (REAL)m_H))
+					if (m_HDefined || (m_ClipStringH != -1 && rect->Height > m_ClipStringH))
 					{
 						rect->Height = (REAL)(m_HDefined ? m_H : m_ClipStringH);
 					}
