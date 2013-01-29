@@ -2205,7 +2205,7 @@ bool CMeterWindow::ReadSkin()
 					m_Meters.push_back(meter);
 					meter->SetRelativeMeter(prevMeter);
 
-					if (!m_HasButtons && meter->GetTypeID() == TypeID<CMeterButton>())
+					if (meter->GetTypeID() == TypeID<CMeterButton>())
 					{
 						m_HasButtons = true;
 					}
@@ -2613,10 +2613,7 @@ bool CMeterWindow::UpdateMeasure(CMeasure* measure, bool force)
 			measure->ReadOptions(m_Parser);
 		}
 
-		if (measure->Update())
-		{
-			bUpdate = true;
-		}
+		bUpdate = measure->Update();
 	}
 
 	return bUpdate;
@@ -2644,10 +2641,7 @@ bool CMeterWindow::UpdateMeter(CMeter* meter, bool& bActiveTransition, bool forc
 			meter->ReadOptions(m_Parser);
 		}
 
-		if (meter->Update())
-		{
-			bUpdate = true;
-		}
+		bUpdate = meter->Update();
 	}
 
 	// Update tooltips
@@ -3447,10 +3441,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() && monitors[screenIndex-1].active))
 		{
-			if (m_AutoSelectScreen)
-			{
-				m_AutoSelectScreen = false;
-			}
+			m_AutoSelectScreen = false;
 
 			m_WindowXScreen = m_WindowYScreen = screenIndex;
 			m_WindowXScreenDefined = m_WindowYScreenDefined = screenDefined;

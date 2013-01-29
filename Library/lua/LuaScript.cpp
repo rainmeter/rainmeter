@@ -138,10 +138,7 @@ bool LuaScript::IsFunction(const char* funcName)
 		// Push the function onto the stack
 		lua_getfield(L, -1, funcName);
 
-		if (lua_isfunction(L, -1))
-		{
-			bExists = true;
-		}
+		bExists = lua_isfunction(L, -1);
 
 		// Pop both the table and the function off the stack.
 		lua_pop(L, 2);

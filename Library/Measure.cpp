@@ -517,7 +517,7 @@ bool CMeasure::Update()
 				{
 					if (!m_IfAboveCommitted)
 					{
-						m_IfAboveCommitted= true;	// To avoid infinite loop from !Update
+						m_IfAboveCommitted = true;	// To avoid infinite loop from !Update
 						Rainmeter->ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
 					}
 				}
