@@ -37,6 +37,17 @@ enum AUTOSCALE
 	AUTOSCALE_ON    = AUTOSCALE_1024
 };
 
+class CMeasureValueSet
+{
+public:
+	CMeasureValueSet(double val, const WCHAR* str) : m_Value(val), m_StringValue(str) {}
+	void Set(double val, const WCHAR* str) { m_Value = val; m_StringValue = str; }
+	bool IsChanged(double val, const WCHAR* str) { if (m_Value != val || wcscmp(m_StringValue.c_str(), str) != 0) { Set(val, str); return true; } return false; }
+private:
+	double m_Value;
+	std::wstring m_StringValue;
+};
+
 class CMeter;
 class CMeterWindow;
 class CConfigParser;
@@ -68,7 +79,7 @@ public:
 	static void RemoveTrailingZero(WCHAR* str, int strLen);
 
 	const std::wstring& GetOnChangeAction() { return m_OnChangeAction; }
-	void DoChangeAction();
+	void DoChangeAction(bool execute = true);
 
 	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
 
@@ -114,9 +125,8 @@ protected:
 	bool m_Initialized;
 
 	std::wstring m_OnChangeAction;
-	double m_OldValue;
-	std::wstring m_OldStringValue;
-	bool m_OldValueInitialized;
+	CMeasureValueSet* m_OldValue;
+	bool m_ValueAssigned;
 };
 
 #endif

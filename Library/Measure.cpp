@@ -88,7 +88,7 @@ CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : CSection(mete
 	m_Disabled(false),
 	m_Initialized(false),
 	m_OldValue(),
-	m_OldValueInitialized(false)
+	m_ValueAssigned(false)
 {
 }
 
@@ -98,6 +98,7 @@ CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : CSection(mete
 */
 CMeasure::~CMeasure()
 {
+	delete m_OldValue;
 }
 
 /*
@@ -116,6 +117,8 @@ void CMeasure::Initialize()
 */
 void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
+	bool oldOnChangeActionEmpty = m_OnChangeAction.empty();
+
 	// Clear substitutes to prevent from being added more than once.
 	if (!m_Substitute.empty())
 	{
@@ -172,6 +175,12 @@ void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	const std::wstring& group = parser.ReadString(section, L"Group", L"");
 	InitializeGroup(group);
+
+	if (m_Initialized &&
+		oldOnChangeActionEmpty && !m_OnChangeAction.empty())
+	{
+		DoChangeAction(false);
+	}
 }
 
 void CMeasure::Disable()
@@ -493,6 +502,8 @@ bool CMeasure::Update()
 			m_MinValue = min(m_MinValue, medianValue);
 		}
 
+		m_ValueAssigned = true;
+
 		if (m_MeterWindow)
 		{
 			if (!m_IfEqualAction.empty())
@@ -729,31 +740,31 @@ void CMeasure::RemoveTrailingZero(WCHAR* str, int strLen)
 }
 
 /*
-** Execute OnChangeAction if action is set
+** Executes OnChangeAction if action is set.
+** If execute parameter is set to false, only updates old value with current value.
 **
 */
-void CMeasure::DoChangeAction()
+void CMeasure::DoChangeAction(bool execute)
 {
-	if (!m_OldValueInitialized)
+	if (!m_OnChangeAction.empty() && m_ValueAssigned)
 	{
 		double newValue = GetValue();
 		const WCHAR* newStringValue = GetStringValue(AUTOSCALE_OFF, 1, -1, false);
 
-		m_OldValue = newValue;
-		m_OldStringValue = newStringValue;
-		m_OldValueInitialized = true;
-	}
-	else if (!m_OnChangeAction.empty())
-	{
-		double newValue = GetValue();
-		const WCHAR* newStringValue = GetStringValue(AUTOSCALE_OFF, 1, -1, false);
-
-		if (m_OldValue != newValue || wcscmp(m_OldStringValue.c_str(), newStringValue) != 0)
+		if (!m_OldValue)
 		{
-			m_OldValue = newValue;
-			m_OldStringValue = newStringValue;
-
-			Rainmeter->ExecuteCommand(m_OnChangeAction.c_str(), m_MeterWindow);
+			m_OldValue = new CMeasureValueSet(newValue, newStringValue);
+		}
+		else if (execute)
+		{
+			if (m_OldValue->IsChanged(newValue, newStringValue))
+			{
+				Rainmeter->ExecuteCommand(m_OnChangeAction.c_str(), m_MeterWindow);
+			}
+		}
+		else
+		{
+			m_OldValue->Set(newValue, newStringValue);
 		}
 	}
 }
