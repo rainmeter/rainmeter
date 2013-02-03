@@ -538,6 +538,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 		
 		if (_wcsicmp(args, L"UPDATE") == 0)
 		{
+			parent->indexOffset = 0;
 			parent->needsIcons = true;
 			parent->needsUpdating = true;
 		}
