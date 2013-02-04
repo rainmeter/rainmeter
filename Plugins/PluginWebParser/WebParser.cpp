@@ -911,7 +911,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 		if (measure->codepage == 1200)		// 1200 = UTF-16LE
 		{
 			// Must convert the data to utf8
-			utf8Data = StringUtil::NarrowUTF8((LPCWSTR)parseData, dwSize);
+			utf8Data = StringUtil::NarrowUTF8((LPCWSTR)parseData, dwSize / 2);
 			parseData = utf8Data.c_str();
 			dwSize = utf8Data.length();
 		}
