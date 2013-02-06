@@ -709,8 +709,6 @@ void CMeterWindow::ChangeSingleZPos(ZPOSITION zPos, bool all)
 */
 void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& args)
 {
-	if (!m_Window) return;
-
 	switch (bang)
 	{
 	case BANG_REFRESH:

@@ -24,6 +24,7 @@
 #include "Group.h"
 
 class CMeterWindow;
+class CConfigParser;
 
 class CSection : public CGroup
 {
@@ -47,6 +48,10 @@ public:
 
 protected:
 	CSection(CMeterWindow* meterWindow, const WCHAR* name);
+
+	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+
+	bool UpdateCounter();
 
 	const std::wstring m_Name;		// Name of this Section
 

@@ -65,8 +65,8 @@ public:
 	void CreateToolTip(CMeterWindow* meterWindow);
 	void UpdateToolTip();
 
-	virtual void Hide();
-	virtual void Show();
+	void Hide();
+	void Show();
 	bool IsHidden() { return m_Hidden; }
 
 	const Gdiplus::Matrix* GetTransformationMatrix() { return m_Transformation; }

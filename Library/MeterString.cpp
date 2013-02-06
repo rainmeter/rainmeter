@@ -377,7 +377,7 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		m_FontFace = L"Arial";
 	}
 
-	m_FontSize = (int)parser.ReadFloat(section, L"FontSize", 10);
+	m_FontSize = parser.ReadInt(section, L"FontSize", 10);
 	if (m_FontSize < 0)
 	{
 		m_FontSize = 10;

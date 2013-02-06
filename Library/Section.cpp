@@ -18,6 +18,7 @@
 
 #include "StdAfx.h"
 #include "Section.h"
+#include "ConfigParser.h"
 #include "Rainmeter.h"
 
 extern CRainmeter* Rainmeter;
@@ -39,6 +40,40 @@ CSection::CSection(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow
 */
 CSection::~CSection()
 {
+}
+
+/*
+** Read the common options specified in the ini file. The inherited classes must
+** call this base implementation if they overwrite this method.
+**
+*/
+void CSection::ReadOptions(CConfigParser& parser, const WCHAR* section)
+{
+	int updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
+	if (updateDivider != m_UpdateDivider)
+	{
+		m_UpdateCounter = m_UpdateDivider = updateDivider;
+	}
+
+	m_DynamicVariables = 0!=parser.ReadInt(section, L"DynamicVariables", 0);
+
+	m_OnUpdateAction = parser.ReadString(section, L"OnUpdateAction", L"", false);
+
+	const std::wstring& group = parser.ReadString(section, L"Group", L"");
+	InitializeGroup(group);
+}
+
+/*
+** Updates the counter value
+**
+*/
+bool CSection::UpdateCounter()
+{
+	++m_UpdateCounter;
+	if (m_UpdateCounter < m_UpdateDivider) return false;
+	m_UpdateCounter = 0;
+
+	return true;
 }
 
 /*

@@ -169,15 +169,13 @@ RECT CMeter::GetMeterRect()
 
 /*
 ** Checks if the given point is inside the meter.
+** This function doesn't check Hidden state, so check it before calling this function if needed.
 **
 */
 bool CMeter::HitTest(int x, int y)
 {
-	if (x >= GetX() && x < GetX() + GetW() && y >= GetY() && y < GetY() + GetH())
-	{
-		return true;
-	}
-	return false;
+	int p;
+	return (x >= (p = GetX()) && x < p + m_W && y >= (p = GetY()) && y < p + m_H);
 }
 
 /*
@@ -230,6 +228,8 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	{
 		parser.SetStyleTemplate(style);
 	}
+
+	CSection::ReadOptions(parser, section);
 
 	BindMeasures(parser, section);
 
@@ -321,26 +321,17 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_SolidColor2 = parser.ReadColor(section, L"SolidColor2", m_SolidColor.GetValue());
 	m_SolidAngle = (Gdiplus::REAL)parser.ReadFloat(section, L"GradientAngle", 0.0);
 
-	m_OnUpdateAction = parser.ReadString(section, L"OnUpdateAction", L"", false);
-
 	m_Mouse.ReadOptions(parser, section);
 	m_HasMouseAction = m_Mouse.HasButtonAction() || m_Mouse.HasScrollAction();
 
 	m_ToolTipText = parser.ReadString(section, L"ToolTipText", L"");
 	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"");
 	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"");
-	m_ToolTipWidth = (int)parser.ReadFloat(section, L"ToolTipWidth", 1000);
+	m_ToolTipWidth = parser.ReadInt(section, L"ToolTipWidth", 1000);
 	m_ToolTipType = 0!=parser.ReadInt(section, L"ToolTipType", 0);
 	m_ToolTipHidden = 0!=parser.ReadInt(section, L"ToolTipHidden", m_MeterWindow->GetMeterToolTipHidden());
 
-	int updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
-	if (updateDivider != m_UpdateDivider)
-	{
-		m_UpdateCounter = m_UpdateDivider = updateDivider;
-	}
-
 	m_AntiAlias = 0!=parser.ReadInt(section, L"AntiAlias", 0);
-	m_DynamicVariables = 0!=parser.ReadInt(section, L"DynamicVariables", 0);
 
 	std::vector<Gdiplus::REAL> matrix = parser.ReadFloats(section, L"TransformationMatrix");
 	if (matrix.size() == 6)
@@ -361,9 +352,6 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 		LogWithArgs(LOG_ERROR, L"Meter: Incorrect number of values in TransformationMatrix=%s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
 	}
-
-	const std::wstring& group = parser.ReadString(section, L"Group", L"");
-	InitializeGroup(group);
 }
 
 /*
@@ -432,11 +420,7 @@ CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHA
 bool CMeter::Update()
 {
 	// Only update the meter's value when the divider is equal to the counter
-	++m_UpdateCounter;
-	if (m_UpdateCounter < m_UpdateDivider) return false;
-	m_UpdateCounter = 0;
-
-	return true;
+	return UpdateCounter();
 }
 
 /*

@@ -108,7 +108,7 @@ void CMeterBar::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	m_Border = parser.ReadInt(section, L"BarBorder", 0);
 
-	m_Flip = parser.ReadInt(section, L"Flip", 0) == 1;
+	m_Flip = 0!=parser.ReadInt(section, L"Flip", 0);
 
 	const WCHAR* orientation = parser.ReadString(section, L"BarOrientation", L"VERTICAL").c_str();
 	if (_wcsicmp(L"VERTICAL", orientation) == 0)

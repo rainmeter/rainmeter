@@ -73,7 +73,22 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	const WCHAR* defaultMouseCursor = (section == L"Rainmeter") ? L"HAND" : L"";
 	const WCHAR* mouseCursor = parser.ReadString(section, L"MouseActionCursorName", defaultMouseCursor).c_str();
-	if (_wcsicmp(mouseCursor, L"HAND") == 0)
+
+	auto inheritSkinDefault = [&]()
+	{
+		// Inherit from [Rainmeter].
+		m_CursorType = m_MeterWindow->GetMouse().GetCursorType();
+		if (m_CursorType == MOUSECURSOR_CUSTOM)
+		{
+			mouseCursor = m_MeterWindow->GetParser().ReadString(L"Rainmeter", L"MouseActionCursorName", L"").c_str();
+		}
+	};
+
+	if (*mouseCursor == L'\0')  // meters' default
+	{
+		inheritSkinDefault();
+	}
+	else if (_wcsicmp(mouseCursor, L"HAND") == 0)  // skin's default
 	{
 		m_CursorType = MOUSECURSOR_HAND;
 	}
@@ -103,12 +118,7 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		// Inherit from [Rainmeter].
-		m_CursorType = m_MeterWindow->GetMouse().GetCursorType();
-		if (m_CursorType == MOUSECURSOR_CUSTOM)
-		{
-			mouseCursor = m_MeterWindow->GetParser().ReadString(L"Rainmeter", L"MouseActionCursorName", L"").c_str();
-		}
+		inheritSkinDefault();
 	}
 
 	if (m_CursorType == MOUSECURSOR_CUSTOM)

@@ -119,6 +119,8 @@ void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 {
 	bool oldOnChangeActionEmpty = m_OnChangeAction.empty();
 
+	CSection::ReadOptions(parser, section);
+
 	// Clear substitutes to prevent from being added more than once.
 	if (!m_Substitute.empty())
 	{
@@ -128,12 +130,6 @@ void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_Invert = 0!=parser.ReadInt(section, L"InvertMeasure", 0);
 
 	m_Disabled = 0!=parser.ReadInt(section, L"Disabled", 0);
-
-	int updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
-	if (updateDivider != m_UpdateDivider)
-	{
-		m_UpdateCounter = m_UpdateDivider = updateDivider;
-	}
 
 	m_MinValue = parser.ReadFloat(section, L"MinValue", m_MinValue);
 	m_MaxValue = parser.ReadFloat(section, L"MaxValue", m_MaxValue);
@@ -149,12 +145,9 @@ void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_IfEqualValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0);
 	m_IfEqualAction = parser.ReadString(section, L"IfEqualAction", L"", false);
 
-	m_OnUpdateAction = parser.ReadString(section, L"OnUpdateAction", L"", false);
 	m_OnChangeAction = parser.ReadString(section, L"OnChangeAction", L"", false);
 
 	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0);
-
-	m_DynamicVariables = 0!=parser.ReadInt(section, L"DynamicVariables", 0);
 
 	m_RegExpSubstitute = 0!=parser.ReadInt(section, L"RegExpSubstitute", 0);
 	std::wstring subs = parser.ReadString(section, L"Substitute", L"");
@@ -172,9 +165,6 @@ void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 			LogWithArgs(LOG_ERROR, L"Measure: Invalid Substitute=%s", subs.c_str());
 		}
 	}
-
-	const std::wstring& group = parser.ReadString(section, L"Group", L"");
-	InitializeGroup(group);
 
 	if (m_Initialized &&
 		oldOnChangeActionEmpty && !m_OnChangeAction.empty())
@@ -450,9 +440,7 @@ bool CMeasure::Update()
 	if (!m_Disabled)
 	{
 		// Only update the counter if the divider
-		++m_UpdateCounter;
-		if (m_UpdateCounter < m_UpdateDivider) return false;
-		m_UpdateCounter = 0;
+		if (!UpdateCounter()) return false;
 
 		// Call derived method to update value
 		UpdateValue();
