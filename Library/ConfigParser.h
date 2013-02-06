@@ -52,14 +52,11 @@ public:
 
 	const std::unordered_map<std::wstring, std::wstring>& GetVariables() { return m_Variables; }
 
-	void SetCurrentSection(const std::wstring& strSection) { m_CurrentSection->assign(strSection); }
-	void ClearCurrentSection() { m_CurrentSection->clear(); }
-
 	const std::wstring& GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault);
 	void SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue);
 	void DeleteValue(const std::wstring& strSection, const std::wstring& strKey);
 
-	void SetStyleTemplate(const std::wstring& strStyle) { static const std::wstring delim(1, L'|'); Tokenize(strStyle, delim).swap(m_StyleTemplate); Shrink(m_StyleTemplate); }
+	void SetStyleTemplate(const std::wstring& strStyle) { static const std::wstring delim(1, L'|'); Tokenize(strStyle, delim).swap(m_StyleTemplate); }
 	void ClearStyleTemplate() { m_StyleTemplate.clear(); }
 
 	bool GetLastReplaced() { return m_LastReplaced; }
@@ -89,7 +86,6 @@ public:
 	bool ReplaceMeasures(std::wstring& result);
 
 	static std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters);
-	static void Shrink(std::vector<std::wstring>& vec);
 	static double ParseDouble(LPCTSTR string, double defValue);
 	static int ParseInt(LPCTSTR string, int defValue);
 	static uint32_t ParseUInt(LPCTSTR string, uint32_t defValue);

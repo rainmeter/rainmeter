@@ -30,15 +30,9 @@ void CGroup::InitializeGroup(const std::wstring& groups)
 		if (!groups.empty())
 		{
 			std::vector<std::wstring> vGroups = CConfigParser::Tokenize(groups, L"|");
-
-			std::vector<std::wstring>::const_iterator iter = vGroups.begin();
-			for ( ; iter != vGroups.end(); ++iter)
+			for (auto iter = vGroups.begin(); iter != vGroups.end(); ++iter)
 			{
-				std::wstring group = CreateGroup(*iter);
-				if (!group.empty())
-				{
-					m_Groups.insert(group);
-				}
+				m_Groups.insert(CreateGroup(*iter));
 			}
 		}
 	}
@@ -46,10 +40,16 @@ void CGroup::InitializeGroup(const std::wstring& groups)
 
 bool CGroup::BelongsToGroup(const std::wstring& group) const
 {
-	return (m_Groups.find(CreateGroup(group)) != m_Groups.end());
+	return (m_Groups.find(VerifyGroup(group)) != m_Groups.end());
 }
 
-std::wstring CGroup::CreateGroup(const std::wstring& str) const
+std::wstring& CGroup::CreateGroup(std::wstring& str) const
+{
+	_wcsupr(&str[0]);
+	return str;
+}
+
+std::wstring CGroup::VerifyGroup(const std::wstring& str) const
 {
 	std::wstring strTmp;
 
@@ -59,7 +59,7 @@ std::wstring CGroup::CreateGroup(const std::wstring& str) const
 		// Trim white-space
 		strTmp.assign(str, pos, str.find_last_not_of(L" \t\r\n") - pos + 1);
 
-		_wcsupr(&strTmp[0]);
+		CreateGroup(strTmp);
 	}
 
 	return strTmp;

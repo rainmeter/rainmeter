@@ -35,7 +35,8 @@ protected:
 	void InitializeGroup(const std::wstring& groups);
 
 private:
-	std::wstring CreateGroup(const std::wstring& str) const;
+	std::wstring& CreateGroup(std::wstring& str) const;
+	std::wstring VerifyGroup(const std::wstring& str) const;
 
 	std::unordered_set<std::wstring> m_Groups;
 	std::wstring m_OldGroups;

@@ -794,14 +794,14 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		{
 			if (result.find(L'#') != std::wstring::npos)
 			{
-				SetCurrentSection(strSection);  // Set temporarily
+				m_CurrentSection->assign(strSection);  // Set temporarily
 
 				if (ReplaceVariables(result))
 				{
 					m_LastReplaced = true;
 				}
 
-				ClearCurrentSection();  // Reset
+				m_CurrentSection->clear();  // Reset
 			}
 			else
 			{
@@ -852,16 +852,25 @@ CMeasure* CConfigParser::GetMeasure(const std::wstring& name)
 std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
 {
 	std::vector<Gdiplus::REAL> result;
-	const std::wstring& string = ReadString(section, key, L"");
-	if (!string.empty())
+	const std::wstring& str = ReadString(section, key, L"");
+	if (!str.empty())
 	{
 		// Tokenize and parse the floats
-		std::vector<std::wstring> tokens = Tokenize(string, L";");
-		std::vector<std::wstring>::const_iterator iter = tokens.begin();
-		for ( ; iter != tokens.end(); ++iter)
+		const WCHAR delimiter = L';';
+		size_t lastPos, pos = 0;
+		do
 		{
-			result.push_back((Gdiplus::REAL)ParseDouble((*iter).c_str(), 0.0));
+			lastPos = str.find_first_not_of(delimiter, pos);
+			if (lastPos == std::wstring::npos) break;
+
+			pos = str.find_first_of(delimiter, lastPos + 1);
+
+			result.push_back((Gdiplus::REAL)ParseDouble(str.substr(lastPos, pos - lastPos).c_str(), 0.0));  // (pos != std::wstring::npos) ? pos - lastPos : pos
+			if (pos == std::wstring::npos) break;
+
+			++pos;
 		}
+		while (true);
 	}
 	return result;
 }
@@ -1045,56 +1054,42 @@ RECT CConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
 }
 
 /*
-** Splits the string from the delimiters
+** Splits the string from the delimiters.
+** Now trims empty element in vector and white-space in each string.
 **
-** http://www.digitalpeer.com/id/simple
+** Modified from http://www.digitalpeer.com/id/simple
 */
 std::vector<std::wstring> CConfigParser::Tokenize(const std::wstring& str, const std::wstring& delimiters)
 {
 	std::vector<std::wstring> tokens;
 
-	std::wstring::size_type lastPos = str.find_first_not_of(delimiters, 0);	// skip delimiters at beginning.
-	std::wstring::size_type pos = str.find_first_of(delimiters, lastPos);	// find first "non-delimiter".
-
-	while (std::wstring::npos != pos || std::wstring::npos != lastPos)
+	size_t lastPos, pos = 0;
+	do
 	{
-		tokens.push_back(str.substr(lastPos, pos - lastPos));    	// found a token, add it to the vector.
-		lastPos = str.find_first_not_of(delimiters, pos);    	// skip delimiters.  Note the "not_of"
-		pos = str.find_first_of(delimiters, lastPos);    	// find next "non-delimiter"
+		lastPos = str.find_first_not_of(delimiters, pos);
+		if (lastPos == std::wstring::npos) break;
+
+		pos = str.find_first_of(delimiters, lastPos + 1);
+		std::wstring token = str.substr(lastPos, pos - lastPos);  // len = (pos != std::wstring::npos) ? pos - lastPos : pos
+
+		size_t pos2 = token.find_first_not_of(L" \t\r\n");
+		if (pos2 != std::wstring::npos)
+		{
+			size_t lastPos2 = token.find_last_not_of(L" \t\r\n");
+			if (pos2 != 0 || lastPos2 != (token.size() - 1))
+			{
+				// Trim white-space
+				token.assign(token, pos2, lastPos2 - pos2 + 1);
+			}
+			tokens.push_back(token);
+		}
+
+		if (pos == std::wstring::npos) break;
+		++pos;
 	}
+	while (true);
 
 	return tokens;
-}
-
-/*
-** Trims empty element in vector and white-space in each string.
-**
-*/
-void CConfigParser::Shrink(std::vector<std::wstring>& vec)
-{
-	if (!vec.empty())
-	{
-		std::vector<std::wstring>::reverse_iterator iter = vec.rbegin();
-		while (iter != vec.rend())
-		{
-			std::wstring::size_type pos = (*iter).find_first_not_of(L" \t\r\n");
-			if (pos != std::wstring::npos)
-			{
-				std::wstring::size_type lastPos = (*iter).find_last_not_of(L" \t\r\n");
-				if (pos != 0 || lastPos != ((*iter).size() - 1))
-				{
-					// Trim white-space
-					(*iter).assign((*iter), pos, lastPos - pos + 1);
-				}
-				++iter;
-			}
-			else
-			{
-				// Remove empty element
-				vec.erase((++iter).base());
-			}
-		}
-	}
 }
 
 /*
