@@ -464,156 +464,170 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	switch (uMsg)
 	{
 	case WM_COMMAND:
-		if (wParam == IDM_MANAGE)
+		switch (wParam)
 		{
+		case IDM_MANAGE:
 			CDialogManage::Open();
-		}
-		else if (wParam == IDM_ABOUT)
-		{
+			break;
+
+		case IDM_ABOUT:
 			CDialogAbout::Open();
-		}
-		else if (wParam == IDM_SHOW_HELP)
-		{
+			break;
+
+		case IDM_SHOW_HELP:
 			RunFile(RAINMETER_HELP);
-		}
-		else if (wParam == IDM_NEW_VERSION)
-		{
+			break;
+
+		case IDM_NEW_VERSION:
 			RunFile(RAINMETER_OFFICIAL);
-		}
-		else if (wParam == IDM_REFRESH)
-		{
+			break;
+
+		case IDM_REFRESH:
 			PostMessage(Rainmeter->GetWindow(), WM_RAINMETER_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
-		}
-		else if (wParam == IDM_SHOWLOGFILE)
-		{
+			break;
+
+		case IDM_SHOWLOGFILE:
 			Rainmeter->ShowLogFile();
-		}
-		else if (wParam == IDM_STARTLOG)
-		{
+			break;
+
+		case IDM_STARTLOG:
 			Rainmeter->StartLogging();
-		}
-		else if (wParam == IDM_STOPLOG)
-		{
+			break;
+
+		case IDM_STOPLOG:
 			Rainmeter->StopLogging();
-		}
-		else if (wParam == IDM_DELETELOGFILE)
-		{
+			break;
+
+		case IDM_DELETELOGFILE:
 			Rainmeter->DeleteLogFile();
-		}
-		else if (wParam == IDM_DEBUGLOG)
-		{
+			break;
+
+		case IDM_DEBUGLOG:
 			Rainmeter->SetDebug(!Rainmeter->GetDebug());
-		}
-		else if (wParam == IDM_DISABLEDRAG)
-		{
+			break;
+
+		case IDM_DISABLEDRAG:
 			Rainmeter->SetDisableDragging(!Rainmeter->GetDisableDragging());
-		}
-		else if (wParam == IDM_EDITCONFIG)
-		{
+			break;
+
+		case IDM_EDITCONFIG:
 			Rainmeter->EditSettings();
-		}
-		else if (wParam == IDM_QUIT)
-		{
+			break;
+
+		case IDM_QUIT:
 			PostQuitMessage(0);
-		}
-		else if (wParam == IDM_OPENSKINSFOLDER)
-		{
+			break;
+
+		case IDM_OPENSKINSFOLDER:
 			Rainmeter->OpenSkinFolder();
-		}
-		else
-		{
-			UINT mID = wParam & 0x0FFFF;
+			break;
 
-			if (mID >= ID_THEME_FIRST && mID <= ID_THEME_LAST)
+		default:
 			{
-				int pos = mID - ID_THEME_FIRST;
+				UINT mID = wParam & 0x0FFFF;
 
-				const std::vector<std::wstring>& layouts = Rainmeter->GetAllLayouts();
-				if (pos >= 0 && pos < (int)layouts.size())
+				if (mID >= ID_THEME_FIRST && mID <= ID_THEME_LAST)
 				{
-					Rainmeter->LoadLayout(layouts[pos]);
-				}
-			}
-			else if (mID >= ID_CONFIG_FIRST && mID <= ID_CONFIG_LAST)
-			{
-				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(mID);
-				if (indexes.first != -1 && indexes.second != -1)
-				{
-					Rainmeter->ToggleSkin(indexes.first, indexes.second);
-				}
-			}
-			else
-			{
-				// Forward the message to correct window
-				int index = (int)(wParam >> 16);
-				const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+					int pos = mID - ID_THEME_FIRST;
 
-				if (index < (int)windows.size())
-				{
-					std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
-					for ( ; iter != windows.end(); ++iter)
+					const std::vector<std::wstring>& layouts = Rainmeter->GetAllLayouts();
+					if (pos >= 0 && pos < (int)layouts.size())
 					{
-						--index;
-						if (index < 0)
+						Rainmeter->LoadLayout(layouts[pos]);
+					}
+				}
+				else if (mID >= ID_CONFIG_FIRST && mID <= ID_CONFIG_LAST)
+				{
+					std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(mID);
+					if (indexes.first != -1 && indexes.second != -1)
+					{
+						Rainmeter->ToggleSkin(indexes.first, indexes.second);
+					}
+				}
+				else
+				{
+					// Forward the message to correct window
+					int index = (int)(wParam >> 16);
+					const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+
+					if (index < (int)windows.size())
+					{
+						std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
+						for ( ; iter != windows.end(); ++iter)
 						{
-							CMeterWindow* meterWindow = (*iter).second;
-							SendMessage(meterWindow->GetWindow(), WM_COMMAND, mID, NULL);
-							break;
+							--index;
+							if (index < 0)
+							{
+								CMeterWindow* meterWindow = (*iter).second;
+								SendMessage(meterWindow->GetWindow(), WM_COMMAND, mID, NULL);
+								break;
+							}
 						}
 					}
 				}
 			}
+			break;
 		}
 		break;	// Don't send WM_COMMANDS any further
 
 	case WM_TRAY_NOTIFYICON:
 		{
 			UINT uMouseMsg = (UINT)lParam;
-			std::wstring bang;
+			LPCWSTR bang;
 
+			// Check TrayExecute actions
 			switch (uMouseMsg)
 			{
 			case WM_MBUTTONDOWN:
-				bang = Rainmeter->GetTrayExecuteM();
+				bang = Rainmeter->GetTrayExecuteM().c_str();
 				break;
 
 			case WM_RBUTTONDOWN:
-				bang = Rainmeter->GetTrayExecuteR();
+				bang = Rainmeter->GetTrayExecuteR().c_str();
 				break;
 
 			case WM_MBUTTONDBLCLK:
-				bang = Rainmeter->GetTrayExecuteDM();
+				bang = Rainmeter->GetTrayExecuteDM().c_str();
 				break;
 
 			case WM_RBUTTONDBLCLK:
-				bang = Rainmeter->GetTrayExecuteDR();
+				bang = Rainmeter->GetTrayExecuteDR().c_str();
+				break;
+
+			default:
+				bang = L"";
 				break;
 			}
 
-			if (!bang.empty() &&
+			if (*bang &&
 				!IsCtrlKeyDown())   // Ctrl is pressed, so only run default action
 			{
-				Rainmeter->ExecuteCommand(bang.c_str(), NULL);
+				Rainmeter->ExecuteCommand(bang, NULL);
 				tray->m_TrayContextMenuEnabled = (uMouseMsg != WM_RBUTTONDOWN);
+				break;
 			}
-			else if (uMouseMsg == WM_RBUTTONDOWN)
+
+			// Run default UI action
+			switch (uMouseMsg)
 			{
+			case WM_RBUTTONDOWN:
 				tray->m_TrayContextMenuEnabled = true;
-			}
-			else if (uMouseMsg == WM_RBUTTONUP)
-			{
+				break;
+
+			case WM_RBUTTONUP:
 				if (tray->m_TrayContextMenuEnabled)
 				{
 					POINT pos = CSystem::GetCursorPosition();
 					Rainmeter->ShowContextMenu(pos, NULL);
 				}
-			}
-			else if (uMouseMsg == WM_LBUTTONUP || uMouseMsg == WM_LBUTTONDBLCLK)
-			{
+				break;
+
+			case WM_LBUTTONUP:
+			case WM_LBUTTONDBLCLK:
 				CDialogManage::Open();
-			}
-			else if (uMouseMsg == NIN_BALLOONUSERCLICK)
-			{
+				break;
+
+			case NIN_BALLOONUSERCLICK:
 				if (tray->m_Notification == TRAY_NOTIFICATION_WELCOME)
 				{
 					CDialogManage::Open();
@@ -622,12 +636,13 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				{
 					RunFile(RAINMETER_OFFICIAL);
 				}
+				tray->m_Notification = TRAY_NOTIFICATION_NONE;
+				break;
 
+			case NIN_BALLOONHIDE:
+			case NIN_BALLOONTIMEOUT:
 				tray->m_Notification = TRAY_NOTIFICATION_NONE;
-			}
-			else if (uMouseMsg == NIN_BALLOONHIDE || uMouseMsg == NIN_BALLOONTIMEOUT)
-			{
-				tray->m_Notification = TRAY_NOTIFICATION_NONE;
+				break;
 			}
 		}
 		break;
@@ -644,40 +659,37 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				SendMessage((HWND)lParam, WM_COPYDATA, (WPARAM)hWnd, (LPARAM)&cds);
 			};
 
-			if (wParam == RAINMETER_QUERY_ID_SKINS_PATH)
+			switch (wParam)
 			{
+			case RAINMETER_QUERY_ID_SKINS_PATH:
 				sendCopyData(Rainmeter->GetSkinPath());
 				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_SETTINGS_PATH)
-			{
+
+			case RAINMETER_QUERY_ID_SETTINGS_PATH:
 				sendCopyData(Rainmeter->GetSettingsPath());
 				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_PLUGINS_PATH)
-			{
+
+			case RAINMETER_QUERY_ID_PLUGINS_PATH:
 				sendCopyData(Rainmeter->GetPluginPath());
 				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_PROGRAM_PATH)
-			{
+
+			case RAINMETER_QUERY_ID_PROGRAM_PATH:
 				sendCopyData(Rainmeter->GetPath());
 				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_LOG_PATH)
-			{
+
+			case RAINMETER_QUERY_ID_LOG_PATH:
 				sendCopyData(Rainmeter->GetLogFile());
 				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_CONFIG_EDITOR)
-			{
+
+			case RAINMETER_QUERY_ID_CONFIG_EDITOR:
 				sendCopyData(Rainmeter->GetSkinEditor());
 				return 0;
-			}
-			else if (wParam == RAINMETER_QUERY_ID_IS_DEBUGGING)
-			{
-				BOOL debug = Rainmeter->GetDebug();
-				SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)debug);
+
+			case RAINMETER_QUERY_ID_IS_DEBUGGING:
+				{
+					BOOL debug = Rainmeter->GetDebug();
+					SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)debug);
+				}
 				return 0;
 			}
 		}

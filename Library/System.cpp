@@ -995,7 +995,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		ClearMultiMonitorInfo();
 		CConfigParser::ClearMultiMonitorVariables();
 	case WM_SETTINGCHANGE:
-		if (uMsg == WM_DISPLAYCHANGE || (uMsg == WM_SETTINGCHANGE && wParam == SPI_SETWORKAREA))
+		if (uMsg == WM_DISPLAYCHANGE || (/*uMsg == WM_SETTINGCHANGE &&*/ wParam == SPI_SETWORKAREA))
 		{
 			if (uMsg == WM_SETTINGCHANGE)  // SPI_SETWORKAREA
 			{
