@@ -100,6 +100,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		if (!child->parent)
 		{
 			RmLog(LOG_ERROR, L"FileView.dll: Invalid Path");
+			return;
 		}
 	}
 	else
