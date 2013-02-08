@@ -387,15 +387,18 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 		c_MonitorVariables[variable] = value;
 	};
 
-	WCHAR buffer[32];
-	RECT workArea, scrArea;
-
 	if (!reset && c_MonitorVariables.empty())
 	{
 		reset = true;  // Set all variables
 	}
 
-	SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);
+	const size_t numOfMonitors = CSystem::GetMonitorCount();  // intentional
+	const MultiMonitorInfo& monitorsInfo = CSystem::GetMultiMonitorInfo();
+	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
+
+	WCHAR buffer[32];
+	const RECT workArea = monitors[monitorsInfo.primary - 1].work;
+	const RECT scrArea = monitors[monitorsInfo.primary - 1].screen;
 
 	_itow_s(workArea.left, buffer, 10);
 	setMonitorVariable(L"WORKAREAX", buffer);
@@ -412,11 +415,6 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 
 	if (reset)
 	{
-		scrArea.left = 0;
-		scrArea.top = 0;
-		scrArea.right = GetSystemMetrics(SM_CXSCREEN);
-		scrArea.bottom = GetSystemMetrics(SM_CYSCREEN);
-
 		_itow_s(scrArea.left, buffer, 10);
 		setMonitorVariable(L"SCREENAREAX", buffer);
 		setMonitorVariable(L"PSCREENAREAX", buffer);
@@ -430,57 +428,52 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 		setMonitorVariable(L"SCREENAREAHEIGHT", buffer);
 		setMonitorVariable(L"PSCREENAREAHEIGHT", buffer);
 
-		_itow_s(GetSystemMetrics(SM_XVIRTUALSCREEN), buffer, 10);
+		_itow_s(monitorsInfo.vsL, buffer, 10);
 		setMonitorVariable(L"VSCREENAREAX", buffer);
-		_itow_s(GetSystemMetrics(SM_YVIRTUALSCREEN), buffer, 10);
+		_itow_s(monitorsInfo.vsT, buffer, 10);
 		setMonitorVariable(L"VSCREENAREAY", buffer);
-		_itow_s(GetSystemMetrics(SM_CXVIRTUALSCREEN), buffer, 10);
+		_itow_s(monitorsInfo.vsW, buffer, 10);
 		setMonitorVariable(L"VSCREENAREAWIDTH", buffer);
-		_itow_s(GetSystemMetrics(SM_CYVIRTUALSCREEN), buffer, 10);
+		_itow_s(monitorsInfo.vsH, buffer, 10);
 		setMonitorVariable(L"VSCREENAREAHEIGHT", buffer);
 	}
 
-	if (CSystem::GetMonitorCount() > 0)
+	int i = 1;
+	for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++i)
 	{
-		const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
-		const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
+		WCHAR buffer2[64];
 
-		for (size_t i = 0, isize = monitors.size(); i < isize; ++i)
+		const RECT work = ((*iter).active) ? (*iter).work : workArea;
+
+		_itow_s(work.left, buffer, 10);
+		_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAX@%i", i);
+		setMonitorVariable(buffer2, buffer);
+		_itow_s(work.top, buffer, 10);
+		_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAY@%i", i);
+		setMonitorVariable(buffer2, buffer);
+		_itow_s(work.right - work.left, buffer, 10);
+		_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAWIDTH@%i", i);
+		setMonitorVariable(buffer2, buffer);
+		_itow_s(work.bottom - work.top, buffer, 10);
+		_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAHEIGHT@%i", i);
+		setMonitorVariable(buffer2, buffer);
+
+		if (reset)
 		{
-			WCHAR buffer2[64];
+			const RECT screen = ((*iter).active) ? (*iter).screen : scrArea;
 
-			const RECT work = (monitors[i].active) ? monitors[i].work : workArea;
-
-			_itow_s(work.left, buffer, 10);
-			_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAX@%i", (int)i + 1);
+			_itow_s(screen.left, buffer, 10);
+			_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAX@%i", i);
 			setMonitorVariable(buffer2, buffer);
-			_itow_s(work.top, buffer, 10);
-			_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAY@%i", (int)i + 1);
+			_itow_s(screen.top, buffer, 10);
+			_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAY@%i", i);
 			setMonitorVariable(buffer2, buffer);
-			_itow_s(work.right - work.left, buffer, 10);
-			_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAWIDTH@%i", (int)i + 1);
+			_itow_s(screen.right - screen.left, buffer, 10);
+			_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAWIDTH@%i", i);
 			setMonitorVariable(buffer2, buffer);
-			_itow_s(work.bottom - work.top, buffer, 10);
-			_snwprintf_s(buffer2, _TRUNCATE, L"WORKAREAHEIGHT@%i", (int)i + 1);
+			_itow_s(screen.bottom - screen.top, buffer, 10);
+			_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAHEIGHT@%i", i);
 			setMonitorVariable(buffer2, buffer);
-
-			if (reset)
-			{
-				const RECT screen = (monitors[i].active) ? monitors[i].screen : scrArea;
-
-				_itow_s(screen.left, buffer, 10);
-				_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAX@%i", (int)i + 1);
-				setMonitorVariable(buffer2, buffer);
-				_itow_s(screen.top, buffer, 10);
-				_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAY@%i", (int)i + 1);
-				setMonitorVariable(buffer2, buffer);
-				_itow_s(screen.right - screen.left, buffer, 10);
-				_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAWIDTH@%i", (int)i + 1);
-				setMonitorVariable(buffer2, buffer);
-				_itow_s(screen.bottom - screen.top, buffer, 10);
-				_snwprintf_s(buffer2, _TRUNCATE, L"SCREENAREAHEIGHT@%i", (int)i + 1);
-				setMonitorVariable(buffer2, buffer);
-			}
 		}
 	}
 }
@@ -493,113 +486,79 @@ void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 {
 	if (meterWindow)
 	{
+		const int numOfMonitors = (int)CSystem::GetMonitorCount();
+		const MultiMonitorInfo& monitorsInfo = CSystem::GetMultiMonitorInfo();
+		const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
+
 		WCHAR buffer[32];
+		int w1, w2, s1, s2;
+		int screenIndex;
 
-		if (CSystem::GetMonitorCount() > 0)
+		// Set X / WIDTH
+		screenIndex = monitorsInfo.primary;
+		if (meterWindow->GetXScreenDefined())
 		{
-			int w1, w2, s1, s2;
-			int screenIndex;
-
-			const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
-			const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
-
-			// Set X / WIDTH
-			screenIndex = multimonInfo.primary;
-			if (meterWindow->GetXScreenDefined())
+			int i = meterWindow->GetXScreen();
+			if (i >= 0 && (i == 0 || i <= numOfMonitors && monitors[i - 1].active))
 			{
-				int i = meterWindow->GetXScreen();
-				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i-1].active))
-				{
-					screenIndex = i;
-				}
+				screenIndex = i;
 			}
+		}
 
-			if (screenIndex == 0)
-			{
-				s1 = w1 = multimonInfo.vsL;
-				s2 = w2 = multimonInfo.vsW;
-			}
-			else
-			{
-				w1 = monitors[screenIndex-1].work.left;
-				w2 = monitors[screenIndex-1].work.right - monitors[screenIndex-1].work.left;
-				s1 = monitors[screenIndex-1].screen.left;
-				s2 = monitors[screenIndex-1].screen.right - monitors[screenIndex-1].screen.left;
-			}
-
-			_itow_s(w1, buffer, 10);
-			SetBuiltInVariable(L"WORKAREAX", buffer);
-			_itow_s(w2, buffer, 10);
-			SetBuiltInVariable(L"WORKAREAWIDTH", buffer);
-			_itow_s(s1, buffer, 10);
-			SetBuiltInVariable(L"SCREENAREAX", buffer);
-			_itow_s(s2, buffer, 10);
-			SetBuiltInVariable(L"SCREENAREAWIDTH", buffer);
-
-			// Set Y / HEIGHT
-			screenIndex = multimonInfo.primary;
-			if (meterWindow->GetYScreenDefined())
-			{
-				int i = meterWindow->GetYScreen();
-				if (i >= 0 && (i == 0 || i <= (int)monitors.size() && monitors[i-1].active))
-				{
-					screenIndex = i;
-				}
-			}
-
-			if (screenIndex == 0)
-			{
-				s1 = w1 = multimonInfo.vsL;
-				s2 = w2 = multimonInfo.vsW;
-			}
-			else
-			{
-				w1 = monitors[screenIndex-1].work.top;
-				w2 = monitors[screenIndex-1].work.bottom - monitors[screenIndex-1].work.top;
-				s1 = monitors[screenIndex-1].screen.top;
-				s2 = monitors[screenIndex-1].screen.bottom - monitors[screenIndex-1].screen.top;
-			}
-
-			_itow_s(w1, buffer, 10);
-			SetBuiltInVariable(L"WORKAREAY", buffer);
-			_itow_s(w2, buffer, 10);
-			SetBuiltInVariable(L"WORKAREAHEIGHT", buffer);
-			_itow_s(s1, buffer, 10);
-			SetBuiltInVariable(L"SCREENAREAY", buffer);
-			_itow_s(s2, buffer, 10);
-			SetBuiltInVariable(L"SCREENAREAHEIGHT", buffer);
+		if (screenIndex == 0)
+		{
+			s1 = w1 = monitorsInfo.vsL;
+			s2 = w2 = monitorsInfo.vsW;
 		}
 		else
 		{
-			RECT r;
-
-			// Set default WORKAREA
-			SystemParametersInfo(SPI_GETWORKAREA, 0, &r, 0);
-
-			_itow_s(r.left, buffer, 10);
-			SetBuiltInVariable(L"WORKAREAX", buffer);
-			_itow_s(r.top, buffer, 10);
-			SetBuiltInVariable(L"WORKAREAY", buffer);
-			_itow_s(r.right - r.left, buffer, 10);
-			SetBuiltInVariable(L"WORKAREAWIDTH", buffer);
-			_itow_s(r.bottom - r.top, buffer, 10);
-			SetBuiltInVariable(L"WORKAREAHEIGHT", buffer);
-
-			// Set default SCREENAREA
-			r.left = 0;
-			r.top = 0;
-			r.right = GetSystemMetrics(SM_CXSCREEN);
-			r.bottom = GetSystemMetrics(SM_CYSCREEN);
-
-			_itow_s(r.left, buffer, 10);
-			SetBuiltInVariable(L"SCREENAREAX", buffer);
-			_itow_s(r.top, buffer, 10);
-			SetBuiltInVariable(L"SCREENAREAY", buffer);
-			_itow_s(r.right - r.left, buffer, 10);
-			SetBuiltInVariable(L"SCREENAREAWIDTH", buffer);
-			_itow_s(r.bottom - r.top, buffer, 10);
-			SetBuiltInVariable(L"SCREENAREAHEIGHT", buffer);
+			w1 = monitors[screenIndex - 1].work.left;
+			w2 = monitors[screenIndex - 1].work.right - monitors[screenIndex - 1].work.left;
+			s1 = monitors[screenIndex - 1].screen.left;
+			s2 = monitors[screenIndex - 1].screen.right - monitors[screenIndex - 1].screen.left;
 		}
+
+		_itow_s(w1, buffer, 10);
+		SetBuiltInVariable(L"WORKAREAX", buffer);
+		_itow_s(w2, buffer, 10);
+		SetBuiltInVariable(L"WORKAREAWIDTH", buffer);
+		_itow_s(s1, buffer, 10);
+		SetBuiltInVariable(L"SCREENAREAX", buffer);
+		_itow_s(s2, buffer, 10);
+		SetBuiltInVariable(L"SCREENAREAWIDTH", buffer);
+
+		// Set Y / HEIGHT
+		screenIndex = monitorsInfo.primary;
+		if (meterWindow->GetYScreenDefined())
+		{
+			int i = meterWindow->GetYScreen();
+			if (i >= 0 && (i == 0 || i <= numOfMonitors && monitors[i - 1].active))
+			{
+				screenIndex = i;
+			}
+		}
+
+		if (screenIndex == 0)
+		{
+			s1 = w1 = monitorsInfo.vsL;
+			s2 = w2 = monitorsInfo.vsW;
+		}
+		else
+		{
+			w1 = monitors[screenIndex - 1].work.top;
+			w2 = monitors[screenIndex - 1].work.bottom - monitors[screenIndex - 1].work.top;
+			s1 = monitors[screenIndex - 1].screen.top;
+			s2 = monitors[screenIndex - 1].screen.bottom - monitors[screenIndex - 1].screen.top;
+		}
+
+		_itow_s(w1, buffer, 10);
+		SetBuiltInVariable(L"WORKAREAY", buffer);
+		_itow_s(w2, buffer, 10);
+		SetBuiltInVariable(L"WORKAREAHEIGHT", buffer);
+		_itow_s(s1, buffer, 10);
+		SetBuiltInVariable(L"SCREENAREAY", buffer);
+		_itow_s(s2, buffer, 10);
+		SetBuiltInVariable(L"SCREENAREAHEIGHT", buffer);
 	}
 }
 

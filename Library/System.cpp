@@ -179,13 +179,13 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 
 	if (m->useEnumDisplayDevices)
 	{
-		for (size_t i = 0, isize = m->monitors.size(); i < isize; ++i)
+		for (auto iter = m->monitors.begin(); iter != m->monitors.end(); ++iter)
 		{
-			if (m->monitors[i].handle == NULL && _wcsicmp(info.szDevice, m->monitors[i].deviceName.c_str()) == 0)
+			if ((*iter).handle == NULL && _wcsicmp(info.szDevice, (*iter).deviceName.c_str()) == 0)
 			{
-				m->monitors[i].handle = hMonitor;
-				m->monitors[i].screen = *lprcMonitor;
-				m->monitors[i].work = info.rcWork;
+				(*iter).handle = hMonitor;
+				(*iter).screen = *lprcMonitor;
+				(*iter).work = info.rcWork;
 				break;
 			}
 		}
@@ -490,18 +490,19 @@ void CSystem::SetMultiMonitorInfo()
 			c_Monitors.vsL, c_Monitors.vsT, c_Monitors.vsL + c_Monitors.vsW, c_Monitors.vsT + c_Monitors.vsH,
 			c_Monitors.vsW, c_Monitors.vsH);
 
-		for (size_t i = 0, isize = monitors.size(); i < isize; ++i)
+		int i = 1;
+		for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++i)
 		{
-			if (monitors[i].active)
+			if ((*iter).active)
 			{
-				LogWithArgs(LOG_DEBUG, L"@%i: %s (active), MonitorName: %s", (int)i + 1, monitors[i].deviceName.c_str(), monitors[i].monitorName.c_str());
+				LogWithArgs(LOG_DEBUG, L"@%i: %s (active), MonitorName: %s", i, (*iter).deviceName.c_str(), (*iter).monitorName.c_str());
 				LogWithArgs(LOG_DEBUG, L"  L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-					monitors[i].screen.left, monitors[i].screen.top, monitors[i].screen.right, monitors[i].screen.bottom,
-					monitors[i].screen.right - monitors[i].screen.left, monitors[i].screen.bottom - monitors[i].screen.top);
+					(*iter).screen.left, (*iter).screen.top, (*iter).screen.right, (*iter).screen.bottom,
+					(*iter).screen.right - (*iter).screen.left, (*iter).screen.bottom - (*iter).screen.top);
 			}
 			else
 			{
-				LogWithArgs(LOG_DEBUG, L"@%i: %s (inactive), MonitorName: %s", (int)i + 1, monitors[i].deviceName.c_str(), monitors[i].monitorName.c_str());
+				LogWithArgs(LOG_DEBUG, L"@%i: %s (inactive), MonitorName: %s", i, (*iter).deviceName.c_str(), (*iter).monitorName.c_str());
 			}
 		}
 		Log(LOG_DEBUG, L"------------------------------");
@@ -522,19 +523,20 @@ void CSystem::UpdateWorkareaInfo()
 		return;
 	}
 
-	for (size_t i = 0, isize = monitors.size(); i < isize; ++i)
+	int i = 1;
+	for (auto iter = monitors.begin(); iter != monitors.end(); ++iter, ++i)
 	{
-		if (monitors[i].active && monitors[i].handle != NULL)
+		if ((*iter).active && (*iter).handle != NULL)
 		{
 			MONITORINFO info = {sizeof(MONITORINFO)};
-			GetMonitorInfo(monitors[i].handle, &info);
+			GetMonitorInfo((*iter).handle, &info);
 
-			monitors[i].work = info.rcWork;
+			(*iter).work = info.rcWork;
 
 			if (Rainmeter->GetDebug())
 			{
 				LogWithArgs(LOG_DEBUG, L"WorkArea@%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
-					(int)i + 1,
+					i,
 					info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
 					info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
 			}

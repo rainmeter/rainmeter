@@ -326,8 +326,10 @@ private:
 	void HandleButtons(POINT pos, BUTTONPROC proc, bool execute = true);
 	void SetClickThrough(bool b);
 	void SetKeepOnScreen(bool b);
+	bool MoveWindowIfAppropriate();
 	void SetWindowDraggable(bool b);
 	void SetSavePosition(bool b);
+	void SavePositionIfAppropriate();
 	void SetSnapEdges(bool b);
 	void SetWindowHide(HIDEMODE hide);
 	void SetWindowZPosition(ZPOSITION zpos);

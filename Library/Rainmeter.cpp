@@ -2450,7 +2450,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		m_DesktopWorkAreaChanged = true;
 	}
 
-	for (UINT i = 1; i <= CSystem::GetMonitorCount(); ++i)
+	for (UINT i = 1, isize = CSystem::GetMonitorCount(); i <= isize; ++i)
 	{
 		_snwprintf_s(buffer, _TRUNCATE, L"DesktopWorkArea@%i", i);
 		const std::wstring& area = parser.ReadString(L"Rainmeter", buffer, L"");
@@ -2663,9 +2663,10 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 	{
 		if (!m_OldDesktopWorkAreas.empty())
 		{
-			for (size_t i = 0, isize = m_OldDesktopWorkAreas.size(); i < isize; ++i)
+			int i = 1;
+			for (auto iter = m_OldDesktopWorkAreas.cbegin(); iter != m_OldDesktopWorkAreas.cend(); ++iter, ++i)
 			{
-				RECT r = m_OldDesktopWorkAreas[i];
+				RECT r = (*iter);
 
 				BOOL result = SystemParametersInfo(SPI_SETWORKAREA, 0, &r, 0);
 
@@ -2676,7 +2677,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 					{
 						format += L" => FAIL";
 					}
-					LogWithArgs(LOG_DEBUG, format.c_str(), (int)i + 1, r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
+					LogWithArgs(LOG_DEBUG, format.c_str(), i, r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
 				}
 			}
 			changed = true;
@@ -2684,13 +2685,14 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 	}
 	else
 	{
-		const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
-		const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
+		const size_t numOfMonitors = CSystem::GetMonitorCount();
+		const MultiMonitorInfo& monitorsInfo = CSystem::GetMultiMonitorInfo();
+		const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
 		if (m_OldDesktopWorkAreas.empty())
 		{
 			// Store old work areas for changing them back
-			for (size_t i = 0; i < CSystem::GetMonitorCount(); ++i)
+			for (size_t i = 0; i < numOfMonitors; ++i)
 			{
 				m_OldDesktopWorkAreas.push_back(monitors[i].work);
 			}
@@ -2701,18 +2703,18 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 			LogWithArgs(LOG_DEBUG, L"DesktopWorkAreaType: %s", m_DesktopWorkAreaType ? L"Margin" : L"Default");
 		}
 
-		for (UINT i = 0; i <= CSystem::GetMonitorCount(); ++i)
+		for (UINT i = 0; i <= numOfMonitors; ++i)
 		{
 			std::map<UINT, RECT>::const_iterator it = m_DesktopWorkAreas.find(i);
 			if (it != m_DesktopWorkAreas.end())
 			{
-				RECT r = it->second;
+				RECT r = (*it).second;
 
 				// Move rect to correct offset
 				if (m_DesktopWorkAreaType)
 				{
 					RECT margin = r;
-					r = (i == 0) ? monitors[multimonInfo.primary - 1].screen : monitors[i - 1].screen;
+					r = (i == 0) ? monitors[monitorsInfo.primary - 1].screen : monitors[i - 1].screen;
 					r.left += margin.left;
 					r.top += margin.top;
 					r.right -= margin.right;
@@ -3380,34 +3382,32 @@ void CRainmeter::CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow)
 	int screenIndex = meterWindow->GetXScreen();
 
 	// for the "Specified monitor" (@n)
-	if (CSystem::GetMonitorCount() > 0)
+	const size_t numOfMonitors = CSystem::GetMonitorCount();  // intentional
+	const std::vector<MonitorInfo>& monitors = CSystem::GetMultiMonitorInfo().monitors;
+
+	int i = 1;
+	for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++i)
 	{
-		const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
-		const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
+		WCHAR buffer[64];
+		size_t len = _snwprintf_s(buffer, _TRUNCATE, L"@%i: ", i);
 
-		for (int i = 0, isize = (int)monitors.size(); i < isize; ++i)
+		std::wstring item(buffer, len);
+
+		if ((*iter).monitorName.size() > 32)
 		{
-			WCHAR buffer[64];
-			size_t len = _snwprintf_s(buffer, _TRUNCATE, L"@%i: ", i + 1);
-
-			std::wstring item(buffer, len);
-
-			if (monitors[i].monitorName.size() > 32)
-			{
-				item.append(monitors[i].monitorName, 0, 32);
-				item += L"...";
-			}
-			else
-			{
-				item += monitors[i].monitorName;
-			}
-
-			InsertMenu(monitorMenu,
-				i + 3,
-				MF_BYPOSITION | ((screenDefined && screenIndex == i + 1) ? MF_CHECKED : MF_UNCHECKED) | ((!monitors[i].active) ? MF_GRAYED : MF_ENABLED),
-				ID_MONITOR_FIRST + i + 1,
-				item.c_str());
+			item.append((*iter).monitorName, 0, 32);
+			item += L"...";
 		}
+		else
+		{
+			item += (*iter).monitorName;
+		}
+
+		InsertMenu(monitorMenu,
+			i + 2,
+			MF_BYPOSITION | ((screenDefined && screenIndex == i) ? MF_CHECKED : MF_UNCHECKED) | ((!(*iter).active) ? MF_GRAYED : MF_ENABLED),
+			ID_MONITOR_FIRST + i,
+			item.c_str());
 	}
 
 	if (!screenDefined)

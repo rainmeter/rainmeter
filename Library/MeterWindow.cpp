@@ -527,6 +527,9 @@ void CMeterWindow::SetMouseLeaveEvent(bool cancel)
 
 void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 {
+	const size_t numOfMonitors = CSystem::GetMonitorCount();  // intentional
+	const std::vector<MonitorInfo>& monitors = CSystem::GetMultiMonitorInfo().monitors;
+
 	// Check that the window is inside the screen area
 	POINT pt = {x + w / 2, y + h / 2};
 	for (int i = 0; i < 5; ++i)
@@ -558,29 +561,28 @@ void CMeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 			break;
 		}
 
-		HMONITOR hMonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTONULL);
-
-		if (hMonitor != NULL)
+		for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter)
 		{
-			MONITORINFO mi;
-			mi.cbSize = sizeof(mi);
-			GetMonitorInfo(hMonitor, &mi);
+			if (!(*iter).active) continue;
 
-			x = min(x, mi.rcMonitor.right - m_WindowW);
-			x = max(x, mi.rcMonitor.left);
-			y = min(y, mi.rcMonitor.bottom - m_WindowH);
-			y = max(y, mi.rcMonitor.top);
-			return;
+			const RECT r = (*iter).screen;
+			if (pt.x >= r.left && pt.x < r.right && pt.y >= r.top && pt.y < r.bottom)
+			{
+				x = min(x, r.right - w);
+				x = max(x, r.left);
+				y = min(y, r.bottom - h);
+				y = max(y, r.top);
+				return;
+			}
 		}
 	}
 
 	// No monitor found for the window -> Use the default work area
-	RECT workArea;
-	SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0);	// Store the old value
-	x = min(x, workArea.right - m_WindowW);
-	x = max(x, workArea.left);
-	y = min(y, workArea.bottom - m_WindowH);
-	y = max(y, workArea.top);
+	const RECT r = monitors[CSystem::GetMultiMonitorInfo().primary - 1].work;
+	x = min(x, r.right - w);
+	x = max(x, r.left);
+	y = min(y, r.bottom - h);
+	y = max(y, r.top);
 }
 
 /*
@@ -591,12 +593,7 @@ void CMeterWindow::MoveWindow(int x, int y)
 {
 	SetWindowPos(m_Window, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
-	ScreenToWindow();
-
-	if (m_SavePosition)
-	{
-		WriteOptions(OPTION_POSITION);
-	}
+	SavePositionIfAppropriate();
 }
 
 /*
@@ -1466,22 +1463,17 @@ void CMeterWindow::SetOption(const std::wstring& section, const std::wstring& op
 */
 void CMeterWindow::WindowToScreen()
 {
-	if (CSystem::GetMonitorCount() == 0)
-	{
-		Log(LOG_ERROR, L"No monitors (WindowToScreen)");
-		return;
-	}
-
 	std::wstring::size_type index, index2;
 	int pixel = 0;
 	float num;
 	int screenx, screeny, screenh, screenw;
 
-	const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
-	const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
+	const int numOfMonitors = (int)CSystem::GetMonitorCount();
+	const MultiMonitorInfo& monitorsInfo = CSystem::GetMultiMonitorInfo();
+	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
 	// Clear position flags
-	m_WindowXScreen = m_WindowYScreen = multimonInfo.primary; // Default to primary screen
+	m_WindowXScreen = m_WindowYScreen = monitorsInfo.primary; // Default to primary screen
 	m_WindowXScreenDefined = m_WindowYScreenDefined = false;
 	m_WindowXFromRight = m_WindowYFromBottom = false; // Default to from left/top
 	m_WindowXPercentage = m_WindowYPercentage = false; // Default to pixels
@@ -1565,7 +1557,7 @@ void CMeterWindow::WindowToScreen()
 		if (!screenStr.empty())
 		{
 			int screenIndex = _wtoi(screenStr.c_str());
-			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() && monitors[screenIndex-1].active))
+			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= numOfMonitors && monitors[screenIndex - 1].active))
 			{
 				m_WindowXScreen = screenIndex;
 				m_WindowXScreenDefined = true;
@@ -1576,13 +1568,13 @@ void CMeterWindow::WindowToScreen()
 	}
 	if (m_WindowXScreen == 0)
 	{
-		screenx = multimonInfo.vsL;
-		screenw = multimonInfo.vsW;
+		screenx = monitorsInfo.vsL;
+		screenw = monitorsInfo.vsW;
 	}
 	else
 	{
-		screenx = monitors[m_WindowXScreen-1].screen.left;
-		screenw = monitors[m_WindowXScreen-1].screen.right - monitors[m_WindowXScreen-1].screen.left;
+		screenx = monitors[m_WindowXScreen - 1].screen.left;
+		screenw = monitors[m_WindowXScreen - 1].screen.right - monitors[m_WindowXScreen - 1].screen.left;
 	}
 	if (m_WindowXPercentage) //is a percentage
 	{
@@ -1627,7 +1619,7 @@ void CMeterWindow::WindowToScreen()
 		if (!screenStr.empty())
 		{
 			int screenIndex = _wtoi(screenStr.c_str());
-			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() && monitors[screenIndex-1].active))
+			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= numOfMonitors && monitors[screenIndex - 1].active))
 			{
 				m_WindowYScreen = screenIndex;
 				m_WindowYScreenDefined = true;
@@ -1636,13 +1628,13 @@ void CMeterWindow::WindowToScreen()
 	}
 	if (m_WindowYScreen == 0)
 	{
-		screeny = multimonInfo.vsT;
-		screenh = multimonInfo.vsH;
+		screeny = monitorsInfo.vsT;
+		screenh = monitorsInfo.vsH;
 	}
 	else
 	{
-		screeny = monitors[m_WindowYScreen-1].screen.top;
-		screenh = monitors[m_WindowYScreen-1].screen.bottom - monitors[m_WindowYScreen-1].screen.top;
+		screeny = monitors[m_WindowYScreen - 1].screen.top;
+		screenh = monitors[m_WindowYScreen - 1].screen.bottom - monitors[m_WindowYScreen - 1].screen.top;
 	}
 	if (m_WindowYPercentage) //is a percentage
 	{
@@ -1675,14 +1667,9 @@ void CMeterWindow::ScreenToWindow()
 	float num;
 	int screenx, screeny, screenh, screenw;
 
-	const MultiMonitorInfo& multimonInfo = CSystem::GetMultiMonitorInfo();
-	const std::vector<MonitorInfo>& monitors = multimonInfo.monitors;
-
-	if (monitors.empty())
-	{
-		Log(LOG_ERROR, L"No monitors (ScreenToWindow)");
-		return;
-	}
+	const size_t numOfMonitors = CSystem::GetMonitorCount();
+	const MultiMonitorInfo& monitorsInfo = CSystem::GetMultiMonitorInfo();
+	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
 	// Correct to auto-selected screen
 	if (m_AutoSelectScreen)
@@ -1692,11 +1679,11 @@ void CMeterWindow::ScreenToWindow()
 
 		if (hMonitor != NULL)
 		{
-			for (size_t i = 0, isize = monitors.size(); i < isize; ++i)
+			int screenIndex = 1;
+			for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++screenIndex)
 			{
-				if (monitors[i].active && monitors[i].handle == hMonitor)
+				if ((*iter).active && (*iter).handle == hMonitor)
 				{
-					int screenIndex = (int)i + 1;
 					bool reset = (!m_WindowXScreenDefined || !m_WindowYScreenDefined ||
 						m_WindowXScreen != screenIndex || m_WindowYScreen != screenIndex);
 
@@ -1717,13 +1704,13 @@ void CMeterWindow::ScreenToWindow()
 
 	if (m_WindowXScreen == 0)
 	{
-		screenx = multimonInfo.vsL;
-		screenw = multimonInfo.vsW;
+		screenx = monitorsInfo.vsL;
+		screenw = monitorsInfo.vsW;
 	}
 	else
 	{
-		screenx = monitors[m_WindowXScreen-1].screen.left;
-		screenw = monitors[m_WindowXScreen-1].screen.right - monitors[m_WindowXScreen-1].screen.left;
+		screenx = monitors[m_WindowXScreen - 1].screen.left;
+		screenw = monitors[m_WindowXScreen - 1].screen.right - monitors[m_WindowXScreen - 1].screen.left;
 	}
 	if (m_WindowXFromRight)
 	{
@@ -1746,7 +1733,7 @@ void CMeterWindow::ScreenToWindow()
 	}
 	if (m_WindowXFromRight)
 	{
-		_snwprintf_s(buffer, _TRUNCATE, L"%sR", buffer);
+		wcscat_s(buffer, L"R");
 	}
 	if (m_WindowXScreenDefined)
 	{
@@ -1758,13 +1745,13 @@ void CMeterWindow::ScreenToWindow()
 
 	if (m_WindowYScreen == 0)
 	{
-		screeny = multimonInfo.vsT;
-		screenh = multimonInfo.vsH;
+		screeny = monitorsInfo.vsT;
+		screenh = monitorsInfo.vsH;
 	}
 	else
 	{
-		screeny = monitors[m_WindowYScreen-1].screen.top;
-		screenh = monitors[m_WindowYScreen-1].screen.bottom - monitors[m_WindowYScreen-1].screen.top;
+		screeny = monitors[m_WindowYScreen - 1].screen.top;
+		screenh = monitors[m_WindowYScreen - 1].screen.bottom - monitors[m_WindowYScreen - 1].screen.top;
 	}
 	if (m_WindowYFromBottom)
 	{
@@ -1787,7 +1774,7 @@ void CMeterWindow::ScreenToWindow()
 	}
 	if (m_WindowYFromBottom)
 	{
-		_snwprintf_s(buffer, _TRUNCATE, L"%sB", buffer);
+		wcscat_s(buffer, L"B");
 	}
 	if (m_WindowYScreenDefined)
 	{
@@ -1904,13 +1891,16 @@ void CMeterWindow::WriteOptions(INT setting)
 
 		if (setting & OPTION_POSITION)
 		{
+			ScreenToWindow();
+
 			// If position needs to be save, do so.
 			if (m_SavePosition)
 			{
-				ScreenToWindow();
 				WritePrivateProfileString(section, L"WindowX", m_WindowX.c_str(), iniFile);
 				WritePrivateProfileString(section, L"WindowY", m_WindowY.c_str(), iniFile);
 			}
+
+			if (setting == OPTION_POSITION) return;
 		}
 
 		if (setting & OPTION_ALPHAVALUE)
@@ -3389,35 +3379,30 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case IDM_SKIN_FROMRIGHT:
 		m_WindowXFromRight = !m_WindowXFromRight;
 
-		ScreenToWindow();
-		WriteOptions(OPTION_POSITION);
+		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_FROMBOTTOM:
 		m_WindowYFromBottom = !m_WindowYFromBottom;
 
-		ScreenToWindow();
-		WriteOptions(OPTION_POSITION);
+		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_XPERCENTAGE:
 		m_WindowXPercentage = !m_WindowXPercentage;
 
-		ScreenToWindow();
-		WriteOptions(OPTION_POSITION);
+		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_YPERCENTAGE:
 		m_WindowYPercentage = !m_WindowYPercentage;
 
-		ScreenToWindow();
-		WriteOptions(OPTION_POSITION);
+		SavePositionIfAppropriate();
 		break;
 
 	case IDM_SKIN_MONITOR_AUTOSELECT:
 		m_AutoSelectScreen = !m_AutoSelectScreen;
 
-		ScreenToWindow();
 		WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
 		break;
 
@@ -3430,6 +3415,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == IDM_SKIN_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
 		{
+			const int numOfMonitors = (int)CSystem::GetMonitorCount();
 			const MultiMonitorInfo& monitorsInfo = CSystem::GetMultiMonitorInfo();
 			const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
@@ -3446,7 +3432,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				screenDefined = true;
 			}
 
-			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= (int)monitors.size() && monitors[screenIndex-1].active))
+			if (screenIndex >= 0 && (screenIndex == 0 || screenIndex <= numOfMonitors && monitors[screenIndex - 1].active))
 			{
 				m_AutoSelectScreen = false;
 
@@ -3454,7 +3440,6 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				m_WindowXScreenDefined = m_WindowYScreenDefined = screenDefined;
 
 				m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
-				ScreenToWindow();
 				WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
 			}
 		}
@@ -3530,16 +3515,30 @@ void CMeterWindow::SetKeepOnScreen(bool b)
 	m_KeepOnScreen = b;
 	WriteOptions(OPTION_KEEPONSCREEN);
 
+	MoveWindowIfAppropriate();
+}
+
+/*
+** Helper function for setting KeepOnScreen
+**
+*/
+bool CMeterWindow::MoveWindowIfAppropriate()
+{
 	if (m_KeepOnScreen)
 	{
 		int x = m_ScreenX;
 		int y = m_ScreenY;
+
 		MapCoordsToScreen(x, y, m_WindowW, m_WindowH);
+
 		if (x != m_ScreenX || y != m_ScreenY)
 		{
 			MoveWindow(x, y);
+			return true;
 		}
 	}
+
+	return false;
 }
 
 /*
@@ -3560,6 +3559,23 @@ void CMeterWindow::SetSavePosition(bool b)
 {
 	m_SavePosition = b;
 	WriteOptions(OPTION_POSITION | OPTION_SAVEPOSITION);
+}
+
+/*
+** Helper function for setting SavePosition
+**
+*/
+void CMeterWindow::SavePositionIfAppropriate()
+{
+	if (m_SavePosition)
+	{
+		WriteOptions(OPTION_POSITION);
+	}
+	else
+	{
+		ScreenToWindow();
+		CDialogManage::UpdateSkins(this);
+	}
 }
 
 /*
@@ -3615,12 +3631,7 @@ LRESULT CMeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (m_Dragged)
 	{
-		ScreenToWindow();
-
-		if (m_SavePosition)
-		{
-			WriteOptions(OPTION_POSITION);
-		}
+		SavePositionIfAppropriate();
 
 		POINT pos = CSystem::GetCursorPosition();
 		MapWindowPoints(NULL, m_Window, &pos, 1);
@@ -3741,27 +3752,30 @@ LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lPara
 			// only process movement (ignore anything without winpos values)
 			if (wp->cx != 0 && wp->cy != 0)
 			{
-				RECT workArea;
+				// Search display monitor that has the largest area of intersection with the window
+				const size_t numOfMonitors = CSystem::GetMonitorCount();  // intentional
+				const std::vector<MonitorInfo>& monitors = CSystem::GetMultiMonitorInfo().monitors;
 
-				//HMONITOR hMonitor = MonitorFromWindow(m_Window, MONITOR_DEFAULTTONULL);  // returns incorrect monitor when the window is "On Desktop"
-				RECT windowRect = {wp->x, wp->y, (wp->x + m_WindowW), (wp->y + m_WindowH)};
-				HMONITOR hMonitor = MonitorFromRect(&windowRect, MONITOR_DEFAULTTONULL);
+				const RECT windowRect = {wp->x, wp->y, wp->x + (m_WindowW ? m_WindowW : 1), wp->y + (m_WindowH ? m_WindowH : 1)};
+				const RECT* workArea = NULL;
 
-				if (hMonitor != NULL)
+				size_t maxSize = 0;
+				for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter)
 				{
-					MONITORINFO mi;
-					mi.cbSize = sizeof(mi);
-					GetMonitorInfo(hMonitor, &mi);
-					workArea = mi.rcWork;
-				}
-				else
-				{
-					GetClientRect(GetDesktopWindow(), &workArea);
+					RECT r;
+					if ((*iter).active && IntersectRect(&r, &windowRect, &(*iter).screen))
+					{
+						size_t size = (r.right - r.left) * (r.bottom - r.top);
+						if (size > maxSize)
+						{
+							workArea = &(*iter).work;
+							maxSize = size;
+						}
+					}
 				}
 
 				// Snap to other windows
-				std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
-				for ( ; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
+				for (auto iter = Rainmeter->GetAllMeterWindows().cbegin(); iter != Rainmeter->GetAllMeterWindows().cend(); ++iter)
 				{
 					if ((*iter).second != this)
 					{
@@ -3769,13 +3783,17 @@ LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lPara
 					}
 				}
 
-				int w = workArea.right - m_WindowW;
-				int h = workArea.bottom - m_WindowH;
+				// Snap to work area if window is on the appropriate screen
+				if (workArea)
+				{
+					int w = workArea->right - m_WindowW;
+					int h = workArea->bottom - m_WindowH;
 
-				if ((wp->x < SNAPDISTANCE + workArea.left) && (wp->x > workArea.left - SNAPDISTANCE)) wp->x = workArea.left;
-				if ((wp->y < SNAPDISTANCE + workArea.top) && (wp->y > workArea.top - SNAPDISTANCE)) wp->y = workArea.top;
-				if ((wp->x < SNAPDISTANCE + w) && (wp->x > -SNAPDISTANCE + w)) wp->x = w;
-				if ((wp->y < SNAPDISTANCE + h) && (wp->y > -SNAPDISTANCE + h)) wp->y = h;
+					if ((wp->x < SNAPDISTANCE + workArea->left) && (wp->x > workArea->left - SNAPDISTANCE)) wp->x = workArea->left;
+					if ((wp->y < SNAPDISTANCE + workArea->top) && (wp->y > workArea->top - SNAPDISTANCE)) wp->y = workArea->top;
+					if ((wp->x < SNAPDISTANCE + w) && (wp->x > -SNAPDISTANCE + w)) wp->x = w;
+					if ((wp->y < SNAPDISTANCE + h) && (wp->y > -SNAPDISTANCE + h)) wp->y = h;
+				}
 			}
 		}
 
@@ -3785,7 +3803,7 @@ LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lPara
 		}
 	}
 
-	return DefWindowProc(m_Window, uMsg, wParam, lParam);
+	return 0;
 }
 
 void CMeterWindow::SnapToWindow(CMeterWindow* window, LPWINDOWPOS wp)
@@ -4643,12 +4661,10 @@ LRESULT CMeterWindow::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Move the window to correct position
 	ResizeWindow(true);
 
-	if (m_KeepOnScreen)
+	if (!MoveWindowIfAppropriate())
 	{
-		MapCoordsToScreen(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
+		ScreenToWindow();
 	}
-
-	SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, m_WindowW, m_WindowH, SWP_NOZORDER | SWP_NOACTIVATE);
 
 	return 0;
 }
