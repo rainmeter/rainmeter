@@ -3515,15 +3515,6 @@ void CMeterWindow::SetKeepOnScreen(bool b)
 	m_KeepOnScreen = b;
 	WriteOptions(OPTION_KEEPONSCREEN);
 
-	MoveWindowIfAppropriate();
-}
-
-/*
-** Helper function for setting KeepOnScreen
-**
-*/
-bool CMeterWindow::MoveWindowIfAppropriate()
-{
 	if (m_KeepOnScreen)
 	{
 		int x = m_ScreenX;
@@ -3534,11 +3525,8 @@ bool CMeterWindow::MoveWindowIfAppropriate()
 		if (x != m_ScreenX || y != m_ScreenY)
 		{
 			MoveWindow(x, y);
-			return true;
 		}
 	}
-
-	return false;
 }
 
 /*
@@ -4651,20 +4639,17 @@ LRESULT CMeterWindow::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
-** Handles delayed move
+** Handles delayed move.
+** Do not save the position in this handler for the sake of preventing move by temporal resolution/workarea change.
 **
 */
 LRESULT CMeterWindow::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	m_Parser.ResetMonitorVariables(this);
 
-	// Move the window to correct position
-	ResizeWindow(true);
-
-	if (!MoveWindowIfAppropriate())
-	{
-		ScreenToWindow();
-	}
+	// Move the window temporarily
+	ResizeWindow(false);
+	SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
 	return 0;
 }
