@@ -52,7 +52,7 @@ class CMeter;
 class CMeterWindow;
 class CConfigParser;
 
-class CMeasure : public CSection
+class __declspec(novtable) CMeasure : public CSection
 {
 public:
 	virtual ~CMeasure();

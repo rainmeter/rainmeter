@@ -54,7 +54,7 @@ enum MeasureType
 	MEASURE_YEAR     = 0x00010000
 };
 
-class CPlayer
+class __declspec(novtable) CPlayer
 {
 public:
 	CPlayer();

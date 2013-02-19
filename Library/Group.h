@@ -22,7 +22,7 @@
 #include <string>
 #include <unordered_set>
 
-class CGroup
+class __declspec(novtable) CGroup
 {
 public:
 	virtual ~CGroup() {}

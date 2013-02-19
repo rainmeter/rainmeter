@@ -31,7 +31,7 @@
 
 class CMeasure;
 
-class CMeter : public CSection
+class __declspec(novtable) CMeter : public CSection
 {
 public:
 	virtual ~CMeter();

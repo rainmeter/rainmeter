@@ -26,7 +26,7 @@
 class CMeterWindow;
 class CConfigParser;
 
-class CSection : public CGroup
+class __declspec(novtable) CSection : public CGroup
 {
 public:
 	virtual ~CSection();
