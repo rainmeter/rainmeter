@@ -713,6 +713,7 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 					file.fileName = drive;
 					file.isFolder = true;
 					file.size = 0;
+					++folderCount;
 
 					files.push_back(file);
 				}
