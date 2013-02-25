@@ -46,6 +46,8 @@ public:
 	const std::wstring& GetOnUpdateAction() { return m_OnUpdateAction; }
 	void DoUpdateAction();
 
+	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
+
 protected:
 	CSection(CMeterWindow* meterWindow, const WCHAR* name);
 

@@ -76,8 +76,6 @@ public:
 	void SetMouseOver(bool over) { m_MouseOver = over; }
 	bool IsMouseOver() { return m_MouseOver; }
 
-	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
-
 	static CMeter* Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHAR* name);
 	
 	static void DrawBevel(Gdiplus::Graphics& graphics, const Gdiplus::Rect& rect, const Gdiplus::Pen& light, const Gdiplus::Pen& dark);

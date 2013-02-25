@@ -81,8 +81,6 @@ public:
 	const std::wstring& GetOnChangeAction() { return m_OnChangeAction; }
 	void DoChangeAction(bool execute = true);
 
-	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
-
 	static CMeasure* Create(const WCHAR* measure, CMeterWindow* meterWindow, const WCHAR* name);
 
 protected:
