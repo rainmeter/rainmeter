@@ -78,6 +78,20 @@ void* __stdcall RmGet(void* rm, int type)
 		{
 			return (void*)Rainmeter->GetDataFile().c_str();
 		}
+
+	case RMG_SKINNAME:
+		{
+			CMeterWindow* window = measure->GetMeterWindow();
+			if (!window) break;
+			return (void*)window->GetFolderPath().c_str();
+		}
+
+	case RMG_SKINWINDOWHANDLE:
+		{
+			CMeterWindow* window = measure->GetMeterWindow();
+			if (!window) break;
+			return (void*)window->GetWindow();
+		}
 	}
 
 	return NULL;

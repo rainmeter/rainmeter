@@ -47,9 +47,11 @@ LIBRARY_EXPORT void* __stdcall RmGet(void* rm, int type);
 
 enum RmGetType
 {
-	RMG_MEASURENAME  = 0,
-	RMG_SKIN         = 1,
-	RMG_SETTINGSFILE = 2
+	RMG_MEASURENAME      = 0,
+	RMG_SKIN             = 1,
+	RMG_SETTINGSFILE     = 2,
+	RMG_SKINNAME         = 3,
+	RMG_SKINWINDOWHANDLE = 4
 };
 
 LIBRARY_EXPORT BOOL LSLog(int type, LPCWSTR unused, LPCWSTR message);
@@ -88,6 +90,16 @@ __inline LPCWSTR RmGetSettingsFile()
 __inline void* RmGetSkin(void* rm)
 {
 	return (void*)RmGet(rm, RMG_SKIN);
+}
+
+__inline LPCWSTR RmGetSkinName(void* rm)
+{
+	return (LPCWSTR)RmGet(rm, RMG_SKINNAME);
+}
+
+__inline void* RmGetSkinWindow(void* rm)
+{
+	return (void*)RmGet(rm, RMG_SKINWINDOWHANDLE);
 }
 
 __inline void RmLog(int level, LPCWSTR message)
