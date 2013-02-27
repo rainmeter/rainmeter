@@ -583,104 +583,94 @@ namespace InputText
 
         public UInt32 Update(Rainmeter.Settings Plugin, UInt32 id)
         {
-            bool bAlreadyRunning = (bool)Plugin.Instances[id].GetTempValue("__RMT_U_AlreadyRunning", false);
-            if (!bAlreadyRunning)
-            {
-                UpdateThread thread_details = new UpdateThread(Plugin.Instances[id]);
-                Thread thread = new Thread(new ThreadStart(thread_details.Go));
-                thread.Start();
-            }
+            //bool bAlreadyRunning = (bool)Plugin.Instances[id].GetTempValue("__RMT_U_AlreadyRunning", false);
+            //if (!bAlreadyRunning)
+            //{
+            //    Plugin.Instances[id].SetTempValue("__RMT_U_AlreadyRunning", true);
 
-            try
-            {
-                return (UInt32)Plugin.Instances[id].GetTempValue("__RMT_U_LastValue", 0);
-            }
-            catch
+            //    ThreadPool.QueueUserWorkItem(_instance =>
+            //    {
+            //        Rainmeter.Settings.InstanceSettings Instance = (Rainmeter.Settings.InstanceSettings)_instance;
+
+            //        try
+            //        {
+            //            Instance.SetTempValue("__RMT_U_LastValue", new PluginCode().Update(Instance));
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            Rainmeter.Log(Rainmeter.LogLevel.Error, "C# plugin in Update(), " + ex.GetType().ToString() + ": " + ex.Message);
+            //        }
+
+            //        Instance.SetTempValue("__RMT_U_AlreadyRunning", false);
+            //    }, Plugin.Instances[id]);
+            //}
+
+            //try
+            //{
+            //    return (UInt32)Plugin.Instances[id].GetTempValue("__RMT_U_LastValue", 0);
+            //}
+            //catch
             {
                 return 0;
             }
         }
 
-        private class UpdateThread
-        {
-            private Rainmeter.Settings.InstanceSettings Instance = null;
+        //public double Update2(Rainmeter.Settings Plugin, UInt32 id)
+        //{
+        //    bool bAlreadyRunning = (bool)Plugin.Instances[id].GetTempValue("__RMT_U2_AlreadyRunning", false);
+        //    if (!bAlreadyRunning)
+        //    {
+        //        Plugin.Instances[id].SetTempValue("__RMT_U2_AlreadyRunning", true);
 
-            public UpdateThread(Rainmeter.Settings.InstanceSettings _Instance)
-            {
-                this.Instance = _Instance;
-            }
+        //        ThreadPool.QueueUserWorkItem(_instance =>
+        //        {
+        //            Rainmeter.Settings.InstanceSettings Instance = (Rainmeter.Settings.InstanceSettings)_instance;
 
-            public void Go()
-            {
-                this.Instance.SetTempValue("__RMT_U_AlreadyRunning", true);
+        //            try
+        //            {
+        //                Instance.SetTempValue("__RMT_U2_LastValue", new PluginCode().Update2(Instance));
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                Rainmeter.Log(Rainmeter.LogLevel.Error, "C# plugin in Update2(), " + ex.GetType().ToString() + ": " + ex.Message);
+        //            }
 
-                try
-                {
-                    this.Instance.SetTempValue("__RMT_U_LastValue", new PluginCode().Update(this.Instance));
-                }
-                catch (Exception ex)
-                {
-                    Rainmeter.Log(Rainmeter.LogLevel.Error, "C# plugin in GetString(), " + ex.GetType().ToString() + ": " + ex.Message);
-                }
+        //            Instance.SetTempValue("__RMT_U2_AlreadyRunning", false);
+        //        }, Plugin.Instances[id]);
+        //    }
 
-                this.Instance.SetTempValue("__RMT_U_AlreadyRunning", false);
-            }
-        }
-
-        public double Update2(Rainmeter.Settings Plugin, UInt32 id)
-        {
-            bool bAlreadyRunning = (bool)Plugin.Instances[id].GetTempValue("__RMT_U2_AlreadyRunning", false);
-            if (!bAlreadyRunning)
-            {
-                Update2Thread thread_details = new Update2Thread(Plugin.Instances[id]);
-                Thread thread = new Thread(new ThreadStart(thread_details.Go));
-                thread.Start();
-            }
-
-            try
-            {
-                return (double)Plugin.Instances[id].GetTempValue("__RMT_U2_LastValue", 0.0);
-            }
-            catch
-            {
-                return 0.0;
-            }
-        }
-
-        private class Update2Thread
-        {
-            private Rainmeter.Settings.InstanceSettings Instance = null;
-
-            public Update2Thread(Rainmeter.Settings.InstanceSettings _Instance)
-            {
-                this.Instance = _Instance;
-            }
-
-            public void Go()
-            {
-                this.Instance.SetTempValue("__RMT_U2_AlreadyRunning", true);
-
-                try
-                {
-                    this.Instance.SetTempValue("__RMT_U2_LastValue", new PluginCode().Update2(this.Instance));
-                }
-                catch (Exception ex)
-                {
-                    Rainmeter.Log(Rainmeter.LogLevel.Error, "C# plugin in GetString(), " + ex.GetType().ToString() + ": " + ex.Message);
-                }
-
-                this.Instance.SetTempValue("__RMT_U2_AlreadyRunning", false);
-            }
-        }
+        //    try
+        //    {
+        //        return (double)Plugin.Instances[id].GetTempValue("__RMT_U2_LastValue", 0.0);
+        //    }
+        //    catch
+        //    {
+        //        return 0.0;
+        //    }
+        //}
 
         public string GetString(Rainmeter.Settings Plugin, UInt32 id)
         {
             bool bAlreadyRunning = (bool)Plugin.Instances[id].GetTempValue("__RMT_GS_AlreadyRunning", false);
             if (!bAlreadyRunning)
             {
-                GetStringThread thread_details = new GetStringThread(Plugin.Instances[id]);
-                Thread thread = new Thread(new ThreadStart(thread_details.Go));
-                thread.Start();
+                Plugin.Instances[id].SetTempValue("__RMT_GS_AlreadyRunning", true);
+
+                ThreadPool.QueueUserWorkItem(_instance =>
+                {
+                    Rainmeter.Settings.InstanceSettings Instance = (Rainmeter.Settings.InstanceSettings)_instance;
+
+                    try
+                    {
+                        Instance.SetTempValue("__RMT_GS_LastValue", new PluginCode().GetString(Instance));
+                    }
+                    catch (Exception ex)
+                    {
+                        Rainmeter.Log(Rainmeter.LogLevel.Error, "C# plugin in GetString(), " + ex.GetType().ToString() + ": " + ex.Message);
+                    }
+
+                    Instance.SetTempValue("__RMT_GS_AlreadyRunning", false);
+                }, Plugin.Instances[id]);
             }
 
             try
@@ -693,69 +683,42 @@ namespace InputText
             }
         }
 
-        private class GetStringThread
-        {
-            private Rainmeter.Settings.InstanceSettings Instance = null;
-
-            public GetStringThread(Rainmeter.Settings.InstanceSettings _Instance)
-            {
-                this.Instance = _Instance;
-            }
-
-            public void Go()
-            {
-                this.Instance.SetTempValue("__RMT_GS_AlreadyRunning", true);
-
-                try
-                {
-                    this.Instance.SetTempValue("__RMT_GS_LastValue", new PluginCode().GetString(this.Instance));
-                }
-                catch (Exception ex)
-                {
-                    Rainmeter.Log(Rainmeter.LogLevel.Error, "C# plugin in GetString(), " + ex.GetType().ToString() + ": " + ex.Message);
-                }
-
-                this.Instance.SetTempValue("__RMT_GS_AlreadyRunning", false);
-            }
-        }
-
         public void ExecuteBang(Rainmeter.Settings Plugin, UInt32 id, string sArguments)
         {
             bool bAlreadyRunning = (bool)Plugin.Instances[id].GetTempValue("__RMT_EB_AlreadyRunning", false);
             if (!bAlreadyRunning)
             {
-                ExecuteBangThread thread_details = new ExecuteBangThread(Plugin.Instances[id], sArguments);
-                Thread thread = new Thread(new ThreadStart(thread_details.Go));
-                thread.Start();
+                Plugin.Instances[id].SetTempValue("__RMT_EB_AlreadyRunning", true);
+
+                ThreadPool.QueueUserWorkItem(_param =>
+                {
+                    Rainmeter.Settings.InstanceSettings Instance = (Rainmeter.Settings.InstanceSettings)((ExecuteBangParam)_param).Instance;
+                    string Command = (string)((ExecuteBangParam)_param).Command;
+
+                    try
+                    {
+                        new PluginCode().ExecuteBang(Instance, Command);
+                    }
+                    catch (Exception ex)
+                    {
+                        Rainmeter.Log(Rainmeter.LogLevel.Error, "C# plugin in ExecuteBang(), " + ex.GetType().ToString() + ": " + ex.Message);
+                    }
+
+                    Instance.SetTempValue("__RMT_EB_AlreadyRunning", false);
+                }, new ExecuteBangParam(Plugin.Instances[id], sArguments));
             }
             return;
         }
 
-        private class ExecuteBangThread
+        private class ExecuteBangParam
         {
-            private Rainmeter.Settings.InstanceSettings Instance = null;
-            private string Command = string.Empty;
+            public Rainmeter.Settings.InstanceSettings Instance = null;
+            public string Command = string.Empty;
 
-            public ExecuteBangThread(Rainmeter.Settings.InstanceSettings _Instance, string _Command)
+            public ExecuteBangParam(Rainmeter.Settings.InstanceSettings _Instance, string _Command)
             {
                 this.Instance = _Instance;
                 this.Command = _Command;
-            }
-
-            public void Go()
-            {
-                this.Instance.SetTempValue("__RMT_EB_AlreadyRunning", true);
-
-                try
-                {
-                    new PluginCode().ExecuteBang(this.Instance, this.Command);
-                }
-                catch (Exception ex)
-                {
-                    Rainmeter.Log(Rainmeter.LogLevel.Error, "C# plugin in GetString(), " + ex.GetType().ToString() + ": " + ex.Message);
-                }
-
-                this.Instance.SetTempValue("__RMT_EB_AlreadyRunning", false);
             }
         }
 

@@ -19,10 +19,10 @@ namespace InputText
             return 0;
         }
 
-        public double Update2(Rainmeter.Settings.InstanceSettings Instance)
-        {
-            return 0.0;
-        }
+        //public double Update2(Rainmeter.Settings.InstanceSettings Instance)
+        //{
+        //    return 0.0;
+        //}
 
         public string GetString(Rainmeter.Settings.InstanceSettings Instance)
         {
@@ -176,20 +176,20 @@ namespace InputText
                     // used.  For example:
                     //
                     // DefaultValue="hello there, how are you"
-                    sLine = ScanAndReplace(sLine, "DefaultValue", ref Overrides);
-                    sLine = ScanAndReplace(sLine, "X", ref Overrides);
-                    sLine = ScanAndReplace(sLine, "Y", ref Overrides);
-                    sLine = ScanAndReplace(sLine, "W", ref Overrides);
-                    sLine = ScanAndReplace(sLine, "H", ref Overrides);
-                    sLine = ScanAndReplace(sLine, "StringStyle", ref Overrides);
-                    sLine = ScanAndReplace(sLine, "StringAlign", ref Overrides);
-                    sLine = ScanAndReplace(sLine, "FocusDismiss", ref Overrides);
-                    sLine = ScanAndReplace(sLine, "FontColor", ref Overrides);
-                    sLine = ScanAndReplace(sLine, "FontFace", ref Overrides);
-                    sLine = ScanAndReplace(sLine, "SolidColor", ref Overrides);
-                    sLine = ScanAndReplace(sLine, "Password", ref Overrides);
-                    sLine = ScanAndReplace(sLine, "FontSize", ref Overrides);
-                    sLine = ScanAndReplace(sLine, "TopMost", ref Overrides);
+                    sLine = ScanAndReplace(sLine, "DefaultValue", Overrides);
+                    sLine = ScanAndReplace(sLine, "X", Overrides);
+                    sLine = ScanAndReplace(sLine, "Y", Overrides);
+                    sLine = ScanAndReplace(sLine, "W", Overrides);
+                    sLine = ScanAndReplace(sLine, "H", Overrides);
+                    sLine = ScanAndReplace(sLine, "StringStyle", Overrides);
+                    sLine = ScanAndReplace(sLine, "StringAlign", Overrides);
+                    sLine = ScanAndReplace(sLine, "FocusDismiss", Overrides);
+                    sLine = ScanAndReplace(sLine, "FontColor", Overrides);
+                    sLine = ScanAndReplace(sLine, "FontFace", Overrides);
+                    sLine = ScanAndReplace(sLine, "SolidColor", Overrides);
+                    sLine = ScanAndReplace(sLine, "Password", Overrides);
+                    sLine = ScanAndReplace(sLine, "FontSize", Overrides);
+                    sLine = ScanAndReplace(sLine, "TopMost", Overrides);
                     #endregion
 
                     // Get user input
@@ -352,7 +352,6 @@ namespace InputText
             {
                 input.ShowDialog(new WindowWrapper(Rainmeter.GetConfigWindow(Instance)));
             }
-                        
 
             if (input.drBackup != System.Windows.Forms.DialogResult.None)
             {
@@ -454,7 +453,7 @@ namespace InputText
         }
         #endregion
         #region ScanAndReplace() -- searches for a tag and its value, adding it to overrides if found, and then removing it from the input line
-        private string ScanAndReplace(string sLine, string sTagName, ref Dictionary<string, string> Overrides)
+        private string ScanAndReplace(string sLine, string sTagName, Dictionary<string, string> Overrides)
         {
             if (FindTag(sLine, sTagName))
             {

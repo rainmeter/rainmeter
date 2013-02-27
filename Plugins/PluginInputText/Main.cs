@@ -18,7 +18,7 @@ namespace InputText
             "Peter Souza IV",
 
             // Version
-            1.05,
+            1.06,
 
             // E-mail
             "psouza4@gmail.com",
@@ -125,13 +125,13 @@ namespace InputText
         /// </summary>
         /// <param name="id">The unique instance ID of this request.</param>
         /// <returns>Current value for this meter.</returns>
-        [DllExport]
-        public static double Update2(UInt32 id)
-        {
-            // Do not modify this member (although you can comment it out).  Instead, update 
-            // your code in 'PluginCode.cs'.
-            return new YourPlugin().Update2(Plugin, id);
-        }
+        //[DllExport]
+        //public static double Update2(UInt32 id)
+        //{
+        //    // Do not modify this member (although you can comment it out).  Instead, update 
+        //    // your code in 'PluginCode.cs'.
+        //    return new YourPlugin().Update2(Plugin, id);
+        //}
 
         /// <summary>
         /// Rainmeter's request for text data from the plugin.
