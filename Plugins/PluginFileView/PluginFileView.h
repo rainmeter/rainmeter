@@ -20,19 +20,16 @@
 
 enum MeasureType
 {
-	TYPE_FOLDERPATH,	// Current folder complete path
-	TYPE_FOLDERSIZE,	// Current folder size
-
-	TYPE_FILECOUNT,		// Number of files of current folder
-	TYPE_FOLDERCOUNT,	// Number of sub-folders under the current folder
-
-	TYPE_FILENAME,		// Name of file
-	TYPE_FILETYPE,		// Type of file (ie "Text Document", not .txt)
-	TYPE_FILESIZE,		// Size of file
-	TYPE_FILEDATE,		// Date of file - Can be "Created Date", "Modified Date" etc.
-	TYPE_FILEPATH,		// Full path of the file
-
-	TYPE_ICON			// Icon of file
+	TYPE_FOLDERPATH,
+	TYPE_FOLDERSIZE,
+	TYPE_FILECOUNT,
+	TYPE_FOLDERCOUNT,
+	TYPE_FILENAME,
+	TYPE_FILETYPE,
+	TYPE_FILESIZE,
+	TYPE_FILEDATE,
+	TYPE_FILEPATH,
+	TYPE_ICON
 };
 
 enum DateType
@@ -58,51 +55,45 @@ enum IconSize
 	IS_EXLARGE = 4	// 256x256
 };
 
+enum RecursiveType
+{
+	RECURSIVE_NONE,
+	RECURSIVE_PARTIAL,
+	RECURSIVE_FULL
+};
+
 struct FileInfo
 {
 	std::wstring fileName;
-	std::wstring typeName;	// File type description
+	std::wstring path;
 	std::wstring ext;
 	bool isFolder;
-	bool sortAscending;	// Used for sorting function (since we cannot pass other values to a sort function)
 	UINT64 size;
 	FILETIME createdTime;
 	FILETIME modifiedTime;
 	FILETIME accessedTime;
 
-	FileInfo(): sortAscending(false)
-	{
-		Clear();
-	}
-
-	void Clear()
-	{
-		fileName = L"";
-		typeName = L"";
-		ext = L"";
-		isFolder = false;
-		size = 0;
-
-		createdTime.dwLowDateTime = 0;
-		createdTime.dwHighDateTime = 0;
-		modifiedTime.dwLowDateTime = 0;
-		modifiedTime.dwHighDateTime = 0;
-		accessedTime.dwLowDateTime = 0;
-		accessedTime.dwHighDateTime = 0;
-	}
+	FileInfo() :
+		fileName(L""),
+		path(L""),
+		ext(L""),
+		isFolder(false),
+		size(0),
+		createdTime(),
+		modifiedTime(),
+		accessedTime() { }
 };
 
 struct ChildMeasure;
 
 struct ParentMeasure
 {
-	// Options from the .ini
 	std::wstring path;
 	std::wstring wildcardSearch;
 	SortType sortType;
 	DateType sortDateType;
 	int count;
-	bool isRecursive;
+	RecursiveType recursiveType;
 	bool sortAscending;
 	bool showDotDot;
 	bool showFile;
@@ -110,11 +101,10 @@ struct ParentMeasure
 	bool showHidden;
 	bool showSystem;
 	bool hideExtension;
-	std::vector<std::wstring> extensions;	// only show these extensions
+	std::vector<std::wstring> extensions;
 	std::wstring finishAction;
 
-	// Internal values
-	std::vector<ChildMeasure*> children;
+	std::vector<ChildMeasure*> iconChildren;
 	std::vector<FileInfo> files;
 	int fileCount;
 	int folderCount;
@@ -124,7 +114,6 @@ struct ParentMeasure
 	int indexOffset;
 	HANDLE thread;
 
-	// References and identifying values
 	void* skin;
 	LPCWSTR name;
 	ChildMeasure* ownerChild;
@@ -145,23 +134,22 @@ struct ParentMeasure
 		hideExtension(false),
 		extensions(),
 		finishAction(),
-		children(NULL),
-		files(NULL),
-		skin(NULL),
+		iconChildren(),
+		files(),
+		skin(nullptr),
 		name(L""),
-		ownerChild(NULL),
-		thread(NULL),
+		ownerChild(nullptr),
+		thread(nullptr),
 		fileCount(0),
 		folderCount(0),
 		needsUpdating(true),
 		needsIcons(true),
 		indexOffset(0),
-		isRecursive(false) { }
+		recursiveType(RECURSIVE_NONE) { }
 };
 
 struct ChildMeasure
 {
-	// Options from the .ini
 	MeasureType type;
 	DateType date;
 	IconSize iconSize;
@@ -170,11 +158,7 @@ struct ChildMeasure
 	bool ignoreCount;
 	bool needsIcon;
 
-	// Internal values
-	double value;			// numerical value of the value (if available)
-	std::wstring strValue;	// string value of the value
-
-	// References
+	std::wstring strValue;
 	ParentMeasure* parent;
 
 	ChildMeasure() :
@@ -185,123 +169,25 @@ struct ChildMeasure
 		index(1),
 		ignoreCount(false),
 		needsIcon(true),
-		value(0.0),
-		strValue(),
-		parent(NULL) { }
+		strValue(L""),
+		parent(nullptr) { }
 };
 
 std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& delimiters)
 {
 	std::vector<std::wstring> tokens;
 
-	std::wstring::size_type lastPos = str.find_first_not_of(delimiters, 0);	// skip delimiters at beginning.
-	std::wstring::size_type pos = str.find_first_of(delimiters, lastPos);	// find first "non-delimiter".
+	std::wstring::size_type lastPos = str.find_first_not_of(delimiters, 0);
+	std::wstring::size_type pos = str.find_first_of(delimiters, lastPos);
 
 	while (std::wstring::npos != pos || std::wstring::npos != lastPos)
 	{
-		tokens.push_back(str.substr(lastPos, pos - lastPos));    	// found a token, add it to the vector.
-		lastPos = str.find_first_not_of(delimiters, pos);    	// skip delimiters.  Note the "not_of"
-		pos = str.find_first_of(delimiters, lastPos);    	// find next "non-delimiter"
+		tokens.emplace_back(str.substr(lastPos, pos - lastPos));
+		lastPos = str.find_first_not_of(delimiters, pos);
+		pos = str.find_first_of(delimiters, lastPos);
 	}
 
 	return tokens;
-}
-
-bool SortByName(const FileInfo& file1, const FileInfo& file2)
-{
-	int sort = file1.sortAscending ? 1 : -1;
-
-	if (file1.isFolder && file2.isFolder)
-	{
-		return (sort * _wcsicmp(file1.fileName.c_str(), file2.fileName.c_str()) < 0);
-	}
-	else if (!file1.isFolder && !file2.isFolder)
-	{
-		return (sort * _wcsicmp(file1.fileName.c_str(), file2.fileName.c_str()) < 0);
-	}
-
-	return file1.isFolder;
-}
-
-bool SortByExtension(const FileInfo& file1, const FileInfo& file2)
-{
-	int sort = file1.sortAscending ? 1 : -1;
-
-	if (file1.isFolder && file2.isFolder)
-	{
-		return (sort * _wcsicmp(file1.fileName.c_str(), file2.fileName.c_str()) < 0);
-	}
-	else if (!file1.isFolder && !file2.isFolder)
-	{
-		int result = (file1.ext.empty() && file2.ext.empty()) ? 0 : sort * _wcsicmp(file1.ext.c_str(), file2.ext.c_str());
-		return (0 != result) ? (result < 0) : (sort * _wcsicmp(file1.fileName.c_str(), file2.fileName.c_str()) < 0);
-	}
-    
-	return file1.isFolder;
-}
-
-bool SortBySize(const FileInfo& file1, const FileInfo& file2)
-{
-	int sort = file1.sortAscending ? 1 : -1;
-
-	if (file1.isFolder && file2.isFolder)
-	{
-		return (sort * _wcsicmp(file1.fileName.c_str(), file2.fileName.c_str()) < 0);
-	}
-	else if (!file1.isFolder && !file2.isFolder)
-	{
-		return (sort > 0) ? (file1.size < file2.size) : (file1.size > file2.size);
-	}
-    
-	return file1.isFolder;
-}
-
-bool SortByAccessedTime(const FileInfo& file1, const FileInfo& file2)
-{
-	int sort = file1.sortAscending ? 1 : -1;
-
-	if (file1.isFolder && file2.isFolder)
-	{
-		return (sort * CompareFileTime(&file1.accessedTime, &file2.accessedTime) < 0);
-	}
-	else if (!file1.isFolder && !file2.isFolder)
-	{
-		return (sort * CompareFileTime(&file1.accessedTime, &file2.accessedTime) < 0);
-	}
-
-	return file1.isFolder;
-}
-
-bool SortByCreatedTime(const FileInfo& file1, const FileInfo& file2)
-{
-	int sort = file1.sortAscending ? 1 : -1;
-
-	if (file1.isFolder && file2.isFolder)
-	{
-		return (sort * CompareFileTime(&file1.createdTime, &file2.createdTime) < 0);
-	}
-	else if (!file1.isFolder && !file2.isFolder)
-	{
-		return (sort * CompareFileTime(&file1.createdTime, &file2.createdTime) < 0);
-	}
-
-	return file1.isFolder;
-}
-
-bool SortByModifiedTime(const FileInfo& file1, const FileInfo& file2)
-{
-	int sort = file1.sortAscending ? 1 : -1;
-
-	if (file1.isFolder && file2.isFolder)
-	{
-		return (sort * CompareFileTime(&file1.modifiedTime, &file2.modifiedTime) < 0);
-	}
-	else if (!file1.isFolder && !file2.isFolder)
-	{
-		return (sort * CompareFileTime(&file1.modifiedTime, &file2.modifiedTime) < 0);
-	}
-
-	return file1.isFolder;
 }
 
 /*std::wstring UINT64_To_String(UINT64 value)

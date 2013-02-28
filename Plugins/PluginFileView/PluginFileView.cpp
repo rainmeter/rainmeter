@@ -44,9 +44,9 @@ typedef struct	// 22 bytes
 #pragma pack(pop)
 
 unsigned __stdcall SystemThreadProc(void* pParam);
-void GetSubFolderSize(const std::vector<FileInfo> files, const std::wstring path, int& folderCount, int& fileCount, UINT64& folderSize);
-void GetIcon(std::wstring fileName, std::wstring iconPath, IconSize iconSize);
-HRESULT SaveIcon(HICON icon, FILE*fp);
+void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, ParentMeasure* parent, RecursiveType rType);
+void GetIcon(std::wstring filePath, std::wstring iconPath, IconSize iconSize);
+HRESULT SaveIcon(HICON hIcon, FILE* fp);
 
 std::vector<ParentMeasure*> g_ParentMeasures;
 static CRITICAL_SECTION g_CriticalSection;
@@ -87,12 +87,12 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		path = path.substr(1, path.size() - 2);
 		
-		for (auto iter = g_ParentMeasures.begin(); iter != g_ParentMeasures.end(); ++iter)
+		for (auto iter : g_ParentMeasures)
 		{
-			if (_wcsicmp((*iter)->name, path.c_str()) == 0 &&
-				(*iter)->skin == skin)
+			if (_wcsicmp(iter->name, path.c_str()) == 0 &&
+				iter->skin == skin)
 			{
-				child->parent = (*iter);
+				child->parent = iter;
 				break;
 			}
 		}
@@ -157,25 +157,37 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		int count = RmReadInt(rm, L"Count", 1);
 		child->parent->count = count > 0 ? count : 1;
 
-		child->parent->isRecursive = 0!=RmReadInt(rm, L"Recursive", 0);
+		int recursive = RmReadInt(rm, L"Recursive", 0);
+		switch (recursive)
+		{
+		default:
+			RmLog(LOG_WARNING, L"Invalid Recursive type");
+
+		case 0:
+			child->parent->recursiveType = RECURSIVE_NONE;
+			break;
+
+		case 1:
+			child->parent->recursiveType = RECURSIVE_PARTIAL;
+			break;
+
+		case 2:
+			child->parent->recursiveType = RECURSIVE_FULL;
+			break;
+		}
+
 		child->parent->sortAscending = 0!=RmReadInt(rm, L"SortAscending", 1);
 		child->parent->showDotDot = 0!=RmReadInt(rm, L"ShowDotDot", 1);
 		child->parent->showFile = 0!=RmReadInt(rm, L"ShowFile", 1);
 		child->parent->showFolder = 0!=RmReadInt(rm, L"ShowFolder", 1);
 		child->parent->showHidden = 0!=RmReadInt(rm, L"ShowHidden", 1);
 		child->parent->showSystem = 0!=RmReadInt(rm, L"ShowSystem", 0);
-		child->parent->hideExtension = 0!=RmReadInt(rm, L"HideExtensions", 0);		
+		child->parent->hideExtension = 0!=RmReadInt(rm, L"HideExtensions", 0);
 		child->parent->extensions = Tokenize(RmReadString(rm, L"Extensions", L""), L";");
 
 		child->parent->wildcardSearch = RmReadString(rm, L"WildcardSearch", L"*");
 
 		child->parent->finishAction = RmReadString(rm, L"FinishAction", L"", false);
-	}
-
-	auto iter = std::find(child->parent->children.begin(), child->parent->children.end(), child);
-	if (iter == child->parent->children.end())
-	{
-		child->parent->children.push_back(child);
 	}
 
 	int index = RmReadInt(rm, L"Index", 1) - 1;
@@ -238,7 +250,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		WCHAR buffer[MAX_PATH];
 		_itow_s(child->index + 1, buffer, 10);
 		temp += buffer;
-		temp += L".ico";		
+		temp += L".ico";
 		child->iconPath = RmReadPath(rm, L"IconPath", temp.c_str());
 
 		LPCWSTR size = RmReadString(rm, L"IconSize", L"MEDIUM");
@@ -257,6 +269,12 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		else if (_wcsicmp(size, L"EXTRALARGE") == 0)
 		{
 			child->iconSize = IS_EXLARGE;
+		}
+
+		auto iter = std::find(child->parent->iconChildren.begin(), child->parent->iconChildren.end(), child);
+		if (iter == child->parent->iconChildren.end())
+		{
+			child->parent->iconChildren.push_back(child);
 		}
 	}
 	else if (_wcsicmp(type, L"FILEPATH") == 0)
@@ -279,22 +297,22 @@ PLUGIN_EXPORT double Update(void* data)
 	if (parent->ownerChild == child && (parent->needsUpdating || parent->needsIcons))
 	{
 		unsigned int id;
-		HANDLE thread = (HANDLE)_beginthreadex(NULL, 0, SystemThreadProc, child, 0, &id);
+		HANDLE thread = (HANDLE)_beginthreadex(nullptr, 0, SystemThreadProc, parent, 0, &id);
 		if (thread)
 		{
 			parent->thread = thread;
 		}
 	}
-	
+
 	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
-	child->value = 0;
+	double value = 0;
 
 	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < parent->files.size())
 	{
 		switch (child->type)
 		{
 		case TYPE_FILESIZE:
-			child->value = parent->files[trueIndex].size > 0 ? (double)parent->files[trueIndex].size : 0;
+			value = parent->files[trueIndex].size > 0 ? (double)parent->files[trueIndex].size : 0;
 			break;
 
 		case TYPE_FILEDATE:
@@ -319,42 +337,42 @@ PLUGIN_EXPORT double Update(void* data)
 				}
 
 				FileTimeToSystemTime(&fTime, &stUTC);
-				SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLOCAL);
+				SystemTimeToTzSpecificLocalTime(nullptr, &stUTC, &stLOCAL);
 				SystemTimeToFileTime(&stLOCAL, &fTime);
 
 				time.LowPart = fTime.dwLowDateTime;
 				time.HighPart = fTime.dwHighDateTime;
 
-				child->value = (double)(time.QuadPart / 10000000);
+				value = (double)(time.QuadPart / 10000000);
 			}
 			break;
 		}
 	}
-	
+
 	switch (child->type)
 	{
 	case TYPE_FILECOUNT:
-		child->value = (double)parent->fileCount;
+		value = (double)parent->fileCount;
 		break;
 
 	case TYPE_FOLDERCOUNT:
-		child->value = (double)parent->folderCount;
+		value = (double)parent->folderCount;
 		break;
 
 	case TYPE_FOLDERSIZE:
-		child->value = (double)parent->folderSize;
+		value = (double)parent->folderSize;
 		break;
 	}
 	LeaveCriticalSection(&g_CriticalSection);
 
-	return child->value;
+	return value;
 }
 
 PLUGIN_EXPORT LPCWSTR GetString(void* data)
 {
 	ChildMeasure* child = (ChildMeasure*)data;
 	ParentMeasure* parent = child->parent;
-	
+
 	EnterCriticalSection(&g_CriticalSection);
 	if (!parent)
 	{
@@ -373,7 +391,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 			if (!parent->files[trueIndex].isFolder)
 			{
 				LeaveCriticalSection(&g_CriticalSection);
-				return NULL;	// Force a numeric return (see the Update function)
+				return nullptr;	// Force a numeric return (see the Update function)
 			}
 			break;
 
@@ -423,11 +441,11 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 				if (fTime.dwLowDateTime != 0  && fTime.dwHighDateTime != 0)
 				{
 					FileTimeToSystemTime(&fTime, &stUTC);
-					SystemTimeToTzSpecificLocalTime(NULL, &stUTC, &stLOCAL);
-					GetDateFormat(LOCALE_USER_DEFAULT, 0, &stLOCAL, NULL, temp, MAX_LINE_LENGTH);
+					SystemTimeToTzSpecificLocalTime(nullptr, &stUTC, &stLOCAL);
+					GetDateFormat(LOCALE_USER_DEFAULT, 0, &stLOCAL, nullptr, temp, MAX_LINE_LENGTH);
 					child->strValue = temp;
 					child->strValue += L" ";
-					GetTimeFormat(LOCALE_USER_DEFAULT, 0, &stLOCAL, NULL, temp, MAX_LINE_LENGTH);
+					GetTimeFormat(LOCALE_USER_DEFAULT, 0, &stLOCAL, nullptr, temp, MAX_LINE_LENGTH);
 					child->strValue += temp;
 				}
 				else
@@ -443,7 +461,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 			break;
 
 		case TYPE_FILEPATH:
-			child->strValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ? parent->path : parent->path + parent->files[trueIndex].fileName;
+			child->strValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ? parent->path : parent->files[trueIndex].path + parent->files[trueIndex].fileName;
 			break;
 		}
 	}
@@ -453,9 +471,8 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 	case TYPE_FILECOUNT:
 	case TYPE_FOLDERCOUNT:
 	case TYPE_FOLDERSIZE:
-		child->strValue = L"";
 		LeaveCriticalSection(&g_CriticalSection);
-		return NULL;	// Force numeric return (see the Update function)
+		return nullptr;	// Force numeric return (see the Update function)
 		break;
 
 	case TYPE_FOLDERPATH:
@@ -478,7 +495,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 		LeaveCriticalSection(&g_CriticalSection);
 		return;
 	}
-	
+
 	if (parent->ownerChild == child)
 	{
 		if (parent->files.size() > parent->count)
@@ -536,14 +553,14 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 				}
 			}
 		}
-		
+
 		if (_wcsicmp(args, L"UPDATE") == 0)
 		{
 			parent->indexOffset = 0;
 			parent->needsIcons = true;
 			parent->needsUpdating = true;
 		}
-		else if (_wcsicmp(args, L"PREVIOUSFOLDER") == 0)
+		else if (parent->recursiveType != RECURSIVE_FULL && _wcsicmp(args, L"PREVIOUSFOLDER") == 0)
 		{
 			std::vector<std::wstring> path = Tokenize(parent->path, L"\\");
 			if (path.size() < 2)
@@ -571,13 +588,13 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 
 	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
 	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < parent->files.size())
-	{	
+	{
 		if (_wcsicmp(args, L"OPEN") == 0)
 		{
-			std::wstring file = parent->path + parent->files[trueIndex].fileName;
-			ShellExecute(NULL, NULL, file.c_str(), NULL, parent->path.c_str(), SW_SHOW);
+			std::wstring file = parent->files[trueIndex].path + parent->files[trueIndex].fileName;
+			ShellExecute(nullptr, nullptr, file.c_str(), nullptr, parent->files[trueIndex].path.c_str(), SW_SHOW);
 		}
-		else if (_wcsicmp(args, L"FOLLOWPATH") == 0)
+		else if (parent->recursiveType != RECURSIVE_FULL && _wcsicmp(args, L"FOLLOWPATH") == 0)
 		{
 			if (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0)
 			{
@@ -615,7 +632,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 			else
 			{
 				std::wstring file = parent->path + parent->files[trueIndex].fileName;
-				ShellExecute(NULL, NULL, file.c_str(), NULL, parent->path.c_str(), SW_SHOW);
+				ShellExecute(nullptr, nullptr, file.c_str(), nullptr, parent->path.c_str(), SW_SHOW);
 			}
 		}
 
@@ -636,13 +653,13 @@ PLUGIN_EXPORT void Finalize(void* data)
 	if (parent->thread)
 	{
 		TerminateThread(parent->thread, 0);
-		parent->thread = NULL;
+		parent->thread = nullptr;
 	}
 
 	if (parent && parent->ownerChild == child)
 	{
 		CloseHandle(parent->thread);
-		parent->thread = NULL;
+		parent->thread = nullptr;
 
 		delete parent;
 
@@ -656,52 +673,29 @@ PLUGIN_EXPORT void Finalize(void* data)
 
 unsigned __stdcall SystemThreadProc(void* pParam)
 {
-	ChildMeasure* child = (ChildMeasure*)pParam;
-	ParentMeasure* parent = child->parent;
+	ParentMeasure* parent = (ParentMeasure*)pParam;
 
 	EnterCriticalSection(&g_CriticalSection);
-	const bool needsUpdating = parent->needsUpdating;
+	ParentMeasure* tmp = new ParentMeasure (*parent);
 	parent->needsUpdating = false;						// Set to false here in case skin is reloaded
-	const bool needsIcons = parent->needsIcons;
 	parent->needsIcons = false;							// Set to false here in case skin is reloaded
-
-	const std::wstring parentPath = parent->path;
-	const std::wstring wildcard = parent->wildcardSearch;
-	const std::vector<std::wstring> extensions = parent->extensions;
-	const bool isRecursive = parent->isRecursive;
-	const bool showDotDot = parent->showDotDot;
-	const bool showFile = parent->showFile;
-	const bool showFolder = parent->showFolder;
-	const bool showHidden = parent->showHidden;
-	const bool showSystem = parent->showSystem;
-	const SortType sortType = parent->sortType;
-	const DateType sortDateType = parent->sortDateType;
-	const bool sortAscending = parent->sortAscending;
-	const std::vector<ChildMeasure*> children = parent->children;
-
-	std::vector<FileInfo> files = parent->files;
-	int fileCount = parent->fileCount;
-	int folderCount = parent->folderCount;
-	UINT64 folderSize = parent->folderSize;
 	LeaveCriticalSection(&g_CriticalSection);
-
-	std::wstring path = parentPath + wildcard;
 	
 	FileInfo file;
 
-	if (needsUpdating)
+	if (tmp->needsUpdating)
 	{
-		fileCount = 0;
-		folderCount = 0;
-		folderSize = 0;
-
 		EnterCriticalSection(&g_CriticalSection);
 		parent->files.clear();
-		files.clear();
 		LeaveCriticalSection(&g_CriticalSection);
 
+		tmp->files.clear();
+		tmp->fileCount = 0;
+		tmp->folderCount = 0;
+		tmp->folderSize = 0;
+
 		// If no path is specified, get all the drives instead
-		if (parentPath == L"" || parentPath.empty())
+		if (tmp->path == L"" || tmp->path.empty())
 		{
 			WCHAR drive[4] = L" :\\";
 			DWORD driveMask = GetLogicalDrives();
@@ -713,241 +707,295 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 					file.fileName = drive;
 					file.isFolder = true;
 					file.size = 0;
-					++folderCount;
 
-					files.push_back(file);
+					++tmp->folderCount;
+					tmp->files.push_back(file);
 				}
 			}
 		}
 		else
 		{
-			if (showDotDot)
+			if (tmp->showDotDot && tmp->recursiveType != RECURSIVE_FULL)
 			{
 				file.fileName = L"..";
 				file.isFolder = true;
 
-				files.push_back(file);
+				tmp->files.push_back(file);
 			}
 
-			WIN32_FIND_DATA fd;
-			HANDLE find = FindFirstFileEx(path.c_str(),	FindExInfoStandard,	&fd, FindExSearchNameMatch,	NULL, 0);
+			std::queue<std::wstring> folderQueue;
+			std::wstring folder = tmp->path;
+			
+			RecursiveType rType = tmp->recursiveType;
+			GetFolderInfo(folderQueue, folder, tmp, (rType == RECURSIVE_PARTIAL) ? RECURSIVE_NONE : rType);
 
-			if (find != INVALID_HANDLE_VALUE)
+			if (rType != RECURSIVE_NONE)
 			{
-				do
-				{
-					file.Clear();
-
-					file.fileName = fd.cFileName;
-					if (_wcsicmp(file.fileName.c_str(), L".") == 0 || _wcsicmp(file.fileName.c_str(), L"..") == 0)
+				while (!folderQueue.empty())
 					{
-						continue;
+						folder = folderQueue.front();
+						GetFolderInfo(folderQueue, folder, tmp, rType);
+						folderQueue.pop();
 					}
-
-					file.isFolder = (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) > 0;
-					bool isHidden = (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) > 0;
-					bool isSystem = (fd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) > 0;
-
-					if ((!showFile && !file.isFolder) || (!showFolder && file.isFolder) ||
-						(!showHidden && isHidden) || (!showSystem && isSystem))
-					{
-						continue;
-					}
-
-					if (!file.isFolder)
-					{
-						size_t pos = file.fileName.find_last_of(L".");
-						if (pos != file.fileName.npos)
-						{
-							file.ext = file.fileName.substr(pos + 1);
-
-							if (extensions.size() > 0)
-							{
-								bool found = false;
-								for (auto iter = extensions.begin(); iter != extensions.end(); ++iter)
-								{
-									if (_wcsicmp((*iter).c_str(), file.ext.c_str()) == 0)
-									{
-										found = true;
-										break;
-									}
-								}
-
-								if (!found)
-								{
-									continue;
-								}
-							}
-						}
-						else if (extensions.size() > 0)
-						{
-							continue;
-						}
-					}
-
-					if (file.isFolder)
-					{
-						++folderCount;
-						file.size = 0;
-					}
-					else
-					{
-						++fileCount;
-						file.size = ((UINT64)fd.nFileSizeHigh << 32) + fd.nFileSizeLow;
-						file.createdTime = fd.ftCreationTime;
-						file.modifiedTime = fd.ftLastWriteTime;
-						file.accessedTime = fd.ftLastAccessTime;
-					}
-					
-					file.sortAscending = sortAscending;		// Used in sort functions
-					folderSize += file.size;
-
-					files.push_back(file);
-				}
-				while (FindNextFile(find, &fd));
-				FindClose(find);
-
-				// Sort
-				auto begin = showDotDot ? files.begin() + 1: files.begin();
-				switch (sortType)
-				{
-				case STYPE_NAME:
-					std::sort(begin, files.end(), SortByName);
-					break;
-
-				case STYPE_SIZE:
-					std::sort(begin, files.end(), SortBySize);
-					break;
-
-				case STYPE_TYPE:
-					std::sort(begin, files.end(), SortByExtension);
-					break;
-
-				case STYPE_DATE:
-					switch (sortDateType)
-					{
-					case DTYPE_MODIFIED:
-						std::sort(begin, files.end(), SortByModifiedTime);
-						break;
-
-					case DTYPE_CREATED:
-						std::sort(begin, files.end(), SortByCreatedTime);
-						break;
-
-					case DTYPE_ACCESSED:
-						std::sort(begin, files.end(), SortByAccessedTime);
-						break;
-					}
-					break;
-				}
-
-				if (isRecursive)
-				{
-					GetSubFolderSize(files, parentPath, folderCount, fileCount, folderSize);
-				}
 			}
 		}
+
+		// Sort
+		const int sortAsc = tmp->sortAscending ? 1 : -1;
+		auto begin = ((tmp->path != L"" || !tmp->path.empty()) && (tmp->showDotDot && tmp->recursiveType != RECURSIVE_FULL)) ?
+			tmp->files.begin() + 1: tmp->files.begin();
+
+		switch (tmp->sortType)
+		{
+		case STYPE_NAME:
+			std::sort(begin, tmp->files.end(),
+				[&sortAsc](const FileInfo& file1, const FileInfo& file2) -> bool
+				{
+					if (file1.isFolder && file2.isFolder)
+					{
+						return (sortAsc * _wcsicmp(file1.fileName.c_str(), file2.fileName.c_str()) < 0);
+					}
+					else if (!file1.isFolder && !file2.isFolder)
+					{
+						return (sortAsc * _wcsicmp(file1.fileName.c_str(), file2.fileName.c_str()) < 0);
+					}
+					return file1.isFolder;
+				});
+			break;
+
+		case STYPE_SIZE:
+			std::sort(begin, tmp->files.end(),
+				[&sortAsc](const FileInfo& file1, const FileInfo& file2) -> bool
+				{
+					if (file1.isFolder && file2.isFolder)
+					{
+						return (sortAsc * _wcsicmp(file1.fileName.c_str(), file2.fileName.c_str()) < 0);
+					}
+					else if (!file1.isFolder && !file2.isFolder)
+					{
+						return (sortAsc > 0) ? (file1.size < file2.size) : (file1.size > file2.size);
+					}
+					return file1.isFolder;
+				});
+			break;
+
+		case STYPE_TYPE:
+			std::sort(begin, tmp->files.end(),
+				[&sortAsc](const FileInfo& file1, const FileInfo& file2) -> bool
+				{
+					if (file1.isFolder && file2.isFolder)
+					{
+						return (sortAsc * _wcsicmp(file1.fileName.c_str(), file2.fileName.c_str()) < 0);
+					}
+					else if (!file1.isFolder && !file2.isFolder)
+					{
+						int result = (file1.ext.empty() && file2.ext.empty()) ? 0 : sortAsc * _wcsicmp(file1.ext.c_str(), file2.ext.c_str());
+						return (0 != result) ? (result < 0) : (sortAsc * _wcsicmp(file1.fileName.c_str(), file2.fileName.c_str()) < 0);
+					}
+					return file1.isFolder;
+				});
+			break;
+
+		case STYPE_DATE:
+			switch (tmp->sortDateType)
+			{
+			case DTYPE_MODIFIED:
+				std::sort(begin, tmp->files.end(),
+					[&sortAsc](const FileInfo& file1, const FileInfo& file2) -> bool
+					{
+						if (file1.isFolder && file2.isFolder)
+						{
+							return (sortAsc * CompareFileTime(&file1.modifiedTime, &file2.modifiedTime) < 0);
+						}
+						else if (!file1.isFolder && !file2.isFolder)
+						{
+							return (sortAsc * CompareFileTime(&file1.modifiedTime, &file2.modifiedTime) < 0);
+						}
+						return file1.isFolder;
+					});
+				break;
+
+			case DTYPE_CREATED:
+				std::sort(begin, tmp->files.end(),
+					[&sortAsc](const FileInfo& file1, const FileInfo& file2) -> bool
+					{
+						if (file1.isFolder && file2.isFolder)
+						{
+							return (sortAsc * CompareFileTime(&file1.createdTime, &file2.createdTime) < 0);
+						}
+						else if (!file1.isFolder && !file2.isFolder)
+						{
+							return (sortAsc * CompareFileTime(&file1.createdTime, &file2.createdTime) < 0);
+						}
+						return file1.isFolder;
+					});
+				break;
+
+			case DTYPE_ACCESSED:
+				std::sort(begin, tmp->files.end(),
+					[&sortAsc](const FileInfo& file1, const FileInfo& file2) -> bool
+					{
+						if (file1.isFolder && file2.isFolder)
+						{
+							return (sortAsc * CompareFileTime(&file1.accessedTime, &file2.accessedTime) < 0);
+						}
+						else if (!file1.isFolder && !file2.isFolder)
+						{
+							return (sortAsc * CompareFileTime(&file1.accessedTime, &file2.accessedTime) < 0);
+						}
+						return file1.isFolder;
+					});
+				break;
+			}
+			break;
+		}
+
+		EnterCriticalSection(&g_CriticalSection);
+		parent->files.reserve(tmp->files.size());
+		parent->files = tmp->files;
+		parent->fileCount = tmp->fileCount;
+		parent->folderCount = tmp->folderCount;
+		parent->folderSize = tmp->folderSize;
+		LeaveCriticalSection(&g_CriticalSection);
 	}
 
-	if (needsIcons)
+	if (tmp->needsIcons)
 	{
-		for (auto iter = children.begin(); iter != children.end(); ++iter)
+		for (auto iter : tmp->iconChildren)
 		{
 			EnterCriticalSection(&g_CriticalSection);
-			int trueIndex = (*iter)->ignoreCount ? (*iter)->index : (((*iter)->index % (*iter)->parent->count) + (*iter)->parent->indexOffset);
-			
-			if ((*iter)->type == TYPE_ICON && trueIndex >= 0 && trueIndex < files.size())
+			int trueIndex = iter->ignoreCount ? iter->index : ((iter->index % iter->parent->count) + iter->parent->indexOffset);
+
+			if (iter->type == TYPE_ICON && trueIndex >= 0 && trueIndex < tmp->files.size())
 			{
-				std::wstring filePath = parentPath;
-				filePath += (files[trueIndex].fileName == L"..") ? L"" : files[trueIndex].fileName;
-				GetIcon(filePath, (*iter)->iconPath, (*iter)->iconSize);
+				std::wstring filePath = tmp->files[trueIndex].path;
+				filePath += (tmp->files[trueIndex].fileName == L"..") ? L"" :tmp->files[trueIndex].fileName;
+				GetIcon(filePath, iter->iconPath, iter->iconSize);
 			}
-			else if ((*iter)->type == TYPE_ICON)
+			else if (iter->type == TYPE_ICON)
 			{
-				GetIcon(INVALID_FILE, (*iter)->iconPath, (*iter)->iconSize);
+				GetIcon(INVALID_FILE, iter->iconPath, iter->iconSize);
 			}
 			LeaveCriticalSection(&g_CriticalSection);
 		}
 	}
 
 	EnterCriticalSection(&g_CriticalSection);
-	parent->files = files;
-	parent->fileCount = fileCount;
-	parent->folderCount = folderCount;
-	parent->folderSize = folderSize;
-
 	CloseHandle(parent->thread);
-	parent->thread = NULL;
+	parent->thread = nullptr;
 	LeaveCriticalSection(&g_CriticalSection);
 
-	if (!parent->finishAction.empty())
+	if (!tmp->finishAction.empty())
 	{
-		RmExecute(parent->skin, parent->finishAction.c_str());
+		RmExecute(tmp->skin, tmp->finishAction.c_str());
 	}
 
-	_endthreadex(0);
+	delete tmp;
 	return 0;
 }
 
-void GetSubFolderSize(const std::vector<FileInfo> files, const std::wstring path, int& folderCount, int& fileCount, UINT64& folderSize)
+void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, ParentMeasure* parent, RecursiveType rType)
 {
-	std::list<std::wstring> folderQueue;
-	std::wstring folder;
+	std::wstring path = folder;
+	folder += (rType == RECURSIVE_PARTIAL) ? L"*" : parent->wildcardSearch;
 
-	// Get current folders first (if any)
-	for (auto iter = files.begin(); iter != files.end(); ++iter)
+	WIN32_FIND_DATA fd;
+	HANDLE find = FindFirstFileEx(folder.c_str(), FindExInfoStandard, &fd, FindExSearchNameMatch, nullptr, 0);
+
+	if (find != INVALID_HANDLE_VALUE)
 	{
-		if ((*iter).isFolder && _wcsicmp((*iter).fileName.c_str(), L"..") != 0)
+		do
 		{
-			folderQueue.push_back(path + (*iter).fileName);
-		}
-	}
+			FileInfo file;
 
-	while (!folderQueue.empty())
-	{
-		std::list<std::wstring>::reference ref = folderQueue.front();
-		folder = ref + L"\\*";
-
-		WIN32_FIND_DATA fd;
-		HANDLE find = FindFirstFileEx(folder.c_str(), FindExInfoStandard, &fd, FindExSearchNameMatch, NULL,	0);
-		
-		if (find != INVALID_HANDLE_VALUE)
-		{
-			do 
+			file.fileName = fd.cFileName;
+			if (_wcsicmp(file.fileName.c_str(), L".") == 0 || _wcsicmp(file.fileName.c_str(), L"..") == 0)
 			{
-				folder = fd.cFileName;
+				continue;
+			}
 
-				if (_wcsicmp(folder.c_str(), L".") == 0 || _wcsicmp(folder.c_str(), L"..") == 0)
+			file.isFolder = (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) > 0;
+			bool isHidden = (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) > 0;
+			bool isSystem = (fd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) > 0;
+
+			if ((rType != RECURSIVE_PARTIAL) &&
+				((rType != RECURSIVE_FULL && !parent->showFile && !file.isFolder) ||
+				(rType != RECURSIVE_FULL && !parent->showFolder && file.isFolder) ||
+				(!parent->showHidden && isHidden) ||(!parent->showSystem && isSystem)))
+			{
+				continue;
+			}
+
+			if (rType != RECURSIVE_PARTIAL && !file.isFolder)
+			{
+				size_t pos = file.fileName.find_last_of(L".");
+				if (pos != std::wstring::npos)
+				{
+					file.ext = file.fileName.substr(pos + 1);
+
+					if (parent->extensions.size() > 0)
+					{
+						bool found = false;
+						for (auto iter : parent->extensions)
+						{
+							if (_wcsicmp(iter.c_str(), file.ext.c_str()) == 0)
+							{
+								found = true;
+								break;
+							}
+						}
+
+						if (!found)
+						{
+							continue;
+						}
+					}
+				}
+				else if (parent->extensions.size() > 0)
 				{
 					continue;
 				}
-
-				if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) > 0)
-				{
-					++folderCount;
-					folderQueue.push_back(ref + L"\\" + folder);
-				}
-				else
-				{
-					++fileCount;
-					folderSize += ((UINT64)fd.nFileSizeHigh << 32) + fd.nFileSizeLow;
-				}
 			}
-			while (FindNextFile(find, &fd));
-							
-			FindClose(find);
+
+			if (file.isFolder)
+			{
+				if (rType != RECURSIVE_FULL)
+				{
+					++parent->folderCount;
+				}
+
+				folderQueue.push(path + file.fileName + L"\\");
+			}
+			else
+			{
+				++parent->fileCount;
+				file.size = ((UINT64)fd.nFileSizeHigh << 32) + fd.nFileSizeLow;
+			}
+
+			parent->folderSize += file.size;
+
+			file.createdTime = fd.ftCreationTime;
+			file.modifiedTime = fd.ftLastWriteTime;
+			file.accessedTime = fd.ftLastAccessTime;
+
+			file.path = path;
+
+			if (rType == RECURSIVE_NONE || (rType == RECURSIVE_FULL && !file.isFolder))
+			{
+				parent->files.push_back(file);
+			}
 		}
-						
-		folderQueue.pop_front();
+		while (FindNextFile(find, &fd));
+		FindClose(find);
 	}
 }
 
 void GetIcon(std::wstring filePath, std::wstring iconPath, IconSize iconSize)
 {
 	SHFILEINFO shFileInfo;
-	HICON icon = NULL;
-	HIMAGELIST* hImageList = NULL;
-	FILE* fp = NULL;
+	HICON icon = nullptr;
+	HIMAGELIST* hImageList = nullptr;
+	FILE* fp = nullptr;
 
 	// Special case for .url files
 	if (filePath.size() > 3 && _wcsicmp(filePath.substr(filePath.size() - 4).c_str(), L".URL") == 0)
@@ -973,7 +1021,7 @@ void GetIcon(std::wstring filePath, std::wstring iconPath, IconSize iconSize)
 			case IS_MEDIUM: size = 32; break;
 			}
 
-			PrivateExtractIcons(file.c_str(), iconIndex, size, size, &icon, NULL, 1, LR_LOADTRANSPARENT);
+			PrivateExtractIcons(file.c_str(), iconIndex, size, size, &icon, nullptr, 1, LR_LOADTRANSPARENT);
 		}
 		else
 		{
@@ -983,7 +1031,7 @@ void GetIcon(std::wstring filePath, std::wstring iconPath, IconSize iconSize)
 			HKEY hKey;
 
 			RegOpenKeyEx(HKEY_CLASSES_ROOT, L"http\\shell\\open\\command", 0, KEY_QUERY_VALUE, &hKey);
-			RegQueryValueEx(hKey, NULL, NULL, NULL, (LPBYTE)buffer, &size);
+			RegQueryValueEx(hKey, nullptr, nullptr, nullptr, (LPBYTE)buffer, &size);
 			RegCloseKey(hKey);
 
 			//Strip quotes
@@ -997,8 +1045,8 @@ void GetIcon(std::wstring filePath, std::wstring iconPath, IconSize iconSize)
 			filePath = browser;
 		}
 	}
-	
-	if (icon == NULL)
+
+	if (icon == nullptr)
 	{
 		SHGetFileInfo(filePath.c_str(), 0, &shFileInfo, sizeof(shFileInfo), SHGFI_SYSICONINDEX);
 		SHGetImageList(iconSize, IID_IImageList, (void**) &hImageList);
@@ -1006,7 +1054,7 @@ void GetIcon(std::wstring filePath, std::wstring iconPath, IconSize iconSize)
 	}
 
 	errno_t error = _wfopen_s(&fp, iconPath.c_str(), L"wb");
-	if (filePath == INVALID_FILE || icon == NULL || (error == 0 && !SaveIcon(icon, fp)))
+	if (filePath == INVALID_FILE || icon == nullptr || (error == 0 && !SaveIcon(icon, fp)))
 	{
 		fwrite(iconPath.c_str(), 1, 1, fp);		// Clears previous icon
 		fclose(fp);
@@ -1020,7 +1068,7 @@ HRESULT SaveIcon(HICON hIcon, FILE* fp)
 	ICONINFO iconInfo;
 	BITMAP bmColor;
 	BITMAP bmMask;
-	if (!fp || NULL == hIcon || !GetIconInfo(hIcon, &iconInfo) ||
+	if (!fp || nullptr == hIcon || !GetIconInfo(hIcon, &iconInfo) ||
 		!GetObject(iconInfo.hbmColor, sizeof(bmColor), &bmColor) ||
 		!GetObject(iconInfo.hbmMask,  sizeof(bmMask),  &bmMask))
 		return false;
@@ -1029,14 +1077,14 @@ HRESULT SaveIcon(HICON hIcon, FILE* fp)
 	if (bmColor.bmBitsPixel != 16 && bmColor.bmBitsPixel != 32)
 		return false;
 
-	HDC dc = GetDC(NULL);
+	HDC dc = GetDC(nullptr);
 	BYTE bmiBytes[sizeof(BITMAPINFOHEADER) + 256 * sizeof(RGBQUAD)];
 	BITMAPINFO* bmi = (BITMAPINFO*)bmiBytes;
 
 	// color bits
 	memset(bmi, 0, sizeof(BITMAPINFO));
 	bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	GetDIBits(dc, iconInfo.hbmColor, 0, bmColor.bmHeight, NULL, bmi, DIB_RGB_COLORS);
+	GetDIBits(dc, iconInfo.hbmColor, 0, bmColor.bmHeight, nullptr, bmi, DIB_RGB_COLORS);
 	int colorBytesCount = bmi->bmiHeader.biSizeImage;
 	BYTE* colorBits = new BYTE[colorBytesCount];
 	GetDIBits(dc, iconInfo.hbmColor, 0, bmColor.bmHeight, colorBits, bmi, DIB_RGB_COLORS);
@@ -1044,12 +1092,12 @@ HRESULT SaveIcon(HICON hIcon, FILE* fp)
 	// mask bits
 	memset(bmi, 0, sizeof(BITMAPINFO));
 	bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	GetDIBits(dc, iconInfo.hbmMask, 0, bmMask.bmHeight, NULL, bmi, DIB_RGB_COLORS);
+	GetDIBits(dc, iconInfo.hbmMask, 0, bmMask.bmHeight, nullptr, bmi, DIB_RGB_COLORS);
 	int maskBytesCount = bmi->bmiHeader.biSizeImage;
 	BYTE* maskBits = new BYTE[maskBytesCount];
 	GetDIBits(dc, iconInfo.hbmMask, 0, bmMask.bmHeight, maskBits, bmi, DIB_RGB_COLORS);
 
-	ReleaseDC(NULL, dc);
+	ReleaseDC(nullptr, dc);
 
 	// icon data
 	BITMAPINFOHEADER bmihIcon;

@@ -28,7 +28,7 @@
 // STL
 #include <string>
 #include <vector>
-#include <list>
+#include <queue>
 #include <algorithm>
 
 // Rainmeter API
