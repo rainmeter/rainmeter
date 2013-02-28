@@ -89,8 +89,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		
 		for (auto iter : g_ParentMeasures)
 		{
-			if (_wcsicmp(iter->name, path.c_str()) == 0 &&
-				iter->skin == skin)
+			if (_wcsicmp(iter->name, path.c_str()) == 0 && iter->skin == skin)
 			{
 				child->parent = iter;
 				break;
@@ -687,6 +686,9 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 	{
 		EnterCriticalSection(&g_CriticalSection);
 		parent->files.clear();
+		parent->fileCount = 0;
+		parent->folderCount = 0;
+		parent->folderSize = 0;
 		LeaveCriticalSection(&g_CriticalSection);
 
 		tmp->files.clear();
@@ -729,21 +731,18 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 			RecursiveType rType = tmp->recursiveType;
 			GetFolderInfo(folderQueue, folder, tmp, (rType == RECURSIVE_PARTIAL) ? RECURSIVE_NONE : rType);
 
-			if (rType != RECURSIVE_NONE)
+			while (rType != RECURSIVE_NONE && !folderQueue.empty())
 			{
-				while (!folderQueue.empty())
-					{
-						folder = folderQueue.front();
-						GetFolderInfo(folderQueue, folder, tmp, rType);
-						folderQueue.pop();
-					}
+				folder = folderQueue.front();
+				GetFolderInfo(folderQueue, folder, tmp, rType);
+				folderQueue.pop();
 			}
 		}
 
 		// Sort
 		const int sortAsc = tmp->sortAscending ? 1 : -1;
-		auto begin = ((tmp->path != L"" || !tmp->path.empty()) && (tmp->showDotDot && tmp->recursiveType != RECURSIVE_FULL)) ?
-			tmp->files.begin() + 1: tmp->files.begin();
+		auto begin = ((tmp->path != L"" || !tmp->path.empty()) && 
+			(tmp->showDotDot && tmp->recursiveType != RECURSIVE_FULL)) ? tmp->files.begin() + 1: tmp->files.begin();
 
 		switch (tmp->sortType)
 		{
@@ -852,6 +851,7 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 
 		EnterCriticalSection(&g_CriticalSection);
 		parent->files = tmp->files;
+		parent->files.shrink_to_fit();
 		parent->fileCount = tmp->fileCount;
 		parent->folderCount = tmp->folderCount;
 		parent->folderSize = tmp->folderSize;
