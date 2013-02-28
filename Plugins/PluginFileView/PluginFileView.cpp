@@ -851,7 +851,6 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 		}
 
 		EnterCriticalSection(&g_CriticalSection);
-		parent->files.reserve(tmp->files.size());
 		parent->files = tmp->files;
 		parent->fileCount = tmp->fileCount;
 		parent->folderCount = tmp->folderCount;
