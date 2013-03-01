@@ -71,17 +71,51 @@ namespace InputText
 
             if (go)
             {
-                ThreadPool.QueueUserWorkItem(ExecuteBangThread, args);
+                ExecuteBangParam param = new ExecuteBangParam(args);
+                if (ReadOptions(param))  // Read all options in advance for thread-safety
+                {
+                    ThreadPool.QueueUserWorkItem(ExecuteBangThread, param);
+                }
+                else
+                {
+                    // No need to continue
+                    lock (this.locker)
+                    {
+                        this.IsExecuteBangRunning = false;
+                    }
+                }
             }
         }
 
+        internal class ExecuteBangParam
+        {
+            internal enum BangType
+            {
+                Unknown,
+                SetVariable,
+                ExecuteBatch
+            };
+            internal Dictionary<string, string> Options;
+            internal List<string> Commands;
+            internal string Command;
+            internal BangType Type;
+
+            internal ExecuteBangParam(string args)
+            {
+                this.Options = new Dictionary<string, string>();
+                this.Commands = new List<string>();
+                this.Command = args.Trim();
+                this.Type = BangType.Unknown;
+            }
+        };
+
         private void ExecuteBangThread(object state)
         {
-            string command = (string)state;
+            ExecuteBangParam param = (ExecuteBangParam)state;
 
             try
             {
-                ExecuteCommands(command);
+                ExecuteCommands(param);
             }
             catch (Exception ex)
             {
@@ -92,6 +126,11 @@ namespace InputText
             {
                 this.IsExecuteBangRunning = false;
             }
+        }
+
+        internal void Dispose()
+        {
+            CloseInputBox();
         }
     }
 
@@ -112,6 +151,7 @@ namespace InputText
         public unsafe static void Finalize(void* data)
         {
             uint id = (uint)data;
+            Measures[id].Dispose();
             Measures.Remove(id);
         }
 

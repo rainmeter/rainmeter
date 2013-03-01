@@ -294,6 +294,9 @@ namespace InputText
 
         public bool ShowInputBox()
         {
+            if (this.drBackup != DialogResult.None)
+                return false;
+
             if (this._FocusDismiss)
             {
                 this.Show(this.parent);
@@ -322,6 +325,12 @@ namespace InputText
             }
 
             return true;
+        }
+
+        public void Abort()
+        {
+            this.drBackup = DialogResult.Cancel;
+            this.Close();
         }
 
         private void txtInput_Leave(object sender, EventArgs e)
