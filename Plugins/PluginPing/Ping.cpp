@@ -17,6 +17,7 @@
 */
 
 #include <windows.h>
+#include <string>
 #include <Ipexport.h>
 #include <Icmpapi.h>
 #include "../../Library/Export.h"	// Rainmeter's exported functions
@@ -30,6 +31,8 @@ struct MeasureData
 	DWORD updateCounter;
 	bool threadActive;
 	double value;
+	std::wstring finishAction;
+	void* skin;
 
 	MeasureData() :
 		destAddr(),
@@ -38,7 +41,8 @@ struct MeasureData
 		updateRate(),
 		updateCounter(),
 		threadActive(false),
-		value()
+		value(),
+		finishAction()
 	{
 	}
 };
@@ -68,6 +72,8 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
 	*data = measure;
+
+	measure->skin = RmGetSkin(rm);
 }
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
@@ -115,6 +121,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	measure->updateRate = RmReadInt(rm, L"UpdateRate", 32);
 	measure->timeout = RmReadInt(rm, L"Timeout", 30000);
 	measure->timeoutValue = RmReadDouble(rm, L"TimeoutValue", 30000.0);
+	measure->finishAction = RmReadString(rm, L"FinishAction", L"", false);
 }
 
 DWORD WINAPI NetworkThreadProc(void* pParam)
@@ -143,6 +150,11 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 	{
 		measure->value = value;
 		measure->threadActive = false;
+
+		if (!measure->finishAction.empty())
+		{
+			RmExecute(measure->skin, measure->finishAction.c_str());
+		}
 	}
 	else
 	{
