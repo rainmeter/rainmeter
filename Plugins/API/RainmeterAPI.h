@@ -97,9 +97,9 @@ __inline LPCWSTR RmGetSkinName(void* rm)
 	return (LPCWSTR)RmGet(rm, RMG_SKINNAME);
 }
 
-__inline void* RmGetSkinWindow(void* rm)
+__inline HWND RmGetSkinWindow(void* rm)
 {
-	return (void*)RmGet(rm, RMG_SKINWINDOWHANDLE);
+	return (HWND)RmGet(rm, RMG_SKINWINDOWHANDLE);
 }
 
 __inline void RmLog(int level, LPCWSTR message)
