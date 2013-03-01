@@ -1,4 +1,22 @@
-﻿using System;
+﻿/*
+  Copyright (C) 2013 Rainmeter Team
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -6,14 +24,17 @@ namespace InputText
 {
     public partial class InputBox : Form
     {
-        public Rainmeter.Settings.InstanceSettings Instance = null;
+        private SkinWindow parent = null;
 
-        #region Default form initializer
-        public InputBox()
+        private bool _FocusDismiss = true;
+        private string _TextValue = string.Empty;
+
+        public InputBox(SkinWindow parent)
         {
+            this.parent = parent;
+
             InitializeComponent();
         }
-        #endregion
 
         // This event will make sure we have focus when the inputbox is shown ot the user.
         // it will only cause focus if the window itself has focus (i.e. doesn't steal).
@@ -24,6 +45,14 @@ namespace InputText
             this.Activate();
             this.BringToFront();
             this.txtInput.Focus();
+        }
+
+        private void InputBox_Load(object sender, EventArgs e)
+        {
+            this.Activate();
+            this.BringToFront();
+            this.Activate();
+            this.BringToFront();
         }
 
         // All exceptions are swallowed for the sake of this example.  Since the majority
@@ -39,16 +68,13 @@ namespace InputText
         //      }
         //      catch (Exception ex)
         //      {
-        //           Rainmeter.Log(Rainmeter.LogLevel.Warning, "InputText :: exception :: " + ex.GetType().ToString() + ": " + ex.Message);
+        //           API.Log(API.LogType.Warning, "InputText :: exception :: " + ex.GetType().ToString() + ": " + ex.Message);
         //      }
 
-        #region TextInput -- returns the inputted text
-        public string TextInput
+        #region TextValue -- returns the inputted text
+        public string TextValue
         {
-            get
-            {
-                return this.txtInput.Text.Trim();
-            }
+            get { return this._TextValue; }
         }
         #endregion
         #region ChangeFontFace(string) -- changes the text's font name
@@ -170,10 +196,10 @@ namespace InputText
             this.TopMost = true;
         }
         #endregion
-        #region MakePassword() -- causes the textbox to be password style
-        public void MakePassword()
+        #region MakePassword(bool) -- causes the textbox to be password style
+        public void MakePassword(bool bPass)
         {
-            this.txtInput.PasswordChar = '*';
+            this.txtInput.PasswordChar = bPass ? '*' : '\0';
         }
         #endregion
         #region ChangeFontStringStyle() -- changes the font's bold/italic styles
@@ -216,7 +242,7 @@ namespace InputText
         }
         #endregion
         #region ChangeX(string) -- changes the X (horizontal) position of the input textbox, relative to its parent skin
-        public void ChangeX(Rainmeter.Settings.InstanceSettings Instance, string sX)
+        public void ChangeX(string sX)
         {
             try
             {
@@ -227,13 +253,13 @@ namespace InputText
                 // Notice that we need the position of the parent window for offset location.
                 //
                 // The Rainmeter class does this for us
-                this.Location = new System.Drawing.Point(Rainmeter.ConfigX(Rainmeter.SkinName(Instance)) + int.Parse(sX), this.Location.Y);
+                this.Location = new System.Drawing.Point(this.parent.X + int.Parse(sX), this.Location.Y);
             }
             catch { }
         }
         #endregion
         #region ChangeY(string) -- changes the Y (vertical) position of the input textbox, relative to its parent skin
-        public void ChangeY(Rainmeter.Settings.InstanceSettings Instance, string sY)
+        public void ChangeY(string sY)
         {
             try
             {
@@ -244,7 +270,7 @@ namespace InputText
                 // Notice that we need the position of the parent window for offset location.
                 //
                 // The Rainmeter class does this for us
-                this.Location = new System.Drawing.Point(this.Location.X, Rainmeter.ConfigY(Rainmeter.SkinName(Instance)) + int.Parse(sY));
+                this.Location = new System.Drawing.Point(this.Location.X, this.parent.Y + int.Parse(sY));
             }
             catch { }
         }
@@ -256,14 +282,46 @@ namespace InputText
         }
         #endregion
         #region MakeFocusDismiss(bool) -- dismisses the input textbox if it loses cursor/window focus
-        
-        private bool _FocusDismiss = true;
-        public DialogResult drBackup = DialogResult.None;
-        public string sTextValue = string.Empty;
-
         public void MakeFocusDismiss(bool bDismissing)
         {
             this._FocusDismiss = bDismissing;
+        }
+        #endregion
+
+        #region ShowInputBox() -- shows text input textbox
+
+        private DialogResult drBackup = DialogResult.None;
+
+        public bool ShowInputBox()
+        {
+            if (this._FocusDismiss)
+            {
+                this.Show(this.parent);
+
+                while (this.DialogResult == DialogResult.None &&
+                    this.drBackup == DialogResult.None)
+                {
+                    Application.DoEvents();
+                    System.Threading.Thread.Sleep(44);
+                }
+            }
+            else
+            {
+                this.ShowDialog(this.parent);
+            }
+
+            if (this.drBackup != DialogResult.None)
+            {
+                if (this.drBackup != DialogResult.OK)
+                    return false;
+            }
+            else if (this.DialogResult != DialogResult.None)
+            {
+                if (this.DialogResult != DialogResult.OK)
+                    return false;
+            }
+
+            return true;
         }
 
         private void txtInput_Leave(object sender, EventArgs e)
@@ -295,8 +353,8 @@ namespace InputText
 
         private void btnOK_Click(object sender, EventArgs e)
         {
-            _FocusDismiss = false;
-            this.sTextValue = this.txtInput.Text.Trim();
+            this._FocusDismiss = false;
+            this._TextValue = this.txtInput.Text.Trim();
             this.drBackup = DialogResult.OK;
             this.DialogResult = DialogResult.OK;
             this.Close();
@@ -304,20 +362,12 @@ namespace InputText
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            _FocusDismiss = false;
+            this._FocusDismiss = false;
             this.drBackup = DialogResult.Cancel;
             this.DialogResult = DialogResult.Cancel;
             this.Close();
         }
 
         #endregion
-
-        private void InputBox_Load(object sender, EventArgs e)
-        {
-            this.Activate();
-            this.BringToFront();
-            this.Activate();
-            this.BringToFront();
-        }
     }
 }

@@ -94,6 +94,7 @@
       <DependentUpon>InputBox.cs</DependentUpon>
     </Compile>
     <Compile Include="$(SolutionDir)Version.cs" />
+    <Compile Include="$(SolutionDir)Plugins\API\RainmeterAPI.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="InputBox.resx">
