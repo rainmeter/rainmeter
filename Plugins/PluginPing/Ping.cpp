@@ -42,7 +42,8 @@ struct MeasureData
 		updateCounter(),
 		threadActive(false),
 		value(),
-		finishAction()
+		finishAction(),
+		skin(NULL)
 	{
 	}
 };
@@ -72,8 +73,6 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	MeasureData* measure = new MeasureData;
 	*data = measure;
-
-	measure->skin = RmGetSkin(rm);
 }
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
@@ -122,6 +121,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	measure->timeout = RmReadInt(rm, L"Timeout", 30000);
 	measure->timeoutValue = RmReadDouble(rm, L"TimeoutValue", 30000.0);
 	measure->finishAction = RmReadString(rm, L"FinishAction", L"", false);
+	measure->skin = RmGetSkin(rm);
 }
 
 DWORD WINAPI NetworkThreadProc(void* pParam)
@@ -141,6 +141,11 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 
 		ICMP_ECHO_REPLY* reply = (ICMP_ECHO_REPLY*)buffer;
 		value = (reply->Status != IP_SUCCESS) ? measure->timeoutValue : reply->RoundTripTime;
+
+		if (!measure->finishAction.empty())
+		{
+			RmExecute(measure->skin, measure->finishAction.c_str());
+		}
 	}
 
 	HMODULE module = NULL;
@@ -150,11 +155,6 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 	{
 		measure->value = value;
 		measure->threadActive = false;
-
-		if (!measure->finishAction.empty())
-		{
-			RmExecute(measure->skin, measure->finishAction.c_str());
-		}
 	}
 	else
 	{
