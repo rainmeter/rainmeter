@@ -329,7 +329,7 @@ namespace InputText
 
         public void Abort()
         {
-            this.drBackup = DialogResult.Cancel;
+            this.drBackup = DialogResult.Abort;
             this.Close();
         }
 

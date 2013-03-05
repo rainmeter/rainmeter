@@ -72,9 +72,24 @@ namespace InputText
             if (go)
             {
                 ExecuteBangParam param = new ExecuteBangParam(args);
-                if (ReadOptions(param))  // Read all options in advance for thread-safety
+                if (ReadOptions(param))  // Read all options in main thread for thread-safety
                 {
-                    ThreadPool.QueueUserWorkItem(ExecuteBangThread, param);
+                    ThreadPool.QueueUserWorkItem(_ =>
+                    {
+                        try
+                        {
+                            ExecuteCommands(param);
+                        }
+                        catch (Exception ex)
+                        {
+                            API.Log(API.LogType.Error, "C# plugin in ExecuteBang(), " + ex.GetType().ToString() + ": " + ex.Message);
+                        }
+
+                        lock (this.locker)
+                        {
+                            this.IsExecuteBangRunning = false;
+                        }
+                    });
                 }
                 else
                 {
@@ -87,7 +102,7 @@ namespace InputText
             }
         }
 
-        internal class ExecuteBangParam
+        private class ExecuteBangParam
         {
             internal enum BangType
             {
@@ -109,28 +124,12 @@ namespace InputText
             }
         };
 
-        private void ExecuteBangThread(object state)
-        {
-            ExecuteBangParam param = (ExecuteBangParam)state;
-
-            try
-            {
-                ExecuteCommands(param);
-            }
-            catch (Exception ex)
-            {
-                API.Log(API.LogType.Error, "C# plugin in ExecuteBang(), " + ex.GetType().ToString() + ": " + ex.Message);
-            }
-
-            lock (this.locker)
-            {
-                this.IsExecuteBangRunning = false;
-            }
-        }
+        private bool _IsFinalizing = false;
 
         internal void Dispose()
         {
-            CloseInputBox();
+            this._IsFinalizing = true;
+            FinalizePluginCode();
         }
     }
 

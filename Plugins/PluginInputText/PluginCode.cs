@@ -264,6 +264,9 @@ namespace InputText
 
             lock (this._InputBoxLocker)
             {
+                if (this._IsFinalizing)
+                    return null;
+
                 SkinWindow skin = new SkinWindow(rm);
 
                 // Create the form.  'InputBox' is a .NET form with a textbox and two button controls on it.
@@ -352,7 +355,7 @@ namespace InputText
             return result;
         }
 
-        private void CloseInputBox()
+        private void FinalizePluginCode()
         {
             lock (this._InputBoxLocker)
             {
