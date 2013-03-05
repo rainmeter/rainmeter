@@ -673,6 +673,8 @@ PLUGIN_EXPORT void Finalize(void* data)
 
 unsigned __stdcall SystemThreadProc(void* pParam)
 {
+	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
 	ParentMeasure* parent = (ParentMeasure*)pParam;
 
 	EnterCriticalSection(&g_CriticalSection);
@@ -896,6 +898,8 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 	}
 
 	delete tmp;
+
+	CoUninitialize();
 	return 0;
 }
 
