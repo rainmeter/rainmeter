@@ -44,6 +44,7 @@ typedef struct	// 22 bytes
 #pragma pack(pop)
 
 unsigned __stdcall SystemThreadProc(void* pParam);
+void EscapeRegex(std::wstring& regex);
 void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, ParentMeasure* parent, RecursiveType rType);
 void GetIcon(std::wstring filePath, std::wstring iconPath, IconSize iconSize);
 HRESULT SaveIcon(HICON hIcon, FILE* fp);
@@ -729,6 +730,11 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 			std::wstring folder = tmp->path;
 			
 			RecursiveType rType = tmp->recursiveType;
+			if (rType == RECURSIVE_FULL && tmp->wildcardSearch != L"*")
+			{
+				EscapeRegex(tmp->wildcardSearch);
+			}
+
 			GetFolderInfo(folderQueue, folder, tmp, (rType == RECURSIVE_PARTIAL) ? RECURSIVE_NONE : rType);
 
 			while (rType != RECURSIVE_NONE && !folderQueue.empty())
@@ -893,10 +899,41 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 	return 0;
 }
 
+void EscapeRegex(std::wstring& regex)
+{
+	auto replace = [&regex](std::wstring from, std::wstring to)
+	{
+		size_t start = 0;
+		while ((start = regex.find(from, start)) != std::wstring::npos)
+		{
+			regex.replace(start, from.size(), to);
+			start += to.size();
+		}
+	};
+
+	replace(L"\\", L"\\\\");
+	replace(L"^", L"\\^");
+	replace(L"$", L"\\$");
+	replace(L"|", L"\\|");
+	replace(L"(", L"\\(");
+	replace(L")", L"\\)");
+	replace(L"[", L"\\[");
+	replace(L"]", L"\\]");
+	replace(L".", L"\\.");
+	replace(L"+", L"\\+");
+	replace(L"/", L"\\/");
+	replace(L"&", L"\\&");
+	replace(L"{", L"\\{");
+	replace(L"}", L"\\}");
+
+	replace(L"*", L".*");
+	replace(L"?", L".");
+}
+
 void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, ParentMeasure* parent, RecursiveType rType)
 {
 	std::wstring path = folder;
-	folder += (rType == RECURSIVE_PARTIAL) ? L"*" : parent->wildcardSearch;
+	folder += (rType == RECURSIVE_NONE) ? parent->wildcardSearch : L"*";
 
 	WIN32_FIND_DATA fd;
 	HANDLE find = FindFirstFileEx(folder.c_str(), FindExInfoStandard, &fd, FindExSearchNameMatch, nullptr, 0);
@@ -916,6 +953,15 @@ void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, 
 			file.isFolder = (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) > 0;
 			bool isHidden = (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) > 0;
 			bool isSystem = (fd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) > 0;
+
+			if (rType == RECURSIVE_FULL && parent->wildcardSearch != L"*" && !file.isFolder)
+			{
+				std::wregex pattern(parent->wildcardSearch, std::wregex::icase | std::wregex::optimize);
+				if (!std::regex_match(file.fileName, pattern))
+				{
+					continue;
+				}
+			}
 
 			if ((rType != RECURSIVE_PARTIAL) &&
 				((rType != RECURSIVE_FULL && !parent->showFile && !file.isFolder) ||
