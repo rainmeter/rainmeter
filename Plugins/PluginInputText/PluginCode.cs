@@ -29,16 +29,16 @@ namespace InputText
         {
             // Get default options
             ReadOption("DefaultValue", param.Options);
-            ReadOption("X", param.Options);
-            ReadOption("Y", param.Options);
-            ReadOption("W", param.Options);
-            ReadOption("H", param.Options);
+            ReadOption("X", param.Options, true);
+            ReadOption("Y", param.Options, true);
+            ReadOption("W", param.Options, true);
+            ReadOption("H", param.Options, true);
             ReadOption("StringStyle", param.Options);
             ReadOption("StringAlign", param.Options);
             ReadOption("FocusDismiss", param.Options);
             ReadOption("FontColor", param.Options);
             ReadOption("FontFace", param.Options);
-            ReadOption("FontSize", param.Options);
+            ReadOption("FontSize", param.Options, true);
             ReadOption("SolidColor", param.Options);
             ReadOption("Password", param.Options);
             ReadOption("TopMost", param.Options);
@@ -120,13 +120,42 @@ namespace InputText
                 for (int i = iMin; i <= iMax; i++)
                 {
                     // Read this command's line
-                    string sCurrentLine = rm.ReadString("Command" + i.ToString(), "", false);
+                    string sLine = rm.ReadString("Command" + i.ToString(), "", false);
 
                     // If empty/non-existent, abort
-                    if (string.IsNullOrEmpty(sCurrentLine))
+                    if (string.IsNullOrEmpty(sLine))
                         break;
 
-                    param.Commands.Add(sCurrentLine);
+                    #region Handle in-line overrides
+                    // Create a blank list of overrides
+                    Dictionary<string, string> Overrides = new Dictionary<string, string>();
+
+                    // Start looking for overridable settings and adjust the list accordingly,
+                    // stripping out settings from the line if they are discovered.
+                    //
+                    // The supporting TagData() function allows for whitespace if quotes are
+                    // used.  For example:
+                    //
+                    // DefaultValue="hello there, how are you"
+                    sLine = ScanAndReplace(sLine, "DefaultValue", Overrides);
+                    sLine = ScanAndReplace(sLine, "X", Overrides, true);
+                    sLine = ScanAndReplace(sLine, "Y", Overrides, true);
+                    sLine = ScanAndReplace(sLine, "W", Overrides, true);
+                    sLine = ScanAndReplace(sLine, "H", Overrides, true);
+                    sLine = ScanAndReplace(sLine, "StringStyle", Overrides);
+                    sLine = ScanAndReplace(sLine, "StringAlign", Overrides);
+                    sLine = ScanAndReplace(sLine, "FocusDismiss", Overrides);
+                    sLine = ScanAndReplace(sLine, "FontColor", Overrides);
+                    sLine = ScanAndReplace(sLine, "FontFace", Overrides);
+                    sLine = ScanAndReplace(sLine, "FontSize", Overrides, true);
+                    sLine = ScanAndReplace(sLine, "SolidColor", Overrides);
+                    sLine = ScanAndReplace(sLine, "Password", Overrides);
+                    sLine = ScanAndReplace(sLine, "TopMost", Overrides);
+
+                    param.OverrideOptions.Add(Overrides);
+                    #endregion
+
+                    param.Commands.Add(sLine);
                 }
                 #endregion
 
@@ -167,11 +196,11 @@ namespace InputText
 
                 case ExecuteBangParam.BangType.ExecuteBatch:
                     {
-                        foreach (string sCurrentLine in param.Commands)
+                        for (int i = 0; i < param.Commands.Count; ++i)
                         {
                             // Execute the line, but if there's a problem (error or they cancel the
                             // input textbox), then abort
-                            if (!ExecuteLine(sCurrentLine, param.Options))
+                            if (!ExecuteLine(param.Commands[i], param.Options, param.OverrideOptions[i]))
                                 break;
 
                             // Continue to the next line, if there is any
@@ -184,7 +213,7 @@ namespace InputText
         #region This is all code custom to this plugin
 
         #region Parse the current command line
-        private bool ExecuteLine(string sLine, Dictionary<string, string> Options)
+        private bool ExecuteLine(string sLine, Dictionary<string, string> Options, Dictionary<string, string> Overrides)
         {
             // If this line contains a $UserInput$ token, then we need to do some extra
             // parsing
@@ -192,33 +221,6 @@ namespace InputText
             {
                 try
                 {
-                    #region Handle in-line overrides
-                    // Create a blank list of overrides
-                    Dictionary<string, string> Overrides = new Dictionary<string, string>();
-
-                    // Start looking for overridable settings and adjust the list accordingly,
-                    // stripping out settings from the line if they are discovered.
-                    //
-                    // The supporting TagData() function allows for whitespace if quotes are
-                    // used.  For example:
-                    //
-                    // DefaultValue="hello there, how are you"
-                    sLine = ScanAndReplace(sLine, "DefaultValue", Overrides);
-                    sLine = ScanAndReplace(sLine, "X", Overrides);
-                    sLine = ScanAndReplace(sLine, "Y", Overrides);
-                    sLine = ScanAndReplace(sLine, "W", Overrides);
-                    sLine = ScanAndReplace(sLine, "H", Overrides);
-                    sLine = ScanAndReplace(sLine, "StringStyle", Overrides);
-                    sLine = ScanAndReplace(sLine, "StringAlign", Overrides);
-                    sLine = ScanAndReplace(sLine, "FocusDismiss", Overrides);
-                    sLine = ScanAndReplace(sLine, "FontColor", Overrides);
-                    sLine = ScanAndReplace(sLine, "FontFace", Overrides);
-                    sLine = ScanAndReplace(sLine, "FontSize", Overrides);
-                    sLine = ScanAndReplace(sLine, "SolidColor", Overrides);
-                    sLine = ScanAndReplace(sLine, "Password", Overrides);
-                    sLine = ScanAndReplace(sLine, "TopMost", Overrides);
-                    #endregion
-
                     // Get user input
                     string sInput = GetUserInput(Options, Overrides);
                     if (sInput == null)
@@ -368,14 +370,30 @@ namespace InputText
         }
         #endregion
 
-        #region ReadOption() -- reads given option's value from Rainmeter
-        private void ReadOption(string optionName, Dictionary<string, string> Options)
+        #region ReadOption(), ParseInlineOption() -- reads given option's value from Rainmeter
+        private void ReadOption(string optionName, Dictionary<string, string> Options, bool formula = false)
         {
             string value = rm.ReadString(optionName, "");
             if (!string.IsNullOrEmpty(value))
             {
-                Options.Add(optionName, value);
+                if (formula && value[0] == '(')
+                    Options.Add(optionName, rm.ReadInt(optionName, 0).ToString());
+                else
+                    Options.Add(optionName, value);
             }
+        }
+        private string ParseInlineOption(string data, bool formula = false)
+        {
+            IntPtr skin = rm.GetSkin();
+            string keyName = "__InputText_ParseInline_TemporaryKey__";
+            string bang = "!SetOption \"" + rm.GetMeasureName() + "\" " + keyName + " ";
+            string quote = (data.IndexOf('"') >= 0) ? "\"\"\"" : "\"";
+
+            API.Execute(skin, bang + quote + data + quote);  // set temporarily
+            string value = formula ? rm.ReadInt(keyName, 0).ToString() : rm.ReadString(keyName, "");
+            API.Execute(skin, bang + "\"\"");  // remove
+
+            return value;
         }
         #endregion
 
@@ -389,7 +407,7 @@ namespace InputText
             if (iReplace > 0)
                 sLineNew += sIn.Substring(0, iReplace);
             sLineNew += sReplace;
-            sLineNew += sIn.Substring(iReplace + (sFind.ToUpper()).Length);
+            sLineNew += sIn.Substring(iReplace + sFind.Length);
 
             return sLineNew;
         }
@@ -407,21 +425,24 @@ namespace InputText
             return sLineNew;
         }
         #endregion
-        #region TagLoc(), TagData(), FindTag() -- text parsing utilities for the override tags
+        #region TagLoc(), TagData() -- text parsing utilities for the override tags
         private int TagLoc(string sLine, string sTag)
         {
-            if (!FindTag(sLine, sTag))
-                return -1;
-
-            return sLine.ToUpper().IndexOf(" " + sTag.ToUpper() + "=") + 1;
+            if (!string.IsNullOrEmpty(sLine) && !string.IsNullOrEmpty(sTag))
+            {
+                int loc = sLine.ToUpper().IndexOf(" " + sTag.ToUpper() + "=");
+                if (loc >= 0)
+                    return loc + 1;
+            }
+            return -1;
         }
 
-        private string TagData(string sLine, string sTag)
+        private string TagData(string sLine, string sTag, int iStart)
         {
-            if (!FindTag(sLine, sTag))
+            if (iStart < 0)
                 return string.Empty;
 
-            int iStart = TagLoc(sLine, sTag) + sTag.Length + 1;
+            iStart += sTag.Length + 1;
 
             string sTagData = string.Empty;
             bool bInQuote = false;
@@ -457,24 +478,29 @@ namespace InputText
 
             return sTagData;
         }
-
-        private bool FindTag(string sLine, string sTag)
-        {
-            return (sLine.ToUpper().Contains(" " + sTag.ToUpper() + "="));
-        }
         #endregion
         #region ScanAndReplace() -- searches for a tag and its value, adding it to overrides if found, and then removing it from the input line
-        private string ScanAndReplace(string sLine, string sTagName, Dictionary<string, string> Overrides)
+        private string ScanAndReplace(string sLine, string sTagName, Dictionary<string, string> Overrides, bool formula = false)
         {
-            if (FindTag(sLine, sTagName))
+            int loc = TagLoc(sLine, sTagName);
+            if (loc >= 0)
             {
-                string sTagData = TagData(sLine, sTagName);
+                string sTagData = TagData(sLine, sTagName, loc);
                 // API.Log(API.LogType.Debug, "InputText: Overriding " + sTagName + " with " + sTagData);
-                if (sTagData.StartsWith("\""))
-                    Overrides.Add(sTagName, sTagData.Substring(1, sTagData.Length - 2));
-                else
-                    Overrides.Add(sTagName, sTagData);
-                sLine = Replace(sLine, TagLoc(sLine, sTagName) - 1, 1 + sTagName.Length + 1 + sTagData.Length, string.Empty);
+
+                string data = (sTagData.StartsWith("\"")) ? sTagData.Substring(1, sTagData.Length - 2) : sTagData;
+                if (!string.IsNullOrEmpty(data))
+                {
+                    int index;
+                    if (formula && data[0] == '(')
+                        data = ParseInlineOption(data, true);
+                    else if ((index = data.IndexOf('[')) >= 0 && data.IndexOf(']', index) > 0)
+                        data = ParseInlineOption(data, false);
+                }
+
+                Overrides.Add(sTagName, data);
+
+                sLine = Replace(sLine, loc - 1, 1 + sTagName.Length + 1 + sTagData.Length, string.Empty);
             }
 
             return sLine;

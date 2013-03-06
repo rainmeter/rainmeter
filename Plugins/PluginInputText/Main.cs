@@ -111,6 +111,7 @@ namespace InputText
                 ExecuteBatch
             };
             internal Dictionary<string, string> Options;
+            internal List<Dictionary<string, string>> OverrideOptions;
             internal List<string> Commands;
             internal string Command;
             internal BangType Type;
@@ -118,6 +119,7 @@ namespace InputText
             internal ExecuteBangParam(string args)
             {
                 this.Options = new Dictionary<string, string>();
+                this.OverrideOptions = new List<Dictionary<string, string>>();
                 this.Commands = new List<string>();
                 this.Command = args.Trim();
                 this.Type = BangType.Unknown;
