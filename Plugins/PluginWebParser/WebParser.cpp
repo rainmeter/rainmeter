@@ -242,7 +242,7 @@ struct MeasureData
 	}
 };
 
-BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dwSize, bool forceReload);
+BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool forceReload);
 unsigned __stdcall NetworkThreadProc(void* pParam);
 unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
 void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize);
@@ -869,7 +869,7 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 
 		ParseData(measure, (LPCSTR)data, dwSize);
 
-		delete [] data;
+		free(data);
 	}
 
 	EnterCriticalSection(&g_CriticalSection);
@@ -1592,19 +1592,10 @@ PLUGIN_EXPORT void Finalize(void* data)
 
 /*
 	Downloads the given url and returns the webpage as dynamically allocated string.
-	You need to delete the returned string after use!
+	You need to free the returned string after use!
 */
-BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dwDataSize, bool forceReload)
+BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool forceReload)
 {
-	HINTERNET hUrlDump;
-	DWORD dwSize;
-	BYTE* lpData;
-	BYTE* lpOutPut;
-	BYTE* lpHolding = NULL;
-	int nCounter = 1;
-	int nBufferSize;
-	const int CHUNK_SIZE = 8192;
-
 	std::wstring err = L"WebParser.dll: Fetching: " + url;
 	RmLog(LOG_DEBUG, err.c_str());
 
@@ -1614,8 +1605,8 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dwDataSize, bool f
 		flags = INTERNET_FLAG_RELOAD;
 	}
 
-	hUrlDump = InternetOpenUrl(handle, url.c_str(), NULL, NULL, flags, 0);
-	if (hUrlDump == NULL)
+	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), NULL, NULL, flags, 0);
+	if (!hUrlDump)
 	{
 		if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
 		{
@@ -1623,85 +1614,50 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dwDataSize, bool f
 			hUrlDump = InternetOpenUrlA(handle, urlACP.c_str(), NULL, NULL, flags, 0);
 		}
 
-		if (hUrlDump == NULL)
+		if (!hUrlDump)
 		{
 			ShowError(__LINE__);
 			return NULL;
 		}
 	}
 
-	*dwDataSize = 0;
+	// Allocate buffer with 3 extra bytes for triple null termination in case the string is
+	// invalid (e.g. when incorrectly using the UTF-16LE codepage for the data).
+	const int CHUNK_SIZE = 8192;
+	DWORD bufferSize = CHUNK_SIZE;
+	BYTE* buffer = (BYTE*)malloc(bufferSize + 3);
+	*dataSize = 0;
 
-	// Allocate the buffer.
-	lpData = new BYTE[CHUNK_SIZE];
-
+	// Read the data.
 	do
 	{
-		// Read the data.
-		if (!InternetReadFile(hUrlDump, (LPVOID)lpData, CHUNK_SIZE, &dwSize))
+		DWORD readSize;
+		if (!InternetReadFile(hUrlDump, buffer + *dataSize, bufferSize - *dataSize, &readSize))
 		{
 			ShowError(__LINE__);
 			break;
 		}
-		else
+		else if (readSize == 0)
 		{
-			// Check if all of the data has been read.  This should
-			// never get called on the first time through the loop.
-			if (dwSize == 0)
-			{
-				break;
-			}
-
-			// Determine the buffer size to hold the new data and the data
-			// already written (if any).
-			nBufferSize = *dwDataSize + dwSize;
-
-			// Allocate the output buffer.
-			lpOutPut = new BYTE[nBufferSize + 3];
-
-			// Make sure the buffer is not the initial buffer.
-			if (lpHolding != NULL)
-			{
-				// Copy the data in the holding buffer.
-				memcpy(lpOutPut, lpHolding, *dwDataSize);
-
-				// Delete the old buffer
-				delete [] lpHolding;
-
-				lpHolding = lpOutPut;
-				lpOutPut = lpOutPut + *dwDataSize;
-			}
-			else
-			{
-				lpHolding = lpOutPut;
-			}
-
-			// Copy the data buffer.
-			memcpy(lpOutPut, lpData, dwSize);
-
-			*dwDataSize += dwSize;
-
-			// End with triple null
-			lpOutPut[dwSize] = 0;
-			lpOutPut[dwSize + 1] = 0;
-			lpOutPut[dwSize + 2] = 0;
-
-			// Increment the number of buffers read.
-			++nCounter;
-
-			// Clear the buffer
-			memset(lpData, 0, CHUNK_SIZE);
+			// All data read.
+			break;
 		}
-	} while (TRUE);
 
-	// Close the HINTERNET handle.
+		*dataSize += readSize;
+
+		bufferSize += CHUNK_SIZE;
+		buffer = (BYTE*)realloc(buffer, bufferSize + 3);
+	}
+	while (true);
+
 	InternetCloseHandle(hUrlDump);
 
-	// Delete the existing buffers.
-	delete [] lpData;
+	// Triple null terminate the buffer.
+	buffer[*dataSize] = 0;
+	buffer[*dataSize + 1] = 0;
+	buffer[*dataSize + 2] = 0;
 
-	// Return.
-	return lpHolding;
+	return buffer;
 }
 
 /*
