@@ -1127,6 +1127,7 @@ bool CDialogInstall::IsIgnoredPlugin(const WCHAR* name)
 {
 	return _wcsicmp(name, L"AdvancedCPU.dll") == 0 ||
 		_wcsicmp(name, L"CoreTemp.dll") == 0 ||
+		_wcsicmp(name, L"FileView.dll") == 0 ||
 		_wcsicmp(name, L"FolderInfo.dll") == 0 ||
 		_wcsicmp(name, L"InputText.dll") == 0 ||
 		_wcsicmp(name, L"iTunesPlugin.dll") == 0 ||
