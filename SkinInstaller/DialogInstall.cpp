@@ -814,17 +814,8 @@ bool CDialogInstall::InstallPackage()
 				error = !ExtractCurrentFile(targetPath);
 				if (!error)
 				{
-					// Remove user specific options
-					const WCHAR* layout = targetPath.c_str();
-					WritePrivateProfileString(L"Rainmeter", L"SkinPath", NULL, layout);
-					WritePrivateProfileString(L"Rainmeter", L"Language", NULL, layout);
-					WritePrivateProfileString(L"Rainmeter", L"Logging", NULL, layout);
-					WritePrivateProfileString(L"Rainmeter", L"ConfigEditor", NULL, layout);
-					WritePrivateProfileString(L"Rainmeter", L"LogViewer", NULL, layout);
-					WritePrivateProfileString(L"Rainmeter", L"DisableDragging", NULL, layout);
-					WritePrivateProfileString(L"Rainmeter", L"DisableRDP", NULL, layout);
-					WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", NULL, layout);
-					WritePrivateProfileString(L"Rainmeter", L"Debug", NULL, layout);
+					// Clear the [Rainmeter] section.
+					WritePrivateProfileSection(L"Rainmeter", L"", targetPath.c_str());
 				}
 			}
 		}
