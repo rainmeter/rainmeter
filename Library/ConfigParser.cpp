@@ -287,7 +287,7 @@ bool CConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& 
 	CMeasure* measure = m_MeterWindow->GetMeasure(strVariable);
 	if (measure)
 	{
-		double scale = 1.0;
+		int scale = 1;
 
 		const WCHAR* decimalsSz = wcschr(selectorSz, L',');
 		if (decimalsSz)
@@ -308,9 +308,9 @@ bool CConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& 
 		{
 			errno = 0;
 			scale = _wtoi(selectorSz + 1);
-			if (errno == EINVAL)
+			if (errno == EINVAL || scale == 0)  // Invalid scale value
 			{
-				scale = 1.0;
+				return false;
 			}
 		}
 		else
