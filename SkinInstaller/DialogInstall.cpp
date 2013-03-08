@@ -1104,49 +1104,83 @@ void CDialogInstall::LaunchRainmeter()
 	}
 }
 
+// Helper for the IsIgnore... functions.
+bool IsIgnoredName(const WCHAR* name, const WCHAR* names[], int namesCount)
+{
+	for (int i = 0; i < namesCount; ++i)
+	{
+		if (_wcsicmp(name, names[i]) == 0)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool CDialogInstall::IsIgnoredSkin(const WCHAR* name)
 {
-	return _wcsicmp(name, L"Backup") == 0 ||
-		_wcsicmp(name, L"@Backup") == 0;
+	static const WCHAR* s_Skins[] =
+	{
+		L"Backup",
+		L"@Backup"
+	};
+
+	return IsIgnoredName(name, s_Skins, _countof(s_Skins));
 }
 
 bool CDialogInstall::IsIgnoredLayout(const WCHAR* name)
 {
-	return _wcsicmp(name, L"Backup") == 0 ||
-		_wcsicmp(name, L"@Backup") == 0;
+	static const WCHAR* s_Layouts[] =
+	{
+		L"Backup",
+		L"@Backup"
+	};
+
+	return IsIgnoredName(name, s_Layouts, _countof(s_Layouts));
 }
 
 bool CDialogInstall::IsIgnoredAddon(const WCHAR* name)
 {
-	return _wcsicmp(name, L"Backup") == 0 ||
-		_wcsicmp(name, L"Rainstaller") == 0 ||
-		_wcsicmp(name, L"RainBackup") == 0;
+	static const WCHAR* s_Addons[] =
+	{
+		L"Backup",
+		L"Rainstaller",
+		L"RainBackup"
+	};
+
+	return IsIgnoredName(name, s_Addons, _countof(s_Addons));
 }
 
 bool CDialogInstall::IsIgnoredPlugin(const WCHAR* name)
 {
-	return _wcsicmp(name, L"AdvancedCPU.dll") == 0 ||
-		_wcsicmp(name, L"CoreTemp.dll") == 0 ||
-		_wcsicmp(name, L"FileView.dll") == 0 ||
-		_wcsicmp(name, L"FolderInfo.dll") == 0 ||
-		_wcsicmp(name, L"InputText.dll") == 0 ||
-		_wcsicmp(name, L"iTunesPlugin.dll") == 0 ||
-		_wcsicmp(name, L"MediaKey.dll") == 0 ||
-		_wcsicmp(name, L"NowPlaying.dll") == 0 ||
-		_wcsicmp(name, L"PerfMon.dll") == 0 ||
-		_wcsicmp(name, L"PingPlugin.dll") == 0 ||
-		_wcsicmp(name, L"PowerPlugin.dll") == 0 ||
-		_wcsicmp(name, L"Process.dll") == 0 ||
-		_wcsicmp(name, L"QuotePlugin.dll") == 0 ||
-		_wcsicmp(name, L"RecycleManager.dll") == 0 ||
-		_wcsicmp(name, L"ResMon.dll") == 0 ||
-		_wcsicmp(name, L"SpeedFanPlugin.dll") == 0 ||
-		_wcsicmp(name, L"SysInfo.dll") == 0 ||
-		_wcsicmp(name, L"VirtualDesktops.dll") == 0 ||
-		_wcsicmp(name, L"WebParser.dll") == 0 ||
-		_wcsicmp(name, L"WifiStatus.dll") == 0 ||
-		_wcsicmp(name, L"Win7AudioPlugin.dll") == 0 ||
-		_wcsicmp(name, L"WindowMessagePlugin.dll") == 0;
+	static const WCHAR* s_Plugins[] =
+	{
+		L"AdvancedCPU.dll",
+		L"CoreTemp.dll",
+		L"FileView.dll",
+		L"FolderInfo.dll",
+		L"InputText.dll",
+		L"iTunesPlugin.dll",
+		L"MediaKey.dll",
+		L"NowPlaying.dll",
+		L"PerfMon.dll",
+		L"PingPlugin.dll",
+		L"PowerPlugin.dll",
+		L"Process.dll",
+		L"QuotePlugin.dll",
+		L"RecycleManager.dll",
+		L"ResMon.dll",
+		L"SpeedFanPlugin.dll",
+		L"SysInfo.dll",
+		L"VirtualDesktops.dll",
+		L"WebParser.dll",
+		L"WifiStatus.dll",
+		L"Win7AudioPlugin.dll",
+		L"WindowMessagePlugin.dll"
+	};
+
+	return IsIgnoredName(name, s_Plugins, _countof(s_Plugins));
 }
 
 /*
