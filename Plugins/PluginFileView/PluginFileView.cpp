@@ -650,21 +650,18 @@ PLUGIN_EXPORT void Finalize(void* data)
 	ParentMeasure* parent = child->parent;
 
 	EnterCriticalSection(&g_CriticalSection);
-	if (parent->thread)
-	{
-		TerminateThread(parent->thread, 0);
-		parent->thread = nullptr;
-	}
-
 	if (parent && parent->ownerChild == child)
 	{
-		CloseHandle(parent->thread);
-		parent->thread = nullptr;
-
-		delete parent;
+		if (parent->thread)
+		{
+			TerminateThread(parent->thread, 0);
+			parent->thread = nullptr;
+		}
 
 		auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), parent);
 		g_ParentMeasures.erase(iter);
+
+		delete parent;
 	}
 
 	delete child;
