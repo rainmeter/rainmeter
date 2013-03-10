@@ -85,8 +85,6 @@ private:
 	static UINT __stdcall InstallThread(void* pParam);
 	bool ExtractCurrentFile(const std::wstring& fileName);
 
-	bool IsPackageBlacklisted();
-
 	void LaunchRainmeter();
 	void KeepVariables();
 
