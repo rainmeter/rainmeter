@@ -3283,81 +3283,84 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 		}
 
 		// Add custom actions to the context menu
-		auto isTitleSeparator = [](const std::wstring& title)
-		{
-			return title.find_first_not_of(L'-') == std::wstring::npos;
-		};
-
 		std::wstring contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextTitle", L"");
-		std::wstring contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextAction", L"");
-		if (!contextTitle.empty() && (!contextAction.empty() || isTitleSeparator(contextTitle)))
+		if (!contextTitle.empty())
 		{
-			std::vector<std::wstring> cTitles;
-			WCHAR buffer[128];
-			int i = 1;
-
-			while (!contextTitle.empty() && 
-			      (!contextAction.empty() || isTitleSeparator(contextTitle)) &&
-			      (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i - 1) <= IDM_SKIN_CUSTOMCONTEXTMENU_LAST) // Set maximum context items in resource.h
+			auto isTitleSeparator = [](const std::wstring& title)
 			{
-				// Trim long titles
-				if (contextTitle.size() > 30)
-				{
-					contextTitle.replace(27, contextTitle.size() - 27, L"...");
-				}
+				return title.find_first_not_of(L'-') == std::wstring::npos;
+			};
 
-				cTitles.push_back(contextTitle);
-
-				_snwprintf_s(buffer, _TRUNCATE, L"ContextTitle%i", ++i);
-				contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
-				_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", i);
-				contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
-			}
-
-			// Build a sub-menu if more than three items
-			size_t titleSize = cTitles.size();
-			if (titleSize <= 3)
+			std::wstring contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextAction", L"");
+			if (!contextAction.empty() || isTitleSeparator(contextTitle))
 			{
-				size_t position = 0;
-				for (size_t i = 0; i < titleSize; ++i)
+				std::vector<std::wstring> cTitles;
+				WCHAR buffer[128];
+				int i = 1;
+
+				while (!contextTitle.empty() &&
+					  (!contextAction.empty() || isTitleSeparator(contextTitle)) &&
+					  (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i - 1) <= IDM_SKIN_CUSTOMCONTEXTMENU_LAST) // Set maximum context items in resource.h
 				{
-					if (isTitleSeparator(cTitles[i]))
+					// Trim long titles
+					if (contextTitle.size() > 30)
 					{
-						// Separators not allowed in main top-level menu
-						--position;
-					}
-					else
-					{
-						InsertMenu(skinMenu, position + 1, MF_BYPOSITION | MF_STRING, (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i), cTitles[i].c_str());
+						contextTitle.replace(27, contextTitle.size() - 27, L"...");
 					}
 
-					++position;
+					cTitles.push_back(contextTitle);
+
+					_snwprintf_s(buffer, _TRUNCATE, L"ContextTitle%i", ++i);
+					contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
+					_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", i);
+					contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
 				}
 
-				if (position != 0)
+				// Build a sub-menu if more than three items
+				size_t titleSize = cTitles.size();
+				if (titleSize <= 3)
 				{
-					InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, NULL, L"Custom skin actions");
+					size_t position = 0;
+					for (size_t i = 0; i < titleSize; ++i)
+					{
+						if (isTitleSeparator(cTitles[i]))
+						{
+							// Separators not allowed in main top-level menu
+							--position;
+						}
+						else
+						{
+							InsertMenu(skinMenu, position + 1, MF_BYPOSITION | MF_STRING, (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i), cTitles[i].c_str());
+						}
+
+						++position;
+					}
+
+					if (position != 0)
+					{
+						InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, NULL, L"Custom skin actions");
+						InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+					}
+				}
+				else
+				{
+					HMENU customMenu = CreatePopupMenu();
+					InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)customMenu, L"Custom skin actions");
+				
+					for (size_t i = 0; i < titleSize; ++i)
+					{
+						if (isTitleSeparator(cTitles[i]))
+						{
+							AppendMenu(customMenu, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+						}
+						else
+						{
+							AppendMenu(customMenu, MF_BYPOSITION | MF_STRING, (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i), cTitles[i].c_str());
+						}
+					}
+
 					InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 				}
-			}
-			else
-			{
-				HMENU customMenu = CreatePopupMenu();
-				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)customMenu, L"Custom skin actions");
-				
-				for (size_t i = 0; i < titleSize; ++i)
-				{
-					if (isTitleSeparator(cTitles[i]))
-					{
-						AppendMenu(customMenu, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-					}
-					else
-					{
-						AppendMenu(customMenu, MF_BYPOSITION | MF_STRING, (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i), cTitles[i].c_str());
-					}
-				}
-
-				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
 			}
 		}
 	}
