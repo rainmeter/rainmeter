@@ -237,6 +237,8 @@ public:
 
 	bool GetMeterToolTipHidden() { return m_ToolTipHidden; }
 
+	bool IsClosing() { return m_State == STATE_CLOSING; }
+
 	const CMouse& GetMouse() { return m_Mouse; }
 
 	void MakePathAbsolute(std::wstring& path);
@@ -290,6 +292,14 @@ protected:
 	LRESULT OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
+	enum STATE
+	{
+		STATE_INITIALIZING,
+		STATE_REFRESHING,
+		STATE_RUNNING,
+		STATE_CLOSING
+	};
+
 	enum OPTION
 	{
 		OPTION_POSITION         = 0x00000001,
@@ -433,7 +443,7 @@ private:
 	int m_FadeEndValue;
 	int m_TransparencyValue;
 
-	bool m_Refreshing;
+	STATE m_State;
 
 	bool m_Hidden;
 	RESIZEMODE m_ResizeWindow;

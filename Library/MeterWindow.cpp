@@ -137,7 +137,7 @@ CMeterWindow::CMeterWindow(const std::wstring& folderPath, const std::wstring& f
 	m_FadeStartValue(),
 	m_FadeEndValue(),
 	m_TransparencyValue(),
-	m_Refreshing(false),
+	m_State(STATE_INITIALIZING),
 	m_Hidden(false),
 	m_ResizeWindow(RESIZEMODE_NONE),
 	m_UpdateCounter(),
@@ -214,6 +214,8 @@ void CMeterWindow::Dispose(bool refresh)
 	KillTimer(m_Window, TIMER_MOUSE);
 	KillTimer(m_Window, TIMER_FADE);
 	KillTimer(m_Window, TIMER_TRANSITION);
+
+	m_FadeStartTime = 0;
 
 	UnregisterMouseInput();
 	m_HasMouseScrollAction = false;
@@ -389,6 +391,8 @@ void CMeterWindow::RemoveWindowExStyle(LONG_PTR flag)
 */
 void CMeterWindow::Deactivate()
 {
+	m_State = STATE_CLOSING;
+
 	Rainmeter->RemoveMeterWindow(this);
 
 	HideFade();
@@ -403,6 +407,9 @@ void CMeterWindow::Refresh(bool init, bool all)
 {
 	assert(Rainmeter != NULL);
 
+	if (m_State == STATE_CLOSING) return;
+	m_State = STATE_REFRESHING;
+
 	Rainmeter->SetCurrentParser(&m_Parser);
 
 	std::wstring notice = L"Refreshing skin \"" + m_FolderPath;
@@ -411,7 +418,6 @@ void CMeterWindow::Refresh(bool init, bool all)
 	notice += L'"';
 	Log(LOG_NOTICE, notice.c_str());
 
-	m_Refreshing = true;
 	SetResizeWindowMode(RESIZEMODE_RESET);
 
 	if (!init)
@@ -473,7 +479,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 
 	Rainmeter->SetCurrentParser(NULL);
 
-	m_Refreshing = false;
+	m_State = STATE_RUNNING;
 
 	if (!m_OnRefreshAction.empty())
 	{
@@ -3375,7 +3381,10 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_CLOSESKIN:
-		Rainmeter->DeactivateSkin(this, -1);
+		if (m_State != STATE_CLOSING)
+		{
+			Rainmeter->DeactivateSkin(this, -1);
+		}
 		break;
 
 	case IDM_SKIN_FROMRIGHT:
@@ -3718,7 +3727,7 @@ LRESULT CMeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lPara
 {
 	LPWINDOWPOS wp = (LPWINDOWPOS)lParam;
 
-	if (!m_Refreshing)
+	if (m_State != STATE_REFRESHING)
 	{
 		if (m_WindowZPosition == ZPOSITION_NORMAL && Rainmeter->IsNormalStayDesktop() && CSystem::GetShowDesktop())
 		{

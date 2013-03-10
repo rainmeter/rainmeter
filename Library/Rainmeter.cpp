@@ -2884,7 +2884,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 		MENU_ITEM(IDM_QUIT, ID_STR_EXIT)
 	};
 
-	if (!m_MenuActive)
+	if (!m_MenuActive && (!meterWindow || !meterWindow->IsClosing()))
 	{
 		m_MenuActive = true;
 
