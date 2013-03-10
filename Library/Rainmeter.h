@@ -126,8 +126,9 @@ public:
 	const std::vector<SkinFolder>& GetFolders() { return m_SkinFolders; }
 	const std::vector<std::wstring>& GetAllLayouts() { return m_Layouts; }
 
-	void DeleteAllMeterWindows();
 	void RemoveMeterWindow(CMeterWindow* meterWindow);
+	void AddUnmanagedMeterWindow(CMeterWindow* meterWindow);
+	void RemoveUnmanagedMeterWindow(CMeterWindow* meterWindow);
 
 	void ActivateSkin(int folderIndex, int fileIndex);
 	void DeactivateSkin(CMeterWindow* meterWindow, int folderIndex, bool save = true);
@@ -246,6 +247,8 @@ private:
 
 	void ActivateActiveSkins();
 	void CreateMeterWindow(const std::wstring& folderPath, const std::wstring& file);
+	void DeleteAllMeterWindows();
+	void DeleteAllUnmanagedMeterWindows();
 	void WriteActive(const std::wstring& folderPath, int fileIndex);
 	void ScanForSkins();
 	void ScanForLayouts();
@@ -273,6 +276,7 @@ private:
 	std::vector<SkinFolder> m_SkinFolders;
 	std::multimap<int, int> m_SkinOrders;
 	std::map<std::wstring, CMeterWindow*> m_MeterWindows;
+	std::list<CMeterWindow*> m_UnmanagedMeterWindows;
 	std::vector<std::wstring> m_Layouts;
 
 	std::wstring m_Path;

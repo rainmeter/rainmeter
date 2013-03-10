@@ -394,6 +394,7 @@ void CMeterWindow::Deactivate()
 	m_State = STATE_CLOSING;
 
 	Rainmeter->RemoveMeterWindow(this);
+	Rainmeter->AddUnmanagedMeterWindow(this);
 
 	HideFade();
 	SetTimer(m_Window, TIMER_DEACTIVATE, m_FadeDuration + 50, NULL);
@@ -2887,6 +2888,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (m_FadeStartTime == 0)
 		{
 			KillTimer(m_Window, TIMER_DEACTIVATE);
+			Rainmeter->RemoveUnmanagedMeterWindow(this);
 			delete this;
 		}
 		break;

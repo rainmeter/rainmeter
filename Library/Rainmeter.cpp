@@ -728,6 +728,7 @@ CRainmeter::~CRainmeter()
 {
 	KillTimer(m_Window, TIMER_NETSTATS);
 
+	DeleteAllUnmanagedMeterWindows();
 	DeleteAllMeterWindows();
 
 	delete m_TrayWindow;
@@ -1540,8 +1541,18 @@ void CRainmeter::DeleteAllMeterWindows()
 	CDialogAbout::UpdateSkins();
 }
 
+void CRainmeter::DeleteAllUnmanagedMeterWindows()
+{
+	for (auto it = m_UnmanagedMeterWindows.cbegin(); it != m_UnmanagedMeterWindows.end(); ++it)
+	{
+		delete (*it);
+	}
+
+	m_UnmanagedMeterWindows.clear();
+}
+
 /*
-** Removes the skin from m_MeterWindow. The skin should delete itself.
+** Removes the skin from m_MeterWindows. The skin should delete itself.
 **
 */
 void CRainmeter::RemoveMeterWindow(CMeterWindow* meterWindow)
@@ -1553,6 +1564,35 @@ void CRainmeter::RemoveMeterWindow(CMeterWindow* meterWindow)
 			m_MeterWindows.erase(it);
 			CDialogManage::UpdateSkins(meterWindow, true);
 			CDialogAbout::UpdateSkins();
+			break;
+		}
+	}
+}
+
+/*
+** Adds the skin to m_UnmanagedMeterWindows. The skin should remove itself by calling RemoveUnmanagedMeterWindow().
+**
+*/
+void CRainmeter::AddUnmanagedMeterWindow(CMeterWindow* meterWindow)
+{
+	for (auto it = m_UnmanagedMeterWindows.cbegin(); it != m_UnmanagedMeterWindows.cend(); ++it)
+	{
+		if ((*it) == meterWindow)  // already added
+		{
+			return;
+		}
+	}
+
+	m_UnmanagedMeterWindows.push_back(meterWindow);
+}
+
+void CRainmeter::RemoveUnmanagedMeterWindow(CMeterWindow* meterWindow)
+{
+	for (auto it = m_UnmanagedMeterWindows.cbegin(); it != m_UnmanagedMeterWindows.cend(); ++it)
+	{
+		if ((*it) == meterWindow)
+		{
+			m_UnmanagedMeterWindows.erase(it);
 			break;
 		}
 	}
@@ -2590,6 +2630,7 @@ bool CRainmeter::LoadLayout(const std::wstring& name)
 		return false;
 	}
 
+	DeleteAllUnmanagedMeterWindows();
 	DeleteAllMeterWindows();
 
 	std::wstring backup = GetLayoutPath();
