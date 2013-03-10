@@ -126,7 +126,8 @@ public:
 	const std::vector<SkinFolder>& GetFolders() { return m_SkinFolders; }
 	const std::vector<std::wstring>& GetAllLayouts() { return m_Layouts; }
 
-	void DeleteMeterWindow(CMeterWindow* meterWindow, bool force = false);
+	void DeleteAllMeterWindows();
+	void RemoveMeterWindow(CMeterWindow* meterWindow);
 
 	void ActivateSkin(int folderIndex, int fileIndex);
 	void DeactivateSkin(CMeterWindow* meterWindow, int folderIndex, bool save = true);

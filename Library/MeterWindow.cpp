@@ -389,6 +389,8 @@ void CMeterWindow::RemoveWindowExStyle(LONG_PTR flag)
 */
 void CMeterWindow::Deactivate()
 {
+	Rainmeter->RemoveMeterWindow(this);
+
 	HideFade();
 	SetTimer(m_Window, TIMER_DEACTIVATE, m_FadeDuration + 50, NULL);
 }
@@ -2879,7 +2881,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (m_FadeStartTime == 0)
 		{
 			KillTimer(m_Window, TIMER_DEACTIVATE);
-			Rainmeter->DeleteMeterWindow(this, true);  // "delete this;"
+			delete this;
 		}
 		break;
 	}
