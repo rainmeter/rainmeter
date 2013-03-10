@@ -1053,7 +1053,9 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(m_SkinFolderPath, m_SkinFileName);
 				if (indexes.first != -1 && indexes.second != -1)
 				{
+					m_HandleCommands = false;
 					Rainmeter->ActivateSkin(indexes.first, indexes.second);
+					m_HandleCommands = true;
 
 					// Fake selection change to update controls
 					NMHDR nm;
