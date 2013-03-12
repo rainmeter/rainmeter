@@ -29,8 +29,8 @@ static CRITICAL_SECTION g_CsLogDelay = {0};
 
 void InitalizeLitestep()
 {
-	InitializeCriticalSection(&g_CsLog);
-	InitializeCriticalSection(&g_CsLogDelay);
+	CSystem::InitializeCriticalSection(&g_CsLog);
+	CSystem::InitializeCriticalSection(&g_CsLogDelay);
 }
 
 void FinalizeLitestep()

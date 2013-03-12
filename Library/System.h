@@ -24,10 +24,10 @@
 
 enum OSPLATFORM
 {
-	OSPLATFORM_UNKNOWN = 0,
 	OSPLATFORM_XP,
 	OSPLATFORM_VISTA,
-	OSPLATFORM_7
+	OSPLATFORM_7,
+	OSPLATFORM_8
 };
 
 struct MonitorInfo
@@ -67,7 +67,7 @@ public:
 	static HWND GetHelperWindow() { return c_HelperWindow; }
 	static void PrepareHelperWindow(HWND WorkerW = GetWorkerW());
 
-	static OSPLATFORM GetOSPlatform() { return c_Platform; }
+	static OSPLATFORM GetOSPlatform() { static OSPLATFORM c_Platform = InitOSPlatform(); return c_Platform; }
 	static ULONGLONG GetTickCount64();
 	static POINT GetCursorPosition();
 
@@ -79,6 +79,7 @@ public:
 
 	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = NULL);
 	static void ResetWorkingDirectory();
+	static void InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 
 	static void SetClipboardText(const std::wstring& text);
 	static void SetWallpaper(const std::wstring& wallpaper, const std::wstring& style);
@@ -98,7 +99,7 @@ private:
 	static void ClearMultiMonitorInfo() { c_Monitors.monitors.clear(); }
 	static void UpdateWorkareaInfo();
 
-	static void SetOSPlatform();
+	static OSPLATFORM InitOSPlatform();
 
 	static HWND GetDefaultShellWindow();
 	static HWND GetWorkerW();
@@ -115,8 +116,6 @@ private:
 	static MultiMonitorInfo c_Monitors;
 
 	static bool c_ShowDesktop;
-
-	static OSPLATFORM c_Platform;
 
 	static std::wstring c_WorkingDirectory;
 

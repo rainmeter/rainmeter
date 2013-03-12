@@ -51,8 +51,6 @@ HWINEVENTHOOK CSystem::c_WinEventHook = NULL;
 
 bool CSystem::c_ShowDesktop = false;
 
-OSPLATFORM CSystem::c_Platform = OSPLATFORM_UNKNOWN;
-
 std::wstring CSystem::c_WorkingDirectory;
 
 std::vector<std::wstring> CSystem::c_IniFileMappings;
@@ -101,8 +99,6 @@ void CSystem::Initialize(HINSTANCE instance)
 
 	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 	SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
-
-	SetOSPlatform();
 
 	c_Monitors.monitors.reserve(4);
 	SetMultiMonitorInfo();
@@ -548,32 +544,34 @@ void CSystem::UpdateWorkareaInfo()
 ** Sets the OS platform.
 **
 */
-void CSystem::SetOSPlatform()
+OSPLATFORM CSystem::InitOSPlatform()
 {
 	OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
 	if (GetVersionEx((OSVERSIONINFO*)&osvi))
 	{
-		if (osvi.dwMajorVersion == 5)
+		switch (osvi.dwMajorVersion)
 		{
+		case 5:
 			// Not checking for osvi.dwMinorVersion >= 1 because Rainmeter won't run on pre-XP
-			c_Platform = OSPLATFORM_XP;
-		}
-		else if (osvi.dwMajorVersion == 6)
-		{
-			if (osvi.dwMinorVersion == 0)
+			return OSPLATFORM_XP;
+
+		case 6:
+			switch (osvi.dwMinorVersion)
 			{
-				c_Platform = OSPLATFORM_VISTA; // Vista, Server 2008
+			case 0:
+				return OSPLATFORM_VISTA; // Vista, Server 2008
+
+			case 1:
+				return OSPLATFORM_7; // 7, Server 2008R2
+
+			default:
+				return OSPLATFORM_8; // 8, Server 2012
 			}
-			else
-			{
-				c_Platform = OSPLATFORM_7; // 7, Server 2008R2
-			}
-		}
-		else // newer OS
-		{
-			c_Platform = OSPLATFORM_7;
+			break;
 		}
 	}
+
+	return OSPLATFORM_8;  // newer OS
 }
 
 /*
@@ -1117,6 +1115,28 @@ void CSystem::ResetWorkingDirectory()
 	{
 		SetCurrentDirectory(workDir);
 	}
+}
+
+/*
+** Initializes a critical section object by using InitializeCriticalSectionEx function with CRITICAL_SECTION_NO_DEBUG_INFO flag.
+** For more details: http://stackoverflow.com/questions/804848/critical-sections-leaking-memory-on-vista-win2008/
+**
+*/
+void CSystem::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
+{
+	typedef BOOL (WINAPI * FPINITCRITEX)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
+	static FPINITCRITEX InitializeCriticalSectionEx = (GetOSPlatform() >= OSPLATFORM_VISTA) ?
+		(FPINITCRITEX)GetProcAddress(GetModuleHandle(L"Kernel32"), "InitializeCriticalSectionEx") : nullptr;
+
+	if (InitializeCriticalSectionEx)
+	{
+		if (InitializeCriticalSectionEx(lpCriticalSection, 0, CRITICAL_SECTION_NO_DEBUG_INFO))
+		{
+			return;
+		}
+	}
+
+	::InitializeCriticalSectionAndSpinCount(lpCriticalSection, 0);
 }
 
 /*
