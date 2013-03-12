@@ -145,7 +145,7 @@ CMeterWindow::CMeterWindow(const std::wstring& folderPath, const std::wstring& f
 	m_FontCollection(),
 	m_ToolTipHidden(false)
 {
-	if (!c_DwmInstance && CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
+	if (!c_DwmInstance && Platform::IsAtLeastWinVista())
 	{
 		c_DwmInstance = CSystem::RmLoadLibrary(L"dwmapi.dll");
 		if (c_DwmInstance)
@@ -1030,7 +1030,7 @@ void CMeterWindow::HideBlur()
 */
 void CMeterWindow::ResizeBlur(const std::wstring& arg, int mode)
 {
-	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
+	if (Platform::IsAtLeastWinVista())
 	{
 		WCHAR* parseSz = _wcsdup(arg.c_str());
 		int type, x, y, w = 0, h = 0;
@@ -2054,7 +2054,7 @@ bool CMeterWindow::ReadSkin()
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
 	m_ToolTipHidden = 0 != m_Parser.ReadInt(L"Rainmeter", L"ToolTipHidden", 0);
 
-	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
+	if (Platform::IsAtLeastWinVista())
 	{
 		if (0 != m_Parser.ReadInt(L"Rainmeter", L"Blur", 0))
 		{
@@ -2095,7 +2095,7 @@ bool CMeterWindow::ReadSkin()
 
 		HANDLE find = FindFirstFileEx(
 			resourcePath.c_str(),
-			(CSystem::GetOSPlatform() >= OSPLATFORM_7) ? FindExInfoBasic : FindExInfoStandard,
+			(Platform::IsAtLeastWin7()) ? FindExInfoBasic : FindExInfoStandard,
 			&fd,
 			FindExSearchNameMatch,
 			NULL,

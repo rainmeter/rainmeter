@@ -66,6 +66,7 @@
     <ClCompile Include="..\Common\ControlTemplate.cpp" />
     <ClCompile Include="..\Common\Dialog.cpp" />
     <ClCompile Include="..\Common\MenuTemplate.cpp" />
+    <ClCompile Include="..\Common\Platform.cpp" />
     <ClCompile Include="..\Common\StringUtil.cpp" />
     <ClCompile Include="ConfigParser.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -275,6 +276,7 @@
     <ClInclude Include="..\Common\ControlTemplate.h" />
     <ClInclude Include="..\Common\Dialog.h" />
     <ClInclude Include="..\Common\MenuTemplate.h" />
+    <ClInclude Include="..\Common\Platform.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="DialogAbout.h" />

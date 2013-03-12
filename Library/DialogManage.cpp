@@ -233,7 +233,7 @@ INT_PTR CDialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = m_TabSkins.GetControl(CTabSkins::Id_FileLabel);
 	SendMessage(item, WM_SETFONT, (WPARAM)m_FontBold, 0);
 
-	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
+	if (Platform::IsAtLeastWinVista())
 	{
 		// Use arrows instead of plus/minus in the tree for Vista+
 		item = m_TabSkins.GetControl(CTabSkins::Id_SkinsTreeView);

@@ -21,14 +21,7 @@
 
 #include <windows.h>
 #include <vector>
-
-enum OSPLATFORM
-{
-	OSPLATFORM_XP,
-	OSPLATFORM_VISTA,
-	OSPLATFORM_7,
-	OSPLATFORM_8
-};
+#include "../Common/Platform.h"
 
 struct MonitorInfo
 {
@@ -67,7 +60,6 @@ public:
 	static HWND GetHelperWindow() { return c_HelperWindow; }
 	static void PrepareHelperWindow(HWND WorkerW = GetWorkerW());
 
-	static OSPLATFORM GetOSPlatform() { static OSPLATFORM c_Platform = InitOSPlatform(); return c_Platform; }
 	static ULONGLONG GetTickCount64();
 	static POINT GetCursorPosition();
 
@@ -98,8 +90,6 @@ private:
 	static void SetMultiMonitorInfo();
 	static void ClearMultiMonitorInfo() { c_Monitors.monitors.clear(); }
 	static void UpdateWorkareaInfo();
-
-	static OSPLATFORM InitOSPlatform();
 
 	static HWND GetDefaultShellWindow();
 	static HWND GetWorkerW();

@@ -333,6 +333,9 @@
     <ClCompile Include="..\Common\MenuTemplate.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\Platform.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
     <ClCompile Include="..\Common\StringUtil.cpp">
       <Filter>Common</Filter>
     </ClCompile>
@@ -573,6 +576,9 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\MenuTemplate.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Platform.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\StringUtil.h">

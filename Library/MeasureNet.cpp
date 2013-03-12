@@ -691,7 +691,7 @@ void CMeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate
 */
 void CMeasureNet::InitializeStatic()
 {
-	if (CSystem::GetOSPlatform() >= OSPLATFORM_VISTA)
+	if (Platform::IsAtLeastWinVista())
 	{
 		HMODULE IpHlpApiLibrary = GetModuleHandle(L"IpHlpApi.dll");
 		if (IpHlpApiLibrary)

@@ -1828,7 +1828,7 @@ int CRainmeter::ScanForSkinsRecursive(const std::wstring& path, std::wstring bas
 
 	hSearch = FindFirstFileEx(
 		filter.c_str(),
-		(CSystem::GetOSPlatform() >= OSPLATFORM_7) ? FindExInfoBasic : FindExInfoStandard,
+		(Platform::IsAtLeastWin7()) ? FindExInfoBasic : FindExInfoStandard,
 		&fileData,
 		FindExSearchNameMatch,
 		NULL,
@@ -1935,7 +1935,7 @@ void CRainmeter::ScanForLayouts()
 
 	hSearch = FindFirstFileEx(
 		folders.c_str(),
-		(CSystem::GetOSPlatform() >= OSPLATFORM_7) ? FindExInfoBasic : FindExInfoStandard,
+		(Platform::IsAtLeastWin7()) ? FindExInfoBasic : FindExInfoStandard,
 		&fileData,
 		FindExSearchNameMatch,
 		NULL,

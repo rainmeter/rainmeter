@@ -541,40 +541,6 @@ void CSystem::UpdateWorkareaInfo()
 }
 
 /*
-** Sets the OS platform.
-**
-*/
-OSPLATFORM CSystem::InitOSPlatform()
-{
-	OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
-	if (GetVersionEx((OSVERSIONINFO*)&osvi))
-	{
-		switch (osvi.dwMajorVersion)
-		{
-		case 5:
-			// Not checking for osvi.dwMinorVersion >= 1 because Rainmeter won't run on pre-XP
-			return OSPLATFORM_XP;
-
-		case 6:
-			switch (osvi.dwMinorVersion)
-			{
-			case 0:
-				return OSPLATFORM_VISTA; // Vista, Server 2008
-
-			case 1:
-				return OSPLATFORM_7; // 7, Server 2008R2
-
-			default:
-				return OSPLATFORM_8; // 8, Server 2012
-			}
-			break;
-		}
-	}
-
-	return OSPLATFORM_8;  // newer OS
-}
-
-/*
 ** Finds the Default Shell's window.
 **
 */
@@ -1125,7 +1091,7 @@ void CSystem::ResetWorkingDirectory()
 void CSystem::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 	typedef BOOL (WINAPI * FPINITCRITEX)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
-	static FPINITCRITEX InitializeCriticalSectionEx = (GetOSPlatform() >= OSPLATFORM_VISTA) ?
+	static FPINITCRITEX InitializeCriticalSectionEx = Platform::IsAtLeastWinVista() ?
 		(FPINITCRITEX)GetProcAddress(GetModuleHandle(L"Kernel32"), "InitializeCriticalSectionEx") : nullptr;
 
 	if (InitializeCriticalSectionEx)
@@ -1212,7 +1178,7 @@ void CSystem::SetWallpaper(const std::wstring& wallpaper, const std::wstring& st
 						{
 							wallStyle = L"2";
 						}
-						else if (GetOSPlatform() >= OSPLATFORM_7)
+						else if (Platform::IsAtLeastWin7())
 						{
 							if (_wcsicmp(option, L"FIT") == 0)
 							{
