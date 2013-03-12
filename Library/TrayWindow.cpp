@@ -309,7 +309,7 @@ void CTrayWindow::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, con
 		wcsncpy_s(nid.szInfoTitle, title, _TRUNCATE);
 		wcsncpy_s(nid.szInfo, text, _TRUNCATE);
 
-		if (Platform::IsAtLeastWinVista())
+		if (Platform::IsAtLeastWin7())
 		{
 			nid.dwInfoFlags |= NIIF_LARGE_ICON;
 			nid.hBalloonIcon = GetIcon(IDI_RAINMETER, true);
