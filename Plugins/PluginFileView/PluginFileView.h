@@ -156,7 +156,6 @@ struct ChildMeasure
 	std::wstring iconPath;
 	int index;
 	bool ignoreCount;
-	bool needsIcon;
 
 	std::wstring strValue;
 	ParentMeasure* parent;
@@ -168,7 +167,6 @@ struct ChildMeasure
 		iconPath(L""),
 		index(1),
 		ignoreCount(false),
-		needsIcon(true),
 		strValue(L""),
 		parent(nullptr) { }
 };
