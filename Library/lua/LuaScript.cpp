@@ -59,6 +59,9 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 	fseek(file, 0, SEEK_SET);
 	fread(fileData, fileSize, 1, file);
 
+	fclose(file);
+	file = NULL;
+
 	int load = luaL_loadbuffer(L, fileData, fileSize, "");
 	delete [] fileData;
 
