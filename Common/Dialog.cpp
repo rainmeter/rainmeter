@@ -35,7 +35,7 @@ CBaseDialog::CBaseDialog() :
 ** Create (if not already) and show the dialog.
 **
 */
-void CBaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent)
+void CBaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
 {
 	if (m_Window)
 	{
@@ -86,7 +86,14 @@ void CBaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, D
 	// Font array.
 	memcpy(dtExtra, font, fontSize);
 
-	CreateDialogIndirectParam(NULL, dt, parent, InitialDlgProc, (LPARAM)this);
+	if (modeless)
+	{
+		CreateDialogIndirectParam(NULL, dt, parent, InitialDlgProc, (LPARAM)this);
+	}
+	else
+	{
+		DialogBoxIndirectParam(NULL, dt, parent, InitialDlgProc, (LPARAM)this);
+	}
 
 	delete [] dt;
 }
@@ -140,9 +147,9 @@ CDialog::~CDialog()
 	DeleteObject(m_FontBold);
 }
 
-void CDialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent)
+void CDialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
 {
-	Show(title, x, y, w, h, style, exStyle, parent);
+	Show(title, x, y, w, h, style, exStyle, parent, modeless);
 }
 
 INT_PTR CDialog::OnActivate(WPARAM wParam, LPARAM lParam)
@@ -232,7 +239,7 @@ void CDialog::CTab::CreateTabWindow(short x, short y, short w, short h, HWND own
 {
 	const DWORD style = DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS;
 	const DWORD exStyle = WS_EX_CONTROLPARENT;
-	Show(L"", x, y, w, h, style, exStyle, owner);
+	Show(L"", x, y, w, h, style, exStyle, owner, true);
 
 	EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
 }

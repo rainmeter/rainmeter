@@ -32,7 +32,7 @@ protected:
 	CBaseDialog();
 	virtual ~CBaseDialog() {}
 
-	void Show(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent);
+	void Show(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless);
 
 	void CreateControls(const ControlTemplate::Control* cts, UINT ctCount, HFONT font, ControlTemplate::GetStringFunc getString);
 
@@ -77,7 +77,7 @@ protected:
 	CDialog();
 	virtual ~CDialog();
 
-	void ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent);
+	void ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless = true);
 
 	INT_PTR OnActivate(WPARAM wParam, LPARAM lParam);
 
