@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{22670730-eb79-4df9-bed9-27fff1350132}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{774a1827-ac91-40b9-ad18-8a3d68983c64}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{a4963a10-e359-400f-86fa-bdce98dd5dc2}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="lzma">
+      <UniqueIdentifier>{9588f54f-9188-40b7-b750-260f5f514ee5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{f19567fb-ab8f-4193-a3b3-826685cf8db3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Application.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StdAfx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\Bcj2.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\Bra.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\Bra86.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\CpuArch.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\Lzma2Dec.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\LzmaDec.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\Ppmd7.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\Ppmd7Dec.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\7zAlloc.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\7zBuf.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\7zCrc.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\7zCrcOpt.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\7zDec.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\7zFile.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\7zIn.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\7zMemInStream.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\7zStream.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\Alloc.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="DialogInstall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Dialog.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\ControlTemplate.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\Alloc.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\Bcj2.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\Bra.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\CpuArch.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\Lzma2Dec.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\LzmaDec.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\Ppmd.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\Ppmd7.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\Types.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\7z.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\7zAlloc.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\7zBuf.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\7zCrc.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\7zFile.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\7zMemInStream.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\7zVersion.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="DialogInstall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Dialog.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\ControlTemplate.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Installer.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

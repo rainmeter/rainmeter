@@ -1,0 +1,51 @@
+#include <windows.h>
+#include "Resource.h"
+#include "../Version.h"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+#pragma code_page(1252)
+
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION FILEVER
+ PRODUCTVERSION PRODUCTVER
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+{
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "040904E4"
+        {
+            VALUE "FileVersion", STRFILEVER
+            VALUE "LegalCopyright", "© 2013 - All authors"
+            VALUE "OriginalFilename", "Rainmeter-Setup.exe"
+            VALUE "ProductName", "Rainmeter"
+#ifdef _WIN64
+            VALUE "ProductVersion", STRPRODUCTVER " (64-bit)"
+#else
+            VALUE "ProductVersion", STRPRODUCTVER " (32-bit)"
+#endif //_WIN64
+        }
+    }
+    BLOCK "VarFileInfo"
+    {
+        VALUE "Translation", 0x409, 1252
+    }
+}
+
+//
+// Icon
+//
+
+IDI_APPICON             ICON                    "Installer.ico"
+

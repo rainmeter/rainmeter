@@ -2,6 +2,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Application", "Application\Application.vcxproj", "{D2A0903C-E760-4134-AE61-3D55BF8F760C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Installer", "Installer\Installer.vcxproj", "{2FCFBFD2-2720-4BDD-B620-4BDD3DBB8D3D}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Language", "Language\Language.vcxproj", "{6BE6F228-B741-4DA9-9FBC-E9F2A7BD483A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Library", "Library\Library.vcxproj", "{BE9D2400-7F1C-49D6-8498-5CE495491AD6}"
@@ -69,6 +71,10 @@ Global
 		{D2A0903C-E760-4134-AE61-3D55BF8F760C}.Release|Win32.Build.0 = Release|Win32
 		{D2A0903C-E760-4134-AE61-3D55BF8F760C}.Release|x64.ActiveCfg = Release|x64
 		{D2A0903C-E760-4134-AE61-3D55BF8F760C}.Release|x64.Build.0 = Release|x64
+		{2FCFBFD2-2720-4BDD-B620-4BDD3DBB8D3D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2FCFBFD2-2720-4BDD-B620-4BDD3DBB8D3D}.Debug|x64.ActiveCfg = Debug|Win32
+		{2FCFBFD2-2720-4BDD-B620-4BDD3DBB8D3D}.Release|Win32.ActiveCfg = Release|Win32
+		{2FCFBFD2-2720-4BDD-B620-4BDD3DBB8D3D}.Release|x64.ActiveCfg = Release|Win32
 		{6BE6F228-B741-4DA9-9FBC-E9F2A7BD483A}.Debug|Win32.ActiveCfg = Debug|Win32
 		{6BE6F228-B741-4DA9-9FBC-E9F2A7BD483A}.Debug|Win32.Build.0 = Debug|Win32
 		{6BE6F228-B741-4DA9-9FBC-E9F2A7BD483A}.Debug|x64.ActiveCfg = Debug|x64

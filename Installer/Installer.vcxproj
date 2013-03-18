@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{2FCFBFD2-2720-4BDD-B620-4BDD3DBB8D3D}</ProjectGuid>
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SolutionDir)\Rainmeter.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>Imagehlp.lib;Wininet.lib;Comctl32.lib;Version.lib;UxTheme.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)'=='Release'">$(WinDDK71Dir)\lib\Crt\i386\msvcrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries Condition="'$(Configuration)'=='Release'">true</IgnoreAllDefaultLibraries>
+    </Link>
+    <Manifest>
+      <AdditionalManifestFiles>..\Application\Application.manifest</AdditionalManifestFiles>
+    </Manifest>
+    <ClCompile>
+      <DisableSpecificWarnings>4800;4996</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Common\ControlTemplate.cpp" />
+    <ClCompile Include="..\Common\Dialog.cpp" />
+    <ClCompile Include="Application.cpp" />
+    <ClCompile Include="DialogInstall.cpp" />
+    <ClCompile Include="lzma\7zAlloc.c" />
+    <ClCompile Include="lzma\7zBuf.c" />
+    <ClCompile Include="lzma\7zCrc.c" />
+    <ClCompile Include="lzma\7zCrcOpt.c" />
+    <ClCompile Include="lzma\7zDec.c" />
+    <ClCompile Include="lzma\7zFile.c" />
+    <ClCompile Include="lzma\7zIn.c" />
+    <ClCompile Include="lzma\7zMemInStream.c" />
+    <ClCompile Include="lzma\7zStream.c" />
+    <ClCompile Include="lzma\Alloc.c" />
+    <ClCompile Include="lzma\Bcj2.c" />
+    <ClCompile Include="lzma\Bra.c" />
+    <ClCompile Include="lzma\Bra86.c" />
+    <ClCompile Include="lzma\CpuArch.c" />
+    <ClCompile Include="lzma\Lzma2Dec.c" />
+    <ClCompile Include="lzma\LzmaDec.c" />
+    <ClCompile Include="lzma\Ppmd7.c" />
+    <ClCompile Include="lzma\Ppmd7Dec.c" />
+    <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="Util.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Common\ControlTemplate.h" />
+    <ClInclude Include="..\Common\Dialog.h" />
+    <ClInclude Include="Application.h" />
+    <ClInclude Include="DialogInstall.h" />
+    <ClInclude Include="lzma\7z.h" />
+    <ClInclude Include="lzma\7zAlloc.h" />
+    <ClInclude Include="lzma\7zBuf.h" />
+    <ClInclude Include="lzma\7zCrc.h" />
+    <ClInclude Include="lzma\7zFile.h" />
+    <ClInclude Include="lzma\7zMemInStream.h" />
+    <ClInclude Include="lzma\7zVersion.h" />
+    <ClInclude Include="lzma\Alloc.h" />
+    <ClInclude Include="lzma\Bcj2.h" />
+    <ClInclude Include="lzma\Bra.h" />
+    <ClInclude Include="lzma\CpuArch.h" />
+    <ClInclude Include="lzma\Lzma2Dec.h" />
+    <ClInclude Include="lzma\LzmaDec.h" />
+    <ClInclude Include="lzma\Ppmd.h" />
+    <ClInclude Include="lzma\Ppmd7.h" />
+    <ClInclude Include="lzma\Types.h" />
+    <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="Util.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Installer.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
