@@ -1216,6 +1216,13 @@ void CSystem::SetWallpaper(const std::wstring& wallpaper, const std::wstring& st
 */
 bool CSystem::CopyFiles(std::wstring from, std::wstring to, bool bMove)
 {
+	// If given "from" path ends with path separator, remove it (Workaround for XP: error code 1026)
+	size_t len;
+	while (len = from.size(), len > 0 && IsPathSeparator(from[len - 1]))
+	{
+		from.resize(len - 1);
+	}
+
 	// The strings must end with double \0
 	from.append(1, L'\0');
 	to.append(1, L'\0');
