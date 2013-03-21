@@ -783,6 +783,7 @@ SkipIniMove:
 	Delete "$INSTDIR\Rainmeter.chm"
 	Delete "$INSTDIR\Default.ini"
 	Delete "$INSTDIR\Launcher.exe"
+	Delete "$INSTDIR\Defaults\Plugins\FileView.dll"
 	RMDir /r "$INSTDIR\Addons\Rainstaller"
 	RMDir /r "$INSTDIR\Addons\RainBackup"
 
@@ -924,6 +925,7 @@ FunctionEnd
 Function MoveNonDefaultPlugins
 	${If} $R7 != "AdvancedCPU.dll"
 	${AndIf} $R7 != "CoreTemp.dll"
+	${AndIf} $R7 != "FileView.dll"
 	${AndIf} $R7 != "FolderInfo.dll"
 	${AndIf} $R7 != "InputText.dll"
 	${AndIf} $R7 != "iTunesPlugin.dll"
