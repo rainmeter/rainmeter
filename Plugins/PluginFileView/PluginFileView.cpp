@@ -923,6 +923,8 @@ unsigned __stdcall UpdateInfoThreadProc(void* pParam)
 		DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
 		GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
 	}
+
+	parent->threadActive = false;
 	LeaveCriticalSection(&g_CriticalSection);
 
 	if (module)
