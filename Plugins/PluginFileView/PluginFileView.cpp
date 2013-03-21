@@ -914,7 +914,11 @@ unsigned __stdcall UpdateInfoThreadProc(void* pParam)
 	HMODULE module = NULL;
 
 	EnterCriticalSection(&g_CriticalSection);
-	if (!parent->threadActive)
+	if (parent->threadActive)
+	{
+		parent->threadActive = false;
+	}
+	else
 	{
 		// Thread is not attached to an existing measure any longer, so delete
 		// unreferenced data.
@@ -924,7 +928,6 @@ unsigned __stdcall UpdateInfoThreadProc(void* pParam)
 		GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
 	}
 
-	parent->threadActive = false;
 	LeaveCriticalSection(&g_CriticalSection);
 
 	if (module)
