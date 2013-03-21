@@ -110,6 +110,8 @@ public:
 
 	CTrayWindow* GetTrayWindow() { return m_TrayWindow; }
 
+	bool HasMeterWindow(const CMeterWindow* meterWindow) const;
+
 	CMeterWindow* GetMeterWindow(const std::wstring& folderPath);
 	CMeterWindow* GetMeterWindowByINI(const std::wstring& ini_searching);
 	std::pair<int, int> GetMeterWindowIndex(const std::wstring& folderPath, const std::wstring& file);

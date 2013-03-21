@@ -4677,19 +4677,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (pCopyDataStruct && (pCopyDataStruct->dwData == 1) && (pCopyDataStruct->cbData > 0))
 	{
-		// Check that we're still alive
-		bool found = false;
-		std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
-		for ( ; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
-		{
-			if ((*iter).second == this)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (found)
+		if (Rainmeter->HasMeterWindow(this))
 		{
 			const WCHAR* command = (const WCHAR*)pCopyDataStruct->lpData;
 			Rainmeter->ExecuteCommand(command, this);

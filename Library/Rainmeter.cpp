@@ -1172,7 +1172,10 @@ LRESULT CALLBACK CRainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		break;
 
 	case WM_RAINMETER_EXECUTE:
-		Rainmeter->ExecuteCommand((const WCHAR*)lParam, (CMeterWindow*)wParam);
+		if (Rainmeter->HasMeterWindow((CMeterWindow*)wParam))
+		{
+			Rainmeter->ExecuteCommand((const WCHAR*)lParam, (CMeterWindow*)wParam);
+		}
 		break;
 
 	default:
@@ -1596,6 +1599,19 @@ void CRainmeter::RemoveUnmanagedMeterWindow(CMeterWindow* meterWindow)
 			break;
 		}
 	}
+}
+
+bool CRainmeter::HasMeterWindow(const CMeterWindow* meterWindow) const
+{
+	for (auto it = m_MeterWindows.begin(); it != m_MeterWindows.end(); ++it)
+	{
+		if ((*it).second == meterWindow)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 CMeterWindow* CRainmeter::GetMeterWindow(const std::wstring& folderPath)
