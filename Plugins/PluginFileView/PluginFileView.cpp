@@ -43,7 +43,7 @@ typedef struct	// 22 bytes
 } ICONDIR, *LPICONDIR;
 #pragma pack(pop)
 
-unsigned __stdcall SystemThreadProc(void* pParam);
+unsigned __stdcall UpdateInfoThreadProc(void* pParam);
 void EscapeRegex(std::wstring& regex);
 void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, ParentMeasure* parent, RecursiveType rType);
 void GetIcon(std::wstring filePath, std::wstring iconPath, IconSize iconSize);
@@ -297,10 +297,11 @@ PLUGIN_EXPORT double Update(void* data)
 	if (parent->ownerChild == child && (parent->needsUpdating || parent->needsIcons))
 	{
 		unsigned int id;
-		HANDLE thread = (HANDLE)_beginthreadex(nullptr, 0, SystemThreadProc, parent, 0, &id);
+		HANDLE thread = (HANDLE)_beginthreadex(nullptr, 0, UpdateInfoThreadProc, parent, 0, &id);
 		if (thread)
 		{
-			parent->thread = thread;
+			parent->threadActive = true;
+			CloseHandle(thread);
 		}
 	}
 
@@ -489,8 +490,12 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 	ChildMeasure* child = (ChildMeasure*)data;
 	ParentMeasure* parent = child->parent;
 
-	EnterCriticalSection(&g_CriticalSection);
-	if (!parent || parent->thread)
+	if (!TryEnterCriticalSection(&g_CriticalSection))
+	{
+		return;
+	}
+
+	if (!parent || parent->threadActive)
 	{
 		LeaveCriticalSection(&g_CriticalSection);
 		return;
@@ -652,28 +657,32 @@ PLUGIN_EXPORT void Finalize(void* data)
 	EnterCriticalSection(&g_CriticalSection);
 	if (parent && parent->ownerChild == child)
 	{
-		if (parent->thread)
-		{
-			TerminateThread(parent->thread, 0);
-			parent->thread = nullptr;
-		}
-
 		auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), parent);
 		g_ParentMeasures.erase(iter);
 
-		delete parent;
+		if (parent->threadActive)
+		{
+			// Increment ref count of this module so that it will not be unloaded prior to
+			// thread completion.
+			DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS;
+			HMODULE module;
+			GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
+
+			// Thread will perform cleanup.
+			parent->threadActive = false;
+		}
+		else
+		{
+			delete parent;
+		}
 	}
 
 	delete child;
 	LeaveCriticalSection(&g_CriticalSection);
 }
 
-unsigned __stdcall SystemThreadProc(void* pParam)
+void UpdateInfo(ParentMeasure* parent)
 {
-	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-
-	ParentMeasure* parent = (ParentMeasure*)pParam;
-
 	EnterCriticalSection(&g_CriticalSection);
 	ParentMeasure* tmp = new ParentMeasure (*parent);
 	parent->needsUpdating = false;						// Set to false here in case skin is reloaded
@@ -884,19 +893,45 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 		}
 	}
 
-	EnterCriticalSection(&g_CriticalSection);
-	CloseHandle(parent->thread);
-	parent->thread = nullptr;
-	LeaveCriticalSection(&g_CriticalSection);
-
 	if (!tmp->finishAction.empty())
 	{
 		RmExecute(tmp->skin, tmp->finishAction.c_str());
 	}
 
 	delete tmp;
+}
+
+unsigned __stdcall UpdateInfoThreadProc(void* pParam)
+{
+	ParentMeasure* parent = (ParentMeasure*)pParam;
+
+	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
+	UpdateInfo(parent);
 
 	CoUninitialize();
+
+	HMODULE module = NULL;
+
+	EnterCriticalSection(&g_CriticalSection);
+	if (!parent->threadActive)
+	{
+		// Thread is not attached to an existing measure any longer, so delete
+		// unreferenced data.
+		delete parent;
+
+		DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
+		GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
+	}
+	LeaveCriticalSection(&g_CriticalSection);
+
+	if (module)
+	{
+		// Decrement the ref count and possibly unload the module if this is
+		// the last instance.
+		FreeLibraryAndExitThread(module, 0);
+	}
+
 	return 0;
 }
 
