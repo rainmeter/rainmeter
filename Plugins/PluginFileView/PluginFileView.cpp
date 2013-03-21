@@ -294,7 +294,7 @@ PLUGIN_EXPORT double Update(void* data)
 	}
 
 	EnterCriticalSection(&g_CriticalSection);
-	if (parent->ownerChild == child && (parent->needsUpdating || parent->needsIcons))
+	if (!parent->threadActive && parent->ownerChild == child && (parent->needsUpdating || parent->needsIcons))
 	{
 		unsigned int id;
 		HANDLE thread = (HANDLE)_beginthreadex(nullptr, 0, UpdateInfoThreadProc, parent, 0, &id);
