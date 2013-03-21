@@ -119,8 +119,8 @@ struct ParentMeasure
 	ChildMeasure* ownerChild;
 
 	ParentMeasure() :
-		path(L""),
-		wildcardSearch(L""),
+		path(),
+		wildcardSearch(),
 		folderSize(0),
 		sortType(STYPE_NAME),
 		sortDateType(DTYPE_MODIFIED),
@@ -137,7 +137,7 @@ struct ParentMeasure
 		iconChildren(),
 		files(),
 		skin(nullptr),
-		name(L""),
+		name(),
 		ownerChild(nullptr),
 		threadActive(false),
 		fileCount(0),
@@ -164,10 +164,10 @@ struct ChildMeasure
 		type(TYPE_FOLDERPATH),
 		date(DTYPE_MODIFIED),
 		iconSize(IS_LARGE),
-		iconPath(L""),
+		iconPath(),
 		index(1),
 		ignoreCount(false),
-		strValue(L""),
+		strValue(),
 		parent(nullptr) { }
 };
 

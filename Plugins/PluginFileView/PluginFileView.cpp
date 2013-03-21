@@ -46,7 +46,7 @@ typedef struct	// 22 bytes
 unsigned __stdcall UpdateInfoThreadProc(void* pParam);
 void EscapeRegex(std::wstring& regex);
 void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, ParentMeasure* parent, RecursiveType rType);
-void GetIcon(std::wstring filePath, std::wstring iconPath, IconSize iconSize);
+void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconSize);
 HRESULT SaveIcon(HICON hIcon, FILE* fp);
 
 std::vector<ParentMeasure*> g_ParentMeasures;
@@ -706,7 +706,7 @@ void UpdateInfo(ParentMeasure* parent)
 		tmp->folderSize = 0;
 
 		// If no path is specified, get all the drives instead
-		if (tmp->path == L"" || tmp->path.empty())
+		if (tmp->path.empty())
 		{
 			WCHAR drive[4] = L" :\\";
 			DWORD driveMask = GetLogicalDrives();
@@ -755,7 +755,7 @@ void UpdateInfo(ParentMeasure* parent)
 
 		// Sort
 		const int sortAsc = tmp->sortAscending ? 1 : -1;
-		auto begin = ((tmp->path != L"" || !tmp->path.empty()) && 
+		auto begin = (!tmp->path.empty() && 
 			(tmp->showDotDot && tmp->recursiveType != RECURSIVE_FULL)) ? tmp->files.begin() + 1: tmp->files.begin();
 
 		switch (tmp->sortType)
@@ -1071,7 +1071,7 @@ void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, 
 	}
 }
 
-void GetIcon(std::wstring filePath, std::wstring iconPath, IconSize iconSize)
+void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconSize)
 {
 	SHFILEINFO shFileInfo;
 	HICON icon = nullptr;
@@ -1081,18 +1081,12 @@ void GetIcon(std::wstring filePath, std::wstring iconPath, IconSize iconSize)
 	// Special case for .url files
 	if (filePath.size() > 3 && _wcsicmp(filePath.substr(filePath.size() - 4).c_str(), L".URL") == 0)
 	{
-		WCHAR buffer[MAX_PATH] = L"";
-		GetPrivateProfileString(L"InternetShortcut", L"IconFile", L"", buffer, sizeof(buffer), filePath.c_str());
-		if (*buffer)
+		const WCHAR* urlFile = filePath.c_str();
+		WCHAR buffer[MAX_PATH];
+		if (GetPrivateProfileString(L"InternetShortcut", L"IconFile", L"", buffer, _countof(buffer), urlFile) > 0)
 		{
-			std::wstring file = buffer;
-			int iconIndex = 0;
-
-			GetPrivateProfileString(L"InternetShortcut", L"IconIndex", L"-1", buffer, sizeof(buffer), filePath.c_str());
-			if (buffer != L"-1")
-			{
-				iconIndex = _wtoi(buffer);
-			}
+			int iconIndex = GetPrivateProfileInt(L"InternetShortcut", L"IconIndex", 0, urlFile);
+			iconIndex = max(0, iconIndex);
 
 			int size = 16;
 			switch (iconSize)
@@ -1102,28 +1096,31 @@ void GetIcon(std::wstring filePath, std::wstring iconPath, IconSize iconSize)
 			case IS_MEDIUM: size = 32; break;
 			}
 
-			PrivateExtractIcons(file.c_str(), iconIndex, size, size, &icon, nullptr, 1, LR_LOADTRANSPARENT);
+			PrivateExtractIcons(buffer, iconIndex, size, size, &icon, nullptr, 1, LR_LOADTRANSPARENT);
 		}
 		else
 		{
-			std::wstring browser;
-			WCHAR buffer[MAX_PATH];
-			DWORD size = MAX_PATH;
+			DWORD bufferSize = sizeof(buffer);
 			HKEY hKey;
-
-			RegOpenKeyEx(HKEY_CLASSES_ROOT, L"http\\shell\\open\\command", 0, KEY_QUERY_VALUE, &hKey);
-			RegQueryValueEx(hKey, nullptr, nullptr, nullptr, (LPBYTE)buffer, &size);
-			RegCloseKey(hKey);
-
-			//Strip quotes
-			if (buffer[0] == L'"')
+			if (RegOpenKeyEx(HKEY_CLASSES_ROOT, L"http\\shell\\open\\command", 0, KEY_QUERY_VALUE, &hKey))
 			{
-				browser = buffer; browser = browser.substr(1);
-				size_t pos = browser.find_first_of(L'"');
-				browser = browser.substr(0, pos);
-			}
+				RegQueryValueEx(hKey, nullptr, nullptr, nullptr, (LPBYTE)buffer, &bufferSize);
+				RegCloseKey(hKey);
 
-			filePath = browser;
+				WCHAR* path = buffer;
+				if (path[0] == L'"')
+				{
+					// Strip quotes.
+					++path;
+					WCHAR* pos = wcsrchr(path, L'"');
+					if (pos)
+					{
+						*pos = L'\0';
+					}
+				}
+
+				filePath = path;
+			}
 		}
 	}
 
