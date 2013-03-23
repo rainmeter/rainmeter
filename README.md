@@ -1,11 +1,3 @@
 *Rainmeter* is a desktop customization tool for Windows. For more information and downloads, visit [rainmeter.net](http://rainmeter.net/).
 
-Source
----------
-
-To obtain the source code:
-
-*   Use git (`git clone git@github.com:rainmeter/rainmeter.git`)
-*   Download the [current snapshot](https://github.com/rainmeter/rainmeter/zipball/master) as a .zip archive.
-
-Refer to `/Build/Instructions.txt` for build instructions.
+Refer to [/Build/Instructions.txt](https://raw.github.com/rainmeter/rainmeter/master/Build/Instructions.txt) for build instructions.
