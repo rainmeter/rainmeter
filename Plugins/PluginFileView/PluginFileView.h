@@ -112,7 +112,7 @@ struct ParentMeasure
 	bool needsUpdating;
 	bool needsIcons;
 	int indexOffset;
-	bool threadActive;
+	HANDLE thread;
 
 	void* skin;
 	LPCWSTR name;
@@ -139,7 +139,7 @@ struct ParentMeasure
 		skin(nullptr),
 		name(),
 		ownerChild(nullptr),
-		threadActive(false),
+		thread(nullptr),
 		fileCount(0),
 		folderCount(0),
 		needsUpdating(true),

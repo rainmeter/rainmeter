@@ -43,7 +43,7 @@ typedef struct	// 22 bytes
 } ICONDIR, *LPICONDIR;
 #pragma pack(pop)
 
-unsigned __stdcall UpdateInfoThreadProc(void* pParam);
+unsigned __stdcall SystemThreadProc(void* pParam);
 void EscapeRegex(std::wstring& regex);
 void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, ParentMeasure* parent, RecursiveType rType);
 void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconSize);
@@ -297,11 +297,10 @@ PLUGIN_EXPORT double Update(void* data)
 	if (!parent->threadActive && parent->ownerChild == child && (parent->needsUpdating || parent->needsIcons))
 	{
 		unsigned int id;
-		HANDLE thread = (HANDLE)_beginthreadex(nullptr, 0, UpdateInfoThreadProc, parent, 0, &id);
+		HANDLE thread = (HANDLE)_beginthreadex(nullptr, 0, SystemThreadProc, parent, 0, &id);
 		if (thread)
 		{
-			parent->threadActive = true;
-			CloseHandle(thread);
+			parent->thread = thread;
 		}
 	}
 
@@ -490,12 +489,8 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 	ChildMeasure* child = (ChildMeasure*)data;
 	ParentMeasure* parent = child->parent;
 
-	if (!TryEnterCriticalSection(&g_CriticalSection))
-	{
-		return;
-	}
-
-	if (!parent || parent->threadActive)
+	EnterCriticalSection(&g_CriticalSection);
+	if (!parent || parent->thread)
 	{
 		LeaveCriticalSection(&g_CriticalSection);
 		return;
@@ -657,32 +652,28 @@ PLUGIN_EXPORT void Finalize(void* data)
 	EnterCriticalSection(&g_CriticalSection);
 	if (parent && parent->ownerChild == child)
 	{
+		if (parent->thread)
+		{
+			TerminateThread(parent->thread, 0);
+			parent->thread = nullptr;
+		}
+
 		auto iter = std::find(g_ParentMeasures.begin(), g_ParentMeasures.end(), parent);
 		g_ParentMeasures.erase(iter);
 
-		if (parent->threadActive)
-		{
-			// Increment ref count of this module so that it will not be unloaded prior to
-			// thread completion.
-			DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS;
-			HMODULE module;
-			GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
-
-			// Thread will perform cleanup.
-			parent->threadActive = false;
-		}
-		else
-		{
-			delete parent;
-		}
+		delete parent;
 	}
 
 	delete child;
 	LeaveCriticalSection(&g_CriticalSection);
 }
 
-void UpdateInfo(ParentMeasure* parent)
+unsigned __stdcall SystemThreadProc(void* pParam)
 {
+	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
+	ParentMeasure* parent = (ParentMeasure*)pParam;
+
 	EnterCriticalSection(&g_CriticalSection);
 	ParentMeasure* tmp = new ParentMeasure (*parent);
 	parent->needsUpdating = false;						// Set to false here in case skin is reloaded
@@ -893,50 +884,19 @@ void UpdateInfo(ParentMeasure* parent)
 		}
 	}
 
+	EnterCriticalSection(&g_CriticalSection);
+	CloseHandle(parent->thread);
+	parent->thread = nullptr;
+	LeaveCriticalSection(&g_CriticalSection);
+
 	if (!tmp->finishAction.empty())
 	{
 		RmExecute(tmp->skin, tmp->finishAction.c_str());
 	}
 
 	delete tmp;
-}
-
-unsigned __stdcall UpdateInfoThreadProc(void* pParam)
-{
-	ParentMeasure* parent = (ParentMeasure*)pParam;
-
-	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-
-	UpdateInfo(parent);
 
 	CoUninitialize();
-
-	HMODULE module = NULL;
-
-	EnterCriticalSection(&g_CriticalSection);
-	if (parent->threadActive)
-	{
-		parent->threadActive = false;
-	}
-	else
-	{
-		// Thread is not attached to an existing measure any longer, so delete
-		// unreferenced data.
-		delete parent;
-
-		DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
-		GetModuleHandleEx(flags, (LPCWSTR)DllMain, &module);
-	}
-
-	LeaveCriticalSection(&g_CriticalSection);
-
-	if (module)
-	{
-		// Decrement the ref count and possibly unload the module if this is
-		// the last instance.
-		FreeLibraryAndExitThread(module, 0);
-	}
-
 	return 0;
 }
 
@@ -1086,12 +1046,18 @@ void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconS
 	// Special case for .url files
 	if (filePath.size() > 3 && _wcsicmp(filePath.substr(filePath.size() - 4).c_str(), L".URL") == 0)
 	{
-		const WCHAR* urlFile = filePath.c_str();
-		WCHAR buffer[MAX_PATH];
-		if (GetPrivateProfileString(L"InternetShortcut", L"IconFile", L"", buffer, _countof(buffer), urlFile) > 0)
+		WCHAR buffer[MAX_PATH] = L"";
+		GetPrivateProfileString(L"InternetShortcut", L"IconFile", L"", buffer, sizeof(buffer), filePath.c_str());
+		if (*buffer)
 		{
-			int iconIndex = GetPrivateProfileInt(L"InternetShortcut", L"IconIndex", 0, urlFile);
-			iconIndex = max(0, iconIndex);
+			std::wstring file = buffer;
+			int iconIndex = 0;
+
+			GetPrivateProfileString(L"InternetShortcut", L"IconIndex", L"-1", buffer, sizeof(buffer), filePath.c_str());
+			if (buffer != L"-1")
+			{
+				iconIndex = _wtoi(buffer);
+			}
 
 			int size = 16;
 			switch (iconSize)
@@ -1101,31 +1067,28 @@ void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconS
 			case IS_MEDIUM: size = 32; break;
 			}
 
-			PrivateExtractIcons(buffer, iconIndex, size, size, &icon, nullptr, 1, LR_LOADTRANSPARENT);
+			PrivateExtractIcons(file.c_str(), iconIndex, size, size, &icon, nullptr, 1, LR_LOADTRANSPARENT);
 		}
 		else
 		{
-			DWORD bufferSize = sizeof(buffer);
+			std::wstring browser;
+			WCHAR buffer[MAX_PATH];
+			DWORD size = MAX_PATH;
 			HKEY hKey;
-			if (RegOpenKeyEx(HKEY_CLASSES_ROOT, L"http\\shell\\open\\command", 0, KEY_QUERY_VALUE, &hKey))
+
+			RegOpenKeyEx(HKEY_CLASSES_ROOT, L"http\\shell\\open\\command", 0, KEY_QUERY_VALUE, &hKey);
+			RegQueryValueEx(hKey, nullptr, nullptr, nullptr, (LPBYTE)buffer, &size);
+			RegCloseKey(hKey);
+
+			//Strip quotes
+			if (buffer[0] == L'"')
 			{
-				RegQueryValueEx(hKey, nullptr, nullptr, nullptr, (LPBYTE)buffer, &bufferSize);
-				RegCloseKey(hKey);
-
-				WCHAR* path = buffer;
-				if (path[0] == L'"')
-				{
-					// Strip quotes.
-					++path;
-					WCHAR* pos = wcsrchr(path, L'"');
-					if (pos)
-					{
-						*pos = L'\0';
-					}
-				}
-
-				filePath = path;
+				browser = buffer; browser = browser.substr(1);
+				size_t pos = browser.find_first_of(L'"');
+				browser = browser.substr(0, pos);
 			}
+
+			filePath = browser;
 		}
 	}
 
