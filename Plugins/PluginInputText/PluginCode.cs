@@ -43,6 +43,8 @@ namespace InputText
             ReadOption("Password", param.Options);
             ReadOption("TopMost", param.Options);
 
+            param.DismissAction = rm.ReadString("OnDismissAction", "", false);
+
             #region Handle a single parameter
 
             // If our parameter list only contains a single word, then open a textbox immediately
@@ -184,7 +186,12 @@ namespace InputText
 
                         // If the user cancelled out of the inputbox (ESC key, etc.), then abort
                         if (sInput == null)
+                        {
+                            // Execute OnDismissAction if defined
+                            if (!String.IsNullOrEmpty(param.DismissAction))
+                                API.Execute(rm.GetSkin(), param.DismissAction);
                             break;
+                        }
 
                         // Ask Rainmeter to set the variable using a bang (http://rainmeter.net/RainCMS/?q=Bangs)
                         API.Execute(rm.GetSkin(), "!SetVariable " + param.Command + " \"" + sInput + "\"");
@@ -201,7 +208,12 @@ namespace InputText
                             // Execute the line, but if there's a problem (error or they cancel the
                             // input textbox), then abort
                             if (!ExecuteLine(param.Commands[i], param.Options, param.OverrideOptions[i]))
+                            {
+                                // Execute OnDismissAction if defined
+                                if (!String.IsNullOrEmpty(param.DismissAction))
+                                    API.Execute(rm.GetSkin(), param.DismissAction);
                                 break;
+                            }
 
                             // Continue to the next line, if there is any
                         }

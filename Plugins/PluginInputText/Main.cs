@@ -114,6 +114,7 @@ namespace InputText
             internal List<Dictionary<string, string>> OverrideOptions;
             internal List<string> Commands;
             internal string Command;
+            internal string DismissAction;
             internal BangType Type;
 
             internal ExecuteBangParam(string args)
@@ -122,6 +123,7 @@ namespace InputText
                 this.OverrideOptions = new List<Dictionary<string, string>>();
                 this.Commands = new List<string>();
                 this.Command = args.Trim();
+                this.DismissAction = null;
                 this.Type = BangType.Unknown;
             }
         };
