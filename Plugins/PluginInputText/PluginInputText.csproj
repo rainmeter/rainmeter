@@ -110,6 +110,6 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>"$(SolutionDir)Plugins\API\DllExporter.exe" "$(ConfigurationName)" "$(PlatformName)" "$(TargetDir)\" "$(TargetFileName)" "$(TargetedFrameworkDir)\ilasm.exe" "$(FrameworkSDKDir)bin\ildasm.exe"</PostBuildEvent>
+    <PostBuildEvent>"$(SolutionDir)Plugins\API\DllExporter.exe" "$(ConfigurationName)" "$(PlatformName)" "$(TargetDir)\" "$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
 </Project>
