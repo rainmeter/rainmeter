@@ -30,6 +30,7 @@
 #include "MeterButton.h"
 #include "Measure.h"
 #include "Rainmeter.h"
+#include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;
 
@@ -638,23 +639,11 @@ void CMeter::UpdateToolTip()
 /*
 ** Draws the solid background & bevel if such are defined
 */
-bool CMeter::Draw(Graphics& graphics)
+bool CMeter::Draw(Gfx::Canvas& canvas)
 {
 	if (IsHidden()) return false;
 
-	graphics.SetInterpolationMode(InterpolationModeDefault);
-	graphics.SetCompositingQuality(CompositingQualityDefault);
-
-	if (m_AntiAlias)
-	{
-		graphics.SetSmoothingMode(SmoothingModeHighQuality);
-		graphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
-	}
-	else
-	{
-		graphics.SetSmoothingMode(SmoothingModeNone);
-		graphics.SetPixelOffsetMode(PixelOffsetModeDefault);
-	}
+	canvas.SetAntiAliasing(m_AntiAlias);
 
 	if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
 	{
@@ -666,10 +655,12 @@ bool CMeter::Draw(Graphics& graphics)
 		if (m_SolidColor.GetValue() == m_SolidColor2.GetValue())
 		{
 			SolidBrush solid(m_SolidColor);
-			graphics.FillRectangle(&solid, r);
+			canvas.FillRectangle(r, solid);
 		}
 		else
 		{
+			Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
+
 			if (!m_AntiAlias)
 			{
 				// Fix the tiling issue in some GradientAngle values
@@ -683,11 +674,15 @@ bool CMeter::Draw(Graphics& graphics)
 			{
 				graphics.SetPixelOffsetMode(PixelOffsetModeDefault);
 			}
+
+			canvas.EndGdiplusContext();
 		}
 	}
 
 	if (m_SolidBevel != BEVELTYPE_NONE)
 	{
+		Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
+
 		int x = GetX();
 		int y = GetY();
 
@@ -706,6 +701,8 @@ bool CMeter::Draw(Graphics& graphics)
 		// The bevel is drawn outside the meter
 		Rect rect(x - 2, y - 2, m_W + 4, m_H + 4);
 		DrawBevel(graphics, rect, light, dark);
+
+		canvas.EndGdiplusContext();
 	}
 
 	return true;

@@ -20,6 +20,7 @@
 #include "MeterRoundLine.h"
 #include "Measure.h"
 #include "Error.h"
+#include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;
 
@@ -116,9 +117,11 @@ bool CMeterRoundLine::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterRoundLine::Draw(Graphics& graphics)
+bool CMeterRoundLine::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(canvas)) return false;
+
+	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
 
 	// Calculate the center of for the line
 	int x = GetX();
@@ -163,6 +166,8 @@ bool CMeterRoundLine::Draw(Graphics& graphics)
 		Pen pen(m_LineColor, (REAL)m_LineWidth);
 		graphics.DrawLine(&pen, sx, sy, ex, ey);
 	}
+
+	canvas.EndGdiplusContext();
 
 	return true;
 }

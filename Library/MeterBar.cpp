@@ -22,6 +22,7 @@
 #include "Error.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
+#include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;
 
@@ -160,9 +161,9 @@ bool CMeterBar::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterBar::Draw(Graphics& graphics)
+bool CMeterBar::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(canvas)) return false;
 
 	int x = GetX();
 	int y = GetY();
@@ -183,28 +184,26 @@ bool CMeterBar::Draw(Graphics& graphics)
 				if (m_Border > 0)
 				{
 					Rect r2(x, y, m_W, m_Border);
-					graphics.DrawImage(drawBitmap, r2, 0, 0, m_W, m_Border, UnitPixel);
+					canvas.DrawBitmap(drawBitmap, r2, Rect(0, 0, m_W, m_Border));
 					r2.Y = y + size + m_Border;
-					graphics.DrawImage(drawBitmap, r2, 0, m_H - m_Border, m_W, m_Border, UnitPixel);
+					canvas.DrawBitmap(drawBitmap, r2, Rect(0, m_H - m_Border, m_W, m_Border));
 				}
 
-				// Blit the image
 				Rect r(x, y + m_Border, m_W, size);
-				graphics.DrawImage(drawBitmap, r, 0, m_Border, m_W, size, UnitPixel);
+				canvas.DrawBitmap(drawBitmap, r, Rect(0, m_Border, m_W, size));
 			}
 			else
 			{
 				if (m_Border > 0)
 				{
 					Rect r2(x, y + m_H - size - 2 * m_Border, m_W, m_Border);
-					graphics.DrawImage(drawBitmap, r2, 0, 0, m_W, m_Border, UnitPixel);
+					canvas.DrawBitmap(drawBitmap, r2, Rect(0, 0, m_W, m_Border));
 					r2.Y = y + m_H - m_Border;
-					graphics.DrawImage(drawBitmap, r2, 0, m_H - m_Border, m_W, m_Border, UnitPixel);
+					canvas.DrawBitmap(drawBitmap, r2, Rect(0, m_H - m_Border, m_W, m_Border));
 				}
 
-				// Blit the image
 				Rect r(x, y + m_H - size - m_Border, m_W, size);
-				graphics.DrawImage(drawBitmap, r, 0, m_H - size - m_Border, m_W, size, UnitPixel);
+				canvas.DrawBitmap(drawBitmap, r, Rect(0, m_H - size - m_Border, m_W, size));
 			}
 		}
 		else
@@ -213,12 +212,12 @@ bool CMeterBar::Draw(Graphics& graphics)
 			if (m_Flip)
 			{
 				Rect r(x, y, m_W, size);
-				graphics.FillRectangle(&brush, r);
+				canvas.FillRectangle(r, brush);
 			}
 			else
 			{
 				Rect r(x, y + m_H - size, m_W, size);
-				graphics.FillRectangle(&brush, r);
+				canvas.FillRectangle(r, brush);
 			}
 		}
 	}
@@ -236,28 +235,26 @@ bool CMeterBar::Draw(Graphics& graphics)
 				if (m_Border > 0)
 				{
 					Rect r2(x + m_W - size - 2 * m_Border, y, m_Border, m_H);
-					graphics.DrawImage(drawBitmap, r2, 0, 0, m_Border, m_H, UnitPixel);
+					canvas.DrawBitmap(drawBitmap, r2, Rect(0, 0, m_Border, m_H));
 					r2.X = x + m_W - m_Border;
-					graphics.DrawImage(drawBitmap, r2, m_W - m_Border, 0, m_Border, m_H, UnitPixel);
+					canvas.DrawBitmap(drawBitmap, r2, Rect(m_W - m_Border, 0, m_Border, m_H));
 				}
 
-				// Blit the image
 				Rect r(x + m_W - size - m_Border, y, size, m_H);
-				graphics.DrawImage(drawBitmap, r, m_W - size - m_Border, 0, size, m_H, UnitPixel);
+				canvas.DrawBitmap(drawBitmap, r, Rect(m_W - size - m_Border, 0, size, m_H));
 			}
 			else
 			{
 				if (m_Border > 0)
 				{
 					Rect r2(x, y, m_Border, m_H);
-					graphics.DrawImage(drawBitmap, r2, 0, 0, m_Border, m_H, UnitPixel);
+					canvas.DrawBitmap(drawBitmap, r2, Rect(0, 0, m_Border, m_H));
 					r2.X = x + size + m_Border;
-					graphics.DrawImage(drawBitmap, r2, m_W - m_Border, 0, m_Border, m_H, UnitPixel);
+					canvas.DrawBitmap(drawBitmap, r2, Rect(m_W - m_Border, 0, m_Border, m_H));
 				}
 
-				// Blit the image
 				Rect r(x + m_Border, y, size, m_H);
-				graphics.DrawImage(drawBitmap, r, m_Border, 0, size, m_H, UnitPixel);
+				canvas.DrawBitmap(drawBitmap, r, Rect(m_Border, 0, size, m_H));
 			}
 		}
 		else
@@ -266,12 +263,12 @@ bool CMeterBar::Draw(Graphics& graphics)
 			if (m_Flip)
 			{
 				Rect r(x + m_W - size, y, size, m_H);
-				graphics.FillRectangle(&brush, r);
+				canvas.FillRectangle(r, brush);
 			}
 			else
 			{
 				Rect r(x, y, size, m_H);
-				graphics.FillRectangle(&brush, r);
+				canvas.FillRectangle(r, brush);
 			}
 		}
 	}

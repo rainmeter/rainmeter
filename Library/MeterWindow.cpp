@@ -36,6 +36,8 @@
 #include "TintedImage.h"
 #include "MeasureScript.h"
 #include "../Version.h"
+#include "../Common/Gfx/CanvasGDIP.h"
+#include "../Common/Gfx/CanvasD2D.h"
 
 using namespace Gdiplus;
 
@@ -74,11 +76,7 @@ extern CRainmeter* Rainmeter;
 **
 */
 CMeterWindow::CMeterWindow(const std::wstring& folderPath, const std::wstring& file) : m_FolderPath(folderPath), m_FileName(file),
-	m_DoubleBuffer(),
-	m_DIBSectionBuffer(),
-	m_DIBSectionBufferPixels(),
-	m_DIBSectionBufferW(),
-	m_DIBSectionBufferH(),
+	m_Canvas(),
 	m_Background(),
 	m_BackgroundSize(),
 	m_Window(),
@@ -145,6 +143,9 @@ CMeterWindow::CMeterWindow(const std::wstring& folderPath, const std::wstring& f
 	m_FontCollection(),
 	m_ToolTipHidden(false)
 {
+	m_Canvas = Platform::IsAtLeastWinVista() ?
+		(Gfx::Canvas*)new Gfx::CanvasD2D() : (Gfx::Canvas*)new Gfx::CanvasGDIP();
+
 	if (!c_DwmInstance && Platform::IsAtLeastWinVista())
 	{
 		c_DwmInstance = CSystem::RmLoadLibrary(L"dwmapi.dll");
@@ -201,6 +202,9 @@ CMeterWindow::~CMeterWindow()
 			c_DwmIsCompositionEnabled = NULL;
 		}
 	}
+
+	delete m_Canvas;
+	m_Canvas = NULL;
 }
 
 /*
@@ -260,16 +264,6 @@ void CMeterWindow::Dispose(bool refresh)
 
 	if (!refresh)
 	{
-		// Destroy double buffers and window
-		delete m_DoubleBuffer;
-		m_DoubleBuffer = NULL;
-
-		if (m_DIBSectionBuffer)
-		{
-			DeleteObject(m_DIBSectionBuffer);
-			m_DIBSectionBuffer = NULL;
-		}
-
 		if (m_Window)
 		{
 			DestroyWindow(m_Window);
@@ -2439,25 +2433,7 @@ bool CMeterWindow::ResizeWindow(bool reset)
 */
 void CMeterWindow::CreateDoubleBuffer(int cx, int cy)
 {
-	// Create DIBSection bitmap
-	BITMAPV4HEADER bmiHeader = {sizeof(BITMAPV4HEADER)};
-	bmiHeader.bV4Width = cx;
-	bmiHeader.bV4Height = -cy;  // top-down DIB
-	bmiHeader.bV4Planes = 1;
-	bmiHeader.bV4BitCount = 32;
-	bmiHeader.bV4V4Compression = BI_BITFIELDS;
-	bmiHeader.bV4RedMask = 0x00FF0000;
-	bmiHeader.bV4GreenMask = 0x0000FF00;
-	bmiHeader.bV4BlueMask = 0x000000FF;
-	bmiHeader.bV4AlphaMask = 0xFF000000;
-
-	m_DIBSectionBuffer = CreateDIBSection(NULL, (BITMAPINFO*)&bmiHeader, DIB_RGB_COLORS, (void**)&m_DIBSectionBufferPixels, NULL, 0);
-
-	// Create GDI+ bitmap from DIBSection's pixels
-	m_DoubleBuffer = new Bitmap(cx, cy, cx * 4, PixelFormat32bppPARGB, (BYTE*)m_DIBSectionBufferPixels);
-
-	m_DIBSectionBufferW = cx;
-	m_DIBSectionBufferH = cy;
+	m_Canvas->Resize(cx, cy);
 }
 
 /*
@@ -2484,29 +2460,26 @@ void CMeterWindow::Redraw()
 			cy = 1;
 		}
 
-		if (cx != m_DIBSectionBufferW || cy != m_DIBSectionBufferH || m_DIBSectionBufferPixels == NULL)
+		if (cx != m_Canvas->GetW() || cy != m_Canvas->GetH())
 		{
-			delete m_DoubleBuffer;
-			if (m_DIBSectionBuffer) DeleteObject(m_DIBSectionBuffer);
-			m_DIBSectionBufferPixels = NULL;
-
 			CreateDoubleBuffer(cx, cy);
-		}
-		else
-		{
-			memset(m_DIBSectionBufferPixels, 0, cx * cy * 4);
 		}
 	}
 
+	if (!m_Canvas->BeginDraw())
+	{
+		return;
+	}
+
+	m_Canvas->Clear();
+
 	if (m_WindowW != 0 && m_WindowH != 0)
 	{
-		Graphics graphics(m_DoubleBuffer);
-
 		if (m_Background)
 		{
-			// Copy the background over the doublebuffer
-			Rect r(0, 0, m_WindowW, m_WindowH);
-			graphics.DrawImage(m_Background, r, 0, 0, m_Background->GetWidth(), m_Background->GetHeight(), UnitPixel);
+			const Rect dst(0, 0, m_WindowW, m_WindowH);
+			const Rect src(0, 0, m_Background->GetWidth(), m_Background->GetHeight());
+			m_Canvas->DrawBitmap(m_Background, dst, src);
 		}
 		else if (m_BackgroundMode == BGMODE_SOLID)
 		{
@@ -2517,12 +2490,14 @@ void CMeterWindow::Redraw()
 			{
 				if (m_SolidColor.GetValue() == m_SolidColor2.GetValue())
 				{
-					graphics.Clear(m_SolidColor);
+					m_Canvas->Clear(m_SolidColor);
 				}
 				else
 				{
+					Gdiplus::Graphics& graphics = m_Canvas->BeginGdiplusContext();
 					LinearGradientBrush gradient(r, m_SolidColor, m_SolidColor2, m_SolidAngle, TRUE);
 					graphics.FillRectangle(&gradient, r);
+					m_Canvas->EndGdiplusContext();
 				}
 			}
 
@@ -2540,7 +2515,9 @@ void CMeterWindow::Redraw()
 				Pen light(lightColor);
 				Pen dark(darkColor);
 
+				Gdiplus::Graphics& graphics = m_Canvas->BeginGdiplusContext();
 				CMeter::DrawBevel(graphics, r, light, dark);
+				m_Canvas->EndGdiplusContext();
 			}
 		}
 
@@ -2551,22 +2528,24 @@ void CMeterWindow::Redraw()
 			const Matrix* matrix = (*j)->GetTransformationMatrix();
 			if (matrix && !matrix->IsIdentity())
 			{
-				// Change the world matrix
-				graphics.SetTransform(matrix);
+				// TODO FIXME: Change the world matrix
+				//m_Canvas->GetGraphics().SetTransform(matrix);
 
-				(*j)->Draw(graphics);
+				(*j)->Draw(*m_Canvas);
 
-				// Set back to identity matrix
-				graphics.ResetTransform();
+				// TODO FIXME: Set back to identity matrix
+				//m_Canvas->GetGraphics().ResetTransform();
 			}
 			else
 			{
-				(*j)->Draw(graphics);
+				(*j)->Draw(*m_Canvas);
 			}
 		}
 	}
 
-	UpdateWindow(m_TransparencyValue, false);
+	UpdateWindow(m_TransparencyValue, false, true);
+
+	m_Canvas->EndDraw();
 }
 
 /*
@@ -2738,7 +2717,7 @@ void CMeterWindow::Update(bool refresh)
 ** Updates the window contents
 **
 */
-void CMeterWindow::UpdateWindow(int alpha, bool reset)
+void CMeterWindow::UpdateWindow(int alpha, bool reset, bool canvasBeginDrawCalled)
 {
 	if (reset)
 	{
@@ -2746,25 +2725,25 @@ void CMeterWindow::UpdateWindow(int alpha, bool reset)
 	}
 
 	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
-	POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
 	POINT ptSrc = {0, 0};
-	SIZE szWindow = {m_DIBSectionBufferW, m_DIBSectionBufferH};
+	SIZE szWindow = {m_WindowW, m_WindowH};
 
-	HDC dcScreen = GetDC(0);
-	HDC dcMemory = CreateCompatibleDC(dcScreen);
-	SelectObject(dcMemory, m_DIBSectionBuffer);
+	if (!canvasBeginDrawCalled) m_Canvas->BeginDraw();
 
-	BOOL ret = UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
-	if (!ret)
+	HDC dcScreen = GetDC(NULL);
+	HDC dcMemory = m_Canvas->GetDC();
+	if (!UpdateLayeredWindow(m_Window, dcScreen, NULL, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
 	{
-		// Retry after resetting WS_EX_LAYERED flag
+		// Retry after resetting WS_EX_LAYERED flag.
 		RemoveWindowExStyle(WS_EX_LAYERED);
 		AddWindowExStyle(WS_EX_LAYERED);
-		UpdateLayeredWindow(m_Window, dcScreen, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+		UpdateLayeredWindow(m_Window, dcScreen, NULL, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
 	}
 
-	ReleaseDC(0, dcScreen);
-	DeleteDC(dcMemory);
+	ReleaseDC(NULL, dcScreen);
+	m_Canvas->ReleaseDC(dcMemory);
+
+	if (!canvasBeginDrawCalled) m_Canvas->EndDraw();
 
 	m_TransparencyValue = alpha;
 }
@@ -3066,21 +3045,7 @@ HWND CMeterWindow::GetWindowFromPoint(POINT pos)
 */
 bool CMeterWindow::HitTest(int x, int y)
 {
-	if (x >= 0 && y >= 0 && x < m_WindowW && y < m_WindowH)
-	{
-		// Check transparent pixels
-		if (m_DIBSectionBufferPixels)
-		{
-			DWORD pixel = m_DIBSectionBufferPixels[y * m_WindowW + x];  // top-down DIB
-			return ((pixel & 0xFF000000) != 0);
-		}
-		else
-		{
-			return true;
-		}
-	}
-
-	return false;
+	return m_Canvas->IsTransparentPixel(x, y);
 }
 
 /*

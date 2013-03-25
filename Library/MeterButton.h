@@ -34,7 +34,7 @@ public:
 
 	virtual void Initialize();
 	virtual bool Update();
-	virtual bool Draw(Gdiplus::Graphics& graphics);
+	virtual bool Draw(Gfx::Canvas& canvas);
 
 	bool MouseMove(POINT pos);
 	bool MouseUp(POINT pos, bool execute);

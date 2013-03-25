@@ -20,7 +20,6 @@
 #define __METERWINDOW_H__
 
 #include <windows.h>
-#include <gdiplus.h>
 #include <dwmapi.h>
 #include <string>
 #include <list>
@@ -152,6 +151,13 @@ class CRainmeter;
 class CMeasure;
 class CMeter;
 
+namespace Gfx {
+
+class Canvas;
+class TextFormat;
+
+}  // namespace Gfx
+
 class CMeterWindow : public CGroup
 {
 public:
@@ -194,7 +200,7 @@ public:
 
 	void SetResizeWindowMode(RESIZEMODE mode) { if (m_ResizeWindow != RESIZEMODE_RESET || mode != RESIZEMODE_CHECK) m_ResizeWindow = mode; }
 
-	Gdiplus::Bitmap* GetDoubleBuffer() { return m_DoubleBuffer; }
+	Gfx::Canvas& GetCanvas() { return *m_Canvas; }
 	HWND GetWindow() { return m_Window; }
 
 	CConfigParser& GetParser() { return m_Parser; }
@@ -327,7 +333,7 @@ private:
 	bool UpdateMeasure(CMeasure* measure, bool force);
 	bool UpdateMeter(CMeter* meter, bool& bActiveTransition, bool force);
 	void Update(bool refresh);
-	void UpdateWindow(int alpha, bool reset);
+	void UpdateWindow(int alpha, bool reset, bool canvasBeginDrawCalled = false);
 	void ReadOptions();
 	void WriteOptions(INT setting = OPTION_ALL);
 	bool ReadSkin();
@@ -360,13 +366,9 @@ private:
 	void Dispose(bool refresh);
 	void CreateDoubleBuffer(int cx, int cy);
 
-	CConfigParser m_Parser;
+	Gfx::Canvas* m_Canvas;
 
-	Gdiplus::Bitmap* m_DoubleBuffer;
-	HBITMAP m_DIBSectionBuffer;
-	LPDWORD m_DIBSectionBufferPixels;
-	int m_DIBSectionBufferW;
-	int m_DIBSectionBufferH;
+	CConfigParser m_Parser;
 
 	Gdiplus::Bitmap* m_Background;
 	SIZE m_BackgroundSize;

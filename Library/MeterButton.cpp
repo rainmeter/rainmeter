@@ -21,6 +21,7 @@
 #include "Measure.h"
 #include "Rainmeter.h"
 #include "Error.h"
+#include "../Common/Gfx/Canvas.h"
 
 extern CRainmeter* Rainmeter;
 
@@ -181,17 +182,21 @@ bool CMeterButton::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterButton::Draw(Graphics& graphics)
+bool CMeterButton::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(canvas)) return false;
 
 	if (m_Bitmaps[m_State] == NULL) return false;	// Unable to continue
+
+	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
 
 	int x = GetX();
 	int y = GetY();
 
 	// Blit the image
 	graphics.DrawCachedBitmap(m_Bitmaps[m_State], x, y);
+
+	canvas.EndGdiplusContext();
 
 	return true;
 }

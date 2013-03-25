@@ -22,6 +22,7 @@
 #include "Error.h"
 #include "Rainmeter.h"
 #include "System.h"
+#include "../Common/Gfx/Canvas.h"
 
 extern CRainmeter* Rainmeter;
 
@@ -212,9 +213,9 @@ bool CMeterImage::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterImage::Draw(Graphics& graphics)
+bool CMeterImage::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(canvas)) return false;
 
 	if (m_Image.IsLoaded())
 	{
@@ -235,16 +236,19 @@ bool CMeterImage::Draw(Graphics& graphics)
 		if (drawW == imageW && drawH == imageH &&
 			m_ScaleMargins.left == 0 && m_ScaleMargins.top == 0 && m_ScaleMargins.right == 0 && m_ScaleMargins.bottom == 0)
 		{
-			Rect r(x, y, drawW, drawH);
-			graphics.DrawImage(drawBitmap, r, 0, 0, imageW, imageH, UnitPixel);
+			canvas.DrawBitmap(drawBitmap, Rect(x, y, drawW, drawH), Rect(0, 0, imageW, imageH));
 		}
 		else if (m_DrawMode == DRAWMODE_TILE)
 		{
+			Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
+
 			ImageAttributes imgAttr;
 			imgAttr.SetWrapMode(WrapModeTile);
 
 			Rect r(x, y, drawW, drawH);
 			graphics.DrawImage(drawBitmap, r, 0, 0, drawW, drawH, UnitPixel, &imgAttr);
+
+			canvas.EndGdiplusContext();
 		}
 		else if (m_DrawMode == DRAWMODE_KEEPRATIO || m_DrawMode == DRAWMODE_KEEPRATIOANDCROP)
 		{
@@ -290,11 +294,11 @@ bool CMeterImage::Draw(Graphics& graphics)
 			}
 
 			Rect r(x, y, drawW, drawH);
-			graphics.DrawImage(drawBitmap, r, cropX, cropY, cropW, cropH, UnitPixel);
+			canvas.DrawBitmap(drawBitmap, r, Rect(cropX, cropY, cropW, cropH));
 		}
 		else
 		{
-			const RECT m = m_ScaleMargins;
+			const RECT& m = m_ScaleMargins;
 
 			if (m.top > 0)
 			{
@@ -302,18 +306,18 @@ bool CMeterImage::Draw(Graphics& graphics)
 				{
 					// Top-Left
 					Rect r(x, y, m.left, m.top);
-					graphics.DrawImage(drawBitmap, r, 0, 0, m.left, m.top, UnitPixel);
+					canvas.DrawBitmap(drawBitmap, r, Rect(0, 0, m.left, m.top));
 				}
 
 				// Top
 				Rect r(x + m.left, y, drawW - m.left - m.right, m.top);
-				graphics.DrawImage(drawBitmap, r, m.left, 0, imageW - m.left - m.right, m.top, UnitPixel);
+				canvas.DrawBitmap(drawBitmap, r, Rect(m.left, 0, imageW - m.left - m.right, m.top));
 
 				if (m.right > 0)
 				{
 					// Top-Right
 					Rect r(x + drawW - m.right, y, m.right, m.top);
-					graphics.DrawImage(drawBitmap, r, imageW - m.right, 0, m.right, m.top, UnitPixel);
+					canvas.DrawBitmap(drawBitmap, r, Rect(imageW - m.right, 0, m.right, m.top));
 				}
 			}
 
@@ -321,18 +325,18 @@ bool CMeterImage::Draw(Graphics& graphics)
 			{
 				// Left
 				Rect r(x, y + m.top, m.left, drawH - m.top - m.bottom);
-				graphics.DrawImage(drawBitmap, r, 0, m.top, m.left, imageH - m.top - m.bottom, UnitPixel);
+				canvas.DrawBitmap(drawBitmap, r, Rect(0, m.top, m.left, imageH - m.top - m.bottom));
 			}
 
 			// Center
 			Rect r(x + m.left, y + m.top, drawW - m.left - m.right, drawH - m.top - m.bottom);
-			graphics.DrawImage(drawBitmap, r, m.left, m.top, imageW - m.left - m.right, imageH - m.top - m.bottom, UnitPixel);
+			canvas.DrawBitmap(drawBitmap, r, Rect(m.left, m.top, imageW - m.left - m.right, imageH - m.top - m.bottom));
 
 			if (m.right > 0)
 			{
 				// Right
 				Rect r(x + drawW - m.right, y + m.top, m.right, drawH - m.top - m.bottom);
-				graphics.DrawImage(drawBitmap, r, imageW - m.right, m.top, m.right, imageH - m.top - m.bottom, UnitPixel);
+				canvas.DrawBitmap(drawBitmap, r, Rect(imageW - m.right, m.top, m.right, imageH - m.top - m.bottom));
 			}
 
 			if (m.bottom > 0)
@@ -341,18 +345,18 @@ bool CMeterImage::Draw(Graphics& graphics)
 				{
 					// Bottom-Left
 					Rect r(x, y + drawH - m.bottom, m.left, m.bottom);
-					graphics.DrawImage(drawBitmap, r, 0, imageH - m.bottom, m.left, m.bottom, UnitPixel);
+					canvas.DrawBitmap(drawBitmap, r, Rect(0, imageH - m.bottom, m.left, m.bottom));
 				}
 
 				// Bottom
 				Rect r(x + m.left, y + drawH - m.bottom, drawW - m.left - m.right, m.bottom);
-				graphics.DrawImage(drawBitmap, r, m.left, imageH - m.bottom, imageW - m.left - m.right, m.bottom, UnitPixel);
+				canvas.DrawBitmap(drawBitmap, r, Rect(m.left, imageH - m.bottom, imageW - m.left - m.right, m.bottom));
 
 				if (m.right > 0)
 				{
 					// Bottom-Right
 					Rect r(x + drawW - m.right, y + drawH - m.bottom, m.right, m.bottom);
-					graphics.DrawImage(drawBitmap, r, imageW - m.right, imageH - m.bottom, m.right, m.bottom, UnitPixel);
+					canvas.DrawBitmap(drawBitmap, r, Rect(imageW - m.right, imageH - m.bottom, m.right, m.bottom));
 				}
 			}
 		}

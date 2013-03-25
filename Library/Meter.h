@@ -40,7 +40,7 @@ public:
 
 	virtual void Initialize();
 	virtual bool Update();
-	virtual bool Draw(Gdiplus::Graphics& graphics);
+	virtual bool Draw(Gfx::Canvas& canvas);
 	virtual bool HasActiveTransition() { return false; }
 
 	virtual int GetW() { return m_Hidden ? 0 : m_W; }

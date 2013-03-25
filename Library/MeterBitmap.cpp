@@ -22,6 +22,7 @@
 #include "Error.h"
 #include "Rainmeter.h"
 #include "System.h"
+#include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;
 
@@ -270,9 +271,9 @@ bool CMeterBitmap::HasActiveTransition()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterBitmap::Draw(Graphics& graphics)
+bool CMeterBitmap::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(canvas)) return false;
 
 	int newY, newX;
 
@@ -336,8 +337,6 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 		{
 			offset = offset - (m_W + m_Separation);
 
-			Rect r(x + offset, y, m_W, m_H);
-
 			int realFrames = (m_FrameCount / (m_TransitionFrameCount + 1));
 			int frame = (value % realFrames) * (m_TransitionFrameCount + 1);
 
@@ -377,7 +376,7 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 				newY = 0;
 			}
 
-			graphics.DrawImage(bitmap, r, newX, newY, m_W, m_H, UnitPixel);
+			canvas.DrawBitmap(bitmap, Rect(x + offset, y, m_W, m_H), Rect(newX, newY, m_W, m_H));
 			if (m_FrameCount == 1)
 			{
 				value /= 2;
@@ -446,9 +445,7 @@ bool CMeterBitmap::Draw(Graphics& graphics)
 			newY = 0;
 		}
 
-		// Blit the image
-		Rect r(x, y, m_W, m_H);
-		graphics.DrawImage(bitmap, r, newX, newY, m_W, m_H, UnitPixel);
+		canvas.DrawBitmap(bitmap, Rect(x, y, m_W, m_H), Rect(newX, newY, m_W, m_H));
 	}
 
 	return true;

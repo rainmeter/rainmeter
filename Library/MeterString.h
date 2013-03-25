@@ -37,7 +37,7 @@ public:
 	virtual void Initialize();
 	virtual bool Update();
 	void SetText(const WCHAR* text) { m_Text = text; }
-	virtual bool Draw(Gdiplus::Graphics& graphics);
+	virtual bool Draw(Gfx::Canvas& canvas);
 	Gdiplus::RectF GetRect() { return m_Rect; }
 
 	static void FreeFontCache(Gdiplus::PrivateFontCollection* collection = NULL);
@@ -83,7 +83,7 @@ private:
 		CLIP_AUTO
 	};
 
-	bool DrawString(Gdiplus::Graphics& graphics, Gdiplus::RectF* rect);
+	bool DrawString(Gfx::Canvas& canvas, Gdiplus::RectF* rect);
 
 	Gdiplus::Color m_Color;
 	Gdiplus::Color m_EffectColor;
@@ -92,7 +92,6 @@ private:
 	std::wstring m_Text;
 	std::wstring m_FontFace;
 	AUTOSCALE m_AutoScale;
-	METER_ALIGNMENT m_Align;
 	TEXTSTYLE m_Style;
 	TEXTEFFECT m_Effect;
 	TEXTCASE m_Case;
@@ -104,19 +103,12 @@ private:
 	bool m_NeedsClipping;
 	int m_ClipStringW;
 	int m_ClipStringH;
-	Gdiplus::Font* m_Font;
-	Gdiplus::FontFamily* m_FontFamily;
+	Gfx::TextFormat* m_TextFormat;
 	int m_NumOfDecimals;
 	Gdiplus::REAL m_Angle;
 	Gdiplus::RectF m_Rect;
 
 	std::wstring m_String;
-
-	static std::wstring FontFaceToString(const std::wstring& fontFace, Gdiplus::PrivateFontCollection* collection);
-	static std::wstring FontPropertiesToString(Gdiplus::REAL size, Gdiplus::FontStyle style);
-
-	static std::unordered_map<std::wstring, Gdiplus::FontFamily*> c_FontFamilies;		// Cache for the font families
-	static std::unordered_map<std::wstring, Gdiplus::Font*> c_Fonts;					// Cache for the fonts
 };
 
 #endif

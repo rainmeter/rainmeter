@@ -22,6 +22,7 @@
 #include "Error.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
+#include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;
 
@@ -145,9 +146,11 @@ bool CMeterRotator::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterRotator::Draw(Graphics& graphics)
+bool CMeterRotator::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(canvas)) return false;
+
+	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
 
 	if (m_Image.IsLoaded())
 	{
@@ -175,6 +178,8 @@ bool CMeterRotator::Draw(Graphics& graphics)
 
 		graphics.ResetTransform();
 	}
+
+	canvas.EndGdiplusContext();
 
 	return true;
 }

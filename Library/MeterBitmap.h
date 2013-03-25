@@ -34,7 +34,7 @@ public:
 
 	virtual void Initialize();
 	virtual bool Update();
-	virtual bool Draw(Gdiplus::Graphics& graphics);
+	virtual bool Draw(Gfx::Canvas& canvas);
 	virtual bool HasActiveTransition();
 
 protected:

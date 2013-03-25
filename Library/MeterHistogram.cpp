@@ -21,6 +21,7 @@
 #include "Measure.h"
 #include "Error.h"
 #include "Rainmeter.h"
+#include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;
 
@@ -410,11 +411,13 @@ bool CMeterHistogram::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterHistogram::Draw(Graphics& graphics)
+bool CMeterHistogram::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(graphics) ||
+	if (!CMeter::Draw(canvas) ||
 		(m_Measures.size() >= 1 && !m_PrimaryValues) ||
 		(m_Measures.size() >= 2 && !m_SecondaryValues)) return false;
+
+	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
 
 	CMeasure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
 
@@ -632,6 +635,8 @@ bool CMeterHistogram::Draw(Graphics& graphics)
 			graphics.FillPath(&brush, &bothPath);
 		}
 	}
+
+	canvas.EndGdiplusContext();
 
 	return true;
 }

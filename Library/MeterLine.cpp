@@ -20,6 +20,7 @@
 #include "MeterLine.h"
 #include "Measure.h"
 #include "Error.h"
+#include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;
 
@@ -218,10 +219,12 @@ bool CMeterLine::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterLine::Draw(Graphics& graphics)
+bool CMeterLine::Draw(Gfx::Canvas& canvas)
 {
 	int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
-	if (!CMeter::Draw(graphics) || maxSize <= 0) return false;
+	if (!CMeter::Draw(canvas) || maxSize <= 0) return false;
+	
+	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
 
 	double maxValue = 0.0;
 	int counter = 0;
@@ -428,6 +431,8 @@ bool CMeterLine::Draw(Graphics& graphics)
 			++counter;
 		}
 	}
+
+	canvas.EndGdiplusContext();
 
 	return true;
 }

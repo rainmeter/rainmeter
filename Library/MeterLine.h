@@ -31,7 +31,7 @@ public:
 
 	virtual void Initialize();
 	virtual bool Update();
-	virtual bool Draw(Gdiplus::Graphics& graphics);
+	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);

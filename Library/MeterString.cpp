@@ -21,11 +21,9 @@
 #include "Rainmeter.h"
 #include "Measure.h"
 #include "Error.h"
+#include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;
-
-std::unordered_map<std::wstring, Gdiplus::FontFamily*> CMeterString::c_FontFamilies;
-std::unordered_map<std::wstring, Gdiplus::Font*> CMeterString::c_Fonts;
 
 #define PI	(3.14159265f)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0f / PI))
@@ -69,7 +67,6 @@ CMeterString::CMeterString(CMeterWindow* meterWindow, const WCHAR* name) : CMete
 	m_Color(Color::White),
 	m_EffectColor(Color::Black),
 	m_AutoScale(AUTOSCALE_OFF),
-	m_Align(ALIGN_LEFT),
 	m_Style(NORMAL),
 	m_Effect(EFFECT_NONE),
 	m_Case(TEXTCASE_NONE),
@@ -81,8 +78,7 @@ CMeterString::CMeterString(CMeterWindow* meterWindow, const WCHAR* name) : CMete
 	m_NeedsClipping(false),
 	m_ClipStringW(-1),
 	m_ClipStringH(-1),
-	m_Font(),
-	m_FontFamily(),
+	m_TextFormat(meterWindow->GetCanvas().CreateTextFormat()),
 	m_NumOfDecimals(-1),
 	m_Angle()
 {
@@ -94,6 +90,8 @@ CMeterString::CMeterString(CMeterWindow* meterWindow, const WCHAR* name) : CMete
 */
 CMeterString::~CMeterString()
 {
+	delete m_TextFormat;
+	m_TextFormat = NULL;
 }
 
 /*
@@ -106,24 +104,14 @@ int CMeterString::GetX(bool abs)
 
 	if (!abs)
 	{
-		switch (m_Align)
+		switch (m_TextFormat->GetHorizontalAlignment())
 		{
-		case ALIGN_CENTER:			// Same as ALIGN_CENTERTOP
-		case ALIGN_CENTERBOTTOM:
-		case ALIGN_CENTERCENTER:
+		case Gfx::HorizontalAlignment::Center:
 			x -= m_W / 2;
 			break;
 
-		case ALIGN_RIGHT:			// Same as ALIGN_RIGHTTOP
-		case ALIGN_RIGHTBOTTOM:
-		case ALIGN_RIGHTCENTER:
+		case Gfx::HorizontalAlignment::Right:
 			x -= m_W;
-			break;
-
-		case ALIGN_LEFT:			// Same as ALIGN_LEFTTOP
-		case ALIGN_LEFTBOTTOM:
-		case ALIGN_LEFTCENTER:
-			// This is already correct
 			break;
 		}
 	}
@@ -141,17 +129,13 @@ int CMeterString::GetY(bool abs)
 
 	if (!abs)
 	{
-		switch (m_Align)
+		switch (m_TextFormat->GetVerticalAlignment())
 		{
-		case ALIGN_LEFTCENTER:
-		case ALIGN_RIGHTCENTER:
-		case ALIGN_CENTERCENTER:
+		case Gfx::VerticalAlignment::Center:
 			y -= m_H / 2;
 			break;
 
-		case ALIGN_LEFTBOTTOM:
-		case ALIGN_RIGHTBOTTOM:
-		case ALIGN_CENTERBOTTOM:
+		case Gfx::VerticalAlignment::Bottom:
 			y -= m_H;
 			break;
 		}
@@ -167,164 +151,12 @@ int CMeterString::GetY(bool abs)
 void CMeterString::Initialize()
 {
 	CMeter::Initialize();
-	
-	// Check if the font family is in the cache and use it
-	std::wstring cacheKey;
-	std::wstring systemFontFaceKey = FontFaceToString(m_FontFace, NULL);
-	std::unordered_map<std::wstring, Gdiplus::FontFamily*>::const_iterator iter = c_FontFamilies.find(systemFontFaceKey);
-	if (iter != c_FontFamilies.end())
-	{
-		m_FontFamily = (*iter).second;
-		cacheKey = systemFontFaceKey;
-	}
-	else
-	{
-		m_FontFamily = NULL;
 
-		PrivateFontCollection* collection = m_MeterWindow->GetPrivateFontCollection();
-		std::wstring privateFontFaceKey;
-
-		if (collection)
-		{
-			// Check if the private font family is in the cache and use it
-			privateFontFaceKey = FontFaceToString(m_FontFace, collection);
-			iter = c_FontFamilies.find(privateFontFaceKey);
-			if (iter != c_FontFamilies.end())
-			{
-				m_FontFamily = (*iter).second;
-				cacheKey = privateFontFaceKey;
-			}
-		}
-
-		if (m_FontFamily == NULL)  // Not found in the cache
-		{
-			m_FontFamily = new FontFamily(m_FontFace.c_str());
-			Status status = m_FontFamily->GetLastStatus();
-
-			if (Ok == status)
-			{
-				cacheKey = systemFontFaceKey;
-			}
-			else
-			{
-				delete m_FontFamily;
-
-				// It couldn't find the font family
-				// Therefore we look in the privatefontcollection of this meters MeterWindow
-				if (collection)
-				{
-					m_FontFamily = new FontFamily(m_FontFace.c_str(), collection);
-					status = m_FontFamily->GetLastStatus();
-
-					if (Ok == status)
-					{
-						cacheKey = privateFontFaceKey;
-					}
-				}
-				else
-				{
-					m_FontFamily = NULL;
-				}
-
-				// It couldn't find the font family: Log it.
-				if (Ok != status)
-				{
-					LogWithArgs(LOG_ERROR, L"Unable to load font: %s", m_FontFace.c_str());
-
-					delete m_FontFamily;
-					m_FontFamily = NULL;
-
-					cacheKey = L"<>";  // set dummy key
-				}
-			}
-
-			if (m_FontFamily)
-			{
-				// Cache
-				//LogWithArgs(LOG_DEBUG, L"FontFamilyCache-Add: %s", cacheKey.c_str());
-				c_FontFamilies[cacheKey] = m_FontFamily;
-			}
-		}
-	}
-
-	FontStyle style = FontStyleRegular;
-
-	switch (m_Style)
-	{
-	case ITALIC:
-		style = FontStyleItalic;
-		break;
-
-	case BOLD:
-		style = FontStyleBold;
-		break;
-
-	case BOLDITALIC:
-		style = FontStyleBoldItalic;
-		break;
-	}
-
-	// Adjust the font size with screen DPI
-	HDC dc = GetDC(0);
-	int dpi = GetDeviceCaps(dc, LOGPIXELSX);
-	ReleaseDC(0, dc);
-
-	REAL size = (REAL)m_FontSize * (96.0f / (REAL)dpi);
-
-	// Check if the font is in the cache and use it
-	cacheKey += L'-';
-	cacheKey += FontPropertiesToString(size, style);
-	std::unordered_map<std::wstring, Gdiplus::Font*>::const_iterator iter2 = c_Fonts.find(cacheKey);
-	if (iter2 != c_Fonts.end())
-	{
-		m_Font = (*iter2).second;
-	}
-	else
-	{
-		m_Font = NULL;
-
-		if (m_FontSize != 0)
-		{
-			if (m_FontFamily)
-			{
-				m_Font = new Gdiplus::Font(m_FontFamily, size, style);
-				Status status = m_Font->GetLastStatus();
-
-				if (Ok != status)
-				{
-					if (FontStyleNotFound == status)
-					{
-						LogWithArgs(LOG_ERROR, L"Invalid StringStyle for font: %s", m_FontFace.c_str());
-					}
-					else
-					{
-						LogWithArgs(LOG_ERROR, L"Invalid font: %s", m_FontFace.c_str());
-					}
-
-					delete m_Font;
-					m_Font = NULL;
-				}
-			}
-
-			if (m_Font == NULL)
-			{
-				// Use default font ("Arial" or GenericSansSerif)
-				m_Font = new Gdiplus::Font(L"Arial", size, style);
-				if (Ok != m_Font->GetLastStatus())
-				{
-					delete m_Font;
-					m_Font = NULL;
-				}
-			}
-
-			if (m_Font)
-			{
-				// Cache
-				//LogWithArgs(LOG_DEBUG, L"FontCache-Add: %s", cacheKey.c_str());
-				c_Fonts[cacheKey] = m_Font;
-			}
-		}
-	}
+	m_TextFormat->SetProperties(
+		m_FontFace.c_str(),
+		m_FontSize,
+		m_Style & BOLD,
+		m_Style & ITALIC);
 }
 
 /*
@@ -409,46 +241,35 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_NoDecimals = (scale.find(L'.') == std::wstring::npos);
 	m_Scale = parser.ParseDouble(scale.c_str(), 1);
 
-	const WCHAR* align = parser.ReadString(section, L"StringAlign", L"LEFT").c_str();
-	if (_wcsicmp(align, L"LEFT") == 0 || _wcsicmp(align, L"LEFTTOP") == 0)
+	const WCHAR* hAlign = parser.ReadString(section, L"StringAlign", L"LEFT").c_str();
+	const WCHAR* vAlign = NULL;
+	if (_wcsnicmp(hAlign, L"LEFT", 4) == 0)
 	{
-		m_Align = ALIGN_LEFT;
+		m_TextFormat->SetHorizontalAlignment(Gfx::HorizontalAlignment::Left);
+		vAlign = hAlign + 4;
 	}
-	else if (_wcsicmp(align, L"RIGHT") == 0 || _wcsicmp(align, L"RIGHTTOP") == 0)
+	else if (_wcsnicmp(hAlign, L"RIGHT", 5) == 0)
 	{
-		m_Align = ALIGN_RIGHT;
+		m_TextFormat->SetHorizontalAlignment(Gfx::HorizontalAlignment::Right);
+		vAlign = hAlign + 5;
 	}
-	else if (_wcsicmp(align, L"CENTER") == 0 || _wcsicmp(align, L"CENTERTOP") == 0)
+	else if (_wcsnicmp(hAlign, L"CENTER", 6) == 0)
 	{
-		m_Align = ALIGN_CENTER;
+		m_TextFormat->SetHorizontalAlignment(Gfx::HorizontalAlignment::Center);
+		vAlign = hAlign + 6;
 	}
-	else if (_wcsicmp(align, L"LEFTBOTTOM") == 0)
+
+	if (!vAlign || _wcsicmp(vAlign, L"TOP") == 0)
 	{
-		m_Align = ALIGN_LEFTBOTTOM;
+		m_TextFormat->SetVerticalAlignment(Gfx::VerticalAlignment::Top);
 	}
-	else if (_wcsicmp(align, L"RIGHTBOTTOM") == 0)
+	else if (_wcsicmp(vAlign, L"BOTTOM") == 0)
 	{
-		m_Align = ALIGN_RIGHTBOTTOM;
+		m_TextFormat->SetVerticalAlignment(Gfx::VerticalAlignment::Bottom);
 	}
-	else if (_wcsicmp(align, L"CENTERBOTTOM") == 0)
+	else if (_wcsicmp(vAlign, L"CENTER") == 0)
 	{
-		m_Align = ALIGN_CENTERBOTTOM;
-	}
-	else if (_wcsicmp(align, L"LEFTCENTER") == 0)
-	{
-		m_Align = ALIGN_LEFTCENTER;
-	}
-	else if (_wcsicmp(align, L"RIGHTCENTER") == 0)
-	{
-		m_Align = ALIGN_RIGHTCENTER;
-	}
-	else if (_wcsicmp(align, L"CENTERCENTER") == 0)
-	{
-		m_Align = ALIGN_CENTERCENTER;
-	}
-	else
-	{
-		LogWithArgs(LOG_ERROR, L"StringAlign=%s is not valid in [%s]", align, m_Name.c_str());
+		m_TextFormat->SetVerticalAlignment(Gfx::VerticalAlignment::Center);
 	}
 
 	const WCHAR* stringCase = parser.ReadString(section, L"StringCase", L"NONE").c_str();
@@ -570,8 +391,7 @@ bool CMeterString::Update()
 		{
 			// Calculate the text size
 			RectF rect;
-			Graphics graphics(m_MeterWindow->GetDoubleBuffer());
-			if (DrawString(graphics, &rect))
+			if (DrawString(m_MeterWindow->GetCanvas(), &rect))
 			{
 				m_W = (int)rect.Width;
 				m_H = (int)rect.Height;
@@ -592,111 +412,45 @@ bool CMeterString::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterString::Draw(Graphics& graphics)
+bool CMeterString::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(graphics)) return false;
+	if (!CMeter::Draw(canvas)) return false;
 
-	return DrawString(graphics, NULL);
+	return DrawString(canvas, NULL);
 }
 
 /*
 ** Draws the string or calculates it's size
 **
 */
-bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
+bool CMeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 {
-	if (m_Font == NULL) return false;
+	if (!m_TextFormat->IsInitialized()) return false;
 
 	LPCWSTR string = m_String.c_str();
-	int stringLen = (int)m_String.length();
+	UINT stringLen = (UINT)m_String.length();
 
-	StringFormat stringFormat;
+	canvas.SetTextAntiAliasing(m_AntiAlias);
 
-	if (m_AntiAlias)
-	{
-		graphics.SetTextRenderingHint(TextRenderingHintAntiAlias);
-	}
-	else
-	{
-		graphics.SetTextRenderingHint(TextRenderingHintSingleBitPerPixelGridFit);
-	}
+	//CharacterRange range(0, stringLen);
+	//stringFormat.SetMeasurableCharacterRanges(1, &range);
 
-	switch (m_Align)
-	{
-	case ALIGN_CENTERCENTER:
-		stringFormat.SetAlignment(StringAlignmentCenter);
-		stringFormat.SetLineAlignment(StringAlignmentCenter);
-		break;
-
-	case ALIGN_RIGHTCENTER:
-		stringFormat.SetAlignment(StringAlignmentFar);
-		stringFormat.SetLineAlignment(StringAlignmentCenter);
-		break;
-
-	case ALIGN_LEFTCENTER:
-		stringFormat.SetAlignment(StringAlignmentNear);
-		stringFormat.SetLineAlignment(StringAlignmentCenter);
-		break;
-
-	case ALIGN_CENTERBOTTOM:
-		stringFormat.SetAlignment(StringAlignmentCenter);
-		stringFormat.SetLineAlignment(StringAlignmentFar);
-		break;
-
-	case ALIGN_RIGHTBOTTOM:
-		stringFormat.SetAlignment(StringAlignmentFar);
-		stringFormat.SetLineAlignment(StringAlignmentFar);
-		break;
-
-	case ALIGN_LEFTBOTTOM:
-		stringFormat.SetAlignment(StringAlignmentNear);
-		stringFormat.SetLineAlignment(StringAlignmentFar);
-		break;
-
-	case ALIGN_CENTER:	// Same as CenterTop
-		stringFormat.SetAlignment(StringAlignmentCenter);
-		stringFormat.SetLineAlignment(StringAlignmentNear);
-		break;
-
-	case ALIGN_RIGHT:	// Same as RightTop
-		stringFormat.SetAlignment(StringAlignmentFar);
-		stringFormat.SetLineAlignment(StringAlignmentNear);
-		break;
-
-	case ALIGN_LEFT:	// Same as LeftTop
-		stringFormat.SetAlignment(StringAlignmentNear);
-		stringFormat.SetLineAlignment(StringAlignmentNear);
-		break;
-	}
-
-	CharacterRange range(0, stringLen);
-	stringFormat.SetMeasurableCharacterRanges(1, &range);
-
-	if (m_ClipType == CLIP_ON || (m_NeedsClipping && m_ClipType == CLIP_AUTO) ||
-		m_ClipType == CLIP_AUTO && m_WDefined && m_HDefined)
-	{
-		stringFormat.SetTrimming(StringTrimmingEllipsisCharacter);
-	}
-	else
-	{
-		stringFormat.SetTrimming(StringTrimmingNone);
-		stringFormat.SetFormatFlags(StringFormatFlagsNoClip | StringFormatFlagsNoWrap);
-	}
+	m_TextFormat->SetTrimming(
+		m_ClipType == CLIP_ON ||
+		(m_ClipType == CLIP_AUTO && (m_NeedsClipping || (m_WDefined && m_HDefined))));
 
 	REAL x = (REAL)GetX();
 	REAL y = (REAL)GetY();
 
 	if (rect)
 	{
-		PointF pos(x, y);
-		Status status = graphics.MeasureString(string, stringLen, m_Font, pos, &stringFormat, rect);
-
-		if (m_ClipType == CLIP_AUTO && status == Ok)
+		rect->X = x;
+		rect->Y = y;;
+		if (canvas.MeasureTextW(string, stringLen, *m_TextFormat, *rect) &&
+			m_ClipType == CLIP_AUTO)
 		{
 			// Set initial clipping
 			m_NeedsClipping = false;
-			stringFormat.SetTrimming(StringTrimmingNone);
-			stringFormat.SetFormatFlags(StringFormatFlagsNoClip);
 
 			REAL w, h;
 			bool updateSize = true;
@@ -749,20 +503,6 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 
 					updateSize = false;
 				}
-				else if (m_ClipStringH == -1)
-				{
-					if (rect->Width > m_ClipStringW)
-					{
-						w = (REAL)m_ClipStringW;
-						m_NeedsClipping = true;
-					}
-					else
-					{
-						w = rect->Width;
-					}
-
-					h = rect->Height;
-				}
 				else
 				{
 					if (rect->Width > m_ClipStringW)
@@ -781,12 +521,10 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 
 			if (updateSize)
 			{
-				int lines = 0;
+				UINT lines = 0;
 				RectF layout(x, y, w, h);
-
-				status = graphics.MeasureString(string, stringLen, m_Font, layout, &stringFormat, &layout, NULL, &lines);
-
-				if (status == Ok && lines != 0)
+				if (canvas.MeasureTextLinesW(string, stringLen, *m_TextFormat, layout, lines) &&
+					lines != 0)
 				{
 					rect->Width = w;
 					rect->Height = layout.Height;
@@ -806,9 +544,10 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 
 		if (m_Angle != 0.0f)
 		{
-			graphics.TranslateTransform((Gdiplus::REAL)CMeter::GetX(), y);
-			graphics.RotateTransform(CONVERT_TO_DEGREES(m_Angle));
-			graphics.TranslateTransform(-(Gdiplus::REAL)CMeter::GetX(), -y);
+			// TODO FIXME
+			//graphics.TranslateTransform((Gdiplus::REAL)CMeter::GetX(), y);
+			//graphics.RotateTransform(CONVERT_TO_DEGREES(m_Angle));
+			//graphics.TranslateTransform(-(Gdiplus::REAL)CMeter::GetX(), -y);
 		}
 
 		if (m_Effect != EFFECT_NONE)
@@ -819,27 +558,28 @@ bool CMeterString::DrawString(Graphics& graphics, RectF* rect)
 			if (m_Effect == EFFECT_SHADOW)
 			{
 				rcEffect.Offset(1, 1);
-				graphics.DrawString(string, stringLen, m_Font, rcEffect, &stringFormat, &solidBrush);
+				canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcEffect, solidBrush);
 			}
 			else  //if (m_Effect == EFFECT_BORDER)
 			{
 				rcEffect.Offset(0, 1);
-				graphics.DrawString(string, stringLen, m_Font, rcEffect, &stringFormat, &solidBrush);
+				canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcEffect, solidBrush);
 				rcEffect.Offset(1, -1);
-				graphics.DrawString(string, stringLen, m_Font, rcEffect, &stringFormat, &solidBrush);
+				canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcEffect, solidBrush);
 				rcEffect.Offset(-1, -1);
-				graphics.DrawString(string, stringLen, m_Font, rcEffect, &stringFormat, &solidBrush);
+				canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcEffect, solidBrush);
 				rcEffect.Offset(-1, 1);
-				graphics.DrawString(string, stringLen, m_Font, rcEffect, &stringFormat, &solidBrush);
+				canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcEffect, solidBrush);
 			}
 		}
 
 		SolidBrush solidBrush(m_Color);
-		graphics.DrawString(string, stringLen, m_Font, rcDest, &stringFormat, &solidBrush);
+		canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcDest, solidBrush);
 
 		if (m_Angle != 0.0f)
 		{
-			graphics.ResetTransform();
+			// TODO FIXME
+			//graphics.ResetTransform();
 		}
 	}
 
@@ -865,81 +605,6 @@ void CMeterString::BindMeasures(CConfigParser& parser, const WCHAR* section)
 */
 void CMeterString::FreeFontCache(PrivateFontCollection* collection)
 {
-	std::wstring prefix;
-
-	if (collection)
-	{
-		WCHAR buffer[32];
-		size_t len = _snwprintf_s(buffer, _TRUNCATE, L"<%p>", collection);
-
-		prefix.assign(buffer, len);
-		_wcsupr(&prefix[0]);
-	}
-
-	std::unordered_map<std::wstring, Gdiplus::Font*>::iterator iter2 = c_Fonts.begin();
-	while (iter2 != c_Fonts.end())
-	{
-		if (collection == NULL || wcsncmp((*iter2).first.c_str(), prefix.c_str(), prefix.length()) == 0)
-		{
-			//LogWithArgs(LOG_DEBUG, L"FontCache-Remove: %s", (*iter2).first.c_str());
-			delete (*iter2).second;
-
-			if (collection)
-			{
-				c_Fonts.erase(iter2++);
-				continue;
-			}
-		}
-		++iter2;
-	}
-	if (collection == NULL) c_Fonts.clear();
-
-	std::unordered_map<std::wstring, Gdiplus::FontFamily*>::iterator iter = c_FontFamilies.begin();
-	while (iter != c_FontFamilies.end())
-	{
-		if (collection == NULL || wcsncmp((*iter).first.c_str(), prefix.c_str(), prefix.length()) == 0)
-		{
-			//LogWithArgs(LOG_DEBUG, L"FontFamilyCache-Remove: %s", (*iter).first.c_str());
-			delete (*iter).second;
-
-			if (collection)
-			{
-				c_FontFamilies.erase(iter++);
-				continue;
-			}
-		}
-		++iter;
-	}
-	if (collection == NULL) c_FontFamilies.clear();
-}
-
-/*
-** Static helper to convert font name to a string so it can be used as a key for the cache map.
-**
-*/
-std::wstring CMeterString::FontFaceToString(const std::wstring& fontFace, PrivateFontCollection* collection)
-{
-	WCHAR buffer[32];
-	size_t len = _snwprintf_s(buffer, _TRUNCATE, L"<%p>", collection);
-
-	std::wstring strTmp;
-	strTmp.reserve(len + fontFace.size());
-	strTmp.assign(buffer, len);
-	strTmp += fontFace;
-	_wcsupr(&strTmp[0]);
-	return strTmp;
-}
-
-/*
-** Static helper to convert font properties to a string so it can be used as a key for the cache map.
-**
-*/
-std::wstring CMeterString::FontPropertiesToString(REAL size, FontStyle style)
-{
-	WCHAR buffer[64];
-	size_t len = _snwprintf_s(buffer, _TRUNCATE, L"%.1f-%i", size, (int)style);
-
-	return std::wstring(buffer, len);
 }
 
 /*
