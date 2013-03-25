@@ -25,10 +25,9 @@
 
 namespace Gfx {
 
-class Canvas
+class __declspec(novtable) Canvas
 {
 public:
-	Canvas();
 	virtual ~Canvas();
 
 	int GetW() const { return m_W; }
@@ -72,6 +71,8 @@ public:
 	virtual void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush) = 0;
 
 protected:
+	Canvas();
+
 	int m_W;
 	int m_H;
 

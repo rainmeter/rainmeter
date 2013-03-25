@@ -37,10 +37,9 @@ enum class VerticalAlignment : BYTE
 	Bottom
 };
 
-class TextFormat
+class __declspec(novtable) TextFormat
 {
 public:
-	TextFormat();
 	virtual ~TextFormat();
 
 	virtual bool IsInitialized() = 0;
@@ -53,6 +52,9 @@ public:
 
 	virtual void SetVerticalAlignment(VerticalAlignment alignment);
 	VerticalAlignment GetVerticalAlignment() { return m_VerticalAlignment; }
+
+protected:
+	TextFormat();
 
 private:
 	TextFormat(const TextFormat& other) {}
