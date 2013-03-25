@@ -36,8 +36,8 @@
 #include "TintedImage.h"
 #include "MeasureScript.h"
 #include "../Version.h"
-#include "../Common/Gfx/CanvasGDIP.h"
 #include "../Common/Gfx/CanvasD2D.h"
+#include "../Common/Gfx/CanvasGDIP.h"
 
 using namespace Gdiplus;
 
@@ -143,7 +143,7 @@ CMeterWindow::CMeterWindow(const std::wstring& folderPath, const std::wstring& f
 	m_FontCollection(),
 	m_ToolTipHidden(false)
 {
-	m_Canvas = Platform::IsAtLeastWinVista() ?
+	m_Canvas = (Platform::IsAtLeastWinVista() && Rainmeter->CanUseD2D()) ?
 		(Gfx::Canvas*)new Gfx::CanvasD2D() : (Gfx::Canvas*)new Gfx::CanvasGDIP();
 
 	if (!c_DwmInstance && Platform::IsAtLeastWinVista())

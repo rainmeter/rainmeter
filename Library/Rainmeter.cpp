@@ -688,6 +688,7 @@ void CRainmeter::Bang_Log(std::vector<std::wstring>& args)
 */
 CRainmeter::CRainmeter() :
 	m_TrayWindow(),
+	m_UseD2D(false),
 	m_Debug(false),
 	m_DisableVersionCheck(false),
 	m_NewVersion(false),
@@ -2455,6 +2456,8 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	CConfigParser parser;
 	parser.Initialize(iniFile, NULL, NULL);
+
+	m_UseD2D = 0!=parser.ReadInt(L"Rainmeter", L"UseD2D", 0);
 
 	// Read Logging settings
 	m_Logging = 0!=parser.ReadInt(L"Rainmeter", L"Logging", 0);
