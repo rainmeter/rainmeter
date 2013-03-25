@@ -3,7 +3,6 @@ setlocal EnableDelayedExpansion
 
 set VCVARSALL=%VS110COMNTOOLS%..\..\VC\vcvarsall.bat
 set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
-set SUBWCREV=%PROGRAMFILES%\TortoiseSVN\bin\SubWCRev.exe
 set GIT=%PROGRAMFILES%\Git\bin\git.exe
 
 :: Set VERSION_REVISION to non-zero value to override
@@ -35,8 +34,6 @@ if not exist "%MAKENSIS%" echo ERROR: MakeNSIS.exe not found & goto END
 
 :BUILDVERSION
 
-if exist "..\.svn" goto SVN
-if exist "..\..\.svn" goto SVN
 if not exist "..\.git" goto UPDATEVERSION
 if not "%VERSION_REVISION%" == "0" goto UPDATEVERSION
 
@@ -47,15 +44,6 @@ if not exist "%GIT%" echo ERROR: git.exe not found & goto END
 :GITFOUND
 set /a VERSION_REVISION=0
 for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --all --count`) do set VERSION_REVISION=%%G
-goto UPDATEVERSION
-
-:: svn
-:SVN
-if exist "%SUBWCREV%" goto SUBWCREVFOUND
-set SUBWCREV=%SUBWCREV:Program Files\=Program Files (x86)\%
-if not exist "%SUBWCREV%" echo ERROR: SubWCRev.exe (TortoiseSVN) not found & goto END
-:SUBWCREVFOUND
-for /f "usebackq tokens=5 delims= " %%G in (`"%SUBWCREV%" ..\`) do set VERSION_REVISION=%%G
 
 :UPDATEVERSION
 
