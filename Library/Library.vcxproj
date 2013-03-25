@@ -21,8 +21,8 @@
       <DisableSpecificWarnings>4018;4090;4114;4267;4334;4351;4786;4800;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>Winmm.dll;Version.dll</DelayLoadDLLs>
+      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -33,8 +33,8 @@
       <DisableSpecificWarnings>4018;4090;4114;4267;4334;4351;4786;4800;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>Winmm.dll;Version.dll</DelayLoadDLLs>
+      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -45,8 +45,8 @@
       <DisableSpecificWarnings>4018;4090;4114;4267;4334;4351;4786;4800;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>Winmm.dll;Version.dll</DelayLoadDLLs>
+      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -57,14 +57,21 @@
       <DisableSpecificWarnings>4018;4090;4114;4267;4334;4351;4786;4800;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>Winmm.dll;Version.dll</DelayLoadDLLs>
+      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Common\ControlTemplate.cpp" />
     <ClCompile Include="..\Common\Dialog.cpp" />
+    <ClCompile Include="..\Common\Gfx\Canvas.cpp" />
+    <ClCompile Include="..\Common\Gfx\CanvasD2D.cpp" />
+    <ClCompile Include="..\Common\Gfx\CanvasGDIP.cpp" />
+    <ClCompile Include="..\Common\Gfx\TextFormat.cpp" />
+    <ClCompile Include="..\Common\Gfx\TextFormatD2D.cpp" />
+    <ClCompile Include="..\Common\Gfx\TextFormatGDIP.cpp" />
+    <ClCompile Include="..\Common\Gfx\WICBitmapLockGDIP.cpp" />
     <ClCompile Include="..\Common\MenuTemplate.cpp" />
     <ClCompile Include="..\Common\Platform.cpp" />
     <ClCompile Include="..\Common\StringUtil.cpp" />
@@ -275,6 +282,13 @@
   <ItemGroup>
     <ClInclude Include="..\Common\ControlTemplate.h" />
     <ClInclude Include="..\Common\Dialog.h" />
+    <ClInclude Include="..\Common\Gfx\Canvas.h" />
+    <ClInclude Include="..\Common\Gfx\CanvasD2D.h" />
+    <ClInclude Include="..\Common\Gfx\CanvasGDIP.h" />
+    <ClInclude Include="..\Common\Gfx\TextFormat.h" />
+    <ClInclude Include="..\Common\Gfx\TextFormatD2D.h" />
+    <ClInclude Include="..\Common\Gfx\TextFormatGDIP.h" />
+    <ClInclude Include="..\Common\Gfx\WICBitmapLockGDIP.h" />
     <ClInclude Include="..\Common\MenuTemplate.h" />
     <ClInclude Include="..\Common\Platform.h" />
     <ClInclude Include="..\Common\StringUtil.h" />

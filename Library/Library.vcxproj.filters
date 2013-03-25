@@ -28,6 +28,9 @@
     <Filter Include="Common">
       <UniqueIdentifier>{3fcdd272-ad7a-4e06-a1bc-ff114498ccee}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\Gfx">
+      <UniqueIdentifier>{26d9c191-5857-45c2-9e73-b0b88964728f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConfigParser.cpp">
@@ -339,6 +342,27 @@
     <ClCompile Include="..\Common\StringUtil.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\Gfx\CanvasGDIP.cpp">
+      <Filter>Common\Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Gfx\TextFormat.cpp">
+      <Filter>Common\Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Gfx\TextFormatD2D.cpp">
+      <Filter>Common\Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Gfx\TextFormatGDIP.cpp">
+      <Filter>Common\Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Gfx\WICBitmapLockGDIP.cpp">
+      <Filter>Common\Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Gfx\Canvas.cpp">
+      <Filter>Common\Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Gfx\CanvasD2D.cpp">
+      <Filter>Common\Gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigParser.h">
@@ -583,6 +607,27 @@
     </ClInclude>
     <ClInclude Include="..\Common\StringUtil.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Gfx\CanvasGDIP.h">
+      <Filter>Common\Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Gfx\TextFormat.h">
+      <Filter>Common\Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Gfx\TextFormatD2D.h">
+      <Filter>Common\Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Gfx\TextFormatGDIP.h">
+      <Filter>Common\Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Gfx\WICBitmapLockGDIP.h">
+      <Filter>Common\Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Gfx\Canvas.h">
+      <Filter>Common\Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Gfx\CanvasD2D.h">
+      <Filter>Common\Gfx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
