@@ -48,8 +48,12 @@ namespace DllExporter
                 ildasmPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles(x86)%\Microsoft SDKs\Windows\v7.0A\Bin\ildasm.exe");
                 if (!System.IO.File.Exists(ildasmPath))
                 {
-                    Console.WriteLine("DllExporter error: ildasm.exe not found");
-                    return 1;
+                    ildasmPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles(x86)%\Microsoft SDKs\Windows\v8.0A\bin\NETFX 4.0 Tools\ildasm.exe");
+                    if (!System.IO.File.Exists(ildasmPath))
+                    {
+                        Console.WriteLine("DllExporter error: ildasm.exe not found");
+                        return 1;
+                    }
                 }
             }
 
