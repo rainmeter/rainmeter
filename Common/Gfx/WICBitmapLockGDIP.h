@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef RM_GFX_BITMAPLOCKGDI_H_
-#define RM_GFX_BITMAPLOCKGDI_H_
+#ifndef RM_GFX_WICBITMAPLOCKGDIP_H_
+#define RM_GFX_WICBITMAPLOCKGDIP_H_
 
 #include <Windows.h>
 #include <GdiPlus.h>
@@ -30,7 +30,9 @@ namespace Gfx {
 class WICBitmapLockGDIP : public IWICBitmapLock
 {
 public:
-	WICBitmapLockGDIP() : m_RefCount(0) {}
+	WICBitmapLockGDIP();
+
+	Gdiplus::BitmapData* GetBitmapData() { return &m_BitmapData; }
 
 	// IUnknown
 	IFACEMETHOD(QueryInterface)(REFIID riid, void** ppvObject);
@@ -42,8 +44,6 @@ public:
 	IFACEMETHOD(GetStride)(UINT* pcbStride);
 	IFACEMETHOD(GetDataPointer)(UINT* pcbBufferSize, BYTE** ppbData);
 	IFACEMETHOD(GetPixelFormat)(WICPixelFormatGUID* pPixelFormat);
-
-	Gdiplus::BitmapData* GetBitmapData() { return &m_BitmapData; }
 
 private:
 	Gdiplus::BitmapData m_BitmapData;

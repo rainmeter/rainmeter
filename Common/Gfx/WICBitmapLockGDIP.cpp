@@ -21,6 +21,11 @@
 
 namespace Gfx {
 
+WICBitmapLockGDIP::WICBitmapLockGDIP() :
+	m_RefCount(1)
+{
+}
+
 IFACEMETHODIMP WICBitmapLockGDIP::QueryInterface(REFIID riid, void** ppvObject)
 {
 	return E_NOTIMPL;

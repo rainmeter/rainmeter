@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef RM_GFX_CANVASGDI_H_
-#define RM_GFX_CANVASGDI_H_
+#ifndef RM_GFX_CANVASGDIP_H_
+#define RM_GFX_CANVASGDIP_H_
 
 #include "Canvas.h"
 #include "TextFormatGDIP.h"

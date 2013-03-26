@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef RM_GFX_TEXTFORMATGDI_H_
-#define RM_GFX_TEXTFORMATGDI_H_
+#ifndef RM_GFX_TEXTFORMATGDIP_H_
+#define RM_GFX_TEXTFORMATGDIP_H_
 
 #include "TextFormat.h"
 #include <GdiPlus.h>
