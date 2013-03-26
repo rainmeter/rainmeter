@@ -498,19 +498,16 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 
 	auto runFile = [&](std::wstring& filename, std::wstring& dir)
 	{
-		CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-
 		std::wstring file = dir + filename;
 		SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
 
-		si.lpVerb = L"open";
+		si.lpVerb = nullptr;
 		si.lpFile = file.c_str();
 		si.nShow = SW_SHOWNORMAL;
 		si.lpDirectory = dir.c_str();
 		si.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_ASYNCOK;
 
 		ShellExecuteEx(&si);
-		CoUninitialize();
 	};
 
 	if (parent->ownerChild == child)
