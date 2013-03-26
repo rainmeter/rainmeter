@@ -71,6 +71,8 @@
     <ClCompile Include="..\Common\Gfx\TextFormat.cpp" />
     <ClCompile Include="..\Common\Gfx\TextFormatD2D.cpp" />
     <ClCompile Include="..\Common\Gfx\TextFormatGDIP.cpp" />
+    <ClCompile Include="..\Common\Gfx\WICBitmapDIB.cpp" />
+    <ClCompile Include="..\Common\Gfx\WICBitmapLockDIB.cpp" />
     <ClCompile Include="..\Common\Gfx\WICBitmapLockGDIP.cpp" />
     <ClCompile Include="..\Common\MenuTemplate.cpp" />
     <ClCompile Include="..\Common\Platform.cpp" />
@@ -288,6 +290,8 @@
     <ClInclude Include="..\Common\Gfx\TextFormat.h" />
     <ClInclude Include="..\Common\Gfx\TextFormatD2D.h" />
     <ClInclude Include="..\Common\Gfx\TextFormatGDIP.h" />
+    <ClInclude Include="..\Common\Gfx\WICBitmapDIB.h" />
+    <ClInclude Include="..\Common\Gfx\WICBitmapLockDIB.h" />
     <ClInclude Include="..\Common\Gfx\WICBitmapLockGDIP.h" />
     <ClInclude Include="..\Common\MenuTemplate.h" />
     <ClInclude Include="..\Common\Platform.h" />

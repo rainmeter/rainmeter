@@ -363,6 +363,12 @@
     <ClCompile Include="..\Common\Gfx\CanvasD2D.cpp">
       <Filter>Common\Gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\Gfx\WICBitmapDIB.cpp">
+      <Filter>Common\Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Gfx\WICBitmapLockDIB.cpp">
+      <Filter>Common\Gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigParser.h">
@@ -627,6 +633,12 @@
       <Filter>Common\Gfx</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\Gfx\CanvasD2D.h">
+      <Filter>Common\Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Gfx\WICBitmapDIB.h">
+      <Filter>Common\Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Gfx\WICBitmapLockDIB.h">
       <Filter>Common\Gfx</Filter>
     </ClInclude>
   </ItemGroup>

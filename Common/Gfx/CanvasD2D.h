@@ -21,6 +21,7 @@
 
 #include "Canvas.h"
 #include "TextFormatD2D.h"
+#include "WICBitmapDIB.h"
 #include <string>
 #include <GdiPlus.h>
 #include <d2d1.h>
@@ -75,24 +76,17 @@ private:
 
 	void DiscardDeviceResources();
 
-	void BeginTargetDraw();
+	bool BeginTargetDraw();
 	void EndTargetDraw();
 
 	ID2D1RenderTarget* m_Target;
-	ID2D1GdiInteropRenderTarget* m_InteropTarget;
-	IWICBitmap* m_Bitmap;
+	WICBitmapDIB m_Bitmap;
 
 	// GDI+ objects that share the pixel data of m_Bitmap.
 	Gdiplus::Graphics* m_GdipGraphics;
 	Gdiplus::Bitmap* m_GdipBitmap;
 
-	// If true, the BeginDraw() function of this class has been called and the matching EndDraw()
-	// has not been called yet.
-	bool m_BeginDrawCalled;
-
-	// If true, the BeginDraw() function of the render target has been called and the matching
-	// EndDraw() has not been called yet.
-	bool m_TargetBeginDrawCalled;
+	bool m_TextAntiAliasing;
 
 	static UINT c_Instances;
 	static ID2D1Factory* c_D2D;
