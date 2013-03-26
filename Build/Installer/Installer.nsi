@@ -99,9 +99,6 @@ Var NonDefaultLanguage
 Var AutoStartup
 Var Install64Bit
 Var InstallPortable
-!ifndef BETA
-Var SendStatistics
-!endif
 Var un.DeleteAll
 
 ; Install
@@ -218,9 +215,6 @@ Function .onInit
 		StrCpy $NonDefaultLanguage $3
 		StrCpy $LANGUAGE $4
 		StrCpy $INSTDIR $5
-!ifndef BETA
-		StrCpy $SendStatistics $6
-!endif
 	${EndIf}
 FunctionEnd
 
@@ -230,9 +224,6 @@ Function ExchangeSettings
 	StrCpy $3 $NonDefaultLanguage
 	StrCpy $4 $LANGUAGE
 	StrCpy $5 $INSTDIR
-!ifndef BETA
-	StrCpy $6 $SendStatistics
-!endif
 	HideWindow
 FunctionEnd
 
@@ -370,15 +361,6 @@ Function PageOptions
 		${NSD_CreateGroupBox} 0 42u -1u $1 "$(ADDITIONALOPTIONS)"
 	${EndIf}
 
-!ifndef BETA
-	${NSD_CreateCheckbox} 6u 92u 285u 12u "$(SENDINFORMATION)"
-	Pop $R4
-	${NSD_Check} $R4
-
-	${NSD_CreateLabel} 17u 105u -20u 43u "$(SENDINFORMATIONDESC)"
-	Pop $0
-!endif
-
 	; Set default directory
 	${If} $InstallPortable = 1
 		${GetRoot} "$WINDIR" $0
@@ -490,19 +472,6 @@ Function PageOptionsOnLeave
 	${If} $R3 != 0
 		${NSD_GetState} $R3 $AutoStartup
 	${EndIf}
-
-!ifndef BETA
-	${NSD_GetState} $R4 $SendStatistics
-
-	${If} ${FileExists} "$INSTDIR\Rainmeter.exe"
-		MoreInfo::GetFileVersion "$INSTDIR\Rainmeter.exe"
-		Pop $0
-		${VersionCompare} "${VER}.0.${REV}" "$0" $1
-		${If} $1 != 1
-			StrCpy $SendStatistics "0"
-		${EndIf}
-	${EndIf}
-!endif
 
 	${If} $InstallPortable <> 1
 		${IfNot} ${UAC_IsAdmin}
@@ -699,47 +668,6 @@ Section
 
 		Sleep 500
 	${Next}
-
-!ifndef BETA
-	${IfNot} ${Silent}
-	${AndIf} $SendStatistics = 1
-		System::Call "Secur32.dll::GetUserNameEx(i 2, t .r0, *i ${NSIS_MAX_STRLEN} r1) i.r2"
-		${If} ${RunningX64}
-			SetRegView 64
-		${EndIf}
-		ReadRegStr $1 HKLM "SOFTWARE\Microsoft\Cryptography" "MachineGuid"
-		${If} ${RunningX64}
-			SetRegView 32
-		${EndIf}
-		MD5::GetMD5String "$0$1"
-		Pop $R0
-
-		${WinVerGetMajor} $R1
-		${WinVerGetMinor} $R2
-		${WinVerGetServicePackLevel} $R3
-
-		System::Call 'kernel32::LoadLibrary(t"d2d1.dll")i.R4'
-		${If} $R4 <> 0
-			StrCpy $R4 "1"
-			System::Call 'kernel32::FreeLibrary(i R4)'
-		${EndIf}
-
-		System::Call 'kernel32::IsProcessorFeaturePresent(i${PF_XMMI64_INSTRUCTIONS_AVAILABLE})i.R5'
-		${If} $R5 <> 0
-			StrCpy $R5 "1"
-		${EndIf}
-
-		System::Call 'kernel32::GetUserDefaultUILanguage() i.R6'
-
-		StrCpy $R7 "$Install64Bit"
-		${If} $R7 <> 1
-			StrCpy $R7 "0"
-		${EndIf}
-
-		NSISdl::download_quiet /TIMEOUT=30000 "http://rainmeter.net/stat/${VER}.php?id=$R0&vmj=$R1&vmi=$R2&vsp=$R3&d2d=$R4&sse2=$R5&uilang=$R6&64bit=$R7&lang=$LANGUAGE" "$PLUGINSDIR\_"
-		Delete "$PLUGINSDIR\_"
-	${EndIf}
-!endif
 
 	; Move Rainmeter.ini to %APPDATA% if needed
 	${IfNot} ${Silent}
