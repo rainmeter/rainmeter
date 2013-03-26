@@ -49,7 +49,7 @@ void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, 
 void GetIcon(std::wstring filePath, const std::wstring& iconPath, IconSize iconSize);
 HRESULT SaveIcon(HICON hIcon, FILE* fp);
 
-std::vector<ParentMeasure*> g_ParentMeasures;
+static std::vector<ParentMeasure*> g_ParentMeasures;
 static CRITICAL_SECTION g_CriticalSection;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -496,6 +496,23 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 		return;
 	}
 
+	auto runFile = [&](std::wstring& filename, std::wstring& dir)
+	{
+		CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
+		std::wstring file = dir + filename;
+		SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
+
+		si.lpVerb = L"open";
+		si.lpFile = file.c_str();
+		si.nShow = SW_SHOWNORMAL;
+		si.lpDirectory = dir.c_str();
+		si.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_ASYNCOK;
+
+		ShellExecuteEx(&si);
+		CoUninitialize();
+	};
+
 	if (parent->ownerChild == child)
 	{
 		if (parent->files.size() > parent->count)
@@ -591,8 +608,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 	{
 		if (_wcsicmp(args, L"OPEN") == 0)
 		{
-			std::wstring file = parent->files[trueIndex].path + parent->files[trueIndex].fileName;
-			ShellExecute(nullptr, nullptr, file.c_str(), nullptr, parent->files[trueIndex].path.c_str(), SW_SHOW);
+			runFile(parent->files[trueIndex].fileName, parent->files[trueIndex].path);
 		}
 		else if (parent->recursiveType != RECURSIVE_FULL && _wcsicmp(args, L"FOLLOWPATH") == 0)
 		{
@@ -631,8 +647,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 			}
 			else
 			{
-				std::wstring file = parent->path + parent->files[trueIndex].fileName;
-				ShellExecute(nullptr, nullptr, file.c_str(), nullptr, parent->path.c_str(), SW_SHOW);
+				runFile(parent->files[trueIndex].fileName, parent->files[trueIndex].path);
 			}
 		}
 
