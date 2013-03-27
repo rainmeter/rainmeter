@@ -69,7 +69,7 @@ CanvasD2D::CanvasD2D() : Canvas(),
 
 CanvasD2D::~CanvasD2D()
 {
-	DiscardDeviceResources();
+	Dispose();
 	Finalize();
 }
 
@@ -118,7 +118,7 @@ void CanvasD2D::Finalize()
 	}
 }
 
-void CanvasD2D::DiscardDeviceResources()
+void CanvasD2D::Dispose()
 {
 	SafeRelease(&m_Target);
 
@@ -133,7 +133,7 @@ void CanvasD2D::Resize(int w, int h)
 {
 	__super::Resize(w, h);
 
-	DiscardDeviceResources();
+	Dispose();
 
 	m_Bitmap.Resize(w, h);
 

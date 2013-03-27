@@ -64,8 +64,10 @@ public:
 private:
 	CanvasGDIP(const CanvasGDIP& other) {}
 
+	void Dispose();
+
 	Gdiplus::Graphics* m_Graphics;
-	Gdiplus::Bitmap* m_DoubleBuffer;
+	Gdiplus::Bitmap* m_Bitmap;
 	HBITMAP m_DIBSectionBuffer;
 	LPDWORD m_DIBSectionBufferPixels;
 

@@ -74,7 +74,7 @@ private:
 	static bool Initialize();
 	static void Finalize();
 
-	void DiscardDeviceResources();
+	void Dispose();
 
 	bool BeginTargetDraw();
 	void EndTargetDraw();

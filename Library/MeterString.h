@@ -40,7 +40,6 @@ public:
 	virtual bool Draw(Gfx::Canvas& canvas);
 	Gdiplus::RectF GetRect() { return m_Rect; }
 
-	static void FreeFontCache(Gdiplus::PrivateFontCollection* collection = NULL);
 	static void EnumerateInstalledFontFamilies();
 
 	static void InitializeStatic();

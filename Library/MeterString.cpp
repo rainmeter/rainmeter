@@ -432,15 +432,12 @@ bool CMeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 
 	canvas.SetTextAntiAliasing(m_AntiAlias);
 
-	//CharacterRange range(0, stringLen);
-	//stringFormat.SetMeasurableCharacterRanges(1, &range);
-
 	m_TextFormat->SetTrimming(
 		m_ClipType == CLIP_ON ||
 		(m_ClipType == CLIP_AUTO && (m_NeedsClipping || (m_WDefined && m_HDefined))));
 
-	REAL x = (REAL)GetX();
-	REAL y = (REAL)GetY();
+	const REAL x = (REAL)GetX();
+	const REAL y = (REAL)GetY();
 
 	if (rect)
 	{
@@ -599,15 +596,6 @@ void CMeterString::BindMeasures(CConfigParser& parser, const WCHAR* section)
 }
 
 /*
-** Static function which frees the font cache.
-** If collection is not NULL, frees the private font cache.
-**
-*/
-void CMeterString::FreeFontCache(PrivateFontCollection* collection)
-{
-}
-
-/*
 ** Static helper to log all installed font families.
 **
 */
@@ -674,5 +662,4 @@ void CMeterString::InitializeStatic()
 
 void CMeterString::FinalizeStatic()
 {
-	FreeFontCache();
 }

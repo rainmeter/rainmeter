@@ -22,7 +22,7 @@ namespace Gfx {
 
 CanvasGDIP::CanvasGDIP() : Canvas(),
 	m_Graphics(),
-	m_DoubleBuffer(),
+	m_Bitmap(),
 	m_DIBSectionBuffer(),
 	m_DIBSectionBufferPixels()
 {
@@ -30,22 +30,30 @@ CanvasGDIP::CanvasGDIP() : Canvas(),
 
 CanvasGDIP::~CanvasGDIP()
 {
-	delete m_DoubleBuffer;
-	if (m_DIBSectionBuffer) DeleteObject(m_DIBSectionBuffer);
+	Dispose();
+}
+
+void CanvasGDIP::Dispose()
+{
+	delete m_Graphics;
+	m_Graphics = nullptr;
+
+	delete m_Bitmap;
+	m_Bitmap = nullptr;
+
+	if (m_DIBSectionBuffer)
+	{
+		DeleteObject(m_DIBSectionBuffer);
+		m_DIBSectionBuffer = nullptr;
+		m_DIBSectionBufferPixels = nullptr;
+	}
 }
 
 void CanvasGDIP::Resize(int w, int h)
 {
 	__super::Resize(w, h);
 
-	delete m_Graphics;
-
-	if (m_DIBSectionBuffer)
-	{
-		delete m_DoubleBuffer;
-		DeleteObject(m_DIBSectionBuffer);
-		m_DIBSectionBufferPixels = nullptr;
-	}
+	Dispose();
 
 	BITMAPV4HEADER bh = {sizeof(BITMAPV4HEADER)};
 	bh.bV4Width = w;
@@ -67,14 +75,14 @@ void CanvasGDIP::Resize(int w, int h)
 		0);
 
 	// Create GDI+ bitmap from the DIBSection pixels
-	m_DoubleBuffer = new Gdiplus::Bitmap(
+	m_Bitmap = new Gdiplus::Bitmap(
 		w,
 		h,
 		w * 4,
 		PixelFormat32bppPARGB,
 		(BYTE*)m_DIBSectionBufferPixels);
 
-	m_Graphics = new Gdiplus::Graphics(m_DoubleBuffer);
+	m_Graphics = new Gdiplus::Graphics(m_Bitmap);
 }
 
 bool CanvasGDIP::BeginDraw()
