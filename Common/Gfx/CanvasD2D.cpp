@@ -275,25 +275,27 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 	brush.GetColor(&color);
 
 	ID2D1SolidColorBrush* solidBrush;
-	m_Target->CreateSolidColorBrush(ToColorF(color), &solidBrush);
+	HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(color), &solidBrush);
+	if (SUCCEEDED(hr))
+	{
+		const bool right = ((TextFormatD2D&)format).GetHorizontalAlignment() == Gfx::HorizontalAlignment::Right;
 
-	bool right = ((TextFormatD2D&)format).GetHorizontalAlignment() == Gfx::HorizontalAlignment::Right;
+		// TODO: Draw cached layout?
+		//m_Target->DrawTextLayout(
+		//	D2D1::Point2F(right ? rect.X - 2 : rect.X + 2.0f, rect.Y - 1.0f),
+		//	textLayout,
+		//	solidBrush);
 
-	// TODO: Draw cached layout?
-	//m_Target->DrawTextLayout(
-	//	D2D1::Point2F(right ? rect.X - 2 : rect.X + 2.0f, rect.Y - 1.0f),
-	//	textLayout,
-	//	solidBrush);
+		auto dst = D2D1::RectF(
+			right ? rect.X - 2 : rect.X + 2.0f,
+			rect.Y - 1.0f,
+			(right ? rect.X - 2 : rect.X + 2.0f) + rect.Width,
+			rect.Y + rect.Height  - 1.0f);
 
-	m_Target->DrawTextW(
-		str,
-		strLen,
-		((TextFormatD2D&)format).m_TextFormat,
-		D2D1::RectF(right ? rect.X - 2 : rect.X + 2.0f, rect.Y - 1.0f, (right ? rect.X - 2 : rect.X + 2.0f) + rect.Width, rect.Y + rect.Height  - 1.0f),
-		solidBrush,
-		D2D1_DRAW_TEXT_OPTIONS_NONE);
+		m_Target->DrawTextW(str, strLen, ((TextFormatD2D&)format).m_TextFormat, dst, solidBrush);
 
-	solidBrush->Release();
+		solidBrush->Release();
+	}
 }
 
 bool CanvasD2D::MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect)
@@ -396,11 +398,12 @@ void CanvasD2D::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& br
 	brush.GetColor(&color);
 
 	ID2D1SolidColorBrush* solidBrush;
-	m_Target->CreateSolidColorBrush(ToColorF(color), &solidBrush);
-
-	m_Target->FillRectangle(ToRectF(rect), solidBrush);
-
-	solidBrush->Release();
+	HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(color), &solidBrush);
+	if (SUCCEEDED(hr))
+	{
+		m_Target->FillRectangle(ToRectF(rect), solidBrush);
+		solidBrush->Release();
+	}
 }
 
 }  // namespace Gfx
