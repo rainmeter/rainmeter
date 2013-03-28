@@ -258,7 +258,11 @@ void CanvasD2D::SetTextAntiAliasing(bool enable)
 
 void CanvasD2D::Clear(const Gdiplus::Color& color)
 {
-	if (!BeginTargetDraw()) return;
+	if (!m_Target)  // Use GDI+ if D2D render target has not been created.
+	{
+		m_GdipGraphics->Clear(color);
+		return;
+	}
 
 	m_Target->Clear(ToColorF(color));
 }
@@ -345,7 +349,12 @@ bool CanvasD2D::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForma
 
 void CanvasD2D::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect)
 {
-	if (!BeginTargetDraw()) return;
+	if (!m_Target)  // Use GDI+ if D2D render target has not been created.
+	{
+		m_GdipGraphics->DrawImage(
+			bitmap, dstRect, srcRect.X, srcRect.Y, srcRect.Width, srcRect.Height, Gdiplus::UnitPixel);
+		return;
+	}
 
 	// The D2D DrawBitmap seems to perform exactly like Gdiplus::Graphics::DrawImage since we are
 	// not using a hardware accelerated render target. Nevertheless, we will use it to avoid
@@ -377,7 +386,11 @@ void CanvasD2D::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect
 
 void CanvasD2D::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
 {
-	if (!BeginTargetDraw()) return;
+	if (!m_Target)  // Use GDI+ if D2D render target has not been created.
+	{
+		m_GdipGraphics->FillRectangle(&brush, rect);
+		return;
+	}
 
 	Gdiplus::Color color;
 	brush.GetColor(&color);
