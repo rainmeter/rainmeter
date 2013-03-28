@@ -43,16 +43,16 @@ class __declspec(novtable) TextFormat
 public:
 	virtual ~TextFormat();
 
-	virtual bool IsInitialized() = 0;
+	virtual bool IsInitialized() const = 0;
 	virtual void SetProperties(const WCHAR* fontFamily, int size, bool bold, bool italic, Gdiplus::PrivateFontCollection* fontCollection) = 0;
 
 	virtual void SetTrimming(bool trim) = 0;
 
 	virtual void SetHorizontalAlignment(HorizontalAlignment alignment);
-	HorizontalAlignment GetHorizontalAlignment() { return m_HorizontalAlignment; }
+	HorizontalAlignment GetHorizontalAlignment() const { return m_HorizontalAlignment; }
 
 	virtual void SetVerticalAlignment(VerticalAlignment alignment);
-	VerticalAlignment GetVerticalAlignment() { return m_VerticalAlignment; }
+	VerticalAlignment GetVerticalAlignment() const { return m_VerticalAlignment; }
 
 protected:
 	TextFormat();
