@@ -104,8 +104,6 @@ void TextFormatD2D::SetProperties(const WCHAR* fontFamily, int size, bool bold, 
 
 	if (SUCCEEDED(hr))
 	{
-		CanvasD2D::c_DW->CreateEllipsisTrimmingSign(m_TextFormat, &m_InlineEllipsis);
-
 		SetHorizontalAlignment(GetHorizontalAlignment());
 		SetVerticalAlignment(GetVerticalAlignment());
 	}
@@ -122,6 +120,11 @@ void TextFormatD2D::SetTrimming(bool trim)
 	DWRITE_WORD_WRAPPING wordWrapping = DWRITE_WORD_WRAPPING_NO_WRAP;
 	if (trim)
 	{
+		if (!m_InlineEllipsis)
+		{
+			CanvasD2D::c_DW->CreateEllipsisTrimmingSign(m_TextFormat, &m_InlineEllipsis);
+		}
+
 		inlineObject = m_InlineEllipsis;
 		trimming.granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER;
 		wordWrapping = DWRITE_WORD_WRAPPING_WRAP;
