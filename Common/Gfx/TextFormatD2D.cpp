@@ -47,7 +47,7 @@ void TextFormatD2D::Dispose()
 	}
 }
 
-void TextFormatD2D::SetProperties(const WCHAR* fontFamily, int size, bool bold, bool italic)
+void TextFormatD2D::SetProperties(const WCHAR* fontFamily, int size, bool bold, bool italic, Gdiplus::PrivateFontCollection* fontCollection)
 {
 	Dispose();
 

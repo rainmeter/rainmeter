@@ -156,7 +156,8 @@ void CMeterString::Initialize()
 		m_FontFace.c_str(),
 		m_FontSize,
 		m_Style & BOLD,
-		m_Style & ITALIC);
+		m_Style & ITALIC,
+		m_MeterWindow->GetPrivateFontCollection());
 }
 
 /*

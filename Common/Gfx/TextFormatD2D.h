@@ -31,7 +31,7 @@ public:
 	virtual ~TextFormatD2D();
 
 	virtual bool IsInitialized() { return m_TextFormat != nullptr; }
-	virtual void SetProperties(const WCHAR* fontFamily, int size, bool bold, bool italic);
+	virtual void SetProperties(const WCHAR* fontFamily, int size, bool bold, bool italic, Gdiplus::PrivateFontCollection* fontCollection) override;
 
 	virtual void SetTrimming(bool trim) override;
 	virtual void SetHorizontalAlignment(HorizontalAlignment alignment) override;

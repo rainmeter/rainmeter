@@ -20,6 +20,7 @@
 #define RM_GFX_TEXTFORMAT_H_
 
 #include <Windows.h>
+#include <GdiPlus.h>
 
 namespace Gfx {
 
@@ -43,7 +44,7 @@ public:
 	virtual ~TextFormat();
 
 	virtual bool IsInitialized() = 0;
-	virtual void SetProperties(const WCHAR* fontFamily, int size, bool bold, bool italic) = 0;
+	virtual void SetProperties(const WCHAR* fontFamily, int size, bool bold, bool italic, Gdiplus::PrivateFontCollection* fontCollection) = 0;
 
 	virtual void SetTrimming(bool trim) = 0;
 

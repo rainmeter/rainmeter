@@ -40,7 +40,7 @@ void TextFormatGDIP::Dispose()
 	m_Font = nullptr;
 }
 
-void TextFormatGDIP::SetProperties(const WCHAR* fontFamily, int size, bool bold, bool italic)
+void TextFormatGDIP::SetProperties(const WCHAR* fontFamily, int size, bool bold, bool italic, Gdiplus::PrivateFontCollection* fontCollection)
 {
 	Dispose();
 
@@ -49,6 +49,17 @@ void TextFormatGDIP::SetProperties(const WCHAR* fontFamily, int size, bool bold,
 	{
 		delete m_FontFamily;
 		m_FontFamily = nullptr;
+
+		// Not found in system collection so try the private collection.
+		if (fontCollection)
+		{
+			m_FontFamily = new Gdiplus::FontFamily(fontFamily, fontCollection);
+			if (m_FontFamily->GetLastStatus() != Gdiplus::Ok)
+			{
+				delete m_FontFamily;
+				m_FontFamily = nullptr;
+			}
+		}
 	}
 
 	Gdiplus::FontStyle style = Gdiplus::FontStyleRegular;

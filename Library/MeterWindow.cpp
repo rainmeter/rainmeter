@@ -257,7 +257,6 @@ void CMeterWindow::Dispose(bool refresh)
 
 	if (m_FontCollection)
 	{
-		CMeterString::FreeFontCache(m_FontCollection);
 		delete m_FontCollection;
 		m_FontCollection = NULL;
 	}
