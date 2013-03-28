@@ -20,6 +20,7 @@
 #define RM_GFX_TEXTFORMATD2D_H_
 
 #include "TextFormat.h"
+#include <string>
 #include <dwrite.h>
 
 namespace Gfx {
@@ -44,8 +45,16 @@ private:
 
 	void Dispose();
 
+	// Creates a new DirectWrite text layout if |str| has changed since last call. Since creating
+	// the layout is costly, it is more efficient to keep reusing the text layout until the text
+	// changes.
+	void CreateLayout(const WCHAR* str, UINT strLen, float maxW, float maxH);
+
 	IDWriteTextFormat* m_TextFormat;
+	IDWriteTextLayout* m_TextLayout;
 	IDWriteInlineObject* m_InlineEllipsis;
+
+	std::wstring m_LastString;
 };
 
 }  // namespace Gfx

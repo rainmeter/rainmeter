@@ -23,6 +23,7 @@ namespace Gfx {
 
 TextFormatD2D::TextFormatD2D() :
 	m_TextFormat(),
+	m_TextLayout(),
 	m_InlineEllipsis()
 {
 }
@@ -40,10 +41,50 @@ void TextFormatD2D::Dispose()
 		m_TextFormat = nullptr;
 	}
 
+	if (m_TextLayout)
+	{
+		m_TextLayout->Release();
+		m_TextLayout = nullptr;
+	}
+
 	if (m_InlineEllipsis)
 	{
 		m_InlineEllipsis->Release();
 		m_InlineEllipsis = nullptr;
+	}
+}
+
+void TextFormatD2D::CreateLayout(const WCHAR* str, UINT strLen, float maxW, float maxH)
+{
+	bool strChanged = false;
+	if (strLen != m_LastString.length() ||
+		memcmp(str, m_LastString.c_str(), (strLen + 1) * sizeof(WCHAR)) != 0)
+	{
+		strChanged = true;
+		m_LastString.assign(str, strLen);
+	}
+
+	if (m_TextLayout && !strChanged)
+	{
+		if (maxW != m_TextLayout->GetMaxWidth())
+		{
+			m_TextLayout->SetMaxWidth(maxW);
+		}
+
+		if (maxH != m_TextLayout->GetMaxHeight())
+		{
+			m_TextLayout->SetMaxWidth(maxH);
+		}
+	}
+	else
+	{
+		if (m_TextLayout)
+		{
+			m_TextLayout->Release();
+			m_TextLayout = nullptr;
+		}
+
+		CanvasD2D::c_DW->CreateTextLayout(str, strLen, m_TextFormat, maxW, maxH, &m_TextLayout);
 	}
 }
 

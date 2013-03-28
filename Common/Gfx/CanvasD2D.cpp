@@ -278,21 +278,15 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 	HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(color), &solidBrush);
 	if (SUCCEEDED(hr))
 	{
-		const bool right = ((TextFormatD2D&)format).GetHorizontalAlignment() == Gfx::HorizontalAlignment::Right;
+		TextFormatD2D& formatD2D = (TextFormatD2D&)format;
+		const bool right = formatD2D.GetHorizontalAlignment() == Gfx::HorizontalAlignment::Right;
 
-		// TODO: Draw cached layout?
-		//m_Target->DrawTextLayout(
-		//	D2D1::Point2F(right ? rect.X - 2 : rect.X + 2.0f, rect.Y - 1.0f),
-		//	textLayout,
-		//	solidBrush);
+		formatD2D.CreateLayout(str, strLen, rect.Width, rect.Height);
 
-		auto dst = D2D1::RectF(
-			right ? rect.X - 2 : rect.X + 2.0f,
-			rect.Y - 1.0f,
-			(right ? rect.X - 2 : rect.X + 2.0f) + rect.Width,
-			rect.Y + rect.Height  - 1.0f);
-
-		m_Target->DrawTextW(str, strLen, ((TextFormatD2D&)format).m_TextFormat, dst, solidBrush);
+		m_Target->DrawTextLayout(
+			D2D1::Point2F(right ? rect.X - 2 : rect.X + 2.0f, rect.Y - 1.0f),
+			formatD2D.m_TextLayout,
+			solidBrush);
 
 		solidBrush->Release();
 	}
