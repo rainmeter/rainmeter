@@ -57,6 +57,12 @@ public:
 
 	virtual bool IsTransparentPixel(int x, int y) = 0;
 
+	// TODO: Implement proper solution.
+	virtual void SetTransform(const Gdiplus::Matrix& matrix) {}
+	virtual void ResetTransform() {}
+	virtual void RotateTransform(float angle) {}
+	virtual void TranslateTransform(float dx, float dy) {}
+
 	virtual void SetAntiAliasing(bool enable) = 0;
 	virtual void SetTextAntiAliasing(bool enable) = 0;
 

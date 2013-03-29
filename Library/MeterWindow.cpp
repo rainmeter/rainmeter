@@ -2527,13 +2527,9 @@ void CMeterWindow::Redraw()
 			const Matrix* matrix = (*j)->GetTransformationMatrix();
 			if (matrix && !matrix->IsIdentity())
 			{
-				// TODO FIXME: Change the world matrix
-				//m_Canvas->GetGraphics().SetTransform(matrix);
-
+				m_Canvas->SetTransform(*matrix);
 				(*j)->Draw(*m_Canvas);
-
-				// TODO FIXME: Set back to identity matrix
-				//m_Canvas->GetGraphics().ResetTransform();
+				m_Canvas->ResetTransform();
 			}
 			else
 			{

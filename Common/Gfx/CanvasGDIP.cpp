@@ -128,6 +128,26 @@ bool CanvasGDIP::IsTransparentPixel(int x, int y)
 	return false;
 }
 
+void CanvasGDIP::SetTransform(const Gdiplus::Matrix& matrix)
+{
+	m_Graphics->SetTransform(&matrix);
+}
+
+void CanvasGDIP::ResetTransform()
+{
+	m_Graphics->ResetTransform();
+}
+
+void CanvasGDIP::RotateTransform(float angle)
+{
+	m_Graphics->RotateTransform(angle);
+}
+
+void CanvasGDIP::TranslateTransform(float dx, float dy)
+{
+	m_Graphics->TranslateTransform(dx, dy);
+}
+
 void CanvasGDIP::SetAntiAliasing(bool enable)
 {
 	m_Graphics->SetSmoothingMode(

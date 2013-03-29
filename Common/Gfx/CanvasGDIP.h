@@ -48,6 +48,11 @@ public:
 
 	virtual bool IsTransparentPixel(int x, int y) override;
 
+	virtual void SetTransform(const Gdiplus::Matrix& matrix) override;
+	virtual void ResetTransform() override;
+	virtual void RotateTransform(float angle) override;
+	virtual void TranslateTransform(float dx, float dy) override;
+
 	virtual void SetAntiAliasing(bool enable) override;
 	virtual void SetTextAntiAliasing(bool enable) override;
 

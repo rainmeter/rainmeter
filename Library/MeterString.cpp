@@ -542,10 +542,9 @@ bool CMeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 
 		if (m_Angle != 0.0f)
 		{
-			// TODO FIXME
-			//graphics.TranslateTransform((Gdiplus::REAL)CMeter::GetX(), y);
-			//graphics.RotateTransform(CONVERT_TO_DEGREES(m_Angle));
-			//graphics.TranslateTransform(-(Gdiplus::REAL)CMeter::GetX(), -y);
+			canvas.TranslateTransform((Gdiplus::REAL)CMeter::GetX(), y);
+			canvas.RotateTransform(CONVERT_TO_DEGREES(m_Angle));
+			canvas.TranslateTransform(-(Gdiplus::REAL)CMeter::GetX(), -y);
 		}
 
 		if (m_Effect != EFFECT_NONE)
@@ -576,8 +575,7 @@ bool CMeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 
 		if (m_Angle != 0.0f)
 		{
-			// TODO FIXME
-			//graphics.ResetTransform();
+			canvas.ResetTransform();
 		}
 	}
 
