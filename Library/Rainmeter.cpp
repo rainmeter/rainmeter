@@ -2679,6 +2679,7 @@ bool CRainmeter::LoadLayout(const std::wstring& name)
 		PreserveSetting(backup, L"TrayExecuteR", false);
 		PreserveSetting(backup, L"TrayExecuteDM", false);
 		PreserveSetting(backup, L"TrayExecuteDR", false);
+		PreserveSetting(backup, L"UseD2D");
 
 		// Set wallpaper if it exists
 		if (_waccess(wallpaper.c_str(), 0) != -1)
