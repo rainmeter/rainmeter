@@ -334,6 +334,7 @@ private:
 	bool UpdateMeter(CMeter* meter, bool& bActiveTransition, bool force);
 	void Update(bool refresh);
 	void UpdateWindow(int alpha, bool reset, bool canvasBeginDrawCalled = false);
+	void UpdateWindowTransparency(int alpha);
 	void ReadOptions();
 	void WriteOptions(INT setting = OPTION_ALL);
 	bool ReadSkin();

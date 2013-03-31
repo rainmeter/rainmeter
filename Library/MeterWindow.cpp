@@ -819,7 +819,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 	case BANG_SHOW:
 		m_Hidden = false;
 		ShowWindow(m_Window, SW_SHOWNOACTIVATE);
-		UpdateWindow((m_WindowHide == HIDEMODE_FADEOUT) ? 255 : m_AlphaValue, false);
+		UpdateWindowTransparency((m_WindowHide == HIDEMODE_FADEOUT) ? 255 : m_AlphaValue);
 		break;
 
 	case BANG_HIDE:
@@ -889,7 +889,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 			m_AlphaValue = CConfigParser::ParseInt(arg.c_str(), 255);
 			m_AlphaValue = max(m_AlphaValue, 0);
 			m_AlphaValue = min(m_AlphaValue, 255);
-			UpdateWindow(m_AlphaValue, false);
+			UpdateWindowTransparency(m_AlphaValue);
 		}
 		break;
 
@@ -2725,21 +2725,29 @@ void CMeterWindow::UpdateWindow(int alpha, bool reset, bool canvasBeginDrawCalle
 
 	if (!canvasBeginDrawCalled) m_Canvas->BeginDraw();
 
-	HDC dcScreen = GetDC(NULL);
 	HDC dcMemory = m_Canvas->GetDC();
-	if (!UpdateLayeredWindow(m_Window, dcScreen, NULL, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
+	if (!UpdateLayeredWindow(m_Window, NULL, NULL, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
 	{
 		// Retry after resetting WS_EX_LAYERED flag.
 		RemoveWindowExStyle(WS_EX_LAYERED);
 		AddWindowExStyle(WS_EX_LAYERED);
-		UpdateLayeredWindow(m_Window, dcScreen, NULL, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+		UpdateLayeredWindow(m_Window, NULL, NULL, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
 	}
-
-	ReleaseDC(NULL, dcScreen);
 	m_Canvas->ReleaseDC(dcMemory);
 
 	if (!canvasBeginDrawCalled) m_Canvas->EndDraw();
 
+	m_TransparencyValue = alpha;
+}
+
+/*
+** Updates the window transparency (using existing contents).
+**
+*/
+void CMeterWindow::UpdateWindowTransparency(int alpha)
+{
+	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
+	UpdateLayeredWindow(m_Window, NULL, NULL, NULL, NULL, NULL, 0, &blendPixelFunction, ULW_ALPHA);
 	m_TransparencyValue = alpha;
 }
 
@@ -2841,7 +2849,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				else
 				{
-					UpdateWindow(m_FadeEndValue, false);
+					UpdateWindowTransparency(m_FadeEndValue);
 				}
 			}
 			else
@@ -2853,7 +2861,7 @@ LRESULT CMeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				value = min(value, 255);
 				value = max(value, 0);
 
-				UpdateWindow((int)value, false);
+				UpdateWindowTransparency((int)value);
 			}
 		}
 		break;
@@ -2883,7 +2891,7 @@ void CMeterWindow::FadeWindow(int from, int to)
 		{
 			if (m_FadeDuration == 0)
 			{
-				UpdateWindow(to, false);
+				UpdateWindowTransparency(to);
 			}
 			if (from == 0)
 			{
@@ -2898,7 +2906,7 @@ void CMeterWindow::FadeWindow(int from, int to)
 	{
 		m_FadeStartValue = from;
 		m_FadeEndValue = to;
-		UpdateWindow(from, false);
+		UpdateWindowTransparency(from);
 		if (from == 0)
 		{
 			if (!m_Hidden)
@@ -3383,7 +3391,7 @@ LRESULT CMeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (wParam >= IDM_SKIN_TRANSPARENCY_0 && wParam <= IDM_SKIN_TRANSPARENCY_90)
 		{
 			m_AlphaValue = (int)(255.0 - (wParam - IDM_SKIN_TRANSPARENCY_0) * (230.0 / (IDM_SKIN_TRANSPARENCY_90 - IDM_SKIN_TRANSPARENCY_0)));
-			UpdateWindow(m_AlphaValue, false);
+			UpdateWindowTransparency(m_AlphaValue);
 			WriteOptions(OPTION_ALPHAVALUE);
 		}
 		else if (wParam == IDM_SKIN_MONITOR_PRIMARY || wParam >= ID_MONITOR_FIRST && wParam <= ID_MONITOR_LAST)
@@ -3556,7 +3564,7 @@ void CMeterWindow::SetSnapEdges(bool b)
 void CMeterWindow::SetWindowHide(HIDEMODE hide)
 {
 	m_WindowHide = hide;
-	UpdateWindow(m_AlphaValue, false);
+	UpdateWindowTransparency(m_AlphaValue);
 	WriteOptions(OPTION_HIDEONMOUSEOVER);
 }
 
