@@ -3607,9 +3607,6 @@ LRESULT CMeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		// Handle buttons
 		HandleButtons(pos, BUTTONPROC_UP, false);  // redraw only
-
-		// Workaround for the system that the window size is changed incorrectly when the window is dragged over the upper side of the virtual screen
-		UpdateWindow(m_TransparencyValue, false);
 	}
 	else  // not dragged
 	{
