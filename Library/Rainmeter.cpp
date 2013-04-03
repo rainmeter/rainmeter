@@ -3187,6 +3187,12 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 	HMENU skinMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 	if (skinMenu)
 	{
+		// Set the 'Unload skin' icon.
+		MENUITEMINFO mii = {sizeof(mii)};
+		mii.fMask = MIIM_BITMAP;
+		mii.hbmpItem = HBMMENU_MBAR_CLOSE;
+		SetMenuItemInfo(skinMenu, IDM_CLOSESKIN, FALSE, &mii);
+
 		// Tick the position
 		HMENU settingsMenu = GetSubMenu(skinMenu, 4);
 		if (settingsMenu)
