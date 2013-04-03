@@ -2953,6 +2953,12 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 		HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 		if (menu)
 		{
+			// Set the 'Exit' Rainmeter icon
+			MENUITEMINFO mii = {sizeof(mii)};
+			mii.fMask = MIIM_BITMAP;
+			mii.hbmpItem = HBMMENU_MBAR_CLOSE;
+			SetMenuItemInfo(menu, IDM_QUIT, FALSE, &mii);
+
 			SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
 
 			if (_waccess(m_LogFile.c_str(), 0) == -1)
