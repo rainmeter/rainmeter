@@ -8,7 +8,7 @@ NowPlaying plugin) cannot be built with the free Express version.
 The free VS2012 Express is available for download from:
   http://microsoft.com/visualstudio/eng/products/visual-studio-express-for-windows-desktop
 
-VS2012 Update 1 is also required for Windows XP targeting support. It is available
+VS2012 Update 2 is also required for Windows XP targeting support. It is available
 from:
   http://microsoft.com/visualstudio/eng/downloads#d-visual-studio-2012-update
 
