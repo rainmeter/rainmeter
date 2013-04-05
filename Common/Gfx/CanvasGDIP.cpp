@@ -138,13 +138,10 @@ void CanvasGDIP::ResetTransform()
 	m_Graphics->ResetTransform();
 }
 
-void CanvasGDIP::RotateTransform(float angle)
+void CanvasGDIP::RotateTransform(float angle, float x, float y, float dx, float dy)
 {
+	m_Graphics->TranslateTransform(x, y);
 	m_Graphics->RotateTransform(angle);
-}
-
-void CanvasGDIP::TranslateTransform(float dx, float dy)
-{
 	m_Graphics->TranslateTransform(dx, dy);
 }
 

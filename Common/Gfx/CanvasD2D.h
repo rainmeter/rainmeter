@@ -53,6 +53,10 @@ public:
 
 	virtual bool IsTransparentPixel(int x, int y) override;
 
+	virtual void SetTransform(const Gdiplus::Matrix& matrix) override;
+	virtual void ResetTransform() override;
+	virtual void RotateTransform(float angle, float x, float y, float dx, float dy) override;
+
 	virtual void SetAntiAliasing(bool enable) override;
 	virtual void SetTextAntiAliasing(bool enable) override;
 
@@ -78,6 +82,9 @@ private:
 
 	bool BeginTargetDraw();
 	void EndTargetDraw();
+
+	// Retrieves current GDI+ transform (if any) and converts to a D2D Matrix
+	D2D1::Matrix3x2F GetCurrentTransform();
 
 	ID2D1RenderTarget* m_Target;
 	WICBitmapDIB m_Bitmap;

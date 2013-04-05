@@ -179,6 +179,10 @@ bool CanvasD2D::BeginTargetDraw()
 		SetTextAntiAliasing(m_TextAntiAliasing);
 
 		m_Target->BeginDraw();
+
+		// Apply any transforms that occurred before creation of m_Target
+		m_Target->SetTransform(GetCurrentTransform());
+
 		return true;
 	}
 
@@ -233,6 +237,54 @@ bool CanvasD2D::IsTransparentPixel(int x, int y)
 	}
 
 	return transparent;
+}
+
+D2D1::Matrix3x2F CanvasD2D::GetCurrentTransform()
+{
+	D2D1::Matrix3x2F dMatrix = D2D1::Matrix3x2F::Identity();
+	Gdiplus::Matrix gMatrix;
+
+	if (Gdiplus::Ok == m_GdipGraphics->GetTransform(&gMatrix))
+	{
+		float m[6];
+		gMatrix.GetElements(m);
+
+		dMatrix = D2D1::Matrix3x2F(m[0], m[1], m[2], m[3], m[4], m[5]);
+	}
+
+	return dMatrix;
+}
+
+void CanvasD2D::SetTransform(const Gdiplus::Matrix& matrix)
+{
+	m_GdipGraphics->SetTransform(&matrix);
+
+	if (m_Target)
+	{
+		m_Target->SetTransform(GetCurrentTransform());
+	}
+}
+
+void CanvasD2D::ResetTransform()
+{
+	m_GdipGraphics->ResetTransform();
+
+	if (m_Target)
+	{
+		m_Target->SetTransform(D2D1::Matrix3x2F::Identity());
+	}
+}
+
+void CanvasD2D::RotateTransform(float angle, float x, float y, float dx, float dy)
+{
+	m_GdipGraphics->TranslateTransform(x, y);
+	m_GdipGraphics->RotateTransform(angle);
+	m_GdipGraphics->TranslateTransform(dx, dy);
+
+	if (m_Target)
+	{
+		m_Target->SetTransform(GetCurrentTransform());
+	}
 }
 
 void CanvasD2D::SetAntiAliasing(bool enable)

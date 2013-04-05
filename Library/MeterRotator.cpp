@@ -164,6 +164,7 @@ bool CMeterRotator::Draw(Gfx::Canvas& canvas)
 		// Calculate the rotation
 		REAL angle = (REAL)(CONVERT_TO_DEGREES(m_RotationAngle * m_Value + m_StartAngle));
 
+		// TODO: convert to Canvas: canvas.RotateTransform(angle, cx, cy, (REAL)-m_OffsetX, (REAL)-m_OffsetY);
 		graphics.TranslateTransform(cx, cy);
 		graphics.RotateTransform(angle);
 		graphics.TranslateTransform((REAL)-m_OffsetX, (REAL)-m_OffsetY);
