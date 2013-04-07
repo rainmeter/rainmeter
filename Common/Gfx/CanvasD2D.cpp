@@ -55,6 +55,7 @@ namespace Gfx {
 UINT CanvasD2D::c_Instances = 0;
 ID2D1Factory* CanvasD2D::c_D2D = nullptr;
 IDWriteFactory* CanvasD2D::c_DW = nullptr;
+IDWriteGdiInterop* CanvasD2D::c_DWGDIInterop = nullptr;
 IWICImagingFactory* CanvasD2D::c_WIC = nullptr;
 
 CanvasD2D::CanvasD2D() : Canvas(),
@@ -102,6 +103,9 @@ bool CanvasD2D::Initialize()
 			__uuidof(IDWriteFactory),
 			(IUnknown**)&c_DW);
 		if (FAILED(hr)) return false;
+
+		hr = c_DW->GetGdiInterop(&c_DWGDIInterop);
+		if (FAILED(hr)) return false;
 	}
 
 	return true;
@@ -114,6 +118,7 @@ void CanvasD2D::Finalize()
 	{
 		SafeRelease(&c_D2D);
 		SafeRelease(&c_WIC);
+		SafeRelease(&c_DWGDIInterop);
 		SafeRelease(&c_DW);
 	}
 }

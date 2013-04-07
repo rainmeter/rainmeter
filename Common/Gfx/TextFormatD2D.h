@@ -50,6 +50,14 @@ private:
 	// changes.
 	void CreateLayout(const WCHAR* str, UINT strLen, float maxW, float maxH);
 
+	// Creates a IDWriteFont using the GDI family name instead of the DirectWrite family name. For
+	// example, 'Segoe UI' and 'Segoe UI Semibold' are separate family names with GDI whereas
+	// DirectWrite uses the family name 'Segoe UI' for both and differentiates them by the font
+	// style.
+	static IDWriteFont* CreateDWFontFromGDIFamilyName(const WCHAR* fontFamily, bool bold, bool italic);
+
+	static bool GetDWFontFamilyName(IDWriteFont* font, WCHAR* buffer, UINT bufferSize);
+
 	IDWriteTextFormat* m_TextFormat;
 	IDWriteTextLayout* m_TextLayout;
 	IDWriteInlineObject* m_InlineEllipsis;

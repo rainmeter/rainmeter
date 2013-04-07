@@ -98,6 +98,7 @@ private:
 	static UINT c_Instances;
 	static ID2D1Factory* c_D2D;
 	static IDWriteFactory* c_DW;
+	static IDWriteGdiInterop* c_DWGDIInterop;
 	static IWICImagingFactory* c_WIC;
 };
 

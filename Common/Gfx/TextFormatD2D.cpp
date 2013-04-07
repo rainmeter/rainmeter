@@ -92,15 +92,46 @@ void TextFormatD2D::SetProperties(const WCHAR* fontFamily, int size, bool bold, 
 {
 	Dispose();
 
-	HRESULT hr = CanvasD2D::c_DW->CreateTextFormat(
-		fontFamily,
-		nullptr,
-		bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
-		italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
-		DWRITE_FONT_STRETCH_NORMAL,
-		size * (4.0f / 3.0f),
-		L"",
-		&m_TextFormat);
+	HRESULT hr = E_FAIL;
+
+	// |fontFamily| uses the GDI/GDI+ font naming convention so try to create DirectWrite font
+	// using the GDI family name and then create a text format using the DirectWrite family name
+	// obtained from it.
+	IDWriteFont* dwFont = CreateDWFontFromGDIFamilyName(fontFamily, bold, italic);
+	if (dwFont)
+	{
+		WCHAR buffer[LF_FACESIZE];
+		if (GetDWFontFamilyName(dwFont, buffer, _countof(buffer)))
+		{
+			// TODO: If |fontFamily| is e.g. 'Segoe UI Semibold' and |bold| is true, we might want
+			// to make the weight heaver to match GDI+.
+			hr = CanvasD2D::c_DW->CreateTextFormat(
+				buffer,
+				nullptr,
+				dwFont->GetWeight(),
+				dwFont->GetStyle(),
+				DWRITE_FONT_STRETCH_NORMAL,
+				size * (4.0f / 3.0f),
+				L"",
+				&m_TextFormat);
+		}
+
+		dwFont->Release();
+	}
+
+	if (FAILED(hr))
+	{
+		// Fallback in case above fails.
+		hr = CanvasD2D::c_DW->CreateTextFormat(
+			fontFamily,
+			nullptr,
+			bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
+			italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
+			DWRITE_FONT_STRETCH_NORMAL,
+			size * (4.0f / 3.0f),
+			L"",
+			&m_TextFormat);
+	}
 
 	if (SUCCEEDED(hr))
 	{
@@ -158,6 +189,60 @@ void TextFormatD2D::SetVerticalAlignment(VerticalAlignment alignment)
 			(alignment == VerticalAlignment::Center) ? DWRITE_PARAGRAPH_ALIGNMENT_CENTER :
 			DWRITE_PARAGRAPH_ALIGNMENT_FAR);
 	}
+}
+
+IDWriteFont* TextFormatD2D::CreateDWFontFromGDIFamilyName(const WCHAR* fontFamily, bool bold, bool italic)
+{
+	IDWriteGdiInterop* dwGdiInterop;
+	HRESULT hr = CanvasD2D::c_DW->GetGdiInterop(&dwGdiInterop);
+	if (SUCCEEDED(hr))
+	{
+		LOGFONT lf = {};
+		wcscpy_s(lf.lfFaceName, fontFamily);
+		lf.lfWidth = 12;
+		lf.lfHeight = 12;
+		lf.lfWeight = bold ? FW_BOLD : FW_NORMAL;
+		lf.lfItalic = (BYTE)italic;
+		lf.lfCharSet = DEFAULT_CHARSET;
+		lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
+		lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+		lf.lfQuality = ANTIALIASED_QUALITY;
+		lf.lfPitchAndFamily = VARIABLE_PITCH;
+
+		IDWriteFont* dwFont;
+		hr = dwGdiInterop->CreateFontFromLOGFONT(&lf, &dwFont);
+		if (SUCCEEDED(hr))
+		{
+			return dwFont;
+		}
+
+		dwGdiInterop->Release();
+	}
+
+	return nullptr;
+}
+
+bool TextFormatD2D::GetDWFontFamilyName(IDWriteFont* font, WCHAR* buffer, const UINT bufferSize)
+{
+	bool result = false;
+	IDWriteFontFamily* dwFontFamily;
+	HRESULT hr = font->GetFontFamily(&dwFontFamily);
+	if (SUCCEEDED(hr))
+	{
+		IDWriteLocalizedStrings* dwFamilyNames;
+		hr = dwFontFamily->GetFamilyNames(&dwFamilyNames);
+		if (SUCCEEDED(hr))
+		{
+			// TODO: Determine the best index?
+			hr = dwFamilyNames->GetString(0, buffer, bufferSize);
+			result = SUCCEEDED(hr);
+			dwFamilyNames->Release();
+		}
+
+		dwFontFamily->Release();
+	}
+
+	return result;
 }
 
 }  // namespace Gfx
