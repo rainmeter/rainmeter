@@ -53,10 +53,10 @@ D2D1_RECT_F ToRectF(const Gdiplus::RectF& rect)
 namespace Gfx {
 
 UINT CanvasD2D::c_Instances = 0;
-ID2D1Factory* CanvasD2D::c_D2D = nullptr;
-IDWriteFactory* CanvasD2D::c_DW = nullptr;
+ID2D1Factory* CanvasD2D::c_D2DFactory = nullptr;
+IDWriteFactory* CanvasD2D::c_DWFactory = nullptr;
 IDWriteGdiInterop* CanvasD2D::c_DWGDIInterop = nullptr;
-IWICImagingFactory* CanvasD2D::c_WIC = nullptr;
+IWICImagingFactory* CanvasD2D::c_WICFactory = nullptr;
 
 CanvasD2D::CanvasD2D() : Canvas(),
 	m_Target(),
@@ -87,7 +87,7 @@ bool CanvasD2D::Initialize()
 		HRESULT hr = D2D1CreateFactory(
 			D2D1_FACTORY_TYPE_SINGLE_THREADED,
 			fo,
-			&c_D2D);
+			&c_D2DFactory);
 		if (FAILED(hr)) return false;
 
 		hr = CoCreateInstance(
@@ -95,16 +95,16 @@ bool CanvasD2D::Initialize()
 			nullptr,
 			CLSCTX_INPROC_SERVER,
 			IID_IWICImagingFactory,
-			(LPVOID*)&c_WIC);
+			(LPVOID*)&c_WICFactory);
 		if (FAILED(hr)) return false;
 
 		hr = DWriteCreateFactory(
 			DWRITE_FACTORY_TYPE_SHARED,
 			__uuidof(IDWriteFactory),
-			(IUnknown**)&c_DW);
+			(IUnknown**)&c_DWFactory);
 		if (FAILED(hr)) return false;
 
-		hr = c_DW->GetGdiInterop(&c_DWGDIInterop);
+		hr = c_DWFactory->GetGdiInterop(&c_DWGDIInterop);
 		if (FAILED(hr)) return false;
 	}
 
@@ -116,10 +116,10 @@ void CanvasD2D::Finalize()
 	--c_Instances;
 	if (c_Instances == 0)
 	{
-		SafeRelease(&c_D2D);
-		SafeRelease(&c_WIC);
+		SafeRelease(&c_D2DFactory);
+		SafeRelease(&c_WICFactory);
 		SafeRelease(&c_DWGDIInterop);
-		SafeRelease(&c_DW);
+		SafeRelease(&c_DWFactory);
 	}
 }
 
@@ -178,7 +178,7 @@ bool CanvasD2D::BeginTargetDraw()
 	// before the next GDI+ draw operations, we ensure that the pixel data result is as expected
 	// Once GDI+ drawing is no longer needed, we change to recreate the render target only when the
 	// bitmap size is changed.
-	HRESULT hr = c_D2D->CreateWicBitmapRenderTarget(&m_Bitmap, properties, &m_Target);
+	HRESULT hr = c_D2DFactory->CreateWicBitmapRenderTarget(&m_Bitmap, properties, &m_Target);
 	if (SUCCEEDED(hr))
 	{
 		SetTextAntiAliasing(m_TextAntiAliasing);
@@ -352,7 +352,7 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 bool CanvasD2D::MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect)
 {
 	IDWriteTextLayout* textLayout;
-	HRESULT hr = c_DW->CreateTextLayout(
+	HRESULT hr = c_DWFactory->CreateTextLayout(
 		str,
 		strLen,
 		((TextFormatD2D&)format).m_TextFormat,
@@ -378,7 +378,7 @@ bool CanvasD2D::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForma
 	((TextFormatD2D&)format).m_TextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
 
 	IDWriteTextLayout* textLayout;
-	HRESULT hr = c_DW->CreateTextLayout(
+	HRESULT hr = c_DWFactory->CreateTextLayout(
 		str,
 		strLen,
 		((TextFormatD2D&)format).m_TextFormat,

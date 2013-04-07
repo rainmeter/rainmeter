@@ -96,10 +96,10 @@ private:
 	bool m_TextAntiAliasing;
 
 	static UINT c_Instances;
-	static ID2D1Factory* c_D2D;
-	static IDWriteFactory* c_DW;
+	static ID2D1Factory* c_D2DFactory;
+	static IDWriteFactory* c_DWFactory;
 	static IDWriteGdiInterop* c_DWGDIInterop;
-	static IWICImagingFactory* c_WIC;
+	static IWICImagingFactory* c_WICFactory;
 };
 
 }  // namespace Gfx

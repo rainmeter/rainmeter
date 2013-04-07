@@ -84,7 +84,7 @@ void TextFormatD2D::CreateLayout(const WCHAR* str, UINT strLen, float maxW, floa
 			m_TextLayout = nullptr;
 		}
 
-		CanvasD2D::c_DW->CreateTextLayout(str, strLen, m_TextFormat, maxW, maxH, &m_TextLayout);
+		CanvasD2D::c_DWFactory->CreateTextLayout(str, strLen, m_TextFormat, maxW, maxH, &m_TextLayout);
 	}
 }
 
@@ -105,7 +105,7 @@ void TextFormatD2D::SetProperties(const WCHAR* fontFamily, int size, bool bold, 
 		{
 			// TODO: If |fontFamily| is e.g. 'Segoe UI Semibold' and |bold| is true, we might want
 			// to make the weight heaver to match GDI+.
-			hr = CanvasD2D::c_DW->CreateTextFormat(
+			hr = CanvasD2D::c_DWFactory->CreateTextFormat(
 				buffer,
 				nullptr,
 				dwFont->GetWeight(),
@@ -122,7 +122,7 @@ void TextFormatD2D::SetProperties(const WCHAR* fontFamily, int size, bool bold, 
 	if (FAILED(hr))
 	{
 		// Fallback in case above fails.
-		hr = CanvasD2D::c_DW->CreateTextFormat(
+		hr = CanvasD2D::c_DWFactory->CreateTextFormat(
 			fontFamily,
 			nullptr,
 			bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
@@ -153,7 +153,7 @@ void TextFormatD2D::SetTrimming(bool trim)
 	{
 		if (!m_InlineEllipsis)
 		{
-			CanvasD2D::c_DW->CreateEllipsisTrimmingSign(m_TextFormat, &m_InlineEllipsis);
+			CanvasD2D::c_DWFactory->CreateEllipsisTrimmingSign(m_TextFormat, &m_InlineEllipsis);
 		}
 
 		inlineObject = m_InlineEllipsis;
@@ -194,7 +194,7 @@ void TextFormatD2D::SetVerticalAlignment(VerticalAlignment alignment)
 IDWriteFont* TextFormatD2D::CreateDWFontFromGDIFamilyName(const WCHAR* fontFamily, bool bold, bool italic)
 {
 	IDWriteGdiInterop* dwGdiInterop;
-	HRESULT hr = CanvasD2D::c_DW->GetGdiInterop(&dwGdiInterop);
+	HRESULT hr = CanvasD2D::c_DWFactory->GetGdiInterop(&dwGdiInterop);
 	if (SUCCEEDED(hr))
 	{
 		LOGFONT lf = {};
