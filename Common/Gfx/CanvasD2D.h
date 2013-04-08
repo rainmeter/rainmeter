@@ -84,7 +84,7 @@ private:
 	void EndTargetDraw();
 
 	// Retrieves current GDI+ transform (if any) and converts to a D2D Matrix
-	D2D1::Matrix3x2F GetCurrentTransform();
+	D2D1_MATRIX_3X2_F GetCurrentTransform();
 
 	ID2D1RenderTarget* m_Target;
 	WICBitmapDIB m_Bitmap;

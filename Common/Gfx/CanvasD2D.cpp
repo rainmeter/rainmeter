@@ -244,20 +244,13 @@ bool CanvasD2D::IsTransparentPixel(int x, int y)
 	return transparent;
 }
 
-D2D1::Matrix3x2F CanvasD2D::GetCurrentTransform()
+D2D1_MATRIX_3X2_F CanvasD2D::GetCurrentTransform()
 {
-	D2D1::Matrix3x2F dMatrix = D2D1::Matrix3x2F::Identity();
-	Gdiplus::Matrix gMatrix;
-
-	if (Gdiplus::Ok == m_GdipGraphics->GetTransform(&gMatrix))
-	{
-		float m[6];
-		gMatrix.GetElements(m);
-
-		dMatrix = D2D1::Matrix3x2F(m[0], m[1], m[2], m[3], m[4], m[5]);
-	}
-
-	return dMatrix;
+	D2D1_MATRIX_3X2_F d2dMatrix;
+	Gdiplus::Matrix gdipMatrix;
+	m_GdipGraphics->GetTransform(&gdipMatrix);
+	gdipMatrix.GetElements((Gdiplus::REAL*)&d2dMatrix);
+	return d2dMatrix;
 }
 
 void CanvasD2D::SetTransform(const Gdiplus::Matrix& matrix)
