@@ -50,11 +50,18 @@ private:
 	// changes.
 	void CreateLayout(const WCHAR* str, UINT strLen, float maxW, float maxH);
 
+	// Maps the GDI family name and italic/bold flags to the DirectWrite family name, weight, style,
+	// and stretch.
+	static bool GetDWPropertiesFromGDIProperties(
+		const WCHAR* gdiFamilyName, const bool gdiBold, const bool gdiItalic,
+		DWRITE_FONT_WEIGHT& dwFontWeight, DWRITE_FONT_STYLE& dwFontStyle,
+		DWRITE_FONT_STRETCH& dwFontStretch, WCHAR* dwFamilyName, UINT dwFamilyNameSize);
+
 	// Creates a IDWriteFont using the GDI family name instead of the DirectWrite family name. For
 	// example, 'Segoe UI' and 'Segoe UI Semibold' are separate family names with GDI whereas
 	// DirectWrite uses the family name 'Segoe UI' for both and differentiates them by the font
 	// style.
-	static IDWriteFont* CreateDWFontFromGDIFamilyName(const WCHAR* fontFamily, bool bold, bool italic);
+	static IDWriteFont* CreateDWFontFromGDIFamilyName(const WCHAR* fontFamily);
 
 	static bool GetFamilyNameFromDWFont(IDWriteFont* font, WCHAR* buffer, UINT bufferSize);
 	static bool GetFamilyNameFromDWFontFamily(IDWriteFontFamily* fontFamily, WCHAR* buffer, UINT bufferSize);

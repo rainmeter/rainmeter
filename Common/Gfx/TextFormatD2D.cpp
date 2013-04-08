@@ -97,26 +97,23 @@ void TextFormatD2D::SetProperties(const WCHAR* fontFamily, int size, bool bold, 
 	// |fontFamily| uses the GDI/GDI+ font naming convention so try to create DirectWrite font
 	// using the GDI family name and then create a text format using the DirectWrite family name
 	// obtained from it.
-	IDWriteFont* dwFont = CreateDWFontFromGDIFamilyName(fontFamily, bold, italic);
-	if (dwFont)
+	WCHAR dwFamilyName[LF_FACESIZE];
+	DWRITE_FONT_WEIGHT dwFontWeight;
+	DWRITE_FONT_STYLE dwFontStyle;
+	DWRITE_FONT_STRETCH dwFontStretch;
+	if (GetDWPropertiesFromGDIProperties(
+		fontFamily, bold, italic, dwFontWeight, dwFontStyle, dwFontStretch, dwFamilyName,
+		_countof(dwFamilyName)))
 	{
-		WCHAR buffer[LF_FACESIZE];
-		if (GetFamilyNameFromDWFont(dwFont, buffer, _countof(buffer)))
-		{
-			// TODO: If |fontFamily| is e.g. 'Segoe UI Semibold' and |bold| is true, we might want
-			// to make the weight heaver to match GDI+.
-			hr = CanvasD2D::c_DWFactory->CreateTextFormat(
-				buffer,
-				nullptr,
-				dwFont->GetWeight(),
-				dwFont->GetStyle(),
-				DWRITE_FONT_STRETCH_NORMAL,
-				size * (4.0f / 3.0f),
-				L"",
-				&m_TextFormat);
-		}
-
-		dwFont->Release();
+		hr = CanvasD2D::c_DWFactory->CreateTextFormat(
+			dwFamilyName,
+			nullptr,
+			dwFontWeight,
+			dwFontStyle,
+			dwFontStretch,
+			size * (4.0f / 3.0f),
+			L"",
+			&m_TextFormat);
 	}
 
 	if (FAILED(hr))
@@ -191,7 +188,52 @@ void TextFormatD2D::SetVerticalAlignment(VerticalAlignment alignment)
 	}
 }
 
-IDWriteFont* TextFormatD2D::CreateDWFontFromGDIFamilyName(const WCHAR* fontFamily, bool bold, bool italic)
+bool TextFormatD2D::GetDWPropertiesFromGDIProperties(
+	const WCHAR* gdiFamilyName, const bool gdiBold, const bool gdiItalic,
+	DWRITE_FONT_WEIGHT& dwFontWeight, DWRITE_FONT_STYLE& dwFontStyle,
+	DWRITE_FONT_STRETCH& dwFontStretch, WCHAR* dwFamilyName, UINT dwFamilyNameSize)
+{
+	bool result = false;
+	IDWriteFont* dwFont = CreateDWFontFromGDIFamilyName(gdiFamilyName);
+	if (dwFont)
+	{
+		if (GetFamilyNameFromDWFont(dwFont, dwFamilyName, dwFamilyNameSize))
+		{
+			dwFontWeight = dwFont->GetWeight();
+			if (gdiBold)
+			{
+				if (dwFontWeight == DWRITE_FONT_WEIGHT_NORMAL)
+				{
+					dwFontWeight = DWRITE_FONT_WEIGHT_BOLD;
+				}
+				else if (dwFontWeight < DWRITE_FONT_WEIGHT_ULTRA_BOLD)
+				{
+					// If 'gdiFamilyName' was e.g. 'Segoe UI Light', |dwFontWeight| wil be equal to
+					// DWRITE_FONT_WEIGHT_LIGHT. If |gdiBold| is true in that case, we need to
+					// increase the weight a little more for similar results with GDI+.
+					// TODO: Is +100 enough?
+					dwFontWeight = (DWRITE_FONT_WEIGHT)(dwFontWeight + 100);
+				}
+			}
+
+			dwFontStyle = dwFont->GetStyle();
+			if (gdiItalic && dwFontStyle == DWRITE_FONT_STYLE_NORMAL)
+			{
+				dwFontStyle = DWRITE_FONT_STYLE_ITALIC;
+			}
+
+			dwFontStretch = dwFont->GetStretch();
+
+			result = true;
+		}
+
+		dwFont->Release();
+	}
+
+	return result;
+}
+
+IDWriteFont* TextFormatD2D::CreateDWFontFromGDIFamilyName(const WCHAR* fontFamily)
 {
 	IDWriteGdiInterop* dwGdiInterop;
 	HRESULT hr = CanvasD2D::c_DWFactory->GetGdiInterop(&dwGdiInterop);
@@ -199,10 +241,8 @@ IDWriteFont* TextFormatD2D::CreateDWFontFromGDIFamilyName(const WCHAR* fontFamil
 	{
 		LOGFONT lf = {};
 		wcscpy_s(lf.lfFaceName, fontFamily);
-		lf.lfWidth = 12;
-		lf.lfHeight = 12;
-		lf.lfWeight = bold ? FW_BOLD : FW_NORMAL;
-		lf.lfItalic = (BYTE)italic;
+		lf.lfHeight = -12;
+		lf.lfWeight = FW_DONTCARE;
 		lf.lfCharSet = DEFAULT_CHARSET;
 		lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
 		lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
