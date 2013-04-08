@@ -56,7 +56,8 @@ private:
 	// style.
 	static IDWriteFont* CreateDWFontFromGDIFamilyName(const WCHAR* fontFamily, bool bold, bool italic);
 
-	static bool GetDWFontFamilyName(IDWriteFont* font, WCHAR* buffer, UINT bufferSize);
+	static bool GetFamilyNameFromDWFont(IDWriteFont* font, WCHAR* buffer, UINT bufferSize);
+	static bool GetFamilyNameFromDWFontFamily(IDWriteFontFamily* fontFamily, WCHAR* buffer, UINT bufferSize);
 
 	IDWriteTextFormat* m_TextFormat;
 	IDWriteTextLayout* m_TextLayout;

@@ -101,7 +101,7 @@ void TextFormatD2D::SetProperties(const WCHAR* fontFamily, int size, bool bold, 
 	if (dwFont)
 	{
 		WCHAR buffer[LF_FACESIZE];
-		if (GetDWFontFamilyName(dwFont, buffer, _countof(buffer)))
+		if (GetFamilyNameFromDWFont(dwFont, buffer, _countof(buffer)))
 		{
 			// TODO: If |fontFamily| is e.g. 'Segoe UI Semibold' and |bold| is true, we might want
 			// to make the weight heaver to match GDI+.
@@ -222,24 +222,24 @@ IDWriteFont* TextFormatD2D::CreateDWFontFromGDIFamilyName(const WCHAR* fontFamil
 	return nullptr;
 }
 
-bool TextFormatD2D::GetDWFontFamilyName(IDWriteFont* font, WCHAR* buffer, const UINT bufferSize)
+bool TextFormatD2D::GetFamilyNameFromDWFont(IDWriteFont* font, WCHAR* buffer, const UINT bufferSize)
 {
-	bool result = false;
 	IDWriteFontFamily* dwFontFamily;
 	HRESULT hr = font->GetFontFamily(&dwFontFamily);
+	return SUCCEEDED(hr) ? GetFamilyNameFromDWFontFamily(dwFontFamily, buffer, bufferSize) : false;
+}
+
+bool TextFormatD2D::GetFamilyNameFromDWFontFamily(IDWriteFontFamily* fontFamily, WCHAR* buffer, const UINT bufferSize)
+{
+	bool result = false;
+	IDWriteLocalizedStrings* dwFamilyNames;
+	HRESULT hr = fontFamily->GetFamilyNames(&dwFamilyNames);
 	if (SUCCEEDED(hr))
 	{
-		IDWriteLocalizedStrings* dwFamilyNames;
-		hr = dwFontFamily->GetFamilyNames(&dwFamilyNames);
-		if (SUCCEEDED(hr))
-		{
-			// TODO: Determine the best index?
-			hr = dwFamilyNames->GetString(0, buffer, bufferSize);
-			result = SUCCEEDED(hr);
-			dwFamilyNames->Release();
-		}
-
-		dwFontFamily->Release();
+		// TODO: Determine the best index?
+		hr = dwFamilyNames->GetString(0, buffer, bufferSize);
+		result = SUCCEEDED(hr);
+		dwFamilyNames->Release();
 	}
 
 	return result;
