@@ -16,42 +16,39 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef RM_GFX_TEXTFORMATGDIP_H_
-#define RM_GFX_TEXTFORMATGDIP_H_
-
-#include "TextFormat.h"
+#include "FontCollectionGDIP.h"
 #include <GdiPlus.h>
 
 namespace Gfx {
 
-class TextFormatGDIP : public TextFormat
+FontCollectionGDIP::FontCollectionGDIP() : FontCollection(),
+	m_PrivateCollection()
 {
-public:
-	TextFormatGDIP();
-	virtual ~TextFormatGDIP();
+}
 
-	virtual bool IsInitialized() const override { return m_Font != nullptr; }
+FontCollectionGDIP::~FontCollectionGDIP()
+{
+	Dispose();
+}
 
-	virtual void SetProperties(
-		const WCHAR* fontFamily, int size, bool bold, bool italic,
-		const FontCollection* fontCollection) override;
+void FontCollectionGDIP::Dispose()
+{
+	if (m_PrivateCollection)
+	{
+		delete m_PrivateCollection;
+		m_PrivateCollection = nullptr;
+	}
+}
 
-	virtual void SetTrimming(bool trim) override;
-	virtual void SetHorizontalAlignment(HorizontalAlignment alignment) override;
-	virtual void SetVerticalAlignment(VerticalAlignment alignment) override;
+bool FontCollectionGDIP::AddFile(const WCHAR* file)
+{
+	if (!m_PrivateCollection)
+	{
+		m_PrivateCollection = new Gdiplus::PrivateFontCollection();
+	}
 
-private:
-	friend class CanvasGDIP;
-
-	TextFormatGDIP(const TextFormatGDIP& other) {}
-
-	void Dispose();
-
-	Gdiplus::Font* m_Font;
-	Gdiplus::FontFamily* m_FontFamily;
-	Gdiplus::StringFormat m_StringFormat;
-};
+	const Gdiplus::Status status = m_PrivateCollection->AddFontFile(file);
+	return status == Gdiplus::Ok;
+}
 
 }  // namespace Gfx
-
-#endif

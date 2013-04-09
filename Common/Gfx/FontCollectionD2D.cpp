@@ -16,42 +16,23 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef RM_GFX_TEXTFORMATGDIP_H_
-#define RM_GFX_TEXTFORMATGDIP_H_
-
-#include "TextFormat.h"
+#include "FontCollectionD2D.h"
 #include <GdiPlus.h>
 
 namespace Gfx {
 
-class TextFormatGDIP : public TextFormat
+FontCollectionD2D::FontCollectionD2D() : FontCollection()
 {
-public:
-	TextFormatGDIP();
-	virtual ~TextFormatGDIP();
+}
 
-	virtual bool IsInitialized() const override { return m_Font != nullptr; }
+FontCollectionD2D::~FontCollectionD2D()
+{
+}
 
-	virtual void SetProperties(
-		const WCHAR* fontFamily, int size, bool bold, bool italic,
-		const FontCollection* fontCollection) override;
-
-	virtual void SetTrimming(bool trim) override;
-	virtual void SetHorizontalAlignment(HorizontalAlignment alignment) override;
-	virtual void SetVerticalAlignment(VerticalAlignment alignment) override;
-
-private:
-	friend class CanvasGDIP;
-
-	TextFormatGDIP(const TextFormatGDIP& other) {}
-
-	void Dispose();
-
-	Gdiplus::Font* m_Font;
-	Gdiplus::FontFamily* m_FontFamily;
-	Gdiplus::StringFormat m_StringFormat;
-};
+bool FontCollectionD2D::AddFile(const WCHAR* file)
+{
+	// FIXME.
+	return true;
+}
 
 }  // namespace Gfx
-
-#endif

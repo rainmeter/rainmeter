@@ -16,40 +16,27 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef RM_GFX_TEXTFORMATGDIP_H_
-#define RM_GFX_TEXTFORMATGDIP_H_
+#ifndef RM_GFX_FONTCOLLECTION_H_
+#define RM_GFX_FONTCOLLECTION_H_
 
-#include "TextFormat.h"
-#include <GdiPlus.h>
+#include <Windows.h>
 
 namespace Gfx {
 
-class TextFormatGDIP : public TextFormat
+// Interface for a collection of fonts that may or may not be installed on the system.
+class __declspec(novtable) FontCollection
 {
 public:
-	TextFormatGDIP();
-	virtual ~TextFormatGDIP();
+	virtual ~FontCollection();
 
-	virtual bool IsInitialized() const override { return m_Font != nullptr; }
+	// Adds a file to the collection. Returns true if the file was successfully added.
+	virtual bool AddFile(const WCHAR* file) = 0;
 
-	virtual void SetProperties(
-		const WCHAR* fontFamily, int size, bool bold, bool italic,
-		const FontCollection* fontCollection) override;
-
-	virtual void SetTrimming(bool trim) override;
-	virtual void SetHorizontalAlignment(HorizontalAlignment alignment) override;
-	virtual void SetVerticalAlignment(VerticalAlignment alignment) override;
+protected:
+	FontCollection();
 
 private:
-	friend class CanvasGDIP;
-
-	TextFormatGDIP(const TextFormatGDIP& other) {}
-
-	void Dispose();
-
-	Gdiplus::Font* m_Font;
-	Gdiplus::FontFamily* m_FontFamily;
-	Gdiplus::StringFormat m_StringFormat;
+	FontCollection(const FontCollection& other) {}
 };
 
 }  // namespace Gfx

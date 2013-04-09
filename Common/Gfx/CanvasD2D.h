@@ -20,6 +20,7 @@
 #define RM_GFX_CANVASD2D_H_
 
 #include "Canvas.h"
+#include "FontCollectionD2D.h"
 #include "TextFormatD2D.h"
 #include "WICBitmapDIB.h"
 #include <string>
@@ -48,7 +49,8 @@ public:
 
 	virtual HDC GetDC() override;
 	virtual void ReleaseDC(HDC dc) override;
-
+	
+	virtual FontCollection* CreateFontCollection() override { return new FontCollectionD2D(); }
 	virtual TextFormat* CreateTextFormat() override { return new TextFormatD2D(); }
 
 	virtual bool IsTransparentPixel(int x, int y) override;

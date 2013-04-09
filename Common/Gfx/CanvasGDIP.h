@@ -20,6 +20,7 @@
 #define RM_GFX_CANVASGDIP_H_
 
 #include "Canvas.h"
+#include "FontCollectionGDIP.h"
 #include "TextFormatGDIP.h"
 #include <string>
 #include <GdiPlus.h>
@@ -44,6 +45,7 @@ public:
 	virtual HDC GetDC() override;
 	virtual void ReleaseDC(HDC dc) override;
 
+	virtual FontCollection* CreateFontCollection() override { return new FontCollectionGDIP(); }
 	virtual TextFormat* CreateTextFormat() override { return new TextFormatGDIP(); }
 
 	virtual bool IsTransparentPixel(int x, int y) override;

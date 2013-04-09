@@ -17,6 +17,7 @@
 */
 
 #include "TextFormatGDIP.h"
+#include "FontCollectionGDIP.h"
 
 namespace Gfx {
 
@@ -40,8 +41,12 @@ void TextFormatGDIP::Dispose()
 	m_Font = nullptr;
 }
 
-void TextFormatGDIP::SetProperties(const WCHAR* fontFamily, int size, bool bold, bool italic, Gdiplus::PrivateFontCollection* fontCollection)
+void TextFormatGDIP::SetProperties(
+	const WCHAR* fontFamily, int size, bool bold, bool italic,
+	const FontCollection* fontCollection)
 {
+	auto fontCollectionGDIP = (FontCollectionGDIP*)fontCollection;
+
 	Dispose();
 
 	m_FontFamily = new Gdiplus::FontFamily(fontFamily);
@@ -51,9 +56,9 @@ void TextFormatGDIP::SetProperties(const WCHAR* fontFamily, int size, bool bold,
 		m_FontFamily = nullptr;
 
 		// Not found in system collection so try the private collection.
-		if (fontCollection)
+		if (fontCollectionGDIP && fontCollectionGDIP->m_PrivateCollection)
 		{
-			m_FontFamily = new Gdiplus::FontFamily(fontFamily, fontCollection);
+			m_FontFamily = new Gdiplus::FontFamily(fontFamily, fontCollectionGDIP->m_PrivateCollection);
 			if (m_FontFamily->GetLastStatus() != Gdiplus::Ok)
 			{
 				delete m_FontFamily;

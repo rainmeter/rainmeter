@@ -19,6 +19,7 @@
 #ifndef RM_GFX_CANVAS_H_
 #define RM_GFX_CANVAS_H_
 
+#include "FontCollection.h"
 #include "TextFormat.h"
 #include <Windows.h>
 #include <GdiPlus.h>
@@ -53,6 +54,7 @@ public:
 	virtual HDC GetDC() = 0;
 	virtual void ReleaseDC(HDC dc) = 0;
 
+	virtual FontCollection* CreateFontCollection() = 0;
 	virtual TextFormat* CreateTextFormat() = 0;
 
 	virtual bool IsTransparentPixel(int x, int y) = 0;

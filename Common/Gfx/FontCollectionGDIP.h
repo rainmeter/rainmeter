@@ -16,40 +16,37 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef RM_GFX_TEXTFORMATGDIP_H_
-#define RM_GFX_TEXTFORMATGDIP_H_
+#ifndef RM_GFX_FONTCOLLECTIONGDIP_H_
+#define RM_GFX_FONTCOLLECTIONGDIP_H_
 
-#include "TextFormat.h"
-#include <GdiPlus.h>
+#include "FontCollection.h"
+
+namespace Gdiplus {
+class PrivateFontCollection;
+}
 
 namespace Gfx {
 
-class TextFormatGDIP : public TextFormat
+// Wraps the GDI+ PrivateFontCollection for use with CanvasGDIP.
+class FontCollectionGDIP final : public FontCollection
 {
 public:
-	TextFormatGDIP();
-	virtual ~TextFormatGDIP();
+	virtual ~FontCollectionGDIP();
 
-	virtual bool IsInitialized() const override { return m_Font != nullptr; }
+	virtual bool AddFile(const WCHAR* file) override;
 
-	virtual void SetProperties(
-		const WCHAR* fontFamily, int size, bool bold, bool italic,
-		const FontCollection* fontCollection) override;
-
-	virtual void SetTrimming(bool trim) override;
-	virtual void SetHorizontalAlignment(HorizontalAlignment alignment) override;
-	virtual void SetVerticalAlignment(VerticalAlignment alignment) override;
+protected:
+	FontCollectionGDIP();
 
 private:
 	friend class CanvasGDIP;
+	friend class TextFormatGDIP;
 
-	TextFormatGDIP(const TextFormatGDIP& other) {}
+	FontCollectionGDIP(const FontCollectionGDIP& other) {}
 
 	void Dispose();
 
-	Gdiplus::Font* m_Font;
-	Gdiplus::FontFamily* m_FontFamily;
-	Gdiplus::StringFormat m_StringFormat;
+	Gdiplus::PrivateFontCollection* m_PrivateCollection;
 };
 
 }  // namespace Gfx

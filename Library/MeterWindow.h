@@ -152,11 +152,10 @@ class CMeasure;
 class CMeter;
 
 namespace Gfx {
-
 class Canvas;
+class FontCollection;
 class TextFormat;
-
-}  // namespace Gfx
+}
 
 class CMeterWindow : public CGroup
 {
@@ -249,7 +248,7 @@ public:
 
 	void MakePathAbsolute(std::wstring& path);
 
-	Gdiplus::PrivateFontCollection* GetPrivateFontCollection() { return m_FontCollection; }
+	Gfx::FontCollection* GetFontCollection() { return m_FontCollection; }
 
 	CMeter* GetMeter(const std::wstring& meterName);
 	CMeasure* GetMeasure(const std::wstring& measureName) { return m_Parser.GetMeasure(measureName); }
@@ -460,7 +459,7 @@ private:
 	int m_UpdateCounter;
 	UINT m_MouseMoveCounter;
 
-	Gdiplus::PrivateFontCollection* m_FontCollection;
+	Gfx::FontCollection* m_FontCollection;
 
 	bool m_ToolTipHidden;
 

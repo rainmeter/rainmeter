@@ -88,7 +88,9 @@ void TextFormatD2D::CreateLayout(const WCHAR* str, UINT strLen, float maxW, floa
 	}
 }
 
-void TextFormatD2D::SetProperties(const WCHAR* fontFamily, int size, bool bold, bool italic, Gdiplus::PrivateFontCollection* fontCollection)
+void TextFormatD2D::SetProperties(
+	const WCHAR* fontFamily, int size, bool bold, bool italic,
+	const FontCollection* fontCollection)
 {
 	Dispose();
 

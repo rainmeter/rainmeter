@@ -2096,7 +2096,7 @@ bool CMeterWindow::ReadSkin()
 
 		if (find != INVALID_HANDLE_VALUE)
 		{
-			m_FontCollection = new PrivateFontCollection();
+			m_FontCollection = m_Canvas->CreateFontCollection();
 
 			do
 			{
@@ -2104,8 +2104,7 @@ bool CMeterWindow::ReadSkin()
 				{
 					std::wstring file(resourcePath, 0, resourcePath.length() - 1);
 					file += fd.cFileName;
-					Status status = m_FontCollection->AddFontFile(file.c_str());
-					if (status != Ok)
+					if (!m_FontCollection->AddFile(file.c_str()))
 					{
 						std::wstring error = L"Unable to load font: ";
 						error += file.c_str();
@@ -2125,7 +2124,7 @@ bool CMeterWindow::ReadSkin()
 	{
 		if (!m_FontCollection)
 		{
-			m_FontCollection = new PrivateFontCollection();
+			m_FontCollection = m_Canvas->CreateFontCollection();
 		}
 
 		int i = 1;
@@ -2134,13 +2133,11 @@ bool CMeterWindow::ReadSkin()
 			// Try program folder first
 			std::wstring szFontFile = Rainmeter->GetPath() + L"Fonts\\";
 			szFontFile += localFont;
-			Status status = m_FontCollection->AddFontFile(szFontFile.c_str());
-			if (status != Ok)
+			if (!m_FontCollection->AddFile(szFontFile.c_str()))
 			{
 				szFontFile = localFont;
 				MakePathAbsolute(szFontFile);
-				status = m_FontCollection->AddFontFile(szFontFile.c_str());
-				if (status != Ok)
+				if (!m_FontCollection->AddFile(szFontFile.c_str()))
 				{
 					std::wstring error = L"Unable to load font: ";
 					error += localFont;

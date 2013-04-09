@@ -68,6 +68,9 @@
     <ClCompile Include="..\Common\Gfx\Canvas.cpp" />
     <ClCompile Include="..\Common\Gfx\CanvasD2D.cpp" />
     <ClCompile Include="..\Common\Gfx\CanvasGDIP.cpp" />
+    <ClCompile Include="..\Common\Gfx\FontCollection.cpp" />
+    <ClCompile Include="..\Common\Gfx\FontCollectionD2D.cpp" />
+    <ClCompile Include="..\Common\Gfx\FontCollectionGDIP.cpp" />
     <ClCompile Include="..\Common\Gfx\TextFormat.cpp" />
     <ClCompile Include="..\Common\Gfx\TextFormatD2D.cpp" />
     <ClCompile Include="..\Common\Gfx\TextFormatGDIP.cpp" />
@@ -287,6 +290,9 @@
     <ClInclude Include="..\Common\Gfx\Canvas.h" />
     <ClInclude Include="..\Common\Gfx\CanvasD2D.h" />
     <ClInclude Include="..\Common\Gfx\CanvasGDIP.h" />
+    <ClInclude Include="..\Common\Gfx\FontCollection.h" />
+    <ClInclude Include="..\Common\Gfx\FontCollectionD2D.h" />
+    <ClInclude Include="..\Common\Gfx\FontCollectionGDIP.h" />
     <ClInclude Include="..\Common\Gfx\TextFormat.h" />
     <ClInclude Include="..\Common\Gfx\TextFormatD2D.h" />
     <ClInclude Include="..\Common\Gfx\TextFormatGDIP.h" />

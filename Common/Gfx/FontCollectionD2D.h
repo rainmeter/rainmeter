@@ -16,40 +16,31 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef RM_GFX_TEXTFORMATGDIP_H_
-#define RM_GFX_TEXTFORMATGDIP_H_
+#ifndef RM_GFX_FONTCOLLECTIOND2D_H_
+#define RM_GFX_FONTCOLLECTIOND2D_H_
 
-#include "TextFormat.h"
-#include <GdiPlus.h>
+#include "FontCollection.h"
 
 namespace Gfx {
 
-class TextFormatGDIP : public TextFormat
+// Wraps the DirectWrite IDWriteFontCollection for use with CanvasD2D.
+class FontCollectionD2D final : public FontCollection
 {
 public:
-	TextFormatGDIP();
-	virtual ~TextFormatGDIP();
+	virtual ~FontCollectionD2D();
 
-	virtual bool IsInitialized() const override { return m_Font != nullptr; }
+	virtual bool AddFile(const WCHAR* file) override;
 
-	virtual void SetProperties(
-		const WCHAR* fontFamily, int size, bool bold, bool italic,
-		const FontCollection* fontCollection) override;
-
-	virtual void SetTrimming(bool trim) override;
-	virtual void SetHorizontalAlignment(HorizontalAlignment alignment) override;
-	virtual void SetVerticalAlignment(VerticalAlignment alignment) override;
+protected:
+	FontCollectionD2D();
 
 private:
-	friend class CanvasGDIP;
+	friend class CanvasD2D;
+	friend class TextFormatD2D;
 
-	TextFormatGDIP(const TextFormatGDIP& other) {}
+	FontCollectionD2D(const FontCollectionD2D& other) {}
 
 	void Dispose();
-
-	Gdiplus::Font* m_Font;
-	Gdiplus::FontFamily* m_FontFamily;
-	Gdiplus::StringFormat m_StringFormat;
 };
 
 }  // namespace Gfx
