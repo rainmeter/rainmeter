@@ -26,6 +26,7 @@
 
 namespace Gfx {
 
+// Provides methods for drawing text, bitmaps, etc.
 class __declspec(novtable) Canvas
 {
 public:
@@ -34,6 +35,8 @@ public:
 	int GetW() const { return m_W; }
 	int GetH() const { return m_H; }
 
+	// Resize the draw area of the Canvas. This function must not be called if BeginDraw() has been
+	// called and has not yet been matched by a correspoding call to EndDraw.
 	virtual void Resize(int w, int h);
 
 	// BeginDraw() must be matched by a corresponding call to EndDraw(). Drawing functions must be
@@ -54,6 +57,7 @@ public:
 	virtual HDC GetDC() = 0;
 	virtual void ReleaseDC(HDC dc) = 0;
 
+	// The Create* functions allocate objects specific to this Canvas object.
 	virtual FontCollection* CreateFontCollection() = 0;
 	virtual TextFormat* CreateTextFormat() = 0;
 

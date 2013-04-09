@@ -25,6 +25,7 @@
 
 namespace Gfx {
 
+// Provides a Direct2D/DirectWrite implementation of TextFormat for use with CanvasD2D.
 class TextFormatD2D : public TextFormat
 {
 public:
@@ -38,6 +39,7 @@ public:
 		const FontCollection* fontCollection) override;
 
 	virtual void SetTrimming(bool trim) override;
+
 	virtual void SetHorizontalAlignment(HorizontalAlignment alignment) override;
 	virtual void SetVerticalAlignment(VerticalAlignment alignment) override;
 
