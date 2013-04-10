@@ -501,7 +501,8 @@ bool CMeter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scal
 			size_t len = _snwprintf_s(buffer, _TRUNCATE, L"%%%i", (int)i);
 			size_t start = 0, pos;
 
-			const WCHAR* measureValue = m_Measures[i - 1]->GetStringValue(autoScale, scale, decimals, percentual);
+			const WCHAR* measureValue = m_Measures[i - 1]->GetStringOrFormattedValue(
+				autoScale, scale, decimals, percentual);
 			int measureValueLen = wcslen(measureValue);
 
 			do

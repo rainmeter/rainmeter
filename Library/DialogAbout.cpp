@@ -807,7 +807,8 @@ void CDialogAbout::CTabSkins::UpdateMeasureList(CMeterWindow* meterWindow)
 		range += buffer;
 
 		ListView_SetItemText(item, lvi.iItem, 1, (WCHAR*)range.c_str());
-		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)(*j)->GetStringValue(AUTOSCALE_OFF, 1, -1, false));
+		ListView_SetItemText(item, lvi.iItem, 2, (WCHAR*)(*j)->GetStringOrFormattedValue(
+			AUTOSCALE_OFF, 1, -1, false));
 		++lvi.iItem;
 	}
 

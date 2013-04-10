@@ -164,14 +164,9 @@ void CMeasureDiskSpace::UpdateValue()
 ** Returns the time as string.
 **
 */
-const WCHAR* CMeasureDiskSpace::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
+const WCHAR* CMeasureDiskSpace::GetStringValue()
 {
-	if (m_Type || m_Label)
-	{
-		return CheckSubstitute(m_StringValue.c_str());
-	}
-
-	return CMeasure::GetStringValue(autoScale, scale, decimals, percentual);
+	return (m_Type || m_Label) ? CheckSubstitute(m_StringValue.c_str()) : NULL;
 }
 
 /*

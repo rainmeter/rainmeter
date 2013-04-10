@@ -360,7 +360,8 @@ bool CMeterString::Update()
 		{
 			if (m_Text.empty())
 			{
-				m_String += m_Measures[0]->GetStringValue(m_AutoScale, m_Scale, decimals, m_Percentual);
+				m_String += m_Measures[0]->GetStringOrFormattedValue(
+					m_AutoScale, m_Scale, decimals, m_Percentual);
 			}
 			else
 			{

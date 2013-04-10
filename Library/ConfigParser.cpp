@@ -664,7 +664,7 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 				CMeasure* measure = GetMeasure(var);
 				if (measure)
 				{
-					const WCHAR* value = measure->GetStringValue(AUTOSCALE_OFF, 1, -1, false);
+					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, -1, false);
 					size_t valueLen = wcslen(value);
 
 					// Measure found, replace it with the value

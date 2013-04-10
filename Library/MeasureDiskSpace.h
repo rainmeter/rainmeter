@@ -29,7 +29,7 @@ public:
 
 	virtual UINT GetTypeID() { return TypeID<CMeasureDiskSpace>(); }
 
-	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
+	virtual const WCHAR* GetStringValue();
 
 protected:
 	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);

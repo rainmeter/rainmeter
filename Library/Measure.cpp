@@ -618,6 +618,26 @@ double CMeasure::GetValueRange()
 }
 
 /*
+** Base implementation. Derivied classes can provide an alternative implementation if they have a
+** string value that is not based on m_Value.
+**
+*/
+const WCHAR* CMeasure::GetStringValue()
+{
+	return NULL;
+}
+
+/*
+** Returns the unformatted string value if the measure has one or a formatted value otherwise.
+**
+*/
+const WCHAR* CMeasure::GetStringOrFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
+{
+	const WCHAR* stringValue = GetStringValue();
+	return stringValue ? stringValue : GetFormattedValue(autoScale, scale, decimals, percentual);
+}
+
+/*
 ** This method returns the value as text string. The actual value is
 ** get with GetValue() so we don't have to worry about m_Invert.
 **
@@ -626,7 +646,7 @@ double CMeasure::GetValueRange()
 ** decimals   Number of decimals used in the value. If -1, get rid of ".00000" for dynamic variables.
 ** percentual Return the value as % from the maximum value.
 */
-const WCHAR* CMeasure::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
+const WCHAR* CMeasure::GetFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	static WCHAR buffer[128];
 	WCHAR format[32];
@@ -737,7 +757,7 @@ void CMeasure::DoChangeAction(bool execute)
 	if (!m_OnChangeAction.empty() && m_ValueAssigned)
 	{
 		double newValue = GetValue();
-		const WCHAR* newStringValue = GetStringValue(AUTOSCALE_OFF, 1, -1, false);
+		const WCHAR* newStringValue = GetStringValue();
 
 		if (!m_OldValue)
 		{

@@ -76,14 +76,9 @@ void CMeasureScript::UpdateValue()
 ** Returns the value as a string.
 **
 */
-const WCHAR* CMeasureScript::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
+const WCHAR* CMeasureScript::GetStringValue()
 {
-	if (m_ValueType == LUA_TSTRING)
-	{
-		return CheckSubstitute(m_StringValue.c_str());
-	}
-
-	return CMeasure::GetStringValue(autoScale, scale, decimals, percentual);
+	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : NULL;
 }
 
 /*

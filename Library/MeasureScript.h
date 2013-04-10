@@ -29,7 +29,7 @@ public:
 
 	virtual UINT GetTypeID() { return TypeID<CMeasureScript>(); }
 
-	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
+	virtual const WCHAR* GetStringValue();
 	virtual void Command(const std::wstring& command);
 
 	void UninitializeLuaScript();

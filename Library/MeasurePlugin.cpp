@@ -213,7 +213,7 @@ void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Gets the string value from the plugin.
 **
 */
-const WCHAR* CMeasurePlugin::GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
+const WCHAR* CMeasurePlugin::GetStringValue()
 {
 	if (m_GetStringFunc)
 	{
@@ -230,7 +230,7 @@ const WCHAR* CMeasurePlugin::GetStringValue(AUTOSCALE autoScale, double scale, i
 		if (ret) return CheckSubstitute(ret);
 	}
 
-	return CMeasure::GetStringValue(autoScale, scale, decimals, percentual);
+	return NULL;
 }
 
 /*

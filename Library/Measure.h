@@ -40,9 +40,34 @@ enum AUTOSCALE
 class CMeasureValueSet
 {
 public:
-	CMeasureValueSet(double val, const WCHAR* str) : m_Value(val), m_StringValue(str) {}
-	void Set(double val, const WCHAR* str) { m_Value = val; m_StringValue = str; }
-	bool IsChanged(double val, const WCHAR* str) { if (m_Value != val || wcscmp(m_StringValue.c_str(), str) != 0) { Set(val, str); return true; } return false; }
+	CMeasureValueSet(double val, const WCHAR* str) : m_Value(val), m_StringValue(str ? str : L"") {}
+
+	void Set(double val, const WCHAR* str)
+	{
+		m_Value = val;
+		if (str)
+		{
+			m_StringValue = str;
+		}
+		else
+		{
+			m_StringValue.clear();
+		}
+	}
+
+	bool IsChanged(double val, const WCHAR* str)
+	{
+		if (m_Value != val ||
+			(!str && !m_StringValue.empty()) ||
+			(str && wcscmp(m_StringValue.c_str(), str) != 0))
+		{
+			Set(val, str);
+			return true;
+		}
+		
+		return false;
+	}
+
 private:
 	double m_Value;
 	std::wstring m_StringValue;
@@ -74,7 +99,10 @@ public:
 	double GetMinValue() { return m_MinValue; }
 	double GetMaxValue() { return m_MaxValue; }
 
-	virtual const WCHAR* GetStringValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
+	virtual const WCHAR* GetStringValue();
+	const WCHAR* GetStringOrFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
+	const WCHAR* GetFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
+
 	static void GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords);
 	static void RemoveTrailingZero(WCHAR* str, int strLen);
 
