@@ -758,6 +758,10 @@ void CMeasure::DoChangeAction(bool execute)
 	{
 		double newValue = GetValue();
 		const WCHAR* newStringValue = GetStringValue();
+		if (!newStringValue)
+		{
+			newStringValue = L"";
+		}
 
 		if (!m_OldValue)
 		{
