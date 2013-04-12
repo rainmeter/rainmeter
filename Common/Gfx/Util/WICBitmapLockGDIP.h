@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef RM_GFX_WICBITMAPLOCKGDIP_H_
-#define RM_GFX_WICBITMAPLOCKGDIP_H_
+#ifndef RM_GFX_UTIL_WICBITMAPLOCKGDIP_H_
+#define RM_GFX_UTIL_WICBITMAPLOCKGDIP_H_
 
 #include <Windows.h>
 #include <GdiPlus.h>
