@@ -185,7 +185,7 @@ namespace InputText
         {
             try
             {
-                this.txtInput.Font = new Font(this.txtInput.Font.OriginalFontName, float.Parse(sSize));
+                this.txtInput.Font = new Font(this.txtInput.Font.Name, float.Parse(sSize));
             }
             catch { }
         }
