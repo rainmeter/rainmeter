@@ -372,6 +372,9 @@
     <ClCompile Include="..\Common\Gfx\TextFormatGDIP.cpp">
       <Filter>Common\Gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\Gfx\Util\DWriteHelpers.cpp">
+      <Filter>Common\Gfx\Util</Filter>
+    </ClCompile>
     <ClCompile Include="..\Common\Gfx\Util\DWriteFontFileEnumerator.cpp">
       <Filter>Common\Gfx\Util</Filter>
     </ClCompile>
@@ -658,6 +661,9 @@
     </ClInclude>
     <ClInclude Include="..\Common\Gfx\TextFormatGDIP.h">
       <Filter>Common\Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Gfx\Util\DWriteHelpers.h">
+      <Filter>Common\Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\Gfx\Util\DWriteFontFileEnumerator.h">
       <Filter>Common\Gfx\Util</Filter>
