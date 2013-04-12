@@ -18,6 +18,7 @@
 
 #include "TextFormatD2D.h"
 #include "CanvasD2D.h"
+#include "Util/DWriteHelpers.h"
 
 namespace Gfx {
 
@@ -103,9 +104,9 @@ void TextFormatD2D::SetProperties(
 	DWRITE_FONT_WEIGHT dwFontWeight;
 	DWRITE_FONT_STYLE dwFontStyle;
 	DWRITE_FONT_STRETCH dwFontStretch;
-	if (GetDWPropertiesFromGDIProperties(
-		fontFamily, bold, italic, dwFontWeight, dwFontStyle, dwFontStretch, dwFamilyName,
-		_countof(dwFamilyName)))
+	if (Util::GetDWritePropertiesFromGDIProperties(
+		CanvasD2D::c_DWFactory, fontFamily, bold, italic, dwFontWeight, dwFontStyle, dwFontStretch,
+		dwFamilyName, _countof(dwFamilyName)))
 	{
 		hr = CanvasD2D::c_DWFactory->CreateTextFormat(
 			dwFamilyName,
@@ -188,103 +189,6 @@ void TextFormatD2D::SetVerticalAlignment(VerticalAlignment alignment)
 			(alignment == VerticalAlignment::Center) ? DWRITE_PARAGRAPH_ALIGNMENT_CENTER :
 			DWRITE_PARAGRAPH_ALIGNMENT_FAR);
 	}
-}
-
-bool TextFormatD2D::GetDWPropertiesFromGDIProperties(
-	const WCHAR* gdiFamilyName, const bool gdiBold, const bool gdiItalic,
-	DWRITE_FONT_WEIGHT& dwFontWeight, DWRITE_FONT_STYLE& dwFontStyle,
-	DWRITE_FONT_STRETCH& dwFontStretch, WCHAR* dwFamilyName, UINT dwFamilyNameSize)
-{
-	bool result = false;
-	IDWriteFont* dwFont = CreateDWFontFromGDIFamilyName(gdiFamilyName);
-	if (dwFont)
-	{
-		if (GetFamilyNameFromDWFont(dwFont, dwFamilyName, dwFamilyNameSize))
-		{
-			dwFontWeight = dwFont->GetWeight();
-			if (gdiBold)
-			{
-				if (dwFontWeight == DWRITE_FONT_WEIGHT_NORMAL)
-				{
-					dwFontWeight = DWRITE_FONT_WEIGHT_BOLD;
-				}
-				else if (dwFontWeight < DWRITE_FONT_WEIGHT_ULTRA_BOLD)
-				{
-					// If 'gdiFamilyName' was e.g. 'Segoe UI Light', |dwFontWeight| wil be equal to
-					// DWRITE_FONT_WEIGHT_LIGHT. If |gdiBold| is true in that case, we need to
-					// increase the weight a little more for similar results with GDI+.
-					// TODO: Is +100 enough?
-					dwFontWeight = (DWRITE_FONT_WEIGHT)(dwFontWeight + 100);
-				}
-			}
-
-			dwFontStyle = dwFont->GetStyle();
-			if (gdiItalic && dwFontStyle == DWRITE_FONT_STYLE_NORMAL)
-			{
-				dwFontStyle = DWRITE_FONT_STYLE_ITALIC;
-			}
-
-			dwFontStretch = dwFont->GetStretch();
-
-			result = true;
-		}
-
-		dwFont->Release();
-	}
-
-	return result;
-}
-
-IDWriteFont* TextFormatD2D::CreateDWFontFromGDIFamilyName(const WCHAR* fontFamily)
-{
-	IDWriteGdiInterop* dwGdiInterop;
-	HRESULT hr = CanvasD2D::c_DWFactory->GetGdiInterop(&dwGdiInterop);
-	if (SUCCEEDED(hr))
-	{
-		LOGFONT lf = {};
-		wcscpy_s(lf.lfFaceName, fontFamily);
-		lf.lfHeight = -12;
-		lf.lfWeight = FW_DONTCARE;
-		lf.lfCharSet = DEFAULT_CHARSET;
-		lf.lfOutPrecision = OUT_DEFAULT_PRECIS;
-		lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-		lf.lfQuality = ANTIALIASED_QUALITY;
-		lf.lfPitchAndFamily = VARIABLE_PITCH;
-
-		IDWriteFont* dwFont;
-		hr = dwGdiInterop->CreateFontFromLOGFONT(&lf, &dwFont);
-		if (SUCCEEDED(hr))
-		{
-			return dwFont;
-		}
-
-		dwGdiInterop->Release();
-	}
-
-	return nullptr;
-}
-
-bool TextFormatD2D::GetFamilyNameFromDWFont(IDWriteFont* font, WCHAR* buffer, const UINT bufferSize)
-{
-	IDWriteFontFamily* dwFontFamily;
-	HRESULT hr = font->GetFontFamily(&dwFontFamily);
-	return SUCCEEDED(hr) ? GetFamilyNameFromDWFontFamily(dwFontFamily, buffer, bufferSize) : false;
-}
-
-bool TextFormatD2D::GetFamilyNameFromDWFontFamily(IDWriteFontFamily* fontFamily, WCHAR* buffer, const UINT bufferSize)
-{
-	bool result = false;
-	IDWriteLocalizedStrings* dwFamilyNames;
-	HRESULT hr = fontFamily->GetFamilyNames(&dwFamilyNames);
-	if (SUCCEEDED(hr))
-	{
-		// TODO: Determine the best index?
-		hr = dwFamilyNames->GetString(0, buffer, bufferSize);
-		result = SUCCEEDED(hr);
-		dwFamilyNames->Release();
-	}
-
-	return result;
 }
 
 }  // namespace Gfx
