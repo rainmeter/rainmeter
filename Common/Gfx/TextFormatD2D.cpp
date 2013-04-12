@@ -93,15 +93,20 @@ void TextFormatD2D::SetProperties(
 	const WCHAR* fontFamily, int size, bool bold, bool italic,
 	const FontCollection* fontCollection)
 {
+	auto fontCollectionD2D = (FontCollectionD2D*)fontCollection;
+
 	Dispose();
+
+	WCHAR dwriteFamilyName[LF_FACESIZE];
+	DWRITE_FONT_WEIGHT dwriteFontWeight =
+		bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR;
+	DWRITE_FONT_STYLE dwriteFontStyle =
+		italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
+	DWRITE_FONT_STRETCH dwriteFontStretch = DWRITE_FONT_STRETCH_NORMAL;
 
 	// |fontFamily| uses the GDI/GDI+ font naming convention so try to create DirectWrite font
 	// using the GDI family name and then create a text format using the DirectWrite family name
 	// obtained from it.
-	WCHAR dwriteFamilyName[LF_FACESIZE];
-	DWRITE_FONT_WEIGHT dwriteFontWeight;
-	DWRITE_FONT_STYLE dwriteFontStyle;
-	DWRITE_FONT_STRETCH dwriteFontStretch;
 	HRESULT hr = Util::GetDWritePropertiesFromGDIProperties(
 		CanvasD2D::c_DWFactory, fontFamily, bold, italic, dwriteFontWeight, dwriteFontStyle,
 		dwriteFontStretch, dwriteFamilyName, _countof(dwriteFamilyName));
@@ -121,15 +126,28 @@ void TextFormatD2D::SetProperties(
 	if (FAILED(hr))
 	{
 		IDWriteFontCollection* dwriteFontCollection = nullptr;
-		auto fontCollectionD2D = (FontCollectionD2D*)fontCollection;
 
 		// If |fontFamily| is not in the system collection, use the font collection from
 		// |fontCollectionD2D| if possible.
-		//
-		// TODO: Need to check GDI family names of the collection in |fontCollectionD2D|.
 		if (!Util::IsFamilyInSystemFontCollection(CanvasD2D::c_DWFactory, fontFamily) &&
 			(fontCollectionD2D && fontCollectionD2D->InitializeCollection()))
 		{
+			IDWriteFont* dwriteFont = Util::FindDWriteFontInFontCollectionByGDIFamilyName(
+				fontCollectionD2D->m_Collection, fontFamily);
+			if (dwriteFont)
+			{
+				hr = Util::GetFamilyNameFromDWriteFont(
+					dwriteFont, dwriteFamilyName, _countof(dwriteFamilyName));
+				{
+					fontFamily = dwriteFamilyName;
+					Util::GetPropertiesFromDWriteFont(
+						dwriteFont, bold, italic, &dwriteFontWeight, &dwriteFontStyle,
+						&dwriteFontStretch);
+				}
+
+				dwriteFont->Release();
+			}
+
 			dwriteFontCollection = fontCollectionD2D->m_Collection;
 		}
 
@@ -137,9 +155,9 @@ void TextFormatD2D::SetProperties(
 		hr = CanvasD2D::c_DWFactory->CreateTextFormat(
 			fontFamily,
 			dwriteFontCollection,
-			bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
-			italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
-			DWRITE_FONT_STRETCH_NORMAL,
+			dwriteFontWeight,
+			dwriteFontStyle,
+			dwriteFontStretch,
 			size * (4.0f / 3.0f),
 			L"",
 			&m_TextFormat);

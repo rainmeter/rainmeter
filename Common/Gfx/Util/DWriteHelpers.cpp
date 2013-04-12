@@ -32,31 +32,8 @@ HRESULT GetDWritePropertiesFromGDIProperties(
 	{
 		if (GetFamilyNameFromDWriteFont(dwriteFont, dwriteFamilyName, dwriteFamilyNameSize))
 		{
-			dwriteFontWeight = dwriteFont->GetWeight();
-			if (gdiBold)
-			{
-				if (dwriteFontWeight == DWRITE_FONT_WEIGHT_NORMAL)
-				{
-					dwriteFontWeight = DWRITE_FONT_WEIGHT_BOLD;
-				}
-				else if (dwriteFontWeight < DWRITE_FONT_WEIGHT_ULTRA_BOLD)
-				{
-					// If 'gdiFamilyName' was e.g. 'Segoe UI Light', |dwFontWeight| wil be equal to
-					// DWRITE_FONT_WEIGHT_LIGHT. If |gdiBold| is true in that case, we need to
-					// increase the weight a little more for similar results with GDI+.
-					// TODO: Is +100 enough?
-					dwriteFontWeight = (DWRITE_FONT_WEIGHT)(dwriteFontWeight + 100);
-				}
-			}
-
-			dwriteFontStyle = dwriteFont->GetStyle();
-			if (gdiItalic && dwriteFontStyle == DWRITE_FONT_STYLE_NORMAL)
-			{
-				dwriteFontStyle = DWRITE_FONT_STYLE_ITALIC;
-			}
-
-			dwriteFontStretch = dwriteFont->GetStretch();
-
+			GetPropertiesFromDWriteFont(
+				dwriteFont, gdiBold, gdiItalic, &dwriteFontWeight, &dwriteFontStyle, &dwriteFontStretch);
 			hr = S_OK;
 		}
 
@@ -64,6 +41,37 @@ HRESULT GetDWritePropertiesFromGDIProperties(
 	}
 
 	return hr;
+}
+
+void GetPropertiesFromDWriteFont(
+	IDWriteFont* dwriteFont, const bool bold, const bool italic,
+	DWRITE_FONT_WEIGHT* dwriteFontWeight, DWRITE_FONT_STYLE* dwriteFontStyle,
+	DWRITE_FONT_STRETCH* dwriteFontStretch)
+{
+	*dwriteFontWeight = dwriteFont->GetWeight();
+	if (bold)
+	{
+		if (*dwriteFontWeight == DWRITE_FONT_WEIGHT_NORMAL)
+		{
+			*dwriteFontWeight = DWRITE_FONT_WEIGHT_BOLD;
+		}
+		else if (*dwriteFontWeight < DWRITE_FONT_WEIGHT_ULTRA_BOLD)
+		{
+			// If 'gdiFamilyName' was e.g. 'Segoe UI Light', |dwFontWeight| wil be equal to
+			// DWRITE_FONT_WEIGHT_LIGHT. If |gdiBold| is true in that case, we need to
+			// increase the weight a little more for similar results with GDI+.
+			// TODO: Is +100 enough?
+			*dwriteFontWeight = (DWRITE_FONT_WEIGHT)(*dwriteFontWeight + 100);
+		}
+	}
+
+	*dwriteFontStyle = dwriteFont->GetStyle();
+	if (italic && *dwriteFontStyle == DWRITE_FONT_STYLE_NORMAL)
+	{
+		*dwriteFontStyle = DWRITE_FONT_STYLE_ITALIC;
+	}
+
+	*dwriteFontStretch = dwriteFont->GetStretch();
 }
 
 IDWriteFont* CreateDWriteFontFromGDIFamilyName(IDWriteFactory* factory, const WCHAR* gdiFamilyName)
@@ -143,6 +151,73 @@ bool IsFamilyInSystemFontCollection(IDWriteFactory* factory, const WCHAR* family
 	}
 
 	return result;
+}
+
+HRESULT GetGDIFamilyNameFromDWriteFont(IDWriteFont* font, WCHAR* buffer, UINT bufferSize)
+{
+	bool result = false;
+	IDWriteLocalizedStrings* strings;
+	BOOL stringsExist;
+	HRESULT hr = font->GetInformationalStrings(
+		DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &stringsExist);
+	if (SUCCEEDED(hr) && stringsExist)
+	{
+		hr = strings->GetString(0, buffer, bufferSize);
+		if (SUCCEEDED(hr))
+		{
+			result = true;
+		}
+	}
+
+	return result;
+}
+
+IDWriteFont* FindDWriteFontInFontFamilyByGDIFamilyName(
+	IDWriteFontFamily* fontFamily, const WCHAR* gdiFamilyName)
+{
+	const UINT32 fontFamilyFontCount = fontFamily->GetFontCount();
+	for (UINT32 j = 0; j < fontFamilyFontCount; ++j)
+	{
+		IDWriteFont* font;
+		HRESULT hr = fontFamily->GetFont(j, &font);
+		if (SUCCEEDED(hr))
+		{
+			WCHAR buffer[LF_FACESIZE];
+			if (GetGDIFamilyNameFromDWriteFont(font, buffer, _countof(buffer)) &&
+				_wcsicmp(gdiFamilyName, buffer) == 0)
+			{
+				return font;
+			}
+
+			font->Release();
+		}
+	}
+
+	return nullptr;
+}
+
+IDWriteFont* FindDWriteFontInFontCollectionByGDIFamilyName(
+	IDWriteFontCollection* fontCollection, const WCHAR* gdiFamilyName)
+{
+	const UINT32 fontCollectionFamilyCount = fontCollection->GetFontFamilyCount();
+	for (UINT32 i = 0; i < fontCollectionFamilyCount; ++i)
+	{
+		IDWriteFontFamily* fontFamily;
+		HRESULT hr = fontCollection->GetFontFamily(i, &fontFamily);
+		if (SUCCEEDED(hr))
+		{
+			IDWriteFont* font = FindDWriteFontInFontFamilyByGDIFamilyName(
+				fontFamily, gdiFamilyName);
+			fontFamily->Release();
+
+			if (font)
+			{
+				return font;
+			}
+		}
+	}
+
+	return nullptr;
 }
 
 }  // namespace Util
