@@ -16,44 +16,59 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef RM_GFX_WICBITMAPLOCKDIB_H_
-#define RM_GFX_WICBITMAPLOCKDIB_H_
+#ifndef RM_GFX_WICBITMAPDIB_H_
+#define RM_GFX_WICBITMAPDIB_H_
 
 #include <Windows.h>
 #include <GdiPlus.h>
 #include <wincodec.h>
-#include "WICBitmapDIB.h"
 
 namespace Gfx {
+namespace Util {
 
-// Implements the IWICBitmapLock interface for use with WICBitmapDIB. It is assumed that this
+// Allows the use of a DIB section (HBITMAP) in Direct2D as a WIC bitmap. It is assumed that this
 // class is used only with 32bpp PARGB bitmaps and using a sigle thread.
-class WICBitmapLockDIB : public IWICBitmapLock
+//
+// This class does not follow the COM reference count model. RTTI is used instead. This class
+// implements only the bare essentials in order to use a DIB section as a Direct2D render target.
+class WICBitmapDIB : public IWICBitmap
 {
 public:
-	WICBitmapLockDIB(WICBitmapDIB* bitmap, const WICRect* lockRect);
-	virtual ~WICBitmapLockDIB();
+	WICBitmapDIB();
+	~WICBitmapDIB();
 
 	void Resize(UINT w, UINT h);
+
+	HBITMAP GetHandle() const { return m_DIBSectionBuffer; }
+	BYTE* GetData() const { return (BYTE*)m_DIBSectionBufferPixels; }
 
 	// IUnknown
 	IFACEMETHOD(QueryInterface)(REFIID riid, void** ppvObject);
 	IFACEMETHOD_(ULONG, AddRef)();
 	IFACEMETHOD_(ULONG, Release)();
 
-	// IWICBitmapLock
+	// IWICBitmapSource
 	IFACEMETHOD(GetSize)(UINT* puiWidth, UINT* puiHeight);
-	IFACEMETHOD(GetStride)(UINT* pcbStride);
-	IFACEMETHOD(GetDataPointer)(UINT* pcbBufferSize, BYTE** ppbData);
 	IFACEMETHOD(GetPixelFormat)(WICPixelFormatGUID* pPixelFormat);
+	IFACEMETHOD(GetResolution)(double* pDpiX, double* pDpiY);
+	IFACEMETHOD(CopyPalette)(IWICPalette* pIPalette);
+	IFACEMETHOD(CopyPixels)(const WICRect* prc, UINT cbStride, UINT cbBufferSize, BYTE* pbBuffer);
+
+	// IWICBitmap
+	IFACEMETHOD(Lock)(const WICRect* prcLock, DWORD flags, IWICBitmapLock** ppILock);
+	IFACEMETHOD(SetPalette)(IWICPalette* pIPalette);
+	IFACEMETHOD(SetResolution)(double dpiX, double dpiY);
 
 private:
-	WICBitmapDIB* m_Bitmap;
-	const WICRect* m_Rect;
-	UINT m_RefCount;
+	friend class WICBitmapLockDIB;
+
+	HBITMAP m_DIBSectionBuffer;
+	LPDWORD m_DIBSectionBufferPixels;
+	UINT m_W;
+	UINT m_H;
 };
 
-
+}  // namespace Util
 }  // namespace Gfx
 
 #endif

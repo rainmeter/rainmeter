@@ -18,9 +18,9 @@
 
 #include "WICBitmapLockDIB.h"
 #include <cassert>
-#include "../../Library/Litestep.h"
 
 namespace Gfx {
+namespace Util {
 
 WICBitmapLockDIB::WICBitmapLockDIB(WICBitmapDIB* bitmap, const WICRect* lockRect) :
 	m_Bitmap(bitmap),
@@ -82,10 +82,10 @@ IFACEMETHODIMP WICBitmapLockDIB::GetDataPointer(UINT* pcbBufferSize, BYTE** ppbD
 	return S_OK;
 }
 
-
 IFACEMETHODIMP WICBitmapLockDIB::GetPixelFormat(WICPixelFormatGUID* pPixelFormat)
 {
 	return m_Bitmap->GetPixelFormat(pPixelFormat);
 }
 
+}  // namespace Util
 }  // namespace Gfx

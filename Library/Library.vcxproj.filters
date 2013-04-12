@@ -378,14 +378,14 @@
     <ClCompile Include="..\Common\Gfx\Util\DWriteFontCollectionLoader.cpp">
       <Filter>Common\Gfx\Util</Filter>
     </ClCompile>
-    <ClCompile Include="..\Common\Gfx\WICBitmapDIB.cpp">
-      <Filter>Common\Gfx</Filter>
+    <ClCompile Include="..\Common\Gfx\Util\WICBitmapLockGDIP.cpp">
+      <Filter>Common\Gfx\Util</Filter>
     </ClCompile>
-    <ClCompile Include="..\Common\Gfx\WICBitmapLockDIB.cpp">
-      <Filter>Common\Gfx</Filter>
+    <ClCompile Include="..\Common\Gfx\Util\WICBitmapDIB.cpp">
+      <Filter>Common\Gfx\Util</Filter>
     </ClCompile>
-    <ClCompile Include="..\Common\Gfx\WICBitmapLockGDIP.cpp">
-      <Filter>Common\Gfx</Filter>
+    <ClCompile Include="..\Common\Gfx\Util\WICBitmapLockDIB.cpp">
+      <Filter>Common\Gfx\Util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -665,14 +665,14 @@
     <ClInclude Include="..\Common\Gfx\Util\DWriteFontCollectionLoader.h">
       <Filter>Common\Gfx\Util</Filter>
     </ClInclude>
-    <ClInclude Include="..\Common\Gfx\WICBitmapDIB.h">
-      <Filter>Common\Gfx</Filter>
+    <ClInclude Include="..\Common\Gfx\Util\WICBitmapLockDIB.h">
+      <Filter>Common\Gfx\Util</Filter>
     </ClInclude>
-    <ClInclude Include="..\Common\Gfx\WICBitmapLockDIB.h">
-      <Filter>Common\Gfx</Filter>
+    <ClInclude Include="..\Common\Gfx\Util\WICBitmapLockGDIP.h">
+      <Filter>Common\Gfx\Util</Filter>
     </ClInclude>
-    <ClInclude Include="..\Common\Gfx\WICBitmapLockGDIP.h">
-      <Filter>Common\Gfx</Filter>
+    <ClInclude Include="..\Common\Gfx\Util\WICBitmapDIB.h">
+      <Filter>Common\Gfx\Util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

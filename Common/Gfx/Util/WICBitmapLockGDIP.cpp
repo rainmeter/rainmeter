@@ -20,6 +20,7 @@
 #include <cassert>
 
 namespace Gfx {
+namespace Util {
 
 WICBitmapLockGDIP::WICBitmapLockGDIP() :
 	m_RefCount(1)
@@ -77,4 +78,5 @@ IFACEMETHODIMP WICBitmapLockGDIP::GetPixelFormat(WICPixelFormatGUID* pPixelForma
 	return S_OK;
 }
 
+}  // namespace Util
 }  // namespace Gfx

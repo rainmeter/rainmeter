@@ -24,6 +24,7 @@
 #include <wincodec.h>
 
 namespace Gfx {
+namespace Util {
 
 // Allows the creation of a shared ID2D1Bitmap using pixel data in a Gdiplus::Bitmap. It is
 // assumed that this class is used only with 32bpp PARGB bitmaps and using a sigle thread.
@@ -50,6 +51,7 @@ private:
 	UINT m_RefCount;
 };
 
+}  // namespace Util
 }  // namespace Gfx
 
 #endif

@@ -22,7 +22,7 @@
 #include "Canvas.h"
 #include "FontCollectionD2D.h"
 #include "TextFormatD2D.h"
-#include "WICBitmapDIB.h"
+#include "Util/WICBitmapDIB.h"
 #include <string>
 #include <GdiPlus.h>
 #include <d2d1.h>
@@ -90,7 +90,7 @@ private:
 	D2D1_MATRIX_3X2_F GetCurrentTransform();
 
 	ID2D1RenderTarget* m_Target;
-	WICBitmapDIB m_Bitmap;
+	Util::WICBitmapDIB m_Bitmap;
 
 	// GDI+ objects that share the pixel data of m_Bitmap.
 	Gdiplus::Graphics* m_GdipGraphics;

@@ -19,7 +19,7 @@
 #include "CanvasD2D.h"
 #include "TextFormatD2D.h"
 #include "Util/DWriteFontCollectionLoader.h"
-#include "WICBitmapLockGDIP.h"
+#include "Util/WICBitmapLockGDIP.h"
 #include "../../Library/Litestep.h"
 
 template<class T>
@@ -411,7 +411,7 @@ void CanvasD2D::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect
 	// The D2D DrawBitmap seems to perform exactly like Gdiplus::Graphics::DrawImage since we are
 	// not using a hardware accelerated render target. Nevertheless, we will use it to avoid
 	// the EndDraw() call needed for GDI+ drawing.
-	WICBitmapLockGDIP* bitmapLock = new WICBitmapLockGDIP();
+	Util::WICBitmapLockGDIP* bitmapLock = new Util::WICBitmapLockGDIP();
 	Gdiplus::Status status = bitmap->LockBits(
 		&srcRect, Gdiplus::ImageLockModeRead, PixelFormat32bppPARGB, bitmapLock->GetBitmapData());
 	if (status == Gdiplus::Ok)

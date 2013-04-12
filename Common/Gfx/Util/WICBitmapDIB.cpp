@@ -21,7 +21,8 @@
 #include <cassert>
 
 namespace Gfx {
-	
+namespace Util {
+
 WICBitmapDIB::WICBitmapDIB() :
 	m_DIBSectionBuffer(),
 	m_DIBSectionBufferPixels(),
@@ -131,4 +132,5 @@ IFACEMETHODIMP WICBitmapDIB::SetResolution(double dpiX, double dpiY)
 	return E_NOTIMPL;
 }
 
+}  // namespace Util
 }  // namespace Gfx
