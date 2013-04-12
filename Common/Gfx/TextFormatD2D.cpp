@@ -121,10 +121,23 @@ void TextFormatD2D::SetProperties(
 
 	if (FAILED(hr))
 	{
+		IDWriteFontCollection* dwriteFontCollection = nullptr;
+		auto fontCollectionD2D = (FontCollectionD2D*)fontCollection;
+
+		// If |fontFamily| is not in the system collection, use the font collection from
+		// |fontCollectionD2D| if possible.
+		//
+		// TODO: Need to check GDI family names of the collection in |fontCollectionD2D|.
+		if (!Util::IsFamilyInSystemFontCollection(CanvasD2D::c_DWFactory, fontFamily) &&
+			(fontCollectionD2D && fontCollectionD2D->InitializeCollection()))
+		{
+			dwriteFontCollection = fontCollectionD2D->m_Collection;
+		}
+
 		// Fallback in case above fails.
 		hr = CanvasD2D::c_DWFactory->CreateTextFormat(
 			fontFamily,
-			nullptr,
+			dwriteFontCollection,
 			bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
 			italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
 			DWRITE_FONT_STRETCH_NORMAL,

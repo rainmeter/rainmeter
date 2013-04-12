@@ -138,7 +138,7 @@ bool IsFamilyInSystemFontCollection(IDWriteFactory* factory, const WCHAR* family
 		BOOL familyNameFound;
 		HRESULT hr = systemFontCollection->FindFamilyName(
 			familyName, &familyNameIndex, &familyNameFound);
-		if (SUCCEEDED(hr) && !familyNameFound)
+		if (SUCCEEDED(hr) && familyNameFound)
 		{
 			result = true;
 		}
