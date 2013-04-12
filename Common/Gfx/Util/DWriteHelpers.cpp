@@ -21,12 +21,12 @@
 namespace Gfx {
 namespace Util {
 
-bool GetDWritePropertiesFromGDIProperties(
+HRESULT GetDWritePropertiesFromGDIProperties(
 	IDWriteFactory* factory, const WCHAR* gdiFamilyName, const bool gdiBold, const bool gdiItalic,
 	DWRITE_FONT_WEIGHT& dwriteFontWeight, DWRITE_FONT_STYLE& dwriteFontStyle,
 	DWRITE_FONT_STRETCH& dwriteFontStretch, WCHAR* dwriteFamilyName, UINT dwriteFamilyNameSize)
 {
-	bool result = false;
+	HRESULT hr = E_FAIL;
 	IDWriteFont* dwriteFont = CreateDWriteFontFromGDIFamilyName(factory, gdiFamilyName);
 	if (dwriteFont)
 	{
@@ -57,13 +57,13 @@ bool GetDWritePropertiesFromGDIProperties(
 
 			dwriteFontStretch = dwriteFont->GetStretch();
 
-			result = true;
+			hr = S_OK;
 		}
 
 		dwriteFont->Release();
 	}
 
-	return result;
+	return hr;
 }
 
 IDWriteFont* CreateDWriteFontFromGDIFamilyName(IDWriteFactory* factory, const WCHAR* gdiFamilyName)
@@ -95,7 +95,7 @@ IDWriteFont* CreateDWriteFontFromGDIFamilyName(IDWriteFactory* factory, const WC
 	return nullptr;
 }
 
-bool GetFamilyNameFromDWriteFont(IDWriteFont* font, WCHAR* buffer, const UINT bufferSize)
+HRESULT GetFamilyNameFromDWriteFont(IDWriteFont* font, WCHAR* buffer, const UINT bufferSize)
 {
 	IDWriteFontFamily* dwriteFontFamily;
 	HRESULT hr = font->GetFontFamily(&dwriteFontFamily);
@@ -103,33 +103,29 @@ bool GetFamilyNameFromDWriteFont(IDWriteFont* font, WCHAR* buffer, const UINT bu
 	{
 		GetFamilyNameFromDWriteFontFamily(dwriteFontFamily, buffer, bufferSize);
 		dwriteFontFamily->Release();
-		return true;
 	}
 
-	return false;
+	return hr;
 }
 
-bool GetFamilyNameFromDWriteFontFamily(
+HRESULT GetFamilyNameFromDWriteFontFamily(
 	IDWriteFontFamily* fontFamily, WCHAR* buffer, const UINT bufferSize)
 {
-	bool result = false;
 	IDWriteLocalizedStrings* dwFamilyNames;
 	HRESULT hr = fontFamily->GetFamilyNames(&dwFamilyNames);
 	if (SUCCEEDED(hr))
 	{
 		// TODO: Determine the best index?
 		hr = dwFamilyNames->GetString(0, buffer, bufferSize);
-		result = SUCCEEDED(hr);
 		dwFamilyNames->Release();
 	}
 
-	return result;
+	return hr;
 }
 
 bool IsFamilyInSystemFontCollection(IDWriteFactory* factory, const WCHAR* familyName)
 {
 	bool result = false;
-
 	IDWriteFontCollection* systemFontCollection;
 	HRESULT hr = factory->GetSystemFontCollection(&systemFontCollection);
 	if (SUCCEEDED(hr))

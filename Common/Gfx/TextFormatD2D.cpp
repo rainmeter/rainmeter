@@ -95,25 +95,24 @@ void TextFormatD2D::SetProperties(
 {
 	Dispose();
 
-	HRESULT hr = E_FAIL;
-
 	// |fontFamily| uses the GDI/GDI+ font naming convention so try to create DirectWrite font
 	// using the GDI family name and then create a text format using the DirectWrite family name
 	// obtained from it.
-	WCHAR dwFamilyName[LF_FACESIZE];
-	DWRITE_FONT_WEIGHT dwFontWeight;
-	DWRITE_FONT_STYLE dwFontStyle;
-	DWRITE_FONT_STRETCH dwFontStretch;
-	if (Util::GetDWritePropertiesFromGDIProperties(
-		CanvasD2D::c_DWFactory, fontFamily, bold, italic, dwFontWeight, dwFontStyle, dwFontStretch,
-		dwFamilyName, _countof(dwFamilyName)))
+	WCHAR dwriteFamilyName[LF_FACESIZE];
+	DWRITE_FONT_WEIGHT dwriteFontWeight;
+	DWRITE_FONT_STYLE dwriteFontStyle;
+	DWRITE_FONT_STRETCH dwriteFontStretch;
+	HRESULT hr = Util::GetDWritePropertiesFromGDIProperties(
+		CanvasD2D::c_DWFactory, fontFamily, bold, italic, dwriteFontWeight, dwriteFontStyle,
+		dwriteFontStretch, dwriteFamilyName, _countof(dwriteFamilyName));
+	if (SUCCEEDED(hr))
 	{
 		hr = CanvasD2D::c_DWFactory->CreateTextFormat(
-			dwFamilyName,
+			dwriteFamilyName,
 			nullptr,
-			dwFontWeight,
-			dwFontStyle,
-			dwFontStretch,
+			dwriteFontWeight,
+			dwriteFontStyle,
+			dwriteFontStretch,
 			size * (4.0f / 3.0f),
 			L"",
 			&m_TextFormat);

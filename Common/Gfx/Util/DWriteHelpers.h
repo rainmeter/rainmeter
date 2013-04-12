@@ -26,7 +26,7 @@ namespace Util {
 
 // Maps the GDI family name and italic/bold flags to the DirectWrite family name, weight, style,
 // and stretch.
-bool GetDWritePropertiesFromGDIProperties(
+HRESULT GetDWritePropertiesFromGDIProperties(
 	IDWriteFactory* factory, const WCHAR* gdiFamilyName, const bool gdiBold, const bool gdiItalic,
 	DWRITE_FONT_WEIGHT& dwriteFontWeight, DWRITE_FONT_STYLE& dwriteFontStyle,
 	DWRITE_FONT_STRETCH& dwriteFontStretch, WCHAR* dwriteFamilyName, UINT dwriteFamilyNameSize);
@@ -37,9 +37,9 @@ bool GetDWritePropertiesFromGDIProperties(
 // style.
 IDWriteFont* CreateDWriteFontFromGDIFamilyName(IDWriteFactory* factory, const WCHAR* fontFamily);
 
-bool GetFamilyNameFromDWriteFont(IDWriteFont* font, WCHAR* buffer, UINT bufferSize);
+HRESULT GetFamilyNameFromDWriteFont(IDWriteFont* font, WCHAR* buffer, UINT bufferSize);
 
-bool GetFamilyNameFromDWriteFontFamily(
+HRESULT GetFamilyNameFromDWriteFontFamily(
 	IDWriteFontFamily* fontFamily, WCHAR* buffer, UINT bufferSize);
 
 bool IsFamilyInSystemFontCollection(IDWriteFactory* factory, const WCHAR* familyName);
