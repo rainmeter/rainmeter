@@ -31,6 +31,9 @@
     <Filter Include="Common\Gfx">
       <UniqueIdentifier>{26d9c191-5857-45c2-9e73-b0b88964728f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common\Gfx\Util">
+      <UniqueIdentifier>{acfbb3c5-84fd-471f-845c-f7d178d35c55}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConfigParser.cpp">
@@ -369,6 +372,12 @@
     <ClCompile Include="..\Common\Gfx\TextFormatGDIP.cpp">
       <Filter>Common\Gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\Gfx\Util\DWriteFontFileEnumerator.cpp">
+      <Filter>Common\Gfx\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Gfx\Util\DWriteFontCollectionLoader.cpp">
+      <Filter>Common\Gfx\Util</Filter>
+    </ClCompile>
     <ClCompile Include="..\Common\Gfx\WICBitmapDIB.cpp">
       <Filter>Common\Gfx</Filter>
     </ClCompile>
@@ -649,6 +658,12 @@
     </ClInclude>
     <ClInclude Include="..\Common\Gfx\TextFormatGDIP.h">
       <Filter>Common\Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Gfx\Util\DWriteFontFileEnumerator.h">
+      <Filter>Common\Gfx\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Gfx\Util\DWriteFontCollectionLoader.h">
+      <Filter>Common\Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\Gfx\WICBitmapDIB.h">
       <Filter>Common\Gfx</Filter>

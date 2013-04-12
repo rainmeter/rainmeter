@@ -74,6 +74,8 @@
     <ClCompile Include="..\Common\Gfx\TextFormat.cpp" />
     <ClCompile Include="..\Common\Gfx\TextFormatD2D.cpp" />
     <ClCompile Include="..\Common\Gfx\TextFormatGDIP.cpp" />
+    <ClCompile Include="..\Common\Gfx\Util\DWriteFontCollectionLoader.cpp" />
+    <ClCompile Include="..\Common\Gfx\Util\DWriteFontFileEnumerator.cpp" />
     <ClCompile Include="..\Common\Gfx\WICBitmapDIB.cpp" />
     <ClCompile Include="..\Common\Gfx\WICBitmapLockDIB.cpp" />
     <ClCompile Include="..\Common\Gfx\WICBitmapLockGDIP.cpp" />
@@ -296,6 +298,8 @@
     <ClInclude Include="..\Common\Gfx\TextFormat.h" />
     <ClInclude Include="..\Common\Gfx\TextFormatD2D.h" />
     <ClInclude Include="..\Common\Gfx\TextFormatGDIP.h" />
+    <ClInclude Include="..\Common\Gfx\Util\DWriteFontCollectionLoader.h" />
+    <ClInclude Include="..\Common\Gfx\Util\DWriteFontFileEnumerator.h" />
     <ClInclude Include="..\Common\Gfx\WICBitmapDIB.h" />
     <ClInclude Include="..\Common\Gfx\WICBitmapLockDIB.h" />
     <ClInclude Include="..\Common\Gfx\WICBitmapLockGDIP.h" />

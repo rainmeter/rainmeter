@@ -20,6 +20,8 @@
 #define RM_GFX_FONTCOLLECTIOND2D_H_
 
 #include "FontCollection.h"
+#include <vector>
+#include <dwrite.h>
 
 namespace Gfx {
 
@@ -41,6 +43,11 @@ private:
 	FontCollectionD2D(const FontCollectionD2D& other) {}
 
 	void Dispose();
+
+	bool InitializeCollection();
+
+	std::vector<IDWriteFontFile*> m_FileReferences;
+	IDWriteFontCollection* m_Collection;
 };
 
 }  // namespace Gfx

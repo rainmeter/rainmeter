@@ -18,6 +18,7 @@
 
 #include "CanvasD2D.h"
 #include "TextFormatD2D.h"
+#include "Util/DWriteFontCollectionLoader.h"
 #include "WICBitmapLockGDIP.h"
 #include "../../Library/Litestep.h"
 
@@ -106,6 +107,9 @@ bool CanvasD2D::Initialize()
 
 		hr = c_DWFactory->GetGdiInterop(&c_DWGDIInterop);
 		if (FAILED(hr)) return false;
+
+		hr = c_DWFactory->RegisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
+		if (FAILED(hr)) return false;
 	}
 
 	return true;
@@ -119,6 +123,8 @@ void CanvasD2D::Finalize()
 		SafeRelease(&c_D2DFactory);
 		SafeRelease(&c_WICFactory);
 		SafeRelease(&c_DWGDIInterop);
+
+		c_DWFactory->UnregisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
 		SafeRelease(&c_DWFactory);
 	}
 }
