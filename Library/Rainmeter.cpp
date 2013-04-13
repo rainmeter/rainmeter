@@ -2953,12 +2953,6 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 		HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 		if (menu)
 		{
-			// Set the 'Exit' Rainmeter icon
-			MENUITEMINFO mii = {sizeof(mii)};
-			mii.fMask = MIIM_BITMAP;
-			mii.hbmpItem = HBMMENU_MBAR_CLOSE;
-			SetMenuItemInfo(menu, IDM_QUIT, FALSE, &mii);
-
 			SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
 
 			if (_waccess(m_LogFile.c_str(), 0) == -1)
@@ -3193,12 +3187,6 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 	HMENU skinMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 	if (skinMenu)
 	{
-		// Set the 'Unload skin' icon.
-		MENUITEMINFO mii = {sizeof(mii)};
-		mii.fMask = MIIM_BITMAP;
-		mii.hbmpItem = HBMMENU_MBAR_CLOSE;
-		SetMenuItemInfo(skinMenu, IDM_CLOSESKIN, FALSE, &mii);
-
 		// Tick the position
 		HMENU settingsMenu = GetSubMenu(skinMenu, 4);
 		if (settingsMenu)
