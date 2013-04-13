@@ -30,11 +30,11 @@ HRESULT GetDWritePropertiesFromGDIProperties(
 	IDWriteFont* dwriteFont = CreateDWriteFontFromGDIFamilyName(factory, gdiFamilyName);
 	if (dwriteFont)
 	{
-		if (GetFamilyNameFromDWriteFont(dwriteFont, dwriteFamilyName, dwriteFamilyNameSize))
+		hr = GetFamilyNameFromDWriteFont(dwriteFont, dwriteFamilyName, dwriteFamilyNameSize);
+		if (SUCCEEDED(hr))
 		{
 			GetPropertiesFromDWriteFont(
 				dwriteFont, gdiBold, gdiItalic, &dwriteFontWeight, &dwriteFontStyle, &dwriteFontStretch);
-			hr = S_OK;
 		}
 
 		dwriteFont->Release();
@@ -109,7 +109,7 @@ HRESULT GetFamilyNameFromDWriteFont(IDWriteFont* font, WCHAR* buffer, const UINT
 	HRESULT hr = font->GetFontFamily(&dwriteFontFamily);
 	if (SUCCEEDED(hr))
 	{
-		GetFamilyNameFromDWriteFontFamily(dwriteFontFamily, buffer, bufferSize);
+		hr = GetFamilyNameFromDWriteFontFamily(dwriteFontFamily, buffer, bufferSize);
 		dwriteFontFamily->Release();
 	}
 
@@ -155,7 +155,6 @@ bool IsFamilyInSystemFontCollection(IDWriteFactory* factory, const WCHAR* family
 
 HRESULT GetGDIFamilyNameFromDWriteFont(IDWriteFont* font, WCHAR* buffer, UINT bufferSize)
 {
-	bool result = false;
 	IDWriteLocalizedStrings* strings;
 	BOOL stringsExist;
 	HRESULT hr = font->GetInformationalStrings(
@@ -163,13 +162,9 @@ HRESULT GetGDIFamilyNameFromDWriteFont(IDWriteFont* font, WCHAR* buffer, UINT bu
 	if (SUCCEEDED(hr) && stringsExist)
 	{
 		hr = strings->GetString(0, buffer, bufferSize);
-		if (SUCCEEDED(hr))
-		{
-			result = true;
-		}
 	}
 
-	return result;
+	return hr;
 }
 
 IDWriteFont* FindDWriteFontInFontFamilyByGDIFamilyName(
@@ -183,8 +178,8 @@ IDWriteFont* FindDWriteFontInFontFamilyByGDIFamilyName(
 		if (SUCCEEDED(hr))
 		{
 			WCHAR buffer[LF_FACESIZE];
-			if (GetGDIFamilyNameFromDWriteFont(font, buffer, _countof(buffer)) &&
-				_wcsicmp(gdiFamilyName, buffer) == 0)
+			hr = GetGDIFamilyNameFromDWriteFont(font, buffer, _countof(buffer));
+			if (SUCCEEDED(hr) && _wcsicmp(gdiFamilyName, buffer) == 0)
 			{
 				return font;
 			}
