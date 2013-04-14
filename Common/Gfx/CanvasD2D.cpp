@@ -412,8 +412,9 @@ void CanvasD2D::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect
 	// not using a hardware accelerated render target. Nevertheless, we will use it to avoid
 	// the EndDraw() call needed for GDI+ drawing.
 	Util::WICBitmapLockGDIP* bitmapLock = new Util::WICBitmapLockGDIP();
+	Gdiplus::Rect lockRect(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
 	Gdiplus::Status status = bitmap->LockBits(
-		&srcRect, Gdiplus::ImageLockModeRead, PixelFormat32bppPARGB, bitmapLock->GetBitmapData());
+		&lockRect, Gdiplus::ImageLockModeRead, PixelFormat32bppPARGB, bitmapLock->GetBitmapData());
 	if (status == Gdiplus::Ok)
 	{
 		D2D1_BITMAP_PROPERTIES props = D2D1::BitmapProperties(
