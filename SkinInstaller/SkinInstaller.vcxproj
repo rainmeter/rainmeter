@@ -134,6 +134,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Common\StringUtil.cpp" />
     <ClCompile Include="..\Library\Dialog.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="DialogInstall.cpp" />
@@ -170,6 +171,7 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="..\Library\Dialog.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="DialogInstall.h" />

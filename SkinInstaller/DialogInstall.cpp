@@ -21,6 +21,7 @@
 #include "DialogInstall.h"
 #include "../Library/pcre-8.10/config.h"
 #include "../Library/pcre-8.10/pcre.h"
+#include "../Common/StringUtil.h"
 #include "resource.h"
 #include "../Version.h"
 
@@ -388,7 +389,7 @@ bool CDialogInstall::ReadPackage()
 		return false;
 	}
 
-	m_PackageUnzFile = unzOpen(ConvertToAscii(fileName).c_str());
+	m_PackageUnzFile = unzOpen(StringUtil::NarrowUTF8(fileName).c_str());
 	if (!m_PackageUnzFile)
 	{
 		return false;
@@ -409,7 +410,7 @@ bool CDialogInstall::ReadPackage()
 		unz_file_info ufi;
 		if (unzGetCurrentFileInfo(m_PackageUnzFile, &ufi, cBuffer, MAX_PATH, NULL, 0, NULL, 0) == UNZ_OK)
 		{
-			MultiByteToWideChar(CP_ACP, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
+			MultiByteToWideChar(CP_UTF8, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
 			while (WCHAR* pos = wcschr(buffer, L'/')) *pos = L'\\';
 			return true;
 		}
@@ -717,7 +718,7 @@ bool CDialogInstall::InstallPackage()
 		unz_file_info ufi;
 		if (unzGetCurrentFileInfo(m_PackageUnzFile, &ufi, cBuffer, MAX_PATH, NULL, 0, NULL, 0) == UNZ_OK)
 		{
-			MultiByteToWideChar(CP_ACP, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
+			MultiByteToWideChar(CP_UTF8, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
 			while (WCHAR* pos = wcschr(buffer, L'/')) *pos = L'\\';
 			return true;
 		}
