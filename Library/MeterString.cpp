@@ -54,7 +54,7 @@ void StringToProper(std::wstring& str)
 		for (size_t i = 1; i < str.length(); ++i)
 		{
 			srcAndDest = &str[i];
-			LCMapString(LOCALE_USER_DEFAULT, (str[i - 1] == L' ') ? LCMAP_UPPERCASE : LCMAP_LOWERCASE, srcAndDest, 1, srcAndDest, 1);
+			LCMapString(LOCALE_USER_DEFAULT, (iswspace(str[i - 1]) > 0) ? LCMAP_UPPERCASE : LCMAP_LOWERCASE, srcAndDest, 1, srcAndDest, 1);
 		}
 	}
 }
