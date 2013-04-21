@@ -20,7 +20,6 @@
 #include "Application.h"
 #include "DialogPackage.h"
 #include "DialogInstall.h"
-#include "../Common/StringUtil.h"
 #include "resource.h"
 #include "../Version.h"
 
@@ -265,7 +264,7 @@ bool CDialogPackage::CreatePackage()
 	WritePrivateProfileString(L"rmskin", L"MinimumWindows", m_MinimumWindows.c_str(), tempFile);
 
 	// Create archive and add options file and header bitmap
-	m_ZipFile = zipOpen(StringUtil::NarrowUTF8(m_TargetFile).c_str(), APPEND_STATUS_CREATE);
+	m_ZipFile = zipOpen(ConvertToAscii(m_TargetFile.c_str()).c_str(), APPEND_STATUS_CREATE);
 
 	auto cleanup = [&]()->bool
 	{
@@ -380,16 +379,16 @@ unsigned __stdcall CDialogPackage::PackagerThreadProc(void* pParam)
 
 bool CDialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath)
 {
-	std::string zipPathUTF8 = StringUtil::NarrowUTF8(zipPath);
-	for (int i = 0, isize = zipPathUTF8.length(); i < isize; ++i)
+	std::string zipPathAscii = ConvertToAscii(zipPath);
+	for (int i = 0, isize = zipPathAscii.length(); i < isize; ++i)
 	{
-		if (zipPathUTF8[i] == '\\')
+		if (zipPathAscii[i] == '\\')
 		{
-			zipPathUTF8[i] = '/';
+			zipPathAscii[i] = '/';
 		}
 	}
 
-	int open = zipOpenNewFileInZip(m_ZipFile, zipPathUTF8.c_str(), NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_DEFAULT_COMPRESSION);
+	int open = zipOpenNewFileInZip(m_ZipFile, zipPathAscii.c_str(), NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_DEFAULT_COMPRESSION);
 	if (open != ZIP_OK)
 	{
 		return false;
@@ -744,7 +743,7 @@ INT_PTR CALLBACK CDialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARA
 
 				bool x32 = LOWORD(wParam) == IDC_PACKAGESELECTPLUGIN_32BITBROWSE_BUTTON;
 
-				LOADED_IMAGE* loadedImage = ImageLoad(StringUtil::NarrowUTF8(buffer).c_str(), NULL);
+				LOADED_IMAGE* loadedImage = ImageLoad(ConvertToAscii(buffer).c_str(), NULL);
 				if (loadedImage)
 				{
 					WORD machine = loadedImage->FileHeader->FileHeader.Machine;

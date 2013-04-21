@@ -293,3 +293,37 @@ OSPLATFORM GetOSPlatform()
 
 	return OSPLATFORM_UNKNOWN;
 }
+
+std::string ConvertToAscii(LPCTSTR str)
+{
+	std::string szAscii;
+
+	if (str && *str)
+	{
+		int strLen = (int)wcslen(str);
+		int bufLen = WideCharToMultiByte(CP_ACP, 0, str, strLen, NULL, 0, NULL, NULL);
+		if (bufLen > 0)
+		{
+			szAscii.resize(bufLen);
+			WideCharToMultiByte(CP_ACP, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
+		}
+	}
+	return szAscii;
+}
+
+std::wstring ConvertToWide(LPCSTR str)
+{
+	std::wstring szWide;
+
+	if (str && *str)
+	{
+		int strLen = (int)strlen(str);
+		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
+		if (bufLen > 0)
+		{
+			szWide.resize(bufLen);
+			MultiByteToWideChar(CP_ACP, 0, str, strLen, &szWide[0], bufLen);
+		}
+	}
+	return szWide;
+}

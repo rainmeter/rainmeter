@@ -53,5 +53,7 @@ OSPLATFORM GetOSPlatform();
 
 bool IsRunning(const WCHAR* name, HANDLE* hMutex);
 bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMove = false);
+std::string ConvertToAscii(LPCTSTR str);
+std::wstring ConvertToWide(LPCSTR str);
 
 #endif

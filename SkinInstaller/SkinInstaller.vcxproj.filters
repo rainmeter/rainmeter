@@ -22,9 +22,6 @@
     <Filter Include="pcre">
       <UniqueIdentifier>{73cc243e-5b60-4fbc-ae48-069c6decc4ed}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common">
-      <UniqueIdentifier>{65d4ccc5-15bd-4268-a539-ebf090e28d5d}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp">
@@ -89,9 +86,6 @@
     </ClCompile>
     <ClCompile Include="DialogPackage.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\StringUtil.cpp">
-      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -160,9 +154,6 @@
     </ClInclude>
     <ClInclude Include="DialogPackage.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\StringUtil.h">
-      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
