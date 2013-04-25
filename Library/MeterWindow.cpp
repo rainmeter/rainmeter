@@ -2152,7 +2152,8 @@ bool CMeterWindow::ReadSkin()
 		while (*localFont);
 	}
 
-	// Create all meters and measures.
+	// Create all meters and measures. The meters and measures are not initialized in this loop
+	// to avoid errors caused by referencing nonexistent [sections] in the options.
 	m_HasNetMeasures = false;
 	m_HasButtons = false;
 	CMeter* prevMeter = NULL;
@@ -2212,8 +2213,16 @@ bool CMeterWindow::ReadSkin()
 		return false;
 	}
 
-	// Initialize meters. Separate loop to avoid errors caused with section
-	// variables for nonexistent measures/meters.
+	// Read measure options. This is done before the meters to ensure that e.g. Substitute is used
+	// when the meters get the value of the measure. The measures cannot be initialized yet as som
+	// measures (e.g. Script) except that the meters are ready when calling Initialize().
+	for (auto iter = m_Measures.cbegin(); iter != m_Measures.cend(); ++iter)
+	{
+		CMeasure* measure = *iter;
+		measure->ReadOptions(m_Parser);
+	}
+
+	// Initialize meters.
 	for (auto iter = m_Meters.cbegin(); iter != m_Meters.cend(); ++iter)
 	{
 		CMeter* meter = *iter;
@@ -2226,12 +2235,10 @@ bool CMeterWindow::ReadSkin()
 		}
 	}
 
-	// Initialize measures. Separate loop to avoid errors caused by
-	// referencing nonexistent [measures] in the measure options.
+	// Initialize measures.
 	for (auto iter = m_Measures.cbegin(); iter != m_Measures.cend(); ++iter)
 	{
 		CMeasure* measure = *iter;
-		measure->ReadOptions(m_Parser);
 		measure->Initialize();
 	}
 
