@@ -295,6 +295,7 @@ protected:
 	LRESULT OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnWake(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
 	enum STATE
@@ -385,6 +386,7 @@ private:
 	std::wstring m_OnFocusAction;
 	std::wstring m_OnUnfocusAction;
 	std::wstring m_OnUpdateAction;
+	std::wstring m_OnWakeAction;
 
 	std::wstring m_BackgroundName;
 	RECT m_BackgroundMargins;

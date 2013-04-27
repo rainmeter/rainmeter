@@ -2042,6 +2042,7 @@ bool CMeterWindow::ReadSkin()
 	m_OnFocusAction = m_Parser.ReadString(L"Rainmeter", L"OnFocusAction", L"", false);
 	m_OnUnfocusAction = m_Parser.ReadString(L"Rainmeter", L"OnUnfocusAction", L"", false);
 	m_OnUpdateAction = m_Parser.ReadString(L"Rainmeter", L"OnUpdateAction", L"", false);
+	m_OnWakeAction = m_Parser.ReadString(L"Rainmeter", L"OnWakeAction", L"", false);
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
@@ -4529,6 +4530,20 @@ LRESULT CMeterWindow::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 /*
+** Performs an action when returning from sleep
+**
+*/
+LRESULT CMeterWindow::OnWake(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (wParam == PBT_APMRESUMEAUTOMATIC && !m_OnWakeAction.empty())
+	{
+		Rainmeter->ExecuteCommand(m_OnWakeAction.c_str(), this);
+	}
+
+	return 0;
+}
+
+/*
 ** The main window procedure for the meter window.
 **
 */
@@ -4588,6 +4603,7 @@ LRESULT CALLBACK CMeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	MESSAGE(OnDisplayChange, WM_DISPLAYCHANGE)
 	MESSAGE(OnSetWindowFocus, WM_SETFOCUS)
 	MESSAGE(OnSetWindowFocus, WM_KILLFOCUS)
+	MESSAGE(OnWake, WM_POWERBROADCAST)
 	END_MESSAGEPROC
 }
 
