@@ -22,16 +22,6 @@
 #include "Util/WICBitmapLockGDIP.h"
 #include "../../Library/Litestep.h"
 
-template<class T>
-inline void SafeRelease(T** t)
-{
-	if (*t)
-	{
-		(*t)->Release();
-		*t = nullptr;
-	}
-}
-
 namespace {
 
 D2D1_COLOR_F ToColorF(const Gdiplus::Color& color)
@@ -54,13 +44,12 @@ D2D1_RECT_F ToRectF(const Gdiplus::RectF& rect)
 namespace Gfx {
 
 UINT CanvasD2D::c_Instances = 0;
-ID2D1Factory* CanvasD2D::c_D2DFactory = nullptr;
-IDWriteFactory* CanvasD2D::c_DWFactory = nullptr;
-IDWriteGdiInterop* CanvasD2D::c_DWGDIInterop = nullptr;
-IWICImagingFactory* CanvasD2D::c_WICFactory = nullptr;
+Microsoft::WRL::ComPtr<ID2D1Factory> CanvasD2D::c_D2DFactory;
+Microsoft::WRL::ComPtr<IDWriteFactory> CanvasD2D::c_DWFactory;
+Microsoft::WRL::ComPtr<IDWriteGdiInterop> CanvasD2D::c_DWGDIInterop;
+Microsoft::WRL::ComPtr<IWICImagingFactory> CanvasD2D::c_WICFactory;
 
 CanvasD2D::CanvasD2D() : Canvas(),
-	m_Target(),
 	m_Bitmap(),
 	m_GdipGraphics(),
 	m_GdipBitmap(),
@@ -88,7 +77,7 @@ bool CanvasD2D::Initialize()
 		HRESULT hr = D2D1CreateFactory(
 			D2D1_FACTORY_TYPE_SINGLE_THREADED,
 			fo,
-			&c_D2DFactory);
+			c_D2DFactory.GetAddressOf());
 		if (FAILED(hr)) return false;
 
 		hr = CoCreateInstance(
@@ -96,16 +85,16 @@ bool CanvasD2D::Initialize()
 			nullptr,
 			CLSCTX_INPROC_SERVER,
 			IID_IWICImagingFactory,
-			(LPVOID*)&c_WICFactory);
+			(LPVOID*)c_WICFactory.GetAddressOf());
 		if (FAILED(hr)) return false;
 
 		hr = DWriteCreateFactory(
 			DWRITE_FACTORY_TYPE_SHARED,
 			__uuidof(IDWriteFactory),
-			(IUnknown**)&c_DWFactory);
+			(IUnknown**)c_DWFactory.GetAddressOf());
 		if (FAILED(hr)) return false;
 
-		hr = c_DWFactory->GetGdiInterop(&c_DWGDIInterop);
+		hr = c_DWFactory->GetGdiInterop(c_DWGDIInterop.GetAddressOf());
 		if (FAILED(hr)) return false;
 
 		hr = c_DWFactory->RegisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
@@ -120,18 +109,18 @@ void CanvasD2D::Finalize()
 	--c_Instances;
 	if (c_Instances == 0)
 	{
-		SafeRelease(&c_D2DFactory);
-		SafeRelease(&c_WICFactory);
-		SafeRelease(&c_DWGDIInterop);
+		c_D2DFactory.Reset();
+		c_WICFactory.Reset();
+		c_DWGDIInterop.Reset();
 
 		c_DWFactory->UnregisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
-		SafeRelease(&c_DWFactory);
+		c_DWFactory.Reset();
 	}
 }
 
 void CanvasD2D::Dispose()
 {
-	SafeRelease(&m_Target);
+	m_Target.Reset();
 
 	delete m_GdipGraphics;
 	m_GdipGraphics = nullptr;
@@ -205,8 +194,7 @@ void CanvasD2D::EndTargetDraw()
 	if (m_Target)
 	{
 		m_Target->EndDraw();
-
-		SafeRelease(&m_Target);
+		m_Target.Reset();
 	}
 }
 
@@ -330,8 +318,8 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 	Gdiplus::Color color;
 	brush.GetColor(&color);
 
-	ID2D1SolidColorBrush* solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(color), &solidBrush);
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
+	HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(color), solidBrush.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
 		TextFormatD2D& formatD2D = (TextFormatD2D&)format;
@@ -341,31 +329,27 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 
 		m_Target->DrawTextLayout(
 			D2D1::Point2F(right ? rect.X - 2 : rect.X + 2.0f, rect.Y - 1.0f),
-			formatD2D.m_TextLayout,
-			solidBrush);
-
-		solidBrush->Release();
+			formatD2D.m_TextLayout.Get(),
+			solidBrush.Get());
 	}
 }
 
 bool CanvasD2D::MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect)
 {
-	IDWriteTextLayout* textLayout;
+	Microsoft::WRL::ComPtr<IDWriteTextLayout> textLayout;
 	HRESULT hr = c_DWFactory->CreateTextLayout(
 		str,
 		strLen,
-		((TextFormatD2D&)format).m_TextFormat,
+		((TextFormatD2D&)format).m_TextFormat.Get(),
 		10000,
 		10000,
-		&textLayout);
+		textLayout.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
 		DWRITE_TEXT_METRICS metrics;
 		textLayout->GetMetrics(&metrics);
 		rect.Width = metrics.width + 5.0f;
 		rect.Height = metrics.height + 1.0f;  // 1.0f to get same result as GDI+.
-
-		textLayout->Release();
 		return true;
 	}
 
@@ -376,14 +360,14 @@ bool CanvasD2D::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForma
 {
 	((TextFormatD2D&)format).m_TextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
 
-	IDWriteTextLayout* textLayout;
+	Microsoft::WRL::ComPtr<IDWriteTextLayout> textLayout;
 	HRESULT hr = c_DWFactory->CreateTextLayout(
 		str,
 		strLen,
-		((TextFormatD2D&)format).m_TextFormat,
+		((TextFormatD2D&)format).m_TextFormat.Get(),
 		rect.Width,
 		10000,
-		&textLayout);
+		textLayout.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
 		DWRITE_TEXT_METRICS metrics;
@@ -391,8 +375,6 @@ bool CanvasD2D::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForma
 		rect.Width = metrics.width + 5.0f;
 		rect.Height = metrics.height + 1.0f;  // 1.0f to get same result as GDI+.
 		lines = metrics.lineCount;
-
-		textLayout->Release();
 		return true;
 	}
 
@@ -419,15 +401,14 @@ void CanvasD2D::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect
 	{
 		D2D1_BITMAP_PROPERTIES props = D2D1::BitmapProperties(
 			D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
-		ID2D1Bitmap* d2dBitmap;
-		HRESULT hr = m_Target->CreateSharedBitmap(__uuidof(IWICBitmapLock), bitmapLock, &props, &d2dBitmap);
+		Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dBitmap;
+		HRESULT hr = m_Target->CreateSharedBitmap(
+			__uuidof(IWICBitmapLock), bitmapLock, &props, d2dBitmap.GetAddressOf());
 		if (SUCCEEDED(hr))
 		{
 			auto rDst = ToRectF(dstRect);
 			auto rSrc = ToRectF(srcRect);
-			m_Target->DrawBitmap(d2dBitmap, rDst, 1.0F, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, rSrc);
-
-			d2dBitmap->Release();
+			m_Target->DrawBitmap(d2dBitmap.Get(), rDst, 1.0F, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, rSrc);
 		}
 
 		// D2D will still use the pixel data after this call (at the next Flush() or EndDraw()).
@@ -448,12 +429,11 @@ void CanvasD2D::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& br
 	Gdiplus::Color color;
 	brush.GetColor(&color);
 
-	ID2D1SolidColorBrush* solidBrush;
-	HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(color), &solidBrush);
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
+	HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(color), solidBrush.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
-		m_Target->FillRectangle(ToRectF(rect), solidBrush);
-		solidBrush->Release();
+		m_Target->FillRectangle(ToRectF(rect), solidBrush.Get());
 	}
 }
 

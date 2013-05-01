@@ -22,10 +22,7 @@
 
 namespace Gfx {
 
-TextFormatD2D::TextFormatD2D() :
-	m_TextFormat(),
-	m_TextLayout(),
-	m_InlineEllipsis()
+TextFormatD2D::TextFormatD2D()
 {
 }
 
@@ -36,23 +33,9 @@ TextFormatD2D::~TextFormatD2D()
 
 void TextFormatD2D::Dispose()
 {
-	if (m_TextFormat)
-	{
-		m_TextFormat->Release();
-		m_TextFormat = nullptr;
-	}
-
-	if (m_TextLayout)
-	{
-		m_TextLayout->Release();
-		m_TextLayout = nullptr;
-	}
-
-	if (m_InlineEllipsis)
-	{
-		m_InlineEllipsis->Release();
-		m_InlineEllipsis = nullptr;
-	}
+	m_TextFormat.Reset();
+	m_TextLayout.Reset();
+	m_InlineEllipsis.Reset();
 }
 
 void TextFormatD2D::CreateLayout(const WCHAR* str, UINT strLen, float maxW, float maxH)
@@ -79,13 +62,8 @@ void TextFormatD2D::CreateLayout(const WCHAR* str, UINT strLen, float maxW, floa
 	}
 	else
 	{
-		if (m_TextLayout)
-		{
-			m_TextLayout->Release();
-			m_TextLayout = nullptr;
-		}
-
-		CanvasD2D::c_DWFactory->CreateTextLayout(str, strLen, m_TextFormat, maxW, maxH, &m_TextLayout);
+		CanvasD2D::c_DWFactory->CreateTextLayout(
+			str, strLen, m_TextFormat.Get(), maxW, maxH, m_TextLayout.ReleaseAndGetAddressOf());
 	}
 }
 
@@ -108,7 +86,7 @@ void TextFormatD2D::SetProperties(
 	// using the GDI family name and then create a text format using the DirectWrite family name
 	// obtained from it.
 	HRESULT hr = Util::GetDWritePropertiesFromGDIProperties(
-		CanvasD2D::c_DWFactory, fontFamily, bold, italic, dwriteFontWeight, dwriteFontStyle,
+		CanvasD2D::c_DWFactory.Get(), fontFamily, bold, italic, dwriteFontWeight, dwriteFontStyle,
 		dwriteFontStretch, dwriteFamilyName, _countof(dwriteFamilyName));
 	if (SUCCEEDED(hr))
 	{
@@ -129,7 +107,7 @@ void TextFormatD2D::SetProperties(
 
 		// If |fontFamily| is not in the system collection, use the font collection from
 		// |fontCollectionD2D| if possible.
-		if (!Util::IsFamilyInSystemFontCollection(CanvasD2D::c_DWFactory, fontFamily) &&
+		if (!Util::IsFamilyInSystemFontCollection(CanvasD2D::c_DWFactory.Get(), fontFamily) &&
 			(fontCollectionD2D && fontCollectionD2D->InitializeCollection()))
 		{
 			IDWriteFont* dwriteFont = Util::FindDWriteFontInFontCollectionByGDIFamilyName(
@@ -183,10 +161,11 @@ void TextFormatD2D::SetTrimming(bool trim)
 	{
 		if (!m_InlineEllipsis)
 		{
-			CanvasD2D::c_DWFactory->CreateEllipsisTrimmingSign(m_TextFormat, &m_InlineEllipsis);
+			CanvasD2D::c_DWFactory->CreateEllipsisTrimmingSign(
+				m_TextFormat.Get(), m_InlineEllipsis.GetAddressOf());
 		}
 
-		inlineObject = m_InlineEllipsis;
+		inlineObject = m_InlineEllipsis.Get();
 		trimming.granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER;
 		wordWrapping = DWRITE_WORD_WRAPPING_WRAP;
 	}

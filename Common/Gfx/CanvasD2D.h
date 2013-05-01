@@ -29,6 +29,7 @@
 #include <d2d1helper.h>
 #include <dwrite.h>
 #include <wincodec.h>
+#include <wrl/client.h>
 
 namespace Gfx {
 
@@ -89,7 +90,7 @@ private:
 	// Retrieves current GDI+ transform (if any) and converts to a D2D Matrix
 	D2D1_MATRIX_3X2_F GetCurrentTransform();
 
-	ID2D1RenderTarget* m_Target;
+	Microsoft::WRL::ComPtr<ID2D1RenderTarget> m_Target;
 	Util::WICBitmapDIB m_Bitmap;
 
 	// GDI+ objects that share the pixel data of m_Bitmap.
@@ -99,10 +100,10 @@ private:
 	bool m_TextAntiAliasing;
 
 	static UINT c_Instances;
-	static ID2D1Factory* c_D2DFactory;
-	static IDWriteFactory* c_DWFactory;
-	static IDWriteGdiInterop* c_DWGDIInterop;
-	static IWICImagingFactory* c_WICFactory;
+	static Microsoft::WRL::ComPtr<ID2D1Factory> c_D2DFactory;
+	static Microsoft::WRL::ComPtr<IDWriteFactory> c_DWFactory;
+	static Microsoft::WRL::ComPtr<IDWriteGdiInterop> c_DWGDIInterop;
+	static Microsoft::WRL::ComPtr<IWICImagingFactory> c_WICFactory;
 };
 
 }  // namespace Gfx

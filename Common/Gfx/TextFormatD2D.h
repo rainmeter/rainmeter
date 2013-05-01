@@ -22,6 +22,7 @@
 #include "TextFormat.h"
 #include <string>
 #include <dwrite.h>
+#include <wrl/client.h>
 
 namespace Gfx {
 
@@ -55,9 +56,9 @@ private:
 	// changes.
 	void CreateLayout(const WCHAR* str, UINT strLen, float maxW, float maxH);
 
-	IDWriteTextFormat* m_TextFormat;
-	IDWriteTextLayout* m_TextLayout;
-	IDWriteInlineObject* m_InlineEllipsis;
+	Microsoft::WRL::ComPtr<IDWriteTextFormat> m_TextFormat;
+	Microsoft::WRL::ComPtr<IDWriteTextLayout> m_TextLayout;
+	Microsoft::WRL::ComPtr<IDWriteInlineObject> m_InlineEllipsis;
 
 	std::wstring m_LastString;
 };
