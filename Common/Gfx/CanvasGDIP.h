@@ -22,6 +22,7 @@
 #include "Canvas.h"
 #include "FontCollectionGDIP.h"
 #include "TextFormatGDIP.h"
+#include <memory>
 #include <string>
 #include <GdiPlus.h>
 
@@ -72,10 +73,10 @@ private:
 
 	void Dispose();
 
-	Gdiplus::Graphics* m_Graphics;
-	Gdiplus::Bitmap* m_Bitmap;
-	HBITMAP m_DIBSectionBuffer;
-	LPDWORD m_DIBSectionBufferPixels;
+	std::unique_ptr<Gdiplus::Graphics> m_Graphics;
+	std::unique_ptr<Gdiplus::Bitmap> m_Bitmap;
+	HBITMAP m_DIBSection;
+	LPDWORD m_DIBSectionPixels;
 
 	//static ULONG_PTR c_GdiToken;
 };

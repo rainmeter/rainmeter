@@ -28,7 +28,6 @@ TextFormatD2D::TextFormatD2D()
 
 TextFormatD2D::~TextFormatD2D()
 {
-	Dispose();
 }
 
 void TextFormatD2D::Dispose()

@@ -20,6 +20,7 @@
 #define RM_GFX_TEXTFORMATGDIP_H_
 
 #include "TextFormat.h"
+#include <memory>
 #include <GdiPlus.h>
 
 namespace Gfx {
@@ -47,10 +48,8 @@ private:
 
 	TextFormatGDIP(const TextFormatGDIP& other) {}
 
-	void Dispose();
-
-	Gdiplus::Font* m_Font;
-	Gdiplus::FontFamily* m_FontFamily;
+	std::unique_ptr<Gdiplus::Font> m_Font;
+	std::unique_ptr<Gdiplus::FontFamily> m_FontFamily;
 	Gdiplus::StringFormat m_StringFormat;
 };
 

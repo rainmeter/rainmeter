@@ -23,6 +23,7 @@
 #include "FontCollectionD2D.h"
 #include "TextFormatD2D.h"
 #include "Util/WICBitmapDIB.h"
+#include <memory>
 #include <string>
 #include <GdiPlus.h>
 #include <d2d1.h>
@@ -82,8 +83,6 @@ private:
 	static bool Initialize();
 	static void Finalize();
 
-	void Dispose();
-
 	bool BeginTargetDraw();
 	void EndTargetDraw();
 
@@ -94,8 +93,8 @@ private:
 	Util::WICBitmapDIB m_Bitmap;
 
 	// GDI+ objects that share the pixel data of m_Bitmap.
-	Gdiplus::Graphics* m_GdipGraphics;
-	Gdiplus::Bitmap* m_GdipBitmap;
+	std::unique_ptr<Gdiplus::Graphics> m_GdipGraphics;
+	std::unique_ptr<Gdiplus::Bitmap> m_GdipBitmap;
 
 	bool m_TextAntiAliasing;
 

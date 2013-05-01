@@ -51,8 +51,6 @@ Microsoft::WRL::ComPtr<IWICImagingFactory> CanvasD2D::c_WICFactory;
 
 CanvasD2D::CanvasD2D() : Canvas(),
 	m_Bitmap(),
-	m_GdipGraphics(),
-	m_GdipBitmap(),
 	m_TextAntiAliasing(false)
 {
 	Initialize();
@@ -60,7 +58,6 @@ CanvasD2D::CanvasD2D() : Canvas(),
 
 CanvasD2D::~CanvasD2D()
 {
-	Dispose();
 	Finalize();
 }
 
@@ -118,27 +115,16 @@ void CanvasD2D::Finalize()
 	}
 }
 
-void CanvasD2D::Dispose()
-{
-	m_Target.Reset();
-
-	delete m_GdipGraphics;
-	m_GdipGraphics = nullptr;
-
-	delete m_GdipBitmap;
-	m_GdipBitmap = nullptr;
-}
-
 void CanvasD2D::Resize(int w, int h)
 {
 	__super::Resize(w, h);
 
-	Dispose();
+	m_Target.Reset();
 
 	m_Bitmap.Resize(w, h);
 
-	m_GdipBitmap = new Gdiplus::Bitmap(w, h, w * 4, PixelFormat32bppPARGB, m_Bitmap.GetData());
-	m_GdipGraphics = new Gdiplus::Graphics(m_GdipBitmap);
+	m_GdipBitmap.reset(new Gdiplus::Bitmap(w, h, w * 4, PixelFormat32bppPARGB, m_Bitmap.GetData()));
+	m_GdipGraphics.reset(new Gdiplus::Graphics(m_GdipBitmap.get()));
 }
 
 bool CanvasD2D::BeginDraw()

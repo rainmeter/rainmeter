@@ -21,24 +21,12 @@
 
 namespace Gfx {
 
-TextFormatGDIP::TextFormatGDIP() :
-	m_Font(),
-	m_FontFamily()
+TextFormatGDIP::TextFormatGDIP()
 {
 }
 
 TextFormatGDIP::~TextFormatGDIP()
 {
-	Dispose();
-}
-
-void TextFormatGDIP::Dispose()
-{
-	delete m_FontFamily;
-	m_FontFamily = nullptr;
-
-	delete m_Font;
-	m_Font = nullptr;
 }
 
 void TextFormatGDIP::SetProperties(
@@ -47,22 +35,20 @@ void TextFormatGDIP::SetProperties(
 {
 	auto fontCollectionGDIP = (FontCollectionGDIP*)fontCollection;
 
-	Dispose();
+	m_Font.reset();
 
-	m_FontFamily = new Gdiplus::FontFamily(fontFamily);
+	m_FontFamily.reset(new Gdiplus::FontFamily(fontFamily));
 	if (m_FontFamily->GetLastStatus() != Gdiplus::Ok)
 	{
-		delete m_FontFamily;
-		m_FontFamily = nullptr;
+		m_FontFamily.reset();
 
 		// Not found in system collection so try the private collection.
 		if (fontCollectionGDIP && fontCollectionGDIP->m_PrivateCollection)
 		{
-			m_FontFamily = new Gdiplus::FontFamily(fontFamily, fontCollectionGDIP->m_PrivateCollection);
+			m_FontFamily.reset(new Gdiplus::FontFamily(fontFamily, fontCollectionGDIP->m_PrivateCollection));
 			if (m_FontFamily->GetLastStatus() != Gdiplus::Ok)
 			{
-				delete m_FontFamily;
-				m_FontFamily = nullptr;
+				m_FontFamily.reset();
 			}
 		}
 	}
@@ -91,22 +77,20 @@ void TextFormatGDIP::SetProperties(
 
 		if (m_FontFamily)
 		{
-			m_Font = new Gdiplus::Font(m_FontFamily, fontSize, style);
+			m_Font.reset(new Gdiplus::Font(m_FontFamily.get(), fontSize, style));
 			if (m_Font->GetLastStatus() != Gdiplus::Ok)
 			{
-				delete m_Font;
-				m_Font = nullptr;
+				m_Font.reset();
 			}
 		}
 
 		if (!m_Font)
 		{
 			// Use default font ("Arial" or GenericSansSerif).
-			m_Font = new Gdiplus::Font(L"Arial", fontSize, style);
+			m_Font.reset(new Gdiplus::Font(L"Arial", fontSize, style));
 			if (m_Font->GetLastStatus() != Gdiplus::Ok)
 			{
-				delete m_Font;
-				m_Font = nullptr;
+				m_Font.reset();
 			}
 		}
 	}

@@ -21,10 +21,8 @@
 namespace Gfx {
 
 CanvasGDIP::CanvasGDIP() : Canvas(),
-	m_Graphics(),
-	m_Bitmap(),
-	m_DIBSectionBuffer(),
-	m_DIBSectionBufferPixels()
+	m_DIBSection(),
+	m_DIBSectionPixels()
 {
 }
 
@@ -35,17 +33,11 @@ CanvasGDIP::~CanvasGDIP()
 
 void CanvasGDIP::Dispose()
 {
-	delete m_Graphics;
-	m_Graphics = nullptr;
-
-	delete m_Bitmap;
-	m_Bitmap = nullptr;
-
-	if (m_DIBSectionBuffer)
+	if (m_DIBSection)
 	{
-		DeleteObject(m_DIBSectionBuffer);
-		m_DIBSectionBuffer = nullptr;
-		m_DIBSectionBufferPixels = nullptr;
+		DeleteObject(m_DIBSection);
+		m_DIBSection = nullptr;
+		m_DIBSectionPixels = nullptr;
 	}
 }
 
@@ -66,23 +58,17 @@ void CanvasGDIP::Resize(int w, int h)
 	bh.bV4BlueMask = 0x000000FF;
 	bh.bV4AlphaMask = 0xFF000000;
 
-	m_DIBSectionBuffer = CreateDIBSection(
+	m_DIBSection = CreateDIBSection(
 		nullptr,
 		(BITMAPINFO*)&bh,
 		DIB_RGB_COLORS,
-		(void**)&m_DIBSectionBufferPixels,
+		(void**)&m_DIBSectionPixels,
 		nullptr,
 		0);
 
 	// Create GDI+ bitmap from the DIBSection pixels
-	m_Bitmap = new Gdiplus::Bitmap(
-		w,
-		h,
-		w * 4,
-		PixelFormat32bppPARGB,
-		(BYTE*)m_DIBSectionBufferPixels);
-
-	m_Graphics = new Gdiplus::Graphics(m_Bitmap);
+	m_Bitmap.reset(new Gdiplus::Bitmap(w, h, w * 4, PixelFormat32bppPARGB, (BYTE*)m_DIBSectionPixels));
+	m_Graphics.reset(new Gdiplus::Graphics(m_Bitmap.get()));
 }
 
 bool CanvasGDIP::BeginDraw()
@@ -108,7 +94,7 @@ void CanvasGDIP::EndGdiplusContext()
 HDC CanvasGDIP::GetDC()
 {
 	HDC dcMemory = CreateCompatibleDC(nullptr);
-	SelectObject(dcMemory, m_DIBSectionBuffer);
+	SelectObject(dcMemory, m_DIBSection);
 	return dcMemory;
 }
 
@@ -119,9 +105,9 @@ void CanvasGDIP::ReleaseDC(HDC dc)
 
 bool CanvasGDIP::IsTransparentPixel(int x, int y)
 {
-	if (m_DIBSectionBufferPixels && x >= 0 && y >= 0 && x < m_W && y < m_H)
+	if (m_DIBSectionPixels && x >= 0 && y >= 0 && x < m_W && y < m_H)
 	{
-		DWORD pixel = m_DIBSectionBufferPixels[y * m_W + x];  // top-down DIB
+		DWORD pixel = m_DIBSectionPixels[y * m_W + x];  // top-down DIB
 		return ((pixel & 0xFF000000) != 0);
 	}
 
@@ -163,7 +149,7 @@ void CanvasGDIP::Clear(const Gdiplus::Color& color)
 {
 	if (color.GetValue() == 0x00000000)
 	{
-		memset(m_DIBSectionBufferPixels, 0, m_W * m_H * 4);
+		memset(m_DIBSectionPixels, 0, m_W * m_H * 4);
 	}
 	else
 	{
@@ -174,13 +160,15 @@ void CanvasGDIP::Clear(const Gdiplus::Color& color)
 void CanvasGDIP::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect, const Gdiplus::SolidBrush& brush)
 {
 	Gdiplus::StringFormat& stringFormat = ((TextFormatGDIP&)format).m_StringFormat;
-	m_Graphics->DrawString(str, (INT)strLen, ((TextFormatGDIP&)format).m_Font, rect, &stringFormat, &brush);
+	m_Graphics->DrawString(
+		str, (INT)strLen, ((TextFormatGDIP&)format).m_Font.get(), rect, &stringFormat, &brush);
 }
 
 bool CanvasGDIP::MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect)
 {
 	Gdiplus::StringFormat& stringFormat = ((TextFormatGDIP&)format).m_StringFormat;
-	const Gdiplus::Status status = m_Graphics->MeasureString(str, (INT)strLen, ((TextFormatGDIP&)format).m_Font, rect, &stringFormat, &rect);
+	const Gdiplus::Status status = m_Graphics->MeasureString(
+		str, (INT)strLen, ((TextFormatGDIP&)format).m_Font.get(), rect, &stringFormat, &rect);
 	return status == Gdiplus::Ok;
 }
 
@@ -196,7 +184,8 @@ bool CanvasGDIP::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForm
 	stringFormat.SetFormatFlags(Gdiplus::StringFormatFlagsNoClip);
 
 	INT linesFilled = 0;
-	const Gdiplus::Status status = m_Graphics->MeasureString(str, (INT)strLen, ((TextFormatGDIP&)format).m_Font, rect, &stringFormat, &rect, nullptr, &linesFilled);
+	const Gdiplus::Status status = m_Graphics->MeasureString(
+		str, (INT)strLen, ((TextFormatGDIP&)format).m_Font.get(), rect, &stringFormat, &rect, nullptr, &linesFilled);
 	lines = linesFilled;
 
 	// Restore old options.
