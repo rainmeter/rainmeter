@@ -19,8 +19,6 @@
 #ifndef __STDAFX_H__
 #define __STDAFX_H__
 
-#define _WIN32_IE 0x0600
-
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 

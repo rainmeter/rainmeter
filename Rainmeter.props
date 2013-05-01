@@ -2,7 +2,8 @@
 <!-- Visual C++ project options meant to applied after the default Microsoft property sheets. -->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <IncludePath>$(IncludePath);$(ProgramFiles)\Windows Kits\8.0\Include\WinRT</IncludePath>
+    <!-- Use the Win8 SDK headers even though we are using the v110_xp toolset. -->
+    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
@@ -26,7 +27,8 @@
 
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <!-- Set the version macros to 0x0600 (Vista) to avoid using Win8 specific features in the Win8 SDK. -->
+      <PreprocessorDefinitions>WIN32;_WINDOWS;WINVER=0x0600;_WIN32_WINNT=0x0600;_WIN32_IE=0x0600;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
     <Link>
