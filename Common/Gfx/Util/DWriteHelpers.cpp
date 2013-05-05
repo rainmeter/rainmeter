@@ -159,9 +159,18 @@ HRESULT GetGDIFamilyNameFromDWriteFont(IDWriteFont* font, WCHAR* buffer, UINT bu
 	BOOL stringsExist;
 	HRESULT hr = font->GetInformationalStrings(
 		DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &stringsExist);
-	if (SUCCEEDED(hr) && stringsExist)
+	if (SUCCEEDED(hr))
 	{
-		hr = strings->GetString(0, buffer, bufferSize);
+		if (stringsExist)
+		{
+			hr = strings->GetString(0, buffer, bufferSize);
+		}
+		else
+		{
+			hr = E_FAIL;
+		}
+
+		strings->Release();
 	}
 
 	return hr;
