@@ -21,28 +21,11 @@
 #include <crtdbg.h>
 #include <Windows.h>
 #include <ShellAPI.h>
+#include <delayimp.h>
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
-typedef int (*RainmeterMainFunc)(WCHAR* args);
-
-HINSTANCE LoadRainmeterLibrary()
-{
-	const int bufferSize = MAX_PATH;
-	WCHAR buffer[bufferSize];
-	int bufferLen = GetModuleFileName(NULL, buffer, bufferSize);
-	if (bufferLen == 0 || bufferLen == bufferSize)
-	{
-		return NULL;
-	}
-
-	// Change extension from .exe to .dll.
-	buffer[bufferLen - 3] = L'd';
-	buffer[bufferLen - 2] = L'l';
-	buffer[bufferLen - 1] = L'l';
-
-	return LoadLibrary(buffer);
-}
+EXTERN_C __declspec(dllimport) int RainmeterMain(LPWSTR cmdLine);
 
 WCHAR* GetCommandLineArguments()
 {
@@ -76,6 +59,34 @@ WCHAR* GetCommandLineArguments()
 }
 
 /*
+** Hook to exit the process gracefully if delay-loading dependencies (i.e. Rainmeter.dll) fails.
+**
+*/
+FARPROC WINAPI DelayLoadFailureHook(unsigned int dliNotify, DelayLoadInfo* dli)
+{
+	if (dliNotify == dliFailLoadLib)
+	{
+		WCHAR buffer[128];
+		int arch = 32;
+#ifdef _WIN64
+		arch = 64;
+#endif
+		const WCHAR* format = L"%S (%i-bit) error %ld.\n\nDo you want to view help online?";
+		wsprintf(buffer, format, dli->szDll, arch, dli->dwLastError);
+		if (MessageBox(NULL, buffer, L"Rainmeter", MB_YESNO | MB_ICONERROR) == IDYES)
+		{
+			ShellExecute(NULL, L"open", L"http://rainmeter.net/dllerror", NULL, NULL, SW_SHOWNORMAL); 
+		}
+
+		ExitProcess(0);
+	}
+
+	return nullptr;
+}
+
+EXTERN_C PfnDliHook __pfnDliFailureHook2 = DelayLoadFailureHook;
+
+/*
 ** Entry point. In Release builds, the entry point is Main() since the CRT is not used.
 **
 */
@@ -84,35 +95,17 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	//_CrtSetBreakAlloc(000);
 
+	// Prevent system error message boxes.
+	UINT oldMode = SetErrorMode(0);
+	SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);
+
 	HINSTANCE instance = (HINSTANCE)&__ImageBase;
 	WCHAR* args = GetCommandLineArguments();
 
 	HRSRC iconResource = FindResource(instance, MAKEINTRESOURCE(1), RT_ICON);
 	if (iconResource)
 	{
-		// Initialize Rainmeter.
-		HINSTANCE libInstance = LoadRainmeterLibrary();
-		if (libInstance)
-		{
-			auto rainmeterMain = (RainmeterMainFunc)GetProcAddress(libInstance, MAKEINTRESOURCEA(1));
-			int result = rainmeterMain(args);
-			FreeLibrary(libInstance);
-			return result;
-		}
-		else
-		{
-			WCHAR buffer[128];
-			int arch = 32;
-#ifdef _WIN64
-			arch = 64;
-#endif
-			const WCHAR* error = L"Rainmeter.dll (%i-bit) error %i.\n\nDo you want to view help online?";
-			wsprintf(buffer, error, arch, GetLastError());
-			if (MessageBox(NULL, buffer, L"Rainmeter", MB_YESNO | MB_ICONERROR) == IDYES)
-			{
-				ShellExecute(NULL, L"open", L"http://rainmeter.net/dllerror", NULL, NULL, SW_SHOWNORMAL); 
-			}
-		}
+		return RainmeterMain(args);
 	}
 	else
 	{

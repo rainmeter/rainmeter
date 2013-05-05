@@ -708,10 +708,6 @@ CRainmeter::CRainmeter() :
 	m_GDIplusToken(),
 	m_GlobalOptions()
 {
-	// Prevent the system error message boxes.
-	UINT oldMode = SetErrorMode(0);
-	SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);
-
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
 	InitCommonControls();
