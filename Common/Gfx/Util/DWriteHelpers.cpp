@@ -17,6 +17,7 @@
 */
 
 #include "DWriteHelpers.h"
+#include <wrl/client.h>
 
 namespace Gfx {
 namespace Util {
@@ -76,8 +77,8 @@ void GetPropertiesFromDWriteFont(
 
 IDWriteFont* CreateDWriteFontFromGDIFamilyName(IDWriteFactory* factory, const WCHAR* gdiFamilyName)
 {
-	IDWriteGdiInterop* dwGdiInterop;
-	HRESULT hr = factory->GetGdiInterop(&dwGdiInterop);
+	Microsoft::WRL::ComPtr<IDWriteGdiInterop> dwGdiInterop;
+	HRESULT hr = factory->GetGdiInterop(dwGdiInterop.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
 		LOGFONT lf = {};
@@ -96,8 +97,6 @@ IDWriteFont* CreateDWriteFontFromGDIFamilyName(IDWriteFactory* factory, const WC
 		{
 			return dwFont;
 		}
-
-		dwGdiInterop->Release();
 	}
 
 	return nullptr;
@@ -155,25 +154,16 @@ bool IsFamilyInSystemFontCollection(IDWriteFactory* factory, const WCHAR* family
 
 HRESULT GetGDIFamilyNameFromDWriteFont(IDWriteFont* font, WCHAR* buffer, UINT bufferSize)
 {
-	IDWriteLocalizedStrings* strings;
+	Microsoft::WRL::ComPtr<IDWriteLocalizedStrings> strings;
 	BOOL stringsExist;
-	HRESULT hr = font->GetInformationalStrings(
-		DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &stringsExist);
-	if (SUCCEEDED(hr))
+	font->GetInformationalStrings(
+		DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, strings.GetAddressOf(), &stringsExist);
+	if (strings && stringsExist)
 	{
-		if (stringsExist)
-		{
-			hr = strings->GetString(0, buffer, bufferSize);
-		}
-		else
-		{
-			hr = E_FAIL;
-		}
-
-		strings->Release();
+		return strings->GetString(0, buffer, bufferSize);
 	}
 
-	return hr;
+	return E_FAIL;
 }
 
 IDWriteFont* FindDWriteFontInFontFamilyByGDIFamilyName(
