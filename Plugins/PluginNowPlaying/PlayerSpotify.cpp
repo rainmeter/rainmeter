@@ -91,7 +91,7 @@ void CPlayerSpotify::UpdateData()
 		{
 			std::wstring title = &buffer[10];  // Skip "Spotify - "
 
-			std::wstring::size_type pos = title.find(L" – ");
+			std::wstring::size_type pos = title.find(L" \u2013 ");
 			if (pos != std::wstring::npos)
 			{
 				std::wstring artist(title, 0, pos);
