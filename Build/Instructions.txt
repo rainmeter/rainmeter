@@ -12,12 +12,10 @@ VS2012 Update 2 is also required for Windows XP targeting support. It is availab
 from:
   http://microsoft.com/visualstudio/eng/downloads#d-visual-studio-2012-update
 
-Once both Visual Studio and Update 1 have been installed, open Rainmeter.sln to build
-projects. With VS2012 Express, you may want to use RainmeterCPP.sln, which does not
-include projects that cannot be built with it.
+After Visual Studio has been installed and updated, open Rainmeter.sln to build.
 
 
-Building installer
+Building the installer
 --------------------------
 
 To build the full Rainmeter distribution, run Build.bat. If you receive "not found"
