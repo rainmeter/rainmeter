@@ -1,5 +1,7 @@
 LIBRARY
 EXPORTS
+	; Note: If new functions are added, the Rainmeter.lib files in Plugins\API\x32 and Plugins\API\x64
+	; must be replaced by the corresponding file in Library\x32\Release and Library\x64\Release.
 	RmReadString
 	RmReadFormula
 	RmPathToAbsolute
