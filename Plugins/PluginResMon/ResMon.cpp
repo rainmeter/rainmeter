@@ -23,8 +23,6 @@
   resource leaks in itself (all fixed).  There's irony for you!
 */
 
-#define _WIN32_WINNT 0x0501
-
 #include <windows.h>
 #include <stdio.h>
 #include <psapi.h>
