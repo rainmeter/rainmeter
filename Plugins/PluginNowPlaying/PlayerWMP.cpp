@@ -389,6 +389,7 @@ void CPlayerWMP::Uninitialize()
 		m_IConnectionPoint.Reset();
 		m_IPlayer.Reset();
 		DestroyWindow(m_Window);
+		UnregisterClass(L"NowPlayingWMP", g_Instance);
 	}
 }
 
