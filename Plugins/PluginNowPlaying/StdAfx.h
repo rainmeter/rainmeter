@@ -23,6 +23,7 @@
 #include <Windows.h>
 #include <WinInet.h>
 #include <Psapi.h>
+#include <comutil.h>
 
 // STL
 #include <string>

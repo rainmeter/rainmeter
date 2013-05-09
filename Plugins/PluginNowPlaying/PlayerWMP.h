@@ -20,18 +20,8 @@
 #define __PLAYERWMP_H__
 
 #include "Player.h"
-
-#ifndef _ATL_DLL
-  #define _ATL_DLL
-  #define _ATL_APARTMENT_THREADED
-  #define _ATL_NO_EXCEPTIONS
-#endif
-
 #include <wmp.h>
-#include <atlbase.h>
-#include <atlcom.h>
-#include <atlhost.h>
-#include <atlctl.h>
+#include <wrl/client.h>
 
 class CPlayerWMP : public CPlayer
 {
@@ -58,7 +48,6 @@ protected:
 
 private:
 	class CRemoteHost :
-		public CComObjectRootEx<CComSingleThreadModel>,
 		public IServiceProvider,
 		public IWMPRemoteMediaServices,
 		public IWMPEvents
@@ -69,11 +58,12 @@ private:
 
 		CPlayerWMP* m_Player;
 
-		BEGIN_COM_MAP(CRemoteHost)
-			COM_INTERFACE_ENTRY(IServiceProvider)
-			COM_INTERFACE_ENTRY(IWMPRemoteMediaServices)
-			COM_INTERFACE_ENTRY(IWMPEvents)
-		END_COM_MAP()
+		IUnknown* GetUnknown() const { return (IServiceProvider*)this; }
+
+		// IUnknown
+		virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID uuid, void** object) override;
+		virtual ULONG STDMETHODCALLTYPE AddRef() override;
+		virtual ULONG STDMETHODCALLTYPE Release() override;
 
 		// IServiceProvider
 		STDMETHOD(QueryService)(REFGUID guidService, REFIID riid, void** ppv);
@@ -130,6 +120,9 @@ private:
 		void STDMETHODCALLTYPE MouseDown(short nButton, short nShiftState, long fX, long fY) {}
 		void STDMETHODCALLTYPE MouseMove(short nButton, short nShiftState, long fX, long fY) {}
 		void STDMETHODCALLTYPE MouseUp(short nButton, short nShiftState, long fX, long fY) {}
+
+	private:
+		ULONG m_RefCount;
 	};
 
 	void Initialize();
@@ -141,12 +134,11 @@ private:
 	HWND m_Window;
 	DWORD m_LastCheckTime;
 
-	CComModule m_ComModule;
-	CAxWindow* m_AxWindow;
-	CComPtr<IWMPPlayer4> m_IPlayer;
-	CComPtr<IWMPControls> m_IControls;
-	CComPtr<IWMPSettings> m_ISettings;
-	CComPtr<IConnectionPoint> m_IConnectionPoint;
+	Microsoft::WRL::ComPtr<IWMPPlayer4> m_IPlayer;
+	Microsoft::WRL::ComPtr<IWMPControls> m_IControls;
+	Microsoft::WRL::ComPtr<IWMPSettings> m_ISettings;
+	Microsoft::WRL::ComPtr<IConnectionPoint> m_IConnectionPoint;
+	DWORD m_ConnectionCookie;
 };
 
 #endif

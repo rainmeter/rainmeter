@@ -22,26 +22,109 @@
 CPlayer* CPlayerWMP::c_Player = NULL;
 extern HINSTANCE g_Instance;
 
-/*
-** Constructor.
-**
-*/
+namespace {
+
+// Definitions of ATL stuff we need to avoid dependency on atlbase.h (which is not included in free
+// versions of Visual Studio).
+
+MIDL_INTERFACE("B6EA2050-048A-11d1-82B9-00C04FB9942E")
+IAxWinHostWindow : public IUnknown
+{
+public:
+	virtual HRESULT STDMETHODCALLTYPE CreateControl(
+		LPCOLESTR lpTricsData, HWND hWnd, IStream *pStream) = 0;
+
+	virtual HRESULT STDMETHODCALLTYPE CreateControlEx(
+		LPCOLESTR lpszTricsData, HWND hWnd, IStream* pStream, IUnknown** ppUnk, REFIID iidAdvise,
+		IUnknown* punkSink) = 0;
+
+	virtual HRESULT STDMETHODCALLTYPE AttachControl(IUnknown* pUnkControl, HWND hWnd) = 0;
+	virtual HRESULT STDMETHODCALLTYPE QueryControl(REFIID riid, void** ppvObject) = 0;
+	virtual HRESULT STDMETHODCALLTYPE SetExternalDispatch(IDispatch* pDisp) = 0;
+	virtual HRESULT STDMETHODCALLTYPE SetExternalUIHandler(void* pDisp) = 0;
+};
+
+typedef BOOL (WINAPI * AtlAxWinInitFunc)();
+typedef HRESULT (WINAPI * AtlAxGetControlFunc)(HWND h, IUnknown** pp);
+typedef HRESULT (WINAPI * AtlAxGetHostFunc)(HWND h, IUnknown** pp);
+
+HMODULE InitializeAtlLibrary()
+{
+	static HMODULE s_ATL = LoadLibrary(L"atl");
+	if (s_ATL)
+	{
+		auto atlAxWinInit = (AtlAxWinInitFunc)GetProcAddress(s_ATL, "AtlAxWinInit");
+		atlAxWinInit();
+	}
+	return s_ATL;
+}
+
+}  // namespace
+
+//
+// CPlayerWMP::CRemoteHost
+//
+
 CPlayerWMP::CRemoteHost::CRemoteHost() :
-	m_Player()
+	m_Player(),
+	m_RefCount(0)
 {
 }
 
-/*
-** Destructor.
-**
-*/
 CPlayerWMP::CRemoteHost::~CRemoteHost()
 {
 }
 
+ULONG STDMETHODCALLTYPE CPlayerWMP::CRemoteHost::AddRef()
+{
+	++m_RefCount;
+	return m_RefCount;
+}
+
+ULONG STDMETHODCALLTYPE CPlayerWMP::CRemoteHost::Release()
+{
+	--m_RefCount;
+	if (m_RefCount == 0)
+	{
+		delete this;
+		return 0;
+	}
+	return m_RefCount;
+}
+
+HRESULT STDMETHODCALLTYPE CPlayerWMP::CRemoteHost::QueryInterface(IID const& riid, void** object)
+{
+	if (!object)
+	{
+		return E_POINTER;
+	}
+
+	if (riid == __uuidof(IUnknown) ||
+		riid == __uuidof(IServiceProvider))
+	{
+		*object = (IServiceProvider*)this;
+	}
+	else if (riid == __uuidof(IWMPRemoteMediaServices))
+	{
+		*object = (IWMPRemoteMediaServices*)this;
+	}
+	else if (riid == __uuidof(IWMPEvents))
+	{
+		*object = (IWMPEvents*)this;
+	}
+	else
+	{
+		*object = NULL;
+		return E_NOINTERFACE;
+	}
+
+	AddRef();
+	return S_OK;
+}
+
 HRESULT CPlayerWMP::CRemoteHost::QueryService(REFGUID guidService, REFIID riid, void** ppv)
 {
-	return ppv ? QueryInterface(riid, ppv) : E_POINTER;
+	return QueryInterface(riid, ppv);
 }
 
 HRESULT CPlayerWMP::CRemoteHost::GetServiceType(BSTR* pbstrType)
@@ -123,33 +206,22 @@ void CPlayerWMP::CRemoteHost::SwitchedToControl()
 	m_Player->Uninitialize();
 }
 
-/*
-** Constructor.
-**
-*/
+//
+// CPlayerWMP
+//
+
 CPlayerWMP::CPlayerWMP() : CPlayer(),
 	m_TrackChanged(false),
 	m_Window(),
 	m_LastCheckTime(0),
-	m_ComModule(),
-	m_AxWindow(),
-	m_IPlayer(),
-	m_IControls(),
-	m_ISettings(),
-	m_IConnectionPoint()
+	m_ConnectionCookie()
 {
-	m_ComModule.Init(NULL, NULL, &LIBID_ATLLib);
 }
 
-/*
-** Destructor.
-**
-*/
 CPlayerWMP::~CPlayerWMP()
 {
 	c_Player = NULL;
 	Uninitialize();
-	m_ComModule.Term();
 }
 
 /*
@@ -172,147 +244,128 @@ CPlayer* CPlayerWMP::Create()
 */
 void CPlayerWMP::Initialize()
 {
-	// Create windows class
-	WNDCLASS wc = {0};
-	wc.hInstance = g_Instance;
-	wc.lpfnWndProc = DefWindowProc;
-	wc.lpszClassName = L"NowPlayingWMPClass";
-	RegisterClass(&wc);
-
-	// Create the host window
-	m_Window = CreateWindow(L"NowPlayingWMPClass",
-							L"HostWindow",
-							WS_DISABLED,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							NULL,
-							NULL,
-							g_Instance,
-							NULL);
-
-	if (!m_Window) return;
-
-	CComPtr<IObjectWithSite> spHostObject;
-	CComPtr<IAxWinHostWindow> spHost;
-	CComObject<CRemoteHost>* pRemoteHost;
-
-	m_AxWindow = new CAxWindow();
-	HRESULT hr = m_AxWindow ? S_OK : E_OUTOFMEMORY;
-
-	if (SUCCEEDED(hr)) 
+	HMODULE atl = InitializeAtlLibrary();
+	if (!atl)
 	{
-		m_AxWindow->Create(m_Window, NULL, NULL, WS_CHILD | WS_DISABLED);
-		if(IsWindow(m_AxWindow->m_hWnd))
-		{
-			hr = m_AxWindow->QueryHost(IID_IObjectWithSite, (void**)&spHostObject);
-			if(!spHostObject.p)
-			{
-				hr = E_POINTER;
-			}
-		}
-	}
-	else
-	{
+		RmLog(LOG_ERROR, L"NowPlaying: ATL not found");
 		return;
 	}
 
-	// Create remote host which implements IServiceProvider and IWMPRemoteMediaServices
+	auto atlAxGetControl = (AtlAxGetControlFunc)GetProcAddress(atl, "AtlAxGetControl");
+	auto atlAxGetHost = (AtlAxGetHostFunc)GetProcAddress(atl, "AtlAxGetHost");
+
+	WNDCLASS wc = {0};
+	wc.hInstance = g_Instance;
+	wc.lpfnWndProc = DefWindowProc;
+	wc.lpszClassName = L"NowPlayingWMP";
+	RegisterClass(&wc);
+
+	// Create the container window and the ATL host window.
+	m_Window = CreateWindow(
+		L"NowPlayingWMP", L"",
+		WS_DISABLED,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+		NULL, NULL, g_Instance, NULL);
+
+	HWND window = CreateWindow(
+		L"AtlAxWin", L"",
+		WS_DISABLED | WS_CHILD,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+		m_Window, NULL, g_Instance, NULL);
+
+	Microsoft::WRL::ComPtr<IUnknown> axHost;
+	Microsoft::WRL::ComPtr<IObjectWithSite> hostObject;
+	HRESULT hr = atlAxGetHost(window, axHost.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
-		hr = CComObject<CRemoteHost>::CreateInstance(&pRemoteHost);
-		if (pRemoteHost)
+		hr = axHost.As(&hostObject);
+	}
+
+	Microsoft::WRL::ComPtr<CRemoteHost> remoteHost(new CRemoteHost());
+	if (SUCCEEDED(hr))
+	{
+		remoteHost->m_Player = this;
+		hr = hostObject->SetSite((IWMPRemoteMediaServices*)remoteHost.Get());
+	}
+
+	Microsoft::WRL::ComPtr<IAxWinHostWindow> axWinHostWindow;
+	if (SUCCEEDED(hr))
+	{
+		hr = axHost.As(&axWinHostWindow);
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = axWinHostWindow->CreateControl(L"{6BF52A52-394A-11D3-B153-00C04F79FAA6}", window, nullptr);
+	}
+
+	Microsoft::WRL::ComPtr<IUnknown> axControl;
+	if (SUCCEEDED(hr))
+	{
+		hr = atlAxGetControl(window, axControl.GetAddressOf());
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = axControl.As(&m_IPlayer);
+	}
+
+	// Connect the event interface.
+	Microsoft::WRL::ComPtr<IConnectionPointContainer> wmpPlayerConnectionContainer;
+	if (SUCCEEDED(hr))
+	{
+		hr = m_IPlayer.As(&wmpPlayerConnectionContainer);
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = wmpPlayerConnectionContainer->FindConnectionPoint(
+			__uuidof(IWMPEvents), m_IConnectionPoint.GetAddressOf());
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = m_IConnectionPoint->Advise(remoteHost->GetUnknown(), &m_ConnectionCookie);
+		if (!m_ConnectionCookie)
 		{
-			pRemoteHost->AddRef();
-			pRemoteHost->m_Player = this;
+			hr = E_FAIL;
 		}
-		else
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = m_IPlayer->get_controls(&m_IControls);
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		hr = m_IPlayer->get_settings(&m_ISettings);
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		WMPPlayState state;
+		m_IPlayer->get_playState(&state);
+		if (state == wmppsPlaying)
 		{
-			hr = E_POINTER;
+			m_State = STATE_PLAYING;
 		}
-	}
-
-	// Set site to the remote host
-	if (SUCCEEDED(hr))
-	{
-		hr = spHostObject->SetSite((IWMPRemoteMediaServices*)pRemoteHost);
-	}
-
-	if (SUCCEEDED(hr))
-	{
-		hr = m_AxWindow->QueryHost(&spHost);
-		if (!spHost)
+		else if (state ==  wmppsPaused)
 		{
-			hr = E_NOINTERFACE;
+			m_State = STATE_PAUSED;
 		}
-	}
 
-	// Create WMP control
-	if (SUCCEEDED(hr))
-	{
-		hr = spHost->CreateControl(L"{6BF52A52-394A-11D3-B153-00C04F79FAA6}", m_AxWindow->m_hWnd, NULL);
-	}
-
-	if (SUCCEEDED(hr))
-	{
-		hr = m_AxWindow->QueryControl(&m_IPlayer);
-		if (!m_IPlayer.p)
+		if (m_State != STATE_STOPPED)
 		{
-			hr = E_NOINTERFACE;
+			m_TrackChanged = true;
 		}
+
+		m_Initialized = true;
 	}
-
-	// Connect the event interface
-	CComPtr<IConnectionPointContainer> spConnectionContainer;
-	hr = m_IPlayer->QueryInterface(&spConnectionContainer);
-
-	if (SUCCEEDED(hr))
+	else
 	{
-		hr = spConnectionContainer->FindConnectionPoint( __uuidof(IWMPEvents), &m_IConnectionPoint);
+		Uninitialize();
 	}
-
-	if (SUCCEEDED(hr))
-	{
-		DWORD adviseCookie;
-		hr = m_IConnectionPoint->Advise(pRemoteHost->GetUnknown(), &adviseCookie);
-
-		if ((FAILED(hr)) || !adviseCookie)
-		{
-			m_IConnectionPoint = NULL;
-		}
-	}
-
-	// Release remote host object
-	if (pRemoteHost)
-	{
-		pRemoteHost->Release();
-	}
-
-	hr = m_IPlayer->get_controls(&m_IControls);
-	if (FAILED(hr)) return;
-
-	hr = m_IPlayer->get_settings(&m_ISettings);
-	if (FAILED(hr)) return;
-
-	// Get player state
-	WMPPlayState state;
-	m_IPlayer->get_playState(&state);
-	if (state == wmppsPlaying)
-	{
-		m_State = STATE_PLAYING;
-	}
-	else if (state ==  wmppsPaused)
-	{
-		m_State = STATE_PAUSED;
-	}
-
-	if (m_State != STATE_STOPPED)
-	{
-		m_TrackChanged = true;
-	}
-
-	m_Initialized = true;
 }
 
 /*
@@ -324,13 +377,18 @@ void CPlayerWMP::Uninitialize()
 	if (m_Initialized)
 	{
 		m_Initialized = false;
-		m_IControls.Release();
-		m_ISettings.Release();
-		m_IPlayer.Release();
-		m_AxWindow->DestroyWindow();
-		delete m_AxWindow;
+
+		if (m_ConnectionCookie)
+		{
+			m_IConnectionPoint->Unadvise(m_ConnectionCookie);
+			m_ConnectionCookie = 0;
+		}
+
+		m_IControls.Reset();
+		m_ISettings.Reset();
+		m_IConnectionPoint.Reset();
+		m_IPlayer.Reset();
 		DestroyWindow(m_Window);
-		UnregisterClass(L"NowPlayingWMPClass", g_Instance);
 	}
 }
 
@@ -358,22 +416,23 @@ void CPlayerWMP::UpdateData()
 		{
 			m_TrackChanged = false;
 
-			CComPtr<IWMPMedia> spMedia;
-			m_IPlayer->get_currentMedia(&spMedia);
+			Microsoft::WRL::ComPtr<IWMPMedia> spMedia;
+			m_IPlayer->get_currentMedia(spMedia.GetAddressOf());
 
 			if (spMedia)
 			{
 				BSTR val;
-				spMedia->getItemInfo(CComBSTR(L"Artist"), &val);
+
+				spMedia->getItemInfo(_bstr_t(L"Artist"), &val);
 				m_Artist = val;
 
-				spMedia->getItemInfo(CComBSTR(L"Title"), &val);
+				spMedia->getItemInfo(_bstr_t(L"Title"), &val);
 				m_Title = val;
 
-				spMedia->getItemInfo(CComBSTR(L"Album"), &val);
+				spMedia->getItemInfo(_bstr_t(L"Album"), &val);
 				m_Album = val;
 
-				spMedia->getItemInfo(CComBSTR(L"UserRating"), &val);
+				spMedia->getItemInfo(_bstr_t(L"UserRating"), &val);
 				int rating = _wtoi(val);
 
 				if (rating > 75)
@@ -397,10 +456,10 @@ void CPlayerWMP::UpdateData()
 					m_Rating = rating;
 				}
 
-				spMedia->getItemInfo(CComBSTR(L"WM/TrackNumber"), &val);
+				spMedia->getItemInfo(_bstr_t(L"WM/TrackNumber"), &val);
 				m_Number = (UINT)_wtoi(val);
 
-				spMedia->getItemInfo(CComBSTR(L"WM/Year"), &val);
+				spMedia->getItemInfo(_bstr_t(L"WM/Year"), &val);
 				m_Year = (UINT)_wtoi(val);
 
 				double duration;
@@ -420,7 +479,7 @@ void CPlayerWMP::UpdateData()
 					// TODO: Fix temp solution
 					if (m_Measures & MEASURE_COVER || m_InstanceCount == 0)
 					{
-						spMedia->getItemInfo(CComBSTR(L"WM/WMCollectionID"), &val);
+						spMedia->getItemInfo(_bstr_t(L"WM/WMCollectionID"), &val);
 						targetPath.resize(targetPath.find_last_of(L'\\') + 1);
 						targetPath += L"AlbumArt_";
 						targetPath += val;
@@ -525,8 +584,8 @@ void CPlayerWMP::SetRating(int rating)
 {
 	if (m_State != STATE_STOPPED)
 	{
-		CComPtr<IWMPMedia> spMedia;
-		m_IPlayer->get_currentMedia(&spMedia);
+		Microsoft::WRL::ComPtr<IWMPMedia> spMedia;
+		m_IPlayer->get_currentMedia(spMedia.GetAddressOf());
 
 		if (spMedia)
 		{
@@ -558,7 +617,7 @@ void CPlayerWMP::SetRating(int rating)
 				break;
 			}
 
-			spMedia->setItemInfo(CComBSTR(L"UserRating"), val);
+			spMedia->setItemInfo(_bstr_t(L"UserRating"), val);
 			m_Rating = rating;
 		}
 	}

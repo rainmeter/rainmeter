@@ -24,7 +24,7 @@
       <AdditionalIncludeDirectories>.\sha2;.\taglib;.\taglib\toolkit;.\taglib\mpeg\id3v2\frames;.\taglib\ogg;.\taglib\asf;.\taglib\mp4;.\taglib\ogg\vorbis;.\taglib\ogg\flac;.\taglib\ogg\speex;.\taglib\riff;.\taglib\riff\wav;.\taglib\riff\aiff;.\taglib\flac;.\taglib\mpeg;.\taglib\mpeg\id3v1;.\taglib\mpeg\id3v2;.\taglib\mpc;.\taglib\ape;.\taglib\trueaudio;.\taglib\wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Psapi.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Psapi.lib;WinInet.lib;comsuppwd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </Link>
   </ItemDefinitionGroup>
@@ -35,7 +35,7 @@
       <AdditionalIncludeDirectories>.\sha2;.\taglib;.\taglib\toolkit;.\taglib\mpeg\id3v2\frames;.\taglib\ogg;.\taglib\asf;.\taglib\mp4;.\taglib\ogg\vorbis;.\taglib\ogg\flac;.\taglib\ogg\speex;.\taglib\riff;.\taglib\riff\wav;.\taglib\riff\aiff;.\taglib\flac;.\taglib\mpeg;.\taglib\mpeg\id3v1;.\taglib\mpeg\id3v2;.\taglib\mpc;.\taglib\ape;.\taglib\trueaudio;.\taglib\wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Psapi.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Psapi.lib;WinInet.lib;comsuppwd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </Link>
   </ItemDefinitionGroup>
@@ -47,7 +47,7 @@
       <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Psapi.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Psapi.lib;WinInet.lib;comsuppw.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </Link>
   </ItemDefinitionGroup>
@@ -59,7 +59,7 @@
       <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Psapi.lib;WinInet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Psapi.lib;WinInet.lib;comsuppw.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </Link>
   </ItemDefinitionGroup>
