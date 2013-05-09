@@ -25,9 +25,6 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{abad9374-731c-48b4-8ae1-45793b348013}</UniqueIdentifier>
     </Filter>
-    <Filter Include="XPATL">
-      <UniqueIdentifier>{d22781ac-b5c3-48db-b89f-3429215cc8cf}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SDKs\iTunes\iTunesCOMInterface_i.c">
@@ -273,9 +270,6 @@
     <ClCompile Include="Internet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="XPATL.cpp">
-      <Filter>XPATL</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SDKs\AIMP\aimp2_sdk.h">
@@ -343,13 +337,5 @@
     <ResourceCompile Include="PluginNowPlaying.rc">
       <Filter>Source Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <MASM Include="XPATLx86.asm">
-      <Filter>XPATL</Filter>
-    </MASM>
-    <MASM Include="XPATLx64.asm">
-      <Filter>XPATL</Filter>
-    </MASM>
   </ItemGroup>
 </Project>
