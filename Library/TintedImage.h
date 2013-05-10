@@ -39,7 +39,8 @@
 		prefix  L"ColorMatrix4", \
 		prefix  L"ColorMatrix5", \
 		prefix  L"ImageFlip", \
-		prefix  L"ImageRotate" \
+		prefix  L"ImageRotate", \
+		prefix  L"UseExifOrientation" \
 	};
 
 class CConfigParser;
@@ -60,6 +61,7 @@ public:
 		OptionIndexColorMatrix5,
 		OptionIndexImageFlip,
 		OptionIndexImageRotate,
+		OptionIndexUseExifOrientation,
 
 		OptionCount
 	};
@@ -117,6 +119,7 @@ protected:
 	Gdiplus::ColorMatrix* m_ColorMatrix;
 	Gdiplus::RotateFlipType m_Flip;
 	Gdiplus::REAL m_Rotate;
+	bool m_UseExifOrientation;
 
 	std::wstring m_CacheKey;
 

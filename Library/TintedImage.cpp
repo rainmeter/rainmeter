@@ -29,7 +29,7 @@ using namespace Gdiplus;
 class ImageCachePool
 {
 public:
-	static std::wstring CreateKey(const std::wstring& name, ULONGLONG time, DWORD size)
+	static std::wstring CreateKey(const std::wstring& name, ULONGLONG time, DWORD size, WCHAR* exifOrientation)
 	{
 		std::wstring key;
 
@@ -44,7 +44,7 @@ public:
 		}
 		_wcsupr(&key[0]);
 
-		size_t len = _snwprintf_s(buffer, _TRUNCATE, L":%llx:%x", time, size);
+		size_t len = _snwprintf_s(buffer, _TRUNCATE, L":%llx:%x:%s", time, size, exifOrientation);
 		key.append(buffer, len);
 
 		return key;
@@ -154,7 +154,6 @@ CTintedImageHelper_DefineOptionArray(CTintedImage::c_DefaultOptionArray, L"");
 CTintedImage::CTintedImage(const WCHAR* name, const WCHAR** optionArray, bool disableTransform) : m_DisableTransform(disableTransform),
 	m_Name(name ? name : L"Image"),
 	m_OptionArray(optionArray ? optionArray : c_DefaultOptionArray),
-
 	m_Bitmap(),
 	m_BitmapTint(),
 	m_NeedsCrop(false),
@@ -165,7 +164,8 @@ CTintedImage::CTintedImage(const WCHAR* name, const WCHAR** optionArray, bool di
 	m_GreyScale(false),
 	m_ColorMatrix(new ColorMatrix(c_IdentityMatrix)),
 	m_Flip(RotateNoneFlipNone),
-	m_Rotate()
+	m_Rotate(),
+	m_UseExifOrientation(false)
 {
 }
 
@@ -225,6 +225,57 @@ Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize,
 					GUID guid;
 					if (Ok == bitmap->GetRawFormat(&guid) && guid != ImageFormatIcon)
 					{
+						// Gather EXIF orientation information
+						if (m_UseExifOrientation)
+						{
+							UINT size = bitmap->GetPropertyItemSize(PropertyTagOrientation);
+							if (size)
+							{
+								RotateFlipType flip = RotateNoneFlipNone;
+								PropertyItem* orientation = (PropertyItem*)new BYTE[size];
+								bitmap->GetPropertyItem(PropertyTagOrientation, size, orientation);
+								if (orientation)
+								{
+									switch(*(short*)orientation->value)
+									{
+									case 8:
+										flip = Rotate270FlipNone;
+										break;
+
+									case 7:
+										flip = Rotate270FlipX;
+										break;
+
+									case 6:
+										flip = Rotate90FlipNone;
+										break;
+
+									case 5:
+										flip = Rotate90FlipX;
+										break;
+
+									case 4:
+										flip = Rotate180FlipX;
+										break;
+
+									case 3:
+										flip = Rotate180FlipNone;
+										break;
+
+									case 2:
+										flip = RotateNoneFlipX;
+										break;
+
+									default:
+										flip = RotateNoneFlipNone;
+									}
+
+									bitmap->RotateFlip(flip);
+								}
+								delete [] orientation;
+							}
+						}
+
 						////////////////////////////////////////////
 						// Convert loaded image to faster blittable bitmap (may increase memory usage slightly)
 						Rect r(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
@@ -281,7 +332,7 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 			// Compare the filename/timestamp/filesize to check if the file has been changed (don't load if it's not)
 			ULONGLONG fileTime;
 			GetFileTime(fileHandle, NULL, NULL, (LPFILETIME)&fileTime);
-			std::wstring key = ImageCachePool::CreateKey(filename, fileTime, fileSize);
+			std::wstring key = ImageCachePool::CreateKey(filename, fileTime, fileSize, m_UseExifOrientation ? L"EXIF" : L"NONE");
 
 			if (bLoadAlways || wcscmp(key.c_str(), m_CacheKey.c_str()) != 0)
 			{
@@ -704,6 +755,8 @@ void CTintedImage::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 
 	m_NeedsTinting = (oldGreyScale != m_GreyScale || !CompareColorMatrix(&oldColorMatrix, m_ColorMatrix));
+
+	m_UseExifOrientation = 0!=parser.ReadInt(section, m_OptionArray[OptionIndexUseExifOrientation], 0);
 
 	const WCHAR* flip = parser.ReadString(section, m_OptionArray[OptionIndexImageFlip], L"NONE").c_str();
 	if (_wcsicmp(flip, L"NONE") == 0)
