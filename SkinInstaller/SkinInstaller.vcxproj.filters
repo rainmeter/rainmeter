@@ -19,9 +19,6 @@
     <Filter Include="zlib\minizip">
       <UniqueIdentifier>{b726e25d-2977-424a-b45b-8ee60ce6bd49}</UniqueIdentifier>
     </Filter>
-    <Filter Include="pcre">
-      <UniqueIdentifier>{73cc243e-5b60-4fbc-ae48-069c6decc4ed}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp">
@@ -81,9 +78,6 @@
     <ClCompile Include="DialogInstall.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Library\pcre-8.10\pcre_globals.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
     <ClCompile Include="DialogPackage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -139,18 +133,6 @@
     </ClInclude>
     <ClInclude Include="DialogInstall.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Library\pcre-8.10\pcre.h">
-      <Filter>pcre</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Library\pcre-8.10\pcre_internal.h">
-      <Filter>pcre</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Library\pcre-8.10\ucp.h">
-      <Filter>pcre</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Library\pcre-8.10\config.h">
-      <Filter>pcre</Filter>
     </ClInclude>
     <ClInclude Include="DialogPackage.h">
       <Filter>Header Files</Filter>
