@@ -17,7 +17,7 @@
 */
 
 #include <windows.h>
-#include <Psapi.h>
+#include <TlHelp32.h>
 #include <algorithm>
 #include <vector>
 #include "../../Library/RawString.h"
@@ -86,39 +86,25 @@ void CheckProcesses()
 		(*iter)->isRunning = false;
 	}
 
-	int bufSize = 256;
-	DWORD* pids = new DWORD[bufSize];
-	DWORD bytesReturned = 0;
-	while (!EnumProcesses(pids, bufSize * sizeof(DWORD), &bytesReturned) &&
-			bytesReturned == bufSize * sizeof(DWORD))
+	HANDLE thSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (thSnapshot != INVALID_HANDLE_VALUE)
 	{
-		delete [] pids;
-		bufSize *= 2;
-		pids = new DWORD[bufSize];
-	}
-
-	for (UINT i = 0, isize = bytesReturned / sizeof(DWORD); i < isize; ++i)
-	{
-		const DWORD flags = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
-		HANDLE hProcess = OpenProcess(flags, FALSE, pids[i]);
-		if (hProcess)
+		PROCESSENTRY32 processEntry = {sizeof(processEntry)};
+		if (Process32First(thSnapshot, &processEntry))
 		{
-			WCHAR buffer[MAX_PATH];
-			if (GetModuleBaseName(hProcess, NULL, buffer, _countof(buffer)))
+			do
 			{
-				iter = g_Measures.begin();
-				for ( ; iter != g_Measures.end(); ++iter)
+				for (MeasureData* data : g_Measures)
 				{
-					if (_wcsicmp(buffer, (*iter)->processName.c_str()) == 0)
+					if (_wcsicmp(processEntry.szExeFile, data->processName.c_str()) == 0)
 					{
-						(*iter)->isRunning = true;
+						data->isRunning = true;
 					}
 				}
 			}
-
-			CloseHandle(hProcess);
+			while (Process32Next(thSnapshot, &processEntry));
 		}
-	}
 
-	delete [] pids;
+		CloseHandle(thSnapshot);
+	}
 }
