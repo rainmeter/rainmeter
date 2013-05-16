@@ -144,7 +144,7 @@ bool CMeterRoundLine::Draw(Gfx::Canvas& canvas)
 
 	if (m_Solid)
 	{
-		REAL startAngle = (REAL)(CONVERT_TO_DEGREES(m_StartAngle));
+		REAL startAngle = (REAL)(fmod(CONVERT_TO_DEGREES(m_StartAngle), 360.0));
 		REAL sweepAngle = (REAL)(CONVERT_TO_DEGREES(m_RotationAngle * m_Value));
 
 		// Calculate the start point of the line
