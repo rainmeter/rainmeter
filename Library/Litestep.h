@@ -25,25 +25,10 @@
 #include "../Common/StringUtil.h"
 #include "Error.h"
 
-enum LOGLEVEL
-{
-	LOG_ERROR   = 1,
-	LOG_WARNING = 2,
-	LOG_NOTICE  = 3,
-	LOG_DEBUG   = 4
-};
-
-void InitalizeLitestep();
-void FinalizeLitestep();
-
 UINT GetUniqueID();
 
 template <typename T>
 UINT TypeID() { static UINT id = GetUniqueID(); return id; }
-
-void Log(int nLevel, const WCHAR* message);
-void LogWithArgs(int nLevel, const WCHAR* format, ...);
-void LogError(CError& error);
 
 void RunCommand(std::wstring command);
 void RunFile(const WCHAR* file, const WCHAR* args = NULL);

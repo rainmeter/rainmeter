@@ -722,7 +722,7 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 		{
 			const std::wstring& strStyleValue = GetValue((*iter), strKey, strDefault);
 
-			//LogWithArgs(LOG_DEBUG, L"StyleTemplate: [%s] %s (from [%s]) : strDefault=%s (0x%p), strStyleValue=%s (0x%p)",
+			//CLogger_DebugF(L"StyleTemplate: [%s] %s (from [%s]) : strDefault=%s (0x%p), strStyleValue=%s (0x%p)",
 			//	section, key, (*iter).c_str(), strDefault.c_str(), &strDefault, strStyleValue.c_str(), &strStyleValue);
 
 			if (&strStyleValue != &strDefault)
@@ -850,7 +850,7 @@ int CConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 				return (int)dblValue;
 			}
 
-			LogWithArgs(LOG_ERROR, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			CLogger_ErrorF(L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
 		}
 		else if (*string)
 		{
@@ -882,7 +882,7 @@ uint32_t CConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue
 				return (uint32_t)dblValue;
 			}
 
-			LogWithArgs(LOG_ERROR, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			CLogger_ErrorF(L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
 		}
 		else if (*string)
 		{
@@ -914,7 +914,7 @@ uint64_t CConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defVal
 				return (uint64_t)dblValue;
 			}
 
-			LogWithArgs(LOG_ERROR, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			CLogger_ErrorF(L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
 		}
 		else if (*string)
 		{
@@ -946,7 +946,7 @@ double CConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 				return value;
 			}
 
-			LogWithArgs(LOG_ERROR, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			CLogger_ErrorF(L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
 		}
 		else if (*string)
 		{
@@ -972,7 +972,7 @@ bool CConfigParser::ParseFormula(const std::wstring& formula, double* resultValu
 		const WCHAR* errMsg = MathParser::CheckedParse(string, resultValue);
 		if (errMsg != NULL)
 		{
-			LogWithArgs(LOG_ERROR, L"Formula: %s: %s", errMsg, string);
+			CLogger_ErrorF(L"Formula: %s: %s", errMsg, string);
 			return false;
 		}
 
@@ -1069,7 +1069,7 @@ double CConfigParser::ParseDouble(LPCTSTR string, double defValue)
 			return value;
 		}
 
-		LogWithArgs(LOG_ERROR, L"Formula: %s: %s", errMsg, string);
+		CLogger_ErrorF(L"Formula: %s: %s", errMsg, string);
 	}
 	else if (*string)
 	{
@@ -1102,7 +1102,7 @@ int CConfigParser::ParseInt(LPCTSTR string, int defValue)
 			return (int)dblValue;
 		}
 
-		LogWithArgs(LOG_ERROR, L"Formula: %s: %s", errMsg, string);
+		CLogger_ErrorF(L"Formula: %s: %s", errMsg, string);
 	}
 	else if (*string)
 	{
@@ -1135,7 +1135,7 @@ uint32_t CConfigParser::ParseUInt(LPCTSTR string, uint32_t defValue)
 			return (uint32_t)dblValue;
 		}
 
-		LogWithArgs(LOG_ERROR, L"Formula: %s: %s", errMsg, string);
+		CLogger_ErrorF(L"Formula: %s: %s", errMsg, string);
 	}
 	else if (*string)
 	{
@@ -1168,7 +1168,7 @@ uint64_t CConfigParser::ParseUInt64(LPCTSTR string, uint64_t defValue)
 			return (uint64_t)dblValue;
 		}
 
-		LogWithArgs(LOG_ERROR, L"Formula: %s: %s", errMsg, string);
+		CLogger_ErrorF(L"Formula: %s: %s", errMsg, string);
 	}
 	else if (*string)
 	{
@@ -1295,7 +1295,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 	// Verify whether the file exists
 	if (_waccess(iniFile.c_str(), 0) == -1)
 	{
-		LogWithArgs(LOG_ERROR, L"Unable to read file: %s", iniFile.c_str());
+		CLogger_ErrorF(L"Unable to read file: %s", iniFile.c_str());
 		return;
 	}
 
@@ -1305,11 +1305,11 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 
 	if (temporary)
 	{
-		if (Rainmeter->GetDebug()) LogWithArgs(LOG_DEBUG, L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
+		if (Rainmeter->GetDebug()) CLogger_DebugF(L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
 	}
 	else
 	{
-		if (Rainmeter->GetDebug()) LogWithArgs(LOG_DEBUG, L"Reading file: %s", iniFile.c_str());
+		if (Rainmeter->GetDebug()) CLogger_DebugF(L"Reading file: %s", iniFile.c_str());
 		iniRead = iniFile;
 	}
 
@@ -1513,7 +1513,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 */
 void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue)
 {
-	// LogWithArgs(LOG_DEBUG, L"[%s] %s=%s (size: %i)", strSection.c_str(), strKey.c_str(), strValue.c_str(), (int)m_Values.size());
+	// CLogger_DebugF(L"[%s] %s=%s (size: %i)", strSection.c_str(), strKey.c_str(), strValue.c_str(), (int)m_Values.size());
 
 	std::wstring strTmp;
 	strTmp.reserve(strSection.size() + 1 + strKey.size());

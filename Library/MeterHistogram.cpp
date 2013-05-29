@@ -120,7 +120,7 @@ void CMeterHistogram::Initialize()
 	// A sanity check
 	if (secondaryMeasure && !m_PrimaryImageName.empty() && (m_OverlapImageName.empty() || m_SecondaryImageName.empty()))
 	{
-		Log(LOG_WARNING, L"Histogram: SecondaryImage and BothImage not defined");
+		CLogger::Warning(L"Histogram: SecondaryImage and BothImage not defined");
 
 		m_PrimaryImage.DisposeImage();
 		m_SecondaryImage.DisposeImage();
@@ -262,7 +262,7 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"GraphStart=%s is not valid in [%s]", graph, m_Name.c_str());
+		CLogger_ErrorF(L"GraphStart=%s is not valid in [%s]", graph, m_Name.c_str());
 	}
 
 	graph = parser.ReadString(section, L"GraphOrientation", L"VERTICAL").c_str();
@@ -276,7 +276,7 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"GraphOrientation=%s is not valid in [%s]", graph, m_Name.c_str());
+		CLogger_ErrorF(L"GraphOrientation=%s is not valid in [%s]", graph, m_Name.c_str());
 	}
 
 	if (m_Initialized)

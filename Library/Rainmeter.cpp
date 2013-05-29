@@ -238,7 +238,7 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& args,
 					}
 					else
 					{
-						LogWithArgs(LOG_ERROR,  L"Bang: Skin \"%s\" not found", folderPath.c_str());
+						CLogger_ErrorF( L"Bang: Skin \"%s\" not found", folderPath.c_str());
 					}
 					return;
 				}
@@ -265,13 +265,13 @@ void CRainmeter::BangWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& args,
 				firstArg.erase(0, pos + 1);
 				args.insert(args.begin(), newArg);
 
-				Log(LOG_WARNING, L"!CommandMeasure: Two parameters required, only one given");
+				CLogger::Warning(L"!CommandMeasure: Two parameters required, only one given");
 				BangWithArgs(bang, args, numOfArgs, meterWindow);
 				return;
 			}
 		}
 
-		Log(LOG_ERROR, L"Bang: Incorrect number of arguments");
+		CLogger::Error(L"Bang: Incorrect number of arguments");
 	}
 }
 
@@ -296,7 +296,7 @@ void CRainmeter::BangGroupWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& 
 	}
 	else
 	{
-		Log(LOG_ERROR, L"BangGroup: Incorrect number of arguments");
+		CLogger::Error(L"BangGroup: Incorrect number of arguments");
 	}
 }
 
@@ -330,7 +330,7 @@ void CRainmeter::Bang_ActivateSkin(std::vector<std::wstring>& args)
 		}
 	}
 
-	Log(LOG_ERROR, L"!ActivateConfig: Invalid parameters");
+	CLogger::Error(L"!ActivateConfig: Invalid parameters");
 }
 
 /*
@@ -344,7 +344,7 @@ void CRainmeter::Bang_DeactivateSkin(std::vector<std::wstring>& args, CMeterWind
 		meterWindow = GetMeterWindow(args[0]);
 		if (!meterWindow)
 		{
-			LogWithArgs(LOG_WARNING, L"!DeactivateConfig: \"%s\" not active", args[0].c_str());
+			CLogger_WarningF(L"!DeactivateConfig: \"%s\" not active", args[0].c_str());
 			return;
 		}
 	}
@@ -355,7 +355,7 @@ void CRainmeter::Bang_DeactivateSkin(std::vector<std::wstring>& args, CMeterWind
 	}
 	else
 	{
-		Log(LOG_ERROR, L"!DeactivateConfig: Invalid parameters");
+		CLogger::Error(L"!DeactivateConfig: Invalid parameters");
 	}
 }
 
@@ -379,7 +379,7 @@ void CRainmeter::Bang_ToggleSkin(std::vector<std::wstring>& args)
 	}
 	else
 	{
-		Log(LOG_ERROR, L"!ToggleConfig: Invalid parameters");
+		CLogger::Error(L"!ToggleConfig: Invalid parameters");
 	}
 }
 
@@ -402,7 +402,7 @@ void CRainmeter::Bang_DeactivateSkinGroup(std::vector<std::wstring>& args)
 	}
 	else
 	{
-		Log(LOG_ERROR, L"!DeactivateConfigGroup: Invalid parameters");
+		CLogger::Error(L"!DeactivateConfigGroup: Invalid parameters");
 	}
 }
 
@@ -442,7 +442,7 @@ void CRainmeter::Bang_SetClip(std::vector<std::wstring>& args)
 	}
 	else
 	{
-		Log(LOG_ERROR, L"!SetClip: Invalid parameter");
+		CLogger::Error(L"!SetClip: Invalid parameter");
 	}
 }
 
@@ -467,7 +467,7 @@ void CRainmeter::Bang_SetWallpaper(std::vector<std::wstring>& args, CMeterWindow
 	}
 	else
 	{
-		Log(LOG_ERROR, L"!SetWallpaper: Invalid parameters");
+		CLogger::Error(L"!SetWallpaper: Invalid parameters");
 	}
 }
 
@@ -482,7 +482,7 @@ void CRainmeter::Bang_SkinMenu(std::vector<std::wstring>& args, CMeterWindow* me
 		meterWindow = GetMeterWindow(args[0]);
 		if (!meterWindow)
 		{
-			LogWithArgs(LOG_WARNING, L"!SkinMenu: \"%s\" not active", args[0].c_str());
+			CLogger_WarningF(L"!SkinMenu: \"%s\" not active", args[0].c_str());
 			return;
 		}
 	}
@@ -494,7 +494,7 @@ void CRainmeter::Bang_SkinMenu(std::vector<std::wstring>& args, CMeterWindow* me
 	}
 	else
 	{
-		Log(LOG_ERROR, L"!SkinMenu: Invalid parameter");
+		CLogger::Error(L"!SkinMenu: Invalid parameter");
 	}
 }
 
@@ -521,7 +521,7 @@ void CRainmeter::Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindo
 	}
 	else if (args.size() < 4)
 	{
-		Log(LOG_ERROR, L"!WriteKeyValue: Invalid parameters");
+		CLogger::Error(L"!WriteKeyValue: Invalid parameters");
 		return;
 	}
 
@@ -535,21 +535,21 @@ void CRainmeter::Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindo
 
 	if (strIniFile.find(L"..\\") != std::wstring::npos || strIniFile.find(L"../") != std::wstring::npos)
 	{
-		LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile);
+		CLogger_ErrorF(L"!WriteKeyValue: Illegal path: %s", iniFile);
 		return;
 	}
 
 	if (_wcsnicmp(iniFile, m_SkinPath.c_str(), m_SkinPath.size()) != 0 &&
 		_wcsnicmp(iniFile, m_SettingsPath.c_str(), m_SettingsPath.size()) != 0)
 	{
-		LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Illegal path: %s", iniFile);
+		CLogger_ErrorF(L"!WriteKeyValue: Illegal path: %s", iniFile);
 		return;
 	}
 
 	// Verify whether the file exists
 	if (_waccess(iniFile, 0) == -1)
 	{
-		LogWithArgs(LOG_ERROR, L"!WriteKeyValue: File not found: %s", iniFile);
+		CLogger_ErrorF(L"!WriteKeyValue: File not found: %s", iniFile);
 		return;
 	}
 
@@ -557,7 +557,7 @@ void CRainmeter::Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindo
 	DWORD attr = GetFileAttributes(iniFile);
 	if (attr == -1 || (attr & FILE_ATTRIBUTE_READONLY))
 	{
-		LogWithArgs(LOG_WARNING, L"!WriteKeyValue: File is read-only: %s", iniFile);
+		CLogger_WarningF(L"!WriteKeyValue: File is read-only: %s", iniFile);
 		return;
 	}
 
@@ -573,11 +573,11 @@ void CRainmeter::Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindo
 
 	if (temporary)
 	{
-		if (GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile, strIniWrite.c_str());
+		if (GetDebug()) CLogger_DebugF(L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile, strIniWrite.c_str());
 	}
 	else
 	{
-		if (GetDebug()) LogWithArgs(LOG_DEBUG, L"!WriteKeyValue: Writing to: %s", iniFile);
+		if (GetDebug()) CLogger_DebugF(L"!WriteKeyValue: Writing to: %s", iniFile);
 		strIniWrite = strIniFile;
 	}
 
@@ -619,12 +619,12 @@ void CRainmeter::Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindo
 			// Copy the file back
 			if (!CSystem::CopyFiles(strIniWrite, strIniFile))
 			{
-				LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to copy temporary file to original filepath: %s (Temp: %s)", iniFile, iniWrite);
+				CLogger_ErrorF(L"!WriteKeyValue: Failed to copy temporary file to original filepath: %s (Temp: %s)", iniFile, iniWrite);
 			}
 		}
 		else  // failed
 		{
-			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s (Temp: %s)", iniFile, iniWrite);
+			CLogger_ErrorF(L"!WriteKeyValue: Failed to write to: %s (Temp: %s)", iniFile, iniWrite);
 		}
 
 		// Remove a temporary file
@@ -634,7 +634,7 @@ void CRainmeter::Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindo
 	{
 		if (write == 0)  // failed
 		{
-			LogWithArgs(LOG_ERROR, L"!WriteKeyValue: Failed to write to: %s", iniFile);
+			CLogger_ErrorF(L"!WriteKeyValue: Failed to write to: %s", iniFile);
 		}
 	}
 }
@@ -647,31 +647,30 @@ void CRainmeter::Bang_Log(std::vector<std::wstring>& args)
 {
 	if (!args.empty())
 	{
-		int level = LOG_NOTICE;
-
+		CLogger::Level level = CLogger::Level::Notice;
 		if (args.size() > 1)
 		{
 			const WCHAR* type = args[1].c_str();
 			if (_wcsicmp(type, L"ERROR") == 0)
 			{
-				level = LOG_ERROR;
+				level = CLogger::Level::Error;
 			}
 			else if (_wcsicmp(type, L"WARNING") == 0)
 			{
-				level = LOG_WARNING;
+				level = CLogger::Level::Warning;
 			}
 			else if (_wcsicmp(type, L"DEBUG") == 0)
 			{
-				level = LOG_DEBUG;
+				level = CLogger::Level::Debug;
 			}
 			else if (_wcsicmp(type, L"NOTICE") != 0)
 			{
-				Log(LOG_ERROR, L"!Log: Invalid type");
+				CLogger::Error(L"!Log: Invalid type");
 				return;
 			}
 		}
 
-		Log(level, args[0].c_str());
+		CLogger::GetInstance().Log(level, args[0].c_str());
 	}
 }
 
@@ -698,7 +697,6 @@ CRainmeter::CRainmeter() :
 	m_MenuActive(false),
 	m_DisableRDP(false),
 	m_DisableDragging(false),
-	m_Logging(false),
 	m_CurrentParser(),
 	m_Window(),
 	m_Mutex(),
@@ -746,8 +744,6 @@ CRainmeter::~CRainmeter()
 		UpdateDesktopWorkArea(true);
 	}
 
-	FinalizeLitestep();
-
 	if (m_ResourceInstance) FreeLibrary(m_ResourceInstance);
 	if (m_Mutex) ReleaseMutex(m_Mutex);
 
@@ -762,8 +758,6 @@ CRainmeter::~CRainmeter()
 */
 int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 {
-	InitalizeLitestep();
-
 	m_Instance = GetModuleHandle(L"Rainmeter");
 
 	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
@@ -840,6 +834,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	if (!m_Window) return 1;
 
+	CLogger& logger = CLogger::GetInstance();
 	const WCHAR* iniFile = m_IniFile.c_str();
 
 	// Set file locations
@@ -852,11 +847,13 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 			len -= 4;
 		}
 
-		m_LogFile.assign(m_IniFile, 0, len);
-		m_DataFile = m_StatsFile = m_LogFile;
-		m_LogFile += L".log";
+		std::wstring logFile(m_IniFile, 0, len);
+		m_DataFile = m_StatsFile = logFile;
+		logFile += L".log";
 		m_StatsFile += L".stats";
 		m_DataFile += L".data";
+
+		logger.SetLogFilePath(logFile);
 	}
 
 	// Create a default Rainmeter.ini file if needed
@@ -873,14 +870,15 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 
 	// Reset log file
-	CSystem::RemoveFile(m_LogFile);
+	CSystem::RemoveFile(logger.GetLogFilePath());
 
 	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, iniFile);
-	m_Logging = 0!=GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, iniFile);
 
-	if (m_Logging)
+	const bool logging = GetPrivateProfileInt(L"Rainmeter", L"Logging", 0, iniFile) != 0;
+	logger.SetLogToFile(logging);
+	if (logging)
 	{
-		StartLogging();
+		logger.StartLogFile();
 	}
 
 	// Determine the language resource to load
@@ -960,9 +958,9 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	delete [] buffer;
 	buffer = NULL;
 
-	LogWithArgs(LOG_NOTICE, L"Path: %s", m_Path.c_str());
-	LogWithArgs(LOG_NOTICE, L"IniFile: %s", iniFile);
-	LogWithArgs(LOG_NOTICE, L"SkinPath: %s", m_SkinPath.c_str());
+	CLogger_NoticeF(L"Path: %s", m_Path.c_str());
+	CLogger_NoticeF(L"IniFile: %s", iniFile);
+	CLogger_NoticeF(L"SkinPath: %s", m_SkinPath.c_str());
 
 	// Extract volume path from program path
 	// E.g.:
@@ -1418,7 +1416,7 @@ void CRainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		{
 			if (wcscmp(((*iter).second)->GetFileName().c_str(), fileSz) == 0)
 			{
-				LogWithArgs(LOG_WARNING, L"!ActivateConfig: \"%s\" already active", folderPath.c_str());
+				CLogger_WarningF(L"!ActivateConfig: \"%s\" already active", folderPath.c_str());
 				return;
 			}
 			else
@@ -2281,7 +2279,7 @@ void CRainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args,
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"Invalid bang: !%s", bang);
+		CLogger_ErrorF(L"Invalid bang: !%s", bang);
 	}
 }
 
@@ -2455,13 +2453,15 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	m_UseD2D = 0!=parser.ReadInt(L"Rainmeter", L"UseD2D", 0);
 
-	// Read Logging settings
-	m_Logging = 0!=parser.ReadInt(L"Rainmeter", L"Logging", 0);
 	m_Debug = 0!=parser.ReadInt(L"Rainmeter", L"Debug", 0);
-
-	if (m_Logging)
+	
+	// Read Logging settings
+	CLogger& logger = CLogger::GetInstance();
+	const bool logging = parser.ReadInt(L"Rainmeter", L"Logging", 0) != 0;
+	logger.SetLogToFile(logging);
+	if (logging)
 	{
-		StartLogging();
+		logger.StartLogFile();
 	}
 
 	if (m_TrayWindow)
@@ -2486,7 +2486,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	if (m_Debug)
 	{
-		LogWithArgs(LOG_NOTICE, L"ConfigEditor: %s", m_SkinEditor.c_str());
+		CLogger_NoticeF(L"ConfigEditor: %s", m_SkinEditor.c_str());
 	}
 
 	m_TrayExecuteR = parser.ReadString(L"Rainmeter", L"TrayExecuteR", L"", false);
@@ -2731,7 +2731,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 					{
 						format += L" => FAIL";
 					}
-					LogWithArgs(LOG_DEBUG, format.c_str(), i, r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
+					CLogger_DebugF(format.c_str(), i, r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
 				}
 			}
 			changed = true;
@@ -2754,7 +2754,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 
 		if (m_Debug)
 		{
-			LogWithArgs(LOG_DEBUG, L"DesktopWorkAreaType: %s", m_DesktopWorkAreaType ? L"Margin" : L"Default");
+			CLogger_DebugF(L"DesktopWorkAreaType: %s", m_DesktopWorkAreaType ? L"Margin" : L"Default");
 		}
 
 		for (UINT i = 0; i <= numOfMonitors; ++i)
@@ -2806,7 +2806,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 					{
 						format += L" => FAIL";
 					}
-					LogWithArgs(LOG_DEBUG, format.c_str(), r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
+					CLogger_DebugF(format.c_str(), r.left, r.top, r.right, r.bottom, r.right - r.left, r.bottom - r.top);
 				}
 			}
 		}
@@ -2951,7 +2951,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 		{
 			SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
 
-			if (_waccess(m_LogFile.c_str(), 0) == -1)
+			if (_waccess(CLogger::GetInstance().GetLogFilePath().c_str(), 0) == -1)
 			{
 				EnableMenuItem(menu, IDM_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(menu, IDM_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
@@ -2959,7 +2959,10 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 			}
 			else
 			{
-				EnableMenuItem(menu, (m_Logging) ? IDM_STARTLOG : IDM_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(
+					menu,
+					(CLogger::GetInstance().IsLogToFile()) ? IDM_STARTLOG : IDM_STOPLOG,
+					MF_BYCOMMAND | MF_GRAYED);
 			}
 
 			if (m_Debug)
@@ -3512,81 +3515,12 @@ void CRainmeter::ChangeSkinIndex(HMENU menu, int index)
 	}
 }
 
-void CRainmeter::StartLogging()
-{
-	// Check if the file exists
-	const WCHAR* logFile = m_LogFile.c_str();
-	if (_waccess(logFile, 0) == -1)
-	{
-		// Create log file
-		HANDLE file = CreateFile(logFile, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
-		if (file != INVALID_HANDLE_VALUE)
-		{
-			CloseHandle(file);
-			SetLogging(true);
-		}
-		else
-		{
-			// Disable logging
-			SetLogging(false);
-	
-			std::wstring text = GetFormattedString(ID_STR_LOGFILECREATEFAIL, logFile);
-			ShowMessage(NULL, text.c_str(), MB_OK | MB_ICONERROR);
-		}
-	}
-	else
-	{
-		SetLogging(true);
-	}
-}
-
-void CRainmeter::StopLogging()
-{
-	SetLogging(false);
-}
-
 void CRainmeter::ShowLogFile()
 {
-	std::wstring logFile = L'"' + m_LogFile;
+	std::wstring logFile = L'"' + CLogger::GetInstance().GetLogFilePath();
 	logFile += L'"';
 
 	RunFile(m_SkinEditor.c_str(), logFile.c_str());
-}
-
-void CRainmeter::DeleteLogFile()
-{
-	// Check if the file exists
-	const WCHAR* logFile = m_LogFile.c_str();
-	if (_waccess(logFile, 0) != -1)
-	{
-		std::wstring text = GetFormattedString(ID_STR_LOGFILEDELETE, logFile);
-		int res = ShowMessage(NULL, text.c_str(), MB_YESNO | MB_ICONQUESTION);
-		if (res == IDYES)
-		{
-			// Disable logging
-			SetLogging(false);
-			CSystem::RemoveFile(m_LogFile);
-		}
-	}
-}
-
-void CRainmeter::AddAboutLogInfo(int level, LPCWSTR time, LPCWSTR message)
-{
-	// Store 20 last items
-	LogInfo logInfo = {level, time, message};
-	m_LogData.push_back(logInfo);
-	if (m_LogData.size() > 20)
-	{
-		m_LogData.pop_front();
-	}
-
-	CDialogAbout::AddLogItem(level, time, message);
-}
-
-void CRainmeter::SetLogging(bool logging)
-{
-	m_Logging = logging;
-	WritePrivateProfileString(L"Rainmeter", L"Logging", logging ? L"1" : L"0", m_IniFile.c_str());
 }
 
 void CRainmeter::SetDebug(bool debug)
@@ -3675,7 +3609,7 @@ void CRainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
 				DWORD ret = ExpandEnvironmentStrings(strPath.c_str(), buffer, bufSize);
 				if (ret == 0)  // Error
 				{
-					LogWithArgs(LOG_WARNING, L"Unable to expand environment strings in: %s", strPath.c_str());
+					CLogger_WarningF(L"Unable to expand environment strings in: %s", strPath.c_str());
 					break;
 				}
 				if (ret <= bufSize)  // Fits in the buffer

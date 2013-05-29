@@ -99,6 +99,9 @@
     <ClCompile Include="Litestep.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="MathParser.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -316,6 +319,7 @@
     <ClInclude Include="Group.h" />
     <ClInclude Include="Litestep.h" />
     <ClInclude Include="DialogManage.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="MathParser.h" />
     <ClInclude Include="Measure.h" />
     <ClInclude Include="MeasureCalc.h" />

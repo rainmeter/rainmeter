@@ -70,7 +70,7 @@ void LuaManager::ReportErrors(lua_State* L, const std::wstring& file)
 
 	std::wstring str(file, file.find_last_of(L'\\') + 1);
 	str += StringUtil::Widen(error);
-	LogWithArgs(LOG_ERROR, L"Script: %s", str.c_str());
+	CLogger_ErrorF(L"Script: %s", str.c_str());
 }
 
 void LuaManager::PushWide(lua_State* L, const WCHAR* str)

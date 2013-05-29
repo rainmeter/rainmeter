@@ -111,10 +111,10 @@ BOOL LSLog(int nLevel, LPCWSTR unused, LPCWSTR pszMessage)
 {
 	NULLCHECK(pszMessage);
 
-	// Ignore LOG_DEBUG messages from plugins unless in debug mode
-	if (nLevel != LOG_DEBUG || Rainmeter->GetDebug())
+	// Ignore Level::Debug messages from plugins unless in debug mode
+	if (nLevel != (int)CLogger::Level::Debug || Rainmeter->GetDebug())
 	{
-		Log(nLevel, pszMessage);
+		CLogger::GetInstance().Log((CLogger::Level)nLevel, pszMessage);
 	}
 
 	return TRUE;

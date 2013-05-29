@@ -18,7 +18,8 @@
 
 #include "../../StdAfx.h"
 #include "../LuaManager.h"
-#include "../../Litestep.h"
+#include "../../Logger.h"
+#include "../../../Common/StringUtil.h"
 
 static int Print(lua_State* L)
 {
@@ -53,7 +54,7 @@ static int Print(lua_State* L)
 		lua_pop(L, 1);
 	}
 
-	Log(LOG_DEBUG, StringUtil::Widen(message).c_str());
+	CLogger::Debug(StringUtil::Widen(message).c_str());
 	return 0;
 }
 

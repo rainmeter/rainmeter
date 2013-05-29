@@ -111,7 +111,7 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 				if (m_HasGetStringFunction)
 				{
-					LogWithArgs(LOG_WARNING, L"Script: Using deprecated GetStringValue() in [%s]", m_Name.c_str());
+					CLogger_WarningF(L"Script: Using deprecated GetStringValue() in [%s]", m_Name.c_str());
 				}
 
 				lua_rawgeti(L, LUA_GLOBALSINDEX, m_LuaScript.GetRef());
@@ -171,7 +171,7 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		}
 	}
 
-	LogWithArgs(LOG_ERROR, L"Script: File not valid in [%s]", m_Name.c_str());
+	CLogger_ErrorF(L"Script: File not valid in [%s]", m_Name.c_str());
 	UninitializeLuaScript();
 }
 
@@ -187,28 +187,28 @@ void CMeasureScript::Command(const std::wstring& command)
 
 //static void stackDump(lua_State *L)
 //{
-//	LuaManager::LuaLog(LOG_DEBUG, " ----------------  Stack Dump ----------------" );
+//	LuaManager::LuaLogger::Debug(" ----------------  Stack Dump ----------------" );
 //	for (int i = lua_gettop(L); i > 0; --i)
 //	{
 //		int t = lua_type(L, i);
 //		switch (t)
 //		{
 //		case LUA_TSTRING:
-//			LuaManager::LuaLog(LOG_DEBUG, "%d:'%s'", i, lua_tostring(L, i));
+//			LuaManager::LuaLogger::Debug("%d:'%s'", i, lua_tostring(L, i));
 //			break;
 //
 //		case LUA_TBOOLEAN:
-//			LuaManager::LuaLog(LOG_DEBUG, "%d: %s", i, lua_toboolean(L, i) ? "true" : "false");
+//			LuaManager::LuaLogger::Debug("%d: %s", i, lua_toboolean(L, i) ? "true" : "false");
 //			break;
 //
 //		case LUA_TNUMBER:
-//			LuaManager::LuaLog(LOG_DEBUG, "%d: %g", i, lua_tonumber(L, i));
+//			LuaManager::LuaLogger::Debug("%d: %g", i, lua_tonumber(L, i));
 //			break;
 //
 //		default:
-//			LuaManager::LuaLog(LOG_DEBUG, "%d: %s", i, lua_typename(L, t));
+//			LuaManager::LuaLogger::Debug("%d: %s", i, lua_typename(L, t));
 //			break;
 //		}
 //	}
-//	LuaManager::LuaLog(LOG_DEBUG, "--------------- Stack Dump Finished ---------------" );
+//	LuaManager::LuaLogger::Debug("--------------- Stack Dump Finished ---------------" );
 //}

@@ -21,7 +21,7 @@
 #include "ConfigParser.h"
 #include "System.h"
 #include "Error.h"
-#include "Litestep.h"
+#include "Logger.h"
 
 using namespace Gdiplus;
 
@@ -66,12 +66,12 @@ public:
 		if (iter != c_CacheMap.end())
 		{
 			(*iter).second->AddRef();
-			//LogWithArgs(LOG_DEBUG, L"* ADD: key=%s, ref=%i", key.c_str(), (*iter).second->GetRef());
+			//CLogger_DebugF(L"* ADD: key=%s, ref=%i", key.c_str(), (*iter).second->GetRef());
 		}
 		else
 		{
 			c_CacheMap[key] = new ImageCache(bitmap, hBuffer);
-			//LogWithArgs(LOG_DEBUG, L"* ADD: key=%s, ref=new", key.c_str());
+			//CLogger_DebugF(L"* ADD: key=%s, ref=new", key.c_str());
 		}
 	}
 
@@ -82,11 +82,11 @@ public:
 		{
 			ImageCache* cache = (*iter).second;
 			cache->Release();
-			//LogWithArgs(LOG_DEBUG, L"* REMOVE: key=%s, ref=%i", key.c_str(), cache->GetRef());
+			//CLogger_DebugF(L"* REMOVE: key=%s, ref=%i", key.c_str(), cache->GetRef());
 
 			if (cache->IsInvalid())
 			{
-				//LogWithArgs(LOG_DEBUG, L"* EMPTY-ERASE: key=%s", key.c_str());
+				//CLogger_DebugF(L"* EMPTY-ERASE: key=%s", key.c_str());
 				c_CacheMap.erase(iter);
 				delete cache;
 			}
@@ -375,7 +375,7 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 				}
 				else
 				{
-					LogWithArgs(LOG_ERROR, L"%s: Unable to load: %s", m_Name, filename.c_str());
+					CLogger_ErrorF(L"%s: Unable to load: %s", m_Name, filename.c_str());
 				}
 			}
 			CloseHandle(fileHandle);
@@ -407,7 +407,7 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		}
 		else
 		{
-			LogWithArgs(LOG_ERROR, L"%s: Unable to open: %s", m_Name, filename.c_str());
+			CLogger_ErrorF(L"%s: Unable to open: %s", m_Name, filename.c_str());
 
 			if (fileHandle != INVALID_HANDLE_VALUE)
 			{
@@ -673,7 +673,7 @@ void CTintedImage::ReadOptions(CConfigParser& parser, const WCHAR* section)
 			if (m_CropMode < CROPMODE_TL || m_CropMode > CROPMODE_C)
 			{
 				m_CropMode = CROPMODE_TL;
-				LogWithArgs(LOG_ERROR, L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageCrop], crop, section);
+				CLogger_ErrorF(L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageCrop], crop, section);
 			}
 		}
 	}
@@ -777,7 +777,7 @@ void CTintedImage::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageFlip], flip, section);
+		CLogger_ErrorF(L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageFlip], flip, section);
 	}
 
 	if (!m_DisableTransform)

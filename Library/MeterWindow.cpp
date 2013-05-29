@@ -410,7 +410,7 @@ void CMeterWindow::Refresh(bool init, bool all)
 	notice += L'\\';
 	notice += m_FileName;
 	notice += L'"';
-	Log(LOG_NOTICE, notice.c_str());
+	CLogger::Notice(notice.c_str());
 
 	SetResizeWindowMode(RESIZEMODE_RESET);
 
@@ -911,7 +911,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 			}
 			else
 			{
-				LogWithArgs(LOG_WARNING, L"!CommandMeasure: [%s] not found", measure.c_str());
+				CLogger_WarningF(L"!CommandMeasure: [%s] not found", measure.c_str());
 			}
 		}
 		break;
@@ -947,11 +947,11 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 					return;
 				}
 
-				LogWithArgs(LOG_WARNING, L"!PluginBang: [%s] not found", measure.c_str());
+				CLogger_WarningF(L"!PluginBang: [%s] not found", measure.c_str());
 			}
 			else
 			{
-				Log(LOG_ERROR, L"!PluginBang: Invalid parameters");
+				CLogger::Error(L"!PluginBang: Invalid parameters");
 			}
 		}
 		break;
@@ -1127,7 +1127,7 @@ void CMeterWindow::ShowMeter(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!ShowMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
+	if (!group) CLogger_ErrorF(L"!ShowMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
 }
 
 /*
@@ -1149,7 +1149,7 @@ void CMeterWindow::HideMeter(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!HideMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
+	if (!group) CLogger_ErrorF(L"!HideMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
 }
 
 /*
@@ -1178,7 +1178,7 @@ void CMeterWindow::ToggleMeter(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!ToggleMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
+	if (!group) CLogger_ErrorF(L"!ToggleMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
 }
 
 /*
@@ -1201,7 +1201,7 @@ void CMeterWindow::MoveMeter(const std::wstring& name, int x, int y)
 		}
 	}
 
-	LogWithArgs(LOG_ERROR, L"!MoveMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
+	CLogger_ErrorF(L"!MoveMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
 }
 
 /*
@@ -1251,7 +1251,7 @@ void CMeterWindow::UpdateMeter(const std::wstring& name, bool group)
 	// Post-updates
 	PostUpdate(bActiveTransition);
 
-	if (!group && bContinue) LogWithArgs(LOG_ERROR, L"!UpdateMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
+	if (!group && bContinue) CLogger_ErrorF(L"!UpdateMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
 }
 
 /*
@@ -1272,7 +1272,7 @@ void CMeterWindow::EnableMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!EnableMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
+	if (!group) CLogger_ErrorF(L"!EnableMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
 }
 
 /*
@@ -1293,7 +1293,7 @@ void CMeterWindow::DisableMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!DisableMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
+	if (!group) CLogger_ErrorF(L"!DisableMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
 }
 
 /*
@@ -1321,7 +1321,7 @@ void CMeterWindow::ToggleMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!ToggleMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
+	if (!group) CLogger_ErrorF(L"!ToggleMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
 }
 
 /*
@@ -1361,7 +1361,7 @@ void CMeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogWithArgs(LOG_ERROR, L"!UpdateMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
+	if (!group) CLogger_ErrorF(L"!UpdateMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
 }
 
 /*
@@ -2109,7 +2109,7 @@ bool CMeterWindow::ReadSkin()
 					{
 						std::wstring error = L"Unable to load font: ";
 						error += file.c_str();
-						Log(LOG_ERROR, error.c_str());
+						CLogger::Error(error.c_str());
 					}
 				}
 			}
@@ -2142,7 +2142,7 @@ bool CMeterWindow::ReadSkin()
 				{
 					std::wstring error = L"Unable to load font: ";
 					error += localFont;
-					Log(LOG_ERROR, error.c_str());
+					CLogger::Error(error.c_str());
 				}
 			}
 
@@ -4348,7 +4348,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 				if (!m_MouseOver)
 				{
 					// If the mouse is over a meter it's also over the main window
-					//LogWithArgs(LOG_DEBUG, L"@Enter: %s", m_FolderPath.c_str());
+					//CLogger_DebugF(L"@Enter: %s", m_FolderPath.c_str());
 					m_MouseOver = true;
 					SetMouseLeaveEvent(false);
 					RegisterMouseInput();
@@ -4387,7 +4387,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 						!mouse.GetLeaveAction().empty() ||
 						button)
 					{
-						//LogWithArgs(LOG_DEBUG, L"MeterEnter: %s - [%s]", m_FolderPath.c_str(), (*j)->GetName());
+						//CLogger_DebugF(L"MeterEnter: %s - [%s]", m_FolderPath.c_str(), (*j)->GetName());
 						(*j)->SetMouseOver(true);
 
 						if (!mouse.GetOverAction().empty())
@@ -4413,7 +4413,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 						button->SetFocus(false);
 					}
 
-					//LogWithArgs(LOG_DEBUG, L"MeterLeave: %s - [%s]", m_FolderPath.c_str(), (*j)->GetName());
+					//CLogger_DebugF(L"MeterLeave: %s - [%s]", m_FolderPath.c_str(), (*j)->GetName());
 					(*j)->SetMouseOver(false);
 
 					const CMouse& mouse = (*j)->GetMouse();
@@ -4434,7 +4434,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 		{
 			if (!m_MouseOver)
 			{
-				//LogWithArgs(LOG_DEBUG, L"Enter: %s", m_FolderPath.c_str());
+				//CLogger_DebugF(L"Enter: %s", m_FolderPath.c_str());
 				m_MouseOver = true;
 				SetMouseLeaveEvent(false);
 				RegisterMouseInput();
@@ -4455,7 +4455,7 @@ bool CMeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 			// Mouse leave happens when the mouse is outside the window
 			if (m_MouseOver)
 			{
-				//LogWithArgs(LOG_DEBUG, L"Leave: %s", m_FolderPath.c_str());
+				//CLogger_DebugF(L"Leave: %s", m_FolderPath.c_str());
 				m_MouseOver = false;
 				SetMouseLeaveEvent(true);
 				UnregisterMouseInput();
@@ -4670,7 +4670,7 @@ LRESULT CMeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		else
 		{
 			// This meterwindow has been deactivated
-			Log(LOG_WARNING, L"Unable to bang unloaded skin");
+			CLogger::Warning(L"Unable to bang unloaded skin");
 		}
 
 		return TRUE;

@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "MeterLine.h"
 #include "Measure.h"
-#include "Error.h"
+#include "Logger.h"
 #include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;
@@ -159,7 +159,7 @@ void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"GraphStart=%s is not valid in [%s]", graph, m_Name.c_str());
+		CLogger_ErrorF(L"GraphStart=%s is not valid in [%s]", graph, m_Name.c_str());
 	}
 
 	graph = parser.ReadString(section, L"GraphOrientation", L"VERTICAL").c_str();
@@ -173,7 +173,7 @@ void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"GraphOrientation=%s is not valid in [%s]", graph, m_Name.c_str());
+		CLogger_ErrorF(L"GraphOrientation=%s is not valid in [%s]", graph, m_Name.c_str());
 	}
 
 	if (m_Initialized)

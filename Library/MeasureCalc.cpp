@@ -61,7 +61,7 @@ void CMeasureCalc::UpdateValue()
 	{
 		if (!m_ParseError)
 		{
-			LogWithArgs(LOG_ERROR, L"Calc: %s in [%s]", errMsg, m_Name.c_str());
+			CLogger_ErrorF(L"Calc: %s in [%s]", errMsg, m_Name.c_str());
 			m_ParseError = true;
 		}
 	}
@@ -105,7 +105,7 @@ void CMeasureCalc::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		const WCHAR* errMsg = MathParser::Check(m_Formula.c_str());
 		if (errMsg != NULL)
 		{
-			LogWithArgs(LOG_ERROR, L"Calc: %s in [%s]", errMsg, m_Name.c_str());
+			CLogger_ErrorF(L"Calc: %s in [%s]", errMsg, m_Name.c_str());
 			m_Formula.clear();
 		}
 	}

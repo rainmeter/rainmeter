@@ -351,7 +351,7 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		delete m_Transformation;
 		m_Transformation = NULL;
 
-		LogWithArgs(LOG_ERROR, L"Meter: Incorrect number of values in TransformationMatrix=%s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
+		CLogger_ErrorF(L"Meter: Incorrect number of values in TransformationMatrix=%s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
 	}
 }
 
@@ -409,7 +409,7 @@ CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHA
 		return new CMeterButton(meterWindow, name);
 	}
 
-	LogWithArgs(LOG_ERROR, L"Meter=%s is not valid in [%s]", meter, name);
+	CLogger_ErrorF(L"Meter=%s is not valid in [%s]", meter, name);
 
 	return NULL;
 }
@@ -443,7 +443,7 @@ bool CMeter::BindPrimaryMeasure(CConfigParser& parser, const WCHAR* section, boo
 	}
 	else if (!optional)
 	{
-		LogWithArgs(LOG_ERROR, L"MeasureName=%s is not valid in [%s]", measureName.c_str(), section);
+		CLogger_ErrorF(L"MeasureName=%s is not valid in [%s]", measureName.c_str(), section);
 	}
 
 	return false;
@@ -473,7 +473,7 @@ void CMeter::BindSecondaryMeasures(CConfigParser& parser, const WCHAR* section)
 			{
 				if (!measureName.empty())
 				{
-					LogWithArgs(LOG_ERROR, L"MeasureName%i=%s is not valid in [%s]", i, measureName.c_str(), section);
+					CLogger_ErrorF(L"MeasureName%i=%s is not valid in [%s]", i, measureName.c_str(), section);
 				}
 
 				break;

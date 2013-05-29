@@ -114,7 +114,7 @@ void CDialogAbout::ShowAboutLog()
 	}
 }
 
-void CDialogAbout::AddLogItem(int level, LPCWSTR time, LPCWSTR message)
+void CDialogAbout::AddLogItem(CLogger::Level level, LPCWSTR time, LPCWSTR message)
 {
 	if (c_Dialog && c_Dialog->m_TabLog.IsInitialized())
 	{
@@ -409,10 +409,9 @@ void CDialogAbout::CTabLog::Initialize()
 	ListView_InsertColumn(item, 2, &lvc);
 
 	// Add stored entires
-	std::list<CRainmeter::LogInfo>::const_iterator iter = Rainmeter->GetAboutLogData().begin();
-	for ( ; iter != Rainmeter->GetAboutLogData().end(); ++iter)
+	for (const auto& entry : CLogger::GetInstance().GetEntries())
 	{
-		AddItem((*iter).level, (*iter).timestamp.c_str(), (*iter).message.c_str());
+		AddItem(entry.level, entry.timestamp.c_str(), entry.message.c_str());
 	}
 
 	item = GetControl(Id_ErrorCheckBox);
@@ -467,7 +466,7 @@ void CDialogAbout::CTabLog::Resize(int w, int h)
 ** Adds item to log.
 **
 */
-void CDialogAbout::CTabLog::AddItem(int level, LPCWSTR time, LPCWSTR message)
+void CDialogAbout::CTabLog::AddItem(CLogger::Level level, LPCWSTR time, LPCWSTR message)
 {
 	WCHAR buffer[32];
 	LVITEM vitem;
@@ -479,25 +478,25 @@ void CDialogAbout::CTabLog::AddItem(int level, LPCWSTR time, LPCWSTR message)
 
 	switch (level)
 	{
-	case LOG_ERROR:
+	case CLogger::Level::Error:
 		if (!m_Error) return;
 		item = GetControl(Id_ErrorCheckBox);
 		vitem.iImage = 0;
 		break;
 
-	case LOG_WARNING:
+	case CLogger::Level::Warning:
 		if (!m_Warning) return;
 		item = GetControl(Id_WarningCheckBox);
 		vitem.iImage = 1;
 		break;
 
-	case LOG_NOTICE:
+	case CLogger::Level::Notice:
 		if (!m_Notice) return;
 		item = GetControl(Id_NoticeCheckBox);
 		vitem.iImage = 2;
 		break;
 
-	case LOG_DEBUG:
+	case CLogger::Level::Debug:
 		if (!m_Debug) return;
 		item = GetControl(Id_DebugCheckBox);
 		vitem.iImage = I_IMAGENONE;
@@ -1084,7 +1083,7 @@ void CDialogAbout::CTabPlugins::Initialize()
 			}
 			else
 			{
-				LogWithArgs(LOG_ERROR, L"Unable to load plugin: %s (%u)", tmpSz.c_str(), err);
+				CLogger_ErrorF(L"Unable to load plugin: %s (%u)", tmpSz.c_str(), err);
 			}
 		}
 		while (FindNextFile(hSearch, &fd));

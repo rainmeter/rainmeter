@@ -201,7 +201,7 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		break;
 
 	default:
-		LogWithArgs(LOG_ERROR, L"ClipString=%s is not valid in [%s]", clipping, m_Name.c_str());
+		CLogger_ErrorF(L"ClipString=%s is not valid in [%s]", clipping, m_Name.c_str());
 	}
 
 	m_FontFace = parser.ReadString(section, L"FontFace", L"Arial");
@@ -292,7 +292,7 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"StringCase=%s is not valid in [%s]", stringCase, m_Name.c_str());
+		CLogger_ErrorF(L"StringCase=%s is not valid in [%s]", stringCase, m_Name.c_str());
 	}
 
 	const WCHAR* style = parser.ReadString(section, L"StringStyle", L"NORMAL").c_str();
@@ -314,7 +314,7 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"StringStyle=%s is not valid in [%s]", style, m_Name.c_str());
+		CLogger_ErrorF(L"StringStyle=%s is not valid in [%s]", style, m_Name.c_str());
 	}
 
 	const WCHAR* effect = parser.ReadString(section, L"StringEffect", L"NONE").c_str();
@@ -332,7 +332,7 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"StringEffect=%s is not valid in [%s]", effect, m_Name.c_str());
+		CLogger_ErrorF(L"StringEffect=%s is not valid in [%s]", effect, m_Name.c_str());
 	}
 
 	if (m_Initialized &&
@@ -627,23 +627,23 @@ void CMeterString::EnumerateInstalledFontFamilies()
 					}
 					fonts += L", ";
 				}
-				Log(LOG_NOTICE, fonts.c_str());
+				CLogger::Warning(fonts.c_str());
 			}
 			else
 			{
-				Log(LOG_ERROR, L"Font enumeration: GetFamilies failed");
+				CLogger::Error(L"Font enumeration: GetFamilies failed");
 			}
 
 			delete [] fontFamilies;
 		}
 		else
 		{
-			Log(LOG_WARNING, L"No installed fonts");
+			CLogger::Warning(L"No installed fonts");
 		}
 	}
 	else
 	{
-		Log(LOG_ERROR, L"Font enumeration: InstalledFontCollection failed");
+		CLogger::Error(L"Font enumeration: InstalledFontCollection failed");
 	}
 }
 
@@ -651,10 +651,10 @@ void CMeterString::InitializeStatic()
 {
 	if (Rainmeter->GetDebug())
 	{
-		Log(LOG_DEBUG, L"------------------------------");
-		Log(LOG_DEBUG, L"* Font families:");
+		CLogger::Debug(L"------------------------------");
+		CLogger::Debug(L"* Font families:");
 		EnumerateInstalledFontFamilies();
-		Log(LOG_DEBUG, L"------------------------------");
+		CLogger::Debug(L"------------------------------");
 	}
 }
 

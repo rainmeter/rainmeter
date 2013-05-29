@@ -434,14 +434,14 @@ void CTrayWindow::ReadOptions(CConfigParser& parser)
 					{
 						delete m_Bitmap;
 						m_Bitmap = NULL;
-						LogWithArgs(LOG_WARNING, L"Bitmap image not found: %s", imagePath);
+						CLogger_WarningF(L"Bitmap image not found: %s", imagePath);
 					}
 				}
 			}
 		}
 		else
 		{
-			LogWithArgs(LOG_ERROR, L"No such TrayMeter: %s", type);
+			CLogger_ErrorF(L"No such TrayMeter: %s", type);
 		}
 
 		TryAddTrayIcon();
@@ -491,15 +491,15 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			break;
 
 		case IDM_STARTLOG:
-			Rainmeter->StartLogging();
+			CLogger::GetInstance().StartLogFile();
 			break;
 
 		case IDM_STOPLOG:
-			Rainmeter->StopLogging();
+			CLogger::GetInstance().StopLogFile();
 			break;
 
 		case IDM_DELETELOGFILE:
-			Rainmeter->DeleteLogFile();
+			CLogger::GetInstance().DeleteLogFile();
 			break;
 
 		case IDM_DEBUGLOG:
@@ -678,7 +678,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				return 0;
 
 			case RAINMETER_QUERY_ID_LOG_PATH:
-				sendCopyData(Rainmeter->GetLogFile());
+				sendCopyData(CLogger::GetInstance().GetLogFilePath());
 				return 0;
 
 			case RAINMETER_QUERY_ID_CONFIG_EDITOR:

@@ -20,7 +20,7 @@
 #include "ConfigParser.h"
 #include "MeterWindow.h"
 #include "Meter.h"
-#include "Litestep.h"
+#include "Logger.h"
 #include "Mouse.h"
 
 CMouse::CMouse(CMeterWindow* meterWindow, CMeter* meter) : m_MeterWindow(meterWindow), m_Meter(meter),
@@ -130,7 +130,7 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		if (!m_CustomCursor)
 		{
 			m_CursorType = MOUSECURSOR_ARROW;
-			LogWithArgs(LOG_ERROR, L"Invalid cursor: %s", cursorPath.c_str());
+			CLogger_ErrorF(L"Invalid cursor: %s", cursorPath.c_str());
 		}
 	}
 }

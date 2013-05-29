@@ -33,7 +33,7 @@ public:
 	static void Open(const WCHAR* name);
 	static void ShowAboutLog();
 
-	static void AddLogItem(int level, LPCWSTR time, LPCWSTR message);
+	static void AddLogItem(CLogger::Level level, LPCWSTR time, LPCWSTR message);
 	static void UpdateSkins();
 	static void UpdateMeasures(CMeterWindow* meterWindow);
 
@@ -63,7 +63,7 @@ private:
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
 
-		void AddItem(int level, LPCWSTR time, LPCWSTR message);
+		void AddItem(CLogger::Level level, LPCWSTR time, LPCWSTR message);
 
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);

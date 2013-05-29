@@ -80,8 +80,8 @@ void CMeasureNet::UpdateIFTable()
 
 			if (Rainmeter->GetDebug() && logging)
 			{
-				Log(LOG_DEBUG, L"------------------------------");
-				LogWithArgs(LOG_DEBUG, L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
+				CLogger::Debug(L"------------------------------");
+				CLogger_DebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
 
 				for (size_t i = 0; i < c_NumOfTables; ++i)
 				{
@@ -108,14 +108,14 @@ void CMeasureNet::UpdateIFTable()
 						break;
 					}
 
-					LogWithArgs(LOG_DEBUG, L"%i: %s", (int)i + 1, ifTable->Table[i].Description);
-					LogWithArgs(LOG_DEBUG, L"  Alias: %s", ifTable->Table[i].Alias);
-					LogWithArgs(LOG_DEBUG, L"  Type=%s(%i), Hardware=%s, Filter=%s",
+					CLogger_DebugF(L"%i: %s", (int)i + 1, ifTable->Table[i].Description);
+					CLogger_DebugF(L"  Alias: %s", ifTable->Table[i].Alias);
+					CLogger_DebugF(L"  Type=%s(%i), Hardware=%s, Filter=%s",
 						type, ifTable->Table[i].Type,
 						(ifTable->Table[i].InterfaceAndOperStatusFlags.HardwareInterface == 1) ? L"Yes" : L"No",
 						(ifTable->Table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) ? L"Yes" : L"No");
 				}
-				Log(LOG_DEBUG, L"------------------------------");
+				CLogger::Debug(L"------------------------------");
 			}
 		}
 		else
@@ -173,8 +173,8 @@ void CMeasureNet::UpdateIFTable()
 
 				if (Rainmeter->GetDebug() && logging)
 				{
-					Log(LOG_DEBUG, L"------------------------------");
-					LogWithArgs(LOG_DEBUG, L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
+					CLogger::Debug(L"------------------------------");
+					CLogger_DebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
 
 					for (size_t i = 0; i < c_NumOfTables; ++i)
 					{
@@ -204,10 +204,10 @@ void CMeasureNet::UpdateIFTable()
 							break;
 						}
 
-						LogWithArgs(LOG_DEBUG, L"%i: %.*S", (int)i + 1, ifTable->table[i].dwDescrLen, (char*)ifTable->table[i].bDescr);
-						LogWithArgs(LOG_DEBUG, L"  Type=%s(%i)", type, ifTable->table[i].dwType);
+						CLogger_DebugF(L"%i: %.*S", (int)i + 1, ifTable->table[i].dwDescrLen, (char*)ifTable->table[i].bDescr);
+						CLogger_DebugF(L"  Type=%s(%i)", type, ifTable->table[i].dwType);
 					}
-					Log(LOG_DEBUG, L"------------------------------");
+					CLogger::Debug(L"------------------------------");
 				}
 			}
 			else

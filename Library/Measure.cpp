@@ -162,7 +162,7 @@ void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		}
 		if (!ParseSubstitute(subs))
 		{
-			LogWithArgs(LOG_ERROR, L"Measure: Invalid Substitute=%s", subs.c_str());
+			CLogger_ErrorF(L"Measure: Invalid Substitute=%s", subs.c_str());
 		}
 	}
 
@@ -260,7 +260,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 				if (re == NULL)
 				{
 					MakePlainSubstitute(str, i);
-					LogWithArgs(LOG_NOTICE, L"Substitute: %S", error);
+					CLogger_NoticeF(L"Substitute: %S", error);
 				}
 				else
 				{
@@ -847,7 +847,7 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, cons
 		return new CMeasureScript(meterWindow, name);
 	}
 
-	LogWithArgs(LOG_ERROR, L"Measure=%s is not valid in [%s]", measure, name);
+	CLogger_ErrorF(L"Measure=%s is not valid in [%s]", measure, name);
 
 	return NULL;
 }
@@ -858,5 +858,5 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, cons
 */
 void CMeasure::Command(const std::wstring& command)
 {
-	LogWithArgs(LOG_WARNING, L"!CommandMeasure: Not supported by [%s]", m_Name.c_str());
+	CLogger_WarningF(L"!CommandMeasure: Not supported by [%s]", m_Name.c_str());
 }

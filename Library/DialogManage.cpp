@@ -1900,10 +1900,10 @@ void CDialogManage::CTabSettings::Initialize()
 
 	Button_SetCheck(GetControl(Id_CheckForUpdatesCheckBox), !Rainmeter->GetDisableVersionCheck());
 	Button_SetCheck(GetControl(Id_LockSkinsCheckBox), Rainmeter->GetDisableDragging());
-	Button_SetCheck(GetControl(Id_LogToFileCheckBox), Rainmeter->GetLogging());
+	Button_SetCheck(GetControl(Id_LogToFileCheckBox), CLogger::GetInstance().IsLogToFile());
 	Button_SetCheck(GetControl(Id_VerboseLoggingCheckbox), Rainmeter->GetDebug());
 
-	BOOL isLogFile = (_waccess(Rainmeter->GetLogFile().c_str(), 0) != -1);
+	BOOL isLogFile = (_waccess(CLogger::GetInstance().GetLogFilePath().c_str(), 0) != -1);
 	EnableWindow(GetControl(Id_ShowLogFileButton), isLogFile);
 	EnableWindow(GetControl(Id_DeleteLogFileButton), isLogFile);
 
@@ -1998,8 +1998,8 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case Id_DeleteLogFileButton:
-		Rainmeter->DeleteLogFile();
-		if (_waccess(Rainmeter->GetLogFile().c_str(), 0) == -1)
+		CLogger::GetInstance().DeleteLogFile();
+		if (_waccess(CLogger::GetInstance().GetLogFilePath().c_str(), 0) == -1)
 		{
 			Button_SetCheck(GetControl(Id_LogToFileCheckBox), BST_UNCHECKED);
 			EnableWindow(GetControl(Id_ShowLogFileButton), FALSE);
@@ -2008,14 +2008,14 @@ INT_PTR CDialogManage::CTabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case Id_LogToFileCheckBox:
-		if (Rainmeter->GetLogging())
+		if (CLogger::GetInstance().IsLogToFile())
 		{
-			Rainmeter->StopLogging();
+			CLogger::GetInstance().StopLogFile();
 		}
 		else
 		{
-			Rainmeter->StartLogging();
-			if (_waccess(Rainmeter->GetLogFile().c_str(), 0) != -1)
+			CLogger::GetInstance().StartLogFile();
+			if (_waccess(CLogger::GetInstance().GetLogFilePath().c_str(), 0) != -1)
 			{
 				EnableWindow(GetControl(Id_ShowLogFileButton), TRUE);
 				EnableWindow(GetControl(Id_DeleteLogFileButton), TRUE);

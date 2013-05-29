@@ -201,7 +201,7 @@ void CMeterBitmap::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogWithArgs(LOG_ERROR, L"BitmapAlign=%s is not valid in [%s]", align, m_Name.c_str());
+		CLogger_ErrorF(L"BitmapAlign=%s is not valid in [%s]", align, m_Name.c_str());
 	}
 
 	if (m_Initialized)
@@ -363,7 +363,7 @@ bool CMeterBitmap::Draw(Gfx::Canvas& canvas)
 				}
 			}
 
-//			LogWithArgs(LOG_DEBUG, L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
+//			CLogger_DebugF(L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
 			if (bitmap->GetHeight() > bitmap->GetWidth())
 			{
@@ -432,7 +432,7 @@ bool CMeterBitmap::Draw(Gfx::Canvas& canvas)
 			}
 		}
 
-//		LogWithArgs(LOG_DEBUG, L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
+//		CLogger_DebugF(L"[%u] Value: %f Frame: %i (Transition = %s)", GetTickCount(), m_Value, frame, m_TransitionStartTicks > 0 ? L"true" : L"false");
 
 		if (bitmap->GetHeight() > bitmap->GetWidth())
 		{

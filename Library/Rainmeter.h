@@ -25,6 +25,7 @@
 #include <list>
 #include <string>
 #include "Litestep.h"
+#include "Logger.h"
 #include "MeterWindow.h"
 
 #define MAX_LINE_LENGTH 4096
@@ -89,13 +90,6 @@ public:
 		}
 	};
 
-	struct LogInfo
-	{
-		int level;
-		std::wstring timestamp;
-		std::wstring message;
-	};
-
 	CRainmeter();
 	~CRainmeter();
 
@@ -139,7 +133,6 @@ public:
 	const std::wstring& GetPath() { return m_Path; }
 	const std::wstring& GetIniFile() { return m_IniFile; }
 	const std::wstring& GetDataFile() { return m_DataFile; }
-	const std::wstring& GetLogFile() { return m_LogFile; }
 	const std::wstring& GetSettingsPath() { return m_SettingsPath; }
 	const std::wstring& GetSkinPath() { return m_SkinPath; }
 	void SetSkinPath(const std::wstring& skinPath);
@@ -188,11 +181,7 @@ public:
 	bool GetNewVersion() { return m_NewVersion; }
 	void SetNewVersion() { m_NewVersion = true; }
 
-	bool GetLogging() { return m_Logging; }
-	void StartLogging();
-	void StopLogging();
 	void ShowLogFile();
-	void DeleteLogFile();
 
 	bool GetDisableRDP() { return m_DisableRDP; }
 	bool IsRedrawable() { return (!GetDisableRDP() || !GetSystemMetrics(SM_REMOTESESSION)); }
@@ -201,9 +190,6 @@ public:
 	void SetDisableDragging(bool dragging);
 
 	bool IsNormalStayDesktop() { return m_NormalStayDesktop; }
-
-	void AddAboutLogInfo(int level, LPCWSTR time, LPCWSTR message);
-	const std::list<LogInfo>& GetAboutLogData() { return m_LogData; }
 
 	void SetDebug(bool debug);
 
@@ -229,7 +215,7 @@ public:
 	static std::vector<std::wstring> ParseString(LPCTSTR str, CConfigParser* parser = NULL);
 	static std::wstring ExtractPath(const std::wstring& strFilePath);
 	static void ExpandEnvironmentVariables(std::wstring& strPath);
-
+	
 	friend class CDialogManage;
 
 private:
@@ -272,7 +258,6 @@ private:
 	void CreateOptionsFile();
 	void CreateDataFile();
 	void CreateComponentFolders(bool defaultIniLocation);
-	void SetLogging(bool logging);
 	void TestSettingsFile(bool bDefaultIniLocation);
 
 	CTrayWindow* m_TrayWindow;
@@ -287,7 +272,6 @@ private:
 	std::wstring m_IniFile;
 	std::wstring m_DataFile;
 	std::wstring m_StatsFile;
-	std::wstring m_LogFile;
 	std::wstring m_SettingsPath;
 	std::wstring m_SkinPath;
 
@@ -319,10 +303,6 @@ private:
 	bool m_DisableRDP;
 
 	bool m_DisableDragging;
-
-	bool m_Logging;
-
-	std::list<LogInfo> m_LogData;
 
 	std::wstring m_SkinEditor;
 
