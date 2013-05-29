@@ -215,7 +215,7 @@ public:
 	static std::vector<std::wstring> ParseString(LPCTSTR str, CConfigParser* parser = NULL);
 	static std::wstring ExtractPath(const std::wstring& strFilePath);
 	static void ExpandEnvironmentVariables(std::wstring& strPath);
-	
+
 	friend class CDialogManage;
 
 private:

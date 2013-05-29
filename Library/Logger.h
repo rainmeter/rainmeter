@@ -29,10 +29,10 @@ class CLogger
 public:
 	enum class Level
 	{
-		Error,
-		Warning,
-		Notice,
-		Debug
+		Error   = 1,
+		Warning = 2,
+		Notice  = 3,
+		Debug   = 4
 	};
 
 	struct Entry
