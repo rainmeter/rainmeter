@@ -18,8 +18,9 @@
 
 #include "StdAfx.h"
 #include "Logger.h"
-#include "Rainmeter.h"
 #include "DialogAbout.h"
+#include "Litestep.h"
+#include "Rainmeter.h"
 #include "System.h"
 #include "resource.h"
 
@@ -121,6 +122,7 @@ void CLogger::LogInternal(Level level, ULONGLONG timestamp, const WCHAR* msg)
 	}
 
 	CDialogAbout::AddLogItem(level, timestampSz, msg);
+	WriteToLogFile(entry);
 }
 
 void CLogger::WriteToLogFile(Entry& entry)
