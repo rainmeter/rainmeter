@@ -91,7 +91,7 @@ void CMeasureCPU::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	if (processor < 0 || processor > c_NumOfProcessors)
 	{
-		CLogger_WarningF(L"CPU: Processor=%i invalid in [%s]", processor, section);
+		LogWarningF(L"CPU: Processor=%i invalid in [%s]", processor, section);
 		processor = 0;
 	}
 

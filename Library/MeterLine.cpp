@@ -159,7 +159,7 @@ void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		CLogger_ErrorF(L"GraphStart=%s is not valid in [%s]", graph, m_Name.c_str());
+		LogErrorF(L"GraphStart=%s is not valid in [%s]", graph, m_Name.c_str());
 	}
 
 	graph = parser.ReadString(section, L"GraphOrientation", L"VERTICAL").c_str();
@@ -173,7 +173,7 @@ void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		CLogger_ErrorF(L"GraphOrientation=%s is not valid in [%s]", graph, m_Name.c_str());
+		LogErrorF(L"GraphOrientation=%s is not valid in [%s]", graph, m_Name.c_str());
 	}
 
 	if (m_Initialized)

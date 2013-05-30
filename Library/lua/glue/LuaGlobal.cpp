@@ -54,7 +54,7 @@ static int Print(lua_State* L)
 		lua_pop(L, 1);
 	}
 
-	CLogger::Debug(StringUtil::Widen(message).c_str());
+	LogDebug(StringUtil::Widen(message).c_str());
 	return 0;
 }
 

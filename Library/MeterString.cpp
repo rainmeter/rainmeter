@@ -201,7 +201,7 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		break;
 
 	default:
-		CLogger_ErrorF(L"ClipString=%s is not valid in [%s]", clipping, m_Name.c_str());
+		LogErrorF(L"ClipString=%s is not valid in [%s]", clipping, m_Name.c_str());
 	}
 
 	m_FontFace = parser.ReadString(section, L"FontFace", L"Arial");
@@ -292,7 +292,7 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		CLogger_ErrorF(L"StringCase=%s is not valid in [%s]", stringCase, m_Name.c_str());
+		LogErrorF(L"StringCase=%s is not valid in [%s]", stringCase, m_Name.c_str());
 	}
 
 	const WCHAR* style = parser.ReadString(section, L"StringStyle", L"NORMAL").c_str();
@@ -314,7 +314,7 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		CLogger_ErrorF(L"StringStyle=%s is not valid in [%s]", style, m_Name.c_str());
+		LogErrorF(L"StringStyle=%s is not valid in [%s]", style, m_Name.c_str());
 	}
 
 	const WCHAR* effect = parser.ReadString(section, L"StringEffect", L"NONE").c_str();
@@ -332,7 +332,7 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		CLogger_ErrorF(L"StringEffect=%s is not valid in [%s]", effect, m_Name.c_str());
+		LogErrorF(L"StringEffect=%s is not valid in [%s]", effect, m_Name.c_str());
 	}
 
 	if (m_Initialized &&
@@ -627,23 +627,23 @@ void CMeterString::EnumerateInstalledFontFamilies()
 					}
 					fonts += L", ";
 				}
-				CLogger::Warning(fonts.c_str());
+				LogWarning(fonts.c_str());
 			}
 			else
 			{
-				CLogger::Error(L"Font enumeration: GetFamilies failed");
+				LogError(L"Font enumeration: GetFamilies failed");
 			}
 
 			delete [] fontFamilies;
 		}
 		else
 		{
-			CLogger::Warning(L"No installed fonts");
+			LogWarning(L"No installed fonts");
 		}
 	}
 	else
 	{
-		CLogger::Error(L"Font enumeration: InstalledFontCollection failed");
+		LogError(L"Font enumeration: InstalledFontCollection failed");
 	}
 }
 
@@ -651,10 +651,10 @@ void CMeterString::InitializeStatic()
 {
 	if (Rainmeter->GetDebug())
 	{
-		CLogger::Debug(L"------------------------------");
-		CLogger::Debug(L"* Font families:");
+		LogDebug(L"------------------------------");
+		LogDebug(L"* Font families:");
 		EnumerateInstalledFontFamilies();
-		CLogger::Debug(L"------------------------------");
+		LogDebug(L"------------------------------");
 	}
 }
 

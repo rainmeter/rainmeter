@@ -56,27 +56,6 @@ public:
 	void Log(Level level, const WCHAR* msg);
 	void LogF(Level level, const WCHAR* format, ...);
 
-	// Convenience functions.
-	static void Error(const WCHAR* msg) { GetInstance().Log(Level::Error, msg); }
-	static void Warning(const WCHAR* msg) { GetInstance().Log(Level::Warning, msg); }
-	static void Notice(const WCHAR* msg) { GetInstance().Log(Level::Notice, msg); }
-	static void Debug(const WCHAR* msg) { GetInstance().Log(Level::Debug, msg); }
-
-	// TODO: Uncomment when VS supports variadic templates.
-	/*
-	template<typename... Args>
-	static void ErrorF(const WCHAR* format, Args... args) { GetInstance().LogF(Level::Error, args...); }
-
-	template<typename... Args>
-	static void WarningF(const WCHAR* format, Args... args) { GetInstance().LogF(Level::Warning, args...); }
-
-	template<typename... Args>
-	static void NoticeF(const WCHAR* format, Args... args) { GetInstance().LogF(Level::Notice, args...); }
-
-	template<typename... Args>
-	static void DebugF(const WCHAR* format, Args... args) { GetInstance().LogF(Level::Debug, args...); }
-	*/
-
 	const std::wstring& GetLogFilePath() { return m_LogFilePath; }
 
 	const std::list<Entry>& GetEntries() { return m_Entries; }
@@ -99,12 +78,31 @@ private:
 	CRITICAL_SECTION m_CsLogDelay;
 };
 
+// Convenience functions.
+#define RM_LOGGER_DEFINE_LOG_FUNCTION(name) \
+	inline void Log ## name(const WCHAR* msg) \
+	{ \
+		CLogger::GetInstance().Log(CLogger::Level::name, msg); \
+	} \
+/*	\
+	template<typename... Args> \
+	inline void Log ## name ## F(const WCHAR* format, Args... args) \
+	{ \
+		GetInstance().LogF(CLogger::Level::name, args...); \
+	}
+*/
+
+RM_LOGGER_DEFINE_LOG_FUNCTION(Error)
+RM_LOGGER_DEFINE_LOG_FUNCTION(Warning)
+RM_LOGGER_DEFINE_LOG_FUNCTION(Notice)
+RM_LOGGER_DEFINE_LOG_FUNCTION(Debug)
+
 // FIXME: Temporary solution until VS support variadic macros.
 #define RM_LOGGER_LOGF_HELPER(name, format, ...) \
 	CLogger::GetInstance().LogF(CLogger::Level::name, format, __VA_ARGS__);
-#define CLogger_ErrorF(format, ...) RM_LOGGER_LOGF_HELPER(Error, format, __VA_ARGS__)
-#define CLogger_WarningF(format, ...) RM_LOGGER_LOGF_HELPER(Warning, format, __VA_ARGS__)
-#define CLogger_NoticeF(format, ...) RM_LOGGER_LOGF_HELPER(Notice, format, __VA_ARGS__)
-#define CLogger_DebugF(format, ...) RM_LOGGER_LOGF_HELPER(Debug, format, __VA_ARGS__)
+#define LogErrorF(format, ...) RM_LOGGER_LOGF_HELPER(Error, format, __VA_ARGS__)
+#define LogWarningF(format, ...) RM_LOGGER_LOGF_HELPER(Warning, format, __VA_ARGS__)
+#define LogNoticeF(format, ...) RM_LOGGER_LOGF_HELPER(Notice, format, __VA_ARGS__)
+#define LogDebugF(format, ...) RM_LOGGER_LOGF_HELPER(Debug, format, __VA_ARGS__)
 
 #endif

@@ -122,7 +122,7 @@ void CMeterBar::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		CLogger_ErrorF(L"BarOrientation=%s is not valid in [%s]", orientation, m_Name.c_str());
+		LogErrorF(L"BarOrientation=%s is not valid in [%s]", orientation, m_Name.c_str());
 	}
 
 	if (m_Initialized)

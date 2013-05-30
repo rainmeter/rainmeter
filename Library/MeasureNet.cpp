@@ -80,8 +80,8 @@ void CMeasureNet::UpdateIFTable()
 
 			if (Rainmeter->GetDebug() && logging)
 			{
-				CLogger::Debug(L"------------------------------");
-				CLogger_DebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
+				LogDebug(L"------------------------------");
+				LogDebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
 
 				for (size_t i = 0; i < c_NumOfTables; ++i)
 				{
@@ -108,14 +108,14 @@ void CMeasureNet::UpdateIFTable()
 						break;
 					}
 
-					CLogger_DebugF(L"%i: %s", (int)i + 1, ifTable->Table[i].Description);
-					CLogger_DebugF(L"  Alias: %s", ifTable->Table[i].Alias);
-					CLogger_DebugF(L"  Type=%s(%i), Hardware=%s, Filter=%s",
+					LogDebugF(L"%i: %s", (int)i + 1, ifTable->Table[i].Description);
+					LogDebugF(L"  Alias: %s", ifTable->Table[i].Alias);
+					LogDebugF(L"  Type=%s(%i), Hardware=%s, Filter=%s",
 						type, ifTable->Table[i].Type,
 						(ifTable->Table[i].InterfaceAndOperStatusFlags.HardwareInterface == 1) ? L"Yes" : L"No",
 						(ifTable->Table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) ? L"Yes" : L"No");
 				}
-				CLogger::Debug(L"------------------------------");
+				LogDebug(L"------------------------------");
 			}
 		}
 		else
@@ -173,8 +173,8 @@ void CMeasureNet::UpdateIFTable()
 
 				if (Rainmeter->GetDebug() && logging)
 				{
-					CLogger::Debug(L"------------------------------");
-					CLogger_DebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
+					LogDebug(L"------------------------------");
+					LogDebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
 
 					for (size_t i = 0; i < c_NumOfTables; ++i)
 					{
@@ -204,10 +204,10 @@ void CMeasureNet::UpdateIFTable()
 							break;
 						}
 
-						CLogger_DebugF(L"%i: %.*S", (int)i + 1, ifTable->table[i].dwDescrLen, (char*)ifTable->table[i].bDescr);
-						CLogger_DebugF(L"  Type=%s(%i)", type, ifTable->table[i].dwType);
+						LogDebugF(L"%i: %.*S", (int)i + 1, ifTable->table[i].dwDescrLen, (char*)ifTable->table[i].bDescr);
+						LogDebugF(L"  Type=%s(%i)", type, ifTable->table[i].dwType);
 					}
-					CLogger::Debug(L"------------------------------");
+					LogDebug(L"------------------------------");
 				}
 			}
 			else

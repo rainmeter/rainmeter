@@ -182,7 +182,7 @@ void CMeasureDiskSpace::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_Drive = parser.ReadString(section, L"Drive", L"C:\\");
 	if (m_Drive.empty())
 	{
-		CLogger::Warning(L"FreeDiskSpace: Drive= empty");
+		LogWarning(L"FreeDiskSpace: Drive= empty");
 		m_Value = 0.0;
 		m_MaxValue = 0.0;
 		m_OldTotalBytes = 0;

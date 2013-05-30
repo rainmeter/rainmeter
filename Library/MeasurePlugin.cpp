@@ -143,7 +143,7 @@ void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		}
 		if (!m_Plugin)
 		{
-			CLogger_ErrorF(L"Plugin: \"%s\" not found", pluginName.c_str());
+			LogErrorF(L"Plugin: \"%s\" not found", pluginName.c_str());
 			return;
 		}
 	}

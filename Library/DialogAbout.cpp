@@ -1083,7 +1083,7 @@ void CDialogAbout::CTabPlugins::Initialize()
 			}
 			else
 			{
-				CLogger_ErrorF(L"Unable to load plugin: %s (%u)", tmpSz.c_str(), err);
+				LogErrorF(L"Unable to load plugin: %s (%u)", tmpSz.c_str(), err);
 			}
 		}
 		while (FindNextFile(hSearch, &fd));

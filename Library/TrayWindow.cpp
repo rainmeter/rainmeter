@@ -434,14 +434,14 @@ void CTrayWindow::ReadOptions(CConfigParser& parser)
 					{
 						delete m_Bitmap;
 						m_Bitmap = NULL;
-						CLogger_WarningF(L"Bitmap image not found: %s", imagePath);
+						LogWarningF(L"Bitmap image not found: %s", imagePath);
 					}
 				}
 			}
 		}
 		else
 		{
-			CLogger_ErrorF(L"No such TrayMeter: %s", type);
+			LogErrorF(L"No such TrayMeter: %s", type);
 		}
 
 		TryAddTrayIcon();
