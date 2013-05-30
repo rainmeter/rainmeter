@@ -64,7 +64,12 @@ namespace DllExporter
 
             // Disassemble
             Process ildasmProc = new Process();
-            string ildasmArgs = string.Format("/nobar /output=\"{0}\" \"{1}\"", targetIlName, targetDllName);
+            string ildasmArgs = string.Format(
+                "/nobar {0} /output=\"{1}\" \"{2}\"",
+                isDebug ? "/linenum" : "",
+                targetIlName,
+                targetDllName);
+
             ildasmProc.StartInfo = new ProcessStartInfo(ildasmPath, ildasmArgs);
             ildasmProc.StartInfo.UseShellExecute = false;
             ildasmProc.StartInfo.CreateNoWindow = false;
