@@ -1041,7 +1041,7 @@ INT_PTR CDialogManage::CTabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_CreateSkinPackageButton:
 		{
 			std::wstring file = Rainmeter->GetPath() + L"SkinInstaller.exe";
-			RunFile(file.c_str(), L"/Packager");
+			CCommandHandler::RunFile(file.c_str(), L"/Packager");
 		}
 		break;
 
@@ -1733,7 +1733,7 @@ INT_PTR CDialogManage::CTabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			args += layouts[sel];
 			args += L"\\Rainmeter.ini";
 			args += L'"';
-			RunFile(Rainmeter->GetSkinEditor().c_str(), args.c_str());
+			CCommandHandler::RunFile(Rainmeter->GetSkinEditor().c_str(), args.c_str());
 		}
 		break;
 

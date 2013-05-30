@@ -161,7 +161,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 	}
 	else if (_wcsicmp(command, L"GetWindow") == 0)
 	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(data);
+		std::vector<std::wstring> subStrings = CCommandHandler::ParseString(data);
 
 		if (subStrings.size() >= 1)
 		{
@@ -181,7 +181,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 	}
 	else if (_wcsicmp(command, L"GetVariable") == 0)
 	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(data);
+		std::vector<std::wstring> subStrings = CCommandHandler::ParseString(data);
 
 		if (subStrings.size() >= 2)
 		{
@@ -204,7 +204,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 	}
 	else if (_wcsicmp(command, L"SetVariable") == 0)
 	{
-		std::vector<std::wstring> subStrings = CRainmeter::ParseString(data);
+		std::vector<std::wstring> subStrings = CCommandHandler::ParseString(data);
 
 		if (subStrings.size() == 3)
 		{

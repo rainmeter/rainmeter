@@ -706,20 +706,20 @@ void CMeterWindow::ChangeSingleZPos(ZPOSITION zPos, bool all)
 ** Runs the bang command with the given arguments.
 ** Correct number of arguments must be passed (or use CRainmeter::ExecuteBang).
 */
-void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& args)
+void CMeterWindow::DoBang(Bang bang, const std::vector<std::wstring>& args)
 {
 	switch (bang)
 	{
-	case BANG_REFRESH:
+	case Bang::Refresh:
 		// Refresh needs to be delayed since it crashes if done during Update()
 		PostMessage(m_Window, WM_METERWINDOW_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
 		break;
 
-	case BANG_REDRAW:
+	case Bang::Redraw:
 		Redraw();
 		break;
 
-	case BANG_UPDATE:
+	case Bang::Update:
 		KillTimer(m_Window, TIMER_METER);  // Kill timer temporarily
 		Update(false);
 		if (m_WindowUpdate >= 0)
@@ -728,122 +728,122 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 		}
 		break;
 
-	case BANG_SHOWBLUR:
+	case Bang::ShowBlur:
 		ShowBlur();
 		break;
 
-	case BANG_HIDEBLUR:
+	case Bang::HideBlur:
 		HideBlur();
 		break;
 
-	case BANG_TOGGLEBLUR:
-		RunBang(IsBlur() ? BANG_HIDEBLUR : BANG_SHOWBLUR, args);
+	case Bang::ToggleBlur:
+		DoBang(IsBlur() ? Bang::HideBlur : Bang::ShowBlur, args);
 		break;
 
-	case BANG_ADDBLUR:
+	case Bang::AddBlur:
 		ResizeBlur(args[0], RGN_OR);
 		if (IsBlur()) ShowBlur();
 		break;
 
-	case BANG_REMOVEBLUR:
+	case Bang::RemoveBlur:
 		ResizeBlur(args[0], RGN_DIFF);
 		if (IsBlur()) ShowBlur();
 		break;
 
-	case BANG_TOGGLEMETER:
+	case Bang::ToggleMeter:
 		ToggleMeter(args[0]);
 		break;
 
-	case BANG_SHOWMETER:
+	case Bang::ShowMeter:
 		ShowMeter(args[0]);
 		break;
 
-	case BANG_HIDEMETER:
+	case Bang::HideMeter:
 		HideMeter(args[0]);
 		break;
 
-	case BANG_UPDATEMETER:
+	case Bang::UpdateMeter:
 		UpdateMeter(args[0]);
 		break;
 
-	case BANG_TOGGLEMETERGROUP:
+	case Bang::ToggleMeterGroup:
 		ToggleMeter(args[0], true);
 		break;
 
-	case BANG_SHOWMETERGROUP:
+	case Bang::ShowMeterGroup:
 		ShowMeter(args[0], true);
 		break;
 
-	case BANG_HIDEMETERGROUP:
+	case Bang::HideMeterGroup:
 		HideMeter(args[0], true);
 		break;
 
-	case BANG_UPDATEMETERGROUP:
+	case Bang::UpdateMeterGroup:
 		UpdateMeter(args[0], true);
 		break;
 
-	case BANG_TOGGLEMEASURE:
+	case Bang::ToggleMeasure:
 		ToggleMeasure(args[0]);
 		break;
 
-	case BANG_ENABLEMEASURE:
+	case Bang::EnableMeasure:
 		EnableMeasure(args[0]);
 		break;
 
-	case BANG_DISABLEMEASURE:
+	case Bang::DisableMeasure:
 		DisableMeasure(args[0]);
 		break;
 
-	case BANG_UPDATEMEASURE:
+	case Bang::UpdateMeasure:
 		UpdateMeasure(args[0]);
 		CDialogAbout::UpdateMeasures(this);
 		break;
 
-	case BANG_DISABLEMEASUREGROUP:
+	case Bang::DisableMeasureGroup:
 		DisableMeasure(args[0], true);
 		break;
 
-	case BANG_TOGGLEMEASUREGROUP:
+	case Bang::ToggleMeasureGroup:
 		ToggleMeasure(args[0], true);
 		break;
 
-	case BANG_ENABLEMEASUREGROUP:
+	case Bang::EnableMeasureGroup:
 		EnableMeasure(args[0], true);
 		break;
 
-	case BANG_UPDATEMEASUREGROUP:
+	case Bang::UpdateMeasureGroup:
 		UpdateMeasure(args[0], true);
 		CDialogAbout::UpdateMeasures(this);
 		break;
 
-	case BANG_SHOW:
+	case Bang::Show:
 		m_Hidden = false;
 		ShowWindow(m_Window, SW_SHOWNOACTIVATE);
 		UpdateWindowTransparency((m_WindowHide == HIDEMODE_FADEOUT) ? 255 : m_AlphaValue);
 		break;
 
-	case BANG_HIDE:
+	case Bang::Hide:
 		m_Hidden = true;
 		ShowWindow(m_Window, SW_HIDE);
 		break;
 
-	case BANG_TOGGLE:
-		RunBang(m_Hidden ? BANG_SHOW : BANG_HIDE, args);
+	case Bang::Toggle:
+		DoBang(m_Hidden ? Bang::Show : Bang::Toggle, args);
 		break;
 
-	case BANG_SHOWFADE:
+	case Bang::ShowFade:
 		ShowFade();
 		break;
 
-	case BANG_HIDEFADE:
+	case Bang::HideFade:
 		HideFade();
 		break;
 
-	case BANG_TOGGLEFADE:
-		RunBang(m_Hidden ? BANG_SHOWFADE : BANG_HIDEFADE, args);
+	case Bang::ToggleFade:
+		DoBang(m_Hidden ? Bang::ShowFade : Bang::HideFade, args);
 		break;
 
-	case BANG_MOVE:
+	case Bang::Move:
 		{
 			int x = m_Parser.ParseInt(args[0].c_str(), 0);
 			int y = m_Parser.ParseInt(args[1].c_str(), 0);
@@ -851,39 +851,39 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 		}
 		break;
 
-	case BANG_ZPOS:
+	case Bang::ZPos:
 		SetWindowZPosition((ZPOSITION)m_Parser.ParseInt(args[0].c_str(), 0));
 		break;
 
-	case BANG_CLICKTHROUGH:
+	case Bang::ClickThrough:
 		{
 			int f = m_Parser.ParseInt(args[0].c_str(), 0);
 			SetClickThrough((f == -1) ? !m_ClickThrough : f);
 		}
 		break;
 
-	case BANG_DRAGGABLE:
+	case Bang::Draggable:
 		{
 			int f = m_Parser.ParseInt(args[0].c_str(), 0);
 			SetWindowDraggable((f == -1) ? !m_WindowDraggable : f);
 		}
 		break;
 
-	case BANG_SNAPEDGES:
+	case Bang::SnapEdges:
 		{
 			int f = m_Parser.ParseInt(args[0].c_str(), 0);
 			SetSnapEdges((f == -1) ? !m_SnapEdges : f);
 		}
 		break;
 
-	case BANG_KEEPONSCREEN:
+	case Bang::KeepOnScreen:
 		{
 			int f = m_Parser.ParseInt(args[0].c_str(), 0);
 			SetKeepOnScreen((f == -1) ? !m_KeepOnScreen : f);
 		}
 		break;
 
-	case BANG_SETTRANSPARENCY:
+	case Bang::SetTransparency:
 		{
 			const std::wstring& arg = args[0];
 			m_AlphaValue = CConfigParser::ParseInt(arg.c_str(), 255);
@@ -893,7 +893,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 		}
 		break;
 
-	case BANG_MOVEMETER:
+	case Bang::MoveMeter:
 		{
 			int x = m_Parser.ParseInt(args[0].c_str(), 0);
 			int y = m_Parser.ParseInt(args[1].c_str(), 0);
@@ -901,7 +901,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 		}
 		break;
 
-	case BANG_COMMANDMEASURE:
+	case Bang::CommandMeasure:
 		{
 			const std::wstring& measure = args[0];
 			CMeasure* m = GetMeasure(measure);
@@ -916,7 +916,7 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 		}
 		break;
 
-	case BANG_PLUGIN:
+	case Bang::PluginBang:
 		{
 			std::wstring arg = args[0];
 			std::wstring::size_type pos;
@@ -956,15 +956,15 @@ void CMeterWindow::RunBang(BANGCOMMAND bang, const std::vector<std::wstring>& ar
 		}
 		break;
 
-	case BANG_SETVARIABLE:
+	case Bang::SetVariable:
 		SetVariable(args[0], args[1]);
 		break;
 
-	case BANG_SETOPTION:
+	case Bang::SetOption:
 		SetOption(args[0], args[1], args[2], false);
 		break;
 
-	case BANG_SETOPTIONGROUP:
+	case Bang::SetOptionGroup:
 		SetOption(args[0], args[1], args[2], true);
 		break;
 	}

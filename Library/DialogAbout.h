@@ -20,6 +20,8 @@
 #define __DIALOGABOUT_H__
 
 #include "../Common/Dialog.h"
+#include "Logger.h"
+#include "MeterWindow.h"
 
 class CDialogAbout : public CDialog
 {

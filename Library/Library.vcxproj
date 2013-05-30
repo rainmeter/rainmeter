@@ -84,6 +84,9 @@
     <ClCompile Include="..\Common\MenuTemplate.cpp" />
     <ClCompile Include="..\Common\Platform.cpp" />
     <ClCompile Include="..\Common\StringUtil.cpp" />
+    <ClCompile Include="CommandHandler.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="ConfigParser.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -312,6 +315,7 @@
     <ClInclude Include="..\Common\MenuTemplate.h" />
     <ClInclude Include="..\Common\Platform.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
+    <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="DialogAbout.h" />
     <ClInclude Include="DisableThreadLibraryCalls.h" />

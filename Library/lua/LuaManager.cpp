@@ -17,8 +17,9 @@
 */
 
 #include "../StdAfx.h"
+#include "../../Common/StringUtil.h"
 #include "LuaManager.h"
-#include "../Rainmeter.h"
+#include "../Logger.h"
 
 int LuaManager::c_RefCount = 0;
 lua_State* LuaManager::c_State = 0;

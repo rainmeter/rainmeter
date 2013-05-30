@@ -30,9 +30,6 @@ UINT GetUniqueID();
 template <typename T>
 UINT TypeID() { static UINT id = GetUniqueID(); return id; }
 
-void RunCommand(std::wstring command);
-void RunFile(const WCHAR* file, const WCHAR* args = NULL);
-
 WCHAR* GetString(UINT id);
 std::wstring GetFormattedString(UINT id, ...);
 

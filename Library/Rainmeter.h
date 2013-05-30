@@ -24,7 +24,7 @@
 #include <vector>
 #include <list>
 #include <string>
-#include "Litestep.h"
+#include "CommandHandler.h"
 #include "Logger.h"
 #include "MeterWindow.h"
 
@@ -212,28 +212,14 @@ public:
 	bool LoadLayout(const std::wstring& name);
 	void PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace = true);
 
-	static std::vector<std::wstring> ParseString(LPCTSTR str, CConfigParser* parser = NULL);
 	static std::wstring ExtractPath(const std::wstring& strFilePath);
 	static void ExpandEnvironmentVariables(std::wstring& strPath);
 
+	friend class CCommandHandler;
 	friend class CDialogManage;
 
 private:
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-	void BangWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& args, size_t numOfArgs, CMeterWindow* meterWindow);
-	void BangGroupWithArgs(BANGCOMMAND bang, std::vector<std::wstring>& args, size_t numOfArgs, CMeterWindow* meterWindow);
-	void Bang_ActivateSkin(std::vector<std::wstring>& args);
-	void Bang_DeactivateSkin(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
-	void Bang_ToggleSkin(std::vector<std::wstring>& args);
-	void Bang_DeactivateSkinGroup(std::vector<std::wstring>& args);
-	void Bang_LoadLayout(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
-	void Bang_SetClip(std::vector<std::wstring>& args);
-	void Bang_SetWallpaper(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
-	void Bang_SkinMenu(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
-	void Bang_TrayMenu();
-	void Bang_WriteKeyValue(std::vector<std::wstring>& args, CMeterWindow* meterWindow);
-	void Bang_Log(std::vector<std::wstring>& args);
 
 	void ActivateActiveSkins();
 	void CreateMeterWindow(const std::wstring& folderPath, const std::wstring& file);
@@ -305,6 +291,8 @@ private:
 	bool m_DisableDragging;
 
 	std::wstring m_SkinEditor;
+
+	CCommandHandler m_CommandHandler;
 
 	CConfigParser* m_CurrentParser;
 

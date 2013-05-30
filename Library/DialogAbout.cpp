@@ -1252,11 +1252,11 @@ INT_PTR CDialogAbout::CTabVersion::OnNotify(WPARAM wParam, LPARAM lParam)
 	case NM_CLICK:
 		if (nm->idFrom == Id_HomeLink)
 		{
-			RunFile(L"http://rainmeter.net");
+			CCommandHandler::RunFile(L"http://rainmeter.net");
 		}
 		else if (nm->idFrom == Id_HomeLink)
 		{
-			RunFile(L"http://gnu.org/licenses");
+			CCommandHandler::RunFile(L"http://gnu.org/licenses");
 		}
 		break;
 

@@ -17,9 +17,9 @@
 */
 
 #include "../StdAfx.h"
+#include "../../Common/StringUtil.h"
 #include "LuaScript.h"
 #include "LuaManager.h"
-#include "../Rainmeter.h"
 
 /*
 ** The constructor

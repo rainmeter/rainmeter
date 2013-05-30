@@ -393,6 +393,9 @@
     <ClCompile Include="Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CommandHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigParser.h">
@@ -684,6 +687,9 @@
       <Filter>Common\Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

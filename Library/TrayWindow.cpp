@@ -475,11 +475,11 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			break;
 
 		case IDM_SHOW_HELP:
-			RunFile(RAINMETER_HELP);
+			CCommandHandler::RunFile(RAINMETER_HELP);
 			break;
 
 		case IDM_NEW_VERSION:
-			RunFile(RAINMETER_OFFICIAL);
+			CCommandHandler::RunFile(RAINMETER_OFFICIAL);
 			break;
 
 		case IDM_REFRESH:
@@ -634,7 +634,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				}
 				else if (tray->m_Notification == TRAY_NOTIFICATION_UPDATE)
 				{
-					RunFile(RAINMETER_OFFICIAL);
+					CCommandHandler::RunFile(RAINMETER_OFFICIAL);
 				}
 				tray->m_Notification = TRAY_NOTIFICATION_NONE;
 				break;

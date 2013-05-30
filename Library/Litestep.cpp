@@ -30,65 +30,6 @@ UINT GetUniqueID()
 	return id++;
 }
 
-void RunCommand(std::wstring command)
-{
-	std::wstring args;
-
-	size_t notwhite = command.find_first_not_of(L" \t\r\n");
-	command.erase(0, notwhite);
-
-	size_t quotePos = command.find(L'"');
-	if (quotePos == 0)
-	{
-		size_t quotePos2 = command.find(L'"', quotePos + 1);
-		if (quotePos2 != std::wstring::npos)
-		{
-			args.assign(command, quotePos2 + 1, command.length() - (quotePos2 + 1));
-			command.assign(command, quotePos + 1, quotePos2 - quotePos - 1);
-		}
-		else
-		{
-			command.erase(0, 1);
-		}
-	}
-	else
-	{
-		size_t spacePos = command.find(L' ');
-		if (spacePos != std::wstring::npos)
-		{
-			args.assign(command, spacePos + 1, command.length() - (spacePos + 1));
-			command.erase(spacePos);
-		}
-	}
-
-	if (!command.empty())
-	{
-		RunFile(command.c_str(), args.c_str());
-	}
-}
-
-void RunFile(const WCHAR* file, const WCHAR* args)
-{
-	SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
-	si.lpVerb = L"open";
-	si.lpFile = file;
-	si.nShow = SW_SHOWNORMAL;
-
-	DWORD type = GetFileAttributes(si.lpFile);
-	if (type & FILE_ATTRIBUTE_DIRECTORY && type != 0xFFFFFFFF)
-	{
-		ShellExecute(si.hwnd, si.lpVerb, si.lpFile, NULL, NULL, si.nShow);
-	}
-	else
-	{
-		std::wstring dir = CRainmeter::ExtractPath(file);
-		si.lpDirectory = dir.c_str();
-		si.lpParameters = args;
-		si.fMask = SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI;
-		ShellExecuteEx(&si);
-	}
-}
-
 WCHAR* GetString(UINT id)
 {
 	LPWSTR pData;
