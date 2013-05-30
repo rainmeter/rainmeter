@@ -845,7 +845,8 @@ void CCommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, CMete
 	if (skin)
 	{
 		double value;
-		if (skin->GetParser().ParseFormula(strValue, &value))
+		formula = skin->GetParser().ParseFormula(strValue, &value); 
+		if (formula)
 		{
 			WCHAR buffer[256];
 			int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
