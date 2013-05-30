@@ -97,9 +97,9 @@ RM_LOGGER_DEFINE_LOG_FUNCTION(Warning)
 RM_LOGGER_DEFINE_LOG_FUNCTION(Notice)
 RM_LOGGER_DEFINE_LOG_FUNCTION(Debug)
 
-// FIXME: Temporary solution until VS support variadic macros.
+// FIXME: Temporary solution until VS support variadic templates.
 #define RM_LOGGER_LOGF_HELPER(name, format, ...) \
-	CLogger::GetInstance().LogF(CLogger::Level::name, format, __VA_ARGS__);
+	CLogger::GetInstance().LogF(CLogger::Level::name, format, __VA_ARGS__)
 #define LogErrorF(format, ...) RM_LOGGER_LOGF_HELPER(Error, format, __VA_ARGS__)
 #define LogWarningF(format, ...) RM_LOGGER_LOGF_HELPER(Warning, format, __VA_ARGS__)
 #define LogNoticeF(format, ...) RM_LOGGER_LOGF_HELPER(Notice, format, __VA_ARGS__)
