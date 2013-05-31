@@ -42,26 +42,26 @@ enum INTERVAL
 	INTERVAL_RESUME         = 1000
 };
 
-MultiMonitorInfo CSystem::c_Monitors = { 0 };
+MultiMonitorInfo System::c_Monitors = { 0 };
 
-HWND CSystem::c_Window = NULL;
-HWND CSystem::c_HelperWindow = NULL;
+HWND System::c_Window = NULL;
+HWND System::c_HelperWindow = NULL;
 
-HWINEVENTHOOK CSystem::c_WinEventHook = NULL;
+HWINEVENTHOOK System::c_WinEventHook = NULL;
 
-bool CSystem::c_ShowDesktop = false;
+bool System::c_ShowDesktop = false;
 
-std::wstring CSystem::c_WorkingDirectory;
+std::wstring System::c_WorkingDirectory;
 
-std::vector<std::wstring> CSystem::c_IniFileMappings;
+std::vector<std::wstring> System::c_IniFileMappings;
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 /*
 ** Creates a helper window to detect changes in the system.
 **
 */
-void CSystem::Initialize(HINSTANCE instance)
+void System::Initialize(HINSTANCE instance)
 {
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = (WNDPROC)WndProc;
@@ -123,7 +123,7 @@ void CSystem::Initialize(HINSTANCE instance)
 ** Destroys a window.
 **
 */
-void CSystem::Finalize()
+void System::Finalize()
 {
 	KillTimer(c_Window, TIMER_SHOWDESKTOP);
 	KillTimer(c_Window, TIMER_RESUME);
@@ -159,7 +159,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 	info.cbSize = sizeof(MONITORINFOEX);
 	GetMonitorInfo(hMonitor, &info);
 
-	if (Rainmeter->GetDebug())
+	if (g_Rainmeter->GetDebug())
 	{
 		LogDebug(info.szDevice);
 		LogDebugF(L"  Flags    : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
@@ -225,7 +225,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 ** Returns the number of monitors.
 **
 */
-size_t CSystem::GetMonitorCount()
+size_t System::GetMonitorCount()
 {
 	if (c_Monitors.monitors.empty())
 	{
@@ -238,10 +238,10 @@ size_t CSystem::GetMonitorCount()
 ** Sets the multi-monitor information.
 **
 */
-void CSystem::SetMultiMonitorInfo()
+void System::SetMultiMonitorInfo()
 {
 	std::vector<MonitorInfo>& monitors = c_Monitors.monitors;
-	bool logging = Rainmeter->GetDebug();
+	bool logging = g_Rainmeter->GetDebug();
 
 	c_Monitors.vsT = GetSystemMetrics(SM_YVIRTUALSCREEN);
 	c_Monitors.vsL = GetSystemMetrics(SM_XVIRTUALSCREEN);
@@ -509,7 +509,7 @@ void CSystem::SetMultiMonitorInfo()
 ** Updates the workarea information.
 **
 */
-void CSystem::UpdateWorkareaInfo()
+void System::UpdateWorkareaInfo()
 {
 	std::vector<MonitorInfo>& monitors = c_Monitors.monitors;
 
@@ -529,7 +529,7 @@ void CSystem::UpdateWorkareaInfo()
 
 			(*iter).work = info.rcWork;
 
-			if (Rainmeter->GetDebug())
+			if (g_Rainmeter->GetDebug())
 			{
 				LogDebugF(L"WorkArea@%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 					i,
@@ -544,7 +544,7 @@ void CSystem::UpdateWorkareaInfo()
 ** Finds the Default Shell's window.
 **
 */
-HWND CSystem::GetDefaultShellWindow()
+HWND System::GetDefaultShellWindow()
 {
 	static HWND c_ShellW = NULL;  // cache
 	HWND ShellW = GetShellWindow();
@@ -576,7 +576,7 @@ HWND CSystem::GetDefaultShellWindow()
 ** If the WorkerW window is not active, returns NULL.
 **
 */
-HWND CSystem::GetWorkerW()
+HWND System::GetWorkerW()
 {
 	static HWND c_DefView = NULL;  // cache
 	HWND ShellW = GetDefaultShellWindow();
@@ -627,14 +627,14 @@ HWND CSystem::GetWorkerW()
 ** ZPOSITION_BOTTOM, or ZPOSITION_NORMAL.
 **
 */
-HWND CSystem::GetBackmostTopWindow()
+HWND System::GetBackmostTopWindow()
 {
 	HWND winPos = c_HelperWindow;
 
 	// Skip all ZPOSITION_ONDESKTOP, ZPOSITION_BOTTOM, and ZPOSITION_NORMAL windows
 	while (winPos = ::GetNextWindow(winPos, GW_HWNDPREV))
 	{
-		CMeterWindow* wnd = Rainmeter->GetMeterWindow(winPos);
+		MeterWindow* wnd = g_Rainmeter->GetMeterWindow(winPos);
 		if (!wnd ||
 			(wnd->GetWindowZPosition() != ZPOSITION_NORMAL && 
 			wnd->GetWindowZPosition() != ZPOSITION_ONDESKTOP &&
@@ -651,7 +651,7 @@ HWND CSystem::GetBackmostTopWindow()
 ** Checks whether the given windows belong to the same process.
 **
 */
-bool CSystem::BelongToSameProcess(HWND hwndA, HWND hwndB)
+bool System::BelongToSameProcess(HWND hwndA, HWND hwndB)
 {
 	DWORD procAId = 0, procBId = 0;
 
@@ -667,24 +667,24 @@ bool CSystem::BelongToSameProcess(HWND hwndA, HWND hwndB)
 */
 BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
-	bool logging = Rainmeter->GetDebug() && DEBUG_VERBOSE;
+	bool logging = g_Rainmeter->GetDebug() && DEBUG_VERBOSE;
 	const int classLen = _countof(METERWINDOW_CLASS_NAME) + (DEBUG_VERBOSE ? 32 : 1);
 	WCHAR className[classLen];
-	CMeterWindow* Window;
+	MeterWindow* Window;
 	WCHAR flag;
 
 	if (GetClassName(hwnd, className, classLen) > 0 &&
 		wcscmp(className, METERWINDOW_CLASS_NAME) == 0 &&
-		(Window = Rainmeter->GetMeterWindow(hwnd)))
+		(Window = g_Rainmeter->GetMeterWindow(hwnd)))
 	{
 		ZPOSITION zPos = Window->GetWindowZPosition();
 		if (zPos == ZPOSITION_ONDESKTOP ||
-			(zPos == ZPOSITION_NORMAL && Rainmeter->IsNormalStayDesktop()) ||
+			(zPos == ZPOSITION_NORMAL && g_Rainmeter->IsNormalStayDesktop()) ||
 			zPos == ZPOSITION_ONBOTTOM)
 		{
 			if (lParam)
 			{
-				((std::vector<CMeterWindow*>*)lParam)->push_back(Window);
+				((std::vector<MeterWindow*>*)lParam)->push_back(Window);
 			}
 
 			if (logging) flag = L'+';
@@ -704,7 +704,7 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 	{
 		if (logging)
 		{
-			flag = (hwnd == CSystem::GetHelperWindow()) ? L'o' : ' ';
+			flag = (hwnd == System::GetHelperWindow()) ? L'o' : ' ';
 			LogDebugF(L"%c [%c] 0x%p : %s", flag, IsWindowVisible(hwnd) ? L'V' : L'H', hwnd, className);
 		}
 	}
@@ -716,10 +716,10 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 ** Arranges the meter window in Z-order.
 **
 */
-void CSystem::ChangeZPosInOrder()
+void System::ChangeZPosInOrder()
 {
-	bool logging = Rainmeter->GetDebug() && DEBUG_VERBOSE;
-	std::vector<CMeterWindow*> windowsInZOrder;
+	bool logging = g_Rainmeter->GetDebug() && DEBUG_VERBOSE;
+	std::vector<MeterWindow*> windowsInZOrder;
 
 	if (logging) LogDebug(L"1: ----- BEFORE -----");
 
@@ -729,7 +729,7 @@ void CSystem::ChangeZPosInOrder()
 	auto resetZPos = [&](ZPOSITION zpos)
 	{
 		// Reset ZPos in Z-order (Bottom)
-		std::vector<CMeterWindow*>::const_iterator iter = windowsInZOrder.begin();
+		std::vector<MeterWindow*>::const_iterator iter = windowsInZOrder.begin();
 		for ( ; iter != windowsInZOrder.end(); ++iter)
 		{
 			if ((*iter)->GetWindowZPosition() == zpos)
@@ -739,7 +739,7 @@ void CSystem::ChangeZPosInOrder()
 		}
 	};
 
-	if (Rainmeter->IsNormalStayDesktop())
+	if (g_Rainmeter->IsNormalStayDesktop())
 	{
 		resetZPos(ZPOSITION_NORMAL);
 	}
@@ -764,9 +764,9 @@ void CSystem::ChangeZPosInOrder()
 ** Moves the helper window to the reference position.
 **
 */
-void CSystem::PrepareHelperWindow(HWND WorkerW)
+void System::PrepareHelperWindow(HWND WorkerW)
 {
-	bool logging = Rainmeter->GetDebug() && DEBUG_VERBOSE;
+	bool logging = g_Rainmeter->GetDebug() && DEBUG_VERBOSE;
 
 	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);  // always on bottom
 
@@ -834,7 +834,7 @@ void CSystem::PrepareHelperWindow(HWND WorkerW)
 ** Changes the "Show Desktop" state.
 **
 */
-bool CSystem::CheckDesktopState(HWND WorkerW)
+bool System::CheckDesktopState(HWND WorkerW)
 {
 	HWND hwnd = NULL;
 
@@ -849,7 +849,7 @@ bool CSystem::CheckDesktopState(HWND WorkerW)
 	{
 		c_ShowDesktop = !c_ShowDesktop;
 
-		if (Rainmeter->GetDebug())
+		if (g_Rainmeter->GetDebug())
 		{
 			LogDebugF(L"System: \"Show %s\" has been detected.",
 				c_ShowDesktop ? L"desktop" : L"open windows");
@@ -876,7 +876,7 @@ bool CSystem::CheckDesktopState(HWND WorkerW)
 ** The event hook procedure
 **
 */
-void CALLBACK CSystem::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+void CALLBACK System::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
 	if (event == EVENT_SYSTEM_FOREGROUND)
 	{
@@ -914,7 +914,7 @@ void CALLBACK CSystem::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, 
 ** The window procedure
 **
 */
-LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (hWnd != c_Window)
 	{
@@ -944,10 +944,10 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
 		case TIMER_RESUME:
 			KillTimer(hWnd, TIMER_RESUME);
-			if (Rainmeter->IsRedrawable())
+			if (g_Rainmeter->IsRedrawable())
 			{
-				std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
-				for ( ; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
+				std::map<std::wstring, MeterWindow*>::const_iterator iter = g_Rainmeter->GetAllMeterWindows().begin();
+				for ( ; iter != g_Rainmeter->GetAllMeterWindows().end(); ++iter)
 				{
 					(*iter).second->RedrawWindow();
 				}
@@ -959,7 +959,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	case WM_DISPLAYCHANGE:
 		LogNotice(L"System: Display settings changed");
 		ClearMultiMonitorInfo();
-		CConfigParser::ClearMultiMonitorVariables();
+		ConfigParser::ClearMultiMonitorVariables();
 	case WM_SETTINGCHANGE:
 		if (uMsg == WM_DISPLAYCHANGE || (/*uMsg == WM_SETTINGCHANGE &&*/ wParam == SPI_SETWORKAREA))
 		{
@@ -967,12 +967,12 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 			{
 				LogNotice(L"System: Work area changed");
 				UpdateWorkareaInfo();
-				CConfigParser::UpdateWorkareaVariables();
+				ConfigParser::UpdateWorkareaVariables();
 			}
 
 			// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
-			std::map<std::wstring, CMeterWindow*>::const_iterator iter = Rainmeter->GetAllMeterWindows().begin();
-			for ( ; iter != Rainmeter->GetAllMeterWindows().end(); ++iter)
+			std::map<std::wstring, MeterWindow*>::const_iterator iter = g_Rainmeter->GetAllMeterWindows().begin();
+			for ( ; iter != g_Rainmeter->GetAllMeterWindows().end(); ++iter)
 			{
 				PostMessage((*iter).second->GetWindow(), WM_METERWINDOW_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
 			}
@@ -999,7 +999,7 @@ LRESULT CALLBACK CSystem::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 ** In XP, returns the predictive value due to the 32bit limitation.
 **
 */
-ULONGLONG CSystem::GetTickCount64()
+ULONGLONG System::GetTickCount64()
 {
 	typedef ULONGLONG (WINAPI * FPGETTICKCOUNT64)();
 	static FPGETTICKCOUNT64 c_GetTickCount64 = (FPGETTICKCOUNT64)GetProcAddress(GetModuleHandle(L"kernel32"), "GetTickCount64");
@@ -1022,7 +1022,7 @@ ULONGLONG CSystem::GetTickCount64()
 ** Gets the cursor position in last message retrieved by GetMessage().
 **
 */
-POINT CSystem::GetCursorPosition()
+POINT System::GetCursorPosition()
 {
 	DWORD pos = GetMessagePos();
 	POINT pt = { GET_X_LPARAM(pos), GET_Y_LPARAM(pos) };
@@ -1033,7 +1033,7 @@ POINT CSystem::GetCursorPosition()
 ** Checks if file is writable.
 **
 */
-bool CSystem::IsFileWritable(LPCWSTR file)
+bool System::IsFileWritable(LPCWSTR file)
 {
 	HANDLE hFile = CreateFile(file, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
@@ -1051,7 +1051,7 @@ bool CSystem::IsFileWritable(LPCWSTR file)
 ** Avoids loading a DLL from current directory.
 **
 */
-HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError)
+HMODULE System::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError)
 {
 	// Remove current directory from DLL search path
 	SetDllDirectory(L"");
@@ -1071,7 +1071,7 @@ HMODULE CSystem::RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError)
 ** Resets working directory to default.
 **
 */
-void CSystem::ResetWorkingDirectory()
+void System::ResetWorkingDirectory()
 {
 	WCHAR directory[MAX_PATH] = {0};
 	GetCurrentDirectory(MAX_PATH, directory);
@@ -1088,7 +1088,7 @@ void CSystem::ResetWorkingDirectory()
 ** For more details: http://stackoverflow.com/questions/804848/critical-sections-leaking-memory-on-vista-win2008/
 **
 */
-void CSystem::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
+void System::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 	typedef BOOL (WINAPI * FPINITCRITEX)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
 	static FPINITCRITEX InitializeCriticalSectionEx = Platform::IsAtLeastWinVista() ?
@@ -1109,7 +1109,7 @@ void CSystem::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 ** Sets clipboard text to given string.
 **
 */
-void CSystem::SetClipboardText(const std::wstring& text)
+void System::SetClipboardText(const std::wstring& text)
 {
 	if (OpenClipboard(NULL))
 	{
@@ -1138,7 +1138,7 @@ void CSystem::SetClipboardText(const std::wstring& text)
 ** Sets the system wallpapar.
 **
 */
-void CSystem::SetWallpaper(const std::wstring& wallpaper, const std::wstring& style)
+void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& style)
 {
 	if (!wallpaper.empty())
 	{
@@ -1151,7 +1151,7 @@ void CSystem::SetWallpaper(const std::wstring& wallpaper, const std::wstring& st
 		Bitmap* bitmap = Bitmap::FromFile(wallpaper.c_str());
 		if (bitmap && bitmap->GetLastStatus() == Ok)
 		{
-			std::wstring file = Rainmeter->GetSettingsPath() + L"Wallpaper.bmp";
+			std::wstring file = g_Rainmeter->GetSettingsPath() + L"Wallpaper.bmp";
 
 			const CLSID bmpClsid = { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } };
 			if (bitmap->Save(file.c_str(), &bmpClsid) == Ok)
@@ -1214,7 +1214,7 @@ void CSystem::SetWallpaper(const std::wstring& wallpaper, const std::wstring& st
 ** Copies files and folders from one location to another.
 **
 */
-bool CSystem::CopyFiles(std::wstring from, std::wstring to, bool bMove)
+bool System::CopyFiles(std::wstring from, std::wstring to, bool bMove)
 {
 	// If given "from" path ends with path separator, remove it (Workaround for XP: error code 1026)
 	size_t len;
@@ -1249,7 +1249,7 @@ bool CSystem::CopyFiles(std::wstring from, std::wstring to, bool bMove)
 ** Removes a file even if a file is read-only.
 **
 */
-bool CSystem::RemoveFile(const std::wstring& file)
+bool System::RemoveFile(const std::wstring& file)
 {
 	DWORD attr = GetFileAttributes(file.c_str());
 	if (attr == -1 || (attr & FILE_ATTRIBUTE_READONLY))
@@ -1265,7 +1265,7 @@ bool CSystem::RemoveFile(const std::wstring& file)
 ** Recursively removes folder.
 **
 */
-bool CSystem::RemoveFolder(std::wstring folder)
+bool System::RemoveFolder(std::wstring folder)
 {
 	// The strings must end with double nul
 	folder.append(1, L'\0');
@@ -1292,7 +1292,7 @@ bool CSystem::RemoveFolder(std::wstring folder)
 ** Retrieves the "IniFileMapping" entries from Registry.
 **
 */
-void CSystem::UpdateIniFileMappingList()
+void System::UpdateIniFileMappingList()
 {
 	static ULONGLONG s_LastWriteTime = 0;
 
@@ -1358,7 +1358,7 @@ void CSystem::UpdateIniFileMappingList()
 ** Note that a temporary file must be deleted by caller.
 **
 */
-std::wstring CSystem::GetTemporaryFile(const std::wstring& iniFile)
+std::wstring System::GetTemporaryFile(const std::wstring& iniFile)
 {
 	std::wstring temporary;
 

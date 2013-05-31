@@ -29,13 +29,13 @@ using namespace Gdiplus;
 #define PI	(3.14159265358979323846)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0 / PI))
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 /*
 ** The constructor
 **
 */
-CMeterRotator::CMeterRotator(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
+MeterRotator::MeterRotator(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
 	m_NeedsReload(false),
 	m_OffsetX(),
 	m_OffsetY(),
@@ -50,7 +50,7 @@ CMeterRotator::CMeterRotator(CMeterWindow* meterWindow, const WCHAR* name) : CMe
 ** The destructor
 **
 */
-CMeterRotator::~CMeterRotator()
+MeterRotator::~MeterRotator()
 {
 }
 
@@ -58,9 +58,9 @@ CMeterRotator::~CMeterRotator()
 ** Load the image.
 **
 */
-void CMeterRotator::Initialize()
+void MeterRotator::Initialize()
 {
-	CMeter::Initialize();
+	Meter::Initialize();
 
 	// Load the bitmaps if defined
 	if (!m_ImageName.empty())
@@ -77,12 +77,12 @@ void CMeterRotator::Initialize()
 ** Read the options specified in the ini file.
 **
 */
-void CMeterRotator::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeterRotator::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 
-	CMeter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser, section);
 
 	m_ImageName = parser.ReadString(section, L"ImageName", L"");
 	if (!m_ImageName.empty())
@@ -121,11 +121,11 @@ void CMeterRotator::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Updates the value(s) from the measures.
 **
 */
-bool CMeterRotator::Update()
+bool MeterRotator::Update()
 {
-	if (CMeter::Update() && !m_Measures.empty())
+	if (Meter::Update() && !m_Measures.empty())
 	{
-		CMeasure* measure = m_Measures[0];
+		Measure* measure = m_Measures[0];
 		if (m_ValueRemainder > 0)
 		{
 			LONGLONG time = (LONGLONG)measure->GetValue();
@@ -146,9 +146,9 @@ bool CMeterRotator::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterRotator::Draw(Gfx::Canvas& canvas)
+bool MeterRotator::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(canvas)) return false;
+	if (!Meter::Draw(canvas)) return false;
 
 	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
 

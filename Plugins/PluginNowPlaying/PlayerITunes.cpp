@@ -19,14 +19,14 @@
 #include "StdAfx.h"
 #include "PlayerITunes.h"
 
-CPlayer* CPlayerITunes::c_Player = NULL;
+Player* PlayerITunes::c_Player = NULL;
 extern HINSTANCE g_Instance;
 
 /*
 ** Constructor.
 **
 */
-CPlayerITunes::CEventHandler::CEventHandler(CPlayerITunes* player) :
+PlayerITunes::CEventHandler::CEventHandler(PlayerITunes* player) :
 	m_Player(player),
 	m_RefCount(),
 	m_ConnectionPoint(),
@@ -43,7 +43,7 @@ CPlayerITunes::CEventHandler::CEventHandler(CPlayerITunes* player) :
 ** Destructor.
 **
 */
-CPlayerITunes::CEventHandler::~CEventHandler()
+PlayerITunes::CEventHandler::~CEventHandler()
 {
 	if (m_ConnectionPoint)
 	{
@@ -52,7 +52,7 @@ CPlayerITunes::CEventHandler::~CEventHandler()
 	}
 }
 
-HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::QueryInterface(REFIID iid, void** ppvObject)
+HRESULT STDMETHODCALLTYPE PlayerITunes::CEventHandler::QueryInterface(REFIID iid, void** ppvObject)
 {
 	if (iid == IID_IUnknown || iid == IID_IUnknown || iid == DIID__IiTunesEvents)
 	{
@@ -64,17 +64,17 @@ HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::QueryInterface(REFIID ii
 	return E_NOINTERFACE;
 }
 
-ULONG STDMETHODCALLTYPE CPlayerITunes::CEventHandler::AddRef()
+ULONG STDMETHODCALLTYPE PlayerITunes::CEventHandler::AddRef()
 {
 	return ++m_RefCount;
 }
 
-ULONG STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Release()
+ULONG STDMETHODCALLTYPE PlayerITunes::CEventHandler::Release()
 {
 	return --m_RefCount;
 }
 
-HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Invoke(DISPID dispidMember, REFIID, LCID, WORD, DISPPARAMS* dispParams, VARIANT*, EXCEPINFO*, UINT*)
+HRESULT STDMETHODCALLTYPE PlayerITunes::CEventHandler::Invoke(DISPID dispidMember, REFIID, LCID, WORD, DISPPARAMS* dispParams, VARIANT*, EXCEPINFO*, UINT*)
 {
 	switch (dispidMember)
 	{
@@ -112,7 +112,7 @@ HRESULT STDMETHODCALLTYPE CPlayerITunes::CEventHandler::Invoke(DISPID dispidMemb
 ** Constructor.
 **
 */
-CPlayerITunes::CPlayerITunes() : CPlayer(),
+PlayerITunes::PlayerITunes() : Player(),
 	m_CallbackWindow(),
 	m_LastCheckTime(0),
 	m_iTunesActive(false),
@@ -144,7 +144,7 @@ CPlayerITunes::CPlayerITunes() : CPlayer(),
 ** Destructor.
 **
 */
-CPlayerITunes::~CPlayerITunes()
+PlayerITunes::~PlayerITunes()
 {
 	c_Player = NULL;
 
@@ -158,11 +158,11 @@ CPlayerITunes::~CPlayerITunes()
 ** Creates a shared class object.
 **
 */
-CPlayer* CPlayerITunes::Create()
+Player* PlayerITunes::Create()
 {
 	if (!c_Player)
 	{
-		c_Player = new CPlayerITunes();
+		c_Player = new PlayerITunes();
 	}
 
 	return c_Player;
@@ -172,7 +172,7 @@ CPlayer* CPlayerITunes::Create()
 ** Initialize iTunes COM interface and event handler.
 **
 */
-void CPlayerITunes::Initialize()
+void PlayerITunes::Initialize()
 {
 	while (true)
 	{
@@ -239,7 +239,7 @@ void CPlayerITunes::Initialize()
 ** Close iTunes COM interface.
 **
 */
-void CPlayerITunes::Uninitialize()
+void PlayerITunes::Uninitialize()
 {
 	if (m_Initialized)
 	{
@@ -255,15 +255,15 @@ void CPlayerITunes::Uninitialize()
 ** Window procedure for the callback window.
 **
 */
-LRESULT CALLBACK CPlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static CPlayerITunes* player;
+	static PlayerITunes* player;
 
 	switch (msg)
 	{
 	case WM_CREATE:
-		// Get pointer to the CPlayerITunes class from the CreateWindow call
-		player = (CPlayerITunes*)(((CREATESTRUCT*)lParam)->lpCreateParams);
+		// Get pointer to the PlayerITunes class from the CreateWindow call
+		player = (PlayerITunes*)(((CREATESTRUCT*)lParam)->lpCreateParams);
 		return 0;
 
 	case WM_USER:
@@ -294,7 +294,7 @@ LRESULT CALLBACK CPlayerITunes::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 ** Try to find iTunes periodically.
 **
 */
-bool CPlayerITunes::CheckWindow()
+bool PlayerITunes::CheckWindow()
 {
 	DWORD time = GetTickCount();
 	if (time - m_LastCheckTime > 5000)
@@ -315,7 +315,7 @@ bool CPlayerITunes::CheckWindow()
 ** Called during each update of the main measure.
 **
 */
-void CPlayerITunes::UpdateData()
+void PlayerITunes::UpdateData()
 {
 	if ((m_Initialized || CheckWindow()) && m_State != STATE_STOPPED)
 	{
@@ -329,7 +329,7 @@ void CPlayerITunes::UpdateData()
 ** Called by iTunes event handler when the database is changed.
 **
 */
-void CPlayerITunes::OnDatabaseChange()
+void PlayerITunes::OnDatabaseChange()
 {
 	// Check the shuffle state. TODO: Find better way
 	IITPlaylist* playlist;
@@ -351,7 +351,7 @@ void CPlayerITunes::OnDatabaseChange()
 ** Called by iTunes event handler on track change.
 **
 */
-void CPlayerITunes::OnTrackChange()
+void PlayerITunes::OnTrackChange()
 {
 	IITTrack* track;
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
@@ -463,7 +463,7 @@ void CPlayerITunes::OnTrackChange()
 ** Called by iTunes event handler on player state change.
 **
 */
-void CPlayerITunes::OnStateChange(bool playing)
+void PlayerITunes::OnStateChange(bool playing)
 {
 	if (playing)
 	{
@@ -480,7 +480,7 @@ void CPlayerITunes::OnStateChange(bool playing)
 ** Called by iTunes event handler on volume change.
 **
 */
-void CPlayerITunes::OnVolumeChange(int volume)
+void PlayerITunes::OnVolumeChange(int volume)
 {
 	m_Volume = volume;
 }
@@ -489,7 +489,7 @@ void CPlayerITunes::OnVolumeChange(int volume)
 ** Handles the Pause bang.
 **
 */
-void CPlayerITunes::Pause()
+void PlayerITunes::Pause()
 {
 	m_iTunes->Pause();
 }
@@ -498,7 +498,7 @@ void CPlayerITunes::Pause()
 ** Handles the Play bang.
 **
 */
-void CPlayerITunes::Play()
+void PlayerITunes::Play()
 {
 	m_iTunes->Play();
 }
@@ -507,7 +507,7 @@ void CPlayerITunes::Play()
 ** Handles the Stop bang.
 **
 */
-void CPlayerITunes::Stop() 
+void PlayerITunes::Stop() 
 {
 	m_iTunes->Stop();
 }
@@ -516,7 +516,7 @@ void CPlayerITunes::Stop()
 ** Handles the Next bang.
 **
 */
-void CPlayerITunes::Next() 
+void PlayerITunes::Next() 
 {
 	m_iTunes->NextTrack();
 }
@@ -525,7 +525,7 @@ void CPlayerITunes::Next()
 ** Handles the Previous bang.
 **
 */
-void CPlayerITunes::Previous() 
+void PlayerITunes::Previous() 
 {
 	m_iTunes->PreviousTrack();
 }
@@ -534,7 +534,7 @@ void CPlayerITunes::Previous()
 ** Handles the SetPosition bang.
 **
 */
-void CPlayerITunes::SetPosition(int position)
+void PlayerITunes::SetPosition(int position)
 {
 	m_iTunes->put_PlayerPosition((long)position);
 }
@@ -543,7 +543,7 @@ void CPlayerITunes::SetPosition(int position)
 ** Handles the SetRating bang.
 **
 */
-void CPlayerITunes::SetRating(int rating)
+void PlayerITunes::SetRating(int rating)
 {
 	IITTrack* track;
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
@@ -559,7 +559,7 @@ void CPlayerITunes::SetRating(int rating)
 ** Handles the SetVolume bang.
 **
 */
-void CPlayerITunes::SetVolume(int volume)
+void PlayerITunes::SetVolume(int volume)
 {
 	m_iTunes->put_SoundVolume((long)volume);
 }
@@ -568,7 +568,7 @@ void CPlayerITunes::SetVolume(int volume)
 ** Handles the SetShuffle bang.
 **
 */
-void CPlayerITunes::SetShuffle(bool state)
+void PlayerITunes::SetShuffle(bool state)
 {
 	IITTrack* track;
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
@@ -593,7 +593,7 @@ void CPlayerITunes::SetShuffle(bool state)
 ** Handles the SetRepeat bang.
 **
 */
-void CPlayerITunes::SetRepeat(bool state)
+void PlayerITunes::SetRepeat(bool state)
 {
 	IITTrack* track;
 	HRESULT hr = m_iTunes->get_CurrentTrack(&track);
@@ -617,7 +617,7 @@ void CPlayerITunes::SetRepeat(bool state)
 ** Handles the ClosePlayer bang.
 **
 */
-void CPlayerITunes::ClosePlayer()
+void PlayerITunes::ClosePlayer()
 {
 	m_iTunes->Quit();
 	Uninitialize();
@@ -628,7 +628,7 @@ void CPlayerITunes::ClosePlayer()
 ** Handles the OpenPlayer bang.
 **
 */
-void CPlayerITunes::OpenPlayer(std::wstring& path)
+void PlayerITunes::OpenPlayer(std::wstring& path)
 {
 	ShellExecute(NULL, L"open", path.empty() ? L"iTunes.exe" : path.c_str(), NULL, NULL, SW_SHOW);
 }

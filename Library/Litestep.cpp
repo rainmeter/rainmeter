@@ -22,7 +22,7 @@
 #include "DialogAbout.h"
 #include "System.h"
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 UINT GetUniqueID()
 {
@@ -33,7 +33,7 @@ UINT GetUniqueID()
 WCHAR* GetString(UINT id)
 {
 	LPWSTR pData;
-	int len = LoadString(Rainmeter->GetResourceInstance(), id, (LPWSTR)&pData, 0);
+	int len = LoadString(g_Rainmeter->GetResourceInstance(), id, (LPWSTR)&pData, 0);
 	return len ? pData : L"";
 }
 

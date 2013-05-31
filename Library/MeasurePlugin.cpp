@@ -23,13 +23,13 @@
 #include "System.h"
 #include "Error.h"
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 /*
 ** The constructor
 **
 */
-CMeasurePlugin::CMeasurePlugin(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+MeasurePlugin::MeasurePlugin(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_Plugin(),
 	m_ReloadFunc(),
 	m_ID(),
@@ -45,7 +45,7 @@ CMeasurePlugin::CMeasurePlugin(CMeterWindow* meterWindow, const WCHAR* name) : C
 ** The destructor
 **
 */
-CMeasurePlugin::~CMeasurePlugin()
+MeasurePlugin::~MeasurePlugin()
 {
 	if (m_Plugin)
 	{
@@ -70,7 +70,7 @@ CMeasurePlugin::~CMeasurePlugin()
 ** Gets the current value from the plugin
 **
 */
-void CMeasurePlugin::UpdateValue()
+void MeasurePlugin::UpdateValue()
 {
 	if (m_UpdateFunc)
 	{
@@ -91,7 +91,7 @@ void CMeasurePlugin::UpdateValue()
 		}
 
 		// Reset to default
-		CSystem::ResetWorkingDirectory();
+		System::ResetWorkingDirectory();
 	}
 }
 
@@ -99,11 +99,11 @@ void CMeasurePlugin::UpdateValue()
 ** Reads the options and loads the plugin
 **
 */
-void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	static UINT id = 0;
 
-	CMeasure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser, section);
 
 	if (m_Initialized)
 	{
@@ -129,17 +129,17 @@ void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 
 	// First try from program path
-	std::wstring pluginFile = Rainmeter->GetPluginPath();
+	std::wstring pluginFile = g_Rainmeter->GetPluginPath();
 	pluginFile += pluginName;
-	m_Plugin = CSystem::RmLoadLibrary(pluginFile.c_str());
+	m_Plugin = System::RmLoadLibrary(pluginFile.c_str());
 	if (!m_Plugin)
 	{
-		if (Rainmeter->HasUserPluginPath())
+		if (g_Rainmeter->HasUserPluginPath())
 		{
 			// Try from settings path
-			pluginFile = Rainmeter->GetUserPluginPath();
+			pluginFile = g_Rainmeter->GetUserPluginPath();
 			pluginFile += pluginName;
-			m_Plugin = CSystem::RmLoadLibrary(pluginFile.c_str());
+			m_Plugin = System::RmLoadLibrary(pluginFile.c_str());
 		}
 		if (!m_Plugin)
 		{
@@ -204,7 +204,7 @@ void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 	// Reset to default
 	SetDllDirectory(L"");
-	CSystem::ResetWorkingDirectory();
+	System::ResetWorkingDirectory();
 
 	++id;
 }
@@ -213,7 +213,7 @@ void CMeasurePlugin::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Gets the string value from the plugin.
 **
 */
-const WCHAR* CMeasurePlugin::GetStringValue()
+const WCHAR* MeasurePlugin::GetStringValue()
 {
 	if (m_GetStringFunc)
 	{
@@ -237,7 +237,7 @@ const WCHAR* CMeasurePlugin::GetStringValue()
 ** Sends a bang to the plugin
 **
 */
-void CMeasurePlugin::Command(const std::wstring& command)
+void MeasurePlugin::Command(const std::wstring& command)
 {
 	if (m_ExecuteBangFunc)
 	{
@@ -253,6 +253,6 @@ void CMeasurePlugin::Command(const std::wstring& command)
 	}
 	else
 	{
-		CMeasure::Command(command);
+		Measure::Command(command);
 	}
 }

@@ -38,7 +38,7 @@ enum DRIVETYPE
 ** The constructor
 **
 */
-CMeasureDiskSpace::CMeasureDiskSpace(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+MeasureDiskSpace::MeasureDiskSpace(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_Type(false),
 	m_Total(false),
 	m_Label(false),
@@ -52,7 +52,7 @@ CMeasureDiskSpace::CMeasureDiskSpace(CMeterWindow* meterWindow, const WCHAR* nam
 ** The destructor
 **
 */
-CMeasureDiskSpace::~CMeasureDiskSpace()
+MeasureDiskSpace::~MeasureDiskSpace()
 {
 }
 
@@ -60,7 +60,7 @@ CMeasureDiskSpace::~CMeasureDiskSpace()
 ** Updates the current disk free space value.
 **
 */
-void CMeasureDiskSpace::UpdateValue()
+void MeasureDiskSpace::UpdateValue()
 {
 	if (!m_Drive.empty())
 	{
@@ -164,7 +164,7 @@ void CMeasureDiskSpace::UpdateValue()
 ** Returns the time as string.
 **
 */
-const WCHAR* CMeasureDiskSpace::GetStringValue()
+const WCHAR* MeasureDiskSpace::GetStringValue()
 {
 	return (m_Type || m_Label) ? CheckSubstitute(m_StringValue.c_str()) : NULL;
 }
@@ -173,11 +173,11 @@ const WCHAR* CMeasureDiskSpace::GetStringValue()
 ** Read the options specified in the ini file.
 **
 */
-void CMeasureDiskSpace::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeasureDiskSpace::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	double oldMaxValue = m_MaxValue;
 
-	CMeasure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser, section);
 
 	m_Drive = parser.ReadString(section, L"Drive", L"C:\\");
 	if (m_Drive.empty())
@@ -188,7 +188,7 @@ void CMeasureDiskSpace::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		m_OldTotalBytes = 0;
 		m_StringValue.clear();
 	}
-	else if (!CSystem::IsPathSeparator(m_Drive[m_Drive.length() - 1]))  // E.g. "C:"
+	else if (!System::IsPathSeparator(m_Drive[m_Drive.length() - 1]))  // E.g. "C:"
 	{
 		m_Drive += L'\\';  // A trailing backslash is required.
 	}

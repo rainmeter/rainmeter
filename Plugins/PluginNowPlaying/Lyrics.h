@@ -19,7 +19,7 @@
 #ifndef __LYRICS_H__
 #define __LYRICS_H__
 
-class CLyrics
+class Lyrics
 {
 public:
 	static bool GetFromInternet(const std::wstring& artist, const std::wstring& title, std::wstring& out);

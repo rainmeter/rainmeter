@@ -23,7 +23,7 @@
 #include "zip.h"
 #include "../Library/Dialog.h"
 
-class CDialogPackage : public CDialog
+class DialogPackage : public Dialog
 {
 public:
 	static void Create(HINSTANCE hInstance, LPWSTR lpCmdLine);
@@ -33,16 +33,16 @@ public:
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
-	static CDialogPackage* c_Dialog;
+	static DialogPackage* c_Dialog;
 
 protected:
-	virtual CTab& GetActiveTab();
+	virtual Tab& GetActiveTab();
 
 private:
-	class CTabInfo : public CTab
+	class TabInfo : public Tab
 	{
 	public:
-		CTabInfo(HWND window);
+		TabInfo(HWND window);
 
 		virtual void Initialize();
 
@@ -51,10 +51,10 @@ private:
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	};
 
-	class CTabOptions : public CTab
+	class TabOptions : public Tab
 	{
 	public:
-		CTabOptions(HWND window);
+		TabOptions(HWND window);
 
 		virtual void Initialize();
 
@@ -62,10 +62,10 @@ private:
 		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	};
 
-	class CTabAdvanced : public CTab
+	class TabAdvanced : public Tab
 	{
 	public:
-		CTabAdvanced(HWND window);
+		TabAdvanced(HWND window);
 
 		virtual void Initialize();
 
@@ -74,8 +74,8 @@ private:
 		INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	};
 
-	CDialogPackage(HWND wnd);
-	virtual ~CDialogPackage();
+	DialogPackage(HWND wnd);
+	virtual ~DialogPackage();
 
 	void SetNextButtonState();
 	
@@ -93,9 +93,9 @@ private:
 	static std::pair<std::wstring, std::wstring> SelectPlugin(HWND parent);
 	static INT_PTR CALLBACK SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	CTabInfo m_TabInfo;
-	CTabOptions m_TabOptions;
-	CTabAdvanced m_TabAdvanced;
+	TabInfo m_TabInfo;
+	TabOptions m_TabOptions;
+	TabAdvanced m_TabAdvanced;
 
 	std::wstring m_BackupTime;
 

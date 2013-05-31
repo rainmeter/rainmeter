@@ -53,7 +53,7 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 
 	if (!g_Initialized)
 	{
-		CInternet::Initialize();
+		Internet::Initialize();
 		g_Initialized = true;
 	}
 }
@@ -116,7 +116,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		// ParentMeasure is created when PlayerName is an actual player (and not a reference)
 		ParentMeasure* parent = measure->parent;
-		CPlayer* oldPlayer = NULL;
+		Player* oldPlayer = NULL;
 		if (parent)
 		{
 			if (parent->data != data)
@@ -139,11 +139,11 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 		if (_wcsicmp(L"AIMP", str) == 0)
 		{
-			parent->player = CPlayerAIMP::Create();
+			parent->player = PlayerAIMP::Create();
 		}
 		else if (_wcsicmp(L"CAD", str) == 0)
 		{
-			parent->player = CPlayerCAD::Create();
+			parent->player = PlayerCAD::Create();
 		}
 		else if (_wcsicmp(L"foobar2000", str) == 0)
 		{
@@ -157,32 +157,32 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 				}
 			}
 
-			parent->player = CPlayerCAD::Create();
+			parent->player = PlayerCAD::Create();
 		}
 		else if (_wcsicmp(L"iTunes", str) == 0)
 		{
-			parent->player = CPlayerITunes::Create();
+			parent->player = PlayerITunes::Create();
 		}
 		else if (_wcsicmp(L"MediaMonkey", str) == 0)
 		{
-			parent->player = CPlayerWinamp::Create(WA_MEDIAMONKEY);
+			parent->player = PlayerWinamp::Create(WA_MEDIAMONKEY);
 		}
 		else if (_wcsicmp(L"Spotify", str) == 0)
 		{
-			parent->player = CPlayerSpotify::Create();
+			parent->player = PlayerSpotify::Create();
 		}
 		else if (_wcsicmp(L"WinAmp", str) == 0)
 		{
-			parent->player = CPlayerWinamp::Create(WA_WINAMP);
+			parent->player = PlayerWinamp::Create(WA_WINAMP);
 		}
 		else if (_wcsicmp(L"WMP", str) == 0)
 		{
-			parent->player = CPlayerWMP::Create();
+			parent->player = PlayerWMP::Create();
 		}
 		else
 		{
 			// Default to WLM
-			parent->player = CPlayerWLM::Create();
+			parent->player = PlayerWLM::Create();
 
 			if (_wcsicmp(L"WLM", str) != 0)
 			{
@@ -302,7 +302,7 @@ PLUGIN_EXPORT double Update(void* data)
 	ParentMeasure* parent = measure->parent;
 	if (!parent) return 0.0;
 
-	CPlayer* player = parent->player;
+	Player* player = parent->player;
 
 	// Only allow parent measure to update
 	if (parent->data == data)
@@ -367,7 +367,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 	ParentMeasure* parent = measure->parent;
 	if (!parent) return NULL;
 
-	const CPlayer* player = parent->player;
+	const Player* player = parent->player;
 	static WCHAR buffer[32];
 
 	switch (measure->type)
@@ -444,7 +444,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 	ParentMeasure* parent = measure->parent;
 	if (parent)
 	{
-		CPlayer* player = parent->player;
+		Player* player = parent->player;
 		if (--parent->measureCount == 0)
 		{
 			player->RemoveInstance();
@@ -455,7 +455,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 
 			if (g_ParentMeasures.empty())
 			{
-				CInternet::Finalize();
+				Internet::Finalize();
 			}
 		}
 	}
@@ -469,7 +469,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 	ParentMeasure* parent = measure->parent;
 	if (!parent) return;
 
-	CPlayer* player = parent->player;
+	Player* player = parent->player;
 
 	if (!player->IsInitialized())
 	{

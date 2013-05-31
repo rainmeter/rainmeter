@@ -21,13 +21,13 @@
 #include "AIMP/aimp2_sdk.h"
 #include "Winamp/wa_ipc.h"
 
-CPlayer* CPlayerAIMP::c_Player = NULL;
+Player* PlayerAIMP::c_Player = NULL;
 
 /*
 ** Constructor.
 **
 */
-CPlayerAIMP::CPlayerAIMP() : CPlayer(),
+PlayerAIMP::PlayerAIMP() : Player(),
 	m_Window(),
 	m_WinampWindow(),
 	m_LastCheckTime(0),
@@ -42,7 +42,7 @@ CPlayerAIMP::CPlayerAIMP() : CPlayer(),
 ** Destructor.
 **
 */
-CPlayerAIMP::~CPlayerAIMP()
+PlayerAIMP::~PlayerAIMP()
 {
 	c_Player = NULL;
 	if (m_FileMap) UnmapViewOfFile(m_FileMap);
@@ -53,11 +53,11 @@ CPlayerAIMP::~CPlayerAIMP()
 ** Creates a shared class object.
 **
 */
-CPlayer* CPlayerAIMP::Create()
+Player* PlayerAIMP::Create()
 {
 	if (!c_Player)
 	{
-		c_Player = new CPlayerAIMP();
+		c_Player = new PlayerAIMP();
 	}
 
 	return c_Player;
@@ -67,7 +67,7 @@ CPlayer* CPlayerAIMP::Create()
 ** Try to find AIMP periodically.
 **
 */
-bool CPlayerAIMP::CheckWindow()
+bool PlayerAIMP::CheckWindow()
 {
 	DWORD time = GetTickCount();
 
@@ -100,7 +100,7 @@ bool CPlayerAIMP::CheckWindow()
 ** Called during each update of the main measure.
 **
 */
-void CPlayerAIMP::UpdateData()
+void PlayerAIMP::UpdateData()
 {
 	if (!m_Initialized)
 	{
@@ -191,7 +191,7 @@ void CPlayerAIMP::UpdateData()
 ** Handles the Pause bang.
 **
 */
-void CPlayerAIMP::Pause()
+void PlayerAIMP::Pause()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PAUSE);
 }
@@ -200,7 +200,7 @@ void CPlayerAIMP::Pause()
 ** Handles the Play bang.
 **
 */
-void CPlayerAIMP::Play()
+void PlayerAIMP::Play()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PLAY);
 }
@@ -209,7 +209,7 @@ void CPlayerAIMP::Play()
 ** Handles the Stop bang.
 **
 */
-void CPlayerAIMP::Stop()
+void PlayerAIMP::Stop()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_STOP);
 }
@@ -218,7 +218,7 @@ void CPlayerAIMP::Stop()
 ** Handles the Next bang.
 **
 */
-void CPlayerAIMP::Next() 
+void PlayerAIMP::Next() 
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_NEXT);
 }
@@ -227,7 +227,7 @@ void CPlayerAIMP::Next()
 ** Handles the Previous bang.
 **
 */
-void CPlayerAIMP::Previous()
+void PlayerAIMP::Previous()
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_CALLFUNC, AIMP_PREV);
 }
@@ -236,7 +236,7 @@ void CPlayerAIMP::Previous()
 ** Handles the SetPosition bang.
 **
 */
-void CPlayerAIMP::SetPosition(int position)
+void PlayerAIMP::SetPosition(int position)
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(position, AIMP_STS_POS));
 }
@@ -245,7 +245,7 @@ void CPlayerAIMP::SetPosition(int position)
 ** Handles the SetRating bang.
 **
 */
-void CPlayerAIMP::SetRating(int rating)
+void PlayerAIMP::SetRating(int rating)
 {
 	// Set rating through the AIMP Winamp API
 	if (m_State != STATE_STOPPED)
@@ -259,7 +259,7 @@ void CPlayerAIMP::SetRating(int rating)
 ** Handles the SetVolume bang.
 **
 */
-void CPlayerAIMP::SetVolume(int volume)
+void PlayerAIMP::SetVolume(int volume)
 {
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(volume, AIMP_STS_VOLUME));
 }
@@ -268,7 +268,7 @@ void CPlayerAIMP::SetVolume(int volume)
 ** Handles the SetShuffle bang.
 **
 */
-void CPlayerAIMP::SetShuffle(bool state)
+void PlayerAIMP::SetShuffle(bool state)
 {
 	m_Shuffle = state;
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(m_Shuffle, AIMP_STS_SHUFFLE));
@@ -278,7 +278,7 @@ void CPlayerAIMP::SetShuffle(bool state)
 ** Handles the SetRepeat bang.
 **
 */
-void CPlayerAIMP::SetRepeat(bool state)
+void PlayerAIMP::SetRepeat(bool state)
 {
 	m_Repeat = state;
 	SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_SET, MAKELPARAM(m_Repeat, AIMP_STS_REPEAT));
@@ -288,7 +288,7 @@ void CPlayerAIMP::SetRepeat(bool state)
 ** Handles the ClosePlayer bang.
 **
 */
-void CPlayerAIMP::ClosePlayer()
+void PlayerAIMP::ClosePlayer()
 {
 	SendMessage(m_Window, WM_CLOSE, 0, 0);
 }
@@ -297,7 +297,7 @@ void CPlayerAIMP::ClosePlayer()
 ** Handles the OpenPlayer bang.
 **
 */
-void CPlayerAIMP::OpenPlayer(std::wstring& path)
+void PlayerAIMP::OpenPlayer(std::wstring& path)
 {
 	if (path.empty())
 	{

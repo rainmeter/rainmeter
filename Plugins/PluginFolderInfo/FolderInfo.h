@@ -56,7 +56,7 @@ private:
 	UINT m_InstanceCount;
 	void* m_Skin;
 
-	CRawString m_Path;
+	RawString m_Path;
 	bool m_IncludeSubFolders;
 	bool m_IncludeHiddenFiles;
 	bool m_IncludeSystemFiles;

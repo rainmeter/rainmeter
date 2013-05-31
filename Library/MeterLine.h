@@ -21,21 +21,21 @@
 
 #include "Meter.h"
 
-class CMeterLine : public CMeter
+class MeterLine : public Meter
 {
 public:
-	CMeterLine(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeterLine();
+	MeterLine(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeterLine();
 
-	virtual UINT GetTypeID() { return TypeID<CMeterLine>(); }
+	virtual UINT GetTypeID() { return TypeID<MeterLine>(); }
 
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
 
 private:
 	std::vector<Gdiplus::Color> m_Colors;

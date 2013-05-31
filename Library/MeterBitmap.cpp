@@ -26,13 +26,13 @@
 
 using namespace Gdiplus;
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 /*
 ** The constructor
 **
 */
-CMeterBitmap::CMeterBitmap(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
+MeterBitmap::MeterBitmap(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
 	m_Image(L"BitmapImage", NULL, true),
 	m_NeedsReload(false),
 	m_ZeroFrame(false),
@@ -52,7 +52,7 @@ CMeterBitmap::CMeterBitmap(CMeterWindow* meterWindow, const WCHAR* name) : CMete
 ** The destructor
 **
 */
-CMeterBitmap::~CMeterBitmap()
+MeterBitmap::~MeterBitmap()
 {
 }
 
@@ -60,9 +60,9 @@ CMeterBitmap::~CMeterBitmap()
 ** Load the image and get the dimensions of the meter from it.
 **
 */
-void CMeterBitmap::Initialize()
+void MeterBitmap::Initialize()
 {
-	CMeter::Initialize();
+	Meter::Initialize();
 
 	// Load the bitmaps if defined
 	if (!m_ImageName.empty())
@@ -96,7 +96,7 @@ void CMeterBitmap::Initialize()
 ** Checks if the given point is inside the meter.
 **
 */
-bool CMeterBitmap::HitTest(int x, int y)
+bool MeterBitmap::HitTest(int x, int y)
 {
 	if (m_Extend)
 	{
@@ -147,7 +147,7 @@ bool CMeterBitmap::HitTest(int x, int y)
 	}
 	else
 	{
-		return CMeter::HitTest(x, y);
+		return Meter::HitTest(x, y);
 	}
 }
 
@@ -155,14 +155,14 @@ bool CMeterBitmap::HitTest(int x, int y)
 ** Read the options specified in the ini file.
 **
 */
-void CMeterBitmap::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 	int oldW = m_W;
 	int oldH = m_H;
 
-	CMeter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser, section);
 
 	m_ImageName = parser.ReadString(section, L"BitmapImage", L"");
 	if (!m_ImageName.empty())
@@ -226,11 +226,11 @@ void CMeterBitmap::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Updates the value(s) from the measures.
 **
 */
-bool CMeterBitmap::Update()
+bool MeterBitmap::Update()
 {
-	if (CMeter::Update() && !m_Measures.empty())
+	if (Meter::Update() && !m_Measures.empty())
 	{
-		CMeasure* measure = m_Measures[0];
+		Measure* measure = m_Measures[0];
 		double value = (m_Extend) ? measure->GetValue() : measure->GetRelativeValue();
 
 		if (m_TransitionFrameCount > 0)
@@ -239,7 +239,7 @@ bool CMeterBitmap::Update()
 			if ((int)(value * realFrames) != (int)(m_Value * realFrames))
 			{
 				m_TransitionStartValue = m_Value;
-				m_TransitionStartTicks = CSystem::GetTickCount64();
+				m_TransitionStartTicks = System::GetTickCount64();
 			}
 			else
 			{
@@ -258,7 +258,7 @@ bool CMeterBitmap::Update()
 ** Returns true if the meter has active transition animation.
 **
 */
-bool CMeterBitmap::HasActiveTransition()
+bool MeterBitmap::HasActiveTransition()
 {
 	if (m_TransitionStartTicks > 0)
 	{
@@ -271,9 +271,9 @@ bool CMeterBitmap::HasActiveTransition()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterBitmap::Draw(Gfx::Canvas& canvas)
+bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(canvas)) return false;
+	if (!Meter::Draw(canvas)) return false;
 
 	int newY, newX;
 
@@ -343,7 +343,7 @@ bool CMeterBitmap::Draw(Gfx::Canvas& canvas)
 			// If transition is ongoing the pick the correct frame
 			if (m_TransitionStartTicks > 0)
 			{
-				int diffTicks = (int)(CSystem::GetTickCount64() - m_TransitionStartTicks);
+				int diffTicks = (int)(System::GetTickCount64() - m_TransitionStartTicks);
 
 				int range = ((value % realFrames) - (transitionValue % realFrames)) * (m_TransitionFrameCount + 1);
 				if (range < 0)
@@ -413,7 +413,7 @@ bool CMeterBitmap::Draw(Gfx::Canvas& canvas)
 		// If transition is ongoing the pick the correct frame
 		if (m_TransitionStartTicks > 0)
 		{
-			int diffTicks = (int)(CSystem::GetTickCount64() - m_TransitionStartTicks);
+			int diffTicks = (int)(System::GetTickCount64() - m_TransitionStartTicks);
 
 			if (diffTicks > ((m_TransitionFrameCount + 1) * m_MeterWindow->GetTransitionUpdate()))
 			{

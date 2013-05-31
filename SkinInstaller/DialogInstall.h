@@ -23,7 +23,7 @@
 #include "unzip.h"
 #include "../Library/Dialog.h"
 
-class CDialogInstall : public CDialog
+class DialogInstall : public Dialog
 {
 public:
 	static void Create(HINSTANCE hInstance, LPWSTR lpCmdLine);
@@ -33,18 +33,18 @@ public:
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 
-	static CDialogInstall* c_Dialog;
+	static DialogInstall* c_Dialog;
 
 protected:
-	virtual CTab& GetActiveTab();
+	virtual Tab& GetActiveTab();
 
 private:
-	friend class CDialogPackage;
+	friend class DialogPackage;
 
-	class CTabInstall : public CTab
+	class TabInstall : public Tab
 	{
 	public:
-		CTabInstall(HWND window);
+		TabInstall(HWND window);
 
 		virtual void Initialize();
 
@@ -75,8 +75,8 @@ private:
 		char key[7];
 	};
 
-	CDialogInstall(HWND wnd, const WCHAR* file);
-	virtual ~CDialogInstall();
+	DialogInstall(HWND wnd, const WCHAR* file);
+	virtual ~DialogInstall();
 
 	bool ReadPackage();
 	bool ReadOptions(const WCHAR* file);
@@ -100,7 +100,7 @@ private:
 	static std::wstring GetDotNetVersionString();
 	static std::wstring GetWindowsVersionString();
 
-	CTabInstall m_TabInstall;
+	TabInstall m_TabInstall;
 
 	HBITMAP m_HeaderBitmap;
 

@@ -21,16 +21,16 @@
 
 #include "Measure.h"
 
-class CMeasureVirtualMemory : public CMeasure
+class MeasureVirtualMemory : public Measure
 {
 public:
-	CMeasureVirtualMemory(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeasureVirtualMemory();
+	MeasureVirtualMemory(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeasureVirtualMemory();
 
-	virtual UINT GetTypeID() { return TypeID<CMeasureVirtualMemory>(); }
+	virtual UINT GetTypeID() { return TypeID<MeasureVirtualMemory>(); }
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:

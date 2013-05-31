@@ -53,10 +53,10 @@ struct GlobalOptions
 	double netOutSpeed;
 };
 
-class CConfigParser;
-class CTrayWindow;
+class ConfigParser;
+class TrayWindow;
 
-class CRainmeter
+class Rainmeter
 {
 public:
 	struct SkinFolder 
@@ -90,8 +90,8 @@ public:
 		}
 	};
 
-	CRainmeter();
-	~CRainmeter();
+	Rainmeter();
+	~Rainmeter();
 
 	int Initialize(LPCWSTR iniPath, LPCWSTR layout);
 	bool IsAlreadyRunning();
@@ -99,22 +99,22 @@ public:
 
 	void SetNetworkStatisticsTimer();
 
-	CConfigParser* GetCurrentParser() { return m_CurrentParser; }
-	void SetCurrentParser(CConfigParser* parser) { m_CurrentParser = parser; }
+	ConfigParser* GetCurrentParser() { return m_CurrentParser; }
+	void SetCurrentParser(ConfigParser* parser) { m_CurrentParser = parser; }
 
-	CTrayWindow* GetTrayWindow() { return m_TrayWindow; }
+	TrayWindow* GetTrayWindow() { return m_TrayWindow; }
 
-	bool HasMeterWindow(const CMeterWindow* meterWindow) const;
+	bool HasMeterWindow(const MeterWindow* meterWindow) const;
 
-	CMeterWindow* GetMeterWindow(const std::wstring& folderPath);
-	CMeterWindow* GetMeterWindowByINI(const std::wstring& ini_searching);
+	MeterWindow* GetMeterWindow(const std::wstring& folderPath);
+	MeterWindow* GetMeterWindowByINI(const std::wstring& ini_searching);
 	std::pair<int, int> GetMeterWindowIndex(const std::wstring& folderPath, const std::wstring& file);
-	std::pair<int, int> GetMeterWindowIndex(CMeterWindow* meterWindow) { return GetMeterWindowIndex(meterWindow->GetFolderPath(), meterWindow->GetFileName()); }
+	std::pair<int, int> GetMeterWindowIndex(MeterWindow* meterWindow) { return GetMeterWindowIndex(meterWindow->GetFolderPath(), meterWindow->GetFileName()); }
 	std::pair<int, int> GetMeterWindowIndex(UINT menuCommand);
 
-	CMeterWindow* GetMeterWindow(HWND hwnd);
-	void GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group = std::wstring());
-	std::map<std::wstring, CMeterWindow*>& GetAllMeterWindows() { return m_MeterWindows; }
+	MeterWindow* GetMeterWindow(HWND hwnd);
+	void GetMeterWindowsByLoadOrder(std::multimap<int, MeterWindow*>& windows, const std::wstring& group = std::wstring());
+	std::map<std::wstring, MeterWindow*>& GetAllMeterWindows() { return m_MeterWindows; }
 
 	std::wstring GetFolderPath(int folderIndex);
 	int FindSkinFolderIndex(const std::wstring& folderPath);
@@ -122,12 +122,12 @@ public:
 	const std::vector<SkinFolder>& GetFolders() { return m_SkinFolders; }
 	const std::vector<std::wstring>& GetAllLayouts() { return m_Layouts; }
 
-	void RemoveMeterWindow(CMeterWindow* meterWindow);
-	void AddUnmanagedMeterWindow(CMeterWindow* meterWindow);
-	void RemoveUnmanagedMeterWindow(CMeterWindow* meterWindow);
+	void RemoveMeterWindow(MeterWindow* meterWindow);
+	void AddUnmanagedMeterWindow(MeterWindow* meterWindow);
+	void RemoveUnmanagedMeterWindow(MeterWindow* meterWindow);
 
 	void ActivateSkin(int folderIndex, int fileIndex);
-	void DeactivateSkin(CMeterWindow* meterWindow, int folderIndex, bool save = true);
+	void DeactivateSkin(MeterWindow* meterWindow, int folderIndex, bool save = true);
 	void ToggleSkin(int folderIndex, int fileIndex);
 
 	const std::wstring& GetPath() { return m_Path; }
@@ -196,15 +196,15 @@ public:
 	int ShowMessage(HWND parent, const WCHAR* text, UINT type);
 
 	bool IsMenuActive() { return m_MenuActive; }
-	void ShowContextMenu(POINT pos, CMeterWindow* meterWindow);
+	void ShowContextMenu(POINT pos, MeterWindow* meterWindow);
 
 	const std::wstring& GetTrayExecuteR() { return m_TrayExecuteR; }
 	const std::wstring& GetTrayExecuteM() { return m_TrayExecuteM; }
 	const std::wstring& GetTrayExecuteDR() { return m_TrayExecuteDR; }
 	const std::wstring& GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
-	void ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, CMeterWindow* meterWindow);
-	void ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow, bool multi = true);
+	void ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, MeterWindow* meterWindow);
+	void ExecuteCommand(const WCHAR* command, MeterWindow* meterWindow, bool multi = true);
 	void DelayedExecuteCommand(const WCHAR* command);
 
 	void RefreshAll();
@@ -215,8 +215,8 @@ public:
 	static std::wstring ExtractPath(const std::wstring& strFilePath);
 	static void ExpandEnvironmentVariables(std::wstring& strPath);
 
-	friend class CCommandHandler;
-	friend class CDialogManage;
+	friend class CommandHandler;
+	friend class DialogManage;
 
 private:
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -232,7 +232,7 @@ private:
 	void SetLoadOrder(int folderIndex, int order);
 	int GetLoadOrder(const std::wstring& folderPath);
 	void UpdateDesktopWorkArea(bool reset);
-	HMENU CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU menu);
+	HMENU CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU menu);
 	void ChangeSkinIndex(HMENU subMenu, int index);
 	int ScanForSkinsRecursive(const std::wstring& path, std::wstring base, int index, UINT level);
 	
@@ -240,18 +240,18 @@ private:
 	int CreateAllSkinsMenuRecursive(HMENU skinMenu, int index);
 
 	void CreateLayoutMenu(HMENU layoutMenu);
-	void CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow);
+	void CreateMonitorMenu(HMENU monitorMenu, MeterWindow* meterWindow);
 	void CreateOptionsFile();
 	void CreateDataFile();
 	void CreateComponentFolders(bool defaultIniLocation);
 	void TestSettingsFile(bool bDefaultIniLocation);
 
-	CTrayWindow* m_TrayWindow;
+	TrayWindow* m_TrayWindow;
 
 	std::vector<SkinFolder> m_SkinFolders;
 	std::multimap<int, int> m_SkinOrders;
-	std::map<std::wstring, CMeterWindow*> m_MeterWindows;
-	std::list<CMeterWindow*> m_UnmanagedMeterWindows;
+	std::map<std::wstring, MeterWindow*> m_MeterWindows;
+	std::list<MeterWindow*> m_UnmanagedMeterWindows;
 	std::vector<std::wstring> m_Layouts;
 
 	std::wstring m_Path;
@@ -292,9 +292,9 @@ private:
 
 	std::wstring m_SkinEditor;
 
-	CCommandHandler m_CommandHandler;
+	CommandHandler m_CommandHandler;
 
-	CConfigParser* m_CurrentParser;
+	ConfigParser* m_CurrentParser;
 
 	HWND m_Window;
 

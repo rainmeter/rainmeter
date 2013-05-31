@@ -19,7 +19,7 @@
 #ifndef __INTERNET_H__
 #define __INTERNET_H__
 
-class CInternet
+class Internet
 {
 public:
 	static void Initialize();

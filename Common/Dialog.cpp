@@ -20,13 +20,13 @@
 #include <Commctrl.h>
 #include <Uxtheme.h>
 
-HWND CDialog::c_ActiveDialogWindow = NULL;
+HWND Dialog::c_ActiveDialogWindow = NULL;
 
 //
-// CBaseDialog
+// BaseDialog
 //
 
-CBaseDialog::CBaseDialog() :
+BaseDialog::BaseDialog() :
 	m_Window()
 {
 }
@@ -35,7 +35,7 @@ CBaseDialog::CBaseDialog() :
 ** Create (if not already) and show the dialog.
 **
 */
-void CBaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
+void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
 {
 	if (m_Window)
 	{
@@ -98,16 +98,16 @@ void CBaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, D
 	delete [] dt;
 }
 
-void CBaseDialog::CreateControls(const ControlTemplate::Control* cts, UINT ctCount, HFONT font, ControlTemplate::GetStringFunc getString)
+void BaseDialog::CreateControls(const ControlTemplate::Control* cts, UINT ctCount, HFONT font, ControlTemplate::GetStringFunc getString)
 {
 	ControlTemplate::CreateControls(cts, ctCount, m_Window, font, getString);
 }
 
-INT_PTR CALLBACK CBaseDialog::InitialDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK BaseDialog::InitialDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_INITDIALOG)
 	{
-		CBaseDialog* dialog = (CBaseDialog*)lParam;
+		BaseDialog* dialog = (BaseDialog*)lParam;
 		dialog->m_Window = hWnd;
 		SetWindowLongPtr(hWnd, DWLP_USER, (LONG_PTR)dialog);
 		SetWindowLongPtr(hWnd, DWLP_DLGPROC, (LONG_PTR)MainDlgProc);
@@ -117,17 +117,17 @@ INT_PTR CALLBACK CBaseDialog::InitialDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam
 	return FALSE;
 }
 
-INT_PTR CALLBACK CBaseDialog::MainDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK BaseDialog::MainDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	CBaseDialog* dialog = (CBaseDialog*)GetWindowLongPtr(hWnd, DWLP_USER);
+	BaseDialog* dialog = (BaseDialog*)GetWindowLongPtr(hWnd, DWLP_USER);
 	return dialog->HandleMessage(uMsg, wParam, lParam);
 }
 
 //
-// CDialog
+// Dialog
 //
 
-CDialog::CDialog() : CBaseDialog(),
+Dialog::Dialog() : BaseDialog(),
 	m_Font(),
 	m_FontBold()
 {
@@ -140,25 +140,25 @@ CDialog::CDialog() : CBaseDialog(),
 	m_FontBold = CreateFontIndirect(&ncm.lfMenuFont);
 }
 
-CDialog::~CDialog()
+Dialog::~Dialog()
 {
 	DestroyWindow(m_Window);
 	DeleteObject(m_Font);
 	DeleteObject(m_FontBold);
 }
 
-void CDialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
+void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless)
 {
 	Show(title, x, y, w, h, style, exStyle, parent, modeless);
 }
 
-INT_PTR CDialog::OnActivate(WPARAM wParam, LPARAM lParam)
+INT_PTR Dialog::OnActivate(WPARAM wParam, LPARAM lParam)
 {
 	c_ActiveDialogWindow = wParam ? m_Window : NULL;
 	return FALSE;
 }
 
-bool CDialog::HandleMessage(MSG& msg)
+bool Dialog::HandleMessage(MSG& msg)
 {
 	if (c_ActiveDialogWindow)
 	{
@@ -175,12 +175,12 @@ bool CDialog::HandleMessage(MSG& msg)
 ** Subclass button control to draw arrow on the right.
 **
 */
-void CDialog::SetMenuButton(HWND button)
+void Dialog::SetMenuButton(HWND button)
 {
 	SetWindowSubclass(button, MenuButtonProc, NULL, NULL);
 }
 
-LRESULT CALLBACK CDialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
 	LRESULT result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
 
@@ -227,15 +227,15 @@ LRESULT CALLBACK CDialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 }
 
 //
-// CTab
+// Tab
 //
 
-CDialog::CTab::CTab() : CBaseDialog(),
+Dialog::Tab::Tab() : BaseDialog(),
 	m_Initialized(false)
 {
 }
 
-void CDialog::CTab::CreateTabWindow(short x, short y, short w, short h, HWND owner)
+void Dialog::Tab::CreateTabWindow(short x, short y, short w, short h, HWND owner)
 {
 	const DWORD style = DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS;
 	const DWORD exStyle = WS_EX_CONTROLPARENT;
@@ -244,12 +244,12 @@ void CDialog::CTab::CreateTabWindow(short x, short y, short w, short h, HWND own
 	EnableThemeDialogTexture(m_Window, ETDT_ENABLETAB);
 }
 
-CDialog::CTab::~CTab()
+Dialog::Tab::~Tab()
 {
 	DestroyWindow(m_Window);
 }
 
-void CDialog::CTab::Activate()
+void Dialog::Tab::Activate()
 {
 	if (!m_Initialized)
 	{

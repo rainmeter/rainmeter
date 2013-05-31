@@ -25,17 +25,17 @@
 
 using namespace Gdiplus;
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
-CTintedImageHelper_DefineOptionArray(CMeterHistogram::c_PrimaryOptionArray, L"Primary");
-CTintedImageHelper_DefineOptionArray(CMeterHistogram::c_SecondaryOptionArray, L"Secondary");
-CTintedImageHelper_DefineOptionArray(CMeterHistogram::c_BothOptionArray, L"Both");
+TintedImageHelper_DefineOptionArray(MeterHistogram::c_PrimaryOptionArray, L"Primary");
+TintedImageHelper_DefineOptionArray(MeterHistogram::c_SecondaryOptionArray, L"Secondary");
+TintedImageHelper_DefineOptionArray(MeterHistogram::c_BothOptionArray, L"Both");
 
 /*
 ** The constructor
 **
 */
-CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
+MeterHistogram::MeterHistogram(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
 	m_PrimaryColor(Color::Green),
 	m_SecondaryColor(Color::Red),
 	m_OverlapColor(Color::Yellow),
@@ -64,7 +64,7 @@ CMeterHistogram::CMeterHistogram(CMeterWindow* meterWindow, const WCHAR* name) :
 ** The destructor
 **
 */
-CMeterHistogram::~CMeterHistogram()
+MeterHistogram::~MeterHistogram()
 {
 	DisposeBuffer();
 }
@@ -73,7 +73,7 @@ CMeterHistogram::~CMeterHistogram()
 ** Disposes the buffers.
 **
 */
-void CMeterHistogram::DisposeBuffer()
+void MeterHistogram::DisposeBuffer()
 {
 	// Reset current position
 	m_MeterPos = 0;
@@ -90,7 +90,7 @@ void CMeterHistogram::DisposeBuffer()
 ** Creates the buffers.
 **
 */
-void CMeterHistogram::CreateBuffer()
+void MeterHistogram::CreateBuffer()
 {
 	DisposeBuffer();
 
@@ -111,11 +111,11 @@ void CMeterHistogram::CreateBuffer()
 ** Or create the brushes if solid color histogram is used.
 **
 */
-void CMeterHistogram::Initialize()
+void MeterHistogram::Initialize()
 {
-	CMeter::Initialize();
+	Meter::Initialize();
 
-	CMeasure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
+	Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
 
 	// A sanity check
 	if (secondaryMeasure && !m_PrimaryImageName.empty() && (m_OverlapImageName.empty() || m_SecondaryImageName.empty()))
@@ -193,7 +193,7 @@ void CMeterHistogram::Initialize()
 ** Read the options specified in the ini file.
 **
 */
-void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldPrimaryImageName = m_PrimaryImageName;
@@ -203,7 +203,7 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	int oldH = m_H;
 	bool oldGraphHorizontalOrientation = m_GraphHorizontalOrientation;
 
-	CMeter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser, section);
 
 	m_PrimaryColor = parser.ReadColor(section, L"PrimaryColor", Color::Green);
 	m_SecondaryColor = parser.ReadColor(section, L"SecondaryColor", Color::Red);
@@ -323,16 +323,16 @@ void CMeterHistogram::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Updates the value(s) from the measures.
 **
 */
-bool CMeterHistogram::Update()
+bool MeterHistogram::Update()
 {
-	if (CMeter::Update() && !m_Measures.empty())
+	if (Meter::Update() && !m_Measures.empty())
 	{
 		int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
 
 		if (maxSize > 0)  // m_PrimaryValues is not NULL
 		{
-			CMeasure* measure = m_Measures[0];
-			CMeasure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
+			Measure* measure = m_Measures[0];
+			Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
 
 			// Gather values
 			m_PrimaryValues[m_MeterPos] = measure->GetValue();
@@ -411,15 +411,15 @@ bool CMeterHistogram::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterHistogram::Draw(Gfx::Canvas& canvas)
+bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(canvas) ||
+	if (!Meter::Draw(canvas) ||
 		(m_Measures.size() >= 1 && !m_PrimaryValues) ||
 		(m_Measures.size() >= 2 && !m_SecondaryValues)) return false;
 
 	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
 
-	CMeasure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
+	Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
 
 	GraphicsPath primaryPath;
 	GraphicsPath secondaryPath;
@@ -645,7 +645,7 @@ bool CMeterHistogram::Draw(Gfx::Canvas& canvas)
 ** Overwritten method to handle the secondary measure binding.
 **
 */
-void CMeterHistogram::BindMeasures(CConfigParser& parser, const WCHAR* section)
+void MeterHistogram::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	if (BindPrimaryMeasure(parser, section, false))
 	{
@@ -656,7 +656,7 @@ void CMeterHistogram::BindMeasures(CConfigParser& parser, const WCHAR* section)
 			secondaryMeasure = &parser.ReadString(section, L"SecondaryMeasureName", L"");
 		}
 
-		CMeasure* measure = parser.GetMeasure(*secondaryMeasure);
+		Measure* measure = parser.GetMeasure(*secondaryMeasure);
 		if (measure)
 		{
 			m_Measures.push_back(measure);

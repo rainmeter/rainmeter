@@ -34,13 +34,13 @@
 
 using namespace Gdiplus;
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 /*
 ** The constructor
 **
 */
-CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : CSection(meterWindow, name),
+Meter::Meter(MeterWindow* meterWindow, const WCHAR* name) : Section(meterWindow, name),
 	m_X(),
 	m_Y(),
 	m_W(0),
@@ -70,7 +70,7 @@ CMeter::CMeter(CMeterWindow* meterWindow, const WCHAR* name) : CSection(meterWin
 ** The destructor
 **
 */
-CMeter::~CMeter()
+Meter::~Meter()
 {
 	delete m_Transformation;
 
@@ -85,7 +85,7 @@ CMeter::~CMeter()
 ** classes, which load bitmaps and such things during initialization.
 **
 */
-void CMeter::Initialize()
+void Meter::Initialize()
 {
 	m_Initialized = true;
 }
@@ -94,7 +94,7 @@ void CMeter::Initialize()
 ** Returns the X-position of the meter.
 **
 */
-int CMeter::GetX(bool abs)
+int Meter::GetX(bool abs)
 {
 	if (m_RelativeX != POSITION_ABSOLUTE && m_RelativeMeter)
 	{
@@ -114,7 +114,7 @@ int CMeter::GetX(bool abs)
 ** Returns the Y-position of the meter.
 **
 */
-int CMeter::GetY(bool abs)
+int Meter::GetY(bool abs)
 {
 	if (m_RelativeY != POSITION_ABSOLUTE && m_RelativeMeter)
 	{
@@ -130,7 +130,7 @@ int CMeter::GetY(bool abs)
 	return m_Y;
 }
 
-void CMeter::SetX(int x)
+void Meter::SetX(int x)
 {
 	m_X = x;
 	m_RelativeX = POSITION_ABSOLUTE;
@@ -141,7 +141,7 @@ void CMeter::SetX(int x)
 	m_MeterWindow->GetParser().SetValue(m_Name, L"X", buffer);
 }
 
-void CMeter::SetY(int y)
+void Meter::SetY(int y)
 {
 	m_Y = y;
 	m_RelativeY = POSITION_ABSOLUTE;
@@ -156,7 +156,7 @@ void CMeter::SetY(int y)
 ** Returns a RECT containing the dimensions of the meter within the MeterWindow
 **
 */
-RECT CMeter::GetMeterRect()
+RECT Meter::GetMeterRect()
 {
 	RECT meterRect;
 
@@ -173,7 +173,7 @@ RECT CMeter::GetMeterRect()
 ** This function doesn't check Hidden state, so check it before calling this function if needed.
 **
 */
-bool CMeter::HitTest(int x, int y)
+bool Meter::HitTest(int x, int y)
 {
 	int p;
 	return (x >= (p = GetX()) && x < p + m_W && y >= (p = GetY()) && y < p + m_H);
@@ -183,7 +183,7 @@ bool CMeter::HitTest(int x, int y)
 ** Shows the meter and tooltip.
 **
 */
-void CMeter::Show()
+void Meter::Show()
 {
 	m_Hidden = false;
 
@@ -203,7 +203,7 @@ void CMeter::Show()
 ** Hides the meter and tooltip.
 **
 */
-void CMeter::Hide()
+void Meter::Hide()
 {
 	m_Hidden = true;
 
@@ -221,7 +221,7 @@ void CMeter::Hide()
 ** call this base implementation if they overwrite this method.
 **
 */
-void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// The MeterStyle defines a template where the values are read if the meter doesn't have it itself
 	const std::wstring& style = parser.ReadString(section, L"MeterStyle", L"");
@@ -230,7 +230,7 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 		parser.SetStyleTemplate(style);
 	}
 
-	CSection::ReadOptions(parser, section);
+	Section::ReadOptions(parser, section);
 
 	BindMeasures(parser, section);
 
@@ -360,7 +360,7 @@ void CMeter::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** several meters but one meter and only be bound to one measure.
 **
 */
-void CMeter::BindMeasures(CConfigParser& parser, const WCHAR* section)
+void Meter::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	BindPrimaryMeasure(parser, section, false);
 }
@@ -370,43 +370,43 @@ void CMeter::BindMeasures(CConfigParser& parser, const WCHAR* section)
 ** If new meters are implemented this method needs to be updated.
 **
 */
-CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHAR* name)
+Meter* Meter::Create(const WCHAR* meter, MeterWindow* meterWindow, const WCHAR* name)
 {
 	if (_wcsicmp(L"STRING", meter) == 0)
 	{
-		return new CMeterString(meterWindow, name);
+		return new MeterString(meterWindow, name);
 	}
 	else if (_wcsicmp(L"IMAGE", meter) == 0)
 	{
-		return new CMeterImage(meterWindow, name);
+		return new MeterImage(meterWindow, name);
 	}
 	else if (_wcsicmp(L"HISTOGRAM", meter) == 0)
 	{
-		return new CMeterHistogram(meterWindow, name);
+		return new MeterHistogram(meterWindow, name);
 	}
 	else if (_wcsicmp(L"BAR", meter) == 0)
 	{
-		return new CMeterBar(meterWindow, name);
+		return new MeterBar(meterWindow, name);
 	}
 	else if (_wcsicmp(L"BITMAP", meter) == 0)
 	{
-		return new CMeterBitmap(meterWindow, name);
+		return new MeterBitmap(meterWindow, name);
 	}
 	else if (_wcsicmp(L"LINE", meter) == 0)
 	{
-		return new CMeterLine(meterWindow, name);
+		return new MeterLine(meterWindow, name);
 	}
 	else if (_wcsicmp(L"ROUNDLINE", meter) == 0)
 	{
-		return new CMeterRoundLine(meterWindow, name);
+		return new MeterRoundLine(meterWindow, name);
 	}
 	else if (_wcsicmp(L"ROTATOR", meter) == 0)
 	{
-		return new CMeterRotator(meterWindow, name);
+		return new MeterRotator(meterWindow, name);
 	}
 	else if (_wcsicmp(L"BUTTON", meter) == 0)
 	{
-		return new CMeterButton(meterWindow, name);
+		return new MeterButton(meterWindow, name);
 	}
 
 	LogErrorF(L"Meter=%s is not valid in [%s]", meter, name);
@@ -418,7 +418,7 @@ CMeter* CMeter::Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHA
 ** Updates the value(s) from the measures. Derived classes should
 ** only update if this returns true;
 */
-bool CMeter::Update()
+bool Meter::Update()
 {
 	// Only update the meter's value when the divider is equal to the counter
 	return UpdateCounter();
@@ -429,13 +429,13 @@ bool CMeter::Update()
 ** BindMeasures() implementations.
 **
 */
-bool CMeter::BindPrimaryMeasure(CConfigParser& parser, const WCHAR* section, bool optional)
+bool Meter::BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool optional)
 {
 	m_Measures.clear();
 
 	const std::wstring& measureName = parser.ReadString(section, L"MeasureName", L"");
 
-	CMeasure* measure = parser.GetMeasure(measureName);
+	Measure* measure = parser.GetMeasure(measureName);
 	if (measure)
 	{
 		m_Measures.push_back(measure);
@@ -453,7 +453,7 @@ bool CMeter::BindPrimaryMeasure(CConfigParser& parser, const WCHAR* section, boo
 ** Reads and binds secondary measures (MeasureName2 - MeasureNameN).
 **
 */
-void CMeter::BindSecondaryMeasures(CConfigParser& parser, const WCHAR* section)
+void Meter::BindSecondaryMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	if (!m_Measures.empty())
 	{
@@ -464,7 +464,7 @@ void CMeter::BindSecondaryMeasures(CConfigParser& parser, const WCHAR* section)
 		{
 			_snwprintf_s(tmpName, _TRUNCATE, L"MeasureName%i", i);
 			const std::wstring& measureName = parser.ReadString(section, tmpName, L"");
-			CMeasure* measure = parser.GetMeasure(measureName);
+			Measure* measure = parser.GetMeasure(measureName);
 			if (measure)
 			{
 				m_Measures.push_back(measure);
@@ -488,7 +488,7 @@ void CMeter::BindSecondaryMeasures(CConfigParser& parser, const WCHAR* section)
 ** Replaces %1, %2, ... with the corresponding measure value.
 **
 */
-bool CMeter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scale, int decimals, bool percentual)
+bool Meter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	bool replaced = false;
 
@@ -525,10 +525,10 @@ bool CMeter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scal
 /*
 ** Does the initial construction of the ToolTip for the meter
 */
-void CMeter::CreateToolTip(CMeterWindow* meterWindow)
+void Meter::CreateToolTip(MeterWindow* meterWindow)
 {
 	HWND hMeterWindow = m_MeterWindow->GetWindow();
-	HINSTANCE hInstance = Rainmeter->GetInstance();
+	HINSTANCE hInstance = g_Rainmeter->GetInstance();
 	DWORD style = WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP;
 
 	if (m_ToolTipType)
@@ -565,7 +565,7 @@ void CMeter::CreateToolTip(CMeterWindow* meterWindow)
 /*
 ** Updates the ToolTip to match new values
 */
-void CMeter::UpdateToolTip()
+void Meter::UpdateToolTip()
 {
 	HWND hwndTT = m_ToolTipHandle;
 
@@ -640,7 +640,7 @@ void CMeter::UpdateToolTip()
 /*
 ** Draws the solid background & bevel if such are defined
 */
-bool CMeter::Draw(Gfx::Canvas& canvas)
+bool Meter::Draw(Gfx::Canvas& canvas)
 {
 	if (IsHidden()) return false;
 
@@ -712,7 +712,7 @@ bool CMeter::Draw(Gfx::Canvas& canvas)
 /*
 ** Draws a bevel inside the given area
 */
-void CMeter::DrawBevel(Graphics& graphics, const Rect& rect, const Pen& light, const Pen& dark)
+void Meter::DrawBevel(Graphics& graphics, const Rect& rect, const Pen& light, const Pen& dark)
 {
 	int l = rect.GetLeft();
 	int r = rect.GetRight() - 1;

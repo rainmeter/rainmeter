@@ -60,13 +60,13 @@ enum MOUSECURSOR
 	MOUSECURSOR_CUSTOM
 };
 
-class CMouse
+class Mouse
 {
 public:
-	CMouse(CMeterWindow* meterWindow, CMeter* meter = NULL);
-	~CMouse();
+	Mouse(MeterWindow* meterWindow, Meter* meter = NULL);
+	~Mouse();
 
-	void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
 	MOUSECURSOR GetCursorType() const { return m_CursorType; }
 	HCURSOR GetCursor() const;
@@ -142,8 +142,8 @@ private:
 	HCURSOR m_CustomCursor;
 	bool m_CursorState;
 
-	CMeterWindow* m_MeterWindow;
-	CMeter* m_Meter;
+	MeterWindow* m_MeterWindow;
+	Meter* m_Meter;
 };
 
 #endif

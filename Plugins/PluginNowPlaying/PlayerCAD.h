@@ -24,12 +24,12 @@
 typedef BOOL (WINAPI * FPCHANGEWINDOWMESSAGEFILTER)(UINT message, DWORD dwFlag);
 typedef BOOL (WINAPI * FPCHANGEWINDOWMESSAGEFILTEREX)(HWND hWnd, UINT message, DWORD dwFlag, PCHANGEFILTERSTRUCT pChangeFilterStruct);
 
-class CPlayerCAD : public CPlayer
+class PlayerCAD : public Player
 {
 public:
-	virtual ~CPlayerCAD();
+	virtual ~PlayerCAD();
 
-	static CPlayer* Create();
+	static Player* Create();
 
 	virtual void UpdateData();
 
@@ -47,14 +47,14 @@ public:
 	virtual void OpenPlayer(std::wstring& path);
 
 protected:
-	CPlayerCAD();
+	PlayerCAD();
 
 private:
 	void Initialize();
 	void Uninitialize();
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-	static CPlayer* c_Player;
+	static Player* c_Player;
 
 	HWND m_Window;
 	HWND m_PlayerWindow;

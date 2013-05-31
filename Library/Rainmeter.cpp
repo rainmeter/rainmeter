@@ -44,7 +44,7 @@ enum INTERVAL
 	INTERVAL_NETSTATS = 120000
 };
 
-CRainmeter* Rainmeter; // The module
+Rainmeter* g_Rainmeter; // The module
 
 /*
 ** Initializes Rainmeter.
@@ -94,15 +94,15 @@ int RainmeterMain(LPWSTR cmdLine)
 
 	const WCHAR* iniFile = (*cmdLine && !layout) ? cmdLine : NULL;
 
-	Rainmeter = new CRainmeter;
-	int ret = Rainmeter->Initialize(iniFile, layout);
+	g_Rainmeter = new Rainmeter;
+	int ret = g_Rainmeter->Initialize(iniFile, layout);
 	if (ret == 0)
 	{
-		ret = Rainmeter->MessagePump();
+		ret = g_Rainmeter->MessagePump();
 	}
 
-	delete Rainmeter;
-	Rainmeter = NULL;
+	delete g_Rainmeter;
+	g_Rainmeter = NULL;
 
 	return ret;
 }
@@ -111,7 +111,7 @@ int RainmeterMain(LPWSTR cmdLine)
 ** Constructor
 **
 */
-CRainmeter::CRainmeter() :
+Rainmeter::Rainmeter() :
 	m_TrayWindow(),
 	m_UseD2D(false),
 	m_Debug(false),
@@ -145,7 +145,7 @@ CRainmeter::CRainmeter() :
 ** Destructor
 **
 */
-CRainmeter::~CRainmeter()
+Rainmeter::~Rainmeter()
 {
 	KillTimer(m_Window, TIMER_NETSTATS);
 
@@ -154,15 +154,15 @@ CRainmeter::~CRainmeter()
 
 	delete m_TrayWindow;
 
-	CSystem::Finalize();
+	System::Finalize();
 
-	CMeasureNet::UpdateIFTable();
-	CMeasureNet::UpdateStats();
+	MeasureNet::UpdateIFTable();
+	MeasureNet::UpdateStats();
 	WriteStats(true);
 
-	CMeasureNet::FinalizeStatic();
-	CMeasureCPU::FinalizeStatic();
-	CMeterString::FinalizeStatic();
+	MeasureNet::FinalizeStatic();
+	MeasureCPU::FinalizeStatic();
+	MeterString::FinalizeStatic();
 
 	// Change the work area back
 	if (m_DesktopWorkAreaChanged)
@@ -182,7 +182,7 @@ CRainmeter::~CRainmeter()
 ** The main initialization function for the module.
 **
 */
-int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
+int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 {
 	m_Instance = GetModuleHandle(L"Rainmeter");
 
@@ -200,7 +200,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		std::wstring iniFile = iniPath;
 		ExpandEnvironmentVariables(iniFile);
 
-		if (iniFile.empty() || CSystem::IsPathSeparator(iniFile[iniFile.length() - 1]))
+		if (iniFile.empty() || System::IsPathSeparator(iniFile[iniFile.length() - 1]))
 		{
 			iniFile += L"Rainmeter.ini";
 		}
@@ -209,7 +209,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 			iniFile += L"\\Rainmeter.ini";
 		}
 
-		if (!CSystem::IsPathSeparator(iniFile[0]) && iniFile.find_first_of(L':') == std::wstring::npos)
+		if (!System::IsPathSeparator(iniFile[0]) && iniFile.find_first_of(L':') == std::wstring::npos)
 		{
 			// Make absolute path
 			iniFile.insert(0, m_Path);
@@ -260,7 +260,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	if (!m_Window) return 1;
 
-	CLogger& logger = CLogger::GetInstance();
+	Logger& logger = Logger::GetInstance();
 	const WCHAR* iniFile = m_IniFile.c_str();
 
 	// Set file locations
@@ -296,7 +296,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 
 	// Reset log file
-	CSystem::RemoveFile(logger.GetLogFilePath());
+	System::RemoveFile(logger.GetLogFilePath());
 
 	m_Debug = 0!=GetPrivateProfileInt(L"Rainmeter", L"Debug", 0, iniFile);
 
@@ -357,7 +357,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		m_SkinPath.assign(buffer, len);
 		ExpandEnvironmentVariables(m_SkinPath);
 
-		if (!m_SkinPath.empty() && !CSystem::IsPathSeparator(m_SkinPath[m_SkinPath.length() - 1]))
+		if (!m_SkinPath.empty() && !System::IsPathSeparator(m_SkinPath[m_SkinPath.length() - 1]))
 		{
 			m_SkinPath += L'\\';
 		}
@@ -398,7 +398,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	{
 		m_Drive.assign(m_Path, 0, loc + 1);
 	}
-	else if (CSystem::IsUNCPath(m_Path))
+	else if (System::IsUNCPath(m_Path))
 	{
 		if ((loc = m_Path.find_first_of(L"\\/", 2)) != std::wstring::npos)
 		{
@@ -414,14 +414,14 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	// Test that the Rainmeter.ini file is writable
 	TestSettingsFile(bDefaultIniLocation);
 
-	CSystem::Initialize(m_Instance);
+	System::Initialize(m_Instance);
 
-	CMeasureNet::InitializeStatic();
-	CMeasureCPU::InitializeStatic();
-	CMeterString::InitializeStatic();
+	MeasureNet::InitializeStatic();
+	MeasureCPU::InitializeStatic();
+	MeterString::InitializeStatic();
 
 	// Tray must exist before skins are read
-	m_TrayWindow = new CTrayWindow();
+	m_TrayWindow = new TrayWindow();
 	m_TrayWindow->Initialize();
 
 	ReloadSettings();
@@ -444,7 +444,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	bool layoutLoaded = false;
 	if (layout)
 	{
-		std::vector<std::wstring> args = CCommandHandler::ParseString(layout);
+		std::vector<std::wstring> args = CommandHandler::ParseString(layout);
 		layoutLoaded = (args.size() == 1 && LoadLayout(args[0]));
 	}
 
@@ -465,7 +465,7 @@ int CRainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	return 0;	// All is OK
 }
 
-bool CRainmeter::IsAlreadyRunning()
+bool Rainmeter::IsAlreadyRunning()
 {
 	typedef struct
 	{
@@ -482,7 +482,7 @@ bool CRainmeter::IsAlreadyRunning()
 	bool alreadyRunning = false;
 
 	// Create MD5 digest from command line
-	HMODULE cryptDll = CSystem::RmLoadLibrary(L"cryptdll.dll");
+	HMODULE cryptDll = System::RmLoadLibrary(L"cryptdll.dll");
 	if (cryptDll)
 	{
 		FPMD5INIT MD5Init = (FPMD5INIT)GetProcAddress(cryptDll, "MD5Init");
@@ -524,7 +524,7 @@ bool CRainmeter::IsAlreadyRunning()
 	return alreadyRunning;
 }
 
-int CRainmeter::MessagePump()
+int Rainmeter::MessagePump()
 {
 	MSG msg;
 	BOOL ret;
@@ -537,7 +537,7 @@ int CRainmeter::MessagePump()
 			break;
 		}
 
-		if (!CDialog::HandleMessage(msg))
+		if (!Dialog::HandleMessage(msg))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -547,7 +547,7 @@ int CRainmeter::MessagePump()
 	return (int)msg.wParam;
 }
 
-LRESULT CALLBACK CRainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
@@ -563,7 +563,7 @@ LRESULT CALLBACK CRainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 				const WCHAR* data = (const WCHAR*)cds->lpData;
 				if (cds->dwData == 1 && (cds->cbData > 0))
 				{
-					Rainmeter->DelayedExecuteCommand(data);
+					g_Rainmeter->DelayedExecuteCommand(data);
 				}
 			}
 		}
@@ -572,14 +572,14 @@ LRESULT CALLBACK CRainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	case WM_TIMER:
 		if (wParam == TIMER_NETSTATS)
 		{
-			CMeasureNet::UpdateIFTable();
-			CMeasureNet::UpdateStats();
-			Rainmeter->WriteStats(false);
+			MeasureNet::UpdateIFTable();
+			MeasureNet::UpdateStats();
+			g_Rainmeter->WriteStats(false);
 		}
 		break;
 
 	case WM_RAINMETER_DELAYED_REFRESH_ALL:
-		Rainmeter->RefreshAll();
+		g_Rainmeter->RefreshAll();
 		break;
 
 	case WM_RAINMETER_DELAYED_EXECUTE:
@@ -587,15 +587,15 @@ LRESULT CALLBACK CRainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		{
 			// Execute bang
 			WCHAR* bang = (WCHAR*)lParam;
-			Rainmeter->ExecuteCommand(bang, NULL);
+			g_Rainmeter->ExecuteCommand(bang, NULL);
 			free(bang);  // _wcsdup()
 		}
 		break;
 
 	case WM_RAINMETER_EXECUTE:
-		if (Rainmeter->HasMeterWindow((CMeterWindow*)wParam))
+		if (g_Rainmeter->HasMeterWindow((MeterWindow*)wParam))
 		{
-			Rainmeter->ExecuteCommand((const WCHAR*)lParam, (CMeterWindow*)wParam);
+			g_Rainmeter->ExecuteCommand((const WCHAR*)lParam, (MeterWindow*)wParam);
 		}
 		break;
 
@@ -606,21 +606,21 @@ LRESULT CALLBACK CRainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	return 0;
 }
 
-void CRainmeter::SetNetworkStatisticsTimer()
+void Rainmeter::SetNetworkStatisticsTimer()
 {
 	static bool set = SetTimer(m_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, NULL);
 }
 
-void CRainmeter::CreateOptionsFile()
+void Rainmeter::CreateOptionsFile()
 {
 	CreateDirectory(m_SettingsPath.c_str(), NULL);
 
 	std::wstring defaultIni = GetDefaultLayoutPath();
 	defaultIni += L"illustro default\\Rainmeter.ini";
-	CSystem::CopyFiles(defaultIni, m_IniFile);
+	System::CopyFiles(defaultIni, m_IniFile);
 }
 
-void CRainmeter::CreateDataFile()
+void Rainmeter::CreateDataFile()
 {
 	std::wstring tmpSz = m_SettingsPath + L"Plugins.ini";
 
@@ -642,7 +642,7 @@ void CRainmeter::CreateDataFile()
 	}
 }
 
-void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
+void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 {
 	std::wstring path;
 
@@ -651,7 +651,7 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 		// Folder just created, so copy default skins there
 		std::wstring from = GetDefaultSkinPath();
 		from += L"*.*";
-		CSystem::CopyFiles(from, m_SkinPath);
+		System::CopyFiles(from, m_SkinPath);
 	}
 	else
 	{
@@ -715,7 +715,7 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 			std::wstring from = GetDefaultLayoutPath();
 			if (_waccess(from.c_str(), 0) != -1)
 			{
-				CSystem::CopyFiles(from, m_SettingsPath);
+				System::CopyFiles(from, m_SettingsPath);
 			}
 		}
 	}
@@ -738,7 +738,7 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 			std::wstring from = GetDefaultPluginPath();
 			if (_waccess(from.c_str(), 0) != -1)
 			{
-				CSystem::CopyFiles(from, m_SettingsPath);
+				System::CopyFiles(from, m_SettingsPath);
 			}
 		}
 
@@ -748,7 +748,7 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 			std::wstring from = GetDefaultAddonPath();
 			if (_waccess(from.c_str(), 0) != -1)
 			{
-				CSystem::CopyFiles(from, m_SettingsPath);
+				System::CopyFiles(from, m_SettingsPath);
 			}
 		}
 
@@ -760,7 +760,7 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 			// Create a hidden stub Rainmeter.exe into SettingsPath for old addon
 			// using relative path to Rainmeter.exe
 			std::wstring from = m_Path + L"Rainmeter.exe";
-			CSystem::CopyFiles(from, path);
+			System::CopyFiles(from, path);
 
 			// Get rid of all resources from the stub executable
 			HANDLE stub = BeginUpdateResource(pathSz, TRUE);
@@ -782,37 +782,37 @@ void CRainmeter::CreateComponentFolders(bool defaultIniLocation)
 	}
 }
 
-void CRainmeter::ReloadSettings()
+void Rainmeter::ReloadSettings()
 {
 	ScanForSkins();
 	ScanForLayouts();
 	ReadGeneralSettings(m_IniFile);
 }
 
-void CRainmeter::EditSettings()
+void Rainmeter::EditSettings()
 {
 	std::wstring file = L'"' + m_IniFile;
 	file += L'"';
-	CCommandHandler::RunFile(m_SkinEditor.c_str(), file.c_str());
+	CommandHandler::RunFile(m_SkinEditor.c_str(), file.c_str());
 }
 
-void CRainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniFile)
+void Rainmeter::EditSkinFile(const std::wstring& name, const std::wstring& iniFile)
 {
 	std::wstring args = L'"' + m_SkinPath;
 	args += name;
 	args += L'\\';
 	args += iniFile;
 	args += L'"';
-	CCommandHandler::RunFile(m_SkinEditor.c_str(), args.c_str());
+	CommandHandler::RunFile(m_SkinEditor.c_str(), args.c_str());
 }
 
-void CRainmeter::OpenSkinFolder(const std::wstring& name)
+void Rainmeter::OpenSkinFolder(const std::wstring& name)
 {
 	std::wstring folderPath = m_SkinPath + name;
-	CCommandHandler::RunFile(folderPath.c_str());
+	CommandHandler::RunFile(folderPath.c_str());
 }
 
-void CRainmeter::ActivateActiveSkins()
+void Rainmeter::ActivateActiveSkins()
 {
 	std::multimap<int, int>::const_iterator iter = m_SkinOrders.begin();
 	for ( ; iter != m_SkinOrders.end(); ++iter)
@@ -825,7 +825,7 @@ void CRainmeter::ActivateActiveSkins()
 	}
 }
 
-void CRainmeter::ActivateSkin(int folderIndex, int fileIndex)
+void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 {
 	if (folderIndex >= 0 && folderIndex < (int)m_SkinFolders.size() &&
 		fileIndex >= 0 && fileIndex < (int)m_SkinFolders[folderIndex].files.size())
@@ -837,7 +837,7 @@ void CRainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		std::wstring folderPath = GetFolderPath(folderIndex);
 
 		// Verify that the skin is not already active
-		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.find(folderPath);
+		std::map<std::wstring, MeterWindow*>::const_iterator iter = m_MeterWindows.find(folderPath);
 		if (iter != m_MeterWindows.end())
 		{
 			if (wcscmp(((*iter).second)->GetFileName().c_str(), fileSz) == 0)
@@ -875,7 +875,7 @@ void CRainmeter::ActivateSkin(int folderIndex, int fileIndex)
 	}
 }
 
-void CRainmeter::DeactivateSkin(CMeterWindow* meterWindow, int folderIndex, bool save)
+void Rainmeter::DeactivateSkin(MeterWindow* meterWindow, int folderIndex, bool save)
 {
 	if (folderIndex >= 0 && folderIndex < (int)m_SkinFolders.size())
 	{
@@ -902,14 +902,14 @@ void CRainmeter::DeactivateSkin(CMeterWindow* meterWindow, int folderIndex, bool
 	}
 }
 
-void CRainmeter::ToggleSkin(int folderIndex, int fileIndex)
+void Rainmeter::ToggleSkin(int folderIndex, int fileIndex)
 {
 	if (folderIndex >= 0 && folderIndex < (int)m_SkinFolders.size() &&
 		fileIndex >= 0 && fileIndex < (int)m_SkinFolders[folderIndex].files.size())
 	{
 		if (m_SkinFolders[folderIndex].active == fileIndex + 1)
 		{
-			CMeterWindow* meterWindow = Rainmeter->GetMeterWindow(GetFolderPath(folderIndex));
+			MeterWindow* meterWindow = g_Rainmeter->GetMeterWindow(GetFolderPath(folderIndex));
 			DeactivateSkin(meterWindow, folderIndex);
 		}
 		else
@@ -919,12 +919,12 @@ void CRainmeter::ToggleSkin(int folderIndex, int fileIndex)
 	}
 }
 
-void CRainmeter::SetSkinPath(const std::wstring& skinPath)
+void Rainmeter::SetSkinPath(const std::wstring& skinPath)
 {
 	WritePrivateProfileString(L"Rainmeter", L"SkinPath", skinPath.c_str(), m_IniFile.c_str());
 }
 
-void CRainmeter::SetSkinEditor(const std::wstring& path)
+void Rainmeter::SetSkinEditor(const std::wstring& path)
 {
 	if (!path.empty())
 	{
@@ -933,39 +933,39 @@ void CRainmeter::SetSkinEditor(const std::wstring& path)
 	}
 }
 
-void CRainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
+void Rainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
 {
 	WCHAR buffer[32];
 	_itow_s(fileIndex + 1, buffer, 10);
 	WritePrivateProfileString(folderPath.c_str(), L"Active", buffer, m_IniFile.c_str());
 }
 
-void CRainmeter::CreateMeterWindow(const std::wstring& folderPath, const std::wstring& file)
+void Rainmeter::CreateMeterWindow(const std::wstring& folderPath, const std::wstring& file)
 {
-	CMeterWindow* mw = new CMeterWindow(folderPath, file);
+	MeterWindow* mw = new MeterWindow(folderPath, file);
 
 	// Note: May modify existing key
 	m_MeterWindows[folderPath] = mw;
 
 	mw->Initialize();
 
-	CDialogAbout::UpdateSkins();
-	CDialogManage::UpdateSkins(mw);
+	DialogAbout::UpdateSkins();
+	DialogManage::UpdateSkins(mw);
 }
 
-void CRainmeter::DeleteAllMeterWindows()
+void Rainmeter::DeleteAllMeterWindows()
 {
 	for (auto it = m_MeterWindows.cbegin(); it != m_MeterWindows.end(); ++it)
 	{
-		CDialogManage::UpdateSkins((*it).second, true);
+		DialogManage::UpdateSkins((*it).second, true);
 		delete (*it).second;
 	}
 
 	m_MeterWindows.clear();
-	CDialogAbout::UpdateSkins();
+	DialogAbout::UpdateSkins();
 }
 
-void CRainmeter::DeleteAllUnmanagedMeterWindows()
+void Rainmeter::DeleteAllUnmanagedMeterWindows()
 {
 	for (auto it = m_UnmanagedMeterWindows.cbegin(); it != m_UnmanagedMeterWindows.end(); ++it)
 	{
@@ -979,15 +979,15 @@ void CRainmeter::DeleteAllUnmanagedMeterWindows()
 ** Removes the skin from m_MeterWindows. The skin should delete itself.
 **
 */
-void CRainmeter::RemoveMeterWindow(CMeterWindow* meterWindow)
+void Rainmeter::RemoveMeterWindow(MeterWindow* meterWindow)
 {
 	for (auto it = m_MeterWindows.cbegin(); it != m_MeterWindows.end(); ++it)
 	{
 		if ((*it).second == meterWindow)
 		{
 			m_MeterWindows.erase(it);
-			CDialogManage::UpdateSkins(meterWindow, true);
-			CDialogAbout::UpdateSkins();
+			DialogManage::UpdateSkins(meterWindow, true);
+			DialogAbout::UpdateSkins();
 			break;
 		}
 	}
@@ -997,7 +997,7 @@ void CRainmeter::RemoveMeterWindow(CMeterWindow* meterWindow)
 ** Adds the skin to m_UnmanagedMeterWindows. The skin should remove itself by calling RemoveUnmanagedMeterWindow().
 **
 */
-void CRainmeter::AddUnmanagedMeterWindow(CMeterWindow* meterWindow)
+void Rainmeter::AddUnmanagedMeterWindow(MeterWindow* meterWindow)
 {
 	for (auto it = m_UnmanagedMeterWindows.cbegin(); it != m_UnmanagedMeterWindows.cend(); ++it)
 	{
@@ -1010,7 +1010,7 @@ void CRainmeter::AddUnmanagedMeterWindow(CMeterWindow* meterWindow)
 	m_UnmanagedMeterWindows.push_back(meterWindow);
 }
 
-void CRainmeter::RemoveUnmanagedMeterWindow(CMeterWindow* meterWindow)
+void Rainmeter::RemoveUnmanagedMeterWindow(MeterWindow* meterWindow)
 {
 	for (auto it = m_UnmanagedMeterWindows.cbegin(); it != m_UnmanagedMeterWindows.cend(); ++it)
 	{
@@ -1022,7 +1022,7 @@ void CRainmeter::RemoveUnmanagedMeterWindow(CMeterWindow* meterWindow)
 	}
 }
 
-bool CRainmeter::HasMeterWindow(const CMeterWindow* meterWindow) const
+bool Rainmeter::HasMeterWindow(const MeterWindow* meterWindow) const
 {
 	for (auto it = m_MeterWindows.begin(); it != m_MeterWindows.end(); ++it)
 	{
@@ -1035,10 +1035,10 @@ bool CRainmeter::HasMeterWindow(const CMeterWindow* meterWindow) const
 	return false;
 }
 
-CMeterWindow* CRainmeter::GetMeterWindow(const std::wstring& folderPath)
+MeterWindow* Rainmeter::GetMeterWindow(const std::wstring& folderPath)
 {
 	const WCHAR* folderSz = folderPath.c_str();
-	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
+	std::map<std::wstring, MeterWindow*>::const_iterator iter = m_MeterWindows.begin();
 	for (; iter != m_MeterWindows.end(); ++iter)
 	{
 		if (_wcsicmp((*iter).first.c_str(), folderSz) == 0)
@@ -1050,13 +1050,13 @@ CMeterWindow* CRainmeter::GetMeterWindow(const std::wstring& folderPath)
 	return NULL;
 }
 
-CMeterWindow* CRainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
+MeterWindow* Rainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
 {
 	if (_wcsnicmp(m_SkinPath.c_str(), ini_searching.c_str(), m_SkinPath.length()) == 0)
 	{
 		const std::wstring config_searching = ini_searching.substr(m_SkinPath.length());
 
-		std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
+		std::map<std::wstring, MeterWindow*>::const_iterator iter = m_MeterWindows.begin();
 		for (; iter != m_MeterWindows.end(); ++iter)
 		{
 			std::wstring config_current = (*iter).second->GetFolderPath() + L'\\';
@@ -1072,7 +1072,7 @@ CMeterWindow* CRainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
 	return NULL;
 }
 
-std::pair<int, int> CRainmeter::GetMeterWindowIndex(const std::wstring& folderPath, const std::wstring& file)
+std::pair<int, int> Rainmeter::GetMeterWindowIndex(const std::wstring& folderPath, const std::wstring& file)
 {
 	int index = FindSkinFolderIndex(folderPath);
 	if (index != -1)
@@ -1092,7 +1092,7 @@ std::pair<int, int> CRainmeter::GetMeterWindowIndex(const std::wstring& folderPa
 	return std::make_pair(-1, -1);	// Error
 }
 
-std::pair<int, int> CRainmeter::GetMeterWindowIndex(UINT menuCommand)
+std::pair<int, int> Rainmeter::GetMeterWindowIndex(UINT menuCommand)
 {
 	if (menuCommand >= ID_CONFIG_FIRST && menuCommand <= ID_CONFIG_LAST)
 	{
@@ -1111,9 +1111,9 @@ std::pair<int, int> CRainmeter::GetMeterWindowIndex(UINT menuCommand)
 	return std::make_pair(-1, -1);  // error;
 }
 
-CMeterWindow* CRainmeter::GetMeterWindow(HWND hwnd)
+MeterWindow* Rainmeter::GetMeterWindow(HWND hwnd)
 {
-	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
+	std::map<std::wstring, MeterWindow*>::const_iterator iter = m_MeterWindows.begin();
 	for (; iter != m_MeterWindows.end(); ++iter)
 	{
 		if ((*iter).second->GetWindow() == hwnd)
@@ -1125,15 +1125,15 @@ CMeterWindow* CRainmeter::GetMeterWindow(HWND hwnd)
 	return NULL;
 }
 
-void CRainmeter::GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& windows, const std::wstring& group)
+void Rainmeter::GetMeterWindowsByLoadOrder(std::multimap<int, MeterWindow*>& windows, const std::wstring& group)
 {
-	std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
+	std::map<std::wstring, MeterWindow*>::const_iterator iter = m_MeterWindows.begin();
 	for (; iter != m_MeterWindows.end(); ++iter)
 	{
-		CMeterWindow* mw = (*iter).second;
+		MeterWindow* mw = (*iter).second;
 		if (mw && (group.empty() || mw->BelongsToGroup(group)))
 		{
-			windows.insert(std::pair<int, CMeterWindow*>(GetLoadOrder((*iter).first), mw));
+			windows.insert(std::pair<int, MeterWindow*>(GetLoadOrder((*iter).first), mw));
 		}
 	}
 }
@@ -1142,7 +1142,7 @@ void CRainmeter::GetMeterWindowsByLoadOrder(std::multimap<int, CMeterWindow*>& w
 ** Returns the skin folder path relative to the skin folder (e.g. illustro\Clock).
 **
 */
-std::wstring CRainmeter::GetFolderPath(int folderIndex)
+std::wstring Rainmeter::GetFolderPath(int folderIndex)
 {
 	const SkinFolder& skinFolder = m_SkinFolders[folderIndex];
 	std::wstring path = skinFolder.name;
@@ -1159,7 +1159,7 @@ std::wstring CRainmeter::GetFolderPath(int folderIndex)
 	return path;
 }
 
-int CRainmeter::FindSkinFolderIndex(const std::wstring& folderPath)
+int Rainmeter::FindSkinFolderIndex(const std::wstring& folderPath)
 {
 	if (!folderPath.empty())
 	{
@@ -1201,7 +1201,7 @@ int CRainmeter::FindSkinFolderIndex(const std::wstring& folderPath)
 	return -1;
 }
 
-void CRainmeter::SetLoadOrder(int folderIndex, int order)
+void Rainmeter::SetLoadOrder(int folderIndex, int order)
 {
 	std::multimap<int, int>::iterator iter = m_SkinOrders.begin();
 	for ( ; iter != m_SkinOrders.end(); ++iter)
@@ -1223,7 +1223,7 @@ void CRainmeter::SetLoadOrder(int folderIndex, int order)
 	m_SkinOrders.insert(std::pair<int, int>(order, folderIndex));
 }
 
-int CRainmeter::GetLoadOrder(const std::wstring& folderPath)
+int Rainmeter::GetLoadOrder(const std::wstring& folderPath)
 {
 	int index = FindSkinFolderIndex(folderPath);
 	if (index != -1)
@@ -1245,7 +1245,7 @@ int CRainmeter::GetLoadOrder(const std::wstring& folderPath)
 /*
 ** Scans all the subfolders and locates the ini-files.
 */
-void CRainmeter::ScanForSkins()
+void Rainmeter::ScanForSkins()
 {
 	m_SkinFolders.clear();
 	m_SkinOrders.clear();
@@ -1253,7 +1253,7 @@ void CRainmeter::ScanForSkins()
 	ScanForSkinsRecursive(m_SkinPath, L"", 0, 0);
 }
 
-int CRainmeter::ScanForSkinsRecursive(const std::wstring& path, std::wstring base, int index, UINT level)
+int Rainmeter::ScanForSkinsRecursive(const std::wstring& path, std::wstring base, int index, UINT level)
 {
 	WIN32_FIND_DATA fileData;      // Data structure describes the file found
 	HANDLE hSearch;                // Search handle returned by FindFirstFile
@@ -1359,7 +1359,7 @@ int CRainmeter::ScanForSkinsRecursive(const std::wstring& path, std::wstring bas
 /*
 ** Scans the given folder for layouts
 */
-void CRainmeter::ScanForLayouts()
+void Rainmeter::ScanForLayouts()
 {
 	m_Layouts.clear();
 
@@ -1395,7 +1395,7 @@ void CRainmeter::ScanForLayouts()
 	}
 }
 
-void CRainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, CMeterWindow* meterWindow)
+void Rainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, MeterWindow* meterWindow)
 {
 	m_CommandHandler.ExecuteBang(bang, args, meterWindow);
 }
@@ -1404,7 +1404,7 @@ void CRainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args,
 ** Runs the given command or bang
 **
 */
-void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow, bool multi)
+void Rainmeter::ExecuteCommand(const WCHAR* command, MeterWindow* meterWindow, bool multi)
 {
 	m_CommandHandler.ExecuteCommand(command, meterWindow, multi);
 }
@@ -1413,7 +1413,7 @@ void CRainmeter::ExecuteCommand(const WCHAR* command, CMeterWindow* meterWindow,
 ** Executes command when current processing is done.
 **
 */
-void CRainmeter::DelayedExecuteCommand(const WCHAR* command)
+void Rainmeter::DelayedExecuteCommand(const WCHAR* command)
 {
 	WCHAR* bang = _wcsdup(command);
 	PostMessage(m_Window, WM_RAINMETER_DELAYED_EXECUTE, (WPARAM)NULL, (LPARAM)bang);
@@ -1423,14 +1423,14 @@ void CRainmeter::DelayedExecuteCommand(const WCHAR* command)
 ** Reads the general settings from the Rainmeter.ini file
 **
 */
-void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
+void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 {
 	WCHAR buffer[MAX_PATH];
 
 	// Clear old settings
 	m_DesktopWorkAreas.clear();
 
-	CConfigParser parser;
+	ConfigParser parser;
 	parser.Initialize(iniFile, NULL, NULL);
 
 	m_UseD2D = 0!=parser.ReadInt(L"Rainmeter", L"UseD2D", 0);
@@ -1438,7 +1438,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_Debug = 0!=parser.ReadInt(L"Rainmeter", L"Debug", 0);
 	
 	// Read Logging settings
-	CLogger& logger = CLogger::GetInstance();
+	Logger& logger = Logger::GetInstance();
 	const bool logging = parser.ReadInt(L"Rainmeter", L"Logging", 0) != 0;
 	logger.SetLogToFile(logging);
 	if (logging)
@@ -1485,7 +1485,7 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		m_DesktopWorkAreaChanged = true;
 	}
 
-	for (UINT i = 1, isize = CSystem::GetMonitorCount(); i <= isize; ++i)
+	for (UINT i = 1, isize = System::GetMonitorCount(); i <= isize; ++i)
 	{
 		_snwprintf_s(buffer, _TRUNCATE, L"DesktopWorkArea@%i", i);
 		const std::wstring& area = parser.ReadString(L"Rainmeter", buffer, L"");
@@ -1532,10 +1532,10 @@ void CRainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 /*
 ** Refreshes all active meter windows.
-** Note: This function calls CMeterWindow::Refresh() directly for synchronization. Be careful about crash.
+** Note: This function calls MeterWindow::Refresh() directly for synchronization. Be careful about crash.
 **
 */
-void CRainmeter::RefreshAll()
+void Rainmeter::RefreshAll()
 {
 	// Read skins and settings
 	ReloadSettings();
@@ -1547,17 +1547,17 @@ void CRainmeter::RefreshAll()
 	}
 
 	// Make the sending order by using LoadOrder
-	std::multimap<int, CMeterWindow*> windows;
+	std::multimap<int, MeterWindow*> windows;
 	GetMeterWindowsByLoadOrder(windows);
 
 	// Prepare the helper window
-	CSystem::PrepareHelperWindow();
+	System::PrepareHelperWindow();
 
 	// Refresh all
-	std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+	std::multimap<int, MeterWindow*>::const_iterator iter = windows.begin();
 	for ( ; iter != windows.end(); ++iter)
 	{
-		CMeterWindow* mw = (*iter).second;
+		MeterWindow* mw = (*iter).second;
 		if (mw)
 		{
 			// Verify whether the cached information is valid
@@ -1610,11 +1610,11 @@ void CRainmeter::RefreshAll()
 		}
 	}
 
-	CDialogAbout::UpdateSkins();
-	CDialogManage::UpdateSkins(NULL);
+	DialogAbout::UpdateSkins();
+	DialogManage::UpdateSkins(NULL);
 }
 
-bool CRainmeter::LoadLayout(const std::wstring& name)
+bool Rainmeter::LoadLayout(const std::wstring& name)
 {
 	// Replace Rainmeter.ini with layout
 	std::wstring layout = GetLayoutPath();
@@ -1639,10 +1639,10 @@ bool CRainmeter::LoadLayout(const std::wstring& name)
 	if (!backupLayout)
 	{
 		// Make a copy of current Rainmeter.ini
-		CSystem::CopyFiles(m_IniFile, backup);
+		System::CopyFiles(m_IniFile, backup);
 	}
 
-	CSystem::CopyFiles(layout, m_IniFile);
+	System::CopyFiles(layout, m_IniFile);
 
 	if (!backupLayout)
 	{
@@ -1674,7 +1674,7 @@ bool CRainmeter::LoadLayout(const std::wstring& name)
 	return true;
 }
 
-void CRainmeter::PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace)
+void Rainmeter::PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace)
 {
 	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
 
@@ -1691,7 +1691,7 @@ void CRainmeter::PreserveSetting(const std::wstring& from, LPCTSTR key, bool rep
 ** Applies given DesktopWorkArea and DesktopWorkArea@n.
 **
 */
-void CRainmeter::UpdateDesktopWorkArea(bool reset)
+void Rainmeter::UpdateDesktopWorkArea(bool reset)
 {
 	bool changed = false;
 
@@ -1721,8 +1721,8 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 	}
 	else
 	{
-		const size_t numOfMonitors = CSystem::GetMonitorCount();
-		const MultiMonitorInfo& monitorsInfo = CSystem::GetMultiMonitorInfo();
+		const size_t numOfMonitors = System::GetMonitorCount();
+		const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 		const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
 		if (m_OldDesktopWorkAreas.empty())
@@ -1794,10 +1794,10 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 		}
 	}
 
-	if (changed && CSystem::GetWindow())
+	if (changed && System::GetWindow())
 	{
-		// Update CSystem::MultiMonitorInfo for for work area variables
-		SendMessageTimeout(CSystem::GetWindow(), WM_SETTINGCHANGE, SPI_SETWORKAREA, 0, SMTO_ABORTIFHUNG, 1000, NULL);
+		// Update System::MultiMonitorInfo for for work area variables
+		SendMessageTimeout(System::GetWindow(), WM_SETTINGCHANGE, SPI_SETWORKAREA, 0, SMTO_ABORTIFHUNG, 1000, NULL);
 	}
 }
 
@@ -1805,7 +1805,7 @@ void CRainmeter::UpdateDesktopWorkArea(bool reset)
 ** Reads the statistics from the ini-file
 **
 */
-void CRainmeter::ReadStats()
+void Rainmeter::ReadStats()
 {
 	const WCHAR* statsFile = m_StatsFile.c_str();
 
@@ -1829,18 +1829,18 @@ void CRainmeter::ReadStats()
 	}
 
 	// Only Net measure has stats at the moment
-	CMeasureNet::ReadStats(m_StatsFile, m_StatsDate);
+	MeasureNet::ReadStats(m_StatsFile, m_StatsDate);
 }
 
 /*
 ** Writes the statistics to the ini-file. If bForce is false the stats are written only once per an appropriate interval.
 **
 */
-void CRainmeter::WriteStats(bool bForce)
+void Rainmeter::WriteStats(bool bForce)
 {
 	static ULONGLONG lastWrite = 0;
 
-	ULONGLONG ticks = CSystem::GetTickCount64();
+	ULONGLONG ticks = System::GetTickCount64();
 
 	if (bForce || (lastWrite + INTERVAL_NETSTATS < ticks))
 	{
@@ -1848,7 +1848,7 @@ void CRainmeter::WriteStats(bool bForce)
 
 		// Only Net measure has stats at the moment
 		const WCHAR* statsFile = m_StatsFile.c_str();
-		CMeasureNet::WriteStats(statsFile, m_StatsDate);
+		MeasureNet::WriteStats(statsFile, m_StatsDate);
 
 		WritePrivateProfileString(NULL, NULL, NULL, statsFile);
 	}
@@ -1858,7 +1858,7 @@ void CRainmeter::WriteStats(bool bForce)
 ** Clears the statistics
 **
 */
-void CRainmeter::ResetStats()
+void Rainmeter::ResetStats()
 {
 	// Set the stats-date string
 	tm* newtime;
@@ -1869,14 +1869,14 @@ void CRainmeter::ResetStats()
 	m_StatsDate.erase(m_StatsDate.size() - 1);
 
 	// Only Net measure has stats at the moment
-	CMeasureNet::ResetStats();
+	MeasureNet::ResetStats();
 }
 
 /*
 ** Wraps MessageBox(). Sets RTL flag if necessary.
 **
 */
-int CRainmeter::ShowMessage(HWND parent, const WCHAR* text, UINT type)
+int Rainmeter::ShowMessage(HWND parent, const WCHAR* text, UINT type)
 {
 	type |= MB_TOPMOST;
 
@@ -1892,7 +1892,7 @@ int CRainmeter::ShowMessage(HWND parent, const WCHAR* text, UINT type)
 ** Opens the context menu in given coordinates.
 **
 */
-void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
+void Rainmeter::ShowContextMenu(POINT pos, MeterWindow* meterWindow)
 {
 	static const MenuTemplate s_Menu[] =
 	{
@@ -1933,7 +1933,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 		{
 			SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
 
-			if (_waccess(CLogger::GetInstance().GetLogFilePath().c_str(), 0) == -1)
+			if (_waccess(Logger::GetInstance().GetLogFilePath().c_str(), 0) == -1)
 			{
 				EnableMenuItem(menu, IDM_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(menu, IDM_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
@@ -1943,7 +1943,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 			{
 				EnableMenuItem(
 					menu,
-					(CLogger::GetInstance().IsLogToFile()) ? IDM_STARTLOG : IDM_STOPLOG,
+					(Logger::GetInstance().IsLogToFile()) ? IDM_STARTLOG : IDM_STOPLOG,
 					MF_BYCOMMAND | MF_GRAYED);
 			}
 
@@ -1991,10 +1991,10 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 
 				// Create a menu for all active skins
 				int index = 0;
-				std::map<std::wstring, CMeterWindow*>::const_iterator iter = m_MeterWindows.begin();
+				std::map<std::wstring, MeterWindow*>::const_iterator iter = m_MeterWindows.begin();
 				for (; iter != m_MeterWindows.end(); ++iter)
 				{
-					CMeterWindow* mw = ((*iter).second);
+					MeterWindow* mw = ((*iter).second);
 					HMENU skinMenu = CreateSkinMenu(mw, index, allSkinsMenu);
 					InsertMenu(menu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetFolderPath().c_str());
 					++index;
@@ -2012,7 +2012,7 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 			HWND hWnd = WindowFromPoint(pos);
 			if (hWnd != NULL)
 			{
-				CMeterWindow* mw = GetMeterWindow(hWnd);
+				MeterWindow* mw = GetMeterWindow(hWnd);
 				if (mw)
 				{
 					// Cancel the mouse event beforehand
@@ -2054,15 +2054,15 @@ void CRainmeter::ShowContextMenu(POINT pos, CMeterWindow* meterWindow)
 	}
 }
 
-int CRainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
+int Rainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 {
 	int initialLevel = m_SkinFolders[index].level;
 	int menuIndex = 0;
 
-	const size_t max = Rainmeter->m_SkinFolders.size();
+	const size_t max = g_Rainmeter->m_SkinFolders.size();
 	while (index < max)
 	{
-		const SkinFolder& skinFolder = Rainmeter->m_SkinFolders[index];
+		const SkinFolder& skinFolder = g_Rainmeter->m_SkinFolders[index];
 		if (skinFolder.level != initialLevel)
 		{
 			return index - 1;
@@ -2108,7 +2108,7 @@ int CRainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 	return index;
 }
 
-HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU menu)
+HMENU Rainmeter::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU menu)
 {
 	static const MenuTemplate s_Menu[] =
 	{
@@ -2410,7 +2410,7 @@ HMENU CRainmeter::CreateSkinMenu(CMeterWindow* meterWindow, int index, HMENU men
 	return skinMenu;
 }
 
-void CRainmeter::CreateLayoutMenu(HMENU layoutMenu)
+void Rainmeter::CreateLayoutMenu(HMENU layoutMenu)
 {
 	for (size_t i = 0, isize = m_Layouts.size(); i < isize; ++i)
 	{
@@ -2418,14 +2418,14 @@ void CRainmeter::CreateLayoutMenu(HMENU layoutMenu)
 	}
 }
 
-void CRainmeter::CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow)
+void Rainmeter::CreateMonitorMenu(HMENU monitorMenu, MeterWindow* meterWindow)
 {
 	bool screenDefined = meterWindow->GetXScreenDefined();
 	int screenIndex = meterWindow->GetXScreen();
 
 	// for the "Specified monitor" (@n)
-	const size_t numOfMonitors = CSystem::GetMonitorCount();  // intentional
-	const std::vector<MonitorInfo>& monitors = CSystem::GetMultiMonitorInfo().monitors;
+	const size_t numOfMonitors = System::GetMonitorCount();  // intentional
+	const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
 
 	int i = 1;
 	for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++i)
@@ -2468,7 +2468,7 @@ void CRainmeter::CreateMonitorMenu(HMENU monitorMenu, CMeterWindow* meterWindow)
 	}
 }
 
-void CRainmeter::ChangeSkinIndex(HMENU menu, int index)
+void Rainmeter::ChangeSkinIndex(HMENU menu, int index)
 {
 	if (index > 0)
 	{
@@ -2497,36 +2497,36 @@ void CRainmeter::ChangeSkinIndex(HMENU menu, int index)
 	}
 }
 
-void CRainmeter::ShowLogFile()
+void Rainmeter::ShowLogFile()
 {
-	std::wstring logFile = L'"' + CLogger::GetInstance().GetLogFilePath();
+	std::wstring logFile = L'"' + Logger::GetInstance().GetLogFilePath();
 	logFile += L'"';
 
-	CCommandHandler::RunFile(m_SkinEditor.c_str(), logFile.c_str());
+	CommandHandler::RunFile(m_SkinEditor.c_str(), logFile.c_str());
 }
 
-void CRainmeter::SetDebug(bool debug)
+void Rainmeter::SetDebug(bool debug)
 {
 	m_Debug = debug;
 	WritePrivateProfileString(L"Rainmeter", L"Debug", debug ? L"1" : L"0", m_IniFile.c_str());
 }
 
-void CRainmeter::SetDisableDragging(bool dragging)
+void Rainmeter::SetDisableDragging(bool dragging)
 {
 	m_DisableDragging = dragging;
 	WritePrivateProfileString(L"Rainmeter", L"DisableDragging", dragging ? L"1" : L"0", m_IniFile.c_str());
 }
 
-void CRainmeter::SetDisableVersionCheck(bool check)
+void Rainmeter::SetDisableVersionCheck(bool check)
 {
 	m_DisableVersionCheck = check;
 	WritePrivateProfileString(L"Rainmeter", L"DisableVersionCheck", check ? L"1" : L"0" , m_IniFile.c_str());
 }
 
-void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
+void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)
 {
 	const WCHAR* iniFile = m_IniFile.c_str();
-	if (!CSystem::IsFileWritable(iniFile))
+	if (!System::IsFileWritable(iniFile))
 	{
 		std::wstring error = GetString(ID_STR_SETTINGSNOTWRITABLE);
 
@@ -2546,7 +2546,7 @@ void CRainmeter::TestSettingsFile(bool bDefaultIniLocation)
 	}
 }
 
-std::wstring CRainmeter::ExtractPath(const std::wstring& strFilePath)
+std::wstring Rainmeter::ExtractPath(const std::wstring& strFilePath)
 {
 	std::wstring::size_type pos = strFilePath.find_last_of(L"\\/");
 	if (pos != std::wstring::npos)
@@ -2556,7 +2556,7 @@ std::wstring CRainmeter::ExtractPath(const std::wstring& strFilePath)
 	return L".\\";
 }
 
-void CRainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
+void Rainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
 {
 	std::wstring::size_type pos;
 

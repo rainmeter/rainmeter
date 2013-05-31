@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "PlayerWMP.h"
 
-CPlayer* CPlayerWMP::c_Player = NULL;
+Player* PlayerWMP::c_Player = NULL;
 extern HINSTANCE g_Instance;
 
 namespace {
@@ -62,26 +62,26 @@ HMODULE InitializeAtlLibrary()
 }  // namespace
 
 //
-// CPlayerWMP::CRemoteHost
+// PlayerWMP::CRemoteHost
 //
 
-CPlayerWMP::CRemoteHost::CRemoteHost() :
+PlayerWMP::CRemoteHost::CRemoteHost() :
 	m_Player(),
 	m_RefCount(0)
 {
 }
 
-CPlayerWMP::CRemoteHost::~CRemoteHost()
+PlayerWMP::CRemoteHost::~CRemoteHost()
 {
 }
 
-ULONG STDMETHODCALLTYPE CPlayerWMP::CRemoteHost::AddRef()
+ULONG STDMETHODCALLTYPE PlayerWMP::CRemoteHost::AddRef()
 {
 	++m_RefCount;
 	return m_RefCount;
 }
 
-ULONG STDMETHODCALLTYPE CPlayerWMP::CRemoteHost::Release()
+ULONG STDMETHODCALLTYPE PlayerWMP::CRemoteHost::Release()
 {
 	--m_RefCount;
 	if (m_RefCount == 0)
@@ -92,7 +92,7 @@ ULONG STDMETHODCALLTYPE CPlayerWMP::CRemoteHost::Release()
 	return m_RefCount;
 }
 
-HRESULT STDMETHODCALLTYPE CPlayerWMP::CRemoteHost::QueryInterface(IID const& riid, void** object)
+HRESULT STDMETHODCALLTYPE PlayerWMP::CRemoteHost::QueryInterface(IID const& riid, void** object)
 {
 	if (!object)
 	{
@@ -122,24 +122,24 @@ HRESULT STDMETHODCALLTYPE CPlayerWMP::CRemoteHost::QueryInterface(IID const& rii
 	return S_OK;
 }
 
-HRESULT CPlayerWMP::CRemoteHost::QueryService(REFGUID guidService, REFIID riid, void** ppv)
+HRESULT PlayerWMP::CRemoteHost::QueryService(REFGUID guidService, REFIID riid, void** ppv)
 {
 	return QueryInterface(riid, ppv);
 }
 
-HRESULT CPlayerWMP::CRemoteHost::GetServiceType(BSTR* pbstrType)
+HRESULT PlayerWMP::CRemoteHost::GetServiceType(BSTR* pbstrType)
 {
 	*pbstrType = SysAllocString(L"RemoteNoDialogs");
 	return *pbstrType ? S_OK : E_POINTER;
 }
 
-HRESULT CPlayerWMP::CRemoteHost::GetApplicationName(BSTR* pbstrName)
+HRESULT PlayerWMP::CRemoteHost::GetApplicationName(BSTR* pbstrName)
 {
 	*pbstrName = SysAllocString(L"Rainmeter NowPlaying");
 	return *pbstrName ? S_OK : E_POINTER;
 }
 
-HRESULT CPlayerWMP::CRemoteHost::GetScriptableObject(BSTR* pbstrName, IDispatch** ppDispatch)
+HRESULT PlayerWMP::CRemoteHost::GetScriptableObject(BSTR* pbstrName, IDispatch** ppDispatch)
 {
 	if (pbstrName)
 	{
@@ -152,7 +152,7 @@ HRESULT CPlayerWMP::CRemoteHost::GetScriptableObject(BSTR* pbstrName, IDispatch*
 	return E_NOTIMPL;
 }
 
-HRESULT CPlayerWMP::CRemoteHost::GetCustomUIMode(BSTR* pbstrFile)
+HRESULT PlayerWMP::CRemoteHost::GetCustomUIMode(BSTR* pbstrFile)
 {
 	return E_POINTER;
 }
@@ -161,7 +161,7 @@ HRESULT CPlayerWMP::CRemoteHost::GetCustomUIMode(BSTR* pbstrFile)
 ** Called when playing track changes.
 **
 */
-void CPlayerWMP::CRemoteHost::CurrentItemChange(IDispatch* pdispMedia)
+void PlayerWMP::CRemoteHost::CurrentItemChange(IDispatch* pdispMedia)
 {
 	m_Player->m_TrackChanged = true;
 }
@@ -170,7 +170,7 @@ void CPlayerWMP::CRemoteHost::CurrentItemChange(IDispatch* pdispMedia)
 ** Called when play state changes.
 **
 */
-void CPlayerWMP::CRemoteHost::PlayStateChange(long NewState)
+void PlayerWMP::CRemoteHost::PlayStateChange(long NewState)
 {
 	switch (NewState)
 	{
@@ -200,17 +200,17 @@ void CPlayerWMP::CRemoteHost::PlayStateChange(long NewState)
 ** Called when WMP quits.
 **
 */
-void CPlayerWMP::CRemoteHost::SwitchedToControl()
+void PlayerWMP::CRemoteHost::SwitchedToControl()
 {
 	m_Player->ClearData();
 	m_Player->Uninitialize();
 }
 
 //
-// CPlayerWMP
+// PlayerWMP
 //
 
-CPlayerWMP::CPlayerWMP() : CPlayer(),
+PlayerWMP::PlayerWMP() : Player(),
 	m_TrackChanged(false),
 	m_Window(),
 	m_LastCheckTime(0),
@@ -218,7 +218,7 @@ CPlayerWMP::CPlayerWMP() : CPlayer(),
 {
 }
 
-CPlayerWMP::~CPlayerWMP()
+PlayerWMP::~PlayerWMP()
 {
 	c_Player = NULL;
 	Uninitialize();
@@ -228,11 +228,11 @@ CPlayerWMP::~CPlayerWMP()
 ** Creates a shared class object.
 **
 */
-CPlayer* CPlayerWMP::Create()
+Player* PlayerWMP::Create()
 {
 	if (!c_Player)
 	{
-		c_Player = new CPlayerWMP();
+		c_Player = new PlayerWMP();
 	}
 
 	return c_Player;
@@ -242,7 +242,7 @@ CPlayer* CPlayerWMP::Create()
 ** Set up the COM interface with WMP.
 **
 */
-void CPlayerWMP::Initialize()
+void PlayerWMP::Initialize()
 {
 	HMODULE atl = InitializeAtlLibrary();
 	if (!atl)
@@ -372,7 +372,7 @@ void CPlayerWMP::Initialize()
 ** Close the interface with WMP.
 **
 */
-void CPlayerWMP::Uninitialize()
+void PlayerWMP::Uninitialize()
 {
 	if (m_Initialized)
 	{
@@ -397,7 +397,7 @@ void CPlayerWMP::Uninitialize()
 ** Called during each update of the main measure.
 **
 */
-void CPlayerWMP::UpdateData()
+void PlayerWMP::UpdateData()
 {
 	if (m_Initialized)
 	{
@@ -525,7 +525,7 @@ void CPlayerWMP::UpdateData()
 ** Handles the Pause bang.
 **
 */
-void CPlayerWMP::Pause() 
+void PlayerWMP::Pause() 
 {
 	m_IControls->pause();
 }
@@ -534,7 +534,7 @@ void CPlayerWMP::Pause()
 ** Handles the Play bang.
 **
 */
-void CPlayerWMP::Play() 
+void PlayerWMP::Play() 
 {
 	m_IControls->play();
 }
@@ -543,7 +543,7 @@ void CPlayerWMP::Play()
 ** Handles the Stop bang.
 **
 */
-void CPlayerWMP::Stop() 
+void PlayerWMP::Stop() 
 {
 	m_IControls->stop();
 	// TODO: FIXME
@@ -554,7 +554,7 @@ void CPlayerWMP::Stop()
 ** Handles the Next bang.
 **
 */
-void CPlayerWMP::Next() 
+void PlayerWMP::Next() 
 {
 	m_IControls->next();
 }
@@ -563,7 +563,7 @@ void CPlayerWMP::Next()
 ** Handles the Previous bang.
 **
 */
-void CPlayerWMP::Previous() 
+void PlayerWMP::Previous() 
 {
 	m_IControls->previous();
 }
@@ -572,7 +572,7 @@ void CPlayerWMP::Previous()
 ** Handles the SetPosition bang.
 **
 */
-void CPlayerWMP::SetPosition(int position)
+void PlayerWMP::SetPosition(int position)
 {
 	m_IControls->put_currentPosition((double)position);
 }
@@ -581,7 +581,7 @@ void CPlayerWMP::SetPosition(int position)
 ** Handles the SetRating bang.
 **
 */
-void CPlayerWMP::SetRating(int rating)
+void PlayerWMP::SetRating(int rating)
 {
 	if (m_State != STATE_STOPPED)
 	{
@@ -628,7 +628,7 @@ void CPlayerWMP::SetRating(int rating)
 ** Handles the SetVolume bang.
 **
 */
-void CPlayerWMP::SetVolume(int volume)
+void PlayerWMP::SetVolume(int volume)
 {
 	m_ISettings->put_volume(volume);
 }
@@ -637,7 +637,7 @@ void CPlayerWMP::SetVolume(int volume)
 ** Handles the ClosePlayer bang.
 **
 */
-void CPlayerWMP::ClosePlayer()
+void PlayerWMP::ClosePlayer()
 {
 	HWND wnd = FindWindow(L"WMPlayerApp", NULL);
 
@@ -651,7 +651,7 @@ void CPlayerWMP::ClosePlayer()
 ** Handles the OpenPlayer bang.
 **
 */
-void CPlayerWMP::OpenPlayer(std::wstring& path)
+void PlayerWMP::OpenPlayer(std::wstring& path)
 {
 	ShellExecute(NULL, L"open", path.empty() ? L"wmplayer.exe" : path.c_str(), NULL, NULL, SW_SHOW);
 }

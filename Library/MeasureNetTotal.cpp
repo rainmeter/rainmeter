@@ -23,7 +23,7 @@
 ** The constructor
 **
 */
-CMeasureNetTotal::CMeasureNetTotal(CMeterWindow* meterWindow, const WCHAR* name) : CMeasureNet(meterWindow, name, NET_TOTAL)
+MeasureNetTotal::MeasureNetTotal(MeterWindow* meterWindow, const WCHAR* name) : MeasureNet(meterWindow, name, NET_TOTAL)
 {
 }
 
@@ -31,6 +31,6 @@ CMeasureNetTotal::CMeasureNetTotal(CMeterWindow* meterWindow, const WCHAR* name)
 ** The destructor
 **
 */
-CMeasureNetTotal::~CMeasureNetTotal()
+MeasureNetTotal::~MeasureNetTotal()
 {
 }

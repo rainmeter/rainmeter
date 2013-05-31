@@ -25,7 +25,7 @@
 ** The constructor
 **
 */
-CMeasureUptime::CMeasureUptime(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+MeasureUptime::MeasureUptime(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_AddDaysToHours(false)
 {
 }
@@ -34,7 +34,7 @@ CMeasureUptime::CMeasureUptime(CMeterWindow* meterWindow, const WCHAR* name) : C
 ** The destructor
 **
 */
-CMeasureUptime::~CMeasureUptime()
+MeasureUptime::~MeasureUptime()
 {
 }
 
@@ -42,9 +42,9 @@ CMeasureUptime::~CMeasureUptime()
 ** Read the options specified in the ini file.
 **
 */
-void CMeasureUptime::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeasureUptime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser, section);
 
 	m_Format = parser.ReadString(section, L"Format", L"%4!i!d %3!i!:%2!02i!");
 
@@ -62,9 +62,9 @@ void CMeasureUptime::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Updates the current uptime
 **
 */
-void CMeasureUptime::UpdateValue()
+void MeasureUptime::UpdateValue()
 {
-	ULONGLONG ticks = CSystem::GetTickCount64();
+	ULONGLONG ticks = System::GetTickCount64();
 	m_Value = (double)(__int64)(ticks / 1000);
 }
 
@@ -72,7 +72,7 @@ void CMeasureUptime::UpdateValue()
 ** Returns the uptime as string.
 **
 */
-const WCHAR* CMeasureUptime::GetStringValue()
+const WCHAR* MeasureUptime::GetStringValue()
 {
 	static WCHAR buffer[MAX_LINE_LENGTH];
 

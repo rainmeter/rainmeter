@@ -43,7 +43,7 @@ struct MultiMonitorInfo
 	std::vector<MonitorInfo> monitors;
 };
 
-class CSystem
+class System
 {
 public:
 	static void Initialize(HINSTANCE instance);

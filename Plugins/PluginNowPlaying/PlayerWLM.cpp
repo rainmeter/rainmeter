@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "PlayerWLM.h"
 
-CPlayer* CPlayerWLM::c_Player = NULL;
+Player* PlayerWLM::c_Player = NULL;
 extern HINSTANCE g_Instance;
 
 // This player emulates the MSN/WLM Messenger 'Listening to' interface, which is
@@ -29,7 +29,7 @@ extern HINSTANCE g_Instance;
 ** Constructor.
 **
 */
-CPlayerWLM::CPlayerWLM() : CPlayer(),
+PlayerWLM::PlayerWLM() : Player(),
 	m_Window()
 {
 	// Create windows class
@@ -59,7 +59,7 @@ CPlayerWLM::CPlayerWLM() : CPlayer(),
 ** Destructor.
 **
 */
-CPlayerWLM::~CPlayerWLM()
+PlayerWLM::~PlayerWLM()
 {
 	c_Player = NULL;
 	DestroyWindow(m_Window);
@@ -70,26 +70,26 @@ CPlayerWLM::~CPlayerWLM()
 ** Creates a shared class object.
 **
 */
-CPlayer* CPlayerWLM::Create()
+Player* PlayerWLM::Create()
 {
 	if (!c_Player)
 	{
-		c_Player = new CPlayerWLM();
+		c_Player = new PlayerWLM();
 	}
 
 	return c_Player;
 }
 
-LRESULT CALLBACK CPlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static CPlayerWLM* player;
+	static PlayerWLM* player;
 
 	switch (msg)
 	{
 	case WM_CREATE:
 		{
-			// Get pointer to the CPlayerWLM class from the CreateWindow call
-			player = (CPlayerWLM*)((CREATESTRUCT*)lParam)->lpCreateParams;
+			// Get pointer to the PlayerWLM class from the CreateWindow call
+			player = (PlayerWLM*)((CREATESTRUCT*)lParam)->lpCreateParams;
 			return 0;
 		}
 
@@ -149,7 +149,7 @@ LRESULT CALLBACK CPlayerWLM::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-void CPlayerWLM::SendKeyInput(WORD key)
+void PlayerWLM::SendKeyInput(WORD key)
 {
 	KEYBDINPUT kbi = {0};
 	kbi.wVk = key;
@@ -166,7 +166,7 @@ void CPlayerWLM::SendKeyInput(WORD key)
 ** Called during each update of the main measure.
 **
 */
-void CPlayerWLM::UpdateData()
+void PlayerWLM::UpdateData()
 {
 }
 
@@ -174,7 +174,7 @@ void CPlayerWLM::UpdateData()
 ** Handles the Play bang.
 **
 */
-void CPlayerWLM::Play()
+void PlayerWLM::Play()
 {
 	SendKeyInput(VK_MEDIA_PLAY_PAUSE);
 }
@@ -183,7 +183,7 @@ void CPlayerWLM::Play()
 ** Handles the Stop bang.
 **
 */
-void CPlayerWLM::Stop() 
+void PlayerWLM::Stop() 
 {
 	SendKeyInput(VK_MEDIA_STOP);
 }
@@ -192,7 +192,7 @@ void CPlayerWLM::Stop()
 ** Handles the Next bang.
 **
 */
-void CPlayerWLM::Next() 
+void PlayerWLM::Next() 
 {
 	SendKeyInput(VK_MEDIA_NEXT_TRACK);
 }
@@ -201,7 +201,7 @@ void CPlayerWLM::Next()
 ** Handles the Previous bang.
 **
 */
-void CPlayerWLM::Previous() 
+void PlayerWLM::Previous() 
 {
 	SendKeyInput(VK_MEDIA_PREV_TRACK);
 }

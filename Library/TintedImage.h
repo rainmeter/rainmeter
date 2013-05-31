@@ -27,8 +27,8 @@
 ** Helper macro to define an array of option names. A prefix must be given.
 **
 */
-#define CTintedImageHelper_DefineOptionArray(name, prefix) \
-	const WCHAR* (name)[CTintedImage::OptionCount] = { \
+#define TintedImageHelper_DefineOptionArray(name, prefix) \
+	const WCHAR* (name)[TintedImage::OptionCount] = { \
 		prefix  L"ImageCrop", \
 		prefix  L"Greyscale", \
 		prefix  L"ImageTint", \
@@ -43,9 +43,9 @@
 		prefix  L"UseExifOrientation" \
 	};
 
-class CConfigParser;
+class ConfigParser;
 
-class CTintedImage
+class TintedImage
 {
 public:
 	enum OptionIndex
@@ -66,10 +66,10 @@ public:
 		OptionCount
 	};
 
-	CTintedImage(const WCHAR* name = L"Image", const WCHAR** optionArray = c_DefaultOptionArray, bool disableTransform = false);
-	~CTintedImage();
+	TintedImage(const WCHAR* name = L"Image", const WCHAR** optionArray = c_DefaultOptionArray, bool disableTransform = false);
+	~TintedImage();
 
-	void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
 	bool IsLoaded() { return (m_Bitmap != NULL); }
 	bool IsTinted() { return (m_BitmapTint != NULL); }

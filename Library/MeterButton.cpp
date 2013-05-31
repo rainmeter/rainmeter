@@ -23,7 +23,7 @@
 #include "Error.h"
 #include "../Common/Gfx/Canvas.h"
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 using namespace Gdiplus;
 
@@ -38,7 +38,7 @@ enum BUTTON_STATE
 ** The constructor
 **
 */
-CMeterButton::CMeterButton(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
+MeterButton::MeterButton(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
 	m_Image(L"ButtonImage", NULL, true),
 	m_NeedsReload(false),
 	m_Bitmaps(),
@@ -52,7 +52,7 @@ CMeterButton::CMeterButton(CMeterWindow* meterWindow, const WCHAR* name) : CMete
 ** The destructor
 **
 */
-CMeterButton::~CMeterButton()
+MeterButton::~MeterButton()
 {
 	for (int i = 0; i < BUTTON_FRAMES; ++i)
 	{
@@ -64,9 +64,9 @@ CMeterButton::~CMeterButton()
 ** Load the image and get the dimensions of the meter from it.
 **
 */
-void CMeterButton::Initialize()
+void MeterButton::Initialize()
 {
-	CMeter::Initialize();
+	Meter::Initialize();
 
 	for (int i = 0; i < BUTTON_FRAMES; ++i)
 	{
@@ -127,14 +127,14 @@ void CMeterButton::Initialize()
 ** Read the options specified in the ini file.
 **
 */
-void CMeterButton::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeterButton::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 	int oldW = m_W;
 	int oldH = m_H;
 
-	CMeter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser, section);
 
 	m_ImageName = parser.ReadString(section, L"ButtonImage", L"");
 	if (!m_ImageName.empty())
@@ -173,18 +173,18 @@ void CMeterButton::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Updates the value(s) from the measures.
 **
 */
-bool CMeterButton::Update()
+bool MeterButton::Update()
 {
-	return CMeter::Update();
+	return Meter::Update();
 }
 
 /*
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterButton::Draw(Gfx::Canvas& canvas)
+bool MeterButton::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(canvas)) return false;
+	if (!Meter::Draw(canvas)) return false;
 
 	if (m_Bitmaps[m_State] == NULL) return false;	// Unable to continue
 
@@ -205,7 +205,7 @@ bool CMeterButton::Draw(Gfx::Canvas& canvas)
 ** Overridden method. The meters need not to be bound on anything
 **
 */
-void CMeterButton::BindMeasures(CConfigParser& parser, const WCHAR* section)
+void MeterButton::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	BindPrimaryMeasure(parser, section, true);
 }
@@ -214,7 +214,7 @@ void CMeterButton::BindMeasures(CConfigParser& parser, const WCHAR* section)
 ** Checks if the given point is inside the button.
 **
 */
-bool CMeterButton::HitTest2(int px, int py, bool checkAlpha)
+bool MeterButton::HitTest2(int px, int py, bool checkAlpha)
 {
 	int x = GetX();
 	int y = GetY();
@@ -253,13 +253,13 @@ bool CMeterButton::HitTest2(int px, int py, bool checkAlpha)
 	return false;
 }
 
-bool CMeterButton::MouseUp(POINT pos, bool execute)
+bool MeterButton::MouseUp(POINT pos, bool execute)
 {
 	if (m_State == BUTTON_STATE_DOWN)
 	{
 		if (execute && m_Clicked && m_Focus && HitTest2(pos.x, pos.y, true))
 		{
-			Rainmeter->ExecuteCommand(m_Command.c_str(), m_MeterWindow);
+			g_Rainmeter->ExecuteCommand(m_Command.c_str(), m_MeterWindow);
 		}
 		m_State = BUTTON_STATE_NORMAL;
 		m_Clicked = false;
@@ -270,7 +270,7 @@ bool CMeterButton::MouseUp(POINT pos, bool execute)
 	return false;
 }
 
-bool CMeterButton::MouseDown(POINT pos)
+bool MeterButton::MouseDown(POINT pos)
 {
 	if (m_Focus && HitTest2(pos.x, pos.y, true))
 	{
@@ -281,7 +281,7 @@ bool CMeterButton::MouseDown(POINT pos)
 	return false;
 }
 
-bool CMeterButton::MouseMove(POINT pos)
+bool MeterButton::MouseMove(POINT pos)
 {
 	if (m_Clicked)
 	{

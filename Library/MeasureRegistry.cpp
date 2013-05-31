@@ -25,7 +25,7 @@
 ** The constructor
 **
 */
-CMeasureRegistry::CMeasureRegistry(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+MeasureRegistry::MeasureRegistry(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_RegKey(),
 	m_HKey(HKEY_CURRENT_USER)
 {
@@ -36,7 +36,7 @@ CMeasureRegistry::CMeasureRegistry(CMeterWindow* meterWindow, const WCHAR* name)
 ** The destructor
 **
 */
-CMeasureRegistry::~CMeasureRegistry()
+MeasureRegistry::~MeasureRegistry()
 {
 	if (m_RegKey) RegCloseKey(m_RegKey);
 }
@@ -45,7 +45,7 @@ CMeasureRegistry::~CMeasureRegistry()
 ** Gets the current value from the registry
 **
 */
-void CMeasureRegistry::UpdateValue()
+void MeasureRegistry::UpdateValue()
 {
 	if (m_RegKey != NULL)
 	{
@@ -104,9 +104,9 @@ void CMeasureRegistry::UpdateValue()
 ** Read the options specified in the ini file.
 **
 */
-void CMeasureRegistry::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser, section);
 
 	const WCHAR* keyname = parser.ReadString(section, L"RegHKey", L"HKEY_CURRENT_USER").c_str();
 	if (_wcsicmp(keyname, L"HKEY_CURRENT_USER") == 0)
@@ -157,7 +157,7 @@ void CMeasureRegistry::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** value to string as normal.
 **
 */
-const WCHAR* CMeasureRegistry::GetStringValue()
+const WCHAR* MeasureRegistry::GetStringValue()
 {
 	return !m_StringValue.empty() ? CheckSubstitute(m_StringValue.c_str()) : NULL;
 }

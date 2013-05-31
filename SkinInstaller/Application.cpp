@@ -189,11 +189,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	}
 	else if (wcscmp(lpCmdLine, L"/Packager") == 0)
 	{
-		CDialogPackage::Create(hInstance, lpCmdLine);
+		DialogPackage::Create(hInstance, lpCmdLine);
 	}
 	else
 	{
-		CDialogInstall::Create(hInstance, lpCmdLine);
+		DialogInstall::Create(hInstance, lpCmdLine);
 	}
 
 	return 0;

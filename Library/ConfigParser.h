@@ -30,21 +30,21 @@
 #include <cstdint>
 #include <gdiplus.h>
 
-class CRainmeter;
-class CMeterWindow;
-class CMeasure;
-class CMeter;
+class Rainmeter;
+class MeterWindow;
+class Measure;
+class Meter;
 
-class CConfigParser
+class ConfigParser
 {
 public:
-	CConfigParser();
-	~CConfigParser();
+	ConfigParser();
+	~ConfigParser();
 
-	void Initialize(const std::wstring& filename, CMeterWindow* meterWindow = NULL, LPCTSTR skinSection = NULL, const std::wstring* resourcePath = NULL);
+	void Initialize(const std::wstring& filename, MeterWindow* meterWindow = NULL, LPCTSTR skinSection = NULL, const std::wstring* resourcePath = NULL);
 
-	void AddMeasure(CMeasure* pMeasure);
-	CMeasure* GetMeasure(const std::wstring& name);
+	void AddMeasure(Measure* pMeasure);
+	Measure* GetMeasure(const std::wstring& name);
 
 	const std::wstring* GetVariable(const std::wstring& strVariable);
 	void SetVariable(std::wstring strVariable, const std::wstring& strValue);
@@ -64,7 +64,7 @@ public:
 	bool GetLastKeyDefined() { return !m_LastDefaultUsed; }
 	bool GetLastValueDefined() { return m_LastValueDefined; }
 
-	void ResetMonitorVariables(CMeterWindow* meterWindow = NULL);
+	void ResetMonitorVariables(MeterWindow* meterWindow = NULL);
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
 	bool IsKeyDefined(LPCTSTR section, LPCTSTR key);
@@ -98,13 +98,13 @@ public:
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
 
 private:
-	void SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, CMeterWindow* meterWindow);
+	void SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, MeterWindow* meterWindow);
 
 	void ReadVariables();
 
 	void ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection = NULL, int depth = 0);
 
-	void SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow);
+	void SetAutoSelectedMonitorVariables(MeterWindow* meterWindow);
 
 	bool GetSectionVariable(std::wstring& strVariable, std::wstring& strValue);
 
@@ -118,7 +118,7 @@ private:
 	static std::wstring StrToUpper(const WCHAR* str) { std::wstring strTmp(str); StrToUpperC(strTmp); return strTmp; }
 	static std::wstring& StrToUpperC(std::wstring& str) { _wcsupr(&str[0]); return str; }
 
-	std::unordered_map<std::wstring, CMeasure*> m_Measures;
+	std::unordered_map<std::wstring, Measure*> m_Measures;
 
 	std::vector<std::wstring> m_StyleTemplate;
 
@@ -138,7 +138,7 @@ private:
 	std::unordered_map<std::wstring, std::wstring> m_BuiltInVariables;
 	std::unordered_map<std::wstring, std::wstring> m_Variables;
 
-	CMeterWindow* m_MeterWindow;
+	MeterWindow* m_MeterWindow;
 
 	static std::unordered_map<std::wstring, std::wstring> c_MonitorVariables;
 };

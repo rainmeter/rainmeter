@@ -38,9 +38,9 @@ typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
 #define Li2Double(x) ((double)((x).QuadPart))
 #define Ft2Double(x) ((double)((x).dwHighDateTime) * 4.294967296E9 + (double)((x).dwLowDateTime))
 
-FPNTQSI CMeasureCPU::c_NtQuerySystemInformation = NULL;
-int CMeasureCPU::c_NumOfProcessors = 0;
-ULONG CMeasureCPU::c_BufferSize = 0;
+FPNTQSI MeasureCPU::c_NtQuerySystemInformation = NULL;
+int MeasureCPU::c_NumOfProcessors = 0;
+ULONG MeasureCPU::c_BufferSize = 0;
 
 // ntdll!NtQuerySystemInformation (NT specific!)
 //
@@ -64,7 +64,7 @@ ULONG CMeasureCPU::c_BufferSize = 0;
 ** The constructor
 **
 */
-CMeasureCPU::CMeasureCPU(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+MeasureCPU::MeasureCPU(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_Processor(),
 	m_OldTime()
 {
@@ -75,7 +75,7 @@ CMeasureCPU::CMeasureCPU(CMeterWindow* meterWindow, const WCHAR* name) : CMeasur
 ** The destructor
 **
 */
-CMeasureCPU::~CMeasureCPU()
+MeasureCPU::~MeasureCPU()
 {
 }
 
@@ -83,9 +83,9 @@ CMeasureCPU::~CMeasureCPU()
 ** Read the options specified in the ini file.
 **
 */
-void CMeasureCPU::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeasureCPU::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser, section);
 
 	int processor = parser.ReadInt(section, L"Processor", 0);
 
@@ -106,7 +106,7 @@ void CMeasureCPU::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Updates the current CPU utilization value.
 **
 */
-void CMeasureCPU::UpdateValue()
+void MeasureCPU::UpdateValue()
 {
 	if (m_Processor == 0)
 	{
@@ -194,7 +194,7 @@ void CMeasureCPU::UpdateValue()
 ** Calculates the current CPU utilization value.
 **
 */
-void CMeasureCPU::CalcUsage(double idleTime, double systemTime)
+void MeasureCPU::CalcUsage(double idleTime, double systemTime)
 {
 	// CurrentCpuUsage% = 100 - ((IdleTime / SystemTime) * 100)
 	double dbCpuUsage = 100.0 - ((idleTime - m_OldTime[0]) / (systemTime - m_OldTime[1])) * 100.0;
@@ -207,7 +207,7 @@ void CMeasureCPU::CalcUsage(double idleTime, double systemTime)
 	m_OldTime[1] = systemTime;
 }
 
-void CMeasureCPU::InitializeStatic()
+void MeasureCPU::InitializeStatic()
 {
 	c_NtQuerySystemInformation = (FPNTQSI)GetProcAddress(GetModuleHandle(L"ntdll"), "NtQuerySystemInformation");
 
@@ -216,6 +216,6 @@ void CMeasureCPU::InitializeStatic()
 	c_NumOfProcessors = (int)systemInfo.dwNumberOfProcessors;
 }
 
-void CMeasureCPU::FinalizeStatic()
+void MeasureCPU::FinalizeStatic()
 {
 }

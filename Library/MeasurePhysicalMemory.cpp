@@ -24,7 +24,7 @@
 ** The constructor
 **
 */
-CMeasurePhysicalMemory::CMeasurePhysicalMemory(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+MeasurePhysicalMemory::MeasurePhysicalMemory(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_Total(false)
 {
 	MEMORYSTATUSEX stat;
@@ -37,7 +37,7 @@ CMeasurePhysicalMemory::CMeasurePhysicalMemory(CMeterWindow* meterWindow, const 
 ** The destructor
 **
 */
-CMeasurePhysicalMemory::~CMeasurePhysicalMemory()
+MeasurePhysicalMemory::~MeasurePhysicalMemory()
 {
 }
 
@@ -45,7 +45,7 @@ CMeasurePhysicalMemory::~CMeasurePhysicalMemory()
 ** Updates the current physical memory value.
 **
 */
-void CMeasurePhysicalMemory::UpdateValue()
+void MeasurePhysicalMemory::UpdateValue()
 {
 	if (!m_Total)
 	{
@@ -61,10 +61,10 @@ void CMeasurePhysicalMemory::UpdateValue()
 ** Read the options specified in the ini file.
 **
 */
-void CMeasurePhysicalMemory::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeasurePhysicalMemory::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	double oldMaxValue = m_MaxValue;
-	CMeasure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser, section);
 	m_MaxValue = oldMaxValue;
 
 	m_Total = (1 == parser.ReadInt(section, L"Total", 0));

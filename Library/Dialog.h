@@ -19,7 +19,7 @@
 #ifndef __DIALOG_H__
 #define __DIALOG_H__
 
-class CDialog
+class Dialog
 {
 public:
 	HWND GetWindow() { return m_Window; }
@@ -28,7 +28,7 @@ public:
 	static HWND GetActiveTabWindow() { return c_ActiveTabWindow; }
 
 protected:
-	class CTab
+	class Tab
 	{
 	public:
 		HWND GetWindow() { return m_Window; }
@@ -39,15 +39,15 @@ protected:
 		virtual void Resize(int w, int h) {}
 
 	protected:
-		CTab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc);
-		virtual ~CTab();
+		Tab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc);
+		virtual ~Tab();
 
 		HWND m_Window;
 		bool m_Initialized;
 	};
 
-	CDialog(HWND wnd);
-	virtual ~CDialog();
+	Dialog(HWND wnd);
+	virtual ~Dialog();
 
 	virtual HWND GetActiveWindow() { return m_Window; }
 

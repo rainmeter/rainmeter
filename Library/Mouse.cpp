@@ -23,19 +23,19 @@
 #include "Logger.h"
 #include "Mouse.h"
 
-CMouse::CMouse(CMeterWindow* meterWindow, CMeter* meter) : m_MeterWindow(meterWindow), m_Meter(meter),
+Mouse::Mouse(MeterWindow* meterWindow, Meter* meter) : m_MeterWindow(meterWindow), m_Meter(meter),
 	m_CursorType(MOUSECURSOR_HAND),
 	m_CustomCursor(),
 	m_CursorState(true)
 {
 }
 
-CMouse::~CMouse()
+Mouse::~Mouse()
 {
 	DestroyCustomCursor();
 }
 
-void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void Mouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	DestroyCustomCursor();
 
@@ -135,7 +135,7 @@ void CMouse::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 }
 
-HCURSOR CMouse::GetCursor() const
+HCURSOR Mouse::GetCursor() const
 {
 	LPCWSTR name = IDC_ARROW;
 	switch (m_CursorType)
@@ -177,14 +177,14 @@ HCURSOR CMouse::GetCursor() const
 	return LoadCursor(NULL, name);
 }
 
-std::wstring CMouse::GetActionCommand(MOUSEACTION action) const
+std::wstring Mouse::GetActionCommand(MOUSEACTION action) const
 {
 	std::wstring command = m_MouseActions[action];
 	ReplaceMouseVariables(command);
 	return command;
 }
 
-void CMouse::DestroyCustomCursor()
+void Mouse::DestroyCustomCursor()
 {
 	if (m_CustomCursor)
 	{
@@ -193,7 +193,7 @@ void CMouse::DestroyCustomCursor()
 	}
 }
 
-void CMouse::ReplaceMouseVariables(std::wstring& result) const
+void Mouse::ReplaceMouseVariables(std::wstring& result) const
 {
 	// Check for variables ($VAR$)
 	size_t start = 0, end;
@@ -244,7 +244,7 @@ void CMouse::ReplaceMouseVariables(std::wstring& result) const
 	while (loop);
 }
 
-std::wstring CMouse::GetMouseVariable(const std::wstring& variable) const
+std::wstring Mouse::GetMouseVariable(const std::wstring& variable) const
 {
 	std::wstring result;
 	LPCWSTR var = variable.c_str();

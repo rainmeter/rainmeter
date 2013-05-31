@@ -24,13 +24,13 @@
 
 #define BUTTON_FRAMES 3
 
-class CMeterButton : public CMeter
+class MeterButton : public Meter
 {
 public:
-	CMeterButton(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeterButton();
+	MeterButton(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeterButton();
 
-	virtual UINT GetTypeID() { return TypeID<CMeterButton>(); }
+	virtual UINT GetTypeID() { return TypeID<MeterButton>(); }
 
 	virtual void Initialize();
 	virtual bool Update();
@@ -43,15 +43,15 @@ public:
 	void SetFocus(bool f) { m_Focus = f; }
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
 	
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite; }
 
 private:
 	bool HitTest2(int px, int py, bool checkAlpha);
 
-	CTintedImage m_Image;
+	TintedImage m_Image;
 	std::wstring m_ImageName;
 	bool m_NeedsReload;
 

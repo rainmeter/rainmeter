@@ -90,7 +90,7 @@ void CFolderInfo::Update()
 
 void CFolderInfo::CalculateSize()
 {
-	std::list<CRawString> folderQueue;
+	std::list<RawString> folderQueue;
 	folderQueue.push_back(m_Path.c_str());
 
 	WCHAR searchPattern[MAX_PATH + 10];
@@ -100,7 +100,7 @@ void CFolderInfo::CalculateSize()
 	HANDLE findHandle;
 	while (!folderQueue.empty())
 	{
-		const CRawString& ref = folderQueue.front();
+		const RawString& ref = folderQueue.front();
 		wsprintf(searchPattern, L"%s%s", ref.c_str(), L"\\*.*");
 
 		findHandle = FindFirstFile(searchPattern, &findData);

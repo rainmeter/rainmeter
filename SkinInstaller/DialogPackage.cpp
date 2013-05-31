@@ -28,9 +28,9 @@
 extern GlobalData g_Data;
 extern OsNameVersion g_OsNameVersions[];
 
-CDialogPackage* CDialogPackage::c_Dialog = NULL;
+DialogPackage* DialogPackage::c_Dialog = NULL;
 
-CDialogPackage::CDialogPackage(HWND wnd) : CDialog(wnd),
+DialogPackage::DialogPackage(HWND wnd) : Dialog(wnd),
 	m_TabInfo(wnd),
 	m_TabOptions(wnd),
 	m_TabAdvanced(wnd),
@@ -41,11 +41,11 @@ CDialogPackage::CDialogPackage(HWND wnd) : CDialog(wnd),
 {
 }
 
-CDialogPackage::~CDialogPackage()
+DialogPackage::~DialogPackage()
 {
 }
 
-void CDialogPackage::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
+void DialogPackage::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 {
 	HANDLE hMutex;
 	if (IsRunning(L"Rainmeter Skin Packager", &hMutex))
@@ -60,7 +60,7 @@ void CDialogPackage::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	}
 }
 
-CDialog::CTab& CDialogPackage::GetActiveTab()
+Dialog::Tab& DialogPackage::GetActiveTab()
 {
 	int sel = TabCtrl_GetCurSel(GetDlgItem(m_Window, IDC_PACKAGE_TAB));
 	if (sel == -1)
@@ -77,13 +77,13 @@ CDialog::CTab& CDialogPackage::GetActiveTab()
 	}
 }
 
-INT_PTR CALLBACK CDialogPackage::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DialogPackage::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (!c_Dialog)
 	{
 		if (uMsg == WM_INITDIALOG)
 		{
-			c_Dialog = new CDialogPackage(hWnd);
+			c_Dialog = new DialogPackage(hWnd);
 			return c_Dialog->OnInitDialog(wParam, lParam);
 		}
 	}
@@ -116,7 +116,7 @@ INT_PTR CALLBACK CDialogPackage::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	return FALSE;
 }
 
-INT_PTR CDialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
+INT_PTR DialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_SKININSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
@@ -131,7 +131,7 @@ INT_PTR CDialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-INT_PTR CDialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
+INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
@@ -203,7 +203,7 @@ INT_PTR CDialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-INT_PTR CDialogPackage::OnNotify(WPARAM wParam, LPARAM lParam)
+INT_PTR DialogPackage::OnNotify(WPARAM wParam, LPARAM lParam)
 {
 	LPNMHDR nm = (LPNMHDR)lParam;
 	switch (nm->idFrom)
@@ -227,13 +227,13 @@ INT_PTR CDialogPackage::OnNotify(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-void CDialogPackage::SetNextButtonState()
+void DialogPackage::SetNextButtonState()
 {
 	BOOL state = !(m_Name.empty() || m_Author.empty() || m_SkinFolder.second.empty());
 	EnableWindow(GetDlgItem(m_Window, IDC_PACKAGE_NEXT_BUTTON), state);
 }
 
-bool CDialogPackage::CreatePackage()
+bool DialogPackage::CreatePackage()
 {
 	// Create options file
 	WCHAR tempFile[MAX_PATH];
@@ -336,7 +336,7 @@ bool CDialogPackage::CreatePackage()
 		(file = _wfopen(m_TargetFile.c_str(), L"r+b")) != NULL)
 	{
 		fseek(file, 0, SEEK_END);
-		CDialogInstall::PackageFooter footer = { _ftelli64(file), 0, "RMSKIN" };
+		DialogInstall::PackageFooter footer = { _ftelli64(file), 0, "RMSKIN" };
 		fwrite(&footer, sizeof(footer), 1, file);
 		fclose(file);
 	}
@@ -351,9 +351,9 @@ bool CDialogPackage::CreatePackage()
 	return true;
 }
 
-unsigned __stdcall CDialogPackage::PackagerThreadProc(void* pParam)
+unsigned __stdcall DialogPackage::PackagerThreadProc(void* pParam)
 {
-	CDialogPackage* dialog = (CDialogPackage*)pParam;
+	DialogPackage* dialog = (DialogPackage*)pParam;
 
 	if (dialog->CreatePackage())
 	{
@@ -377,7 +377,7 @@ unsigned __stdcall CDialogPackage::PackagerThreadProc(void* pParam)
 	return 0;
 }
 
-bool CDialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath)
+bool DialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath)
 {
 	std::string zipPathAscii = ConvertToAscii(zipPath);
 	for (int i = 0, isize = zipPathAscii.length(); i < isize; ++i)
@@ -437,7 +437,7 @@ bool CDialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPat
 	return zipCloseFileInZip(m_ZipFile) == ZIP_OK && result;
 }
 
-bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring base, const WCHAR* zipPrefix)
+bool DialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring base, const WCHAR* zipPrefix)
 {
 	std::wstring currentPath = path + base;
 	currentPath += L'*';
@@ -521,7 +521,7 @@ bool CDialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring b
 	return result;
 }
 
-void CDialogPackage::ShowHelp()
+void DialogPackage::ShowHelp()
 {
 	std::wstring url = L"http://rainmeter.net/cms/UsingApplication-SkinPackager";
 	if (revision_beta)
@@ -532,7 +532,7 @@ void CDialogPackage::ShowHelp()
 	ShellExecute(m_Window, L"open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
 }
 
-std::wstring CDialogPackage::SelectFolder(HWND parent, const std::wstring& existingPath)
+std::wstring DialogPackage::SelectFolder(HWND parent, const std::wstring& existingPath)
 {
 	LPCWSTR dialog = MAKEINTRESOURCE(IDD_PACKAGESELECTFOLDER_DIALOG);
 	std::wstring folder = existingPath;
@@ -543,7 +543,7 @@ std::wstring CDialogPackage::SelectFolder(HWND parent, const std::wstring& exist
 	return folder;
 }
 
-INT_PTR CALLBACK CDialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
@@ -691,7 +691,7 @@ INT_PTR CALLBACK CDialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARA
 	return TRUE;
 }
 
-std::pair<std::wstring, std::wstring> CDialogPackage::SelectPlugin(HWND parent)
+std::pair<std::wstring, std::wstring> DialogPackage::SelectPlugin(HWND parent)
 {
 	LPCWSTR dialog = MAKEINTRESOURCE(IDD_PACKAGESELECTPLUGIN_DIALOG);
 	std::pair<std::wstring, std::wstring> plugins;
@@ -703,7 +703,7 @@ std::pair<std::wstring, std::wstring> CDialogPackage::SelectPlugin(HWND parent)
 	return plugins;
 }
 
-INT_PTR CALLBACK CDialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
@@ -800,11 +800,11 @@ INT_PTR CALLBACK CDialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARA
 //
 // -----------------------------------------------------------------------------------------------
 
-CDialogPackage::CTabInfo::CTabInfo(HWND wnd) : CTab(GetModuleHandle(NULL), wnd, IDD_PACKAGEINFO_TAB, DlgProc)
+DialogPackage::TabInfo::TabInfo(HWND wnd) : Tab(GetModuleHandle(NULL), wnd, IDD_PACKAGEINFO_TAB, DlgProc)
 {
 }
 
-void CDialogPackage::CTabInfo::Initialize()
+void DialogPackage::TabInfo::Initialize()
 {
 	m_Initialized = true;
 
@@ -855,7 +855,7 @@ void CDialogPackage::CTabInfo::Initialize()
 	ListView_InsertGroup(item, -1, &lvg);
 }
 
-INT_PTR CALLBACK CDialogPackage::CTabInfo::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DialogPackage::TabInfo::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
@@ -869,7 +869,7 @@ INT_PTR CALLBACK CDialogPackage::CTabInfo::DlgProc(HWND hWnd, UINT uMsg, WPARAM 
 	return FALSE;
 }
 
-INT_PTR CDialogPackage::CTabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
+INT_PTR DialogPackage::TabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
@@ -1012,7 +1012,7 @@ INT_PTR CDialogPackage::CTabInfo::OnCommand(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-INT_PTR CDialogPackage::CTabInfo::OnNotify(WPARAM wParam, LPARAM lParam)
+INT_PTR DialogPackage::TabInfo::OnNotify(WPARAM wParam, LPARAM lParam)
 {
 	LPNMHDR nm = (LPNMHDR)lParam;
 	switch (nm->code)
@@ -1052,11 +1052,11 @@ INT_PTR CDialogPackage::CTabInfo::OnNotify(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-CDialogPackage::CTabOptions::CTabOptions(HWND wnd) : CTab(GetModuleHandle(NULL), wnd, IDD_PACKAGEOPTIONS_TAB, DlgProc)
+DialogPackage::TabOptions::TabOptions(HWND wnd) : Tab(GetModuleHandle(NULL), wnd, IDD_PACKAGEOPTIONS_TAB, DlgProc)
 {
 }
 
-void CDialogPackage::CTabOptions::Initialize()
+void DialogPackage::TabOptions::Initialize()
 {
 	m_Initialized = true;
 
@@ -1125,7 +1125,7 @@ void CDialogPackage::CTabOptions::Initialize()
 	c_Dialog->m_MinimumWindows = g_OsNameVersions[0].version;
 }
 
-INT_PTR CALLBACK CDialogPackage::CTabOptions::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DialogPackage::TabOptions::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
@@ -1136,7 +1136,7 @@ INT_PTR CALLBACK CDialogPackage::CTabOptions::DlgProc(HWND hWnd, UINT uMsg, WPAR
 	return FALSE;
 }
 
-INT_PTR CDialogPackage::CTabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
+INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
@@ -1292,16 +1292,16 @@ INT_PTR CDialogPackage::CTabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-CDialogPackage::CTabAdvanced::CTabAdvanced(HWND wnd) : CTab(GetModuleHandle(NULL), wnd, IDD_PACKAGEADVANCED_TAB, DlgProc)
+DialogPackage::TabAdvanced::TabAdvanced(HWND wnd) : Tab(GetModuleHandle(NULL), wnd, IDD_PACKAGEADVANCED_TAB, DlgProc)
 {
 }
 
-void CDialogPackage::CTabAdvanced::Initialize()
+void DialogPackage::TabAdvanced::Initialize()
 {
 	m_Initialized = true;
 }
 
-INT_PTR CALLBACK CDialogPackage::CTabAdvanced::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DialogPackage::TabAdvanced::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
@@ -1315,7 +1315,7 @@ INT_PTR CALLBACK CDialogPackage::CTabAdvanced::DlgProc(HWND hWnd, UINT uMsg, WPA
 	return FALSE;
 }
 
-INT_PTR CDialogPackage::CTabAdvanced::OnCommand(WPARAM wParam, LPARAM lParam)
+INT_PTR DialogPackage::TabAdvanced::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
@@ -1362,7 +1362,7 @@ INT_PTR CDialogPackage::CTabAdvanced::OnCommand(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-INT_PTR CDialogPackage::CTabAdvanced::OnNotify(WPARAM wParam, LPARAM lParam)
+INT_PTR DialogPackage::TabAdvanced::OnNotify(WPARAM wParam, LPARAM lParam)
 {
 	LPNMHDR nm = (LPNMHDR)lParam;
 	switch (nm->code)

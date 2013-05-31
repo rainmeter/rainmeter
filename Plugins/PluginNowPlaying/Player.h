@@ -54,11 +54,11 @@ enum MeasureType
 	MEASURE_YEAR     = 0x00010000
 };
 
-class __declspec(novtable) CPlayer
+class __declspec(novtable) Player
 {
 public:
-	CPlayer();
-	virtual ~CPlayer() = 0;
+	Player();
+	virtual ~Player() = 0;
 
 	void AddInstance();
 	void RemoveInstance();

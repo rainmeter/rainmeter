@@ -22,7 +22,7 @@
 #include "TrayWindow.h"
 #include "../Version.h"
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 void CheckVersion(void* dummy)
 {
@@ -71,17 +71,17 @@ void CheckVersion(void* dummy)
 			if (availableVersion > RAINMETER_VERSION ||
 				(revision_beta && availableVersion == RAINMETER_VERSION))
 			{
-				Rainmeter->SetNewVersion();
+				g_Rainmeter->SetNewVersion();
 
 				WCHAR buffer[32];
-				const WCHAR* dataFile = Rainmeter->GetDataFile().c_str();
+				const WCHAR* dataFile = g_Rainmeter->GetDataFile().c_str();
 				GetPrivateProfileString(L"Rainmeter", L"LastCheck", L"0", buffer, _countof(buffer), dataFile);
 
 				// Show tray notification only once per new version
 				int lastVersion = parseVersion(buffer);
 				if (availableVersion > lastVersion)
 				{
-					Rainmeter->GetTrayWindow()->ShowUpdateNotification(version);
+					g_Rainmeter->GetTrayWindow()->ShowUpdateNotification(version);
 					WritePrivateProfileString(L"Rainmeter", L"LastCheck", version, dataFile);
 				}
 			}

@@ -99,9 +99,9 @@ enum RESIZEMODE
 	RESIZEMODE_RESET
 };
 
-class CRainmeter;
-class CMeasure;
-class CMeter;
+class Rainmeter;
+class Measure;
+class Meter;
 
 namespace Gfx {
 class Canvas;
@@ -109,11 +109,11 @@ class FontCollection;
 class TextFormat;
 }
 
-class CMeterWindow : public CGroup
+class MeterWindow : public Group
 {
 public:
-	CMeterWindow(const std::wstring& folderPath, const std::wstring& file);
-	~CMeterWindow();
+	MeterWindow(const std::wstring& folderPath, const std::wstring& file);
+	~MeterWindow();
 
 	void Initialize();
 
@@ -154,7 +154,7 @@ public:
 	Gfx::Canvas& GetCanvas() { return *m_Canvas; }
 	HWND GetWindow() { return m_Window; }
 
-	CConfigParser& GetParser() { return m_Parser; }
+	ConfigParser& GetParser() { return m_Parser; }
 
 	const std::wstring& GetFolderPath() { return m_FolderPath; }
 	const std::wstring& GetFileName() { return m_FileName; }
@@ -162,8 +162,8 @@ public:
 	std::wstring GetRootPath();
 	std::wstring GetResourcesPath();
 
-	const std::vector<CMeasure*>& GetMeasures() { return m_Measures; }
-	const std::vector<CMeter*>& GetMeters() { return m_Meters; }
+	const std::vector<Measure*>& GetMeasures() { return m_Measures; }
+	const std::vector<Meter*>& GetMeters() { return m_Meters; }
 
 	ZPOSITION GetWindowZPosition() { return m_WindowZPosition; }
 	bool GetXPercentage() { return m_WindowXPercentage; }
@@ -196,16 +196,16 @@ public:
 
 	bool IsClosing() { return m_State == STATE_CLOSING; }
 
-	const CMouse& GetMouse() { return m_Mouse; }
+	const Mouse& GetMouse() { return m_Mouse; }
 
 	void MakePathAbsolute(std::wstring& path);
 
 	Gfx::FontCollection* GetFontCollection() { return m_FontCollection; }
 
-	CMeter* GetMeter(const std::wstring& meterName);
-	CMeasure* GetMeasure(const std::wstring& measureName) { return m_Parser.GetMeasure(measureName); }
+	Meter* GetMeter(const std::wstring& meterName);
+	Measure* GetMeasure(const std::wstring& measureName) { return m_Parser.GetMeasure(measureName); }
 
-	friend class CDialogManage;
+	friend class DialogManage;
 
 protected:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -277,13 +277,13 @@ private:
 
 	bool HitTest(int x, int y);
 
-	void SnapToWindow(CMeterWindow* window, LPWINDOWPOS wp);
+	void SnapToWindow(MeterWindow* window, LPWINDOWPOS wp);
 	void MapCoordsToScreen(int& x, int& y, int w, int h);
 	void WindowToScreen();
 	void ScreenToWindow();
 	void PostUpdate(bool bActiveTransition);
-	bool UpdateMeasure(CMeasure* measure, bool force);
-	bool UpdateMeter(CMeter* meter, bool& bActiveTransition, bool force);
+	bool UpdateMeasure(Measure* measure, bool force);
+	bool UpdateMeter(Meter* meter, bool& bActiveTransition, bool force);
 	void Update(bool refresh);
 	void UpdateWindow(int alpha, bool reset, bool canvasBeginDrawCalled = false);
 	void UpdateWindowTransparency(int alpha);
@@ -321,14 +321,14 @@ private:
 
 	Gfx::Canvas* m_Canvas;
 
-	CConfigParser m_Parser;
+	ConfigParser m_Parser;
 
 	Gdiplus::Bitmap* m_Background;
 	SIZE m_BackgroundSize;
 
 	HWND m_Window;
 
-	CMouse m_Mouse;
+	Mouse m_Mouse;
 	bool m_MouseOver;
 	bool m_MouseInputRegistered;
 	bool m_HasMouseScrollAction;
@@ -404,8 +404,8 @@ private:
 	bool m_Hidden;
 	RESIZEMODE m_ResizeWindow;
 
-	std::vector<CMeasure*> m_Measures;
-	std::vector<CMeter*> m_Meters;
+	std::vector<Measure*> m_Measures;
+	std::vector<Meter*> m_Meters;
 
 	const std::wstring m_FolderPath;
 	const std::wstring m_FileName;

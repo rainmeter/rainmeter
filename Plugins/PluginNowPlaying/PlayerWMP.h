@@ -23,12 +23,12 @@
 #include <wmp.h>
 #include <wrl/client.h>
 
-class CPlayerWMP : public CPlayer
+class PlayerWMP : public Player
 {
 public:
-	virtual ~CPlayerWMP();
+	virtual ~PlayerWMP();
 
-	static CPlayer* Create();
+	static Player* Create();
 
 	virtual void UpdateData();
 
@@ -44,7 +44,7 @@ public:
 	virtual void ClosePlayer();
 
 protected:
-	CPlayerWMP();
+	PlayerWMP();
 
 private:
 	class CRemoteHost :
@@ -56,7 +56,7 @@ private:
 		CRemoteHost();
 		~CRemoteHost();
 
-		CPlayerWMP* m_Player;
+		PlayerWMP* m_Player;
 
 		IUnknown* GetUnknown() const { return (IServiceProvider*)this; }
 
@@ -128,7 +128,7 @@ private:
 	void Initialize();
 	void Uninitialize();
 
-	static CPlayer* c_Player;
+	static Player* c_Player;
 
 	bool m_TrackChanged;
 	HWND m_Window;

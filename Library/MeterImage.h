@@ -22,21 +22,21 @@
 #include "Meter.h"
 #include "TintedImage.h"
 
-class CMeterImage : public CMeter
+class MeterImage : public Meter
 {
 public:
-	CMeterImage(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeterImage();
+	MeterImage(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeterImage();
 
-	virtual UINT GetTypeID() { return TypeID<CMeterImage>(); }
+	virtual UINT GetTypeID() { return TypeID<MeterImage>(); }
 
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
 	
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite ? true : m_ImageNameResult.empty(); }
 
@@ -51,7 +51,7 @@ private:
 
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
-	CTintedImage m_Image;
+	TintedImage m_Image;
 	std::wstring m_ImageName;
 	std::wstring m_ImageNameResult;		// Image name as absolute path
 	std::wstring m_Path;

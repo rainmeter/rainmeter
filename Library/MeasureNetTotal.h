@@ -21,11 +21,11 @@
 
 #include "MeasureNet.h"
 
-class CMeasureNetTotal : public CMeasureNet
+class MeasureNetTotal : public MeasureNet
 {
 public:
-	CMeasureNetTotal(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeasureNetTotal();
+	MeasureNetTotal(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeasureNetTotal();
 };
 
 #endif

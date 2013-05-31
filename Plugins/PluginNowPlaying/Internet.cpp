@@ -19,13 +19,13 @@
 #include "StdAfx.h"
 #include "Internet.h"
 
-HINTERNET CInternet::c_NetHandle = NULL;
+HINTERNET Internet::c_NetHandle = NULL;
 
 /*
 ** Initialize internet handle and crtical section.
 **
 */
-void CInternet::Initialize()
+void Internet::Initialize()
 {
 	c_NetHandle = InternetOpen(L"Rainmeter NowPlaying.dll",
 								INTERNET_OPEN_TYPE_PRECONFIG,
@@ -43,7 +43,7 @@ void CInternet::Initialize()
 ** Close handles and delete critical section.
 **
 */
-void CInternet::Finalize()
+void Internet::Finalize()
 {
 	if (c_NetHandle) InternetCloseHandle(c_NetHandle);
 }
@@ -52,7 +52,7 @@ void CInternet::Finalize()
 ** Downloads given url and returns it as a string.
 **
 */
-std::wstring CInternet::DownloadUrl(const std::wstring& url, int codepage)
+std::wstring Internet::DownloadUrl(const std::wstring& url, int codepage)
 {
 	// From WebParser.cpp
 	std::wstring result;
@@ -148,7 +148,7 @@ std::wstring CInternet::DownloadUrl(const std::wstring& url, int codepage)
 ** Encode reserved characters.
 **
 */
-std::wstring CInternet::EncodeUrl(const std::wstring& url)
+std::wstring Internet::EncodeUrl(const std::wstring& url)
 {
 	// Based on http://www.zedwood.com/article/111/cpp-urlencode-function
 	const WCHAR* urlChars = L" !*'();:@&=+$,/?#[]";
@@ -176,7 +176,7 @@ std::wstring CInternet::EncodeUrl(const std::wstring& url)
 ** Decodes numeric references.
 **
 */
-void CInternet::DecodeReferences(std::wstring& str)
+void Internet::DecodeReferences(std::wstring& str)
 {
 	// From WebParser.cpp
 	std::wstring::size_type start = 0;
@@ -246,7 +246,7 @@ void CInternet::DecodeReferences(std::wstring& str)
 ** Convert multibyte string to wide string.
 **
 */
-std::wstring CInternet::ConvertToWide(LPCSTR str, int codepage)
+std::wstring Internet::ConvertToWide(LPCSTR str, int codepage)
 {
 	std::wstring szWide;
 

@@ -33,18 +33,18 @@ enum TRAY_METER_TYPE
 	TRAY_METER_TYPE_BITMAP
 };
 
-class CConfigParser;
-class CMeasure;
+class ConfigParser;
+class Measure;
 
-class CTrayWindow
+class TrayWindow
 {
 public:
-	CTrayWindow();
-	~CTrayWindow();
+	TrayWindow();
+	~TrayWindow();
 
 	void Initialize();
 
-	void ReadOptions(CConfigParser& parser);
+	void ReadOptions(ConfigParser& parser);
 	HWND GetWindow() { return m_Window; }
 	bool IsTrayIconEnabled() { return m_IconEnabled; }
 	void SetTrayIcon(bool enabled);
@@ -75,7 +75,7 @@ private:
 
 	HICON m_Icon;
 	HWND m_Window;
-	CMeasure* m_Measure;
+	Measure* m_Measure;
 
 	TRAY_METER_TYPE m_MeterType;
 	Gdiplus::Color m_Color1;

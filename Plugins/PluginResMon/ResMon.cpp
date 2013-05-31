@@ -42,7 +42,7 @@ enum MEASURETYPE
 struct MeasureData
 {
 	MEASURETYPE type;
-	CRawString process;
+	RawString process;
 
 	MeasureData() : type(GDI_COUNT) {}
 };

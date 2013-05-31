@@ -21,37 +21,37 @@
 
 #include <windows.h>
 
-class CRawString
+class RawString
 {
 public:
-	CRawString() :
+	RawString() :
 		m_String()
 	{
 	}
 
-	CRawString(const WCHAR* str) :
+	RawString(const WCHAR* str) :
 		m_String(str_alloc(str))
 	{
 	}
 
-	CRawString(const CRawString& rhs) :
+	RawString(const RawString& rhs) :
 		m_String(str_alloc(rhs.c_str()))
 	{
 	}
 
-	~CRawString()
+	~RawString()
 	{
 		clear();
 	}
 	
-	CRawString& operator=(const WCHAR* rhs)
+	RawString& operator=(const WCHAR* rhs)
 	{
 		clear();
 		m_String = str_alloc(rhs);
 		return *this;
 	}
 
-	CRawString& operator=(const CRawString& rhs)
+	RawString& operator=(const RawString& rhs)
 	{
 		if (&rhs != this)
 		{

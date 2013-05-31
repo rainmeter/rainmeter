@@ -48,11 +48,11 @@ enum INTERVAL
 
 const UINT WM_TASKBARCREATED = ::RegisterWindowMessage(L"TaskbarCreated");
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 using namespace Gdiplus;
 
-CTrayWindow::CTrayWindow() :
+TrayWindow::TrayWindow() :
 	m_Icon(),
 	m_Measure(),
 	m_MeterType(TRAY_METER_TYPE_HISTOGRAM),
@@ -67,7 +67,7 @@ CTrayWindow::CTrayWindow() :
 {
 }
 
-CTrayWindow::~CTrayWindow()
+TrayWindow::~TrayWindow()
 {
 	KillTimer(m_Window, TIMER_ADDTRAYICON);
 	KillTimer(m_Window, TIMER_TRAYMEASURE);
@@ -85,11 +85,11 @@ CTrayWindow::~CTrayWindow()
 	if (m_Window) DestroyWindow(m_Window);
 }
 
-void CTrayWindow::Initialize()
+void TrayWindow::Initialize()
 {
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = (WNDPROC)WndProc;
-	wc.hInstance = Rainmeter->GetInstance();
+	wc.hInstance = g_Rainmeter->GetInstance();
 	wc.lpszClassName = L"RainmeterTrayClass";
 	wc.hIcon = GetIcon(IDI_RAINMETER);
 
@@ -112,7 +112,7 @@ void CTrayWindow::Initialize()
 	SetWindowPos(m_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 }
 
-bool CTrayWindow::AddTrayIcon()
+bool TrayWindow::AddTrayIcon()
 {
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
@@ -125,7 +125,7 @@ bool CTrayWindow::AddTrayIcon()
 	return (Shell_NotifyIcon(NIM_ADD, &tnid) || GetLastError() != ERROR_TIMEOUT);
 }
 
-bool CTrayWindow::IsTrayIconReady()
+bool TrayWindow::IsTrayIconReady()
 {
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
@@ -134,7 +134,7 @@ bool CTrayWindow::IsTrayIconReady()
 	return Shell_NotifyIcon(NIM_MODIFY, &tnid);
 }
 
-void CTrayWindow::TryAddTrayIcon()
+void TrayWindow::TryAddTrayIcon()
 {
 	if (IsTrayIconReady())
 	{
@@ -156,7 +156,7 @@ void CTrayWindow::TryAddTrayIcon()
 	}
 }
 
-void CTrayWindow::CheckTrayIcon()
+void TrayWindow::CheckTrayIcon()
 {
 	if (IsTrayIconReady() || AddTrayIcon())
 	{
@@ -164,7 +164,7 @@ void CTrayWindow::CheckTrayIcon()
 	}
 }
 
-void CTrayWindow::RemoveTrayIcon()
+void TrayWindow::RemoveTrayIcon()
 {
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
@@ -180,7 +180,7 @@ void CTrayWindow::RemoveTrayIcon()
 	}
 }
 
-void CTrayWindow::ModifyTrayIcon(double value)
+void TrayWindow::ModifyTrayIcon(double value)
 {
 	if (m_Icon)
 	{
@@ -199,7 +199,7 @@ void CTrayWindow::ModifyTrayIcon(double value)
 	Shell_NotifyIcon(NIM_MODIFY, &tnid);
 }
 
-HICON CTrayWindow::CreateTrayIcon(double value)
+HICON TrayWindow::CreateTrayIcon(double value)
 {
 	if (m_Measure != NULL)
 	{
@@ -296,7 +296,7 @@ HICON CTrayWindow::CreateTrayIcon(double value)
 	return GetIcon(IDI_TRAY);
 }
 
-void CTrayWindow::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const WCHAR* text)
+void TrayWindow::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const WCHAR* text)
 {
 	if (m_Notification == TRAY_NOTIFICATION_NONE)
 	{
@@ -322,28 +322,28 @@ void CTrayWindow::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, con
 	}
 }
 
-void CTrayWindow::ShowWelcomeNotification()
+void TrayWindow::ShowWelcomeNotification()
 {
 	ShowNotification(TRAY_NOTIFICATION_WELCOME, GetString(ID_STR_WELCOME), GetString(ID_STR_CLICKTOMANAGE));
 }
 
-void CTrayWindow::ShowUpdateNotification(const WCHAR* newVersion)
+void TrayWindow::ShowUpdateNotification(const WCHAR* newVersion)
 {
 	std::wstring text = GetFormattedString(ID_STR_CLICKTODOWNLOAD, newVersion);
 	ShowNotification(TRAY_NOTIFICATION_UPDATE, GetString(ID_STR_UPDATEAVAILABLE), text.c_str());
 }
 
-void CTrayWindow::SetTrayIcon(bool enabled)
+void TrayWindow::SetTrayIcon(bool enabled)
 {
 	enabled ? TryAddTrayIcon() : RemoveTrayIcon();
 	m_IconEnabled = enabled;
 
 	// Save to Rainmeter.ini.
-	const std::wstring& iniFile = Rainmeter->GetIniFile();
+	const std::wstring& iniFile = g_Rainmeter->GetIniFile();
 	WritePrivateProfileString(L"Rainmeter", L"TrayIcon", enabled ? NULL : L"0", iniFile.c_str());
 }
 
-void CTrayWindow::ReadOptions(CConfigParser& parser)
+void TrayWindow::ReadOptions(ConfigParser& parser)
 {
 	// Clear old Settings
 	KillTimer(m_Window, TIMER_ADDTRAYICON);
@@ -372,16 +372,16 @@ void CTrayWindow::ReadOptions(CConfigParser& parser)
 
 		if (!measureName.empty())
 		{
-			CConfigParser* oldParser = Rainmeter->GetCurrentParser();
-			Rainmeter->SetCurrentParser(&parser);
+			ConfigParser* oldParser = g_Rainmeter->GetCurrentParser();
+			g_Rainmeter->SetCurrentParser(&parser);
 
-			m_Measure = CMeasure::Create(measureName.c_str(), NULL, L"TrayMeasure");
+			m_Measure = Measure::Create(measureName.c_str(), NULL, L"TrayMeasure");
 			if (m_Measure)
 			{
 				m_Measure->ReadOptions(parser);
 			}
 
-			Rainmeter->SetCurrentParser(oldParser);
+			g_Rainmeter->SetCurrentParser(oldParser);
 		}
 
 		const WCHAR* type = parser.ReadString(L"TrayMeasure", L"TrayMeter", m_Measure ? L"HISTOGRAM" : L"NONE").c_str();
@@ -404,7 +404,7 @@ void CTrayWindow::ReadOptions(CConfigParser& parser)
 			// Load the bitmaps if defined
 			if (!imageName.empty())
 			{
-				imageName.insert(0, Rainmeter->GetSkinPath());
+				imageName.insert(0, g_Rainmeter->GetSkinPath());
 				const WCHAR* imagePath = imageName.c_str();
 				if (_wcsicmp(imagePath + (imageName.size() - 4), L".ico") == 0)
 				{
@@ -457,9 +457,9 @@ void CTrayWindow::ReadOptions(CConfigParser& parser)
 	}
 }
 
-LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK TrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	CTrayWindow* tray = Rainmeter->GetTrayWindow();
+	TrayWindow* tray = g_Rainmeter->GetTrayWindow();
 
 	switch (uMsg)
 	{
@@ -467,51 +467,51 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		switch (wParam)
 		{
 		case IDM_MANAGE:
-			CDialogManage::Open();
+			DialogManage::Open();
 			break;
 
 		case IDM_ABOUT:
-			CDialogAbout::Open();
+			DialogAbout::Open();
 			break;
 
 		case IDM_SHOW_HELP:
-			CCommandHandler::RunFile(RAINMETER_HELP);
+			CommandHandler::RunFile(RAINMETER_HELP);
 			break;
 
 		case IDM_NEW_VERSION:
-			CCommandHandler::RunFile(RAINMETER_OFFICIAL);
+			CommandHandler::RunFile(RAINMETER_OFFICIAL);
 			break;
 
 		case IDM_REFRESH:
-			PostMessage(Rainmeter->GetWindow(), WM_RAINMETER_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
+			PostMessage(g_Rainmeter->GetWindow(), WM_RAINMETER_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
 			break;
 
 		case IDM_SHOWLOGFILE:
-			Rainmeter->ShowLogFile();
+			g_Rainmeter->ShowLogFile();
 			break;
 
 		case IDM_STARTLOG:
-			CLogger::GetInstance().StartLogFile();
+			Logger::GetInstance().StartLogFile();
 			break;
 
 		case IDM_STOPLOG:
-			CLogger::GetInstance().StopLogFile();
+			Logger::GetInstance().StopLogFile();
 			break;
 
 		case IDM_DELETELOGFILE:
-			CLogger::GetInstance().DeleteLogFile();
+			Logger::GetInstance().DeleteLogFile();
 			break;
 
 		case IDM_DEBUGLOG:
-			Rainmeter->SetDebug(!Rainmeter->GetDebug());
+			g_Rainmeter->SetDebug(!g_Rainmeter->GetDebug());
 			break;
 
 		case IDM_DISABLEDRAG:
-			Rainmeter->SetDisableDragging(!Rainmeter->GetDisableDragging());
+			g_Rainmeter->SetDisableDragging(!g_Rainmeter->GetDisableDragging());
 			break;
 
 		case IDM_EDITCONFIG:
-			Rainmeter->EditSettings();
+			g_Rainmeter->EditSettings();
 			break;
 
 		case IDM_QUIT:
@@ -519,7 +519,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			break;
 
 		case IDM_OPENSKINSFOLDER:
-			Rainmeter->OpenSkinFolder();
+			g_Rainmeter->OpenSkinFolder();
 			break;
 
 		default:
@@ -530,35 +530,35 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				{
 					int pos = mID - ID_THEME_FIRST;
 
-					const std::vector<std::wstring>& layouts = Rainmeter->GetAllLayouts();
+					const std::vector<std::wstring>& layouts = g_Rainmeter->GetAllLayouts();
 					if (pos >= 0 && pos < (int)layouts.size())
 					{
-						Rainmeter->LoadLayout(layouts[pos]);
+						g_Rainmeter->LoadLayout(layouts[pos]);
 					}
 				}
 				else if (mID >= ID_CONFIG_FIRST && mID <= ID_CONFIG_LAST)
 				{
-					std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(mID);
+					std::pair<int, int> indexes = g_Rainmeter->GetMeterWindowIndex(mID);
 					if (indexes.first != -1 && indexes.second != -1)
 					{
-						Rainmeter->ToggleSkin(indexes.first, indexes.second);
+						g_Rainmeter->ToggleSkin(indexes.first, indexes.second);
 					}
 				}
 				else
 				{
 					// Forward the message to correct window
 					int index = (int)(wParam >> 16);
-					const std::map<std::wstring, CMeterWindow*>& windows = Rainmeter->GetAllMeterWindows();
+					const std::map<std::wstring, MeterWindow*>& windows = g_Rainmeter->GetAllMeterWindows();
 
 					if (index < (int)windows.size())
 					{
-						std::map<std::wstring, CMeterWindow*>::const_iterator iter = windows.begin();
+						std::map<std::wstring, MeterWindow*>::const_iterator iter = windows.begin();
 						for ( ; iter != windows.end(); ++iter)
 						{
 							--index;
 							if (index < 0)
 							{
-								CMeterWindow* meterWindow = (*iter).second;
+								MeterWindow* meterWindow = (*iter).second;
 								SendMessage(meterWindow->GetWindow(), WM_COMMAND, mID, NULL);
 								break;
 							}
@@ -579,19 +579,19 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			switch (uMouseMsg)
 			{
 			case WM_MBUTTONDOWN:
-				bang = Rainmeter->GetTrayExecuteM().c_str();
+				bang = g_Rainmeter->GetTrayExecuteM().c_str();
 				break;
 
 			case WM_RBUTTONDOWN:
-				bang = Rainmeter->GetTrayExecuteR().c_str();
+				bang = g_Rainmeter->GetTrayExecuteR().c_str();
 				break;
 
 			case WM_MBUTTONDBLCLK:
-				bang = Rainmeter->GetTrayExecuteDM().c_str();
+				bang = g_Rainmeter->GetTrayExecuteDM().c_str();
 				break;
 
 			case WM_RBUTTONDBLCLK:
-				bang = Rainmeter->GetTrayExecuteDR().c_str();
+				bang = g_Rainmeter->GetTrayExecuteDR().c_str();
 				break;
 
 			default:
@@ -602,7 +602,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			if (*bang &&
 				!IsCtrlKeyDown())   // Ctrl is pressed, so only run default action
 			{
-				Rainmeter->ExecuteCommand(bang, NULL);
+				g_Rainmeter->ExecuteCommand(bang, NULL);
 				tray->m_TrayContextMenuEnabled = (uMouseMsg != WM_RBUTTONDOWN);
 				break;
 			}
@@ -617,24 +617,24 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			case WM_RBUTTONUP:
 				if (tray->m_TrayContextMenuEnabled)
 				{
-					POINT pos = CSystem::GetCursorPosition();
-					Rainmeter->ShowContextMenu(pos, NULL);
+					POINT pos = System::GetCursorPosition();
+					g_Rainmeter->ShowContextMenu(pos, NULL);
 				}
 				break;
 
 			case WM_LBUTTONUP:
 			case WM_LBUTTONDBLCLK:
-				CDialogManage::Open();
+				DialogManage::Open();
 				break;
 
 			case NIN_BALLOONUSERCLICK:
 				if (tray->m_Notification == TRAY_NOTIFICATION_WELCOME)
 				{
-					CDialogManage::Open();
+					DialogManage::Open();
 				}
 				else if (tray->m_Notification == TRAY_NOTIFICATION_UPDATE)
 				{
-					CCommandHandler::RunFile(RAINMETER_OFFICIAL);
+					CommandHandler::RunFile(RAINMETER_OFFICIAL);
 				}
 				tray->m_Notification = TRAY_NOTIFICATION_NONE;
 				break;
@@ -662,32 +662,32 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			switch (wParam)
 			{
 			case RAINMETER_QUERY_ID_SKINS_PATH:
-				sendCopyData(Rainmeter->GetSkinPath());
+				sendCopyData(g_Rainmeter->GetSkinPath());
 				return 0;
 
 			case RAINMETER_QUERY_ID_SETTINGS_PATH:
-				sendCopyData(Rainmeter->GetSettingsPath());
+				sendCopyData(g_Rainmeter->GetSettingsPath());
 				return 0;
 
 			case RAINMETER_QUERY_ID_PLUGINS_PATH:
-				sendCopyData(Rainmeter->GetPluginPath());
+				sendCopyData(g_Rainmeter->GetPluginPath());
 				return 0;
 
 			case RAINMETER_QUERY_ID_PROGRAM_PATH:
-				sendCopyData(Rainmeter->GetPath());
+				sendCopyData(g_Rainmeter->GetPath());
 				return 0;
 
 			case RAINMETER_QUERY_ID_LOG_PATH:
-				sendCopyData(CLogger::GetInstance().GetLogFilePath());
+				sendCopyData(Logger::GetInstance().GetLogFilePath());
 				return 0;
 
 			case RAINMETER_QUERY_ID_CONFIG_EDITOR:
-				sendCopyData(Rainmeter->GetSkinEditor());
+				sendCopyData(g_Rainmeter->GetSkinEditor());
 				return 0;
 
 			case RAINMETER_QUERY_ID_IS_DEBUGGING:
 				{
-					BOOL debug = Rainmeter->GetDebug();
+					BOOL debug = g_Rainmeter->GetDebug();
 					SendMessage((HWND)lParam, WM_QUERY_RAINMETER_RETURN, (WPARAM)hWnd, (LPARAM)debug);
 				}
 				return 0;
@@ -701,7 +701,7 @@ LRESULT CALLBACK CTrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			if (cds->dwData == RAINMETER_QUERY_ID_SKIN_WINDOWHANDLE)
 			{
 				LPCWSTR folderPath = (LPCWSTR)cds->lpData;
-				CMeterWindow* mw = Rainmeter->GetMeterWindow(folderPath);
+				MeterWindow* mw = g_Rainmeter->GetMeterWindow(folderPath);
 				return (mw) ? (LRESULT)mw->GetWindow() : NULL;
 			}
 		}

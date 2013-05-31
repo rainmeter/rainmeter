@@ -30,9 +30,9 @@
 
 struct MeasureData
 {
-	CRawString objectName;
-	CRawString counterName;
-	CRawString instanceName;
+	RawString objectName;
+	RawString counterName;
+	RawString instanceName;
 	ULONGLONG oldValue;
 	bool difference;
 	bool firstTime;

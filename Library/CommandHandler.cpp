@@ -28,11 +28,11 @@
 #include "TrayWindow.h"
 #include "resource.h"
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 namespace {
 
-typedef void (* BangHandlerFunc)(std::vector<std::wstring>& args, CMeterWindow* skin);
+typedef void (* BangHandlerFunc)(std::vector<std::wstring>& args, MeterWindow* skin);
 
 struct BangInfo
 {
@@ -123,25 +123,25 @@ const BangInfo s_GroupBangs[] =
 // Bangs that are to be handled using a custom handler function.
 const CustomBangInfo s_CustomBangs[] =
 {
-	{ Bang::ActivateConfig, L"ActivateConfig", CCommandHandler::DoActivateSkinBang },
-	{ Bang::DeactivateConfig, L"DeactivateConfig", CCommandHandler::DoDeactivateSkinBang },
-	{ Bang::ToggleConfig, L"ToggleConfig", CCommandHandler::DoToggleSkinBang },
-	{ Bang::WriteKeyValue, L"WriteKeyValue", CCommandHandler::DoWriteKeyValueBang },
-	{ Bang::LoadLayout, L"LoadLayout", CCommandHandler::DoLoadLayoutBang },
-	{ Bang::SetClip, L"SetClip", CCommandHandler::DoSetClipBang },
-	{ Bang::SetWallpaper, L"SetWallpaper", CCommandHandler::DoSetWallpaperBang },
-	{ Bang::About, L"About", CCommandHandler::DoAboutBang },
-	{ Bang::Manage, L"Manage", CCommandHandler::DoManageBang },
-	{ Bang::SkinMenu, L"SkinMenu", CCommandHandler::DoSkinMenuBang },
-	{ Bang::TrayMenu, L"TrayMenu", CCommandHandler::DoTrayMenuBang  },
-	{ Bang::ResetStats, L"ResetStats", CCommandHandler::DoResetStatsBang  },
-	{ Bang::Log, L"Log", CCommandHandler::DoLogBang  },
-	{ Bang::RefreshApp, L"RefreshApp", CCommandHandler::DoRefreshApp },
-	{ Bang::Quit, L"Quit", CCommandHandler::DoQuitBang  },
-	{ Bang::LsBoxHook, L"LsBoxHook", CCommandHandler::DoLsBoxHookBang }
+	{ Bang::ActivateConfig, L"ActivateConfig", CommandHandler::DoActivateSkinBang },
+	{ Bang::DeactivateConfig, L"DeactivateConfig", CommandHandler::DoDeactivateSkinBang },
+	{ Bang::ToggleConfig, L"ToggleConfig", CommandHandler::DoToggleSkinBang },
+	{ Bang::WriteKeyValue, L"WriteKeyValue", CommandHandler::DoWriteKeyValueBang },
+	{ Bang::LoadLayout, L"LoadLayout", CommandHandler::DoLoadLayoutBang },
+	{ Bang::SetClip, L"SetClip", CommandHandler::DoSetClipBang },
+	{ Bang::SetWallpaper, L"SetWallpaper", CommandHandler::DoSetWallpaperBang },
+	{ Bang::About, L"About", CommandHandler::DoAboutBang },
+	{ Bang::Manage, L"Manage", CommandHandler::DoManageBang },
+	{ Bang::SkinMenu, L"SkinMenu", CommandHandler::DoSkinMenuBang },
+	{ Bang::TrayMenu, L"TrayMenu", CommandHandler::DoTrayMenuBang  },
+	{ Bang::ResetStats, L"ResetStats", CommandHandler::DoResetStatsBang  },
+	{ Bang::Log, L"Log", CommandHandler::DoLogBang  },
+	{ Bang::RefreshApp, L"RefreshApp", CommandHandler::DoRefreshApp },
+	{ Bang::Quit, L"Quit", CommandHandler::DoQuitBang  },
+	{ Bang::LsBoxHook, L"LsBoxHook", CommandHandler::DoLsBoxHookBang }
 };
 
-void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, CMeterWindow* skin)
+void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	const size_t argsCount = args.size();
 	if (argsCount >= bangInfo.argCount)
@@ -158,7 +158,7 @@ void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, CMeterWin
 				const std::wstring& folderPath = args[bangInfo.argCount];
 				if (!folderPath.empty() && (folderPath.length() != 1 || folderPath[0] != L'*'))
 				{
-					CMeterWindow* skin = Rainmeter->GetMeterWindow(folderPath);
+					MeterWindow* skin = g_Rainmeter->GetMeterWindow(folderPath);
 					if (skin)
 					{
 						skin->DoBang(bangInfo.bang, args);
@@ -172,7 +172,7 @@ void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, CMeterWin
 			}
 
 			// No skin defined -> apply to all.
-			for (const auto& ip : Rainmeter->GetAllMeterWindows())
+			for (const auto& ip : g_Rainmeter->GetAllMeterWindows())
 			{
 				ip.second->DoBang(bangInfo.bang, args);
 			}
@@ -201,17 +201,17 @@ void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, CMeterWin
 	}
 }
 
-void DoGroupBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, CMeterWindow* skin)
+void DoGroupBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	if (args.size() > bangInfo.argCount)
 	{
-		std::multimap<int, CMeterWindow*> windows;
-		Rainmeter->GetMeterWindowsByLoadOrder(windows, args[bangInfo.argCount]);
+		std::multimap<int, MeterWindow*> windows;
+		g_Rainmeter->GetMeterWindowsByLoadOrder(windows, args[bangInfo.argCount]);
 
 		// Remove extra parameters (including group).
 		args.resize(bangInfo.argCount);
 
-		std::multimap<int, CMeterWindow*>::const_iterator iter = windows.begin();
+		std::multimap<int, MeterWindow*>::const_iterator iter = windows.begin();
 		for (const auto& ip : windows)
 		{
 			DoBang(bangInfo, args, ip.second);
@@ -229,7 +229,7 @@ void DoGroupBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, CMet
 ** Parses and executes the given command.
 **
 */
-void CCommandHandler::ExecuteCommand(const WCHAR* command, CMeterWindow* skin, bool multi)
+void CommandHandler::ExecuteCommand(const WCHAR* command, MeterWindow* skin, bool multi)
 {
 	if (command[0] == L'!')	// Bang
 	{
@@ -373,7 +373,7 @@ void CCommandHandler::ExecuteCommand(const WCHAR* command, CMeterWindow* skin, b
 ** Runs the given bang.
 **
 */
-void CCommandHandler::ExecuteBang(const WCHAR* name, std::vector<std::wstring>& args, CMeterWindow* skin)
+void CommandHandler::ExecuteBang(const WCHAR* name, std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	for (const auto& bangInfo : s_Bangs)
 	{
@@ -409,7 +409,7 @@ void CCommandHandler::ExecuteBang(const WCHAR* name, std::vector<std::wstring>& 
 ** Parses and runs the given command.
 **
 */
-void CCommandHandler::RunCommand(std::wstring command)
+void CommandHandler::RunCommand(std::wstring command)
 {
 	std::wstring args;
 
@@ -450,7 +450,7 @@ void CCommandHandler::RunCommand(std::wstring command)
 ** Runs a file with the given arguments.
 **
 */
-void CCommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
+void CommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 {
 	SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
 	si.lpVerb = L"open";
@@ -464,7 +464,7 @@ void CCommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 	}
 	else
 	{
-		std::wstring dir = CRainmeter::ExtractPath(file);
+		std::wstring dir = Rainmeter::ExtractPath(file);
 		si.lpDirectory = dir.c_str();
 		si.lpParameters = args;
 		si.fMask = SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI;
@@ -476,7 +476,7 @@ void CCommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 ** Splits strings into parts.
 **
 */
-std::vector<std::wstring> CCommandHandler::ParseString(LPCTSTR str, CConfigParser* parser)
+std::vector<std::wstring> CommandHandler::ParseString(LPCTSTR str, ConfigParser* parser)
 {
 	std::vector<std::wstring> result;
 
@@ -574,28 +574,28 @@ std::vector<std::wstring> CCommandHandler::ParseString(LPCTSTR str, CConfigParse
 	return result;
 }
 
-void CCommandHandler::DoActivateSkinBang(std::vector<std::wstring>& args, CMeterWindow* skin)
+void CommandHandler::DoActivateSkinBang(std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	if (args.size() == 1)
 	{
-		int index = Rainmeter->FindSkinFolderIndex(args[0]);
+		int index = g_Rainmeter->FindSkinFolderIndex(args[0]);
 		if (index != -1)
 		{
-			const CRainmeter::SkinFolder& skinFolder = Rainmeter->m_SkinFolders[index];
+			const Rainmeter::SkinFolder& skinFolder = g_Rainmeter->m_SkinFolders[index];
 			if (!(skinFolder.active == 1 && skinFolder.files.size() == 1))
 			{
 				// Activate the next index.
-				Rainmeter->ActivateSkin(index, (skinFolder.active < skinFolder.files.size()) ? skinFolder.active : 0);
+				g_Rainmeter->ActivateSkin(index, (skinFolder.active < skinFolder.files.size()) ? skinFolder.active : 0);
 			}
 			return;
 		}
 	}
 	else if (args.size() > 1)
 	{
-		std::pair<int, int> indexes = Rainmeter->GetMeterWindowIndex(args[0], args[1]);
+		std::pair<int, int> indexes = g_Rainmeter->GetMeterWindowIndex(args[0], args[1]);
 		if (indexes.first != -1 && indexes.second != -1)
 		{
-			Rainmeter->ActivateSkin(indexes.first, indexes.second);
+			g_Rainmeter->ActivateSkin(indexes.first, indexes.second);
 			return;
 		}
 	}
@@ -603,11 +603,11 @@ void CCommandHandler::DoActivateSkinBang(std::vector<std::wstring>& args, CMeter
 	LogError(L"!ActivateConfig: Invalid parameters");
 }
 
-void CCommandHandler::DoDeactivateSkinBang(std::vector<std::wstring>& args, CMeterWindow* skin)
+void CommandHandler::DoDeactivateSkinBang(std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	if (!args.empty())
 	{
-		skin = Rainmeter->GetMeterWindow(args[0]);
+		skin = g_Rainmeter->GetMeterWindow(args[0]);
 		if (!skin)
 		{
 			LogWarningF(L"!DeactivateConfig: \"%s\" not active", args[0].c_str());
@@ -617,7 +617,7 @@ void CCommandHandler::DoDeactivateSkinBang(std::vector<std::wstring>& args, CMet
 
 	if (skin)
 	{
-		Rainmeter->DeactivateSkin(skin, -1);
+		g_Rainmeter->DeactivateSkin(skin, -1);
 	}
 	else
 	{
@@ -625,14 +625,14 @@ void CCommandHandler::DoDeactivateSkinBang(std::vector<std::wstring>& args, CMet
 	}
 }
 
-void CCommandHandler::DoToggleSkinBang(std::vector<std::wstring>& args, CMeterWindow* skin)
+void CommandHandler::DoToggleSkinBang(std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	if (args.size() >= 2)
 	{
-		CMeterWindow* skin = Rainmeter->GetMeterWindow(args[0]);
+		MeterWindow* skin = g_Rainmeter->GetMeterWindow(args[0]);
 		if (skin)
 		{
-			Rainmeter->DeactivateSkin(skin, -1);
+			g_Rainmeter->DeactivateSkin(skin, -1);
 			return;
 		}
 
@@ -645,15 +645,15 @@ void CCommandHandler::DoToggleSkinBang(std::vector<std::wstring>& args, CMeterWi
 	}
 }
 
-void CCommandHandler::DoDeactivateSkinGroupBang(std::vector<std::wstring>& args, CMeterWindow* skin)
+void CommandHandler::DoDeactivateSkinGroupBang(std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	if (!args.empty())
 	{
-		std::multimap<int, CMeterWindow*> windows;
-		Rainmeter->GetMeterWindowsByLoadOrder(windows, args[0]);
+		std::multimap<int, MeterWindow*> windows;
+		g_Rainmeter->GetMeterWindowsByLoadOrder(windows, args[0]);
 		for (const auto& ip : windows)
 		{
-			Rainmeter->DeactivateSkin(ip.second, -1);
+			g_Rainmeter->DeactivateSkin(ip.second, -1);
 		}
 	}
 	else
@@ -662,7 +662,7 @@ void CCommandHandler::DoDeactivateSkinGroupBang(std::vector<std::wstring>& args,
 	}
 }
 
-void CCommandHandler::DoLoadLayoutBang(std::vector<std::wstring>& args, CMeterWindow* skin)
+void CommandHandler::DoLoadLayoutBang(std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	if (args.size() == 1)
 	{
@@ -672,21 +672,21 @@ void CCommandHandler::DoLoadLayoutBang(std::vector<std::wstring>& args, CMeterWi
 			std::wstring command = L"!LoadLayout \"";
 			command += args[0];
 			command += L'"';
-			Rainmeter->DelayedExecuteCommand(command.c_str());
+			g_Rainmeter->DelayedExecuteCommand(command.c_str());
 		}
 		else
 		{
 			// Not called from a skin (or called with delay).
-			Rainmeter->LoadLayout(args[0]);
+			g_Rainmeter->LoadLayout(args[0]);
 		}
 	}
 }
 
-void CCommandHandler::DoSetClipBang(std::vector<std::wstring>& args, CMeterWindow* skin)
+void CommandHandler::DoSetClipBang(std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	if (!args.empty())
 	{
-		CSystem::SetClipboardText(args[0]);
+		System::SetClipboardText(args[0]);
 	}
 	else
 	{
@@ -694,7 +694,7 @@ void CCommandHandler::DoSetClipBang(std::vector<std::wstring>& args, CMeterWindo
 	}
 }
 
-void CCommandHandler::DoSetWallpaperBang(std::vector<std::wstring>& args, CMeterWindow* skin)
+void CommandHandler::DoSetWallpaperBang(std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	const size_t argsSize = args.size();
 	if (argsSize >= 1 && argsSize <= 2)
@@ -707,7 +707,7 @@ void CCommandHandler::DoSetWallpaperBang(std::vector<std::wstring>& args, CMeter
 			skin->MakePathAbsolute(file);
 		}
 
-		CSystem::SetWallpaper(file, style);
+		System::SetWallpaper(file, style);
 	}
 	else
 	{
@@ -715,21 +715,21 @@ void CCommandHandler::DoSetWallpaperBang(std::vector<std::wstring>& args, CMeter
 	}
 }
 
-void CCommandHandler::DoAboutBang(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
+void CommandHandler::DoAboutBang(std::vector<std::wstring>& args, MeterWindow* meterWindow)
 {
-	CDialogAbout::Open(args.empty() ? L"" : args[0].c_str());
+	DialogAbout::Open(args.empty() ? L"" : args[0].c_str());
 }
 
-void CCommandHandler::DoManageBang(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
+void CommandHandler::DoManageBang(std::vector<std::wstring>& args, MeterWindow* meterWindow)
 {
-	CDialogManage::Open(args.empty() ? L"" : args[0].c_str());
+	DialogManage::Open(args.empty() ? L"" : args[0].c_str());
 }
 
-void CCommandHandler::DoSkinMenuBang(std::vector<std::wstring>& args, CMeterWindow* skin)
+void CommandHandler::DoSkinMenuBang(std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	if (!args.empty())
 	{
-		skin = Rainmeter->GetMeterWindow(args[0]);
+		skin = g_Rainmeter->GetMeterWindow(args[0]);
 		if (!skin)
 		{
 			LogWarningF(L"!SkinMenu: \"%s\" not active", args[0].c_str());
@@ -739,8 +739,8 @@ void CCommandHandler::DoSkinMenuBang(std::vector<std::wstring>& args, CMeterWind
 
 	if (skin)
 	{
-		POINT pos = CSystem::GetCursorPosition();
-		Rainmeter->ShowContextMenu(pos, skin);
+		POINT pos = System::GetCursorPosition();
+		g_Rainmeter->ShowContextMenu(pos, skin);
 	}
 	else
 	{
@@ -748,18 +748,18 @@ void CCommandHandler::DoSkinMenuBang(std::vector<std::wstring>& args, CMeterWind
 	}
 }
 
-void CCommandHandler::DoTrayMenuBang(std::vector<std::wstring>& args, CMeterWindow* skin)
+void CommandHandler::DoTrayMenuBang(std::vector<std::wstring>& args, MeterWindow* skin)
 {
-	POINT pos = CSystem::GetCursorPosition();
-	Rainmeter->ShowContextMenu(pos, NULL);
+	POINT pos = System::GetCursorPosition();
+	g_Rainmeter->ShowContextMenu(pos, NULL);
 }
 
-void CCommandHandler::DoResetStatsBang(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
+void CommandHandler::DoResetStatsBang(std::vector<std::wstring>& args, MeterWindow* meterWindow)
 {
-	Rainmeter->ResetStats();
+	g_Rainmeter->ResetStats();
 }
 
-void CCommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, CMeterWindow* skin)
+void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	if (args.size() == 3 && skin)
 	{
@@ -786,8 +786,8 @@ void CCommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, CMete
 		return;
 	}
 
-	if (_wcsnicmp(iniFile, Rainmeter->m_SkinPath.c_str(), Rainmeter->m_SkinPath.size()) != 0 &&
-		_wcsnicmp(iniFile, Rainmeter->m_SettingsPath.c_str(), Rainmeter->m_SettingsPath.size()) != 0)
+	if (_wcsnicmp(iniFile, g_Rainmeter->m_SkinPath.c_str(), g_Rainmeter->m_SkinPath.size()) != 0 &&
+		_wcsnicmp(iniFile, g_Rainmeter->m_SettingsPath.c_str(), g_Rainmeter->m_SettingsPath.size()) != 0)
 	{
 		LogErrorF(L"!WriteKeyValue: Illegal path: %s", iniFile);
 		return;
@@ -809,8 +809,8 @@ void CCommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, CMete
 	}
 
 	// Avoid "IniFileMapping"
-	CSystem::UpdateIniFileMappingList();
-	std::wstring strIniWrite = CSystem::GetTemporaryFile(strIniFile);
+	System::UpdateIniFileMappingList();
+	std::wstring strIniWrite = System::GetTemporaryFile(strIniFile);
 	if (strIniWrite.size() == 1 && strIniWrite[0] == L'?')  // error occurred
 	{
 		return;
@@ -820,14 +820,14 @@ void CCommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, CMete
 
 	if (temporary)
 	{
-		if (Rainmeter->GetDebug())
+		if (g_Rainmeter->GetDebug())
 		{
 			LogDebugF(L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile, strIniWrite.c_str());
 		}
 	}
 	else
 	{
-		if (Rainmeter->GetDebug())
+		if (g_Rainmeter->GetDebug())
 		{
 			LogDebugF(L"!WriteKeyValue: Writing to: %s", iniFile);
 		}
@@ -850,7 +850,7 @@ void CCommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, CMete
 		{
 			WCHAR buffer[256];
 			int len = _snwprintf_s(buffer, _TRUNCATE, L"%.5f", value);
-			CMeasure::RemoveTrailingZero(buffer, len);
+			Measure::RemoveTrailingZero(buffer, len);
 
 			write = WritePrivateProfileString(section, key, buffer, iniWrite);
 		}
@@ -868,7 +868,7 @@ void CCommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, CMete
 			WritePrivateProfileString(NULL, NULL, NULL, iniWrite);  // FLUSH
 
 			// Copy the file back.
-			if (!CSystem::CopyFiles(strIniWrite, strIniFile))
+			if (!System::CopyFiles(strIniWrite, strIniFile))
 			{
 				LogErrorF(L"!WriteKeyValue: Failed to copy temporary file to original filepath: %s (Temp: %s)", iniFile, iniWrite);
 			}
@@ -879,7 +879,7 @@ void CCommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, CMete
 		}
 
 		// Remove the temporary file.
-		CSystem::RemoveFile(strIniWrite);
+		System::RemoveFile(strIniWrite);
 	}
 	else
 	{
@@ -890,25 +890,25 @@ void CCommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, CMete
 	}
 }
 
-void CCommandHandler::DoLogBang(std::vector<std::wstring>& args, CMeterWindow* skin)
+void CommandHandler::DoLogBang(std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	if (!args.empty())
 	{
-		CLogger::Level level = CLogger::Level::Notice;
+		Logger::Level level = Logger::Level::Notice;
 		if (args.size() > 1)
 		{
 			const WCHAR* type = args[1].c_str();
 			if (_wcsicmp(type, L"ERROR") == 0)
 			{
-				level = CLogger::Level::Error;
+				level = Logger::Level::Error;
 			}
 			else if (_wcsicmp(type, L"WARNING") == 0)
 			{
-				level = CLogger::Level::Warning;
+				level = Logger::Level::Warning;
 			}
 			else if (_wcsicmp(type, L"DEBUG") == 0)
 			{
-				level = CLogger::Level::Debug;
+				level = Logger::Level::Debug;
 			}
 			else if (_wcsicmp(type, L"NOTICE") != 0)
 			{
@@ -917,23 +917,23 @@ void CCommandHandler::DoLogBang(std::vector<std::wstring>& args, CMeterWindow* s
 			}
 		}
 
-		CLogger::GetInstance().Log(level, args[0].c_str());
+		Logger::GetInstance().Log(level, args[0].c_str());
 	}
 }
 
-void CCommandHandler::DoRefreshApp(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
+void CommandHandler::DoRefreshApp(std::vector<std::wstring>& args, MeterWindow* meterWindow)
 {
 	// Refresh needs to be delayed since it crashes if done during Update().
-	PostMessage(Rainmeter->m_Window, WM_RAINMETER_DELAYED_REFRESH_ALL, NULL, NULL);
+	PostMessage(g_Rainmeter->m_Window, WM_RAINMETER_DELAYED_REFRESH_ALL, NULL, NULL);
 }
 
-void CCommandHandler::DoQuitBang(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
+void CommandHandler::DoQuitBang(std::vector<std::wstring>& args, MeterWindow* meterWindow)
 {
 	// Quit needs to be delayed since it crashes if done during Update().
-	PostMessage(Rainmeter->GetTrayWindow()->GetWindow(), WM_COMMAND, MAKEWPARAM(IDM_QUIT, 0), NULL);
+	PostMessage(g_Rainmeter->GetTrayWindow()->GetWindow(), WM_COMMAND, MAKEWPARAM(IDM_QUIT, 0), NULL);
 }
 
-void CCommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, CMeterWindow* meterWindow)
+void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, MeterWindow* meterWindow)
 {
 	// Deprecated.
 }

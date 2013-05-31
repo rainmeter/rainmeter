@@ -28,7 +28,7 @@ using namespace Gdiplus;
 #define PI	(3.14159265f)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0f / PI))
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 void StringToUpper(std::wstring& str)
 {
@@ -63,7 +63,7 @@ void StringToProper(std::wstring& str)
 ** The constructor
 **
 */
-CMeterString::CMeterString(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
+MeterString::MeterString(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
 	m_Color(Color::White),
 	m_EffectColor(Color::Black),
 	m_AutoScale(AUTOSCALE_OFF),
@@ -88,7 +88,7 @@ CMeterString::CMeterString(CMeterWindow* meterWindow, const WCHAR* name) : CMete
 ** The destructor
 **
 */
-CMeterString::~CMeterString()
+MeterString::~MeterString()
 {
 	delete m_TextFormat;
 	m_TextFormat = NULL;
@@ -98,9 +98,9 @@ CMeterString::~CMeterString()
 ** Returns the X-coordinate of the meter
 **
 */
-int CMeterString::GetX(bool abs)
+int MeterString::GetX(bool abs)
 {
-	int x = CMeter::GetX();
+	int x = Meter::GetX();
 
 	if (!abs)
 	{
@@ -123,9 +123,9 @@ int CMeterString::GetX(bool abs)
 ** Returns the Y-coordinate of the meter
 **
 */
-int CMeterString::GetY(bool abs)
+int MeterString::GetY(bool abs)
 {
-	int y = CMeter::GetY();
+	int y = Meter::GetY();
 
 	if (!abs)
 	{
@@ -148,9 +148,9 @@ int CMeterString::GetY(bool abs)
 ** Create the font that is used to draw the text.
 **
 */
-void CMeterString::Initialize()
+void MeterString::Initialize()
 {
-	CMeter::Initialize();
+	Meter::Initialize();
 
 	m_TextFormat->SetProperties(
 		m_FontFace.c_str(),
@@ -164,14 +164,14 @@ void CMeterString::Initialize()
 ** Read the options specified in the ini file.
 **
 */
-void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current font values so we know if the font needs to be updated
 	std::wstring oldFontFace = m_FontFace;
 	int oldFontSize = m_FontSize;
 	TEXTSTYLE oldStyle = m_Style;
 
-	CMeter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser, section);
 
 	m_Color = parser.ReadColor(section, L"FontColor", Color::Black);
 	m_EffectColor = parser.ReadColor(section, L"FontEffectColor", Color::Black);
@@ -348,9 +348,9 @@ void CMeterString::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Updates the value(s) from the measures.
 **
 */
-bool CMeterString::Update()
+bool MeterString::Update()
 {
-	if (CMeter::Update())
+	if (Meter::Update())
 	{
 		int decimals = (m_NumOfDecimals != -1) ? m_NumOfDecimals : (m_NoDecimals && (m_Percentual || m_AutoScale == AUTOSCALE_OFF)) ? 0 : 1;
 
@@ -414,9 +414,9 @@ bool CMeterString::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterString::Draw(Gfx::Canvas& canvas)
+bool MeterString::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(canvas)) return false;
+	if (!Meter::Draw(canvas)) return false;
 
 	return DrawString(canvas, NULL);
 }
@@ -425,7 +425,7 @@ bool CMeterString::Draw(Gfx::Canvas& canvas)
 ** Draws the string or calculates it's size
 **
 */
-bool CMeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
+bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 {
 	if (!m_TextFormat->IsInitialized()) return false;
 
@@ -585,7 +585,7 @@ bool CMeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 ** Overridden method. The string meters need not to be bound on anything
 **
 */
-void CMeterString::BindMeasures(CConfigParser& parser, const WCHAR* section)
+void MeterString::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	if (BindPrimaryMeasure(parser, section, true))
 	{
@@ -597,7 +597,7 @@ void CMeterString::BindMeasures(CConfigParser& parser, const WCHAR* section)
 ** Static helper to log all installed font families.
 **
 */
-void CMeterString::EnumerateInstalledFontFamilies()
+void MeterString::EnumerateInstalledFontFamilies()
 {
 	INT fontCount;
 	InstalledFontCollection fontCollection;
@@ -647,9 +647,9 @@ void CMeterString::EnumerateInstalledFontFamilies()
 	}
 }
 
-void CMeterString::InitializeStatic()
+void MeterString::InitializeStatic()
 {
-	if (Rainmeter->GetDebug())
+	if (g_Rainmeter->GetDebug())
 	{
 		LogDebug(L"------------------------------");
 		LogDebug(L"* Font families:");
@@ -658,6 +658,6 @@ void CMeterString::InitializeStatic()
 	}
 }
 
-void CMeterString::FinalizeStatic()
+void MeterString::FinalizeStatic()
 {
 }

@@ -21,13 +21,13 @@
 #include "ConfigParser.h"
 #include "Rainmeter.h"
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 /*
 ** The constructor
 **
 */
-CSection::CSection(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(meterWindow), m_Name(name),
+Section::Section(MeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(meterWindow), m_Name(name),
 	m_DynamicVariables(false),
 	m_UpdateDivider(1),
 	m_UpdateCounter(1)
@@ -38,7 +38,7 @@ CSection::CSection(CMeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow
 ** The destructor
 **
 */
-CSection::~CSection()
+Section::~Section()
 {
 }
 
@@ -47,7 +47,7 @@ CSection::~CSection()
 ** call this base implementation if they overwrite this method.
 **
 */
-void CSection::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void Section::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	int updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
 	if (updateDivider != m_UpdateDivider)
@@ -67,7 +67,7 @@ void CSection::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Updates the counter value
 **
 */
-bool CSection::UpdateCounter()
+bool Section::UpdateCounter()
 {
 	++m_UpdateCounter;
 	if (m_UpdateCounter < m_UpdateDivider) return false;
@@ -80,10 +80,10 @@ bool CSection::UpdateCounter()
 ** Execute OnUpdateAction if action is set
 **
 */
-void CSection::DoUpdateAction()
+void Section::DoUpdateAction()
 {
 	if (!m_OnUpdateAction.empty())
 	{
-		Rainmeter->ExecuteCommand(m_OnUpdateAction.c_str(), m_MeterWindow);
+		g_Rainmeter->ExecuteCommand(m_OnUpdateAction.c_str(), m_MeterWindow);
 	}
 }

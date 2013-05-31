@@ -23,13 +23,13 @@
 #include "Measure.h"
 #include <unordered_map>
 
-class CMeterString : public CMeter
+class MeterString : public Meter
 {
 public:
-	CMeterString(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeterString();
+	MeterString(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeterString();
 
-	virtual UINT GetTypeID() { return TypeID<CMeterString>(); }
+	virtual UINT GetTypeID() { return TypeID<MeterString>(); }
 
 	virtual int GetX(bool abs = false);
 	virtual int GetY(bool abs = false);
@@ -46,8 +46,8 @@ public:
 	static void FinalizeStatic();
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
 
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite; }
 

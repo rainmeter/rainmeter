@@ -24,7 +24,7 @@
 #include "System.h"
 #include "resource.h"
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 namespace {
 
@@ -32,26 +32,26 @@ const size_t MAX_LOG_ENTIRES = 20;
 
 }  // namespace
 
-CLogger::CLogger() :
+Logger::Logger() :
 	m_LogToFile(false)
 {
-	CSystem::InitializeCriticalSection(&m_CsLog);
-	CSystem::InitializeCriticalSection(&m_CsLogDelay);
+	System::InitializeCriticalSection(&m_CsLog);
+	System::InitializeCriticalSection(&m_CsLogDelay);
 }
 
-CLogger::~CLogger()
+Logger::~Logger()
 {
 	DeleteCriticalSection(&m_CsLog);
 	DeleteCriticalSection(&m_CsLogDelay);
 }
 
-CLogger& CLogger::GetInstance()
+Logger& Logger::GetInstance()
 {
-	static CLogger s_CLogger;
-	return s_CLogger;
+	static Logger s_Logger;
+	return s_Logger;
 }
 
-void CLogger::StartLogFile()
+void Logger::StartLogFile()
 {
 	const WCHAR* filePath = m_LogFilePath.c_str();
 	if (_waccess(filePath, 0) == -1)
@@ -65,7 +65,7 @@ void CLogger::StartLogFile()
 		else
 		{
 			const std::wstring text = GetFormattedString(ID_STR_LOGFILECREATEFAIL, filePath);
-			Rainmeter->ShowMessage(NULL, text.c_str(), MB_OK | MB_ICONERROR);
+			g_Rainmeter->ShowMessage(NULL, text.c_str(), MB_OK | MB_ICONERROR);
 			SetLogToFile(false);
 			return;
 		}
@@ -74,34 +74,34 @@ void CLogger::StartLogFile()
 	SetLogToFile(true);
 }
 
-void CLogger::StopLogFile()
+void Logger::StopLogFile()
 {
 	SetLogToFile(false);
 }
 
-void CLogger::DeleteLogFile()
+void Logger::DeleteLogFile()
 {
 	const WCHAR* filePath = m_LogFilePath.c_str();
 	if (_waccess(filePath, 0) != -1)
 	{
 		const std::wstring text = GetFormattedString(ID_STR_LOGFILEDELETE, filePath);
-		const int res = Rainmeter->ShowMessage(NULL, text.c_str(), MB_YESNO | MB_ICONQUESTION);
+		const int res = g_Rainmeter->ShowMessage(NULL, text.c_str(), MB_YESNO | MB_ICONQUESTION);
 		if (res == IDYES)
 		{
 			SetLogToFile(false);
-			CSystem::RemoveFile(m_LogFilePath);
+			System::RemoveFile(m_LogFilePath);
 		}
 	}
 }
 
-void CLogger::SetLogToFile(bool logToFile)
+void Logger::SetLogToFile(bool logToFile)
 {
 	m_LogToFile = logToFile;
 	WritePrivateProfileString(
-		L"Rainmeter", L"Logging", logToFile ? L"1" : L"0", Rainmeter->GetIniFile().c_str());
+		L"Rainmeter", L"Logging", logToFile ? L"1" : L"0", g_Rainmeter->GetIniFile().c_str());
 }
 
-void CLogger::LogInternal(Level level, ULONGLONG timestamp, const WCHAR* msg)
+void Logger::LogInternal(Level level, ULONGLONG timestamp, const WCHAR* msg)
 {
 	WCHAR timestampSz[128];
 	size_t len = _snwprintf_s(
@@ -121,11 +121,11 @@ void CLogger::LogInternal(Level level, ULONGLONG timestamp, const WCHAR* msg)
 		m_Entries.pop_front();
 	}
 
-	CDialogAbout::AddLogItem(level, timestampSz, msg);
+	DialogAbout::AddLogItem(level, timestampSz, msg);
 	WriteToLogFile(entry);
 }
 
-void CLogger::WriteToLogFile(Entry& entry)
+void Logger::WriteToLogFile(Entry& entry)
 {
 #ifndef _DEBUG
 	if (!m_LogToFile) return;
@@ -166,7 +166,7 @@ void CLogger::WriteToLogFile(Entry& entry)
 	}
 }
 
-void CLogger::Log(Level level, const WCHAR* msg)
+void Logger::Log(Level level, const WCHAR* msg)
 {
 	struct DelayedEntry
 	{
@@ -176,8 +176,8 @@ void CLogger::Log(Level level, const WCHAR* msg)
 	};
 	static std::list<DelayedEntry> s_DelayedEntries;
 
-	static ULONGLONG s_StartTime = CSystem::GetTickCount64();
-	ULONGLONG elapsed = CSystem::GetTickCount64() - s_StartTime;
+	static ULONGLONG s_StartTime = System::GetTickCount64();
+	ULONGLONG elapsed = System::GetTickCount64() - s_StartTime;
 
 	if (TryEnterCriticalSection(&m_CsLog))
 	{
@@ -211,7 +211,7 @@ void CLogger::Log(Level level, const WCHAR* msg)
 	}
 }
 
-void CLogger::LogF(Level level, const WCHAR* format, ...)
+void Logger::LogF(Level level, const WCHAR* format, ...)
 {
 	WCHAR* buffer = new WCHAR[1024];
 	va_list args;

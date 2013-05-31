@@ -22,21 +22,21 @@
 #include "Meter.h"
 #include "TintedImage.h"
 
-class CMeterHistogram : public CMeter
+class MeterHistogram : public Meter
 {
 public:
-	CMeterHistogram(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeterHistogram();
+	MeterHistogram(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeterHistogram();
 
-	virtual UINT GetTypeID() { return TypeID<CMeterHistogram>(); }
+	virtual UINT GetTypeID() { return TypeID<MeterHistogram>(); }
 
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
 
 	virtual bool IsFixedSize(bool overwrite = false) { return m_PrimaryImageName.empty(); }
 
@@ -56,9 +56,9 @@ private:
 	std::wstring m_SecondaryImageName;
 	std::wstring m_OverlapImageName;
 
-	CTintedImage m_PrimaryImage;
-	CTintedImage m_SecondaryImage;
-	CTintedImage m_OverlapImage;
+	TintedImage m_PrimaryImage;
+	TintedImage m_SecondaryImage;
+	TintedImage m_OverlapImage;
 
 	bool m_PrimaryNeedsReload;
 	bool m_SecondaryNeedsReload;
@@ -77,9 +77,9 @@ private:
 	bool m_GraphStartLeft;
 	bool m_GraphHorizontalOrientation;
 
-	static const WCHAR* c_PrimaryOptionArray[CTintedImage::OptionCount];
-	static const WCHAR* c_SecondaryOptionArray[CTintedImage::OptionCount];
-	static const WCHAR* c_BothOptionArray[CTintedImage::OptionCount];
+	static const WCHAR* c_PrimaryOptionArray[TintedImage::OptionCount];
+	static const WCHAR* c_SecondaryOptionArray[TintedImage::OptionCount];
+	static const WCHAR* c_BothOptionArray[TintedImage::OptionCount];
 };
 
 #endif

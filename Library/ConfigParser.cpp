@@ -26,17 +26,17 @@
 #include "Meter.h"
 #include "resource.h"
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 using namespace Gdiplus;
 
-std::unordered_map<std::wstring, std::wstring> CConfigParser::c_MonitorVariables;
+std::unordered_map<std::wstring, std::wstring> ConfigParser::c_MonitorVariables;
 
 /*
 ** The constructor
 **
 */
-CConfigParser::CConfigParser() :
+ConfigParser::ConfigParser() :
 	m_LastReplaced(false),
 	m_LastDefaultUsed(false),
 	m_LastValueDefined(false),
@@ -49,11 +49,11 @@ CConfigParser::CConfigParser() :
 ** The destructor
 **
 */
-CConfigParser::~CConfigParser()
+ConfigParser::~ConfigParser()
 {
 }
 
-void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meterWindow, LPCTSTR skinSection, const std::wstring* resourcePath)
+void ConfigParser::Initialize(const std::wstring& filename, MeterWindow* meterWindow, LPCTSTR skinSection, const std::wstring* resourcePath)
 {
 	m_MeterWindow = meterWindow;
 
@@ -75,7 +75,7 @@ void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meter
 	SetBuiltInVariables(filename, resourcePath, meterWindow);
 	ResetMonitorVariables(meterWindow);
 
-	CSystem::UpdateIniFileMappingList();
+	System::UpdateIniFileMappingList();
 
 	ReadIniFile(filename, skinSection);
 	ReadVariables();
@@ -86,20 +86,20 @@ void CConfigParser::Initialize(const std::wstring& filename, CMeterWindow* meter
 	m_SectionInsertPos = m_Sections.end();
 }
 
-void CConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, CMeterWindow* meterWindow)
+void ConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, MeterWindow* meterWindow)
 {
 	auto insertVariable = [&](const WCHAR* name, std::wstring value)
 	{
 		return m_BuiltInVariables.insert(std::make_pair(name, value));
 	};
 
-	insertVariable(L"PROGRAMPATH", Rainmeter->GetPath());
-	insertVariable(L"PROGRAMDRIVE", Rainmeter->GetDrive());
-	insertVariable(L"SETTINGSPATH", Rainmeter->GetSettingsPath());
-	insertVariable(L"SKINSPATH", Rainmeter->GetSkinPath());
-	insertVariable(L"PLUGINSPATH", Rainmeter->GetPluginPath());
-	insertVariable(L"CURRENTPATH", CRainmeter::ExtractPath(filename));
-	insertVariable(L"ADDONSPATH", Rainmeter->GetAddonPath());
+	insertVariable(L"PROGRAMPATH", g_Rainmeter->GetPath());
+	insertVariable(L"PROGRAMDRIVE", g_Rainmeter->GetDrive());
+	insertVariable(L"SETTINGSPATH", g_Rainmeter->GetSettingsPath());
+	insertVariable(L"SKINSPATH", g_Rainmeter->GetSkinPath());
+	insertVariable(L"PLUGINSPATH", g_Rainmeter->GetPluginPath());
+	insertVariable(L"CURRENTPATH", Rainmeter::ExtractPath(filename));
+	insertVariable(L"ADDONSPATH", g_Rainmeter->GetAddonPath());
 
 	if (meterWindow)
 	{
@@ -122,7 +122,7 @@ void CConfigParser::SetBuiltInVariables(const std::wstring& filename, const std:
 ** Sets all user-defined variables.
 **
 */
-void CConfigParser::ReadVariables()
+void ConfigParser::ReadVariables()
 {
 	std::list<std::wstring>::const_iterator iter = m_ListVariables.begin();
 	for ( ; iter != m_ListVariables.end(); ++iter)
@@ -131,13 +131,13 @@ void CConfigParser::ReadVariables()
 	}
 }
 
-void CConfigParser::SetVariable(std::wstring strVariable, const std::wstring& strValue)
+void ConfigParser::SetVariable(std::wstring strVariable, const std::wstring& strValue)
 {
 	StrToUpperC(strVariable);
 	m_Variables[strVariable] = strValue;
 }
 
-void CConfigParser::SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue)
+void ConfigParser::SetBuiltInVariable(const std::wstring& strVariable, const std::wstring& strValue)
 {
 	m_BuiltInVariables[strVariable] = strValue;
 }
@@ -146,7 +146,7 @@ void CConfigParser::SetBuiltInVariable(const std::wstring& strVariable, const st
 ** Gets a value for the variable. Returns NULL if not found.
 **
 */
-const std::wstring* CConfigParser::GetVariable(const std::wstring& strVariable)
+const std::wstring* ConfigParser::GetVariable(const std::wstring& strVariable)
 {
 	const std::wstring strTmp = StrToUpper(strVariable);
 
@@ -179,7 +179,7 @@ const std::wstring* CConfigParser::GetVariable(const std::wstring& strVariable)
 ** The selector is stripped from strVariable.
 **
 */
-bool CConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue)
+bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& strValue)
 {
 	size_t colonPos = strVariable.find_last_of(L':');
 	if (colonPos == std::wstring::npos)
@@ -196,7 +196,7 @@ bool CConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& 
 	if (isKeySelector)
 	{
 		// [Meter:X], [Meter:Y], [Meter:W], [Meter:H]
-		CMeter* meter = m_MeterWindow->GetMeter(strVariable);
+		Meter* meter = m_MeterWindow->GetMeter(strVariable);
 		if (meter)
 		{
 			WCHAR buffer[32];
@@ -284,7 +284,7 @@ bool CConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& 
 		}
 	}
 
-	CMeasure* measure = m_MeterWindow->GetMeasure(strVariable);
+	Measure* measure = m_MeterWindow->GetMeasure(strVariable);
 	if (measure)
 	{
 		int scale = 1;
@@ -364,7 +364,7 @@ bool CConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& 
 	return false;
 }
 
-void CConfigParser::ResetMonitorVariables(CMeterWindow* meterWindow)
+void ConfigParser::ResetMonitorVariables(MeterWindow* meterWindow)
 {
 	// Set the SCREENAREA/WORKAREA variables
 	if (c_MonitorVariables.empty())
@@ -380,7 +380,7 @@ void CConfigParser::ResetMonitorVariables(CMeterWindow* meterWindow)
 ** Sets new values for the SCREENAREA/WORKAREA variables.
 **
 */
-void CConfigParser::SetMultiMonitorVariables(bool reset)
+void ConfigParser::SetMultiMonitorVariables(bool reset)
 {
 	auto setMonitorVariable = [&](const WCHAR* variable, const WCHAR* value)
 	{
@@ -392,8 +392,8 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 		reset = true;  // Set all variables
 	}
 
-	const size_t numOfMonitors = CSystem::GetMonitorCount();  // intentional
-	const MultiMonitorInfo& monitorsInfo = CSystem::GetMultiMonitorInfo();
+	const size_t numOfMonitors = System::GetMonitorCount();  // intentional
+	const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 	const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
 	WCHAR buffer[32];
@@ -482,12 +482,12 @@ void CConfigParser::SetMultiMonitorVariables(bool reset)
 ** Sets new SCREENAREA/WORKAREA variables for present monitor.
 **
 */
-void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
+void ConfigParser::SetAutoSelectedMonitorVariables(MeterWindow* meterWindow)
 {
 	if (meterWindow)
 	{
-		const int numOfMonitors = (int)CSystem::GetMonitorCount();
-		const MultiMonitorInfo& monitorsInfo = CSystem::GetMultiMonitorInfo();
+		const int numOfMonitors = (int)System::GetMonitorCount();
+		const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
 		const std::vector<MonitorInfo>& monitors = monitorsInfo.monitors;
 
 		WCHAR buffer[32];
@@ -566,11 +566,11 @@ void CConfigParser::SetAutoSelectedMonitorVariables(CMeterWindow* meterWindow)
 ** Replaces environment and internal variables in the given string.
 **
 */
-bool CConfigParser::ReplaceVariables(std::wstring& result)
+bool ConfigParser::ReplaceVariables(std::wstring& result)
 {
 	bool replaced = false;
 
-	CRainmeter::ExpandEnvironmentVariables(result);
+	Rainmeter::ExpandEnvironmentVariables(result);
 
 	if (c_MonitorVariables.empty())
 	{
@@ -633,7 +633,7 @@ bool CConfigParser::ReplaceVariables(std::wstring& result)
 ** Replaces measures in the given string.
 **
 */
-bool CConfigParser::ReplaceMeasures(std::wstring& result)
+bool ConfigParser::ReplaceMeasures(std::wstring& result)
 {
 	bool replaced = false;
 
@@ -661,7 +661,7 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 			{
 				std::wstring var = result.substr(si, end - si);
 
-				CMeasure* measure = GetMeasure(var);
+				Measure* measure = GetMeasure(var);
 				if (measure)
 				{
 					const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, -1, false);
@@ -698,7 +698,7 @@ bool CConfigParser::ReplaceMeasures(std::wstring& result)
 	return replaced;
 }
 
-const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures)
+const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures)
 {
 	static std::wstring result;
 
@@ -764,7 +764,7 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 			}
 			else
 			{
-				CRainmeter::ExpandEnvironmentVariables(result);
+				Rainmeter::ExpandEnvironmentVariables(result);
 			}
 
 			if (bReplaceMeasures && ReplaceMeasures(result))
@@ -777,19 +777,19 @@ const std::wstring& CConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCT
 	return result;
 }
 
-bool CConfigParser::IsKeyDefined(LPCTSTR section, LPCTSTR key)
+bool ConfigParser::IsKeyDefined(LPCTSTR section, LPCTSTR key)
 {
 	ReadString(section, key, L"", false);
 	return !m_LastDefaultUsed;
 }
 
-bool CConfigParser::IsValueDefined(LPCTSTR section, LPCTSTR key)
+bool ConfigParser::IsValueDefined(LPCTSTR section, LPCTSTR key)
 {
 	ReadString(section, key, L"", false);
 	return m_LastValueDefined;
 }
 
-void CConfigParser::AddMeasure(CMeasure* pMeasure)
+void ConfigParser::AddMeasure(Measure* pMeasure)
 {
 	if (pMeasure)
 	{
@@ -797,9 +797,9 @@ void CConfigParser::AddMeasure(CMeasure* pMeasure)
 	}
 }
 
-CMeasure* CConfigParser::GetMeasure(const std::wstring& name)
+Measure* ConfigParser::GetMeasure(const std::wstring& name)
 {
-	std::unordered_map<std::wstring, CMeasure*>::const_iterator iter = m_Measures.find(StrToUpper(name));
+	std::unordered_map<std::wstring, Measure*>::const_iterator iter = m_Measures.find(StrToUpper(name));
 	if (iter != m_Measures.end())
 	{
 		return (*iter).second;
@@ -808,7 +808,7 @@ CMeasure* CConfigParser::GetMeasure(const std::wstring& name)
 	return NULL;
 }
 
-std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
+std::vector<Gdiplus::REAL> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
 {
 	std::vector<Gdiplus::REAL> result;
 	const std::wstring& str = ReadString(section, key, L"");
@@ -834,7 +834,7 @@ std::vector<Gdiplus::REAL> CConfigParser::ReadFloats(LPCTSTR section, LPCTSTR ke
 	return result;
 }
 
-int CConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
+int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -866,7 +866,7 @@ int CConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 	return defValue;
 }
 
-uint32_t CConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
+uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -898,7 +898,7 @@ uint32_t CConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue
 	return defValue;
 }
 
-uint64_t CConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValue)
+uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -930,7 +930,7 @@ uint64_t CConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defVal
 	return defValue;
 }
 
-double CConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
+double ConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -963,7 +963,7 @@ double CConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 }
 
 // Returns true if the formula was read successfully, false for failure.
-bool CConfigParser::ParseFormula(const std::wstring& formula, double* resultValue)
+bool ConfigParser::ParseFormula(const std::wstring& formula, double* resultValue)
 {
 	// Formulas must be surrounded by parenthesis
 	if (!formula.empty() && formula[0] == L'(' && formula[formula.size() - 1] == L')')
@@ -982,21 +982,21 @@ bool CConfigParser::ParseFormula(const std::wstring& formula, double* resultValu
 	return false;
 }
 
-ARGB CConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, ARGB defValue)
+ARGB ConfigParser::ReadColor(LPCTSTR section, LPCTSTR key, ARGB defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
 	return (m_LastDefaultUsed) ? defValue : ParseColor(result.c_str());
 }
 
-Rect CConfigParser::ReadRect(LPCTSTR section, LPCTSTR key, const Rect& defValue)
+Rect ConfigParser::ReadRect(LPCTSTR section, LPCTSTR key, const Rect& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
 	return (m_LastDefaultUsed) ? defValue : ParseRect(result.c_str());
 }
 
-RECT CConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
+RECT ConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
 {
 	const std::wstring& result = ReadString(section, key, L"");
 
@@ -1018,7 +1018,7 @@ RECT CConfigParser::ReadRECT(LPCTSTR section, LPCTSTR key, const RECT& defValue)
 **
 ** Modified from http://www.digitalpeer.com/id/simple
 */
-std::vector<std::wstring> CConfigParser::Tokenize(const std::wstring& str, const std::wstring& delimiters)
+std::vector<std::wstring> ConfigParser::Tokenize(const std::wstring& str, const std::wstring& delimiters)
 {
 	std::vector<std::wstring> tokens;
 
@@ -1056,7 +1056,7 @@ std::vector<std::wstring> CConfigParser::Tokenize(const std::wstring& str, const
 ** If the given string is invalid format or causes overflow/underflow, returns given default value.
 **
 */
-double CConfigParser::ParseDouble(LPCTSTR string, double defValue)
+double ConfigParser::ParseDouble(LPCTSTR string, double defValue)
 {
 	assert(string);
 
@@ -1089,7 +1089,7 @@ double CConfigParser::ParseDouble(LPCTSTR string, double defValue)
 ** If the given string is invalid format or causes overflow/underflow, returns given default value.
 **
 */
-int CConfigParser::ParseInt(LPCTSTR string, int defValue)
+int ConfigParser::ParseInt(LPCTSTR string, int defValue)
 {
 	assert(string);
 
@@ -1122,7 +1122,7 @@ int CConfigParser::ParseInt(LPCTSTR string, int defValue)
 ** If the given string is invalid format or causes overflow/underflow, returns given default value.
 **
 */
-uint32_t CConfigParser::ParseUInt(LPCTSTR string, uint32_t defValue)
+uint32_t ConfigParser::ParseUInt(LPCTSTR string, uint32_t defValue)
 {
 	assert(string);
 
@@ -1155,7 +1155,7 @@ uint32_t CConfigParser::ParseUInt(LPCTSTR string, uint32_t defValue)
 ** If the given string is invalid format or causes overflow/underflow, returns given default value.
 **
 */
-uint64_t CConfigParser::ParseUInt64(LPCTSTR string, uint64_t defValue)
+uint64_t ConfigParser::ParseUInt64(LPCTSTR string, uint64_t defValue)
 {
 	assert(string);
 
@@ -1198,22 +1198,22 @@ bool ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 		token = wcstok(parseSz, L",");
 		if (token)
 		{
-			v1 = CConfigParser::ParseInt(token, 0);
+			v1 = ConfigParser::ParseInt(token, 0);
 
 			token = wcstok(NULL, L",");
 			if (token)
 			{
-				v2 = CConfigParser::ParseInt(token, 0);
+				v2 = ConfigParser::ParseInt(token, 0);
 
 				token = wcstok(NULL, L",");
 				if (token)
 				{
-					v3 = CConfigParser::ParseInt(token, 0);
+					v3 = ConfigParser::ParseInt(token, 0);
 
 					token = wcstok(NULL, L",");
 					if (token)
 					{
-						v4 = CConfigParser::ParseInt(token, 0);
+						v4 = ConfigParser::ParseInt(token, 0);
 					}
 				}
 			}
@@ -1231,7 +1231,7 @@ bool ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 ** hex-value.
 **
 */
-ARGB CConfigParser::ParseColor(LPCTSTR string)
+ARGB ConfigParser::ParseColor(LPCTSTR string)
 {
 	int R = 255, G = 255, B = 255, A = 255;
 
@@ -1261,7 +1261,7 @@ ARGB CConfigParser::ParseColor(LPCTSTR string)
 ** The rect can be supplied as four comma separated values (X/Y/Width/Height).
 **
 */
-Rect CConfigParser::ParseRect(LPCTSTR string)
+Rect ConfigParser::ParseRect(LPCTSTR string)
 {
 	Rect r;
 	ParseInt4(string, r.X, r.Y, r.Width, r.Height);
@@ -1273,7 +1273,7 @@ Rect CConfigParser::ParseRect(LPCTSTR string)
 ** The rect can be supplied as four comma separated values (left/top/right/bottom).
 **
 */
-RECT CConfigParser::ParseRECT(LPCTSTR string)
+RECT ConfigParser::ParseRECT(LPCTSTR string)
 {
 	RECT r = {0};
 	ParseInt4(string, r.left, r.top, r.right, r.bottom);
@@ -1284,11 +1284,11 @@ RECT CConfigParser::ParseRECT(LPCTSTR string)
 ** Reads the given ini file and fills the m_Values and m_Keys maps.
 **
 */
-void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection, int depth)
+void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection, int depth)
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
-		Rainmeter->ShowMessage(NULL, GetString(ID_STR_INCLUDEINFINITELOOP), MB_OK | MB_ICONERROR);
+		g_Rainmeter->ShowMessage(NULL, GetString(ID_STR_INCLUDEINFINITELOOP), MB_OK | MB_ICONERROR);
 		return;
 	}
 
@@ -1300,16 +1300,16 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 	}
 
 	// Avoid "IniFileMapping"
-	std::wstring iniRead = CSystem::GetTemporaryFile(iniFile);
+	std::wstring iniRead = System::GetTemporaryFile(iniFile);
 	bool temporary = (!iniRead.empty() && (iniRead.size() != 1 || iniRead[0] != L'?'));
 
 	if (temporary)
 	{
-		if (Rainmeter->GetDebug()) LogDebugF(L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
+		if (g_Rainmeter->GetDebug()) LogDebugF(L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
 	}
 	else
 	{
-		if (Rainmeter->GetDebug()) LogDebugF(L"Reading file: %s", iniFile.c_str());
+		if (g_Rainmeter->GetDebug()) LogDebugF(L"Reading file: %s", iniFile.c_str());
 		iniRead = iniFile;
 	}
 
@@ -1333,7 +1333,7 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 			if (res == 0)		// File not found
 			{
 				delete [] items;
-				if (temporary) CSystem::RemoveFile(iniRead);
+				if (temporary) System::RemoveFile(iniRead);
 				return;
 			}
 			if (res < itemsSize - 2)		// Fits in the buffer
@@ -1446,10 +1446,10 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 								value.assign(sep, clen);
 								ReadVariables();
 								ReplaceVariables(value);
-								if (!CSystem::IsAbsolutePath(value))
+								if (!System::IsAbsolutePath(value))
 								{
 									// Relative to the ini folder
-									value.insert(0, CRainmeter::ExtractPath(iniFile));
+									value.insert(0, Rainmeter::ExtractPath(iniFile));
 								}
 
 								if (resetInsertPos)
@@ -1504,14 +1504,14 @@ void CConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection
 	}
 
 	delete [] items;
-	if (temporary) CSystem::RemoveFile(iniRead);
+	if (temporary) System::RemoveFile(iniRead);
 }
 
 /*
 ** Sets the value for the key under the given section.
 **
 */
-void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue)
+void ConfigParser::SetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strValue)
 {
 	// LogDebugF(L"[%s] %s=%s (size: %i)", strSection.c_str(), strKey.c_str(), strValue.c_str(), (int)m_Values.size());
 
@@ -1528,7 +1528,7 @@ void CConfigParser::SetValue(const std::wstring& strSection, const std::wstring&
 ** Deletes the value for the key under the given section.
 **
 */
-void CConfigParser::DeleteValue(const std::wstring& strSection, const std::wstring& strKey)
+void ConfigParser::DeleteValue(const std::wstring& strSection, const std::wstring& strKey)
 {
 	std::wstring strTmp;
 	strTmp.reserve(strSection.size() + 1 + strKey.size());
@@ -1547,7 +1547,7 @@ void CConfigParser::DeleteValue(const std::wstring& strSection, const std::wstri
 ** Returns the value for the key under the given section.
 **
 */
-const std::wstring& CConfigParser::GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault)
+const std::wstring& ConfigParser::GetValue(const std::wstring& strSection, const std::wstring& strKey, const std::wstring& strDefault)
 {
 	std::wstring strTmp;
 	strTmp.reserve(strSection.size() + 1 + strKey.size());

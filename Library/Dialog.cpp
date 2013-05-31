@@ -19,14 +19,14 @@
 #include "StdAfx.h"
 #include "Dialog.h"
 
-HWND CDialog::c_ActiveDialogWindow = NULL;
-HWND CDialog::c_ActiveTabWindow = NULL;
+HWND Dialog::c_ActiveDialogWindow = NULL;
+HWND Dialog::c_ActiveTabWindow = NULL;
 
 /*
 ** Constructor.
 **
 */
-CDialog::CDialog(HWND wnd) :
+Dialog::Dialog(HWND wnd) :
 	m_Window(wnd),
 	m_Font(),
 	m_FontBold()
@@ -44,13 +44,13 @@ CDialog::CDialog(HWND wnd) :
 ** Destructor.
 **
 */
-CDialog::~CDialog()
+Dialog::~Dialog()
 {
 	DeleteObject(m_Font);
 	DeleteObject(m_FontBold);
 }
 
-INT_PTR CDialog::OnActivate(WPARAM wParam, LPARAM lParam)
+INT_PTR Dialog::OnActivate(WPARAM wParam, LPARAM lParam)
 {
 	if (wParam)
 	{
@@ -69,12 +69,12 @@ INT_PTR CDialog::OnActivate(WPARAM wParam, LPARAM lParam)
 ** Sets dialog font to UI font.
 **
 */
-void CDialog::SetDialogFont(HWND window)
+void Dialog::SetDialogFont(HWND window)
 {
 	EnumChildWindows(window, SetFontProc, (WPARAM)m_Font);
 }
 
-BOOL CALLBACK CDialog::SetFontProc(HWND hWnd, LPARAM lParam)
+BOOL CALLBACK Dialog::SetFontProc(HWND hWnd, LPARAM lParam)
 {
 	SendMessage(hWnd, WM_SETFONT, (WPARAM)lParam, 0);
 	return TRUE;
@@ -84,12 +84,12 @@ BOOL CALLBACK CDialog::SetFontProc(HWND hWnd, LPARAM lParam)
 ** Subclass button control to draw arrow on the right.
 **
 */
-void CDialog::SetMenuButton(HWND button)
+void Dialog::SetMenuButton(HWND button)
 {
 	SetWindowSubclass(button, MenuButtonProc, NULL, NULL);
 }
 
-LRESULT CALLBACK CDialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
 	LRESULT result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
 
@@ -139,7 +139,7 @@ LRESULT CALLBACK CDialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 ** Constructor.
 **
 */
-CDialog::CTab::CTab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc) :
+Dialog::Tab::Tab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc) :
 	m_Window(CreateDialog(instance, MAKEINTRESOURCE(tabId), owner, tabProc)),
 	m_Initialized(false)
 {
@@ -150,7 +150,7 @@ CDialog::CTab::CTab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc)
 ** Destructor.
 **
 */
-CDialog::CTab::~CTab()
+Dialog::Tab::~Tab()
 {
 	DestroyWindow(m_Window);
 }
@@ -159,7 +159,7 @@ CDialog::CTab::~CTab()
 ** Activates the tab.
 **
 */
-void CDialog::CTab::Activate()
+void Dialog::Tab::Activate()
 {
 	c_ActiveTabWindow = m_Window;
 

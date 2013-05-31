@@ -30,12 +30,12 @@
 
 struct MeasureData
 {
-	std::vector<CRawString> includes;
-	std::vector<CRawString> excludes;
-	CRawString includesCache;
-	CRawString excludesCache;
+	std::vector<RawString> includes;
+	std::vector<RawString> excludes;
+	RawString includesCache;
+	RawString excludesCache;
 	int topProcess;
-	CRawString topProcessName;
+	RawString topProcessName;
 	LONGLONG topProcessValue;
 
 	MeasureData() :
@@ -47,7 +47,7 @@ struct MeasureData
 
 struct ProcessValues
 {
-	CRawString name;
+	RawString name;
 	LONGLONG oldValue;
 	LONGLONG newValue;
 	bool found;
@@ -58,7 +58,7 @@ std::vector<ProcessValues> g_Processes;
 
 void UpdateProcesses();
 
-void SplitName(WCHAR* names, std::vector<CRawString>& splittedNames)
+void SplitName(WCHAR* names, std::vector<RawString>& splittedNames)
 {
 	WCHAR* token = wcstok(names, L";");
 	while (token != NULL)

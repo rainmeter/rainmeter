@@ -22,23 +22,23 @@
 #include "Meter.h"
 #include "TintedImage.h"
 
-class CMeterRotator : public CMeter
+class MeterRotator : public Meter
 {
 public:
-	CMeterRotator(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeterRotator();
+	MeterRotator(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeterRotator();
 
-	virtual UINT GetTypeID() { return TypeID<CMeterRotator>(); }
+	virtual UINT GetTypeID() { return TypeID<MeterRotator>(); }
 
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
 private:
-	CTintedImage m_Image;
+	TintedImage m_Image;
 	std::wstring m_ImageName;
 	bool m_NeedsReload;
 

@@ -21,12 +21,12 @@
 
 #include "Player.h"
 
-class CPlayerSpotify : public CPlayer
+class PlayerSpotify : public Player
 {
 public:
-	virtual ~CPlayerSpotify();
+	virtual ~PlayerSpotify();
 
-	static CPlayer* Create();
+	static Player* Create();
 
 	virtual void Pause() { return Play(); }
 	virtual void Play();
@@ -38,7 +38,7 @@ public:
 	virtual void UpdateData();
 
 protected:
-	CPlayerSpotify();
+	PlayerSpotify();
 
 private:
 	enum SPOTIFYCOMMAND
@@ -54,7 +54,7 @@ private:
 
 	bool CheckWindow();
 
-	static CPlayer* c_Player;
+	static Player* c_Player;
 
 	HWND m_Window;
 	DWORD m_LastCheckTime;

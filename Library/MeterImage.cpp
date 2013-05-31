@@ -24,7 +24,7 @@
 #include "System.h"
 #include "../Common/Gfx/Canvas.h"
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 using namespace Gdiplus;
 
@@ -32,7 +32,7 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-CMeterImage::CMeterImage(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
+MeterImage::MeterImage(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
 	m_NeedsRedraw(false),
 	m_DrawMode(DRAWMODE_NONE),
 	m_ScaleMargins()
@@ -43,7 +43,7 @@ CMeterImage::CMeterImage(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(
 ** The destructor
 **
 */
-CMeterImage::~CMeterImage()
+MeterImage::~MeterImage()
 {
 }
 
@@ -51,9 +51,9 @@ CMeterImage::~CMeterImage()
 ** Load the image and get the dimensions of the meter from it.
 **
 */
-void CMeterImage::Initialize()
+void MeterImage::Initialize()
 {
-	CMeter::Initialize();
+	Meter::Initialize();
 
 	if (m_Measures.empty() && !m_DynamicVariables && !m_ImageName.empty())
 	{
@@ -68,7 +68,7 @@ void CMeterImage::Initialize()
 ** Loads the image from disk
 **
 */
-void CMeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
+void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 {
 	m_Image.LoadImage(imageName, bLoadAlways);
 
@@ -106,14 +106,14 @@ void CMeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 ** Read the options specified in the ini file.
 **
 */
-void CMeterImage::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	CMeter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser, section);
 
 	m_Path = parser.ReadString(section, L"Path", L"");
 	if (!m_Path.empty())
 	{
-		if (!CSystem::IsPathSeparator(m_Path[m_Path.length() - 1]))
+		if (!System::IsPathSeparator(m_Path[m_Path.length() - 1]))
 		{
 			m_Path += L'\\';
 		}
@@ -161,9 +161,9 @@ void CMeterImage::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Updates the value(s) from the measures.
 **
 */
-bool CMeterImage::Update()
+bool MeterImage::Update()
 {
-	if (CMeter::Update())
+	if (Meter::Update())
 	{
 		if (!m_Measures.empty() || m_DynamicVariables)
 		{
@@ -215,9 +215,9 @@ bool CMeterImage::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterImage::Draw(Gfx::Canvas& canvas)
+bool MeterImage::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(canvas)) return false;
+	if (!Meter::Draw(canvas)) return false;
 
 	if (m_Image.IsLoaded())
 	{
@@ -371,7 +371,7 @@ bool CMeterImage::Draw(Gfx::Canvas& canvas)
 ** Overridden method. The Image meters need not to be bound on anything
 **
 */
-void CMeterImage::BindMeasures(CConfigParser& parser, const WCHAR* section)
+void MeterImage::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	if (BindPrimaryMeasure(parser, section, true))
 	{

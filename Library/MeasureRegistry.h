@@ -21,18 +21,18 @@
 
 #include "Measure.h"
 
-class CMeasureRegistry : public CMeasure
+class MeasureRegistry : public Measure
 {
 public:
-	CMeasureRegistry(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeasureRegistry();
+	MeasureRegistry(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeasureRegistry();
 
-	virtual UINT GetTypeID() { return TypeID<CMeasureRegistry>(); }
+	virtual UINT GetTypeID() { return TypeID<MeasureRegistry>(); }
 
 	virtual const WCHAR* GetStringValue();
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:

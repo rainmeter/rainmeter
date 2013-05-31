@@ -63,13 +63,13 @@ static const double g_TblScale[2][4] = {
 
 const int MEDIAN_SIZE = 3;
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 /*
 ** The constructor
 **
 */
-CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : CSection(meterWindow, name),
+Measure::Measure(MeterWindow* meterWindow, const WCHAR* name) : Section(meterWindow, name),
 	m_Invert(false),
 	m_LogMaxValue(false),
 	m_MinValue(),
@@ -96,7 +96,7 @@ CMeasure::CMeasure(CMeterWindow* meterWindow, const WCHAR* name) : CSection(mete
 ** The destructor
 **
 */
-CMeasure::~CMeasure()
+Measure::~Measure()
 {
 	delete m_OldValue;
 }
@@ -105,7 +105,7 @@ CMeasure::~CMeasure()
 ** Initializes the measure.
 **
 */
-void CMeasure::Initialize()
+void Measure::Initialize()
 {
 	m_Initialized = true;
 }
@@ -115,11 +115,11 @@ void CMeasure::Initialize()
 ** call this base implementation if they overwrite this method.
 **
 */
-void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	bool oldOnChangeActionEmpty = m_OnChangeAction.empty();
 
-	CSection::ReadOptions(parser, section);
+	Section::ReadOptions(parser, section);
 
 	// Clear substitutes to prevent from being added more than once.
 	if (!m_Substitute.empty())
@@ -173,7 +173,7 @@ void CMeasure::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	}
 }
 
-void CMeasure::Disable()
+void Measure::Disable()
 {
 	m_Disabled = true;
 
@@ -181,7 +181,7 @@ void CMeasure::Disable()
 	m_MeterWindow->GetParser().SetValue(m_Name, L"Disabled", L"1");
 }
 
-void CMeasure::Enable()
+void Measure::Enable()
 {
 	m_Disabled = false;
 
@@ -192,7 +192,7 @@ void CMeasure::Enable()
 /*
 ** Substitues text using a straight find and replace method
 */
-bool CMeasure::MakePlainSubstitute(std::wstring& str, size_t index)
+bool Measure::MakePlainSubstitute(std::wstring& str, size_t index)
 {
 	size_t start = 0, pos;
 
@@ -213,7 +213,7 @@ bool CMeasure::MakePlainSubstitute(std::wstring& str, size_t index)
 /*
 ** Substitutes part of the text
 */
-const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
+const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 {
 	static std::wstring str;
 
@@ -338,7 +338,7 @@ const WCHAR* CMeasure::CheckSubstitute(const WCHAR* buffer)
 ** Reads the buffer for "Name":"Value"-pairs separated with comma and
 ** fills the map with the parsed data.
 */
-bool CMeasure::ParseSubstitute(std::wstring buffer)
+bool Measure::ParseSubstitute(std::wstring buffer)
 {
 	if (buffer.empty()) return true;
 
@@ -373,7 +373,7 @@ bool CMeasure::ParseSubstitute(std::wstring buffer)
 ** If not, the separators are ' ', '\t', ',' and ':'. Whitespaces are removed
 ** and buffer _will_ be modified.
 */
-std::wstring CMeasure::ExtractWord(std::wstring& buffer)
+std::wstring Measure::ExtractWord(std::wstring& buffer)
 {
 	std::wstring::size_type end, len = buffer.size();
 	std::wstring ret;
@@ -435,7 +435,7 @@ std::wstring CMeasure::ExtractWord(std::wstring& buffer)
 	return ret;
 }
 
-bool CMeasure::Update()
+bool Measure::Update()
 {
 	if (!m_Disabled)
 	{
@@ -501,7 +501,7 @@ bool CMeasure::Update()
 					if (!m_IfEqualCommitted)
 					{
 						m_IfEqualCommitted = true;	// To avoid infinite loop from !Update
-						Rainmeter->ExecuteCommand(m_IfEqualAction.c_str(), m_MeterWindow);
+						g_Rainmeter->ExecuteCommand(m_IfEqualAction.c_str(), m_MeterWindow);
 					}
 				}
 				else
@@ -517,7 +517,7 @@ bool CMeasure::Update()
 					if (!m_IfAboveCommitted)
 					{
 						m_IfAboveCommitted = true;	// To avoid infinite loop from !Update
-						Rainmeter->ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
+						g_Rainmeter->ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
 					}
 				}
 				else
@@ -533,7 +533,7 @@ bool CMeasure::Update()
 					if (!m_IfBelowCommitted)
 					{
 						m_IfBelowCommitted = true;	// To avoid infinite loop from !Update
-						Rainmeter->ExecuteCommand(m_IfBelowAction.c_str(), m_MeterWindow);
+						g_Rainmeter->ExecuteCommand(m_IfBelowAction.c_str(), m_MeterWindow);
 					}
 				}
 				else
@@ -574,7 +574,7 @@ bool CMeasure::Update()
 ** Returns the value of the measure.
 **
 */
-double CMeasure::GetValue()
+double Measure::GetValue()
 {
 	// Invert if so requested
 	if (m_Invert)
@@ -589,7 +589,7 @@ double CMeasure::GetValue()
 ** Returns the relative value of the measure (0.0 - 1.0).
 **
 */
-double CMeasure::GetRelativeValue()
+double Measure::GetRelativeValue()
 {
 	double range = GetValueRange();
 
@@ -612,7 +612,7 @@ double CMeasure::GetRelativeValue()
 ** Returns the value range.
 **
 */
-double CMeasure::GetValueRange()
+double Measure::GetValueRange()
 {
 	return m_MaxValue - m_MinValue;
 }
@@ -622,7 +622,7 @@ double CMeasure::GetValueRange()
 ** string value that is not based on m_Value.
 **
 */
-const WCHAR* CMeasure::GetStringValue()
+const WCHAR* Measure::GetStringValue()
 {
 	return NULL;
 }
@@ -631,7 +631,7 @@ const WCHAR* CMeasure::GetStringValue()
 ** Returns the unformatted string value if the measure has one or a formatted value otherwise.
 **
 */
-const WCHAR* CMeasure::GetStringOrFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
+const WCHAR* Measure::GetStringOrFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	const WCHAR* stringValue = GetStringValue();
 	return stringValue ? stringValue : GetFormattedValue(autoScale, scale, decimals, percentual);
@@ -646,7 +646,7 @@ const WCHAR* CMeasure::GetStringOrFormattedValue(AUTOSCALE autoScale, double sca
 ** decimals   Number of decimals used in the value. If -1, get rid of ".00000" for dynamic variables.
 ** percentual Return the value as % from the maximum value.
 */
-const WCHAR* CMeasure::GetFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
+const WCHAR* Measure::GetFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual)
 {
 	static WCHAR buffer[128];
 	WCHAR format[32];
@@ -681,7 +681,7 @@ const WCHAR* CMeasure::GetFormattedValue(AUTOSCALE autoScale, double scale, int 
 	return CheckSubstitute(buffer);
 }
 
-void CMeasure::GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords)
+void Measure::GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords)
 {
 	WCHAR format[32];
 	double value = 0;
@@ -726,7 +726,7 @@ void CMeasure::GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue
 	_snwprintf_s(buffer, sizeInWords, _TRUNCATE, format, value);
 }
 
-void CMeasure::RemoveTrailingZero(WCHAR* str, int strLen)
+void Measure::RemoveTrailingZero(WCHAR* str, int strLen)
 {
 	--strLen;
 	while (strLen >= 0)
@@ -752,7 +752,7 @@ void CMeasure::RemoveTrailingZero(WCHAR* str, int strLen)
 ** If execute parameter is set to false, only updates old value with current value.
 **
 */
-void CMeasure::DoChangeAction(bool execute)
+void Measure::DoChangeAction(bool execute)
 {
 	if (!m_OnChangeAction.empty() && m_ValueAssigned)
 	{
@@ -765,13 +765,13 @@ void CMeasure::DoChangeAction(bool execute)
 
 		if (!m_OldValue)
 		{
-			m_OldValue = new CMeasureValueSet(newValue, newStringValue);
+			m_OldValue = new MeasureValueSet(newValue, newStringValue);
 		}
 		else if (execute)
 		{
 			if (m_OldValue->IsChanged(newValue, newStringValue))
 			{
-				Rainmeter->ExecuteCommand(m_OnChangeAction.c_str(), m_MeterWindow);
+				g_Rainmeter->ExecuteCommand(m_OnChangeAction.c_str(), m_MeterWindow);
 			}
 		}
 		else
@@ -786,65 +786,65 @@ void CMeasure::DoChangeAction(bool execute)
 ** If new measures are implemented this method needs to be updated.
 **
 */
-CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, const WCHAR* name)
+Measure* Measure::Create(const WCHAR* measure, MeterWindow* meterWindow, const WCHAR* name)
 {
 	// Comparison is caseinsensitive
 
 	if (_wcsicmp(L"CPU", measure) == 0)
 	{
-		return new CMeasureCPU(meterWindow, name);
+		return new MeasureCPU(meterWindow, name);
 	}
 	else if (_wcsicmp(L"Memory", measure) == 0)
 	{
-		return new CMeasureMemory(meterWindow, name);
+		return new MeasureMemory(meterWindow, name);
 	}
 	else if (_wcsicmp(L"NetIn", measure) == 0)
 	{
-		return new CMeasureNetIn(meterWindow, name);
+		return new MeasureNetIn(meterWindow, name);
 	}
 	else if (_wcsicmp(L"NetOut", measure) == 0)
 	{
-		return new CMeasureNetOut(meterWindow, name);
+		return new MeasureNetOut(meterWindow, name);
 	}
 	else if (_wcsicmp(L"NetTotal", measure) == 0)
 	{
-		return new CMeasureNetTotal(meterWindow, name);
+		return new MeasureNetTotal(meterWindow, name);
 	}
 	else if (_wcsicmp(L"PhysicalMemory", measure) == 0)
 	{
-		return new CMeasurePhysicalMemory(meterWindow, name);
+		return new MeasurePhysicalMemory(meterWindow, name);
 	}
 	else if (_wcsicmp(L"SwapMemory", measure) == 0)
 	{
-		return new CMeasureVirtualMemory(meterWindow, name);
+		return new MeasureVirtualMemory(meterWindow, name);
 	}
 	else if (_wcsicmp(L"FreeDiskSpace", measure) == 0)
 	{
-		return new CMeasureDiskSpace(meterWindow, name);
+		return new MeasureDiskSpace(meterWindow, name);
 	}
 	else if (_wcsicmp(L"Uptime", measure) == 0)
 	{
-		return new CMeasureUptime(meterWindow, name);
+		return new MeasureUptime(meterWindow, name);
 	}
 	else if (_wcsicmp(L"Time", measure) == 0)
 	{
-		return new CMeasureTime(meterWindow, name);
+		return new MeasureTime(meterWindow, name);
 	}
 	else if (_wcsicmp(L"Plugin", measure) == 0)
 	{
-		return new CMeasurePlugin(meterWindow, name);
+		return new MeasurePlugin(meterWindow, name);
 	}
 	else if (_wcsicmp(L"Registry", measure) == 0)
 	{
-		return new CMeasureRegistry(meterWindow, name);
+		return new MeasureRegistry(meterWindow, name);
 	}
 	else if (_wcsicmp(L"Calc", measure) == 0)
 	{
-		return new CMeasureCalc(meterWindow, name);
+		return new MeasureCalc(meterWindow, name);
 	}
 	else if (_wcsicmp(L"Script", measure) == 0)
 	{
-		return new CMeasureScript(meterWindow, name);
+		return new MeasureScript(meterWindow, name);
 	}
 
 	LogErrorF(L"Measure=%s is not valid in [%s]", measure, name);
@@ -856,7 +856,7 @@ CMeasure* CMeasure::Create(const WCHAR* measure, CMeterWindow* meterWindow, cons
 ** Executes a custom bang.
 **
 */
-void CMeasure::Command(const std::wstring& command)
+void Measure::Command(const std::wstring& command)
 {
 	LogWarningF(L"!CommandMeasure: Not supported by [%s]", m_Name.c_str());
 }

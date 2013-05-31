@@ -127,7 +127,7 @@ std::unordered_map<std::wstring, ImageCachePool::ImageCache*> ImageCachePool::c_
 #define CONVERT_TO_RADIANS(X)	((X) * (PI / 180.0f))
 
 // GrayScale Matrix
-const Gdiplus::ColorMatrix CTintedImage::c_GreyScaleMatrix = {
+const Gdiplus::ColorMatrix TintedImage::c_GreyScaleMatrix = {
 	0.299f, 0.299f, 0.299f, 0.0f, 0.0f,
 	0.587f, 0.587f, 0.587f, 0.0f, 0.0f,
 	0.114f, 0.114f, 0.114f, 0.0f, 0.0f,
@@ -135,7 +135,7 @@ const Gdiplus::ColorMatrix CTintedImage::c_GreyScaleMatrix = {
 	  0.0f,   0.0f,   0.0f, 0.0f, 1.0f
 };
 
-const Gdiplus::ColorMatrix CTintedImage::c_IdentityMatrix = {
+const Gdiplus::ColorMatrix TintedImage::c_IdentityMatrix = {
 	1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 	0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
 	0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
@@ -143,7 +143,7 @@ const Gdiplus::ColorMatrix CTintedImage::c_IdentityMatrix = {
 	0.0f, 0.0f, 0.0f, 0.0f, 1.0f
 };
 
-CTintedImageHelper_DefineOptionArray(CTintedImage::c_DefaultOptionArray, L"");
+TintedImageHelper_DefineOptionArray(TintedImage::c_DefaultOptionArray, L"");
 
 /*
 ** The constructor.
@@ -151,7 +151,7 @@ CTintedImageHelper_DefineOptionArray(CTintedImage::c_DefaultOptionArray, L"");
 ** If disableTransform is true, ImageCrop and ImageRotate are ignored.
 **
 */
-CTintedImage::CTintedImage(const WCHAR* name, const WCHAR** optionArray, bool disableTransform) : m_DisableTransform(disableTransform),
+TintedImage::TintedImage(const WCHAR* name, const WCHAR** optionArray, bool disableTransform) : m_DisableTransform(disableTransform),
 	m_Name(name ? name : L"Image"),
 	m_OptionArray(optionArray ? optionArray : c_DefaultOptionArray),
 	m_Bitmap(),
@@ -173,7 +173,7 @@ CTintedImage::CTintedImage(const WCHAR* name, const WCHAR** optionArray, bool di
 ** The destructor
 **
 */
-CTintedImage::~CTintedImage()
+TintedImage::~TintedImage()
 {
 	DisposeImage();
 
@@ -184,7 +184,7 @@ CTintedImage::~CTintedImage()
 ** Disposes the image buffers.
 **
 */
-void CTintedImage::DisposeImage()
+void TintedImage::DisposeImage()
 {
 	delete m_BitmapTint;
 	m_BitmapTint = NULL;
@@ -202,7 +202,7 @@ void CTintedImage::DisposeImage()
 ** Loads the image from file handle
 **
 */
-Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize, HGLOBAL* phBuffer)
+Bitmap* TintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize, HGLOBAL* phBuffer)
 {
 	HGLOBAL hBuffer = ::GlobalAlloc(GMEM_MOVEABLE, fileSize);
 	if (hBuffer)
@@ -310,7 +310,7 @@ Bitmap* CTintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize,
 ** Loads the image from disk
 **
 */
-void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
+void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 {
 	// Load the bitmap if defined
 	if (!imageName.empty())
@@ -426,7 +426,7 @@ void CTintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 ** This will apply the cropping.
 **
 */
-void CTintedImage::ApplyCrop()
+void TintedImage::ApplyCrop()
 {
 	if (m_Crop.Width >= 0 && m_Crop.Height >= 0)
 	{
@@ -483,7 +483,7 @@ void CTintedImage::ApplyCrop()
 ** This will apply the Greyscale matrix and the color tinting.
 **
 */
-void CTintedImage::ApplyTint()
+void TintedImage::ApplyTint()
 {
 	bool useColorMatrix = !CompareColorMatrix(m_ColorMatrix, &c_IdentityMatrix);
 
@@ -529,7 +529,7 @@ void CTintedImage::ApplyTint()
 ** Note that the returned bitmap image must be freed by caller.
 **
 */
-Bitmap* CTintedImage::TurnGreyscale(Bitmap* source)
+Bitmap* TintedImage::TurnGreyscale(Bitmap* source)
 {
 	ImageAttributes ImgAttr;
 	ImgAttr.SetColorMatrix(&c_GreyScaleMatrix, ColorMatrixFlagsDefault, ColorAdjustTypeBitmap);
@@ -548,7 +548,7 @@ Bitmap* CTintedImage::TurnGreyscale(Bitmap* source)
 ** This will apply the flipping and rotating.
 **
 */
-void CTintedImage::ApplyTransform()
+void TintedImage::ApplyTransform()
 {
 	if (m_Rotate != 0.0f)
 	{
@@ -615,7 +615,7 @@ void CTintedImage::ApplyTransform()
 ** Read the meter-specific options from the ini-file.
 **
 */
-void CTintedImage::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be tinted or transformed
 	Rect oldCrop = m_Crop;
@@ -792,7 +792,7 @@ void CTintedImage::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Compares the two given color matrices.
 **
 */
-bool CTintedImage::CompareColorMatrix(const Gdiplus::ColorMatrix* a, const Gdiplus::ColorMatrix* b)
+bool TintedImage::CompareColorMatrix(const Gdiplus::ColorMatrix* a, const Gdiplus::ColorMatrix* b)
 {
 	for (int i = 0; i < 5; ++i)
 	{

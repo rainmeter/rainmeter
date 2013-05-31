@@ -21,13 +21,13 @@
 #include "Rainmeter.h"
 #include "MathParser.h"
 
-bool CMeasureCalc::c_RandSeeded = false;
+bool MeasureCalc::c_RandSeeded = false;
 
 /*
 ** The constructor
 **
 */
-CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+MeasureCalc::MeasureCalc(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_ParseError(false),
 	m_LowBound(),
 	m_HighBound(100),
@@ -46,7 +46,7 @@ CMeasureCalc::CMeasureCalc(CMeterWindow* meterWindow, const WCHAR* name) : CMeas
 ** The destructor
 **
 */
-CMeasureCalc::~CMeasureCalc()
+MeasureCalc::~MeasureCalc()
 {
 }
 
@@ -54,7 +54,7 @@ CMeasureCalc::~CMeasureCalc()
 ** Updates the calculation
 **
 */
-void CMeasureCalc::UpdateValue()
+void MeasureCalc::UpdateValue()
 {
 	const WCHAR* errMsg = MathParser::Parse(m_Formula.c_str(), this, &m_Value);
 	if (errMsg != NULL)
@@ -75,9 +75,9 @@ void CMeasureCalc::UpdateValue()
 ** Read the options specified in the ini file.
 **
 */
-void CMeasureCalc::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser, section);
 
 	// Store the current values so we know if the value needs to be updated
 	int oldLowBound = m_LowBound;
@@ -115,7 +115,7 @@ void CMeasureCalc::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** This replaces the word Random in the formula with a random number
 **
 */
-void CMeasureCalc::FormulaReplace()
+void MeasureCalc::FormulaReplace()
 {
 	size_t start = 0, pos;
 	do
@@ -145,11 +145,11 @@ void CMeasureCalc::FormulaReplace()
 	while (pos != std::wstring::npos);
 }
 
-bool CMeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value)
+bool MeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value)
 {
-	const std::vector<CMeasure*>& measures = m_MeterWindow->GetMeasures();
+	const std::vector<Measure*>& measures = m_MeterWindow->GetMeasures();
 
-	std::vector<CMeasure*>::const_iterator iter = measures.begin();
+	std::vector<Measure*>::const_iterator iter = measures.begin();
 	for ( ; iter != measures.end(); ++iter)
 	{
 		if ((*iter)->GetOriginalName().length() == len &&
@@ -174,7 +174,7 @@ bool CMeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value)
 	return false;
 }
 
-int CMeasureCalc::GetRandom()
+int MeasureCalc::GetRandom()
 {
 	double range = (m_HighBound - m_LowBound) + 1;
 	srand((unsigned)rand());

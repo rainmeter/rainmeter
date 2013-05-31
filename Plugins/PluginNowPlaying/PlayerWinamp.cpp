@@ -22,7 +22,7 @@
 #include "Winamp/wa_ipc.h"
 #include "Winamp/wa_cmd.h"
 
-CPlayer* CPlayerWinamp::c_Player = NULL;
+Player* PlayerWinamp::c_Player = NULL;
 
 // This player retrieves data through the Winamp IPC interface.
 
@@ -30,7 +30,7 @@ CPlayer* CPlayerWinamp::c_Player = NULL;
 ** Constructor.
 **
 */
-CPlayerWinamp::CPlayerWinamp(WINAMPTYPE type) : CPlayer(),
+PlayerWinamp::PlayerWinamp(WINAMPTYPE type) : Player(),
 	m_Window(),
 	m_LastCheckTime(0),
 	m_UseUnicodeAPI(false),
@@ -45,7 +45,7 @@ CPlayerWinamp::CPlayerWinamp(WINAMPTYPE type) : CPlayer(),
 ** Destructor.
 **
 */
-CPlayerWinamp::~CPlayerWinamp()
+PlayerWinamp::~PlayerWinamp()
 {
 	c_Player = NULL;
 	if (m_WinampHandle) CloseHandle(m_WinampHandle);
@@ -55,11 +55,11 @@ CPlayerWinamp::~CPlayerWinamp()
 ** Creates a shared class object.
 **
 */
-CPlayer* CPlayerWinamp::Create(WINAMPTYPE type)
+Player* PlayerWinamp::Create(WINAMPTYPE type)
 {
 	if (!c_Player)
 	{
-		c_Player = new CPlayerWinamp(type);
+		c_Player = new PlayerWinamp(type);
 	}
 
 	return c_Player;
@@ -69,7 +69,7 @@ CPlayer* CPlayerWinamp::Create(WINAMPTYPE type)
 ** Try to find Winamp periodically.
 **
 */
-bool CPlayerWinamp::CheckWindow()
+bool PlayerWinamp::CheckWindow()
 {
 	DWORD time = GetTickCount();
 
@@ -101,7 +101,7 @@ bool CPlayerWinamp::CheckWindow()
 ** Called during each update of the main measure.
 **
 */
-void CPlayerWinamp::UpdateData()
+void PlayerWinamp::UpdateData()
 {
 	if (m_Initialized || CheckWindow())
 	{
@@ -323,7 +323,7 @@ void CPlayerWinamp::UpdateData()
 ** Handles the Pause bang.
 **
 */
-void CPlayerWinamp::Pause()
+void PlayerWinamp::Pause()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_PAUSE, 0);
 }
@@ -332,7 +332,7 @@ void CPlayerWinamp::Pause()
 ** Handles the Play bang.
 **
 */
-void CPlayerWinamp::Play()
+void PlayerWinamp::Play()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_PLAY, 0);
 }
@@ -341,7 +341,7 @@ void CPlayerWinamp::Play()
 ** Handles the Stop bang.
 **
 */
-void CPlayerWinamp::Stop()
+void PlayerWinamp::Stop()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_STOP, 0);
 }
@@ -350,7 +350,7 @@ void CPlayerWinamp::Stop()
 ** Handles the Next bang.
 **
 */
-void CPlayerWinamp::Next() 
+void PlayerWinamp::Next() 
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_FASTFWD, 0);
 }
@@ -359,7 +359,7 @@ void CPlayerWinamp::Next()
 ** Handles the Previous bang.
 **
 */
-void CPlayerWinamp::Previous()
+void PlayerWinamp::Previous()
 {
 	SendMessage(m_Window, WM_COMMAND, WINAMP_REWIND, 0);
 }
@@ -368,7 +368,7 @@ void CPlayerWinamp::Previous()
 ** Handles the SetPosition bang.
 **
 */
-void CPlayerWinamp::SetPosition(int position)
+void PlayerWinamp::SetPosition(int position)
 {
 	position *= 1000; // To milliseconds
 	SendMessage(m_Window, WM_WA_IPC, position, IPC_JUMPTOTIME);
@@ -378,7 +378,7 @@ void CPlayerWinamp::SetPosition(int position)
 ** Handles the SetRating bang.
 **
 */
-void CPlayerWinamp::SetRating(int rating)
+void PlayerWinamp::SetRating(int rating)
 {
 	if (rating < 0)
 	{
@@ -397,7 +397,7 @@ void CPlayerWinamp::SetRating(int rating)
 ** Handles the SetVolume bang.
 **
 */
-void CPlayerWinamp::SetVolume(int volume)
+void PlayerWinamp::SetVolume(int volume)
 {
 	// Winamp accepts volume in 0 - 255 range
 	float fVolume = volume * 2.55f;
@@ -408,7 +408,7 @@ void CPlayerWinamp::SetVolume(int volume)
 ** Handles the SetShuffle bang.
 **
 */
-void CPlayerWinamp::SetShuffle(bool state)
+void PlayerWinamp::SetShuffle(bool state)
 {
 	if (!m_PlayingStream)
 	{
@@ -421,7 +421,7 @@ void CPlayerWinamp::SetShuffle(bool state)
 ** Handles the SetRepeat bang.
 **
 */
-void CPlayerWinamp::SetRepeat(bool state)
+void PlayerWinamp::SetRepeat(bool state)
 {
 	if (!m_PlayingStream)
 	{
@@ -434,7 +434,7 @@ void CPlayerWinamp::SetRepeat(bool state)
 ** Handles the ClosePlayer bang.
 **
 */
-void CPlayerWinamp::ClosePlayer()
+void PlayerWinamp::ClosePlayer()
 {
 	if (m_WinampType == WA_WINAMP)
 	{
@@ -454,7 +454,7 @@ void CPlayerWinamp::ClosePlayer()
 ** Handles the OpenPlayer bang.
 **
 */
-void CPlayerWinamp::OpenPlayer(std::wstring& path)
+void PlayerWinamp::OpenPlayer(std::wstring& path)
 {
 	if (m_WinampType == WA_WINAMP)
 	{

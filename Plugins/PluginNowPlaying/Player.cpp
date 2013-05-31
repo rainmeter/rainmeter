@@ -23,7 +23,7 @@
 ** Constructor.
 **
 */
-CPlayer::CPlayer() :
+Player::Player() :
 	m_Initialized(false),
 	m_InstanceCount(),
 	m_UpdateCount(),
@@ -51,7 +51,7 @@ CPlayer::CPlayer() :
 ** Destructor.
 **
 */
-CPlayer::~CPlayer()
+Player::~Player()
 {
 	DeleteFile(m_TempCoverPath.c_str());
 
@@ -65,7 +65,7 @@ CPlayer::~CPlayer()
 ** Called during initialization of main measure.
 **
 */
-void CPlayer::AddInstance()
+void Player::AddInstance()
 {
 	++m_InstanceCount;
 }
@@ -74,7 +74,7 @@ void CPlayer::AddInstance()
 ** Called during destruction of main measure.
 **
 */
-void CPlayer::RemoveInstance()
+void Player::RemoveInstance()
 {
 	m_UpdateCount = 0;
 
@@ -88,7 +88,7 @@ void CPlayer::RemoveInstance()
 ** Called during initialization of any measure.
 **
 */
-void CPlayer::AddMeasure(INT type)
+void Player::AddMeasure(INT type)
 {
 	m_Measures |= type;
 }
@@ -97,7 +97,7 @@ void CPlayer::AddMeasure(INT type)
 ** Called during update of main measure.
 **
 */
-void CPlayer::UpdateMeasure()
+void Player::UpdateMeasure()
 {
 	if (++m_UpdateCount == m_InstanceCount)
 	{
@@ -110,7 +110,7 @@ void CPlayer::UpdateMeasure()
 ** Default implementation for getting cover.
 **
 */
-void CPlayer::FindCover()
+void Player::FindCover()
 {
 	TagLib::FileRef fr(m_FilePath.c_str(), false);
 	if (!fr.isNull() && CCover::GetEmbedded(fr, m_TempCoverPath))
@@ -134,7 +134,7 @@ void CPlayer::FindCover()
 ** Default implementation for getting lyrics.
 **
 */
-void CPlayer::FindLyrics()
+void Player::FindLyrics()
 {
 	if (!m_InternetThread)
 	{
@@ -157,9 +157,9 @@ void CPlayer::FindLyrics()
 ** Thread to download lyrics.
 **
 */
-unsigned __stdcall CPlayer::LyricsThreadProc(void* pParam)
+unsigned __stdcall Player::LyricsThreadProc(void* pParam)
 {
-	CPlayer* player = (CPlayer*)pParam;
+	Player* player = (Player*)pParam;
 
 	std::wstring lyrics;
 	bool found;
@@ -167,7 +167,7 @@ unsigned __stdcall CPlayer::LyricsThreadProc(void* pParam)
 	while (true)
 	{
 		UINT beforeCount = player->GetTrackCount();
-		found = CLyrics::GetFromInternet(player->m_Artist, player->m_Title, lyrics);
+		found = Lyrics::GetFromInternet(player->m_Artist, player->m_Title, lyrics);
 		UINT afterCount = player->GetTrackCount();
 
 		if (beforeCount == afterCount)
@@ -194,7 +194,7 @@ unsigned __stdcall CPlayer::LyricsThreadProc(void* pParam)
 ** Clear track information.
 **
 */
-void CPlayer::ClearData(bool all)
+void Player::ClearData(bool all)
 {
 	m_State = STATE_STOPPED;
 	m_Artist.clear();

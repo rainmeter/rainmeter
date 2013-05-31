@@ -23,19 +23,19 @@
 
 typedef LONG (WINAPI *FPNTQSI)(UINT, PVOID, ULONG, PULONG);
 
-class CMeasureCPU : public CMeasure
+class MeasureCPU : public Measure
 {
 public:
-	CMeasureCPU(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeasureCPU();
+	MeasureCPU(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeasureCPU();
 
-	virtual UINT GetTypeID() { return TypeID<CMeasureCPU>(); }
+	virtual UINT GetTypeID() { return TypeID<MeasureCPU>(); }
 
 	static void InitializeStatic();
 	static void FinalizeStatic();
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:

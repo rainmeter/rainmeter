@@ -21,13 +21,13 @@
 #ifndef __MATHPARSER_H__
 #define __MATHPARSER_H__
 
-class CMeasureCalc;
+class MeasureCalc;
 
 namespace MathParser
 {
 	const WCHAR* Check(const WCHAR* formula);
 	const WCHAR* CheckedParse(const WCHAR* formula, double* result);
-	const WCHAR* Parse(const WCHAR* formula, CMeasureCalc* calc, double* result);
+	const WCHAR* Parse(const WCHAR* formula, MeasureCalc* calc, double* result);
 
 	bool IsDelimiter(WCHAR ch);
 };

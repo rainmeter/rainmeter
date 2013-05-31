@@ -27,12 +27,12 @@ enum WINAMPTYPE
 	WA_MEDIAMONKEY
 };
 
-class CPlayerWinamp : public CPlayer
+class PlayerWinamp : public Player
 {
 public:
-	virtual ~CPlayerWinamp();
+	virtual ~PlayerWinamp();
 
-	static CPlayer* Create(WINAMPTYPE type);
+	static Player* Create(WINAMPTYPE type);
 
 	virtual void UpdateData();
 
@@ -50,12 +50,12 @@ public:
 	virtual void OpenPlayer(std::wstring& path);
 
 protected:
-	CPlayerWinamp(WINAMPTYPE type);
+	PlayerWinamp(WINAMPTYPE type);
 
 private:
 	bool CheckWindow();
 
-	static CPlayer* c_Player;
+	static Player* c_Player;
 
 	HWND m_Window;				// Winamp window
 	DWORD m_LastCheckTime;

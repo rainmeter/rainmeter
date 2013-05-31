@@ -50,7 +50,7 @@ enum MeasureType
 struct MeasureData
 {
 	MeasureType type;
-	CRawString format;
+	RawString format;
 	
 	MeasureData() : type(POWER_UNKNOWN) {}
 };

@@ -22,19 +22,19 @@
 #include "../Common/Dialog.h"
 #include "resource.h"
 
-class CDialogManage : public CDialog
+class DialogManage : public Dialog
 {
 public:
-	CDialogManage();
-	virtual ~CDialogManage();
+	DialogManage();
+	virtual ~DialogManage();
 
-	static CDialog* GetDialog() { return c_Dialog; }
+	static Dialog* GetDialog() { return c_Dialog; }
 
 	static void Open(const WCHAR* name);
 	static void Open(int tab = 0);
-	static void OpenSkin(CMeterWindow* meterWindow);
+	static void OpenSkin(MeterWindow* meterWindow);
 
-	static void UpdateSkins(CMeterWindow* meterWindow, bool deleted = false);
+	static void UpdateSkins(MeterWindow* meterWindow, bool deleted = false);
 
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -44,7 +44,7 @@ protected:
 
 private:
 	// Skins tab
-	class CTabSkins : public CTab
+	class TabSkins : public Tab
 	{
 	public:
 		enum Id
@@ -77,12 +77,12 @@ private:
 			Id_EditButton    = IDM_MANAGESKINSMENU_EDIT
 		};
 
-		CTabSkins();
+		TabSkins();
 
 		void Create(HWND owner);
 		virtual void Initialize();
 
-		void Update(CMeterWindow* meterWindow, bool deleted);
+		void Update(MeterWindow* meterWindow, bool deleted);
 
 		static void SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR name);
 
@@ -101,13 +101,13 @@ private:
 
 		std::wstring m_SkinFileName;
 		std::wstring m_SkinFolderPath;
-		CMeterWindow* m_SkinWindow;
+		MeterWindow* m_SkinWindow;
 		bool m_HandleCommands;
 		bool m_IgnoreUpdate;
 	};
 
 	// Layouts tab
-	class CTabLayouts : public CTab
+	class TabLayouts : public Tab
 	{
 	public:
 		enum Id
@@ -123,7 +123,7 @@ private:
 			Id_NameLabel
 		};
 
-		CTabLayouts();
+		TabLayouts();
 
 		void Create(HWND owner);
 		virtual void Initialize();
@@ -134,7 +134,7 @@ private:
 	};
 	
 	// Settings tab
-	class CTabSettings : public CTab
+	class TabSettings : public Tab
 	{
 	public:
 		enum Id
@@ -152,7 +152,7 @@ private:
 			Id_ShowTrayIconCheckBox
 		};
 
-		CTabSettings();
+		TabSettings();
 
 		void Create(HWND owner);
 		virtual void Initialize();
@@ -172,14 +172,14 @@ private:
 		Id_HelpButton
 	};
 
-	CTab& GetActiveTab();
+	Tab& GetActiveTab();
 
-	CTabSkins m_TabSkins;
-	CTabLayouts m_TabLayouts;
-	CTabSettings m_TabSettings;
+	TabSkins m_TabSkins;
+	TabLayouts m_TabLayouts;
+	TabSettings m_TabSettings;
 
 	static WINDOWPLACEMENT c_WindowPlacement;
-	static CDialogManage* c_Dialog;
+	static DialogManage* c_Dialog;
 };
 
 #endif

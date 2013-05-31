@@ -24,12 +24,12 @@
 
 const int TIMER_CHECKACTIVE = 1;
 
-class CPlayerITunes : public CPlayer
+class PlayerITunes : public Player
 {
 public:
-	virtual ~CPlayerITunes();
+	virtual ~PlayerITunes();
 
-	static CPlayer* Create();
+	static Player* Create();
 
 	virtual void UpdateData();
 
@@ -47,13 +47,13 @@ public:
 	virtual void OpenPlayer(std::wstring& path);
 
 protected:
-	CPlayerITunes();
+	PlayerITunes();
 
 private:
 	class CEventHandler : public _IiTunesEvents
 	{
 	public:
-		CEventHandler(CPlayerITunes* player);
+		CEventHandler(PlayerITunes* player);
 		~CEventHandler();
 
 		// IUnknown
@@ -69,7 +69,7 @@ private:
 
 	private:
 		ULONG m_RefCount;
-		CPlayerITunes* m_Player;
+		PlayerITunes* m_Player;
 		IConnectionPoint* m_ConnectionPoint;
 		DWORD m_ConnectionCookie;
 	};
@@ -84,7 +84,7 @@ private:
 
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-	static CPlayer* c_Player;
+	static Player* c_Player;
 
 	HWND m_CallbackWindow;
 	DWORD m_LastCheckTime;

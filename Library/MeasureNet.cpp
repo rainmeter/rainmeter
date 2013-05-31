@@ -21,21 +21,21 @@
 #include "Rainmeter.h"
 #include "System.h"
 
-BYTE* CMeasureNet::c_Table = NULL;
-UINT CMeasureNet::c_NumOfTables = 0;
-std::vector<ULONG64> CMeasureNet::c_StatValues;
-std::vector<ULONG64> CMeasureNet::c_OldStatValues;
+BYTE* MeasureNet::c_Table = NULL;
+UINT MeasureNet::c_NumOfTables = 0;
+std::vector<ULONG64> MeasureNet::c_StatValues;
+std::vector<ULONG64> MeasureNet::c_OldStatValues;
 
-FPGETIFTABLE2 CMeasureNet::c_GetIfTable2 = NULL;
-FPFREEMIBTABLE CMeasureNet::c_FreeMibTable = NULL;
+FPGETIFTABLE2 MeasureNet::c_GetIfTable2 = NULL;
+FPFREEMIBTABLE MeasureNet::c_FreeMibTable = NULL;
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 /*
 ** The constructor. This is the base class for the net-meters.
 **
 */
-CMeasureNet::CMeasureNet(CMeterWindow* meterWindow, const WCHAR* name, NET type) : CMeasure(meterWindow, name),
+MeasureNet::MeasureNet(MeterWindow* meterWindow, const WCHAR* name, NET type) : Measure(meterWindow, name),
 	m_Net(type),
 	m_Interface(),
 	m_Octets(),
@@ -48,7 +48,7 @@ CMeasureNet::CMeasureNet(CMeterWindow* meterWindow, const WCHAR* name, NET type)
 ** The destructor
 **
 */
-CMeasureNet::~CMeasureNet()
+MeasureNet::~MeasureNet()
 {
 }
 
@@ -56,7 +56,7 @@ CMeasureNet::~CMeasureNet()
 ** Reads the tables for all net interfaces
 **
 */
-void CMeasureNet::UpdateIFTable()
+void MeasureNet::UpdateIFTable()
 {
 	bool logging = false;
 
@@ -78,7 +78,7 @@ void CMeasureNet::UpdateIFTable()
 				logging = true;
 			}
 
-			if (Rainmeter->GetDebug() && logging)
+			if (g_Rainmeter->GetDebug() && logging)
 			{
 				LogDebug(L"------------------------------");
 				LogDebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
@@ -171,7 +171,7 @@ void CMeasureNet::UpdateIFTable()
 					logging = true;
 				}
 
-				if (Rainmeter->GetDebug() && logging)
+				if (g_Rainmeter->GetDebug() && logging)
 				{
 					LogDebug(L"------------------------------");
 					LogDebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
@@ -226,7 +226,7 @@ void CMeasureNet::UpdateIFTable()
 ** the net-parameter informs which inherited class called this method.
 **
 */
-ULONG64 CMeasureNet::GetNetOctets(NET net)
+ULONG64 MeasureNet::GetNetOctets(NET net)
 {
 	ULONG64 value = 0;
 
@@ -343,7 +343,7 @@ ULONG64 CMeasureNet::GetNetOctets(NET net)
 ** Returns the stats value of the interface
 **
 */
-ULONG64 CMeasureNet::GetNetStatsValue(NET net)
+ULONG64 MeasureNet::GetNetStatsValue(NET net)
 {
 	ULONG64 value = 0;
 	size_t statsSize = c_StatValues.size() / 2;
@@ -414,7 +414,7 @@ ULONG64 CMeasureNet::GetNetStatsValue(NET net)
 ** Updates the current value.
 **
 */
-void CMeasureNet::UpdateValue()
+void MeasureNet::UpdateValue()
 {
 	if (c_Table == NULL) return;
 
@@ -455,9 +455,9 @@ void CMeasureNet::UpdateValue()
 ** Read the options specified in the ini file.
 **
 */
-void CMeasureNet::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser, section);
 
 	double value;
 	const WCHAR* netName = NULL;
@@ -465,17 +465,17 @@ void CMeasureNet::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	if (m_Net == NET_IN)
 	{
 		netName = L"NetInSpeed";
-		value = Rainmeter->GetGlobalOptions().netInSpeed;
+		value = g_Rainmeter->GetGlobalOptions().netInSpeed;
 	}
 	else if (m_Net == NET_OUT)
 	{
 		netName = L"NetOutSpeed";
-		value = Rainmeter->GetGlobalOptions().netOutSpeed;
+		value = g_Rainmeter->GetGlobalOptions().netOutSpeed;
 	}
 	else // if (m_Net == NET_TOTAL)
 	{
 		netName = L"NetTotalSpeed";
-		value = Rainmeter->GetGlobalOptions().netInSpeed + Rainmeter->GetGlobalOptions().netOutSpeed;
+		value = g_Rainmeter->GetGlobalOptions().netInSpeed + g_Rainmeter->GetGlobalOptions().netOutSpeed;
 	}
 
 	double maxValue = parser.ReadFloat(section, L"MaxValue", -1);
@@ -493,7 +493,7 @@ void CMeasureNet::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	m_Cumulative = 0!=parser.ReadInt(section, L"Cumulative", 0);
 	if (m_Cumulative)
 	{
-		Rainmeter->SetNetworkStatisticsTimer();
+		g_Rainmeter->SetNetworkStatisticsTimer();
 	}
 
 	if (maxValue == 0.0)
@@ -516,7 +516,7 @@ void CMeasureNet::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Updates the statistics.
 **
 */
-void CMeasureNet::UpdateStats()
+void MeasureNet::UpdateStats()
 {
 	if (c_Table)
 	{
@@ -574,7 +574,7 @@ void CMeasureNet::UpdateStats()
 ** Resets the statistics.
 **
 */
-void CMeasureNet::ResetStats()
+void MeasureNet::ResetStats()
 {
 	c_StatValues.clear();
 }
@@ -583,11 +583,11 @@ void CMeasureNet::ResetStats()
 ** Reads statistics.
 **
 */
-void CMeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
+void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 {
 	WCHAR buffer[48];
 
-	CConfigParser parser;
+	ConfigParser parser;
 	parser.Initialize(iniFile, NULL, L"Statistics");
 
 	const std::wstring& date = parser.ReadString(L"Statistics", L"Since", L"", false);
@@ -639,7 +639,7 @@ void CMeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate
 ** Writes statistics.
 **
 */
-void CMeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
+void MeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
 {
 	WCHAR buffer[48];
 	int len;
@@ -689,7 +689,7 @@ void CMeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate
 ** Prepares in order to use the new APIs which are available on Vista or newer.
 **
 */
-void CMeasureNet::InitializeStatic()
+void MeasureNet::InitializeStatic()
 {
 	if (Platform::IsAtLeastWinVista())
 	{
@@ -707,7 +707,7 @@ void CMeasureNet::InitializeStatic()
 		}
 	}
 
-	if (Rainmeter->GetDebug())
+	if (g_Rainmeter->GetDebug())
 	{
 		UpdateIFTable();
 	}
@@ -717,7 +717,7 @@ void CMeasureNet::InitializeStatic()
 ** Frees the resources.
 **
 */
-void CMeasureNet::FinalizeStatic()
+void MeasureNet::FinalizeStatic()
 {
 	if (c_GetIfTable2)
 	{

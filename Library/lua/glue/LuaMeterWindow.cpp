@@ -22,17 +22,17 @@
 #include "../../MeterWindow.h"
 #include "../../MeterString.h"
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 #define DECLARE_SELF(L) \
 	void* selfData = lua_touserdata(L, 1); \
 	if (!selfData) return 0; \
-	CMeterWindow* self = *(CMeterWindow**)selfData;
+	MeterWindow* self = *(MeterWindow**)selfData;
 
 static int Bang(lua_State* L)
 {
 	DECLARE_SELF(L)
-	CConfigParser& parser = self->GetParser();
+	ConfigParser& parser = self->GetParser();
 
 	std::wstring bang = LuaManager::ToWide(L, 2);
 
@@ -40,7 +40,7 @@ static int Bang(lua_State* L)
 	if (top == 2)	// 1 argument
 	{
 		parser.ReplaceVariables(bang);
-		Rainmeter->ExecuteCommand(bang.c_str(), self);
+		g_Rainmeter->ExecuteCommand(bang.c_str(), self);
 	}
 	else
 	{
@@ -56,7 +56,7 @@ static int Bang(lua_State* L)
 				args.push_back(tmpSz);
 			}
 
-			Rainmeter->ExecuteBang(bangSz, args, self);
+			g_Rainmeter->ExecuteBang(bangSz, args, self);
 		}
 	}
 
@@ -68,11 +68,11 @@ static int GetMeter(lua_State* L)
 	DECLARE_SELF(L)
 	const std::wstring meterName = LuaManager::ToWide(L, 2);
 
-	CMeter* meter = self->GetMeter(meterName);
+	Meter* meter = self->GetMeter(meterName);
 	if (meter)
 	{
-		*(CMeter**)lua_newuserdata(L, sizeof(CMeter*)) = meter;
-		lua_getglobal(L, "CMeter");
+		*(Meter**)lua_newuserdata(L, sizeof(Meter*)) = meter;
+		lua_getglobal(L, "Meter");
 		lua_setmetatable(L, -2);
 	}
 	else
@@ -88,11 +88,11 @@ static int GetMeasure(lua_State* L)
 	DECLARE_SELF(L)
 	const std::wstring measureName = LuaManager::ToWide(L, 2);
 
-	CMeasure* measure = self->GetMeasure(measureName);
+	Measure* measure = self->GetMeasure(measureName);
 	if (measure)
 	{
-		*(CMeasure**)lua_newuserdata(L, sizeof(CMeasure*)) = measure;
-		lua_getglobal(L, "CMeasure");
+		*(Measure**)lua_newuserdata(L, sizeof(Measure*)) = measure;
+		lua_getglobal(L, "Measure");
 		lua_setmetatable(L, -2);
 	}
 	else
@@ -231,7 +231,7 @@ void LuaManager::RegisterMeterWindow(lua_State* L)
 		{ NULL, NULL }
 	};
 
-	luaL_register(L, "CMeterWindow", functions);
+	luaL_register(L, "MeterWindow", functions);
 	lua_pushvalue(L, -1);
 	lua_setfield(L, -2, "__index");
 	lua_pop(L, 1);

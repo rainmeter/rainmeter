@@ -21,13 +21,13 @@
 #include "lua/LuaScript.h"
 #include "MeterWindow.h"
 
-class CMeasureScript : public CMeasure
+class MeasureScript : public Measure
 {
 public:
-	CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeasureScript();
+	MeasureScript(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeasureScript();
 
-	virtual UINT GetTypeID() { return TypeID<CMeasureScript>(); }
+	virtual UINT GetTypeID() { return TypeID<MeasureScript>(); }
 
 	virtual const WCHAR* GetStringValue();
 	virtual void Command(const std::wstring& command);
@@ -35,7 +35,7 @@ public:
 	void UninitializeLuaScript();
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:

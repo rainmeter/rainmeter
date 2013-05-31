@@ -20,7 +20,7 @@
 #include "PlayerCAD.h"
 #include "CAD/cad_sdk.h"
 
-CPlayer* CPlayerCAD::c_Player = NULL;
+Player* PlayerCAD::c_Player = NULL;
 extern HINSTANCE g_Instance;
 
 // This player emulates the CD Art Display IPC interface, which is supported by
@@ -30,7 +30,7 @@ extern HINSTANCE g_Instance;
 ** Constructor.
 **
 */
-CPlayerCAD::CPlayerCAD() : CPlayer(),
+PlayerCAD::PlayerCAD() : Player(),
 	m_Window(),
 	m_PlayerWindow(),
 	m_ExtendedAPI(false),
@@ -43,7 +43,7 @@ CPlayerCAD::CPlayerCAD() : CPlayer(),
 ** Constructor.
 **
 */
-CPlayerCAD::~CPlayerCAD()
+PlayerCAD::~PlayerCAD()
 {
 	c_Player = NULL;
 	Uninitialize();
@@ -53,11 +53,11 @@ CPlayerCAD::~CPlayerCAD()
 ** Creates a shared class object.
 **
 */
-CPlayer* CPlayerCAD::Create()
+Player* PlayerCAD::Create()
 {
 	if (!c_Player)
 	{
-		c_Player = new CPlayerCAD();
+		c_Player = new PlayerCAD();
 	}
 
 	return c_Player;
@@ -67,7 +67,7 @@ CPlayer* CPlayerCAD::Create()
 ** Create receiver window.
 **
 */
-void CPlayerCAD::Initialize()
+void PlayerCAD::Initialize()
 {
 	// Create windows class
 	WNDCLASS wc = {0};
@@ -184,7 +184,7 @@ void CPlayerCAD::Initialize()
 ** Destroy reciever window.
 **
 */
-void CPlayerCAD::Uninitialize()
+void PlayerCAD::Uninitialize()
 {
 	DestroyWindow(m_Window);
 	UnregisterClass(L"NowPlayingCADClass", g_Instance);
@@ -194,16 +194,16 @@ void CPlayerCAD::Uninitialize()
 ** Window procedure for the reciever window.
 **
 */
-LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	static CPlayerCAD* player;
+	static PlayerCAD* player;
 
 	switch (msg)
 	{
 	case WM_CREATE:
 		{
-			// Get pointer to the CPlayerCAD class from the CreateWindow call
-			player = (CPlayerCAD*)((CREATESTRUCT*)lParam)->lpCreateParams;
+			// Get pointer to the PlayerCAD class from the CreateWindow call
+			player = (PlayerCAD*)((CREATESTRUCT*)lParam)->lpCreateParams;
 			return 0;
 		}
 
@@ -414,7 +414,7 @@ LRESULT CALLBACK CPlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 ** Called during each update of the main measure.
 **
 */
-void CPlayerCAD::UpdateData()
+void PlayerCAD::UpdateData()
 {
 	if (m_State != STATE_STOPPED)
 	{
@@ -427,7 +427,7 @@ void CPlayerCAD::UpdateData()
 ** Handles the Pause bang.
 **
 */
-void CPlayerCAD::Pause()
+void PlayerCAD::Pause()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, m_ExtendedAPI ? IPC_PAUSE : IPC_PLAYPAUSE);
 }
@@ -436,7 +436,7 @@ void CPlayerCAD::Pause()
 ** Handles the Play bang.
 **
 */
-void CPlayerCAD::Play()
+void PlayerCAD::Play()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, m_ExtendedAPI ? IPC_PLAY : IPC_PLAYPAUSE);
 }
@@ -445,7 +445,7 @@ void CPlayerCAD::Play()
 ** Handles the Stop bang.
 **
 */
-void CPlayerCAD::Stop() 
+void PlayerCAD::Stop() 
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_STOP);
 }
@@ -454,7 +454,7 @@ void CPlayerCAD::Stop()
 ** Handles the Next bang.
 **
 */
-void CPlayerCAD::Next() 
+void PlayerCAD::Next() 
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_NEXT);
 }
@@ -463,7 +463,7 @@ void CPlayerCAD::Next()
 ** Handles the Previous bang.
 **
 */
-void CPlayerCAD::Previous() 
+void PlayerCAD::Previous() 
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_PREVIOUS);
 }
@@ -472,7 +472,7 @@ void CPlayerCAD::Previous()
 ** Handles the SetPosition bang.
 **
 */
-void CPlayerCAD::SetPosition(int position)
+void PlayerCAD::SetPosition(int position)
 {
 	SendMessage(m_PlayerWindow, WM_USER, position, IPC_SET_POSITION);
 }
@@ -481,7 +481,7 @@ void CPlayerCAD::SetPosition(int position)
 ** Handles the SetRating bang.
 **
 */
-void CPlayerCAD::SetRating(int rating) 
+void PlayerCAD::SetRating(int rating) 
 {
 	m_Rating = rating;
 	rating *= 2; // From 0 - 5 to 0 - 10
@@ -492,7 +492,7 @@ void CPlayerCAD::SetRating(int rating)
 ** Handles the SetVolume bang.
 **
 */
-void CPlayerCAD::SetVolume(int volume) 
+void PlayerCAD::SetVolume(int volume) 
 {
 	SendMessage(m_PlayerWindow, WM_USER, volume, IPC_SET_VOLUME);
 }
@@ -501,7 +501,7 @@ void CPlayerCAD::SetVolume(int volume)
 ** Handles the SetShuffle bang.
 **
 */
-void CPlayerCAD::SetShuffle(bool state)
+void PlayerCAD::SetShuffle(bool state)
 {
 	SendMessage(m_PlayerWindow, WM_USER, (WPARAM)state, IPC_SET_SHUFFLE);
 	m_Shuffle = (bool)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_SHUFFLE);
@@ -511,7 +511,7 @@ void CPlayerCAD::SetShuffle(bool state)
 ** Handles the SetRepeat bang.
 **
 */
-void CPlayerCAD::SetRepeat(bool state)
+void PlayerCAD::SetRepeat(bool state)
 {
 	SendMessage(m_PlayerWindow, WM_USER, (WPARAM)state, IPC_SET_REPEAT);
 	m_Repeat = (bool)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_REPEAT);
@@ -521,7 +521,7 @@ void CPlayerCAD::SetRepeat(bool state)
 ** Handles the ClosePlayer bang.
 **
 */
-void CPlayerCAD::ClosePlayer()
+void PlayerCAD::ClosePlayer()
 {
 	SendMessage(m_PlayerWindow, WM_USER, 0, IPC_CLOSE);
 	// TODO
@@ -533,7 +533,7 @@ void CPlayerCAD::ClosePlayer()
 ** Handles the OpenPlayer bang.
 **
 */
-void CPlayerCAD::OpenPlayer(std::wstring& path)
+void PlayerCAD::OpenPlayer(std::wstring& path)
 {
 	if (!m_Initialized)
 	{

@@ -31,7 +31,7 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-CMeterRoundLine::CMeterRoundLine(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
+MeterRoundLine::MeterRoundLine(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
 	m_Solid(false),
 	m_LineWidth(1.0),
 	m_LineLength(20.0),
@@ -53,7 +53,7 @@ CMeterRoundLine::CMeterRoundLine(CMeterWindow* meterWindow, const WCHAR* name) :
 ** The destructor
 **
 */
-CMeterRoundLine::~CMeterRoundLine()
+MeterRoundLine::~MeterRoundLine()
 {
 }
 
@@ -61,9 +61,9 @@ CMeterRoundLine::~CMeterRoundLine()
 ** Read the options specified in the ini file.
 **
 */
-void CMeterRoundLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	CMeter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser, section);
 
 	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
 	m_LineLength = parser.ReadFloat(section, L"LineLength", 20.0);
@@ -85,9 +85,9 @@ void CMeterRoundLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Updates the value(s) from the measures.
 **
 */
-bool CMeterRoundLine::Update()
+bool MeterRoundLine::Update()
 {
-	if (CMeter::Update())
+	if (Meter::Update())
 	{
 		if (m_Measures.empty())
 		{
@@ -95,7 +95,7 @@ bool CMeterRoundLine::Update()
 			return true;
 		}
 
-		CMeasure* measure = m_Measures[0];
+		Measure* measure = m_Measures[0];
 		if (m_ValueRemainder > 0)
 		{
 			LONGLONG time = (LONGLONG)measure->GetValue();
@@ -117,9 +117,9 @@ bool CMeterRoundLine::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterRoundLine::Draw(Gfx::Canvas& canvas)
+bool MeterRoundLine::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(canvas)) return false;
+	if (!Meter::Draw(canvas)) return false;
 
 	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
 
@@ -176,7 +176,7 @@ bool CMeterRoundLine::Draw(Gfx::Canvas& canvas)
 ** Overridden method. The roundline meters need not to be bound on anything
 **
 */
-void CMeterRoundLine::BindMeasures(CConfigParser& parser, const WCHAR* section)
+void MeterRoundLine::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	BindPrimaryMeasure(parser, section, true);
 }

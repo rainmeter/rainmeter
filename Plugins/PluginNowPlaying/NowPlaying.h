@@ -33,7 +33,7 @@ struct ParentMeasure
 		disableLeadingZero(false)
 	{}
 
-	CPlayer* player;
+	Player* player;
 	void* data;
 	void* skin;
 	LPCWSTR ownerName;

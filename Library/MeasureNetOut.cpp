@@ -23,7 +23,7 @@
 ** The constructor
 **
 */
-CMeasureNetOut::CMeasureNetOut(CMeterWindow* meterWindow, const WCHAR* name) : CMeasureNet(meterWindow, name, NET_OUT)
+MeasureNetOut::MeasureNetOut(MeterWindow* meterWindow, const WCHAR* name) : MeasureNet(meterWindow, name, NET_OUT)
 {
 }
 
@@ -31,6 +31,6 @@ CMeasureNetOut::CMeasureNetOut(CMeterWindow* meterWindow, const WCHAR* name) : C
 ** The destructor
 **
 */
-CMeasureNetOut::~CMeasureNetOut()
+MeasureNetOut::~MeasureNetOut()
 {
 }

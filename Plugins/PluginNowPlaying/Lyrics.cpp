@@ -25,10 +25,10 @@
 ** Download lyrics from various serivces.
 **
 */
-bool CLyrics::GetFromInternet(const std::wstring& artist, const std::wstring& title, std::wstring& out)
+bool Lyrics::GetFromInternet(const std::wstring& artist, const std::wstring& title, std::wstring& out)
 {
-	std::wstring encArtist = CInternet::EncodeUrl(artist);
-	std::wstring encTitle = CInternet::EncodeUrl(title);
+	std::wstring encArtist = Internet::EncodeUrl(artist);
+	std::wstring encTitle = Internet::EncodeUrl(title);
 
 	bool found = GetFromWikia(encArtist, encTitle, out) ||
 				 GetFromLYRDB(encArtist, encTitle, out) ||
@@ -41,7 +41,7 @@ bool CLyrics::GetFromInternet(const std::wstring& artist, const std::wstring& ti
 ** Download lyrics from LyricWiki.
 **
 */
-bool CLyrics::GetFromWikia(const std::wstring& artist, const std::wstring& title, std::wstring& data)
+bool Lyrics::GetFromWikia(const std::wstring& artist, const std::wstring& title, std::wstring& data)
 {
 	bool ret = false;
 	
@@ -49,7 +49,7 @@ bool CLyrics::GetFromWikia(const std::wstring& artist, const std::wstring& title
 	url += L"&song=";
 	url += title;
 
-	data = CInternet::DownloadUrl(url, CP_UTF8);
+	data = Internet::DownloadUrl(url, CP_UTF8);
 	if (!data.empty())
 	{
 		// First we get the URL to the actual wiki page
@@ -61,7 +61,7 @@ bool CLyrics::GetFromWikia(const std::wstring& artist, const std::wstring& title
 			url.assign(data, 0, pos);
 
 			// Fetch the wiki page
-			data = CInternet::DownloadUrl(url, CP_UTF8);
+			data = Internet::DownloadUrl(url, CP_UTF8);
 			if (!data.empty())
 			{
 				pos = data.find(L"'lyricbox'");
@@ -72,7 +72,7 @@ bool CLyrics::GetFromWikia(const std::wstring& artist, const std::wstring& title
 					data.erase(0, pos);
 					pos = data.find(L"<!");
 					data.resize(pos);
-					CInternet::DecodeReferences(data);
+					Internet::DecodeReferences(data);
 
 					pos = data.find(L"[...]");
 					if (pos != std::wstring::npos)
@@ -115,7 +115,7 @@ bool CLyrics::GetFromWikia(const std::wstring& artist, const std::wstring& title
 ** Download lyrics from LYRDB.
 **
 */
-bool CLyrics::GetFromLYRDB(const std::wstring& artist, const std::wstring& title, std::wstring& data)
+bool Lyrics::GetFromLYRDB(const std::wstring& artist, const std::wstring& title, std::wstring& data)
 {
 	bool ret = false;
 
@@ -132,7 +132,7 @@ bool CLyrics::GetFromLYRDB(const std::wstring& artist, const std::wstring& title
 	std::wstring url = L"http://webservices.lyrdb.com/lookup.php?q=" + query;
 	url += L"&for=match&agent=RainmeterNowPlaying";
 
-	data = CInternet::DownloadUrl(url, CP_ACP);
+	data = Internet::DownloadUrl(url, CP_ACP);
 	if (!data.empty())
 	{
 		pos = data.find(L"\\");
@@ -142,7 +142,7 @@ bool CLyrics::GetFromLYRDB(const std::wstring& artist, const std::wstring& title
 			url.assign(data, 0, pos);
 			url.insert(0, L"http://webservices.lyrdb.com/getlyr.php?q=");
 
-			data = CInternet::DownloadUrl(url, CP_ACP);
+			data = Internet::DownloadUrl(url, CP_ACP);
 			if (!data.empty())
 			{
 				ret = true;
@@ -157,14 +157,14 @@ bool CLyrics::GetFromLYRDB(const std::wstring& artist, const std::wstring& title
 ** Download lyrics from Letras.
 **
 */
-bool CLyrics::GetFromLetras(const std::wstring& artist, const std::wstring& title, std::wstring& data)
+bool Lyrics::GetFromLetras(const std::wstring& artist, const std::wstring& title, std::wstring& data)
 {
 	bool ret = false;
 
 	std::wstring url = L"http://letras.terra.com.br/winamp.php?musica=" + title;
 	url += L"&artista=";
 	url += artist;
-	data = CInternet::DownloadUrl(url, CP_ACP);
+	data = Internet::DownloadUrl(url, CP_ACP);
 	if (!data.empty())
 	{
 		std::wstring::size_type pos = data.find(L"\"letra\"");
@@ -177,7 +177,7 @@ bool CLyrics::GetFromLetras(const std::wstring& artist, const std::wstring& titl
 			pos = data.find(L"</p>");
 			data.resize(pos);
 
-			CInternet::DecodeReferences(data);
+			Internet::DecodeReferences(data);
 
 			while ((pos = data.find(L"<br/>"), pos) != std::wstring::npos)
 			{

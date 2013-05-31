@@ -27,10 +27,10 @@
 typedef NETIO_STATUS (NETIOAPI_API_ * FPGETIFTABLE2)(PMIB_IF_TABLE2* Table);
 typedef VOID (NETIOAPI_API_ * FPFREEMIBTABLE)(PVOID Memory);
 
-class CMeasureNet : public CMeasure
+class MeasureNet : public Measure
 {
 public:
-	virtual UINT GetTypeID() { return TypeID<CMeasureNet>(); }
+	virtual UINT GetTypeID() { return TypeID<MeasureNet>(); }
 
 	static void UpdateIFTable();
 
@@ -50,10 +50,10 @@ protected:
 		NET_TOTAL
 	};
 
-	CMeasureNet(CMeterWindow* meterWindow, const WCHAR* name, NET type);
-	virtual ~CMeasureNet();
+	MeasureNet(MeterWindow* meterWindow, const WCHAR* name, NET type);
+	virtual ~MeasureNet();
 
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:

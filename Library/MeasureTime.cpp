@@ -37,7 +37,7 @@ int GetYearDay(int year, int month, int day)
 ** The constructor
 **
 */
-CMeasureTime::CMeasureTime(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+MeasureTime::MeasureTime(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_DeltaTime(),
 	m_Time(),
 	m_TimeStamp(-1)
@@ -53,7 +53,7 @@ CMeasureTime::CMeasureTime(CMeterWindow* meterWindow, const WCHAR* name) : CMeas
 ** The destructor
 **
 */
-CMeasureTime::~CMeasureTime()
+MeasureTime::~MeasureTime()
 {
 }
 
@@ -62,7 +62,7 @@ CMeasureTime::~CMeasureTime()
 ** This function is a wrapper function for wcsftime.
 **
 */
-void CMeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const struct tm* time)
+void MeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const struct tm* time)
 {
 	if (bufLen > 0)
 	{
@@ -81,7 +81,7 @@ void CMeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, 
 	}
 }
 
-void CMeasureTime::FillCurrentTime()
+void MeasureTime::FillCurrentTime()
 {
 	if (m_TimeStamp < 0.0)
 	{
@@ -105,7 +105,7 @@ void CMeasureTime::FillCurrentTime()
 ** Updates the current time
 **
 */
-void CMeasureTime::UpdateValue()
+void MeasureTime::UpdateValue()
 {
 	FillCurrentTime();
 
@@ -163,7 +163,7 @@ void CMeasureTime::UpdateValue()
 ** Returns the time as string.
 **
 */
-const WCHAR* CMeasureTime::GetStringValue()
+const WCHAR* MeasureTime::GetStringValue()
 {
 	static WCHAR tmpSz[MAX_LINE_LENGTH];
 	struct tm today;
@@ -216,9 +216,9 @@ const WCHAR* CMeasureTime::GetStringValue()
 ** Read the options specified in the ini file.
 **
 */
-void CMeasureTime::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser, section);
 
 	m_Format = parser.ReadString(section, L"Format", L"");
 

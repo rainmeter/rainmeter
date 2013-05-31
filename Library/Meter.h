@@ -29,14 +29,14 @@
 #include "Section.h"
 #include "Measure.h"
 
-class CMeasure;
+class Measure;
 
-class __declspec(novtable) CMeter : public CSection
+class __declspec(novtable) Meter : public Section
 {
 public:
-	virtual ~CMeter();
+	virtual ~Meter();
 
-	void ReadOptions(CConfigParser& parser) { ReadOptions(parser, GetName()); parser.ClearStyleTemplate(); }
+	void ReadOptions(ConfigParser& parser) { ReadOptions(parser, GetName()); parser.ClearStyleTemplate(); }
 
 	virtual void Initialize();
 	virtual bool Update();
@@ -54,15 +54,15 @@ public:
 	void SetX(int x);
 	void SetY(int y);
 
-	void SetRelativeMeter(CMeter* meter) { m_RelativeMeter = meter; }
+	void SetRelativeMeter(Meter* meter) { m_RelativeMeter = meter; }
 
-	const CMouse& GetMouse() { return m_Mouse; }
+	const Mouse& GetMouse() { return m_Mouse; }
 	bool HasMouseAction() { return m_HasMouseAction; }
 
 	const std::wstring& GetToolTipText() { return m_ToolTipText; }
 	bool HasToolTip() { return m_ToolTipHandle != NULL; }
 
-	void CreateToolTip(CMeterWindow* meterWindow);
+	void CreateToolTip(MeterWindow* meterWindow);
 	void UpdateToolTip();
 
 	void Hide();
@@ -76,7 +76,7 @@ public:
 	void SetMouseOver(bool over) { m_MouseOver = over; }
 	bool IsMouseOver() { return m_MouseOver; }
 
-	static CMeter* Create(const WCHAR* meter, CMeterWindow* meterWindow, const WCHAR* name);
+	static Meter* Create(const WCHAR* meter, MeterWindow* meterWindow, const WCHAR* name);
 	
 	static void DrawBevel(Gdiplus::Graphics& graphics, const Gdiplus::Rect& rect, const Gdiplus::Pen& light, const Gdiplus::Pen& dark);
 
@@ -102,19 +102,19 @@ protected:
 		POSITION_RELATIVE_BR
 	};
 
-	CMeter(CMeterWindow* meterWindow, const WCHAR* name);
+	Meter(MeterWindow* meterWindow, const WCHAR* name);
 
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
 
 	virtual bool IsFixedSize(bool overwrite = false) { return true; }
 
-	bool BindPrimaryMeasure(CConfigParser& parser, const WCHAR* section, bool optional);
-	void BindSecondaryMeasures(CConfigParser& parser, const WCHAR* section);
+	bool BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool optional);
+	void BindSecondaryMeasures(ConfigParser& parser, const WCHAR* section);
 
 	bool ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale = AUTOSCALE_ON, double scale = 1.0, int decimals = 0, bool percentual = false);
 
-	std::vector<CMeasure*> m_Measures;
+	std::vector<Measure*> m_Measures;
 	int m_X;
 	int m_Y;
 	int m_W;
@@ -122,7 +122,7 @@ protected:
 	bool m_Hidden;
 	bool m_WDefined;
 	bool m_HDefined;
-	CMeter*	m_RelativeMeter;
+	Meter*	m_RelativeMeter;
 
 	Gdiplus::Matrix* m_Transformation;
 
@@ -135,7 +135,7 @@ protected:
 
 	HWND m_ToolTipHandle;
 
-	CMouse m_Mouse;
+	Mouse m_Mouse;
 	bool m_HasMouseAction;
 	bool m_MouseOver;
 

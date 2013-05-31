@@ -36,19 +36,19 @@ typedef double (*NEWUPDATE)(void*);
 typedef LPCWSTR (*NEWGETSTRING)(void*);
 typedef void (*NEWEXECUTEBANG)(void*, LPCWSTR);
 
-class CMeasurePlugin : public CMeasure
+class MeasurePlugin : public Measure
 {
 public:
-	CMeasurePlugin(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeasurePlugin();
+	MeasurePlugin(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeasurePlugin();
 
-	virtual UINT GetTypeID() { return TypeID<CMeasurePlugin>(); }
+	virtual UINT GetTypeID() { return TypeID<MeasurePlugin>(); }
 
 	virtual const WCHAR* GetStringValue();
 	virtual void Command(const std::wstring& command);
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:

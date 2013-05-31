@@ -22,20 +22,20 @@
 #include "Meter.h"
 #include "TintedImage.h"
 
-class CMeterBar : public CMeter
+class MeterBar : public Meter
 {
 public:
-	CMeterBar(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeterBar();
+	MeterBar(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeterBar();
 
-	virtual UINT GetTypeID() { return TypeID<CMeterBar>(); }
+	virtual UINT GetTypeID() { return TypeID<MeterBar>(); }
 
 	virtual void Initialize();
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
 	virtual bool IsFixedSize(bool overwrite = false) { return m_ImageName.empty(); }
 
@@ -46,7 +46,7 @@ private:
 		VERTICAL
 	};
 
-	CTintedImage m_Image;
+	TintedImage m_Image;
 	std::wstring m_ImageName;
 	bool m_NeedsReload;
 

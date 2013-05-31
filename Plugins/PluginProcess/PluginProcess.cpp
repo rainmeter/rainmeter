@@ -26,7 +26,7 @@
 
 struct MeasureData
 {
-	CRawString processName;
+	RawString processName;
 	bool isRunning;
 
 	MeasureData() : isRunning(false) {}

@@ -24,7 +24,7 @@
 #define DECLARE_SELF(L) \
 	void* selfData = lua_touserdata(L, 1); \
 	if (!selfData) return 0; \
-	CMeter* self = *(CMeter**)selfData;
+	Meter* self = *(Meter**)selfData;
 
 static int GetName(lua_State* L)
 {
@@ -37,8 +37,8 @@ static int GetName(lua_State* L)
 static int GetOption(lua_State* L)
 {
 	DECLARE_SELF(L)
-	CMeterWindow* meterWindow = self->GetMeterWindow();
-	CConfigParser& parser = meterWindow->GetParser();
+	MeterWindow* meterWindow = self->GetMeterWindow();
+	ConfigParser& parser = meterWindow->GetParser();
 
 	std::wstring strTmp = LuaManager::ToWide(L, 2);
 	strTmp = parser.ReadString(self->GetName(), strTmp.c_str(), L"");
@@ -137,9 +137,9 @@ static int Show(lua_State* L)
 static int SetText(lua_State* L)
 {
 	DECLARE_SELF(L)
-	if (self->GetTypeID() == TypeID<CMeterString>())
+	if (self->GetTypeID() == TypeID<MeterString>())
 	{
-		CMeterString* string = (CMeterString*)self;
+		MeterString* string = (MeterString*)self;
 		std::wstring str = LuaManager::ToWide(L, 2);
 		string->SetText(str.c_str());
 	}
@@ -167,7 +167,7 @@ void LuaManager::RegisterMeter(lua_State* L)
 		{ NULL, NULL }
 	};
 
-	luaL_register(L, "CMeter", functions);
+	luaL_register(L, "Meter", functions);
 	lua_pushvalue(L, -1);
 	lua_setfield(L, -2, "__index");
 	lua_pop(L, 1);

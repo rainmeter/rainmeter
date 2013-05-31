@@ -26,13 +26,13 @@
 
 using namespace Gdiplus;
 
-extern CRainmeter* Rainmeter;
+extern Rainmeter* g_Rainmeter;
 
 /*
 ** The constructor
 **
 */
-CMeterBar::CMeterBar(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
+MeterBar::MeterBar(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
 	m_Image(L"BarImage"),
 	m_NeedsReload(false),
 	m_Color(Color::Green),
@@ -47,7 +47,7 @@ CMeterBar::CMeterBar(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(mete
 ** The destructor
 **
 */
-CMeterBar::~CMeterBar()
+MeterBar::~MeterBar()
 {
 }
 
@@ -56,9 +56,9 @@ CMeterBar::~CMeterBar()
 ** of the meter from it.
 **
 */
-void CMeterBar::Initialize()
+void MeterBar::Initialize()
 {
-	CMeter::Initialize();
+	Meter::Initialize();
 
 	// Load the bitmaps if defined
 	if (!m_ImageName.empty())
@@ -83,14 +83,14 @@ void CMeterBar::Initialize()
 ** Read the options specified in the ini file.
 **
 */
-void CMeterBar::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	// Store the current values so we know if the image needs to be updated
 	std::wstring oldImageName = m_ImageName;
 	int oldW = m_W;
 	int oldH = m_H;
 
-	CMeter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser, section);
 
 	m_Color = parser.ReadColor(section, L"BarColor", Color::Green);
 
@@ -147,9 +147,9 @@ void CMeterBar::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Updates the value(s) from the measures.
 **
 */
-bool CMeterBar::Update()
+bool MeterBar::Update()
 {
-	if (CMeter::Update() && !m_Measures.empty())
+	if (Meter::Update() && !m_Measures.empty())
 	{
 		m_Value = m_Measures[0]->GetRelativeValue();
 		return true;
@@ -161,9 +161,9 @@ bool CMeterBar::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterBar::Draw(Gfx::Canvas& canvas)
+bool MeterBar::Draw(Gfx::Canvas& canvas)
 {
-	if (!CMeter::Draw(canvas)) return false;
+	if (!Meter::Draw(canvas)) return false;
 
 	int x = GetX();
 	int y = GetY();

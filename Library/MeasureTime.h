@@ -21,18 +21,18 @@
 
 #include "Measure.h"
 
-class CMeasureTime : public CMeasure
+class MeasureTime : public Measure
 {
 public:
-	CMeasureTime(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeasureTime();
+	MeasureTime(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeasureTime();
 
-	virtual UINT GetTypeID() { return TypeID<CMeasureTime>(); }
+	virtual UINT GetTypeID() { return TypeID<MeasureTime>(); }
 
 	virtual const WCHAR* GetStringValue();
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:

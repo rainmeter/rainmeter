@@ -20,7 +20,7 @@
 #include "Group.h"
 #include "ConfigParser.h"
 
-void CGroup::InitializeGroup(const std::wstring& groups)
+void Group::InitializeGroup(const std::wstring& groups)
 {
 	if (wcscmp(groups.c_str(), m_OldGroups.c_str()) != 0)
 	{
@@ -29,7 +29,7 @@ void CGroup::InitializeGroup(const std::wstring& groups)
 
 		if (!groups.empty())
 		{
-			std::vector<std::wstring> vGroups = CConfigParser::Tokenize(groups, L"|");
+			std::vector<std::wstring> vGroups = ConfigParser::Tokenize(groups, L"|");
 			for (auto iter = vGroups.begin(); iter != vGroups.end(); ++iter)
 			{
 				m_Groups.insert(CreateGroup(*iter));
@@ -38,18 +38,18 @@ void CGroup::InitializeGroup(const std::wstring& groups)
 	}
 }
 
-bool CGroup::BelongsToGroup(const std::wstring& group) const
+bool Group::BelongsToGroup(const std::wstring& group) const
 {
 	return (m_Groups.find(VerifyGroup(group)) != m_Groups.end());
 }
 
-std::wstring& CGroup::CreateGroup(std::wstring& str) const
+std::wstring& Group::CreateGroup(std::wstring& str) const
 {
 	_wcsupr(&str[0]);
 	return str;
 }
 
-std::wstring CGroup::VerifyGroup(const std::wstring& str) const
+std::wstring Group::VerifyGroup(const std::wstring& str) const
 {
 	std::wstring strTmp;
 

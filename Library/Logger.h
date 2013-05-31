@@ -24,7 +24,7 @@
 #include <list>
 
 // Singleton class to handle and store log messages and control the log file.
-class CLogger
+class Logger
 {
 public:
 	enum class Level
@@ -42,7 +42,7 @@ public:
 		std::wstring message;
 	};
 
-	static CLogger& GetInstance();
+	static Logger& GetInstance();
 
 	void SetLogFilePath(std::wstring path) { m_LogFilePath = path; }
 
@@ -66,8 +66,8 @@ private:
 	// Appends |entry| to the log file.
 	void WriteToLogFile(Entry& entry);
 
-	CLogger();
-	~CLogger();
+	Logger();
+	~Logger();
 
 	bool m_LogToFile;
 	std::wstring m_LogFilePath;
@@ -82,13 +82,13 @@ private:
 #define RM_LOGGER_DEFINE_LOG_FUNCTION(name) \
 	inline void Log ## name(const WCHAR* msg) \
 	{ \
-		CLogger::GetInstance().Log(CLogger::Level::name, msg); \
+		Logger::GetInstance().Log(Logger::Level::name, msg); \
 	} \
 /*	\
 	template<typename... Args> \
 	inline void Log ## name ## F(const WCHAR* format, Args... args) \
 	{ \
-		GetInstance().LogF(CLogger::Level::name, args...); \
+		GetInstance().LogF(Logger::Level::name, args...); \
 	}
 */
 
@@ -99,7 +99,7 @@ RM_LOGGER_DEFINE_LOG_FUNCTION(Debug)
 
 // FIXME: Temporary solution until VS support variadic templates.
 #define RM_LOGGER_LOGF_HELPER(name, format, ...) \
-	CLogger::GetInstance().LogF(CLogger::Level::name, format, __VA_ARGS__)
+	Logger::GetInstance().LogF(Logger::Level::name, format, __VA_ARGS__)
 #define LogErrorF(format, ...) RM_LOGGER_LOGF_HELPER(Error, format, __VA_ARGS__)
 #define LogWarningF(format, ...) RM_LOGGER_LOGF_HELPER(Warning, format, __VA_ARGS__)
 #define LogNoticeF(format, ...) RM_LOGGER_LOGF_HELPER(Notice, format, __VA_ARGS__)

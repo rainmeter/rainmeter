@@ -23,13 +23,13 @@
 #include <string>
 #include "Group.h"
 
-class CMeterWindow;
-class CConfigParser;
+class MeterWindow;
+class ConfigParser;
 
-class __declspec(novtable) CSection : public CGroup
+class __declspec(novtable) Section : public Group
 {
 public:
-	virtual ~CSection();
+	virtual ~Section();
 
 	virtual UINT GetTypeID() = 0;
 
@@ -46,12 +46,12 @@ public:
 	const std::wstring& GetOnUpdateAction() { return m_OnUpdateAction; }
 	void DoUpdateAction();
 
-	CMeterWindow* GetMeterWindow() { return m_MeterWindow; }
+	MeterWindow* GetMeterWindow() { return m_MeterWindow; }
 
 protected:
-	CSection(CMeterWindow* meterWindow, const WCHAR* name);
+	Section(MeterWindow* meterWindow, const WCHAR* name);
 
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
 	bool UpdateCounter();
 
@@ -63,7 +63,7 @@ protected:
 
 	std::wstring m_OnUpdateAction;
 
-	CMeterWindow* m_MeterWindow;
+	MeterWindow* m_MeterWindow;
 };
 
 #endif

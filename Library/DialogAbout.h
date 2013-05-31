@@ -23,21 +23,21 @@
 #include "Logger.h"
 #include "MeterWindow.h"
 
-class CDialogAbout : public CDialog
+class DialogAbout : public Dialog
 {
 public:
-	CDialogAbout();
-	virtual ~CDialogAbout();
+	DialogAbout();
+	virtual ~DialogAbout();
 
-	static CDialog* GetDialog() { return c_Dialog; }
+	static Dialog* GetDialog() { return c_Dialog; }
 
 	static void Open(int tab = 0);
 	static void Open(const WCHAR* name);
 	static void ShowAboutLog();
 
-	static void AddLogItem(CLogger::Level level, LPCWSTR time, LPCWSTR message);
+	static void AddLogItem(Logger::Level level, LPCWSTR time, LPCWSTR message);
 	static void UpdateSkins();
-	static void UpdateMeasures(CMeterWindow* meterWindow);
+	static void UpdateMeasures(MeterWindow* meterWindow);
 
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -47,7 +47,7 @@ protected:
 
 private:
 	// Log tab
-	class CTabLog : public CTab
+	class TabLog : public Tab
 	{
 	public:
 		enum Id
@@ -59,13 +59,13 @@ private:
 			Id_DebugCheckBox
 		};
 
-		CTabLog();
+		TabLog();
 
 		void Create(HWND owner);
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
 
-		void AddItem(CLogger::Level level, LPCWSTR time, LPCWSTR message);
+		void AddItem(Logger::Level level, LPCWSTR time, LPCWSTR message);
 
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -80,7 +80,7 @@ private:
 	};
 
 	// Measures tab
-	class CTabSkins : public CTab
+	class TabSkins : public Tab
 	{
 	public:
 		enum Id
@@ -89,14 +89,14 @@ private:
 			Id_ItemsListView
 		};
 
-		CTabSkins();
+		TabSkins();
 
 		void Create(HWND owner);
 		virtual void Initialize();
 		virtual void Resize(int w, int h);
 	
 		void UpdateSkinList();
-		void UpdateMeasureList(CMeterWindow* meterWindow);
+		void UpdateMeasureList(MeterWindow* meterWindow);
 
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -106,11 +106,11 @@ private:
 	private:
 		static int CALLBACK ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
-		CMeterWindow* m_SkinWindow;
+		MeterWindow* m_SkinWindow;
 	};
 
 	// Plugins tab
-	class CTabPlugins : public CTab
+	class TabPlugins : public Tab
 	{
 	public:
 		enum Id
@@ -118,7 +118,7 @@ private:
 			Id_ItemsListView = 100
 		};
 
-		CTabPlugins();
+		TabPlugins();
 
 		void Create(HWND owner);
 		virtual void Initialize();
@@ -130,7 +130,7 @@ private:
 	};
 
 	// Version tab
-	class CTabVersion : public CTab
+	class TabVersion : public Tab
 	{
 	public:
 		enum Id
@@ -145,7 +145,7 @@ private:
 			Id_CopyButton
 		};
 
-		CTabVersion();
+		TabVersion();
 
 		void Create(HWND owner);
 		virtual void Initialize();
@@ -163,15 +163,15 @@ private:
 		Id_Tab = 100
 	};
 
-	CTab& GetActiveTab();
+	Tab& GetActiveTab();
 
-	CTabLog m_TabLog;
-	CTabSkins m_TabSkins;
-	CTabPlugins m_TabPlugins;
-	CTabVersion m_TabVersion;
+	TabLog m_TabLog;
+	TabSkins m_TabSkins;
+	TabPlugins m_TabPlugins;
+	TabVersion m_TabVersion;
 
 	static WINDOWPLACEMENT c_WindowPlacement;
-	static CDialogAbout* c_Dialog;
+	static DialogAbout* c_Dialog;
 };
 
 #endif

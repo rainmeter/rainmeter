@@ -24,7 +24,7 @@
 ** The constructor
 **
 */
-CMeasureVirtualMemory::CMeasureVirtualMemory(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+MeasureVirtualMemory::MeasureVirtualMemory(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_Total(false)
 {
 	MEMORYSTATUSEX stat;
@@ -37,7 +37,7 @@ CMeasureVirtualMemory::CMeasureVirtualMemory(CMeterWindow* meterWindow, const WC
 ** The destructor
 **
 */
-CMeasureVirtualMemory::~CMeasureVirtualMemory()
+MeasureVirtualMemory::~MeasureVirtualMemory()
 {
 }
 
@@ -45,7 +45,7 @@ CMeasureVirtualMemory::~CMeasureVirtualMemory()
 ** Updates the current virtual memory value.
 **
 */
-void CMeasureVirtualMemory::UpdateValue()
+void MeasureVirtualMemory::UpdateValue()
 {
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
@@ -66,10 +66,10 @@ void CMeasureVirtualMemory::UpdateValue()
 ** Read the options specified in the ini file.
 **
 */
-void CMeasureVirtualMemory::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeasureVirtualMemory::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	double oldMaxValue = m_MaxValue;
-	CMeasure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser, section);
 	m_MaxValue = oldMaxValue;
 
 	m_Total = (1 == parser.ReadInt(section, L"Total", 0));

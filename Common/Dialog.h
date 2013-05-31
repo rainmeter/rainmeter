@@ -22,15 +22,15 @@
 #include <Windows.h>
 #include "ControlTemplate.h"
 
-// Shared base class for CDialog and CTab.
-class CBaseDialog
+// Shared base class for Dialog and Tab.
+class BaseDialog
 {
 public:
 	HWND GetControl(WORD id) { return GetDlgItem(m_Window, id); }
 
 protected:
-	CBaseDialog();
-	virtual ~CBaseDialog() {}
+	BaseDialog();
+	virtual ~BaseDialog() {}
 
 	void Show(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless);
 
@@ -41,13 +41,13 @@ protected:
 	HWND m_Window;
 
 private:
-	CBaseDialog(const CBaseDialog& r);
+	BaseDialog(const BaseDialog& r);
 
 	static INT_PTR CALLBACK InitialDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static INT_PTR CALLBACK MainDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-class CDialog : public CBaseDialog
+class Dialog : public BaseDialog
 {
 public:
 	HWND GetWindow() { return m_Window; }
@@ -55,7 +55,7 @@ public:
 	static bool HandleMessage(MSG& msg);
 
 protected:
-	class CTab : public CBaseDialog
+	class Tab : public BaseDialog
 	{
 	public:
 		HWND GetWindow() { return m_Window; }
@@ -66,16 +66,16 @@ protected:
 		virtual void Resize(int w, int h) {}
 
 	protected:
-		CTab();
-		virtual ~CTab();
+		Tab();
+		virtual ~Tab();
 
 		void CreateTabWindow(short x, short y, short w, short h, HWND owner);
 
 		bool m_Initialized;
 	};
 
-	CDialog();
-	virtual ~CDialog();
+	Dialog();
+	virtual ~Dialog();
 
 	void ShowDialogWindow(const WCHAR* title, short x, short y, short w, short h, DWORD style, DWORD exStyle, HWND parent, bool modeless = true);
 
@@ -87,7 +87,7 @@ protected:
 	HFONT m_FontBold;
 
 private:
-	CDialog(const CDialog& r);
+	Dialog(const Dialog& r);
 
 	static LRESULT CALLBACK MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 

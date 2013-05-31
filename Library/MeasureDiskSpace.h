@@ -21,18 +21,18 @@
 
 #include "Measure.h"
 
-class CMeasureDiskSpace : public CMeasure
+class MeasureDiskSpace : public Measure
 {
 public:
-	CMeasureDiskSpace(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeasureDiskSpace();
+	MeasureDiskSpace(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeasureDiskSpace();
 
-	virtual UINT GetTypeID() { return TypeID<CMeasureDiskSpace>(); }
+	virtual UINT GetTypeID() { return TypeID<MeasureDiskSpace>(); }
 
 	virtual const WCHAR* GetStringValue();
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:

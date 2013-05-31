@@ -28,7 +28,7 @@ const char* g_GetStringFunctionName = "GetStringValue";
 ** The constructor
 **
 */
-CMeasureScript::CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+MeasureScript::MeasureScript(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_HasUpdateFunction(false),
 	m_HasGetStringFunction(false),
 	m_ValueType(LUA_TNIL)
@@ -40,13 +40,13 @@ CMeasureScript::CMeasureScript(CMeterWindow* meterWindow, const WCHAR* name) : C
 ** The destructor
 **
 */
-CMeasureScript::~CMeasureScript()
+MeasureScript::~MeasureScript()
 {
 	UninitializeLuaScript();
 	LuaManager::Finalize();
 }
 
-void CMeasureScript::UninitializeLuaScript()
+void MeasureScript::UninitializeLuaScript()
 {
 	m_LuaScript.Uninitialize();
 
@@ -58,7 +58,7 @@ void CMeasureScript::UninitializeLuaScript()
 ** Runs the function "Update()" in the script.
 **
 */
-void CMeasureScript::UpdateValue()
+void MeasureScript::UpdateValue()
 {
 	if (m_HasUpdateFunction)
 	{
@@ -76,7 +76,7 @@ void CMeasureScript::UpdateValue()
 ** Returns the value as a string.
 **
 */
-const WCHAR* CMeasureScript::GetStringValue()
+const WCHAR* MeasureScript::GetStringValue()
 {
 	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : NULL;
 }
@@ -85,9 +85,9 @@ const WCHAR* CMeasureScript::GetStringValue()
 ** Read the options specified in the ini file.
 **
 */
-void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	CMeasure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser, section);
 
 	std::wstring scriptFile = parser.ReadString(section, L"ScriptFile", L"");
 	if (!scriptFile.empty())
@@ -116,13 +116,13 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 
 				lua_rawgeti(L, LUA_GLOBALSINDEX, m_LuaScript.GetRef());
 
-				*(CMeterWindow**)lua_newuserdata(L, sizeof(CMeterWindow*)) = m_MeterWindow;
-				lua_getglobal(L, "CMeterWindow");
+				*(MeterWindow**)lua_newuserdata(L, sizeof(MeterWindow*)) = m_MeterWindow;
+				lua_getglobal(L, "MeterWindow");
 				lua_setmetatable(L, -2);
 				lua_setfield(L, -2, "SKIN");
 
-				*(CMeasure**)lua_newuserdata(L, sizeof(CMeasure*)) = this;
-				lua_getglobal(L, "CMeasure");
+				*(Measure**)lua_newuserdata(L, sizeof(Measure*)) = this;
+				lua_getglobal(L, "Measure");
 				lua_setmetatable(L, -2);
 				lua_setfield(L, -2, "SELF");
 
@@ -179,7 +179,7 @@ void CMeasureScript::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Executes a custom bang.
 **
 */
-void CMeasureScript::Command(const std::wstring& command)
+void MeasureScript::Command(const std::wstring& command)
 {
 	std::string str = StringUtil::Narrow(command);
 	m_LuaScript.RunString(str.c_str());

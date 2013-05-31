@@ -37,10 +37,10 @@ enum AUTOSCALE
 	AUTOSCALE_ON    = AUTOSCALE_1024
 };
 
-class CMeasureValueSet
+class MeasureValueSet
 {
 public:
-	CMeasureValueSet(double val, const WCHAR* str) : m_Value(val), m_StringValue(str) {}
+	MeasureValueSet(double val, const WCHAR* str) : m_Value(val), m_StringValue(str) {}
 	void Set(double val, const WCHAR* str) { m_Value = val; m_StringValue = str; }
 	bool IsChanged(double val, const WCHAR* str) { if (m_Value != val || wcscmp(m_StringValue.c_str(), str) != 0) { Set(val, str); return true; } return false; }
 private:
@@ -48,16 +48,16 @@ private:
 	std::wstring m_StringValue;
 };
 
-class CMeter;
-class CMeterWindow;
-class CConfigParser;
+class Meter;
+class MeterWindow;
+class ConfigParser;
 
-class __declspec(novtable) CMeasure : public CSection
+class __declspec(novtable) Measure : public Section
 {
 public:
-	virtual ~CMeasure();
+	virtual ~Measure();
 
-	void ReadOptions(CConfigParser& parser) { ReadOptions(parser, GetName()); }
+	void ReadOptions(ConfigParser& parser) { ReadOptions(parser, GetName()); }
 
 	virtual void Initialize();
 	bool Update();
@@ -84,12 +84,12 @@ public:
 	const std::wstring& GetOnChangeAction() { return m_OnChangeAction; }
 	void DoChangeAction(bool execute = true);
 
-	static CMeasure* Create(const WCHAR* measure, CMeterWindow* meterWindow, const WCHAR* name);
+	static Measure* Create(const WCHAR* measure, MeterWindow* meterWindow, const WCHAR* name);
 
 protected:
-	CMeasure(CMeterWindow* meterWindow, const WCHAR* name);
+	Measure(MeterWindow* meterWindow, const WCHAR* name);
 
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue() = 0;
 
 	bool ParseSubstitute(std::wstring buffer);
@@ -126,7 +126,7 @@ protected:
 	bool m_Initialized;
 
 	std::wstring m_OnChangeAction;
-	CMeasureValueSet* m_OldValue;
+	MeasureValueSet* m_OldValue;
 	bool m_ValueAssigned;
 };
 

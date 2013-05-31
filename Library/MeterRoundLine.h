@@ -21,20 +21,20 @@
 
 #include "Meter.h"
 
-class CMeterRoundLine : public CMeter
+class MeterRoundLine : public Meter
 {
 public:
-	CMeterRoundLine(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeterRoundLine();
+	MeterRoundLine(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeterRoundLine();
 
-	virtual UINT GetTypeID() { return TypeID<CMeterRoundLine>(); }
+	virtual UINT GetTypeID() { return TypeID<MeterRoundLine>(); }
 
 	virtual bool Update();
 	virtual bool Draw(Gfx::Canvas& canvas);
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
-	virtual void BindMeasures(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
 
 private:
 	bool m_Solid;

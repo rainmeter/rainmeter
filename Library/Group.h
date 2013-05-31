@@ -22,15 +22,15 @@
 #include <string>
 #include <unordered_set>
 
-class __declspec(novtable) CGroup
+class __declspec(novtable) Group
 {
 public:
-	virtual ~CGroup() {}
+	virtual ~Group() {}
 
 	bool BelongsToGroup(const std::wstring& group) const;
 
 protected:
-	CGroup() {}
+	Group() {}
 
 	void InitializeGroup(const std::wstring& groups);
 

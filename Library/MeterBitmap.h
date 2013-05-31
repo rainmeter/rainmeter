@@ -22,13 +22,13 @@
 #include "Meter.h"
 #include "TintedImage.h"
 
-class CMeterBitmap : public CMeter
+class MeterBitmap : public Meter
 {
 public:
-	CMeterBitmap(CMeterWindow* meterWindow, const WCHAR* name);
-	virtual ~CMeterBitmap();
+	MeterBitmap(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeterBitmap();
 
-	virtual UINT GetTypeID() { return TypeID<CMeterBitmap>(); }
+	virtual UINT GetTypeID() { return TypeID<MeterBitmap>(); }
 
 	virtual bool HitTest(int x, int y);
 
@@ -38,10 +38,10 @@ public:
 	virtual bool HasActiveTransition();
 
 protected:
-	virtual void ReadOptions(CConfigParser& parser, const WCHAR* section);
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
 private:
-	CTintedImage m_Image;
+	TintedImage m_Image;
 	std::wstring m_ImageName;
 	bool m_NeedsReload;
 

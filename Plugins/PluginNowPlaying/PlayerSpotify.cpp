@@ -19,13 +19,13 @@
 #include "StdAfx.h"
 #include "PlayerSpotify.h"
 
-CPlayer* CPlayerSpotify::c_Player = NULL;
+Player* PlayerSpotify::c_Player = NULL;
 
 /*
 ** Constructor.
 **
 */
-CPlayerSpotify::CPlayerSpotify() : CPlayer(),
+PlayerSpotify::PlayerSpotify() : Player(),
 	m_Window(),
 	m_LastCheckTime(0)
 {
@@ -35,7 +35,7 @@ CPlayerSpotify::CPlayerSpotify() : CPlayer(),
 ** Destructor.
 **
 */
-CPlayerSpotify::~CPlayerSpotify()
+PlayerSpotify::~PlayerSpotify()
 {
 	c_Player = NULL;
 }
@@ -44,11 +44,11 @@ CPlayerSpotify::~CPlayerSpotify()
 ** Creates a shared class object.
 **
 */
-CPlayer* CPlayerSpotify::Create()
+Player* PlayerSpotify::Create()
 {
 	if (!c_Player)
 	{
-		c_Player = new CPlayerSpotify();
+		c_Player = new PlayerSpotify();
 	}
 
 	return c_Player;
@@ -58,7 +58,7 @@ CPlayer* CPlayerSpotify::Create()
 ** Try to find Spotify periodically.
 **
 */
-bool CPlayerSpotify::CheckWindow()
+bool PlayerSpotify::CheckWindow()
 {
 	DWORD time = GetTickCount();
 		
@@ -81,7 +81,7 @@ bool CPlayerSpotify::CheckWindow()
 ** Called during each update of the main measure.
 **
 */
-void CPlayerSpotify::UpdateData()
+void PlayerSpotify::UpdateData()
 {
 	if (m_Initialized || CheckWindow())
 	{
@@ -129,7 +129,7 @@ void CPlayerSpotify::UpdateData()
 ** Handles the Play bang.
 **
 */
-void CPlayerSpotify::Play()
+void PlayerSpotify::Play()
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_PLAYPAUSE);
 }
@@ -138,7 +138,7 @@ void CPlayerSpotify::Play()
 ** Handles the Stop bang.
 **
 */
-void CPlayerSpotify::Stop() 
+void PlayerSpotify::Stop() 
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_STOP);
 }
@@ -147,7 +147,7 @@ void CPlayerSpotify::Stop()
 ** Handles the Next bang.
 **
 */
-void CPlayerSpotify::Next() 
+void PlayerSpotify::Next() 
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_NEXT);
 }
@@ -156,7 +156,7 @@ void CPlayerSpotify::Next()
 ** Handles the Previous bang.
 **
 */
-void CPlayerSpotify::Previous() 
+void PlayerSpotify::Previous() 
 {
 	SendMessage(m_Window, WM_APPCOMMAND, 0, SPOTIFY_PREV);
 }
@@ -166,7 +166,7 @@ void CPlayerSpotify::Previous()
 ** Handles the ClosePlayer bang.
 **
 */
-void CPlayerSpotify::ClosePlayer()
+void PlayerSpotify::ClosePlayer()
 {
 	// A little harsh...
 	DWORD pID;
@@ -183,7 +183,7 @@ void CPlayerSpotify::ClosePlayer()
 ** Handles the OpenPlayer bang.
 **
 */
-void CPlayerSpotify::OpenPlayer(std::wstring& path)
+void PlayerSpotify::OpenPlayer(std::wstring& path)
 {
 	if (!m_Initialized)
 	{

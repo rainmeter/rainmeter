@@ -21,12 +21,12 @@
 
 #include "Player.h"
 
-class CPlayerWLM : public CPlayer
+class PlayerWLM : public Player
 {
 public:
-	virtual ~CPlayerWLM();
+	virtual ~PlayerWLM();
 
-	static CPlayer* Create();
+	static Player* Create();
 
 	virtual void UpdateData();
 
@@ -37,13 +37,13 @@ public:
 	virtual void Previous();
 
 protected:
-	CPlayerWLM();
+	PlayerWLM();
 
 private:
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	void SendKeyInput(WORD key);
 
-	static CPlayer* c_Player;
+	static Player* c_Player;
 
 	HWND m_Window;
 };

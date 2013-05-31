@@ -28,7 +28,7 @@
 
 extern GlobalData g_Data;
 
-CDialogInstall* CDialogInstall::c_Dialog = NULL;
+DialogInstall* DialogInstall::c_Dialog = NULL;
 
 inline bool IsWin32Build()
 {
@@ -43,7 +43,7 @@ inline bool IsWin32Build()
 ** Constructor.
 **
 */
-CDialogInstall::CDialogInstall(HWND wnd, const WCHAR* file) : CDialog(wnd),
+DialogInstall::DialogInstall(HWND wnd, const WCHAR* file) : Dialog(wnd),
 	m_TabInstall(wnd),
 	m_HeaderBitmap(),
 	m_InstallThread(),
@@ -61,7 +61,7 @@ CDialogInstall::CDialogInstall(HWND wnd, const WCHAR* file) : CDialog(wnd),
 ** Destructor.
 **
 */
-CDialogInstall::~CDialogInstall()
+DialogInstall::~DialogInstall()
 {
 	if (m_PackageUnzFile)
 	{
@@ -73,7 +73,7 @@ CDialogInstall::~CDialogInstall()
 ** Creates the dialog.
 **
 */
-void CDialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
+void DialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 {
 	// Prompt to select .rmskin file if needed
 	WCHAR buffer[MAX_PATH];
@@ -112,18 +112,18 @@ void CDialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	}
 }
 
-CDialog::CTab& CDialogInstall::GetActiveTab()
+Dialog::Tab& DialogInstall::GetActiveTab()
 {
 	return m_TabInstall;
 }
 
-INT_PTR CALLBACK CDialogInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DialogInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (!c_Dialog)
 	{
 		if (uMsg == WM_INITDIALOG)
 		{
-			c_Dialog = new CDialogInstall(hWnd, (const WCHAR*)lParam);
+			c_Dialog = new DialogInstall(hWnd, (const WCHAR*)lParam);
 			return c_Dialog->OnInitDialog(wParam, lParam);
 		}
 	}
@@ -151,7 +151,7 @@ INT_PTR CALLBACK CDialogInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	return FALSE;
 }
 
-INT_PTR CDialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
+INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
 	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_SKININSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
@@ -162,7 +162,7 @@ INT_PTR CDialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	}
 
 	HWND item = GetDlgItem(m_Window, IDC_INSTALL_ADVANCED_BUTTON);
-	CDialog::SetMenuButton(item);
+	Dialog::SetMenuButton(item);
 
 	if (ReadPackage())
 	{
@@ -212,7 +212,7 @@ INT_PTR CDialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-INT_PTR CDialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
+INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
@@ -283,7 +283,7 @@ INT_PTR CDialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-INT_PTR CDialogInstall::OnNotify(WPARAM wParam, LPARAM lParam)
+INT_PTR DialogInstall::OnNotify(WPARAM wParam, LPARAM lParam)
 {
 	LPNMHDR nm = (LPNMHDR)lParam;
 	switch (nm->code)
@@ -305,7 +305,7 @@ INT_PTR CDialogInstall::OnNotify(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-bool CDialogInstall::ExtractCurrentFile(const std::wstring& fileName)
+bool DialogInstall::ExtractCurrentFile(const std::wstring& fileName)
 {
 	// Some archives don't explicity list directories, so create them recursively
 	if (!CreateDirectoryRecursive(fileName))
@@ -349,7 +349,7 @@ bool CDialogInstall::ExtractCurrentFile(const std::wstring& fileName)
 	return unzCloseCurrentFile(m_PackageUnzFile) == UNZ_OK && read == UNZ_EOF;
 }
 
-bool CDialogInstall::ReadPackage()
+bool DialogInstall::ReadPackage()
 {
 	const WCHAR* fileName = m_PackageFileName.c_str();
 	const WCHAR* fileExtension = PathFindExtension(fileName);
@@ -565,7 +565,7 @@ bool CDialogInstall::ReadPackage()
 		m_PackageAddons.empty() && m_PackageFonts.empty() && m_PackagePlugins.empty());
 }
 
-bool CDialogInstall::ReadOptions(const WCHAR* file)
+bool DialogInstall::ReadOptions(const WCHAR* file)
 {
 	WCHAR buffer[MAX_LINE_LENGTH];
 
@@ -658,7 +658,7 @@ bool CDialogInstall::ReadOptions(const WCHAR* file)
 	return true;
 }
 
-bool CDialogInstall::InstallPackage()
+bool DialogInstall::InstallPackage()
 {
 	if ((!m_MergeSkins && m_BackupSkins) || m_BackupPackage)
 	{
@@ -852,7 +852,7 @@ bool CDialogInstall::InstallPackage()
 	return true;
 }
 
-void CDialogInstall::BeginInstall()
+void DialogInstall::BeginInstall()
 {
 	HWND item = GetDlgItem(m_Window, IDC_INSTALL_ADVANCED_BUTTON);
 	EnableWindow(item, FALSE);
@@ -910,9 +910,9 @@ void CDialogInstall::BeginInstall()
 	}
 }
 
-UINT __stdcall CDialogInstall::InstallThread(void* pParam)
+UINT __stdcall DialogInstall::InstallThread(void* pParam)
 {
-	CDialogInstall* dialog = (CDialogInstall*)pParam;
+	DialogInstall* dialog = (DialogInstall*)pParam;
 
 	if (!CloseRainmeterIfActive())
 	{
@@ -951,7 +951,7 @@ UINT __stdcall CDialogInstall::InstallThread(void* pParam)
 	return 0;
 }
 
-void CDialogInstall::KeepVariables()
+void DialogInstall::KeepVariables()
 {
 	WCHAR keyname[32767];	// Max size returned by GetPrivateProfileSection
 	WCHAR buffer[4];
@@ -993,7 +993,7 @@ void CDialogInstall::KeepVariables()
 	}
 }
 
-void CDialogInstall::LaunchRainmeter()
+void DialogInstall::LaunchRainmeter()
 {
 	// Execute Rainmeter and wait up to a minute for it process all messages
 	std::wstring rainmeterExe = g_Data.programPath + L"Rainmeter.exe";
@@ -1057,7 +1057,7 @@ bool IsIgnoredName(const WCHAR* name, const WCHAR* names[], int namesCount)
 	return false;
 }
 
-bool CDialogInstall::IsIgnoredSkin(const WCHAR* name)
+bool DialogInstall::IsIgnoredSkin(const WCHAR* name)
 {
 	static const WCHAR* s_Skins[] =
 	{
@@ -1068,7 +1068,7 @@ bool CDialogInstall::IsIgnoredSkin(const WCHAR* name)
 	return IsIgnoredName(name, s_Skins, _countof(s_Skins));
 }
 
-bool CDialogInstall::IsIgnoredLayout(const WCHAR* name)
+bool DialogInstall::IsIgnoredLayout(const WCHAR* name)
 {
 	static const WCHAR* s_Layouts[] =
 	{
@@ -1079,7 +1079,7 @@ bool CDialogInstall::IsIgnoredLayout(const WCHAR* name)
 	return IsIgnoredName(name, s_Layouts, _countof(s_Layouts));
 }
 
-bool CDialogInstall::IsIgnoredAddon(const WCHAR* name)
+bool DialogInstall::IsIgnoredAddon(const WCHAR* name)
 {
 	static const WCHAR* s_Addons[] =
 	{
@@ -1091,7 +1091,7 @@ bool CDialogInstall::IsIgnoredAddon(const WCHAR* name)
 	return IsIgnoredName(name, s_Addons, _countof(s_Addons));
 }
 
-bool CDialogInstall::IsIgnoredPlugin(const WCHAR* name)
+bool DialogInstall::IsIgnoredPlugin(const WCHAR* name)
 {
 	static const WCHAR* s_Plugins[] =
 	{
@@ -1125,7 +1125,7 @@ bool CDialogInstall::IsIgnoredPlugin(const WCHAR* name)
 /*
 ** Splits the string from the delimiters and trims whitespace.
 */
-std::vector<std::wstring> CDialogInstall::Tokenize(const std::wstring& str, const std::wstring& delimiters)
+std::vector<std::wstring> DialogInstall::Tokenize(const std::wstring& str, const std::wstring& delimiters)
 {
 	// Modified from http://www.digitalpeer.com/id/simple
 	std::vector<std::wstring> tokens;
@@ -1160,7 +1160,7 @@ std::vector<std::wstring> CDialogInstall::Tokenize(const std::wstring& str, cons
 /*
 ** Compares two version strings. Returns 0 if equal, 1 if A > B and -1 if A < B.
 */
-int CDialogInstall::CompareVersions(const std::wstring& strA, const std::wstring& strB)
+int DialogInstall::CompareVersions(const std::wstring& strA, const std::wstring& strB)
 {
 	if (strA.empty() && strB.empty()) return 0;
 	if (strA.empty()) return -1;
@@ -1190,7 +1190,7 @@ int CDialogInstall::CompareVersions(const std::wstring& strA, const std::wstring
 	return 0;
 }
 
-bool CDialogInstall::CreateDirectoryRecursive(const std::wstring& path)
+bool DialogInstall::CreateDirectoryRecursive(const std::wstring& path)
 {
 	// Dirty...
 	std::wstring& directory = (std::wstring&)path;
@@ -1214,7 +1214,7 @@ bool CDialogInstall::CreateDirectoryRecursive(const std::wstring& path)
 	return !failed;
 }
 
-std::wstring CDialogInstall::GetFileVersionString(const WCHAR* fileName)
+std::wstring DialogInstall::GetFileVersionString(const WCHAR* fileName)
 {
 	DWORD bufSize = GetFileVersionInfoSize(fileName, 0);
 	void* versionInfo = new WCHAR[bufSize];
@@ -1245,7 +1245,7 @@ std::wstring CDialogInstall::GetFileVersionString(const WCHAR* fileName)
 	return result;
 }
 
-std::wstring CDialogInstall::GetDotNetVersionString()
+std::wstring DialogInstall::GetDotNetVersionString()
 {
 	WCHAR buffer[255];
 	HKEY hKey;
@@ -1268,7 +1268,7 @@ std::wstring CDialogInstall::GetDotNetVersionString()
 	return currVer;
 }
 
-std::wstring CDialogInstall::GetWindowsVersionString()
+std::wstring DialogInstall::GetWindowsVersionString()
 {
 	WCHAR buffer[16];
 	OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
@@ -1288,11 +1288,11 @@ std::wstring CDialogInstall::GetWindowsVersionString()
 ** Constructor.
 **
 */
-CDialogInstall::CTabInstall::CTabInstall(HWND wnd) : CTab(GetModuleHandle(NULL), wnd, IDD_INSTALL_TAB, DlgProc)
+DialogInstall::TabInstall::TabInstall(HWND wnd) : Tab(GetModuleHandle(NULL), wnd, IDD_INSTALL_TAB, DlgProc)
 {
 }
 
-void CDialogInstall::CTabInstall::Initialize()
+void DialogInstall::TabInstall::Initialize()
 {
 	HWND item = GetDlgItem(m_Window, IDC_INSTALLTAB_COMPONENTS_LIST);
 
@@ -1381,7 +1381,7 @@ void CDialogInstall::CTabInstall::Initialize()
 	m_Initialized = true;
 }
 
-INT_PTR CALLBACK CDialogInstall::CTabInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK DialogInstall::TabInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return FALSE;
 }

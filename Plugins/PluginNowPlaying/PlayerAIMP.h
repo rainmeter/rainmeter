@@ -21,12 +21,12 @@
 
 #include "Player.h"
 
-class CPlayerAIMP : public CPlayer
+class PlayerAIMP : public Player
 {
 public:
-	virtual ~CPlayerAIMP();
+	virtual ~PlayerAIMP();
 
-	static CPlayer* Create();
+	static Player* Create();
 
 	virtual void UpdateData();
 
@@ -44,13 +44,13 @@ public:
 	virtual void OpenPlayer(std::wstring& path);
 
 protected:
-	CPlayerAIMP();
+	PlayerAIMP();
 
 private:
 	bool Initialize();
 	bool CheckWindow();
 
-	static CPlayer* c_Player;
+	static Player* c_Player;
 	
 	HWND m_Window;				// AIMP window
 	HWND m_WinampWindow;		// AIMP Winamp API window

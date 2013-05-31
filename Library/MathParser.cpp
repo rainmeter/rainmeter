@@ -247,7 +247,7 @@ const WCHAR* MathParser::CheckedParse(const WCHAR* formula, double* result)
 	return error;
 }
 
-const WCHAR* MathParser::Parse(const WCHAR* formula, CMeasureCalc* calc, double* result)
+const WCHAR* MathParser::Parse(const WCHAR* formula, MeasureCalc* calc, double* result)
 {
 	static WCHAR errorBuffer[128];
 

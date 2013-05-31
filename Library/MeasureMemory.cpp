@@ -24,7 +24,7 @@
 ** The constructor
 **
 */
-CMeasureMemory::CMeasureMemory(CMeterWindow* meterWindow, const WCHAR* name) : CMeasure(meterWindow, name),
+MeasureMemory::MeasureMemory(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_Total(false)
 {
 	MEMORYSTATUSEX stat;
@@ -37,7 +37,7 @@ CMeasureMemory::CMeasureMemory(CMeterWindow* meterWindow, const WCHAR* name) : C
 ** The destructor
 **
 */
-CMeasureMemory::~CMeasureMemory()
+MeasureMemory::~MeasureMemory()
 {
 }
 
@@ -45,7 +45,7 @@ CMeasureMemory::~CMeasureMemory()
 ** Updates the current total memory value.
 **
 */
-void CMeasureMemory::UpdateValue()
+void MeasureMemory::UpdateValue()
 {
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
@@ -66,10 +66,10 @@ void CMeasureMemory::UpdateValue()
 ** Read the options specified in the ini file.
 **
 */
-void CMeasureMemory::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeasureMemory::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	double oldMaxValue = m_MaxValue;
-	CMeasure::ReadOptions(parser, section);
+	Measure::ReadOptions(parser, section);
 	m_MaxValue = oldMaxValue;
 
 	m_Total = (1 == parser.ReadInt(section, L"Total", 0));

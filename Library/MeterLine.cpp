@@ -28,7 +28,7 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-CMeterLine::CMeterLine(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(meterWindow, name),
+MeterLine::MeterLine(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
 	m_Autoscale(false),
 	m_HorizontalLines(false),
 	m_Flip(false),
@@ -44,7 +44,7 @@ CMeterLine::CMeterLine(CMeterWindow* meterWindow, const WCHAR* name) : CMeter(me
 ** The destructor
 **
 */
-CMeterLine::~CMeterLine()
+MeterLine::~MeterLine()
 {
 }
 
@@ -52,9 +52,9 @@ CMeterLine::~CMeterLine()
 ** create the buffer for the lines
 **
 */
-void CMeterLine::Initialize()
+void MeterLine::Initialize()
 {
-	CMeter::Initialize();
+	Meter::Initialize();
 
 	size_t colorsSize = m_Colors.size();
 	size_t allValuesSize = m_AllValues.size();
@@ -100,7 +100,7 @@ void CMeterLine::Initialize()
 ** Read the options specified in the ini file.
 **
 */
-void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
+void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	WCHAR tmpName[64];
 
@@ -109,7 +109,7 @@ void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 	int oldSize = m_GraphHorizontalOrientation ? m_H : m_W;
 	bool oldGraphHorizontalOrientation = m_GraphHorizontalOrientation;
 
-	CMeter::ReadOptions(parser, section);
+	Meter::ReadOptions(parser, section);
 
 	int lineCount = parser.ReadInt(section, L"LineCount", 1);
 
@@ -192,9 +192,9 @@ void CMeterLine::ReadOptions(CConfigParser& parser, const WCHAR* section)
 ** Updates the value(s) from the measures.
 **
 */
-bool CMeterLine::Update()
+bool MeterLine::Update()
 {
-	if (CMeter::Update() && !m_Measures.empty())
+	if (Meter::Update() && !m_Measures.empty())
 	{
 		int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
 
@@ -219,10 +219,10 @@ bool CMeterLine::Update()
 ** Draws the meter on the double buffer
 **
 */
-bool CMeterLine::Draw(Gfx::Canvas& canvas)
+bool MeterLine::Draw(Gfx::Canvas& canvas)
 {
 	int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
-	if (!CMeter::Draw(canvas) || maxSize <= 0) return false;
+	if (!Meter::Draw(canvas) || maxSize <= 0) return false;
 	
 	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
 
@@ -441,7 +441,7 @@ bool CMeterLine::Draw(Gfx::Canvas& canvas)
 ** Overwritten method to handle the other measure bindings.
 **
 */
-void CMeterLine::BindMeasures(CConfigParser& parser, const WCHAR* section)
+void MeterLine::BindMeasures(ConfigParser& parser, const WCHAR* section)
 {
 	if (BindPrimaryMeasure(parser, section, false))
 	{

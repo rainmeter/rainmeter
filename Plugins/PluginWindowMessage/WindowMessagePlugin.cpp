@@ -24,9 +24,9 @@
 
 struct MeasureData
 {
-	CRawString windowName;
-	CRawString windowClass;
-	CRawString value;
+	RawString windowName;
+	RawString windowClass;
+	RawString value;
 	WPARAM wParam;
 	LPARAM lParam;
 	DWORD uMsg;
