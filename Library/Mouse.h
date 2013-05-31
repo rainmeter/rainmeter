@@ -63,7 +63,7 @@ enum MOUSECURSOR
 class Mouse
 {
 public:
-	Mouse(MeterWindow* meterWindow, Meter* meter = NULL);
+	Mouse(MeterWindow* meterWindow, Meter* meter = nullptr);
 	~Mouse();
 
 	void ReadOptions(ConfigParser& parser, const WCHAR* section);

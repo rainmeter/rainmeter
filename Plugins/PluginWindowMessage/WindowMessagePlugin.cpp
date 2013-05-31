@@ -62,8 +62,8 @@ PLUGIN_EXPORT double Update(void* data)
 	MeasureData* measure = (MeasureData*)data;
 
 	HWND hwnd = FindWindow(
-		measure->windowClass.empty() ? NULL : measure->windowClass.c_str(),
-		measure->windowName.empty() ? NULL : measure->windowName.c_str());
+		measure->windowClass.empty() ? nullptr : measure->windowClass.c_str(),
+		measure->windowName.empty() ? nullptr : measure->windowName.c_str());
 
 	if (hwnd)
 	{
@@ -96,7 +96,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		return measure->value.c_str();
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 PLUGIN_EXPORT void Finalize(void* data)
@@ -123,8 +123,8 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 			{
 				
 				HWND hwnd = FindWindow(
-					measure->windowClass.empty() ? NULL : measure->windowClass.c_str(),
-					measure->windowName.empty() ? NULL : measure->windowName.c_str());
+					measure->windowClass.empty() ? nullptr : measure->windowClass.c_str(),
+					measure->windowName.empty() ? nullptr : measure->windowName.c_str());
 
 				if (hwnd)
 				{

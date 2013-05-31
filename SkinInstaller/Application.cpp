@@ -41,7 +41,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	// Avoid loading a dll from current directory
 	SetDllDirectory(L"");
 
-	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 	InitCommonControls();
 
 	if (lpCmdLine[0] == L'"')
@@ -88,7 +88,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	}
 	else
 	{
-		HRESULT hr = SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, buffer);
+		HRESULT hr = SHGetFolderPath(nullptr, CSIDL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, buffer);
 		wcscat(buffer, L"\\Rainmeter\\");
 		g_Data.settingsPath = buffer;
 		wcscat(buffer, L"Rainmeter.ini");
@@ -106,14 +106,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 			else
 			{
 				std::wstring error = L"SkinPath not found.\nMake sure that Rainmeter has been run at least once.";
-				MessageBox(NULL, error.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
+				MessageBox(nullptr, error.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
 				return 1;
 			}
 		}
 		else
 		{
 			std::wstring error = L"Rainmeter.ini not found.\nMake sure that Rainmeter has been run at least once.";
-			MessageBox(NULL, error.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
+			MessageBox(nullptr, error.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
 			return 1;
 		}
 	}
@@ -231,10 +231,10 @@ bool CloseRainmeterIfActive()
 bool IsRunning(const WCHAR* name, HANDLE* hMutex)
 {
 	// Create mutex
-	HANDLE hMutexTmp = CreateMutex(NULL, FALSE, name);
+	HANDLE hMutexTmp = CreateMutex(nullptr, FALSE, name);
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
 	{
-		*hMutex = NULL;
+		*hMutex = nullptr;
 		return true;
 	}
 	else
@@ -254,7 +254,7 @@ bool CopyFiles(const std::wstring& strFrom, const std::wstring& strTo, bool bMov
 
 	SHFILEOPSTRUCT fo =
 	{
-		NULL,
+		nullptr,
 		bMove ? FO_MOVE : FO_COPY,
 		tmpFrom.c_str(),
 		tmpTo.c_str(),
@@ -301,11 +301,11 @@ std::string ConvertToAscii(LPCTSTR str)
 	if (str && *str)
 	{
 		int strLen = (int)wcslen(str);
-		int bufLen = WideCharToMultiByte(CP_ACP, 0, str, strLen, NULL, 0, NULL, NULL);
+		int bufLen = WideCharToMultiByte(CP_ACP, 0, str, strLen, nullptr, 0, nullptr, nullptr);
 		if (bufLen > 0)
 		{
 			szAscii.resize(bufLen);
-			WideCharToMultiByte(CP_ACP, 0, str, strLen, &szAscii[0], bufLen, NULL, NULL);
+			WideCharToMultiByte(CP_ACP, 0, str, strLen, &szAscii[0], bufLen, nullptr, nullptr);
 		}
 	}
 	return szAscii;
@@ -318,7 +318,7 @@ std::wstring ConvertToWide(LPCSTR str)
 	if (str && *str)
 	{
 		int strLen = (int)strlen(str);
-		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
+		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, nullptr, 0);
 		if (bufLen > 0)
 		{
 			szWide.resize(bufLen);

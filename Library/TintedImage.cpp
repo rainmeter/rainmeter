@@ -57,7 +57,7 @@ public:
 		{
 			return (*iter).second->GetCache();
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	static void AddCache(const std::wstring& key, Bitmap* bitmap, HGLOBAL hBuffer)
@@ -111,7 +111,7 @@ private:
 		ImageCache() {}
 		ImageCache(const ImageCache& cache) {}
 
-		void Dispose() { delete m_Bitmap; m_Bitmap = NULL; if (m_hBuffer) { ::GlobalFree(m_hBuffer); m_hBuffer = NULL; } }
+		void Dispose() { delete m_Bitmap; m_Bitmap = nullptr; if (m_hBuffer) { ::GlobalFree(m_hBuffer); m_hBuffer = nullptr; } }
 
 		Bitmap* m_Bitmap;
 		HGLOBAL m_hBuffer;
@@ -187,9 +187,9 @@ TintedImage::~TintedImage()
 void TintedImage::DisposeImage()
 {
 	delete m_BitmapTint;
-	m_BitmapTint = NULL;
+	m_BitmapTint = nullptr;
 
-	m_Bitmap = NULL;
+	m_Bitmap = nullptr;
 
 	if (!m_CacheKey.empty())
 	{
@@ -211,10 +211,10 @@ Bitmap* TintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize, 
 		if (pBuffer)
 		{
 			DWORD readBytes;
-			ReadFile(fileHandle, pBuffer, fileSize, &readBytes, NULL);
+			ReadFile(fileHandle, pBuffer, fileSize, &readBytes, nullptr);
 			::GlobalUnlock(hBuffer);
 
-			IStream* pStream = NULL;
+			IStream* pStream = nullptr;
 			if (::CreateStreamOnHGlobal(hBuffer, FALSE, &pStream) == S_OK)
 			{
 				Bitmap* bitmap = Bitmap::FromStream(pStream);
@@ -288,7 +288,7 @@ Bitmap* TintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize, 
 						bitmap = clone;
 
 						::GlobalFree(hBuffer);
-						hBuffer = NULL;
+						hBuffer = nullptr;
 						////////////////////////////////////////////
 					}
 					*phBuffer = hBuffer;
@@ -302,8 +302,8 @@ Bitmap* TintedImage::LoadImageFromFileHandle(HANDLE fileHandle, DWORD fileSize, 
 		::GlobalFree(hBuffer);
 	}
 
-	*phBuffer = NULL;
-	return NULL;
+	*phBuffer = nullptr;
+	return nullptr;
 }
 
 /*
@@ -326,12 +326,12 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 
 		// Read the bitmap to memory so that it's not locked by GDI+
 		DWORD fileSize;
-		HANDLE fileHandle = CreateFile(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
-		if (fileHandle != INVALID_HANDLE_VALUE && (fileSize = GetFileSize(fileHandle, NULL)) != INVALID_FILE_SIZE)
+		HANDLE fileHandle = CreateFile(filename.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+		if (fileHandle != INVALID_HANDLE_VALUE && (fileSize = GetFileSize(fileHandle, nullptr)) != INVALID_FILE_SIZE)
 		{
 			// Compare the filename/timestamp/filesize to check if the file has been changed (don't load if it's not)
 			ULONGLONG fileTime;
-			GetFileTime(fileHandle, NULL, NULL, (LPFILETIME)&fileTime);
+			GetFileTime(fileHandle, nullptr, nullptr, (LPFILETIME)&fileTime);
 			std::wstring key = ImageCachePool::CreateKey(filename, fileTime, fileSize, m_UseExifOrientation ? L"EXIF" : L"NONE");
 
 			if (bLoadAlways || wcscmp(key.c_str(), m_CacheKey.c_str()) != 0)
@@ -339,7 +339,7 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 				DisposeImage();
 
 				Bitmap* bitmap = ImageCachePool::GetCache(key);
-				HGLOBAL hBuffer = NULL;
+				HGLOBAL hBuffer = nullptr;
 
 				m_Bitmap = (bitmap) ?
 					bitmap :
@@ -386,7 +386,7 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 				if (m_NeedsCrop || m_NeedsTinting || m_NeedsTransform)
 				{
 					delete m_BitmapTint;
-					m_BitmapTint = NULL;
+					m_BitmapTint = nullptr;
 
 					if (m_Bitmap->GetWidth() > 0 && m_Bitmap->GetHeight() > 0)
 					{
@@ -643,22 +643,22 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				{
 					m_Crop.X = parser.ParseInt(token, 0);
 
-					token = wcstok(NULL, L",");
+					token = wcstok(nullptr, L",");
 					if (token)
 					{
 						m_Crop.Y = parser.ParseInt(token, 0);
 
-						token = wcstok(NULL, L",");
+						token = wcstok(nullptr, L",");
 						if (token)
 						{
 							m_Crop.Width = parser.ParseInt(token, 0);
 
-							token = wcstok(NULL, L",");
+							token = wcstok(nullptr, L",");
 							if (token)
 							{
 								m_Crop.Height = parser.ParseInt(token, 0);
 
-								token = wcstok(NULL, L",");
+								token = wcstok(nullptr, L",");
 								if (token)
 								{
 									m_CropMode = (CROPMODE)parser.ParseInt(token, 0);

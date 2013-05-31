@@ -68,7 +68,7 @@ void ConfigParser::Initialize(const std::wstring& filename, MeterWindow* meterWi
 	m_LastDefaultUsed = false;
 	m_LastValueDefined = false;
 
-	m_CurrentSection = NULL;
+	m_CurrentSection = nullptr;
 	m_SectionInsertPos = m_Sections.end();
 
 	// Set the built-in variables. Do this before the ini file is read so that the paths can be used with @include
@@ -143,7 +143,7 @@ void ConfigParser::SetBuiltInVariable(const std::wstring& strVariable, const std
 }
 
 /*
-** Gets a value for the variable. Returns NULL if not found.
+** Gets a value for the variable. Returns nullptr if not found.
 **
 */
 const std::wstring* ConfigParser::GetVariable(const std::wstring& strVariable)
@@ -171,7 +171,7 @@ const std::wstring* ConfigParser::GetVariable(const std::wstring& strVariable)
 		return &(*iter).second;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 /*
@@ -341,7 +341,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			}
 			else
 			{
-				decimalsSz = NULL;
+				decimalsSz = nullptr;
 			}
 		}
 
@@ -805,7 +805,7 @@ Measure* ConfigParser::GetMeasure(const std::wstring& name)
 		return (*iter).second;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 std::vector<Gdiplus::REAL> ConfigParser::ReadFloats(LPCTSTR section, LPCTSTR key)
@@ -855,7 +855,7 @@ int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 		else if (*string)
 		{
 			errno = 0;
-			int intValue = wcstol(string, NULL, 10);
+			int intValue = wcstol(string, nullptr, 10);
 			if (errno != ERANGE)
 			{
 				return intValue;
@@ -887,7 +887,7 @@ uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
 		else if (*string)
 		{
 			errno = 0;
-			uint32_t uintValue = wcstoul(string, NULL, 10);
+			uint32_t uintValue = wcstoul(string, nullptr, 10);
 			if (errno != ERANGE)
 			{
 				return uintValue;
@@ -919,7 +919,7 @@ uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValu
 		else if (*string)
 		{
 			errno = 0;
-			uint64_t uint64Value = _wcstoui64(string, NULL, 10);
+			uint64_t uint64Value = _wcstoui64(string, nullptr, 10);
 			if (errno != ERANGE)
 			{
 				return uint64Value;
@@ -951,7 +951,7 @@ double ConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 		else if (*string)
 		{
 			errno = 0;
-			value = wcstod(string, NULL);
+			value = wcstod(string, nullptr);
 			if (errno != ERANGE)
 			{
 				return value;
@@ -970,7 +970,7 @@ bool ConfigParser::ParseFormula(const std::wstring& formula, double* resultValue
 	{
 		const WCHAR* string = formula.c_str();
 		const WCHAR* errMsg = MathParser::CheckedParse(string, resultValue);
-		if (errMsg != NULL)
+		if (errMsg != nullptr)
 		{
 			LogErrorF(L"Formula: %s: %s", errMsg, string);
 			return false;
@@ -1074,7 +1074,7 @@ double ConfigParser::ParseDouble(LPCTSTR string, double defValue)
 	else if (*string)
 	{
 		errno = 0;
-		double value = wcstod(string, NULL);
+		double value = wcstod(string, nullptr);
 		if (errno != ERANGE)
 		{
 			return value;
@@ -1107,7 +1107,7 @@ int ConfigParser::ParseInt(LPCTSTR string, int defValue)
 	else if (*string)
 	{
 		errno = 0;
-		int intValue = wcstol(string, NULL, 10);
+		int intValue = wcstol(string, nullptr, 10);
 		if (errno != ERANGE)
 		{
 			return intValue;
@@ -1140,7 +1140,7 @@ uint32_t ConfigParser::ParseUInt(LPCTSTR string, uint32_t defValue)
 	else if (*string)
 	{
 		errno = 0;
-		uint32_t uintValue = wcstoul(string, NULL, 10);
+		uint32_t uintValue = wcstoul(string, nullptr, 10);
 		if (errno != ERANGE)
 		{
 			return uintValue;
@@ -1173,7 +1173,7 @@ uint64_t ConfigParser::ParseUInt64(LPCTSTR string, uint64_t defValue)
 	else if (*string)
 	{
 		errno = 0;
-		uint64_t uint64Value = _wcstoui64(string, NULL, 10);
+		uint64_t uint64Value = _wcstoui64(string, nullptr, 10);
 		if (errno != ERANGE)
 		{
 			return uint64Value;
@@ -1200,17 +1200,17 @@ bool ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 		{
 			v1 = ConfigParser::ParseInt(token, 0);
 
-			token = wcstok(NULL, L",");
+			token = wcstok(nullptr, L",");
 			if (token)
 			{
 				v2 = ConfigParser::ParseInt(token, 0);
 
-				token = wcstok(NULL, L",");
+				token = wcstok(nullptr, L",");
 				if (token)
 				{
 					v3 = ConfigParser::ParseInt(token, 0);
 
-					token = wcstok(NULL, L",");
+					token = wcstok(nullptr, L",");
 					if (token)
 					{
 						v4 = ConfigParser::ParseInt(token, 0);
@@ -1288,7 +1288,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
-		g_Rainmeter->ShowMessage(NULL, GetString(ID_STR_INCLUDEINFINITELOOP), MB_OK | MB_ICONERROR);
+		g_Rainmeter->ShowMessage(nullptr, GetString(ID_STR_INCLUDEINFINITELOOP), MB_OK | MB_ICONERROR);
 		return;
 	}
 
@@ -1320,10 +1320,10 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 	DWORD itemsSize = MAX_LINE_LENGTH;
 	WCHAR* items = new WCHAR[itemsSize];
-	WCHAR* pos = NULL;
-	WCHAR* epos = NULL;
+	WCHAR* pos = nullptr;
+	WCHAR* epos = nullptr;
 
-	if (skinSection == NULL)
+	if (skinSection == nullptr)
 	{
 		// Get all the sections
 		do
@@ -1395,7 +1395,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 		const WCHAR* sectionName = (*it).c_str();
 		bool isVariables = (_wcsicmp(sectionName, L"Variables") == 0);
-		bool isMetadata = (skinSection == NULL && !isVariables && _wcsicmp(sectionName, L"Metadata") == 0);
+		bool isMetadata = (skinSection == nullptr && !isVariables && _wcsicmp(sectionName, L"Metadata") == 0);
 		bool resetInsertPos = true;
 
 		// Read all "key=value" from the section
@@ -1422,7 +1422,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 			{
 				size_t len = wcslen(pos);
 				WCHAR* sep = wmemchr(pos, L'=', len);
-				if (sep != NULL && sep != pos)
+				if (sep != nullptr && sep != pos)
 				{
 					size_t clen = sep - pos;  // key's length
 

@@ -257,7 +257,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, MeterWindow* skin, boo
 			if (pos)
 			{
 				bang.assign(command, 0, pos - command);
-				args = ParseString(pos + 1, skin ? &skin->GetParser() : NULL);
+				args = ParseString(pos + 1, skin ? &skin->GetParser() : nullptr);
 			}
 			else
 			{
@@ -290,7 +290,7 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, MeterWindow* skin, boo
 
 				if (count == 0 && start != std::wstring::npos)
 				{
-					// Change ] to NULL
+					// Change ] to nullptr
 					bangs[i] = L'\0';
 
 					// Skip whitespace
@@ -348,13 +348,13 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, MeterWindow* skin, boo
 						skin->MakePathAbsolute(sound);
 					}
 
-					PlaySound(sound.c_str(), NULL, flags);
+					PlaySound(sound.c_str(), nullptr, flags);
 				}
 				return;
 			}
 			else if (_wcsnicmp(L"STOP", &command[4], 4) == 0)  // PLAYSTOP
 			{
-				PlaySound(NULL, NULL, SND_PURGE);
+				PlaySound(nullptr, nullptr, SND_PURGE);
 				return;
 			}
 		}
@@ -460,7 +460,7 @@ void CommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 	DWORD type = GetFileAttributes(si.lpFile);
 	if (type & FILE_ATTRIBUTE_DIRECTORY && type != 0xFFFFFFFF)
 	{
-		ShellExecute(si.hwnd, si.lpVerb, si.lpFile, NULL, NULL, si.nShow);
+		ShellExecute(si.hwnd, si.lpVerb, si.lpFile, nullptr, nullptr, si.nShow);
 	}
 	else
 	{
@@ -751,7 +751,7 @@ void CommandHandler::DoSkinMenuBang(std::vector<std::wstring>& args, MeterWindow
 void CommandHandler::DoTrayMenuBang(std::vector<std::wstring>& args, MeterWindow* skin)
 {
 	POINT pos = System::GetCursorPosition();
-	g_Rainmeter->ShowContextMenu(pos, NULL);
+	g_Rainmeter->ShowContextMenu(pos, nullptr);
 }
 
 void CommandHandler::DoResetStatsBang(std::vector<std::wstring>& args, MeterWindow* meterWindow)
@@ -865,7 +865,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, MeterW
 	{
 		if (write != 0)
 		{
-			WritePrivateProfileString(NULL, NULL, NULL, iniWrite);  // FLUSH
+			WritePrivateProfileString(nullptr, nullptr, nullptr, iniWrite);  // FLUSH
 
 			// Copy the file back.
 			if (!System::CopyFiles(strIniWrite, strIniFile))
@@ -924,13 +924,13 @@ void CommandHandler::DoLogBang(std::vector<std::wstring>& args, MeterWindow* ski
 void CommandHandler::DoRefreshApp(std::vector<std::wstring>& args, MeterWindow* meterWindow)
 {
 	// Refresh needs to be delayed since it crashes if done during Update().
-	PostMessage(g_Rainmeter->m_Window, WM_RAINMETER_DELAYED_REFRESH_ALL, NULL, NULL);
+	PostMessage(g_Rainmeter->m_Window, WM_RAINMETER_DELAYED_REFRESH_ALL, 0, 0);
 }
 
 void CommandHandler::DoQuitBang(std::vector<std::wstring>& args, MeterWindow* meterWindow)
 {
 	// Quit needs to be delayed since it crashes if done during Update().
-	PostMessage(g_Rainmeter->GetTrayWindow()->GetWindow(), WM_COMMAND, MAKEWPARAM(IDM_QUIT, 0), NULL);
+	PostMessage(g_Rainmeter->GetTrayWindow()->GetWindow(), WM_COMMAND, MAKEWPARAM(IDM_QUIT, 0), 0);
 }
 
 void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, MeterWindow* meterWindow)

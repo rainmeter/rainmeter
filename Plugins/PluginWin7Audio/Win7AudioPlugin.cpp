@@ -27,7 +27,7 @@
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 #define SAFE_RELEASE(punk)  \
-			  if ((punk) != NULL) { (punk)->Release(); (punk) = NULL; }
+			  if ((punk) != nullptr) { (punk)->Release(); (punk) = nullptr; }
 
 static BOOL com_initialized = FALSE;
 static BOOL instance_created = FALSE;
@@ -110,7 +110,7 @@ HRESULT RegisterDevice(PCWSTR devID)
 		InitCom();
 		IPolicyConfig *pPolicyConfig;
 
-		hr = CoCreateInstance(IID_CPolicyConfigClient, NULL,
+		hr = CoCreateInstance(IID_CPolicyConfigClient, nullptr,
 							CLSCTX_ALL, IID_IPolicyConfig,
 							(LPVOID *)&pPolicyConfig);
 		if (hr == S_OK)

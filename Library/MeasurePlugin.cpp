@@ -230,7 +230,7 @@ const WCHAR* MeasurePlugin::GetStringValue()
 		if (ret) return CheckSubstitute(ret);
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 /*

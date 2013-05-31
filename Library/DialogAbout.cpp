@@ -29,7 +29,7 @@
 extern Rainmeter* g_Rainmeter;
 
 WINDOWPLACEMENT DialogAbout::c_WindowPlacement = {0};
-DialogAbout* DialogAbout::c_Dialog = NULL;
+DialogAbout* DialogAbout::c_Dialog = nullptr;
 
 /*
 ** Constructor.
@@ -192,11 +192,11 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				RECT r;
 
 				HWND item = GetControl(Id_Tab);
-				SetWindowPos(item, NULL, 0, 0, w - 18, h - 47, SWP_NOMOVE | SWP_NOZORDER);
+				SetWindowPos(item, nullptr, 0, 0, w - 18, h - 47, SWP_NOMOVE | SWP_NOZORDER);
 
 				item = GetControl(Id_CloseButton);
 				GetClientRect(item, &r);
-				SetWindowPos(item, NULL, w - r.right - 9, h - r.bottom - 8, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+				SetWindowPos(item, nullptr, w - r.right - 9, h - r.bottom - 8, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
 				w -= 48;
 				h -= 100;
@@ -217,7 +217,7 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 
 			delete c_Dialog;
-			c_Dialog = NULL;
+			c_Dialog = nullptr;
 		}
 		return TRUE;
 	}
@@ -265,9 +265,9 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	if (Platform::IsAtLeastWinVista())
 	{
 		item = m_TabLog.GetControl(TabLog::Id_ItemsListView);
-		SetWindowTheme(item, L"explorer", NULL);
+		SetWindowTheme(item, L"explorer", nullptr);
 		item = m_TabSkins.GetControl(TabSkins::Id_ItemsListView);
-		SetWindowTheme(item, L"explorer", NULL);
+		SetWindowTheme(item, L"explorer", nullptr);
 	}
 
 	if (c_WindowPlacement.length == 0)
@@ -435,25 +435,25 @@ void DialogAbout::TabLog::Initialize()
 */
 void DialogAbout::TabLog::Resize(int w, int h)
 {
-	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	RECT r;
 	HWND item = GetControl(Id_ErrorCheckBox);
 	GetClientRect(item, &r);
 
-	SetWindowPos(item, NULL, 0, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(item, nullptr, 0, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
 	item = GetControl(Id_WarningCheckBox);
-	SetWindowPos(item, NULL, r.right, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(item, nullptr, r.right, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
 	item = GetControl(Id_NoticeCheckBox);
-	SetWindowPos(item, NULL, r.right * 2, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(item, nullptr, r.right * 2, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
 	item = GetControl(Id_DebugCheckBox);
-	SetWindowPos(item, NULL, r.right * 3, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(item, nullptr, r.right * 3, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
 	item = GetControl(Id_ItemsListView);
-	SetWindowPos(item, NULL, 0, 0, w, h - r.bottom - 7, SWP_NOMOVE | SWP_NOZORDER);
+	SetWindowPos(item, nullptr, 0, 0, w, h - r.bottom - 7, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust third colum
 	LVCOLUMN lvc;
@@ -674,14 +674,14 @@ void DialogAbout::TabSkins::Initialize()
 */
 void DialogAbout::TabSkins::Resize(int w, int h)
 {
-	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	HWND item = GetControl(Id_SkinsListBox);
 	int wList = (w < 650) ? (w - 373) : 277;
-	SetWindowPos(item, NULL, 0, 0, wList, h, SWP_NOMOVE | SWP_NOZORDER);
+	SetWindowPos(item, nullptr, 0, 0, wList, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	item = GetControl(Id_ItemsListView);
-	SetWindowPos(item, NULL, (w < 650) ? (w - 365) : 285, 0, w - wList - 10, h, SWP_NOZORDER);
+	SetWindowPos(item, nullptr, (w < 650) ? (w - 365) : 285, 0, w - wList - 10, h, SWP_NOZORDER);
 
 	// Adjust third column
 	LVCOLUMN lvc;
@@ -730,7 +730,7 @@ void DialogAbout::TabSkins::UpdateSkinList()
 	{
 		if (windows.empty())
 		{
-			m_SkinWindow = NULL;
+			m_SkinWindow = nullptr;
 			item = GetControl(Id_ItemsListView);
 			ListView_DeleteAllItems(item);
 		}
@@ -754,7 +754,7 @@ void DialogAbout::TabSkins::UpdateMeasureList(MeterWindow* meterWindow)
 	{
 		// Find selected skin
 		HWND item = GetControl(Id_SkinsListBox);
-		int selected = (int)SendMessage(item, LB_GETCURSEL, NULL, NULL);
+		int selected = (int)SendMessage(item, LB_GETCURSEL, 0, 0);
 
 		const std::map<std::wstring, MeterWindow*>& windows = g_Rainmeter->GetAllMeterWindows();
 		std::map<std::wstring, MeterWindow*>::const_iterator iter = windows.begin();
@@ -894,7 +894,7 @@ INT_PTR DialogAbout::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	case Id_SkinsListBox:
 		if (HIWORD(wParam) == LBN_SELCHANGE)
 		{
-			UpdateMeasureList(NULL);
+			UpdateMeasureList(nullptr);
 		}
 		break;
 
@@ -1105,10 +1105,10 @@ void DialogAbout::TabPlugins::Initialize()
 */
 void DialogAbout::TabPlugins::Resize(int w, int h)
 {
-	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	HWND item = GetControl(Id_ItemsListView);
-	SetWindowPos(item, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+	SetWindowPos(item, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust third colum
 	LVCOLUMN lvc;
@@ -1201,7 +1201,7 @@ void DialogAbout::TabVersion::Initialize()
 */
 void DialogAbout::TabVersion::Resize(int w, int h)
 {
-	SetWindowPos(m_Window, NULL, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 }
 
 INT_PTR DialogAbout::TabVersion::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)

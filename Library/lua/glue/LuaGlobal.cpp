@@ -37,7 +37,7 @@ static int Print(lua_State* L)
 
 		// Get result
 		const char* s = lua_tostring(L, -1);
-		if (s == NULL)
+		if (s == nullptr)
 		{
 			return luaL_error(L, LUA_QL("tostring") " must return a string to " LUA_QL("print"));
 		}
@@ -73,7 +73,7 @@ void LuaManager::RegisterGlobal(lua_State* L)
 	const luaL_Reg toluaFuncs[] =
 	{
 		{ "cast", tolua_cast },
-		{ NULL, NULL }
+		{ nullptr, nullptr }
 	};
 
 	luaL_register(L, "tolua", toluaFuncs);

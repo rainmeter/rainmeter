@@ -32,7 +32,7 @@
 extern Rainmeter* g_Rainmeter;
 
 WINDOWPLACEMENT DialogManage::c_WindowPlacement = {0};
-DialogManage* DialogManage::c_Dialog = NULL;
+DialogManage* DialogManage::c_Dialog = nullptr;
 
 /*
 ** Constructor.
@@ -173,7 +173,7 @@ INT_PTR DialogManage::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 
 			delete c_Dialog;
-			c_Dialog = NULL;
+			c_Dialog = nullptr;
 		}
 		return TRUE;
 	}
@@ -237,7 +237,7 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	{
 		// Use arrows instead of plus/minus in the tree for Vista+
 		item = m_TabSkins.GetControl(TabSkins::Id_SkinsTreeView);
-		SetWindowTheme(item, L"explorer", NULL);
+		SetWindowTheme(item, L"explorer", nullptr);
 	}
 
 	if (c_WindowPlacement.length == 0)
@@ -290,7 +290,7 @@ INT_PTR DialogManage::OnCommand(WPARAM wParam, LPARAM lParam)
 			}
 
 			url += L"Tab";
-			ShellExecute(m_Window, L"open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
+			ShellExecute(m_Window, L"open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 		}
 		break;
 
@@ -491,12 +491,12 @@ void DialogManage::TabSkins::Initialize()
 	// Apply icons and populate tree
 	item = GetControl(Id_SkinsTreeView);
 	TreeView_SetImageList(item, hImageList, TVSIL_NORMAL);
-	Update(NULL, false);
+	Update(nullptr, false);
 
 	// Get rid of the EDITTEXT control border
 	item = GetControl(Id_DescriptionLabel);
 	SetWindowLongPtr(item, GWL_EXSTYLE, GetWindowLongPtr(item, GWL_EXSTYLE) &~ WS_EX_CLIENTEDGE);
-	SetWindowPos(item, NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER); 
+	SetWindowPos(item, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER); 
 
 	item = GetControl(Id_TransparencyDropDownList);
 	ComboBox_AddString(item, L"0%");
@@ -547,7 +547,7 @@ void DialogManage::TabSkins::Update(MeterWindow* meterWindow, bool deleted)
 			if (deleted)
 			{
 				DisableControls();
-				m_SkinWindow = NULL;
+				m_SkinWindow = nullptr;
 			}
 			else
 			{
@@ -778,10 +778,10 @@ void DialogManage::TabSkins::ReadSkin()
 	const WCHAR* fileSz = file.c_str();
 
 	item = GetControl(Id_AuthorLabel);
-	if (GetPrivateProfileString(L"Metadata", L"Author", NULL, buffer, MAX_LINE_LENGTH, fileSz) == 0)
+	if (GetPrivateProfileString(L"Metadata", L"Author", nullptr, buffer, MAX_LINE_LENGTH, fileSz) == 0)
 	{
 		// For backwards compatibility.
-		GetPrivateProfileString(L"Rainmeter", L"Author", NULL, buffer, MAX_LINE_LENGTH, fileSz);
+		GetPrivateProfileString(L"Rainmeter", L"Author", nullptr, buffer, MAX_LINE_LENGTH, fileSz);
 	}
 	SetWindowText(item, buffer);
 
@@ -792,26 +792,26 @@ void DialogManage::TabSkins::ReadSkin()
 
 		// Set metadata
 		item = GetControl(Id_VersionLabel);
-		GetPrivateProfileString(L"Metadata", L"Version", NULL, buffer, MAX_LINE_LENGTH, fileSz);
+		GetPrivateProfileString(L"Metadata", L"Version", nullptr, buffer, MAX_LINE_LENGTH, fileSz);
 		SetWindowText(item, buffer);
 
 		item = GetControl(Id_LicenseLabel);
-		GetPrivateProfileString(L"Metadata", L"License", NULL, buffer, MAX_LINE_LENGTH, fileSz);
+		GetPrivateProfileString(L"Metadata", L"License", nullptr, buffer, MAX_LINE_LENGTH, fileSz);
 		SetWindowText(item, buffer);
 
 		item = GetControl(Id_DescriptionLabel);
 		std::wstring text;
-		if (GetPrivateProfileString(L"Metadata", L"Information", NULL, buffer, MAX_LINE_LENGTH, fileSz) > 0)
+		if (GetPrivateProfileString(L"Metadata", L"Information", nullptr, buffer, MAX_LINE_LENGTH, fileSz) > 0)
 		{
 			text = buffer;
 		}
 		else
 		{
 			// For backwards compatibility
-			GetPrivateProfileString(L"Metadata", L"Description", NULL, buffer, MAX_LINE_LENGTH, fileSz);
+			GetPrivateProfileString(L"Metadata", L"Description", nullptr, buffer, MAX_LINE_LENGTH, fileSz);
 			text = buffer;
 
-			if (GetPrivateProfileString(L"Metadata", L"Instructions", NULL, buffer, MAX_LINE_LENGTH, fileSz) > 0)
+			if (GetPrivateProfileString(L"Metadata", L"Instructions", nullptr, buffer, MAX_LINE_LENGTH, fileSz) > 0)
 			{
 				text += L"\r\n\r\n";
 				text += buffer;
@@ -867,7 +867,7 @@ std::wstring DialogManage::TabSkins::GetTreeSelectionPath(HWND tree)
 	TreeView_GetItem(tree, &tvi);
 	
 	std::wstring path = buffer;
-	while ((tvi.hItem = TreeView_GetParent(tree, tvi.hItem)) != NULL)
+	while ((tvi.hItem = TreeView_GetParent(tree, tvi.hItem)) != nullptr)
 	{
 		TreeView_GetItem(tree, &tvi);
 		path.insert(0, 1, L'\\');
@@ -940,7 +940,7 @@ void DialogManage::TabSkins::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR n
 	if (pos)
 	{
 		const int folderLen = (int)(pos - name);
-		tvi.cchTextMax = folderLen + 1;		// Length of folder name plus 1 for NULL
+		tvi.cchTextMax = folderLen + 1;		// Length of folder name plus 1 for nullptr
 
 		// Find and expand the folder
 		do
@@ -948,7 +948,7 @@ void DialogManage::TabSkins::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR n
 			TreeView_GetItem(tree, &tvi);
 			if (wcsncmp(buffer, name, folderLen) == 0)
 			{
-				if ((item = TreeView_GetChild(tree, tvi.hItem)) != NULL)
+				if ((item = TreeView_GetChild(tree, tvi.hItem)) != nullptr)
 				{
 					TreeView_Expand(tree, tvi.hItem, TVE_EXPAND);
 					++pos;	// Skip the slash
@@ -958,7 +958,7 @@ void DialogManage::TabSkins::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR n
 				break;
 			}
 		}
-		while ((tvi.hItem = TreeView_GetNextSibling(tree, tvi.hItem)) != NULL);
+		while ((tvi.hItem = TreeView_GetNextSibling(tree, tvi.hItem)) != nullptr);
 	}
 	else
 	{
@@ -974,7 +974,7 @@ void DialogManage::TabSkins::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR n
 				break;
 			}
 		}
-		while ((tvi.hItem = TreeView_GetNextSibling(tree, tvi.hItem)) != NULL);
+		while ((tvi.hItem = TreeView_GetNextSibling(tree, tvi.hItem)) != nullptr);
 	}
 }
 
@@ -1030,7 +1030,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 					--r.bottom,
 					0,
 					m_Window,
-					NULL
+					nullptr
 				);
 			}
 
@@ -1198,7 +1198,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 					--r.bottom,
 					0,
 					m_Window,
-					NULL
+					nullptr
 				);
 
 				DestroyMenu(menu);
@@ -1361,7 +1361,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 
 				if (TreeView_GetItem(nm->hwndFrom, &tvi))
 				{
-					HMENU menu = NULL;
+					HMENU menu = nullptr;
 					MENUITEMINFO mii = {0};
 					mii.cbSize = sizeof(MENUITEMINFO);
 					mii.fMask = MIIM_STRING;
@@ -1416,7 +1416,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 						pt.y,
 						0,
 						m_Window,
-						NULL
+						nullptr
 					);
 
 					DestroyMenu(menu);
@@ -1428,7 +1428,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 	case TVN_SELCHANGED:
 		if (nm->idFrom == Id_SkinsTreeView)
 		{
-			m_SkinWindow = NULL;
+			m_SkinWindow = nullptr;
 			m_SkinFileName.clear();
 			m_SkinFolderPath.clear();
 
@@ -1453,7 +1453,7 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 			
 				// Loop through parents to get skin folder
 				m_SkinFolderPath.clear();
-				while ((tvi.hItem = TreeView_GetParent(nm->hwndFrom, tvi.hItem)) != NULL)
+				while ((tvi.hItem = TreeView_GetParent(nm->hwndFrom, tvi.hItem)) != nullptr)
 				{
 					TreeView_GetItem(nm->hwndFrom, &tvi);
 					m_SkinFolderPath.insert(0, 1, L'\\');
@@ -1645,7 +1645,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			else
 			{
 				// Make sure path exists
-				CreateDirectory(path.c_str(), NULL);
+				CreateDirectory(path.c_str(), nullptr);
 			}
 
 			path += L"\\Rainmeter.ini";
@@ -1673,7 +1673,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 					{
 						if (parser.GetValue(*iter, L"Active", L"") == L"0")
 						{
-							WritePrivateProfileString((*iter).c_str(), NULL, NULL, path.c_str());
+							WritePrivateProfileString((*iter).c_str(), nullptr, nullptr, path.c_str());
 						}
 					}
 				}
@@ -1694,7 +1694,7 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 			else
 			{
 				// Create empty layout
-				HANDLE file = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+				HANDLE file = CreateFile(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 				if (file == INVALID_HANDLE_VALUE)
 				{
 					std::wstring text = GetFormattedString(ID_STR_THEMESAVEFAIL, path.c_str());
@@ -1950,7 +1950,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 				resource += buffer;
 				resource += L".dll";
 				FreeLibrary(g_Rainmeter->m_ResourceInstance);
-				g_Rainmeter->m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+				g_Rainmeter->m_ResourceInstance = LoadLibraryEx(resource.c_str(), nullptr, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
 				g_Rainmeter->m_ResourceLCID = lcid;
 
 				if (DialogAbout::GetDialog())

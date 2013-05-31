@@ -33,7 +33,7 @@ extern Rainmeter* g_Rainmeter;
 **
 */
 MeterBitmap::MeterBitmap(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
-	m_Image(L"BitmapImage", NULL, true),
+	m_Image(L"BitmapImage", nullptr, true),
 	m_NeedsReload(false),
 	m_ZeroFrame(false),
 	m_FrameCount(1),

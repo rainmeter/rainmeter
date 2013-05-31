@@ -78,7 +78,7 @@ void MeasureScript::UpdateValue()
 */
 const WCHAR* MeasureScript::GetStringValue()
 {
-	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : NULL;
+	return (m_ValueType == LUA_TSTRING) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
 }
 
 /*

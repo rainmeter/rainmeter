@@ -35,7 +35,7 @@ HMENU MenuTemplate::CreateSubMenu(const MenuTemplate* items, UINT& itemIndex, UI
 
 		UINT itemFlags = MF_STRING;
 		UINT_PTR itemId = item.id;
-		const WCHAR* itemText = item.idText ? getString(item.idText) : NULL;
+		const WCHAR* itemText = item.idText ? getString(item.idText) : nullptr;
 
 		if (item.type == MenuItem_ItemGrayed)
 		{

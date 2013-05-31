@@ -42,7 +42,7 @@ CPerfObjectList::GetFirstPerfObject( void )
 CPerfObject *
 CPerfObjectList::GetNextPerfObject( void )
 {
-	// Are we at the last object in the list?  Return NULL if so.
+	// Are we at the last object in the list?  Return nullptr if so.
 	if ( ++m_currentObjectListIndex >= m_pPerfSnapshot->GetNumObjectTypes() )
 		return 0;
 

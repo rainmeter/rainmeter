@@ -55,7 +55,7 @@ HRESULT STDMETHODCALLTYPE DWriteFontFileEnumerator::QueryInterface(IID const& ri
 		return S_OK;
 	}
 
-	*ppvObject = NULL;
+	*ppvObject = nullptr;
 	return E_NOINTERFACE;
 }
 

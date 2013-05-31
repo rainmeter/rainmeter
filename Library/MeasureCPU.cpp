@@ -38,7 +38,7 @@ typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
 #define Li2Double(x) ((double)((x).QuadPart))
 #define Ft2Double(x) ((double)((x).dwHighDateTime) * 4.294967296E9 + (double)((x).dwLowDateTime))
 
-FPNTQSI MeasureCPU::c_NtQuerySystemInformation = NULL;
+FPNTQSI MeasureCPU::c_NtQuerySystemInformation = nullptr;
 int MeasureCPU::c_NumOfProcessors = 0;
 ULONG MeasureCPU::c_BufferSize = 0;
 
@@ -124,7 +124,7 @@ void MeasureCPU::UpdateValue()
 	{
 		LONG status;
 		ULONG bufSize = c_BufferSize;
-		BYTE* buf = (bufSize > 0) ? new BYTE[bufSize] : NULL;
+		BYTE* buf = (bufSize > 0) ? new BYTE[bufSize] : nullptr;
 
 		int loop = 0;
 

@@ -98,14 +98,14 @@ void TrayWindow::Initialize()
 	m_Window = CreateWindowEx(
 		WS_EX_TOOLWINDOW,
 		L"RainmeterTrayClass",
-		NULL,
+		nullptr,
 		WS_POPUP | WS_DISABLED,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		NULL,
-		NULL,
+		nullptr,
+		nullptr,
 		wc.hInstance,
 		this);
 
@@ -145,14 +145,14 @@ void TrayWindow::TryAddTrayIcon()
 	if (m_Icon)
 	{
 		DestroyIcon(m_Icon);
-		m_Icon = NULL;
+		m_Icon = nullptr;
 	}
 
 	m_Icon = CreateTrayIcon(0);
 
 	if (!AddTrayIcon())
 	{
-		SetTimer(m_Window, TIMER_ADDTRAYICON, INTERVAL_ADDTRAYICON, NULL);
+		SetTimer(m_Window, TIMER_ADDTRAYICON, INTERVAL_ADDTRAYICON, nullptr);
 	}
 }
 
@@ -176,7 +176,7 @@ void TrayWindow::RemoveTrayIcon()
 	if (m_Icon)
 	{
 		DestroyIcon(m_Icon);
-		m_Icon = NULL;
+		m_Icon = nullptr;
 	}
 }
 
@@ -185,7 +185,7 @@ void TrayWindow::ModifyTrayIcon(double value)
 	if (m_Icon)
 	{
 		DestroyIcon(m_Icon);
-		m_Icon = NULL;
+		m_Icon = nullptr;
 	}
 
 	m_Icon = CreateTrayIcon(value);
@@ -201,7 +201,7 @@ void TrayWindow::ModifyTrayIcon(double value)
 
 HICON TrayWindow::CreateTrayIcon(double value)
 {
-	if (m_Measure != NULL)
+	if (m_Measure != nullptr)
 	{
 		if (m_MeterType == TRAY_METER_TYPE_HISTOGRAM)
 		{
@@ -230,7 +230,7 @@ HICON TrayWindow::CreateTrayIcon(double value)
 			SolidBrush brush2(m_Color2);
 			graphics.FillPolygon(&brush2, points, TRAYICON_SIZE + 2);
 
-			HICON icon = NULL;
+			HICON icon = nullptr;
 			trayBitmap.GetHICON(&icon);
 			return icon;
 		}
@@ -285,7 +285,7 @@ HICON TrayWindow::CreateTrayIcon(double value)
 				Rect r(0, 0, TRAYICON_SIZE, TRAYICON_SIZE);
 				graphics.DrawImage(m_Bitmap, r, newX, newY, TRAYICON_SIZE, TRAYICON_SIZE, UnitPixel);
 
-				HICON icon = NULL;
+				HICON icon = nullptr;
 				trayBitmap.GetHICON(&icon);
 				return icon;
 			}
@@ -340,7 +340,7 @@ void TrayWindow::SetTrayIcon(bool enabled)
 
 	// Save to Rainmeter.ini.
 	const std::wstring& iniFile = g_Rainmeter->GetIniFile();
-	WritePrivateProfileString(L"Rainmeter", L"TrayIcon", enabled ? NULL : L"0", iniFile.c_str());
+	WritePrivateProfileString(L"Rainmeter", L"TrayIcon", enabled ? nullptr : L"0", iniFile.c_str());
 }
 
 void TrayWindow::ReadOptions(ConfigParser& parser)
@@ -350,10 +350,10 @@ void TrayWindow::ReadOptions(ConfigParser& parser)
 	KillTimer(m_Window, TIMER_TRAYMEASURE);
 
 	delete m_Measure;
-	m_Measure = NULL;
+	m_Measure = nullptr;
 
 	delete m_Bitmap;
-	m_Bitmap = NULL;
+	m_Bitmap = nullptr;
 
 	std::vector<HICON>::const_iterator iter = m_Icons.begin();
 	for ( ; iter != m_Icons.end(); ++iter)
@@ -375,7 +375,7 @@ void TrayWindow::ReadOptions(ConfigParser& parser)
 			ConfigParser* oldParser = g_Rainmeter->GetCurrentParser();
 			g_Rainmeter->SetCurrentParser(&parser);
 
-			m_Measure = Measure::Create(measureName.c_str(), NULL, L"TrayMeasure");
+			m_Measure = Measure::Create(measureName.c_str(), nullptr, L"TrayMeasure");
 			if (m_Measure)
 			{
 				m_Measure->ReadOptions(parser);
@@ -409,7 +409,7 @@ void TrayWindow::ReadOptions(ConfigParser& parser)
 				if (_wcsicmp(imagePath + (imageName.size() - 4), L".ico") == 0)
 				{
 					int count = 1;
-					HICON hIcon = NULL;
+					HICON hIcon = nullptr;
 
 					// Load the icons
 					do
@@ -417,11 +417,11 @@ void TrayWindow::ReadOptions(ConfigParser& parser)
 						WCHAR buffer[MAX_PATH];
 						_snwprintf_s(buffer, _TRUNCATE, imagePath, count++);
 
-						hIcon = (HICON)LoadImage(NULL, buffer, IMAGE_ICON, TRAYICON_SIZE, TRAYICON_SIZE, LR_LOADFROMFILE);
+						hIcon = (HICON)LoadImage(nullptr, buffer, IMAGE_ICON, TRAYICON_SIZE, TRAYICON_SIZE, LR_LOADFROMFILE);
 						if (hIcon) m_Icons.push_back(hIcon);
 						if (wcscmp(imagePath, buffer) == 0) break;
 					}
-					while(hIcon != NULL);
+					while(hIcon != nullptr);
 				}
 
 				if (m_Icons.empty())
@@ -433,7 +433,7 @@ void TrayWindow::ReadOptions(ConfigParser& parser)
 					if (Ok != status)
 					{
 						delete m_Bitmap;
-						m_Bitmap = NULL;
+						m_Bitmap = nullptr;
 						LogWarningF(L"Bitmap image not found: %s", imagePath);
 					}
 				}
@@ -448,7 +448,7 @@ void TrayWindow::ReadOptions(ConfigParser& parser)
 
 		if (m_Measure)
 		{
-			SetTimer(m_Window, TIMER_TRAYMEASURE, INTERVAL_TRAYMEASURE, NULL);  // Update the tray once per sec
+			SetTimer(m_Window, TIMER_TRAYMEASURE, INTERVAL_TRAYMEASURE, nullptr);  // Update the tray once per sec
 		}
 	}
 	else
@@ -483,7 +483,7 @@ LRESULT CALLBACK TrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 			break;
 
 		case IDM_REFRESH:
-			PostMessage(g_Rainmeter->GetWindow(), WM_RAINMETER_DELAYED_REFRESH_ALL, (WPARAM)NULL, (LPARAM)NULL);
+			PostMessage(g_Rainmeter->GetWindow(), WM_RAINMETER_DELAYED_REFRESH_ALL, (WPARAM)nullptr, (LPARAM)nullptr);
 			break;
 
 		case IDM_SHOWLOGFILE:
@@ -559,7 +559,7 @@ LRESULT CALLBACK TrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 							if (index < 0)
 							{
 								MeterWindow* meterWindow = (*iter).second;
-								SendMessage(meterWindow->GetWindow(), WM_COMMAND, mID, NULL);
+								SendMessage(meterWindow->GetWindow(), WM_COMMAND, mID, 0);
 								break;
 							}
 						}
@@ -602,7 +602,7 @@ LRESULT CALLBACK TrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 			if (*bang &&
 				!IsCtrlKeyDown())   // Ctrl is pressed, so only run default action
 			{
-				g_Rainmeter->ExecuteCommand(bang, NULL);
+				g_Rainmeter->ExecuteCommand(bang, nullptr);
 				tray->m_TrayContextMenuEnabled = (uMouseMsg != WM_RBUTTONDOWN);
 				break;
 			}
@@ -618,7 +618,7 @@ LRESULT CALLBACK TrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 				if (tray->m_TrayContextMenuEnabled)
 				{
 					POINT pos = System::GetCursorPosition();
-					g_Rainmeter->ShowContextMenu(pos, NULL);
+					g_Rainmeter->ShowContextMenu(pos, nullptr);
 				}
 				break;
 
@@ -702,7 +702,7 @@ LRESULT CALLBACK TrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 			{
 				LPCWSTR folderPath = (LPCWSTR)cds->lpData;
 				MeterWindow* mw = g_Rainmeter->GetMeterWindow(folderPath);
-				return (mw) ? (LRESULT)mw->GetWindow() : NULL;
+				return (mw) ? (LRESULT)mw->GetWindow() : 0;
 			}
 		}
 		return 1;

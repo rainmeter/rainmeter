@@ -39,7 +39,7 @@ enum BUTTON_STATE
 **
 */
 MeterButton::MeterButton(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
-	m_Image(L"ButtonImage", NULL, true),
+	m_Image(L"ButtonImage", nullptr, true),
 	m_NeedsReload(false),
 	m_Bitmaps(),
 	m_State(BUTTON_STATE_NORMAL),
@@ -71,7 +71,7 @@ void MeterButton::Initialize()
 	for (int i = 0; i < BUTTON_FRAMES; ++i)
 	{
 		delete m_Bitmaps[i];
-		m_Bitmaps[i] = NULL;
+		m_Bitmaps[i] = nullptr;
 	}
 
 	// Load the bitmaps if defined
@@ -186,7 +186,7 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
 
-	if (m_Bitmaps[m_State] == NULL) return false;	// Unable to continue
+	if (m_Bitmaps[m_State] == nullptr) return false;	// Unable to continue
 
 	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
 

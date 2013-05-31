@@ -90,7 +90,7 @@ HMODULE VDMeasure::hInstance;
 
 UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
-	VDMeasure *Measure = NULL;
+	VDMeasure *Measure = nullptr;
 	LPCTSTR VDManager = ReadConfigString(section, _T("VDManager"), _T(""));
 
 	if (_tcsicmp(VDManager, _T("Dexpot")) == 0)

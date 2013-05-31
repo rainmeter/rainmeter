@@ -29,16 +29,17 @@ void CheckVersion(void* dummy)
 	HINTERNET hRootHandle = InternetOpen(
 		L"Rainmeter",
 		INTERNET_OPEN_TYPE_PRECONFIG,
-		NULL,
-		NULL,
+		nullptr,
+		nullptr,
 		0);
 
-	if (hRootHandle == NULL)
+	if (hRootHandle == nullptr)
 	{
 		return;
 	}
 
-	HINTERNET hUrlDump = InternetOpenUrl(hRootHandle, L"http://rainmeter.github.io/rainmeter/release", NULL, NULL, INTERNET_FLAG_RESYNCHRONIZE, 0);
+	HINTERNET hUrlDump = InternetOpenUrl(
+		hRootHandle, L"http://rainmeter.github.io/rainmeter/release", nullptr, 0, INTERNET_FLAG_RESYNCHRONIZE, 0);
 	if (hUrlDump)
 	{
 		DWORD dwSize;
@@ -94,5 +95,5 @@ void CheckVersion(void* dummy)
 
 void CheckUpdate()
 {
-	_beginthread(CheckVersion, 0, NULL);
+	_beginthread(CheckVersion, 0, nullptr);
 }

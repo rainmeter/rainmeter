@@ -73,9 +73,9 @@ FARPROC WINAPI DelayLoadFailureHook(unsigned int dliNotify, DelayLoadInfo* dli)
 #endif
 		const WCHAR* format = L"%S (%i-bit) error %ld.\n\nDo you want to view help online?";
 		wsprintf(buffer, format, dli->szDll, arch, dli->dwLastError);
-		if (MessageBox(NULL, buffer, L"Rainmeter", MB_YESNO | MB_ICONERROR) == IDYES)
+		if (MessageBox(nullptr, buffer, L"Rainmeter", MB_YESNO | MB_ICONERROR) == IDYES)
 		{
-			ShellExecute(NULL, L"open", L"http://rainmeter.net/dllerror", NULL, NULL, SW_SHOWNORMAL); 
+			ShellExecute(nullptr, L"open", L"http://rainmeter.net/dllerror", nullptr, nullptr, SW_SHOWNORMAL); 
 		}
 
 		ExitProcess(0);
@@ -117,12 +117,12 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 			const DWORD size = MAX_PATH;
 			WCHAR buffer[size];
 			DWORD type = 0;
-			if (RegQueryValueEx(hKey, NULL , NULL, &type, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS &&
+			if (RegQueryValueEx(hKey, nullptr , nullptr, &type, (LPBYTE)buffer, (LPDWORD)&size) == ERROR_SUCCESS &&
 				type == REG_SZ)
 			{
 				SetCurrentDirectory(buffer);
 				lstrcat(buffer, L"\\Rainmeter.exe");
-				ShellExecute(NULL, L"open", buffer, args, NULL, SW_SHOWNORMAL);
+				ShellExecute(nullptr, L"open", buffer, args, nullptr, SW_SHOWNORMAL);
 			}
 			RegCloseKey(hKey);
 		}
@@ -136,7 +136,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 #ifndef _DEBUG
 EXTERN_C int WINAPI Main()
 {
-	int result = wWinMain(NULL, NULL, NULL, 0);
+	int result = wWinMain(nullptr, nullptr, nullptr, 0);
 	ExitProcess(result);
 	return 0;  // Never reached.
 }

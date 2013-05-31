@@ -91,7 +91,7 @@ LPCWSTR CoreTempProxy::GetErrorMessage()
 	}
 	else
 	{
-		::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, lastError, 0, this->m_ErrorMessage, 99, NULL);
+		::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, lastError, 0, this->m_ErrorMessage, 99, nullptr);
 	}
 
 	return this->m_ErrorMessage;

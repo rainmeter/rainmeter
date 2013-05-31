@@ -126,11 +126,11 @@ void MeasureTime::UpdateValue()
 		const WCHAR* format = m_Format.c_str();
 		if (_wcsicmp(L"locale-time", format) == 0)
 		{
-			GetTimeFormat(LOCALE_USER_DEFAULT, 0, &sysToday, NULL, tmpSz, MAX_LINE_LENGTH);
+			GetTimeFormat(LOCALE_USER_DEFAULT, 0, &sysToday, nullptr, tmpSz, MAX_LINE_LENGTH);
 		}
 		else if (_wcsicmp(L"locale-date", format) == 0)
 		{
-			GetDateFormat(LOCALE_USER_DEFAULT, 0, &sysToday, NULL, tmpSz, MAX_LINE_LENGTH);
+			GetDateFormat(LOCALE_USER_DEFAULT, 0, &sysToday, nullptr, tmpSz, MAX_LINE_LENGTH);
 		}
 		else
 		{
@@ -148,7 +148,7 @@ void MeasureTime::UpdateValue()
 			TimeToString(tmpSz, MAX_LINE_LENGTH, format, &today);
 		}
 
-		m_Value = wcstod(tmpSz, NULL);
+		m_Value = wcstod(tmpSz, nullptr);
 
 		delete [] tmpSz;
 	}
@@ -193,11 +193,11 @@ const WCHAR* MeasureTime::GetStringValue()
 		const WCHAR* format = m_Format.c_str();
 		if (_wcsicmp(L"locale-time", format) == 0)
 		{
-			GetTimeFormat(LOCALE_USER_DEFAULT, 0, &sysToday, NULL, tmpSz, MAX_LINE_LENGTH);
+			GetTimeFormat(LOCALE_USER_DEFAULT, 0, &sysToday, nullptr, tmpSz, MAX_LINE_LENGTH);
 		}
 		else if (_wcsicmp(L"locale-date", format) == 0)
 		{
-			GetDateFormat(LOCALE_USER_DEFAULT, 0, &sysToday, NULL, tmpSz, MAX_LINE_LENGTH);
+			GetDateFormat(LOCALE_USER_DEFAULT, 0, &sysToday, nullptr, tmpSz, MAX_LINE_LENGTH);
 		}
 		else
 		{

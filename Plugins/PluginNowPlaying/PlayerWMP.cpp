@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "PlayerWMP.h"
 
-Player* PlayerWMP::c_Player = NULL;
+Player* PlayerWMP::c_Player = nullptr;
 extern HINSTANCE g_Instance;
 
 namespace {
@@ -114,7 +114,7 @@ HRESULT STDMETHODCALLTYPE PlayerWMP::CRemoteHost::QueryInterface(IID const& riid
 	}
 	else
 	{
-		*object = NULL;
+		*object = nullptr;
 		return E_NOINTERFACE;
 	}
 
@@ -143,11 +143,11 @@ HRESULT PlayerWMP::CRemoteHost::GetScriptableObject(BSTR* pbstrName, IDispatch**
 {
 	if (pbstrName)
 	{
-		*pbstrName = NULL;
+		*pbstrName = nullptr;
 	}
 	if (ppDispatch)
 	{
-		*ppDispatch = NULL;
+		*ppDispatch = nullptr;
 	}
 	return E_NOTIMPL;
 }
@@ -220,7 +220,7 @@ PlayerWMP::PlayerWMP() : Player(),
 
 PlayerWMP::~PlayerWMP()
 {
-	c_Player = NULL;
+	c_Player = nullptr;
 	Uninitialize();
 }
 
@@ -265,13 +265,13 @@ void PlayerWMP::Initialize()
 		L"NowPlayingWMP", L"",
 		WS_DISABLED,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-		NULL, NULL, g_Instance, NULL);
+		nullptr, nullptr, g_Instance, nullptr);
 
 	HWND window = CreateWindow(
 		L"AtlAxWin", L"",
 		WS_DISABLED | WS_CHILD,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-		m_Window, NULL, g_Instance, NULL);
+		m_Window, nullptr, g_Instance, nullptr);
 
 	Microsoft::WRL::ComPtr<IUnknown> axHost;
 	Microsoft::WRL::ComPtr<IObjectWithSite> hostObject;
@@ -513,7 +513,7 @@ void PlayerWMP::UpdateData()
 		{
 			m_LastCheckTime = time;
 
-			if (FindWindow(L"WMPlayerApp", NULL))
+			if (FindWindow(L"WMPlayerApp", nullptr))
 			{
 				Initialize();
 			}
@@ -639,7 +639,7 @@ void PlayerWMP::SetVolume(int volume)
 */
 void PlayerWMP::ClosePlayer()
 {
-	HWND wnd = FindWindow(L"WMPlayerApp", NULL);
+	HWND wnd = FindWindow(L"WMPlayerApp", nullptr);
 
 	if (wnd)
 	{
@@ -653,5 +653,5 @@ void PlayerWMP::ClosePlayer()
 */
 void PlayerWMP::OpenPlayer(std::wstring& path)
 {
-	ShellExecute(NULL, L"open", path.empty() ? L"wmplayer.exe" : path.c_str(), NULL, NULL, SW_SHOW);
+	ShellExecute(nullptr, L"open", path.empty() ? L"wmplayer.exe" : path.c_str(), nullptr, nullptr, SW_SHOW);
 }

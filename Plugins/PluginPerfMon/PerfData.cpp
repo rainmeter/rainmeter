@@ -149,7 +149,7 @@ ULONGLONG GetPerfData(LPCWSTR objectName, LPCWSTR instanceName, LPCWSTR counterN
 		if (pPerfObj)
 		{
 			for (CPerfObjectInstance* pObjInst = pPerfObj->GetFirstObjectInstance();
-				pObjInst != NULL;
+				pObjInst != nullptr;
 				pObjInst = pPerfObj->GetNextObjectInstance())
 			{
 				if (*instanceName)
@@ -170,9 +170,9 @@ ULONGLONG GetPerfData(LPCWSTR objectName, LPCWSTR instanceName, LPCWSTR counterN
 				}
 
 				CPerfCounter* pPerfCntr = pObjInst->GetCounterByName(counterName);
-				if (pPerfCntr != NULL)
+				if (pPerfCntr != nullptr)
 				{
-					pPerfCntr->GetData(data, 256, NULL);
+					pPerfCntr->GetData(data, 256, nullptr);
 
 					if (pPerfCntr->GetSize() == 1)
 					{

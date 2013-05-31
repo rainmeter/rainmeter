@@ -55,7 +55,7 @@ int RainmeterMain(LPWSTR cmdLine)
 	// Avoid loading a dll from current directory
 	SetDllDirectory(L"");
 
-	const WCHAR* layout = NULL;
+	const WCHAR* layout = nullptr;
 
 	if (cmdLine[0] == L'!' || cmdLine[0] == L'[')
 	{
@@ -67,7 +67,7 @@ int RainmeterMain(LPWSTR cmdLine)
 			cds.dwData = 1;
 			cds.cbData = (DWORD)((wcslen(cmdLine) + 1) * sizeof(WCHAR));
 			cds.lpData = (PVOID)cmdLine;
-			SendMessage(wnd, WM_COPYDATA, NULL, (LPARAM)&cds);
+			SendMessage(wnd, WM_COPYDATA, 0, (LPARAM)&cds);
 			return 0;
 		}
 
@@ -92,7 +92,7 @@ int RainmeterMain(LPWSTR cmdLine)
 		}
 	}
 
-	const WCHAR* iniFile = (*cmdLine && !layout) ? cmdLine : NULL;
+	const WCHAR* iniFile = (*cmdLine && !layout) ? cmdLine : nullptr;
 
 	g_Rainmeter = new Rainmeter;
 	int ret = g_Rainmeter->Initialize(iniFile, layout);
@@ -102,7 +102,7 @@ int RainmeterMain(LPWSTR cmdLine)
 	}
 
 	delete g_Rainmeter;
-	g_Rainmeter = NULL;
+	g_Rainmeter = nullptr;
 
 	return ret;
 }
@@ -132,13 +132,13 @@ Rainmeter::Rainmeter() :
 	m_GDIplusToken(),
 	m_GlobalOptions()
 {
-	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
 	InitCommonControls();
 
 	// Initialize GDI+.
 	GdiplusStartupInput gdiplusStartupInput;
-	GdiplusStartup(&m_GDIplusToken, &gdiplusStartupInput, NULL);
+	GdiplusStartup(&m_GDIplusToken, &gdiplusStartupInput, nullptr);
 }
 
 /*
@@ -253,10 +253,10 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		NULL,
-		NULL,
+		nullptr,
+		nullptr,
 		m_Instance,
-		NULL);
+		nullptr);
 
 	if (!m_Window) return 1;
 
@@ -317,7 +317,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Rainmeter", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &hKey) == ERROR_SUCCESS)
 		{
 			DWORD type = 0;
-			if (RegQueryValueEx(hKey, L"Language", NULL, &type, (LPBYTE)buffer, (LPDWORD)&size) != ERROR_SUCCESS ||
+			if (RegQueryValueEx(hKey, L"Language", nullptr, &type, (LPBYTE)buffer, (LPDWORD)&size) != ERROR_SUCCESS ||
 				type != REG_SZ)
 			{
 				buffer[0] = L'\0';
@@ -328,22 +328,22 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	if (buffer[0] != L'\0')
 	{
 		// Try selected language
-		m_ResourceLCID = wcstoul(buffer, NULL, 10);
+		m_ResourceLCID = wcstoul(buffer, nullptr, 10);
 		resource += buffer;
 		resource += L".dll";
 
-		m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+		m_ResourceInstance = LoadLibraryEx(resource.c_str(), nullptr, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
 	}
 	if (!m_ResourceInstance)
 	{
 		// Try English
 		resource = m_Path;
 		resource += L"Languages\\1033.dll";
-		m_ResourceInstance = LoadLibraryEx(resource.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+		m_ResourceInstance = LoadLibraryEx(resource.c_str(), nullptr, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
 		m_ResourceLCID = 1033;
 		if (!m_ResourceInstance)
 		{
-			MessageBox(NULL, L"Unable to load language library", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+			MessageBox(nullptr, L"Unable to load language library", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
 			return 1;
 		}
 	}
@@ -363,12 +363,12 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		}
 	}
 	else if (bDefaultIniLocation &&
-		SUCCEEDED(SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, buffer)))
+		SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_MYDOCUMENTS, nullptr, SHGFP_TYPE_CURRENT, buffer)))
 	{
 		// Use My Documents/Rainmeter/Skins
 		m_SkinPath = buffer;
 		m_SkinPath += L"\\Rainmeter\\";
-		CreateDirectory(m_SkinPath.c_str(), NULL);
+		CreateDirectory(m_SkinPath.c_str(), nullptr);
 		m_SkinPath += L"Skins\\";
 
 		WritePrivateProfileString(L"Rainmeter", L"SkinPath", m_SkinPath.c_str(), iniFile);
@@ -382,7 +382,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	CreateComponentFolders(bDefaultIniLocation);
 
 	delete [] buffer;
-	buffer = NULL;
+	buffer = nullptr;
 
 	LogNoticeF(L"Path: %s", m_Path.c_str());
 	LogNoticeF(L"IniFile: %s", iniFile);
@@ -429,7 +429,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	if (m_SkinFolders.empty())
 	{
 		std::wstring error = GetFormattedString(ID_STR_NOAVAILABLESKINS, m_SkinPath.c_str());
-		ShowMessage(NULL, error.c_str(), MB_OK | MB_ICONERROR);
+		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);
 	}
 
 	ResetStats();
@@ -510,11 +510,11 @@ bool Rainmeter::IsAlreadyRunning()
 			}
 			*pos = L'\0';
 
-			m_Mutex = CreateMutex(NULL, FALSE, mutexName);
+			m_Mutex = CreateMutex(nullptr, FALSE, mutexName);
 			if (GetLastError() == ERROR_ALREADY_EXISTS)
 			{
 				alreadyRunning = true;
-				m_Mutex = NULL;
+				m_Mutex = nullptr;
 			}
 		}
 
@@ -530,7 +530,7 @@ int Rainmeter::MessagePump()
 	BOOL ret;
 
 	// Run the standard window message loop
-	while ((ret = GetMessage(&msg, NULL, 0, 0)) != 0)
+	while ((ret = GetMessage(&msg, nullptr, 0, 0)) != 0)
 	{
 		if (ret == -1)
 		{
@@ -587,7 +587,7 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		{
 			// Execute bang
 			WCHAR* bang = (WCHAR*)lParam;
-			g_Rainmeter->ExecuteCommand(bang, NULL);
+			g_Rainmeter->ExecuteCommand(bang, nullptr);
 			free(bang);  // _wcsdup()
 		}
 		break;
@@ -608,12 +608,12 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 void Rainmeter::SetNetworkStatisticsTimer()
 {
-	static bool set = SetTimer(m_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, NULL);
+	static bool set = SetTimer(m_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, nullptr);
 }
 
 void Rainmeter::CreateOptionsFile()
 {
-	CreateDirectory(m_SettingsPath.c_str(), NULL);
+	CreateDirectory(m_SettingsPath.c_str(), nullptr);
 
 	std::wstring defaultIni = GetDefaultLayoutPath();
 	defaultIni += L"illustro default\\Rainmeter.ini";
@@ -634,7 +634,7 @@ void Rainmeter::CreateDataFile()
 	else
 	{
 		// Create empty file
-		HANDLE file = CreateFile(dataFile, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE file = CreateFile(dataFile, GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (file != INVALID_HANDLE_VALUE)
 		{
 			CloseHandle(file);
@@ -646,7 +646,7 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 {
 	std::wstring path;
 
-	if (CreateDirectory(m_SkinPath.c_str(), NULL))
+	if (CreateDirectory(m_SkinPath.c_str(), nullptr))
 	{
 		// Folder just created, so copy default skins there
 		std::wstring from = GetDefaultSkinPath();
@@ -860,7 +860,7 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		if (_waccess(skinIniPath.c_str(), 0) == -1)
 		{
 			std::wstring message = GetFormattedString(ID_STR_UNABLETOACTIVATESKIN, folderPath.c_str(), fileSz);
-			ShowMessage(NULL, message.c_str(), MB_OK | MB_ICONEXCLAMATION);
+			ShowMessage(nullptr, message.c_str(), MB_OK | MB_ICONEXCLAMATION);
 			return;
 		}
 
@@ -1047,7 +1047,7 @@ MeterWindow* Rainmeter::GetMeterWindow(const std::wstring& folderPath)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 MeterWindow* Rainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
@@ -1069,7 +1069,7 @@ MeterWindow* Rainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 std::pair<int, int> Rainmeter::GetMeterWindowIndex(const std::wstring& folderPath, const std::wstring& file)
@@ -1122,7 +1122,7 @@ MeterWindow* Rainmeter::GetMeterWindow(HWND hwnd)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void Rainmeter::GetMeterWindowsByLoadOrder(std::multimap<int, MeterWindow*>& windows, const std::wstring& group)
@@ -1268,7 +1268,7 @@ int Rainmeter::ScanForSkinsRecursive(const std::wstring& path, std::wstring base
 		(Platform::IsAtLeastWin7()) ? FindExInfoBasic : FindExInfoStandard,
 		&fileData,
 		FindExSearchNameMatch,
-		NULL,
+		nullptr,
 		0);
 
 	bool foundFiles = false;
@@ -1375,7 +1375,7 @@ void Rainmeter::ScanForLayouts()
 		(Platform::IsAtLeastWin7()) ? FindExInfoBasic : FindExInfoStandard,
 		&fileData,
 		FindExSearchNameMatch,
-		NULL,
+		nullptr,
 		0);
 
 	if (hSearch != INVALID_HANDLE_VALUE)
@@ -1416,7 +1416,7 @@ void Rainmeter::ExecuteCommand(const WCHAR* command, MeterWindow* meterWindow, b
 void Rainmeter::DelayedExecuteCommand(const WCHAR* command)
 {
 	WCHAR* bang = _wcsdup(command);
-	PostMessage(m_Window, WM_RAINMETER_DELAYED_EXECUTE, (WPARAM)NULL, (LPARAM)bang);
+	PostMessage(m_Window, WM_RAINMETER_DELAYED_EXECUTE, (WPARAM)nullptr, (LPARAM)bang);
 }
 
 /*
@@ -1431,7 +1431,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_DesktopWorkAreas.clear();
 
 	ConfigParser parser;
-	parser.Initialize(iniFile, NULL, NULL);
+	parser.Initialize(iniFile, nullptr, nullptr);
 
 	m_UseD2D = 0!=parser.ReadInt(L"Rainmeter", L"UseD2D", 0);
 
@@ -1591,7 +1591,7 @@ void Rainmeter::RefreshAll()
 
 					DeactivateSkin(mw, index);
 
-					ShowMessage(NULL, error.c_str(), MB_OK | MB_ICONEXCLAMATION);
+					ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONEXCLAMATION);
 					continue;
 				}
 			}
@@ -1602,7 +1602,7 @@ void Rainmeter::RefreshAll()
 
 				DeactivateSkin(mw, -2);  // -2 = Force deactivate
 
-				ShowMessage(NULL, error.c_str(), MB_OK | MB_ICONEXCLAMATION);
+				ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONEXCLAMATION);
 				continue;
 			}
 
@@ -1611,7 +1611,7 @@ void Rainmeter::RefreshAll()
 	}
 
 	DialogAbout::UpdateSkins();
-	DialogManage::UpdateSkins(NULL);
+	DialogManage::UpdateSkins(nullptr);
 }
 
 bool Rainmeter::LoadLayout(const std::wstring& name)
@@ -1632,7 +1632,7 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 
 	std::wstring backup = GetLayoutPath();
 	backup += L"@Backup";
-	CreateDirectory(backup.c_str(), NULL);
+	CreateDirectory(backup.c_str(), nullptr);
 	backup += L"\\Rainmeter.ini";
 
 	bool backupLayout = (_wcsicmp(name.c_str(), L"@Backup") == 0);
@@ -1797,7 +1797,7 @@ void Rainmeter::UpdateDesktopWorkArea(bool reset)
 	if (changed && System::GetWindow())
 	{
 		// Update System::MultiMonitorInfo for for work area variables
-		SendMessageTimeout(System::GetWindow(), WM_SETTINGCHANGE, SPI_SETWORKAREA, 0, SMTO_ABORTIFHUNG, 1000, NULL);
+		SendMessageTimeout(System::GetWindow(), WM_SETTINGCHANGE, SPI_SETWORKAREA, 0, SMTO_ABORTIFHUNG, 1000, nullptr);
 	}
 }
 
@@ -1817,7 +1817,7 @@ void Rainmeter::ReadStats()
 
 		if (GetPrivateProfileSection(L"Statistics", tmpSz, SHRT_MAX, iniFile) > 0)
 		{
-			WritePrivateProfileString(L"Statistics", NULL, NULL, iniFile);
+			WritePrivateProfileString(L"Statistics", nullptr, nullptr, iniFile);
 		}
 		else
 		{
@@ -1850,7 +1850,7 @@ void Rainmeter::WriteStats(bool bForce)
 		const WCHAR* statsFile = m_StatsFile.c_str();
 		MeasureNet::WriteStats(statsFile, m_StatsDate);
 
-		WritePrivateProfileString(NULL, NULL, NULL, statsFile);
+		WritePrivateProfileString(nullptr, nullptr, nullptr, statsFile);
 	}
 }
 
@@ -1983,11 +1983,11 @@ void Rainmeter::ShowContextMenu(POINT pos, MeterWindow* meterWindow)
 				menu = CreateSkinMenu(meterWindow, 0, allSkinsMenu);
 
 				InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_POPUP, (UINT_PTR)rainmeterMenu, L"Rainmeter");
-				InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_SEPARATOR, 0, NULL);
+				InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_SEPARATOR, 0, nullptr);
 			}
 			else
 			{
-				InsertMenu(menu, 12, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+				InsertMenu(menu, 12, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 
 				// Create a menu for all active skins
 				int index = 0;
@@ -2005,12 +2005,12 @@ void Rainmeter::ShowContextMenu(POINT pos, MeterWindow* meterWindow)
 				{
 					InsertMenu(menu, 0, MF_BYPOSITION, IDM_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE));
 					HiliteMenuItem(GetTrayWindow()->GetWindow(), menu, 0, MF_BYPOSITION | MF_HILITE);
-					InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+					InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 				}
 			}
 
 			HWND hWnd = WindowFromPoint(pos);
-			if (hWnd != NULL)
+			if (hWnd != nullptr)
 			{
 				MeterWindow* mw = GetMeterWindow(hWnd);
 				if (mw)
@@ -2025,7 +2025,7 @@ void Rainmeter::ShowContextMenu(POINT pos, MeterWindow* meterWindow)
 			HWND hWndForeground = GetForegroundWindow();
 			if (hWndForeground != hWnd)
 			{
-				DWORD foregroundThreadID = GetWindowThreadProcessId(hWndForeground, NULL);
+				DWORD foregroundThreadID = GetWindowThreadProcessId(hWndForeground, nullptr);
 				DWORD currentThreadID = GetCurrentThreadId();
 				AttachThreadInput(currentThreadID, foregroundThreadID, TRUE);
 				SetForegroundWindow(hWnd);
@@ -2040,7 +2040,7 @@ void Rainmeter::ShowContextMenu(POINT pos, MeterWindow* meterWindow)
 				pos.y,
 				0,
 				hWnd,
-				NULL);
+				nullptr);
 
 			if (meterWindow)
 			{
@@ -2097,7 +2097,7 @@ int Rainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 
 			if (hasSubfolder && fileIndex != 0)
 			{
-				InsertMenu(subMenu, fileIndex, MF_SEPARATOR | MF_BYPOSITION, 0, NULL);
+				InsertMenu(subMenu, fileIndex, MF_SEPARATOR | MF_BYPOSITION, 0, nullptr);
 			}
 		}
 
@@ -2380,8 +2380,8 @@ HMENU Rainmeter::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU menu)
 
 					if (position != 0)
 					{
-						InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, NULL, L"Custom skin actions");
-						InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+						InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, L"Custom skin actions");
+						InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 					}
 				}
 				else
@@ -2393,7 +2393,7 @@ HMENU Rainmeter::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU menu)
 					{
 						if (isTitleSeparator(cTitles[i]))
 						{
-							AppendMenu(customMenu, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+							AppendMenu(customMenu, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 						}
 						else
 						{
@@ -2401,7 +2401,7 @@ HMENU Rainmeter::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU menu)
 						}
 					}
 
-					InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
+					InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 				}
 			}
 		}
@@ -2542,7 +2542,7 @@ void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)
 			error += GetFormattedString(ID_STR_SETTINGSREADONLY, iniFile);
 		}
 
-		ShowMessage(NULL, error.c_str(), MB_OK | MB_ICONERROR);
+		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);
 	}
 }
 
@@ -2570,7 +2570,7 @@ void Rainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
 		pos = strPath.find(L"%APPDATA%", pos);
 		if (pos != std::wstring::npos)
 		{
-			HRESULT hr = SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, buffer);
+			HRESULT hr = SHGetFolderPath(nullptr, CSIDL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, buffer);
 			if (SUCCEEDED(hr))
 			{
 				size_t len = wcslen(buffer);

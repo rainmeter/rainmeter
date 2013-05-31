@@ -31,11 +31,11 @@ std::string Narrow(const WCHAR* str, int strLen, int cp)
 			strLen = (int)wcslen(str);
 		}
 
-		int bufLen = WideCharToMultiByte(cp, 0, str, strLen, NULL, 0, NULL, NULL);
+		int bufLen = WideCharToMultiByte(cp, 0, str, strLen, nullptr, 0, nullptr, nullptr);
 		if (bufLen > 0)
 		{
 			narrowStr.resize(bufLen);
-			WideCharToMultiByte(cp, 0, str, strLen, &narrowStr[0], bufLen, NULL, NULL);
+			WideCharToMultiByte(cp, 0, str, strLen, &narrowStr[0], bufLen, nullptr, nullptr);
 		}
 	}
 	return narrowStr;
@@ -52,7 +52,7 @@ std::wstring Widen(const char* str, int strLen, int cp)
 			strLen = strlen(str);
 		}
 
-		int bufLen = MultiByteToWideChar(cp, 0, str, strLen, NULL, 0);
+		int bufLen = MultiByteToWideChar(cp, 0, str, strLen, nullptr, 0);
 		if (bufLen > 0)
 		{
 			wideStr.resize(bufLen);

@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "PlayerITunes.h"
 
-Player* PlayerITunes::c_Player = NULL;
+Player* PlayerITunes::c_Player = nullptr;
 extern HINSTANCE g_Instance;
 
 /*
@@ -101,7 +101,7 @@ HRESULT STDMETHODCALLTYPE PlayerITunes::CEventHandler::Invoke(DISPID dispidMembe
 
 	case ITEventAboutToPromptUserToQuit:
 		PostMessage(m_Player->m_CallbackWindow, WM_USER, ITEventAboutToPromptUserToQuit, 0);
-		SetTimer(m_Player->m_CallbackWindow, TIMER_CHECKACTIVE, 500, NULL);
+		SetTimer(m_Player->m_CallbackWindow, TIMER_CHECKACTIVE, 500, nullptr);
 		break;
 	}
 
@@ -135,7 +135,7 @@ PlayerITunes::PlayerITunes() : Player(),
 									CW_USEDEFAULT,
 									CW_USEDEFAULT,
 									HWND_MESSAGE,
-									NULL,
+									nullptr,
 									g_Instance,
 									this);
 }
@@ -146,7 +146,7 @@ PlayerITunes::PlayerITunes() : Player(),
 */
 PlayerITunes::~PlayerITunes()
 {
-	c_Player = NULL;
+	c_Player = nullptr;
 
 	DestroyWindow(m_CallbackWindow);
 	UnregisterClass(L"NowPlayingITunesClass", g_Instance);
@@ -176,7 +176,7 @@ void PlayerITunes::Initialize()
 {
 	while (true)
 	{
-		HRESULT hr = CoCreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER, IID_IiTunes, (PVOID*)&m_iTunes);
+		HRESULT hr = CoCreateInstance(CLSID_iTunesApp, nullptr, CLSCTX_LOCAL_SERVER, IID_IiTunes, (PVOID*)&m_iTunes);
 
 		if (hr == CO_E_SERVER_EXEC_FAILURE)
 		{
@@ -187,7 +187,7 @@ void PlayerITunes::Initialize()
 		else if (hr != S_OK)
 		{
 			// Failed to get hold of iTunes instance via COM
-			m_iTunes = NULL;
+			m_iTunes = nullptr;
 		}
 			
 		break;
@@ -621,7 +621,7 @@ void PlayerITunes::ClosePlayer()
 {
 	m_iTunes->Quit();
 	Uninitialize();
-	SetTimer(m_CallbackWindow, TIMER_CHECKACTIVE, 500, NULL);
+	SetTimer(m_CallbackWindow, TIMER_CHECKACTIVE, 500, nullptr);
 }
 
 /*
@@ -630,5 +630,5 @@ void PlayerITunes::ClosePlayer()
 */
 void PlayerITunes::OpenPlayer(std::wstring& path)
 {
-	ShellExecute(NULL, L"open", path.empty() ? L"iTunes.exe" : path.c_str(), NULL, NULL, SW_SHOW);
+	ShellExecute(nullptr, L"open", path.empty() ? L"iTunes.exe" : path.c_str(), nullptr, nullptr, SW_SHOW);
 }

@@ -30,12 +30,12 @@
 #include "../../Common/StringUtil.h"
 #include "../API/RainmeterAPI.h"
 
-void ShowError(int lineNumber, WCHAR* errorMsg = NULL);
+void ShowError(int lineNumber, WCHAR* errorMsg = nullptr);
 
 class ProxyCachePool
 {
 public:
-	ProxyCachePool(LPCWSTR globalProxyName = NULL) :
+	ProxyCachePool(LPCWSTR globalProxyName = nullptr) :
 		m_GlobalProxyName((globalProxyName && *globalProxyName) ? globalProxyName : L"/auto")
 	{
 		m_GlobalProxyCache = new ProxyCache(CreateProxy(m_GlobalProxyName.c_str()), true);
@@ -57,7 +57,7 @@ public:
 
 	HINTERNET GetCache(const std::wstring& proxyName)
 	{
-		ProxyCache* cache = NULL;
+		ProxyCache* cache = nullptr;
 
 		if (proxyName.empty())
 		{
@@ -125,12 +125,12 @@ private:
 		if (_wcsicmp(proxyName, L"/auto") == 0)
 		{
 			proxyType = INTERNET_OPEN_TYPE_PRECONFIG;
-			proxyServer = NULL;
+			proxyServer = nullptr;
 		}
 		else if (_wcsicmp(proxyName, L"/none") == 0)
 		{
 			proxyType = INTERNET_OPEN_TYPE_DIRECT;
-			proxyServer = NULL;
+			proxyServer = nullptr;
 		}
 		else
 		{
@@ -141,7 +141,7 @@ private:
 		HINTERNET handle = InternetOpen(L"Rainmeter WebParser plugin",
 			proxyType,
 			proxyServer,
-			NULL,
+			nullptr,
 			0);
 
 		if (handle)
@@ -179,7 +179,7 @@ private:
 		ProxyCache() {}
 		ProxyCache(const ProxyCache& cache) {}
 
-		void Dispose() { if (m_Handle) { InternetCloseHandle(m_Handle); m_Handle = NULL; } }
+		void Dispose() { if (m_Handle) { InternetCloseHandle(m_Handle); m_Handle = nullptr; } }
 
 		HINTERNET m_Handle;
 		bool m_IsGlobal;
@@ -248,7 +248,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
 void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize);
 
 CRITICAL_SECTION g_CriticalSection;
-ProxyCachePool* g_ProxyCachePool = NULL;
+ProxyCachePool* g_ProxyCachePool = nullptr;
 UINT g_InstanceCount = 0;
 
 static std::vector<MeasureData*> g_Measures;
@@ -327,10 +327,10 @@ void DecodeReferences(std::wstring& str, int opt)
 				}
 
 				std::wstring num(str, pos, end - pos);
-				WCHAR* pch = NULL;
+				WCHAR* pch = nullptr;
 				errno = 0;
 				long ch = wcstol(num.c_str(), &pch, base);
-				if (pch == NULL || *pch != L'\0' || errno == ERANGE || ch <= 0 || ch >= 0xFFFE)  // invalid character
+				if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0 || ch >= 0xFFFE)  // invalid character
 				{
 					start = pos;
 					continue;
@@ -656,7 +656,7 @@ void SetupGlobalProxySetting()
 		WCHAR buffer[MAX_PATH] = {0};
 		LPCWSTR file = RmGetSettingsFile();
 
-		GetPrivateProfileString(L"WebParser.dll", L"ProxyServer", NULL, buffer, MAX_PATH, file);
+		GetPrivateProfileString(L"WebParser.dll", L"ProxyServer", nullptr, buffer, MAX_PATH, file);
 		g_ProxyCachePool = new ProxyCachePool(buffer);
 	}
 }
@@ -664,7 +664,7 @@ void SetupGlobalProxySetting()
 void ClearGlobalProxySetting()
 {
 	delete g_ProxyCachePool;
-	g_ProxyCachePool = NULL;
+	g_ProxyCachePool = nullptr;
 }
 
 void SetupProxySetting(ProxySetting& setting, void* rm)
@@ -683,7 +683,7 @@ void ClearProxySetting(ProxySetting& setting)
 		g_ProxyCachePool->RemoveCache(setting.server);
 	}
 
-	setting.handle = NULL;
+	setting.handle = nullptr;
 	setting.server.clear();
 }
 
@@ -767,7 +767,7 @@ PLUGIN_EXPORT double Update(void* data)
 			{
 				// Launch a new thread to fetch the web data
 				unsigned int id;
-				HANDLE threadHandle = (HANDLE)_beginthreadex(NULL, 0, NetworkDownloadThreadProc, measure, 0, &id);
+				HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0, NetworkDownloadThreadProc, measure, 0, &id);
 				if (threadHandle)
 				{
 					measure->dlThreadHandle = threadHandle;
@@ -797,7 +797,7 @@ PLUGIN_EXPORT double Update(void* data)
 
 		if (!measure->resultString.empty())
 		{
-			value = wcstod(measure->resultString.c_str(), NULL);
+			value = wcstod(measure->resultString.c_str(), nullptr);
 		}
 
 		LeaveCriticalSection(&g_CriticalSection);
@@ -811,7 +811,7 @@ PLUGIN_EXPORT double Update(void* data)
 				{
 					// Launch a new thread to fetch the web data
 					unsigned int id;
-					HANDLE threadHandle = (HANDLE)_beginthreadex(NULL, 0, NetworkThreadProc, measure, 0, &id);
+					HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0, NetworkThreadProc, measure, 0, &id);
 					if (threadHandle)
 					{
 						measure->threadHandle = threadHandle;
@@ -901,9 +901,9 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 		flags,					  // default options
 		&error,               // for error message
 		&erroffset,           // for error offset
-		NULL);                // use default character tables
+		nullptr);                // use default character tables
 
-	if (re != NULL)
+	if (re != nullptr)
 	{
 		// Compilation succeeded: match the subject in the second argument
 		std::string utf8Data;
@@ -925,7 +925,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 
 		rc = pcre_exec(
 			re,                   // the compiled pattern
-			NULL,                 // no extra data - we didn't study the pattern
+			nullptr,                 // no extra data - we didn't study the pattern
 			parseData,			  // the subject string
 			dwSize,			      // the length of the subject
 			0,                    // start at offset 0 in the subject
@@ -1041,7 +1041,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 								{
 									// Start the download thread
 									unsigned int id;
-									HANDLE threadHandle = (HANDLE)_beginthreadex(NULL, 0, NetworkDownloadThreadProc, (*i), 0, &id);
+									HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0, NetworkDownloadThreadProc, (*i), 0, &id);
 									if (threadHandle)
 									{
 										(*i)->dlThreadHandle = threadHandle;
@@ -1139,7 +1139,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 	{
 		// Start the download thread
 		unsigned int id;
-		HANDLE threadHandle = (HANDLE)_beginthreadex(NULL, 0, NetworkDownloadThreadProc, measure, 0, &id);
+		HANDLE threadHandle = (HANDLE)_beginthreadex(nullptr, 0, NetworkDownloadThreadProc, measure, 0, &id);
 		if (threadHandle)
 		{
 			measure->dlThreadHandle = threadHandle;
@@ -1229,7 +1229,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			}
 
 			PathCanonicalize(buffer, measure->downloadFolder.c_str());
-			CreateDirectory(buffer, NULL);	// Make sure that the folder exists
+			CreateDirectory(buffer, nullptr);	// Make sure that the folder exists
 
 			wcscat(buffer, path.c_str());
 
@@ -1245,7 +1245,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			GetTempPath(MAX_PATH, buffer);
 			wcscat(buffer, L"Rainmeter-Cache\\");  // "%TEMP%\Rainmeter-Cache\"
 		}
-		CreateDirectory(buffer, NULL);	// Make sure that the folder exists
+		CreateDirectory(buffer, nullptr);	// Make sure that the folder exists
 		directory = buffer;
 
 		if (fullpath.empty())
@@ -1358,7 +1358,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			}
 
 			// Create empty file
-			HANDLE hFile = CreateFile(fullpath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+			HANDLE hFile = CreateFile(fullpath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 			if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
 
 			LeaveCriticalSection(&g_CriticalSection);
@@ -1384,7 +1384,7 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 				if (ret == ERROR_SUCCESS)
 				{
 					DWORD size = sizeof(mode);
-					ret = RegQueryValueEx(hKey, L"SyncMode5", NULL, NULL, (LPBYTE)&mode, &size);
+					ret = RegQueryValueEx(hKey, L"SyncMode5", nullptr, nullptr, (LPBYTE)&mode, &size);
 					RegCloseKey(hKey);
 				}
 
@@ -1412,10 +1412,10 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 			log += fullpath;
 			RmLog(LOG_DEBUG, log.c_str());
 
-			HRESULT resultCoInitialize = CoInitialize(NULL);  // requires before calling URLDownloadToFile function
+			HRESULT resultCoInitialize = CoInitialize(nullptr);  // requires before calling URLDownloadToFile function
 
 			// Download the file
-			HRESULT result = URLDownloadToFile(NULL, url.c_str(), fullpath.c_str(), NULL, NULL);
+			HRESULT result = URLDownloadToFile(nullptr, url.c_str(), fullpath.c_str(), 0, nullptr);
 			if (result == S_OK)
 			{
 				EnterCriticalSection(&g_CriticalSection);
@@ -1546,7 +1546,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 		EnterCriticalSection(&g_CriticalSection);
 
 		TerminateThread(measure->threadHandle, 0);
-		measure->threadHandle = NULL;
+		measure->threadHandle = nullptr;
 
 		LeaveCriticalSection(&g_CriticalSection);
 	}
@@ -1557,7 +1557,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 		EnterCriticalSection(&g_CriticalSection);
 
 		TerminateThread(measure->dlThreadHandle, 0);
-		measure->dlThreadHandle = NULL;
+		measure->dlThreadHandle = nullptr;
 
 		LeaveCriticalSection(&g_CriticalSection);
 	}
@@ -1605,19 +1605,19 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool for
 		flags = INTERNET_FLAG_RELOAD;
 	}
 
-	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), NULL, NULL, flags, 0);
+	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), nullptr, 0, flags, 0);
 	if (!hUrlDump)
 	{
 		if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
 		{
 			const std::string urlACP = StringUtil::Narrow(url);
-			hUrlDump = InternetOpenUrlA(handle, urlACP.c_str(), NULL, NULL, flags, 0);
+			hUrlDump = InternetOpenUrlA(handle, urlACP.c_str(), nullptr, 0, flags, 0);
 		}
 
 		if (!hUrlDump)
 		{
 			ShowError(__LINE__);
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -1674,7 +1674,7 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 	err += buffer;
 	err += L") ";
 
-	if (errorMsg == NULL)
+	if (errorMsg == nullptr)
 	{
 		if (dwErr == ERROR_INTERNET_EXTENDED_ERROR)
 		{
@@ -1697,7 +1697,7 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 		}
 		else
 		{
-			LPVOID lpMsgBuf = NULL;
+			LPVOID lpMsgBuf = nullptr;
 
 			FormatMessage(
 				FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -1710,10 +1710,10 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
 				(LPTSTR) &lpMsgBuf,
 				0,
-				NULL
+				nullptr
 			);
 
-			if (lpMsgBuf == NULL)
+			if (lpMsgBuf == nullptr)
 			{
 				err += L"Unknown error";
 			}

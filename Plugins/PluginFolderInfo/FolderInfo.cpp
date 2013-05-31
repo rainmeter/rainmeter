@@ -68,7 +68,7 @@ void CFolderInfo::FreePcre()
 	if (m_RegExpFilter)
 	{
 		pcre_free(m_RegExpFilter);
-		m_RegExpFilter = NULL;
+		m_RegExpFilter = nullptr;
 	}
 }
 
@@ -131,8 +131,8 @@ void CFolderInfo::CalculateSize()
 			}
 			else if (!isFolder && m_RegExpFilter)
 			{
-				int utf8BufLen = WideCharToMultiByte(CP_UTF8, 0, findData.cFileName, wcslen(findData.cFileName) + 1, utf8Buf, MAX_PATH * 3, NULL, NULL);
-				if (0 != pcre_exec(m_RegExpFilter, NULL, utf8Buf, utf8BufLen, 0, 0, NULL, 0))
+				int utf8BufLen = WideCharToMultiByte(CP_UTF8, 0, findData.cFileName, wcslen(findData.cFileName) + 1, utf8Buf, MAX_PATH * 3, nullptr, nullptr);
+				if (0 != pcre_exec(m_RegExpFilter, nullptr, utf8Buf, utf8BufLen, 0, 0, nullptr, 0))
 				{
 					continue;
 				}
@@ -178,14 +178,14 @@ void CFolderInfo::SetRegExpFilter(LPCWSTR filter)
 	if (*filter)
 	{
 		int filterLen = wcslen(filter) + 1;
-		int bufLen = WideCharToMultiByte(CP_UTF8, 0, filter, filterLen, NULL, 0, NULL, NULL);
+		int bufLen = WideCharToMultiByte(CP_UTF8, 0, filter, filterLen, nullptr, 0, nullptr, nullptr);
 
 		char* buf = new char[bufLen];
-		WideCharToMultiByte(CP_UTF8, 0, filter, filterLen, buf, bufLen, NULL, NULL);
+		WideCharToMultiByte(CP_UTF8, 0, filter, filterLen, buf, bufLen, nullptr, nullptr);
 
 		const char* error;
 		int erroffset;
-		m_RegExpFilter = pcre_compile(buf, PCRE_UTF8, &error, &erroffset, NULL);
+		m_RegExpFilter = pcre_compile(buf, PCRE_UTF8, &error, &erroffset, nullptr);
 
 		delete [] buf;
 	}

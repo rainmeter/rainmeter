@@ -174,7 +174,7 @@ HCURSOR Mouse::GetCursor() const
 		break;
 	}
 
-	return LoadCursor(NULL, name);
+	return LoadCursor(nullptr, name);
 }
 
 std::wstring Mouse::GetActionCommand(MOUSEACTION action) const
@@ -189,7 +189,7 @@ void Mouse::DestroyCustomCursor()
 	if (m_CustomCursor)
 	{
 		DestroyCursor(m_CustomCursor);
-		m_CustomCursor = NULL;
+		m_CustomCursor = nullptr;
 	}
 }
 

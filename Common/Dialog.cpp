@@ -20,7 +20,7 @@
 #include <Commctrl.h>
 #include <Uxtheme.h>
 
-HWND Dialog::c_ActiveDialogWindow = NULL;
+HWND Dialog::c_ActiveDialogWindow = nullptr;
 
 //
 // BaseDialog
@@ -88,11 +88,11 @@ void BaseDialog::Show(const WCHAR* title, short x, short y, short w, short h, DW
 
 	if (modeless)
 	{
-		CreateDialogIndirectParam(NULL, dt, parent, InitialDlgProc, (LPARAM)this);
+		CreateDialogIndirectParam(nullptr, dt, parent, InitialDlgProc, (LPARAM)this);
 	}
 	else
 	{
-		DialogBoxIndirectParam(NULL, dt, parent, InitialDlgProc, (LPARAM)this);
+		DialogBoxIndirectParam(nullptr, dt, parent, InitialDlgProc, (LPARAM)this);
 	}
 
 	delete [] dt;
@@ -154,7 +154,7 @@ void Dialog::ShowDialogWindow(const WCHAR* title, short x, short y, short w, sho
 
 INT_PTR Dialog::OnActivate(WPARAM wParam, LPARAM lParam)
 {
-	c_ActiveDialogWindow = wParam ? m_Window : NULL;
+	c_ActiveDialogWindow = wParam ? m_Window : nullptr;
 	return FALSE;
 }
 
@@ -177,7 +177,7 @@ bool Dialog::HandleMessage(MSG& msg)
 */
 void Dialog::SetMenuButton(HWND button)
 {
-	SetWindowSubclass(button, MenuButtonProc, NULL, NULL);
+	SetWindowSubclass(button, MenuButtonProc, 0, 0);
 }
 
 LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)

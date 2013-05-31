@@ -115,9 +115,9 @@ public:
 	void ExecuteBang(const WCHAR* name, std::vector<std::wstring>& args, MeterWindow* skin);
 
 	static void RunCommand(std::wstring command);
-	static void RunFile(const WCHAR* file, const WCHAR* args = NULL);
+	static void RunFile(const WCHAR* file, const WCHAR* args = nullptr);
 
-	static std::vector<std::wstring> ParseString(const WCHAR* str, ConfigParser* parser = NULL);
+	static std::vector<std::wstring> ParseString(const WCHAR* str, ConfigParser* parser = nullptr);
 
 	static void DoActivateSkinBang(std::vector<std::wstring>& args, MeterWindow* skin);
 	static void DoDeactivateSkinBang(std::vector<std::wstring>& args, MeterWindow* skin);

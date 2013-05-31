@@ -147,7 +147,7 @@ void LuaManager::RegisterMeasure(lua_State* L)
 		{ "GetMinValue", GetMinValue },
 		{ "GetMaxValue", GetMaxValue },
 		{ "GetStringValue", GetStringValue },
-		{ NULL, NULL }
+		{ nullptr, nullptr }
 	};
 
 	luaL_register(L, "Measure", functions);

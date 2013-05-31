@@ -113,11 +113,11 @@ void MeasureDiskSpace::UpdateValue()
 			{
 				if (!m_DiskQuota)
 				{
-					sizeResult = GetDiskFreeSpaceEx(drive, NULL, (PULARGE_INTEGER)&i64TotalBytes, (PULARGE_INTEGER)&i64FreeBytes);
+					sizeResult = GetDiskFreeSpaceEx(drive, nullptr, (PULARGE_INTEGER)&i64TotalBytes, (PULARGE_INTEGER)&i64FreeBytes);
 				}
 				else
 				{
-					sizeResult = GetDiskFreeSpaceEx(drive, (PULARGE_INTEGER)&i64FreeBytes, (PULARGE_INTEGER)&i64TotalBytes, NULL);
+					sizeResult = GetDiskFreeSpaceEx(drive, (PULARGE_INTEGER)&i64FreeBytes, (PULARGE_INTEGER)&i64TotalBytes, nullptr);
 				}
 			}
 
@@ -147,7 +147,7 @@ void MeasureDiskSpace::UpdateValue()
 				if (type != DRIVE_NO_ROOT_DIR &&
 					(!m_IgnoreRemovable || type != DRIVE_REMOVABLE))  // Ignore removable drives
 				{
-					labelResult = GetVolumeInformation(drive, volumeName, MAX_PATH + 1, NULL, NULL, NULL, NULL, 0);
+					labelResult = GetVolumeInformation(drive, volumeName, MAX_PATH + 1, nullptr, nullptr, nullptr, nullptr, 0);
 				}
 
 				m_StringValue = (labelResult) ? volumeName : L"";
@@ -166,7 +166,7 @@ void MeasureDiskSpace::UpdateValue()
 */
 const WCHAR* MeasureDiskSpace::GetStringValue()
 {
-	return (m_Type || m_Label) ? CheckSubstitute(m_StringValue.c_str()) : NULL;
+	return (m_Type || m_Label) ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
 }
 
 /*
@@ -213,7 +213,7 @@ void MeasureDiskSpace::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				type != DRIVE_CDROM &&
 				(!m_IgnoreRemovable || type != DRIVE_REMOVABLE))  // Ignore CD-ROMS and removable drives
 			{
-				result = GetDiskFreeSpaceEx(drive, NULL, (PULARGE_INTEGER)&i64TotalBytes, NULL);
+				result = GetDiskFreeSpaceEx(drive, nullptr, (PULARGE_INTEGER)&i64TotalBytes, nullptr);
 			}
 		}
 

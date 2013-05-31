@@ -37,7 +37,7 @@ CDialogInstall* CDialogInstall::Create()
 		0, 0, 350, 210,
 		DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
 		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT,
-		NULL,
+		nullptr,
 		false);
 
 	return dialog;

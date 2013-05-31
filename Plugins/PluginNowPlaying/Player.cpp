@@ -141,7 +141,7 @@ void Player::FindLyrics()
 		m_Lyrics.clear();
 
 		unsigned int id;
-		HANDLE thread = (HANDLE)_beginthreadex(NULL, 0, LyricsThreadProc, this, 0, &id);
+		HANDLE thread = (HANDLE)_beginthreadex(nullptr, 0, LyricsThreadProc, this, 0, &id);
 		if (thread)
 		{
 			m_InternetThread = thread;
@@ -185,7 +185,7 @@ unsigned __stdcall Player::LyricsThreadProc(void* pParam)
 	}
 
 	CloseHandle(player->m_InternetThread);
-	player->m_InternetThread = NULL;
+	player->m_InternetThread = nullptr;
 
 	return 0;
 }

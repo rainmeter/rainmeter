@@ -28,7 +28,7 @@
 
 extern GlobalData g_Data;
 
-DialogInstall* DialogInstall::c_Dialog = NULL;
+DialogInstall* DialogInstall::c_Dialog = nullptr;
 
 inline bool IsWin32Build()
 {
@@ -107,7 +107,7 @@ void DialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	}
 	else
 	{
-		DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_INSTALL_DIALOG), NULL, (DLGPROC)DlgProc, (LPARAM)lpCmdLine);
+		DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_INSTALL_DIALOG), nullptr, (DLGPROC)DlgProc, (LPARAM)lpCmdLine);
 		ReleaseMutex(hMutex);
 	}
 }
@@ -143,7 +143,7 @@ INT_PTR CALLBACK DialogInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 		case WM_DESTROY:
 			delete c_Dialog;
-			c_Dialog = NULL;
+			c_Dialog = nullptr;
 			return FALSE;
 		}
 	}
@@ -153,7 +153,7 @@ INT_PTR CALLBACK DialogInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
-	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_SKININSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
+	HICON hIcon = (HICON)LoadImage(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_SKININSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
 	if (GetOSPlatform() >= OSPLATFORM_VISTA)
@@ -184,7 +184,7 @@ INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 			{
 				HWND control = controlIds[i] ? GetDlgItem(m_Window, controlIds[i]) : m_TabInstall.GetWindow();
 				GetWindowRect(control, &r);
-				MapWindowPoints(NULL, m_Window, (POINT*)&r, sizeof(RECT) / sizeof(POINT));
+				MapWindowPoints(nullptr, m_Window, (POINT*)&r, sizeof(RECT) / sizeof(POINT));
 				MoveWindow(control, r.left, r.top - yDiff, r.right - r.left, r.bottom - r.top, TRUE);
 			}
 
@@ -204,7 +204,7 @@ INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 			m_ErrorMessage += L"\n\nThe Skin Packager tool must be used to create valid .rmskin packages.";
 		}
 
-		MessageBox(NULL, m_ErrorMessage.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
+		MessageBox(nullptr, m_ErrorMessage.c_str(), L"Rainmeter Skin Installer", MB_ERROR);
 		EndDialog(m_Window, 0);
 	}
 
@@ -220,7 +220,7 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			RECT r;
 			GetWindowRect((HWND)lParam, &r);
-			HMENU menu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_INSTALL_MENU));
+			HMENU menu = LoadMenu(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDR_INSTALL_MENU));
 			HMENU subMenu = GetSubMenu(menu, 0);
 
 			if (m_PackageSkins.empty() || m_MergeSkins || m_BackupPackage)
@@ -251,7 +251,7 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 				--r.bottom,
 				0,
 				m_Window,
-				NULL);
+				nullptr);
 
 			DestroyMenu(menu);
 		}
@@ -324,7 +324,7 @@ bool DialogInstall::ExtractCurrentFile(const std::wstring& fileName)
 		return false;
 	}
 
-	HANDLE hFile = CreateFile(fileName.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hFile = CreateFile(fileName.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		return false;
@@ -336,7 +336,7 @@ bool DialogInstall::ExtractCurrentFile(const std::wstring& fileName)
 		BYTE buffer[16384];
 		DWORD written;
 		read = unzReadCurrentFile(m_PackageUnzFile, buffer, 16384);
-		if (read < 0 || !WriteFile(hFile, (LPCVOID)buffer, read, &written, NULL) || read != written)
+		if (read < 0 || !WriteFile(hFile, (LPCVOID)buffer, read, &written, nullptr) || read != written)
 		{
 			read = UNZ_ERRNO;
 			break;
@@ -407,7 +407,7 @@ bool DialogInstall::ReadPackage()
 	{
 		char cBuffer[MAX_PATH];
 		unz_file_info ufi;
-		if (unzGetCurrentFileInfo(m_PackageUnzFile, &ufi, cBuffer, MAX_PATH, NULL, 0, NULL, 0) == UNZ_OK)
+		if (unzGetCurrentFileInfo(m_PackageUnzFile, &ufi, cBuffer, MAX_PATH, nullptr, 0, nullptr, 0) == UNZ_OK)
 		{
 			MultiByteToWideChar(CP_ACP, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
 			while (WCHAR* pos = wcschr(buffer, L'/')) *pos = L'\\';
@@ -495,7 +495,7 @@ bool DialogInstall::ReadPackage()
 					return false;
 				}
 
-				m_HeaderBitmap = (HBITMAP)LoadImage(NULL, tempFileSz, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+				m_HeaderBitmap = (HBITMAP)LoadImage(nullptr, tempFileSz, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 				DeleteFile(tempFileSz);
 			}
 
@@ -673,10 +673,10 @@ bool DialogInstall::InstallPackage()
 
 			SHFILEOPSTRUCT fo =
 			{
-				NULL,
+				nullptr,
 				FO_DELETE,
-				NULL,
-				NULL,
+				nullptr,
+				nullptr,
 				FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO
 			};
 
@@ -690,7 +690,7 @@ bool DialogInstall::InstallPackage()
 			else
 			{
 				std::wstring to = g_Data.skinsPath + L"@Backup\\";
-				CreateDirectory(to.c_str(), NULL);
+				CreateDirectory(to.c_str(), nullptr);
 
 				// Delete current backup
 				to += *iter;
@@ -715,7 +715,7 @@ bool DialogInstall::InstallPackage()
 	{
 		char cBuffer[MAX_PATH];
 		unz_file_info ufi;
-		if (unzGetCurrentFileInfo(m_PackageUnzFile, &ufi, cBuffer, MAX_PATH, NULL, 0, NULL, 0) == UNZ_OK)
+		if (unzGetCurrentFileInfo(m_PackageUnzFile, &ufi, cBuffer, MAX_PATH, nullptr, 0, nullptr, 0) == UNZ_OK)
 		{
 			MultiByteToWideChar(CP_ACP, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
 			while (WCHAR* pos = wcschr(buffer, L'/')) *pos = L'\\';
@@ -884,7 +884,7 @@ void DialogInstall::BeginInstall()
 		{
 			ListView_GetItem(item, &lvi);
 
-			std::set<std::wstring>* component = NULL;
+			std::set<std::wstring>* component = nullptr;
 			switch (lvi.iGroupId)
 			{
 			case 0: component = &m_PackageSkins;   break;
@@ -902,7 +902,7 @@ void DialogInstall::BeginInstall()
 	}
 	EnableWindow(item, FALSE);
 
-	m_InstallThread = (HANDLE)_beginthreadex(NULL, 0, InstallThread, this, 0, NULL);
+	m_InstallThread = (HANDLE)_beginthreadex(nullptr, 0, InstallThread, this, 0, nullptr);
 	if (!m_InstallThread)
 	{
 		MessageBox(m_Window, L"Unable to start install.", L"Rainmeter Skin Installer", MB_ERROR);
@@ -972,7 +972,7 @@ void DialogInstall::KeepVariables()
 			{
 				if (keyname[j] == L'=')
 				{
-					if (GetPrivateProfileString(L"Variables", currKey.c_str(), NULL, buffer, 4, toPath.c_str()) > 0)
+					if (GetPrivateProfileString(L"Variables", currKey.c_str(), nullptr, buffer, 4, toPath.c_str()) > 0)
 					{
 						while (keyname[++j] != L'\0') currValue += keyname[j];
 						WritePrivateProfileString(L"Variables", currKey.c_str(), currValue.c_str(), toPath.c_str());
@@ -1203,7 +1203,7 @@ bool DialogInstall::CreateDirectoryRecursive(const std::wstring& path)
 		// Temporarily terminate string
 		directory[pos] = L'\0';
 
-		failed = CreateDirectory(directorySz, NULL) == 0 && GetLastError() == ERROR_PATH_NOT_FOUND;
+		failed = CreateDirectory(directorySz, nullptr) == 0 && GetLastError() == ERROR_PATH_NOT_FOUND;
 
 		// Restore slash
 		directory[pos] = L'\\';
@@ -1288,7 +1288,7 @@ std::wstring DialogInstall::GetWindowsVersionString()
 ** Constructor.
 **
 */
-DialogInstall::TabInstall::TabInstall(HWND wnd) : Tab(GetModuleHandle(NULL), wnd, IDD_INSTALL_TAB, DlgProc)
+DialogInstall::TabInstall::TabInstall(HWND wnd) : Tab(GetModuleHandle(nullptr), wnd, IDD_INSTALL_TAB, DlgProc)
 {
 }
 
@@ -1301,7 +1301,7 @@ void DialogInstall::TabInstall::Initialize()
 	if (GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
 		extendedFlags |= LVS_EX_DOUBLEBUFFER;
-		SetWindowTheme(item, L"explorer", NULL);
+		SetWindowTheme(item, L"explorer", nullptr);
 	}
 
 	ListView_EnableGroupView(item, TRUE);

@@ -50,7 +50,7 @@ HRESULT STDMETHODCALLTYPE DWriteFontCollectionLoader::QueryInterface(IID const& 
 		return S_OK;
 	}
 
-	*ppvObject = NULL;
+	*ppvObject = nullptr;
 	return E_NOINTERFACE;
 }
 

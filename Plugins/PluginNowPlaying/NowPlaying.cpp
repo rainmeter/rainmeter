@@ -29,7 +29,7 @@
 
 static std::vector<ParentMeasure*> g_ParentMeasures;
 bool g_Initialized = false;
-HINSTANCE g_Instance = NULL;
+HINSTANCE g_Instance = nullptr;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -116,7 +116,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		// ParentMeasure is created when PlayerName is an actual player (and not a reference)
 		ParentMeasure* parent = measure->parent;
-		Player* oldPlayer = NULL;
+		Player* oldPlayer = nullptr;
 		if (parent)
 		{
 			if (parent->data != data)
@@ -147,13 +147,13 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		}
 		else if (_wcsicmp(L"foobar2000", str) == 0)
 		{
-			HWND fooWindow = FindWindow(L"foo_rainmeter_class", NULL);
+			HWND fooWindow = FindWindow(L"foo_rainmeter_class", nullptr);
 			if (fooWindow)
 			{
 				const WCHAR* error = L"Your foobar2000 plugin is out of date.\n\nDo you want to update the plugin now?";
-				if (MessageBox(NULL, error, L"Rainmeter", MB_YESNO | MB_ICONINFORMATION | MB_TOPMOST) == IDYES)
+				if (MessageBox(nullptr, error, L"Rainmeter", MB_YESNO | MB_ICONINFORMATION | MB_TOPMOST) == IDYES)
 				{
-					ShellExecute(NULL, L"open", L"http://github.com/poiru/foo-cad#readme", NULL, NULL, SW_SHOWNORMAL);
+					ShellExecute(nullptr, L"open", L"http://github.com/poiru/foo-cad#readme", nullptr, nullptr, SW_SHOWNORMAL);
 				}
 			}
 
@@ -365,7 +365,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 {
 	Measure* measure = (Measure*)data;
 	ParentMeasure* parent = measure->parent;
-	if (!parent) return NULL;
+	if (!parent) return nullptr;
 
 	const Player* player = parent->player;
 	static WCHAR buffer[32];
@@ -435,7 +435,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		return buffer;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 PLUGIN_EXPORT void Finalize(void* data)

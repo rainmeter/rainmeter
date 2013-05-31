@@ -124,8 +124,8 @@ static Function g_Functions[] =
 	{ L"rad", &rad, 3 },
 	{ L"sgn", &sgn, 3 },
 	{ L"neg", &neg, 3 },
-	{ L"e", NULL, 1 },
-	{ L"pi", NULL, 2 }
+	{ L"e", nullptr, 1 },
+	{ L"pi", nullptr, 2 }
 };
 
 static const int FUNC_MAX_LEN = 5;
@@ -234,7 +234,7 @@ const WCHAR* MathParser::Check(const WCHAR* formula)
 		++formula;
 	}
 
-	return (brackets != 0) ? eBrackets : NULL;
+	return (brackets != 0) ? eBrackets : nullptr;
 }
 
 const WCHAR* MathParser::CheckedParse(const WCHAR* formula, double* result)
@@ -242,7 +242,7 @@ const WCHAR* MathParser::CheckedParse(const WCHAR* formula, double* result)
 	const WCHAR* error = Check(formula);
 	if (!error)
 	{
-		error = Parse(formula, NULL, result);
+		error = Parse(formula, nullptr, result);
 	}
 	return error;
 }
@@ -254,7 +254,7 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, MeasureCalc* calc, double* 
 	if (!*formula)
 	{
 		*result = 0.0;
-		return NULL;
+		return nullptr;
 	}
 
 	Parser parser;
@@ -277,7 +277,7 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, MeasureCalc* calc, double* 
 			return eSyntax;
 
 		case Token::Final:
-			if ((error = CalcToObr(parser)) != NULL)
+			if ((error = CalcToObr(parser)) != nullptr)
 			{
 				return error;
 			}
@@ -289,7 +289,7 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, MeasureCalc* calc, double* 
 			{
 				// Done!
 				*result = parser.numStack[0];
-				return NULL;
+				return nullptr;
 			}
 			break;
 
@@ -309,13 +309,13 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, MeasureCalc* calc, double* 
 
 			case Operator::ClosingBracket:
 				{
-					if ((error = CalcToObr(parser)) != NULL) return error;
+					if ((error = CalcToObr(parser)) != nullptr) return error;
 				}
 				break;
 
 			case Operator::Comma:
 				{
-					if ((error = CalcToObr(parser)) != NULL) return error;
+					if ((error = CalcToObr(parser)) != nullptr) return error;
 						
 					if (parser.opStack[parser.opTop].type == Operator::MultiArgFunction)
 					{
@@ -361,7 +361,7 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, MeasureCalc* calc, double* 
 
 					while (g_OpPriorities[(int)op.type] <= g_OpPriorities[(int)parser.opStack[parser.opTop].type])
 					{
-						if ((error = Calc(parser)) != NULL) return error;
+						if ((error = Calc(parser)) != nullptr) return error;
 					}
 					parser.opStack[++parser.opTop] = op;
 				}
@@ -427,7 +427,7 @@ static const WCHAR* Calc(Parser& parser)
 	// Multi-argument function
 	if (op.type == Operator::Conditional)
 	{
-		return NULL; 
+		return nullptr; 
 	}
 	else if (op.type == Operator::MultiArgFunction)
 	{
@@ -438,7 +438,7 @@ static const WCHAR* Calc(Parser& parser)
 		if (error) return error;
 
 		parser.numStack[++parser.valTop] = res;
-		return NULL;
+		return nullptr;
 	}
 	else if (parser.valTop < 0)
 	{
@@ -583,7 +583,7 @@ static const WCHAR* Calc(Parser& parser)
 	}
 
 	parser.numStack[++parser.valTop] = res;
-	return NULL;
+	return nullptr;
 }
 
 static const WCHAR* CalcToObr(Parser& parser)
@@ -594,7 +594,7 @@ static const WCHAR* CalcToObr(Parser& parser)
 		if (error) return error;
 	}
 	--parser.opTop;
-	return NULL;
+	return nullptr;
 }
 
 Token GetNextToken(Lexer& lexer)
@@ -902,5 +902,5 @@ static const WCHAR* round(int paramcnt, double* args, double* result)
 	for (int i = 0; i < sharpness; i++) x /= coef;
 
 	*result = x;
-	return NULL;
+	return nullptr;
 }

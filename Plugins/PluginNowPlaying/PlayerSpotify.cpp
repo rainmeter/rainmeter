@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "PlayerSpotify.h"
 
-Player* PlayerSpotify::c_Player = NULL;
+Player* PlayerSpotify::c_Player = nullptr;
 
 /*
 ** Constructor.
@@ -37,7 +37,7 @@ PlayerSpotify::PlayerSpotify() : Player(),
 */
 PlayerSpotify::~PlayerSpotify()
 {
-	c_Player = NULL;
+	c_Player = nullptr;
 }
 
 /*
@@ -67,7 +67,7 @@ bool PlayerSpotify::CheckWindow()
 	{
 		m_LastCheckTime = time;
 
-		m_Window = FindWindow(L"SpotifyMainWindow", NULL);
+		m_Window = FindWindow(L"SpotifyMainWindow", nullptr);
 		if (m_Window)
 		{
 			m_Initialized = true;
@@ -202,8 +202,8 @@ void PlayerSpotify::OpenPlayer(std::wstring& path)
 			DWORD type = 0;
 
 			if (RegQueryValueEx(hKey,
-								NULL,
-								NULL,
+								nullptr,
+								nullptr,
 								(LPDWORD)&type,
 								(LPBYTE)data,
 								(LPDWORD)&size) == ERROR_SUCCESS)
@@ -213,7 +213,7 @@ void PlayerSpotify::OpenPlayer(std::wstring& path)
 					path = data;
 					path.erase(0, 1);				// Get rid of the leading quote
 					path.resize(path.length() - 3);	// And the ",0 at the end
-					ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
+					ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
 				}
 			}
 
@@ -222,7 +222,7 @@ void PlayerSpotify::OpenPlayer(std::wstring& path)
 		}
 		else
 		{
-			ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
+			ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
 		}
 	}
 	else

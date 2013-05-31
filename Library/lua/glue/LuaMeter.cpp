@@ -164,7 +164,7 @@ void LuaManager::RegisterMeter(lua_State* L)
 		{ "Hide", Hide },
 		{ "Show", Show },
 		{ "SetText", SetText },
-		{ NULL, NULL }
+		{ nullptr, nullptr }
 	};
 
 	luaL_register(L, "Meter", functions);

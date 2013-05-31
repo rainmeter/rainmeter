@@ -86,11 +86,11 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	{
 		if (GetSystemMetrics(SM_CMONITORS) > 32)
 		{
-			LSLog(LOG_ERROR, NULL, L"SysInfo.dll: Max amount of monitors supported is 32.");
+			LSLog(LOG_ERROR, nullptr, L"SysInfo.dll: Max amount of monitors supported is 32.");
 		}
 
 		m_Monitors.count = 0;
-		EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)(&m_Monitors));
+		EnumDisplayMonitors(nullptr, nullptr, MyInfoEnumProc, (LPARAM)(&m_Monitors));
 		g_Initialized = true;
 	}
 }
@@ -361,7 +361,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		break;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 PLUGIN_EXPORT double Update(void* data)

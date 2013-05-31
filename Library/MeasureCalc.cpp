@@ -57,7 +57,7 @@ MeasureCalc::~MeasureCalc()
 void MeasureCalc::UpdateValue()
 {
 	const WCHAR* errMsg = MathParser::Parse(m_Formula.c_str(), this, &m_Value);
-	if (errMsg != NULL)
+	if (errMsg != nullptr)
 	{
 		if (!m_ParseError)
 		{
@@ -103,7 +103,7 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 
 		const WCHAR* errMsg = MathParser::Check(m_Formula.c_str());
-		if (errMsg != NULL)
+		if (errMsg != nullptr)
 		{
 			LogErrorF(L"Calc: %s in [%s]", errMsg, m_Name.c_str());
 			m_Formula.clear();

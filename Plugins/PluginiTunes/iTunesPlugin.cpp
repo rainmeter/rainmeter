@@ -294,7 +294,7 @@ static bool updateCurrentTrack()
 	if (0 == lastClock || currentClock - lastClock > CLOCKS_PER_SEC)
 	{
 		wsprintf(CurrentTrackArtworkPath, L"%s%s", BaseDir, DefaultTrackArtworkPath);
-		if (CurrentTrack != NULL)
+		if (CurrentTrack != nullptr)
 			CurrentTrack.Release();
 		if (FAILED(iTunes->get_CurrentTrack(&CurrentTrack)) || !CurrentTrack)
 			return false;
@@ -316,7 +316,7 @@ static bool updateCurrentTrack()
 				_bstr_t path;
 
 				wsprintf(CurrentTrackArtworkPath, L"%s\\iTunesArtwork", BaseDir);
-				CreateDirectory(CurrentTrackArtworkPath, NULL);
+				CreateDirectory(CurrentTrackArtworkPath, nullptr);
 
 				switch (artworkFormat)
 				{
@@ -338,7 +338,7 @@ static bool updateCurrentTrack()
 			}
 		}
 	}
-	return (NULL != CurrentTrack);
+	return (nullptr != CurrentTrack);
 }
 
 static bool iTunesAboutToPromptUserToQuit = false;
@@ -353,7 +353,7 @@ public:
 	CiTunesEventHandler()
 	{
 		m_dwRefCount=0;
-		ITypeLib* pITypeLib = NULL ;
+		ITypeLib* pITypeLib = nullptr ;
 		HRESULT hr = ::LoadRegTypeLib(LIBID_iTunesLib, 1, 5, 0x00, &pITypeLib) ;
 		// Get type information for the interface of the object.
 		hr = pITypeLib->GetTypeInfoOfGuid(DIID__IiTunesEvents, &m_pITypeInfo) ;
@@ -441,7 +441,7 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 {
 	if (!CoInitialized)
 	{
-		::CoInitialize(NULL);
+		::CoInitialize(nullptr);
 		wcsncpy(BaseDir, iniFile, MAX_PATH);
 		BaseDir[MAX_PATH - 1] = 0;
 		wchar_t* lastBackslash = wcsrchr(BaseDir, L'\\');
@@ -452,14 +452,14 @@ UINT Initialize(HMODULE instance, LPCTSTR iniFile, LPCTSTR section, UINT id)
 
 	if (CoInitialized && !InstanceCreated && (FindWindow(L"iTunesApp", L"iTunes") || FindWindow(L"iTunes", L"iTunes")))
 	{
-		if (SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
+		if (SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, nullptr, CLSCTX_LOCAL_SERVER)))
 		{
 			InstanceCreated = true;
 			initEventHandler();
 		}
 		else
 		{
-			LSLog(LOG_ERROR, NULL, L"iTunesPlugin.dll: Unable to create instance");
+			LSLog(LOG_ERROR, nullptr, L"iTunesPlugin.dll: Unable to create instance");
 		}
 	}
 
@@ -492,14 +492,14 @@ UINT Update(UINT id)
 		// Check if the iTunes window has appeared
 		if (FindWindow(L"iTunesApp", L"iTunes") || FindWindow(L"iTunes", L"iTunes"))
 		{
-			if (!iTunesAboutToPromptUserToQuit && SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
+			if (!iTunesAboutToPromptUserToQuit && SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, nullptr, CLSCTX_LOCAL_SERVER)))
 			{
 				InstanceCreated = true;
 				initEventHandler();
 			}
 			else
 			{
-				LSLog(LOG_ERROR, NULL, L"iTunesPlugin.dll: Unable to create instance");
+				LSLog(LOG_ERROR, nullptr, L"iTunesPlugin.dll: Unable to create instance");
 				return 0;
 			}
 		}
@@ -773,14 +773,14 @@ void ExecuteBang(LPCTSTR args, UINT id)
 		}
 		else
 		{
-			LSLog(LOG_NOTICE, NULL, L"iTunesPlugin.dll: Invalid Command");
+			LSLog(LOG_NOTICE, nullptr, L"iTunesPlugin.dll: Invalid Command");
 			return;
 		}
 	}
 
 	if (!InstanceCreated)
 	{
-		if (COMMAND_POWER == command && CoInitialized && SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, NULL, CLSCTX_LOCAL_SERVER)))
+		if (COMMAND_POWER == command && CoInitialized && SUCCEEDED(iTunes.CreateInstance(CLSID_iTunesApp, nullptr, CLSCTX_LOCAL_SERVER)))
 		{
 			IITBrowserWindowPtr browserWindow;
 			if (SUCCEEDED(iTunes->get_BrowserWindow(&browserWindow)))

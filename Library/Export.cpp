@@ -23,7 +23,7 @@
 #include "Measure.h"
 #include "MeasurePlugin.h"
 
-#define NULLCHECK(str) { if ((str) == NULL) { (str) = L""; } }
+#define NULLCHECK(str) { if ((str) == nullptr) { (str) = L""; } }
 
 extern Rainmeter* g_Rainmeter;
 
@@ -94,7 +94,7 @@ void* __stdcall RmGet(void* rm, int type)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void __stdcall RmExecute(void* skin, LPCWSTR command)
@@ -139,7 +139,7 @@ LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue)
 // Deprecated!
 LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 {
-	if (command == NULL || *command == L'\0')
+	if (command == nullptr || *command == L'\0')
 	{
 		return L"noop";
 	}

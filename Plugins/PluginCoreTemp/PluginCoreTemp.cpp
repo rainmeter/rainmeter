@@ -130,7 +130,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		break;
 
 	default:
-		return NULL;
+		return nullptr;
 	}
 
 	return buffer;

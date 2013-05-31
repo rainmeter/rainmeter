@@ -60,7 +60,7 @@ public:
 	bool HasMouseAction() { return m_HasMouseAction; }
 
 	const std::wstring& GetToolTipText() { return m_ToolTipText; }
-	bool HasToolTip() { return m_ToolTipHandle != NULL; }
+	bool HasToolTip() { return m_ToolTipHandle != nullptr; }
 
 	void CreateToolTip(MeterWindow* meterWindow);
 	void UpdateToolTip();

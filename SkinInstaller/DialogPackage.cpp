@@ -28,7 +28,7 @@
 extern GlobalData g_Data;
 extern OsNameVersion g_OsNameVersions[];
 
-DialogPackage* DialogPackage::c_Dialog = NULL;
+DialogPackage* DialogPackage::c_Dialog = nullptr;
 
 DialogPackage::DialogPackage(HWND wnd) : Dialog(wnd),
 	m_TabInfo(wnd),
@@ -55,7 +55,7 @@ void DialogPackage::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	}
 	else
 	{
-		DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_PACKAGE_DIALOG), NULL, (DLGPROC)DlgProc, (LPARAM)lpCmdLine);
+		DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_PACKAGE_DIALOG), nullptr, (DLGPROC)DlgProc, (LPARAM)lpCmdLine);
 		ReleaseMutex(hMutex);
 	}
 }
@@ -108,7 +108,7 @@ INT_PTR CALLBACK DialogPackage::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 		case WM_DESTROY:
 			delete c_Dialog;
-			c_Dialog = NULL;
+			c_Dialog = nullptr;
 			return FALSE;
 		}
 	}
@@ -118,7 +118,7 @@ INT_PTR CALLBACK DialogPackage::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 INT_PTR DialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 {
-	HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_SKININSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
+	HICON hIcon = (HICON)LoadImage(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_SKININSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
 	if (GetOSPlatform() >= OSPLATFORM_VISTA)
@@ -180,7 +180,7 @@ INT_PTR DialogPackage::OnCommand(WPARAM wParam, LPARAM lParam)
 			ShowWindow(item, SW_SHOWNORMAL);
 			SendMessage(item, PBM_SETMARQUEE, (WPARAM)TRUE, 0);
 
-			m_PackagerThread = (HANDLE)_beginthreadex(NULL, 0, PackagerThreadProc, this, 0, NULL);
+			m_PackagerThread = (HANDLE)_beginthreadex(nullptr, 0, PackagerThreadProc, this, 0, nullptr);
 			if (!m_PackagerThread)
 			{
 				MessageBox(m_Window, L"Unknown error.", L"Rainmeter Skin Packager", MB_ERROR);
@@ -268,7 +268,7 @@ bool DialogPackage::CreatePackage()
 
 	auto cleanup = [&]()->bool
 	{
-		zipClose(m_ZipFile, NULL);
+		zipClose(m_ZipFile, nullptr);
 		return false;
 	};
 
@@ -332,8 +332,8 @@ bool DialogPackage::CreatePackage()
 
 	// Add footer
 	FILE* file;
-	if (zipClose(m_ZipFile, NULL) == ZIP_OK &&
-		(file = _wfopen(m_TargetFile.c_str(), L"r+b")) != NULL)
+	if (zipClose(m_ZipFile, nullptr) == ZIP_OK &&
+		(file = _wfopen(m_TargetFile.c_str(), L"r+b")) != nullptr)
 	{
 		fseek(file, 0, SEEK_END);
 		DialogInstall::PackageFooter footer = { _ftelli64(file), 0, "RMSKIN" };
@@ -388,7 +388,7 @@ bool DialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath
 		}
 	}
 
-	int open = zipOpenNewFileInZip(m_ZipFile, zipPathAscii.c_str(), NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_DEFAULT_COMPRESSION);
+	int open = zipOpenNewFileInZip(m_ZipFile, zipPathAscii.c_str(), nullptr, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_DEFAULT_COMPRESSION);
 	if (open != ZIP_OK)
 	{
 		return false;
@@ -398,7 +398,7 @@ bool DialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath
 
 	if (filePath)
 	{
-		HANDLE file = CreateFile(filePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE file = CreateFile(filePath, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (file == INVALID_HANDLE_VALUE)
 		{
 			result = false;
@@ -410,7 +410,7 @@ bool DialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath
 				const DWORD bufferSize = 16 * 1024;
 				BYTE buffer[bufferSize];
 				DWORD readSize;
-				if (!ReadFile(file, buffer, bufferSize, &readSize, NULL))
+				if (!ReadFile(file, buffer, bufferSize, &readSize, nullptr))
 				{
 					result = false;
 				}
@@ -448,7 +448,7 @@ bool DialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring ba
 		FindExInfoStandard,
 		&fd,
 		FindExSearchNameMatch,
-		NULL,
+		nullptr,
 		0);
 
 	if (hFind == INVALID_HANDLE_VALUE)
@@ -505,7 +505,7 @@ bool DialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring ba
 			// Add directory entry if folder is empty.
 			std::wstring zipPath = zipPrefix;
 			zipPath.append(currentPath, path.length(), currentPath.length() - path.length());
-			AddFileToPackage(NULL, zipPath.c_str());
+			AddFileToPackage(nullptr, zipPath.c_str());
 		}
 
 		std::list<std::wstring>::const_iterator iter = folders.begin();
@@ -529,14 +529,14 @@ void DialogPackage::ShowHelp()
 		url += L"_beta";
 	}
 
-	ShellExecute(m_Window, L"open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
+	ShellExecute(m_Window, L"open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 std::wstring DialogPackage::SelectFolder(HWND parent, const std::wstring& existingPath)
 {
 	LPCWSTR dialog = MAKEINTRESOURCE(IDD_PACKAGESELECTFOLDER_DIALOG);
 	std::wstring folder = existingPath;
-	if (DialogBoxParam(GetModuleHandle(NULL), dialog, parent, SelectFolderDlgProc, (LPARAM)&folder) != 1)
+	if (DialogBoxParam(GetModuleHandle(nullptr), dialog, parent, SelectFolderDlgProc, (LPARAM)&folder) != 1)
 	{
 		folder.clear();
 	}
@@ -557,7 +557,7 @@ INT_PTR CALLBACK DialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM
 
 			*existingPath += L'*';
 			WIN32_FIND_DATA fd;
-			HANDLE hFind = FindFirstFileEx(existingPath->c_str(), FindExInfoStandard, &fd, FindExSearchNameMatch, NULL, 0);
+			HANDLE hFind = FindFirstFileEx(existingPath->c_str(), FindExInfoStandard, &fd, FindExSearchNameMatch, nullptr, 0);
 			existingPath->pop_back();
 
 			if (hFind != INVALID_HANDLE_VALUE)
@@ -695,7 +695,7 @@ std::pair<std::wstring, std::wstring> DialogPackage::SelectPlugin(HWND parent)
 {
 	LPCWSTR dialog = MAKEINTRESOURCE(IDD_PACKAGESELECTPLUGIN_DIALOG);
 	std::pair<std::wstring, std::wstring> plugins;
-	if (DialogBoxParam(GetModuleHandle(NULL), dialog, parent, SelectPluginDlgProc, (LPARAM)&plugins) != 1)
+	if (DialogBoxParam(GetModuleHandle(nullptr), dialog, parent, SelectPluginDlgProc, (LPARAM)&plugins) != 1)
 	{
 		plugins.first.clear();
 		plugins.second.clear();
@@ -743,7 +743,7 @@ INT_PTR CALLBACK DialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM
 
 				bool x32 = LOWORD(wParam) == IDC_PACKAGESELECTPLUGIN_32BITBROWSE_BUTTON;
 
-				LOADED_IMAGE* loadedImage = ImageLoad(ConvertToAscii(buffer).c_str(), NULL);
+				LOADED_IMAGE* loadedImage = ImageLoad(ConvertToAscii(buffer).c_str(), nullptr);
 				if (loadedImage)
 				{
 					WORD machine = loadedImage->FileHeader->FileHeader.Machine;
@@ -800,7 +800,7 @@ INT_PTR CALLBACK DialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM
 //
 // -----------------------------------------------------------------------------------------------
 
-DialogPackage::TabInfo::TabInfo(HWND wnd) : Tab(GetModuleHandle(NULL), wnd, IDD_PACKAGEINFO_TAB, DlgProc)
+DialogPackage::TabInfo::TabInfo(HWND wnd) : Tab(GetModuleHandle(nullptr), wnd, IDD_PACKAGEINFO_TAB, DlgProc)
 {
 }
 
@@ -824,7 +824,7 @@ void DialogPackage::TabInfo::Initialize()
 	if (GetOSPlatform() >= OSPLATFORM_VISTA)
 	{
 		extendedFlags |= LVS_EX_DOUBLEBUFFER;
-		SetWindowTheme(item, L"explorer", NULL);
+		SetWindowTheme(item, L"explorer", nullptr);
 	}
 
 	ListView_EnableGroupView(item, TRUE);
@@ -1052,7 +1052,7 @@ INT_PTR DialogPackage::TabInfo::OnNotify(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-DialogPackage::TabOptions::TabOptions(HWND wnd) : Tab(GetModuleHandle(NULL), wnd, IDD_PACKAGEOPTIONS_TAB, DlgProc)
+DialogPackage::TabOptions::TabOptions(HWND wnd) : Tab(GetModuleHandle(nullptr), wnd, IDD_PACKAGEOPTIONS_TAB, DlgProc)
 {
 }
 
@@ -1061,7 +1061,7 @@ void DialogPackage::TabOptions::Initialize()
 	m_Initialized = true;
 
 	WCHAR buffer[MAX_PATH];
-	SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, SHGFP_TYPE_CURRENT, buffer);
+	SHGetFolderPath(nullptr, CSIDL_DESKTOPDIRECTORY, nullptr, SHGFP_TYPE_CURRENT, buffer);
 
 	c_Dialog->m_TargetFile = buffer;
 	c_Dialog->m_TargetFile += L'\\';
@@ -1292,7 +1292,7 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-DialogPackage::TabAdvanced::TabAdvanced(HWND wnd) : Tab(GetModuleHandle(NULL), wnd, IDD_PACKAGEADVANCED_TAB, DlgProc)
+DialogPackage::TabAdvanced::TabAdvanced(HWND wnd) : Tab(GetModuleHandle(nullptr), wnd, IDD_PACKAGEADVANCED_TAB, DlgProc)
 {
 }
 

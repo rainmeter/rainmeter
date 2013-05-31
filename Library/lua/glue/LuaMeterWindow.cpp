@@ -228,7 +228,7 @@ void LuaManager::RegisterMeterWindow(lua_State* L)
 		{ "GetX", GetX },
 		{ "GetY", GetY },
 		{ "MakePathAbsolute", MakePathAbsolute },
-		{ NULL, NULL }
+		{ nullptr, nullptr }
 	};
 
 	luaL_register(L, "MeterWindow", functions);

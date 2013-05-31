@@ -119,7 +119,7 @@ PLUGIN_EXPORT double Update(void* data)
 					g_UpdateCount = g_InstanceCount * -2;
 
 					DWORD id;
-					HANDLE thread = CreateThread(NULL, 0, QueryRecycleBinThreadProc, NULL, 0, &id);
+					HANDLE thread = CreateThread(nullptr, 0, QueryRecycleBinThreadProc, nullptr, 0, &id);
 					if (thread)
 					{
 						CloseHandle(thread);
@@ -167,15 +167,15 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 
 	if (_wcsicmp(args, L"EmptyBin") == 0)
 	{
-		SHEmptyRecycleBin(NULL, NULL, 0);
+		SHEmptyRecycleBin(nullptr, nullptr, 0);
 	}
 	else if (_wcsicmp(args, L"EmptyBinSilent") == 0)
 	{
-		SHEmptyRecycleBin(NULL, NULL, SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND);
+		SHEmptyRecycleBin(nullptr, nullptr, SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND);
 	}
 	else if (_wcsicmp(args, L"OpenBin") == 0)
 	{
-		ShellExecute(NULL, L"open", L"explorer.exe", L"/N,::{645FF040-5081-101B-9F08-00AA002F954E}", NULL, SW_SHOW);
+		ShellExecute(nullptr, L"open", L"explorer.exe", L"/N,::{645FF040-5081-101B-9F08-00AA002F954E}", nullptr, SW_SHOW);
 	}
 }
 
@@ -185,12 +185,12 @@ DWORD WINAPI QueryRecycleBinThreadProc(void* pParam)
 
 	SHQUERYRBINFO rbi = {0};
 	rbi.cbSize = sizeof(SHQUERYRBINFO);
-	SHQueryRecycleBin(NULL, &rbi);
+	SHQueryRecycleBin(nullptr, &rbi);
 	g_BinCount = (double)rbi.i64NumItems;
 	g_BinSize = (double)rbi.i64Size;
 
 	EnterCriticalSection(&g_CriticalSection);
-	HMODULE module = NULL;
+	HMODULE module = nullptr;
 	if (g_FreeInstanceInThread)
 	{
 		DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
@@ -227,7 +227,7 @@ bool HasRecycleBinChanged()
 	if (ls == ERROR_SUCCESS)
 	{
 		DWORD volumeCount = 0;
-		RegQueryInfoKey(volumeKey, NULL, NULL, NULL, &volumeCount, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+		RegQueryInfoKey(volumeKey, nullptr, nullptr, nullptr, &volumeCount, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 		if (volumeCount != s_LastVolumeCount)
 		{
 			s_LastVolumeCount = volumeCount;
@@ -238,14 +238,14 @@ bool HasRecycleBinChanged()
 		DWORD bufferSize = _countof(buffer);
 		DWORD index = 0;
 
-		while ((ls = RegEnumKeyEx(volumeKey, index, buffer, &bufferSize, NULL, NULL, NULL, NULL)) == ERROR_SUCCESS)
+		while ((ls = RegEnumKeyEx(volumeKey, index, buffer, &bufferSize, nullptr, nullptr, nullptr, nullptr)) == ERROR_SUCCESS)
 		{
 			HKEY volumeSubKey;
 			ls = RegOpenKeyEx(volumeKey, buffer, 0, KEY_QUERY_VALUE, &volumeSubKey);
 			if (ls == ERROR_SUCCESS)
 			{
 				ULONGLONG lastWriteTime;
-				ls = RegQueryInfoKey(volumeSubKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, (FILETIME*)&lastWriteTime);
+				ls = RegQueryInfoKey(volumeSubKey, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, (FILETIME*)&lastWriteTime);
 				if (ls == ERROR_SUCCESS)
 				{
 					if (lastWriteTime > s_LastWriteTime)
@@ -274,7 +274,7 @@ bool HasRecycleBinChanged()
 		if (ls == ERROR_SUCCESS)
 		{
 			ULONGLONG lastWriteTime;
-			ls = RegQueryInfoKey(iconKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, (FILETIME*)&lastWriteTime);
+			ls = RegQueryInfoKey(iconKey, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, (FILETIME*)&lastWriteTime);
 			if (ls == ERROR_SUCCESS)
 			{
 				if (lastWriteTime > s_LastWriteTime)

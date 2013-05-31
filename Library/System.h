@@ -69,7 +69,7 @@ public:
 
 	static bool IsFileWritable(LPCWSTR file);
 
-	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = NULL);
+	static HMODULE RmLoadLibrary(LPCWSTR lpLibFileName, DWORD* dwError = nullptr);
 	static void ResetWorkingDirectory();
 	static void InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 

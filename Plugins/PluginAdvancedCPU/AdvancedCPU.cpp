@@ -61,10 +61,10 @@ void UpdateProcesses();
 void SplitName(WCHAR* names, std::vector<RawString>& splittedNames)
 {
 	WCHAR* token = wcstok(names, L";");
-	while (token != NULL)
+	while (token != nullptr)
 	{
 		splittedNames.push_back(token);
-		token = wcstok(NULL, L";");
+		token = wcstok(nullptr, L";");
 	}
 }
 
@@ -216,7 +216,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		return measure->topProcessName.c_str();
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 PLUGIN_EXPORT void Finalize(void* data)
@@ -248,7 +248,7 @@ void UpdateProcesses()
 		if (pPerfObj)
 		{
 			for (CPerfObjectInstance* pObjInst = pPerfObj->GetFirstObjectInstance();
-				pObjInst != NULL;
+				pObjInst != nullptr;
 				pObjInst = pPerfObj->GetNextObjectInstance())
 			{
 				if (pObjInst->GetObjectInstanceName(name, 256))
@@ -260,9 +260,9 @@ void UpdateProcesses()
 					}
 
 					CPerfCounter* pPerfCntr = pObjInst->GetCounterByName(L"% Processor Time");
-					if (pPerfCntr != NULL)
+					if (pPerfCntr != nullptr)
 					{
-						pPerfCntr->GetData(data, 256, NULL);
+						pPerfCntr->GetData(data, 256, nullptr);
 
 						if (pPerfCntr->GetSize() == 8)
 						{

@@ -22,7 +22,7 @@
 #include "Winamp/wa_ipc.h"
 #include "Winamp/wa_cmd.h"
 
-Player* PlayerWinamp::c_Player = NULL;
+Player* PlayerWinamp::c_Player = nullptr;
 
 // This player retrieves data through the Winamp IPC interface.
 
@@ -47,7 +47,7 @@ PlayerWinamp::PlayerWinamp(WINAMPTYPE type) : Player(),
 */
 PlayerWinamp::~PlayerWinamp()
 {
-	c_Player = NULL;
+	c_Player = nullptr;
 	if (m_WinampHandle) CloseHandle(m_WinampHandle);
 }
 
@@ -78,7 +78,7 @@ bool PlayerWinamp::CheckWindow()
 	{
 		m_LastCheckTime = time;
 
-		m_Window = FindWindow(L"Winamp v1.x", NULL);
+		m_Window = FindWindow(L"Winamp v1.x", nullptr);
 		if (m_Window)
 		{
 			DWORD pID;
@@ -136,7 +136,7 @@ void PlayerWinamp::UpdateData()
 
 		if (m_UseUnicodeAPI)
 		{
-			if (!ReadProcessMemory(m_WinampHandle, m_WinampAddress, &wBuffer, sizeof(wBuffer), NULL))
+			if (!ReadProcessMemory(m_WinampHandle, m_WinampAddress, &wBuffer, sizeof(wBuffer), nullptr))
 			{
 				// Failed to read memory
 				return;
@@ -148,7 +148,7 @@ void PlayerWinamp::UpdateData()
 			int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
 			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTFILE);
 
-			if (!ReadProcessMemory(m_WinampHandle, address, &cBuffer, sizeof(cBuffer), NULL))
+			if (!ReadProcessMemory(m_WinampHandle, address, &cBuffer, sizeof(cBuffer), nullptr))
 			{
 				// Failed to read memory
 				return;
@@ -281,13 +281,13 @@ void PlayerWinamp::UpdateData()
 		if (m_UseUnicodeAPI)
 		{
 			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_PLAYING_TITLE);
-			ReadProcessMemory(m_WinampHandle, address, &wBuffer, sizeof(wBuffer), NULL);
+			ReadProcessMemory(m_WinampHandle, address, &wBuffer, sizeof(wBuffer), nullptr);
 		}
 		else
 		{
 			int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
 			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTTITLE);
-			ReadProcessMemory(m_WinampHandle, address, &cBuffer, sizeof(cBuffer), NULL);
+			ReadProcessMemory(m_WinampHandle, address, &cBuffer, sizeof(cBuffer), nullptr);
 			mbstowcs(wBuffer, cBuffer, MAX_PATH);
 		}
 
@@ -458,7 +458,7 @@ void PlayerWinamp::OpenPlayer(std::wstring& path)
 {
 	if (m_WinampType == WA_WINAMP)
 	{
-		ShellExecute(NULL, L"open", path.empty() ? L"winamp.exe" : path.c_str(), NULL, NULL, SW_SHOW);
+		ShellExecute(nullptr, L"open", path.empty() ? L"winamp.exe" : path.c_str(), nullptr, nullptr, SW_SHOW);
 	}
 	else // if (m_WinampType == WA_MEDIAMONKEY)
 	{
@@ -477,15 +477,15 @@ void PlayerWinamp::OpenPlayer(std::wstring& path)
 			DWORD type = 0;
 
 			if (RegQueryValueEx(hKey,
-								NULL,
-								NULL,
+								nullptr,
+								nullptr,
 								(LPDWORD)&type,
 								(LPBYTE)data,
 								(LPDWORD)&size) == ERROR_SUCCESS)
 			{
 				if (type == REG_SZ)
 				{
-					ShellExecute(NULL, L"open", data, NULL, NULL, SW_SHOW);
+					ShellExecute(nullptr, L"open", data, nullptr, nullptr, SW_SHOW);
 					path = data;
 				}
 			}
@@ -495,7 +495,7 @@ void PlayerWinamp::OpenPlayer(std::wstring& path)
 		}
 		else
 		{
-			ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
+			ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
 		}
 	}
 }

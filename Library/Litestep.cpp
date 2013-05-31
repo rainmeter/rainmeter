@@ -39,8 +39,8 @@ WCHAR* GetString(UINT id)
 
 std::wstring GetFormattedString(UINT id, ...)
 {
-	LPWSTR pBuffer = NULL;
-	va_list args = NULL;
+	LPWSTR pBuffer = nullptr;
+	va_list args = nullptr;
 	va_start(args, id);
 
 	DWORD len = FormatMessage(FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ALLOCATE_BUFFER,
@@ -62,7 +62,7 @@ HICON GetIcon(UINT id, bool large)
 {
 	typedef HRESULT (WINAPI * FPLOADICONMETRIC)(HINSTANCE hinst, PCWSTR pszName, int lims, HICON* phico);
 
-	HINSTANCE hExe = GetModuleHandle(NULL);
+	HINSTANCE hExe = GetModuleHandle(nullptr);
 	HINSTANCE hComctl = GetModuleHandle(L"Comctl32");
 	if (hComctl)
 	{

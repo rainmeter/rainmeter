@@ -56,13 +56,13 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 
 	if (!IsSupportedPlatform())
 	{
-		MessageBox(NULL, L"Windows XP SP2 or higher is required to install Rainmeter.", NULL, MB_OK | MB_ICONERROR);
+		MessageBox(nullptr, L"Windows XP SP2 or higher is required to install Rainmeter.", nullptr, MB_OK | MB_ICONERROR);
 		return (int)InstallStatus::UnsupportedPlatform;
 	}
 
 	if (!IsSupportedCPU())
 	{
-		MessageBox(NULL, L"A Pentium III or later processor is required to install Rainmeter.", NULL, MB_OK | MB_ICONERROR);
+		MessageBox(nullptr, L"A Pentium III or later processor is required to install Rainmeter.", nullptr, MB_OK | MB_ICONERROR);
 		return (int)InstallStatus::UnsupportedPlatform;
 	}
 

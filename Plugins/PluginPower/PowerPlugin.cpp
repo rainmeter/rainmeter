@@ -173,7 +173,7 @@ PLUGIN_EXPORT double Update(void* data)
 			{
 				PROCESSOR_POWER_INFORMATION* ppi = new PROCESSOR_POWER_INFORMATION[g_NumOfProcessors];
 				memset(ppi, 0, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
-				CallNtPowerInformation(ProcessorInformation, NULL, 0, ppi, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
+				CallNtPowerInformation(ProcessorInformation, nullptr, 0, ppi, sizeof(PROCESSOR_POWER_INFORMATION) * g_NumOfProcessors);
 				double value = (measure->type == POWER_MHZ) ? ppi[0].CurrentMhz : ppi[0].CurrentMhz * 1000000.0;
 				delete [] ppi;
 				return value;
@@ -223,7 +223,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 PLUGIN_EXPORT void Finalize(void* data)

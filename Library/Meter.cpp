@@ -74,7 +74,7 @@ Meter::~Meter()
 {
 	delete m_Transformation;
 
-	if (m_ToolTipHandle != NULL)
+	if (m_ToolTipHandle != nullptr)
 	{
 		DestroyWindow(m_ToolTipHandle);
 	}
@@ -190,11 +190,11 @@ void Meter::Show()
 	// Change the option as well to avoid reset in ReadOptions().
 	m_MeterWindow->GetParser().SetValue(m_Name, L"Hidden", L"0");
 
-	if (m_ToolTipHandle != NULL)
+	if (m_ToolTipHandle != nullptr)
 	{
 		if (!m_ToolTipHidden)
 		{
-			SendMessage(m_ToolTipHandle, TTM_ACTIVATE, TRUE, NULL);
+			SendMessage(m_ToolTipHandle, TTM_ACTIVATE, TRUE, 0);
 		}
 	}
 }
@@ -210,9 +210,9 @@ void Meter::Hide()
 	// Change the option as well to avoid reset in ReadOptions().
 	m_MeterWindow->GetParser().SetValue(m_Name, L"Hidden", L"1");
 
-	if (m_ToolTipHandle != NULL)
+	if (m_ToolTipHandle != nullptr)
 	{
-		SendMessage(m_ToolTipHandle, TTM_ACTIVATE, FALSE, NULL);
+		SendMessage(m_ToolTipHandle, TTM_ACTIVATE, FALSE, 0);
 	}
 }
 
@@ -349,7 +349,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	else if (!matrix.empty())
 	{
 		delete m_Transformation;
-		m_Transformation = NULL;
+		m_Transformation = nullptr;
 
 		LogErrorF(L"Meter: Incorrect number of values in TransformationMatrix=%s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
 	}
@@ -411,7 +411,7 @@ Meter* Meter::Create(const WCHAR* meter, MeterWindow* meterWindow, const WCHAR* 
 
 	LogErrorF(L"Meter=%s is not valid in [%s]", meter, name);
 
-	return NULL;
+	return nullptr;
 }
 
 /*
@@ -538,16 +538,16 @@ void Meter::CreateToolTip(MeterWindow* meterWindow)
 
 	HWND hwndTT = CreateWindowEx(WS_EX_TOPMOST,
 		TOOLTIPS_CLASS,
-		NULL,
+		nullptr,
 		style,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		hMeterWindow,
-		NULL,
+		nullptr,
 		hInstance,
-		NULL);
+		nullptr);
 
 	if (hwndTT)
 	{
@@ -555,7 +555,7 @@ void Meter::CreateToolTip(MeterWindow* meterWindow)
 
 		TOOLINFO ti = {sizeof(TOOLINFO), TTF_SUBCLASS, hMeterWindow, 0, GetMeterRect(), hInstance};
 
-		SendMessage(hwndTT, TTM_ADDTOOL, NULL, (LPARAM) (LPTOOLINFO) &ti);
+		SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
 		m_ToolTipHandle = hwndTT;
 		UpdateToolTip();
@@ -572,19 +572,19 @@ void Meter::UpdateToolTip()
 	TOOLINFO ti = {sizeof(TOOLINFO)};
 	ti.hwnd = m_MeterWindow->GetWindow();
 
-	SendMessage(hwndTT, TTM_GETTOOLINFO, NULL, (LPARAM)&ti);
+	SendMessage(hwndTT, TTM_GETTOOLINFO, 0, (LPARAM)&ti);
 
 	std::wstring text = m_ToolTipText;
 	ReplaceMeasures(text);
 	ti.lpszText = (LPTSTR)text.c_str();
 	ti.rect = GetMeterRect();
 
-	SendMessage(hwndTT, TTM_SETTOOLINFO, NULL, (LPARAM)&ti);
-	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, NULL, m_ToolTipWidth);
+	SendMessage(hwndTT, TTM_SETTOOLINFO, 0, (LPARAM)&ti);
+	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, m_ToolTipWidth);
 
 	if (!m_ToolTipTitle.empty())
 	{
-		HICON hIcon = NULL;
+		HICON hIcon = nullptr;
 		bool destroy = false;
 
 		if (!m_ToolTipIcon.empty())
@@ -604,22 +604,22 @@ void Meter::UpdateToolTip()
 			}
 			else if (_wcsicmp(tipIcon, L"QUESTION") == 0)
 			{
-				hIcon = LoadIcon(NULL, IDI_QUESTION);
+				hIcon = LoadIcon(nullptr, IDI_QUESTION);
 			}
 			else if (_wcsicmp(tipIcon, L"SHIELD") == 0)
 			{
-				hIcon = LoadIcon(NULL, IDI_SHIELD);
+				hIcon = LoadIcon(nullptr, IDI_SHIELD);
 			}
 			else
 			{
-				hIcon = (HICON)LoadImage(NULL, tipIcon, IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+				hIcon = (HICON)LoadImage(nullptr, tipIcon, IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
 				destroy = true;
 			}
 		}
 
 		text = m_ToolTipTitle;
 		ReplaceMeasures(text);
-		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM) hIcon, (LPARAM)text.c_str());
+		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM)hIcon, (LPARAM)text.c_str());
 
 		if (destroy)
 		{
@@ -629,11 +629,11 @@ void Meter::UpdateToolTip()
 
 	if (m_ToolTipHidden)
 	{
-		SendMessage(hwndTT, TTM_ACTIVATE, FALSE, NULL);
+		SendMessage(hwndTT, TTM_ACTIVATE, FALSE, 0);
 	}
 	else
 	{
-		SendMessage(hwndTT, TTM_ACTIVATE, !IsHidden(), NULL);
+		SendMessage(hwndTT, TTM_ACTIVATE, !IsHidden(), 0);
 	}
 }
 

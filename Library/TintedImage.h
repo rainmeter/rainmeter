@@ -71,8 +71,8 @@ public:
 
 	void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
-	bool IsLoaded() { return (m_Bitmap != NULL); }
-	bool IsTinted() { return (m_BitmapTint != NULL); }
+	bool IsLoaded() { return (m_Bitmap != nullptr); }
+	bool IsTinted() { return (m_BitmapTint != nullptr); }
 	bool IsOptionsChanged() { return m_NeedsCrop || m_NeedsTinting || m_NeedsTransform; }
 	void ClearOptionFlags() { m_NeedsCrop = m_NeedsTinting = m_NeedsTransform = false; }
 

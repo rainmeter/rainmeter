@@ -127,7 +127,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		measure->separator = RmReadString(rm, L"Separator", L"\n");
 	}
 
-	srand((unsigned)time(NULL));
+	srand((unsigned)time(nullptr));
 }
 
 PLUGIN_EXPORT double Update(void* data)
@@ -163,8 +163,8 @@ PLUGIN_EXPORT double Update(void* data)
 					WCHAR* wBuffer = (WCHAR*)buffer;
 
 					// Read until we find the first separator
-					WCHAR* sepPos1 = NULL;
-					WCHAR* sepPos2 = NULL;
+					WCHAR* sepPos1 = nullptr;
+					WCHAR* sepPos2 = nullptr;
 					do
 					{
 						size_t len = fread(buffer, sizeof(BYTE), BUFFER_SIZE, file);
@@ -172,7 +172,7 @@ PLUGIN_EXPORT double Update(void* data)
 						buffer[len + 1] = 0;
 
 						sepPos1 = wcsstr(wBuffer, measure->separator.c_str());
-						if (sepPos1 == NULL)
+						if (sepPos1 == nullptr)
 						{
 							// The separator wasn't found
 							if (feof(file))
@@ -191,13 +191,13 @@ PLUGIN_EXPORT double Update(void* data)
 							sepPos1 += measure->separator.size();
 						}
 					}
-					while (sepPos1 == NULL);
+					while (sepPos1 == nullptr);
 
 					// Find the second separator
 					do
 					{
 						sepPos2 = wcsstr(sepPos1, measure->separator.c_str());
-						if (sepPos2 == NULL)
+						if (sepPos2 == nullptr)
 						{
 							// The separator wasn't found
 							if (feof(file))
@@ -228,7 +228,7 @@ PLUGIN_EXPORT double Update(void* data)
 							measure->value += sepPos1;
 						}
 					}
-					while (sepPos2 == NULL);
+					while (sepPos2 == nullptr);
 				}
 				else
 				{
@@ -239,15 +239,15 @@ PLUGIN_EXPORT double Update(void* data)
 					const char* separatorSz = separator.c_str();
 
 					// Read until we find the first separator
-					char* sepPos1 = NULL;
-					char* sepPos2 = NULL;
+					char* sepPos1 = nullptr;
+					char* sepPos2 = nullptr;
 					do
 					{
 						size_t len = fread(buffer, sizeof(char), BUFFER_SIZE, file);
 						aBuffer[len] = 0;
 
 						sepPos1 = strstr(aBuffer, separatorSz);
-						if (sepPos1 == NULL)
+						if (sepPos1 == nullptr)
 						{
 							// The separator wasn't found
 							if (feof(file))
@@ -265,13 +265,13 @@ PLUGIN_EXPORT double Update(void* data)
 							sepPos1 += separator.size();
 						}
 					}
-					while (sepPos1 == NULL);
+					while (sepPos1 == nullptr);
 
 					// Find the second separator
 					do
 					{
 						sepPos2 = strstr(sepPos1, separatorSz);
-						if (sepPos2 == NULL)
+						if (sepPos2 == nullptr)
 						{
 							// The separator wasn't found
 							if (feof(file))
@@ -301,7 +301,7 @@ PLUGIN_EXPORT double Update(void* data)
 							measure->value += StringUtil::Widen(sepPos1);
 						}
 					}
-					while (sepPos2 == NULL);
+					while (sepPos2 == nullptr);
 				}
 			}
 

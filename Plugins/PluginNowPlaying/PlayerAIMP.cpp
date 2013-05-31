@@ -21,7 +21,7 @@
 #include "AIMP/aimp2_sdk.h"
 #include "Winamp/wa_ipc.h"
 
-Player* PlayerAIMP::c_Player = NULL;
+Player* PlayerAIMP::c_Player = nullptr;
 
 /*
 ** Constructor.
@@ -44,7 +44,7 @@ PlayerAIMP::PlayerAIMP() : Player(),
 */
 PlayerAIMP::~PlayerAIMP()
 {
-	c_Player = NULL;
+	c_Player = nullptr;
 	if (m_FileMap) UnmapViewOfFile(m_FileMap);
 	if (m_FileMapHandle) CloseHandle(m_FileMapHandle);
 }
@@ -79,7 +79,7 @@ bool PlayerAIMP::CheckWindow()
 
 		if (m_Window)
 		{
-			m_WinampWindow = FindWindow(L"Winamp v1.x", NULL);
+			m_WinampWindow = FindWindow(L"Winamp v1.x", nullptr);
 
 			m_FileMapHandle = OpenFileMapping(FILE_MAP_READ, FALSE, L"AIMP2_RemoteInfo");
 			if (m_FileMapHandle)
@@ -315,14 +315,14 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 
 		if (RegQueryValueEx(hKey,
 							L"DisplayIcon",
-							NULL,
+							nullptr,
 							(LPDWORD)&type,
 							(LPBYTE)data,
 							(LPDWORD)&size) == ERROR_SUCCESS)
 		{
 			if (type == REG_SZ)
 			{
-				ShellExecute(NULL, L"open", data, NULL, NULL, SW_SHOW);
+				ShellExecute(nullptr, L"open", data, nullptr, nullptr, SW_SHOW);
 				path = data;
 			}
 		}
@@ -338,7 +338,7 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 
 			if (RegQueryValueEx(hKey,
 								L"DisplayIcon",
-								NULL,
+								nullptr,
 								(LPDWORD)&type,
 								(LPBYTE)data,
 								(LPDWORD)&size) == ERROR_SUCCESS)
@@ -348,7 +348,7 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 					path = data;
 					path.resize(path.find_last_of(L'\\') + 1);
 					path += L"AIMP3.exe";
-					ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
+					ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
 				}
 			}
 		}
@@ -358,6 +358,6 @@ void PlayerAIMP::OpenPlayer(std::wstring& path)
 	}
 	else
 	{
-		ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
+		ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
 	}
 }

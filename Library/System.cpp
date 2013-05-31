@@ -44,10 +44,10 @@ enum INTERVAL
 
 MultiMonitorInfo System::c_Monitors = { 0 };
 
-HWND System::c_Window = NULL;
-HWND System::c_HelperWindow = NULL;
+HWND System::c_Window = nullptr;
+HWND System::c_HelperWindow = nullptr;
 
-HWINEVENTHOOK System::c_WinEventHook = NULL;
+HWINEVENTHOOK System::c_WinEventHook = nullptr;
 
 bool System::c_ShowDesktop = false;
 
@@ -78,10 +78,10 @@ void System::Initialize(HINSTANCE instance)
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		NULL,
-		NULL,
+		nullptr,
+		nullptr,
 		instance,
-		NULL);
+		nullptr);
 
 	c_HelperWindow = CreateWindowEx(
 		WS_EX_TOOLWINDOW,
@@ -92,10 +92,10 @@ void System::Initialize(HINSTANCE instance)
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		NULL,
-		NULL,
+		nullptr,
+		nullptr,
 		instance,
-		NULL);
+		nullptr);
 
 	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 	SetWindowPos(c_HelperWindow, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
@@ -110,13 +110,13 @@ void System::Initialize(HINSTANCE instance)
 	c_WinEventHook = SetWinEventHook(
 		EVENT_SYSTEM_FOREGROUND,
 		EVENT_SYSTEM_FOREGROUND,
-		NULL,
+		nullptr,
 		MyWinEventProc,
 		0,
 		0,
 		WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
 
-	SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
+	SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, nullptr);
 }
 
 /*
@@ -131,19 +131,19 @@ void System::Finalize()
 	if (c_WinEventHook)
 	{
 		UnhookWinEvent(c_WinEventHook);
-		c_WinEventHook = NULL;
+		c_WinEventHook = nullptr;
 	}
 
 	if (c_HelperWindow)
 	{
 		DestroyWindow(c_HelperWindow);
-		c_HelperWindow = NULL;
+		c_HelperWindow = nullptr;
 	}
 
 	if (c_Window)
 	{
 		DestroyWindow(c_Window);
-		c_Window = NULL;
+		c_Window = nullptr;
 	}
 }
 
@@ -171,13 +171,13 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 			info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom,
 			info.rcWork.right - info.rcWork.left, info.rcWork.bottom - info.rcWork.top);
 	}
-	if (m == NULL) return TRUE;
+	if (m == nullptr) return TRUE;
 
 	if (m->useEnumDisplayDevices)
 	{
 		for (auto iter = m->monitors.begin(); iter != m->monitors.end(); ++iter)
 		{
-			if ((*iter).handle == NULL && _wcsicmp(info.szDevice, (*iter).deviceName.c_str()) == 0)
+			if ((*iter).handle == nullptr && _wcsicmp(info.szDevice, (*iter).deviceName.c_str()) == 0)
 			{
 				(*iter).handle = hMonitor;
 				(*iter).screen = *lprcMonitor;
@@ -261,7 +261,7 @@ void System::SetMultiMonitorInfo()
 
 	DISPLAY_DEVICE dd = {sizeof(DISPLAY_DEVICE)};
 
-	if (EnumDisplayDevices(NULL, 0, &dd, 0))
+	if (EnumDisplayDevices(nullptr, 0, &dd, 0))
 	{
 		DWORD dwDevice = 0;
 
@@ -320,7 +320,7 @@ void System::SetMultiMonitorInfo()
 			{
 				MonitorInfo monitor = {0};
 
-				monitor.handle = NULL;
+				monitor.handle = nullptr;
 				monitor.deviceName = deviceName;  // E.g. "\\.\DISPLAY1"
 
 				// Get the monitor name (E.g. "Generic Non-PnP Monitor")
@@ -364,7 +364,7 @@ void System::SetMultiMonitorInfo()
 						}
 					}
 
-					if (monitor.handle != NULL)
+					if (monitor.handle != nullptr)
 					{
 						MONITORINFO info = {sizeof(MONITORINFO)};
 						GetMonitorInfo(monitor.handle, &info);
@@ -410,7 +410,7 @@ void System::SetMultiMonitorInfo()
 			}
 			++dwDevice;
 		}
-		while (EnumDisplayDevices(NULL, dwDevice, &dd, 0));
+		while (EnumDisplayDevices(nullptr, dwDevice, &dd, 0));
 	}
 
 	if (monitors.empty())  // Failed to enumerate the non-mirroring monitors
@@ -428,7 +428,7 @@ void System::SetMultiMonitorInfo()
 
 	if (c_Monitors.useEnumDisplayMonitors)
 	{
-		EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)(&c_Monitors));
+		EnumDisplayMonitors(nullptr, nullptr, MyInfoEnumProc, (LPARAM)(&c_Monitors));
 
 		if (monitors.empty())  // Failed to enumerate the monitors
 		{
@@ -460,7 +460,7 @@ void System::SetMultiMonitorInfo()
 	{
 		if (logging)
 		{
-			EnumDisplayMonitors(NULL, NULL, MyInfoEnumProc, (LPARAM)NULL);  // Only logging
+			EnumDisplayMonitors(nullptr, nullptr, MyInfoEnumProc, (LPARAM)nullptr);  // Only logging
 		}
 	}
 
@@ -522,7 +522,7 @@ void System::UpdateWorkareaInfo()
 	int i = 1;
 	for (auto iter = monitors.begin(); iter != monitors.end(); ++iter, ++i)
 	{
-		if ((*iter).active && (*iter).handle != NULL)
+		if ((*iter).active && (*iter).handle != nullptr)
 		{
 			MONITORINFO info = {sizeof(MONITORINFO)};
 			GetMonitorInfo((*iter).handle, &info);
@@ -546,7 +546,7 @@ void System::UpdateWorkareaInfo()
 */
 HWND System::GetDefaultShellWindow()
 {
-	static HWND c_ShellW = NULL;  // cache
+	static HWND c_ShellW = nullptr;  // cache
 	HWND ShellW = GetShellWindow();
 
 	if (ShellW)
@@ -562,7 +562,7 @@ HWND System::GetDefaultShellWindow()
 			if (!(GetClassName(ShellW, className, classLen) > 0 &&
 				wcscmp(className, L"Progman") == 0))
 			{
-				ShellW = NULL;
+				ShellW = nullptr;
 			}
 		}
 	}
@@ -573,14 +573,14 @@ HWND System::GetDefaultShellWindow()
 
 /*
 ** Finds the WorkerW window.
-** If the WorkerW window is not active, returns NULL.
+** If the WorkerW window is not active, returns nullptr.
 **
 */
 HWND System::GetWorkerW()
 {
-	static HWND c_DefView = NULL;  // cache
+	static HWND c_DefView = nullptr;  // cache
 	HWND ShellW = GetDefaultShellWindow();
-	if (!ShellW) return NULL;  // Default Shell (Explorer) not running
+	if (!ShellW) return nullptr;  // Default Shell (Explorer) not running
 
 	if (c_DefView && IsWindow(c_DefView))
 	{
@@ -589,7 +589,7 @@ HWND System::GetWorkerW()
 		{
 			if (parent == ShellW)
 			{
-				return NULL;
+				return nullptr;
 			}
 			else
 			{
@@ -604,14 +604,14 @@ HWND System::GetWorkerW()
 		}
 	}
 
-	HWND WorkerW = NULL, DefView = FindWindowEx(ShellW, NULL, L"SHELLDLL_DefView", L"");
-	if (DefView == NULL)
+	HWND WorkerW = nullptr, DefView = FindWindowEx(ShellW, nullptr, L"SHELLDLL_DefView", L"");
+	if (DefView == nullptr)
 	{
-		while (WorkerW = FindWindowEx(NULL, WorkerW, L"WorkerW", L""))
+		while (WorkerW = FindWindowEx(nullptr, WorkerW, L"WorkerW", L""))
 		{
 			if (IsWindowVisible(WorkerW) &&
 				BelongToSameProcess(ShellW, WorkerW) &&
-				(DefView = FindWindowEx(WorkerW, NULL, L"SHELLDLL_DefView", L"")))
+				(DefView = FindWindowEx(WorkerW, nullptr, L"SHELLDLL_DefView", L"")))
 			{
 				break;
 			}
@@ -756,7 +756,7 @@ void System::ChangeZPosInOrder()
 		LogDebug(L"2: ----- AFTER -----");
 
 		// Log all windows in Z-order
-		EnumWindows(MyEnumWindowsProc, (LPARAM)NULL);
+		EnumWindows(MyEnumWindowsProc, (LPARAM)nullptr);
 	}
 }
 
@@ -836,11 +836,11 @@ void System::PrepareHelperWindow(HWND WorkerW)
 */
 bool System::CheckDesktopState(HWND WorkerW)
 {
-	HWND hwnd = NULL;
+	HWND hwnd = nullptr;
 
 	if (WorkerW && IsWindowVisible(WorkerW))
 	{
-		hwnd = FindWindowEx(NULL, WorkerW, L"RainmeterSystem", L"System");
+		hwnd = FindWindowEx(nullptr, WorkerW, L"RainmeterSystem", L"System");
 	}
 
 	bool stateChanged = (hwnd && !c_ShowDesktop) || (!hwnd && c_ShowDesktop);
@@ -861,11 +861,11 @@ bool System::CheckDesktopState(HWND WorkerW)
 
 		if (c_ShowDesktop)
 		{
-			SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_RESTOREWINDOWS, NULL);
+			SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_RESTOREWINDOWS, nullptr);
 		}
 		else
 		{
-			SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, NULL);
+			SetTimer(c_Window, TIMER_SHOWDESKTOP, INTERVAL_SHOWDESKTOP, nullptr);
 		}
 	}
 
@@ -890,7 +890,7 @@ void CALLBACK System::MyWinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, H
 			{
 				const int max = 5;
 				int loop = 0;
-				while (loop < max && FindWindowEx(hwnd, NULL, L"SHELLDLL_DefView", L"") == NULL)
+				while (loop < max && FindWindowEx(hwnd, nullptr, L"SHELLDLL_DefView", L"") == nullptr)
 				{
 					Sleep(2);  // Wait for 2-16 ms before retrying
 					++loop;
@@ -983,7 +983,7 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		if (wParam == PBT_APMRESUMESUSPEND)
 		{
 			// Deliver PBT_APMRESUMESUSPEND event to all meter windows
-			SetTimer(hWnd, TIMER_RESUME, INTERVAL_RESUME, NULL);
+			SetTimer(hWnd, TIMER_RESUME, INTERVAL_RESUME, nullptr);
 		}
 		return TRUE;
 
@@ -1035,7 +1035,7 @@ POINT System::GetCursorPosition()
 */
 bool System::IsFileWritable(LPCWSTR file)
 {
-	HANDLE hFile = CreateFile(file, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+	HANDLE hFile = CreateFile(file, GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		return false;
@@ -1111,7 +1111,7 @@ void System::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 */
 void System::SetClipboardText(const std::wstring& text)
 {
-	if (OpenClipboard(NULL))
+	if (OpenClipboard(nullptr))
 	{
 		// Include terminating null char
 		size_t len = text.length() + 1;
@@ -1161,7 +1161,7 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 					HKEY hKey;
 					if (RegOpenKeyEx(HKEY_CURRENT_USER, L"Control Panel\\Desktop", 0, KEY_SET_VALUE, &hKey) == ERROR_SUCCESS)
 					{
-						const WCHAR* wallStyle = NULL;
+						const WCHAR* wallStyle = nullptr;
 						const WCHAR* wallTile = L"0";
 
 						const WCHAR* option = style.c_str();
@@ -1229,7 +1229,7 @@ bool System::CopyFiles(std::wstring from, std::wstring to, bool bMove)
 
 	SHFILEOPSTRUCT fo =
 	{
-		NULL,
+		nullptr,
 		bMove ? FO_MOVE : FO_COPY,
 		from.c_str(),
 		to.c_str(),
@@ -1272,10 +1272,10 @@ bool System::RemoveFolder(std::wstring folder)
 
 	SHFILEOPSTRUCT fo =
 	{
-		NULL,
+		nullptr,
 		FO_DELETE,
 		folder.c_str(),
-		NULL,
+		nullptr,
 		FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO
 	};
 
@@ -1304,7 +1304,7 @@ void System::UpdateIniFileMappingList()
 		ULONGLONG ftLastWriteTime;
 		bool changed = false;
 
-		ret = RegQueryInfoKey(hKey, NULL, NULL, NULL, &numSubKeys, NULL, NULL, NULL, NULL, NULL, NULL, (LPFILETIME)&ftLastWriteTime);
+		ret = RegQueryInfoKey(hKey, nullptr, nullptr, nullptr, &numSubKeys, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, (LPFILETIME)&ftLastWriteTime);
 		if (ret == ERROR_SUCCESS)
 		{
 			//LogDebugF(L"IniFileMapping: numSubKeys=%u, ftLastWriteTime=%llu", numSubKeys, ftLastWriteTime);
@@ -1336,7 +1336,7 @@ void System::UpdateIniFileMappingList()
 			WCHAR* buffer = new WCHAR[MAX_PATH];
 			DWORD index = 0, cch = MAX_PATH;
 
-			while ((ret = RegEnumKeyEx(hKey, index++, buffer, &cch, NULL, NULL, NULL, NULL)) != ERROR_NO_MORE_ITEMS)
+			while ((ret = RegEnumKeyEx(hKey, index++, buffer, &cch, nullptr, nullptr, nullptr, nullptr)) != ERROR_NO_MORE_ITEMS)
 			{
 				if (ret == ERROR_SUCCESS)
 				{

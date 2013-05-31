@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "PlayerWLM.h"
 
-Player* PlayerWLM::c_Player = NULL;
+Player* PlayerWLM::c_Player = nullptr;
 extern HINSTANCE g_Instance;
 
 // This player emulates the MSN/WLM Messenger 'Listening to' interface, which is
@@ -47,8 +47,8 @@ PlayerWLM::PlayerWLM() : Player(),
 							CW_USEDEFAULT,
 							CW_USEDEFAULT,
 							CW_USEDEFAULT,
-							NULL,
-							NULL,
+							nullptr,
+							nullptr,
 							g_Instance,
 							this);
 
@@ -61,7 +61,7 @@ PlayerWLM::PlayerWLM() : Player(),
 */
 PlayerWLM::~PlayerWLM()
 {
-	c_Player = NULL;
+	c_Player = nullptr;
 	DestroyWindow(m_Window);
 	UnregisterClass(L"MsnMsgrUIManager", g_Instance);
 }

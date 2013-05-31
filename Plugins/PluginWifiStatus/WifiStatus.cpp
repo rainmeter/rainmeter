@@ -48,9 +48,9 @@ UINT g_Instances = 0;
 
 // Globals that store system's wifi interface/adapter structs
 // These are initialized in Initialize(), used during each update
-HANDLE g_hClient = NULL;
-PWLAN_INTERFACE_INFO g_pInterface = NULL;
-PWLAN_INTERFACE_INFO_LIST g_pIntfList = NULL;
+HANDLE g_hClient = nullptr;
+PWLAN_INTERFACE_INFO g_pInterface = nullptr;
+PWLAN_INTERFACE_INFO_LIST g_pIntfList = nullptr;
 
 // Function that translates DOT11 ENUMs to output strings
 LPCWSTR GetDot11Str(int, int);
@@ -61,7 +61,7 @@ std::wstring ConvertToWide(LPCSTR str, int strLen)
 
 	if (str && *str)
 	{
-		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, NULL, 0);
+		int bufLen = MultiByteToWideChar(CP_ACP, 0, str, strLen, nullptr, 0);
 		if (bufLen > 0)
 		{
 			szWide.resize(bufLen);
@@ -73,18 +73,18 @@ std::wstring ConvertToWide(LPCSTR str, int strLen)
 
 void FinalizeHandle()
 {
-	g_pInterface = NULL;
+	g_pInterface = nullptr;
 
-	if (g_pIntfList != NULL)
+	if (g_pIntfList != nullptr)
 	{
 		WlanFreeMemory(g_pIntfList);
-		g_pIntfList = NULL;
+		g_pIntfList = nullptr;
 	}
 
-	if (g_hClient != NULL)
+	if (g_hClient != nullptr)
 	{
-		WlanCloseHandle(g_hClient, NULL);
-		g_hClient = NULL;
+		WlanCloseHandle(g_hClient, nullptr);
+		g_hClient = nullptr;
 	}
 }
 
@@ -100,10 +100,10 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 		WCHAR buffer[256];
 
 		// Create WINLAN API Handle
-		if (g_hClient == NULL)
+		if (g_hClient == nullptr)
 		{
 			DWORD dwNegotiatedVersion = 0;
-			DWORD dwErr = WlanOpenHandle(WLAN_API_VERSION, NULL, &dwNegotiatedVersion, &g_hClient);
+			DWORD dwErr = WlanOpenHandle(WLAN_API_VERSION, nullptr, &dwNegotiatedVersion, &g_hClient);
 			if (ERROR_SUCCESS != dwErr)
 			{
 				FinalizeHandle();
@@ -114,9 +114,9 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 		}
 
 		// Query list of WLAN interfaces
-		if (g_pIntfList == NULL)
+		if (g_pIntfList == nullptr)
 		{
-			DWORD dwErr = WlanEnumInterfaces(g_hClient, NULL, &g_pIntfList);
+			DWORD dwErr = WlanEnumInterfaces(g_hClient, nullptr, &g_pIntfList);
 			if (ERROR_SUCCESS != dwErr)
 			{
 				FinalizeHandle();
@@ -136,7 +136,7 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
-	if (g_hClient == NULL) return;
+	if (g_hClient == nullptr) return;
 
 	MeasureData* measure = (MeasureData*)data;
 	WCHAR buffer[128];
@@ -234,7 +234,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 PLUGIN_EXPORT double Update(void* data)
 {
-	if (g_pInterface == NULL) return 0;
+	if (g_pInterface == nullptr) return 0;
 
 	MeasureData* measure = (MeasureData*)data;
 	double value = 0;
@@ -243,8 +243,8 @@ PLUGIN_EXPORT double Update(void* data)
 	{
 		if (measure->type == LIST)
 		{
-			PWLAN_AVAILABLE_NETWORK_LIST pwnl = NULL;
-			DWORD dwErr = WlanGetAvailableNetworkList(g_hClient, &g_pInterface->InterfaceGuid, NULL, NULL, &pwnl);
+			PWLAN_AVAILABLE_NETWORK_LIST pwnl = nullptr;
+			DWORD dwErr = WlanGetAvailableNetworkList(g_hClient, &g_pInterface->InterfaceGuid, 0, nullptr, &pwnl);
 
 			if (ERROR_SUCCESS != dwErr)
 			{
@@ -267,7 +267,7 @@ PLUGIN_EXPORT double Update(void* data)
 					std::wstring ssid = ConvertToWide((LPCSTR)pwnl->Network[i].dot11Ssid.ucSSID, (int)pwnl->Network[i].dot11Ssid.uSSIDLength);
 
 					// Prevent duplicates that result from profiles, check using SSID
-					if (!ssid.empty() && ssid[0] && wcsstr(measure->statusString.c_str(), ssid.c_str()) == NULL)
+					if (!ssid.empty() && ssid[0] && wcsstr(measure->statusString.c_str(), ssid.c_str()) == nullptr)
 					{
 						++printed;
 						measure->statusString += ssid;
@@ -299,8 +299,8 @@ PLUGIN_EXPORT double Update(void* data)
 		else
 		{
 			ULONG outsize = 0;
-			PWLAN_CONNECTION_ATTRIBUTES wlan_cattr = NULL;
-			DWORD dwErr = WlanQueryInterface(g_hClient, &g_pInterface->InterfaceGuid, wlan_intf_opcode_current_connection, NULL, &outsize, (PVOID*)&wlan_cattr, NULL);
+			PWLAN_CONNECTION_ATTRIBUTES wlan_cattr = nullptr;
+			DWORD dwErr = WlanQueryInterface(g_hClient, &g_pInterface->InterfaceGuid, wlan_intf_opcode_current_connection, nullptr, &outsize, (PVOID*)&wlan_cattr, nullptr);
 
 			if (ERROR_SUCCESS != dwErr)
 			{
@@ -357,7 +357,7 @@ PLUGIN_EXPORT double Update(void* data)
 
 PLUGIN_EXPORT LPCWSTR GetString(void* data)
 {
-	if (g_pInterface == NULL) return NULL;
+	if (g_pInterface == nullptr) return nullptr;
 
 	MeasureData* measure = (MeasureData*)data;
 
@@ -371,7 +371,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		return measure->statusString.c_str();
 
 	default:
-		return NULL;
+		return nullptr;
 	}
 }
 

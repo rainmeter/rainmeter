@@ -25,13 +25,13 @@
 #include "../../Library/Export.h"
 
 int DexpotMeasure::InstanceCount = 0;
-HWND DexpotMeasure::hWndDexpot = NULL;
-HWND DexpotMeasure::hWndMessageWindow = NULL;
+HWND DexpotMeasure::hWndDexpot = nullptr;
+HWND DexpotMeasure::hWndMessageWindow = nullptr;
 std::set<DexpotMeasure*> DexpotMeasure::DexpotMeasures;
 TCHAR DexpotMeasure::StringBuffer[STRINGBUFFER_SIZE];
 UINT DexpotMeasure::WM_DEXPOTSTARTED = RegisterWindowMessage(_T("DexpotStarted"));
 BOOL DexpotMeasure::PluginRegistered = FALSE;
-HWND DexpotMeasure::hWndRainmeterControl = NULL;
+HWND DexpotMeasure::hWndRainmeterControl = nullptr;
 int DexpotMeasure::CurrentDesktop = 0;
 
 std::vector<std::wstring> DexpotDesktopNameMeasure::DesktopNames;
@@ -54,7 +54,7 @@ DexpotMeasure* DexpotMeasure::CreateMeasure(HMODULE instance, UINT id, LPCTSTR i
 	else if (TypeString == _T("DesktopWallpaper")) return new DexpotDesktopWallpaperMeasure(instance, id);
 	else if (TypeString == _T("Command")) return new DexpotCommandMeasure(instance, id);
 
-	return NULL;
+	return nullptr;
 }
 
 UINT DexpotMeasure::Initialize(LPCTSTR iniFile, LPCTSTR section)
@@ -115,7 +115,7 @@ BOOL DexpotMeasure::FindDexpotWindow()
 {
 	if (IsWindow(hWndDexpot)) return TRUE;
 	hWndDexpot = FindWindow(DEXPOTCLASS, DEXPOTTITLE);
-	return hWndDexpot != NULL;
+	return hWndDexpot != nullptr;
 }
 
 HWND DexpotMeasure::CreateMessageWindow()
@@ -128,9 +128,9 @@ HWND DexpotMeasure::CreateMessageWindow()
 	wc.lpfnWndProc = WindowProc;
 	RegisterClass(&wc);
 
-	HWND hWnd = CreateWindowEx(0, _T("DexpotPluginWindowClass"), _T("Dexpot Rainmeter Plugin"), 0, 0, 0, 0, 0, NULL, NULL, hInstance, NULL);
+	HWND hWnd = CreateWindowEx(0, _T("DexpotPluginWindowClass"), _T("Dexpot Rainmeter Plugin"), 0, 0, 0, 0, 0, nullptr, nullptr, hInstance, nullptr);
 	SetWindowLong(hWnd, GWL_STYLE, 0);
-	SetWindowPos(hWnd, NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
+	SetWindowPos(hWnd, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
 	MoveWindow(hWnd, 0, 0, 0, 0, FALSE);
 
 	return hWnd;
@@ -385,7 +385,7 @@ void DexpotScreenshotMeasure::UpdateScreenshot()
 {
 	int Desktop = DesktopNumber == 0 ? CurrentDesktop : DesktopNumber;
 	int nBytes = 0;
-	BYTE *pBytes = NULL;
+	BYTE *pBytes = nullptr;
 	HANDLE fm;
 	HANDLE mutex;
 
@@ -429,7 +429,7 @@ void DexpotScreenshotMeasure::UpdateScreenshot()
 		bmi.bmiHeader.biCompression = BI_RGB;
 		bmi.bmiHeader.biSizeImage = nBytes;
 
-		ScreenDC = GetDC(NULL);
+		ScreenDC = GetDC(nullptr);
 		MemDC = CreateCompatibleDC(ScreenDC);
 		MemDC2 = CreateCompatibleDC(ScreenDC);
 		OriginalBitmap = CreateCompatibleBitmap(ScreenDC, DesktopWidth, DesktopHeight);
@@ -441,7 +441,7 @@ void DexpotScreenshotMeasure::UpdateScreenshot()
 		bmi.bmiHeader.biHeight = ScaledHeight;
 		bmi.bmiHeader.biSizeImage = nBytes;
 
-		ScaledBitmap = CreateDIBSection(MemDC, &bmi, 0, (void**) &ScaledBytes, NULL, 0);
+		ScaledBitmap = CreateDIBSection(MemDC, &bmi, 0, (void**) &ScaledBytes, nullptr, 0);
 		OldBitmap = SelectObject(MemDC, (HGDIOBJ) ScaledBitmap);
 		SetStretchBltMode(MemDC, HALFTONE);
 		StretchBlt(MemDC, 0, 0, ScaledWidth, ScaledHeight, MemDC2, 0, 0, DesktopWidth, DesktopHeight, SRCCOPY);
@@ -467,7 +467,7 @@ void DexpotScreenshotMeasure::UpdateScreenshot()
 		DeleteObject(OriginalBitmap);
 		DeleteDC(MemDC);
 		DeleteDC(MemDC2);
-		ReleaseDC(NULL, ScreenDC);
+		ReleaseDC(nullptr, ScreenDC);
 	}
 
 	UnmapViewOfFile(pBytes);

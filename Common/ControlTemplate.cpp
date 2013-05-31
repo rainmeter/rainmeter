@@ -27,7 +27,7 @@ void CreateControls(const Control* cts, UINT ctCount, HWND parent, HFONT font, G
 	{
 		const Control& ct = cts[i];
 
-		WCHAR* text = ct.textId ? getString(ct.textId) : NULL;
+		WCHAR* text = ct.textId ? getString(ct.textId) : nullptr;
 
 		RECT r = { ct.x, ct.y, ct.w, ct.h };
 		MapDialogRect(parent, &r);
@@ -40,8 +40,8 @@ void CreateControls(const Control* cts, UINT ctCount, HWND parent, HFONT font, G
 			r.left, r.top, r.right, r.bottom,
 			parent,
 			(HMENU)ct.id,
-			NULL,
-			NULL);
+			nullptr,
+			nullptr);
 		SendMessage(wnd, WM_SETFONT, (WPARAM)font, FALSE);
 	}
 }

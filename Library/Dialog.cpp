@@ -19,8 +19,8 @@
 #include "StdAfx.h"
 #include "Dialog.h"
 
-HWND Dialog::c_ActiveDialogWindow = NULL;
-HWND Dialog::c_ActiveTabWindow = NULL;
+HWND Dialog::c_ActiveDialogWindow = nullptr;
+HWND Dialog::c_ActiveTabWindow = nullptr;
 
 /*
 ** Constructor.
@@ -59,7 +59,7 @@ INT_PTR Dialog::OnActivate(WPARAM wParam, LPARAM lParam)
 	}
 	else
 	{
-		c_ActiveDialogWindow = c_ActiveTabWindow = NULL;
+		c_ActiveDialogWindow = c_ActiveTabWindow = nullptr;
 	}
 
 	return FALSE;
@@ -86,7 +86,7 @@ BOOL CALLBACK Dialog::SetFontProc(HWND hWnd, LPARAM lParam)
 */
 void Dialog::SetMenuButton(HWND button)
 {
-	SetWindowSubclass(button, MenuButtonProc, NULL, NULL);
+	SetWindowSubclass(button, MenuButtonProc, 0, 0);
 }
 
 LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)

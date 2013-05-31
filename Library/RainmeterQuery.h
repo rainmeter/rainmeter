@@ -77,7 +77,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #include <tchar.h>
 
 #define RAINMETER_QUERY_CLASS_NAME				TEXT("RainmeterTrayClass")
-#define RAINMETER_QUERY_WINDOW_NAME				NULL
+#define RAINMETER_QUERY_WINDOW_NAME				nullptr
 
 #define WM_QUERY_RAINMETER						WM_APP + 1000
 #define WM_QUERY_RAINMETER_RETURN				WM_APP + 1001
@@ -109,7 +109,7 @@ of the COPYDATASTRUCT.
 
 /*
 This Retuns the Window Handle of the active skin requested by config name in cds.lpData,
-or NULL if the config is not loaded. Currently, the config name is Case-Sensitive.
+or nullptr if the config is not loaded. Currently, the config name is Case-Sensitive.
 
 To requst the data, send a message to Rainmeter in a way similar to this example.
 COPYDATASTRUCT cds;

@@ -43,7 +43,7 @@ struct MeasureData
 		threadActive(false),
 		value(),
 		finishAction(),
-		skin(NULL)
+		skin(nullptr)
 	{
 	}
 };
@@ -83,11 +83,11 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	if (*value)
 	{
 		int strLen = (int)wcslen(value) + 1;
-		int bufLen = WideCharToMultiByte(CP_ACP, 0, value, strLen, NULL, 0, NULL, NULL);
+		int bufLen = WideCharToMultiByte(CP_ACP, 0, value, strLen, nullptr, 0, nullptr, nullptr);
 		if (bufLen > 0)
 		{
 			char* buffer = new char[bufLen];
-			WideCharToMultiByte(CP_ACP, 0, value, strLen, buffer, bufLen, NULL, NULL);
+			WideCharToMultiByte(CP_ACP, 0, value, strLen, buffer, bufLen, nullptr, nullptr);
 
 			measure->destAddr = inet_addr(buffer);
 			if (measure->destAddr == INADDR_NONE)
@@ -136,7 +136,7 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 	HANDLE hIcmpFile = IcmpCreateFile();
 	if (hIcmpFile != INVALID_HANDLE_VALUE)
 	{
-		IcmpSendEcho(hIcmpFile, measure->destAddr, NULL, 0, NULL, buffer, bufferSize, measure->timeout);
+		IcmpSendEcho(hIcmpFile, measure->destAddr, nullptr, 0, nullptr, buffer, bufferSize, measure->timeout);
 		IcmpCloseHandle(hIcmpFile);
 
 		ICMP_ECHO_REPLY* reply = (ICMP_ECHO_REPLY*)buffer;
@@ -148,7 +148,7 @@ DWORD WINAPI NetworkThreadProc(void* pParam)
 		}
 	}
 
-	HMODULE module = NULL;
+	HMODULE module = nullptr;
 
 	EnterCriticalSection(&g_CriticalSection);
 	if (measure->threadActive)
@@ -188,7 +188,7 @@ PLUGIN_EXPORT double Update(void* data)
 		{
 			// Launch a new thread to fetch the web data
 			DWORD id;
-			HANDLE thread = CreateThread(NULL, 0, NetworkThreadProc, measure, 0, &id);
+			HANDLE thread = CreateThread(nullptr, 0, NetworkThreadProc, measure, 0, &id);
 			if (thread)
 			{
 				CloseHandle(thread);

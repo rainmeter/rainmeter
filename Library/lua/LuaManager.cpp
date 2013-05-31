@@ -26,7 +26,7 @@ lua_State* LuaManager::c_State = 0;
 
 void LuaManager::Initialize()
 {
-	if (c_State == NULL)
+	if (c_State == nullptr)
 	{
 		// Initialize Lua
 		c_State = luaL_newstate();
@@ -50,10 +50,10 @@ void LuaManager::Finalize()
 		--c_RefCount;
 	}
 
-	if (c_RefCount == 0 && c_State != NULL)
+	if (c_RefCount == 0 && c_State != nullptr)
 	{
 		lua_close(c_State);
-		c_State = NULL;
+		c_State = nullptr;
 	}
 }
 

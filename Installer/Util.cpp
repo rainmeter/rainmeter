@@ -53,7 +53,7 @@ bool IsProcessUserAdmin()
 	BOOL runningAsAdmin = FALSE;
 
 	// Allocate and initialize a SID of the administrators group.
-	PSID adminGroupSid = NULL;
+	PSID adminGroupSid = nullptr;
 	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
 	if (AllocateAndInitializeSid(
 		&NtAuthority, 
@@ -64,13 +64,13 @@ bool IsProcessUserAdmin()
 		&adminGroupSid))
 	{
 		// Check if the primary access token of the process has the admin group SID.
-		if (!CheckTokenMembership(NULL, adminGroupSid, &runningAsAdmin))
+		if (!CheckTokenMembership(nullptr, adminGroupSid, &runningAsAdmin))
 		{
 			runningAsAdmin = TRUE;
 		}
 
 		FreeSid(adminGroupSid);
-		adminGroupSid = NULL;
+		adminGroupSid = nullptr;
 	}
 
 	return runningAsAdmin;
@@ -130,7 +130,7 @@ bool CopyDirectory(const WCHAR* fromPath, const WCHAR* toPath)
 
 	SHFILEOPSTRUCT fo =
 	{
-		NULL,
+		nullptr,
 		FO_COPY,
 		from,
 		to,
@@ -148,7 +148,7 @@ bool CopyDirectory(const WCHAR* fromPath, const WCHAR* toPath)
 bool CreateShortcutFile(const WCHAR* filePath, const WCHAR* targetPath)
 {
 	IShellLink* psl;
-	HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void**)&psl);
+	HRESULT hr = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_IShellLink, (void**)&psl);
 	if (SUCCEEDED(hr))
 	{
 		IPersistFile* ppf;
@@ -195,7 +195,7 @@ bool SetRegistryData(DWORD type, HKEY rootKey, const WCHAR* subKey, const WCHAR*
 {
 	BOOL result = FALSE;
 	HKEY regKey;
-	if (RegCreateKeyEx(rootKey, subKey, 0, 0, 0, KEY_SET_VALUE, NULL, &regKey, NULL) == ERROR_SUCCESS)
+	if (RegCreateKeyEx(rootKey, subKey, 0, 0, 0, KEY_SET_VALUE, nullptr, &regKey, nullptr) == ERROR_SUCCESS)
 	{
 		if (RegSetValueEx(regKey, value, 0, type, data, dataSize) == ERROR_SUCCESS)
 		{
@@ -226,13 +226,13 @@ bool SetRegistryString(HKEY rootKey, const WCHAR* subKey, const WCHAR* value, co
 bool DownloadFile(const WCHAR* url, const WCHAR* file)
 {
 	bool result = false;
-	HINTERNET hNet = InternetOpen(L"Mozilla/5.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+	HINTERNET hNet = InternetOpen(L"Mozilla/5.0", INTERNET_OPEN_TYPE_PRECONFIG, nullptr, nullptr, 0);
 	if (hNet)
 	{
-		HANDLE hFile = CreateFile(file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE hFile = CreateFile(file, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (hFile)
 		{
-			HINTERNET hUrl = InternetOpenUrl(hNet, url, NULL, 0, INTERNET_FLAG_RESYNCHRONIZE, 0);
+			HINTERNET hUrl = InternetOpenUrl(hNet, url, nullptr, 0, INTERNET_FLAG_RESYNCHRONIZE, 0);
 			if (hUrl)
 			{
 				const DWORD bufferSize = 8192;
@@ -250,7 +250,7 @@ bool DownloadFile(const WCHAR* url, const WCHAR* file)
 						}
 
 						DWORD writeSize;
-						if (!WriteFile(hFile, buffer, readSize, &writeSize, NULL) ||
+						if (!WriteFile(hFile, buffer, readSize, &writeSize, nullptr) ||
 							readSize != writeSize)
 						{
 							break;

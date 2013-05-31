@@ -23,7 +23,7 @@
 #include "VirtuaWinMessages.h"
 #include "../../Library/Export.h"
 
-HWND VirtuaWinMeasure::vwHandle = NULL;
+HWND VirtuaWinMeasure::vwHandle = nullptr;
 std::map<std::wstring, VirtuaWinMeasure::MeasureType> VirtuaWinMeasure::StringToType;
 
 VirtuaWinMeasure::VirtuaWinMeasure(HMODULE instance, UINT id) : VDMeasure(instance, id)
@@ -144,5 +144,5 @@ BOOL VirtuaWinMeasure::FindVirtuaWinWindow()
 {
 	if (IsWindow(vwHandle)) return TRUE;
 	vwHandle = FindWindow(_T("VirtuaWinMainClass"), _T("VirtuaWinMainClass"));
-	return vwHandle != NULL;
+	return vwHandle != nullptr;
 }

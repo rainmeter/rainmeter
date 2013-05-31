@@ -255,9 +255,9 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 					flags,						// default options
 					&error,						// for error message
 					&erroffset,					// for error offset
-					NULL);						// use default character tables
+					nullptr);						// use default character tables
 
-				if (re == NULL)
+				if (re == nullptr)
 				{
 					MakePlainSubstitute(str, i);
 					LogNoticeF(L"Substitute: %S", error);
@@ -268,7 +268,7 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 					{
 						rc = pcre_exec(
 							re,						// the compiled pattern
-							NULL,					// no extra data - we didn't study the pattern
+							nullptr,					// no extra data - we didn't study the pattern
 							utf8str.c_str(),		// the subject string
 							utf8str.length(),		// the length of the subject
 							offset,					// start at offset 0 in the subject
@@ -624,7 +624,7 @@ double Measure::GetValueRange()
 */
 const WCHAR* Measure::GetStringValue()
 {
-	return NULL;
+	return nullptr;
 }
 
 /*
@@ -849,7 +849,7 @@ Measure* Measure::Create(const WCHAR* measure, MeterWindow* meterWindow, const W
 
 	LogErrorF(L"Measure=%s is not valid in [%s]", measure, name);
 
-	return NULL;
+	return nullptr;
 }
 
 /*

@@ -63,11 +63,11 @@ enum INTERVAL
 
 int MeterWindow::c_InstanceCount = 0;
 
-HINSTANCE MeterWindow::c_DwmInstance = NULL;
-FPDWMENABLEBLURBEHINDWINDOW MeterWindow::c_DwmEnableBlurBehindWindow = NULL;
-FPDWMGETCOLORIZATIONCOLOR MeterWindow::c_DwmGetColorizationColor = NULL;
-FPDWMSETWINDOWATTRIBUTE MeterWindow::c_DwmSetWindowAttribute = NULL;
-FPDWMISCOMPOSITIONENABLED MeterWindow::c_DwmIsCompositionEnabled = NULL;
+HINSTANCE MeterWindow::c_DwmInstance = nullptr;
+FPDWMENABLEBLURBEHINDWINDOW MeterWindow::c_DwmEnableBlurBehindWindow = nullptr;
+FPDWMGETCOLORIZATIONCOLOR MeterWindow::c_DwmGetColorizationColor = nullptr;
+FPDWMSETWINDOWATTRIBUTE MeterWindow::c_DwmSetWindowAttribute = nullptr;
+FPDWMISCOMPOSITIONENABLED MeterWindow::c_DwmIsCompositionEnabled = nullptr;
 
 extern Rainmeter* g_Rainmeter;
 
@@ -164,7 +164,7 @@ MeterWindow::MeterWindow(const std::wstring& folderPath, const std::wstring& fil
 		wc.style = CS_NOCLOSE | CS_DBLCLKS;
 		wc.lpfnWndProc = InitialWndProc;
 		wc.hInstance = g_Rainmeter->GetInstance();
-		wc.hCursor = NULL;  // The cursor should be controlled by using SetCursor() when needed.
+		wc.hCursor = nullptr;  // The cursor should be controlled by using SetCursor() when needed.
 		wc.lpszClassName = METERWINDOW_CLASS_NAME;
 		RegisterClassEx(&wc);
 	}
@@ -194,17 +194,17 @@ MeterWindow::~MeterWindow()
 		if (c_DwmInstance)
 		{
 			FreeLibrary(c_DwmInstance);
-			c_DwmInstance = NULL;
+			c_DwmInstance = nullptr;
 
-			c_DwmEnableBlurBehindWindow = NULL;
-			c_DwmGetColorizationColor = NULL;
-			c_DwmSetWindowAttribute = NULL;
-			c_DwmIsCompositionEnabled = NULL;
+			c_DwmEnableBlurBehindWindow = nullptr;
+			c_DwmGetColorizationColor = nullptr;
+			c_DwmSetWindowAttribute = nullptr;
+			c_DwmIsCompositionEnabled = nullptr;
 		}
 	}
 
 	delete m_Canvas;
-	m_Canvas = NULL;
+	m_Canvas = nullptr;
 }
 
 /*
@@ -244,7 +244,7 @@ void MeterWindow::Dispose(bool refresh)
 	m_Measures.clear();
 
 	delete m_Background;
-	m_Background = NULL;
+	m_Background = nullptr;
 
 	m_BackgroundSize.cx = m_BackgroundSize.cy = 0;
 	m_BackgroundName.clear();
@@ -252,13 +252,13 @@ void MeterWindow::Dispose(bool refresh)
 	if (m_BlurRegion)
 	{
 		DeleteObject(m_BlurRegion);
-		m_BlurRegion = NULL;
+		m_BlurRegion = nullptr;
 	}
 
 	if (m_FontCollection)
 	{
 		delete m_FontCollection;
-		m_FontCollection = NULL;
+		m_FontCollection = nullptr;
 	}
 
 	if (!refresh)
@@ -266,7 +266,7 @@ void MeterWindow::Dispose(bool refresh)
 		if (m_Window)
 		{
 			DestroyWindow(m_Window);
-			m_Window = NULL;
+			m_Window = nullptr;
 		}
 	}
 }
@@ -280,14 +280,14 @@ void MeterWindow::Initialize()
 	m_Window = CreateWindowEx(
 		WS_EX_TOOLWINDOW,
 		METERWINDOW_CLASS_NAME,
-		NULL,
+		nullptr,
 		WS_POPUP,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		NULL,
-		NULL,
+		nullptr,
+		nullptr,
 		g_Rainmeter->GetInstance(),
 		this);
 
@@ -390,7 +390,7 @@ void MeterWindow::Deactivate()
 	g_Rainmeter->AddUnmanagedMeterWindow(this);
 
 	HideFade();
-	SetTimer(m_Window, TIMER_DEACTIVATE, m_FadeDuration + 50, NULL);
+	SetTimer(m_Window, TIMER_DEACTIVATE, m_FadeDuration + 50, nullptr);
 }
 
 /*
@@ -448,7 +448,7 @@ void MeterWindow::Refresh(bool init, bool all)
 		MapCoordsToScreen(m_ScreenX, m_ScreenY, m_WindowW, m_WindowH);
 	}
 
-	SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, m_WindowW, m_WindowH, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+	SetWindowPos(m_Window, nullptr, m_ScreenX, m_ScreenY, m_WindowW, m_WindowH, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
 
 	ScreenToWindow();
 
@@ -464,12 +464,12 @@ void MeterWindow::Refresh(bool init, bool all)
 	// Start the timers
 	if (m_WindowUpdate >= 0)
 	{
-		SetTimer(m_Window, TIMER_METER, m_WindowUpdate, NULL);
+		SetTimer(m_Window, TIMER_METER, m_WindowUpdate, nullptr);
 	}
 
-	SetTimer(m_Window, TIMER_MOUSE, INTERVAL_MOUSE, NULL);
+	SetTimer(m_Window, TIMER_MOUSE, INTERVAL_MOUSE, nullptr);
 
-	g_Rainmeter->SetCurrentParser(NULL);
+	g_Rainmeter->SetCurrentParser(nullptr);
 
 	m_State = STATE_RUNNING;
 
@@ -591,7 +591,7 @@ void MeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 */
 void MeterWindow::MoveWindow(int x, int y)
 {
-	SetWindowPos(m_Window, NULL, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+	SetWindowPos(m_Window, nullptr, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
 	SavePositionIfAppropriate();
 }
@@ -710,7 +710,7 @@ void MeterWindow::DoBang(Bang bang, const std::vector<std::wstring>& args)
 	{
 	case Bang::Refresh:
 		// Refresh needs to be delayed since it crashes if done during Update()
-		PostMessage(m_Window, WM_METERWINDOW_DELAYED_REFRESH, (WPARAM)NULL, (LPARAM)NULL);
+		PostMessage(m_Window, WM_METERWINDOW_DELAYED_REFRESH, (WPARAM)nullptr, (LPARAM)nullptr);
 		break;
 
 	case Bang::Redraw:
@@ -722,7 +722,7 @@ void MeterWindow::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		Update(false);
 		if (m_WindowUpdate >= 0)
 		{
-			SetTimer(m_Window, TIMER_METER, m_WindowUpdate, NULL);
+			SetTimer(m_Window, TIMER_METER, m_WindowUpdate, nullptr);
 		}
 		break;
 
@@ -1032,25 +1032,25 @@ void MeterWindow::ResizeBlur(const std::wstring& arg, int mode)
 			while (token[0] == L' ') ++token;
 			type = m_Parser.ParseInt(token, 0);
 
-			token = wcstok(NULL, L",");
+			token = wcstok(nullptr, L",");
 			if (token)
 			{
 				while (token[0] == L' ') ++token;
 				x = m_Parser.ParseInt(token, 0);
 
-				token = wcstok(NULL, L",");
+				token = wcstok(nullptr, L",");
 				if (token)
 				{
 					while (token[0] == L' ') ++token;
 					y = m_Parser.ParseInt(token, 0);
 
-					token = wcstok(NULL, L",");
+					token = wcstok(nullptr, L",");
 					if (token)
 					{
 						while (token[0] == L' ') ++token;
 						w = m_Parser.ParseInt(token, 0);
 
-						token = wcstok(NULL, L",");
+						token = wcstok(nullptr, L",");
 						if (token)
 						{
 							while (token[0] == L' ') ++token;
@@ -1072,7 +1072,7 @@ void MeterWindow::ResizeBlur(const std::wstring& arg, int mode)
 				break;
 
 			case 2:
-				token = wcstok(NULL, L",");
+				token = wcstok(nullptr, L",");
 				if (token)
 				{
 					while (token[0] == L' ') ++token;
@@ -1677,7 +1677,7 @@ void MeterWindow::ScreenToWindow()
 		RECT rect = {m_ScreenX, m_ScreenY, m_ScreenX + m_WindowW, m_ScreenY + m_WindowH};
 		HMONITOR hMonitor = MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST);
 
-		if (hMonitor != NULL)
+		if (hMonitor != nullptr)
 		{
 			int screenIndex = 1;
 			for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter, ++screenIndex)
@@ -1793,7 +1793,7 @@ void MeterWindow::ReadOptions()
 
 	const WCHAR* section = m_FolderPath.c_str();
 	ConfigParser parser;
-	parser.Initialize(g_Rainmeter->GetIniFile(), NULL, section);
+	parser.Initialize(g_Rainmeter->GetIniFile(), nullptr, section);
 
 	INT writeFlags = 0;
 	auto addWriteFlag = [&](INT flag)
@@ -1980,7 +1980,7 @@ bool MeterWindow::ReadSkin()
 	std::wstring resourcePath = GetResourcesPath();
 	bool hasResourcesFolder = (_waccess(resourcePath.c_str(), 0) == 0);
 
-	m_Parser.Initialize(iniFile, this, NULL, &resourcePath);
+	m_Parser.Initialize(iniFile, this, nullptr, &resourcePath);
 
 	// Read options from Rainmeter.ini.
 	ReadOptions();
@@ -2090,7 +2090,7 @@ bool MeterWindow::ReadSkin()
 			(Platform::IsAtLeastWin7()) ? FindExInfoBasic : FindExInfoStandard,
 			&fd,
 			FindExSearchNameMatch,
-			NULL,
+			nullptr,
 			0);
 
 		if (find != INVALID_HANDLE_VALUE)
@@ -2155,7 +2155,7 @@ bool MeterWindow::ReadSkin()
 	// to avoid errors caused by referencing nonexistent [sections] in the options.
 	m_HasNetMeasures = false;
 	m_HasButtons = false;
-	Meter* prevMeter = NULL;
+	Meter* prevMeter = nullptr;
 	for (auto iter = m_Parser.GetSections().cbegin(); iter != m_Parser.GetSections().cend(); ++iter)
 	{
 		const WCHAR* section = (*iter).c_str();
@@ -2285,7 +2285,7 @@ bool MeterWindow::ResizeWindow(bool reset)
 	// Reset size (this is calculated below)
 
 	delete m_Background;
-	m_Background = NULL;
+	m_Background = nullptr;
 
 	if ((m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE) && !m_BackgroundName.empty())
 	{
@@ -2555,7 +2555,7 @@ void MeterWindow::PostUpdate(bool bActiveTransition)
 	// Start/stop the transition timer if necessary
 	if (bActiveTransition && !m_ActiveTransition)
 	{
-		SetTimer(m_Window, TIMER_TRANSITION, m_TransitionUpdate, NULL);
+		SetTimer(m_Window, TIMER_TRANSITION, m_TransitionUpdate, nullptr);
 		m_ActiveTransition = true;
 	}
 	else if (m_ActiveTransition && !bActiveTransition)
@@ -2729,12 +2729,12 @@ void MeterWindow::UpdateWindow(int alpha, bool reset, bool canvasBeginDrawCalled
 	if (!canvasBeginDrawCalled) m_Canvas->BeginDraw();
 
 	HDC dcMemory = m_Canvas->GetDC();
-	if (!UpdateLayeredWindow(m_Window, NULL, NULL, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
+	if (!UpdateLayeredWindow(m_Window, nullptr, nullptr, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
 	{
 		// Retry after resetting WS_EX_LAYERED flag.
 		RemoveWindowExStyle(WS_EX_LAYERED);
 		AddWindowExStyle(WS_EX_LAYERED);
-		UpdateLayeredWindow(m_Window, NULL, NULL, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+		UpdateLayeredWindow(m_Window, nullptr, nullptr, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
 	}
 	m_Canvas->ReleaseDC(dcMemory);
 
@@ -2750,7 +2750,7 @@ void MeterWindow::UpdateWindow(int alpha, bool reset, bool canvasBeginDrawCalled
 void MeterWindow::UpdateWindowTransparency(int alpha)
 {
 	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
-	UpdateLayeredWindow(m_Window, NULL, NULL, NULL, NULL, NULL, 0, &blendPixelFunction, ULW_ALPHA);
+	UpdateLayeredWindow(m_Window, nullptr, nullptr, nullptr, nullptr, nullptr, 0, &blendPixelFunction, ULW_ALPHA);
 	m_TransparencyValue = alpha;
 }
 
@@ -2918,7 +2918,7 @@ void MeterWindow::FadeWindow(int from, int to)
 			}
 		}
 
-		SetTimer(m_Window, TIMER_FADE, INTERVAL_FADE, NULL);
+		SetTimer(m_Window, TIMER_FADE, INTERVAL_FADE, nullptr);
 	}
 }
 
@@ -2951,7 +2951,7 @@ void MeterWindow::ShowWindowIfAppropriate()
 	POINT pos = System::GetCursorPosition();
 	POINT posScr = pos;
 
-	MapWindowPoints(NULL, m_Window, &pos, 1);
+	MapWindowPoints(nullptr, m_Window, &pos, 1);
 	bool inside = HitTest(pos.x, pos.y);
 
 	if (inside)
@@ -3024,14 +3024,14 @@ HWND MeterWindow::GetWindowFromPoint(POINT pos)
 		return hwndPos;
 	}
 
-	MapWindowPoints(NULL, m_Window, &pos, 1);
+	MapWindowPoints(nullptr, m_Window, &pos, 1);
 
 	if (HitTest(pos.x, pos.y))
 	{
 		if (hwndPos)
 		{
 			HWND hWnd = GetAncestor(hwndPos, GA_ROOT);
-			while (hWnd = FindWindowEx(NULL, hWnd, METERWINDOW_CLASS_NAME, NULL))
+			while (hWnd = FindWindowEx(nullptr, hWnd, METERWINDOW_CLASS_NAME, nullptr))
 			{
 				if (hWnd == m_Window)
 				{
@@ -3061,7 +3061,7 @@ bool MeterWindow::HitTest(int x, int y)
 void MeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 {
 	bool redraw = false;
-	HCURSOR cursor = NULL;
+	HCURSOR cursor = nullptr;
 
 	std::vector<Meter*>::const_reverse_iterator j = m_Meters.rbegin();
 	for ( ; j != m_Meters.rend(); ++j)
@@ -3069,7 +3069,7 @@ void MeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 		// Hidden meters are ignored
 		if ((*j)->IsHidden()) continue;
 
-		MeterButton* button = NULL;
+		MeterButton* button = nullptr;
 		if (m_HasButtons && (*j)->GetTypeID() == TypeID<MeterButton>())
 		{
 			button = (MeterButton*)(*j);
@@ -3109,7 +3109,7 @@ void MeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 
 	if (!cursor)
 	{
-		cursor = LoadCursor(NULL, IDC_ARROW);
+		cursor = LoadCursor(nullptr, IDC_ARROW);
 	}
 
 	SetCursor(cursor);
@@ -3131,7 +3131,7 @@ LRESULT MeterWindow::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT MeterWindow::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	// Set cursor to default
-	SetCursor(LoadCursor(NULL, IDC_ARROW));
+	SetCursor(LoadCursor(nullptr, IDC_ARROW));
 
 	return 0;
 }
@@ -3189,7 +3189,7 @@ LRESULT MeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (uMsg == WM_NCMOUSEMOVE)
 		{
 			// Map to local window
-			MapWindowPoints(NULL, m_Window, &pos, 1);
+			MapWindowPoints(nullptr, m_Window, &pos, 1);
 		}
 
 		++m_MouseMoveCounter;
@@ -3245,7 +3245,7 @@ LRESULT MeterWindow::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
 
-	MapWindowPoints(NULL, m_Window, &pos, 1);
+	MapWindowPoints(nullptr, m_Window, &pos, 1);
 
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
@@ -3266,7 +3266,7 @@ LRESULT MeterWindow::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	pos.x = GET_X_LPARAM(lParam);
 	pos.y = GET_Y_LPARAM(lParam);
 
-	MapWindowPoints(NULL, m_Window, &pos, 1);
+	MapWindowPoints(nullptr, m_Window, &pos, 1);
 
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
@@ -3606,7 +3606,7 @@ LRESULT MeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SavePositionIfAppropriate();
 
 		POINT pos = System::GetCursorPosition();
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		MapWindowPoints(nullptr, m_Window, &pos, 1);
 
 		// Handle buttons
 		HandleButtons(pos, BUTTONPROC_UP, false);  // redraw only
@@ -3638,7 +3638,7 @@ LRESULT MeterWindow::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		m_Dragged = true;  // Don't post the WM_NCLBUTTONUP message!
 
 		// Set cursor to default
-		SetCursor(LoadCursor(NULL, IDC_ARROW));
+		SetCursor(LoadCursor(nullptr, IDC_ARROW));
 	}
 
 	return 0;
@@ -3664,7 +3664,7 @@ LRESULT MeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		POINT pos;
 		pos.x = GET_X_LPARAM(lParam);
 		pos.y = GET_Y_LPARAM(lParam);
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		MapWindowPoints(nullptr, m_Window, &pos, 1);
 
 		int x1 = m_DragMargins.left;
 		if (x1 < 0) x1 += m_WindowW;
@@ -3726,7 +3726,7 @@ LRESULT MeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam
 				const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
 
 				const RECT windowRect = {wp->x, wp->y, wp->x + (m_WindowW ? m_WindowW : 1), wp->y + (m_WindowH ? m_WindowH : 1)};
-				const RECT* workArea = NULL;
+				const RECT* workArea = nullptr;
 
 				size_t maxSize = 0;
 				for (auto iter = monitors.cbegin(); iter != monitors.cend(); ++iter)
@@ -3902,7 +3902,7 @@ LRESULT MeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (uMsg == WM_NCLBUTTONDOWN)
 	{
 		// Transform the point to client rect
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		MapWindowPoints(nullptr, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -3934,7 +3934,7 @@ LRESULT MeterWindow::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (uMsg == WM_NCLBUTTONUP)
 	{
 		// Transform the point to client rect
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		MapWindowPoints(nullptr, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -3958,7 +3958,7 @@ LRESULT MeterWindow::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lP
 	if (uMsg == WM_NCLBUTTONDBLCLK)
 	{
 		// Transform the point to client rect
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		MapWindowPoints(nullptr, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -3985,7 +3985,7 @@ LRESULT MeterWindow::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (uMsg == WM_NCRBUTTONDOWN)
 	{
 		// Transform the point to client rect
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		MapWindowPoints(nullptr, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4032,7 +4032,7 @@ LRESULT MeterWindow::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM l
 	if (uMsg == WM_NCRBUTTONDBLCLK)
 	{
 		// Transform the point to client rect
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		MapWindowPoints(nullptr, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4059,7 +4059,7 @@ LRESULT MeterWindow::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (uMsg == WM_NCMBUTTONDOWN)
 	{
 		// Transform the point to client rect
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		MapWindowPoints(nullptr, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4083,7 +4083,7 @@ LRESULT MeterWindow::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (uMsg == WM_NCMBUTTONUP)
 	{
 		// Transform the point to client rect
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		MapWindowPoints(nullptr, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4107,7 +4107,7 @@ LRESULT MeterWindow::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM 
 	if (uMsg == WM_NCMBUTTONDBLCLK)
 	{
 		// Transform the point to client rect
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		MapWindowPoints(nullptr, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4134,7 +4134,7 @@ LRESULT MeterWindow::OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (uMsg == WM_NCXBUTTONDOWN)
 	{
 		// Transform the point to client rect
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		MapWindowPoints(nullptr, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4165,7 +4165,7 @@ LRESULT MeterWindow::OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (uMsg == WM_NCXBUTTONUP)
 	{
 		// Transform the point to client rect
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		MapWindowPoints(nullptr, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4196,7 +4196,7 @@ LRESULT MeterWindow::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lPara
 	if (uMsg == WM_NCXBUTTONDBLCLK)
 	{
 		// Transform the point to client rect
-		MapWindowPoints(NULL, m_Window, &pos, 1);
+		MapWindowPoints(nullptr, m_Window, &pos, 1);
 	}
 
 	// Handle buttons
@@ -4360,7 +4360,7 @@ bool MeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 				}
 
 				// Handle button
-				MeterButton* button = NULL;
+				MeterButton* button = nullptr;
 				if (m_HasButtons && (*j)->GetTypeID() == TypeID<MeterButton>())
 				{
 					button = (MeterButton*)(*j);
@@ -4645,7 +4645,7 @@ LRESULT MeterWindow::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	// Move the window temporarily
 	ResizeWindow(false);
-	SetWindowPos(m_Window, NULL, m_ScreenX, m_ScreenY, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+	SetWindowPos(m_Window, nullptr, m_ScreenX, m_ScreenY, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
 	return 0;
 }
@@ -4771,5 +4771,5 @@ Meter* MeterWindow::GetMeter(const std::wstring& meterName)
 			return (*j);
 		}
 	}
-	return NULL;
+	return nullptr;
 }

@@ -80,10 +80,10 @@ void MeterHistogram::DisposeBuffer()
 
 	// Delete buffers
 	delete [] m_PrimaryValues;
-	m_PrimaryValues = NULL;
+	m_PrimaryValues = nullptr;
 
 	delete [] m_SecondaryValues;
-	m_SecondaryValues = NULL;
+	m_SecondaryValues = nullptr;
 }
 
 /*
@@ -115,7 +115,7 @@ void MeterHistogram::Initialize()
 {
 	Meter::Initialize();
 
-	Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
+	Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : nullptr;
 
 	// A sanity check
 	if (secondaryMeasure && !m_PrimaryImageName.empty() && (m_OverlapImageName.empty() || m_SecondaryImageName.empty()))
@@ -329,10 +329,10 @@ bool MeterHistogram::Update()
 	{
 		int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
 
-		if (maxSize > 0)  // m_PrimaryValues is not NULL
+		if (maxSize > 0)  // m_PrimaryValues is not nullptr
 		{
 			Measure* measure = m_Measures[0];
-			Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
+			Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : nullptr;
 
 			// Gather values
 			m_PrimaryValues[m_MeterPos] = measure->GetValue();
@@ -419,7 +419,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 
 	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
 
-	Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : NULL;
+	Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : nullptr;
 
 	GraphicsPath primaryPath;
 	GraphicsPath secondaryPath;

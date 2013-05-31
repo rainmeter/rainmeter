@@ -60,7 +60,7 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 	fread(fileData, fileSize, 1, file);
 
 	fclose(file);
-	file = NULL;
+	file = nullptr;
 
 	int load = luaL_loadbuffer(L, fileData, fileSize, "");
 	delete [] fileData;
@@ -209,7 +209,7 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 				size_t strLen = 0;
 				const char* str = lua_tolstring(L, -1, &strLen);
 				strValue = StringUtil::Widen(str, (int)strLen);
-				numValue = strtod(str, NULL);
+				numValue = strtod(str, nullptr);
 			}
 
 			lua_pop(L, 2);

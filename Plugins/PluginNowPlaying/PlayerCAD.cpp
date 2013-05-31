@@ -20,7 +20,7 @@
 #include "PlayerCAD.h"
 #include "CAD/cad_sdk.h"
 
-Player* PlayerCAD::c_Player = NULL;
+Player* PlayerCAD::c_Player = nullptr;
 extern HINSTANCE g_Instance;
 
 // This player emulates the CD Art Display IPC interface, which is supported by
@@ -45,7 +45,7 @@ PlayerCAD::PlayerCAD() : Player(),
 */
 PlayerCAD::~PlayerCAD()
 {
-	c_Player = NULL;
+	c_Player = nullptr;
 	Uninitialize();
 }
 
@@ -85,8 +85,8 @@ void PlayerCAD::Initialize()
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		NULL,
-		NULL,
+		nullptr,
+		nullptr,
 		g_Instance,
 		this);
 
@@ -98,8 +98,8 @@ void PlayerCAD::Initialize()
 		FPCHANGEWINDOWMESSAGEFILTEREX ChangeWindowMessageFilterEx = (FPCHANGEWINDOWMESSAGEFILTEREX)GetProcAddress(hUser32, "ChangeWindowMessageFilterEx");
 		if (ChangeWindowMessageFilterEx)
 		{
-			ChangeWindowMessageFilterEx(m_Window, WM_USER, MSGFLT_ALLOW, NULL);
-			ChangeWindowMessageFilterEx(m_Window, WM_COPYDATA, MSGFLT_ALLOW, NULL);
+			ChangeWindowMessageFilterEx(m_Window, WM_USER, MSGFLT_ALLOW, nullptr);
+			ChangeWindowMessageFilterEx(m_Window, WM_COPYDATA, MSGFLT_ALLOW, nullptr);
 		}
 		else
 		{
@@ -119,17 +119,17 @@ void PlayerCAD::Initialize()
 	LPCTSTR file = RmGetSettingsFile();
 
 	// Read saved settings
-	GetPrivateProfileString(L"NowPlaying.dll", L"ClassName", NULL, buffer, MAX_PATH, file);
+	GetPrivateProfileString(L"NowPlaying.dll", L"ClassName", nullptr, buffer, MAX_PATH, file);
 	std::wstring className = buffer;
 
-	GetPrivateProfileString(L"NowPlaying.dll", L"WindowName", NULL, buffer, MAX_PATH, file);
+	GetPrivateProfileString(L"NowPlaying.dll", L"WindowName", nullptr, buffer, MAX_PATH, file);
 	std::wstring windowName = buffer;
 
-	GetPrivateProfileString(L"NowPlaying.dll", L"PlayerPath", NULL, buffer, MAX_PATH, file);
+	GetPrivateProfileString(L"NowPlaying.dll", L"PlayerPath", nullptr, buffer, MAX_PATH, file);
 	m_PlayerPath = buffer;
 
-	LPCTSTR classSz = className.empty() ? NULL : className.c_str();
-	LPCTSTR windowSz = windowName.empty() ? NULL : windowName.c_str();
+	LPCTSTR classSz = className.empty() ? nullptr : className.c_str();
+	LPCTSTR windowSz = windowName.empty() ? nullptr : windowName.c_str();
 
 	if (classSz || windowSz)
 	{
@@ -138,12 +138,12 @@ void PlayerCAD::Initialize()
 	else
 	{
 		classSz = L"CD Art Display IPC Class";
-		m_PlayerWindow = FindWindow(classSz, NULL);
+		m_PlayerWindow = FindWindow(classSz, nullptr);
 		if (m_PlayerWindow)
 		{
 			WritePrivateProfileString(L"NowPlaying.dll", L"ClassName", classSz, file);
 
-			windowSz = (GetWindowText(m_PlayerWindow, buffer, MAX_PATH) > 0) ? buffer : NULL;
+			windowSz = (GetWindowText(m_PlayerWindow, buffer, MAX_PATH) > 0) ? buffer : nullptr;
 			WritePrivateProfileString(L"NowPlaying.dll", L"WindowName", windowSz, file);
 
 			DWORD pID;
@@ -151,7 +151,7 @@ void PlayerCAD::Initialize()
 			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pID);
 			if (hProcess)
 			{
-				if (GetModuleFileNameEx(hProcess, NULL, buffer, MAX_PATH) > 0)
+				if (GetModuleFileNameEx(hProcess, nullptr, buffer, MAX_PATH) > 0)
 				{
 					WritePrivateProfileString(L"NowPlaying.dll", L"PlayerPath", buffer, file);
 				}
@@ -279,7 +279,7 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 				WCHAR* data = (WCHAR*)cds->lpData;
 				WCHAR* pos;
 				UINT index = 1;
-				while ((pos = wcschr(data, '\t')) != NULL)
+				while ((pos = wcschr(data, '\t')) != nullptr)
 				{
 					switch (index)
 					{
@@ -368,8 +368,8 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 					player->m_PlayerPath.assign(data, 0, len);
 					data.erase(0, ++len);
 
-					LPCTSTR classSz = className.empty() ? NULL : className.c_str();
-					LPCTSTR windowSz = windowName.empty() ? NULL : windowName.c_str();
+					LPCTSTR classSz = className.empty() ? nullptr : className.c_str();
+					LPCTSTR windowSz = windowName.empty() ? nullptr : windowName.c_str();
 					LPCTSTR file = RmGetSettingsFile();
 
 					WritePrivateProfileString(L"NowPlaying.dll", L"ClassName", classSz, file);
@@ -537,15 +537,15 @@ void PlayerCAD::OpenPlayer(std::wstring& path)
 {
 	if (!m_Initialized)
 	{
-		HINSTANCE ret = NULL;
+		HINSTANCE ret = nullptr;
 
 		if (!path.empty())
 		{
-			ret = ShellExecute(NULL, L"open", path.c_str(), NULL, NULL, SW_SHOW);
+			ret = ShellExecute(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOW);
 		}
 		else if (!m_PlayerPath.empty())
 		{
-			ret = ShellExecute(NULL, L"open", m_PlayerPath.c_str(), NULL, NULL, SW_SHOW);
+			ret = ShellExecute(nullptr, L"open", m_PlayerPath.c_str(), nullptr, nullptr, SW_SHOW);
 		}
 
 		m_Open = (ret > (HINSTANCE)32);

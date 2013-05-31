@@ -91,7 +91,7 @@ MeterString::MeterString(MeterWindow* meterWindow, const WCHAR* name) : Meter(me
 MeterString::~MeterString()
 {
 	delete m_TextFormat;
-	m_TextFormat = NULL;
+	m_TextFormat = nullptr;
 }
 
 /*
@@ -243,7 +243,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Scale = parser.ParseDouble(scale.c_str(), 1);
 
 	const WCHAR* hAlign = parser.ReadString(section, L"StringAlign", L"LEFT").c_str();
-	const WCHAR* vAlign = NULL;
+	const WCHAR* vAlign = nullptr;
 	if (_wcsnicmp(hAlign, L"LEFT", 4) == 0)
 	{
 		m_TextFormat->SetHorizontalAlignment(Gfx::HorizontalAlignment::Left);
@@ -418,7 +418,7 @@ bool MeterString::Draw(Gfx::Canvas& canvas)
 {
 	if (!Meter::Draw(canvas)) return false;
 
-	return DrawString(canvas, NULL);
+	return DrawString(canvas, nullptr);
 }
 
 /*

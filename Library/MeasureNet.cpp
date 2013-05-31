@@ -21,13 +21,13 @@
 #include "Rainmeter.h"
 #include "System.h"
 
-BYTE* MeasureNet::c_Table = NULL;
+BYTE* MeasureNet::c_Table = nullptr;
 UINT MeasureNet::c_NumOfTables = 0;
 std::vector<ULONG64> MeasureNet::c_StatValues;
 std::vector<ULONG64> MeasureNet::c_OldStatValues;
 
-FPGETIFTABLE2 MeasureNet::c_GetIfTable2 = NULL;
-FPFREEMIBTABLE MeasureNet::c_FreeMibTable = NULL;
+FPGETIFTABLE2 MeasureNet::c_GetIfTable2 = nullptr;
+FPFREEMIBTABLE MeasureNet::c_FreeMibTable = nullptr;
 
 extern Rainmeter* g_Rainmeter;
 
@@ -65,7 +65,7 @@ void MeasureNet::UpdateIFTable()
 		if (c_Table)
 		{
 			c_FreeMibTable(c_Table);
-			c_Table = NULL;
+			c_Table = nullptr;
 		}
 
 		if (c_GetIfTable2((MIB_IF_TABLE2**)&c_Table) == NO_ERROR)
@@ -121,13 +121,13 @@ void MeasureNet::UpdateIFTable()
 		else
 		{
 			// Something's wrong. Unable to get the table.
-			c_Table = NULL;
+			c_Table = nullptr;
 			c_NumOfTables = 0;
 		}
 	}
 	else
 	{
-		if (c_Table == NULL)
+		if (c_Table == nullptr)
 		{
 			// Gotta reserve few bytes for the tables
 			DWORD value = 0;
@@ -214,7 +214,7 @@ void MeasureNet::UpdateIFTable()
 			{
 				// Something's wrong. Unable to get the table.
 				delete [] c_Table;
-				c_Table = NULL;
+				c_Table = nullptr;
 				c_NumOfTables = 0;
 			}
 		}
@@ -416,7 +416,7 @@ ULONG64 MeasureNet::GetNetStatsValue(NET net)
 */
 void MeasureNet::UpdateValue()
 {
-	if (c_Table == NULL) return;
+	if (c_Table == nullptr) return;
 
 	if (m_Cumulative)
 	{
@@ -460,7 +460,7 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	Measure::ReadOptions(parser, section);
 
 	double value;
-	const WCHAR* netName = NULL;
+	const WCHAR* netName = nullptr;
 
 	if (m_Net == NET_IN)
 	{
@@ -588,7 +588,7 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 	WCHAR buffer[48];
 
 	ConfigParser parser;
-	parser.Initialize(iniFile, NULL, L"Statistics");
+	parser.Initialize(iniFile, nullptr, L"Statistics");
 
 	const std::wstring& date = parser.ReadString(L"Statistics", L"Since", L"", false);
 	if (!date.empty())
@@ -702,8 +702,8 @@ void MeasureNet::InitializeStatic()
 
 		if (!c_GetIfTable2 || !c_FreeMibTable)
 		{
-			c_GetIfTable2 = NULL;
-			c_FreeMibTable = NULL;
+			c_GetIfTable2 = nullptr;
+			c_FreeMibTable = nullptr;
 		}
 	}
 
@@ -726,13 +726,13 @@ void MeasureNet::FinalizeStatic()
 			c_FreeMibTable(c_Table);
 		}
 
-		c_GetIfTable2 = NULL;
-		c_FreeMibTable = NULL;
+		c_GetIfTable2 = nullptr;
+		c_FreeMibTable = nullptr;
 	}
 	else
 	{
 		delete [] c_Table;
 	}
-	c_Table = NULL;
+	c_Table = nullptr;
 	c_NumOfTables = 0;
 }

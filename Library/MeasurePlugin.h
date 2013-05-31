@@ -52,7 +52,7 @@ protected:
 	virtual void UpdateValue();
 
 private:
-	bool IsNewApi() { return m_ReloadFunc != NULL; }
+	bool IsNewApi() { return m_ReloadFunc != nullptr; }
 
 	HMODULE m_Plugin;
 

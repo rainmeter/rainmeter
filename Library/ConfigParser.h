@@ -41,7 +41,7 @@ public:
 	ConfigParser();
 	~ConfigParser();
 
-	void Initialize(const std::wstring& filename, MeterWindow* meterWindow = NULL, LPCTSTR skinSection = NULL, const std::wstring* resourcePath = NULL);
+	void Initialize(const std::wstring& filename, MeterWindow* meterWindow = nullptr, LPCTSTR skinSection = nullptr, const std::wstring* resourcePath = nullptr);
 
 	void AddMeasure(Measure* pMeasure);
 	Measure* GetMeasure(const std::wstring& name);
@@ -64,7 +64,7 @@ public:
 	bool GetLastKeyDefined() { return !m_LastDefaultUsed; }
 	bool GetLastValueDefined() { return m_LastValueDefined; }
 
-	void ResetMonitorVariables(MeterWindow* meterWindow = NULL);
+	void ResetMonitorVariables(MeterWindow* meterWindow = nullptr);
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
 	bool IsKeyDefined(LPCTSTR section, LPCTSTR key);
@@ -102,7 +102,7 @@ private:
 
 	void ReadVariables();
 
-	void ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection = NULL, int depth = 0);
+	void ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection = nullptr, int depth = 0);
 
 	void SetAutoSelectedMonitorVariables(MeterWindow* meterWindow);
 

@@ -96,7 +96,7 @@ CPerfTitleDatabase::CPerfTitleDatabase(
 	// The raw data entries are an ASCII string index (e.g., "242"), followed
 	// by the corresponding string.  Fill in the appropriate slot in the
 	// m_TitleStrings array with the pointer to the string name.  The end
-	// of the list is indicated by a double NULL.
+	// of the list is indicated by a double nullptr.
 
 	PTSTR pszWorkStr = (PTSTR)m_pszRawStrings;
 	unsigned cbCurrStr;

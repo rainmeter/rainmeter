@@ -140,7 +140,7 @@ PLUGIN_EXPORT void Finalize(void* data)
 void ReadSharedData(SensorType type, ScaleType scale, UINT number, double* value)
 {
 	HANDLE hData = OpenFileMapping(FILE_MAP_READ, FALSE, L"SFSharedMemory_ALM");
-	if (hData == NULL) return;
+	if (hData == nullptr) return;
 
 	SpeedFanData* ptr = (SpeedFanData*)MapViewOfFile(hData, FILE_MAP_READ, 0, 0, 0);
 	if (ptr == 0)

@@ -17,7 +17,7 @@
 #include "perfsnap.h"
 #include "makeptr.h"
 
-PBYTE CPerfSnapshot::c_pBuffer = NULL;
+PBYTE CPerfSnapshot::c_pBuffer = nullptr;
 DWORD CPerfSnapshot::c_cbBufferSize = 0;
 
 CPerfSnapshot::CPerfSnapshot(

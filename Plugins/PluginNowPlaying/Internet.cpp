@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "Internet.h"
 
-HINTERNET Internet::c_NetHandle = NULL;
+HINTERNET Internet::c_NetHandle = nullptr;
 
 /*
 ** Initialize internet handle and crtical section.
@@ -29,8 +29,8 @@ void Internet::Initialize()
 {
 	c_NetHandle = InternetOpen(L"Rainmeter NowPlaying.dll",
 								INTERNET_OPEN_TYPE_PRECONFIG,
-								NULL,
-								NULL,
+								nullptr,
+								nullptr,
 								0);
 
 	if (!c_NetHandle)
@@ -57,7 +57,7 @@ std::wstring Internet::DownloadUrl(const std::wstring& url, int codepage)
 	// From WebParser.cpp
 	std::wstring result;
 	DWORD flags = INTERNET_FLAG_RESYNCHRONIZE;
-	HINTERNET hUrlDump = InternetOpenUrl(c_NetHandle, url.c_str(), NULL, NULL, flags, 0);
+	HINTERNET hUrlDump = InternetOpenUrl(c_NetHandle, url.c_str(), nullptr, 0, flags, 0);
 
 	if (!hUrlDump)
 	{
@@ -68,7 +68,7 @@ std::wstring Internet::DownloadUrl(const std::wstring& url, int codepage)
 	const int CHUNK_SIZE = 8192;
 	BYTE* lpData = new BYTE[CHUNK_SIZE];
 	BYTE* lpOutPut;
-	BYTE* lpHolding = NULL;
+	BYTE* lpHolding = nullptr;
 	int nCounter = 1;
 	int nBufferSize;
 	DWORD dwDataSize = 0;
@@ -98,7 +98,7 @@ std::wstring Internet::DownloadUrl(const std::wstring& url, int codepage)
 			lpOutPut = new BYTE[nBufferSize + 2];
 
 			// Make sure the buffer is not the initial buffer.
-			if (lpHolding != NULL)
+			if (lpHolding != nullptr)
 			{
 				// Copy the data in the holding buffer.
 				memcpy(lpOutPut, lpHolding, dwDataSize);
@@ -223,10 +223,10 @@ void Internet::DecodeReferences(std::wstring& str)
 			}
 
 			std::wstring num(str, pos, end - pos);
-			WCHAR* pch = NULL;
+			WCHAR* pch = nullptr;
 			errno = 0;
 			long ch = wcstol(num.c_str(), &pch, base);
-			if (pch == NULL || *pch != L'\0' || errno == ERANGE || ch <= 0 || ch >= 0xFFFE)  // invalid character
+			if (pch == nullptr || *pch != L'\0' || errno == ERANGE || ch <= 0 || ch >= 0xFFFE)  // invalid character
 			{
 				start = pos;
 				continue;
@@ -253,7 +253,7 @@ std::wstring Internet::ConvertToWide(LPCSTR str, int codepage)
 	if (str && *str)
 	{
 		int strLen = (int)strlen(str);
-		int bufLen = MultiByteToWideChar(codepage, 0, str, strLen, NULL, 0);
+		int bufLen = MultiByteToWideChar(codepage, 0, str, strLen, nullptr, 0);
 		if (bufLen > 0)
 		{
 			szWide.resize(bufLen);

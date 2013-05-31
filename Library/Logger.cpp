@@ -57,7 +57,7 @@ void Logger::StartLogFile()
 	if (_waccess(filePath, 0) == -1)
 	{
 		// Create empty log file.
-		HANDLE file = CreateFile(filePath, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE file = CreateFile(filePath, GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (file != INVALID_HANDLE_VALUE)
 		{
 			CloseHandle(file);
@@ -65,7 +65,7 @@ void Logger::StartLogFile()
 		else
 		{
 			const std::wstring text = GetFormattedString(ID_STR_LOGFILECREATEFAIL, filePath);
-			g_Rainmeter->ShowMessage(NULL, text.c_str(), MB_OK | MB_ICONERROR);
+			g_Rainmeter->ShowMessage(nullptr, text.c_str(), MB_OK | MB_ICONERROR);
 			SetLogToFile(false);
 			return;
 		}
@@ -85,7 +85,7 @@ void Logger::DeleteLogFile()
 	if (_waccess(filePath, 0) != -1)
 	{
 		const std::wstring text = GetFormattedString(ID_STR_LOGFILEDELETE, filePath);
-		const int res = g_Rainmeter->ShowMessage(NULL, text.c_str(), MB_YESNO | MB_ICONQUESTION);
+		const int res = g_Rainmeter->ShowMessage(nullptr, text.c_str(), MB_YESNO | MB_ICONQUESTION);
 		if (res == IDYES)
 		{
 			SetLogToFile(false);

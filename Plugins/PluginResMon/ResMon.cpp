@@ -103,7 +103,7 @@ PLUGIN_EXPORT double Update(void* data)
 	if (measure->type == WINDOW_COUNT)
 	{
 		g_WindowCount = 0;
-		EnumChildWindows(NULL, EnumWindowProc, 0);
+		EnumChildWindows(nullptr, EnumWindowProc, 0);
 		return g_WindowCount;
 	}
 
@@ -133,7 +133,7 @@ PLUGIN_EXPORT double Update(void* data)
 	for (UINT i = 0, isize = bytesNeeded / sizeof(DWORD); i < isize; ++i)
 	{
 		HANDLE hProcess = OpenProcess(flags, true, aProcesses[i]);
-		if (hProcess != NULL)
+		if (hProcess != nullptr)
 		{
 			if (name)
 			{

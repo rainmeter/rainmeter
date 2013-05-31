@@ -76,14 +76,14 @@ public:
 		if (m_String)
 		{
 			free(m_String);
-			m_String = NULL;
+			m_String = nullptr;
 		}
 	}
 
 private:
 	WCHAR* str_alloc(const WCHAR* str)
 	{
-		return str ? _wcsdup(str) : NULL;
+		return str ? _wcsdup(str) : nullptr;
 	}
 
 	WCHAR* m_String;

@@ -47,7 +47,7 @@ MeasureRegistry::~MeasureRegistry()
 */
 void MeasureRegistry::UpdateValue()
 {
-	if (m_RegKey != NULL)
+	if (m_RegKey != nullptr)
 	{
 		DWORD size = 4096;
 		WCHAR* data = new WCHAR[size];
@@ -56,7 +56,7 @@ void MeasureRegistry::UpdateValue()
 		if (RegQueryValueEx(
 				m_RegKey,
 				m_RegValueName.c_str(),
-				NULL,
+				nullptr,
 				(LPDWORD)&type,
 				(LPBYTE)data,
 				(LPDWORD)&size) == ERROR_SUCCESS)
@@ -71,7 +71,7 @@ void MeasureRegistry::UpdateValue()
 			case REG_SZ:
 			case REG_EXPAND_SZ:
 			case REG_MULTI_SZ:
-				m_Value = wcstod(data, NULL);
+				m_Value = wcstod(data, nullptr);
 				m_StringValue = data;
 				break;
 
@@ -159,6 +159,6 @@ void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 */
 const WCHAR* MeasureRegistry::GetStringValue()
 {
-	return !m_StringValue.empty() ? CheckSubstitute(m_StringValue.c_str()) : NULL;
+	return !m_StringValue.empty() ? CheckSubstitute(m_StringValue.c_str()) : nullptr;
 }
 
