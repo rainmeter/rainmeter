@@ -18,7 +18,7 @@
 
 #include <windows.h>
 #include <stdio.h>
-#include "../../Library/RawString.h"
+#include "../../Common/RawString.h"
 #include "../../Library/Export.h"	// Rainmeter's exported functions
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 

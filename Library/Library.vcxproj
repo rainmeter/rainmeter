@@ -314,6 +314,7 @@
     <ClInclude Include="..\Common\Gfx\Util\WICBitmapLockGDIP.h" />
     <ClInclude Include="..\Common\MenuTemplate.h" />
     <ClInclude Include="..\Common\Platform.h" />
+    <ClInclude Include="..\Common\RawString.h" />
     <ClInclude Include="..\Common\StringUtil.h" />
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="ConfigParser.h" />
@@ -360,7 +361,6 @@
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="Export.h" />
     <ClInclude Include="RainmeterQuery.h" />
-    <ClInclude Include="RawString.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Section.h" />
     <ClInclude Include="StdAfx.h" />

@@ -20,7 +20,7 @@
 #include <TlHelp32.h>
 #include <algorithm>
 #include <vector>
-#include "../../Library/RawString.h"
+#include "../../Common/RawString.h"
 #include "../../Library/Export.h"	// Rainmeter's exported functions
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 

@@ -611,9 +611,6 @@
     <ClInclude Include="Export.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RawString.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MathParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -691,6 +688,9 @@
     </ClInclude>
     <ClInclude Include="CommandHandler.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\RawString.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -25,7 +25,7 @@
 #include "../PluginPerfMon/ObjList.h"
 #include "../PluginPerfMon/ObjInst.h"
 #include "../API/RainmeterAPI.h"
-#include "../../Library/RawString.h"
+#include "../../Common/RawString.h"
 #include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 struct MeasureData

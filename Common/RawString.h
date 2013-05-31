@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef __RAWSTRING_H__
-#define __RAWSTRING_H__
+#ifndef RM_COMMON_RAWSTRING_H_
+#define RM_COMMON_RAWSTRING_H_
 
 #include <windows.h>
 

@@ -20,7 +20,7 @@
 
 #include <string>
 #include <windows.h>
-#include "../../Library/RawString.h"
+#include "../../Common/RawString.h"
 #include "../../Library/pcre-8.10/config.h"
 #include "../../Library/pcre-8.10/pcre.h"
 
