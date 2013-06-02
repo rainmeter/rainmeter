@@ -19,7 +19,6 @@
 #include "DexpotMeasure.h"
 
 #include <tchar.h>
-#include <fstream>
 
 #include "DexpotConstants.h"
 #include "../../Library/Export.h"
@@ -452,13 +451,13 @@ void DexpotScreenshotMeasure::UpdateScreenshot()
 		bmfh.bfSize = bmfh.bfOffBits + nBytes;
 		bmfh.bfType = 0x4d42;
 
-		std::ofstream ofs(OutputFile.c_str(), std::ios_base::binary);
-		if (ofs)
+		FILE* file = _wfopen(OutputFile.c_str(), L"wb");
+		if (file)
 		{
-			ofs.write((char*) &bmfh, sizeof(BITMAPFILEHEADER));
-			ofs.write((char*) &bmi, sizeof(BITMAPINFOHEADER));
-			ofs.write((char*) ScaledBytes, nBytes);
-			ofs.close();
+			fwrite(&bmfh, sizeof(BITMAPFILEHEADER), 1, file);
+			fwrite(&bmi, sizeof(BITMAPINFOHEADER), 1, file);
+			fwrite(ScaledBytes, nBytes, 1, file);
+			fclose(file);
 		}
 
 		SelectObject(MemDC, OldBitmap);
