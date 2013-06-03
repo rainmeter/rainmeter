@@ -955,10 +955,14 @@ void Rainmeter::CreateMeterWindow(const std::wstring& folderPath, const std::wst
 
 void Rainmeter::DeleteAllMeterWindows()
 {
-	for (auto it = m_MeterWindows.cbegin(); it != m_MeterWindows.end(); ++it)
+	auto it = m_MeterWindows.cbegin();
+	while (it != m_MeterWindows.cend())
 	{
-		DialogManage::UpdateSkins((*it).second, true);
-		delete (*it).second;
+		MeterWindow* mw = (*it).second;
+		m_MeterWindows.erase(it++);  // Remove before deleting MeterWindow
+
+		DialogManage::UpdateSkins(mw, true);
+		delete mw;
 	}
 
 	m_MeterWindows.clear();
@@ -967,7 +971,7 @@ void Rainmeter::DeleteAllMeterWindows()
 
 void Rainmeter::DeleteAllUnmanagedMeterWindows()
 {
-	for (auto it = m_UnmanagedMeterWindows.cbegin(); it != m_UnmanagedMeterWindows.end(); ++it)
+	for (auto it = m_UnmanagedMeterWindows.cbegin(); it != m_UnmanagedMeterWindows.cend(); ++it)
 	{
 		delete (*it);
 	}
@@ -981,7 +985,7 @@ void Rainmeter::DeleteAllUnmanagedMeterWindows()
 */
 void Rainmeter::RemoveMeterWindow(MeterWindow* meterWindow)
 {
-	for (auto it = m_MeterWindows.cbegin(); it != m_MeterWindows.end(); ++it)
+	for (auto it = m_MeterWindows.cbegin(); it != m_MeterWindows.cend(); ++it)
 	{
 		if ((*it).second == meterWindow)
 		{
