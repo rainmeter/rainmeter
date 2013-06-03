@@ -23,6 +23,9 @@
     </ClCompile>
     <Link>
     </Link>
+    <Link>
+      <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -30,6 +33,9 @@
       <DisableSpecificWarnings>4018</DisableSpecificWarnings>
     </ClCompile>
     <Link>
+    </Link>
+    <Link>
+      <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -39,6 +45,9 @@
     </ClCompile>
     <Link>
     </Link>
+    <Link>
+      <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -46,6 +55,9 @@
       <DisableSpecificWarnings>4018</DisableSpecificWarnings>
     </ClCompile>
     <Link>
+    </Link>
+    <Link>
+      <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

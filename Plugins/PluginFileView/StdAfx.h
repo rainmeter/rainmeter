@@ -24,12 +24,12 @@
 #include <commctrl.h>
 #include <commoncontrols.h>
 #include <process.h>
+#include <Shlwapi.h>
 
 // STL
 #include <string>
 #include <vector>
 #include <queue>
-#include <regex>
 #include <algorithm>
 
 // Rainmeter API
