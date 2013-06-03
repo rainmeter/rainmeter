@@ -99,25 +99,25 @@ const BangInfo s_Bangs[] =
 };
 
 // Bangs that are to be handled with DoGroupBang().
+// TODO: Better handling of Bang-id
 const BangInfo s_GroupBangs[] =
 {
-	{ Bang::RefreshGroup, L"RefreshGroup", 0 },
-	{ Bang::UpdateGroup, L"UpdateGroup", 0 },
-	{ Bang::RedrawGroup, L"RedrawGroup", 0 },
-	{ Bang::HideGroup, L"HideGroup", 0 },
-	{ Bang::ShowGroup, L"ShowGroup", 0 },
-	{ Bang::ToggleGroup, L"ToggleGroup", 0 },
-	{ Bang::HideFadeGroup, L"HideFadeGroup", 0 },
-	{ Bang::ShowFadeGroup, L"ShowFadeGroup", 0 },
-	{ Bang::ToggleFadeGroup, L"ToggleFadeGroup", 0 },
-	{ Bang::DeactivateConfigGroup, L"DeactivateConfigGroup" },
-	{ Bang::ZPosGroup, L"ZPosGroup", 1 },
-	{ Bang::ClickThroughGroup, L"ClickThroughGroup", 1 },
-	{ Bang::DraggableGroup, L"DraggableGroup", 1 },
-	{ Bang::SnapEdgesGroup, L"SnapEdgesGroup", 1 },
-	{ Bang::KeepOnScreenGroup, L"KeepOnScreenGroup", 1 },
-	{ Bang::SetTransparencyGroup, L"SetTransparencyGroup", 1 },
-	{ Bang::SetVariableGroup, L"SetVariableGroup", 2 }
+	{ Bang::Refresh, L"RefreshGroup", 0 },
+	{ Bang::Update, L"UpdateGroup", 0 },
+	{ Bang::Redraw, L"RedrawGroup", 0 },
+	{ Bang::Hide, L"HideGroup", 0 },
+	{ Bang::Show, L"ShowGroup", 0 },
+	{ Bang::Toggle, L"ToggleGroup", 0 },
+	{ Bang::HideFade, L"HideFadeGroup", 0 },
+	{ Bang::ShowFade, L"ShowFadeGroup", 0 },
+	{ Bang::ToggleFade, L"ToggleFadeGroup", 0 },
+	{ Bang::ZPos, L"ZPosGroup", 1 },
+	{ Bang::ClickThrough, L"ClickThroughGroup", 1 },
+	{ Bang::Draggable, L"DraggableGroup", 1 },
+	{ Bang::SnapEdges, L"SnapEdgesGroup", 1 },
+	{ Bang::KeepOnScreen, L"KeepOnScreenGroup", 1 },
+	{ Bang::SetTransparency, L"SetTransparencyGroup", 1 },
+	{ Bang::SetVariable, L"SetVariableGroup", 2 }
 };
 
 // Bangs that are to be handled using a custom handler function.
@@ -126,6 +126,7 @@ const CustomBangInfo s_CustomBangs[] =
 	{ Bang::ActivateConfig, L"ActivateConfig", CommandHandler::DoActivateSkinBang },
 	{ Bang::DeactivateConfig, L"DeactivateConfig", CommandHandler::DoDeactivateSkinBang },
 	{ Bang::ToggleConfig, L"ToggleConfig", CommandHandler::DoToggleSkinBang },
+	{ Bang::DeactivateConfigGroup, L"DeactivateConfigGroup", CommandHandler::DoDeactivateSkinGroupBang },
 	{ Bang::WriteKeyValue, L"WriteKeyValue", CommandHandler::DoWriteKeyValueBang },
 	{ Bang::LoadLayout, L"LoadLayout", CommandHandler::DoLoadLayoutBang },
 	{ Bang::SetClip, L"SetClip", CommandHandler::DoSetClipBang },
@@ -211,7 +212,6 @@ void DoGroupBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Mete
 		// Remove extra parameters (including group).
 		args.resize(bangInfo.argCount);
 
-		std::multimap<int, MeterWindow*>::const_iterator iter = windows.begin();
 		for (const auto& ip : windows)
 		{
 			DoBang(bangInfo, args, ip.second);
