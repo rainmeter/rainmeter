@@ -826,7 +826,7 @@ void MeterWindow::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		break;
 
 	case Bang::Toggle:
-		DoBang(m_Hidden ? Bang::Show : Bang::Toggle, args);
+		DoBang(m_Hidden ? Bang::Show : Bang::Hide, args);
 		break;
 
 	case Bang::ShowFade:
