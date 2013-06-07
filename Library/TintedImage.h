@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <gdiplus.h>
 #include <string>
+#include "MeterWindow.h"
 
 /*
 ** Helper macro to define an array of option names. A prefix must be given.
@@ -40,7 +41,8 @@
 		prefix  L"ColorMatrix5", \
 		prefix  L"ImageFlip", \
 		prefix  L"ImageRotate", \
-		prefix  L"UseExifOrientation" \
+		prefix  L"UseExifOrientation", \
+		prefix  L"ImagePath" \
 	};
 
 class ConfigParser;
@@ -62,14 +64,15 @@ public:
 		OptionIndexImageFlip,
 		OptionIndexImageRotate,
 		OptionIndexUseExifOrientation,
+		OptionIndexImagePath,
 
 		OptionCount
 	};
 
-	TintedImage(const WCHAR* name = L"Image", const WCHAR** optionArray = c_DefaultOptionArray, bool disableTransform = false);
+	TintedImage(const WCHAR* name = L"ImageName", const WCHAR** optionArray = c_DefaultOptionArray, bool disableTransform = false, MeterWindow* meterWindow = nullptr);
 	~TintedImage();
 
-	void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	void ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath = L"");
 
 	bool IsLoaded() { return (m_Bitmap != nullptr); }
 	bool IsTinted() { return (m_BitmapTint != nullptr); }
@@ -120,8 +123,11 @@ protected:
 	Gdiplus::RotateFlipType m_Flip;
 	Gdiplus::REAL m_Rotate;
 	bool m_UseExifOrientation;
+	std::wstring m_Path;
 
 	std::wstring m_CacheKey;
+
+	MeterWindow* m_MeterWindow;
 
 	static const Gdiplus::ColorMatrix c_GreyScaleMatrix;
 	static const Gdiplus::ColorMatrix c_IdentityMatrix;

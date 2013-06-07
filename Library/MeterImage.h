@@ -38,7 +38,7 @@ protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
 	
-	virtual bool IsFixedSize(bool overwrite = false) { return overwrite ? true : m_ImageNameResult.empty(); }
+	virtual bool IsFixedSize(bool overwrite = false) { return overwrite ? true : m_ImageName.empty(); }
 
 private:
 	enum DRAWMODE
@@ -53,8 +53,6 @@ private:
 
 	TintedImage m_Image;
 	std::wstring m_ImageName;
-	std::wstring m_ImageNameResult;		// Image name as absolute path
-	std::wstring m_Path;
 
 	bool m_NeedsRedraw;
 	DRAWMODE m_DrawMode;

@@ -33,7 +33,7 @@ extern Rainmeter* g_Rainmeter;
 **
 */
 MeterBitmap::MeterBitmap(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
-	m_Image(L"BitmapImage", nullptr, true),
+	m_Image(L"BitmapImage", nullptr, true, meterWindow),
 	m_NeedsReload(false),
 	m_ZeroFrame(false),
 	m_FrameCount(1),
@@ -167,8 +167,6 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_ImageName = parser.ReadString(section, L"BitmapImage", L"");
 	if (!m_ImageName.empty())
 	{
-		m_MeterWindow->MakePathAbsolute(m_ImageName);
-
 		// Read tinting options
 		m_Image.ReadOptions(parser, section);
 	}

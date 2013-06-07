@@ -42,9 +42,9 @@ MeterHistogram::MeterHistogram(MeterWindow* meterWindow, const WCHAR* name) : Me
 	m_MeterPos(),
 	m_Autoscale(false),
 	m_Flip(false),
-	m_PrimaryImage(L"PrimaryImage", c_PrimaryOptionArray),
-	m_SecondaryImage(L"SecondaryImage", c_SecondaryOptionArray),
-	m_OverlapImage(L"BothImage", c_BothOptionArray),
+	m_PrimaryImage(L"PrimaryImage", c_PrimaryOptionArray, false, meterWindow),
+	m_SecondaryImage(L"SecondaryImage", c_SecondaryOptionArray, false, meterWindow),
+	m_OverlapImage(L"BothImage", c_BothOptionArray, false, meterWindow),
 	m_PrimaryNeedsReload(false),
 	m_SecondaryNeedsReload(false),
 	m_OverlapNeedsReload(false),
@@ -212,8 +212,6 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_PrimaryImageName = parser.ReadString(section, L"PrimaryImage", L"");
 	if (!m_PrimaryImageName.empty())
 	{
-		m_MeterWindow->MakePathAbsolute(m_PrimaryImageName);
-
 		// Read tinting options
 		m_PrimaryImage.ReadOptions(parser, section);
 	}
@@ -225,8 +223,6 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_SecondaryImageName = parser.ReadString(section, L"SecondaryImage", L"");
 	if (!m_SecondaryImageName.empty())
 	{
-		m_MeterWindow->MakePathAbsolute(m_SecondaryImageName);
-
 		// Read tinting options
 		m_SecondaryImage.ReadOptions(parser, section);
 	}
@@ -238,8 +234,6 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_OverlapImageName = parser.ReadString(section, L"BothImage", L"");
 	if (!m_OverlapImageName.empty())
 	{
-		m_MeterWindow->MakePathAbsolute(m_OverlapImageName);
-
 		// Read tinting options
 		m_OverlapImage.ReadOptions(parser, section);
 	}
@@ -329,7 +323,7 @@ bool MeterHistogram::Update()
 	{
 		int maxSize = m_GraphHorizontalOrientation ? m_H : m_W;
 
-		if (maxSize > 0)  // m_PrimaryValues is not nullptr
+		if (m_PrimaryValues && maxSize > 0)  // m_PrimaryValues must not be nullptr
 		{
 			Measure* measure = m_Measures[0];
 			Measure* secondaryMeasure = (m_Measures.size() >= 2) ? m_Measures[1] : nullptr;

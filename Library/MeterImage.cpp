@@ -33,6 +33,7 @@ using namespace Gdiplus;
 **
 */
 MeterImage::MeterImage(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
+	m_Image(L"ImageName", nullptr, false, meterWindow),
 	m_NeedsRedraw(false),
 	m_DrawMode(DRAWMODE_NONE),
 	m_ScaleMargins()
@@ -57,10 +58,7 @@ void MeterImage::Initialize()
 
 	if (m_Measures.empty() && !m_DynamicVariables && !m_ImageName.empty())
 	{
-		m_ImageNameResult = m_Path;
-		m_ImageNameResult += m_ImageName;
-		m_MeterWindow->MakePathAbsolute(m_ImageNameResult);
-		LoadImage(m_ImageNameResult, true);
+		LoadImage(m_ImageName, true);
 	}
 }
 
@@ -110,15 +108,6 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Meter::ReadOptions(parser, section);
 
-	m_Path = parser.ReadString(section, L"Path", L"");
-	if (!m_Path.empty())
-	{
-		if (!System::IsPathSeparator(m_Path[m_Path.length() - 1]))
-		{
-			m_Path += L'\\';
-		}
-	}
-
 	m_ImageName = parser.ReadString(section, L"ImageName", L"");
 
 	int mode = parser.ReadInt(section, L"Tile", 0);
@@ -147,8 +136,18 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	static const RECT defMargins = {0};
 	m_ScaleMargins = parser.ReadRECT(section, L"ScaleMargins", defMargins);
 
+	// Deprecated!
+	std::wstring path = parser.ReadString(section, L"Path", L"");
+	if (!path.empty())
+	{
+		if (!System::IsPathSeparator(path[path.length() - 1]))
+		{
+			path += L'\\';
+		}
+	}
+
 	// Read tinting options
-	m_Image.ReadOptions(parser, section);
+	m_Image.ReadOptions(parser, section, path.c_str());
 
 	if (m_Initialized && m_Measures.empty() && !m_DynamicVariables)
 	{
@@ -168,38 +167,26 @@ bool MeterImage::Update()
 		if (!m_Measures.empty() || m_DynamicVariables)
 		{
 			// Store the current values so we know if the image needs to be updated
-			std::wstring oldResult = m_ImageNameResult;
+			std::wstring oldResult = m_ImageName;
 
 			if (!m_Measures.empty())  // read from the measures
 			{
 				if (m_ImageName.empty())
 				{
-					m_ImageNameResult = m_Measures[0]->GetStringOrFormattedValue(
-						AUTOSCALE_OFF, 1, 0, false);
+					m_ImageName = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
 				}
 				else
 				{
-					m_ImageNameResult = m_ImageName;
-					if (!ReplaceMeasures(m_ImageNameResult, AUTOSCALE_OFF))
+					m_ImageName = m_ImageName;
+					if (!ReplaceMeasures(m_ImageName, AUTOSCALE_OFF))
 					{
 						// ImageName doesn't contain any measures, so use the result of MeasureName.
-						m_ImageNameResult = m_Measures[0]->GetStringOrFormattedValue(
-							AUTOSCALE_OFF, 1, 0, false);
+						m_ImageName = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
 					}
 				}
 			}
-			else  // read from the skin
-			{
-				m_ImageNameResult = m_ImageName;
-			}
-
-			if (!m_ImageNameResult.empty())
-			{
-				m_ImageNameResult.insert(0, m_Path);
-				m_MeterWindow->MakePathAbsolute(m_ImageNameResult);
-			}
-
-			LoadImage(m_ImageNameResult, (wcscmp(oldResult.c_str(), m_ImageNameResult.c_str()) != 0));
+			
+			LoadImage(m_ImageName, (wcscmp(oldResult.c_str(), m_ImageName.c_str()) != 0));
 			return true;
 		}
 		else if (m_NeedsRedraw)

@@ -39,7 +39,7 @@ enum BUTTON_STATE
 **
 */
 MeterButton::MeterButton(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
-	m_Image(L"ButtonImage", nullptr, true),
+	m_Image(L"ButtonImage", nullptr, true, meterWindow),
 	m_NeedsReload(false),
 	m_Bitmaps(),
 	m_State(BUTTON_STATE_NORMAL),
@@ -139,8 +139,6 @@ void MeterButton::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_ImageName = parser.ReadString(section, L"ButtonImage", L"");
 	if (!m_ImageName.empty())
 	{
-		m_MeterWindow->MakePathAbsolute(m_ImageName);
-
 		// Read tinting options
 		m_Image.ReadOptions(parser, section);
 	}

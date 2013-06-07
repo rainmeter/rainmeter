@@ -36,6 +36,7 @@ extern Rainmeter* g_Rainmeter;
 **
 */
 MeterRotator::MeterRotator(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
+	m_Image(L"ImageName", nullptr, false, meterWindow),
 	m_NeedsReload(false),
 	m_OffsetX(),
 	m_OffsetY(),
@@ -87,8 +88,6 @@ void MeterRotator::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_ImageName = parser.ReadString(section, L"ImageName", L"");
 	if (!m_ImageName.empty())
 	{
-		m_MeterWindow->MakePathAbsolute(m_ImageName);
-
 		// Read tinting options
 		m_Image.ReadOptions(parser, section);
 	}

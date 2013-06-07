@@ -33,7 +33,7 @@ extern Rainmeter* g_Rainmeter;
 **
 */
 MeterBar::MeterBar(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
-	m_Image(L"BarImage"),
+	m_Image(L"BarImage", nullptr, false, meterWindow),
 	m_NeedsReload(false),
 	m_Color(Color::Green),
 	m_Orientation(VERTICAL),
@@ -97,8 +97,6 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_ImageName = parser.ReadString(section, L"BarImage", L"");
 	if (!m_ImageName.empty())
 	{
-		m_MeterWindow->MakePathAbsolute(m_ImageName);
-
 		// Read tinting options
 		m_Image.ReadOptions(parser, section);
 	}

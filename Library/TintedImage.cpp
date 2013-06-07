@@ -151,8 +151,8 @@ TintedImageHelper_DefineOptionArray(TintedImage::c_DefaultOptionArray, L"");
 ** If disableTransform is true, ImageCrop and ImageRotate are ignored.
 **
 */
-TintedImage::TintedImage(const WCHAR* name, const WCHAR** optionArray, bool disableTransform) : m_DisableTransform(disableTransform),
-	m_Name(name ? name : L"Image"),
+TintedImage::TintedImage(const WCHAR* name, const WCHAR** optionArray, bool disableTransform, MeterWindow* meterWindow) : m_DisableTransform(disableTransform),
+	m_Name(name ? name : L"ImageName"),
 	m_OptionArray(optionArray ? optionArray : c_DefaultOptionArray),
 	m_Bitmap(),
 	m_BitmapTint(),
@@ -165,7 +165,8 @@ TintedImage::TintedImage(const WCHAR* name, const WCHAR** optionArray, bool disa
 	m_ColorMatrix(new ColorMatrix(c_IdentityMatrix)),
 	m_Flip(RotateNoneFlipNone),
 	m_Rotate(),
-	m_UseExifOrientation(false)
+	m_UseExifOrientation(false),
+	m_MeterWindow(meterWindow)
 {
 }
 
@@ -315,7 +316,8 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 	// Load the bitmap if defined
 	if (!imageName.empty())
 	{
-		std::wstring filename = imageName;
+		std::wstring filename = m_Path + imageName;
+		if (m_MeterWindow) m_MeterWindow->MakePathAbsolute(filename);
 
 		// Check extension and if it is missing, add .png
 		size_t pos = filename.rfind(L'\\');
@@ -615,7 +617,7 @@ void TintedImage::ApplyTransform()
 ** Read the meter-specific options from the ini-file.
 **
 */
-void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath)
 {
 	// Store the current values so we know if the image needs to be tinted or transformed
 	Rect oldCrop = m_Crop;
@@ -624,6 +626,15 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	ColorMatrix oldColorMatrix = *m_ColorMatrix;
 	RotateFlipType oldFlip = m_Flip;
 	REAL oldRotate = m_Rotate;
+
+	m_Path = parser.ReadString(section, m_OptionArray[OptionIndexImagePath], imagePath);
+	if (!m_Path.empty())
+	{
+		if (!System::IsPathSeparator(m_Path[m_Path.length() - 1]))
+		{
+			m_Path += L'\\';
+		}
+	}
 
 	if (!m_DisableTransform)
 	{
