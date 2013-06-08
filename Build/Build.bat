@@ -79,6 +79,9 @@ echo * Updated Version.h
 
 :: Set vcbuild environment variables and begin build
 echo * Starting build for %VERSION%
+for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
+	set /A "BUILD_BEGIN_TIMESTAMP=(((%%a * 60) + 1%%b %% 100)* 60+1%%c %% 100) * 100 + 1%%d %% 100"
+)
 
 :: Build Library
 echo * Building 32-bit projects
@@ -153,7 +156,12 @@ if not "%CERTFILE%" == "" (
 
 :: If we got here, build was successful so delete BuildLog.txt
 if exist "BuildLog.txt" del "BuildLog.txt"
-echo * Build complete.
+
+for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
+	set /A "BUILD_END_TIMESTAMP=(((%%a * 60) + 1%%b %% 100)* 60+1%%c %% 100) * 100 + 1%%d %% 100"
+)
+set /A "BUILD_ELAPSED_TIME=(%BUILD_END_TIMESTAMP% - %BUILD_BEGIN_TIMESTAMP%) / 100"
+echo * Build complete. Elapsed time: %BUILD_ELAPSED_TIME% sec
 
 :END
 if exist ".\Installer\Languages.nsh" del ".\Installer\Languages.nsh"
