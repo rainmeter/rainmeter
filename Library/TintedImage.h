@@ -76,8 +76,8 @@ public:
 
 	bool IsLoaded() { return (m_Bitmap != nullptr); }
 	bool IsTinted() { return (m_BitmapTint != nullptr); }
-	bool IsOptionsChanged() { return m_NeedsCrop || m_NeedsTinting || m_NeedsTransform; }
-	void ClearOptionFlags() { m_NeedsCrop = m_NeedsTinting = m_NeedsTransform = false; }
+	bool IsOptionsChanged() { return m_NeedsCrop || m_NeedsTinting || m_NeedsTransform || m_HasPathChanged; }
+	void ClearOptionFlags() { m_NeedsCrop = m_NeedsTinting = m_NeedsTransform = m_HasPathChanged = false; }
 
 	Gdiplus::Bitmap* GetOriginalImage() { return m_Bitmap; }
 	Gdiplus::Bitmap* GetTintedImage() { return m_BitmapTint; }
@@ -123,7 +123,9 @@ protected:
 	Gdiplus::RotateFlipType m_Flip;
 	Gdiplus::REAL m_Rotate;
 	bool m_UseExifOrientation;
+
 	std::wstring m_Path;
+	bool m_HasPathChanged;
 
 	std::wstring m_CacheKey;
 

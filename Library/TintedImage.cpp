@@ -166,7 +166,8 @@ TintedImage::TintedImage(const WCHAR* name, const WCHAR** optionArray, bool disa
 	m_Flip(RotateNoneFlipNone),
 	m_Rotate(),
 	m_UseExifOrientation(false),
-	m_MeterWindow(meterWindow)
+	m_MeterWindow(meterWindow),
+	m_HasPathChanged(false)
 {
 }
 
@@ -318,6 +319,7 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 	{
 		std::wstring filename = m_Path + imageName;
 		if (m_MeterWindow) m_MeterWindow->MakePathAbsolute(filename);
+		m_HasPathChanged = false;
 
 		// Check extension and if it is missing, add .png
 		size_t pos = filename.rfind(L'\\');
@@ -626,6 +628,7 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const 
 	ColorMatrix oldColorMatrix = *m_ColorMatrix;
 	RotateFlipType oldFlip = m_Flip;
 	REAL oldRotate = m_Rotate;
+	std::wstring oldPath = m_Path;
 
 	m_Path = parser.ReadString(section, m_OptionArray[OptionIndexImagePath], imagePath);
 	if (!m_Path.empty())
@@ -635,6 +638,8 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const 
 			m_Path += L'\\';
 		}
 	}
+
+	m_HasPathChanged = (oldPath != m_Path);
 
 	if (!m_DisableTransform)
 	{
