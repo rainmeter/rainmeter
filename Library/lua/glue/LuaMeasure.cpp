@@ -120,11 +120,59 @@ static int GetStringValue(lua_State* L)
 {
 	DECLARE_SELF(L)
 
-	int top = lua_gettop(L);
-	AUTOSCALE autoScale = (top > 1) ? (AUTOSCALE)(int)lua_tonumber(L, 2) : AUTOSCALE_OFF;
-	double scale = (top > 2) ? lua_tonumber(L, 3) : 1.0;
-	int decimals = (int)lua_tonumber(L, 4);
-	bool percentual = lua_toboolean(L, 5);
+	AUTOSCALE autoScale = AUTOSCALE_OFF;
+	double scale = 1.0;
+	int decimals = 0;
+	bool percentual = false;
+
+	const int top = lua_gettop(L);
+	if (top == 2 && lua_istable(L, 2))
+	{
+		lua_pushvalue(L, 2);
+		lua_pushnil(L);
+
+		// Stack: nil, table, ...
+		while (lua_next(L, -2))
+		{
+			// Stack: value, key, table, ...
+			// Push copy of key to avoid changing orignal key.
+			lua_pushvalue(L, -2);
+
+			// Stack: key, value, key, table, ...
+			const char* key = lua_tostring(L, -1);
+			if (strcmp(key, "AutoScale") == 0)
+			{
+				// TODO: Implement something more reliable than casting.
+				autoScale = (AUTOSCALE)(int)lua_tonumber(L, -2);
+			}
+			else if (strcmp(key, "Scale") == 0)
+			{
+				scale = lua_tonumber(L, -2);
+			}
+			else if (strcmp(key, "NumOfDecimals") == 0)
+			{
+				decimals = (int)lua_tonumber(L, -2);
+			}
+			else if (strcmp(key, "Percentual") == 0)
+			{
+				percentual = lua_toboolean(L, -2);
+			}
+
+			lua_pop(L, 2);
+			// Stack: key, table, ...
+		}
+		// Stack: table, ...
+
+		lua_pop(L, 1);
+	}
+	else
+	{
+		// For backwards compatibility.
+		if (top > 1) autoScale = (AUTOSCALE)(int)lua_tonumber(L, 2);
+		if (top > 2) scale = lua_tonumber(L, 3);
+		if (top > 3) decimals = (int)lua_tonumber(L, 4);
+		if (top > 4) percentual = lua_toboolean(L, 5);
+	}
 
 	const WCHAR* val = self->GetStringOrFormattedValue(autoScale, scale, decimals, percentual);
 	LuaManager::PushWide(L, val);
