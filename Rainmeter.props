@@ -25,6 +25,11 @@
     <IntDir>.\x64\$(Configuration)\</IntDir>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- Avoid .lib files in TestBench. -->
+    <OutDir Condition="'$(ConfigurationType)'=='StaticLibrary'">$(IntDir)</OutDir>
+  </PropertyGroup>
+
   <ItemDefinitionGroup>
     <ClCompile>
       <!-- Set the version macros to 0x0601 (Win7) to avoid using Win8 specific features in the Win8 SDK. -->

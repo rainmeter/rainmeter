@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Dialog.cpp" />
+    <ClCompile Include="MenuTemplate.cpp" />
+    <ClCompile Include="PathUtil.cpp" />
+    <ClCompile Include="Platform.cpp" />
+    <ClCompile Include="StringUtil.cpp" />
+    <ClCompile Include="ControlTemplate.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Dialog.h" />
+    <ClInclude Include="MenuTemplate.h" />
+    <ClInclude Include="PathUtil.h" />
+    <ClInclude Include="Platform.h" />
+    <ClInclude Include="RawString.h" />
+    <ClInclude Include="StringUtil.h" />
+    <ClInclude Include="ControlTemplate.h" />
+  </ItemGroup>
+</Project>

@@ -330,21 +330,6 @@
     <ClCompile Include="Section.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Common\Dialog.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\ControlTemplate.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\MenuTemplate.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Platform.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\StringUtil.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
     <ClCompile Include="..\Common\Gfx\Canvas.cpp">
       <Filter>Common\Gfx</Filter>
     </ClCompile>
@@ -395,9 +380,6 @@
     </ClCompile>
     <ClCompile Include="CommandHandler.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\PathUtil.cpp">
-      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -626,21 +608,6 @@
     <ClInclude Include="Section.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Common\Dialog.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\ControlTemplate.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\MenuTemplate.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Platform.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\StringUtil.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\Common\Gfx\Canvas.h">
       <Filter>Common\Gfx</Filter>
     </ClInclude>
@@ -691,12 +658,6 @@
     </ClInclude>
     <ClInclude Include="CommandHandler.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\RawString.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\PathUtil.h">
-      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
