@@ -102,7 +102,7 @@ void ExpandEnvironmentVariables(std::wstring& path)
 		DWORD bufSize = 4096;
 		WCHAR* buffer = new WCHAR[bufSize];
 
-		// %APPDATA% is a special casem
+		// %APPDATA% is a special case.
 		pos = path.find(L"%APPDATA%", pos);
 		if (pos != std::wstring::npos)
 		{
@@ -145,6 +145,5 @@ void ExpandEnvironmentVariables(std::wstring& path)
 		delete [] buffer;
 	}
 }
-
 
 }  // namespace PathUtil
