@@ -22,6 +22,7 @@
 #include "Error.h"
 #include "Rainmeter.h"
 #include "System.h"
+#include "../Common/PathUtil.h"
 #include "../Common/Gfx/Canvas.h"
 
 extern Rainmeter* g_Rainmeter;
@@ -138,13 +139,7 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	// Deprecated!
 	std::wstring path = parser.ReadString(section, L"Path", L"");
-	if (!path.empty())
-	{
-		if (!System::IsPathSeparator(path[path.length() - 1]))
-		{
-			path += L'\\';
-		}
-	}
+	PathUtil::AppendBacklashIfMissing(path);
 
 	// Read tinting options
 	m_Image.ReadOptions(parser, section, path.c_str());

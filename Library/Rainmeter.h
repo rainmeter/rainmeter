@@ -212,9 +212,6 @@ public:
 	bool LoadLayout(const std::wstring& name);
 	void PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace = true);
 
-	static std::wstring ExtractPath(const std::wstring& strFilePath);
-	static void ExpandEnvironmentVariables(std::wstring& strPath);
-
 	friend class CommandHandler;
 	friend class DialogManage;
 

@@ -23,6 +23,7 @@
 #include "MeterWindow.h"
 #include "MeasureNet.h"
 #include "Error.h"
+#include "../Common/PathUtil.h"
 
 using namespace Gdiplus;
 
@@ -1218,7 +1219,7 @@ bool System::CopyFiles(std::wstring from, std::wstring to, bool bMove)
 {
 	// If given "from" path ends with path separator, remove it (Workaround for XP: error code 1026)
 	size_t len;
-	while (len = from.size(), len > 0 && IsPathSeparator(from[len - 1]))
+	while (len = from.size(), len > 0 && PathUtil::IsSeparator(from[len - 1]))
 	{
 		from.resize(len - 1);
 	}

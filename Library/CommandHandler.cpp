@@ -17,6 +17,7 @@
 */
 
 #include "StdAfx.h"
+#include "../Common/PathUtil.h"
 #include "CommandHandler.h"
 #include "ConfigParser.h"
 #include "DialogAbout.h"
@@ -464,7 +465,7 @@ void CommandHandler::RunFile(const WCHAR* file, const WCHAR* args)
 	}
 	else
 	{
-		std::wstring dir = Rainmeter::ExtractPath(file);
+		std::wstring dir = PathUtil::GetFolderFromFilePath(file);
 		si.lpDirectory = dir.c_str();
 		si.lpParameters = args;
 		si.fMask = SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI;

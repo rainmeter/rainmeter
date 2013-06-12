@@ -84,6 +84,7 @@
     <ClCompile Include="..\Common\Gfx\Util\WICBitmapLockDIB.cpp" />
     <ClCompile Include="..\Common\Gfx\Util\WICBitmapLockGDIP.cpp" />
     <ClCompile Include="..\Common\MenuTemplate.cpp" />
+    <ClCompile Include="..\Common\PathUtil.cpp" />
     <ClCompile Include="..\Common\Platform.cpp" />
     <ClCompile Include="..\Common\StringUtil.cpp" />
     <ClCompile Include="CommandHandler.cpp">
@@ -315,6 +316,7 @@
     <ClInclude Include="..\Common\Gfx\Util\WICBitmapLockDIB.h" />
     <ClInclude Include="..\Common\Gfx\Util\WICBitmapLockGDIP.h" />
     <ClInclude Include="..\Common\MenuTemplate.h" />
+    <ClInclude Include="..\Common\PathUtil.h" />
     <ClInclude Include="..\Common\Platform.h" />
     <ClInclude Include="..\Common\RawString.h" />
     <ClInclude Include="..\Common\StringUtil.h" />

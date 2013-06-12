@@ -396,6 +396,9 @@
     <ClCompile Include="CommandHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\PathUtil.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigParser.h">
@@ -690,6 +693,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Common\RawString.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\PathUtil.h">
       <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>

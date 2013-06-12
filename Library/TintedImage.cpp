@@ -17,6 +17,7 @@
 */
 
 #include "StdAfx.h"
+#include "../Common/PathUtil.h"
 #include "TintedImage.h"
 #include "ConfigParser.h"
 #include "System.h"
@@ -631,13 +632,7 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const 
 	std::wstring oldPath = m_Path;
 
 	m_Path = parser.ReadString(section, m_OptionArray[OptionIndexImagePath], imagePath);
-	if (!m_Path.empty())
-	{
-		if (!System::IsPathSeparator(m_Path[m_Path.length() - 1]))
-		{
-			m_Path += L'\\';
-		}
-	}
+	PathUtil::AppendBacklashIfMissing(m_Path);
 
 	m_HasPathChanged = (oldPath != m_Path);
 

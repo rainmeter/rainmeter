@@ -17,6 +17,7 @@
 */
 
 #include "StdAfx.h"
+#include "../Common/PathUtil.h"
 #include "ConfigParser.h"
 #include "MathParser.h"
 #include "Litestep.h"
@@ -98,7 +99,7 @@ void ConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::
 	insertVariable(L"SETTINGSPATH", g_Rainmeter->GetSettingsPath());
 	insertVariable(L"SKINSPATH", g_Rainmeter->GetSkinPath());
 	insertVariable(L"PLUGINSPATH", g_Rainmeter->GetPluginPath());
-	insertVariable(L"CURRENTPATH", Rainmeter::ExtractPath(filename));
+	insertVariable(L"CURRENTPATH", PathUtil::GetFolderFromFilePath(filename));
 	insertVariable(L"ADDONSPATH", g_Rainmeter->GetAddonPath());
 
 	if (meterWindow)
@@ -570,7 +571,7 @@ bool ConfigParser::ReplaceVariables(std::wstring& result)
 {
 	bool replaced = false;
 
-	Rainmeter::ExpandEnvironmentVariables(result);
+	PathUtil::ExpandEnvironmentVariables(result);
 
 	if (c_MonitorVariables.empty())
 	{
@@ -764,7 +765,7 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 			}
 			else
 			{
-				Rainmeter::ExpandEnvironmentVariables(result);
+				PathUtil::ExpandEnvironmentVariables(result);
 			}
 
 			if (bReplaceMeasures && ReplaceMeasures(result))
@@ -1446,10 +1447,10 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 								value.assign(sep, clen);
 								ReadVariables();
 								ReplaceVariables(value);
-								if (!System::IsAbsolutePath(value))
+								if (!PathUtil::IsAbsolute(value))
 								{
 									// Relative to the ini folder
-									value.insert(0, Rainmeter::ExtractPath(iniFile));
+									value.insert(0, PathUtil::GetFolderFromFilePath(iniFile));
 								}
 
 								if (resetInsertPos)

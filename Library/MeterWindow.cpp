@@ -36,6 +36,7 @@
 #include "TintedImage.h"
 #include "MeasureScript.h"
 #include "../Version.h"
+#include "../Common/PathUtil.h"
 #include "../Common/Gfx/CanvasD2D.h"
 #include "../Common/Gfx/CanvasGDIP.h"
 
@@ -4711,7 +4712,7 @@ void MeterWindow::SetWindowSizeVariables(int w, int h)
 */
 void MeterWindow::MakePathAbsolute(std::wstring& path)
 {
-	if (path.empty() || System::IsAbsolutePath(path))
+	if (path.empty() || PathUtil::IsAbsolute(path))
 	{
 		return;  // It's already absolute path (or it's empty)
 	}

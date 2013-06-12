@@ -18,6 +18,7 @@
 
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
+#include "../Common/PathUtil.h"
 #include "Rainmeter.h"
 #include "TrayWindow.h"
 #include "System.h"
@@ -192,15 +193,16 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	// Remove the module's name from the path
 	WCHAR* pos = wcsrchr(buffer, L'\\');
 	m_Path.assign(buffer, pos ? pos - buffer + 1 : 0);
+	m_Drive = PathUtil::GetVolume(m_Path);
 
 	bool bDefaultIniLocation = false;
 	if (iniPath)
 	{
 		// The command line defines the location of Rainmeter.ini (or whatever it calls it).
 		std::wstring iniFile = iniPath;
-		ExpandEnvironmentVariables(iniFile);
+		PathUtil::ExpandEnvironmentVariables(iniFile);
 
-		if (iniFile.empty() || System::IsPathSeparator(iniFile[iniFile.length() - 1]))
+		if (iniFile.empty() || PathUtil::IsSeparator(iniFile[iniFile.length() - 1]))
 		{
 			iniFile += L"Rainmeter.ini";
 		}
@@ -209,7 +211,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 			iniFile += L"\\Rainmeter.ini";
 		}
 
-		if (!System::IsPathSeparator(iniFile[0]) && iniFile.find_first_of(L':') == std::wstring::npos)
+		if (!PathUtil::IsSeparator(iniFile[0]) && iniFile.find_first_of(L':') == std::wstring::npos)
 		{
 			// Make absolute path
 			iniFile.insert(0, m_Path);
@@ -227,7 +229,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 		if (_waccess(m_IniFile.c_str(), 0) == -1)
 		{
 			m_IniFile = L"%APPDATA%\\Rainmeter\\Rainmeter.ini";
-			ExpandEnvironmentVariables(m_IniFile);
+			PathUtil::ExpandEnvironmentVariables(m_IniFile);
 			bDefaultIniLocation = true;
 		}
 	}
@@ -265,7 +267,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	// Set file locations
 	{
-		m_SettingsPath = ExtractPath(m_IniFile);
+		m_SettingsPath = PathUtil::GetFolderFromFilePath(m_IniFile);
 
 		size_t len = m_IniFile.length();
 		if (len > 4 && _wcsicmp(iniFile + (len - 4), L".ini") == 0)
@@ -355,12 +357,8 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	{
 		// Try Rainmeter.ini first
 		m_SkinPath.assign(buffer, len);
-		ExpandEnvironmentVariables(m_SkinPath);
-
-		if (!m_SkinPath.empty() && !System::IsPathSeparator(m_SkinPath[m_SkinPath.length() - 1]))
-		{
-			m_SkinPath += L'\\';
-		}
+		PathUtil::ExpandEnvironmentVariables(m_SkinPath);
+		PathUtil::AppendBacklashIfMissing(m_SkinPath);
 	}
 	else if (bDefaultIniLocation &&
 		SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_MYDOCUMENTS, nullptr, SHGFP_TYPE_CURRENT, buffer)))
@@ -387,29 +385,6 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	LogNoticeF(L"Path: %s", m_Path.c_str());
 	LogNoticeF(L"IniFile: %s", iniFile);
 	LogNoticeF(L"SkinPath: %s", m_SkinPath.c_str());
-
-	// Extract volume path from program path
-	// E.g.:
-	//  "C:\path\" to "C:"
-	//  "\\server\share\" to "\\server\share"
-	//  "\\server\C:\path\" to "\\server\C:"
-	std::wstring::size_type loc;
-	if ((loc = m_Path.find_first_of(L':')) != std::wstring::npos)
-	{
-		m_Drive.assign(m_Path, 0, loc + 1);
-	}
-	else if (System::IsUNCPath(m_Path))
-	{
-		if ((loc = m_Path.find_first_of(L"\\/", 2)) != std::wstring::npos)
-		{
-			std::wstring::size_type loc2;
-			if ((loc2 = m_Path.find_first_of(L"\\/", loc + 1)) != std::wstring::npos || loc != (m_Path.length() - 1))
-			{
-				loc = loc2;
-			}
-		}
-		m_Drive.assign(m_Path, 0, loc);
-	}
 
 	// Test that the Rainmeter.ini file is writable
 	TestSettingsFile(bDefaultIniLocation);
@@ -684,8 +659,7 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 				do
 				{
 					if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
-						wcscmp(L".", fd.cFileName) != 0 &&
-						wcscmp(L"..", fd.cFileName) != 0)
+						PathUtil::IsDotOrDotDot(fd.cFileName))
 					{
 						std::wstring layoutFolder = path + fd.cFileName;
 						layoutFolder += L'\\';
@@ -1289,8 +1263,7 @@ int Rainmeter::ScanForSkinsRecursive(const std::wstring& path, std::wstring base
 
 			if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
-				if (wcscmp(L".", fileData.cFileName) != 0 &&
-					wcscmp(L"..", fileData.cFileName) != 0 &&
+				if (!PathUtil::IsDotOrDotDot(fileData.cFileName) &&
 					!(level == 0 && wcscmp(L"@Backup", fileData.cFileName) == 0) &&
 					!(level == 0 && wcscmp(L"Backup", fileData.cFileName) == 0) &&
 					!(level == 1 && wcscmp(L"@Resources", fileData.cFileName) == 0))
@@ -1387,8 +1360,7 @@ void Rainmeter::ScanForLayouts()
 		do
 		{
 			if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY &&
-				wcscmp(L".", fileData.cFileName) != 0 &&
-				wcscmp(L"..", fileData.cFileName) != 0)
+				!PathUtil::IsDotOrDotDot(fileData.cFileName))
 			{
 				m_Layouts.push_back(fileData.cFileName);
 			}
@@ -2537,7 +2509,7 @@ void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)
 		if (!bDefaultIniLocation)
 		{
 			std::wstring strTarget = L"%APPDATA%\\Rainmeter\\";
-			ExpandEnvironmentVariables(strTarget);
+			PathUtil::ExpandEnvironmentVariables(strTarget);
 
 			error += GetFormattedString(ID_STR_SETTINGSMOVEFILE, iniFile, strTarget.c_str());
 		}
@@ -2547,70 +2519,5 @@ void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)
 		}
 
 		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);
-	}
-}
-
-std::wstring Rainmeter::ExtractPath(const std::wstring& strFilePath)
-{
-	std::wstring::size_type pos = strFilePath.find_last_of(L"\\/");
-	if (pos != std::wstring::npos)
-	{
-		return strFilePath.substr(0, pos + 1);
-	}
-	return L".\\";
-}
-
-void Rainmeter::ExpandEnvironmentVariables(std::wstring& strPath)
-{
-	std::wstring::size_type pos;
-
-	if ((pos = strPath.find(L'%')) != std::wstring::npos &&
-		strPath.find(L'%', pos + 2) != std::wstring::npos)
-	{
-		DWORD bufSize = 4096;
-		WCHAR* buffer = new WCHAR[bufSize];	// lets hope the buffer is large enough...
-
-		// %APPDATA% is a special case
-		pos = strPath.find(L"%APPDATA%", pos);
-		if (pos != std::wstring::npos)
-		{
-			HRESULT hr = SHGetFolderPath(nullptr, CSIDL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, buffer);
-			if (SUCCEEDED(hr))
-			{
-				size_t len = wcslen(buffer);
-				do
-				{
-					strPath.replace(pos, 9, buffer, len);
-				}
-				while ((pos = strPath.find(L"%APPDATA%", pos + len)) != std::wstring::npos);
-			}
-		}
-
-		if ((pos = strPath.find(L'%')) != std::wstring::npos &&
-			strPath.find(L'%', pos + 2) != std::wstring::npos)
-		{
-			// Expand the environment variables
-			do
-			{
-				DWORD ret = ExpandEnvironmentStrings(strPath.c_str(), buffer, bufSize);
-				if (ret == 0)  // Error
-				{
-					LogWarningF(L"Unable to expand environment strings in: %s", strPath.c_str());
-					break;
-				}
-				if (ret <= bufSize)  // Fits in the buffer
-				{
-					strPath.assign(buffer, ret - 1);
-					break;
-				}
-
-				delete [] buffer;
-				bufSize = ret;
-				buffer = new WCHAR[bufSize];
-			}
-			while (true);
-		}
-
-		delete [] buffer;
 	}
 }

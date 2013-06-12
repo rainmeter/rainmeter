@@ -20,6 +20,7 @@
 #include "MeasureDiskSpace.h"
 #include "Rainmeter.h"
 #include "System.h"
+#include "../Common/PathUtil.h"
 
 enum DRIVETYPE
 {
@@ -188,9 +189,10 @@ void MeasureDiskSpace::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_OldTotalBytes = 0;
 		m_StringValue.clear();
 	}
-	else if (!System::IsPathSeparator(m_Drive[m_Drive.length() - 1]))  // E.g. "C:"
+	else
 	{
-		m_Drive += L'\\';  // A trailing backslash is required.
+		// A trailing backslash is required for GetDiskFreeSpaceEx().
+		PathUtil::AppendBacklashIfMissing(m_Drive);
 	}
 
 	m_Type = (1 == parser.ReadInt(section, L"Type", 0));
