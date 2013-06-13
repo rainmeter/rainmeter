@@ -13,13 +13,13 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="MathParser_Test.cpp">
-      <ExcludedFromBuild>$(ExcludeTestFile)</ExcludedFromBuild>
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="PathUtil_Test.cpp">
-      <ExcludedFromBuild>$(ExcludeTestFile)</ExcludedFromBuild>
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="StringUtil_Test.cpp">
-      <ExcludedFromBuild>$(ExcludeTestFile)</ExcludedFromBuild>
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

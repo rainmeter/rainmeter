@@ -32,13 +32,23 @@
 
   <!-- Macros for unit testing. -->
   <PropertyGroup Label="UserMacros">
-    <ExcludeTestFile>true</ExcludeTestFile>
-    <ExcludeTestFile Condition="'$(Configuration)'=='Debug'">false</ExcludeTestFile>
+    <!-- This is set to true by Build.bat when building full builds. -->
+    <ExcludeTests>false</ExcludeTests>
 
     <!-- Non-static projects must delayload CppUnitTestFramework.dll to avoid the "module not found"
          errors (since CppUnitTestFramework.dll is available only when running tests). -->
     <DelayLoadTestDLL Condition="'$(ConfigurationType)'!='StaticLibrary'">Microsoft.VisualStudio.TestTools.CppUnitTestFramework.dll</DelayLoadTestDLL>
+    <DelayLoadTestDLL Condition="'$(ExcludeTests)'=='true'"></DelayLoadTestDLL>
   </PropertyGroup>
+
+  <ItemDefinitionGroup Condition="'$(ExcludeTests)'=='false'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(VCInstallDir)UnitTest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
 
   <ItemDefinitionGroup>
     <ClCompile>
@@ -58,13 +68,11 @@
 
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(VCInstallDir)UnitTest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <ResourceCompile>
