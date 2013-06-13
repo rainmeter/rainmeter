@@ -16,8 +16,10 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "Test.h"
+#include "CppUnitTest.h"
 #include "MathParser.h"
+
+using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace MathParser {
 

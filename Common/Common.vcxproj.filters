@@ -18,6 +18,5 @@
     <ClInclude Include="StringUtil.h" />
     <ClInclude Include="ControlTemplate.h" />
     <ClInclude Include="MathParser.h" />
-    <ClInclude Include="Test.h" />
   </ItemGroup>
 </Project>
