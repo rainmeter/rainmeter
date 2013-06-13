@@ -20,7 +20,7 @@ echo.
 
 if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & goto END
 call "%VCVARSALL%" x86 > nul
-set MSBUILD="msbuild.exe" /p:PlatformToolset=v110_xp;VisualStudioVersion=11.0;ExcludeTests=false
+set MSBUILD="msbuild.exe" /p:PlatformToolset=v110_xp;VisualStudioVersion=11.0;ExcludeTests=true
 
 if exist "Certificate.bat" call "Certificate.bat" > nul
 set SIGNTOOL="signtool.exe" sign /t http://time.certum.pl /f "%CERTFILE%" /p "%CERTKEY%"
