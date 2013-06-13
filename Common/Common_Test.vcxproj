@@ -12,6 +12,7 @@
     <OutDir>$(IntDir)</OutDir>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="MathParser_Test.cpp" />
     <ClCompile Include="PathUtil_Test.cpp" />
   </ItemGroup>
   <ItemGroup>
