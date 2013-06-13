@@ -12,9 +12,15 @@
     <OutDir>$(IntDir)</OutDir>
   </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="MathParser_Test.cpp" />
-    <ClCompile Include="PathUtil_Test.cpp" />
-    <ClCompile Include="StringUtil_Test.cpp" />
+    <ClCompile Include="MathParser_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTestFile)</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="PathUtil_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTestFile)</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="StringUtil_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTestFile)</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Common.vcxproj">

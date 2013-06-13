@@ -30,16 +30,23 @@
     <OutDir Condition="'$(ConfigurationType)'=='StaticLibrary'">$(IntDir)</OutDir>
   </PropertyGroup>
 
+  <!-- Macros for unit testing. -->
+  <PropertyGroup Label="UserMacros">
+    <ExcludeTestFile>true</ExcludeTestFile>
+    <ExcludeTestFile Condition="'$(Configuration)'=='Debug'">false</ExcludeTestFile>
+
+    <!-- Non-static projects must delayload CppUnitTestFramework.dll to avoid the "module not found"
+         errors (since CppUnitTestFramework.dll is available only when running tests). -->
+    <DelayLoadTestDLL Condition="'$(ConfigurationType)'!='StaticLibrary'">Microsoft.VisualStudio.TestTools.CppUnitTestFramework.dll</DelayLoadTestDLL>
+  </PropertyGroup>
+
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(VCInstallDir)UnitTest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-
       <!-- Set the version macros to 0x0601 (Win7) to avoid using Win8 specific features in the Win8 SDK. -->
       <PreprocessorDefinitions>WIN32;_WINDOWS;WINVER=0x0601;_WIN32_WINNT=0x0601;_WIN32_IE=0x0601;PSAPI_VERSION=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
       <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
@@ -51,11 +58,13 @@
 
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
+      <AdditionalIncludeDirectories>$(VCInstallDir)UnitTest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
     <Link>
+      <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <ResourceCompile>

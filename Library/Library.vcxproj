@@ -23,7 +23,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -35,7 +35,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll</DelayLoadDLLs>
+      <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -88,7 +88,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ConfigParser_Test.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)'=='Release'">true</ExcludedFromBuild>
+      <ExcludedFromBuild>$(ExcludeTestFile)</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="DialogAbout.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
