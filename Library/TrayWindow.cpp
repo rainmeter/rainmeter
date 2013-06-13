@@ -489,15 +489,15 @@ LRESULT CALLBACK TrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 			break;
 
 		case IDM_STARTLOG:
-			Logger::GetInstance().StartLogFile();
+			GetLogger().StartLogFile();
 			break;
 
 		case IDM_STOPLOG:
-			Logger::GetInstance().StopLogFile();
+			GetLogger().StopLogFile();
 			break;
 
 		case IDM_DELETELOGFILE:
-			Logger::GetInstance().DeleteLogFile();
+			GetLogger().DeleteLogFile();
 			break;
 
 		case IDM_DEBUGLOG:
@@ -676,7 +676,7 @@ LRESULT CALLBACK TrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 				return 0;
 
 			case RAINMETER_QUERY_ID_LOG_PATH:
-				sendCopyData(Logger::GetInstance().GetLogFilePath());
+				sendCopyData(GetLogger().GetLogFilePath());
 				return 0;
 
 			case RAINMETER_QUERY_ID_CONFIG_EDITOR:

@@ -112,7 +112,7 @@ BOOL LSLog(int nLevel, LPCWSTR unused, LPCWSTR pszMessage)
 	// Ignore Level::Debug messages from plugins unless in debug mode
 	if (nLevel != (int)Logger::Level::Debug || GetRainmeter().GetDebug())
 	{
-		Logger::GetInstance().Log((Logger::Level)nLevel, pszMessage);
+		GetLogger().Log((Logger::Level)nLevel, pszMessage);
 	}
 
 	return TRUE;

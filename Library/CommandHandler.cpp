@@ -916,7 +916,7 @@ void CommandHandler::DoLogBang(std::vector<std::wstring>& args, MeterWindow* ski
 			}
 		}
 
-		Logger::GetInstance().Log(level, args[0].c_str());
+		GetLogger().Log(level, args[0].c_str());
 	}
 }
 

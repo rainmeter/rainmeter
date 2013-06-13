@@ -263,7 +263,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	if (!m_Window) return 1;
 
-	Logger& logger = Logger::GetInstance();
+	Logger& logger = GetLogger();
 	const WCHAR* iniFile = m_IniFile.c_str();
 
 	// Set file locations
@@ -1415,7 +1415,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_Debug = 0!=parser.ReadInt(L"Rainmeter", L"Debug", 0);
 	
 	// Read Logging settings
-	Logger& logger = Logger::GetInstance();
+	Logger& logger = GetLogger();
 	const bool logging = parser.ReadInt(L"Rainmeter", L"Logging", 0) != 0;
 	logger.SetLogToFile(logging);
 	if (logging)
@@ -1910,7 +1910,7 @@ void Rainmeter::ShowContextMenu(POINT pos, MeterWindow* meterWindow)
 		{
 			SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
 
-			if (_waccess(Logger::GetInstance().GetLogFilePath().c_str(), 0) == -1)
+			if (_waccess(GetLogger().GetLogFilePath().c_str(), 0) == -1)
 			{
 				EnableMenuItem(menu, IDM_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
 				EnableMenuItem(menu, IDM_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
@@ -1920,7 +1920,7 @@ void Rainmeter::ShowContextMenu(POINT pos, MeterWindow* meterWindow)
 			{
 				EnableMenuItem(
 					menu,
-					(Logger::GetInstance().IsLogToFile()) ? IDM_STARTLOG : IDM_STOPLOG,
+					(GetLogger().IsLogToFile()) ? IDM_STARTLOG : IDM_STOPLOG,
 					MF_BYCOMMAND | MF_GRAYED);
 			}
 
@@ -2476,7 +2476,7 @@ void Rainmeter::ChangeSkinIndex(HMENU menu, int index)
 
 void Rainmeter::ShowLogFile()
 {
-	std::wstring logFile = L'"' + Logger::GetInstance().GetLogFilePath();
+	std::wstring logFile = L'"' + GetLogger().GetLogFilePath();
 	logFile += L'"';
 
 	CommandHandler::RunFile(m_SkinEditor.c_str(), logFile.c_str());

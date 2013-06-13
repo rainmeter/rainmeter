@@ -407,7 +407,7 @@ void DialogAbout::TabLog::Initialize()
 	ListView_InsertColumn(item, 2, &lvc);
 
 	// Add stored entires
-	for (const auto& entry : Logger::GetInstance().GetEntries())
+	for (const auto& entry : GetLogger().GetEntries())
 	{
 		AddItem(entry.level, entry.timestamp.c_str(), entry.message.c_str());
 	}

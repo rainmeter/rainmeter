@@ -1898,10 +1898,10 @@ void DialogManage::TabSettings::Initialize()
 
 	Button_SetCheck(GetControl(Id_CheckForUpdatesCheckBox), !GetRainmeter().GetDisableVersionCheck());
 	Button_SetCheck(GetControl(Id_LockSkinsCheckBox), GetRainmeter().GetDisableDragging());
-	Button_SetCheck(GetControl(Id_LogToFileCheckBox), Logger::GetInstance().IsLogToFile());
+	Button_SetCheck(GetControl(Id_LogToFileCheckBox), GetLogger().IsLogToFile());
 	Button_SetCheck(GetControl(Id_VerboseLoggingCheckbox), GetRainmeter().GetDebug());
 
-	BOOL isLogFile = (_waccess(Logger::GetInstance().GetLogFilePath().c_str(), 0) != -1);
+	BOOL isLogFile = (_waccess(GetLogger().GetLogFilePath().c_str(), 0) != -1);
 	EnableWindow(GetControl(Id_ShowLogFileButton), isLogFile);
 	EnableWindow(GetControl(Id_DeleteLogFileButton), isLogFile);
 
@@ -1996,8 +1996,8 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case Id_DeleteLogFileButton:
-		Logger::GetInstance().DeleteLogFile();
-		if (_waccess(Logger::GetInstance().GetLogFilePath().c_str(), 0) == -1)
+		GetLogger().DeleteLogFile();
+		if (_waccess(GetLogger().GetLogFilePath().c_str(), 0) == -1)
 		{
 			Button_SetCheck(GetControl(Id_LogToFileCheckBox), BST_UNCHECKED);
 			EnableWindow(GetControl(Id_ShowLogFileButton), FALSE);
@@ -2006,14 +2006,14 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;
 
 	case Id_LogToFileCheckBox:
-		if (Logger::GetInstance().IsLogToFile())
+		if (GetLogger().IsLogToFile())
 		{
-			Logger::GetInstance().StopLogFile();
+			GetLogger().StopLogFile();
 		}
 		else
 		{
-			Logger::GetInstance().StartLogFile();
-			if (_waccess(Logger::GetInstance().GetLogFilePath().c_str(), 0) != -1)
+			GetLogger().StartLogFile();
+			if (_waccess(GetLogger().GetLogFilePath().c_str(), 0) != -1)
 			{
 				EnableWindow(GetControl(Id_ShowLogFileButton), TRUE);
 				EnableWindow(GetControl(Id_DeleteLogFileButton), TRUE);

@@ -79,10 +79,12 @@ private:
 };
 
 // Convenience functions.
+inline Logger& GetLogger() { return Logger::GetInstance(); }
+
 #define RM_LOGGER_DEFINE_LOG_FUNCTION(name) \
 	inline void Log ## name(const WCHAR* msg) \
 	{ \
-		Logger::GetInstance().Log(Logger::Level::name, msg); \
+		GetLogger().Log(Logger::Level::name, msg); \
 	} \
 /*	\
 	template<typename... Args> \
@@ -99,7 +101,7 @@ RM_LOGGER_DEFINE_LOG_FUNCTION(Debug)
 
 // FIXME: Temporary solution until VS support variadic templates.
 #define RM_LOGGER_LOGF_HELPER(name, format, ...) \
-	Logger::GetInstance().LogF(Logger::Level::name, format, __VA_ARGS__)
+	GetLogger().LogF(Logger::Level::name, format, __VA_ARGS__)
 #define LogErrorF(format, ...) RM_LOGGER_LOGF_HELPER(Error, format, __VA_ARGS__)
 #define LogWarningF(format, ...) RM_LOGGER_LOGF_HELPER(Warning, format, __VA_ARGS__)
 #define LogNoticeF(format, ...) RM_LOGGER_LOGF_HELPER(Notice, format, __VA_ARGS__)
