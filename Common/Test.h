@@ -16,29 +16,23 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "Test.h"
-#include "StringUtil.h"
+#ifndef RM_COMMON_TEST_H
+#define RM_COMMON_TEST_H
 
-namespace StringUtil {
+// This file is meant to be included only by unit testing .cpp files.
 
-TEST_CLASS(Common_StringUtil_Test)
-{
-public:
-	TEST_METHOD(TestWiden)
-	{
-		Assert::AreEqual(Widen("test").c_str(), L"test");
-		Assert::AreEqual(Widen("test", 2).c_str(), L"te");
-		Assert::AreEqual(WidenUTF8("\xd0\xa2\xc4\x94st").c_str(), L"\u0422\u0114st");
-		Assert::AreEqual(WidenUTF8("\xd0\xa2\xc4\x94st", 2).c_str(), L"\u0422");
-	}
+#include "CppUnitTest.h"
 
-	TEST_METHOD(TestNarrow)
-	{
-		Assert::AreEqual(Narrow(L"test").c_str(), "test");
-		Assert::AreEqual(Narrow(L"test", 2).c_str(), "te");
-		Assert::AreEqual(NarrowUTF8(L"\u0422\u0114st").c_str(), "\xd0\xa2\xc4\x94st");
-		Assert::AreEqual(NarrowUTF8(L"\u0422\u0114st", 1).c_str(), "\xd0\xa2");
-	}
-};
+#ifndef _DEBUG
+#error Unit testing is not available in Release builds.
+#endif
 
-}  // namespace StringUtil
+// DLL projects should delay-load the CppUnitTestFramework.dll to avoid "module not found" errors
+// since CppUnitTestFramework.dll is available only when running tests.
+#ifdef _MD
+#pragma comment(linker, "/DELAYLOAD:Microsoft.VisualStudio.TestTools.CppUnitTestFramework.dll")
+#endif
+
+using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+
+#endif

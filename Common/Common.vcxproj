@@ -37,6 +37,7 @@
     <ClInclude Include="Platform.h" />
     <ClInclude Include="RawString.h" />
     <ClInclude Include="StringUtil.h" />
+    <ClInclude Include="Test.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -16,10 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "CppUnitTest.h"
+#include "../Common/Test.h"
 #include "ConfigParser.h"
-
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 TEST_CLASS(Library_ConfigParser_Test)
 {
