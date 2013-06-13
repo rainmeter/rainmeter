@@ -25,8 +25,6 @@
 
 #define NULLCHECK(str) { if ((str) == nullptr) { (str) = L""; } }
 
-extern Rainmeter* g_Rainmeter;
-
 static std::wstring g_Buffer;
 
 LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL replaceMeasures)
@@ -76,7 +74,7 @@ void* __stdcall RmGet(void* rm, int type)
 
 	case RMG_SETTINGSFILE:
 		{
-			return (void*)g_Rainmeter->GetDataFile().c_str();
+			return (void*)GetRainmeter().GetDataFile().c_str();
 		}
 
 	case RMG_SKINNAME:
@@ -103,7 +101,7 @@ void __stdcall RmExecute(void* skin, LPCWSTR command)
 	if (command)
 	{
 		// WM_RAINMETER_EXECUTE used instead of ExecuteCommand for thread-safety
-		SendMessage(g_Rainmeter->GetWindow(), WM_RAINMETER_EXECUTE, (WPARAM)mw, (LPARAM)command);
+		SendMessage(GetRainmeter().GetWindow(), WM_RAINMETER_EXECUTE, (WPARAM)mw, (LPARAM)command);
 	}
 }
 
@@ -112,7 +110,7 @@ BOOL LSLog(int nLevel, LPCWSTR unused, LPCWSTR pszMessage)
 	NULLCHECK(pszMessage);
 
 	// Ignore Level::Debug messages from plugins unless in debug mode
-	if (nLevel != (int)Logger::Level::Debug || g_Rainmeter->GetDebug())
+	if (nLevel != (int)Logger::Level::Debug || GetRainmeter().GetDebug())
 	{
 		Logger::GetInstance().Log((Logger::Level)nLevel, pszMessage);
 	}
@@ -127,7 +125,7 @@ LPCWSTR ReadConfigString(LPCWSTR section, LPCWSTR option, LPCWSTR defValue)
 	NULLCHECK(option);
 	NULLCHECK(defValue);
 
-	ConfigParser* parser = g_Rainmeter->GetCurrentParser();
+	ConfigParser* parser = GetRainmeter().GetCurrentParser();
 	if (parser)
 	{
 		return parser->ReadString(section, option, defValue, false).c_str();
@@ -148,7 +146,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 
 	if (_wcsicmp(command, L"GetConfig") == 0)
 	{
-		MeterWindow* meterWindow = g_Rainmeter->GetMeterWindowByINI(data);
+		MeterWindow* meterWindow = GetRainmeter().GetMeterWindowByINI(data);
 		if (meterWindow)
 		{
 			g_Buffer = L"\"";
@@ -167,7 +165,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 		{
 			const std::wstring& config = subStrings[0];
 
-			MeterWindow* meterWindow = g_Rainmeter->GetMeterWindow(config);
+			MeterWindow* meterWindow = GetRainmeter().GetMeterWindow(config);
 			if (meterWindow)
 			{
 				WCHAR buf1[64];
@@ -187,7 +185,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 		{
 			const std::wstring& config = subStrings[0];
 
-			MeterWindow* meterWindow = g_Rainmeter->GetMeterWindow(config);
+			MeterWindow* meterWindow = GetRainmeter().GetMeterWindow(config);
 			if (meterWindow)
 			{
 				const std::wstring& variable = subStrings[1];
@@ -208,7 +206,7 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 
 		if (subStrings.size() == 3)
 		{
-			MeterWindow* meterWindow = g_Rainmeter->GetMeterWindow(subStrings[0]);
+			MeterWindow* meterWindow = GetRainmeter().GetMeterWindow(subStrings[0]);
 			if (meterWindow)
 			{
 				meterWindow->SetVariable(subStrings[1], subStrings[2]);

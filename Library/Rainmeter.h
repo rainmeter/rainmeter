@@ -90,8 +90,7 @@ public:
 		}
 	};
 
-	Rainmeter();
-	~Rainmeter();
+	static Rainmeter& GetInstance();
 
 	int Initialize(LPCWSTR iniPath, LPCWSTR layout);
 	bool IsAlreadyRunning();
@@ -156,7 +155,7 @@ public:
 
 	HWND GetWindow() { return m_Window; }
 
-	HINSTANCE GetInstance() { return m_Instance; }
+	HINSTANCE GetModuleInstance() { return m_Instance; }
 	HINSTANCE GetResourceInstance() { return m_ResourceInstance; }
 	LCID GetResourceLCID() { return m_ResourceLCID; }
 
@@ -216,6 +215,9 @@ public:
 	friend class DialogManage;
 
 private:
+	Rainmeter();
+	~Rainmeter();
+
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	void ActivateActiveSkins();
@@ -304,6 +306,9 @@ private:
 
 	GlobalOptions m_GlobalOptions;
 };
+
+// Convenience function.
+inline Rainmeter& GetRainmeter() { return Rainmeter::GetInstance(); }
 
 #ifdef LIBRARY_EXPORTS
 #define EXPORT_PLUGIN EXTERN_C

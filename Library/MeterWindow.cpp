@@ -70,8 +70,6 @@ FPDWMGETCOLORIZATIONCOLOR MeterWindow::c_DwmGetColorizationColor = nullptr;
 FPDWMSETWINDOWATTRIBUTE MeterWindow::c_DwmSetWindowAttribute = nullptr;
 FPDWMISCOMPOSITIONENABLED MeterWindow::c_DwmIsCompositionEnabled = nullptr;
 
-extern Rainmeter* g_Rainmeter;
-
 /*
 ** Constructor
 **
@@ -144,7 +142,7 @@ MeterWindow::MeterWindow(const std::wstring& folderPath, const std::wstring& fil
 	m_FontCollection(),
 	m_ToolTipHidden(false)
 {
-	m_Canvas = (Platform::IsAtLeastWinVista() && g_Rainmeter->CanUseD2D()) ?
+	m_Canvas = (Platform::IsAtLeastWinVista() && GetRainmeter().CanUseD2D()) ?
 		(Gfx::Canvas*)new Gfx::CanvasD2D() : (Gfx::Canvas*)new Gfx::CanvasGDIP();
 
 	if (!c_DwmInstance && Platform::IsAtLeastWinVista())
@@ -164,7 +162,7 @@ MeterWindow::MeterWindow(const std::wstring& folderPath, const std::wstring& fil
 		WNDCLASSEX wc = {sizeof(WNDCLASSEX)};
 		wc.style = CS_NOCLOSE | CS_DBLCLKS;
 		wc.lpfnWndProc = InitialWndProc;
-		wc.hInstance = g_Rainmeter->GetInstance();
+		wc.hInstance = GetRainmeter().GetModuleInstance();
 		wc.hCursor = nullptr;  // The cursor should be controlled by using SetCursor() when needed.
 		wc.lpszClassName = METERWINDOW_CLASS_NAME;
 		RegisterClassEx(&wc);
@@ -181,7 +179,7 @@ MeterWindow::~MeterWindow()
 {
 	if (!m_OnCloseAction.empty())
 	{
-		g_Rainmeter->ExecuteCommand(m_OnCloseAction.c_str(), this);
+		GetRainmeter().ExecuteCommand(m_OnCloseAction.c_str(), this);
 	}
 
 	Dispose(false);
@@ -190,7 +188,7 @@ MeterWindow::~MeterWindow()
 
 	if (c_InstanceCount == 0)
 	{
-		UnregisterClass(METERWINDOW_CLASS_NAME, g_Rainmeter->GetInstance());
+		UnregisterClass(METERWINDOW_CLASS_NAME, GetRainmeter().GetModuleInstance());
 
 		if (c_DwmInstance)
 		{
@@ -289,7 +287,7 @@ void MeterWindow::Initialize()
 		CW_USEDEFAULT,
 		nullptr,
 		nullptr,
-		g_Rainmeter->GetInstance(),
+		GetRainmeter().GetModuleInstance(),
 		this);
 
 	setlocale(LC_NUMERIC, "C");
@@ -387,8 +385,8 @@ void MeterWindow::Deactivate()
 {
 	m_State = STATE_CLOSING;
 
-	g_Rainmeter->RemoveMeterWindow(this);
-	g_Rainmeter->AddUnmanagedMeterWindow(this);
+	GetRainmeter().RemoveMeterWindow(this);
+	GetRainmeter().AddUnmanagedMeterWindow(this);
 
 	HideFade();
 	SetTimer(m_Window, TIMER_DEACTIVATE, m_FadeDuration + 50, nullptr);
@@ -403,7 +401,7 @@ void MeterWindow::Refresh(bool init, bool all)
 	if (m_State == STATE_CLOSING) return;
 	m_State = STATE_REFRESHING;
 
-	g_Rainmeter->SetCurrentParser(&m_Parser);
+	GetRainmeter().SetCurrentParser(&m_Parser);
 
 	std::wstring notice = L"Refreshing skin \"" + m_FolderPath;
 	notice += L'\\';
@@ -422,7 +420,7 @@ void MeterWindow::Refresh(bool init, bool all)
 
 	if (!ReadSkin())
 	{
-		g_Rainmeter->DeactivateSkin(this, -1);
+		GetRainmeter().DeactivateSkin(this, -1);
 		return;
 	}
 
@@ -470,13 +468,13 @@ void MeterWindow::Refresh(bool init, bool all)
 
 	SetTimer(m_Window, TIMER_MOUSE, INTERVAL_MOUSE, nullptr);
 
-	g_Rainmeter->SetCurrentParser(nullptr);
+	GetRainmeter().SetCurrentParser(nullptr);
 
 	m_State = STATE_RUNNING;
 
 	if (!m_OnRefreshAction.empty())
 	{
-		g_Rainmeter->ExecuteCommand(m_OnRefreshAction.c_str(), this);
+		GetRainmeter().ExecuteCommand(m_OnRefreshAction.c_str(), this);
 	}
 }
 
@@ -634,7 +632,7 @@ void MeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 		break;
 
 	case ZPOSITION_NORMAL:
-		if (all || !g_Rainmeter->IsNormalStayDesktop()) break;
+		if (all || !GetRainmeter().IsNormalStayDesktop()) break;
 	case ZPOSITION_ONDESKTOP:
 		if (System::GetShowDesktop())
 		{
@@ -685,7 +683,7 @@ void MeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 */
 void MeterWindow::ChangeSingleZPos(ZPOSITION zPos, bool all)
 {
-	if (zPos == ZPOSITION_NORMAL && g_Rainmeter->IsNormalStayDesktop() && (!all || System::GetShowDesktop()))
+	if (zPos == ZPOSITION_NORMAL && GetRainmeter().IsNormalStayDesktop() && (!all || System::GetShowDesktop()))
 	{
 		m_WindowZPosition = zPos;
 
@@ -1794,7 +1792,7 @@ void MeterWindow::ReadOptions()
 
 	const WCHAR* section = m_FolderPath.c_str();
 	ConfigParser parser;
-	parser.Initialize(g_Rainmeter->GetIniFile(), nullptr, section);
+	parser.Initialize(GetRainmeter().GetIniFile(), nullptr, section);
 
 	INT writeFlags = 0;
 	auto addWriteFlag = [&](INT flag)
@@ -1878,7 +1876,7 @@ void MeterWindow::ReadOptions()
 */
 void MeterWindow::WriteOptions(INT setting)
 {
-	const WCHAR* iniFile = g_Rainmeter->GetIniFile().c_str();
+	const WCHAR* iniFile = GetRainmeter().GetIniFile().c_str();
 
 	if (*iniFile)
 	{
@@ -1974,7 +1972,7 @@ bool MeterWindow::ReadSkin()
 	if (_waccess(iniFile.c_str(), 0) == -1)
 	{
 		std::wstring message = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, m_FolderPath.c_str(), m_FileName.c_str());
-		g_Rainmeter->ShowMessage(m_Window, message.c_str(), MB_OK | MB_ICONEXCLAMATION);
+		GetRainmeter().ShowMessage(m_Window, message.c_str(), MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
 
@@ -2000,7 +1998,7 @@ bool MeterWindow::ReadSkin()
 		}
 
 		std::wstring text = GetFormattedString(ID_STR_NEWVERSIONREQUIRED, m_FolderPath.c_str(), m_FileName.c_str(), buffer);
-		g_Rainmeter->ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
+		GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
 
@@ -2131,7 +2129,7 @@ bool MeterWindow::ReadSkin()
 		do
 		{
 			// Try program folder first
-			std::wstring szFontFile = g_Rainmeter->GetPath() + L"Fonts\\";
+			std::wstring szFontFile = GetRainmeter().GetPath() + L"Fonts\\";
 			szFontFile += localFont;
 			if (!m_FontCollection->AddFile(szFontFile.c_str()))
 			{
@@ -2209,7 +2207,7 @@ bool MeterWindow::ReadSkin()
 	if (m_Meters.empty())
 	{
 		std::wstring text = GetFormattedString(ID_STR_NOMETERSINSKIN, m_FolderPath.c_str(), m_FileName.c_str());
-		g_Rainmeter->ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
+		GetRainmeter().ShowMessage(m_Window, text.c_str(), MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
 
@@ -2697,7 +2695,7 @@ void MeterWindow::Update(bool refresh)
 
 		// If our option is to disable when in an RDP session, then check if in an RDP session.
 		// Only redraw if we are not in a remote session
-		if (g_Rainmeter->IsRedrawable())
+		if (GetRainmeter().IsRedrawable())
 		{
 			Redraw();
 		}
@@ -2708,7 +2706,7 @@ void MeterWindow::Update(bool refresh)
 
 	if (!m_OnUpdateAction.empty())
 	{
-		g_Rainmeter->ExecuteCommand(m_OnUpdateAction.c_str(), this);
+		GetRainmeter().ExecuteCommand(m_OnUpdateAction.c_str(), this);
 	}
 }
 
@@ -2769,7 +2767,7 @@ LRESULT MeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case TIMER_MOUSE:
-		if (!g_Rainmeter->IsMenuActive() && !m_Dragging)
+		if (!GetRainmeter().IsMenuActive() && !m_Dragging)
 		{
 			ShowWindowIfAppropriate();
 
@@ -2874,7 +2872,7 @@ LRESULT MeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (m_FadeStartTime == 0)
 		{
 			KillTimer(m_Window, TIMER_DEACTIVATE);
-			g_Rainmeter->RemoveUnmanagedMeterWindow(this);
+			GetRainmeter().RemoveUnmanagedMeterWindow(this);
 			delete this;
 		}
 		break;
@@ -3287,7 +3285,7 @@ LRESULT MeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (wParam)
 	{
 	case IDM_SKIN_EDITSKIN:
-		g_Rainmeter->EditSkinFile(m_FolderPath, m_FileName);
+		GetRainmeter().EditSkinFile(m_FolderPath, m_FileName);
 		break;
 
 	case IDM_SKIN_REFRESH:
@@ -3295,7 +3293,7 @@ LRESULT MeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case IDM_SKIN_OPENSKINSFOLDER:
-		g_Rainmeter->OpenSkinFolder(m_FolderPath);
+		GetRainmeter().OpenSkinFolder(m_FolderPath);
 		break;
 
 	case IDM_SKIN_MANAGESKIN:
@@ -3357,7 +3355,7 @@ LRESULT MeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case IDM_CLOSESKIN:
 		if (m_State != STATE_CLOSING)
 		{
-			g_Rainmeter->DeactivateSkin(this, -1);
+			GetRainmeter().DeactivateSkin(this, -1);
 		}
 		break;
 
@@ -3447,13 +3445,13 @@ LRESULT MeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			if (!action.empty())
 			{
-				g_Rainmeter->ExecuteCommand(action.c_str(), this);
+				GetRainmeter().ExecuteCommand(action.c_str(), this);
 			}
 		}
 		else
 		{
 			// Forward to tray window, which handles all the other commands
-			HWND tray = g_Rainmeter->GetTrayWindow()->GetWindow();
+			HWND tray = GetRainmeter().GetTrayWindow()->GetWindow();
 
 			if (wParam == IDM_QUIT)
 			{
@@ -3660,7 +3658,7 @@ LRESULT MeterWindow::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT MeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (m_WindowDraggable && !g_Rainmeter->GetDisableDragging())
+	if (m_WindowDraggable && !GetRainmeter().GetDisableDragging())
 	{
 		POINT pos;
 		pos.x = GET_X_LPARAM(lParam);
@@ -3700,7 +3698,7 @@ LRESULT MeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam
 
 	if (m_State != STATE_REFRESHING)
 	{
-		if (m_WindowZPosition == ZPOSITION_NORMAL && g_Rainmeter->IsNormalStayDesktop() && System::GetShowDesktop())
+		if (m_WindowZPosition == ZPOSITION_NORMAL && GetRainmeter().IsNormalStayDesktop() && System::GetShowDesktop())
 		{
 			if (!(wp->flags & (SWP_NOOWNERZORDER | SWP_NOACTIVATE)))
 			{
@@ -3745,7 +3743,7 @@ LRESULT MeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam
 				}
 
 				// Snap to other windows
-				for (auto iter = g_Rainmeter->GetAllMeterWindows().cbegin(); iter != g_Rainmeter->GetAllMeterWindows().cend(); ++iter)
+				for (auto iter = GetRainmeter().GetAllMeterWindows().cbegin(); iter != GetRainmeter().GetAllMeterWindows().cend(); ++iter)
 				{
 					if ((*iter).second != this)
 					{
@@ -4228,14 +4226,14 @@ LRESULT MeterWindow::OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_SETFOCUS:
 		if (!m_OnFocusAction.empty())
 		{
-			g_Rainmeter->ExecuteCommand(m_OnFocusAction.c_str(), this);
+			GetRainmeter().ExecuteCommand(m_OnFocusAction.c_str(), this);
 		}
 		break;
 
 	case WM_KILLFOCUS:
 		if (!m_OnUnfocusAction.empty())
 		{
-			g_Rainmeter->ExecuteCommand(m_OnUnfocusAction.c_str(), this);
+			GetRainmeter().ExecuteCommand(m_OnUnfocusAction.c_str(), this);
 		}
 		break;
 	}
@@ -4278,7 +4276,7 @@ LRESULT MeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-	g_Rainmeter->ShowContextMenu(pos, this);
+	GetRainmeter().ShowContextMenu(pos, this);
 
 	return 0;
 }
@@ -4319,7 +4317,7 @@ bool MeterWindow::DoAction(int x, int y, MOUSEACTION action, bool test)
 	{
 		if (!test)
 		{
-			g_Rainmeter->ExecuteCommand(command.c_str(), this);
+			GetRainmeter().ExecuteCommand(command.c_str(), this);
 		}
 
 		return true;
@@ -4355,7 +4353,7 @@ bool MeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 					if (!m_Mouse.GetOverAction().empty())
 					{
 						UINT currCounter = m_MouseMoveCounter;
-						g_Rainmeter->ExecuteCommand(m_Mouse.GetOverAction().c_str(), this);
+						GetRainmeter().ExecuteCommand(m_Mouse.GetOverAction().c_str(), this);
 						return (currCounter == m_MouseMoveCounter);
 					}
 				}
@@ -4392,7 +4390,7 @@ bool MeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 						if (!mouse.GetOverAction().empty())
 						{
 							UINT currCounter = m_MouseMoveCounter;
-							g_Rainmeter->ExecuteCommand(mouse.GetOverAction().c_str(), this);
+							GetRainmeter().ExecuteCommand(mouse.GetOverAction().c_str(), this);
 							return (currCounter == m_MouseMoveCounter);
 						}
 					}
@@ -4418,7 +4416,7 @@ bool MeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 					const Mouse& mouse = (*j)->GetMouse();
 					if (!mouse.GetLeaveAction().empty())
 					{
-						g_Rainmeter->ExecuteCommand(mouse.GetLeaveAction().c_str(), this);
+						GetRainmeter().ExecuteCommand(mouse.GetLeaveAction().c_str(), this);
 						return true;
 					}
 				}
@@ -4441,7 +4439,7 @@ bool MeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 				if (!m_Mouse.GetOverAction().empty())
 				{
 					UINT currCounter = m_MouseMoveCounter;
-					g_Rainmeter->ExecuteCommand(m_Mouse.GetOverAction().c_str(), this);
+					GetRainmeter().ExecuteCommand(m_Mouse.GetOverAction().c_str(), this);
 					return (currCounter == m_MouseMoveCounter);
 				}
 			}
@@ -4461,7 +4459,7 @@ bool MeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 
 				if (!m_Mouse.GetLeaveAction().empty())
 				{
-					g_Rainmeter->ExecuteCommand(m_Mouse.GetLeaveAction().c_str(), this);
+					GetRainmeter().ExecuteCommand(m_Mouse.GetLeaveAction().c_str(), this);
 					return true;
 				}
 			}
@@ -4536,7 +4534,7 @@ LRESULT MeterWindow::OnWake(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (wParam == PBT_APMRESUMEAUTOMATIC && !m_OnWakeAction.empty())
 	{
-		g_Rainmeter->ExecuteCommand(m_OnWakeAction.c_str(), this);
+		GetRainmeter().ExecuteCommand(m_OnWakeAction.c_str(), this);
 	}
 
 	return 0;
@@ -4661,10 +4659,10 @@ LRESULT MeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (pCopyDataStruct && (pCopyDataStruct->dwData == 1) && (pCopyDataStruct->cbData > 0))
 	{
-		if (g_Rainmeter->HasMeterWindow(this))
+		if (GetRainmeter().HasMeterWindow(this))
 		{
 			const WCHAR* command = (const WCHAR*)pCopyDataStruct->lpData;
-			g_Rainmeter->ExecuteCommand(command, this);
+			GetRainmeter().ExecuteCommand(command, this);
 		}
 		else
 		{
@@ -4719,8 +4717,8 @@ void MeterWindow::MakePathAbsolute(std::wstring& path)
 	else
 	{
 		std::wstring absolute;
-		absolute.reserve(g_Rainmeter->GetSkinPath().size() + m_FolderPath.size() + 1 + path.size());
-		absolute = g_Rainmeter->GetSkinPath();
+		absolute.reserve(GetRainmeter().GetSkinPath().size() + m_FolderPath.size() + 1 + path.size());
+		absolute = GetRainmeter().GetSkinPath();
 		absolute += m_FolderPath;
 		absolute += L'\\';
 		absolute += path;
@@ -4730,7 +4728,7 @@ void MeterWindow::MakePathAbsolute(std::wstring& path)
 
 std::wstring MeterWindow::GetFilePath()
 {
-	std::wstring file = g_Rainmeter->GetSkinPath() + m_FolderPath;
+	std::wstring file = GetRainmeter().GetSkinPath() + m_FolderPath;
 	file += L'\\';
 	file += m_FileName;
 	return file;
@@ -4738,7 +4736,7 @@ std::wstring MeterWindow::GetFilePath()
 
 std::wstring MeterWindow::GetRootPath()
 {
-	std::wstring path = g_Rainmeter->GetSkinPath();
+	std::wstring path = GetRainmeter().GetSkinPath();
 
 	std::wstring::size_type loc;
 	if ((loc = m_FolderPath.find_first_of(L'\\')) != std::wstring::npos)

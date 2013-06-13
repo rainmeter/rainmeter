@@ -56,8 +56,6 @@ std::wstring System::c_WorkingDirectory;
 
 std::vector<std::wstring> System::c_IniFileMappings;
 
-extern Rainmeter* g_Rainmeter;
-
 /*
 ** Creates a helper window to detect changes in the system.
 **
@@ -160,7 +158,7 @@ BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonit
 	info.cbSize = sizeof(MONITORINFOEX);
 	GetMonitorInfo(hMonitor, &info);
 
-	if (g_Rainmeter->GetDebug())
+	if (GetRainmeter().GetDebug())
 	{
 		LogDebug(info.szDevice);
 		LogDebugF(L"  Flags    : %s(0x%08X)", (info.dwFlags & MONITORINFOF_PRIMARY) ? L"PRIMARY " : L"", info.dwFlags);
@@ -242,7 +240,7 @@ size_t System::GetMonitorCount()
 void System::SetMultiMonitorInfo()
 {
 	std::vector<MonitorInfo>& monitors = c_Monitors.monitors;
-	bool logging = g_Rainmeter->GetDebug();
+	bool logging = GetRainmeter().GetDebug();
 
 	c_Monitors.vsT = GetSystemMetrics(SM_YVIRTUALSCREEN);
 	c_Monitors.vsL = GetSystemMetrics(SM_XVIRTUALSCREEN);
@@ -530,7 +528,7 @@ void System::UpdateWorkareaInfo()
 
 			(*iter).work = info.rcWork;
 
-			if (g_Rainmeter->GetDebug())
+			if (GetRainmeter().GetDebug())
 			{
 				LogDebugF(L"WorkArea@%i : L=%i, T=%i, R=%i, B=%i (W=%i, H=%i)",
 					i,
@@ -635,7 +633,7 @@ HWND System::GetBackmostTopWindow()
 	// Skip all ZPOSITION_ONDESKTOP, ZPOSITION_BOTTOM, and ZPOSITION_NORMAL windows
 	while (winPos = ::GetNextWindow(winPos, GW_HWNDPREV))
 	{
-		MeterWindow* wnd = g_Rainmeter->GetMeterWindow(winPos);
+		MeterWindow* wnd = GetRainmeter().GetMeterWindow(winPos);
 		if (!wnd ||
 			(wnd->GetWindowZPosition() != ZPOSITION_NORMAL && 
 			wnd->GetWindowZPosition() != ZPOSITION_ONDESKTOP &&
@@ -668,7 +666,7 @@ bool System::BelongToSameProcess(HWND hwndA, HWND hwndB)
 */
 BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
-	bool logging = g_Rainmeter->GetDebug() && DEBUG_VERBOSE;
+	bool logging = GetRainmeter().GetDebug() && DEBUG_VERBOSE;
 	const int classLen = _countof(METERWINDOW_CLASS_NAME) + (DEBUG_VERBOSE ? 32 : 1);
 	WCHAR className[classLen];
 	MeterWindow* Window;
@@ -676,11 +674,11 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 
 	if (GetClassName(hwnd, className, classLen) > 0 &&
 		wcscmp(className, METERWINDOW_CLASS_NAME) == 0 &&
-		(Window = g_Rainmeter->GetMeterWindow(hwnd)))
+		(Window = GetRainmeter().GetMeterWindow(hwnd)))
 	{
 		ZPOSITION zPos = Window->GetWindowZPosition();
 		if (zPos == ZPOSITION_ONDESKTOP ||
-			(zPos == ZPOSITION_NORMAL && g_Rainmeter->IsNormalStayDesktop()) ||
+			(zPos == ZPOSITION_NORMAL && GetRainmeter().IsNormalStayDesktop()) ||
 			zPos == ZPOSITION_ONBOTTOM)
 		{
 			if (lParam)
@@ -719,7 +717,7 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 */
 void System::ChangeZPosInOrder()
 {
-	bool logging = g_Rainmeter->GetDebug() && DEBUG_VERBOSE;
+	bool logging = GetRainmeter().GetDebug() && DEBUG_VERBOSE;
 	std::vector<MeterWindow*> windowsInZOrder;
 
 	if (logging) LogDebug(L"1: ----- BEFORE -----");
@@ -740,7 +738,7 @@ void System::ChangeZPosInOrder()
 		}
 	};
 
-	if (g_Rainmeter->IsNormalStayDesktop())
+	if (GetRainmeter().IsNormalStayDesktop())
 	{
 		resetZPos(ZPOSITION_NORMAL);
 	}
@@ -767,7 +765,7 @@ void System::ChangeZPosInOrder()
 */
 void System::PrepareHelperWindow(HWND WorkerW)
 {
-	bool logging = g_Rainmeter->GetDebug() && DEBUG_VERBOSE;
+	bool logging = GetRainmeter().GetDebug() && DEBUG_VERBOSE;
 
 	SetWindowPos(c_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);  // always on bottom
 
@@ -850,7 +848,7 @@ bool System::CheckDesktopState(HWND WorkerW)
 	{
 		c_ShowDesktop = !c_ShowDesktop;
 
-		if (g_Rainmeter->GetDebug())
+		if (GetRainmeter().GetDebug())
 		{
 			LogDebugF(L"System: \"Show %s\" has been detected.",
 				c_ShowDesktop ? L"desktop" : L"open windows");
@@ -945,10 +943,10 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 		case TIMER_RESUME:
 			KillTimer(hWnd, TIMER_RESUME);
-			if (g_Rainmeter->IsRedrawable())
+			if (GetRainmeter().IsRedrawable())
 			{
-				std::map<std::wstring, MeterWindow*>::const_iterator iter = g_Rainmeter->GetAllMeterWindows().begin();
-				for ( ; iter != g_Rainmeter->GetAllMeterWindows().end(); ++iter)
+				std::map<std::wstring, MeterWindow*>::const_iterator iter = GetRainmeter().GetAllMeterWindows().begin();
+				for ( ; iter != GetRainmeter().GetAllMeterWindows().end(); ++iter)
 				{
 					(*iter).second->RedrawWindow();
 				}
@@ -972,8 +970,8 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			}
 
 			// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
-			std::map<std::wstring, MeterWindow*>::const_iterator iter = g_Rainmeter->GetAllMeterWindows().begin();
-			for ( ; iter != g_Rainmeter->GetAllMeterWindows().end(); ++iter)
+			std::map<std::wstring, MeterWindow*>::const_iterator iter = GetRainmeter().GetAllMeterWindows().begin();
+			for ( ; iter != GetRainmeter().GetAllMeterWindows().end(); ++iter)
 			{
 				PostMessage((*iter).second->GetWindow(), WM_METERWINDOW_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
 			}
@@ -1152,7 +1150,7 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 		Bitmap* bitmap = Bitmap::FromFile(wallpaper.c_str());
 		if (bitmap && bitmap->GetLastStatus() == Ok)
 		{
-			std::wstring file = g_Rainmeter->GetSettingsPath() + L"Wallpaper.bmp";
+			std::wstring file = GetRainmeter().GetSettingsPath() + L"Wallpaper.bmp";
 
 			const CLSID bmpClsid = { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } };
 			if (bitmap->Save(file.c_str(), &bmpClsid) == Ok)

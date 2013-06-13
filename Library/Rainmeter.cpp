@@ -45,8 +45,6 @@ enum INTERVAL
 	INTERVAL_NETSTATS = 120000
 };
 
-Rainmeter* g_Rainmeter; // The module
-
 /*
 ** Initializes Rainmeter.
 **
@@ -95,15 +93,12 @@ int RainmeterMain(LPWSTR cmdLine)
 
 	const WCHAR* iniFile = (*cmdLine && !layout) ? cmdLine : nullptr;
 
-	g_Rainmeter = new Rainmeter;
-	int ret = g_Rainmeter->Initialize(iniFile, layout);
+	auto& rainmeter = GetRainmeter();
+	int ret = rainmeter.Initialize(iniFile, layout);
 	if (ret == 0)
 	{
-		ret = g_Rainmeter->MessagePump();
+		ret = rainmeter.MessagePump();
 	}
-
-	delete g_Rainmeter;
-	g_Rainmeter = nullptr;
 
 	return ret;
 }
@@ -177,6 +172,12 @@ Rainmeter::~Rainmeter()
 	CoUninitialize();
 
 	GdiplusShutdown(m_GDIplusToken);
+}
+
+Rainmeter& Rainmeter::GetInstance()
+{
+	static Rainmeter s_Rainmeter;
+	return s_Rainmeter;
 }
 
 /*
@@ -538,7 +539,7 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 				const WCHAR* data = (const WCHAR*)cds->lpData;
 				if (cds->dwData == 1 && (cds->cbData > 0))
 				{
-					g_Rainmeter->DelayedExecuteCommand(data);
+					GetRainmeter().DelayedExecuteCommand(data);
 				}
 			}
 		}
@@ -549,12 +550,12 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		{
 			MeasureNet::UpdateIFTable();
 			MeasureNet::UpdateStats();
-			g_Rainmeter->WriteStats(false);
+			GetRainmeter().WriteStats(false);
 		}
 		break;
 
 	case WM_RAINMETER_DELAYED_REFRESH_ALL:
-		g_Rainmeter->RefreshAll();
+		GetRainmeter().RefreshAll();
 		break;
 
 	case WM_RAINMETER_DELAYED_EXECUTE:
@@ -562,15 +563,15 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		{
 			// Execute bang
 			WCHAR* bang = (WCHAR*)lParam;
-			g_Rainmeter->ExecuteCommand(bang, nullptr);
+			GetRainmeter().ExecuteCommand(bang, nullptr);
 			free(bang);  // _wcsdup()
 		}
 		break;
 
 	case WM_RAINMETER_EXECUTE:
-		if (g_Rainmeter->HasMeterWindow((MeterWindow*)wParam))
+		if (GetRainmeter().HasMeterWindow((MeterWindow*)wParam))
 		{
-			g_Rainmeter->ExecuteCommand((const WCHAR*)lParam, (MeterWindow*)wParam);
+			GetRainmeter().ExecuteCommand((const WCHAR*)lParam, (MeterWindow*)wParam);
 		}
 		break;
 
@@ -883,7 +884,7 @@ void Rainmeter::ToggleSkin(int folderIndex, int fileIndex)
 	{
 		if (m_SkinFolders[folderIndex].active == fileIndex + 1)
 		{
-			MeterWindow* meterWindow = g_Rainmeter->GetMeterWindow(GetFolderPath(folderIndex));
+			MeterWindow* meterWindow = GetRainmeter().GetMeterWindow(GetFolderPath(folderIndex));
 			DeactivateSkin(meterWindow, folderIndex);
 		}
 		else
@@ -2035,10 +2036,10 @@ int Rainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 	int initialLevel = m_SkinFolders[index].level;
 	int menuIndex = 0;
 
-	const size_t max = g_Rainmeter->m_SkinFolders.size();
+	const size_t max = GetRainmeter().m_SkinFolders.size();
 	while (index < max)
 	{
-		const SkinFolder& skinFolder = g_Rainmeter->m_SkinFolders[index];
+		const SkinFolder& skinFolder = GetRainmeter().m_SkinFolders[index];
 		if (skinFolder.level != initialLevel)
 		{
 			return index - 1;

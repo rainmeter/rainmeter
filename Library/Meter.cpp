@@ -34,8 +34,6 @@
 
 using namespace Gdiplus;
 
-extern Rainmeter* g_Rainmeter;
-
 /*
 ** The constructor
 **
@@ -528,7 +526,7 @@ bool Meter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scale
 void Meter::CreateToolTip(MeterWindow* meterWindow)
 {
 	HWND hMeterWindow = m_MeterWindow->GetWindow();
-	HINSTANCE hInstance = g_Rainmeter->GetInstance();
+	HINSTANCE hInstance = GetRainmeter().GetModuleInstance();
 	DWORD style = WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP;
 
 	if (m_ToolTipType)

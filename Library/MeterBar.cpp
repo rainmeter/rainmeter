@@ -26,8 +26,6 @@
 
 using namespace Gdiplus;
 
-extern Rainmeter* g_Rainmeter;
-
 /*
 ** The constructor
 **

@@ -25,8 +25,6 @@
 #include "../Common/PathUtil.h"
 #include "../Common/Gfx/Canvas.h"
 
-extern Rainmeter* g_Rainmeter;
-
 using namespace Gdiplus;
 
 /*

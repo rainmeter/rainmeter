@@ -23,8 +23,6 @@
 #include "System.h"
 #include "Error.h"
 
-extern Rainmeter* g_Rainmeter;
-
 /*
 ** The constructor
 **
@@ -129,15 +127,15 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	// First try from program path
-	std::wstring pluginFile = g_Rainmeter->GetPluginPath();
+	std::wstring pluginFile = GetRainmeter().GetPluginPath();
 	pluginFile += pluginName;
 	m_Plugin = System::RmLoadLibrary(pluginFile.c_str());
 	if (!m_Plugin)
 	{
-		if (g_Rainmeter->HasUserPluginPath())
+		if (GetRainmeter().HasUserPluginPath())
 		{
 			// Try from settings path
-			pluginFile = g_Rainmeter->GetUserPluginPath();
+			pluginFile = GetRainmeter().GetUserPluginPath();
 			pluginFile += pluginName;
 			m_Plugin = System::RmLoadLibrary(pluginFile.c_str());
 		}

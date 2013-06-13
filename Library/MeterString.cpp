@@ -28,8 +28,6 @@ using namespace Gdiplus;
 #define PI	(3.14159265f)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0f / PI))
 
-extern Rainmeter* g_Rainmeter;
-
 void StringToUpper(std::wstring& str)
 {
 	WCHAR* srcAndDest = &str[0];
@@ -650,7 +648,7 @@ void MeterString::EnumerateInstalledFontFamilies()
 
 void MeterString::InitializeStatic()
 {
-	if (g_Rainmeter->GetDebug())
+	if (GetRainmeter().GetDebug())
 	{
 		LogDebug(L"------------------------------");
 		LogDebug(L"* Font families:");

@@ -23,8 +23,6 @@
 #include "Error.h"
 #include "../Common/Gfx/Canvas.h"
 
-extern Rainmeter* g_Rainmeter;
-
 using namespace Gdiplus;
 
 enum BUTTON_STATE
@@ -257,7 +255,7 @@ bool MeterButton::MouseUp(POINT pos, bool execute)
 	{
 		if (execute && m_Clicked && m_Focus && HitTest2(pos.x, pos.y, true))
 		{
-			g_Rainmeter->ExecuteCommand(m_Command.c_str(), m_MeterWindow);
+			GetRainmeter().ExecuteCommand(m_Command.c_str(), m_MeterWindow);
 		}
 		m_State = BUTTON_STATE_NORMAL;
 		m_Clicked = false;

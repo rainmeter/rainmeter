@@ -27,8 +27,6 @@
 #include "Meter.h"
 #include "resource.h"
 
-extern Rainmeter* g_Rainmeter;
-
 using namespace Gdiplus;
 
 std::unordered_map<std::wstring, std::wstring> ConfigParser::c_MonitorVariables;
@@ -94,13 +92,13 @@ void ConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::
 		return m_BuiltInVariables.insert(std::make_pair(name, value));
 	};
 
-	insertVariable(L"PROGRAMPATH", g_Rainmeter->GetPath());
-	insertVariable(L"PROGRAMDRIVE", g_Rainmeter->GetDrive());
-	insertVariable(L"SETTINGSPATH", g_Rainmeter->GetSettingsPath());
-	insertVariable(L"SKINSPATH", g_Rainmeter->GetSkinPath());
-	insertVariable(L"PLUGINSPATH", g_Rainmeter->GetPluginPath());
+	insertVariable(L"PROGRAMPATH", GetRainmeter().GetPath());
+	insertVariable(L"PROGRAMDRIVE", GetRainmeter().GetDrive());
+	insertVariable(L"SETTINGSPATH", GetRainmeter().GetSettingsPath());
+	insertVariable(L"SKINSPATH", GetRainmeter().GetSkinPath());
+	insertVariable(L"PLUGINSPATH", GetRainmeter().GetPluginPath());
 	insertVariable(L"CURRENTPATH", PathUtil::GetFolderFromFilePath(filename));
-	insertVariable(L"ADDONSPATH", g_Rainmeter->GetAddonPath());
+	insertVariable(L"ADDONSPATH", GetRainmeter().GetAddonPath());
 
 	if (meterWindow)
 	{
@@ -1289,7 +1287,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 {
 	if (depth > 100)	// Is 100 enough to assume the include loop never ends?
 	{
-		g_Rainmeter->ShowMessage(nullptr, GetString(ID_STR_INCLUDEINFINITELOOP), MB_OK | MB_ICONERROR);
+		GetRainmeter().ShowMessage(nullptr, GetString(ID_STR_INCLUDEINFINITELOOP), MB_OK | MB_ICONERROR);
 		return;
 	}
 
@@ -1306,11 +1304,11 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 	if (temporary)
 	{
-		if (g_Rainmeter->GetDebug()) LogDebugF(L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
+		if (GetRainmeter().GetDebug()) LogDebugF(L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
 	}
 	else
 	{
-		if (g_Rainmeter->GetDebug()) LogDebugF(L"Reading file: %s", iniFile.c_str());
+		if (GetRainmeter().GetDebug()) LogDebugF(L"Reading file: %s", iniFile.c_str());
 		iniRead = iniFile;
 	}
 

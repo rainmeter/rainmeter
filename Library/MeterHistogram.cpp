@@ -25,8 +25,6 @@
 
 using namespace Gdiplus;
 
-extern Rainmeter* g_Rainmeter;
-
 TintedImageHelper_DefineOptionArray(MeterHistogram::c_PrimaryOptionArray, L"Primary");
 TintedImageHelper_DefineOptionArray(MeterHistogram::c_SecondaryOptionArray, L"Secondary");
 TintedImageHelper_DefineOptionArray(MeterHistogram::c_BothOptionArray, L"Both");

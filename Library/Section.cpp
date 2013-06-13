@@ -21,8 +21,6 @@
 #include "ConfigParser.h"
 #include "Rainmeter.h"
 
-extern Rainmeter* g_Rainmeter;
-
 /*
 ** The constructor
 **
@@ -84,6 +82,6 @@ void Section::DoUpdateAction()
 {
 	if (!m_OnUpdateAction.empty())
 	{
-		g_Rainmeter->ExecuteCommand(m_OnUpdateAction.c_str(), m_MeterWindow);
+		GetRainmeter().ExecuteCommand(m_OnUpdateAction.c_str(), m_MeterWindow);
 	}
 }

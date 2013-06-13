@@ -22,8 +22,6 @@
 #include "../../MeterWindow.h"
 #include "../../MeterString.h"
 
-extern Rainmeter* g_Rainmeter;
-
 #define DECLARE_SELF(L) \
 	void* selfData = lua_touserdata(L, 1); \
 	if (!selfData) return 0; \
@@ -40,7 +38,7 @@ static int Bang(lua_State* L)
 	if (top == 2)	// 1 argument
 	{
 		parser.ReplaceVariables(bang);
-		g_Rainmeter->ExecuteCommand(bang.c_str(), self);
+		GetRainmeter().ExecuteCommand(bang.c_str(), self);
 	}
 	else
 	{
@@ -56,7 +54,7 @@ static int Bang(lua_State* L)
 				args.push_back(tmpSz);
 			}
 
-			g_Rainmeter->ExecuteBang(bangSz, args, self);
+			GetRainmeter().ExecuteBang(bangSz, args, self);
 		}
 	}
 

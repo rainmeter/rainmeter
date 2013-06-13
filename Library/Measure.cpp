@@ -63,8 +63,6 @@ static const double g_TblScale[2][4] = {
 
 const int MEDIAN_SIZE = 3;
 
-extern Rainmeter* g_Rainmeter;
-
 /*
 ** The constructor
 **
@@ -501,7 +499,7 @@ bool Measure::Update()
 					if (!m_IfEqualCommitted)
 					{
 						m_IfEqualCommitted = true;	// To avoid infinite loop from !Update
-						g_Rainmeter->ExecuteCommand(m_IfEqualAction.c_str(), m_MeterWindow);
+						GetRainmeter().ExecuteCommand(m_IfEqualAction.c_str(), m_MeterWindow);
 					}
 				}
 				else
@@ -517,7 +515,7 @@ bool Measure::Update()
 					if (!m_IfAboveCommitted)
 					{
 						m_IfAboveCommitted = true;	// To avoid infinite loop from !Update
-						g_Rainmeter->ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
+						GetRainmeter().ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
 					}
 				}
 				else
@@ -533,7 +531,7 @@ bool Measure::Update()
 					if (!m_IfBelowCommitted)
 					{
 						m_IfBelowCommitted = true;	// To avoid infinite loop from !Update
-						g_Rainmeter->ExecuteCommand(m_IfBelowAction.c_str(), m_MeterWindow);
+						GetRainmeter().ExecuteCommand(m_IfBelowAction.c_str(), m_MeterWindow);
 					}
 				}
 				else
@@ -771,7 +769,7 @@ void Measure::DoChangeAction(bool execute)
 		{
 			if (m_OldValue->IsChanged(newValue, newStringValue))
 			{
-				g_Rainmeter->ExecuteCommand(m_OnChangeAction.c_str(), m_MeterWindow);
+				GetRainmeter().ExecuteCommand(m_OnChangeAction.c_str(), m_MeterWindow);
 			}
 		}
 		else

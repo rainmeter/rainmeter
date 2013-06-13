@@ -29,8 +29,6 @@ std::vector<ULONG64> MeasureNet::c_OldStatValues;
 FPGETIFTABLE2 MeasureNet::c_GetIfTable2 = nullptr;
 FPFREEMIBTABLE MeasureNet::c_FreeMibTable = nullptr;
 
-extern Rainmeter* g_Rainmeter;
-
 /*
 ** The constructor. This is the base class for the net-meters.
 **
@@ -78,7 +76,7 @@ void MeasureNet::UpdateIFTable()
 				logging = true;
 			}
 
-			if (g_Rainmeter->GetDebug() && logging)
+			if (GetRainmeter().GetDebug() && logging)
 			{
 				LogDebug(L"------------------------------");
 				LogDebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
@@ -171,7 +169,7 @@ void MeasureNet::UpdateIFTable()
 					logging = true;
 				}
 
-				if (g_Rainmeter->GetDebug() && logging)
+				if (GetRainmeter().GetDebug() && logging)
 				{
 					LogDebug(L"------------------------------");
 					LogDebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
@@ -465,17 +463,17 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	if (m_Net == NET_IN)
 	{
 		netName = L"NetInSpeed";
-		value = g_Rainmeter->GetGlobalOptions().netInSpeed;
+		value = GetRainmeter().GetGlobalOptions().netInSpeed;
 	}
 	else if (m_Net == NET_OUT)
 	{
 		netName = L"NetOutSpeed";
-		value = g_Rainmeter->GetGlobalOptions().netOutSpeed;
+		value = GetRainmeter().GetGlobalOptions().netOutSpeed;
 	}
 	else // if (m_Net == NET_TOTAL)
 	{
 		netName = L"NetTotalSpeed";
-		value = g_Rainmeter->GetGlobalOptions().netInSpeed + g_Rainmeter->GetGlobalOptions().netOutSpeed;
+		value = GetRainmeter().GetGlobalOptions().netInSpeed + GetRainmeter().GetGlobalOptions().netOutSpeed;
 	}
 
 	double maxValue = parser.ReadFloat(section, L"MaxValue", -1);
@@ -493,7 +491,7 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Cumulative = 0!=parser.ReadInt(section, L"Cumulative", 0);
 	if (m_Cumulative)
 	{
-		g_Rainmeter->SetNetworkStatisticsTimer();
+		GetRainmeter().SetNetworkStatisticsTimer();
 	}
 
 	if (maxValue == 0.0)
@@ -707,7 +705,7 @@ void MeasureNet::InitializeStatic()
 		}
 	}
 
-	if (g_Rainmeter->GetDebug())
+	if (GetRainmeter().GetDebug())
 	{
 		UpdateIFTable();
 	}
