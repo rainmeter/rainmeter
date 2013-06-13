@@ -25,3 +25,8 @@ When building within Visual Studio, the macro `$(ExcludeTests)` evaluates to `fa
     A unit tested dynamic library project should contain both the actual code and the testing code.
 
     In addition, the `$(DelayLoadTestDLL)` macro should be included in the linker *Delay Loaded Dlls* option. The VS unit testing framework introduces a dependency on *Microsoft.VisualStudio.TestTools.CppUnitTestFramework.dll* for dynamic library projects, which means that omitting the `$(DelayLoadTestDLL)` macro will result in the dynamic library failing to load.
+
+
+### Running tests
+
+When you build the test project, the tests appear in **Test Explorer**. If Test Explorer is not visible, choose **Test** on the Visual Studio menu, choose **Windows**, and then choose **Test Explorer**. From there, you can run all or a subset of the tests.
