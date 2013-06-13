@@ -87,6 +87,9 @@
     <ClCompile Include="ConfigParser.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ConfigParser_Test.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)'=='Release'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="DialogAbout.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
