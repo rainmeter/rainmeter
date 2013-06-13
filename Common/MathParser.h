@@ -18,16 +18,20 @@
 
 // Heavily based on ccalc 0.5.1 by Walery Studennikov <hqsoftware@mail.ru>
 
-#ifndef __MATHPARSER_H__
-#define __MATHPARSER_H__
+#ifndef RM_COMMON_MATHPARSER_H_
+#define RM_COMMON_MATHPARSER_H_
 
-class MeasureCalc;
+#include <Windows.h>
 
 namespace MathParser
 {
+	typedef bool (*GetValueFunc)(const WCHAR* str, int len, double* value, void* context);
+
 	const WCHAR* Check(const WCHAR* formula);
 	const WCHAR* CheckedParse(const WCHAR* formula, double* result);
-	const WCHAR* Parse(const WCHAR* formula, MeasureCalc* calc, double* result);
+	const WCHAR* Parse(
+		const WCHAR* formula, double* result,
+		GetValueFunc getValue = nullptr, void* getValueContext = nullptr);
 
 	bool IsDelimiter(WCHAR ch);
 };

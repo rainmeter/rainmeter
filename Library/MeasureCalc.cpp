@@ -17,9 +17,9 @@
 */
 
 #include "StdAfx.h"
+#include "../Common/MathParser.h"
 #include "MeasureCalc.h"
 #include "Rainmeter.h"
-#include "MathParser.h"
 
 bool MeasureCalc::c_RandSeeded = false;
 
@@ -56,7 +56,7 @@ MeasureCalc::~MeasureCalc()
 */
 void MeasureCalc::UpdateValue()
 {
-	const WCHAR* errMsg = MathParser::Parse(m_Formula.c_str(), this, &m_Value);
+	const WCHAR* errMsg = MathParser::Parse(m_Formula.c_str(), &m_Value, GetMeasureValue, this);
 	if (errMsg != nullptr)
 	{
 		if (!m_ParseError)
@@ -145,9 +145,10 @@ void MeasureCalc::FormulaReplace()
 	while (pos != std::wstring::npos);
 }
 
-bool MeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value)
+bool MeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value, void* context)
 {
-	const std::vector<Measure*>& measures = m_MeterWindow->GetMeasures();
+	auto calc = (MeasureCalc*)context;
+	const std::vector<Measure*>& measures = calc->m_MeterWindow->GetMeasures();
 
 	std::vector<Measure*>::const_iterator iter = measures.begin();
 	for ( ; iter != measures.end(); ++iter)
@@ -162,12 +163,12 @@ bool MeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value)
 
 	if (_wcsnicmp(str, L"counter", len) == 0)
 	{
-		*value = m_MeterWindow->GetUpdateCounter();
+		*value = calc->m_MeterWindow->GetUpdateCounter();
 		return true;
 	}
 	else if (_wcsnicmp(str, L"random", len) == 0)
 	{
-		*value = GetRandom();
+		*value = calc->GetRandom();
 		return true;
 	}
 

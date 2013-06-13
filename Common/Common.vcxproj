@@ -22,6 +22,7 @@
   <ItemGroup>
     <ClCompile Include="ControlTemplate.cpp" />
     <ClCompile Include="Dialog.cpp" />
+    <ClCompile Include="MathParser.cpp" />
     <ClCompile Include="MenuTemplate.cpp" />
     <ClCompile Include="PathUtil.cpp" />
     <ClCompile Include="Platform.cpp" />
@@ -30,6 +31,7 @@
   <ItemGroup>
     <ClInclude Include="ControlTemplate.h" />
     <ClInclude Include="Dialog.h" />
+    <ClInclude Include="MathParser.h" />
     <ClInclude Include="MenuTemplate.h" />
     <ClInclude Include="PathUtil.h" />
     <ClInclude Include="Platform.h" />

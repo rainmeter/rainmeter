@@ -17,9 +17,9 @@
 */
 
 #include "StdAfx.h"
+#include "../Common/MathParser.h"
 #include "../Common/PathUtil.h"
 #include "ConfigParser.h"
-#include "MathParser.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
 #include "System.h"

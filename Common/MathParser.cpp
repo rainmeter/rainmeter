@@ -18,8 +18,8 @@
 
 // Heavily based on ccalc 0.5.1 by Walery Studennikov <hqsoftware@mail.ru>
 
-#include "StdAfx.h"
-#include "MeasureCalc.h"
+#include <string>
+#include <stdint.h>
 #include "MathParser.h"
 
 static const double M_E = 2.7182818284590452354;
@@ -242,12 +242,13 @@ const WCHAR* MathParser::CheckedParse(const WCHAR* formula, double* result)
 	const WCHAR* error = Check(formula);
 	if (!error)
 	{
-		error = Parse(formula, nullptr, result);
+		error = Parse(formula, result);
 	}
 	return error;
 }
 
-const WCHAR* MathParser::Parse(const WCHAR* formula, MeasureCalc* calc, double* result)
+const WCHAR* MathParser::Parse(
+	const WCHAR* formula, double* result, GetValueFunc getValue, void* getValueContext)
 {
 	static WCHAR errorBuffer[128];
 
@@ -400,7 +401,7 @@ const WCHAR* MathParser::Parse(const WCHAR* formula, MeasureCalc* calc, double* 
 				else
 				{
 					double dblval;
-					if (calc && calc->GetMeasureValue(lexer.name, lexer.nameLen, &dblval))
+					if (getValue && getValue(lexer.name, lexer.nameLen, &dblval, getValueContext))
 					{
 						parser.numStack[++parser.valTop] = dblval;
 						break;

@@ -7,6 +7,7 @@
     <ClCompile Include="Platform.cpp" />
     <ClCompile Include="StringUtil.cpp" />
     <ClCompile Include="ControlTemplate.cpp" />
+    <ClCompile Include="MathParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -16,5 +17,6 @@
     <ClInclude Include="RawString.h" />
     <ClInclude Include="StringUtil.h" />
     <ClInclude Include="ControlTemplate.h" />
+    <ClInclude Include="MathParser.h" />
   </ItemGroup>
 </Project>

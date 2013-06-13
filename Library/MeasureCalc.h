@@ -29,13 +29,13 @@ public:
 
 	virtual UINT GetTypeID() { return TypeID<MeasureCalc>(); }
 
-	bool GetMeasureValue(const WCHAR* str, int len, double* value);
-
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 
 private:
+	static bool GetMeasureValue(const WCHAR* str, int len, double* value, void* context);
+
 	void FormulaReplace();
 	int GetRandom();
 

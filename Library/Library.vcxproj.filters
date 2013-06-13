@@ -321,9 +321,6 @@
     <ClCompile Include="Export.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MathParser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Mouse.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -594,9 +591,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Export.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MathParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="lua\lua\luaconf.h">
