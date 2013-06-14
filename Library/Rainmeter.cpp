@@ -99,6 +99,7 @@ int RainmeterMain(LPWSTR cmdLine)
 	{
 		ret = rainmeter.MessagePump();
 	}
+	rainmeter.Finalize();
 
 	return ret;
 }
@@ -143,32 +144,6 @@ Rainmeter::Rainmeter() :
 */
 Rainmeter::~Rainmeter()
 {
-	KillTimer(m_Window, TIMER_NETSTATS);
-
-	DeleteAllUnmanagedMeterWindows();
-	DeleteAllMeterWindows();
-
-	delete m_TrayWindow;
-
-	System::Finalize();
-
-	MeasureNet::UpdateIFTable();
-	MeasureNet::UpdateStats();
-	WriteStats(true);
-
-	MeasureNet::FinalizeStatic();
-	MeasureCPU::FinalizeStatic();
-	MeterString::FinalizeStatic();
-
-	// Change the work area back
-	if (m_DesktopWorkAreaChanged)
-	{
-		UpdateDesktopWorkArea(true);
-	}
-
-	if (m_ResourceInstance) FreeLibrary(m_ResourceInstance);
-	if (m_Mutex) ReleaseMutex(m_Mutex);
-
 	CoUninitialize();
 
 	GdiplusShutdown(m_GDIplusToken);
@@ -439,6 +414,35 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	}
 
 	return 0;	// All is OK
+}
+
+void Rainmeter::Finalize()
+{
+	KillTimer(m_Window, TIMER_NETSTATS);
+
+	DeleteAllUnmanagedMeterWindows();
+	DeleteAllMeterWindows();
+
+	delete m_TrayWindow;
+
+	System::Finalize();
+
+	MeasureNet::UpdateIFTable();
+	MeasureNet::UpdateStats();
+	WriteStats(true);
+
+	MeasureNet::FinalizeStatic();
+	MeasureCPU::FinalizeStatic();
+	MeterString::FinalizeStatic();
+
+	// Change the work area back
+	if (m_DesktopWorkAreaChanged)
+	{
+		UpdateDesktopWorkArea(true);
+	}
+
+	if (m_ResourceInstance) FreeLibrary(m_ResourceInstance);
+	if (m_Mutex) ReleaseMutex(m_Mutex);
 }
 
 bool Rainmeter::IsAlreadyRunning()

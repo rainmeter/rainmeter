@@ -93,6 +93,8 @@ public:
 	static Rainmeter& GetInstance();
 
 	int Initialize(LPCWSTR iniPath, LPCWSTR layout);
+	void Finalize();
+
 	bool IsAlreadyRunning();
 	int MessagePump();
 
