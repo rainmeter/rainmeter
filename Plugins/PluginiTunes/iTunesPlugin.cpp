@@ -23,8 +23,6 @@
 #include <map>
 #include <time.h>
 
-#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
-
 const int VOLUME_STEP = 5;
 
 /* The exported functions */

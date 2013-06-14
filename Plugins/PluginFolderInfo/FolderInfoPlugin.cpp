@@ -21,7 +21,6 @@
 #include <algorithm>
 #include "FolderInfo.h"
 #include "../API/RainmeterAPI.h"
-#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 enum MeasureType
 {

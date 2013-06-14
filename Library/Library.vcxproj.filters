@@ -386,9 +386,6 @@
     <ClInclude Include="ConfigParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DisableThreadLibraryCalls.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Error.h">
       <Filter>Header Files</Filter>
     </ClInclude>

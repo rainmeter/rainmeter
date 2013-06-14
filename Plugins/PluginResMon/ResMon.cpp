@@ -28,7 +28,6 @@
 #include <psapi.h>
 #include "../../Common/RawString.h"
 #include "../../Library/Export.h"	// Rainmeter's exported functions
-#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 // system resources that can be counted
 enum MEASURETYPE

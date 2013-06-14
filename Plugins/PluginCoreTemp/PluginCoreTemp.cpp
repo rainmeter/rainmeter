@@ -20,7 +20,6 @@
 #include <wchar.h>
 #include "CoreTempProxy.h"
 #include "../../Library/Export.h"	// Rainmeter's exported functions
-#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 typedef enum eMeasureType
 {

@@ -310,7 +310,6 @@
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="DialogAbout.h" />
-    <ClInclude Include="DisableThreadLibraryCalls.h" />
     <ClInclude Include="Error.h" />
     <ClInclude Include="Group.h" />
     <ClInclude Include="Litestep.h" />

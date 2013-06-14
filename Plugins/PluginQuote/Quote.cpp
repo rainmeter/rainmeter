@@ -22,7 +22,6 @@
 #include <time.h>
 #include <shlwapi.h>
 #include "../API/RainmeterAPI.h"
-#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 #include "../../Common/StringUtil.h"
 
 #define BUFFER_SIZE 4096

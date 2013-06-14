@@ -26,7 +26,6 @@
 #include <process.h>
 #include "../../Library/pcre-8.10/config.h"
 #include "../../Library/pcre-8.10/pcre.h"
-#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 #include "../../Common/StringUtil.h"
 #include "../API/RainmeterAPI.h"
 

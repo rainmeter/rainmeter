@@ -20,8 +20,6 @@
 #include <stdio.h>
 #include "../../Library/Export.h"	// Rainmeter's exported functions
 
-#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
-
 
 #pragma pack(push, 1)
 struct SpeedFanData

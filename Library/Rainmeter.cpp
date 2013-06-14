@@ -32,8 +32,6 @@
 #include "UpdateCheck.h"
 #include "../Version.h"
 
-#include "DisableThreadLibraryCalls.h"	// contains DllMain entry point
-
 using namespace Gdiplus;
 
 enum TIMER

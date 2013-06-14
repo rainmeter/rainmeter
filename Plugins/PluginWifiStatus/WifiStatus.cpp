@@ -20,7 +20,6 @@
 #include <string>
 #include <wlanapi.h>
 #include "../API/RainmeterAPI.h"
-#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 enum MEASURETYPE
 {

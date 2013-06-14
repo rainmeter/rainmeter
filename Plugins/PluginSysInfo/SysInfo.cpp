@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include "../API/RainmeterAPI.h"
 #include "../../Library/Export.h"
-#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 typedef struct
 {

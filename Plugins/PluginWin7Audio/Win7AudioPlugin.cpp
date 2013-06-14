@@ -24,7 +24,6 @@
 #include <Functiondiscoverykeys_devpkey.h>
 #include "PolicyConfig.h"
 #include "../API/RainmeterAPI.h"
-#include "../../Library/DisableThreadLibraryCalls.h"	// contains DllMain entry point
 
 #define SAFE_RELEASE(punk)  \
 			  if ((punk) != nullptr) { (punk)->Release(); (punk) = nullptr; }
