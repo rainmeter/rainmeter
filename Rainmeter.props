@@ -37,7 +37,9 @@
 
     <!-- Non-static projects must delayload CppUnitTestFramework.dll to avoid the "module not found"
          errors (since CppUnitTestFramework.dll is available only when running tests). -->
-    <DelayLoadTestDLL Condition="'$(ConfigurationType)'!='StaticLibrary'">Microsoft.VisualStudio.TestTools.CppUnitTestFramework.dll</DelayLoadTestDLL>
+    <DelayLoadTestDLL>Microsoft.VisualStudio.TestTools.CppUnitTestFramework.dll</DelayLoadTestDLL>
+    <DelayLoadTestDLL Condition="'$(Platform)'=='x64'">Microsoft.VisualStudio.TestTools.CppUnitTestFramework.x64.dll</DelayLoadTestDLL>
+    <DelayLoadTestDLL Condition="'$(ConfigurationType)'=='StaticLibrary'"></DelayLoadTestDLL>
     <DelayLoadTestDLL Condition="'$(ExcludeTests)'=='true'"></DelayLoadTestDLL>
   </PropertyGroup>
 
