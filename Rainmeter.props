@@ -33,7 +33,7 @@
   <!-- Macros for unit testing. -->
   <PropertyGroup Label="UserMacros">
     <!-- This is set to true by Build.bat when building full builds. -->
-    <ExcludeTests>true</ExcludeTests>
+    <ExcludeTests>false</ExcludeTests>
 
     <!-- Non-static projects must delayload CppUnitTestFramework.dll to avoid the "module not found"
          errors (since CppUnitTestFramework.dll is available only when running tests). -->
