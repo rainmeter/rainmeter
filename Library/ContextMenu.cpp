@@ -65,135 +65,125 @@ void ContextMenu::ShowMenu(POINT pos, MeterWindow* meterWindow)
 		MENU_ITEM(IDM_QUIT, ID_STR_EXIT)
 	};
 
-	if (m_MenuActive || (meterWindow && meterWindow->IsClosing()))
-	{
-		return;
-	}
-
-	Rainmeter& rainmeter = GetRainmeter();
-
-	m_MenuActive = true;
+	if (m_MenuActive || (meterWindow && meterWindow->IsClosing())) return;
 
 	// Show context menu, if no actions were executed
 	HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
-	if (menu)
+	if (!menu) return;
+
+	m_MenuActive = true;
+	Rainmeter& rainmeter = GetRainmeter();
+
+	SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
+
+	if (_waccess(GetLogger().GetLogFilePath().c_str(), 0) == -1)
 	{
-		SetMenuDefaultItem(menu, IDM_MANAGE, MF_BYCOMMAND);
-
-		if (_waccess(GetLogger().GetLogFilePath().c_str(), 0) == -1)
-		{
-			EnableMenuItem(menu, IDM_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
-			EnableMenuItem(menu, IDM_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
-			EnableMenuItem(menu, IDM_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
-		}
-		else
-		{
-			EnableMenuItem(
-				menu,
-				(GetLogger().IsLogToFile()) ? IDM_STARTLOG : IDM_STOPLOG,
-				MF_BYCOMMAND | MF_GRAYED);
-		}
-
-		if (rainmeter.m_Debug)
-		{
-			CheckMenuItem(menu, IDM_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
-		}
-
-		HMENU allSkinsMenu = GetSubMenu(menu, 4);
-		if (allSkinsMenu)
-		{
-			if (!rainmeter.m_SkinRegistry.IsEmpty())
-			{
-				DeleteMenu(allSkinsMenu, 0, MF_BYPOSITION);  // "No skins available" menuitem
-				CreateAllSkinsMenu(allSkinsMenu);
-			}
-
-			if (rainmeter.m_DisableDragging)
-			{
-				CheckMenuItem(allSkinsMenu, IDM_DISABLEDRAG, MF_BYCOMMAND | MF_CHECKED);
-			}
-		}
-
-		HMENU layoutMenu = GetSubMenu(menu, 5);
-		if (layoutMenu)
-		{
-			if (!rainmeter.m_Layouts.empty())
-			{
-				DeleteMenu(layoutMenu, 0, MF_BYPOSITION);  // "No layouts available" menuitem
-				CreateLayoutMenu(layoutMenu);
-			}
-		}
-
-		if (meterWindow)
-		{
-			HMENU rainmeterMenu = menu;
-			menu = CreateSkinMenu(meterWindow, 0, allSkinsMenu);
-
-			InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_POPUP, (UINT_PTR)rainmeterMenu, L"Rainmeter");
-			InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_SEPARATOR, 0, nullptr);
-		}
-		else
-		{
-			InsertMenu(menu, 12, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
-
-			// Create a menu for all active skins
-			int index = 0;
-			std::map<std::wstring, MeterWindow*>::const_iterator iter = rainmeter.m_MeterWindows.begin();
-			for (; iter != rainmeter.m_MeterWindows.end(); ++iter)
-			{
-				MeterWindow* mw = ((*iter).second);
-				HMENU skinMenu = CreateSkinMenu(mw, index, allSkinsMenu);
-				InsertMenu(menu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetFolderPath().c_str());
-				++index;
-			}
-
-			// Add update notification item
-			if (rainmeter.m_NewVersion)
-			{
-				InsertMenu(menu, 0, MF_BYPOSITION, IDM_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE));
-				HiliteMenuItem(rainmeter.GetTrayWindow()->GetWindow(), menu, 0, MF_BYPOSITION | MF_HILITE);
-				InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
-			}
-		}
-
-		HWND hWnd = WindowFromPoint(pos);
-		if (hWnd != nullptr)
-		{
-			MeterWindow* mw = rainmeter.GetMeterWindow(hWnd);
-			if (mw)
-			{
-				// Cancel the mouse event beforehand
-				mw->SetMouseLeaveEvent(true);
-			}
-		}
-
-		// Set the window to foreground
-		hWnd = meterWindow ? meterWindow->GetWindow() : rainmeter.m_TrayWindow->GetWindow();
-		HWND hWndForeground = GetForegroundWindow();
-		if (hWndForeground != hWnd)
-		{
-			DWORD foregroundThreadID = GetWindowThreadProcessId(hWndForeground, nullptr);
-			DWORD currentThreadID = GetCurrentThreadId();
-			AttachThreadInput(currentThreadID, foregroundThreadID, TRUE);
-			SetForegroundWindow(hWnd);
-			AttachThreadInput(currentThreadID, foregroundThreadID, FALSE);
-		}
-
-		// Show context menu
-		TrackPopupMenu(
+		EnableMenuItem(menu, IDM_SHOWLOGFILE, MF_BYCOMMAND | MF_GRAYED);
+		EnableMenuItem(menu, IDM_DELETELOGFILE, MF_BYCOMMAND | MF_GRAYED);
+		EnableMenuItem(menu, IDM_STOPLOG, MF_BYCOMMAND | MF_GRAYED);
+	}
+	else
+	{
+		EnableMenuItem(
 			menu,
-			TPM_RIGHTBUTTON | TPM_LEFTALIGN | (*GetString(ID_STR_ISRTL) == L'1' ? TPM_LAYOUTRTL : 0),
-			pos.x,
-			pos.y,
-			0,
-			hWnd,
-			nullptr);
+			(GetLogger().IsLogToFile()) ? IDM_STARTLOG : IDM_STOPLOG,
+			MF_BYCOMMAND | MF_GRAYED);
+	}
 
-		if (meterWindow)
+	if (rainmeter.m_Debug)
+	{
+		CheckMenuItem(menu, IDM_DEBUGLOG, MF_BYCOMMAND | MF_CHECKED);
+	}
+
+	HMENU allSkinsMenu = GetSubMenu(menu, 4);
+	if (allSkinsMenu)
+	{
+		if (!rainmeter.m_SkinRegistry.IsEmpty())
 		{
-			DestroyMenu(menu);
+			DeleteMenu(allSkinsMenu, 0, MF_BYPOSITION);  // "No skins available" menuitem
+			CreateAllSkinsMenu(allSkinsMenu);
+		}
+
+		if (rainmeter.m_DisableDragging)
+		{
+			CheckMenuItem(allSkinsMenu, IDM_DISABLEDRAG, MF_BYCOMMAND | MF_CHECKED);
 		}
 	}
+
+	HMENU layoutMenu = GetSubMenu(menu, 5);
+	if (layoutMenu)
+	{
+		if (!rainmeter.m_Layouts.empty())
+		{
+			DeleteMenu(layoutMenu, 0, MF_BYPOSITION);  // "No layouts available" menuitem
+			CreateLayoutMenu(layoutMenu);
+		}
+	}
+
+	if (meterWindow)
+	{
+		HMENU rainmeterMenu = menu;
+		menu = CreateSkinMenu(meterWindow, 0, allSkinsMenu);
+
+		InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_POPUP, (UINT_PTR)rainmeterMenu, L"Rainmeter");
+		InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_SEPARATOR, 0, nullptr);
+	}
+	else
+	{
+		InsertMenu(menu, 12, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+
+		// Create a menu for all active skins
+		int index = 0;
+		std::map<std::wstring, MeterWindow*>::const_iterator iter = rainmeter.m_MeterWindows.begin();
+		for (; iter != rainmeter.m_MeterWindows.end(); ++iter)
+		{
+			MeterWindow* mw = ((*iter).second);
+			HMENU skinMenu = CreateSkinMenu(mw, index, allSkinsMenu);
+			InsertMenu(menu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetFolderPath().c_str());
+			++index;
+		}
+
+		// Add update notification item
+		if (rainmeter.m_NewVersion)
+		{
+			InsertMenu(menu, 0, MF_BYPOSITION, IDM_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE));
+			HiliteMenuItem(rainmeter.GetTrayWindow()->GetWindow(), menu, 0, MF_BYPOSITION | MF_HILITE);
+			InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+		}
+	}
+
+	HWND hWnd = WindowFromPoint(pos);
+	if (hWnd != nullptr)
+	{
+		MeterWindow* mw = rainmeter.GetMeterWindow(hWnd);
+		if (mw)
+		{
+			// Cancel the mouse event beforehand
+			mw->SetMouseLeaveEvent(true);
+		}
+	}
+
+	// Set the window to foreground
+	hWnd = meterWindow ? meterWindow->GetWindow() : rainmeter.m_TrayWindow->GetWindow();
+	HWND hWndForeground = GetForegroundWindow();
+	if (hWndForeground != hWnd)
+	{
+		const DWORD foregroundThreadID = GetWindowThreadProcessId(hWndForeground, nullptr);
+		const DWORD currentThreadID = GetCurrentThreadId();
+		AttachThreadInput(currentThreadID, foregroundThreadID, TRUE);
+		SetForegroundWindow(hWnd);
+		AttachThreadInput(currentThreadID, foregroundThreadID, FALSE);
+	}
+
+	// Show context menu
+	TrackPopupMenu(
+		menu,
+		TPM_RIGHTBUTTON | TPM_LEFTALIGN | (*GetString(ID_STR_ISRTL) == L'1' ? TPM_LAYOUTRTL : 0),
+		pos.x,
+		pos.y,
+		0,
+		hWnd,
+		nullptr);
 
 	DestroyMenu(menu);
 
@@ -258,243 +248,244 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 	};
 
 	HMENU skinMenu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
-	if (skinMenu)
+	if (!skinMenu) return nullptr;
+
+	// Tick the position
+	HMENU settingsMenu = GetSubMenu(skinMenu, 4);
+	if (settingsMenu)
 	{
-		// Tick the position
-		HMENU settingsMenu = GetSubMenu(skinMenu, 4);
-		if (settingsMenu)
+		HMENU posMenu = GetSubMenu(settingsMenu, 0);
+		if (posMenu)
 		{
-			HMENU posMenu = GetSubMenu(settingsMenu, 0);
-			if (posMenu)
+			const UINT checkPos = IDM_SKIN_NORMAL - (UINT)meterWindow->GetWindowZPosition();
+			CheckMenuRadioItem(posMenu, checkPos, checkPos, checkPos, MF_BYCOMMAND);
+
+			if (meterWindow->GetXFromRight()) CheckMenuItem(posMenu, IDM_SKIN_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
+			if (meterWindow->GetYFromBottom()) CheckMenuItem(posMenu, IDM_SKIN_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
+			if (meterWindow->GetXPercentage()) CheckMenuItem(posMenu, IDM_SKIN_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
+			if (meterWindow->GetYPercentage()) CheckMenuItem(posMenu, IDM_SKIN_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
+
+			HMENU monitorMenu = GetSubMenu(posMenu, 0);
+			if (monitorMenu)
 			{
-				UINT checkPos = IDM_SKIN_NORMAL - (UINT)meterWindow->GetWindowZPosition();
-				CheckMenuRadioItem(posMenu, checkPos, checkPos, checkPos, MF_BYCOMMAND);
-
-				if (meterWindow->GetXFromRight()) CheckMenuItem(posMenu, IDM_SKIN_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
-				if (meterWindow->GetYFromBottom()) CheckMenuItem(posMenu, IDM_SKIN_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
-				if (meterWindow->GetXPercentage()) CheckMenuItem(posMenu, IDM_SKIN_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
-				if (meterWindow->GetYPercentage()) CheckMenuItem(posMenu, IDM_SKIN_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
-
-				HMENU monitorMenu = GetSubMenu(posMenu, 0);
-				if (monitorMenu)
-				{
-					CreateMonitorMenu(monitorMenu, meterWindow);
-				}
+				CreateMonitorMenu(monitorMenu, meterWindow);
 			}
+		}
 
-			// Tick the transparency
-			HMENU alphaMenu = GetSubMenu(settingsMenu, 1);
-			if (alphaMenu)
-			{
-				UINT checkPos = (UINT)(10 - meterWindow->GetAlphaValue() / 25.5);
-				checkPos = min(9, checkPos);
-				checkPos = max(0, checkPos);
-				CheckMenuRadioItem(alphaMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
+		// Tick the transparency
+		HMENU alphaMenu = GetSubMenu(settingsMenu, 1);
+		if (alphaMenu)
+		{
+			UINT checkPos = (UINT)(10 - meterWindow->GetAlphaValue() / 25.5);
+			checkPos = min(9, checkPos);
+			checkPos = max(0, checkPos);
+			CheckMenuRadioItem(alphaMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
 
-				switch (meterWindow->GetWindowHide())
-				{
-				case HIDEMODE_FADEIN:
-					CheckMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_CHECKED);
-					EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
-					break;
-
-				case HIDEMODE_FADEOUT:
-					CheckMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_CHECKED);
-					EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
-					break;
-
-				case HIDEMODE_HIDE:
-					EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
-					EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
-					break;
-				}
-			}
-
-			// Tick the settings
 			switch (meterWindow->GetWindowHide())
 			{
-			case HIDEMODE_HIDE:
-				CheckMenuItem(settingsMenu, IDM_SKIN_HIDEONMOUSE, MF_BYCOMMAND | MF_CHECKED);
-				break;
-
 			case HIDEMODE_FADEIN:
+				CheckMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_CHECKED);
+				EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
+				break;
+
 			case HIDEMODE_FADEOUT:
-				EnableMenuItem(settingsMenu, IDM_SKIN_HIDEONMOUSE, MF_BYCOMMAND | MF_GRAYED);
+				CheckMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_CHECKED);
+				EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
+				break;
+
+			case HIDEMODE_HIDE:
+				EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_GRAYED);
+				EnableMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEOUT, MF_BYCOMMAND | MF_GRAYED);
 				break;
 			}
-
-			if (meterWindow->GetSnapEdges())
-			{
-				CheckMenuItem(settingsMenu, IDM_SKIN_SNAPTOEDGES, MF_BYCOMMAND | MF_CHECKED);
-			}
-
-			if (meterWindow->GetSavePosition())
-			{
-				CheckMenuItem(settingsMenu, IDM_SKIN_REMEMBERPOSITION, MF_BYCOMMAND | MF_CHECKED);
-			}
-
-			if (GetRainmeter().m_DisableDragging)
-			{
-				EnableMenuItem(settingsMenu, IDM_SKIN_DRAGGABLE, MF_BYCOMMAND | MF_GRAYED);
-			}
-			else if (meterWindow->GetWindowDraggable())
-			{
-				CheckMenuItem(settingsMenu, IDM_SKIN_DRAGGABLE, MF_BYCOMMAND | MF_CHECKED);
-			}
-
-			if (meterWindow->GetClickThrough())
-			{
-				CheckMenuItem(settingsMenu, IDM_SKIN_CLICKTHROUGH, MF_BYCOMMAND | MF_CHECKED);
-			}
-
-			if (meterWindow->GetKeepOnScreen())
-			{
-				CheckMenuItem(settingsMenu, IDM_SKIN_KEEPONSCREEN, MF_BYCOMMAND | MF_CHECKED);
-			}
 		}
 
-		// Add the name of the Skin to the menu
-		const std::wstring& skinName = meterWindow->GetFolderPath();
-		ModifyMenu(skinMenu, IDM_SKIN_OPENSKINSFOLDER, MF_BYCOMMAND, IDM_SKIN_OPENSKINSFOLDER, skinName.c_str());
-		SetMenuDefaultItem(skinMenu, IDM_SKIN_OPENSKINSFOLDER, FALSE);
-
-		// Remove dummy menuitem from the variants menu
-		HMENU variantsMenu = GetSubMenu(skinMenu, 2);
-		if (variantsMenu)
+		// Tick the settings
+		switch (meterWindow->GetWindowHide())
 		{
-			DeleteMenu(variantsMenu, 0, MF_BYPOSITION);
+		case HIDEMODE_HIDE:
+			CheckMenuItem(settingsMenu, IDM_SKIN_HIDEONMOUSE, MF_BYCOMMAND | MF_CHECKED);
+			break;
+
+		case HIDEMODE_FADEIN:
+		case HIDEMODE_FADEOUT:
+			EnableMenuItem(settingsMenu, IDM_SKIN_HIDEONMOUSE, MF_BYCOMMAND | MF_GRAYED);
+			break;
 		}
 
-		// Give the menuitem the unique id that depends on the skin
-		ChangeSkinIndex(skinMenu, index);
-
-		// Add the variants menu
-		if (variantsMenu)
+		if (meterWindow->GetSnapEdges())
 		{
-			const SkinRegistry::Folder& skinFolder = *GetRainmeter().m_SkinRegistry.FindFolder(skinName);
-			for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
-			{
-				InsertMenu(variantsMenu, i, MF_BYPOSITION, skinFolder.baseID + i, skinFolder.files[i].c_str());
-			}
-
-			if (skinFolder.active)
-			{
-				UINT checkPos = skinFolder.active - 1;
-				CheckMenuRadioItem(variantsMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
-			}
+			CheckMenuItem(settingsMenu, IDM_SKIN_SNAPTOEDGES, MF_BYCOMMAND | MF_CHECKED);
 		}
 
-		// Add skin root menu
-		int itemCount = GetMenuItemCount(menu);
-		if (itemCount > 0)
+		if (meterWindow->GetSavePosition())
 		{
-			std::wstring root = meterWindow->GetFolderPath();
-			std::wstring::size_type pos = root.find_first_of(L'\\');
-			if (pos != std::wstring::npos)
-			{
-				root.erase(pos);
-			}
+			CheckMenuItem(settingsMenu, IDM_SKIN_REMEMBERPOSITION, MF_BYCOMMAND | MF_CHECKED);
+		}
 
-			for (int i = 0; i < itemCount; ++i)
-			{
-				UINT state = GetMenuState(menu, i, MF_BYPOSITION);
-				if (state == 0xFFFFFFFF || (state & MF_POPUP) == 0) break;
+		if (GetRainmeter().m_DisableDragging)
+		{
+			EnableMenuItem(settingsMenu, IDM_SKIN_DRAGGABLE, MF_BYCOMMAND | MF_GRAYED);
+		}
+		else if (meterWindow->GetWindowDraggable())
+		{
+			CheckMenuItem(settingsMenu, IDM_SKIN_DRAGGABLE, MF_BYCOMMAND | MF_CHECKED);
+		}
 
-				WCHAR buffer[MAX_PATH];
-				if (GetMenuString(menu, i, buffer, MAX_PATH, MF_BYPOSITION))
+		if (meterWindow->GetClickThrough())
+		{
+			CheckMenuItem(settingsMenu, IDM_SKIN_CLICKTHROUGH, MF_BYCOMMAND | MF_CHECKED);
+		}
+
+		if (meterWindow->GetKeepOnScreen())
+		{
+			CheckMenuItem(settingsMenu, IDM_SKIN_KEEPONSCREEN, MF_BYCOMMAND | MF_CHECKED);
+		}
+	}
+
+	// Add the name of the Skin to the menu
+	const std::wstring& skinName = meterWindow->GetFolderPath();
+	ModifyMenu(skinMenu, IDM_SKIN_OPENSKINSFOLDER, MF_BYCOMMAND, IDM_SKIN_OPENSKINSFOLDER, skinName.c_str());
+	SetMenuDefaultItem(skinMenu, IDM_SKIN_OPENSKINSFOLDER, FALSE);
+
+	// Remove dummy menuitem from the variants menu
+	HMENU variantsMenu = GetSubMenu(skinMenu, 2);
+	if (variantsMenu)
+	{
+		DeleteMenu(variantsMenu, 0, MF_BYPOSITION);
+	}
+
+	// Give the menuitem the unique id that depends on the skin
+	ChangeSkinIndex(skinMenu, index);
+
+	// Add the variants menu
+	if (variantsMenu)
+	{
+		const SkinRegistry::Folder& skinFolder = *GetRainmeter().m_SkinRegistry.FindFolder(skinName);
+		for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
+		{
+			InsertMenu(variantsMenu, i, MF_BYPOSITION, skinFolder.baseID + i, skinFolder.files[i].c_str());
+		}
+
+		if (skinFolder.active)
+		{
+			UINT checkPos = skinFolder.active - 1;
+			CheckMenuRadioItem(variantsMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
+		}
+	}
+
+	// Add skin root menu
+	int itemCount = GetMenuItemCount(menu);
+	if (itemCount > 0)
+	{
+		std::wstring root = meterWindow->GetFolderPath();
+		std::wstring::size_type pos = root.find_first_of(L'\\');
+		if (pos != std::wstring::npos)
+		{
+			root.erase(pos);
+		}
+
+		for (int i = 0; i < itemCount; ++i)
+		{
+			const UINT state = GetMenuState(menu, i, MF_BYPOSITION);
+			if (state == 0xFFFFFFFF || (state & MF_POPUP) == 0) break;
+
+			WCHAR buffer[MAX_PATH];
+			if (GetMenuString(menu, i, buffer, MAX_PATH, MF_BYPOSITION))
+			{
+				if (_wcsicmp(root.c_str(), buffer) == 0)
 				{
-					if (_wcsicmp(root.c_str(), buffer) == 0)
+					HMENU skinRootMenu = GetSubMenu(menu, i);
+					if (skinRootMenu)
 					{
-						HMENU skinRootMenu = GetSubMenu(menu, i);
-						if (skinRootMenu)
-						{
-							InsertMenu(skinMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinRootMenu, root.c_str());
-						}
-						break;
+						InsertMenu(skinMenu, 3, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinRootMenu, root.c_str());
 					}
+					break;
 				}
 			}
 		}
+	}
 
-		// Add custom actions to the context menu
-		std::wstring contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextTitle", L"");
-		if (!contextTitle.empty())
+	// Add custom actions to the context menu
+	std::wstring contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextTitle", L"");
+	if (!contextTitle.empty())
+	{
+		auto isTitleSeparator = [](const std::wstring& title)
 		{
-			auto isTitleSeparator = [](const std::wstring& title)
-			{
-				return title.find_first_not_of(L'-') == std::wstring::npos;
-			};
+			return title.find_first_not_of(L'-') == std::wstring::npos;
+		};
 
-			std::wstring contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextAction", L"");
-			if (!contextAction.empty() || isTitleSeparator(contextTitle))
-			{
-				std::vector<std::wstring> cTitles;
-				WCHAR buffer[128];
-				int i = 1;
+		std::wstring contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextAction", L"");
+		if (!contextAction.empty() || isTitleSeparator(contextTitle))
+		{
+			std::vector<std::wstring> cTitles;
+			WCHAR buffer[128];
+			int i = 1;
 
-				while (!contextTitle.empty() &&
-					  (!contextAction.empty() || isTitleSeparator(contextTitle)) &&
-					  (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i - 1) <= IDM_SKIN_CUSTOMCONTEXTMENU_LAST) // Set maximum context items in resource.h
+			while (!contextTitle.empty() &&
+					(!contextAction.empty() || isTitleSeparator(contextTitle)) &&
+					(IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i - 1) <= IDM_SKIN_CUSTOMCONTEXTMENU_LAST) // Set maximum context items in resource.h
+			{
+				// Trim long titles
+				if (contextTitle.size() > 30)
 				{
-					// Trim long titles
-					if (contextTitle.size() > 30)
-					{
-						contextTitle.replace(27, contextTitle.size() - 27, L"...");
-					}
-
-					cTitles.push_back(contextTitle);
-
-					_snwprintf_s(buffer, _TRUNCATE, L"ContextTitle%i", ++i);
-					contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
-					_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", i);
-					contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
+					contextTitle.replace(27, contextTitle.size() - 27, L"...");
 				}
 
-				// Build a sub-menu if more than three items
-				size_t titleSize = cTitles.size();
-				if (titleSize <= 3)
+				cTitles.push_back(contextTitle);
+
+				_snwprintf_s(buffer, _TRUNCATE, L"ContextTitle%i", ++i);
+				contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
+				_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", i);
+				contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
+			}
+
+			// Build a sub-menu if more than three items
+			const size_t titleSize = cTitles.size();
+			if (titleSize <= 3)
+			{
+				size_t position = 0;
+				for (size_t i = 0; i < titleSize; ++i)
 				{
-					size_t position = 0;
-					for (size_t i = 0; i < titleSize; ++i)
+					if (isTitleSeparator(cTitles[i]))
 					{
-						if (isTitleSeparator(cTitles[i]))
-						{
-							// Separators not allowed in main top-level menu
-							--position;
-						}
-						else
-						{
-							InsertMenu(skinMenu, position + 1, MF_BYPOSITION | MF_STRING, (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i), cTitles[i].c_str());
-						}
-
-						++position;
+						// Separators not allowed in main top-level menu
+						--position;
+					}
+					else
+					{
+						const UINT_PTR id = (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i);
+						InsertMenu(skinMenu, position + 1, MF_BYPOSITION | MF_STRING, id, cTitles[i].c_str());
 					}
 
-					if (position != 0)
-					{
-						InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, L"Custom skin actions");
-						InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
-					}
+					++position;
 				}
-				else
-				{
-					HMENU customMenu = CreatePopupMenu();
-					InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)customMenu, L"Custom skin actions");
-				
-					for (size_t i = 0; i < titleSize; ++i)
-					{
-						if (isTitleSeparator(cTitles[i]))
-						{
-							AppendMenu(customMenu, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
-						}
-						else
-						{
-							AppendMenu(customMenu, MF_BYPOSITION | MF_STRING, (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i), cTitles[i].c_str());
-						}
-					}
 
+				if (position != 0)
+				{
+					InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, L"Custom skin actions");
 					InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 				}
+			}
+			else
+			{
+				HMENU customMenu = CreatePopupMenu();
+				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)customMenu, L"Custom skin actions");
+				
+				for (size_t i = 0; i < titleSize; ++i)
+				{
+					if (isTitleSeparator(cTitles[i]))
+					{
+						AppendMenu(customMenu, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+					}
+					else
+					{
+						const UINT_PTR id = (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i);
+						AppendMenu(customMenu, MF_BYPOSITION | MF_STRING, id, cTitles[i].c_str());
+					}
+				}
+
+				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 			}
 		}
 	}
@@ -532,7 +523,7 @@ int ContextMenu::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 		// Add files
 		{
 			int fileIndex = 0;
-			int fileCount = (int)skinFolder.files.size();
+			const int fileCount = (int)skinFolder.files.size();
 			for ( ; fileIndex < fileCount; ++fileIndex)
 			{
 				InsertMenu(subMenu, fileIndex, MF_STRING | MF_BYPOSITION, skinFolder.baseID + fileIndex, skinFolder.files[fileIndex].c_str());
@@ -568,8 +559,8 @@ void ContextMenu::CreateLayoutMenu(HMENU layoutMenu)
 
 void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, MeterWindow* meterWindow)
 {
-	bool screenDefined = meterWindow->GetXScreenDefined();
-	int screenIndex = meterWindow->GetXScreen();
+	const bool screenDefined = meterWindow->GetXScreenDefined();
+	const int screenIndex = meterWindow->GetXScreen();
 
 	// for the "Specified monitor" (@n)
 	const size_t numOfMonitors = System::GetMonitorCount();  // intentional
@@ -593,11 +584,11 @@ void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, MeterWindow* meterWindow)
 			item += (*iter).monitorName;
 		}
 
-		InsertMenu(monitorMenu,
-			i + 2,
-			MF_BYPOSITION | ((screenDefined && screenIndex == i) ? MF_CHECKED : MF_UNCHECKED) | ((!(*iter).active) ? MF_GRAYED : MF_ENABLED),
-			ID_MONITOR_FIRST + i,
-			item.c_str());
+		const UINT flags =
+			MF_BYPOSITION |
+			((screenDefined && screenIndex == i) ? MF_CHECKED : MF_UNCHECKED) |
+			((*iter).active ? MF_ENABLED : MF_GRAYED);
+		InsertMenu(monitorMenu, i + 2, flags, ID_MONITOR_FIRST + i, item.c_str());
 	}
 
 	if (!screenDefined)
@@ -620,8 +611,7 @@ void ContextMenu::ChangeSkinIndex(HMENU menu, int index)
 {
 	if (index > 0)
 	{
-		int count = GetMenuItemCount(menu);
-
+		const int count = GetMenuItemCount(menu);
 		for (int i = 0; i < count; ++i)
 		{
 			HMENU subMenu = GetSubMenu(menu, i);
