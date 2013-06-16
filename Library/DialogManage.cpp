@@ -1185,7 +1185,7 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
 			if (menu)
 			{
-				GetRainmeter().CreateMonitorMenu(menu, m_SkinWindow);
+				ContextMenu::CreateMonitorMenu(menu, m_SkinWindow);
 
 				RECT r;
 				GetWindowRect((HWND)lParam, &r);

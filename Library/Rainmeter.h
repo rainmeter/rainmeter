@@ -25,6 +25,7 @@
 #include <list>
 #include <string>
 #include "CommandHandler.h"
+#include "ContextMenu.h"
 #include "Logger.h"
 #include "MeterWindow.h"
 #include "SkinRegistry.h"
@@ -162,8 +163,8 @@ public:
 
 	int ShowMessage(HWND parent, const WCHAR* text, UINT type);
 
-	bool IsMenuActive() { return m_MenuActive; }
-	void ShowContextMenu(POINT pos, MeterWindow* meterWindow);
+	bool IsMenuActive() { return m_ContextMenu.IsMenuActive(); }
+	void ShowContextMenu(POINT pos, MeterWindow* mw) { return m_ContextMenu.ShowMenu(pos, mw); }
 
 	const std::wstring& GetTrayExecuteR() { return m_TrayExecuteR; }
 	const std::wstring& GetTrayExecuteM() { return m_TrayExecuteM; }
@@ -180,6 +181,7 @@ public:
 	void PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace = true);
 
 	friend class CommandHandler;
+	friend class ContextMenu;
 	friend class DialogManage;
 
 private:
@@ -199,14 +201,7 @@ private:
 	void SetLoadOrder(int folderIndex, int order);
 	int GetLoadOrder(const std::wstring& folderPath);
 	void UpdateDesktopWorkArea(bool reset);
-	HMENU CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU menu);
-	void ChangeSkinIndex(HMENU subMenu, int index);
-	
-	void CreateAllSkinsMenu(HMENU skinMenu) { CreateAllSkinsMenuRecursive(skinMenu, 0); }
-	int CreateAllSkinsMenuRecursive(HMENU skinMenu, int index);
 
-	void CreateLayoutMenu(HMENU layoutMenu);
-	void CreateMonitorMenu(HMENU monitorMenu, MeterWindow* meterWindow);
 	void CreateOptionsFile();
 	void CreateDataFile();
 	void CreateComponentFolders(bool defaultIniLocation);
@@ -249,8 +244,6 @@ private:
 
 	bool m_NormalStayDesktop;
 
-	bool m_MenuActive;
-
 	bool m_DisableRDP;
 
 	bool m_DisableDragging;
@@ -258,7 +251,7 @@ private:
 	std::wstring m_SkinEditor;
 
 	CommandHandler m_CommandHandler;
-
+	ContextMenu m_ContextMenu;
 	SkinRegistry m_SkinRegistry;
 
 	ConfigParser* m_CurrentParser;

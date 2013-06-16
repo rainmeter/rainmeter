@@ -90,6 +90,9 @@
     <ClCompile Include="ConfigParser_Test.cpp">
       <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="ContextMenu.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="DialogAbout.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -315,6 +318,7 @@
     <ClInclude Include="..\Common\Gfx\Util\WICBitmapLockGDIP.h" />
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="ConfigParser.h" />
+    <ClInclude Include="ContextMenu.h" />
     <ClInclude Include="DialogAbout.h" />
     <ClInclude Include="Error.h" />
     <ClInclude Include="Group.h" />
