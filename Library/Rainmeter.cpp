@@ -1862,13 +1862,8 @@ void Rainmeter::ShowContextMenu(POINT pos, MeterWindow* meterWindow)
 				hWnd,
 				nullptr);
 
-			if (meterWindow)
-			{
-				DestroyMenu(menu);
-			}
+			DestroyMenu(menu);
 		}
-
-		DestroyMenu(menu);
 
 		m_MenuActive = false;
 	}
