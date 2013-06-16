@@ -577,26 +577,11 @@ void CommandHandler::DoActivateSkinBang(std::vector<std::wstring>& args, MeterWi
 {
 	if (args.size() == 1)
 	{
-		int index = GetRainmeter().FindSkinFolderIndex(args[0]);
-		if (index != -1)
-		{
-			const Rainmeter::SkinFolder& skinFolder = GetRainmeter().m_SkinFolders[index];
-			if (!(skinFolder.active == 1 && skinFolder.files.size() == 1))
-			{
-				// Activate the next index.
-				GetRainmeter().ActivateSkin(index, (skinFolder.active < skinFolder.files.size()) ? skinFolder.active : 0);
-			}
-			return;
-		}
+		if (GetRainmeter().ActivateSkin(args[0])) return;
 	}
 	else if (args.size() > 1)
 	{
-		std::pair<int, int> indexes = GetRainmeter().GetMeterWindowIndex(args[0], args[1]);
-		if (indexes.first != -1 && indexes.second != -1)
-		{
-			GetRainmeter().ActivateSkin(indexes.first, indexes.second);
-			return;
-		}
+		if (GetRainmeter().ActivateSkin(args[0], args[1])) return;
 	}
 
 	LogError(L"!ActivateConfig: Invalid parameters");

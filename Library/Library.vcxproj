@@ -218,6 +218,12 @@
     <ClCompile Include="Section.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="SkinRegistry.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="SkinRegistry_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -352,6 +358,7 @@
     <ClInclude Include="RainmeterQuery.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Section.h" />
+    <ClInclude Include="SkinRegistry.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="TintedImage.h" />

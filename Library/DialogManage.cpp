@@ -570,7 +570,7 @@ void DialogManage::TabSkins::Update(MeterWindow* meterWindow, bool deleted)
 		tvi.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 		tvi.item.iImage = tvi.item.iSelectedImage = 0;
 
-		if (!GetRainmeter().m_SkinFolders.empty())
+		if (!GetRainmeter().m_SkinRegistry.IsEmpty())
 		{
 			PopulateTree(item, tvi);
 		}
@@ -881,12 +881,12 @@ std::wstring DialogManage::TabSkins::GetTreeSelectionPath(HWND tree)
 */
 int DialogManage::TabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int index)
 {
-	int initialLevel = GetRainmeter().m_SkinFolders[index].level;
+	int initialLevel = GetRainmeter().m_SkinRegistry.GetFolder(index).level;
 
-	const size_t max = GetRainmeter().m_SkinFolders.size();
+	const size_t max = GetRainmeter().m_SkinRegistry.GetFolderCount();
 	while (index < max)
 	{
-		const Rainmeter::SkinFolder& skinFolder = GetRainmeter().m_SkinFolders[index];
+		const auto& skinFolder = GetRainmeter().m_SkinRegistry.GetFolder(index);
 		if (skinFolder.level != initialLevel)
 		{
 			return index - 1;
@@ -901,7 +901,7 @@ int DialogManage::TabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int ind
 
 		// Add subfolders
 		if ((index + 1) < max &&
-			GetRainmeter().m_SkinFolders[index + 1].level == initialLevel + 1)
+			GetRainmeter().m_SkinRegistry.GetFolder(index + 1).level == initialLevel + 1)
 		{
 			index = PopulateTree(tree, tvi, index + 1);
 		}
@@ -1048,11 +1048,12 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			if (!m_SkinWindow)
 			{
 				// Skin not active, load
-				std::pair<int, int> indexes = GetRainmeter().GetMeterWindowIndex(m_SkinFolderPath, m_SkinFileName);
-				if (indexes.first != -1 && indexes.second != -1)
+				const SkinRegistry::Indexes indexes =
+					GetRainmeter().m_SkinRegistry.FindIndexes(m_SkinFolderPath, m_SkinFileName);
+				if (indexes.IsValid())
 				{
 					m_HandleCommands = false;
-					GetRainmeter().ActivateSkin(indexes.first, indexes.second);
+					GetRainmeter().ActivateSkin(indexes.folder, indexes.file);
 					m_HandleCommands = true;
 
 					// Fake selection change to update controls
@@ -1147,10 +1148,11 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				Edit_SetSel((HWND)lParam, LOWORD(sel), HIWORD(sel));
 
 				WritePrivateProfileString(m_SkinFolderPath.c_str(), L"LoadOrder", buffer, GetRainmeter().GetIniFile().c_str());
-				std::pair<int, int> indexes = GetRainmeter().GetMeterWindowIndex(m_SkinWindow);
-				if (indexes.first != -1)
+				const SkinRegistry::Indexes indexes = GetRainmeter().m_SkinRegistry.FindIndexes(
+					m_SkinWindow->GetFolderPath(), m_SkinWindow->GetFileName());
+				if (indexes.IsValid())
 				{
-					GetRainmeter().SetLoadOrder(indexes.first, value);
+					GetRainmeter().SetLoadOrder(indexes.folder, value);
 
 					std::multimap<int, MeterWindow*> windows;
 					GetRainmeter().GetMeterWindowsByLoadOrder(windows);

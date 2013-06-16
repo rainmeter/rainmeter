@@ -27,6 +27,7 @@
 #include "CommandHandler.h"
 #include "Logger.h"
 #include "MeterWindow.h"
+#include "SkinRegistry.h"
 
 #define MAX_LINE_LENGTH 4096
 
@@ -59,37 +60,6 @@ class TrayWindow;
 class Rainmeter
 {
 public:
-	struct SkinFolder 
-	{
-		std::wstring name;
-		std::vector<std::wstring> files;
-		UINT commandBase;
-		int16_t active;
-		int16_t level;
-
-		SkinFolder() {}
-		~SkinFolder() {}
-
-		SkinFolder(SkinFolder&& r) :
-			name(std::move(r.name)),
-			files(std::move(r.files)),
-			commandBase(r.commandBase),
-			active(r.active),
-			level(r.level)
-		{
-		}
-
-		SkinFolder& operator=(SkinFolder&& r)
-		{
-			name = std::move(r.name);
-			files = std::move(r.files);
-			commandBase = r.commandBase;
-			active = r.active;
-			level = r.level;
-			return *this;
-		}
-	};
-
 	static Rainmeter& GetInstance();
 
 	int Initialize(LPCWSTR iniPath, LPCWSTR layout);
@@ -109,27 +79,23 @@ public:
 
 	MeterWindow* GetMeterWindow(const std::wstring& folderPath);
 	MeterWindow* GetMeterWindowByINI(const std::wstring& ini_searching);
-	std::pair<int, int> GetMeterWindowIndex(const std::wstring& folderPath, const std::wstring& file);
-	std::pair<int, int> GetMeterWindowIndex(MeterWindow* meterWindow) { return GetMeterWindowIndex(meterWindow->GetFolderPath(), meterWindow->GetFileName()); }
-	std::pair<int, int> GetMeterWindowIndex(UINT menuCommand);
 
 	MeterWindow* GetMeterWindow(HWND hwnd);
 	void GetMeterWindowsByLoadOrder(std::multimap<int, MeterWindow*>& windows, const std::wstring& group = std::wstring());
 	std::map<std::wstring, MeterWindow*>& GetAllMeterWindows() { return m_MeterWindows; }
 
-	std::wstring GetFolderPath(int folderIndex);
-	int FindSkinFolderIndex(const std::wstring& folderPath);
-
-	const std::vector<SkinFolder>& GetFolders() { return m_SkinFolders; }
 	const std::vector<std::wstring>& GetAllLayouts() { return m_Layouts; }
 
 	void RemoveMeterWindow(MeterWindow* meterWindow);
 	void AddUnmanagedMeterWindow(MeterWindow* meterWindow);
 	void RemoveUnmanagedMeterWindow(MeterWindow* meterWindow);
 
+	bool ActivateSkin(const std::wstring& folderPath);
+	bool ActivateSkin(const std::wstring& folderPath, const std::wstring& file);
 	void ActivateSkin(int folderIndex, int fileIndex);
 	void DeactivateSkin(MeterWindow* meterWindow, int folderIndex, bool save = true);
 	void ToggleSkin(int folderIndex, int fileIndex);
+	void ToggleSkinWithID(UINT id);
 
 	const std::wstring& GetPath() { return m_Path; }
 	const std::wstring& GetIniFile() { return m_IniFile; }
@@ -235,7 +201,6 @@ private:
 	void UpdateDesktopWorkArea(bool reset);
 	HMENU CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU menu);
 	void ChangeSkinIndex(HMENU subMenu, int index);
-	int ScanForSkinsRecursive(const std::wstring& path, std::wstring base, int index, UINT level);
 	
 	void CreateAllSkinsMenu(HMENU skinMenu) { CreateAllSkinsMenuRecursive(skinMenu, 0); }
 	int CreateAllSkinsMenuRecursive(HMENU skinMenu, int index);
@@ -249,7 +214,6 @@ private:
 
 	TrayWindow* m_TrayWindow;
 
-	std::vector<SkinFolder> m_SkinFolders;
 	std::multimap<int, int> m_SkinOrders;
 	std::map<std::wstring, MeterWindow*> m_MeterWindows;
 	std::list<MeterWindow*> m_UnmanagedMeterWindows;
@@ -294,6 +258,8 @@ private:
 	std::wstring m_SkinEditor;
 
 	CommandHandler m_CommandHandler;
+
+	SkinRegistry m_SkinRegistry;
 
 	ConfigParser* m_CurrentParser;
 

@@ -375,7 +375,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	ReloadSettings();
 
-	if (m_SkinFolders.empty())
+	if (m_SkinRegistry.IsEmpty())
 	{
 		std::wstring error = GetFormattedString(ID_STR_NOAVAILABLESKINS, m_SkinPath.c_str());
 		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);
@@ -794,24 +794,63 @@ void Rainmeter::ActivateActiveSkins()
 	std::multimap<int, int>::const_iterator iter = m_SkinOrders.begin();
 	for ( ; iter != m_SkinOrders.end(); ++iter)
 	{
-		const SkinFolder& skinFolder = m_SkinFolders[(*iter).second];
-		if (skinFolder.active > 0 && skinFolder.active <= (int)skinFolder.files.size())
+		const SkinRegistry::Folder& skinFolder = m_SkinRegistry.GetFolder((*iter).second);
+		if (skinFolder.active > 0 && skinFolder.active <= (uint16_t)skinFolder.files.size())
 		{
 			ActivateSkin((*iter).second, skinFolder.active - 1);
 		}
 	}
 }
 
+/*
+** Activates the skin, or, if it is already active, the next variant of the skin. Returns true
+** if the skin was activated (or was already active).
+*/
+bool Rainmeter::ActivateSkin(const std::wstring& folderPath)
+{
+	const int index = m_SkinRegistry.FindFolderIndex(folderPath);
+	if (index != -1)
+	{
+		const SkinRegistry::Folder& skinFolder = m_SkinRegistry.GetFolder(index);
+		if (!(skinFolder.active == 1 && skinFolder.files.size() == 1))
+		{
+			// Activate the next index.
+			ActivateSkin(
+				index, (skinFolder.active < skinFolder.files.size()) ? skinFolder.active : 0);
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+/*
+** Activates the skin, or, if it is already active, the next variant of the skin. Returns true
+** if the skin was activated (or was already active).
+*/
+bool Rainmeter::ActivateSkin(const std::wstring& folderPath, const std::wstring& file)
+{
+	const SkinRegistry::Indexes indexes = m_SkinRegistry.FindIndexes(folderPath, file);
+	if (indexes.IsValid())
+	{
+		ActivateSkin(indexes.folder, indexes.file);
+		return true;
+	}
+
+	return false;
+}
+
 void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 {
-	if (folderIndex >= 0 && folderIndex < (int)m_SkinFolders.size() &&
-		fileIndex >= 0 && fileIndex < (int)m_SkinFolders[folderIndex].files.size())
+	if (folderIndex >= 0 && folderIndex < m_SkinRegistry.GetFolderCount() &&
+		fileIndex >= 0 && fileIndex < m_SkinRegistry.GetFolder(folderIndex).files.size())
 	{
-		SkinFolder& skinFolder = m_SkinFolders[folderIndex];
+		auto& skinFolder = m_SkinRegistry.GetFolder(folderIndex);
 		const std::wstring& file = skinFolder.files[fileIndex];
 		const WCHAR* fileSz = file.c_str();
 
-		std::wstring folderPath = GetFolderPath(folderIndex);
+		std::wstring folderPath = m_SkinRegistry.GetFolderPath(folderIndex);
 
 		// Verify that the skin is not already active
 		std::map<std::wstring, MeterWindow*>::const_iterator iter = m_MeterWindows.find(folderPath);
@@ -854,16 +893,16 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 
 void Rainmeter::DeactivateSkin(MeterWindow* meterWindow, int folderIndex, bool save)
 {
-	if (folderIndex >= 0 && folderIndex < (int)m_SkinFolders.size())
+	if (folderIndex >= 0 && folderIndex < m_SkinRegistry.GetFolderCount())
 	{
-		m_SkinFolders[folderIndex].active = 0;	// Deactivate the skin
+		m_SkinRegistry.GetFolder(folderIndex).active = 0;	// Deactivate the skin
 	}
 	else if (folderIndex == -1 && meterWindow)
 	{
-		folderIndex = FindSkinFolderIndex(meterWindow->GetFolderPath());
-		if (folderIndex != -1)
+		SkinRegistry::Folder* folder = m_SkinRegistry.FindFolder(meterWindow->GetFolderPath());
+		if (folder)
 		{
-			m_SkinFolders[folderIndex].active = 0;
+			folder->active = 0;
 		}
 	}
 
@@ -881,18 +920,27 @@ void Rainmeter::DeactivateSkin(MeterWindow* meterWindow, int folderIndex, bool s
 
 void Rainmeter::ToggleSkin(int folderIndex, int fileIndex)
 {
-	if (folderIndex >= 0 && folderIndex < (int)m_SkinFolders.size() &&
-		fileIndex >= 0 && fileIndex < (int)m_SkinFolders[folderIndex].files.size())
+	if (folderIndex >= 0 && folderIndex < m_SkinRegistry.GetFolderCount() &&
+		fileIndex >= 0 && fileIndex < m_SkinRegistry.GetFolder(folderIndex).files.size())
 	{
-		if (m_SkinFolders[folderIndex].active == fileIndex + 1)
+		if (m_SkinRegistry.GetFolder(folderIndex).active == fileIndex + 1)
 		{
-			MeterWindow* meterWindow = GetRainmeter().GetMeterWindow(GetFolderPath(folderIndex));
+			MeterWindow* meterWindow = GetMeterWindow(m_SkinRegistry.GetFolderPath(folderIndex));
 			DeactivateSkin(meterWindow, folderIndex);
 		}
 		else
 		{
 			ActivateSkin(folderIndex, fileIndex);
 		}
+	}
+}
+
+void Rainmeter::ToggleSkinWithID(UINT id)
+{
+	const SkinRegistry::Indexes indexes = m_SkinRegistry.FindIndexesForID(id);
+	if (indexes.IsValid())
+	{
+		ToggleSkin(indexes.folder, indexes.file);
 	}
 }
 
@@ -1053,45 +1101,6 @@ MeterWindow* Rainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
 	return nullptr;
 }
 
-std::pair<int, int> Rainmeter::GetMeterWindowIndex(const std::wstring& folderPath, const std::wstring& file)
-{
-	int index = FindSkinFolderIndex(folderPath);
-	if (index != -1)
-	{
-		const SkinFolder& skinFolder = m_SkinFolders[index];
-
-		const WCHAR* fileSz = file.c_str();
-		for (size_t i = 0, isize = skinFolder.files.size(); i < isize; ++i)
-		{
-			if (_wcsicmp(skinFolder.files[i].c_str(), fileSz) == 0)
-			{
-				return std::make_pair(index, (int)i);
-			}
-		}
-	}
-
-	return std::make_pair(-1, -1);	// Error
-}
-
-std::pair<int, int> Rainmeter::GetMeterWindowIndex(UINT menuCommand)
-{
-	if (menuCommand >= ID_CONFIG_FIRST && menuCommand <= ID_CONFIG_LAST)
-	{
-		// Check which skin was selected
-		for (size_t i = 0, isize = m_SkinFolders.size(); i < isize; ++i)
-		{
-			const SkinFolder& skinFolder = m_SkinFolders[i];
-			if (menuCommand >= skinFolder.commandBase &&
-				menuCommand < (skinFolder.commandBase + skinFolder.files.size()))
-			{
-				return std::make_pair((int)i, (int)(menuCommand - skinFolder.commandBase));
-			}
-		}
-	}
-
-	return std::make_pair(-1, -1);  // error;
-}
-
 MeterWindow* Rainmeter::GetMeterWindow(HWND hwnd)
 {
 	std::map<std::wstring, MeterWindow*>::const_iterator iter = m_MeterWindows.begin();
@@ -1119,69 +1128,6 @@ void Rainmeter::GetMeterWindowsByLoadOrder(std::multimap<int, MeterWindow*>& win
 	}
 }
 
-/*
-** Returns the skin folder path relative to the skin folder (e.g. illustro\Clock).
-**
-*/
-std::wstring Rainmeter::GetFolderPath(int folderIndex)
-{
-	const SkinFolder& skinFolder = m_SkinFolders[folderIndex];
-	std::wstring path = skinFolder.name;
-	for (int i = skinFolder.level - 1, index = folderIndex; i >= 1; --i)
-	{
-		while (m_SkinFolders[index].level != i)
-		{
-			--index;
-		}
-
-		path.insert(0, L"\\");
-		path.insert(0, m_SkinFolders[index].name);
-	}
-	return path;
-}
-
-int Rainmeter::FindSkinFolderIndex(const std::wstring& folderPath)
-{
-	if (!folderPath.empty())
-	{
-		const WCHAR* path = folderPath.c_str();
-		int len = 0;
-		while (path[len] && path[len] != L'\\') ++len;
-
-		int level = 1;
-		for (int i = 0, isize = (int)m_SkinFolders.size(); i < isize; ++i)
-		{
-			const SkinFolder& skinFolder = m_SkinFolders[i];
-			if (skinFolder.level == level)
-			{
-				if (skinFolder.name.length() == len && _wcsnicmp(skinFolder.name.c_str(), path, len) == 0)
-				{
-					path += len;
-					if (*path)
-					{
-						++path;	// Skip backslash
-						len = 0;
-						while (path[len] && path[len] != L'\\') ++len;
-					}
-					else
-					{
-						// Match found
-						return i;
-					}
-
-					++level;
-				}
-			}
-			else if (skinFolder.level < level)
-			{
-				break;
-			}
-		}
-	}
-
-	return -1;
-}
-
 void Rainmeter::SetLoadOrder(int folderIndex, int order)
 {
 	std::multimap<int, int>::iterator iter = m_SkinOrders.begin();
@@ -1206,7 +1152,7 @@ void Rainmeter::SetLoadOrder(int folderIndex, int order)
 
 int Rainmeter::GetLoadOrder(const std::wstring& folderPath)
 {
-	int index = FindSkinFolderIndex(folderPath);
+	const int index = m_SkinRegistry.FindFolderIndex(folderPath);
 	if (index != -1)
 	{
 		std::multimap<int, int>::const_iterator iter = m_SkinOrders.begin();
@@ -1228,112 +1174,8 @@ int Rainmeter::GetLoadOrder(const std::wstring& folderPath)
 */
 void Rainmeter::ScanForSkins()
 {
-	m_SkinFolders.clear();
+	m_SkinRegistry.Populate(m_SkinPath);
 	m_SkinOrders.clear();
-
-	ScanForSkinsRecursive(m_SkinPath, L"", 0, 0);
-}
-
-int Rainmeter::ScanForSkinsRecursive(const std::wstring& path, std::wstring base, int index, UINT level)
-{
-	WIN32_FIND_DATA fileData;      // Data structure describes the file found
-	HANDLE hSearch;                // Search handle returned by FindFirstFile
-	std::list<std::wstring> subfolders;
-
-	// Find all .ini files and subfolders
-	std::wstring filter = path + base;
-	filter += L"\\*";
-
-	hSearch = FindFirstFileEx(
-		filter.c_str(),
-		(Platform::IsAtLeastWin7()) ? FindExInfoBasic : FindExInfoStandard,
-		&fileData,
-		FindExSearchNameMatch,
-		nullptr,
-		0);
-
-	bool foundFiles = false;
-	if (hSearch != INVALID_HANDLE_VALUE)
-	{
-		SkinFolder skinFolder;
-		skinFolder.commandBase = ID_CONFIG_FIRST + index;
-		skinFolder.active = 0;
-		skinFolder.level = level;
-
-		do
-		{
-			const std::wstring filename = fileData.cFileName;
-
-			if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-			{
-				if (!PathUtil::IsDotOrDotDot(fileData.cFileName) &&
-					!(level == 0 && wcscmp(L"@Backup", fileData.cFileName) == 0) &&
-					!(level == 0 && wcscmp(L"Backup", fileData.cFileName) == 0) &&
-					!(level == 1 && wcscmp(L"@Resources", fileData.cFileName) == 0))
-				{
-					subfolders.push_back(filename);
-				}
-			}
-			else if (level != 0)
-			{
-				// Check whether the extension is ".ini"
-				size_t filenameLen = filename.size();
-				if (filenameLen >= 4 && _wcsicmp(fileData.cFileName + (filenameLen - 4), L".ini") == 0)
-				{
-					foundFiles = true;
-					skinFolder.files.push_back(filename);
-					++index;
-				}
-			}
-		}
-		while (FindNextFile(hSearch, &fileData));
-
-		FindClose(hSearch);
-
-		if (level > 0 && (foundFiles || !subfolders.empty()))
-		{
-			if (level == 1)
-			{
-				skinFolder.name = base;
-			}
-			else
-			{
-				std::wstring::size_type pos = base.rfind(L'\\') + 1;
-				skinFolder.name.assign(base, pos, base.length() - pos);
-			}
-
-			m_SkinFolders.push_back(std::move(skinFolder));
-		}
-	}
-
-	if (level != 0)
-	{
-		base += L'\\';
-	}
-
-	if (!subfolders.empty())
-	{
-		bool popFolder = !foundFiles;
-
-		std::list<std::wstring>::const_iterator iter = subfolders.begin();
-		for ( ; iter != subfolders.end(); ++iter)
-		{
-			int newIndex = ScanForSkinsRecursive(path, base + (*iter), index, level + 1);
-			if (newIndex != index)
-			{
-				popFolder = false;
-			}
-
-			index = newIndex;
-		}
-
-		if (popFolder)
-		{
-			m_SkinFolders.pop_back();
-		}
-	}
-
-	return index;
 }
 
 /*
@@ -1489,13 +1331,13 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 			continue;
 		}
 
-		int index = FindSkinFolderIndex(*iter);
+		const int index = m_SkinRegistry.FindFolderIndex(*iter);
 		if (index == -1)
 		{
 			continue;
 		}
 
-		SkinFolder& skinFolder = m_SkinFolders[index];
+		SkinRegistry::Folder& skinFolder = m_SkinRegistry.GetFolder(index);
 
 		// Make sure there is a ini file available
 		int active = parser.ReadInt(section, L"Active", 0);
@@ -1540,11 +1382,10 @@ void Rainmeter::RefreshAll()
 		if (mw)
 		{
 			// Verify whether the cached information is valid
-			int index = FindSkinFolderIndex(mw->GetFolderPath());
+			const int index = m_SkinRegistry.FindFolderIndex(mw->GetFolderPath());
 			if (index != -1)
 			{
-				SkinFolder& skinFolder = m_SkinFolders[index];
-
+				SkinRegistry::Folder& skinFolder = m_SkinRegistry.GetFolder(index);
 				const WCHAR* skinIniFile = mw->GetFileName().c_str();
 
 				bool found = false;
@@ -1934,7 +1775,7 @@ void Rainmeter::ShowContextMenu(POINT pos, MeterWindow* meterWindow)
 			HMENU allSkinsMenu = GetSubMenu(menu, 4);
 			if (allSkinsMenu)
 			{
-				if (!m_SkinFolders.empty())
+				if (!m_SkinRegistry.IsEmpty())
 				{
 					DeleteMenu(allSkinsMenu, 0, MF_BYPOSITION);  // "No skins available" menuitem
 					CreateAllSkinsMenu(allSkinsMenu);
@@ -2035,13 +1876,13 @@ void Rainmeter::ShowContextMenu(POINT pos, MeterWindow* meterWindow)
 
 int Rainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 {
-	int initialLevel = m_SkinFolders[index].level;
+	const int initialLevel = m_SkinRegistry.GetFolder(index).level;
 	int menuIndex = 0;
 
-	const size_t max = GetRainmeter().m_SkinFolders.size();
+	const size_t max = m_SkinRegistry.GetFolderCount();
 	while (index < max)
 	{
-		const SkinFolder& skinFolder = GetRainmeter().m_SkinFolders[index];
+		const SkinRegistry::Folder& skinFolder = m_SkinRegistry.GetFolder(index);
 		if (skinFolder.level != initialLevel)
 		{
 			return index - 1;
@@ -2053,7 +1894,7 @@ int Rainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 		InsertMenu(skinMenu, menuIndex, MF_POPUP | MF_BYPOSITION, (UINT_PTR)subMenu, skinFolder.name.c_str());
 
 		// Add subfolders
-		const bool hasSubfolder = (index + 1) < max && m_SkinFolders[index + 1].level == initialLevel + 1;
+		const bool hasSubfolder = (index + 1) < max && m_SkinRegistry.GetFolder(index + 1).level == initialLevel + 1;
 		if (hasSubfolder)
 		{
 			index = CreateAllSkinsMenuRecursive(subMenu, index + 1);
@@ -2065,7 +1906,7 @@ int Rainmeter::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 			int fileCount = (int)skinFolder.files.size();
 			for ( ; fileIndex < fileCount; ++fileIndex)
 			{
-				InsertMenu(subMenu, fileIndex, MF_STRING | MF_BYPOSITION, skinFolder.commandBase + fileIndex, skinFolder.files[fileIndex].c_str());
+				InsertMenu(subMenu, fileIndex, MF_STRING | MF_BYPOSITION, skinFolder.baseID + fileIndex, skinFolder.files[fileIndex].c_str());
 			}
 
 			if (skinFolder.active)
@@ -2258,10 +2099,10 @@ HMENU Rainmeter::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU menu)
 		// Add the variants menu
 		if (variantsMenu)
 		{
-			const SkinFolder& skinFolder = m_SkinFolders[FindSkinFolderIndex(skinName)];
+			const SkinRegistry::Folder& skinFolder = *m_SkinRegistry.FindFolder(skinName);
 			for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
 			{
-				InsertMenu(variantsMenu, i, MF_BYPOSITION, skinFolder.commandBase + i, skinFolder.files[i].c_str());
+				InsertMenu(variantsMenu, i, MF_BYPOSITION, skinFolder.baseID + i, skinFolder.files[i].c_str());
 			}
 
 			if (skinFolder.active)

@@ -536,11 +536,7 @@ LRESULT CALLBACK TrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 				}
 				else if (mID >= ID_CONFIG_FIRST && mID <= ID_CONFIG_LAST)
 				{
-					std::pair<int, int> indexes = GetRainmeter().GetMeterWindowIndex(mID);
-					if (indexes.first != -1 && indexes.second != -1)
-					{
-						GetRainmeter().ToggleSkin(indexes.first, indexes.second);
-					}
+					GetRainmeter().ToggleSkinWithID(mID);
 				}
 				else
 				{
