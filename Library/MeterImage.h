@@ -53,6 +53,7 @@ private:
 
 	TintedImage m_Image;
 	std::wstring m_ImageName;
+	std::wstring m_ImageNameResult;
 
 	bool m_NeedsRedraw;
 	DRAWMODE m_DrawMode;

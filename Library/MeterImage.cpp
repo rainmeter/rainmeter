@@ -57,6 +57,7 @@ void MeterImage::Initialize()
 
 	if (m_Measures.empty() && !m_DynamicVariables && !m_ImageName.empty())
 	{
+		m_ImageNameResult = m_ImageName;
 		LoadImage(m_ImageName, true);
 	}
 }
@@ -159,33 +160,31 @@ bool MeterImage::Update()
 	{
 		if (!m_Measures.empty() || m_DynamicVariables)
 		{
-			static std::wstring s_ImageNameResult;
-
 			// Store the current values so we know if the image needs to be updated
-			std::wstring oldResult = s_ImageNameResult;
+			std::wstring oldResult = m_ImageNameResult;
 
 			if (!m_Measures.empty())  // read from the measures
 			{
 				if (m_ImageName.empty())
 				{
-					s_ImageNameResult = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
+					m_ImageNameResult = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
 				}
 				else
 				{
-					s_ImageNameResult = m_ImageName;
-					if (!ReplaceMeasures(s_ImageNameResult, AUTOSCALE_OFF))
+					m_ImageNameResult = m_ImageName;
+					if (!ReplaceMeasures(m_ImageNameResult, AUTOSCALE_OFF))
 					{
 						// ImageName doesn't contain any measures, so use the result of MeasureName.
-						s_ImageNameResult = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
+						m_ImageNameResult = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
 					}
 				}
 			}
 			else  // read from the skin
 			{
-				s_ImageNameResult = m_ImageName;
+				m_ImageNameResult = m_ImageName;
 			}
 			
-			LoadImage(s_ImageNameResult, (wcscmp(oldResult.c_str(), s_ImageNameResult.c_str()) != 0));
+			LoadImage(m_ImageNameResult, (wcscmp(oldResult.c_str(), m_ImageNameResult.c_str()) != 0));
 			return true;
 		}
 		else if (m_NeedsRedraw)
