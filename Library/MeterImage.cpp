@@ -180,6 +180,10 @@ bool MeterImage::Update()
 					}
 				}
 			}
+			else  // read from the skin
+			{
+				s_ImageNameResult = m_ImageName;
+			}
 			
 			LoadImage(s_ImageNameResult, (wcscmp(oldResult.c_str(), s_ImageNameResult.c_str()) != 0));
 			return true;
