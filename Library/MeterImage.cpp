@@ -159,27 +159,29 @@ bool MeterImage::Update()
 	{
 		if (!m_Measures.empty() || m_DynamicVariables)
 		{
+			static std::wstring s_ImageNameResult;
+
 			// Store the current values so we know if the image needs to be updated
-			std::wstring oldResult = m_ImageName;
+			std::wstring oldResult = s_ImageNameResult;
 
 			if (!m_Measures.empty())  // read from the measures
 			{
 				if (m_ImageName.empty())
 				{
-					m_ImageName = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
+					s_ImageNameResult = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
 				}
 				else
 				{
-					m_ImageName = m_ImageName;
-					if (!ReplaceMeasures(m_ImageName, AUTOSCALE_OFF))
+					s_ImageNameResult = m_ImageName;
+					if (!ReplaceMeasures(s_ImageNameResult, AUTOSCALE_OFF))
 					{
 						// ImageName doesn't contain any measures, so use the result of MeasureName.
-						m_ImageName = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
+						s_ImageNameResult = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
 					}
 				}
 			}
 			
-			LoadImage(m_ImageName, (wcscmp(oldResult.c_str(), m_ImageName.c_str()) != 0));
+			LoadImage(s_ImageNameResult, (wcscmp(oldResult.c_str(), s_ImageNameResult.c_str()) != 0));
 			return true;
 		}
 		else if (m_NeedsRedraw)
