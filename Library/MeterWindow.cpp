@@ -2723,7 +2723,7 @@ void MeterWindow::UpdateWindow(int alpha, bool reset, bool canvasBeginDrawCalled
 
 	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
 	POINT ptSrc = {0, 0};
-	SIZE szWindow = {m_WindowW, m_WindowH};
+	SIZE szWindow = {m_Canvas->GetW(), m_Canvas->GetH()};
 
 	if (!canvasBeginDrawCalled) m_Canvas->BeginDraw();
 
