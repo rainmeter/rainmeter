@@ -35,6 +35,7 @@ public:
 	void UninitializeLuaScript();
 
 protected:
+	virtual void Initialize();
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 

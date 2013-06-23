@@ -54,6 +54,16 @@ void MeasureScript::UninitializeLuaScript()
 	m_HasGetStringFunction = false;
 }
 
+void MeasureScript::Initialize()
+{
+	Measure::Initialize();
+
+	if (m_LuaScript.IsFunction(g_InitializeFunctionName))
+	{
+		m_LuaScript.RunFunction(g_InitializeFunctionName);
+	}
+}
+
 /*
 ** Runs the function "Update()" in the script.
 **
@@ -155,9 +165,11 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				// Pop PROPERTIES table and our table
 				lua_pop(L, 2);
 
-				if (hasInitializeFunction)
+				if (m_Initialized)
 				{
-					m_LuaScript.RunFunction(g_InitializeFunctionName);
+					// If the measure is already initialized and the script has changed, we need to
+					// manually call Initialize().
+					Initialize();
 				}
 
 				// Valid script.
