@@ -61,7 +61,7 @@ void MeasureCalc::UpdateValue()
 	{
 		if (!m_ParseError)
 		{
-			LogErrorF(L"Calc: %s in [%s]", errMsg, m_Name.c_str());
+			LogErrorF(this, L"Calc: %s", errMsg);
 			m_ParseError = true;
 		}
 	}
@@ -105,7 +105,7 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		const WCHAR* errMsg = MathParser::Check(m_Formula.c_str());
 		if (errMsg != nullptr)
 		{
-			LogErrorF(L"Calc: %s in [%s]", errMsg, m_Name.c_str());
+			LogErrorF(this, L"Calc: %s", errMsg);
 			m_Formula.clear();
 		}
 	}

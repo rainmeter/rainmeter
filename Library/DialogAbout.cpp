@@ -112,11 +112,11 @@ void DialogAbout::ShowAboutLog()
 	}
 }
 
-void DialogAbout::AddLogItem(Logger::Level level, LPCWSTR time, LPCWSTR message)
+void DialogAbout::AddLogItem(Logger::Level level, LPCWSTR time, LPCWSTR source, LPCWSTR message)
 {
 	if (c_Dialog && c_Dialog->m_TabLog.IsInitialized())
 	{
-		c_Dialog->m_TabLog.AddItem(level, time, message);
+		c_Dialog->m_TabLog.AddItem(level, time, source, message);
 	}
 }
 
@@ -176,7 +176,7 @@ INT_PTR DialogAbout::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_GETMINMAXINFO:
 		{
 			MINMAXINFO* mmi = (MINMAXINFO*)lParam;
-			mmi->ptMinTrackSize.x = 550;
+			mmi->ptMinTrackSize.x = 700;
 			mmi->ptMinTrackSize.y = 350;
 		}
 		return TRUE;
@@ -402,14 +402,25 @@ void DialogAbout::TabLog::Initialize()
 	lvc.pszText = GetString(ID_STR_TIME);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-	lvc.cx = 370;
-	lvc.pszText = GetString(ID_STR_MESSAGE);
+	lvc.cx = 225;
+	lvc.pszText = GetString(ID_STR_SOURCE);
 	ListView_InsertColumn(item, 2, &lvc);
+	lvc.iSubItem = 4;
+	
+	// Start 4th column at max width
+	RECT rect = {0};
+	if (GetWindowRect(item, &rect))
+		lvc.cx = rect.right - rect.left - 405;
+	else
+		lvc.cx = 180;
+
+	lvc.pszText = GetString(ID_STR_MESSAGE);
+	ListView_InsertColumn(item, 3, &lvc);
 
 	// Add stored entires
 	for (const auto& entry : GetLogger().GetEntries())
 	{
-		AddItem(entry.level, entry.timestamp.c_str(), entry.message.c_str());
+		AddItem(entry.level, entry.timestamp.c_str(), entry.source.c_str(), entry.message.c_str());
 	}
 
 	item = GetControl(Id_ErrorCheckBox);
@@ -453,18 +464,21 @@ void DialogAbout::TabLog::Resize(int w, int h)
 	item = GetControl(Id_ItemsListView);
 	SetWindowPos(item, nullptr, 0, 0, w, h - r.bottom - 7, SWP_NOMOVE | SWP_NOZORDER);
 
-	// Adjust third colum
+	// Adjust 4th colum
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_WIDTH;
-	lvc.cx = w - 183;
-	ListView_SetColumn(item, 2, &lvc);
+	lvc.cx = w - 20 -
+		(ListView_GetColumnWidth(item, 0) +
+		 ListView_GetColumnWidth(item, 1) +
+		 ListView_GetColumnWidth(item, 2));
+	ListView_SetColumn(item, 3, &lvc);
 }
 
 /*
 ** Adds item to log.
 **
 */
-void DialogAbout::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR message)
+void DialogAbout::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR source, LPCWSTR message)
 {
 	WCHAR buffer[32];
 	LVITEM vitem;
@@ -505,7 +519,8 @@ void DialogAbout::TabLog::AddItem(Logger::Level level, LPCWSTR time, LPCWSTR mes
 	item = GetControl(Id_ItemsListView);
 	ListView_InsertItem(item, &vitem);
 	ListView_SetItemText(item, vitem.iItem, 1, (WCHAR*)time);
-	ListView_SetItemText(item, vitem.iItem, 2, (WCHAR*)message);
+	ListView_SetItemText(item, vitem.iItem, 2, (WCHAR*)source);
+	ListView_SetItemText(item, vitem.iItem, 3, (WCHAR*)message);
 	if (!ListView_IsItemVisible(item, 0))
 	{
 		ListView_Scroll(item, 0, 16);
@@ -579,9 +594,25 @@ INT_PTR DialogAbout::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 				int sel = ListView_GetNextItem(nm->hwndFrom, -1, LVNI_FOCUSED | LVNI_SELECTED);
 				if (sel != -1)
 				{
-					std::wstring tmpSz(512, L'0');
-					ListView_GetItemText(nm->hwndFrom, sel, 2, &tmpSz[0], 512);
-					System::SetClipboardText(tmpSz);
+					WCHAR* buffer = new WCHAR[512];
+					std::wstring message;
+
+					// Get Source (if any)
+					ListView_GetItemText(nm->hwndFrom, sel, 2, buffer, 512);
+					if (*buffer)
+					{
+						message = L"Source:  ";
+						message += buffer;
+						message += L"\n";
+					}
+					
+					// Get message
+					ListView_GetItemText(nm->hwndFrom, sel, 3, buffer, 512);
+					message += L"Message: ";
+					message += buffer;
+
+					delete [] buffer;
+					System::SetClipboardText(message);
 				}
 			}
 		}
@@ -657,7 +688,14 @@ void DialogAbout::TabSkins::Initialize()
 	lvc.pszText = GetString(ID_STR_RANGE);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-	lvc.cx = 130;
+
+	// Start 3rd column at max width
+	RECT rect = {0};
+	if (GetWindowRect(item, &rect))
+		lvc.cx = rect.right - rect.left - 230;
+	else
+		lvc.cx = 130;
+
 	lvc.pszText = GetString(ID_STR_VALUE);
 	ListView_InsertColumn(item, 2, &lvc);
 
@@ -675,16 +713,17 @@ void DialogAbout::TabSkins::Resize(int w, int h)
 	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	HWND item = GetControl(Id_SkinsListBox);
-	int wList = (w < 650) ? (w - 373) : 277;
-	SetWindowPos(item, nullptr, 0, 0, wList, h, SWP_NOMOVE | SWP_NOZORDER);
+	SetWindowPos(item, nullptr, 0, 0, 265, h, SWP_NOMOVE | SWP_NOZORDER);
 
 	item = GetControl(Id_ItemsListView);
-	SetWindowPos(item, nullptr, (w < 650) ? (w - 365) : 285, 0, w - wList - 10, h, SWP_NOZORDER);
+	SetWindowPos(item, nullptr, 275, 0, w - 275, h, SWP_NOZORDER);
 
 	// Adjust third column
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_WIDTH;
-	lvc.cx = w - wList - 243;
+	lvc.cx = w - 275 - 20 -
+		(ListView_GetColumnWidth(item, 0) +
+		 ListView_GetColumnWidth(item, 1));
 	ListView_SetColumn(item, 2, &lvc);
 }
 
@@ -972,7 +1011,14 @@ void DialogAbout::TabPlugins::Initialize()
 	lvc.pszText = GetString(ID_STR_VERSION);
 	ListView_InsertColumn(item, 1, &lvc);
 	lvc.iSubItem = 2;
-	lvc.cx = 310;
+
+	// Start 3rd column at max width
+	RECT rect = {0};
+	if (GetWindowRect(item, &rect))
+		lvc.cx = rect.right - rect.left - 193;
+	else
+		lvc.cx = 290;
+
 	lvc.pszText = GetString(ID_STR_AUTHOR);
 	ListView_InsertColumn(item, 2, &lvc);
 
@@ -1081,7 +1127,7 @@ void DialogAbout::TabPlugins::Initialize()
 			}
 			else
 			{
-				LogErrorF(L"Unable to load plugin: %s (%u)", tmpSz.c_str(), err);
+				LogErrorF(L"About Dialog - Unable to load plugin: %s (%u)", tmpSz.c_str(), err);
 			}
 		}
 		while (FindNextFile(hSearch, &fd));
@@ -1111,7 +1157,9 @@ void DialogAbout::TabPlugins::Resize(int w, int h)
 	// Adjust third colum
 	LVCOLUMN lvc;
 	lvc.mask = LVCF_WIDTH;
-	lvc.cx = w - 242;
+	lvc.cx = w - 20 - 
+		(ListView_GetColumnWidth(item, 0) +
+		 ListView_GetColumnWidth(item, 1));
 	ListView_SetColumn(item, 2, &lvc);
 }
 

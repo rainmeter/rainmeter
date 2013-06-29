@@ -20,8 +20,11 @@
 #define RM_LOGGER_H_
 
 #include <Windows.h>
+#include <cstdarg>
 #include <string>
 #include <list>
+#include "Section.h"
+#include "MeterWindow.h"
 
 // Singleton class to handle and store log messages and control the log file.
 class Logger
@@ -39,6 +42,7 @@ public:
 	{
 		Level level;
 		std::wstring timestamp;
+		std::wstring source;
 		std::wstring message;
 	};
 
@@ -53,15 +57,15 @@ public:
 	bool IsLogToFile() { return m_LogToFile; }
 	void SetLogToFile(bool logToFile);
 
-	void Log(Level level, const WCHAR* msg);
-	void LogF(Level level, const WCHAR* format, ...);
+	void Log(Level level, const WCHAR* source, const WCHAR* msg);
+	void LogF(Level level, const WCHAR* source, const WCHAR* format, va_list args);
 
 	const std::wstring& GetLogFilePath() { return m_LogFilePath; }
 
 	const std::list<Entry>& GetEntries() { return m_Entries; }
 
 private:
-	void LogInternal(Level level, ULONGLONG timestamp, const WCHAR* msg);
+	void LogInternal(Level level, ULONGLONG timestamp, const WCHAR* source, const WCHAR* msg);
 
 	// Appends |entry| to the log file.
 	void WriteToLogFile(Entry& entry);
@@ -84,7 +88,7 @@ inline Logger& GetLogger() { return Logger::GetInstance(); }
 #define RM_LOGGER_DEFINE_LOG_FUNCTION(name) \
 	inline void Log ## name(const WCHAR* msg) \
 	{ \
-		GetLogger().Log(Logger::Level::name, msg); \
+		GetLogger().Log(Logger::Level::name, L"", msg); \
 	} \
 /*	\
 	template<typename... Args> \
@@ -100,11 +104,23 @@ RM_LOGGER_DEFINE_LOG_FUNCTION(Notice)
 RM_LOGGER_DEFINE_LOG_FUNCTION(Debug)
 
 // FIXME: Temporary solution until VS support variadic templates.
-#define RM_LOGGER_LOGF_HELPER(name, format, ...) \
-	GetLogger().LogF(Logger::Level::name, format, __VA_ARGS__)
-#define LogErrorF(format, ...) RM_LOGGER_LOGF_HELPER(Error, format, __VA_ARGS__)
-#define LogWarningF(format, ...) RM_LOGGER_LOGF_HELPER(Warning, format, __VA_ARGS__)
-#define LogNoticeF(format, ...) RM_LOGGER_LOGF_HELPER(Notice, format, __VA_ARGS__)
-#define LogDebugF(format, ...) RM_LOGGER_LOGF_HELPER(Debug, format, __VA_ARGS__)
+void LogSection(Logger::Level level, Section* section, const WCHAR* format, va_list args);
+void LogMeterWindow(Logger::Level level, MeterWindow* meterWindow, const WCHAR* format, va_list args);
+
+void LogErrorF(const WCHAR* format, ...);
+void LogErrorF(Section* section, const WCHAR* format, ...);
+void LogErrorF(MeterWindow* meterWindow, const WCHAR* format, ...);
+
+void LogWarningF(const WCHAR* format, ...);
+void LogWarningF(Section* section, const WCHAR* format, ...);
+void LogWarningF(MeterWindow* meterWindow, const WCHAR* format, ...);
+
+void LogNoticeF(const WCHAR* format, ...);
+void LogNoticeF(Section* section, const WCHAR* format, ...);
+void LogNoticeF(MeterWindow* meterWindow, const WCHAR* format, ...);
+
+void LogDebugF(const WCHAR* format, ...);
+void LogDebugF(Section* section, const WCHAR* format, ...);
+void LogDebugF(MeterWindow* meterWindow, const WCHAR* format, ...);
 
 #endif

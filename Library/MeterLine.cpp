@@ -159,7 +159,7 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogErrorF(L"GraphStart=%s is not valid in [%s]", graph, m_Name.c_str());
+		LogErrorF(this, L"GraphStart=%s is not valid", graph);
 	}
 
 	graph = parser.ReadString(section, L"GraphOrientation", L"VERTICAL").c_str();
@@ -173,7 +173,7 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogErrorF(L"GraphOrientation=%s is not valid in [%s]", graph, m_Name.c_str());
+		LogErrorF(this, L"GraphOrientation=%s is not valid", graph);
 	}
 
 	if (m_Initialized)

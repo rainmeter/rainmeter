@@ -849,7 +849,7 @@ int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 				return (int)dblValue;
 			}
 
-			LogErrorF(L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogErrorF(m_MeterWindow, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
 		}
 		else if (*string)
 		{
@@ -881,7 +881,7 @@ uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
 				return (uint32_t)dblValue;
 			}
 
-			LogErrorF(L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogErrorF(m_MeterWindow, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
 		}
 		else if (*string)
 		{
@@ -913,7 +913,7 @@ uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValu
 				return (uint64_t)dblValue;
 			}
 
-			LogErrorF(L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogErrorF(m_MeterWindow, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
 		}
 		else if (*string)
 		{
@@ -945,7 +945,7 @@ double ConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 				return value;
 			}
 
-			LogErrorF(L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogErrorF(m_MeterWindow, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
 		}
 		else if (*string)
 		{
@@ -971,7 +971,7 @@ bool ConfigParser::ParseFormula(const std::wstring& formula, double* resultValue
 		const WCHAR* errMsg = MathParser::CheckedParse(string, resultValue);
 		if (errMsg != nullptr)
 		{
-			LogErrorF(L"Formula: %s: %s", errMsg, string);
+			LogErrorF(m_MeterWindow, L"Formula: %s: %s", errMsg, string);
 			return false;
 		}
 
@@ -1294,7 +1294,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	// Verify whether the file exists
 	if (_waccess(iniFile.c_str(), 0) == -1)
 	{
-		LogErrorF(L"Unable to read file: %s", iniFile.c_str());
+		LogErrorF(m_MeterWindow, L"Unable to read file: %s", iniFile.c_str());
 		return;
 	}
 
@@ -1304,11 +1304,11 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 	if (temporary)
 	{
-		if (GetRainmeter().GetDebug()) LogDebugF(L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
+		if (GetRainmeter().GetDebug()) LogDebugF(m_MeterWindow, L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
 	}
 	else
 	{
-		if (GetRainmeter().GetDebug()) LogDebugF(L"Reading file: %s", iniFile.c_str());
+		if (GetRainmeter().GetDebug()) LogDebugF(m_MeterWindow, L"Reading file: %s", iniFile.c_str());
 		iniRead = iniFile;
 	}
 

@@ -167,4 +167,5 @@ STRINGTABLE
     ID_STR_EDITORSC, "Editor:"
     ID_STR_ELLIPSIS, "..."
     ID_STR_SHOWNOTIFICATIONAREAICON, "Show notification area icon"
+    ID_STR_SOURCE, "Source"
 }

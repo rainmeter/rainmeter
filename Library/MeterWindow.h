@@ -161,6 +161,7 @@ public:
 	std::wstring GetFilePath();
 	std::wstring GetRootPath();
 	std::wstring GetResourcesPath();
+	std::wstring GetSkinPath();
 
 	const std::vector<Measure*>& GetMeasures() { return m_Measures; }
 	const std::vector<Meter*>& GetMeters() { return m_Meters; }

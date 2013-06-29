@@ -349,7 +349,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		delete m_Transformation;
 		m_Transformation = nullptr;
 
-		LogErrorF(L"Meter: Incorrect number of values in TransformationMatrix=%s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
+		LogErrorF(this, L"Meter: Incorrect number of values in TransformationMatrix=%s", parser.ReadString(section, L"TransformationMatrix", L"").c_str());
 	}
 }
 
@@ -407,7 +407,7 @@ Meter* Meter::Create(const WCHAR* meter, MeterWindow* meterWindow, const WCHAR* 
 		return new MeterButton(meterWindow, name);
 	}
 
-	LogErrorF(L"Meter=%s is not valid in [%s]", meter, name);
+	LogErrorF(meterWindow, L"Meter=%s is not valid in [%s]", meter, name);
 
 	return nullptr;
 }
@@ -441,7 +441,7 @@ bool Meter::BindPrimaryMeasure(ConfigParser& parser, const WCHAR* section, bool 
 	}
 	else if (!optional)
 	{
-		LogErrorF(L"MeasureName=%s is not valid in [%s]", measureName.c_str(), section);
+		LogErrorF(this, L"MeasureName=%s is not valid", measureName.c_str());
 	}
 
 	return false;
@@ -471,7 +471,7 @@ void Meter::BindSecondaryMeasures(ConfigParser& parser, const WCHAR* section)
 			{
 				if (!measureName.empty())
 				{
-					LogErrorF(L"MeasureName%i=%s is not valid in [%s]", i, measureName.c_str(), section);
+					LogErrorF(this, L"MeasureName%i=%s is not valid", i, measureName.c_str());
 				}
 
 				break;

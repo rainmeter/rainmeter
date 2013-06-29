@@ -118,7 +118,7 @@ void MeterBar::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogErrorF(L"BarOrientation=%s is not valid in [%s]", orientation, m_Name.c_str());
+		LogErrorF(this, L"BarOrientation=%s is not valid", orientation);
 	}
 
 	if (m_Initialized)

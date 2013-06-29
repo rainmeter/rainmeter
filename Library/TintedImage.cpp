@@ -380,7 +380,7 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 				}
 				else
 				{
-					LogErrorF(L"%s: Unable to load: %s", m_Name, filename.c_str());
+					LogErrorF(m_MeterWindow, L"%s: Unable to load: %s", m_Name, filename.c_str());
 				}
 			}
 			CloseHandle(fileHandle);
@@ -412,7 +412,7 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		}
 		else
 		{
-			LogErrorF(L"%s: Unable to open: %s", m_Name, filename.c_str());
+			LogErrorF(m_MeterWindow, L"%s: Unable to open: %s", m_Name, filename.c_str());
 
 			if (fileHandle != INVALID_HANDLE_VALUE)
 			{
@@ -684,7 +684,7 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const 
 			if (m_CropMode < CROPMODE_TL || m_CropMode > CROPMODE_C)
 			{
 				m_CropMode = CROPMODE_TL;
-				LogErrorF(L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageCrop], crop, section);
+				LogErrorF(m_MeterWindow, L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageCrop], crop, section);
 			}
 		}
 	}
@@ -788,7 +788,7 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const 
 	}
 	else
 	{
-		LogErrorF(L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageFlip], flip, section);
+		LogErrorF(m_MeterWindow, L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageFlip], flip, section);
 	}
 
 	if (!m_DisableTransform)

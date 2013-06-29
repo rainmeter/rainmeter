@@ -147,6 +147,7 @@
 #define ID_STR_EDITORSC                              2136
 #define ID_STR_ELLIPSIS                              2137
 #define ID_STR_SHOWNOTIFICATIONAREAICON              2138
+#define ID_STR_SOURCE                                2139
 
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002

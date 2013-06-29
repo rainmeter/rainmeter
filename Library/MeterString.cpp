@@ -199,7 +199,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		break;
 
 	default:
-		LogErrorF(L"ClipString=%s is not valid in [%s]", clipping, m_Name.c_str());
+		LogErrorF(this, L"ClipString=%s is not valid", clipping);
 	}
 
 	m_FontFace = parser.ReadString(section, L"FontFace", L"Arial");
@@ -290,7 +290,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogErrorF(L"StringCase=%s is not valid in [%s]", stringCase, m_Name.c_str());
+		LogErrorF(this, L"StringCase=%s is not valid", stringCase);
 	}
 
 	const WCHAR* style = parser.ReadString(section, L"StringStyle", L"NORMAL").c_str();
@@ -312,7 +312,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogErrorF(L"StringStyle=%s is not valid in [%s]", style, m_Name.c_str());
+		LogErrorF(this, L"StringStyle=%s is not valid", style);
 	}
 
 	const WCHAR* effect = parser.ReadString(section, L"StringEffect", L"NONE").c_str();
@@ -330,7 +330,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogErrorF(L"StringEffect=%s is not valid in [%s]", effect, m_Name.c_str());
+		LogErrorF(this, L"StringEffect=%s is not valid", effect);
 	}
 
 	if (m_Initialized &&

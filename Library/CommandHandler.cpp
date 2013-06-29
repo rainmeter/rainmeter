@@ -165,7 +165,7 @@ void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, MeterWind
 					}
 					else
 					{
-						LogErrorF(L"!%s: Skin \"%s\" not found", folderPath.c_str(), bangInfo.name);
+						LogErrorF(skin, L"!%s: Skin \"%s\" not found", folderPath.c_str(), bangInfo.name);
 					}
 					return;
 				}
@@ -191,13 +191,13 @@ void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, MeterWind
 				firstArg.erase(0, pos + 1);
 				args.insert(args.begin(), newArg);
 
-				LogWarningF(L"!%s: Two parameters required, only one given", bangInfo.name);
+				LogWarningF(skin, L"!%s: Two parameters required, only one given", bangInfo.name);
 				DoBang(bangInfo, args, skin);
 				return;
 			}
 		}
 
-		LogErrorF(L"!%s: Incorrect number of arguments", bangInfo.name);
+		LogErrorF(skin, L"!%s: Incorrect number of arguments", bangInfo.name);
 	}
 }
 
@@ -218,7 +218,7 @@ void DoGroupBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, Mete
 	}
 	else
 	{
-		LogErrorF(L"!%s: Incorrect number of arguments", bangInfo.name);
+		LogErrorF(skin, L"!%s: Incorrect number of arguments", bangInfo.name);
 	}
 }
 
@@ -401,7 +401,7 @@ void CommandHandler::ExecuteBang(const WCHAR* name, std::vector<std::wstring>& a
 		}
 	}
 
-	LogErrorF(L"Invalid bang: !%s", name);
+	LogErrorF(skin, L"Invalid bang: !%s", name);
 }
 
 /*
@@ -584,7 +584,7 @@ void CommandHandler::DoActivateSkinBang(std::vector<std::wstring>& args, MeterWi
 		if (GetRainmeter().ActivateSkin(args[0], args[1])) return;
 	}
 
-	LogError(L"!ActivateConfig: Invalid parameters");
+	LogErrorF(skin, L"!ActivateConfig: Invalid parameters");
 }
 
 void CommandHandler::DoDeactivateSkinBang(std::vector<std::wstring>& args, MeterWindow* skin)
@@ -625,7 +625,7 @@ void CommandHandler::DoToggleSkinBang(std::vector<std::wstring>& args, MeterWind
 	}
 	else
 	{
-		LogError(L"!ToggleConfig: Invalid parameters");
+		LogErrorF(skin, L"!ToggleConfig: Invalid parameters");
 	}
 }
 
@@ -642,7 +642,7 @@ void CommandHandler::DoDeactivateSkinGroupBang(std::vector<std::wstring>& args, 
 	}
 	else
 	{
-		LogError(L"!DeactivateConfigGroup: Invalid parameters");
+		LogErrorF(skin, L"!DeactivateConfigGroup: Invalid parameters");
 	}
 }
 
@@ -674,7 +674,7 @@ void CommandHandler::DoSetClipBang(std::vector<std::wstring>& args, MeterWindow*
 	}
 	else
 	{
-		LogError(L"!SetClip: Invalid parameter");
+		LogErrorF(skin, L"!SetClip: Invalid parameter");
 	}
 }
 
@@ -695,7 +695,7 @@ void CommandHandler::DoSetWallpaperBang(std::vector<std::wstring>& args, MeterWi
 	}
 	else
 	{
-		LogError(L"!SetWallpaper: Invalid parameters");
+		LogErrorF(skin, L"!SetWallpaper: Invalid parameters");
 	}
 }
 
@@ -752,7 +752,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, MeterW
 	}
 	else if (args.size() < 4)
 	{
-		LogError(L"!WriteKeyValue: Invalid parameters");
+		LogErrorF(skin, L"!WriteKeyValue: Invalid parameters");
 		return;
 	}
 
@@ -766,21 +766,21 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, MeterW
 
 	if (strIniFile.find(L"..\\") != std::wstring::npos || strIniFile.find(L"../") != std::wstring::npos)
 	{
-		LogErrorF(L"!WriteKeyValue: Illegal path: %s", iniFile);
+		LogErrorF(skin, L"!WriteKeyValue: Illegal path: %s", iniFile);
 		return;
 	}
 
 	if (_wcsnicmp(iniFile, GetRainmeter().m_SkinPath.c_str(), GetRainmeter().m_SkinPath.size()) != 0 &&
 		_wcsnicmp(iniFile, GetRainmeter().m_SettingsPath.c_str(), GetRainmeter().m_SettingsPath.size()) != 0)
 	{
-		LogErrorF(L"!WriteKeyValue: Illegal path: %s", iniFile);
+		LogErrorF(skin, L"!WriteKeyValue: Illegal path: %s", iniFile);
 		return;
 	}
 
 	// Verify whether the file exists.
 	if (_waccess(iniFile, 0) == -1)
 	{
-		LogErrorF(L"!WriteKeyValue: File not found: %s", iniFile);
+		LogErrorF(skin, L"!WriteKeyValue: File not found: %s", iniFile);
 		return;
 	}
 
@@ -788,7 +788,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, MeterW
 	DWORD attr = GetFileAttributes(iniFile);
 	if (attr == -1 || (attr & FILE_ATTRIBUTE_READONLY))
 	{
-		LogWarningF(L"!WriteKeyValue: File is read-only: %s", iniFile);
+		LogWarningF(skin, L"!WriteKeyValue: File is read-only: %s", iniFile);
 		return;
 	}
 
@@ -806,14 +806,14 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, MeterW
 	{
 		if (GetRainmeter().GetDebug())
 		{
-			LogDebugF(L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile, strIniWrite.c_str());
+			LogDebugF(skin, L"!WriteKeyValue: Writing to: %s (Temp: %s)", iniFile, strIniWrite.c_str());
 		}
 	}
 	else
 	{
 		if (GetRainmeter().GetDebug())
 		{
-			LogDebugF(L"!WriteKeyValue: Writing to: %s", iniFile);
+			LogDebugF(skin, L"!WriteKeyValue: Writing to: %s", iniFile);
 		}
 		strIniWrite = strIniFile;
 	}
@@ -854,12 +854,12 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, MeterW
 			// Copy the file back.
 			if (!System::CopyFiles(strIniWrite, strIniFile))
 			{
-				LogErrorF(L"!WriteKeyValue: Failed to copy temporary file to original filepath: %s (Temp: %s)", iniFile, iniWrite);
+				LogErrorF(skin, L"!WriteKeyValue: Failed to copy temporary file to original filepath: %s (Temp: %s)", iniFile, iniWrite);
 			}
 		}
 		else  // failed
 		{
-			LogErrorF(L"!WriteKeyValue: Failed to write to: %s (Temp: %s)", iniFile, iniWrite);
+			LogErrorF(skin, L"!WriteKeyValue: Failed to write to: %s (Temp: %s)", iniFile, iniWrite);
 		}
 
 		// Remove the temporary file.
@@ -869,7 +869,7 @@ void CommandHandler::DoWriteKeyValueBang(std::vector<std::wstring>& args, MeterW
 	{
 		if (write == 0)  // failed
 		{
-			LogErrorF(L"!WriteKeyValue: Failed to write to: %s", iniFile);
+			LogErrorF(skin, L"!WriteKeyValue: Failed to write to: %s", iniFile);
 		}
 	}
 }
@@ -896,12 +896,18 @@ void CommandHandler::DoLogBang(std::vector<std::wstring>& args, MeterWindow* ski
 			}
 			else if (_wcsicmp(type, L"NOTICE") != 0)
 			{
-				LogError(L"!Log: Invalid type");
+				LogErrorF(skin, L"!Log: Invalid type");
 				return;
 			}
 		}
 
-		GetLogger().Log(level, args[0].c_str());
+		std::wstring source;
+		if (skin)
+		{
+			source = skin->GetSkinPath();
+		}
+
+		GetLogger().Log(level, source.c_str(), args[0].c_str());
 	}
 }
 

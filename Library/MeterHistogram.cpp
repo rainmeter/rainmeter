@@ -118,7 +118,7 @@ void MeterHistogram::Initialize()
 	// A sanity check
 	if (secondaryMeasure && !m_PrimaryImageName.empty() && (m_OverlapImageName.empty() || m_SecondaryImageName.empty()))
 	{
-		LogWarning(L"Histogram: SecondaryImage and BothImage not defined");
+		LogWarningF(this, L"Histogram: SecondaryImage and BothImage not defined");
 
 		m_PrimaryImage.DisposeImage();
 		m_SecondaryImage.DisposeImage();
@@ -254,7 +254,7 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogErrorF(L"GraphStart=%s is not valid in [%s]", graph, m_Name.c_str());
+		LogErrorF(this, L"GraphStart=%s is not valid", graph);
 	}
 
 	graph = parser.ReadString(section, L"GraphOrientation", L"VERTICAL").c_str();
@@ -268,7 +268,7 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogErrorF(L"GraphOrientation=%s is not valid in [%s]", graph, m_Name.c_str());
+		LogErrorF(this, L"GraphOrientation=%s is not valid", graph);
 	}
 
 	if (m_Initialized)

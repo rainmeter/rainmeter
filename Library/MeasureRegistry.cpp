@@ -135,7 +135,7 @@ void MeasureRegistry::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogErrorF(L"RegHKey=%s is not valid in [%s]", keyname, m_Name.c_str());
+		LogErrorF(this, L"RegHKey=%s is not valid", keyname);
 	}
 
 	m_RegKeyName = parser.ReadString(section, L"RegKey", L"");

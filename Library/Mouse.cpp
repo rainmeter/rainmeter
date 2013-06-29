@@ -130,7 +130,7 @@ void Mouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		if (!m_CustomCursor)
 		{
 			m_CursorType = MOUSECURSOR_ARROW;
-			LogErrorF(L"Invalid cursor: %s", cursorPath.c_str());
+			LogErrorF(m_MeterWindow, L"Invalid cursor: %s", cursorPath.c_str());
 		}
 	}
 }

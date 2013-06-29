@@ -402,12 +402,8 @@ void MeterWindow::Refresh(bool init, bool all)
 	m_State = STATE_REFRESHING;
 
 	GetRainmeter().SetCurrentParser(&m_Parser);
-
-	std::wstring notice = L"Refreshing skin \"" + m_FolderPath;
-	notice += L'\\';
-	notice += m_FileName;
-	notice += L'"';
-	LogNotice(notice.c_str());
+	
+	LogNoticeF(this, L"Refreshing skin");
 
 	SetResizeWindowMode(RESIZEMODE_RESET);
 
@@ -908,7 +904,7 @@ void MeterWindow::DoBang(Bang bang, const std::vector<std::wstring>& args)
 			}
 			else
 			{
-				LogWarningF(L"!CommandMeasure: [%s] not found", measure.c_str());
+				LogWarningF(this, L"!CommandMeasure: [%s] not found", measure.c_str());
 			}
 		}
 		break;
@@ -944,11 +940,11 @@ void MeterWindow::DoBang(Bang bang, const std::vector<std::wstring>& args)
 					return;
 				}
 
-				LogWarningF(L"!PluginBang: [%s] not found", measure.c_str());
+				LogWarningF(this, L"!PluginBang: [%s] not found", measure.c_str());
 			}
 			else
 			{
-				LogError(L"!PluginBang: Invalid parameters");
+				LogErrorF(this, L"!PluginBang: Invalid parameters");
 			}
 		}
 		break;
@@ -1124,7 +1120,7 @@ void MeterWindow::ShowMeter(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogErrorF(L"!ShowMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
+	if (!group) LogErrorF(this, L"!ShowMeter: [%s] not found", meter);
 }
 
 /*
@@ -1146,7 +1142,7 @@ void MeterWindow::HideMeter(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogErrorF(L"!HideMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
+	if (!group) LogErrorF(this, L"!HideMeter: [%s] not found", meter);
 }
 
 /*
@@ -1175,7 +1171,7 @@ void MeterWindow::ToggleMeter(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogErrorF(L"!ToggleMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
+	if (!group) LogErrorF(this, L"!ToggleMeter: [%s] not found", meter);
 }
 
 /*
@@ -1198,7 +1194,7 @@ void MeterWindow::MoveMeter(const std::wstring& name, int x, int y)
 		}
 	}
 
-	LogErrorF(L"!MoveMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
+	LogErrorF(this, L"!MoveMeter: [%s] not found", meter);
 }
 
 /*
@@ -1248,7 +1244,7 @@ void MeterWindow::UpdateMeter(const std::wstring& name, bool group)
 	// Post-updates
 	PostUpdate(bActiveTransition);
 
-	if (!group && bContinue) LogErrorF(L"!UpdateMeter: [%s] not found in \"%s\"", meter, m_FolderPath.c_str());
+	if (!group && bContinue) LogErrorF(this, L"!UpdateMeter: [%s] not found", meter);
 }
 
 /*
@@ -1269,7 +1265,7 @@ void MeterWindow::EnableMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogErrorF(L"!EnableMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
+	if (!group) LogErrorF(this, L"!EnableMeasure: [%s] not found", measure);
 }
 
 /*
@@ -1290,7 +1286,7 @@ void MeterWindow::DisableMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogErrorF(L"!DisableMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
+	if (!group) LogErrorF(this, L"!DisableMeasure: [%s] not found", measure);
 }
 
 /*
@@ -1318,7 +1314,7 @@ void MeterWindow::ToggleMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogErrorF(L"!ToggleMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
+	if (!group) LogErrorF(this, L"!ToggleMeasure: [%s] not found", measure);
 }
 
 /*
@@ -1358,7 +1354,7 @@ void MeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 		}
 	}
 
-	if (!group) LogErrorF(L"!UpdateMeasure: [%s] not found in \"%s\"", measure, m_FolderPath.c_str());
+	if (!group) LogErrorF(this, L"!UpdateMeasure: [%s] not found", measure);
 }
 
 /*
@@ -2104,9 +2100,7 @@ bool MeterWindow::ReadSkin()
 					file += fd.cFileName;
 					if (!m_FontCollection->AddFile(file.c_str()))
 					{
-						std::wstring error = L"Unable to load font: ";
-						error += file.c_str();
-						LogError(error.c_str());
+						LogErrorF(this, L"Unable to load font: %s", file.c_str());
 					}
 				}
 			}
@@ -2137,9 +2131,7 @@ bool MeterWindow::ReadSkin()
 				MakePathAbsolute(szFontFile);
 				if (!m_FontCollection->AddFile(szFontFile.c_str()))
 				{
-					std::wstring error = L"Unable to load font: ";
-					error += localFont;
-					LogError(error.c_str());
+					LogErrorF(this, L"Unable to load font: %s", localFont);
 				}
 			}
 
@@ -4756,6 +4748,24 @@ std::wstring MeterWindow::GetResourcesPath()
 {
 	std::wstring path = GetRootPath();
 	path += L"@Resources\\";
+	return path;
+}
+
+std::wstring MeterWindow::GetSkinPath()
+{
+	std::wstring path = L"";
+
+	if (!m_FolderPath.empty())
+	{
+		path += m_FolderPath;
+		path += L"\\";
+	}
+
+	if (!m_FileName.empty())
+	{
+		path += m_FileName;
+	}
+
 	return path;
 }
 

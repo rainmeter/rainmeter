@@ -160,7 +160,7 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 		if (!ParseSubstitute(subs))
 		{
-			LogErrorF(L"Measure: Invalid Substitute=%s", subs.c_str());
+			LogErrorF(this, L"Measure: Invalid Substitute=%s", subs.c_str());
 		}
 	}
 
@@ -258,7 +258,7 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 				if (re == nullptr)
 				{
 					MakePlainSubstitute(str, i);
-					LogNoticeF(L"Substitute: %S", error);
+					LogNoticeF(this, L"Substitute: %S", error);
 				}
 				else
 				{
@@ -845,7 +845,7 @@ Measure* Measure::Create(const WCHAR* measure, MeterWindow* meterWindow, const W
 		return new MeasureScript(meterWindow, name);
 	}
 
-	LogErrorF(L"Measure=%s is not valid in [%s]", measure, name);
+	LogErrorF(meterWindow, L"Measure=%s is not valid in [%s]", measure, name);
 
 	return nullptr;
 }
@@ -856,5 +856,5 @@ Measure* Measure::Create(const WCHAR* measure, MeterWindow* meterWindow, const W
 */
 void Measure::Command(const std::wstring& command)
 {
-	LogWarningF(L"!CommandMeasure: Not supported by [%s]", m_Name.c_str());
+	LogWarningF(this, L"!CommandMeasure: Not supported by [%s]", m_Name.c_str());
 }

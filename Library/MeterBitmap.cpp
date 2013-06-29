@@ -197,7 +197,7 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 	else
 	{
-		LogErrorF(L"BitmapAlign=%s is not valid in [%s]", align, m_Name.c_str());
+		LogErrorF(this, L"BitmapAlign=%s is not valid", align);
 	}
 
 	if (m_Initialized)

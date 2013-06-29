@@ -121,7 +121,7 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 				if (m_HasGetStringFunction)
 				{
-					LogWarningF(L"Script: Using deprecated GetStringValue() in [%s]", m_Name.c_str());
+					LogWarningF(this, L"Script: Using deprecated GetStringValue()");
 				}
 
 				lua_rawgeti(L, LUA_GLOBALSINDEX, m_LuaScript.GetRef());
@@ -183,7 +183,7 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 	}
 
-	LogErrorF(L"Script: File not valid in [%s]", m_Name.c_str());
+	LogErrorF(this, L"Script: File not valid");
 	UninitializeLuaScript();
 }
 

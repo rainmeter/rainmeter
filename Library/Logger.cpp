@@ -99,7 +99,7 @@ void Logger::SetLogToFile(bool logToFile)
 		L"Rainmeter", L"Logging", logToFile ? L"1" : L"0", GetRainmeter().GetIniFile().c_str());
 }
 
-void Logger::LogInternal(Level level, ULONGLONG timestamp, const WCHAR* msg)
+void Logger::LogInternal(Level level, ULONGLONG timestamp, const WCHAR* source, const WCHAR* msg)
 {
 	WCHAR timestampSz[128];
 	size_t len = _snwprintf_s(
@@ -112,14 +112,14 @@ void Logger::LogInternal(Level level, ULONGLONG timestamp, const WCHAR* msg)
 		timestamp % 1000);
 
 	// Store up to MAX_LOG_ENTIRES entries.
-	Entry entry = {level, std::wstring(timestampSz, len), msg};
+	Entry entry = {level, std::wstring(timestampSz, len), source, msg};
 	m_Entries.push_back(entry);
 	if (m_Entries.size() > MAX_LOG_ENTIRES)
 	{
 		m_Entries.pop_front();
 	}
 
-	DialogAbout::AddLogItem(level, timestampSz, msg);
+	DialogAbout::AddLogItem(level, timestampSz, source, msg);
 	WriteToLogFile(entry);
 }
 
@@ -139,6 +139,8 @@ void Logger::WriteToLogFile(Entry& entry)
 	message += L" (";
 	message.append(entry.timestamp);
 	message += L") ";
+	message += entry.source;
+	message += L": ";
 	message += entry.message;
 	message += L'\n';
 	
@@ -164,7 +166,7 @@ void Logger::WriteToLogFile(Entry& entry)
 	}
 }
 
-void Logger::Log(Level level, const WCHAR* msg)
+void Logger::Log(Level level, const WCHAR* source, const WCHAR* msg)
 {
 	struct DelayedEntry
 	{
@@ -185,7 +187,7 @@ void Logger::Log(Level level, const WCHAR* msg)
 		while (!s_DelayedEntries.empty())
 		{
 			DelayedEntry& entry = s_DelayedEntries.front();
-			LogInternal(entry.level, entry.elapsed, entry.message.c_str());
+			LogInternal(entry.level, entry.elapsed, source, entry.message.c_str());
 
 			s_DelayedEntries.erase(s_DelayedEntries.begin());
 		}
@@ -193,7 +195,7 @@ void Logger::Log(Level level, const WCHAR* msg)
 		LeaveCriticalSection(&m_CsLogDelay);
 
 		// Log the actual message.
-		LogInternal(level, elapsed, msg);
+		LogInternal(level, elapsed, source, msg);
 
 		LeaveCriticalSection(&m_CsLog);
 	}
@@ -209,11 +211,9 @@ void Logger::Log(Level level, const WCHAR* msg)
 	}
 }
 
-void Logger::LogF(Level level, const WCHAR* format, ...)
+void Logger::LogF(Level level, const WCHAR* source, const WCHAR* format, va_list args)
 {
 	WCHAR* buffer = new WCHAR[1024];
-	va_list args;
-	va_start(args, format);
 
 	_invalid_parameter_handler oldHandler = _set_invalid_parameter_handler(RmNullCRTInvalidParameterHandler);
 	_CrtSetReportMode(_CRT_ASSERT, 0);
@@ -228,8 +228,133 @@ void Logger::LogF(Level level, const WCHAR* format, ...)
 
 	_set_invalid_parameter_handler(oldHandler);
 
-	Log(level, buffer);
-	va_end(args);
-
+	Log(level, source, buffer);
 	delete [] buffer;
+}
+
+void LogSection(Logger::Level level, Section* section, const WCHAR* format, va_list args)
+{
+	std::wstring source;
+	if (section)
+	{
+		MeterWindow* meterWindow = section->GetMeterWindow();
+		if (meterWindow)
+		{
+			source = meterWindow->GetSkinPath();
+			source += L" - ";
+		}
+
+		source += L"[";
+		source += section->GetOriginalName();
+		source += L"]";
+	}
+
+	GetLogger().LogF(level, source.c_str(), format, args);
+}
+
+void LogMeterWindow(Logger::Level level, MeterWindow* meterWindow, const WCHAR* format, va_list args)
+{
+	std::wstring source;
+	if (meterWindow)
+	{
+		source = meterWindow->GetSkinPath();
+	}
+
+	GetLogger().LogF(level, source.c_str(), format, args);
+}
+
+void LogErrorF(const WCHAR* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	GetLogger().LogF(Logger::Level::Error, L"", format, args);
+	va_end(args);
+}
+
+void LogErrorF(Section* section, const WCHAR* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	LogSection(Logger::Level::Error, section, format, args);
+	va_end(args);
+}
+
+void LogErrorF(MeterWindow* meterWindow, const WCHAR* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	LogMeterWindow(Logger::Level::Error, meterWindow, format, args);
+	va_end(args);
+}
+
+void LogWarningF(const WCHAR* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	GetLogger().LogF(Logger::Level::Warning, L"", format, args);
+	va_end(args);
+}
+
+void LogWarningF(Section* section, const WCHAR* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	LogSection(Logger::Level::Warning, section, format, args);
+	va_end(args);
+}
+
+void LogWarningF(MeterWindow* meterWindow, const WCHAR* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	LogMeterWindow(Logger::Level::Warning, meterWindow, format, args);
+	va_end(args);
+}
+
+void LogNoticeF(const WCHAR* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	GetLogger().LogF(Logger::Level::Notice, L"", format, args);
+	va_end(args);
+}
+
+void LogNoticeF(Section* section, const WCHAR* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	LogSection(Logger::Level::Notice, section, format, args);
+	va_end(args);
+}
+
+void LogNoticeF(MeterWindow* meterWindow, const WCHAR* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	LogMeterWindow(Logger::Level::Notice, meterWindow, format, args);
+	va_end(args);
+}
+
+void LogDebugF(const WCHAR* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	GetLogger().LogF(Logger::Level::Debug, L"", format, args);
+	va_end(args);
+}
+
+void LogDebugF(Section* section, const WCHAR* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	LogSection(Logger::Level::Debug, section, format, args);
+	va_end(args);
+}
+
+void LogDebugF(MeterWindow* meterWindow, const WCHAR* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	LogMeterWindow(Logger::Level::Debug, meterWindow, format, args);
+	va_end(args);
 }

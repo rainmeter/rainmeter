@@ -95,7 +95,7 @@ const WCHAR* MeasureUptime::GetStringValue()
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER)
 	{
-		LogErrorF(L"Uptime: \"Format=%s\" invalid in [%s]", m_Format.c_str(), m_Name.c_str());
+		LogErrorF(this, L"Uptime: \"Format=%s\" invalid", m_Format.c_str());
 		buffer[0] = 0;
 	}
 
