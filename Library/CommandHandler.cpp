@@ -165,7 +165,7 @@ void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, MeterWind
 					}
 					else
 					{
-						LogErrorF(skin, L"!%s: Skin \"%s\" not found", folderPath.c_str(), bangInfo.name);
+						LogErrorF(skin, L"!%s: Skin \"%s\" not found", bangInfo.name, folderPath.c_str());
 					}
 					return;
 				}
