@@ -133,11 +133,11 @@ const CustomBangInfo s_CustomBangs[] =
 	{ Bang::About, L"About", CommandHandler::DoAboutBang },
 	{ Bang::Manage, L"Manage", CommandHandler::DoManageBang },
 	{ Bang::SkinMenu, L"SkinMenu", CommandHandler::DoSkinMenuBang },
-	{ Bang::TrayMenu, L"TrayMenu", CommandHandler::DoTrayMenuBang  },
-	{ Bang::ResetStats, L"ResetStats", CommandHandler::DoResetStatsBang  },
-	{ Bang::Log, L"Log", CommandHandler::DoLogBang  },
+	{ Bang::TrayMenu, L"TrayMenu", CommandHandler::DoTrayMenuBang },
+	{ Bang::ResetStats, L"ResetStats", CommandHandler::DoResetStatsBang },
+	{ Bang::Log, L"Log", CommandHandler::DoLogBang },
 	{ Bang::RefreshApp, L"RefreshApp", CommandHandler::DoRefreshApp },
-	{ Bang::Quit, L"Quit", CommandHandler::DoQuitBang  },
+	{ Bang::Quit, L"Quit", CommandHandler::DoQuitBang },
 	{ Bang::LsBoxHook, L"LsBoxHook", CommandHandler::DoLsBoxHookBang }
 };
 
@@ -158,10 +158,10 @@ void DoBang(const BangInfo& bangInfo, std::vector<std::wstring>& args, MeterWind
 				const std::wstring& folderPath = args[bangInfo.argCount];
 				if (!folderPath.empty() && (folderPath.length() != 1 || folderPath[0] != L'*'))
 				{
-					MeterWindow* skin = GetRainmeter().GetMeterWindow(folderPath);
-					if (skin)
+					MeterWindow* meterWindow = GetRainmeter().GetMeterWindow(folderPath);
+					if (meterWindow)
 					{
-						skin->DoBang(bangInfo.bang, args);
+						meterWindow->DoBang(bangInfo.bang, args);
 					}
 					else
 					{
@@ -613,10 +613,10 @@ void CommandHandler::DoToggleSkinBang(std::vector<std::wstring>& args, MeterWind
 {
 	if (args.size() >= 2)
 	{
-		MeterWindow* skin = GetRainmeter().GetMeterWindow(args[0]);
-		if (skin)
+		MeterWindow* meterWindow = GetRainmeter().GetMeterWindow(args[0]);
+		if (meterWindow)
 		{
-			GetRainmeter().DeactivateSkin(skin, -1);
+			GetRainmeter().DeactivateSkin(meterWindow, -1);
 			return;
 		}
 
