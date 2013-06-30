@@ -334,7 +334,7 @@ bool CanvasD2D::MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& fo
 	{
 		DWRITE_TEXT_METRICS metrics;
 		textLayout->GetMetrics(&metrics);
-		rect.Width = metrics.width + 5.0f;
+		rect.Width = metrics.widthIncludingTrailingWhitespace + 5.0f;
 		rect.Height = metrics.height + 1.0f;  // 1.0f to get same result as GDI+.
 		return true;
 	}
