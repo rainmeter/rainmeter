@@ -417,6 +417,7 @@ void Rainmeter::Finalize()
 
 	DeleteAllUnmanagedMeterWindows();
 	DeleteAllMeterWindows();
+	DeleteAllUnmanagedMeterWindows();  // Redelete unmanaged windows caused by OnCloseAction
 
 	delete m_TrayWindow;
 
@@ -981,10 +982,13 @@ void Rainmeter::DeleteAllMeterWindows()
 	while (it != m_MeterWindows.cend())
 	{
 		MeterWindow* mw = (*it).second;
-		m_MeterWindows.erase(it++);  // Remove before deleting MeterWindow
+		m_MeterWindows.erase(it);  // Remove before deleting MeterWindow
 
 		DialogManage::UpdateSkins(mw, true);
 		delete mw;
+
+		// Get next valid iterator (Fix for iterator invalidation caused by OnCloseAction)
+		it = m_MeterWindows.cbegin();
 	}
 
 	m_MeterWindows.clear();

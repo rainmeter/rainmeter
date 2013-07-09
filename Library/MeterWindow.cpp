@@ -177,6 +177,8 @@ MeterWindow::MeterWindow(const std::wstring& folderPath, const std::wstring& fil
 */
 MeterWindow::~MeterWindow()
 {
+	m_State = STATE_CLOSING;
+
 	if (!m_OnCloseAction.empty())
 	{
 		GetRainmeter().ExecuteCommand(m_OnCloseAction.c_str(), this);
@@ -383,6 +385,7 @@ void MeterWindow::RemoveWindowExStyle(LONG_PTR flag)
 */
 void MeterWindow::Deactivate()
 {
+	if (m_State == STATE_CLOSING) return;
 	m_State = STATE_CLOSING;
 
 	GetRainmeter().RemoveMeterWindow(this);
