@@ -733,7 +733,7 @@ std::vector<std::wstring> TokenizeUrl(const std::wstring url)
 		{
 			tokens.emplace_back(url.substr(start, end - start));
 		}
-		
+
 		// Push back [MeasureName]
 		tokens.emplace_back(url.substr(end, ending - end + 1));
 
@@ -801,11 +801,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	measure->stringIndex2 = RmReadInt(rm, L"StringIndex2", 0);
 	measure->decodeCharacterReference = RmReadInt(rm, L"DecodeCharacterReference", 0);
 	measure->updateRate = RmReadInt(rm, L"UpdateRate", 600);
-	measure->download = 1 == RmReadInt(rm, L"Download", 0);
-	measure->forceReload = 1 == RmReadInt(rm, L"ForceReload", 0);
-	measure->debug = RmReadInt(rm, L"Debug", 0);
+	measure->forceReload = 0!=RmReadInt(rm, L"ForceReload", 0);
 	measure->codepage = RmReadInt(rm, L"CodePage", 0);
 
+	measure->download = 0!=RmReadInt(rm, L"Download", 0);
 	if (measure->download)
 	{
 		measure->downloadFolder = RmPathToAbsolute(rm, L"DownloadFile\\");
@@ -816,8 +815,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		measure->downloadFile.clear();
 	}
 
+	
+	measure->debug = RmReadInt(rm, L"Debug", 0);
 	if (measure->debug == 2)
-	{		
+	{
 		measure->debugFileLocation = RmReadPath(rm, L"Debug2File", L"WebParserDump.txt");
 		RmLog(LOG_DEBUG, measure->debugFileLocation.c_str());
 	}
@@ -969,11 +970,11 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 
 	// Compile the regular expression in the first argument
 	re = pcre_compile(
-		StringUtil::NarrowUTF8(measure->regExp).c_str(),   // the pattern
-		flags,					  // default options
-		&error,               // for error message
-		&erroffset,           // for error offset
-		nullptr);                // use default character tables
+		StringUtil::NarrowUTF8(measure->regExp).c_str(),	// the pattern
+		flags,												// default options
+		&error,												// for error message
+		&erroffset,											// for error offset
+		nullptr);											// use default character tables
 
 	if (re != nullptr)
 	{
@@ -996,14 +997,14 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 		}
 
 		rc = pcre_exec(
-			re,                   // the compiled pattern
-			nullptr,                 // no extra data - we didn't study the pattern
-			parseData,			  // the subject string
-			dwSize,			      // the length of the subject
-			0,                    // start at offset 0 in the subject
-			0,					  // default options
-			ovector,              // output vector for substring information
-			OVECCOUNT);           // number of elements in the output vector
+			re,						// the compiled pattern
+			nullptr,				// no extra data - we didn't study the pattern
+			parseData,				// the subject string
+			dwSize,					// the length of the subject
+			0,						// start at offset 0 in the subject
+			0,						// default options
+			ovector,				// output vector for substring information
+			OVECCOUNT);				// number of elements in the output vector
 
 
 		if (rc >= 0)
