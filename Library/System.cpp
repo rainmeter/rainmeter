@@ -1206,6 +1206,8 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 				SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)file.c_str(), SPIF_UPDATEINIFILE);
 			}
 		}
+
+		delete bitmap;
 	}
 }
 
