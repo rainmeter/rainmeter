@@ -815,7 +815,6 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		measure->downloadFile.clear();
 	}
 
-	
 	measure->debug = RmReadInt(rm, L"Debug", 0);
 	if (measure->debug == 2)
 	{
@@ -1005,7 +1004,6 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 			0,						// default options
 			ovector,				// output vector for substring information
 			OVECCOUNT);				// number of elements in the output vector
-
 
 		if (rc >= 0)
 		{
