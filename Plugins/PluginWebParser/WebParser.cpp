@@ -693,6 +693,7 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	g_Measures.push_back(measure);
 
 	measure->skin = RmGetSkin(rm);
+	measure->section = RmGetMeasureName(rm);
 
 	if (g_InstanceCount == 0)
 	{
@@ -707,21 +708,91 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	++g_InstanceCount;
 }
 
+std::vector<std::wstring> TokenizeUrl(const std::wstring url)
+{
+	std::vector<std::wstring> tokens;
+
+	std::wstring::size_type start = 0;
+	std::wstring::size_type end = url.find_first_of(L'[', 0);
+
+	while (std::wstring::npos != start || std::wstring::npos != end)
+	{
+		std::wstring::size_type ending = url.find_first_of(L']', end);
+		if (ending == std::wstring::npos)
+		{
+			// Push back rest of string
+			if (url.size() != start)
+			{
+				tokens.emplace_back(url.substr(start, url.size() - start));
+			}
+			break;
+		}
+
+		// Push non-Measure name chars (if any)
+		if (start != end)
+		{
+			tokens.emplace_back(url.substr(start, end - start));
+		}
+		
+		// Push back [MeasureName]
+		tokens.emplace_back(url.substr(end, ending - end + 1));
+
+		start = ending + 1;
+		end = url.find_first_of(L'[', start);
+	}
+
+	return tokens;
+}
+
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
 	MeasureData* measure = (MeasureData*)data;
 
-	if (!measure->url.empty())
-	{
-		// No support for DynamicVariables yet
-		return;
-	}
-
-	measure->section = RmGetMeasureName(rm);
+	EnterCriticalSection(&g_CriticalSection);
 
 	/* Read our own settings from the ini-file */
 
-	measure->url = RmReadString(rm, L"Url", L"", FALSE);
+	std::wstring url = RmReadString(rm, L"Url", L"", FALSE);
+	if (url.find_first_of(L'[', 0) != std::wstring::npos)
+	{
+		std::vector<std::wstring> tokens = TokenizeUrl(url);
+		std::unordered_map<std::wstring, std::wstring> replacedTokens;
+		for (auto iter : tokens)
+		{
+			if (iter[0] == L'[' && iter[iter.size() - 1] == L']' && iter.size() >= 3)
+			{
+				std::wstring section = iter.substr(1, iter.size() - 2);
+				bool found = false;
+
+				for (auto jter : g_Measures)
+				{
+					if (jter->section == section)
+					{
+						found = true;
+						break;
+					}
+				}
+
+				// A non-WebParser measure was found, read a "dummy" key value
+				if (!found)
+				{
+					replacedTokens[iter] = RmReadString(rm, L"DUMMY", iter.c_str(), TRUE);
+				}
+			}
+		}
+
+		for (auto iter : replacedTokens)
+		{
+			std::wstring::size_type start = url.find(iter.first);
+			while (start != std::wstring::npos)
+			{
+				url.replace(start, iter.first.size(), iter.second, 0, iter.second.size());
+				start = url.find(iter.first);
+			}
+		}
+	}
+	measure->url = url;
+
 	measure->regExp = RmReadString(rm, L"RegExp", L"");
 	measure->finishAction = RmReadString(rm, L"FinishAction", L"", FALSE);
 	measure->errorString = RmReadString(rm, L"ErrorString", L"");
@@ -750,6 +821,8 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		measure->debugFileLocation = RmReadPath(rm, L"Debug2File", L"WebParserDump.txt");
 		RmLog(LOG_DEBUG, measure->debugFileLocation.c_str());
 	}
+
+	LeaveCriticalSection(&g_CriticalSection);
 }
 
 PLUGIN_EXPORT double Update(void* data)
@@ -1734,4 +1807,37 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 	}
 
 	RmLog(LOG_ERROR, err.c_str());
+}
+
+PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
+{
+	MeasureData* measure = (MeasureData*)data;
+
+	// Kill the threads (if any) and reset the update counter
+	if (_wcsicmp(args, L"UPDATE") == 0)
+	{
+		if (measure->threadHandle)
+		{
+			// Thread is killed inside critical section so that itself is not inside one when it is terminated
+			EnterCriticalSection(&g_CriticalSection);
+
+			TerminateThread(measure->threadHandle, 0);
+			measure->threadHandle = nullptr;
+
+			LeaveCriticalSection(&g_CriticalSection);
+		}
+
+		if (measure->dlThreadHandle)
+		{
+			// Thread is killed inside critical section so that itself is not inside one when it is terminated
+			EnterCriticalSection(&g_CriticalSection);
+
+			TerminateThread(measure->dlThreadHandle, 0);
+			measure->dlThreadHandle = nullptr;
+
+			LeaveCriticalSection(&g_CriticalSection);
+		}
+
+		measure->updateCounter = 0;
+	}
 }

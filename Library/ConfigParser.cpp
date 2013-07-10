@@ -736,7 +736,6 @@ const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTS
 		{
 			result = strDefault;
 			m_LastDefaultUsed = true;
-			return result;
 		}
 	}
 	else
