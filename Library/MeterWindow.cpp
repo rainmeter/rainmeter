@@ -1317,7 +1317,7 @@ void MeterWindow::DisableMeasure(const std::wstring& name, bool group)
 }
 
 /*
-** Toggless the given measure
+** Toggles the given measure
 **
 */
 void MeterWindow::ToggleMeasure(const std::wstring& name, bool group)
