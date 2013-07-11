@@ -127,6 +127,9 @@ public:
 	void DisableMeasure(const std::wstring& name, bool group = false);
 	void EnableMeasure(const std::wstring& name, bool group = false);
 	void ToggleMeasure(const std::wstring& name, bool group = false);
+	void PauseMeasure(const std::wstring& name, bool group = false);
+	void UnpauseMeasure(const std::wstring& name, bool group = false);
+	void TogglePauseMeasure(const std::wstring& name, bool group = false);
 	void UpdateMeasure(const std::wstring& name, bool group = false);
 	void Deactivate();
 	void Refresh(bool init, bool all = false);

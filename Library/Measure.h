@@ -66,6 +66,10 @@ public:
 	void Enable();
 	bool IsDisabled() { return m_Disabled; }
 
+	void Pause() { m_Paused = true; }
+	void Unpause() { m_Paused = false; }
+	bool IsPaused() { return m_Paused; }
+
 	virtual void Command(const std::wstring& command);
 
 	double GetValue();
@@ -123,6 +127,7 @@ protected:
 	bool m_IfAboveCommitted;		// True when the IfAbove action is executed
 	bool m_IfBelowCommitted;		// True when the IfBelow action is executed
 	bool m_Disabled;				// Status of the measure
+	bool m_Paused;
 	bool m_Initialized;
 
 	std::wstring m_OnChangeAction;

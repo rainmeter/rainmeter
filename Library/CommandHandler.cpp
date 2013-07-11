@@ -67,6 +67,9 @@ const BangInfo s_Bangs[] =
 	{ Bang::DisableMeasure, L"DisableMeasure", 1 },
 	{ Bang::EnableMeasure, L"EnableMeasure", 1 },
 	{ Bang::ToggleMeasure, L"ToggleMeasure", 1 },
+	{ Bang::PauseMeasure, L"PauseMeasure", 1 },
+	{ Bang::UnpauseMeasure, L"UnpauseMeasure", 1 },
+	{ Bang::TogglePauseMeasure, L"TogglePauseMeasure", 1 },
 	{ Bang::UpdateMeasure, L"UpdateMeasure", 1 },
 	{ Bang::CommandMeasure, L"CommandMeasure", 2 },
 	{ Bang::PluginBang, L"PluginBang", 1 },
@@ -94,6 +97,9 @@ const BangInfo s_Bangs[] =
 	{ Bang::DisableMeasureGroup, L"DisableMeasureGroup", 1 },
 	{ Bang::EnableMeasureGroup, L"EnableMeasureGroup", 1 },
 	{ Bang::ToggleMeasureGroup, L"ToggleMeasureGroup", 1 },
+	{ Bang::PauseMeasureGroup, L"PauseMeasureGroup", 1 },
+	{ Bang::UnpauseMeasureGroup, L"UnpauseMeasureGroup", 1 },
+	{ Bang::TogglePauseMeasureGroup, L"TogglePauseMeasureGroup", 1 },
 	{ Bang::UpdateMeasureGroup, L"UpdateMeasureGroup", 1 }
 };
 

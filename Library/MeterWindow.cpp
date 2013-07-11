@@ -790,6 +790,18 @@ void MeterWindow::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		DisableMeasure(args[0]);
 		break;
 
+	case Bang::PauseMeasure:
+		PauseMeasure(args[0]);
+		break;
+
+	case Bang::UnpauseMeasure:
+		UnpauseMeasure(args[0]);
+		break;
+
+	case Bang::TogglePauseMeasure:
+		TogglePauseMeasure(args[0]);
+		break;
+
 	case Bang::UpdateMeasure:
 		UpdateMeasure(args[0]);
 		DialogAbout::UpdateMeasures(this);
@@ -805,6 +817,18 @@ void MeterWindow::DoBang(Bang bang, const std::vector<std::wstring>& args)
 
 	case Bang::EnableMeasureGroup:
 		EnableMeasure(args[0], true);
+		break;
+
+	case Bang::PauseMeasureGroup:
+		PauseMeasure(args[0], true);
+		break;
+
+	case Bang::UnpauseMeasureGroup:
+		UnpauseMeasure(args[0], true);
+		break;
+
+	case Bang::TogglePauseMeasureGroup:
+		TogglePauseMeasure(args[0], true);
 		break;
 
 	case Bang::UpdateMeasureGroup:
@@ -1318,6 +1342,76 @@ void MeterWindow::ToggleMeasure(const std::wstring& name, bool group)
 	}
 
 	if (!group) LogErrorF(this, L"!ToggleMeasure: [%s] not found", measure);
+}
+
+/*
+** Pauses the given measure
+**
+*/
+void MeterWindow::PauseMeasure(const std::wstring& name, bool group)
+{
+	const WCHAR* measure = name.c_str();
+
+	std::vector<Measure*>::const_iterator i = m_Measures.begin();
+	for ( ; i != m_Measures.end(); ++i)
+	{
+		if (CompareName((*i), measure, group))
+		{
+			(*i)->Pause();
+			if (!group) return;
+		}
+	}
+
+	if (!group) LogErrorF(this, L"!PauseMeasure: [%s] not found", measure);
+}
+
+/*
+** Unpauses the given measure
+**
+*/
+void MeterWindow::UnpauseMeasure(const std::wstring& name, bool group)
+{
+	const WCHAR* measure = name.c_str();
+
+	std::vector<Measure*>::const_iterator i = m_Measures.begin();
+	for ( ; i != m_Measures.end(); ++i)
+	{
+		if (CompareName((*i), measure, group))
+		{
+			(*i)->Unpause();
+			if (!group) return;
+		}
+	}
+
+	if (!group) LogErrorF(this, L"!UnpauseMeasure: [%s] not found", measure);
+}
+
+/*
+** Toggles the pause state of the given measure
+**
+*/
+void MeterWindow::TogglePauseMeasure(const std::wstring& name, bool group)
+{
+	const WCHAR* measure = name.c_str();
+
+	std::vector<Measure*>::const_iterator i = m_Measures.begin();
+	for ( ; i != m_Measures.end(); ++i)
+	{
+		if (CompareName((*i), measure, group))
+		{
+			if ((*i)->IsPaused())
+			{
+				(*i)->Unpause();
+			}
+			else
+			{
+				(*i)->Pause();
+			}
+			if (!group) return;
+		}
+	}
+
+	if (!group) LogErrorF(this, L"!TogglePauseMeasure: [%s] not found", measure);
 }
 
 /*

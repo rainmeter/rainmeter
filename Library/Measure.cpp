@@ -84,6 +84,7 @@ Measure::Measure(MeterWindow* meterWindow, const WCHAR* name) : Section(meterWin
 	m_IfAboveCommitted(false),
 	m_IfBelowCommitted(false),
 	m_Disabled(false),
+	m_Paused(false),
 	m_Initialized(false),
 	m_OldValue(),
 	m_ValueAssigned(false)
@@ -435,6 +436,9 @@ std::wstring Measure::ExtractWord(std::wstring& buffer)
 
 bool Measure::Update()
 {
+	// Don't do anything if paused
+	if (m_Paused) return false;
+
 	if (!m_Disabled)
 	{
 		// Only update the counter if the divider
