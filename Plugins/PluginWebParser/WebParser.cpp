@@ -759,24 +759,36 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		std::unordered_map<std::wstring, std::wstring> replacedTokens;
 		for (auto iter : tokens)
 		{
-			if (iter[0] == L'[' && iter[iter.size() - 1] == L']' && iter.size() >= 3)
+			if (iter.size() >= 3 && iter[0] == L'[' && iter[iter.size() - 1] == L']')
 			{
 				std::wstring section = iter.substr(1, iter.size() - 2);
 				bool found = false;
 
-				for (auto jter : g_Measures)
+				// Check for "escaped" Webparser measures eg. [$WebparserMeasure$]
+				if (section[0] != L'$' && section[section.size() - 1] != L'$')
 				{
-					if (jter->section == section)
+					for (auto jter : g_Measures)
 					{
-						found = true;
-						break;
+						if (jter->section == section)
+						{
+							found = true;
+							break;
+						}
 					}
 				}
+				else
+				{
+					section.erase(0,1);
+					section.erase(section.size() - 1, 1);
+				}
+
+				section.insert(0, L"[");
+				section.append(L"]");
 
 				// A non-WebParser measure was found, read a "dummy" key value
 				if (!found)
 				{
-					replacedTokens[iter] = RmReadString(rm, L"DUMMY", iter.c_str(), TRUE);
+					replacedTokens[iter] = RmReadString(rm, L"DUMMY", section.c_str(), TRUE);
 				}
 			}
 		}
