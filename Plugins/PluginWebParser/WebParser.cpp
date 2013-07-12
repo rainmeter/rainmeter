@@ -755,19 +755,20 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		std::vector<std::wstring> tokens = TokenizeUrl(url);
 		std::unordered_map<std::wstring, std::wstring> replacedTokens;
-		for (const auto& iter : tokens)
+		for (const auto& token : tokens)
 		{
-			if (iter.size() >= 3 && iter[0] == L'[' && iter[iter.size() - 1] == L']')
+			if (token.size() >= 3 && token[0] == L'[' && token[token.size() - 1] == L']')
 			{
-				std::wstring section = iter.substr(1, iter.size() - 2);
+				std::wstring section = token.substr(1, token.size() - 2);
 				bool found = false;
 
 				// Check for "escaped" Webparser measures eg. [$WebparserMeasure$]
 				if (section[0] != L'$' && section[section.size() - 1] != L'$')
 				{
-					for (const auto& jter : g_Measures)
+					const WCHAR* sectionSz = section.c_str();
+					for (const auto& measure : g_Measures)
 					{
-						if (jter->section == section)
+						if (_wcsicmp(measure->section, sectionSz) == 0)
 						{
 							found = true;
 							break;
@@ -781,23 +782,23 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 				}
 
 				section.insert(0, L"[");
-				section.append(L"]");
+				section += L']';
 
 				// A non-WebParser measure was found, read a "dummy" key value
 				if (!found)
 				{
-					replacedTokens[iter] = RmReadString(rm, L"DUMMY", section.c_str(), TRUE);
+					replacedTokens[token] = RmReadString(rm, L"DUMMY", section.c_str(), TRUE);
 				}
 			}
 		}
 
-		for (const auto& iter : replacedTokens)
+		for (const auto& ip : replacedTokens)
 		{
-			std::wstring::size_type start = url.find(iter.first);
+			std::wstring::size_type start = url.find(ip.first);
 			while (start != std::wstring::npos)
 			{
-				url.replace(start, iter.first.size(), iter.second, 0, iter.second.size());
-				start = url.find(iter.first);
+				url.replace(start, ip.first.size(), ip.second, 0, ip.second.size());
+				start = url.find(ip.first);
 			}
 		}
 	}
