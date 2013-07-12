@@ -408,12 +408,8 @@ void DialogAbout::TabLog::Initialize()
 	lvc.iSubItem = 4;
 	
 	// Start 4th column at max width
-	RECT rect = {0};
-	if (GetWindowRect(item, &rect))
-		lvc.cx = rect.right - rect.left - 405;
-	else
-		lvc.cx = 180;
-
+	RECT rect;
+	lvc.cx = GetWindowRect(item, &rect) ? (rect.right - rect.left - 405) : 180;
 	lvc.pszText = GetString(ID_STR_MESSAGE);
 	ListView_InsertColumn(item, 3, &lvc);
 
@@ -591,27 +587,24 @@ INT_PTR DialogAbout::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 			if (lvkd->wVKey == 0x43 && // C key.
 				IsCtrlKeyDown())
 			{
-				int sel = ListView_GetNextItem(nm->hwndFrom, -1, LVNI_FOCUSED | LVNI_SELECTED);
+				const int sel = ListView_GetNextItem(nm->hwndFrom, -1, LVNI_FOCUSED | LVNI_SELECTED);
 				if (sel != -1)
 				{
-					WCHAR* buffer = new WCHAR[512];
-					std::wstring message;
+					WCHAR buffer[512];
 
-					// Get Source (if any)
+					// Get message.
+					ListView_GetItemText(nm->hwndFrom, sel, 3, buffer, 512);
+					std::wstring message = buffer;
+
+					// Get source (if any).
 					ListView_GetItemText(nm->hwndFrom, sel, 2, buffer, 512);
 					if (*buffer)
 					{
-						message = L"Source:  ";
+						message += L" (";
 						message += buffer;
-						message += L"\n";
+						message += L')';
 					}
-					
-					// Get message
-					ListView_GetItemText(nm->hwndFrom, sel, 3, buffer, 512);
-					message += L"Message: ";
-					message += buffer;
 
-					delete [] buffer;
 					System::SetClipboardText(message);
 				}
 			}
@@ -690,12 +683,8 @@ void DialogAbout::TabSkins::Initialize()
 	lvc.iSubItem = 2;
 
 	// Start 3rd column at max width
-	RECT rect = {0};
-	if (GetWindowRect(item, &rect))
-		lvc.cx = rect.right - rect.left - 230;
-	else
-		lvc.cx = 130;
-
+	RECT rect;
+	lvc.cx = GetWindowRect(item, &rect) ? (rect.right - rect.left - 230) : 130;
 	lvc.pszText = GetString(ID_STR_VALUE);
 	ListView_InsertColumn(item, 2, &lvc);
 
@@ -1013,12 +1002,8 @@ void DialogAbout::TabPlugins::Initialize()
 	lvc.iSubItem = 2;
 
 	// Start 3rd column at max width
-	RECT rect = {0};
-	if (GetWindowRect(item, &rect))
-		lvc.cx = rect.right - rect.left - 193;
-	else
-		lvc.cx = 290;
-
+	RECT rect;
+	lvc.cx = GetWindowRect(item, &rect) ? (rect.right - rect.left - 193) : 290;
 	lvc.pszText = GetString(ID_STR_AUTHOR);
 	ListView_InsertColumn(item, 2, &lvc);
 
