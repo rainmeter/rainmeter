@@ -45,6 +45,9 @@ namespace Rainmeter
         private extern static unsafe double RmReadFormula(void* rm, char* option, double defValue);
 
         [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
+        private extern static unsafe char* RmReplaceVariables(void* rm, char* str);
+
+        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
         private extern static unsafe char* RmPathToAbsolute(void* rm, char* relativePath);
 
         [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
@@ -85,6 +88,12 @@ namespace Rainmeter
         public unsafe int ReadInt(string option, int defValue)
         {
             return (int)RmReadFormula((void*)m_Rm, ToUnsafe(option), defValue);
+        }
+
+        public unsafe string ReplaceVariables(string str)
+        {
+            char* value = RmReplaceVariables((void*)m_Rm, ToUnsafe(str));
+            return new string(value);
         }
 
         public unsafe string GetMeasureName()

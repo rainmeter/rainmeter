@@ -46,6 +46,17 @@ double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 	return parser.ReadFloat(measure->GetName(), option, defValue);
 }
 
+LPCWSTR __stdcall RmReplaceVariables(void* rm, LPCWSTR str)
+{
+	NULLCHECK(str);
+
+	MeasurePlugin* measure = (MeasurePlugin*)rm;
+	ConfigParser& parser = measure->GetMeterWindow()->GetParser();
+	g_Buffer = str;
+	parser.ReplaceVariables(g_Buffer);
+	return g_Buffer.c_str();
+}
+
 LPCWSTR __stdcall RmPathToAbsolute(void* rm, LPCWSTR relativePath)
 {
 	NULLCHECK(relativePath);
