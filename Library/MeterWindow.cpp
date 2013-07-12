@@ -4850,19 +4850,14 @@ std::wstring MeterWindow::GetResourcesPath()
 
 std::wstring MeterWindow::GetSkinPath()
 {
-	std::wstring path = L"";
-
+	std::wstring path;
 	if (!m_FolderPath.empty())
 	{
 		path += m_FolderPath;
 		path += L"\\";
 	}
 
-	if (!m_FileName.empty())
-	{
-		path += m_FileName;
-	}
-
+	path += m_FileName;
 	return path;
 }
 
