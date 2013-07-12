@@ -708,22 +708,20 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	++g_InstanceCount;
 }
 
-std::vector<std::wstring> TokenizeUrl(const std::wstring url)
+std::vector<std::wstring> TokenizeUrl(const std::wstring& url)
 {
 	std::vector<std::wstring> tokens;
-
 	std::wstring::size_type start = 0;
 	std::wstring::size_type end = url.find_first_of(L'[', 0);
-
 	while (std::wstring::npos != start || std::wstring::npos != end)
 	{
-		std::wstring::size_type ending = url.find_first_of(L']', end);
+		const std::wstring::size_type ending = url.find_first_of(L']', end);
 		if (ending == std::wstring::npos)
 		{
 			// Push back rest of string
 			if (url.size() != start)
 			{
-				tokens.emplace_back(url.substr(start, url.size() - start));
+				tokens.emplace_back(url, start, url.size() - start);
 			}
 			break;
 		}
@@ -731,11 +729,11 @@ std::vector<std::wstring> TokenizeUrl(const std::wstring url)
 		// Push non-Measure name chars (if any)
 		if (start != end)
 		{
-			tokens.emplace_back(url.substr(start, end - start));
+			tokens.emplace_back(url, start, end - start);
 		}
 
 		// Push back [MeasureName]
-		tokens.emplace_back(url.substr(end, ending - end + 1));
+		tokens.emplace_back(url, end, ending - end + 1);
 
 		start = ending + 1;
 		end = url.find_first_of(L'[', start);
@@ -757,7 +755,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		std::vector<std::wstring> tokens = TokenizeUrl(url);
 		std::unordered_map<std::wstring, std::wstring> replacedTokens;
-		for (auto iter : tokens)
+		for (const auto& iter : tokens)
 		{
 			if (iter.size() >= 3 && iter[0] == L'[' && iter[iter.size() - 1] == L']')
 			{
@@ -767,7 +765,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 				// Check for "escaped" Webparser measures eg. [$WebparserMeasure$]
 				if (section[0] != L'$' && section[section.size() - 1] != L'$')
 				{
-					for (auto jter : g_Measures)
+					for (const auto& jter : g_Measures)
 					{
 						if (jter->section == section)
 						{
@@ -778,7 +776,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 				}
 				else
 				{
-					section.erase(0,1);
+					section.erase(0, 1);
 					section.erase(section.size() - 1, 1);
 				}
 
@@ -793,7 +791,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 			}
 		}
 
-		for (auto iter : replacedTokens)
+		for (const auto& iter : replacedTokens)
 		{
 			std::wstring::size_type start = url.find(iter.first);
 			while (start != std::wstring::npos)
