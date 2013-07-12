@@ -784,10 +784,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 				section.insert(0, L"[");
 				section += L']';
 
-				// A non-WebParser measure was found, read a "dummy" key value
+				// A non-WebParser measure was found.
 				if (!found)
 				{
-					replacedTokens[token] = RmReadString(rm, L"DUMMY", section.c_str(), TRUE);
+					replacedTokens[token] = RmReplaceVariables(rm, section.c_str());
 				}
 			}
 		}
