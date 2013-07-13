@@ -181,7 +181,7 @@ bool CanvasGDIP::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForm
 	stringFormat.SetTrimming(Gdiplus::StringTrimmingNone);
 
 	const INT stringFormatFlags = stringFormat.GetFormatFlags();
-	stringFormat.SetFormatFlags(Gdiplus::StringFormatFlagsNoClip);
+	stringFormat.SetFormatFlags(Gdiplus::StringFormatFlagsMeasureTrailingSpaces | Gdiplus::StringFormatFlagsNoClip);
 
 	INT linesFilled = 0;
 	const Gdiplus::Status status = m_Graphics->MeasureString(

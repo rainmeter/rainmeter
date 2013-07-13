@@ -101,12 +101,13 @@ void TextFormatGDIP::SetTrimming(bool trim)
 	if (trim)
 	{
 		m_StringFormat.SetTrimming(Gdiplus::StringTrimmingEllipsisCharacter);
-		m_StringFormat.SetFormatFlags(0x0);
+		m_StringFormat.SetFormatFlags(Gdiplus::StringFormatFlagsMeasureTrailingSpaces);
 	}
 	else
 	{
 		m_StringFormat.SetTrimming(Gdiplus::StringTrimmingNone);
-		m_StringFormat.SetFormatFlags(Gdiplus::StringFormatFlagsNoClip | Gdiplus::StringFormatFlagsNoWrap);
+		m_StringFormat.SetFormatFlags(Gdiplus::StringFormatFlagsMeasureTrailingSpaces | 
+			Gdiplus::StringFormatFlagsNoClip | Gdiplus::StringFormatFlagsNoWrap);
 	}
 }
 
