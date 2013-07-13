@@ -54,6 +54,7 @@ LPCWSTR __stdcall RmReplaceVariables(void* rm, LPCWSTR str)
 	ConfigParser& parser = measure->GetMeterWindow()->GetParser();
 	g_Buffer = str;
 	parser.ReplaceVariables(g_Buffer);
+	parser.ReplaceMeasures(g_Buffer);
 	return g_Buffer.c_str();
 }
 
