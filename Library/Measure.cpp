@@ -129,6 +129,7 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Invert = 0!=parser.ReadInt(section, L"InvertMeasure", 0);
 
 	m_Disabled = 0!=parser.ReadInt(section, L"Disabled", 0);
+	m_Paused = 0!=parser.ReadInt(section, L"Paused", 0);
 
 	m_MinValue = parser.ReadFloat(section, L"MinValue", m_MinValue);
 	m_MaxValue = parser.ReadFloat(section, L"MaxValue", m_MaxValue);
@@ -186,6 +187,22 @@ void Measure::Enable()
 
 	// Change the option as well to avoid reset in ReadOptions().
 	m_MeterWindow->GetParser().SetValue(m_Name, L"Disabled", L"0");
+}
+
+void Measure::Pause()
+{
+	m_Paused = true;
+
+	// Change the option as well to avoid reset in ReadOptions().
+	m_MeterWindow->GetParser().SetValue(m_Name, L"Paused", L"1");
+}
+
+void Measure::Unpause()
+{
+	m_Paused = false;
+
+	// Change the option as well to avoid reset in ReadOptions().
+	m_MeterWindow->GetParser().SetValue(m_Name, L"Paused", L"0");
 }
 
 /*

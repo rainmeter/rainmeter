@@ -66,8 +66,8 @@ public:
 	void Enable();
 	bool IsDisabled() { return m_Disabled; }
 
-	void Pause() { m_Paused = true; }
-	void Unpause() { m_Paused = false; }
+	void Pause();
+	void Unpause();
 	bool IsPaused() { return m_Paused; }
 
 	virtual void Command(const std::wstring& command);
