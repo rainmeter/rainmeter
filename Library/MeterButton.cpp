@@ -210,7 +210,7 @@ void MeterButton::BindMeasures(ConfigParser& parser, const WCHAR* section)
 ** Checks if the given point is inside the button.
 **
 */
-bool MeterButton::HitTest2(int px, int py, bool checkAlpha)
+bool MeterButton::HitTest2(int px, int py)
 {
 	int x = GetX();
 	int y = GetY();
@@ -219,24 +219,17 @@ bool MeterButton::HitTest2(int px, int py, bool checkAlpha)
 		px >= x && px < x + m_W &&
 		py >= y && py < y + m_H)
 	{
-		if (checkAlpha)
+		if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
 		{
-			if (m_SolidColor.GetA() != 0 || m_SolidColor2.GetA() != 0)
-			{
-				return true;
-			}
+			return true;
+		}
 
-			// Check transparent pixels
-			if (m_Image.IsLoaded())
-			{
-				Color color;
-				Status status = m_Image.GetImage()->GetPixel(px - x + m_W * m_State, py - y, &color);
-				if (status != Ok || color.GetA() != 0)
-				{
-					return true;
-				}
-			}
-			else
+		// Check transparent pixels
+		if (m_Image.IsLoaded())
+		{
+			Color color;
+			Status status = m_Image.GetImage()->GetPixel(px - x + m_W * m_State, py - y, &color);
+			if (status != Ok || color.GetA() != 0)
 			{
 				return true;
 			}
@@ -253,7 +246,7 @@ bool MeterButton::MouseUp(POINT pos, bool execute)
 {
 	if (m_State == BUTTON_STATE_DOWN)
 	{
-		if (execute && m_Clicked && m_Focus && HitTest2(pos.x, pos.y, true))
+		if (execute && m_Clicked && m_Focus && HitTest2(pos.x, pos.y))
 		{
 			GetRainmeter().ExecuteCommand(m_Command.c_str(), m_MeterWindow);
 		}
@@ -268,7 +261,7 @@ bool MeterButton::MouseUp(POINT pos, bool execute)
 
 bool MeterButton::MouseDown(POINT pos)
 {
-	if (m_Focus && HitTest2(pos.x, pos.y, true))
+	if (m_Focus && HitTest2(pos.x, pos.y))
 	{
 		m_State = BUTTON_STATE_DOWN;
 		m_Clicked = true;
@@ -281,7 +274,7 @@ bool MeterButton::MouseMove(POINT pos)
 {
 	if (m_Clicked)
 	{
-		if (HitTest2(pos.x, pos.y, true))
+		if (HitTest2(pos.x, pos.y))
 		{
 			if (m_State == BUTTON_STATE_NORMAL)
 			{
@@ -306,7 +299,7 @@ bool MeterButton::MouseMove(POINT pos)
 	}
 	else
 	{
-		if (HitTest2(pos.x, pos.y, false))
+		if (HitTest2(pos.x, pos.y))
 		{
 			if (m_State == BUTTON_STATE_NORMAL)
 			{

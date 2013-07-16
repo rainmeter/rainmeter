@@ -42,6 +42,8 @@ public:
 
 	void SetFocus(bool f) { m_Focus = f; }
 
+	bool HitTest2(int px, int py);
+
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);
@@ -49,8 +51,6 @@ protected:
 	virtual bool IsFixedSize(bool overwrite = false) { return overwrite; }
 
 private:
-	bool HitTest2(int px, int py, bool checkAlpha);
-
 	TintedImage m_Image;
 	std::wstring m_ImageName;
 	bool m_NeedsReload;

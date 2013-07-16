@@ -3181,12 +3181,24 @@ void MeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 			}
 		}
 
-		if (!cursor &&
-			((*j)->HasMouseAction() || button) &&
-			(*j)->GetMouse().GetCursorState() &&
-			(*j)->HitTest(pos.x, pos.y))
+		// Get cursor if required
+		if (!cursor && (*j)->GetMouse().GetCursorState())
 		{
-			cursor = (*j)->GetMouse().GetCursor();
+			if ((*j)->HasMouseAction())
+			{
+				if ((*j)->HitTest(pos.x, pos.y))
+				{
+					cursor = (*j)->GetMouse().GetCursor();
+				}
+			}
+			else
+			{
+				// Special case for Button meter: reacts only on valid pixel in button image
+				if (button && button->HitTest2(pos.x, pos.y))
+				{
+					cursor = (*j)->GetMouse().GetCursor();
+				}
+			}
 		}
 	}
 
