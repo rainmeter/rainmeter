@@ -1147,13 +1147,13 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 			return;
 		}
 
-		Bitmap* bitmap = Bitmap::FromFile(wallpaper.c_str());
-		if (bitmap && bitmap->GetLastStatus() == Ok)
+		Bitmap bitmap(wallpaper.c_str());
+		if (bitmap.GetLastStatus() == Ok)
 		{
 			std::wstring file = GetRainmeter().GetSettingsPath() + L"Wallpaper.bmp";
 
 			const CLSID bmpClsid = { 0x557cf400, 0x1a04, 0x11d3, { 0x9a, 0x73, 0x0, 0x0, 0xf8, 0x1e, 0xf3, 0x2e } };
-			if (bitmap->Save(file.c_str(), &bmpClsid) == Ok)
+			if (bitmap.Save(file.c_str(), &bmpClsid) == Ok)
 			{
 				if (!style.empty())
 				{
@@ -1206,8 +1206,6 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 				SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)file.c_str(), SPIF_UPDATEINIFILE);
 			}
 		}
-
-		delete bitmap;
 	}
 }
 
