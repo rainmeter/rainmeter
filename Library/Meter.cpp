@@ -168,7 +168,7 @@ RECT Meter::GetMeterRect()
 }
 
 /*
-** Returns a Rect containing the adjusted meter location with SolidColorPadding
+** Returns a Rect containing the adjusted meter location with "Padding" option
 **
 */
 Gdiplus::Rect Meter::GetMeterRectPadding()
