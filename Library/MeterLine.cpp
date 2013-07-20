@@ -273,14 +273,13 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		}
 	}
 
-	int x = GetX();
-	int y = GetY();
+	Gdiplus::Rect meterRect = GetMeterRectPadding();
 
 	// Draw the horizontal lines
 	if (m_HorizontalLines)
 	{
 		// Calc the max number of lines we should draw
-		int maxLines = m_H / 4;	// one line per 4 pixels is max
+		int maxLines = meterRect.Height / 4;	// one line per 4 pixels is max
 		int numOfLines;
 
 		// Check the highest power of 2 that fits in maxLines
@@ -297,9 +296,9 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		REAL Y;
 		for (int j = 0; j < numOfLines; ++j)
 		{
-			Y = (REAL)((j + 1) * m_H / (numOfLines + 1));
-			Y = y + m_H - Y - 1;
-			graphics.DrawLine(&pen, (REAL)x, Y, (REAL)(x + m_W - 1), Y);	// GDI+
+			Y = (REAL)((j + 1) * meterRect.Height / (numOfLines + 1));
+			Y = meterRect.Y + meterRect.Height - Y - 1;
+			graphics.DrawLine(&pen, (REAL)meterRect.X, Y, (REAL)(meterRect.X + meterRect.Width - 1), Y);	// GDI+
 		}
 	}
 
@@ -307,7 +306,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 
 	if (m_GraphHorizontalOrientation)
 	{
-		const REAL W = m_W - 1.0f;
+		const REAL W = meterRect.Width - 1.0f;
 		counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
@@ -323,7 +322,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 				_x = (REAL)((*i)[pos] * scale);
 				_x = min(_x, W);
 				_x = max(_x, 0.0f);
-				_x = x + (m_GraphStartLeft ? _x : W - _x);
+				_x = meterRect.X + (m_GraphStartLeft ? _x : W - _x);
 			};
 
 			calcX(oldX);
@@ -333,10 +332,10 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		
 			if (!m_Flip)
 			{
-				for (int j = y + 1, R = y + m_H; j < R; ++j)
+				for (int j = meterRect.Y + 1, R = meterRect.Y + meterRect.Height; j < R; ++j)
 				{
 					++pos;
-					pos %= m_H;
+					pos %= meterRect.Height;
 
 					calcX(X);
 
@@ -347,10 +346,10 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			}
 			else
 			{
-				for (int j = y + m_H, R = y + 1; j > R; --j)
+				for (int j = meterRect.Y + meterRect.Height, R = meterRect.Y + 1; j > R; --j)
 				{
 					++pos;
-					pos %= m_H;
+					pos %= meterRect.Height;
 
 					calcX(X);
 
@@ -370,7 +369,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 	}
 	else
 	{
-		const REAL H = m_H - 1.0f;
+		const REAL H = meterRect.Height - 1.0f;
 		counter = 0;
 		for (auto i = m_AllValues.cbegin(); i != m_AllValues.cend(); ++i)
 		{
@@ -386,7 +385,7 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 				_y = (REAL)((*i)[pos] * scale);
 				_y = min(_y, H);
 				_y = max(_y, 0.0f);
-				_y = y + (m_Flip ? _y : H - _y);
+				_y = meterRect.Y + (m_Flip ? _y : H - _y);
 			};
 
 			calcY(oldY);
@@ -396,10 +395,10 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 		
 			if (!m_GraphStartLeft)
 			{
-				for (int j = x + 1, R = x + m_W; j < R; ++j)
+				for (int j = meterRect.X + 1, R = meterRect.X + meterRect.Width; j < R; ++j)
 				{
 					++pos;
-					pos %= m_W;
+					pos %= meterRect.Width;
 
 					calcY(Y);
 
@@ -410,10 +409,10 @@ bool MeterLine::Draw(Gfx::Canvas& canvas)
 			}
 			else
 			{
-				for (int j = x + m_W, R = x + 1; j > R; --j)
+				for (int j = meterRect.X + meterRect.Width, R = meterRect.X + 1; j > R; --j)
 				{
 					++pos;
-					pos %= m_W;
+					pos %= meterRect.Width;
 
 					calcY(Y);
 

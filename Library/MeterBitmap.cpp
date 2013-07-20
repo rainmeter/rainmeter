@@ -82,6 +82,9 @@ void MeterBitmap::Initialize()
 			{
 				m_W = m_W / m_FrameCount;
 			}
+
+			m_W += GetWidthPadding();
+			m_H += GetHeightPadding();
 		}
 	}
 	else if (m_Image.IsLoaded())
@@ -277,8 +280,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 
 	Bitmap* bitmap = m_Image.GetImage();
 
-	int x = GetX();
-	int y = GetY();
+	Gdiplus::Rect meterRect = GetMeterRectPadding();
 
 	if (m_Extend)
 	{
@@ -322,16 +324,16 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		}
 		else if (m_Align == ALIGN_CENTER)
 		{
-			offset = numOfNums * (m_W + m_Separation) / 2;
+			offset = numOfNums * (meterRect.Width + m_Separation) / 2;
 		}
 		else
 		{
-			offset = numOfNums * (m_W + m_Separation);
+			offset = numOfNums * (meterRect.Width + m_Separation);
 		}
 
 		do
 		{
-			offset = offset - (m_W + m_Separation);
+			offset = offset - (meterRect.Width + m_Separation);
 
 			int realFrames = (m_FrameCount / (m_TransitionFrameCount + 1));
 			int frame = (value % realFrames) * (m_TransitionFrameCount + 1);
@@ -364,15 +366,15 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 			if (bitmap->GetHeight() > bitmap->GetWidth())
 			{
 				newX = 0;
-				newY = m_H * frame;
+				newY = meterRect.Height * frame;
 			}
 			else
 			{
-				newX = m_W * frame;
+				newX = meterRect.Width * frame;
 				newY = 0;
 			}
 
-			canvas.DrawBitmap(bitmap, Rect(x + offset, y, m_W, m_H), Rect(newX, newY, m_W, m_H));
+			canvas.DrawBitmap(bitmap, Rect(meterRect.X + offset, meterRect.Y, meterRect.Width, meterRect.Height), Rect(newX, newY, meterRect.Width, meterRect.Height));
 			if (m_FrameCount == 1)
 			{
 				value /= 2;
@@ -433,17 +435,16 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		if (bitmap->GetHeight() > bitmap->GetWidth())
 		{
 			newX = 0;
-			newY = frame * m_H;
+			newY = frame * meterRect.Height;
 		}
 		else
 		{
-			newX = frame * m_W;
+			newX = frame * meterRect.Width;
 			newY = 0;
 		}
 
-		canvas.DrawBitmap(bitmap, Rect(x, y, m_W, m_H), Rect(newX, newY, m_W, m_H));
+		canvas.DrawBitmap(bitmap, Rect(meterRect.X, meterRect.Y, meterRect.Width, meterRect.Height), Rect(newX, newY, meterRect.Width, m_H));
 	}
 
 	return true;
 }
-

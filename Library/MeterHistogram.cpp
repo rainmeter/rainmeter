@@ -145,6 +145,9 @@ void MeterHistogram::Initialize()
 				{
 					m_SizeChanged = true;
 				}
+
+				m_W += GetWidthPadding();
+				m_H += GetHeightPadding();
 			}
 		}
 		else if (m_PrimaryImage.IsLoaded())
@@ -421,14 +424,13 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	Bitmap* secondaryBitmap = m_SecondaryImage.GetImage();
 	Bitmap* bothBitmap = m_OverlapImage.GetImage();
 
-	int x = GetX();
-	int y = GetY();
+	Gdiplus::Rect meterRect = GetMeterRectPadding();
 
 	// Default values (GraphStart=Right, GraphOrientation=Vertical)
 	int i;
 	int startValue = 0;
 	int* endValueLHS = &i;
-	int* endValueRHS = &m_W;
+	int* endValueRHS = &meterRect.Width;
 	int step = 1;
 	int endValue = -1; //(should be 0, but need to simulate <=)
 
@@ -437,7 +439,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	{
 		if (m_GraphStartLeft)
 		{
-			startValue = m_W - 1;
+			startValue = meterRect.Width - 1;
 			endValueLHS = &endValue;
 			endValueRHS = &i;
 			step = -1;
@@ -447,11 +449,11 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	{
 		if (!m_Flip)
 		{
-			endValueRHS = &m_H;
+			endValueRHS = &meterRect.Height;
 		}
 		else
 		{
-			startValue = m_H - 1;
+			startValue = meterRect.Height - 1;
 			endValueLHS = &endValue;
 			endValueRHS = &i;
 			step = -1;
@@ -465,20 +467,20 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		{
 			double value = (m_MaxPrimaryValue == 0.0) ?
 				  0.0
-				: m_PrimaryValues[(i + (m_MeterPos % m_H)) % m_H] / m_MaxPrimaryValue;
+				: m_PrimaryValues[(i + (m_MeterPos % meterRect.Height)) % meterRect.Height] / m_MaxPrimaryValue;
 			value -= m_MinPrimaryValue;
-			int primaryBarHeight = (int)(m_W * value);
-			primaryBarHeight = min(m_W, primaryBarHeight);
+			int primaryBarHeight = (int)(meterRect.Width * value);
+			primaryBarHeight = min(meterRect.Width, primaryBarHeight);
 			primaryBarHeight = max(0, primaryBarHeight);
 
 			if (secondaryMeasure)
 			{
 				value = (m_MaxSecondaryValue == 0.0) ?
 					  0.0
-					: m_SecondaryValues[(i + m_MeterPos) % m_H] / m_MaxSecondaryValue;
+					: m_SecondaryValues[(i + m_MeterPos) % meterRect.Height] / m_MaxSecondaryValue;
 				value -= m_MinSecondaryValue;
-				int secondaryBarHeight = (int)(m_W * value);
-				secondaryBarHeight = min(m_W, secondaryBarHeight);
+				int secondaryBarHeight = (int)(meterRect.Width * value);
+				secondaryBarHeight = min(meterRect.Width, secondaryBarHeight);
 				secondaryBarHeight = max(0, secondaryBarHeight);
 
 				// Check which measured value is higher
@@ -487,8 +489,8 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 				// Cache image/color rectangle for the both lines
 				{
 					Rect& r = m_GraphStartLeft ?
-						  Rect(x, y + startValue + (step * i), bothBarHeight, 1)
-						: Rect(x + m_W - bothBarHeight, y + startValue + (step * i), bothBarHeight, 1);
+						  Rect(meterRect.X, meterRect.Y + startValue + (step * i), bothBarHeight, 1)
+						: Rect(meterRect.X + meterRect.Width - bothBarHeight, meterRect.Y + startValue + (step * i), bothBarHeight, 1);
 
 					bothPath.AddRectangle(r);  // cache
 				}
@@ -497,16 +499,16 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 				if (secondaryBarHeight > primaryBarHeight)
 				{
 					Rect& r = m_GraphStartLeft ?
-						  Rect(x + bothBarHeight, y + startValue + (step * i), secondaryBarHeight - bothBarHeight, 1)
-						: Rect(x + m_W - secondaryBarHeight, y + startValue + (step * i), secondaryBarHeight - bothBarHeight, 1);
+						  Rect(meterRect.X + bothBarHeight, meterRect.Y + startValue + (step * i), secondaryBarHeight - bothBarHeight, 1)
+						: Rect(meterRect.X + meterRect.Width - secondaryBarHeight, meterRect.Y + startValue + (step * i), secondaryBarHeight - bothBarHeight, 1);
 
 					secondaryPath.AddRectangle(r);  // cache
 				}
 				else
 				{
 					Rect& r = m_GraphStartLeft ?
-						  Rect(x + bothBarHeight, y + startValue + (step * i), primaryBarHeight - bothBarHeight, 1)
-						: Rect(x + m_W - primaryBarHeight, y + startValue + (step * i), primaryBarHeight - bothBarHeight, 1);
+						  Rect(meterRect.X + bothBarHeight, meterRect.Y + startValue + (step * i), primaryBarHeight - bothBarHeight, 1)
+						: Rect(meterRect.X + meterRect.Width - primaryBarHeight, meterRect.Y + startValue + (step * i), primaryBarHeight - bothBarHeight, 1);
 
 					primaryPath.AddRectangle(r);  // cache
 				}
@@ -514,8 +516,8 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 			else
 			{
 				Rect& r = m_GraphStartLeft ?
-					  Rect(x, y + startValue + (step * i), primaryBarHeight, 1)
-					: Rect(x + m_W - primaryBarHeight, y + startValue + (step * i), primaryBarHeight, 1);
+					  Rect(meterRect.X, meterRect.Y + startValue + (step * i), primaryBarHeight, 1)
+					: Rect(meterRect.X + meterRect.Width - primaryBarHeight, meterRect.Y + startValue + (step * i), primaryBarHeight, 1);
 
 				primaryPath.AddRectangle(r);  // cache
 			}
@@ -527,20 +529,20 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		{
 			double value = (m_MaxPrimaryValue == 0.0) ?
 				  0.0
-				: m_PrimaryValues[(i + m_MeterPos) % m_W] / m_MaxPrimaryValue;
+				: m_PrimaryValues[(i + m_MeterPos) % meterRect.Width] / m_MaxPrimaryValue;
 			value -= m_MinPrimaryValue;
-			int primaryBarHeight = (int)(m_H * value);
-			primaryBarHeight = min(m_H, primaryBarHeight);
+			int primaryBarHeight = (int)(meterRect.Height * value);
+			primaryBarHeight = min(meterRect.Height, primaryBarHeight);
 			primaryBarHeight = max(0, primaryBarHeight);
 
 			if (secondaryMeasure)
 			{
 				value = (m_MaxSecondaryValue == 0.0) ?
 					  0.0
-					: m_SecondaryValues[(i + m_MeterPos) % m_W] / m_MaxSecondaryValue;
+					: m_SecondaryValues[(i + m_MeterPos) % meterRect.Width] / m_MaxSecondaryValue;
 				value -= m_MinSecondaryValue;
-				int secondaryBarHeight = (int)(m_H * value);
-				secondaryBarHeight = min(m_H, secondaryBarHeight);
+				int secondaryBarHeight = (int)(meterRect.Height * value);
+				secondaryBarHeight = min(meterRect.Height, secondaryBarHeight);
 				secondaryBarHeight = max(0, secondaryBarHeight);
 
 				// Check which measured value is higher
@@ -549,8 +551,8 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 				// Cache image/color rectangle for the both lines
 				{
 					Rect& r = m_Flip ?
-						  Rect(x + startValue + (step * i), y, 1, bothBarHeight)
-						: Rect(x + startValue + (step * i), y + m_H - bothBarHeight, 1, bothBarHeight);
+						  Rect(meterRect.X + startValue + (step * i), meterRect.Y, 1, bothBarHeight)
+						: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - bothBarHeight, 1, bothBarHeight);
 
 					bothPath.AddRectangle(r);  // cache
 				}
@@ -559,16 +561,16 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 				if (secondaryBarHeight > primaryBarHeight)
 				{
 					Rect& r = m_Flip ?
-						  Rect(x + startValue + (step * i), y + bothBarHeight, 1, secondaryBarHeight - bothBarHeight)
-						: Rect(x + startValue + (step * i), y + m_H - secondaryBarHeight, 1, secondaryBarHeight - bothBarHeight);
+						  Rect(meterRect.X + startValue + (step * i), meterRect.Y + bothBarHeight, 1, secondaryBarHeight - bothBarHeight)
+						: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - secondaryBarHeight, 1, secondaryBarHeight - bothBarHeight);
 
 					secondaryPath.AddRectangle(r);  // cache
 				}
 				else
 				{
 					Rect& r = m_Flip ?
-						  Rect(x + startValue + (step * i), y + bothBarHeight, 1, primaryBarHeight - bothBarHeight)
-						: Rect(x + startValue + (step * i), y + m_H - primaryBarHeight, 1, primaryBarHeight - bothBarHeight);
+						  Rect(meterRect.X + startValue + (step * i), meterRect.Y + bothBarHeight, 1, primaryBarHeight - bothBarHeight)
+						: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - primaryBarHeight, 1, primaryBarHeight - bothBarHeight);
 
 					primaryPath.AddRectangle(r);  // cache
 				}
@@ -576,8 +578,8 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 			else
 			{
 				Rect& r = m_Flip ?
-					  Rect(x + startValue + (step * i), y, 1, primaryBarHeight)
-					: Rect(x + startValue + (step * i), y + m_H - primaryBarHeight, 1, primaryBarHeight);
+					  Rect(meterRect.X + startValue + (step * i), meterRect.Y, 1, primaryBarHeight)
+					: Rect(meterRect.X + startValue + (step * i), meterRect.Y + meterRect.Height - primaryBarHeight, 1, primaryBarHeight);
 
 				primaryPath.AddRectangle(r);  // cache
 			}
@@ -587,7 +589,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	// Draw cached rectangles
 	if (primaryBitmap)
 	{
-		Rect r(x, y, primaryBitmap->GetWidth(), primaryBitmap->GetHeight());
+		Rect r(meterRect.X, meterRect.Y, primaryBitmap->GetWidth(), primaryBitmap->GetHeight());
 
 		graphics.SetClip(&primaryPath);
 		graphics.DrawImage(primaryBitmap, r, 0, 0, r.Width, r.Height, UnitPixel);
@@ -602,7 +604,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 	{
 		if (secondaryBitmap)
 		{
-			Rect r(x, y, secondaryBitmap->GetWidth(), secondaryBitmap->GetHeight());
+			Rect r(meterRect.X, meterRect.Y, secondaryBitmap->GetWidth(), secondaryBitmap->GetHeight());
 
 			graphics.SetClip(&secondaryPath);
 			graphics.DrawImage(secondaryBitmap, r, 0, 0, r.Width, r.Height, UnitPixel);
@@ -615,7 +617,7 @@ bool MeterHistogram::Draw(Gfx::Canvas& canvas)
 		}
 		if (bothBitmap)
 		{
-			Rect r(x, y, bothBitmap->GetWidth(), bothBitmap->GetHeight());
+			Rect r(meterRect.X, meterRect.Y, bothBitmap->GetWidth(), bothBitmap->GetHeight());
 
 			graphics.SetClip(&bothPath);
 			graphics.DrawImage(bothBitmap, r, 0, 0, r.Width, r.Height, UnitPixel);

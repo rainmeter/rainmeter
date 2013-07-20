@@ -113,6 +113,9 @@ void MeterButton::Initialize()
 				}
 				m_Bitmaps[i] = new CachedBitmap(&bitmapPart, &graphics);
 			}
+
+			m_W += GetWidthPadding();
+			m_H += GetHeightPadding();
 		}
 	}
 	else if (m_Image.IsLoaded())
@@ -186,11 +189,10 @@ bool MeterButton::Draw(Gfx::Canvas& canvas)
 
 	Gdiplus::Graphics& graphics = canvas.BeginGdiplusContext();
 
-	int x = GetX();
-	int y = GetY();
+	Gdiplus::Rect meterRect = GetMeterRectPadding();
 
 	// Blit the image
-	graphics.DrawCachedBitmap(m_Bitmaps[m_State], x, y);
+	graphics.DrawCachedBitmap(m_Bitmaps[m_State], meterRect.X, meterRect.Y);
 
 	canvas.EndGdiplusContext();
 

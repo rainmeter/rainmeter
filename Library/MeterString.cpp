@@ -393,13 +393,13 @@ bool MeterString::Update()
 			RectF rect;
 			if (DrawString(m_MeterWindow->GetCanvas(), &rect))
 			{
-				m_W = (int)rect.Width;
-				m_H = (int)rect.Height;
+				m_W = (int)rect.Width + GetWidthPadding();
+				m_H = (int)rect.Height + GetHeightPadding();
 			}
 			else
 			{
-				m_W = 1;
-				m_H = 1;
+				m_W = GetWidthPadding() + 1;
+				m_H = GetHeightPadding() + 1;
 			}
 		}
 
@@ -436,13 +436,12 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 		m_ClipType == CLIP_ON ||
 		(m_ClipType == CLIP_AUTO && (m_NeedsClipping || (m_WDefined && m_HDefined))));
 
-	const REAL x = (REAL)GetX();
-	const REAL y = (REAL)GetY();
+	Gdiplus::Rect meterRect = GetMeterRectPadding();
 
 	if (rect)
 	{
-		rect->X = x;
-		rect->Y = y;;
+		rect->X = (REAL)meterRect.X;
+		rect->Y = (REAL)meterRect.Y;
 		if (canvas.MeasureTextW(string, stringLen, *m_TextFormat, *rect) &&
 			m_ClipType == CLIP_AUTO)
 		{
@@ -454,7 +453,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 
 			if (m_WDefined)
 			{
-				w = (REAL)m_W;
+				w = (REAL)meterRect.Width;
 				h = rect->Height;
 				m_NeedsClipping = true;
 			}
@@ -463,18 +462,18 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 				if (m_ClipStringW == -1)
 				{
 					// Text does not fit in defined height, clip it
-					if (rect->Height > (REAL)m_H)
+					if (rect->Height > (REAL)meterRect.Height)
 					{
 						m_NeedsClipping = true;
 					}
 
-					rect->Height = (REAL)m_H;
+					rect->Height = (REAL)meterRect.Height;
 					updateSize = false;
 
 				}
 				else
 				{
-					if (rect->Width > m_ClipStringW)
+					if (rect->Width > (REAL)m_ClipStringW)
 					{
 						w = (REAL)m_ClipStringW;
 						m_NeedsClipping = true;
@@ -484,7 +483,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 						w = rect->Width;
 					}
 
-					h = (REAL)m_H;
+					h = (REAL)meterRect.Height;
 				}
 			}
 			else
@@ -502,7 +501,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 				}
 				else
 				{
-					if (rect->Width > m_ClipStringW)
+					if (rect->Width > (REAL)m_ClipStringW)
 					{
 						w = (REAL)m_ClipStringW;
 						m_NeedsClipping = true;
@@ -519,16 +518,16 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 			if (updateSize)
 			{
 				UINT lines = 0;
-				RectF layout(x, y, w, h);
+				RectF layout((REAL)meterRect.X, (REAL)meterRect.Y, w, h);
 				if (canvas.MeasureTextLinesW(string, stringLen, *m_TextFormat, layout, lines) &&
 					lines != 0)
 				{
 					rect->Width = w;
 					rect->Height = layout.Height;
 
-					if (m_HDefined || (m_ClipStringH != -1 && rect->Height > m_ClipStringH))
+					if (m_HDefined || (m_ClipStringH != -1 && rect->Height > (REAL)m_ClipStringH))
 					{
-						rect->Height = (REAL)(m_HDefined ? m_H : m_ClipStringH);
+						rect->Height = m_HDefined ? (REAL)meterRect.Height : (REAL)m_ClipStringH;
 					}
 				}
 			}
@@ -536,13 +535,13 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 	}
 	else
 	{
-		RectF rcDest(x, y, (REAL)m_W, (REAL)m_H);
+		RectF rcDest((REAL)meterRect.X, (REAL)meterRect.Y, (REAL)meterRect.Width, (REAL)meterRect.Height);
 		m_Rect = rcDest;
 
 		if (m_Angle != 0.0f)
 		{
 			const float baseX = (float)Meter::GetX();
-			canvas.RotateTransform(CONVERT_TO_DEGREES(m_Angle), baseX, y, -baseX, -y);
+			canvas.RotateTransform(CONVERT_TO_DEGREES(m_Angle), baseX, (REAL)meterRect.Y, -baseX, -(REAL)meterRect.Y);
 		}
 
 		if (m_Effect != EFFECT_NONE)

@@ -49,6 +49,10 @@ public:
 	virtual int GetY(bool abs = false);
 	RECT GetMeterRect();
 
+	Gdiplus::Rect GetMeterRectPadding();
+	int GetWidthPadding() { return m_Padding.X + m_Padding.Width; }
+	int GetHeightPadding() { return m_Padding.Y + m_Padding.Height; }
+
 	void SetW(int w) { m_W = w; }
 	void SetH(int h) { m_H = h; }
 	void SetX(int x);
@@ -122,7 +126,7 @@ protected:
 	bool m_Hidden;
 	bool m_WDefined;
 	bool m_HDefined;
-	Meter*	m_RelativeMeter;
+	Meter* m_RelativeMeter;
 
 	Gdiplus::Matrix* m_Transformation;
 
@@ -146,6 +150,7 @@ protected:
 	Gdiplus::Color m_SolidColor;
 	Gdiplus::Color m_SolidColor2;
 	Gdiplus::REAL m_SolidAngle;
+	Gdiplus::Rect m_Padding;
 	bool m_AntiAlias;
 	bool m_Initialized;
 };

@@ -59,6 +59,7 @@ Meter::Meter(MeterWindow* meterWindow, const WCHAR* name) : Section(meterWindow,
 	m_RelativeY(POSITION_ABSOLUTE),
 	m_SolidBevel(BEVELTYPE_NONE),
 	m_SolidAngle(),
+	m_Padding(),
 	m_AntiAlias(false),
 	m_Initialized(false)
 {
@@ -162,6 +163,22 @@ RECT Meter::GetMeterRect()
 	meterRect.top = GetY();
 	meterRect.right = meterRect.left + m_W;
 	meterRect.bottom = meterRect.top + m_H;
+
+	return meterRect;
+}
+
+/*
+** Returns a Rect containing the adjusted meter location with SolidColorPadding
+**
+*/
+Gdiplus::Rect Meter::GetMeterRectPadding()
+{
+	Gdiplus::Rect meterRect;
+
+	meterRect.X = GetX() + m_Padding.X;
+	meterRect.Y = GetY() + m_Padding.Y;
+	meterRect.Width = m_W - m_Padding.X - m_Padding.Width;
+	meterRect.Height = m_H - m_Padding.Y - m_Padding.Height;
 
 	return meterRect;
 }
@@ -288,10 +305,13 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_RelativeY = POSITION_ABSOLUTE;
 	}
 
+	static const Gdiplus::Rect defPadding;
+	m_Padding = parser.ReadRect(section, L"Padding", defPadding);
+
 	bool oldWDefined = m_WDefined;
 	int w = parser.ReadInt(section, L"W", m_W);
 	m_WDefined = parser.GetLastValueDefined();
-	if (IsFixedSize(true)) m_W = w;
+	if (IsFixedSize(true)) m_W = w + GetWidthPadding();
 	if (!m_WDefined && oldWDefined && IsFixedSize())
 	{
 		m_W = 0;
@@ -300,7 +320,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	bool oldHDefined = m_HDefined;
 	int h = parser.ReadInt(section, L"H", m_H);
 	m_HDefined = parser.GetLastValueDefined();
-	if (IsFixedSize(true)) m_H = h;
+	if (IsFixedSize(true)) m_H = h + GetHeightPadding();
 	if (!m_HDefined && oldHDefined && IsFixedSize())
 	{
 		m_H = 0;
