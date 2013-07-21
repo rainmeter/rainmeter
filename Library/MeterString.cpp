@@ -398,8 +398,8 @@ bool MeterString::Update()
 			}
 			else
 			{
-				m_W = GetWidthPadding() + 1;
-				m_H = GetHeightPadding() + 1;
+				m_W = 1;
+				m_H = 1;
 			}
 		}
 

@@ -308,19 +308,23 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	static const Gdiplus::Rect defPadding;
 	m_Padding = parser.ReadRect(section, L"Padding", defPadding);
 
+	int oldW = m_W;
 	bool oldWDefined = m_WDefined;
 	int w = parser.ReadInt(section, L"W", m_W);
 	m_WDefined = parser.GetLastValueDefined();
-	if (IsFixedSize(true)) m_W = w + GetWidthPadding();
+	if (IsFixedSize(true)) m_W = w;
+	if (oldW != m_W) m_W += GetWidthPadding();
 	if (!m_WDefined && oldWDefined && IsFixedSize())
 	{
 		m_W = 0;
 	}
 	
+	int oldH = m_H;
 	bool oldHDefined = m_HDefined;
 	int h = parser.ReadInt(section, L"H", m_H);
 	m_HDefined = parser.GetLastValueDefined();
-	if (IsFixedSize(true)) m_H = h + GetHeightPadding();
+	if (IsFixedSize(true)) m_H = h;
+	if (oldH != m_H) m_H += GetHeightPadding();
 	if (!m_HDefined && oldHDefined && IsFixedSize())
 	{
 		m_H = 0;
