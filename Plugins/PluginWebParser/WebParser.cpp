@@ -751,7 +751,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	/* Read our own settings from the ini-file */
 
 	std::wstring url = RmReadString(rm, L"Url", L"", FALSE);
-	if (url.find_first_of(L'[', 0) != std::wstring::npos)
+	/*if (url.find_first_of(L'[', 0) != std::wstring::npos)
 	{
 		std::vector<std::wstring> tokens = TokenizeUrl(url);
 		std::unordered_map<std::wstring, std::wstring> replacedTokens;
@@ -801,7 +801,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 				start = url.find(ip.first);
 			}
 		}
-	}
+	}*/
 	measure->url = url;
 
 	measure->regExp = RmReadString(rm, L"RegExp", L"");
