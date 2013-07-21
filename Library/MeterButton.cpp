@@ -229,11 +229,19 @@ bool MeterButton::HitTest2(int px, int py)
 		// Check transparent pixels
 		if (m_Image.IsLoaded())
 		{
-			Color color;
-			Status status = m_Image.GetImage()->GetPixel(px - x + m_W * m_State, py - y, &color);
-			if (status != Ok || color.GetA() != 0)
+			Rect meterRect = GetMeterRectPadding();
+			int ix = meterRect.Width * m_State;
+			px = px - meterRect.X + ix;
+			py = py - meterRect.Y;
+			if (px >= ix && px < ix + meterRect.Width &&
+				py >= 0 && py < meterRect.Height)
 			{
-				return true;
+				Color color;
+				Status status = m_Image.GetImage()->GetPixel(px, py, &color);
+				if (status != Ok || color.GetA() != 0)
+				{
+					return true;
+				}
 			}
 		}
 		else
