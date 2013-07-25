@@ -128,7 +128,8 @@ public:
 	HINSTANCE GetResourceInstance() { return m_ResourceInstance; }
 	LCID GetResourceLCID() { return m_ResourceLCID; }
 
-	bool CanUseD2D() const { return m_UseD2D; }
+	bool GetUseD2D() const { return m_UseD2D; }
+	void SetUseD2D(bool enabled);
 
 	bool GetDebug() { return m_Debug; }
 

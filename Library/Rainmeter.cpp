@@ -1757,3 +1757,13 @@ void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)
 		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);
 	}
 }
+
+void Rainmeter::SetUseD2D(bool enabled)
+{
+	m_UseD2D = enabled;
+
+	// Save to Rainmeter.ini
+	WritePrivateProfileString(L"Rainmeter", L"UseD2D", enabled ? L"1" : L"0", m_IniFile.c_str());
+
+	RefreshAll();
+}

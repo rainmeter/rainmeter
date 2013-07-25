@@ -1806,7 +1806,7 @@ void DialogManage::TabSettings::Create(HWND owner)
 	const ControlTemplate::Control s_Controls[] =
 	{
 		CT_GROUPBOX(-1, ID_STR_GENERAL,
-			0, 0, 468, 118,
+			0, 0, 468, 131,
 			WS_VISIBLE, 0),
 		CT_LABEL(-1, ID_STR_LANGUAGESC,
 			6, 16, 87, 14,
@@ -1832,24 +1832,27 @@ void DialogManage::TabSettings::Create(HWND owner)
 		CT_CHECKBOX(Id_ShowTrayIconCheckBox, ID_STR_SHOWNOTIFICATIONAREAICON,
 			6, 81, 150, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_CHECKBOX(Id_UseD2DCheckBox, ID_STR_USED2D,
+			6, 94, 150, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ResetStatisticsButton, ID_STR_RESETSTATISTICS,
-			6, 97, buttonWidth + 20, 14,
+			6, 110, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 
 		CT_GROUPBOX(-1, ID_STR_LOGGING,
-			0, 125, 468, 66,
+			0, 138, 468, 66,
 			WS_VISIBLE, 0),
 		CT_CHECKBOX(Id_VerboseLoggingCheckbox, ID_STR_DEBUGMODE,
-			6, 141, 200, 9,
-			WS_VISIBLE | WS_TABSTOP, 0),
-		CT_CHECKBOX(Id_LogToFileCheckBox, ID_STR_LOGTOFILE,
 			6, 154, 200, 9,
 			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_CHECKBOX(Id_LogToFileCheckBox, ID_STR_LOGTOFILE,
+			6, 167, 200, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_ShowLogFileButton, ID_STR_SHOWLOGFILE,
-			6, 170, buttonWidth + 20, 14,
+			6, 183, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_BUTTON(Id_DeleteLogFileButton, ID_STR_DELETELOGFILE,
-			buttonWidth + 30, 170, buttonWidth + 20, 14,
+			buttonWidth + 30, 183, buttonWidth + 20, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -1911,6 +1914,15 @@ void DialogManage::TabSettings::Initialize()
 
 	bool iconEnabled = GetRainmeter().GetTrayWindow()->IsTrayIconEnabled();
 	Button_SetCheck(GetControl(Id_ShowTrayIconCheckBox), iconEnabled);
+
+	if (Platform::IsAtLeastWinVista())
+	{
+		Button_SetCheck(GetControl(Id_UseD2DCheckBox), GetRainmeter().GetUseD2D());
+	}
+	else
+	{
+		Button_Enable(GetControl(Id_UseD2DCheckBox), FALSE);
+	}
 
 	m_Initialized = true;
 }
@@ -2068,6 +2080,10 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 
 	case Id_ShowTrayIconCheckBox:
 		GetRainmeter().GetTrayWindow()->SetTrayIcon(!GetRainmeter().GetTrayWindow()->IsTrayIconEnabled());
+		break;
+
+	case Id_UseD2DCheckBox:
+		GetRainmeter().SetUseD2D(!GetRainmeter().GetUseD2D());
 		break;
 
 	default:

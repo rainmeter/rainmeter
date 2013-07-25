@@ -149,7 +149,8 @@ private:
 			Id_LanguageDropDownList,
 			Id_EditorEdit,
 			Id_EditorBrowseButton,
-			Id_ShowTrayIconCheckBox
+			Id_ShowTrayIconCheckBox,
+			Id_UseD2DCheckBox
 		};
 
 		TabSettings();

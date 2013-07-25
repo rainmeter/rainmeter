@@ -2072,7 +2072,7 @@ bool MeterWindow::ReadSkin()
 	ReadOptions();
 
 	// Temporarily read "__UseD2D" from skin for easy testing
-	bool useD2D = GetRainmeter().CanUseD2D();
+	bool useD2D = GetRainmeter().GetUseD2D();
 	if (revision_beta)
 	{
 		useD2D = 0!=m_Parser.ReadInt(L"Rainmeter", L"__UseD2D", useD2D ? 1 : 0);
