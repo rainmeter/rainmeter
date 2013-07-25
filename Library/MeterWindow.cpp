@@ -142,9 +142,6 @@ MeterWindow::MeterWindow(const std::wstring& folderPath, const std::wstring& fil
 	m_FontCollection(),
 	m_ToolTipHidden(false)
 {
-	m_Canvas = (Platform::IsAtLeastWinVista() && GetRainmeter().CanUseD2D()) ?
-		(Gfx::Canvas*)new Gfx::CanvasD2D() : (Gfx::Canvas*)new Gfx::CanvasGDIP();
-
 	if (!c_DwmInstance && Platform::IsAtLeastWinVista())
 	{
 		c_DwmInstance = System::RmLoadLibrary(L"dwmapi.dll");
@@ -203,9 +200,6 @@ MeterWindow::~MeterWindow()
 			c_DwmIsCompositionEnabled = nullptr;
 		}
 	}
-
-	delete m_Canvas;
-	m_Canvas = nullptr;
 }
 
 /*
@@ -270,6 +264,9 @@ void MeterWindow::Dispose(bool refresh)
 			m_Window = nullptr;
 		}
 	}
+
+	delete m_Canvas;
+	m_Canvas = nullptr;
 }
 
 /*
@@ -296,9 +293,6 @@ void MeterWindow::Initialize()
 
 	// Mark the window to ignore the Aero peek
 	IgnoreAeroPeek();
-
-	// Gotta have some kind of buffer during initialization
-	CreateDoubleBuffer(1, 1);
 
 	Refresh(true, true);
 	if (!m_WindowStartHidden)
@@ -2076,6 +2070,19 @@ bool MeterWindow::ReadSkin()
 
 	// Read options from Rainmeter.ini.
 	ReadOptions();
+
+	// Temporarily read "__UseD2D" from skin for easy testing
+	bool useD2D = GetRainmeter().CanUseD2D();
+	if (revision_beta)
+	{
+		useD2D = 0!=m_Parser.ReadInt(L"Rainmeter", L"__UseD2D", useD2D ? 1 : 0);
+	}
+
+	m_Canvas = (Platform::IsAtLeastWinVista() && useD2D) ?
+		(Gfx::Canvas*)new Gfx::CanvasD2D() : (Gfx::Canvas*)new Gfx::CanvasGDIP();
+
+	// Gotta have some kind of buffer during initialization
+	CreateDoubleBuffer(1, 1);
 
 	m_AccurateText = 0!=m_Parser.ReadInt(L"Rainmeter", L"AccurateText", 0);
 	m_Canvas->SetAccurateText(m_AccurateText);
