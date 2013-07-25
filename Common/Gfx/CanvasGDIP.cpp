@@ -160,21 +160,45 @@ void CanvasGDIP::Clear(const Gdiplus::Color& color)
 void CanvasGDIP::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect, const Gdiplus::SolidBrush& brush)
 {
 	Gdiplus::StringFormat& stringFormat = ((TextFormatGDIP&)format).m_StringFormat;
+	Gdiplus::StringFormat tStringFormat = Gdiplus::StringFormat::GenericTypographic();
+
+	if (m_AccurateText)
+	{
+		tStringFormat.SetTrimming(stringFormat.GetTrimming());
+		tStringFormat.SetFormatFlags(stringFormat.GetFormatFlags());
+		tStringFormat.SetAlignment(stringFormat.GetAlignment());
+		tStringFormat.SetLineAlignment(stringFormat.GetLineAlignment());
+	}
+
 	m_Graphics->DrawString(
-		str, (INT)strLen, ((TextFormatGDIP&)format).m_Font.get(), rect, &stringFormat, &brush);
+		str, (INT)strLen, ((TextFormatGDIP&)format).m_Font.get(), rect,
+		m_AccurateText ? &tStringFormat : &stringFormat, &brush);
 }
 
 bool CanvasGDIP::MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect)
 {
 	Gdiplus::StringFormat& stringFormat = ((TextFormatGDIP&)format).m_StringFormat;
+	Gdiplus::StringFormat tStringFormat = Gdiplus::StringFormat::GenericTypographic();
+
+	if (m_AccurateText)
+	{
+		tStringFormat.SetTrimming(stringFormat.GetTrimming());
+		tStringFormat.SetFormatFlags(stringFormat.GetFormatFlags());
+		tStringFormat.SetAlignment(stringFormat.GetAlignment());
+		tStringFormat.SetLineAlignment(stringFormat.GetLineAlignment());
+	}
+
 	const Gdiplus::Status status = m_Graphics->MeasureString(
-		str, (INT)strLen, ((TextFormatGDIP&)format).m_Font.get(), rect, &stringFormat, &rect);
+		str, (INT)strLen, ((TextFormatGDIP&)format).m_Font.get(), rect,
+		m_AccurateText ? &tStringFormat : &stringFormat, &rect);
+
 	return status == Gdiplus::Ok;
 }
 
 bool CanvasGDIP::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect, UINT& lines)
 {
 	Gdiplus::StringFormat& stringFormat = ((TextFormatGDIP&)format).m_StringFormat;
+	Gdiplus::StringFormat tStringFormat = Gdiplus::StringFormat::GenericTypographic();
 
 	// Set trimming and format temporarily.
 	const Gdiplus::StringTrimming stringTrimming = stringFormat.GetTrimming();
@@ -183,9 +207,18 @@ bool CanvasGDIP::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForm
 	const INT stringFormatFlags = stringFormat.GetFormatFlags();
 	stringFormat.SetFormatFlags(Gdiplus::StringFormatFlagsNoClip);
 
+	if (m_AccurateText)
+	{
+		tStringFormat.SetTrimming(stringFormat.GetTrimming());
+		tStringFormat.SetFormatFlags(stringFormat.GetFormatFlags());
+		tStringFormat.SetAlignment(stringFormat.GetAlignment());
+		tStringFormat.SetLineAlignment(stringFormat.GetLineAlignment());
+	}
+
 	INT linesFilled = 0;
 	const Gdiplus::Status status = m_Graphics->MeasureString(
-		str, (INT)strLen, ((TextFormatGDIP&)format).m_Font.get(), rect, &stringFormat, &rect, nullptr, &linesFilled);
+		str, (INT)strLen, ((TextFormatGDIP&)format).m_Font.get(), rect,
+		m_AccurateText ? &tStringFormat : &stringFormat, &rect, nullptr, &linesFilled);
 	lines = linesFilled;
 
 	// Restore old options.

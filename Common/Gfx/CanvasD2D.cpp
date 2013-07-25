@@ -314,7 +314,7 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 		formatD2D.CreateLayout(str, strLen, rect.Width, rect.Height);
 
 		m_Target->DrawTextLayout(
-			D2D1::Point2F(right ? rect.X - 2 : rect.X + 2.0f, rect.Y - 1.0f),
+			D2D1::Point2F(m_AccurateText ? rect.X : right ? rect.X - 3.0f : rect.X + 3.0f, rect.Y - 1.0f),
 			formatD2D.m_TextLayout.Get(),
 			solidBrush.Get());
 	}
@@ -334,8 +334,21 @@ bool CanvasD2D::MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& fo
 	{
 		DWRITE_TEXT_METRICS metrics;
 		textLayout->GetMetrics(&metrics);
-		rect.Width = metrics.width + 5.0f;
-		rect.Height = metrics.height + 1.0f;  // 1.0f to get same result as GDI+.
+
+		if (!m_AccurateText)
+		{
+			float size = 0.0f;
+			textLayout->GetFontSize(0, &size);
+
+			rect.Width = floor(metrics.width + (size / 2.05f) + 0.65f);
+			rect.Height = floor(metrics.height + 1.5f);
+		}
+		else
+		{
+			rect.Width = metrics.width;
+			rect.Height = metrics.height;
+		}
+
 		return true;
 	}
 
@@ -358,8 +371,21 @@ bool CanvasD2D::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForma
 	{
 		DWRITE_TEXT_METRICS metrics;
 		textLayout->GetMetrics(&metrics);
-		rect.Width = metrics.width + 5.0f;
-		rect.Height = metrics.height + 1.0f;  // 1.0f to get same result as GDI+.
+
+		if (!m_AccurateText)
+		{
+			float size = 0.0f;
+			textLayout->GetFontSize(0, &size);
+
+			rect.Width = floor(metrics.width + (size / 2.05f) + 0.65f);
+			rect.Height = floor(metrics.height + 1.5f);
+		}
+		else
+		{
+			rect.Width = metrics.width;
+			rect.Height = metrics.height + 1.0f;
+		}
+
 		lines = metrics.lineCount;
 		return true;
 	}

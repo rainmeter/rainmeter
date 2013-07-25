@@ -35,6 +35,8 @@ public:
 	int GetW() const { return m_W; }
 	int GetH() const { return m_H; }
 
+	void SetAccurateText(bool option) { m_AccurateText = option; }
+
 	// Resize the draw area of the Canvas. This function must not be called if BeginDraw() has been
 	// called and has not yet been matched by a correspoding call to EndDraw.
 	virtual void Resize(int w, int h);
@@ -85,6 +87,8 @@ protected:
 
 	int m_W;
 	int m_H;
+
+	bool m_AccurateText;
 
 private:
 	Canvas(const Canvas& other) {}

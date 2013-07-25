@@ -22,7 +22,8 @@ namespace Gfx {
 
 Canvas::Canvas() :
 	m_W(),
-	m_H()
+	m_H(),
+	m_AccurateText(false)
 {
 }
 

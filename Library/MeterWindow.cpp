@@ -2077,6 +2077,9 @@ bool MeterWindow::ReadSkin()
 	// Read options from Rainmeter.ini.
 	ReadOptions();
 
+	m_AccurateText = 0!=m_Parser.ReadInt(L"Rainmeter", L"AccurateText", 0);
+	m_Canvas->SetAccurateText(m_AccurateText);
+
 	// Check the version
 	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
 	if (appVersion > RAINMETER_VERSION)
