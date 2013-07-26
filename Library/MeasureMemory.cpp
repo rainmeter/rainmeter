@@ -50,7 +50,7 @@ void MeasureMemory::UpdateValue()
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
 	GlobalMemoryStatusEx(&stat);
-	m_MaxValue = (double)(__int64)(stat.ullTotalPageFile + stat.ullTotalPhys);
+	m_MaxValue = (double)(__int64)(stat.ullTotalPageFile);
 
 	if (m_Total)
 	{
@@ -58,7 +58,7 @@ void MeasureMemory::UpdateValue()
 	}
 	else
 	{
-		m_Value = (double)(__int64)(stat.ullTotalPageFile + stat.ullTotalPhys - stat.ullAvailPageFile - stat.ullAvailPhys);
+		m_Value = (double)(__int64)(stat.ullTotalPageFile - stat.ullAvailPageFile);
 	}
 }
 

@@ -22,6 +22,7 @@
 #include "MeasureMemory.h"
 #include "MeasurePhysicalMemory.h"
 #include "MeasureVirtualMemory.h"
+#include "MeasureSwapfileSize.h"
 #include "MeasureNetIn.h"
 #include "MeasureNetOut.h"
 #include "MeasureNetTotal.h"
@@ -836,6 +837,10 @@ Measure* Measure::Create(const WCHAR* measure, MeterWindow* meterWindow, const W
 	else if (_wcsicmp(L"SwapMemory", measure) == 0)
 	{
 		return new MeasureVirtualMemory(meterWindow, name);
+	}
+	else if (_wcsicmp(L"SwapMemory2", measure) == 0)
+	{
+		return new MeasureSwapfileSize(meterWindow, name);
 	}
 	else if (_wcsicmp(L"FreeDiskSpace", measure) == 0)
 	{
