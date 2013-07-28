@@ -309,12 +309,40 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 	if (SUCCEEDED(hr))
 	{
 		TextFormatD2D& formatD2D = (TextFormatD2D&)format;
-		const bool right = formatD2D.GetHorizontalAlignment() == Gfx::HorizontalAlignment::Right;
 
 		formatD2D.CreateLayout(str, strLen, rect.Width, rect.Height);
 
+		// Center text inside rect
+		DWRITE_TEXT_METRICS metrics;
+		formatD2D.m_TextLayout->GetMetrics(&metrics);
+
+		float xOffset = (rect.Width - metrics.width) / 2.0f;
+		float yOffset = (rect.Height - metrics.height) / 2.0f;
+		
+		switch (formatD2D.GetHorizontalAlignment())
+		{
+		case Gfx::HorizontalAlignment::Center:
+			xOffset = xOffset / 2.0f;
+			break;
+
+		case Gfx::HorizontalAlignment::Right:
+			xOffset = -xOffset;
+			break;
+		}
+
+		switch (formatD2D.GetVerticalAlignment())
+		{
+		case Gfx::VerticalAlignment::Center:
+			yOffset = yOffset / 2.0f;
+			break;
+
+		case Gfx::VerticalAlignment::Bottom:
+			yOffset = -yOffset;
+			break;
+		}
+
 		m_Target->DrawTextLayout(
-			D2D1::Point2F(m_AccurateText ? rect.X : right ? rect.X - 3.0f : rect.X + 3.0f, rect.Y - 1.0f),
+			D2D1::Point2F(m_AccurateText ? rect.X : rect.X + xOffset, rect.Y + yOffset),
 			formatD2D.m_TextLayout.Get(),
 			solidBrush.Get());
 	}
@@ -340,8 +368,8 @@ bool CanvasD2D::MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& fo
 			float size = 0.0f;
 			textLayout->GetFontSize(0, &size);
 
-			rect.Width = floor(metrics.width + (size / 2.05f) + 0.65f);
-			rect.Height = floor(metrics.height + 1.5f);
+			rect.Width = floor(metrics.width + (size / 2.05f) + (metrics.width / 46.0f) - 0.5f);
+			rect.Height = floor(metrics.height + (size / 10.0f) + 0.3f);
 		}
 		else
 		{
@@ -377,8 +405,8 @@ bool CanvasD2D::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForma
 			float size = 0.0f;
 			textLayout->GetFontSize(0, &size);
 
-			rect.Width = floor(metrics.width + (size / 2.05f) + 0.65f);
-			rect.Height = floor(metrics.height + 1.5f);
+			rect.Width = floor(metrics.width + (size / 2.05f) + (metrics.width / 46.0f) - 0.5f);
+			rect.Height = floor(metrics.height + (size / 10.0f) + 0.3f);
 		}
 		else
 		{
