@@ -320,7 +320,7 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 
 		if (!m_AccurateText)
 		{
-			float emOffset = xOffset / 22.0f;
+			float emOffset = xOffset / 25.0f;
 
 			DWRITE_TEXT_RANGE range = {0, strLen};
 			Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout;
