@@ -318,6 +318,17 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 		formatD2D.m_TextLayout->GetFontSize(0, &xOffset);
 		xOffset /= 6.0f;
 
+		if (!m_AccurateText)
+		{
+			float emOffset = xOffset / 22.0f;
+
+			DWRITE_TEXT_RANGE range = {0, strLen};
+			Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout;
+			formatD2D.m_TextLayout.As(&textLayout);
+
+			textLayout->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
+		}
+
 		m_Target->DrawTextLayout(
 			D2D1::Point2F(m_AccurateText ? rect.X : right ? rect.X - xOffset : rect.X + xOffset,
 				m_AccurateText || !bottom ? rect.Y : rect.Y - 1.0f),
