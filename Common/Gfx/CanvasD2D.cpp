@@ -53,7 +53,6 @@ CanvasD2D::CanvasD2D() : Canvas(),
 	m_Bitmap(),
 	m_TextAntiAliasing(false)
 {
-	Initialize();
 }
 
 CanvasD2D::~CanvasD2D()

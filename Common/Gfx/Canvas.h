@@ -26,11 +26,23 @@
 
 namespace Gfx {
 
+enum class Renderer
+{
+	GDIP,
+	D2D,
+
+	// Attempts to use D2D. If D2D is not available, fallbacks to use GDI+.
+	PreferD2D
+};
+
 // Provides methods for drawing text, bitmaps, etc.
 class __declspec(novtable) Canvas
 {
 public:
 	virtual ~Canvas();
+
+	// Creates the canvas using the specified rendering engine. May return nullptr.
+	static Canvas* Create(Renderer renderer);
 
 	int GetW() const { return m_W; }
 	int GetH() const { return m_H; }

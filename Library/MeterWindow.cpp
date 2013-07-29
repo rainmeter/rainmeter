@@ -37,8 +37,7 @@
 #include "MeasureScript.h"
 #include "../Version.h"
 #include "../Common/PathUtil.h"
-#include "../Common/Gfx/CanvasD2D.h"
-#include "../Common/Gfx/CanvasGDIP.h"
+#include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;
 
@@ -2078,8 +2077,7 @@ bool MeterWindow::ReadSkin()
 		useD2D = 0!=m_Parser.ReadInt(L"Rainmeter", L"__UseD2D", useD2D ? 1 : 0);
 	}
 
-	m_Canvas = (Platform::IsAtLeastWinVista() && useD2D) ?
-		(Gfx::Canvas*)new Gfx::CanvasD2D() : (Gfx::Canvas*)new Gfx::CanvasGDIP();
+	m_Canvas = Gfx::Canvas::Create(useD2D ? Gfx::Renderer::PreferD2D : Gfx::Renderer::GDIP);
 
 	// Gotta have some kind of buffer during initialization
 	CreateDoubleBuffer(1, 1);

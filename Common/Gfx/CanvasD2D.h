@@ -38,9 +38,6 @@ namespace Gfx {
 class CanvasD2D : public Canvas
 {
 public:
-	CanvasD2D();
-	~CanvasD2D();
-
 	virtual void Resize(int w, int h);
 
 	virtual bool BeginDraw();
@@ -75,9 +72,12 @@ public:
 	virtual void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush) override;
 
 private:
+	friend class Canvas;
 	friend class FontCollectionD2D;
 	friend class TextFormatD2D;
 
+	CanvasD2D();
+	~CanvasD2D();
 	CanvasD2D(const CanvasD2D& other) {}
 
 	static bool Initialize();

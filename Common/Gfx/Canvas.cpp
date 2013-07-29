@@ -17,6 +17,9 @@
 */
 
 #include "Canvas.h"
+#include "CanvasD2D.h"
+#include "CanvasGDIP.h"
+#include "../Platform.h"
 
 namespace Gfx {
 
@@ -30,6 +33,34 @@ Canvas::Canvas() :
 Canvas::~Canvas()
 {
 }
+
+Canvas* Canvas::Create(Renderer renderer)
+{
+	if (renderer == Renderer::GDIP)
+	{
+		return new CanvasGDIP();
+	}
+	else if (renderer == Renderer::D2D && Platform::IsAtLeastWin7())
+	{
+		if (CanvasD2D::Initialize())
+		{
+			return new CanvasD2D();
+		}
+
+		CanvasD2D::Finalize();
+	}
+	else if (renderer == Renderer::PreferD2D)
+	{
+		if (Canvas* canvas = Create(Renderer::D2D))
+		{
+			return canvas;
+		}
+
+		return Create(Renderer::GDIP);
+	}
+
+	return nullptr;
+};
 
 void Canvas::Resize(int w, int h)
 {

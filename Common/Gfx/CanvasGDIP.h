@@ -32,9 +32,6 @@ namespace Gfx {
 class CanvasGDIP : public Canvas
 {
 public:
-	CanvasGDIP();
-	~CanvasGDIP();
-
 	virtual void Resize(int w, int h);
 
 	virtual bool BeginDraw();
@@ -69,6 +66,10 @@ public:
 	virtual void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush) override;
 
 private:
+	friend class Canvas;
+
+	CanvasGDIP();
+	~CanvasGDIP();
 	CanvasGDIP(const CanvasGDIP& other) {}
 
 	void Dispose();
