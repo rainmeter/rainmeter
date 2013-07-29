@@ -310,7 +310,6 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 	{
 		TextFormatD2D& formatD2D = (TextFormatD2D&)format;
 		const bool right = formatD2D.GetHorizontalAlignment() == Gfx::HorizontalAlignment::Right;
-		const bool bottom = formatD2D.GetVerticalAlignment() == Gfx::VerticalAlignment::Bottom;
 
 		formatD2D.CreateLayout(str, strLen, rect.Width, rect.Height);
 
@@ -330,8 +329,7 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 		}
 
 		m_Target->DrawTextLayout(
-			D2D1::Point2F(m_AccurateText ? rect.X : right ? rect.X - xOffset : rect.X + xOffset,
-				m_AccurateText || !bottom ? rect.Y : rect.Y - 1.0f),
+			D2D1::Point2F(m_AccurateText ? rect.X : right ? rect.X - xOffset : rect.X + xOffset, rect.Y - 1.0f),
 			formatD2D.m_TextLayout.Get(),
 			solidBrush.Get());
 	}
