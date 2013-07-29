@@ -44,8 +44,8 @@ D2D1_RECT_F ToRectF(const Gdiplus::RectF& rect)
 namespace Gfx {
 
 UINT CanvasD2D::c_Instances = 0;
-Microsoft::WRL::ComPtr<ID2D1Factory> CanvasD2D::c_D2DFactory;
-Microsoft::WRL::ComPtr<IDWriteFactory> CanvasD2D::c_DWFactory;
+Microsoft::WRL::ComPtr<ID2D1Factory1> CanvasD2D::c_D2DFactory;
+Microsoft::WRL::ComPtr<IDWriteFactory1> CanvasD2D::c_DWFactory;
 Microsoft::WRL::ComPtr<IDWriteGdiInterop> CanvasD2D::c_DWGDIInterop;
 Microsoft::WRL::ComPtr<IWICImagingFactory> CanvasD2D::c_WICFactory;
 
@@ -110,8 +110,11 @@ void CanvasD2D::Finalize()
 		c_WICFactory.Reset();
 		c_DWGDIInterop.Reset();
 
-		c_DWFactory->UnregisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
-		c_DWFactory.Reset();
+		if (c_DWFactory)
+		{
+			c_DWFactory->UnregisterFontCollectionLoader(Util::DWriteFontCollectionLoader::GetInstance());
+			c_DWFactory.Reset();
+		}
 	}
 }
 

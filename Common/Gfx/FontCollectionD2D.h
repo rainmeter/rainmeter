@@ -21,7 +21,7 @@
 
 #include "FontCollection.h"
 #include <vector>
-#include <dwrite.h>
+#include <dwrite_1.h>
 
 namespace Gfx {
 

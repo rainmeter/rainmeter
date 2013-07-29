@@ -20,7 +20,7 @@
 #define RM_GFX_UTIL_DWRITEFONTFILEENUMERATOR_H_
 
 #include <vector>
-#include <dwrite.h>
+#include <dwrite_1.h>
 
 namespace Gfx {
 namespace Util {

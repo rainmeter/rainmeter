@@ -21,7 +21,7 @@
 
 #include "TextFormat.h"
 #include <string>
-#include <dwrite.h>
+#include <dwrite_1.h>
 #include <wrl/client.h>
 
 namespace Gfx {

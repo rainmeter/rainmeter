@@ -19,7 +19,7 @@
 #ifndef RM_GFX_UTIL_DWRITEFONTCOLLECTIONLOADER_H_
 #define RM_GFX_UTIL_DWRITEFONTCOLLECTIONLOADER_H_
 
-#include <dwrite.h>
+#include <dwrite_1.h>
 
 namespace Gfx {
 namespace Util {

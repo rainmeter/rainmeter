@@ -26,7 +26,7 @@
 #include <memory>
 #include <string>
 #include <GdiPlus.h>
-#include <d2d1.h>
+#include <d2d1_1.h>
 #include <d2d1helper.h>
 #include <dwrite_1.h>
 #include <wincodec.h>
@@ -99,8 +99,8 @@ private:
 	bool m_TextAntiAliasing;
 
 	static UINT c_Instances;
-	static Microsoft::WRL::ComPtr<ID2D1Factory> c_D2DFactory;
-	static Microsoft::WRL::ComPtr<IDWriteFactory> c_DWFactory;
+	static Microsoft::WRL::ComPtr<ID2D1Factory1> c_D2DFactory;
+	static Microsoft::WRL::ComPtr<IDWriteFactory1> c_DWFactory;
 	static Microsoft::WRL::ComPtr<IDWriteGdiInterop> c_DWGDIInterop;
 	static Microsoft::WRL::ComPtr<IWICImagingFactory> c_WICFactory;
 };
