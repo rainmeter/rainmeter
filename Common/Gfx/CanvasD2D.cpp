@@ -319,7 +319,7 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 		formatD2D.m_TextLayout->GetFontSize(0, &xOffset);
 		xOffset /= 6.0f;
 
-		if (!m_AccurateText)
+		if (!m_AccurateText && m_TextAntiAliasing)
 		{
 			float emOffset = xOffset / 25.0f;
 
@@ -357,8 +357,8 @@ bool CanvasD2D::MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& fo
 			float size = 0.0f;
 			textLayout->GetFontSize(0, &size);
 
-			rect.Width = floor(metrics.width + (size / 2.05f) + (metrics.width / 46.0f) - 0.5f);
-			rect.Height = floor(metrics.height + (size / 10.0f) + 0.3f);
+			rect.Width = floor(metrics.width + (size / 2.05f) + (metrics.width / 55.0f) - 0.5f);
+			rect.Height = floor(metrics.height + (size / 9.25f) + 0.3f);
 		}
 		else
 		{
@@ -394,8 +394,8 @@ bool CanvasD2D::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForma
 			float size = 0.0f;
 			textLayout->GetFontSize(0, &size);
 
-			rect.Width = floor(metrics.width + (size / 2.05f) + (metrics.width / 46.0f) - 0.5f);
-			rect.Height = floor(metrics.height + (size / 10.0f) + 0.3f);
+			rect.Width = floor(metrics.width + (size / 2.05f) + (metrics.width / 55.0f) - 0.5f);
+			rect.Height = floor(metrics.height + (size / 9.25f) + 0.3f);
 		}
 		else
 		{
