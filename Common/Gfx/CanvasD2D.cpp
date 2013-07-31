@@ -377,8 +377,11 @@ bool CanvasD2D::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForma
 		const DWRITE_TEXT_METRICS metrics =
 			Util::GetAdjustedDWriteTextLayoutMetrics(textLayout.Get(), !m_AccurateText);
 		rect.Width = metrics.width;
-		rect.Height = metrics.height;
 		lines = metrics.lineCount;
+
+		// GDI+ draws multi-line text even though the last line may be clipped slightly at the bottom.
+		// This is a workaround to emulate that behaviour.
+		rect.Height = metrics.height + 1.0f;
 		return true;
 	}
 

@@ -36,12 +36,6 @@ DWRITE_TEXT_METRICS GetAdjustedDWriteTextLayoutMetrics(
 		metrics.width = floor(metrics.width + (size / 2.05f) + (metrics.width / 55.0f) - 0.5f);
 		metrics.height = floor(metrics.height + (size / 9.25f) + 0.3f);
 	}
-	else
-	{
-		// GDI+ draws multi-line text even though the last line may be clipped slightly at the bottom.
-		// This is a workaround to emulate that behaviour.
-		metrics.height += 1.0f;
-	}
 
 	return metrics;
 }
