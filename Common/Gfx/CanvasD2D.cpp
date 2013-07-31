@@ -19,6 +19,7 @@
 #include "CanvasD2D.h"
 #include "TextFormatD2D.h"
 #include "Util/DWriteFontCollectionLoader.h"
+#include "Util/DWriteHelpers.h"
 #include "Util/WICBitmapLockGDIP.h"
 #include "../../Library/Litestep.h"
 
@@ -321,7 +322,7 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 
 		if (!m_AccurateText && m_TextAntiAliasing)
 		{
-			float emOffset = xOffset / 25.0f;
+			const float emOffset = xOffset / 25.0f;
 
 			DWRITE_TEXT_RANGE range = {0, strLen};
 			Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout;
@@ -349,23 +350,10 @@ bool CanvasD2D::MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& fo
 		textLayout.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
-		DWRITE_TEXT_METRICS metrics;
-		textLayout->GetMetrics(&metrics);
-
-		if (!m_AccurateText)
-		{
-			float size = 0.0f;
-			textLayout->GetFontSize(0, &size);
-
-			rect.Width = floor(metrics.width + (size / 2.05f) + (metrics.width / 55.0f) - 0.5f);
-			rect.Height = floor(metrics.height + (size / 9.25f) + 0.3f);
-		}
-		else
-		{
-			rect.Width = metrics.width;
-			rect.Height = metrics.height;
-		}
-
+		const DWRITE_TEXT_METRICS metrics =
+			Util::GetAdjustedDWriteTextLayoutMetrics(textLayout.Get(), !m_AccurateText);
+		rect.Width = metrics.width;
+		rect.Height = metrics.height;
 		return true;
 	}
 
@@ -386,23 +374,10 @@ bool CanvasD2D::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForma
 		textLayout.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
-		DWRITE_TEXT_METRICS metrics;
-		textLayout->GetMetrics(&metrics);
-
-		if (!m_AccurateText)
-		{
-			float size = 0.0f;
-			textLayout->GetFontSize(0, &size);
-
-			rect.Width = floor(metrics.width + (size / 2.05f) + (metrics.width / 55.0f) - 0.5f);
-			rect.Height = floor(metrics.height + (size / 9.25f) + 0.3f);
-		}
-		else
-		{
-			rect.Width = metrics.width;
-			rect.Height = metrics.height + 1.0f;
-		}
-
+		const DWRITE_TEXT_METRICS metrics =
+			Util::GetAdjustedDWriteTextLayoutMetrics(textLayout.Get(), !m_AccurateText);
+		rect.Width = metrics.width;
+		rect.Height = metrics.height;
 		lines = metrics.lineCount;
 		return true;
 	}
