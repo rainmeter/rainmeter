@@ -100,6 +100,12 @@ protected:
 	int m_W;
 	int m_H;
 
+	// GDI+, by default, includes padding around the string and also has a larger character spacing
+	// compared to DirectWrite. In order to minimize diffeences between the text renderers,
+	// an option is provided to enable accurate (typographic) text rendering. If set to |true|,
+	// it is expected that there is no padding around the text and that the output is similar to
+	// the default DirectWrite output. Otherwise, the expected result should be similar to that of
+	// non-typographic GDI+.
 	bool m_AccurateText;
 
 private:
