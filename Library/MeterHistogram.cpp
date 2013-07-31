@@ -243,8 +243,8 @@ void MeterHistogram::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_OverlapImage.ClearOptionFlags();
 	}
 
-	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0);
-	m_Flip = 0!=parser.ReadInt(section, L"Flip", 0);
+	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
+	m_Flip = parser.ReadBool(section, L"Flip", false);
 
 	const WCHAR* graph = parser.ReadString(section, L"GraphStart", L"RIGHT").c_str();
 	if (_wcsicmp(graph, L"RIGHT") == 0)

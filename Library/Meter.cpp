@@ -331,7 +331,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	bool oldHidden = m_Hidden;
-	m_Hidden = 0!=parser.ReadInt(section, L"Hidden", 0);
+	m_Hidden = parser.ReadBool(section, L"Hidden", false);
 
 	if (oldX != m_X || oldY != m_Y || oldHidden != m_Hidden)
 	{
@@ -351,10 +351,10 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"");
 	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"");
 	m_ToolTipWidth = parser.ReadInt(section, L"ToolTipWidth", 1000);
-	m_ToolTipType = 0!=parser.ReadInt(section, L"ToolTipType", 0);
-	m_ToolTipHidden = 0!=parser.ReadInt(section, L"ToolTipHidden", m_MeterWindow->GetMeterToolTipHidden());
+	m_ToolTipType = parser.ReadBool(section, L"ToolTipType", false);
+	m_ToolTipHidden = parser.ReadBool(section, L"ToolTipHidden", m_MeterWindow->GetMeterToolTipHidden());
 
-	m_AntiAlias = 0!=parser.ReadInt(section, L"AntiAlias", 0);
+	m_AntiAlias = parser.ReadBool(section, L"AntiAlias", false);
 
 	std::vector<Gdiplus::REAL> matrix = parser.ReadFloats(section, L"TransformationMatrix");
 	if (matrix.size() == 6)

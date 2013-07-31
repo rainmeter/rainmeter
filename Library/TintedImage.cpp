@@ -691,7 +691,7 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const 
 
 	m_NeedsCrop = (oldCrop.X != m_Crop.X || oldCrop.Y != m_Crop.Y || oldCrop.Width != m_Crop.Width || oldCrop.Height != m_Crop.Height || oldCropMode != m_CropMode);
 
-	m_GreyScale = 0!=parser.ReadInt(section, m_OptionArray[OptionIndexGreyscale], 0);
+	m_GreyScale = parser.ReadBool(section, m_OptionArray[OptionIndexGreyscale], false);
 
 	Color tint = parser.ReadColor(section, m_OptionArray[OptionIndexImageTint], Color::White);
 	int alpha = parser.ReadInt(section, m_OptionArray[OptionIndexImageAlpha], tint.GetAlpha());  // for backwards compatibility
@@ -767,7 +767,7 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const 
 
 	m_NeedsTinting = (oldGreyScale != m_GreyScale || !CompareColorMatrix(&oldColorMatrix, m_ColorMatrix));
 
-	m_UseExifOrientation = 0!=parser.ReadInt(section, m_OptionArray[OptionIndexUseExifOrientation], 0);
+	m_UseExifOrientation = parser.ReadBool(section, m_OptionArray[OptionIndexUseExifOrientation], false);
 
 	const WCHAR* flip = parser.ReadString(section, m_OptionArray[OptionIndexImageFlip], L"NONE").c_str();
 	if (_wcsicmp(flip, L"NONE") == 0)

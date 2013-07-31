@@ -72,5 +72,5 @@ void MeasureMemory::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	Measure::ReadOptions(parser, section);
 	m_MaxValue = oldMaxValue;
 
-	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
+	m_Total = parser.ReadBool(section, L"Total", false);
 }

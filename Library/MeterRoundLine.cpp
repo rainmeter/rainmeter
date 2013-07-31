@@ -73,10 +73,10 @@ void MeterRoundLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_ValueRemainder = parser.ReadInt(section, L"ValueReminder", 0);		// Typo
 	m_ValueRemainder = parser.ReadInt(section, L"ValueRemainder", m_ValueRemainder);
 	m_LineColor = parser.ReadColor(section, L"LineColor", Color::Black);
-	m_Solid = 0!=parser.ReadInt(section, L"Solid", 0);
-	m_CntrlAngle = 0!=parser.ReadInt(section, L"ControlAngle", 1);
-	m_CntrlLineStart = 0!=parser.ReadInt(section, L"ControlStart", 0);
-	m_CntrlLineLength = 0!=parser.ReadInt(section, L"ControlLength", 0);
+	m_Solid = parser.ReadBool(section, L"Solid", false);
+	m_CntrlAngle = parser.ReadBool(section, L"ControlAngle", true);
+	m_CntrlLineStart = parser.ReadBool(section, L"ControlStart", false);
+	m_CntrlLineLength = parser.ReadBool(section, L"ControlLength", false);
 	m_LineStartShift = parser.ReadFloat(section, L"StartShift", 0.0);
 	m_LineLengthShift = parser.ReadFloat(section, L"LengthShift", 0.0);
 }

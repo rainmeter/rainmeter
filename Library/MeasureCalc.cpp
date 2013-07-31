@@ -89,7 +89,7 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_LowBound = parser.ReadInt(section, L"LowBound", 0);
 	m_HighBound = parser.ReadInt(section, L"HighBound", 100);
-	m_UpdateRandom = 0!=parser.ReadInt(section, L"UpdateRandom", 0);
+	m_UpdateRandom = parser.ReadBool(section, L"UpdateRandom", false);
 
 	if (!m_Initialized ||
 		wcscmp(m_Formula.c_str(), oldFormula.c_str()) != 0 ||

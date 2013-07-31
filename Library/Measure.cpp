@@ -126,10 +126,10 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_Substitute.clear();
 	}
 
-	m_Invert = 0!=parser.ReadInt(section, L"InvertMeasure", 0);
+	m_Invert = parser.ReadBool(section, L"InvertMeasure", false);
 
-	m_Disabled = 0!=parser.ReadInt(section, L"Disabled", 0);
-	m_Paused = 0!=parser.ReadInt(section, L"Paused", 0);
+	m_Disabled = parser.ReadBool(section, L"Disabled", false);
+	m_Paused = parser.ReadBool(section, L"Paused", false);
 
 	m_MinValue = parser.ReadFloat(section, L"MinValue", m_MinValue);
 	m_MaxValue = parser.ReadFloat(section, L"MaxValue", m_MaxValue);
@@ -149,7 +149,7 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0);
 
-	m_RegExpSubstitute = 0!=parser.ReadInt(section, L"RegExpSubstitute", 0);
+	m_RegExpSubstitute = parser.ReadBool(section, L"RegExpSubstitute", false);
 	std::wstring subs = parser.ReadString(section, L"Substitute", L"");
 	if (!subs.empty())
 	{

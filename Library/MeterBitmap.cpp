@@ -177,10 +177,10 @@ void MeterBitmap::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	m_FrameCount = parser.ReadInt(section, L"BitmapFrames", 1);
-	m_ZeroFrame = 0!=parser.ReadInt(section, L"BitmapZeroFrame", 0);
+	m_ZeroFrame = parser.ReadBool(section, L"BitmapZeroFrame", false);
 
 	m_Separation = parser.ReadInt(section, L"BitmapSeparation", 0);
-	m_Extend = 0!=parser.ReadInt(section, L"BitmapExtend", 0);
+	m_Extend = parser.ReadBool(section, L"BitmapExtend", false);
 	m_Digits = parser.ReadInt(section, L"BitmapDigits", 0);
 
 	m_TransitionFrameCount = parser.ReadInt(section, L"BitmapTransitionFrames", 0);

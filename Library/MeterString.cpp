@@ -178,7 +178,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Postfix = parser.ReadString(section, L"Postfix", L"");
 	m_Text = parser.ReadString(section, L"Text", L"");
 
-	m_Percentual = 0!=parser.ReadInt(section, L"Percentual", 0);
+	m_Percentual = parser.ReadBool(section, L"Percentual", false);
 
 	int clipping = parser.ReadInt(section, L"ClipString", 0);
 	switch (clipping)

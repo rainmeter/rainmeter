@@ -1916,21 +1916,21 @@ void MeterWindow::ReadOptions()
 	int hideMode = parser.ReadInt(section, L"HideOnMouseOver", HIDEMODE_NONE);
 	m_WindowHide = (hideMode >= HIDEMODE_NONE && hideMode <= HIDEMODE_FADEOUT) ? (HIDEMODE)hideMode : HIDEMODE_NONE;
 
-	m_WindowDraggable = 0!=parser.ReadInt(section, L"Draggable", 1);
+	m_WindowDraggable = parser.ReadBool(section, L"Draggable", true);
 	addWriteFlag(OPTION_DRAGGABLE);
 
-	m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", 1);
+	m_SnapEdges = parser.ReadBool(section, L"SnapEdges", true);
 	addWriteFlag(OPTION_SNAPEDGES);
 
-	m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", 0);
+	m_ClickThrough = parser.ReadBool(section, L"ClickThrough", false);
 	addWriteFlag(OPTION_CLICKTHROUGH);
 
-	m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", 1);
+	m_KeepOnScreen = parser.ReadBool(section, L"KeepOnScreen", true);
 	addWriteFlag(OPTION_KEEPONSCREEN);
 
-	m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", 1);
-	m_WindowStartHidden = 0!=parser.ReadInt(section, L"StartHidden", 0);
-	m_AutoSelectScreen = 0!=parser.ReadInt(section, L"AutoSelectScreen", 0);
+	m_SavePosition = parser.ReadBool(section, L"SavePosition", true);
+	m_WindowStartHidden = parser.ReadBool(section, L"StartHidden", false);
+	m_AutoSelectScreen = parser.ReadBool(section, L"AutoSelectScreen", false);
 
 	m_AlphaValue = parser.ReadInt(section, L"AlphaValue", 255);
 	m_AlphaValue = max(m_AlphaValue, 0);
@@ -2074,7 +2074,7 @@ bool MeterWindow::ReadSkin()
 	bool useD2D = GetRainmeter().GetUseD2D();
 	if (revision_beta)
 	{
-		useD2D = 0!=m_Parser.ReadInt(L"Rainmeter", L"__UseD2D", useD2D ? 1 : 0);
+		useD2D = m_Parser.ReadBool(L"Rainmeter", L"__UseD2D", useD2D);
 	}
 
 	m_Canvas = Gfx::Canvas::Create(useD2D ? Gfx::Renderer::PreferD2D : Gfx::Renderer::GDIP);
@@ -2082,7 +2082,7 @@ bool MeterWindow::ReadSkin()
 	// Gotta have some kind of buffer during initialization
 	CreateDoubleBuffer(1, 1);
 
-	m_AccurateText = 0!=m_Parser.ReadInt(L"Rainmeter", L"AccurateText", 0);
+	m_AccurateText = m_Parser.ReadBool(L"Rainmeter", L"AccurateText", false);
 	m_Canvas->SetAccurateText(m_AccurateText);
 
 	// Check the version
@@ -2118,7 +2118,7 @@ bool MeterWindow::ReadSkin()
 	m_SolidColor2 = m_Parser.ReadColor(L"Rainmeter", L"SolidColor2", m_SolidColor.GetValue());
 	m_SolidAngle = (Gdiplus::REAL)m_Parser.ReadFloat(L"Rainmeter", L"GradientAngle", 0.0);
 
-	m_DynamicWindowSize = 0!=m_Parser.ReadInt(L"Rainmeter", L"DynamicWindowSize", 0);
+	m_DynamicWindowSize = m_Parser.ReadBool(L"Rainmeter", L"DynamicWindowSize", false);
 
 	if (m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE)
 	{
@@ -2144,11 +2144,11 @@ bool MeterWindow::ReadSkin()
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
-	m_ToolTipHidden = 0 != m_Parser.ReadInt(L"Rainmeter", L"ToolTipHidden", 0);
+	m_ToolTipHidden = m_Parser.ReadBool(L"Rainmeter", L"ToolTipHidden", false);
 
 	if (Platform::IsAtLeastWinVista())
 	{
-		if (0 != m_Parser.ReadInt(L"Rainmeter", L"Blur", 0))
+		if (m_Parser.ReadBool(L"Rainmeter", L"Blur", false))
 		{
 			const WCHAR* blurRegion = m_Parser.ReadString(L"Rainmeter", L"BlurRegion", L"", false).c_str();
 

@@ -69,6 +69,7 @@ public:
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
 	bool IsKeyDefined(LPCTSTR section, LPCTSTR key);
 	bool IsValueDefined(LPCTSTR section, LPCTSTR key);
+	bool ReadBool(LPCTSTR section, LPCTSTR key, bool defValue) { return ReadInt(section, key, (int)defValue) != 0; }
 	int ReadInt(LPCTSTR section, LPCTSTR key, int defValue);
 	uint32_t ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue);
 	uint64_t ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValue);
