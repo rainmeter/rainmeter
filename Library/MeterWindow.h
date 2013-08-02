@@ -324,7 +324,6 @@ private:
 	void CreateDoubleBuffer(int cx, int cy);
 
 	Gfx::Canvas* m_Canvas;
-	bool m_AccurateText;
 
 	ConfigParser m_Parser;
 

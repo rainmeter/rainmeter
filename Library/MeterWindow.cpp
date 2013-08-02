@@ -2078,12 +2078,10 @@ bool MeterWindow::ReadSkin()
 	}
 
 	m_Canvas = Gfx::Canvas::Create(useD2D ? Gfx::Renderer::PreferD2D : Gfx::Renderer::GDIP);
+	m_Canvas->SetAccurateText(m_Parser.ReadBool(L"Rainmeter", L"AccurateText", false));
 
 	// Gotta have some kind of buffer during initialization
 	CreateDoubleBuffer(1, 1);
-
-	m_AccurateText = m_Parser.ReadBool(L"Rainmeter", L"AccurateText", false);
-	m_Canvas->SetAccurateText(m_AccurateText);
 
 	// Check the version
 	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
