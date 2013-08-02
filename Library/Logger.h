@@ -98,7 +98,7 @@ inline Logger& GetLogger() { return Logger::GetInstance(); }
 	{ \
 		va_list args; \
 		va_start(args, format); \
-		GetLogger().LogVF(Logger::Level::Warning, L"", format, args); \
+		GetLogger().LogVF(Logger::Level::name, L"", format, args); \
 		va_end(args); \
 	} \
 	\
@@ -106,7 +106,7 @@ inline Logger& GetLogger() { return Logger::GetInstance(); }
 	{ \
 		va_list args; \
 		va_start(args, format); \
-		GetLogger().LogSectionVF(Logger::Level::Error, section, format, args); \
+		GetLogger().LogSectionVF(Logger::Level::name, section, format, args); \
 		va_end(args); \
 	} \
 	\
@@ -114,7 +114,7 @@ inline Logger& GetLogger() { return Logger::GetInstance(); }
 	{ \
 		va_list args; \
 		va_start(args, format); \
-		GetLogger().LogMeterWindowVF(Logger::Level::Error, meterWindow, format, args); \
+		GetLogger().LogMeterWindowVF(Logger::Level::name, meterWindow, format, args); \
 		va_end(args); \
 	}
 
