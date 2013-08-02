@@ -27,7 +27,7 @@ namespace Util {
 // If |gdiEmulation| is true, the returns metrics have similar characteristics to those provided
 // by GDI+.
 DWRITE_TEXT_METRICS GetAdjustedDWriteTextLayoutMetrics(
-	IDWriteTextLayout* textLayout, bool gdiEmulation, bool containsNewLine);
+	IDWriteTextLayout* textLayout, bool gdiEmulation);
 
 // Maps the GDI family name and italic/bold flags to the DirectWrite family name, weight, style,
 // and stretch.
