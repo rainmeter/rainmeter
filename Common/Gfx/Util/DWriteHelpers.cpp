@@ -24,7 +24,7 @@ namespace Gfx {
 namespace Util {
 
 DWRITE_TEXT_METRICS GetAdjustedDWriteTextLayoutMetrics(
-	IDWriteTextLayout* textLayout, bool gdiEmulation)
+	IDWriteTextLayout* textLayout, bool gdiEmulation, bool containsNewLine)
 {
 	DWRITE_TEXT_METRICS metrics;
 	textLayout->GetMetrics(&metrics);
@@ -34,7 +34,13 @@ DWRITE_TEXT_METRICS GetAdjustedDWriteTextLayoutMetrics(
 		float size = 0.0f;
 		textLayout->GetFontSize(0, &size);
 		metrics.width = floor(metrics.width + ((size / 6.0f) * 4.0f) + ((size * 3.0f / 4.0f) / 17.5f) + 0.255f);
-		metrics.height = floor(metrics.height * 1.087f);
+		
+		if (containsNewLine)
+		{
+			metrics.width -= ((size * 3.0f / 4.0f) / 4.0f);
+		}
+
+		metrics.height = floor(metrics.height + (size / 9.25f) + 0.3f); 
 	}
 
 	return metrics;

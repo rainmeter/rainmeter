@@ -350,8 +350,9 @@ bool CanvasD2D::MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& fo
 		textLayout.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
+		std::wstring s = str;
 		const DWRITE_TEXT_METRICS metrics =
-			Util::GetAdjustedDWriteTextLayoutMetrics(textLayout.Get(), !m_AccurateText);
+			Util::GetAdjustedDWriteTextLayoutMetrics(textLayout.Get(), !m_AccurateText, s.rfind(L"\n") != std::wstring::npos);
 		rect.Width = metrics.width;
 		rect.Height = metrics.height;
 		return true;
@@ -375,7 +376,7 @@ bool CanvasD2D::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForma
 	if (SUCCEEDED(hr))
 	{
 		const DWRITE_TEXT_METRICS metrics =
-			Util::GetAdjustedDWriteTextLayoutMetrics(textLayout.Get(), !m_AccurateText);
+			Util::GetAdjustedDWriteTextLayoutMetrics(textLayout.Get(), !m_AccurateText, false);
 		rect.Width = metrics.width;
 		lines = metrics.lineCount;
 
