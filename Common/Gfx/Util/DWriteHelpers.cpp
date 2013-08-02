@@ -33,8 +33,8 @@ DWRITE_TEXT_METRICS GetAdjustedDWriteTextLayoutMetrics(
 	{
 		float size = 0.0f;
 		textLayout->GetFontSize(0, &size);
-		metrics.width = floor(metrics.width + (size / 2.05f) + (metrics.width / 55.0f) - 0.5f);
-		metrics.height = floor(metrics.height + (size / 9.25f) + 0.3f);
+		metrics.width = floor(metrics.width + ((size / 6.0f) * 4.0f) + ((size * 3.0f / 4.0f) / 17.5f) + 0.255f);
+		metrics.height = floor(metrics.height * 1.087f);
 	}
 
 	return metrics;
