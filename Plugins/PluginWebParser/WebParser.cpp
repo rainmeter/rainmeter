@@ -743,8 +743,12 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	measure->finishAction = RmReadString(rm, L"FinishAction", L"", FALSE);
 	measure->errorString = RmReadString(rm, L"ErrorString", L"");
 
-	measure->stringIndex = RmReadInt(rm, L"StringIndex", 0);
-	measure->stringIndex2 = RmReadInt(rm, L"StringIndex2", 0);
+	int index = RmReadInt(rm, L"StringIndex", 0);
+	measure->stringIndex = index < 0 ? 0 : index;
+
+	index = RmReadInt(rm, L"StringIndex2", 0);
+	measure->stringIndex2 = index < 0 ? 0 : index;
+
 	measure->decodeCharacterReference = RmReadInt(rm, L"DecodeCharacterReference", 0);
 	measure->updateRate = RmReadInt(rm, L"UpdateRate", 600);
 	measure->forceReload = 0!=RmReadInt(rm, L"ForceReload", 0);
