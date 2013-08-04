@@ -259,7 +259,7 @@ void Logger::LogMeterWindowVF(Logger::Level level, MeterWindow* meterWindow, con
 	std::wstring source;
 	if (meterWindow)
 	{
-		source = meterWindow->GetSkinPath().c_str();
+		source = meterWindow->GetSkinPath();
 	}
 	GetLogger().LogVF(level, source.c_str(), format, args);
 }
