@@ -256,6 +256,10 @@ void Logger::LogSectionVF(Logger::Level level, Section* section, const WCHAR* fo
 
 void Logger::LogMeterWindowVF(Logger::Level level, MeterWindow* meterWindow, const WCHAR* format, va_list args)
 {
-	const WCHAR* sourceSz = meterWindow ? meterWindow->GetSkinPath().c_str() : L"";
-	GetLogger().LogVF(level, sourceSz, format, args);
+	std::wstring source;
+	if (meterWindow)
+	{
+		source = meterWindow->GetSkinPath().c_str();
+	}
+	GetLogger().LogVF(level, source.c_str(), format, args);
 }
