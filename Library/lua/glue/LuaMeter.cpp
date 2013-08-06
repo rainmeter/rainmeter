@@ -29,7 +29,7 @@
 static int GetName(lua_State* L)
 {
 	DECLARE_SELF(L)
-	LuaManager::PushWide(L, self->GetName());
+	LuaManager::PushWide(self->GetName());
 
 	return 1;
 }
@@ -40,10 +40,10 @@ static int GetOption(lua_State* L)
 	MeterWindow* meterWindow = self->GetMeterWindow();
 	ConfigParser& parser = meterWindow->GetParser();
 
-	std::wstring strTmp = LuaManager::ToWide(L, 2);
+	std::wstring strTmp = LuaManager::ToWide(2);
 	strTmp = parser.ReadString(self->GetName(), strTmp.c_str(), L"");
 
-	LuaManager::PushWide(L, strTmp);
+	LuaManager::PushWide(strTmp);
 	return 1;
 }
 
@@ -140,7 +140,7 @@ static int SetText(lua_State* L)
 	if (self->GetTypeID() == TypeID<MeterString>())
 	{
 		MeterString* string = (MeterString*)self;
-		std::wstring str = LuaManager::ToWide(L, 2);
+		std::wstring str = LuaManager::ToWide(2);
 		string->SetText(str.c_str());
 	}
 

@@ -31,18 +31,21 @@ public:
 	void Uninitialize();
 	bool IsInitialized() { return m_Ref != LUA_NOREF; }
 
-	int GetRef() { return m_Ref; }
 	const std::wstring& GetFile() { return m_File; }
+	int GetRef() { return m_Ref; }
+	bool IsUnicode() const { return m_Unicode; }
+
+	lua_State* GetState() { return LuaManager::GetState(m_Unicode); }
 
 	bool IsFunction(const char* funcName);
 	void RunFunction(const char* funcName);
 	int RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue);
-	void RunString(const char* str);
+	void RunString(const std::wstring& str);
 
 protected:
-	int m_Ref;
-
 	std::wstring m_File;
+	int m_Ref;
+	bool m_Unicode;
 };
 
 #endif

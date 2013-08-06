@@ -112,18 +112,12 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		{
 			UninitializeLuaScript();
 
-			lua_State* L = LuaManager::GetState();
 			if (m_LuaScript.Initialize(scriptFile))
 			{
 				bool hasInitializeFunction = m_LuaScript.IsFunction(g_InitializeFunctionName);
 				m_HasUpdateFunction = m_LuaScript.IsFunction(g_UpdateFunctionName);
-				m_HasGetStringFunction = m_LuaScript.IsFunction(g_GetStringFunctionName);  // For backwards compatbility
 
-				if (m_HasGetStringFunction)
-				{
-					LogWarningF(this, L"Script: Using deprecated GetStringValue()");
-				}
-
+				lua_State* L = m_LuaScript.GetState();
 				lua_rawgeti(L, LUA_GLOBALSINDEX, m_LuaScript.GetRef());
 
 				*(MeterWindow**)lua_newuserdata(L, sizeof(MeterWindow*)) = m_MeterWindow;
@@ -136,28 +130,35 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				lua_setmetatable(L, -2);
 				lua_setfield(L, -2, "SELF");
 
-				// For backwards compatibility
-				lua_getfield(L, -1, "PROPERTIES");
-				if (lua_isnil(L, -1) == 0)
+				if (!m_LuaScript.IsUnicode())
 				{
-					lua_pushnil(L);
-					
-					// Look in the table for values to read from the section
-					while (lua_next(L, -2))
+					// For backwards compatibility.
+
+					m_HasGetStringFunction = m_LuaScript.IsFunction(g_GetStringFunctionName);
+					if (m_HasGetStringFunction)
 					{
-						lua_pop(L, 1);
-						const char* strKey = lua_tostring(L, -1);
+						LogWarningF(this, L"Script: Using deprecated GetStringValue()");
+					}
 
-						std::wstring wstrKey = StringUtil::Widen(strKey);
-						const std::wstring& wstrValue = parser.ReadString(section, wstrKey.c_str(), L"");
-
-						if (!wstrValue.empty())
+					lua_getfield(L, -1, "PROPERTIES");
+					if (lua_isnil(L, -1) == 0)
+					{
+						lua_pushnil(L);
+					
+						// Look in the table for values to read from the section
+						while (lua_next(L, -2))
 						{
-							std::string strStrVal = StringUtil::Narrow(wstrValue);
-							const char* strValue = strStrVal.c_str();
-
-							lua_pushstring(L, strValue);
-							lua_setfield(L, -3, strKey);
+							lua_pop(L, 1);
+							const char* strKey = lua_tostring(L, -1);
+							const std::wstring wstrKey = StringUtil::Widen(strKey);
+							const std::wstring& wstrValue =
+								parser.ReadString(section, wstrKey.c_str(), L"");
+							if (!wstrValue.empty())
+							{
+								const std::string strStrVal = StringUtil::Narrow(wstrValue);
+								lua_pushstring(L, strStrVal.c_str());
+								lua_setfield(L, -3, strKey);
+							}
 						}
 					}
 				}
@@ -193,8 +194,7 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 */
 void MeasureScript::Command(const std::wstring& command)
 {
-	std::string str = StringUtil::Narrow(command);
-	m_LuaScript.RunString(str.c_str());
+	m_LuaScript.RunString(command);
 }
 
 //static void stackDump(lua_State *L)

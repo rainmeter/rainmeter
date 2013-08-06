@@ -32,13 +32,13 @@ public:
 	static void Initialize();
 	static void Finalize();
 
-	static lua_State* GetState() { return c_State; }
+	static lua_State* GetState(bool unicode) { s_UnicodeState = unicode; return c_State; }
 
-	static void ReportErrors(lua_State* L, const std::wstring& file);
+	static void ReportErrors(const std::wstring& file);
 
-	static void PushWide(lua_State* L, const WCHAR* str);
-	static void PushWide(lua_State* L, const std::wstring& str);
-	static std::wstring ToWide(lua_State* L, int narg);
+	static void PushWide(const WCHAR* str);
+	static void PushWide(const std::wstring& str);
+	static std::wstring ToWide(int narg);
 
 protected:
 	static int c_RefCount;
@@ -50,6 +50,10 @@ private:
 	static void RegisterMeter(lua_State* L);
 	static void RegisterMeterWindow(lua_State* L);
 	static void RegisterMeterString(lua_State* L);
+
+	// If set true |true|, Lua strings converted to/from as if they were encoded in UTF-8. Otherwise
+	// Lua strings are treated as if they are encoded in the default system encoding.
+	static bool s_UnicodeState;
 };
 
 #endif
