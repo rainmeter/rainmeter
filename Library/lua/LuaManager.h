@@ -34,6 +34,8 @@ public:
 
 	static lua_State* GetState(bool unicode) { c_UnicodeState = unicode; return c_State; }
 
+	static bool IsUnicodeState() { return c_UnicodeState; }
+
 	static void ReportErrors(const std::wstring& file);
 
 	static void PushWide(const WCHAR* str);
