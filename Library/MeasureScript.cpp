@@ -161,10 +161,13 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 							}
 						}
 					}
+
+					// Pop PROPERTIES table.
+					lua_pop(L, 1);
 				}
 
-				// Pop PROPERTIES table and our table
-				lua_pop(L, 2);
+				// Pop our table.
+				lua_pop(L, 1);
 
 				if (m_Initialized)
 				{
