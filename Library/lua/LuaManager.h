@@ -32,7 +32,7 @@ public:
 	static void Initialize();
 	static void Finalize();
 
-	static lua_State* GetState(bool unicode) { s_UnicodeState = unicode; return c_State; }
+	static lua_State* GetState(bool unicode) { c_UnicodeState = unicode; return c_State; }
 
 	static void ReportErrors(const std::wstring& file);
 
@@ -53,7 +53,7 @@ private:
 
 	// If set true |true|, Lua strings converted to/from as if they were encoded in UTF-8. Otherwise
 	// Lua strings are treated as if they are encoded in the default system encoding.
-	static bool s_UnicodeState;
+	static bool c_UnicodeState;
 };
 
 #endif

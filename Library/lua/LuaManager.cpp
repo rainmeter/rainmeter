@@ -24,7 +24,7 @@
 int LuaManager::c_RefCount = 0;
 lua_State* LuaManager::c_State = 0;
 
-bool LuaManager::s_UnicodeState = false;
+bool LuaManager::c_UnicodeState = false;
 
 void LuaManager::Initialize()
 {
@@ -73,14 +73,14 @@ void LuaManager::ReportErrors(const std::wstring& file)
 	}
 
 	std::wstring str(file, file.find_last_of(L'\\') + 1);
-	str += s_UnicodeState ? StringUtil::WidenUTF8(error) : StringUtil::Widen(error);
+	str += c_UnicodeState ? StringUtil::WidenUTF8(error) : StringUtil::Widen(error);
 	LogErrorF(L"Script: %s", str.c_str());
 }
 
 void LuaManager::PushWide(const WCHAR* str)
 {
 	lua_State* L = c_State;
-	const std::string narrowStr = s_UnicodeState ?
+	const std::string narrowStr = c_UnicodeState ?
 		StringUtil::NarrowUTF8(str) : StringUtil::Narrow(str);
 	lua_pushlstring(L, narrowStr.c_str(), narrowStr.length());
 }
@@ -88,7 +88,7 @@ void LuaManager::PushWide(const WCHAR* str)
 void LuaManager::PushWide(const std::wstring& str)
 {
 	lua_State* L = c_State;
-	const std::string narrowStr = s_UnicodeState ?
+	const std::string narrowStr = c_UnicodeState ?
 		StringUtil::NarrowUTF8(str) : StringUtil::Narrow(str);
 	lua_pushlstring(L, narrowStr.c_str(), narrowStr.length());
 }
@@ -98,6 +98,6 @@ std::wstring LuaManager::ToWide(int narg)
 	lua_State* L = c_State;
 	size_t strLen = 0;
 	const char* str = lua_tolstring(L, narg, &strLen);
-	return s_UnicodeState ?
+	return c_UnicodeState ?
 		StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
 }
