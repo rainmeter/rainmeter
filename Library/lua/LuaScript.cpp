@@ -55,21 +55,21 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 	fclose(file);
 	file = nullptr;
 
-	// Has UTF8 BOM, so assume that data is already in UTF8.
-	char* scriptData = (char*)fileData;
-	int scriptDataSize = fileSize;
+	lua_State* L = GetState();
+	bool scriptLoaded = false;
 
-	// Treat the script as Unicode if it has the UTF-8 BOM.
-	m_Unicode = fileSize > 3 && fileData[0] == 0xEF && fileData[1] == 0xBB && fileData[2] == 0xBF;
+	// Treat the script as Unicode if it has the UTF-16 LE BOM.
+	m_Unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
 	if (m_Unicode)
 	{
-		// Skip the BOM.
-		scriptData += 3;
-		scriptDataSize -= 3;
+		const std::string utf8Data = 
+			StringUtil::NarrowUTF8((WCHAR*)(fileData + 2), (fileSize - 2) / sizeof(WCHAR));
+		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), "") == 0;
 	}
-
-	lua_State* L = GetState();
-	bool scriptLoaded = luaL_loadbuffer(L, scriptData, scriptDataSize, "") == 0;
+	else
+	{
+		scriptLoaded = luaL_loadbuffer(L, (char*)fileData, fileSize, "") == 0;
+	}
 
 	delete [] fileData;
 
