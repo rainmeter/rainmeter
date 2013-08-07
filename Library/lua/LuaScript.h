@@ -35,7 +35,7 @@ public:
 	int GetRef() { return m_Ref; }
 	bool IsUnicode() const { return m_Unicode; }
 
-	lua_State* GetState() { return LuaManager::GetState(m_Unicode); }
+	LuaManager::ScopedLuaState GetState() { return LuaManager::GetState(m_Unicode); }
 
 	bool IsFunction(const char* funcName);
 	void RunFunction(const char* funcName);

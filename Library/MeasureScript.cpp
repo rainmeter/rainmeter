@@ -117,7 +117,7 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				bool hasInitializeFunction = m_LuaScript.IsFunction(g_InitializeFunctionName);
 				m_HasUpdateFunction = m_LuaScript.IsFunction(g_UpdateFunctionName);
 
-				lua_State* L = m_LuaScript.GetState();
+				auto L = m_LuaScript.GetState();
 				lua_rawgeti(L, LUA_GLOBALSINDEX, m_LuaScript.GetRef());
 
 				*(MeterWindow**)lua_newuserdata(L, sizeof(MeterWindow*)) = m_MeterWindow;

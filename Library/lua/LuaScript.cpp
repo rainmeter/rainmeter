@@ -55,7 +55,7 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 	fclose(file);
 	file = nullptr;
 
-	lua_State* L = GetState();
+	auto L = GetState();
 	bool scriptLoaded = false;
 
 	// Treat the script as Unicode if it has the UTF-16 LE BOM.
@@ -122,7 +122,7 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 
 void LuaScript::Uninitialize()
 {
-	lua_State* L = GetState();
+	auto L = GetState();
 
 	if (m_Ref != LUA_NOREF)
 	{
@@ -138,7 +138,7 @@ void LuaScript::Uninitialize()
 */
 bool LuaScript::IsFunction(const char* funcName)
 {
-	lua_State* L = GetState();
+	auto L = GetState();
 	bool bExists = false;
 
 	if (IsInitialized())
@@ -164,7 +164,7 @@ bool LuaScript::IsFunction(const char* funcName)
 */
 void LuaScript::RunFunction(const char* funcName)
 {
-	lua_State* L = GetState();
+	auto L = GetState();
 
 	if (IsInitialized())
 	{
@@ -189,7 +189,7 @@ void LuaScript::RunFunction(const char* funcName)
 */
 int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue)
 {
-	lua_State* L = GetState();
+	auto L = GetState();
 	int type = LUA_TNIL;
 
 	if (IsInitialized())
@@ -234,7 +234,7 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 */
 void LuaScript::RunString(const std::wstring& str)
 {
-	lua_State* L = GetState();
+	auto L = GetState();
 
 	if (IsInitialized())
 	{
