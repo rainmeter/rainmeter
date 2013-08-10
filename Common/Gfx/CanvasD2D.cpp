@@ -312,13 +312,23 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 	if (SUCCEEDED(hr))
 	{
 		TextFormatD2D& formatD2D = (TextFormatD2D&)format;
-		const bool right = formatD2D.GetHorizontalAlignment() == Gfx::HorizontalAlignment::Right;
+		formatD2D.CreateLayout(
+			str, strLen, rect.Width, rect.Height, !m_AccurateText && m_TextAntiAliasing);
 
-		formatD2D.CreateLayout(str, strLen, rect.Width, rect.Height);
+		const float xOffset = formatD2D.m_TextFormat->GetFontSize() / 6.0f;
+		const float xPos = [&]()
+		{
+			if (!m_AccurateText)
+			{
+				switch (formatD2D.GetHorizontalAlignment())
+				{
+				case HorizontalAlignment::Left: return rect.X + xOffset;
+				case HorizontalAlignment::Right: return rect.X - xOffset;
+				}
+			}
 
-		float xOffset = 0.0f;
-		formatD2D.m_TextLayout->GetFontSize(0, &xOffset);
-		xOffset /= 6.0f;
+			return rect.X;
+		} ();
 
 		if (!m_AccurateText && m_TextAntiAliasing)
 		{
@@ -332,7 +342,7 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 		}
 
 		m_Target->DrawTextLayout(
-			D2D1::Point2F(m_AccurateText ? rect.X : right ? rect.X - xOffset : rect.X + xOffset, rect.Y - 1.0f),
+			D2D1::Point2F(xPos, rect.Y - 1.0f),
 			formatD2D.m_TextLayout.Get(),
 			solidBrush.Get());
 	}
