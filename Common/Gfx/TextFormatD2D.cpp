@@ -56,7 +56,7 @@ void TextFormatD2D::CreateLayout(const WCHAR* str, UINT strLen, float maxW, floa
 
 		if (maxH != m_TextLayout->GetMaxHeight())
 		{
-			m_TextLayout->SetMaxWidth(maxH);
+			m_TextLayout->SetMaxHeight(maxH);
 		}
 	}
 	else
