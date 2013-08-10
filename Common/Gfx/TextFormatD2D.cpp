@@ -70,15 +70,30 @@ void TextFormatD2D::CreateLayout(
 		CanvasD2D::c_DWFactory->CreateTextLayout(
 			str, strLen, m_TextFormat.Get(), maxW, maxH, m_TextLayout.ReleaseAndGetAddressOf());
 
-		if (gdiEmulation && m_TextLayout)
+		if (m_TextLayout)
 		{
-			Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout1;
-			m_TextLayout.As(&textLayout1);
+			if (gdiEmulation)
+			{
+				Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout1;
+				m_TextLayout.As(&textLayout1);
 
-			const float xOffset = m_TextFormat->GetFontSize() / 6.0f;
-			const float emOffset = xOffset / 24.0f;
-			const DWRITE_TEXT_RANGE range = {0, strLen};
-			textLayout1->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
+				const float xOffset = m_TextFormat->GetFontSize() / 6.0f;
+				const float emOffset = xOffset / 24.0f;
+				const DWRITE_TEXT_RANGE range = {0, strLen};
+				textLayout1->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
+			}
+
+			UINT32 lineCount = 0;
+			DWRITE_LINE_METRICS lineMetrics[2];
+			HRESULT hr = m_TextLayout->GetLineMetrics(lineMetrics, _countof(lineMetrics), &lineCount);
+			if (SUCCEEDED(hr) &&
+				lineMetrics[0].isTrimmed &&
+				lineMetrics[1].isTrimmed &&
+				lineMetrics[1].height == 0.0f)
+			{
+				m_TextLayout->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+				return;
+			}
 		}
 	}
 }
