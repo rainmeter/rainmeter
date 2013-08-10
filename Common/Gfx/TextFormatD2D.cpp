@@ -201,7 +201,7 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(
 {
 	// GDI+ compatibility: If the last character is a newline, GDI+ measurements seem to ignore it.
 	bool strippedLastNewLine = false;
-	if (str[strLen - 1] == L'\n')
+	if (strLen > 2 && str[strLen - 1] == L'\n')
 	{
 		strippedLastNewLine = true;
 		--strLen;
