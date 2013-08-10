@@ -249,6 +249,15 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(
 					metrics.height += m_LineGap;
 				}
 			}
+			else
+			{
+				// GDI+ compatibility: With accurate metrics, the line gap needs to be subtracted
+				// from the overall height if the string does not contain newlines.
+				if (!strippedLastNewLine && wmemchr(str, L'\n', strLen) == nullptr)
+				{
+					metrics.height -= m_LineGap;
+				}
+			}
 		}
 		else
 		{
