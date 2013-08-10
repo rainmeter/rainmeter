@@ -341,10 +341,15 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 			textLayout->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
 		}
 
+		// TODO: Check for transformation.
+		m_Target->PushAxisAlignedClip(ToRectF(rect), D2D1_ANTIALIAS_MODE_ALIASED);
+
 		m_Target->DrawTextLayout(
 			D2D1::Point2F(xPos, rect.Y - 1.0f),
 			formatD2D.m_TextLayout.Get(),
 			solidBrush.Get());
+
+		m_Target->PopAxisAlignedClip();
 	}
 }
 
