@@ -22,7 +22,9 @@
 
 namespace Gfx {
 
-TextFormatD2D::TextFormatD2D()
+TextFormatD2D::TextFormatD2D() :
+	m_ExtraHeight(),
+	m_LineGap()
 {
 }
 
@@ -37,7 +39,8 @@ void TextFormatD2D::Dispose()
 	m_InlineEllipsis.Reset();
 }
 
-void TextFormatD2D::CreateLayout(const WCHAR* str, UINT strLen, float maxW, float maxH)
+void TextFormatD2D::CreateLayout(
+	const WCHAR* str, UINT strLen, float maxW, float maxH, bool gdiEmulation)
 {
 	bool strChanged = false;
 	if (strLen != m_LastString.length() ||
@@ -63,6 +66,17 @@ void TextFormatD2D::CreateLayout(const WCHAR* str, UINT strLen, float maxW, floa
 	{
 		CanvasD2D::c_DWFactory->CreateTextLayout(
 			str, strLen, m_TextFormat.Get(), maxW, maxH, m_TextLayout.ReleaseAndGetAddressOf());
+
+		if (gdiEmulation && m_TextLayout)
+		{
+			Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout1;
+			m_TextLayout.As(&textLayout1);
+
+			const float xOffset = m_TextFormat->GetFontSize() / 6.0f;
+			const float emOffset = xOffset / 24.0f;
+			const DWRITE_TEXT_RANGE range = {0, strLen};
+			textLayout1->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
+		}
 	}
 }
 
@@ -80,6 +94,7 @@ void TextFormatD2D::SetProperties(
 	DWRITE_FONT_STYLE dwriteFontStyle =
 		italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
 	DWRITE_FONT_STRETCH dwriteFontStretch = DWRITE_FONT_STRETCH_NORMAL;
+	const float dwriteFontSize = size * (4.0f / 3.0f);
 
 	// |fontFamily| uses the GDI/GDI+ font naming convention so try to create DirectWrite font
 	// using the GDI family name and then create a text format using the DirectWrite family name
@@ -95,7 +110,7 @@ void TextFormatD2D::SetProperties(
 			dwriteFontWeight,
 			dwriteFontStyle,
 			dwriteFontStretch,
-			size * (4.0f / 3.0f),
+			dwriteFontSize,
 			L"",
 			&m_TextFormat);
 	}
@@ -135,7 +150,7 @@ void TextFormatD2D::SetProperties(
 			dwriteFontWeight,
 			dwriteFontStyle,
 			dwriteFontStretch,
-			size * (4.0f / 3.0f),
+			dwriteFontSize,
 			L"",
 			&m_TextFormat);
 	}
@@ -144,11 +159,106 @@ void TextFormatD2D::SetProperties(
 	{
 		SetHorizontalAlignment(GetHorizontalAlignment());
 		SetVerticalAlignment(GetVerticalAlignment());
+
+		// TODO: Clean this up and check for errors.
+		Microsoft::WRL::ComPtr<IDWriteFontCollection> collection;
+		m_TextFormat->GetFontCollection(collection.GetAddressOf());
+
+		UINT32 familyNameIndex;
+		BOOL exists;
+		collection->FindFamilyName(dwriteFamilyName, &familyNameIndex, &exists); 
+
+		Microsoft::WRL::ComPtr<IDWriteFontFamily> fontFamily;
+		collection->GetFontFamily(familyNameIndex, fontFamily.GetAddressOf());
+
+		Microsoft::WRL::ComPtr<IDWriteFont> font;
+		fontFamily->GetFirstMatchingFont(
+			m_TextFormat->GetFontWeight(),
+			m_TextFormat->GetFontStretch(),
+			m_TextFormat->GetFontStyle(),
+			font.GetAddressOf());
+
+		DWRITE_FONT_METRICS fmetrics;
+		font->GetMetrics(&fmetrics);
+
+		// GDI+ compatibility: GDI+ adds extra padding below the string when |m_AccurateText| is
+		// |false|. The bottom padding seems to be based on the font metrics so we can calculate it
+		// once and keep using it regardless of the actual string. In some cases, GDI+ also adds
+		// the line gap to the overall height so we will store it as well.
+		const float pixelsPerDesignUnit =  dwriteFontSize / (float)fmetrics.designUnitsPerEm;
+		m_ExtraHeight =
+			(((float)fmetrics.designUnitsPerEm / 8.0f) - fmetrics.lineGap) * pixelsPerDesignUnit;
+		m_LineGap = fmetrics.lineGap * pixelsPerDesignUnit;
 	}
 	else
 	{
 		Dispose();
 	}
+}
+
+DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(
+	const WCHAR* str, UINT strLen, bool gdiEmulation, float maxWidth)
+{
+	// GDI+ compatibility: If the last character is a newline, GDI+ measurements seem to ignore it.
+	bool strippedLastNewLine = false;
+	if (str[strLen - 1] == L'\n')
+	{
+		strippedLastNewLine = true;
+		--strLen;
+
+		if (str[strLen - 1] == L'\r')
+		{
+			--strLen;
+		}
+	}
+
+	DWRITE_TEXT_METRICS metrics = {0};
+	Microsoft::WRL::ComPtr<IDWriteTextLayout> textLayout;
+	HRESULT hr = CanvasD2D::c_DWFactory->CreateTextLayout(
+		str,
+		strLen,
+		m_TextFormat.Get(),
+		maxWidth,
+		10000,
+		textLayout.GetAddressOf());
+	if (SUCCEEDED(hr))
+	{
+		const float xOffset = m_TextFormat->GetFontSize() / 6.0f;
+		if (gdiEmulation)
+		{
+			Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout1;
+			textLayout.As(&textLayout1);
+
+			const float emOffset = xOffset / 24.0f;
+			const DWRITE_TEXT_RANGE range = {0, strLen};
+			textLayout1->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
+		}
+
+		textLayout->GetMetrics(&metrics);
+		if (metrics.width > 0.0f)
+		{
+			if (gdiEmulation)
+			{
+				metrics.width += xOffset * 2;
+				metrics.height += m_ExtraHeight;
+
+				// GDI+ compatibility: If the string contains a newline (even if it is the
+				// stripped last character), GDI+ adds the line gap to the overall height.
+				if (strippedLastNewLine || wmemchr(str, L'\n', strLen) != nullptr)
+				{
+					metrics.height += m_LineGap;
+				}
+			}
+		}
+		else
+		{
+			// GDI+ compatibility: Get rid of the height that DirectWrite assigns to zero-width
+			// strings.
+			metrics.height = 0.0f;
+		}
+	}
+
+	return metrics;
 }
 
 void TextFormatD2D::SetTrimming(bool trim)

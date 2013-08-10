@@ -313,13 +313,13 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 	{
 		TextFormatD2D& formatD2D = (TextFormatD2D&)format;
 		formatD2D.CreateLayout(
-			str, strLen, rect.Width, rect.Height);
+			str, strLen, rect.Width, rect.Height, !m_AccurateText && m_TextAntiAliasing);
 
-		const float xOffset = formatD2D.m_TextFormat->GetFontSize() / 6.0f;
 		const float xPos = [&]()
 		{
 			if (!m_AccurateText)
 			{
+				const float xOffset = formatD2D.m_TextFormat->GetFontSize() / 6.0f;
 				switch (formatD2D.GetHorizontalAlignment())
 				{
 				case HorizontalAlignment::Left: return rect.X + xOffset;
@@ -330,22 +330,11 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 			return rect.X;
 		} ();
 
-		if (!m_AccurateText && m_TextAntiAliasing)
-		{
-			const float emOffset = xOffset / 25.0f;
-
-			DWRITE_TEXT_RANGE range = {0, strLen};
-			Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout;
-			formatD2D.m_TextLayout.As(&textLayout);
-
-			textLayout->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
-		}
-
 		// TODO: Check for transformation.
 		m_Target->PushAxisAlignedClip(ToRectF(rect), D2D1_ANTIALIAS_MODE_ALIASED);
 
 		m_Target->DrawTextLayout(
-			D2D1::Point2F(xPos, rect.Y - 1.0f),
+			D2D1::Point2F(xPos, rect.Y - formatD2D.m_LineGap),
 			formatD2D.m_TextLayout.Get(),
 			solidBrush.Get());
 
@@ -355,52 +344,27 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 
 bool CanvasD2D::MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect)
 {
-	Microsoft::WRL::ComPtr<IDWriteTextLayout> textLayout;
-	HRESULT hr = c_DWFactory->CreateTextLayout(
-		str,
-		strLen,
-		((TextFormatD2D&)format).m_TextFormat.Get(),
-		10000,
-		10000,
-		textLayout.GetAddressOf());
-	if (SUCCEEDED(hr))
-	{
-		const DWRITE_TEXT_METRICS metrics =
-			Util::GetAdjustedDWriteTextLayoutMetrics(textLayout.Get(), !m_AccurateText);
-		rect.Width = metrics.width;
-		rect.Height = metrics.height;
-		return true;
-	}
-
-	return false;
+	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
+	const DWRITE_TEXT_METRICS metrics = formatD2D.GetMetrics(str, strLen, !m_AccurateText);
+	rect.Width = metrics.width;
+	rect.Height = metrics.height;
+	return true;
 }
 
 bool CanvasD2D::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect, UINT& lines)
 {
-	((TextFormatD2D&)format).m_TextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
+	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
+	formatD2D.m_TextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_WRAP);
 
-	Microsoft::WRL::ComPtr<IDWriteTextLayout> textLayout;
-	HRESULT hr = c_DWFactory->CreateTextLayout(
-		str,
-		strLen,
-		((TextFormatD2D&)format).m_TextFormat.Get(),
-		rect.Width,
-		10000,
-		textLayout.GetAddressOf());
-	if (SUCCEEDED(hr))
-	{
-		const DWRITE_TEXT_METRICS metrics =
-			Util::GetAdjustedDWriteTextLayoutMetrics(textLayout.Get(), !m_AccurateText);
-		rect.Width = metrics.width;
-		lines = metrics.lineCount;
+	const DWRITE_TEXT_METRICS metrics = formatD2D.GetMetrics(str, strLen, !m_AccurateText, rect.Width);
+	rect.Width = metrics.width;
+	rect.Height = metrics.height;
+	lines = metrics.lineCount;
 
-		// GDI+ draws multi-line text even though the last line may be clipped slightly at the bottom.
-		// This is a workaround to emulate that behaviour.
-		rect.Height = metrics.height + 1.0f;
-		return true;
-	}
-
-	return false;
+	// GDI+ draws multi-line text even though the last line may be clipped slightly at the bottom.
+	// This is a workaround to emulate that behaviour.
+	rect.Height += 1.0f;
+	return true;
 }
 
 void CanvasD2D::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect)

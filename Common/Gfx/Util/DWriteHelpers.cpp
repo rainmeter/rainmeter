@@ -23,31 +23,6 @@
 namespace Gfx {
 namespace Util {
 
-DWRITE_TEXT_METRICS GetAdjustedDWriteTextLayoutMetrics(
-	IDWriteTextLayout* textLayout, bool gdiEmulation)
-{
-	DWRITE_TEXT_METRICS metrics;
-	textLayout->GetMetrics(&metrics);
-
-	if (metrics.width > 0.0f)
-	{
-		if (gdiEmulation)
-		{
-			float size = 0.0f;
-			textLayout->GetFontSize(0, &size);
-			metrics.width = floor(metrics.width + (size / 2.05f) + (metrics.width / 55.0f) - 0.5f);
-			metrics.height = floor(metrics.height + (size / 9.25f) + 0.3f);
-		}
-	}
-	else
-	{
-		// Get rid of the height that DirectWrite assigns to zero-width strings.
-		metrics.height = 0.0f;
-	}
-
-	return metrics;
-}
-
 HRESULT GetDWritePropertiesFromGDIProperties(
 	IDWriteFactory* factory, const WCHAR* gdiFamilyName, const bool gdiBold, const bool gdiItalic,
 	DWRITE_FONT_WEIGHT& dwriteFontWeight, DWRITE_FONT_STYLE& dwriteFontStyle,

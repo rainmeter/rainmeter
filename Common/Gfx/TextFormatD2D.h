@@ -54,13 +54,20 @@ private:
 	// Creates a new DirectWrite text layout if |str| has changed since last call. Since creating
 	// the layout is costly, it is more efficient to keep reusing the text layout until the text
 	// changes.
-	void CreateLayout(const WCHAR* str, UINT strLen, float maxW, float maxH);
+	void CreateLayout(const WCHAR* str, UINT strLen, float maxW, float maxH, bool gdiEmulation);
+
+	DWRITE_TEXT_METRICS GetMetrics(
+		const WCHAR* str, UINT strLen, bool gdiEmulation, float maxWidth = 10000.0f);
 
 	Microsoft::WRL::ComPtr<IDWriteTextFormat> m_TextFormat;
 	Microsoft::WRL::ComPtr<IDWriteTextLayout> m_TextLayout;
 	Microsoft::WRL::ComPtr<IDWriteInlineObject> m_InlineEllipsis;
 
 	std::wstring m_LastString;
+
+	// Used to emulate GDI+ behaviour.
+	float m_ExtraHeight;
+	float m_LineGap;
 };
 
 }  // namespace Gfx
