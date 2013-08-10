@@ -313,7 +313,7 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 	{
 		TextFormatD2D& formatD2D = (TextFormatD2D&)format;
 		formatD2D.CreateLayout(
-			str, strLen, rect.Width, rect.Height, !m_AccurateText && m_TextAntiAliasing);
+			str, strLen, rect.Width, rect.Height);
 
 		const float xOffset = formatD2D.m_TextFormat->GetFontSize() / 6.0f;
 		const float xPos = [&]()
