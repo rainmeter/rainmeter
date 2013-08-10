@@ -83,6 +83,9 @@ void TextFormatD2D::CreateLayout(
 				textLayout1->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
 			}
 
+			// If only one line is visible, disable wrapping so that as much text as possible is shown
+			// after trimming.
+			// TODO: Fix this for when more than one line is visible.
 			UINT32 lineCount = 0;
 			DWRITE_LINE_METRICS lineMetrics[2];
 			HRESULT hr = m_TextLayout->GetLineMetrics(lineMetrics, _countof(lineMetrics), &lineCount);
@@ -92,7 +95,6 @@ void TextFormatD2D::CreateLayout(
 				lineMetrics[1].height == 0.0f)
 			{
 				m_TextLayout->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
-				return;
 			}
 		}
 	}
