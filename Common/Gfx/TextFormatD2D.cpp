@@ -37,6 +37,9 @@ void TextFormatD2D::Dispose()
 	m_TextFormat.Reset();
 	m_TextLayout.Reset();
 	m_InlineEllipsis.Reset();
+
+	m_ExtraHeight = 0.0f;
+	m_LineGap = 0.0f;
 }
 
 void TextFormatD2D::CreateLayout(
@@ -160,23 +163,28 @@ void TextFormatD2D::SetProperties(
 		SetHorizontalAlignment(GetHorizontalAlignment());
 		SetVerticalAlignment(GetVerticalAlignment());
 
-		// TODO: Clean this up and check for errors.
-		Microsoft::WRL::ComPtr<IDWriteFontCollection> collection;
-		m_TextFormat->GetFontCollection(collection.GetAddressOf());
+		// Get the family name to in case CreateTextFormat() fallbacked on some other family name.
+		hr = m_TextFormat->GetFontFamilyName(dwriteFamilyName, _countof(dwriteFamilyName));
+		if (FAILED(hr)) return;
 
+		Microsoft::WRL::ComPtr<IDWriteFontCollection> collection;
+		Microsoft::WRL::ComPtr<IDWriteFontFamily> fontFamily;
 		UINT32 familyNameIndex;
 		BOOL exists;
-		collection->FindFamilyName(dwriteFamilyName, &familyNameIndex, &exists); 
-
-		Microsoft::WRL::ComPtr<IDWriteFontFamily> fontFamily;
-		collection->GetFontFamily(familyNameIndex, fontFamily.GetAddressOf());
+		if (FAILED(m_TextFormat->GetFontCollection(collection.GetAddressOf())) ||
+			FAILED(collection->FindFamilyName(dwriteFamilyName, &familyNameIndex, &exists)) ||
+			FAILED(collection->GetFontFamily(familyNameIndex, fontFamily.GetAddressOf())))
+		{
+			return;
+		}
 
 		Microsoft::WRL::ComPtr<IDWriteFont> font;
-		fontFamily->GetFirstMatchingFont(
+		hr = fontFamily->GetFirstMatchingFont(
 			m_TextFormat->GetFontWeight(),
 			m_TextFormat->GetFontStretch(),
 			m_TextFormat->GetFontStyle(),
 			font.GetAddressOf());
+		if (FAILED(hr)) return;
 
 		DWRITE_FONT_METRICS fmetrics;
 		font->GetMetrics(&fmetrics);
