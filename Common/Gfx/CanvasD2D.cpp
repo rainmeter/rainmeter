@@ -332,12 +332,16 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 			return rect.X;
 		} ();
 
+		DWRITE_OVERHANG_METRICS overhangMetrics;
+		formatD2D.m_TextLayout->GetOverhangMetrics(&overhangMetrics);
+
 		D2D1::Matrix3x2F transformMatrix;
 		m_Target->GetTransform(&transformMatrix);
 		const bool identityTransform = transformMatrix.IsIdentity();
 
 		// TODO: Determine if we can avoid clipping.
 		D2D1_RECT_F clipRect = ToRectF(rect);
+		clipRect.bottom += ceil(overhangMetrics.bottom);
 		if (identityTransform)
 		{
 			m_Target->PushAxisAlignedClip(clipRect, D2D1_ANTIALIAS_MODE_ALIASED);
