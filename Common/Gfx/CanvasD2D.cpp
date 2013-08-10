@@ -315,7 +315,9 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 		formatD2D.CreateLayout(
 			str, strLen, rect.Width, rect.Height, !m_AccurateText && m_TextAntiAliasing);
 
-		const float xPos = [&]()
+		D2D1_POINT_2F drawPosition;
+		drawPosition.y = rect.Y - formatD2D.m_LineGap;
+		drawPosition.x = [&]()
 		{
 			if (!m_AccurateText)
 			{
@@ -330,15 +332,33 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 			return rect.X;
 		} ();
 
-		// TODO: Check for transformation.
-		m_Target->PushAxisAlignedClip(ToRectF(rect), D2D1_ANTIALIAS_MODE_ALIASED);
+		D2D1::Matrix3x2F transformMatrix;
+		m_Target->GetTransform(&transformMatrix);
+		const bool identityTransform = transformMatrix.IsIdentity();
 
-		m_Target->DrawTextLayout(
-			D2D1::Point2F(xPos, rect.Y - formatD2D.m_LineGap),
-			formatD2D.m_TextLayout.Get(),
-			solidBrush.Get());
+		// TODO: Determine if we can avoid clipping.
+		D2D1_RECT_F clipRect = ToRectF(rect);
+		if (identityTransform)
+		{
+			m_Target->PushAxisAlignedClip(clipRect, D2D1_ANTIALIAS_MODE_ALIASED);
+		}
+		else
+		{
+			const D2D1_LAYER_PARAMETERS layerParams =
+				D2D1::LayerParameters(clipRect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
+			m_Target->PushLayer(layerParams, nullptr);
+		}
 
-		m_Target->PopAxisAlignedClip();
+		m_Target->DrawTextLayout(drawPosition, formatD2D.m_TextLayout.Get(), solidBrush.Get());
+
+		if (identityTransform)
+		{
+			m_Target->PopAxisAlignedClip();
+		}
+		else
+		{
+			m_Target->PopLayer();
+		}
 	}
 }
 
