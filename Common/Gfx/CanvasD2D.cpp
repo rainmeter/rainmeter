@@ -316,7 +316,6 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 			str, strLen, rect.Width, rect.Height, !m_AccurateText && m_TextAntiAliasing);
 
 		D2D1_POINT_2F drawPosition;
-		drawPosition.y = rect.Y - formatD2D.m_LineGap;
 		drawPosition.x = [&]()
 		{
 			if (!m_AccurateText)
@@ -330,6 +329,19 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 			}
 
 			return rect.X;
+		} ();
+
+		drawPosition.y = [&]()
+		{
+			// GDI+ compatibility.
+			float yPos = rect.Y - formatD2D.m_LineGap;
+			switch (formatD2D.GetVerticalAlignment())
+			{
+			case VerticalAlignment::Bottom: yPos -= formatD2D.m_ExtraHeight; break;
+			case VerticalAlignment::Center: yPos -= formatD2D.m_ExtraHeight / 2; break;
+			}
+
+			return yPos;
 		} ();
 
 		DWRITE_OVERHANG_METRICS overhangMetrics;
