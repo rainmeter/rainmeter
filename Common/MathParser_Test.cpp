@@ -17,9 +17,7 @@
 */
 
 #include "MathParser.h"
-#include <CppUnitTest.h>
-
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+#include "UnitTest.h"
 
 namespace MathParser {
 

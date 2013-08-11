@@ -18,10 +18,8 @@
 
 #include "Canvas.h"
 #include "TextFormatD2D.h"
-#include <CppUnitTest.h>
+#include "../UnitTest.h"
 #include <memory>
-
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace Gfx {
 
