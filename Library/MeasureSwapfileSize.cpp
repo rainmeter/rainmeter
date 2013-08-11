@@ -58,7 +58,7 @@ void MeasureSwapfileSize::UpdateValue()
 	}
 	else
 	{
-		m_Value = (double)(__int64)(stat.ullTotalPageFile - (stat.ullAvailPageFile + stat.ullAvailPhys));
+		m_Value = (double)(__int64)(m_MaxValue - (stat.ullAvailPageFile - stat.ullAvailPhys));
 	}
 }
 
