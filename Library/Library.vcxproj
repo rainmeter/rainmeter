@@ -74,6 +74,9 @@
     <ClCompile Include="..\Common\Gfx\FontCollectionGDIP.cpp" />
     <ClCompile Include="..\Common\Gfx\TextFormat.cpp" />
     <ClCompile Include="..\Common\Gfx\TextFormatD2D.cpp" />
+    <ClCompile Include="..\Common\Gfx\TextFormatD2D_Test.cpp">
+      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\Common\Gfx\TextFormatGDIP.cpp" />
     <ClCompile Include="..\Common\Gfx\Util\DWriteHelpers.cpp" />
     <ClCompile Include="..\Common\Gfx\Util\DWriteFontCollectionLoader.cpp" />

@@ -47,6 +47,8 @@ public:
 private:
 	friend class CanvasD2D;
 
+	friend class Common_Gfx_TextFormatD2D_Test;
+
 	TextFormatD2D(const TextFormatD2D& other) {}
 
 	void Dispose();

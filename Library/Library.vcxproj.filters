@@ -354,6 +354,9 @@
     <ClCompile Include="..\Common\Gfx\TextFormatD2D.cpp">
       <Filter>Common\Gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\Gfx\TextFormatD2D_Test.cpp">
+      <Filter>Common\Gfx</Filter>
+    </ClCompile>
     <ClCompile Include="..\Common\Gfx\TextFormatGDIP.cpp">
       <Filter>Common\Gfx</Filter>
     </ClCompile>
