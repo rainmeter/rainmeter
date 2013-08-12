@@ -59,7 +59,6 @@ void MeasureSwapfileSize::UpdateValue()
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
 	GlobalMemoryStatusEx(&stat);
-	CheckSwapfileEnabled();
 
 	if (m_bSwapfileEnabled == true)
 	{

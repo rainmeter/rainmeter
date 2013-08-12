@@ -65,7 +65,6 @@ void MeasureMemory::UpdateValue()
 	PERFORMANCE_INFORMATION info;
 	info.cb = sizeof(PERFORMANCE_INFORMATION);
 	GetPerformanceInfo(&info, info.cb);
-	CheckSwapfileEnabled();
 
 	if (m_bSwapfileEnabled == true)
 	{
