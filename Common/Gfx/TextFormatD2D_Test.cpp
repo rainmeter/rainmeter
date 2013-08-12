@@ -45,7 +45,9 @@ public:
 		std::unique_ptr<TextFormatD2D> textFormat((TextFormatD2D*)m_D2D->CreateTextFormat());
 		textFormat->SetProperties(L"Arial", 10, false, false, nullptr);
 
-		DWRITE_TEXT_METRICS metrics = textFormat->GetMetrics(L"test", 4, true);
+		DWRITE_TEXT_METRICS metrics;
+
+		metrics = textFormat->GetMetrics(L"test", 4, true);
 		Assert::AreEqual(26, (int)metrics.width);
 		Assert::AreEqual(16, (int)metrics.height);
 
@@ -59,13 +61,21 @@ public:
 		std::unique_ptr<TextFormatD2D> textFormat((TextFormatD2D*)m_D2D->CreateTextFormat());
 		textFormat->SetProperties(L"Arial", 10, false, false, nullptr);
 
-		DWRITE_TEXT_METRICS metrics = textFormat->GetMetrics(L"test\n", 5, false);
+		DWRITE_TEXT_METRICS metrics;
+		
+		metrics = textFormat->GetMetrics(L"test\n", 5, false);
+		Assert::AreEqual(15, (int)metrics.height);
+		metrics = textFormat->GetMetrics(L"test\r\n", 6, false);
 		Assert::AreEqual(15, (int)metrics.height);
 
 		metrics = textFormat->GetMetrics(L"test\n ", 6, false);
 		Assert::AreEqual(30, (int)metrics.height);
+		metrics = textFormat->GetMetrics(L"test\r\n ", 7, false);
+		Assert::AreEqual(30, (int)metrics.height);
 
 		metrics = textFormat->GetMetrics(L"test\n\n", 6, false);
+		Assert::AreEqual(30, (int)metrics.height);
+		metrics = textFormat->GetMetrics(L"test\r\n\r\n", 8, false);
 		Assert::AreEqual(30, (int)metrics.height);
 	}
 };
