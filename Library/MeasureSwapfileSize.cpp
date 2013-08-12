@@ -30,7 +30,16 @@ MeasureSwapfileSize::MeasureSwapfileSize(MeterWindow* meterWindow, const WCHAR* 
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
 	GlobalMemoryStatusEx(&stat);
-	m_MaxValue = (double)(__int64)(stat.ullTotalPageFile - stat.ullTotalPhys);
+	CheckSwapfileEnabled();
+
+	if (m_bSwapfileEnabled == true)
+	{
+		m_MaxValue = (double)(__int64)(stat.ullTotalPageFile - stat.ullTotalPhys);
+	}
+	else
+	{
+		m_MaxValue = 0;
+	}
 }
 
 /*
@@ -50,15 +59,24 @@ void MeasureSwapfileSize::UpdateValue()
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
 	GlobalMemoryStatusEx(&stat);
-	m_MaxValue = (double)(__int64)(stat.ullTotalPageFile - stat.ullTotalPhys);
+	CheckSwapfileEnabled();
 
-	if (m_Total)
+	if (m_bSwapfileEnabled == true)
 	{
-		m_Value = m_MaxValue;
+		m_MaxValue = (double)(__int64)(stat.ullTotalPageFile - stat.ullTotalPhys);
+
+		if (m_Total)
+		{
+			m_Value = m_MaxValue;
+		}
+		else
+		{
+			m_Value = (double)(__int64)(m_MaxValue - (stat.ullAvailPageFile - stat.ullAvailPhys));
+		}
 	}
 	else
 	{
-		m_Value = (double)(__int64)(m_MaxValue - (stat.ullAvailPageFile - stat.ullAvailPhys));
+		m_Value = m_MaxValue = 0;
 	}
 }
 
@@ -75,3 +93,38 @@ void MeasureSwapfileSize::ReadOptions(ConfigParser& parser, const WCHAR* section
 	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
 }
 
+void MeasureSwapfileSize::CheckSwapfileEnabled(void)
+{
+	// This only needs to run once (called by constructor) because changing the swapfile size 
+	// always requires a restart in the Windows operating system.
+	#define BUFFERSIZE 256
+	HKEY	hKey;
+	DWORD	dwSize = BUFFERSIZE;
+	DWORD	dwError;
+	CHAR	SwapfileData[BUFFERSIZE];
+
+	for (int i = 0; i < BUFFERSIZE; i++)
+	{
+		SwapfileData[i] = 0;
+	}
+
+	if( RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT("System\\CurrentControlSet\\Control\\Session Manager\\Memory Management"),0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS)
+	{
+		dwError = RegQueryValueEx(hKey, TEXT("PagingFiles"),0,0, (LPBYTE)SwapfileData, &dwSize);
+
+		if ( (dwError != ERROR_SUCCESS) || (SwapfileData[0] == 0) || (SwapfileData[0] == '/n') || (SwapfileData[0] == '/0') )
+		{
+			m_bSwapfileEnabled = false;
+		}
+		else
+		{
+			m_bSwapfileEnabled = true;
+		}
+	}
+	else
+	{
+		m_bSwapfileEnabled = false;
+	}
+
+	RegCloseKey(hKey);
+}

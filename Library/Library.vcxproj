@@ -32,9 +32,12 @@
       <AdditionalIncludeDirectories>lua/include;lua/lua;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_USRDLL;HAVE_CONFIG_H;SUPPORT_UTF8;LIBRARY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4018;4090;4114;4267;4334;4351;4786;4800;4996</DisableSpecificWarnings>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;psapi.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
@@ -45,6 +48,8 @@
       <PreprocessorDefinitions>_USRDLL;LIBRARY_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4018;4090;4114;4267;4334;4351;4786;4800;4996</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
     </ClCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -58,9 +63,13 @@
       <PreprocessorDefinitions>_USRDLL;LIBRARY_EXPORTS;HAVE_CONFIG_H;SUPPORT_UTF8;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4018;4090;4114;4267;4334;4351;4786;4800;4996</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>

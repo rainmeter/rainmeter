@@ -32,6 +32,9 @@ public:
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
+	void		 CheckSwapfileEnabled(void);
+
+	bool m_bSwapfileEnabled;
 
 private:
 	bool m_Total;
