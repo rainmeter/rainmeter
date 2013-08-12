@@ -54,6 +54,16 @@ void TextFormatD2D::CreateLayout(
 		m_LastString.assign(str, strLen);
 	}
 
+	if (m_Trimming)
+	{
+		// GDI+ compatibility: If we trimming (i.e. clipping), GDI+ draws text lines even if they
+		// would be clipped. This is arguably a bad 'feature', but some in some cases the height
+		// might be just a pixel or two too small. In order to render those cases correctly (but
+		// still clipped as CanvasD2D::DrawTextW() will clip), we'll increase the max height of
+		// the layout.
+		maxH += 2.0f;
+	}
+
 	if (m_TextLayout && !strChanged)
 	{
 		if (maxW != m_TextLayout->GetMaxWidth())
