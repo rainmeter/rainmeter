@@ -52,7 +52,8 @@ Microsoft::WRL::ComPtr<IWICImagingFactory> CanvasD2D::c_WICFactory;
 
 CanvasD2D::CanvasD2D() : Canvas(),
 	m_Bitmap(),
-	m_TextAntiAliasing(false)
+	m_TextAntiAliasing(false),
+	m_CanUseAxisAlignClip(false)
 {
 }
 
@@ -169,8 +170,8 @@ bool CanvasD2D::BeginTargetDraw()
 
 		m_Target->BeginDraw();
 
-		// Apply any transforms that occurred before creation of m_Target
-		m_Target->SetTransform(GetCurrentTransform());
+		// Apply any transforms that occurred before creation of |m_Target|.
+		UpdateTargetTransform();
 
 		return true;
 	}
@@ -227,13 +228,18 @@ bool CanvasD2D::IsTransparentPixel(int x, int y)
 	return transparent;
 }
 
-D2D1_MATRIX_3X2_F CanvasD2D::GetCurrentTransform()
+void CanvasD2D::UpdateTargetTransform()
 {
-	D2D1_MATRIX_3X2_F d2dMatrix;
 	Gdiplus::Matrix gdipMatrix;
 	m_GdipGraphics->GetTransform(&gdipMatrix);
+
+	D2D1_MATRIX_3X2_F d2dMatrix;
 	gdipMatrix.GetElements((Gdiplus::REAL*)&d2dMatrix);
-	return d2dMatrix;
+
+	m_Target->SetTransform(d2dMatrix);
+	m_CanUseAxisAlignClip =
+		d2dMatrix._12 == 0.0f && d2dMatrix._21 == 0.0f &&
+		d2dMatrix._31 == 0.0f && d2dMatrix._32 == 0.0f;
 }
 
 void CanvasD2D::SetTransform(const Gdiplus::Matrix& matrix)
@@ -242,7 +248,7 @@ void CanvasD2D::SetTransform(const Gdiplus::Matrix& matrix)
 
 	if (m_Target)
 	{
-		m_Target->SetTransform(GetCurrentTransform());
+		UpdateTargetTransform();
 	}
 }
 
@@ -264,7 +270,7 @@ void CanvasD2D::RotateTransform(float angle, float x, float y, float dx, float d
 
 	if (m_Target)
 	{
-		m_Target->SetTransform(GetCurrentTransform());
+		UpdateTargetTransform();
 	}
 }
 
@@ -344,36 +350,34 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 			return yPos;
 		} ();
 
-		DWRITE_OVERHANG_METRICS overhangMetrics;
-		formatD2D.m_TextLayout->GetOverhangMetrics(&overhangMetrics);
-
-		D2D1::Matrix3x2F transformMatrix;
-		m_Target->GetTransform(&transformMatrix);
-		const bool identityTransform = transformMatrix.IsIdentity();
-
-		// TODO: Determine if we can avoid clipping.
-		D2D1_RECT_F clipRect = ToRectF(rect);
-		clipRect.bottom += ceil(overhangMetrics.bottom);
-		if (identityTransform)
+		if (formatD2D.m_Trimming)
 		{
-			m_Target->PushAxisAlignedClip(clipRect, D2D1_ANTIALIAS_MODE_ALIASED);
-		}
-		else
-		{
-			const D2D1_LAYER_PARAMETERS layerParams =
-				D2D1::LayerParameters(clipRect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
-			m_Target->PushLayer(layerParams, nullptr);
+			D2D1_RECT_F clipRect = ToRectF(rect);
+
+			if (m_CanUseAxisAlignClip)
+			{
+				m_Target->PushAxisAlignedClip(clipRect, D2D1_ANTIALIAS_MODE_ALIASED);
+			}
+			else
+			{
+				const D2D1_LAYER_PARAMETERS layerParams =
+					D2D1::LayerParameters(clipRect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
+				m_Target->PushLayer(layerParams, nullptr);
+			}
 		}
 
 		m_Target->DrawTextLayout(drawPosition, formatD2D.m_TextLayout.Get(), solidBrush.Get());
 
-		if (identityTransform)
+		if (formatD2D.m_Trimming)
 		{
-			m_Target->PopAxisAlignedClip();
-		}
-		else
-		{
-			m_Target->PopLayer();
+			if (m_CanUseAxisAlignClip)
+			{
+				m_Target->PopAxisAlignedClip();
+			}
+			else
+			{
+				m_Target->PopLayer();
+			}
 		}
 	}
 }

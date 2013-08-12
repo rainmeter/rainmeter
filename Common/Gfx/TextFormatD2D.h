@@ -70,6 +70,9 @@ private:
 	// Used to emulate GDI+ behaviour.
 	float m_ExtraHeight;
 	float m_LineGap;
+
+	// Contains the value passed to the last call of of SetTrimming().
+	bool m_Trimming;
 };
 
 }  // namespace Gfx

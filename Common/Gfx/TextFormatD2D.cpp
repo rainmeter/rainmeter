@@ -24,7 +24,8 @@ namespace Gfx {
 
 TextFormatD2D::TextFormatD2D() :
 	m_ExtraHeight(),
-	m_LineGap()
+	m_LineGap(),
+	m_Trimming()
 {
 }
 
@@ -297,6 +298,7 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(
 
 void TextFormatD2D::SetTrimming(bool trim)
 {
+	m_Trimming = trim;
 	IDWriteInlineObject* inlineObject = nullptr;
 	DWRITE_TRIMMING trimming = {};
 	DWRITE_WORD_WRAPPING wordWrapping = DWRITE_WORD_WRAPPING_NO_WRAP;

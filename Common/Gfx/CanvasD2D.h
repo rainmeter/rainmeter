@@ -86,8 +86,8 @@ private:
 	bool BeginTargetDraw();
 	void EndTargetDraw();
 
-	// Retrieves current GDI+ transform (if any) and converts to a D2D Matrix
-	D2D1_MATRIX_3X2_F GetCurrentTransform();
+	// Sets the |m_Target| transformation to be equal to that of |m_GdipGraphics|.
+	void UpdateTargetTransform();
 
 	Microsoft::WRL::ComPtr<ID2D1RenderTarget> m_Target;
 	Util::WICBitmapDIB m_Bitmap;
@@ -97,6 +97,9 @@ private:
 	std::unique_ptr<Gdiplus::Bitmap> m_GdipBitmap;
 
 	bool m_TextAntiAliasing;
+
+	// |true| if PushAxisAlignedClip()/PopAxisAlignedClip() can be used.
+	bool m_CanUseAxisAlignClip;
 
 	static UINT c_Instances;
 	static Microsoft::WRL::ComPtr<ID2D1Factory1> c_D2DFactory;
