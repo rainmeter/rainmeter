@@ -1,0 +1,16 @@
+﻿Build started 08/12/2013 19:19:56.
+     1>Project "D:\Dev\GitHub\rainmeter\Plugins\PluginOpenHardwareMonitor\PluginOpenHardwareMonitor.vcxproj" on node 9 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _USRDLL /D PLUGINOPENHARDWAREMONITOR_EXPORTS /D _WINDLL /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt PluginOpenHardwareMonitor.cpp
+         PluginOpenHardwareMonitor.cpp
+       ResourceCompile:
+         C:\Program Files (x86)\Windows Kits\8.0\bin\x86\rc.exe /D _UNICODE /D UNICODE /l"0x0409" /nologo /fo"Debug\PluginOpenHardwareMonitor.res" PluginOpenHardwareMonitor.rc 
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\Dev\GitHub\rainmeter\Debug\PluginOpenHardwareMonitor.dll" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:\Dev\GitHub\rainmeter\Debug\PluginOpenHardwareMonitor.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\Dev\GitHub\rainmeter\Debug\PluginOpenHardwareMonitor.lib" /MACHINE:X86 /DLL Debug\PluginOpenHardwareMonitor.res
+         Debug\PluginOpenHardwareMonitor.obj
+         PluginOpenHardwareMonitor.vcxproj -> D:\Dev\GitHub\rainmeter\Debug\PluginOpenHardwareMonitor.dll
+     1>Done Building Project "D:\Dev\GitHub\rainmeter\Plugins\PluginOpenHardwareMonitor\PluginOpenHardwareMonitor.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:01.23
