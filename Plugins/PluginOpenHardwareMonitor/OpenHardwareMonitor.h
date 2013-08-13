@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2013 Aaron Stone
+  Copyright (C) 2013 NAME
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -30,14 +30,13 @@
   to run in the background.
 */
 
-
-
 #include <windows.h>
-
-#ifndef __PLUGINOPENHARDWAREMONITOR_H__
-#define __PLUGINOPENHARDWAREMONITOR_H__
+#include "NativeInterface.h"
 
 #pragma once
+
+#ifndef __OPENHARDWAREMONITOR_H__
+#define __OPENHARDWAREMONITOR_H__
 
 
 

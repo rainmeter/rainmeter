@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2013 Aaron Stone
+  Copyright (C) 2013 NAME
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -30,14 +30,19 @@
   to run in the background.
 */
 
+#include "NativeInterface.h"
+#include "CLIWrapper.h"
 
+using namespace OpenHardwareMonitor;
 
-#include "PluginOpenHardwareMonitor.h"
-
-
-void testfunc(void)
+#ifdef __cplusplus
+extern "C"
 {
-	int j = 0;
+#endif
 
-	j++;
+
+
+
+#ifdef __cplusplus
 }
+#endif

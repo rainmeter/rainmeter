@@ -20,7 +20,7 @@
 #include "DialogInstall.h"
 #include "../Common/ControlTemplate.h"
 
-CDialogInstall::CDialogInstall() : CDialog()
+CDialogInstall::CDialogInstall() : Dialog()
 {
 }
 
