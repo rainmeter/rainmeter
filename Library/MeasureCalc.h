@@ -20,6 +20,7 @@
 #define __MEASURECALC_H__
 
 #include "Measure.h"
+#include <random>
 
 class MeasureCalc : public Measure
 {
@@ -46,8 +47,14 @@ private:
 	int m_HighBound;
 
 	bool m_UpdateRandom;
+	bool m_UniqueRandom;
 
-	static bool c_RandSeeded;
+	std::vector<int> m_UniqueNumbers;
+	void UpdateUniqueNumberList();
+
+	// Uniform Random Number Generator
+	std::default_random_engine m_Engine;
+	std::uniform_int_distribution<int> m_Distrubtion;
 };
 
 #endif

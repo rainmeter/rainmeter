@@ -21,7 +21,8 @@
 #include "MeasureCalc.h"
 #include "Rainmeter.h"
 
-bool MeasureCalc::c_RandSeeded = false;
+#define DEFAULT_LOWER_BOUND	0
+#define DEFAULT_UPPER_BOUND	100
 
 /*
 ** The constructor
@@ -29,17 +30,15 @@ bool MeasureCalc::c_RandSeeded = false;
 */
 MeasureCalc::MeasureCalc(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_ParseError(false),
-	m_LowBound(),
-	m_HighBound(100),
-	m_UpdateRandom(false)
+	m_LowBound(DEFAULT_LOWER_BOUND),
+	m_HighBound(DEFAULT_UPPER_BOUND),
+	m_UpdateRandom(false),
+	m_UniqueRandom(false),
+	m_Engine(),
+	m_Distrubtion()
 {
-	if (!c_RandSeeded)
-	{
-		c_RandSeeded = true;
-		srand((unsigned)time(0));
-	}
-
-	rand();
+	std::random_device device;
+	m_Engine.seed(device());
 }
 
 /*
@@ -83,20 +82,49 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	int oldLowBound = m_LowBound;
 	int oldHighBound = m_HighBound;
 	bool oldUpdateRandom = m_UpdateRandom;
+	bool oldUniqueRandom = m_UniqueRandom;
 
 	std::wstring oldFormula = m_Formula;
 	m_Formula = parser.ReadString(section, L"Formula", L"");
 
-	m_LowBound = parser.ReadInt(section, L"LowBound", 0);
-	m_HighBound = parser.ReadInt(section, L"HighBound", 100);
+	m_LowBound = parser.ReadInt(section, L"LowBound", DEFAULT_LOWER_BOUND);
+	m_HighBound = parser.ReadInt(section, L"HighBound", DEFAULT_UPPER_BOUND);
 	m_UpdateRandom = parser.ReadBool(section, L"UpdateRandom", false);
+	
+	m_UniqueRandom = parser.ReadBool(section, L"UniqueRandom", false);
+	if (!m_UniqueRandom)
+	{
+		m_UniqueNumbers.clear();
+	}
 
 	if (!m_Initialized ||
 		wcscmp(m_Formula.c_str(), oldFormula.c_str()) != 0 ||
 		oldLowBound != m_LowBound ||
 		oldHighBound != m_HighBound ||
-		oldUpdateRandom != m_UpdateRandom)
+		oldUpdateRandom != m_UpdateRandom ||
+		oldUniqueRandom != m_UniqueRandom)
 	{
+		// Reset bounds if |m_LowBound| is greater than or equal to |m_HighBound|
+		if (m_LowBound >= m_HighBound)
+		{
+			LogErrorF(this, L"\"LowBound\" (%i) must be less then \"HighBound\" (%i)", m_LowBound, m_HighBound);
+
+			m_LowBound = DEFAULT_LOWER_BOUND;
+			m_HighBound = DEFAULT_UPPER_BOUND;
+
+			// Change the option as well to avoid reset in ReadOptions().
+			parser.SetValue(section, L"LowBound", std::to_wstring(m_LowBound));
+			parser.SetValue(section, L"HighBound", std::to_wstring(m_HighBound));
+		}
+
+		// Reset the list if the bounds are changed
+		if (m_UniqueRandom && (
+			oldLowBound != m_LowBound ||
+			oldHighBound != m_HighBound))
+		{
+			UpdateUniqueNumberList();
+		}
+
 		if (!m_UpdateRandom)
 		{
 			FormulaReplace();
@@ -177,7 +205,38 @@ bool MeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value, void
 
 int MeasureCalc::GetRandom()
 {
-	double range = (m_HighBound - m_LowBound) + 1;
-	srand((unsigned)rand());
-	return m_LowBound + (int)(range * rand() / (RAND_MAX + 1.0));
+	int value = 0;
+
+	if (m_UniqueRandom)
+	{
+		if (m_UniqueNumbers.empty())
+		{
+			UpdateUniqueNumberList();
+		}
+
+		value = m_UniqueNumbers.back();
+		m_UniqueNumbers.pop_back();
+	}
+	else
+	{
+		std::uniform_int_distribution<int>::param_type params(m_LowBound, m_HighBound);
+		m_Distrubtion.param(params);
+		m_Distrubtion.reset();
+		value = m_Distrubtion(m_Engine);
+	}
+
+	return value;
+}
+
+void MeasureCalc::UpdateUniqueNumberList()
+{
+	m_UniqueNumbers.clear();
+
+	for (int i = m_LowBound; i <= m_HighBound; ++i)
+	{
+		m_UniqueNumbers.push_back(i);
+	}
+
+	std::shuffle(m_UniqueNumbers.begin(), m_UniqueNumbers.end(), m_Engine);
+	m_UniqueNumbers.shrink_to_fit();
 }
