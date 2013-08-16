@@ -90,7 +90,7 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_LowBound = parser.ReadInt(section, L"LowBound", DEFAULT_LOWER_BOUND);
 	m_HighBound = parser.ReadInt(section, L"HighBound", DEFAULT_UPPER_BOUND);
 	m_UpdateRandom = parser.ReadBool(section, L"UpdateRandom", false);
-		
+
 	m_UniqueRandom = parser.ReadBool(section, L"UniqueRandom", false);
 	if (!m_UniqueRandom)
 	{
@@ -107,7 +107,12 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		// Reset bounds if |m_LowBound| is greater than or equal to |m_HighBound|
 		if (m_LowBound >= m_HighBound)
 		{
-			LogErrorF(this, L"\"LowBound\" (%i) must be less then \"HighBound\" (%i)", m_LowBound, m_HighBound);
+			// Only report an error after the first update cycle
+			// For cases where "HighBound=[SomeMeasure]", and [SomeMeasure] would initially equal 0
+			if (m_Initialized)
+			{
+				LogErrorF(this, L"\"LowBound\" (%i) must be less then \"HighBound\" (%i)", m_LowBound, m_HighBound);
+			}
 
 			m_LowBound = DEFAULT_LOWER_BOUND;
 			m_HighBound = DEFAULT_UPPER_BOUND;
