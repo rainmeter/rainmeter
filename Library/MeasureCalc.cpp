@@ -90,9 +90,7 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_LowBound = parser.ReadInt(section, L"LowBound", DEFAULT_LOWER_BOUND);
 	m_HighBound = parser.ReadInt(section, L"HighBound", DEFAULT_UPPER_BOUND);
 	m_UpdateRandom = parser.ReadBool(section, L"UpdateRandom", false);
-
-	LogNoticeF(this, L"Low=%i High=%i", m_LowBound, m_HighBound);
-	
+		
 	m_UniqueRandom = parser.ReadBool(section, L"UniqueRandom", false);
 	if (!m_UniqueRandom)
 	{
