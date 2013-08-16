@@ -90,6 +90,8 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_LowBound = parser.ReadInt(section, L"LowBound", DEFAULT_LOWER_BOUND);
 	m_HighBound = parser.ReadInt(section, L"HighBound", DEFAULT_UPPER_BOUND);
 	m_UpdateRandom = parser.ReadBool(section, L"UpdateRandom", false);
+
+	LogNoticeF(this, L"Low=%i High=%i", m_LowBound, m_HighBound);
 	
 	m_UniqueRandom = parser.ReadBool(section, L"UniqueRandom", false);
 	if (!m_UniqueRandom)
@@ -111,10 +113,6 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 			m_LowBound = DEFAULT_LOWER_BOUND;
 			m_HighBound = DEFAULT_UPPER_BOUND;
-
-			// Change the option as well to avoid reset in ReadOptions().
-			parser.SetValue(section, L"LowBound", std::to_wstring(m_LowBound));
-			parser.SetValue(section, L"HighBound", std::to_wstring(m_HighBound));
 		}
 
 		// Reset the list if the bounds are changed
