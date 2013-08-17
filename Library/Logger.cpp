@@ -136,7 +136,7 @@ void Logger::WriteToLogFile(Entry& entry)
 		(entry.level == Level::Warning) ? L"WARN" :
 		(entry.level == Level::Notice) ? L"NOTE" :
 		L"DBUG";
-	
+
 	std::wstring message = levelSz;
 	message += L" (";
 	message.append(entry.timestamp);
@@ -145,9 +145,9 @@ void Logger::WriteToLogFile(Entry& entry)
 	message += L": ";
 	message += entry.message;
 	message += L'\n';
-	
+
 #ifdef _DEBUG
-	_RPT0(_CRT_WARN, StringUtil::Narrow(message).c_str());
+	_RPTW0(_CRT_WARN, message.c_str());
 	if (!m_LogToFile) return;
 #endif
 
