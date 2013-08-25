@@ -118,6 +118,40 @@ void DialogManage::OpenSkin(MeterWindow* meterWindow)
 }
 
 /*
+** Opens the Manage dialog Skins tab with config and/or skin selected.
+**
+*/
+void DialogManage::OpenSkin(const WCHAR* tabName, const WCHAR* param1, const WCHAR* param2)
+{
+	Open(tabName);
+
+	if (c_Dialog)
+	{
+		// Make sure "Skins" was defined in the bang
+		if (_wcsicmp(tabName, L"Skins") == 0)
+		{
+			// For "Skins":
+			// |param1| represents the config (ie. "illustro\Clock")
+			// |param2| represents the file (ie. "Clock.ini")
+
+			std::wstring name = param1;
+
+			// Allow just a config to be selected
+			if (param2)
+			{
+				name += L'\\';
+				name += param2;
+			}
+
+			HWND item = c_Dialog->m_TabSkins.GetControl(TabSkins::Id_SkinsTreeView);
+			c_Dialog->m_TabSkins.SelectTreeItem(item, TreeView_GetRoot(item), name.c_str());
+		}
+		// Future use: Allow optional params for different tabs
+		//else if (_wcsicmp(tabName, L"Layouts") == 0)
+	}
+}
+
+/*
 ** Updates Skins tab.
 **
 */
@@ -949,6 +983,7 @@ void DialogManage::TabSkins::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR n
 				if ((item = TreeView_GetChild(tree, tvi.hItem)) != nullptr)
 				{
 					TreeView_Expand(tree, tvi.hItem, TVE_EXPAND);
+					TreeView_Select(tree, tvi.hItem, TVGN_CARET);
 					++pos;	// Skip the slash
 					SelectTreeItem(tree, item, pos);
 				}
