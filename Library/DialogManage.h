@@ -30,10 +30,10 @@ public:
 
 	static Dialog* GetDialog() { return c_Dialog; }
 
+	static void Open(const WCHAR* tabName, const WCHAR* param1, const WCHAR* param2);
 	static void Open(const WCHAR* name);
 	static void Open(int tab = 0);
 	static void OpenSkin(MeterWindow* meterWindow);
-	static void OpenSkin(const WCHAR* tabName, const WCHAR* param1, const WCHAR* param2);
 
 	static void UpdateSkins(MeterWindow* meterWindow, bool deleted = false);
 

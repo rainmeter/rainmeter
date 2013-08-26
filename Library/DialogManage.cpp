@@ -118,25 +118,23 @@ void DialogManage::OpenSkin(MeterWindow* meterWindow)
 }
 
 /*
-** Opens the Manage dialog Skins tab with config and/or skin selected.
+** Opens the Manage dialog tab with parameters
 **
 */
-void DialogManage::OpenSkin(const WCHAR* tabName, const WCHAR* param1, const WCHAR* param2)
+void DialogManage::Open(const WCHAR* tabName, const WCHAR* param1, const WCHAR* param2)
 {
 	Open(tabName);
 
 	if (c_Dialog)
 	{
-		// Make sure "Skins" was defined in the bang
+		// "Skins" tab
 		if (_wcsicmp(tabName, L"Skins") == 0)
 		{
-			// For "Skins":
 			// |param1| represents the config (ie. "illustro\Clock")
 			// |param2| represents the file (ie. "Clock.ini")
 
 			std::wstring name = param1;
 
-			// Allow just a config to be selected
 			if (param2)
 			{
 				name += L'\\';

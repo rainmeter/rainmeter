@@ -715,7 +715,7 @@ void CommandHandler::DoManageBang(std::vector<std::wstring>& args, MeterWindow* 
 	const size_t argsSize = args.size();
 	if (argsSize >= 2 && argsSize <= 3)
 	{
-		DialogManage::OpenSkin(args[0].c_str(),
+		DialogManage::Open(args[0].c_str(),
 			args[1].c_str(),
 			(argsSize == 3) ? args[2].c_str() : L"");
 	}
