@@ -35,9 +35,82 @@
 #include "OpenHardwareMonitor.h"
 
 
-void testfunc(void)
+int		GetTotalNumberCPUCores(void)
 {
-	int j = 0;
+	return 1;
+}
 
-	j++;
+int		GetCPUFSBSpeed(int GPU)
+{
+	return 1;
+}
+
+int		GetCPUSpeed(int GPU)
+{
+	return 1;
+}
+
+int		GetCPUTemperature(int GPU)
+{
+	return 1;
+}
+
+int		GetCPUVoltage(int GPU)
+{
+	return 1;
+}
+
+int		GetTotalNumberGPUs(void)
+{
+	return 1;
+}
+
+int		GetGPULoad(int GPU)
+{
+	return 1;
+}
+
+int		GetGPUSpeed(int GPU)
+{
+	return 1;
+}
+
+int		GetGPUTemperature(int GPU)
+{
+	return 1;
+}
+
+int		GetGPUVoltage(int GPU)
+{
+	return 1;
+}
+
+int		GetGPUMemorySize(int GPU)
+{
+	return 1;
+}
+
+int		GetGPUMemorySpeed(int GPU)
+{
+	return 1;
+}
+
+int		GetTotalNumberMBFanSensors(void)
+{
+	return 1;
+}
+
+int		GetTotalNumberMBTempSensors(void)
+{
+	return 1;
+}
+
+int		GetMBTemperature(int Sensor)
+{
+	return 1;
+}
+
+int		GetMBFanRPM(int Sensor)
+{
+	return 1;
 }

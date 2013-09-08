@@ -30,64 +30,37 @@
   to run in the background.
 */
 
-#include "NativeInterface.h"
-#include "CLIWrapper.h"
+#ifndef __MEASUREGPU_H__
+#define __MEASUREGPU_H__
 
-using namespace OpenHardwareMonitor;
+#include "Measure.h"
 
-#ifdef __cplusplus
-extern "C"
+class MeasureGPU : public Measure
 {
-#endif
+public:
+	MeasureGPU(MeterWindow* meterWindow, const WCHAR* name);
+	virtual ~MeasureGPU();
 
-	__declspec(dllexport) void OHM_GPU_GetUsage(int Card)
-	{
-	}
+	virtual UINT GetTypeID() { return TypeID<MeasureGPU>(); }
 
-	__declspec(dllexport) void OHM_GPU_GetTemperature(int Card)
-	{
-	}
+	static void InitializeStatic();
+	static void FinalizeStatic();
 
-	__declspec(dllexport) void OHM_GPU_GetCoreFreq(int Card)
-	{
-	}
+protected:
+	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	virtual void UpdateValue();
 
-	__declspec(dllexport) void OHM_GPU_GetMemFreq(int Card)
-	{
-	}
+private:
+	void CalcUsage(double idleTime, double systemTime);
 
-	__declspec(dllexport) void OHM_GPU_GetVoltage(int Card)
-	{
-	}
+	int m_Processor;
 
-	__declspec(dllexport) void OHM_GPU_GetFanSpeed(int Card)
-	{
-	}
+	double m_OldTime[2];
 
-	__declspec(dllexport) void OHM_CPU_GetTemperature(int Core)
-	{
-	}
+	bool m_bOHM_Plugin_Available;
 
-	__declspec(dllexport) void OHM_CPU_GetFrequency(int Core)
-	{
-	}
+	static int c_NumOfProcessors;
+	static ULONG c_BufferSize;
+};
 
-	__declspec(dllexport) void OHM_CPU_GetVoltage(int Core)
-	{
-	}
-
-	__declspec(dllexport) void OHM_CPU_GetFanSpeed(int Card)
-	{
-	}
-
-	__declspec(dllexport) void OHM_MB_GetTemperature(int Sensor)
-	{
-	}
-
-	__declspec(dllexport) void OHM_MB_GetFanSpeed(int Sensor)
-	{
-	}
-
-#ifdef __cplusplus
-}
 #endif

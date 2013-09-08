@@ -32,6 +32,7 @@
     <ClCompile>
       <PreprocessorDefinitions>_USRDLL;PluginOpenHardwareMonitor_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4018;4090;4114;4351;4786;4800;4996</DisableSpecificWarnings>
+      <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>

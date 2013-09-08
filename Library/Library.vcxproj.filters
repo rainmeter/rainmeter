@@ -393,6 +393,9 @@
     <ClCompile Include="MeasureSwapfileSize.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MeasureGPU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigParser.h">
@@ -672,6 +675,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MeasureSwapfileSize.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureGPU.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

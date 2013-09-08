@@ -38,15 +38,24 @@
 #ifndef __OPENHARDWAREMONITOR_H__
 #define __OPENHARDWAREMONITOR_H__
 
+int		GetTotalNumberCPUCores(void);
+int		GetCPUFSBSpeed(int GPU);
+int		GetCPUSpeed(int GPU);
+int		GetCPUTemperature(int GPU);
+int		GetCPUVoltage(int GPU);
+
+int		GetTotalNumberGPUs(void);
+int		GetGPULoad(int GPU);
+int		GetGPUSpeed(int GPU);
+int		GetGPUTemperature(int GPU);
+int		GetGPUVoltage(int GPU);
+int		GetGPUMemorySize(int GPU);
+int		GetGPUMemorySpeed(int GPU);
 
 
-void testfunc(void);
-
-
-
-
-
-
-
+int		GetTotalNumberMBFanSensors(void);
+int		GetTotalNumberMBTempSensors(void);
+int		GetMBTemperature(int Sensor);
+int		GetMBFanRPM(int Sensor);
 
 #endif

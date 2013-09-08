@@ -35,7 +35,27 @@
 #ifndef __NATIVEINTERFACE_H__
 #define __NATIVEINTERFACE_H__
 
-void testfunc_native(void);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
+	__declspec(dllexport) void OHM_GPU_GetUsage(int Card = 0);
+	__declspec(dllexport) void OHM_GPU_GetTemperature(int Card = 0);
+	__declspec(dllexport) void OHM_GPU_GetCoreFreq(int Card = 0);
+	__declspec(dllexport) void OHM_GPU_GetMemFreq(int Card = 0);
+	__declspec(dllexport) void OHM_GPU_GetVoltage(int Card = 0);
+	__declspec(dllexport) void OHM_GPU_GetFanSpeed(int Card = 0);
 
+	__declspec(dllexport) void OHM_CPU_GetTemperature(int Core = 0);
+	__declspec(dllexport) void OHM_CPU_GetFrequency(int Core = 0);
+	__declspec(dllexport) void OHM_CPU_GetVoltage(int Core = 0);
+	__declspec(dllexport) void OHM_CPU_GetFanSpeed(int Card = 0);
+
+	__declspec(dllexport) void OHM_MB_GetTemperature(int Sensor = 0);
+	__declspec(dllexport) void OHM_MB_GetFanSpeed(int Sensor = 0);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

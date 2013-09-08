@@ -129,6 +129,7 @@
     <ClCompile Include="MeasureDiskSpace.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="MeasureGPU.cpp" />
     <ClCompile Include="MeasureMemory.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -339,6 +340,7 @@
     <ClInclude Include="MeasureCalc.h" />
     <ClInclude Include="MeasureCPU.h" />
     <ClInclude Include="MeasureDiskSpace.h" />
+    <ClInclude Include="MeasureGPU.h" />
     <ClInclude Include="MeasureMemory.h" />
     <ClInclude Include="MeasureNet.h" />
     <ClInclude Include="MeasureNetIn.h" />
