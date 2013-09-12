@@ -719,7 +719,7 @@ void CommandHandler::DoManageBang(std::vector<std::wstring>& args, MeterWindow* 
 			args[1].c_str(),
 			(argsSize == 3) ? args[2].c_str() : L"");
 	}
-	else if (argsSize == 1)
+	else if (argsSize <= 1)
 	{
 		DialogManage::Open(args.empty() ? L"" : args[0].c_str());
 	}
