@@ -877,5 +877,5 @@ Measure* Measure::Create(const WCHAR* measure, MeterWindow* meterWindow, const W
 */
 void Measure::Command(const std::wstring& command)
 {
-	LogWarningF(this, L"!CommandMeasure: Not supported by [%s]", m_Name.c_str());
+	LogWarningF(this, L"!CommandMeasure: Not supported");
 }
