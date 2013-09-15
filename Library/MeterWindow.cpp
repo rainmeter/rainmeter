@@ -4841,6 +4841,17 @@ std::wstring MeterWindow::GetFilePath()
 	return file;
 }
 
+std::wstring MeterWindow::GetRootName()
+{
+	std::wstring::size_type loc;
+	if ((loc = m_FolderPath.find_first_of(L'\\')) != std::wstring::npos)
+	{
+		return m_FolderPath.substr(0, loc);
+	}
+
+	return m_FolderPath;
+}
+
 std::wstring MeterWindow::GetRootPath()
 {
 	std::wstring path = GetRainmeter().GetSkinPath();

@@ -104,6 +104,7 @@ void ConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::
 	{
 		insertVariable(L"CURRENTFILE", meterWindow->GetFileName());
 		insertVariable(L"CURRENTCONFIG", meterWindow->GetFolderPath());
+		insertVariable(L"ROOTCONFIG", meterWindow->GetRootName());
 		insertVariable(L"ROOTCONFIGPATH", meterWindow->GetRootPath());
 	}
 

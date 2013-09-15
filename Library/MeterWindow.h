@@ -162,6 +162,7 @@ public:
 	const std::wstring& GetFolderPath() { return m_FolderPath; }
 	const std::wstring& GetFileName() { return m_FileName; }
 	std::wstring GetFilePath();
+	std::wstring GetRootName();
 	std::wstring GetRootPath();
 	std::wstring GetResourcesPath();
 	std::wstring GetSkinPath();
