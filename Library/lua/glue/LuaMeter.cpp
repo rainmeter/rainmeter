@@ -40,10 +40,11 @@ static int GetOption(lua_State* L)
 	MeterWindow* meterWindow = self->GetMeterWindow();
 	ConfigParser& parser = meterWindow->GetParser();
 
-	std::wstring strTmp = LuaManager::ToWide(2);
-	strTmp = parser.ReadString(self->GetName(), strTmp.c_str(), L"");
-
-	LuaManager::PushWide(strTmp);
+	const std::wstring section = LuaManager::ToWide(2);
+	const std::wstring defValue = LuaManager::ToWide(3);
+	const std::wstring& value =
+		parser.ReadString(self->GetName(), section.c_str(), defValue.c_str());
+	LuaManager::PushWide(value);
 	return 1;
 }
 
