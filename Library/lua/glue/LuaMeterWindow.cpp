@@ -104,12 +104,16 @@ static int GetMeasure(lua_State* L)
 static int GetVariable(lua_State* L)
 {
 	DECLARE_SELF(L)
-	std::wstring strTmp = LuaManager::ToWide(2);
 
-	const std::wstring* value = self->GetParser().GetVariable(strTmp);
+	const std::wstring name = LuaManager::ToWide(2);
+	const std::wstring* value = self->GetParser().GetVariable(name);
 	if (value)
 	{
 		LuaManager::PushWide(*value);
+	}
+	else if (lua_gettop(L) >= 3)
+	{
+		lua_pushvalue(L, 3);
 	}
 	else
 	{
