@@ -109,7 +109,6 @@ void ConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::
 	}
 
 	insertVariable(L"CRLF", L"\n");
-	insertVariable(L"NBSP", L"\u00A0");
 
 	m_CurrentSection = &(insertVariable(L"CURRENTSECTION", L"").first->second);	// shortcut
 
