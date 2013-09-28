@@ -409,6 +409,14 @@ bool CanvasD2D::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForma
 
 void CanvasD2D::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect)
 {
+	if (srcRect.Width != dstRect.Width || srcRect.Height != dstRect.Height)
+	{
+		// If the bitmap needs to be scaled, get rid of the D2D target and use the GDI+ code path
+		// to draw the bitmap. This is due to antialiasing differences between GDI+ and D2D on
+		// scaled bitmaps.
+		EndTargetDraw();
+	}
+
 	if (!m_Target)  // Use GDI+ if D2D render target has not been created.
 	{
 		m_GdipGraphics->DrawImage(
