@@ -60,6 +60,7 @@ public:
 
 	virtual void SetAntiAliasing(bool enable) override;
 	virtual void SetTextAntiAliasing(bool enable) override;
+	virtual void SetTextRenderingOptions(float gamma, float enhancedContrast) override;
 
 	virtual void Clear(const Gdiplus::Color& color) override;
 
@@ -90,6 +91,9 @@ private:
 	void UpdateTargetTransform();
 
 	Microsoft::WRL::ComPtr<ID2D1RenderTarget> m_Target;
+	Microsoft::WRL::ComPtr<IDWriteRenderingParams> m_TextRenderingParams;
+
+	// Underlying pixel data shared by both m_Target and m_GdipBitmap.
 	Util::WICBitmapDIB m_Bitmap;
 
 	// GDI+ objects that share the pixel data of m_Bitmap.

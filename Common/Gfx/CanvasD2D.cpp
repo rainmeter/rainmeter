@@ -167,6 +167,10 @@ bool CanvasD2D::BeginTargetDraw()
 	if (SUCCEEDED(hr))
 	{
 		SetTextAntiAliasing(m_TextAntiAliasing);
+		if (m_TextRenderingParams)
+		{
+			m_Target->SetTextRenderingParams(m_TextRenderingParams.Get());
+		}
 
 		m_Target->BeginDraw();
 
@@ -292,6 +296,27 @@ void CanvasD2D::SetTextAntiAliasing(bool enable)
 	{
 		m_Target->SetTextAntialiasMode(
 			m_TextAntiAliasing ? D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE : D2D1_TEXT_ANTIALIAS_MODE_ALIASED);
+	}
+}
+
+void CanvasD2D::SetTextRenderingOptions(float gamma, float enhancedContrast)
+{
+	Microsoft::WRL::ComPtr<IDWriteRenderingParams> defaultRenderingParams;
+	HRESULT hr = c_DWFactory->CreateRenderingParams(defaultRenderingParams.GetAddressOf());
+	if (SUCCEEDED(hr))
+	{
+		hr = c_DWFactory->CreateCustomRenderingParams(
+			gamma,
+			enhancedContrast,
+			defaultRenderingParams->GetClearTypeLevel(),
+			defaultRenderingParams->GetPixelGeometry(),
+			defaultRenderingParams->GetRenderingMode(),
+			m_TextRenderingParams.ReleaseAndGetAddressOf());
+	}
+
+	if (SUCCEEDED(hr) && m_Target)
+	{
+		m_Target->SetTextRenderingParams(m_TextRenderingParams.Get());
 	}
 }
 
