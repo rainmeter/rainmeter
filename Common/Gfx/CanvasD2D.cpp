@@ -305,8 +305,9 @@ void CanvasD2D::SetTextRenderingOptions(float gamma, float enhancedContrast)
 	HRESULT hr = c_DWFactory->CreateRenderingParams(defaultRenderingParams.GetAddressOf());
 	if (SUCCEEDED(hr))
 	{
-		hr = c_DWFactory->CreateCustomRenderingParams(
+		hr = ((IDWriteFactory1*)c_DWFactory.Get())->CreateCustomRenderingParams(
 			gamma,
+			enhancedContrast,
 			enhancedContrast,
 			defaultRenderingParams->GetClearTypeLevel(),
 			defaultRenderingParams->GetPixelGeometry(),

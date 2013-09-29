@@ -91,7 +91,7 @@ private:
 	void UpdateTargetTransform();
 
 	Microsoft::WRL::ComPtr<ID2D1RenderTarget> m_Target;
-	Microsoft::WRL::ComPtr<IDWriteRenderingParams> m_TextRenderingParams;
+	Microsoft::WRL::ComPtr<IDWriteRenderingParams1> m_TextRenderingParams;
 
 	// Underlying pixel data shared by both m_Target and m_GdipBitmap.
 	Util::WICBitmapDIB m_Bitmap;

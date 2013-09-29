@@ -2080,6 +2080,12 @@ bool MeterWindow::ReadSkin()
 	m_Canvas = Gfx::Canvas::Create(useD2D ? Gfx::Renderer::PreferD2D : Gfx::Renderer::GDIP);
 	m_Canvas->SetAccurateText(m_Parser.ReadBool(L"Rainmeter", L"AccurateText", false));
 
+	const auto d2dParams = m_Parser.ReadFloats(L"Rainmeter", L"__D2DParams");
+	if (d2dParams.size() == 2)
+	{
+		m_Canvas->SetTextRenderingOptions(d2dParams[0], d2dParams[1]);
+	}
+
 	// Gotta have some kind of buffer during initialization
 	CreateDoubleBuffer(1, 1);
 
