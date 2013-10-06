@@ -88,6 +88,8 @@ private:
 	void LaunchRainmeter();
 	void KeepVariables();
 
+	static void CleanLayoutFile(const WCHAR* file);
+
 	static bool IsIgnoredSkin(const WCHAR* name);
 	static bool IsIgnoredLayout(const WCHAR* name);
 	static bool IsIgnoredAddon(const WCHAR* name);
