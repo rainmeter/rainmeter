@@ -33,7 +33,7 @@
 #include "NativeInterface.h"
 #include "CLIWrapper.h"
 
-using namespace OpenHardwareMonitor;
+namespace OpenHardwareMonitor{
 
 #ifdef __cplusplus
 extern "C"
@@ -91,3 +91,5 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
+}

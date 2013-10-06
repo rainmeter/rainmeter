@@ -31,7 +31,7 @@ D2D1_COLOR_F ToColorF(const Gdiplus::Color& color)
 
 D2D1_RECT_F ToRectF(const Gdiplus::Rect& rect)
 {
-	return D2D1::RectF(rect.X, rect.Y, rect.X + rect.Width, rect.Y + rect.Height);
+	return D2D1::RectF(static_cast<float>(rect.X), static_cast<float>(rect.Y), static_cast<float>(rect.X) + static_cast<float>(rect.Width), static_cast<float>(rect.Y) + static_cast<float>(rect.Height));
 }
 
 D2D1_RECT_F ToRectF(const Gdiplus::RectF& rect)
