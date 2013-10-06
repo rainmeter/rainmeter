@@ -346,7 +346,11 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 
 		if (Gfx::CanvasD2D::Initialize())
 		{
-			if (meterWindow->GetUseD2D())
+			if (!Rainmeter::GetInstance().GetUseD2D())
+			{
+				EnableMenuItem(settingsMenu, IDM_SKIN_USED2D, MF_BYCOMMAND | MF_GRAYED);
+			}
+			else if (meterWindow->GetUseD2D())
 			{
 				CheckMenuItem(settingsMenu, IDM_SKIN_USED2D, MF_BYCOMMAND | MF_CHECKED);
 			}
