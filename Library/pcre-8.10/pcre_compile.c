@@ -41,6 +41,9 @@ POSSIBILITY OF SUCH DAMAGE.
 /* This module contains the external function pcre_compile(), along with
 supporting internal functions that are not used by other modules. */
 
+// Disable loss of conversion from [A] to [B], possible loss of data
+#pragma warning (push)
+#pragma warning (disable : 4244)
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -7202,4 +7205,5 @@ if (code - codestart > length)
 return (pcre *)re;
 }
 
+#pragma warning (pop)
 /* End of pcre_compile.c */
