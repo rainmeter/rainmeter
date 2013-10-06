@@ -18,6 +18,7 @@
 
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
+#include "../Common/Gfx/CanvasD2D.h"
 #include "ContextMenu.h"
 #include "Rainmeter.h"
 #include "Litestep.h"
@@ -238,7 +239,8 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 			MENU_ITEM(IDM_SKIN_REMEMBERPOSITION, ID_STR_SAVEPOSITION),
 			MENU_ITEM(IDM_SKIN_SNAPTOEDGES, ID_STR_SNAPTOEDGES),
 			MENU_ITEM(IDM_SKIN_CLICKTHROUGH, ID_STR_CLICKTHROUGH),
-			MENU_ITEM(IDM_SKIN_KEEPONSCREEN, ID_STR_KEEPONSCREEN)),
+			MENU_ITEM(IDM_SKIN_KEEPONSCREEN, ID_STR_KEEPONSCREEN),
+			MENU_ITEM(IDM_SKIN_USED2D, ID_STR_USED2D)),
 		MENU_SEPARATOR(),
 		MENU_ITEM(IDM_SKIN_MANAGESKIN, ID_STR_MANAGESKIN),
 		MENU_ITEM(IDM_SKIN_EDITSKIN, ID_STR_EDITSKIN),
@@ -341,6 +343,19 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 		{
 			CheckMenuItem(settingsMenu, IDM_SKIN_KEEPONSCREEN, MF_BYCOMMAND | MF_CHECKED);
 		}
+
+		if (Gfx::CanvasD2D::Initialize())
+		{
+			if (meterWindow->GetUseD2D())
+			{
+				CheckMenuItem(settingsMenu, IDM_SKIN_USED2D, MF_BYCOMMAND | MF_CHECKED);
+			}
+		}
+		else
+		{
+			DeleteMenu(settingsMenu, IDM_SKIN_USED2D, MF_BYCOMMAND);
+		}
+		Gfx::CanvasD2D::Finalize();
 	}
 
 	// Add the name of the Skin to the menu

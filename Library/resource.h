@@ -205,6 +205,7 @@
 #define IDM_MANAGESKINSMENU_REFRESH                  4057
 #define IDM_MANAGESKINSMENU_EDIT                     4058
 #define IDM_COPY                                     4059
+#define IDM_SKIN_USED2D                              4060
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9014

@@ -38,6 +38,9 @@ namespace Gfx {
 class CanvasD2D : public Canvas
 {
 public:
+	static bool Initialize();
+	static void Finalize();
+
 	virtual void Resize(int w, int h);
 
 	virtual bool BeginDraw();
@@ -80,9 +83,6 @@ private:
 	CanvasD2D();
 	~CanvasD2D();
 	CanvasD2D(const CanvasD2D& other) {}
-
-	static bool Initialize();
-	static void Finalize();
 
 	bool BeginTargetDraw();
 	void EndTargetDraw();
