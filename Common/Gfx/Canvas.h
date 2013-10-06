@@ -84,9 +84,6 @@ public:
 	virtual void SetAntiAliasing(bool enable) = 0;
 	virtual void SetTextAntiAliasing(bool enable) = 0;
 
-	// FIXME: Temporary hack to test things out. This will be removed when no longer needed.
-	virtual void SetTextRenderingOptions(float gamma, float enhancedContrast) {};
-
 	virtual void Clear(const Gdiplus::Color& color = Gdiplus::Color(0, 0, 0, 0)) = 0;
 
 	virtual void DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect, const Gdiplus::SolidBrush& brush) = 0;
