@@ -106,7 +106,7 @@ int RainmeterMain(LPWSTR cmdLine)
 */
 Rainmeter::Rainmeter() :
 	m_TrayWindow(),
-	m_UseD2D(false),
+	m_UseD2D(true),
 	m_Debug(false),
 	m_DisableVersionCheck(false),
 	m_NewVersion(false),
@@ -1255,7 +1255,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	ConfigParser parser;
 	parser.Initialize(iniFile, nullptr, nullptr);
 
-	m_UseD2D = parser.ReadBool(L"Rainmeter", L"UseD2D", false);
+	m_UseD2D = parser.ReadBool(L"Rainmeter", L"UseD2D", true);
 
 	m_Debug = parser.ReadBool(L"Rainmeter", L"Debug", false);
 	
