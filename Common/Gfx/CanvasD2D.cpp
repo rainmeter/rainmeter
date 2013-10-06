@@ -16,6 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include "../Platform.h"
 #include "CanvasD2D.h"
 #include "TextFormatD2D.h"
 #include "Util/DWriteFontCollectionLoader.h"
@@ -67,6 +68,8 @@ bool CanvasD2D::Initialize()
 	++c_Instances;
 	if (c_Instances == 1)
 	{
+		if (!Platform::IsAtLeastWin7()) return false;
+
 		D2D1_FACTORY_OPTIONS fo = {};
 #ifdef _DEBUG
 		fo.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
