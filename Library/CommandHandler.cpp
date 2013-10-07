@@ -712,7 +712,21 @@ void CommandHandler::DoAboutBang(std::vector<std::wstring>& args, MeterWindow* m
 
 void CommandHandler::DoManageBang(std::vector<std::wstring>& args, MeterWindow* meterWindow)
 {
-	DialogManage::Open(args.empty() ? L"" : args[0].c_str());
+	const size_t argsSize = args.size();
+	if (argsSize >= 2 && argsSize <= 3)
+	{
+		DialogManage::Open(args[0].c_str(),
+			args[1].c_str(),
+			(argsSize == 3) ? args[2].c_str() : L"");
+	}
+	else if (argsSize <= 1)
+	{
+		DialogManage::Open(args.empty() ? L"" : args[0].c_str());
+	}
+	else
+	{
+		LogErrorF(meterWindow, L"!Manage: Invalid parameters");
+	}
 }
 
 void CommandHandler::DoSkinMenuBang(std::vector<std::wstring>& args, MeterWindow* skin)

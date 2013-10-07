@@ -16,29 +16,11 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "StringUtil.h"
-#include "UnitTest.h"
+#include <CppUnitTest.h>
 
-namespace StringUtil {
+using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-TEST_CLASS(Common_StringUtil_Test)
-{
-public:
-	TEST_METHOD(TestWiden)
-	{
-		Assert::AreEqual(Widen("test").c_str(), L"test");
-		Assert::AreEqual(Widen("test", 2).c_str(), L"te");
-		Assert::AreEqual(WidenUTF8("\xd0\xa2\xc4\x94st").c_str(), L"\u0422\u0114st");
-		Assert::AreEqual(WidenUTF8("\xd0\xa2\xc4\x94st", 2).c_str(), L"\u0422");
-	}
-
-	TEST_METHOD(TestNarrow)
-	{
-		Assert::AreEqual(Narrow(L"test").c_str(), "test");
-		Assert::AreEqual(Narrow(L"test", 2).c_str(), "te");
-		Assert::AreEqual(NarrowUTF8(L"\u0422\u0114st").c_str(), "\xd0\xa2\xc4\x94st");
-		Assert::AreEqual(NarrowUTF8(L"\u0422\u0114st", 1).c_str(), "\xd0\xa2");
-	}
-};
-
-}  // namespace StringUtil
+// VS IntelliSense doesn't seem to work well with the CppUnitTest.h TEST_CLASS macro. This is a 
+// simpler version, which seems to work fine.
+#undef TEST_CLASS
+#define TEST_CLASS(className) class className : public TestClass<className>

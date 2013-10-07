@@ -26,19 +26,31 @@ extern "C"
 #include "lauxlib.h"
 }
 
+#include <vector>
+
 class LuaManager
 {
 public:
+	class ScopedLuaState
+	{
+	public:
+		ScopedLuaState(bool unicode) { LuaManager::c_UnicodeStateStack.push_back(unicode); }
+		~ScopedLuaState() { LuaManager::c_UnicodeStateStack.pop_back(); }
+		operator lua_State*() { return LuaManager::c_State; }
+	};
+
 	static void Initialize();
 	static void Finalize();
 
-	static lua_State* GetState() { return c_State; }
+	static ScopedLuaState GetState(bool unicode) { return ScopedLuaState(unicode); }
 
-	static void ReportErrors(lua_State* L, const std::wstring& file);
+	static bool IsUnicodeState() { return c_UnicodeStateStack.back(); }
 
-	static void PushWide(lua_State* L, const WCHAR* str);
-	static void PushWide(lua_State* L, const std::wstring& str);
-	static std::wstring ToWide(lua_State* L, int narg);
+	static void ReportErrors(const std::wstring& file);
+
+	static void PushWide(const WCHAR* str);
+	static void PushWide(const std::wstring& str);
+	static std::wstring ToWide(int narg);
 
 protected:
 	static int c_RefCount;
@@ -50,6 +62,11 @@ private:
 	static void RegisterMeter(lua_State* L);
 	static void RegisterMeterWindow(lua_State* L);
 	static void RegisterMeterString(lua_State* L);
+
+	// If the back of the vector is |true|, Lua strings converted to/from as if they were encoded
+	// in UTF-8. Otherwise Lua strings are treated as if they are encoded in the default system
+	// encoding.
+	static std::vector<bool> c_UnicodeStateStack;
 };
 
 #endif

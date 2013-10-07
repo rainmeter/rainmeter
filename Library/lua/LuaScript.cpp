@@ -26,7 +26,8 @@
 **
 */
 LuaScript::LuaScript() :
-	m_Ref(LUA_NOREF)
+	m_Ref(LUA_NOREF),
+	m_Unicode(false)
 {
 }
 
@@ -43,29 +44,36 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 {
 	assert(!IsInitialized());
 
-	lua_State* L = LuaManager::GetState();
-
-	// Load file into a buffer as luaL_loadfile does not support Unicode paths.
 	FILE* file = _wfopen(scriptFile.c_str(), L"rb");
-	if (!file)
-	{
-		return false;
-	}
+	if (!file) return false;
 
 	fseek(file, 0, SEEK_END);
-	long fileSize = ftell(file);
-
-	char* fileData = new char[fileSize];
+	const long fileSize = ftell(file);
+	BYTE* fileData = new BYTE[fileSize];
 	fseek(file, 0, SEEK_SET);
 	fread(fileData, fileSize, 1, file);
-
 	fclose(file);
 	file = nullptr;
 
-	int load = luaL_loadbuffer(L, fileData, fileSize, "");
+	auto L = GetState();
+	bool scriptLoaded = false;
+
+	// Treat the script as Unicode if it has the UTF-16 LE BOM.
+	m_Unicode = fileSize > 2 && fileData[0] == 0xFF && fileData[1] == 0xFE;
+	if (m_Unicode)
+	{
+		const std::string utf8Data = 
+			StringUtil::NarrowUTF8((WCHAR*)(fileData + 2), (fileSize - 2) / sizeof(WCHAR));
+		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), "") == 0;
+	}
+	else
+	{
+		scriptLoaded = luaL_loadbuffer(L, (char*)fileData, fileSize, "") == 0;
+	}
+
 	delete [] fileData;
 
-	if (load == 0)
+	if (scriptLoaded)
 	{
 		// Create the table this script will reside in
 		lua_newtable(L);
@@ -100,13 +108,13 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 		}
 		else
 		{
-			LuaManager::ReportErrors(L, scriptFile);
+			LuaManager::ReportErrors(scriptFile);
 			Uninitialize();
 		}
 	}
 	else
 	{
-		LuaManager::ReportErrors(L, scriptFile);
+		LuaManager::ReportErrors(scriptFile);
 	}
 
 	return false;
@@ -114,7 +122,7 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 
 void LuaScript::Uninitialize()
 {
-	lua_State* L = LuaManager::GetState();
+	auto L = GetState();
 
 	if (m_Ref != LUA_NOREF)
 	{
@@ -130,7 +138,7 @@ void LuaScript::Uninitialize()
 */
 bool LuaScript::IsFunction(const char* funcName)
 {
-	lua_State* L = LuaManager::GetState();
+	auto L = GetState();
 	bool bExists = false;
 
 	if (IsInitialized())
@@ -156,7 +164,7 @@ bool LuaScript::IsFunction(const char* funcName)
 */
 void LuaScript::RunFunction(const char* funcName)
 {
-	lua_State* L = LuaManager::GetState();
+	auto L = GetState();
 
 	if (IsInitialized())
 	{
@@ -168,7 +176,7 @@ void LuaScript::RunFunction(const char* funcName)
 
 		if (lua_pcall(L, 0, 0, 0))
 		{
-			LuaManager::ReportErrors(L, m_File);
+			LuaManager::ReportErrors(m_File);
 		}
 
 		lua_pop(L, 1);
@@ -181,7 +189,7 @@ void LuaScript::RunFunction(const char* funcName)
 */
 int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std::wstring& strValue)
 {
-	lua_State* L = LuaManager::GetState();
+	auto L = GetState();
 	int type = LUA_TNIL;
 
 	if (IsInitialized())
@@ -194,7 +202,7 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 
 		if (lua_pcall(L, 0, 1, 0))
 		{
-			LuaManager::ReportErrors(L, m_File);
+			LuaManager::ReportErrors(m_File);
 			lua_pop(L, 1);
 		}
 		else
@@ -208,7 +216,8 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 			{
 				size_t strLen = 0;
 				const char* str = lua_tolstring(L, -1, &strLen);
-				strValue = StringUtil::Widen(str, (int)strLen);
+				strValue = m_Unicode ?
+					StringUtil::WidenUTF8(str, (int)strLen) : StringUtil::Widen(str, (int)strLen);
 				numValue = strtod(str, nullptr);
 			}
 
@@ -223,16 +232,19 @@ int LuaScript::RunFunctionWithReturn(const char* funcName, double& numValue, std
 ** Runs given string in the context of the script file.
 **
 */
-void LuaScript::RunString(const char* str)
+void LuaScript::RunString(const std::wstring& str)
 {
-	lua_State* L = LuaManager::GetState();
+	auto L = GetState();
 
 	if (IsInitialized())
 	{
+		const std::string narrowStr = m_Unicode ?
+			StringUtil::NarrowUTF8(str) : StringUtil::Narrow(str);
+
 		// Load the string as a Lua chunk
-		if (luaL_loadstring(L, str))
+		if (luaL_loadstring(L, narrowStr.c_str()))
 		{
-			LuaManager::ReportErrors(L, m_File);
+			LuaManager::ReportErrors(m_File);
 		}
 
 		// Push our table onto the stack
@@ -243,7 +255,7 @@ void LuaScript::RunString(const char* str)
 
 		if (lua_pcall(L, 0, 0, 0))
 		{
-			LuaManager::ReportErrors(L, m_File);
+			LuaManager::ReportErrors(m_File);
 		}
 	}
 }

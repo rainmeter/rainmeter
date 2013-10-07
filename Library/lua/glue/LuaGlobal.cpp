@@ -54,7 +54,8 @@ static int Print(lua_State* L)
 		lua_pop(L, 1);
 	}
 
-	LogDebug(StringUtil::Widen(message).c_str());
+	LogDebug(LuaManager::IsUnicodeState() ?
+		StringUtil::WidenUTF8(message).c_str() : StringUtil::Widen(message).c_str());
 	return 0;
 }
 

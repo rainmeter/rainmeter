@@ -21,6 +21,8 @@
 #include "DialogAbout.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
+#include "Section.h"
+#include "MeterWindow.h"
 #include "System.h"
 #include "resource.h"
 
@@ -134,7 +136,7 @@ void Logger::WriteToLogFile(Entry& entry)
 		(entry.level == Level::Warning) ? L"WARN" :
 		(entry.level == Level::Notice) ? L"NOTE" :
 		L"DBUG";
-	
+
 	std::wstring message = levelSz;
 	message += L" (";
 	message.append(entry.timestamp);
@@ -143,9 +145,9 @@ void Logger::WriteToLogFile(Entry& entry)
 	message += L": ";
 	message += entry.message;
 	message += L'\n';
-	
+
 #ifdef _DEBUG
-	_RPT0(_CRT_WARN, StringUtil::Narrow(message).c_str());
+	_RPTW0(_CRT_WARN, message.c_str());
 	if (!m_LogToFile) return;
 #endif
 
@@ -211,7 +213,7 @@ void Logger::Log(Level level, const WCHAR* source, const WCHAR* msg)
 	}
 }
 
-void Logger::LogF(Level level, const WCHAR* source, const WCHAR* format, va_list args)
+void Logger::LogVF(Level level, const WCHAR* source, const WCHAR* format, va_list args)
 {
 	WCHAR* buffer = new WCHAR[1024];
 
@@ -232,7 +234,7 @@ void Logger::LogF(Level level, const WCHAR* source, const WCHAR* format, va_list
 	delete [] buffer;
 }
 
-void LogSection(Logger::Level level, Section* section, const WCHAR* format, va_list args)
+void Logger::LogSectionVF(Logger::Level level, Section* section, const WCHAR* format, va_list args)
 {
 	std::wstring source;
 	if (section)
@@ -244,117 +246,20 @@ void LogSection(Logger::Level level, Section* section, const WCHAR* format, va_l
 			source += L" - ";
 		}
 
-		source += L"[";
+		source += L'[';
 		source += section->GetOriginalName();
-		source += L"]";
+		source += L']';
 	}
 
-	GetLogger().LogF(level, source.c_str(), format, args);
+	GetLogger().LogVF(level, source.c_str(), format, args);
 }
 
-void LogMeterWindow(Logger::Level level, MeterWindow* meterWindow, const WCHAR* format, va_list args)
+void Logger::LogMeterWindowVF(Logger::Level level, MeterWindow* meterWindow, const WCHAR* format, va_list args)
 {
 	std::wstring source;
 	if (meterWindow)
 	{
 		source = meterWindow->GetSkinPath();
 	}
-
-	GetLogger().LogF(level, source.c_str(), format, args);
-}
-
-void LogErrorF(const WCHAR* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	GetLogger().LogF(Logger::Level::Error, L"", format, args);
-	va_end(args);
-}
-
-void LogErrorF(Section* section, const WCHAR* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	LogSection(Logger::Level::Error, section, format, args);
-	va_end(args);
-}
-
-void LogErrorF(MeterWindow* meterWindow, const WCHAR* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	LogMeterWindow(Logger::Level::Error, meterWindow, format, args);
-	va_end(args);
-}
-
-void LogWarningF(const WCHAR* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	GetLogger().LogF(Logger::Level::Warning, L"", format, args);
-	va_end(args);
-}
-
-void LogWarningF(Section* section, const WCHAR* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	LogSection(Logger::Level::Warning, section, format, args);
-	va_end(args);
-}
-
-void LogWarningF(MeterWindow* meterWindow, const WCHAR* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	LogMeterWindow(Logger::Level::Warning, meterWindow, format, args);
-	va_end(args);
-}
-
-void LogNoticeF(const WCHAR* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	GetLogger().LogF(Logger::Level::Notice, L"", format, args);
-	va_end(args);
-}
-
-void LogNoticeF(Section* section, const WCHAR* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	LogSection(Logger::Level::Notice, section, format, args);
-	va_end(args);
-}
-
-void LogNoticeF(MeterWindow* meterWindow, const WCHAR* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	LogMeterWindow(Logger::Level::Notice, meterWindow, format, args);
-	va_end(args);
-}
-
-void LogDebugF(const WCHAR* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	GetLogger().LogF(Logger::Level::Debug, L"", format, args);
-	va_end(args);
-}
-
-void LogDebugF(Section* section, const WCHAR* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	LogSection(Logger::Level::Debug, section, format, args);
-	va_end(args);
-}
-
-void LogDebugF(MeterWindow* meterWindow, const WCHAR* format, ...)
-{
-	va_list args;
-	va_start(args, format);
-	LogMeterWindow(Logger::Level::Debug, meterWindow, format, args);
-	va_end(args);
+	GetLogger().LogVF(level, source.c_str(), format, args);
 }

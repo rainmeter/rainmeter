@@ -26,11 +26,23 @@
 
 namespace Gfx {
 
+enum class Renderer
+{
+	GDIP,
+	D2D,
+
+	// Attempts to use D2D. If D2D is not available, fallbacks to use GDI+.
+	PreferD2D
+};
+
 // Provides methods for drawing text, bitmaps, etc.
 class __declspec(novtable) Canvas
 {
 public:
 	virtual ~Canvas();
+
+	// Creates the canvas using the specified rendering engine. May return nullptr.
+	static Canvas* Create(Renderer renderer);
 
 	int GetW() const { return m_W; }
 	int GetH() const { return m_H; }
@@ -88,6 +100,12 @@ protected:
 	int m_W;
 	int m_H;
 
+	// GDI+, by default, includes padding around the string and also has a larger character spacing
+	// compared to DirectWrite. In order to minimize diffeences between the text renderers,
+	// an option is provided to enable accurate (typographic) text rendering. If set to |true|,
+	// it is expected that there is no padding around the text and that the output is similar to
+	// the default DirectWrite output. Otherwise, the expected result should be similar to that of
+	// non-typographic GDI+.
 	bool m_AccurateText;
 
 private:

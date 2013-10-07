@@ -141,10 +141,10 @@ void MeterLine::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_ScaleValues.push_back(parser.ReadFloat(section, tmpName, 1.0));
 	}
 
-	m_Flip = 0!=parser.ReadInt(section, L"Flip", 0);
-	m_Autoscale = 0!=parser.ReadInt(section, L"AutoScale", 0);
+	m_Flip = parser.ReadBool(section, L"Flip", false);
+	m_Autoscale = parser.ReadBool(section, L"AutoScale", false);
 	m_LineWidth = parser.ReadFloat(section, L"LineWidth", 1.0);
-	m_HorizontalLines = 0!=parser.ReadInt(section, L"HorizontalLines", 0);
+	m_HorizontalLines = parser.ReadBool(section, L"HorizontalLines", false);
 	ARGB color = parser.ReadColor(section, L"HorizontalColor", Color::Black);		// This is left here for backwards compatibility
 	m_HorizontalColor = parser.ReadColor(section, L"HorizontalLineColor", color);	// This is what it should be
 

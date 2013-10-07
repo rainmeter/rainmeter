@@ -18,6 +18,7 @@
 
 #include "DWriteHelpers.h"
 #include <wrl/client.h>
+#include <cmath>
 
 namespace Gfx {
 namespace Util {

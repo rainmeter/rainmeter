@@ -27,6 +27,7 @@
 MeasureMemory::MeasureMemory(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_Total(false)
 {
+	m_Total = false;
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
 	GlobalMemoryStatusEx(&stat);
@@ -104,7 +105,7 @@ void MeasureMemory::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	Measure::ReadOptions(parser, section);
 	m_MaxValue = oldMaxValue;
 
-	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
+	m_Total = parser.ReadBool(section, L"Total", false);
 }
 
 void MeasureMemory::CheckSwapfileEnabled(void)

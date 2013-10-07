@@ -308,30 +308,36 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	static const Gdiplus::Rect defPadding;
 	m_Padding = parser.ReadRect(section, L"Padding", defPadding);
 
-	int oldW = m_W;
-	bool oldWDefined = m_WDefined;
-	int w = parser.ReadInt(section, L"W", m_W);
+	const int oldW = m_W;
+	const bool oldWDefined = m_WDefined;
+	const int widthPadding = GetWidthPadding();
+
+	const int w = parser.ReadInt(section, L"W", m_W);
 	m_WDefined = parser.GetLastValueDefined();
+
 	if (IsFixedSize(true)) m_W = w;
-	if (oldW != m_W) m_W += GetWidthPadding();
+	if (oldW != (m_W - widthPadding)) m_W += widthPadding;
 	if (!m_WDefined && oldWDefined && IsFixedSize())
 	{
 		m_W = 0;
 	}
 	
-	int oldH = m_H;
-	bool oldHDefined = m_HDefined;
-	int h = parser.ReadInt(section, L"H", m_H);
+	const int oldH = m_H;
+	const bool oldHDefined = m_HDefined;
+	const int heightPadding = GetHeightPadding();
+
+	const int h = parser.ReadInt(section, L"H", m_H);
 	m_HDefined = parser.GetLastValueDefined();
+	
 	if (IsFixedSize(true)) m_H = h;
-	if (oldH != m_H) m_H += GetHeightPadding();
+	if (oldH != (m_H - heightPadding)) m_H += heightPadding;
 	if (!m_HDefined && oldHDefined && IsFixedSize())
 	{
 		m_H = 0;
 	}
 
 	bool oldHidden = m_Hidden;
-	m_Hidden = 0!=parser.ReadInt(section, L"Hidden", 0);
+	m_Hidden = parser.ReadBool(section, L"Hidden", false);
 
 	if (oldX != m_X || oldY != m_Y || oldHidden != m_Hidden)
 	{
@@ -351,10 +357,10 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_ToolTipTitle = parser.ReadString(section, L"ToolTipTitle", L"");
 	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"");
 	m_ToolTipWidth = parser.ReadInt(section, L"ToolTipWidth", 1000);
-	m_ToolTipType = 0!=parser.ReadInt(section, L"ToolTipType", 0);
-	m_ToolTipHidden = 0!=parser.ReadInt(section, L"ToolTipHidden", m_MeterWindow->GetMeterToolTipHidden());
+	m_ToolTipType = parser.ReadBool(section, L"ToolTipType", false);
+	m_ToolTipHidden = parser.ReadBool(section, L"ToolTipHidden", m_MeterWindow->GetMeterToolTipHidden());
 
-	m_AntiAlias = 0!=parser.ReadInt(section, L"AntiAlias", 0);
+	m_AntiAlias = parser.ReadBool(section, L"AntiAlias", false);
 
 	std::vector<Gdiplus::REAL> matrix = parser.ReadFloats(section, L"TransformationMatrix");
 	if (matrix.size() == 6)

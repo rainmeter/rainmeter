@@ -248,7 +248,7 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		else
 		{
 			double zone = parser.ParseDouble(timezone, 0.0);
-			bool dst = 1 == parser.ReadInt(section, L"DaylightSavingTime", 1);
+			bool dst = parser.ReadBool(section, L"DaylightSavingTime", true);
 
 			struct tm* today;
 			time_t now;

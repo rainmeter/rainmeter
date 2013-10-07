@@ -56,7 +56,8 @@ private:
 			Id_ErrorCheckBox,
 			Id_WarningCheckBox,
 			Id_NoticeCheckBox,
-			Id_DebugCheckBox
+			Id_DebugCheckBox,
+			Id_ClearButton
 		};
 
 		TabLog();

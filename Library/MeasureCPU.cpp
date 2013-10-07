@@ -91,7 +91,7 @@ void MeasureCPU::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (processor < 0 || processor > c_NumOfProcessors)
 	{
-		LogWarningF(this, L"CPU: Processor=%i invalid in [%s]", processor, section);
+		LogWarningF(this, L"CPU: Processor=%i is not valid", processor);
 		processor = 0;
 	}
 

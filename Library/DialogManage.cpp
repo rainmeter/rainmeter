@@ -118,6 +118,38 @@ void DialogManage::OpenSkin(MeterWindow* meterWindow)
 }
 
 /*
+** Opens the Manage dialog tab with parameters
+**
+*/
+void DialogManage::Open(const WCHAR* tabName, const WCHAR* param1, const WCHAR* param2)
+{
+	Open(tabName);
+
+	if (c_Dialog)
+	{
+		// "Skins" tab
+		if (_wcsicmp(tabName, L"Skins") == 0)
+		{
+			// |param1| represents the config (ie. "illustro\Clock")
+			// |param2| represents the file (ie. "Clock.ini")
+
+			std::wstring name = param1;
+
+			if (param2)
+			{
+				name += L'\\';
+				name += param2;
+			}
+
+			HWND item = c_Dialog->m_TabSkins.GetControl(TabSkins::Id_SkinsTreeView);
+			c_Dialog->m_TabSkins.SelectTreeItem(item, TreeView_GetRoot(item), name.c_str());
+		}
+		// Future use: Allow optional params for different tabs
+		//else if (_wcsicmp(tabName, L"Layouts") == 0)
+	}
+}
+
+/*
 ** Updates Skins tab.
 **
 */
@@ -949,6 +981,7 @@ void DialogManage::TabSkins::SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR n
 				if ((item = TreeView_GetChild(tree, tvi.hItem)) != nullptr)
 				{
 					TreeView_Expand(tree, tvi.hItem, TVE_EXPAND);
+					TreeView_Select(tree, tvi.hItem, TVGN_CARET);
 					++pos;	// Skip the slash
 					SelectTreeItem(tree, item, pos);
 				}
@@ -1809,19 +1842,19 @@ void DialogManage::TabSettings::Create(HWND owner)
 			0, 0, 468, 131,
 			WS_VISIBLE, 0),
 		CT_LABEL(-1, ID_STR_LANGUAGESC,
-			6, 16, 87, 14,
+			6, 16, 107, 14,
 			WS_VISIBLE, 0),
 		CT_COMBOBOX(Id_LanguageDropDownList, 0,
-			87, 13, 222, 14,
+			107, 13, 222, 14,
 			WS_VISIBLE | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL, 0),
 		CT_LABEL(-1, ID_STR_EDITORSC,
-			6, 37, 87, 9,
+			6, 37, 107, 9,
 			WS_VISIBLE, 0),
 		CT_EDIT(Id_EditorEdit, 0,
-			87, 34, 222, 14,
+			107, 34, 222, 14,
 			WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_CLIENTEDGE),
 		CT_BUTTON(Id_EditorBrowseButton, ID_STR_ELLIPSIS,
-			313, 34, 25, 14,
+			333, 34, 25, 14,
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_CheckForUpdatesCheckBox, ID_STR_CHECKFORUPDATES,
 			6, 55, 150, 9,

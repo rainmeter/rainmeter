@@ -173,7 +173,7 @@ void Vorbis::Properties::read()
     long long end = last->absoluteGranularPosition();
 
     if(start >= 0 && end >= 0 && d->sampleRate > 0)
-      d->length = (end - start) / (long long) d->sampleRate;
+      d->length = static_cast<int>((end - start) / (long long) d->sampleRate);
     else
       debug("Vorbis::Properties::read() -- Either the PCM values for the start or "
             "end of this file was incorrect or the sample rate is zero.");

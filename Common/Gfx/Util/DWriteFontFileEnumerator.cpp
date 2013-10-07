@@ -61,7 +61,7 @@ HRESULT STDMETHODCALLTYPE DWriteFontFileEnumerator::QueryInterface(IID const& ri
 
 HRESULT STDMETHODCALLTYPE DWriteFontFileEnumerator::MoveNext(BOOL* hasCurrentFile)
 {
-	*hasCurrentFile = (++m_CurrentFontFileIndex < m_FontFiles.size());
+	*hasCurrentFile = (++m_CurrentFontFileIndex < (int)m_FontFiles.size());
 	return S_OK;
 }
 

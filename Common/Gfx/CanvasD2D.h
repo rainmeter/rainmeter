@@ -26,9 +26,9 @@
 #include <memory>
 #include <string>
 #include <GdiPlus.h>
-#include <d2d1.h>
+#include <d2d1_1.h>
 #include <d2d1helper.h>
-#include <dwrite.h>
+#include <dwrite_1.h>
 #include <wincodec.h>
 #include <wrl/client.h>
 
@@ -38,8 +38,8 @@ namespace Gfx {
 class CanvasD2D : public Canvas
 {
 public:
-	CanvasD2D();
-	~CanvasD2D();
+	static bool Initialize();
+	static void Finalize();
 
 	virtual void Resize(int w, int h);
 
@@ -75,21 +75,23 @@ public:
 	virtual void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush) override;
 
 private:
+	friend class Canvas;
 	friend class FontCollectionD2D;
 	friend class TextFormatD2D;
 
+	CanvasD2D();
+	~CanvasD2D();
 	CanvasD2D(const CanvasD2D& other) {}
-
-	static bool Initialize();
-	static void Finalize();
 
 	bool BeginTargetDraw();
 	void EndTargetDraw();
 
-	// Retrieves current GDI+ transform (if any) and converts to a D2D Matrix
-	D2D1_MATRIX_3X2_F GetCurrentTransform();
+	// Sets the |m_Target| transformation to be equal to that of |m_GdipGraphics|.
+	void UpdateTargetTransform();
 
 	Microsoft::WRL::ComPtr<ID2D1RenderTarget> m_Target;
+
+	// Underlying pixel data shared by both m_Target and m_GdipBitmap.
 	Util::WICBitmapDIB m_Bitmap;
 
 	// GDI+ objects that share the pixel data of m_Bitmap.
@@ -98,9 +100,12 @@ private:
 
 	bool m_TextAntiAliasing;
 
+	// |true| if PushAxisAlignedClip()/PopAxisAlignedClip() can be used.
+	bool m_CanUseAxisAlignClip;
+
 	static UINT c_Instances;
-	static Microsoft::WRL::ComPtr<ID2D1Factory> c_D2DFactory;
-	static Microsoft::WRL::ComPtr<IDWriteFactory> c_DWFactory;
+	static Microsoft::WRL::ComPtr<ID2D1Factory1> c_D2DFactory;
+	static Microsoft::WRL::ComPtr<IDWriteFactory1> c_DWFactory;
 	static Microsoft::WRL::ComPtr<IDWriteGdiInterop> c_DWGDIInterop;
 	static Microsoft::WRL::ComPtr<IWICImagingFactory> c_WICFactory;
 };

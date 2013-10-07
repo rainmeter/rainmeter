@@ -67,7 +67,7 @@ void MeasurePhysicalMemory::ReadOptions(ConfigParser& parser, const WCHAR* secti
 	Measure::ReadOptions(parser, section);
 	m_MaxValue = oldMaxValue;
 
-	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
+	m_Total = parser.ReadBool(section, L"Total", false);
 	if (m_Total)
 	{
 		m_Value = m_MaxValue;

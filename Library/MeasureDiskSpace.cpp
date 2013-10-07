@@ -195,11 +195,11 @@ void MeasureDiskSpace::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		PathUtil::AppendBacklashIfMissing(m_Drive);
 	}
 
-	m_Type = (1 == parser.ReadInt(section, L"Type", 0));
-	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
-	m_Label = (1 == parser.ReadInt(section, L"Label", 0));
-	m_IgnoreRemovable = (1 == parser.ReadInt(section, L"IgnoreRemovable", 1));
-	m_DiskQuota = (1 == parser.ReadInt(section, L"DiskQuota", 1));
+	m_Type = parser.ReadBool(section, L"Type", false);
+	m_Total = parser.ReadBool(section, L"Total", false);
+	m_Label = parser.ReadBool(section, L"Label", false);
+	m_IgnoreRemovable = parser.ReadBool(section, L"IgnoreRemovable", true);
+	m_DiskQuota = parser.ReadBool(section, L"DiskQuota", true);
 	
 	// Set the m_MaxValue
 	if (!m_Initialized)

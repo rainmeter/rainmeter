@@ -17,9 +17,7 @@
 */
 
 #include "SkinRegistry.h"
-#include <CppUnitTest.h>
-
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+#include "../Common/UnitTest.h"
 
 TEST_CLASS(Library_SkinRegistry_Test)
 {

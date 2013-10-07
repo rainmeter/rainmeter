@@ -354,6 +354,9 @@
     <ClCompile Include="..\Common\Gfx\TextFormatD2D.cpp">
       <Filter>Common\Gfx</Filter>
     </ClCompile>
+    <ClCompile Include="..\Common\Gfx\TextFormatD2D_Test.cpp">
+      <Filter>Common\Gfx</Filter>
+    </ClCompile>
     <ClCompile Include="..\Common\Gfx\TextFormatGDIP.cpp">
       <Filter>Common\Gfx</Filter>
     </ClCompile>
@@ -391,9 +394,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MeasureSwapfileSize.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureGPU.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -675,9 +675,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MeasureSwapfileSize.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureGPU.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

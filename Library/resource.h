@@ -149,6 +149,7 @@
 #define ID_STR_SHOWNOTIFICATIONAREAICON              2138
 #define ID_STR_SOURCE                                2139
 #define ID_STR_USED2D                                2140
+#define ID_STR_CLEAR                                 2141
 
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002
@@ -204,6 +205,7 @@
 #define IDM_MANAGESKINSMENU_REFRESH                  4057
 #define IDM_MANAGESKINSMENU_EDIT                     4058
 #define IDM_COPY                                     4059
+#define IDM_SKIN_USED2D                              4060
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
 #define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9014

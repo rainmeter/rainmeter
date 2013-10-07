@@ -50,7 +50,7 @@ void MeasureUptime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (m_Format.find(L"%4") == std::wstring::npos)
 	{
-		m_AddDaysToHours = 0!=parser.ReadInt(section, L"AddDaysToHours", 1);
+		m_AddDaysToHours = parser.ReadBool(section, L"AddDaysToHours", true);
 	}
 	else
 	{

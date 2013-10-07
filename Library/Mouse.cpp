@@ -69,7 +69,7 @@ void Mouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	const bool defaultState = (section == L"Rainmeter") ? true : m_MeterWindow->GetMouse().GetCursorState();
-	m_CursorState = 0!=parser.ReadInt(section, L"MouseActionCursor", defaultState);
+	m_CursorState = parser.ReadBool(section, L"MouseActionCursor", defaultState);
 
 	const WCHAR* defaultMouseCursor = (section == L"Rainmeter") ? L"HAND" : L"";
 	const WCHAR* mouseCursor = parser.ReadString(section, L"MouseActionCursorName", defaultMouseCursor).c_str();

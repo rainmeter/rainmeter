@@ -340,6 +340,9 @@ void DialogAbout::TabLog::Create(HWND owner)
 {
 	Tab::CreateTabWindow(15, 30, 370, 148, owner);
 
+	// FIXME: Temporary hack.
+	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
+
 	static const ControlTemplate::Control s_Controls[] =
 	{
 		CT_LISTVIEW(Id_ItemsListView, 0,
@@ -356,6 +359,9 @@ void DialogAbout::TabLog::Create(HWND owner)
 			WS_VISIBLE | WS_TABSTOP, 0),
 		CT_CHECKBOX(Id_DebugCheckBox, ID_STR_DEBUG,
 			210, 139, 70, 9,
+			WS_VISIBLE | WS_TABSTOP, 0),
+		CT_BUTTON(Id_ClearButton, ID_STR_CLEAR,
+			(368 - buttonWidth), 139, buttonWidth, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -442,23 +448,32 @@ void DialogAbout::TabLog::Resize(int w, int h)
 {
 	SetWindowPos(m_Window, nullptr, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
 
-	RECT r;
-	HWND item = GetControl(Id_ErrorCheckBox);
-	GetClientRect(item, &r);
+	// FIXME: Temporary hack.
+	short buttonWidth = (short)_wtoi(GetString(ID_STR_NUM_BUTTONWIDTH));
 
-	SetWindowPos(item, nullptr, 0, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	RECT r;
+	LONG bottom;
+	HWND item = GetControl(Id_ClearButton);
+	GetClientRect(item, &r);
+	bottom = r.bottom;
+
+	SetWindowPos(item, nullptr, w - r.right, h - bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+
+	item = GetControl(Id_ErrorCheckBox);
+	GetClientRect(item, &r);
+	SetWindowPos(item, nullptr, 0, h - bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
 	item = GetControl(Id_WarningCheckBox);
-	SetWindowPos(item, nullptr, r.right, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(item, nullptr, r.right, h - bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
 	item = GetControl(Id_NoticeCheckBox);
-	SetWindowPos(item, nullptr, r.right * 2, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(item, nullptr, r.right * 2, h - bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
 	item = GetControl(Id_DebugCheckBox);
-	SetWindowPos(item, nullptr, r.right * 3, h - r.bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(item, nullptr, r.right * 3, h - bottom, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 
 	item = GetControl(Id_ItemsListView);
-	SetWindowPos(item, nullptr, 0, 0, w, h - r.bottom - 7, SWP_NOMOVE | SWP_NOZORDER);
+	SetWindowPos(item, nullptr, 0, 0, w, h - bottom - 10, SWP_NOMOVE | SWP_NOZORDER);
 
 	// Adjust 4th colum
 	LVCOLUMN lvc;
@@ -566,6 +581,14 @@ INT_PTR DialogAbout::TabLog::OnCommand(WPARAM wParam, LPARAM lParam)
 		if (HIWORD(wParam) == BN_CLICKED)
 		{
 			m_Debug = !m_Debug;
+		}
+		break;
+
+	case Id_ClearButton:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			HWND item = GetControl(Id_ItemsListView);
+			ListView_DeleteAllItems(item);
 		}
 		break;
 

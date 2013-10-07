@@ -17,10 +17,8 @@
 */
 
 #include "PathUtil.h"
-#include <CppUnitTest.h>
+#include "UnitTest.h"
 #include <Shlobj.h>
-
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace PathUtil {
 

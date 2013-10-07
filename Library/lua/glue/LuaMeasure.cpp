@@ -29,7 +29,7 @@
 static int GetName(lua_State* L)
 {
 	DECLARE_SELF(L)
-	LuaManager::PushWide(L, self->GetName());
+	LuaManager::PushWide(self->GetName());
 
 	return 1;
 }
@@ -40,10 +40,11 @@ static int GetOption(lua_State* L)
 	MeterWindow* meterWindow = self->GetMeterWindow();
 	ConfigParser& parser = meterWindow->GetParser();
 
-	std::wstring strTmp = LuaManager::ToWide(L, 2);
-	strTmp = parser.ReadString(self->GetName(), strTmp.c_str(), LuaManager::ToWide(L, 3).c_str());
-
-	LuaManager::PushWide(L, strTmp);
+	const std::wstring section = LuaManager::ToWide(2);
+	const std::wstring defValue = LuaManager::ToWide(3);
+	const std::wstring& value =
+		parser.ReadString(self->GetName(), section.c_str(), defValue.c_str());
+	LuaManager::PushWide(value);
 	return 1;
 }
 
@@ -53,7 +54,7 @@ static int GetNumberOption(lua_State* L)
 	MeterWindow* meterWindow = self->GetMeterWindow();
 	ConfigParser& parser = meterWindow->GetParser();
 
-	std::wstring strTmp = LuaManager::ToWide(L, 2);
+	std::wstring strTmp = LuaManager::ToWide(2);
 	double value = parser.ReadFloat(self->GetName(), strTmp.c_str(), lua_tonumber(L, 3));
 
 	lua_pushnumber(L, value);
@@ -127,7 +128,7 @@ static int GetStringValue(lua_State* L)
 	bool percentual = lua_toboolean(L, 5);
 
 	const WCHAR* val = self->GetStringOrFormattedValue(autoScale, scale, decimals, percentual);
-	LuaManager::PushWide(L, val);
+	LuaManager::PushWide(val);
 
 	return 1;
 }

@@ -363,7 +363,7 @@ void TrayWindow::ReadOptions(ConfigParser& parser)
 	m_MeterType = TRAY_METER_TYPE_NONE;
 
 	// Read tray settings
-	m_IconEnabled = 0!=parser.ReadInt(L"Rainmeter", L"TrayIcon", 1);
+	m_IconEnabled = parser.ReadBool(L"Rainmeter", L"TrayIcon", true);
 	if (m_IconEnabled)
 	{
 		const std::wstring& measureName = parser.ReadString(L"TrayMeasure", L"Measure", L"");

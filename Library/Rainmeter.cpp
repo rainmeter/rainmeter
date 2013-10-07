@@ -106,7 +106,7 @@ int RainmeterMain(LPWSTR cmdLine)
 */
 Rainmeter::Rainmeter() :
 	m_TrayWindow(),
-	m_UseD2D(false),
+	m_UseD2D(true),
 	m_Debug(false),
 	m_DisableVersionCheck(false),
 	m_NewVersion(false),
@@ -1255,13 +1255,13 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	ConfigParser parser;
 	parser.Initialize(iniFile, nullptr, nullptr);
 
-	m_UseD2D = 0!=parser.ReadInt(L"Rainmeter", L"UseD2D", 0);
+	m_UseD2D = parser.ReadBool(L"Rainmeter", L"UseD2D", true);
 
-	m_Debug = 0!=parser.ReadInt(L"Rainmeter", L"Debug", 0);
+	m_Debug = parser.ReadBool(L"Rainmeter", L"Debug", false);
 	
 	// Read Logging settings
 	Logger& logger = GetLogger();
-	const bool logging = parser.ReadInt(L"Rainmeter", L"Logging", 0) != 0;
+	const bool logging = parser.ReadBool(L"Rainmeter", L"Logging", false);
 	logger.SetLogToFile(logging);
 	if (logging)
 	{
@@ -1276,8 +1276,8 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_GlobalOptions.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", 0.0);
 	m_GlobalOptions.netOutSpeed = parser.ReadFloat(L"Rainmeter", L"NetOutSpeed", 0.0);
 
-	m_DisableDragging = 0!=parser.ReadInt(L"Rainmeter", L"DisableDragging", 0);
-	m_DisableRDP = 0!=parser.ReadInt(L"Rainmeter", L"DisableRDP", 0);
+	m_DisableDragging = parser.ReadBool(L"Rainmeter", L"DisableDragging", false);
+	m_DisableRDP = parser.ReadBool(L"Rainmeter", L"DisableRDP", false);
 
 	m_SkinEditor = parser.ReadString(L"Rainmeter", L"ConfigEditor", L"");
 	if (m_SkinEditor.empty())
@@ -1298,7 +1298,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	m_TrayExecuteDR = parser.ReadString(L"Rainmeter", L"TrayExecuteDR", L"", false);
 	m_TrayExecuteDM = parser.ReadString(L"Rainmeter", L"TrayExecuteDM", L"", false);
 
-	m_DisableVersionCheck = 0!=parser.ReadInt(L"Rainmeter", L"DisableVersionCheck", 0);
+	m_DisableVersionCheck = parser.ReadBool(L"Rainmeter", L"DisableVersionCheck", false);
 
 	const std::wstring& area = parser.ReadString(L"Rainmeter", L"DesktopWorkArea", L"");
 	if (!area.empty())
@@ -1318,9 +1318,9 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		}
 	}
 
-	m_DesktopWorkAreaType = 0!=parser.ReadInt(L"Rainmeter", L"DesktopWorkAreaType", 0);
+	m_DesktopWorkAreaType = parser.ReadBool(L"Rainmeter", L"DesktopWorkAreaType", false);
 
-	m_NormalStayDesktop = 0!=parser.ReadInt(L"Rainmeter", L"NormalStayDesktop", 1);
+	m_NormalStayDesktop = parser.ReadBool(L"Rainmeter", L"NormalStayDesktop", true);
 
 	for (auto iter = parser.GetSections().cbegin(); iter != parser.GetSections().end(); ++iter)
 	{

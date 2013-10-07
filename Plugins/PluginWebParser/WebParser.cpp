@@ -708,40 +708,6 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	++g_InstanceCount;
 }
 
-std::vector<std::wstring> TokenizeUrl(const std::wstring& url)
-{
-	std::vector<std::wstring> tokens;
-	std::wstring::size_type start = 0;
-	std::wstring::size_type end = url.find_first_of(L'[', 0);
-	while (std::wstring::npos != start || std::wstring::npos != end)
-	{
-		const std::wstring::size_type ending = url.find_first_of(L']', end);
-		if (ending == std::wstring::npos)
-		{
-			// Push back rest of string
-			if (url.size() != start)
-			{
-				tokens.emplace_back(url, start, url.size() - start);
-			}
-			break;
-		}
-
-		// Push non-Measure name chars (if any)
-		if (start != end)
-		{
-			tokens.emplace_back(url, start, end - start);
-		}
-
-		// Push back [MeasureName]
-		tokens.emplace_back(url, end, ending - end + 1);
-
-		start = ending + 1;
-		end = url.find_first_of(L'[', start);
-	}
-
-	return tokens;
-}
-
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 {
 	MeasureData* measure = (MeasureData*)data;
@@ -751,65 +717,38 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	/* Read our own settings from the ini-file */
 
 	std::wstring url = RmReadString(rm, L"Url", L"", FALSE);
-	/*if (url.find_first_of(L'[', 0) != std::wstring::npos)
+
+	std::wstring::size_type start = 0;
+	while ((start = url.find(L"[&", start)) != std::wstring::npos)
 	{
-		std::vector<std::wstring> tokens = TokenizeUrl(url);
-		std::unordered_map<std::wstring, std::wstring> replacedTokens;
-		for (const auto& token : tokens)
+		std::wstring::size_type si = start + 1;
+		std::wstring::size_type end = url.find(L']', si);
+		if (end == std::wstring::npos) break;
+
+		std::wstring var = L"[";
+		var += url.substr(si + 1, end - si);
+
+		std::wstring result = RmReplaceVariables(rm, var.c_str());
+		if (result != var)
 		{
-			if (token.size() >= 3 && token[0] == L'[' && token[token.size() - 1] == L']')
-			{
-				std::wstring section = token.substr(1, token.size() - 2);
-				bool found = false;
-
-				// Check for "escaped" Webparser measures eg. [$WebparserMeasure$]
-				if (section[0] != L'$' && section[section.size() - 1] != L'$')
-				{
-					const WCHAR* sectionSz = section.c_str();
-					for (const auto& measure : g_Measures)
-					{
-						if (_wcsicmp(measure->section, sectionSz) == 0)
-						{
-							found = true;
-							break;
-						}
-					}
-				}
-				else
-				{
-					section.erase(0, 1);
-					section.erase(section.size() - 1, 1);
-				}
-
-				section.insert(0, L"[");
-				section += L']';
-
-				// A non-WebParser measure was found.
-				if (!found)
-				{
-					replacedTokens[token] = RmReplaceVariables(rm, section.c_str());
-				}
-			}
+			url.replace(start, end - start + 1, result);
 		}
 
-		for (const auto& ip : replacedTokens)
-		{
-			std::wstring::size_type start = url.find(ip.first);
-			while (start != std::wstring::npos)
-			{
-				url.replace(start, ip.first.size(), ip.second, 0, ip.second.size());
-				start = url.find(ip.first);
-			}
-		}
-	}*/
+		start = end;
+	}
+
 	measure->url = url;
 
 	measure->regExp = RmReadString(rm, L"RegExp", L"");
 	measure->finishAction = RmReadString(rm, L"FinishAction", L"", FALSE);
 	measure->errorString = RmReadString(rm, L"ErrorString", L"");
 
-	measure->stringIndex = RmReadInt(rm, L"StringIndex", 0);
-	measure->stringIndex2 = RmReadInt(rm, L"StringIndex2", 0);
+	int index = RmReadInt(rm, L"StringIndex", 0);
+	measure->stringIndex = index < 0 ? 0 : index;
+
+	index = RmReadInt(rm, L"StringIndex2", 0);
+	measure->stringIndex2 = index < 0 ? 0 : index;
+
 	measure->decodeCharacterReference = RmReadInt(rm, L"DecodeCharacterReference", 0);
 	measure->updateRate = RmReadInt(rm, L"UpdateRate", 600);
 	measure->forceReload = 0!=RmReadInt(rm, L"ForceReload", 0);

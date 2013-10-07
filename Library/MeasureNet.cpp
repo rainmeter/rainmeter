@@ -488,7 +488,7 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_Interface = parser.ReadInt(section, L"Interface", 0);
 
-	m_Cumulative = 0!=parser.ReadInt(section, L"Cumulative", 0);
+	m_Cumulative = parser.ReadBool(section, L"Cumulative", false);
 	if (m_Cumulative)
 	{
 		GetRainmeter().SetNetworkStatisticsTimer();

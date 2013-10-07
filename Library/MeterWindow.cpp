@@ -37,8 +37,7 @@
 #include "MeasureScript.h"
 #include "../Version.h"
 #include "../Common/PathUtil.h"
-#include "../Common/Gfx/CanvasD2D.h"
-#include "../Common/Gfx/CanvasGDIP.h"
+#include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;
 
@@ -122,6 +121,7 @@ MeterWindow::MeterWindow(const std::wstring& folderPath, const std::wstring& fil
 	m_ClickThrough(false),
 	m_KeepOnScreen(true),
 	m_AutoSelectScreen(false),
+	m_UseD2D(true),
 	m_Dragging(false),
 	m_Dragged(false),
 	m_BackgroundMode(BGMODE_IMAGE),
@@ -1917,21 +1917,22 @@ void MeterWindow::ReadOptions()
 	int hideMode = parser.ReadInt(section, L"HideOnMouseOver", HIDEMODE_NONE);
 	m_WindowHide = (hideMode >= HIDEMODE_NONE && hideMode <= HIDEMODE_FADEOUT) ? (HIDEMODE)hideMode : HIDEMODE_NONE;
 
-	m_WindowDraggable = 0!=parser.ReadInt(section, L"Draggable", 1);
+	m_WindowDraggable = parser.ReadBool(section, L"Draggable", true);
 	addWriteFlag(OPTION_DRAGGABLE);
 
-	m_SnapEdges = 0!=parser.ReadInt(section, L"SnapEdges", 1);
+	m_SnapEdges = parser.ReadBool(section, L"SnapEdges", true);
 	addWriteFlag(OPTION_SNAPEDGES);
 
-	m_ClickThrough = 0!=parser.ReadInt(section, L"ClickThrough", 0);
+	m_ClickThrough = parser.ReadBool(section, L"ClickThrough", false);
 	addWriteFlag(OPTION_CLICKTHROUGH);
 
-	m_KeepOnScreen = 0!=parser.ReadInt(section, L"KeepOnScreen", 1);
+	m_KeepOnScreen = parser.ReadBool(section, L"KeepOnScreen", true);
 	addWriteFlag(OPTION_KEEPONSCREEN);
 
-	m_SavePosition = 0!=parser.ReadInt(section, L"SavePosition", 1);
-	m_WindowStartHidden = 0!=parser.ReadInt(section, L"StartHidden", 0);
-	m_AutoSelectScreen = 0!=parser.ReadInt(section, L"AutoSelectScreen", 0);
+	m_UseD2D = parser.ReadBool(section, L"UseD2D", true);
+	m_SavePosition = parser.ReadBool(section, L"SavePosition", true);
+	m_WindowStartHidden = parser.ReadBool(section, L"StartHidden", false);
+	m_AutoSelectScreen = parser.ReadBool(section, L"AutoSelectScreen", false);
 
 	m_AlphaValue = parser.ReadInt(section, L"AlphaValue", 255);
 	m_AlphaValue = max(m_AlphaValue, 0);
@@ -2042,6 +2043,11 @@ void MeterWindow::WriteOptions(INT setting)
 			_itow_s(m_WindowZPosition, buffer, 10);
 			WritePrivateProfileString(section, L"AlwaysOnTop", buffer, iniFile);
 		}
+
+		if (setting & OPTION_USED2D)
+		{
+			WritePrivateProfileString(section, L"UseD2D", m_UseD2D ? L"1" : L"0", iniFile);
+		}
 	}
 }
 
@@ -2071,21 +2077,12 @@ bool MeterWindow::ReadSkin()
 	// Read options from Rainmeter.ini.
 	ReadOptions();
 
-	// Temporarily read "__UseD2D" from skin for easy testing
-	bool useD2D = GetRainmeter().GetUseD2D();
-	if (revision_beta)
-	{
-		useD2D = 0!=m_Parser.ReadInt(L"Rainmeter", L"__UseD2D", useD2D ? 1 : 0);
-	}
-
-	m_Canvas = (Platform::IsAtLeastWinVista() && useD2D) ?
-		(Gfx::Canvas*)new Gfx::CanvasD2D() : (Gfx::Canvas*)new Gfx::CanvasGDIP();
+	m_Canvas = Gfx::Canvas::Create(
+		m_UseD2D && GetRainmeter().GetUseD2D() ? Gfx::Renderer::PreferD2D : Gfx::Renderer::GDIP);
+	m_Canvas->SetAccurateText(m_Parser.ReadBool(L"Rainmeter", L"AccurateText", false));
 
 	// Gotta have some kind of buffer during initialization
 	CreateDoubleBuffer(1, 1);
-
-	m_AccurateText = 0!=m_Parser.ReadInt(L"Rainmeter", L"AccurateText", 0);
-	m_Canvas->SetAccurateText(m_AccurateText);
 
 	// Check the version
 	UINT appVersion = m_Parser.ReadUInt(L"Rainmeter", L"AppVersion", 0);
@@ -2120,7 +2117,7 @@ bool MeterWindow::ReadSkin()
 	m_SolidColor2 = m_Parser.ReadColor(L"Rainmeter", L"SolidColor2", m_SolidColor.GetValue());
 	m_SolidAngle = (Gdiplus::REAL)m_Parser.ReadFloat(L"Rainmeter", L"GradientAngle", 0.0);
 
-	m_DynamicWindowSize = 0!=m_Parser.ReadInt(L"Rainmeter", L"DynamicWindowSize", 0);
+	m_DynamicWindowSize = m_Parser.ReadBool(L"Rainmeter", L"DynamicWindowSize", false);
 
 	if (m_BackgroundMode == BGMODE_IMAGE || m_BackgroundMode == BGMODE_SCALED_IMAGE || m_BackgroundMode == BGMODE_TILED_IMAGE)
 	{
@@ -2146,11 +2143,11 @@ bool MeterWindow::ReadSkin()
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
-	m_ToolTipHidden = 0 != m_Parser.ReadInt(L"Rainmeter", L"ToolTipHidden", 0);
+	m_ToolTipHidden = m_Parser.ReadBool(L"Rainmeter", L"ToolTipHidden", false);
 
 	if (Platform::IsAtLeastWinVista())
 	{
-		if (0 != m_Parser.ReadInt(L"Rainmeter", L"Blur", 0))
+		if (m_Parser.ReadBool(L"Rainmeter", L"Blur", false))
 		{
 			const WCHAR* blurRegion = m_Parser.ReadString(L"Rainmeter", L"BlurRegion", L"", false).c_str();
 
@@ -3435,6 +3432,10 @@ LRESULT MeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetKeepOnScreen(!m_KeepOnScreen);
 		break;
 
+	case IDM_SKIN_USED2D:
+		SetUseD2D(!m_UseD2D);
+		break;
+
 	case IDM_SKIN_CLICKTHROUGH:
 		SetClickThrough(!m_ClickThrough);
 		break;
@@ -3621,6 +3622,17 @@ void MeterWindow::SetKeepOnScreen(bool b)
 			MoveWindow(x, y);
 		}
 	}
+}
+
+/*
+** Helper function for setting UseD2D
+**
+*/
+void MeterWindow::SetUseD2D(bool b)
+{
+	m_UseD2D = b;
+	WriteOptions(OPTION_USED2D);
+	Refresh(false);
 }
 
 /*
@@ -4843,6 +4855,17 @@ std::wstring MeterWindow::GetFilePath()
 	file += L'\\';
 	file += m_FileName;
 	return file;
+}
+
+std::wstring MeterWindow::GetRootName()
+{
+	std::wstring::size_type loc;
+	if ((loc = m_FolderPath.find_first_of(L'\\')) != std::wstring::npos)
+	{
+		return m_FolderPath.substr(0, loc);
+	}
+
+	return m_FolderPath;
 }
 
 std::wstring MeterWindow::GetRootPath()

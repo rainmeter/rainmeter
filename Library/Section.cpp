@@ -53,7 +53,7 @@ void Section::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_UpdateCounter = m_UpdateDivider = updateDivider;
 	}
 
-	m_DynamicVariables = 0!=parser.ReadInt(section, L"DynamicVariables", 0);
+	m_DynamicVariables = parser.ReadBool(section, L"DynamicVariables", false);
 
 	m_OnUpdateAction = parser.ReadString(section, L"OnUpdateAction", L"", false);
 
