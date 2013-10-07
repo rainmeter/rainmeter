@@ -211,7 +211,7 @@ namespace TagLib {
     }
 
     uint size = sizeof(T);
-    uint last = data.size() > size ? size - 1 : data.size() - 1;
+    uint last = static_cast<TagLib::uint>(data.size() > size ? size - 1 : data.size() - 1);
 
     for(uint i = 0; i <= last; i++)
       sum |= (T) uchar(data[i]) << ((mostSignificantByteFirst ? last - i : i) * 8);
@@ -239,7 +239,7 @@ class ByteVector::ByteVectorPrivate : public RefCounter
 {
 public:
   ByteVectorPrivate() : RefCounter(), size(0) {}
-  ByteVectorPrivate(const std::vector<char> &v) : RefCounter(), data(v), size(v.size()) {}
+  ByteVectorPrivate(const std::vector<char> &v) : RefCounter(), data(v), size(static_cast<TagLib::uint>(v.size())) {}
   ByteVectorPrivate(TagLib::uint len, char value) : RefCounter(), data(len, value), size(len) {}
 
   std::vector<char> data;
@@ -340,7 +340,7 @@ ByteVector &ByteVector::setData(const char *data, uint length)
 
 ByteVector &ByteVector::setData(const char *data)
 {
-  return setData(data, ::strlen(data));
+	return setData(data, static_cast<TagLib::uint>(::strlen(data)));
 }
 
 char *ByteVector::data()
@@ -369,7 +369,7 @@ ByteVector ByteVector::mid(uint index, uint length) const
     endIt = d->data.end();
 
   v.d->data.insert(v.d->data.begin(), ConstIterator(d->data.begin() + index), endIt);
-  v.d->size = v.d->data.size();
+  v.d->size = static_cast<TagLib::uint>(v.d->data.size());
 
   return v;
 }

@@ -156,7 +156,7 @@ ByteVector File::readBlock(ulong length)
   }
 
   ByteVector v(static_cast<uint>(length));
-  const int count = fread(v.data(), sizeof(char), length, d->file);
+  const int count = static_cast<int>(fread(v.data(), sizeof(char), length, d->file));
   v.resize(count);
   return v;
 }
@@ -385,7 +385,7 @@ void File::insert(const ByteVector &data, ulong start, ulong replace)
   // That's a bit slower than using char *'s so, we're only doing it here.
 
   seek(readPosition);
-  int bytesRead = fread(aboutToOverwrite.data(), sizeof(char), bufferLength, d->file);
+  int bytesRead = static_cast<int>(fread(aboutToOverwrite.data(), sizeof(char), bufferLength, d->file));
   readPosition += bufferLength;
 
   seek(writePosition);
@@ -407,7 +407,7 @@ void File::insert(const ByteVector &data, ulong start, ulong replace)
     // to overwrite.  Appropriately increment the readPosition.
 
     seek(readPosition);
-    bytesRead = fread(aboutToOverwrite.data(), sizeof(char), bufferLength, d->file);
+    bytesRead = static_cast<int>(fread(aboutToOverwrite.data(), sizeof(char), bufferLength, d->file));
     aboutToOverwrite.resize(bytesRead);
     readPosition += bufferLength;
 
@@ -452,7 +452,7 @@ void File::removeBlock(ulong start, ulong length)
 
   while(bytesRead != 0) {
     seek(readPosition);
-    bytesRead = fread(buffer.data(), sizeof(char), bufferLength, d->file);
+	bytesRead = static_cast<TagLib::ulong>(fread(buffer.data(), sizeof(char), bufferLength, d->file));
     readPosition += bytesRead;
 
     // Check to see if we just read the last block.  We need to call clear()

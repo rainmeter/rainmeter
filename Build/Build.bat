@@ -9,7 +9,7 @@ set GIT=%PROGRAMFILES%\Git\bin\git.exe
 set VERSION_MAJOR=3
 set VERSION_MINOR=0
 set VERSION_SUBMINOR=0
-set VERSION_REVISION=0
+set VERSION_REVISION=2107
 set ISBETA=true
 
 if "%1" == "RELEASE" set ISBETA=false
@@ -82,7 +82,7 @@ echo * Starting build for %VERSION%
 for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
 	set /A "BUILD_BEGIN_TIMESTAMP=(((%%a * 60) + 1%%b %% 100)* 60 + 1%%c %% 100) * 100 + 1%%d %% 100"
 )
-
+goto BUILDLANGUAGES
 :: Build Library
 echo * Building 32-bit projects
 %MSBUILD% /t:rebuild /p:Configuration=Release;Platform=Win32 /v:q /m ..\Rainmeter.sln > "BuildLog.txt"

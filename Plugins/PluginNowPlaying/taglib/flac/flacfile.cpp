@@ -198,7 +198,12 @@ bool FLAC::File::save()
   }
   ByteVector padding = ByteVector::fromUInt(paddingLength);
   padding.resize(paddingLength + 4);
+
+  #pragma warning (push)
+  #pragma warning (disable : 4309)
   padding[0] = FLAC::MetadataBlock::Padding | LastBlockFlag;
+  #pragma warning (pop)
+
   data.append(padding);
 
   // Write the data to the file
