@@ -19,7 +19,6 @@
 #include "StdAfx.h"
 #include "Measure.h"
 #include "MeasureCPU.h"
-#include "MeasureGPU.h"
 #include "MeasureMemory.h"
 #include "MeasurePhysicalMemory.h"
 #include "MeasureVirtualMemory.h"
@@ -814,10 +813,6 @@ Measure* Measure::Create(const WCHAR* measure, MeterWindow* meterWindow, const W
 	if (_wcsicmp(L"CPU", measure) == 0)
 	{
 		return new MeasureCPU(meterWindow, name);
-	}
-	if (_wcsicmp(L"GPU", measure) == 0)
-	{
-		return new MeasureGPU(meterWindow, name);
 	}
 	else if (_wcsicmp(L"Memory", measure) == 0)
 	{

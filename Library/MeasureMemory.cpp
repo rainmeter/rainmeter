@@ -27,6 +27,7 @@
 MeasureMemory::MeasureMemory(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_Total(false)
 {
+	m_Total = false;
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
 	GlobalMemoryStatusEx(&stat);
