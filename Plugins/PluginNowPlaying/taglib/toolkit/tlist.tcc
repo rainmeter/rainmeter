@@ -194,7 +194,7 @@ List<T> &List<T>::clear()
 template <class T>
 TagLib::uint List<T>::size() const
 {
-  return d->list.size();
+  return static_cast<TagLib::uint>(d->list.size());
 }
 
 template <class T>

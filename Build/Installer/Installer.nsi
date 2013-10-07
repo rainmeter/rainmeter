@@ -69,7 +69,7 @@ ReserveFile ".\UAC.dll"
 
 ; Additional Windows definitions
 !ifndef BCM_SETSHIELD
-!define BCM_SETSHIELD 0x0000160c
+	!define BCM_SETSHIELD 0x0000160c
 !endif
 !define PF_XMMI_INSTRUCTIONS_AVAILABLE 6
 !define PF_XMMI64_INSTRUCTIONS_AVAILABLE 10
