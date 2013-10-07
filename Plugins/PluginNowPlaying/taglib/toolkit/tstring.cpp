@@ -94,7 +94,7 @@ String::String(const std::string &s, Type t)
     return;
   }
 
-  int length = s.length();
+  int length = static_cast<int>(s.length());
   d->data.resize(length);
   wstring::iterator targetIt = d->data.begin();
 
@@ -127,7 +127,7 @@ String::String(const char *s, Type t)
     return;
   }
 
-  int length = ::strlen(s);
+  int length = static_cast<int>(::strlen(s));
   d->data.resize(length);
 
   wstring::iterator targetIt = d->data.begin();
@@ -216,7 +216,7 @@ std::string String::to8Bit(bool unicode) const
     return s;
   }
 
-  const int outputBufferSize = d->data.size() * 3 + 1;
+  const int outputBufferSize = static_cast<int>(d->data.size() * 3 + 1);
 
   Unicode::UTF16 *sourceBuffer = new Unicode::UTF16[d->data.size() + 1];
   Unicode::UTF8  *targetBuffer = new Unicode::UTF8[outputBufferSize];
@@ -235,7 +235,7 @@ std::string String::to8Bit(bool unicode) const
   if(result != Unicode::conversionOK)
     debug("String::to8Bit() - Unicode conversion error.");
 
-  int newSize = target - targetBuffer;
+  int newSize = static_cast<int>(target - targetBuffer);
   s.resize(newSize);
   targetBuffer[newSize] = 0;
 
@@ -288,7 +288,7 @@ int String::find(const String &s, int offset) const
   wstring::size_type position = d->data.find(s.d->data, offset);
 
   if(position != wstring::npos)
-    return position;
+    return static_cast<int>(position);
   else
     return -1;
 }
@@ -299,7 +299,7 @@ int String::rfind(const String &s, int offset) const
     d->data.rfind(s.d->data, offset == -1 ? wstring::npos : offset);
 
   if(position != wstring::npos)
-    return position;
+    return static_cast<int>(position);
   else
     return -1;
 }
@@ -315,7 +315,7 @@ bool String::startsWith(const String &s) const
 String String::substr(uint position, uint n) const
 {
   if(n > position + d->data.size())
-    n = d->data.size() - position;
+	n = static_cast<TagLib::uint>(d->data.size() - position);
 
   String s;
   s.d->data = d->data.substr(position, n);
@@ -347,7 +347,7 @@ String String::upper() const
 
 TagLib::uint String::size() const
 {
-  return d->data.size();
+  return static_cast<TagLib::uint>(d->data.size());
 }
 
 TagLib::uint String::length() const
@@ -380,7 +380,7 @@ ByteVector String::data(Type t) const
   case UTF8:
   {
     std::string s = to8Bit(true);
-    v.setData(s.c_str(), s.length());
+    v.setData(s.c_str(), static_cast<TagLib::uint>(s.length()));
     break;
   }
   case UTF16:
@@ -439,7 +439,7 @@ int String::toInt(bool *ok) const
 {
   int value = 0;
 
-  uint size = d->data.size();
+  uint size = static_cast<TagLib::uint>(d->data.size());
   bool negative = size > 0 && d->data[0] == '-';
   uint start = negative ? 1 : 0;
   uint i = start;
@@ -523,7 +523,7 @@ String String::number(int n) // static
   if(negative)
     s += '-';
 
-  for(int i = charStack.d->data.size() - 1; i >= 0; i--)
+  for(int i = static_cast<int>(charStack.d->data.size()) - 1; i >= 0; i--)
     s += charStack.d->data[i];
 
   return s;
@@ -658,7 +658,7 @@ String &String::operator=(const char *s)
 
   d = new StringPrivate;
 
-  int length = ::strlen(s);
+  int length = static_cast<int>(::strlen(s));
   d->data.resize(length);
 
   wstring::iterator targetIt = d->data.begin();
@@ -736,7 +736,7 @@ void String::prepare(Type t)
   }
   case UTF8:
   {
-    int bufferSize = d->data.size() + 1;
+    int bufferSize = static_cast<int>(d->data.size() + 1);
     Unicode::UTF8  *sourceBuffer = new Unicode::UTF8[bufferSize];
     Unicode::UTF16 *targetBuffer = new Unicode::UTF16[bufferSize];
 
@@ -757,7 +757,7 @@ void String::prepare(Type t)
       debug("String::prepare() - Unicode conversion error.");
 
 
-    int newSize = target != targetBuffer ? target - targetBuffer - 1 : 0;
+    int newSize = static_cast<int>(target != targetBuffer ? target - targetBuffer - 1 : 0);
     d->data.resize(newSize);
 
     for(int i = 0; i < newSize; i++)

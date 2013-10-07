@@ -17,7 +17,7 @@
 */
 
 #include "StdAfx.h"
-#include "Install.h"
+#include "DialogInstall.h"
 #include "Resource.h"
 #include "Application.h"
 
