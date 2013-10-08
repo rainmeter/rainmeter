@@ -410,6 +410,11 @@ bool CanvasD2D::MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextForma
 		// bottom. This is a workaround to emulate that behaviour.
 		rect.Height += 1.0f;
 	}
+	else
+	{
+		// GDI+ compatibility: Zero height text has no visible lines.
+		lines = 0;
+	}
 	return true;
 }
 
