@@ -38,7 +38,7 @@ MeasureSwapfileSize::MeasureSwapfileSize(MeterWindow* meterWindow, const WCHAR* 
 	}
 	else
 	{
-		m_MaxValue = 0;
+		m_MaxValue = 0.0;
 	}
 }
 
@@ -62,6 +62,8 @@ void MeasureSwapfileSize::UpdateValue()
 
 	if (m_bSwapfileEnabled == true)
 	{
+		// Replace code in this section with code to detect the size of all pagefiles in the system and add them together
+
 		m_MaxValue = (double)(__int64)(stat.ullTotalPageFile - stat.ullTotalPhys);
 
 		if (m_Total)
@@ -75,7 +77,7 @@ void MeasureSwapfileSize::UpdateValue()
 	}
 	else
 	{
-		m_Value = m_MaxValue = 0;
+		m_Value = m_MaxValue = 0.0;
 	}
 }
 
