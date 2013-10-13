@@ -53,10 +53,12 @@ ShowInstDetails nevershow
 AllowSkipFiles off
 XPStyle on
 OutFile "..\${OUTFILE}"
-ReserveFile "${NSISDIR}\Plugins\x86-unicode\LangDLL.dll"
-ReserveFile "${NSISDIR}\Plugins\x86-unicode\nsDialogs.dll"
-ReserveFile "${NSISDIR}\Plugins\x86-unicode\System.dll"
-ReserveFile ".\UAC.dll"
+ReserveFile "${NSISDIR}\Plugins\x86-ansi\LangDLL.dll"
+ReserveFile "${NSISDIR}\Plugins\x86-ansi\MD5.dll"
+ReserveFile "${NSISDIR}\Plugins\x86-ansi\MoreInfo.dll"
+ReserveFile "${NSISDIR}\Plugins\x86-ansi\nsDialogs.dll"
+ReserveFile "${NSISDIR}\Plugins\x86-ansi\System.dll"
+ReserveFile "${NSISDIR}\Plugins\x86-ansi\UAC.dll"
 
 !define REQUIREDSPACE 5 ; Minimum required space for install (in MB)
 
