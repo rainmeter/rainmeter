@@ -3,7 +3,7 @@ ${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} requer o Windows XP 
 ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} requer o Windows 2003 SP1 ou melhor. Por favor atualiza para o último  Service Pack e tenta outra vez."
 ${LangFileString} ADMINERROR              "Direitos de administração necessários."
 ${LangFileString} LOGONERROR              "O serviço de inicio de sessão não está a ser executado."
-${LangFileString} UACERROR                "Unable to elevate."
+${LangFileString} UACERROR                "Falha a obter direitos de instalação."
 ${LangFileString} WRITEERROR              "A versão portátil do Rainmeter tem de ser instalada num local com direitos completos de escrita e leitura sem necessidade de direitos de administrador.$\nSe instalaste o Rainmeter em em '$0', volta atrás e seleciona 'Instalação Normal'.$\n$\nCaso contrário, escolhe outro local que respeite o direitos requeridos."
 ${LangFileString} VCINSTERROR             "A instalação do Visual C++ $instArc falhou com o código de erro $0.$\n$\nÉ melhor fazer download manualmente do Visual C++ $instArc em http://rainmeter.net/redist$\n$\nPressiona ok para sair."
 ${LangFileString} DOTNETINSTERROR         "A instalação do .NET $instArc falhou com o código de erro $0.$\n$\nÉ melhor fazer download manualmente do .NET $instArc em http://rainmeter.net/redist$\n$\nPressiona ok para sair."
