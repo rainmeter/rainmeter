@@ -387,17 +387,24 @@ bool MeterString::Update()
 			break;
 		}
 
-		// Ugly hack to make D2D render trailing spaces followed by a non-breaking space correctly.
-		// By default, D2D ignores all trailing whitespace. Both GDI+ and D2D, however, acknowledge the
-		// presense of the zero-width space (and give it a width of 0px), so we append the zero-width
-		// space after each non-breaking space.
 		for (size_t i = 0; i < m_String.length(); ++i)
 		{
 			if (m_String[i] == L'\u00A0' ||  // No-Break Space
 				m_String[i] == L'\u205F')    // Medium Mathematical Space
 			{
+				// Ugly hack to make D2D render trailing spaces followed by a non-breaking space
+				// correctly. By default, D2D ignores all trailing whitespace. Both GDI+ and D2D,
+				// however, acknowledge the presense of the zero-width space (and give it a width
+				// of 0px), so we append the zero-width space after each non-breaking space.
 				++i;
 				m_String.insert(i, 1, L'\u200B');
+			}
+			else if (m_String[i] == L'\r')
+			{
+				// GDI+ seems to ignore carriage returns, so strip it entirely to make it behave
+				// similarly with D2D as well.
+				m_String.erase(i, 1);
+				--i;
 			}
 		}
 
