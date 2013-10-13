@@ -1916,7 +1916,7 @@ void DialogManage::TabSettings::Initialize()
 					std::wstring text = fd.cFileName;
 					text += L" - ";
 
-					GetLocaleInfo(lcid, LOCALE_SNATIVELANGUAGENAME, fd.cFileName, MAX_PATH);
+					GetLocaleInfo(lcid, LOCALE_SNATIVEDISPLAYNAME, fd.cFileName, MAX_PATH);
 					text += fd.cFileName;
 
 					int index = ComboBox_AddString(item, text.c_str());
