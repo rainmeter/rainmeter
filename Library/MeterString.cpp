@@ -391,20 +391,14 @@ bool MeterString::Update()
 		// By default, D2D ignores all trailing whitespace. Both GDI+ and D2D, however, acknowledge the
 		// presense of the zero-width space (and give it a width of 0px), so we append the zero-width
 		// space after each non-breaking space.
-		size_t pos = 0;
-		while (true)
+		for (size_t i = 0; i < m_String.length(); ++i)
 		{
-			const WCHAR spaceChars[] =
+			if (m_String[i] == L'\u00A0' ||  // No-Break Space
+				m_String[i] == L'\u205F')    // Medium Mathematical Space
 			{
-				L'\u00A0',  // No-Break Space
-				L'\u205F'   // Medium Mathematical Space
-			};
-
-			pos = m_String.find_first_of(spaceChars, pos, _countof(spaceChars));
-			if (pos == std::wstring::npos) break;
-
-			m_String.insert(pos + 1, 1, L'\u200B');
-			pos += 2;
+				++i;
+				m_String.insert(i, 1, L'\u200B');
+			}
 		}
 
 		if (!m_WDefined || !m_HDefined)
