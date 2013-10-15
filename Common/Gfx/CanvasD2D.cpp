@@ -318,69 +318,68 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
 	HRESULT hr = m_Target->CreateSolidColorBrush(ToColorF(color), solidBrush.GetAddressOf());
-	if (SUCCEEDED(hr))
+	if (FAILED(hr)) return;
+
+	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
+	if (!formatD2D.CreateLayout(
+			str, strLen, rect.Width, rect.Height, !m_AccurateText && m_TextAntiAliasing)) return;
+
+	D2D1_POINT_2F drawPosition;
+	drawPosition.x = [&]()
 	{
-		TextFormatD2D& formatD2D = (TextFormatD2D&)format;
-		formatD2D.CreateLayout(
-			str, strLen, rect.Width, rect.Height, !m_AccurateText && m_TextAntiAliasing);
-
-		D2D1_POINT_2F drawPosition;
-		drawPosition.x = [&]()
+		if (!m_AccurateText)
 		{
-			if (!m_AccurateText)
+			const float xOffset = formatD2D.m_TextFormat->GetFontSize() / 6.0f;
+			switch (formatD2D.GetHorizontalAlignment())
 			{
-				const float xOffset = formatD2D.m_TextFormat->GetFontSize() / 6.0f;
-				switch (formatD2D.GetHorizontalAlignment())
-				{
-				case HorizontalAlignment::Left: return rect.X + xOffset;
-				case HorizontalAlignment::Right: return rect.X - xOffset;
-				}
-			}
-
-			return rect.X;
-		} ();
-
-		drawPosition.y = [&]()
-		{
-			// GDI+ compatibility.
-			float yPos = rect.Y - formatD2D.m_LineGap;
-			switch (formatD2D.GetVerticalAlignment())
-			{
-			case VerticalAlignment::Bottom: yPos -= formatD2D.m_ExtraHeight; break;
-			case VerticalAlignment::Center: yPos -= formatD2D.m_ExtraHeight / 2; break;
-			}
-
-			return yPos;
-		} ();
-
-		if (formatD2D.m_Trimming)
-		{
-			D2D1_RECT_F clipRect = ToRectF(rect);
-
-			if (m_CanUseAxisAlignClip)
-			{
-				m_Target->PushAxisAlignedClip(clipRect, D2D1_ANTIALIAS_MODE_ALIASED);
-			}
-			else
-			{
-				const D2D1_LAYER_PARAMETERS layerParams =
-					D2D1::LayerParameters(clipRect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
-				m_Target->PushLayer(layerParams, nullptr);
+			case HorizontalAlignment::Left: return rect.X + xOffset;
+			case HorizontalAlignment::Right: return rect.X - xOffset;
 			}
 		}
 
-		m_Target->DrawTextLayout(drawPosition, formatD2D.m_TextLayout.Get(), solidBrush.Get());
+		return rect.X;
+	} ();
 
-		if (formatD2D.m_Trimming)
+	drawPosition.y = [&]()
+	{
+		// GDI+ compatibility.
+		float yPos = rect.Y - formatD2D.m_LineGap;
+		switch (formatD2D.GetVerticalAlignment())
 		{
-			if (m_CanUseAxisAlignClip)
-			{
-				m_Target->PopAxisAlignedClip();
-			}
-			else
-			{
-				m_Target->PopLayer();
-			}
+		case VerticalAlignment::Bottom: yPos -= formatD2D.m_ExtraHeight; break;
+		case VerticalAlignment::Center: yPos -= formatD2D.m_ExtraHeight / 2; break;
+		}
+
+		return yPos;
+	} ();
+
+	if (formatD2D.m_Trimming)
+	{
+		D2D1_RECT_F clipRect = ToRectF(rect);
+
+		if (m_CanUseAxisAlignClip)
+		{
+			m_Target->PushAxisAlignedClip(clipRect, D2D1_ANTIALIAS_MODE_ALIASED);
+		}
+		else
+		{
+			const D2D1_LAYER_PARAMETERS layerParams =
+				D2D1::LayerParameters(clipRect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
+			m_Target->PushLayer(layerParams, nullptr);
+		}
+	}
+
+	m_Target->DrawTextLayout(drawPosition, formatD2D.m_TextLayout.Get(), solidBrush.Get());
+
+	if (formatD2D.m_Trimming)
+	{
+		if (m_CanUseAxisAlignClip)
+		{
+			m_Target->PopAxisAlignedClip();
+		}
+		else
+		{
+			m_Target->PopLayer();
 		}
 	}
 }

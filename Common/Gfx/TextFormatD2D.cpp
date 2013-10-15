@@ -43,7 +43,7 @@ void TextFormatD2D::Dispose()
 	m_LineGap = 0.0f;
 }
 
-void TextFormatD2D::CreateLayout(
+bool TextFormatD2D::CreateLayout(
 	const WCHAR* str, UINT strLen, float maxW, float maxH, bool gdiEmulation)
 {
 	bool strChanged = false;
@@ -84,38 +84,38 @@ void TextFormatD2D::CreateLayout(
 	{
 		CanvasD2D::c_DWFactory->CreateTextLayout(
 			str, strLen, m_TextFormat.Get(), maxW, maxH, m_TextLayout.ReleaseAndGetAddressOf());
+		if (!m_TextLayout) return false;
 
-		if (m_TextLayout)
+		if (gdiEmulation)
 		{
-			if (gdiEmulation)
-			{
-				Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout1;
-				m_TextLayout.As(&textLayout1);
+			Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout1;
+			m_TextLayout.As(&textLayout1);
 
-				const float xOffset = m_TextFormat->GetFontSize() / 6.0f;
-				const float emOffset = xOffset / 24.0f;
-				const DWRITE_TEXT_RANGE range = {0, strLen};
-				textLayout1->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
-			}
+			const float xOffset = m_TextFormat->GetFontSize() / 6.0f;
+			const float emOffset = xOffset / 24.0f;
+			const DWRITE_TEXT_RANGE range = {0, strLen};
+			textLayout1->SetCharacterSpacing(emOffset, emOffset, 0.0f, range);
+		}
 
-			UINT32 lineCount = 0;
-			DWRITE_LINE_METRICS lineMetrics[2];
-			HRESULT hr = m_TextLayout->GetLineMetrics(lineMetrics, _countof(lineMetrics), &lineCount);
-			if (SUCCEEDED(hr))
+		UINT32 lineCount = 0;
+		DWRITE_LINE_METRICS lineMetrics[2];
+		HRESULT hr = m_TextLayout->GetLineMetrics(lineMetrics, _countof(lineMetrics), &lineCount);
+		if (SUCCEEDED(hr))
+		{
+			// If only one line is visible, disable wrapping so that as much text as possible is shown
+			// after trimming.
+			// TODO: Fix this for when more than one line is visible.
+			if (lineCount >= 2 &&
+				lineMetrics[0].isTrimmed &&
+				lineMetrics[1].isTrimmed &&
+				lineMetrics[1].height == 0.0f)
 			{
-				// If only one line is visible, disable wrapping so that as much text as possible is shown
-				// after trimming.
-				// TODO: Fix this for when more than one line is visible.
-				if (lineCount >= 2 &&
-					lineMetrics[0].isTrimmed &&
-					lineMetrics[1].isTrimmed &&
-					lineMetrics[1].height == 0.0f)
-				{
-					m_TextLayout->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
-				}
+				m_TextLayout->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
 			}
 		}
 	}
+
+	return true;
 }
 
 void TextFormatD2D::SetProperties(

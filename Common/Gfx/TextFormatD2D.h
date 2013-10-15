@@ -55,8 +55,8 @@ private:
 
 	// Creates a new DirectWrite text layout if |str| has changed since last call. Since creating
 	// the layout is costly, it is more efficient to keep reusing the text layout until the text
-	// changes.
-	void CreateLayout(const WCHAR* str, UINT strLen, float maxW, float maxH, bool gdiEmulation);
+	// changes. Returns true if the layout is valid for use.
+	bool CreateLayout(const WCHAR* str, UINT strLen, float maxW, float maxH, bool gdiEmulation);
 
 	DWRITE_TEXT_METRICS GetMetrics(
 		const WCHAR* str, UINT strLen, bool gdiEmulation, float maxWidth = 10000.0f);
