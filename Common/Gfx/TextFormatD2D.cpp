@@ -54,6 +54,10 @@ void TextFormatD2D::CreateLayout(
 		m_LastString.assign(str, strLen);
 	}
 
+	// The width and height of a DirectWrite layout must be non-negative.
+	maxW = max(0.0f, maxW);
+	maxH = max(0.0f, maxH);
+
 	if (m_Trimming)
 	{
 		// GDI+ compatibility: If we trimming (i.e. clipping), GDI+ draws text lines even if they
