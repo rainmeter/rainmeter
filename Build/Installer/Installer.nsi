@@ -824,7 +824,7 @@ SkipIniMove:
 		WriteUninstaller "$INSTDIR\uninst.exe"
 	${Else}
 		${IfNot} ${FileExists} "Rainmeter.ini"
-			CopyFiles /SILENT "$INSTDIR\Layouts\illustro default\Rainmeter.ini" "$INSTDIR\Rainmeter.ini"
+			CopyFiles /SILENT "$INSTDIR\Defaults\Layouts\illustro default\Rainmeter.ini" "$INSTDIR\Rainmeter.ini"
 		${EndIf}
 
 		WriteINIStr "$INSTDIR\Rainmeter.ini" "Rainmeter" "Language" "$LANGUAGE"
