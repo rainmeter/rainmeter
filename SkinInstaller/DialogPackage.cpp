@@ -17,6 +17,7 @@
 */
 
 #include "StdAfx.h"
+#include "../Common/StringUtil.h"
 #include "Application.h"
 #include "DialogPackage.h"
 #include "DialogInstall.h"
@@ -37,7 +38,8 @@ DialogPackage::DialogPackage(HWND wnd) : Dialog(wnd),
 	m_LoadLayout(false),
 	m_MergeSkins(false),
 	m_PackagerThread(),
-	m_ZipFile()
+	m_ZipFile(),
+	m_AllowNonAsciiFilenames(false)
 {
 }
 
@@ -263,12 +265,16 @@ bool DialogPackage::CreatePackage()
 	WritePrivateProfileString(L"rmskin", L"MinimumRainmeter", m_MinimumRainmeter.c_str(), tempFile);
 	WritePrivateProfileString(L"rmskin", L"MinimumWindows", m_MinimumWindows.c_str(), tempFile);
 
+	// Only Skin Installer in Rainmeter 3.0.1 support UTF-8 filenames.
+	m_AllowNonAsciiFilenames = DialogInstall::CompareVersions(m_MinimumRainmeter, L"3.0.1") != -1;
+
 	// Create archive and add options file and header bitmap
 	m_ZipFile = zipOpen(ConvertToAscii(m_TargetFile.c_str()).c_str(), APPEND_STATUS_CREATE);
 
 	auto cleanup = [&]()->bool
 	{
 		zipClose(m_ZipFile, nullptr);
+		DeleteFile(m_TargetFile.c_str());
 		return false;
 	};
 
@@ -379,17 +385,30 @@ unsigned __stdcall DialogPackage::PackagerThreadProc(void* pParam)
 
 bool DialogPackage::AddFileToPackage(const WCHAR* filePath, const WCHAR* zipPath)
 {
-	std::string zipPathAscii = ConvertToAscii(zipPath);
-	for (int i = 0, isize = zipPathAscii.length(); i < isize; ++i)
+	std::string zipPathUTF8 = StringUtil::NarrowUTF8(zipPath);
+	for (int i = 0, isize = zipPathUTF8.length(); i < isize; ++i)
 	{
-		if (zipPathAscii[i] == '\\')
+		if ((zipPathUTF8[i] & 0x80) != 0)
 		{
-			zipPathAscii[i] = '/';
+			// UTF-8 lead bit is not zero so the string is non-ASCII.
+			if (!m_AllowNonAsciiFilenames)
+			{
+				return false;
+			}
+		}
+
+		if (zipPathUTF8[i] == '\\')
+		{
+			zipPathUTF8[i] = '/';
 		}
 	}
 
-	int open = zipOpenNewFileInZip(m_ZipFile, zipPathAscii.c_str(), nullptr, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_DEFAULT_COMPRESSION);
-	if (open != ZIP_OK)
+	const uLong ZIP_UTF8_FLAG = 1 << 11;
+	zip_fileinfo fi = {0};
+	if (zipOpenNewFileInZip4(
+		m_ZipFile, zipPathUTF8.c_str(), &fi,
+		nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_DEFAULT_COMPRESSION,
+		0, -MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY, NULL, 0, 0, ZIP_UTF8_FLAG) != ZIP_OK)
 	{
 		return false;
 	}

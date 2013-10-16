@@ -405,11 +405,14 @@ bool DialogInstall::ReadPackage()
 	// Helper to sets buffer with current file name
 	auto getFileInfo = [&]()->bool
 	{
-		char cBuffer[MAX_PATH];
+		char cBuffer[MAX_PATH * 3];
 		unz_file_info ufi;
-		if (unzGetCurrentFileInfo(m_PackageUnzFile, &ufi, cBuffer, MAX_PATH, nullptr, 0, nullptr, 0) == UNZ_OK)
+		if (unzGetCurrentFileInfo(
+				m_PackageUnzFile, &ufi, cBuffer, _countof(cBuffer), nullptr, 0, nullptr, 0) == UNZ_OK)
 		{
-			MultiByteToWideChar(CP_ACP, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
+			const uLong ZIP_UTF8_FLAG = 1 << 11;
+			const DWORD codePage = (ufi.flag & ZIP_UTF8_FLAG) ? CP_UTF8 : CP_ACP;
+			MultiByteToWideChar(codePage, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
 			while (WCHAR* pos = wcschr(buffer, L'/')) *pos = L'\\';
 			return true;
 		}
@@ -713,11 +716,14 @@ bool DialogInstall::InstallPackage()
 	// Helper to sets buffer with current file name
 	auto getFileInfo = [&]()->bool
 	{
-		char cBuffer[MAX_PATH];
+		char cBuffer[MAX_PATH * 3];
 		unz_file_info ufi;
-		if (unzGetCurrentFileInfo(m_PackageUnzFile, &ufi, cBuffer, MAX_PATH, nullptr, 0, nullptr, 0) == UNZ_OK)
+		if (unzGetCurrentFileInfo(
+				m_PackageUnzFile, &ufi, cBuffer, _countof(cBuffer), nullptr, 0, nullptr, 0) == UNZ_OK)
 		{
-			MultiByteToWideChar(CP_ACP, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
+			const uLong ZIP_UTF8_FLAG = 1 << 11;
+			const DWORD codePage = (ufi.flag & ZIP_UTF8_FLAG) ? CP_UTF8 : CP_ACP;
+			MultiByteToWideChar(codePage, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
 			while (WCHAR* pos = wcschr(buffer, L'/')) *pos = L'\\';
 			return true;
 		}

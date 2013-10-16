@@ -121,6 +121,7 @@ private:
 
 	HANDLE m_PackagerThread;
 	zipFile m_ZipFile;
+	bool m_AllowNonAsciiFilenames;
 };
 
 #endif

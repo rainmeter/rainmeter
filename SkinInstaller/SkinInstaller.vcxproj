@@ -122,6 +122,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Common\StringUtil.cpp" />
     <ClCompile Include="..\Library\Dialog.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="DialogInstall.cpp" />

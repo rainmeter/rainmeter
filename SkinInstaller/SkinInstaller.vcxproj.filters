@@ -19,6 +19,9 @@
     <Filter Include="zlib\minizip">
       <UniqueIdentifier>{b726e25d-2977-424a-b45b-8ee60ce6bd49}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{b69ece81-b900-41d8-9ccd-61476261c411}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp">
@@ -80,6 +83,9 @@
     </ClCompile>
     <ClCompile Include="DialogPackage.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\StringUtil.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
