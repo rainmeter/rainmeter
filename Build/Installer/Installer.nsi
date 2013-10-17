@@ -138,7 +138,7 @@ Function .onInit
 			${OrIf} $0 <> $LANGUAGE
 			${AndIf} $NonDefaultLanguage != 1
 				; New install or better match
-				LangDLL::LangDialog "$(^SetupCaption)" "Please select the installer language.$\n$(SELECTLANGUAGE)" AC ${LANGUAGES} ""
+				LangDLL::LangDialog "$(^SetupCaption)" "Please select the installer language.$\n$(SELECTLANGUAGE)" AC ${LANGDLL_PARAMS} ""
 				Pop $0
 				${If} $0 == "cancel"
 					Abort
@@ -206,6 +206,12 @@ Function .onInit
 				SetErrorLevel ${ERROR_WRITEFAIL}
 				Quit
 			${EndIf}
+		${EndIf}
+
+		; If the language was set to a non-existent language, reset it back to English.
+		${WordFind} ",${LANGUAGE_IDS}" ",$LANGUAGE," "E+1{" $0
+		${If} ${Errors}
+			StrCpy $LANGUAGE "1033"
 		${EndIf}
 	${Else}
 		; Exchange settings with user instance
