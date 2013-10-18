@@ -583,42 +583,6 @@ Section
 			${EndIf}
 		${EndIf}
 
-		; Download and install VC++ 2010 redist if required
-		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$InstArc" "Bld"
-		${VersionCompare} "$0" "40219" $1
-		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$InstArc" "Installed"
-		${If} $1 = 2
-		${OrIf} $2 <> 1
-			${If} ${Silent}
-				SetErrorLevel ${ERROR_NOVCREDIST}
-				Quit
-			${EndIf}
-
-			${If} $Install64Bit <> 1
-				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/C/6/D/C6D0FD4E-9E53-4897-9B91-836EBA2AACD3/vcredist_x86.exe" "$PLUGINSDIR\vcredist.exe"
-			${Else}
-				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/A/8/0/A80747C3-41BD-45DF-B505-E9710D2744E0/vcredist_x64.exe" "$PLUGINSDIR\vcredist.exe"
-			${EndIf}
-			Pop $0
-
-			${If} $0 == "success"
-				ExecWait '"$PLUGINSDIR\vcredist.exe" /q /norestart' $0
-				Delete "$PLUGINSDIR\vcredist.exe"
-
-				${If} $0 = 3010
-					SetRebootFlag true
-				${ElseIf} $0 <> 0
-					MessageBox MB_OK|MB_ICONSTOP "$(VCINSTERROR)"
-					Quit
-				${EndIf}
-			${ElseIf} $0 == "cancel"
-				Quit
-			${Else}
-				MessageBox MB_OK|MB_ICONSTOP "$(VCINSTERROR)"
-				Quit
-			${EndIf}
-		${EndIf}
-
 		${IfNot} ${AtLeastWinVista}
 			; Download and install .NET if required
 			ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727" "Install"
