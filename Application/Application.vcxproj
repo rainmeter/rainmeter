@@ -119,6 +119,11 @@ xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\release\Layouts
     <ResourceCompile Include="Application.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Rainmeter.exe.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <None Include="Rainmeter.ico" />
   </ItemGroup>
   <ItemGroup>
