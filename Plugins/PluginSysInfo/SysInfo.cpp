@@ -465,7 +465,15 @@ LPCWSTR GetPlatformName()
 		}
 		else
 		{
-			if (osvi.dwMinorVersion == 2 && osvi.wProductType == VER_NT_WORKSTATION)
+			if (osvi.dwMinorVersion == 3 && osvi.wProductType == VER_NT_WORKSTATION)
+			{
+				return L"Windows 8.1";
+			}
+			else if (osvi.dwMinorVersion == 3 && osvi.wProductType != VER_NT_WORKSTATION)
+			{
+				return L"Windows Server 2012 R2";
+			}
+			else if (osvi.dwMinorVersion == 2 && osvi.wProductType == VER_NT_WORKSTATION)
 			{
 				return L"Windows 8";
 			}
