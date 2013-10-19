@@ -23,21 +23,16 @@
  *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#ifdef WITH_ASF
-
 #include <taglib.h>
 #include <tdebug.h>
+#include "trefcounter.h"
 #include "asfattribute.h"
 #include "asffile.h"
 #include "asfpicture.h"
 
 using namespace TagLib;
 
-class ASF::Picture::PicturePriavte : public RefCounter
+class ASF::Picture::PicturePrivate : public RefCounter
 {
 public:
   bool valid;
@@ -53,7 +48,7 @@ public:
 
 ASF::Picture::Picture()
 {
-  d = new PicturePriavte();
+  d = new PicturePrivate();
   d->valid = true;
 }
 
@@ -151,7 +146,7 @@ void ASF::Picture::parse(const ByteVector& bytes)
     return;
   int pos = 0;
   d->type = (Type)bytes[0]; ++pos;
-  uint dataLen = bytes.mid(pos, 4).toUInt(false); pos+=4;
+  const uint dataLen = bytes.toUInt(pos, false); pos+=4;
 
   const ByteVector nullStringTerminator(2, 0);
 
@@ -182,4 +177,3 @@ ASF::Picture ASF::Picture::fromInvalid()
   return ret;
 }
 
-#endif

@@ -46,6 +46,7 @@ public:
     channels(0),
     version(0),
     bitsPerSample(0),
+    sampleFrames(0),
     file(file),
     streamLength(streamLength) {}
 
@@ -55,6 +56,7 @@ public:
   int channels;
   int version;
   int bitsPerSample;
+  uint sampleFrames;
   File *file;
   long streamLength;
 };
@@ -104,6 +106,11 @@ int APE::Properties::bitsPerSample() const
   return d->bitsPerSample;
 }
 
+TagLib::uint APE::Properties::sampleFrames() const
+{
+  return d->sampleFrames;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // private members
 ////////////////////////////////////////////////////////////////////////////////
@@ -118,10 +125,10 @@ void APE::Properties::read()
 
   // Then we read the header common for all versions of APE
   d->file->seek(offset);
-  ByteVector commonHeader=d->file->readBlock(6);
+  ByteVector commonHeader = d->file->readBlock(6);
   if(!commonHeader.startsWith("MAC "))
     return;
-  d->version = commonHeader.mid(4).toUInt(false);
+  d->version = commonHeader.toUShort(4, false);
 
   if(d->version >= 3980) {
     analyzeCurrent();
@@ -137,7 +144,7 @@ long APE::Properties::findDescriptor()
   long ID3v2OriginalSize = 0;
   bool hasID3v2 = false;
   if(ID3v2Location >= 0) {
-    ID3v2::Tag tag(d->file, ID3v2Location, 0);
+    ID3v2::Tag tag(d->file, ID3v2Location);
     ID3v2OriginalSize = tag.header()->completeTagSize();
     if(tag.header()->tagSize() > 0)
       hasID3v2 = true;
@@ -175,7 +182,7 @@ void APE::Properties::analyzeCurrent()
   // Read the descriptor
   d->file->seek(2, File::Current);
   ByteVector descriptor = d->file->readBlock(44);
-  uint descriptorBytes = descriptor.mid(0,4).toUInt(false);
+  const uint descriptorBytes = descriptor.toUInt(0, false);
 
   if ((descriptorBytes - 52) > 0)
     d->file->seek(descriptorBytes - 52, File::Current);
@@ -184,29 +191,29 @@ void APE::Properties::analyzeCurrent()
   ByteVector header = d->file->readBlock(24);
 
   // Get the APE info
-  d->channels = header.mid(18, 2).toShort(false);
-  d->sampleRate = header.mid(20, 4).toUInt(false);
-  d->bitsPerSample = header.mid(16, 2).toShort(false);
+  d->channels      = header.toShort(18, false);
+  d->sampleRate    = header.toUInt(20, false);
+  d->bitsPerSample = header.toShort(16, false);
   //d->compressionLevel =
 
-  uint totalFrames = header.mid(12, 4).toUInt(false);
-  uint blocksPerFrame = header.mid(4, 4).toUInt(false);
-  uint finalFrameBlocks = header.mid(8, 4).toUInt(false);
-  uint totalBlocks = totalFrames > 0 ? (totalFrames -  1) * blocksPerFrame + finalFrameBlocks : 0;
-  d->length = d->sampleRate > 0 ? totalBlocks / d->sampleRate : 0;
+  const uint totalFrames      = header.toUInt(12, false);
+  const uint blocksPerFrame   = header.toUInt(4, false);
+  const uint finalFrameBlocks = header.toUInt(8, false);
+  d->sampleFrames = totalFrames > 0 ? (totalFrames -  1) * blocksPerFrame + finalFrameBlocks : 0;
+  d->length = d->sampleRate > 0 ? d->sampleFrames / d->sampleRate : 0;
   d->bitrate = d->length > 0 ? ((d->streamLength * 8L) / d->length) / 1000 : 0;
 }
 
 void APE::Properties::analyzeOld()
 {
   ByteVector header = d->file->readBlock(26);
-  uint totalFrames = header.mid(18, 4).toUInt(false);
+  const uint totalFrames = header.toUInt(18, false);
 
   // Fail on 0 length APE files (catches non-finalized APE files)
   if(totalFrames == 0)
     return;
 
-  short compressionLevel = header.mid(0, 2).toShort(false);
+  const short compressionLevel = header.toShort(0, false);
   uint blocksPerFrame;
   if(d->version >= 3950)
     blocksPerFrame = 73728 * 4;
@@ -214,10 +221,11 @@ void APE::Properties::analyzeOld()
     blocksPerFrame = 73728;
   else
     blocksPerFrame = 9216;
-  d->channels = header.mid(4, 2).toShort(false);
-  d->sampleRate = header.mid(6, 4).toUInt(false);
-  uint finalFrameBlocks = header.mid(22, 4).toUInt(false);
-  uint totalBlocks = totalFrames > 0 ? (totalFrames - 1) * blocksPerFrame + finalFrameBlocks : 0;
+  d->channels   = header.toShort(4, false);
+  d->sampleRate = header.toUInt(6, false);
+  const uint finalFrameBlocks = header.toUInt(22, false);
+  const uint totalBlocks 
+    = totalFrames > 0 ? (totalFrames - 1) * blocksPerFrame + finalFrameBlocks : 0;
   d->length = totalBlocks / d->sampleRate;
   d->bitrate = d->length > 0 ? ((d->streamLength * 8L) / d->length) / 1000 : 0;
 }

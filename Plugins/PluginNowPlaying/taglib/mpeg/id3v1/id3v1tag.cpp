@@ -58,6 +58,10 @@ const ID3v1::StringHandler *ID3v1::Tag::TagPrivate::stringHandler = &defaultStri
 // StringHandler implementation
 ////////////////////////////////////////////////////////////////////////////////
 
+StringHandler::StringHandler()
+{
+}
+
 String ID3v1::StringHandler::parse(const ByteVector &data) const
 {
   return String(data, String::Latin1).stripWhiteSpace();
@@ -178,22 +182,32 @@ void ID3v1::Tag::setGenre(const String &s)
   d->genre = ID3v1::genreIndex(s);
 }
 
-void ID3v1::Tag::setYear(uint i)
+void ID3v1::Tag::setYear(TagLib::uint i)
 {
   d->year = i > 0 ? String::number(i) : String::null;
 }
 
-void ID3v1::Tag::setTrack(uint i)
+void ID3v1::Tag::setTrack(TagLib::uint i)
 {
   d->track = i < 256 ? i : 0;
 }
 
+TagLib::uint ID3v1::Tag::genreNumber() const
+{
+  return d->genre;
+}
+
+void ID3v1::Tag::setGenreNumber(TagLib::uint i)
+{
+  d->genre = i < 256 ? i : 255;
+}
+
 void ID3v1::Tag::setStringHandler(const StringHandler *handler)
 {
-  if(TagPrivate::stringHandler != &defaultStringHandler)
-    delete TagPrivate::stringHandler;
-
-  TagPrivate::stringHandler = handler;
+  if (handler)
+    TagPrivate::stringHandler = handler;
+  else
+    TagPrivate::stringHandler = &defaultStringHandler;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

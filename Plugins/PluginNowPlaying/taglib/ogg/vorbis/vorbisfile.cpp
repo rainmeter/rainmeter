@@ -27,8 +27,10 @@
 
 #include <tstring.h>
 #include <tdebug.h>
+#include <tpropertymap.h>
 
 #include "vorbisfile.h"
+
 
 using namespace TagLib;
 
@@ -65,7 +67,16 @@ Vorbis::File::File(FileName file, bool readProperties,
                    Properties::ReadStyle propertiesStyle) : Ogg::File(file)
 {
   d = new FilePrivate;
-  read(readProperties, propertiesStyle);
+  if(isOpen())
+    read(readProperties, propertiesStyle);
+}
+
+Vorbis::File::File(IOStream *stream, bool readProperties,
+                   Properties::ReadStyle propertiesStyle) : Ogg::File(stream)
+{
+  d = new FilePrivate;
+  if(isOpen())
+    read(readProperties, propertiesStyle);
 }
 
 Vorbis::File::~File()
@@ -76,6 +87,16 @@ Vorbis::File::~File()
 Ogg::XiphComment *Vorbis::File::tag() const
 {
   return d->comment;
+}
+
+PropertyMap Vorbis::File::properties() const
+{
+  return d->comment->properties();
+}
+
+PropertyMap Vorbis::File::setProperties(const PropertyMap &properties)
+{
+  return d->comment->setProperties(properties);
 }
 
 Vorbis::Properties *Vorbis::File::audioProperties() const

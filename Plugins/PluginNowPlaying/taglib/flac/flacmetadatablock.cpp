@@ -23,17 +23,13 @@
  *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include <taglib.h>
 #include <tdebug.h>
 #include "flacmetadatablock.h"
 
 using namespace TagLib;
 
-class FLAC::MetadataBlock::MetadataBlockPrivate 
+class FLAC::MetadataBlock::MetadataBlockPrivate
 {
 public:
   MetadataBlockPrivate() {}

@@ -120,17 +120,17 @@ namespace TagLib {
       virtual void setComment(const String &s);
 
       /*!
-       * Sets the rating to \a s. 
+       * Sets the rating to \a s.
        */
       virtual void setRating(const String &s);
 
       /*!
-       * Sets the copyright to \a s. 
+       * Sets the copyright to \a s.
        */
       virtual void setCopyright(const String &s);
 
       /*!
-       * Sets the genre to \a s. 
+       * Sets the genre to \a s.
        */
       virtual void setGenre(const String &s);
 
@@ -175,6 +175,10 @@ namespace TagLib {
        * with the \a key is already present, it will be added to the list.
        */
       void addAttribute(const String &name, const Attribute &attribute);
+
+      PropertyMap properties() const;
+      void removeUnsupportedProperties(const StringList& properties);
+      PropertyMap setProperties(const PropertyMap &properties);
 
     private:
 

@@ -98,7 +98,7 @@ void PrivateFrame::parseFields(const ByteVector &data)
   }
 
   // Owner identifier is assumed to be Latin1
-  
+
   const int byteAlign =  1;
   const int endOfOwner = data.find(textDelimiter(String::Latin1), 0, byteAlign);
 

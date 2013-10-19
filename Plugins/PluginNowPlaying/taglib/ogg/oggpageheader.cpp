@@ -255,9 +255,9 @@ void Ogg::PageHeader::read()
   d->firstPageOfStream = flags.test(1);
   d->lastPageOfStream = flags.test(2);
 
-  d->absoluteGranularPosition = data.mid(6, 8).toLongLong(false);
-  d->streamSerialNumber = data.mid(14, 4).toUInt(false);
-  d->pageSequenceNumber = data.mid(18, 4).toUInt(false);
+  d->absoluteGranularPosition = data.toLongLong(6, false);
+  d->streamSerialNumber = data.toUInt(14, false);
+  d->pageSequenceNumber = data.toUInt(18, false);
 
   // Byte number 27 is the number of page segments, which is the only variable
   // length portion of the page header.  After reading the number of page

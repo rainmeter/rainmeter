@@ -27,7 +27,6 @@
 #define TAGLIB_MAP_H
 
 #include <map>
-using namespace std;
 
 #include "taglib.h"
 

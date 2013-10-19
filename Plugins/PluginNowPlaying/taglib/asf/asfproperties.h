@@ -54,12 +54,14 @@ namespace TagLib {
       virtual int bitrate() const;
       virtual int sampleRate() const;
       virtual int channels() const;
+      bool isEncrypted() const;
 
 #ifndef DO_NOT_DOCUMENT
       void setLength(int value);
       void setBitrate(int value);
       void setSampleRate(int value);
       void setChannels(int value);
+      void setEncrypted(bool value);
 #endif
 
     private:
@@ -71,4 +73,4 @@ namespace TagLib {
 
 }
 
-#endif 
+#endif

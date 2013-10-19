@@ -123,8 +123,7 @@ namespace TagLib {
       FrameFactory();
 
       /*!
-       * Destroys the frame factory.  In most cases this will never be called (as
-       * is typical of singletons).
+       * Destroys the frame factory.
        */
       virtual ~FrameFactory();
 
@@ -155,7 +154,7 @@ namespace TagLib {
 
       void updateGenre(TextIdentificationFrame *frame) const;
 
-      static FrameFactory *factory;
+      static FrameFactory factory;
 
       class FrameFactoryPrivate;
       FrameFactoryPrivate *d;

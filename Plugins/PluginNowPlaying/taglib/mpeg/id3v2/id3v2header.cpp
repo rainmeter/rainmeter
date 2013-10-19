@@ -164,7 +164,7 @@ ByteVector Header::render() const
   // add the version number -- we always render a 2.4.0 tag regardless of what
   // the tag originally was.
 
-  v.append(char(4));
+  v.append(char(majorVersion()));
   v.append(char(0));
 
   // Currently we don't actually support writing extended headers, footers or

@@ -49,7 +49,14 @@ TagLib::uint SynchData::toUInt(const ByteVector &data)
     // Invalid data; assume this was created by some buggy software that just
     // put normal integers here rather than syncsafe ones, and try it that
     // way.
-    sum = (data.size() > 4) ? data.mid(0, 4).toUInt() : data.toUInt();
+    if(data.size() >= 4) {
+      sum = data.toUInt(0, true);
+    }
+    else {
+      ByteVector tmp(data);
+      tmp.resize(4);
+      sum = tmp.toUInt(0, true);
+    }
   }
 
   return sum;

@@ -1,7 +1,7 @@
-/**************************************************************************
-    copyright            : (C) 2009 by Lukáš Lalinský
-    email                : lalinsky@gmail.com
- **************************************************************************/
+/***************************************************************************
+    copyright            : (C) 2013 by Tsuda Kageyu
+    email                : tsuda.kageyu@gmail.com
+ ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
@@ -23,49 +23,63 @@
  *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
-#ifndef TAGLIB_MP4COVERART_H
-#define TAGLIB_MP4COVERART_H
+#include "tdebuglistener.h"
 
-#include "tlist.h"
-#include "tbytevector.h"
-#include "taglib_export.h"
+#include <iostream>
+#include <bitset>
 
-namespace TagLib {
+#ifdef _WIN32
+# include <windows.h>
+#endif
 
-  namespace MP4 {
+using namespace TagLib;
 
-    class TAGLIB_EXPORT CoverArt
+namespace
+{
+  class DefaultListener : public DebugListener
+  {
+  public:
+    virtual void printMessage(const String &msg)
     {
-    public:
-      /*!
-       * This describes the image type.
-       */
-      enum Format {
-        JPEG = 0x0D,
-        PNG  = 0x0E
-      };
+#ifdef _WIN32
 
-      CoverArt(Format format, const ByteVector &data);
-      ~CoverArt();
+      const wstring wstr = msg.toWString();
+      const int len = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
+      if(len != 0) {
+        std::vector<char> buf(len);
+        WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, &buf[0], len, NULL, NULL);
 
-      CoverArt(const CoverArt &item);
-      CoverArt &operator=(const CoverArt &item);
+        std::cerr << std::string(&buf[0]);
+      }
 
-      //! Format of the image
-      Format format() const;
+#else
 
-      //! The image data
-      ByteVector data() const;
+      std::cerr << msg;
 
-    private:
-      class CoverArtPrivate;
-      CoverArtPrivate *d;
-    };
+#endif 
+    }
+  };
 
-    typedef List<CoverArt> CoverArtList;
-
-  }
-
+  DefaultListener defaultListener;
 }
 
-#endif
+namespace TagLib
+{
+  DebugListener *debugListener = &defaultListener;
+
+  DebugListener::DebugListener()
+  {
+  }
+
+  DebugListener::~DebugListener()
+  {
+  }
+
+  void setDebugListener(DebugListener *listener)
+  {
+    if(listener)
+      debugListener = listener;
+    else
+      debugListener = &defaultListener;
+  }
+}

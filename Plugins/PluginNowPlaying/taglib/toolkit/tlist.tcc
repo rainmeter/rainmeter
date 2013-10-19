@@ -24,6 +24,7 @@
  ***************************************************************************/
 
 #include <algorithm>
+#include "trefcounter.h"
 
 namespace TagLib {
 
@@ -38,7 +39,8 @@ namespace TagLib {
 // A base for the generic and specialized private class types.  New
 // non-templatized members should be added here.
 
-class ListPrivateBase : public RefCounter
+// BIC change to RefCounter
+class ListPrivateBase : public RefCounterOld
 {
 public:
   ListPrivateBase() : autoDelete(false) {}
@@ -298,6 +300,12 @@ template <class T>
 bool List<T>::operator==(const List<T> &l) const
 {
   return d->list == l.d->list;
+}
+
+template <class T>
+bool List<T>::operator!=(const List<T> &l) const
+{
+  return d->list != l.d->list;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

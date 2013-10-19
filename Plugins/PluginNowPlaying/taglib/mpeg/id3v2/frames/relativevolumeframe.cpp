@@ -191,7 +191,7 @@ void RelativeVolumeFrame::parseFields(const ByteVector &data)
 
     ChannelData &channel = d->channels[type];
 
-    channel.volumeAdjustment = data.mid(pos, 2).toShort();
+    channel.volumeAdjustment = data.toShort(static_cast<uint>(pos));
     pos += 2;
 
     channel.peakVolume.bitsRepresentingPeak = data[pos];

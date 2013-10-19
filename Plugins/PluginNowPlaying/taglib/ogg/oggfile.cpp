@@ -213,6 +213,11 @@ Ogg::File::File(FileName file) : TagLib::File(file)
   d = new FilePrivate;
 }
 
+Ogg::File::File(IOStream *stream) : TagLib::File(stream)
+{
+  d = new FilePrivate;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // private members
 ////////////////////////////////////////////////////////////////////////////////
@@ -276,8 +281,8 @@ void Ogg::File::writePageGroup(const List<int> &thePageGroup)
     return;
 
 
-  // pages in the pageGroup and packets must be equivalent 
-  // (originalSize and size of packets would not work together), 
+  // pages in the pageGroup and packets must be equivalent
+  // (originalSize and size of packets would not work together),
   // therefore we sometimes have to add pages to the group
   List<int> pageGroup(thePageGroup);
   while (!d->pages[pageGroup.back()]->header()->lastPacketCompleted()) {
@@ -336,7 +341,7 @@ void Ogg::File::writePageGroup(const List<int> &thePageGroup)
 
   if (pages.back()->header()->pageSequenceNumber() != pageGroup.back()) {
 
-    // TODO: change the internal data structure so that we don't need to hold the 
+    // TODO: change the internal data structure so that we don't need to hold the
     // complete file in memory (is unavoidable at the moment)
 
     // read the complete stream

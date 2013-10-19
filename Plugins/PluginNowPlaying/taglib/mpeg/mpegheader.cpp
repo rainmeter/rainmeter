@@ -28,6 +28,7 @@
 #include <tbytevector.h>
 #include <tstring.h>
 #include <tdebug.h>
+#include "trefcounter.h"
 
 #include "mpegheader.h"
 

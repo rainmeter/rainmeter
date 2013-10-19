@@ -136,7 +136,7 @@ void AttachedPictureFrame::parseFields(const ByteVector &data)
   int pos = 1;
 
   d->mimeType = readStringField(data, String::Latin1, &pos);
-  /* Now we need at least two more bytes available */	
+  /* Now we need at least two more bytes available */
   if (uint(pos) + 1 >= data.size()) {
     debug("Truncated picture frame.");
     return;
@@ -152,7 +152,7 @@ ByteVector AttachedPictureFrame::renderFields() const
 {
   ByteVector data;
 
-  String::Type encoding = checkEncoding(d->description, d->textEncoding);
+  String::Type encoding = checkTextEncoding(d->description, d->textEncoding);
 
   data.append(char(encoding));
   data.append(d->mimeType.data(String::Latin1));

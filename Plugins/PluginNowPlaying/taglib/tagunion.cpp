@@ -24,6 +24,7 @@
  ***************************************************************************/
 
 #include "tagunion.h"
+#include "tstringlist.h"
 
 using namespace TagLib;
 

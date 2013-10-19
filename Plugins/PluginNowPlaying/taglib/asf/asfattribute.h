@@ -70,7 +70,7 @@ namespace TagLib
       /*!
        * Constructs an attribute with \a key and a BytesType \a value.
        */
-      Attribute(const ByteVector &value);      
+      Attribute(const ByteVector &value);
 
       /*!
        * Constructs an attribute with \a key and a Picture \a value.

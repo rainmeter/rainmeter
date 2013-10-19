@@ -227,6 +227,11 @@ namespace TagLib {
      */
     bool operator==(const List<T> &l) const;
 
+    /*!
+     * Compares this list with \a l and returns true if the lists differ.
+     */
+    bool operator!=(const List<T> &l) const;
+
   protected:
     /*
      * If this List is being shared via implicit sharing, do a deep copy of the

@@ -18,20 +18,19 @@
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_USRDLL;HAVE_CONFIG_H;PluginNowPlaying_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <DisableSpecificWarnings>4018;4090;4114;4351;4786;4800;4996</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>.\sha2;.\taglib;.\taglib\toolkit;.\taglib\mpeg\id3v2\frames;.\taglib\ogg;.\taglib\asf;.\taglib\mp4;.\taglib\ogg\vorbis;.\taglib\ogg\flac;.\taglib\ogg\speex;.\taglib\riff;.\taglib\riff\wav;.\taglib\riff\aiff;.\taglib\flac;.\taglib\mpeg;.\taglib\mpeg\id3v1;.\taglib\mpeg\id3v2;.\taglib\mpc;.\taglib\ape;.\taglib\trueaudio;.\taglib\wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_USRDLL;PluginNowPlaying_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>./taglib;./taglib/toolkit;./taglib/asf;./taglib/mpeg;./taglib/ogg;./taglib/ogg/flac;./taglib/flac;./taglib/mpc;./taglib/mp4;./taglib/ogg/vorbis;./taglib/mpeg/id3v2;./taglib/mpeg/id3v2/frames;./taglib/mpeg/id3v1;./taglib/ape;./taglib/wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4351;4800;4273;4251</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Psapi.lib;WinInet.lib;comsuppwd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Psapi.lib;WinInet.lib;comsuppwd.lib;D:\Biru\Downloads\taglib-1.9.1.tar\taglib-1.9.1\taglib-1.9.1\taglib\Debug\tag.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_USRDLL;HAVE_CONFIG_H;NowPlaying_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <DisableSpecificWarnings>4018;4090;4114;4351;4786;4800;4996</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>.\sha2;.\taglib;.\taglib\toolkit;.\taglib\mpeg\id3v2\frames;.\taglib\ogg;.\taglib\asf;.\taglib\mp4;.\taglib\ogg\vorbis;.\taglib\ogg\flac;.\taglib\ogg\speex;.\taglib\riff;.\taglib\riff\wav;.\taglib\riff\aiff;.\taglib\flac;.\taglib\mpeg;.\taglib\mpeg\id3v1;.\taglib\mpeg\id3v2;.\taglib\mpc;.\taglib\ape;.\taglib\trueaudio;.\taglib\wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_USRDLL;NowPlaying_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>./taglib;./taglib/toolkit;./taglib/asf;./taglib/mpeg;./taglib/ogg;./taglib/ogg/flac;./taglib/flac;./taglib/mpc;./taglib/mp4;./taglib/ogg/vorbis;./taglib/mpeg/id3v2;./taglib/mpeg/id3v2/frames;./taglib/mpeg/id3v1;./taglib/ape;./taglib/wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>Psapi.lib;WinInet.lib;comsuppwd.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -40,9 +39,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_USRDLL;HAVE_CONFIG_H;PluginNowPlaying_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <DisableSpecificWarnings>4018;4090;4099;4114;4244;4267;4309;4351;4390;4530;4786;4800;4996</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>.\sha2;.\taglib;.\taglib\toolkit;.\taglib\mpeg\id3v2\frames;.\taglib\ogg;.\taglib\asf;.\taglib\mp4;.\taglib\ogg\vorbis;.\taglib\ogg\flac;.\taglib\ogg\speex;.\taglib\riff;.\taglib\riff\wav;.\taglib\riff\aiff;.\taglib\flac;.\taglib\mpeg;.\taglib\mpeg\id3v1;.\taglib\mpeg\id3v2;.\taglib\mpc;.\taglib\ape;.\taglib\trueaudio;.\taglib\wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_USRDLL;PluginNowPlaying_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>./taglib;./taglib/toolkit;./taglib/asf;./taglib/mpeg;./taglib/ogg;./taglib/ogg/flac;./taglib/flac;./taglib/mpc;./taglib/mp4;./taglib/ogg/vorbis;./taglib/mpeg/id3v2;./taglib/mpeg/id3v2/frames;./taglib/mpeg/id3v1;./taglib/ape;./taglib/wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -53,11 +51,11 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_USRDLL;HAVE_CONFIG_H;PluginNowPlaying_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <DisableSpecificWarnings>4018;4090;4099;4114;4244;4267;4309;4351;4390;4530;4786;4800;4996</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>.\sha2;.\taglib;.\taglib\toolkit;.\taglib\mpeg\id3v2\frames;.\taglib\ogg;.\taglib\asf;.\taglib\mp4;.\taglib\ogg\vorbis;.\taglib\ogg\flac;.\taglib\ogg\speex;.\taglib\riff;.\taglib\riff\wav;.\taglib\riff\aiff;.\taglib\flac;.\taglib\mpeg;.\taglib\mpeg\id3v1;.\taglib\mpeg\id3v2;.\taglib\mpc;.\taglib\ape;.\taglib\trueaudio;.\taglib\wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_USRDLL;PluginNowPlaying_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>./taglib;./taglib/toolkit;./taglib/asf;./taglib/mpeg;./taglib/ogg;./taglib/ogg/flac;./taglib/flac;./taglib/mpc;./taglib/mp4;./taglib/ogg/vorbis;./taglib/mpeg/id3v2;./taglib/mpeg/id3v2/frames;./taglib/mpeg/id3v1;./taglib/ape;./taglib/wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DisableSpecificWarnings>4351;4800;4267</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalDependencies>Psapi.lib;WinInet.lib;comsuppw.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -65,6 +63,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\Downloads\taglib-1.9.1.tar\taglib-1.9.1\taglib-1.9.1\taglib\toolkit\tpropertymap.cpp" />
     <ClCompile Include="Cover.cpp" />
     <ClCompile Include="Internet.cpp" />
     <ClCompile Include="Lyrics.cpp" />
@@ -79,75 +78,9 @@
     <ClCompile Include="PlayerWMP.cpp" />
     <ClCompile Include="SDKs\iTunes\iTunesCOMInterface_i.c" />
     <ClCompile Include="StdAfx.cpp" />
-    <ClCompile Include="taglib\ape\apefile.cpp" />
-    <ClCompile Include="taglib\ape\apefooter.cpp" />
-    <ClCompile Include="taglib\ape\apeitem.cpp" />
-    <ClCompile Include="taglib\ape\apeproperties.cpp" />
-    <ClCompile Include="taglib\ape\apetag.cpp" />
-    <ClCompile Include="taglib\asf\asfattribute.cpp" />
-    <ClCompile Include="taglib\asf\asffile.cpp" />
-    <ClCompile Include="taglib\asf\asfpicture.cpp" />
-    <ClCompile Include="taglib\asf\asfproperties.cpp" />
-    <ClCompile Include="taglib\asf\asftag.cpp" />
-    <ClCompile Include="taglib\audioproperties.cpp" />
-    <ClCompile Include="taglib\fileref.cpp" />
-    <ClCompile Include="taglib\flac\flacfile.cpp" />
-    <ClCompile Include="taglib\flac\flacmetadatablock.cpp" />
-    <ClCompile Include="taglib\flac\flacpicture.cpp" />
-    <ClCompile Include="taglib\flac\flacproperties.cpp" />
-    <ClCompile Include="taglib\flac\flacunknownmetadatablock.cpp" />
-    <ClCompile Include="taglib\mp4\mp4atom.cpp" />
-    <ClCompile Include="taglib\mp4\mp4coverart.cpp" />
-    <ClCompile Include="taglib\mp4\mp4file.cpp" />
-    <ClCompile Include="taglib\mp4\mp4item.cpp" />
-    <ClCompile Include="taglib\mp4\mp4properties.cpp" />
-    <ClCompile Include="taglib\mp4\mp4tag.cpp" />
-    <ClCompile Include="taglib\mpc\mpcfile.cpp" />
-    <ClCompile Include="taglib\mpc\mpcproperties.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v1\id3v1genres.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v1\id3v1tag.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\frames\attachedpictureframe.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\frames\commentsframe.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\frames\generalencapsulatedobjectframe.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\frames\popularimeterframe.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\frames\privateframe.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\frames\relativevolumeframe.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\frames\textidentificationframe.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\frames\uniquefileidentifierframe.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\frames\unknownframe.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\frames\unsynchronizedlyricsframe.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\frames\urllinkframe.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\id3v2extendedheader.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\id3v2footer.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\id3v2frame.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\id3v2framefactory.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\id3v2header.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\id3v2synchdata.cpp" />
-    <ClCompile Include="taglib\mpeg\id3v2\id3v2tag.cpp" />
-    <ClCompile Include="taglib\mpeg\mpegfile.cpp" />
-    <ClCompile Include="taglib\mpeg\mpegheader.cpp" />
-    <ClCompile Include="taglib\mpeg\mpegproperties.cpp" />
-    <ClCompile Include="taglib\mpeg\xingheader.cpp" />
-    <ClCompile Include="taglib\ogg\flac\oggflacfile.cpp" />
-    <ClCompile Include="taglib\ogg\oggfile.cpp" />
-    <ClCompile Include="taglib\ogg\oggpage.cpp" />
-    <ClCompile Include="taglib\ogg\oggpageheader.cpp" />
-    <ClCompile Include="taglib\ogg\vorbis\vorbisfile.cpp" />
-    <ClCompile Include="taglib\ogg\vorbis\vorbisproperties.cpp" />
-    <ClCompile Include="taglib\ogg\xiphcomment.cpp" />
-    <ClCompile Include="taglib\tag.cpp" />
-    <ClCompile Include="taglib\tagunion.cpp" />
-    <ClCompile Include="taglib\toolkit\tbytevector.cpp" />
-    <ClCompile Include="taglib\toolkit\tbytevectorlist.cpp" />
-    <ClCompile Include="taglib\toolkit\tdebug.cpp" />
-    <ClCompile Include="taglib\toolkit\tfile.cpp" />
-    <ClCompile Include="taglib\toolkit\tstring.cpp" />
-    <ClCompile Include="taglib\toolkit\tstringlist.cpp" />
-    <ClCompile Include="taglib\toolkit\unicode.cpp" />
-    <ClCompile Include="taglib\wavpack\wavpackfile.cpp" />
-    <ClCompile Include="taglib\wavpack\wavpackproperties.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\Downloads\taglib-1.9.1.tar\taglib-1.9.1\taglib-1.9.1\taglib\toolkit\tpropertymap.h" />
     <ClInclude Include="Cover.h" />
     <ClInclude Include="Internet.h" />
     <ClInclude Include="Lyrics.h" />
@@ -168,6 +101,139 @@
     <ClInclude Include="SDKs\Winamp\wa_hotkeys.h" />
     <ClInclude Include="SDKs\Winamp\wa_ipc.h" />
     <ClInclude Include="StdAfx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="taglib\tag.h" />
+    <ClInclude Include="taglib\fileref.h" />
+    <ClInclude Include="taglib\audioproperties.h" />
+    <ClInclude Include="taglib\taglib_export.h" />
+    <ClInclude Include="taglib\toolkit\taglib.h" />
+    <ClInclude Include="taglib\toolkit\tstring.h" />
+    <ClInclude Include="taglib\toolkit\tlist.h" />
+    <ClInclude Include="taglib\toolkit\tstringlist.h" />
+    <ClInclude Include="taglib\toolkit\tbytevector.h" />
+    <ClInclude Include="taglib\toolkit\tbytevectorlist.h" />
+    <ClInclude Include="taglib\toolkit\tbytevectorstream.h" />
+    <ClInclude Include="taglib\toolkit\tiostream.h" />
+    <ClInclude Include="taglib\toolkit\tfile.h" />
+    <ClInclude Include="taglib\toolkit\tfilestream.h" />
+    <ClInclude Include="taglib\toolkit\tmap.h" />
+    <ClInclude Include="taglib\toolkit\trefcounter.h" />
+    <ClInclude Include="taglib\toolkit\tdebuglistener.h" />
+    <ClInclude Include="taglib\mpeg\mpegfile.h" />
+    <ClInclude Include="taglib\mpeg\mpegproperties.h" />
+    <ClInclude Include="taglib\mpeg\mpegheader.h" />
+    <ClInclude Include="taglib\mpeg\xingheader.h" />
+    <ClInclude Include="taglib\mpeg\id3v1\id3v1tag.h" />
+    <ClInclude Include="taglib\mpeg\id3v1\id3v1genres.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\id3v2extendedheader.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\id3v2frame.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\id3v2header.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\id3v2synchdata.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\id3v2footer.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\id3v2framefactory.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\id3v2tag.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\frames\attachedpictureframe.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\frames\commentsframe.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\frames\generalencapsulatedobjectframe.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\frames\ownershipframe.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\frames\popularimeterframe.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\frames\privateframe.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\frames\relativevolumeframe.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\frames\textidentificationframe.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\frames\uniquefileidentifierframe.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\frames\unknownframe.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\frames\unsynchronizedlyricsframe.h" />
+    <ClInclude Include="taglib\mpeg\id3v2\frames\urllinkframe.h" />
+    <ClInclude Include="taglib\ogg\oggfile.h" />
+    <ClInclude Include="taglib\ogg\oggpage.h" />
+    <ClInclude Include="taglib\ogg\oggpageheader.h" />
+    <ClInclude Include="taglib\ogg\xiphcomment.h" />
+    <ClInclude Include="taglib\ogg\vorbis\vorbisfile.h" />
+    <ClInclude Include="taglib\ogg\vorbis\vorbisproperties.h" />
+    <ClInclude Include="taglib\ogg\flac\oggflacfile.h" />
+    <ClInclude Include="taglib\flac\flacfile.h" />
+    <ClInclude Include="taglib\flac\flacpicture.h" />
+    <ClInclude Include="taglib\flac\flacproperties.h" />
+    <ClInclude Include="taglib\flac\flacmetadatablock.h" />
+    <ClInclude Include="taglib\ape\apefile.h" />
+    <ClInclude Include="taglib\ape\apeproperties.h" />
+    <ClInclude Include="taglib\ape\apetag.h" />
+    <ClInclude Include="taglib\ape\apefooter.h" />
+    <ClInclude Include="taglib\ape\apeitem.h" />
+    <ClInclude Include="taglib\mpc\mpcfile.h" />
+    <ClInclude Include="taglib\mpc\mpcproperties.h" />
+    <ClInclude Include="taglib\riff\wav\infotag.h" />
+    <ClInclude Include="taglib\asf\asffile.h" />
+    <ClInclude Include="taglib\asf\asfproperties.h" />
+    <ClInclude Include="taglib\asf\asftag.h" />
+    <ClInclude Include="taglib\asf\asfattribute.h" />
+    <ClInclude Include="taglib\asf\asfpicture.h" />
+    <ClCompile Include="taglib\mpeg\mpegfile.cpp" />
+    <ClCompile Include="taglib\mpeg\mpegproperties.cpp" />
+    <ClCompile Include="taglib\mpeg\mpegheader.cpp" />
+    <ClCompile Include="taglib\mpeg\xingheader.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v1\id3v1tag.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v1\id3v1genres.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\id3v2framefactory.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\id3v2synchdata.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\id3v2tag.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\id3v2header.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\id3v2frame.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\id3v2footer.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\id3v2extendedheader.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\frames\attachedpictureframe.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\frames\commentsframe.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\frames\generalencapsulatedobjectframe.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\frames\ownershipframe.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\frames\popularimeterframe.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\frames\privateframe.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\frames\relativevolumeframe.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\frames\textidentificationframe.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\frames\uniquefileidentifierframe.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\frames\unknownframe.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\frames\unsynchronizedlyricsframe.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\frames\urllinkframe.cpp" />
+    <ClCompile Include="taglib\ogg\oggfile.cpp" />
+    <ClCompile Include="taglib\ogg\oggpage.cpp" />
+    <ClCompile Include="taglib\ogg\oggpageheader.cpp" />
+    <ClCompile Include="taglib\ogg\xiphcomment.cpp" />
+    <ClCompile Include="taglib\ogg\vorbis\vorbisfile.cpp" />
+    <ClCompile Include="taglib\ogg\vorbis\vorbisproperties.cpp" />
+    <ClCompile Include="taglib\ogg\flac\oggflacfile.cpp" />
+    <ClCompile Include="taglib\mpc\mpcfile.cpp" />
+    <ClCompile Include="taglib\mpc\mpcproperties.cpp" />
+    <ClCompile Include="taglib\ape\apetag.cpp" />
+    <ClCompile Include="taglib\ape\apefooter.cpp" />
+    <ClCompile Include="taglib\ape\apeitem.cpp" />
+    <ClCompile Include="taglib\ape\apefile.cpp" />
+    <ClCompile Include="taglib\ape\apeproperties.cpp" />
+    <ClCompile Include="taglib\toolkit\tstring.cpp" />
+    <ClCompile Include="taglib\toolkit\tstringlist.cpp" />
+    <ClCompile Include="taglib\toolkit\tbytevector.cpp" />
+    <ClCompile Include="taglib\toolkit\tbytevectorlist.cpp" />
+    <ClCompile Include="taglib\toolkit\tbytevectorstream.cpp" />
+    <ClCompile Include="taglib\toolkit\tiostream.cpp" />
+    <ClCompile Include="taglib\toolkit\tfile.cpp" />
+    <ClCompile Include="taglib\toolkit\tfilestream.cpp" />
+    <ClCompile Include="taglib\toolkit\tdebug.cpp" />
+    <ClCompile Include="taglib\toolkit\trefcounter.cpp" />
+    <ClCompile Include="taglib\toolkit\tdebuglistener.cpp" />
+    <ClCompile Include="taglib\toolkit\unicode.cpp" />
+    <ClCompile Include="taglib\flac\flacfile.cpp" />
+    <ClCompile Include="taglib\flac\flacpicture.cpp" />
+    <ClCompile Include="taglib\flac\flacproperties.cpp" />
+    <ClCompile Include="taglib\flac\flacmetadatablock.cpp" />
+    <ClCompile Include="taglib\flac\flacunknownmetadatablock.cpp" />
+    <ClCompile Include="taglib\asf\asftag.cpp" />
+    <ClCompile Include="taglib\asf\asffile.cpp" />
+    <ClCompile Include="taglib\asf\asfproperties.cpp" />
+    <ClCompile Include="taglib\asf\asfattribute.cpp" />
+    <ClCompile Include="taglib\asf\asfpicture.cpp" />
+    <ClCompile Include="taglib\tag.cpp" />
+    <ClCompile Include="taglib\tagunion.cpp" />
+    <ClCompile Include="taglib\fileref.cpp" />
+    <ClCompile Include="taglib\audioproperties.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PluginNowPlaying.rc" />

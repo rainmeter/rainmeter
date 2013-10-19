@@ -70,9 +70,9 @@ namespace TagLib {
        */
       const PageHeader *header() const;
 
-      /*! 
+      /*!
        * Returns a copy of the page with \a sequenceNumber set as sequence number.
-       * 
+       *
        * \see header()
        * \see PageHeader::setPageSequenceNumber()
        */

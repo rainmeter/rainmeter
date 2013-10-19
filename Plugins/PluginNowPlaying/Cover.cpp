@@ -79,13 +79,6 @@ bool CCover::GetEmbedded(const TagLib::FileRef& fr, const std::wstring& target)
 			found = ExtractAPE(file->APETag(), target);
 		}
 	}
-	else if (TagLib::MP4::File* file = dynamic_cast<TagLib::MP4::File*>(fr.file()))
-	{
-		if (file->tag())
-		{
-			found = ExtractMP4(file, target);
-		}
-	}
 	else if (TagLib::FLAC::File* file = dynamic_cast<TagLib::FLAC::File*>(fr.file()))
 	{
 		found = ExtractFLAC(file, target);
@@ -107,13 +100,6 @@ bool CCover::GetEmbedded(const TagLib::FileRef& fr, const std::wstring& target)
 		}
 	}
 	else if (TagLib::MPC::File* file = dynamic_cast<TagLib::MPC::File*>(fr.file()))
-	{
-		if (file->APETag())
-		{
-			found = ExtractAPE(file->APETag(), target);
-		}
-	}
-	else if (TagLib::WavPack::File* file = dynamic_cast<TagLib::WavPack::File*>(fr.file()))
 	{
 		if (file->APETag())
 		{
@@ -217,25 +203,6 @@ bool CCover::ExtractFLAC(TagLib::FLAC::File* file, const std::wstring& target)
 		// Let's grab the first image
 		TagLib::FLAC::Picture* pic = picList[0];
 		return WriteCover(pic->data(), target);
-	}
-
-	return false;
-}
-
-/*
-** Extracts cover art embedded in MP4-like files.
-**
-*/
-bool CCover::ExtractMP4(TagLib::MP4::File* file, const std::wstring& target)
-{
-	TagLib::MP4::Tag* tag = file->tag();
-	if (tag->itemListMap().contains("covr"))
-	{
-		TagLib::MP4::CoverArtList coverList = tag->itemListMap()["covr"].toCoverArtList();
-		if (coverList[0].data().size() > 0)
-		{
-			return WriteCover(coverList[0].data(), target);
-		}
 	}
 
 	return false;

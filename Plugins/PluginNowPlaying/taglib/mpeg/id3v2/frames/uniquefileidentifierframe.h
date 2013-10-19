@@ -94,13 +94,23 @@ namespace TagLib {
 
       virtual String toString() const;
 
+      PropertyMap asProperties() const;
+
+      /*!
+       * UFID frames each have a unique owner. This searches for a UFID
+       * frame with the owner \a o and returns a pointer to it.
+       *
+       * \see owner()
+       */
+      static UniqueFileIdentifierFrame *findByOwner(const Tag *tag, const String &o);
+
     protected:
       virtual void parseFields(const ByteVector &data);
       virtual ByteVector renderFields() const;
 
     private:
       UniqueFileIdentifierFrame(const UniqueFileIdentifierFrame &);
-      UniqueFileIdentifierFrame &operator=(UniqueFileIdentifierFrame &);
+      UniqueFileIdentifierFrame &operator=(const UniqueFileIdentifierFrame &);
 
       UniqueFileIdentifierFrame(const ByteVector &data, Header *h);
 

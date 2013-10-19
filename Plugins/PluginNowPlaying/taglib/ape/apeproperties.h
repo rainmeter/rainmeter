@@ -71,6 +71,7 @@ namespace TagLib {
        * Returns number of bits per sample.
        */
       int bitsPerSample() const;
+      uint sampleFrames() const;
 
       /*!
        * Returns APE version.

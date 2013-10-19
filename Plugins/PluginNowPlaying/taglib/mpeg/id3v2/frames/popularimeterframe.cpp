@@ -109,7 +109,7 @@ void PopularimeterFrame::parseFields(const ByteVector &data)
   if(pos < size) {
     d->rating = (unsigned char)(data[pos++]);
     if(pos < size) {
-      d->counter = data.mid(pos, 4).toUInt();
+      d->counter = data.toUInt(static_cast<uint>(pos));
     }
   }
 }

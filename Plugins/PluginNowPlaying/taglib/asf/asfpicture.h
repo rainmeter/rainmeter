@@ -208,8 +208,8 @@ namespace TagLib
       friend class Attribute;
 #endif
       private:
-        struct PicturePriavte;
-        PicturePriavte *d;
+        class PicturePrivate;
+        PicturePrivate *d;
       };
   }
 }
