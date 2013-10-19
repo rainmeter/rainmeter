@@ -9,7 +9,7 @@ set GIT=%PROGRAMFILES%\Git\bin\git.exe
 set VERSION_MAJOR=3
 set VERSION_MINOR=0
 set VERSION_SUBMINOR=1
-set VERSION_REVISION=0
+set VERSION_REVISION=2130
 set ISBETA=true
 
 set VERSION_FULL=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%.%VERSION_REVISION%
@@ -84,15 +84,6 @@ echo * Starting build for %VERSION%
 for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
 	set /A "BUILD_BEGIN_TIMESTAMP=(((%%a * 60) + 1%%b %% 100)* 60 + 1%%c %% 100) * 100 + 1%%d %% 100"
 )
-
-:: Build Library
-echo * Building 32-bit projects
-%MSBUILD% /t:rebuild /p:Configuration=Release;Platform=Win32 /v:q /m ..\Rainmeter.sln > "BuildLog.txt"
-if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Build failed & goto END
-
-echo * Building 64-bit projects
-%MSBUILD% /t:rebuild /p:Configuration=Release;Platform=x64 /v:q /m ..\Rainmeter.sln > "BuildLog.txt"
-if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Build failed & goto END
 
 :BUILDLANGUAGES
 echo * Building languages

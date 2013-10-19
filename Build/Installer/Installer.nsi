@@ -505,7 +505,7 @@ UAC_TryAgain:
 	${EndIf}
 FunctionEnd
 
-!macro InstallFiles DIR
+!macro InstallFiles DIR ARCH
 	SetOutPath "$INSTDIR"
 	File "..\..\TestBench\${DIR}\Release\Rainmeter.exe"
 	File "..\..\TestBench\${DIR}\Release\Rainmeter.dll"
@@ -515,8 +515,8 @@ FunctionEnd
 	File /x *Example*.dll "..\..\TestBench\${DIR}\Release\Plugins\*.dll"
 
 	SetOutPath "$INSTDIR\Runtime"
-	File "..\Runtime\${DIR}\msvcp110.dll"
-	File "..\Runtime\${DIR}\msvcr110.dll"
+	File "$%VS110COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC110.CRT\msvcp110.dll"
+	File "$%VS110COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC110.CRT\msvcr110.dll"
 !macroend
 
 !macro RemoveStartMenuShortcuts STARTMENUPATH
@@ -662,9 +662,9 @@ SkipIniMove:
 	File "..\..\Application\Rainmeter.exe.config"
 
 	${If} $instArc == "x86"
-		!insertmacro InstallFiles "x32"
+		!insertmacro InstallFiles "x32" "x86"
 	${Else}
-		!insertmacro InstallFiles "x64"
+		!insertmacro InstallFiles "x64" "x64"
 	${EndIf}
 
 	RMDir /r "$INSTDIR\Languages"
