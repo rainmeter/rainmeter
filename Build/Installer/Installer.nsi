@@ -324,14 +324,14 @@ Function PageOptions
 
 	StrCpy $1 0
 
+	StrCpy $R2 0
 	${If} ${RunningX64}
-	${AndIf} $InstallPortable = 1
-	${OrIf} $INSTDIR == ""
-		${NSD_CreateCheckBox} 6u 54u 285u 12u "$(INSTALL64BIT)"
-		Pop $R2
-		StrCpy $1 30u
-	${Else}
-		StrCpy $R2 0
+		${If} $InstallPortable = 1
+		${OrIf} $INSTDIR == ""
+			${NSD_CreateCheckBox} 6u 54u 285u 12u "$(INSTALL64BIT)"
+			Pop $R2
+			StrCpy $1 30u
+		${EndIf}
 	${EndIf}
 
 	${If} $InstallPortable <> 1
