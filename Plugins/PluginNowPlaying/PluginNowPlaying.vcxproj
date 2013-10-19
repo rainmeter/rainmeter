@@ -63,7 +63,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\Downloads\taglib-1.9.1.tar\taglib-1.9.1\taglib-1.9.1\taglib\toolkit\tpropertymap.cpp" />
     <ClCompile Include="Cover.cpp" />
     <ClCompile Include="Internet.cpp" />
     <ClCompile Include="Lyrics.cpp" />
@@ -80,7 +79,6 @@
     <ClCompile Include="StdAfx.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\Downloads\taglib-1.9.1.tar\taglib-1.9.1\taglib-1.9.1\taglib\toolkit\tpropertymap.h" />
     <ClInclude Include="Cover.h" />
     <ClInclude Include="Internet.h" />
     <ClInclude Include="Lyrics.h" />
@@ -108,6 +106,7 @@
     <ClInclude Include="taglib\audioproperties.h" />
     <ClInclude Include="taglib\taglib_export.h" />
     <ClInclude Include="taglib\toolkit\taglib.h" />
+    <ClInclude Include="taglib\toolkit\tpropertymap.h" />
     <ClInclude Include="taglib\toolkit\tstring.h" />
     <ClInclude Include="taglib\toolkit\tlist.h" />
     <ClInclude Include="taglib\toolkit\tstringlist.h" />
@@ -208,6 +207,7 @@
     <ClCompile Include="taglib\ape\apeitem.cpp" />
     <ClCompile Include="taglib\ape\apefile.cpp" />
     <ClCompile Include="taglib\ape\apeproperties.cpp" />
+    <ClCompile Include="taglib\toolkit\tpropertymap.cpp" />
     <ClCompile Include="taglib\toolkit\tstring.cpp" />
     <ClCompile Include="taglib\toolkit\tstringlist.cpp" />
     <ClCompile Include="taglib\toolkit\tbytevector.cpp" />

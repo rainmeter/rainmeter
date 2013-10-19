@@ -264,7 +264,7 @@
     <ClCompile Include="taglib\ogg\xiphcomment.cpp">
       <Filter>taglib</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Downloads\taglib-1.9.1.tar\taglib-1.9.1\taglib-1.9.1\taglib\toolkit\tpropertymap.cpp">
+    <ClCompile Include="taglib\toolkit\tpropertymap.cpp">
       <Filter>taglib</Filter>
     </ClCompile>
   </ItemGroup>
@@ -527,7 +527,7 @@
     <ClInclude Include="taglib\ogg\xiphcomment.h">
       <Filter>taglib</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\Downloads\taglib-1.9.1.tar\taglib-1.9.1\taglib-1.9.1\taglib\toolkit\tpropertymap.h">
+    <ClInclude Include="taglib\toolkit\tpropertymap.h">
       <Filter>taglib</Filter>
     </ClInclude>
   </ItemGroup>
