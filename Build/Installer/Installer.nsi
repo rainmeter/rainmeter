@@ -669,15 +669,6 @@ SkipIniMove:
 
 	SetOutPath "$INSTDIR"
 
-	; Remove Rainmeter files mistakenly installed to root of Windows drive (old installer bug)
-	${GetRoot} "$WINDIR" $0
-	${If} ${FileExists} "$0\Rainmeter.exe"
-	${AndIfNot} ${FileExists} "$0\Plugins"
-		Delete "$0\Rainmeter.exe"
-		Delete "$0\Rainmeter.dll"
-		Delete "$0\SkinInstaller.exe"
-	${EndIf}
-
 	; Cleanup old stuff
 	Delete "$INSTDIR\Rainmeter.chm"
 	Delete "$INSTDIR\Default.ini"
@@ -706,12 +697,13 @@ SkipIniMove:
 	${EndIf}
 
 !ifdef INCLUDEFILES
+	File "..\..\Application\Rainmeter.exe.config"
+
 	${If} $instArc == "x86"
 		!insertmacro InstallFiles "x32"
 	${Else}
 		!insertmacro InstallFiles "x64"
 	${EndIf}
-	File "..\..\Application\Rainmeter.exe.config"
 
 	RMDir /r "$INSTDIR\Languages"
 	SetOutPath "$INSTDIR\Languages"
