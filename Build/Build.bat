@@ -12,6 +12,10 @@ set VERSION_SUBMINOR=1
 set VERSION_REVISION=0
 set ISBETA=true
 
+set VERSION_FULL=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%.%VERSION_REVISION%
+set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%
+if not "%VERSION_SUBMINOR%" == "0" set VERSION_SHORT=!VERSION_SHORT!.%VERSION_SUBMINOR%
+
 if "%1" == "RELEASE" set ISBETA=false
 if "%1" == "BUILDVERSION" goto BUILDVERSION
 echo Rainmeter Build
@@ -47,13 +51,11 @@ for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --all --count`) do set VERS
 
 :UPDATEVERSION
 
-set VERSION=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%.%VERSION_REVISION%
-
 :: Update Version.h
 > "..\Version.h" echo #pragma once
 >>"..\Version.h" echo #define FILEVER %VERSION_MAJOR%,%VERSION_MINOR%,%VERSION_SUBMINOR%,%VERSION_REVISION%
 >>"..\Version.h" echo #define PRODUCTVER FILEVER
->>"..\Version.h" echo #define STRFILEVER "%VERSION%"
+>>"..\Version.h" echo #define STRFILEVER "%VERSION_FULL%"
 >>"..\Version.h" echo #define STRPRODUCTVER STRFILEVER
 >>"..\Version.h" echo #define APPVERSION L"%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%"
 >>"..\Version.h" echo #define RAINMETER_VERSION ((%VERSION_MAJOR% * 1000000) + (%VERSION_MINOR% * 1000) + %VERSION_SUBMINOR%)
@@ -66,9 +68,9 @@ set VERSION=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%.%VERSION_REVISION
 >>"..\Version.cs" echo     public class Version
 >>"..\Version.cs" echo     {
 >>"..\Version.cs" echo #if X64
->>"..\Version.cs" echo         public const string Informational = "%VERSION% (64-bit)";
+>>"..\Version.cs" echo         public const string Informational = "%VERSION_FULL% (64-bit)";
 >>"..\Version.cs" echo #else
->>"..\Version.cs" echo         public const string Informational = "%VERSION% (32-bit)";
+>>"..\Version.cs" echo         public const string Informational = "%VERSION_FULL% (32-bit)";
 >>"..\Version.cs" echo #endif
 >>"..\Version.cs" echo     }
 >>"..\Version.cs" echo }
@@ -135,24 +137,23 @@ if not "%CERTFILE%" == "" (
 :: Build installer
 echo * Building installer
 
-set INSTALLER_VERSION=%VERSION_MAJOR%.%VERSION_MINOR%
-if not "%VERSION_SUBMINOR%" == "0" set INSTALLER_VERSION=!INSTALLER_VERSION!.%VERSION_SUBMINOR%
+set INSTALLER_NAME=Rainmeter-%VERSION_SHORT%.exe
+if not "%1" == "RELEASE" set INSTALLER_NAME=Rainmeter-%VERSION_SHORT%-r%VERSION_REVISION%-beta.exe
 
-if "%1" == "RELEASE" (
-	"%MAKENSIS%" /DREV="%VERSION_REVISION%" /DVER="%INSTALLER_VERSION%" .\Installer\Installer.nsi > "BuildLog.txt"
-) else (
-	"%MAKENSIS%" /DBETA /DREV="%VERSION_REVISION%" /DVER="%INSTALLER_VERSION%" .\Installer\Installer.nsi > "BuildLog.txt"
-)
+set INSTALLER_DEFINES=^
+	/DOUTFILE="%INSTALLER_NAME%"^
+	/DVERSION_FULL="%VERSION_FULL%"^
+	/DVERSION_SHORT="%VERSION_SHORT%"^
+	/DVERSION_REVISION="%VERSION_REVISION%"
+if not "%1" == "RELEASE" set INSTALLER_DEFINES=!INSTALLER_DEFINES! /DBETA
+
+"%MAKENSIS%" %INSTALLER_DEFINES% .\Installer\Installer.nsi > "BuildLog.txt"
 if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Building installer failed & goto END
 
 :: Sign installer
 if not "%CERTFILE%" == "" (
 	echo * Signing installer
-	if "%1" == "RELEASE" (
-		%SIGNTOOL% Rainmeter-%INSTALLER_VERSION%.exe > BuildLog.txt
-	) else (
-		%SIGNTOOL% Rainmeter-%INSTALLER_VERSION%-r%VERSION_REVISION%-beta.exe > BuildLog.txt
-	)
+	%SIGNTOOL% %INSTALLER_NAME% > BuildLog.txt
 	if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing installer failed & goto END
 )
 

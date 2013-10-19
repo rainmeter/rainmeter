@@ -25,26 +25,23 @@
 !include "WinVer.nsh"
 !include "UAC.nsh"
 
-!ifndef VER
- !define VER "0.0"
- !define REV "000"
+!ifndef OUTFILE
+ !define OUTFILE "Rainmeter-test.exe"
+ !define VERSION_FULL "0.0.0.0"
+ !define VERSION_SHORT "0.0"
+ !define VERSION_REVISION "000"
 !else
  !define INCLUDEFILES
-!endif
-!ifdef BETA
- !define OUTFILE "Rainmeter-${VER}-r${REV}-beta.exe"
-!else
- !define OUTFILE "Rainmeter-${VER}.exe"
 !endif
 
 Name "Rainmeter"
 VIAddVersionKey "ProductName" "Rainmeter"
 VIAddVersionKey "FileDescription" "Rainmeter Installer"
-VIAddVersionKey "FileVersion" "${VER}.0"
-VIAddVersionKey "ProductVersion" "${VER}.0.${REV}"
+VIAddVersionKey "FileVersion" "${VERSION_FULL}"
+VIAddVersionKey "ProductVersion" "${VERSION_FULL}"
 VIAddVersionKey "OriginalFilename" "${OUTFILE}"
-VIAddVersionKey "LegalCopyright" "Copyright (C) 2009-2012 - All authors"
-VIProductVersion "${VER}.0.${REV}"
+VIAddVersionKey "LegalCopyright" "Copyright (C) 2009-2013 - All authors"
+VIProductVersion "${VERSION_FULL}"
 BrandingText " "
 SetCompressor /SOLID lzma
 RequestExecutionLevel user
@@ -115,7 +112,7 @@ Function .onInit
 		${OrIf} ${IsWin2003}
 		${AndIf} ${AtMostServicePack} 0
 			${IfNot} ${Silent}
-				MessageBox MB_OK|MB_ICONSTOP "Windows XP SP2 or later is required to install Rainmeter ${VER}."
+				MessageBox MB_OK|MB_ICONSTOP "Rainmeter requires Windows XP SP2 or later."
 			${EndIf}
 			SetErrorLevel ${ERROR_UNSUPPORTED}
 			Quit
@@ -124,7 +121,7 @@ Function .onInit
 		System::Call 'kernel32::IsProcessorFeaturePresent(i${PF_XMMI_INSTRUCTIONS_AVAILABLE})i.r0'
 		${If} $0 = 0
 			${IfNot} ${Silent}
-				MessageBox MB_OK|MB_ICONSTOP "A Pentium III or later processor is required to install Rainmeter ${VER}."
+				MessageBox MB_OK|MB_ICONSTOP "Rainmeter requires a Pentium III or later processor."
 			${EndIf}
 			SetErrorLevel ${ERROR_UNSUPPORTED}
 			Quit
@@ -732,9 +729,9 @@ SkipIniMove:
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "UninstallString" "$INSTDIR\uninst.exe"
 
 !ifdef BETA
-		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VER} beta r${REV}"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_SHORT} beta r${VERSION_REVISION}"
 !else
-		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VER} r${REV}"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_SHORT} r${VERSION_REVISION}"
 !endif
 
 		; Create .rmskin association
@@ -941,12 +938,14 @@ Section Uninstall
 		Sleep 500
 	${Next}
 
+	; Old stuff
+	RMDir /r "$INSTDIR\Addons"
+	RMDir /r "$INSTDIR\Fonts"
+
 	RMDir /r "$INSTDIR\Defaults"
 	RMDir /r "$INSTDIR\Languages"
 	RMDir /r "$INSTDIR\Plugins"
 	RMDir /r "$INSTDIR\Skins"
-	RMDir /r "$INSTDIR\Addons"
-	RMDir /r "$INSTDIR\Fonts"
 	Delete "$INSTDIR\Rainmeter.dll"
 	Delete "$INSTDIR\Rainmeter.exe"
 	Delete "$INSTDIR\Rainmeter.exe.config"
