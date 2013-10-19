@@ -513,6 +513,10 @@ FunctionEnd
 
 	SetOutPath "$INSTDIR\Plugins"
 	File /x *Example*.dll "..\..\TestBench\${DIR}\Release\Plugins\*.dll"
+
+	SetOutPath "$INSTDIR\Runtime"
+	File "..\Runtime\${DIR}\msvcp110.dll"
+	File "..\Runtime\${DIR}\msvcr110.dll"
 !macroend
 
 !macro RemoveStartMenuShortcuts STARTMENUPATH
@@ -542,71 +546,32 @@ Section
 	${EndIf}
 
 	${If} $InstallPortable <> 1
-		; Download and install VC++ 2012 redist if required
-		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Runtimes\$InstArc" "Bld"
-		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Runtimes\$InstArc" "Installed"
-		${If} $0 == ""
-			; Some VS installs do not appear to have the "VC\Runtimes" node.
-			ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Libraries\Extended\$InstArc" "Bld"
-			ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Libraries\Extended\$InstArc" "Install"
-		${EndIf}
-
-		${VersionCompare} "$0" "51106" $1
-		${If} $1 = 2
-		${OrIf} $2 <> 1
-			${If} ${Silent}
-				SetErrorLevel ${ERROR_NOVCREDIST}
-				Quit
+	${AndIfNot} ${AtLeastWinVista}
+		; Download and install .NET if required
+		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727" "Install"
+		${If} $0 <> 1
+			${If} $Install64Bit <> 1
+				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/5/6/7/567758a3-759e-473e-bf8f-52154438565a/dotnetfx.exe" "$PLUGINSDIR\dotnetfx.exe"
+			${Else}
+				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/a/3/f/a3f1bf98-18f3-4036-9b68-8e6de530ce0a/NetFx64.exe" "$PLUGINSDIR\dotnetfx.exe"
 			${EndIf}
-
-			NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU1/vcredist_$InstArc.exe" "$PLUGINSDIR\vcredist.exe"
 			Pop $0
 
 			${If} $0 == "success"
-				ExecWait '"$PLUGINSDIR\vcredist.exe" /q /norestart' $0
-				Delete "$PLUGINSDIR\vcredist.exe"
+				ExecWait '"$PLUGINSDIR\dotnetfx.exe" /q:a /c:"install /q"' $0
+				Delete "$PLUGINSDIR\dotnetfx.exe"
 
 				${If} $0 = 3010
 					SetRebootFlag true
 				${ElseIf} $0 <> 0
-					MessageBox MB_OK|MB_ICONSTOP "$(VCINSTERROR)"
+					MessageBox MB_OK|MB_ICONSTOP "$(DOTNETINSTERROR)"
 					Quit
 				${EndIf}
 			${ElseIf} $0 == "cancel"
 				Quit
 			${Else}
-				MessageBox MB_OK|MB_ICONSTOP "$(VCINSTERROR)"
+				MessageBox MB_OK|MB_ICONSTOP "$(DOTNETINSTERROR)"
 				Quit
-			${EndIf}
-		${EndIf}
-
-		${IfNot} ${AtLeastWinVista}
-			; Download and install .NET if required
-			ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727" "Install"
-			${If} $0 <> 1
-				${If} $Install64Bit <> 1
-					NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/5/6/7/567758a3-759e-473e-bf8f-52154438565a/dotnetfx.exe" "$PLUGINSDIR\dotnetfx.exe"
-				${Else}
-					NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/a/3/f/a3f1bf98-18f3-4036-9b68-8e6de530ce0a/NetFx64.exe" "$PLUGINSDIR\dotnetfx.exe"
-				${EndIf}
-				Pop $0
-
-				${If} $0 == "success"
-					ExecWait '"$PLUGINSDIR\dotnetfx.exe" /q:a /c:"install /q"' $0
-					Delete "$PLUGINSDIR\dotnetfx.exe"
-
-					${If} $0 = 3010
-						SetRebootFlag true
-					${ElseIf} $0 <> 0
-						MessageBox MB_OK|MB_ICONSTOP "$(DOTNETINSTERROR)"
-						Quit
-					${EndIf}
-				${ElseIf} $0 == "cancel"
-					Quit
-				${Else}
-					MessageBox MB_OK|MB_ICONSTOP "$(DOTNETINSTERROR)"
-					Quit
-				${EndIf}
 			${EndIf}
 		${EndIf}
 	${EndIf}
@@ -945,6 +910,7 @@ Section Uninstall
 	RMDir /r "$INSTDIR\Defaults"
 	RMDir /r "$INSTDIR\Languages"
 	RMDir /r "$INSTDIR\Plugins"
+	RMDir /r "$INSTDIR\Runtime"
 	RMDir /r "$INSTDIR\Skins"
 	Delete "$INSTDIR\Rainmeter.dll"
 	Delete "$INSTDIR\Rainmeter.exe"

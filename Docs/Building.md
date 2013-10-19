@@ -11,7 +11,14 @@ After Visual Studio has been installed and updated, open Rainmeter.sln to build.
 
 ### Building the installer
 
-To build the full Rainmeter distribution, run Build.bat. If you receive "not found" errors, open Build.bat and change the variables at the top to match your system.
+To build the full Rainmeter installer, you need to get obtain 32-bit and 64-bit versions of the Visual C++ 2012 Update 3 redistributable DLLs and place them in:
+
+* `Build\Runtime\x32\msvcr110.dll`
+* `Build\Runtime\x32\msvcp110.dll`
+* `Build\Runtime\x64\msvcr110.dll`
+* `Build\Runtime\x64\msvcp110.dll`
+
+Then run Build.bat. If you receive "not found" errors, open Build.bat and change the `set=` lines at the top to match your system.
 
 To sign the installer and the Rainmeter executables, create a Certificate.bat file alongside Build.bat with the following contents:
 
