@@ -207,7 +207,7 @@ void PlayerITunes::Initialize()
 			if (state == ITPlayerStateStopped)
 			{
 				// Determine if paused of stopped
-				long position;
+				long position = 0;
 				m_iTunes->get_PlayerPosition(&position);
 
 				if (position != 0)
@@ -319,7 +319,7 @@ void PlayerITunes::UpdateData()
 {
 	if ((m_Initialized || CheckWindow()) && m_State != STATE_STOPPED)
 	{
-		long position;
+		long position = 0;
 		m_iTunes->get_PlayerPosition(&position);
 		m_Position = (UINT)position;
 	}
@@ -471,8 +471,15 @@ void PlayerITunes::OnStateChange(bool playing)
 	}
 	else
 	{
+		long position = 0;
+		m_iTunes->get_PlayerPosition(&position);
+
 		// Guess if paused or stopped from track time
-		m_State = (m_Position == 0) ? STATE_STOPPED : STATE_PAUSED;
+		m_State = (position == 0) ? STATE_STOPPED : STATE_PAUSED;
+		if (m_State == STATE_STOPPED)
+		{
+			ClearData(false);
+		}
 	}
 }
 
