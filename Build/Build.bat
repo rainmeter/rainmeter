@@ -116,9 +116,9 @@ for /f "tokens=1,2,3 delims=," %%a in (..\Language\List) do (
 echo #include "English.h"> "..\Language\Language.rc"
 echo #include "Resource.rc">> "..\Language\Language.rc"
 if "%1" == "BUILDLANGUAGES" (
-	xcopy /Q /S /Y ..\TestBench\x32\Release\Languages\*.dll ..\TestBench\x64\Release\Languages\ > nul
-	xcopy /Q /S /Y ..\TestBench\x32\Release\Languages\*.dll ..\TestBench\x32\Debug\Languages\ > nul
-	xcopy /Q /S /Y ..\TestBench\x32\Release\Languages\*.dll ..\TestBench\x64\Debug\Languages\ > nul
+	xcopy /Q /S /Y ..\x32-Release\Languages\*.dll ..\x64-Release\Languages\ > nul
+	xcopy /Q /S /Y ..\x32-Release\Release\Languages\*.dll ..\x32-Debug\Languages\ > nul
+	xcopy /Q /S /Y ..\x32-Release\Release\Languages\*.dll ..\x64-Debug\Languages\ > nul
 	if exist "BuildLog.txt" del "BuildLog.txt"
 	goto END
 )
@@ -127,9 +127,9 @@ if "%1" == "BUILDLANGUAGES" (
 if not "%CERTFILE%" == "" (
 	echo * Signing binaries
 	for %%Z in (Rainmeter.dll Rainmeter.exe SkinInstaller.exe SkinInstaller.dll) do (
-		%SIGNTOOL% ..\TestBench\x32\Release\%%Z > BuildLog.txt
+		%SIGNTOOL% ..\x32-Release\%%Z > BuildLog.txt
 		if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing x32\%%Z failed & goto END
-		%SIGNTOOL% ..\TestBench\x64\Release\%%Z > BuildLog.txt
+		%SIGNTOOL% ..\x64-Release\%%Z > BuildLog.txt
 		if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing x64\%%Z failed & goto END
 	)
 )

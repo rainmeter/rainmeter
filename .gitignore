@@ -1,10 +1,9 @@
-/Build/Runtime
 /TestBench
 /ipch
 bin
 obj
-x32
-x64
+x32*
+x64*
 Certificate.bat
 *.aps
 *.docstates

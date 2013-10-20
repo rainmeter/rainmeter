@@ -15,14 +15,10 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Platform)'=='Win32'">
-    <OutDir>$(SolutionDir)TestBench\x32\$(Configuration)\</OutDir>
-    <IntDir>.\x32\$(Configuration)\</IntDir>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Platform)'=='x64'">
-    <OutDir>$(SolutionDir)TestBench\x64\$(Configuration)\</OutDir>
-    <IntDir>.\x64\$(Configuration)\</IntDir>
+  <PropertyGroup>
+    <OutDir Condition="'$(Platform)'=='Win32'">$(SolutionDir)x32-$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Platform)'=='x64'">$(SolutionDir)x64-$(Configuration)\</OutDir>
+    <IntDir>$(OutDir)\Obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
 
   <PropertyGroup>

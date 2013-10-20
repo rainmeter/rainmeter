@@ -507,13 +507,13 @@ FunctionEnd
 
 !macro InstallFiles DIR ARCH
 	SetOutPath "$INSTDIR"
-	File "..\..\TestBench\${DIR}\Release\Rainmeter.exe"
-	File "..\..\TestBench\${DIR}\Release\Rainmeter.dll"
-	File "..\..\TestBench\${DIR}\Release\SkinInstaller.exe"
-	File "..\..\TestBench\${DIR}\Release\SkinInstaller.dll"
+	File "..\..\${DIR}-Release\Rainmeter.exe"
+	File "..\..\${DIR}-Release\Rainmeter.dll"
+	File "..\..\${DIR}-Release\SkinInstaller.exe"
+	File "..\..\${DIR}-Release\SkinInstaller.dll"
 
 	SetOutPath "$INSTDIR\Plugins"
-	File /x *Example*.dll "..\..\TestBench\${DIR}\Release\Plugins\*.dll"
+	File /x *Example*.dll "..\..\${DIR}-Release\Plugins\*.dll"
 
 	SetOutPath "$INSTDIR\Runtime"
 	File "$%VS110COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC110.CRT\msvcp110.dll"
@@ -670,7 +670,7 @@ SkipIniMove:
 
 	RMDir /r "$INSTDIR\Languages"
 	SetOutPath "$INSTDIR\Languages"
-	File "..\..\TestBench\x32\Release\Languages\*.*"
+	File "..\..\x32-Release\Languages\*.*"
 
 	SetOutPath "$INSTDIR\Defaults\Skins"
 	RMDir /r "$INSTDIR\Skins\illustro"

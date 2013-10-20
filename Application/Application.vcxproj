@@ -27,13 +27,8 @@
       <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>if exist ..\testbench\x32\debug\Skins goto skip
-mkdir ..\testbench\x32\debug\Skins
-if not exist ..\testbench\x32\debug\Layouts (mkdir ..\testbench\x32\debug\Layouts)
-echo "Copying skins..."
-xcopy /Q /S /Y ..\Build\Skins ..\testbench\x32\debug\Skins
-xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\debug\Layouts
-:skip</Command>
+      <Command>if not exist "$(OutDir)Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Skins\"
+if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Themes "$(OutDir)Layouts\"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
@@ -51,13 +46,8 @@ xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\debug\Layouts
       <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>if exist ..\testbench\x64\debug\Skins goto skip
-mkdir ..\testbench\x64\debug\Skins
-if not exist ..\testbench\x64\debug\Layouts (mkdir ..\testbench\x64\debug\Layouts)
-echo "Copying skins..."
-xcopy /Q /S /Y ..\Build\Skins ..\testbench\x64\debug\Skins
-xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\debug\Layouts
-:skip</Command>
+      <Command>if not exist "$(OutDir)Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Skins\"
+if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Themes "$(OutDir)Layouts\"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
@@ -79,13 +69,8 @@ xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\debug\Layouts
       <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>if exist ..\testbench\x32\release\Skins goto skip
-mkdir ..\testbench\x32\release\Skins
-if not exist ..\testbench\x32\release\Layouts (mkdir ..\testbench\x32\release\Layouts)
-echo "Copying skins..."
-xcopy /Q /S /Y ..\Build\Skins ..\testbench\x32\release\Skins
-xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\release\Layouts
-:skip</Command>
+      <Command>if not exist "$(OutDir)Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Skins\"
+if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Themes "$(OutDir)Layouts\"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
@@ -108,13 +93,8 @@ xcopy /Q /S /Y ..\Build\Themes ..\testbench\x32\release\Layouts
       <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>if exist ..\testbench\x64\release\Skins goto skip
-mkdir ..\testbench\x64\release\Skins
-if not exist ..\testbench\x64\release\Layouts (mkdir ..\testbench\x64\release\Layouts)
-echo "Copying skins..."
-xcopy /Q /S /Y ..\Build\Skins ..\testbench\x64\release\Skins
-xcopy /Q /S /Y ..\Build\Themes ..\testbench\x64\release\Layouts
-:skip</Command>
+      <Command>if not exist "$(OutDir)Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Skins\"
+if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Themes "$(OutDir)Layouts\"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
