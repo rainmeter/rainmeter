@@ -134,7 +134,7 @@ public:
 	void Deactivate();
 	void Refresh(bool init, bool all = false);
 	void Redraw();
-	void RedrawWindow() { UpdateWindow(m_TransparencyValue, false); }
+	void RedrawWindow() { UpdateWindow(m_TransparencyValue); }
 	void SetVariable(const std::wstring& variable, const std::wstring& value);
 	void SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group);
 
@@ -292,7 +292,7 @@ private:
 	bool UpdateMeasure(Measure* measure, bool force);
 	bool UpdateMeter(Meter* meter, bool& bActiveTransition, bool force);
 	void Update(bool refresh);
-	void UpdateWindow(int alpha, bool reset, bool canvasBeginDrawCalled = false);
+	void UpdateWindow(int alpha, bool canvasBeginDrawCalled = false);
 	void UpdateWindowTransparency(int alpha);
 	void ReadOptions();
 	void WriteOptions(INT setting = OPTION_ALL);

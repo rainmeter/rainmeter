@@ -423,7 +423,8 @@ void MeterWindow::Refresh(bool init, bool all)
 	m_Hidden = m_WindowStartHidden;
 
 	// Set the window region
-	UpdateWindow(m_AlphaValue, true);  // Add/Remove layered flag
+	AddWindowExStyle(WS_EX_LAYERED);
+	UpdateWindow(m_AlphaValue);
 	Update(true);
 
 	if (m_BlurMode == BLURMODE_NONE)
@@ -2636,7 +2637,7 @@ void MeterWindow::Redraw()
 		}
 	}
 
-	UpdateWindow(m_TransparencyValue, false, true);
+	UpdateWindow(m_TransparencyValue, true);
 
 	m_Canvas->EndDraw();
 }
@@ -2810,13 +2811,8 @@ void MeterWindow::Update(bool refresh)
 ** Updates the window contents
 **
 */
-void MeterWindow::UpdateWindow(int alpha, bool reset, bool canvasBeginDrawCalled)
+void MeterWindow::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 {
-	if (reset)
-	{
-		AddWindowExStyle(WS_EX_LAYERED);
-	}
-
 	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
 	POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
 	POINT ptSrc = {0, 0};
