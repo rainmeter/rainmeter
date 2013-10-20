@@ -15,15 +15,13 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+  <ItemDefinitionGroup>
     <ClCompile>
       <DisableSpecificWarnings>4018;4090;4114;4267;4351;4786;4800;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
-      <DelayLoadDLLs>
-      </DelayLoadDLLs>
       <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
@@ -34,71 +32,15 @@ if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Layouts "$(OutDir)Layout
       <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
-      <DisableSpecificWarnings>4018;4090;4114;4267;4351;4786;4800;4996</DisableSpecificWarnings>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <EntryPointSymbol>wWinMainCRTStartup</EntryPointSymbol>
-      <DelayLoadDLLs>
-      </DelayLoadDLLs>
-      <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <PostBuildEvent>
-      <Command>if not exist "$(OutDir)Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Skins\"
-if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Layouts "$(OutDir)Layouts\"</Command>
-    </PostBuildEvent>
-    <Manifest>
-      <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
-    </Manifest>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <DisableSpecificWarnings>4018;4090;4114;4267;4351;4786;4800;4996</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>..\Library\x32\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>Main</EntryPointSymbol>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
-      <DelayLoadDLLs>
-      </DelayLoadDLLs>
-      <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command>if not exist "$(OutDir)Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Skins\"
-if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Layouts "$(OutDir)Layouts\"</Command>
-    </PostBuildEvent>
-    <Manifest>
-      <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
-    </Manifest>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ClCompile>
-      <AdditionalOptions>/GA %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>4018;4090;4114;4267;4351;4786;4800;4996</DisableSpecificWarnings>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-    </ClCompile>
-    <Link>
-      <AdditionalLibraryDirectories>..\Library\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <SubSystem>Windows</SubSystem>
-      <EntryPointSymbol>Main</EntryPointSymbol>
-      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
-      <DelayLoadDLLs>
-      </DelayLoadDLLs>
-      <AdditionalDependencies>Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <PostBuildEvent>
-      <Command>if not exist "$(OutDir)Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Skins\"
-if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Layouts "$(OutDir)Layouts\"</Command>
-    </PostBuildEvent>
-    <Manifest>
-      <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
-    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />

@@ -17,7 +17,7 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+  <ItemDefinitionGroup>
     <MASM>
       <PreprocessorDefinitions>NOOLDPENTIUMCODE</PreprocessorDefinitions>
     </MASM>
@@ -30,53 +30,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>Imagehlp.lib;Wininet.lib;Comctl32.lib;Version.lib;UxTheme.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
-      <ModuleDefinitionFile>SkinInstaller.def</ModuleDefinitionFile>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <MASM>
-      <PreprocessorDefinitions>NOOLDPENTIUMCODE</PreprocessorDefinitions>
-    </MASM>
-    <ClCompile>
-      <PreprocessorDefinitions>ZLIB_WINAPI;NOCRYPT;NOUNCRYPT;NO_GZIP;ASMV;ASMINF;NOOLDPENTIUMCODE;HAVE_CONFIG_H;SUPPORT_UTF8;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <DisableSpecificWarnings>4244;4267;4482;4530;4996</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>./zlib;./zlib/minizip</AdditionalIncludeDirectories>
-      <ExceptionHandling>false</ExceptionHandling>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>Imagehlp.lib;Wininet.lib;Comctl32.lib;Version.lib;UxTheme.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ModuleDefinitionFile>SkinInstaller.def</ModuleDefinitionFile>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <MASM>
-      <PreprocessorDefinitions>NOOLDPENTIUMCODE</PreprocessorDefinitions>
-    </MASM>
-    <ClCompile>
-      <PreprocessorDefinitions>ZLIB_WINAPI;NOCRYPT;NOUNCRYPT;NO_GZIP;ASMV;ASMINF;NOOLDPENTIUMCODE;HAVE_CONFIG_H;SUPPORT_UTF8;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./zlib;./zlib/minizip</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>4244;4267;4482;4530;4996</DisableSpecificWarnings>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>Imagehlp.lib;Wininet.lib;Comctl32.lib;Version.lib;UxTheme.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ModuleDefinitionFile>SkinInstaller.def</ModuleDefinitionFile>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <MASM>
-      <PreprocessorDefinitions>NOOLDPENTIUMCODE</PreprocessorDefinitions>
-    </MASM>
-    <ClCompile>
-      <PreprocessorDefinitions>ZLIB_WINAPI;NOCRYPT;NOUNCRYPT;NO_GZIP;ASMV;ASMINF;NOOLDPENTIUMCODE;HAVE_CONFIG_H;SUPPORT_UTF8;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./zlib;./zlib/minizip</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>4244;4267;4482;4530;4996</DisableSpecificWarnings>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>Imagehlp.lib;Wininet.lib;Comctl32.lib;Version.lib;UxTheme.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
       <ModuleDefinitionFile>SkinInstaller.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
