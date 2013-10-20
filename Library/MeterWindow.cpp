@@ -2818,18 +2818,19 @@ void MeterWindow::UpdateWindow(int alpha, bool reset, bool canvasBeginDrawCalled
 	}
 
 	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
+	POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
 	POINT ptSrc = {0, 0};
 	SIZE szWindow = {m_Canvas->GetW(), m_Canvas->GetH()};
 
 	if (!canvasBeginDrawCalled) m_Canvas->BeginDraw();
 
 	HDC dcMemory = m_Canvas->GetDC();
-	if (!UpdateLayeredWindow(m_Window, nullptr, nullptr, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
+	if (!UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
 	{
 		// Retry after resetting WS_EX_LAYERED flag.
 		RemoveWindowExStyle(WS_EX_LAYERED);
 		AddWindowExStyle(WS_EX_LAYERED);
-		UpdateLayeredWindow(m_Window, nullptr, nullptr, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
+		UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
 	}
 	m_Canvas->ReleaseDC(dcMemory);
 
