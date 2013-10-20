@@ -510,6 +510,7 @@ FunctionEnd
 	File "..\..\TestBench\${DIR}\Release\Rainmeter.exe"
 	File "..\..\TestBench\${DIR}\Release\Rainmeter.dll"
 	File "..\..\TestBench\${DIR}\Release\SkinInstaller.exe"
+	File "..\..\TestBench\${DIR}\Release\SkinInstaller.dll"
 
 	SetOutPath "$INSTDIR\Plugins"
 	File /x *Example*.dll "..\..\TestBench\${DIR}\Release\Plugins\*.dll"
@@ -916,6 +917,7 @@ Section Uninstall
 	Delete "$INSTDIR\Rainmeter.exe"
 	Delete "$INSTDIR\Rainmeter.exe.config"
 	Delete "$INSTDIR\SkinInstaller.exe"
+	Delete "$INSTDIR\SkinInstaller.dll"
 	Delete "$INSTDIR\uninst.exe"
 
 	RMDir "$INSTDIR"

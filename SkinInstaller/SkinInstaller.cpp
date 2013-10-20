@@ -20,7 +20,9 @@
 #include "DialogPackage.h"
 #include "DialogInstall.h"
 #include "resource.h"
-#include "Application.h"
+#include "SkinInstaller.h"
+
+EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 GlobalData g_Data;
 
@@ -36,7 +38,7 @@ OsNameVersion g_OsNameVersions[] =
 ** Entry point
 **
 */
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
+int SkinInstallerMain(LPWSTR lpCmdLine)
 {
 	// Avoid loading a dll from current directory
 	SetDllDirectory(L"");
@@ -56,7 +58,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	}
 
 	WCHAR buffer[MAX_PATH];
-	GetModuleFileName(hInstance, buffer, MAX_PATH);
+	GetModuleFileName(GetInstanceHandle(), buffer, MAX_PATH);
 
 	// Remove the module's name from the path
 	WCHAR* pos = wcsrchr(buffer, L'\\');
@@ -189,11 +191,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	}
 	else if (wcscmp(lpCmdLine, L"/Packager") == 0)
 	{
-		DialogPackage::Create(hInstance, lpCmdLine);
+		DialogPackage::Create(GetInstanceHandle(), lpCmdLine);
 	}
 	else
 	{
-		DialogInstall::Create(hInstance, lpCmdLine);
+		DialogInstall::Create(GetInstanceHandle(), lpCmdLine);
 	}
 
 	return 0;
@@ -222,6 +224,11 @@ bool CloseRainmeterIfActive()
 	}
 
 	return true;
+}
+
+HINSTANCE GetInstanceHandle()
+{
+	return (HINSTANCE)&__ImageBase;
 }
 
 // -----------------------------------------------------------------------------------------------

@@ -29,8 +29,8 @@ VS_VERSION_INFO VERSIONINFO
         {
             VALUE "FileDescription", "Rainmeter Skin Installer"
             VALUE "FileVersion", STRFILEVER
-            VALUE "LegalCopyright", "© 2012 - Birunthan Mohanathas"
-            VALUE "OriginalFilename", "SkinInstaller.exe"
+            VALUE "LegalCopyright", "© 2013 - All authors"
+            VALUE "OriginalFilename", "SkinInstaller.dll"
             VALUE "ProductName", "Rainmeter"
 #ifdef _WIN64
             VALUE "ProductVersion", STRPRODUCTVER " (64-bit)"
@@ -197,10 +197,3 @@ FONT 8, "MS Shell Dlg 2"
     LTEXT           "Installing...", IDC_INSTALLTAB_INPROGRESS_TEXT, 0, 0, 236, 60, NOT WS_VISIBLE
     CONTROL         "", IDC_INSTALLTAB_PROGRESS, "msctls_progress32", PBS_MARQUEE | NOT WS_VISIBLE | WS_BORDER, 0, 15, 236, 11
 }
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
-
-IDI_SKININSTALLER           ICON    DISCARDABLE     "res/Rainstaller.ico"

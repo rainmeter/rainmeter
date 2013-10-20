@@ -18,7 +18,7 @@
 
 #include "StdAfx.h"
 #include "../Common/StringUtil.h"
-#include "Application.h"
+#include "SkinInstaller.h"
 #include "DialogPackage.h"
 #include "DialogInstall.h"
 #include "resource.h"
@@ -555,7 +555,7 @@ std::wstring DialogPackage::SelectFolder(HWND parent, const std::wstring& existi
 {
 	LPCWSTR dialog = MAKEINTRESOURCE(IDD_PACKAGESELECTFOLDER_DIALOG);
 	std::wstring folder = existingPath;
-	if (DialogBoxParam(GetModuleHandle(nullptr), dialog, parent, SelectFolderDlgProc, (LPARAM)&folder) != 1)
+	if (DialogBoxParam(GetInstanceHandle(), dialog, parent, SelectFolderDlgProc, (LPARAM)&folder) != 1)
 	{
 		folder.clear();
 	}
@@ -714,7 +714,7 @@ std::pair<std::wstring, std::wstring> DialogPackage::SelectPlugin(HWND parent)
 {
 	LPCWSTR dialog = MAKEINTRESOURCE(IDD_PACKAGESELECTPLUGIN_DIALOG);
 	std::pair<std::wstring, std::wstring> plugins;
-	if (DialogBoxParam(GetModuleHandle(nullptr), dialog, parent, SelectPluginDlgProc, (LPARAM)&plugins) != 1)
+	if (DialogBoxParam(GetInstanceHandle(), dialog, parent, SelectPluginDlgProc, (LPARAM)&plugins) != 1)
 	{
 		plugins.first.clear();
 		plugins.second.clear();
@@ -819,7 +819,7 @@ INT_PTR CALLBACK DialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM
 //
 // -----------------------------------------------------------------------------------------------
 
-DialogPackage::TabInfo::TabInfo(HWND wnd) : Tab(GetModuleHandle(nullptr), wnd, IDD_PACKAGEINFO_TAB, DlgProc)
+DialogPackage::TabInfo::TabInfo(HWND wnd) : Tab(GetInstanceHandle(), wnd, IDD_PACKAGEINFO_TAB, DlgProc)
 {
 }
 
@@ -1071,7 +1071,7 @@ INT_PTR DialogPackage::TabInfo::OnNotify(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-DialogPackage::TabOptions::TabOptions(HWND wnd) : Tab(GetModuleHandle(nullptr), wnd, IDD_PACKAGEOPTIONS_TAB, DlgProc)
+DialogPackage::TabOptions::TabOptions(HWND wnd) : Tab(GetInstanceHandle(), wnd, IDD_PACKAGEOPTIONS_TAB, DlgProc)
 {
 }
 
@@ -1311,7 +1311,7 @@ INT_PTR DialogPackage::TabOptions::OnCommand(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-DialogPackage::TabAdvanced::TabAdvanced(HWND wnd) : Tab(GetModuleHandle(nullptr), wnd, IDD_PACKAGEADVANCED_TAB, DlgProc)
+DialogPackage::TabAdvanced::TabAdvanced(HWND wnd) : Tab(GetInstanceHandle(), wnd, IDD_PACKAGEADVANCED_TAB, DlgProc)
 {
 }
 

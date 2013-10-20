@@ -24,9 +24,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Application.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="StdAfx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -87,12 +84,12 @@
     <ClCompile Include="..\Common\StringUtil.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="SkinInstaller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Application.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StdAfx.h">
@@ -143,13 +140,13 @@
     <ClInclude Include="DialogPackage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SkinInstaller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Res\SkinInstaller.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="res\Rainstaller.bmp">
-      <Filter>Resource Files</Filter>
+    <None Include="SkinInstaller.def">
+      <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

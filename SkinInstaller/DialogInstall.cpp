@@ -17,7 +17,7 @@
 */
 
 #include "StdAfx.h"
-#include "Application.h"
+#include "SkinInstaller.h"
 #include "DialogInstall.h"
 #include "../Library/pcre-8.10/config.h"
 #include "../Library/pcre-8.10/pcre.h"
@@ -220,7 +220,7 @@ INT_PTR DialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 		{
 			RECT r;
 			GetWindowRect((HWND)lParam, &r);
-			HMENU menu = LoadMenu(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDR_INSTALL_MENU));
+			HMENU menu = LoadMenu(GetInstanceHandle(), MAKEINTRESOURCE(IDR_INSTALL_MENU));
 			HMENU subMenu = GetSubMenu(menu, 0);
 
 			if (m_PackageSkins.empty() || m_MergeSkins || m_BackupPackage)
@@ -1312,7 +1312,7 @@ std::wstring DialogInstall::GetWindowsVersionString()
 ** Constructor.
 **
 */
-DialogInstall::TabInstall::TabInstall(HWND wnd) : Tab(GetModuleHandle(nullptr), wnd, IDD_INSTALL_TAB, DlgProc)
+DialogInstall::TabInstall::TabInstall(HWND wnd) : Tab(GetInstanceHandle(), wnd, IDD_INSTALL_TAB, DlgProc)
 {
 }
 
