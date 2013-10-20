@@ -12,10 +12,6 @@ set VERSION_SUBMINOR=1
 set VERSION_REVISION=0
 set ISBETA=true
 
-set VERSION_FULL=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%.%VERSION_REVISION%
-set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%
-if not "%VERSION_SUBMINOR%" == "0" set VERSION_SHORT=!VERSION_SHORT!.%VERSION_SUBMINOR%
-
 if "%1" == "RELEASE" set ISBETA=false
 if "%1" == "BUILDVERSION" goto BUILDVERSION
 echo Rainmeter Build
@@ -51,6 +47,10 @@ for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --all --count`) do set VERS
 
 :UPDATEVERSION
 
+set VERSION_FULL=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%.%VERSION_REVISION%
+set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%
+if not "%VERSION_SUBMINOR%" == "0" set VERSION_SHORT=!VERSION_SHORT!.%VERSION_SUBMINOR%
+
 :: Update Version.h
 > "..\Version.h" echo #pragma once
 >>"..\Version.h" echo #define FILEVER %VERSION_MAJOR%,%VERSION_MINOR%,%VERSION_SUBMINOR%,%VERSION_REVISION%
@@ -80,7 +80,7 @@ if "%1" == "BUILDVERSION" goto :eof
 echo * Updated Version.h
 
 :: Set vcbuild environment variables and begin build
-echo * Starting build for %VERSION%
+echo * Starting build for %VERSION_FULL%
 for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
 	set /A "BUILD_BEGIN_TIMESTAMP=(((%%a * 60) + 1%%b %% 100)* 60 + 1%%c %% 100) * 100 + 1%%d %% 100"
 )
