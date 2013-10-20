@@ -23,6 +23,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Link>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
       <NoEntryPoint>true</NoEntryPoint>
     </Link>
     <ResourceCompile>

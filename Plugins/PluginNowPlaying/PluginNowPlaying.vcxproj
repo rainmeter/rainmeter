@@ -25,6 +25,7 @@
       <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">false</WholeProgramOptimization>
     </ClCompile>
     <Link>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
       <AdditionalDependencies>Psapi.lib;WinInet.lib;comsuppwd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </Link>

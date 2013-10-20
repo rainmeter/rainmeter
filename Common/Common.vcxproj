@@ -18,6 +18,9 @@
     <ClCompile>
       <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <Lib>
+      <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">true</LinkTimeCodeGeneration>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ControlTemplate.cpp" />
