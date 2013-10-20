@@ -23,7 +23,7 @@
       <DisableSpecificWarnings>4351;4800;4273;4251</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Psapi.lib;WinInet.lib;comsuppwd.lib;D:\Biru\Downloads\taglib-1.9.1.tar\taglib-1.9.1\taglib-1.9.1\taglib\Debug\tag.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Psapi.lib;WinInet.lib;comsuppwd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </Link>
   </ItemDefinitionGroup>
