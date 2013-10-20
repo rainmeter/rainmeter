@@ -28,7 +28,7 @@
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(OutDir)Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Skins\"
-if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Themes "$(OutDir)Layouts\"</Command>
+if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Layouts "$(OutDir)Layouts\"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
@@ -47,7 +47,7 @@ if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Themes "$(OutDir)Layouts
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(OutDir)Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Skins\"
-if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Themes "$(OutDir)Layouts\"</Command>
+if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Layouts "$(OutDir)Layouts\"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
@@ -70,7 +70,7 @@ if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Themes "$(OutDir)Layouts
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(OutDir)Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Skins\"
-if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Themes "$(OutDir)Layouts\"</Command>
+if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Layouts "$(OutDir)Layouts\"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>
@@ -94,7 +94,7 @@ if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Themes "$(OutDir)Layouts
     </Link>
     <PostBuildEvent>
       <Command>if not exist "$(OutDir)Skins" xcopy /Q /S /Y ..\Build\Skins "$(OutDir)Skins\"
-if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Themes "$(OutDir)Layouts\"</Command>
+if not exist "$(OutDir)Layouts" xcopy /Q /S /Y ..\Build\Layouts "$(OutDir)Layouts\"</Command>
     </PostBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>Application.manifest</AdditionalManifestFiles>

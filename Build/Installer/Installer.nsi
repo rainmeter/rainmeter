@@ -678,7 +678,7 @@ SkipIniMove:
 	File /r "..\Skins\*.*"
 
 	SetOutPath "$INSTDIR\Defaults\Layouts"
-	File /r "..\Themes\*.*"
+	File /r "..\Layouts\*.*"
 !endif
 
 	SetOutPath "$INSTDIR"
