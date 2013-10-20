@@ -57,9 +57,6 @@
     <ClCompile Include="zlib\inffas8664.c">
       <Filter>zlib</Filter>
     </ClCompile>
-    <ClCompile Include="zlib\gvmat32c.c">
-      <Filter>zlib</Filter>
-    </ClCompile>
     <ClCompile Include="zlib\minizip\zip.c">
       <Filter>zlib\minizip</Filter>
     </ClCompile>
@@ -150,18 +147,16 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="zlib\inffasx64.asm">
+    <MASM Include="zlib\gvmat64.asm">
       <Filter>zlib</Filter>
-    </CustomBuild>
-    <CustomBuild Include="zlib\gvmat64.asm">
-      <Filter>zlib</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <MASM Include="zlib\gvmat32.asm">
+    </MASM>
+    <MASM Include="zlib\inffasx64.asm">
       <Filter>zlib</Filter>
     </MASM>
     <MASM Include="zlib\inffas32.asm">
+      <Filter>zlib</Filter>
+    </MASM>
+    <MASM Include="zlib\match686.asm">
       <Filter>zlib</Filter>
     </MASM>
   </ItemGroup>
