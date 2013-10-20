@@ -22,6 +22,7 @@
       <AdditionalIncludeDirectories>./taglib;./taglib/toolkit;./taglib/asf;./taglib/mpeg;./taglib/ogg;./taglib/ogg/flac;./taglib/flac;./taglib/mpc;./taglib/ogg/vorbis;./taglib/mpeg/id3v2;./taglib/mpeg/id3v2/frames;./taglib/mpeg/id3v1;./taglib/ape;./taglib/wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4351;4800;4273;4251;4530;4996</DisableSpecificWarnings>
       <ExceptionHandling Condition="'$(Configuration)'=='Release'">false</ExceptionHandling>
+      <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">false</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <AdditionalDependencies>Psapi.lib;WinInet.lib;comsuppwd.lib;%(AdditionalDependencies)</AdditionalDependencies>

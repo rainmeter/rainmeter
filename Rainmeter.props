@@ -82,6 +82,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
