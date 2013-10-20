@@ -78,7 +78,7 @@ HINSTANCE LoadSkinInstallerLibrary()
 
 			if (msvcrDll)
 			{
-				rmDll = LoadLibrary(L"Rainmeter.dll");
+				rmDll = LoadLibrary(L"SkinInstaller.dll");
 				FreeLibrary(msvcrDll);
 			}
 		}
