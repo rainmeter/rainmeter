@@ -1541,7 +1541,10 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool for
 			hUrlDump = InternetOpenUrlA(handle, urlACP.c_str(), nullptr, 0, flags, 0);
 		}
 
-		return nullptr;
+		if (!hUrlDump)
+		{
+			return nullptr;
+		}
 	}
 
 	// Allocate buffer with 3 extra bytes for triple null termination in case the string is
