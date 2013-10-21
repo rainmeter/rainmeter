@@ -117,17 +117,46 @@ void __stdcall RmExecute(void* skin, LPCWSTR command)
 	}
 }
 
-BOOL LSLog(int nLevel, LPCWSTR unused, LPCWSTR pszMessage)
+BOOL LSLog(int level, LPCWSTR unused, LPCWSTR message)
 {
-	NULLCHECK(pszMessage);
+	NULLCHECK(message);
 
-	// Ignore Level::Debug messages from plugins unless in debug mode
-	if (nLevel != (int)Logger::Level::Debug || GetRainmeter().GetDebug())
+	// Ignore Debug messages from plugins unless in debug mode.
+	if (level != (int)Logger::Level::Debug || GetRainmeter().GetDebug())
 	{
-		GetLogger().Log((Logger::Level)nLevel, L"", pszMessage);
+		GetLogger().Log((Logger::Level)level, L"", message);
 	}
 
 	return TRUE;
+}
+
+void __stdcall RmLog(void* rm, int level, LPCWSTR message)
+{
+	NULLCHECK(message);
+
+	MeasurePlugin* measure = (MeasurePlugin*)rm;
+
+	// Ignore Debug messages from plugins unless in debug mode.
+	if (level != (int)Logger::Level::Debug || GetRainmeter().GetDebug())
+	{
+		GetLogger().LogSection((Logger::Level)level, measure, message);
+	}
+}
+
+void RmLogF(void* rm, int level, LPCWSTR format, ...)
+{
+	NULLCHECK(format);
+
+	MeasurePlugin* measure = (MeasurePlugin*)rm;
+
+	// Ignore Debug messages from plugins unless in debug mode.
+	if (level != (int)Logger::Level::Debug || GetRainmeter().GetDebug())
+	{
+		va_list args;
+		va_start(args, format);
+		GetLogger().LogSectionVF((Logger::Level)level, measure, format, args);
+		va_end(args);
+	}
 }
 
 // Deprecated!

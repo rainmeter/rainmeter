@@ -56,7 +56,11 @@ enum RmGetType
 	RMG_SKINWINDOWHANDLE = 4
 };
 
-LIBRARY_EXPORT BOOL LSLog(int type, LPCWSTR unused, LPCWSTR message);
+LIBRARY_EXPORT void __stdcall RmLog(void* rm, int level, LPCWSTR message);
+
+LIBRARY_EXPORT void __cdecl RmLogF(void* rm, int level, LPCWSTR format, ...);
+
+LIBRARY_EXPORT BOOL __cdecl LSLog(int level, LPCWSTR unused, LPCWSTR message);
 
 //
 // Wrapper functions

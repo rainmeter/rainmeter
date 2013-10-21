@@ -55,7 +55,9 @@ protected:
 
 	bool UpdateCounter();
 
-	const std::wstring m_Name;		// Name of this Section
+	// Plugins may access this string through RmGetMeasureName(). This should never changed be to
+	// ensure thread-safety.
+	const std::wstring m_Name;
 
 	bool m_DynamicVariables;		// If true, the section contains dynamic variables
 	int m_UpdateDivider;			// Divider for the update

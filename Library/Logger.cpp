@@ -234,7 +234,7 @@ void Logger::LogVF(Level level, const WCHAR* source, const WCHAR* format, va_lis
 	delete [] buffer;
 }
 
-void Logger::LogSectionVF(Logger::Level level, Section* section, const WCHAR* format, va_list args)
+std::wstring GetSectionSourceString(Section* section)
 {
 	std::wstring source;
 	if (section)
@@ -250,7 +250,18 @@ void Logger::LogSectionVF(Logger::Level level, Section* section, const WCHAR* fo
 		source += section->GetOriginalName();
 		source += L']';
 	}
+	return source;
+}
 
+void Logger::LogSection(Logger::Level level, Section* section, const WCHAR* message)
+{
+	const std::wstring source = GetSectionSourceString(section);
+	GetLogger().Log(level, source.c_str(), message);
+}
+
+void Logger::LogSectionVF(Logger::Level level, Section* section, const WCHAR* format, va_list args)
+{
+	const std::wstring source = GetSectionSourceString(section);
 	GetLogger().LogVF(level, source.c_str(), format, args);
 }
 

@@ -1,7 +1,7 @@
 LIBRARY
 EXPORTS
-	; Note: If new functions are added, the Rainmeter.lib files in Plugins\API\x32 and Plugins\API\x64
-	; must be replaced by the corresponding file in Library\x32\Release and Library\x64\Release.
+	; Note: If new functions are added, the Rainmeter.lib files in Plugins\API\{x32,x64} must be
+	; replaced by the corresponding file in {x32,x64}-Release\Obj\Library.
 	; Set '<ExcludeTests>true</ExcludeTests>' in Rainmeter.props first to minimize the .lib size.
 	RmReadString
 	RmReadFormula
@@ -9,6 +9,8 @@ EXPORTS
 	RmPathToAbsolute
 	RmExecute
 	RmGet
+	RmLog
+	RmLogF
 	LSLog
 	ReadConfigString
 	PluginBridge

@@ -61,6 +61,7 @@ public:
 	void Log(Level level, const WCHAR* source, const WCHAR* msg);
 	void LogVF(Level level, const WCHAR* source, const WCHAR* format, va_list args);
 	void LogMeterWindowVF(Logger::Level level, MeterWindow* meterWindow, const WCHAR* format, va_list args);
+	void LogSection(Logger::Level level, Section* section, const WCHAR* message);
 	void LogSectionVF(Logger::Level level, Section* section, const WCHAR* format, va_list args);
 
 	const std::wstring& GetLogFilePath() { return m_LogFilePath; }
