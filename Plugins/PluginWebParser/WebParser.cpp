@@ -29,7 +29,7 @@
 #include "../../Common/StringUtil.h"
 #include "../API/RainmeterAPI.h"
 
-void ShowError(int lineNumber, WCHAR* errorMsg = nullptr);
+void ShowError(void* rm, WCHAR* description);
 
 class ProxyCachePool
 {
@@ -152,7 +152,7 @@ private:
 		}
 		else
 		{
-			ShowError(__LINE__);
+			ShowError(nullptr, L"InternetOpen error");
 		}
 
 		return handle;
@@ -852,8 +852,11 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 
 	RmLogF(measure->rm, LOG_DEBUG, L"WebParser: Fetching: %s", measure->url.c_str());
 	BYTE* data = DownloadUrl(measure->proxy.handle, measure->url, &dwSize, measure->forceReload);
-
-	if (data)
+	if (!data)
+	{
+		ShowError(measure->rm, L"Fetch error");
+	}
+	else
 	{
 		if (measure->debug == 2)
 		{
@@ -1538,11 +1541,7 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool for
 			hUrlDump = InternetOpenUrlA(handle, urlACP.c_str(), nullptr, 0, flags, 0);
 		}
 
-		if (!hUrlDump)
-		{
-			ShowError(__LINE__);
-			return nullptr;
-		}
+		return nullptr;
 	}
 
 	// Allocate buffer with 3 extra bytes for triple null termination in case the string is
@@ -1558,8 +1557,9 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool for
 		DWORD readSize;
 		if (!InternetReadFile(hUrlDump, buffer + *dataSize, bufferSize - *dataSize, &readSize))
 		{
-			ShowError(__LINE__);
-			break;
+			free(buffer);
+			InternetCloseHandle(hUrlDump);
+			return nullptr;
 		}
 		else if (readSize == 0)
 		{
@@ -1587,14 +1587,8 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool for
 /*
   Writes the last error to log.
 */
-void ShowError(int lineNumber, WCHAR* errorMsg)
+void ShowError(void* rm, WCHAR* description)
 {
-	if (errorMsg)
-	{
-		RmLogF(nullptr, LOG_ERROR, L"WebParser: (%i) %s", lineNumber, errorMsg);
-		return;
-	}
-
 	DWORD dwErr = GetLastError();
 	if (dwErr == ERROR_INTERNET_EXTENDED_ERROR)
 	{
@@ -1607,7 +1601,7 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 			dwErr = dwError;
 		}
 
-		RmLogF(nullptr, LOG_ERROR, L"WebParser: (%i) %s (ErrorCode=%i)", lineNumber, error, dwErr);
+		RmLogF(rm, LOG_ERROR, L"WebParser: (%s) %s (ErrorCode=%i)", description, error, dwErr);
 	}
 	else
 	{
@@ -1628,7 +1622,7 @@ void ShowError(int lineNumber, WCHAR* errorMsg)
 		);
 
 		const WCHAR* error = lpMsgBuf ? (WCHAR*)lpMsgBuf : L"Unknown error";
-		RmLogF(nullptr, LOG_ERROR, L"WebParser: (%i) %s (ErrorCode=%i)", lineNumber, error, dwErr);
+		RmLogF(rm, LOG_ERROR, L"WebParser: (%s) %s (ErrorCode=%i)", description, error, dwErr);
 
 		if (lpMsgBuf) LocalFree(lpMsgBuf);
 	}
