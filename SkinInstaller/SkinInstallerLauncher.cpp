@@ -115,7 +115,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 		message,
 		L"SkinInstaller.dll load error %ld.",
 		GetLastError());
-	MessageBox(nullptr, message, L"Rainmeter", MB_OK | MB_ICONERROR);
+	MessageBox(nullptr, message, L"Skin Installer", MB_OK | MB_ICONERROR);
 
 	return 1;
 }

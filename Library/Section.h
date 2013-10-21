@@ -55,7 +55,7 @@ protected:
 
 	bool UpdateCounter();
 
-	// Plugins may access this string through RmGetMeasureName(). This should never changed be to
+	// Plugins may access this string through RmGetMeasureName(). This should never be modified to
 	// ensure thread-safety.
 	const std::wstring m_Name;
 
