@@ -7,9 +7,9 @@ set GIT=%PROGRAMFILES%\Git\bin\git.exe
 
 :: Set VERSION_REVISION to non-zero value to override
 set VERSION_MAJOR=3
-set VERSION_MINOR=1
+set VERSION_MINOR=0
 set VERSION_SUBMINOR=0
-set VERSION_REVISION=0
+set VERSION_REVISION=2107
 set ISBETA=true
 
 if "%1" == "RELEASE" set ISBETA=false
@@ -47,15 +47,13 @@ for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --all --count`) do set VERS
 
 :UPDATEVERSION
 
-set VERSION_FULL=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%.%VERSION_REVISION%
-set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%
-if not "%VERSION_SUBMINOR%" == "0" set VERSION_SHORT=!VERSION_SHORT!.%VERSION_SUBMINOR%
+set VERSION=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%.%VERSION_REVISION%
 
 :: Update Version.h
 > "..\Version.h" echo #pragma once
 >>"..\Version.h" echo #define FILEVER %VERSION_MAJOR%,%VERSION_MINOR%,%VERSION_SUBMINOR%,%VERSION_REVISION%
 >>"..\Version.h" echo #define PRODUCTVER FILEVER
->>"..\Version.h" echo #define STRFILEVER "%VERSION_FULL%"
+>>"..\Version.h" echo #define STRFILEVER "%VERSION%"
 >>"..\Version.h" echo #define STRPRODUCTVER STRFILEVER
 >>"..\Version.h" echo #define APPVERSION L"%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%"
 >>"..\Version.h" echo #define RAINMETER_VERSION ((%VERSION_MAJOR% * 1000000) + (%VERSION_MINOR% * 1000) + %VERSION_SUBMINOR%)
@@ -68,9 +66,9 @@ if not "%VERSION_SUBMINOR%" == "0" set VERSION_SHORT=!VERSION_SHORT!.%VERSION_SU
 >>"..\Version.cs" echo     public class Version
 >>"..\Version.cs" echo     {
 >>"..\Version.cs" echo #if X64
->>"..\Version.cs" echo         public const string Informational = "%VERSION_FULL% (64-bit)";
+>>"..\Version.cs" echo         public const string Informational = "%VERSION% (64-bit)";
 >>"..\Version.cs" echo #else
->>"..\Version.cs" echo         public const string Informational = "%VERSION_FULL% (32-bit)";
+>>"..\Version.cs" echo         public const string Informational = "%VERSION% (32-bit)";
 >>"..\Version.cs" echo #endif
 >>"..\Version.cs" echo     }
 >>"..\Version.cs" echo }
@@ -80,7 +78,7 @@ if "%1" == "BUILDVERSION" goto :eof
 echo * Updated Version.h
 
 :: Set vcbuild environment variables and begin build
-echo * Starting build for %VERSION_FULL%
+echo * Starting build for %VERSION%
 for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
 	set /A "BUILD_BEGIN_TIMESTAMP=(((%%a * 60) + 1%%b %% 100)* 60 + 1%%c %% 100) * 100 + 1%%d %% 100"
 )
@@ -103,22 +101,20 @@ for /f "tokens=1,2,3 delims=," %%a in (..\Language\List) do (
 	> "..\Language\Language.rc" echo #include "%%a.h"
 	>>"..\Language\Language.rc" echo #include "Resource.rc"
 	>>".\Installer\Languages.nsh" echo ${IncludeLanguage} "%%b" "%%a"
-	set LANGDLL_PARAMS='%%a -  ${LANGFILE_%%b_NAME}' '${LANG_%%b}' '${LANG_%%b_CP}' !LANGDLL_PARAMS!
-	set LANGUAGE_IDS=${LANG_%%b},!LANGUAGE_IDS!
+	set LANGUAGES='%%a -  ${LANGFILE_%%b_NAME}' '${LANG_%%b}' '${LANG_%%b_CP}' !LANGUAGES!
 
 	%MSBUILD% /t:Language /p:Configuration=Release;Platform=Win32;TargetName=%%c /v:q ..\Rainmeter.sln > "BuildLog.txt"
 	if not %ERRORLEVEL% == 0 echo   ERROR: Building language %%a failed & goto END
 )
->>".\Installer\Languages.nsh" echo ^^!define LANGDLL_PARAMS "%LANGDLL_PARAMS%"
->>".\Installer\Languages.nsh" echo ^^!define LANGUAGE_IDS "%LANGUAGE_IDS%"
+>>".\Installer\Languages.nsh" echo ^^!define LANGUAGES "%LANGUAGES%"
 
 :: Restore English
 echo #include "English.h"> "..\Language\Language.rc"
 echo #include "Resource.rc">> "..\Language\Language.rc"
 if "%1" == "BUILDLANGUAGES" (
-	xcopy /Q /S /Y ..\x32-Release\Languages\*.dll ..\x64-Release\Languages\ > nul
-	xcopy /Q /S /Y ..\x32-Release\Release\Languages\*.dll ..\x32-Debug\Languages\ > nul
-	xcopy /Q /S /Y ..\x32-Release\Release\Languages\*.dll ..\x64-Debug\Languages\ > nul
+	xcopy /Q /S /Y ..\TestBench\x32\Release\Languages\*.dll ..\TestBench\x64\Release\Languages\ > nul
+	xcopy /Q /S /Y ..\TestBench\x32\Release\Languages\*.dll ..\TestBench\x32\Debug\Languages\ > nul
+	xcopy /Q /S /Y ..\TestBench\x32\Release\Languages\*.dll ..\TestBench\x64\Debug\Languages\ > nul
 	if exist "BuildLog.txt" del "BuildLog.txt"
 	goto END
 )
@@ -126,10 +122,10 @@ if "%1" == "BUILDLANGUAGES" (
 :: Sign binaries
 if not "%CERTFILE%" == "" (
 	echo * Signing binaries
-	for %%Z in (Rainmeter.dll Rainmeter.exe SkinInstaller.exe SkinInstaller.dll) do (
-		%SIGNTOOL% ..\x32-Release\%%Z > BuildLog.txt
+	for %%Z in (Rainmeter.dll Rainmeter.exe SkinInstaller.exe) do (
+		%SIGNTOOL% ..\TestBench\x32\Release\%%Z > BuildLog.txt
 		if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing x32\%%Z failed & goto END
-		%SIGNTOOL% ..\x64-Release\%%Z > BuildLog.txt
+		%SIGNTOOL% ..\TestBench\x64\Release\%%Z > BuildLog.txt
 		if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing x64\%%Z failed & goto END
 	)
 )
@@ -137,23 +133,24 @@ if not "%CERTFILE%" == "" (
 :: Build installer
 echo * Building installer
 
-set INSTALLER_NAME=Rainmeter-%VERSION_SHORT%.exe
-if not "%1" == "RELEASE" set INSTALLER_NAME=Rainmeter-%VERSION_SHORT%-r%VERSION_REVISION%-beta.exe
+set INSTALLER_VERSION=%VERSION_MAJOR%.%VERSION_MINOR%
+if not "%VERSION_SUBMINOR%" == "0" set INSTALLER_VERSION=!INSTALLER_VERSION!.%VERSION_SUBMINOR%
 
-set INSTALLER_DEFINES=^
-	/DOUTFILE="%INSTALLER_NAME%"^
-	/DVERSION_FULL="%VERSION_FULL%"^
-	/DVERSION_SHORT="%VERSION_SHORT%"^
-	/DVERSION_REVISION="%VERSION_REVISION%"
-if not "%1" == "RELEASE" set INSTALLER_DEFINES=!INSTALLER_DEFINES! /DBETA
-
-"%MAKENSIS%" %INSTALLER_DEFINES% .\Installer\Installer.nsi > "BuildLog.txt"
+if "%1" == "RELEASE" (
+	"%MAKENSIS%" /DREV="%VERSION_REVISION%" /DVER="%INSTALLER_VERSION%" .\Installer\Installer.nsi > "BuildLog.txt"
+) else (
+	"%MAKENSIS%" /DBETA /DREV="%VERSION_REVISION%" /DVER="%INSTALLER_VERSION%" .\Installer\Installer.nsi > "BuildLog.txt"
+)
 if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Building installer failed & goto END
 
 :: Sign installer
 if not "%CERTFILE%" == "" (
 	echo * Signing installer
-	%SIGNTOOL% %INSTALLER_NAME% > BuildLog.txt
+	if "%1" == "RELEASE" (
+		%SIGNTOOL% Rainmeter-%INSTALLER_VERSION%.exe > BuildLog.txt
+	) else (
+		%SIGNTOOL% Rainmeter-%INSTALLER_VERSION%-r%VERSION_REVISION%-beta.exe > BuildLog.txt
+	)
 	if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing installer failed & goto END
 )
 

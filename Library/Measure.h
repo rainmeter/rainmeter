@@ -20,6 +20,7 @@
 #define __MEASURE_H__
 
 #include <windows.h>
+#include <Psapi.h>
 #include <vector>
 #include <string>
 #include "Litestep.h"

@@ -79,7 +79,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		{
 			// PlayerName starts with [ so use referenced section
 			++str;
-			int len = wcslen(str);
+			int len = static_cast<int>(wcslen(str));
 			if (len > 0 && str[len - 1] == L']')
 			{
 				--len;

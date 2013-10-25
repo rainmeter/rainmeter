@@ -17,32 +17,28 @@
 */
 
 #include "StdAfx.h"
-#include "MeasureMemory.h"
+#include "MeasureSwapfileSize.h"
 #include "ConfigParser.h"
 
 /*
 ** The constructor
 **
 */
-MeasureMemory::MeasureMemory(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
+MeasureSwapfileSize::MeasureSwapfileSize(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
 	m_Total(false)
 {
-	m_Total = false;
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
 	GlobalMemoryStatusEx(&stat);
-	PERFORMANCE_INFORMATION info;
-	info.cb = sizeof(PERFORMANCE_INFORMATION);
-	GetPerformanceInfo(&info, info.cb);
 	CheckSwapfileEnabled();
 
 	if (m_bSwapfileEnabled == true)
 	{
-		m_MaxValue = (double)(__int64)(info.CommitLimit);
+		m_MaxValue = (double)(__int64)(stat.ullTotalPageFile - stat.ullTotalPhys);
 	}
 	else
 	{
-		m_MaxValue = (double)(__int64)(stat.ullTotalPhys);
+		m_MaxValue = 0.0;
 	}
 }
 
@@ -50,7 +46,7 @@ MeasureMemory::MeasureMemory(MeterWindow* meterWindow, const WCHAR* name) : Meas
 ** The destructor
 **
 */
-MeasureMemory::~MeasureMemory()
+MeasureSwapfileSize::~MeasureSwapfileSize()
 {
 }
 
@@ -58,18 +54,17 @@ MeasureMemory::~MeasureMemory()
 ** Updates the current virtual memory value.
 **
 */
-void MeasureMemory::UpdateValue()
+void MeasureSwapfileSize::UpdateValue()
 {
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(MEMORYSTATUSEX);
 	GlobalMemoryStatusEx(&stat);
-	PERFORMANCE_INFORMATION info;
-	info.cb = sizeof(PERFORMANCE_INFORMATION);
-	GetPerformanceInfo(&info, info.cb);
 
 	if (m_bSwapfileEnabled == true)
 	{
-		m_MaxValue = (double)(__int64)(stat.ullTotalPageFile);
+		// Replace code in this section with code to detect the size of all pagefiles in the system and add them together
+
+		m_MaxValue = (double)(__int64)(stat.ullTotalPageFile - stat.ullTotalPhys);
 
 		if (m_Total)
 		{
@@ -77,21 +72,12 @@ void MeasureMemory::UpdateValue()
 		}
 		else
 		{
-			m_Value = (double)(__int64)(stat.ullTotalPageFile - stat.ullAvailPageFile);
+			m_Value = (double)(__int64)(m_MaxValue - (stat.ullAvailPageFile - stat.ullAvailPhys));
 		}
 	}
 	else
 	{
-		m_MaxValue = (double)(__int64)(stat.ullTotalPhys);
-
-		if (m_Total)
-		{
-			m_Value = m_MaxValue;
-		}
-		else
-		{
-			m_Value = (double)(__int64)(stat.ullTotalPhys - stat.ullAvailPhys);
-		}
+		m_Value = m_MaxValue = 0.0;
 	}
 }
 
@@ -99,16 +85,16 @@ void MeasureMemory::UpdateValue()
 ** Read the options specified in the ini file.
 **
 */
-void MeasureMemory::ReadOptions(ConfigParser& parser, const WCHAR* section)
+void MeasureSwapfileSize::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	double oldMaxValue = m_MaxValue;
 	Measure::ReadOptions(parser, section);
 	m_MaxValue = oldMaxValue;
 
-	m_Total = parser.ReadBool(section, L"Total", false);
+	m_Total = (1 == parser.ReadInt(section, L"Total", 0));
 }
 
-void MeasureMemory::CheckSwapfileEnabled(void)
+void MeasureSwapfileSize::CheckSwapfileEnabled(void)
 {
 	// This only needs to run once (called by constructor) because changing the swapfile size 
 	// always requires a restart in the Windows operating system.
