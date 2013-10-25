@@ -374,7 +374,7 @@ const WCHAR* MathParser::Parse(
 			{
 				Operation op;
 				if (lexer.nameLen <= FUNC_MAX_LEN &&
-					((op.funcIndex = GetFunctionIndex(lexer.name, lexer.nameLen)) != FUNC_INVALID))
+					((op.funcIndex = (GetFunctionIndex(lexer.name, static_cast<BYTE>(lexer.nameLen))) != FUNC_INVALID)))
 				{
 					switch (op.funcIndex)
 					{
@@ -401,7 +401,7 @@ const WCHAR* MathParser::Parse(
 				else
 				{
 					double dblval;
-					if (getValue && getValue(lexer.name, lexer.nameLen, &dblval, getValueContext))
+					if (getValue && getValue(lexer.name, static_cast<int>(lexer.nameLen), &dblval, getValueContext))
 					{
 						parser.numStack[++parser.valTop] = dblval;
 						break;

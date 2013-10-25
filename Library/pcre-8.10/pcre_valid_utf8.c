@@ -48,6 +48,9 @@ strings. */
 
 #include "pcre_internal.h"
 
+// Disable loss of conversion from [A] to [B], possible loss of data
+#pragma warning (push)
+#pragma warning (disable : 4244)
 
 /*************************************************
 *         Validate a UTF-8 string                *
@@ -162,4 +165,5 @@ for (p = string; length-- > 0; p++)
 return -1;
 }
 
+#pragma warning (pop)
 /* End of pcre_valid_utf8.c */

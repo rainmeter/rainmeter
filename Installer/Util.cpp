@@ -116,8 +116,8 @@ bool CanProcessUserElevate()
 
 bool CopyDirectory(const WCHAR* fromPath, const WCHAR* toPath)
 {
-	int fromPathLength = wcslen(fromPath);
-	int toPathLength = wcslen(toPath);
+	int fromPathLength = static_cast<int>(wcslen(fromPath));
+	int toPathLength = static_cast<int>(wcslen(toPath));
 
 	// SHFileOperation expects double null terminated strings.
 	WCHAR* from = (WCHAR*)malloc((fromPathLength + 2) * sizeof(WCHAR));
@@ -215,7 +215,7 @@ bool SetRegistryDword(HKEY rootKey, const WCHAR* subKey, const WCHAR* value, DWO
 
 bool SetRegistryString(HKEY rootKey, const WCHAR* subKey, const WCHAR* value, const WCHAR* data)
 {
-	DWORD dataSize = (wcslen(data) + 1) * sizeof(WCHAR);
+	DWORD dataSize = static_cast<DWORD>((wcslen(data) + 1) * sizeof(WCHAR));
 	return SetRegistryData(REG_SZ, rootKey, subKey, value, (BYTE*)data, dataSize);
 }
 

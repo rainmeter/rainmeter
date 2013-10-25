@@ -133,7 +133,7 @@ void Vorbis::Properties::read()
 
   ByteVector data = d->file->packet(0);
 
-  uint pos = 0;
+  int pos = 0;
 
   if(data.mid(pos, 7) != vorbisSetupHeaderID) {
     debug("Vorbis::Properties::read() -- invalid Vorbis identification header");
@@ -142,22 +142,22 @@ void Vorbis::Properties::read()
 
   pos += 7;
 
-  d->vorbisVersion = data.toUInt(pos, false);
+  d->vorbisVersion = data.mid(pos, 4).toUInt(false);
   pos += 4;
 
   d->channels = uchar(data[pos]);
   pos += 1;
 
-  d->sampleRate = data.toUInt(pos, false);
+  d->sampleRate = data.mid(pos, 4).toUInt(false);
   pos += 4;
 
-  d->bitrateMaximum = data.toUInt(pos, false);
+  d->bitrateMaximum = data.mid(pos, 4).toUInt(false);
   pos += 4;
 
-  d->bitrateNominal = data.toUInt(pos, false);
+  d->bitrateNominal = data.mid(pos, 4).toUInt(false);
   pos += 4;
 
-  d->bitrateMinimum = data.toUInt(pos, false);
+  d->bitrateMinimum = data.mid(pos, 4).toUInt(false);
 
   // TODO: Later this should be only the "fast" mode.
   d->bitrate = d->bitrateNominal;
@@ -173,7 +173,7 @@ void Vorbis::Properties::read()
     long long end = last->absoluteGranularPosition();
 
     if(start >= 0 && end >= 0 && d->sampleRate > 0)
-      d->length = (int)((end - start) / (long long) d->sampleRate);
+      d->length = static_cast<int>((end - start) / (long long) d->sampleRate);
     else
       debug("Vorbis::Properties::read() -- Either the PCM values for the start or "
             "end of this file was incorrect or the sample rate is zero.");

@@ -234,7 +234,7 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 		case IPC_VOLUME_CHANGED_NOTIFICATION:
 			{
-				player->m_Volume = wParam;
+				player->m_Volume = static_cast<unsigned int>(wParam);
 				break;
 			}
 
@@ -252,7 +252,7 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 		case IPC_RATING_CHANGED_NOTIFICATION:
 			{
-				player->m_Rating = (wParam + 1) / 2;	// From 0 - 10 to 0 - 5
+				player->m_Rating = (static_cast<unsigned int>(wParam) + 1) / 2;	// From 0 - 10 to 0 - 5
 				break;
 			}
 
@@ -418,8 +418,8 @@ void PlayerCAD::UpdateData()
 {
 	if (m_State != STATE_STOPPED)
 	{
-		m_Position = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_POSITION);
-		m_Volume = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_VOLUME);
+		m_Position = static_cast<unsigned int>(SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_POSITION));
+		m_Volume = static_cast<unsigned int>(SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_VOLUME));
 	}
 }
 

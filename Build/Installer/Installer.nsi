@@ -25,23 +25,26 @@
 !include "WinVer.nsh"
 !include "UAC.nsh"
 
-!ifndef OUTFILE
- !define OUTFILE "Rainmeter-test.exe"
- !define VERSION_FULL "0.0.0.0"
- !define VERSION_SHORT "0.0"
- !define VERSION_REVISION "000"
+!ifndef VER
+ !define VER "0.0"
+ !define REV "000"
 !else
  !define INCLUDEFILES
+!endif
+!ifdef BETA
+ !define OUTFILE "Rainmeter-${VER}-r${REV}-beta.exe"
+!else
+ !define OUTFILE "Rainmeter-${VER}.exe"
 !endif
 
 Name "Rainmeter"
 VIAddVersionKey "ProductName" "Rainmeter"
 VIAddVersionKey "FileDescription" "Rainmeter Installer"
-VIAddVersionKey "FileVersion" "${VERSION_FULL}"
-VIAddVersionKey "ProductVersion" "${VERSION_FULL}"
+VIAddVersionKey "FileVersion" "${VER}.0"
+VIAddVersionKey "ProductVersion" "${VER}.0.${REV}"
 VIAddVersionKey "OriginalFilename" "${OUTFILE}"
-VIAddVersionKey "LegalCopyright" "Copyright (C) 2009-2013 - All authors"
-VIProductVersion "${VERSION_FULL}"
+VIAddVersionKey "LegalCopyright" "Copyright (C) 2009-2012 - All authors"
+VIProductVersion "${VER}.0.${REV}"
 BrandingText " "
 SetCompressor /SOLID lzma
 RequestExecutionLevel user
@@ -50,10 +53,12 @@ ShowInstDetails nevershow
 AllowSkipFiles off
 XPStyle on
 OutFile "..\${OUTFILE}"
-ReserveFile "${NSISDIR}\Plugins\LangDLL.dll"
-ReserveFile "${NSISDIR}\Plugins\nsDialogs.dll"
-ReserveFile "${NSISDIR}\Plugins\System.dll"
-ReserveFile ".\UAC.dll"
+ReserveFile "${NSISDIR}\Plugins\x86-ansi\LangDLL.dll"
+ReserveFile "${NSISDIR}\Plugins\x86-ansi\MD5.dll"
+ReserveFile "${NSISDIR}\Plugins\x86-ansi\MoreInfo.dll"
+ReserveFile "${NSISDIR}\Plugins\x86-ansi\nsDialogs.dll"
+ReserveFile "${NSISDIR}\Plugins\x86-ansi\System.dll"
+ReserveFile "${NSISDIR}\Plugins\x86-ansi\UAC.dll"
 
 !define REQUIREDSPACE 5 ; Minimum required space for install (in MB)
 
@@ -65,7 +70,9 @@ ReserveFile ".\UAC.dll"
 !define ERROR_CLOSEFAIL		7
 
 ; Additional Windows definitions
-!define BCM_SETSHIELD 0x0000160c
+!ifndef BCM_SETSHIELD
+	!define BCM_SETSHIELD 0x0000160c
+!endif
 !define PF_XMMI_INSTRUCTIONS_AVAILABLE 6
 !define PF_XMMI64_INSTRUCTIONS_AVAILABLE 10
 
@@ -112,7 +119,7 @@ Function .onInit
 		${OrIf} ${IsWin2003}
 		${AndIf} ${AtMostServicePack} 0
 			${IfNot} ${Silent}
-				MessageBox MB_OK|MB_ICONSTOP "Rainmeter requires Windows XP SP2 or later."
+				MessageBox MB_OK|MB_ICONSTOP "Windows XP SP2 or later is required to install Rainmeter ${VER}."
 			${EndIf}
 			SetErrorLevel ${ERROR_UNSUPPORTED}
 			Quit
@@ -121,7 +128,7 @@ Function .onInit
 		System::Call 'kernel32::IsProcessorFeaturePresent(i${PF_XMMI_INSTRUCTIONS_AVAILABLE})i.r0'
 		${If} $0 = 0
 			${IfNot} ${Silent}
-				MessageBox MB_OK|MB_ICONSTOP "Rainmeter requires a Pentium III or later processor."
+				MessageBox MB_OK|MB_ICONSTOP "A Pentium III or later processor is required to install Rainmeter ${VER}."
 			${EndIf}
 			SetErrorLevel ${ERROR_UNSUPPORTED}
 			Quit
@@ -135,7 +142,7 @@ Function .onInit
 			${OrIf} $0 <> $LANGUAGE
 			${AndIf} $NonDefaultLanguage != 1
 				; New install or better match
-				LangDLL::LangDialog "$(^SetupCaption)" "Please select the installer language.$\n$(SELECTLANGUAGE)" AC ${LANGDLL_PARAMS} ""
+				LangDLL::LangDialog "$(^SetupCaption)" "Please select the installer language.$\n$(SELECTLANGUAGE)" AC ${LANGUAGES} ""
 				Pop $0
 				${If} $0 == "cancel"
 					Abort
@@ -203,12 +210,6 @@ Function .onInit
 				SetErrorLevel ${ERROR_WRITEFAIL}
 				Quit
 			${EndIf}
-		${EndIf}
-
-		; If the language was set to a non-existent language, reset it back to English.
-		${WordFind} ",${LANGUAGE_IDS}" ",$LANGUAGE," "E+1{" $0
-		${If} ${Errors}
-			StrCpy $LANGUAGE "1033"
 		${EndIf}
 	${Else}
 		; Exchange settings with user instance
@@ -321,14 +322,14 @@ Function PageOptions
 
 	StrCpy $1 0
 
-	StrCpy $R2 0
 	${If} ${RunningX64}
-		${If} $InstallPortable = 1
-		${OrIf} $INSTDIR == ""
-			${NSD_CreateCheckBox} 6u 54u 285u 12u "$(INSTALL64BIT)"
-			Pop $R2
-			StrCpy $1 30u
-		${EndIf}
+	${AndIf} $InstallPortable = 1
+	${OrIf} $INSTDIR == ""
+		${NSD_CreateCheckBox} 6u 54u 285u 12u "$(INSTALL64BIT)"
+		Pop $R2
+		StrCpy $1 30u
+	${Else}
+		StrCpy $R2 0
 	${EndIf}
 
 	${If} $InstallPortable <> 1
@@ -505,19 +506,14 @@ UAC_TryAgain:
 	${EndIf}
 FunctionEnd
 
-!macro InstallFiles DIR ARCH
+!macro InstallFiles DIR
 	SetOutPath "$INSTDIR"
-	File "..\..\${DIR}-Release\Rainmeter.exe"
-	File "..\..\${DIR}-Release\Rainmeter.dll"
-	File "..\..\${DIR}-Release\SkinInstaller.exe"
-	File "..\..\${DIR}-Release\SkinInstaller.dll"
+	File "..\..\TestBench\${DIR}\Release\Rainmeter.exe"
+	File "..\..\TestBench\${DIR}\Release\Rainmeter.dll"
+	File "..\..\TestBench\${DIR}\Release\SkinInstaller.exe"
 
 	SetOutPath "$INSTDIR\Plugins"
-	File /x *Example*.dll "..\..\${DIR}-Release\Plugins\*.dll"
-
-	SetOutPath "$INSTDIR\Runtime"
-	File "$%VS110COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC110.CRT\msvcp110.dll"
-	File "$%VS110COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC110.CRT\msvcr110.dll"
+	File /x *Example*.dll "..\..\TestBench\${DIR}\Release\Plugins\*.dll"
 !macroend
 
 !macro RemoveStartMenuShortcuts STARTMENUPATH
@@ -547,7 +543,80 @@ Section
 	${EndIf}
 
 	${If} $InstallPortable <> 1
-	${AndIfNot} ${AtLeastWinVista}
+		; Download and install VC++ 2012 redist if required
+		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Runtimes\$InstArc" "Bld"
+		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Runtimes\$InstArc" "Installed"
+		${If} $0 == ""
+			; Some VS installs do not appear to have the "VC\Runtimes" node.
+			ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Libraries\Extended\$InstArc" "Bld"
+			ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\11.0\VC\Libraries\Extended\$InstArc" "Install"
+		${EndIf}
+
+		${VersionCompare} "$0" "51106" $1
+		${If} $1 = 2
+		${OrIf} $2 <> 1
+			${If} ${Silent}
+				SetErrorLevel ${ERROR_NOVCREDIST}
+				Quit
+			${EndIf}
+
+			NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU1/vcredist_$InstArc.exe" "$PLUGINSDIR\vcredist.exe"
+			Pop $0
+
+			${If} $0 == "success"
+				ExecWait '"$PLUGINSDIR\vcredist.exe" /q /norestart' $0
+				Delete "$PLUGINSDIR\vcredist.exe"
+
+				${If} $0 = 3010
+					SetRebootFlag true
+				${ElseIf} $0 <> 0
+					MessageBox MB_OK|MB_ICONSTOP "$(VCINSTERROR)"
+					Quit
+				${EndIf}
+			${ElseIf} $0 == "cancel"
+				Quit
+			${Else}
+				MessageBox MB_OK|MB_ICONSTOP "$(VCINSTERROR)"
+				Quit
+			${EndIf}
+		${EndIf}
+
+		; Download and install VC++ 2010 redist if required
+		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$InstArc" "Bld"
+		${VersionCompare} "$0" "40219" $1
+		ReadRegDWORD $2 HKLM "SOFTWARE\Microsoft\VisualStudio\10.0\VC\VCRedist\$InstArc" "Installed"
+		${If} $1 = 2
+		${OrIf} $2 <> 1
+			${If} ${Silent}
+				SetErrorLevel ${ERROR_NOVCREDIST}
+				Quit
+			${EndIf}
+
+			${If} $Install64Bit <> 1
+				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/C/6/D/C6D0FD4E-9E53-4897-9B91-836EBA2AACD3/vcredist_x86.exe" "$PLUGINSDIR\vcredist.exe"
+			${Else}
+				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/A/8/0/A80747C3-41BD-45DF-B505-E9710D2744E0/vcredist_x64.exe" "$PLUGINSDIR\vcredist.exe"
+			${EndIf}
+			Pop $0
+
+			${If} $0 == "success"
+				ExecWait '"$PLUGINSDIR\vcredist.exe" /q /norestart' $0
+				Delete "$PLUGINSDIR\vcredist.exe"
+
+				${If} $0 = 3010
+					SetRebootFlag true
+				${ElseIf} $0 <> 0
+					MessageBox MB_OK|MB_ICONSTOP "$(VCINSTERROR)"
+					Quit
+				${EndIf}
+			${ElseIf} $0 == "cancel"
+				Quit
+			${Else}
+				MessageBox MB_OK|MB_ICONSTOP "$(VCINSTERROR)"
+				Quit
+			${EndIf}
+		${EndIf}
+
 		; Download and install .NET if required
 		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727" "Install"
 		${If} $0 <> 1
@@ -632,7 +701,17 @@ SkipIniMove:
 
 	SetOutPath "$INSTDIR"
 
+	; Remove Rainmeter files mistakenly installed to root of Windows drive (old installer bug)
+	${GetRoot} "$WINDIR" $0
+	${If} ${FileExists} "$0\Rainmeter.exe"
+	${AndIfNot} ${FileExists} "$0\Plugins"
+		Delete "$0\Rainmeter.exe"
+		Delete "$0\Rainmeter.dll"
+		Delete "$0\SkinInstaller.exe"
+	${EndIf}
+
 	; Cleanup old stuff
+	Delete "$INSTDIR\Rainmeter.exe.config"
 	Delete "$INSTDIR\Rainmeter.chm"
 	Delete "$INSTDIR\Default.ini"
 	Delete "$INSTDIR\Launcher.exe"
@@ -660,17 +739,15 @@ SkipIniMove:
 	${EndIf}
 
 !ifdef INCLUDEFILES
-	File "..\..\Application\Rainmeter.exe.config"
-
 	${If} $instArc == "x86"
-		!insertmacro InstallFiles "x32" "x86"
+		!insertmacro InstallFiles "x32"
 	${Else}
-		!insertmacro InstallFiles "x64" "x64"
+		!insertmacro InstallFiles "x64"
 	${EndIf}
 
 	RMDir /r "$INSTDIR\Languages"
 	SetOutPath "$INSTDIR\Languages"
-	File "..\..\x32-Release\Languages\*.*"
+	File "..\..\TestBench\x32\Release\Languages\*.*"
 
 	SetOutPath "$INSTDIR\Defaults\Skins"
 	RMDir /r "$INSTDIR\Skins\illustro"
@@ -678,7 +755,7 @@ SkipIniMove:
 	File /r "..\Skins\*.*"
 
 	SetOutPath "$INSTDIR\Defaults\Layouts"
-	File /r "..\Layouts\*.*"
+	File /r "..\Themes\*.*"
 !endif
 
 	SetOutPath "$INSTDIR"
@@ -695,9 +772,9 @@ SkipIniMove:
 		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "UninstallString" "$INSTDIR\uninst.exe"
 
 !ifdef BETA
-		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_SHORT} beta r${VERSION_REVISION}"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VER} beta r${REV}"
 !else
-		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VERSION_SHORT} r${VERSION_REVISION}"
+		WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Rainmeter" "DisplayVersion" "${VER} r${REV}"
 !endif
 
 		; Create .rmskin association
@@ -751,7 +828,7 @@ SkipIniMove:
 		WriteUninstaller "$INSTDIR\uninst.exe"
 	${Else}
 		${IfNot} ${FileExists} "Rainmeter.ini"
-			CopyFiles /SILENT "$INSTDIR\Defaults\Layouts\illustro default\Rainmeter.ini" "$INSTDIR\Rainmeter.ini"
+			CopyFiles /SILENT "$INSTDIR\Layouts\illustro default\Rainmeter.ini" "$INSTDIR\Rainmeter.ini"
 		${EndIf}
 
 		WriteINIStr "$INSTDIR\Rainmeter.ini" "Rainmeter" "Language" "$LANGUAGE"
@@ -904,20 +981,15 @@ Section Uninstall
 		Sleep 500
 	${Next}
 
-	; Old stuff
-	RMDir /r "$INSTDIR\Addons"
-	RMDir /r "$INSTDIR\Fonts"
-
 	RMDir /r "$INSTDIR\Defaults"
 	RMDir /r "$INSTDIR\Languages"
 	RMDir /r "$INSTDIR\Plugins"
-	RMDir /r "$INSTDIR\Runtime"
 	RMDir /r "$INSTDIR\Skins"
+	RMDir /r "$INSTDIR\Addons"
+	RMDir /r "$INSTDIR\Fonts"
 	Delete "$INSTDIR\Rainmeter.dll"
 	Delete "$INSTDIR\Rainmeter.exe"
-	Delete "$INSTDIR\Rainmeter.exe.config"
 	Delete "$INSTDIR\SkinInstaller.exe"
-	Delete "$INSTDIR\SkinInstaller.dll"
 	Delete "$INSTDIR\uninst.exe"
 
 	RMDir "$INSTDIR"

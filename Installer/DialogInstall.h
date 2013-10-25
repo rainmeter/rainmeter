@@ -21,7 +21,7 @@
 
 #include "../Common/Dialog.h"
 
-class CDialogInstall : public CDialog
+class CDialogInstall : public Dialog
 {
 public:
 	CDialogInstall();

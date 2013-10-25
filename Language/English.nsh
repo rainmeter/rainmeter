@@ -1,4 +1,4 @@
-﻿${LangFileString} WIN2KERROR              "Rainmeter ${VER} does not support Windows 2000. To use Rainmeter on Windows 2000, download the older Rainmeter 2.0 version."
+${LangFileString} WIN2KERROR              "Rainmeter ${VER} does not support Windows 2000. To use Rainmeter on Windows 2000, download the older Rainmeter 2.0 version."
 ${LangFileString} WINXPS2ERROR            "Rainmeter ${VER} requires Windows XP SP2 or higher. Please upgrade to the latest service pack and try again."
 ${LangFileString} WIN2003SP1ERROR         "Rainmeter ${VER} requires Windows 2003 SP1 or higher. Please upgrade to the latest service pack and try again."
 ${LangFileString} ADMINERROR              "Adminstrative rights required."
