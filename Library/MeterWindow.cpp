@@ -276,7 +276,7 @@ void MeterWindow::Dispose(bool refresh)
 void MeterWindow::Initialize()
 {
 	m_Window = CreateWindowEx(
-		WS_EX_TOOLWINDOW,
+		WS_EX_TOOLWINDOW | WS_EX_LAYERED,
 		METERWINDOW_CLASS_NAME,
 		nullptr,
 		WS_POPUP,
@@ -421,10 +421,8 @@ void MeterWindow::Refresh(bool init, bool all)
 	RemoveWindowExStyle(WS_EX_TRANSPARENT);
 
 	m_Hidden = m_WindowStartHidden;
+	m_TransparencyValue = m_AlphaValue;
 
-	// Set the window region
-	AddWindowExStyle(WS_EX_LAYERED);
-	UpdateWindow(m_AlphaValue);
 	Update(true);
 
 	if (m_BlurMode == BLURMODE_NONE)
