@@ -86,7 +86,7 @@ void DialogManage::Open(int tab)
 	c_Dialog->ShowDialogWindow(
 		GetString(ID_STR_MANAGERAINMETER),
 		0, 0, 500, 322,
-		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
+		DS_CENTER | WS_POPUP | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU,
 		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT | ((*GetString(ID_STR_ISRTL) == L'1') ? WS_EX_LAYOUTRTL : 0),
 		GetRainmeter().GetWindow());
 
