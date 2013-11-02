@@ -43,14 +43,8 @@
     <ClCompile Include="lzma\7zMemInStream.c" />
     <ClCompile Include="lzma\7zStream.c" />
     <ClCompile Include="lzma\Alloc.c" />
-    <ClCompile Include="lzma\Bcj2.c" />
-    <ClCompile Include="lzma\Bra.c" />
-    <ClCompile Include="lzma\Bra86.c" />
     <ClCompile Include="lzma\CpuArch.c" />
-    <ClCompile Include="lzma\Lzma2Dec.c" />
     <ClCompile Include="lzma\LzmaDec.c" />
-    <ClCompile Include="lzma\Ppmd7.c" />
-    <ClCompile Include="lzma\Ppmd7Dec.c" />
     <ClCompile Include="StdAfx.cpp" />
     <ClCompile Include="Util.cpp" />
   </ItemGroup>
@@ -67,13 +61,8 @@
     <ClInclude Include="lzma\7zMemInStream.h" />
     <ClInclude Include="lzma\7zVersion.h" />
     <ClInclude Include="lzma\Alloc.h" />
-    <ClInclude Include="lzma\Bcj2.h" />
-    <ClInclude Include="lzma\Bra.h" />
     <ClInclude Include="lzma\CpuArch.h" />
-    <ClInclude Include="lzma\Lzma2Dec.h" />
     <ClInclude Include="lzma\LzmaDec.h" />
-    <ClInclude Include="lzma\Ppmd.h" />
-    <ClInclude Include="lzma\Ppmd7.h" />
     <ClInclude Include="lzma\Types.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="Util.h" />

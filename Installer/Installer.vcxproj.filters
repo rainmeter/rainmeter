@@ -30,28 +30,10 @@
     <ClCompile Include="Util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lzma\Bcj2.c">
-      <Filter>lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="lzma\Bra.c">
-      <Filter>lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="lzma\Bra86.c">
-      <Filter>lzma</Filter>
-    </ClCompile>
     <ClCompile Include="lzma\CpuArch.c">
       <Filter>lzma</Filter>
     </ClCompile>
-    <ClCompile Include="lzma\Lzma2Dec.c">
-      <Filter>lzma</Filter>
-    </ClCompile>
     <ClCompile Include="lzma\LzmaDec.c">
-      <Filter>lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="lzma\Ppmd7.c">
-      <Filter>lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="lzma\Ppmd7Dec.c">
       <Filter>lzma</Filter>
     </ClCompile>
     <ClCompile Include="lzma\7zAlloc.c">
@@ -104,25 +86,10 @@
     <ClInclude Include="lzma\Alloc.h">
       <Filter>lzma</Filter>
     </ClInclude>
-    <ClInclude Include="lzma\Bcj2.h">
-      <Filter>lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="lzma\Bra.h">
-      <Filter>lzma</Filter>
-    </ClInclude>
     <ClInclude Include="lzma\CpuArch.h">
       <Filter>lzma</Filter>
     </ClInclude>
-    <ClInclude Include="lzma\Lzma2Dec.h">
-      <Filter>lzma</Filter>
-    </ClInclude>
     <ClInclude Include="lzma\LzmaDec.h">
-      <Filter>lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="lzma\Ppmd.h">
-      <Filter>lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="lzma\Ppmd7.h">
       <Filter>lzma</Filter>
     </ClInclude>
     <ClInclude Include="lzma\Types.h">
