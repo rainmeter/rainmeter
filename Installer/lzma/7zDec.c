@@ -7,11 +7,15 @@
 
 #include "7z.h"
 
+#ifdef _7ZIP_BCJ2_SUPPPORT
 #include "Bcj2.h"
 #include "Bra.h"
+#endif
 #include "CpuArch.h"
 #include "LzmaDec.h"
+#ifdef _7ZIP_LZMA2_SUPPPORT
 #include "Lzma2Dec.h"
+#endif
 #ifdef _7ZIP_PPMD_SUPPPORT
 #include "Ppmd7.h"
 #endif
@@ -249,7 +253,9 @@ static Bool IS_MAIN_METHOD(UInt32 m)
   {
     case k_Copy:
     case k_LZMA:
+    #ifdef _7ZIP_LZMA2_SUPPPORT
     case k_LZMA2:
+    #endif
     #ifdef _7ZIP_PPMD_SUPPPORT
     case k_PPMD:
     #endif
@@ -416,6 +422,7 @@ static SRes SzFolder_Decode2(const CSzFolder *folder, const UInt64 *packSizes,
         #endif
       }
     }
+    #ifdef _7ZIP_BCJ2_SUPPPORT
     else if (coder->MethodID == k_BCJ2)
     {
       UInt64 offset = GetSum(packSizes, 1);
@@ -441,12 +448,14 @@ static SRes SzFolder_Decode2(const CSzFolder *folder, const UInt64 *packSizes,
           outBuffer, outSize);
       RINOK(res)
     }
+    #endif
     else
     {
       if (ci != 1)
         return SZ_ERROR_UNSUPPORTED;
       switch(coder->MethodID)
       {
+        #ifdef _7ZIP_BCJ2_SUPPPORT
         case k_BCJ:
         {
           UInt32 state;
@@ -455,6 +464,7 @@ static SRes SzFolder_Decode2(const CSzFolder *folder, const UInt64 *packSizes,
           break;
         }
         CASE_BRA_CONV(ARM)
+        #endif
         default:
           return SZ_ERROR_UNSUPPORTED;
       }

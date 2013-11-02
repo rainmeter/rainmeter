@@ -9,6 +9,8 @@
 
 #include "Types.h"
 
+EXTERN_C_BEGIN
+
 typedef struct
 {
   ILookInStream s;
@@ -18,5 +20,7 @@ typedef struct
 } CMemInStream;
 
 void MemInStream_Init(CMemInStream *p, const void *begin, size_t length);
+
+EXTERN_C_END
 
 #endif
