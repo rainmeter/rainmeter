@@ -91,7 +91,7 @@ bool CanvasD2D::Initialize()
 
 		hr = DWriteCreateFactory(
 			DWRITE_FACTORY_TYPE_SHARED,
-			__uuidof(IDWriteFactory),
+			__uuidof(c_DWFactory),
 			(IUnknown**)c_DWFactory.GetAddressOf());
 		if (FAILED(hr)) return false;
 
