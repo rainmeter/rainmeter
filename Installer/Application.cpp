@@ -17,7 +17,7 @@
 */
 
 #include "StdAfx.h"
-#include "Install.h"
+#include "DialogInstall.h"
 #include "Resource.h"
 #include "Application.h"
 
@@ -65,6 +65,8 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 		MessageBox(nullptr, L"A Pentium III or later processor is required to install Rainmeter.", nullptr, MB_OK | MB_ICONERROR);
 		return (int)InstallStatus::UnsupportedPlatform;
 	}
+
+	CDialogInstall::Create();
 
 	return 0;
 }

@@ -21,7 +21,7 @@
 
 #include "../Common/Dialog.h"
 
-class CDialogInstall : public CDialog
+class CDialogInstall : public Dialog
 {
 public:
 	CDialogInstall();
@@ -34,15 +34,47 @@ public:
 	static void ShowAboutLog();
 
 protected:
+	// Layouts tab
+	class TabContents : public Tab
+	{
+	public:
+		enum Id
+		{
+			Id_LanguageComboBox = 100,
+			Id_InstallationTypeComboBox,
+			Id_DestinationEdit,
+			Id_DestinationBrowseButton,
+			Id_LaunchOnLoginCheckBox
+		};
+
+		TabContents();
+
+		void Create(HWND owner);
+		virtual void Initialize();
+
+	protected:
+		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+		INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
+	};
+
+	static CDialogInstall* c_Dialog;
+
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	INT_PTR OnInitDialog(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 private:
+	TabContents m_TabContents;
+
 	enum Id
 	{
-		Id_CloseButton = IDCLOSE
+		Id_CancelButton = IDCANCEL,
+
+		Id_HeaderIcon = 100,
+		Id_HeaderTitleLabel,
+		Id_InstallButton,
+		Id_Tab
 	};
 };
 
