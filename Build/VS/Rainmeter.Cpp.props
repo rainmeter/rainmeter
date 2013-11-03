@@ -16,8 +16,11 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <OutDir Condition="'$(Platform)'=='Win32'">$(SolutionDir)x32-$(Configuration)\</OutDir>
-    <OutDir Condition="'$(Platform)'=='x64'">$(SolutionDir)x64-$(Configuration)\</OutDir>
+    <!-- This is overridden by Build.bat during full build. -->
+    <RmOutDirRoot Condition=" '$(Platform)' == 'Win32' ">$(SolutionDir)x32-$(Configuration)\</RmOutDirRoot>
+    <RmOutDirRoot Condition=" '$(Platform)' == 'x64' ">$(SolutionDir)x64-$(Configuration)\</RmOutDirRoot>
+
+    <OutDir>$(RmOutDirRoot)</OutDir>
     <IntDir>$(OutDir)\Obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
 
