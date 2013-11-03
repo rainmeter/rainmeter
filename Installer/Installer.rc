@@ -47,5 +47,8 @@ VS_VERSION_INFO VERSIONINFO
 // Icon
 //
 
-IDI_APPICON             ICON                    "Installer.ico"
+IDI_APPICON  ICON  "Installer.ico"
 
+#ifdef INSTALLER_INCLUDE_PAYLOAD
+IDR_PAYLOAD  PAYLOAD_RESOURCE_TYPEID  payload.7z
+#endif

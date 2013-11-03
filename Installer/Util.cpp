@@ -99,7 +99,7 @@ bool CanProcessUserElevate()
 			// Try checking registry.
 			const WCHAR* subKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System";
 			DWORD data;
-			if (GetRegistryDword(HKEY_LOCAL_MACHINE, subKey, L"EnableLUA", &data) == ERROR_SUCCESS &&
+			if (GetRegistryDword(HKEY_LOCAL_MACHINE, subKey, L"EnableLUA", &data) &&
 				data != 0)
 			{
 				return true;

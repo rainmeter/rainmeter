@@ -17,52 +17,53 @@
 */
 
 #include "StdAfx.h"
-#include "DialogInstall.h"
-#include "Resource.h"
 #include "Application.h"
+#include "DialogInstall.h"
+#include "Install.h"
+#include "Resource.h"
 
 bool IsSupportedPlatform();
 bool IsSupportedCPU();
 
-int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
+int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR cmdLine, int)
 {
-	int argCount = 0;
-	LPWSTR* args = CommandLineToArgvW(GetCommandLine(), &argCount);
-	if (args)
-	{
-		for (int i = 1; i < argCount; ++i)
-		{
-			WCHAR* name = &args[i][(args[i][0] == L'/') ? 1 : 0];
-			WCHAR* value = wcschr(name, L':');
-			if (value)
-			{
-				*value = L'\0';
-				++value;
-			}
-
-			if (wcscmp(name, L"Silent") == 0)
-			{
-			}
-		}
-
-		if (argCount >= 2 && wcscmp(args[1], L"/ElevatedInstall") == 0)
-		{
-		}
-
-		LocalFree(args);
-	}
-
+	CoInitialize(nullptr);
 	InitCommonControls();
+
+	if (*cmdLine)
+	{
+		InstallOptions options;
+		const int scans = swscanf(
+			cmdLine, L"OPT:%259[^|]|%ld|%hd|%hd|%d",
+			options.targetPath,
+			&options.language,
+			&options.type,
+			&options.arch,
+			&options.launchOnLogin);
+		if (scans == 5)
+		{
+			DoInstall(options);
+			return 0;
+		}
+
+		return 1;
+	}
 
 	if (!IsSupportedPlatform())
 	{
-		MessageBox(nullptr, L"Windows XP SP2 or higher is required to install Rainmeter.", nullptr, MB_OK | MB_ICONERROR);
+		MessageBox(
+			nullptr,
+			L"Windows XP SP2 or higher is required to install Rainmeter.",
+			L"Rainmeter Setup", MB_OK | MB_ICONERROR);
 		return (int)InstallStatus::UnsupportedPlatform;
 	}
 
 	if (!IsSupportedCPU())
 	{
-		MessageBox(nullptr, L"A Pentium III or later processor is required to install Rainmeter.", nullptr, MB_OK | MB_ICONERROR);
+		MessageBox(
+			nullptr,
+			L"A Pentium III or later processor is required to install Rainmeter.",
+			L"Rainmeter Setup", MB_OK | MB_ICONERROR);
 		return (int)InstallStatus::UnsupportedPlatform;
 	}
 

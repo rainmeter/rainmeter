@@ -65,8 +65,6 @@ protected:
 	INT_PTR OnCommand(WPARAM wParam, LPARAM lParam);
 
 private:
-	TabContents m_TabContents;
-
 	enum Id
 	{
 		Id_CancelButton = IDCANCEL,
@@ -76,6 +74,15 @@ private:
 		Id_InstallButton,
 		Id_Tab
 	};
+
+	TabContents m_TabContents;
+
+	HANDLE m_InstallProcess;
+	HANDLE m_InstallProcessWaitThread;
+
+	void LaunchInstallProcess();
+
+	static DWORD WINAPI ElevatedProcessWaitThreadProc(void* param);
 };
 
 #endif

@@ -18,8 +18,11 @@
 
 #include "StdAfx.h"
 #include "DialogInstall.h"
+#include "Install.h"
 #include "Resource.h"
+#include "Util.h"
 #include "../Common/ControlTemplate.h"
+#include "../Common/Platform.h"
 
 CDialogInstall* CDialogInstall::c_Dialog = nullptr;
 
@@ -74,7 +77,9 @@ WCHAR* GetString(UINT id)
 	return L"";
 }
 
-CDialogInstall::CDialogInstall() : Dialog()
+CDialogInstall::CDialogInstall() : Dialog(),
+	m_InstallProcess(),
+	m_InstallProcessWaitThread()
 {
 }
 
@@ -87,7 +92,7 @@ CDialogInstall* CDialogInstall::Create()
 	c_Dialog = new CDialogInstall();
 
 	c_Dialog->ShowDialogWindow(
-		L"Installer",
+		L"Rainmeter Setup",
 		0, 0, 350, 210,
 		DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU,
 		WS_EX_APPWINDOW | WS_EX_CONTROLPARENT,
@@ -128,7 +133,7 @@ INT_PTR CDialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	static const ControlTemplate::Control s_Controls[] =
 	{
 		CT_ICON(Id_HeaderIcon, 0,
-			8, 10, 24, 24,
+			10, 10, 24, 24,
 			WS_VISIBLE, 0),
 
 		CT_LABEL(Id_HeaderTitleLabel, 2,
@@ -139,7 +144,6 @@ INT_PTR CDialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 			40, 20, 250, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 
-			
 		CT_BUTTON(Id_InstallButton, 1,
 			199, 191, 70, 14,
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
@@ -149,7 +153,7 @@ INT_PTR CDialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 			WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 0),
 
 		CT_TAB(Id_Tab, 0,
-			-2, 38, 400, 148,
+			-2, 36, 400, 150,
 			WS_VISIBLE | WS_TABSTOP | TCS_FIXEDWIDTH, 0)  // Last for correct tab order.
 	};
 
@@ -168,7 +172,11 @@ INT_PTR CDialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	item = GetControl(Id_InstallButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
-	
+	if (Platform::IsAtLeastWinVista() && !Util::IsProcessUserAdmin())
+	{
+		Button_SetElevationRequiredState(item, TRUE);
+	}
+
 	return TRUE;
 }
 
@@ -180,6 +188,10 @@ INT_PTR CDialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 		PostMessage(m_Window, WM_CLOSE, 0, 0);
 		break;
 
+	case Id_InstallButton:
+		LaunchInstallProcess();
+		break;
+
 	default:
 		return FALSE;
 	}
@@ -189,6 +201,84 @@ INT_PTR CDialogInstall::OnCommand(WPARAM wParam, LPARAM lParam)
 
 INT_PTR CDialogInstall::OnNotify(WPARAM wParam, LPARAM lParam)
 {
+	return 0;
+}
+
+void CDialogInstall::LaunchInstallProcess()
+{
+	const bool isProcsesUserAdmin = Util::IsProcessUserAdmin();
+	if (!isProcsesUserAdmin && (Platform::IsAtLeastWinVista() && !Util::CanProcessUserElevate()))
+	{
+		MessageBox(
+			m_Window,
+			L"Adminstrative privileges are required to install Rainmeter.\n\nClick OK to close setup.",
+			L"Rainmeter Setup", MB_OK | MB_ICONERROR);
+		PostMessage(m_Window, WM_CLOSE, 0, 0);
+		return;
+	}
+
+	m_InstallProcessWaitThread = CreateThread(
+		nullptr, 0, ElevatedProcessWaitThreadProc, nullptr, CREATE_SUSPENDED, nullptr);
+	if (!m_InstallProcessWaitThread)
+	{
+		// TODO.
+	}
+
+	WCHAR exePath[MAX_PATH];
+	GetModuleFileName(nullptr, exePath, _countof(exePath));
+
+	HWND item = m_TabContents.GetControl(TabContents::Id_LanguageComboBox); 
+	const LCID lcid = (LCID)ComboBox_GetItemData(item, ComboBox_GetCurSel(item));
+
+	item = m_TabContents.GetControl(TabContents::Id_InstallationTypeComboBox); 
+	const LPARAM typeData = ComboBox_GetItemData(item, ComboBox_GetCurSel(item));
+
+	WCHAR targetPath[MAX_PATH];
+	item = m_TabContents.GetControl(TabContents::Id_DestinationEdit);
+	Edit_GetText(item, targetPath, _countof(targetPath));
+
+	item = m_TabContents.GetControl(TabContents::Id_LaunchOnLoginCheckBox);
+	const int launchOnLogin = Button_GetCheck(item) == BST_CHECKED ? 1 : 0;
+
+	WCHAR params[512];
+	wsprintf(
+		params, L"OPT:%s|%ld|%hd|%hd|%d",
+		targetPath, lcid, LOWORD(typeData), HIWORD(typeData), launchOnLogin);
+
+	// Launch the installer process and, if needed, request elevation.
+	SHELLEXECUTEINFO sei = {sizeof(sei)};
+	sei.fMask = SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI | SEE_MASK_NOCLOSEPROCESS;
+	sei.lpVerb = isProcsesUserAdmin ? L"open" : L"runas";
+	sei.lpFile = exePath;
+	sei.lpParameters = params;
+	sei.hwnd = m_Window;
+	sei.nShow = SW_NORMAL;
+
+	if (!ShellExecuteEx(&sei) || !sei.hProcess)
+	{
+		MessageBox(m_Window,
+			L"Adminstrative privileges are required to install Rainmeter.\n\nClick OK to close setup.",
+			L"Rainmeter Setup", MB_OK | MB_ICONERROR);
+		PostMessage(m_Window, WM_CLOSE, 0, 0);
+		return;
+	}
+
+	m_InstallProcess = sei.hProcess;
+	ResumeThread(m_InstallProcessWaitThread);
+}
+
+DWORD WINAPI CDialogInstall::ElevatedProcessWaitThreadProc(void* param)
+{
+	WaitForSingleObject(c_Dialog->m_InstallProcess, INFINITE);
+
+	CloseHandle(c_Dialog->m_InstallProcess);
+	c_Dialog->m_InstallProcess = nullptr;
+
+	CloseHandle(c_Dialog->m_InstallProcessWaitThread);
+	c_Dialog->m_InstallProcessWaitThread = nullptr;
+
+	PostMessage(c_Dialog->m_Window, WM_CLOSE, 0, 0);
+
 	return 0;
 }
 
@@ -247,9 +337,13 @@ void CDialogInstall::TabContents::Create(HWND owner)
 
 	item = GetControl(Id_InstallationTypeComboBox);
 	ComboBox_AddString(item, L"Standard 64-bit installation (reccomended)");
+	ComboBox_SetItemData(item, 0, MAKELPARAM(InstallType::Standard, InstallArch::X64));
 	ComboBox_AddString(item, L"Standard 32-bit installation");
+	ComboBox_SetItemData(item, 1, MAKELPARAM(InstallType::Standard, InstallArch::X32));
 	ComboBox_AddString(item, L"Portable 64-bit installation");
+	ComboBox_SetItemData(item, 2, MAKELPARAM(InstallType::Portable, InstallArch::X64));
 	ComboBox_AddString(item, L"Portable 32-bit installation");
+	ComboBox_SetItemData(item, 3, MAKELPARAM(InstallType::Portable, InstallArch::X32));
 	ComboBox_SetCurSel(item, 0);
 }
 
@@ -270,5 +364,28 @@ INT_PTR CDialogInstall::TabContents::HandleMessage(UINT uMsg, WPARAM wParam, LPA
 
 INT_PTR CDialogInstall::TabContents::OnCommand(WPARAM wParam, LPARAM lParam)
 {
-	return 0;
+	switch (LOWORD(wParam))
+	{
+	case Id_DestinationBrowseButton:
+		{
+			WCHAR buffer[MAX_PATH];
+			BROWSEINFO bi = {0};
+			bi.hwndOwner = c_Dialog->GetWindow();
+			bi.ulFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
+
+			PIDLIST_ABSOLUTE pidl = SHBrowseForFolder(&bi);
+			if (pidl && SHGetPathFromIDList(pidl, buffer))
+			{
+				HWND item = GetControl(Id_DestinationEdit);
+				Static_SetText(item, buffer);
+				CoTaskMemFree(pidl);
+			}
+		}
+		break;
+
+	default:
+		return FALSE;
+	}
+
+	return TRUE;
 }
