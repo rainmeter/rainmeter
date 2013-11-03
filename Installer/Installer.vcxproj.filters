@@ -30,6 +30,18 @@
     <ClCompile Include="Util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="lzma\Alloc.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\Bcj2.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\Bra.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\Bra86.c">
+      <Filter>lzma</Filter>
+    </ClCompile>
     <ClCompile Include="lzma\CpuArch.c">
       <Filter>lzma</Filter>
     </ClCompile>
@@ -63,9 +75,6 @@
     <ClCompile Include="lzma\7zStream.c">
       <Filter>lzma</Filter>
     </ClCompile>
-    <ClCompile Include="lzma\Alloc.c">
-      <Filter>lzma</Filter>
-    </ClCompile>
     <ClCompile Include="DialogInstall.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -84,6 +93,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="lzma\Alloc.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\Bcj2.h">
+      <Filter>lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\Bra.h">
       <Filter>lzma</Filter>
     </ClInclude>
     <ClInclude Include="lzma\CpuArch.h">

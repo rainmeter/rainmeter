@@ -7,10 +7,8 @@
 
 #include "7z.h"
 
-#ifdef _7ZIP_BCJ2_SUPPPORT
 #include "Bcj2.h"
 #include "Bra.h"
-#endif
 #include "CpuArch.h"
 #include "LzmaDec.h"
 #ifdef _7ZIP_LZMA2_SUPPPORT
@@ -422,7 +420,6 @@ static SRes SzFolder_Decode2(const CSzFolder *folder, const UInt64 *packSizes,
         #endif
       }
     }
-    #ifdef _7ZIP_BCJ2_SUPPPORT
     else if (coder->MethodID == k_BCJ2)
     {
       UInt64 offset = GetSum(packSizes, 1);
@@ -448,14 +445,12 @@ static SRes SzFolder_Decode2(const CSzFolder *folder, const UInt64 *packSizes,
           outBuffer, outSize);
       RINOK(res)
     }
-    #endif
     else
     {
       if (ci != 1)
         return SZ_ERROR_UNSUPPORTED;
       switch(coder->MethodID)
       {
-        #ifdef _7ZIP_BCJ2_SUPPPORT
         case k_BCJ:
         {
           UInt32 state;
@@ -464,7 +459,6 @@ static SRes SzFolder_Decode2(const CSzFolder *folder, const UInt64 *packSizes,
           break;
         }
         CASE_BRA_CONV(ARM)
-        #endif
         default:
           return SZ_ERROR_UNSUPPORTED;
       }
