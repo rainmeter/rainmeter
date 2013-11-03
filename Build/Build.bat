@@ -20,7 +20,11 @@ echo.
 
 if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & goto END
 call "%VCVARSALL%" x86 > nul
-set MSBUILD="msbuild.exe" /nologo /p:PlatformToolset=v110_xp;VisualStudioVersion=11.0;ExcludeTests=true
+
+set MSBUILD="msbuild.exe" /nologo^
+	/p:PlatformToolset=v110_xp;VisualStudioVersion=11.0^
+	/p:ExcludeTests=true^
+	/p:Configuration=Release
 
 if exist "Certificate.bat" call "Certificate.bat" > nul
 set SIGNTOOL="signtool.exe" sign /t http://time.certum.pl /f "%CERTFILE%" /p "%CERTKEY%"
@@ -87,11 +91,11 @@ for /F "tokens=1-4 delims=:.," %%a in ("%TIME%") do (
 
 :: Build Library
 echo * Building 32-bit projects
-%MSBUILD% /t:rebuild /p:Configuration=Release;Platform=Win32 /v:q /m ..\Rainmeter.sln > "BuildLog.txt"
+%MSBUILD% /t:rebuild /p:Platform=Win32 /v:q /m ..\Rainmeter.sln > "BuildLog.txt"
 if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Build failed & goto END
 
 echo * Building 64-bit projects
-%MSBUILD% /t:rebuild /p:Configuration=Release;Platform=x64 /v:q /m ..\Rainmeter.sln > "BuildLog.txt"
+%MSBUILD% /t:rebuild /p:Platform=x64 /v:q /m ..\Rainmeter.sln > "BuildLog.txt"
 if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Build failed & goto END
 
 :BUILDLANGUAGES
@@ -106,7 +110,7 @@ for /f "tokens=1,2,3 delims=," %%a in (..\Language\List) do (
 	set LANGDLL_PARAMS='%%a -  ${LANGFILE_%%b_NAME}' '${LANG_%%b}' '${LANG_%%b_CP}' !LANGDLL_PARAMS!
 	set LANGUAGE_IDS=${LANG_%%b},!LANGUAGE_IDS!
 
-	%MSBUILD% /t:Language /p:Configuration=Release;Platform=Win32;TargetName=%%c /v:q ..\Rainmeter.sln > "BuildLog.txt"
+	%MSBUILD% /t:Language /p:Platform=Win32;TargetName=%%c /v:q ..\Rainmeter.sln > "BuildLog.txt"
 	if not %ERRORLEVEL% == 0 echo   ERROR: Building language %%a failed & goto END
 )
 >>".\Installer\Languages.nsh" echo ^^!define LANGDLL_PARAMS "%LANGDLL_PARAMS%"
