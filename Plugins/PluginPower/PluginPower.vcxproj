@@ -9,7 +9,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.props" />
-  <Import Project="$(SolutionDir)\Plugins\Plugins.props" />
+  <Import Project="$(SolutionDir)Build\VS\RainmeterPlugin.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="PropertySheets">
