@@ -30,7 +30,7 @@ class MeterWindow;
 class IfCondition
 {
 public:
-	IfCondition(std::wstring value, std::wstring trueAction, std::wstring falseAction = L"", bool hasSelf = false) :
+	IfCondition(std::wstring value, std::wstring trueAction, std::wstring falseAction, bool hasSelf = false) :
 		condition(),
 		tAction(),
 		fAction(),
