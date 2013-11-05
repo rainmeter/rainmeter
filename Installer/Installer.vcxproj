@@ -18,7 +18,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>Imagehlp.lib;Wininet.lib;Comctl32.lib;Version.lib;UxTheme.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)'=='Release'">D:\Biru\Projects\WinDDK\7600.16385.1\lib\Crt\i386\msvcrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)'=='Release'">$(WinDDK71Dir)\lib\Crt\i386\msvcrt.lib;$(WinDDK71Dir)\lib\wxp\i386\msvcrt_winxp.obj;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries Condition="'$(Configuration)'=='Release'">true</IgnoreAllDefaultLibraries>
     </Link>
     <Manifest>
