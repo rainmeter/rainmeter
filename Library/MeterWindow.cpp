@@ -2675,13 +2675,9 @@ bool MeterWindow::UpdateMeasure(Measure* measure, bool force)
 	int updateDivider = measure->GetUpdateDivider();
 	if (updateDivider >= 0 || force)
 	{
-		if (measure->HasDynamicVariables() &&
-			(measure->GetUpdateCounter() + 1) >= updateDivider)
-		{
-			measure->ReadOptions(m_Parser);
-		}
-
-		bUpdate = measure->Update();
+		const bool rereadOptions =
+			measure->HasDynamicVariables() && (measure->GetUpdateCounter() + 1) >= updateDivider;
+		bUpdate = measure->Update(rereadOptions);
 	}
 
 	return bUpdate;

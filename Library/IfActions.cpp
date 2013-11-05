@@ -34,7 +34,6 @@ IfActions::IfActions(MeterWindow* meterWindow, Measure* measure) :
 	m_EqualCommitted(false),
 	m_Conditions(),
 	m_HasConditions(false),
-	m_HasDynamicVariables(false),
 	m_MeterWindow(meterWindow),
 	m_Measure(measure)
 {
@@ -46,9 +45,6 @@ IfActions::~IfActions()
 
 void IfActions::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	m_Parser = &parser;
-	m_HasDynamicVariables = m_Measure->HasDynamicVariables();
-
 	m_AboveAction = parser.ReadString(section, L"IfAboveAction", L"", false);
 	m_AboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0f);
 
@@ -57,25 +53,14 @@ void IfActions::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_EqualAction = parser.ReadString(section, L"IfEqualAction", L"", false);
 	m_EqualValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0f);
-	
+}
+
+void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
+{
 	m_HasConditions = false;
-	bool hasSelf = false;
-	std::wstring condition;
-
-	if (m_HasDynamicVariables)
-	{
-		condition = parser.GetValue(section, L"IfCondition", L"");
-		if (!condition.empty() && ReplaceSelf(condition, section, L"[]", L"{}"))
-		{
-			parser.SetValue(section, L"IfCondition", condition);
-			hasSelf = true;
-		}
-	}
-	condition = parser.ReadString(section, L"IfCondition", L"");
-
+	std::wstring condition = parser.ReadString(section, L"IfCondition", L"");
 	std::wstring tAction = parser.ReadString(section, L"IfTrueAction", L"", false);
 	std::wstring fAction = parser.ReadString(section, L"IfFalseAction", L"", false);
-
 	if (!condition.empty() && (!tAction.empty() || !fAction.empty()))
 	{
 		m_HasConditions = true;
@@ -89,10 +74,8 @@ void IfActions::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			}
 			else
 			{
-				m_Conditions.emplace_back(condition, tAction, fAction, hasSelf);
+				m_Conditions.emplace_back(condition, tAction, fAction);
 			}
-
-			hasSelf = false;
 
 			// Check for IfCondition2/IfTrueAction2/IfFalseAction2 ... etc.
 			std::wstring key = L"IfTrueAction" + std::to_wstring(++i);
@@ -101,15 +84,6 @@ void IfActions::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			fAction = parser.ReadString(section, key.c_str(), L"", false);
 
 			key = L"IfCondition" + std::to_wstring(i);
-			if (m_HasDynamicVariables)
-			{
-				condition = parser.GetValue(section, key, L"");
-				if (!condition.empty() && ReplaceSelf(condition, section, L"[]", L"{}"))
-				{
-					parser.SetValue(section, key, condition);
-					hasSelf = true;
-				}
-			}
 			condition = parser.ReadString(section, key.c_str(), L"");
 
 		}
@@ -175,13 +149,6 @@ void IfActions::DoIfActions(double& value)
 			++i;
 			if (!item.condition.empty() && (!item.tAction.empty() || !item.fAction.empty()))
 			{
-				//Replace measures (need it here in case the if actions reference themselves)
-				if (m_HasDynamicVariables && item.containsSelf)
-				{
-					ReplaceSelf(item.condition, m_Measure->GetName(), L"{}", L"[]");
-					m_Parser->ReplaceMeasures(item.condition);
-				}
-
 				double result = 0.0f;
 				const WCHAR* errMsg = MathParser::Parse(item.condition.c_str(), &result, m_Measure->GetCurrentMeasureValue, m_Measure);
 				if (errMsg != nullptr)
@@ -234,37 +201,4 @@ void IfActions::SetState(double value)
 	{
 		m_BelowCommitted = false;
 	}
-}
-
-/*
-** Replaces a [MeasureName] with {MeasureName} and vice-versa.
-** This is needed to support IfConditions referencing themselves.
-*/
-bool IfActions::ReplaceSelf(std::wstring& condition, const WCHAR* section,
-							const std::wstring sBracket, const std::wstring eBracket)
-{
-	bool replaced = false;
-	std::wstring measureName = sBracket;
-	measureName.replace(1, 1, section);
-
-	size_t pos = 0;
-	while ((pos = condition.find(measureName, pos)) != std::wstring::npos)
-	{
-		condition.replace(pos, 1, eBracket.substr(0, 1));
-		pos = condition.find(sBracket.substr(1, 1), pos);
-
-		if (pos != std::wstring::npos)
-		{
-			condition.replace(pos, 1, eBracket.substr(1, 1));
-			++pos;
-			replaced = true;
-		}
-		else
-		{
-			replaced = false;	// No closing bracket found
-			break;
-		}
-	}
-
-	return replaced;
 }

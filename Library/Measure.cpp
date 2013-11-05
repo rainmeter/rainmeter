@@ -131,6 +131,13 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_IfActions.ReadOptions(parser, section);
 
+	// The first time around, we read the conditions here. Subsequent rereads will be done in
+	// Update() if needed.
+	if (!m_Initialized)
+	{
+		m_IfActions.ReadConditionOptions(parser, section);
+	}
+
 	m_OnChangeAction = parser.ReadString(section, L"OnChangeAction", L"", false);
 
 	m_AverageSize = parser.ReadUInt(section, L"AverageSize", 0);
@@ -437,8 +444,13 @@ std::wstring Measure::ExtractWord(std::wstring& buffer)
 	return ret;
 }
 
-bool Measure::Update()
+bool Measure::Update(bool rereadOptions)
 {
+	if (rereadOptions)
+	{
+		ReadOptions(m_MeterWindow->GetParser());
+	}
+
 	// Don't do anything if paused
 	if (m_Paused) return false;
 
@@ -496,6 +508,13 @@ bool Measure::Update()
 		}
 
 		m_ValueAssigned = true;
+
+		// For the conditional options to work with the current measure value when using
+		// [MeasureName], we need to read the options after m_Value has been changed.
+		if (rereadOptions)
+		{
+			m_IfActions.ReadConditionOptions(m_MeterWindow->GetParser(), GetName());
+		}
 
 		if (m_MeterWindow)
 		{

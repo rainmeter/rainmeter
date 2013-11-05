@@ -30,11 +30,10 @@ class MeterWindow;
 class IfCondition
 {
 public:
-	IfCondition(std::wstring value, std::wstring trueAction, std::wstring falseAction, bool hasSelf = false) :
+	IfCondition(std::wstring value, std::wstring trueAction, std::wstring falseAction) :
 		condition(),
 		tAction(),
 		fAction(),
-		containsSelf(hasSelf),
 		parseError(false)
 	{
 		Set(value, trueAction, falseAction);
@@ -51,7 +50,6 @@ public:
 	std::wstring tAction;		// IfTrueAction
 	std::wstring fAction;		// IfFalseAction
 	bool parseError;
-	bool containsSelf;
 };
 
 class IfActions
@@ -61,13 +59,11 @@ public:
 	~IfActions();
 
 	void ReadOptions(ConfigParser& parser, const WCHAR* section);
+	void ReadConditionOptions(ConfigParser& parser, const WCHAR* section);
 	void DoIfActions(double& value);
 	void SetState(double value = 0.0f);
 
 private:
-	bool ReplaceSelf(std::wstring& condition, const WCHAR* section,
-		const std::wstring sBracket, const std::wstring eBracket);
-
 	double m_AboveValue;
 	double m_BelowValue;
 	int64_t m_EqualValue;
@@ -83,9 +79,6 @@ private:
 	std::vector<IfCondition> m_Conditions;
 	bool m_HasConditions;
 
-	bool m_HasDynamicVariables;
-
-	ConfigParser* m_Parser;
 	MeterWindow* m_MeterWindow;
 	Measure* m_Measure;
 };

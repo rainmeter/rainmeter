@@ -61,7 +61,7 @@ public:
 	void ReadOptions(ConfigParser& parser) { ReadOptions(parser, GetName()); }
 
 	virtual void Initialize();
-	bool Update();
+	bool Update(bool rereadOptions = false);
 
 	void Disable();
 	void Enable();
