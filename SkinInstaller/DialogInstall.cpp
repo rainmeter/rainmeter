@@ -19,8 +19,6 @@
 #include "StdAfx.h"
 #include "SkinInstaller.h"
 #include "DialogInstall.h"
-#include "../Library/pcre-8.10/config.h"
-#include "../Library/pcre-8.10/pcre.h"
 #include "resource.h"
 #include "../Version.h"
 
