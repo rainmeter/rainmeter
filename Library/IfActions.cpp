@@ -251,10 +251,19 @@ bool IfActions::ReplaceSelf(std::wstring& condition, const WCHAR* section,
 	while ((pos = condition.find(measureName, pos)) != std::wstring::npos)
 	{
 		condition.replace(pos, 1, eBracket.substr(0, 1));
-		pos = condition.find(sBracket[1], pos);
-		condition.replace(pos, 1, eBracket.substr(1, 1));
-		++pos;
-		replaced = true;
+		pos = condition.find(sBracket.substr(1, 1), pos);
+
+		if (pos != std::wstring::npos)
+		{
+			condition.replace(pos, 1, eBracket.substr(1, 1));
+			++pos;
+			replaced = true;
+		}
+		else
+		{
+			replaced = false;	// No closing bracket found
+			break;
+		}
 	}
 
 	return replaced;
