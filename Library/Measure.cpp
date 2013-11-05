@@ -77,12 +77,7 @@ Measure::Measure(MeterWindow* meterWindow, const WCHAR* name) : Section(meterWin
 	m_MedianPos(),
 	m_AveragePos(),
 	m_AverageSize(),
-	m_IfEqualValue(),
-	m_IfAboveValue(),
-	m_IfBelowValue(),
-	m_IfEqualCommitted(false),
-	m_IfAboveCommitted(false),
-	m_IfBelowCommitted(false),
+	m_IfActions(meterWindow, this),
 	m_Disabled(false),
 	m_Paused(false),
 	m_Initialized(false),
@@ -134,16 +129,7 @@ void Measure::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_MinValue = parser.ReadFloat(section, L"MinValue", m_MinValue);
 	m_MaxValue = parser.ReadFloat(section, L"MaxValue", m_MaxValue);
 
-	// The ifabove/ifbelow define actions that are ran when the value goes above/below the given number.
-
-	m_IfAboveValue = parser.ReadFloat(section, L"IfAboveValue", 0.0);
-	m_IfAboveAction = parser.ReadString(section, L"IfAboveAction", L"", false);
-
-	m_IfBelowValue = parser.ReadFloat(section, L"IfBelowValue", 0.0);
-	m_IfBelowAction = parser.ReadString(section, L"IfBelowAction", L"", false);
-
-	m_IfEqualValue = (int64_t)parser.ReadFloat(section, L"IfEqualValue", 0.0);
-	m_IfEqualAction = parser.ReadString(section, L"IfEqualAction", L"", false);
+	m_IfActions.ReadOptions(parser, section);
 
 	m_OnChangeAction = parser.ReadString(section, L"OnChangeAction", L"", false);
 
@@ -513,53 +499,7 @@ bool Measure::Update()
 
 		if (m_MeterWindow)
 		{
-			if (!m_IfEqualAction.empty())
-			{
-				if ((int64_t)m_Value == m_IfEqualValue)
-				{
-					if (!m_IfEqualCommitted)
-					{
-						m_IfEqualCommitted = true;	// To avoid infinite loop from !Update
-						GetRainmeter().ExecuteCommand(m_IfEqualAction.c_str(), m_MeterWindow);
-					}
-				}
-				else
-				{
-					m_IfEqualCommitted = false;
-				}
-			}
-
-			if (!m_IfAboveAction.empty())
-			{
-				if (m_Value > m_IfAboveValue)
-				{
-					if (!m_IfAboveCommitted)
-					{
-						m_IfAboveCommitted = true;	// To avoid infinite loop from !Update
-						GetRainmeter().ExecuteCommand(m_IfAboveAction.c_str(), m_MeterWindow);
-					}
-				}
-				else
-				{
-					m_IfAboveCommitted = false;
-				}
-			}
-
-			if (!m_IfBelowAction.empty())
-			{
-				if (m_Value < m_IfBelowValue)
-				{
-					if (!m_IfBelowCommitted)
-					{
-						m_IfBelowCommitted = true;	// To avoid infinite loop from !Update
-						GetRainmeter().ExecuteCommand(m_IfBelowAction.c_str(), m_MeterWindow);
-					}
-				}
-				else
-				{
-					m_IfBelowCommitted = false;
-				}
-			}
+			m_IfActions.DoIfActions(m_Value);
 		}
 
 		return true;
@@ -569,21 +509,7 @@ bool Measure::Update()
 		// Disabled measures have 0 as value
 		m_Value = 0.0;
 
-		// Set IfAction committed state to false if condition is not met with value = 0
-		if (m_IfEqualValue != 0)
-		{
-			m_IfEqualCommitted = false;
-		}
-
-		if (m_IfAboveValue <= 0.0)
-		{
-			m_IfAboveCommitted = false;
-		}
-
-		if (m_IfBelowValue >= 0.0)
-		{
-			m_IfBelowCommitted = false;
-		}
+		m_IfActions.SetState(m_Value);
 
 		return false;
 	}
@@ -878,4 +804,26 @@ Measure* Measure::Create(const WCHAR* measure, MeterWindow* meterWindow, const W
 void Measure::Command(const std::wstring& command)
 {
 	LogWarningF(this, L"!CommandMeasure: Not supported");
+}
+
+/*
+** Returns the number value of a measure, used by IfCondition's.
+**
+*/
+bool Measure::GetCurrentMeasureValue(const WCHAR* str, int len, double* value, void* context)
+{
+	auto measure = (Measure*)context;
+	const std::vector<Measure*>& measures = measure->m_MeterWindow->GetMeasures();
+
+	for (const auto& iter : measures)
+	{
+		if (iter->GetOriginalName().length() == len &&
+			_wcsnicmp(str, iter->GetName(), len) == 0)
+		{
+			*value = iter->GetValue();
+			return true;
+		}
+	}
+
+	return false;
 }

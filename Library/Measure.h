@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <vector>
 #include <string>
+#include "IfActions.h"
 #include "Litestep.h"
 #include "Section.h"
 
@@ -89,6 +90,7 @@ public:
 	void DoChangeAction(bool execute = true);
 
 	static Measure* Create(const WCHAR* measure, MeterWindow* meterWindow, const WCHAR* name);
+	static bool GetCurrentMeasureValue(const WCHAR* str, int len, double* value, void* context);
 
 protected:
 	Measure(MeterWindow* meterWindow, const WCHAR* name);
@@ -117,15 +119,7 @@ protected:
 	UINT m_AveragePos;
 	UINT m_AverageSize;
 
-	int64_t m_IfEqualValue;			// The limit for the IfEqual action
-	double m_IfAboveValue;			// The limit for the IfAbove action
-	double m_IfBelowValue;			// The limit for the IfBelow action
-	std::wstring m_IfEqualAction;	// The IfEqual action
-	std::wstring m_IfAboveAction;	// The IfAbove action
-	std::wstring m_IfBelowAction;	// The IfBelow action
-	bool m_IfEqualCommitted;		// True when the IfEqual action is executed
-	bool m_IfAboveCommitted;		// True when the IfAbove action is executed
-	bool m_IfBelowCommitted;		// True when the IfBelow action is executed
+	IfActions m_IfActions;
 	bool m_Disabled;				// Status of the measure
 	bool m_Paused;
 	bool m_Initialized;

@@ -67,6 +67,7 @@
     <ClCompile Include="Group.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="IfActions.cpp" />
     <ClCompile Include="Litestep.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -287,6 +288,7 @@
     <ClInclude Include="DialogAbout.h" />
     <ClInclude Include="Error.h" />
     <ClInclude Include="Group.h" />
+    <ClInclude Include="IfActions.h" />
     <ClInclude Include="Litestep.h" />
     <ClInclude Include="DialogManage.h" />
     <ClInclude Include="Logger.h" />
