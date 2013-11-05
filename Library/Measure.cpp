@@ -77,7 +77,6 @@ Measure::Measure(MeterWindow* meterWindow, const WCHAR* name) : Section(meterWin
 	m_MedianPos(),
 	m_AveragePos(),
 	m_AverageSize(),
-	m_IfActions(meterWindow, this),
 	m_Disabled(false),
 	m_Paused(false),
 	m_Initialized(false),
@@ -518,7 +517,7 @@ bool Measure::Update(bool rereadOptions)
 
 		if (m_MeterWindow)
 		{
-			m_IfActions.DoIfActions(m_Value);
+			m_IfActions.DoIfActions(*this, m_Value);
 		}
 
 		return true;
