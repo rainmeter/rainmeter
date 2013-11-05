@@ -55,12 +55,12 @@ public:
 class IfActions
 {
 public:
-	IfActions(MeterWindow* meterWindow, Measure* measure);
+	IfActions();
 	~IfActions();
 
 	void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	void ReadConditionOptions(ConfigParser& parser, const WCHAR* section);
-	void DoIfActions(double& value);
+	void DoIfActions(Measure& measure, double value);
 	void SetState(double value = 0.0f);
 
 private:
@@ -77,9 +77,5 @@ private:
 	bool m_EqualCommitted;
 
 	std::vector<IfCondition> m_Conditions;
-	bool m_HasConditions;
-
-	MeterWindow* m_MeterWindow;
-	Measure* m_Measure;
 };
 #endif

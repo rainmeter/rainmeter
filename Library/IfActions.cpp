@@ -22,7 +22,7 @@
 #include "Rainmeter.h"
 #include "../Common/MathParser.h"
 
-IfActions::IfActions(MeterWindow* meterWindow, Measure* measure) :
+IfActions::IfActions() :
 	m_AboveValue(0.0f),
 	m_BelowValue(0.0f),
 	m_EqualValue(0),
@@ -32,10 +32,7 @@ IfActions::IfActions(MeterWindow* meterWindow, Measure* measure) :
 	m_AboveCommitted(false),
 	m_BelowCommitted(false),
 	m_EqualCommitted(false),
-	m_Conditions(),
-	m_HasConditions(false),
-	m_MeterWindow(meterWindow),
-	m_Measure(measure)
+	m_Conditions()
 {
 }
 
@@ -57,15 +54,12 @@ void IfActions::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 {
-	m_HasConditions = false;
 	std::wstring condition = parser.ReadString(section, L"IfCondition", L"");
 	std::wstring tAction = parser.ReadString(section, L"IfTrueAction", L"", false);
 	std::wstring fAction = parser.ReadString(section, L"IfFalseAction", L"", false);
 	if (!condition.empty() && (!tAction.empty() || !fAction.empty()))
 	{
-		m_HasConditions = true;
 		int i = 1;
-
 		do
 		{
 			if (m_Conditions.size() > (i - 1))
@@ -89,9 +83,13 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 		}
 		while (!condition.empty() && (!tAction.empty() || !fAction.empty()));
 	}
+	else
+	{
+		m_Conditions.clear();
+	}
 }
 
-void IfActions::DoIfActions(double& value)
+void IfActions::DoIfActions(Measure& measure, double value)
 {
 	if (!m_EqualAction.empty())
 	{
@@ -100,7 +98,7 @@ void IfActions::DoIfActions(double& value)
 			if (!m_EqualCommitted)
 			{
 				m_EqualCommitted = true;		// To avoid infinite loop from !Update
-				GetRainmeter().ExecuteCommand(m_EqualAction.c_str(), m_MeterWindow);
+				GetRainmeter().ExecuteCommand(m_EqualAction.c_str(), measure.GetMeterWindow());
 			}
 		}
 		else
@@ -116,7 +114,7 @@ void IfActions::DoIfActions(double& value)
 			if (!m_AboveCommitted)
 			{
 				m_AboveCommitted = true;		// To avoid infinite loop from !Update
-				GetRainmeter().ExecuteCommand(m_AboveAction.c_str(), m_MeterWindow);
+				GetRainmeter().ExecuteCommand(m_AboveAction.c_str(), measure.GetMeterWindow());
 			}
 		}
 		else
@@ -132,7 +130,7 @@ void IfActions::DoIfActions(double& value)
 			if (!m_BelowCommitted)
 			{
 				m_BelowCommitted = true;		// To avoid infinite loop from !Update
-				GetRainmeter().ExecuteCommand(m_BelowAction.c_str(), m_MeterWindow);
+				GetRainmeter().ExecuteCommand(m_BelowAction.c_str(), measure.GetMeterWindow());
 			}
 		}
 		else
@@ -141,43 +139,41 @@ void IfActions::DoIfActions(double& value)
 		}
 	}
 
-	if (m_HasConditions)
+	int i = 0;
+	for (auto& item : m_Conditions)
 	{
-		int i = 0;
-		for (auto& item : m_Conditions)
+		++i;
+		if (!item.condition.empty() && (!item.tAction.empty() || !item.fAction.empty()))
 		{
-			++i;
-			if (!item.condition.empty() && (!item.tAction.empty() || !item.fAction.empty()))
+			double result = 0.0f;
+			const WCHAR* errMsg = MathParser::Parse(
+				item.condition.c_str(), &result, measure.GetCurrentMeasureValue, &measure);
+			if (errMsg != nullptr)
 			{
-				double result = 0.0f;
-				const WCHAR* errMsg = MathParser::Parse(item.condition.c_str(), &result, m_Measure->GetCurrentMeasureValue, m_Measure);
-				if (errMsg != nullptr)
+				if (!item.parseError)
 				{
-					if (!item.parseError)
+					if (i == 1)
 					{
-						if (i == 1)
-						{
-							LogErrorF(m_Measure, L"%s: IfCondition=%s", errMsg, item.condition.c_str());
-						}
-						else
-						{
-							LogErrorF(m_Measure, L"%s: IfCondition%i=%s", errMsg, i, item.condition.c_str());
-						}
-						item.parseError = true;
+						LogErrorF(&measure, L"%s: IfCondition=%s", errMsg, item.condition.c_str());
 					}
+					else
+					{
+						LogErrorF(&measure, L"%s: IfCondition%i=%s", errMsg, i, item.condition.c_str());
+					}
+					item.parseError = true;
 				}
-				else
-				{
-					item.parseError = false;
+			}
+			else
+			{
+				item.parseError = false;
 
-					if (result == 1.0f)			// "True"
-					{
-						GetRainmeter().ExecuteCommand(item.tAction.c_str(), m_MeterWindow);
-					}
-					else if (result == 0.0f)	// "False"
-					{
-						GetRainmeter().ExecuteCommand(item.fAction.c_str(), m_MeterWindow);
-					}
+				if (result == 1.0f)			// "True"
+				{
+					GetRainmeter().ExecuteCommand(item.tAction.c_str(), measure.GetMeterWindow());
+				}
+				else if (result == 0.0f)	// "False"
+				{
+					GetRainmeter().ExecuteCommand(item.fAction.c_str(), measure.GetMeterWindow());
 				}
 			}
 		}
