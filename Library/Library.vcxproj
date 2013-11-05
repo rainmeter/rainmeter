@@ -67,7 +67,9 @@
     <ClCompile Include="Group.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="IfActions.cpp" />
+    <ClCompile Include="IfActions.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Litestep.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
