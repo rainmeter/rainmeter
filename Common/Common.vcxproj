@@ -40,6 +40,7 @@
     <ClInclude Include="Platform.h" />
     <ClInclude Include="RawString.h" />
     <ClInclude Include="StringUtil.h" />
+    <ClInclude Include="Timer.h" />
     <ClInclude Include="UnitTest.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
