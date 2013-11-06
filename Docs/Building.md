@@ -18,6 +18,8 @@ To sign the installer and the Rainmeter executables, create a Certificate.bat fi
     set CERTFILE=/path/to/PFXcert.p12
     set CERTKEY=certpassword
 
+Use `Build.bat RELEASE` to build a non-beta installer.
+
 
 ### Building old versions
 
