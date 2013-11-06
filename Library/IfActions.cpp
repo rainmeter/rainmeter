@@ -55,33 +55,42 @@ void IfActions::ReadOptions(ConfigParser& parser, const WCHAR* section)
 void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 {
 	std::wstring condition = parser.ReadString(section, L"IfCondition", L"");
-	std::wstring tAction = parser.ReadString(section, L"IfTrueAction", L"", false);
-	std::wstring fAction = parser.ReadString(section, L"IfFalseAction", L"", false);
-	if (!condition.empty() && (!tAction.empty() || !fAction.empty()))
+	if (!condition.empty())
 	{
-		int i = 1;
-		do
+		std::wstring tAction = parser.ReadString(section, L"IfTrueAction", L"", false);
+		std::wstring fAction = parser.ReadString(section, L"IfFalseAction", L"", false);
+		if (!tAction.empty() || !fAction.empty())
 		{
-			if (m_Conditions.size() > (i - 1))
+			int i = 1;
+			do
 			{
-				m_Conditions[i - 1].Set(condition, tAction, fAction);
+				if (m_Conditions.size() > (i - 1))
+				{
+					m_Conditions[i - 1].Set(condition, tAction, fAction);
+				}
+				else
+				{
+					m_Conditions.emplace_back(condition, tAction, fAction);
+				}
+
+				// Check for IfCondition2/IfTrueAction2/IfFalseAction2 ... etc.
+				const std::wstring num = std::to_wstring(++i);
+
+				std::wstring key = L"IfCondition" + num;
+				condition = parser.ReadString(section, key.c_str(), L"");
+				if (condition.empty()) break;
+
+				key = L"IfTrueAction" + num;
+				tAction = parser.ReadString(section, key.c_str(), L"", false);
+				key = L"IfFalseAction" + num;
+				fAction = parser.ReadString(section, key.c_str(), L"", false);
 			}
-			else
-			{
-				m_Conditions.emplace_back(condition, tAction, fAction);
-			}
-
-			// Check for IfCondition2/IfTrueAction2/IfFalseAction2 ... etc.
-			std::wstring key = L"IfTrueAction" + std::to_wstring(++i);
-			tAction = parser.ReadString(section, key.c_str(), L"", false);
-			key = L"IfFalseAction" + std::to_wstring(i);
-			fAction = parser.ReadString(section, key.c_str(), L"", false);
-
-			key = L"IfCondition" + std::to_wstring(i);
-			condition = parser.ReadString(section, key.c_str(), L"");
-
+			while (!tAction.empty() || !fAction.empty());
 		}
-		while (!condition.empty() && (!tAction.empty() || !fAction.empty()));
+		else
+		{
+			m_Conditions.clear();
+		}
 	}
 	else
 	{
