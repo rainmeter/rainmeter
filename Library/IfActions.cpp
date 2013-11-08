@@ -32,7 +32,8 @@ IfActions::IfActions() :
 	m_AboveCommitted(false),
 	m_BelowCommitted(false),
 	m_EqualCommitted(false),
-	m_Conditions()
+	m_Conditions(),
+	m_ConditionMode(false)
 {
 }
 
@@ -54,6 +55,8 @@ void IfActions::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 {
+	m_ConditionMode = parser.ReadBool(section, L"IfConditionMode", false);
+
 	std::wstring condition = parser.ReadString(section, L"IfCondition", L"");
 	if (!condition.empty())
 	{
@@ -178,11 +181,23 @@ void IfActions::DoIfActions(Measure& measure, double value)
 
 				if (result == 1.0f)			// "True"
 				{
-					GetRainmeter().ExecuteCommand(item.tAction.c_str(), measure.GetMeterWindow());
+					item.fCommitted = false;
+
+					if (m_ConditionMode || !item.tCommitted)
+					{
+						item.tCommitted = true;
+						GetRainmeter().ExecuteCommand(item.tAction.c_str(), measure.GetMeterWindow());
+					}
 				}
 				else if (result == 0.0f)	// "False"
 				{
-					GetRainmeter().ExecuteCommand(item.fAction.c_str(), measure.GetMeterWindow());
+					item.tCommitted = false;
+
+					if (m_ConditionMode || !item.fCommitted)
+					{
+						item.fCommitted = true;
+						GetRainmeter().ExecuteCommand(item.fAction.c_str(), measure.GetMeterWindow());
+					}
 				}
 			}
 		}
@@ -205,5 +220,11 @@ void IfActions::SetState(double value)
 	if (m_BelowValue >= 0.0)
 	{
 		m_BelowCommitted = false;
+	}
+
+	for (auto& item : m_Conditions)
+	{
+		item.tCommitted = false;
+		item.fCommitted = false;
 	}
 }

@@ -34,7 +34,9 @@ public:
 		condition(),
 		tAction(),
 		fAction(),
-		parseError(false)
+		parseError(false),
+		tCommitted(false),
+		fCommitted(false)
 	{
 		Set(value, trueAction, falseAction);
 	}
@@ -50,6 +52,8 @@ public:
 	std::wstring tAction;		// IfTrueAction
 	std::wstring fAction;		// IfFalseAction
 	bool parseError;
+	bool tCommitted;
+	bool fCommitted;
 };
 
 class IfActions
@@ -77,5 +81,6 @@ private:
 	bool m_EqualCommitted;
 
 	std::vector<IfCondition> m_Conditions;
+	bool m_ConditionMode;
 };
 #endif
