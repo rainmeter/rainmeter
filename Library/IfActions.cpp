@@ -204,20 +204,20 @@ void IfActions::DoIfActions(Measure& measure, double value)
 	}
 }
 
-void IfActions::SetState(double value)
+void IfActions::SetState(double& value)
 {
 	// Set IfAction committed state to false if condition is not met with value = 0
-	if (m_EqualValue != 0)
+	if (m_EqualValue != (int64_t)value)
 	{
 		m_EqualCommitted = false;
 	}
 
-	if (m_AboveValue <= 0.0)
+	if (m_AboveValue <= value)
 	{
 		m_AboveCommitted = false;
 	}
 
-	if (m_BelowValue >= 0.0)
+	if (m_BelowValue >= value)
 	{
 		m_BelowCommitted = false;
 	}

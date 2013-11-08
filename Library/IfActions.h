@@ -65,7 +65,7 @@ public:
 	void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	void ReadConditionOptions(ConfigParser& parser, const WCHAR* section);
 	void DoIfActions(Measure& measure, double value);
-	void SetState(double value = 0.0f);
+	void SetState(double& value);
 
 private:
 	double m_AboveValue;
