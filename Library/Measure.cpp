@@ -225,121 +225,107 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 {
 	static std::wstring str;
 
-	if (!m_Substitute.empty())
-	{
-		if (!m_RegExpSubstitute)	// Plain Substitutions only
-		{
-			str = buffer;
-
-			for (size_t i = 0, isize = m_Substitute.size(); i < isize; i += 2)
-			{
-				if (!m_Substitute[i].empty())
-				{
-					MakePlainSubstitute(str, i);
-				}
-				else if (str.empty())
-				{
-					// Empty result and empty substitute -> use second
-					str = m_Substitute[i + 1];
-				}
-			}
-		}
-		else // Contains a RegEx
-		{
-			std::string utf8str = StringUtil::NarrowUTF8(buffer);
-			int* ovector = new int[OVECCOUNT];
-
-			for (size_t i = 0, isize = m_Substitute.size(); i < isize ; i += 2)
-			{
-				pcre* re;
-				const char* error;
-				int erroffset;
-				int rc;
-				int flags = PCRE_UTF8;
-				int offset = 0;
-
-				re = pcre_compile(
-					StringUtil::NarrowUTF8(m_Substitute[i]).c_str(),   // the pattern
-					flags,						// default options
-					&error,						// for error message
-					&erroffset,					// for error offset
-					nullptr);						// use default character tables
-
-				if (re == nullptr)
-				{
-					MakePlainSubstitute(str, i);
-					LogNoticeF(this, L"Substitute: %S", error);
-				}
-				else
-				{
-					do
-					{
-						rc = pcre_exec(
-							re,						// the compiled pattern
-							nullptr,					// no extra data - we didn't study the pattern
-							utf8str.c_str(),		// the subject string
-							utf8str.length(),		// the length of the subject
-							offset,					// start at offset 0 in the subject
-							0,						// default options
-							ovector,				// output vector for substring information
-							OVECCOUNT);				// number of elements in the output vector
-
-						if (rc <= 0)
-						{
-							break;
-						}
-						else
-						{
-							std::string result = StringUtil::NarrowUTF8(m_Substitute[i + 1]);
-
-							if (rc > 1)
-							{
-								for (int j = rc - 1 ; j >= 0 ; --j)
-								{
-									size_t new_start = ovector[2 * j];
-									size_t in_length = ovector[2 * j + 1] - ovector[2 * j];
-
-									char tmpName[64];
-
-									size_t cut_length = _snprintf_s(tmpName, _TRUNCATE, "\\%i", j);;
-									size_t start = 0, pos;
-									do
-									{
-										pos = result.find(tmpName, start, cut_length);
-										if (pos != std::string::npos)
-										{
-											result.replace(pos, cut_length, utf8str, new_start, in_length);
-											start = pos + in_length;
-										}
-									}
-									while (pos != std::string::npos);
-								}
-							}
-
-							size_t start = ovector[0];
-							size_t length = ovector[1] - ovector[0];
-							utf8str.replace(start, length, result);
-							offset = start + result.length();
-						}
-					}
-					while (true);
-
-					// Release memory used for the compiled pattern
-					pcre_free(re);
-				}
-			}
-
-			delete [] ovector;
-
-			str = StringUtil::WidenUTF8(utf8str);
-		}
-
-		return str.c_str();
-	}
-	else
+	if (m_Substitute.empty())
 	{
 		return buffer;
 	}
+
+	if (!m_RegExpSubstitute)
+	{
+		str = buffer;
+
+		for (size_t i = 0, isize = m_Substitute.size(); i < isize; i += 2)
+		{
+			if (!m_Substitute[i].empty())
+			{
+				MakePlainSubstitute(str, i);
+			}
+			else if (str.empty())
+			{
+				// Empty result and empty substitute -> use second
+				str = m_Substitute[i + 1];
+			}
+		}
+	}
+	else
+	{
+		std::string utf8str = StringUtil::NarrowUTF8(buffer);
+		int ovector[300];
+
+		for (size_t i = 0, isize = m_Substitute.size(); i < isize; i += 2)
+		{
+			const char* error;
+			int errorOffset;
+			int offset = 0;
+			pcre* re = pcre_compile(
+				StringUtil::NarrowUTF8(m_Substitute[i]).c_str(),
+				PCRE_UTF8,
+				&error,
+				&errorOffset,
+				nullptr);  // Use default character tables.
+			if (!re)
+			{
+				MakePlainSubstitute(str, i);
+				LogNoticeF(this, L"Substitute: %S", error);
+			}
+			else
+			{
+				do
+				{
+					const int rc = pcre_exec(
+						re,
+						nullptr,           // No extra data - we didn't study the pattern
+						utf8str.c_str(),   // The subject string
+						utf8str.length(),  // The length of the subject
+						offset,
+						0,
+						ovector,
+						_countof(ovector));
+					if (rc <= 0)
+					{
+						break;
+					}
+
+					std::string result = StringUtil::NarrowUTF8(m_Substitute[i + 1]);
+
+					if (rc > 1)
+					{
+						for (int j = rc - 1 ; j >= 0 ; --j)
+						{
+							size_t newStart = ovector[2 * j];
+							size_t inLength = ovector[2 * j + 1] - ovector[2 * j];
+
+							char tmpName[64];
+							size_t cutLength = _snprintf_s(tmpName, _TRUNCATE, "\\%i", j);;
+							size_t start = 0, pos;
+							do
+							{
+								pos = result.find(tmpName, start, cutLength);
+								if (pos != std::string::npos)
+								{
+									result.replace(pos, cutLength, utf8str, newStart, inLength);
+									start = pos + inLength;
+								}
+							}
+							while (pos != std::string::npos);
+						}
+					}
+
+					const size_t start = ovector[0];
+					const size_t length = ovector[1] - ovector[0];
+					utf8str.replace(start, length, result);
+					offset = start + result.length();
+				}
+				while (true);
+
+				pcre_free(re);
+			}
+		}
+
+		str = StringUtil::WidenUTF8(utf8str);
+	}
+
+	return str.c_str();
 }
 
 /*

@@ -21,8 +21,8 @@
 #include "MeasureCalc.h"
 #include "Rainmeter.h"
 
-#define DEFAULT_LOWER_BOUND	0
-#define DEFAULT_UPPER_BOUND	100
+const int DEFAULT_LOWER_BOUND = 0;
+const int DEFAULT_UPPER_BOUND = 100;
 
 /*
 ** The constructor
