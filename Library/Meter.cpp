@@ -640,7 +640,9 @@ void Meter::UpdateToolTip()
 			}
 			else
 			{
-				hIcon = (HICON)LoadImage(nullptr, tipIcon, IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+				std::wstring iconPath = m_ToolTipIcon;
+				m_MeterWindow->MakePathAbsolute(iconPath);
+				hIcon = (HICON)LoadImage(nullptr, iconPath.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
 				destroy = true;
 			}
 		}
