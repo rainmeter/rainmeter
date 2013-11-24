@@ -168,6 +168,7 @@ void TextFormatD2D::SetProperties(
 			{
 				hr = Util::GetFamilyNameFromDWriteFont(
 					dwriteFont, dwriteFamilyName, _countof(dwriteFamilyName));
+				if (SUCCEEDED(hr))
 				{
 					fontFamily = dwriteFamilyName;
 					Util::GetPropertiesFromDWriteFont(
