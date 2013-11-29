@@ -516,8 +516,8 @@ FunctionEnd
 	File /x *Example*.dll "..\..\${DIR}-Release\Plugins\*.dll"
 
 	SetOutPath "$INSTDIR\Runtime"
-	File "$%VS110COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC120.CRT\msvcp120.dll"
-	File "$%VS110COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC120.CRT\msvcr120.dll"
+	File "$%VS120COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC120.CRT\msvcp120.dll"
+	File "$%VS120COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC120.CRT\msvcr120.dll"
 !macroend
 
 !macro RemoveStartMenuShortcuts STARTMENUPATH
