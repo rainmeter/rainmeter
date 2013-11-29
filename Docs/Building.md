@@ -1,10 +1,6 @@
 ## Building Rainmeter
 
-Rainmeter can be built using the free Visual Studio Express 2012 for Windows Desktop or any paid version of VS2012 (e.g. Professional). Note some projects (such as the NowPlaying plugin) cannot be built with the free Express version.
-
-The free VS2012 Express version can be downloaded [here](http://microsoft.com/visualstudio/eng/products/visual-studio-express-for-windows-desktop).
-
-VS2012 Update 2 (or later) is also required for Windows XP targeting support. It is available [here](http://microsoft.com/visualstudio/eng/downloads#d-visual-studio-2012-update).
+Rainmeter can be built using any (including free) version of Visual Stuido 2013. The free "Visual Studio Express 2013 for Windows Desktop" version can be downloaded [here](http://www.visualstudio.com/downloads/download-visual-studio-vs).
 
 After Visual Studio has been installed and updated, open Rainmeter.sln to build.
 
