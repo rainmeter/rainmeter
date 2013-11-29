@@ -73,7 +73,7 @@ HINSTANCE LoadRainmeterLibrary()
 			PathRemoveFileSpec(path);
 			PathAppend(path, L"Runtime");
 			SetDllDirectory(path);
-			PathAppend(path, L"msvcp110.dll");
+			PathAppend(path, L"msvcp120.dll");
 
 			// Loading msvcpNNN.dll will load msvcrNNN.dll as well.
 			HINSTANCE msvcrDll = LoadLibrary(path);
