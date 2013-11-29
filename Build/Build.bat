@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-set VCVARSALL=%VS110COMNTOOLS%..\..\VC\vcvarsall.bat
+set VCVARSALL=%VS120COMNTOOLS%..\..\VC\vcvarsall.bat
 set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
 set GIT=%PROGRAMFILES%\Git\bin\git.exe
 
@@ -22,7 +22,7 @@ if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & goto END
 call "%VCVARSALL%" x86 > nul
 
 set MSBUILD="msbuild.exe" /nologo^
-	/p:PlatformToolset=v110_xp;VisualStudioVersion=11.0^
+	/p:PlatformToolset=v120_xp;VisualStudioVersion=12.0^
 	/p:ExcludeTests=true^
 	/p:Configuration=Release
 

@@ -2,7 +2,7 @@
 <!-- Visual C++ project options meant to applied after the default Microsoft property sheets. -->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <!-- Use the Win8 SDK headers even though we are using the v110_xp toolset. -->
+    <!-- Use the Win8 SDK headers even though we are using the v120_xp toolset. -->
     <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
 
@@ -58,6 +58,7 @@
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
     <Link>
+      <SubSystem>Windows</SubSystem>
       <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
       <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
