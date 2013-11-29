@@ -97,7 +97,7 @@ struct Function
 };
 
 static double frac(double x);
-static double trunc(double x);
+static double trunc2(double x);
 static double rad(double deg);
 static double sgn(double x);
 static double neg(double x);
@@ -115,7 +115,7 @@ static Function g_Functions[] =
 	{ L"log", &log10, 3 },
 	{ L"sqrt", &sqrt, 4 },
 	{ L"frac", &frac, 4 },
-	{ L"trunc", &trunc, 5 },
+	{ L"trunc", &trunc2, 5 },
 	{ L"floor", &floor, 5 },
 	{ L"ceil", &ceil, 4 },
 	{ L"round", (SingleArgFunction)&round, 5 },
@@ -846,7 +846,7 @@ static double frac(double x)
 	return modf(x, &y);
 }
 
-static double trunc(double x)
+static double trunc2(double x)
 {
 	return (x >= 0.0) ? floor(x) : ceil(x);
 }
