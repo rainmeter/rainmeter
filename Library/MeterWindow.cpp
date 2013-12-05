@@ -4589,20 +4589,20 @@ bool MeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 */
 LRESULT MeterWindow::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	POINT pos = System::GetCursorPosition();
-	HWND hwnd = WindowFromPoint(pos);
+	const POINT pos = System::GetCursorPosition();
 
 	// Only process for unfocused skin window.
-	if (m_Window == hwnd && m_Window != GetFocus())
+	if (m_Window == WindowFromPoint(pos) && m_Window != GetFocus())
 	{
 		RAWINPUT ri;
 		UINT riSize = sizeof(ri);
-		GetRawInputData((HRAWINPUT)lParam, RID_INPUT, &ri, &riSize, sizeof(RAWINPUTHEADER));
-		if (ri.header.dwType == RIM_TYPEMOUSE) 
+		const UINT dataSize = GetRawInputData(
+			(HRAWINPUT)lParam, RID_INPUT, &ri, &riSize, sizeof(RAWINPUTHEADER));
+		if (dataSize != (UINT)-1 &&
+			ri.header.dwType == RIM_TYPEMOUSE) 
 		{
-			WPARAM wheelDelta = MAKEWPARAM(0, HIWORD((short)ri.data.mouse.usButtonData));
-			LPARAM wheelPos = MAKELPARAM(pos.x, pos.y);
-
+			const WPARAM wheelDelta = MAKEWPARAM(0, HIWORD((short)ri.data.mouse.usButtonData));
+			const LPARAM wheelPos = MAKELPARAM(pos.x, pos.y);
 			if (ri.data.mouse.usButtonFlags == RI_MOUSE_WHEEL)
 			{
 				OnMouseScrollMove(WM_INPUT, wheelDelta, wheelPos);
