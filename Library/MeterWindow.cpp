@@ -4614,6 +4614,8 @@ LRESULT MeterWindow::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
+	// DefWindowProc must be called after processing WM_INPUT.
+	DefWindowProc(m_Window, uMsg, wParam, lParam);
 	return 0;
 }
 
