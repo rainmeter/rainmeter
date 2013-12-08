@@ -20,12 +20,16 @@
 #include "../Common/MathParser.h"
 #include "MeasureCalc.h"
 #include "Rainmeter.h"
+#include <random>
 
 const int DEFAULT_LOWER_BOUND = 0;
 const int DEFAULT_UPPER_BOUND = 100;
 
-std::default_random_engine MeasureCalc::c_RandomEngine =
-	std::default_random_engine(std::random_device()());
+std::mt19937& GetRandomEngine()
+{
+	static std::unique_ptr<std::mt19937> s_Engine(new std::mt19937((uint32_t)time(0)));
+	return *s_Engine;
+}
 
 /*
 ** The constructor
@@ -216,7 +220,7 @@ int MeasureCalc::GetRandom()
 	else
 	{
 		const std::uniform_int_distribution<int> distribution(m_LowBound, m_HighBound);
-		return distribution(c_RandomEngine);
+		return distribution(GetRandomEngine());
 	}
 }
 
@@ -230,5 +234,5 @@ void MeasureCalc::UpdateUniqueNumberList()
 		m_UniqueNumbers[i] = m_LowBound + i;
 	}
 
-	std::shuffle(m_UniqueNumbers.begin(), m_UniqueNumbers.end(), c_RandomEngine);
+	std::shuffle(m_UniqueNumbers.begin(), m_UniqueNumbers.end(), GetRandomEngine());
 }
