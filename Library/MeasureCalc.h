@@ -53,8 +53,7 @@ private:
 	void UpdateUniqueNumberList();
 
 	// Uniform Random Number Generator
-	std::default_random_engine m_Engine;
-	std::uniform_int_distribution<int> m_Distrubtion;
+	static std::default_random_engine c_RandomEngine;
 };
 
 #endif

@@ -24,6 +24,9 @@
 const int DEFAULT_LOWER_BOUND = 0;
 const int DEFAULT_UPPER_BOUND = 100;
 
+std::default_random_engine MeasureCalc::c_RandomEngine =
+	std::default_random_engine(std::random_device()());
+
 /*
 ** The constructor
 **
@@ -33,12 +36,8 @@ MeasureCalc::MeasureCalc(MeterWindow* meterWindow, const WCHAR* name) : Measure(
 	m_LowBound(DEFAULT_LOWER_BOUND),
 	m_HighBound(DEFAULT_UPPER_BOUND),
 	m_UpdateRandom(false),
-	m_UniqueRandom(false),
-	m_Engine(),
-	m_Distrubtion()
+	m_UniqueRandom(false)
 {
-	std::random_device device;
-	m_Engine.seed(device());
 }
 
 /*
@@ -105,11 +104,11 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		oldUniqueRandom != m_UniqueRandom)
 	{
 		// Reset bounds if |m_LowBound| is greater than |m_HighBound|
-		if (m_LowBound > m_HighBound && (
-			oldLowBound != m_LowBound ||
-			oldHighBound != m_HighBound))
+		if (m_LowBound > m_HighBound)
 		{
 			LogErrorF(this, L"\"LowBound\" (%i) must be less then or equal to \"HighBound\" (%i)", m_LowBound, m_HighBound);
+			
+			m_HighBound = m_LowBound;
 		}
 
 		// Reset the list if the bounds are changed
@@ -218,10 +217,8 @@ int MeasureCalc::GetRandom()
 	}
 	else
 	{
-		std::uniform_int_distribution<int>::param_type params(m_LowBound, m_HighBound);
-		m_Distrubtion.param(params);
-		m_Distrubtion.reset();
-		value = m_Distrubtion(m_Engine);
+		const std::uniform_int_distribution<int> distribution(m_LowBound, m_HighBound);
+		return distribution(c_RandomEngine);
 	}
 
 	return value;
@@ -236,6 +233,6 @@ void MeasureCalc::UpdateUniqueNumberList()
 		m_UniqueNumbers.push_back(i);
 	}
 
-	std::shuffle(m_UniqueNumbers.begin(), m_UniqueNumbers.end(), m_Engine);
+	std::shuffle(m_UniqueNumbers.begin(), m_UniqueNumbers.end(), c_RandomEngine);
 	m_UniqueNumbers.shrink_to_fit();
 }
