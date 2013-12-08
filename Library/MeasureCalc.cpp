@@ -103,12 +103,11 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		oldUpdateRandom != m_UpdateRandom ||
 		oldUniqueRandom != m_UniqueRandom)
 	{
-		// Reset bounds if |m_LowBound| is greater than |m_HighBound|
-		if (m_LowBound > m_HighBound)
+		// Reset bounds if |m_LowBound| is greater than |m_HighBound|.
+		if (m_LowBound > m_HighBound &&
+			(oldLowBound != m_LowBound || oldHighBound != m_HighBound))
 		{
 			LogErrorF(this, L"\"LowBound\" (%i) must be less then or equal to \"HighBound\" (%i)", m_LowBound, m_HighBound);
-			
-			m_HighBound = m_LowBound;
 		}
 
 		// Reset the list if the bounds are changed
@@ -199,7 +198,7 @@ bool MeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value, void
 
 int MeasureCalc::GetRandom()
 {
-	if (m_LowBound == m_HighBound)
+	if (m_LowBound == m_HighBound || m_LowBound > m_HighBound)
 	{
 		return m_LowBound;
 	}
