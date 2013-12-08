@@ -27,7 +27,7 @@ const int DEFAULT_UPPER_BOUND = 100;
 
 std::mt19937& GetRandomEngine()
 {
-	static std::unique_ptr<std::mt19937> s_Engine(new std::mt19937((uint32_t)time(0)));
+	static std::unique_ptr<std::mt19937> s_Engine(new std::mt19937((uint32_t)time(nullptr)));
 	return *s_Engine;
 }
 
