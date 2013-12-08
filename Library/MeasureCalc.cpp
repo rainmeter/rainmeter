@@ -199,11 +199,9 @@ bool MeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value, void
 
 int MeasureCalc::GetRandom()
 {
-	int value = 0;
-
-	if (m_LowBound == m_HighBound || m_LowBound > m_HighBound)
+	if (m_LowBound == m_HighBound)
 	{
-		value = m_LowBound;
+		return m_LowBound;
 	}
 	else if (m_UniqueRandom)
 	{
@@ -212,27 +210,26 @@ int MeasureCalc::GetRandom()
 			UpdateUniqueNumberList();
 		}
 
-		value = m_UniqueNumbers.back();
+		const int value = m_UniqueNumbers.back();
 		m_UniqueNumbers.pop_back();
+		return value;
 	}
 	else
 	{
 		const std::uniform_int_distribution<int> distribution(m_LowBound, m_HighBound);
 		return distribution(c_RandomEngine);
 	}
-
-	return value;
 }
 
 void MeasureCalc::UpdateUniqueNumberList()
 {
-	m_UniqueNumbers.clear();
+	const size_t range = (m_HighBound - m_LowBound) + 1;
+	m_UniqueNumbers.resize(range);
 
-	for (int i = m_LowBound; i <= m_HighBound; ++i)
+	for (size_t i = 0; i < range; ++i)
 	{
-		m_UniqueNumbers.push_back(i);
+		m_UniqueNumbers[i] = m_LowBound + i;
 	}
 
 	std::shuffle(m_UniqueNumbers.begin(), m_UniqueNumbers.end(), c_RandomEngine);
-	m_UniqueNumbers.shrink_to_fit();
 }
