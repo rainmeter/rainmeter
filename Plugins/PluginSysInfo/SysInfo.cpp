@@ -19,6 +19,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <Iphlpapi.h>
+#include <Netlistmgr.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "../API/RainmeterAPI.h"
@@ -50,6 +51,8 @@ enum MeasureType
 	MEASURE_HOST_NAME,
 	MEASURE_DOMAIN_NAME,
 	MEASURE_DNS_SERVER,
+	MEASURE_INTERNET_CONNECTIVITY,
+	MEASURE_NETWORK_STATUS,
 	MEASURE_WORK_AREA_TOP,
 	MEASURE_WORK_AREA_LEFT,
 	MEASURE_WORK_AREA_WIDTH,
@@ -72,6 +75,7 @@ struct MeasureData
 };
 
 LPCWSTR GetPlatformName();
+NLM_CONNECTIVITY GetNetworkConnectivity();
 BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
 
 bool g_Initialized = false;
@@ -160,6 +164,14 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	else if (_wcsicmp(L"DNS_SERVER", type) == 0)
 	{
 		measure->type = MEASURE_DNS_SERVER;
+	}
+	else if (_wcsicmp(L"INTERNET_CONNECTIVITY", type) == 0)
+	{
+		measure->type = MEASURE_INTERNET_CONNECTIVITY;
+	}
+	else if (_wcsicmp(L"NETWORK_STATUS", type) == 0)
+	{
+		measure->type = MEASURE_NETWORK_STATUS;
 	}
 	else if (_wcsicmp(L"WORK_AREA_TOP", type) == 0)
 	{
@@ -377,6 +389,16 @@ PLUGIN_EXPORT double Update(void* data)
 				si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_IA64) ? 64.0 : 32.0;
 		}
 
+	case MEASURE_INTERNET_CONNECTIVITY:
+		{
+			const auto connectivity = GetNetworkConnectivity();
+			return (connectivity & NLM_CONNECTIVITY_IPV4_INTERNET ||
+				connectivity & NLM_CONNECTIVITY_IPV6_INTERNET) ? 1.0 : 0.0;
+		}
+
+	case MEASURE_NETWORK_STATUS:
+		return (double)GetNetworkConnectivity();
+
 	case MEASURE_WORK_AREA_WIDTH:
 		return (measure->data != -1)
 			? m_Monitors.m_MonitorInfo[measure->data - 1].rcWork.right - m_Monitors.m_MonitorInfo[measure->data - 1].rcWork.left
@@ -501,4 +523,19 @@ LPCWSTR GetPlatformName()
 	}
 
 	return L"Unknown";
+}
+
+NLM_CONNECTIVITY GetNetworkConnectivity()
+{
+	NLM_CONNECTIVITY connectivity = NLM_CONNECTIVITY_DISCONNECTED;
+	INetworkListManager* nlm;
+	HRESULT hr = CoCreateInstance(
+		CLSID_NetworkListManager, NULL, CLSCTX_INPROC_SERVER, __uuidof(INetworkListManager), (void**)&nlm);
+	if (SUCCEEDED(hr))
+	{
+		nlm->GetConnectivity(&connectivity);
+		nlm->Release();
+	}
+
+	return connectivity;
 }
