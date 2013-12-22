@@ -393,11 +393,11 @@ PLUGIN_EXPORT double Update(void* data)
 		{
 			const auto connectivity = GetNetworkConnectivity();
 			return (connectivity & NLM_CONNECTIVITY_IPV4_INTERNET ||
-				connectivity & NLM_CONNECTIVITY_IPV6_INTERNET) ? 1.0 : 0.0;
+				connectivity & NLM_CONNECTIVITY_IPV6_INTERNET) ? 1.0 : -1.0;
 		}
 
 	case MEASURE_LAN_CONNECTIVITY:
-		return GetNetworkConnectivity() != NLM_CONNECTIVITY_DISCONNECTED ? 1.0 : 0.0;
+		return GetNetworkConnectivity() != NLM_CONNECTIVITY_DISCONNECTED ? 1.0 : -1.0;
 
 	case MEASURE_WORK_AREA_WIDTH:
 		return (measure->data != -1)
