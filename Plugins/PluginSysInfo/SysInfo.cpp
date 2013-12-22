@@ -52,7 +52,7 @@ enum MeasureType
 	MEASURE_DOMAIN_NAME,
 	MEASURE_DNS_SERVER,
 	MEASURE_INTERNET_CONNECTIVITY,
-	MEASURE_NETWORK_STATUS,
+	MEASURE_LAN_CONNECTIVITY,
 	MEASURE_WORK_AREA_TOP,
 	MEASURE_WORK_AREA_LEFT,
 	MEASURE_WORK_AREA_WIDTH,
@@ -169,9 +169,9 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		measure->type = MEASURE_INTERNET_CONNECTIVITY;
 	}
-	else if (_wcsicmp(L"NETWORK_STATUS", type) == 0)
+	else if (_wcsicmp(L"LAN_CONNECTIVITY", type) == 0)
 	{
-		measure->type = MEASURE_NETWORK_STATUS;
+		measure->type = MEASURE_LAN_CONNECTIVITY;
 	}
 	else if (_wcsicmp(L"WORK_AREA_TOP", type) == 0)
 	{
@@ -396,8 +396,8 @@ PLUGIN_EXPORT double Update(void* data)
 				connectivity & NLM_CONNECTIVITY_IPV6_INTERNET) ? 1.0 : 0.0;
 		}
 
-	case MEASURE_NETWORK_STATUS:
-		return (double)GetNetworkConnectivity();
+	case MEASURE_LAN_CONNECTIVITY:
+		return GetNetworkConnectivity() != NLM_CONNECTIVITY_DISCONNECTED ? 1.0 : 0.0;
 
 	case MEASURE_WORK_AREA_WIDTH:
 		return (measure->data != -1)
