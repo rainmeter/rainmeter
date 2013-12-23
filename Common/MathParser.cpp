@@ -99,7 +99,6 @@ struct Function
 };
 
 static double frac(double x);
-static double trunc(double x);
 static double rad(double deg);
 static double sgn(double x);
 static double neg(double x);
@@ -846,11 +845,6 @@ static double frac(double x)
 {
 	double y;
 	return modf(x, &y);
-}
-
-static double trunc(double x)
-{
-	return (x >= 0.0) ? floor(x) : ceil(x);
 }
 
 static double rad(double deg)
