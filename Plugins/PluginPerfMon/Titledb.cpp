@@ -39,7 +39,6 @@ CPerfTitleDatabase::CPerfTitleDatabase(
 
 	// Find out the max number of entries
 	HKEY hKeyPerflib = 0;
-	DWORD cbLastIndex = sizeof(DWORD);
 
 	// Open the registry key that has the values for the maximum number
 	// of title strings
@@ -50,6 +49,7 @@ CPerfTitleDatabase::CPerfTitleDatabase(
 		return;
 
 	// Read in the number of title strings
+	DWORD cbLastIndex = sizeof(m_nLastIndex);
 	if ( ERROR_SUCCESS != RegQueryValueEx(
 				hKeyPerflib, pszLastIndexRegValue, 0, 0,
 				(PBYTE)&m_nLastIndex, &cbLastIndex ) )
