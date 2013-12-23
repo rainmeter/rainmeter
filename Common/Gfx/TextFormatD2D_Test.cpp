@@ -48,12 +48,12 @@ public:
 		DWRITE_TEXT_METRICS metrics;
 
 		metrics = textFormat->GetMetrics(L"test", 4, true);
-		Assert::AreEqual((int)metrics.width, 26);
-		Assert::AreEqual((int)metrics.height, 16);
+		Assert::AreEqual(26, (int)metrics.width);
+		Assert::AreEqual(16, (int)metrics.height);
 
 		metrics = textFormat->GetMetrics(L"test", 4, false);
-		Assert::AreEqual((int)metrics.width, 21);
-		Assert::AreEqual((int)metrics.height, 14);
+		Assert::AreEqual(21, (int)metrics.width);
+		Assert::AreEqual(14, (int)metrics.height);
 	}
 
 	TEST_METHOD(TestTrailingNewlineGdipCompatibility)
@@ -64,19 +64,19 @@ public:
 		DWRITE_TEXT_METRICS metrics;
 		
 		metrics = textFormat->GetMetrics(L"test\n", 5, false);
-		Assert::AreEqual((int)metrics.height, 15);
+		Assert::AreEqual(15, (int)metrics.height);
 		metrics = textFormat->GetMetrics(L"test\r\n", 6, false);
-		Assert::AreEqual((int)metrics.height, 15);
+		Assert::AreEqual(15, (int)metrics.height);
 
 		metrics = textFormat->GetMetrics(L"test\n ", 6, false);
-		Assert::AreEqual((int)metrics.height, 30);
+		Assert::AreEqual(30, (int)metrics.height);
 		metrics = textFormat->GetMetrics(L"test\r\n ", 7, false);
-		Assert::AreEqual((int)metrics.height, 30);
+		Assert::AreEqual(30, (int)metrics.height);
 
 		metrics = textFormat->GetMetrics(L"test\n\n", 6, false);
-		Assert::AreEqual((int)metrics.height, 30);
+		Assert::AreEqual(30, (int)metrics.height);
 		metrics = textFormat->GetMetrics(L"test\r\n\r\n", 8, false);
-		Assert::AreEqual((int)metrics.height, 30);
+		Assert::AreEqual(30, (int)metrics.height);
 	}
 };
 
