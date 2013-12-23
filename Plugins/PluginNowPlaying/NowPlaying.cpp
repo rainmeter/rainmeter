@@ -79,7 +79,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		{
 			// PlayerName starts with [ so use referenced section
 			++str;
-			int len = wcslen(str);
+			size_t len = wcslen(str);
 			if (len > 0 && str[len - 1] == L']')
 			{
 				--len;
@@ -198,7 +198,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		parent->player->AddInstance();
 		parent->playerPath = RmReadString(rm, L"PlayerPath", L"");
 		parent->trackChangeAction = RmReadString(rm, L"TrackChangeAction", L"", FALSE);
-		parent->disableLeadingZero = RmReadInt(rm, L"DisableLeadingZero", 0);
+		parent->disableLeadingZero = RmReadInt(rm, L"DisableLeadingZero", 0) != 0;
 
 		if (oldPlayer)
 		{
@@ -518,7 +518,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 		{
 			++arg;	// Skip the space
 
-			if (wcsnicmp(args, L"SetPosition", 11) == 0)
+			if (_wcsnicmp(args, L"SetPosition", 11) == 0)
 			{
 				int position = (_wtoi(arg) * (int)player->GetDuration()) / 100;
 				if (arg[0] == L'+' || arg[0] == L'-')
@@ -528,7 +528,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 
 				player->SetPosition(position);
 			}
-			else if (wcsnicmp(args, L"SetRating", 9) == 0)
+			else if (_wcsnicmp(args, L"SetRating", 9) == 0)
 			{
 				int rating = _wtoi(arg);
 				if (rating >= 0 && rating <= 5)
@@ -536,7 +536,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 					player->SetRating(rating);
 				}
 			}
-			else if (wcsnicmp(args, L"SetVolume", 9) == 0)
+			else if (_wcsnicmp(args, L"SetVolume", 9) == 0)
 			{
 				int volume = _wtoi(arg);
 				if (arg[0] == L'+' || arg[0] == L'-')
@@ -555,7 +555,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 				}
 				player->SetVolume(volume);;
 			}
-			else if (wcsnicmp(args, L"SetShuffle", 9) == 0)
+			else if (_wcsnicmp(args, L"SetShuffle", 9) == 0)
 			{
 				int state = _wtoi(arg);
 				if (state == -1)
@@ -564,10 +564,10 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 				}
 				else if (state == 0 || state == 1)
 				{
-					player->SetShuffle((bool)state);
+					player->SetShuffle(state != 0);
 				}
 			}
-			else if (wcsnicmp(args, L"SetRepeat", 9) == 0)
+			else if (_wcsnicmp(args, L"SetRepeat", 9) == 0)
 			{
 				int state = _wtoi(arg);
 				if (state == -1)
@@ -576,7 +576,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 				}
 				else if (state == 0 || state == 1)
 				{
-					player->SetRepeat((bool)state);
+					player->SetRepeat(state != 0);
 				}
 			}
 			else

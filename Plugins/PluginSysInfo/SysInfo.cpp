@@ -301,7 +301,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 					}
 				}
 			}
-			else if (measure->data < ipTable->dwNumEntries)
+			else if (measure->data < (int)ipTable->dwNumEntries)
 			{
 				DWORD ip = ipTable->table[measure->data].dwAddr;
 				wsprintf(sBuffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
@@ -314,7 +314,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		if (NO_ERROR == GetIpAddrTable((PMIB_IPADDRTABLE)tmpBuffer, &tmpBufferLen, FALSE))
 		{
 			PMIB_IPADDRTABLE ipTable = (PMIB_IPADDRTABLE)tmpBuffer;
-			if (measure->data < ipTable->dwNumEntries)
+			if (measure->data < (int)ipTable->dwNumEntries)
 			{
 				DWORD ip = ipTable->table[measure->data].dwMask;
 				wsprintf(sBuffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);

@@ -49,7 +49,7 @@ std::wstring Widen(const char* str, int strLen, int cp)
 	{
 		if (strLen == -1)
 		{
-			strLen = strlen(str);
+			strLen = (int)strlen(str);
 		}
 
 		int bufLen = MultiByteToWideChar(cp, 0, str, strLen, nullptr, 0);

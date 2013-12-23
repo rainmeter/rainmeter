@@ -340,7 +340,7 @@ void PlayerITunes::OnDatabaseChange()
 		hr = playlist->get_Shuffle(&shuffle);
 		if (SUCCEEDED(hr))
 		{
-			m_Shuffle = (bool)shuffle;
+			m_Shuffle = shuffle != VARIANT_FALSE;
 		}
 
 		playlist->Release();
@@ -392,7 +392,7 @@ void PlayerITunes::OnTrackChange()
 			hr = playlist->get_SongRepeat(&repeat);
 			if (SUCCEEDED(hr))
 			{
-				m_Repeat = (bool)repeat;
+				m_Repeat = repeat != ITPlaylistRepeatModeOff;
 			}
 
 			playlist->Release();

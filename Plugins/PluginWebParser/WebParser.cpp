@@ -920,14 +920,14 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 			// Must convert the data to utf8
 			utf8Data = StringUtil::NarrowUTF8((LPCWSTR)parseData, dwSize / 2);
 			parseData = utf8Data.c_str();
-			dwSize = utf8Data.length();
+			dwSize = (DWORD)utf8Data.length();
 		}
 		else if (measure->codepage != CP_UTF8 && measure->codepage != 0)		// 0 = CP_ACP
 		{
 			// Must convert the data to utf8
 			utf8Data = ConvertAsciiToUTF8(parseData, dwSize, measure->codepage);
 			parseData = utf8Data.c_str();
-			dwSize = utf8Data.length();
+			dwSize = (DWORD)utf8Data.length();
 		}
 
 		rc = pcre_exec(

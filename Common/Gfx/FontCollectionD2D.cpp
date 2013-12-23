@@ -51,7 +51,7 @@ bool FontCollectionD2D::InitializeCollection()
 			loader, &m_FileReferences, sizeof(m_FileReferences), &m_Collection);
 	}
 
-	return m_Collection;
+	return m_Collection != nullptr;
 }
 
 bool FontCollectionD2D::AddFile(const WCHAR* file)

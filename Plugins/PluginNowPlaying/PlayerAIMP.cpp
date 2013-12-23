@@ -137,8 +137,8 @@ void PlayerAIMP::UpdateData()
 		return;
 	}
 
-	m_Position = SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_POS);
-	m_Volume = SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_VOLUME);
+	m_Position = (UINT)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_POS);
+	m_Volume = (UINT)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_VOLUME);
 
 	AIMP2FileInfo* info = (AIMP2FileInfo*)m_FileMap;
 	if (info->cbSizeOf > 0 &&
@@ -169,11 +169,11 @@ void PlayerAIMP::UpdateData()
 		m_Duration = info->nDuration / 1000;
 		m_Number = (UINT)info->nTrackID;
 
-		m_Shuffle = (bool)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_SHUFFLE);
-		m_Repeat = (bool)SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_REPEAT);
+		m_Shuffle = SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_SHUFFLE) != 0;
+		m_Repeat = SendMessage(m_Window, WM_AIMP_COMMAND, WM_AIMP_STATUS_GET, AIMP_STS_REPEAT) != 0;
 
 		// Get rating through the AIMP Winamp API
-		m_Rating = SendMessage(m_WinampWindow, WM_WA_IPC, 0, IPC_GETRATING);
+		m_Rating = (UINT)SendMessage(m_WinampWindow, WM_WA_IPC, 0, IPC_GETRATING);
 
 		if (filepath != m_FilePath)
 		{

@@ -19,7 +19,6 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <DisableSpecificWarnings>4018;4090;4114;4351;4786;4800;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalDependencies>PowrProf.lib;%(AdditionalDependencies)</AdditionalDependencies>

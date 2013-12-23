@@ -306,7 +306,7 @@ PLUGIN_EXPORT double Update(void* data)
 	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
 	double value = 0;
 
-	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < parent->files.size())
+	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
 	{
 		switch (child->type)
 		{
@@ -382,7 +382,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
 	child->strValue = L"";
 
-	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < parent->files.size())
+	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
 	{
 		switch (child->type)
 		{
@@ -511,7 +511,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 
 	if (parent->ownerChild == child)
 	{
-		if (parent->files.size() > parent->count)
+		if ((int)parent->files.size() > parent->count)
 		{
 			if (_wcsicmp(args, L"PAGEUP") == 0)
 			{
@@ -528,7 +528,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 			}
 			else if (_wcsicmp(args, L"PAGEDOWN") == 0)
 			{
-				if ((parent->indexOffset + ( 2 * parent->count)) < parent->files.size())
+				if ((parent->indexOffset + (2 * parent->count)) < (int)parent->files.size())
 				{
 					parent->indexOffset += parent->count;
 					parent->needsIcons = true;
@@ -554,7 +554,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 			}
 			else if (_wcsicmp(args, L"INDEXDOWN") == 0)
 			{
-				if ((parent->indexOffset + parent->count) < parent->files.size())
+				if ((parent->indexOffset + parent->count) < (int)parent->files.size())
 				{
 					++parent->indexOffset;
 					parent->needsIcons = true;
@@ -583,7 +583,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 			else
 			{
 				parent->path.clear();
-				for (int i = 0; i < path.size() - 1; ++i)
+				for (size_t i = 0; i < path.size() - 1; ++i)
 				{
 					parent->path += path[i];
 					parent->path += L"\\";
@@ -600,7 +600,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 	}
 
 	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
-	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < parent->files.size())
+	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
 	{
 		if (_wcsicmp(args, L"OPEN") == 0)
 		{
@@ -618,7 +618,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 				else
 				{
 					parent->path.clear();
-					for (int i = 0; i < path.size() - 1; ++i)
+					for (size_t i = 0; i < path.size() - 1; ++i)
 					{
 						parent->path += path[i];
 						parent->path += L"\\";
@@ -876,7 +876,7 @@ unsigned __stdcall SystemThreadProc(void* pParam)
 			EnterCriticalSection(&g_CriticalSection);
 			int trueIndex = iter->ignoreCount ? iter->index : ((iter->index % iter->parent->count) + iter->parent->indexOffset);
 
-			if (iter->type == TYPE_ICON && trueIndex >= 0 && trueIndex < tmp->files.size())
+			if (iter->type == TYPE_ICON && trueIndex >= 0 && trueIndex < (int)tmp->files.size())
 			{
 				std::wstring filePath = tmp->files[trueIndex].path;
 				filePath += (tmp->files[trueIndex].fileName == L"..") ? L"" :tmp->files[trueIndex].fileName;

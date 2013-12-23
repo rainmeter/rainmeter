@@ -375,7 +375,7 @@ const WCHAR* Parse(
 			{
 				Operation op;
 				if (lexer.nameLen <= FUNC_MAX_LEN &&
-					((op.funcIndex = GetFunctionIndex(lexer.name, lexer.nameLen)) != FUNC_INVALID))
+					((op.funcIndex = GetFunctionIndex(lexer.name, (BYTE)lexer.nameLen)) != FUNC_INVALID))
 				{
 					switch (op.funcIndex)
 					{
@@ -402,13 +402,13 @@ const WCHAR* Parse(
 				else
 				{
 					double dblval;
-					if (getValue && getValue(lexer.name, lexer.nameLen, &dblval, getValueContext))
+					if (getValue && getValue(lexer.name, (int)lexer.nameLen, &dblval, getValueContext))
 					{
 						parser.numStack[++parser.valTop] = dblval;
 						break;
 					}
 
-					std::wstring name(lexer.name, lexer.nameLen);
+					const std::wstring name(lexer.name, lexer.nameLen);
 					_snwprintf_s(errorBuffer, _TRUNCATE, eUnknFunc, name.c_str());
 					return errorBuffer;
 				}

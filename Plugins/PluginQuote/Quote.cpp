@@ -60,7 +60,7 @@ void ScanFolder(std::vector<std::wstring>& files, std::vector<std::wstring>& fil
 		{
 			if (!filters.empty())
 			{
-				for (int i = 0; i < filters.size(); ++i)
+				for (size_t i = 0; i < filters.size(); ++i)
 				{
 					if (!filters[i].empty() && PathMatchSpec(fileData.cFileName, filters[i].c_str()))
 					{

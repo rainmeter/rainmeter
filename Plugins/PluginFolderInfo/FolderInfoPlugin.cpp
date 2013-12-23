@@ -58,7 +58,7 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	LPCWSTR str = RmReadString(rm, L"Folder", L"", FALSE);
 	if (*str == L'[')
 	{
-		int len = wcslen(str);
+		const size_t len = wcslen(str);
 		for (auto iter = g_Measures.cbegin(); iter != g_Measures.cend(); ++iter)
 		{
 			if ((*iter)->folder &&
@@ -130,7 +130,7 @@ PLUGIN_EXPORT double Update(void* data)
 	switch (measure->type)
 	{
 	case MEASURE_FOLDERSIZE:
-		return measure->folder->GetSize();
+		return (double)measure->folder->GetSize();
 
 	case MEASURE_FILECOUNT:
 		return measure->folder->GetFileCount();

@@ -234,25 +234,25 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 		case IPC_VOLUME_CHANGED_NOTIFICATION:
 			{
-				player->m_Volume = wParam;
+				player->m_Volume = (UINT)wParam;
 				break;
 			}
 
 		case IPC_REPEAT_CHANGED_NOTIFICATION:
 			{
-				player->m_Repeat = (bool)wParam;
+				player->m_Repeat = wParam != 0;
 				break;
 			}
 
 		case IPC_SHUFFLE_CHANGED_NOTIFICATION:
 			{
-				player->m_Shuffle = (bool)wParam;
+				player->m_Shuffle = wParam != 0;
 				break;
 			}
 
 		case IPC_RATING_CHANGED_NOTIFICATION:
 			{
-				player->m_Rating = (wParam + 1) / 2;	// From 0 - 10 to 0 - 5
+				player->m_Rating = ((UINT)wParam + 1) / 2;  // From 0 - 10 to 0 - 5
 				break;
 			}
 
@@ -270,8 +270,8 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			PCOPYDATASTRUCT cds = (PCOPYDATASTRUCT)lParam;
 			if (cds->dwData == IPC_CURRENT_TRACK_NOTIFICATION)
 			{
-				player->m_Shuffle = (bool)SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_SHUFFLE);
-				player->m_Repeat = (bool)SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_REPEAT);
+				player->m_Shuffle = SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_SHUFFLE) != 0;
+				player->m_Repeat = SendMessage(player->m_PlayerWindow, WM_USER, 0, IPC_GET_REPEAT) != 0;
 
 				// TODO: Sent on track update?
 				++player->m_TrackCount;
@@ -418,8 +418,8 @@ void PlayerCAD::UpdateData()
 {
 	if (m_State != STATE_STOPPED)
 	{
-		m_Position = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_POSITION);
-		m_Volume = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_VOLUME);
+		m_Position = (UINT)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_POSITION);
+		m_Volume = (UINT)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_VOLUME);
 	}
 }
 
@@ -504,7 +504,7 @@ void PlayerCAD::SetVolume(int volume)
 void PlayerCAD::SetShuffle(bool state)
 {
 	SendMessage(m_PlayerWindow, WM_USER, (WPARAM)state, IPC_SET_SHUFFLE);
-	m_Shuffle = (bool)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_SHUFFLE);
+	m_Shuffle = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_SHUFFLE) != 0;
 }
 
 /*
@@ -514,7 +514,7 @@ void PlayerCAD::SetShuffle(bool state)
 void PlayerCAD::SetRepeat(bool state)
 {
 	SendMessage(m_PlayerWindow, WM_USER, (WPARAM)state, IPC_SET_REPEAT);
-	m_Repeat = (bool)SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_REPEAT);
+	m_Repeat = SendMessage(m_PlayerWindow, WM_USER, 0, IPC_GET_REPEAT) != 0;
 }
 
 /*

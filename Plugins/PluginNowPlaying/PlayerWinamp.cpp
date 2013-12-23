@@ -105,7 +105,7 @@ void PlayerWinamp::UpdateData()
 {
 	if (m_Initialized || CheckWindow())
 	{
-		int playing = SendMessage(m_Window, WM_WA_IPC, 0, IPC_ISPLAYING);
+		const auto playing = SendMessage(m_Window, WM_WA_IPC, 0, IPC_ISPLAYING);
 		if (playing == 0)
 		{
 			// Make sure Winamp is still active
@@ -127,8 +127,8 @@ void PlayerWinamp::UpdateData()
 		else
 		{
 			m_State = (playing == 1) ? STATE_PLAYING : STATE_PAUSED;
-			m_Position = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETOUTPUTTIME) / 1000;		// ms to secs
-			m_Volume = (SendMessage(m_Window, WM_WA_IPC, -666, IPC_SETVOLUME) * 100) / 255;	// 0 - 255 to 0 - 100
+			m_Position = (UINT)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETOUTPUTTIME) / 1000;  // ms to secs
+			m_Volume = ((UINT)SendMessage(m_Window, WM_WA_IPC, -666, IPC_SETVOLUME) * 100) / 255;  // 0 - 255 to 0 - 100
 		}
 
 		WCHAR wBuffer[MAX_PATH];
@@ -145,7 +145,7 @@ void PlayerWinamp::UpdateData()
 		else
 		{
 			// MediaMonkey doesn't support wide IPC messages
-			int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
+			const auto pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
 			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTFILE);
 
 			if (!ReadProcessMemory(m_WinampHandle, address, &cBuffer, sizeof(cBuffer), nullptr))
@@ -165,12 +165,12 @@ void PlayerWinamp::UpdateData()
 
 			if (!m_PlayingStream)
 			{
-				int duration = SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
+				const int duration = (int)SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
 				m_Duration = (duration != -1) ? duration : 0;
 
-				m_Rating = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETRATING);
-				m_Shuffle = (bool)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_SHUFFLE);
-				m_Repeat = (bool)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_REPEAT);
+				m_Rating = (UINT)SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETRATING);
+				m_Shuffle = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_SHUFFLE) != 0;
+				m_Repeat = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GET_REPEAT) != 0;
 
 				TagLib::FileRef fr(wBuffer, false);
 				TagLib::Tag* tag = fr.tag();
@@ -270,7 +270,7 @@ void PlayerWinamp::UpdateData()
 		{
 			if (m_Duration == 0)
 			{
-				int duration = SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
+				const int duration = (int)SendMessage(m_Window, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
 				m_Duration = (duration != -1) ? duration : 0;
 			}
 
@@ -285,7 +285,7 @@ void PlayerWinamp::UpdateData()
 		}
 		else
 		{
-			int pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
+			const auto pos = SendMessage(m_Window, WM_WA_IPC, 0, IPC_GETLISTPOS);
 			LPCVOID address = (LPCVOID)SendMessage(m_Window, WM_WA_IPC, pos, IPC_GETPLAYLISTTITLE);
 			ReadProcessMemory(m_WinampHandle, address, &cBuffer, sizeof(cBuffer), nullptr);
 			mbstowcs(wBuffer, cBuffer, MAX_PATH);
