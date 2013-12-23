@@ -229,7 +229,7 @@ void MeasureCalc::UpdateUniqueNumberList()
 	const size_t range = (m_HighBound - m_LowBound) + 1;
 	m_UniqueNumbers.resize(range);
 
-	for (size_t i = 0; i < range; ++i)
+	for (int i = 0; i < (int)range; ++i)
 	{
 		m_UniqueNumbers[i] = m_LowBound + i;
 	}

@@ -1582,7 +1582,7 @@ void DialogManage::TabLayouts::Initialize()
 {
 	HWND item  = GetControl(Id_List);
 	const std::vector<std::wstring>& layouts = GetRainmeter().GetAllLayouts();
-	for (int i = 0, isize = layouts.size(); i < isize; ++i)
+	for (size_t i = 0, isize = layouts.size(); i < isize; ++i)
 	{
 		ListBox_AddString(item, layouts[i].c_str());
 	}

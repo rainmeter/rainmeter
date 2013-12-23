@@ -34,7 +34,7 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	ConfigParser& parser = measure->GetMeterWindow()->GetParser();
-	return parser.ReadString(measure->GetName(), option, defValue, (bool)replaceMeasures).c_str();
+	return parser.ReadString(measure->GetName(), option, defValue, replaceMeasures != FALSE).c_str();
 }
 
 double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)

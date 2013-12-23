@@ -153,8 +153,8 @@ void MeterString::Initialize()
 	m_TextFormat->SetProperties(
 		m_FontFace.c_str(),
 		m_FontSize,
-		m_Style & BOLD,
-		m_Style & ITALIC,
+		(m_Style & BOLD) != 0,
+		(m_Style & ITALIC) != 0,
 		m_MeterWindow->GetFontCollection());
 }
 

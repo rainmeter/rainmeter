@@ -64,7 +64,7 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 		std::wstring fAction = parser.ReadString(section, L"IfFalseAction", L"", false);
 		if (!tAction.empty() || !fAction.empty())
 		{
-			int i = 1;
+			size_t i = 1;
 			do
 			{
 				if (m_Conditions.size() > (i - 1))

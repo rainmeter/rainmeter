@@ -531,7 +531,7 @@ bool Meter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scale
 
 			const WCHAR* measureValue = m_Measures[i - 1]->GetStringOrFormattedValue(
 				autoScale, scale, decimals, percentual);
-			int measureValueLen = wcslen(measureValue);
+			const size_t measureValueLen = wcslen(measureValue);
 
 			do
 			{

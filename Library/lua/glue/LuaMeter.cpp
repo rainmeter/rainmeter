@@ -68,7 +68,7 @@ static int GetH(lua_State* L)
 static int GetX(lua_State* L)
 {
 	DECLARE_SELF(L)
-	bool abs = (bool)lua_toboolean(L, 2);
+	const bool abs = lua_toboolean(L, 2) != 0;
 	lua_pushnumber(L, self->GetX(abs));
 
 	return 1;
@@ -77,7 +77,7 @@ static int GetX(lua_State* L)
 static int GetY(lua_State* L)
 {
 	DECLARE_SELF(L)
-	bool abs = (bool)lua_toboolean(L, 2);
+	const bool abs = lua_toboolean(L, 2) != 0;
 	lua_pushnumber(L, self->GetY(abs));
 
 	return 1;

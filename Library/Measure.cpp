@@ -276,11 +276,11 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 						re,
 						nullptr,           // No extra data - we didn't study the pattern
 						utf8str.c_str(),   // The subject string
-						utf8str.length(),  // The length of the subject
+						(int)utf8str.length(),  // The length of the subject
 						offset,
 						0,
 						ovector,
-						_countof(ovector));
+						(int)_countof(ovector));
 					if (rc <= 0)
 					{
 						break;
@@ -311,10 +311,10 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 						}
 					}
 
-					const size_t start = ovector[0];
-					const size_t length = ovector[1] - ovector[0];
+					const int start = ovector[0];
+					const int length = ovector[1] - ovector[0];
 					utf8str.replace(start, length, result);
-					offset = start + result.length();
+					offset = start + (int)result.length();
 				}
 				while (true);
 

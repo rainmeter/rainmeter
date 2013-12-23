@@ -471,7 +471,7 @@ bool Rainmeter::IsAlreadyRunning()
 
 			MD5_CTX ctx = {0};
 			MD5Init(&ctx);
-			MD5Update(&ctx, (LPBYTE)&data[0], data.length() * sizeof(WCHAR));
+			MD5Update(&ctx, (LPBYTE)&data[0], (UINT)data.length() * sizeof(WCHAR));
 			MD5Final(&ctx);
 			FreeLibrary(cryptDll);
 
@@ -584,7 +584,7 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 void Rainmeter::SetNetworkStatisticsTimer()
 {
-	static bool set = SetTimer(m_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, nullptr);
+	static bool set = SetTimer(m_Window, TIMER_NETSTATS, INTERVAL_NETSTATS, nullptr) != 0;
 }
 
 void Rainmeter::CreateOptionsFile()
@@ -1307,9 +1307,10 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		m_DesktopWorkAreaChanged = true;
 	}
 
-	for (UINT i = 1, isize = System::GetMonitorCount(); i <= isize; ++i)
+	const size_t monitorCount = System::GetMonitorCount();
+	for (UINT i = 1; i <= monitorCount; ++i)
 	{
-		_snwprintf_s(buffer, _TRUNCATE, L"DesktopWorkArea@%i", i);
+		_snwprintf_s(buffer, _TRUNCATE, L"DesktopWorkArea@%i", (int)i);
 		const std::wstring& area = parser.ReadString(L"Rainmeter", buffer, L"");
 		if (!area.empty())
 		{

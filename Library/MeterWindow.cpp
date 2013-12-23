@@ -871,28 +871,28 @@ void MeterWindow::DoBang(Bang bang, const std::vector<std::wstring>& args)
 	case Bang::ClickThrough:
 		{
 			int f = m_Parser.ParseInt(args[0].c_str(), 0);
-			SetClickThrough((f == -1) ? !m_ClickThrough : f);
+			SetClickThrough((f == -1) ? !m_ClickThrough : f != 0);
 		}
 		break;
 
 	case Bang::Draggable:
 		{
 			int f = m_Parser.ParseInt(args[0].c_str(), 0);
-			SetWindowDraggable((f == -1) ? !m_WindowDraggable : f);
+			SetWindowDraggable((f == -1) ? !m_WindowDraggable : f != 0);
 		}
 		break;
 
 	case Bang::SnapEdges:
 		{
 			int f = m_Parser.ParseInt(args[0].c_str(), 0);
-			SetSnapEdges((f == -1) ? !m_SnapEdges : f);
+			SetSnapEdges((f == -1) ? !m_SnapEdges : f != 0);
 		}
 		break;
 
 	case Bang::KeepOnScreen:
 		{
 			int f = m_Parser.ParseInt(args[0].c_str(), 0);
-			SetKeepOnScreen((f == -1) ? !m_KeepOnScreen : f);
+			SetKeepOnScreen((f == -1) ? !m_KeepOnScreen : f != 0);
 		}
 		break;
 
@@ -1526,7 +1526,8 @@ void MeterWindow::SetOption(const std::wstring& section, const std::wstring& opt
 		}
 
 		// ContextTitle and ContextAction in [Rainmeter] are dynamic
-		if ((_wcsicmp(section.c_str(), L"Rainmeter") == 0) && (wcsnicmp(option.c_str(), L"Context", 7) == 0))
+		if (_wcsicmp(section.c_str(), L"Rainmeter") == 0 &&
+			_wcsnicmp(option.c_str(), L"Context", 7) == 0)
 		{
 			if (value.empty())
 			{

@@ -19,7 +19,6 @@
     <ClCompile>
       <AdditionalIncludeDirectories>lua/include;lua/lua;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_USRDLL;HAVE_CONFIG_H;SUPPORT_UTF8;LIBRARY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <DisableSpecificWarnings>4018;4090;4114;4267;4334;4351;4786;4800;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>

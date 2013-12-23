@@ -874,7 +874,7 @@ void DialogAbout::TabSkins::UpdateMeasureList(MeterWindow* meterWindow)
 		}
 
 		std::wstring tmpStr = (*iter).first;
-		wcslwr(&tmpStr[0]);
+		_wcslwr(&tmpStr[0]);
 		lvi.pszText = (WCHAR*)tmpStr.c_str();
 
 		if (lvi.iItem < count)

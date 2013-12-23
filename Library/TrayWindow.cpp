@@ -129,7 +129,7 @@ bool TrayWindow::IsTrayIconReady()
 	tnid.hWnd = m_Window;
 	tnid.uID = IDI_TRAY;
 
-	return Shell_NotifyIcon(NIM_MODIFY, &tnid);
+	return Shell_NotifyIcon(NIM_MODIFY, &tnid) != FALSE;
 }
 
 void TrayWindow::TryAddTrayIcon()

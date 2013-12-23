@@ -642,7 +642,7 @@ void MeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
 	WCHAR buffer[48];
 	int len;
 
-	uint32_t count = c_StatValues.size() / 2;
+	uint32_t count = (uint32_t)c_StatValues.size() / 2;
 
 	// Reserve sufficient buffer for statistics
 	std::wstring data;

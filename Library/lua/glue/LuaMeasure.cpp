@@ -125,7 +125,7 @@ static int GetStringValue(lua_State* L)
 	AUTOSCALE autoScale = (top > 1) ? (AUTOSCALE)(int)lua_tonumber(L, 2) : AUTOSCALE_OFF;
 	double scale = (top > 2) ? lua_tonumber(L, 3) : 1.0;
 	int decimals = (int)lua_tonumber(L, 4);
-	bool percentual = lua_toboolean(L, 5);
+	bool percentual = lua_toboolean(L, 5) != 0;
 
 	const WCHAR* val = self->GetStringOrFormattedValue(autoScale, scale, decimals, percentual);
 	LuaManager::PushWide(val);
