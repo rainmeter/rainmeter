@@ -24,46 +24,47 @@ namespace MathParser {
 TEST_CLASS(Common_MathParser_Test)
 {
 public:
-	void ParseAssert(const WCHAR* formula, double expected)
+	void ParseAssert(double expected, const WCHAR* formula)
 	{
 		double value = 0.0;
 		Assert::IsNull(Parse(formula, &value));
-		Assert::AreEqual(value, expected);
+		Assert::AreEqual(expected, value);
 	}
 
 	TEST_METHOD(TestParse)
 	{
-		ParseAssert(L"5", 5.0);
-		ParseAssert(L"      5      ", 5.0);
-		ParseAssert(L"((((5))))", 5.0);
-		ParseAssert(L"(5 + 5)", 10.0);
-		ParseAssert(L"(-5 - 5)", -10.0);
-		ParseAssert(L"-(-5-5)", 10.0);
-		ParseAssert(L"-(-5+-5)", 10.0);
-		ParseAssert(L"1 && 1", 1.0);
-		ParseAssert(L"1 && 0", 0.0);
-		ParseAssert(L"1 || 1", 1.0);
-		ParseAssert(L"1 || -1", 1.0);
-		ParseAssert(L"1 < 2 && 2 > 1", 0.0);
-		ParseAssert(L"(1 < 2) && (2 > 1)", 1.0);
-		ParseAssert(L"sin(50)", sin(50.0));
-		ParseAssert(L"-sin((25 + 25) * 2)", -sin(100.0));
-		ParseAssert(L"01", 1.0);
-		ParseAssert(L"011", 11.0);
-		ParseAssert(L"0b11", 3.0);
-		ParseAssert(L"0xA", 10.0);
-		ParseAssert(L"0o12", 10.0);
-		ParseAssert(L"1 ? 2 : 3", 2.0);
-		ParseAssert(L"0 ? 2 : 3", 3.0);
-		ParseAssert(L"1 ? (2 + 3) : 3", 5.0);
-		ParseAssert(L"1 ? 2 : 3", 2.0);
-		ParseAssert(L"1 ? 2 : 0 ? 4 : 5", 4.0);
-		ParseAssert(L"1 ? 2 : 1 ? 4 : 5", 4.0);
-		ParseAssert(L"1 ? 2 : (1 ? 4 : 5)", 2.0);
-		ParseAssert(L"0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:5)))))))))))))))))))))))))))))", 5.0);
-		ParseAssert(L"trunc(1.5)", 1.0);
-		ParseAssert(L"trunc(-1.5)", -1.0);
-		ParseAssert(L"round(1.555, 2)", 1.56);
+		ParseAssert(5.0, L"5");
+		ParseAssert(5.0, L"      5      ");
+		ParseAssert(5.0, L"((((5))))");
+		ParseAssert(10.0, L"(5 + 5)");
+		ParseAssert(-10.0, L"(-5 - 5)");
+		ParseAssert(10.0, L"-(-5-5)");
+		ParseAssert(10.0, L"-(-5+-5)");
+		ParseAssert(1.0, L"1 && 1");
+		ParseAssert(0.0, L"1 && 0");
+		ParseAssert(1.0, L"1 || 1");
+		ParseAssert(1.0, L"1 || -1");
+		ParseAssert(0.0, L"1 < 2 && 2 > 1");
+		ParseAssert(1.0, L"(1 < 2) && (2 > 1)");
+		ParseAssert(sin(50.0), L"sin(50)");
+		ParseAssert(-sin(100.0), L"-sin((25 + 25) * 2)");
+		ParseAssert(1.0, L"01");
+		ParseAssert(11.0, L"011");
+		ParseAssert(3.0, L"0b11");
+		ParseAssert(10.0, L"0xA");
+		ParseAssert(10.0, L"0o12");
+		ParseAssert(2.0, L"1 ? 2 : 3");
+		ParseAssert(3.0, L"0 ? 2 : 3");
+		ParseAssert(5.0, L"1 ? (2 + 3) : 3");
+		ParseAssert(2.0, L"1 ? 2 : 3");
+		ParseAssert(4.0, L"1 ? 2 : 0 ? 4 : 5");
+		ParseAssert(4.0, L"1 ? 2 : 1 ? 4 : 5");
+		ParseAssert(2.0, L"1 ? 2 : (1 ? 4 : 5)");
+		ParseAssert(5.0, L"0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:(0?1:5)))))))))))))))))))))))))))))");
+		ParseAssert(1.0, L"trunc(1.5)");
+		ParseAssert(-1.0, L"trunc(-1.5)");
+		ParseAssert(2.0, L"round(1.555)");
+		ParseAssert(1.56, L"round(1.555, 2)");
 
 		double value;
 
@@ -75,22 +76,22 @@ public:
 		Assert::IsNotNull(Parse(L"a", &value));
 
 		Assert::IsNull(Parse(L"e", &value));
-		Assert::AreEqual((int)value, 2);
+		Assert::AreEqual(2, (int)value);
 
 		Assert::IsNull(Parse(L"pi", &value));
-		Assert::AreEqual((int)value, 3);
+		Assert::AreEqual(3, (int)value);
 
 		Assert::IsNull(Parse(L"pi", &value, GetValueHelper));
-		Assert::AreEqual((int)value, 3);
+		Assert::AreEqual(3, (int)value);
 
 		Assert::IsNull(Parse(L"a + 5", &value, GetValueHelper));
-		Assert::AreEqual(value, 15.0);
+		Assert::AreEqual(15.0, value);
 
 		Assert::IsNull(Parse(L"bbb", &value, GetValueHelper));
-		Assert::AreEqual(value, 20.0);
+		Assert::AreEqual(20.0, value);
 
 		Assert::IsNull(Parse(L"(ccc_)", &value, GetValueHelper, (void*)1));
-		Assert::AreEqual(value, 30.0);
+		Assert::AreEqual(30.0, value);
 	}
 
 	static bool GetValueHelper(const WCHAR* str, int len, double* value, void* context)
