@@ -101,7 +101,7 @@ static double trunc2(double x);
 static double rad(double deg);
 static double sgn(double x);
 static double neg(double x);
-static const WCHAR* round(int paramcnt, double* args, double* result);
+static const WCHAR* round2(int paramcnt, double* args, double* result);
 
 static Function g_Functions[] =
 {
@@ -118,7 +118,7 @@ static Function g_Functions[] =
 	{ L"trunc", &trunc2, 5 },
 	{ L"floor", &floor, 5 },
 	{ L"ceil", &ceil, 4 },
-	{ L"round", (SingleArgFunction)&round, 5 },
+	{ L"round", (SingleArgFunction)&round2, 5 },
 	{ L"asin", &asin, 4 },
 	{ L"acos", &acos, 4 },
 	{ L"rad", &rad, 3 },
@@ -867,7 +867,7 @@ static double neg(double x)
 }
 
 // "Advanced" round function; second argument - sharpness
-static const WCHAR* round(int paramcnt, double* args, double* result)
+static const WCHAR* round2(int paramcnt, double* args, double* result)
 {
 	int sharpness;
 	if (paramcnt == 1)
