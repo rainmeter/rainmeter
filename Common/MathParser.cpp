@@ -22,6 +22,8 @@
 #include <stdint.h>
 #include "MathParser.h"
 
+namespace MathParser {
+
 static const double M_E = 2.7182818284590452354;
 static const double M_PI = 3.14159265358979323846;
 
@@ -97,11 +99,11 @@ struct Function
 };
 
 static double frac(double x);
-static double trunc2(double x);
+static double trunc(double x);
 static double rad(double deg);
 static double sgn(double x);
 static double neg(double x);
-static const WCHAR* round2(int paramcnt, double* args, double* result);
+static const WCHAR* round(int paramcnt, double* args, double* result);
 
 static Function g_Functions[] =
 {
@@ -115,10 +117,10 @@ static Function g_Functions[] =
 	{ L"log", &log10, 3 },
 	{ L"sqrt", &sqrt, 4 },
 	{ L"frac", &frac, 4 },
-	{ L"trunc", &trunc2, 5 },
+	{ L"trunc", &trunc, 5 },
 	{ L"floor", &floor, 5 },
 	{ L"ceil", &ceil, 4 },
-	{ L"round", (SingleArgFunction)&round2, 5 },
+	{ L"round", (SingleArgFunction)&round, 5 },
 	{ L"asin", &asin, 4 },
 	{ L"acos", &acos, 4 },
 	{ L"rad", &rad, 3 },
@@ -137,7 +139,7 @@ static const BYTE FUNC_INVALID = UCHAR_MAX;
 static const Operation g_BrOp = { Operator::OpeningBracket, 0, 0};
 static const Operation g_NegOp = { Operator::SingleArgFunction, 18, 0 };
 
-static const BYTE g_OpPriorities[Operator::Invalid] =
+static const BYTE g_OpPriorities[(uint8_t)Operator::Invalid] =
 {
 	5, // Operator::ShiftLeft
 	5, // Operator::ShiftRight
@@ -216,7 +218,7 @@ const WCHAR* eUnknFunc = L"\"%s\" is unknown";
 const WCHAR* eLogicErr = L"Logical expression error";
 const WCHAR* eInvPrmCnt = L"Invalid function parameter count";
 
-const WCHAR* MathParser::Check(const WCHAR* formula)
+const WCHAR* Check(const WCHAR* formula)
 {
 	int brackets = 0;
 
@@ -237,7 +239,7 @@ const WCHAR* MathParser::Check(const WCHAR* formula)
 	return (brackets != 0) ? eBrackets : nullptr;
 }
 
-const WCHAR* MathParser::CheckedParse(const WCHAR* formula, double* result)
+const WCHAR* CheckedParse(const WCHAR* formula, double* result)
 {
 	const WCHAR* error = Check(formula);
 	if (!error)
@@ -247,7 +249,7 @@ const WCHAR* MathParser::CheckedParse(const WCHAR* formula, double* result)
 	return error;
 }
 
-const WCHAR* MathParser::Parse(
+const WCHAR* Parse(
 	const WCHAR* formula, double* result, GetValueFunc getValue, void* getValueContext)
 {
 	static WCHAR errorBuffer[128];
@@ -753,7 +755,7 @@ CharType GetCharType(WCHAR ch)
 	return CharType::Unknown;
 }
 
-bool MathParser::IsDelimiter(WCHAR ch)
+bool IsDelimiter(WCHAR ch)
 {
 	CharType type = GetCharType(ch);
 	return type == CharType::Symbol || type == CharType::Separator;
@@ -846,7 +848,7 @@ static double frac(double x)
 	return modf(x, &y);
 }
 
-static double trunc2(double x)
+static double trunc(double x)
 {
 	return (x >= 0.0) ? floor(x) : ceil(x);
 }
@@ -867,7 +869,7 @@ static double neg(double x)
 }
 
 // "Advanced" round function; second argument - sharpness
-static const WCHAR* round2(int paramcnt, double* args, double* result)
+static const WCHAR* round(int paramcnt, double* args, double* result)
 {
 	int sharpness;
 	if (paramcnt == 1)
@@ -905,3 +907,5 @@ static const WCHAR* round2(int paramcnt, double* args, double* result)
 	*result = x;
 	return nullptr;
 }
+
+}  // namespace MathParser
