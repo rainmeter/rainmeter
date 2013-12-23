@@ -527,7 +527,11 @@ LPCWSTR GetPlatformName()
 
 NLM_CONNECTIVITY GetNetworkConnectivity()
 {
-	NLM_CONNECTIVITY connectivity = NLM_CONNECTIVITY_DISCONNECTED;
+	// This is initialized like this in case INetworkListManager is not available (i.e. on WinXP).
+	// In such cases, we simply assume that there is an internet connection.
+	NLM_CONNECTIVITY connectivity =
+		(NLM_CONNECTIVITY)((int)NLM_CONNECTIVITY_IPV4_INTERNET | (int)NLM_CONNECTIVITY_IPV4_LOCALNETWORK);
+
 	INetworkListManager* nlm;
 	HRESULT hr = CoCreateInstance(
 		CLSID_NetworkListManager, NULL, CLSCTX_INPROC_SERVER, __uuidof(INetworkListManager), (void**)&nlm);
