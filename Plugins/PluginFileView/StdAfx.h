@@ -24,6 +24,7 @@
 #include <commctrl.h>
 #include <commoncontrols.h>
 #include <process.h>
+#include <Shellapi.h>
 #include <Shlwapi.h>
 
 // STL

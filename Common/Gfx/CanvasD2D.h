@@ -25,6 +25,7 @@
 #include "Util/WICBitmapDIB.h"
 #include <memory>
 #include <string>
+#include <ole2.h>  // For Gdiplus.h.
 #include <GdiPlus.h>
 #include <d2d1_1.h>
 #include <d2d1helper.h>

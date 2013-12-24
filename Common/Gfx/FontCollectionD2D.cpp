@@ -19,6 +19,7 @@
 #include "FontCollectionD2D.h"
 #include "CanvasD2D.h"
 #include "Util/DWriteFontCollectionLoader.h"
+#include <ole2.h>  // For Gdiplus.h.
 #include <GdiPlus.h>
 
 namespace Gfx {

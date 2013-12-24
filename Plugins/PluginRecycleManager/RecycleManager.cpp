@@ -16,7 +16,6 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <ShellAPI.h>
 #include <process.h>

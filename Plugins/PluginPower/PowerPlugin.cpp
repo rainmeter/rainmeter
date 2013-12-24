@@ -21,6 +21,7 @@
 #include <time.h>
 #include <errno.h>
 #include <crtdbg.h>
+#include <stdlib.h>
 #include "../../Common/RawString.h"
 #include "../../Library/Export.h"	// Rainmeter's exported functions
 

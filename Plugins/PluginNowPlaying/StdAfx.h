@@ -24,6 +24,7 @@
 #include <WinInet.h>
 #include <Psapi.h>
 #include <comutil.h>
+#include <ShellAPI.h>
 
 // STL
 #include <string>

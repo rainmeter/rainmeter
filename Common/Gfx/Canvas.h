@@ -22,6 +22,7 @@
 #include "FontCollection.h"
 #include "TextFormat.h"
 #include <Windows.h>
+#include <ole2.h>  // For Gdiplus.h.
 #include <GdiPlus.h>
 
 namespace Gfx {

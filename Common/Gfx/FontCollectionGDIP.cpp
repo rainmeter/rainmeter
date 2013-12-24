@@ -17,6 +17,7 @@
 */
 
 #include "FontCollectionGDIP.h"
+#include <ole2.h>  // For Gdiplus.h.
 #include <GdiPlus.h>
 
 namespace Gfx {

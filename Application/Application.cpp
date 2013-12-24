@@ -17,7 +17,6 @@
 */
 
 #define _CRTDBG_MAP_ALLOC
-#define WIN32_LEAN_AND_MEAN
 #include <crtdbg.h>
 #include <Windows.h>
 #include <ShellAPI.h>

@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <Mmreg.h>
+
 // ----------------------------------------------------------------------------
 // class CPolicyConfigClient
 // {294935CE-F637-4E7C-A41B-AB255460B862}

@@ -28,6 +28,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <cstdint>
+#include <ole2.h>  // For Gdiplus.h.
 #include <gdiplus.h>
 
 class Rainmeter;

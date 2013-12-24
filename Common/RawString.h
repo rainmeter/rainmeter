@@ -19,7 +19,7 @@
 #ifndef RM_COMMON_RAWSTRING_H_
 #define RM_COMMON_RAWSTRING_H_
 
-#include <windows.h>
+#include <malloc.h>
 
 class RawString
 {
@@ -29,7 +29,7 @@ public:
 	{
 	}
 
-	RawString(const WCHAR* str) :
+	RawString(const wchar_t* str) :
 		m_String(str_alloc(str))
 	{
 	}
@@ -44,7 +44,7 @@ public:
 		clear();
 	}
 	
-	RawString& operator=(const WCHAR* rhs)
+	RawString& operator=(const wchar_t* rhs)
 	{
 		clear();
 		m_String = str_alloc(rhs);
@@ -61,7 +61,7 @@ public:
 		return *this;
 	}
 
-	const WCHAR* c_str() const
+	const wchar_t* c_str() const
 	{
 		return m_String ? m_String : L"";
 	}
@@ -81,12 +81,12 @@ public:
 	}
 
 private:
-	WCHAR* str_alloc(const WCHAR* str)
+	wchar_t* str_alloc(const wchar_t* str)
 	{
 		return str ? _wcsdup(str) : nullptr;
 	}
 
-	WCHAR* m_String;
+	wchar_t* m_String;
 };
 
 #endif

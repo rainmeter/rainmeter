@@ -24,6 +24,7 @@
 #include "TextFormatGDIP.h"
 #include <memory>
 #include <string>
+#include <ole2.h>  // For Gdiplus.h.
 #include <GdiPlus.h>
 
 namespace Gfx {

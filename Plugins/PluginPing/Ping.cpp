@@ -17,6 +17,7 @@
 */
 
 #include <windows.h>
+#include <Winsock2.h>
 #include <string>
 #include <Ipexport.h>
 #include <Icmpapi.h>

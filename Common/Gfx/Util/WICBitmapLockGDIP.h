@@ -20,6 +20,7 @@
 #define RM_GFX_UTIL_WICBITMAPLOCKGDIP_H_
 
 #include <Windows.h>
+#include <ole2.h>  // For Gdiplus.h.
 #include <GdiPlus.h>
 #include <wincodec.h>
 

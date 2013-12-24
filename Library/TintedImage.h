@@ -20,6 +20,7 @@
 #define __TINTEDIMAGE_H__
 
 #include <windows.h>
+#include <ole2.h>  // For Gdiplus.h.
 #include <gdiplus.h>
 #include <string>
 #include "MeterWindow.h"

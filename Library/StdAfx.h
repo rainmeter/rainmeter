@@ -23,11 +23,10 @@
 #include <crtdbg.h>
 
 // WINAPI
-#define WIN32_LEAN_AND_MEAN
 #include <ws2tcpip.h>
 #include <windows.h>
 #include <windowsx.h>
-#include <ole2.h>
+#include <ole2.h>  // For Gdiplus.h.
 #include <gdiplus.h>
 #include <dwmapi.h>
 #include <comdef.h>
