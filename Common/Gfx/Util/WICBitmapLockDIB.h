@@ -20,8 +20,6 @@
 #define RM_GFX_UTIL_WICBITMAPLOCKDIB_H_
 
 #include <Windows.h>
-#include <ole2.h>  // For Gdiplus.h.
-#include <GdiPlus.h>
 #include <wincodec.h>
 #include "WICBitmapDIB.h"
 
