@@ -104,29 +104,23 @@ void UnInitCom()
 HRESULT RegisterDevice(PCWSTR devID)
 {
 	HRESULT hr = S_FALSE;
-	try
-	{
-		InitCom();
-		IPolicyConfig *pPolicyConfig;
 
-		hr = CoCreateInstance(IID_CPolicyConfigClient, nullptr,
-							CLSCTX_ALL, IID_IPolicyConfig,
-							(LPVOID *)&pPolicyConfig);
+	InitCom();
+	IPolicyConfig *pPolicyConfig;
+
+	hr = CoCreateInstance(IID_CPolicyConfigClient, nullptr,
+						CLSCTX_ALL, IID_IPolicyConfig,
+						(LPVOID *)&pPolicyConfig);
+	if (hr == S_OK)
+	{
+		hr = pPolicyConfig->SetDefaultEndpoint(devID, eConsole);
 		if (hr == S_OK)
 		{
-			hr = pPolicyConfig->SetDefaultEndpoint(devID, eConsole);
-			if (hr == S_OK)
-			{
-				hr = pPolicyConfig->SetDefaultEndpoint(devID, eCommunications);
-			}
-			SAFE_RELEASE(pPolicyConfig);
+			hr = pPolicyConfig->SetDefaultEndpoint(devID, eCommunications);
 		}
+		SAFE_RELEASE(pPolicyConfig);
 	}
-	catch (...)
-	{
-		RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: RegisterDevice exception");
-		hr = S_FALSE;
-	}
+
 	UnInitCom();
 	return hr;
 }
@@ -135,23 +129,16 @@ std::wstring GetDefaultID()
 {
 	std::wstring id_default;
 	IMMDevice * pEndpoint = 0;
-	try
+	if (pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pEndpoint) == S_OK)
 	{
-		if (pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pEndpoint) == S_OK)
+		LPWSTR pwszID = 0;
+		if (pEndpoint->GetId(&pwszID) == S_OK)
 		{
-			LPWSTR pwszID = 0;
-			if (pEndpoint->GetId(&pwszID) == S_OK)
-			{
-				id_default = pwszID;
-			}
-			CoTaskMemFree(pwszID);
+			id_default = pwszID;
 		}
+		CoTaskMemFree(pwszID);
 	}
-	catch (...)
-	{
-		RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: GetDefaultID exception");
-		id_default = L"Exception";
-	}
+
 	SAFE_RELEASE(pEndpoint)
 	return id_default;
 }
@@ -162,32 +149,26 @@ bool GetWin7AudioState(const VolumeAction action)
 	IAudioEndpointVolume * pEndptVol = 0;
 	bool success = false;
 
-	try
+	if (InitCom())
 	{
-		if (InitCom())
+		if (pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pEndpoint) == S_OK)
 		{
-			if (pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pEndpoint) == S_OK)
+			if (pEndpoint->Activate(IID_IAudioEndpointVolume, CLSCTX_ALL, 0, (void**)&pEndptVol) == S_OK)
 			{
-				if (pEndpoint->Activate(IID_IAudioEndpointVolume, CLSCTX_ALL, 0, (void**)&pEndptVol) == S_OK)
+				if (pEndptVol->GetMute(&is_mute) == S_OK && action == TOGGLE_MUTE)
 				{
-					if (pEndptVol->GetMute(&is_mute) == S_OK && action == TOGGLE_MUTE)
-					{
-						success = pEndptVol->SetMute(is_mute == TRUE ? FALSE : TRUE, 0) == S_OK;
-					}
-					// get current volume
-					float vol = 0.0f;
-					if (action != TOGGLE_MUTE && pEndptVol->GetMasterVolumeLevelScalar(&vol) == S_OK)
-					{
-						master_volume = vol;
-					}
+					success = pEndptVol->SetMute(is_mute == TRUE ? FALSE : TRUE, 0) == S_OK;
+				}
+				// get current volume
+				float vol = 0.0f;
+				if (action != TOGGLE_MUTE && pEndptVol->GetMasterVolumeLevelScalar(&vol) == S_OK)
+				{
+					master_volume = vol;
 				}
 			}
 		}
 	}
-	catch (...)
-	{
-		RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: ToggleMute exception");
-	}
+
 	SAFE_RELEASE(pEndptVol)
 	SAFE_RELEASE(pEndpoint)
 	UnInitCom();
@@ -213,39 +194,32 @@ bool SetWin7Volume(UINT volume, int offset = 0)
 	IAudioEndpointVolume * pEndptVol = 0;
 	bool success = false;
 
-	try
+	if (InitCom())
 	{
-		if (InitCom())
+		if (pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pEndpoint) == S_OK)
 		{
-			if (pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pEndpoint) == S_OK)
+			if (pEndpoint->Activate(IID_IAudioEndpointVolume, CLSCTX_ALL, 0, (void**)&pEndptVol) == S_OK)
 			{
-				if (pEndpoint->Activate(IID_IAudioEndpointVolume, CLSCTX_ALL, 0, (void**)&pEndptVol) == S_OK)
+				pEndptVol->SetMute(FALSE, 0);
+				float vol = 0.0f;
+				if (offset != 0) // change master volume + offset
 				{
-					pEndptVol->SetMute(FALSE, 0);
-					float vol = 0.0f;
-					if (offset != 0) // change master volume + offset
-					{
-						float off = static_cast<float>(offset) / 100.0f;
-						vol = master_volume + off;
-						vol = (vol < 0.0f) ? 0.0f : ((vol > 1.0f) ? 1.0f : vol);
-					}
-					else
-					{
-						vol = (float)volume / 100.0f;
-					}
-					// set to volume
-					success = pEndptVol->SetMasterVolumeLevelScalar(vol, 0) == S_OK;
-					if (success) success = pEndptVol->GetMasterVolumeLevelScalar(&vol) == S_OK;
-					if (success) master_volume = vol;
+					float off = static_cast<float>(offset) / 100.0f;
+					vol = master_volume + off;
+					vol = (vol < 0.0f) ? 0.0f : ((vol > 1.0f) ? 1.0f : vol);
 				}
+				else
+				{
+					vol = (float)volume / 100.0f;
+				}
+				// set to volume
+				success = pEndptVol->SetMasterVolumeLevelScalar(vol, 0) == S_OK;
+				if (success) success = pEndptVol->GetMasterVolumeLevelScalar(&vol) == S_OK;
+				if (success) master_volume = vol;
 			}
 		}
+	}
 
-	}
-	catch (...)
-	{
-		RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: SetVolume exception");
-	}
 	SAFE_RELEASE(pEndptVol)
 	SAFE_RELEASE(pEndpoint)
 	UnInitCom();
@@ -305,56 +279,51 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 {
 	static WCHAR result[256];
 	wsprintf(result, L"ERROR");
-	try {
-		if (!InitCom() || !pEnumerator)
-		{
-			UnInitCom();
-			wsprintf(result, L"ERROR - Initializing COM");
-			return result;
-		}
+	if (!InitCom() || !pEnumerator)
+	{
+		UnInitCom();
+		wsprintf(result, L"ERROR - Initializing COM");
+		return result;
+	}
 
-		IMMDevice * pEndpoint = 0;
-		if (pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pEndpoint) == S_OK)
+	IMMDevice * pEndpoint = 0;
+	if (pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pEndpoint) == S_OK)
+	{
+		IPropertyStore * pProps = 0;
+		if (pEndpoint->OpenPropertyStore(STGM_READ, &pProps) == S_OK)
 		{
-			IPropertyStore * pProps = 0;
-			if (pEndpoint->OpenPropertyStore(STGM_READ, &pProps) == S_OK)
+			PROPVARIANT varName;
+			PropVariantInit(&varName);
+			if (pProps->GetValue(PKEY_Device_DeviceDesc, &varName) == S_OK)
 			{
-				PROPVARIANT varName;
-				PropVariantInit(&varName);
-				if (pProps->GetValue(PKEY_Device_DeviceDesc, &varName) == S_OK)
-				{
-					wcsncpy(result, varName.pwszVal, 255);
-					PropVariantClear(&varName);
-					SAFE_RELEASE(pProps)
-					SAFE_RELEASE(pEndpoint)
-					UnInitCom();
-					return result;
-				}
-				else
-				{
-					PropVariantClear(&varName);
-					SAFE_RELEASE(pProps)
-					SAFE_RELEASE(pEndpoint)
-					wsprintf(result, L"ERROR - Getting Device Description");
-				}
+				wcsncpy(result, varName.pwszVal, 255);
+				PropVariantClear(&varName);
+				SAFE_RELEASE(pProps)
+				SAFE_RELEASE(pEndpoint)
+				UnInitCom();
+				return result;
 			}
 			else
 			{
+				PropVariantClear(&varName);
 				SAFE_RELEASE(pProps)
 				SAFE_RELEASE(pEndpoint)
-				wsprintf(result, L"ERROR - Getting Property");
+				wsprintf(result, L"ERROR - Getting Device Description");
 			}
 		}
 		else
 		{
+			SAFE_RELEASE(pProps)
 			SAFE_RELEASE(pEndpoint)
-			wsprintf(result, L"ERROR - Getting Default Device");
+			wsprintf(result, L"ERROR - Getting Property");
 		}
-	} catch (...)
-	{
-		RmLog(LOG_WARNING, L"Win7AudioPlugin.dll: GetString exception");
-		wsprintf(result, L"Exception");
 	}
+	else
+	{
+		SAFE_RELEASE(pEndpoint)
+		wsprintf(result, L"ERROR - Getting Default Device");
+	}
+
 	UnInitCom();
 	return result;
 }
