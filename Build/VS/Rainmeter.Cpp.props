@@ -54,11 +54,13 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <!-- Ignore C4351 to get rid of "new behavior: elements of array 'array' will be default initialized" -->
-      <!-- Ignore C4530 to get rid of "C++ exception handler used, but unwind semantics are not enabled" -->
-      <DisableSpecificWarnings>4351;4530</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4351;%(DisableSpecificWarnings)</DisableSpecificWarnings>
 
-      <!-- Set the version macros to 0x0601 (Win7) to avoid using Win8 specific features in the Win8 SDK. -->
-      <PreprocessorDefinitions>WIN32;_WINDOWS;WINVER=0x0601;_WIN32_WINNT=0x0601;_WIN32_IE=0x0601;PSAPI_VERSION=1;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>false</ExceptionHandling>
+
+      <!-- Set WINVER=0x0601 and friends (Win7) to avoid using Win8 specific features in the Win8 SDK. -->
+      <!-- Set _HAS_EXCEPTIONS=0 to accompany the disabled exception handling above. -->
+      <PreprocessorDefinitions>WIN32;_WINDOWS;WINVER=0x0601;_WIN32_WINNT=0x0601;_WIN32_IE=0x0601;PSAPI_VERSION=1;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
     <Link>
