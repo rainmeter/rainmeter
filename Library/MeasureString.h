@@ -19,7 +19,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef __MEASURESTRING_H__
 #define __MEASURESTRING_H__
 
-#include <cstdarg>
 #include "Measure.h"
 
 class MeasureString : public Measure
