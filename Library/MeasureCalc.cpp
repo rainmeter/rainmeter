@@ -24,6 +24,7 @@
 
 const int DEFAULT_LOWER_BOUND = 0;
 const int DEFAULT_UPPER_BOUND = 100;
+const int DEFAULT_UNIQUELIMIT = 65535;
 
 std::mt19937& GetRandomEngine()
 {
@@ -93,9 +94,14 @@ void MeasureCalc::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_LowBound = parser.ReadInt(section, L"LowBound", DEFAULT_LOWER_BOUND);
 	m_HighBound = parser.ReadInt(section, L"HighBound", DEFAULT_UPPER_BOUND);
 	m_UpdateRandom = parser.ReadBool(section, L"UpdateRandom", false);
+	const size_t range = (m_HighBound - m_LowBound) + 1;
 
 	m_UniqueRandom = parser.ReadBool(section, L"UniqueRandom", false);
-	if (!m_UniqueRandom)
+	if (m_UniqueRandom && range > DEFAULT_UNIQUELIMIT)
+	{
+		m_UniqueRandom = false;
+	}
+	else if (!m_UniqueRandom)
 	{
 		m_UniqueNumbers.clear();
 	}
