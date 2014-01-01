@@ -29,6 +29,7 @@
 #include "MeasureUptime.h"
 #include "MeasurePlugin.h"
 #include "MeasureRegistry.h"
+#include "MeasureString.h"
 #include "MeasureTime.h"
 #include "MeasureCalc.h"
 #include "MeasureScript.h"
@@ -794,6 +795,10 @@ Measure* Measure::Create(const WCHAR* measure, MeterWindow* meterWindow, const W
 	else if (_wcsicmp(L"Script", measure) == 0)
 	{
 		return new MeasureScript(meterWindow, name);
+	}
+	else if (_wcsicmp(L"String", measure) == 0)
+	{
+		return new MeasureString(meterWindow, name);
 	}
 
 	LogErrorF(meterWindow, L"Measure=%s is not valid in [%s]", measure, name);

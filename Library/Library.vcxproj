@@ -114,6 +114,7 @@
     <ClCompile Include="MeasureScript.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="MeasureString.cpp" />
     <ClCompile Include="MeasureTime.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -306,6 +307,7 @@
     <ClInclude Include="MeasurePlugin.h" />
     <ClInclude Include="MeasureRegistry.h" />
     <ClInclude Include="MeasureScript.h" />
+    <ClInclude Include="MeasureString.h" />
     <ClInclude Include="MeasureTime.h" />
     <ClInclude Include="MeasureUptime.h" />
     <ClInclude Include="MeasureVirtualMemory.h" />
