@@ -54,7 +54,7 @@ void MeasureString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 */
 void MeasureString::UpdateValue()
 {
-	m_Value = (double)_wtoi(m_String.c_str());
+	m_Value = std::stod(m_String);
 }
 
 /*
