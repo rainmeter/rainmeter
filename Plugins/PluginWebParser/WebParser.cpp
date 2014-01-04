@@ -725,18 +725,12 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		if (end == std::wstring::npos) break;
 
 		std::wstring var = L"[";
-		var += url.substr(si + 1, end - si);
+		var.append(url, si + 1, end - si);
 
-		const std::wstring result = RmReplaceVariables(rm, var.c_str());
-		if (result != var)
-		{
-			url.replace(start, end - start + 1, result);
-			start += result.length();
-		}
-		else
-		{
-			start = end;
-		}
+		const WCHAR* result = RmReplaceVariables(rm, var.c_str());
+		const size_t resultLength = wcslen(result);
+		url.replace(start, end - start + 1, result, resultLength);
+		start += resultLength;
 	}
 
 	measure->url = url;
