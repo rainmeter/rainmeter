@@ -727,13 +727,16 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		std::wstring var = L"[";
 		var += url.substr(si + 1, end - si);
 
-		std::wstring result = RmReplaceVariables(rm, var.c_str());
+		const std::wstring result = RmReplaceVariables(rm, var.c_str());
 		if (result != var)
 		{
 			url.replace(start, end - start + 1, result);
+			start += result.length();
 		}
-
-		start = end;
+		else
+		{
+			start = end;
+		}
 	}
 
 	measure->url = url;
