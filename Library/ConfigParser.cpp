@@ -230,12 +230,14 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	// Percentual: [Measure:%], [Measure:%, dec]
 	// Scale: [Measure:/scale], [Measure:/scale, dec]
 	// Max/Min: [Measure:MaxValue], [Measure:MaxValue:/scale, dec] ('%' cannot be used)
+	// EscapeRegExp: [Measure:EscapeRegExp] (Escapes regular expression syntax, used for 'IfMatch')
 	enum VALUETYPE
 	{
 		RAW        = 0,
 		PERCENTUAL = 1,
 		MAX        = 2,
-		MIN        = 3
+		MIN        = 3,
+		SPECIAL    = 4
 	} valueType = RAW;
 
 	if (isKeySelector)
@@ -247,6 +249,10 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		else if (_wcsicmp(selectorSz, L"MinValue") == 0)
 		{
 			valueType = MIN;
+		}
+		else if (_wcsicmp(selectorSz, L"EscapeRegExp") == 0)
+		{
+			valueType = SPECIAL;
 		}
 		else
 		{
@@ -287,6 +293,19 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	Measure* measure = m_MeterWindow->GetMeasure(strVariable);
 	if (measure)
 	{
+		if (valueType == SPECIAL)  // "Special" functions: EscapeRegExp
+		{
+			if (_wcsicmp(selector.c_str(), L"EscapeRegExp") == 0)
+			{
+				std::wstring str = measure->GetStringValue();
+				EscapeRegExp(str);
+				strValue.assign(str);
+			}
+			//else if (_wcsicmp(selector.c_str(), L"") == 0)
+
+			return true;
+		}
+
 		int scale = 1;
 
 		const WCHAR* decimalsSz = wcschr(selectorSz, L',');
@@ -362,6 +381,36 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	}
 	
 	return false;
+}
+
+/*
+** Used to escape regular expression metacharacters for use in IfMatch
+**
+*/
+void ConfigParser::EscapeRegExp(std::wstring& str)
+{
+	auto replace = [&str](WCHAR reservedChar)
+	{
+		size_t start = 0;
+		while ((start = str.find(reservedChar, start)) != std::wstring::npos)
+		{
+			str.insert(start, L"\\");
+			start += 2;
+		}
+	};
+
+	replace(L'\\');
+	replace(L'^');
+	replace(L'$');
+	replace(L'|');
+	replace(L'(');
+	replace(L')');
+	replace(L'[');
+	replace(L'{');
+	replace(L'.');
+	replace(L'+');
+	replace(L'*');
+	replace(L'?');
 }
 
 void ConfigParser::ResetMonitorVariables(MeterWindow* meterWindow)
