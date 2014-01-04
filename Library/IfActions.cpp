@@ -127,7 +127,7 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 					m_Matches.emplace_back(match, tAction, fAction);
 				}
 
-				// Check for IfCondition2/IfTrueAction2/IfFalseAction2 ... etc.
+				// Check for IfMatch2/IfMatchAction2/IfNotMatchAction2 ... etc.
 				const std::wstring num = std::to_wstring(++i);
 
 				std::wstring key = L"IfMatch" + num;
