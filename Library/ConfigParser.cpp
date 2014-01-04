@@ -379,33 +379,17 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 }
 
 /*
-** Used to escape regular expression metacharacters for use in IfMatch
+** Escapes reserved PCRE regex metacharacters.
 **
 */
 void ConfigParser::EscapeRegExp(std::wstring& str)
 {
-	auto replace = [&str](WCHAR reservedChar)
+	size_t start = 0;
+	while ((start = str.find_first_of(L"\\^$|()[{.+*?", start)) != std::wstring::npos)
 	{
-		size_t start = 0;
-		while ((start = str.find(reservedChar, start)) != std::wstring::npos)
-		{
-			str.insert(start, L"\\");
-			start += 2;
-		}
-	};
-
-	replace(L'\\');
-	replace(L'^');
-	replace(L'$');
-	replace(L'|');
-	replace(L'(');
-	replace(L')');
-	replace(L'[');
-	replace(L'{');
-	replace(L'.');
-	replace(L'+');
-	replace(L'*');
-	replace(L'?');
+		str.insert(start, L"\\");
+		start += 2;
+	}
 }
 
 void ConfigParser::ResetMonitorVariables(MeterWindow* meterWindow)
