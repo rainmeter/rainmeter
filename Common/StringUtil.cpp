@@ -62,4 +62,17 @@ std::wstring Widen(const char* str, int strLen, int cp)
 	return wideStr;
 }
 
+/*
+** Escapes reserved PCRE regex metacharacters.
+*/
+void EscapeRegExp(std::wstring& str)
+{
+	size_t start = 0;
+	while ((start = str.find_first_of(L"\\^$|()[{.+*?", start)) != std::wstring::npos)
+	{
+		str.insert(start, L"\\");
+		start += 2;
+	}
+}
+
 }  // namespace StringUtil

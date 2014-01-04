@@ -39,6 +39,13 @@ public:
 		Assert::AreEqual("\xd0\xa2\xc4\x94st", NarrowUTF8(L"\u0422\u0114st").c_str());
 		Assert::AreEqual("\xd0\xa2", NarrowUTF8(L"\u0422\u0114st", 1).c_str());
 	}
+
+	TEST_METHOD(TestEscapeRegExp)
+	{
+		std::wstring str = L"\\^$|(test)[{. ing+*?";
+		EscapeRegExp(str);
+		Assert::AreEqual(L"\\\\\\^\\$\\|\\(test\\)\\[\\{\\. ing\\+\\*\\?", str.c_str());
+	}
 };
 
 }  // namespace StringUtil

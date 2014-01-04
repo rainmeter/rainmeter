@@ -36,6 +36,8 @@ inline std::wstring Widen(const std::string& str, int cp = CP_ACP) { return Wide
 inline std::wstring WidenUTF8(const char* str, int strLen = -1) { return Widen(str, strLen, CP_UTF8); }
 inline std::wstring WidenUTF8(const std::string& str) { return Widen(str.c_str(), (int)str.length(), CP_UTF8); }
 
+void EscapeRegExp(std::wstring& str);
+
 }  // namespace StringUtil
 
 #endif

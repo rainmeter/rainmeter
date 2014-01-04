@@ -296,7 +296,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		if (valueType == ValueType::EscapeRegExp)
 		{
 			strValue = measure->GetStringValue();
-			EscapeRegExp(strValue);
+			StringUtil::EscapeRegExp(strValue);
 			return true;
 		}
 
@@ -310,7 +310,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 
 		if (*selectorSz == L'%')  // Percentual
 		{
-			if (valueType == ValueType::Max || valueType == ValueType::Min) 
+			if (valueType == ValueType::Max || valueType == ValueType::Min)
 			{
 				// '%' cannot be used with Max/Min values.
 				return false;
@@ -377,20 +377,6 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	}
 	
 	return false;
-}
-
-/*
-** Escapes reserved PCRE regex metacharacters.
-**
-*/
-void ConfigParser::EscapeRegExp(std::wstring& str)
-{
-	size_t start = 0;
-	while ((start = str.find_first_of(L"\\^$|()[{.+*?", start)) != std::wstring::npos)
-	{
-		str.insert(start, L"\\");
-		start += 2;
-	}
 }
 
 void ConfigParser::ResetMonitorVariables(MeterWindow* meterWindow)
