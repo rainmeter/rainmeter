@@ -75,4 +75,20 @@ void EscapeRegExp(std::wstring& str)
 	}
 }
 
+/*
+** Escapes reserved URL characters.
+*/
+void EscapeUrl(std::wstring& str)
+{
+	size_t pos = 0;
+	while ((pos = str.find_first_of(L" !*'();:@&=+$,/?#[]", pos)) != std::wstring::npos)
+	{
+		WCHAR buffer[3];
+		_snwprintf_s(buffer, _countof(buffer), L"%.2X", str[pos]);
+		str[pos] = L'%';
+		str.insert(pos + 1, buffer);
+		pos += 3;
+	}
+}
+
 }  // namespace StringUtil

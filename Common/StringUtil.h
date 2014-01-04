@@ -38,6 +38,8 @@ inline std::wstring WidenUTF8(const std::string& str) { return Widen(str.c_str()
 
 void EscapeRegExp(std::wstring& str);
 
+void EscapeUrl(std::wstring& str);
+
 }  // namespace StringUtil
 
 #endif
