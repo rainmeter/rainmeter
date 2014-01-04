@@ -295,9 +295,8 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	{
 		if (valueType == ValueType::EscapeRegExp)
 		{
-			std::wstring str = measure->GetStringValue();
-			EscapeRegExp(str);
-			strValue.assign(str);
+			strValue = measure->GetStringValue();
+			EscapeRegExp(strValue);
 			return true;
 		}
 
@@ -311,8 +310,9 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 
 		if (*selectorSz == L'%')  // Percentual
 		{
-			if (valueType == ValueType::Max || valueType == ValueType::Min)  // '%' cannot be used with MAX/MIN value
+			if (valueType == ValueType::Max || valueType == ValueType::Min) 
 			{
+				// '%' cannot be used with Max/Min values.
 				return false;
 			}
 
@@ -322,8 +322,9 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		{
 			errno = 0;
 			scale = _wtoi(selectorSz + 1);
-			if (errno == EINVAL || scale == 0)  // Invalid scale value
+			if (errno == EINVAL || scale == 0)
 			{
+				// Invalid scale value.
 				return false;
 			}
 		}
