@@ -231,28 +231,28 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	// Scale: [Measure:/scale], [Measure:/scale, dec]
 	// Max/Min: [Measure:MaxValue], [Measure:MaxValue:/scale, dec] ('%' cannot be used)
 	// EscapeRegExp: [Measure:EscapeRegExp] (Escapes regular expression syntax, used for 'IfMatch')
-	enum VALUETYPE
+	enum class ValueType
 	{
-		RAW        = 0,
-		PERCENTUAL = 1,
-		MAX        = 2,
-		MIN        = 3,
-		SPECIAL    = 4
-	} valueType = RAW;
+		Raw,
+		Percentual,
+		Max,
+		Min,
+		EscapeRegExp
+	} valueType = ValueType::Raw;
 
 	if (isKeySelector)
 	{
 		if (_wcsicmp(selectorSz, L"MaxValue") == 0)
 		{
-			valueType = MAX;
+			valueType = ValueType::Max;
 		}
 		else if (_wcsicmp(selectorSz, L"MinValue") == 0)
 		{
-			valueType = MIN;
+			valueType = ValueType::Min;
 		}
 		else if (_wcsicmp(selectorSz, L"EscapeRegExp") == 0)
 		{
-			valueType = SPECIAL;
+			valueType = ValueType::EscapeRegExp;
 		}
 		else
 		{
@@ -272,11 +272,11 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 
 				if (_wcsicmp(keySelectorSz, L"MaxValue") == 0)
 				{
-					valueType = MAX;
+					valueType = ValueType::Max;
 				}
 				else if (_wcsicmp(keySelectorSz, L"MinValue") == 0)
 				{
-					valueType = MIN;
+					valueType = ValueType::Min;
 				}
 				else
 				{
@@ -293,16 +293,11 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	Measure* measure = m_MeterWindow->GetMeasure(strVariable);
 	if (measure)
 	{
-		if (valueType == SPECIAL)  // "Special" functions: EscapeRegExp
+		if (valueType == ValueType::EscapeRegExp)
 		{
-			if (_wcsicmp(selector.c_str(), L"EscapeRegExp") == 0)
-			{
-				std::wstring str = measure->GetStringValue();
-				EscapeRegExp(str);
-				strValue.assign(str);
-			}
-			//else if (_wcsicmp(selector.c_str(), L"") == 0)
-
+			std::wstring str = measure->GetStringValue();
+			EscapeRegExp(str);
+			strValue.assign(str);
 			return true;
 		}
 
@@ -316,12 +311,12 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 
 		if (*selectorSz == L'%')  // Percentual
 		{
-			if (valueType == MAX || valueType == MIN)  // '%' cannot be used with MAX/MIN value
+			if (valueType == ValueType::Max || valueType == ValueType::Min)  // '%' cannot be used with MAX/MIN value
 			{
 				return false;
 			}
 
-			valueType = PERCENTUAL;
+			valueType = ValueType::Percentual;
 		}
 		else if (*selectorSz == L'/')  // Scale
 		{
@@ -342,12 +337,12 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			decimalsSz = selectorSz;
 		}
 
-		double value = (valueType == PERCENTUAL) ? measure->GetRelativeValue() * 100.0
-			: (valueType == MAX) ? measure->GetMaxValue() / scale
-			: (valueType == MIN) ? measure->GetMinValue() / scale
-			: measure->GetValue() / scale;
+		const double value =
+			(valueType == ValueType::Percentual) ? measure->GetRelativeValue() * 100.0 :
+			(valueType == ValueType::Max)        ? measure->GetMaxValue() / scale :
+			(valueType == ValueType::Min)        ? measure->GetMinValue() / scale :
+			                                       measure->GetValue() / scale;
 		int decimals = 10;
-
 		if (decimalsSz)
 		{
 			while (iswspace(*decimalsSz)) ++decimalsSz;
