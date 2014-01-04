@@ -21,6 +21,8 @@
 #include "IfActions.h"
 #include "Rainmeter.h"
 #include "../Common/MathParser.h"
+#include "pcre-8.10\config.h"
+#include "pcre-8.10\pcre.h"
 
 IfActions::IfActions() :
 	m_AboveValue(0.0f),
@@ -33,7 +35,9 @@ IfActions::IfActions() :
 	m_BelowCommitted(false),
 	m_EqualCommitted(false),
 	m_Conditions(),
-	m_ConditionMode(false)
+	m_ConditionMode(false),
+	m_Matches(),
+	m_MatchMode(false)
 {
 }
 
@@ -55,6 +59,7 @@ void IfActions::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 {
+	// IfCondition options
 	m_ConditionMode = parser.ReadBool(section, L"IfConditionMode", false);
 
 	std::wstring condition = parser.ReadString(section, L"IfCondition", L"");
@@ -99,10 +104,56 @@ void IfActions::ReadConditionOptions(ConfigParser& parser, const WCHAR* section)
 	{
 		m_Conditions.clear();
 	}
+
+	// IfMatch options
+	m_MatchMode = parser.ReadBool(section, L"IfMatchMode", false);
+
+	std::wstring match = parser.ReadString(section, L"IfMatch", L"");
+	if (!match.empty())
+	{
+		std::wstring tAction = parser.ReadString(section, L"IfMatchAction", L"", false);
+		std::wstring fAction = parser.ReadString(section, L"IfNotMatchAction", L"", false);
+		if (!tAction.empty() || !fAction.empty())
+		{
+			size_t i = 1;
+			do
+			{
+				if (m_Matches.size() > (i - 1))
+				{
+					m_Matches[i - 1].Set(match, tAction, fAction);
+				}
+				else
+				{
+					m_Matches.emplace_back(match, tAction, fAction);
+				}
+
+				// Check for IfCondition2/IfTrueAction2/IfFalseAction2 ... etc.
+				const std::wstring num = std::to_wstring(++i);
+
+				std::wstring key = L"IfMatch" + num;
+				match = parser.ReadString(section, key.c_str(), L"");
+				if (match.empty()) break;
+
+				key = L"IfMatchAction" + num;
+				tAction = parser.ReadString(section, key.c_str(), L"", false);
+				key = L"IfNotMatchAction" + num;
+				fAction = parser.ReadString(section, key.c_str(), L"", false);
+			} while (!tAction.empty() || !fAction.empty());
+		}
+		else
+		{
+			m_Matches.clear();
+		}
+	}
+	else
+	{
+		m_Matches.clear();
+	}
 }
 
 void IfActions::DoIfActions(Measure& measure, double value)
 {
+	// IfEqual
 	if (!m_EqualAction.empty())
 	{
 		if ((int64_t)value == m_EqualValue)
@@ -119,6 +170,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 		}
 	}
 
+	// IfAbove
 	if (!m_AboveAction.empty())
 	{
 		if (value > m_AboveValue)
@@ -135,6 +187,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 		}
 	}
 
+	// IfBelow
 	if (!m_BelowAction.empty())
 	{
 		if (value < m_BelowValue)
@@ -151,26 +204,27 @@ void IfActions::DoIfActions(Measure& measure, double value)
 		}
 	}
 
+	// IfCondition
 	int i = 0;
 	for (auto& item : m_Conditions)
 	{
 		++i;
-		if (!item.condition.empty() && (!item.tAction.empty() || !item.fAction.empty()))
+		if (!item.value.empty() && (!item.tAction.empty() || !item.fAction.empty()))
 		{
 			double result = 0.0f;
 			const WCHAR* errMsg = MathParser::Parse(
-				item.condition.c_str(), &result, measure.GetCurrentMeasureValue, &measure);
+				item.value.c_str(), &result, measure.GetCurrentMeasureValue, &measure);
 			if (errMsg != nullptr)
 			{
 				if (!item.parseError)
 				{
 					if (i == 1)
 					{
-						LogErrorF(&measure, L"%s: IfCondition=%s", errMsg, item.condition.c_str());
+						LogErrorF(&measure, L"%s: IfCondition=%s", errMsg, item.value.c_str());
 					}
 					else
 					{
-						LogErrorF(&measure, L"%s: IfCondition%i=%s", errMsg, i, item.condition.c_str());
+						LogErrorF(&measure, L"%s: IfCondition%i=%s", errMsg, i, item.value.c_str());
 					}
 					item.parseError = true;
 				}
@@ -202,6 +256,83 @@ void IfActions::DoIfActions(Measure& measure, double value)
 			}
 		}
 	}
+	
+	// IfMatch
+	i = 0;
+	for (auto& item : m_Matches)
+	{
+		++i;
+		if (!item.value.empty() && (!item.tAction.empty() || !item.fAction.empty()))
+		{
+			const char* error;
+			int errorOffset;
+
+			pcre* re = pcre_compile(
+				StringUtil::NarrowUTF8(item.value).c_str(),
+				PCRE_UTF8,
+				&error,
+				&errorOffset,
+				nullptr);
+
+			if (!re)
+			{
+				if (!item.parseError)
+				{
+					if (i == 1)
+					{
+						LogErrorF(&measure, L"Error: \"%S\" in IfMatch=%s", error, item.value.c_str());
+					}
+					else
+					{
+						LogErrorF(&measure, L"Error: \"%S\" in IfMatch%i=%s", error, i, item.value.c_str());
+					}
+
+					item.parseError = true;
+				}
+			}
+			else
+			{
+				item.parseError = false;
+
+				std::string utf8str = StringUtil::NarrowUTF8(measure.GetStringValue());
+				int ovector[300];
+
+				int rc = pcre_exec(
+					re,
+					nullptr,
+					utf8str.c_str(),
+					(int)utf8str.length(),
+					0,
+					0,
+					ovector,
+					(int)_countof(ovector));
+
+				if (rc > 0)		// Match
+				{
+					item.fCommitted = false;
+
+					if (m_MatchMode || !item.tCommitted)
+					{
+						item.tCommitted = true;
+						GetRainmeter().ExecuteCommand(item.tAction.c_str(), measure.GetMeterWindow());
+					}
+				}
+				else			// Not Match
+				{
+					item.tCommitted = false;
+
+					if (m_MatchMode || !item.fCommitted)
+					{
+						item.fCommitted = true;
+						GetRainmeter().ExecuteCommand(item.fAction.c_str(), measure.GetMeterWindow());
+					}
+				}
+			}
+
+			// Release memory used for the compiled pattern
+			pcre_free(re);
+		}
+	}
 }
 
 void IfActions::SetState(double& value)
@@ -223,6 +354,12 @@ void IfActions::SetState(double& value)
 	}
 
 	for (auto& item : m_Conditions)
+	{
+		item.tCommitted = false;
+		item.fCommitted = false;
+	}
+
+	for (auto& item : m_Matches)
 	{
 		item.tCommitted = false;
 		item.fCommitted = false;

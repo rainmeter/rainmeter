@@ -27,11 +27,12 @@ class ConfigParser;
 class Measure;
 class MeterWindow;
 
-class IfCondition
+// Helper class for IfCondition/IfMatch
+class IfState
 {
 public:
-	IfCondition(std::wstring value, std::wstring trueAction, std::wstring falseAction) :
-		condition(),
+	IfState(std::wstring value, std::wstring trueAction, std::wstring falseAction) :
+		value(),
 		tAction(),
 		fAction(),
 		parseError(false),
@@ -43,14 +44,14 @@ public:
 
 	inline void Set(std::wstring value, std::wstring trueAction, std::wstring falseAction)
 	{
-		this->condition = value;
+		this->value = value;
 		this->tAction = trueAction;
 		this->fAction = falseAction;
 	}
 
-	std::wstring condition;		// IfCondition
-	std::wstring tAction;		// IfTrueAction
-	std::wstring fAction;		// IfFalseAction
+	std::wstring value;			// IfCondition/IfMatch
+	std::wstring tAction;		// IfTrueAction/IfMatchAction
+	std::wstring fAction;		// IfFalseAction/IfNotMatchAction
 	bool parseError;
 	bool tCommitted;
 	bool fCommitted;
@@ -80,7 +81,10 @@ private:
 	bool m_BelowCommitted;
 	bool m_EqualCommitted;
 
-	std::vector<IfCondition> m_Conditions;
+	std::vector<IfState> m_Conditions;
 	bool m_ConditionMode;
+
+	std::vector<IfState> m_Matches;
+	bool m_MatchMode;
 };
 #endif
