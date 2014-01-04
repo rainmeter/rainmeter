@@ -21,8 +21,8 @@
 #include "IfActions.h"
 #include "Rainmeter.h"
 #include "../Common/MathParser.h"
-#include "pcre-8.10\config.h"
-#include "pcre-8.10\pcre.h"
+#include "pcre-8.10/config.h"
+#include "pcre-8.10/pcre.h"
 
 IfActions::IfActions() :
 	m_AboveValue(0.0f),
