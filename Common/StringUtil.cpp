@@ -78,7 +78,7 @@ void EscapeRegExp(std::wstring& str)
 /*
 ** Escapes reserved URL characters.
 */
-void EscapeUrl(std::wstring& str)
+void EncodeUrl(std::wstring& str)
 {
 	size_t pos = 0;
 	while ((pos = str.find_first_of(L" !*'();:@&=+$,/?#[]", pos)) != std::wstring::npos)

@@ -238,7 +238,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		Max,
 		Min,
 		EscapeRegExp,
-		EscapeUrl
+		EncodeUrl
 	} valueType = ValueType::Raw;
 
 	if (isKeySelector)
@@ -255,9 +255,9 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		{
 			valueType = ValueType::EscapeRegExp;
 		}
-		else if (_wcsicmp(selectorSz, L"EscapeUrl") == 0)
+		else if (_wcsicmp(selectorSz, L"EncodeUrl") == 0)
 		{
-			valueType = ValueType::EscapeUrl;
+			valueType = ValueType::EncodeUrl;
 		}
 		else
 		{
@@ -304,10 +304,10 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 			StringUtil::EscapeRegExp(strValue);
 			return true;
 		}
-		else if (valueType == ValueType::EscapeUrl)
+		else if (valueType == ValueType::EncodeUrl)
 		{
 			strValue = measure->GetStringValue();
-			StringUtil::EscapeUrl(strValue);
+			StringUtil::EncodeUrl(strValue);
 			return true;
 		}
 

@@ -47,10 +47,10 @@ public:
 		Assert::AreEqual(L"\\\\\\^\\$\\|\\(test\\)\\[\\{\\. ing\\+\\*\\?", str.c_str());
 	}
 
-	TEST_METHOD(TestEscapeUrl)
+	TEST_METHOD(TestEncodeUrl)
 	{
 		std::wstring str = L" !*'();:@test&=+$,/?#[ing]";
-		EscapeUrl(str);
+		EncodeUrl(str);
 		Assert::AreEqual(L"%20%21%2A%27%28%29%3B%3A%40test%26%3D%2B%24%2C%2F%3F%23%5Bing%5D", str.c_str());
 	}
 };
