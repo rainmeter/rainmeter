@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Application", "Application\Application.vcxproj", "{D2A0903C-E760-4134-AE61-3D55BF8F760C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcxproj", "{19312085-AA51-4BD6-BE92-4B6098CCA539}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common_Test", "Common\Common_Test.vcxproj", "{442084A6-2069-4927-B0C9-51525A720CB2}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Installer", "Installer\Installer.vcxproj", "{2FCFBFD2-2720-4BDD-B620-4BDD3DBB8D3D}"
 EndProject
@@ -13,7 +17,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Library", "Library\Library.
 	ProjectSection(ProjectDependencies) = postProject
 		{6BE6F228-B741-4DA9-9FBC-E9F2A7BD483A} = {6BE6F228-B741-4DA9-9FBC-E9F2A7BD483A}
 		{19312085-AA51-4BD6-BE92-4B6098CCA539} = {19312085-AA51-4BD6-BE92-4B6098CCA539}
+		{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6} = {BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Library_Lua", "Library\Library_Lua.vcxproj", "{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SkinInstaller", "SkinInstaller\SkinInstaller.vcxproj", "{6F5D4C4A-C8C3-41DA-BF44-6D42B76464DA}"
 EndProject
@@ -68,8 +75,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginWin7Audio", "Plugins\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginWindowMessage", "Plugins\PluginWindowMessage\PluginWindowMessage.vcxproj", "{B9184DBA-C6B7-44FE-8BBD-0852DB22D2E4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common_Test", "Common\Common_Test.vcxproj", "{442084A6-2069-4927-B0C9-51525A720CB2}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -114,6 +119,14 @@ Global
 		{BE9D2400-7F1C-49D6-8498-5CE495491AD6}.Release|Win32.Build.0 = Release|Win32
 		{BE9D2400-7F1C-49D6-8498-5CE495491AD6}.Release|x64.ActiveCfg = Release|x64
 		{BE9D2400-7F1C-49D6-8498-5CE495491AD6}.Release|x64.Build.0 = Release|x64
+		{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}.Debug|Win32.Build.0 = Debug|Win32
+		{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}.Debug|x64.ActiveCfg = Debug|x64
+		{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}.Debug|x64.Build.0 = Debug|x64
+		{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}.Release|Win32.ActiveCfg = Release|Win32
+		{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}.Release|Win32.Build.0 = Release|Win32
+		{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}.Release|x64.ActiveCfg = Release|x64
+		{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}.Release|x64.Build.0 = Release|x64
 		{6F5D4C4A-C8C3-41DA-BF44-6D42B76464DA}.Debug|Win32.ActiveCfg = Debug|Win32
 		{6F5D4C4A-C8C3-41DA-BF44-6D42B76464DA}.Debug|Win32.Build.0 = Debug|Win32
 		{6F5D4C4A-C8C3-41DA-BF44-6D42B76464DA}.Debug|x64.ActiveCfg = Debug|x64

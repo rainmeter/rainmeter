@@ -234,36 +234,6 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>../../StdAfx.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="lua\lua\lapi.c" />
-    <ClCompile Include="lua\lua\lauxlib.c" />
-    <ClCompile Include="lua\lua\lbaselib.c" />
-    <ClCompile Include="lua\lua\lcode.c" />
-    <ClCompile Include="lua\lua\ldebug.c" />
-    <ClCompile Include="lua\lua\ldo.c" />
-    <ClCompile Include="lua\lua\ldump.c" />
-    <ClCompile Include="lua\lua\lfunc.c" />
-    <ClCompile Include="lua\lua\lgc.c" />
-    <ClCompile Include="lua\lua\linit.c" />
-    <ClCompile Include="lua\lua\liolib.c" />
-    <ClCompile Include="lua\lua\llex.c" />
-    <ClCompile Include="lua\lua\lmathlib.c" />
-    <ClCompile Include="lua\lua\lmem.c" />
-    <ClCompile Include="lua\lua\loadlib.c" />
-    <ClCompile Include="lua\lua\lobject.c" />
-    <ClCompile Include="lua\lua\lopcodes.c" />
-    <ClCompile Include="lua\lua\loslib.c" />
-    <ClCompile Include="lua\lua\lparser.c" />
-    <ClCompile Include="lua\lua\lstate.c" />
-    <ClCompile Include="lua\lua\lstring.c" />
-    <ClCompile Include="lua\lua\lstrlib.c" />
-    <ClCompile Include="lua\lua\ltable.c" />
-    <ClCompile Include="lua\lua\ltablib.c" />
-    <ClCompile Include="lua\lua\ltm.c" />
-    <ClCompile Include="lua\lua\luac.c" />
-    <ClCompile Include="lua\lua\lundump.c" />
-    <ClCompile Include="lua\lua\lvm.c" />
-    <ClCompile Include="lua\lua\lzio.c" />
-    <ClCompile Include="lua\lua\print.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc" />
@@ -340,29 +310,6 @@
     <ClInclude Include="UpdateCheck.h" />
     <ClInclude Include="lua\LuaManager.h" />
     <ClInclude Include="lua\LuaScript.h" />
-    <ClInclude Include="lua\lua\luaconf.h" />
-    <ClInclude Include="lua\lua\lapi.h" />
-    <ClInclude Include="lua\lua\lauxlib.h" />
-    <ClInclude Include="lua\lua\lcode.h" />
-    <ClInclude Include="lua\lua\ldebug.h" />
-    <ClInclude Include="lua\lua\ldo.h" />
-    <ClInclude Include="lua\lua\lfunc.h" />
-    <ClInclude Include="lua\lua\lgc.h" />
-    <ClInclude Include="lua\lua\llex.h" />
-    <ClInclude Include="lua\lua\llimits.h" />
-    <ClInclude Include="lua\lua\lmem.h" />
-    <ClInclude Include="lua\lua\lobject.h" />
-    <ClInclude Include="lua\lua\lopcodes.h" />
-    <ClInclude Include="lua\lua\lparser.h" />
-    <ClInclude Include="lua\lua\lstate.h" />
-    <ClInclude Include="lua\lua\lstring.h" />
-    <ClInclude Include="lua\lua\ltable.h" />
-    <ClInclude Include="lua\lua\ltm.h" />
-    <ClInclude Include="lua\lua\lua.h" />
-    <ClInclude Include="lua\lua\lualib.h" />
-    <ClInclude Include="lua\lua\lundump.h" />
-    <ClInclude Include="lua\lua\lvm.h" />
-    <ClInclude Include="lua\lua\lzio.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Exports.def" />
@@ -370,6 +317,11 @@
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">
       <Project>{19312085-aa51-4bd6-be92-4b6098cca539}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Library_Lua.vcxproj">
+      <Project>{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
