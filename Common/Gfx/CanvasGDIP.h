@@ -71,7 +71,9 @@ private:
 
 	CanvasGDIP();
 	~CanvasGDIP();
-	CanvasGDIP(const CanvasGDIP& other) {}
+
+	CanvasGDIP(const CanvasGDIP& other) = delete;
+	CanvasGDIP& operator=(CanvasGDIP other) = delete;
 
 	void Dispose();
 

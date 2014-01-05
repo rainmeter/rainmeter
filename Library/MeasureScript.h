@@ -27,6 +27,9 @@ public:
 	MeasureScript(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeasureScript();
 
+	MeasureScript(const MeasureScript& other) = delete;
+	MeasureScript& operator=(MeasureScript other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeasureScript>(); }
 
 	virtual const WCHAR* GetStringValue();

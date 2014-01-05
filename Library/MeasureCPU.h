@@ -29,6 +29,9 @@ public:
 	MeasureCPU(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeasureCPU();
 
+	MeasureCPU(const MeasureCPU& other) = delete;
+	MeasureCPU& operator=(MeasureCPU other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeasureCPU>(); }
 
 	static void InitializeStatic();

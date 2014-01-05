@@ -31,6 +31,8 @@ class __declspec(novtable) Section : public Group
 public:
 	virtual ~Section();
 
+	Section(const Section& other) = delete;
+
 	virtual UINT GetTypeID() = 0;
 
 	const WCHAR* GetName() const { return m_Name.c_str(); }

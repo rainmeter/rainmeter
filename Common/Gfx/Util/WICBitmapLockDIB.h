@@ -48,6 +48,9 @@ public:
 	IFACEMETHOD(GetPixelFormat)(WICPixelFormatGUID* pPixelFormat);
 
 private:
+	WICBitmapLockDIB(const WICBitmapLockDIB& other) = delete;
+	WICBitmapLockDIB& operator=(WICBitmapLockDIB other) = delete;
+
 	WICBitmapDIB* m_Bitmap;
 	const WICRect* m_Rect;
 	UINT m_RefCount;

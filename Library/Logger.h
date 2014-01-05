@@ -77,6 +77,9 @@ private:
 	Logger();
 	~Logger();
 
+	Logger(const Logger& other) = delete;
+	Logger& operator=(Logger other) = delete;
+
 	bool m_LogToFile;
 	std::wstring m_LogFilePath;
 

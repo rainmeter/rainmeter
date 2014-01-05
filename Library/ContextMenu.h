@@ -29,6 +29,9 @@ class ContextMenu
 public:
 	ContextMenu();
 
+	ContextMenu(const ContextMenu& other) = delete;
+	ContextMenu& operator=(ContextMenu other) = delete;
+
 	bool IsMenuActive() { return m_MenuActive; }
 
 	void ShowMenu(POINT pos, MeterWindow* meterWindow);

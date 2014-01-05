@@ -42,6 +42,9 @@ public:
 	MeasurePlugin(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeasurePlugin();
 
+	MeasurePlugin(const MeasurePlugin& other) = delete;
+	MeasurePlugin& operator=(MeasurePlugin other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeasurePlugin>(); }
 
 	virtual const WCHAR* GetStringValue();

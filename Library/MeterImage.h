@@ -28,6 +28,9 @@ public:
 	MeterImage(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeterImage();
 
+	MeterImage(const MeterImage& other) = delete;
+	MeterImage& operator=(MeterImage other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeterImage>(); }
 
 	virtual void Initialize();

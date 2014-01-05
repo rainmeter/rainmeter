@@ -33,6 +33,9 @@ class FontCollectionGDIP final : public FontCollection
 public:
 	virtual ~FontCollectionGDIP();
 
+	FontCollectionGDIP(const FontCollectionGDIP& other) = delete;
+	FontCollectionGDIP& operator=(FontCollectionGDIP other) = delete;
+
 	virtual bool AddFile(const WCHAR* file) override;
 
 protected:
@@ -41,8 +44,6 @@ protected:
 private:
 	friend class CanvasGDIP;
 	friend class TextFormatGDIP;
-
-	FontCollectionGDIP(const FontCollectionGDIP& other) {}
 
 	void Dispose();
 

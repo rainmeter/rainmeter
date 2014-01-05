@@ -28,6 +28,9 @@ public:
 	MeterRotator(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeterRotator();
 
+	MeterRotator(const MeterRotator& other) = delete;
+	MeterRotator& operator=(MeterRotator other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeterRotator>(); }
 
 	virtual void Initialize();

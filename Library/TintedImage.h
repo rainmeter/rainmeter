@@ -73,6 +73,9 @@ public:
 	TintedImage(const WCHAR* name = L"ImageName", const WCHAR** optionArray = c_DefaultOptionArray, bool disableTransform = false, MeterWindow* meterWindow = nullptr);
 	~TintedImage();
 
+	TintedImage(const TintedImage& other) = delete;
+	TintedImage& operator=(TintedImage other) = delete;
+
 	void ReadOptions(ConfigParser& parser, const WCHAR* section, const WCHAR* imagePath = L"");
 
 	bool IsLoaded() { return (m_Bitmap != nullptr); }

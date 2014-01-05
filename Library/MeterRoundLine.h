@@ -27,6 +27,9 @@ public:
 	MeterRoundLine(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeterRoundLine();
 
+	MeterRoundLine(const MeterRoundLine& other) = delete;
+	MeterRoundLine& operator=(MeterRoundLine other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeterRoundLine>(); }
 
 	virtual bool Update();

@@ -27,6 +27,9 @@ public:
 	MeterLine(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeterLine();
 
+	MeterLine(const MeterLine& other) = delete;
+	MeterLine& operator=(MeterLine other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeterLine>(); }
 
 	virtual void Initialize();

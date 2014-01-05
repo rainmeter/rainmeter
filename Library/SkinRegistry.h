@@ -29,6 +29,10 @@
 class SkinRegistry
 {
 public:
+	SkinRegistry() = default;
+	SkinRegistry(const SkinRegistry& other) = delete;
+	SkinRegistry& operator=(SkinRegistry other) = delete;
+
 	struct Folder 
 	{
 		std::wstring name;

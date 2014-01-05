@@ -48,6 +48,9 @@ public:
 	IFACEMETHOD(GetPixelFormat)(WICPixelFormatGUID* pPixelFormat);
 
 private:
+	WICBitmapLockGDIP(const WICBitmapLockGDIP& other) = delete;
+	WICBitmapLockGDIP& operator=(WICBitmapLockGDIP other) = delete;
+
 	Gdiplus::BitmapData m_BitmapData;
 	UINT m_RefCount;
 };

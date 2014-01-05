@@ -28,6 +28,9 @@ public:
 	DialogManage();
 	virtual ~DialogManage();
 
+	DialogManage(const DialogManage& other) = delete;
+	DialogManage& operator=(DialogManage other) = delete;
+
 	static Dialog* GetDialog() { return c_Dialog; }
 
 	static void Open(const WCHAR* tabName, const WCHAR* param1, const WCHAR* param2);

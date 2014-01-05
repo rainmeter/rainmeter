@@ -46,6 +46,9 @@ struct MultiMonitorInfo
 class System
 {
 public:
+	System(const System& other) = delete;
+	System& operator=(System other) = delete;
+
 	static void Initialize(HINSTANCE instance);
 	static void Finalize();
 

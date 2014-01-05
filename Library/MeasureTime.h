@@ -27,6 +27,9 @@ public:
 	MeasureTime(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeasureTime();
 
+	MeasureTime(const MeasureTime& other) = delete;
+	MeasureTime& operator=(MeasureTime other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeasureTime>(); }
 
 	virtual const WCHAR* GetStringValue();

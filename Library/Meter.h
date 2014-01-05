@@ -37,6 +37,8 @@ class __declspec(novtable) Meter : public Section
 public:
 	virtual ~Meter();
 
+	Meter(const Meter& other) = delete;
+
 	void ReadOptions(ConfigParser& parser) { ReadOptions(parser, GetName()); parser.ClearStyleTemplate(); }
 
 	virtual void Initialize();

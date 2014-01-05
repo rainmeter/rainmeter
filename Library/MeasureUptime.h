@@ -27,6 +27,9 @@ public:
 	MeasureUptime(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeasureUptime();
 
+	MeasureUptime(const MeasureUptime& other) = delete;
+	MeasureUptime& operator=(MeasureUptime other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeasureUptime>(); }
 
 	virtual const WCHAR* GetStringValue();

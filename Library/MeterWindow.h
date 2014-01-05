@@ -115,6 +115,9 @@ public:
 	MeterWindow(const std::wstring& folderPath, const std::wstring& file);
 	~MeterWindow();
 
+	MeterWindow(const MeterWindow& other) = delete;
+	MeterWindow& operator=(MeterWindow other) = delete;
+
 	void Initialize();
 
 	void DoBang(Bang bang, const std::vector<std::wstring>& args);

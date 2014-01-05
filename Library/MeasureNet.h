@@ -53,6 +53,9 @@ protected:
 	MeasureNet(MeterWindow* meterWindow, const WCHAR* name, NET type);
 	virtual ~MeasureNet();
 
+	MeasureNet(const MeasureNet& other) = delete;
+	MeasureNet& operator=(MeasureNet other) = delete;
+
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
 

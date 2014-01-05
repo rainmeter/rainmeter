@@ -43,6 +43,9 @@ public:
 	TrayWindow();
 	~TrayWindow();
 
+	TrayWindow(const TrayWindow& other) = delete;
+	TrayWindow& operator=(TrayWindow other) = delete;
+
 	void Initialize();
 
 	void ReadOptions(ConfigParser& parser);

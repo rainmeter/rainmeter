@@ -29,6 +29,9 @@ public:
 	MeterString(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeterString();
 
+	MeterString(const MeterString& other) = delete;
+	MeterString& operator=(MeterString other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeterString>(); }
 
 	virtual int GetX(bool abs = false);

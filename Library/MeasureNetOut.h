@@ -26,6 +26,9 @@ class MeasureNetOut : public MeasureNet
 public:
 	MeasureNetOut(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeasureNetOut();
+
+	MeasureNetOut(const MeasureNetOut& other) = delete;
+	MeasureNetOut& operator=(MeasureNetOut other) = delete;
 };
 
 #endif

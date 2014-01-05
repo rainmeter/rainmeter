@@ -36,6 +36,9 @@ public:
 	WICBitmapDIB();
 	~WICBitmapDIB();
 
+	WICBitmapDIB(const WICBitmapDIB& other) = delete;
+	WICBitmapDIB& operator=(WICBitmapDIB other) = delete;
+
 	void Resize(UINT w, UINT h);
 
 	HBITMAP GetHandle() const { return m_DIBSectionBuffer; }

@@ -27,6 +27,9 @@ public:
 	MeasureCalc(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeasureCalc();
 
+	MeasureCalc(const MeasureCalc& other) = delete;
+	MeasureCalc& operator=(MeasureCalc other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeasureCalc>(); }
 
 protected:

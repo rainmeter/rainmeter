@@ -58,6 +58,8 @@ class __declspec(novtable) Measure : public Section
 public:
 	virtual ~Measure();
 
+	Measure(const Measure& other) = delete;
+
 	void ReadOptions(ConfigParser& parser) { ReadOptions(parser, GetName()); }
 
 	virtual void Initialize();

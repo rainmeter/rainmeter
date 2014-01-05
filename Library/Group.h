@@ -27,6 +27,9 @@ class __declspec(novtable) Group
 public:
 	virtual ~Group() {}
 
+	Group(const Group& other) = delete;
+	Group& operator=(Group other) = delete;
+
 	bool BelongsToGroup(const std::wstring& group) const;
 
 protected:

@@ -30,6 +30,9 @@ public:
 	MeterButton(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeterButton();
 
+	MeterButton(const MeterButton& other) = delete;
+	MeterButton& operator=(MeterButton other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeterButton>(); }
 
 	virtual void Initialize();

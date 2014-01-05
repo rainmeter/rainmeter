@@ -33,6 +33,9 @@ public:
 	TextFormatD2D();
 	virtual ~TextFormatD2D();
 
+	TextFormatD2D(const TextFormatD2D& other) = delete;
+	TextFormatD2D& operator=(TextFormatD2D other) = delete;
+
 	virtual bool IsInitialized() const override { return m_TextFormat != nullptr; }
 
 	virtual void SetProperties(
@@ -48,8 +51,6 @@ private:
 	friend class CanvasD2D;
 
 	friend class Common_Gfx_TextFormatD2D_Test;
-
-	TextFormatD2D(const TextFormatD2D& other) {}
 
 	void Dispose();
 

@@ -45,6 +45,8 @@ class __declspec(novtable) TextFormat
 public:
 	virtual ~TextFormat();
 
+	TextFormat(const TextFormat& other) = delete;
+
 	// Returns true if this TextFormat object is valid for use in draw operations.
 	virtual bool IsInitialized() const = 0;
 
@@ -69,8 +71,6 @@ protected:
 	TextFormat();
 
 private:
-	TextFormat(const TextFormat& other) {}
-
 	HorizontalAlignment m_HorizontalAlignment;
 	VerticalAlignment m_VerticalAlignment;
 };

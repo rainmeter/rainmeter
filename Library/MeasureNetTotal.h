@@ -26,6 +26,9 @@ class MeasureNetTotal : public MeasureNet
 public:
 	MeasureNetTotal(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeasureNetTotal();
+
+	MeasureNetTotal(const MeasureNetTotal& other) = delete;
+	MeasureNetTotal& operator=(MeasureNetTotal other) = delete;
 };
 
 #endif

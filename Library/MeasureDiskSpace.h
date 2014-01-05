@@ -27,6 +27,9 @@ public:
 	MeasureDiskSpace(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeasureDiskSpace();
 
+	MeasureDiskSpace(const MeasureDiskSpace& other) = delete;
+	MeasureDiskSpace& operator=(MeasureDiskSpace other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeasureDiskSpace>(); }
 
 	virtual const WCHAR* GetStringValue();

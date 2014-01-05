@@ -31,6 +31,9 @@ class FontCollectionD2D final : public FontCollection
 public:
 	virtual ~FontCollectionD2D();
 
+	FontCollectionD2D(const FontCollectionD2D& other) = delete;
+	FontCollectionD2D& operator=(FontCollectionD2D other) = delete;
+
 	virtual bool AddFile(const WCHAR* file) override;
 
 protected:
@@ -39,8 +42,6 @@ protected:
 private:
 	friend class CanvasD2D;
 	friend class TextFormatD2D;
-
-	FontCollectionD2D(const FontCollectionD2D& other) {}
 
 	void Dispose();
 

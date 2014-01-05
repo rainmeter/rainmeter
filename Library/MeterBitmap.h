@@ -28,6 +28,9 @@ public:
 	MeterBitmap(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeterBitmap();
 
+	MeterBitmap(const MeterBitmap& other) = delete;
+	MeterBitmap& operator=(MeterBitmap other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeterBitmap>(); }
 
 	virtual bool HitTest(int x, int y);

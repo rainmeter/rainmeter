@@ -29,14 +29,13 @@ class __declspec(novtable) FontCollection
 public:
 	virtual ~FontCollection();
 
+	FontCollection(const FontCollection& other) = delete;
+
 	// Adds a file to the collection. Returns true if the file was successfully added.
 	virtual bool AddFile(const WCHAR* file) = 0;
 
 protected:
 	FontCollection();
-
-private:
-	FontCollection(const FontCollection& other) {}
 };
 
 }  // namespace Gfx

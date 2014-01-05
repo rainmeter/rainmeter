@@ -33,6 +33,9 @@ public:
 	TextFormatGDIP();
 	virtual ~TextFormatGDIP();
 
+	TextFormatGDIP(const TextFormatGDIP& other) = delete;
+	TextFormatGDIP& operator=(TextFormatGDIP other) = delete;
+
 	virtual bool IsInitialized() const override { return m_Font != nullptr; }
 
 	virtual void SetProperties(
@@ -46,8 +49,6 @@ public:
 
 private:
 	friend class CanvasGDIP;
-
-	TextFormatGDIP(const TextFormatGDIP& other) {}
 
 	std::unique_ptr<Gdiplus::Font> m_Font;
 	std::unique_ptr<Gdiplus::FontFamily> m_FontFamily;

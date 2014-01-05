@@ -29,6 +29,9 @@ public:
 	DialogAbout();
 	virtual ~DialogAbout();
 
+	DialogAbout(const DialogAbout& other) = delete;
+	DialogAbout& operator=(DialogAbout other) = delete;
+
 	static Dialog* GetDialog() { return c_Dialog; }
 
 	static void Open(int tab = 0);

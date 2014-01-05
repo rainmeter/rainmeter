@@ -27,6 +27,9 @@ public:
 	MeasureMemory(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeasureMemory();
 
+	MeasureMemory(const MeasureMemory& other) = delete;
+	MeasureMemory& operator=(MeasureMemory other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeasureMemory>(); }
 
 protected:

@@ -28,6 +28,9 @@ public:
 	MeterHistogram(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeterHistogram();
 
+	MeterHistogram(const MeterHistogram& other) = delete;
+	MeterHistogram& operator=(MeterHistogram other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeterHistogram>(); }
 
 	virtual void Initialize();

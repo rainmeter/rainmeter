@@ -66,6 +66,9 @@ public:
 	Mouse(MeterWindow* meterWindow, Meter* meter = nullptr);
 	~Mouse();
 
+	Mouse(const Mouse& other) = delete;
+	Mouse& operator=(Mouse other) = delete;
+
 	void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
 	MOUSECURSOR GetCursorType() const { return m_CursorType; }

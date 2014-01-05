@@ -42,6 +42,8 @@ class __declspec(novtable) Canvas
 public:
 	virtual ~Canvas();
 
+	Canvas(const Canvas& other) = delete;
+
 	// Creates the canvas using the specified rendering engine. May return nullptr.
 	static Canvas* Create(Renderer renderer);
 
@@ -108,9 +110,6 @@ protected:
 	// the default DirectWrite output. Otherwise, the expected result should be similar to that of
 	// non-typographic GDI+.
 	bool m_AccurateText;
-
-private:
-	Canvas(const Canvas& other) {}
 };
 
 }  // namespace Gfx

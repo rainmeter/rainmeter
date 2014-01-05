@@ -28,6 +28,9 @@ public:
 	MeterBar(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeterBar();
 
+	MeterBar(const MeterBar& other) = delete;
+	MeterBar& operator=(MeterBar other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeterBar>(); }
 
 	virtual void Initialize();

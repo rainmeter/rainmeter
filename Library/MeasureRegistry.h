@@ -27,6 +27,9 @@ public:
 	MeasureRegistry(MeterWindow* meterWindow, const WCHAR* name);
 	virtual ~MeasureRegistry();
 
+	MeasureRegistry(const MeasureRegistry& other) = delete;
+	MeasureRegistry& operator=(MeasureRegistry other) = delete;
+
 	virtual UINT GetTypeID() { return TypeID<MeasureRegistry>(); }
 
 	virtual const WCHAR* GetStringValue();

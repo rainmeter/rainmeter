@@ -82,7 +82,9 @@ private:
 
 	CanvasD2D();
 	~CanvasD2D();
-	CanvasD2D(const CanvasD2D& other) {}
+
+	CanvasD2D(const CanvasD2D& other) = delete;
+	CanvasD2D& operator=(CanvasD2D other) = delete;
 
 	bool BeginTargetDraw();
 	void EndTargetDraw();

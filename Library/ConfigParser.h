@@ -42,6 +42,9 @@ public:
 	ConfigParser();
 	~ConfigParser();
 
+	ConfigParser(const ConfigParser& other) = delete;
+	ConfigParser& operator=(ConfigParser other) = delete;
+
 	void Initialize(const std::wstring& filename, MeterWindow* meterWindow = nullptr, LPCTSTR skinSection = nullptr, const std::wstring* resourcePath = nullptr);
 
 	void AddMeasure(Measure* pMeasure);

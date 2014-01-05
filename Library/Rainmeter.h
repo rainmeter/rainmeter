@@ -189,6 +189,9 @@ private:
 	Rainmeter();
 	~Rainmeter();
 
+	Rainmeter(const Rainmeter& other) = delete;
+	Rainmeter& operator=(Rainmeter other) = delete;
+
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	void ActivateActiveSkins();
