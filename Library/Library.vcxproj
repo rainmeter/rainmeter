@@ -27,24 +27,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Common\Gfx\Canvas.cpp" />
-    <ClCompile Include="..\Common\Gfx\CanvasD2D.cpp" />
-    <ClCompile Include="..\Common\Gfx\CanvasGDIP.cpp" />
-    <ClCompile Include="..\Common\Gfx\FontCollection.cpp" />
-    <ClCompile Include="..\Common\Gfx\FontCollectionD2D.cpp" />
-    <ClCompile Include="..\Common\Gfx\FontCollectionGDIP.cpp" />
-    <ClCompile Include="..\Common\Gfx\TextFormat.cpp" />
-    <ClCompile Include="..\Common\Gfx\TextFormatD2D.cpp" />
-    <ClCompile Include="..\Common\Gfx\TextFormatD2D_Test.cpp">
-      <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\TextFormatGDIP.cpp" />
-    <ClCompile Include="..\Common\Gfx\Util\DWriteHelpers.cpp" />
-    <ClCompile Include="..\Common\Gfx\Util\DWriteFontCollectionLoader.cpp" />
-    <ClCompile Include="..\Common\Gfx\Util\DWriteFontFileEnumerator.cpp" />
-    <ClCompile Include="..\Common\Gfx\Util\WICBitmapDIB.cpp" />
-    <ClCompile Include="..\Common\Gfx\Util\WICBitmapLockDIB.cpp" />
-    <ClCompile Include="..\Common\Gfx\Util\WICBitmapLockGDIP.cpp" />
     <ClCompile Include="CommandHandler.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -219,21 +201,6 @@
     <ResourceCompile Include="Library.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Common\Gfx\Canvas.h" />
-    <ClInclude Include="..\Common\Gfx\CanvasD2D.h" />
-    <ClInclude Include="..\Common\Gfx\CanvasGDIP.h" />
-    <ClInclude Include="..\Common\Gfx\FontCollection.h" />
-    <ClInclude Include="..\Common\Gfx\FontCollectionD2D.h" />
-    <ClInclude Include="..\Common\Gfx\FontCollectionGDIP.h" />
-    <ClInclude Include="..\Common\Gfx\TextFormat.h" />
-    <ClInclude Include="..\Common\Gfx\TextFormatD2D.h" />
-    <ClInclude Include="..\Common\Gfx\TextFormatGDIP.h" />
-    <ClInclude Include="..\Common\Gfx\Util\DWriteHelpers.h" />
-    <ClInclude Include="..\Common\Gfx\Util\DWriteFontCollectionLoader.h" />
-    <ClInclude Include="..\Common\Gfx\Util\DWriteFontFileEnumerator.h" />
-    <ClInclude Include="..\Common\Gfx\Util\WICBitmapDIB.h" />
-    <ClInclude Include="..\Common\Gfx\Util\WICBitmapLockDIB.h" />
-    <ClInclude Include="..\Common\Gfx\Util\WICBitmapLockGDIP.h" />
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="ContextMenu.h" />

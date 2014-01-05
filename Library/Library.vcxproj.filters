@@ -19,15 +19,6 @@
     <Filter Include="Lua\glue">
       <UniqueIdentifier>{941dce28-a314-4492-befb-5770432c98bf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common">
-      <UniqueIdentifier>{3fcdd272-ad7a-4e06-a1bc-ff114498ccee}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Gfx">
-      <UniqueIdentifier>{26d9c191-5857-45c2-9e73-b0b88964728f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Gfx\Util">
-      <UniqueIdentifier>{acfbb3c5-84fd-471f-845c-f7d178d35c55}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConfigParser.cpp">
@@ -173,54 +164,6 @@
     </ClCompile>
     <ClCompile Include="Section.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\Canvas.cpp">
-      <Filter>Common\Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\CanvasD2D.cpp">
-      <Filter>Common\Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\CanvasGDIP.cpp">
-      <Filter>Common\Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\FontCollection.cpp">
-      <Filter>Common\Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\FontCollectionD2D.cpp">
-      <Filter>Common\Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\FontCollectionGDIP.cpp">
-      <Filter>Common\Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\TextFormat.cpp">
-      <Filter>Common\Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\TextFormatD2D.cpp">
-      <Filter>Common\Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\TextFormatD2D_Test.cpp">
-      <Filter>Common\Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\TextFormatGDIP.cpp">
-      <Filter>Common\Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\Util\DWriteHelpers.cpp">
-      <Filter>Common\Gfx\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\Util\DWriteFontFileEnumerator.cpp">
-      <Filter>Common\Gfx\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\Util\DWriteFontCollectionLoader.cpp">
-      <Filter>Common\Gfx\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\Util\WICBitmapLockGDIP.cpp">
-      <Filter>Common\Gfx\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\Util\WICBitmapDIB.cpp">
-      <Filter>Common\Gfx\Util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Common\Gfx\Util\WICBitmapLockDIB.cpp">
-      <Filter>Common\Gfx\Util</Filter>
     </ClCompile>
     <ClCompile Include="Logger.cpp">
       <Filter>Source Files</Filter>
@@ -382,51 +325,6 @@
     </ClInclude>
     <ClInclude Include="Section.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\Canvas.h">
-      <Filter>Common\Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\CanvasD2D.h">
-      <Filter>Common\Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\CanvasGDIP.h">
-      <Filter>Common\Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\FontCollectionGDIP.h">
-      <Filter>Common\Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\FontCollection.h">
-      <Filter>Common\Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\FontCollectionD2D.h">
-      <Filter>Common\Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\TextFormat.h">
-      <Filter>Common\Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\TextFormatD2D.h">
-      <Filter>Common\Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\TextFormatGDIP.h">
-      <Filter>Common\Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\Util\DWriteHelpers.h">
-      <Filter>Common\Gfx\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\Util\DWriteFontFileEnumerator.h">
-      <Filter>Common\Gfx\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\Util\DWriteFontCollectionLoader.h">
-      <Filter>Common\Gfx\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\Util\WICBitmapLockDIB.h">
-      <Filter>Common\Gfx\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\Util\WICBitmapLockGDIP.h">
-      <Filter>Common\Gfx\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Common\Gfx\Util\WICBitmapDIB.h">
-      <Filter>Common\Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
       <Filter>Header Files</Filter>

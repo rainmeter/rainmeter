@@ -8,6 +8,51 @@
     <ClCompile Include="StringUtil.cpp" />
     <ClCompile Include="ControlTemplate.cpp" />
     <ClCompile Include="MathParser.cpp" />
+    <ClCompile Include="Gfx\Canvas.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\CanvasD2D.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\CanvasGDIP.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\FontCollection.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\FontCollectionD2D.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\FontCollectionGDIP.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextFormat.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextFormatD2D.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextFormatGDIP.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\Util\DWriteHelpers.cpp">
+      <Filter>Gfx\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\Util\DWriteFontCollectionLoader.cpp">
+      <Filter>Gfx\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\Util\DWriteFontFileEnumerator.cpp">
+      <Filter>Gfx\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\Util\WICBitmapDIB.cpp">
+      <Filter>Gfx\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\Util\WICBitmapLockDIB.cpp">
+      <Filter>Gfx\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\Util\WICBitmapLockGDIP.cpp">
+      <Filter>Gfx\Util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -20,5 +65,58 @@
     <ClInclude Include="MathParser.h" />
     <ClInclude Include="UnitTest.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="Gfx\Canvas.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\CanvasD2D.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\CanvasGDIP.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\FontCollection.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\FontCollectionD2D.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\FontCollectionGDIP.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextFormat.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextFormatD2D.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextFormatGDIP.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\Util\DWriteHelpers.h">
+      <Filter>Gfx\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\Util\DWriteFontCollectionLoader.h">
+      <Filter>Gfx\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\Util\DWriteFontFileEnumerator.h">
+      <Filter>Gfx\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\Util\WICBitmapDIB.h">
+      <Filter>Gfx\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\Util\WICBitmapLockDIB.h">
+      <Filter>Gfx\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\Util\WICBitmapLockGDIP.h">
+      <Filter>Gfx\Util</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Gfx">
+      <UniqueIdentifier>{263d9d8c-b463-4f2a-87ab-5f6575a4cc38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Gfx\Util">
+      <UniqueIdentifier>{c3efb431-e0f5-4085-9b07-33a7e34c4baa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
