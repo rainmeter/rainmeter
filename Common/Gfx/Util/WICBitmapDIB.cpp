@@ -16,9 +16,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include "StdAfx.h"
 #include "WICBitmapDIB.h"
 #include "WICBitmapLockDIB.h"
-#include <cassert>
 
 namespace Gfx {
 namespace Util {

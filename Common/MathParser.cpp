@@ -18,8 +18,7 @@
 
 // Heavily based on ccalc 0.5.1 by Walery Studennikov <hqsoftware@mail.ru>
 
-#include <string>
-#include <stdint.h>
+#include "StdAfx.h"
 #include "MathParser.h"
 
 namespace MathParser {

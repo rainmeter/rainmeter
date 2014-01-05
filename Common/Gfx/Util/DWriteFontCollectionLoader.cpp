@@ -16,9 +16,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include "StdAfx.h"
 #include "DWriteFontCollectionLoader.h"
 #include "DWriteFontFileEnumerator.h"
-#include <vector>
 
 namespace Gfx {
 namespace Util {

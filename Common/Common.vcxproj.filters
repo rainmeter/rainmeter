@@ -53,6 +53,7 @@
     <ClCompile Include="Gfx\Util\WICBitmapLockGDIP.cpp">
       <Filter>Gfx\Util</Filter>
     </ClCompile>
+    <ClCompile Include="StdAfx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -110,6 +111,7 @@
     <ClInclude Include="Gfx\Util\WICBitmapLockGDIP.h">
       <Filter>Gfx\Util</Filter>
     </ClInclude>
+    <ClInclude Include="StdAfx.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">

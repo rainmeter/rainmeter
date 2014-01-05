@@ -17,6 +17,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Lib>
       <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">true</LinkTimeCodeGeneration>
@@ -44,6 +45,9 @@
     <ClCompile Include="MenuTemplate.cpp" />
     <ClCompile Include="PathUtil.cpp" />
     <ClCompile Include="Platform.cpp" />
+    <ClCompile Include="StdAfx.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="StringUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -69,6 +73,7 @@
     <ClInclude Include="PathUtil.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="RawString.h" />
+    <ClInclude Include="StdAfx.h" />
     <ClInclude Include="StringUtil.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="UnitTest.h" />

@@ -16,9 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include "StdAfx.h"
 #include "FontCollectionGDIP.h"
-#include <ole2.h>  // For Gdiplus.h.
-#include <GdiPlus.h>
 
 namespace Gfx {
 
