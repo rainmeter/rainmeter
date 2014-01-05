@@ -162,10 +162,13 @@
     <ClInclude Include="taglib\asf\asftag.h" />
     <ClInclude Include="taglib\asf\asfattribute.h" />
     <ClInclude Include="taglib\asf\asfpicture.h" />
-    <ClCompile Include="taglib\mpeg\id3v2\id3v2tag.cpp">
-      <DisableSpecificWarnings>4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-    </ClCompile>
-    <ClCompile Include="taglib\toolkit\tfile.cpp" />
+    <ClCompile Include="TagLibUnity_ape.cpp" />
+    <ClCompile Include="TagLibUnity_asf.cpp" />
+    <ClCompile Include="TagLibUnity_flac.cpp" />
+    <ClCompile Include="TagLibUnity_mpeg.cpp" />
+    <ClCompile Include="TagLibUnity_mpeg_id3v2.cpp" />
+    <ClCompile Include="TagLibUnity_ogg.cpp" />
+    <ClCompile Include="TagLibUnity_toolkit.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PluginNowPlaying.rc" />

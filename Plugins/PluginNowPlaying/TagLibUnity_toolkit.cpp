@@ -16,24 +16,30 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-// TagLib unity build: This file includes several TagLib source files. By compiling all of them
+// TagLib unity build: This file includes most TagLib source files. By compiling all of them
 // together, the build performance is greatly increased.
 
-// The files have been separated into several TagLibUnity_*.cpp files in order help the optimizer.
-// Including everything here increases the binary size.
+// The following includes have been commented out and are compiled separately due to e.g.
+// mismatching symbols.
+/*
+#include "taglib\mpeg\id3v2\id3v2tag.cpp"
+#include "taglib\toolkit\tfile.cpp"
+*/
 
 #pragma warning(push)
 #pragma warning(disable: 4244; disable: 4267)
 
-#include "taglib\fileref.cpp"
-#include "taglib\tag.cpp"
-#include "taglib\tagunion.cpp"
-#include "taglib\audioproperties.cpp"
-
-#include "taglib\mpc\mpcfile.cpp"
-#include "taglib\mpc\mpcproperties.cpp"
-
-// Included here due to mismatch with toolkit\tfilestream.cpp.
-#include "taglib\toolkit\tfile.cpp"
+#include "taglib\toolkit\tbytevector.cpp"
+#include "taglib\toolkit\tbytevectorlist.cpp"
+#include "taglib\toolkit\tbytevectorstream.cpp"
+#include "taglib\toolkit\tdebug.cpp"
+#include "taglib\toolkit\tdebuglistener.cpp"
+#include "taglib\toolkit\tfilestream.cpp"
+#include "taglib\toolkit\tiostream.cpp"
+#include "taglib\toolkit\tpropertymap.cpp"
+#include "taglib\toolkit\trefcounter.cpp"
+#include "taglib\toolkit\tstring.cpp"
+#include "taglib\toolkit\tstringlist.cpp"
+#include "taglib\toolkit\unicode.cpp"
 
 #pragma warning(pop)

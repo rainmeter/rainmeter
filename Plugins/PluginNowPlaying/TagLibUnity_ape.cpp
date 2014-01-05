@@ -19,21 +19,13 @@
 // TagLib unity build: This file includes several TagLib source files. By compiling all of them
 // together, the build performance is greatly increased.
 
-// The files have been separated into several TagLibUnity_*.cpp files in order help the optimizer.
-// Including everything here increases the binary size.
-
 #pragma warning(push)
 #pragma warning(disable: 4244; disable: 4267)
 
-#include "taglib\fileref.cpp"
-#include "taglib\tag.cpp"
-#include "taglib\tagunion.cpp"
-#include "taglib\audioproperties.cpp"
-
-#include "taglib\mpc\mpcfile.cpp"
-#include "taglib\mpc\mpcproperties.cpp"
-
-// Included here due to mismatch with toolkit\tfilestream.cpp.
-#include "taglib\toolkit\tfile.cpp"
+#include "taglib\ape\apefile.cpp"
+#include "taglib\ape\apefooter.cpp"
+#include "taglib\ape\apeitem.cpp"
+#include "taglib\ape\apeproperties.cpp"
+#include "taglib\ape\apetag.cpp"
 
 #pragma warning(pop)

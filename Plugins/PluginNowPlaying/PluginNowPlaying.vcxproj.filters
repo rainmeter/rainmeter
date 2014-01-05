@@ -69,14 +69,29 @@
     <ClCompile Include="Internet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="taglib\mpeg\id3v2\id3v2tag.cpp">
-      <Filter>taglib</Filter>
-    </ClCompile>
-    <ClCompile Include="taglib\toolkit\tfile.cpp">
+    <ClCompile Include="TagLibUnity_toolkit.cpp">
       <Filter>taglib</Filter>
     </ClCompile>
     <ClCompile Include="TagLibUnity.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>taglib</Filter>
+    </ClCompile>
+    <ClCompile Include="TagLibUnity_ape.cpp">
+      <Filter>taglib</Filter>
+    </ClCompile>
+    <ClCompile Include="TagLibUnity_asf.cpp">
+      <Filter>taglib</Filter>
+    </ClCompile>
+    <ClCompile Include="TagLibUnity_flac.cpp">
+      <Filter>taglib</Filter>
+    </ClCompile>
+    <ClCompile Include="TagLibUnity_mpeg.cpp">
+      <Filter>taglib</Filter>
+    </ClCompile>
+    <ClCompile Include="TagLibUnity_mpeg_id3v2.cpp">
+      <Filter>taglib</Filter>
+    </ClCompile>
+    <ClCompile Include="TagLibUnity_ogg.cpp">
+      <Filter>taglib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
