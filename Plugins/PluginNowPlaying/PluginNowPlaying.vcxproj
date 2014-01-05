@@ -30,20 +30,46 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Cover.cpp" />
-    <ClCompile Include="Internet.cpp" />
-    <ClCompile Include="Lyrics.cpp" />
-    <ClCompile Include="NowPlaying.cpp" />
-    <ClCompile Include="Player.cpp" />
-    <ClCompile Include="PlayerAIMP.cpp" />
-    <ClCompile Include="PlayerCAD.cpp" />
-    <ClCompile Include="PlayerITunes.cpp" />
-    <ClCompile Include="PlayerSpotify.cpp" />
-    <ClCompile Include="PlayerWinamp.cpp" />
-    <ClCompile Include="PlayerWLM.cpp" />
-    <ClCompile Include="PlayerWMP.cpp" />
+    <ClCompile Include="Cover.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Internet.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Lyrics.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="NowPlaying.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="PlayerAIMP.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="PlayerCAD.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="PlayerITunes.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="PlayerSpotify.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="PlayerWinamp.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="PlayerWLM.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="PlayerWMP.cpp">
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="SDKs\iTunes\iTunesCOMInterface_i.c" />
-    <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="StdAfx.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="TagLibUnity.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -136,7 +162,9 @@
     <ClInclude Include="taglib\asf\asftag.h" />
     <ClInclude Include="taglib\asf\asfattribute.h" />
     <ClInclude Include="taglib\asf\asfpicture.h" />
-    <ClCompile Include="taglib\mpeg\id3v2\id3v2tag.cpp" />
+    <ClCompile Include="taglib\mpeg\id3v2\id3v2tag.cpp">
+      <DisableSpecificWarnings>4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="taglib\toolkit\tfile.cpp" />
   </ItemGroup>
   <ItemGroup>
