@@ -16,7 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "../../StdAfx.h"
+#include "StdAfx.h"
 #include "../LuaManager.h"
 #include "../../Logger.h"
 #include "../../../Common/StringUtil.h"
