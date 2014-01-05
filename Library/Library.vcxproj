@@ -18,7 +18,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>lua/include;lua/lua;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USRDLL;HAVE_CONFIG_H;SUPPORT_UTF8;LIBRARY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_USRDLL;LIBRARY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -160,26 +160,6 @@
     <ClCompile Include="Mouse.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_chartables.c" />
-    <ClCompile Include="pcre-8.10\pcre_compile.c" />
-    <ClCompile Include="pcre-8.10\pcre_config.c" />
-    <ClCompile Include="pcre-8.10\pcre_dfa_exec.c" />
-    <ClCompile Include="pcre-8.10\pcre_exec.c" />
-    <ClCompile Include="pcre-8.10\pcre_fullinfo.c" />
-    <ClCompile Include="pcre-8.10\pcre_get.c" />
-    <ClCompile Include="pcre-8.10\pcre_globals.c" />
-    <ClCompile Include="pcre-8.10\pcre_info.c" />
-    <ClCompile Include="pcre-8.10\pcre_maketables.c" />
-    <ClCompile Include="pcre-8.10\pcre_newline.c" />
-    <ClCompile Include="pcre-8.10\pcre_ord2utf8.c" />
-    <ClCompile Include="pcre-8.10\pcre_refcount.c" />
-    <ClCompile Include="pcre-8.10\pcre_study.c" />
-    <ClCompile Include="pcre-8.10\pcre_tables.c" />
-    <ClCompile Include="pcre-8.10\pcre_try_flipped.c" />
-    <ClCompile Include="pcre-8.10\pcre_ucd.c" />
-    <ClCompile Include="pcre-8.10\pcre_valid_utf8.c" />
-    <ClCompile Include="pcre-8.10\pcre_version.c" />
-    <ClCompile Include="pcre-8.10\pcre_xclass.c" />
     <ClCompile Include="Rainmeter.cpp">
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -293,10 +273,6 @@
     <ClInclude Include="MeterString.h" />
     <ClInclude Include="MeterWindow.h" />
     <ClInclude Include="Mouse.h" />
-    <ClInclude Include="pcre-8.10\config.h" />
-    <ClInclude Include="pcre-8.10\pcre.h" />
-    <ClInclude Include="pcre-8.10\pcre_internal.h" />
-    <ClInclude Include="pcre-8.10\ucp.h" />
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="Export.h" />
     <ClInclude Include="RainmeterQuery.h" />
@@ -322,6 +298,11 @@
   <ItemGroup>
     <ProjectReference Include="Library_Lua.vcxproj">
       <Project>{BC25C5DC-AEFB-49F9-8188-3C1B8C8929E6}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Library_PCRE.vcxproj">
+      <Project>{6D61FBE9-6913-4885-A95D-1A8C0C223D82}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

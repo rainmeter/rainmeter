@@ -19,12 +19,6 @@
     <Filter Include="Lua\glue">
       <UniqueIdentifier>{941dce28-a314-4492-befb-5770432c98bf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Lua\Lua">
-      <UniqueIdentifier>{c8550e7b-009b-4e12-a55a-ed458d05bdad}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="pcre">
-      <UniqueIdentifier>{5866a61e-ec27-469c-a8f0-2a45ce141f60}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{3fcdd272-ad7a-4e06-a1bc-ff114498ccee}</UniqueIdentifier>
     </Filter>
@@ -164,66 +158,6 @@
     </ClCompile>
     <ClCompile Include="lua\glue\LuaGlobal.cpp">
       <Filter>Lua\glue</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_chartables.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_compile.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_config.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_dfa_exec.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_exec.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_fullinfo.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_get.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_globals.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_info.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_maketables.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_newline.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_ord2utf8.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_refcount.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_study.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_tables.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_try_flipped.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_ucd.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_valid_utf8.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_version.c">
-      <Filter>pcre</Filter>
-    </ClCompile>
-    <ClCompile Include="pcre-8.10\pcre_xclass.c">
-      <Filter>pcre</Filter>
     </ClCompile>
     <ClCompile Include="DialogAbout.cpp">
       <Filter>Source Files</Filter>
@@ -433,18 +367,6 @@
     </ClInclude>
     <ClInclude Include="lua\LuaScript.h">
       <Filter>Lua</Filter>
-    </ClInclude>
-    <ClInclude Include="pcre-8.10\config.h">
-      <Filter>pcre</Filter>
-    </ClInclude>
-    <ClInclude Include="pcre-8.10\pcre.h">
-      <Filter>pcre</Filter>
-    </ClInclude>
-    <ClInclude Include="pcre-8.10\pcre_internal.h">
-      <Filter>pcre</Filter>
-    </ClInclude>
-    <ClInclude Include="pcre-8.10\ucp.h">
-      <Filter>pcre</Filter>
     </ClInclude>
     <ClInclude Include="DialogAbout.h">
       <Filter>Header Files</Filter>

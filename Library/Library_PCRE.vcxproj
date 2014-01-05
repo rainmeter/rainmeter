@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.Default.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6D61FBE9-6913-4885-A95D-1A8C0C223D82}</ProjectGuid>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup>
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_LIB;HAVE_CONFIG_H;SUPPORT_UTF8;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>4244;4334;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Lib>
+      <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">true</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="pcre-8.10\pcre_chartables.c" />
+    <ClCompile Include="pcre-8.10\pcre_compile.c" />
+    <ClCompile Include="pcre-8.10\pcre_config.c" />
+    <ClCompile Include="pcre-8.10\pcre_dfa_exec.c" />
+    <ClCompile Include="pcre-8.10\pcre_exec.c" />
+    <ClCompile Include="pcre-8.10\pcre_fullinfo.c" />
+    <ClCompile Include="pcre-8.10\pcre_get.c" />
+    <ClCompile Include="pcre-8.10\pcre_globals.c" />
+    <ClCompile Include="pcre-8.10\pcre_info.c" />
+    <ClCompile Include="pcre-8.10\pcre_maketables.c" />
+    <ClCompile Include="pcre-8.10\pcre_newline.c" />
+    <ClCompile Include="pcre-8.10\pcre_ord2utf8.c" />
+    <ClCompile Include="pcre-8.10\pcre_refcount.c" />
+    <ClCompile Include="pcre-8.10\pcre_study.c" />
+    <ClCompile Include="pcre-8.10\pcre_tables.c" />
+    <ClCompile Include="pcre-8.10\pcre_try_flipped.c" />
+    <ClCompile Include="pcre-8.10\pcre_ucd.c" />
+    <ClCompile Include="pcre-8.10\pcre_valid_utf8.c" />
+    <ClCompile Include="pcre-8.10\pcre_version.c" />
+    <ClCompile Include="pcre-8.10\pcre_xclass.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pcre-8.10\config.h" />
+    <ClInclude Include="pcre-8.10\pcre.h" />
+    <ClInclude Include="pcre-8.10\pcre_internal.h" />
+    <ClInclude Include="pcre-8.10\ucp.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
