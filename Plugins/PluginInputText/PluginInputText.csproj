@@ -97,9 +97,9 @@
       <DependentUpon>InputBox.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
-  <Import Project="$(SolutionDir)Build\VS\RainmeterPlugin.Cs.props"/>
+  <Import Project="$(SolutionDir)Build\VS\RainmeterPlugin.Cs.props" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>"$(SolutionDir)Plugins\API\DllExporter.exe" "$(ConfigurationName)" "$(PlatformName)" "$(TargetDir)\" "$(TargetFileName)"</PostBuildEvent>
+    <PostBuildEvent>"$(RmOutDirRoot)Tools\DllExporter.exe" "$(ConfigurationName)" "$(PlatformName)" "$(TargetDir)\" "$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
 </Project>

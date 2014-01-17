@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common_Test", "Common\Common_Test.vcxproj", "{442084A6-2069-4927-B0C9-51525A720CB2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DllExporter", "Build\DllExporter\DllExporter.csproj", "{49D56CA5-54AB-45C9-A245-EAE588FCBFE1}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Installer", "Installer\Installer.vcxproj", "{2FCFBFD2-2720-4BDD-B620-4BDD3DBB8D3D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Language", "Language\Language.vcxproj", "{6BE6F228-B741-4DA9-9FBC-E9F2A7BD483A}"
@@ -32,8 +34,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SkinInstallerLauncher", "Sk
 		{6F5D4C4A-C8C3-41DA-BF44-6D42B76464DA} = {6F5D4C4A-C8C3-41DA-BF44-6D42B76464DA}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DllExporter", "Plugins\API\DllExporter\DllExporter.csproj", "{49D56CA5-54AB-45C9-A245-EAE588FCBFE1}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginAdvancedCPU", "Plugins\PluginAdvancedCPU\PluginAdvancedCPU.vcxproj", "{EE8EC522-8430-4B46-86A3-D943D77F9E4B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginCoreTemp", "Plugins\PluginCoreTemp\PluginCoreTemp.vcxproj", "{F32FA418-8DF4-4E94-B92B-EBD502F5DC07}"
@@ -43,6 +43,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginFolderInfo", "Plugins\PluginFolderInfo\PluginFolderInfo.vcxproj", "{A221819D-4263-42AA-B22A-C022924842A7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginInputText", "Plugins\PluginInputText\PluginInputText.csproj", "{2CFEC79A-E39E-4FFD-ABC2-C4A69DD1E44D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{49D56CA5-54AB-45C9-A245-EAE588FCBFE1} = {49D56CA5-54AB-45C9-A245-EAE588FCBFE1}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginiTunes", "Plugins\PluginiTunes\PluginiTunes.vcxproj", "{A2DD3CBE-B140-4892-A875-24107FA52518}"
 EndProject
