@@ -187,10 +187,8 @@ namespace DllExporter
                 throw new DirectoryNotFoundException("'Microsoft SDKs' directory not found");
             }
 
-            // Get the version directories in reverse order (i.e. newest version first).
+            // Get the version directories.
             var sdkVersionDirectories = Directory.GetDirectories(sdkPath);
-            Array.Reverse(sdkVersionDirectories);
-
             foreach (var sdkVersionDirectory in sdkVersionDirectories)
             {
                 var binDirectory = Path.Combine(sdkVersionDirectory, @"bin");
