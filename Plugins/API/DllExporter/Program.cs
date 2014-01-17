@@ -36,8 +36,11 @@ namespace DllExporter
             string targetIlName = targetDllName + ".il";
             string targetResName = targetDllName + ".res";
 
-            string ilasmPath = ToolLocationHelper.GetPathToDotNetFrameworkFile("ilasm.exe", TargetDotNetFrameworkVersion.Version20);
-            if (!File.Exists(ilasmPath))
+            bool is64 = platformTarget.ToLower().Equals("x64");
+            bool isDebug = configurationName.ToLower().Equals("debug");
+
+            string ilasmPath = FindIlasmPath(is64);
+            if (ilasmPath == null)
             {
                 Console.WriteLine("DllExporter error: ilasm.exe not found");
                 return 1;
@@ -51,9 +54,6 @@ namespace DllExporter
             }
 
             Directory.SetCurrentDirectory(targetDirectory);
-
-            bool is64 = platformTarget.ToLower().Equals("x64");
-            bool isDebug = configurationName.ToLower().Equals("debug");
 
             // Disassemble
             Process ildasmProc = new Process();
@@ -169,6 +169,17 @@ namespace DllExporter
             File.Delete(targetResName);
 
             return 0;
+        }
+
+        /// <summary>
+        /// Finds path to ilasm.exe.
+        /// </summary>
+        private static string FindIlasmPath(bool x64)
+        {
+            var arch = x64 ? DotNetFrameworkArchitecture.Bitness64 : DotNetFrameworkArchitecture.Bitness32;
+            var path = ToolLocationHelper.GetPathToDotNetFrameworkFile(
+                "ilasm.exe", TargetDotNetFrameworkVersion.Version20, arch);
+            return File.Exists(path) ? path : null;
         }
 
         /// <summary>
