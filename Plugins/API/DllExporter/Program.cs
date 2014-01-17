@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
 using Microsoft.Build.Utilities;
+using System.IO;
 
 namespace DllExporter
 {
@@ -36,28 +37,20 @@ namespace DllExporter
             string targetResName = targetDllName + ".res";
 
             string ilasmPath = ToolLocationHelper.GetPathToDotNetFrameworkFile("ilasm.exe", TargetDotNetFrameworkVersion.Version20);
-            if (!System.IO.File.Exists(ilasmPath))
+            if (!File.Exists(ilasmPath))
             {
                 Console.WriteLine("DllExporter error: ilasm.exe not found");
                 return 1;
             }
 
-            string ildasmPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\Microsoft SDKs\Windows\v7.0A\Bin\ildasm.exe");
-            if (!System.IO.File.Exists(ildasmPath))
+            string ildasmPath = FindIldasmPath();
+            if (ildasmPath == null)
             {
-                ildasmPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles(x86)%\Microsoft SDKs\Windows\v7.0A\Bin\ildasm.exe");
-                if (!System.IO.File.Exists(ildasmPath))
-                {
-                    ildasmPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles(x86)%\Microsoft SDKs\Windows\v8.0A\bin\NETFX 4.0 Tools\ildasm.exe");
-                    if (!System.IO.File.Exists(ildasmPath))
-                    {
-                        Console.WriteLine("DllExporter error: ildasm.exe not found");
-                        return 1;
-                    }
-                }
+                Console.WriteLine("DllExporter error: ildasm.exe not found");
+                return 1;
             }
 
-            System.IO.Directory.SetCurrentDirectory(targetDirectory);
+            Directory.SetCurrentDirectory(targetDirectory);
 
             bool is64 = platformTarget.ToLower().Equals("x64");
             bool isDebug = configurationName.ToLower().Equals("debug");
@@ -84,10 +77,10 @@ namespace DllExporter
                 return ildasmProc.ExitCode;
             }
 
-            bool hasResource = System.IO.File.Exists(targetResName);
+            bool hasResource = File.Exists(targetResName);
 
             // Read disassembly and find methods marked with DllExport attribute
-            List<string> lines = new List<string>(System.IO.File.ReadAllLines(targetIlName));
+            List<string> lines = new List<string>(File.ReadAllLines(targetIlName));
             int attributeIndex = 0;
             int exportCount = 0;
             while (true)
@@ -151,7 +144,7 @@ namespace DllExporter
             }
 
             // Write everything back
-            System.IO.File.WriteAllLines(targetIlName, lines.ToArray());
+            File.WriteAllLines(targetIlName, lines.ToArray());
 
             // Reassemble
             Process ilasmProc = new Process();
@@ -172,10 +165,60 @@ namespace DllExporter
             }
 
             // Cleanup
-            System.IO.File.Delete(targetIlName);
-            System.IO.File.Delete(targetResName);
+            File.Delete(targetIlName);
+            File.Delete(targetResName);
 
             return 0;
+        }
+
+        /// <summary>
+        /// Finds path to ildasm.exe.
+        /// </summary>
+        private static string FindIldasmPath()
+        {
+            var sdkPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\Microsoft SDKs\Windows\");
+            if (!Directory.Exists(sdkPath))
+            {
+                sdkPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles(x86)%\Microsoft SDKs\Windows\");
+            }
+
+            if (!Directory.Exists(sdkPath))
+            {
+                throw new DirectoryNotFoundException("'Microsoft SDKs' directory not found");
+            }
+
+            // Get the version directories in reverse order (i.e. newest version first).
+            var sdkVersionDirectories = Directory.GetDirectories(sdkPath);
+            Array.Reverse(sdkVersionDirectories);
+
+            foreach (var sdkVersionDirectory in sdkVersionDirectories)
+            {
+                var binDirectory = Path.Combine(sdkVersionDirectory, @"bin");
+                if (!Directory.Exists(binDirectory))
+                {
+                    continue;
+                }
+
+                // Check for e.g. 'Microsoft SDKs\v8.0A\bin\ildasm.exe'.
+                var ildasmPath = Path.Combine(binDirectory, @"ildasm.exe");
+                if (File.Exists(ildasmPath))
+                {
+                    return ildasmPath;
+                }
+
+                // Check for e.g. 'Microsoft SDKs\v8.0A\bin\NETFX 4.0 Tools\ildasm.exe'.
+                var toolsDirectories = Directory.GetDirectories(binDirectory, "NETFX*Tools");
+                foreach (var toolDirectory in toolsDirectories)
+                {
+                    ildasmPath = Path.Combine(toolDirectory, @"ildasm.exe");
+                    if (File.Exists(ildasmPath))
+                    {
+                        return ildasmPath;
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }
