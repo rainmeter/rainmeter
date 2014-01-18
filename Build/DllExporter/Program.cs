@@ -195,10 +195,10 @@ namespace DllExporter
         /// </summary>
         private static string FindIldasmPath()
         {
-            var sdkPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\Microsoft SDKs\Windows\");
+            var sdkPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles(x86)%\Microsoft SDKs\Windows\");
             if (!Directory.Exists(sdkPath))
             {
-                sdkPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles(x86)%\Microsoft SDKs\Windows\");
+                sdkPath = Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\Microsoft SDKs\Windows\");
             }
 
             if (!Directory.Exists(sdkPath))
