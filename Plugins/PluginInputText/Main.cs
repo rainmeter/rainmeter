@@ -141,49 +141,66 @@ namespace InputText
 
     public static class Plugin
     {
-        internal static Dictionary<uint, Measure> Measures = new Dictionary<uint, Measure>();
+        static IntPtr StringBuffer = IntPtr.Zero;
 
         [DllExport]
-        public unsafe static void Initialize(void** data, void* rm)
+        public static void Initialize(ref IntPtr data, IntPtr rm)
         {
-            uint id = (uint)((void*)*data);
-            Measures.Add(id, new Measure(new Rainmeter.API((IntPtr)rm)));
+            data = GCHandle.ToIntPtr(GCHandle.Alloc(new Measure(new Rainmeter.API(rm))));
         }
 
         [DllExport]
-        public unsafe static void Finalize(void* data)
+        public static void Finalize(IntPtr data)
         {
-            uint id = (uint)data;
-            Measures[id].Dispose();
-            Measures.Remove(id);
+            Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
+            measure.Dispose();
+            GCHandle.FromIntPtr(data).Free();
+
+            if (StringBuffer != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(StringBuffer);
+                StringBuffer = IntPtr.Zero;
+            }
         }
 
         [DllExport]
-        public unsafe static void Reload(void* data, void* rm, double* maxValue)
+        public static void Reload(IntPtr data, IntPtr rm, ref double maxValue)
         {
-            uint id = (uint)data;
-            Measures[id].Reload(new Rainmeter.API((IntPtr)rm), ref *maxValue);
+            Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
+            measure.Reload(new Rainmeter.API(rm), ref maxValue);
         }
 
         [DllExport]
-        public unsafe static double Update(void* data)
+        public static double Update(IntPtr data)
         {
-            uint id = (uint)data;
-            return Measures[id].Update();
+            Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
+            return measure.Update();
         }
 
         [DllExport]
-        public unsafe static char* GetString(void* data)
+        public static IntPtr GetString(IntPtr data)
         {
-            uint id = (uint)data;
-            fixed (char* s = Measures[id].GetString()) return s;
+            Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
+            if (StringBuffer != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(StringBuffer);
+                StringBuffer = IntPtr.Zero;
+            }
+
+            string stringValue = measure.GetString();
+            if (stringValue != null)
+            {
+                StringBuffer = Marshal.StringToHGlobalUni(stringValue);
+            }
+
+            return StringBuffer;
         }
 
         [DllExport]
-        public unsafe static void ExecuteBang(void* data, char* args)
+        public static void ExecuteBang(IntPtr data, IntPtr args)
         {
-            uint id = (uint)data;
-            Measures[id].ExecuteBang(new string(args));
+            Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
+            measure.ExecuteBang(Marshal.PtrToStringUni(args));
         }
     }
 
