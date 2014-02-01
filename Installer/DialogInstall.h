@@ -19,6 +19,7 @@
 #ifndef RM_INSTALLER_DIALOGINSTALL_H_
 #define RM_INSTALLER_DIALOGINSTALL_H_
 
+#include "Install.h"
 #include "../Common/Dialog.h"
 
 class CDialogInstall : public Dialog
@@ -51,6 +52,14 @@ protected:
 
 		void Create(HWND owner);
 		virtual void Initialize();
+
+		InstallType GetInstallType();
+		InstallArch GetInstallArch();
+
+		void PopulateInstallationTypes();
+		void UpdateDestinationDirectory();
+
+		bool IsAlreadyInstalled(InstallArch& arch);
 
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);

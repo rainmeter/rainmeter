@@ -184,9 +184,10 @@ bool GetRegistryDword(HKEY rootKey, const WCHAR* subKey, const WCHAR* value, DWO
 		type == REG_DWORD);
 }
 
-bool GetRegistryString(HKEY rootKey, const WCHAR* subKey, const WCHAR* value, WCHAR* data, DWORD dataSize)
+bool GetRegistryString(HKEY rootKey, const WCHAR* subKey, const WCHAR* value, WCHAR* data, DWORD bufferLength)
 {
 	DWORD type;
+	DWORD dataSize = bufferLength * sizeof(data[0]);
 	return (SHGetValue(rootKey, subKey, value, &type, data, &dataSize) == ERROR_SUCCESS &&
 		type == REG_SZ);
 }

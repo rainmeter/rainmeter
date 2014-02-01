@@ -19,7 +19,6 @@
 #ifndef RM_INSTALLER_STDAFX_H_
 #define RM_INSTALLER_STDAFX_H_
 
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>

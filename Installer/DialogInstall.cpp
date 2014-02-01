@@ -24,6 +24,10 @@
 #include "../Common/ControlTemplate.h"
 #include "../Common/Platform.h"
 
+#define APPNAME L"Rainmeter"
+
+const WCHAR* kRegistryInstallKey = L"SOFTWARE\\" APPNAME;
+
 CDialogInstall* CDialogInstall::c_Dialog = nullptr;
 
 HICON GetIcon(UINT id, bool large)
@@ -316,7 +320,7 @@ void CDialogInstall::TabContents::Create(HWND owner)
 			0, 43, 107, 9,
 			WS_VISIBLE, 0),
 
-		CT_EDIT(Id_DestinationEdit, 14,
+		CT_EDIT(Id_DestinationEdit, 0,
 			107, 40, 192, 14,
 			WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL | ES_READONLY, WS_EX_CLIENTEDGE),
 
@@ -335,16 +339,8 @@ void CDialogInstall::TabContents::Create(HWND owner)
 	ComboBox_AddString(item, L"English - English (United States)");
 	ComboBox_SetCurSel(item, 0);
 
-	item = GetControl(Id_InstallationTypeComboBox);
-	ComboBox_AddString(item, L"Standard 64-bit installation (reccomended)");
-	ComboBox_SetItemData(item, 0, MAKELPARAM(InstallType::Standard, InstallArch::X64));
-	ComboBox_AddString(item, L"Standard 32-bit installation");
-	ComboBox_SetItemData(item, 1, MAKELPARAM(InstallType::Standard, InstallArch::X32));
-	ComboBox_AddString(item, L"Portable 64-bit installation");
-	ComboBox_SetItemData(item, 2, MAKELPARAM(InstallType::Portable, InstallArch::X64));
-	ComboBox_AddString(item, L"Portable 32-bit installation");
-	ComboBox_SetItemData(item, 3, MAKELPARAM(InstallType::Portable, InstallArch::X32));
-	ComboBox_SetCurSel(item, 0);
+	PopulateInstallationTypes();
+	UpdateDestinationDirectory();
 }
 
 void CDialogInstall::TabContents::Initialize()
@@ -383,9 +379,117 @@ INT_PTR CDialogInstall::TabContents::OnCommand(WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case Id_InstallationTypeComboBox:
+	{
+		if (HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			UpdateDestinationDirectory();
+		}
+		break;
+	}
+
 	default:
 		return FALSE;
 	}
 
 	return TRUE;
+}
+
+InstallType CDialogInstall::TabContents::GetInstallType()
+{
+	HWND item = GetControl(TabContents::Id_InstallationTypeComboBox);
+	const LPARAM typeData = ComboBox_GetItemData(item, ComboBox_GetCurSel(item));
+	return (InstallType)LOWORD(typeData);
+}
+
+InstallArch CDialogInstall::TabContents::GetInstallArch()
+{
+	HWND item = GetControl(TabContents::Id_InstallationTypeComboBox);
+	const LPARAM typeData = ComboBox_GetItemData(item, ComboBox_GetCurSel(item));
+	return (InstallArch)HIWORD(typeData);
+}
+
+void CDialogInstall::TabContents::PopulateInstallationTypes()
+{
+	HWND item = GetControl(Id_InstallationTypeComboBox);
+	int index = 0;
+	if (Util::IsSystem64Bit())
+	{
+		InstallArch existingArch;
+		const bool alreadyInstalled = IsAlreadyInstalled(existingArch);
+		if (!alreadyInstalled || existingArch == InstallArch::X64)
+		{
+			index = ComboBox_AddString(item, L"Standard 64-bit installation (recommended)");
+			ComboBox_SetItemData(item, index, MAKELPARAM(InstallType::Standard, InstallArch::X64));
+		}
+		if (!alreadyInstalled || existingArch == InstallArch::X32)
+		{
+			index = ComboBox_AddString(item, L"Standard 32-bit installation");
+			ComboBox_SetItemData(item, index, MAKELPARAM(InstallType::Standard, InstallArch::X32));
+		}
+		index = ComboBox_AddString(item, L"Portable 64-bit installation");
+		ComboBox_SetItemData(item, index, MAKELPARAM(InstallType::Portable, InstallArch::X64));
+	}
+	else
+	{
+		index = ComboBox_AddString(item, L"Standard 32-bit installation (recommended)");
+		ComboBox_SetItemData(item, index, MAKELPARAM(InstallType::Standard, InstallArch::X32));
+	}
+	index = ComboBox_AddString(item, L"Portable 32-bit installation");
+	ComboBox_SetItemData(item, index, MAKELPARAM(InstallType::Portable, InstallArch::X32));
+
+	ComboBox_SetCurSel(item, 0);
+}
+
+void CDialogInstall::TabContents::UpdateDestinationDirectory()
+{
+	WCHAR buffer[MAX_PATH];
+	buffer[0] = L'\0';
+
+	if (GetInstallType() == InstallType::Standard)
+	{
+		const bool hasRegistryKey = Util::GetRegistryString(
+			HKEY_LOCAL_MACHINE, kRegistryInstallKey, nullptr, buffer, _countof(buffer));
+		if (!hasRegistryKey)
+		{
+			const WCHAR* installPath =
+				GetInstallArch() == InstallArch::X32 ? L"%ProgramFiles%\\" APPNAME : L"%ProgramW6432%\\" APPNAME;
+			ExpandEnvironmentStrings(installPath, buffer, _countof(buffer));
+		}
+	}
+	else
+	{
+		ExpandEnvironmentStrings(L"%SystemDrive%\\" APPNAME, buffer, _countof(buffer));
+	}
+
+	HWND item = GetControl(Id_DestinationEdit);
+	Edit_SetText(item, buffer);
+}
+
+bool CDialogInstall::TabContents::IsAlreadyInstalled(InstallArch& arch)
+{
+	WCHAR buffer[MAX_PATH];
+	const bool hasRegistryKey = Util::GetRegistryString(
+		HKEY_LOCAL_MACHINE, kRegistryInstallKey, nullptr, buffer, _countof(buffer));
+	if (hasRegistryKey)
+	{
+		PathAppend(buffer, L"Rainmeter.exe");
+		if (PathFileExists(buffer))
+		{
+			// FIXME: This is an ugly way to check if Rainmeter.exe is 32-bit.
+			HMODULE rainmeterExe = LoadLibrary(buffer);
+			if (rainmeterExe)
+			{
+				arch = InstallArch::X32;
+				CloseHandle(rainmeterExe);
+			}
+			else
+			{
+				arch = InstallArch::X64;
+			}
+			return true;
+		}
+	}
+
+	return false;
 }
