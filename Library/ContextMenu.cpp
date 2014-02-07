@@ -164,15 +164,22 @@ void ContextMenu::ShowMenu(POINT pos, MeterWindow* meterWindow)
 		}
 	}
 
+	DisplayMenu(pos, menu, meterWindow ? meterWindow->GetWindow() : rainmeter.m_TrayWindow->GetWindow());
+	DestroyMenu(menu);
+
+	m_MenuActive = false;
+}
+
+void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
+{
 	// Set the window to foreground
-	hWnd = meterWindow ? meterWindow->GetWindow() : rainmeter.m_TrayWindow->GetWindow();
-	HWND hWndForeground = GetForegroundWindow();
-	if (hWndForeground != hWnd)
+	HWND foregroundWindow = GetForegroundWindow();
+	if (foregroundWindow != parentWindow)
 	{
-		const DWORD foregroundThreadID = GetWindowThreadProcessId(hWndForeground, nullptr);
+		const DWORD foregroundThreadID = GetWindowThreadProcessId(foregroundWindow, nullptr);
 		const DWORD currentThreadID = GetCurrentThreadId();
 		AttachThreadInput(currentThreadID, foregroundThreadID, TRUE);
-		SetForegroundWindow(hWnd);
+		SetForegroundWindow(parentWindow);
 		AttachThreadInput(currentThreadID, foregroundThreadID, FALSE);
 	}
 
@@ -183,12 +190,8 @@ void ContextMenu::ShowMenu(POINT pos, MeterWindow* meterWindow)
 		pos.x,
 		pos.y,
 		0,
-		hWnd,
+		parentWindow,
 		nullptr);
-
-	DestroyMenu(menu);
-
-	m_MenuActive = false;
 }
 
 HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU menu)
@@ -425,91 +428,100 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 		}
 	}
 
+	AppendSkinCustomMenu(meterWindow, index, skinMenu);
+
+	return skinMenu;
+}
+
+void ContextMenu::AppendSkinCustomMenu(MeterWindow* meterWindow, int index, HMENU menu)
+{
 	// Add custom actions to the context menu
 	std::wstring contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextTitle", L"");
-	if (!contextTitle.empty())
+	if (contextTitle.empty())
 	{
-		auto isTitleSeparator = [](const std::wstring& title)
+		return;
+	}
+
+	auto isTitleSeparator = [](const std::wstring& title)
+	{
+		return title.find_first_not_of(L'-') == std::wstring::npos;
+	};
+
+	std::wstring contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextAction", L"");
+	if (contextAction.empty() && !isTitleSeparator(contextTitle))
+	{
+		return;
+	}
+
+	std::vector<std::wstring> cTitles;
+	WCHAR buffer[128];
+	int i = 1;
+
+	while (!contextTitle.empty() &&
+		(!contextAction.empty() || isTitleSeparator(contextTitle)) &&
+		(IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i - 1) <= IDM_SKIN_CUSTOMCONTEXTMENU_LAST) // Set maximum context items in resource.h
+	{
+		// Trim long titles
+		if (contextTitle.size() > 30)
 		{
-			return title.find_first_not_of(L'-') == std::wstring::npos;
-		};
+			contextTitle.replace(27, contextTitle.size() - 27, L"...");
+		}
 
-		std::wstring contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextAction", L"");
-		if (!contextAction.empty() || isTitleSeparator(contextTitle))
+		cTitles.push_back(contextTitle);
+
+		_snwprintf_s(buffer, _TRUNCATE, L"ContextTitle%i", ++i);
+		contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
+		_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", i);
+		contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
+	}
+
+	// Build a sub-menu if more than three items
+	const size_t titleSize = cTitles.size();
+	if (titleSize <= 3)
+	{
+		size_t position = 0;
+		for (size_t i = 0; i < titleSize; ++i)
 		{
-			std::vector<std::wstring> cTitles;
-			WCHAR buffer[128];
-			int i = 1;
-
-			while (!contextTitle.empty() &&
-					(!contextAction.empty() || isTitleSeparator(contextTitle)) &&
-					(IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i - 1) <= IDM_SKIN_CUSTOMCONTEXTMENU_LAST) // Set maximum context items in resource.h
+			if (isTitleSeparator(cTitles[i]))
 			{
-				// Trim long titles
-				if (contextTitle.size() > 30)
-				{
-					contextTitle.replace(27, contextTitle.size() - 27, L"...");
-				}
-
-				cTitles.push_back(contextTitle);
-
-				_snwprintf_s(buffer, _TRUNCATE, L"ContextTitle%i", ++i);
-				contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
-				_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", i);
-				contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
-			}
-
-			// Build a sub-menu if more than three items
-			const size_t titleSize = cTitles.size();
-			if (titleSize <= 3)
-			{
-				size_t position = 0;
-				for (size_t i = 0; i < titleSize; ++i)
-				{
-					if (isTitleSeparator(cTitles[i]))
-					{
-						// Separators not allowed in main top-level menu
-						--position;
-					}
-					else
-					{
-						const UINT_PTR id = (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i);
-						InsertMenu(skinMenu, position + 1, MF_BYPOSITION | MF_STRING, id, cTitles[i].c_str());
-					}
-
-					++position;
-				}
-
-				if (position != 0)
-				{
-					InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, L"Custom skin actions");
-					InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
-				}
+				// Separators not allowed in main top-level menu
+				--position;
 			}
 			else
 			{
-				HMENU customMenu = CreatePopupMenu();
-				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)customMenu, L"Custom skin actions");
-				
-				for (size_t i = 0; i < titleSize; ++i)
-				{
-					if (isTitleSeparator(cTitles[i]))
-					{
-						AppendMenu(customMenu, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
-					}
-					else
-					{
-						const UINT_PTR id = (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i);
-						AppendMenu(customMenu, MF_BYPOSITION | MF_STRING, id, cTitles[i].c_str());
-					}
-				}
-
-				InsertMenu(skinMenu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+				const UINT_PTR id = (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i);
+				InsertMenu(menu, position + 1, MF_BYPOSITION | MF_STRING, id, cTitles[i].c_str());
 			}
+
+			++position;
+		}
+
+		if (position != 0)
+		{
+			InsertMenu(menu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, L"Custom skin actions");
+			InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 		}
 	}
+	else
+	{
+		HMENU customMenu = CreatePopupMenu();
+		InsertMenu(menu, 1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)customMenu, L"Custom skin actions");
 
-	return skinMenu;
+		for (size_t i = 0; i < titleSize; ++i)
+		{
+			if (isTitleSeparator(cTitles[i]))
+			{
+				AppendMenu(customMenu, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+			}
+			else
+			{
+				const UINT_PTR id = (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i);
+				AppendMenu(customMenu, MF_BYPOSITION | MF_STRING, id, cTitles[i].c_str());
+			}
+		}
+
+		InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+	}
 }
 
 int ContextMenu::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)

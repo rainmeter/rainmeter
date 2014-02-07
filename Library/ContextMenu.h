@@ -39,7 +39,10 @@ public:
 	static void CreateMonitorMenu(HMENU monitorMenu, MeterWindow* meterWindow);
 
 private:
+	static void DisplayMenu(POINT pos, HMENU menu, HWND parentWindow);
+
 	static HMENU CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU menu);
+	static void AppendSkinCustomMenu(MeterWindow* meterWindow, int index, HMENU menu);
 	static void ChangeSkinIndex(HMENU subMenu, int index);
 	
 	static void CreateAllSkinsMenu(HMENU skinMenu) { CreateAllSkinsMenuRecursive(skinMenu, 0); }
