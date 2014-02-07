@@ -17,6 +17,8 @@
 */
 
 #include "PluginFileView.h"
+#include "../../Common/Platform.h"
+#include "../../Common/StringUtil.h"
 
 #define MAX_LINE_LENGTH 4096
 #define INVALID_FILE L"/<>\\"
@@ -50,6 +52,7 @@ HRESULT SaveIcon(HICON hIcon, FILE* fp);
 
 static std::vector<ParentMeasure*> g_ParentMeasures;
 static CRITICAL_SECTION g_CriticalSection;
+static std::string g_SysProperties;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -74,6 +77,15 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 {
 	ChildMeasure* child = new ChildMeasure;
 	*data = child;
+
+	if (g_SysProperties.empty())
+	{
+		std::wstring dir = RmReplaceVariables(rm, L"%WINDIR%");
+		dir.append(L"\\system32\\control.exe");
+		dir.append(Platform::IsAtLeastWinVista() ? L" system" : L" sysdm.cpl");
+
+		g_SysProperties = StringUtil::Narrow(dir);
+	}
 }
 
 PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
@@ -98,7 +110,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 		if (!child->parent)
 		{
-			RmLog(LOG_ERROR, L"FileView.dll: Invalid Path");
+			RmLogF(rm, LOG_ERROR, L"Invalid Path: \"%s\"", path.c_str());
 			return;
 		}
 	}
@@ -110,6 +122,8 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 			child->parent->skin = skin;
 			child->parent->name = RmGetMeasureName(rm);
 			child->parent->ownerChild = child;
+			child->parent->hwnd = RmGetSkinWindow(rm);
+			child->parent->rm = rm;
 			g_ParentMeasures.push_back(child->parent);
 		}
 
@@ -495,20 +509,33 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 		return;
 	}
 
-	auto runFile = [&](std::wstring& filename, std::wstring& dir)
+	auto runFile = [&](std::wstring fileName, std::wstring dir, bool isProperty) -> void
 	{
-		std::wstring file = dir + filename;
+		// Display computer system properties
+		if (isProperty && dir.empty() && fileName.empty())
+		{
+			WinExec(g_SysProperties.c_str(), SW_SHOWNORMAL);
+			return;
+		}
+
+		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
+		std::wstring file = dir + fileName;
 		SHELLEXECUTEINFO si = {sizeof(SHELLEXECUTEINFO)};
 
-		si.lpVerb = nullptr;
+		si.lpVerb = isProperty ? L"properties" : nullptr;
 		si.lpFile = file.c_str();
 		si.nShow = SW_SHOWNORMAL;
 		si.lpDirectory = dir.c_str();
 		si.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_ASYNCOK;
+		
+		if (isProperty) si.fMask |= SEE_MASK_INVOKEIDLIST;
 
 		ShellExecuteEx(&si);
+		CoUninitialize();
 	};
 
+	// Parent only commands
 	if (parent->ownerChild == child)
 	{
 		if ((int)parent->files.size() > parent->count)
@@ -573,57 +600,110 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 			parent->needsIcons = true;
 			parent->needsUpdating = true;
 		}
+		else if (_wcsicmp(args, L"CONTEXTMENU") == 0)
+		{
+			if (!ShowContextMenu(parent->hwnd, parent->path))
+			{
+				RmLogF(parent->rm, LOG_ERROR, L"Cannot open context menu for \"%s\"", parent->path.c_str());
+			}
+		}
+		else if (_wcsicmp(args, L"PROPERTIES") == 0)
+		{
+			runFile(L"", parent->path, true);
+		}
 		else if (parent->recursiveType != RECURSIVE_FULL && _wcsicmp(args, L"PREVIOUSFOLDER") == 0)
 		{
-			std::vector<std::wstring> path = Tokenize(parent->path, L"\\");
-			if (path.size() < 2)
-			{
-				parent->path.clear();
-			}
-			else
-			{
-				parent->path.clear();
-				for (size_t i = 0; i < path.size() - 1; ++i)
-				{
-					parent->path += path[i];
-					parent->path += L"\\";
-				}
-			}
+			GetParentFolder(parent->path);
 
 			parent->indexOffset = 0;
 			parent->needsUpdating = true;
 			parent->needsIcons = true;
+		}
+		else
+		{
+			// Special commands that allow for a user defined file/folder
+			std::wstring arg = args;
+			std::wstring::size_type pos = arg.find_first_of(L' ');
+			if (pos != std::wstring::npos)
+			{
+				arg = arg.substr(pos);
+				if (!arg.empty())
+				{
+					arg.erase(0, 1);	// Skip the space
+
+					if (_wcsnicmp(args, L"CONTEXTMENU", 11) == 0)
+					{
+						if (!ShowContextMenu(parent->hwnd, arg))
+						{
+							RmLogF(parent->rm, LOG_ERROR, L"Cannot open context menu for \"%s\"", arg.c_str());
+						}
+					}
+					else if (_wcsnicmp(args, L"PROPERTIES", 10) == 0)
+					{
+						runFile(arg, L"", true);
+					}
+					else
+					{
+						RmLogF(parent->rm, LOG_WARNING, L"!CommandMeasure: Unknown path: %s", arg.c_str());
+					}
+				}
+				else
+				{
+					RmLogF(parent->rm, LOG_WARNING, L"!CommandMeasure: Unknown command: %s", args);
+				}
+			}
 		}
 
 		LeaveCriticalSection(&g_CriticalSection);
 		return;
 	}
 
+	// Child only commands
 	int trueIndex = child->ignoreCount ? child->index : ((child->index % parent->count) + parent->indexOffset);
 	if (!parent->files.empty() && trueIndex >= 0 && trueIndex < (int)parent->files.size())
 	{
 		if (_wcsicmp(args, L"OPEN") == 0)
 		{
-			runFile(parent->files[trueIndex].fileName, parent->files[trueIndex].path);
+			runFile(parent->files[trueIndex].fileName, parent->files[trueIndex].path, false);
+		}
+		else if (_wcsicmp(args, L"CONTEXTMENU") == 0)
+		{
+			std::wstring path = parent->files[trueIndex].path;
+			std::wstring fileName = parent->files[trueIndex].fileName;
+
+			if (_wcsicmp(fileName.c_str(), L"..") == 0)
+			{
+				path = parent->path;
+				GetParentFolder(path);
+				fileName = L"";
+			}
+
+			path.append(fileName);
+
+			if (!ShowContextMenu(parent->hwnd, path))
+			{
+				RmLogF(parent->rm, LOG_ERROR, L"Cannot open context menu for \"%s\"", path.c_str());
+			}
+		}
+		else if (_wcsicmp(args, L"PROPERTIES") == 0)
+		{
+			std::wstring path = parent->files[trueIndex].path;
+			std::wstring fileName = parent->files[trueIndex].fileName;
+
+			if (_wcsicmp(fileName.c_str(), L"..") == 0)
+			{
+				path = parent->path;
+				GetParentFolder(path);
+				fileName = L"";
+			}
+
+			runFile(fileName, path, true);
 		}
 		else if (parent->recursiveType != RECURSIVE_FULL && _wcsicmp(args, L"FOLLOWPATH") == 0)
 		{
 			if (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0)
 			{
-				std::vector<std::wstring> path = Tokenize(parent->path, L"\\");
-				if (path.size() < 2)
-				{
-					parent->path.clear();
-				}
-				else
-				{
-					parent->path.clear();
-					for (size_t i = 0; i < path.size() - 1; ++i)
-					{
-						parent->path += path[i];
-						parent->path += L"\\";
-					}
-				}
+				GetParentFolder(parent->path);
 
 				parent->indexOffset = 0;
 				parent->needsUpdating = true;
@@ -643,8 +723,12 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 			}
 			else
 			{
-				runFile(parent->files[trueIndex].fileName, parent->files[trueIndex].path);
+				runFile(parent->files[trueIndex].fileName, parent->files[trueIndex].path, false);
 			}
+		}
+		else
+		{
+			RmLogF(parent->rm, LOG_WARNING, L"!CommandMeasure: Unknown command: %s", args);
 		}
 
 		LeaveCriticalSection(&g_CriticalSection);
@@ -652,7 +736,7 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 	}
 
 	LeaveCriticalSection(&g_CriticalSection);
-	RmLog(LOG_ERROR, L"FileView.dll: Invalid command");
+	RmLogF(parent->rm, LOG_WARNING, L"!CommandMeasure: Unknown command: %s", args);
 }
 
 PLUGIN_EXPORT void Finalize(void* data)

@@ -114,6 +114,8 @@ struct ParentMeasure
 	int indexOffset;
 	HANDLE thread;
 
+	void* rm;
+	HWND hwnd;
 	void* skin;
 	LPCWSTR name;
 	ChildMeasure* ownerChild;
@@ -139,6 +141,8 @@ struct ParentMeasure
 		skin(nullptr),
 		name(),
 		ownerChild(nullptr),
+		rm(),
+		hwnd(),
 		thread(nullptr),
 		fileCount(0),
 		folderCount(0),
@@ -186,6 +190,81 @@ std::vector<std::wstring> Tokenize(const std::wstring& str, const std::wstring& 
 	}
 
 	return tokens;
+}
+
+void GetParentFolder(std::wstring& path)
+{
+	std::vector<std::wstring> tokens = Tokenize(path, L"\\");
+	if (tokens.size() < 2)
+	{
+		path.clear();
+	}
+	else
+	{
+		path.clear();
+		for (size_t i = 0; i < tokens.size() - 1; ++i)
+		{
+			path += tokens[i];
+			path += L"\\";
+		}
+	}
+}
+
+bool ShowContextMenu(HWND hwnd, std::wstring& path)
+{
+	POINT pos;
+	GetCursorPos(&pos);
+
+	// If the mouse is outside of the boundaries of
+	// the skin, use the upper-left corner of the skin
+	RECT rect;
+	GetWindowRect(hwnd, &rect);
+	if (pos.x < rect.left || pos.x > rect.right ||
+		pos.y < rect.top || pos.y > rect.bottom)
+	{
+		pos.x = rect.left;
+		pos.y = rect.top;
+	}
+
+	ITEMIDLIST* id = nullptr;
+	HRESULT result = SHParseDisplayName(path.c_str(), nullptr, &id, 0, nullptr);
+	if (!SUCCEEDED(result) || !id)
+		return false;
+
+	IShellFolder* iFolder = nullptr;
+	LPCITEMIDLIST idChild = nullptr;
+	result = SHBindToParent(id, IID_IShellFolder, (void**)&iFolder, &idChild);
+	if (!SUCCEEDED(result) || !iFolder)
+		return false;
+
+	IContextMenu* iMenu = nullptr;
+	result = iFolder->GetUIObjectOf(hwnd, 1, (const ITEMIDLIST **)&idChild, IID_IContextMenu, nullptr, (void**)&iMenu);
+	if (!SUCCEEDED(result) || !iFolder)
+		return false;
+
+	HMENU hMenu = CreatePopupMenu();
+	if (!hMenu)
+		return false;
+
+	if (SUCCEEDED(iMenu->QueryContextMenu(hMenu, 0, 1, 0x7FFF, CMF_NORMAL)))
+	{
+		int iCmd = TrackPopupMenuEx(hMenu, TPM_RETURNCMD, pos.x, pos.y, hwnd, NULL);
+		if (iCmd > 0)
+		{
+			CMINVOKECOMMANDINFOEX info = { 0 };
+			info.cbSize = sizeof(info);
+			info.fMask = CMIC_MASK_UNICODE | CMIC_MASK_ASYNCOK;
+			info.hwnd = hwnd;
+			info.lpVerb = MAKEINTRESOURCEA(iCmd - 1);
+			info.lpVerbW = MAKEINTRESOURCEW(iCmd - 1);
+			info.nShow = SW_SHOWNORMAL;
+
+			iMenu->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
+		}
+	}
+
+	DestroyMenu(hMenu);
+	return true;
 }
 
 /*std::wstring UINT64_To_String(UINT64 value)

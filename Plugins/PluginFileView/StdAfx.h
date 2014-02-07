@@ -26,6 +26,7 @@
 #include <process.h>
 #include <Shellapi.h>
 #include <Shlwapi.h>
+#include <ShlObj.h>
 
 // STL
 #include <string>
