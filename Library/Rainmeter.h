@@ -166,6 +166,7 @@ public:
 
 	bool IsMenuActive() { return m_ContextMenu.IsMenuActive(); }
 	void ShowContextMenu(POINT pos, MeterWindow* mw) { return m_ContextMenu.ShowMenu(pos, mw); }
+	void ShowSkinCustomContextMenu(POINT pos, MeterWindow* mw) { return m_ContextMenu.ShowSkinCustomMenu(pos, mw); }
 
 	const std::wstring& GetTrayExecuteR() { return m_TrayExecuteR; }
 	const std::wstring& GetTrayExecuteM() { return m_TrayExecuteM; }

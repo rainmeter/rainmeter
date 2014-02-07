@@ -170,6 +170,21 @@ void ContextMenu::ShowMenu(POINT pos, MeterWindow* meterWindow)
 	m_MenuActive = false;
 }
 
+void ContextMenu::ShowSkinCustomMenu(POINT pos, MeterWindow* meterWindow)
+{
+	if (m_MenuActive || meterWindow->IsClosing()) return;
+
+	m_MenuActive = true;
+
+	HMENU menu = CreatePopupMenu();
+	AppendSkinCustomMenu(meterWindow, 0, menu, true);
+
+	DisplayMenu(pos, menu, meterWindow->GetWindow());
+	DestroyMenu(menu);
+
+	m_MenuActive = false;
+}
+
 void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 {
 	// Set the window to foreground
@@ -428,12 +443,13 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 		}
 	}
 
-	AppendSkinCustomMenu(meterWindow, index, skinMenu);
+	AppendSkinCustomMenu(meterWindow, index, skinMenu, false);
 
 	return skinMenu;
 }
 
-void ContextMenu::AppendSkinCustomMenu(MeterWindow* meterWindow, int index, HMENU menu)
+void ContextMenu::AppendSkinCustomMenu(
+	MeterWindow* meterWindow, int index, HMENU menu, bool standaloneMenu)
 {
 	// Add custom actions to the context menu
 	std::wstring contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextTitle", L"");
@@ -477,7 +493,7 @@ void ContextMenu::AppendSkinCustomMenu(MeterWindow* meterWindow, int index, HMEN
 
 	// Build a sub-menu if more than three items
 	const size_t titleSize = cTitles.size();
-	if (titleSize <= 3)
+	if (titleSize <= 3 || standaloneMenu)
 	{
 		size_t position = 0;
 		for (size_t i = 0; i < titleSize; ++i)
@@ -496,7 +512,7 @@ void ContextMenu::AppendSkinCustomMenu(MeterWindow* meterWindow, int index, HMEN
 			++position;
 		}
 
-		if (position != 0)
+		if (position != 0 && !standaloneMenu)
 		{
 			InsertMenu(menu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, L"Custom skin actions");
 			InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);

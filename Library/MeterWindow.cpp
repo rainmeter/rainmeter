@@ -980,6 +980,10 @@ void MeterWindow::DoBang(Bang bang, const std::vector<std::wstring>& args)
 	case Bang::SetOptionGroup:
 		SetOption(args[0], args[1], args[2], true);
 		break;
+
+	case Bang::SkinCustomMenu:
+		Rainmeter::GetInstance().ShowSkinCustomContextMenu(System::GetCursorPosition(), this);
+		break;
 	}
 }
 

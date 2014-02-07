@@ -100,7 +100,8 @@ const BangInfo s_Bangs[] =
 	{ Bang::PauseMeasureGroup, L"PauseMeasureGroup", 1 },
 	{ Bang::UnpauseMeasureGroup, L"UnpauseMeasureGroup", 1 },
 	{ Bang::TogglePauseMeasureGroup, L"TogglePauseMeasureGroup", 1 },
-	{ Bang::UpdateMeasureGroup, L"UpdateMeasureGroup", 1 }
+	{ Bang::UpdateMeasureGroup, L"UpdateMeasureGroup", 1 },
+	{ Bang::SkinCustomMenu, L"SkinCustomMenu", 0 }
 };
 
 // Bangs that are to be handled with DoGroupBang().

@@ -106,6 +106,7 @@ enum class Bang
 	About,
 	Manage,
 	SkinMenu,
+	SkinCustomMenu,
 	TrayMenu,
 	ResetStats,
 	Log,
