@@ -17,6 +17,7 @@
 */
 
 #include "StdAfx.h"
+#include <wrl/client.h>
 
 enum MeasureType
 {
@@ -231,13 +232,13 @@ bool ShowContextMenu(HWND hwnd, std::wstring& path)
 	if (!SUCCEEDED(result) || !id)
 		return false;
 
-	IShellFolder* iFolder = nullptr;
+	Microsoft::WRL::ComPtr<IShellFolder> iFolder = nullptr;
 	LPCITEMIDLIST idChild = nullptr;
 	result = SHBindToParent(id, IID_IShellFolder, (void**)&iFolder, &idChild);
 	if (!SUCCEEDED(result) || !iFolder)
 		return false;
 
-	IContextMenu* iMenu = nullptr;
+	Microsoft::WRL::ComPtr<IContextMenu> iMenu = nullptr;
 	result = iFolder->GetUIObjectOf(hwnd, 1, (const ITEMIDLIST **)&idChild, IID_IContextMenu, nullptr, (void**)&iMenu);
 	if (!SUCCEEDED(result) || !iFolder)
 		return false;
