@@ -1,20 +1,31 @@
 ## Building Rainmeter
 
-Rainmeter can be built using any (including free) version of Visual Stuido 2013. The free "Visual Studio Express 2013 for Windows Desktop" version can be downloaded [here](http://www.visualstudio.com/downloads/download-visual-studio-vs).
+### Get the source code
 
-After Visual Studio has been installed and updated, open Rainmeter.sln to build.
+Use <a href="http://git-scm.com">Git</a> to clone the repository:
+
+    git clone https://github.com/rainmeter/rainmeter.git
+
+Alternatively, download the repository contents as a [ZIP archive](https://github.com/rainmeter/rainmeter/archive/master.zip).
+
+
+### Building with Visual Studio
+
+Rainmeter can be built using any version of Visual Studio 2013. If you don't already have VS2013, you can download the free "Visual Studio Express 2013 for Windows Desktop" version [here](http://www.visualstudio.com/downloads/download-visual-studio-vs).
+
+After Visual Studio has been installed and updated, open Rainmeter.sln at the root of the repository to build.
 
 
 ### Building the installer
 
-To build the full Rainmeter installer, run Build.bat. If you receive "not found" errors, open Build.bat and change the `set=` lines at the top to match your system.
+First, download and install <a href="https://code.google.com/p/unsis/downloads/list">NSIS Unicode</a> (download the Unicode version, not the ANSI version).
 
-To sign the installer and the Rainmeter executables, create a Certificate.bat file alongside Build.bat with the following contents:
+Now you can simply run the <b>Build.bat</b> batch file in the Build folder of your local repository. If you see any "not found" errors, check that the paths in the `set` commands at the top of the file match your environment. To build the release (non-beta) installer, use `Build.bat RELEASE`.
+
+To digitally sign the installer and the Rainmeter executables, obtain a Windows code signing certificate and create a Certificate.bat file alongside Build.bat with the following contents:
 
     set CERTFILE=/path/to/PFXcert.p12
     set CERTKEY=certpassword
-
-Use `Build.bat RELEASE` to build a non-beta installer.
 
 
 ### Building old versions
