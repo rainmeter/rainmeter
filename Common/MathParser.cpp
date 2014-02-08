@@ -21,6 +21,8 @@
 #include "StdAfx.h"
 #include "MathParser.h"
 
+#include <string>
+
 namespace MathParser {
 
 static const double M_E = 2.7182818284590452354;

@@ -19,6 +19,9 @@
 #ifndef __STDAFX_H__
 #define __STDAFX_H__
 
+// Common is used by projects that don't link to msvcpNNN.dll at all so this header should include
+// only C compatible headers.
+
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 
@@ -34,11 +37,8 @@
 #include <wincodec.h>
 #include <wrl/client.h>
 
-#include <cassert>
-#include <cmath>
-#include <cstdint>
-#include <memory>
-#include <string>
-#include <vector>
+#include <assert.h>
+#include <math.h>
+#include <stdint.h>
 
 #endif

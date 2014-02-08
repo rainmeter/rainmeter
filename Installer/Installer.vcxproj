@@ -26,9 +26,13 @@
     </Manifest>
     <ClCompile>
       <DisableSpecificWarnings>4800;4996</DisableSpecificWarnings>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Common\ControlTemplate.cpp" />
+    <ClCompile Include="..\Common\Dialog.cpp" />
+    <ClCompile Include="..\Common\Platform.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="DialogInstall.cpp" />
     <ClCompile Include="Install.cpp" />
@@ -73,11 +77,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Installer.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Common\Common.vcxproj">
-      <Project>{19312085-aa51-4bd6-be92-4b6098cca539}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -16,6 +16,9 @@
     <Filter Include="lzma">
       <UniqueIdentifier>{9588f54f-9188-40b7-b750-260f5f514ee5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{6acda1fa-eb7e-490b-ae49-ed7ff8b2534d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp">
@@ -77,6 +80,15 @@
     </ClCompile>
     <ClCompile Include="DialogInstall.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Platform.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\ControlTemplate.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Common\Dialog.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
