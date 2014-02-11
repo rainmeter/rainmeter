@@ -143,6 +143,7 @@ private:
 			Id_VersionLabel,
 			Id_HomeLink,
 			Id_LicenseLink,
+			Id_WinVerLabel,
 			Id_PathLabel,
 			Id_IniFileLabel,
 			Id_SkinPathLabel,

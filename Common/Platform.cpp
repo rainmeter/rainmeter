@@ -56,4 +56,110 @@ Version GetVersion()
 	return s_Version;
 }
 
+LPCWSTR GetPlatformName()
+{
+	OSVERSIONINFOEX osvi = { sizeof(OSVERSIONINFOEX) };
+	if (GetVersionEx((OSVERSIONINFO*)&osvi))
+	{
+		if (osvi.dwMajorVersion == 5)
+		{
+			if (osvi.dwMinorVersion == 2)
+			{
+				return L"Windows 2003";
+			}
+			else if (osvi.dwMinorVersion == 1)
+			{
+				return L"Windows XP";
+			}
+		}
+		else
+		{
+			if (osvi.dwMinorVersion == 3 && osvi.wProductType == VER_NT_WORKSTATION)
+			{
+				return L"Windows 8.1";
+			}
+			else if (osvi.dwMinorVersion == 3 && osvi.wProductType != VER_NT_WORKSTATION)
+			{
+				return L"Windows Server 2012 R2";
+			}
+			else if (osvi.dwMinorVersion == 2 && osvi.wProductType == VER_NT_WORKSTATION)
+			{
+				return L"Windows 8";
+			}
+			else if (osvi.dwMinorVersion == 2 && osvi.wProductType != VER_NT_WORKSTATION)
+			{
+				return L"Windows Server 2012";
+			}
+			else if (osvi.dwMinorVersion == 1 && osvi.wProductType == VER_NT_WORKSTATION)
+			{
+				return L"Windows 7";
+			}
+			else if (osvi.dwMinorVersion == 1 && osvi.wProductType != VER_NT_WORKSTATION)
+			{
+				return L"Windows Server 2008 R2";
+			}
+			else if (osvi.dwMinorVersion == 0 && osvi.wProductType == VER_NT_WORKSTATION)
+			{
+				return L"Windows Vista";
+			}
+			else if (osvi.dwMinorVersion == 0 && osvi.wProductType != VER_NT_WORKSTATION)
+			{
+				return L"Windows Server 2008";
+			}
+		}
+	}
+
+	return L"Unknown";
+}
+
+/*
+** Returns |true| if the OS architecture can be found (either 32-bit or 64-bit),
+**  or |false| if it cannot be determined.
+**
+** Note: IsWow64Process was introduced with Windows XP SP2.
+*/
+bool GetPlatformBit(bool& is64Bit)
+{
+#if _WIN64
+
+	is64Bit = true;
+	return true;
+
+#elif _WIN32
+
+	BOOL isWow64 = FALSE;
+
+	LPFN_ISWOW64PROCESS fnIsWow64Process = 
+		(LPFN_ISWOW64PROCESS)GetProcAddress(GetModuleHandle(L"kernel32"), "IsWow64Process");
+
+	if (fnIsWow64Process)
+	{
+		if (!fnIsWow64Process(GetCurrentProcess(), &isWow64))
+		{
+			return false;
+		}
+
+		if (isWow64)
+		{
+			is64Bit = true;
+		}
+		else
+		{
+			is64Bit = false;
+		}
+
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+
+#else
+
+	return false;
+
+#endif
+}
+
 }  // namespace Platform

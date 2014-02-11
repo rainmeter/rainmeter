@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include "../API/RainmeterAPI.h"
 #include "../../Library/Export.h"
+#include"../../Common/Platform.h"
 
 typedef struct
 {
@@ -73,7 +74,6 @@ struct MeasureData
 	MeasureData() : type(), data() {}
 };
 
-LPCWSTR GetPlatformName();
 NLM_CONNECTIVITY GetNetworkConnectivity();
 BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
 
@@ -261,7 +261,7 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		return sBuffer;
 
 	case MEASURE_OS_VERSION:
-		return GetPlatformName();
+		return Platform::GetPlatformName();
 
 	case MEASURE_ADAPTER_DESCRIPTION:
 		if (ERROR_SUCCESS == GetAdaptersInfo((IP_ADAPTER_INFO*)tmpBuffer, &tmpBufferLen))
@@ -466,62 +466,6 @@ PLUGIN_EXPORT void Finalize(void* data)
 {
 	MeasureData* measure = (MeasureData*)data;
 	delete measure;
-}
-
-LPCWSTR GetPlatformName()
-{
-	OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
-	if (GetVersionEx((OSVERSIONINFO*)&osvi))
-	{
-		if (osvi.dwMajorVersion == 5)
-		{
-			if (osvi.dwMinorVersion == 2)
-			{
-				return L"Windows 2003";
-			}
-			else if (osvi.dwMinorVersion == 1)
-			{
-				return L"Windows XP";
-			}
-		}
-		else
-		{
-			if (osvi.dwMinorVersion == 3 && osvi.wProductType == VER_NT_WORKSTATION)
-			{
-				return L"Windows 8.1";
-			}
-			else if (osvi.dwMinorVersion == 3 && osvi.wProductType != VER_NT_WORKSTATION)
-			{
-				return L"Windows Server 2012 R2";
-			}
-			else if (osvi.dwMinorVersion == 2 && osvi.wProductType == VER_NT_WORKSTATION)
-			{
-				return L"Windows 8";
-			}
-			else if (osvi.dwMinorVersion == 2 && osvi.wProductType != VER_NT_WORKSTATION)
-			{
-				return L"Windows Server 2012";
-			}
-			else if (osvi.dwMinorVersion == 1 && osvi.wProductType == VER_NT_WORKSTATION)
-			{
-				return L"Windows 7";
-			}
-			else if (osvi.dwMinorVersion == 1 && osvi.wProductType != VER_NT_WORKSTATION)
-			{
-				return L"Windows Server 2008 R2";
-			}
-			else if (osvi.dwMinorVersion == 0 && osvi.wProductType == VER_NT_WORKSTATION)
-			{
-				return L"Windows Vista";
-			}
-			else if (osvi.dwMinorVersion == 0 && osvi.wProductType != VER_NT_WORKSTATION)
-			{
-				return L"Windows Server 2008";
-			}
-		}
-	}
-
-	return L"Unknown";
 }
 
 NLM_CONNECTIVITY GetNetworkConnectivity()

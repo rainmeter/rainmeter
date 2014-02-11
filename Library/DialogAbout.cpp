@@ -25,6 +25,7 @@
 #include "resource.h"
 #include "DialogAbout.h"
 #include "../Version.h"
+#include "../Common/Platform.h"
 
 WINDOWPLACEMENT DialogAbout::c_WindowPlacement = {0};
 DialogAbout* DialogAbout::c_Dialog = nullptr;
@@ -1206,17 +1207,20 @@ void DialogAbout::TabVersion::Create(HWND owner)
 		CT_LINKLABEL(Id_LicenseLink, ID_STR_COPYRIGHTNOTICE,
 			28, 26, 300, 9,
 			WS_VISIBLE, 0),
-		CT_LABEL(Id_PathLabel, 0,
+		CT_LABEL(Id_WinVerLabel, 0,
 			0, 43, 360, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
-		CT_LABEL(Id_IniFileLabel, 0,
+		CT_LABEL(Id_PathLabel, 0,
 			0, 56, 360, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
-		CT_LABEL(Id_SkinPathLabel, 0,
+		CT_LABEL(Id_IniFileLabel, 0,
 			0, 69, 360, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
+		CT_LABEL(Id_SkinPathLabel, 0,
+			0, 82, 360, 9,
+			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_BUTTON(Id_CopyButton, ID_STR_COPYTOCLIPBOARD,
-			0, 85, buttonWidth + 25, 14,
+			0, 98, buttonWidth + 25, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
@@ -1234,8 +1238,21 @@ void DialogAbout::TabVersion::Initialize()
 	_snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
 	SetWindowText(item, tmpSz);
 
+	item = GetControl(Id_WinVerLabel);
+	std::wstring text = Platform::GetPlatformName();
+	bool is64Bit = false;
+	if (Platform::GetPlatformBit(is64Bit))
+	{
+		text.append(is64Bit ? L" (64-bit)" : L" (32-bit)");
+	}
+	else
+	{
+		text.append(L" (???-bit)");
+	}
+	SetWindowText(item, text.c_str());
+
 	item = GetControl(Id_PathLabel);
-	std::wstring text = L"Path: " + GetRainmeter().GetPath();
+	text = L"Path: " + GetRainmeter().GetPath();
 	SetWindowText(item, text.c_str());
 
 	item = GetControl(Id_IniFileLabel);

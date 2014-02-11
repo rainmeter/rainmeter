@@ -21,6 +21,8 @@
 
 namespace Platform {
 
+typedef BOOL(WINAPI * LPFN_ISWOW64PROCESS)(HANDLE hProcess, PBOOL Wow64Process);
+
 enum Version
 {
 	WinXP,
@@ -30,6 +32,8 @@ enum Version
 };
 
 Version GetVersion();
+LPCWSTR GetPlatformName();
+bool GetPlatformBit(bool& is64Bit);
 
 #define RM_PLATFORM_DECLARE_HELPERS(ver) \
 	inline bool IsAtMost ## ver() { return GetVersion() <= ver; } \
