@@ -1243,11 +1243,11 @@ void DialogAbout::TabVersion::Initialize()
 	bool is64Bit = false;
 	if (Platform::GetPlatformBit(is64Bit))
 	{
-		text.append(is64Bit ? L" (64-bit)" : L" (32-bit)");
+		text += (is64Bit) ? L" (64-bit)" : L" (32-bit)";
 	}
 	else
 	{
-		text.append(L" (???-bit)");
+		text += L" (???-bit)";
 	}
 	SetWindowText(item, text.c_str());
 
