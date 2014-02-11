@@ -1298,6 +1298,17 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 			WCHAR tmpSz[64];
 			int len = _snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
 			std::wstring text(tmpSz, len);
+			text += L'\n';
+			text += Platform::GetPlatformName();
+			bool is64Bit = false;
+			if (Platform::GetPlatformBit(is64Bit))
+			{
+				text += (is64Bit) ? L" (64-bit)" : L" (32-bit)";
+			}
+			else
+			{
+				text += L" (???-bit)";
+			}
 			text += L"\nPath: ";
 			text += GetRainmeter().GetPath();
 			text += L"\nIniFile: ";
