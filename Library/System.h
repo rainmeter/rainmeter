@@ -21,7 +21,6 @@
 
 #include <windows.h>
 #include <vector>
-#include "../Common/Platform.h"
 
 struct MonitorInfo
 {

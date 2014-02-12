@@ -36,6 +36,7 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 #include <Wininet.h>
+#include <VersionHelpers.h>
 
 // STL
 #include <map>

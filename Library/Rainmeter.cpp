@@ -1195,7 +1195,7 @@ void Rainmeter::ScanForLayouts()
 
 	hSearch = FindFirstFileEx(
 		folders.c_str(),
-		(Platform::IsAtLeastWin7()) ? FindExInfoBasic : FindExInfoStandard,
+		(IsWindows7OrGreater()) ? FindExInfoBasic : FindExInfoStandard,
 		&fileData,
 		FindExSearchNameMatch,
 		nullptr,

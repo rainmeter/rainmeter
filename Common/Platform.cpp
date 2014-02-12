@@ -21,41 +21,6 @@
 
 namespace Platform {
 
-Version GetVersion()
-{
-	static Version s_Version = ([]()
-	{
-		OSVERSIONINFOEX osvi = {sizeof(OSVERSIONINFOEX)};
-		if (GetVersionEx((OSVERSIONINFO*)&osvi))
-		{
-			switch (osvi.dwMajorVersion)
-			{
-			case 5:
-				// Not checking for osvi.dwMinorVersion >= 1 because Rainmeter won't run on pre-XP.
-				return Version::WinXP;
-
-			case 6:
-				switch (osvi.dwMinorVersion)
-				{
-				case 0:
-					return Version::WinVista;  // Vista, Server 2008
-
-				case 1:
-					return Version::Win7;  // 7, Server 2008R2
-
-				default:
-					return Version::Win8;  // 8, Server 2012
-				}
-				break;
-			}
-		}
-
-		return Version::Win8;  // newer OS
-	})();
-
-	return s_Version;
-}
-
 LPCWSTR GetPlatformName()
 {
 	OSVERSIONINFOEX osvi = { sizeof(OSVERSIONINFOEX) };

@@ -689,7 +689,7 @@ void MeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
 */
 void MeasureNet::InitializeStatic()
 {
-	if (Platform::IsAtLeastWinVista())
+	if (IsWindowsVistaOrGreater())
 	{
 		HMODULE IpHlpApiLibrary = GetModuleHandle(L"IpHlpApi.dll");
 		if (IpHlpApiLibrary)

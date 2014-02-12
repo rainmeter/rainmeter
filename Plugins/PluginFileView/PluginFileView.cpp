@@ -17,7 +17,6 @@
 */
 
 #include "PluginFileView.h"
-#include "../../Common/Platform.h"
 #include "../../Common/StringUtil.h"
 
 #define MAX_LINE_LENGTH 4096
@@ -82,7 +81,7 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	{
 		std::wstring dir = RmReplaceVariables(rm, L"%WINDIR%");
 		dir.append(L"\\system32\\control.exe");
-		dir.append(Platform::IsAtLeastWinVista() ? L" system" : L" sysdm.cpl");
+		dir.append(IsWindowsVistaOrGreater() ? L" system" : L" sysdm.cpl");
 
 		g_SysProperties = StringUtil::Narrow(dir);
 	}

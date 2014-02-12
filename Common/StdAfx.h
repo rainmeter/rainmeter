@@ -36,6 +36,7 @@
 #include <Uxtheme.h>
 #include <wincodec.h>
 #include <wrl/client.h>
+#include <VersionHelpers.h>
 
 #include <assert.h>
 #include <math.h>

@@ -18,7 +18,6 @@
 
 #include "StdAfx.h"
 #include "../Common/PathUtil.h"
-#include "../Common/Platform.h"
 #include "SkinRegistry.h"
 #include "resource.h"
 
@@ -152,7 +151,7 @@ int SkinRegistry::PopulateRecursive(const std::wstring& path, std::wstring base,
 
 	hSearch = FindFirstFileEx(
 		filter.c_str(),
-		(Platform::IsAtLeastWin7()) ? FindExInfoBasic : FindExInfoStandard,
+		(IsWindows7OrGreater()) ? FindExInfoBasic : FindExInfoStandard,
 		&fileData,
 		FindExSearchNameMatch,
 		nullptr,

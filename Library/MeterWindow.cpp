@@ -142,7 +142,7 @@ MeterWindow::MeterWindow(const std::wstring& folderPath, const std::wstring& fil
 	m_FontCollection(),
 	m_ToolTipHidden(false)
 {
-	if (!c_DwmInstance && Platform::IsAtLeastWinVista())
+	if (!c_DwmInstance && IsWindowsVistaOrGreater())
 	{
 		c_DwmInstance = System::RmLoadLibrary(L"dwmapi.dll");
 		if (c_DwmInstance)
@@ -1040,7 +1040,7 @@ void MeterWindow::HideBlur()
 */
 void MeterWindow::ResizeBlur(const std::wstring& arg, int mode)
 {
-	if (Platform::IsAtLeastWinVista())
+	if (IsWindowsVistaOrGreater())
 	{
 		WCHAR* parseSz = _wcsdup(arg.c_str());
 		int type, x, y, w = 0, h = 0;
@@ -2149,7 +2149,7 @@ bool MeterWindow::ReadSkin()
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
 	m_ToolTipHidden = m_Parser.ReadBool(L"Rainmeter", L"ToolTipHidden", false);
 
-	if (Platform::IsAtLeastWinVista())
+	if (IsWindowsVistaOrGreater())
 	{
 		if (m_Parser.ReadBool(L"Rainmeter", L"Blur", false))
 		{
@@ -2190,7 +2190,7 @@ bool MeterWindow::ReadSkin()
 
 		HANDLE find = FindFirstFileEx(
 			resourcePath.c_str(),
-			(Platform::IsAtLeastWin7()) ? FindExInfoBasic : FindExInfoStandard,
+			(IsWindows7OrGreater()) ? FindExInfoBasic : FindExInfoStandard,
 			&fd,
 			FindExSearchNameMatch,
 			nullptr,

@@ -263,7 +263,7 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = m_TabSkins.GetControl(TabSkins::Id_FileLabel);
 	SendMessage(item, WM_SETFONT, (WPARAM)m_FontBold, 0);
 
-	if (Platform::IsAtLeastWinVista())
+	if (IsWindowsVistaOrGreater())
 	{
 		// Use arrows instead of plus/minus in the tree for Vista+
 		item = m_TabSkins.GetControl(TabSkins::Id_SkinsTreeView);
@@ -1948,7 +1948,7 @@ void DialogManage::TabSettings::Initialize()
 	bool iconEnabled = GetRainmeter().GetTrayWindow()->IsTrayIconEnabled();
 	Button_SetCheck(GetControl(Id_ShowTrayIconCheckBox), iconEnabled);
 
-	if (Platform::IsAtLeastWinVista())
+	if (IsWindowsVistaOrGreater())
 	{
 		Button_SetCheck(GetControl(Id_UseD2DCheckBox), GetRainmeter().GetUseD2D());
 	}

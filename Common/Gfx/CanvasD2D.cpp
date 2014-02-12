@@ -17,7 +17,6 @@
 */
 
 #include "StdAfx.h"
-#include "../Platform.h"
 #include "CanvasD2D.h"
 #include "TextFormatD2D.h"
 #include "Util/DWriteFontCollectionLoader.h"
@@ -69,7 +68,7 @@ bool CanvasD2D::Initialize()
 	++c_Instances;
 	if (c_Instances == 1)
 	{
-		if (!Platform::IsAtLeastWin7()) return false;
+		if (!IsWindows7OrGreater()) return false;
 
 		D2D1_FACTORY_OPTIONS fo = {};
 #ifdef _DEBUG

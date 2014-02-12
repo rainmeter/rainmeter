@@ -1090,7 +1090,7 @@ void System::ResetWorkingDirectory()
 void System::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 	typedef BOOL (WINAPI * FPINITCRITEX)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
-	static FPINITCRITEX InitializeCriticalSectionEx = Platform::IsAtLeastWinVista() ?
+	static FPINITCRITEX InitializeCriticalSectionEx = IsWindowsVistaOrGreater() ?
 		(FPINITCRITEX)GetProcAddress(GetModuleHandle(L"Kernel32"), "InitializeCriticalSectionEx") : nullptr;
 
 	if (InitializeCriticalSectionEx)
@@ -1177,7 +1177,7 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 						{
 							wallStyle = L"2";
 						}
-						else if (Platform::IsAtLeastWin7())
+						else if (IsWindows7OrGreater())
 						{
 							if (_wcsicmp(option, L"FIT") == 0)
 							{

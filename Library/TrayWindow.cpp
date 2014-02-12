@@ -307,7 +307,7 @@ void TrayWindow::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, cons
 		wcsncpy_s(nid.szInfoTitle, title, _TRUNCATE);
 		wcsncpy_s(nid.szInfo, text, _TRUNCATE);
 
-		if (Platform::IsAtLeastWin7())
+		if (IsWindows7OrGreater())
 		{
 			nid.dwInfoFlags |= NIIF_LARGE_ICON;
 			nid.hBalloonIcon = GetIcon(IDI_RAINMETER, true);

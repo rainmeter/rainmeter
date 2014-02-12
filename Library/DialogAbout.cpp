@@ -261,7 +261,7 @@ INT_PTR DialogAbout::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = GetControl(Id_CloseButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
 
-	if (Platform::IsAtLeastWinVista())
+	if (IsWindowsVistaOrGreater())
 	{
 		item = m_TabLog.GetControl(TabLog::Id_ItemsListView);
 		SetWindowTheme(item, L"explorer", nullptr);
@@ -683,7 +683,7 @@ void DialogAbout::TabSkins::Initialize()
 	LVGROUP lvg;
 	lvg.cbSize = sizeof(LVGROUP);
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
-	lvg.state = (Platform::IsAtLeastWinVista()) ? LVGS_COLLAPSIBLE : LVGS_NORMAL;
+	lvg.state = (IsWindowsVistaOrGreater()) ? LVGS_COLLAPSIBLE : LVGS_NORMAL;
 	lvg.iGroupId = 0;
 	lvg.pszHeader = GetString(ID_STR_MEASURES);
 	ListView_InsertGroup(item, 0, &lvg);

@@ -27,6 +27,7 @@
 #include <Shellapi.h>
 #include <Shlwapi.h>
 #include <ShlObj.h>
+#include <VersionHelpers.h>
 
 // STL
 #include <string>

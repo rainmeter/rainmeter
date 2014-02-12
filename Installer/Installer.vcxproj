@@ -32,7 +32,6 @@
   <ItemGroup>
     <ClCompile Include="..\Common\ControlTemplate.cpp" />
     <ClCompile Include="..\Common\Dialog.cpp" />
-    <ClCompile Include="..\Common\Platform.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="DialogInstall.cpp" />
     <ClCompile Include="Install.cpp" />

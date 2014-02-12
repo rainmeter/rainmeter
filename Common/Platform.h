@@ -23,27 +23,8 @@ namespace Platform {
 
 typedef BOOL(WINAPI * LPFN_ISWOW64PROCESS)(HANDLE hProcess, PBOOL Wow64Process);
 
-enum Version
-{
-	WinXP,
-	WinVista,
-	Win7,
-	Win8
-};
-
-Version GetVersion();
 LPCWSTR GetPlatformName();
 bool GetPlatformBit(bool& is64Bit);
-
-#define RM_PLATFORM_DECLARE_HELPERS(ver) \
-	inline bool IsAtMost ## ver() { return GetVersion() <= ver; } \
-	inline bool Is ## ver() { return GetVersion() == ver; } \
-	inline bool IsAtLeast ## ver() { return GetVersion() >= ver; } \
-
-RM_PLATFORM_DECLARE_HELPERS(WinXP)
-RM_PLATFORM_DECLARE_HELPERS(WinVista)
-RM_PLATFORM_DECLARE_HELPERS(Win7)
-RM_PLATFORM_DECLARE_HELPERS(Win8)
 
 }  // namespace Platform
 

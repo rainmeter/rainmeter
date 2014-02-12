@@ -20,7 +20,6 @@
 #include "Canvas.h"
 #include "CanvasD2D.h"
 #include "CanvasGDIP.h"
-#include "../Platform.h"
 
 namespace Gfx {
 
@@ -41,7 +40,7 @@ Canvas* Canvas::Create(Renderer renderer)
 	{
 		return new CanvasGDIP();
 	}
-	else if (renderer == Renderer::D2D && Platform::IsAtLeastWin7())
+	else if (renderer == Renderer::D2D && IsWindows7OrGreater())
 	{
 		if (CanvasD2D::Initialize())
 		{

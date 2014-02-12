@@ -22,7 +22,6 @@
 #include "Resource.h"
 #include "Util.h"
 #include "../Common/ControlTemplate.h"
-#include "../Common/Platform.h"
 
 #define APPNAME L"Rainmeter"
 
@@ -176,7 +175,7 @@ INT_PTR CDialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 
 	item = GetControl(Id_InstallButton);
 	SendMessage(m_Window, WM_NEXTDLGCTL, (WPARAM)item, TRUE);
-	if (Platform::IsAtLeastWinVista() && !Util::IsProcessUserAdmin())
+	if (IsWindowsVistaOrGreater() && !Util::IsProcessUserAdmin())
 	{
 		Button_SetElevationRequiredState(item, TRUE);
 	}
@@ -211,7 +210,7 @@ INT_PTR CDialogInstall::OnNotify(WPARAM wParam, LPARAM lParam)
 void CDialogInstall::LaunchInstallProcess()
 {
 	const bool isProcsesUserAdmin = Util::IsProcessUserAdmin();
-	if (!isProcsesUserAdmin && (Platform::IsAtLeastWinVista() && !Util::CanProcessUserElevate()))
+	if (!isProcsesUserAdmin && (IsWindowsVistaOrGreater() && !Util::CanProcessUserElevate()))
 	{
 		MessageBox(
 			m_Window,

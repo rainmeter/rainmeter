@@ -26,6 +26,7 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 #include <wininet.h>
+#include <VersionHelpers.h>
 
 #include <stdlib.h>
 #include <malloc.h>
