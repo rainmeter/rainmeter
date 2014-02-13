@@ -513,7 +513,7 @@ void ContextMenu::AppendSkinCustomMenu(
 			else
 			{
 				const UINT_PTR id = (index << 16) | (IDM_SKIN_CUSTOMCONTEXTMENU_FIRST + i);
-				InsertMenu(menu, position + 1, MF_BYPOSITION | MF_STRING, id, cTitles[i].c_str());
+				InsertMenu(menu, (UINT)(position + 1), MF_BYPOSITION | MF_STRING, id, cTitles[i].c_str());
 			}
 
 			++position;
@@ -607,7 +607,7 @@ void ContextMenu::CreateLayoutMenu(HMENU layoutMenu)
 	const auto& layouts = GetRainmeter().m_Layouts;
 	for (size_t i = 0, isize = layouts.size(); i < isize; ++i)
 	{
-		InsertMenu(layoutMenu, i, MF_BYPOSITION, ID_THEME_FIRST + i, layouts[i].c_str());
+		InsertMenu(layoutMenu, (UINT)i, MF_BYPOSITION, ID_THEME_FIRST + i, layouts[i].c_str());
 	}
 }
 
