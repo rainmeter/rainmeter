@@ -21,20 +21,11 @@
 
 #include <string>
 
-#define MAX_LINE_LENGTH 4096
-
 namespace Platform {
-
-typedef BOOL(WINAPI * LPFN_ISWOW64PROCESS)(HANDLE hProcess, PBOOL Wow64Process);
-typedef BOOL(WINAPI * PGETPRODUCTINFO)(DWORD dwOSMajorVersion,
-	DWORD dwOSMinorVersion,
-	DWORD dwSpMajorVersion,
-	DWORD dwSpMinorVersion,
-	PDWORD pdwReturnedProductType);
 
 LPCWSTR GetPlatformName();
 std::wstring GetPlatformFriendlyName();
-bool GetPlatformBit(bool& is64Bit);
+bool Is64BitWindows();
 
 }  // namespace Platform
 
