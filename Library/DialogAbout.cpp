@@ -1239,7 +1239,7 @@ void DialogAbout::TabVersion::Initialize()
 	SetWindowText(item, tmpSz);
 
 	item = GetControl(Id_WinVerLabel);
-	SetWindowText(item, Platform::GetPlatformName(true));
+	SetWindowText(item, Platform::GetPlatformFriendlyName());
 
 	item = GetControl(Id_PathLabel);
 	std::wstring text = L"Path: " + GetRainmeter().GetPath();
@@ -1289,7 +1289,7 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 			int len = _snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
 			std::wstring text(tmpSz, len);
 			text += L'\n';
-			text += Platform::GetPlatformName(true);
+			text += Platform::GetPlatformFriendlyName();
 			text += L"\nPath: ";
 			text += GetRainmeter().GetPath();
 			text += L"\nIniFile: ";

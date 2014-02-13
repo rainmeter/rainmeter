@@ -19,6 +19,8 @@
 #ifndef RM_COMMON_PLATFORM_H_
 #define RM_COMMON_PLATFORM_H_
 
+#define MAX_LINE_LENGTH 4096
+
 namespace Platform {
 
 typedef BOOL(WINAPI * LPFN_ISWOW64PROCESS)(HANDLE hProcess, PBOOL Wow64Process);
@@ -28,7 +30,8 @@ typedef BOOL(WINAPI * PGETPRODUCTINFO)(DWORD dwOSMajorVersion,
 	DWORD dwSpMinorVersion,
 	PDWORD pdwReturnedProductType);
 
-LPCWSTR GetPlatformName(bool getExtendedInfo = false);
+LPCWSTR GetPlatformName();
+LPCWSTR GetPlatformFriendlyName();
 bool GetPlatformBit(bool& is64Bit);
 
 }  // namespace Platform
