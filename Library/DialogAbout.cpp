@@ -1239,7 +1239,7 @@ void DialogAbout::TabVersion::Initialize()
 	SetWindowText(item, tmpSz);
 
 	item = GetControl(Id_WinVerLabel);
-	SetWindowText(item, Platform::GetPlatformFriendlyName());
+	SetWindowText(item, Platform::GetPlatformFriendlyName().c_str());
 
 	item = GetControl(Id_PathLabel);
 	std::wstring text = L"Path: " + GetRainmeter().GetPath();

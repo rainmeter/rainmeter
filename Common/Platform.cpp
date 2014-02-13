@@ -18,7 +18,6 @@
 
 #include "StdAfx.h"
 #include "Platform.h"
-#include <string>
 
 namespace Platform {
 
@@ -37,9 +36,9 @@ LPCWSTR GetPlatformName()
 	return L"Unknown";
 }
 
-LPCWSTR GetPlatformFriendlyName()
+std::wstring GetPlatformFriendlyName()
 {
-	static std::wstring name;
+	std::wstring name;
 	
 	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
 	DWORD size = MAX_LINE_LENGTH;
@@ -88,7 +87,7 @@ LPCWSTR GetPlatformFriendlyName()
 
 	delete [] buffer;
 
-	return name.c_str();
+	return name;
 }
 
 /*

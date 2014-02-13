@@ -19,6 +19,8 @@
 #ifndef RM_COMMON_PLATFORM_H_
 #define RM_COMMON_PLATFORM_H_
 
+#include <string>
+
 #define MAX_LINE_LENGTH 4096
 
 namespace Platform {
@@ -31,7 +33,7 @@ typedef BOOL(WINAPI * PGETPRODUCTINFO)(DWORD dwOSMajorVersion,
 	PDWORD pdwReturnedProductType);
 
 LPCWSTR GetPlatformName();
-LPCWSTR GetPlatformFriendlyName();
+std::wstring GetPlatformFriendlyName();
 bool GetPlatformBit(bool& is64Bit);
 
 }  // namespace Platform
