@@ -500,8 +500,15 @@ void ContextMenu::AppendSkinCustomMenu(
 		{
 			if (isTitleSeparator(cTitles[i]))
 			{
-				// Separators not allowed in main top-level menu
-				--position;
+				if (standaloneMenu)
+				{
+					AppendMenu(menu, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+				}
+				else
+				{
+					// Separators not allowed in main top-level menu
+					--position;
+				}
 			}
 			else
 			{
