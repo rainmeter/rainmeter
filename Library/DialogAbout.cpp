@@ -1239,20 +1239,10 @@ void DialogAbout::TabVersion::Initialize()
 	SetWindowText(item, tmpSz);
 
 	item = GetControl(Id_WinVerLabel);
-	std::wstring text = Platform::GetPlatformName();
-	bool is64Bit = false;
-	if (Platform::GetPlatformBit(is64Bit))
-	{
-		text += (is64Bit) ? L" (64-bit)" : L" (32-bit)";
-	}
-	else
-	{
-		text += L" (???-bit)";
-	}
-	SetWindowText(item, text.c_str());
+	SetWindowText(item, Platform::GetPlatformName(true));
 
 	item = GetControl(Id_PathLabel);
-	text = L"Path: " + GetRainmeter().GetPath();
+	std::wstring text = L"Path: " + GetRainmeter().GetPath();
 	SetWindowText(item, text.c_str());
 
 	item = GetControl(Id_IniFileLabel);
@@ -1299,16 +1289,7 @@ INT_PTR DialogAbout::TabVersion::OnCommand(WPARAM wParam, LPARAM lParam)
 			int len = _snwprintf_s(tmpSz, _TRUNCATE, L"%s%s r%i %s (%s)", APPVERSION, revision_beta ? L" beta" : L"", revision_number, APPBITS, APPDATE);
 			std::wstring text(tmpSz, len);
 			text += L'\n';
-			text += Platform::GetPlatformName();
-			bool is64Bit = false;
-			if (Platform::GetPlatformBit(is64Bit))
-			{
-				text += (is64Bit) ? L" (64-bit)" : L" (32-bit)";
-			}
-			else
-			{
-				text += L" (???-bit)";
-			}
+			text += Platform::GetPlatformName(true);
 			text += L"\nPath: ";
 			text += GetRainmeter().GetPath();
 			text += L"\nIniFile: ";

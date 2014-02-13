@@ -22,8 +22,13 @@
 namespace Platform {
 
 typedef BOOL(WINAPI * LPFN_ISWOW64PROCESS)(HANDLE hProcess, PBOOL Wow64Process);
+typedef BOOL(WINAPI * PGETPRODUCTINFO)(DWORD dwOSMajorVersion,
+	DWORD dwOSMinorVersion,
+	DWORD dwSpMajorVersion,
+	DWORD dwSpMinorVersion,
+	PDWORD pdwReturnedProductType);
 
-LPCWSTR GetPlatformName();
+LPCWSTR GetPlatformName(bool getExtendedInfo = false);
 bool GetPlatformBit(bool& is64Bit);
 
 }  // namespace Platform
