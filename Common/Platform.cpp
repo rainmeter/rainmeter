@@ -32,8 +32,7 @@ LPCWSTR GetPlatformName(bool getExtendedInfo)
 	OSVERSIONINFOEX osvi = { sizeof(OSVERSIONINFOEX) };
 	if (GetVersionEx((OSVERSIONINFO*)&osvi))
 	{
-		// Note: Place newer versions at the top. Service pack helper functions are commented out for
-		//       backward compatibility with the SysInfo plugin.
+		// Note: Place newer versions at the top.
 
 		if (IsWindows8Point1OrGreater())
 		{
