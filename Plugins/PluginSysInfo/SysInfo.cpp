@@ -44,6 +44,7 @@ enum MeasureType
 	MEASURE_RAS_STATUS,
 	MEASURE_OS_VERSION,
 	MEASURE_OS_BITS,
+	MEASURE_IDLE_TIME,
 	MEASURE_ADAPTER_DESCRIPTION,
 	MEASURE_NET_MASK,
 	MEASURE_IP_ADDRESS,
@@ -131,6 +132,11 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	else if (_wcsicmp(L"OS_BITS", type) == 0)
 	{
 		measure->type = MEASURE_OS_BITS;
+	}
+	else if (_wcsicmp(L"IDLE_TIME", type) == 0)
+	{
+		defaultData = 1;
+		measure->type = MEASURE_IDLE_TIME;
 	}
 	else if (_wcsicmp(L"ADAPTER_DESCRIPTION", type) == 0)
 	{
@@ -386,6 +392,14 @@ PLUGIN_EXPORT double Update(void* data)
 			GetNativeSystemInfo(&si);
 			return (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ||
 				si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_IA64) ? 64.0 : 32.0;
+		}
+
+	case MEASURE_IDLE_TIME:
+		{
+			LASTINPUTINFO idle = { sizeof(LASTINPUTINFO) };
+			GetLastInputInfo(&idle);
+			int scale = (measure->data < 1) ? 1 : measure->data;
+			return (double)((GetTickCount() - idle.dwTime) / scale);
 		}
 
 	case MEASURE_INTERNET_CONNECTIVITY:
