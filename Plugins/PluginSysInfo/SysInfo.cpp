@@ -135,7 +135,6 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 	else if (_wcsicmp(L"IDLE_TIME", type) == 0)
 	{
-		defaultData = 1;
 		measure->type = MEASURE_IDLE_TIME;
 	}
 	else if (_wcsicmp(L"ADAPTER_DESCRIPTION", type) == 0)
@@ -398,8 +397,7 @@ PLUGIN_EXPORT double Update(void* data)
 		{
 			LASTINPUTINFO idle = { sizeof(LASTINPUTINFO) };
 			GetLastInputInfo(&idle);
-			int scale = (measure->data < 1) ? 1 : measure->data;
-			return (double)((GetTickCount() - idle.dwTime) / scale);
+			return (double)((GetTickCount() - idle.dwTime) / 1000);
 		}
 
 	case MEASURE_INTERNET_CONNECTIVITY:
