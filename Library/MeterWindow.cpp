@@ -64,10 +64,10 @@ enum INTERVAL
 int MeterWindow::c_InstanceCount = 0;
 
 HINSTANCE MeterWindow::c_DwmInstance = nullptr;
-FPDWMENABLEBLURBEHINDWINDOW MeterWindow::c_DwmEnableBlurBehindWindow = nullptr;
-FPDWMGETCOLORIZATIONCOLOR MeterWindow::c_DwmGetColorizationColor = nullptr;
-FPDWMSETWINDOWATTRIBUTE MeterWindow::c_DwmSetWindowAttribute = nullptr;
-FPDWMISCOMPOSITIONENABLED MeterWindow::c_DwmIsCompositionEnabled = nullptr;
+decltype(DwmEnableBlurBehindWindow)* MeterWindow::c_DwmEnableBlurBehindWindow = nullptr;
+decltype(DwmGetColorizationColor)* MeterWindow::c_DwmGetColorizationColor = nullptr;
+decltype(DwmSetWindowAttribute)* MeterWindow::c_DwmSetWindowAttribute = nullptr;
+decltype(DwmIsCompositionEnabled)* MeterWindow::c_DwmIsCompositionEnabled = nullptr;
 
 /*
 ** Constructor
@@ -142,16 +142,17 @@ MeterWindow::MeterWindow(const std::wstring& folderPath, const std::wstring& fil
 	m_FontCollection(),
 	m_ToolTipHidden(false)
 {
-	if (!c_DwmInstance && IsWindowsVistaOrGreater())
+	if (!c_DwmInstance && IsWindowsVistaOrGreater() &&
+		(c_DwmInstance = System::RmLoadLibrary(L"dwmapi.dll")) != nullptr)
 	{
-		c_DwmInstance = System::RmLoadLibrary(L"dwmapi.dll");
-		if (c_DwmInstance)
-		{
-			c_DwmEnableBlurBehindWindow = (FPDWMENABLEBLURBEHINDWINDOW)GetProcAddress(c_DwmInstance, "DwmEnableBlurBehindWindow");
-			c_DwmGetColorizationColor = (FPDWMGETCOLORIZATIONCOLOR)GetProcAddress(c_DwmInstance, "DwmGetColorizationColor");
-			c_DwmSetWindowAttribute = (FPDWMSETWINDOWATTRIBUTE)GetProcAddress(c_DwmInstance, "DwmSetWindowAttribute");
-			c_DwmIsCompositionEnabled = (FPDWMISCOMPOSITIONENABLED)GetProcAddress(c_DwmInstance, "DwmIsCompositionEnabled");
-		}
+		c_DwmEnableBlurBehindWindow =
+			(decltype(c_DwmEnableBlurBehindWindow))GetProcAddress(c_DwmInstance, "DwmEnableBlurBehindWindow");
+		c_DwmGetColorizationColor =
+			(decltype(c_DwmGetColorizationColor))GetProcAddress(c_DwmInstance, "DwmGetColorizationColor");
+		c_DwmSetWindowAttribute =
+			(decltype(c_DwmSetWindowAttribute))GetProcAddress(c_DwmInstance, "DwmSetWindowAttribute");
+		c_DwmIsCompositionEnabled =
+			(decltype(c_DwmIsCompositionEnabled))GetProcAddress(c_DwmInstance, "DwmIsCompositionEnabled");
 	}
 
 	if (c_InstanceCount == 0)

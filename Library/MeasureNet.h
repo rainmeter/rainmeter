@@ -24,9 +24,6 @@
 #include <Iphlpapi.h>
 #include "Measure.h"
 
-typedef NETIO_STATUS (NETIOAPI_API_ * FPGETIFTABLE2)(PMIB_IF_TABLE2* Table);
-typedef VOID (NETIOAPI_API_ * FPFREEMIBTABLE)(PVOID Memory);
-
 class MeasureNet : public Measure
 {
 public:
@@ -75,8 +72,8 @@ private:
 	static BYTE* c_Table;
 	static UINT c_NumOfTables;
 
-	static FPGETIFTABLE2 c_GetIfTable2;
-	static FPFREEMIBTABLE c_FreeMibTable;
+	static decltype(GetIfTable2)* c_GetIfTable2;
+	static decltype(FreeMibTable)* c_FreeMibTable;
 };
 
 #endif

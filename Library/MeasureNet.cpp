@@ -26,8 +26,8 @@ UINT MeasureNet::c_NumOfTables = 0;
 std::vector<ULONG64> MeasureNet::c_StatValues;
 std::vector<ULONG64> MeasureNet::c_OldStatValues;
 
-FPGETIFTABLE2 MeasureNet::c_GetIfTable2 = nullptr;
-FPFREEMIBTABLE MeasureNet::c_FreeMibTable = nullptr;
+decltype(GetIfTable2)* MeasureNet::c_GetIfTable2 = nullptr;
+decltype(FreeMibTable)* MeasureNet::c_FreeMibTable = nullptr;
 
 /*
 ** The constructor. This is the base class for the net-meters.
@@ -694,8 +694,8 @@ void MeasureNet::InitializeStatic()
 		HMODULE IpHlpApiLibrary = GetModuleHandle(L"IpHlpApi.dll");
 		if (IpHlpApiLibrary)
 		{
-			c_GetIfTable2 = (FPGETIFTABLE2)GetProcAddress(IpHlpApiLibrary, "GetIfTable2");
-			c_FreeMibTable = (FPFREEMIBTABLE)GetProcAddress(IpHlpApiLibrary, "FreeMibTable");
+			c_GetIfTable2 = (decltype(c_GetIfTable2))GetProcAddress(IpHlpApiLibrary, "GetIfTable2");
+			c_FreeMibTable = (decltype(c_FreeMibTable))GetProcAddress(IpHlpApiLibrary, "FreeMibTable");
 		}
 
 		if (!c_GetIfTable2 || !c_FreeMibTable)

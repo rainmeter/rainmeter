@@ -91,28 +91,26 @@ void PlayerCAD::Initialize()
 		this);
 
 	// Add WM_USER/WM_COPYDATA to allowed messages from lower level processes
-	HMODULE hUser32 = LoadLibrary(L"user32.dll");
-	if (hUser32)
-	{
-		// Try ChangeWindowMessageFilterEx first (Win7+)
-		FPCHANGEWINDOWMESSAGEFILTEREX ChangeWindowMessageFilterEx = (FPCHANGEWINDOWMESSAGEFILTEREX)GetProcAddress(hUser32, "ChangeWindowMessageFilterEx");
-		if (ChangeWindowMessageFilterEx)
-		{
-			ChangeWindowMessageFilterEx(m_Window, WM_USER, MSGFLT_ALLOW, nullptr);
-			ChangeWindowMessageFilterEx(m_Window, WM_COPYDATA, MSGFLT_ALLOW, nullptr);
-		}
-		else
-		{
-			// Try ChangeWindowMessageFilter (Vista)
-			FPCHANGEWINDOWMESSAGEFILTER ChangeWindowMessageFilter = (FPCHANGEWINDOWMESSAGEFILTER)GetProcAddress(hUser32, "ChangeWindowMessageFilter");
-			if (ChangeWindowMessageFilter)
-			{
-				ChangeWindowMessageFilter(WM_USER, MSGFLT_ALLOW);
-				ChangeWindowMessageFilter(WM_COPYDATA, MSGFLT_ALLOW);
-			}
-		}
+	const HMODULE hUser32 = GetModuleHandle(L"user32");
 
-		FreeLibrary(hUser32);
+	// Try ChangeWindowMessageFilterEx first (Win7+)
+	auto changeWindowMessageFilterEx =
+		(decltype(ChangeWindowMessageFilterEx)*)GetProcAddress(hUser32, "ChangeWindowMessageFilterEx");
+	if (changeWindowMessageFilterEx)
+	{
+		changeWindowMessageFilterEx(m_Window, WM_USER, MSGFLT_ALLOW, nullptr);
+		changeWindowMessageFilterEx(m_Window, WM_COPYDATA, MSGFLT_ALLOW, nullptr);
+	}
+	else
+	{
+		// Try ChangeWindowMessageFilter (Vista)
+		auto changeWindowMessageFilter =
+			(decltype(ChangeWindowMessageFilter)*)GetProcAddress(hUser32, "ChangeWindowMessageFilter");
+		if (changeWindowMessageFilter)
+		{
+			changeWindowMessageFilter(WM_USER, MSGFLT_ALLOW);
+			changeWindowMessageFilter(WM_COPYDATA, MSGFLT_ALLOW);
+		}
 	}
 
 	WCHAR buffer[MAX_PATH];

@@ -40,11 +40,6 @@
 
 #define RI_MOUSE_HORIZONTAL_WHEEL 0x0800
 
-typedef HRESULT (WINAPI * FPDWMENABLEBLURBEHINDWINDOW)(HWND hWnd, const DWM_BLURBEHIND* pBlurBehind);
-typedef HRESULT (WINAPI * FPDWMGETCOLORIZATIONCOLOR)(DWORD* pcrColorization, BOOL* pfOpaqueBlend);
-typedef HRESULT (WINAPI * FPDWMSETWINDOWATTRIBUTE)(HWND hwnd, DWORD dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
-typedef HRESULT (WINAPI * FPDWMISCOMPOSITIONENABLED)(BOOL* pfEnabled);
-
 enum BUTTONPROC
 {
 	BUTTONPROC_DOWN,
@@ -433,10 +428,10 @@ private:
 
 	static HINSTANCE c_DwmInstance;
 
-	static FPDWMENABLEBLURBEHINDWINDOW c_DwmEnableBlurBehindWindow;
-	static FPDWMGETCOLORIZATIONCOLOR c_DwmGetColorizationColor;
-	static FPDWMSETWINDOWATTRIBUTE c_DwmSetWindowAttribute;
-	static FPDWMISCOMPOSITIONENABLED c_DwmIsCompositionEnabled;
+	static decltype(DwmEnableBlurBehindWindow)* c_DwmEnableBlurBehindWindow;
+	static decltype(DwmGetColorizationColor)* c_DwmGetColorizationColor;
+	static decltype(DwmSetWindowAttribute)* c_DwmSetWindowAttribute;
+	static decltype(DwmIsCompositionEnabled)* c_DwmIsCompositionEnabled;
 };
 
 #endif

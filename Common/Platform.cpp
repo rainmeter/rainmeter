@@ -89,8 +89,7 @@ bool Is64BitWindows()
 	return true;
 #endif
 
-	typedef BOOL(WINAPI * IsWow64ProcessFunc)(HANDLE hProcess, PBOOL Wow64Process);
-	auto isWow64Process = (IsWow64ProcessFunc)GetProcAddress(GetModuleHandle(L"kernel32"), "IsWow64Process");
+	auto isWow64Process = (decltype(IsWow64Process)*)GetProcAddress(GetModuleHandle(L"kernel32"), "IsWow64Process");
 	if (isWow64Process)
 	{
 		BOOL isWow64 = FALSE;

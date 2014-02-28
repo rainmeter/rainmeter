@@ -1000,12 +1000,12 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 */
 ULONGLONG System::GetTickCount64()
 {
-	typedef ULONGLONG (WINAPI * FPGETTICKCOUNT64)();
-	static FPGETTICKCOUNT64 c_GetTickCount64 = (FPGETTICKCOUNT64)GetProcAddress(GetModuleHandle(L"kernel32"), "GetTickCount64");
+	static auto s_GetTickCount64 =
+		(decltype(GetTickCount64)*)GetProcAddress(GetModuleHandle(L"kernel32"), "GetTickCount64");
 
-	if (c_GetTickCount64)
+	if (s_GetTickCount64)
 	{
-		return c_GetTickCount64();
+		return s_GetTickCount64();
 	}
 	else
 	{
@@ -1089,19 +1089,16 @@ void System::ResetWorkingDirectory()
 */
 void System::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-	typedef BOOL (WINAPI * FPINITCRITEX)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
-	static FPINITCRITEX InitializeCriticalSectionEx = IsWindowsVistaOrGreater() ?
-		(FPINITCRITEX)GetProcAddress(GetModuleHandle(L"Kernel32"), "InitializeCriticalSectionEx") : nullptr;
+	static auto s_InitializeCriticalSectionEx = IsWindowsVistaOrGreater() ?
+		(decltype(InitializeCriticalSectionEx)*)GetProcAddress(GetModuleHandle(L"kernel32"), "InitializeCriticalSectionEx") : nullptr;
 
-	if (InitializeCriticalSectionEx)
+	if (s_InitializeCriticalSectionEx &&
+		s_InitializeCriticalSectionEx(lpCriticalSection, 0, CRITICAL_SECTION_NO_DEBUG_INFO))
 	{
-		if (InitializeCriticalSectionEx(lpCriticalSection, 0, CRITICAL_SECTION_NO_DEBUG_INFO))
-		{
-			return;
-		}
+		return;
 	}
 
-	::InitializeCriticalSectionAndSpinCount(lpCriticalSection, 0);
+	InitializeCriticalSectionAndSpinCount(lpCriticalSection, 0);
 }
 
 /*
