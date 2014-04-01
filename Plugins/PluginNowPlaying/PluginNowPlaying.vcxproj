@@ -19,7 +19,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./taglib;./taglib/toolkit;./taglib/asf;./taglib/mpeg;./taglib/ogg;./taglib/ogg/flac;./taglib/flac;./taglib/mpc;./taglib/ogg/vorbis;./taglib/mpeg/id3v2;./taglib/mpeg/id3v2/frames;./taglib/mpeg/id3v1;./taglib/ape;./taglib/wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./taglib;./taglib/toolkit;./taglib/asf;./taglib/mpeg;./taglib/ogg;./taglib/ogg/flac;./taglib/flac;./taglib/mpc;./taglib/ogg/vorbis;./taglib/mpeg/id3v2;./taglib/mpeg/id3v2/frames;./taglib/mpeg/id3v1;./taglib/ape;./taglib/wavpack;./taglib/mp4;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling Condition="'$(Configuration)'=='Release'">false</ExceptionHandling>
       <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">false</WholeProgramOptimization>
     </ClCompile>
@@ -165,6 +165,7 @@
     <ClCompile Include="TagLibUnity_ape.cpp" />
     <ClCompile Include="TagLibUnity_asf.cpp" />
     <ClCompile Include="TagLibUnity_flac.cpp" />
+    <ClCompile Include="TagLibUnity_mp4.cpp" />
     <ClCompile Include="TagLibUnity_mpeg.cpp" />
     <ClCompile Include="TagLibUnity_mpeg_id3v2.cpp" />
     <ClCompile Include="TagLibUnity_ogg.cpp" />

@@ -93,6 +93,9 @@
     <ClCompile Include="TagLibUnity_ogg.cpp">
       <Filter>taglib</Filter>
     </ClCompile>
+    <ClCompile Include="TagLibUnity_mp4.cpp">
+      <Filter>taglib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SDKs\AIMP\aimp2_sdk.h">

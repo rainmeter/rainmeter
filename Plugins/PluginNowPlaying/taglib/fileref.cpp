@@ -39,7 +39,7 @@
 #include "flacfile.h"
 #include "oggflacfile.h"
 #include "mpcfile.h"
-//#include "mp4file.h"
+#include "mp4file.h"
 //#include "wavpackfile.h"
 //#include "speexfile.h"
 //#include "trueaudiofile.h"
@@ -148,12 +148,12 @@ StringList FileRef::defaultFileExtensions()
 //  l.append("wv");
 //  l.append("spx");
 //  l.append("tta");
-//  l.append("m4a");
-//  l.append("m4r");
-//  l.append("m4b");
-//  l.append("m4p");
-//  l.append("3g2");
-//  l.append("mp4");
+  l.append("m4a");
+  l.append("m4r");
+  l.append("m4b");
+  l.append("m4p");
+  l.append("3g2");
+  l.append("mp4");
   l.append("wma");
   l.append("asf");
 //  l.append("aif");
@@ -260,8 +260,8 @@ File *FileRef::create(FileName fileName, bool readAudioProperties,
 //      return new Ogg::Opus::File(fileName, readAudioProperties, audioPropertiesStyle);
 //    if(ext == "TTA")
 //      return new TrueAudio::File(fileName, readAudioProperties, audioPropertiesStyle);
-//    if(ext == "M4A" || ext == "M4R" || ext == "M4B" || ext == "M4P" || ext == "MP4" || ext == "3G2")
-//      return new MP4::File(fileName, readAudioProperties, audioPropertiesStyle);
+    if(ext == "M4A" || ext == "M4R" || ext == "M4B" || ext == "M4P" || ext == "MP4" || ext == "3G2")
+      return new MP4::File(fileName, readAudioProperties, audioPropertiesStyle);
     if(ext == "WMA" || ext == "ASF")
       return new ASF::File(fileName, readAudioProperties, audioPropertiesStyle);
 //    if(ext == "AIF" || ext == "AIFF")

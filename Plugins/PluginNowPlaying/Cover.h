@@ -36,6 +36,7 @@
 #include "textidentificationframe.h"
 #include "tstring.h"
 #include "vorbisfile.h"
+#include "mp4file.h"
 
 class CCover
 {
@@ -50,6 +51,7 @@ private:
 	static bool ExtractID3(TagLib::ID3v2::Tag* tag, const std::wstring& target);
 	static bool ExtractASF(TagLib::ASF::File* file, const std::wstring& target);
 	static bool ExtractFLAC(TagLib::FLAC::File* file, const std::wstring& target);
+	static bool ExtractMP4(TagLib::MP4::File* file, const std::wstring& target);
 	static bool WriteCover(const TagLib::ByteVector& data, const std::wstring& target);
 };
 
