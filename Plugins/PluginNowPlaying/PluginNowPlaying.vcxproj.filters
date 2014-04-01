@@ -84,6 +84,9 @@
     <ClCompile Include="TagLibUnity_flac.cpp">
       <Filter>taglib</Filter>
     </ClCompile>
+    <ClCompile Include="TagLibUnity_mp4.cpp">
+      <Filter>taglib</Filter>
+    </ClCompile>
     <ClCompile Include="TagLibUnity_mpeg.cpp">
       <Filter>taglib</Filter>
     </ClCompile>
@@ -327,6 +330,24 @@
       <Filter>taglib</Filter>
     </ClInclude>
     <ClInclude Include="taglib\toolkit\tstringlist.h">
+      <Filter>taglib</Filter>
+    </ClInclude>
+    <ClInclude Include="taglib\mp4\mp4atom.h">
+      <Filter>taglib</Filter>
+    </ClInclude>
+    <ClInclude Include="taglib\mp4\mp4coverart.h">
+      <Filter>taglib</Filter>
+    </ClInclude>
+    <ClInclude Include="taglib\mp4\mp4file.h">
+      <Filter>taglib</Filter>
+    </ClInclude>
+    <ClInclude Include="taglib\mp4\mp4item.h">
+      <Filter>taglib</Filter>
+    </ClInclude>
+    <ClInclude Include="taglib\mp4\mp4properties.h">
+      <Filter>taglib</Filter>
+    </ClInclude>
+    <ClInclude Include="taglib\mp4\mp4tag.h">
       <Filter>taglib</Filter>
     </ClInclude>
     <ClInclude Include="taglib\mpeg\id3v2\frames\uniquefileidentifierframe.h">

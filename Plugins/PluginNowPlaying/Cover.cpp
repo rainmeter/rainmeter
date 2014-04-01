@@ -88,6 +88,10 @@ bool CCover::GetEmbedded(const TagLib::FileRef& fr, const std::wstring& target)
 			found = ExtractID3(file->ID3v2Tag(), target);
 		}
 	}
+	else if (TagLib::MP4::File* file = dynamic_cast<TagLib::MP4::File*>(fr.file()))
+	{
+		found = ExtractMP4(file, target);
+	}
 	else if (TagLib::ASF::File* file = dynamic_cast<TagLib::ASF::File*>(fr.file()))
 	{
 		found = ExtractASF(file, target);
@@ -205,6 +209,27 @@ bool CCover::ExtractFLAC(TagLib::FLAC::File* file, const std::wstring& target)
 		return WriteCover(pic->data(), target);
 	}
 
+	return false;
+}
+
+/*
+** Extracts cover art embedded in MP4 files.
+**
+*/
+bool CCover::ExtractMP4(TagLib::MP4::File* file, const std::wstring& target)
+{
+	TagLib::MP4::Tag* tag = file->tag();
+	const TagLib::MP4::ItemListMap& itemListMap = tag->itemListMap();
+	if (itemListMap.contains("covr"))
+	{
+		const TagLib::MP4::CoverArtList& coverArtList = itemListMap["covr"].toCoverArtList();
+		if (!coverArtList.isEmpty())
+		{
+			const TagLib::MP4::CoverArt* pic = &(coverArtList.front());
+			return WriteCover(pic->data(), target);
+		}
+	}
+		
 	return false;
 }
 

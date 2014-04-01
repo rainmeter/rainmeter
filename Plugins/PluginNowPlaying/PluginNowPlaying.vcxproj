@@ -19,7 +19,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./taglib;./taglib/toolkit;./taglib/asf;./taglib/mpeg;./taglib/ogg;./taglib/ogg/flac;./taglib/flac;./taglib/mpc;./taglib/ogg/vorbis;./taglib/mpeg/id3v2;./taglib/mpeg/id3v2/frames;./taglib/mpeg/id3v1;./taglib/ape;./taglib/wavpack;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./taglib;./taglib/toolkit;./taglib/asf;./taglib/mpeg;./taglib/ogg;./taglib/ogg/flac;./taglib/flac;./taglib/mpc;./taglib/ogg/vorbis;./taglib/mpeg/id3v2;./taglib/mpeg/id3v2/frames;./taglib/mpeg/id3v1;./taglib/ape;./taglib/wavpack;./taglib/mp4;.\SDKs\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling Condition="'$(Configuration)'=='Release'">false</ExceptionHandling>
       <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">false</WholeProgramOptimization>
     </ClCompile>
@@ -113,6 +113,12 @@
     <ClInclude Include="taglib\toolkit\tmap.h" />
     <ClInclude Include="taglib\toolkit\trefcounter.h" />
     <ClInclude Include="taglib\toolkit\tdebuglistener.h" />
+    <ClInclude Include="taglib\mp4\mp4atom.h" />
+    <ClInclude Include="taglib\mp4\mp4coverart.h" />
+    <ClInclude Include="taglib\mp4\mp4file.h" />
+    <ClInclude Include="taglib\mp4\mp4item.h" />
+    <ClInclude Include="taglib\mp4\mp4properties.h" />
+    <ClInclude Include="taglib\mp4\mp4tag.h" />
     <ClInclude Include="taglib\mpeg\mpegfile.h" />
     <ClInclude Include="taglib\mpeg\mpegproperties.h" />
     <ClInclude Include="taglib\mpeg\mpegheader.h" />
@@ -165,6 +171,7 @@
     <ClCompile Include="TagLibUnity_ape.cpp" />
     <ClCompile Include="TagLibUnity_asf.cpp" />
     <ClCompile Include="TagLibUnity_flac.cpp" />
+    <ClCompile Include="TagLibUnity_mp4.cpp" />
     <ClCompile Include="TagLibUnity_mpeg.cpp" />
     <ClCompile Include="TagLibUnity_mpeg_id3v2.cpp" />
     <ClCompile Include="TagLibUnity_ogg.cpp" />

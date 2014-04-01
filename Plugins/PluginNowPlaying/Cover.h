@@ -31,6 +31,7 @@
 #include "id3v2tag.h"
 #include "mpcfile.h"
 #include "mpegfile.h"
+#include "mp4file.h"
 #include "tag.h"
 #include "taglib.h"
 #include "textidentificationframe.h"
@@ -50,6 +51,7 @@ private:
 	static bool ExtractID3(TagLib::ID3v2::Tag* tag, const std::wstring& target);
 	static bool ExtractASF(TagLib::ASF::File* file, const std::wstring& target);
 	static bool ExtractFLAC(TagLib::FLAC::File* file, const std::wstring& target);
+	static bool ExtractMP4(TagLib::MP4::File* file, const std::wstring& target);
 	static bool WriteCover(const TagLib::ByteVector& data, const std::wstring& target);
 };
 
