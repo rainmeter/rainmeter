@@ -37,6 +37,7 @@
 #include "textidentificationframe.h"
 #include "tstring.h"
 #include "vorbisfile.h"
+#include "mp4file.h"
 
 class CCover
 {
