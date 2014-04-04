@@ -19,6 +19,104 @@
 #include "StdAfx.h"
 #include "Cover.h"
 
+namespace {
+
+bool WriteCoverToFile(const TagLib::ByteVector& data, const std::wstring& target)
+{
+	FILE* f = _wfopen(target.c_str(), L"wb");
+	if (f)
+	{
+		const bool written = fwrite(data.data(), 1, data.size(), f) == data.size();
+		fclose(f);
+		return written;
+	}
+
+	return false;
+}
+
+bool ExtractAPE(TagLib::APE::Tag* tag, const std::wstring& target)
+{
+	const TagLib::APE::ItemListMap& listMap = tag->itemListMap();
+	if (listMap.contains("COVER ART (FRONT)"))
+	{
+		const TagLib::ByteVector nullStringTerminator(1, 0);
+		TagLib::ByteVector item = listMap["COVER ART (FRONT)"].value();
+		const int pos = item.find(nullStringTerminator);	// Skip the filename.
+		if (pos != -1)
+		{
+			const TagLib::ByteVector& pic = item.mid(pos + 1);
+			return WriteCoverToFile(pic, target);
+		}
+	}
+
+	return false;
+}
+
+bool ExtractID3(TagLib::ID3v2::Tag* tag, const std::wstring& target)
+{
+	const TagLib::ID3v2::FrameList& frameList = tag->frameList("APIC");
+	if (!frameList.isEmpty())
+	{
+		// Just grab the first image.
+		const auto* frame = (TagLib::ID3v2::AttachedPictureFrame*)frameList.front();
+		return WriteCoverToFile(frame->picture(), target);
+	}
+
+	return false;
+}
+
+bool ExtractASF(TagLib::ASF::File* file, const std::wstring& target)
+{
+	const TagLib::ASF::AttributeListMap& attrListMap = file->tag()->attributeListMap();
+	if (attrListMap.contains("WM/Picture"))
+	{
+		const TagLib::ASF::AttributeList& attrList = attrListMap["WM/Picture"];
+		if (!attrList.isEmpty())
+		{
+			// Let's grab the first cover. TODO: Check/loop for correct type.
+			const TagLib::ASF::Picture& wmpic = attrList[0].toPicture();
+			if (wmpic.isValid())
+			{
+				return WriteCoverToFile(wmpic.picture(), target);
+			}
+		}
+	}
+
+	return false;
+}
+
+bool ExtractFLAC(TagLib::FLAC::File* file, const std::wstring& target)
+{
+	const TagLib::List<TagLib::FLAC::Picture*>& picList = file->pictureList();
+	if (!picList.isEmpty())
+	{
+		// Just grab the first image.
+		const TagLib::FLAC::Picture* pic = picList[0];
+		return WriteCoverToFile(pic->data(), target);
+	}
+
+	return false;
+}
+
+bool ExtractMP4(TagLib::MP4::File* file, const std::wstring& target)
+{
+	TagLib::MP4::Tag* tag = file->tag();
+	const TagLib::MP4::ItemListMap& itemListMap = tag->itemListMap();
+	if (itemListMap.contains("covr"))
+	{
+		const TagLib::MP4::CoverArtList& coverArtList = itemListMap["covr"].toCoverArtList();
+		if (!coverArtList.isEmpty())
+		{
+			const TagLib::MP4::CoverArt* pic = &(coverArtList.front());
+			return WriteCoverToFile(pic->data(), target);
+		}
+	}
+
+	return false;
+}
+
+}  // namespace
+
 /*
 ** Checks if cover art is in cache.
 **
@@ -127,126 +225,4 @@ std::wstring CCover::GetFileFolder(const std::wstring& file)
 	}
 
 	return file;
-}
-
-/*
-** Extracts cover art embedded in APE tags.
-**
-*/
-bool CCover::ExtractAPE(TagLib::APE::Tag* tag, const std::wstring& target)
-{
-	const TagLib::APE::ItemListMap& listMap = tag->itemListMap();
-	if (listMap.contains("COVER ART (FRONT)"))
-	{
-		const TagLib::ByteVector nullStringTerminator(1, 0);
-
-		TagLib::ByteVector item = listMap["COVER ART (FRONT)"].value();
-		int pos = item.find(nullStringTerminator);	// Skip the filename
-
-		if (++pos > 0)
-		{
-			const TagLib::ByteVector& pic = item.mid(pos);
-			return WriteCover(pic, target);
-		}
-	}
-
-	return false;
-}
-
-/*
-** Extracts cover art embedded in ID3v2 tags.
-**
-*/
-bool CCover::ExtractID3(TagLib::ID3v2::Tag* tag, const std::wstring& target)
-{
-	const TagLib::ID3v2::FrameList& frameList = tag->frameList("APIC");
-	if (!frameList.isEmpty())
-	{
-		// Grab the first image
-		TagLib::ID3v2::AttachedPictureFrame* frame = static_cast<TagLib::ID3v2::AttachedPictureFrame*>(frameList.front());
-		return WriteCover(frame->picture(), target);
-	}
-
-	return false;
-}
-
-/*
-** Extracts cover art embedded in ASF/WMA files.
-**
-*/
-bool CCover::ExtractASF(TagLib::ASF::File* file, const std::wstring& target)
-{
-	const TagLib::ASF::AttributeListMap& attrListMap = file->tag()->attributeListMap();
-	if (attrListMap.contains("WM/Picture"))
-	{
-		const TagLib::ASF::AttributeList& attrList = attrListMap["WM/Picture"];
-
-		if (!attrList.isEmpty())
-		{
-			// Let's grab the first cover. TODO: Check/loop for correct type
-			TagLib::ASF::Picture wmpic = attrList[0].toPicture();
-			if (wmpic.isValid())
-			{
-				return WriteCover(wmpic.picture(), target);
-			}
-		}
-	}
-
-	return false;
-}
-
-/*
-** Extracts cover art embedded in FLAC files.
-**
-*/
-bool CCover::ExtractFLAC(TagLib::FLAC::File* file, const std::wstring& target)
-{
-	const TagLib::List<TagLib::FLAC::Picture*>& picList = file->pictureList();
-	if (!picList.isEmpty())
-	{
-		// Let's grab the first image
-		TagLib::FLAC::Picture* pic = picList[0];
-		return WriteCover(pic->data(), target);
-	}
-
-	return false;
-}
-
-/*
-** Extracts cover art embedded in MP4 files.
-**
-*/
-bool CCover::ExtractMP4(TagLib::MP4::File* file, const std::wstring& target)
-{
-	TagLib::MP4::Tag* tag = file->tag();
-	const TagLib::MP4::ItemListMap& itemListMap = tag->itemListMap();
-	if (itemListMap.contains("covr"))
-	{
-		const TagLib::MP4::CoverArtList& coverArtList = itemListMap["covr"].toCoverArtList();
-		if (!coverArtList.isEmpty())
-		{
-			const TagLib::MP4::CoverArt* pic = &(coverArtList.front());
-			return WriteCover(pic->data(), target);
-		}
-	}
-		
-	return false;
-}
-
-/*
-** Write cover data to file.
-**
-*/
-bool CCover::WriteCover(const TagLib::ByteVector& data, const std::wstring& target)
-{
-	bool written = false;
-
-	FILE* f = _wfopen(target.c_str(), L"wb");
-	if (f)
-	{
-		written = (fwrite(data.data(), 1, data.size(), f) == data.size());
-		fclose(f);
-	}
-
-	return written;
 }
