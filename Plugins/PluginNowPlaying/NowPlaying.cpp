@@ -88,7 +88,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 				for ( ; iter != g_ParentMeasures.end(); ++iter)
 				{
 					if (skin == (*iter)->skin &&
-						wcsncmp(str, (*iter)->ownerName, len) == 0)
+						_wcsnicmp(str, (*iter)->ownerName, len) == 0)
 					{
 						// Use same ParentMeasure as referenced section
 						measure->parent = (*iter);
