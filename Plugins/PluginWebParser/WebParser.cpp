@@ -999,7 +999,8 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 				for ( ; i != g_Measures.end(); ++i)
 				{
 					if (measure->skin == (*i)->skin &&
-						(*i)->url.find(compareStr) != std::wstring::npos)
+						//(*i)->url.find(compareStr) != std::wstring::npos)
+						StringUtil::CaseInsensitiveFind((*i)->url, compareStr) != std::wstring::npos)
 					{
 						if ((*i)->stringIndex < rc)
 						{
@@ -1022,7 +1023,10 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 								// Substitude the [measure] with result
 								std::wstring result = StringUtil::WidenUTF8(substring_start, substring_length);
 								(*i)->resultString = (*i)->url;
-								(*i)->resultString.replace((*i)->resultString.find(compareStr), compareStr.size(), result);
+								(*i)->resultString.replace(
+									StringUtil::CaseInsensitiveFind((*i)->resultString, compareStr),
+									//(*i)->resultString.find(compareStr),
+									compareStr.size(), result);
 								DecodeReferences((*i)->resultString, (*i)->decodeCharacterReference);
 
 								// Start download threads for the references
@@ -1080,7 +1084,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 			compareStr += L']';
 			for ( ; i != g_Measures.end(); ++i)
 			{
-				if (((*i)->url.find(compareStr) != std::wstring::npos) && (measure->skin == (*i)->skin))
+				if ((/*(*i)->url.find(compareStr)*/StringUtil::CaseInsensitiveFind((*i)->url, compareStr) != std::wstring::npos) && (measure->skin == (*i)->skin))
 				{
 					(*i)->resultString = (*i)->errorString;
 				}
