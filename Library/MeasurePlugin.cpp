@@ -141,7 +141,9 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 		if (!m_Plugin)
 		{
-			LogErrorF(this, L"Plugin: \"%s\" not found", pluginName.c_str());
+			LogErrorF(
+				this, L"Plugin: Unable to load \"%s\" (error %ld)",
+				pluginName.c_str(), GetLastError());
 			return;
 		}
 	}
