@@ -108,11 +108,11 @@ Function .onInit
 	${IfNot} ${UAC_IsInnerInstance}
 		${If} ${IsWin2000}
 		${OrIf} ${IsWinXP}
-		${AndIf} ${AtMostServicePack} 1
+		${AndIf} ${AtMostServicePack} 2
 		${OrIf} ${IsWin2003}
 		${AndIf} ${AtMostServicePack} 0
 			${IfNot} ${Silent}
-				MessageBox MB_OK|MB_ICONSTOP "Rainmeter requires Windows XP SP2 or later."
+				MessageBox MB_OK|MB_ICONSTOP "Rainmeter requires Windows XP SP3 or later."
 			${EndIf}
 			SetErrorLevel ${ERROR_UNSUPPORTED}
 			Quit
