@@ -1945,14 +1945,7 @@ void MeterWindow::ReadOptions()
 
 	m_FadeDuration = parser.ReadInt(section, L"FadeDuration", 250);
 
-	std::wstring skinGroup = parser.ReadString(section, L"Group", L"");
-	const std::wstring& group = m_Parser.ReadString(L"Rainmeter", L"Group", L"");
-	if (!group.empty())
-	{
-		skinGroup += L'|';
-		skinGroup += group;
-	}
-	InitializeGroup(skinGroup);
+	m_SkinGroup = parser.ReadString(section, L"Group", L"");
 
 	if (writeFlags != 0)
 	{
@@ -2077,10 +2070,10 @@ bool MeterWindow::ReadSkin()
 	std::wstring resourcePath = GetResourcesPath();
 	bool hasResourcesFolder = (_waccess(resourcePath.c_str(), 0) == 0);
 
-	m_Parser.Initialize(iniFile, this, nullptr, &resourcePath);
-
 	// Read options from Rainmeter.ini.
 	ReadOptions();
+
+	m_Parser.Initialize(iniFile, this, nullptr, &resourcePath);
 
 	m_Canvas = Gfx::Canvas::Create(
 		m_UseD2D && GetRainmeter().GetUseD2D() ? Gfx::Renderer::PreferD2D : Gfx::Renderer::GDIP);
@@ -2110,6 +2103,15 @@ bool MeterWindow::ReadSkin()
 	// Initialize window variables
 	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
 	SetWindowSizeVariables(0, 0);
+
+	// Global settings
+	const std::wstring& group = m_Parser.ReadString(L"Rainmeter", L"Group", L"");
+	if (!group.empty())
+	{
+		m_SkinGroup += L'|';
+		m_SkinGroup += group;
+	}
+	InitializeGroup(m_SkinGroup);
 
 	static const RECT defMargins = {0};
 	m_BackgroundMargins = m_Parser.ReadRECT(L"Rainmeter", L"BackgroundMargins", defMargins);

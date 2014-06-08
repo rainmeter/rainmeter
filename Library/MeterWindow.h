@@ -346,6 +346,7 @@ private:
 	std::wstring m_OnUpdateAction;
 	std::wstring m_OnWakeAction;
 
+	std::wstring m_SkinGroup;
 	std::wstring m_BackgroundName;
 	RECT m_BackgroundMargins;
 	RECT m_DragMargins;
