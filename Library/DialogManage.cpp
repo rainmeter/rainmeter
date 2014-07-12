@@ -149,15 +149,19 @@ void DialogManage::Open(const WCHAR* tabName, const WCHAR* param1, const WCHAR* 
 	}
 }
 
-/*
-** Updates Skins tab.
-**
-*/
 void DialogManage::UpdateSkins(MeterWindow* meterWindow, bool deleted)
 {
 	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
 	{
 		c_Dialog->m_TabSkins.Update(meterWindow, deleted);
+	}
+}
+
+void DialogManage::UpdateLayouts()
+{
+	if (c_Dialog && c_Dialog->m_TabLayouts.IsInitialized())
+	{
+		c_Dialog->m_TabLayouts.Update();
 	}
 }
 
@@ -1580,7 +1584,8 @@ void DialogManage::TabLayouts::Create(HWND owner)
 
 void DialogManage::TabLayouts::Initialize()
 {
-	HWND item  = GetControl(Id_List);
+	HWND item = GetControl(Id_List);
+	ListBox_ResetContent(item);
 	const std::vector<std::wstring>& layouts = GetRainmeter().GetAllLayouts();
 	for (size_t i = 0, isize = layouts.size(); i < isize; ++i)
 	{
@@ -1588,6 +1593,11 @@ void DialogManage::TabLayouts::Initialize()
 	}
 
 	m_Initialized = true;
+}
+
+void DialogManage::TabLayouts::Update()
+{
+	Initialize();
 }
 
 INT_PTR DialogManage::TabLayouts::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)

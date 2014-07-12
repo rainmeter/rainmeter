@@ -39,6 +39,7 @@ public:
 	static void OpenSkin(MeterWindow* meterWindow);
 
 	static void UpdateSkins(MeterWindow* meterWindow, bool deleted = false);
+	static void UpdateLayouts();
 
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -131,6 +132,8 @@ private:
 
 		void Create(HWND owner);
 		virtual void Initialize();
+
+		void Update();
 
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);

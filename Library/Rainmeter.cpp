@@ -1215,6 +1215,8 @@ void Rainmeter::ScanForLayouts()
 
 		FindClose(hSearch);
 	}
+
+	DialogManage::UpdateLayouts();
 }
 
 void Rainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, MeterWindow* meterWindow)
