@@ -152,9 +152,9 @@ PLUGIN_EXPORT double Update(void* data)
 			{
 				return 3.0;	// Low
 			}
-			else if (sps.BatteryFlag & 1)
+			else if (sps.BatteryFlag == 0 || sps.BatteryFlag & 1)
 			{
-				return 4.0;	// High
+				return 4.0;	// Medium/High
 			}
 			break;
 
