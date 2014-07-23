@@ -26,6 +26,8 @@
 #include "DialogAbout.h"
 #include "../Version.h"
 #include "../Common/Platform.h"
+#include "../Common/StringUtil.h"
+#include <Imagehlp.h>
 
 WINDOWPLACEMENT DialogAbout::c_WindowPlacement = {0};
 DialogAbout* DialogAbout::c_Dialog = nullptr;
@@ -1053,6 +1055,28 @@ void DialogAbout::TabPlugins::Initialize()
 			// Try to get the version and author
 			std::wstring tmpSz = path + fd.cFileName;
 			const WCHAR* path = tmpSz.c_str();
+
+			LOADED_IMAGE* loadedImage = ImageLoad(StringUtil::Narrow(path).c_str(), nullptr);
+			if (!loadedImage)
+			{
+				LogErrorF(L"About Dialog - Unable to load plugin: %s", fd.cFileName);
+				continue;
+			}
+
+			const WORD imageBitness = loadedImage->FileHeader->FileHeader.Machine;
+			ImageUnload(loadedImage);
+
+#ifdef _WIN64
+			const WORD rainmeterBitness = IMAGE_FILE_MACHINE_AMD64;
+#elif _WIN32
+			const WORD rainmeterBitness = IMAGE_FILE_MACHINE_I386;
+#endif
+
+			if (rainmeterBitness != imageBitness)
+			{
+				LogErrorF(L"About Dialog - Incorrect bitness of plugin: %s", fd.cFileName);
+				continue;
+			}
 
 			vitem.iItem = index;
 			vitem.pszText = fd.cFileName;
