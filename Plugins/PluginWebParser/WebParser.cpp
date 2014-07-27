@@ -199,6 +199,7 @@ struct ProxySetting
 struct MeasureData
 {
 	std::wstring url;
+	std::wstring headers;
 	std::wstring regExp;
 	std::wstring resultString;
 	std::wstring errorString;
@@ -240,7 +241,7 @@ struct MeasureData
 	}
 };
 
-BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool forceReload);
+BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DWORD* dataSize, bool forceReload);
 unsigned __stdcall NetworkThreadProc(void* pParam);
 unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
 void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize);
@@ -734,6 +735,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 
 	measure->url = url;
+	measure->headers = RmReadString(rm, L"Headers", L"");
 
 	measure->regExp = RmReadString(rm, L"RegExp", L"");
 	measure->finishAction = RmReadString(rm, L"FinishAction", L"", FALSE);
@@ -848,7 +850,7 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 	DWORD dwSize = 0;
 
 	RmLogF(measure->rm, LOG_DEBUG, L"WebParser: Fetching: %s", measure->url.c_str());
-	BYTE* data = DownloadUrl(measure->proxy.handle, measure->url, &dwSize, measure->forceReload);
+	BYTE* data = DownloadUrl(measure->proxy.handle, measure->url, measure->headers, &dwSize, measure->forceReload);
 	if (!data)
 	{
 		ShowError(measure->rm, L"Fetch error");
@@ -1524,21 +1526,22 @@ PLUGIN_EXPORT void Finalize(void* data)
 	Downloads the given url and returns the webpage as dynamically allocated string.
 	You need to free the returned string after use!
 */
-BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool forceReload)
+BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, std::wstring& headers, DWORD* dataSize, bool forceReload)
 {
 	DWORD flags = INTERNET_FLAG_RESYNCHRONIZE;
 	if (forceReload)
 	{
 		flags = INTERNET_FLAG_RELOAD;
 	}
-
-	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), nullptr, 0, flags, 0);
+	
+	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), headers.c_str(), -1L, flags|INTERNET_FLAG_NO_COOKIES, 0);
 	if (!hUrlDump)
 	{
 		if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
 		{
 			const std::string urlACP = StringUtil::Narrow(url);
-			hUrlDump = InternetOpenUrlA(handle, urlACP.c_str(), nullptr, 0, flags, 0);
+			const std::string headersACP = StringUtil::Narrow(headers);
+			hUrlDump = InternetOpenUrlA(handle, urlACP.c_str(), headersACP.c_str(), -1L, flags, 0);
 		}
 
 		if (!hUrlDump)
