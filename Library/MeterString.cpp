@@ -199,7 +199,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		break;
 
 	default:
-		LogErrorF(this, L"ClipString=%s is not valid", clipping);
+		LogErrorF(this, L"ClipString=%i is not valid", clipping);
 	}
 
 	m_FontFace = parser.ReadString(section, L"FontFace", L"Arial");
