@@ -27,12 +27,15 @@
 
 using namespace Gdiplus;
 
+TintedImageHelper_DefineOptionArray(MeterImage::c_MaskOptionArray, L"Mask");
+
 /*
 ** The constructor
 **
 */
 MeterImage::MeterImage(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
 	m_Image(L"ImageName", nullptr, false, meterWindow),
+	m_MaskImage(L"MaskImageName", c_MaskOptionArray, false, meterWindow),
 	m_NeedsRedraw(false),
 	m_DrawMode(DRAWMODE_NONE),
 	m_ScaleMargins()
@@ -72,8 +75,17 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 
 	if (m_Image.IsLoaded())
 	{
+		bool useMaskSize = false;
+		if (m_MeterWindow->GetUseD2D() && !m_MaskImageName.empty())
+		{
+			m_MaskImageNameResult = m_MaskImageName;
+			m_MaskImage.LoadImage(m_MaskImageName, true);
+
+			if (m_MaskImage.IsLoaded()) useMaskSize = true;
+		}
+
 		// Calculate size of the meter
-		Bitmap* bitmap = m_Image.GetImage();
+		Bitmap* bitmap = useMaskSize ? m_MaskImage.GetImage() : m_Image.GetImage();
 
 		int imageW = bitmap->GetWidth();
 		int imageH = bitmap->GetHeight();
@@ -111,6 +123,7 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	Meter::ReadOptions(parser, section);
 
 	m_ImageName = parser.ReadString(section, L"ImageName", L"");
+	m_MaskImageName = parser.ReadString(section, L"MaskImageName", L"");
 
 	int mode = parser.ReadInt(section, L"Tile", 0);
 	if (mode != 0)
@@ -144,6 +157,10 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	// Read tinting options
 	m_Image.ReadOptions(parser, section, path.c_str());
+	if (m_MeterWindow->GetUseD2D())
+	{
+		m_MaskImage.ReadOptions(parser, section, m_Image.GetPath().c_str());
+	}
 
 	if (m_Initialized && m_Measures.empty() && !m_DynamicVariables)
 	{
@@ -164,6 +181,7 @@ bool MeterImage::Update()
 		{
 			// Store the current values so we know if the image needs to be updated
 			std::wstring oldResult = m_ImageNameResult;
+			std::wstring oldMask = m_MaskImageNameResult;
 
 			if (!m_Measures.empty())  // read from the measures
 			{
@@ -180,13 +198,33 @@ bool MeterImage::Update()
 						m_ImageNameResult = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
 					}
 				}
+
+				if (m_MeterWindow->GetUseD2D() && m_Measures.size() >= 2)
+				{
+					if (m_MaskImageName.empty())
+					{
+						m_MaskImageNameResult = m_Measures[1]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
+					}
+					else
+					{
+						m_MaskImageNameResult = m_MaskImageName;
+						if (!ReplaceMeasures(m_MaskImageNameResult, AUTOSCALE_OFF))
+						{
+							// MaskImageName doesn't contain any measures, so use the result of MeasureName2.
+							m_MaskImageNameResult = m_Measures[1]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
+						}
+					}
+				}
 			}
 			else  // read from the skin
 			{
 				m_ImageNameResult = m_ImageName;
+				m_MaskImageNameResult = m_MaskImageName;
 			}
 			
-			LoadImage(m_ImageNameResult, (wcscmp(oldResult.c_str(), m_ImageNameResult.c_str()) != 0));
+			LoadImage(m_ImageNameResult, (wcscmp(oldResult.c_str(), m_ImageNameResult.c_str()) != 0) ||
+				(wcscmp(oldMask.c_str(), m_MaskImageNameResult.c_str()) != 0));
+
 			return true;
 		}
 		else if (m_NeedsRedraw)
@@ -213,7 +251,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 
 		int imageW = drawBitmap->GetWidth();
 		int imageH = drawBitmap->GetHeight();
-
+		
 		if (imageW == 0 || imageH == 0 || m_W == 0 || m_H == 0) return true;
 
 		Gdiplus::Rect meterRect = GetMeterRectPadding();
@@ -221,7 +259,42 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 		int drawW = meterRect.Width;
 		int drawH = meterRect.Height;
 
-		if (drawW == imageW && drawH == imageH &&
+		bool hasMask = (m_MeterWindow->GetUseD2D() && m_MaskImage.IsLoaded());
+		if (hasMask)
+		{
+			Bitmap* maskBitmap = m_MaskImage.GetImage();
+
+			imageW = maskBitmap->GetWidth();
+			imageH = maskBitmap->GetHeight();
+			int imageMW = drawBitmap->GetWidth();
+			int imageMH = drawBitmap->GetHeight();
+
+			int cropX = 0;
+			int cropY = 0;
+			int cropW = imageMW;
+			int cropH = imageMH;
+
+			REAL imageratio = imageMW / (REAL)imageMH;
+			REAL meterRatio = meterRect.Width / (REAL)meterRect.Height;
+
+			if (imageratio != meterRatio)
+			{
+				if (imageratio > meterRatio)
+				{
+					cropW = (int)(imageMH * meterRatio);
+					cropX = (imageMW - cropW) / 2;
+				}
+				else
+				{
+					cropH = (int)(imageMW / meterRatio);
+					cropY = (imageMH - cropH) / 2;
+				}
+			}
+
+			canvas.DrawMaskedBitmap(drawBitmap, maskBitmap, meterRect, Rect(0, 0, imageW, imageH), Gdiplus::Rect(cropX, cropY, cropW, cropH));
+		}
+
+		else if (drawW == imageW && drawH == imageH &&
 			m_ScaleMargins.left == 0 && m_ScaleMargins.top == 0 && m_ScaleMargins.right == 0 && m_ScaleMargins.bottom == 0)
 		{
 			canvas.DrawBitmap(drawBitmap, Rect(meterRect.X, meterRect.Y, drawW, drawH), Rect(0, 0, imageW, imageH));

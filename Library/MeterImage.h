@@ -58,10 +58,16 @@ private:
 	std::wstring m_ImageName;
 	std::wstring m_ImageNameResult;
 
+	TintedImage m_MaskImage;
+	std::wstring m_MaskImageName;
+	std::wstring m_MaskImageNameResult;
+
 	bool m_NeedsRedraw;
 	DRAWMODE m_DrawMode;
 
 	RECT m_ScaleMargins;
+
+	static const WCHAR* c_MaskOptionArray[TintedImage::OptionCount];
 };
 
 #endif

@@ -462,6 +462,86 @@ void CanvasD2D::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect
 	bitmapLock->Release();
 }
 
+void CanvasD2D::DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,
+	const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2)
+{
+	if (!BeginTargetDraw()) return;
+
+	auto rDst = ToRectF(dstRect);
+	auto rSrc = ToRectF(srcRect);
+
+	Util::WICBitmapLockGDIP* bitmapLock = new Util::WICBitmapLockGDIP();
+	Gdiplus::Rect lockRect(srcRect2);
+	Gdiplus::Status status = bitmap->LockBits(
+		&lockRect, Gdiplus::ImageLockModeRead, PixelFormat32bppPARGB, bitmapLock->GetBitmapData());
+	if (status == Gdiplus::Ok)
+	{
+		D2D1_BITMAP_PROPERTIES props = D2D1::BitmapProperties(
+			D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
+		Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dBitmap;
+		HRESULT hr = m_Target->CreateSharedBitmap(
+			__uuidof(IWICBitmapLock), bitmapLock, &props, d2dBitmap.GetAddressOf());
+		if (SUCCEEDED(hr))
+		{
+			// Create bitmap brush from original |bitmap|.
+			Microsoft::WRL::ComPtr<ID2D1BitmapBrush> brush;
+			D2D1_BITMAP_BRUSH_PROPERTIES propertiesXClampYClamp = D2D1::BitmapBrushProperties(
+				D2D1_EXTEND_MODE_CLAMP,
+				D2D1_EXTEND_MODE_CLAMP,
+				D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
+
+			// "Move" and "scale" the |bitmap| to match the destination.
+			D2D1_MATRIX_3X2_F translate = D2D1::Matrix3x2F::Translation(rDst.left, rDst.top);
+			D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(
+				D2D1::SizeF((rDst.right - rDst.left) / (float)srcRect2.Width, (rDst.bottom - rDst.top) / (float)srcRect2.Height));
+			D2D1_BRUSH_PROPERTIES brushProps = D2D1::BrushProperties(1.0F, scale * translate);
+
+			hr = m_Target->CreateBitmapBrush(
+				d2dBitmap.Get(),
+				propertiesXClampYClamp,
+				brushProps,
+				brush.GetAddressOf());
+
+			// Load the |maskBitmap| and use the bitmap brush to "fill" its contents.
+			// Note: The image must be aliased when applying the opacity mask.
+			if (SUCCEEDED(hr))
+			{
+				Util::WICBitmapLockGDIP* maskBitmapLock = new Util::WICBitmapLockGDIP();
+				Gdiplus::Rect maskLockRect(0, 0, maskBitmap->GetWidth(), maskBitmap->GetHeight());
+				status = maskBitmap->LockBits(
+					&maskLockRect, Gdiplus::ImageLockModeRead, PixelFormat32bppPARGB, maskBitmapLock->GetBitmapData());
+				if (status == Gdiplus::Ok)
+				{
+					D2D1_BITMAP_PROPERTIES maskProps = D2D1::BitmapProperties(
+						D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED));
+					Microsoft::WRL::ComPtr<ID2D1Bitmap> d2dMaskBitmap;
+					hr = m_Target->CreateSharedBitmap(
+						__uuidof(IWICBitmapLock), maskBitmapLock, &props, d2dMaskBitmap.GetAddressOf());
+					if (SUCCEEDED(hr))
+					{
+						m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED); // required
+						m_Target->FillOpacityMask(
+							d2dMaskBitmap.Get(),
+							brush.Get(),
+							D2D1_OPACITY_MASK_CONTENT_GRAPHICS,
+							&rDst,
+							&rSrc);
+						m_Target->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+					}
+
+					maskBitmap->UnlockBits(bitmapLock->GetBitmapData());
+				}
+
+				maskBitmapLock->Release();
+			}
+		}
+
+		bitmap->UnlockBits(bitmapLock->GetBitmapData());
+	}
+
+	bitmapLock->Release();
+}
+
 void CanvasD2D::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
 {
 	if (!m_Target)  // Use GDI+ if D2D render target has not been created.

@@ -234,6 +234,12 @@ void CanvasGDIP::DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRec
 	m_Graphics->DrawImage(bitmap, dstRect, srcRect.X, srcRect.Y, srcRect.Width, srcRect.Height, Gdiplus::UnitPixel);
 }
 
+void CanvasGDIP::DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,
+	const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2)
+{
+	// Do nothing
+}
+
 void CanvasGDIP::FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush)
 {
 	m_Graphics->FillRectangle(&brush, rect);
