@@ -181,7 +181,6 @@ bool MeterImage::Update()
 		{
 			// Store the current values so we know if the image needs to be updated
 			std::wstring oldResult = m_ImageNameResult;
-			std::wstring oldMask = m_MaskImageNameResult;
 
 			if (!m_Measures.empty())  // read from the measures
 			{
@@ -198,32 +197,13 @@ bool MeterImage::Update()
 						m_ImageNameResult = m_Measures[0]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
 					}
 				}
-
-				if (m_MeterWindow->GetUseD2D() && m_Measures.size() >= 2)
-				{
-					if (m_MaskImageName.empty())
-					{
-						m_MaskImageNameResult = m_Measures[1]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
-					}
-					else
-					{
-						m_MaskImageNameResult = m_MaskImageName;
-						if (!ReplaceMeasures(m_MaskImageNameResult, AUTOSCALE_OFF))
-						{
-							// MaskImageName doesn't contain any measures, so use the result of MeasureName2.
-							m_MaskImageNameResult = m_Measures[1]->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, 0, false);
-						}
-					}
-				}
 			}
 			else  // read from the skin
 			{
 				m_ImageNameResult = m_ImageName;
-				m_MaskImageNameResult = m_MaskImageName;
 			}
 			
-			LoadImage(m_ImageNameResult, (wcscmp(oldResult.c_str(), m_ImageNameResult.c_str()) != 0) ||
-				(wcscmp(oldMask.c_str(), m_MaskImageNameResult.c_str()) != 0));
+			LoadImage(m_ImageNameResult, (wcscmp(oldResult.c_str(), m_ImageNameResult.c_str()) != 0));
 
 			return true;
 		}
