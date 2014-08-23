@@ -159,7 +159,7 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Image.ReadOptions(parser, section, path.c_str());
 	if (m_MeterWindow->GetUseD2D())
 	{
-		m_MaskImage.ReadOptions(parser, section, m_Image.GetPath().c_str());
+		m_MaskImage.ReadOptions(parser, section, L"");
 	}
 
 	if (m_Initialized && m_Measures.empty() && !m_DynamicVariables)

@@ -87,8 +87,6 @@ public:
 	Gdiplus::Bitmap* GetTintedImage() { return m_BitmapTint; }
 	Gdiplus::Bitmap* GetImage() { return (m_BitmapTint) ? m_BitmapTint : m_Bitmap; }
 
-	std::wstring GetPath() { return m_Path; }
-
 	void DisposeImage();
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
 
