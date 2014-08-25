@@ -139,30 +139,30 @@ enum {
 
 static Function g_Functions[NUM_FUNCS] =
 {
-	{ L"atan", &atan, 4 },							// FUNC_ATAN
-	{ L"cos", &cos, 3 },							// FUNC_COS
-	{ L"sin", &sin, 3 },							// FUNC_SIN
-	{ L"tan", &tan, 3 },							// FUNC_TAN
-	{ L"abs", &fabs, 3 },							// FUNC_ABS
-	{ L"exp", &exp, 3 },							// FUNC_EXP
-	{ L"ln", &log, 2 },								// FUNC_LN
-	{ L"log", &log10, 3 },							// FUNC_LOG
-	{ L"sqrt", &sqrt, 4 },							// FUNC_SQRT
-	{ L"frac", &frac, 4 },							// FUNC_FRAC
-	{ L"trunc", &trunc, 5 },						// FUNC_TRUNC
-	{ L"floor", &floor, 5 },						// FUNC_FLOOR
-	{ L"ceil", &ceil, 4 },							// FUNC_CEIL
-	{ L"round", (SingleArgFunction)&round, 5 },		// FUNC_ROUND
-	{ L"asin", &asin, 4 },							// FUNC_ASIN
-	{ L"acos", &acos, 4 },							// FUNC_ACOS
-	{ L"rad", &rad, 3 },							// FUNC_RAD
-	{ L"sgn", &sgn, 3 },							// FUNC_SGN
-	{ L"neg", &neg, 3 },							// FUNC_NEG
-	{ L"min", (SingleArgFunction)&Min, 3 },			// FUNC_MIN
-	{ L"max", (SingleArgFunction)&Max, 3 },			// FUNC_MAX
-	{ L"clamp", (SingleArgFunction)&Clamp, 5 },		// FUNC_CLAMP
-	{ L"e", nullptr, 1 },							// FUNC_E
-	{ L"pi", nullptr, 2 }							// FUNC_PI
+	{ L"atan", &atan, 4 },                         // FUNC_ATAN
+	{ L"cos", &cos, 3 },                           // FUNC_COS
+	{ L"sin", &sin, 3 },                           // FUNC_SIN
+	{ L"tan", &tan, 3 },                           // FUNC_TAN
+	{ L"abs", &fabs, 3 },                          // FUNC_ABS
+	{ L"exp", &exp, 3 },                           // FUNC_EXP
+	{ L"ln", &log, 2 },                            // FUNC_LN
+	{ L"log", &log10, 3 },                         // FUNC_LOG
+	{ L"sqrt", &sqrt, 4 },                         // FUNC_SQRT
+	{ L"frac", &frac, 4 },                         // FUNC_FRAC
+	{ L"trunc", &trunc, 5 },                       // FUNC_TRUNC
+	{ L"floor", &floor, 5 },                       // FUNC_FLOOR
+	{ L"ceil", &ceil, 4 },                         // FUNC_CEIL
+	{ L"round", (SingleArgFunction)&round, 5 },    // FUNC_ROUND
+	{ L"asin", &asin, 4 },                         // FUNC_ASIN
+	{ L"acos", &acos, 4 },                         // FUNC_ACOS
+	{ L"rad", &rad, 3 },                           // FUNC_RAD
+	{ L"sgn", &sgn, 3 },                           // FUNC_SGN
+	{ L"neg", &neg, 3 },                           // FUNC_NEG
+	{ L"min", (SingleArgFunction)&Min, 3 },        // FUNC_MIN
+	{ L"max", (SingleArgFunction)&Max, 3 },        // FUNC_MAX
+	{ L"clamp", (SingleArgFunction)&Clamp, 5 },    // FUNC_CLAMP
+	{ L"e", nullptr, 1 },                          // FUNC_E
+	{ L"pi", nullptr, 2 }                          // FUNC_PI
 };
 
 static const int FUNC_MAX_LEN = 5;
@@ -905,7 +905,7 @@ static const WCHAR* Min(int paramcnt, double* args, double* result)
 		const double& a = args[0];
 		const double& b = args[1];
 
-		*result = (a < b)? a : b;
+		*result = (a < b) ? a : b;
 		return nullptr;
 	}
 	return eInvPrmCnt;
@@ -918,7 +918,7 @@ static const WCHAR* Max(int paramcnt, double* args, double* result)
 		const double& a = args[0];
 		const double& b = args[1];
 
-		*result = (a > b)? a : b;
+		*result = (a > b) ? a : b;
 		return nullptr;
 	}
 	return eInvPrmCnt;
@@ -932,7 +932,7 @@ static const WCHAR* Clamp(int paramcnt, double* args, double* result)
 		const double& a = args[1];
 		const double& b = args[2];
 
-		*result = (x < a)? a : ((x > b)? b : x);
+		*result = (x < a) ? a : ((x > b) ? b : x);
 		return nullptr;
 	}
 	return eInvPrmCnt;
