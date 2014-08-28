@@ -758,7 +758,7 @@ CharType GetCharType(WCHAR ch)
 bool IsDelimiter(WCHAR ch)
 {
 	CharType type = GetCharType(ch);
-	return type == CharType::Symbol || type == CharType::Separator;
+	return type == CharType::MinusSymbol || type == CharType::Symbol || type == CharType::Separator;
 }
 
 BYTE GetFunctionIndex(const WCHAR* str, BYTE len)
