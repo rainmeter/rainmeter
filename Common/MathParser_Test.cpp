@@ -65,6 +65,9 @@ public:
 		ParseAssert(-1.0, L"trunc(-1.5)");
 		ParseAssert(2.0, L"round(1.555)");
 		ParseAssert(1.56, L"round(1.555, 2)");
+		ParseAssert(-2.0, L"min(1, -2)");
+		ParseAssert(3.0, L"max(3, -2)");
+		ParseAssert(3.0, L"clamp(6, -2, 3)");
 
 		double value;
 
