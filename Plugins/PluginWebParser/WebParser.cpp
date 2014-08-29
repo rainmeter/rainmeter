@@ -735,7 +735,24 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 
 	measure->url = url;
-	measure->headers = RmReadString(rm, L"Headers", L"");
+	
+	measure->headers = L"";
+
+	unsigned headerNum = 1;
+	std::wstring headerOption;
+	std::wstring headerValue = RmReadString(rm, L"Header", L"");
+
+	while (!headerValue.empty())
+	{
+		measure->headers += headerValue + L"\r\n";	// Seperates each header field
+		headerOption = L"Header" + std::to_wstring(++headerNum);
+		headerValue = RmReadString(rm, headerOption.c_str(), L"");
+	}
+
+	if (!measure->headers.empty())
+	{
+		measure->headers += L"\r\n";	// Append \r\n to the last header to denote end of header section
+	}
 
 	measure->regExp = RmReadString(rm, L"RegExp", L"");
 	measure->finishAction = RmReadString(rm, L"FinishAction", L"", FALSE);
