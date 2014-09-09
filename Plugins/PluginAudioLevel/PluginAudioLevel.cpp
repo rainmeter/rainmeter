@@ -975,7 +975,7 @@ PLUGIN_EXPORT LPCWSTR GetString (void* data)
 								L"%s%s: %s", iDevice > 0 ? L"\n" : L"", id, varName.pwszVal);
 						}
 
-						if(id) CoTaskMemFree(id);
+						if (id) CoTaskMemFree(id);
 
 						PropVariantClear(&varName);
 					}
