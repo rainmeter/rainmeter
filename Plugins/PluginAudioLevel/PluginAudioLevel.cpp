@@ -910,11 +910,11 @@ PLUGIN_EXPORT LPCWSTR GetString (void* data)
 	Measure* parent	= m->m_parent ? m->m_parent : m;
 
 	static WCHAR buffer[512];
-	const char* s_fmtName[Measure::NUM_FORMATS] =
+	const WCHAR* s_fmtName[Measure::NUM_FORMATS] =
 	{
-		"<invalid>",	// FMT_INVALID
-		"PCM 16b",		// FMT_PCM_S16
-		"PCM 32b",		// FMT_PCM_F32
+		L"<invalid>",	// FMT_INVALID
+		L"PCM 16b",		// FMT_PCM_S16
+		L"PCM 32b",		// FMT_PCM_F32
 	};
 
 	buffer[0] = '\0';
