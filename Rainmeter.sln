@@ -36,6 +36,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SkinInstallerLauncher", "Sk
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginAdvancedCPU", "Plugins\PluginAdvancedCPU\PluginAdvancedCPU.vcxproj", "{EE8EC522-8430-4B46-86A3-D943D77F9E4B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginAudioLevel", "Plugins\PluginAudioLevel\PluginAudioLevel.vcxproj", "{7FB00A1C-F0C0-49FD-A15C-392F69FDF645}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginCoreTemp", "Plugins\PluginCoreTemp\PluginCoreTemp.vcxproj", "{F32FA418-8DF4-4E94-B92B-EBD502F5DC07}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginFileView", "Plugins\PluginFileView\PluginFileView.vcxproj", "{64FDEE97-6B7E-40E5-A489-ECA322825BC8}"
@@ -173,6 +175,14 @@ Global
 		{EE8EC522-8430-4B46-86A3-D943D77F9E4B}.Release|Win32.Build.0 = Release|Win32
 		{EE8EC522-8430-4B46-86A3-D943D77F9E4B}.Release|x64.ActiveCfg = Release|x64
 		{EE8EC522-8430-4B46-86A3-D943D77F9E4B}.Release|x64.Build.0 = Release|x64
+		{7FB00A1C-F0C0-49FD-A15C-392F69FDF645}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7FB00A1C-F0C0-49FD-A15C-392F69FDF645}.Debug|Win32.Build.0 = Debug|Win32
+		{7FB00A1C-F0C0-49FD-A15C-392F69FDF645}.Debug|x64.ActiveCfg = Debug|x64
+		{7FB00A1C-F0C0-49FD-A15C-392F69FDF645}.Debug|x64.Build.0 = Debug|x64
+		{7FB00A1C-F0C0-49FD-A15C-392F69FDF645}.Release|Win32.ActiveCfg = Release|Win32
+		{7FB00A1C-F0C0-49FD-A15C-392F69FDF645}.Release|Win32.Build.0 = Release|Win32
+		{7FB00A1C-F0C0-49FD-A15C-392F69FDF645}.Release|x64.ActiveCfg = Release|x64
+		{7FB00A1C-F0C0-49FD-A15C-392F69FDF645}.Release|x64.Build.0 = Release|x64
 		{F32FA418-8DF4-4E94-B92B-EBD502F5DC07}.Debug|Win32.ActiveCfg = Debug|Win32
 		{F32FA418-8DF4-4E94-B92B-EBD502F5DC07}.Debug|Win32.Build.0 = Debug|Win32
 		{F32FA418-8DF4-4E94-B92B-EBD502F5DC07}.Debug|x64.ActiveCfg = Debug|x64
