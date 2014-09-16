@@ -195,6 +195,7 @@ public:
 	int GetAlphaValue() { return m_AlphaValue; }
 	int GetUpdateCounter() { return m_UpdateCounter; }
 	int GetTransitionUpdate() { return m_TransitionUpdate; }
+	int GetDefaultUpdateDivider() { return m_DefaultUpdateDivider; }
 
 	bool GetMeterToolTipHidden() { return m_ToolTipHidden; }
 
@@ -375,6 +376,7 @@ private:
 	bool m_WindowDraggable;
 	int m_WindowUpdate;
 	int m_TransitionUpdate;
+	int m_DefaultUpdateDivider;
 	bool m_ActiveTransition;
 	bool m_HasNetMeasures;
 	bool m_HasButtons;

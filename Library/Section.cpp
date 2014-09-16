@@ -47,7 +47,9 @@ Section::~Section()
 */
 void Section::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	int updateDivider = parser.ReadInt(section, L"UpdateDivider", 1);
+	const int defaultUpdateDivider =
+		m_MeterWindow ? m_MeterWindow->GetDefaultUpdateDivider() : 1;
+	int updateDivider = parser.ReadInt(section, L"UpdateDivider", defaultUpdateDivider);
 	if (updateDivider != m_UpdateDivider)
 	{
 		m_UpdateCounter = m_UpdateDivider = updateDivider;

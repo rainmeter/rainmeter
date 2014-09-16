@@ -107,6 +107,7 @@ MeterWindow::MeterWindow(const std::wstring& folderPath, const std::wstring& fil
 	m_WindowDraggable(true),
 	m_WindowUpdate(INTERVAL_METER),
 	m_TransitionUpdate(INTERVAL_TRANSITION),
+	m_DefaultUpdateDivider(1),
 	m_ActiveTransition(false),
 	m_HasNetMeasures(false),
 	m_HasButtons(false),
@@ -2150,6 +2151,7 @@ bool MeterWindow::ReadSkin()
 
 	m_WindowUpdate = m_Parser.ReadInt(L"Rainmeter", L"Update", INTERVAL_METER);
 	m_TransitionUpdate = m_Parser.ReadInt(L"Rainmeter", L"TransitionUpdate", INTERVAL_TRANSITION);
+	m_DefaultUpdateDivider = m_Parser.ReadInt(L"Rainmeter", L"DefaultUpdateDivider", 1);
 	m_ToolTipHidden = m_Parser.ReadBool(L"Rainmeter", L"ToolTipHidden", false);
 
 	if (IsWindowsVistaOrGreater())
