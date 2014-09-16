@@ -37,14 +37,14 @@ enum TRAY_METER_TYPE
 class ConfigParser;
 class Measure;
 
-class TrayWindow
+class TrayIcon
 {
 public:
-	TrayWindow();
-	~TrayWindow();
+	TrayIcon();
+	~TrayIcon();
 
-	TrayWindow(const TrayWindow& other) = delete;
-	TrayWindow& operator=(TrayWindow other) = delete;
+	TrayIcon(const TrayIcon& other) = delete;
+	TrayIcon& operator=(TrayIcon other) = delete;
 
 	void Initialize();
 

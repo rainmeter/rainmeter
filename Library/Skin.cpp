@@ -3564,7 +3564,7 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		else
 		{
 			// Forward to tray window, which handles all the other commands
-			HWND tray = GetRainmeter().GetTrayWindow()->GetWindow();
+			HWND tray = GetRainmeter().GetTrayIcon()->GetWindow();
 
 			if (wParam == IDM_QUIT)
 			{

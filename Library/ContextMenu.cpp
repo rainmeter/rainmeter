@@ -148,7 +148,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		if (rainmeter.m_NewVersion)
 		{
 			InsertMenu(menu, 0, MF_BYPOSITION, IDM_NEW_VERSION, GetString(ID_STR_UPDATEAVAILABLE));
-			HiliteMenuItem(rainmeter.GetTrayWindow()->GetWindow(), menu, 0, MF_BYPOSITION | MF_HILITE);
+			HiliteMenuItem(rainmeter.GetTrayIcon()->GetWindow(), menu, 0, MF_BYPOSITION | MF_HILITE);
 			InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 		}
 	}
@@ -164,7 +164,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		}
 	}
 
-	DisplayMenu(pos, menu, skin ? skin->GetWindow() : rainmeter.m_TrayWindow->GetWindow());
+	DisplayMenu(pos, menu, skin ? skin->GetWindow() : rainmeter.m_TrayIcon->GetWindow());
 	DestroyMenu(menu);
 
 	m_MenuActive = false;

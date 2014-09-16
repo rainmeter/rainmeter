@@ -1955,7 +1955,7 @@ void DialogManage::TabSettings::Initialize()
 
 	Edit_SetText(GetControl(Id_EditorEdit), GetRainmeter().GetSkinEditor().c_str());
 
-	bool iconEnabled = GetRainmeter().GetTrayWindow()->IsTrayIconEnabled();
+	bool iconEnabled = GetRainmeter().GetTrayIcon()->IsTrayIconEnabled();
 	Button_SetCheck(GetControl(Id_ShowTrayIconCheckBox), iconEnabled);
 
 	if (IsWindowsVistaOrGreater())
@@ -2122,7 +2122,7 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;	
 
 	case Id_ShowTrayIconCheckBox:
-		GetRainmeter().GetTrayWindow()->SetTrayIcon(!GetRainmeter().GetTrayWindow()->IsTrayIconEnabled());
+		GetRainmeter().GetTrayIcon()->SetTrayIcon(!GetRainmeter().GetTrayIcon()->IsTrayIconEnabled());
 		break;
 
 	case Id_UseD2DCheckBox:

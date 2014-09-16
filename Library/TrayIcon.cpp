@@ -50,7 +50,7 @@ const UINT WM_TASKBARCREATED = ::RegisterWindowMessage(L"TaskbarCreated");
 
 using namespace Gdiplus;
 
-TrayWindow::TrayWindow() :
+TrayIcon::TrayIcon() :
 	m_Icon(),
 	m_Measure(),
 	m_MeterType(TRAY_METER_TYPE_HISTOGRAM),
@@ -65,7 +65,7 @@ TrayWindow::TrayWindow() :
 {
 }
 
-TrayWindow::~TrayWindow()
+TrayIcon::~TrayIcon()
 {
 	KillTimer(m_Window, TIMER_ADDTRAYICON);
 	KillTimer(m_Window, TIMER_TRAYMEASURE);
@@ -83,7 +83,7 @@ TrayWindow::~TrayWindow()
 	if (m_Window) DestroyWindow(m_Window);
 }
 
-void TrayWindow::Initialize()
+void TrayIcon::Initialize()
 {
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = (WNDPROC)WndProc;
@@ -110,7 +110,7 @@ void TrayWindow::Initialize()
 	SetWindowPos(m_Window, HWND_BOTTOM, 0, 0, 0, 0, ZPOS_FLAGS);
 }
 
-bool TrayWindow::AddTrayIcon()
+bool TrayIcon::AddTrayIcon()
 {
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
@@ -123,7 +123,7 @@ bool TrayWindow::AddTrayIcon()
 	return (Shell_NotifyIcon(NIM_ADD, &tnid) || GetLastError() != ERROR_TIMEOUT);
 }
 
-bool TrayWindow::IsTrayIconReady()
+bool TrayIcon::IsTrayIconReady()
 {
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
@@ -132,7 +132,7 @@ bool TrayWindow::IsTrayIconReady()
 	return Shell_NotifyIcon(NIM_MODIFY, &tnid) != FALSE;
 }
 
-void TrayWindow::TryAddTrayIcon()
+void TrayIcon::TryAddTrayIcon()
 {
 	if (IsTrayIconReady())
 	{
@@ -154,7 +154,7 @@ void TrayWindow::TryAddTrayIcon()
 	}
 }
 
-void TrayWindow::CheckTrayIcon()
+void TrayIcon::CheckTrayIcon()
 {
 	if (IsTrayIconReady() || AddTrayIcon())
 	{
@@ -162,7 +162,7 @@ void TrayWindow::CheckTrayIcon()
 	}
 }
 
-void TrayWindow::RemoveTrayIcon()
+void TrayIcon::RemoveTrayIcon()
 {
 	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
 	tnid.hWnd = m_Window;
@@ -178,7 +178,7 @@ void TrayWindow::RemoveTrayIcon()
 	}
 }
 
-void TrayWindow::ModifyTrayIcon(double value)
+void TrayIcon::ModifyTrayIcon(double value)
 {
 	if (m_Icon)
 	{
@@ -197,7 +197,7 @@ void TrayWindow::ModifyTrayIcon(double value)
 	Shell_NotifyIcon(NIM_MODIFY, &tnid);
 }
 
-HICON TrayWindow::CreateTrayIcon(double value)
+HICON TrayIcon::CreateTrayIcon(double value)
 {
 	if (m_Measure != nullptr)
 	{
@@ -294,7 +294,7 @@ HICON TrayWindow::CreateTrayIcon(double value)
 	return GetIcon(IDI_TRAY);
 }
 
-void TrayWindow::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const WCHAR* text)
+void TrayIcon::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const WCHAR* text)
 {
 	if (m_Notification == TRAY_NOTIFICATION_NONE)
 	{
@@ -320,18 +320,18 @@ void TrayWindow::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, cons
 	}
 }
 
-void TrayWindow::ShowWelcomeNotification()
+void TrayIcon::ShowWelcomeNotification()
 {
 	ShowNotification(TRAY_NOTIFICATION_WELCOME, GetString(ID_STR_WELCOME), GetString(ID_STR_CLICKTOMANAGE));
 }
 
-void TrayWindow::ShowUpdateNotification(const WCHAR* newVersion)
+void TrayIcon::ShowUpdateNotification(const WCHAR* newVersion)
 {
 	std::wstring text = GetFormattedString(ID_STR_CLICKTODOWNLOAD, newVersion);
 	ShowNotification(TRAY_NOTIFICATION_UPDATE, GetString(ID_STR_UPDATEAVAILABLE), text.c_str());
 }
 
-void TrayWindow::SetTrayIcon(bool enabled)
+void TrayIcon::SetTrayIcon(bool enabled)
 {
 	enabled ? TryAddTrayIcon() : RemoveTrayIcon();
 	m_IconEnabled = enabled;
@@ -341,7 +341,7 @@ void TrayWindow::SetTrayIcon(bool enabled)
 	WritePrivateProfileString(L"Rainmeter", L"TrayIcon", enabled ? nullptr : L"0", iniFile.c_str());
 }
 
-void TrayWindow::ReadOptions(ConfigParser& parser)
+void TrayIcon::ReadOptions(ConfigParser& parser)
 {
 	// Clear old Settings
 	KillTimer(m_Window, TIMER_ADDTRAYICON);
@@ -455,9 +455,9 @@ void TrayWindow::ReadOptions(ConfigParser& parser)
 	}
 }
 
-LRESULT CALLBACK TrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK TrayIcon::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	TrayWindow* tray = GetRainmeter().GetTrayWindow();
+	TrayIcon* tray = GetRainmeter().GetTrayIcon();
 
 	switch (uMsg)
 	{

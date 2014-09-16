@@ -80,7 +80,7 @@ void CheckVersion(void* dummy)
 				int lastVersion = parseVersion(buffer);
 				if (availableVersion > lastVersion)
 				{
-					GetRainmeter().GetTrayWindow()->ShowUpdateNotification(version);
+					GetRainmeter().GetTrayIcon()->ShowUpdateNotification(version);
 					WritePrivateProfileString(L"Rainmeter", L"LastCheck", version, dataFile);
 				}
 			}

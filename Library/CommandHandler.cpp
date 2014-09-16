@@ -941,7 +941,7 @@ void CommandHandler::DoRefreshApp(std::vector<std::wstring>& args, Skin* skin)
 void CommandHandler::DoQuitBang(std::vector<std::wstring>& args, Skin* skin)
 {
 	// Quit needs to be delayed since it crashes if done during Update().
-	PostMessage(GetRainmeter().GetTrayWindow()->GetWindow(), WM_COMMAND, MAKEWPARAM(IDM_QUIT, 0), 0);
+	PostMessage(GetRainmeter().GetTrayIcon()->GetWindow(), WM_COMMAND, MAKEWPARAM(IDM_QUIT, 0), 0);
 }
 
 void CommandHandler::DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin)

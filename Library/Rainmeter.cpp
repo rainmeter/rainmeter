@@ -105,7 +105,7 @@ int RainmeterMain(LPWSTR cmdLine)
 **
 */
 Rainmeter::Rainmeter() :
-	m_TrayWindow(),
+	m_TrayIcon(),
 	m_UseD2D(true),
 	m_Debug(false),
 	m_DisableVersionCheck(false),
@@ -367,8 +367,8 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 	MeterString::InitializeStatic();
 
 	// Tray must exist before skins are read
-	m_TrayWindow = new TrayWindow();
-	m_TrayWindow->Initialize();
+	m_TrayIcon = new TrayIcon();
+	m_TrayIcon->Initialize();
 
 	ReloadSettings();
 
@@ -401,7 +401,7 @@ int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 
 	if (dataFileCreated)
 	{
-		m_TrayWindow->ShowWelcomeNotification();
+		m_TrayIcon->ShowWelcomeNotification();
 	}
 	else if (!m_DisableVersionCheck)
 	{
@@ -419,7 +419,7 @@ void Rainmeter::Finalize()
 	DeleteAllSkins();
 	DeleteAllUnmanagedSkins();  // Redelete unmanaged windows caused by OnCloseAction
 
-	delete m_TrayWindow;
+	delete m_TrayIcon;
 
 	System::Finalize();
 
@@ -1270,9 +1270,9 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		logger.StartLogFile();
 	}
 
-	if (m_TrayWindow)
+	if (m_TrayIcon)
 	{
-		m_TrayWindow->ReadOptions(parser);
+		m_TrayIcon->ReadOptions(parser);
 	}
 
 	m_GlobalOptions.netInSpeed = parser.ReadFloat(L"Rainmeter", L"NetInSpeed", 0.0);

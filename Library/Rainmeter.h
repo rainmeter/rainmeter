@@ -56,7 +56,7 @@ struct GlobalOptions
 };
 
 class ConfigParser;
-class TrayWindow;
+class TrayIcon;
 
 class Rainmeter
 {
@@ -74,7 +74,7 @@ public:
 	ConfigParser* GetCurrentParser() { return m_CurrentParser; }
 	void SetCurrentParser(ConfigParser* parser) { m_CurrentParser = parser; }
 
-	TrayWindow* GetTrayWindow() { return m_TrayWindow; }
+	TrayIcon* GetTrayIcon() { return m_TrayIcon; }
 
 	bool HasSkin(const Skin* skin) const;
 
@@ -212,7 +212,7 @@ private:
 	void CreateComponentFolders(bool defaultIniLocation);
 	void TestSettingsFile(bool bDefaultIniLocation);
 
-	TrayWindow* m_TrayWindow;
+	TrayIcon* m_TrayIcon;
 
 	std::multimap<int, int> m_SkinOrders;
 	std::map<std::wstring, Skin*> m_Skins;

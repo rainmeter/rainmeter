@@ -22,7 +22,7 @@ Rainmeter query interface based on Window Message
 The majority of the queries work as detailed below, other queries are explained along with their definitions.
 Usage:
 1) Post the query to Rainmeter (E.g. QueryRainmeterSkinsPath function)
-   * target window : Rainmeter(TrayWindow)
+   * target window : Rainmeter(TrayIcon)
    * message       : WM_QUERY_RAINMETER
    * wParam        : QUERY ID (RAINMETER_QUERY_ID_XXXXX)
    * lParam        : window handle which receives WM_COPYDATA
