@@ -22,7 +22,7 @@
 #include "ContextMenu.h"
 #include "Rainmeter.h"
 #include "Litestep.h"
-#include "MeterWindow.h"
+#include "Skin.h"
 #include "System.h"
 #include "TrayWindow.h"
 #include "resource.h"

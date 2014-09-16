@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "../LuaManager.h"
 #include "../../Measure.h"
-#include "../../MeterWindow.h"
+#include "../../Skin.h"
 
 #define DECLARE_SELF(L) \
 	void* selfData = lua_touserdata(L, 1); \

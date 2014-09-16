@@ -18,8 +18,8 @@
 
 #include "StdAfx.h"
 #include "Rainmeter.h"
+#include "Skin.h"
 #include "System.h"
-#include "MeterWindow.h"
 #include "TrayWindow.h"
 #include "Measure.h"
 #include "resource.h"

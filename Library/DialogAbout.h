@@ -21,7 +21,7 @@
 
 #include "../Common/Dialog.h"
 #include "Logger.h"
-#include "MeterWindow.h"
+#include "Skin.h"
 
 class DialogAbout : public Dialog
 {

@@ -22,7 +22,7 @@
 #include "Litestep.h"
 #include "Rainmeter.h"
 #include "Section.h"
-#include "MeterWindow.h"
+#include "Skin.h"
 #include "System.h"
 #include "resource.h"
 

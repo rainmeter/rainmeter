@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef __METERWINDOW_H__
-#define __METERWINDOW_H__
+#ifndef RM_LIBRARY_SKIN_H_
+#define RM_LIBRARY_SKIN_H_
 
 #include <windows.h>
 #include <dwmapi.h>

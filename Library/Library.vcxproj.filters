@@ -111,10 +111,10 @@
     <ClCompile Include="MeterString.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MeterWindow.cpp">
+    <ClCompile Include="Rainmeter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Rainmeter.cpp">
+    <ClCompile Include="Skin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="StdAfx.cpp">

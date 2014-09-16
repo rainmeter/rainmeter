@@ -17,7 +17,7 @@
 */
 
 #include "StdAfx.h"
-#include "MeterWindow.h"
+#include "Skin.h"
 #include "Rainmeter.h"
 #include "TrayWindow.h"
 #include "System.h"

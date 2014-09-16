@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "Rainmeter.h"
 #include "Export.h"
-#include "MeterWindow.h"
+#include "Skin.h"
 #include "Measure.h"
 #include "MeasurePlugin.h"
 

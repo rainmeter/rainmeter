@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "../LuaManager.h"
 #include "../../Rainmeter.h"
-#include "../../MeterWindow.h"
+#include "../../Skin.h"
 #include "../../MeterString.h"
 
 #define DECLARE_SELF(L) \

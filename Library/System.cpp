@@ -20,7 +20,7 @@
 #include "System.h"
 #include "Litestep.h"
 #include "Rainmeter.h"
-#include "MeterWindow.h"
+#include "Skin.h"
 #include "MeasureNet.h"
 #include "Error.h"
 #include "../Common/PathUtil.h"

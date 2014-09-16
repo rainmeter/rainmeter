@@ -19,7 +19,7 @@
 
 #include "Measure.h"
 #include "lua/LuaScript.h"
-#include "MeterWindow.h"
+#include "Skin.h"
 
 class MeasureScript : public Measure
 {

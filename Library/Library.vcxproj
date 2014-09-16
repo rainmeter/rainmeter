@@ -67,9 +67,9 @@
     <ClCompile Include="MeterRotator.cpp" />
     <ClCompile Include="MeterRoundLine.cpp" />
     <ClCompile Include="MeterString.cpp" />
-    <ClCompile Include="MeterWindow.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="Rainmeter.cpp" />
+    <ClCompile Include="Skin.cpp" />
     <ClCompile Include="Export.cpp" />
     <ClCompile Include="Section.cpp" />
     <ClCompile Include="SkinRegistry.cpp" />

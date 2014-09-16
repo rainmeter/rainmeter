@@ -27,7 +27,7 @@
 #include "CommandHandler.h"
 #include "ContextMenu.h"
 #include "Logger.h"
-#include "MeterWindow.h"
+#include "Skin.h"
 #include "SkinRegistry.h"
 
 #define MAX_LINE_LENGTH 4096

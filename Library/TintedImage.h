@@ -23,7 +23,7 @@
 #include <ole2.h>  // For Gdiplus.h.
 #include <gdiplus.h>
 #include <string>
-#include "MeterWindow.h"
+#include "Skin.h"
 
 /*
 ** Helper macro to define an array of option names. A prefix must be given.

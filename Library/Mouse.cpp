@@ -18,7 +18,7 @@
 
 #include "StdAfx.h"
 #include "ConfigParser.h"
-#include "MeterWindow.h"
+#include "Skin.h"
 #include "Meter.h"
 #include "Logger.h"
 #include "Mouse.h"

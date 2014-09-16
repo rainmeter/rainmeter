@@ -26,7 +26,7 @@
 #include <string>
 #include "Litestep.h"
 #include "ConfigParser.h"
-#include "MeterWindow.h"
+#include "Skin.h"
 #include "Section.h"
 #include "Measure.h"
 
