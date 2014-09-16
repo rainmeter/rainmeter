@@ -26,7 +26,7 @@
 #include "Logger.h"
 #include "Rainmeter.h"
 #include "System.h"
-#include "TrayWindow.h"
+#include "TrayIcon.h"
 #include "resource.h"
 
 namespace {

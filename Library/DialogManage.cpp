@@ -21,7 +21,7 @@
 #include "Rainmeter.h"
 #include "Skin.h"
 #include "System.h"
-#include "TrayWindow.h"
+#include "TrayIcon.h"
 #include "Measure.h"
 #include "resource.h"
 #include "DialogManage.h"

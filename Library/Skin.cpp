@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "Skin.h"
 #include "Rainmeter.h"
-#include "TrayWindow.h"
+#include "TrayIcon.h"
 #include "System.h"
 #include "Error.h"
 #include "Meter.h"

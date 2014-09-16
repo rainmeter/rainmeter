@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef __TRAYWINDOW_H__
-#define __TRAYWINDOW_H__
+#ifndef RM_LIBRARY_TRAYICON_H_
+#define RM_LIBRARY_TRAYICON_H_
 
 #include <windows.h>
 #include <ole2.h>  // For Gdiplus.h.

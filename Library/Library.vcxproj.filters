@@ -123,7 +123,7 @@
     <ClCompile Include="TintedImage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TrayWindow.cpp">
+    <ClCompile Include="TrayIcon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UpdateCheck.cpp">
@@ -296,7 +296,7 @@
     <ClInclude Include="TintedImage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TrayWindow.h">
+    <ClInclude Include="TrayIcon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UpdateCheck.h">

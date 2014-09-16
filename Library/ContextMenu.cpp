@@ -24,7 +24,7 @@
 #include "Util.h"
 #include "Skin.h"
 #include "System.h"
-#include "TrayWindow.h"
+#include "TrayIcon.h"
 #include "resource.h"
 
 ContextMenu::ContextMenu() :

@@ -17,7 +17,7 @@
 */
 
 #include "StdAfx.h"
-#include "TrayWindow.h"
+#include "TrayIcon.h"
 #include "Measure.h"
 #include "resource.h"
 #include "Util.h"

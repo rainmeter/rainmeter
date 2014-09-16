@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "Util.h"
 #include "Rainmeter.h"
-#include "TrayWindow.h"
+#include "TrayIcon.h"
 #include "../Version.h"
 
 void CheckVersion(void* dummy)
