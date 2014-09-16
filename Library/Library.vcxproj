@@ -131,9 +131,9 @@
     <ClInclude Include="MeterRotator.h" />
     <ClInclude Include="MeterRoundLine.h" />
     <ClInclude Include="MeterString.h" />
-    <ClInclude Include="MeterWindow.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="Rainmeter.h" />
+    <ClInclude Include="Skin.h" />
     <ClInclude Include="Export.h" />
     <ClInclude Include="RainmeterQuery.h" />
     <ClInclude Include="resource.h" />

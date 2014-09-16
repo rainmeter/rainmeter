@@ -278,9 +278,6 @@
     <ClInclude Include="MeterString.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MeterWindow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Rainmeter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -291,6 +288,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Skin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="System.h">
