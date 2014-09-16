@@ -415,9 +415,9 @@ void Rainmeter::Finalize()
 {
 	KillTimer(m_Window, TIMER_NETSTATS);
 
-	DeleteAllUnmanagedMeterWindows();
-	DeleteAllMeterWindows();
-	DeleteAllUnmanagedMeterWindows();  // Redelete unmanaged windows caused by OnCloseAction
+	DeleteAllUnmanagedSkins();
+	DeleteAllSkins();
+	DeleteAllUnmanagedSkins();  // Redelete unmanaged windows caused by OnCloseAction
 
 	delete m_TrayWindow;
 
@@ -569,9 +569,9 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		break;
 
 	case WM_RAINMETER_EXECUTE:
-		if (GetRainmeter().HasMeterWindow((MeterWindow*)wParam))
+		if (GetRainmeter().HasSkin((Skin*)wParam))
 		{
-			GetRainmeter().ExecuteCommand((const WCHAR*)lParam, (MeterWindow*)wParam);
+			GetRainmeter().ExecuteCommand((const WCHAR*)lParam, (Skin*)wParam);
 		}
 		break;
 
@@ -851,8 +851,8 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		std::wstring folderPath = m_SkinRegistry.GetFolderPath(folderIndex);
 
 		// Verify that the skin is not already active
-		std::map<std::wstring, MeterWindow*>::const_iterator iter = m_MeterWindows.find(folderPath);
-		if (iter != m_MeterWindows.end())
+		std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.find(folderPath);
+		if (iter != m_Skins.end())
 		{
 			if (wcscmp(((*iter).second)->GetFileName().c_str(), fileSz) == 0)
 			{
@@ -885,34 +885,34 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 			WriteActive(folderPath, fileIndex);
 		}
 
-		CreateMeterWindow(folderPath, file);
+		CreateSkin(folderPath, file);
 	}
 }
 
-void Rainmeter::DeactivateSkin(MeterWindow* meterWindow, int folderIndex, bool save)
+void Rainmeter::DeactivateSkin(Skin* skin, int folderIndex, bool save)
 {
 	if (folderIndex >= 0 && folderIndex < m_SkinRegistry.GetFolderCount())
 	{
 		m_SkinRegistry.GetFolder(folderIndex).active = 0;	// Deactivate the skin
 	}
-	else if (folderIndex == -1 && meterWindow)
+	else if (folderIndex == -1 && skin)
 	{
-		SkinRegistry::Folder* folder = m_SkinRegistry.FindFolder(meterWindow->GetFolderPath());
+		SkinRegistry::Folder* folder = m_SkinRegistry.FindFolder(skin->GetFolderPath());
 		if (folder)
 		{
 			folder->active = 0;
 		}
 	}
 
-	if (meterWindow)
+	if (skin)
 	{
 		if (save)
 		{
 			// Disable the skin in the ini-file
-			WriteActive(meterWindow->GetFolderPath(), -1);
+			WriteActive(skin->GetFolderPath(), -1);
 		}
 
-		meterWindow->Deactivate();
+		skin->Deactivate();
 	}
 }
 
@@ -923,8 +923,8 @@ void Rainmeter::ToggleSkin(int folderIndex, int fileIndex)
 	{
 		if (m_SkinRegistry.GetFolder(folderIndex).active == fileIndex + 1)
 		{
-			MeterWindow* meterWindow = GetMeterWindow(m_SkinRegistry.GetFolderPath(folderIndex));
-			DeactivateSkin(meterWindow, folderIndex);
+			Skin* skin = GetSkin(m_SkinRegistry.GetFolderPath(folderIndex));
+			DeactivateSkin(skin, folderIndex);
 		}
 		else
 		{
@@ -963,60 +963,60 @@ void Rainmeter::WriteActive(const std::wstring& folderPath, int fileIndex)
 	WritePrivateProfileString(folderPath.c_str(), L"Active", buffer, m_IniFile.c_str());
 }
 
-void Rainmeter::CreateMeterWindow(const std::wstring& folderPath, const std::wstring& file)
+void Rainmeter::CreateSkin(const std::wstring& folderPath, const std::wstring& file)
 {
-	MeterWindow* mw = new MeterWindow(folderPath, file);
+	Skin* skin = new Skin(folderPath, file);
 
 	// Note: May modify existing key
-	m_MeterWindows[folderPath] = mw;
+	m_Skins[folderPath] = skin;
 
-	mw->Initialize();
+	skin->Initialize();
 
 	DialogAbout::UpdateSkins();
-	DialogManage::UpdateSkins(mw);
+	DialogManage::UpdateSkins(skin);
 }
 
-void Rainmeter::DeleteAllMeterWindows()
+void Rainmeter::DeleteAllSkins()
 {
-	auto it = m_MeterWindows.cbegin();
-	while (it != m_MeterWindows.cend())
+	auto it = m_Skins.cbegin();
+	while (it != m_Skins.cend())
 	{
-		MeterWindow* mw = (*it).second;
-		m_MeterWindows.erase(it);  // Remove before deleting MeterWindow
+		Skin* skin = (*it).second;
+		m_Skins.erase(it);  // Remove before deleting Skin
 
-		DialogManage::UpdateSkins(mw, true);
-		delete mw;
+		DialogManage::UpdateSkins(skin, true);
+		delete skin;
 
 		// Get next valid iterator (Fix for iterator invalidation caused by OnCloseAction)
-		it = m_MeterWindows.cbegin();
+		it = m_Skins.cbegin();
 	}
 
-	m_MeterWindows.clear();
+	m_Skins.clear();
 	DialogAbout::UpdateSkins();
 }
 
-void Rainmeter::DeleteAllUnmanagedMeterWindows()
+void Rainmeter::DeleteAllUnmanagedSkins()
 {
-	for (auto it = m_UnmanagedMeterWindows.cbegin(); it != m_UnmanagedMeterWindows.cend(); ++it)
+	for (auto it = m_UnmanagedSkins.cbegin(); it != m_UnmanagedSkins.cend(); ++it)
 	{
 		delete (*it);
 	}
 
-	m_UnmanagedMeterWindows.clear();
+	m_UnmanagedSkins.clear();
 }
 
 /*
-** Removes the skin from m_MeterWindows. The skin should delete itself.
+** Removes the skin from m_Skins. The skin should delete itself.
 **
 */
-void Rainmeter::RemoveMeterWindow(MeterWindow* meterWindow)
+void Rainmeter::RemoveSkin(Skin* skin)
 {
-	for (auto it = m_MeterWindows.cbegin(); it != m_MeterWindows.cend(); ++it)
+	for (auto it = m_Skins.cbegin(); it != m_Skins.cend(); ++it)
 	{
-		if ((*it).second == meterWindow)
+		if ((*it).second == skin)
 		{
-			m_MeterWindows.erase(it);
-			DialogManage::UpdateSkins(meterWindow, true);
+			m_Skins.erase(it);
+			DialogManage::UpdateSkins(skin, true);
 			DialogAbout::UpdateSkins();
 			break;
 		}
@@ -1024,39 +1024,39 @@ void Rainmeter::RemoveMeterWindow(MeterWindow* meterWindow)
 }
 
 /*
-** Adds the skin to m_UnmanagedMeterWindows. The skin should remove itself by calling RemoveUnmanagedMeterWindow().
+** Adds the skin to m_UnmanagedSkins. The skin should remove itself by calling RemoveUnmanagedSkin().
 **
 */
-void Rainmeter::AddUnmanagedMeterWindow(MeterWindow* meterWindow)
+void Rainmeter::AddUnmanagedSkin(Skin* skin)
 {
-	for (auto it = m_UnmanagedMeterWindows.cbegin(); it != m_UnmanagedMeterWindows.cend(); ++it)
+	for (auto it = m_UnmanagedSkins.cbegin(); it != m_UnmanagedSkins.cend(); ++it)
 	{
-		if ((*it) == meterWindow)  // already added
+		if ((*it) == skin)  // already added
 		{
 			return;
 		}
 	}
 
-	m_UnmanagedMeterWindows.push_back(meterWindow);
+	m_UnmanagedSkins.push_back(skin);
 }
 
-void Rainmeter::RemoveUnmanagedMeterWindow(MeterWindow* meterWindow)
+void Rainmeter::RemoveUnmanagedSkin(Skin* skin)
 {
-	for (auto it = m_UnmanagedMeterWindows.cbegin(); it != m_UnmanagedMeterWindows.cend(); ++it)
+	for (auto it = m_UnmanagedSkins.cbegin(); it != m_UnmanagedSkins.cend(); ++it)
 	{
-		if ((*it) == meterWindow)
+		if ((*it) == skin)
 		{
-			m_UnmanagedMeterWindows.erase(it);
+			m_UnmanagedSkins.erase(it);
 			break;
 		}
 	}
 }
 
-bool Rainmeter::HasMeterWindow(const MeterWindow* meterWindow) const
+bool Rainmeter::HasSkin(const Skin* skin) const
 {
-	for (auto it = m_MeterWindows.begin(); it != m_MeterWindows.end(); ++it)
+	for (auto it = m_Skins.begin(); it != m_Skins.end(); ++it)
 	{
-		if ((*it).second == meterWindow)
+		if ((*it).second == skin)
 		{
 			return true;
 		}
@@ -1065,11 +1065,11 @@ bool Rainmeter::HasMeterWindow(const MeterWindow* meterWindow) const
 	return false;
 }
 
-MeterWindow* Rainmeter::GetMeterWindow(const std::wstring& folderPath)
+Skin* Rainmeter::GetSkin(const std::wstring& folderPath)
 {
 	const WCHAR* folderSz = folderPath.c_str();
-	std::map<std::wstring, MeterWindow*>::const_iterator iter = m_MeterWindows.begin();
-	for (; iter != m_MeterWindows.end(); ++iter)
+	std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
+	for (; iter != m_Skins.end(); ++iter)
 	{
 		if (_wcsicmp((*iter).first.c_str(), folderSz) == 0)
 		{
@@ -1080,14 +1080,14 @@ MeterWindow* Rainmeter::GetMeterWindow(const std::wstring& folderPath)
 	return nullptr;
 }
 
-MeterWindow* Rainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
+Skin* Rainmeter::GetSkinByINI(const std::wstring& ini_searching)
 {
 	if (_wcsnicmp(m_SkinPath.c_str(), ini_searching.c_str(), m_SkinPath.length()) == 0)
 	{
 		const std::wstring config_searching = ini_searching.substr(m_SkinPath.length());
 
-		std::map<std::wstring, MeterWindow*>::const_iterator iter = m_MeterWindows.begin();
-		for (; iter != m_MeterWindows.end(); ++iter)
+		std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
+		for (; iter != m_Skins.end(); ++iter)
 		{
 			std::wstring config_current = (*iter).second->GetFolderPath() + L'\\';
 			config_current += (*iter).second->GetFileName();
@@ -1102,10 +1102,10 @@ MeterWindow* Rainmeter::GetMeterWindowByINI(const std::wstring& ini_searching)
 	return nullptr;
 }
 
-MeterWindow* Rainmeter::GetMeterWindow(HWND hwnd)
+Skin* Rainmeter::GetSkin(HWND hwnd)
 {
-	std::map<std::wstring, MeterWindow*>::const_iterator iter = m_MeterWindows.begin();
-	for (; iter != m_MeterWindows.end(); ++iter)
+	std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
+	for (; iter != m_Skins.end(); ++iter)
 	{
 		if ((*iter).second->GetWindow() == hwnd)
 		{
@@ -1116,15 +1116,15 @@ MeterWindow* Rainmeter::GetMeterWindow(HWND hwnd)
 	return nullptr;
 }
 
-void Rainmeter::GetMeterWindowsByLoadOrder(std::multimap<int, MeterWindow*>& windows, const std::wstring& group)
+void Rainmeter::GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, const std::wstring& group)
 {
-	std::map<std::wstring, MeterWindow*>::const_iterator iter = m_MeterWindows.begin();
-	for (; iter != m_MeterWindows.end(); ++iter)
+	std::map<std::wstring, Skin*>::const_iterator iter = m_Skins.begin();
+	for (; iter != m_Skins.end(); ++iter)
 	{
-		MeterWindow* mw = (*iter).second;
-		if (mw && (group.empty() || mw->BelongsToGroup(group)))
+		Skin* skin = (*iter).second;
+		if (skin && (group.empty() || skin->BelongsToGroup(group)))
 		{
-			windows.insert(std::pair<int, MeterWindow*>(GetLoadOrder((*iter).first), mw));
+			windows.insert(std::pair<int, Skin*>(GetLoadOrder((*iter).first), skin));
 		}
 	}
 }
@@ -1219,18 +1219,18 @@ void Rainmeter::ScanForLayouts()
 	DialogManage::UpdateLayouts();
 }
 
-void Rainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, MeterWindow* meterWindow)
+void Rainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, Skin* skin)
 {
-	m_CommandHandler.ExecuteBang(bang, args, meterWindow);
+	m_CommandHandler.ExecuteBang(bang, args, skin);
 }
 
 /*
 ** Runs the given command or bang
 **
 */
-void Rainmeter::ExecuteCommand(const WCHAR* command, MeterWindow* meterWindow, bool multi)
+void Rainmeter::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi)
 {
-	m_CommandHandler.ExecuteCommand(command, meterWindow, multi);
+	m_CommandHandler.ExecuteCommand(command, skin, multi);
 }
 
 /*
@@ -1357,7 +1357,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 /*
 ** Refreshes all active meter windows.
-** Note: This function calls MeterWindow::Refresh() directly for synchronization. Be careful about crash.
+** Note: This function calls Skin::Refresh() directly for synchronization. Be careful about crash.
 **
 */
 void Rainmeter::RefreshAll()
@@ -1372,25 +1372,25 @@ void Rainmeter::RefreshAll()
 	}
 
 	// Make the sending order by using LoadOrder
-	std::multimap<int, MeterWindow*> windows;
-	GetMeterWindowsByLoadOrder(windows);
+	std::multimap<int, Skin*> windows;
+	GetSkinsByLoadOrder(windows);
 
 	// Prepare the helper window
 	System::PrepareHelperWindow();
 
 	// Refresh all
-	std::multimap<int, MeterWindow*>::const_iterator iter = windows.begin();
+	std::multimap<int, Skin*>::const_iterator iter = windows.begin();
 	for ( ; iter != windows.end(); ++iter)
 	{
-		MeterWindow* mw = (*iter).second;
-		if (mw)
+		Skin* skin = (*iter).second;
+		if (skin)
 		{
 			// Verify whether the cached information is valid
-			const int index = m_SkinRegistry.FindFolderIndex(mw->GetFolderPath());
+			const int index = m_SkinRegistry.FindFolderIndex(skin->GetFolderPath());
 			if (index != -1)
 			{
 				SkinRegistry::Folder& skinFolder = m_SkinRegistry.GetFolder(index);
-				const WCHAR* skinIniFile = mw->GetFileName().c_str();
+				const WCHAR* skinIniFile = skin->GetFileName().c_str();
 
 				bool found = false;
 				for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
@@ -1402,7 +1402,7 @@ void Rainmeter::RefreshAll()
 						{
 							// Switch to new ini-file order
 							skinFolder.active = i + 1;
-							WriteActive(mw->GetFolderPath(), i);
+							WriteActive(skin->GetFolderPath(), i);
 						}
 						break;
 					}
@@ -1410,10 +1410,10 @@ void Rainmeter::RefreshAll()
 
 				if (!found)
 				{
-					const WCHAR* skinFolderPath = mw->GetFolderPath().c_str();
+					const WCHAR* skinFolderPath = skin->GetFolderPath().c_str();
 					std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolderPath, skinIniFile);
 
-					DeactivateSkin(mw, index);
+					DeactivateSkin(skin, index);
 
 					ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONEXCLAMATION);
 					continue;
@@ -1421,16 +1421,16 @@ void Rainmeter::RefreshAll()
 			}
 			else
 			{
-				const WCHAR* skinFolderPath = mw->GetFolderPath().c_str();
+				const WCHAR* skinFolderPath = skin->GetFolderPath().c_str();
 				std::wstring error = GetFormattedString(ID_STR_UNABLETOREFRESHSKIN, skinFolderPath, L"");
 
-				DeactivateSkin(mw, -2);  // -2 = Force deactivate
+				DeactivateSkin(skin, -2);  // -2 = Force deactivate
 
 				ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONEXCLAMATION);
 				continue;
 			}
 
-			mw->Refresh(false, true);
+			skin->Refresh(false, true);
 		}
 	}
 
@@ -1451,8 +1451,8 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 		return false;
 	}
 
-	DeleteAllUnmanagedMeterWindows();
-	DeleteAllMeterWindows();
+	DeleteAllUnmanagedSkins();
+	DeleteAllSkins();
 
 	std::wstring backup = GetLayoutPath();
 	backup += L"@Backup";

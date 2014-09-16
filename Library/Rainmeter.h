@@ -76,25 +76,25 @@ public:
 
 	TrayWindow* GetTrayWindow() { return m_TrayWindow; }
 
-	bool HasMeterWindow(const MeterWindow* meterWindow) const;
+	bool HasSkin(const Skin* skin) const;
 
-	MeterWindow* GetMeterWindow(const std::wstring& folderPath);
-	MeterWindow* GetMeterWindowByINI(const std::wstring& ini_searching);
+	Skin* GetSkin(const std::wstring& folderPath);
+	Skin* GetSkinByINI(const std::wstring& ini_searching);
 
-	MeterWindow* GetMeterWindow(HWND hwnd);
-	void GetMeterWindowsByLoadOrder(std::multimap<int, MeterWindow*>& windows, const std::wstring& group = std::wstring());
-	std::map<std::wstring, MeterWindow*>& GetAllMeterWindows() { return m_MeterWindows; }
+	Skin* GetSkin(HWND hwnd);
+	void GetSkinsByLoadOrder(std::multimap<int, Skin*>& windows, const std::wstring& group = std::wstring());
+	std::map<std::wstring, Skin*>& GetAllSkins() { return m_Skins; }
 
 	const std::vector<std::wstring>& GetAllLayouts() { return m_Layouts; }
 
-	void RemoveMeterWindow(MeterWindow* meterWindow);
-	void AddUnmanagedMeterWindow(MeterWindow* meterWindow);
-	void RemoveUnmanagedMeterWindow(MeterWindow* meterWindow);
+	void RemoveSkin(Skin* skin);
+	void AddUnmanagedSkin(Skin* skin);
+	void RemoveUnmanagedSkin(Skin* skin);
 
 	bool ActivateSkin(const std::wstring& folderPath);
 	bool ActivateSkin(const std::wstring& folderPath, const std::wstring& file);
 	void ActivateSkin(int folderIndex, int fileIndex);
-	void DeactivateSkin(MeterWindow* meterWindow, int folderIndex, bool save = true);
+	void DeactivateSkin(Skin* skin, int folderIndex, bool save = true);
 	void ToggleSkin(int folderIndex, int fileIndex);
 	void ToggleSkinWithID(UINT id);
 
@@ -165,16 +165,16 @@ public:
 	int ShowMessage(HWND parent, const WCHAR* text, UINT type);
 
 	bool IsMenuActive() { return m_ContextMenu.IsMenuActive(); }
-	void ShowContextMenu(POINT pos, MeterWindow* mw) { return m_ContextMenu.ShowMenu(pos, mw); }
-	void ShowSkinCustomContextMenu(POINT pos, MeterWindow* mw) { return m_ContextMenu.ShowSkinCustomMenu(pos, mw); }
+	void ShowContextMenu(POINT pos, Skin* skin) { return m_ContextMenu.ShowMenu(pos, skin); }
+	void ShowSkinCustomContextMenu(POINT pos, Skin* skin) { return m_ContextMenu.ShowSkinCustomMenu(pos, skin); }
 
 	const std::wstring& GetTrayExecuteR() { return m_TrayExecuteR; }
 	const std::wstring& GetTrayExecuteM() { return m_TrayExecuteM; }
 	const std::wstring& GetTrayExecuteDR() { return m_TrayExecuteDR; }
 	const std::wstring& GetTrayExecuteDM() { return m_TrayExecuteDM; }
 
-	void ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, MeterWindow* meterWindow);
-	void ExecuteCommand(const WCHAR* command, MeterWindow* meterWindow, bool multi = true);
+	void ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, Skin* skin);
+	void ExecuteCommand(const WCHAR* command, Skin* skin, bool multi = true);
 	void DelayedExecuteCommand(const WCHAR* command);
 
 	void RefreshAll();
@@ -196,9 +196,9 @@ private:
 	static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	void ActivateActiveSkins();
-	void CreateMeterWindow(const std::wstring& folderPath, const std::wstring& file);
-	void DeleteAllMeterWindows();
-	void DeleteAllUnmanagedMeterWindows();
+	void CreateSkin(const std::wstring& folderPath, const std::wstring& file);
+	void DeleteAllSkins();
+	void DeleteAllUnmanagedSkins();
 	void WriteActive(const std::wstring& folderPath, int fileIndex);
 	void ScanForSkins();
 	void ScanForLayouts();
@@ -215,8 +215,8 @@ private:
 	TrayWindow* m_TrayWindow;
 
 	std::multimap<int, int> m_SkinOrders;
-	std::map<std::wstring, MeterWindow*> m_MeterWindows;
-	std::list<MeterWindow*> m_UnmanagedMeterWindows;
+	std::map<std::wstring, Skin*> m_Skins;
+	std::list<Skin*> m_UnmanagedSkins;
 	std::vector<std::wstring> m_Layouts;
 
 	std::wstring m_Path;

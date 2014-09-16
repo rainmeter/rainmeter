@@ -39,7 +39,7 @@ typedef void (*NEWEXECUTEBANG)(void*, LPCWSTR);
 class MeasurePlugin : public Measure
 {
 public:
-	MeasurePlugin(MeterWindow* meterWindow, const WCHAR* name);
+	MeasurePlugin(Skin* skin, const WCHAR* name);
 	virtual ~MeasurePlugin();
 
 	MeasurePlugin(const MeasurePlugin& other) = delete;

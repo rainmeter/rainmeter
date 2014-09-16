@@ -239,10 +239,10 @@ std::wstring GetSectionSourceString(Section* section)
 	std::wstring source;
 	if (section)
 	{
-		MeterWindow* meterWindow = section->GetMeterWindow();
-		if (meterWindow)
+		Skin* skin = section->GetSkin();
+		if (skin)
 		{
-			source = meterWindow->GetSkinPath();
+			source = skin->GetSkinPath();
 			source += L" - ";
 		}
 
@@ -265,12 +265,12 @@ void Logger::LogSectionVF(Logger::Level level, Section* section, const WCHAR* fo
 	GetLogger().LogVF(level, source.c_str(), format, args);
 }
 
-void Logger::LogMeterWindowVF(Logger::Level level, MeterWindow* meterWindow, const WCHAR* format, va_list args)
+void Logger::LogSkinVF(Logger::Level level, Skin* skin, const WCHAR* format, va_list args)
 {
 	std::wstring source;
-	if (meterWindow)
+	if (skin)
 	{
-		source = meterWindow->GetSkinPath();
+		source = skin->GetSkinPath();
 	}
 	GetLogger().LogVF(level, source.c_str(), format, args);
 }

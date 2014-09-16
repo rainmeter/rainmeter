@@ -24,7 +24,7 @@
 class MeasureRegistry : public Measure
 {
 public:
-	MeasureRegistry(MeterWindow* meterWindow, const WCHAR* name);
+	MeasureRegistry(Skin* skin, const WCHAR* name);
 	virtual ~MeasureRegistry();
 
 	MeasureRegistry(const MeasureRegistry& other) = delete;

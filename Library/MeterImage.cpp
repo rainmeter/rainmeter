@@ -33,9 +33,9 @@ TintedImageHelper_DefineOptionArray(MeterImage::c_MaskOptionArray, L"Mask");
 ** The constructor
 **
 */
-MeterImage::MeterImage(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
-	m_Image(L"ImageName", nullptr, false, meterWindow),
-	m_MaskImage(L"MaskImageName", c_MaskOptionArray, false, meterWindow),
+MeterImage::MeterImage(Skin* skin, const WCHAR* name) : Meter(skin, name),
+	m_Image(L"ImageName", nullptr, false, skin),
+	m_MaskImage(L"MaskImageName", c_MaskOptionArray, false, skin),
 	m_NeedsRedraw(false),
 	m_DrawMode(DRAWMODE_NONE),
 	m_ScaleMargins()
@@ -76,7 +76,7 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 	if (m_Image.IsLoaded())
 	{
 		bool useMaskSize = false;
-		if (m_MeterWindow->GetUseD2D() && !m_MaskImageName.empty())
+		if (m_Skin->GetUseD2D() && !m_MaskImageName.empty())
 		{
 			m_MaskImageNameResult = m_MaskImageName;
 			m_MaskImage.LoadImage(m_MaskImageName, true);
@@ -157,7 +157,7 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	// Read tinting options
 	m_Image.ReadOptions(parser, section, path.c_str());
-	if (m_MeterWindow->GetUseD2D())
+	if (m_Skin->GetUseD2D())
 	{
 		m_MaskImage.ReadOptions(parser, section, L"");
 	}
@@ -239,7 +239,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 		int drawW = meterRect.Width;
 		int drawH = meterRect.Height;
 
-		bool hasMask = (m_MeterWindow->GetUseD2D() && m_MaskImage.IsLoaded());
+		bool hasMask = (m_Skin->GetUseD2D() && m_MaskImage.IsLoaded());
 		if (hasMask)
 		{
 			Bitmap* maskBitmap = m_MaskImage.GetImage();

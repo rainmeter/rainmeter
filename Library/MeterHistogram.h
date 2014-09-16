@@ -25,7 +25,7 @@
 class MeterHistogram : public Meter
 {
 public:
-	MeterHistogram(MeterWindow* meterWindow, const WCHAR* name);
+	MeterHistogram(Skin* skin, const WCHAR* name);
 	virtual ~MeterHistogram();
 
 	MeterHistogram(const MeterHistogram& other) = delete;

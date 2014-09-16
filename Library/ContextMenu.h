@@ -21,7 +21,7 @@
 
 #include <Windows.h>
 
-class MeterWindow;
+class Skin;
 
 // Handles the creation and display of Rainmeter and skin context menus.
 class ContextMenu
@@ -34,17 +34,17 @@ public:
 
 	bool IsMenuActive() { return m_MenuActive; }
 
-	void ShowMenu(POINT pos, MeterWindow* meterWindow);
-	void ShowSkinCustomMenu(POINT pos, MeterWindow* meterWindow);
+	void ShowMenu(POINT pos, Skin* skin);
+	void ShowSkinCustomMenu(POINT pos, Skin* skin);
 
-	static void CreateMonitorMenu(HMENU monitorMenu, MeterWindow* meterWindow);
+	static void CreateMonitorMenu(HMENU monitorMenu, Skin* skin);
 
 private:
 	static void DisplayMenu(POINT pos, HMENU menu, HWND parentWindow);
 
-	static HMENU CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU menu);
+	static HMENU CreateSkinMenu(Skin* skin, int index, HMENU menu);
 	static void AppendSkinCustomMenu(
-		MeterWindow* meterWindow, int index, HMENU menu, bool standaloneMenu);
+		Skin* skin, int index, HMENU menu, bool standaloneMenu);
 	static void ChangeSkinIndex(HMENU subMenu, int index);
 	
 	static void CreateAllSkinsMenu(HMENU skinMenu) { CreateAllSkinsMenuRecursive(skinMenu, 0); }

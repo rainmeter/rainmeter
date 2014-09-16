@@ -33,16 +33,16 @@ TintedImageHelper_DefineOptionArray(MeterHistogram::c_BothOptionArray, L"Both");
 ** The constructor
 **
 */
-MeterHistogram::MeterHistogram(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
+MeterHistogram::MeterHistogram(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_PrimaryColor(Color::Green),
 	m_SecondaryColor(Color::Red),
 	m_OverlapColor(Color::Yellow),
 	m_MeterPos(),
 	m_Autoscale(false),
 	m_Flip(false),
-	m_PrimaryImage(L"PrimaryImage", c_PrimaryOptionArray, false, meterWindow),
-	m_SecondaryImage(L"SecondaryImage", c_SecondaryOptionArray, false, meterWindow),
-	m_OverlapImage(L"BothImage", c_BothOptionArray, false, meterWindow),
+	m_PrimaryImage(L"PrimaryImage", c_PrimaryOptionArray, false, skin),
+	m_SecondaryImage(L"SecondaryImage", c_SecondaryOptionArray, false, skin),
+	m_OverlapImage(L"BothImage", c_BothOptionArray, false, skin),
 	m_PrimaryNeedsReload(false),
 	m_SecondaryNeedsReload(false),
 	m_OverlapNeedsReload(false),

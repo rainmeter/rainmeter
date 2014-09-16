@@ -38,7 +38,7 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-Meter::Meter(MeterWindow* meterWindow, const WCHAR* name) : Section(meterWindow, name),
+Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_X(),
 	m_Y(),
 	m_W(0),
@@ -50,9 +50,9 @@ Meter::Meter(MeterWindow* meterWindow, const WCHAR* name) : Section(meterWindow,
 	m_Transformation(),
 	m_ToolTipWidth(),
 	m_ToolTipType(false),
-	m_ToolTipHidden(meterWindow->GetMeterToolTipHidden()),
+	m_ToolTipHidden(skin->GetMeterToolTipHidden()),
 	m_ToolTipHandle(),
-	m_Mouse(meterWindow, this),
+	m_Mouse(skin, this),
 	m_HasMouseAction(false),
 	m_MouseOver(false),
 	m_RelativeX(POSITION_ABSOLUTE),
@@ -137,7 +137,7 @@ void Meter::SetX(int x)
 	// Change the option as well to avoid reset in ReadOptions().
 	WCHAR buffer[32];
 	_itow_s(x, buffer, 10);
-	m_MeterWindow->GetParser().SetValue(m_Name, L"X", buffer);
+	m_Skin->GetParser().SetValue(m_Name, L"X", buffer);
 }
 
 void Meter::SetY(int y)
@@ -148,11 +148,11 @@ void Meter::SetY(int y)
 	// Change the option as well to avoid reset in ReadOptions().
 	WCHAR buffer[32];
 	_itow_s(y, buffer, 10);
-	m_MeterWindow->GetParser().SetValue(m_Name, L"Y", buffer);
+	m_Skin->GetParser().SetValue(m_Name, L"Y", buffer);
 }
 
 /*
-** Returns a RECT containing the dimensions of the meter within the MeterWindow
+** Returns a RECT containing the dimensions of the meter within the Skin
 **
 */
 RECT Meter::GetMeterRect()
@@ -203,7 +203,7 @@ void Meter::Show()
 	m_Hidden = false;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	m_MeterWindow->GetParser().SetValue(m_Name, L"Hidden", L"0");
+	m_Skin->GetParser().SetValue(m_Name, L"Hidden", L"0");
 
 	if (m_ToolTipHandle != nullptr)
 	{
@@ -223,7 +223,7 @@ void Meter::Hide()
 	m_Hidden = true;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	m_MeterWindow->GetParser().SetValue(m_Name, L"Hidden", L"1");
+	m_Skin->GetParser().SetValue(m_Name, L"Hidden", L"1");
 
 	if (m_ToolTipHandle != nullptr)
 	{
@@ -341,7 +341,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (oldX != m_X || oldY != m_Y || oldHidden != m_Hidden)
 	{
-		m_MeterWindow->SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
+		m_Skin->SetResizeWindowMode(RESIZEMODE_CHECK);	// Need to recalculate the window size
 	}
 
 	m_SolidBevel = (BEVELTYPE)parser.ReadInt(section, L"BevelType", BEVELTYPE_NONE);
@@ -358,7 +358,7 @@ void Meter::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_ToolTipIcon = parser.ReadString(section, L"ToolTipIcon", L"");
 	m_ToolTipWidth = parser.ReadInt(section, L"ToolTipWidth", 1000);
 	m_ToolTipType = parser.ReadBool(section, L"ToolTipType", false);
-	m_ToolTipHidden = parser.ReadBool(section, L"ToolTipHidden", m_MeterWindow->GetMeterToolTipHidden());
+	m_ToolTipHidden = parser.ReadBool(section, L"ToolTipHidden", m_Skin->GetMeterToolTipHidden());
 
 	m_AntiAlias = parser.ReadBool(section, L"AntiAlias", false);
 
@@ -398,46 +398,46 @@ void Meter::BindMeasures(ConfigParser& parser, const WCHAR* section)
 ** If new meters are implemented this method needs to be updated.
 **
 */
-Meter* Meter::Create(const WCHAR* meter, MeterWindow* meterWindow, const WCHAR* name)
+Meter* Meter::Create(const WCHAR* meter, Skin* skin, const WCHAR* name)
 {
 	if (_wcsicmp(L"STRING", meter) == 0)
 	{
-		return new MeterString(meterWindow, name);
+		return new MeterString(skin, name);
 	}
 	else if (_wcsicmp(L"IMAGE", meter) == 0)
 	{
-		return new MeterImage(meterWindow, name);
+		return new MeterImage(skin, name);
 	}
 	else if (_wcsicmp(L"HISTOGRAM", meter) == 0)
 	{
-		return new MeterHistogram(meterWindow, name);
+		return new MeterHistogram(skin, name);
 	}
 	else if (_wcsicmp(L"BAR", meter) == 0)
 	{
-		return new MeterBar(meterWindow, name);
+		return new MeterBar(skin, name);
 	}
 	else if (_wcsicmp(L"BITMAP", meter) == 0)
 	{
-		return new MeterBitmap(meterWindow, name);
+		return new MeterBitmap(skin, name);
 	}
 	else if (_wcsicmp(L"LINE", meter) == 0)
 	{
-		return new MeterLine(meterWindow, name);
+		return new MeterLine(skin, name);
 	}
 	else if (_wcsicmp(L"ROUNDLINE", meter) == 0)
 	{
-		return new MeterRoundLine(meterWindow, name);
+		return new MeterRoundLine(skin, name);
 	}
 	else if (_wcsicmp(L"ROTATOR", meter) == 0)
 	{
-		return new MeterRotator(meterWindow, name);
+		return new MeterRotator(skin, name);
 	}
 	else if (_wcsicmp(L"BUTTON", meter) == 0)
 	{
-		return new MeterButton(meterWindow, name);
+		return new MeterButton(skin, name);
 	}
 
-	LogErrorF(meterWindow, L"Meter=%s is not valid in [%s]", meter, name);
+	LogErrorF(skin, L"Meter=%s is not valid in [%s]", meter, name);
 
 	return nullptr;
 }
@@ -553,9 +553,9 @@ bool Meter::ReplaceMeasures(std::wstring& str, AUTOSCALE autoScale, double scale
 /*
 ** Does the initial construction of the ToolTip for the meter
 */
-void Meter::CreateToolTip(MeterWindow* meterWindow)
+void Meter::CreateToolTip(Skin* skin)
 {
-	HWND hMeterWindow = m_MeterWindow->GetWindow();
+	HWND hSkin = m_Skin->GetWindow();
 	HINSTANCE hInstance = GetRainmeter().GetModuleInstance();
 	DWORD style = WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP;
 
@@ -572,7 +572,7 @@ void Meter::CreateToolTip(MeterWindow* meterWindow)
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		hMeterWindow,
+		hSkin,
 		nullptr,
 		hInstance,
 		nullptr);
@@ -581,7 +581,7 @@ void Meter::CreateToolTip(MeterWindow* meterWindow)
 	{
 		SetWindowPos(hwndTT, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
-		TOOLINFO ti = {sizeof(TOOLINFO), TTF_SUBCLASS, hMeterWindow, 0, GetMeterRect(), hInstance};
+		TOOLINFO ti = {sizeof(TOOLINFO), TTF_SUBCLASS, hSkin, 0, GetMeterRect(), hInstance};
 
 		SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti);
 
@@ -598,7 +598,7 @@ void Meter::UpdateToolTip()
 	HWND hwndTT = m_ToolTipHandle;
 
 	TOOLINFO ti = {sizeof(TOOLINFO)};
-	ti.hwnd = m_MeterWindow->GetWindow();
+	ti.hwnd = m_Skin->GetWindow();
 
 	SendMessage(hwndTT, TTM_GETTOOLINFO, 0, (LPARAM)&ti);
 
@@ -641,7 +641,7 @@ void Meter::UpdateToolTip()
 			else
 			{
 				std::wstring iconPath = m_ToolTipIcon;
-				m_MeterWindow->MakePathAbsolute(iconPath);
+				m_Skin->MakePathAbsolute(iconPath);
 				hIcon = (HICON)LoadImage(nullptr, iconPath.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
 				destroy = true;
 			}

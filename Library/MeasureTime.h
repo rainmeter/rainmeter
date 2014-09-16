@@ -24,7 +24,7 @@
 class MeasureTime : public Measure
 {
 public:
-	MeasureTime(MeterWindow* meterWindow, const WCHAR* name);
+	MeasureTime(Skin* skin, const WCHAR* name);
 	virtual ~MeasureTime();
 
 	MeasureTime(const MeasureTime& other) = delete;

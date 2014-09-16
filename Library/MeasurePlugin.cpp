@@ -27,7 +27,7 @@
 ** The constructor
 **
 */
-MeasurePlugin::MeasurePlugin(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
+MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
 	m_ReloadFunc(),
 	m_ID(),
@@ -182,7 +182,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 		if (initializeFunc)
 		{
-			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_MeterWindow->GetFilePath().c_str(), section, m_ID);
+			maxValue = ((INITIALIZE)initializeFunc)(m_Plugin, m_Skin->GetFilePath().c_str(), section, m_ID);
 		}
 	}
 

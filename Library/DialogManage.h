@@ -36,9 +36,9 @@ public:
 	static void Open(const WCHAR* tabName, const WCHAR* param1, const WCHAR* param2);
 	static void Open(const WCHAR* name);
 	static void Open(int tab = 0);
-	static void OpenSkin(MeterWindow* meterWindow);
+	static void OpenSkin(Skin* skin);
 
-	static void UpdateSkins(MeterWindow* meterWindow, bool deleted = false);
+	static void UpdateSkins(Skin* skin, bool deleted = false);
 	static void UpdateLayouts();
 
 protected:
@@ -87,7 +87,7 @@ private:
 		void Create(HWND owner);
 		virtual void Initialize();
 
-		void Update(MeterWindow* meterWindow, bool deleted);
+		void Update(Skin* skin, bool deleted);
 
 		static void SelectTreeItem(HWND tree, HTREEITEM item, LPCWSTR name);
 
@@ -106,7 +106,7 @@ private:
 
 		std::wstring m_SkinFileName;
 		std::wstring m_SkinFolderPath;
-		MeterWindow* m_SkinWindow;
+		Skin* m_SkinWindow;
 		bool m_HandleCommands;
 		bool m_IgnoreUpdate;
 	};

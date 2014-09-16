@@ -29,14 +29,14 @@
 #include "Mouse.h"
 
 #define BEGIN_MESSAGEPROC switch (uMsg) {
-#define MESSAGE(handler, msg) case msg: return window->handler(uMsg, wParam, lParam);
+#define MESSAGE(handler, msg) case msg: return skin->handler(uMsg, wParam, lParam);
 #define REJECT_MESSAGE(msg) case msg: return 0;
 #define END_MESSAGEPROC } return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 #define WM_METERWINDOW_DELAYED_REFRESH WM_APP + 1
 #define WM_METERWINDOW_DELAYED_MOVE    WM_APP + 3
 
-#define METERWINDOW_CLASS_NAME	L"RainmeterMeterWindow"
+#define METERWINDOW_CLASS_NAME	L"RainmeterSkin"
 
 #define RI_MOUSE_HORIZONTAL_WHEEL 0x0800
 
@@ -104,14 +104,14 @@ class FontCollection;
 class TextFormat;
 }
 
-class MeterWindow : public Group
+class Skin : public Group
 {
 public:
-	MeterWindow(const std::wstring& folderPath, const std::wstring& file);
-	~MeterWindow();
+	Skin(const std::wstring& folderPath, const std::wstring& file);
+	~Skin();
 
-	MeterWindow(const MeterWindow& other) = delete;
-	MeterWindow& operator=(MeterWindow other) = delete;
+	Skin(const Skin& other) = delete;
+	Skin& operator=(Skin other) = delete;
 
 	void Initialize();
 
@@ -283,7 +283,7 @@ private:
 
 	bool HitTest(int x, int y);
 
-	void SnapToWindow(MeterWindow* window, LPWINDOWPOS wp);
+	void SnapToWindow(Skin* skin, LPWINDOWPOS wp);
 	void MapCoordsToScreen(int& x, int& y, int w, int h);
 	void WindowToScreen();
 	void ScreenToWindow();

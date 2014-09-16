@@ -25,7 +25,7 @@
 class MeterRotator : public Meter
 {
 public:
-	MeterRotator(MeterWindow* meterWindow, const WCHAR* name);
+	MeterRotator(Skin* skin, const WCHAR* name);
 	virtual ~MeterRotator();
 
 	MeterRotator(const MeterRotator& other) = delete;

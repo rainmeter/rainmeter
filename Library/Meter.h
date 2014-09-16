@@ -69,7 +69,7 @@ public:
 	const std::wstring& GetToolTipText() { return m_ToolTipText; }
 	bool HasToolTip() { return m_ToolTipHandle != nullptr; }
 
-	void CreateToolTip(MeterWindow* meterWindow);
+	void CreateToolTip(Skin* skin);
 	void UpdateToolTip();
 
 	void Hide();
@@ -83,7 +83,7 @@ public:
 	void SetMouseOver(bool over) { m_MouseOver = over; }
 	bool IsMouseOver() { return m_MouseOver; }
 
-	static Meter* Create(const WCHAR* meter, MeterWindow* meterWindow, const WCHAR* name);
+	static Meter* Create(const WCHAR* meter, Skin* skin, const WCHAR* name);
 	
 	static void DrawBevel(Gdiplus::Graphics& graphics, const Gdiplus::Rect& rect, const Gdiplus::Pen& light, const Gdiplus::Pen& dark);
 
@@ -109,7 +109,7 @@ protected:
 		POSITION_RELATIVE_BR
 	};
 
-	Meter(MeterWindow* meterWindow, const WCHAR* name);
+	Meter(Skin* skin, const WCHAR* name);
 
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void BindMeasures(ConfigParser& parser, const WCHAR* section);

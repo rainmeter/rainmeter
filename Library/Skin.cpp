@@ -61,19 +61,19 @@ enum INTERVAL
 	INTERVAL_TRANSITION = 100
 };
 
-int MeterWindow::c_InstanceCount = 0;
+int Skin::c_InstanceCount = 0;
 
-HINSTANCE MeterWindow::c_DwmInstance = nullptr;
-decltype(DwmEnableBlurBehindWindow)* MeterWindow::c_DwmEnableBlurBehindWindow = nullptr;
-decltype(DwmGetColorizationColor)* MeterWindow::c_DwmGetColorizationColor = nullptr;
-decltype(DwmSetWindowAttribute)* MeterWindow::c_DwmSetWindowAttribute = nullptr;
-decltype(DwmIsCompositionEnabled)* MeterWindow::c_DwmIsCompositionEnabled = nullptr;
+HINSTANCE Skin::c_DwmInstance = nullptr;
+decltype(DwmEnableBlurBehindWindow)* Skin::c_DwmEnableBlurBehindWindow = nullptr;
+decltype(DwmGetColorizationColor)* Skin::c_DwmGetColorizationColor = nullptr;
+decltype(DwmSetWindowAttribute)* Skin::c_DwmSetWindowAttribute = nullptr;
+decltype(DwmIsCompositionEnabled)* Skin::c_DwmIsCompositionEnabled = nullptr;
 
 /*
 ** Constructor
 **
 */
-MeterWindow::MeterWindow(const std::wstring& folderPath, const std::wstring& file) : m_FolderPath(folderPath), m_FileName(file),
+Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderPath(folderPath), m_FileName(file),
 	m_Canvas(),
 	m_Background(),
 	m_BackgroundSize(),
@@ -174,7 +174,7 @@ MeterWindow::MeterWindow(const std::wstring& folderPath, const std::wstring& fil
 ** Destructor
 **
 */
-MeterWindow::~MeterWindow()
+Skin::~Skin()
 {
 	m_State = STATE_CLOSING;
 
@@ -208,7 +208,7 @@ MeterWindow::~MeterWindow()
 ** Kills timers/hooks and disposes buffers
 **
 */
-void MeterWindow::Dispose(bool refresh)
+void Skin::Dispose(bool refresh)
 {
 	// Kill the timer/hook
 	KillTimer(m_Window, TIMER_METER);
@@ -275,7 +275,7 @@ void MeterWindow::Dispose(bool refresh)
 ** Initializes the window, creates the class and the window.
 **
 */
-void MeterWindow::Initialize()
+void Skin::Initialize()
 {
 	m_Window = CreateWindowEx(
 		WS_EX_TOOLWINDOW | WS_EX_LAYERED,
@@ -314,7 +314,7 @@ void MeterWindow::Initialize()
 ** Excludes this window from the Aero Peek.
 **
 */
-void MeterWindow::IgnoreAeroPeek()
+void Skin::IgnoreAeroPeek()
 {
 	if (c_DwmSetWindowAttribute)
 	{
@@ -327,7 +327,7 @@ void MeterWindow::IgnoreAeroPeek()
 ** Registers to receive WM_INPUT for the mouse events.
 **
 */
-void MeterWindow::RegisterMouseInput()
+void Skin::RegisterMouseInput()
 {
 	if (!m_MouseInputRegistered && m_HasMouseScrollAction)
 	{
@@ -343,7 +343,7 @@ void MeterWindow::RegisterMouseInput()
 	}
 }
 
-void MeterWindow::UnregisterMouseInput()
+void Skin::UnregisterMouseInput()
 {
 	if (m_MouseInputRegistered)
 	{
@@ -357,7 +357,7 @@ void MeterWindow::UnregisterMouseInput()
 	}
 }
 
-void MeterWindow::AddWindowExStyle(LONG_PTR flag)
+void Skin::AddWindowExStyle(LONG_PTR flag)
 {
 	LONG_PTR style = GetWindowLongPtr(m_Window, GWL_EXSTYLE);
 	if ((style & flag) == 0)
@@ -366,7 +366,7 @@ void MeterWindow::AddWindowExStyle(LONG_PTR flag)
 	}
 }
 
-void MeterWindow::RemoveWindowExStyle(LONG_PTR flag)
+void Skin::RemoveWindowExStyle(LONG_PTR flag)
 {
 	LONG_PTR style = GetWindowLongPtr(m_Window, GWL_EXSTYLE);
 	if ((style & flag) != 0)
@@ -379,13 +379,13 @@ void MeterWindow::RemoveWindowExStyle(LONG_PTR flag)
 ** Unloads the skin with delay to avoid crash (and for fade to complete).
 **
 */
-void MeterWindow::Deactivate()
+void Skin::Deactivate()
 {
 	if (m_State == STATE_CLOSING) return;
 	m_State = STATE_CLOSING;
 
-	GetRainmeter().RemoveMeterWindow(this);
-	GetRainmeter().AddUnmanagedMeterWindow(this);
+	GetRainmeter().RemoveSkin(this);
+	GetRainmeter().AddUnmanagedSkin(this);
 
 	HideFade();
 	SetTimer(m_Window, TIMER_DEACTIVATE, m_FadeDuration + 50, nullptr);
@@ -395,7 +395,7 @@ void MeterWindow::Deactivate()
 ** Rebuilds the skin.
 **
 */
-void MeterWindow::Refresh(bool init, bool all)
+void Skin::Refresh(bool init, bool all)
 {
 	if (m_State == STATE_CLOSING) return;
 	m_State = STATE_REFRESHING;
@@ -472,7 +472,7 @@ void MeterWindow::Refresh(bool init, bool all)
 	}
 }
 
-void MeterWindow::SetMouseLeaveEvent(bool cancel)
+void Skin::SetMouseLeaveEvent(bool cancel)
 {
 	if (!cancel && (!m_MouseOver || m_ClickThrough)) return;
 
@@ -518,7 +518,7 @@ void MeterWindow::SetMouseLeaveEvent(bool cancel)
 	TrackMouseEvent(&tme);
 }
 
-void MeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
+void Skin::MapCoordsToScreen(int& x, int& y, int w, int h)
 {
 	const size_t numOfMonitors = System::GetMonitorCount();  // intentional
 	const std::vector<MonitorInfo>& monitors = System::GetMultiMonitorInfo().monitors;
@@ -582,7 +582,7 @@ void MeterWindow::MapCoordsToScreen(int& x, int& y, int w, int h)
 ** Moves the window to a new place (on the virtual screen)
 **
 */
-void MeterWindow::MoveWindow(int x, int y)
+void Skin::MoveWindow(int x, int y)
 {
 	SetWindowPos(m_Window, nullptr, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
@@ -593,7 +593,7 @@ void MeterWindow::MoveWindow(int x, int y)
 ** Sets the window's z-position
 **
 */
-void MeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
+void Skin::ChangeZPos(ZPOSITION zPos, bool all)
 {
 	HWND winPos = HWND_NOTOPMOST;
 	m_WindowZPosition = zPos;
@@ -675,7 +675,7 @@ void MeterWindow::ChangeZPos(ZPOSITION zPos, bool all)
 ** Sets the window's z-position in proper order.
 **
 */
-void MeterWindow::ChangeSingleZPos(ZPOSITION zPos, bool all)
+void Skin::ChangeSingleZPos(ZPOSITION zPos, bool all)
 {
 	if (zPos == ZPOSITION_NORMAL && GetRainmeter().IsNormalStayDesktop() && (!all || System::GetShowDesktop()))
 	{
@@ -697,7 +697,7 @@ void MeterWindow::ChangeSingleZPos(ZPOSITION zPos, bool all)
 ** Runs the bang command with the given arguments.
 ** Correct number of arguments must be passed (or use Rainmeter::ExecuteBang).
 */
-void MeterWindow::DoBang(Bang bang, const std::vector<std::wstring>& args)
+void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 {
 	switch (bang)
 	{
@@ -993,7 +993,7 @@ void MeterWindow::DoBang(Bang bang, const std::vector<std::wstring>& args)
 ** Enables blurring of the window background (using Aero)
 **
 */
-void MeterWindow::ShowBlur()
+void Skin::ShowBlur()
 {
 	if (c_DwmGetColorizationColor && c_DwmIsCompositionEnabled && c_DwmEnableBlurBehindWindow)
 	{
@@ -1026,7 +1026,7 @@ void MeterWindow::ShowBlur()
 ** Disables Aero blur
 **
 */
-void MeterWindow::HideBlur()
+void Skin::HideBlur()
 {
 	if (c_DwmEnableBlurBehindWindow)
 	{
@@ -1040,7 +1040,7 @@ void MeterWindow::HideBlur()
 ** Adds to or removes from blur region
 **
 */
-void MeterWindow::ResizeBlur(const std::wstring& arg, int mode)
+void Skin::ResizeBlur(const std::wstring& arg, int mode)
 {
 	if (IsWindowsVistaOrGreater())
 	{
@@ -1131,7 +1131,7 @@ bool CompareName(const Section* section, const WCHAR* name, bool group)
 ** Shows the given meter
 **
 */
-void MeterWindow::ShowMeter(const std::wstring& name, bool group)
+void Skin::ShowMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
 
@@ -1153,7 +1153,7 @@ void MeterWindow::ShowMeter(const std::wstring& name, bool group)
 ** Hides the given meter
 **
 */
-void MeterWindow::HideMeter(const std::wstring& name, bool group)
+void Skin::HideMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
 
@@ -1175,7 +1175,7 @@ void MeterWindow::HideMeter(const std::wstring& name, bool group)
 ** Toggles the given meter
 **
 */
-void MeterWindow::ToggleMeter(const std::wstring& name, bool group)
+void Skin::ToggleMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
 
@@ -1204,7 +1204,7 @@ void MeterWindow::ToggleMeter(const std::wstring& name, bool group)
 ** Moves the given meter
 **
 */
-void MeterWindow::MoveMeter(const std::wstring& name, int x, int y)
+void Skin::MoveMeter(const std::wstring& name, int x, int y)
 {
 	const WCHAR* meter = name.c_str();
 
@@ -1227,7 +1227,7 @@ void MeterWindow::MoveMeter(const std::wstring& name, int x, int y)
 ** Updates the given meter
 **
 */
-void MeterWindow::UpdateMeter(const std::wstring& name, bool group)
+void Skin::UpdateMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
 	bool all = false;
@@ -1277,7 +1277,7 @@ void MeterWindow::UpdateMeter(const std::wstring& name, bool group)
 ** Enables the given measure
 **
 */
-void MeterWindow::EnableMeasure(const std::wstring& name, bool group)
+void Skin::EnableMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
 
@@ -1298,7 +1298,7 @@ void MeterWindow::EnableMeasure(const std::wstring& name, bool group)
 ** Disables the given measure
 **
 */
-void MeterWindow::DisableMeasure(const std::wstring& name, bool group)
+void Skin::DisableMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
 
@@ -1319,7 +1319,7 @@ void MeterWindow::DisableMeasure(const std::wstring& name, bool group)
 ** Toggles the given measure
 **
 */
-void MeterWindow::ToggleMeasure(const std::wstring& name, bool group)
+void Skin::ToggleMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
 
@@ -1347,7 +1347,7 @@ void MeterWindow::ToggleMeasure(const std::wstring& name, bool group)
 ** Pauses the given measure
 **
 */
-void MeterWindow::PauseMeasure(const std::wstring& name, bool group)
+void Skin::PauseMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
 
@@ -1368,7 +1368,7 @@ void MeterWindow::PauseMeasure(const std::wstring& name, bool group)
 ** Unpauses the given measure
 **
 */
-void MeterWindow::UnpauseMeasure(const std::wstring& name, bool group)
+void Skin::UnpauseMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
 
@@ -1389,7 +1389,7 @@ void MeterWindow::UnpauseMeasure(const std::wstring& name, bool group)
 ** Toggles the pause state of the given measure
 **
 */
-void MeterWindow::TogglePauseMeasure(const std::wstring& name, bool group)
+void Skin::TogglePauseMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
 
@@ -1417,7 +1417,7 @@ void MeterWindow::TogglePauseMeasure(const std::wstring& name, bool group)
 ** Updates the given measure
 **
 */
-void MeterWindow::UpdateMeasure(const std::wstring& name, bool group)
+void Skin::UpdateMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
 	bool all = false;
@@ -1457,7 +1457,7 @@ void MeterWindow::UpdateMeasure(const std::wstring& name, bool group)
 ** Sets variable to given value.
 **
 */
-void MeterWindow::SetVariable(const std::wstring& variable, const std::wstring& value)
+void Skin::SetVariable(const std::wstring& variable, const std::wstring& value)
 {
 	double result;
 	if (m_Parser.ParseFormula(value, &result))
@@ -1480,7 +1480,7 @@ void MeterWindow::SetVariable(const std::wstring& variable, const std::wstring& 
 ** Changes the property of a meter or measure.
 **
 */
-void MeterWindow::SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group)
+void Skin::SetOption(const std::wstring& section, const std::wstring& option, const std::wstring& value, bool group)
 {
 	auto setValue = [&](Section* section, const std::wstring& option, const std::wstring& value)
 	{
@@ -1553,7 +1553,7 @@ void MeterWindow::SetOption(const std::wstring& section, const std::wstring& opt
 ** Calculates the screen cordinates from the WindowX/Y options
 **
 */
-void MeterWindow::WindowToScreen()
+void Skin::WindowToScreen()
 {
 	std::wstring::size_type index, index2;
 	int pixel = 0;
@@ -1752,7 +1752,7 @@ void MeterWindow::WindowToScreen()
 ** Calculates the WindowX/Y cordinates from the ScreenX/Y
 **
 */
-void MeterWindow::ScreenToWindow()
+void Skin::ScreenToWindow()
 {
 	WCHAR buffer[256];
 	int pixel = 0;
@@ -1879,7 +1879,7 @@ void MeterWindow::ScreenToWindow()
 ** Reads the skin options from Rainmeter.ini
 **
 */
-void MeterWindow::ReadOptions()
+void Skin::ReadOptions()
 {
 	WCHAR buffer[32];
 
@@ -1961,7 +1961,7 @@ void MeterWindow::ReadOptions()
 ** Writes the specified options to Rainmeter.ini
 **
 */
-void MeterWindow::WriteOptions(INT setting)
+void Skin::WriteOptions(INT setting)
 {
 	const WCHAR* iniFile = GetRainmeter().GetIniFile().c_str();
 
@@ -2054,7 +2054,7 @@ void MeterWindow::WriteOptions(INT setting)
 ** Reads the skin file and creates the meters and measures.
 **
 */
-bool MeterWindow::ReadSkin()
+bool Skin::ReadSkin()
 {
 	WCHAR buffer[128];
 
@@ -2359,7 +2359,7 @@ bool MeterWindow::ReadSkin()
 /*
 ** Changes the size of the window and re-adjusts the background
 */
-bool MeterWindow::ResizeWindow(bool reset)
+bool Skin::ResizeWindow(bool reset)
 {
 	int w = m_BackgroundMargins.left;
 	int h = m_BackgroundMargins.top;
@@ -2537,7 +2537,7 @@ bool MeterWindow::ResizeWindow(bool reset)
 ** Creates the back buffer bitmap.
 **
 */
-void MeterWindow::CreateDoubleBuffer(int cx, int cy)
+void Skin::CreateDoubleBuffer(int cx, int cy)
 {
 	m_Canvas->Resize(cx, cy);
 }
@@ -2546,7 +2546,7 @@ void MeterWindow::CreateDoubleBuffer(int cx, int cy)
 ** Redraws the meters and paints the window
 **
 */
-void MeterWindow::Redraw()
+void Skin::Redraw()
 {
 	if (m_ResizeWindow)
 	{
@@ -2654,7 +2654,7 @@ void MeterWindow::Redraw()
 ** Updates the transition state
 **
 */
-void MeterWindow::PostUpdate(bool bActiveTransition)
+void Skin::PostUpdate(bool bActiveTransition)
 {
 	// Start/stop the transition timer if necessary
 	if (bActiveTransition && !m_ActiveTransition)
@@ -2673,7 +2673,7 @@ void MeterWindow::PostUpdate(bool bActiveTransition)
 ** Updates the given measure
 **
 */
-bool MeterWindow::UpdateMeasure(Measure* measure, bool force)
+bool Skin::UpdateMeasure(Measure* measure, bool force)
 {
 	bool bUpdate = false;
 
@@ -2697,7 +2697,7 @@ bool MeterWindow::UpdateMeasure(Measure* measure, bool force)
 ** Updates the given meter
 **
 */
-bool MeterWindow::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
+bool Skin::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 {
 	bool bUpdate = false;
 
@@ -2744,7 +2744,7 @@ bool MeterWindow::UpdateMeter(Meter* meter, bool& bActiveTransition, bool force)
 ** Updates all the measures and redraws the meters
 **
 */
-void MeterWindow::Update(bool refresh)
+void Skin::Update(bool refresh)
 {
 	++m_UpdateCounter;
 
@@ -2815,7 +2815,7 @@ void MeterWindow::Update(bool refresh)
 ** Updates the window contents
 **
 */
-void MeterWindow::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
+void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 {
 	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
 	POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
@@ -2843,7 +2843,7 @@ void MeterWindow::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 ** Updates the window transparency (using existing contents).
 **
 */
-void MeterWindow::UpdateWindowTransparency(int alpha)
+void Skin::UpdateWindowTransparency(int alpha)
 {
 	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
 	UpdateLayeredWindow(m_Window, nullptr, nullptr, nullptr, nullptr, nullptr, 0, &blendPixelFunction, ULW_ALPHA);
@@ -2855,7 +2855,7 @@ void MeterWindow::UpdateWindowTransparency(int alpha)
 ** MOUSETIMER is used to hide/show the window.
 **
 */
-LRESULT MeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (wParam)
 	{
@@ -2969,7 +2969,7 @@ LRESULT MeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (m_FadeStartTime == 0)
 		{
 			KillTimer(m_Window, TIMER_DEACTIVATE);
-			GetRainmeter().RemoveUnmanagedMeterWindow(this);
+			GetRainmeter().RemoveUnmanagedSkin(this);
 			delete this;
 		}
 		break;
@@ -2978,7 +2978,7 @@ LRESULT MeterWindow::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-void MeterWindow::FadeWindow(int from, int to)
+void Skin::FadeWindow(int from, int to)
 {
 	if (m_FadeDuration == 0)
 	{
@@ -3018,7 +3018,7 @@ void MeterWindow::FadeWindow(int from, int to)
 	}
 }
 
-void MeterWindow::HideFade()
+void Skin::HideFade()
 {
 	m_Hidden = true;
 	if (IsWindowVisible(m_Window))
@@ -3027,7 +3027,7 @@ void MeterWindow::HideFade()
 	}
 }
 
-void MeterWindow::ShowFade()
+void Skin::ShowFade()
 {
 	m_Hidden = false;
 	if (!IsWindowVisible(m_Window))
@@ -3040,7 +3040,7 @@ void MeterWindow::ShowFade()
 ** Show the window if it is temporarily hidden.
 **
 */
-void MeterWindow::ShowWindowIfAppropriate()
+void Skin::ShowWindowIfAppropriate()
 {
 	bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
 
@@ -3111,7 +3111,7 @@ void MeterWindow::ShowWindowIfAppropriate()
 ** Retrieves a handle to the window that contains the specified point.
 **
 */
-HWND MeterWindow::GetWindowFromPoint(POINT pos)
+HWND Skin::GetWindowFromPoint(POINT pos)
 {
 	HWND hwndPos = WindowFromPoint(pos);
 
@@ -3145,7 +3145,7 @@ HWND MeterWindow::GetWindowFromPoint(POINT pos)
 ** Checks if the given point is inside the window.
 **
 */
-bool MeterWindow::HitTest(int x, int y)
+bool Skin::HitTest(int x, int y)
 {
 	return m_Canvas->IsTransparentPixel(x, y);
 }
@@ -3154,7 +3154,7 @@ bool MeterWindow::HitTest(int x, int y)
 ** Handles all buttons and cursor.
 **
 */
-void MeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
+void Skin::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 {
 	bool redraw = false;
 	HCURSOR cursor = nullptr;
@@ -3227,7 +3227,7 @@ void MeterWindow::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 ** During setting the cursor do nothing.
 **
 */
-LRESULT MeterWindow::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return 0;
 }
@@ -3236,7 +3236,7 @@ LRESULT MeterWindow::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Enters context menu loop.
 **
 */
-LRESULT MeterWindow::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	// Set cursor to default
 	SetCursor(LoadCursor(nullptr, IDC_ARROW));
@@ -3248,7 +3248,7 @@ LRESULT MeterWindow::OnEnterMenuLoop(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** When we get WM_MOUSEMOVE messages, hide the window as the mouse is over it.
 **
 */
-LRESULT MeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	bool keyDown = IsCtrlKeyDown() || IsShiftKeyDown() || IsAltKeyDown();
 
@@ -3316,7 +3316,7 @@ LRESULT MeterWindow::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** When we get WM_MOUSELEAVE messages, run all leave actions.
 **
 */
-LRESULT MeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos = System::GetCursorPosition();
 	HWND hWnd = WindowFromPoint(pos);
@@ -3338,7 +3338,7 @@ LRESULT MeterWindow::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** When we get WM_MOUSEWHEEL messages.
 **
 */
-LRESULT MeterWindow::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_MOUSEWHEEL)  // If sent through WM_INPUT, uMsg is WM_INPUT.
 	{
@@ -3368,7 +3368,7 @@ LRESULT MeterWindow::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** When we get WM_MOUSEHWHEEL messages.
 **
 */
-LRESULT MeterWindow::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -3389,7 +3389,7 @@ LRESULT MeterWindow::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Handle the menu commands.
 **
 */
-LRESULT MeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (wParam)
 	{
@@ -3585,7 +3585,7 @@ LRESULT MeterWindow::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Helper function for setting ClickThrough
 **
 */
-void MeterWindow::SetClickThrough(bool b)
+void Skin::SetClickThrough(bool b)
 {
 	m_ClickThrough = b;
 	WriteOptions(OPTION_CLICKTHROUGH);
@@ -3606,7 +3606,7 @@ void MeterWindow::SetClickThrough(bool b)
 ** Helper function for setting KeepOnScreen
 **
 */
-void MeterWindow::SetKeepOnScreen(bool b)
+void Skin::SetKeepOnScreen(bool b)
 {
 	m_KeepOnScreen = b;
 	WriteOptions(OPTION_KEEPONSCREEN);
@@ -3629,7 +3629,7 @@ void MeterWindow::SetKeepOnScreen(bool b)
 ** Helper function for setting UseD2D
 **
 */
-void MeterWindow::SetUseD2D(bool b)
+void Skin::SetUseD2D(bool b)
 {
 	m_UseD2D = b;
 	WriteOptions(OPTION_USED2D);
@@ -3640,7 +3640,7 @@ void MeterWindow::SetUseD2D(bool b)
 ** Helper function for setting WindowDraggable
 **
 */
-void MeterWindow::SetWindowDraggable(bool b)
+void Skin::SetWindowDraggable(bool b)
 {
 	m_WindowDraggable = b;
 	WriteOptions(OPTION_DRAGGABLE);
@@ -3650,7 +3650,7 @@ void MeterWindow::SetWindowDraggable(bool b)
 ** Helper function for setting SavePosition
 **
 */
-void MeterWindow::SetSavePosition(bool b)
+void Skin::SetSavePosition(bool b)
 {
 	m_SavePosition = b;
 	WriteOptions(OPTION_POSITION | OPTION_SAVEPOSITION);
@@ -3660,7 +3660,7 @@ void MeterWindow::SetSavePosition(bool b)
 ** Helper function for setting SavePosition
 **
 */
-void MeterWindow::SavePositionIfAppropriate()
+void Skin::SavePositionIfAppropriate()
 {
 	if (m_SavePosition)
 	{
@@ -3677,7 +3677,7 @@ void MeterWindow::SavePositionIfAppropriate()
 ** Helper function for setting SnapEdges
 **
 */
-void MeterWindow::SetSnapEdges(bool b)
+void Skin::SetSnapEdges(bool b)
 {
 	m_SnapEdges = b;
 	WriteOptions(OPTION_SNAPEDGES);
@@ -3687,7 +3687,7 @@ void MeterWindow::SetSnapEdges(bool b)
 ** Helper function for setting WindowHide
 **
 */
-void MeterWindow::SetWindowHide(HIDEMODE hide)
+void Skin::SetWindowHide(HIDEMODE hide)
 {
 	m_WindowHide = hide;
 	UpdateWindowTransparency(m_AlphaValue);
@@ -3698,7 +3698,7 @@ void MeterWindow::SetWindowHide(HIDEMODE hide)
 ** Helper function for setting Position
 **
 */
-void MeterWindow::SetWindowZPosition(ZPOSITION zpos)
+void Skin::SetWindowZPosition(ZPOSITION zpos)
 {
 	ChangeSingleZPos(zpos);
 	WriteOptions(OPTION_ALWAYSONTOP);
@@ -3708,7 +3708,7 @@ void MeterWindow::SetWindowZPosition(ZPOSITION zpos)
 ** Handle dragging the window
 **
 */
-LRESULT MeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if ((wParam & 0xFFF0) != SC_MOVE)
 	{
@@ -3754,7 +3754,7 @@ LRESULT MeterWindow::OnSysCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Starts dragging
 **
 */
-LRESULT MeterWindow::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_Dragging)
 	{
@@ -3771,7 +3771,7 @@ LRESULT MeterWindow::OnEnterSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Ends dragging
 **
 */
-LRESULT MeterWindow::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return 0;
 }
@@ -3780,7 +3780,7 @@ LRESULT MeterWindow::OnExitSizeMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** This is overwritten so that the window can be dragged
 **
 */
-LRESULT MeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_WindowDraggable && !GetRainmeter().GetDisableDragging())
 	{
@@ -3816,7 +3816,7 @@ LRESULT MeterWindow::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Called when windows position is about to change
 **
 */
-LRESULT MeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LPWINDOWPOS wp = (LPWINDOWPOS)lParam;
 
@@ -3867,7 +3867,7 @@ LRESULT MeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam
 				}
 
 				// Snap to other windows
-				for (auto iter = GetRainmeter().GetAllMeterWindows().cbegin(); iter != GetRainmeter().GetAllMeterWindows().cend(); ++iter)
+				for (auto iter = GetRainmeter().GetAllSkins().cbegin(); iter != GetRainmeter().GetAllSkins().cend(); ++iter)
 				{
 					if ((*iter).second != this)
 					{
@@ -3898,12 +3898,12 @@ LRESULT MeterWindow::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam
 	return 0;
 }
 
-void MeterWindow::SnapToWindow(MeterWindow* window, LPWINDOWPOS wp)
+void Skin::SnapToWindow(Skin* skin, LPWINDOWPOS wp)
 {
-	int x = window->m_ScreenX;
-	int y = window->m_ScreenY;
-	int w = window->m_WindowW;
-	int h = window->m_WindowH;
+	int x = skin->m_ScreenX;
+	int y = skin->m_ScreenY;
+	int w = skin->m_WindowW;
+	int h = skin->m_WindowH;
 
 	if (wp->y < y + h && wp->y + m_WindowH > y)
 	{
@@ -3928,7 +3928,7 @@ void MeterWindow::SnapToWindow(MeterWindow* window, LPWINDOWPOS wp)
 ** Disables blur when Aero transparency is disabled
 **
 */
-LRESULT MeterWindow::OnDwmColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnDwmColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_BlurMode != BLURMODE_NONE && IsBlur() && c_DwmGetColorizationColor && c_DwmEnableBlurBehindWindow)
 	{
@@ -3949,7 +3949,7 @@ LRESULT MeterWindow::OnDwmColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Disables blur when desktop composition is disabled
 **
 */
-LRESULT MeterWindow::OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (m_BlurMode != BLURMODE_NONE && IsBlur() && c_DwmIsCompositionEnabled && c_DwmEnableBlurBehindWindow)
 	{
@@ -3969,7 +3969,7 @@ LRESULT MeterWindow::OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lPa
 ** Adds the blur region to the window
 **
 */
-void MeterWindow::BlurBehindWindow(BOOL fEnable)
+void Skin::BlurBehindWindow(BOOL fEnable)
 {
 	if (c_DwmEnableBlurBehindWindow)
 	{
@@ -3997,7 +3997,7 @@ void MeterWindow::BlurBehindWindow(BOOL fEnable)
 ** (OnDelayedMove function is used instead.)
 **
 */
-LRESULT MeterWindow::OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return 0;
 }
@@ -4007,7 +4007,7 @@ LRESULT MeterWindow::OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** (OnDelayedMove function is used instead.)
 **
 */
-LRESULT MeterWindow::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return 0;
 }
@@ -4016,7 +4016,7 @@ LRESULT MeterWindow::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when left mouse button is down
 **
 */
-LRESULT MeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -4048,7 +4048,7 @@ LRESULT MeterWindow::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when left mouse button is up
 **
 */
-LRESULT MeterWindow::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -4072,7 +4072,7 @@ LRESULT MeterWindow::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when left mouse button is double-clicked
 **
 */
-LRESULT MeterWindow::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -4099,7 +4099,7 @@ LRESULT MeterWindow::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lP
 ** Runs the action when right mouse button is down
 **
 */
-LRESULT MeterWindow::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -4123,7 +4123,7 @@ LRESULT MeterWindow::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when right mouse button is up
 **
 */
-LRESULT MeterWindow::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -4146,7 +4146,7 @@ LRESULT MeterWindow::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when right mouse button is double-clicked
 **
 */
-LRESULT MeterWindow::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -4173,7 +4173,7 @@ LRESULT MeterWindow::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM l
 ** Runs the action when middle mouse button is down
 **
 */
-LRESULT MeterWindow::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -4197,7 +4197,7 @@ LRESULT MeterWindow::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when middle mouse button is up
 **
 */
-LRESULT MeterWindow::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -4221,7 +4221,7 @@ LRESULT MeterWindow::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when middle mouse button is double-clicked
 **
 */
-LRESULT MeterWindow::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -4248,7 +4248,7 @@ LRESULT MeterWindow::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM 
 ** Runs the action when a X mouse button is down
 **
 */
-LRESULT MeterWindow::OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -4279,7 +4279,7 @@ LRESULT MeterWindow::OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when a X mouse button is up
 **
 */
-LRESULT MeterWindow::OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -4310,7 +4310,7 @@ LRESULT MeterWindow::OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Runs the action when a X mouse button is double-clicked
 **
 */
-LRESULT MeterWindow::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	pos.x = GET_X_LPARAM(lParam);
@@ -4340,10 +4340,10 @@ LRESULT MeterWindow::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lPara
 }
 
 /*
-** Runs the action when the MeterWindow gets or loses focus
+** Runs the action when the Skin gets or loses focus
 **
 */
-LRESULT MeterWindow::OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
@@ -4369,7 +4369,7 @@ LRESULT MeterWindow::OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Handles the context menu. The menu is recreated every time it is shown.
 **
 */
-LRESULT MeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
 	RECT rect;
@@ -4410,7 +4410,7 @@ LRESULT MeterWindow::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** If the test is true, the action is not executed.
 **
 */
-bool MeterWindow::DoAction(int x, int y, MOUSEACTION action, bool test)
+bool Skin::DoAction(int x, int y, MOUSEACTION action, bool test)
 {
 	std::wstring command;
 
@@ -4454,7 +4454,7 @@ bool MeterWindow::DoAction(int x, int y, MOUSEACTION action, bool test)
 ** Executes the action if such are defined. Returns true, if meter/window which should be processed still may exist.
 **
 */
-bool MeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
+bool Skin::DoMoveAction(int x, int y, MOUSEACTION action)
 {
 	bool buttonFound = false;
 
@@ -4597,7 +4597,7 @@ bool MeterWindow::DoMoveAction(int x, int y, MOUSEACTION action)
 ** Sends mouse wheel messages to the window if the window does not have focus.
 **
 */
-LRESULT MeterWindow::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	const POINT pos = System::GetCursorPosition();
 
@@ -4633,7 +4633,7 @@ LRESULT MeterWindow::OnMouseInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Stores the new place of the window, in screen coordinates.
 **
 */
-LRESULT MeterWindow::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	// The lParam's x/y parameters are given in screen coordinates for overlapped and pop-up windows
 	// and in parent-client coordinates for child windows.
@@ -4656,7 +4656,7 @@ LRESULT MeterWindow::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Performs an action when returning from sleep
 **
 */
-LRESULT MeterWindow::OnWake(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnWake(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (wParam == PBT_APMRESUMEAUTOMATIC && !m_OnWakeAction.empty())
 	{
@@ -4670,9 +4670,9 @@ LRESULT MeterWindow::OnWake(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** The main window procedure for the meter window.
 **
 */
-LRESULT CALLBACK MeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	MeterWindow* window = (MeterWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	Skin* skin = (Skin*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 	BEGIN_MESSAGEPROC
 	MESSAGE(OnMouseInput, WM_INPUT)
@@ -4734,12 +4734,12 @@ LRESULT CALLBACK MeterWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 ** The initial window procedure for the meter window. Passes control to WndProc after initial setup.
 **
 */
-LRESULT CALLBACK MeterWindow::InitialWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK Skin::InitialWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_NCCREATE)
 	{
-		MeterWindow* window = (MeterWindow*)((LPCREATESTRUCT)lParam)->lpCreateParams;
-		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)window);
+		Skin* skin = (Skin*)((LPCREATESTRUCT)lParam)->lpCreateParams;
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)skin);
 
 		// Change the window procedure over to MainWndProc now that GWLP_USERDATA is set
 		SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
@@ -4753,7 +4753,7 @@ LRESULT CALLBACK MeterWindow::InitialWndProc(HWND hWnd, UINT uMsg, WPARAM wParam
 ** Handles delayed refresh
 **
 */
-LRESULT MeterWindow::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	Refresh(false);
 	return 0;
@@ -4764,7 +4764,7 @@ LRESULT MeterWindow::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Do not save the position in this handler for the sake of preventing move by temporal resolution/workarea change.
 **
 */
-LRESULT MeterWindow::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	m_Parser.ResetMonitorVariables(this);
 
@@ -4779,13 +4779,13 @@ LRESULT MeterWindow::OnDelayedMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Handles bangs from the exe
 **
 */
-LRESULT MeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	COPYDATASTRUCT* pCopyDataStruct = (COPYDATASTRUCT*)lParam;
 
 	if (pCopyDataStruct && (pCopyDataStruct->dwData == 1) && (pCopyDataStruct->cbData > 0))
 	{
-		if (GetRainmeter().HasMeterWindow(this))
+		if (GetRainmeter().HasSkin(this))
 		{
 			const WCHAR* command = (const WCHAR*)pCopyDataStruct->lpData;
 			GetRainmeter().ExecuteCommand(command, this);
@@ -4806,7 +4806,7 @@ LRESULT MeterWindow::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ** Sets up the window position variables.
 **
 */
-void MeterWindow::SetWindowPositionVariables(int x, int y)
+void Skin::SetWindowPositionVariables(int x, int y)
 {
 	WCHAR buffer[32];
 
@@ -4820,7 +4820,7 @@ void MeterWindow::SetWindowPositionVariables(int x, int y)
 ** Sets up the window size variables.
 **
 */
-void MeterWindow::SetWindowSizeVariables(int w, int h)
+void Skin::SetWindowSizeVariables(int w, int h)
 {
 	WCHAR buffer[32];
 
@@ -4834,7 +4834,7 @@ void MeterWindow::SetWindowSizeVariables(int w, int h)
 ** Converts the path to absolute by adding the skin's path to it (unless it already is absolute).
 **
 */
-void MeterWindow::MakePathAbsolute(std::wstring& path)
+void Skin::MakePathAbsolute(std::wstring& path)
 {
 	if (path.empty() || PathUtil::IsAbsolute(path))
 	{
@@ -4852,7 +4852,7 @@ void MeterWindow::MakePathAbsolute(std::wstring& path)
 	}
 }
 
-std::wstring MeterWindow::GetFilePath()
+std::wstring Skin::GetFilePath()
 {
 	std::wstring file = GetRainmeter().GetSkinPath() + m_FolderPath;
 	file += L'\\';
@@ -4860,7 +4860,7 @@ std::wstring MeterWindow::GetFilePath()
 	return file;
 }
 
-std::wstring MeterWindow::GetRootName()
+std::wstring Skin::GetRootName()
 {
 	std::wstring::size_type loc;
 	if ((loc = m_FolderPath.find_first_of(L'\\')) != std::wstring::npos)
@@ -4871,7 +4871,7 @@ std::wstring MeterWindow::GetRootName()
 	return m_FolderPath;
 }
 
-std::wstring MeterWindow::GetRootPath()
+std::wstring Skin::GetRootPath()
 {
 	std::wstring path = GetRainmeter().GetSkinPath();
 
@@ -4889,14 +4889,14 @@ std::wstring MeterWindow::GetRootPath()
 	return path;
 }
 
-std::wstring MeterWindow::GetResourcesPath()
+std::wstring Skin::GetResourcesPath()
 {
 	std::wstring path = GetRootPath();
 	path += L"@Resources\\";
 	return path;
 }
 
-std::wstring MeterWindow::GetSkinPath()
+std::wstring Skin::GetSkinPath()
 {
 	std::wstring path;
 	if (!m_FolderPath.empty())
@@ -4909,7 +4909,7 @@ std::wstring MeterWindow::GetSkinPath()
 	return path;
 }
 
-Meter* MeterWindow::GetMeter(const std::wstring& meterName)
+Meter* Skin::GetMeter(const std::wstring& meterName)
 {
 	const WCHAR* name = meterName.c_str();
 	std::vector<Meter*>::const_iterator j = m_Meters.begin();

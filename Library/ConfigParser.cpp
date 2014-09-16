@@ -40,7 +40,7 @@ ConfigParser::ConfigParser() :
 	m_LastDefaultUsed(false),
 	m_LastValueDefined(false),
 	m_CurrentSection(),
-	m_MeterWindow()
+	m_Skin()
 {
 }
 
@@ -52,9 +52,9 @@ ConfigParser::~ConfigParser()
 {
 }
 
-void ConfigParser::Initialize(const std::wstring& filename, MeterWindow* meterWindow, LPCTSTR skinSection, const std::wstring* resourcePath)
+void ConfigParser::Initialize(const std::wstring& filename, Skin* skin, LPCTSTR skinSection, const std::wstring* resourcePath)
 {
-	m_MeterWindow = meterWindow;
+	m_Skin = skin;
 
 	m_Measures.clear();
 	m_Sections.clear();
@@ -71,8 +71,8 @@ void ConfigParser::Initialize(const std::wstring& filename, MeterWindow* meterWi
 	m_SectionInsertPos = m_Sections.end();
 
 	// Set the built-in variables. Do this before the ini file is read so that the paths can be used with @include
-	SetBuiltInVariables(filename, resourcePath, meterWindow);
-	ResetMonitorVariables(meterWindow);
+	SetBuiltInVariables(filename, resourcePath, skin);
+	ResetMonitorVariables(skin);
 
 	System::UpdateIniFileMappingList();
 
@@ -85,7 +85,7 @@ void ConfigParser::Initialize(const std::wstring& filename, MeterWindow* meterWi
 	m_SectionInsertPos = m_Sections.end();
 }
 
-void ConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, MeterWindow* meterWindow)
+void ConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, Skin* skin)
 {
 	auto insertVariable = [&](const WCHAR* name, std::wstring value)
 	{
@@ -100,12 +100,12 @@ void ConfigParser::SetBuiltInVariables(const std::wstring& filename, const std::
 	insertVariable(L"CURRENTPATH", PathUtil::GetFolderFromFilePath(filename));
 	insertVariable(L"ADDONSPATH", GetRainmeter().GetAddonPath());
 
-	if (meterWindow)
+	if (skin)
 	{
-		insertVariable(L"CURRENTFILE", meterWindow->GetFileName());
-		insertVariable(L"CURRENTCONFIG", meterWindow->GetFolderPath());
-		insertVariable(L"ROOTCONFIG", meterWindow->GetRootName());
-		insertVariable(L"ROOTCONFIGPATH", meterWindow->GetRootPath());
+		insertVariable(L"CURRENTFILE", skin->GetFileName());
+		insertVariable(L"CURRENTCONFIG", skin->GetFolderPath());
+		insertVariable(L"ROOTCONFIG", skin->GetRootName());
+		insertVariable(L"ROOTCONFIGPATH", skin->GetRootPath());
 	}
 
 	insertVariable(L"CRLF", L"\n");
@@ -196,7 +196,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	if (isKeySelector)
 	{
 		// [Meter:X], [Meter:Y], [Meter:W], [Meter:H]
-		Meter* meter = m_MeterWindow->GetMeter(strVariable);
+		Meter* meter = m_Skin->GetMeter(strVariable);
 		if (meter)
 		{
 			WCHAR buffer[32];
@@ -295,7 +295,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		}
 	}
 
-	Measure* measure = m_MeterWindow->GetMeasure(strVariable);
+	Measure* measure = m_Skin->GetMeasure(strVariable);
 	if (measure)
 	{
 		if (valueType == ValueType::EscapeRegExp)
@@ -390,7 +390,7 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	return false;
 }
 
-void ConfigParser::ResetMonitorVariables(MeterWindow* meterWindow)
+void ConfigParser::ResetMonitorVariables(Skin* skin)
 {
 	// Set the SCREENAREA/WORKAREA variables
 	if (c_MonitorVariables.empty())
@@ -399,7 +399,7 @@ void ConfigParser::ResetMonitorVariables(MeterWindow* meterWindow)
 	}
 
 	// Set the SCREENAREA/WORKAREA variables for present monitor
-	SetAutoSelectedMonitorVariables(meterWindow);
+	SetAutoSelectedMonitorVariables(skin);
 }
 
 /*
@@ -508,9 +508,9 @@ void ConfigParser::SetMultiMonitorVariables(bool reset)
 ** Sets new SCREENAREA/WORKAREA variables for present monitor.
 **
 */
-void ConfigParser::SetAutoSelectedMonitorVariables(MeterWindow* meterWindow)
+void ConfigParser::SetAutoSelectedMonitorVariables(Skin* skin)
 {
-	if (meterWindow)
+	if (skin)
 	{
 		const int numOfMonitors = (int)System::GetMonitorCount();
 		const MultiMonitorInfo& monitorsInfo = System::GetMultiMonitorInfo();
@@ -522,9 +522,9 @@ void ConfigParser::SetAutoSelectedMonitorVariables(MeterWindow* meterWindow)
 
 		// Set X / WIDTH
 		screenIndex = monitorsInfo.primary;
-		if (meterWindow->GetXScreenDefined())
+		if (skin->GetXScreenDefined())
 		{
-			int i = meterWindow->GetXScreen();
+			int i = skin->GetXScreen();
 			if (i >= 0 && (i == 0 || i <= numOfMonitors && monitors[i - 1].active))
 			{
 				screenIndex = i;
@@ -555,9 +555,9 @@ void ConfigParser::SetAutoSelectedMonitorVariables(MeterWindow* meterWindow)
 
 		// Set Y / HEIGHT
 		screenIndex = monitorsInfo.primary;
-		if (meterWindow->GetYScreenDefined())
+		if (skin->GetYScreenDefined())
 		{
-			int i = meterWindow->GetYScreen();
+			int i = skin->GetYScreen();
 			if (i >= 0 && (i == 0 || i <= numOfMonitors && monitors[i - 1].active))
 			{
 				screenIndex = i;
@@ -876,7 +876,7 @@ int ConfigParser::ReadInt(LPCTSTR section, LPCTSTR key, int defValue)
 				return (int)dblValue;
 			}
 
-			LogErrorF(m_MeterWindow, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
 		}
 		else if (*string)
 		{
@@ -908,7 +908,7 @@ uint32_t ConfigParser::ReadUInt(LPCTSTR section, LPCTSTR key, uint32_t defValue)
 				return (uint32_t)dblValue;
 			}
 
-			LogErrorF(m_MeterWindow, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
 		}
 		else if (*string)
 		{
@@ -940,7 +940,7 @@ uint64_t ConfigParser::ReadUInt64(LPCTSTR section, LPCTSTR key, uint64_t defValu
 				return (uint64_t)dblValue;
 			}
 
-			LogErrorF(m_MeterWindow, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
 		}
 		else if (*string)
 		{
@@ -972,7 +972,7 @@ double ConfigParser::ReadFloat(LPCTSTR section, LPCTSTR key, double defValue)
 				return value;
 			}
 
-			LogErrorF(m_MeterWindow, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
+			LogErrorF(m_Skin, L"Formula: %s in key \"%s\" in [%s]", errMsg, key, section);
 		}
 		else if (*string)
 		{
@@ -998,7 +998,7 @@ bool ConfigParser::ParseFormula(const std::wstring& formula, double* resultValue
 		const WCHAR* errMsg = MathParser::CheckedParse(string, resultValue);
 		if (errMsg != nullptr)
 		{
-			LogErrorF(m_MeterWindow, L"Formula: %s: %s", errMsg, string);
+			LogErrorF(m_Skin, L"Formula: %s: %s", errMsg, string);
 			return false;
 		}
 
@@ -1321,7 +1321,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 	// Verify whether the file exists
 	if (_waccess(iniFile.c_str(), 0) == -1)
 	{
-		LogErrorF(m_MeterWindow, L"Unable to read file: %s", iniFile.c_str());
+		LogErrorF(m_Skin, L"Unable to read file: %s", iniFile.c_str());
 		return;
 	}
 
@@ -1331,11 +1331,11 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 
 	if (temporary)
 	{
-		if (GetRainmeter().GetDebug()) LogDebugF(m_MeterWindow, L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
+		if (GetRainmeter().GetDebug()) LogDebugF(m_Skin, L"Reading file: %s (Temp: %s)", iniFile.c_str(), iniRead.c_str());
 	}
 	else
 	{
-		if (GetRainmeter().GetDebug()) LogDebugF(m_MeterWindow, L"Reading file: %s", iniFile.c_str());
+		if (GetRainmeter().GetDebug()) LogDebugF(m_Skin, L"Reading file: %s", iniFile.c_str());
 		iniRead = iniFile;
 	}
 

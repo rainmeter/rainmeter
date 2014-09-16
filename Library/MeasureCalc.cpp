@@ -36,7 +36,7 @@ std::mt19937& GetRandomEngine()
 ** The constructor
 **
 */
-MeasureCalc::MeasureCalc(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
+MeasureCalc::MeasureCalc(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_ParseError(false),
 	m_LowBound(DEFAULT_LOWER_BOUND),
 	m_HighBound(DEFAULT_UPPER_BOUND),
@@ -175,7 +175,7 @@ void MeasureCalc::FormulaReplace()
 bool MeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value, void* context)
 {
 	auto calc = (MeasureCalc*)context;
-	const std::vector<Measure*>& measures = calc->m_MeterWindow->GetMeasures();
+	const std::vector<Measure*>& measures = calc->m_Skin->GetMeasures();
 
 	std::vector<Measure*>::const_iterator iter = measures.begin();
 	for ( ; iter != measures.end(); ++iter)
@@ -190,7 +190,7 @@ bool MeasureCalc::GetMeasureValue(const WCHAR* str, int len, double* value, void
 
 	if (_wcsnicmp(str, L"counter", len) == 0)
 	{
-		*value = calc->m_MeterWindow->GetUpdateCounter();
+		*value = calc->m_Skin->GetUpdateCounter();
 		return true;
 	}
 	else if (_wcsnicmp(str, L"random", len) == 0)

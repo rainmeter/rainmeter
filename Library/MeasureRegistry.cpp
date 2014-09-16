@@ -25,7 +25,7 @@
 ** The constructor
 **
 */
-MeasureRegistry::MeasureRegistry(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
+MeasureRegistry::MeasureRegistry(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_RegKey(),
 	m_HKey(HKEY_CURRENT_USER)
 {

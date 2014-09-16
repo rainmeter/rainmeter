@@ -68,7 +68,7 @@ const int MEDIAN_SIZE = 3;
 ** The constructor
 **
 */
-Measure::Measure(MeterWindow* meterWindow, const WCHAR* name) : Section(meterWindow, name),
+Measure::Measure(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_Invert(false),
 	m_LogMaxValue(false),
 	m_MinValue(),
@@ -171,7 +171,7 @@ void Measure::Disable()
 	m_Disabled = true;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	m_MeterWindow->GetParser().SetValue(m_Name, L"Disabled", L"1");
+	m_Skin->GetParser().SetValue(m_Name, L"Disabled", L"1");
 }
 
 void Measure::Enable()
@@ -179,7 +179,7 @@ void Measure::Enable()
 	m_Disabled = false;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	m_MeterWindow->GetParser().SetValue(m_Name, L"Disabled", L"0");
+	m_Skin->GetParser().SetValue(m_Name, L"Disabled", L"0");
 }
 
 void Measure::Pause()
@@ -187,7 +187,7 @@ void Measure::Pause()
 	m_Paused = true;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	m_MeterWindow->GetParser().SetValue(m_Name, L"Paused", L"1");
+	m_Skin->GetParser().SetValue(m_Name, L"Paused", L"1");
 }
 
 void Measure::Unpause()
@@ -195,7 +195,7 @@ void Measure::Unpause()
 	m_Paused = false;
 
 	// Change the option as well to avoid reset in ReadOptions().
-	m_MeterWindow->GetParser().SetValue(m_Name, L"Paused", L"0");
+	m_Skin->GetParser().SetValue(m_Name, L"Paused", L"0");
 }
 
 /*
@@ -434,7 +434,7 @@ bool Measure::Update(bool rereadOptions)
 {
 	if (rereadOptions)
 	{
-		ReadOptions(m_MeterWindow->GetParser());
+		ReadOptions(m_Skin->GetParser());
 	}
 
 	// Don't do anything if paused
@@ -499,10 +499,10 @@ bool Measure::Update(bool rereadOptions)
 		// [MeasureName], we need to read the options after m_Value has been changed.
 		if (rereadOptions)
 		{
-			m_IfActions.ReadConditionOptions(m_MeterWindow->GetParser(), GetName());
+			m_IfActions.ReadConditionOptions(m_Skin->GetParser(), GetName());
 		}
 
-		if (m_MeterWindow)
+		if (m_Skin)
 		{
 			m_IfActions.DoIfActions(*this, m_Value);
 		}
@@ -721,7 +721,7 @@ void Measure::DoChangeAction(bool execute)
 		{
 			if (m_OldValue->IsChanged(newValue, newStringValue))
 			{
-				GetRainmeter().ExecuteCommand(m_OnChangeAction.c_str(), m_MeterWindow);
+				GetRainmeter().ExecuteCommand(m_OnChangeAction.c_str(), m_Skin);
 			}
 		}
 		else
@@ -736,72 +736,72 @@ void Measure::DoChangeAction(bool execute)
 ** If new measures are implemented this method needs to be updated.
 **
 */
-Measure* Measure::Create(const WCHAR* measure, MeterWindow* meterWindow, const WCHAR* name)
+Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 {
 	// Comparison is caseinsensitive
 
 	if (_wcsicmp(L"CPU", measure) == 0)
 	{
-		return new MeasureCPU(meterWindow, name);
+		return new MeasureCPU(skin, name);
 	}
 	else if (_wcsicmp(L"Memory", measure) == 0)
 	{
-		return new MeasureMemory(meterWindow, name);
+		return new MeasureMemory(skin, name);
 	}
 	else if (_wcsicmp(L"NetIn", measure) == 0)
 	{
-		return new MeasureNetIn(meterWindow, name);
+		return new MeasureNetIn(skin, name);
 	}
 	else if (_wcsicmp(L"NetOut", measure) == 0)
 	{
-		return new MeasureNetOut(meterWindow, name);
+		return new MeasureNetOut(skin, name);
 	}
 	else if (_wcsicmp(L"NetTotal", measure) == 0)
 	{
-		return new MeasureNetTotal(meterWindow, name);
+		return new MeasureNetTotal(skin, name);
 	}
 	else if (_wcsicmp(L"PhysicalMemory", measure) == 0)
 	{
-		return new MeasurePhysicalMemory(meterWindow, name);
+		return new MeasurePhysicalMemory(skin, name);
 	}
 	else if (_wcsicmp(L"SwapMemory", measure) == 0)
 	{
-		return new MeasureVirtualMemory(meterWindow, name);
+		return new MeasureVirtualMemory(skin, name);
 	}
 	else if (_wcsicmp(L"FreeDiskSpace", measure) == 0)
 	{
-		return new MeasureDiskSpace(meterWindow, name);
+		return new MeasureDiskSpace(skin, name);
 	}
 	else if (_wcsicmp(L"Uptime", measure) == 0)
 	{
-		return new MeasureUptime(meterWindow, name);
+		return new MeasureUptime(skin, name);
 	}
 	else if (_wcsicmp(L"Time", measure) == 0)
 	{
-		return new MeasureTime(meterWindow, name);
+		return new MeasureTime(skin, name);
 	}
 	else if (_wcsicmp(L"Plugin", measure) == 0)
 	{
-		return new MeasurePlugin(meterWindow, name);
+		return new MeasurePlugin(skin, name);
 	}
 	else if (_wcsicmp(L"Registry", measure) == 0)
 	{
-		return new MeasureRegistry(meterWindow, name);
+		return new MeasureRegistry(skin, name);
 	}
 	else if (_wcsicmp(L"Calc", measure) == 0)
 	{
-		return new MeasureCalc(meterWindow, name);
+		return new MeasureCalc(skin, name);
 	}
 	else if (_wcsicmp(L"Script", measure) == 0)
 	{
-		return new MeasureScript(meterWindow, name);
+		return new MeasureScript(skin, name);
 	}
 	else if (_wcsicmp(L"String", measure) == 0)
 	{
-		return new MeasureString(meterWindow, name);
+		return new MeasureString(skin, name);
 	}
 
-	LogErrorF(meterWindow, L"Measure=%s is not valid in [%s]", measure, name);
+	LogErrorF(skin, L"Measure=%s is not valid in [%s]", measure, name);
 
 	return nullptr;
 }
@@ -822,7 +822,7 @@ void Measure::Command(const std::wstring& command)
 bool Measure::GetCurrentMeasureValue(const WCHAR* str, int len, double* value, void* context)
 {
 	auto measure = (Measure*)context;
-	const std::vector<Measure*>& measures = measure->m_MeterWindow->GetMeasures();
+	const std::vector<Measure*>& measures = measure->m_Skin->GetMeasures();
 
 	for (const auto& iter : measures)
 	{

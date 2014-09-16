@@ -27,7 +27,7 @@
 class MeterButton : public Meter
 {
 public:
-	MeterButton(MeterWindow* meterWindow, const WCHAR* name);
+	MeterButton(Skin* skin, const WCHAR* name);
 	virtual ~MeterButton();
 
 	MeterButton(const MeterButton& other) = delete;

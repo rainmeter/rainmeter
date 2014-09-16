@@ -37,8 +37,8 @@ static int GetName(lua_State* L)
 static int GetOption(lua_State* L)
 {
 	DECLARE_SELF(L)
-	MeterWindow* meterWindow = self->GetMeterWindow();
-	ConfigParser& parser = meterWindow->GetParser();
+	Skin* skin = self->GetSkin();
+	ConfigParser& parser = skin->GetParser();
 
 	const std::wstring section = LuaManager::ToWide(2);
 	const std::wstring defValue = LuaManager::ToWide(3);
@@ -51,8 +51,8 @@ static int GetOption(lua_State* L)
 static int GetNumberOption(lua_State* L)
 {
 	DECLARE_SELF(L)
-	MeterWindow* meterWindow = self->GetMeterWindow();
-	ConfigParser& parser = meterWindow->GetParser();
+	Skin* skin = self->GetSkin();
+	ConfigParser& parser = skin->GetParser();
 
 	std::wstring strTmp = LuaManager::ToWide(2);
 	double value = parser.ReadFloat(self->GetName(), strTmp.c_str(), lua_tonumber(L, 3));

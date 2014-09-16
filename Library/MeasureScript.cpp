@@ -28,7 +28,7 @@ const char* g_GetStringFunctionName = "GetStringValue";
 ** The constructor
 **
 */
-MeasureScript::MeasureScript(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
+MeasureScript::MeasureScript(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_HasUpdateFunction(false),
 	m_HasGetStringFunction(false),
 	m_ValueType(LUA_TNIL)
@@ -102,9 +102,9 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	std::wstring scriptFile = parser.ReadString(section, L"ScriptFile", L"");
 	if (!scriptFile.empty())
 	{
-		if (m_MeterWindow)
+		if (m_Skin)
 		{
-			m_MeterWindow->MakePathAbsolute(scriptFile);
+			m_Skin->MakePathAbsolute(scriptFile);
 		}
 
 		if (!m_Initialized ||
@@ -120,7 +120,7 @@ void MeasureScript::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				auto L = m_LuaScript.GetState();
 				lua_rawgeti(L, LUA_GLOBALSINDEX, m_LuaScript.GetRef());
 
-				*(MeterWindow**)lua_newuserdata(L, sizeof(MeterWindow*)) = m_MeterWindow;
+				*(Skin**)lua_newuserdata(L, sizeof(Skin*)) = m_Skin;
 				lua_getglobal(L, "MeterWindow");
 				lua_setmetatable(L, -2);
 				lua_setfield(L, -2, "SKIN");

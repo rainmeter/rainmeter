@@ -63,7 +63,7 @@ enum MOUSECURSOR
 class Mouse
 {
 public:
-	Mouse(MeterWindow* meterWindow, Meter* meter = nullptr);
+	Mouse(Skin* skin, Meter* meter = nullptr);
 	~Mouse();
 
 	Mouse(const Mouse& other) = delete;
@@ -145,7 +145,7 @@ private:
 	HCURSOR m_CustomCursor;
 	bool m_CursorState;
 
-	MeterWindow* m_MeterWindow;
+	Skin* m_Skin;
 	Meter* m_Meter;
 };
 

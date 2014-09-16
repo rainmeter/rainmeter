@@ -24,7 +24,7 @@
 ** The constructor
 **
 */
-MeasureVirtualMemory::MeasureVirtualMemory(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
+MeasureVirtualMemory::MeasureVirtualMemory(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Total(false)
 {
 	MEMORYSTATUSEX stat;

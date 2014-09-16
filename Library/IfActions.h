@@ -25,7 +25,7 @@
 
 class ConfigParser;
 class Measure;
-class MeterWindow;
+class Skin;
 
 // Helper class for IfCondition/IfMatch
 class IfState

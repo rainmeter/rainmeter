@@ -28,7 +28,7 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-MeterLine::MeterLine(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
+MeterLine::MeterLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Autoscale(false),
 	m_HorizontalLines(false),
 	m_Flip(false),

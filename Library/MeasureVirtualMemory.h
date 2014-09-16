@@ -24,7 +24,7 @@
 class MeasureVirtualMemory : public Measure
 {
 public:
-	MeasureVirtualMemory(MeterWindow* meterWindow, const WCHAR* name);
+	MeasureVirtualMemory(Skin* skin, const WCHAR* name);
 	virtual ~MeasureVirtualMemory();
 
 	MeasureVirtualMemory(const MeasureVirtualMemory& other) = delete;

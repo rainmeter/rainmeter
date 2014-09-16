@@ -47,7 +47,7 @@ protected:
 		NET_TOTAL
 	};
 
-	MeasureNet(MeterWindow* meterWindow, const WCHAR* name, NET type);
+	MeasureNet(Skin* skin, const WCHAR* name, NET type);
 	virtual ~MeasureNet();
 
 	MeasureNet(const MeasureNet& other) = delete;

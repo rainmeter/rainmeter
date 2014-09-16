@@ -70,7 +70,7 @@ public:
 		OptionCount
 	};
 
-	TintedImage(const WCHAR* name = L"ImageName", const WCHAR** optionArray = c_DefaultOptionArray, bool disableTransform = false, MeterWindow* meterWindow = nullptr);
+	TintedImage(const WCHAR* name = L"ImageName", const WCHAR** optionArray = c_DefaultOptionArray, bool disableTransform = false, Skin* skin = nullptr);
 	~TintedImage();
 
 	TintedImage(const TintedImage& other) = delete;
@@ -133,7 +133,7 @@ protected:
 
 	std::wstring m_CacheKey;
 
-	MeterWindow* m_MeterWindow;
+	Skin* m_Skin;
 
 	static const Gdiplus::ColorMatrix c_GreyScaleMatrix;
 	static const Gdiplus::ColorMatrix c_IdentityMatrix;

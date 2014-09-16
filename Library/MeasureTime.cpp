@@ -37,7 +37,7 @@ int GetYearDay(int year, int month, int day)
 ** The constructor
 **
 */
-MeasureTime::MeasureTime(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
+MeasureTime::MeasureTime(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_DeltaTime(),
 	m_Time(),
 	m_TimeStamp(-1)

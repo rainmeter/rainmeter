@@ -103,14 +103,14 @@ void DialogManage::Open(int tab)
 ** Opens the Manage dialog Skins tab with skin selected.
 **
 */
-void DialogManage::OpenSkin(MeterWindow* meterWindow)
+void DialogManage::OpenSkin(Skin* skin)
 {
 	Open();
 
 	if (c_Dialog)
 	{
-		std::wstring name = meterWindow->GetFolderPath() + L'\\';
-		name += meterWindow->GetFileName();
+		std::wstring name = skin->GetFolderPath() + L'\\';
+		name += skin->GetFileName();
 
 		HWND item = c_Dialog->m_TabSkins.GetControl(TabSkins::Id_SkinsTreeView);
 		c_Dialog->m_TabSkins.SelectTreeItem(item, TreeView_GetRoot(item), name.c_str());
@@ -149,11 +149,11 @@ void DialogManage::Open(const WCHAR* tabName, const WCHAR* param1, const WCHAR* 
 	}
 }
 
-void DialogManage::UpdateSkins(MeterWindow* meterWindow, bool deleted)
+void DialogManage::UpdateSkins(Skin* skin, bool deleted)
 {
 	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
 	{
-		c_Dialog->m_TabSkins.Update(meterWindow, deleted);
+		c_Dialog->m_TabSkins.Update(skin, deleted);
 	}
 }
 
@@ -565,16 +565,16 @@ void DialogManage::TabSkins::Initialize()
 ** Updates metadata and settings when changed.
 **
 */
-void DialogManage::TabSkins::Update(MeterWindow* meterWindow, bool deleted)
+void DialogManage::TabSkins::Update(Skin* skin, bool deleted)
 {
-	if (meterWindow)
+	if (skin)
 	{
 		if (!deleted && m_IgnoreUpdate)
 		{
 			// Changed setting from dialog, no need to update
 			m_IgnoreUpdate = false;
 		}
-		else if (m_SkinWindow && m_SkinWindow == meterWindow) 
+		else if (m_SkinWindow && m_SkinWindow == skin) 
 		{
 			// Update from currently open skin
 			m_HandleCommands = false;
@@ -589,8 +589,8 @@ void DialogManage::TabSkins::Update(MeterWindow* meterWindow, bool deleted)
 			}
 			m_HandleCommands = true;
 		}
-		else if (wcscmp(meterWindow->GetFolderPath().c_str(), m_SkinFolderPath.c_str()) == 0 &&
-				 wcscmp(meterWindow->GetFileName().c_str(), m_SkinFileName.c_str()) == 0)
+		else if (wcscmp(skin->GetFolderPath().c_str(), m_SkinFolderPath.c_str()) == 0 &&
+				 wcscmp(skin->GetFileName().c_str(), m_SkinFileName.c_str()) == 0)
 		{
 			ReadSkin();
 		}
@@ -800,7 +800,7 @@ void DialogManage::TabSkins::ReadSkin()
 	std::wstring file = GetRainmeter().GetSkinPath() + m_SkinFolderPath;
 	file += L'\\';
 	file += m_SkinFileName;
-	m_SkinWindow = GetRainmeter().GetMeterWindowByINI(file);
+	m_SkinWindow = GetRainmeter().GetSkinByINI(file);
 	if (!m_SkinWindow)
 	{
 		DisableControls();
@@ -1042,9 +1042,9 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 			HMENU menu = CreatePopupMenu();
 
 			// Add active skins to menu
-			std::map<std::wstring, MeterWindow*>::const_iterator iter = GetRainmeter().GetAllMeterWindows().begin();
+			std::map<std::wstring, Skin*>::const_iterator iter = GetRainmeter().GetAllSkins().begin();
 			int index = 0;
-			for ( ; iter != GetRainmeter().GetAllMeterWindows().end(); ++iter)
+			for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 			{
 				std::wstring name = ((*iter).second)->GetFolderPath() + L'\\';
 				name += ((*iter).second)->GetFileName();
@@ -1191,17 +1191,17 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 				{
 					GetRainmeter().SetLoadOrder(indexes.folder, value);
 
-					std::multimap<int, MeterWindow*> windows;
-					GetRainmeter().GetMeterWindowsByLoadOrder(windows);
+					std::multimap<int, Skin*> windows;
+					GetRainmeter().GetSkinsByLoadOrder(windows);
 
 					System::PrepareHelperWindow();
 
 					// Reorder window z-position to reflect load order
-					std::multimap<int, MeterWindow*>::const_iterator iter = windows.begin();
+					std::multimap<int, Skin*>::const_iterator iter = windows.begin();
 					for ( ; iter != windows.end(); ++iter)
 					{
-						MeterWindow* mw = (*iter).second;
-						mw->ChangeZPos(mw->GetWindowZPosition(), true);
+						Skin* skin = (*iter).second;
+						skin->ChangeZPos(skin->GetWindowZPosition(), true);
 					}
 				}
 			}
@@ -1313,10 +1313,10 @@ INT_PTR DialogManage::TabSkins::OnCommand(WPARAM wParam, LPARAM lParam)
 	default:
 		if (wParam >= ID_CONFIG_FIRST && wParam <= ID_CONFIG_LAST)
 		{
-			std::map<std::wstring, MeterWindow*>::const_iterator iter = GetRainmeter().GetAllMeterWindows().begin();
+			std::map<std::wstring, Skin*>::const_iterator iter = GetRainmeter().GetAllSkins().begin();
 			int index = (int)wParam - ID_CONFIG_FIRST;
 			int i = 0;
-			for ( ; iter != GetRainmeter().GetAllMeterWindows().end(); ++iter)
+			for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 			{
 				if (i == index)
 				{

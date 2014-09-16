@@ -61,7 +61,7 @@ void StringToProper(std::wstring& str)
 ** The constructor
 **
 */
-MeterString::MeterString(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
+MeterString::MeterString(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Color(Color::White),
 	m_EffectColor(Color::Black),
 	m_AutoScale(AUTOSCALE_OFF),
@@ -76,7 +76,7 @@ MeterString::MeterString(MeterWindow* meterWindow, const WCHAR* name) : Meter(me
 	m_NeedsClipping(false),
 	m_ClipStringW(-1),
 	m_ClipStringH(-1),
-	m_TextFormat(meterWindow->GetCanvas().CreateTextFormat()),
+	m_TextFormat(skin->GetCanvas().CreateTextFormat()),
 	m_NumOfDecimals(-1),
 	m_Angle()
 {
@@ -155,7 +155,7 @@ void MeterString::Initialize()
 		m_FontSize,
 		(m_Style & BOLD) != 0,
 		(m_Style & ITALIC) != 0,
-		m_MeterWindow->GetFontCollection());
+		m_Skin->GetFontCollection());
 }
 
 /*
@@ -412,7 +412,7 @@ bool MeterString::Update()
 		{
 			// Calculate the text size
 			RectF rect;
-			if (DrawString(m_MeterWindow->GetCanvas(), &rect))
+			if (DrawString(m_Skin->GetCanvas(), &rect))
 			{
 				m_W = (int)rect.Width + GetWidthPadding();
 				m_H = (int)rect.Height + GetHeightPadding();

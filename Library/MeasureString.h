@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 class MeasureString : public Measure
 {
 public:
-	MeasureString(MeterWindow* meterWindow, const WCHAR* name);
+	MeasureString(Skin* skin, const WCHAR* name);
 	virtual ~MeasureString();
 
 	MeasureString(const MeasureString& other) = delete;

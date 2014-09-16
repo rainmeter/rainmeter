@@ -24,7 +24,7 @@
 class MeasureDiskSpace : public Measure
 {
 public:
-	MeasureDiskSpace(MeterWindow* meterWindow, const WCHAR* name);
+	MeasureDiskSpace(Skin* skin, const WCHAR* name);
 	virtual ~MeasureDiskSpace();
 
 	MeasureDiskSpace(const MeasureDiskSpace& other) = delete;

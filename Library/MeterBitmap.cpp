@@ -30,8 +30,8 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-MeterBitmap::MeterBitmap(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
-	m_Image(L"BitmapImage", nullptr, true, meterWindow),
+MeterBitmap::MeterBitmap(Skin* skin, const WCHAR* name) : Meter(skin, name),
+	m_Image(L"BitmapImage", nullptr, true, skin),
 	m_NeedsReload(false),
 	m_ZeroFrame(false),
 	m_FrameCount(1),
@@ -348,7 +348,7 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 				{
 					range += m_FrameCount;
 				}
-				int frameAdjustment = range * diffTicks / ((m_TransitionFrameCount + 1) * m_MeterWindow->GetTransitionUpdate());
+				int frameAdjustment = range * diffTicks / ((m_TransitionFrameCount + 1) * m_Skin->GetTransitionUpdate());
 				if (frameAdjustment > range)
 				{
 					m_TransitionStartTicks = 0;		// The transition is over. Draw with the real value.
@@ -413,14 +413,14 @@ bool MeterBitmap::Draw(Gfx::Canvas& canvas)
 		{
 			int diffTicks = (int)(System::GetTickCount64() - m_TransitionStartTicks);
 
-			if (diffTicks > ((m_TransitionFrameCount + 1) * m_MeterWindow->GetTransitionUpdate()))
+			if (diffTicks > ((m_TransitionFrameCount + 1) * m_Skin->GetTransitionUpdate()))
 			{
 				m_TransitionStartTicks = 0;		// The transition is over. Draw with the real value.
 			}
 			else
 			{
 				double range = (m_Value - m_TransitionStartValue);
-				double adjustment = range * diffTicks / ((m_TransitionFrameCount + 1) * m_MeterWindow->GetTransitionUpdate());
+				double adjustment = range * diffTicks / ((m_TransitionFrameCount + 1) * m_Skin->GetTransitionUpdate());
 				double frameAdjustment = adjustment * m_FrameCount;
 
 				frame = (int)(m_TransitionStartValue * realFrames) * (m_TransitionFrameCount + 1);

@@ -25,7 +25,7 @@
 #define DECLARE_SELF(L) \
 	void* selfData = lua_touserdata(L, 1); \
 	if (!selfData) return 0; \
-	MeterWindow* self = *(MeterWindow**)selfData;
+	Skin* self = *(Skin**)selfData;
 
 static int Bang(lua_State* L)
 {
@@ -213,7 +213,7 @@ static int MakePathAbsolute(lua_State* L)
 	return 1;
 }
 
-void LuaManager::RegisterMeterWindow(lua_State* L)
+void LuaManager::RegisterSkin(lua_State* L)
 {
 	const luaL_Reg functions[] =
 	{

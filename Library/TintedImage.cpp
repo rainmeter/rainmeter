@@ -152,7 +152,7 @@ TintedImageHelper_DefineOptionArray(TintedImage::c_DefaultOptionArray, L"");
 ** If disableTransform is true, ImageCrop and ImageRotate are ignored.
 **
 */
-TintedImage::TintedImage(const WCHAR* name, const WCHAR** optionArray, bool disableTransform, MeterWindow* meterWindow) : m_DisableTransform(disableTransform),
+TintedImage::TintedImage(const WCHAR* name, const WCHAR** optionArray, bool disableTransform, Skin* skin) : m_DisableTransform(disableTransform),
 	m_Name(name ? name : L"ImageName"),
 	m_OptionArray(optionArray ? optionArray : c_DefaultOptionArray),
 	m_Bitmap(),
@@ -167,7 +167,7 @@ TintedImage::TintedImage(const WCHAR* name, const WCHAR** optionArray, bool disa
 	m_Flip(RotateNoneFlipNone),
 	m_Rotate(),
 	m_UseExifOrientation(false),
-	m_MeterWindow(meterWindow),
+	m_Skin(skin),
 	m_HasPathChanged(false)
 {
 }
@@ -319,7 +319,7 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 	if (!imageName.empty())
 	{
 		std::wstring filename = m_Path + imageName;
-		if (m_MeterWindow) m_MeterWindow->MakePathAbsolute(filename);
+		if (m_Skin) m_Skin->MakePathAbsolute(filename);
 		m_HasPathChanged = false;
 
 		// Check extension and if it is missing, add .png
@@ -380,7 +380,7 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 				}
 				else
 				{
-					LogErrorF(m_MeterWindow, L"%s: Unable to load: %s", m_Name, filename.c_str());
+					LogErrorF(m_Skin, L"%s: Unable to load: %s", m_Name, filename.c_str());
 				}
 			}
 			CloseHandle(fileHandle);
@@ -412,7 +412,7 @@ void TintedImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 		}
 		else
 		{
-			LogErrorF(m_MeterWindow, L"%s: Unable to open: %s", m_Name, filename.c_str());
+			LogErrorF(m_Skin, L"%s: Unable to open: %s", m_Name, filename.c_str());
 
 			if (fileHandle != INVALID_HANDLE_VALUE)
 			{
@@ -684,7 +684,7 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const 
 			if (m_CropMode < CROPMODE_TL || m_CropMode > CROPMODE_C)
 			{
 				m_CropMode = CROPMODE_TL;
-				LogErrorF(m_MeterWindow, L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageCrop], crop, section);
+				LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageCrop], crop, section);
 			}
 		}
 	}
@@ -788,7 +788,7 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const 
 	}
 	else
 	{
-		LogErrorF(m_MeterWindow, L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageFlip], flip, section);
+		LogErrorF(m_Skin, L"%s=%s (origin) is not valid in [%s]",  m_OptionArray[OptionIndexImageFlip], flip, section);
 	}
 
 	if (!m_DisableTransform)

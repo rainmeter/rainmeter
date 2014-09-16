@@ -40,7 +40,7 @@ public:
 
 	static void AddLogItem(Logger::Level level, LPCWSTR time, LPCWSTR source, LPCWSTR message);
 	static void UpdateSkins();
-	static void UpdateMeasures(MeterWindow* meterWindow);
+	static void UpdateMeasures(Skin* skin);
 
 protected:
 	virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -100,7 +100,7 @@ private:
 		virtual void Resize(int w, int h);
 	
 		void UpdateSkinList();
-		void UpdateMeasureList(MeterWindow* meterWindow);
+		void UpdateMeasureList(Skin* skin);
 
 	protected:
 		virtual INT_PTR HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -110,7 +110,7 @@ private:
 	private:
 		static int CALLBACK ListSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
-		MeterWindow* m_SkinWindow;
+		Skin* m_SkinWindow;
 	};
 
 	// Plugins tab

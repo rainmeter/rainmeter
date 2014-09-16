@@ -60,7 +60,7 @@ private:
 	static void RegisterGlobal(lua_State* L);
 	static void RegisterMeasure(lua_State* L);
 	static void RegisterMeter(lua_State* L);
-	static void RegisterMeterWindow(lua_State* L);
+	static void RegisterSkin(lua_State* L);
 	static void RegisterMeterString(lua_State* L);
 
 	// If the back of the vector is |true|, Lua strings converted to/from as if they were encoded

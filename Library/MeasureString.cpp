@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ** The constructor
 **
 */
-MeasureString::MeasureString(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
+MeasureString::MeasureString(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_String()
 {
 }

@@ -24,7 +24,7 @@
 class MeasureUptime : public Measure
 {
 public:
-	MeasureUptime(MeterWindow* meterWindow, const WCHAR* name);
+	MeasureUptime(Skin* skin, const WCHAR* name);
 	virtual ~MeasureUptime();
 
 	MeasureUptime(const MeasureUptime& other) = delete;

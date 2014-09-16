@@ -33,7 +33,7 @@ LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR defValue, BOOL 
 	NULLCHECK(defValue);
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
-	ConfigParser& parser = measure->GetMeterWindow()->GetParser();
+	ConfigParser& parser = measure->GetSkin()->GetParser();
 	return parser.ReadString(measure->GetName(), option, defValue, replaceMeasures != FALSE).c_str();
 }
 
@@ -42,7 +42,7 @@ double __stdcall RmReadFormula(void* rm, LPCWSTR option, double defValue)
 	NULLCHECK(option);
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
-	ConfigParser& parser = measure->GetMeterWindow()->GetParser();
+	ConfigParser& parser = measure->GetSkin()->GetParser();
 	return parser.ReadFloat(measure->GetName(), option, defValue);
 }
 
@@ -51,7 +51,7 @@ LPCWSTR __stdcall RmReplaceVariables(void* rm, LPCWSTR str)
 	NULLCHECK(str);
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
-	ConfigParser& parser = measure->GetMeterWindow()->GetParser();
+	ConfigParser& parser = measure->GetSkin()->GetParser();
 	g_Buffer = str;
 	parser.ReplaceVariables(g_Buffer);
 	parser.ReplaceMeasures(g_Buffer);
@@ -64,7 +64,7 @@ LPCWSTR __stdcall RmPathToAbsolute(void* rm, LPCWSTR relativePath)
 
 	MeasurePlugin* measure = (MeasurePlugin*)rm;
 	g_Buffer = relativePath;
-	measure->GetMeterWindow()->MakePathAbsolute(g_Buffer);
+	measure->GetSkin()->MakePathAbsolute(g_Buffer);
 	return g_Buffer.c_str();
 }
 
@@ -81,7 +81,7 @@ void* __stdcall RmGet(void* rm, int type)
 
 	case RMG_SKIN:
 		{
-			return (void*)measure->GetMeterWindow();
+			return (void*)measure->GetSkin();
 		}
 
 	case RMG_SETTINGSFILE:
@@ -91,14 +91,14 @@ void* __stdcall RmGet(void* rm, int type)
 
 	case RMG_SKINNAME:
 		{
-			MeterWindow* window = measure->GetMeterWindow();
+			Skin* window = measure->GetSkin();
 			if (!window) break;
 			return (void*)window->GetFolderPath().c_str();
 		}
 
 	case RMG_SKINWINDOWHANDLE:
 		{
-			MeterWindow* window = measure->GetMeterWindow();
+			Skin* window = measure->GetSkin();
 			if (!window) break;
 			return (void*)window->GetWindow();
 		}
@@ -109,11 +109,10 @@ void* __stdcall RmGet(void* rm, int type)
 
 void __stdcall RmExecute(void* skin, LPCWSTR command)
 {
-	MeterWindow* mw = (MeterWindow*)skin;
 	if (command)
 	{
 		// WM_RAINMETER_EXECUTE used instead of ExecuteCommand for thread-safety
-		SendMessage(GetRainmeter().GetWindow(), WM_RAINMETER_EXECUTE, (WPARAM)mw, (LPARAM)command);
+		SendMessage(GetRainmeter().GetWindow(), WM_RAINMETER_EXECUTE, (WPARAM)skin, (LPARAM)command);
 	}
 }
 
@@ -187,11 +186,11 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 
 	if (_wcsicmp(command, L"GetConfig") == 0)
 	{
-		MeterWindow* meterWindow = GetRainmeter().GetMeterWindowByINI(data);
-		if (meterWindow)
+		Skin* skin = GetRainmeter().GetSkinByINI(data);
+		if (skin)
 		{
 			g_Buffer = L"\"";
-			g_Buffer += meterWindow->GetFolderPath();
+			g_Buffer += skin->GetFolderPath();
 			g_Buffer += L"\"";
 			return g_Buffer.c_str();
 		}
@@ -206,11 +205,11 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 		{
 			const std::wstring& config = subStrings[0];
 
-			MeterWindow* meterWindow = GetRainmeter().GetMeterWindow(config);
-			if (meterWindow)
+			Skin* skin = GetRainmeter().GetSkin(config);
+			if (skin)
 			{
 				WCHAR buf1[64];
-				_snwprintf_s(buf1, _TRUNCATE, L"%lu", PtrToUlong(meterWindow->GetWindow()));
+				_snwprintf_s(buf1, _TRUNCATE, L"%lu", PtrToUlong(skin->GetWindow()));
 				g_Buffer = buf1;
 				return g_Buffer.c_str();
 			}
@@ -226,12 +225,12 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 		{
 			const std::wstring& config = subStrings[0];
 
-			MeterWindow* meterWindow = GetRainmeter().GetMeterWindow(config);
-			if (meterWindow)
+			Skin* skin = GetRainmeter().GetSkin(config);
+			if (skin)
 			{
 				const std::wstring& variable = subStrings[1];
 
-				const std::wstring* value = meterWindow->GetParser().GetVariable(variable);
+				const std::wstring* value = skin->GetParser().GetVariable(variable);
 				if (value)
 				{
 					return (*value).c_str();
@@ -247,10 +246,10 @@ LPCWSTR PluginBridge(LPCWSTR command, LPCWSTR data)
 
 		if (subStrings.size() == 3)
 		{
-			MeterWindow* meterWindow = GetRainmeter().GetMeterWindow(subStrings[0]);
-			if (meterWindow)
+			Skin* skin = GetRainmeter().GetSkin(subStrings[0]);
+			if (skin)
 			{
-				meterWindow->SetVariable(subStrings[1], subStrings[2]);
+				skin->SetVariable(subStrings[1], subStrings[2]);
 				return L"success";
 			}
 		}

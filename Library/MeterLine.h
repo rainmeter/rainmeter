@@ -24,7 +24,7 @@
 class MeterLine : public Meter
 {
 public:
-	MeterLine(MeterWindow* meterWindow, const WCHAR* name);
+	MeterLine(Skin* skin, const WCHAR* name);
 	virtual ~MeterLine();
 
 	MeterLine(const MeterLine& other) = delete;

@@ -24,7 +24,7 @@
 class MeasureCalc : public Measure
 {
 public:
-	MeasureCalc(MeterWindow* meterWindow, const WCHAR* name);
+	MeasureCalc(Skin* skin, const WCHAR* name);
 	virtual ~MeasureCalc();
 
 	MeasureCalc(const MeasureCalc& other) = delete;

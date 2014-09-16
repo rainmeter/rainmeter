@@ -50,7 +50,7 @@ private:
 };
 
 class Meter;
-class MeterWindow;
+class Skin;
 class ConfigParser;
 
 class __declspec(novtable) Measure : public Section
@@ -91,11 +91,11 @@ public:
 	const std::wstring& GetOnChangeAction() { return m_OnChangeAction; }
 	void DoChangeAction(bool execute = true);
 
-	static Measure* Create(const WCHAR* measure, MeterWindow* meterWindow, const WCHAR* name);
+	static Measure* Create(const WCHAR* measure, Skin* skin, const WCHAR* name);
 	static bool GetCurrentMeasureValue(const WCHAR* str, int len, double* value, void* context);
 
 protected:
-	Measure(MeterWindow* meterWindow, const WCHAR* name);
+	Measure(Skin* skin, const WCHAR* name);
 
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue() = 0;

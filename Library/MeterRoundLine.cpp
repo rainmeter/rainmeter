@@ -31,7 +31,7 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-MeterRoundLine::MeterRoundLine(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
+MeterRoundLine::MeterRoundLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Solid(false),
 	m_LineWidth(1.0),
 	m_LineLength(20.0),

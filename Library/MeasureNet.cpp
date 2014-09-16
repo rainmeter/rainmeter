@@ -33,7 +33,7 @@ decltype(FreeMibTable)* MeasureNet::c_FreeMibTable = nullptr;
 ** The constructor. This is the base class for the net-meters.
 **
 */
-MeasureNet::MeasureNet(MeterWindow* meterWindow, const WCHAR* name, NET type) : Measure(meterWindow, name),
+MeasureNet::MeasureNet(Skin* skin, const WCHAR* name, NET type) : Measure(skin, name),
 	m_Net(type),
 	m_Interface(),
 	m_Octets(),

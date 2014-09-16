@@ -542,18 +542,18 @@ LRESULT CALLBACK TrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 				{
 					// Forward the message to correct window
 					int index = (int)(wParam >> 16);
-					const std::map<std::wstring, MeterWindow*>& windows = GetRainmeter().GetAllMeterWindows();
+					const std::map<std::wstring, Skin*>& windows = GetRainmeter().GetAllSkins();
 
 					if (index < (int)windows.size())
 					{
-						std::map<std::wstring, MeterWindow*>::const_iterator iter = windows.begin();
+						std::map<std::wstring, Skin*>::const_iterator iter = windows.begin();
 						for ( ; iter != windows.end(); ++iter)
 						{
 							--index;
 							if (index < 0)
 							{
-								MeterWindow* meterWindow = (*iter).second;
-								SendMessage(meterWindow->GetWindow(), WM_COMMAND, mID, 0);
+								Skin* skin = (*iter).second;
+								SendMessage(skin->GetWindow(), WM_COMMAND, mID, 0);
 								break;
 							}
 						}
@@ -695,8 +695,8 @@ LRESULT CALLBACK TrayWindow::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 			if (cds->dwData == RAINMETER_QUERY_ID_SKIN_WINDOWHANDLE)
 			{
 				LPCWSTR folderPath = (LPCWSTR)cds->lpData;
-				MeterWindow* mw = GetRainmeter().GetMeterWindow(folderPath);
-				return (mw) ? (LRESULT)mw->GetWindow() : 0;
+				Skin* skin = GetRainmeter().GetSkin(folderPath);
+				return (skin) ? (LRESULT)skin->GetWindow() : 0;
 			}
 		}
 		return 1;

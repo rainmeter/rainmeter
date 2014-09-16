@@ -36,8 +36,8 @@ enum BUTTON_STATE
 ** The constructor
 **
 */
-MeterButton::MeterButton(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
-	m_Image(L"ButtonImage", nullptr, true, meterWindow),
+MeterButton::MeterButton(Skin* skin, const WCHAR* name) : Meter(skin, name),
+	m_Image(L"ButtonImage", nullptr, true, skin),
 	m_NeedsReload(false),
 	m_Bitmaps(),
 	m_State(BUTTON_STATE_NORMAL),
@@ -258,7 +258,7 @@ bool MeterButton::MouseUp(POINT pos, bool execute)
 	{
 		if (execute && m_Clicked && m_Focus && HitTest2(pos.x, pos.y))
 		{
-			GetRainmeter().ExecuteCommand(m_Command.c_str(), m_MeterWindow);
+			GetRainmeter().ExecuteCommand(m_Command.c_str(), m_Skin);
 		}
 		m_State = BUTTON_STATE_NORMAL;
 		m_Clicked = false;

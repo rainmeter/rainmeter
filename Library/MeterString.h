@@ -26,7 +26,7 @@
 class MeterString : public Meter
 {
 public:
-	MeterString(MeterWindow* meterWindow, const WCHAR* name);
+	MeterString(Skin* skin, const WCHAR* name);
 	virtual ~MeterString();
 
 	MeterString(const MeterString& other) = delete;

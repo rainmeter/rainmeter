@@ -23,7 +23,7 @@
 #include "Logger.h"
 #include "Mouse.h"
 
-Mouse::Mouse(MeterWindow* meterWindow, Meter* meter) : m_MeterWindow(meterWindow), m_Meter(meter),
+Mouse::Mouse(Skin* skin, Meter* meter) : m_Skin(skin), m_Meter(meter),
 	m_CursorType(MOUSECURSOR_HAND),
 	m_CustomCursor(),
 	m_CursorState(true)
@@ -65,10 +65,10 @@ void Mouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (HasScrollAction())
 	{
-		m_MeterWindow->SetHasMouseScrollAction();
+		m_Skin->SetHasMouseScrollAction();
 	}
 
-	const bool defaultState = (section == L"Rainmeter") ? true : m_MeterWindow->GetMouse().GetCursorState();
+	const bool defaultState = (section == L"Rainmeter") ? true : m_Skin->GetMouse().GetCursorState();
 	m_CursorState = parser.ReadBool(section, L"MouseActionCursor", defaultState);
 
 	const WCHAR* defaultMouseCursor = (section == L"Rainmeter") ? L"HAND" : L"";
@@ -77,10 +77,10 @@ void Mouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	auto inheritSkinDefault = [&]()
 	{
 		// Inherit from [Rainmeter].
-		m_CursorType = m_MeterWindow->GetMouse().GetCursorType();
+		m_CursorType = m_Skin->GetMouse().GetCursorType();
 		if (m_CursorType == MOUSECURSOR_CUSTOM)
 		{
-			mouseCursor = m_MeterWindow->GetParser().ReadString(L"Rainmeter", L"MouseActionCursorName", L"").c_str();
+			mouseCursor = m_Skin->GetParser().ReadString(L"Rainmeter", L"MouseActionCursorName", L"").c_str();
 		}
 	};
 
@@ -123,14 +123,14 @@ void Mouse::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	if (m_CursorType == MOUSECURSOR_CUSTOM)
 	{
-		std::wstring cursorPath = m_MeterWindow->GetResourcesPath();
+		std::wstring cursorPath = m_Skin->GetResourcesPath();
 		cursorPath += L"Cursors\\";
 		cursorPath += mouseCursor;
 		m_CustomCursor = LoadCursorFromFile(cursorPath.c_str());
 		if (!m_CustomCursor)
 		{
 			m_CursorType = MOUSECURSOR_ARROW;
-			LogErrorF(m_MeterWindow, L"Invalid cursor: %s", cursorPath.c_str());
+			LogErrorF(m_Skin, L"Invalid cursor: %s", cursorPath.c_str());
 		}
 	}
 }
@@ -256,10 +256,10 @@ std::wstring Mouse::GetMouseVariable(const std::wstring& variable) const
 	if (_wcsnicmp(var, L"MOUSEX", 6) == 0)
 	{
 		var += 6;
-		int xOffset = m_MeterWindow->GetX() + (m_Meter ? m_Meter->GetX() : 0);
+		int xOffset = m_Skin->GetX() + (m_Meter ? m_Meter->GetX() : 0);
 		if (wcscmp(var, L":%") == 0)  // $MOUSEX:%$
 		{
-			xOffset = (int)(((pt.x - xOffset + 1) / (double)(m_Meter ? m_Meter->GetW() : m_MeterWindow->GetW())) * 100);
+			xOffset = (int)(((pt.x - xOffset + 1) / (double)(m_Meter ? m_Meter->GetW() : m_Skin->GetW())) * 100);
 			_itow_s(xOffset, buffer, 10);
 			result = buffer;
 		}
@@ -272,10 +272,10 @@ std::wstring Mouse::GetMouseVariable(const std::wstring& variable) const
 	else if (_wcsnicmp(var, L"MOUSEY", 6) == 0)
 	{
 		var += 6;
-		int yOffset = m_MeterWindow->GetY() + (m_Meter ? m_Meter->GetY() : 0);
+		int yOffset = m_Skin->GetY() + (m_Meter ? m_Meter->GetY() : 0);
 		if (wcscmp(var, L":%") == 0)  // $MOUSEY:%$
 		{
-			yOffset = (int)(((pt.y - yOffset + 1) / (double)(m_Meter ? m_Meter->GetH() : m_MeterWindow->GetH())) * 100);
+			yOffset = (int)(((pt.y - yOffset + 1) / (double)(m_Meter ? m_Meter->GetH() : m_Skin->GetH())) * 100);
 			_itow_s(yOffset, buffer, 10);
 			result = buffer;
 		}

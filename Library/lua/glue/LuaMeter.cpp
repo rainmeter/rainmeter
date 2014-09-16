@@ -37,8 +37,8 @@ static int GetName(lua_State* L)
 static int GetOption(lua_State* L)
 {
 	DECLARE_SELF(L)
-	MeterWindow* meterWindow = self->GetMeterWindow();
-	ConfigParser& parser = meterWindow->GetParser();
+	Skin* skin = self->GetSkin();
+	ConfigParser& parser = skin->GetParser();
 
 	const std::wstring section = LuaManager::ToWide(2);
 	const std::wstring defValue = LuaManager::ToWide(3);

@@ -25,7 +25,7 @@
 ** The constructor
 **
 */
-Section::Section(MeterWindow* meterWindow, const WCHAR* name) : m_MeterWindow(meterWindow), m_Name(name),
+Section::Section(Skin* skin, const WCHAR* name) : m_Skin(skin), m_Name(name),
 	m_DynamicVariables(false),
 	m_UpdateDivider(1),
 	m_UpdateCounter(1)
@@ -48,7 +48,7 @@ Section::~Section()
 void Section::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	const int defaultUpdateDivider =
-		m_MeterWindow ? m_MeterWindow->GetDefaultUpdateDivider() : 1;
+		m_Skin ? m_Skin->GetDefaultUpdateDivider() : 1;
 	int updateDivider = parser.ReadInt(section, L"UpdateDivider", defaultUpdateDivider);
 	if (updateDivider != m_UpdateDivider)
 	{
@@ -84,6 +84,6 @@ void Section::DoUpdateAction()
 {
 	if (!m_OnUpdateAction.empty())
 	{
-		GetRainmeter().ExecuteCommand(m_OnUpdateAction.c_str(), m_MeterWindow);
+		GetRainmeter().ExecuteCommand(m_OnUpdateAction.c_str(), m_Skin);
 	}
 }

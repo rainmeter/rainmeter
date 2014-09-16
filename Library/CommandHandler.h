@@ -24,7 +24,7 @@
 #include <vector>
 
 class ConfigParser;
-class MeterWindow;
+class Skin;
 
 enum class Bang
 {
@@ -118,31 +118,31 @@ enum class Bang
 class CommandHandler
 {
 public:
-	void ExecuteCommand(const WCHAR* command, MeterWindow* skin, bool multi = true);
-	void ExecuteBang(const WCHAR* name, std::vector<std::wstring>& args, MeterWindow* skin);
+	void ExecuteCommand(const WCHAR* command, Skin* skin, bool multi = true);
+	void ExecuteBang(const WCHAR* name, std::vector<std::wstring>& args, Skin* skin);
 
 	static void RunCommand(std::wstring command);
 	static void RunFile(const WCHAR* file, const WCHAR* args = nullptr);
 
 	static std::vector<std::wstring> ParseString(const WCHAR* str, ConfigParser* parser = nullptr);
 
-	static void DoActivateSkinBang(std::vector<std::wstring>& args, MeterWindow* skin);
-	static void DoDeactivateSkinBang(std::vector<std::wstring>& args, MeterWindow* skin);
-	static void DoToggleSkinBang(std::vector<std::wstring>& args, MeterWindow* skin);
-	static void DoDeactivateSkinGroupBang(std::vector<std::wstring>& args, MeterWindow* skin);
-	static void DoLoadLayoutBang(std::vector<std::wstring>& args, MeterWindow* meterWindow);
-	static void DoSetClipBang(std::vector<std::wstring>& args, MeterWindow* skin);
-	static void DoSetWallpaperBang(std::vector<std::wstring>& args, MeterWindow* meterWindow);
-	static void DoAboutBang(std::vector<std::wstring>& args, MeterWindow* meterWindow);
-	static void DoManageBang(std::vector<std::wstring>& args, MeterWindow* meterWindow);
-	static void DoSkinMenuBang(std::vector<std::wstring>& args, MeterWindow* meterWindow);
-	static void DoTrayMenuBang(std::vector<std::wstring>& args, MeterWindow* meterWindow);
-	static void DoResetStatsBang(std::vector<std::wstring>& args, MeterWindow* meterWindow);
-	static void DoWriteKeyValueBang(std::vector<std::wstring>& args, MeterWindow* meterWindow);
-	static void DoLogBang(std::vector<std::wstring>& args, MeterWindow* meterWindow);
-	static void DoRefreshApp(std::vector<std::wstring>& args, MeterWindow* skin);
-	static void DoQuitBang(std::vector<std::wstring>& args, MeterWindow* meterWindow);
-	static void DoLsBoxHookBang(std::vector<std::wstring>& args, MeterWindow* meterWindow);
+	static void DoActivateSkinBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoDeactivateSkinBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoToggleSkinBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoDeactivateSkinGroupBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoLoadLayoutBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoSetClipBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoSetWallpaperBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoAboutBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoManageBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoSkinMenuBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoTrayMenuBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoResetStatsBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoWriteKeyValueBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoLogBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoRefreshApp(std::vector<std::wstring>& args, Skin* skin);
+	static void DoQuitBang(std::vector<std::wstring>& args, Skin* skin);
+	static void DoLsBoxHookBang(std::vector<std::wstring>& args, Skin* skin);
 };
 
 #endif

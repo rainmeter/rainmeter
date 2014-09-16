@@ -25,7 +25,7 @@
 class MeterImage : public Meter
 {
 public:
-	MeterImage(MeterWindow* meterWindow, const WCHAR* name);
+	MeterImage(Skin* skin, const WCHAR* name);
 	virtual ~MeterImage();
 
 	MeterImage(const MeterImage& other) = delete;

@@ -35,7 +35,7 @@ ContextMenu::ContextMenu() :
 /*
 ** Opens the context menu in given coordinates.
 */
-void ContextMenu::ShowMenu(POINT pos, MeterWindow* meterWindow)
+void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 {
 	static const MenuTemplate s_Menu[] =
 	{
@@ -66,7 +66,7 @@ void ContextMenu::ShowMenu(POINT pos, MeterWindow* meterWindow)
 		MENU_ITEM(IDM_QUIT, ID_STR_EXIT)
 	};
 
-	if (m_MenuActive || (meterWindow && meterWindow->IsClosing())) return;
+	if (m_MenuActive || (skin && skin->IsClosing())) return;
 
 	// Show context menu, if no actions were executed
 	HMENU menu = MenuTemplate::CreateMenu(s_Menu, _countof(s_Menu), GetString);
@@ -121,10 +121,10 @@ void ContextMenu::ShowMenu(POINT pos, MeterWindow* meterWindow)
 		}
 	}
 
-	if (meterWindow)
+	if (skin)
 	{
 		HMENU rainmeterMenu = menu;
-		menu = CreateSkinMenu(meterWindow, 0, allSkinsMenu);
+		menu = CreateSkinMenu(skin, 0, allSkinsMenu);
 
 		InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_POPUP, (UINT_PTR)rainmeterMenu, L"Rainmeter");
 		InsertMenu(menu, IDM_CLOSESKIN, MF_BYCOMMAND | MF_SEPARATOR, 0, nullptr);
@@ -135,12 +135,12 @@ void ContextMenu::ShowMenu(POINT pos, MeterWindow* meterWindow)
 
 		// Create a menu for all active skins
 		int index = 0;
-		std::map<std::wstring, MeterWindow*>::const_iterator iter = rainmeter.m_MeterWindows.begin();
-		for (; iter != rainmeter.m_MeterWindows.end(); ++iter)
+		std::map<std::wstring, Skin*>::const_iterator iter = rainmeter.m_Skins.begin();
+		for (; iter != rainmeter.m_Skins.end(); ++iter)
 		{
-			MeterWindow* mw = ((*iter).second);
-			HMENU skinMenu = CreateSkinMenu(mw, index, allSkinsMenu);
-			InsertMenu(menu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, mw->GetFolderPath().c_str());
+			Skin* skin = ((*iter).second);
+			HMENU skinMenu = CreateSkinMenu(skin, index, allSkinsMenu);
+			InsertMenu(menu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, skin->GetFolderPath().c_str());
 			++index;
 		}
 
@@ -156,30 +156,30 @@ void ContextMenu::ShowMenu(POINT pos, MeterWindow* meterWindow)
 	HWND hWnd = WindowFromPoint(pos);
 	if (hWnd != nullptr)
 	{
-		MeterWindow* mw = rainmeter.GetMeterWindow(hWnd);
-		if (mw)
+		Skin* skin = rainmeter.GetSkin(hWnd);
+		if (skin)
 		{
 			// Cancel the mouse event beforehand
-			mw->SetMouseLeaveEvent(true);
+			skin->SetMouseLeaveEvent(true);
 		}
 	}
 
-	DisplayMenu(pos, menu, meterWindow ? meterWindow->GetWindow() : rainmeter.m_TrayWindow->GetWindow());
+	DisplayMenu(pos, menu, skin ? skin->GetWindow() : rainmeter.m_TrayWindow->GetWindow());
 	DestroyMenu(menu);
 
 	m_MenuActive = false;
 }
 
-void ContextMenu::ShowSkinCustomMenu(POINT pos, MeterWindow* meterWindow)
+void ContextMenu::ShowSkinCustomMenu(POINT pos, Skin* skin)
 {
-	if (m_MenuActive || meterWindow->IsClosing()) return;
+	if (m_MenuActive || skin->IsClosing()) return;
 
 	m_MenuActive = true;
 
 	HMENU menu = CreatePopupMenu();
-	AppendSkinCustomMenu(meterWindow, 0, menu, true);
+	AppendSkinCustomMenu(skin, 0, menu, true);
 
-	DisplayMenu(pos, menu, meterWindow->GetWindow());
+	DisplayMenu(pos, menu, skin->GetWindow());
 	DestroyMenu(menu);
 
 	m_MenuActive = false;
@@ -209,7 +209,7 @@ void ContextMenu::DisplayMenu(POINT pos, HMENU menu, HWND parentWindow)
 		nullptr);
 }
 
-HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU menu)
+HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 {
 	static const MenuTemplate s_Menu[] =
 	{
@@ -277,18 +277,18 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 		HMENU posMenu = GetSubMenu(settingsMenu, 0);
 		if (posMenu)
 		{
-			const UINT checkPos = IDM_SKIN_NORMAL - (UINT)meterWindow->GetWindowZPosition();
+			const UINT checkPos = IDM_SKIN_NORMAL - (UINT)skin->GetWindowZPosition();
 			CheckMenuRadioItem(posMenu, checkPos, checkPos, checkPos, MF_BYCOMMAND);
 
-			if (meterWindow->GetXFromRight()) CheckMenuItem(posMenu, IDM_SKIN_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
-			if (meterWindow->GetYFromBottom()) CheckMenuItem(posMenu, IDM_SKIN_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
-			if (meterWindow->GetXPercentage()) CheckMenuItem(posMenu, IDM_SKIN_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
-			if (meterWindow->GetYPercentage()) CheckMenuItem(posMenu, IDM_SKIN_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
+			if (skin->GetXFromRight()) CheckMenuItem(posMenu, IDM_SKIN_FROMRIGHT, MF_BYCOMMAND | MF_CHECKED);
+			if (skin->GetYFromBottom()) CheckMenuItem(posMenu, IDM_SKIN_FROMBOTTOM, MF_BYCOMMAND | MF_CHECKED);
+			if (skin->GetXPercentage()) CheckMenuItem(posMenu, IDM_SKIN_XPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
+			if (skin->GetYPercentage()) CheckMenuItem(posMenu, IDM_SKIN_YPERCENTAGE, MF_BYCOMMAND | MF_CHECKED);
 
 			HMENU monitorMenu = GetSubMenu(posMenu, 0);
 			if (monitorMenu)
 			{
-				CreateMonitorMenu(monitorMenu, meterWindow);
+				CreateMonitorMenu(monitorMenu, skin);
 			}
 		}
 
@@ -296,12 +296,12 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 		HMENU alphaMenu = GetSubMenu(settingsMenu, 1);
 		if (alphaMenu)
 		{
-			UINT checkPos = (UINT)(10 - meterWindow->GetAlphaValue() / 25.5);
+			UINT checkPos = (UINT)(10 - skin->GetAlphaValue() / 25.5);
 			checkPos = min(9, checkPos);
 			checkPos = max(0, checkPos);
 			CheckMenuRadioItem(alphaMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
 
-			switch (meterWindow->GetWindowHide())
+			switch (skin->GetWindowHide())
 			{
 			case HIDEMODE_FADEIN:
 				CheckMenuItem(alphaMenu, IDM_SKIN_TRANSPARENCY_FADEIN, MF_BYCOMMAND | MF_CHECKED);
@@ -321,7 +321,7 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 		}
 
 		// Tick the settings
-		switch (meterWindow->GetWindowHide())
+		switch (skin->GetWindowHide())
 		{
 		case HIDEMODE_HIDE:
 			CheckMenuItem(settingsMenu, IDM_SKIN_HIDEONMOUSE, MF_BYCOMMAND | MF_CHECKED);
@@ -333,12 +333,12 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 			break;
 		}
 
-		if (meterWindow->GetSnapEdges())
+		if (skin->GetSnapEdges())
 		{
 			CheckMenuItem(settingsMenu, IDM_SKIN_SNAPTOEDGES, MF_BYCOMMAND | MF_CHECKED);
 		}
 
-		if (meterWindow->GetSavePosition())
+		if (skin->GetSavePosition())
 		{
 			CheckMenuItem(settingsMenu, IDM_SKIN_REMEMBERPOSITION, MF_BYCOMMAND | MF_CHECKED);
 		}
@@ -347,17 +347,17 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 		{
 			EnableMenuItem(settingsMenu, IDM_SKIN_DRAGGABLE, MF_BYCOMMAND | MF_GRAYED);
 		}
-		else if (meterWindow->GetWindowDraggable())
+		else if (skin->GetWindowDraggable())
 		{
 			CheckMenuItem(settingsMenu, IDM_SKIN_DRAGGABLE, MF_BYCOMMAND | MF_CHECKED);
 		}
 
-		if (meterWindow->GetClickThrough())
+		if (skin->GetClickThrough())
 		{
 			CheckMenuItem(settingsMenu, IDM_SKIN_CLICKTHROUGH, MF_BYCOMMAND | MF_CHECKED);
 		}
 
-		if (meterWindow->GetKeepOnScreen())
+		if (skin->GetKeepOnScreen())
 		{
 			CheckMenuItem(settingsMenu, IDM_SKIN_KEEPONSCREEN, MF_BYCOMMAND | MF_CHECKED);
 		}
@@ -368,7 +368,7 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 			{
 				EnableMenuItem(settingsMenu, IDM_SKIN_USED2D, MF_BYCOMMAND | MF_GRAYED);
 			}
-			else if (meterWindow->GetUseD2D())
+			else if (skin->GetUseD2D())
 			{
 				CheckMenuItem(settingsMenu, IDM_SKIN_USED2D, MF_BYCOMMAND | MF_CHECKED);
 			}
@@ -381,7 +381,7 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 	}
 
 	// Add the name of the Skin to the menu
-	const std::wstring& skinName = meterWindow->GetFolderPath();
+	const std::wstring& skinName = skin->GetFolderPath();
 	ModifyMenu(skinMenu, IDM_SKIN_OPENSKINSFOLDER, MF_BYCOMMAND, IDM_SKIN_OPENSKINSFOLDER, skinName.c_str());
 	SetMenuDefaultItem(skinMenu, IDM_SKIN_OPENSKINSFOLDER, FALSE);
 
@@ -415,7 +415,7 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 	int itemCount = GetMenuItemCount(menu);
 	if (itemCount > 0)
 	{
-		std::wstring root = meterWindow->GetFolderPath();
+		std::wstring root = skin->GetFolderPath();
 		std::wstring::size_type pos = root.find_first_of(L'\\');
 		if (pos != std::wstring::npos)
 		{
@@ -443,16 +443,16 @@ HMENU ContextMenu::CreateSkinMenu(MeterWindow* meterWindow, int index, HMENU men
 		}
 	}
 
-	AppendSkinCustomMenu(meterWindow, index, skinMenu, false);
+	AppendSkinCustomMenu(skin, index, skinMenu, false);
 
 	return skinMenu;
 }
 
 void ContextMenu::AppendSkinCustomMenu(
-	MeterWindow* meterWindow, int index, HMENU menu, bool standaloneMenu)
+	Skin* skin, int index, HMENU menu, bool standaloneMenu)
 {
 	// Add custom actions to the context menu
-	std::wstring contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextTitle", L"");
+	std::wstring contextTitle = skin->GetParser().ReadString(L"Rainmeter", L"ContextTitle", L"");
 	if (contextTitle.empty())
 	{
 		return;
@@ -463,7 +463,7 @@ void ContextMenu::AppendSkinCustomMenu(
 		return title.find_first_not_of(L'-') == std::wstring::npos;
 	};
 
-	std::wstring contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", L"ContextAction", L"");
+	std::wstring contextAction = skin->GetParser().ReadString(L"Rainmeter", L"ContextAction", L"");
 	if (contextAction.empty() && !isTitleSeparator(contextTitle))
 	{
 		return;
@@ -486,9 +486,9 @@ void ContextMenu::AppendSkinCustomMenu(
 		cTitles.push_back(contextTitle);
 
 		_snwprintf_s(buffer, _TRUNCATE, L"ContextTitle%i", ++i);
-		contextTitle = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
+		contextTitle = skin->GetParser().ReadString(L"Rainmeter", buffer, L"");
 		_snwprintf_s(buffer, _TRUNCATE, L"ContextAction%i", i);
-		contextAction = meterWindow->GetParser().ReadString(L"Rainmeter", buffer, L"");
+		contextAction = skin->GetParser().ReadString(L"Rainmeter", buffer, L"");
 	}
 
 	// Build a sub-menu if more than three items
@@ -611,10 +611,10 @@ void ContextMenu::CreateLayoutMenu(HMENU layoutMenu)
 	}
 }
 
-void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, MeterWindow* meterWindow)
+void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, Skin* skin)
 {
-	const bool screenDefined = meterWindow->GetXScreenDefined();
-	const int screenIndex = meterWindow->GetXScreen();
+	const bool screenDefined = skin->GetXScreenDefined();
+	const int screenIndex = skin->GetXScreen();
 
 	// for the "Specified monitor" (@n)
 	const size_t numOfMonitors = System::GetMonitorCount();  // intentional
@@ -655,7 +655,7 @@ void ContextMenu::CreateMonitorMenu(HMENU monitorMenu, MeterWindow* meterWindow)
 		CheckMenuItem(monitorMenu, ID_MONITOR_FIRST, MF_BYCOMMAND | MF_CHECKED);
 	}
 
-	if (meterWindow->GetAutoSelectScreen())
+	if (skin->GetAutoSelectScreen())
 	{
 		CheckMenuItem(monitorMenu, IDM_SKIN_MONITOR_AUTOSELECT, MF_BYCOMMAND | MF_CHECKED);
 	}

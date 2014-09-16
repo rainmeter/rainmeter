@@ -24,7 +24,7 @@
 ** The constructor
 **
 */
-MeasurePhysicalMemory::MeasurePhysicalMemory(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
+MeasurePhysicalMemory::MeasurePhysicalMemory(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Total(false)
 {
 	MEMORYSTATUSEX stat;

@@ -24,7 +24,7 @@
 class MeasureScript : public Measure
 {
 public:
-	MeasureScript(MeterWindow* meterWindow, const WCHAR* name);
+	MeasureScript(Skin* skin, const WCHAR* name);
 	virtual ~MeasureScript();
 
 	MeasureScript(const MeasureScript& other) = delete;

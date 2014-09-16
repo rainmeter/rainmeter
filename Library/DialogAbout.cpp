@@ -131,11 +131,11 @@ void DialogAbout::UpdateSkins()
 	}
 }
 
-void DialogAbout::UpdateMeasures(MeterWindow* meterWindow)
+void DialogAbout::UpdateMeasures(Skin* skin)
 {
 	if (c_Dialog && c_Dialog->m_TabSkins.IsInitialized())
 	{
-		c_Dialog->m_TabSkins.UpdateMeasureList(meterWindow);
+		c_Dialog->m_TabSkins.UpdateMeasureList(skin);
 	}
 }
 
@@ -754,8 +754,8 @@ void DialogAbout::TabSkins::UpdateSkinList()
 
 	// Add entries for each skin
 	std::wstring::size_type maxLength = 0;
-	const std::map<std::wstring, MeterWindow*>& windows = GetRainmeter().GetAllMeterWindows();
-	std::map<std::wstring, MeterWindow*>::const_iterator iter = windows.begin();
+	const std::map<std::wstring, Skin*>& windows = GetRainmeter().GetAllSkins();
+	std::map<std::wstring, Skin*>::const_iterator iter = windows.begin();
 	bool found = false;
 	for ( ; iter != windows.end(); ++iter)
 	{
@@ -800,16 +800,16 @@ void DialogAbout::TabSkins::UpdateSkinList()
 ** Updates the list of measures and values.
 **
 */
-void DialogAbout::TabSkins::UpdateMeasureList(MeterWindow* meterWindow)
+void DialogAbout::TabSkins::UpdateMeasureList(Skin* skin)
 {
-	if (!meterWindow)
+	if (!skin)
 	{
 		// Find selected skin
 		HWND item = GetControl(Id_SkinsListBox);
 		int selected = (int)SendMessage(item, LB_GETCURSEL, 0, 0);
 
-		const std::map<std::wstring, MeterWindow*>& windows = GetRainmeter().GetAllMeterWindows();
-		std::map<std::wstring, MeterWindow*>::const_iterator iter = windows.begin();
+		const std::map<std::wstring, Skin*>& windows = GetRainmeter().GetAllSkins();
+		std::map<std::wstring, Skin*>::const_iterator iter = windows.begin();
 		while (selected && iter != windows.end())
 		{
 			++iter;
@@ -818,7 +818,7 @@ void DialogAbout::TabSkins::UpdateMeasureList(MeterWindow* meterWindow)
 
 		m_SkinWindow = (*iter).second;
 	}
-	else if (meterWindow != m_SkinWindow)
+	else if (skin != m_SkinWindow)
 	{
 		// Called by a skin other than currently visible one, so return
 		return;

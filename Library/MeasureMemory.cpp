@@ -24,7 +24,7 @@
 ** The constructor
 **
 */
-MeasureMemory::MeasureMemory(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
+MeasureMemory::MeasureMemory(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Total(false)
 {
 	MEMORYSTATUSEX stat;

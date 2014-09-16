@@ -633,7 +633,7 @@ HWND System::GetBackmostTopWindow()
 	// Skip all ZPOSITION_ONDESKTOP, ZPOSITION_BOTTOM, and ZPOSITION_NORMAL windows
 	while (winPos = ::GetNextWindow(winPos, GW_HWNDPREV))
 	{
-		MeterWindow* wnd = GetRainmeter().GetMeterWindow(winPos);
+		Skin* wnd = GetRainmeter().GetSkin(winPos);
 		if (!wnd ||
 			(wnd->GetWindowZPosition() != ZPOSITION_NORMAL && 
 			wnd->GetWindowZPosition() != ZPOSITION_ONDESKTOP &&
@@ -669,12 +669,12 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 	bool logging = GetRainmeter().GetDebug() && DEBUG_VERBOSE;
 	const int classLen = _countof(METERWINDOW_CLASS_NAME) + (DEBUG_VERBOSE ? 32 : 1);
 	WCHAR className[classLen];
-	MeterWindow* Window;
+	Skin* Window;
 	WCHAR flag;
 
 	if (GetClassName(hwnd, className, classLen) > 0 &&
 		wcscmp(className, METERWINDOW_CLASS_NAME) == 0 &&
-		(Window = GetRainmeter().GetMeterWindow(hwnd)))
+		(Window = GetRainmeter().GetSkin(hwnd)))
 	{
 		ZPOSITION zPos = Window->GetWindowZPosition();
 		if (zPos == ZPOSITION_ONDESKTOP ||
@@ -683,7 +683,7 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 		{
 			if (lParam)
 			{
-				((std::vector<MeterWindow*>*)lParam)->push_back(Window);
+				((std::vector<Skin*>*)lParam)->push_back(Window);
 			}
 
 			if (logging) flag = L'+';
@@ -718,7 +718,7 @@ BOOL CALLBACK MyEnumWindowsProc(HWND hwnd, LPARAM lParam)
 void System::ChangeZPosInOrder()
 {
 	bool logging = GetRainmeter().GetDebug() && DEBUG_VERBOSE;
-	std::vector<MeterWindow*> windowsInZOrder;
+	std::vector<Skin*> windowsInZOrder;
 
 	if (logging) LogDebug(L"1: ----- BEFORE -----");
 
@@ -728,7 +728,7 @@ void System::ChangeZPosInOrder()
 	auto resetZPos = [&](ZPOSITION zpos)
 	{
 		// Reset ZPos in Z-order (Bottom)
-		std::vector<MeterWindow*>::const_iterator iter = windowsInZOrder.begin();
+		std::vector<Skin*>::const_iterator iter = windowsInZOrder.begin();
 		for ( ; iter != windowsInZOrder.end(); ++iter)
 		{
 			if ((*iter)->GetWindowZPosition() == zpos)
@@ -945,8 +945,8 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			KillTimer(hWnd, TIMER_RESUME);
 			if (GetRainmeter().IsRedrawable())
 			{
-				std::map<std::wstring, MeterWindow*>::const_iterator iter = GetRainmeter().GetAllMeterWindows().begin();
-				for ( ; iter != GetRainmeter().GetAllMeterWindows().end(); ++iter)
+				std::map<std::wstring, Skin*>::const_iterator iter = GetRainmeter().GetAllSkins().begin();
+				for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 				{
 					(*iter).second->RedrawWindow();
 				}
@@ -970,8 +970,8 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			}
 
 			// Deliver WM_DISPLAYCHANGE / WM_SETTINGCHANGE message to all meter windows
-			std::map<std::wstring, MeterWindow*>::const_iterator iter = GetRainmeter().GetAllMeterWindows().begin();
-			for ( ; iter != GetRainmeter().GetAllMeterWindows().end(); ++iter)
+			std::map<std::wstring, Skin*>::const_iterator iter = GetRainmeter().GetAllSkins().begin();
+			for ( ; iter != GetRainmeter().GetAllSkins().end(); ++iter)
 			{
 				PostMessage((*iter).second->GetWindow(), WM_METERWINDOW_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
 			}

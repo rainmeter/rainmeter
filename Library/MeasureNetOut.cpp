@@ -23,7 +23,7 @@
 ** The constructor
 **
 */
-MeasureNetOut::MeasureNetOut(MeterWindow* meterWindow, const WCHAR* name) : MeasureNet(meterWindow, name, NET_OUT)
+MeasureNetOut::MeasureNetOut(Skin* skin, const WCHAR* name) : MeasureNet(skin, name, NET_OUT)
 {
 }
 

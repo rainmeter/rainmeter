@@ -64,7 +64,7 @@ ULONG MeasureCPU::c_BufferSize = 0;
 ** The constructor
 **
 */
-MeasureCPU::MeasureCPU(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
+MeasureCPU::MeasureCPU(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Processor(),
 	m_OldTime()
 {

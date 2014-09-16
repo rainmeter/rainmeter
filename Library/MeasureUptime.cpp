@@ -25,7 +25,7 @@
 ** The constructor
 **
 */
-MeasureUptime::MeasureUptime(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
+MeasureUptime::MeasureUptime(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_AddDaysToHours(false)
 {
 }

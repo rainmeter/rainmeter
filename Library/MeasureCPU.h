@@ -26,7 +26,7 @@ typedef LONG (WINAPI *FPNTQSI)(UINT, PVOID, ULONG, PULONG);
 class MeasureCPU : public Measure
 {
 public:
-	MeasureCPU(MeterWindow* meterWindow, const WCHAR* name);
+	MeasureCPU(Skin* skin, const WCHAR* name);
 	virtual ~MeasureCPU();
 
 	MeasureCPU(const MeasureCPU& other) = delete;

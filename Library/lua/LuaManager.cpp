@@ -39,7 +39,7 @@ void LuaManager::Initialize()
 		RegisterGlobal(c_State);
 		RegisterMeasure(c_State);
 		RegisterMeter(c_State);
-		RegisterMeterWindow(c_State);
+		RegisterSkin(c_State);
 	}
 
 	++c_RefCount;

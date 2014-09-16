@@ -32,7 +32,7 @@
 #include <gdiplus.h>
 
 class Rainmeter;
-class MeterWindow;
+class Skin;
 class Measure;
 class Meter;
 
@@ -45,7 +45,7 @@ public:
 	ConfigParser(const ConfigParser& other) = delete;
 	ConfigParser& operator=(ConfigParser other) = delete;
 
-	void Initialize(const std::wstring& filename, MeterWindow* meterWindow = nullptr, LPCTSTR skinSection = nullptr, const std::wstring* resourcePath = nullptr);
+	void Initialize(const std::wstring& filename, Skin* skin = nullptr, LPCTSTR skinSection = nullptr, const std::wstring* resourcePath = nullptr);
 
 	void AddMeasure(Measure* pMeasure);
 	Measure* GetMeasure(const std::wstring& name);
@@ -68,7 +68,7 @@ public:
 	bool GetLastKeyDefined() { return !m_LastDefaultUsed; }
 	bool GetLastValueDefined() { return m_LastValueDefined; }
 
-	void ResetMonitorVariables(MeterWindow* meterWindow = nullptr);
+	void ResetMonitorVariables(Skin* skin = nullptr);
 
 	const std::wstring& ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures = true);
 	bool IsKeyDefined(LPCTSTR section, LPCTSTR key);
@@ -103,13 +103,13 @@ public:
 	static void UpdateWorkareaVariables() { SetMultiMonitorVariables(false); }
 
 private:
-	void SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, MeterWindow* meterWindow);
+	void SetBuiltInVariables(const std::wstring& filename, const std::wstring* resourcePath, Skin* skin);
 
 	void ReadVariables();
 
 	void ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection = nullptr, int depth = 0);
 
-	void SetAutoSelectedMonitorVariables(MeterWindow* meterWindow);
+	void SetAutoSelectedMonitorVariables(Skin* skin);
 
 	bool GetSectionVariable(std::wstring& strVariable, std::wstring& strValue);
 
@@ -143,7 +143,7 @@ private:
 	std::unordered_map<std::wstring, std::wstring> m_BuiltInVariables;
 	std::unordered_map<std::wstring, std::wstring> m_Variables;
 
-	MeterWindow* m_MeterWindow;
+	Skin* m_Skin;
 
 	static std::unordered_map<std::wstring, std::wstring> c_MonitorVariables;
 };

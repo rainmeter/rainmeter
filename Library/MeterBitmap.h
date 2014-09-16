@@ -25,7 +25,7 @@
 class MeterBitmap : public Meter
 {
 public:
-	MeterBitmap(MeterWindow* meterWindow, const WCHAR* name);
+	MeterBitmap(Skin* skin, const WCHAR* name);
 	virtual ~MeterBitmap();
 
 	MeterBitmap(const MeterBitmap& other) = delete;

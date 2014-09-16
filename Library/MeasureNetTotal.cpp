@@ -23,7 +23,7 @@
 ** The constructor
 **
 */
-MeasureNetTotal::MeasureNetTotal(MeterWindow* meterWindow, const WCHAR* name) : MeasureNet(meterWindow, name, NET_TOTAL)
+MeasureNetTotal::MeasureNetTotal(Skin* skin, const WCHAR* name) : MeasureNet(skin, name, NET_TOTAL)
 {
 }
 

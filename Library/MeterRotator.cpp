@@ -33,8 +33,8 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-MeterRotator::MeterRotator(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
-	m_Image(L"ImageName", nullptr, false, meterWindow),
+MeterRotator::MeterRotator(Skin* skin, const WCHAR* name) : Meter(skin, name),
+	m_Image(L"ImageName", nullptr, false, skin),
 	m_NeedsReload(false),
 	m_OffsetX(),
 	m_OffsetY(),

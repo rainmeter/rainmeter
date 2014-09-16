@@ -39,7 +39,7 @@ enum DRIVETYPE
 ** The constructor
 **
 */
-MeasureDiskSpace::MeasureDiskSpace(MeterWindow* meterWindow, const WCHAR* name) : Measure(meterWindow, name),
+MeasureDiskSpace::MeasureDiskSpace(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(false),
 	m_Total(false),
 	m_Label(false),

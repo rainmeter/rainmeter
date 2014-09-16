@@ -23,8 +23,8 @@
 #include <string>
 #include "Group.h"
 
-class MeterWindow;
 class ConfigParser;
+class Skin;
 
 class __declspec(novtable) Section : public Group
 {
@@ -48,10 +48,10 @@ public:
 	const std::wstring& GetOnUpdateAction() { return m_OnUpdateAction; }
 	void DoUpdateAction();
 
-	MeterWindow* GetMeterWindow() { return m_MeterWindow; }
+	Skin* GetSkin() { return m_Skin; }
 
 protected:
-	Section(MeterWindow* meterWindow, const WCHAR* name);
+	Section(Skin* skin, const WCHAR* name);
 
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 
@@ -67,7 +67,7 @@ protected:
 
 	std::wstring m_OnUpdateAction;
 
-	MeterWindow* m_MeterWindow;
+	Skin* m_Skin;
 };
 
 #endif

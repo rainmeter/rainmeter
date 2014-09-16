@@ -25,7 +25,7 @@
 class MeterBar : public Meter
 {
 public:
-	MeterBar(MeterWindow* meterWindow, const WCHAR* name);
+	MeterBar(Skin* skin, const WCHAR* name);
 	virtual ~MeterBar();
 
 	MeterBar(const MeterBar& other) = delete;

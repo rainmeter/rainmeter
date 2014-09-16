@@ -30,8 +30,8 @@ using namespace Gdiplus;
 ** The constructor
 **
 */
-MeterBar::MeterBar(MeterWindow* meterWindow, const WCHAR* name) : Meter(meterWindow, name),
-	m_Image(L"BarImage", nullptr, false, meterWindow),
+MeterBar::MeterBar(Skin* skin, const WCHAR* name) : Meter(skin, name),
+	m_Image(L"BarImage", nullptr, false, skin),
 	m_NeedsReload(false),
 	m_Color(Color::Green),
 	m_Orientation(VERTICAL),

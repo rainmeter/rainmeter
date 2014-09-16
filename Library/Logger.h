@@ -25,7 +25,7 @@
 #include <list>
 
 class Section;
-class MeterWindow;
+class Skin;
 
 // Singleton class to handle and store log messages and control the log file.
 class Logger
@@ -60,7 +60,7 @@ public:
 
 	void Log(Level level, const WCHAR* source, const WCHAR* msg);
 	void LogVF(Level level, const WCHAR* source, const WCHAR* format, va_list args);
-	void LogMeterWindowVF(Logger::Level level, MeterWindow* meterWindow, const WCHAR* format, va_list args);
+	void LogSkinVF(Logger::Level level, Skin* skin, const WCHAR* format, va_list args);
 	void LogSection(Logger::Level level, Section* section, const WCHAR* message);
 	void LogSectionVF(Logger::Level level, Section* section, const WCHAR* format, va_list args);
 
@@ -114,11 +114,11 @@ inline Logger& GetLogger() { return Logger::GetInstance(); }
 		va_end(args); \
 	} \
 	\
-	inline void Log ## name ## F(MeterWindow* meterWindow, const WCHAR* format, ...) \
+	inline void Log ## name ## F(Skin* skin, const WCHAR* format, ...) \
 	{ \
 		va_list args; \
 		va_start(args, format); \
-		GetLogger().LogMeterWindowVF(Logger::Level::name, meterWindow, format, args); \
+		GetLogger().LogSkinVF(Logger::Level::name, skin, format, args); \
 		va_end(args); \
 	}
 
