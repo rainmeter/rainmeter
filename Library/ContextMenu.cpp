@@ -21,7 +21,7 @@
 #include "../Common/Gfx/CanvasD2D.h"
 #include "ContextMenu.h"
 #include "Rainmeter.h"
-#include "Litestep.h"
+#include "Util.h"
 #include "Skin.h"
 #include "System.h"
 #include "TrayWindow.h"

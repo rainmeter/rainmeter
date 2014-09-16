@@ -27,7 +27,7 @@
 #include "DialogAbout.h"
 #include "DialogManage.h"
 #include "resource.h"
-#include "Litestep.h"
+#include "Util.h"
 #include "MeasureCalc.h"
 #include "MeasureNet.h"
 #include "MeasurePlugin.h"

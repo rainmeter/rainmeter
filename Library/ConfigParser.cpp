@@ -20,7 +20,7 @@
 #include "../Common/MathParser.h"
 #include "../Common/PathUtil.h"
 #include "ConfigParser.h"
-#include "Litestep.h"
+#include "Util.h"
 #include "Rainmeter.h"
 #include "System.h"
 #include "Measure.h"

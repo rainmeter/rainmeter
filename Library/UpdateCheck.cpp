@@ -17,7 +17,7 @@
 */
 
 #include "StdAfx.h"
-#include "Litestep.h"
+#include "Util.h"
 #include "Rainmeter.h"
 #include "TrayWindow.h"
 #include "../Version.h"

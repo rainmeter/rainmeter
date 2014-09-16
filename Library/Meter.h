@@ -24,7 +24,7 @@
 #include <gdiplus.h>
 #include <vector>
 #include <string>
-#include "Litestep.h"
+#include "Util.h"
 #include "ConfigParser.h"
 #include "Skin.h"
 #include "Section.h"

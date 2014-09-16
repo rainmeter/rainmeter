@@ -20,7 +20,7 @@
 #include "MeterBar.h"
 #include "Measure.h"
 #include "Error.h"
-#include "Litestep.h"
+#include "Util.h"
 #include "Rainmeter.h"
 #include "../Common/Gfx/Canvas.h"
 

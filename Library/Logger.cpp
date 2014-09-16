@@ -19,7 +19,7 @@
 #include "StdAfx.h"
 #include "Logger.h"
 #include "DialogAbout.h"
-#include "Litestep.h"
+#include "Util.h"
 #include "Rainmeter.h"
 #include "Section.h"
 #include "Skin.h"

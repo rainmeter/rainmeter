@@ -20,7 +20,7 @@
 #include "TrayWindow.h"
 #include "Measure.h"
 #include "resource.h"
-#include "Litestep.h"
+#include "Util.h"
 #include "Rainmeter.h"
 #include "DialogAbout.h"
 #include "DialogManage.h"

@@ -38,7 +38,6 @@
     <ClCompile Include="DialogManage.cpp" />
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
-    <ClCompile Include="Litestep.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Measure.cpp" />
     <ClCompile Include="MeasureCalc.cpp" />
@@ -83,6 +82,7 @@
     <ClCompile Include="TintedImage.cpp" />
     <ClCompile Include="TrayWindow.cpp" />
     <ClCompile Include="UpdateCheck.cpp" />
+    <ClCompile Include="Util.cpp" />
     <ClCompile Include="lua\LuaManager.cpp" />
     <ClCompile Include="lua\LuaScript.cpp" />
     <ClCompile Include="lua\glue\LuaMeasure.cpp" />
@@ -101,7 +101,6 @@
     <ClInclude Include="Error.h" />
     <ClInclude Include="Group.h" />
     <ClInclude Include="IfActions.h" />
-    <ClInclude Include="Litestep.h" />
     <ClInclude Include="DialogManage.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Measure.h" />
@@ -144,6 +143,7 @@
     <ClInclude Include="TintedImage.h" />
     <ClInclude Include="TrayWindow.h" />
     <ClInclude Include="UpdateCheck.h" />
+    <ClInclude Include="Util.h" />
     <ClInclude Include="lua\LuaManager.h" />
     <ClInclude Include="lua\LuaScript.h" />
   </ItemGroup>

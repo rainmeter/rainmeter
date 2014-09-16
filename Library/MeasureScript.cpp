@@ -17,7 +17,7 @@
 #include "StdAfx.h"
 #include "MeasureScript.h"
 #include "lua/LuaManager.h"
-#include "Litestep.h"
+#include "Util.h"
 #include "Rainmeter.h"
 
 const char* g_InitializeFunctionName = "Initialize";

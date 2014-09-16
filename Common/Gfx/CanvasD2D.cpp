@@ -22,7 +22,7 @@
 #include "Util/DWriteFontCollectionLoader.h"
 #include "Util/DWriteHelpers.h"
 #include "Util/WICBitmapLockGDIP.h"
-#include "../../Library/Litestep.h"
+#include "../../Library/Util.h"
 
 namespace {
 

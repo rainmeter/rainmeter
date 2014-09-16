@@ -35,7 +35,7 @@
 #include "MeasureScript.h"
 #include "Rainmeter.h"
 #include "Error.h"
-#include "Litestep.h"
+#include "Util.h"
 #include "pcre-8.10/config.h"
 #include "pcre-8.10/pcre.h"
 
