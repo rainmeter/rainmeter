@@ -47,8 +47,8 @@ set GIT=%GIT:Program Files\=Program Files (x86)\%
 if not exist "%GIT%" echo ERROR: git.exe not found & goto END
 :GITFOUND
 set /a VERSION_REVISION=0
-for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --all --count`) do set VERSION_REVISION=%%G
-
+for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --remotes^=origin/gh-pages* --remotes^=origin/master* --count`) do set VERSION_REVISION=%%G
+echo %VERSION_REVISION%
 :UPDATEVERSION
 
 set VERSION_FULL=%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%.%VERSION_REVISION%
