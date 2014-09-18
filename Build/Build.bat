@@ -47,7 +47,11 @@ set GIT=%GIT:Program Files\=Program Files (x86)\%
 if not exist "%GIT%" echo ERROR: git.exe not found & goto END
 :GITFOUND
 set /a VERSION_REVISION=0
-for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --remotes^=origin/gh-pages* --remotes^=origin/master* --count`) do set VERSION_REVISION=%%G
+:: We really shouldn't be including revs from gh-pages, but it is too late to
+:: change that now. We are also using `gh-page[s]` instead of just `gh-pages`
+:: because Git adds ´/*´ to the end of the pattern unless it contains one a
+:: special glob char like [.
+for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --remotes^=origin/gh-page[s] --remotes^=origin/maste[r] --count`) do set VERSION_REVISION=%%G
 
 :UPDATEVERSION
 
