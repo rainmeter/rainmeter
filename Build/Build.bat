@@ -49,7 +49,7 @@ if not exist "%GIT%" echo ERROR: git.exe not found & goto END
 set /a VERSION_REVISION=0
 :: We really shouldn't be including revs from gh-pages, but it is too late to
 :: change that now. We are also using `gh-page[s]` instead of just `gh-pages`
-:: because Git adds ´/*´ to the end of the pattern unless it contains one a
+:: because Git adds ´/*´ to the end of the pattern unless it contains a
 :: special glob char like [.
 for /f "usebackq delims= " %%G in (`"%GIT%" rev-list --remotes^=origin/gh-page[s] --remotes^=origin/maste[r] --count`) do set VERSION_REVISION=%%G
 
@@ -60,28 +60,32 @@ set VERSION_SHORT=%VERSION_MAJOR%.%VERSION_MINOR%
 if not "%VERSION_SUBMINOR%" == "0" set VERSION_SHORT=!VERSION_SHORT!.%VERSION_SUBMINOR%
 
 :: Update Version.h
-> "..\Version.h" echo #pragma once
->>"..\Version.h" echo #define FILEVER %VERSION_MAJOR%,%VERSION_MINOR%,%VERSION_SUBMINOR%,%VERSION_REVISION%
->>"..\Version.h" echo #define PRODUCTVER FILEVER
->>"..\Version.h" echo #define STRFILEVER "%VERSION_FULL%"
->>"..\Version.h" echo #define STRPRODUCTVER STRFILEVER
->>"..\Version.h" echo #define APPVERSION L"%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%"
->>"..\Version.h" echo #define RAINMETER_VERSION ((%VERSION_MAJOR% * 1000000) + (%VERSION_MINOR% * 1000) + %VERSION_SUBMINOR%)
->>"..\Version.h" echo const int revision_number = %VERSION_REVISION%;
->>"..\Version.h" echo const bool revision_beta = %ISBETA%;
+> "..\Version.h" (
+	echo #pragma once
+	echo #define FILEVER %VERSION_MAJOR%,%VERSION_MINOR%,%VERSION_SUBMINOR%,%VERSION_REVISION%
+	echo #define PRODUCTVER FILEVER
+	echo #define STRFILEVER "%VERSION_FULL%"
+	echo #define STRPRODUCTVER STRFILEVER
+	echo #define APPVERSION L"%VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_SUBMINOR%"
+	echo #define RAINMETER_VERSION ((%VERSION_MAJOR% * 1000000^) + (%VERSION_MINOR% * 1000^) + %VERSION_SUBMINOR%^)
+	echo const int revision_number = %VERSION_REVISION%;
+	echo const bool revision_beta = %ISBETA%;
+)
 
 :: Update Version.cs
-> "..\Version.cs" echo namespace Rainmeter
->>"..\Version.cs" echo {
->>"..\Version.cs" echo     public class Version
->>"..\Version.cs" echo     {
->>"..\Version.cs" echo #if X64
->>"..\Version.cs" echo         public const string Informational = "%VERSION_FULL% (64-bit)";
->>"..\Version.cs" echo #else
->>"..\Version.cs" echo         public const string Informational = "%VERSION_FULL% (32-bit)";
->>"..\Version.cs" echo #endif
->>"..\Version.cs" echo     }
->>"..\Version.cs" echo }
+> "..\Version.cs" (
+	echo namespace Rainmeter
+	echo {
+	echo     public class Version
+	echo     {
+	echo #if X64
+	echo         public const string Informational = "%VERSION_FULL% (64-bit^)";
+	echo #else
+	echo         public const string Informational = "%VERSION_FULL% (32-bit^)";
+	echo #endif
+	echo     }
+	echo }
+)
 
 
 if "%1" == "BUILDVERSION" goto :eof
