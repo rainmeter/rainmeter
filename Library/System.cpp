@@ -62,6 +62,9 @@ std::vector<std::wstring> System::c_IniFileMappings;
 */
 void System::Initialize(HINSTANCE instance)
 {
+	// Update the CRT timezone variables.
+	_tzset();
+
 	WNDCLASS wc = {0};
 	wc.lpfnWndProc = (WNDPROC)WndProc;
 	wc.hInstance = instance;
@@ -976,6 +979,11 @@ LRESULT CALLBACK System::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				PostMessage((*iter).second->GetWindow(), WM_METERWINDOW_DELAYED_MOVE, (WPARAM)uMsg, (LPARAM)0);
 			}
 		}
+		break;
+
+	case WM_TIMECHANGE:
+		// Update the CRT timezone variables.
+		_tzset();
 		break;
 
 	case WM_POWERBROADCAST:

@@ -42,11 +42,6 @@ MeasureTime::MeasureTime(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Time(),
 	m_TimeStamp(-1)
 {
-	/* Set time zone from TZ environment variable. If TZ is not set,
-	 * the operating system is queried to obtain the default value
-	 * for the variable.
-	 */
-	_tzset();
 }
 
 /*
