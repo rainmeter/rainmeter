@@ -4666,11 +4666,7 @@ LRESULT Skin::OnTimeChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Performs an action when returning from sleep
-**
-*/
-LRESULT Skin::OnWake(UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT Skin::OnPowerBroadcast(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (wParam == PBT_APMRESUMEAUTOMATIC && !m_OnWakeAction.empty())
 	{
@@ -4741,7 +4737,7 @@ LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	MESSAGE(OnSetWindowFocus, WM_SETFOCUS)
 	MESSAGE(OnSetWindowFocus, WM_KILLFOCUS)
 	MESSAGE(OnTimeChange, WM_TIMECHANGE)
-	MESSAGE(OnWake, WM_POWERBROADCAST)
+	MESSAGE(OnPowerBroadcast, WM_POWERBROADCAST)
 	END_MESSAGEPROC
 }
 

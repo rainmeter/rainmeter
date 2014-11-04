@@ -253,7 +253,7 @@ protected:
 	LRESULT OnDisplayChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnTimeChange(UINT uMsg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnWake(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnPowerBroadcast(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
 	enum STATE
