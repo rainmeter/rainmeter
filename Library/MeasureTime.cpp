@@ -20,6 +20,8 @@
 #include "MeasureTime.h"
 #include "Rainmeter.h"
 
+const double LOCAL_TIMEZONE = DBL_MIN;
+
 int GetYearDay(int year, int month, int day)
 {
 	static const int dates[] = {  0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
@@ -40,7 +42,9 @@ int GetYearDay(int year, int month, int day)
 MeasureTime::MeasureTime(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Delta(),
 	m_Time(),
-	m_TimeStamp(-1)
+	m_TimeStamp(-1),
+	m_TimeZone(LOCAL_TIMEZONE),
+	m_DaylightSavingTime(true)
 {
 }
 
@@ -218,60 +222,65 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_Format = parser.ReadString(section, L"Format", L"");
 
 	m_TimeStamp = parser.ReadFloat(section, L"TimeStamp", -1);
-
 	if (m_TimeStamp < 0.0)
 	{
 		const WCHAR* timezone = parser.ReadString(section, L"TimeZone", L"local").c_str();
 		if (_wcsicmp(L"local", timezone) == 0)
 		{
-			SYSTEMTIME sysLocalTime, sysUTCTime;
-			GetLocalTime(&sysLocalTime);
-			GetSystemTime(&sysUTCTime);
-
-			FILETIME ftLocalTime, ftUTCTime;
-			SystemTimeToFileTime(&sysLocalTime, &ftLocalTime);
-			SystemTimeToFileTime(&sysUTCTime, &ftUTCTime);
-
-			LARGE_INTEGER largeInt1, largeInt2;
-			largeInt1.HighPart = ftLocalTime.dwHighDateTime;
-			largeInt1.LowPart = ftLocalTime.dwLowDateTime;
-			largeInt2.HighPart = ftUTCTime.dwHighDateTime;
-			largeInt2.LowPart = ftUTCTime.dwLowDateTime;
-
-			m_Delta.QuadPart = largeInt1.QuadPart - largeInt2.QuadPart;
+			m_TimeZone = LOCAL_TIMEZONE;
 		}
 		else
 		{
-			double zone = parser.ParseDouble(timezone, 0.0);
-			bool dst = parser.ReadBool(section, L"DaylightSavingTime", true);
-
-			struct tm* today;
-			time_t now;
-			time(&now);
-			today = localtime(&now);
-
-			if (dst && today->tm_isdst)
-			{
-				// Add DST
-				TIME_ZONE_INFORMATION tzi;
-				GetTimeZoneInformation(&tzi);
-
-				m_Delta.QuadPart = (LONGLONG)((zone * 3600) - tzi.DaylightBias * 60) * 10000000;
-			}
-			else
-			{
-				m_Delta.QuadPart = (LONGLONG)(zone * 3600) * 10000000;
-			}
+			m_TimeZone = parser.ParseDouble(timezone, 0.0);
+			m_DaylightSavingTime = parser.ReadBool(section, L"DaylightSavingTime", true);
 		}
-	}
-	else
-	{
-		m_Delta.QuadPart = 0;
+
+		UpdateDelta();
 	}
 
 	if (!m_Initialized)
 	{
 		// Initialize m_Time to avoid causing EINVAL in TimeToString() until calling UpdateValue()
 		FillCurrentTime();
+	}
+}
+
+void MeasureTime::UpdateDelta()
+{
+	if (m_TimeZone == LOCAL_TIMEZONE)
+	{
+		SYSTEMTIME sysLocalTime, sysUTCTime;
+		GetLocalTime(&sysLocalTime);
+		GetSystemTime(&sysUTCTime);
+
+		FILETIME ftLocalTime, ftUTCTime;
+		SystemTimeToFileTime(&sysLocalTime, &ftLocalTime);
+		SystemTimeToFileTime(&sysUTCTime, &ftUTCTime);
+
+		LARGE_INTEGER largeInt1, largeInt2;
+		largeInt1.HighPart = ftLocalTime.dwHighDateTime;
+		largeInt1.LowPart = ftLocalTime.dwLowDateTime;
+		largeInt2.HighPart = ftUTCTime.dwHighDateTime;
+		largeInt2.LowPart = ftUTCTime.dwLowDateTime;
+
+		m_Delta.QuadPart = largeInt1.QuadPart - largeInt2.QuadPart;
+	}
+	else
+	{
+		time_t now;
+		time(&now);
+		tm* today = localtime(&now);
+		if (m_DaylightSavingTime && today->tm_isdst)
+		{
+			// Add DST
+			TIME_ZONE_INFORMATION tzi;
+			GetTimeZoneInformation(&tzi);
+
+			m_Delta.QuadPart = (LONGLONG)((m_TimeZone * 3600) - tzi.DaylightBias * 60) * 10000000;
+		}
+		else
+		{
+			m_Delta.QuadPart = (LONGLONG)(m_TimeZone * 3600) * 10000000;
+		}
 	}
 }

@@ -34,6 +34,8 @@ public:
 
 	virtual const WCHAR* GetStringValue();
 
+	void UpdateDelta();
+
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
 	virtual void UpdateValue();
@@ -47,6 +49,9 @@ private:
 	LARGE_INTEGER m_Time;
 
 	double m_TimeStamp;
+
+	double m_TimeZone;
+	bool m_DaylightSavingTime;
 };
 
 #endif
