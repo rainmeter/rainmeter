@@ -70,10 +70,6 @@ decltype(DwmGetColorizationColor)* Skin::c_DwmGetColorizationColor = nullptr;
 decltype(DwmSetWindowAttribute)* Skin::c_DwmSetWindowAttribute = nullptr;
 decltype(DwmIsCompositionEnabled)* Skin::c_DwmIsCompositionEnabled = nullptr;
 
-/*
-** Constructor
-**
-*/
 Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderPath(folderPath), m_FileName(file),
 	m_Canvas(),
 	m_Background(),
@@ -171,10 +167,6 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	++c_InstanceCount;
 }
 
-/*
-** Destructor
-**
-*/
 Skin::~Skin()
 {
 	m_State = STATE_CLOSING;
@@ -590,10 +582,6 @@ void Skin::MoveWindow(int x, int y)
 	SavePositionIfAppropriate();
 }
 
-/*
-** Sets the window's z-position
-**
-*/
 void Skin::ChangeZPos(ZPOSITION zPos, bool all)
 {
 	HWND winPos = HWND_NOTOPMOST;
@@ -990,10 +978,6 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 	}
 }
 
-/*
-** Enables blurring of the window background (using Aero)
-**
-*/
 void Skin::ShowBlur()
 {
 	if (c_DwmGetColorizationColor && c_DwmIsCompositionEnabled && c_DwmEnableBlurBehindWindow)
@@ -1023,10 +1007,6 @@ void Skin::ShowBlur()
 	}
 }
 
-/*
-** Disables Aero blur
-**
-*/
 void Skin::HideBlur()
 {
 	if (c_DwmEnableBlurBehindWindow)
@@ -1119,19 +1099,12 @@ void Skin::ResizeBlur(const std::wstring& arg, int mode)
 	}
 }
 
-/*
-** Helper function that compares the given name to section's name.
-**
-*/
+// Helper function that compares the given name to section's name.
 bool CompareName(const Section* section, const WCHAR* name, bool group)
 {
 	return (group) ? section->BelongsToGroup(name) : (_wcsicmp(section->GetName(), name) == 0);
 }
 
-/*
-** Shows the given meter
-**
-*/
 void Skin::ShowMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
@@ -1150,10 +1123,6 @@ void Skin::ShowMeter(const std::wstring& name, bool group)
 	if (!group) LogErrorF(this, L"!ShowMeter: [%s] not found", meter);
 }
 
-/*
-** Hides the given meter
-**
-*/
 void Skin::HideMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
@@ -1172,10 +1141,6 @@ void Skin::HideMeter(const std::wstring& name, bool group)
 	if (!group) LogErrorF(this, L"!HideMeter: [%s] not found", meter);
 }
 
-/*
-** Toggles the given meter
-**
-*/
 void Skin::ToggleMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
@@ -1201,10 +1166,6 @@ void Skin::ToggleMeter(const std::wstring& name, bool group)
 	if (!group) LogErrorF(this, L"!ToggleMeter: [%s] not found", meter);
 }
 
-/*
-** Moves the given meter
-**
-*/
 void Skin::MoveMeter(const std::wstring& name, int x, int y)
 {
 	const WCHAR* meter = name.c_str();
@@ -1224,10 +1185,6 @@ void Skin::MoveMeter(const std::wstring& name, int x, int y)
 	LogErrorF(this, L"!MoveMeter: [%s] not found", meter);
 }
 
-/*
-** Updates the given meter
-**
-*/
 void Skin::UpdateMeter(const std::wstring& name, bool group)
 {
 	const WCHAR* meter = name.c_str();
@@ -1274,10 +1231,6 @@ void Skin::UpdateMeter(const std::wstring& name, bool group)
 	if (!group && bContinue) LogErrorF(this, L"!UpdateMeter: [%s] not found", meter);
 }
 
-/*
-** Enables the given measure
-**
-*/
 void Skin::EnableMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
@@ -1295,10 +1248,6 @@ void Skin::EnableMeasure(const std::wstring& name, bool group)
 	if (!group) LogErrorF(this, L"!EnableMeasure: [%s] not found", measure);
 }
 
-/*
-** Disables the given measure
-**
-*/
 void Skin::DisableMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
@@ -1316,10 +1265,6 @@ void Skin::DisableMeasure(const std::wstring& name, bool group)
 	if (!group) LogErrorF(this, L"!DisableMeasure: [%s] not found", measure);
 }
 
-/*
-** Toggles the given measure
-**
-*/
 void Skin::ToggleMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
@@ -1344,10 +1289,6 @@ void Skin::ToggleMeasure(const std::wstring& name, bool group)
 	if (!group) LogErrorF(this, L"!ToggleMeasure: [%s] not found", measure);
 }
 
-/*
-** Pauses the given measure
-**
-*/
 void Skin::PauseMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
@@ -1365,10 +1306,6 @@ void Skin::PauseMeasure(const std::wstring& name, bool group)
 	if (!group) LogErrorF(this, L"!PauseMeasure: [%s] not found", measure);
 }
 
-/*
-** Unpauses the given measure
-**
-*/
 void Skin::UnpauseMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
@@ -1386,10 +1323,6 @@ void Skin::UnpauseMeasure(const std::wstring& name, bool group)
 	if (!group) LogErrorF(this, L"!UnpauseMeasure: [%s] not found", measure);
 }
 
-/*
-** Toggles the pause state of the given measure
-**
-*/
 void Skin::TogglePauseMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
@@ -1414,10 +1347,6 @@ void Skin::TogglePauseMeasure(const std::wstring& name, bool group)
 	if (!group) LogErrorF(this, L"!TogglePauseMeasure: [%s] not found", measure);
 }
 
-/*
-** Updates the given measure
-**
-*/
 void Skin::UpdateMeasure(const std::wstring& name, bool group)
 {
 	const WCHAR* measure = name.c_str();
@@ -1454,10 +1383,6 @@ void Skin::UpdateMeasure(const std::wstring& name, bool group)
 	if (!group) LogErrorF(this, L"!UpdateMeasure: [%s] not found", measure);
 }
 
-/*
-** Sets variable to given value.
-**
-*/
 void Skin::SetVariable(const std::wstring& variable, const std::wstring& value)
 {
 	double result;
@@ -3224,12 +3149,9 @@ void Skin::HandleButtons(POINT pos, BUTTONPROC proc, bool execute)
 	SetCursor(cursor);
 }
 
-/*
-** During setting the cursor do nothing.
-**
-*/
 LRESULT Skin::OnSetCursor(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	// Do nothing.
 	return 0;
 }
 
@@ -3313,10 +3235,6 @@ LRESULT Skin::OnMouseMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** When we get WM_MOUSELEAVE messages, run all leave actions.
-**
-*/
 LRESULT Skin::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos = System::GetCursorPosition();
@@ -3335,10 +3253,6 @@ LRESULT Skin::OnMouseLeave(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** When we get WM_MOUSEWHEEL messages.
-**
-*/
 LRESULT Skin::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_MOUSEWHEEL)  // If sent through WM_INPUT, uMsg is WM_INPUT.
@@ -3365,10 +3279,6 @@ LRESULT Skin::OnMouseScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** When we get WM_MOUSEHWHEEL messages.
-**
-*/
 LRESULT Skin::OnMouseHScrollMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -3582,10 +3492,6 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Helper function for setting ClickThrough
-**
-*/
 void Skin::SetClickThrough(bool b)
 {
 	m_ClickThrough = b;
@@ -3603,10 +3509,6 @@ void Skin::SetClickThrough(bool b)
 	}
 }
 
-/*
-** Helper function for setting KeepOnScreen
-**
-*/
 void Skin::SetKeepOnScreen(bool b)
 {
 	m_KeepOnScreen = b;
@@ -3626,10 +3528,6 @@ void Skin::SetKeepOnScreen(bool b)
 	}
 }
 
-/*
-** Helper function for setting UseD2D
-**
-*/
 void Skin::SetUseD2D(bool b)
 {
 	m_UseD2D = b;
@@ -3637,30 +3535,18 @@ void Skin::SetUseD2D(bool b)
 	Refresh(false);
 }
 
-/*
-** Helper function for setting WindowDraggable
-**
-*/
 void Skin::SetWindowDraggable(bool b)
 {
 	m_WindowDraggable = b;
 	WriteOptions(OPTION_DRAGGABLE);
 }
 
-/*
-** Helper function for setting SavePosition
-**
-*/
 void Skin::SetSavePosition(bool b)
 {
 	m_SavePosition = b;
 	WriteOptions(OPTION_POSITION | OPTION_SAVEPOSITION);
 }
 
-/*
-** Helper function for setting SavePosition
-**
-*/
 void Skin::SavePositionIfAppropriate()
 {
 	if (m_SavePosition)
@@ -3674,20 +3560,12 @@ void Skin::SavePositionIfAppropriate()
 	}
 }
 
-/*
-** Helper function for setting SnapEdges
-**
-*/
 void Skin::SetSnapEdges(bool b)
 {
 	m_SnapEdges = b;
 	WriteOptions(OPTION_SNAPEDGES);
 }
 
-/*
-** Helper function for setting WindowHide
-**
-*/
 void Skin::SetWindowHide(HIDEMODE hide)
 {
 	m_WindowHide = hide;
@@ -3695,10 +3573,6 @@ void Skin::SetWindowHide(HIDEMODE hide)
 	WriteOptions(OPTION_HIDEONMOUSEOVER);
 }
 
-/*
-** Helper function for setting Position
-**
-*/
 void Skin::SetWindowZPosition(ZPOSITION zpos)
 {
 	ChangeSingleZPos(zpos);
@@ -3813,10 +3687,6 @@ LRESULT Skin::OnNcHitTest(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return HTCLIENT;
 }
 
-/*
-** Called when windows position is about to change
-**
-*/
 LRESULT Skin::OnWindowPosChanging(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LPWINDOWPOS wp = (LPWINDOWPOS)lParam;
@@ -4013,10 +3883,6 @@ LRESULT Skin::OnSettingChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Runs the action when left mouse button is down
-**
-*/
 LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -4045,10 +3911,6 @@ LRESULT Skin::OnLeftButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Runs the action when left mouse button is up
-**
-*/
 LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -4069,10 +3931,6 @@ LRESULT Skin::OnLeftButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Runs the action when left mouse button is double-clicked
-**
-*/
 LRESULT Skin::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -4096,10 +3954,6 @@ LRESULT Skin::OnLeftButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Runs the action when right mouse button is down
-**
-*/
 LRESULT Skin::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -4120,10 +3974,6 @@ LRESULT Skin::OnRightButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Runs the action when right mouse button is up
-**
-*/
 LRESULT Skin::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -4143,10 +3993,6 @@ LRESULT Skin::OnRightButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Runs the action when right mouse button is double-clicked
-**
-*/
 LRESULT Skin::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -4170,10 +4016,6 @@ LRESULT Skin::OnRightButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Runs the action when middle mouse button is down
-**
-*/
 LRESULT Skin::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -4194,10 +4036,6 @@ LRESULT Skin::OnMiddleButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Runs the action when middle mouse button is up
-**
-*/
 LRESULT Skin::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -4218,10 +4056,6 @@ LRESULT Skin::OnMiddleButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Runs the action when middle mouse button is double-clicked
-**
-*/
 LRESULT Skin::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -4245,10 +4079,6 @@ LRESULT Skin::OnMiddleButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Runs the action when a X mouse button is down
-**
-*/
 LRESULT Skin::OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -4276,10 +4106,6 @@ LRESULT Skin::OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Runs the action when a X mouse button is up
-**
-*/
 LRESULT Skin::OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -4307,10 +4133,6 @@ LRESULT Skin::OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Runs the action when a X mouse button is double-clicked
-**
-*/
 LRESULT Skin::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -4340,10 +4162,6 @@ LRESULT Skin::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Runs the action when the Skin gets or loses focus
-**
-*/
 LRESULT Skin::OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
@@ -4366,10 +4184,6 @@ LRESULT Skin::OnSetWindowFocus(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/*
-** Handles the context menu. The menu is recreated every time it is shown.
-**
-*/
 LRESULT Skin::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	POINT pos;
@@ -4760,10 +4574,6 @@ LRESULT CALLBACK Skin::InitialWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-/*
-** Handles delayed refresh
-**
-*/
 LRESULT Skin::OnDelayedRefresh(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	Refresh(false);
@@ -4813,10 +4623,6 @@ LRESULT Skin::OnCopyData(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-/*
-** Sets up the window position variables.
-**
-*/
 void Skin::SetWindowPositionVariables(int x, int y)
 {
 	WCHAR buffer[32];
@@ -4827,10 +4633,6 @@ void Skin::SetWindowPositionVariables(int x, int y)
 	m_Parser.SetBuiltInVariable(L"CURRENTCONFIGY", buffer);
 }
 
-/*
-** Sets up the window size variables.
-**
-*/
 void Skin::SetWindowSizeVariables(int w, int h)
 {
 	WCHAR buffer[32];
