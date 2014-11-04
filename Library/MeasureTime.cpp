@@ -38,7 +38,7 @@ int GetYearDay(int year, int month, int day)
 **
 */
 MeasureTime::MeasureTime(Skin* skin, const WCHAR* name) : Measure(skin, name),
-	m_DeltaTime(),
+	m_Delta(),
 	m_Time(),
 	m_TimeStamp(-1)
 {
@@ -88,7 +88,7 @@ void MeasureTime::FillCurrentTime()
 		m_Time.HighPart = ftUTCTime.dwHighDateTime;
 		m_Time.LowPart = ftUTCTime.dwLowDateTime;
 
-		m_Time.QuadPart += m_DeltaTime.QuadPart;
+		m_Time.QuadPart += m_Delta.QuadPart;
 	}
 	else
 	{
@@ -238,7 +238,7 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			largeInt2.HighPart = ftUTCTime.dwHighDateTime;
 			largeInt2.LowPart = ftUTCTime.dwLowDateTime;
 
-			m_DeltaTime.QuadPart = largeInt1.QuadPart - largeInt2.QuadPart;
+			m_Delta.QuadPart = largeInt1.QuadPart - largeInt2.QuadPart;
 		}
 		else
 		{
@@ -256,17 +256,17 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				TIME_ZONE_INFORMATION tzi;
 				GetTimeZoneInformation(&tzi);
 
-				m_DeltaTime.QuadPart = (LONGLONG)((zone * 3600) - tzi.DaylightBias * 60) * 10000000;
+				m_Delta.QuadPart = (LONGLONG)((zone * 3600) - tzi.DaylightBias * 60) * 10000000;
 			}
 			else
 			{
-				m_DeltaTime.QuadPart = (LONGLONG)(zone * 3600) * 10000000;
+				m_Delta.QuadPart = (LONGLONG)(zone * 3600) * 10000000;
 			}
 		}
 	}
 	else
 	{
-		m_DeltaTime.QuadPart = 0;
+		m_Delta.QuadPart = 0;
 	}
 
 	if (!m_Initialized)
