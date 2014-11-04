@@ -147,8 +147,6 @@ const Gdiplus::ColorMatrix TintedImage::c_IdentityMatrix = {
 TintedImageHelper_DefineOptionArray(TintedImage::c_DefaultOptionArray, L"");
 
 /*
-** The constructor.
-**
 ** If disableTransform is true, ImageCrop and ImageRotate are ignored.
 **
 */
@@ -172,10 +170,6 @@ TintedImage::TintedImage(const WCHAR* name, const WCHAR** optionArray, bool disa
 {
 }
 
-/*
-** The destructor
-**
-*/
 TintedImage::~TintedImage()
 {
 	DisposeImage();

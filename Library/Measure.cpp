@@ -64,10 +64,6 @@ static const double g_TblScale[2][4] = {
 
 const int MEDIAN_SIZE = 3;
 
-/*
-** The constructor
-**
-*/
 Measure::Measure(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_Invert(false),
 	m_LogMaxValue(false),
@@ -86,10 +82,6 @@ Measure::Measure(Skin* skin, const WCHAR* name) : Section(skin, name),
 {
 }
 
-/*
-** The destructor
-**
-*/
 Measure::~Measure()
 {
 	delete m_OldValue;

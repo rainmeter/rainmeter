@@ -32,10 +32,6 @@ std::mt19937& GetRandomEngine()
 	return *s_Engine;
 }
 
-/*
-** The constructor
-**
-*/
 MeasureCalc::MeasureCalc(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_ParseError(false),
 	m_LowBound(DEFAULT_LOWER_BOUND),
@@ -45,10 +41,6 @@ MeasureCalc::MeasureCalc(Skin* skin, const WCHAR* name) : Measure(skin, name),
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeasureCalc::~MeasureCalc()
 {
 }

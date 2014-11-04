@@ -31,10 +31,6 @@ using namespace Gdiplus;
 
 std::unordered_map<std::wstring, std::wstring> ConfigParser::c_MonitorVariables;
 
-/*
-** The constructor
-**
-*/
 ConfigParser::ConfigParser() :
 	m_LastReplaced(false),
 	m_LastDefaultUsed(false),
@@ -44,10 +40,6 @@ ConfigParser::ConfigParser() :
 {
 }
 
-/*
-** The destructor
-**
-*/
 ConfigParser::~ConfigParser()
 {
 }

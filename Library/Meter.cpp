@@ -34,10 +34,6 @@
 
 using namespace Gdiplus;
 
-/*
-** The constructor
-**
-*/
 Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 	m_X(),
 	m_Y(),
@@ -65,10 +61,6 @@ Meter::Meter(Skin* skin, const WCHAR* name) : Section(skin, name),
 {
 }
 
-/*
-** The destructor
-**
-*/
 Meter::~Meter()
 {
 	delete m_Transformation;

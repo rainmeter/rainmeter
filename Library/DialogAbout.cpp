@@ -32,18 +32,10 @@
 WINDOWPLACEMENT DialogAbout::c_WindowPlacement = {0};
 DialogAbout* DialogAbout::c_Dialog = nullptr;
 
-/*
-** Constructor.
-**
-*/
 DialogAbout::DialogAbout() : Dialog()
 {
 }
 
-/*
-** Destructor.
-**
-*/
 DialogAbout::~DialogAbout()
 {
 }
@@ -327,10 +319,6 @@ INT_PTR DialogAbout::OnNotify(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-/*
-** Constructor.
-**
-*/
 DialogAbout::TabLog::TabLog() : Tab(),
 	m_Error(true),
 	m_Warning(true),
@@ -650,10 +638,6 @@ INT_PTR DialogAbout::TabLog::OnNotify(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-/*
-** Constructor.
-**
-*/
 DialogAbout::TabSkins::TabSkins() : Tab(),
 	m_SkinWindow()
 {
@@ -1202,10 +1186,6 @@ void DialogAbout::TabPlugins::Resize(int w, int h)
 //
 // -----------------------------------------------------------------------------------------------
 
-/*
-** Constructor.
-**
-*/
 DialogAbout::TabVersion::TabVersion() : Tab()
 {
 }

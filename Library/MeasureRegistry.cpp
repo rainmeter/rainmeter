@@ -21,10 +21,6 @@
 #include "Rainmeter.h"
 #include "Error.h"
 
-/*
-** The constructor
-**
-*/
 MeasureRegistry::MeasureRegistry(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_RegKey(),
 	m_HKey(HKEY_CURRENT_USER)
@@ -32,10 +28,6 @@ MeasureRegistry::MeasureRegistry(Skin* skin, const WCHAR* name) : Measure(skin, 
 	m_MaxValue = 0.0;
 }
 
-/*
-** The destructor
-**
-*/
 MeasureRegistry::~MeasureRegistry()
 {
 	if (m_RegKey) RegCloseKey(m_RegKey);

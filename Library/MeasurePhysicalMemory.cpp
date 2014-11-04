@@ -20,10 +20,6 @@
 #include "MeasurePhysicalMemory.h"
 #include "ConfigParser.h"
 
-/*
-** The constructor
-**
-*/
 MeasurePhysicalMemory::MeasurePhysicalMemory(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Total(false)
 {
@@ -33,10 +29,6 @@ MeasurePhysicalMemory::MeasurePhysicalMemory(Skin* skin, const WCHAR* name) : Me
 	m_MaxValue = (double)(__int64)stat.ullTotalPhys;
 }
 
-/*
-** The destructor
-**
-*/
 MeasurePhysicalMemory::~MeasurePhysicalMemory()
 {
 }

@@ -23,10 +23,6 @@
 #include "System.h"
 #include "Error.h"
 
-/*
-** The constructor
-**
-*/
 MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Plugin(),
 	m_ReloadFunc(),
@@ -39,10 +35,6 @@ MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeasurePlugin::~MeasurePlugin()
 {
 	if (m_Plugin)

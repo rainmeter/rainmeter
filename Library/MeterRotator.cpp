@@ -29,10 +29,6 @@ using namespace Gdiplus;
 #define PI	(3.14159265358979323846)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0 / PI))
 
-/*
-** The constructor
-**
-*/
 MeterRotator::MeterRotator(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"ImageName", nullptr, false, skin),
 	m_NeedsReload(false),
@@ -45,10 +41,6 @@ MeterRotator::MeterRotator(Skin* skin, const WCHAR* name) : Meter(skin, name),
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeterRotator::~MeterRotator()
 {
 }

@@ -20,10 +20,6 @@
 #include "MeasureMemory.h"
 #include "ConfigParser.h"
 
-/*
-** The constructor
-**
-*/
 MeasureMemory::MeasureMemory(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Total(false)
 {
@@ -33,10 +29,6 @@ MeasureMemory::MeasureMemory(Skin* skin, const WCHAR* name) : Measure(skin, name
 	m_MaxValue = (double)(__int64)(stat.ullTotalPageFile + stat.ullTotalPhys);
 }
 
-/*
-** The destructor
-**
-*/
 MeasureMemory::~MeasureMemory()
 {
 }

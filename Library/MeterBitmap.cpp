@@ -26,10 +26,6 @@
 
 using namespace Gdiplus;
 
-/*
-** The constructor
-**
-*/
 MeterBitmap::MeterBitmap(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"BitmapImage", nullptr, true, skin),
 	m_NeedsReload(false),
@@ -46,10 +42,6 @@ MeterBitmap::MeterBitmap(Skin* skin, const WCHAR* name) : Meter(skin, name),
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeterBitmap::~MeterBitmap()
 {
 }

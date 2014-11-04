@@ -29,10 +29,6 @@ TintedImageHelper_DefineOptionArray(MeterHistogram::c_PrimaryOptionArray, L"Prim
 TintedImageHelper_DefineOptionArray(MeterHistogram::c_SecondaryOptionArray, L"Secondary");
 TintedImageHelper_DefineOptionArray(MeterHistogram::c_BothOptionArray, L"Both");
 
-/*
-** The constructor
-**
-*/
 MeterHistogram::MeterHistogram(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_PrimaryColor(Color::Green),
 	m_SecondaryColor(Color::Red),
@@ -58,10 +54,6 @@ MeterHistogram::MeterHistogram(Skin* skin, const WCHAR* name) : Meter(skin, name
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeterHistogram::~MeterHistogram()
 {
 	DisposeBuffer();

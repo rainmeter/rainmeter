@@ -27,10 +27,6 @@ using namespace Gdiplus;
 #define PI	(3.14159265358979323846)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0 / PI))
 
-/*
-** The constructor
-**
-*/
 MeterRoundLine::MeterRoundLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Solid(false),
 	m_LineWidth(1.0),
@@ -49,10 +45,6 @@ MeterRoundLine::MeterRoundLine(Skin* skin, const WCHAR* name) : Meter(skin, name
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeterRoundLine::~MeterRoundLine()
 {
 }

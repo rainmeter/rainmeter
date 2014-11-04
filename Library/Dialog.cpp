@@ -22,10 +22,6 @@
 HWND Dialog::c_ActiveDialogWindow = nullptr;
 HWND Dialog::c_ActiveTabWindow = nullptr;
 
-/*
-** Constructor.
-**
-*/
 Dialog::Dialog(HWND wnd) :
 	m_Window(wnd),
 	m_Font(),
@@ -135,10 +131,6 @@ LRESULT CALLBACK Dialog::MenuButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	return result;
 }
 
-/*
-** Constructor.
-**
-*/
 Dialog::Tab::Tab(HINSTANCE instance, HWND owner, WORD tabId, DLGPROC tabProc) :
 	m_Window(CreateDialog(instance, MAKEINTRESOURCE(tabId), owner, tabProc)),
 	m_Initialized(false)

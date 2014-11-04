@@ -32,18 +32,10 @@
 WINDOWPLACEMENT DialogManage::c_WindowPlacement = {0};
 DialogManage* DialogManage::c_Dialog = nullptr;
 
-/*
-** Constructor.
-**
-*/
 DialogManage::DialogManage() : Dialog()
 {
 }
 
-/*
-** Destructor.
-**
-*/
 DialogManage::~DialogManage()
 {
 }
@@ -365,10 +357,6 @@ INT_PTR DialogManage::OnNotify(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-/*
-** Constructor.
-**
-*/
 DialogManage::TabSkins::TabSkins() : Tab(),
 	m_SkinWindow(),
 	m_HandleCommands(false),
@@ -1523,10 +1511,6 @@ INT_PTR DialogManage::TabSkins::OnNotify(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-/*
-** Constructor.
-**
-*/
 DialogManage::TabLayouts::TabLayouts() : Tab()
 {
 }
@@ -1831,10 +1815,6 @@ INT_PTR DialogManage::TabLayouts::OnCommand(WPARAM wParam, LPARAM lParam)
 //
 // -----------------------------------------------------------------------------------------------
 
-/*
-** Constructor.
-**
-*/
 DialogManage::TabSettings::TabSettings() : Tab()
 {
 }

@@ -19,18 +19,10 @@
 #include "StdAfx.h"
 #include "MeasureNetTotal.h"
 
-/*
-** The constructor
-**
-*/
 MeasureNetTotal::MeasureNetTotal(Skin* skin, const WCHAR* name) : MeasureNet(skin, name, NET_TOTAL)
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeasureNetTotal::~MeasureNetTotal()
 {
 }

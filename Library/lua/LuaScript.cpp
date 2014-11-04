@@ -21,20 +21,12 @@
 #include "LuaScript.h"
 #include "LuaManager.h"
 
-/*
-** The constructor
-**
-*/
 LuaScript::LuaScript() :
 	m_Ref(LUA_NOREF),
 	m_Unicode(false)
 {
 }
 
-/*
-** The destructor
-**
-*/
 LuaScript::~LuaScript()
 {
 	Uninitialize();

@@ -21,10 +21,6 @@
 #include "ConfigParser.h"
 #include "Rainmeter.h"
 
-/*
-** The constructor
-**
-*/
 Section::Section(Skin* skin, const WCHAR* name) : m_Skin(skin), m_Name(name),
 	m_DynamicVariables(false),
 	m_UpdateDivider(1),
@@ -32,10 +28,6 @@ Section::Section(Skin* skin, const WCHAR* name) : m_Skin(skin), m_Name(name),
 {
 }
 
-/*
-** The destructor
-**
-*/
 Section::~Section()
 {
 }

@@ -29,10 +29,6 @@ std::vector<ULONG64> MeasureNet::c_OldStatValues;
 decltype(GetIfTable2)* MeasureNet::c_GetIfTable2 = nullptr;
 decltype(FreeMibTable)* MeasureNet::c_FreeMibTable = nullptr;
 
-/*
-** The constructor. This is the base class for the net-meters.
-**
-*/
 MeasureNet::MeasureNet(Skin* skin, const WCHAR* name, NET type) : Measure(skin, name),
 	m_Net(type),
 	m_Interface(),
@@ -42,10 +38,6 @@ MeasureNet::MeasureNet(Skin* skin, const WCHAR* name, NET type) : Measure(skin, 
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeasureNet::~MeasureNet()
 {
 }

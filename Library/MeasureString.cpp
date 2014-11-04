@@ -20,19 +20,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "MeasureString.h"
 #include "Rainmeter.h"
 
-/*
-** The constructor
-**
-*/
 MeasureString::MeasureString(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_String()
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeasureString::~MeasureString()
 {
 }

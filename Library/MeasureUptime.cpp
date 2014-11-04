@@ -21,19 +21,11 @@
 #include "Rainmeter.h"
 #include "System.h"
 
-/*
-** The constructor
-**
-*/
 MeasureUptime::MeasureUptime(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_AddDaysToHours(false)
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeasureUptime::~MeasureUptime()
 {
 }

@@ -35,10 +35,6 @@ enum DRIVETYPE
 	DRIVETYPE_MAX         = DRIVETYPE_RAM
 };
 
-/*
-** The constructor
-**
-*/
 MeasureDiskSpace::MeasureDiskSpace(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Type(false),
 	m_Total(false),
@@ -49,10 +45,6 @@ MeasureDiskSpace::MeasureDiskSpace(Skin* skin, const WCHAR* name) : Measure(skin
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeasureDiskSpace::~MeasureDiskSpace()
 {
 }

@@ -26,10 +26,6 @@
 
 using namespace Gdiplus;
 
-/*
-** The constructor
-**
-*/
 MeterBar::MeterBar(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"BarImage", nullptr, false, skin),
 	m_NeedsReload(false),
@@ -41,10 +37,6 @@ MeterBar::MeterBar(Skin* skin, const WCHAR* name) : Meter(skin, name),
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeterBar::~MeterBar()
 {
 }

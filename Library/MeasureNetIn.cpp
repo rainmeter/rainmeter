@@ -19,18 +19,10 @@
 #include "StdAfx.h"
 #include "MeasureNetIn.h"
 
-/*
-** The constructor
-**
-*/
 MeasureNetIn::MeasureNetIn(Skin* skin, const WCHAR* name) : MeasureNet(skin, name, NET_IN)
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeasureNetIn::~MeasureNetIn()
 {
 }

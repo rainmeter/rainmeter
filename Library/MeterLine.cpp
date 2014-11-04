@@ -24,10 +24,6 @@
 
 using namespace Gdiplus;
 
-/*
-** The constructor
-**
-*/
 MeterLine::MeterLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Autoscale(false),
 	m_HorizontalLines(false),
@@ -40,10 +36,6 @@ MeterLine::MeterLine(Skin* skin, const WCHAR* name) : Meter(skin, name),
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeterLine::~MeterLine()
 {
 }

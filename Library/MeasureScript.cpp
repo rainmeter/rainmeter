@@ -24,10 +24,6 @@ const char* g_InitializeFunctionName = "Initialize";
 const char* g_UpdateFunctionName = "Update";
 const char* g_GetStringFunctionName = "GetStringValue";
 
-/*
-** The constructor
-**
-*/
 MeasureScript::MeasureScript(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_HasUpdateFunction(false),
 	m_HasGetStringFunction(false),
@@ -36,10 +32,6 @@ MeasureScript::MeasureScript(Skin* skin, const WCHAR* name) : Measure(skin, name
 	LuaManager::Initialize();
 }
 
-/*
-** The destructor
-**
-*/
 MeasureScript::~MeasureScript()
 {
 	UninitializeLuaScript();

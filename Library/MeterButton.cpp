@@ -32,10 +32,6 @@ enum BUTTON_STATE
 	BUTTON_STATE_HOVER
 };
 
-/*
-** The constructor
-**
-*/
 MeterButton::MeterButton(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"ButtonImage", nullptr, true, skin),
 	m_NeedsReload(false),
@@ -46,10 +42,6 @@ MeterButton::MeterButton(Skin* skin, const WCHAR* name) : Meter(skin, name),
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeterButton::~MeterButton()
 {
 	for (int i = 0; i < BUTTON_FRAMES; ++i)

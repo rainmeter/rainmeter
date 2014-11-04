@@ -60,10 +60,6 @@ ULONG MeasureCPU::c_BufferSize = 0;
 //                                       // written to the buffer
 // );
 
-/*
-** The constructor
-**
-*/
 MeasureCPU::MeasureCPU(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Processor(),
 	m_OldTime()
@@ -71,10 +67,6 @@ MeasureCPU::MeasureCPU(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_MaxValue = 100.0;
 }
 
-/*
-** The destructor
-**
-*/
 MeasureCPU::~MeasureCPU()
 {
 }

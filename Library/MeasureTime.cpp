@@ -35,10 +35,6 @@ int GetYearDay(int year, int month, int day)
 	return yearDay - 1;
 }
 
-/*
-** The constructor
-**
-*/
 MeasureTime::MeasureTime(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Delta(),
 	m_Time(),
@@ -48,10 +44,6 @@ MeasureTime::MeasureTime(Skin* skin, const WCHAR* name) : Measure(skin, name),
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeasureTime::~MeasureTime()
 {
 }

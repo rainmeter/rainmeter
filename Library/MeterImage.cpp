@@ -29,10 +29,6 @@ using namespace Gdiplus;
 
 TintedImageHelper_DefineOptionArray(MeterImage::c_MaskOptionArray, L"Mask");
 
-/*
-** The constructor
-**
-*/
 MeterImage::MeterImage(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Image(L"ImageName", nullptr, false, skin),
 	m_MaskImage(L"MaskImageName", c_MaskOptionArray, false, skin),
@@ -42,10 +38,6 @@ MeterImage::MeterImage(Skin* skin, const WCHAR* name) : Meter(skin, name),
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeterImage::~MeterImage()
 {
 }

@@ -19,18 +19,10 @@
 #include "StdAfx.h"
 #include "MeasureNetOut.h"
 
-/*
-** The constructor
-**
-*/
 MeasureNetOut::MeasureNetOut(Skin* skin, const WCHAR* name) : MeasureNet(skin, name, NET_OUT)
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeasureNetOut::~MeasureNetOut()
 {
 }

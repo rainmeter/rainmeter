@@ -57,10 +57,6 @@ void StringToProper(std::wstring& str)
 	}
 }
 
-/*
-** The constructor
-**
-*/
 MeterString::MeterString(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Color(Color::White),
 	m_EffectColor(Color::Black),
@@ -82,10 +78,6 @@ MeterString::MeterString(Skin* skin, const WCHAR* name) : Meter(skin, name),
 {
 }
 
-/*
-** The destructor
-**
-*/
 MeterString::~MeterString()
 {
 	delete m_TextFormat;

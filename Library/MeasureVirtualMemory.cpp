@@ -20,10 +20,6 @@
 #include "MeasureVirtualMemory.h"
 #include "ConfigParser.h"
 
-/*
-** The constructor
-**
-*/
 MeasureVirtualMemory::MeasureVirtualMemory(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Total(false)
 {
@@ -33,10 +29,6 @@ MeasureVirtualMemory::MeasureVirtualMemory(Skin* skin, const WCHAR* name) : Meas
 	m_MaxValue = (double)(__int64)stat.ullTotalPageFile;
 }
 
-/*
-** The destructor
-**
-*/
 MeasureVirtualMemory::~MeasureVirtualMemory()
 {
 }
