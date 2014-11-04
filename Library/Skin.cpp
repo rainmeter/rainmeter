@@ -4264,11 +4264,11 @@ LRESULT Skin::OnXButtonDown(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
-	if (GET_XBUTTON_WPARAM (wParam) == XBUTTON1)
+	if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
 	{
 		DoAction(pos.x, pos.y, MOUSE_X1MB_DOWN, false);
 	}
-	else if (GET_XBUTTON_WPARAM (wParam) == XBUTTON2)
+	else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON2)
 	{
 		DoAction(pos.x, pos.y, MOUSE_X2MB_DOWN, false);
 	}
@@ -4295,11 +4295,11 @@ LRESULT Skin::OnXButtonUp(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
-	if (GET_XBUTTON_WPARAM (wParam) == XBUTTON1)
+	if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1)
 	{
 		DoAction(pos.x, pos.y, MOUSE_X1MB_UP, false);
 	}
-	else if (GET_XBUTTON_WPARAM (wParam) == XBUTTON2)
+	else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON2)
 	{
 		DoAction(pos.x, pos.y, MOUSE_X2MB_UP, false);
 	}
@@ -4326,12 +4326,12 @@ LRESULT Skin::OnXButtonDoubleClick(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Handle buttons
 	HandleButtons(pos, BUTTONPROC_MOVE);
 
-	if (GET_XBUTTON_WPARAM (wParam) == XBUTTON1 &&
+	if (GET_XBUTTON_WPARAM(wParam) == XBUTTON1 &&
 		!DoAction(pos.x, pos.y, MOUSE_X1MB_DBLCLK, false))
 	{
 		DoAction(pos.x, pos.y, MOUSE_X1MB_DOWN, false);
 	}
-	else if (GET_XBUTTON_WPARAM (wParam) == XBUTTON2 &&
+	else if (GET_XBUTTON_WPARAM(wParam) == XBUTTON2 &&
 		!DoAction(pos.x, pos.y, MOUSE_X2MB_DBLCLK, false))
 	{
 		DoAction(pos.x, pos.y, MOUSE_X2MB_DOWN, false);
