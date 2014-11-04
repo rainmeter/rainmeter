@@ -31,6 +31,7 @@
 #include "MeasureCalc.h"
 #include "MeasureNet.h"
 #include "MeasurePlugin.h"
+#include "MeasureTime.h"
 #include "MeterButton.h"
 #include "MeterString.h"
 #include "TintedImage.h"
@@ -4652,6 +4653,19 @@ LRESULT Skin::OnMove(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+LRESULT Skin::OnTimeChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	for (auto* measure : m_Measures)
+	{
+		if (measure->GetTypeID() == TypeID<MeasureTime>())
+		{
+			((MeasureTime*)measure)->UpdateDelta();
+		}
+	}
+
+	return 0;
+}
+
 /*
 ** Performs an action when returning from sleep
 **
@@ -4726,6 +4740,7 @@ LRESULT CALLBACK Skin::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	MESSAGE(OnDisplayChange, WM_DISPLAYCHANGE)
 	MESSAGE(OnSetWindowFocus, WM_SETFOCUS)
 	MESSAGE(OnSetWindowFocus, WM_KILLFOCUS)
+	MESSAGE(OnTimeChange, WM_TIMECHANGE)
 	MESSAGE(OnWake, WM_POWERBROADCAST)
 	END_MESSAGEPROC
 }
