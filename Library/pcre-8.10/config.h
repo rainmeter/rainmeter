@@ -239,6 +239,7 @@ them both to 0; an emulation function will be used. */
    that support it, "configure" can be used to set this in the Makefile (use
    --disable-stack-for-recursion). */
 /* #undef NO_RECURSE */
+#define NO_RECURSE
 
 /* Name of package */
 #define PACKAGE "pcre"
