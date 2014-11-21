@@ -33,6 +33,10 @@ if "%1" == "BUILDLANGUAGES" goto BUILDLANGUAGES
 
 if exist "%MAKENSIS%" goto NSISFOUND
 set MAKENSIS=%MAKENSIS:Program Files\=Program Files (x86)\%
+if exist "%MAKENSIS%" goto NSISFOUND
+set MAKENSIS=%PROGRAMFILES%\NSIS\Unicode\MakeNSIS.exe
+if exist "%MAKENSIS%" goto NSISFOUND
+set MAKENSIS=%MAKENSIS:Program Files\=Program Files (x86)\%
 if not exist "%MAKENSIS%" echo ERROR: MakeNSIS.exe not found & goto END
 :NSISFOUND
 
