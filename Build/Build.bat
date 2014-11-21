@@ -32,7 +32,11 @@ set SIGNTOOL="signtool.exe" sign /t http://time.certum.pl /f "%CERTFILE%" /p "%C
 if "%1" == "BUILDLANGUAGES" goto BUILDLANGUAGES
 
 if exist "%MAKENSIS%" goto NSISFOUND
+set MAKENSIS=%MAKENSIS:NSIS\=NSIS\Unicode\%
+if exist "%MAKENSIS%" goto NSISFOUND
 set MAKENSIS=%MAKENSIS:Program Files\=Program Files (x86)\%
+if exist "%MAKENSIS%" goto NSISFOUND
+set MAKENSIS=%MAKENSIS:NSIS\=NSIS\Unicode\%
 if not exist "%MAKENSIS%" echo ERROR: MakeNSIS.exe not found & goto END
 :NSISFOUND
 
