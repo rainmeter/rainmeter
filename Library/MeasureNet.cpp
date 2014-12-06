@@ -117,76 +117,72 @@ void MeasureNet::UpdateIFTable()
 	}
 	else
 	{
-		if (true)
+		DWORD ret, size = 0;
+		MIB_IFTABLE* ifTable = (MIB_IFTABLE*)c_Table;
+
+		if ((ret = GetIfTable(ifTable, &size, FALSE)) == ERROR_INSUFFICIENT_BUFFER)
 		{
-			DWORD ret, size = 0;
+			delete [] c_Table;
+			c_Table = new BYTE[size];
 
-			MIB_IFTABLE* ifTable = (MIB_IFTABLE*)c_Table;
+			ifTable = (MIB_IFTABLE*)c_Table;
 
-			if ((ret = GetIfTable(ifTable, &size, FALSE)) == ERROR_INSUFFICIENT_BUFFER)
+			ret = GetIfTable(ifTable, &size, FALSE);
+		}
+
+		if (ret == NO_ERROR)
+		{
+			if (c_NumOfTables != ifTable->dwNumEntries)
 			{
-				delete [] c_Table;
-				c_Table = new BYTE[size];
-
-				ifTable = (MIB_IFTABLE*)c_Table;
-
-				ret = GetIfTable(ifTable, &size, FALSE);
+				c_NumOfTables = ifTable->dwNumEntries;
+				logging = true;
 			}
 
-			if (ret == NO_ERROR)
+			if (GetRainmeter().GetDebug() && logging)
 			{
-				if (c_NumOfTables != ifTable->dwNumEntries)
-				{
-					c_NumOfTables = ifTable->dwNumEntries;
-					logging = true;
-				}
+				LogDebug(L"------------------------------");
+				LogDebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
 
-				if (GetRainmeter().GetDebug() && logging)
+				for (size_t i = 0; i < c_NumOfTables; ++i)
 				{
-					LogDebug(L"------------------------------");
-					LogDebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
-
-					for (size_t i = 0; i < c_NumOfTables; ++i)
+					const WCHAR* type = L"";
+					switch (ifTable->table[i].dwType)
 					{
-						const WCHAR* type = L"";
-						switch (ifTable->table[i].dwType)
-						{
-						case IF_TYPE_ETHERNET_CSMACD:
-							type = L"Ethernet";
-							break;
-						case IF_TYPE_PPP:
-							type = L"PPP";
-							break;
-						case IF_TYPE_SOFTWARE_LOOPBACK:
-							type = L"Loopback";
-							break;
-						case IF_TYPE_IEEE80211:
-							type = L"IEEE802.11";
-							break;
-						case IF_TYPE_TUNNEL:
-							type = L"Tunnel";
-							break;
-						case IF_TYPE_IEEE1394:
-							type = L"IEEE1394";
-							break;
-						default:
-							type = L"Other";
-							break;
-						}
-
-						LogDebugF(L"%i: %.*S", (int)i + 1, ifTable->table[i].dwDescrLen, (char*)ifTable->table[i].bDescr);
-						LogDebugF(L"  Type=%s(%i)", type, ifTable->table[i].dwType);
+					case IF_TYPE_ETHERNET_CSMACD:
+						type = L"Ethernet";
+						break;
+					case IF_TYPE_PPP:
+						type = L"PPP";
+						break;
+					case IF_TYPE_SOFTWARE_LOOPBACK:
+						type = L"Loopback";
+						break;
+					case IF_TYPE_IEEE80211:
+						type = L"IEEE802.11";
+						break;
+					case IF_TYPE_TUNNEL:
+						type = L"Tunnel";
+						break;
+					case IF_TYPE_IEEE1394:
+						type = L"IEEE1394";
+						break;
+					default:
+						type = L"Other";
+						break;
 					}
-					LogDebug(L"------------------------------");
+
+					LogDebugF(L"%i: %.*S", (int)i + 1, ifTable->table[i].dwDescrLen, (char*)ifTable->table[i].bDescr);
+					LogDebugF(L"  Type=%s(%i)", type, ifTable->table[i].dwType);
 				}
+				LogDebug(L"------------------------------");
 			}
-			else
-			{
-				// Something's wrong. Unable to get the table.
-				delete [] c_Table;
-				c_Table = nullptr;
-				c_NumOfTables = 0;
-			}
+		}
+		else
+		{
+			// Something's wrong. Unable to get the table.
+			delete [] c_Table;
+			c_Table = nullptr;
+			c_NumOfTables = 0;
 		}
 	}
 }
