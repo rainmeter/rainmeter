@@ -117,27 +117,7 @@ void MeasureNet::UpdateIFTable()
 	}
 	else
 	{
-		if (c_Table == nullptr)
-		{
-			// Gotta reserve few bytes for the tables
-			DWORD value = 0;
-			if (GetNumberOfInterfaces(&value) == NO_ERROR)
-			{
-				if (c_NumOfTables != value)
-				{
-					c_NumOfTables = value;
-					logging = true;
-				}
-
-				if (c_NumOfTables > 0)
-				{
-					DWORD size = sizeof(MIB_IFTABLE) + sizeof(MIB_IFROW) * c_NumOfTables;
-					c_Table = new BYTE[size];
-				}
-			}
-		}
-
-		if (c_Table)
+		if (true)
 		{
 			DWORD ret, size = 0;
 
