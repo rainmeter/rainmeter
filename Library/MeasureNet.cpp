@@ -400,10 +400,6 @@ ULONG64 MeasureNet::GetNetStatsValue(NET net)
 	return value;
 }
 
-/*
-** Updates the current value.
-**
-*/
 void MeasureNet::UpdateValue()
 {
 	if (c_Table == nullptr) return;
@@ -441,10 +437,6 @@ void MeasureNet::UpdateValue()
 	}
 }
 
-/*
-** Read the options specified in the ini file.
-**
-*/
 void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	Measure::ReadOptions(parser, section);
@@ -502,10 +494,6 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 }
 
-/*
-** Updates the statistics.
-**
-*/
 void MeasureNet::UpdateStats()
 {
 	if (c_Table)
@@ -560,19 +548,11 @@ void MeasureNet::UpdateStats()
 	}
 }
 
-/*
-** Resets the statistics.
-**
-*/
 void MeasureNet::ResetStats()
 {
 	c_StatValues.clear();
 }
 
-/*
-** Reads statistics.
-**
-*/
 void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 {
 	WCHAR buffer[48];
@@ -625,10 +605,6 @@ void MeasureNet::ReadStats(const std::wstring& iniFile, std::wstring& statsDate)
 	}
 }
 
-/*
-** Writes statistics.
-**
-*/
 void MeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
 {
 	WCHAR buffer[48];
@@ -675,10 +651,6 @@ void MeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
 	WritePrivateProfileSection(L"Statistics", data.c_str(), iniFile);
 }
 
-/*
-** Prepares in order to use the new APIs which are available on Vista or newer.
-**
-*/
 void MeasureNet::InitializeStatic()
 {
 	if (IsWindowsVistaOrGreater())
@@ -703,10 +675,6 @@ void MeasureNet::InitializeStatic()
 	}
 }
 
-/*
-** Frees the resources.
-**
-*/
 void MeasureNet::FinalizeStatic()
 {
 	if (c_GetIfTable2)
