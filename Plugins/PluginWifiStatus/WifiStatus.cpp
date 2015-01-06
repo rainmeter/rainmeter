@@ -51,8 +51,72 @@ HANDLE g_hClient = nullptr;
 PWLAN_INTERFACE_INFO g_pInterface = nullptr;
 PWLAN_INTERFACE_INFO_LIST g_pIntfList = nullptr;
 
-// Function that translates DOT11 ENUMs to output strings
-LPCWSTR GetDot11Str(int, int);
+const WCHAR* ToString(DOT11_CIPHER_ALGORITHM value)
+{
+	switch (value)
+	{
+	case DOT11_CIPHER_ALGO_NONE: return L"NONE";
+	case DOT11_CIPHER_ALGO_WEP40: return L"WEP40";
+	case DOT11_CIPHER_ALGO_TKIP: return L"TKIP";
+	case DOT11_CIPHER_ALGO_CCMP: return L"AES";
+	case DOT11_CIPHER_ALGO_WEP104: return L"WEP104";
+	case DOT11_CIPHER_ALGO_WPA_USE_GROUP: return L"WPA-GROUP";
+	case DOT11_CIPHER_ALGO_WEP: return L"WEP";
+	default: return L"???";
+	}
+}
+
+const WCHAR* ToString(DOT11_AUTH_ALGORITHM value)
+{
+	switch (value)
+	{
+	case DOT11_AUTH_ALGO_80211_OPEN: return L"Open";
+	case DOT11_AUTH_ALGO_80211_SHARED_KEY: return L"Shared";
+	case DOT11_AUTH_ALGO_WPA: return L"WPA-Enterprise";
+	case DOT11_AUTH_ALGO_WPA_PSK: return L"WPA-Personal";
+	case DOT11_AUTH_ALGO_WPA_NONE: return L"WPA-NONE";
+	case DOT11_AUTH_ALGO_RSNA: return L"WPA2-Enterprise";
+	case DOT11_AUTH_ALGO_RSNA_PSK: return L"WPA2-Personal";
+	default: return L"???";
+	}
+}
+
+const WCHAR* ToString(WLAN_INTERFACE_STATE value)
+{
+	switch (value)
+	{
+	case wlan_interface_state_connected: return L"";
+	case wlan_interface_state_authenticating: return L"(authorizing...)";
+	default: return L"(connecting...)";
+	}
+}
+
+const WCHAR* ToString(DOT11_PHY_TYPE value)
+{
+	switch (value)
+	{
+	case dot11_phy_type_fhss: return L"FHSS";
+	case dot11_phy_type_dsss: return L"DSSS";
+	case dot11_phy_type_irbaseband: return L"IR-Band";
+	case dot11_phy_type_ofdm: return L"802.11a";
+	case dot11_phy_type_hrdsss: return L"802.11b";
+	case dot11_phy_type_erp: return L"802.11g";
+	// Case below appears as dot11_phy_type_ht on MSDN.
+	case 7: return L"802.11n";
+	default: return L"???";
+	}
+}
+
+const WCHAR* ToErrorString(DWORD value)
+{
+	switch (value)
+	{
+	case ERROR_INVALID_PARAMETER: return L"Invalid parameters";
+	case ERROR_NOT_ENOUGH_MEMORY: return L"Not enough memory";
+	case ERROR_REMOTE_SESSION_LIMIT_EXCEEDED: return L"Too many handles already issued";
+	default: return L"Unknown error code";
+	}
+}
 
 std::wstring ConvertToWide(LPCSTR str, int strLen)
 {
@@ -106,7 +170,7 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 			if (ERROR_SUCCESS != dwErr)
 			{
 				FinalizeHandle();
-				_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: Unable to open WLAN API Handle. Error code (%u): %s", dwErr, GetDot11Str((int)dwErr, 5));
+				_snwprintf_s(buffer, _TRUNCATE, L"WifiStatus.dll: Unable to open WLAN API Handle. Error code (%u): %s", dwErr, ToErrorString(dwErr));
 				RmLog(LOG_ERROR, buffer);
 				return;
 			}
@@ -276,15 +340,15 @@ PLUGIN_EXPORT double Update(void* data)
 							{
 								// ADD PHY type
 								measure->statusString += L" @";
-								measure->statusString += GetDot11Str(pwnl->Network[i].dot11PhyTypes[0], 4);
+								measure->statusString += ToString(pwnl->Network[i].dot11PhyTypes[0]);
 							}
 							if (measure->listStyle == 2 || measure->listStyle == 3)
 							{
 								// ADD cipher and authentication
 								measure->statusString += L" (";
-								measure->statusString += GetDot11Str(pwnl->Network[i].dot11DefaultCipherAlgorithm, 1);
+								measure->statusString += ToString(pwnl->Network[i].dot11DefaultCipherAlgorithm);
 								measure->statusString += L':';
-								measure->statusString += GetDot11Str(pwnl->Network[i].dot11DefaultAuthAlgorithm, 2);
+								measure->statusString += ToString(pwnl->Network[i].dot11DefaultAuthAlgorithm);
 								measure->statusString += L')';
 							}
 						}
@@ -325,19 +389,19 @@ PLUGIN_EXPORT double Update(void* data)
 					// Need to convert ucSSID to wchar from uchar
 					measure->statusString = ConvertToWide((LPCSTR)wlan_cattr->wlanAssociationAttributes.dot11Ssid.ucSSID, (int)wlan_cattr->wlanAssociationAttributes.dot11Ssid.uSSIDLength);
 					// If not connected yet add current status
-					measure->statusString += GetDot11Str(wlan_cattr->isState, 3);
+					measure->statusString += ToString(wlan_cattr->isState);
 					break;
 
 				case PHY:
-					measure->statusString = GetDot11Str(wlan_cattr->wlanAssociationAttributes.dot11PhyType, 4);
+					measure->statusString = ToString(wlan_cattr->wlanAssociationAttributes.dot11PhyType);
 					break;
 
 				case ENCRYPTION:
-					measure->statusString = GetDot11Str(wlan_cattr->wlanSecurityAttributes.dot11CipherAlgorithm, 1);
+					measure->statusString = ToString(wlan_cattr->wlanSecurityAttributes.dot11CipherAlgorithm);
 					break;
 
 				case AUTH:
-					measure->statusString = GetDot11Str(wlan_cattr->wlanSecurityAttributes.dot11AuthAlgorithm, 2);
+					measure->statusString = ToString(wlan_cattr->wlanSecurityAttributes.dot11AuthAlgorithm);
 					break;
 
 				default:  // Invalid type
@@ -386,111 +450,6 @@ PLUGIN_EXPORT void Finalize(void* data)
 		if (g_Instances == 0)
 		{
 			FinalizeHandle();
-		}
-	}
-}
-
-/*
-	switches from winlanapi.h + SDK
-	in: -DOT11 ENUM (converted to int)
-		-type of ENUM (cipher=1, auth=2, status=3, phy=4, otherwise=error strings)
-	out: String to be returned by measure
-*/
-LPCWSTR GetDot11Str(int dot11enum, int type)
-{
-	if (type == 1)
-	{
-		switch (dot11enum)
-		{
-		case DOT11_CIPHER_ALGO_NONE:
-			return L"NONE";
-		case DOT11_CIPHER_ALGO_WEP40:
-			return L"WEP40";
-		case DOT11_CIPHER_ALGO_TKIP:
-			return L"TKIP";
-		case DOT11_CIPHER_ALGO_CCMP:
-			return L"AES";
-		case DOT11_CIPHER_ALGO_WEP104:
-			return L"WEP104";
-		case DOT11_CIPHER_ALGO_WPA_USE_GROUP:
-			return L"WPA-GROUP";
-		case DOT11_CIPHER_ALGO_WEP:
-			return L"WEP";
-		default:
-			return L"???";
-		}
-	}
-	else if (type == 2)
-	{
-		switch (dot11enum)
-		{
-		case DOT11_AUTH_ALGO_80211_OPEN:
-			return L"Open";
-		case DOT11_AUTH_ALGO_80211_SHARED_KEY:
-			return L"Shared";
-			case DOT11_AUTH_ALGO_WPA_NONE:
-			return L"WPA-NONE";
-		case DOT11_AUTH_ALGO_WPA:
-			return L"WPA-Enterprise";
-		case DOT11_AUTH_ALGO_WPA_PSK:
-			return L"WPA-Personal";
-		case DOT11_AUTH_ALGO_RSNA:
-			return L"WPA2-Enterprise";
-		case DOT11_AUTH_ALGO_RSNA_PSK:
-			return L"WPA2-Personal";
-		default:
-			return L"???";
-		}
-	}
-	else if (type == 3)
-	{
-		switch (dot11enum)
-		{
-		case wlan_interface_state_connected:
-			return L"";
-		case wlan_interface_state_authenticating:
-			return L"(authorizing...)";
-		default:
-			return L"(connecting...)";
-		}
-	}
-	else if (type == 4)
-	{
-		switch (dot11enum)
-		{
-		case dot11_phy_type_unknown:
-		default:
-			return L"???";
-		case dot11_phy_type_dsss:
-			return L"DSSS";
-		case dot11_phy_type_erp:
-			return L"802.11g";
-		case dot11_phy_type_fhss:
-			return L"FHSS";
-		case dot11_phy_type_hrdsss:
-			return L"802.11b";
-		case dot11_phy_type_irbaseband:
-			return L"IR-Band";
-		case dot11_phy_type_ofdm:
-			return L"802.11a";
-		//Case below appears as dot11_phy_type_ht on MSDN
-		//However its not supported in winlanapi.h ???
-		case 7:
-			return L"802.11n";
-		}
-	}
-	else
-	{
-		switch (dot11enum)
-		{
-		case ERROR_INVALID_PARAMETER:
-			return L"Invalid parameters";
-		case ERROR_NOT_ENOUGH_MEMORY:
-			return L"Not enough memory";
-		case ERROR_REMOTE_SESSION_LIMIT_EXCEEDED:
-			return L"Too many handles already issued";
-		default:
-			return L"Unknown error code";
 		}
 	}
 }
