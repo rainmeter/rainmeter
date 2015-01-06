@@ -101,8 +101,8 @@ const WCHAR* ToString(DOT11_PHY_TYPE value)
 	case dot11_phy_type_ofdm: return L"802.11a";
 	case dot11_phy_type_hrdsss: return L"802.11b";
 	case dot11_phy_type_erp: return L"802.11g";
-	// Case below appears as dot11_phy_type_ht on MSDN.
-	case 7: return L"802.11n";
+	case dot11_phy_type_ht: return L"802.11n";
+	case dot11_phy_type_vht: return L"802.11ac";
 	default: return L"???";
 	}
 }
