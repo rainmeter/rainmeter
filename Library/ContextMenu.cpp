@@ -44,10 +44,10 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		MENU_ITEM(IDM_SHOW_HELP, ID_STR_HELP),
 		MENU_SEPARATOR(),
 		MENU_SUBMENU(ID_STR_SKINS,
-			MENU_ITEM_GRAYED(0, ID_STR_NOSKINS),
-			MENU_SEPARATOR(),
 			MENU_ITEM(IDM_OPENSKINSFOLDER, ID_STR_OPENFOLDER),
-			MENU_ITEM(IDM_DISABLEDRAG, ID_STR_DISABLEDRAGGING)),
+			MENU_ITEM(IDM_DISABLEDRAG, ID_STR_DISABLEDRAGGING),
+			MENU_SEPARATOR(),
+			MENU_ITEM_GRAYED(0, ID_STR_NOSKINS)),
 		MENU_SUBMENU(ID_STR_THEMES,
 			MENU_ITEM_GRAYED(0, ID_STR_NOTHEMES)),
 		MENU_SEPARATOR(),
@@ -101,7 +101,8 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 	{
 		if (!rainmeter.m_SkinRegistry.IsEmpty())
 		{
-			DeleteMenu(allSkinsMenu, 0, MF_BYPOSITION);  // "No skins available" menuitem
+			// "Open folder" = 0, "Disable dragging" = 1, separator = 2
+			DeleteMenu(allSkinsMenu, 3, MF_BYPOSITION);  // "No skins available" menuitem
 			CreateAllSkinsMenu(allSkinsMenu);
 		}
 
@@ -551,7 +552,7 @@ int ContextMenu::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
 {
 	SkinRegistry& skinRegistry = GetRainmeter().m_SkinRegistry;
 	const int initialLevel = skinRegistry.GetFolder(index).level;
-	int menuIndex = 0;
+	int menuIndex = 3; // "Open folder" = 0, "Disable dragging" = 1, separator = 2
 
 	const size_t max = skinRegistry.GetFolderCount();
 	while (index < max)
