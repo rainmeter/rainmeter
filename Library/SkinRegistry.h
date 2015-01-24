@@ -33,14 +33,31 @@ public:
 	SkinRegistry(const SkinRegistry& other) = delete;
 	SkinRegistry& operator=(SkinRegistry other) = delete;
 
+	struct File
+	{
+		std::wstring filename;
+		bool isFavorite;
+
+		File() {}
+		~File() {}
+		File(std::wstring name) : filename(name), isFavorite(false) {}
+
+		const bool operator==(const File& rhs) const
+		{
+			return (rhs.filename == filename) && (rhs.isFavorite == isFavorite);
+		}
+	};
+
 	struct Folder 
 	{
 		std::wstring name;
-		std::vector<std::wstring> files;
+		std::vector<SkinRegistry::File> files;
 		UINT baseID;
 
 		int16_t active;
 		int16_t level;
+
+		bool hasFavorite;
 
 		Folder() {}
 		~Folder() {}
@@ -50,7 +67,8 @@ public:
 			files(std::move(r.files)),
 			baseID(r.baseID),
 			active(r.active),
-			level(r.level)
+			level(r.level),
+			hasFavorite(r.hasFavorite)
 		{
 		}
 
@@ -61,6 +79,7 @@ public:
 			baseID = r.baseID;
 			active = r.active;
 			level = r.level;
+			hasFavorite = r.hasFavorite;
 			return *this;
 		}
 	};
@@ -89,10 +108,14 @@ public:
 	int GetFolderCount() const { return (int)m_Folders.size(); }
 	bool IsEmpty() const { return m_Folders.empty(); }
 
-	void Populate(const std::wstring& path);
+	void Populate(const std::wstring& path, std::vector<std::wstring>& favorites);
+
+	std::vector<std::wstring> UpdateFavorite(const std::wstring& config, const std::wstring& filename, bool favorite);
 
 private:
-	int PopulateRecursive(const std::wstring& path, std::wstring base, int index, UINT level);
+	int PopulateRecursive(const std::wstring& path, std::vector<std::wstring>& favorites, std::wstring base, int index, UINT level);
+
+	std::vector<std::wstring> ValidateFavorites();
 
 	// Contains a sequential list of Folders. The folders are arranged as follows:
 	//   A         (index: 0, level: 1)

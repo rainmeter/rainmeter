@@ -101,7 +101,7 @@ SkinRegistry::Indexes SkinRegistry::FindIndexes(const std::wstring& folderPath, 
 		const WCHAR* fileSz = file.c_str();
 		for (size_t i = 0, isize = skinFolder.files.size(); i < isize; ++i)
 		{
-			if (_wcsicmp(skinFolder.files[i].c_str(), fileSz) == 0)
+			if (_wcsicmp(skinFolder.files[i].filename.c_str(), fileSz) == 0)
 			{
 				return Indexes(folderIndex, (int)i);
 			}
@@ -133,13 +133,13 @@ SkinRegistry::Indexes SkinRegistry::FindIndexesForID(UINT id)
 /*
 ** Re-scans all the subfolders of |path| for .ini files and populates |m_Folders|.
 */
-void SkinRegistry::Populate(const std::wstring& path)
+void SkinRegistry::Populate(const std::wstring& path, std::vector<std::wstring>& favorites)
 {
 	m_Folders.clear();
-	PopulateRecursive(path, L"", 0, 0);
+	PopulateRecursive(path, favorites, L"", 0, 0);
 }
 
-int SkinRegistry::PopulateRecursive(const std::wstring& path, std::wstring base, int index, UINT level)
+int SkinRegistry::PopulateRecursive(const std::wstring& path, std::vector<std::wstring>& favorites, std::wstring base, int index, UINT level)
 {
 	WIN32_FIND_DATA fileData;      // Data structure describes the file found
 	HANDLE hSearch;                // Search handle returned by FindFirstFile
@@ -164,6 +164,7 @@ int SkinRegistry::PopulateRecursive(const std::wstring& path, std::wstring base,
 		folder.baseID = ID_CONFIG_FIRST + index;
 		folder.active = 0;
 		folder.level = level;
+		folder.hasFavorite = false;
 
 		do
 		{
@@ -185,8 +186,43 @@ int SkinRegistry::PopulateRecursive(const std::wstring& path, std::wstring base,
 				size_t filenameLen = filename.size();
 				if (filenameLen >= 4 && _wcsicmp(fileData.cFileName + (filenameLen - 4), L".ini") == 0)
 				{
+					File file(filename);
+					std::wstring temp = base + L'\\';
+					temp += filename;
+
+					for (const auto& favorite : favorites)
+					{
+						if (temp == favorite)
+						{
+							file.isFavorite = true;
+							folder.hasFavorite = true;	// current folder
+
+							// Tell parent folder(s) it has a favorite
+							temp = base;
+							std::wstring::size_type pos = 0;
+							std::wstring prevConfig;
+							Folder* prevFolder = nullptr;
+
+							for (int i = level; i > 1; --i)
+							{
+								pos = temp.rfind(L'\\');
+								prevConfig.assign(temp, 0, pos);
+								prevFolder = FindFolder(prevConfig);
+
+								if (prevFolder)
+								{
+									prevFolder->hasFavorite = true;
+								}
+
+								temp = prevConfig;
+							}
+
+							break;
+						}
+					}
+
+					folder.files.push_back(file);
 					foundFiles = true;
-					folder.files.push_back(filename);
 					++index;
 				}
 			}
@@ -223,7 +259,7 @@ int SkinRegistry::PopulateRecursive(const std::wstring& path, std::wstring base,
 		std::list<std::wstring>::const_iterator iter = subfolders.begin();
 		for ( ; iter != subfolders.end(); ++iter)
 		{
-			int newIndex = PopulateRecursive(path, base + (*iter), index, level + 1);
+			int newIndex = PopulateRecursive(path, favorites, base + (*iter), index, level + 1);
 			if (newIndex != index)
 			{
 				popFolder = false;
@@ -239,4 +275,66 @@ int SkinRegistry::PopulateRecursive(const std::wstring& path, std::wstring base,
 	}
 
 	return index;
+}
+
+std::vector<std::wstring> SkinRegistry::UpdateFavorite(const std::wstring& config, const std::wstring& filename, bool favorite)
+{
+	Folder* folder = FindFolder(config);
+	for (auto& file : folder->files)
+	{
+		if (file.filename == filename)
+		{
+			file.isFavorite = favorite;
+			break;
+		}
+	}
+
+	return ValidateFavorites();
+}
+
+std::vector<std::wstring> SkinRegistry::ValidateFavorites()
+{
+	// Files should be marked correctly at this point, Folders are not
+	int16_t count = 0;
+	int16_t foundOnLevel = 0;
+	std::vector<std::wstring> newFavorites;
+	std::wstring favorite;
+	Indexes indexes;
+
+	auto& folder = m_Folders.rbegin();
+	for (; folder != m_Folders.rend(); ++folder)
+	{
+		(*folder).hasFavorite = false;
+
+		auto& file = (*folder).files.rbegin();
+		for (; file != (*folder).files.rend(); ++file)
+		{
+			if ((*file).isFavorite)
+			{
+				++count;
+				foundOnLevel = (*folder).level;
+				(*folder).hasFavorite = true;	// to mark current folder
+
+				indexes = FindIndexesForID((*folder).baseID);
+				favorite = GetFolderPath(indexes.folder);
+				favorite += L'\\';
+				favorite += (*file).filename;
+				newFavorites.emplace(newFavorites.begin(), favorite);
+			}
+		}
+
+		if (foundOnLevel > (*folder).level && count > 0)
+		{
+			(*folder).hasFavorite = true;
+			--foundOnLevel;
+		}
+
+		if ((*folder).level == 1)
+		{
+			count = 0;
+			foundOnLevel = 0;
+		}
+	}
+
+	return newFavorites;
 }

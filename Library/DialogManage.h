@@ -76,6 +76,7 @@ private:
 			Id_KeepOnScreenCheckBox,
 			Id_SavePositionCheckBox,
 			Id_SnapToEdgesCheckBox,
+			Id_FavoriteCheckBox,
 
 			Id_LoadButton    = IDM_MANAGESKINSMENU_LOAD,
 			Id_RefreshButton = IDM_MANAGESKINSMENU_REFRESH,

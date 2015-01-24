@@ -138,7 +138,8 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_UpdateCounter(),
 	m_MouseMoveCounter(),
 	m_FontCollection(),
-	m_ToolTipHidden(false)
+	m_ToolTipHidden(false),
+	m_Favorite(false)
 {
 	if (!c_DwmInstance && IsWindowsVistaOrGreater() &&
 		(c_DwmInstance = System::RmLoadLibrary(L"dwmapi.dll")) != nullptr)
@@ -165,6 +166,9 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	}
 
 	++c_InstanceCount;
+
+	// Favorites stored in skin registry.
+	m_Favorite = GetRainmeter().IsSkinAFavorite(folderPath, file);
 }
 
 Skin::~Skin()
@@ -3348,6 +3352,10 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetUseD2D(!m_UseD2D);
 		break;
 
+	case IDM_SKIN_FAVORITE:
+		SetFavorite(!m_Favorite);
+		break;
+
 	case IDM_SKIN_CLICKTHROUGH:
 		SetClickThrough(!m_ClickThrough);
 		break;
@@ -3533,6 +3541,15 @@ void Skin::SetUseD2D(bool b)
 	m_UseD2D = b;
 	WriteOptions(OPTION_USED2D);
 	Refresh(false);
+}
+
+void Skin::SetFavorite(bool b)
+{
+	m_Favorite = b;
+
+	DialogManage::UpdateSkins(this);
+
+	GetRainmeter().UpdateFavorites(m_FolderPath, m_FileName, b);
 }
 
 void Skin::SetWindowDraggable(bool b)

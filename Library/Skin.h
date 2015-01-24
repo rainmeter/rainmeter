@@ -199,6 +199,8 @@ public:
 
 	bool GetMeterToolTipHidden() { return m_ToolTipHidden; }
 
+	bool GetFavorite() { return m_Favorite; }
+
 	bool IsClosing() { return m_State == STATE_CLOSING; }
 
 	const Mouse& GetMouse() { return m_Mouse; }
@@ -320,6 +322,7 @@ private:
 	void BlurBehindWindow(BOOL fEnable);
 	void SetWindowPositionVariables(int x, int y);
 	void SetWindowSizeVariables(int w, int h);
+	void SetFavorite(bool favorite);
 
 	void ShowBlur();
 	void HideBlur();
@@ -427,6 +430,8 @@ private:
 	Gfx::FontCollection* m_FontCollection;
 
 	bool m_ToolTipHidden;
+
+	bool m_Favorite;
 
 	static int c_InstanceCount;
 

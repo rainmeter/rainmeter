@@ -182,6 +182,9 @@ public:
 	bool LoadLayout(const std::wstring& name);
 	void PreserveSetting(const std::wstring& from, LPCTSTR key, bool replace = true);
 
+	bool IsSkinAFavorite(const std::wstring& folder, const std::wstring& filename);
+	void UpdateFavorites(const std::wstring& folder, const std::wstring& file, bool favorite);
+
 	friend class CommandHandler;
 	friend class ContextMenu;
 	friend class DialogManage;
@@ -202,6 +205,7 @@ private:
 	void WriteActive(const std::wstring& folderPath, int fileIndex);
 	void ScanForSkins();
 	void ScanForLayouts();
+	void ReadFavorites();
 	void ReadGeneralSettings(const std::wstring& iniFile);
 	void SetLoadOrder(int folderIndex, int order);
 	int GetLoadOrder(const std::wstring& folderPath);
@@ -218,6 +222,7 @@ private:
 	std::map<std::wstring, Skin*> m_Skins;
 	std::list<Skin*> m_UnmanagedSkins;
 	std::vector<std::wstring> m_Layouts;
+	std::vector<std::wstring> m_Favorites;
 
 	std::wstring m_Path;
 	std::wstring m_IniFile;

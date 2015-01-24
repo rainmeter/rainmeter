@@ -25,18 +25,20 @@ TEST_CLASS(Library_SkinRegistry_Test)
 public:
 	Library_SkinRegistry_Test()
 	{
-		m_SkinRegistry.Populate(L"..\\..\\..\\Library\\Test\\SkinRegistry\\");
+		std::vector<std::wstring> favorites;
+		m_SkinRegistry.Populate(L"..\\..\\..\\Library\\Test\\SkinRegistry\\", favorites);
 	}
 
 	TEST_METHOD(TestContents)
 	{
-		std::vector<std::wstring> files1;
-		files1.push_back(L"1.ini");
+		std::vector<SkinRegistry::File> files1;
+		files1.emplace_back(L"1.ini");
+		files1.emplace_back(L"1.ini");
 
-		std::vector<std::wstring> files3;
-		files3.push_back(L"1.ini");
-		files3.push_back(L"2.ini");
-		files3.push_back(L"3.ini");
+		std::vector<SkinRegistry::File> files3;
+		files3.emplace_back(L"1.ini");
+		files3.emplace_back(L"2.ini");
+		files3.emplace_back(L"3.ini");
 
 		Assert::AreEqual(5, m_SkinRegistry.GetFolderCount());
 

@@ -47,10 +47,12 @@ private:
 		Skin* skin, int index, HMENU menu, bool standaloneMenu);
 	static void ChangeSkinIndex(HMENU subMenu, int index);
 	
-	static void CreateAllSkinsMenu(HMENU skinMenu) { CreateAllSkinsMenuRecursive(skinMenu, 0); }
-	static int CreateAllSkinsMenuRecursive(HMENU skinMenu, int index);
+	static void CreateAllSkinsMenu(HMENU skinMenu) { CreateSkinsMenuRecursive(skinMenu, 0, false); }
+	static int CreateSkinsMenuRecursive(HMENU skinMenu, int index, bool isFavoriteMenu);
 
 	static void CreateLayoutMenu(HMENU layoutMenu);
+
+	static void CreateFavoritesMenu(HMENU favoriteMenu) { CreateSkinsMenuRecursive(favoriteMenu, 0, true); }
 
 	bool m_MenuActive;
 };

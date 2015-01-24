@@ -48,6 +48,8 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 			MENU_ITEM(IDM_DISABLEDRAG, ID_STR_DISABLEDRAGGING),
 			MENU_SEPARATOR(),
 			MENU_ITEM_GRAYED(0, ID_STR_NOSKINS)),
+		MENU_SUBMENU(ID_STR_FAVORITES,
+			MENU_ITEM_GRAYED(0, ID_STR_NOFAVORITES)),
 		MENU_SUBMENU(ID_STR_THEMES,
 			MENU_ITEM_GRAYED(0, ID_STR_NOTHEMES)),
 		MENU_SEPARATOR(),
@@ -112,7 +114,17 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		}
 	}
 
-	HMENU layoutMenu = GetSubMenu(menu, 5);
+	HMENU favoritesMenu = GetSubMenu(menu, 5);
+	if (favoritesMenu)
+	{
+		if (!rainmeter.m_Favorites.empty())
+		{
+			DeleteMenu(favoritesMenu, 0, MF_BYPOSITION);  // "No skins available" menuitem
+			CreateFavoritesMenu(favoritesMenu);
+		}
+	}
+
+	HMENU layoutMenu = GetSubMenu(menu, 6);
 	if (layoutMenu)
 	{
 		if (!rainmeter.m_Layouts.empty())
@@ -132,7 +144,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 	}
 	else
 	{
-		InsertMenu(menu, 12, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
+		InsertMenu(menu, 13, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 
 		// Create a menu for all active skins
 		int index = 0;
@@ -141,7 +153,7 @@ void ContextMenu::ShowMenu(POINT pos, Skin* skin)
 		{
 			Skin* skin = ((*iter).second);
 			HMENU skinMenu = CreateSkinMenu(skin, index, allSkinsMenu);
-			InsertMenu(menu, 12, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, skin->GetFolderPath().c_str());
+			InsertMenu(menu, 13, MF_BYPOSITION | MF_POPUP, (UINT_PTR)skinMenu, skin->GetFolderPath().c_str());
 			++index;
 		}
 
@@ -259,7 +271,8 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 			MENU_ITEM(IDM_SKIN_SNAPTOEDGES, ID_STR_SNAPTOEDGES),
 			MENU_ITEM(IDM_SKIN_CLICKTHROUGH, ID_STR_CLICKTHROUGH),
 			MENU_ITEM(IDM_SKIN_KEEPONSCREEN, ID_STR_KEEPONSCREEN),
-			MENU_ITEM(IDM_SKIN_USED2D, ID_STR_USED2D)),
+			MENU_ITEM(IDM_SKIN_USED2D, ID_STR_USED2D),
+			MENU_ITEM(IDM_SKIN_FAVORITE, ID_STR_FAVORITE)),
 		MENU_SEPARATOR(),
 		MENU_ITEM(IDM_SKIN_MANAGESKIN, ID_STR_MANAGESKIN),
 		MENU_ITEM(IDM_SKIN_EDITSKIN, ID_STR_EDITSKIN),
@@ -379,6 +392,11 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 			DeleteMenu(settingsMenu, IDM_SKIN_USED2D, MF_BYCOMMAND);
 		}
 		Gfx::CanvasD2D::Finalize();
+
+		if (skin->GetFavorite())
+		{
+			CheckMenuItem(settingsMenu, IDM_SKIN_FAVORITE, MF_BYCOMMAND | MF_CHECKED);
+		}
 	}
 
 	// Add the name of the Skin to the menu
@@ -402,7 +420,7 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 		const SkinRegistry::Folder& skinFolder = *GetRainmeter().m_SkinRegistry.FindFolder(skinName);
 		for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
 		{
-			InsertMenu(variantsMenu, i, MF_BYPOSITION, skinFolder.baseID + i, skinFolder.files[i].c_str());
+			InsertMenu(variantsMenu, i, MF_BYPOSITION, skinFolder.baseID + i, skinFolder.files[i].filename.c_str());
 		}
 
 		if (skinFolder.active)
@@ -548,55 +566,83 @@ void ContextMenu::AppendSkinCustomMenu(
 	}
 }
 
-int ContextMenu::CreateAllSkinsMenuRecursive(HMENU skinMenu, int index)
+int ContextMenu::CreateSkinsMenuRecursive(HMENU skinMenu, int index, bool isFavoriteMenu)
 {
 	SkinRegistry& skinRegistry = GetRainmeter().m_SkinRegistry;
 	const int initialLevel = skinRegistry.GetFolder(index).level;
-	int menuIndex = 3; // "Open folder" = 0, "Disable dragging" = 1, separator = 2
+
+	// For "Skins" menu, index starts at 3 ("Open folder" = 0, "Disable dragging" = 1, separator = 2)
+	// For "Favorites" menu, index starts at 0
+	int menuIndex = isFavoriteMenu ? 0 : 3;
 
 	const size_t max = skinRegistry.GetFolderCount();
 	while (index < max)
 	{
 		const SkinRegistry::Folder& skinFolder = skinRegistry.GetFolder(index);
-		if (skinFolder.level != initialLevel)
+
+		if (!isFavoriteMenu || (isFavoriteMenu && skinFolder.hasFavorite))
 		{
-			return index - 1;
-		}
-
-		HMENU subMenu = CreatePopupMenu();
-
-		// Add current folder
-		InsertMenu(skinMenu, menuIndex, MF_POPUP | MF_BYPOSITION, (UINT_PTR)subMenu, skinFolder.name.c_str());
-
-		// Add subfolders
-		const bool hasSubfolder = (index + 1) < max && skinRegistry.GetFolder(index + 1).level == initialLevel + 1;
-		if (hasSubfolder)
-		{
-			index = CreateAllSkinsMenuRecursive(subMenu, index + 1);
-		}
-
-		// Add files
-		{
-			int fileIndex = 0;
-			const int fileCount = (int)skinFolder.files.size();
-			for ( ; fileIndex < fileCount; ++fileIndex)
+			if (skinFolder.level != initialLevel)
 			{
-				InsertMenu(subMenu, fileIndex, MF_STRING | MF_BYPOSITION, skinFolder.baseID + fileIndex, skinFolder.files[fileIndex].c_str());
+				return index - 1;
 			}
 
-			if (skinFolder.active)
+			HMENU subMenu = isFavoriteMenu ? skinMenu : CreatePopupMenu();
+
+			// Add current folder
+			if (!isFavoriteMenu)
 			{
-				UINT checkPos = skinFolder.active - 1;
-				CheckMenuRadioItem(subMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
+				InsertMenu(skinMenu, menuIndex, MF_POPUP | MF_BYPOSITION, (UINT_PTR)subMenu, skinFolder.name.c_str());
 			}
 
-			if (hasSubfolder && fileIndex != 0)
+			// Add subfolders
+			const bool hasSubfolder = (index + 1) < max && skinRegistry.GetFolder(index + 1).level == initialLevel + 1;
+			if (hasSubfolder)
 			{
-				InsertMenu(subMenu, fileIndex, MF_SEPARATOR | MF_BYPOSITION, 0, nullptr);
+				index = CreateSkinsMenuRecursive(subMenu, index + 1, isFavoriteMenu);
 			}
+
+			// Add files
+			{
+				std::wstring filename;
+				SkinRegistry::Indexes indexes;
+				bool hasFavorite = false;
+				int fileIndex = 0;
+				const int fileCount = (int)skinFolder.files.size();
+
+				for (; fileIndex < fileCount; ++fileIndex)
+				{
+					if (!isFavoriteMenu || (isFavoriteMenu && skinFolder.files[fileIndex].isFavorite))
+					{
+						filename = skinFolder.files[fileIndex].filename;
+
+						if (isFavoriteMenu)
+						{
+							indexes = skinRegistry.FindIndexesForID(skinFolder.baseID);
+							filename.insert(0, L"\\");
+							filename.insert(0, skinRegistry.GetFolderPath(indexes.folder));
+						}
+
+						InsertMenu(subMenu, fileIndex, MF_STRING | MF_BYPOSITION, skinFolder.baseID + fileIndex, filename.c_str());
+						hasFavorite = true;
+					}
+				}
+
+				if (skinFolder.active)
+				{
+					UINT checkId = skinFolder.baseID + skinFolder.active - 1;
+					CheckMenuRadioItem(subMenu, checkId, checkId, checkId, MF_BYCOMMAND);
+				}
+
+				if (!isFavoriteMenu && hasSubfolder && fileIndex != 0)
+				{
+					InsertMenu(subMenu, fileIndex, MF_SEPARATOR | MF_BYPOSITION, 0, nullptr);
+				}
+			}
+
+			++menuIndex;
 		}
 
-		++menuIndex;
 		++index;
 	}
 

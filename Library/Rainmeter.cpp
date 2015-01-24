@@ -759,6 +759,7 @@ void Rainmeter::CreateComponentFolders(bool defaultIniLocation)
 
 void Rainmeter::ReloadSettings()
 {
+	ReadFavorites();
 	ScanForSkins();
 	ScanForLayouts();
 	ReadGeneralSettings(m_IniFile);
@@ -845,7 +846,7 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 		fileIndex >= 0 && fileIndex < m_SkinRegistry.GetFolder(folderIndex).files.size())
 	{
 		auto& skinFolder = m_SkinRegistry.GetFolder(folderIndex);
-		const std::wstring& file = skinFolder.files[fileIndex];
+		const std::wstring& file = skinFolder.files[fileIndex].filename;
 		const WCHAR* fileSz = file.c_str();
 
 		std::wstring folderPath = m_SkinRegistry.GetFolderPath(folderIndex);
@@ -1175,7 +1176,7 @@ int Rainmeter::GetLoadOrder(const std::wstring& folderPath)
 */
 void Rainmeter::ScanForSkins()
 {
-	m_SkinRegistry.Populate(m_SkinPath);
+	m_SkinRegistry.Populate(m_SkinPath, m_Favorites);
 	m_SkinOrders.clear();
 }
 
@@ -1217,6 +1218,31 @@ void Rainmeter::ScanForLayouts()
 	}
 
 	DialogManage::UpdateLayouts();
+}
+
+void Rainmeter::ReadFavorites()
+{
+	m_Favorites.clear();
+
+	// Load from [Favorites] section of Rainmeter.data
+
+	if (!m_DataFile.empty())
+	{
+		WCHAR favorite[MAX_LINE_LENGTH];
+		WCHAR buffer[128];
+		int i = 0;
+
+		do
+		{
+			_snwprintf(buffer, _TRUNCATE, L"Favorite%i", ++i);
+			DWORD res = GetPrivateProfileString(L"Favorites", buffer, L"", favorite, MAX_LINE_LENGTH, m_DataFile.c_str());
+
+			if (res > 4)
+			{
+				m_Favorites.emplace_back(favorite);
+			}
+		} while (*favorite);
+	}
 }
 
 void Rainmeter::ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, Skin* skin)
@@ -1395,7 +1421,7 @@ void Rainmeter::RefreshAll()
 				bool found = false;
 				for (int i = 0, isize = (int)skinFolder.files.size(); i < isize; ++i)
 				{
-					if (_wcsicmp(skinIniFile, skinFolder.files[i].c_str()) == 0)
+					if (_wcsicmp(skinIniFile, skinFolder.files[i].filename.c_str()) == 0)
 					{
 						found = true;
 						if (skinFolder.active != i + 1)
@@ -1510,6 +1536,37 @@ void Rainmeter::PreserveSetting(const std::wstring& from, LPCTSTR key, bool repl
 
 	delete [] buffer;
 }
+
+bool Rainmeter::IsSkinAFavorite(const std::wstring& folder, const std::wstring& filename)
+{
+	for (const auto& file : m_SkinRegistry.FindFolder(folder)->files)
+	{
+		if (file.filename == filename)
+		{
+			return file.isFavorite;
+		}
+	}
+
+	return false;
+}
+
+void Rainmeter::UpdateFavorites(const std::wstring& folder, const std::wstring& file, bool favorite)
+{
+	m_Favorites = m_SkinRegistry.UpdateFavorite(folder, file, favorite);
+
+	// Delete entire [Favorites] section
+	WritePrivateProfileSection(L"Favorites", nullptr, m_DataFile.c_str());
+
+	// Write new section
+	WCHAR buffer[128];
+	int i = 0;
+	for (const auto& fav : m_Favorites)
+	{
+		_snwprintf(buffer, _TRUNCATE, L"Favorite%i", ++i);
+		WritePrivateProfileString(L"Favorites", buffer, fav.c_str(), m_DataFile.c_str());
+	}
+}
+
 
 /*
 ** Applies given DesktopWorkArea and DesktopWorkArea@n.
