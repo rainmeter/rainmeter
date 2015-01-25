@@ -107,8 +107,10 @@ static const WCHAR* Min(int paramcnt, double* args, double* result);
 static const WCHAR* Max(int paramcnt, double* args, double* result);
 static const WCHAR* Clamp(int paramcnt, double* args, double* result);
 static const WCHAR* round(int paramcnt, double* args, double* result);
+static const WCHAR* ATan2(int paramcnt, double* args, double* result);
 
 enum {
+	FUNC_ATAN2,			// note: must be before atan so it gets matched first!
 	FUNC_ATAN,
 	FUNC_COS,
 	FUNC_SIN,
@@ -139,6 +141,7 @@ enum {
 
 static Function g_Functions[NUM_FUNCS] =
 {
+	{ L"atan2", (SingleArgFunction)&ATan2, 5 },    // FUNC_ATAN2
 	{ L"atan", &atan, 4 },                         // FUNC_ATAN
 	{ L"cos", &cos, 3 },                           // FUNC_COS
 	{ L"sin", &sin, 3 },                           // FUNC_SIN
@@ -420,6 +423,7 @@ const WCHAR* Parse(
 						parser.numStack[++parser.valTop] = M_PI;
 						break;
 
+					case FUNC_ATAN2:
 					case FUNC_ROUND:
 					case FUNC_MIN:
 					case FUNC_MAX:
@@ -976,6 +980,20 @@ static const WCHAR* round(int paramcnt, double* args, double* result)
 
 	*result = x;
 	return nullptr;
+}
+
+// wrapper for standard math lib atan2
+static const WCHAR* ATan2(int paramcnt, double* args, double* result)
+{
+	if (paramcnt == 2)
+	{
+		const double& y = args[0];
+		const double& x = args[1];
+
+		*result = atan2(y, x);
+		return nullptr;
+	}
+	return eInvPrmCnt;
 }
 
 }  // namespace MathParser
