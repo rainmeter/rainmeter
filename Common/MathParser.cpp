@@ -172,7 +172,7 @@ static const int FUNC_MAX_LEN = 5;
 static const BYTE FUNC_INVALID = UCHAR_MAX;
 
 static const Operation g_BrOp = { Operator::OpeningBracket, 0, 0};
-static const Operation g_NegOp = { Operator::SingleArgFunction, 18, 0 };
+static const Operation g_NegOp = { Operator::SingleArgFunction, FUNC_NEG, 0 };
 
 static const BYTE g_OpPriorities[(uint8_t)Operator::Invalid] =
 {
