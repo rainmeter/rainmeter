@@ -441,7 +441,8 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 			root.erase(pos);
 		}
 
-		for (int i = 0; i < itemCount; ++i)
+		// Skip "Open folder", "Disable dragging" and a separator
+		for (int i = 3; i < itemCount; ++i)
 		{
 			const UINT state = GetMenuState(menu, i, MF_BYPOSITION);
 			if (state == 0xFFFFFFFF || (state & MF_POPUP) == 0) break;
