@@ -293,6 +293,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		child->type = TYPE_FILEPATH;
 	}
+	else if (_wcsicmp(type, L"PATHTOFILE") == 0)
+	{
+		child->type = TYPE_PATHTOFILE;
+	}
 }
 
 PLUGIN_EXPORT double Update(void* data)
@@ -474,6 +478,10 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 
 		case TYPE_FILEPATH:
 			child->strValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ? parent->path : parent->files[trueIndex].path + parent->files[trueIndex].fileName;
+			break;
+
+		case TYPE_PATHTOFILE:
+			child->strValue = (_wcsicmp(parent->files[trueIndex].fileName.c_str(), L"..") == 0) ? parent->path : parent->files[trueIndex].path;
 			break;
 		}
 	}
