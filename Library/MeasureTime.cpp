@@ -35,10 +35,54 @@ int GetYearDay(int year, int month, int day)
 	return yearDay - 1;
 }
 
+// GetTimeZoneChangeDate by: Henrik Haftmann
+// Via: https://msdn.microsoft.com/en-us/library/windows/desktop/ms724421%28v=vs.85%29.aspx#1
+bool GetTimeZoneChangeDate(SYSTEMTIME* st)
+{
+	FILETIME ft;
+	int nWeek = st->wDay - 1;	//wDay is 1-5, convert to 0 based
+	if (!st->wMonth || !st->wYear || nWeek >= 8) return false;
+
+	int day = st->wDayOfWeek;
+	if (nWeek >= 4)
+	{
+		nWeek = 3 - nWeek;
+
+		// calculate last day and day-of-week of given month
+		for (st->wDay = 31; !SystemTimeToFileTime(st, &ft); st->wDay--)
+		{
+			if (st->wDay == 28) return false;
+		}
+
+		FileTimeToSystemTime(&ft, st);
+		int last = st->wDayOfWeek;
+		st->wDayOfWeek = (WORD)day;
+		day -= last;
+
+		if (day <= 0) nWeek++;
+	}
+	else
+	{
+		st->wDay = 1;
+		if (!SystemTimeToFileTime(st, &ft)) return false;
+
+		FileTimeToSystemTime(&ft, st);
+		int first = st->wDayOfWeek;
+		st->wDayOfWeek = (WORD)day;
+		day -= first;
+
+		if (day < 0) nWeek++;
+	}
+
+	st->wDay += day + nWeek * 7;
+	return true;
+}
+
 MeasureTime::MeasureTime(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_Delta(),
 	m_Time(),
 	m_TimeStamp(-1),
+	m_TimeStampType(INVALID),
 	m_TimeZone(LOCAL_TIMEZONE),
 	m_DaylightSavingTime(true)
 {
@@ -74,7 +118,34 @@ void MeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, c
 
 void MeasureTime::FillCurrentTime()
 {
-	if (m_TimeStamp < 0.0)
+	auto getTZSysTime = [&](bool getDaylight) -> DWORD
+	{
+		SYSTEMTIME st;
+		if (m_TimeStamp == DBL_MIN)
+		{
+			GetSystemTime(&st);
+			m_TimeStamp = (int)st.wYear;
+		}
+
+		TIME_ZONE_INFORMATION tzi;
+		DWORD ret = GetTimeZoneInformation(&tzi);
+		st = getDaylight ? tzi.DaylightDate : tzi.StandardDate;
+		st.wYear = (int)m_TimeStamp;
+
+		if (ret == 0 || !GetTimeZoneChangeDate(&st))
+		{
+			m_Time.QuadPart = 0;
+			return ret;
+		}
+
+		FILETIME ft;
+		SystemTimeToFileTime(&st, &ft);
+		m_Time.HighPart = ft.dwHighDateTime;
+		m_Time.LowPart = ft.dwLowDateTime;
+		return ret;
+	};
+
+	auto getCurrentTime = [&]() -> void
 	{
 		FILETIME ftUTCTime;
 		GetSystemTimeAsFileTime(&ftUTCTime);
@@ -85,8 +156,57 @@ void MeasureTime::FillCurrentTime()
 		m_Time.LowPart = ftUTCTime.dwLowDateTime;
 
 		m_Time.QuadPart += m_Delta.QuadPart;
+	};
+
+	if (m_TimeStampType == DST_END)
+	{
+		getTZSysTime(false);
 	}
-	else
+	else if (m_TimeStampType == DST_START)
+	{
+		getTZSysTime(true);
+	}
+	else if (m_TimeStampType == DST_NEXT_END)
+	{
+		if (getTZSysTime(false) != 0)
+		{
+			LARGE_INTEGER dstStandard = m_Time;
+			getCurrentTime();
+			if (m_Time.QuadPart < dstStandard.QuadPart)
+			{
+				m_Time = dstStandard;
+			}
+			else
+			{
+				// Get next year's DST end date/time
+				++m_TimeStamp;
+				getTZSysTime(false);
+			}
+		}
+	}
+	else if (m_TimeStampType == DST_NEXT_START)
+	{
+		if (getTZSysTime(true) != 0)
+		{
+			LARGE_INTEGER dstDaylight = m_Time;
+			getCurrentTime();
+			if (m_Time.QuadPart < dstDaylight.QuadPart)
+			{
+				m_Time = dstDaylight;
+			}
+			else
+			{
+				// Get next year's DST start date/time
+				++m_TimeStamp;
+				getTZSysTime(true);
+			}
+		}
+	}
+	else if (m_TimeStamp < 0.0) // m_TimeStampType == INVALID
+	{
+		getCurrentTime();
+	}
+	else // m_TimeStampType == FIXED
 	{
 		m_Time.QuadPart = (LONGLONG)(m_TimeStamp * 10000000);
 	}
@@ -209,25 +329,61 @@ const WCHAR* MeasureTime::GetStringValue()
 */
 void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
+	auto ParseYear = [&](std::wstring year, size_t pos) -> void
+	{
+		year = year.substr(pos);
+		m_TimeStamp = parser.ParseDouble(year.c_str(), DBL_MIN);
+	};
+
 	Measure::ReadOptions(parser, section);
 
 	m_Format = parser.ReadString(section, L"Format", L"");
 
-	m_TimeStamp = parser.ReadFloat(section, L"TimeStamp", -1);
-	if (m_TimeStamp < 0.0)
+	const WCHAR* timeStamp = parser.ReadString(section, L"TimeStamp", L"-1").c_str();
+	if (wcsncmp(timeStamp, L"DSTStart", 8) == 0)
 	{
-		const WCHAR* timezone = parser.ReadString(section, L"TimeZone", L"local").c_str();
-		if (_wcsicmp(L"local", timezone) == 0)
+		m_TimeStampType = DST_START;
+		ParseYear(timeStamp, 8);
+	}
+	else if (wcsncmp(timeStamp, L"DSTEnd", 6) == 0)
+	{
+		m_TimeStampType = DST_END;
+		ParseYear(timeStamp, 6);
+	}
+	else if (_wcsicmp(timeStamp, L"DSTNextStart") == 0)
+	{
+		m_TimeStampType = DST_NEXT_START;
+		m_TimeStamp = DBL_MIN;
+	}
+	else if (_wcsicmp(timeStamp, L"DSTNextEnd") == 0)
+	{
+		m_TimeStampType = DST_NEXT_END;
+		m_TimeStamp = DBL_MIN;
+	}
+	else
+	{
+		m_TimeStamp = parser.ParseDouble(timeStamp, -1.0);
+		if (m_TimeStamp < 0.0)
 		{
-			m_TimeZone = LOCAL_TIMEZONE;
+			m_TimeStampType = INVALID;
+
+			const WCHAR* timezone = parser.ReadString(section, L"TimeZone", L"local").c_str();
+			if (_wcsicmp(L"local", timezone) == 0)
+			{
+				m_TimeZone = LOCAL_TIMEZONE;
+			}
+			else
+			{
+				m_TimeZone = parser.ParseDouble(timezone, 0.0);
+				m_DaylightSavingTime = parser.ReadBool(section, L"DaylightSavingTime", true);
+			}
+
+			UpdateDelta();
 		}
 		else
 		{
-			m_TimeZone = parser.ParseDouble(timezone, 0.0);
-			m_DaylightSavingTime = parser.ReadBool(section, L"DaylightSavingTime", true);
+			m_TimeStampType = FIXED;
 		}
-
-		UpdateDelta();
 	}
 
 	if (!m_Initialized)

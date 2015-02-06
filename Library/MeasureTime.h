@@ -41,6 +41,16 @@ protected:
 	virtual void UpdateValue();
 
 private:
+	enum TIMESTAMP_TYPE
+	{
+		FIXED,
+		DST_END,
+		DST_START,
+		DST_NEXT_END,
+		DST_NEXT_START,
+		INVALID
+	};
+
 	void TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const tm* time);
 	void FillCurrentTime();
 
@@ -49,6 +59,7 @@ private:
 	LARGE_INTEGER m_Time;
 
 	double m_TimeStamp;
+	TIMESTAMP_TYPE m_TimeStampType;
 
 	double m_TimeZone;
 	bool m_DaylightSavingTime;
