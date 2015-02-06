@@ -508,7 +508,8 @@ PLUGIN_EXPORT double Update(void* data)
 	case MEASURE_TIMEZONE_ISDST:
 		{
 			TIME_ZONE_INFORMATION tzi;
-			return (double)(GetTimeZoneInformation(&tzi) - 1);
+			DWORD ret = GetTimeZoneInformation(&tzi);
+			return ret == TIME_ZONE_ID_UNKNOWN ? -1.0 : ret - 1.0;
 		}
 	case MEASURE_TIMEZONE_BIAS:
 		{
