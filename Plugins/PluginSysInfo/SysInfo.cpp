@@ -64,7 +64,13 @@ enum MeasureType
 	MEASURE_VIRTUAL_SCREEN_TOP,
 	MEASURE_VIRTUAL_SCREEN_LEFT,
 	MEASURE_VIRTUAL_SCREEN_WIDTH,
-	MEASURE_VIRTUAL_SCREEN_HEIGHT
+	MEASURE_VIRTUAL_SCREEN_HEIGHT,
+	MEASURE_TIMEZONE_ISDST,
+	MEASURE_TIMEZONE_BIAS,
+	MEASURE_TIMEZONE_STANDARD_BIAS,
+	MEASURE_TIMEZONE_STANDARD_NAME,
+	MEASURE_TIMEZONE_DAYLIGHT_BIAS,
+	MEASURE_TIMEZONE_DAYLIGHT_NAME
 };
 
 struct MeasureData
@@ -221,6 +227,30 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		measure->type = MEASURE_VIRTUAL_SCREEN_HEIGHT;
 	}
+	else if (_wcsicmp(L"TIMEZONE_ISDST", type) == 0)
+	{
+		measure->type = MEASURE_TIMEZONE_ISDST;
+	}
+	else if (_wcsicmp(L"TIMEZONE_BIAS", type) == 0)
+	{
+		measure->type = MEASURE_TIMEZONE_BIAS;
+	}
+	else if (_wcsicmp(L"TIMEZONE_STANDARD_BIAS", type) == 0)
+	{
+		measure->type = MEASURE_TIMEZONE_STANDARD_BIAS;
+	}
+	else if (_wcsicmp(L"TIMEZONE_STANDARD_NAME", type) == 0)
+	{
+		measure->type = MEASURE_TIMEZONE_STANDARD_NAME;
+	}
+	else if (_wcsicmp(L"TIMEZONE_DAYLIGHT_BIAS", type) == 0)
+	{
+		measure->type = MEASURE_TIMEZONE_DAYLIGHT_BIAS;
+	}
+	else if (_wcsicmp(L"TIMEZONE_DAYLIGHT_NAME", type) == 0)
+	{
+		measure->type = MEASURE_TIMEZONE_DAYLIGHT_NAME;
+	}
 	else
 	{
 		WCHAR buffer[256];
@@ -374,6 +404,22 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 			}
 		}
 		break;
+
+	case MEASURE_TIMEZONE_STANDARD_NAME:
+		{
+			TIME_ZONE_INFORMATION tzi;
+			GetTimeZoneInformation(&tzi);
+			wcscpy(sBuffer, tzi.StandardName);
+			return sBuffer;
+		}
+
+	case MEASURE_TIMEZONE_DAYLIGHT_NAME:
+		{
+			TIME_ZONE_INFORMATION tzi;
+			GetTimeZoneInformation(&tzi);
+			wcscpy(sBuffer, tzi.DaylightName);
+			return sBuffer;
+		}
 	}
 
 	return nullptr;
@@ -458,6 +504,30 @@ PLUGIN_EXPORT double Update(void* data)
 		return (measure->data != -1)
 			? m_Monitors.m_MonitorInfo[measure->data - 1].rcMonitor.left
 			: GetSystemMetrics(SM_XVIRTUALSCREEN);
+
+	case MEASURE_TIMEZONE_ISDST:
+		{
+			TIME_ZONE_INFORMATION tzi;
+			return (double)(GetTimeZoneInformation(&tzi) - 1);
+		}
+	case MEASURE_TIMEZONE_BIAS:
+		{
+			TIME_ZONE_INFORMATION tzi;
+			GetTimeZoneInformation(&tzi);
+			return (double)tzi.Bias;
+		}
+	case MEASURE_TIMEZONE_STANDARD_BIAS:
+		{
+			TIME_ZONE_INFORMATION tzi;
+			GetTimeZoneInformation(&tzi);
+			return (double)tzi.StandardBias;
+		}
+	case MEASURE_TIMEZONE_DAYLIGHT_BIAS:
+		{
+			TIME_ZONE_INFORMATION tzi;
+			GetTimeZoneInformation(&tzi);
+			return (double)tzi.DaylightBias;
+		}
 	}
 
 	return 0.0;
