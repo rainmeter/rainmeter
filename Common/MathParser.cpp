@@ -853,7 +853,7 @@ Operator GetOperator(const WCHAR* str)
 		return (str[1] == L'|') ? Operator::LogicalOR : Operator::BitwiseOR;
 
 	case L'=':
-		return (str[1] == L'>') ? Operator::GreatorOrEqual : (str[1] == L'<') ? Operator::LessOrEqual : Operator::Equal;
+		return Operator::Equal;
 
 	case L'>':
 		return (str[1] == L'>') ? Operator::ShiftRight : (str[1] == L'=') ? Operator::GreatorOrEqual : Operator::Greater;
