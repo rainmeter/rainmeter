@@ -409,22 +409,25 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			// The |TimeStamp| is formatted, parse it and convert to a Windows timestamp
 			m_TimeStampType = FIXED;
 
-			std::wstring tslocale = parser.ReadString(section, L"TimeStampLocale", L"C");
-			std::locale loc;
+			std::wstring localeStr = parser.ReadString(section, L"TimeStampLocale", L"C");
 
-			try
+			// Because exceptions are disabled, constructing std::locale with an invalid locale will
+			// call abort(). To fail gracefully, we need to check if the locale exists first.
+			std::locale locale;
+			if (_locale_t cLocale = _wcreate_locale(LC_TIME, localeStr.c_str()))
 			{
-				loc = std::locale(StringUtil::Narrow(tslocale), std::locale::time);
+				locale = std::locale(StringUtil::Narrow(localeStr), std::locale::time);
+				_free_locale(cLocale);
 			}
-			catch (std::runtime_error)
+			else
 			{
-				LogErrorF(this, L"Invalid TimeStampLocale: %s", tslocale.c_str());
-				loc = std::locale("C");
+				LogErrorF(this, L"Invalid TimeStampLocale: %s", localeStr.c_str());
+				locale = std::locale("C");
 			}
 
 			std::tm time = { 0 };
 			std::basic_istringstream<wchar_t> is(timeStamp);
-			is.imbue(loc);
+			is.imbue(locale);
 			is >> std::get_time(&time, tsformat.c_str());
 
 			if (is.fail())
