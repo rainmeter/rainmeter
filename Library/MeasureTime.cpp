@@ -119,7 +119,14 @@ void MeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, c
 		_CrtSetReportMode(_CRT_ASSERT, 0);
 
 		errno = 0;
-		_wcsftime_l(buf, bufLen, format, time, m_FormatLocale);
+		if (m_FormatLocale)
+		{
+			_wcsftime_l(buf, bufLen, format, time, m_FormatLocale);
+		}
+		else
+		{
+			wcsftime(buf, bufLen, format, time);
+		}
 		if (errno == EINVAL)
 		{
 			LogErrorF(this, L"Time: \"Format=%s\" invalid", format);
@@ -462,12 +469,14 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	// Format locale
 	FreeLocale();
-	std::wstring fmtlocale = parser.ReadString(section, L"FormatLocale", L"C");
-	m_FormatLocale = _wcreate_locale(LC_TIME, fmtlocale.c_str());
-	if (!m_FormatLocale)
+	const WCHAR* formatLocale = parser.ReadString(section, L"FormatLocale", L"").c_str();
+	if (*formatLocale)
 	{
-		LogErrorF(this, L"Invalid FormatLocale: %s", fmtlocale.c_str());
-		m_FormatLocale = _wcreate_locale(LC_TIME, L"C");
+		m_FormatLocale = _wcreate_locale(LC_TIME, formatLocale);
+		if (!m_FormatLocale)
+		{
+			LogErrorF(this, L"Invalid FormatLocale: %s", formatLocale);
+		}
 	}
 
 	if (!m_Initialized)
