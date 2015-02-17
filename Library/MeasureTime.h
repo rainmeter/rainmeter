@@ -53,8 +53,11 @@ private:
 
 	void TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const tm* time);
 	void FillCurrentTime();
+	void FreeLocale();
 
 	std::wstring m_Format;
+	_locale_t m_FormatLocale;
+
 	LARGE_INTEGER m_Delta;
 	LARGE_INTEGER m_Time;
 

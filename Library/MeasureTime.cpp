@@ -19,6 +19,9 @@
 #include "StdAfx.h"
 #include "MeasureTime.h"
 #include "Rainmeter.h"
+#include <locale>
+#include <sstream>
+#include <iomanip>
 
 const double LOCAL_TIMEZONE = DBL_MIN;
 
@@ -79,6 +82,7 @@ bool GetTimeZoneChangeDate(SYSTEMTIME* st)
 }
 
 MeasureTime::MeasureTime(Skin* skin, const WCHAR* name) : Measure(skin, name),
+	m_FormatLocale(nullptr),
 	m_Delta(),
 	m_Time(),
 	m_TimeStamp(-1),
@@ -90,11 +94,21 @@ MeasureTime::MeasureTime(Skin* skin, const WCHAR* name) : Measure(skin, name),
 
 MeasureTime::~MeasureTime()
 {
+	FreeLocale();
+}
+
+void MeasureTime::FreeLocale()
+{
+	if (m_FormatLocale)
+	{
+		_free_locale(m_FormatLocale);
+		m_FormatLocale = nullptr;
+	}
 }
 
 /*
 ** Converts given time to string.
-** This function is a wrapper function for wcsftime.
+** This function is a wrapper function for _wcsftime_l.
 **
 */
 void MeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, const struct tm* time)
@@ -105,7 +119,7 @@ void MeasureTime::TimeToString(WCHAR* buf, size_t bufLen, const WCHAR* format, c
 		_CrtSetReportMode(_CRT_ASSERT, 0);
 
 		errno = 0;
-		wcsftime(buf, bufLen, format, time);
+		_wcsftime_l(buf, bufLen, format, time, m_FormatLocale);
 		if (errno == EINVAL)
 		{
 			LogErrorF(this, L"Time: \"Format=%s\" invalid", format);
@@ -339,51 +353,118 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_Format = parser.ReadString(section, L"Format", L"");
 
-	const WCHAR* timeStamp = parser.ReadString(section, L"TimeStamp", L"-1").c_str();
-	if (wcsncmp(timeStamp, L"DSTStart", 8) == 0)
+	std::wstring timeStamp = parser.ReadString(section, L"TimeStamp", L"-1");
+	if (wcsncmp(timeStamp.c_str(), L"DSTStart", 8) == 0)
 	{
 		m_TimeStampType = DST_START;
 		ParseYear(timeStamp, 8);
 	}
-	else if (wcsncmp(timeStamp, L"DSTEnd", 6) == 0)
+	else if (wcsncmp(timeStamp.c_str(), L"DSTEnd", 6) == 0)
 	{
 		m_TimeStampType = DST_END;
 		ParseYear(timeStamp, 6);
 	}
-	else if (_wcsicmp(timeStamp, L"DSTNextStart") == 0)
+	else if (_wcsicmp(timeStamp.c_str(), L"DSTNextStart") == 0)
 	{
 		m_TimeStampType = DST_NEXT_START;
 		m_TimeStamp = DBL_MIN;
 	}
-	else if (_wcsicmp(timeStamp, L"DSTNextEnd") == 0)
+	else if (_wcsicmp(timeStamp.c_str(), L"DSTNextEnd") == 0)
 	{
 		m_TimeStampType = DST_NEXT_END;
 		m_TimeStamp = DBL_MIN;
 	}
 	else
 	{
-		m_TimeStamp = parser.ParseDouble(timeStamp, -1.0);
-		if (m_TimeStamp < 0.0)
+		std::wstring tsformat = parser.ReadString(section, L"TimeStampFormat", L"");
+		if (tsformat.empty())
 		{
-			m_TimeStampType = INVALID;
-
-			const WCHAR* timezone = parser.ReadString(section, L"TimeZone", L"local").c_str();
-			if (_wcsicmp(L"local", timezone) == 0)
+			m_TimeStamp = parser.ParseDouble(timeStamp.c_str(), -1.0);
+			if (m_TimeStamp < 0.0)
 			{
-				m_TimeZone = LOCAL_TIMEZONE;
+				// |TimeStamp| is invalid, measure returns the current time
+				m_TimeStampType = INVALID;
+
+				const WCHAR* timezone = parser.ReadString(section, L"TimeZone", L"local").c_str();
+				if (_wcsicmp(L"local", timezone) == 0)
+				{
+					m_TimeZone = LOCAL_TIMEZONE;
+				}
+				else
+				{
+					m_TimeZone = parser.ParseDouble(timezone, 0.0);
+					m_DaylightSavingTime = parser.ReadBool(section, L"DaylightSavingTime", true);
+				}
+
+				UpdateDelta();
 			}
 			else
 			{
-				m_TimeZone = parser.ParseDouble(timezone, 0.0);
-				m_DaylightSavingTime = parser.ReadBool(section, L"DaylightSavingTime", true);
+				// |TimeStamp| is a Windows timestamp
+				m_TimeStampType = FIXED;
 			}
-
-			UpdateDelta();
 		}
 		else
 		{
+			// The |TimeStamp| is formatted, parse it and convert to a Windows timestamp
 			m_TimeStampType = FIXED;
+
+			std::wstring tslocale = parser.ReadString(section, L"TimeStampLocale", L"C");
+			std::locale loc;
+
+			try
+			{
+				loc = std::locale(StringUtil::Narrow(tslocale), std::locale::time);
+			}
+			catch (std::runtime_error)
+			{
+				LogErrorF(this, L"Invalid TimeStampLocale: %s", tslocale.c_str());
+				loc = std::locale("C");
+			}
+
+			std::tm time = { 0 };
+			std::basic_istringstream<wchar_t> is(timeStamp);
+			is.imbue(loc);
+			is >> std::get_time(&time, tsformat.c_str());
+
+			if (is.fail())
+			{
+				LogErrorF(this, L"Invalid TimeStampFormat: %s", tsformat.c_str());
+				m_TimeStamp = 0;
+			}
+			else
+			{
+				// Convert std::tm -> SYSTEMTIME -> FILETIME -> LARGE_INTEGER
+				SYSTEMTIME st;
+				st.wDay = time.tm_mday;
+				st.wDayOfWeek = time.tm_wday;
+				st.wHour = time.tm_hour;
+				st.wMilliseconds = 0;
+				st.wMinute = time.tm_min;
+				st.wMonth = time.tm_mon + 1;
+				st.wSecond = time.tm_sec;
+				st.wYear = time.tm_year + 1900;
+
+				FILETIME ft;
+				SystemTimeToFileTime(&st, &ft);
+
+				LARGE_INTEGER li;
+				li.HighPart = ft.dwHighDateTime;
+				li.LowPart = ft.dwLowDateTime;
+
+				m_TimeStamp = (double)(li.QuadPart / 10000000);
+			}
 		}
+	}
+
+	// Format locale
+	FreeLocale();
+	std::wstring fmtlocale = parser.ReadString(section, L"FormatLocale", L"C");
+	m_FormatLocale = _wcreate_locale(LC_TIME, fmtlocale.c_str());
+	if (!m_FormatLocale)
+	{
+		LogErrorF(this, L"Invalid FormatLocale: %s", fmtlocale.c_str());
+		m_FormatLocale = _wcreate_locale(LC_TIME, L"C");
 	}
 
 	if (!m_Initialized)
