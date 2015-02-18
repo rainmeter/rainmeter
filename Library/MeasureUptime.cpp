@@ -57,7 +57,7 @@ void MeasureUptime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	if (!seconds.empty())
 	{
 		m_SecondsDefined = true;
-		m_Seconds = (double)abs((__int64)parser.ReadFloat(section, L"SecondsValue", -1.0));
+		m_Seconds = (double)abs((__int64)parser.ReadFloat(section, L"SecondsValue", 0.0));
 	}
 }
 
