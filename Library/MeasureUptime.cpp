@@ -23,7 +23,8 @@
 
 MeasureUptime::MeasureUptime(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_AddDaysToHours(false),
-	m_Seconds(0.0)
+	m_Seconds(0.0),
+	m_SecondsDefined(false)
 {
 }
 
@@ -51,7 +52,13 @@ void MeasureUptime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	}
 
 	// Don't allow negative seconds
-	m_Seconds = (double)abs((__int64)parser.ReadFloat(section, L"SecondsValue", 0.0));
+	m_SecondsDefined = false;
+	std::wstring seconds = parser.ReadString(section, L"SecondsValue", L"");
+	if (!seconds.empty())
+	{
+		m_SecondsDefined = true;
+		m_Seconds = (double)abs((__int64)parser.ReadFloat(section, L"SecondsValue", -1.0));
+	}
 }
 
 /*
@@ -60,7 +67,7 @@ void MeasureUptime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 */
 void MeasureUptime::UpdateValue()
 {
-	if (m_Seconds == 0.0)
+	if (!m_SecondsDefined)
 	{
 		ULONGLONG ticks = System::GetTickCount64();
 		m_Value = (double)(__int64)(ticks / 1000);
