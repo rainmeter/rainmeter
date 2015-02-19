@@ -472,7 +472,16 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	const WCHAR* formatLocale = parser.ReadString(section, L"FormatLocale", L"").c_str();
 	if (*formatLocale)
 	{
-		m_FormatLocale = _wcreate_locale(LC_TIME, formatLocale);
+		if (_wcsicmp(formatLocale, L"local") == 0)
+		{
+			// An empty string represents the user's locale, instead of the default "C" locale.
+			m_FormatLocale = _wcreate_locale(LC_TIME, L"");
+		}
+		else
+		{
+			m_FormatLocale = _wcreate_locale(LC_TIME, formatLocale);
+		}
+
 		if (!m_FormatLocale)
 		{
 			LogErrorF(this, L"Invalid FormatLocale: %s", formatLocale);
