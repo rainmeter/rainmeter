@@ -433,6 +433,8 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 			}
 
 			std::tm time = { 0 };
+			time.tm_mday = 1;	// "Day of month" cannot be 0.
+
 			std::basic_istringstream<wchar_t> is(timeStamp);
 			is.imbue(locale);
 			is >> std::get_time(&time, tsformat.c_str());
@@ -455,14 +457,25 @@ void MeasureTime::ReadOptions(ConfigParser& parser, const WCHAR* section)
 				st.wSecond = time.tm_sec;
 				st.wYear = time.tm_year + 1900;
 
+				// Fix known overflow bug when using %p.
+				// TODO: VS2015 has *apparently* fixed this (and other bugs with this).
+				// https://connect.microsoft.com/VisualStudio/feedback/details/808162
+				st.wHour %= 24;
+
 				FILETIME ft;
-				SystemTimeToFileTime(&st, &ft);
+				if (!SystemTimeToFileTime(&st, &ft))
+				{
+					LogErrorF(this, L"Parsing error: %s", tsformat.c_str());
+					m_TimeStamp = 0;
+				}
+				else
+				{
+					LARGE_INTEGER li;
+					li.HighPart = ft.dwHighDateTime;
+					li.LowPart = ft.dwLowDateTime;
 
-				LARGE_INTEGER li;
-				li.HighPart = ft.dwHighDateTime;
-				li.LowPart = ft.dwLowDateTime;
-
-				m_TimeStamp = (double)(li.QuadPart / 10000000);
+					m_TimeStamp = (double)(li.QuadPart / 10000000);
+				}
 			}
 		}
 	}
