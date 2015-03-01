@@ -1678,4 +1678,27 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 
 		measure->updateCounter = 0;
 	}
+	else if (_wcsicmp(args, L"RESET") == 0)
+	{
+		measure->resultString.clear();
+		measure->downloadedFile.clear();
+
+		EnterCriticalSection(&g_CriticalSection);
+
+		// Update the references
+		std::vector<MeasureData*>::iterator i = g_Measures.begin();
+		std::wstring compareStr = L"[";
+		compareStr += RmGetMeasureName(measure->rm);
+		compareStr += L']';
+		for (; i != g_Measures.end(); ++i)
+		{
+			if ((StringUtil::CaseInsensitiveFind((*i)->url, compareStr) != std::wstring::npos) &&
+				(measure->skin == (*i)->skin))
+			{
+				(*i)->resultString.clear();
+				(*i)->downloadedFile.clear();
+			}
+		}
+		LeaveCriticalSection(&g_CriticalSection);
+	}
 }
