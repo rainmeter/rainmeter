@@ -1122,16 +1122,14 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 			measure->dlThreadHandle = threadHandle;
 		}
 	}
-	else
+
+	if (doErrorAction && !measure->onRegExpErrAction.empty())
 	{
-		if (doErrorAction && !measure->onRegExpErrAction.empty())
-		{
-			RmExecute(measure->skin, measure->onRegExpErrAction.c_str());
-		}
-		else if (!measure->finishAction.empty())
-		{
-			RmExecute(measure->skin, measure->finishAction.c_str());
-		}
+		RmExecute(measure->skin, measure->onRegExpErrAction.c_str());
+	}
+	else if (!measure->download && !measure->finishAction.empty())
+	{
+		RmExecute(measure->skin, measure->finishAction.c_str());
 	}
 }
 
