@@ -1233,7 +1233,10 @@ bool ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 		auto getToken = [&]() -> void
 		{
 			start = str.find_first_not_of(L" \t", start); // skip any leading whitespace
-			tokens.push_back(ConfigParser::ParseInt(str.substr(start, end - start).c_str(), 0));
+			if (start <= end)
+			{
+				tokens.push_back(ConfigParser::ParseInt(str.substr(start, end - start).c_str(), 0));
+			}
 		};
 
 		for (auto iter : str)
