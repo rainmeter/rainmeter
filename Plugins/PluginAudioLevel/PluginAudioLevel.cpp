@@ -148,6 +148,10 @@ struct Measure
 	WAVEFORMATEX*			m_wfx;						// audio format info
 	IAudioClient*			m_clAudio;					// audio client instance
 	IAudioCaptureClient*	m_clCapture;				// capture client instance
+#if (WINDOWS_BUG_WORKAROUND)
+	IAudioClient*			m_clBugAudio;				// audio client for dummy silent channel
+	IAudioRenderClient*		m_clBugRender;				// render client for dummy silent channel
+#endif
 	WCHAR					m_reqID[64];				// requested device ID (parsed from options)
 	WCHAR					m_devName[64];				// device friendly name (detected in init)
 	float					m_kRMS[2];					// RMS attack/decay filter constants
@@ -192,6 +196,10 @@ struct Measure
 		m_wfx(NULL),
 		m_clAudio(NULL),
 		m_clCapture(NULL),
+#if (WINDOWS_BUG_WORKAROUND)
+		m_clBugAudio(NULL),
+		m_clBugRender(NULL),
+#endif
 		m_fftKWdw(NULL),
 		m_fftTmpIn(NULL),
 		m_fftTmpOut(NULL),
@@ -1022,7 +1030,6 @@ PLUGIN_EXPORT LPCWSTR GetString (void* data)
 HRESULT	Measure::DeviceInit ()
 {
 	HRESULT hr;
-	IAudioRenderClient *clRender = NULL;
 
 	// get the device handle
 	assert(m_enum && !m_dev);
@@ -1064,7 +1071,16 @@ HRESULT	Measure::DeviceInit ()
 
 	SAFE_RELEASE(props);
 
-	// get the audio client
+#if (WINDOWS_BUG_WORKAROUND)
+	// get an extra audio client for the dummy silent channel
+	hr = m_dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&m_clBugAudio);
+	if (hr != S_OK)
+	{
+		RmLog(LOG_WARNING, L"Failed to create audio client for Windows bug workaround.\n");
+	}
+#endif
+
+	// get the main audio client
 	hr = m_dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&m_clAudio);
 	if (hr != S_OK)
 	{
@@ -1151,36 +1167,29 @@ HRESULT	Measure::DeviceInit ()
 	// see: http://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/c7ba0a04-46ce-43ff-ad15-ce8932c00171/loopback-recording-causes-digital-stuttering?forum=windowspro-audiodevelopment
 	if (m_port == PORT_OUTPUT)
 	{
-		hr = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, hnsRequestedDuration, 0, m_wfx, NULL);
+		hr = m_clBugAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, hnsRequestedDuration, 0, m_wfx, NULL);
 		EXIT_ON_ERROR(hr);
 
 		// get the frame count
 		UINT32 nFrames;
-		hr = m_clAudio->GetBufferSize(&nFrames);
+		hr = m_clBugAudio->GetBufferSize(&nFrames);
 		EXIT_ON_ERROR(hr);
 
 		// create a render client
-		hr = m_clAudio->GetService(IID_IAudioRenderClient, (void**)&clRender);
+		hr = m_clBugAudio->GetService(IID_IAudioRenderClient, (void**)&m_clBugRender);
 		EXIT_ON_ERROR(hr);
 
 		// get the buffer
 		BYTE* buffer;
-		hr = clRender->GetBuffer(nFrames, &buffer);
+		hr = m_clBugRender->GetBuffer(nFrames, &buffer);
 		EXIT_ON_ERROR(hr);
 
 		// release it
-		hr = clRender->ReleaseBuffer(nFrames, AUDCLNT_BUFFERFLAGS_SILENT);
+		hr = m_clBugRender->ReleaseBuffer(nFrames, AUDCLNT_BUFFERFLAGS_SILENT);
 		EXIT_ON_ERROR(hr);
 
-		// release the render client
-		clRender->Release();
-		clRender = NULL;
-
-		// release the audio client
-		m_clAudio->Release();
-
-		// create a new IAudioClient
-		hr = m_dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&m_clAudio);
+		// start the stream
+		hr = m_clBugAudio->Start();
 		EXIT_ON_ERROR(hr);
 	}
 	// ---------------------------------------------------------------------------------------
@@ -1217,7 +1226,6 @@ HRESULT	Measure::DeviceInit ()
 	return S_OK;
 
 Exit:
-	SAFE_RELEASE(clRender);
 	DeviceRelease();
 	return hr;
 }
@@ -1228,6 +1236,16 @@ Exit:
  */
 void Measure::DeviceRelease ()
 {
+#if (WINDOWS_BUG_WORKAROUND)
+	RmLog(LOG_DEBUG, L"Releasing dummy stream audio device.\n");
+	if (m_clBugAudio)
+	{
+		m_clBugAudio->Stop();
+	}
+	SAFE_RELEASE(m_clBugRender);
+	SAFE_RELEASE(m_clBugAudio);
+#endif
+
 	RmLog(LOG_DEBUG, L"Releasing audio device.\n");
 
 	if (m_clAudio)
