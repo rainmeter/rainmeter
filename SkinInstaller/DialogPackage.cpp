@@ -1355,8 +1355,34 @@ INT_PTR DialogPackage::TabAdvanced::OnCommand(WPARAM wParam, LPARAM lParam)
 
 			if (GetOpenFileName(&ofn))
 			{
-				c_Dialog->m_HeaderFile = buffer;
-				SetWindowText(item, buffer);
+				// Validate bitmap and make sure size is 400x60
+				std::wstring error;
+				HBITMAP bitmap = (HBITMAP)LoadImage(nullptr, buffer, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+				if (bitmap)
+				{
+					BITMAP bm = { 0 };
+					GetObject(bitmap, sizeof(bm), &bm);
+					if (bm.bmWidth == 400 && bm.bmHeight == 60)
+					{
+						c_Dialog->m_HeaderFile = buffer;
+						SetWindowText(item, buffer);
+						break;
+					}
+					else
+					{
+						error = L"Error: Invalid size\n\"";
+						error += buffer;
+						error += L"\" must be exactly 400x60.";
+					}
+				}
+				else
+				{
+					error = L"Error: Invalid .bmp file\n\"";
+					error += buffer;
+					error += L"\"";
+				}
+
+				MessageBox(m_Window, error.c_str(), L"Rainmeter Skin Packager", MB_OK | MB_ICONERROR);
 			}
 		}
 		break;

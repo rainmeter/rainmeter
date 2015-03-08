@@ -203,6 +203,8 @@ struct MeasureData
 	std::wstring resultString;
 	std::wstring errorString;
 	std::wstring finishAction;
+	std::wstring onRegExpErrAction;
+	std::wstring onConnectErrAction;
 	std::wstring downloadFolder;
 	std::wstring downloadFile;
 	std::wstring downloadedFile;
@@ -737,6 +739,8 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 	measure->regExp = RmReadString(rm, L"RegExp", L"");
 	measure->finishAction = RmReadString(rm, L"FinishAction", L"", FALSE);
+	measure->onRegExpErrAction = RmReadString(rm, L"OnRegExpErrorAction", L"", FALSE);
+	measure->onConnectErrAction = RmReadString(rm, L"OnConnectErrorAction", L"", FALSE);
 	measure->errorString = RmReadString(rm, L"ErrorString", L"");
 
 	int index = RmReadInt(rm, L"StringIndex", 0);
@@ -852,6 +856,11 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 	if (!data)
 	{
 		ShowError(measure->rm, L"Fetch error");
+
+		if (!measure->onConnectErrAction.empty())
+		{
+			RmExecute(measure->skin, measure->onConnectErrAction.c_str());
+		}
 	}
 	else
 	{
@@ -893,6 +902,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 	int ovector[OVECCOUNT];
 	int rc;
 	int flags = PCRE_UTF8;
+	bool doErrorAction = false;
 
 	if (measure->codepage == 0)
 	{
@@ -1071,6 +1081,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 		{
 			// Matching failed: handle error cases
 			RmLogF(measure->rm, LOG_ERROR, L"WebParser: RegExp matching error (%d)", rc);
+			doErrorAction = true;
 
 			EnterCriticalSection(&g_CriticalSection);
 			measure->resultString = measure->errorString;
@@ -1098,6 +1109,7 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 	{
 		// Compilation failed.
 		RmLogF(measure->rm, LOG_ERROR, L"WebParser: RegExp error at offset %d: %S", erroffset, error);
+		doErrorAction = true;
 	}
 
 	if (measure->download)
@@ -1110,12 +1122,14 @@ void ParseData(MeasureData* measure, LPCSTR parseData, DWORD dwSize)
 			measure->dlThreadHandle = threadHandle;
 		}
 	}
-	else
+
+	if (doErrorAction && !measure->onRegExpErrAction.empty())
 	{
-		if (!measure->finishAction.empty())
-		{
-			RmExecute(measure->skin, measure->finishAction.c_str());
-		}
+		RmExecute(measure->skin, measure->onRegExpErrAction.c_str());
+	}
+	else if (!measure->download && !measure->finishAction.empty())
+	{
+		RmExecute(measure->skin, measure->finishAction.c_str());
 	}
 }
 
@@ -1661,5 +1675,28 @@ PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 		}
 
 		measure->updateCounter = 0;
+	}
+	else if (_wcsicmp(args, L"RESET") == 0)
+	{
+		measure->resultString.clear();
+		measure->downloadedFile.clear();
+
+		EnterCriticalSection(&g_CriticalSection);
+
+		// Update the references
+		std::vector<MeasureData*>::iterator i = g_Measures.begin();
+		std::wstring compareStr = L"[";
+		compareStr += RmGetMeasureName(measure->rm);
+		compareStr += L']';
+		for (; i != g_Measures.end(); ++i)
+		{
+			if ((StringUtil::CaseInsensitiveFind((*i)->url, compareStr) != std::wstring::npos) &&
+				(measure->skin == (*i)->skin))
+			{
+				(*i)->resultString.clear();
+				(*i)->downloadedFile.clear();
+			}
+		}
+		LeaveCriticalSection(&g_CriticalSection);
 	}
 }

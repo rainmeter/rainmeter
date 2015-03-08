@@ -441,7 +441,8 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 			root.erase(pos);
 		}
 
-		for (int i = 0; i < itemCount; ++i)
+		// Skip "Open folder", "Disable dragging" and a separator
+		for (int i = 3; i < itemCount; ++i)
 		{
 			const UINT state = GetMenuState(menu, i, MF_BYPOSITION);
 			if (state == 0xFFFFFFFF || (state & MF_POPUP) == 0) break;
@@ -608,7 +609,6 @@ int ContextMenu::CreateSkinsMenuRecursive(HMENU skinMenu, int index, bool isFavo
 				SkinRegistry::Indexes indexes;
 				bool hasFavorite = false;
 				int fileIndex = 0;
-				int filePos = fileIndex;
 				const int fileCount = (int)skinFolder.files.size();
 
 				for (; fileIndex < fileCount; ++fileIndex)
@@ -619,13 +619,12 @@ int ContextMenu::CreateSkinsMenuRecursive(HMENU skinMenu, int index, bool isFavo
 
 						if (isFavoriteMenu)
 						{
-							filePos = -1;
 							indexes = skinRegistry.FindIndexesForID(skinFolder.baseID);
 							filename.insert(0, L"\\");
 							filename.insert(0, skinRegistry.GetFolderPath(indexes.folder));
 						}
 
-						InsertMenu(subMenu, filePos, MF_STRING | MF_BYPOSITION, skinFolder.baseID + fileIndex, filename.c_str());
+						InsertMenu(subMenu, isFavoriteMenu ? -1 : fileIndex, MF_STRING | MF_BYPOSITION, skinFolder.baseID + fileIndex, filename.c_str());
 						hasFavorite = true;
 					}
 				}

@@ -25,6 +25,7 @@
 #include "Skin.h"
 #include "System.h"
 #include "resource.h"
+#include "Measure.h"
 
 namespace {
 
@@ -273,4 +274,13 @@ void Logger::LogSkinVF(Logger::Level level, Skin* skin, const WCHAR* format, va_
 		source = skin->GetSkinPath();
 	}
 	GetLogger().LogVF(level, source.c_str(), format, args);
+}
+
+void Logger::LogMeasureVF(Logger::Level level, Measure* measure, const WCHAR* format, va_list args)
+{
+	if (!measure || !measure->IsDisabled())
+	{
+		const std::wstring source = GetSectionSourceString(measure);
+		GetLogger().LogVF(level, source.c_str(), format, args);
+	}
 }

@@ -24,6 +24,7 @@
 #include "Rainmeter.h"
 #include "System.h"
 #include "Measure.h"
+#include "MeasureTime.h"
 #include "Meter.h"
 #include "resource.h"
 
@@ -223,6 +224,8 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 	// Scale: [Measure:/scale], [Measure:/scale, dec]
 	// Max/Min: [Measure:MaxValue], [Measure:MaxValue:/scale, dec] ('%' cannot be used)
 	// EscapeRegExp: [Measure:EscapeRegExp] (Escapes regular expression syntax, used for 'IfMatch')
+	// EncodeUrl: [Measure:EncodeUrl] (Escapes URL reserved characters)
+	// TimeStamp: [TimeMeasure:TimeStamp] (ONLY for Time measures, returns the Windows timestamp of the measure)
 	enum class ValueType
 	{
 		Raw,
@@ -230,7 +233,8 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		Max,
 		Min,
 		EscapeRegExp,
-		EncodeUrl
+		EncodeUrl,
+		TimeStamp
 	} valueType = ValueType::Raw;
 
 	if (isKeySelector)
@@ -250,6 +254,10 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		else if (_wcsicmp(selectorSz, L"EncodeUrl") == 0)
 		{
 			valueType = ValueType::EncodeUrl;
+		}
+		else if (_wcsicmp(selectorSz, L"TimeStamp") == 0)
+		{
+			valueType = ValueType::TimeStamp;
 		}
 		else
 		{
@@ -300,6 +308,12 @@ bool ConfigParser::GetSectionVariable(std::wstring& strVariable, std::wstring& s
 		{
 			strValue = measure->GetStringValue();
 			StringUtil::EncodeUrl(strValue);
+			return true;
+		}
+		else if (measure->GetTypeID() == TypeID<MeasureTime>() && valueType == ValueType::TimeStamp)
+		{
+			MeasureTime* time = (MeasureTime*)measure;
+			strValue = std::to_wstring(time->GetTimeStamp().QuadPart / 10000000);
 			return true;
 		}
 
@@ -1210,33 +1224,50 @@ bool ParseInt4(LPCTSTR string, T& v1, T& v2, T& v3, T& v4)
 {
 	if (wcschr(string, L','))
 	{
-		WCHAR* parseSz = _wcsdup(string);
-		WCHAR* token;
+		std::wstring str = string;
+		std::vector<T> tokens;
+		size_t start = 0;
+		size_t end = 0;
+		int parens = 0;
 
-		token = wcstok(parseSz, L",");
-		if (token)
+		auto getToken = [&]() -> void
 		{
-			v1 = ConfigParser::ParseInt(token, 0);
-
-			token = wcstok(nullptr, L",");
-			if (token)
+			start = str.find_first_not_of(L" \t", start); // skip any leading whitespace
+			if (start <= end)
 			{
-				v2 = ConfigParser::ParseInt(token, 0);
+				tokens.push_back(ConfigParser::ParseInt(str.substr(start, end - start).c_str(), 0));
+			}
+		};
 
-				token = wcstok(nullptr, L",");
-				if (token)
+		for (auto iter : str)
+		{
+			switch (iter)
+			{
+			case '(': ++parens; break;
+			case ')': --parens; break;
+			case ',':
 				{
-					v3 = ConfigParser::ParseInt(token, 0);
-
-					token = wcstok(nullptr, L",");
-					if (token)
+					if (parens == 0)
 					{
-						v4 = ConfigParser::ParseInt(token, 0);
+						getToken();
+						start = end + 1; // skip comma
+						break;
 					}
+					//else multi arg function ?
 				}
 			}
+			++end;
 		}
-		free(parseSz);
+
+		// read last token
+		getToken();
+
+		size_t size = tokens.size();
+		if (size > 0) v1 = tokens[0];
+		if (size > 1) v2 = tokens[1];
+		if (size > 2) v3 = tokens[2];
+		if (size > 3) v4 = tokens[3];
+
 		return true;
 	}
 

@@ -41,6 +41,8 @@ protected:
 private:
 	bool m_AddDaysToHours;
 	std::wstring m_Format;
+	double m_Seconds;
+	bool m_SecondsDefined;
 };
 
 #endif
