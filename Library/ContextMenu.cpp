@@ -312,7 +312,7 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 		if (alphaMenu)
 		{
 			int alpha = skin->GetAlphaValue();
-			if (alpha == 1)	// ~100%
+			if (alpha <= 1)	// ~100%
 			{
 				CheckMenuRadioItem(alphaMenu, 10, 10, 10, MF_BYPOSITION);
 			}

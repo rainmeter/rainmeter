@@ -670,7 +670,7 @@ void DialogManage::TabSkins::SetControls()
 		item = GetControl(Id_TransparencyDropDownList);
 		EnableWindow(item, TRUE);
 		int alpha = m_SkinWindow->GetAlphaValue();
-		if (alpha == 1)	// ~100%
+		if (alpha <= 1)	// ~100%
 		{
 			ComboBox_SetCurSel(item, 10);
 		}
