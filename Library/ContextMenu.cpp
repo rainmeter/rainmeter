@@ -261,6 +261,7 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 				MENU_ITEM(IDM_SKIN_TRANSPARENCY_70, ID_STR_70PERCENT),
 				MENU_ITEM(IDM_SKIN_TRANSPARENCY_80, ID_STR_80PERCENT),
 				MENU_ITEM(IDM_SKIN_TRANSPARENCY_90, ID_STR_90PERCENT),
+				MENU_ITEM(IDM_SKIN_TRANSPARENCY_100, ID_STR_100PERCENT),
 				MENU_SEPARATOR(),
 				MENU_ITEM(IDM_SKIN_TRANSPARENCY_FADEIN, ID_STR_FADEIN),
 				MENU_ITEM(IDM_SKIN_TRANSPARENCY_FADEOUT, ID_STR_FADEOUT)),
@@ -310,10 +311,18 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 		HMENU alphaMenu = GetSubMenu(settingsMenu, 1);
 		if (alphaMenu)
 		{
-			UINT checkPos = (UINT)(10 - skin->GetAlphaValue() / 25.5);
-			checkPos = min(9, checkPos);
-			checkPos = max(0, checkPos);
-			CheckMenuRadioItem(alphaMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
+			int alpha = skin->GetAlphaValue();
+			if (alpha == 1)	// ~100%
+			{
+				CheckMenuRadioItem(alphaMenu, 10, 10, 10, MF_BYPOSITION);
+			}
+			else
+			{
+				UINT checkPos = (UINT)(10 - alpha / 25.5);
+				checkPos = min(9, checkPos);
+				checkPos = max(0, checkPos);
+				CheckMenuRadioItem(alphaMenu, checkPos, checkPos, checkPos, MF_BYPOSITION);
+			}
 
 			switch (skin->GetWindowHide())
 			{

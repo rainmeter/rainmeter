@@ -534,6 +534,7 @@ void DialogManage::TabSkins::Initialize()
 	ComboBox_AddString(item, L"70%");
 	ComboBox_AddString(item, L"80%");
 	ComboBox_AddString(item, L"90%");
+	ComboBox_AddString(item, L"~100%");
 
 	item = GetControl(Id_ZPositionDropDownList);
 	ComboBox_AddString(item, GetString(ID_STR_ONDESKTOP));
@@ -668,10 +669,18 @@ void DialogManage::TabSkins::SetControls()
 
 		item = GetControl(Id_TransparencyDropDownList);
 		EnableWindow(item, TRUE);
-		int value = (int)(10 - m_SkinWindow->GetAlphaValue() / 25.5);
-		value = min(9, value);
-		value = max(0, value);
-		ComboBox_SetCurSel(item, value);
+		int alpha = m_SkinWindow->GetAlphaValue();
+		if (alpha == 1)	// ~100%
+		{
+			ComboBox_SetCurSel(item, 10);
+		}
+		else
+		{
+			int value = (int)(10 - alpha / 25.5);
+			value = min(9, value);
+			value = max(0, value);
+			ComboBox_SetCurSel(item, value);
+		}
 
 		item = GetControl(Id_ZPositionDropDownList);
 		EnableWindow(item, TRUE);
