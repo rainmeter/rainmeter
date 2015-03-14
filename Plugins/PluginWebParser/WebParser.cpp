@@ -205,6 +205,7 @@ struct MeasureData
 	std::wstring finishAction;
 	std::wstring onRegExpErrAction;
 	std::wstring onConnectErrAction;
+	std::wstring onDownloadErrAction;
 	std::wstring downloadFolder;
 	std::wstring downloadFile;
 	std::wstring downloadedFile;
@@ -741,6 +742,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	measure->finishAction = RmReadString(rm, L"FinishAction", L"", FALSE);
 	measure->onRegExpErrAction = RmReadString(rm, L"OnRegExpErrorAction", L"", FALSE);
 	measure->onConnectErrAction = RmReadString(rm, L"OnConnectErrorAction", L"", FALSE);
+	measure->onDownloadErrAction = RmReadString(rm, L"OnDownloadErrorAction", L"", FALSE);
 	measure->errorString = RmReadString(rm, L"ErrorString", L"");
 
 	int index = RmReadInt(rm, L"StringIndex", 0);
@@ -1417,6 +1419,11 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 					measure->rm, LOG_ERROR,
 					L"WebParser: Download failed (res=0x%08X, COM=0x%08X): %s",
 					result, resultCoInitialize, url.c_str());
+
+				if (!measure->onDownloadErrAction.empty())
+				{
+					RmExecute(measure->skin, measure->onDownloadErrAction.c_str());
+				}
 			}
 
 			if (SUCCEEDED(resultCoInitialize))
@@ -1427,6 +1434,11 @@ unsigned __stdcall NetworkDownloadThreadProc(void* pParam)
 		else
 		{
 			RmLogF(measure->rm, LOG_ERROR, L"WebParser: Download failed: %s", url.c_str());
+
+			if (!measure->onDownloadErrAction.empty())
+			{
+				RmExecute(measure->skin, measure->onDownloadErrAction.c_str());
+			}
 		}
 	}
 	else
