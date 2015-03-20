@@ -214,7 +214,7 @@ void PlayerSpotify::OpenPlayer(std::wstring& path)
 	{
 		if (path.empty())
 		{
-			// Gotta figure out where Winamp is located at
+			// Gotta figure out where Spotify is located at
 			HKEY hKey;
 			RegOpenKeyEx(HKEY_CLASSES_ROOT,
 						 L"spotify\\DefaultIcon",
