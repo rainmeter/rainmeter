@@ -21,10 +21,19 @@
 #include <vector>
 #include <time.h>
 #include <shlwapi.h>
+#include <random>
 #include "../API/RainmeterAPI.h"
 #include "../../Common/StringUtil.h"
 
 #define BUFFER_SIZE 4096
+
+template <typename T>
+T GetRandomNumber(T size)
+{
+	static std::mt19937 s_Engine((unsigned)time(nullptr));
+	const std::uniform_int_distribution<T> distribution(0, size);
+	return distribution(s_Engine);
+}
 
 struct MeasureData
 {
@@ -125,8 +134,6 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		measure->separator = RmReadString(rm, L"Separator", L"\n");
 	}
-
-	srand((unsigned)time(nullptr));
 }
 
 PLUGIN_EXPORT double Update(void* data)
@@ -151,7 +158,8 @@ PLUGIN_EXPORT double Update(void* data)
 			if (size > 0)
 			{
 				// Go to a random place
-				int pos = rand() % size;
+				long pos = GetRandomNumber(size);
+
 				fseek(file, (pos / 2) * 2, SEEK_SET);
 
 				measure->value.clear();
@@ -310,7 +318,7 @@ PLUGIN_EXPORT double Update(void* data)
 	else
 	{
 		// Select the filename
-		measure->value = measure->files[rand() % measure->files.size()];
+		measure->value = measure->files[GetRandomNumber(measure->files.size())];
 	}
 
 	return 0;
