@@ -72,7 +72,8 @@ bool PlayerSpotify::CheckWindow()
 	// Try to find Spotify window every 5 seconds
 	if (time - m_LastCheckTime > 5000)
 	{
-		if (csrfToken.empty() || openidToken.empty()) {
+		m_Window = FindWindow(L"SpotifyMainWindow", nullptr);
+		if ((!m_Initialized || csrfToken.empty() || openidToken.empty()) && m_Window) {
 			//Grab CSRF token, requires Origin header set
 			csrfToken = Internet::DownloadUrl(m_baseURL + m_csrfURL, CP_UTF8, originHeader);
 			RmLog(LOG_NOTICE, csrfToken.c_str());
@@ -97,7 +98,6 @@ bool PlayerSpotify::CheckWindow()
 		
 		m_LastCheckTime = time;
 
-		m_Window = FindWindow(L"SpotifyMainWindow", nullptr);
 		if (m_Window)
 		{
 			m_Initialized = true;
@@ -123,28 +123,34 @@ void PlayerSpotify::UpdateData()
 			WDocument statusDocument;
 			statusDocument.Parse(statusJson.c_str());
 			if (statusDocument[L"error"].IsNull()) {
-				//Client does not really have a "stopped" state, and holds on to tracks
-				m_State = statusDocument[L"playing"].GetBool() ? STATE_PLAYING : STATE_PAUSED;
-				m_Shuffle = statusDocument[L"shuffle"].GetBool();
-				m_Repeat = statusDocument[L"repeat"].GetBool();
-				m_Position = int(statusDocument[L"playing_position"].GetDouble());
+				WValue& runningValue = statusDocument[L"running"];
+				if (!runningValue.IsNull() && runningValue.GetBool()) {
+					//Client does not really have a "stopped" state, and holds on to tracks
+					m_State = statusDocument[L"playing"].GetBool() ? STATE_PLAYING : STATE_PAUSED;
+					m_Shuffle = statusDocument[L"shuffle"].GetBool();
+					m_Repeat = statusDocument[L"repeat"].GetBool();
+					m_Position = int(statusDocument[L"playing_position"].GetDouble());
 
-				WValue& trackValue = statusDocument[L"track"];
+					WValue& trackValue = statusDocument[L"track"];
 
-				if (!trackValue.IsNull()) {
+					if (!trackValue.IsNull()) {
 
-					m_Duration = trackValue[L"length"].GetInt();
+						m_Duration = trackValue[L"length"].GetInt();
 
-					WValue& trackResource = trackValue[L"track_resource"];
-					m_Title = trackResource[L"name"].GetString();
+						WValue& trackResource = trackValue[L"track_resource"];
+						m_Title = trackResource[L"name"].GetString();
 
-					WValue& artistResource = trackValue[L"artist_resource"];
-					m_Artist = artistResource[L"name"].GetString();
+						WValue& artistResource = trackValue[L"artist_resource"];
+						m_Artist = artistResource[L"name"].GetString();
 
-					WValue& albumResouce = trackValue[L"album_resource"];
-					m_Album = albumResouce[L"name"].GetString();
-
+						WValue& albumResouce = trackValue[L"album_resource"];
+						m_Album = albumResouce[L"name"].GetString();
+					}
 				}
+			}
+			else {
+				ClearData();
+				m_Initialized = false;
 			}
 		}
 	}
