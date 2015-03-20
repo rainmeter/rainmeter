@@ -18,8 +18,15 @@
 
 #include "StdAfx.h"
 #include "PlayerSpotify.h"
+#include "../../Library/rapidjson/rapidjson.h"
+#include "../../Library/rapidjson/document.h"
+#include "../../Library/rapidjson/stringbuffer.h"
 
 Player* PlayerSpotify::c_Player = nullptr;
+
+using namespace rapidjson;
+typedef GenericDocument<UTF16<>> WDocument;
+typedef GenericValue<UTF16<>> WValue;
 
 /*
 ** Constructor.
@@ -65,6 +72,29 @@ bool PlayerSpotify::CheckWindow()
 	// Try to find Spotify window every 5 seconds
 	if (time - m_LastCheckTime > 5000)
 	{
+		if (csrfToken.empty() || openidToken.empty()) {
+			//Grab CSRF token, requires Origin header set
+			csrfToken = Internet::DownloadUrl(m_baseURL + m_csrfURL, CP_UTF8, originHeader);
+			RmLog(LOG_NOTICE, csrfToken.c_str());
+			WDocument csrfDocument;
+			csrfDocument.Parse(csrfToken.c_str());
+
+			if (!csrfDocument[L"token"].IsNull()) {
+				csrfToken = csrfDocument[L"token"].GetString();
+				RmLog(LOG_NOTICE, csrfToken.c_str());
+			}
+
+			//Grab OpenID token
+			openidToken = Internet::DownloadUrl(m_openidURL, CP_UTF8);
+			WDocument tokenDocument;
+			tokenDocument.Parse(openidToken.c_str());
+
+			if (!tokenDocument[L"t"].IsNull()) {
+				openidToken = tokenDocument[L"t"].GetString();
+				RmLog(LOG_NOTICE, openidToken.c_str());
+			}
+		}
+		
 		m_LastCheckTime = time;
 
 		m_Window = FindWindow(L"SpotifyMainWindow", nullptr);
@@ -85,42 +115,37 @@ void PlayerSpotify::UpdateData()
 {
 	if (m_Initialized || CheckWindow())
 	{
-		// Parse title and artist from window title
-		WCHAR buffer[256];
-		if (GetWindowText(m_Window, buffer, 256) > 10)
+		std::wstring statusParams = L"?oauth=" + openidToken + L"&csrf=" + csrfToken;
+		std::wstring statusJson = Internet::DownloadUrl(m_baseURL + m_statusURL + statusParams, CP_UTF8, originHeader);
+
+		if (!statusJson.empty())
 		{
-			std::wstring title = &buffer[10];  // Skip "Spotify - "
+			WDocument statusDocument;
+			statusDocument.Parse(statusJson.c_str());
+			if (statusDocument[L"error"].IsNull()) {
+				//Client does not really have a "stopped" state, and holds on to tracks
+				m_State = statusDocument[L"playing"].GetBool() ? STATE_PLAYING : STATE_PAUSED;
+				m_Shuffle = statusDocument[L"shuffle"].GetBool();
+				m_Repeat = statusDocument[L"repeat"].GetBool();
+				m_Position = int(statusDocument[L"playing_position"].GetDouble());
 
-			std::wstring::size_type pos = title.find(L" \u2013 ");
-			if (pos != std::wstring::npos)
-			{
-				std::wstring artist(title, 0, pos);
-				pos += 3;  // Skip " - "
-				std::wstring track(title, pos);
+				WValue& trackValue = statusDocument[L"track"];
 
-				if (track != m_Title || artist != m_Artist)
-				{
-					m_State = STATE_PLAYING;
-					m_Title = track;
-					m_Artist = artist;
-					++m_TrackCount;
+				if (!trackValue.IsNull()) {
 
-					if (m_Measures & MEASURE_LYRICS)
-					{
-						FindLyrics();
-					}
+					m_Duration = trackValue[L"length"].GetInt();
+
+					WValue& trackResource = trackValue[L"track_resource"];
+					m_Title = trackResource[L"name"].GetString();
+
+					WValue& artistResource = trackValue[L"artist_resource"];
+					m_Artist = artistResource[L"name"].GetString();
+
+					WValue& albumResouce = trackValue[L"album_resource"];
+					m_Album = albumResouce[L"name"].GetString();
+
 				}
-				return;
 			}
-		}
-		else if (IsWindow(m_Window))
-		{
-			m_State = STATE_PAUSED;
-		}
-		else
-		{
-			ClearData();
-			m_Initialized = false;
 		}
 	}
 }
