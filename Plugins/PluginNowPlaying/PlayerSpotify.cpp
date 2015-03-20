@@ -76,13 +76,14 @@ bool PlayerSpotify::CheckWindow()
 		if ((!m_Initialized || csrfToken.empty() || openidToken.empty()) && m_Window) {
 			//Grab CSRF token, requires Origin header set
 			csrfToken = Internet::DownloadUrl(m_baseURL + m_csrfURL, CP_UTF8, originHeader);
-			RmLog(LOG_NOTICE, csrfToken.c_str());
 			WDocument csrfDocument;
 			csrfDocument.Parse(csrfToken.c_str());
 
 			if (!csrfDocument[L"token"].IsNull()) {
 				csrfToken = csrfDocument[L"token"].GetString();
-				RmLog(LOG_NOTICE, csrfToken.c_str());
+			}
+			else {
+				RmLog(LOG_ERROR, L"Spotify: Cannot get CSRF token");
 			}
 
 			//Grab OpenID token
@@ -92,7 +93,9 @@ bool PlayerSpotify::CheckWindow()
 
 			if (!tokenDocument[L"t"].IsNull()) {
 				openidToken = tokenDocument[L"t"].GetString();
-				RmLog(LOG_NOTICE, openidToken.c_str());
+			}
+			else {
+				RmLog(LOG_ERROR, L"Spotify: Cannot get OpenID token");
 			}
 		}
 		
