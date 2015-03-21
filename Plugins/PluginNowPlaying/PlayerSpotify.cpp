@@ -128,6 +128,14 @@ void PlayerSpotify::UpdateData()
 			if (statusDocument[L"error"].IsNull()) {
 				WValue& runningValue = statusDocument[L"running"];
 				if (!runningValue.IsNull() && runningValue.GetBool()) {
+
+					//Client does not tell us what's playing in private mode
+					WValue& openGraphState = statusDocument[L"open_graph_state"];
+					if (openGraphState[L"private_session"].GetBool()) {
+						ClearData();
+						return;
+					}
+
 					//Client does not really have a "stopped" state, and holds on to tracks
 					m_State = statusDocument[L"playing"].GetBool() ? STATE_PLAYING : STATE_PAUSED;
 					m_Shuffle = statusDocument[L"shuffle"].GetBool();
