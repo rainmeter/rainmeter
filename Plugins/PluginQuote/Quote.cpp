@@ -318,7 +318,7 @@ PLUGIN_EXPORT double Update(void* data)
 	else
 	{
 		// Select the filename
-		measure->value = measure->files[GetRandomNumber(measure->files.size())];
+		measure->value = measure->files[GetRandomNumber(measure->files.size() - 1)];
 	}
 
 	return 0;
