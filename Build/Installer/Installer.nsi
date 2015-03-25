@@ -673,8 +673,6 @@ SkipIniMove:
 	File "..\..\x32-Release\Languages\*.*"
 
 	SetOutPath "$INSTDIR\Defaults\Skins"
-	RMDir /r "$INSTDIR\Skins\illustro"
-	Delete "$INSTDIR\Skins\*.txt"
 	File /r "..\Skins\*.*"
 
 	SetOutPath "$INSTDIR\Defaults\Layouts"
