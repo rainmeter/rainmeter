@@ -19,7 +19,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "StdAfx.h"
 #include "MeasureLoop.h"
 #include "Rainmeter.h"
-#include "../Common/MathParser.h"
 
 MeasureLoop::MeasureLoop(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_StartValue(1),
