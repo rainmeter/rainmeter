@@ -19,11 +19,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "StdAfx.h"
 #include "MeasureLoop.h"
 #include "Rainmeter.h"
+#include "../Common/MathParser.h"
 
 MeasureLoop::MeasureLoop(Skin* skin, const WCHAR* name) : Measure(skin, name),
-	m_StartValue(0.0f),
-	m_EndValue(1.0f),
-	m_Increment(0.01f),
+	m_StartValue(1),
+	m_EndValue(100),
+	m_Increment(1),
 	m_IncSign(false),
 	m_LoopCount(0),
 	m_LoopCounter(0),
@@ -41,9 +42,9 @@ void MeasureLoop::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	Measure::ReadOptions(parser, section);
 
-	m_StartValue = parser.ReadFloat(section, L"StartValue", m_StartValue);
-	m_EndValue = parser.ReadFloat(section, L"EndValue", m_EndValue);
-	m_IncSign = !signbit(m_Increment = parser.ReadFloat(section, L"Increment", m_Increment));
+	m_StartValue = parser.ReadInt(section, L"StartValue", 1);
+	m_EndValue = parser.ReadInt(section, L"EndValue", 100);
+	m_IncSign = (m_Increment = parser.ReadInt(section, L"Increment", 1)) > 0;
 
 	m_LoopCount = parser.ReadInt(section, L"LoopCount", 0);
 
@@ -52,9 +53,10 @@ void MeasureLoop::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		Reset();
 
 		// Warn the user if the |m_EndValue| is never reached
-		if (abs(fmod((m_EndValue - m_StartValue), m_Increment)) != 0.0f)
+		double temp = abs(fmod((m_EndValue - m_StartValue), m_Increment));
+		if (temp != 0)
 		{
-			LogWarningF(this, L"EndValue=%lf will never be reached", m_EndValue);
+			LogWarningF(this, L"EndValue=%i will never be reached", m_EndValue);
 		}
 	}
 }

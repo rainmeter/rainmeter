@@ -41,9 +41,9 @@ protected:
 private:
 	void Reset();
 
-	double m_StartValue;
-	double m_EndValue;
-	double m_Increment;
+	int m_StartValue;
+	int m_EndValue;
+	int m_Increment;
 	bool m_IncSign;
 
 	int m_LoopCount;
