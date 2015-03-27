@@ -53,8 +53,7 @@ void MeasureLoop::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		Reset();
 
 		// Warn the user if the |m_EndValue| is never reached
-		double temp = abs(fmod((m_EndValue - m_StartValue), m_Increment));
-		if (temp != 0)
+		if (abs(fmod((m_EndValue - m_StartValue), m_Increment)) != 0)
 		{
 			LogWarningF(this, L"EndValue=%i will never be reached", m_EndValue);
 		}
