@@ -33,6 +33,7 @@
 #include "MeasureTime.h"
 #include "MeasureCalc.h"
 #include "MeasureScript.h"
+#include "MeasureLoop.h"
 #include "Rainmeter.h"
 #include "Error.h"
 #include "Util.h"
@@ -791,6 +792,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"String", measure) == 0)
 	{
 		return new MeasureString(skin, name);
+	}
+	else if (_wcsicmp(L"Loop", measure) == 0)
+	{
+		return new MeasureLoop(skin, name);
 	}
 
 	LogErrorF(skin, L"Measure=%s is not valid in [%s]", measure, name);

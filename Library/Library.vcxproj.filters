@@ -42,6 +42,9 @@
     <ClCompile Include="MeasureDiskSpace.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MeasureLoop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="MeasureMemory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -207,6 +210,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MeasureDiskSpace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureLoop.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MeasureMemory.h">
