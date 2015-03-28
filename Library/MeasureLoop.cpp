@@ -27,7 +27,8 @@ MeasureLoop::MeasureLoop(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_IncSign(false),
 	m_LoopCount(0),
 	m_LoopCounter(0),
-	m_SkipFirst(true)
+	m_SkipFirst(true),
+	m_HasOverRun(false)
 {
 }
 
@@ -50,12 +51,6 @@ void MeasureLoop::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	if (!m_Initialized || oldStart != m_StartValue || oldEnd != m_EndValue || oldInc != m_Increment)
 	{
 		Reset();
-
-		// Warn the user if the |m_EndValue| is never reached
-		if (abs(fmod((m_EndValue - m_StartValue), m_Increment)) != 0)
-		{
-			LogWarningF(this, L"EndValue=%i will never be reached", m_EndValue);
-		}
 	}
 }
 
@@ -68,15 +63,25 @@ void MeasureLoop::UpdateValue()
 		return;
 	}
 
-	if (m_LoopCount == 0 || m_LoopCounter < m_LoopCount)
+	if (m_LoopCount <= 0 || m_LoopCounter < m_LoopCount)
 	{
 		m_Value += m_Increment;
 
-		// |m_Value| is beyond |m_EndValue|, so start loop over
-		if ((m_IncSign && m_Value > m_EndValue) || (!m_IncSign && m_Value < m_EndValue))
+		if ((m_IncSign && m_Value >= m_EndValue) || (!m_IncSign && m_Value <= m_EndValue))
 		{
-			m_Value = m_StartValue;
-			++m_LoopCounter;
+			// |m_Value| has overrun. Display the |m_EndValue| for exactly
+			// one update cycle before starting over (if necessary)
+			if (m_HasOverRun && (m_LoopCount <= 0 || m_LoopCounter <= m_LoopCount))
+			{
+				m_Value = m_StartValue;
+				m_HasOverRun = false;
+			}
+			else
+			{
+				m_Value = m_EndValue;
+				++m_LoopCounter;
+				m_HasOverRun = true;
+			}
 		}
 	}
 }
@@ -86,6 +91,7 @@ void MeasureLoop::Reset()
 	m_Value = m_StartValue;
 	m_LoopCounter = 0;
 	m_SkipFirst = true;
+	m_HasOverRun = false;
 
 	if (m_StartValue < m_EndValue)
 	{

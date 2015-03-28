@@ -50,6 +50,7 @@ private:
 	int m_LoopCounter;
 
 	bool m_SkipFirst;
+	bool m_HasOverRun;
 };
 
 #endif
