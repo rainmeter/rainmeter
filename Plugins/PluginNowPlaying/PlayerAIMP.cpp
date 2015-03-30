@@ -164,7 +164,7 @@ void PlayerAIMP::UpdateData()
 		std::wstring filepath(stringData, info->nFileNameLen);
 		stringData += info->nFileNameLen;
 
-		m_Title.assign(stringData, info->nGenreLen);
+		m_Genre.assign(stringData, info->nGenreLen);
 		stringData += info->nGenreLen;
 
 		m_Title.assign(stringData, info->nTitleLen);
