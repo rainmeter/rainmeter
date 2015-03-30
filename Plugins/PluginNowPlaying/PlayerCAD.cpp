@@ -293,6 +293,10 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 						player->m_Album.assign(data, pos - data);
 						break;
 
+					case 4:
+						player->m_Genre.assign(data, pos - data);
+						break;
+
 					case 5:
 						player->m_Year = (UINT)_wtoi(data);
 						break;

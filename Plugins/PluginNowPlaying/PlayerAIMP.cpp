@@ -154,16 +154,19 @@ void PlayerAIMP::UpdateData()
 		stringData += 44;
 
 		m_Album.assign(stringData, info->nAlbumLen);
-
 		stringData += info->nAlbumLen;
+
 		m_Artist.assign(stringData, info->nArtistLen);
-
 		stringData += info->nArtistLen;
-		stringData += info->nDateLen;
-		std::wstring filepath(stringData, info->nFileNameLen);
 
+		stringData += info->nDateLen;
+
+		std::wstring filepath(stringData, info->nFileNameLen);
 		stringData += info->nFileNameLen;
+
+		m_Title.assign(stringData, info->nGenreLen);
 		stringData += info->nGenreLen;
+
 		m_Title.assign(stringData, info->nTitleLen);
 
 		m_Duration = info->nDuration / 1000;
