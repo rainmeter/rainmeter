@@ -44,7 +44,6 @@ private:
 	int m_StartValue;
 	int m_EndValue;
 	int m_Increment;
-	bool m_IncSign;
 
 	int m_LoopCount;
 	int m_LoopCounter;
