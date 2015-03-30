@@ -433,6 +433,9 @@ void PlayerWMP::UpdateData()
 				spMedia->getItemInfo(_bstr_t(L"Album"), &val);
 				m_Album = val;
 
+				spMedia->getItemInfo(_bstr_t(L"Genre"), &val);
+				m_Genre = val;
+
 				spMedia->getItemInfo(_bstr_t(L"UserRating"), &val);
 				int rating = _wtoi(val);
 

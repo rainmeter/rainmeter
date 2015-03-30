@@ -370,6 +370,9 @@ void PlayerITunes::OnTrackChange()
 		track->get_Album(&tmpStr);
 		tmpStr ? (m_Album = tmpStr) : m_Album.clear();
 
+		track->get_Genre(&tmpStr);;
+		tmpStr ? (m_Genre = tmpStr) : m_Genre.clear();
+
 		track->get_Duration(&tmpVal);
 		m_Duration = (UINT)tmpVal;
 

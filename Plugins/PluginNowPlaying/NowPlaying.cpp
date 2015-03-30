@@ -283,6 +283,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		measure->type = MEASURE_YEAR;
 	}
+	else if (_wcsicmp(L"GENRE", str) == 0)
+	{
+		measure->type = MEASURE_GENRE;
+	}
 	else
 	{
 		std::wstring error = L"NowPlaying.dll: Invalid PlayerType=";
@@ -433,6 +437,9 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 	case MEASURE_YEAR:
 		_itow_s(player->GetYear(), buffer, 10);
 		return buffer;
+
+	case MEASURE_GENRE:
+		return player->GetGenre();
 	}
 
 	return nullptr;

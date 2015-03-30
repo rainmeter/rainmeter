@@ -51,7 +51,8 @@ enum MeasureType
 	MEASURE_SHUFFLE  = 0x00002000,
 	MEASURE_REPEAT   = 0x00004000,
 	MEASURE_NUMBER   = 0x00008000,
-	MEASURE_YEAR     = 0x00010000
+	MEASURE_YEAR     = 0x00010000,
+	MEASURE_GENRE    = 0x00020000
 };
 
 class __declspec(novtable) Player
@@ -92,6 +93,7 @@ public:
 	LPCTSTR GetArtist() const { return m_Artist.c_str(); }
 	LPCTSTR GetAlbum() const { return m_Album.c_str(); }
 	LPCTSTR GetTitle() const { return m_Title.c_str(); }
+	LPCTSTR GetGenre() const { return m_Genre.c_str(); }
 	LPCTSTR GetLyrics() const { return m_Lyrics.c_str(); }
 	LPCTSTR GetCoverPath() const { return m_CoverPath.c_str(); }
 	LPCTSTR GetFilePath() const { return m_FilePath.c_str(); }
@@ -119,6 +121,7 @@ protected:
 	std::wstring m_Artist;
 	std::wstring m_Title;
 	std::wstring m_Album;
+	std::wstring m_Genre;
 	std::wstring m_Lyrics;
 	std::wstring m_CoverPath;		// Path to cover art image
 	std::wstring m_FilePath;		// Path to playing file

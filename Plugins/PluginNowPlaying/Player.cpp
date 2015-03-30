@@ -200,6 +200,7 @@ void Player::ClearData(bool all)
 	m_Artist.clear();
 	m_Album.clear();
 	m_Title.clear();
+	m_Genre.clear();
 	m_Lyrics.clear();
 	m_FilePath.clear();
 	m_CoverPath.clear();
