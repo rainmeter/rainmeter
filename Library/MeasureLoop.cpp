@@ -24,7 +24,6 @@ MeasureLoop::MeasureLoop(Skin* skin, const WCHAR* name) : Measure(skin, name),
 	m_StartValue(1),
 	m_EndValue(100),
 	m_Increment(1),
-	m_IncSign(false),
 	m_LoopCount(0),
 	m_LoopCounter(0),
 	m_SkipFirst(true),
@@ -44,7 +43,7 @@ void MeasureLoop::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_StartValue = parser.ReadInt(section, L"StartValue", 1);
 	m_EndValue = parser.ReadInt(section, L"EndValue", 100);
-	m_IncSign = (m_Increment = parser.ReadInt(section, L"Increment", 1)) > 0;
+	m_Increment = parser.ReadInt(section, L"Increment", 1);
 
 	m_LoopCount = parser.ReadInt(section, L"LoopCount", 0);
 
@@ -67,7 +66,8 @@ void MeasureLoop::UpdateValue()
 	{
 		m_Value += m_Increment;
 
-		if ((m_IncSign && m_Value >= m_EndValue) || (!m_IncSign && m_Value <= m_EndValue))
+		if ((m_Increment > 0 && m_Value >= m_EndValue) ||
+			(m_Increment <= 0 && m_Value <= m_EndValue))
 		{
 			// |m_Value| has overrun. Display the |m_EndValue| for exactly
 			// one update cycle before starting over (if necessary)
