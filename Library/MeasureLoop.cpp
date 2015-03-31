@@ -69,18 +69,38 @@ void MeasureLoop::UpdateValue()
 		if ((m_Increment > 0 && m_Value >= m_EndValue) ||
 			(m_Increment <= 0 && m_Value <= m_EndValue))
 		{
-			// |m_Value| has overrun. Display the |m_EndValue| for exactly
-			// one update cycle before starting over (if necessary)
-			if (m_HasOverRun && (m_LoopCount <= 0 || m_LoopCounter <= m_LoopCount))
+			if (!m_Invert)
 			{
-				m_Value = m_StartValue;
-				m_HasOverRun = false;
+				// |m_Value| has overrun. Display the |m_EndValue| for exactly
+				// one update cycle before starting over (if necessary)
+				if (m_HasOverRun && (m_LoopCount <= 0 || m_LoopCounter <= m_LoopCount))
+				{
+					m_Value = m_StartValue;
+					m_HasOverRun = false;
+				}
+				else
+				{
+					m_Value = m_EndValue;
+					++m_LoopCounter;
+					m_HasOverRun = true;
+				}
 			}
 			else
 			{
-				m_Value = m_EndValue;
-				++m_LoopCounter;
-				m_HasOverRun = true;
+				// For inverted measures, the opposite needs to happen.
+				// Display |m_StartValue| for exactly one update cycle
+				// before starting over (if necessary)
+				if (!m_HasOverRun && (m_LoopCount <= 0 || m_LoopCounter <= m_LoopCount))
+				{
+					m_Value = m_EndValue;
+					++m_LoopCounter;
+					m_HasOverRun = true;
+				}
+				else
+				{
+					m_Value = m_StartValue;
+					m_HasOverRun = false;
+				}
 			}
 		}
 	}
