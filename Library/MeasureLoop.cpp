@@ -37,7 +37,7 @@ MeasureLoop::~MeasureLoop()
 
 void MeasureLoop::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
-	double oldStart = m_StartValue, oldEnd = m_EndValue, oldInc = m_Increment, oldCount = m_LoopCount;
+	int oldStart = m_StartValue, oldEnd = m_EndValue, oldInc = m_Increment, oldCount = m_LoopCount;
 	bool oldInvert = m_Invert;
 
 	Measure::ReadOptions(parser, section);
