@@ -38,6 +38,7 @@ MeasureLoop::~MeasureLoop()
 void MeasureLoop::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
 	double oldStart = m_StartValue, oldEnd = m_EndValue, oldInc = m_Increment;
+	bool oldInvert = m_Invert;
 
 	Measure::ReadOptions(parser, section);
 
@@ -47,7 +48,8 @@ void MeasureLoop::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	m_LoopCount = parser.ReadInt(section, L"LoopCount", 0);
 
-	if (!m_Initialized || oldStart != m_StartValue || oldEnd != m_EndValue || oldInc != m_Increment)
+	if (!m_Initialized || oldStart != m_StartValue || oldEnd != m_EndValue ||
+		oldInc != m_Increment || oldInvert != m_Invert)
 	{
 		Reset();
 	}
