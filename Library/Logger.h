@@ -23,6 +23,7 @@
 #include <cstdarg>
 #include <string>
 #include <list>
+#include <chrono>
 
 class Section;
 class Skin;
@@ -71,7 +72,7 @@ public:
 	const std::list<Entry>& GetEntries() { return m_Entries; }
 
 private:
-	void LogInternal(Level level, ULONGLONG timestamp, const WCHAR* source, const WCHAR* msg);
+	void LogInternal(Level level, std::chrono::system_clock::time_point timestamp, const WCHAR* source, const WCHAR* msg);
 
 	// Appends |entry| to the log file.
 	void WriteToLogFile(Entry& entry);

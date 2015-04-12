@@ -102,17 +102,21 @@ void Logger::SetLogToFile(bool logToFile)
 		L"Rainmeter", L"Logging", logToFile ? L"1" : L"0", GetRainmeter().GetIniFile().c_str());
 }
 
-void Logger::LogInternal(Level level, ULONGLONG timestamp, const WCHAR* source, const WCHAR* msg)
+void Logger::LogInternal(Level level, std::chrono::system_clock::time_point timestamp, const WCHAR* source, const WCHAR* msg)
 {
+	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(timestamp.time_since_epoch());
+	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(milliseconds).count();
+	auto time = localtime(&seconds);
+
 	WCHAR timestampSz[128];
 	size_t len = _snwprintf_s(
 		timestampSz,
 		_TRUNCATE,
-		L"%02llu:%02llu:%02llu.%03llu",
-		timestamp / (1000 * 60 * 60),
-		(timestamp / (1000 * 60)) % 60,
-		(timestamp / 1000) % 60,
-		timestamp % 1000);
+		L"%02i:%02i:%02i.%03llu",
+		time->tm_hour,
+		time->tm_min,
+		time->tm_sec,
+		milliseconds.count() % 1000);
 
 	// Store up to MAX_LOG_ENTIRES entries.
 	Entry entry = {level, std::wstring(timestampSz, len), source, msg};
@@ -174,13 +178,12 @@ void Logger::Log(Level level, const WCHAR* source, const WCHAR* msg)
 	struct DelayedEntry
 	{
 		Level level;
-		ULONGLONG elapsed;
+		std::chrono::system_clock::time_point timestamp;
 		std::wstring message;
 	};
 	static std::list<DelayedEntry> s_DelayedEntries;
 
-	static ULONGLONG s_StartTime = System::GetTickCount64();
-	ULONGLONG elapsed = System::GetTickCount64() - s_StartTime;
+	std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
 
 	if (TryEnterCriticalSection(&m_CsLog))
 	{
@@ -190,7 +193,7 @@ void Logger::Log(Level level, const WCHAR* source, const WCHAR* msg)
 		while (!s_DelayedEntries.empty())
 		{
 			DelayedEntry& entry = s_DelayedEntries.front();
-			LogInternal(entry.level, entry.elapsed, source, entry.message.c_str());
+			LogInternal(entry.level, entry.timestamp, source, entry.message.c_str());
 
 			s_DelayedEntries.erase(s_DelayedEntries.begin());
 		}
@@ -198,7 +201,7 @@ void Logger::Log(Level level, const WCHAR* source, const WCHAR* msg)
 		LeaveCriticalSection(&m_CsLogDelay);
 
 		// Log the actual message.
-		LogInternal(level, elapsed, source, msg);
+		LogInternal(level, timestamp, source, msg);
 
 		LeaveCriticalSection(&m_CsLog);
 	}
@@ -207,7 +210,7 @@ void Logger::Log(Level level, const WCHAR* source, const WCHAR* msg)
 		// Queue message.
 		EnterCriticalSection(&m_CsLogDelay);
 
-		DelayedEntry entry = {level, elapsed, msg};
+		DelayedEntry entry = {level, timestamp, msg};
 		s_DelayedEntries.push_back(entry);
 
 		LeaveCriticalSection(&m_CsLogDelay);
