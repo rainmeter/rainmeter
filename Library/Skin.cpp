@@ -52,7 +52,10 @@ enum TIMER
 	TIMER_MOUSE      = 2,
 	TIMER_FADE       = 3,
 	TIMER_TRANSITION = 4,
-	TIMER_DEACTIVATE = 5
+	TIMER_DEACTIVATE = 5,
+
+	// Update this when adding a new timer.
+	TIMER_MAX        = 5
 };
 enum INTERVAL
 {
@@ -980,6 +983,14 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		Rainmeter::GetInstance().ShowSkinCustomContextMenu(System::GetCursorPosition(), this);
 		break;
 	}
+}
+
+void Skin::DoDelayedCommand(const WCHAR* command, UINT delay)
+{
+	static UINT_PTR id = TIMER_MAX;
+	++id;
+	SetTimer(m_Window, id, delay, nullptr);
+	m_DelayedCommands.emplace(id, command);
 }
 
 void Skin::ShowBlur()
@@ -2903,6 +2914,16 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			delete this;
 		}
 		break;
+
+	default:
+		{
+			auto it = m_DelayedCommands.find(wParam);
+			if (it != m_DelayedCommands.end()) {
+				KillTimer(m_Window, wParam);
+				GetRainmeter().ExecuteCommand(it->second.c_str(), this, true);
+				m_DelayedCommands.erase(it);
+			}
+		}
 	}
 
 	return 0;

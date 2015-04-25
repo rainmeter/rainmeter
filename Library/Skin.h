@@ -116,6 +116,7 @@ public:
 	void Initialize();
 
 	void DoBang(Bang bang, const std::vector<std::wstring>& args);
+	void DoDelayedCommand(const WCHAR* command, UINT delay);
 
 	void HideMeter(const std::wstring& name, bool group = false);
 	void ShowMeter(const std::wstring& name, bool group = false);
@@ -417,6 +418,8 @@ private:
 
 	bool m_Hidden;
 	RESIZEMODE m_ResizeWindow;
+
+	std::unordered_map<UINT_PTR, std::wstring> m_DelayedCommands;
 
 	std::vector<Measure*> m_Measures;
 	std::vector<Meter*> m_Meters;
