@@ -302,7 +302,21 @@ void CommandHandler::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi
 					// Skip whitespace
 					start = bangs.find_first_not_of(L" \t\r\n", start + 1, 4);
 
-					ExecuteCommand(bangs.c_str() + start, skin, false);
+					const WCHAR* newCommand = bangs.c_str() + start;
+					if (skin && _wcsnicmp(newCommand, L"!Delay ", wcslen(L"!Delay ")) == 0)
+					{
+						auto args = ParseString(newCommand + wcslen(L"!Delay "), &skin->GetParser());
+						if (args.size() == 1)
+						{
+							auto delay = ConfigParser::ParseUInt(args[0].c_str(), 0);
+							skin->DoDelayedCommand(bangs.c_str() + i + 1, delay);
+							return;
+						}
+					}
+					else
+					{
+						ExecuteCommand(newCommand, skin, false);
+					}
 				}
 			}
 			else if (bangs[i] == L'"' && isize > (i + 2) && bangs[i + 1] == L'"' && bangs[i + 2] == L'"')
