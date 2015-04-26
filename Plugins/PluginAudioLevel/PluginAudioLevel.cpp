@@ -287,7 +287,7 @@ PLUGIN_EXPORT void Initialize (void** data, void* rm)
 			}
 		}
 
-		RmLogF(rm, LOG_ERROR, L"Couldn't find Parent measure '%s'.\n", parentName);
+		RmLogF(rm, LOG_ERROR, L"Couldn't find Parent measure '%s'.", parentName);
 	}
 
 	// this is a parent measure - add it to the global list
@@ -307,7 +307,7 @@ PLUGIN_EXPORT void Initialize (void** data, void* rm)
 		}
 		else
 		{
-			RmLogF(rm, LOG_ERROR, L"Invalid Port '%s', must be one of: Output or Input.\n", port);
+			RmLogF(rm, LOG_ERROR, L"Invalid Port '%s', must be one of: Output or Input.", port);
 		}
 	}
 
@@ -322,7 +322,7 @@ PLUGIN_EXPORT void Initialize (void** data, void* rm)
 	m->m_fftSize = RmReadInt(rm, L"FFTSize", m->m_fftSize);
 	if (m->m_fftSize < 0 || m->m_fftSize & 1)
 	{
-		RmLogF(rm, LOG_ERROR, L"Invalid FFTSize %ld: must be an even integer >= 0. (powers of 2 work best)\n", m->m_fftSize);
+		RmLogF(rm, LOG_ERROR, L"Invalid FFTSize %ld: must be an even integer >= 0. (powers of 2 work best)", m->m_fftSize);
 		m->m_fftSize = 0;
 	}
 
@@ -331,7 +331,7 @@ PLUGIN_EXPORT void Initialize (void** data, void* rm)
 		m->m_fftOverlap = RmReadInt(rm, L"FFTOverlap", m->m_fftOverlap);
 		if (m->m_fftOverlap < 0 || m->m_fftOverlap >= m->m_fftSize)
 		{
-			RmLogF(rm, LOG_ERROR, L"Invalid FFTOverlap %ld: must be an integer between 0 and FFTSize(%ld).\n", m->m_fftOverlap, m->m_fftSize);
+			RmLogF(rm, LOG_ERROR, L"Invalid FFTOverlap %ld: must be an integer between 0 and FFTSize(%ld).", m->m_fftOverlap, m->m_fftSize);
 			m->m_fftOverlap = 0;
 		}
 	}
@@ -340,7 +340,7 @@ PLUGIN_EXPORT void Initialize (void** data, void* rm)
 	m->m_nBands = RmReadInt(rm, L"Bands", m->m_nBands);
 	if (m->m_nBands < 0)
 	{
-		RmLogF(rm, LOG_ERROR, L"AudioLevel.dll: Invalid Bands %ld: must be an integer >= 0.\n", m->m_nBands);
+		RmLogF(rm, LOG_ERROR, L"AudioLevel.dll: Invalid Bands %ld: must be an integer >= 0.", m->m_nBands);
 		m->m_nBands = 0;
 	}
 
@@ -460,7 +460,7 @@ PLUGIN_EXPORT void Reload (void* data, void* rm, double* maxValue)
 					L"%s%s%s", i ? L", " : L" ", i == Measure::CHANNEL_SUM ? L"or " : L"", s_chanName[i][0]);
 			}
 
-			d += _snwprintf_s(d, (sizeof(msg) + (UINT32)msg - (UINT32)d) / sizeof(WCHAR), _TRUNCATE, L".\n");
+			d += _snwprintf_s(d, (sizeof(msg) + (UINT32)msg - (UINT32)d) / sizeof(WCHAR), _TRUNCATE, L".");
 			RmLogF(rm, LOG_ERROR, msg);
 		}
 	}
@@ -492,7 +492,7 @@ PLUGIN_EXPORT void Reload (void* data, void* rm, double* maxValue)
 					L"%s%s%s", i ? L", " : L" ", i == (Measure::NUM_TYPES - 1) ? L"or " : L"", s_typeName[i]);
 			}
 
-			d += _snwprintf_s(d, (sizeof(msg) + (UINT32)msg - (UINT32)d) / sizeof(WCHAR), _TRUNCATE, L".\n");
+			d += _snwprintf_s(d, (sizeof(msg) + (UINT32)msg - (UINT32)d) / sizeof(WCHAR), _TRUNCATE, L".");
 			RmLogF(rm, LOG_ERROR, msg);
 		}
 	}
@@ -1041,7 +1041,7 @@ HRESULT	Measure::DeviceInit ()
 		if (hr != S_OK)
 		{
 			WCHAR msg[256];
-			_snwprintf_s(msg, _TRUNCATE, L"Audio %s device '%s' not found (error 0x%08x).\n",
+			_snwprintf_s(msg, _TRUNCATE, L"Audio %s device '%s' not found (error 0x%08x).",
 				m_port==PORT_OUTPUT ? L"output" : L"input", m_reqID, hr);
 
 			RmLog(LOG_WARNING, msg);
@@ -1076,7 +1076,7 @@ HRESULT	Measure::DeviceInit ()
 	hr = m_dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&m_clBugAudio);
 	if (hr != S_OK)
 	{
-		RmLog(LOG_WARNING, L"Failed to create audio client for Windows bug workaround.\n");
+		RmLog(LOG_WARNING, L"Failed to create audio client for Windows bug workaround.");
 	}
 #endif
 
@@ -1084,7 +1084,7 @@ HRESULT	Measure::DeviceInit ()
 	hr = m_dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&m_clAudio);
 	if (hr != S_OK)
 	{
-		RmLog(LOG_WARNING, L"Failed to create audio client.\n");
+		RmLog(LOG_WARNING, L"Failed to create audio client.");
 	}
 
 	EXIT_ON_ERROR(hr);
@@ -1116,7 +1116,7 @@ HRESULT	Measure::DeviceInit ()
 
 	if(m_format == FMT_INVALID)
 	{
-		RmLog(LOG_WARNING, L"Invalid sample format.  Only PCM 16b integer or PCM 32b float are supported.\n");
+		RmLog(LOG_WARNING, L"Invalid sample format.  Only PCM 16b integer or PCM 32b float are supported.");
 	}
 
 	// setup FFT buffers
@@ -1200,7 +1200,7 @@ HRESULT	Measure::DeviceInit ()
 		hnsRequestedDuration, 0, m_wfx, NULL);
 	if (hr != S_OK)
 	{
-		RmLog(LOG_WARNING, L"Failed to initialize audio client.\n");
+		RmLog(LOG_WARNING, L"Failed to initialize audio client.");
 	}
 	EXIT_ON_ERROR(hr);
 
@@ -1208,7 +1208,7 @@ HRESULT	Measure::DeviceInit ()
 	hr = m_clAudio->GetService(IID_IAudioCaptureClient, (void**)&m_clCapture);
 	if (hr != S_OK)
 	{
-		RmLog(LOG_WARNING, L"Failed to create audio capture client.\n");
+		RmLog(LOG_WARNING, L"Failed to create audio capture client.");
 	}
 	EXIT_ON_ERROR(hr);
 
@@ -1216,7 +1216,7 @@ HRESULT	Measure::DeviceInit ()
 	hr = m_clAudio->Start();
 	if (hr != S_OK)
 	{
-		RmLog(LOG_WARNING, L"Failed to start the stream.\n");
+		RmLog(LOG_WARNING, L"Failed to start the stream.");
 	}
 	EXIT_ON_ERROR(hr);
 
@@ -1237,7 +1237,7 @@ Exit:
 void Measure::DeviceRelease ()
 {
 #if (WINDOWS_BUG_WORKAROUND)
-	RmLog(LOG_DEBUG, L"Releasing dummy stream audio device.\n");
+	RmLog(LOG_DEBUG, L"Releasing dummy stream audio device.");
 	if (m_clBugAudio)
 	{
 		m_clBugAudio->Stop();
@@ -1246,7 +1246,7 @@ void Measure::DeviceRelease ()
 	SAFE_RELEASE(m_clBugAudio);
 #endif
 
-	RmLog(LOG_DEBUG, L"Releasing audio device.\n");
+	RmLog(LOG_DEBUG, L"Releasing audio device.");
 
 	if (m_clAudio)
 	{
