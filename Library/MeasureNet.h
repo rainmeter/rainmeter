@@ -59,6 +59,7 @@ protected:
 private:
 	ULONG64 GetNetOctets(NET net);
 	ULONG64 GetNetStatsValue(NET net);
+	UINT GetBestInterfaceOrByName(const WCHAR* iface);
 
 	NET m_Net;
 	UINT m_Interface;

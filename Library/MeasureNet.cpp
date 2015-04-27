@@ -446,7 +446,18 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		}
 	}
 
-	m_Interface = parser.ReadInt(section, L"Interface", 0);
+	// Option 'Interface' represents either the number of the interface in the 'iftable',
+	// or the name of the interface (ie. its Description). Optionally, if 'Interface=Best',
+	// there will be an attempt to find the best interface.
+	std::wstring iface = parser.ReadString(section, L"Interface", L"");
+	if (!iface.empty() || !std::all_of(iface.begin(), iface.end(), iswdigit))
+	{
+		m_Interface = GetBestInterfaceOrByName(iface.c_str());
+	}
+	else
+	{
+		m_Interface = parser.ReadInt(section, L"Interface", 0);
+	}
 
 	m_Cumulative = parser.ReadBool(section, L"Cumulative", false);
 	if (m_Cumulative)
@@ -468,6 +479,45 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		m_MaxValue = maxValue / 8;
 		m_LogMaxValue = false;
 	}
+}
+
+UINT MeasureNet::GetBestInterfaceOrByName(const WCHAR* iface)
+{
+	MIB_IF_ROW2* table = (MIB_IF_ROW2*)((MIB_IF_TABLE2*)c_Table)->Table;
+	if (_wcsicmp(iface, L"BEST") == 0)
+	{
+		DWORD dwBestIndex;
+		if (NO_ERROR == GetBestInterface(INADDR_ANY, &dwBestIndex))
+		{
+			// Search 'iftable' for the best interface index
+			for (size_t i = 0; i < c_NumOfTables; ++i)
+			{
+				if (table[i].InterfaceIndex == (NET_IFINDEX)dwBestIndex)
+				{
+					if (GetRainmeter().GetDebug())
+					{
+						LogDebugF(this, L"Using network interface: Number=(%i), Name=\"%s\"", i + 1, table[i].Description);
+					}
+
+					return (i + 1);
+				}
+			}
+		}
+	}
+	else
+	{
+		// Search 'iftable' for adapter name
+		for (size_t i = 0; i < c_NumOfTables; ++i)
+		{
+			if (_wcsicmp(iface, table[i].Description) == 0)
+			{
+				return (i + 1);
+			}
+		}
+	}
+
+	LogErrorF(this, L"Cannot find interface: \"%s\"", iface);
+	return 0;
 }
 
 void MeasureNet::UpdateStats()
