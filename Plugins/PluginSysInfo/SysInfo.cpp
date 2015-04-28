@@ -16,6 +16,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+#include <algorithm>
 #include <windows.h>
 #include <Iphlpapi.h>
 #include <Netlistmgr.h>
@@ -24,6 +25,7 @@
 #include "../API/RainmeterAPI.h"
 #include "../../Library/Export.h"
 #include"../../Common/Platform.h"
+#include "../../Common/StringUtil.h"
 
 #define INADDR_ANY (ULONG)0x00000000
 
@@ -87,6 +89,7 @@ struct MeasureData
 
 NLM_CONNECTIVITY GetNetworkConnectivity();
 BOOL CALLBACK MyInfoEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
+int GetBestInterfaceOrByName(LPCWSTR data, bool& found);
 
 bool g_Initialized = false;
 
@@ -263,20 +266,12 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	}
 
 	measure->useBestInterface = false;
-	LPCWSTR siData = RmReadString(rm, L"SysInfoData", L"");
-	if (measure->type >= MEASURE_ADAPTER_DESCRIPTION &&
-		measure->type <= MEASURE_GATEWAY_ADDRESS &&
-		_wcsicmp(siData, L"BEST") == 0)
+	if (measure->type >= MEASURE_ADAPTER_DESCRIPTION && measure->type <= MEASURE_GATEWAY_ADDRESS)
 	{
-		DWORD dwBestIndex;
-		if (NO_ERROR == GetBestInterface(INADDR_ANY, &dwBestIndex))
+		std::wstring siData = RmReadString(rm, L"SysInfoData", L"");
+		if (!siData.empty() || !std::all_of(siData.begin(), siData.end(), iswdigit))
 		{
-			measure->data = (int)dwBestIndex;
-			measure->useBestInterface = true;
-		}
-		else
-		{
-			measure->data = 0;
+			measure->data = GetBestInterfaceOrByName(siData.c_str(), measure->useBestInterface);
 		}
 	}
 	else
@@ -633,4 +628,56 @@ NLM_CONNECTIVITY GetNetworkConnectivity()
 	}
 
 	return connectivity;
+}
+
+int GetBestInterfaceOrByName(LPCWSTR data, bool& found)
+{
+	int index = 0;
+
+	if (_wcsicmp(data, L"BEST") == 0)
+	{
+		DWORD dwBestIndex;
+		if (NO_ERROR == GetBestInterface(INADDR_ANY, &dwBestIndex))
+		{
+			index = (int)dwBestIndex;
+			found = true;
+		}
+	}
+	else
+	{
+		PIP_ADAPTER_INFO info;
+		ULONG infoLen = sizeof(IP_ADAPTER_INFO);
+
+		// Get correct size
+		info = (IP_ADAPTER_INFO*) malloc(sizeof(IP_ADAPTER_INFO));
+		if (GetAdaptersInfo(info, &infoLen) == ERROR_BUFFER_OVERFLOW)
+		{
+			free(info);
+			info = (IP_ADAPTER_INFO*)malloc(infoLen);
+		}
+
+		if (ERROR_SUCCESS == GetAdaptersInfo(info, &infoLen))
+		{
+			int i = 0;
+			while (info)
+			{
+				if (_wcsicmp(data, StringUtil::Widen(info->Description).c_str()) == 0)
+				{
+					index = info->Index;
+					found = true;
+					break;
+				}
+
+				info = info->Next;
+				++i;
+			}
+		}
+
+		if (info)
+		{
+			free(info);
+		}
+	}
+
+	return index;
 }
