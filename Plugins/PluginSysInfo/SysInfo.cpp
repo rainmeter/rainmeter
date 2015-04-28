@@ -25,6 +25,8 @@
 #include "../../Library/Export.h"
 #include"../../Common/Platform.h"
 
+#define INADDR_ANY (ULONG)0x00000000
+
 typedef struct
 {
 	int count;						// Number of monitors
@@ -78,7 +80,9 @@ struct MeasureData
 	MeasureType type;
 	int data;
 
-	MeasureData() : type(), data() {}
+	bool useBestInterface;
+
+	MeasureData() : type(), data(), useBestInterface(false) {}
 };
 
 NLM_CONNECTIVITY GetNetworkConnectivity();
@@ -258,7 +262,27 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		RmLog(LOG_ERROR, buffer);
 	}
 
-	measure->data = RmReadInt(rm, L"SysInfoData", defaultData);
+	measure->useBestInterface = false;
+	LPCWSTR siData = RmReadString(rm, L"SysInfoData", L"");
+	if (measure->type >= MEASURE_ADAPTER_DESCRIPTION &&
+		measure->type <= MEASURE_GATEWAY_ADDRESS &&
+		_wcsicmp(siData, L"BEST") == 0)
+	{
+		DWORD dwBestIndex;
+		if (NO_ERROR == GetBestInterface(INADDR_ANY, &dwBestIndex))
+		{
+			measure->data = (int)dwBestIndex;
+			measure->useBestInterface = true;
+		}
+		else
+		{
+			measure->data = 0;
+		}
+	}
+	else
+	{
+		measure->data = RmReadInt(rm, L"SysInfoData", defaultData);
+	}
 }
 
 PLUGIN_EXPORT LPCWSTR GetString(void* data)
@@ -305,13 +329,23 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 			int i = 0;
 			while (info)
 			{
-				if (i == measure->data)
+				if (measure->useBestInterface)
 				{
-					return convertToWide(info->Description);
+					if (info->Index == measure->data)
+					{
+						return convertToWide(info->Description);
+					}
+				}
+				else
+				{
+					if (i == measure->data)
+					{
+						return convertToWide(info->Description);
+					}
 				}
 
 				info = info->Next;
-				i++;
+				++i;
 			}
 		}
 		break;
@@ -320,7 +354,19 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		if (NO_ERROR == GetIpAddrTable((PMIB_IPADDRTABLE)tmpBuffer, &tmpBufferLen, FALSE))
 		{
 			PMIB_IPADDRTABLE ipTable = (PMIB_IPADDRTABLE)tmpBuffer;
-			if (measure->data >= 1000)
+			if (measure->useBestInterface)
+			{
+				for (UINT i = 0; i < ipTable->dwNumEntries; ++i)
+				{
+					if (ipTable->table[i].dwIndex == measure->data)
+					{
+						DWORD ip = ipTable->table[i].dwAddr;
+						wsprintf(sBuffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
+						return sBuffer;
+					}
+				}
+			}
+			else if (measure->data >= 1000)
 			{
 				measure->data = measure->data - 999;
 				for (UINT i = 0; i < ipTable->dwNumEntries; ++i)
@@ -348,7 +394,19 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		if (NO_ERROR == GetIpAddrTable((PMIB_IPADDRTABLE)tmpBuffer, &tmpBufferLen, FALSE))
 		{
 			PMIB_IPADDRTABLE ipTable = (PMIB_IPADDRTABLE)tmpBuffer;
-			if (measure->data < (int)ipTable->dwNumEntries)
+			if (measure->useBestInterface)
+			{
+				for (UINT i = 0; i < ipTable->dwNumEntries; ++i)
+				{
+					if (ipTable->table[i].dwIndex == measure->data)
+					{
+						DWORD ip = ipTable->table[i].dwMask;
+						wsprintf(sBuffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
+						return sBuffer;
+					}
+				}
+			}
+			else if (measure->data < (int)ipTable->dwNumEntries)
 			{
 				DWORD ip = ipTable->table[measure->data].dwMask;
 				wsprintf(sBuffer, L"%i.%i.%i.%i", ip % 256, (ip >> 8) % 256, (ip >> 16) % 256, (ip >> 24) % 256);
@@ -364,7 +422,14 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 			int i = 0;
 			while (info)
 			{
-				if (i == measure->data)
+				if (measure->useBestInterface)
+				{
+					if (info->Index == measure->data)
+					{
+						return convertToWide(info->GatewayList.IpAddress.String);
+					}
+				}
+				else if (i == measure->data)
 				{
 					return convertToWide(info->GatewayList.IpAddress.String);
 				}
