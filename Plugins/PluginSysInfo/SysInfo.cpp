@@ -649,19 +649,12 @@ int GetBestInterfaceOrByName(LPCWSTR data, bool& found)
 	}
 	else
 	{
-		PIP_ADAPTER_INFO info;
-		ULONG infoLen = sizeof(IP_ADAPTER_INFO);
+		BYTE buffer[7168];
+		ULONG bufLen = _countof(buffer);
 
-		// Get correct size
-		info = (IP_ADAPTER_INFO*)HeapAlloc(GetProcessHeap(), 0, sizeof(IP_ADAPTER_INFO));
-		if (GetAdaptersInfo(info, &infoLen) == ERROR_BUFFER_OVERFLOW)
+		if (ERROR_SUCCESS == GetAdaptersInfo((IP_ADAPTER_INFO*)buffer, &bufLen))
 		{
-			HeapFree(GetProcessHeap(), 0, info);
-			info = (IP_ADAPTER_INFO*)HeapAlloc(GetProcessHeap(), 0, infoLen);
-		}
-
-		if (ERROR_SUCCESS == GetAdaptersInfo(info, &infoLen))
-		{
+			PIP_ADAPTER_INFO info = (IP_ADAPTER_INFO*)buffer;
 			int i = 0;
 			while (info)
 			{
@@ -675,11 +668,6 @@ int GetBestInterfaceOrByName(LPCWSTR data, bool& found)
 				info = info->Next;
 				++i;
 			}
-		}
-
-		if (info)
-		{
-			HeapFree(GetProcessHeap(), 0, info);
 		}
 	}
 
