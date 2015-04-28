@@ -273,6 +273,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 		{
 			measure->data = GetBestInterfaceOrByName(siData.c_str(), measure->useBestInterface);
 		}
+		else
+		{
+			measure->data = 0;
+		}
 	}
 	else
 	{
@@ -649,11 +653,11 @@ int GetBestInterfaceOrByName(LPCWSTR data, bool& found)
 		ULONG infoLen = sizeof(IP_ADAPTER_INFO);
 
 		// Get correct size
-		info = (IP_ADAPTER_INFO*) malloc(sizeof(IP_ADAPTER_INFO));
+		info = (IP_ADAPTER_INFO*)HeapAlloc(GetProcessHeap(), 0, sizeof(IP_ADAPTER_INFO));
 		if (GetAdaptersInfo(info, &infoLen) == ERROR_BUFFER_OVERFLOW)
 		{
-			free(info);
-			info = (IP_ADAPTER_INFO*)malloc(infoLen);
+			HeapFree(GetProcessHeap(), 0, info);
+			info = (IP_ADAPTER_INFO*)HeapAlloc(GetProcessHeap(), 0, infoLen);
 		}
 
 		if (ERROR_SUCCESS == GetAdaptersInfo(info, &infoLen))
@@ -675,7 +679,7 @@ int GetBestInterfaceOrByName(LPCWSTR data, bool& found)
 
 		if (info)
 		{
-			free(info);
+			HeapFree(GetProcessHeap(), 0, info);
 		}
 	}
 
