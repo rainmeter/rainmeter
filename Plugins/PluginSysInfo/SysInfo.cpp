@@ -269,13 +269,13 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	if (measure->type >= MEASURE_ADAPTER_DESCRIPTION && measure->type <= MEASURE_GATEWAY_ADDRESS)
 	{
 		std::wstring siData = RmReadString(rm, L"SysInfoData", L"");
-		if (!siData.empty() || !std::all_of(siData.begin(), siData.end(), iswdigit))
+		if (!siData.empty() && !std::all_of(siData.begin(), siData.end(), iswdigit))
 		{
 			measure->data = GetBestInterfaceOrByName(siData.c_str(), measure->useBestInterface);
 		}
 		else
 		{
-			measure->data = 0;
+			measure->data = RmReadInt(rm, L"SysInfoData", defaultData);
 		}
 	}
 	else
