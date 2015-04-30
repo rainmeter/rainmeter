@@ -450,7 +450,7 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	// or the name of the interface (ie. its Description). Optionally, if 'Interface=Best',
 	// there will be an attempt to find the best interface.
 	std::wstring iface = parser.ReadString(section, L"Interface", L"");
-	if (!iface.empty() || !std::all_of(iface.begin(), iface.end(), iswdigit))
+	if (!iface.empty() && !std::all_of(iface.begin(), iface.end(), iswdigit))
 	{
 		m_Interface = GetBestInterfaceOrByName(iface.c_str());
 	}
@@ -483,6 +483,8 @@ void MeasureNet::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 UINT MeasureNet::GetBestInterfaceOrByName(const WCHAR* iface)
 {
+	if (c_Table == nullptr) return 0;
+
 	MIB_IF_ROW2* table = (MIB_IF_ROW2*)((MIB_IF_TABLE2*)c_Table)->Table;
 	if (_wcsicmp(iface, L"BEST") == 0)
 	{
