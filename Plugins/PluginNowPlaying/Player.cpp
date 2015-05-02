@@ -121,8 +121,12 @@ void Player::FindCover()
 	{
 		std::wstring trackFolder = CCover::GetFileFolder(m_FilePath);
 
-		if (!CCover::GetLocal(L"cover", trackFolder, m_CoverPath) &&
-			!CCover::GetLocal(L"folder", trackFolder, m_CoverPath))
+		if (!CCover::GetLocal(m_Artist, trackFolder, m_CoverPath) &&
+			!CCover::GetLocal(L"CD", trackFolder, m_CoverPath) &&
+			!CCover::GetLocal(L"front", trackFolder, m_CoverPath) &&
+			!CCover::GetLocal(L"cover", trackFolder, m_CoverPath) &&
+			!CCover::GetLocal(L"folder", trackFolder, m_CoverPath) &&
+			!CCover::GetLocal(m_Album, trackFolder, m_CoverPath))
 		{
 			// Nothing found
 			m_CoverPath.clear();
