@@ -485,35 +485,67 @@ UINT MeasureNet::GetBestInterfaceOrByName(const WCHAR* iface)
 {
 	if (c_Table == nullptr) return 0;
 
-	MIB_IF_ROW2* table = (MIB_IF_ROW2*)((MIB_IF_TABLE2*)c_Table)->Table;
 	if (_wcsicmp(iface, L"BEST") == 0)
 	{
 		DWORD dwBestIndex;
 		if (NO_ERROR == GetBestInterface(INADDR_ANY, &dwBestIndex))
 		{
-			// Search 'iftable' for the best interface index
-			for (size_t i = 0; i < c_NumOfTables; ++i)
+			if (c_GetIfTable2)
 			{
-				if (table[i].InterfaceIndex == (NET_IFINDEX)dwBestIndex)
+				MIB_IF_ROW2* table = (MIB_IF_ROW2*)((MIB_IF_TABLE2*)c_Table)->Table;
+				for (size_t i = 0; i < c_NumOfTables; ++i)
 				{
-					if (GetRainmeter().GetDebug())
+					if (table[i].InterfaceIndex == (NET_IFINDEX)dwBestIndex)
 					{
-						LogDebugF(this, L"Using network interface: Number=(%i), Name=\"%s\"", i + 1, table[i].Description);
-					}
+						if (GetRainmeter().GetDebug())
+						{
+							LogDebugF(this, L"Using network interface: Number=(%i), Name=\"%s\"", i + 1, table[i].Description);
+						}
 
-					return (i + 1);
+						return (i + 1);
+					}
+				}
+			}
+			else
+			{
+				MIB_IFROW* table = (MIB_IFROW*)((MIB_IFTABLE*)c_Table)->table;
+				for (size_t i = 0; i < c_NumOfTables; ++i)
+				{
+					if (table[i].dwIndex == (NET_IFINDEX)dwBestIndex)
+					{
+						if (GetRainmeter().GetDebug())
+						{
+							LogDebugF(this, L"Using network interface: Number=(%i), Name=\"%.*S\"", (int)i + 1, table[i].dwDescrLen, (char*)table[i].bDescr);
+						}
+
+						return (i + 1);
+					}
 				}
 			}
 		}
 	}
 	else
 	{
-		// Search 'iftable' for adapter name
-		for (size_t i = 0; i < c_NumOfTables; ++i)
+		if (c_GetIfTable2)
 		{
-			if (_wcsicmp(iface, table[i].Description) == 0)
+			MIB_IF_ROW2* table = (MIB_IF_ROW2*)((MIB_IF_TABLE2*)c_Table)->Table;
+			for (size_t i = 0; i < c_NumOfTables; ++i)
 			{
-				return (i + 1);
+				if (_wcsicmp(iface, table[i].Description) == 0)
+				{
+					return (i + 1);
+				}
+			}
+		}
+		else
+		{
+			MIB_IFROW* table = (MIB_IFROW*)((MIB_IFTABLE*)c_Table)->table;
+			for (size_t i = 0; i < c_NumOfTables; ++i)
+			{
+				if (_wcsicmp(iface, StringUtil::Widen((char*)table[i].bDescr).c_str()) == 0)
+				{
+					return (i + 1);
+				}
 			}
 		}
 	}
