@@ -117,6 +117,9 @@ bool ExtractMP4(TagLib::MP4::File* file, const std::wstring& target)
 
 }  // namespace
 
+
+const LPCTSTR CCover::localCoverExtName[localCoverExtCount] = { L"jpg", L"jpeg", L"png", L"bmp" };
+
 /*
 ** Checks if cover art is in cache.
 **
@@ -137,12 +140,9 @@ bool CCover::GetLocal(std::wstring filename, const std::wstring& folder, std::ws
 	testPath += L".";
 	std::wstring::size_type origLen = testPath.length();
 
-	const int extCount = 4;
-	LPCTSTR extName[extCount] = { L"jpg", L"jpeg", L"png", L"bmp" };
-
-	for (int i = 0; i < extCount; ++i)
+	for (int i = 0; i < localCoverExtCount; ++i)
 	{
-		testPath += extName[i];
+		testPath += localCoverExtName[i];
 		if (_waccess(testPath.c_str(), 0) == 0)
 		{
 			target = testPath;
@@ -156,6 +156,37 @@ bool CCover::GetLocal(std::wstring filename, const std::wstring& folder, std::ws
 	}
 
 	return false;
+}
+bool CCover::GetLocalAnyImage(const std::wstring& folder, std::wstring& target)
+{
+	std::wstring testPath = folder;
+	std::wstring::size_type origLen = testPath.length();
+
+	LPCWSTR lpFileName;
+	WIN32_FIND_DATA FindFileData;
+
+	HANDLE hFind;
+	for (int i = 0; i < localCoverExtCount; ++i)
+	{
+		testPath += L"*.";
+		testPath += localCoverExtName[i];
+		lpFileName = testPath.c_str();
+		
+		hFind = FindFirstFile(lpFileName, &FindFileData);
+		if (hFind != INVALID_HANDLE_VALUE
+			&& (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+		{
+			std::wstring imagePath = folder;
+			imagePath += FindFileData.cFileName;
+			target = imagePath;
+			return true;
+		}
+		else
+		{
+			// Get rid of the added extension
+			testPath.resize(origLen);
+		}
+	}
 }
 
 /*
