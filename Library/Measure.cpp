@@ -268,11 +268,11 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 				{
 					const int rc = pcre_exec(
 						re,
-						nullptr,           // No extra data - we didn't study the pattern
-						utf8str.c_str(),   // The subject string
+						nullptr,                // No extra data - we didn't study the pattern
+						utf8str.c_str(),        // The subject string
 						(int)utf8str.length(),  // The length of the subject
 						offset,
-						0,
+						PCRE_NOTEMPTY,          // Empty string is not a valid match
 						ovector,
 						(int)_countof(ovector));
 					if (rc <= 0)
@@ -286,8 +286,10 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 					{
 						for (int j = rc - 1 ; j >= 0 ; --j)
 						{
-							size_t newStart = ovector[2 * j];
+							int newStart = ovector[2 * j];
 							size_t inLength = ovector[2 * j + 1] - ovector[2 * j];
+
+							if (newStart < 0) break;	// Match was not found, so skip to the next item
 
 							char tmpName[64];
 							size_t cutLength = _snprintf_s(tmpName, _TRUNCATE, "\\%i", j);;
@@ -297,7 +299,7 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 								pos = result.find(tmpName, start, cutLength);
 								if (pos != std::string::npos)
 								{
-									result.replace(pos, cutLength, utf8str, newStart, inLength);
+									result.replace(pos, cutLength, utf8str, (size_t)newStart, inLength);
 									start = pos + inLength;
 								}
 							}
