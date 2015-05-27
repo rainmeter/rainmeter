@@ -266,13 +266,14 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 			{
 				do
 				{
+					const int options = utf8str.empty() ? 0 : PCRE_NOTEMPTY;
 					const int rc = pcre_exec(
 						re,
 						nullptr,                // No extra data - we didn't study the pattern
 						utf8str.c_str(),        // The subject string
 						(int)utf8str.length(),  // The length of the subject
 						offset,
-						PCRE_NOTEMPTY,          // Empty string is not a valid match
+						options,               // Empty string is not a valid match
 						ovector,
 						(int)_countof(ovector));
 					if (rc <= 0)
