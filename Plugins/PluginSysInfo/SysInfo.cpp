@@ -47,6 +47,7 @@ enum MeasureType
 	MEASURE_SCREEN_SIZE,
 	MEASURE_RAS_STATUS,
 	MEASURE_OS_VERSION,
+	MEASURE_PAGESIZE,
 	MEASURE_OS_BITS,
 	MEASURE_IDLE_TIME,
 	MEASURE_ADAPTER_DESCRIPTION,
@@ -142,6 +143,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		measure->type = MEASURE_OS_VERSION;
 	}
+	else if (_wcsicmp(L"PAGESIZE", type) == 0)
+	{
+		measure->type = MEASURE_PAGESIZE;
+	}	
 	else if (_wcsicmp(L"OS_BITS", type) == 0)
 	{
 		measure->type = MEASURE_OS_BITS;
@@ -495,6 +500,12 @@ PLUGIN_EXPORT double Update(void* data)
 
 	switch (measure->type)
 	{
+	case MEASURE_PAGESIZE:
+		{
+			SYSTEM_INFO si = { 0 };
+			GetNativeSystemInfo(&si);
+			return (si.dwPageSize);
+		}
 	case MEASURE_OS_BITS:
 		{
 			SYSTEM_INFO si = {0};
