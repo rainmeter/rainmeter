@@ -19,6 +19,7 @@
 #ifndef RM_GFX_TEXTFORMAT_H_
 #define RM_GFX_TEXTFORMAT_H_
 
+#include "../../Library/ConfigParser.h"
 #include <Windows.h>
 
 namespace Gfx {
@@ -66,6 +67,10 @@ public:
 
 	virtual void SetVerticalAlignment(VerticalAlignment alignment);
 	VerticalAlignment GetVerticalAlignment() const { return m_VerticalAlignment; }
+
+	// Reads any inline options for the string meter. This is only available with D2D.
+	virtual void ReadInlineOptions(ConfigParser& parser, const WCHAR* section) = 0;
+	virtual void FindInlineRanges(const std::wstring& str) = 0;
 
 protected:
 	TextFormat();

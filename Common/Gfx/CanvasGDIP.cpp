@@ -158,8 +158,11 @@ void CanvasGDIP::Clear(const Gdiplus::Color& color)
 	}
 }
 
-void CanvasGDIP::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect, const Gdiplus::SolidBrush& brush)
+void CanvasGDIP::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect,
+	const Gdiplus::SolidBrush& brush, const bool applyInlineFormatting)
 {
+	// Note: |applyInlineFormatting| only applies to D2D rendering.
+
 	Gdiplus::StringFormat& stringFormat = ((TextFormatGDIP&)format).m_StringFormat;
 	Gdiplus::StringFormat tStringFormat = Gdiplus::StringFormat::GenericTypographic();
 

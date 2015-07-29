@@ -325,6 +325,11 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		LogErrorF(this, L"StringEffect=%s is not valid", effect);
 	}
 
+	if (m_Skin->GetUseD2D())
+	{
+		m_TextFormat->ReadInlineOptions(parser, section);
+	}
+
 	if (m_Initialized &&
 		(wcscmp(oldFontFace.c_str(), m_FontFace.c_str()) != 0 ||
 		oldFontSize != m_FontSize ||
@@ -398,6 +403,11 @@ bool MeterString::Update()
 				m_String.erase(i, 1);
 				--i;
 			}
+		}
+
+		if (m_Skin->GetUseD2D())
+		{
+			m_TextFormat->FindInlineRanges(m_String);
 		}
 
 		if (!m_WDefined || !m_HDefined)
@@ -581,7 +591,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 		}
 
 		SolidBrush solidBrush(m_Color);
-		canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcDest, solidBrush);
+		canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcDest, solidBrush, true);
 
 		if (m_Angle != 0.0f)
 		{

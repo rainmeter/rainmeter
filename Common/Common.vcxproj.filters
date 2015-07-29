@@ -54,6 +54,48 @@
       <Filter>Gfx\Util</Filter>
     </ClCompile>
     <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="Gfx\TextInlineFormat.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatCharacterSpacing.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatColor.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatFace.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatGradientColor.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatItalic.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatKerning.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatOblique.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatSize.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatStretch.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatStrikethrough.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatTypography.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatUnderline.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatWeight.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -112,6 +154,48 @@
       <Filter>Gfx\Util</Filter>
     </ClInclude>
     <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="Gfx\TextInlineFormat.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatCharacterSpacing.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatColor.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatFace.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatGradientColor.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatItalic.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatKerning.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatOblique.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatSize.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatStretch.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatStrikethrough.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatTypography.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatUnderline.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatWeight.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">
@@ -119,6 +203,9 @@
     </Filter>
     <Filter Include="Gfx\Util">
       <UniqueIdentifier>{c3efb431-e0f5-4085-9b07-33a7e34c4baa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Gfx\TextInlineFormat">
+      <UniqueIdentifier>{7914a5da-66c9-4775-8666-d25595e6e58e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
