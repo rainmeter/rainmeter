@@ -112,7 +112,7 @@ void __stdcall RmExecute(void* skin, LPCWSTR command)
 	if (command)
 	{
 		// WM_RAINMETER_EXECUTE used instead of ExecuteCommand for thread-safety
-		SendNotifyMessage(GetRainmeter().GetWindow(), WM_RAINMETER_EXECUTE, (WPARAM)skin, (LPARAM)command);
+		SendMessage(GetRainmeter().GetWindow(), WM_RAINMETER_EXECUTE, (WPARAM)skin, (LPARAM)command);
 	}
 }
 
