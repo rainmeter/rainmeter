@@ -75,7 +75,6 @@ private:
 	void UpdateInlineGradientColor(const size_t& index, const std::wstring pattern,
 		const std::vector<std::wstring> args, const bool altGamma);
 	void UpdateInlineItalic(const size_t& index, const std::wstring pattern);
-	void UpdateInlineKerning(const size_t& index, const std::wstring pattern);
 	void UpdateInlineOblique(const size_t& index, const std::wstring pattern);
 	void UpdateInlineSize(const size_t& index, const std::wstring pattern, const FLOAT size);
 	void UpdateInlineStretch(const size_t& index, const std::wstring pattern, const DWRITE_FONT_STRETCH stretch);
