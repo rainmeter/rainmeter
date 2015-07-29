@@ -42,6 +42,7 @@ protected:
 private:
 	friend class CanvasD2D;
 	friend class TextFormatD2D;
+	friend class TextInlineFormat_Face;
 
 	void Dispose();
 

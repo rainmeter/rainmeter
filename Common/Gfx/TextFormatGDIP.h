@@ -47,6 +47,10 @@ public:
 	virtual void SetHorizontalAlignment(HorizontalAlignment alignment) override;
 	virtual void SetVerticalAlignment(VerticalAlignment alignment) override;
 
+	// Inline options only available with D2D at this time.
+	virtual void ReadInlineOptions(ConfigParser& parser, const WCHAR* section) override;
+	virtual void FindInlineRanges(const std::wstring& str) override;
+
 private:
 	friend class CanvasGDIP;
 

@@ -67,7 +67,8 @@ public:
 
 	virtual void Clear(const Gdiplus::Color& color) override;
 
-	virtual void DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect, const Gdiplus::SolidBrush& brush) override;
+	virtual void DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect,
+		const Gdiplus::SolidBrush& brush, const bool applyInlineFormatting = false) override;
 	virtual bool MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect) override;
 	virtual bool MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect, UINT& lines) override;
 
@@ -81,6 +82,7 @@ private:
 	friend class Canvas;
 	friend class FontCollectionD2D;
 	friend class TextFormatD2D;
+	friend class TextInlineFormat_Typography;
 
 	CanvasD2D();
 	~CanvasD2D();

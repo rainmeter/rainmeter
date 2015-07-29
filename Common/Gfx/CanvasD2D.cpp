@@ -309,7 +309,8 @@ void CanvasD2D::Clear(const Gdiplus::Color& color)
 	m_Target->Clear(ToColorF(color));
 }
 
-void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect, const Gdiplus::SolidBrush& brush)
+void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect,
+	const Gdiplus::SolidBrush& brush, const bool applyInlineFormatting)
 {
 	if (!BeginTargetDraw()) return;
 
@@ -322,7 +323,7 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 
 	TextFormatD2D& formatD2D = (TextFormatD2D&)format;
 	if (!formatD2D.CreateLayout(
-			str, strLen, rect.Width, rect.Height, !m_AccurateText && m_TextAntiAliasing)) return;
+		m_Target.Get(), str, strLen, rect.Width, rect.Height, !m_AccurateText && m_TextAntiAliasing)) return;
 
 	D2D1_POINT_2F drawPosition;
 	drawPosition.x = [&]()
@@ -367,6 +368,15 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 				D2D1::LayerParameters(clipRect, nullptr, D2D1_ANTIALIAS_MODE_ALIASED);
 			m_Target->PushLayer(layerParams, nullptr);
 		}
+	}
+
+	// When different "effects" are used with inline coloring options, we need to
+	// remove the previous inline coloring, then reapply them (if needed) - instead
+	// of destroying/recreating the text layout.
+	formatD2D.ResetInlineColoring(solidBrush.Get(), strLen);
+	if (applyInlineFormatting)
+	{
+		formatD2D.ApplyInlineColoring(m_Target.Get(), &drawPosition);
 	}
 
 	m_Target->DrawTextLayout(drawPosition, formatD2D.m_TextLayout.Get(), solidBrush.Get());
