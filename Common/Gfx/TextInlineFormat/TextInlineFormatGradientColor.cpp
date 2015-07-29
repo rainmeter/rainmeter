@@ -49,7 +49,7 @@ static D2D1_POINT_2F FindEdgePoint(const UINT32 theta, const float left, const f
 	D2D1_POINT_2F point = { left + (width / 2.0f), top + (height / 2.0f) };
 
 	float xfactor = 1.0f;
-	float yfactor = 1.0f;
+	float yfactor = -1.0f;
 	switch (region)
 	{
 	case One: yfactor = -yfactor; break;
