@@ -462,15 +462,18 @@ void TextFormatD2D::ReadInlineOptions(ConfigParser& parser, const WCHAR* section
 	}
 
 	// Remove any previous options that do not exist anymore
-	std::vector<TextInlineFormat*>::iterator iter = m_TextInlineFormat.begin() + (i - 1);
-	for (; iter != m_TextInlineFormat.end(); ++iter)
+	if (i <= m_TextInlineFormat.size())
 	{
-		delete (*iter);
-		(*iter) = nullptr;
+		std::vector<TextInlineFormat*>::iterator iter = m_TextInlineFormat.begin() + (i - 1);
+		for (; iter != m_TextInlineFormat.end(); ++iter)
+		{
+			delete (*iter);
+			(*iter) = nullptr;
 
-		m_HasInlineOptionsChanged = true;
+			m_HasInlineOptionsChanged = true;
+		}
+		m_TextInlineFormat.erase(m_TextInlineFormat.begin() + (i - 1), m_TextInlineFormat.end());
 	}
-	m_TextInlineFormat.erase(m_TextInlineFormat.begin() + (i - 1), m_TextInlineFormat.end());
 }
 
 void TextFormatD2D::FindInlineRanges(const std::wstring& str)
