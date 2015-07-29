@@ -72,9 +72,6 @@
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatItalic.cpp">
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatKerning.cpp">
-      <Filter>Gfx\TextInlineFormat</Filter>
-    </ClCompile>
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatOblique.cpp">
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClCompile>
@@ -170,9 +167,6 @@
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatItalic.h">
-      <Filter>Gfx\TextInlineFormat</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatKerning.h">
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatOblique.h">

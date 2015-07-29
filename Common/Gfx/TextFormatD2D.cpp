@@ -25,7 +25,6 @@
 #include "TextInlineFormat/TextInlineFormatFace.h"
 #include "TextInlineFormat/TextInlineFormatGradientColor.h"
 #include "TextInlineFormat/TextInlineFormatItalic.h"
-#include "TextInlineFormat/TextInlineFormatKerning.h"
 #include "TextInlineFormat/TextInlineFormatOblique.h"
 #include "TextInlineFormat/TextInlineFormatSize.h"
 #include "TextInlineFormat/TextInlineFormatStretch.h"
@@ -639,12 +638,6 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 		UpdateInlineItalic(index, pattern);
 		return true;
 	}
-	else if(_wcsicmp(option, L"KERNING") == 0)
-	{
-		UpdateInlineKerning(index, pattern);
-		return true;
-		
-	}
 	else if(_wcsicmp(option, L"OBLIQUE") == 0)
 	{
 		UpdateInlineOblique(index, pattern);
@@ -864,29 +857,6 @@ void TextFormatD2D::UpdateInlineItalic(const size_t& index, const std::wstring p
 	{
 		delete m_TextInlineFormat[index];
 		m_TextInlineFormat[index] = new TextInlineFormat_Italic(pattern);
-		m_HasInlineOptionsChanged = true;
-	}
-}
-
-void TextFormatD2D::UpdateInlineKerning(const size_t& index, const std::wstring pattern)
-{
-	if (index >= m_TextInlineFormat.size())
-	{
-		m_TextInlineFormat.emplace_back(new TextInlineFormat_Kerning(pattern));
-		m_HasInlineOptionsChanged = true;
-	}
-	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Kerning)
-	{
-		TextInlineFormat_Kerning* option = (TextInlineFormat_Kerning*)m_TextInlineFormat[index];
-		if (option->CompareAndUpdateProperties(pattern))
-		{
-			m_HasInlineOptionsChanged = true;
-		}
-	}
-	else
-	{
-		delete m_TextInlineFormat[index];
-		m_TextInlineFormat[index] = new TextInlineFormat_Kerning(pattern);
 		m_HasInlineOptionsChanged = true;
 	}
 }
