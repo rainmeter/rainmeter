@@ -68,9 +68,8 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 	if (m_Image.IsLoaded())
 	{
 		bool useMaskSize = false;
-		if (m_Skin->GetUseD2D() && !m_MaskImageName.empty())
+		if (m_Skin->GetUseD2D())
 		{
-			m_MaskImageNameResult = m_MaskImageName;
 			m_MaskImage.LoadImage(m_MaskImageName, true);
 
 			if (m_MaskImage.IsLoaded()) useMaskSize = true;
