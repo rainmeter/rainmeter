@@ -60,7 +60,6 @@ private:
 
 	TintedImage m_MaskImage;
 	std::wstring m_MaskImageName;
-	std::wstring m_MaskImageNameResult;
 
 	bool m_NeedsRedraw;
 	DRAWMODE m_DrawMode;
