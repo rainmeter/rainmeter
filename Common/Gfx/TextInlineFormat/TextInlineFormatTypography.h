@@ -36,13 +36,13 @@ namespace Gfx {
 class TextInlineFormat_Typography final : public TextInlineFormat
 {
 public:
-	TextInlineFormat_Typography(const std::wstring pattern, const DWRITE_FONT_FEATURE_TAG tag, const UINT32 parameter);
+	TextInlineFormat_Typography(const std::wstring pattern, const DWRITE_FONT_FEATURE_TAG tag, UINT32 parameter);
 	virtual ~TextInlineFormat_Typography();
 	virtual InlineType GetType() override { return InlineType::Typography; }
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override;
 
-	bool CompareAndUpdateProperties(const std::wstring pattern, const DWRITE_FONT_FEATURE_TAG tag, const UINT32 parameter);
+	bool CompareAndUpdateProperties(const std::wstring pattern, const DWRITE_FONT_FEATURE_TAG tag, UINT32 parameter);
 
 private:
 	TextInlineFormat_Typography();

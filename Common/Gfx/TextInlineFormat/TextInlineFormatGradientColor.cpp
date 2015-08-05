@@ -87,8 +87,8 @@ static D2D1_POINT_2F FindEdgePoint(const UINT32 theta, const float left, const f
 
 namespace Gfx {
 
-TextInlineFormat_GradientColor::TextInlineFormat_GradientColor(const std::wstring pattern, const UINT32 angle,
-	const std::vector<D2D1_GRADIENT_STOP> stops, const bool altGamma) :
+TextInlineFormat_GradientColor::TextInlineFormat_GradientColor(const std::wstring pattern, UINT32 angle,
+	const std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma) :
 		TextInlineFormat(pattern),
 		m_Angle(angle),
 		m_GradientStops(stops),
@@ -172,7 +172,7 @@ void TextInlineFormat_GradientColor::UpdateSubOptions(const size_t index, const 
 }
 
 void TextInlineFormat_GradientColor::ApplyInlineFormat(IDWriteTextLayout* layout,
-	const D2D1_POINT_2F* point, const bool hasChanged)
+	const D2D1_POINT_2F* point, bool hasChanged)
 {
 	if (!layout) return;
 
@@ -209,8 +209,8 @@ void TextInlineFormat_GradientColor::ApplyInlineFormat(IDWriteTextLayout* layout
 	}
 }
 
-bool TextInlineFormat_GradientColor::CompareAndUpdateProperties(const std::wstring pattern, const UINT32 angle,
-	const std::vector<D2D1_GRADIENT_STOP> stops, const bool altGamma)
+bool TextInlineFormat_GradientColor::CompareAndUpdateProperties(const std::wstring pattern, UINT32 angle,
+	const std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma)
 {
 	// Check most options (and size of 'stops').
 	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || m_Angle != angle ||

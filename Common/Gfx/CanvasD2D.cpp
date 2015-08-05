@@ -310,7 +310,7 @@ void CanvasD2D::Clear(const Gdiplus::Color& color)
 }
 
 void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect,
-	const Gdiplus::SolidBrush& brush, const bool applyInlineFormatting)
+	const Gdiplus::SolidBrush& brush, bool applyInlineFormatting)
 {
 	if (!BeginTargetDraw()) return;
 

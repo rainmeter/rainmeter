@@ -159,7 +159,7 @@ void CanvasGDIP::Clear(const Gdiplus::Color& color)
 }
 
 void CanvasGDIP::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect,
-	const Gdiplus::SolidBrush& brush, const bool applyInlineFormatting)
+	const Gdiplus::SolidBrush& brush, bool applyInlineFormatting)
 {
 	// Note: |applyInlineFormatting| only applies to D2D rendering.
 

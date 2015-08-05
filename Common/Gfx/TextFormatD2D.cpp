@@ -168,7 +168,7 @@ bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target,
 		{
 			if (fmt->GetType() == Gfx::InlineType::GradientColor)
 			{
-				TextInlineFormat_GradientColor* option = (TextInlineFormat_GradientColor*)fmt;
+				auto option = (TextInlineFormat_GradientColor*)fmt;
 				option->BuildGradientBrushes(target, m_TextLayout.Get());
 			}
 		}
@@ -298,7 +298,7 @@ void TextFormatD2D::SetProperties(
 		{
 			if (fmt->GetType() == Gfx::InlineType::Face)
 			{
-				TextInlineFormat_Face* face = (TextInlineFormat_Face*)fmt;
+				auto face = (TextInlineFormat_Face*)fmt;
 				face->SetFontCollection(fontCollectionD2D);
 			}
 		}
@@ -724,7 +724,7 @@ void TextFormatD2D::UpdateInlineCharacterSpacing(const size_t& index, const std:
 		// |index| is within range, and the type of object is also a 'CharacterSpacing'
 		// object, so just update the object if needed.
 
-		TextInlineFormat_CharacterSpacing* option = (TextInlineFormat_CharacterSpacing*)m_TextInlineFormat[index];
+		auto option = (TextInlineFormat_CharacterSpacing*)m_TextInlineFormat[index];
 		if (option->CompareAndUpdateProperties(pattern, leading, trailing, advanceWidth))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -750,7 +750,7 @@ void TextFormatD2D::UpdateInlineColor(const size_t& index, const std::wstring pa
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Color)
 	{
-		TextInlineFormat_Color* option = (TextInlineFormat_Color*)m_TextInlineFormat[index];
+		auto option = (TextInlineFormat_Color*)m_TextInlineFormat[index];
 		if (option->CompareAndUpdateProperties(pattern, color))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -773,7 +773,7 @@ void TextFormatD2D::UpdateInlineFace(const size_t& index, const std::wstring pat
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Face)
 	{
-		TextInlineFormat_Face* option = (TextInlineFormat_Face*)m_TextInlineFormat[index];
+		auto option = (TextInlineFormat_Face*)m_TextInlineFormat[index];
 		if (option->CompareAndUpdateProperties(pattern, face))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -824,7 +824,7 @@ void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::ws
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::GradientColor)
 	{
-		TextInlineFormat_GradientColor* option = (TextInlineFormat_GradientColor*)m_TextInlineFormat[index];
+		auto option = (TextInlineFormat_GradientColor*)m_TextInlineFormat[index];
 		if (option->CompareAndUpdateProperties(pattern, angle, stops, altGamma))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -847,7 +847,7 @@ void TextFormatD2D::UpdateInlineItalic(const size_t& index, const std::wstring p
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Italic)
 	{
-		TextInlineFormat_Italic* option = (TextInlineFormat_Italic*)m_TextInlineFormat[index];
+		auto option = (TextInlineFormat_Italic*)m_TextInlineFormat[index];
 		if (option->CompareAndUpdateProperties(pattern))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -870,7 +870,7 @@ void TextFormatD2D::UpdateInlineOblique(const size_t& index, const std::wstring 
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Oblique)
 	{
-		TextInlineFormat_Oblique* option = (TextInlineFormat_Oblique*)m_TextInlineFormat[index];
+		auto option = (TextInlineFormat_Oblique*)m_TextInlineFormat[index];
 		if (option->CompareAndUpdateProperties(pattern))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -893,7 +893,7 @@ void TextFormatD2D::UpdateInlineSize(const size_t& index, const std::wstring pat
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Size)
 	{
-		TextInlineFormat_Size* option = (TextInlineFormat_Size*)m_TextInlineFormat[index];
+		auto option = (TextInlineFormat_Size*)m_TextInlineFormat[index];
 		if (option->CompareAndUpdateProperties(pattern, size))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -916,7 +916,7 @@ void TextFormatD2D::UpdateInlineStretch(const size_t& index, const std::wstring 
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Stretch)
 	{
-		TextInlineFormat_Stretch* option = (TextInlineFormat_Stretch*)m_TextInlineFormat[index];
+		auto option = (TextInlineFormat_Stretch*)m_TextInlineFormat[index];
 		if (option->CompareAndUpdateProperties(pattern, stretch))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -939,7 +939,7 @@ void TextFormatD2D::UpdateInlineStrikethrough(const size_t& index, const std::ws
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Strikethrough)
 	{
-		TextInlineFormat_Strikethrough* option = (TextInlineFormat_Strikethrough*)m_TextInlineFormat[index];
+		auto option = (TextInlineFormat_Strikethrough*)m_TextInlineFormat[index];
 		if (option->CompareAndUpdateProperties(pattern))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -963,7 +963,7 @@ void TextFormatD2D::UpdateInlineTypography(const size_t& index, const std::wstri
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Typography)
 	{
-		TextInlineFormat_Typography* option = (TextInlineFormat_Typography*)m_TextInlineFormat[index];
+		auto option = (TextInlineFormat_Typography*)m_TextInlineFormat[index];
 		if (option->CompareAndUpdateProperties(pattern, tag, parameter))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -986,7 +986,7 @@ void TextFormatD2D::UpdateInlineUnderline(const size_t& index, const std::wstrin
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Underline)
 	{
-		TextInlineFormat_Underline* option = (TextInlineFormat_Underline*)m_TextInlineFormat[index];
+		auto option = (TextInlineFormat_Underline*)m_TextInlineFormat[index];
 		if (option->CompareAndUpdateProperties(pattern))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -1009,7 +1009,7 @@ void TextFormatD2D::UpdateInlineWeight(const size_t& index, const std::wstring p
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Weight)
 	{
-		TextInlineFormat_Weight* option = (TextInlineFormat_Weight*)m_TextInlineFormat[index];
+		auto option = (TextInlineFormat_Weight*)m_TextInlineFormat[index];
 		if (option->CompareAndUpdateProperties(pattern, weight))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -1042,12 +1042,12 @@ void TextFormatD2D::ApplyInlineColoring(ID2D1RenderTarget* target, const D2D1_PO
 	{
 		if (fmt->GetType() == Gfx::InlineType::Color)
 		{
-			TextInlineFormat_Color* option = (TextInlineFormat_Color*)fmt;
+			auto option = (TextInlineFormat_Color*)fmt;
 			option->ApplyInlineFormat(target, m_TextLayout.Get());
 		}
 		else if (fmt->GetType() == Gfx::InlineType::GradientColor)
 		{
-			TextInlineFormat_GradientColor* option = (TextInlineFormat_GradientColor*)fmt;
+			auto option = (TextInlineFormat_GradientColor*)fmt;
 			option->ApplyInlineFormat(m_TextLayout.Get(), point, m_HasInlineOptionsChanged);
 		}
 	}

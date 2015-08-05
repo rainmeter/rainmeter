@@ -23,7 +23,7 @@
 namespace Gfx {
 
 TextInlineFormat_Typography::TextInlineFormat_Typography(
-	const std::wstring pattern, const DWRITE_FONT_FEATURE_TAG tag, const UINT32 parameter) :
+	const std::wstring pattern, const DWRITE_FONT_FEATURE_TAG tag, UINT32 parameter) :
 		TextInlineFormat(pattern),
 		m_Tag(tag),
 		m_Parameter(parameter)
@@ -58,7 +58,7 @@ void TextInlineFormat_Typography::ApplyInlineFormat(IDWriteTextLayout* layout)
 }
 
 bool TextInlineFormat_Typography::CompareAndUpdateProperties(
-	const std::wstring pattern, const DWRITE_FONT_FEATURE_TAG tag, const UINT32 parameter)
+	const std::wstring pattern, const DWRITE_FONT_FEATURE_TAG tag, UINT32 parameter)
 {
 	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || m_Tag != tag || m_Parameter != parameter)
 	{

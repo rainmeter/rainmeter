@@ -28,8 +28,7 @@ namespace Gfx {
 class TextInlineFormat_CharacterSpacing final : public TextInlineFormat
 {
 public:
-	TextInlineFormat_CharacterSpacing(const std::wstring pattern, const FLOAT leading,
-		const FLOAT trailing, const FLOAT advanceWidth);
+	TextInlineFormat_CharacterSpacing(std::wstring pattern, FLOAT leading, FLOAT trailing, FLOAT advanceWidth);
 	virtual ~TextInlineFormat_CharacterSpacing();
 	virtual InlineType GetType() override { return InlineType::CharacterSpacing; }
 
