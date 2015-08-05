@@ -36,10 +36,9 @@ void TextInlineFormat_Strikethrough::ApplyInlineFormat(IDWriteTextLayout* layout
 
 	for (const auto& range : GetRanges())
 	{
-		if (range.length > 0)
-		{
-			layout->SetStrikethrough(TRUE, range);
-		}
+		if (range.length <= 0) continue;
+
+		layout->SetStrikethrough(TRUE, range);
 	}
 }
 

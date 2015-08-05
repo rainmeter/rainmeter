@@ -36,10 +36,9 @@ void TextInlineFormat_Oblique::ApplyInlineFormat(IDWriteTextLayout* layout)
 
 	for (const auto& range : GetRanges())
 	{
-		if (range.length > 0)
-		{
-			layout->SetFontStyle(DWRITE_FONT_STYLE_OBLIQUE, range);
-		}
+		if (range.length <= 0) continue;
+
+		layout->SetFontStyle(DWRITE_FONT_STYLE_OBLIQUE, range);
 	}
 }
 

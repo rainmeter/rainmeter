@@ -38,26 +38,24 @@ void TextInlineFormat_Face::ApplyInlineFormat(IDWriteTextLayout* layout)
 
 	for (const auto& range : GetRanges())
 	{
-		if (range.length > 0)
+		if (range.length <= 0) continue;
+
+		// Search for the font family name in font collection. Since the
+		// font collection might not have been built yet, build it. If the
+		// font is not in the font collection, assume it is available to
+		// the system.
+		if (m_FontCollection && m_FontCollection->InitializeCollection())
 		{
-			// Search for the font family name in font collection. Since the
-			// font collection might not have been built yet, build it. If the
-			// font is not in the font collection, assume it is available to
-			// the system.
-			if (m_FontCollection && m_FontCollection->InitializeCollection())
-			{
-				UINT32 index = UINT_MAX;
-				BOOL exists = FALSE;
-				HRESULT hr = m_FontCollection->m_Collection->FindFamilyName(m_Face.c_str(), &index, &exists);
+			UINT32 index = UINT_MAX;
+			BOOL exists = FALSE;
+			HRESULT hr = m_FontCollection->m_Collection->FindFamilyName(m_Face.c_str(), &index, &exists);
 
-				if (SUCCEEDED(hr) && exists)
-				{
-					layout->SetFontCollection(m_FontCollection->m_Collection, range);
-				}
-			}
+			if (FAILED(hr) || !exists) continue;
 
-			layout->SetFontFamilyName(m_Face.c_str(), range);
+			layout->SetFontCollection(m_FontCollection->m_Collection, range);
 		}
+
+		layout->SetFontFamilyName(m_Face.c_str(), range);
 	}
 }
 

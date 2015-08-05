@@ -46,15 +46,13 @@ void TextInlineFormat_Color::ApplyInlineFormat(ID2D1RenderTarget* target, IDWrit
 
 	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> solidBrush;
 	HRESULT hr = target->CreateSolidColorBrush(ToColorF(m_Color), solidBrush.GetAddressOf());
-	if (SUCCEEDED(hr))
+	if (FAILED(hr)) return;
+
+	for (const auto& range : GetRanges())
 	{
-		for (const auto& range : GetRanges())
-		{
-			if (range.length > 0)
-			{
-				layout->SetDrawingEffect(solidBrush.Get(), range);
-			}
-		}
+		if (range.length <= 0) continue;
+
+		layout->SetDrawingEffect(solidBrush.Get(), range);
 	}
 }
 

@@ -114,45 +114,41 @@ void TextInlineFormat_GradientColor::BuildGradientBrushes(ID2D1RenderTarget* tar
 		sub.inner_ranges.clear();
 		sub.brushes.clear();
 
-		if (sub.range.length > 0)
+		if (sub.range.length <= 0) continue;
+
+		std::vector<DWRITE_HIT_TEST_METRICS> metrics;
+		HRESULT hr = GetHitTestMetrics(layout, metrics, sub.range);
+
+		if (FAILED(hr)) continue;
+
+		size_t count = 0;
+		for (const auto& hit : metrics)
 		{
-			std::vector<DWRITE_HIT_TEST_METRICS> metrics;
-			HRESULT hr = GetHitTestMetrics(layout, metrics, sub.range);
+			Microsoft::WRL::ComPtr<ID2D1GradientStopCollection> collection;
+			hr = target->CreateGradientStopCollection(
+				&m_GradientStops[0],
+				(UINT32)m_GradientStops.size(),
+				m_AlternativeGamma ? D2D1_GAMMA_1_0 : D2D1_GAMMA_2_2,
+				D2D1_EXTEND_MODE_CLAMP,
+				collection.GetAddressOf());
 
-			if (SUCCEEDED(hr))
-			{
-				size_t count = 0;
-				for (const auto& hit : metrics)
-				{
-					Microsoft::WRL::ComPtr<ID2D1GradientStopCollection> collection;
-					hr = target->CreateGradientStopCollection(
-						&m_GradientStops[0],
-						(UINT32)m_GradientStops.size(),
-						m_AlternativeGamma ? D2D1_GAMMA_1_0 : D2D1_GAMMA_2_2,
-						D2D1_EXTEND_MODE_CLAMP,
-						collection.GetAddressOf());
+			if (FAILED(hr)) continue;
 
-					if (SUCCEEDED(hr))
-					{
-						D2D1_POINT_2F start = FindEdgePoint(m_Angle, hit.left, hit.top, hit.width, hit.height);
-						D2D1_POINT_2F end = FindEdgePoint(m_Angle + 180, hit.left, hit.top, hit.width, hit.height);
+			D2D1_POINT_2F start = FindEdgePoint(m_Angle, hit.left, hit.top, hit.width, hit.height);
+			D2D1_POINT_2F end = FindEdgePoint(m_Angle + 180, hit.left, hit.top, hit.width, hit.height);
 
-						DWRITE_TEXT_RANGE innerRange = { hit.textPosition, hit.length };
+			DWRITE_TEXT_RANGE innerRange = { hit.textPosition, hit.length };
 
-						ID2D1LinearGradientBrush* gradientBrush;
-						hr = target->CreateLinearGradientBrush(
-							D2D1::LinearGradientBrushProperties(start, end),
-							collection.Get(),
-							&gradientBrush);
+			ID2D1LinearGradientBrush* gradientBrush;
+			hr = target->CreateLinearGradientBrush(
+				D2D1::LinearGradientBrushProperties(start, end),
+				collection.Get(),
+				&gradientBrush);
 
-						if (SUCCEEDED(hr))
-						{
-							sub.inner_ranges.push_back(innerRange);
-							sub.brushes.push_back(gradientBrush);
-						}
-					}
-				}
-			}
+			if (FAILED(hr)) continue;
+
+			sub.inner_ranges.push_back(innerRange);
+			sub.brushes.push_back(gradientBrush);
 		}
 	}
 }
@@ -177,26 +173,25 @@ void TextInlineFormat_GradientColor::ApplyInlineFormat(IDWriteTextLayout* layout
 
 	for (const auto& sub : m_SubOptions)
 	{
-		if (sub.range.length > 0)
+		if (sub.range.length <= 0) continue;
+
+		size_t count = 0;
+		for (const auto& range : sub.inner_ranges)
 		{
-			size_t count = 0;
-			for (const auto& range : sub.inner_ranges)
+			if (sub.brushes[count])
 			{
-				if (sub.brushes[count])
-				{
-					D2D1_POINT_2F start = sub.brushes[count]->GetStartPoint();
-					D2D1_POINT_2F end = sub.brushes[count]->GetEndPoint();
+				D2D1_POINT_2F start = sub.brushes[count]->GetStartPoint();
+				D2D1_POINT_2F end = sub.brushes[count]->GetEndPoint();
 
-					start.x += point->x;
-					start.y += point->y;
-					end.x += point->x;
-					end.y += point->y;
+				start.x += point->x;
+				start.y += point->y;
+				end.x += point->x;
+				end.y += point->y;
 
-					layout->SetDrawingEffect(sub.brushes[count], range);
-				}
-
-				++count;
+				layout->SetDrawingEffect(sub.brushes[count], range);
 			}
+
+			++count;
 		}
 	}
 }
