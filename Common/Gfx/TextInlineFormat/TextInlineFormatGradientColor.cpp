@@ -41,12 +41,22 @@ static D2D1_POINT_2F FindEdgePoint(const UINT32 theta, const float left, const f
 		Four        // 225 - 315
 	} region;
 
-	if      (theta1 > -recttan         && theta1 <= recttan)            region = One;
-	else if (theta1 > recttan          && theta1 <= (M_PI - recttan))   region = Two;
-	else if (theta1 > (M_PI - recttan) || theta1 <= -(M_PI - recttan))  region = Three;
-	else                                                                region = Four;
-
-	D2D1_POINT_2F point = { left + (width / 2.0f), top + (height / 2.0f) };
+	if (theta1 > -recttan && theta1 <= recttan)
+	{
+		region = One;
+	}
+	else if (theta1 > recttan && theta1 <= (M_PI - recttan))
+	{
+		region = Two;
+	}
+	else if (theta1 > (M_PI - recttan) || theta1 <= -(M_PI - recttan))
+	{
+		region = Three;
+	}
+	else
+	{
+		region = Four;
+	}
 
 	float xfactor = 1.0f;
 	float yfactor = -1.0f;
@@ -58,6 +68,7 @@ static D2D1_POINT_2F FindEdgePoint(const UINT32 theta, const float left, const f
 	case Four: xfactor = -xfactor; break;
 	}
 
+	D2D1_POINT_2F point = { left + (width / 2.0f), top + (height / 2.0f) };
 	if (region == One || region == Three)
 	{
 		point.x += xfactor * (width / 2.0f);
