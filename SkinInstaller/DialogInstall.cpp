@@ -1300,6 +1300,69 @@ std::wstring DialogInstall::GetWindowsVersionString()
 	return buffer;
 }
 
+int DialogInstall::IsPluginNewer(const std::wstring& item, const std::wstring& itemPath)
+{
+	std::wstring itemVersion;
+	WCHAR buffer[MAX_PATH];
+
+	// Get temporary file to extract the plugin file
+	GetTempPath(MAX_PATH, buffer);
+	GetTempFileName(buffer, L"dat", 0, buffer);
+	std::wstring tempFile = buffer;
+	const WCHAR* tempFileSz = tempFile.c_str();
+
+	// Helper to sets buffer with current file name
+	auto getFileInfo = [&]()->bool
+	{
+		char cBuffer[MAX_PATH * 3];
+		unz_file_info ufi;
+		if (unzGetCurrentFileInfo(
+			m_PackageUnzFile, &ufi, cBuffer, _countof(cBuffer), nullptr, 0, nullptr, 0) == UNZ_OK)
+		{
+			const uLong ZIP_UTF8_FLAG = 1 << 11;
+			const DWORD codePage = (ufi.flag & ZIP_UTF8_FLAG) ? CP_UTF8 : CP_ACP;
+			MultiByteToWideChar(codePage, 0, cBuffer, strlen(cBuffer) + 1, buffer, MAX_PATH);
+			while (WCHAR* pos = wcschr(buffer, L'/')) *pos = L'\\';
+			return true;
+		}
+
+		return false;
+	};
+
+	// Loop through the contents of the archive until the plugin file is found
+	WCHAR* path;
+	do
+	{
+		if (!getFileInfo())
+		{
+			return 0;
+		}
+
+		path = wcsrchr(buffer, L'\\');
+		if (!path)
+		{
+			path = buffer;
+		}
+		else
+		{
+			++path;	// Skip slash
+		}
+
+		if (_wcsicmp(path, item.c_str()) == 0)
+		{
+			if (ExtractCurrentFile(tempFile))
+			{
+				itemVersion = GetFileVersionString(tempFileSz);
+				DeleteFile(tempFileSz);
+			}
+
+			break;
+		}
+	} while (unzGoToNextFile(m_PackageUnzFile) == UNZ_OK);
+
+	return CompareVersions(GetFileVersionString(itemPath.c_str()), itemVersion);
+}
+
 // -----------------------------------------------------------------------------------------------
 //
 //                                Install tab
@@ -1369,12 +1432,32 @@ void DialogInstall::TabInstall::Initialize()
 
 			std::wstring itemPath = path + *iter;
 			WCHAR* text = L"Add";
+			bool disablePlugin = false;
 			if (_waccess(itemPath.c_str(), 0) != -1)
 			{
-				bool backup = groupId == 0 && c_Dialog->m_BackupSkins && !c_Dialog->m_BackupPackage;
-				text = backup ? L"Backup and replace" : L"Replace";
+				if (groupId == 3)
+				{
+					int isNewer = c_Dialog->IsPluginNewer(*iter, itemPath);
+					if (isNewer >= 0)
+					{
+						disablePlugin = true;
+						text = isNewer > 0 ? L"Newer version installed" : L"Versions are the same";
+					}
+					else
+						text = L"Replace";
+				}
+				else
+				{
+					bool backup = groupId == 0 && c_Dialog->m_BackupSkins && !c_Dialog->m_BackupPackage;
+					text = backup ? L"Backup and replace" : L"Replace";
+				}
 			}
 			ListView_SetItemText(item, lvi.iItem, 1, text);
+
+			if (disablePlugin)
+			{
+				ListView_SetCheckState(item, lvi.iItem, FALSE);
+			}
 
 			++lvi.iItem;
 		}
@@ -1405,5 +1488,44 @@ void DialogInstall::TabInstall::Initialize()
 
 INT_PTR CALLBACK DialogInstall::TabInstall::DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	switch (uMsg)
+	{
+	case WM_NOTIFY:
+		return OnNotify(wParam, lParam);
+	}
+
+	return FALSE;
+}
+
+INT_PTR DialogInstall::TabInstall::OnNotify(WPARAM wParam, LPARAM lParam)
+{
+	switch (LOWORD(wParam))
+	{
+	case IDC_INSTALLTAB_COMPONENTS_LIST:
+		{
+			LPNMLISTVIEW pNMLV = (LPNMLISTVIEW)lParam;
+			if (pNMLV->uChanged == LVIF_STATE && (pNMLV->uNewState & LVIS_STATEIMAGEMASK) == INDEXTOSTATEIMAGEMASK(2))
+			{
+				HWND hwnd = pNMLV->hdr.hwndFrom;
+
+				// Get needed information from item
+				WCHAR text[80];
+				ListView_GetItemText(hwnd, pNMLV->iItem, 1, text, 80);
+				BOOL checked = ListView_GetCheckState(hwnd, pNMLV->iItem);
+
+				// Make sure we only display a message box if the plugin is older than the installed version
+				if (!checked && wcscmp(L"Newer version installed", text) == 0)
+				{
+					const WCHAR* message = L"There is already a newer version of this plugin installed " \
+						L"on your computer. Installing an older plugin is not recommended.\n\n" \
+						L"Proceed with caution.";
+					MessageBox(hwnd, message, L"Rainmeter Skin Installer", MB_OK | MB_ICONEXCLAMATION);
+				}
+
+				return TRUE;
+			}
+		}
+	}
+
 	return FALSE;
 }
