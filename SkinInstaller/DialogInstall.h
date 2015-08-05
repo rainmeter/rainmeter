@@ -49,6 +49,7 @@ private:
 		virtual void Initialize();
 
 		static INT_PTR CALLBACK DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		static INT_PTR OnNotify(WPARAM wParam, LPARAM lParam);
 	};
 
 	enum Timer
@@ -84,6 +85,7 @@ private:
 	void BeginInstall();
 	static UINT __stdcall InstallThread(void* pParam);
 	bool ExtractCurrentFile(const std::wstring& fileName);
+	int IsPluginNewer(const std::wstring& item, const std::wstring& itemPath);
 
 	void LaunchRainmeter();
 	void KeepVariables();
