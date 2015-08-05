@@ -21,7 +21,7 @@
 
 namespace Gfx {
 
-TextInlineFormat_Face::TextInlineFormat_Face(const std::wstring pattern, const std::wstring face) :
+TextInlineFormat_Face::TextInlineFormat_Face(const std::wstring& pattern, const std::wstring& face) :
 	TextInlineFormat(pattern),
 	m_Face(face),
 	m_FontCollection(nullptr)
@@ -61,7 +61,7 @@ void TextInlineFormat_Face::ApplyInlineFormat(IDWriteTextLayout* layout)
 	}
 }
 
-bool TextInlineFormat_Face::CompareAndUpdateProperties(const std::wstring pattern, const std::wstring face)
+bool TextInlineFormat_Face::CompareAndUpdateProperties(const std::wstring& pattern, const std::wstring& face)
 {
 	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || _wcsicmp(m_Face.c_str(), face.c_str()) != 0)
 	{

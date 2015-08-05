@@ -28,13 +28,13 @@ namespace Gfx {
 class TextInlineFormat_Italic final : public TextInlineFormat
 {
 public:
-	TextInlineFormat_Italic(const std::wstring pattern);
+	TextInlineFormat_Italic(const std::wstring& pattern);
 	virtual ~TextInlineFormat_Italic();
 	virtual InlineType GetType() override { return InlineType::Italic; }
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override;
 
-	bool CompareAndUpdateProperties(const std::wstring pattern);
+	bool CompareAndUpdateProperties(const std::wstring& pattern);
 
 private:
 	TextInlineFormat_Italic();

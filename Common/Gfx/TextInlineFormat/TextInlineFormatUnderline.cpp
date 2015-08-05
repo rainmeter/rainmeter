@@ -21,7 +21,7 @@
 
 namespace Gfx {
 
-TextInlineFormat_Underline::TextInlineFormat_Underline(const std::wstring pattern) :
+TextInlineFormat_Underline::TextInlineFormat_Underline(const std::wstring& pattern) :
 	TextInlineFormat(pattern)
 {
 }
@@ -43,7 +43,7 @@ void TextInlineFormat_Underline::ApplyInlineFormat(IDWriteTextLayout* layout)
 	}
 }
 
-bool TextInlineFormat_Underline::CompareAndUpdateProperties(const std::wstring pattern)
+bool TextInlineFormat_Underline::CompareAndUpdateProperties(const std::wstring& pattern)
 {
 	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0)
 	{

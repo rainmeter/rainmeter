@@ -44,8 +44,8 @@ namespace Gfx {
 class TextInlineFormat_GradientColor final : public TextInlineFormat
 {
 public:
-	TextInlineFormat_GradientColor(const std::wstring pattern, UINT32 angle,
-		const std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
+	TextInlineFormat_GradientColor(const std::wstring& pattern, UINT32 angle,
+		const std::vector<D2D1_GRADIENT_STOP>& stops, bool altGamma);
 	virtual ~TextInlineFormat_GradientColor();
 	virtual InlineType GetType() override { return InlineType::GradientColor; }
 
@@ -53,10 +53,10 @@ public:
 	void ApplyInlineFormat(IDWriteTextLayout* layout, const D2D1_POINT_2F* point, bool hasChanged);
 
 	void BuildGradientBrushes(ID2D1RenderTarget* target, IDWriteTextLayout* layout);
-	void UpdateSubOptions(const size_t index, const DWRITE_TEXT_RANGE range);
+	void UpdateSubOptions(const size_t& index, const DWRITE_TEXT_RANGE& range);
 
-	bool CompareAndUpdateProperties(const std::wstring pattern, UINT32 angle,
-		const std::vector<D2D1_GRADIENT_STOP> stops, bool altGamma);
+	bool CompareAndUpdateProperties(const std::wstring& pattern, UINT32 angle,
+		const std::vector<D2D1_GRADIENT_STOP>& stops, bool altGamma);
 
 private:
 	TextInlineFormat_GradientColor();

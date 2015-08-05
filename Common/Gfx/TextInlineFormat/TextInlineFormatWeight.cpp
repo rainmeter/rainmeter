@@ -21,7 +21,7 @@
 
 namespace Gfx {
 
-TextInlineFormat_Weight::TextInlineFormat_Weight(const std::wstring pattern, const DWRITE_FONT_WEIGHT weight) :
+TextInlineFormat_Weight::TextInlineFormat_Weight(const std::wstring& pattern, const DWRITE_FONT_WEIGHT& weight) :
 	TextInlineFormat(pattern),
 	m_Weight(weight)
 {
@@ -44,7 +44,7 @@ void TextInlineFormat_Weight::ApplyInlineFormat(IDWriteTextLayout* layout)
 	}
 }
 
-bool TextInlineFormat_Weight::CompareAndUpdateProperties(const std::wstring pattern, const DWRITE_FONT_WEIGHT weight)
+bool TextInlineFormat_Weight::CompareAndUpdateProperties(const std::wstring& pattern, const DWRITE_FONT_WEIGHT& weight)
 {
 	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || m_Weight != weight)
 	{

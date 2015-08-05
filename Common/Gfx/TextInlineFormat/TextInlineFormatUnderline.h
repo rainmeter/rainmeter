@@ -28,13 +28,13 @@ namespace Gfx {
 class TextInlineFormat_Underline final : public TextInlineFormat
 {
 public:
-	TextInlineFormat_Underline(const std::wstring pattern);
+	TextInlineFormat_Underline(const std::wstring& pattern);
 	virtual ~TextInlineFormat_Underline();
 	virtual InlineType GetType() override { return InlineType::Underline; }
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override;
 
-	bool CompareAndUpdateProperties(const std::wstring pattern);
+	bool CompareAndUpdateProperties(const std::wstring& pattern);
 
 private:
 	TextInlineFormat_Underline();

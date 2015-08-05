@@ -21,7 +21,7 @@
 
 namespace Gfx {
 
-TextInlineFormat_CharacterSpacing::TextInlineFormat_CharacterSpacing(std::wstring pattern,
+TextInlineFormat_CharacterSpacing::TextInlineFormat_CharacterSpacing(const std::wstring& pattern,
 	FLOAT leading, FLOAT trailing, FLOAT advanceWidth) :
 		TextInlineFormat(pattern),
 		m_Leading(leading),
@@ -63,8 +63,8 @@ void TextInlineFormat_CharacterSpacing::ApplyInlineFormat(IDWriteTextLayout* lay
 	}
 }
 
-bool TextInlineFormat_CharacterSpacing::CompareAndUpdateProperties(const std::wstring pattern, const FLOAT leading,
-	const FLOAT trailing, const FLOAT advanceWidth)
+bool TextInlineFormat_CharacterSpacing::CompareAndUpdateProperties(const std::wstring& pattern, FLOAT leading,
+	FLOAT trailing, FLOAT advanceWidth)
 {
 	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || m_Leading != leading ||
 		m_Trailing != trailing || m_AdvanceWidth != advanceWidth)

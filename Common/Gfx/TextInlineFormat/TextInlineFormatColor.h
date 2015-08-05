@@ -28,14 +28,14 @@ namespace Gfx {
 class TextInlineFormat_Color final : public TextInlineFormat
 {
 public:
-	TextInlineFormat_Color(const std::wstring pattern, const Gdiplus::Color color);
+	TextInlineFormat_Color(const std::wstring& pattern, const Gdiplus::Color& color);
 	virtual ~TextInlineFormat_Color();
 	virtual InlineType GetType() override { return InlineType::Color; }
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override { }
 	void ApplyInlineFormat(ID2D1RenderTarget* target, IDWriteTextLayout* layout);
 
-	bool CompareAndUpdateProperties(const std::wstring pattern, const Gdiplus::Color color);
+	bool CompareAndUpdateProperties(const std::wstring& pattern, const Gdiplus::Color& color);
 
 private:
 	TextInlineFormat_Color();

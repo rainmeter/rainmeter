@@ -28,13 +28,13 @@ namespace Gfx {
 class TextInlineFormat_Stretch final : public TextInlineFormat
 {
 public:
-	TextInlineFormat_Stretch(const std::wstring pattern, const DWRITE_FONT_STRETCH stretch);
+	TextInlineFormat_Stretch(const std::wstring& pattern, const DWRITE_FONT_STRETCH& stretch);
 	virtual ~TextInlineFormat_Stretch();
 	virtual InlineType GetType() override { return InlineType::Stretch; }
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override;
 
-	bool CompareAndUpdateProperties(const std::wstring pattern, const DWRITE_FONT_STRETCH stretch);
+	bool CompareAndUpdateProperties(const std::wstring& pattern, const DWRITE_FONT_STRETCH& stretch);
 
 private:
 	TextInlineFormat_Stretch();

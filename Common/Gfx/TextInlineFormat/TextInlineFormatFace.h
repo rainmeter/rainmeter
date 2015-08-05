@@ -29,7 +29,7 @@ namespace Gfx {
 class TextInlineFormat_Face final : public TextInlineFormat
 {
 public:
-	TextInlineFormat_Face(const std::wstring pattern, const std::wstring face);
+	TextInlineFormat_Face(const std::wstring& pattern, const std::wstring& face);
 	virtual ~TextInlineFormat_Face();
 	virtual InlineType GetType() override { return InlineType::Face; }
 
@@ -37,7 +37,7 @@ public:
 
 	void SetFontCollection(FontCollectionD2D* fontCollection) { m_FontCollection = fontCollection; }
 
-	bool CompareAndUpdateProperties(const std::wstring pattern, const std::wstring face);
+	bool CompareAndUpdateProperties(const std::wstring& pattern, const std::wstring& face);
 
 private:
 	TextInlineFormat_Face();

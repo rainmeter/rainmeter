@@ -28,13 +28,13 @@ namespace Gfx {
 class TextInlineFormat_Oblique final : public TextInlineFormat
 {
 public:
-	TextInlineFormat_Oblique(const std::wstring pattern);
+	TextInlineFormat_Oblique(const std::wstring& pattern);
 	virtual ~TextInlineFormat_Oblique();
 	virtual InlineType GetType() override { return InlineType::Oblique; }
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override;
 
-	bool CompareAndUpdateProperties(const std::wstring pattern);
+	bool CompareAndUpdateProperties(const std::wstring& pattern);
 
 private:
 	TextInlineFormat_Oblique();

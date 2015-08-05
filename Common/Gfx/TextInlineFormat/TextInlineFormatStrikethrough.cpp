@@ -21,7 +21,7 @@
 
 namespace Gfx {
 
-TextInlineFormat_Strikethrough::TextInlineFormat_Strikethrough(const std::wstring pattern) :
+TextInlineFormat_Strikethrough::TextInlineFormat_Strikethrough(const std::wstring& pattern) :
 	TextInlineFormat(pattern)
 {
 }
@@ -43,7 +43,7 @@ void TextInlineFormat_Strikethrough::ApplyInlineFormat(IDWriteTextLayout* layout
 	}
 }
 
-bool TextInlineFormat_Strikethrough::CompareAndUpdateProperties(const std::wstring pattern)
+bool TextInlineFormat_Strikethrough::CompareAndUpdateProperties(const std::wstring& pattern)
 {
 	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0)
 	{

@@ -28,13 +28,13 @@ namespace Gfx {
 class TextInlineFormat_Strikethrough final : public TextInlineFormat
 {
 public:
-	TextInlineFormat_Strikethrough(const std::wstring pattern);
+	TextInlineFormat_Strikethrough(const std::wstring& pattern);
 	virtual ~TextInlineFormat_Strikethrough();
 	virtual InlineType GetType() override { return InlineType::Strikethrough; }
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override;
 
-	bool CompareAndUpdateProperties(const std::wstring pattern);
+	bool CompareAndUpdateProperties(const std::wstring& pattern);
 
 private:
 	TextInlineFormat_Strikethrough();
