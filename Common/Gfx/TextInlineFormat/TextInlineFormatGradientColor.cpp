@@ -1,19 +1,19 @@
 /*
-Copyright (C) 2015 Brian Ferguson
+  Copyright (C) 2015 Brian Ferguson
 
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 #include "StdAfx.h"
@@ -76,7 +76,7 @@ static D2D1_POINT_2F FindEdgePoint(const UINT32 theta, const float left, const f
 
 namespace Gfx {
 
-	TextInlineFormat_GradientColor::TextInlineFormat_GradientColor(const std::wstring pattern, const UINT32 angle,
+TextInlineFormat_GradientColor::TextInlineFormat_GradientColor(const std::wstring pattern, const UINT32 angle,
 	const std::vector<D2D1_GRADIENT_STOP> stops, const bool altGamma) :
 		TextInlineFormat(pattern),
 		m_Angle(angle),
@@ -85,11 +85,11 @@ namespace Gfx {
 {
 }
 
-	TextInlineFormat_GradientColor::~TextInlineFormat_GradientColor()
+TextInlineFormat_GradientColor::~TextInlineFormat_GradientColor()
 {
 }
 
-	void TextInlineFormat_GradientColor::BuildGradientBrushes(ID2D1RenderTarget* target, IDWriteTextLayout* layout)
+void TextInlineFormat_GradientColor::BuildGradientBrushes(ID2D1RenderTarget* target, IDWriteTextLayout* layout)
 {
 	for (auto& sub : m_SubOptions)
 	{
