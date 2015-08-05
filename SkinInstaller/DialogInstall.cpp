@@ -1444,7 +1444,9 @@ void DialogInstall::TabInstall::Initialize()
 						text = isNewer > 0 ? L"Newer version installed" : L"Versions are the same";
 					}
 					else
+					{
 						text = L"Replace";
+					}
 				}
 				else
 				{
