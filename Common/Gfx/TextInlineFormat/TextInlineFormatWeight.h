@@ -28,13 +28,13 @@ namespace Gfx {
 class TextInlineFormat_Weight final : public TextInlineFormat
 {
 public:
-	TextInlineFormat_Weight(const std::wstring pattern, const DWRITE_FONT_WEIGHT weight);
+	TextInlineFormat_Weight(const std::wstring& pattern, const DWRITE_FONT_WEIGHT& weight);
 	virtual ~TextInlineFormat_Weight();
 	virtual InlineType GetType() override { return InlineType::Weight; }
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override;
 
-	bool CompareAndUpdateProperties(const std::wstring pattern, const DWRITE_FONT_WEIGHT weight);
+	bool CompareAndUpdateProperties(const std::wstring& pattern, const DWRITE_FONT_WEIGHT& weight);
 
 private:
 	TextInlineFormat_Weight();

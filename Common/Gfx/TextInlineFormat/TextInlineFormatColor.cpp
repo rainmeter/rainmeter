@@ -30,7 +30,7 @@ D2D1_COLOR_F ToColorF(const Gdiplus::Color& color)
 
 namespace Gfx {
 
-TextInlineFormat_Color::TextInlineFormat_Color(const std::wstring pattern, const Gdiplus::Color color) :
+TextInlineFormat_Color::TextInlineFormat_Color(const std::wstring& pattern, const Gdiplus::Color& color) :
 	TextInlineFormat(pattern),
 	m_Color(color)
 {
@@ -58,7 +58,7 @@ void TextInlineFormat_Color::ApplyInlineFormat(ID2D1RenderTarget* target, IDWrit
 	}
 }
 
-bool TextInlineFormat_Color::CompareAndUpdateProperties(const std::wstring pattern, const Gdiplus::Color color)
+bool TextInlineFormat_Color::CompareAndUpdateProperties(const std::wstring& pattern, const Gdiplus::Color& color)
 {
 	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || m_Color.GetValue() != color.GetValue())
 	{

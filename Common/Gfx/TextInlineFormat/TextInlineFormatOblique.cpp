@@ -21,7 +21,7 @@
 
 namespace Gfx {
 
-TextInlineFormat_Oblique::TextInlineFormat_Oblique(const std::wstring pattern) :
+TextInlineFormat_Oblique::TextInlineFormat_Oblique(const std::wstring& pattern) :
 	TextInlineFormat(pattern)
 {
 }
@@ -43,7 +43,7 @@ void TextInlineFormat_Oblique::ApplyInlineFormat(IDWriteTextLayout* layout)
 	}
 }
 
-bool TextInlineFormat_Oblique::CompareAndUpdateProperties(const std::wstring pattern)
+bool TextInlineFormat_Oblique::CompareAndUpdateProperties(const std::wstring& pattern)
 {
 	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0)
 	{

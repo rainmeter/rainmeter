@@ -21,7 +21,7 @@
 
 namespace Gfx {
 
-TextInlineFormat_Size::TextInlineFormat_Size(const std::wstring pattern, FLOAT size) :
+TextInlineFormat_Size::TextInlineFormat_Size(const std::wstring& pattern, FLOAT size) :
 	TextInlineFormat(pattern),
 	m_Size(size)
 {
@@ -44,7 +44,7 @@ void TextInlineFormat_Size::ApplyInlineFormat(IDWriteTextLayout* layout)
 	}
 }
 
-bool TextInlineFormat_Size::CompareAndUpdateProperties(const std::wstring pattern, FLOAT size)
+bool TextInlineFormat_Size::CompareAndUpdateProperties(const std::wstring& pattern, FLOAT size)
 {
 	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || m_Size != size)
 	{

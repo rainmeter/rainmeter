@@ -21,7 +21,7 @@
 
 namespace Gfx {
 
-TextInlineFormat_Stretch::TextInlineFormat_Stretch(const std::wstring pattern, const DWRITE_FONT_STRETCH stretch) :
+TextInlineFormat_Stretch::TextInlineFormat_Stretch(const std::wstring& pattern, const DWRITE_FONT_STRETCH& stretch) :
 	TextInlineFormat(pattern),
 	m_Stretch(stretch)
 {
@@ -44,7 +44,7 @@ void TextInlineFormat_Stretch::ApplyInlineFormat(IDWriteTextLayout* layout)
 	}
 }
 
-bool TextInlineFormat_Stretch::CompareAndUpdateProperties(const std::wstring pattern, const DWRITE_FONT_STRETCH stretch)
+bool TextInlineFormat_Stretch::CompareAndUpdateProperties(const std::wstring& pattern, const DWRITE_FONT_STRETCH& stretch)
 {
 	if (_wcsicmp(GetPattern().c_str(), pattern.c_str()) != 0 || m_Stretch != stretch)
 	{
