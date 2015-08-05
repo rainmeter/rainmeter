@@ -21,20 +21,13 @@
 
 namespace Gfx {
 
-TextInlineFormat::TextInlineFormat(std::wstring pattern) :
-	m_Pattern(pattern)
+TextInlineFormat::TextInlineFormat(const std::wstring& pattern) :
+	m_Pattern(std::move(pattern))
 {
 }
 
 TextInlineFormat::~TextInlineFormat()
 {
-}
-
-void TextInlineFormat::SetRanges(std::vector<DWRITE_TEXT_RANGE> ranges)
-{
-	m_TextRange.clear();
-	m_TextRange.resize(ranges.size());
-	m_TextRange = ranges;
 }
 
 }  // namespace Gfx
