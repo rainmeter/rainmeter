@@ -1048,7 +1048,7 @@ void TextFormatD2D::ApplyInlineColoring(ID2D1RenderTarget* target, const D2D1_PO
 		else if (fmt->GetType() == Gfx::InlineType::GradientColor)
 		{
 			auto option = (TextInlineFormat_GradientColor*)fmt;
-			option->ApplyInlineFormat(m_TextLayout.Get(), point, m_HasInlineOptionsChanged);
+			option->ApplyInlineFormat(m_TextLayout.Get(), point);
 		}
 	}
 
