@@ -54,15 +54,15 @@ public:
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) = 0;
 
-	std::wstring GetPattern() { return m_Pattern; }
-	void SetRanges(std::vector<DWRITE_TEXT_RANGE> ranges);
+	const std::wstring& GetPattern() { return m_Pattern; }
+	void SetRanges(std::vector<DWRITE_TEXT_RANGE> ranges) { m_TextRange = ranges; }
 
 protected:
-	TextInlineFormat(std::wstring pattern);
+	TextInlineFormat(const std::wstring& pattern);
 	TextInlineFormat(const TextInlineFormat& other) = delete;
 
 	void SetPattern(const std::wstring pattern) { m_Pattern = pattern; }
-	std::vector<DWRITE_TEXT_RANGE> GetRanges() { return m_TextRange; }
+	const std::vector<DWRITE_TEXT_RANGE>& GetRanges() { return m_TextRange; }
 
 private:
 	std::wstring m_Pattern;
