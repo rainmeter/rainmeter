@@ -36,10 +36,9 @@ void TextInlineFormat_Underline::ApplyInlineFormat(IDWriteTextLayout* layout)
 
 	for (const auto& range : GetRanges())
 	{
-		if (range.length > 0)
-		{
-			layout->SetUnderline(TRUE, range);
-		}
+		if (range.length <= 0) continue;
+
+		layout->SetUnderline(TRUE, range);
 	}
 }
 

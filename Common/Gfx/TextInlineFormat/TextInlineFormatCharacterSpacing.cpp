@@ -40,26 +40,23 @@ void TextInlineFormat_CharacterSpacing::ApplyInlineFormat(IDWriteTextLayout* lay
 
 	for (const auto& range : GetRanges())
 	{
-		if (range.length > 0)
-		{
-			Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout1;
-			HRESULT hr = layout->QueryInterface(__uuidof(IDWriteTextLayout1), &textLayout1);
-			if (SUCCEEDED(hr))
-			{
-				// Query current values
-				FLOAT leading = FLT_MAX, trailing = FLT_MAX, advanceWidth = -1.0f;
-				hr = textLayout1->GetCharacterSpacing(range.startPosition, &leading, &trailing, &advanceWidth);
-				if (SUCCEEDED(hr))
-				{
-					if (m_Leading == FLT_MAX) m_Leading = leading;
-					if (m_Trailing == FLT_MAX) m_Trailing = trailing;
-					if (m_AdvanceWidth < 0.0f) m_AdvanceWidth = advanceWidth;
+		if (range.length <= 0) continue;
 
-					textLayout1->SetCharacterSpacing(m_Leading * (4.0f / 3.0f), m_Trailing * (4.0f / 3.0f),
-						m_AdvanceWidth * (4.0f / 3.0f), range);
-				}
-			}
-		}
+		Microsoft::WRL::ComPtr<IDWriteTextLayout1> textLayout1;
+		HRESULT hr = layout->QueryInterface(__uuidof(IDWriteTextLayout1), &textLayout1);
+		if (FAILED(hr)) continue;
+
+		// Query current values
+		FLOAT leading = FLT_MAX, trailing = FLT_MAX, advanceWidth = -1.0f;
+		hr = textLayout1->GetCharacterSpacing(range.startPosition, &leading, &trailing, &advanceWidth);
+		if (FAILED(hr)) continue;
+
+		if (m_Leading == FLT_MAX) m_Leading = leading;
+		if (m_Trailing == FLT_MAX) m_Trailing = trailing;
+		if (m_AdvanceWidth < 0.0f) m_AdvanceWidth = advanceWidth;
+
+		textLayout1->SetCharacterSpacing(m_Leading * (4.0f / 3.0f), m_Trailing * (4.0f / 3.0f),
+			m_AdvanceWidth * (4.0f / 3.0f), range);
 	}
 }
 

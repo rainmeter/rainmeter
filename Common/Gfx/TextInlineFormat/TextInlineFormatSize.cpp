@@ -37,10 +37,9 @@ void TextInlineFormat_Size::ApplyInlineFormat(IDWriteTextLayout* layout)
 
 	for (const auto& range : GetRanges())
 	{
-		if (range.length > 0)
-		{
-			layout->SetFontSize(m_Size * (4.0f / 3.0f), range);
-		}
+		if (range.length <= 0) continue;
+
+		layout->SetFontSize(m_Size * (4.0f / 3.0f), range);
 	}
 }
 

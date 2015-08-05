@@ -37,10 +37,9 @@ void TextInlineFormat_Stretch::ApplyInlineFormat(IDWriteTextLayout* layout)
 
 	for (const auto& range : GetRanges())
 	{
-		if (range.length > 0)
-		{
-			layout->SetFontStretch(m_Stretch, range);
-		}
+		if (range.length <= 0) continue;
+
+		layout->SetFontStretch(m_Stretch, range);
 	}
 }
 

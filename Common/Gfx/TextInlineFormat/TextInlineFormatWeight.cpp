@@ -37,10 +37,9 @@ void TextInlineFormat_Weight::ApplyInlineFormat(IDWriteTextLayout* layout)
 
 	for (const auto& range : GetRanges())
 	{
-		if (range.length > 0)
-		{
-			layout->SetFontWeight(m_Weight, range);
-		}
+		if (range.length <= 0) continue;
+
+		layout->SetFontWeight(m_Weight, range);
 	}
 }
 
