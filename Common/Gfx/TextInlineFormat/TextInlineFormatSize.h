@@ -28,13 +28,13 @@ namespace Gfx {
 class TextInlineFormat_Size final : public TextInlineFormat
 {
 public:
-	TextInlineFormat_Size(const std::wstring pattern, const FLOAT size);
+	TextInlineFormat_Size(const std::wstring pattern, FLOAT size);
 	virtual ~TextInlineFormat_Size();
 	virtual InlineType GetType() override { return InlineType::Size; }
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override;
 
-	bool CompareAndUpdateProperties(const std::wstring pattern, const FLOAT size);
+	bool CompareAndUpdateProperties(const std::wstring pattern, FLOAT size);
 
 private:
 	TextInlineFormat_Size();

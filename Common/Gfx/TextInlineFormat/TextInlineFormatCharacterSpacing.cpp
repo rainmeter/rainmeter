@@ -21,8 +21,8 @@
 
 namespace Gfx {
 
-TextInlineFormat_CharacterSpacing::TextInlineFormat_CharacterSpacing(const std::wstring pattern,
-	const FLOAT leading, const FLOAT trailing, const FLOAT advanceWidth) :
+TextInlineFormat_CharacterSpacing::TextInlineFormat_CharacterSpacing(std::wstring pattern,
+	FLOAT leading, FLOAT trailing, FLOAT advanceWidth) :
 		TextInlineFormat(pattern),
 		m_Leading(leading),
 		m_Trailing(trailing),
