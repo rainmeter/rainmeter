@@ -172,6 +172,11 @@ bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target,
 				option->BuildGradientBrushes(target, m_TextLayout.Get());
 			}
 		}
+
+		// Because the text layout can be created without any changes to any
+		// 'color' inline options, we need a way to update any color changes
+		// at drawing time. 
+		m_HasInlineOptionsChanged = true;
 	}
 
 	return true;
@@ -1048,7 +1053,7 @@ void TextFormatD2D::ApplyInlineColoring(ID2D1RenderTarget* target, const D2D1_PO
 		else if (fmt->GetType() == Gfx::InlineType::GradientColor)
 		{
 			auto option = (TextInlineFormat_GradientColor*)fmt;
-			option->ApplyInlineFormat(m_TextLayout.Get(), point);
+			option->ApplyInlineFormat(m_TextLayout.Get(), point, m_HasInlineOptionsChanged);
 		}
 	}
 

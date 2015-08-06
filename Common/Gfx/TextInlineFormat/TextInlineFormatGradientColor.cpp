@@ -167,11 +167,11 @@ void TextInlineFormat_GradientColor::UpdateSubOptions(const size_t& index, const
 	}
 }
 
-void TextInlineFormat_GradientColor::ApplyInlineFormat(IDWriteTextLayout* layout, const D2D1_POINT_2F* point)
+void TextInlineFormat_GradientColor::ApplyInlineFormat(IDWriteTextLayout* layout, const D2D1_POINT_2F* point, bool hasChanged)
 {
 	if (!layout) return;
 
-	for (const auto& sub : m_SubOptions)
+	for (auto& sub : m_SubOptions)
 	{
 		if (sub.range.length <= 0) continue;
 
@@ -183,10 +183,16 @@ void TextInlineFormat_GradientColor::ApplyInlineFormat(IDWriteTextLayout* layout
 				D2D1_POINT_2F start = sub.brushes[count]->GetStartPoint();
 				D2D1_POINT_2F end = sub.brushes[count]->GetEndPoint();
 
-				start.x += point->x;
-				start.y += point->y;
-				end.x += point->x;
-				end.y += point->y;
+				if (hasChanged)
+				{
+					start.x += point->x;
+					start.y += point->y;
+					end.x += point->x;
+					end.y += point->y;
+
+					sub.brushes[count]->SetStartPoint(start);
+					sub.brushes[count]->SetEndPoint(end);
+				}
 
 				layout->SetDrawingEffect(sub.brushes[count], range);
 			}
