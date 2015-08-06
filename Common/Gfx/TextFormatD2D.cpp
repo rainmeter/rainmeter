@@ -71,12 +71,6 @@ TextFormatD2D::TextFormatD2D() :
 
 TextFormatD2D::~TextFormatD2D()
 {
-	for (auto& fmt : m_TextInlineFormat)
-	{
-		delete fmt;
-		fmt = nullptr;
-	}
-
 	m_TextInlineFormat.clear();
 }
 
@@ -168,7 +162,7 @@ bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target,
 		{
 			if (fmt->GetType() == Gfx::InlineType::GradientColor)
 			{
-				auto option = (TextInlineFormat_GradientColor*)fmt;
+				auto option = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
 				option->BuildGradientBrushes(target, m_TextLayout.Get());
 			}
 		}
@@ -303,7 +297,7 @@ void TextFormatD2D::SetProperties(
 		{
 			if (fmt->GetType() == Gfx::InlineType::Face)
 			{
-				auto face = (TextInlineFormat_Face*)fmt;
+				auto face = dynamic_cast<TextInlineFormat_Face*>(fmt.get());
 				face->SetFontCollection(fontCollectionD2D);
 			}
 		}
@@ -468,14 +462,7 @@ void TextFormatD2D::ReadInlineOptions(ConfigParser& parser, const WCHAR* section
 	// Remove any previous options that do not exist anymore
 	if (i <= m_TextInlineFormat.size())
 	{
-		std::vector<TextInlineFormat*>::iterator iter = m_TextInlineFormat.begin() + (i - 1);
-		for (; iter != m_TextInlineFormat.end(); ++iter)
-		{
-			delete (*iter);
-			(*iter) = nullptr;
-
-			m_HasInlineOptionsChanged = true;
-		}
+		m_HasInlineOptionsChanged = true;
 		m_TextInlineFormat.erase(m_TextInlineFormat.begin() + (i - 1), m_TextInlineFormat.end());
 	}
 }
@@ -554,7 +541,7 @@ void TextFormatD2D::FindInlineRanges(const std::wstring& str)
 			// when text is split between multiple lines - otherwise set the range.
 			if (fmt->GetType() == InlineType::GradientColor)
 			{
-				TextInlineFormat_GradientColor* linearGradient = (TextInlineFormat_GradientColor*)fmt;
+				auto linearGradient = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
 				size_t index = 0;
 				for (const auto& range : ranges)
 				{
@@ -581,10 +568,7 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 		if (index < m_TextInlineFormat.size())
 		{
 			// Special case to delete a specific index while keeping the rest of the options
-			delete m_TextInlineFormat[index];
-			m_TextInlineFormat[index] = nullptr;
 			m_TextInlineFormat.erase(m_TextInlineFormat.begin() + index);
-
 			m_HasInlineOptionsChanged = true;
 			return true;
 		}
@@ -729,7 +713,7 @@ void TextFormatD2D::UpdateInlineCharacterSpacing(const size_t& index, const std:
 		// |index| is within range, and the type of object is also a 'CharacterSpacing'
 		// object, so just update the object if needed.
 
-		auto option = (TextInlineFormat_CharacterSpacing*)m_TextInlineFormat[index];
+		auto option = dynamic_cast<TextInlineFormat_CharacterSpacing*>(m_TextInlineFormat[index].get());
 		if (option->CompareAndUpdateProperties(pattern, leading, trailing, advanceWidth))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -740,8 +724,7 @@ void TextFormatD2D::UpdateInlineCharacterSpacing(const size_t& index, const std:
 		// |index| is within range, but the types of objects do not match, thus destroy
 		// the previous object and replace it with a new 'CharacterSpacing' object.
 
-		delete m_TextInlineFormat[index];
-		m_TextInlineFormat[index] = new TextInlineFormat_CharacterSpacing(pattern, leading, trailing, advanceWidth);
+		m_TextInlineFormat[index].reset(new TextInlineFormat_CharacterSpacing(pattern, leading, trailing, advanceWidth));
 		m_HasInlineOptionsChanged = true;
 	}
 }
@@ -755,7 +738,7 @@ void TextFormatD2D::UpdateInlineColor(const size_t& index, const std::wstring pa
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Color)
 	{
-		auto option = (TextInlineFormat_Color*)m_TextInlineFormat[index];
+		auto option = dynamic_cast<TextInlineFormat_Color*>(m_TextInlineFormat[index].get());
 		if (option->CompareAndUpdateProperties(pattern, color))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -763,8 +746,7 @@ void TextFormatD2D::UpdateInlineColor(const size_t& index, const std::wstring pa
 	}
 	else
 	{
-		delete m_TextInlineFormat[index];
-		m_TextInlineFormat[index] = new TextInlineFormat_Color(pattern, color);
+		m_TextInlineFormat[index].reset(new TextInlineFormat_Color(pattern, color));
 		m_HasInlineOptionsChanged = true;
 	}
 }
@@ -778,7 +760,7 @@ void TextFormatD2D::UpdateInlineFace(const size_t& index, const std::wstring pat
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Face)
 	{
-		auto option = (TextInlineFormat_Face*)m_TextInlineFormat[index];
+		auto option = dynamic_cast<TextInlineFormat_Face*>(m_TextInlineFormat[index].get());
 		if (option->CompareAndUpdateProperties(pattern, face))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -786,8 +768,7 @@ void TextFormatD2D::UpdateInlineFace(const size_t& index, const std::wstring pat
 	}
 	else
 	{
-		delete m_TextInlineFormat[index];
-		m_TextInlineFormat[index] = new TextInlineFormat_Face(pattern, face);
+		m_TextInlineFormat[index].reset(new TextInlineFormat_Face(pattern, face));
 		m_HasInlineOptionsChanged = true;
 	}
 }
@@ -829,7 +810,7 @@ void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::ws
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::GradientColor)
 	{
-		auto option = (TextInlineFormat_GradientColor*)m_TextInlineFormat[index];
+		auto option = dynamic_cast<TextInlineFormat_GradientColor*>(m_TextInlineFormat[index].get());
 		if (option->CompareAndUpdateProperties(pattern, angle, stops, altGamma))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -837,8 +818,7 @@ void TextFormatD2D::UpdateInlineGradientColor(const size_t& index, const std::ws
 	}
 	else
 	{
-		delete m_TextInlineFormat[index];
-		m_TextInlineFormat[index] = new TextInlineFormat_GradientColor(pattern, angle, stops, altGamma);
+		m_TextInlineFormat[index].reset(new TextInlineFormat_GradientColor(pattern, angle, stops, altGamma));
 		m_HasInlineOptionsChanged = true;
 	}
 }
@@ -852,7 +832,7 @@ void TextFormatD2D::UpdateInlineItalic(const size_t& index, const std::wstring p
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Italic)
 	{
-		auto option = (TextInlineFormat_Italic*)m_TextInlineFormat[index];
+		auto option = dynamic_cast<TextInlineFormat_Italic*>(m_TextInlineFormat[index].get());
 		if (option->CompareAndUpdateProperties(pattern))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -860,8 +840,7 @@ void TextFormatD2D::UpdateInlineItalic(const size_t& index, const std::wstring p
 	}
 	else
 	{
-		delete m_TextInlineFormat[index];
-		m_TextInlineFormat[index] = new TextInlineFormat_Italic(pattern);
+		m_TextInlineFormat[index].reset(new TextInlineFormat_Italic(pattern));
 		m_HasInlineOptionsChanged = true;
 	}
 }
@@ -875,7 +854,7 @@ void TextFormatD2D::UpdateInlineOblique(const size_t& index, const std::wstring 
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Oblique)
 	{
-		auto option = (TextInlineFormat_Oblique*)m_TextInlineFormat[index];
+		auto option = dynamic_cast<TextInlineFormat_Oblique*>(m_TextInlineFormat[index].get());
 		if (option->CompareAndUpdateProperties(pattern))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -883,8 +862,7 @@ void TextFormatD2D::UpdateInlineOblique(const size_t& index, const std::wstring 
 	}
 	else
 	{
-		delete m_TextInlineFormat[index];
-		m_TextInlineFormat[index] = new TextInlineFormat_Oblique(pattern);
+		m_TextInlineFormat[index].reset(new TextInlineFormat_Oblique(pattern));
 		m_HasInlineOptionsChanged = true;
 	}
 }
@@ -898,7 +876,7 @@ void TextFormatD2D::UpdateInlineSize(const size_t& index, const std::wstring pat
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Size)
 	{
-		auto option = (TextInlineFormat_Size*)m_TextInlineFormat[index];
+		auto option = dynamic_cast<TextInlineFormat_Size*>(m_TextInlineFormat[index].get());
 		if (option->CompareAndUpdateProperties(pattern, size))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -906,8 +884,7 @@ void TextFormatD2D::UpdateInlineSize(const size_t& index, const std::wstring pat
 	}
 	else
 	{
-		delete m_TextInlineFormat[index];
-		m_TextInlineFormat[index] = new TextInlineFormat_Size(pattern, size);
+		m_TextInlineFormat[index].reset(new TextInlineFormat_Size(pattern, size));
 		m_HasInlineOptionsChanged = true;
 	}
 }
@@ -921,7 +898,7 @@ void TextFormatD2D::UpdateInlineStretch(const size_t& index, const std::wstring 
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Stretch)
 	{
-		auto option = (TextInlineFormat_Stretch*)m_TextInlineFormat[index];
+		auto option = dynamic_cast<TextInlineFormat_Stretch*>(m_TextInlineFormat[index].get());
 		if (option->CompareAndUpdateProperties(pattern, stretch))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -929,8 +906,7 @@ void TextFormatD2D::UpdateInlineStretch(const size_t& index, const std::wstring 
 	}
 	else
 	{
-		delete m_TextInlineFormat[index];
-		m_TextInlineFormat[index] = new TextInlineFormat_Stretch(pattern, stretch);
+		m_TextInlineFormat[index].reset(new TextInlineFormat_Stretch(pattern, stretch));
 		m_HasInlineOptionsChanged = true;
 	}
 }
@@ -944,7 +920,7 @@ void TextFormatD2D::UpdateInlineStrikethrough(const size_t& index, const std::ws
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Strikethrough)
 	{
-		auto option = (TextInlineFormat_Strikethrough*)m_TextInlineFormat[index];
+		auto option = dynamic_cast<TextInlineFormat_Strikethrough*>(m_TextInlineFormat[index].get());
 		if (option->CompareAndUpdateProperties(pattern))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -952,8 +928,7 @@ void TextFormatD2D::UpdateInlineStrikethrough(const size_t& index, const std::ws
 	}
 	else
 	{
-		delete m_TextInlineFormat[index];
-		m_TextInlineFormat[index] = new TextInlineFormat_Strikethrough(pattern);
+		m_TextInlineFormat[index].reset(new TextInlineFormat_Strikethrough(pattern));
 		m_HasInlineOptionsChanged = true;
 	}
 }
@@ -968,7 +943,7 @@ void TextFormatD2D::UpdateInlineTypography(const size_t& index, const std::wstri
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Typography)
 	{
-		auto option = (TextInlineFormat_Typography*)m_TextInlineFormat[index];
+		auto option = dynamic_cast<TextInlineFormat_Typography*>(m_TextInlineFormat[index].get());
 		if (option->CompareAndUpdateProperties(pattern, tag, parameter))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -976,8 +951,7 @@ void TextFormatD2D::UpdateInlineTypography(const size_t& index, const std::wstri
 	}
 	else
 	{
-		delete m_TextInlineFormat[index];
-		m_TextInlineFormat[index] = new TextInlineFormat_Typography(pattern, tag, parameter);
+		m_TextInlineFormat[index].reset(new TextInlineFormat_Typography(pattern, tag, parameter));
 		m_HasInlineOptionsChanged = true;
 	}
 }
@@ -991,7 +965,7 @@ void TextFormatD2D::UpdateInlineUnderline(const size_t& index, const std::wstrin
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Underline)
 	{
-		auto option = (TextInlineFormat_Underline*)m_TextInlineFormat[index];
+		auto option = dynamic_cast<TextInlineFormat_Underline*>(m_TextInlineFormat[index].get());
 		if (option->CompareAndUpdateProperties(pattern))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -999,8 +973,7 @@ void TextFormatD2D::UpdateInlineUnderline(const size_t& index, const std::wstrin
 	}
 	else
 	{
-		delete m_TextInlineFormat[index];
-		m_TextInlineFormat[index] = new TextInlineFormat_Underline(pattern);
+		m_TextInlineFormat[index].reset(new TextInlineFormat_Underline(pattern));
 		m_HasInlineOptionsChanged = true;
 	}
 }
@@ -1014,7 +987,7 @@ void TextFormatD2D::UpdateInlineWeight(const size_t& index, const std::wstring p
 	}
 	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Weight)
 	{
-		auto option = (TextInlineFormat_Weight*)m_TextInlineFormat[index];
+		auto option = dynamic_cast<TextInlineFormat_Weight*>(m_TextInlineFormat[index].get());
 		if (option->CompareAndUpdateProperties(pattern, weight))
 		{
 			m_HasInlineOptionsChanged = true;
@@ -1022,8 +995,7 @@ void TextFormatD2D::UpdateInlineWeight(const size_t& index, const std::wstring p
 	}
 	else
 	{
-		delete m_TextInlineFormat[index];
-		m_TextInlineFormat[index] = new TextInlineFormat_Weight(pattern, weight);
+		m_TextInlineFormat[index].reset(new TextInlineFormat_Weight(pattern, weight));
 		m_HasInlineOptionsChanged = true;
 	}
 }
@@ -1047,12 +1019,12 @@ void TextFormatD2D::ApplyInlineColoring(ID2D1RenderTarget* target, const D2D1_PO
 	{
 		if (fmt->GetType() == Gfx::InlineType::Color)
 		{
-			auto option = (TextInlineFormat_Color*)fmt;
+			auto option = dynamic_cast<TextInlineFormat_Color*>(fmt.get());
 			option->ApplyInlineFormat(target, m_TextLayout.Get());
 		}
 		else if (fmt->GetType() == Gfx::InlineType::GradientColor)
 		{
-			auto option = (TextInlineFormat_GradientColor*)fmt;
+			auto option = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
 			option->ApplyInlineFormat(m_TextLayout.Get(), point, m_HasInlineOptionsChanged);
 		}
 	}
