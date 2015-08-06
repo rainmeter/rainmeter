@@ -21,7 +21,7 @@
 
 namespace Gfx {
 
-TextInlineFormat::TextInlineFormat(const std::wstring& pattern) :
+TextInlineFormat::TextInlineFormat(std::wstring pattern) :
 	m_Pattern(std::move(pattern))
 {
 }
