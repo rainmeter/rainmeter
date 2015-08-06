@@ -111,7 +111,7 @@ void TextInlineFormat_GradientColor::BuildGradientBrushes(ID2D1RenderTarget* tar
 			sub.brushes[i]->Release();
 			sub.brushes[i] = nullptr;
 		}
-		sub.inner_ranges.clear();
+		sub.innerRanges.clear();
 		sub.brushes.clear();
 
 		if (sub.range.length <= 0) continue;
@@ -147,7 +147,7 @@ void TextInlineFormat_GradientColor::BuildGradientBrushes(ID2D1RenderTarget* tar
 
 			if (FAILED(hr)) continue;
 
-			sub.inner_ranges.push_back(innerRange);
+			sub.innerRanges.push_back(innerRange);
 			sub.brushes.push_back(gradientBrush);
 		}
 	}
@@ -176,7 +176,7 @@ void TextInlineFormat_GradientColor::ApplyInlineFormat(IDWriteTextLayout* layout
 		if (sub.range.length <= 0) continue;
 
 		size_t count = 0;
-		for (const auto& range : sub.inner_ranges)
+		for (const auto& range : sub.innerRanges)
 		{
 			if (sub.brushes[count])
 			{

@@ -30,7 +30,7 @@ namespace {
 struct GradientHelper
 {
 	DWRITE_TEXT_RANGE range;
-	std::vector<DWRITE_TEXT_RANGE> inner_ranges;
+	std::vector<DWRITE_TEXT_RANGE> innerRanges;
 	std::vector<ID2D1LinearGradientBrush*> brushes;
 
 	~GradientHelper() { for (auto brush : brushes) { brush->Release(); brush = nullptr; } brushes.clear(); }
