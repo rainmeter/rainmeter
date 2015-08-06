@@ -58,7 +58,7 @@ public:
 	void SetRanges(std::vector<DWRITE_TEXT_RANGE> ranges) { m_TextRange = ranges; }
 
 protected:
-	TextInlineFormat(const std::wstring& pattern);
+	TextInlineFormat(std::wstring pattern);
 	TextInlineFormat(const TextInlineFormat& other) = delete;
 
 	void SetPattern(const std::wstring pattern) { m_Pattern = pattern; }
