@@ -21,6 +21,7 @@
 
 #include "TextInlineFormat.h"
 #include "TextFormat.h"
+#include <memory>
 #include <string>
 #include <dwrite_1.h>
 #include <wrl/client.h>
@@ -101,7 +102,7 @@ private:
 	bool m_Trimming;
 
 	// Contains all the inline options for the layout.
-	std::vector<TextInlineFormat*> m_TextInlineFormat;
+	std::vector<std::unique_ptr<TextInlineFormat>> m_TextInlineFormat;
 	bool m_HasInlineOptionsChanged;
 };
 
