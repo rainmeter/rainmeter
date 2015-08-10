@@ -479,11 +479,11 @@ void TextFormatD2D::FindInlineRanges(const std::wstring& str)
 		size_t length = (size_t)range.length;
 		std::wstring foundText = StringUtil::WidenUTF8(utf8str.substr(start, length));
 
-		start = str.rfind(foundText, start - offset);
+		start = str.find(foundText, offset);
 		if (start != std::wstring::npos) range.startPosition = (UINT32)start;
 		range.length = (UINT32)foundText.length();
 
-		offset += (length - range.length);
+		offset = start + range.length;
 	};
 
 	for (auto& fmt : m_TextInlineFormat)
