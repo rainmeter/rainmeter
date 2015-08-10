@@ -50,9 +50,10 @@ void TextInlineFormat_Face::ApplyInlineFormat(IDWriteTextLayout* layout)
 			BOOL exists = FALSE;
 			HRESULT hr = m_FontCollection->m_Collection->FindFamilyName(m_Face.c_str(), &index, &exists);
 
-			if (FAILED(hr) || !exists) continue;
-
-			layout->SetFontCollection(m_FontCollection->m_Collection, range);
+			if (SUCCEEDED(hr) && exists)
+			{
+				layout->SetFontCollection(m_FontCollection->m_Collection, range);
+			}
 		}
 
 		layout->SetFontFamilyName(m_Face.c_str(), range);
