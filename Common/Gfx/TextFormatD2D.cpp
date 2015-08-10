@@ -538,7 +538,7 @@ void TextFormatD2D::FindInlineRanges(const std::wstring& str)
 						const UINT32 inLength = ovector[2 * j + 1] - ovector[2 * j];
 
 						if (newStart < 0) break;	// Match was not found, so skip to the next item
-						
+
 						DWRITE_TEXT_RANGE range = { newStart, inLength };
 						adjustRange(range);
 						ranges.push_back(range);
