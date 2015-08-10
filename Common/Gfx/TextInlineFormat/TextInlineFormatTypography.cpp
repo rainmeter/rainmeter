@@ -48,7 +48,7 @@ void TextInlineFormat_Typography::ApplyInlineFormat(IDWriteTextLayout* layout)
 
 		DWRITE_FONT_FEATURE feature = { m_Tag, m_Parameter };
 		hr = typography->AddFontFeature(feature);
-		if (FAILED(hr))
+		if (FAILED(hr)) continue;
 
 		layout->SetTypography(typography.Get(), range);
 	}
