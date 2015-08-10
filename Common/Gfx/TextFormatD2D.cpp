@@ -469,12 +469,24 @@ void TextFormatD2D::ReadInlineOptions(ConfigParser& parser, const WCHAR* section
 
 void TextFormatD2D::FindInlineRanges(const std::wstring& str)
 {
-	const WCHAR* buffer = str.c_str();
+	std::string utf8str = StringUtil::NarrowUTF8(str.c_str());
+
+	// Because PCRE uses UTF8 encoded strings for pattern matching, we need
+	// to adjust the range for use with the standard UTF16 encoded strings.
+	auto adjustRange = [&](DWRITE_TEXT_RANGE& range) -> void
+	{
+		size_t start = (size_t)range.startPosition;
+		size_t length = (size_t)range.length;
+		std::wstring foundText = StringUtil::WidenUTF8(utf8str.substr(start, length));
+
+		start = str.rfind(foundText, start);
+		if (start != std::wstring::npos) range.startPosition = start;
+		range.length = foundText.length();
+	};
 
 	for (auto& fmt : m_TextInlineFormat)
 	{
 		std::vector<DWRITE_TEXT_RANGE> ranges;
-		std::string utf8str = StringUtil::NarrowUTF8(buffer);
 
 		int ovector[300];
 		const char* error;
@@ -515,6 +527,7 @@ void TextFormatD2D::FindInlineRanges(const std::wstring& str)
 				if (rc == 1)
 				{
 					DWRITE_TEXT_RANGE range = { start, length };
+					adjustRange(range);
 					ranges.push_back(range);
 				}
 				else if (rc > 1)	// Captures found.
@@ -525,8 +538,9 @@ void TextFormatD2D::FindInlineRanges(const std::wstring& str)
 						const UINT32 inLength = ovector[2 * j + 1] - ovector[2 * j];
 
 						if (newStart < 0) break;	// Match was not found, so skip to the next item
-
+						
 						DWRITE_TEXT_RANGE range = { newStart, inLength };
+						adjustRange(range);
 						ranges.push_back(range);
 					}
 				}
