@@ -889,16 +889,10 @@ void ParseData(MeasureData* measure, LPCWSTR parseData, DWORD dwSize)
 	int rc;
 	bool doErrorAction = false;
 
-	int flags = PCRE_UTF16;
-	if (measure->codepage == 0)
-	{
-		flags = 0;
-	}
-
 	// Compile the regular expression in the first argument
 	pcre16* re = pcre16_compile(
 		(PCRE_SPTR16)measure->regExp.c_str(),
-		flags, &error, &erroffset, nullptr);
+		PCRE_UTF16, &error, &erroffset, nullptr);
 	if (re != nullptr)
 	{
 		// Compilation succeeded: match the subject in the second argument
