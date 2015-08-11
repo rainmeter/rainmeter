@@ -2,23 +2,23 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="FolderInfo.h" />
-    <ClInclude Include="..\..\Library\pcre-8.10\pcre.h">
+    <ClInclude Include="..\..\Library\pcre\pcre.h">
       <Filter>pcre</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Library\pcre-8.10\pcre_internal.h">
+    <ClInclude Include="..\..\Library\pcre\pcre_internal.h">
       <Filter>pcre</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Library\pcre-8.10\ucp.h">
+    <ClInclude Include="..\..\Library\pcre\ucp.h">
       <Filter>pcre</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Library\pcre-8.10\config.h">
+    <ClInclude Include="..\..\Library\pcre\config.h">
       <Filter>pcre</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FolderInfo.cpp" />
     <ClCompile Include="FolderInfoPlugin.cpp" />
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_globals.c">
+    <ClCompile Include="..\..\Library\pcre\pcre_globals.c">
       <Filter>pcre</Filter>
     </ClCompile>
   </ItemGroup>

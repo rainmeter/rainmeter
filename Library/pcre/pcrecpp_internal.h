@@ -1,12 +1,10 @@
 /*************************************************
-*      Perl-Compatible Regular Expressions       *
+*       Perl-Compatible Regular Expressions      *
 *************************************************/
 
-/* PCRE is a library of functions to support regular expressions whose syntax
-and semantics are as close as possible to those of the Perl 5 language.
-
-                       Written by Philip Hazel
-           Copyright (c) 1997-2008 University of Cambridge
+/*
+Copyright (c) 2005, Google Inc.
+All rights reserved.
 
 -----------------------------------------------------------------------------
 Redistribution and use in source and binary forms, with or without
@@ -38,45 +36,36 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-/* This module contains the external function pcre_refcount(), which is an
-auxiliary function that can be used to maintain a reference count in a compiled
-pattern data block. This might be helpful in applications where the block is
-shared by different users. */
+#ifndef PCRECPP_INTERNAL_H
+#define PCRECPP_INTERNAL_H
 
+/* When compiling a DLL for Windows, the exported symbols have to be declared
+using some MS magic. I found some useful information on this web page:
+http://msdn2.microsoft.com/en-us/library/y4h7bcy6(VS.80).aspx. According to the
+information there, using __declspec(dllexport) without "extern" we have a
+definition; with "extern" we have a declaration. The settings here override the
+setting in pcre.h. We use:
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+  PCRECPP_EXP_DECL       for declarations
+  PCRECPP_EXP_DEFN       for definitions of exported functions
 
-#include "pcre_internal.h"
-
-
-/*************************************************
-*           Maintain reference count             *
-*************************************************/
-
-/* The reference count is a 16-bit field, initialized to zero. It is not
-possible to transfer a non-zero count from one host to a different host that
-has a different byte order - though I can't see why anyone in their right mind
-would ever want to do that!
-
-Arguments:
-  argument_re   points to compiled code
-  adjust        value to add to the count
-
-Returns:        the (possibly updated) count value (a non-negative number), or
-                a negative error number
 */
 
-PCRE_EXP_DEFN int PCRE_CALL_CONVENTION
-pcre_refcount(pcre *argument_re, int adjust)
-{
-real_pcre *re = (real_pcre *)argument_re;
-if (re == NULL) return PCRE_ERROR_NULL;
-re->ref_count = (-adjust > re->ref_count)? 0 :
-                (adjust + re->ref_count > 65535)? 65535 :
-                re->ref_count + adjust;
-return re->ref_count;
-}
+#ifndef PCRECPP_EXP_DECL
+#  ifdef _WIN32
+#    ifndef PCRE_STATIC
+#      define PCRECPP_EXP_DECL       extern __declspec(dllexport)
+#      define PCRECPP_EXP_DEFN       __declspec(dllexport)
+#    else
+#      define PCRECPP_EXP_DECL       extern
+#      define PCRECPP_EXP_DEFN
+#    endif
+#  else
+#    define PCRECPP_EXP_DECL         extern
+#    define PCRECPP_EXP_DEFN
+#  endif
+#endif
 
-/* End of pcre_refcount.c */
+#endif  /* PCRECPP_INTERNAL_H */
+
+/* End of pcrecpp_internal.h */

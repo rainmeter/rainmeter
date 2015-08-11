@@ -21,8 +21,8 @@
 #include <string>
 #include <windows.h>
 #include "../../Common/RawString.h"
-#include "../../Library/pcre-8.10/config.h"
-#include "../../Library/pcre-8.10/pcre.h"
+#include "../../Library/pcre/config.h"
+#include "../../Library/pcre/pcre.h"
 
 class CFolderInfo
 {

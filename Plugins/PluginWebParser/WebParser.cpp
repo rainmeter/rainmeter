@@ -24,8 +24,8 @@
 #include <Wininet.h>
 #include <shlwapi.h>
 #include <process.h>
-#include "../../Library/pcre-8.10/config.h"
-#include "../../Library/pcre-8.10/pcre.h"
+#include "../../Library/pcre/config.h"
+#include "../../Library/pcre/pcre.h"
 #include "../../Common/StringUtil.h"
 #include "../API/RainmeterAPI.h"
 

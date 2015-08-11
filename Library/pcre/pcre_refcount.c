@@ -6,7 +6,7 @@
 and semantics are as close as possible to those of the Perl 5 language.
 
                        Written by Philip Hazel
-           Copyright (c) 1997-2008 University of Cambridge
+           Copyright (c) 1997-2012 University of Cambridge
 
 -----------------------------------------------------------------------------
 Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,11 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-/* This file contains a private PCRE function that converts an ordinal
-character value into a UTF8 string. */
+/* This module contains the external function pcre_refcount(), which is an
+auxiliary function that can be used to maintain a reference count in a compiled
+pattern data block. This might be helpful in applications where the block is
+shared by different users. */
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -49,39 +52,41 @@ character value into a UTF8 string. */
 
 
 /*************************************************
-*       Convert character value to UTF-8         *
+*           Maintain reference count             *
 *************************************************/
 
-/* This function takes an integer value in the range 0 - 0x7fffffff
-and encodes it as a UTF-8 character in 0 to 6 bytes.
+/* The reference count is a 16-bit field, initialized to zero. It is not
+possible to transfer a non-zero count from one host to a different host that
+has a different byte order - though I can't see why anyone in their right mind
+would ever want to do that!
 
 Arguments:
-  cvalue     the character value
-  buffer     pointer to buffer for result - at least 6 bytes long
+  argument_re   points to compiled code
+  adjust        value to add to the count
 
-Returns:     number of characters placed in the buffer
+Returns:        the (possibly updated) count value (a non-negative number), or
+                a negative error number
 */
 
-int
-_pcre_ord2utf8(int cvalue, uschar *buffer)
-{
-#ifdef SUPPORT_UTF8
-register int i, j;
-for (i = 0; i < _pcre_utf8_table1_size; i++)
-  if (cvalue <= _pcre_utf8_table1[i]) break;
-buffer += i;
-for (j = i; j > 0; j--)
- {
- *buffer-- = 0x80 | (cvalue & 0x3f);
- cvalue >>= 6;
- }
-*buffer = _pcre_utf8_table2[i] | cvalue;
-return i + 1;
-#else
-(void)(cvalue);  /* Keep compiler happy; this function won't ever be */
-(void)(buffer);  /* called when SUPPORT_UTF8 is not defined. */
-return 0;
+#if defined COMPILE_PCRE8
+PCRE_EXP_DEFN int PCRE_CALL_CONVENTION
+pcre_refcount(pcre *argument_re, int adjust)
+#elif defined COMPILE_PCRE16
+PCRE_EXP_DEFN int PCRE_CALL_CONVENTION
+pcre16_refcount(pcre16 *argument_re, int adjust)
+#elif defined COMPILE_PCRE32
+PCRE_EXP_DEFN int PCRE_CALL_CONVENTION
+pcre32_refcount(pcre32 *argument_re, int adjust)
 #endif
+{
+REAL_PCRE *re = (REAL_PCRE *)argument_re;
+if (re == NULL) return PCRE_ERROR_NULL;
+if (re->magic_number != MAGIC_NUMBER) return PCRE_ERROR_BADMAGIC;
+if ((re->flags & PCRE_MODE) == 0) return PCRE_ERROR_BADMODE;
+re->ref_count = (-adjust > re->ref_count)? 0 :
+                (adjust + re->ref_count > 65535)? 65535 :
+                re->ref_count + adjust;
+return re->ref_count;
 }
 
-/* End of pcre_ord2utf8.c */
+/* End of pcre_refcount.c */

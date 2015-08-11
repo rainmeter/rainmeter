@@ -6,7 +6,7 @@
 and semantics are as close as possible to those of the Perl 5 language.
 
                        Written by Philip Hazel
-           Copyright (c) 1997-2009 University of Cambridge
+           Copyright (c) 1997-2012 University of Cambridge
 
 -----------------------------------------------------------------------------
 Redistribution and use in source and binary forms, with or without
@@ -38,9 +38,8 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-/* This module contains the external function pcre_info(), which gives some
-information about a compiled pattern. However, use of this function is now
-deprecated, as it has been superseded by pcre_fullinfo(). */
+/* This module contains the external function pcre_version(), which returns a
+string that identifies the PCRE version that is in use. */
 
 
 #ifdef HAVE_CONFIG_H
@@ -51,43 +50,49 @@ deprecated, as it has been superseded by pcre_fullinfo(). */
 
 
 /*************************************************
-* (Obsolete) Return info about compiled pattern  *
+*          Return version string                 *
 *************************************************/
 
-/* This is the original "info" function. It picks potentially useful data out
-of the private structure, but its interface was too rigid. It remains for
-backwards compatibility. The public options are passed back in an int - though
-the re->options field has been expanded to a long int, all the public options
-at the low end of it, and so even on 16-bit systems this will still be OK.
-Therefore, I haven't changed the API for pcre_info().
+/* These macros are the standard way of turning unquoted text into C strings.
+They allow macros like PCRE_MAJOR to be defined without quotes, which is
+convenient for user programs that want to test its value. */
 
-Arguments:
-  argument_re   points to compiled code
-  optptr        where to pass back the options
-  first_byte    where to pass back the first character,
-                or -1 if multiline and all branches start ^,
-                or -2 otherwise
+#define STRING(a)  # a
+#define XSTRING(s) STRING(s)
 
-Returns:        number of capturing subpatterns
-                or negative values on error
-*/
+/* A problem turned up with PCRE_PRERELEASE, which is defined empty for
+production releases. Originally, it was used naively in this code:
 
-PCRE_EXP_DEFN int PCRE_CALL_CONVENTION
-pcre_info(const pcre *argument_re, int *optptr, int *first_byte)
+  return XSTRING(PCRE_MAJOR)
+         "." XSTRING(PCRE_MINOR)
+             XSTRING(PCRE_PRERELEASE)
+         " " XSTRING(PCRE_DATE);
+
+However, when PCRE_PRERELEASE is empty, this leads to an attempted expansion of
+STRING(). The C standard states: "If (before argument substitution) any
+argument consists of no preprocessing tokens, the behavior is undefined." It
+turns out the gcc treats this case as a single empty string - which is what we
+really want - but Visual C grumbles about the lack of an argument for the
+macro. Unfortunately, both are within their rights. To cope with both ways of
+handling this, I had resort to some messy hackery that does a test at run time.
+I could find no way of detecting that a macro is defined as an empty string at
+pre-processor time. This hack uses a standard trick for avoiding calling
+the STRING macro with an empty argument when doing the test. */
+
+#if defined COMPILE_PCRE8
+PCRE_EXP_DEFN const char * PCRE_CALL_CONVENTION
+pcre_version(void)
+#elif defined COMPILE_PCRE16
+PCRE_EXP_DEFN const char * PCRE_CALL_CONVENTION
+pcre16_version(void)
+#elif defined COMPILE_PCRE32
+PCRE_EXP_DEFN const char * PCRE_CALL_CONVENTION
+pcre32_version(void)
+#endif
 {
-real_pcre internal_re;
-const real_pcre *re = (const real_pcre *)argument_re;
-if (re == NULL) return PCRE_ERROR_NULL;
-if (re->magic_number != MAGIC_NUMBER)
-  {
-  re = _pcre_try_flipped(re, &internal_re, NULL, NULL);
-  if (re == NULL) return PCRE_ERROR_BADMAGIC;
-  }
-if (optptr != NULL) *optptr = (int)(re->options & PUBLIC_COMPILE_OPTIONS);
-if (first_byte != NULL)
-  *first_byte = ((re->flags & PCRE_FIRSTSET) != 0)? re->first_byte :
-     ((re->flags & PCRE_STARTLINE) != 0)? -1 : -2;
-return re->top_bracket;
+return (XSTRING(Z PCRE_PRERELEASE)[1] == 0)?
+  XSTRING(PCRE_MAJOR.PCRE_MINOR PCRE_DATE) :
+  XSTRING(PCRE_MAJOR.PCRE_MINOR) XSTRING(PCRE_PRERELEASE PCRE_DATE);
 }
 
-/* End of pcre_info.c */
+/* End of pcre_version.c */

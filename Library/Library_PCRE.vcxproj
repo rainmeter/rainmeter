@@ -24,32 +24,33 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="pcre-8.10\pcre_chartables.c" />
-    <ClCompile Include="pcre-8.10\pcre_compile.c" />
-    <ClCompile Include="pcre-8.10\pcre_config.c" />
-    <ClCompile Include="pcre-8.10\pcre_dfa_exec.c" />
-    <ClCompile Include="pcre-8.10\pcre_exec.c" />
-    <ClCompile Include="pcre-8.10\pcre_fullinfo.c" />
-    <ClCompile Include="pcre-8.10\pcre_get.c" />
-    <ClCompile Include="pcre-8.10\pcre_globals.c" />
-    <ClCompile Include="pcre-8.10\pcre_info.c" />
-    <ClCompile Include="pcre-8.10\pcre_maketables.c" />
-    <ClCompile Include="pcre-8.10\pcre_newline.c" />
-    <ClCompile Include="pcre-8.10\pcre_ord2utf8.c" />
-    <ClCompile Include="pcre-8.10\pcre_refcount.c" />
-    <ClCompile Include="pcre-8.10\pcre_study.c" />
-    <ClCompile Include="pcre-8.10\pcre_tables.c" />
-    <ClCompile Include="pcre-8.10\pcre_try_flipped.c" />
-    <ClCompile Include="pcre-8.10\pcre_ucd.c" />
-    <ClCompile Include="pcre-8.10\pcre_valid_utf8.c" />
-    <ClCompile Include="pcre-8.10\pcre_version.c" />
-    <ClCompile Include="pcre-8.10\pcre_xclass.c" />
+    <ClCompile Include="pcre\pcre_byte_order.c" />
+    <ClCompile Include="pcre\pcre_chartables.c" />
+    <ClCompile Include="pcre\pcre_compile.c" />
+    <ClCompile Include="pcre\pcre_config.c" />
+    <ClCompile Include="pcre\pcre_dfa_exec.c" />
+    <ClCompile Include="pcre\pcre_exec.c" />
+    <ClCompile Include="pcre\pcre_fullinfo.c" />
+    <ClCompile Include="pcre\pcre_get.c" />
+    <ClCompile Include="pcre\pcre_globals.c" />
+    <ClCompile Include="pcre\pcre_maketables.c" />
+    <ClCompile Include="pcre\pcre_newline.c" />
+    <ClCompile Include="pcre\pcre_ord2utf8.c" />
+    <ClCompile Include="pcre\pcre_printint.c" />
+    <ClCompile Include="pcre\pcre_refcount.c" />
+    <ClCompile Include="pcre\pcre_string_utils.c" />
+    <ClCompile Include="pcre\pcre_study.c" />
+    <ClCompile Include="pcre\pcre_tables.c" />
+    <ClCompile Include="pcre\pcre_ucd.c" />
+    <ClCompile Include="pcre\pcre_valid_utf8.c" />
+    <ClCompile Include="pcre\pcre_version.c" />
+    <ClCompile Include="pcre\pcre_xclass.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pcre-8.10\config.h" />
-    <ClInclude Include="pcre-8.10\pcre.h" />
-    <ClInclude Include="pcre-8.10\pcre_internal.h" />
-    <ClInclude Include="pcre-8.10\ucp.h" />
+    <ClInclude Include="pcre\config.h" />
+    <ClInclude Include="pcre\pcre.h" />
+    <ClInclude Include="pcre\pcre_internal.h" />
+    <ClInclude Include="pcre\ucp.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
