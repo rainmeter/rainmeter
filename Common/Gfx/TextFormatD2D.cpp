@@ -34,8 +34,8 @@
 #include "TextInlineFormat/TextInlineFormatWeight.h"
 #include "../StringUtil.h"
 #include "../../Library/ConfigParser.h"
-#include "../../Library/pcre-8.10/config.h"
-#include "../../Library/pcre-8.10/pcre.h"
+#include "../../Library/pcre/config.h"
+#include "../../Library/pcre/pcre.h"
 #include <ole2.h>  // For Gdiplus.h.
 #include <GdiPlus.h>
 

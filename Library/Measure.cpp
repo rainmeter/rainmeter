@@ -37,8 +37,8 @@
 #include "Rainmeter.h"
 #include "Error.h"
 #include "Util.h"
-#include "pcre-8.10/config.h"
-#include "pcre-8.10/pcre.h"
+#include "pcre/config.h"
+#include "pcre/pcre.h"
 
 #define OVECCOUNT 300	// Should be a multiple of 3
 

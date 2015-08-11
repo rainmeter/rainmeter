@@ -24,14 +24,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Library\pcre-8.10\config.h" />
-    <ClInclude Include="..\..\Library\pcre-8.10\pcre.h" />
-    <ClInclude Include="..\..\Library\pcre-8.10\pcre_internal.h" />
-    <ClInclude Include="..\..\Library\pcre-8.10\ucp.h" />
+    <ClInclude Include="..\..\Library\pcre\config.h" />
+    <ClInclude Include="..\..\Library\pcre\pcre.h" />
+    <ClInclude Include="..\..\Library\pcre\pcre_internal.h" />
+    <ClInclude Include="..\..\Library\pcre\ucp.h" />
     <ClInclude Include="FolderInfo.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_globals.c" />
+    <ClCompile Include="..\..\Library\pcre\pcre_globals.c" />
     <ClCompile Include="FolderInfo.cpp" />
     <ClCompile Include="FolderInfoPlugin.cpp" />
   </ItemGroup>

@@ -26,14 +26,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Common\StringUtil.h" />
-    <ClInclude Include="..\..\Library\pcre-8.10\config.h" />
-    <ClInclude Include="..\..\Library\pcre-8.10\pcre.h" />
-    <ClInclude Include="..\..\Library\pcre-8.10\pcre_internal.h" />
-    <ClInclude Include="..\..\Library\pcre-8.10\ucp.h" />
+    <ClInclude Include="..\..\Library\pcre\config.h" />
+    <ClInclude Include="..\..\Library\pcre\pcre.h" />
+    <ClInclude Include="..\..\Library\pcre\pcre_internal.h" />
+    <ClInclude Include="..\..\Library\pcre\ucp.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Common\StringUtil.cpp" />
-    <ClCompile Include="..\..\Library\pcre-8.10\pcre_globals.c" />
+    <ClCompile Include="..\..\Library\pcre\pcre_globals.c" />
     <ClCompile Include="WebParser.cpp" />
   </ItemGroup>
   <ItemGroup>
