@@ -740,6 +740,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	measure->updateRate = RmReadInt(rm, L"UpdateRate", 600);
 	measure->forceReload = 0!=RmReadInt(rm, L"ForceReload", 0);
 	measure->codepage = RmReadInt(rm, L"CodePage", 0);
+	if (measure->codepage == 0)
+	{
+		measure->codepage = CP_UTF8;
+	}
 
 	measure->download = 0!=RmReadInt(rm, L"Download", 0);
 	if (measure->download)
