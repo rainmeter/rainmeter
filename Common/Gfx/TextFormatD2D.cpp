@@ -469,23 +469,6 @@ void TextFormatD2D::ReadInlineOptions(ConfigParser& parser, const WCHAR* section
 
 void TextFormatD2D::FindInlineRanges(const std::wstring& str)
 {
-	std::string utf8str = StringUtil::NarrowUTF8(str.c_str());
-
-	// Because PCRE uses UTF8 encoded strings for pattern matching, we need
-	// to adjust the range for use with the standard UTF16 encoded strings.
-	auto adjustRange = [&](DWRITE_TEXT_RANGE& range, size_t& offset) -> void
-	{
-		size_t start = (size_t)range.startPosition;
-		size_t length = (size_t)range.length;
-		std::wstring foundText = StringUtil::WidenUTF8(utf8str.substr(start, length));
-
-		start = str.find(foundText, offset);
-		if (start != std::wstring::npos) range.startPosition = (UINT32)start;
-		range.length = (UINT32)foundText.length();
-
-		offset = start + range.length;
-	};
-
 	for (auto& fmt : m_TextInlineFormat)
 	{
 		std::vector<DWRITE_TEXT_RANGE> ranges;
@@ -494,10 +477,9 @@ void TextFormatD2D::FindInlineRanges(const std::wstring& str)
 		const char* error;
 		int errorOffset = 0;
 		int offset = 0;
-		size_t utf16Offset = 0;
-		pcre* re = pcre_compile(
-			StringUtil::NarrowUTF8(fmt->GetPattern()).c_str(),
-			PCRE_UTF8,
+		pcre16* re = pcre16_compile(
+			(PCRE_SPTR16)fmt->GetPattern().c_str(),
+			PCRE_UTF16,
 			&error,
 			&errorOffset,
 			nullptr);  // Use default character tables.
@@ -509,11 +491,11 @@ void TextFormatD2D::FindInlineRanges(const std::wstring& str)
 		{
 			do
 			{
-				const int rc = pcre_exec(
+				const int rc = pcre16_exec(
 					re,
-					nullptr,                // No extra data - we didn't study the pattern
-					utf8str.c_str(),        // The subject string
-					(int)utf8str.length(),  // The length of the subject
+					nullptr,
+					(PCRE_SPTR16)str.c_str(),
+					(int)str.length(),
 					offset,
 					PCRE_NOTEMPTY,          // Empty string is not a valid match
 					ovector,
@@ -530,7 +512,6 @@ void TextFormatD2D::FindInlineRanges(const std::wstring& str)
 				if (rc == 1)
 				{
 					DWRITE_TEXT_RANGE range = { start, length };
-					adjustRange(range, utf16Offset);
 					ranges.push_back(range);
 				}
 				else if (rc > 1)	// Captures found.
@@ -543,7 +524,6 @@ void TextFormatD2D::FindInlineRanges(const std::wstring& str)
 						if (newStart < 0) break;	// Match was not found, so skip to the next item
 
 						DWRITE_TEXT_RANGE range = { newStart, inLength };
-						adjustRange(range, utf16Offset);
 						ranges.push_back(range);
 					}
 				}
