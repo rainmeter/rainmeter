@@ -95,7 +95,6 @@ void CFolderInfo::CalculateSize()
 
 	WCHAR searchPattern[MAX_PATH + 10];
 	WCHAR buffer[MAX_PATH];
-	char utf8Buf[MAX_PATH * 3];
 	WIN32_FIND_DATA findData;
 	HANDLE findHandle;
 	while (!folderQueue.empty())
@@ -131,10 +130,10 @@ void CFolderInfo::CalculateSize()
 			}
 			else if (!isFolder && m_RegExpFilter)
 			{
-				const int utf8BufLen = WideCharToMultiByte(
-					CP_UTF8, 0, findData.cFileName, (int)wcslen(findData.cFileName) + 1, utf8Buf, MAX_PATH * 3,
-					nullptr, nullptr);
-				if (0 != pcre_exec(m_RegExpFilter, nullptr, utf8Buf, utf8BufLen, 0, 0, nullptr, 0))
+				if (pcre16_exec(
+						m_RegExpFilter, nullptr,
+						(PCRE_SPTR16)findData.cFileName, (int)wcslen(findData.cFileName),
+						0, 0, nullptr, 0) != 0)
 				{
 					continue;
 				}
@@ -179,16 +178,9 @@ void CFolderInfo::SetRegExpFilter(LPCWSTR filter)
 
 	if (*filter)
 	{
-		const int filterLen = (int)wcslen(filter) + 1;
-		int bufLen = WideCharToMultiByte(CP_UTF8, 0, filter, filterLen, nullptr, 0, nullptr, nullptr);
-
-		char* buf = new char[bufLen];
-		WideCharToMultiByte(CP_UTF8, 0, filter, filterLen, buf, bufLen, nullptr, nullptr);
-
 		const char* error;
 		int erroffset;
-		m_RegExpFilter = pcre_compile(buf, PCRE_UTF8, &error, &erroffset, nullptr);
-
-		delete [] buf;
+		m_RegExpFilter = pcre16_compile(
+			(PCRE_SPTR16)filter, PCRE_UTF16, &error, &erroffset, nullptr);
 	}
 }

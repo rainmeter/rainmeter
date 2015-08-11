@@ -63,6 +63,6 @@ private:
 	UINT64 m_Size;
 	UINT m_FileCount;
 	UINT m_FolderCount;
-	pcre* m_RegExpFilter;
+	pcre16* m_RegExpFilter;
 	DWORD m_LastUpdateTime;
 };
