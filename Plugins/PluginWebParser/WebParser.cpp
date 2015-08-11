@@ -246,7 +246,7 @@ struct MeasureData
 BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool forceReload);
 unsigned __stdcall NetworkThreadProc(void* pParam);
 unsigned __stdcall NetworkDownloadThreadProc(void* pParam);
-void ParseData(MeasureData* measure, LPCWSTR parseData, DWORD dwSize);
+void ParseData(MeasureData* measure, const BYTE* rawData, DWORD rawSize, bool utf16Data = false);
 
 CRITICAL_SECTION g_CriticalSection;
 ProxyCachePool* g_ProxyCachePool = nullptr;
@@ -871,7 +871,7 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 			}
 		}
 
-		ParseData(measure, (LPCWSTR)data, dwSize);
+		ParseData(measure, data, dwSize);
 
 		free(data);
 	}
@@ -884,9 +884,13 @@ unsigned __stdcall NetworkThreadProc(void* pParam)
 	return 0;   // thread completed successfully
 }
 
-void ParseData(MeasureData* measure, LPCWSTR parseData, DWORD dwSize)
+void ParseData(MeasureData* measure, const BYTE* rawData, DWORD rawSize, bool utf16Data)
 {
-	// Parse the value from the data
+	const int UTF16_CODEPAGE = 1200;
+	if (measure->codepage == UTF16_CODEPAGE) {
+		utf16Data = true;
+	}
+
 	const char* error;
 	int erroffset;
 	int ovector[OVECCOUNT];
@@ -901,15 +905,16 @@ void ParseData(MeasureData* measure, LPCWSTR parseData, DWORD dwSize)
 	{
 		// Compilation succeeded: match the subject in the second argument
 		std::wstring buffer;
-		const int UTF16_CODEPAGE = 1200;
-		if (measure->codepage != UTF16_CODEPAGE)
+		auto data = (const WCHAR*)rawData;
+		DWORD dataLength = rawSize / 2;
+		if (!utf16Data)
 		{
-			buffer = StringUtil::Widen((LPCSTR)parseData, dwSize, measure->codepage);
-			parseData = buffer.c_str();
-			dwSize = (DWORD)buffer.length();
+			buffer = StringUtil::Widen((LPCSTR)rawData, rawSize, measure->codepage);
+			data = buffer.c_str();
+			dataLength = (DWORD)buffer.length();
 		}
 
-		rc = pcre16_exec(re, nullptr, (PCRE_SPTR16)parseData, dwSize, 0, 0, ovector, OVECCOUNT);
+		rc = pcre16_exec(re, nullptr, (PCRE_SPTR16)data, dataLength, 0, 0, ovector, OVECCOUNT);
 		if (rc >= 0)
 		{
 			if (rc == 0)
@@ -925,13 +930,13 @@ void ParseData(MeasureData* measure, LPCWSTR parseData, DWORD dwSize)
 					{
 						for (int i = 0; i < rc; ++i)
 						{
-							const WCHAR* match = parseData + ovector[2 * i];
+							const WCHAR* match = data + ovector[2 * i];
 							const int matchLen = min(ovector[2 * i + 1] - ovector[2 * i], 256);
 							RmLogF(measure->rm, LOG_DEBUG, L"WebParser: Index %2d: %.*s", i, matchLen, match);
 						}
 					}
 
-					const WCHAR* match = parseData + ovector[2 * measure->stringIndex];
+					const WCHAR* match = data + ovector[2 * measure->stringIndex];
 					int matchLen = ovector[2 * measure->stringIndex + 1] - ovector[2 * measure->stringIndex];
 					EnterCriticalSection(&g_CriticalSection);
 					measure->resultString.assign(match, matchLen);
@@ -972,14 +977,14 @@ void ParseData(MeasureData* measure, LPCWSTR parseData, DWORD dwSize)
 					{
 						if ((*i)->stringIndex < rc)
 						{
-							const WCHAR* match = parseData + ovector[2 * (*i)->stringIndex];
+							const WCHAR* match = data + ovector[2 * (*i)->stringIndex];
 							int matchLen = ovector[2 * (*i)->stringIndex + 1] - ovector[2 * (*i)->stringIndex];
 							if (!(*i)->regExp.empty())
 							{
 								// Change the index and parse the substring
 								int index = (*i)->stringIndex;
 								(*i)->stringIndex = (*i)->stringIndex2;
-								ParseData((*i), match, matchLen);
+								ParseData((*i), (BYTE*)match, matchLen * 2, true);
 								(*i)->stringIndex = index;
 							}
 							else
