@@ -31,7 +31,7 @@
     <ClInclude Include="FolderInfo.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Library\pcre\pcre_globals.c" />
+    <ClCompile Include="..\..\Library\pcre\pcre16_globals.c" />
     <ClCompile Include="FolderInfo.cpp" />
     <ClCompile Include="FolderInfoPlugin.cpp" />
   </ItemGroup>

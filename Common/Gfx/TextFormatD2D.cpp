@@ -532,7 +532,7 @@ void TextFormatD2D::FindInlineRanges(const std::wstring& str)
 
 			} while (true);
 
-			pcre_free(re);
+			pcre16_free(re);
 
 			// Gradients are set up differently then other options because they require 'inner ranges'
 			// when text is split between multiple lines - otherwise set the range.

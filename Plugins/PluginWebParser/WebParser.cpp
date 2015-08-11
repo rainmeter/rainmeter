@@ -1060,7 +1060,7 @@ void ParseData(MeasureData* measure, LPCWSTR parseData, DWORD dwSize)
 		}
 
 		// Release memory used for the compiled pattern
-		pcre_free(re);
+		pcre16_free(re);
 	}
 	else
 	{

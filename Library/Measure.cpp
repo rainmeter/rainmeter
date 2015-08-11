@@ -312,7 +312,7 @@ const WCHAR* Measure::CheckSubstitute(const WCHAR* buffer)
 				}
 				while (true);
 
-				pcre_free(re);
+				pcre16_free(re);
 			}
 		}
 	}

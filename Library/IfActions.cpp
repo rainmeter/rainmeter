@@ -329,7 +329,7 @@ void IfActions::DoIfActions(Measure& measure, double value)
 			}
 
 			// Release memory used for the compiled pattern
-			pcre_free(re);
+			pcre16_free(re);
 		}
 	}
 }

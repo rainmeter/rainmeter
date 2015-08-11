@@ -33,7 +33,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Common\StringUtil.cpp" />
-    <ClCompile Include="..\..\Library\pcre\pcre_globals.c" />
+    <ClCompile Include="..\..\Library\pcre\pcre16_globals.c" />
     <ClCompile Include="WebParser.cpp" />
   </ItemGroup>
   <ItemGroup>

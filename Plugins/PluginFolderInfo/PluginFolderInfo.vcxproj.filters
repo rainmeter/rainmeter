@@ -18,7 +18,7 @@
   <ItemGroup>
     <ClCompile Include="FolderInfo.cpp" />
     <ClCompile Include="FolderInfoPlugin.cpp" />
-    <ClCompile Include="..\..\Library\pcre\pcre_globals.c">
+    <ClCompile Include="..\..\Library\pcre\pcre16_globals.c">
       <Filter>pcre</Filter>
     </ClCompile>
   </ItemGroup>
