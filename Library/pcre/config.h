@@ -19,11 +19,11 @@
 #define PCRE_STATIC 1
 
 #define SUPPORT_PCRE8 1
-/* #undef SUPPORT_PCRE16 */
+#define SUPPORT_PCRE16 1
 /* #undef SUPPORT_PCRE32 */
 /* #undef SUPPORT_JIT */
 #define SUPPORT_PCREGREP_JIT 1
-/* #undef SUPPORT_UTF */
+#define SUPPORT_UTF 1
 /* #undef SUPPORT_UCP */
 /* #undef EBCDIC */
 /* #undef EBCDIC_NL25 */
