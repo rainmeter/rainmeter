@@ -67,7 +67,7 @@ void CFolderInfo::FreePcre()
 {
 	if (m_RegExpFilter)
 	{
-		pcre_free(m_RegExpFilter);
+		pcre16_free(m_RegExpFilter);
 		m_RegExpFilter = nullptr;
 	}
 }

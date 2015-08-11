@@ -17,9 +17,7 @@ EXPORTS
 
 	; Private
 	RainmeterMain		@1 NONAME
-	pcre_compile		@2 NONAME
-	pcre_exec			@3 NONAME
-	pcre_study			@4 NONAME
+	; 2-4 were for the non-UTF-16 pcre_ functions.
 	pcre16_compile		@5 NONAME
 	pcre16_exec			@6 NONAME
 	pcre16_study		@7 NONAME

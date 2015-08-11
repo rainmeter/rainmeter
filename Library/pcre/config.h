@@ -18,7 +18,7 @@
 
 #define PCRE_STATIC 1
 
-#define SUPPORT_PCRE8 1
+/* #undef SUPPORT_PCRE8 1 */
 #define SUPPORT_PCRE16 1
 /* #undef SUPPORT_PCRE32 */
 /* #undef SUPPORT_JIT */

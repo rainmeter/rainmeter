@@ -16,7 +16,7 @@
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>_LIB;HAVE_CONFIG_H;SUPPORT_UTF8;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_LIB;HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4244;4334;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
@@ -24,49 +24,28 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="pcre/pcre16_byte_order.c" />
-    <ClCompile Include="pcre/pcre16_chartables.c" />
-    <ClCompile Include="pcre/pcre16_compile.c" />
-    <ClCompile Include="pcre/pcre16_config.c" />
-    <ClCompile Include="pcre/pcre16_dfa_exec.c" />
-    <ClCompile Include="pcre/pcre16_exec.c" />
-    <ClCompile Include="pcre/pcre16_fullinfo.c" />
-    <ClCompile Include="pcre/pcre16_get.c" />
-    <ClCompile Include="pcre/pcre16_globals.c" />
-    <ClCompile Include="pcre/pcre16_maketables.c" />
-    <ClCompile Include="pcre/pcre16_newline.c" />
-    <ClCompile Include="pcre/pcre16_ord2utf16.c" />
-    <ClCompile Include="pcre/pcre16_printint.c" />
-    <ClCompile Include="pcre/pcre16_refcount.c" />
-    <ClCompile Include="pcre/pcre16_string_utils.c" />
-    <ClCompile Include="pcre/pcre16_study.c" />
-    <ClCompile Include="pcre/pcre16_tables.c" />
-    <ClCompile Include="pcre/pcre16_ucd.c" />
-    <ClCompile Include="pcre/pcre16_utf16_utils.c" />
-    <ClCompile Include="pcre/pcre16_valid_utf16.c" />
-    <ClCompile Include="pcre/pcre16_version.c" />
-    <ClCompile Include="pcre/pcre16_xclass.c" />
-    <ClCompile Include="pcre\pcre_byte_order.c" />
-    <ClCompile Include="pcre\pcre_chartables.c" />
-    <ClCompile Include="pcre\pcre_compile.c" />
-    <ClCompile Include="pcre\pcre_config.c" />
-    <ClCompile Include="pcre\pcre_dfa_exec.c" />
-    <ClCompile Include="pcre\pcre_exec.c" />
-    <ClCompile Include="pcre\pcre_fullinfo.c" />
-    <ClCompile Include="pcre\pcre_get.c" />
-    <ClCompile Include="pcre\pcre_globals.c" />
-    <ClCompile Include="pcre\pcre_maketables.c" />
-    <ClCompile Include="pcre\pcre_newline.c" />
-    <ClCompile Include="pcre\pcre_ord2utf8.c" />
-    <ClCompile Include="pcre\pcre_printint.c" />
-    <ClCompile Include="pcre\pcre_refcount.c" />
-    <ClCompile Include="pcre\pcre_string_utils.c" />
-    <ClCompile Include="pcre\pcre_study.c" />
-    <ClCompile Include="pcre\pcre_tables.c" />
-    <ClCompile Include="pcre\pcre_ucd.c" />
-    <ClCompile Include="pcre\pcre_valid_utf8.c" />
-    <ClCompile Include="pcre\pcre_version.c" />
-    <ClCompile Include="pcre\pcre_xclass.c" />
+    <ClCompile Include="pcre\pcre16_byte_order.c" />
+    <ClCompile Include="pcre\pcre16_chartables.c" />
+    <ClCompile Include="pcre\pcre16_compile.c" />
+    <ClCompile Include="pcre\pcre16_config.c" />
+    <ClCompile Include="pcre\pcre16_dfa_exec.c" />
+    <ClCompile Include="pcre\pcre16_exec.c" />
+    <ClCompile Include="pcre\pcre16_fullinfo.c" />
+    <ClCompile Include="pcre\pcre16_get.c" />
+    <ClCompile Include="pcre\pcre16_globals.c" />
+    <ClCompile Include="pcre\pcre16_maketables.c" />
+    <ClCompile Include="pcre\pcre16_newline.c" />
+    <ClCompile Include="pcre\pcre16_ord2utf16.c" />
+    <ClCompile Include="pcre\pcre16_printint.c" />
+    <ClCompile Include="pcre\pcre16_refcount.c" />
+    <ClCompile Include="pcre\pcre16_string_utils.c" />
+    <ClCompile Include="pcre\pcre16_study.c" />
+    <ClCompile Include="pcre\pcre16_tables.c" />
+    <ClCompile Include="pcre\pcre16_ucd.c" />
+    <ClCompile Include="pcre\pcre16_utf16_utils.c" />
+    <ClCompile Include="pcre\pcre16_valid_utf16.c" />
+    <ClCompile Include="pcre\pcre16_version.c" />
+    <ClCompile Include="pcre\pcre16_xclass.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pcre\config.h" />
