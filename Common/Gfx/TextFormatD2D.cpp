@@ -1022,7 +1022,7 @@ void TextFormatD2D::ApplyInlineColoring(ID2D1RenderTarget* target, const D2D1_PO
 		else if (fmt->GetType() == Gfx::InlineType::GradientColor)
 		{
 			auto option = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
-			option->ApplyInlineFormat(m_TextLayout.Get(), point, m_HasInlineOptionsChanged);
+			option->ApplyInlineFormat(m_TextLayout.Get(), point);
 		}
 	}
 
@@ -1030,6 +1030,18 @@ void TextFormatD2D::ApplyInlineColoring(ID2D1RenderTarget* target, const D2D1_PO
 	// to tell the 'format' that the inline options have changed. Here, we reset that
 	// flag to false because the coloring of the text happen just before drawing.
 	m_HasInlineOptionsChanged = false;
+}
+
+void TextFormatD2D::ResetGradientPosition(const D2D1_POINT_2F* point)
+{
+	for (const auto& fmt : m_TextInlineFormat)
+	{
+		if (fmt->GetType() == Gfx::InlineType::GradientColor)
+		{
+			auto option = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
+			option->ApplyInlineFormat(nullptr, point, false);
+		}
+	}
 }
 
 void TextFormatD2D::ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT strLen)

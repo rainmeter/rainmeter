@@ -381,6 +381,14 @@ void CanvasD2D::DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& forma
 
 	m_Target->DrawTextLayout(drawPosition, formatD2D.m_TextLayout.Get(), solidBrush.Get());
 
+	if (applyInlineFormatting)
+	{
+		// Inline gradients require the drawing position, so in case that position
+		// changes, we need a way to reset it after drawing time so on the next
+		// iteration it will know the correct position.
+		formatD2D.ResetGradientPosition(&drawPosition);
+	}
+
 	if (formatD2D.m_Trimming)
 	{
 		if (m_CanUseAxisAlignClip)

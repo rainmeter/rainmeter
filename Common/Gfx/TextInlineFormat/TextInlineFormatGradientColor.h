@@ -50,7 +50,7 @@ public:
 	virtual InlineType GetType() override { return InlineType::GradientColor; }
 
 	virtual void ApplyInlineFormat(IDWriteTextLayout* layout) override { }
-	void ApplyInlineFormat(IDWriteTextLayout* layout, const D2D1_POINT_2F* point, bool hasChanged);
+	void ApplyInlineFormat(IDWriteTextLayout* layout, const D2D1_POINT_2F* point, bool beforeDrawing = true);
 
 	void BuildGradientBrushes(ID2D1RenderTarget* target, IDWriteTextLayout* layout);
 	void UpdateSubOptions(const size_t& index, const DWRITE_TEXT_RANGE& range);
