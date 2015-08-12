@@ -167,9 +167,15 @@ void TextInlineFormat_GradientColor::UpdateSubOptions(const size_t& index, const
 	}
 }
 
-void TextInlineFormat_GradientColor::ApplyInlineFormat(IDWriteTextLayout* layout, const D2D1_POINT_2F* point, bool hasChanged)
+void TextInlineFormat_GradientColor::ApplyInlineFormat(IDWriteTextLayout* layout, const D2D1_POINT_2F* point, bool beforeDrawing)
 {
-	if (!layout) return;
+	if (beforeDrawing && !layout) return;
+
+	// Because the gradient needs to know the drawing position, we need a way to set that position
+	// before drawing time, and then remove that same position after drawing time in case the
+	// position changes on the next iteration.
+	// Note: |layout| should be 'nullptr' when |beforeDrawing| is false (or after drawing time)
+	FLOAT sign = beforeDrawing ? 1.0f : -1.0f;
 
 	for (auto& sub : m_SubOptions)
 	{
@@ -183,18 +189,18 @@ void TextInlineFormat_GradientColor::ApplyInlineFormat(IDWriteTextLayout* layout
 				D2D1_POINT_2F start = sub.brushes[count]->GetStartPoint();
 				D2D1_POINT_2F end = sub.brushes[count]->GetEndPoint();
 
-				if (hasChanged)
+				start.x += sign * point->x;
+				start.y += sign * point->y;
+				end.x += sign * point->x;
+				end.y += sign * point->y;
+
+				sub.brushes[count]->SetStartPoint(start);
+				sub.brushes[count]->SetEndPoint(end);
+
+				if (beforeDrawing)
 				{
-					start.x += point->x;
-					start.y += point->y;
-					end.x += point->x;
-					end.y += point->y;
-
-					sub.brushes[count]->SetStartPoint(start);
-					sub.brushes[count]->SetEndPoint(end);
+					layout->SetDrawingEffect(sub.brushes[count], range);
 				}
-
-				layout->SetDrawingEffect(sub.brushes[count], range);
 			}
 
 			++count;

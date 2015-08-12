@@ -86,6 +86,7 @@ private:
 	void UpdateInlineWeight(const size_t& index, const std::wstring pattern, const DWRITE_FONT_WEIGHT weight);
 	void ApplyInlineFormatting(IDWriteTextLayout* layout);
 	void ApplyInlineColoring(ID2D1RenderTarget* target, const D2D1_POINT_2F* point);
+	void ResetGradientPosition(const D2D1_POINT_2F* point);
 	void ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT strLen);
 
 	Microsoft::WRL::ComPtr<IDWriteTextFormat> m_TextFormat;
