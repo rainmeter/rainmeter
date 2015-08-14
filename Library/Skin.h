@@ -372,6 +372,8 @@ private:
 	int m_WindowH;
 	int m_ScreenX;								// X-postion on the virtual screen 
 	int m_ScreenY;								// Y-postion on the virtual screen
+	int m_SkinW;								// User defined width of skin
+	int m_SkinH;								// User defined height of skin
 	bool m_AnchorXFromRight;
 	bool m_AnchorYFromBottom;
 	bool m_AnchorXPercentage;

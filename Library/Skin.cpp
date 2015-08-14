@@ -98,6 +98,8 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_WindowH(),
 	m_ScreenX(),
 	m_ScreenY(),
+	m_SkinW(),
+	m_SkinH(),
 	m_AnchorXFromRight(false),
 	m_AnchorYFromBottom(false),
 	m_AnchorXPercentage(false),
@@ -1496,6 +1498,10 @@ void Skin::SetOption(const std::wstring& section, const std::wstring& option, co
 */
 void Skin::WindowToScreen()
 {
+	// Use user defined width and/or height if necessary
+	if (m_SkinW > 0) m_WindowW = m_SkinW;
+	if (m_SkinH > 0) m_WindowH = m_SkinH;
+
 	std::wstring::size_type index, index2;
 	int pixel = 0;
 	float num;
@@ -2042,9 +2048,13 @@ bool Skin::ReadSkin()
 		return false;
 	}
 
+	// Read user defined skin width and height
+	m_SkinW = m_Parser.ReadInt(L"Rainmeter", L"SkinWidth", 0);
+	m_SkinH = m_Parser.ReadInt(L"Rainmeter", L"SkinHeight", 0);
+
 	// Initialize window variables
 	SetWindowPositionVariables(m_ScreenX, m_ScreenY);
-	SetWindowSizeVariables(0, 0);
+	SetWindowSizeVariables(m_SkinW, m_SkinH);
 
 	// Global settings
 	const std::wstring& group = m_Parser.ReadString(L"Rainmeter", L"Group", L"");
