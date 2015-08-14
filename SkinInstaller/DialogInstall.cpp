@@ -1329,6 +1329,8 @@ int DialogInstall::IsPluginNewer(const std::wstring& item, const std::wstring& i
 		return false;
 	};
 
+	unzGoToFirstFile(m_PackageUnzFile);
+
 	// Loop through the contents of the archive until the plugin file is found
 	WCHAR* path;
 	do
