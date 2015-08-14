@@ -294,13 +294,14 @@ void IfActions::DoIfActions(Measure& measure, double value)
 			{
 				item.parseError = false;
 
-				const std::wstring& str = measure.GetStringValue();
+				const WCHAR* str = measure.GetStringValue();
+				int strLen = str ? wcslen(str) : 0;
 				int ovector[300];
 				int rc = pcre16_exec(
 					re,
 					nullptr,
-					(PCRE_SPTR16)str.c_str(),
-					(int)str.length(),
+					(PCRE_SPTR16)str,
+					(int)strLen,
 					0,
 					0,
 					ovector,
