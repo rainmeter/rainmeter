@@ -31,6 +31,7 @@
 using namespace Gdiplus;
 
 std::unordered_map<std::wstring, std::wstring> ConfigParser::c_MonitorVariables;
+std::unordered_map<ConfigParser::VariableType, WCHAR> ConfigParser::c_VariableMap;
 
 ConfigParser::ConfigParser() :
 	m_LastReplaced(false),
@@ -39,6 +40,12 @@ ConfigParser::ConfigParser() :
 	m_CurrentSection(),
 	m_Skin()
 {
+	if (c_VariableMap.empty())
+	{
+		c_VariableMap.emplace(VariableType::Section, L'&');
+		c_VariableMap.emplace(VariableType::Variable, L'#');
+		c_VariableMap.emplace(VariableType::Mouse, L'$');
+	}
 }
 
 ConfigParser::~ConfigParser()
@@ -598,10 +605,8 @@ void ConfigParser::SetAutoSelectedMonitorVariables(Skin* skin)
 ** Replaces environment and internal variables in the given string.
 **
 */
-bool ConfigParser::ReplaceVariables(std::wstring& result)
+bool ConfigParser::ReplaceVariables(std::wstring& result, bool parseNewStyle)
 {
-	bool replaced = false;
-
 	PathUtil::ExpandEnvironmentVariables(result);
 
 	if (c_MonitorVariables.empty())
@@ -609,7 +614,18 @@ bool ConfigParser::ReplaceVariables(std::wstring& result)
 		SetMultiMonitorVariables(true);
 	}
 
-	// Check for variables (#VAR#)
+	bool replaced = false;
+
+	// Check for new-style variables ([#VAR])
+	// Note: Most new-style variables are parsed later (when section variables are parsed),
+	//   however, there are a few places where we just want to parse only variables (without
+	//   section variables).
+	if (parseNewStyle)
+	{
+		replaced = ParseVariables(result, VariableType::Variable);
+	}
+
+	// Check for old-style variables (#VAR#)
 	size_t start = 0, end;
 	bool loop = true;
 
@@ -667,8 +683,11 @@ bool ConfigParser::ReplaceVariables(std::wstring& result)
 */
 bool ConfigParser::ReplaceMeasures(std::wstring& result)
 {
-	bool replaced = false;
+	// Check for new-style measures (and section variables) [&Measure], [&Meter]
+	// Note: This also parses regular variables as well (in case of nested variable types) eg. [#Var[&Measure]]
+	bool replaced = ParseVariables(result, VariableType::Section);
 
+	// Check for old-style measures (and section variables) [Measure], [Meter]
 	size_t start = 0;
 	while ((start = result.find(L'[', start)) != std::wstring::npos)
 	{
@@ -709,7 +728,7 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 					std::wstring value;
 					if (GetSectionVariable(var, value))
 					{
-						// Replace section variable with the value.
+						// Replace section variable with the value
 						result.replace(start, end - start + 1, value);
 						start += value.length();
 						replaced = true;
@@ -728,6 +747,173 @@ bool ConfigParser::ReplaceMeasures(std::wstring& result)
 	}
 	
 	return replaced;
+}
+
+/*
+** Replaces new-style measure/section variables, regular variables, and mouse variables in the given string.
+**
+*/
+bool ConfigParser::ParseVariables(std::wstring& result, const VariableType type, Meter* meter)
+{
+	bool replaced = false;
+
+	size_t start = 0;
+	size_t end = 0;
+	while ((end = result.find(L']', start)) != std::wstring::npos)
+	{
+		bool found = false;
+
+		size_t ei = end - 1;
+		start = result.rfind(L'[', ei);
+		if (start != std::wstring::npos)
+		{
+			size_t si = start + 1;
+			if (si != ei && result[si] == L'*' && result[ei] == L'*')
+			{
+				result.erase(ei, 1);
+				result.erase(si, 1);
+				start = ei;
+			}
+			else
+			{
+				const WCHAR key = result.substr(si, 1).c_str()[0];
+				std::wstring val = result.substr(si + 1, end - si - 1);
+
+				// Find "type" of key
+				VariableType kType = VariableType::Section;
+				for (auto& t : c_VariableMap)
+				{
+					kType = t.first;
+					if (t.second == key) break;
+				}
+
+				// Since regular variables are replaced just before section variables in most cases, we replace
+				// both types at the same time in case nesting of the different types occurs. The only side effect
+				// is new-style regular variables located in an action will now be "dynamic" just like section
+				// variables.
+				//  Special case 1: Mouse variables cannot be used in the outer part of a nested variable. This is
+				//    because mouse variables are parsed and replaced before the other new-style variables.
+				//  Special case 2: Places where regular variables need to be parsed without any section variables
+				//    parsed afterward. One example is when "@Include" is parsed.
+
+				if ((key == c_VariableMap.find(type)->second) ||										// Special cases
+					(type == VariableType::Section && key == c_VariableMap[VariableType::Variable]))	// Most cases
+				{
+					switch (kType)
+					{
+					case VariableType::Section:
+						{
+							Measure* measure = GetMeasure(val);
+							if (measure)
+							{
+								const WCHAR* value = measure->GetStringOrFormattedValue(AUTOSCALE_OFF, 1, -1, false);
+								size_t valueLen = wcslen(value);
+
+								// Measure found, replace it with the value
+								result.replace(start, end - start + 1, value, valueLen);
+								start += valueLen;
+								replaced = true;
+								found = true;
+							}
+							else
+							{
+								std::wstring value;
+								if (GetSectionVariable(val, value))
+								{
+									// Replace section variable with the value
+									result.replace(start, end - start + 1, value);
+									start += value.length();
+									replaced = true;
+									found = true;
+								}
+							}
+						}
+						break;
+
+					case VariableType::Variable:
+						{
+							const std::wstring* value = GetVariable(val);
+							if (value)
+							{
+								// Variable found, replace it with the value
+								result.replace(start, end - start + 1, *value);
+								start += (*value).length();
+								replaced = true;
+								found = true;
+							}
+						}
+						break;
+
+					case VariableType::Mouse:
+						{
+							std::wstring value = GetMouseVariable(val, meter);
+							if (!value.empty())
+							{
+								// Mouse variable found, replace it with the value
+								result.replace(start, end - start + 1, value);
+								start += value.length();
+								replaced = true;
+								found = true;
+							}
+						}
+						break;
+					}
+				}
+			}
+		}
+
+		if (!found)
+		{
+			start = end + 1;
+		}
+	}
+
+	return replaced;
+}
+
+std::wstring ConfigParser::GetMouseVariable(const std::wstring& variable, Meter* meter)
+{
+	std::wstring result;
+	LPCWSTR var = variable.c_str();
+	WCHAR buffer[32];
+
+	POINT pt;
+	GetCursorPos(&pt);
+
+	if (_wcsnicmp(var, L"MOUSEX", 6) == 0)
+	{
+		var += 6;
+		int xOffset = m_Skin->GetX() + (meter ? meter->GetX() : 0);
+		if (wcscmp(var, L":%") == 0)  // $MOUSEX:%$ or [$MOUSEX:%]
+		{
+			xOffset = (int)(((pt.x - xOffset + 1) / (double)(meter ? meter->GetW() : m_Skin->GetW())) * 100);
+			_itow_s(xOffset, buffer, 10);
+			result = buffer;
+		}
+		else if (*var == L'\0')  // $MOUSEX$ or [$MOUSEX]
+		{
+			_itow_s(pt.x - xOffset, buffer, 10);
+			result = buffer;
+		}
+	}
+	else if (_wcsnicmp(var, L"MOUSEY", 6) == 0)
+	{
+		var += 6;
+		int yOffset = m_Skin->GetY() + (meter ? meter->GetY() : 0);
+		if (wcscmp(var, L":%") == 0)  // $MOUSEY:%$ or [$MOUSEX:%]
+		{
+			yOffset = (int)(((pt.y - yOffset + 1) / (double)(meter ? meter->GetH() : m_Skin->GetH())) * 100);
+			_itow_s(yOffset, buffer, 10);
+			result = buffer;
+		}
+		else if (*var == L'\0')  // $MOUSEY$ or [$MOUSEY]
+		{
+			_itow_s(pt.y - yOffset, buffer, 10);
+			result = buffer;
+		}
+	}
+
+	return result;
 }
 
 const std::wstring& ConfigParser::ReadString(LPCTSTR section, LPCTSTR key, LPCTSTR defValue, bool bReplaceMeasures)
@@ -1494,7 +1680,7 @@ void ConfigParser::ReadIniFile(const std::wstring& iniFile, LPCTSTR skinSection,
 							{
 								value.assign(sep, clen);
 								ReadVariables();
-								ReplaceVariables(value);
+								ReplaceVariables(value, true);
 								if (!PathUtil::IsAbsolute(value))
 								{
 									// Relative to the ini folder
