@@ -189,6 +189,9 @@
     <ClCompile Include="MeasureString.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MeterPartitionBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigParser.h">
@@ -348,6 +351,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MeasureString.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeterPartitionBar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
