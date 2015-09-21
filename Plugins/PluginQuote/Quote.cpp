@@ -146,7 +146,7 @@ PLUGIN_EXPORT double Update(void* data)
 		buffer[BUFFER_SIZE] = 0;
 
 		// Read the file
-		FILE* file = _wfopen(measure->pathname.c_str(), L"r");
+		FILE* file = _wfopen(measure->pathname.c_str(), L"rb");
 		if (file)
 		{
 			// Check if the file is unicode or ascii
