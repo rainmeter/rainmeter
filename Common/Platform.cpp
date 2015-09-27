@@ -29,6 +29,7 @@ LPCWSTR GetPlatformName()
 
 		// Note: Place newer versions at the top.
 		const WCHAR* version =
+			IsWindowsVersionOrGreater(10, 0, 0) ? (isServer ? L"2016" : L"10") :
 			IsWindows8Point1OrGreater() ? (isServer ? L"2012 R2" : L"8.1") :
 			IsWindows8OrGreater() ? (isServer ? L"2012" : L"8") :
 			IsWindows7OrGreater() ? (isServer ? L"2008 R2" : L"7") :
