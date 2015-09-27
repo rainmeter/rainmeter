@@ -23,17 +23,29 @@ namespace Platform {
 
 LPCWSTR GetPlatformName()
 {
-	const bool isServer = IsWindowsServer();
+	static std::wstring s_Name = []() -> std::wstring
+	{
+		const bool isServer = IsWindowsServer();
 
-	// Note: Place newer versions at the top.
+		// Note: Place newer versions at the top.
+		const WCHAR* version =
+			IsWindows8Point1OrGreater() ? (isServer ? L"2012 R2" : L"8.1") :
+			IsWindows8OrGreater() ? (isServer ? L"2012" : L"8") :
+			IsWindows7OrGreater() ? (isServer ? L"2008 R2" : L"7") :
+			IsWindowsVistaOrGreater() ? (isServer ? L"2008" : L"Vista") :
+			IsWindowsXPOrGreater() ? (isServer ? L"2003" : L"XP") :
+			nullptr;
+		if (version)
+		{
+			std::wstring name = L"Windows ";
+			name += isServer ? L"Server " : L"";
+			name += version;
+			return name;
+		}
 
-	if (IsWindows8Point1OrGreater())  return isServer ? L"Windows Server 2012 R2" : L"Windows 8.1";
-	if (IsWindows8OrGreater())        return isServer ? L"Windows Server 2012" : L"Windows 8";
-	if (IsWindows7OrGreater())        return isServer ? L"Windows Server 2008 R2" : L"Windows 7";
-	if (IsWindowsVistaOrGreater())    return isServer ? L"Windows Server 2008" : L"Windows Vista";
-	if (IsWindowsXPOrGreater())       return isServer ? L"Windows Server 2003" : L"Windows XP";
-
-	return L"Unknown";
+		return L"Unknown";
+	} ();
+	return s_Name.c_str();
 }
 
 std::wstring GetPlatformFriendlyName()
