@@ -583,15 +583,8 @@ void Meter::UpdateToolTip()
 
 	SendMessage(hwndTT, TTM_GETTOOLINFO, 0, (LPARAM)&ti);
 
-	std::wstring text = m_ToolTipText;
-	ReplaceMeasures(text);
-	ti.lpszText = (LPTSTR)text.c_str();
-	ti.rect = GetMeterRect();
-
-	SendMessage(hwndTT, TTM_SETTOOLINFO, 0, (LPARAM)&ti);
-	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, m_ToolTipWidth);
-
-	if (!m_ToolTipTitle.empty())
+	std::wstring text = m_ToolTipTitle;
+	if (!text.empty())
 	{
 		HICON hIcon = nullptr;
 		bool destroy = false;
@@ -628,7 +621,6 @@ void Meter::UpdateToolTip()
 			}
 		}
 
-		text = m_ToolTipTitle;
 		ReplaceMeasures(text);
 		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM)hIcon, (LPARAM)text.c_str());
 
@@ -637,6 +629,14 @@ void Meter::UpdateToolTip()
 			DestroyIcon(hIcon);
 		}
 	}
+
+	text = m_ToolTipText;
+	ReplaceMeasures(text);
+	ti.lpszText = (LPTSTR)text.c_str();
+	ti.rect = GetMeterRect();
+
+	SendMessage(hwndTT, TTM_SETTOOLINFO, 0, (LPARAM)&ti);
+	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, m_ToolTipWidth);
 
 	if (m_ToolTipHidden)
 	{
