@@ -629,6 +629,10 @@ void Meter::UpdateToolTip()
 			DestroyIcon(hIcon);
 		}
 	}
+	else
+	{
+		SendMessage(hwndTT, TTM_SETTITLE, (WPARAM)nullptr, (LPARAM)L"");
+	}
 
 	text = m_ToolTipText;
 	ReplaceMeasures(text);
