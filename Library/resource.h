@@ -214,7 +214,7 @@
 #define IDM_SKIN_FAVORITE                            4061
 
 #define IDM_SKIN_CUSTOMCONTEXTMENU_FIRST             9000
-#define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9014
+#define IDM_SKIN_CUSTOMCONTEXTMENU_LAST              9024
 
 #define ID_CONFIG_EDIT                               30000
 #define ID_CONFIG_FIRST                              30001
