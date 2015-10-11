@@ -25,6 +25,8 @@
 #include "IfActions.h"
 #include "Util.h"
 #include "Section.h"
+#include <ole2.h>  // For Gdiplus.h.
+#include <gdiplus.h>
 
 enum AUTOSCALE
 {
@@ -84,6 +86,8 @@ public:
 	virtual const WCHAR* GetStringValue();
 	const WCHAR* GetStringOrFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
 	const WCHAR* GetFormattedValue(AUTOSCALE autoScale, double scale, int decimals, bool percentual);
+
+	virtual Gdiplus::Bitmap* GetBitmap() { return nullptr; }
 
 	static void GetScaledValue(AUTOSCALE autoScale, int decimals, double theValue, WCHAR* buffer, size_t sizeInWords);
 	static void RemoveTrailingZero(WCHAR* str, int strLen);

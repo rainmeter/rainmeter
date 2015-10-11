@@ -53,6 +53,7 @@ private:
 	};
 
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
+	void InitSize(Gdiplus::Bitmap* bitmap);
 
 	TintedImage m_Image;
 	std::wstring m_ImageName;
@@ -60,6 +61,8 @@ private:
 
 	TintedImage m_MaskImage;
 	std::wstring m_MaskImageName;
+
+	Gdiplus::Bitmap* m_Bitmap;
 
 	bool m_NeedsRedraw;
 	DRAWMODE m_DrawMode;
