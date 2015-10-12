@@ -877,7 +877,26 @@ PLUGIN_EXPORT double Update (void* data)
 			const UINT		flags	= Gdiplus::ImageLockModeWrite | Gdiplus::ImageLockModeUserInputBuf;
 			for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
 			{
-				m->m_bmpData.Scan0		= &m->m_pixels[iChan * w * h];
+				DWORD*		dst		= &m->m_pixels[Measure::MAX_CHANNELS * w * h];
+				const DWORD* src	= &m->m_pixels[iChan * h * w];
+				// copy the channel to the temp buffer, unwrapping the ring
+				memcpy(dst, src, w * h * sizeof(DWORD));
+				for (int iY=0; iY < h; ++iY)
+				{
+					dst[iY * w + m->m_bmpX] = 0x00000000;
+				}
+/*
+				DWORD*		d		= dst;
+				for (int iY=0; iY < h; ++iY)
+				{
+					const DWORD* s;
+					s				= &src[iY * w + m->m_bmpX];
+					for (int iX=m->m_bmpX; iX < w; ++iX)	{ *d++ = *s++; }
+					s				= &src[iY * w];
+					for (int iX=0; iX < m->m_bmpX; ++iX)	{ *d++ = *s++; }
+				}
+				assert(d == &dst[h * w]);
+*/
 				m->m_bitmap[iChan]->LockBits(&rect, flags, m->m_bmpData.PixelFormat, &m->m_bmpData);
 				m->m_bitmap[iChan]->UnlockBits(&m->m_bmpData);
 			}
@@ -1418,16 +1437,16 @@ void Measure::BitmapInit (void* rm)
 	)
 	{
 		// allocate the pixel buffer
-		m_pixels				= (DWORD*)calloc(Measure::MAX_CHANNELS * w * h * sizeof(DWORD), 1);
+		m_pixels				= (DWORD*)calloc((MAX_CHANNELS+1) * w * h * sizeof(DWORD), 1);
 
 		// fill in the bitmap descriptor
 		m_bmpData.Width			= w;
 		m_bmpData.Height		= h;
 		m_bmpData.Stride		= w * sizeof(DWORD);
 		m_bmpData.PixelFormat	= PixelFormat32bppPARGB;
-		m_bmpData.Scan0			= NULL;
+		m_bmpData.Scan0			= &m_pixels[MAX_CHANNELS * w * h];
 
-		for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+		for (int iChan = 0; iChan < MAX_CHANNELS; ++iChan)
 		{
 			// create the bitmap
 			m_bitmap[iChan]		= new Gdiplus::Bitmap(w, h, w * sizeof(DWORD), m_bmpData.PixelFormat, (BYTE*)&m_pixels[iChan * w * h]);
@@ -1488,8 +1507,8 @@ void Measure::BitmapUpdate (void* buffer, UINT32 nFrames)
 			for (unsigned int iChan = 0; iChan < m_wfx->nChannels; ++iChan)
 			{
 				// redraw the scanline
-				const int	iYMin	= (int)((1.0 + m_bmpPeak[iChan][0]) * (h-1) / 2.0f);
-				const int	iYMax	= (int)((1.0 + m_bmpPeak[iChan][1]) * (h-1) / 2.0f);
+				const int	iYMin	= h/2 + (int)(m_bmpPeak[iChan][0] * (h-1) / 2.0f);
+				const int	iYMax	= h/2 + (int)(m_bmpPeak[iChan][1] * (h-1) / 2.0f);
 				for (int iY=0; iY < h; ++iY)
 				{
 					m_pixels[iChan * w * h + iY * w + m_bmpX]	= ((iY >= iYMin) && (iY <= iYMax))? m_bmpColFG : m_bmpColBG;
