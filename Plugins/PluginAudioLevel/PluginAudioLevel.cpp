@@ -249,8 +249,8 @@ struct Measure
 			m_fftOut[iChan] = NULL;
 			m_bandOut[iChan] = NULL;
 			m_bitmap[iChan] = NULL;
-			m_bmpPeak[iChan][0] = 0.0f;
-			m_bmpPeak[iChan][1] = 0.0f;
+			m_bmpPeak[iChan][0] = 1.0f;
+			m_bmpPeak[iChan][1] = -1.0f;
 		}
 
 		LARGE_INTEGER pcFreq;
@@ -1447,6 +1447,8 @@ void Measure::BitmapRelease ()
 			delete m_bitmap[iChan];
 			m_bitmap[iChan] = NULL;
 		}
+		m_bmpPeak[iChan][0] = 1.0f;
+		m_bmpPeak[iChan][1] = -1.0f;
 	}
 	if(m_pixels) {
 		free(m_pixels);
@@ -1454,7 +1456,6 @@ void Measure::BitmapRelease ()
 	}
 	m_bmpX = 0;
 	m_iBmpAvg = 0;
-	memset(m_bmpPeak, 0, sizeof(m_bmpPeak));
 }
 
 
@@ -1493,9 +1494,9 @@ void Measure::BitmapUpdate (void* buffer, UINT32 nFrames)
 				{
 					m_pixels[iChan * w * h + iY * w + m_bmpX]	= ((iY >= iYMin) && (iY <= iYMax))? m_bmpColFG : m_bmpColBG;
 				}
-				// zero the accumulators
-				m_bmpPeak[iChan][0]	= 0.0f;
-				m_bmpPeak[iChan][1]	= 0.0f;
+				// reset the accumulators
+				m_bmpPeak[iChan][0]	= 1.0f;
+				m_bmpPeak[iChan][1]	= -1.0f;
 			}
 			m_iBmpAvg		= 0;
 			m_bmpX			= (m_bmpX+1) % w;
