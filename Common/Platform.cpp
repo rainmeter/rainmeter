@@ -1,20 +1,9 @@
-/*
-  Copyright (C) 2013 Birunthan Mohanathas
-
-  This program is free software; you can redistribute it and/or
-  modify it under the terms of the GNU General Public License
-  as published by the Free Software Foundation; either version 2
-  of the License, or (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-*/
+/* Copyright (C) 2013 Rainmeter Project Developers
+ *
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License; either version 2 of the License, or (at your option) any later
+ * version. If a copy of the GPL was not distributed with this file, You can
+ * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
 #include "Platform.h"
@@ -23,17 +12,30 @@ namespace Platform {
 
 LPCWSTR GetPlatformName()
 {
-	const bool isServer = IsWindowsServer();
+	static std::wstring s_Name = []() -> std::wstring
+	{
+		const bool isServer = IsWindowsServer();
 
-	// Note: Place newer versions at the top.
+		// Note: Place newer versions at the top.
+		const WCHAR* version =
+			IsWindowsVersionOrGreater(10, 0, 0) ? (isServer ? L"2016" : L"10") :
+			IsWindows8Point1OrGreater() ? (isServer ? L"2012 R2" : L"8.1") :
+			IsWindows8OrGreater() ? (isServer ? L"2012" : L"8") :
+			IsWindows7OrGreater() ? (isServer ? L"2008 R2" : L"7") :
+			IsWindowsVistaOrGreater() ? (isServer ? L"2008" : L"Vista") :
+			IsWindowsXPOrGreater() ? (isServer ? L"2003" : L"XP") :
+			nullptr;
+		if (version)
+		{
+			std::wstring name = L"Windows ";
+			name += isServer ? L"Server " : L"";
+			name += version;
+			return name;
+		}
 
-	if (IsWindows8Point1OrGreater())  return isServer ? L"Windows Server 2012 R2" : L"Windows 8.1";
-	if (IsWindows8OrGreater())        return isServer ? L"Windows Server 2012" : L"Windows 8";
-	if (IsWindows7OrGreater())        return isServer ? L"Windows Server 2008 R2" : L"Windows 7";
-	if (IsWindowsVistaOrGreater())    return isServer ? L"Windows Server 2008" : L"Windows Vista";
-	if (IsWindowsXPOrGreater())       return isServer ? L"Windows Server 2003" : L"Windows XP";
-
-	return L"Unknown";
+		return L"Unknown";
+	} ();
+	return s_Name.c_str();
 }
 
 std::wstring GetPlatformFriendlyName()

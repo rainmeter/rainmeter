@@ -1,43 +1,11 @@
 #ifndef _MESSAGES_H_
 #define _MESSAGES_H_
-/*************************************************************************
+/* Copyright (C) 1999 Rainmeter Project Developers
  *
- *  VirtuaWin - Virtual Desktop Manager (virtuawin.sourceforge.net)
- *  ConfigParameters.h - Dfinition of all module messages
- * 
- *  Copyright (c) 1999-2005 Johan Piculell
- *  Copyright (c) 2006-2010 VirtuaWin (VirtuaWin@home.se)
- * 
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, 
- *  USA.
- * 
- *************************************************************************
- * This is a definition of all possible messages to send to VirtuaWin 
- * and the messages that VirtuaWin uses for module communication
- *
- * All messages starting with VW_ is for controlling VirtuaWin 
- * and messages starting with MOD_ is messages sent by VirtuaWin 
- * 
- * For example if you want to step one desktop to the left:
- * PostMessage(VirtuaWin HWND, VW_CHANGEDESK, VW_STEPLEFT, 0);
- * For messages where you expect a return value, use the SendMessage
- * function instead, see some win32 documentation for more info.
- * 
- * Note: the message numbers is not all in sequence!
- * 
- *************************************************************************/
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License; either version 2 of the License, or (at your option) any later
+ * version. If a copy of the GPL was not distributed with this file, You can
+ * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 /* Message, switch to a specified desktop, sent with following wParam or 1..vwDESKTOP_MAX */
 #define VW_CHANGEDESK   (WM_USER + 10) 
