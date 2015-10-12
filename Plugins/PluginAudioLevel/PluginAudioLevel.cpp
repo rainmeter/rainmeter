@@ -868,6 +868,22 @@ PLUGIN_EXPORT double Update (void* data)
 			break;
 		}
 
+		// lock the bitmap buffers and copy pixels
+		if (m->m_pixels)
+		{
+			const int		w		= m->m_bmpData.Width;
+			const int		h		= m->m_bmpData.Height;
+			Gdiplus::Rect	rect	(0, 0, w, h);
+			const UINT		flags	= Gdiplus::ImageLockModeWrite | Gdiplus::ImageLockModeUserInputBuf;
+			for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
+			{
+				m->m_bmpData.Scan0		= &m->m_pixels[iChan * w * h];
+				m->m_bitmap[iChan]->LockBits(&rect, flags, m->m_bmpData.PixelFormat, &m->m_bmpData);
+				m->m_bitmap[iChan]->UnlockBits(&m->m_bmpData);
+			}
+		}
+
+		// update poll timer
 		m->m_pcPoll = pcCur;
 
 	}
@@ -1484,15 +1500,5 @@ void Measure::BitmapUpdate (void* buffer, UINT32 nFrames)
 			m_iBmpAvg		= 0;
 			m_bmpX			= (m_bmpX+1) % w;
 		}
-	}
-
-	// lock the buffers and copy pixels
-	Gdiplus::Rect	rect	(0, 0, w, h);
-	const UINT		flags	= Gdiplus::ImageLockModeWrite | Gdiplus::ImageLockModeUserInputBuf;
-	for (unsigned int iChan = 0; iChan < m_wfx->nChannels; ++iChan)
-	{
-		m_bmpData.Scan0		= &m_pixels[iChan * w * h];
-		m_bitmap[iChan]->LockBits(&rect, flags, m_bmpData.PixelFormat, &m_bmpData);
-		m_bitmap[iChan]->UnlockBits(&m_bmpData);
 	}
 }
