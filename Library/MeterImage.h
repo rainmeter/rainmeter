@@ -1,9 +1,20 @@
-/* Copyright (C) 2002 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+/*
+  Copyright (C) 2002 Kimmo Pekkola
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 
 #ifndef __METERIMAGE_H__
 #define __METERIMAGE_H__
@@ -42,6 +53,7 @@ private:
 	};
 
 	void LoadImage(const std::wstring& imageName, bool bLoadAlways);
+	void InitSize(Gdiplus::Bitmap* bitmap);
 
 	TintedImage m_Image;
 	std::wstring m_ImageName;
@@ -49,6 +61,8 @@ private:
 
 	TintedImage m_MaskImage;
 	std::wstring m_MaskImageName;
+
+	Gdiplus::Bitmap* m_Bitmap;
 
 	bool m_NeedsRedraw;
 	DRAWMODE m_DrawMode;
