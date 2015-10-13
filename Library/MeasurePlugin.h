@@ -17,6 +17,7 @@ typedef UINT (*UPDATE)(UINT);
 typedef double (*UPDATE2)(UINT);
 typedef LPCTSTR (*GETSTRING)(UINT, UINT);
 typedef void (*EXECUTEBANG)(LPCWSTR, UINT);
+typedef Gdiplus::Bitmap* (*GETBITMAP)(UINT);
 
 typedef void (*NEWINITIALIZE)(void*, void*);
 typedef void (*NEWRELOAD)(void*, void*, double*);
@@ -24,6 +25,7 @@ typedef void (*NEWFINALIZE)(void*);
 typedef double (*NEWUPDATE)(void*);
 typedef LPCWSTR (*NEWGETSTRING)(void*);
 typedef void (*NEWEXECUTEBANG)(void*, LPCWSTR);
+typedef Gdiplus::Bitmap* (*NEWGETBITMAP)(void*);
 
 class MeasurePlugin : public Measure
 {
@@ -38,6 +40,7 @@ public:
 
 	virtual const WCHAR* GetStringValue();
 	virtual void Command(const std::wstring& command);
+	virtual Gdiplus::Bitmap* GetBitmap();
 
 protected:
 	virtual void ReadOptions(ConfigParser& parser, const WCHAR* section);
@@ -67,6 +70,7 @@ private:
 	void* m_UpdateFunc;
 	void* m_GetStringFunc;
 	void* m_ExecuteBangFunc;
+	void* m_GetBitmapFunc;
 };
 
 #endif
