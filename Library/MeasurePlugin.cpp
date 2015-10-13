@@ -1,9 +1,20 @@
-/* Copyright (C) 2001 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+/*
+  Copyright (C) 2001 Kimmo Pekkola
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 
 #include "StdAfx.h"
 #include "MeasurePlugin.h"
@@ -20,7 +31,8 @@ MeasurePlugin::MeasurePlugin(Skin* skin, const WCHAR* name) : Measure(skin, name
 	m_PluginData(),
 	m_UpdateFunc(),
 	m_GetStringFunc(),
-	m_ExecuteBangFunc()
+	m_ExecuteBangFunc(),
+	m_GetBitmapFunc()
 {
 }
 
@@ -134,6 +146,7 @@ void MeasurePlugin::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_UpdateFunc = GetProcAddress(m_Plugin, "Update");
 	m_GetStringFunc = GetProcAddress(m_Plugin, "GetString");
 	m_ExecuteBangFunc = GetProcAddress(m_Plugin, "ExecuteBang");
+	m_GetBitmapFunc = GetProcAddress(m_Plugin, "GetBitmap");
 
 	// Remove current directory from DLL search path
 	SetDllDirectory(L"");
@@ -236,4 +249,25 @@ void MeasurePlugin::Command(const std::wstring& command)
 	{
 		Measure::Command(command);
 	}
+}
+
+/*
+** Gets the bitmap from the plugin.
+**
+*/
+Gdiplus::Bitmap* MeasurePlugin::GetBitmap()
+{
+	if (m_GetBitmapFunc)
+	{
+		if (IsNewApi())
+		{
+			return ((NEWGETBITMAP)m_GetBitmapFunc)(m_PluginData);
+		}
+		else
+		{
+			return ((GETBITMAP)m_GetStringFunc)(m_ID);
+		}
+	}
+
+	return nullptr;
 }

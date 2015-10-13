@@ -1,9 +1,20 @@
-/* Copyright (C) 2014 Rainmeter Project Developers
- *
- * This Source Code Form is subject to the terms of the GNU General Public
- * License; either version 2 of the License, or (at your option) any later
- * version. If a copy of the GPL was not distributed with this file, You can
- * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+/*
+  Copyright (C) 2014 David Grace
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
 
 #include <Windows.h>
 #include <cstdio>
@@ -12,6 +23,8 @@
 #include <MMDeviceApi.h>
 #include <FunctionDiscoveryKeys_devpkey.h>
 #include <VersionHelpers.h>
+#include <ole2.h>  // For Gdiplus.h.
+#include <gdiplus.h>
 
 #include <cmath>
 #include <cassert>
@@ -93,6 +106,7 @@ struct Measure
 		TYPE_DEV_NAME,
 		TYPE_DEV_ID,
 		TYPE_DEV_LIST,
+		TYPE_WAVEFORM,
 		// ... //
 		NUM_TYPES
 	};
@@ -161,6 +175,15 @@ struct Measure
 	int						m_fftBufP;					// decremental counter - process FFT at zero
 	float*					m_bandFreq;					// buffer of band max frequencies
 	float*					m_bandOut[MAX_CHANNELS];	// buffer of band values
+	Gdiplus::BitmapData		m_bmpData;					// bitmap descriptor
+	DWORD*					m_pixels;					// pixel data buffer (all channels)
+	int						m_bmpZoom;					// number of samples per horizontal pixel
+	UINT32					m_bmpColFG;					// waveform foreground color
+	UINT32					m_bmpColBG;					// waveform background color
+	int						m_bmpX;						// current bitmap X index to write from audio data
+	int						m_iBmpAvg;					// current sample average index
+	Gdiplus::Bitmap*		m_bitmap[MAX_CHANNELS];		// waveform bitmap
+	float					m_bmpPeak[MAX_CHANNELS][2];	// accumulators for peaks
 
 	Measure() :
 		m_port(PORT_OUTPUT),
@@ -194,7 +217,13 @@ struct Measure
 		m_fftTmpOut(NULL),
 		m_fftBufW(0),
 		m_fftBufP(0),
-		m_bandFreq(NULL)
+		m_bandFreq(NULL),
+		m_pixels(NULL),
+		m_bmpZoom(1),
+		m_bmpColFG(0xffffffff),
+		m_bmpColBG(0x00000000),
+		m_bmpX(0),
+		m_iBmpAvg(0)
 	{
 		m_envRMS[0] = 300;
 		m_envRMS[1] = 300;
@@ -219,6 +248,9 @@ struct Measure
 			m_fftIn[iChan] = NULL;
 			m_fftOut[iChan] = NULL;
 			m_bandOut[iChan] = NULL;
+			m_bitmap[iChan] = NULL;
+			m_bmpPeak[iChan][0] = 1.0f;
+			m_bmpPeak[iChan][1] = -1.0f;
 		}
 
 		LARGE_INTEGER pcFreq;
@@ -228,6 +260,9 @@ struct Measure
 
 	HRESULT DeviceInit();
 	void DeviceRelease();
+	void BitmapInit(void* rm);
+	void BitmapRelease();
+	void BitmapUpdate(void* buffer, UINT32 nFrames);
 };
 
 const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
@@ -237,6 +272,33 @@ const IID IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
 const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
 
 std::vector<Measure*> s_parents;
+
+
+/**
+ * Parse a color specification from text.
+ */
+UINT32 _ParseColor (void* rm, LPCWSTR option, UINT32 defValue)
+{
+	LPCWSTR str = RmReadString(rm, option, L"");
+	int r,g,b,a;
+	if(
+			(swscanf(str, L"%d, %d, %d, %d", &r, &g, &b, &a) == 4)
+			&& ((r >= 0) && (r < 256))
+			&& ((g >= 0) && (g < 256))
+			&& ((b >= 0) && (b < 256))
+			&& ((a >= 0) && (a < 256))
+	)
+	{
+		// return in ARGB format
+		return (((UINT32)a)<<24) | (((UINT32)r)<<16) | (((UINT32)g)<<8) | (UINT32)b;
+	}
+	else
+	{
+		RmLogF(rm, LOG_ERROR, L"Invalid %s color specifier '%s', should be R, G, B, A where each value is between 0 and 255.", option, str);
+	}
+	return defValue;
+}
+
 
 /**
  * Create and initialize a measure instance.  Creates WASAPI loopback
@@ -336,6 +398,9 @@ PLUGIN_EXPORT void Initialize (void** data, void* rm)
 	m->m_freqMin = max(0.0, RmReadDouble(rm, L"FreqMin", m->m_freqMin));
 	m->m_freqMax = max(0.0, RmReadDouble(rm, L"FreqMax", m->m_freqMax));
 
+	// create the waveform bitmap
+	m->BitmapInit(rm);
+
 	// initialize the watchdog timer
 	QueryPerformanceCounter(&m->m_pcPoll);
 
@@ -363,6 +428,7 @@ PLUGIN_EXPORT void Finalize (void* data)
 
 	Measure* m = (Measure*)data;
 
+	m->BitmapRelease();
 	m->DeviceRelease();
 	SAFE_RELEASE(m->m_enum);
 
@@ -401,6 +467,7 @@ PLUGIN_EXPORT void Reload (void* data, void* rm, double* maxValue)
 		L"DeviceName",						// TYPE_DEV_NAME
 		L"DeviceID",						// TYPE_DEV_ID
 		L"DeviceList",						// TYPE_DEV_LIST
+		L"Waveform",						// TYPE_WAVEFORM
 	};
 
 	static const LPCWSTR s_chanName[Measure::CHANNEL_SUM + 1][3] =
@@ -529,6 +596,12 @@ PLUGIN_EXPORT void Reload (void* data, void* rm, double* maxValue)
 				m->m_kFFT[1] = (float) exp(log10(0.01) / (freq / (m->m_fftSize-m->m_fftOverlap) * (double)m->m_envFFT[1] * 0.001));
 			}
 		}
+
+		// (re)parse waveform zoom
+		m->m_bmpZoom = max(1, RmReadInt(rm, L"WaveformZoom", m->m_bmpZoom));
+		// (re)parse waveform colors
+		m->m_bmpColFG = _ParseColor(rm, L"WaveformColorFG", m->m_bmpColFG);
+		m->m_bmpColBG = _ParseColor(rm, L"WaveformColorBG", m->m_bmpColBG);
 	}
 }
 
@@ -762,6 +835,9 @@ PLUGIN_EXPORT double Update (void* data)
 				}
 			}
 
+			// update waveform display
+			m->BitmapUpdate(buffer, nFrames);
+
 			// release the buffer
 			m->m_clCapture->ReleaseBuffer(nFrames);
 
@@ -792,6 +868,41 @@ PLUGIN_EXPORT double Update (void* data)
 			break;
 		}
 
+		// lock the bitmap buffers and copy pixels
+		if (m->m_pixels)
+		{
+			const int		w		= m->m_bmpData.Width;
+			const int		h		= m->m_bmpData.Height;
+			Gdiplus::Rect	rect	(0, 0, w, h);
+			const UINT		flags	= Gdiplus::ImageLockModeWrite | Gdiplus::ImageLockModeUserInputBuf;
+			for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
+			{
+				DWORD*		dst		= &m->m_pixels[Measure::MAX_CHANNELS * w * h];
+				const DWORD* src	= &m->m_pixels[iChan * h * w];
+				// copy the channel to the temp buffer, unwrapping the ring
+				memcpy(dst, src, w * h * sizeof(DWORD));
+				for (int iY=0; iY < h; ++iY)
+				{
+					dst[iY * w + m->m_bmpX] = 0x00000000;
+				}
+/*
+				DWORD*		d		= dst;
+				for (int iY=0; iY < h; ++iY)
+				{
+					const DWORD* s;
+					s				= &src[iY * w + m->m_bmpX];
+					for (int iX=m->m_bmpX; iX < w; ++iX)	{ *d++ = *s++; }
+					s				= &src[iY * w];
+					for (int iX=0; iX < m->m_bmpX; ++iX)	{ *d++ = *s++; }
+				}
+				assert(d == &dst[h * w]);
+*/
+				m->m_bitmap[iChan]->LockBits(&rect, flags, m->m_bmpData.PixelFormat, &m->m_bmpData);
+				m->m_bitmap[iChan]->UnlockBits(&m->m_bmpData);
+			}
+		}
+
+		// update poll timer
 		m->m_pcPoll = pcCur;
 
 	}
@@ -1008,6 +1119,26 @@ PLUGIN_EXPORT LPCWSTR GetString (void* data)
 	}
 
 	return buffer;
+}
+
+
+/**
+ * Get a GDI bitmap from the measure.
+ *
+ * @param[in]	data			Measure instance pointer.
+ * @return						The bitmap.
+ */
+PLUGIN_EXPORT Gdiplus::Bitmap* GetBitmap (void* data)
+{
+	Measure* m = (Measure*)data;
+	Measure* parent	= m->m_parent ? m->m_parent : m;
+
+	if(m->m_type == Measure::TYPE_WAVEFORM)
+	{
+		return parent->m_bitmap[m->m_channel];
+	}
+
+	return NULL;
 }
 
 
@@ -1290,4 +1421,104 @@ void Measure::DeviceRelease ()
 
 	m_devName[0] = '\0';
 	m_format = FMT_INVALID;
+}
+
+
+/**
+ * Create waveform display bitmap data.
+ */
+void Measure::BitmapInit (void* rm)
+{
+	// if waveform width and height specified, create bitmap structures
+	int			w, h;
+	if(
+			((w=RmReadInt(rm, L"WaveformWidth", 0)) > 0)
+			&& ((h=RmReadInt(rm, L"WaveformHeight", 0)) > 0)
+	)
+	{
+		// allocate the pixel buffer
+		m_pixels				= (DWORD*)calloc((MAX_CHANNELS+1) * w * h * sizeof(DWORD), 1);
+
+		// fill in the bitmap descriptor
+		m_bmpData.Width			= w;
+		m_bmpData.Height		= h;
+		m_bmpData.Stride		= w * sizeof(DWORD);
+		m_bmpData.PixelFormat	= PixelFormat32bppPARGB;
+		m_bmpData.Scan0			= &m_pixels[MAX_CHANNELS * w * h];
+
+		for (int iChan = 0; iChan < MAX_CHANNELS; ++iChan)
+		{
+			// create the bitmap
+			m_bitmap[iChan]		= new Gdiplus::Bitmap(w, h, w * sizeof(DWORD), m_bmpData.PixelFormat, (BYTE*)&m_pixels[iChan * w * h]);
+		}
+	}
+}
+
+
+/**
+ * Release bitmap data.
+ */
+void Measure::BitmapRelease ()
+{
+	for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+	{
+		if(m_bitmap[iChan]) {
+			delete m_bitmap[iChan];
+			m_bitmap[iChan] = NULL;
+		}
+		m_bmpPeak[iChan][0] = 1.0f;
+		m_bmpPeak[iChan][1] = -1.0f;
+	}
+	if(m_pixels) {
+		free(m_pixels);
+		m_pixels = NULL;
+	}
+	m_bmpX = 0;
+	m_iBmpAvg = 0;
+}
+
+
+/**
+ * Update waveform display.
+ *
+ * @param[in]	buffer		Pointer to audio data.
+ * @param[in]	nFrames		Number of frames of audio.
+ */
+void Measure::BitmapUpdate (void* buffer, UINT32 nFrames)
+{
+	if(!m_pixels) return;
+
+	// update pixel data
+	const int	w		= m_bmpData.Width;
+	const int	h		= m_bmpData.Height;
+	float*		sF32	= (float*)buffer;
+	INT16*		sI16	= (INT16*)buffer;
+
+	for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+	{
+		for (unsigned int iChan = 0; iChan < m_wfx->nChannels; ++iChan)
+		{
+			const float val	= (m_format == Measure::FMT_PCM_F32) ? *sF32++ : (float)*sI16++ * 1.0f / 0x7fff;
+			m_bmpPeak[iChan][0]	= min(m_bmpPeak[iChan][0], val);
+			m_bmpPeak[iChan][1]	= max(m_bmpPeak[iChan][1], val);
+		}
+		if (++m_iBmpAvg == m_bmpZoom)
+		{
+			for (unsigned int iChan = 0; iChan < m_wfx->nChannels; ++iChan)
+			{
+				// redraw the scanline
+				const int	iYMin	= h/2 + (int)(m_bmpPeak[iChan][0] * (h-1) / 2.0f);
+				const int	iYMax	= h/2 + (int)(m_bmpPeak[iChan][1] * (h-1) / 2.0f);
+				for (int iY=0; iY < h; ++iY)
+				{
+					m_pixels[iChan * w * h + iY * w + m_bmpX]	= ((iY >= iYMin) && (iY <= iYMax))? m_bmpColFG : m_bmpColBG;
+				}
+				// reset the accumulators
+				m_bmpPeak[iChan][0]	= 1.0f;
+				m_bmpPeak[iChan][1]	= -1.0f;
+			}
+			m_iBmpAvg		= 0;
+			m_bmpX			= (m_bmpX+1) % w;
+		}
+	}
 }
