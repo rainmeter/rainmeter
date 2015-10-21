@@ -175,8 +175,15 @@ bool MeterImage::Update()
 			Bitmap* bitmap = (!m_Measures.empty())? m_Measures[0]->GetBitmap() : nullptr;
 			if (bitmap)
 			{
-				InitSize(bitmap);
-				m_Bitmap = bitmap;
+				if(m_Bitmap) delete m_Bitmap;
+
+				// Convert loaded image to faster blittable bitmap (may increase memory usage slightly)
+				Rect r(0, 0, bitmap->GetWidth(), bitmap->GetHeight());
+				m_Bitmap = new Bitmap(r.Width, r.Height, PixelFormat32bppPARGB);
+				Graphics graphics(m_Bitmap);
+				graphics.DrawImage(bitmap, r, 0, 0, r.Width, r.Height, UnitPixel);
+
+				InitSize(m_Bitmap);
 			}
 			else
 			{
