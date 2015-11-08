@@ -13,6 +13,7 @@
 #include <Wininet.h>
 #include <shlwapi.h>
 #include <process.h>
+#include <fstream>
 #include "../../Library/pcre/config.h"
 #include "../../Library/pcre/pcre.h"
 #include "../../Common/StringUtil.h"
@@ -1507,19 +1508,43 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool for
 		flags = INTERNET_FLAG_RELOAD;
 	}
 
+    if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
+    {
+        const std::string urlACP = StringUtil::Narrow(url);
+        char fs_path[MAX_PATH];
+        DWORD fs_path_len = MAX_PATH;
+        HRESULT res = PathCreateFromUrlA(urlACP.c_str(), fs_path, &fs_path_len, NULL);
+        if (res != S_OK) {
+            return nullptr;
+        }
+
+        char* buffer = nullptr;
+        *dataSize = 0;
+
+        std::ifstream file_stream;
+        file_stream.open(fs_path, std::ios::in | std::ios::binary | std::ios::ate);
+
+        if (file_stream.is_open()) {
+            *dataSize = file_stream.tellg();
+            buffer = (char*)malloc(*dataSize + 3);
+
+            file_stream.seekg(0, std::ios::beg);
+            file_stream.read(buffer, *dataSize);
+            file_stream.close();
+        }
+
+        buffer[*dataSize] = 0;
+        buffer[*dataSize + 1] = 0;
+        buffer[*dataSize + 2] = 0;
+
+        return (BYTE*)buffer;
+
+    }
+
 	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), nullptr, 0, flags, 0);
 	if (!hUrlDump)
 	{
-		if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
-		{
-			const std::string urlACP = StringUtil::Narrow(url);
-			hUrlDump = InternetOpenUrlA(handle, urlACP.c_str(), nullptr, 0, flags, 0);
-		}
-
-		if (!hUrlDump)
-		{
-			return nullptr;
-		}
+		return nullptr;
 	}
 
 	// Allocate buffer with 3 extra bytes for triple null termination in case the string is
