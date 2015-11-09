@@ -1511,9 +1511,9 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool for
     if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
     {
         const std::string urlACP = StringUtil::Narrow(url);
-        char fs_path[MAX_PATH];
-        DWORD fs_path_len = MAX_PATH;
-        HRESULT res = PathCreateFromUrlA(urlACP.c_str(), fs_path, &fs_path_len, NULL);
+        char filesystemPath[MAX_PATH];
+        DWORD filesystemPathLength = MAX_PATH;
+        HRESULT res = PathCreateFromUrlA(urlACP.c_str(), filesystemPath, &filesystemPathLength, NULL);
         if (res != S_OK) {
             return nullptr;
         }
@@ -1521,16 +1521,19 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool for
         char* buffer = nullptr;
         *dataSize = 0;
 
-        std::ifstream file_stream;
-        file_stream.open(fs_path, std::ios::in | std::ios::binary | std::ios::ate);
+        std::ifstream fileStream;
+        fileStream.open(filesystemPath, std::ios::in | std::ios::binary | std::ios::ate);
 
-        if (file_stream.is_open()) {
-            *dataSize = file_stream.tellg();
+        if (fileStream.is_open()) {
+            *dataSize = (DWORD)fileStream.tellg();
             buffer = (char*)malloc(*dataSize + 3);
 
-            file_stream.seekg(0, std::ios::beg);
-            file_stream.read(buffer, *dataSize);
-            file_stream.close();
+            fileStream.seekg(0, std::ios::beg);
+            fileStream.read(buffer, *dataSize);
+            fileStream.close();
+        }
+        else {
+            return nullptr;
         }
 
         buffer[*dataSize] = 0;
