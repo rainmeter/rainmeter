@@ -13,7 +13,6 @@
 #include <Wininet.h>
 #include <shlwapi.h>
 #include <process.h>
-#include <fstream>
 #include "../../Library/pcre/config.h"
 #include "../../Library/pcre/pcre.h"
 #include "../../Common/StringUtil.h"
@@ -1502,47 +1501,49 @@ PLUGIN_EXPORT void Finalize(void* data)
 */
 BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool forceReload)
 {
+
+	if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
+	{
+		WCHAR filesystemPath[MAX_PATH];
+		DWORD filesystemPathLength = _countof(filesystemPath);
+		HRESULT res = PathCreateFromUrl(url.c_str(), filesystemPath, &filesystemPathLength, NULL);
+		if (res != S_OK)
+		{
+			return nullptr;
+		}
+
+		BYTE* buffer = nullptr;
+		*dataSize = 0;
+
+		FILE* file = _wfopen(filesystemPath, L"rb");
+
+		if (file == nullptr)
+		{
+			return nullptr;
+		}
+
+		fseek(file, 0, SEEK_END);
+		*dataSize = ftell(file);
+		rewind(file);
+		
+		buffer = (BYTE*)malloc(*dataSize + 3);
+
+		fread(buffer, 1, *dataSize, file);
+
+		fclose(file);
+
+		buffer[*dataSize] = 0;
+		buffer[*dataSize + 1] = 0;
+		buffer[*dataSize + 2] = 0;
+
+		return (BYTE*)buffer;
+	}
+
 	DWORD flags = INTERNET_FLAG_RESYNCHRONIZE;
 	if (forceReload)
 	{
 		flags = INTERNET_FLAG_RELOAD;
 	}
-
-    if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
-    {
-        const std::string urlACP = StringUtil::Narrow(url);
-        char filesystemPath[MAX_PATH];
-        DWORD filesystemPathLength = MAX_PATH;
-        HRESULT res = PathCreateFromUrlA(urlACP.c_str(), filesystemPath, &filesystemPathLength, NULL);
-        if (res != S_OK) {
-            return nullptr;
-        }
-
-        char* buffer = nullptr;
-        *dataSize = 0;
-
-        std::ifstream fileStream;
-        fileStream.open(filesystemPath, std::ios::in | std::ios::binary | std::ios::ate);
-
-        if (fileStream.is_open()) {
-            *dataSize = (DWORD)fileStream.tellg();
-            buffer = (char*)malloc(*dataSize + 3);
-
-            fileStream.seekg(0, std::ios::beg);
-            fileStream.read(buffer, *dataSize);
-            fileStream.close();
-        }
-        else {
-            return nullptr;
-        }
-
-        buffer[*dataSize] = 0;
-        buffer[*dataSize + 1] = 0;
-        buffer[*dataSize + 2] = 0;
-
-        return (BYTE*)buffer;
-
-    }
 
 	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), nullptr, 0, flags, 0);
 	if (!hUrlDump)
