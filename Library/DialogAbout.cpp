@@ -1213,7 +1213,7 @@ void DialogAbout::TabVersion::Create(HWND owner)
 			0, 82, 360, 9,
 			WS_VISIBLE | SS_ENDELLIPSIS | SS_NOPREFIX, 0),
 		CT_BUTTON(Id_CopyButton, ID_STR_COPYTOCLIPBOARD,
-			0, 98, buttonWidth + 25, 14,
+			0, 98, buttonWidth + 35, 14,
 			WS_VISIBLE | WS_TABSTOP, 0)
 	};
 
