@@ -1506,7 +1506,7 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool for
 		WCHAR path[MAX_PATH];
 		DWORD pathLength = _countof(path);
 		HRESULT hr = PathCreateFromUrl(url.c_str(), path, &pathLength, 0);
-		if (SUCCEEDED(hr))
+		if (FAILED(hr))
 		{
 			return nullptr;
 		}
