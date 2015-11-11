@@ -1501,6 +1501,44 @@ PLUGIN_EXPORT void Finalize(void* data)
 */
 BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool forceReload)
 {
+
+	if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
+	{
+		WCHAR filesystemPath[MAX_PATH];
+		DWORD filesystemPathLength = _countof(filesystemPath);
+		HRESULT res = PathCreateFromUrl(url.c_str(), filesystemPath, &filesystemPathLength, NULL);
+		if (res != S_OK)
+		{
+			return nullptr;
+		}
+
+		BYTE* buffer = nullptr;
+		*dataSize = 0;
+
+		FILE* file = _wfopen(filesystemPath, L"rb");
+
+		if (file == nullptr)
+		{
+			return nullptr;
+		}
+
+		fseek(file, 0, SEEK_END);
+		*dataSize = ftell(file);
+		rewind(file);
+		
+		buffer = (BYTE*)malloc(*dataSize + 3);
+
+		fread(buffer, 1, *dataSize, file);
+
+		fclose(file);
+
+		buffer[*dataSize] = 0;
+		buffer[*dataSize + 1] = 0;
+		buffer[*dataSize + 2] = 0;
+
+		return (BYTE*)buffer;
+	}
+
 	DWORD flags = INTERNET_FLAG_RESYNCHRONIZE;
 	if (forceReload)
 	{
@@ -1510,16 +1548,7 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool for
 	HINTERNET hUrlDump = InternetOpenUrl(handle, url.c_str(), nullptr, 0, flags, 0);
 	if (!hUrlDump)
 	{
-		if (_wcsnicmp(url.c_str(), L"file://", 7) == 0)  // file scheme
-		{
-			const std::string urlACP = StringUtil::Narrow(url);
-			hUrlDump = InternetOpenUrlA(handle, urlACP.c_str(), nullptr, 0, flags, 0);
-		}
-
-		if (!hUrlDump)
-		{
-			return nullptr;
-		}
+		return nullptr;
 	}
 
 	// Allocate buffer with 3 extra bytes for triple null termination in case the string is
