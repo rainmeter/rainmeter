@@ -93,6 +93,7 @@
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatWeight.cpp">
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClCompile>
+    <ClCompile Include="FileUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -190,6 +191,7 @@
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatWeight.h">
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClInclude>
+    <ClInclude Include="FileUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">

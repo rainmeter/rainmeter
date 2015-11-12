@@ -25,6 +25,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Common\FileUtil.h" />
     <ClInclude Include="..\..\Common\StringUtil.h" />
     <ClInclude Include="..\..\Library\pcre\config.h" />
     <ClInclude Include="..\..\Library\pcre\pcre.h" />
@@ -32,6 +33,7 @@
     <ClInclude Include="..\..\Library\pcre\ucp.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Common\FileUtil.cpp" />
     <ClCompile Include="..\..\Common\StringUtil.cpp" />
     <ClCompile Include="..\..\Library\pcre\pcre16_globals.c" />
     <ClCompile Include="WebParser.cpp" />

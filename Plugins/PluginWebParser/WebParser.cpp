@@ -16,6 +16,7 @@
 #include "../../Library/pcre/config.h"
 #include "../../Library/pcre/pcre.h"
 #include "../../Common/StringUtil.h"
+#include "../../Common/FileUtil.h"
 #include "../API/RainmeterAPI.h"
 
 void ShowError(void* rm, WCHAR* description);
@@ -1510,29 +1511,11 @@ BYTE* DownloadUrl(HINTERNET handle, std::wstring& url, DWORD* dataSize, bool for
 		{
 			return nullptr;
 		}
+		
+		size_t fileSize = 0;
+		BYTE* buffer = FileUtil::ReadFullFile(path, &fileSize).release();
+		*dataSize = (DWORD)fileSize;
 
-		FILE* file = _wfopen(path, L"rb");
-		if (!file)
-		{
-			return nullptr;
-		}
-
-		fseek(file, 0, SEEK_END);
-		*dataSize = ftell(file);
-		rewind(file);
-
-		BYTE* buffer = (BYTE*)malloc(*dataSize + 3);
-		if (buffer)
-		{
-			fread(buffer, 1, *dataSize, file);
-
-			// Triple null terminate the buffer.
-			buffer[*dataSize] = 0;
-			buffer[*dataSize + 1] = 0;
-			buffer[*dataSize + 2] = 0;
-		}
-
-		fclose(file);
 		return buffer;
 	}
 
