@@ -27,6 +27,7 @@
   <ItemGroup>
     <ClCompile Include="ControlTemplate.cpp" />
     <ClCompile Include="Dialog.cpp" />
+    <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="Gfx\Canvas.cpp" />
     <ClCompile Include="Gfx\CanvasD2D.cpp" />
     <ClCompile Include="Gfx\CanvasGDIP.cpp" />
@@ -67,6 +68,7 @@
   <ItemGroup>
     <ClInclude Include="ControlTemplate.h" />
     <ClInclude Include="Dialog.h" />
+    <ClInclude Include="FileUtil.h" />
     <ClInclude Include="Gfx\Canvas.h" />
     <ClInclude Include="Gfx\CanvasD2D.h" />
     <ClInclude Include="Gfx\CanvasGDIP.h" />

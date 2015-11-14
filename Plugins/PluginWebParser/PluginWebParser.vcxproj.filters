@@ -24,6 +24,9 @@
     <ClInclude Include="..\..\Common\StringUtil.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Common\FileUtil.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WebParser.cpp" />
@@ -31,6 +34,9 @@
       <Filter>pcre</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Common\StringUtil.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\FileUtil.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
