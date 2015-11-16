@@ -28,10 +28,12 @@
     <ResourceCompile Include="PluginQuote.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Common\FileUtil.cpp" />
     <ClCompile Include="..\..\Common\StringUtil.cpp" />
     <ClCompile Include="Quote.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Common\FileUtil.h" />
     <ClInclude Include="..\..\Common\StringUtil.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
