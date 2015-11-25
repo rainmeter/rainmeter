@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "../../Common/StringUtil.h"
+#include "../../Common/FileUtil.h"
 #include "LuaScript.h"
 #include "LuaManager.h"
 
@@ -25,16 +26,12 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 {
 	assert(!IsInitialized());
 
-	FILE* file = _wfopen(scriptFile.c_str(), L"rb");
-	if (!file) return false;
-
-	fseek(file, 0, SEEK_END);
-	const long fileSize = ftell(file);
-	BYTE* fileData = new BYTE[fileSize];
-	fseek(file, 0, SEEK_SET);
-	fread(fileData, fileSize, 1, file);
-	fclose(file);
-	file = nullptr;
+	size_t fileSize = 0;
+	auto fileData = FileUtil::ReadFullFile(scriptFile, &fileSize);
+	if (!fileData)
+	{
+		return false;
+	}
 
 	auto L = GetState();
 	bool scriptLoaded = false;
@@ -44,15 +41,13 @@ bool LuaScript::Initialize(const std::wstring& scriptFile)
 	if (m_Unicode)
 	{
 		const std::string utf8Data = 
-			StringUtil::NarrowUTF8((WCHAR*)(fileData + 2), (fileSize - 2) / sizeof(WCHAR));
+			StringUtil::NarrowUTF8((WCHAR*)(fileData.get() + 2), (fileSize - 2) / sizeof(WCHAR));
 		scriptLoaded = luaL_loadbuffer(L, utf8Data.c_str(), utf8Data.length(), "") == 0;
 	}
 	else
 	{
-		scriptLoaded = luaL_loadbuffer(L, (char*)fileData, fileSize, "") == 0;
+		scriptLoaded = luaL_loadbuffer(L, (char*)fileData.get(), fileSize, "") == 0;
 	}
-
-	delete [] fileData;
 
 	if (scriptLoaded)
 	{
