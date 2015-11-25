@@ -57,6 +57,7 @@
 #define STR_EDITSKIN              "Редактировать Скин"
 #define STR_REFRESHSKIN           "Обновить Скин"
 #define STR_UNLOADSKIN            "Закрыть Скин"
+#define STR_CUSTOMSKINACTIONS     "Custom skin actions"
 
 // ============================================================================
 // Dialogs
