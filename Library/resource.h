@@ -154,6 +154,7 @@
 #define ID_STR_FAVORITE                              2143
 #define ID_STR_FAVORITES                             2144
 #define ID_STR_NOFAVORITES                           2145
+#define ID_STR_CUSTOMSKINACTIONS                     2146
 
 #define IDM_REFRESH                                  4001
 #define IDM_QUIT                                     4002
