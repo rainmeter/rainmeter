@@ -539,14 +539,14 @@ void ContextMenu::AppendSkinCustomMenu(
 
 		if (position != 0 && !standaloneMenu)
 		{
-			InsertMenu(menu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, L"Custom skin actions");
+			InsertMenu(menu, 1, MF_BYPOSITION | MF_STRING | MF_GRAYED, 0, GetString(ID_STR_CUSTOMSKINACTIONS));
 			InsertMenu(menu, 1, MF_BYPOSITION | MF_SEPARATOR, 0, nullptr);
 		}
 	}
 	else
 	{
 		HMENU customMenu = CreatePopupMenu();
-		InsertMenu(menu, 1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)customMenu, L"Custom skin actions");
+		InsertMenu(menu, 1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)customMenu, GetString(ID_STR_CUSTOMSKINACTIONS));
 
 		for (size_t i = 0; i < titleSize; ++i)
 		{
