@@ -26,6 +26,6 @@
 
   <PropertyGroup Label="Configuration">
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v120_xp</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
   </PropertyGroup>
 </Project>

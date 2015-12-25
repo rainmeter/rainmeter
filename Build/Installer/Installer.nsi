@@ -29,7 +29,7 @@ VIAddVersionKey "FileDescription" "Rainmeter Installer"
 VIAddVersionKey "FileVersion" "${VERSION_FULL}"
 VIAddVersionKey "ProductVersion" "${VERSION_FULL}"
 VIAddVersionKey "OriginalFilename" "${OUTFILE}"
-VIAddVersionKey "LegalCopyright" "Copyright (C) 2009-2013 - All authors"
+VIAddVersionKey "LegalCopyright" "Copyright (C) 2009-2015 - Rainmeter Team"
 VIProductVersion "${VERSION_FULL}"
 BrandingText " "
 SetCompressor /SOLID lzma
@@ -505,8 +505,9 @@ FunctionEnd
 	File /x *Example*.dll "..\..\${DIR}-Release\Plugins\*.dll"
 
 	SetOutPath "$INSTDIR\Runtime"
-	File "$%VS120COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC120.CRT\msvcp120.dll"
-	File "$%VS120COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC120.CRT\msvcr120.dll"
+	File "$%VS140COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC140.CRT\msvcp140.dll"
+	File "$%VS140COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC140.CRT\vcruntime140.dll"
+	File "$%VS140COMNTOOLS%..\..\..\Windows Kits\10\Redist\ucrt\DLLs\${ARCH}\*.dll"
 !macroend
 
 !macro RemoveStartMenuShortcuts STARTMENUPATH

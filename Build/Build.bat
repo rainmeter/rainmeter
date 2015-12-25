@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-set VCVARSALL=%VS120COMNTOOLS%..\..\VC\vcvarsall.bat
+set VCVARSALL=%VS140COMNTOOLS%..\..\VC\vcvarsall.bat
 set MAKENSIS=%PROGRAMFILES%\NSIS\MakeNSIS.exe
 set GIT=%PROGRAMFILES%\Git\bin\git.exe
 
@@ -22,7 +22,6 @@ if not exist "%VCVARSALL%" echo ERROR: vcvarsall.bat not found & goto END
 call "%VCVARSALL%" x86 > nul
 
 set MSBUILD="msbuild.exe" /nologo^
-	/p:PlatformToolset=v120_xp;VisualStudioVersion=12.0^
 	/p:ExcludeTests=true^
 	/p:Configuration=Release
 
@@ -48,6 +47,8 @@ if not "%VERSION_REVISION%" == "0" goto UPDATEVERSION
 :: git
 if exist "%GIT%" goto GITFOUND
 set GIT=%GIT:Program Files\=Program Files (x86)\%
+if exist "%GIT%" goto GITFOUND
+set GIT=%LOCALAPPDATA%\Programs\Git\bin\GIT.exe
 if not exist "%GIT%" echo ERROR: git.exe not found & goto END
 :GITFOUND
 set /a VERSION_REVISION=0
