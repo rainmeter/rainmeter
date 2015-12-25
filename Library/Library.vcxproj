@@ -22,8 +22,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;Imagehlp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll;Imagehlp.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
+      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;Imagehlp.lib;Urlmon.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll;Imagehlp.dll;Urlmon.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -58,6 +58,7 @@
     <ClCompile Include="MeasureTime.cpp" />
     <ClCompile Include="MeasureUptime.cpp" />
     <ClCompile Include="MeasureVirtualMemory.cpp" />
+    <ClCompile Include="MeasureWebParser.cpp" />
     <ClCompile Include="Meter.cpp" />
     <ClCompile Include="MeterBar.cpp" />
     <ClCompile Include="MeterBitmap.cpp" />
@@ -110,6 +111,7 @@
     <ClInclude Include="MeasureCPU.h" />
     <ClInclude Include="MeasureDiskSpace.h" />
     <ClInclude Include="MeasureLoop.h" />
+    <ClInclude Include="MeasureMediaKey.h" />
     <ClInclude Include="MeasureMemory.h" />
     <ClInclude Include="MeasureNet.h" />
     <ClInclude Include="MeasureNetIn.h" />
@@ -123,6 +125,7 @@
     <ClInclude Include="MeasureTime.h" />
     <ClInclude Include="MeasureUptime.h" />
     <ClInclude Include="MeasureVirtualMemory.h" />
+    <ClInclude Include="MeasureWebParser.h" />
     <ClInclude Include="Meter.h" />
     <ClInclude Include="MeterBar.h" />
     <ClInclude Include="MeterBitmap.h" />

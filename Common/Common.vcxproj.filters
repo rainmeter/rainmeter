@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="CharacterEntityReference.cpp" />
     <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="MenuTemplate.cpp" />
     <ClCompile Include="PathUtil.cpp" />
@@ -96,6 +97,7 @@
     <ClCompile Include="FileUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CharacterEntityReference.h" />
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="MenuTemplate.h" />
     <ClInclude Include="PathUtil.h" />

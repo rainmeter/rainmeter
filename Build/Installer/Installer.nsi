@@ -769,6 +769,7 @@ FunctionEnd
 
 Function HandlePlugins
 	${If} $R7 == "MediaKey.dll"
+	${OrIf} $R7 == "WebParser.dll"
 		Delete "$R9"
 	${ElseIf} $R7 != "AdvancedCPU.dll"
 	${AndIf} $R7 != "CoreTemp.dll"
@@ -787,7 +788,6 @@ Function HandlePlugins
 	${AndIf} $R7 != "SpeedFanPlugin.dll"
 	${AndIf} $R7 != "SysInfo.dll"
 	${AndIf} $R7 != "VirtualDesktops.dll"
-	${AndIf} $R7 != "WebParser.dll"
 	${AndIf} $R7 != "WifiStatus.dll"
 	${AndIf} $R7 != "Win7AudioPlugin.dll"
 	${AndIf} $R7 != "WindowMessagePlugin.dll"

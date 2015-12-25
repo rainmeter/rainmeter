@@ -71,8 +71,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginSysInfo", "Plugins\Pl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginVirtualDesktops", "Plugins\PluginVirtualDesktops\PluginVirtualDesktops.vcxproj", "{4640AB3A-5A8B-2DA0-980C-A70BCAB3A7F1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginWebParser", "Plugins\PluginWebParser\PluginWebParser.vcxproj", "{8B820B9F-C154-417C-A090-42198F2AF496}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginWifiStatus", "Plugins\PluginWifiStatus\PluginWifiStatus.vcxproj", "{45A34285-56DD-4521-912B-3F884D36FA35}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginWin7Audio", "Plugins\PluginWin7Audio\PluginWin7Audio.vcxproj", "{6D032D6B-7656-4743-B454-3388E2921EB0}"
@@ -307,14 +305,6 @@ Global
 		{4640AB3A-5A8B-2DA0-980C-A70BCAB3A7F1}.Release|Win32.Build.0 = Release|Win32
 		{4640AB3A-5A8B-2DA0-980C-A70BCAB3A7F1}.Release|x64.ActiveCfg = Release|x64
 		{4640AB3A-5A8B-2DA0-980C-A70BCAB3A7F1}.Release|x64.Build.0 = Release|x64
-		{8B820B9F-C154-417C-A090-42198F2AF496}.Debug|Win32.ActiveCfg = Debug|Win32
-		{8B820B9F-C154-417C-A090-42198F2AF496}.Debug|Win32.Build.0 = Debug|Win32
-		{8B820B9F-C154-417C-A090-42198F2AF496}.Debug|x64.ActiveCfg = Debug|x64
-		{8B820B9F-C154-417C-A090-42198F2AF496}.Debug|x64.Build.0 = Debug|x64
-		{8B820B9F-C154-417C-A090-42198F2AF496}.Release|Win32.ActiveCfg = Release|Win32
-		{8B820B9F-C154-417C-A090-42198F2AF496}.Release|Win32.Build.0 = Release|Win32
-		{8B820B9F-C154-417C-A090-42198F2AF496}.Release|x64.ActiveCfg = Release|x64
-		{8B820B9F-C154-417C-A090-42198F2AF496}.Release|x64.Build.0 = Release|x64
 		{45A34285-56DD-4521-912B-3F884D36FA35}.Debug|Win32.ActiveCfg = Debug|Win32
 		{45A34285-56DD-4521-912B-3F884D36FA35}.Debug|Win32.Build.0 = Debug|Win32
 		{45A34285-56DD-4521-912B-3F884D36FA35}.Debug|x64.ActiveCfg = Debug|x64

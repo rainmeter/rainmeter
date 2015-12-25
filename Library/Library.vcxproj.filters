@@ -84,6 +84,9 @@
     <ClCompile Include="MeasureVirtualMemory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MeasureWebParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Meter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -216,9 +219,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MeasureLoop.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureMediaKey.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MeasureMemory.h">

@@ -25,6 +25,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CharacterEntityReference.cpp" />
     <ClCompile Include="ControlTemplate.cpp" />
     <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="FileUtil.cpp" />
