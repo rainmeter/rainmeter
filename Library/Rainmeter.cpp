@@ -548,11 +548,10 @@ LRESULT CALLBACK Rainmeter::MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		break;
 
 	case WM_RAINMETER_DELAYED_EXECUTE:
-		if (lParam)
+		if (!wParam || GetRainmeter().HasSkin((Skin*)wParam))
 		{
-			// Execute bang
 			WCHAR* bang = (WCHAR*)lParam;
-			GetRainmeter().ExecuteCommand(bang, nullptr);
+			GetRainmeter().ExecuteCommand(bang, (Skin*)wParam);
 			free(bang);  // _wcsdup()
 		}
 		break;
@@ -1252,10 +1251,10 @@ void Rainmeter::ExecuteCommand(const WCHAR* command, Skin* skin, bool multi)
 ** Executes command when current processing is done.
 **
 */
-void Rainmeter::DelayedExecuteCommand(const WCHAR* command)
+void Rainmeter::DelayedExecuteCommand(const WCHAR* command, Skin* skin)
 {
 	WCHAR* bang = _wcsdup(command);
-	PostMessage(m_Window, WM_RAINMETER_DELAYED_EXECUTE, (WPARAM)nullptr, (LPARAM)bang);
+	PostMessage(m_Window, WM_RAINMETER_DELAYED_EXECUTE, (WPARAM)skin, (LPARAM)bang);
 }
 
 /*
