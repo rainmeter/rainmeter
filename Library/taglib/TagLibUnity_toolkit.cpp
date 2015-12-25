@@ -11,24 +11,24 @@
 // The following includes have been commented out and are compiled separately due to e.g.
 // mismatching symbols.
 /*
-#include "taglib\mpeg\id3v2\id3v2tag.cpp"
-#include "taglib\toolkit\tfile.cpp"
+#include "mpeg\id3v2\id3v2tag.cpp"
+#include "toolkit\tfile.cpp"
 */
 
 #pragma warning(push)
 #pragma warning(disable: 4244; disable: 4267)
 
-#include "taglib\toolkit\tbytevector.cpp"
-#include "taglib\toolkit\tbytevectorlist.cpp"
-#include "taglib\toolkit\tbytevectorstream.cpp"
-#include "taglib\toolkit\tdebug.cpp"
-#include "taglib\toolkit\tdebuglistener.cpp"
-#include "taglib\toolkit\tfilestream.cpp"
-#include "taglib\toolkit\tiostream.cpp"
-#include "taglib\toolkit\tpropertymap.cpp"
-#include "taglib\toolkit\trefcounter.cpp"
-#include "taglib\toolkit\tstring.cpp"
-#include "taglib\toolkit\tstringlist.cpp"
-#include "taglib\toolkit\unicode.cpp"
+#include "toolkit\tbytevector.cpp"
+#include "toolkit\tbytevectorlist.cpp"
+#include "toolkit\tbytevectorstream.cpp"
+#include "toolkit\tdebug.cpp"
+#include "toolkit\tdebuglistener.cpp"
+#include "toolkit\tfilestream.cpp"
+#include "toolkit\tiostream.cpp"
+#include "toolkit\tpropertymap.cpp"
+#include "toolkit\trefcounter.cpp"
+#include "toolkit\tstring.cpp"
+#include "toolkit\tstringlist.cpp"
+#include "toolkit\unicode.cpp"
 
 #pragma warning(pop)

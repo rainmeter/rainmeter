@@ -8,8 +8,8 @@
 #ifndef __PLAYER_H__
 #define __PLAYER_H__
 
-#include "fileref.h"
-#include "tag.h"
+#include "taglib\fileref.h"
+#include "taglib\tag.h"
 #include "Cover.h"
 #include "Internet.h"
 #include "Lyrics.h"

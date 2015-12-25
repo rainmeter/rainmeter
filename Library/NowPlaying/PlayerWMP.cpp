@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "PlayerWMP.h"
+#include "Logger.h"
 
 Player* PlayerWMP::c_Player = nullptr;
 extern HINSTANCE g_Instance;
@@ -236,7 +237,7 @@ void PlayerWMP::Initialize()
 	HMODULE atl = InitializeAtlLibrary();
 	if (!atl)
 	{
-		RmLog(LOG_ERROR, L"NowPlaying: ATL not found");
+		LogError(L"NowPlaying: ATL not found");
 		return;
 	}
 

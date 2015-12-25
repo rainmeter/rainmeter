@@ -15,6 +15,7 @@
 #include "MeasureNetIn.h"
 #include "MeasureNetOut.h"
 #include "MeasureNetTotal.h"
+#include "MeasureNowPlaying.h"
 #include "MeasureDiskSpace.h"
 #include "MeasureUptime.h"
 #include "MeasurePlugin.h"
@@ -745,6 +746,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"NetTotal", measure) == 0)
 	{
 		return new MeasureNetTotal(skin, name);
+	}
+	else if (_wcsicmp(L"NowPlaying", measure) == 0)
+	{
+		return new MeasureNowPlaying(skin, name);
 	}
 	else if (_wcsicmp(L"PhysicalMemory", measure) == 0)
 	{

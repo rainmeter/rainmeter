@@ -11,10 +11,10 @@
 #pragma warning(push)
 #pragma warning(disable: 4244; disable: 4267)
 
-#include "taglib\asf\asfattribute.cpp"
-#include "taglib\asf\asffile.cpp"
-#include "taglib\asf\asfpicture.cpp"
-#include "taglib\asf\asfproperties.cpp"
-#include "taglib\asf\asftag.cpp"
+#include "flac\flacfile.cpp"
+#include "flac\flacmetadatablock.cpp"
+#include "flac\flacpicture.cpp"
+#include "flac\flacunknownmetadatablock.cpp"
+#include "flac\flacproperties.cpp"
 
 #pragma warning(pop)

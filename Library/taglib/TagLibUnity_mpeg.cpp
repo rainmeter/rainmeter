@@ -11,10 +11,12 @@
 #pragma warning(push)
 #pragma warning(disable: 4244; disable: 4267)
 
-#include "taglib\flac\flacfile.cpp"
-#include "taglib\flac\flacmetadatablock.cpp"
-#include "taglib\flac\flacpicture.cpp"
-#include "taglib\flac\flacunknownmetadatablock.cpp"
-#include "taglib\flac\flacproperties.cpp"
+#include "mpeg\mpegfile.cpp"
+#include "mpeg\mpegheader.cpp"
+#include "mpeg\mpegproperties.cpp"
+#include "mpeg\xingheader.cpp"
+
+#include "mpeg\id3v1\id3v1genres.cpp"
+#include "mpeg\id3v1\id3v1tag.cpp"
 
 #pragma warning(pop)

@@ -2228,6 +2228,7 @@ bool Skin::ReadSkin()
 					const WCHAR* const kOldDefaultPlugins[] =
 					{
 						L"MediaKey",
+						L"NowPlaying",
 						L"WebParser"
 					};
 					for (const auto* oldDefaultPlugin : kOldDefaultPlugins)

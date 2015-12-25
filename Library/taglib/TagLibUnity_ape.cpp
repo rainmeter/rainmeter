@@ -11,10 +11,10 @@
 #pragma warning(push)
 #pragma warning(disable: 4244; disable: 4267)
 
-#include "taglib\ape\apefile.cpp"
-#include "taglib\ape\apefooter.cpp"
-#include "taglib\ape\apeitem.cpp"
-#include "taglib\ape\apeproperties.cpp"
-#include "taglib\ape\apetag.cpp"
+#include "ape\apefile.cpp"
+#include "ape\apefooter.cpp"
+#include "ape\apeitem.cpp"
+#include "ape\apeproperties.cpp"
+#include "ape\apetag.cpp"
 
 #pragma warning(pop)

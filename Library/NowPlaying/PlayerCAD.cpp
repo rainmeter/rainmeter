@@ -8,6 +8,9 @@
 #include "StdAfx.h"
 #include "PlayerCAD.h"
 #include "CAD/cad_sdk.h"
+#include "Rainmeter.h"
+
+#include <Psapi.h>
 
 Player* PlayerCAD::c_Player = nullptr;
 extern HINSTANCE g_Instance;
@@ -103,7 +106,7 @@ void PlayerCAD::Initialize()
 	}
 
 	WCHAR buffer[MAX_PATH];
-	LPCTSTR file = RmGetSettingsFile();
+	LPCTSTR file = GetRainmeter().GetDataFile().c_str();
 
 	// Read saved settings
 	GetPrivateProfileString(L"NowPlaying.dll", L"ClassName", nullptr, buffer, MAX_PATH, file);
@@ -361,7 +364,7 @@ LRESULT CALLBACK PlayerCAD::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 					LPCTSTR classSz = className.empty() ? nullptr : className.c_str();
 					LPCTSTR windowSz = windowName.empty() ? nullptr : windowName.c_str();
-					LPCTSTR file = RmGetSettingsFile();
+					LPCTSTR file = GetRainmeter().GetDataFile().c_str();
 
 					WritePrivateProfileString(L"NowPlaying.dll", L"ClassName", classSz, file);
 					WritePrivateProfileString(L"NowPlaying.dll", L"WindowName", windowSz, file);

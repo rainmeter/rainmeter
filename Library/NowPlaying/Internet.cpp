@@ -21,11 +21,6 @@ void Internet::Initialize()
 								nullptr,
 								nullptr,
 								0);
-
-	if (!c_NetHandle)
-	{
-		RmLog(LOG_ERROR, L"NowPlaying.dll: Unable to open net handle");
-	}
 }
 
 /*

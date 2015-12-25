@@ -135,10 +135,6 @@ void Player::FindLyrics()
 		{
 			m_InternetThread = thread;
 		}
-		else
-		{
-			RmLog(LOG_DEBUG, L"NowPlaying.dll: Failed to start lyrics thread");
-		}
 	}
 }
 

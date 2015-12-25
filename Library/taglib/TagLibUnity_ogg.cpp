@@ -11,12 +11,12 @@
 #pragma warning(push)
 #pragma warning(disable: 4244; disable: 4267)
 
-#include "taglib\ogg\flac\oggflacfile.cpp"
-#include "taglib\ogg\oggfile.cpp"
-#include "taglib\ogg\oggpage.cpp"
-#include "taglib\ogg\oggpageheader.cpp"
-#include "taglib\ogg\vorbis\vorbisfile.cpp"
-#include "taglib\ogg\vorbis\vorbisproperties.cpp"
-#include "taglib\ogg\xiphcomment.cpp"
+#include "ogg\flac\oggflacfile.cpp"
+#include "ogg\oggfile.cpp"
+#include "ogg\oggpage.cpp"
+#include "ogg\oggpageheader.cpp"
+#include "ogg\vorbis\vorbisfile.cpp"
+#include "ogg\vorbis\vorbisproperties.cpp"
+#include "ogg\xiphcomment.cpp"
 
 #pragma warning(pop)

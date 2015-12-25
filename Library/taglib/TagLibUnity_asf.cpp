@@ -11,12 +11,10 @@
 #pragma warning(push)
 #pragma warning(disable: 4244; disable: 4267)
 
-#include "taglib\mpeg\mpegfile.cpp"
-#include "taglib\mpeg\mpegheader.cpp"
-#include "taglib\mpeg\mpegproperties.cpp"
-#include "taglib\mpeg\xingheader.cpp"
-
-#include "taglib\mpeg\id3v1\id3v1genres.cpp"
-#include "taglib\mpeg\id3v1\id3v1tag.cpp"
+#include "asf\asfattribute.cpp"
+#include "asf\asffile.cpp"
+#include "asf\asfpicture.cpp"
+#include "asf\asfproperties.cpp"
+#include "asf\asftag.cpp"
 
 #pragma warning(pop)

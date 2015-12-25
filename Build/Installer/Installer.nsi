@@ -769,6 +769,7 @@ FunctionEnd
 
 Function HandlePlugins
 	${If} $R7 == "MediaKey.dll"
+	${OrIf} $R7 == "NowPlaying.dll"
 	${OrIf} $R7 == "WebParser.dll"
 		Delete "$R9"
 	${ElseIf} $R7 != "AdvancedCPU.dll"
@@ -777,7 +778,6 @@ Function HandlePlugins
 	${AndIf} $R7 != "FolderInfo.dll"
 	${AndIf} $R7 != "InputText.dll"
 	${AndIf} $R7 != "iTunesPlugin.dll"
-	${AndIf} $R7 != "NowPlaying.dll"
 	${AndIf} $R7 != "PerfMon.dll"
 	${AndIf} $R7 != "PingPlugin.dll"
 	${AndIf} $R7 != "PowerPlugin.dll"
