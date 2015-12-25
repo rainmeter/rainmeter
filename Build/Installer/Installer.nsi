@@ -314,6 +314,7 @@ Function PageOptions
 	${If} ${RunningX64}
 		${If} $InstallPortable = 1
 		${OrIf} $INSTDIR == ""
+		${OrIfNot} ${FileExists} "$INSTDIR\Rainmeter.exe"
 			${NSD_CreateCheckBox} 6u 54u 285u 12u "$(INSTALL64BIT)"
 			Pop $R2
 			StrCpy $1 30u
@@ -364,6 +365,11 @@ Function PageOptions
 		${If} $INSTDIR != ""
 			EnableWindow $R1 0
 			${NSD_SetText} $R0 "$INSTDIR"
+
+			${If} ${RunningX64}
+			${AndIfNot} ${FileExists} "$INSTDIR\Rainmeter.exe"
+				${NSD_Check} $R2
+			${EndIf}
 		${Else}
 			; Fresh install
 			${If} ${RunningX64}
