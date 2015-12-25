@@ -1,0 +1,91 @@
+LIBRARY
+; zlib data compression and ZIP file I/O library
+
+EXPORTS
+        adler32                                  @1
+        crc32                                    @3
+        deflate                                  @4
+        deflateCopy                              @5
+        deflateEnd                               @6
+        deflateInit2_                            @7
+        deflateInit_                             @8
+        deflateParams                            @9
+        deflateReset                             @10
+        deflateSetDictionary                     @11
+        inflate                                  @19
+        inflateEnd                               @20
+        inflateInit2_                            @21
+        inflateInit_                             @22
+        inflateReset                             @23
+        inflateSetDictionary                     @24
+        inflateSync                              @25
+        zlibVersion                              @27
+        zError                                   @36
+        inflateSyncPoint                         @37
+        get_crc_table                            @38
+        inflateCopy                              @42
+        inflateBackInit_                         @43
+        inflateBack                              @44
+        inflateBackEnd                           @45
+        deflateBound                             @47
+        zlibCompileFlags                         @50
+        deflatePrime                             @51
+        deflatePending                           @52
+
+        unzOpen                                  @61
+        unzClose                                 @62
+        unzGetGlobalInfo                         @63
+        unzGetCurrentFileInfo                    @64
+        unzGoToFirstFile                         @65
+        unzGoToNextFile                          @66
+        unzOpenCurrentFile                       @67
+        unzReadCurrentFile                       @68
+        unzOpenCurrentFile3                      @69
+        unztell                                  @70
+        unzeof                                   @71
+        unzCloseCurrentFile                      @72
+        unzGetGlobalComment                      @73
+        unzStringFileNameCompare                 @74
+        unzLocateFile                            @75
+        unzGetLocalExtrafield                    @76
+        unzOpen2                                 @77
+        unzOpenCurrentFile2                      @78
+        unzOpenCurrentFilePassword               @79
+
+        zipOpen                                  @80
+        zipOpenNewFileInZip                      @81
+        zipWriteInFileInZip                      @82
+        zipCloseFileInZip                        @83
+        zipClose                                 @84
+        zipOpenNewFileInZip2                     @86
+        zipCloseFileInZipRaw                     @87
+        zipOpen2                                 @88
+        zipOpenNewFileInZip3                     @89
+        zipOpenNewFileInZip4                     @90
+
+        unzGetFilePos                            @100
+        unzGoToFilePos                           @101
+
+        fill_win32_filefunc                      @110
+
+; zlibwapi v1.2.4 added:
+        fill_win32_filefunc64                   @111
+        fill_win32_filefunc64A                  @112
+        fill_win32_filefunc64W                  @113
+
+        unzOpen64                               @120
+        unzOpen2_64                             @121
+        unzGetGlobalInfo64                      @122
+        unzGetCurrentFileInfo64                 @124
+        unzGetCurrentFileZStreamPos64           @125
+        unztell64                               @126
+        unzGetFilePos64                         @127
+        unzGoToFilePos64                        @128
+
+        zipOpen64                               @130
+        zipOpen2_64                             @131
+        zipOpenNewFileInZip64                   @132
+        zipOpenNewFileInZip2_64                 @133
+        zipOpenNewFileInZip3_64                 @134
+        zipOpenNewFileInZip4_64                 @135
+        zipCloseFileInZipRaw64                  @136
