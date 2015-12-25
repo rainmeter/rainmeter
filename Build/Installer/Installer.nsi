@@ -648,7 +648,7 @@ SkipIniMove:
 		${EndIf}
 
 		Rename "$INSTDIR\Addons" "$INSTDIR\Defaults\Addons"
-		${Locate} "$INSTDIR\Plugins" "/L=F /M=*.dll /G=0" "MoveNonDefaultPlugins"
+		${Locate} "$INSTDIR\Plugins" "/L=F /M=*.dll /G=0" "HandlePlugins"
 	${EndIf}
 
 !ifdef INCLUDEFILES
@@ -767,14 +767,15 @@ Function RenameToRainmeterIni
 	Push $0
 FunctionEnd
 
-Function MoveNonDefaultPlugins
-	${If} $R7 != "AdvancedCPU.dll"
+Function HandlePlugins
+	${If} $R7 == "MediaKey.dll"
+		Delete "$R9"
+	${ElseIf} $R7 != "AdvancedCPU.dll"
 	${AndIf} $R7 != "CoreTemp.dll"
 	${AndIf} $R7 != "FileView.dll"
 	${AndIf} $R7 != "FolderInfo.dll"
 	${AndIf} $R7 != "InputText.dll"
 	${AndIf} $R7 != "iTunesPlugin.dll"
-	${AndIf} $R7 != "MediaKey.dll"
 	${AndIf} $R7 != "NowPlaying.dll"
 	${AndIf} $R7 != "PerfMon.dll"
 	${AndIf} $R7 != "PingPlugin.dll"

@@ -44,6 +44,7 @@
     <ClCompile Include="MeasureCPU.cpp" />
     <ClCompile Include="MeasureDiskSpace.cpp" />
     <ClCompile Include="MeasureLoop.cpp" />
+    <ClCompile Include="MeasureMediaKey.cpp" />
     <ClCompile Include="MeasureMemory.cpp" />
     <ClCompile Include="MeasureNet.cpp" />
     <ClCompile Include="MeasureNetIn.cpp" />

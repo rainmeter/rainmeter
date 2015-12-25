@@ -1,12 +1,21 @@
-/* Copyright (C) 2010 Rainmeter Project Developers
+/* Copyright (C) 2015 Rainmeter Project Developers
  *
  * This Source Code Form is subject to the terms of the GNU General Public
  * License; either version 2 of the License, or (at your option) any later
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#include <windows.h>
-#include "../../Library/Export.h"	// Rainmeter's exported functions
+#include "StdAfx.h"
+#include "MeasureMediaKey.h"
+#include "Logger.h"
+
+MeasureMediaKey::MeasureMediaKey(Skin* skin, const WCHAR* name) : Measure(skin, name)
+{
+}
+
+MeasureMediaKey::~MeasureMediaKey()
+{
+}
 
 void SendKey(WORD key)
 {
@@ -24,8 +33,9 @@ void SendKey(WORD key)
 	SendInput(1, &input, sizeof(INPUT));
 }
 
-PLUGIN_EXPORT void ExecuteBang(LPCTSTR args, UINT id)
+void MeasureMediaKey::Command(const std::wstring& command)	
 {
+	const WCHAR* args = command.c_str();
 	if (_wcsicmp(args, L"NextTrack") == 0)
 	{
 		SendKey(VK_MEDIA_NEXT_TRACK);
@@ -56,6 +66,6 @@ PLUGIN_EXPORT void ExecuteBang(LPCTSTR args, UINT id)
 	}
 	else
 	{
-		RmLog(LOG_WARNING, L"MediaKey.dll: Unknown bang");
+		LogErrorF(this, L"Unknown command: %s", args);
 	}
 }

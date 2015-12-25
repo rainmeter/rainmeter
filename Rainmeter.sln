@@ -49,8 +49,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginInputText", "Plugins\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginiTunes", "Plugins\PluginiTunes\PluginiTunes.vcxproj", "{A2DD3CBE-B140-4892-A875-24107FA52518}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginMediaKey", "Plugins\PluginMediaKey\PluginMediaKey.vcxproj", "{EB48A04A-657E-41B8-B2F5-D47F8C30B2B4}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginNowPlaying", "Plugins\PluginNowPlaying\PluginNowPlaying.vcxproj", "{C7FECFCD-E6C6-4F95-BB9A-E1762B043969}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginPerfMon", "Plugins\PluginPerfMon\PluginPerfMon.vcxproj", "{5344B52B-BAC3-479C-B41D-D465B8BDA1AD}"
@@ -221,14 +219,6 @@ Global
 		{A2DD3CBE-B140-4892-A875-24107FA52518}.Release|Win32.Build.0 = Release|Win32
 		{A2DD3CBE-B140-4892-A875-24107FA52518}.Release|x64.ActiveCfg = Release|x64
 		{A2DD3CBE-B140-4892-A875-24107FA52518}.Release|x64.Build.0 = Release|x64
-		{EB48A04A-657E-41B8-B2F5-D47F8C30B2B4}.Debug|Win32.ActiveCfg = Debug|Win32
-		{EB48A04A-657E-41B8-B2F5-D47F8C30B2B4}.Debug|Win32.Build.0 = Debug|Win32
-		{EB48A04A-657E-41B8-B2F5-D47F8C30B2B4}.Debug|x64.ActiveCfg = Debug|x64
-		{EB48A04A-657E-41B8-B2F5-D47F8C30B2B4}.Debug|x64.Build.0 = Debug|x64
-		{EB48A04A-657E-41B8-B2F5-D47F8C30B2B4}.Release|Win32.ActiveCfg = Release|Win32
-		{EB48A04A-657E-41B8-B2F5-D47F8C30B2B4}.Release|Win32.Build.0 = Release|Win32
-		{EB48A04A-657E-41B8-B2F5-D47F8C30B2B4}.Release|x64.ActiveCfg = Release|x64
-		{EB48A04A-657E-41B8-B2F5-D47F8C30B2B4}.Release|x64.Build.0 = Release|x64
 		{C7FECFCD-E6C6-4F95-BB9A-E1762B043969}.Debug|Win32.ActiveCfg = Debug|Win32
 		{C7FECFCD-E6C6-4F95-BB9A-E1762B043969}.Debug|Win32.Build.0 = Debug|Win32
 		{C7FECFCD-E6C6-4F95-BB9A-E1762B043969}.Debug|x64.ActiveCfg = Debug|x64

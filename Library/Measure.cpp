@@ -8,6 +8,7 @@
 #include "StdAfx.h"
 #include "Measure.h"
 #include "MeasureCPU.h"
+#include "MeasureMediaKey.h"
 #include "MeasureMemory.h"
 #include "MeasurePhysicalMemory.h"
 #include "MeasureVirtualMemory.h"
@@ -723,6 +724,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	if (_wcsicmp(L"CPU", measure) == 0)
 	{
 		return new MeasureCPU(skin, name);
+	}
+	else if (_wcsicmp(L"MediaKey", measure) == 0)
+	{
+		return new MeasureMediaKey(skin, name);
 	}
 	else if (_wcsicmp(L"Memory", measure) == 0)
 	{

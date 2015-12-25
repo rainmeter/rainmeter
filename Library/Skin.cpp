@@ -2225,7 +2225,7 @@ bool Skin::ReadSkin()
 						PathFindFileName(m_Parser.ReadString(section, L"Plugin", L"", false).c_str());
 					PathRemoveExtension(plugin);
 
-					const WCHAR* const kOldDefaultPlugins[] = { L"" };
+					const WCHAR* const kOldDefaultPlugins[] = { L"MediaKey" };
 					for (const auto* oldDefaultPlugin : kOldDefaultPlugins)
 					{
 						if (_wcsicmp(plugin, oldDefaultPlugin) == 0)
