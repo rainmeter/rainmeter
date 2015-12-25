@@ -2208,9 +2208,34 @@ bool Skin::ReadSkin()
 			_wcsicmp(L"Variables", section) != 0 &&
 			_wcsicmp(L"Metadata", section) != 0)
 		{
-			const std::wstring& measureName = m_Parser.ReadString(section, L"Measure", L"", false);
+			std::wstring measureName = m_Parser.ReadString(section, L"Measure", L"", false);
 			if (!measureName.empty())
 			{
+				// In the past, Rainmeter included several default plugins. These plugins are now
+				// included in Rainmeter.dll, but old skins referencing the old plugins. Here, we
+				// attempt to translate:
+				//   Measure=Plugin
+				//   Plugin=Plugins\Foo.dll
+				//
+				// into:
+				//   Measure=Foo
+				if (_wcsicmp(measureName.c_str(), L"Plugin") == 0)
+				{
+					WCHAR* plugin =
+						PathFindFileName(m_Parser.ReadString(section, L"Plugin", L"", false).c_str());
+					PathRemoveExtension(plugin);
+
+					const WCHAR* const kOldDefaultPlugins[] = { L"" };
+					for (const auto* oldDefaultPlugin : kOldDefaultPlugins)
+					{
+						if (_wcsicmp(plugin, oldDefaultPlugin) == 0)
+						{
+							measureName = plugin;
+							break;
+						}
+					}
+				}
+
 				Measure* measure = Measure::Create(measureName.c_str(), this, section);
 				if (measure)
 				{
