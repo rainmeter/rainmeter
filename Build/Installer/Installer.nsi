@@ -503,11 +503,6 @@ FunctionEnd
 
 	SetOutPath "$INSTDIR\Plugins"
 	File /x *Example*.dll "..\..\${DIR}-Release\Plugins\*.dll"
-
-	SetOutPath "$INSTDIR\Runtime"
-	File "$%VS140COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC140.CRT\msvcp140.dll"
-	File "$%VS140COMNTOOLS%..\..\VC\redist\${ARCH}\Microsoft.VC140.CRT\vcruntime140.dll"
-	File "$%VS140COMNTOOLS%..\..\..\Windows Kits\10\Redist\ucrt\DLLs\${ARCH}\*.dll"
 !macroend
 
 !macro RemoveStartMenuShortcuts STARTMENUPATH
@@ -629,6 +624,7 @@ SkipIniMove:
 	Delete "$INSTDIR\Defaults\Plugins\FileView.dll"
 	RMDir /r "$INSTDIR\Addons\Rainstaller"
 	RMDir /r "$INSTDIR\Addons\RainBackup"
+	RMDir /r "$INSTDIR\Runtime"
 
 	${If} $InstallPortable <> 1
 		CreateDirectory "$INSTDIR\Defaults"

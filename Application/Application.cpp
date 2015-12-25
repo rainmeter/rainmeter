@@ -47,38 +47,6 @@ WCHAR* GetCommandLineArguments()
 }
 
 /*
-** Attempts to load Rainmeter.dll. If it fails, retries after loading our own copies of the CRT
-** DLLs in the Runtime directory.
-*/
-HINSTANCE LoadRainmeterLibrary()
-{
-	HINSTANCE rmDll = LoadLibrary(L"Rainmeter.dll");
-	if (!rmDll)
-	{
-		WCHAR path[MAX_PATH];
-		if (GetModuleFileName(nullptr, path, MAX_PATH) > 0)
-		{
-			PathRemoveFileSpec(path);
-			PathAppend(path, L"Runtime");
-			SetDllDirectory(path);
-			PathAppend(path, L"msvcp120.dll");
-
-			// Loading msvcpNNN.dll will load msvcrNNN.dll as well.
-			HINSTANCE msvcrDll = LoadLibrary(path);
-			SetDllDirectory(L"");
-
-			if (msvcrDll)
-			{
-				rmDll = LoadLibrary(L"Rainmeter.dll");
-				FreeLibrary(msvcrDll);
-			}
-		}
-	}
-
-	return rmDll;
-}
-
-/*
 ** Entry point. In Release builds, the entry point is Main() since the CRT is not used.
 **
 */
@@ -97,7 +65,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 	HRSRC iconResource = FindResource(instance, MAKEINTRESOURCE(1), RT_ICON);
 	if (iconResource)
 	{
-		HINSTANCE rmDll = LoadRainmeterLibrary();
+		HINSTANCE rmDll = LoadLibrary(L"Rainmeter.dll");
 		if (rmDll)
 		{
 			auto rainmeterMain = (RainmeterMainFunc)GetProcAddress(rmDll, MAKEINTRESOURCEA(1));
