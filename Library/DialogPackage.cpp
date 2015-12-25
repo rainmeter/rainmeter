@@ -20,7 +20,7 @@ extern OsNameVersion g_OsNameVersions[];
 
 DialogPackage* DialogPackage::c_Dialog = nullptr;
 
-DialogPackage::DialogPackage(HWND wnd) : Dialog(wnd),
+DialogPackage::DialogPackage(HWND wnd) : OldDialog(wnd),
 	m_TabInfo(wnd),
 	m_TabOptions(wnd),
 	m_TabAdvanced(wnd),
@@ -51,7 +51,7 @@ void DialogPackage::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	}
 }
 
-Dialog::Tab& DialogPackage::GetActiveTab()
+OldDialog::Tab& DialogPackage::GetActiveTab()
 {
 	int sel = TabCtrl_GetCurSel(GetDlgItem(m_Window, IDC_PACKAGE_TAB));
 	if (sel == -1)

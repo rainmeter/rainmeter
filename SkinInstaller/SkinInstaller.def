@@ -1,4 +1,0 @@
-LIBRARY
-EXPORTS
-	; Private
-	SkinInstallerMain		@1 NONAME

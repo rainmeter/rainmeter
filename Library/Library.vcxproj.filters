@@ -240,6 +240,18 @@
     <ClCompile Include="MeasureNowPlaying.cpp">
       <Filter>NowPlaying</Filter>
     </ClCompile>
+    <ClCompile Include="DialogPackage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DialogInstall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Dialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SkinInstaller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigParser.h">
@@ -441,6 +453,18 @@
       <Filter>NowPlaying</Filter>
     </ClInclude>
     <ClInclude Include="MeasureNowPlaying.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DialogInstall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DialogPackage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SkinInstaller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

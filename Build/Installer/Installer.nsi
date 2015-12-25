@@ -505,7 +505,6 @@ FunctionEnd
 	File "..\..\${DIR}-Release\Rainmeter.exe"
 	File "..\..\${DIR}-Release\Rainmeter.dll"
 	File "..\..\${DIR}-Release\SkinInstaller.exe"
-	File "..\..\${DIR}-Release\SkinInstaller.dll"
 
 	SetOutPath "$INSTDIR\Plugins"
 	File /x *Example*.dll "..\..\${DIR}-Release\Plugins\*.dll"
@@ -627,6 +626,7 @@ SkipIniMove:
 	Delete "$INSTDIR\Rainmeter.chm"
 	Delete "$INSTDIR\Default.ini"
 	Delete "$INSTDIR\Launcher.exe"
+	Delete "$INSTDIR\SkinInstaller.dll"
 	Delete "$INSTDIR\Defaults\Plugins\FileView.dll"
 	RMDir /r "$INSTDIR\Addons\Rainstaller"
 	RMDir /r "$INSTDIR\Addons\RainBackup"

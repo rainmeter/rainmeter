@@ -1,5 +1,4 @@
 #include <Windows.h>
-#include "resource.h"
 #include "../Version.h"
 
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
@@ -50,6 +49,4 @@ VS_VERSION_INFO VERSIONINFO
 // Icon
 //
 
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDI_SKININSTALLER           ICON    DISCARDABLE     "res/Rainstaller.ico"
+100           ICON    DISCARDABLE     "res/Rainstaller.ico"

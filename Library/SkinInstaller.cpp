@@ -27,7 +27,7 @@ OsNameVersion g_OsNameVersions[] =
 ** Entry point
 **
 */
-int SkinInstallerMain(LPWSTR lpCmdLine)
+EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine)
 {
 	// Avoid loading a dll from current directory
 	SetDllDirectory(L"");

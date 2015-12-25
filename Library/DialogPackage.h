@@ -10,9 +10,9 @@
 
 #include <string>
 #include "zip.h"
-#include "../Library/Dialog.h"
+#include "Dialog.h"
 
-class DialogPackage : public Dialog
+class DialogPackage : public OldDialog
 {
 public:
 	static void Create(HINSTANCE hInstance, LPWSTR lpCmdLine);

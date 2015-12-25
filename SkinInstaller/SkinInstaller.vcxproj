@@ -18,11 +18,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup>
-    <MASM>
-      <PreprocessorDefinitions>NOOLDPENTIUMCODE</PreprocessorDefinitions>
-    </MASM>
     <ClCompile>
-      <PreprocessorDefinitions>ZLIB_WINAPI;NOCRYPT;NOUNCRYPT;NO_GZIP;ASMV;ASMINF;NOOLDPENTIUMCODE;HAVE_CONFIG_H;SUPPORT_UTF8;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ZLIB_WINAPI;NOCRYPT;NOUNCRYPT;NO_GZIP;ASMV;ASMINF;HAVE_CONFIG_H;SUPPORT_UTF8;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4244;4267;4482;4530;4996</DisableSpecificWarnings>
       <AdditionalIncludeDirectories>..\Library\zlib;..\Library\zlib\minizip;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
@@ -39,7 +36,6 @@
     <ClCompile Include="..\Library\Dialog.cpp" />
     <ClCompile Include="DialogInstall.cpp" />
     <ClCompile Include="DialogPackage.cpp" />
-    <ClCompile Include="StdAfx.cpp" />
     <ClCompile Include="SkinInstaller.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -30,7 +30,7 @@ inline bool IsWin32Build()
 ** Constructor.
 **
 */
-DialogInstall::DialogInstall(HWND wnd, const WCHAR* file) : Dialog(wnd),
+DialogInstall::DialogInstall(HWND wnd, const WCHAR* file) : OldDialog(wnd),
 	m_TabInstall(wnd),
 	m_HeaderBitmap(),
 	m_InstallThread(),
@@ -99,7 +99,7 @@ void DialogInstall::Create(HINSTANCE hInstance, LPWSTR lpCmdLine)
 	}
 }
 
-Dialog::Tab& DialogInstall::GetActiveTab()
+OldDialog::Tab& DialogInstall::GetActiveTab()
 {
 	return m_TabInstall;
 }
@@ -149,7 +149,7 @@ INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	}
 
 	HWND item = GetDlgItem(m_Window, IDC_INSTALL_ADVANCED_BUTTON);
-	Dialog::SetMenuButton(item);
+	OldDialog::SetMenuButton(item);
 
 	if (ReadPackage())
 	{

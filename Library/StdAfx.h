@@ -15,11 +15,13 @@
 #include <ws2tcpip.h>
 #include <windows.h>
 #include <windowsx.h>
+#include <commdlg.h>
 #include <ole2.h>  // For Gdiplus.h.
 #include <gdiplus.h>
 #include <dwmapi.h>
 #include <comdef.h>
 #include <Iphlpapi.h>
+#include <Imagehlp.h>
 #include <Mmsystem.h>
 #include <Shellapi.h>
 #include <shlobj.h>
@@ -29,6 +31,7 @@
 
 // STL
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 #include <unordered_map>

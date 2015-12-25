@@ -8,7 +8,7 @@
 #ifndef __DIALOG_H__
 #define __DIALOG_H__
 
-class Dialog
+class OldDialog
 {
 public:
 	HWND GetWindow() { return m_Window; }
@@ -35,8 +35,8 @@ protected:
 		bool m_Initialized;
 	};
 
-	Dialog(HWND wnd);
-	virtual ~Dialog();
+	OldDialog(HWND wnd);
+	virtual ~OldDialog();
 
 	virtual HWND GetActiveWindow() { return m_Window; }
 
