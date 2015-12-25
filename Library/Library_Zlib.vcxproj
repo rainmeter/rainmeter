@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(SolutionDir)Build\VS\Rainmeter.Cpp.Default.props" />
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0F414430-65C7-4A35-B878-7E6350D6D976}</ProjectGuid>
+    <ProjectGuid>{5D164F45-CEED-47A3-8A5D-B752D09B09DB}</ProjectGuid>
     <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
