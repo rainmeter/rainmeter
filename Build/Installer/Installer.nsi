@@ -768,7 +768,8 @@ Function RenameToRainmeterIni
 FunctionEnd
 
 Function MoveNonDefaultPlugins
-	${If} $R7 != "AdvancedCPU.dll"
+	${If} $R7 != "ActionTimer.dll"
+	${AndIf} $R7 != "AdvancedCPU.dll"
 	${AndIf} $R7 != "CoreTemp.dll"
 	${AndIf} $R7 != "FileView.dll"
 	${AndIf} $R7 != "FolderInfo.dll"
@@ -783,6 +784,7 @@ Function MoveNonDefaultPlugins
 	${AndIf} $R7 != "QuotePlugin.dll"
 	${AndIf} $R7 != "RecycleManager.dll"
 	${AndIf} $R7 != "ResMon.dll"
+	${AndIf} $R7 != "RunCommand.dll"
 	${AndIf} $R7 != "SpeedFanPlugin.dll"
 	${AndIf} $R7 != "SysInfo.dll"
 	${AndIf} $R7 != "VirtualDesktops.dll"
