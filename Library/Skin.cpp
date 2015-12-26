@@ -2788,7 +2788,7 @@ void Skin::Update(bool refresh)
 */
 void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 {
-	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
+	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA};
 	POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
 	POINT ptSrc = {0, 0};
 	SIZE szWindow = {m_Canvas->GetW(), m_Canvas->GetH()};

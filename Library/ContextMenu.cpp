@@ -574,7 +574,7 @@ int ContextMenu::CreateSkinsMenuRecursive(HMENU skinMenu, int index, bool isFavo
 	// For "Favorites" menu, index starts at 0
 	int menuIndex = isFavoriteMenu ? 0 : 3;
 
-	const size_t max = skinRegistry.GetFolderCount();
+	const int max = (int)skinRegistry.GetFolderCount();
 	while (index < max)
 	{
 		const SkinRegistry::Folder& skinFolder = skinRegistry.GetFolder(index);

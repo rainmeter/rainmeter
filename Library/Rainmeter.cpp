@@ -803,7 +803,7 @@ bool Rainmeter::ActivateSkin(const std::wstring& folderPath)
 		{
 			// Activate the next index.
 			ActivateSkin(
-				index, (skinFolder.active < skinFolder.files.size()) ? skinFolder.active : 0);
+				index, (skinFolder.active < (int16_t)skinFolder.files.size()) ? skinFolder.active : 0);
 		}
 
 		return true;
@@ -831,7 +831,7 @@ bool Rainmeter::ActivateSkin(const std::wstring& folderPath, const std::wstring&
 void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 {
 	if (folderIndex >= 0 && folderIndex < m_SkinRegistry.GetFolderCount() &&
-		fileIndex >= 0 && fileIndex < m_SkinRegistry.GetFolder(folderIndex).files.size())
+		fileIndex >= 0 && fileIndex < (int)m_SkinRegistry.GetFolder(folderIndex).files.size())
 	{
 		auto& skinFolder = m_SkinRegistry.GetFolder(folderIndex);
 		const std::wstring& file = skinFolder.files[fileIndex].filename;
@@ -908,7 +908,7 @@ void Rainmeter::DeactivateSkin(Skin* skin, int folderIndex, bool save)
 void Rainmeter::ToggleSkin(int folderIndex, int fileIndex)
 {
 	if (folderIndex >= 0 && folderIndex < m_SkinRegistry.GetFolderCount() &&
-		fileIndex >= 0 && fileIndex < m_SkinRegistry.GetFolder(folderIndex).files.size())
+		fileIndex >= 0 && fileIndex < (int)m_SkinRegistry.GetFolder(folderIndex).files.size())
 	{
 		if (m_SkinRegistry.GetFolder(folderIndex).active == fileIndex + 1)
 		{

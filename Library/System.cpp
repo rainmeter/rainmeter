@@ -1223,7 +1223,7 @@ bool System::CopyFiles(std::wstring from, std::wstring to, bool bMove)
 	SHFILEOPSTRUCT fo =
 	{
 		nullptr,
-		bMove ? FO_MOVE : FO_COPY,
+		(UINT)(bMove ? FO_MOVE : FO_COPY),
 		from.c_str(),
 		to.c_str(),
 		FOF_NO_UI | FOF_NOCONFIRMATION | FOF_ALLOWUNDO
