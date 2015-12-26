@@ -6,9 +6,9 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "DialogPackage.h"
 #include "../Common/StringUtil.h"
 #include "SkinInstaller.h"
-#include "DialogPackage.h"
 #include "DialogInstall.h"
 #include "resource.h"
 #include "../Version.h"
@@ -112,7 +112,7 @@ INT_PTR DialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = (HICON)LoadImage(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_SKININSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	if (GetOSPlatform() >= OSPLATFORM_VISTA)
+	if (IsWindowsVistaOrGreater())
 	{
 		SetDialogFont();
 	}
@@ -258,7 +258,7 @@ bool DialogPackage::CreatePackage()
 	m_AllowNonAsciiFilenames = DialogInstall::CompareVersions(m_MinimumRainmeter, L"3.0.1") != -1;
 
 	// Create archive and add options file and header bitmap
-	m_ZipFile = zipOpen(ConvertToAscii(m_TargetFile.c_str()).c_str(), APPEND_STATUS_CREATE);
+	m_ZipFile = zipOpen(StringUtil::Narrow(m_TargetFile.c_str()).c_str(), APPEND_STATUS_CREATE);
 
 	auto cleanup = [&]()->bool
 	{
@@ -751,7 +751,7 @@ INT_PTR CALLBACK DialogPackage::SelectPluginDlgProc(HWND hWnd, UINT uMsg, WPARAM
 
 				bool x32 = LOWORD(wParam) == IDC_PACKAGESELECTPLUGIN_32BITBROWSE_BUTTON;
 
-				LOADED_IMAGE* loadedImage = ImageLoad(ConvertToAscii(buffer).c_str(), nullptr);
+				LOADED_IMAGE* loadedImage = ImageLoad(StringUtil::Narrow(buffer).c_str(), nullptr);
 				if (loadedImage)
 				{
 					WORD machine = loadedImage->FileHeader->FileHeader.Machine;
@@ -829,7 +829,7 @@ void DialogPackage::TabInfo::Initialize()
 
 	DWORD extendedFlags = LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT;
 
-	if (GetOSPlatform() >= OSPLATFORM_VISTA)
+	if (IsWindowsVistaOrGreater())
 	{
 		extendedFlags |= LVS_EX_DOUBLEBUFFER;
 		SetWindowTheme(item, L"explorer", nullptr);
@@ -851,7 +851,7 @@ void DialogPackage::TabInfo::Initialize()
 	LVGROUP lvg;
 	lvg.cbSize = sizeof(LVGROUP);
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
-	lvg.state = (GetOSPlatform() >= OSPLATFORM_VISTA) ? LVGS_COLLAPSIBLE : LVGS_NORMAL;
+	lvg.state = IsWindowsVistaOrGreater() ? LVGS_COLLAPSIBLE : LVGS_NORMAL;
 	lvg.iGroupId = 0;
 	lvg.pszHeader = L"Skin";
 	ListView_InsertGroup(item, -1, &lvg);

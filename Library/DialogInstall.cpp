@@ -6,9 +6,11 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
-#include "SkinInstaller.h"
 #include "DialogInstall.h"
+#include "../Common/StringUtil.h"
+#include "SkinInstaller.h"
 #include "resource.h"
+#include "System.h"
 #include "../Version.h"
 
 #define WM_DELAYED_CLOSE WM_APP + 0
@@ -143,7 +145,7 @@ INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = (HICON)LoadImage(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_SKININSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	if (GetOSPlatform() >= OSPLATFORM_VISTA)
+	if (IsWindowsVistaOrGreater())
 	{
 		SetDialogFont();
 	}
@@ -375,7 +377,7 @@ bool DialogInstall::ReadPackage()
 		return false;
 	}
 
-	m_PackageUnzFile = unzOpen(ConvertToAscii(fileName).c_str());
+	m_PackageUnzFile = unzOpen(StringUtil::Narrow(fileName).c_str());
 	if (!m_PackageUnzFile)
 	{
 		return false;
@@ -688,7 +690,7 @@ bool DialogInstall::InstallPackage()
 				fo.pFrom = to.c_str();
 				SHFileOperation(&fo);
 
-				if (!CopyFiles(from, to, true))
+				if (!System::CopyFiles(from, to, true))
 				{
 					m_ErrorMessage = L"Unable to move to:\n";
 					m_ErrorMessage += to;
@@ -1374,7 +1376,7 @@ void DialogInstall::TabInstall::Initialize()
 
 	DWORD extendedFlags = LVS_EX_CHECKBOXES | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT;
 
-	if (GetOSPlatform() >= OSPLATFORM_VISTA)
+	if (IsWindowsVistaOrGreater())
 	{
 		extendedFlags |= LVS_EX_DOUBLEBUFFER;
 		SetWindowTheme(item, L"explorer", nullptr);
@@ -1400,7 +1402,7 @@ void DialogInstall::TabInstall::Initialize()
 	LVGROUP lvg;
 	lvg.cbSize = sizeof(LVGROUP);
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
-	lvg.state = (GetOSPlatform() >= OSPLATFORM_VISTA) ? LVGS_COLLAPSIBLE : LVGS_NORMAL;
+	lvg.state = IsWindowsVistaOrGreater() ? LVGS_COLLAPSIBLE : LVGS_NORMAL;
 
 	LVITEM lvi;
 	lvi.mask = LVIF_TEXT | LVIF_GROUPID | LVIF_PARAM;
