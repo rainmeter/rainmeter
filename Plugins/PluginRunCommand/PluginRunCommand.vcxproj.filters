@@ -6,19 +6,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-  <ClCompile Include="Stdafx.h" />
-  <ClCompile Include="PluginRunCommand.h" />
+    <ClCompile Include="Stdafx.h" />
+    <ClCompile Include="PluginRunCommand.h" />
     <ClInclude Include="..\..\Common\StringUtil.h">
       <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PluginRunCommand.cpp" />
-    <ClCompile Include="..\..\Common\StringUtil.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PluginRunCommand.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Common\StringUtil.cpp">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
