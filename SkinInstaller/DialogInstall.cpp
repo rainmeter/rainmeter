@@ -1106,6 +1106,7 @@ bool DialogInstall::IsIgnoredPlugin(const WCHAR* name)
 {
 	static const WCHAR* s_Plugins[] =
 	{
+		L"ActionTimer.dll",
 		L"AdvancedCPU.dll",
 		L"CoreTemp.dll",
 		L"FileView.dll",
@@ -1121,6 +1122,7 @@ bool DialogInstall::IsIgnoredPlugin(const WCHAR* name)
 		L"QuotePlugin.dll",
 		L"RecycleManager.dll",
 		L"ResMon.dll",
+		L"RunCommand.dll",
 		L"SpeedFanPlugin.dll",
 		L"SysInfo.dll",
 		L"VirtualDesktops.dll",
