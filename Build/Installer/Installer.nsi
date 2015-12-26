@@ -95,13 +95,9 @@ Function .onInit
 	${EndIf}
 
 	${IfNot} ${UAC_IsInnerInstance}
-		${If} ${IsWin2000}
-		${OrIf} ${IsWinXP}
-		${AndIf} ${AtMostServicePack} 2
-		${OrIf} ${IsWin2003}
-		${AndIf} ${AtMostServicePack} 0
+		${IfNot} ${AtLeastWinVista}
 			${IfNot} ${Silent}
-				MessageBox MB_OK|MB_ICONSTOP "Rainmeter requires Windows XP SP3 or later."
+				MessageBox MB_OK|MB_ICONSTOP "Rainmeter ${VERSION_SHORT} requires Windows 7 or later.$\n$\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net"
 			${EndIf}
 			SetErrorLevel ${ERROR_UNSUPPORTED}
 			Quit
