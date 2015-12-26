@@ -48,11 +48,12 @@ void UpdateProcesses();
 
 void SplitName(WCHAR* names, std::vector<RawString>& splittedNames)
 {
-	WCHAR* token = wcstok(names, L";");
+	WCHAR* context = nullptr;
+	WCHAR* token = wcstok(names, L";", &context);
 	while (token != nullptr)
 	{
 		splittedNames.push_back(token);
-		token = wcstok(nullptr, L";");
+		token = wcstok(nullptr, L";", &context);
 	}
 }
 

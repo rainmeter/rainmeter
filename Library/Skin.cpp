@@ -1034,31 +1034,32 @@ void Skin::ResizeBlur(const std::wstring& arg, int mode)
 		WCHAR* parseSz = _wcsdup(arg.c_str());
 		int type, x, y, w = 0, h = 0;
 
-		WCHAR* token = wcstok(parseSz, L",");
+		WCHAR* context = nullptr;
+		WCHAR* token = wcstok(parseSz, L",", &context);
 		if (token)
 		{
 			while (token[0] == L' ') ++token;
 			type = m_Parser.ParseInt(token, 0);
 
-			token = wcstok(nullptr, L",");
+			token = wcstok(nullptr, L",", &context);
 			if (token)
 			{
 				while (token[0] == L' ') ++token;
 				x = m_Parser.ParseInt(token, 0);
 
-				token = wcstok(nullptr, L",");
+				token = wcstok(nullptr, L",", &context);
 				if (token)
 				{
 					while (token[0] == L' ') ++token;
 					y = m_Parser.ParseInt(token, 0);
 
-					token = wcstok(nullptr, L",");
+					token = wcstok(nullptr, L",", &context);
 					if (token)
 					{
 						while (token[0] == L' ') ++token;
 						w = m_Parser.ParseInt(token, 0);
 
-						token = wcstok(nullptr, L",");
+						token = wcstok(nullptr, L",", &context);
 						if (token)
 						{
 							while (token[0] == L' ') ++token;
@@ -1080,7 +1081,7 @@ void Skin::ResizeBlur(const std::wstring& arg, int mode)
 				break;
 
 			case 2:
-				token = wcstok(nullptr, L",");
+				token = wcstok(nullptr, L",", &context);
 				if (token)
 				{
 					while (token[0] == L' ') ++token;
