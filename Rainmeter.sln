@@ -69,6 +69,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginRecycleManager", "Plu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginResMon", "Plugins\PluginResMon\PluginResMon.vcxproj", "{17D3BD92-6F5D-438C-A89B-88F4CE06DB94}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginRunCommand", "Plugins\PluginRunCommand\PluginRunCommand.vcxproj", "{4ABFBA48-C1DF-44B5-992F-3CFAEDE48974}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginSpeedFan", "Plugins\PluginSpeedFan\PluginSpeedFan.vcxproj", "{D10AB316-0F7A-4551-BE4F-385E04CCF1E8}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginSysInfo", "Plugins\PluginSysInfo\PluginSysInfo.vcxproj", "{6EBCA4DA-8CC7-42FE-8F45-878ABE165078}"
@@ -303,6 +305,14 @@ Global
 		{17D3BD92-6F5D-438C-A89B-88F4CE06DB94}.Release|Win32.Build.0 = Release|Win32
 		{17D3BD92-6F5D-438C-A89B-88F4CE06DB94}.Release|x64.ActiveCfg = Release|x64
 		{17D3BD92-6F5D-438C-A89B-88F4CE06DB94}.Release|x64.Build.0 = Release|x64
+		{4ABFBA48-C1DF-44B5-992F-3CFAEDE48974}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4ABFBA48-C1DF-44B5-992F-3CFAEDE48974}.Debug|Win32.Build.0 = Debug|Win32
+		{4ABFBA48-C1DF-44B5-992F-3CFAEDE48974}.Debug|x64.ActiveCfg = Debug|x64
+		{4ABFBA48-C1DF-44B5-992F-3CFAEDE48974}.Debug|x64.Build.0 = Debug|x64
+		{4ABFBA48-C1DF-44B5-992F-3CFAEDE48974}.Release|Win32.ActiveCfg = Release|Win32
+		{4ABFBA48-C1DF-44B5-992F-3CFAEDE48974}.Release|Win32.Build.0 = Release|Win32
+		{4ABFBA48-C1DF-44B5-992F-3CFAEDE48974}.Release|x64.ActiveCfg = Release|x64
+		{4ABFBA48-C1DF-44B5-992F-3CFAEDE48974}.Release|x64.Build.0 = Release|x64
 		{D10AB316-0F7A-4551-BE4F-385E04CCF1E8}.Debug|Win32.ActiveCfg = Debug|Win32
 		{D10AB316-0F7A-4551-BE4F-385E04CCF1E8}.Debug|Win32.Build.0 = Debug|Win32
 		{D10AB316-0F7A-4551-BE4F-385E04CCF1E8}.Debug|x64.ActiveCfg = Debug|x64
