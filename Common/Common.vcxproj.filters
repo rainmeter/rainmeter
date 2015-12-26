@@ -194,6 +194,7 @@
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClInclude>
     <ClInclude Include="FileUtil.h" />
+    <ClInclude Include="ScopedFunction.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">

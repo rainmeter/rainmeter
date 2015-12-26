@@ -98,6 +98,7 @@
     <ClInclude Include="Gfx\Util\WICBitmapDIB.h" />
     <ClInclude Include="Gfx\Util\WICBitmapLockDIB.h" />
     <ClInclude Include="Gfx\Util\WICBitmapLockGDIP.h" />
+    <ClInclude Include="ScopedFunction.h" />
     <ClInclude Include="MathParser.h" />
     <ClInclude Include="MenuTemplate.h" />
     <ClInclude Include="PathUtil.h" />
