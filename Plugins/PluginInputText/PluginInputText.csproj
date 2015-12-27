@@ -95,6 +95,8 @@
   </ItemGroup>
   <Import Project="$(SolutionDir)Build\VS\RainmeterPlugin.Cs.props" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- Prevent _CopyFilesMarkedCopyLocal from polluting the output directory with mscorlib.dll and .nlp files -->
+  <Target Name="_CopyFilesMarkedCopyLocal" />
   <PropertyGroup>
     <PostBuildEvent>"$(RmOutDirRoot)Tools\DllExporter.exe" "$(ConfigurationName)" "$(PlatformName)" "$(TargetDir)\" "$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
