@@ -16,7 +16,7 @@
     <RmOutDirRoot Condition=" '$(Platform)' == 'x64' ">$(SolutionDir)x64-$(Configuration)\</RmOutDirRoot>
 
     <OutDir>$(RmOutDirRoot)</OutDir>
-    <IntDir>$(OutDir)\Obj\$(ProjectName)\</IntDir>
+    <IntDir>$(OutDir)Obj\$(ProjectName)\</IntDir>
   </PropertyGroup>
 
   <PropertyGroup>
