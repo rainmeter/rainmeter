@@ -53,6 +53,9 @@
 
       <ExceptionHandling>false</ExceptionHandling>
 
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
+
       <!-- Set WINVER=0x0601 and friends (Win7) to avoid using Win8 specific features in the Win8 SDK. -->
       <!-- Set _HAS_EXCEPTIONS=0 to accompany the disabled exception handling above. -->
       <PreprocessorDefinitions>WIN32;_WINDOWS;WINVER=0x0601;_WIN32_WINNT=0x0601;_WIN32_IE=0x0601;PSAPI_VERSION=1;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -77,7 +80,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
