@@ -1108,6 +1108,7 @@ bool DialogInstall::IsIgnoredPlugin(const WCHAR* name)
 	{
 		L"ActionTimer.dll",
 		L"AdvancedCPU.dll",
+		L"AudioLevel.dll",
 		L"CoreTemp.dll",
 		L"FileView.dll",
 		L"FolderInfo.dll",

@@ -628,6 +628,7 @@ SkipIniMove:
 	Delete "$INSTDIR\Default.ini"
 	Delete "$INSTDIR\Launcher.exe"
 	Delete "$INSTDIR\Defaults\Plugins\FileView.dll"
+	Delete "$INSTDIR\Defaults\Plugins\AudioLevel.dll"
 	RMDir /r "$INSTDIR\Addons\Rainstaller"
 	RMDir /r "$INSTDIR\Addons\RainBackup"
 	RMDir /r "$INSTDIR\Runtime"
@@ -770,6 +771,7 @@ FunctionEnd
 Function MoveNonDefaultPlugins
 	${If} $R7 != "ActionTimer.dll"
 	${AndIf} $R7 != "AdvancedCPU.dll"
+	${AndIf} $R7 != "AudioLevel.dll"
 	${AndIf} $R7 != "CoreTemp.dll"
 	${AndIf} $R7 != "FileView.dll"
 	${AndIf} $R7 != "FolderInfo.dll"
