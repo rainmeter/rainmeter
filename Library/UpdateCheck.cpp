@@ -56,6 +56,13 @@ void CheckVersion(void* dummy)
 			const WCHAR* version = tmpSz.c_str();
 
 			int availableVersion = parseVersion(version);
+
+			// 4.0 will require Windows 7 SP1.
+			if (availableVersion > 4000000 && !IsWindows7SP1OrGreater())
+			{
+				return;
+			}
+
 			if (availableVersion > RAINMETER_VERSION ||
 				(revision_beta && availableVersion == RAINMETER_VERSION))
 			{
