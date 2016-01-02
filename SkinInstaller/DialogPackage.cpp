@@ -531,13 +531,10 @@ bool DialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring ba
 
 void DialogPackage::ShowHelp()
 {
-	std::wstring url = L"https://docs.rainmeter.net/manual/publishing-skins/";
-	if (revision_beta)
-	{
-		url += L"_beta";
-	}
-
-	ShellExecute(m_Window, L"open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+	const WCHAR* url = revision_beta ?
+		L"https://docs.rainmeter.net/manual-beta/publishing-skins/" :
+		L"https://docs.rainmeter.net/manual/publishing-skins/";
+	ShellExecute(m_Window, L"open", url, nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 std::wstring DialogPackage::SelectFolder(HWND parent, const std::wstring& existingPath)
