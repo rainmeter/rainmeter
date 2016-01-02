@@ -58,7 +58,7 @@ void CheckVersion(void* dummy)
 			int availableVersion = parseVersion(version);
 
 			// 4.0 will require Windows 7 SP1.
-			if (availableVersion > 4000000 && !IsWindows7SP1OrGreater())
+			if (availableVersion >= 4000000 && !IsWindows7SP1OrGreater())
 			{
 				return;
 			}
