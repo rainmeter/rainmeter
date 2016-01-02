@@ -19,8 +19,8 @@
 #include "resource.h"
 #include "../Version.h"
 
-#define RAINMETER_OFFICIAL		L"http://rainmeter.net/cms/"
-#define RAINMETER_HELP			L"http://docs.rainmeter.net/"
+#define RAINMETER_OFFICIAL		L"https://www.rainmeter.net"
+#define RAINMETER_HELP			L"https://docs.rainmeter.net"
 
 #define ZPOS_FLAGS	(SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING)
 

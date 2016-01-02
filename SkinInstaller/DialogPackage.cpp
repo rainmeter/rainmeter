@@ -531,7 +531,7 @@ bool DialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring ba
 
 void DialogPackage::ShowHelp()
 {
-	std::wstring url = L"http://rainmeter.net/cms/UsingApplication-SkinPackager";
+	std::wstring url = L"https://docs.rainmeter.net/manual/publishing-skins/";
 	if (revision_beta)
 	{
 		url += L"_beta";

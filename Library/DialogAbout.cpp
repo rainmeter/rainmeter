@@ -1308,7 +1308,7 @@ INT_PTR DialogAbout::TabVersion::OnNotify(WPARAM wParam, LPARAM lParam)
 	case NM_CLICK:
 		if (nm->idFrom == Id_HomeLink)
 		{
-			CommandHandler::RunFile(L"http://rainmeter.net");
+			CommandHandler::RunFile(L"https://www.rainmeter.net");
 		}
 		else if (nm->idFrom == Id_HomeLink)
 		{
