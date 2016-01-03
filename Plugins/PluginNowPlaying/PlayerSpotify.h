@@ -47,6 +47,12 @@ private:
 
 	HWND m_Window;
 	DWORD m_LastCheckTime;
+	std::wstring m_baseURL = L"http://127.0.0.1:4380/";
+	std::wstring m_csrfURL = L"simplecsrf/token.json";
+	std::wstring m_statusURL = L"remote/status.json";
+	std::wstring m_openidURL = L"https://open.spotify.com/token";
+	LPWSTR originHeader = L"Origin: https://open.spotify.com\r\n\r\n\r\n";
+	std::wstring csrfToken, openidToken;
 };
 
 #endif
