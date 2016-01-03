@@ -1310,7 +1310,7 @@ INT_PTR DialogAbout::TabVersion::OnNotify(WPARAM wParam, LPARAM lParam)
 		{
 			CommandHandler::RunFile(L"https://www.rainmeter.net");
 		}
-		else if (nm->idFrom == Id_HomeLink)
+		else if (nm->idFrom == Id_LicenseLink)
 		{
 			CommandHandler::RunFile(L"http://gnu.org/licenses");
 		}
