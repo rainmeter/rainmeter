@@ -32,8 +32,12 @@ class CCover
 public:
 	static bool GetCached(std::wstring& path);
 	static bool GetLocal(std::wstring filename, const std::wstring& folder, std::wstring& target);
+	static bool GetLocalAnyImage(const std::wstring& folder, std::wstring& target);
 	static bool GetEmbedded(const TagLib::FileRef& fr, const std::wstring& target);
 	static std::wstring GetFileFolder(const std::wstring& file);
+private:
+	static const int localCoverExtCount = 4;
+	static const LPCTSTR localCoverExtName[localCoverExtCount];
 };
 
 #endif
