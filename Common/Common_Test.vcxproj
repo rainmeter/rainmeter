@@ -12,6 +12,7 @@
     <OutDir>$(IntDir)</OutDir>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="MathParser_Test.cpp">
       <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
     </ClCompile>

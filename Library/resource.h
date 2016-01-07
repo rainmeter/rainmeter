@@ -6,6 +6,80 @@
 #define IDI_RAINMETER                                100
 #define IDI_TRAY                                     101
 
+#define IDI_SKININSTALLER                            200
+#define IDB_INSTALLHEADER                            201
+#define IDD_INSTALL_DIALOG                           202
+#define IDD_INSTALL_TAB                              203
+#define IDR_INSTALL_MENU                             204
+#define IDD_PACKAGE_DIALOG                           205
+#define IDD_PACKAGEINFO_TAB                          206
+#define IDD_PACKAGEOPTIONS_TAB                       207
+#define IDD_PACKAGEADVANCED_TAB                      208
+#define IDD_PACKAGESELECTFOLDER_DIALOG               209
+#define IDD_PACKAGESELECTPLUGIN_DIALOG               210
+
+#define IDC_INSTALL_TAB                              1000
+#define IDC_INSTALL_HEADER_BITMAP                    1001
+#define IDC_INSTALL_ADVANCED_BUTTON                  1002
+#define IDC_INSTALL_INSTALL_BUTTON                   1003
+
+#define IDC_INSTALLTAB_NAME_TEXT                     1000
+#define IDC_INSTALLTAB_AUTHOR_TEXT                   1001
+#define IDC_INSTALLTAB_VERSION_TEXT                  1002
+#define IDC_INSTALLTAB_COMPONENTS_LIST               1003
+#define IDC_INSTALLTAB_THEME_CHECKBOX                1004
+#define IDC_INSTALLTAB_INPROGRESS_TEXT               1005
+#define IDC_INSTALLTAB_PROGRESS                      1006
+
+#define IDC_PACKAGE_TAB                              1000
+#define IDC_PACKAGE_NEXT_BUTTON                      1001
+#define IDC_PACKAGE_CREATEPACKAGE_BUTTON             1002
+
+#define IDC_PACKAGEINFO_NAME_EDIT                    1000
+#define IDC_PACKAGEINFO_AUTHOR_EDIT                  1001
+#define IDC_PACKAGEINFO_VERSION_EDIT                 1002
+#define IDC_PACKAGEINFO_COMPONENTS_LIST              1003
+#define IDC_PACKAGEINFO_ADDSKIN_BUTTON               1004
+#define IDC_PACKAGEINFO_ADDTHEME_BUTTON              1005
+#define IDC_PACKAGEINFO_ADDPLUGIN_BUTTON             1006
+#define IDC_PACKAGEINFO_REMOVE_BUTTON                1007
+#define IDC_PACKAGEINFO_WHATIS_LINK                  1008
+
+#define IDC_PACKAGEOPTIONS_FILE_EDIT                 1000
+#define IDC_PACKAGEOPTIONS_FILEBROWSE_BUTTON         1001
+#define IDC_PACKAGEOPTIONS_DONOTHING_RADIO           1002
+#define IDC_PACKAGEOPTIONS_LOADSKIN_RADIO            1003
+#define IDC_PACKAGEOPTIONS_LOADSKIN_EDIT             1004
+#define IDC_PACKAGEOPTIONS_LOADSKINBROWSE_BUTTON     1005
+#define IDC_PACKAGEOPTIONS_LOADTHEME_RADIO           1006
+#define IDC_PACKAGEOPTIONS_LOADTHEME_COMBO           1007
+#define IDC_PACKAGEOPTIONS_RAINMETERVERSION_EDIT     1008
+#define IDC_PACKAGEOPTIONS_WINDOWSVERSION_COMBO      1009
+#define IDC_INSTALLTAB_CREATING_TEXT                 1010
+#define IDC_INSTALLTAB_CREATING_BAR                  1011
+
+#define IDC_PACKAGEADVANCED_HEADER_EDIT              1000
+#define IDC_PACKAGEADVANCED_HEADERROWSE_BUTTON       1001
+#define IDC_PACKAGEADVANCED_VARIABLEFILES_EDIT       1002
+#define IDC_PACKAGEADVANCED_MERGESKINS_CHECK         1003
+#define IDC_PACKAGEADVANCED_HELP_LINK                1004
+
+#define IDC_PACKAGESELECTFOLDER_EXISTING_RADIO       1000
+#define IDC_PACKAGESELECTFOLDER_EXISTING_COMBO       1001
+#define IDC_PACKAGESELECTFOLDER_CUSTOM_RADIO         1002
+#define IDC_PACKAGESELECTFOLDER_CUSTOM_EDIT          1003
+#define IDC_PACKAGESELECTFOLDER_CUSTOMBROWSE_BUTTON  1004
+
+#define IDC_PACKAGESELECTPLUGIN_32BIT_EDIT           1000
+#define IDC_PACKAGESELECTPLUGIN_32BITBROWSE_BUTTON   1001
+#define IDC_PACKAGESELECTPLUGIN_64BIT_EDIT           1002
+#define IDC_PACKAGESELECTPLUGIN_64BITBROWSE_BUTTON   1003
+
+#define IDM_INSTALL_BACKUPSKINS                      4200
+#define IDM_INSTALL_SYSTEMFONTS                      4201
+#define IDM_INSTALL_FORMAT                           4202
+
+
 #define ID_STR_NUM_BUTTONWIDTH                       1998
 #define ID_STR_NUM_LABELWIDTH                        1999
 #define ID_STR_ISRTL                                 2000

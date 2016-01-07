@@ -95,13 +95,9 @@ Function .onInit
 	${EndIf}
 
 	${IfNot} ${UAC_IsInnerInstance}
-		${If} ${IsWin2000}
-		${OrIf} ${IsWinXP}
-		${AndIf} ${AtMostServicePack} 2
-		${OrIf} ${IsWin2003}
-		${AndIf} ${AtMostServicePack} 0
+		${IfNot} ${AtLeastWinVista}
 			${IfNot} ${Silent}
-				MessageBox MB_OK|MB_ICONSTOP "Rainmeter requires Windows XP SP3 or later."
+				MessageBox MB_OK|MB_ICONSTOP "Rainmeter ${VERSION_SHORT} requires Windows 7 or later.$\n$\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net"
 			${EndIf}
 			SetErrorLevel ${ERROR_UNSUPPORTED}
 			Quit
@@ -505,7 +501,6 @@ FunctionEnd
 	File "..\..\${DIR}-Release\Rainmeter.exe"
 	File "..\..\${DIR}-Release\Rainmeter.dll"
 	File "..\..\${DIR}-Release\SkinInstaller.exe"
-	File "..\..\${DIR}-Release\SkinInstaller.dll"
 
 	SetOutPath "$INSTDIR\Plugins"
 	File /x *Example*.dll "..\..\${DIR}-Release\Plugins\*.dll"
@@ -627,6 +622,7 @@ SkipIniMove:
 	Delete "$INSTDIR\Rainmeter.chm"
 	Delete "$INSTDIR\Default.ini"
 	Delete "$INSTDIR\Launcher.exe"
+	Delete "$INSTDIR\SkinInstaller.dll"
 	Delete "$INSTDIR\Defaults\Plugins\FileView.dll"
 	Delete "$INSTDIR\Defaults\Plugins\AudioLevel.dll"
 	RMDir /r "$INSTDIR\Addons\Rainstaller"
@@ -649,7 +645,7 @@ SkipIniMove:
 		${EndIf}
 
 		Rename "$INSTDIR\Addons" "$INSTDIR\Defaults\Addons"
-		${Locate} "$INSTDIR\Plugins" "/L=F /M=*.dll /G=0" "MoveNonDefaultPlugins"
+		${Locate} "$INSTDIR\Plugins" "/L=F /M=*.dll /G=0" "HandlePlugins"
 	${EndIf}
 
 !ifdef INCLUDEFILES
@@ -768,17 +764,18 @@ Function RenameToRainmeterIni
 	Push $0
 FunctionEnd
 
-Function MoveNonDefaultPlugins
-	${If} $R7 != "ActionTimer.dll"
+Function HandlePlugins
+	${If} $R7 == "MediaKey.dll"
+	${OrIf} $R7 == "NowPlaying.dll"
+	${OrIf} $R7 == "WebParser.dll"
+		Delete "$R9"
+	${ElseIf} $R7 != "ActionTimer.dll"
 	${AndIf} $R7 != "AdvancedCPU.dll"
-	${AndIf} $R7 != "AudioLevel.dll"
 	${AndIf} $R7 != "CoreTemp.dll"
 	${AndIf} $R7 != "FileView.dll"
 	${AndIf} $R7 != "FolderInfo.dll"
 	${AndIf} $R7 != "InputText.dll"
 	${AndIf} $R7 != "iTunesPlugin.dll"
-	${AndIf} $R7 != "MediaKey.dll"
-	${AndIf} $R7 != "NowPlaying.dll"
 	${AndIf} $R7 != "PerfMon.dll"
 	${AndIf} $R7 != "PingPlugin.dll"
 	${AndIf} $R7 != "PowerPlugin.dll"
@@ -790,7 +787,6 @@ Function MoveNonDefaultPlugins
 	${AndIf} $R7 != "SpeedFanPlugin.dll"
 	${AndIf} $R7 != "SysInfo.dll"
 	${AndIf} $R7 != "VirtualDesktops.dll"
-	${AndIf} $R7 != "WebParser.dll"
 	${AndIf} $R7 != "WifiStatus.dll"
 	${AndIf} $R7 != "Win7AudioPlugin.dll"
 	${AndIf} $R7 != "WindowMessagePlugin.dll"

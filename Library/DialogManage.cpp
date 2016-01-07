@@ -916,7 +916,7 @@ int DialogManage::TabSkins::PopulateTree(HWND tree, TVINSERTSTRUCT& tvi, int ind
 {
 	int initialLevel = GetRainmeter().m_SkinRegistry.GetFolder(index).level;
 
-	const size_t max = GetRainmeter().m_SkinRegistry.GetFolderCount();
+	const int max = (int)GetRainmeter().m_SkinRegistry.GetFolderCount();
 	while (index < max)
 	{
 		const auto& skinFolder = GetRainmeter().m_SkinRegistry.GetFolder(index);

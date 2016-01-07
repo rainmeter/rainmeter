@@ -17,13 +17,13 @@
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>.\;lua/include;lua/lua;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USRDLL;LIBRARY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\;lua/include;lua/lua;.\NowPlaying\SDKs;./taglib;./taglib/toolkit;./taglib/asf;./taglib/mpeg;./taglib/ogg;./taglib/ogg/flac;./taglib/flac;./taglib/mpc;./taglib/ogg/vorbis;./taglib/mpeg/id3v2;./taglib/mpeg/id3v2/frames;./taglib/mpeg/id3v1;./taglib/ape;./taglib/wavpack;./taglib/mp4;zlib;zlib\minizip;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>TAGLIB_STATIC;ZLIB_WINAPI;NOCRYPT;NOUNCRYPT;NO_GZIP;_USRDLL;LIBRARY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;Imagehlp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll;Imagehlp.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
+      <AdditionalDependencies>comctl32.lib;Wininet.lib;UxTheme.lib;Winmm.lib;gdiplus.lib;Iphlpapi.lib;shlwapi.lib;d2d1.lib;dwrite.lib;windowscodecs.lib;Version.lib;Imagehlp.lib;Urlmon.lib;psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>Winmm.dll;Version.dll;d2d1.dll;dwrite.dll;Imagehlp.dll;Urlmon.dll;psapi.dll;$(DelayLoadTestDLL)</DelayLoadDLLs>
       <ModuleDefinitionFile>Exports.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -34,8 +34,11 @@
       <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="ContextMenu.cpp" />
+    <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="DialogAbout.cpp" />
+    <ClCompile Include="DialogInstall.cpp" />
     <ClCompile Include="DialogManage.cpp" />
+    <ClCompile Include="DialogPackage.cpp" />
     <ClCompile Include="Group.cpp" />
     <ClCompile Include="IfActions.cpp" />
     <ClCompile Include="Logger.cpp" />
@@ -44,11 +47,13 @@
     <ClCompile Include="MeasureCPU.cpp" />
     <ClCompile Include="MeasureDiskSpace.cpp" />
     <ClCompile Include="MeasureLoop.cpp" />
+    <ClCompile Include="MeasureMediaKey.cpp" />
     <ClCompile Include="MeasureMemory.cpp" />
     <ClCompile Include="MeasureNet.cpp" />
     <ClCompile Include="MeasureNetIn.cpp" />
     <ClCompile Include="MeasureNetOut.cpp" />
     <ClCompile Include="MeasureNetTotal.cpp" />
+    <ClCompile Include="MeasureNowPlaying.cpp" />
     <ClCompile Include="MeasurePhysicalMemory.cpp" />
     <ClCompile Include="MeasurePlugin.cpp" />
     <ClCompile Include="MeasureRegistry.cpp" />
@@ -57,6 +62,7 @@
     <ClCompile Include="MeasureTime.cpp" />
     <ClCompile Include="MeasureUptime.cpp" />
     <ClCompile Include="MeasureVirtualMemory.cpp" />
+    <ClCompile Include="MeasureWebParser.cpp" />
     <ClCompile Include="Meter.cpp" />
     <ClCompile Include="MeterBar.cpp" />
     <ClCompile Include="MeterBitmap.cpp" />
@@ -68,10 +74,25 @@
     <ClCompile Include="MeterRoundLine.cpp" />
     <ClCompile Include="MeterString.cpp" />
     <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="NowPlaying\Cover.cpp" />
+    <ClCompile Include="NowPlaying\Internet.cpp" />
+    <ClCompile Include="NowPlaying\Lyrics.cpp" />
+    <ClCompile Include="NowPlaying\Player.cpp" />
+    <ClCompile Include="NowPlaying\PlayerAIMP.cpp" />
+    <ClCompile Include="NowPlaying\PlayerCAD.cpp" />
+    <ClCompile Include="NowPlaying\PlayerITunes.cpp" />
+    <ClCompile Include="NowPlaying\PlayerSpotify.cpp" />
+    <ClCompile Include="NowPlaying\PlayerWinamp.cpp" />
+    <ClCompile Include="NowPlaying\PlayerWLM.cpp" />
+    <ClCompile Include="NowPlaying\PlayerWMP.cpp" />
+    <ClCompile Include="NowPlaying\SDKs\iTunes\iTunesCOMInterface_i.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Rainmeter.cpp" />
     <ClCompile Include="Skin.cpp" />
     <ClCompile Include="Export.cpp" />
     <ClCompile Include="Section.cpp" />
+    <ClCompile Include="SkinInstaller.cpp" />
     <ClCompile Include="SkinRegistry.cpp" />
     <ClCompile Include="SkinRegistry_Test.cpp">
       <ExcludedFromBuild>$(ExcludeTests)</ExcludedFromBuild>
@@ -98,7 +119,10 @@
     <ClInclude Include="CommandHandler.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="ContextMenu.h" />
+    <ClInclude Include="Dialog.h" />
     <ClInclude Include="DialogAbout.h" />
+    <ClInclude Include="DialogInstall.h" />
+    <ClInclude Include="DialogPackage.h" />
     <ClInclude Include="Error.h" />
     <ClInclude Include="Group.h" />
     <ClInclude Include="IfActions.h" />
@@ -109,11 +133,13 @@
     <ClInclude Include="MeasureCPU.h" />
     <ClInclude Include="MeasureDiskSpace.h" />
     <ClInclude Include="MeasureLoop.h" />
+    <ClInclude Include="MeasureMediaKey.h" />
     <ClInclude Include="MeasureMemory.h" />
     <ClInclude Include="MeasureNet.h" />
     <ClInclude Include="MeasureNetIn.h" />
     <ClInclude Include="MeasureNetOut.h" />
     <ClInclude Include="MeasureNetTotal.h" />
+    <ClInclude Include="MeasureNowPlaying.h" />
     <ClInclude Include="MeasurePhysicalMemory.h" />
     <ClInclude Include="MeasurePlugin.h" />
     <ClInclude Include="MeasureRegistry.h" />
@@ -122,6 +148,7 @@
     <ClInclude Include="MeasureTime.h" />
     <ClInclude Include="MeasureUptime.h" />
     <ClInclude Include="MeasureVirtualMemory.h" />
+    <ClInclude Include="MeasureWebParser.h" />
     <ClInclude Include="Meter.h" />
     <ClInclude Include="MeterBar.h" />
     <ClInclude Include="MeterBitmap.h" />
@@ -133,12 +160,24 @@
     <ClInclude Include="MeterRoundLine.h" />
     <ClInclude Include="MeterString.h" />
     <ClInclude Include="Mouse.h" />
+    <ClInclude Include="NowPlaying\Cover.h" />
+    <ClInclude Include="NowPlaying\Internet.h" />
+    <ClInclude Include="NowPlaying\Lyrics.h" />
+    <ClInclude Include="NowPlaying\Player.h" />
+    <ClInclude Include="NowPlaying\PlayerAIMP.h" />
+    <ClInclude Include="NowPlaying\PlayerCAD.h" />
+    <ClInclude Include="NowPlaying\PlayerITunes.h" />
+    <ClInclude Include="NowPlaying\PlayerSpotify.h" />
+    <ClInclude Include="NowPlaying\PlayerWinamp.h" />
+    <ClInclude Include="NowPlaying\PlayerWLM.h" />
+    <ClInclude Include="NowPlaying\PlayerWMP.h" />
     <ClInclude Include="Rainmeter.h" />
     <ClInclude Include="Skin.h" />
     <ClInclude Include="Export.h" />
     <ClInclude Include="RainmeterQuery.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Section.h" />
+    <ClInclude Include="SkinInstaller.h" />
     <ClInclude Include="SkinRegistry.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="System.h" />
@@ -155,6 +194,12 @@
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">
       <Project>{19312085-aa51-4bd6-be92-4b6098cca539}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Library_Taglib.vcxproj">
+      <Project>{0f414430-65c7-4a35-b878-7e6350d6d976}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Library_Zlib.vcxproj">
+      <Project>{5d164f45-ceed-47a3-8a5d-b752d09b09db}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

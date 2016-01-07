@@ -13,12 +13,6 @@
       <UniqueIdentifier>{91b7f443-69f2-4af0-8898-79c86916bbc5}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
-    <Filter Include="zlib">
-      <UniqueIdentifier>{42a27d72-d4b7-4a2f-9f0b-5d552623914c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="zlib\minizip">
-      <UniqueIdentifier>{b726e25d-2977-424a-b45b-8ee60ce6bd49}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{b69ece81-b900-41d8-9ccd-61476261c411}</UniqueIdentifier>
     </Filter>
@@ -26,48 +20,6 @@
   <ItemGroup>
     <ClCompile Include="StdAfx.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\adler32.c">
-      <Filter>zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\crc32.c">
-      <Filter>zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\deflate.c">
-      <Filter>zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\infback.c">
-      <Filter>zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\inflate.c">
-      <Filter>zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\inftrees.c">
-      <Filter>zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\trees.c">
-      <Filter>zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\zutil.c">
-      <Filter>zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\inffast.c">
-      <Filter>zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\inffas8664.c">
-      <Filter>zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\minizip\zip.c">
-      <Filter>zlib\minizip</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\minizip\ioapi.c">
-      <Filter>zlib\minizip</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\minizip\iowin32.c">
-      <Filter>zlib\minizip</Filter>
-    </ClCompile>
-    <ClCompile Include="zlib\minizip\unzip.c">
-      <Filter>zlib\minizip</Filter>
     </ClCompile>
     <ClCompile Include="..\Library\Dialog.cpp">
       <Filter>Source Files</Filter>
@@ -92,42 +44,6 @@
     <ClInclude Include="StdAfx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="zlib\zutil.h">
-      <Filter>zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\crc32.h">
-      <Filter>zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\deflate.h">
-      <Filter>zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\inffast.h">
-      <Filter>zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\inflate.h">
-      <Filter>zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\inftrees.h">
-      <Filter>zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\zconf.h">
-      <Filter>zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\zlib.h">
-      <Filter>zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\minizip\zip.h">
-      <Filter>zlib\minizip</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\minizip\ioapi.h">
-      <Filter>zlib\minizip</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\minizip\iowin32.h">
-      <Filter>zlib\minizip</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\minizip\unzip.h">
-      <Filter>zlib\minizip</Filter>
-    </ClInclude>
     <ClInclude Include="..\Library\Dialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -145,20 +61,6 @@
     <None Include="SkinInstaller.def">
       <Filter>Source Files</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <MASM Include="zlib\gvmat64.asm">
-      <Filter>zlib</Filter>
-    </MASM>
-    <MASM Include="zlib\inffasx64.asm">
-      <Filter>zlib</Filter>
-    </MASM>
-    <MASM Include="zlib\inffas32.asm">
-      <Filter>zlib</Filter>
-    </MASM>
-    <MASM Include="zlib\match686.asm">
-      <Filter>zlib</Filter>
-    </MASM>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="SkinInstaller.rc">

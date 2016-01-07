@@ -19,6 +19,12 @@
     <Filter Include="Lua\glue">
       <UniqueIdentifier>{941dce28-a314-4492-befb-5770432c98bf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NowPlaying">
+      <UniqueIdentifier>{64424fee-4da8-4109-84de-df55a55e63c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="taglib">
+      <UniqueIdentifier>{fe354ece-06ea-4af8-9129-f0fcb7e31d0c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConfigParser.cpp">
@@ -43,6 +49,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MeasureLoop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureMediaKey.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MeasureMemory.cpp">
@@ -79,6 +88,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MeasureVirtualMemory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureWebParser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Meter.cpp">
@@ -187,6 +199,57 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MeasureString.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NowPlaying\PlayerAIMP.cpp">
+      <Filter>NowPlaying</Filter>
+    </ClCompile>
+    <ClCompile Include="NowPlaying\PlayerCAD.cpp">
+      <Filter>NowPlaying</Filter>
+    </ClCompile>
+    <ClCompile Include="NowPlaying\PlayerITunes.cpp">
+      <Filter>NowPlaying</Filter>
+    </ClCompile>
+    <ClCompile Include="NowPlaying\PlayerSpotify.cpp">
+      <Filter>NowPlaying</Filter>
+    </ClCompile>
+    <ClCompile Include="NowPlaying\PlayerWinamp.cpp">
+      <Filter>NowPlaying</Filter>
+    </ClCompile>
+    <ClCompile Include="NowPlaying\PlayerWLM.cpp">
+      <Filter>NowPlaying</Filter>
+    </ClCompile>
+    <ClCompile Include="NowPlaying\PlayerWMP.cpp">
+      <Filter>NowPlaying</Filter>
+    </ClCompile>
+    <ClCompile Include="NowPlaying\Cover.cpp">
+      <Filter>NowPlaying</Filter>
+    </ClCompile>
+    <ClCompile Include="NowPlaying\Internet.cpp">
+      <Filter>NowPlaying</Filter>
+    </ClCompile>
+    <ClCompile Include="NowPlaying\Lyrics.cpp">
+      <Filter>NowPlaying</Filter>
+    </ClCompile>
+    <ClCompile Include="NowPlaying\Player.cpp">
+      <Filter>NowPlaying</Filter>
+    </ClCompile>
+    <ClCompile Include="NowPlaying\SDKs\iTunes\iTunesCOMInterface_i.c">
+      <Filter>NowPlaying</Filter>
+    </ClCompile>
+    <ClCompile Include="MeasureNowPlaying.cpp">
+      <Filter>NowPlaying</Filter>
+    </ClCompile>
+    <ClCompile Include="DialogPackage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DialogInstall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Dialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SkinInstaller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -348,6 +411,60 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MeasureString.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureMediaKey.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureWebParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NowPlaying\Player.h">
+      <Filter>NowPlaying</Filter>
+    </ClInclude>
+    <ClInclude Include="NowPlaying\PlayerAIMP.h">
+      <Filter>NowPlaying</Filter>
+    </ClInclude>
+    <ClInclude Include="NowPlaying\PlayerCAD.h">
+      <Filter>NowPlaying</Filter>
+    </ClInclude>
+    <ClInclude Include="NowPlaying\PlayerITunes.h">
+      <Filter>NowPlaying</Filter>
+    </ClInclude>
+    <ClInclude Include="NowPlaying\PlayerSpotify.h">
+      <Filter>NowPlaying</Filter>
+    </ClInclude>
+    <ClInclude Include="NowPlaying\PlayerWinamp.h">
+      <Filter>NowPlaying</Filter>
+    </ClInclude>
+    <ClInclude Include="NowPlaying\PlayerWLM.h">
+      <Filter>NowPlaying</Filter>
+    </ClInclude>
+    <ClInclude Include="NowPlaying\PlayerWMP.h">
+      <Filter>NowPlaying</Filter>
+    </ClInclude>
+    <ClInclude Include="NowPlaying\Cover.h">
+      <Filter>NowPlaying</Filter>
+    </ClInclude>
+    <ClInclude Include="NowPlaying\Internet.h">
+      <Filter>NowPlaying</Filter>
+    </ClInclude>
+    <ClInclude Include="NowPlaying\Lyrics.h">
+      <Filter>NowPlaying</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureNowPlaying.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DialogInstall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DialogPackage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SkinInstaller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

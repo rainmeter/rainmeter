@@ -31,4 +31,7 @@
 #include <math.h>
 #include <stdint.h>
 
+#include <string>
+#include <unordered_map>
+
 #endif

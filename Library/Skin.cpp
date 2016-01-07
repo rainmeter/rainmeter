@@ -1034,31 +1034,32 @@ void Skin::ResizeBlur(const std::wstring& arg, int mode)
 		WCHAR* parseSz = _wcsdup(arg.c_str());
 		int type, x, y, w = 0, h = 0;
 
-		WCHAR* token = wcstok(parseSz, L",");
+		WCHAR* context = nullptr;
+		WCHAR* token = wcstok(parseSz, L",", &context);
 		if (token)
 		{
 			while (token[0] == L' ') ++token;
 			type = m_Parser.ParseInt(token, 0);
 
-			token = wcstok(nullptr, L",");
+			token = wcstok(nullptr, L",", &context);
 			if (token)
 			{
 				while (token[0] == L' ') ++token;
 				x = m_Parser.ParseInt(token, 0);
 
-				token = wcstok(nullptr, L",");
+				token = wcstok(nullptr, L",", &context);
 				if (token)
 				{
 					while (token[0] == L' ') ++token;
 					y = m_Parser.ParseInt(token, 0);
 
-					token = wcstok(nullptr, L",");
+					token = wcstok(nullptr, L",", &context);
 					if (token)
 					{
 						while (token[0] == L' ') ++token;
 						w = m_Parser.ParseInt(token, 0);
 
-						token = wcstok(nullptr, L",");
+						token = wcstok(nullptr, L",", &context);
 						if (token)
 						{
 							while (token[0] == L' ') ++token;
@@ -1080,7 +1081,7 @@ void Skin::ResizeBlur(const std::wstring& arg, int mode)
 				break;
 
 			case 2:
-				token = wcstok(nullptr, L",");
+				token = wcstok(nullptr, L",", &context);
 				if (token)
 				{
 					while (token[0] == L' ') ++token;
@@ -2225,7 +2226,12 @@ bool Skin::ReadSkin()
 						PathFindFileName(m_Parser.ReadString(section, L"Plugin", L"", false).c_str());
 					PathRemoveExtension(plugin);
 
-					const WCHAR* const kOldDefaultPlugins[] = { L"" };
+					const WCHAR* const kOldDefaultPlugins[] =
+					{
+						L"MediaKey",
+						L"NowPlaying",
+						L"WebParser"
+					};
 					for (const auto* oldDefaultPlugin : kOldDefaultPlugins)
 					{
 						if (_wcsicmp(plugin, oldDefaultPlugin) == 0)
@@ -2782,7 +2788,7 @@ void Skin::Update(bool refresh)
 */
 void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 {
-	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, alpha, AC_SRC_ALPHA};
+	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA};
 	POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
 	POINT ptSrc = {0, 0};
 	SIZE szWindow = {m_Canvas->GetW(), m_Canvas->GetH()};

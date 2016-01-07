@@ -10,7 +10,7 @@
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
-typedef int (*SkinInstallerMainFunc)(LPWSTR cmdLine);
+EXTERN_C int SkinInstallerMain(LPWSTR lpCmdLine);
 
 WCHAR* GetCommandLineArguments()
 {
@@ -54,26 +54,7 @@ int APIENTRY wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 	SetErrorMode(oldMode | SEM_FAILCRITICALERRORS);
 
 	WCHAR* args = GetCommandLineArguments();
-
-	HINSTANCE skinInstallerDll = LoadLibrary(L"SkinInstaller.dll");;
-	if (skinInstallerDll)
-	{
-		auto skinInstallerMain =
-			(SkinInstallerMainFunc)GetProcAddress(skinInstallerDll, MAKEINTRESOURCEA(1));
-		if (skinInstallerMain)
-		{
-			return skinInstallerMain(args);
-		}
-	}
-
-	WCHAR message[128];
-	wsprintf(
-		message,
-		L"SkinInstaller.dll load error %ld.",
-		GetLastError());
-	MessageBox(nullptr, message, L"Skin Installer", MB_OK | MB_ICONERROR);
-
-	return 1;
+	return SkinInstallerMain(args);
 }
 
 #ifndef _DEBUG

@@ -629,30 +629,31 @@ void TintedImage::ReadOptions(ConfigParser& parser, const WCHAR* section, const 
 		{
 			if (wcschr(crop.c_str(), L','))
 			{
+				WCHAR* context = nullptr;
 				WCHAR* parseSz = _wcsdup(crop.c_str());
 				WCHAR* token;
 
-				token = wcstok(parseSz, L",");
+				token = wcstok(parseSz, L",", &context);
 				if (token)
 				{
 					m_Crop.X = parser.ParseInt(token, 0);
 
-					token = wcstok(nullptr, L",");
+					token = wcstok(nullptr, L",", &context);
 					if (token)
 					{
 						m_Crop.Y = parser.ParseInt(token, 0);
 
-						token = wcstok(nullptr, L",");
+						token = wcstok(nullptr, L",", &context);
 						if (token)
 						{
 							m_Crop.Width = parser.ParseInt(token, 0);
 
-							token = wcstok(nullptr, L",");
+							token = wcstok(nullptr, L",", &context);
 							if (token)
 							{
 								m_Crop.Height = parser.ParseInt(token, 0);
 
-								token = wcstok(nullptr, L",");
+								token = wcstok(nullptr, L",", &context);
 								if (token)
 								{
 									m_CropMode = (CROPMODE)parser.ParseInt(token, 0);

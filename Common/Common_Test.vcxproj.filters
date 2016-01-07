@@ -4,5 +4,6 @@
     <ClCompile Include="PathUtil_Test.cpp" />
     <ClCompile Include="StringUtil_Test.cpp" />
     <ClCompile Include="MathParser_Test.cpp" />
+    <ClCompile Include="TestMain.cpp" />
   </ItemGroup>
 </Project>

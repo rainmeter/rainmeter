@@ -8,12 +8,14 @@
 #include "StdAfx.h"
 #include "Measure.h"
 #include "MeasureCPU.h"
+#include "MeasureMediaKey.h"
 #include "MeasureMemory.h"
 #include "MeasurePhysicalMemory.h"
 #include "MeasureVirtualMemory.h"
 #include "MeasureNetIn.h"
 #include "MeasureNetOut.h"
 #include "MeasureNetTotal.h"
+#include "MeasureNowPlaying.h"
 #include "MeasureDiskSpace.h"
 #include "MeasureUptime.h"
 #include "MeasurePlugin.h"
@@ -23,6 +25,7 @@
 #include "MeasureCalc.h"
 #include "MeasureScript.h"
 #include "MeasureLoop.h"
+#include "MeasureWebParser.h"
 #include "Rainmeter.h"
 #include "Error.h"
 #include "Util.h"
@@ -724,6 +727,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	{
 		return new MeasureCPU(skin, name);
 	}
+	else if (_wcsicmp(L"MediaKey", measure) == 0)
+	{
+		return new MeasureMediaKey(skin, name);
+	}
 	else if (_wcsicmp(L"Memory", measure) == 0)
 	{
 		return new MeasureMemory(skin, name);
@@ -739,6 +746,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"NetTotal", measure) == 0)
 	{
 		return new MeasureNetTotal(skin, name);
+	}
+	else if (_wcsicmp(L"NowPlaying", measure) == 0)
+	{
+		return new MeasureNowPlaying(skin, name);
 	}
 	else if (_wcsicmp(L"PhysicalMemory", measure) == 0)
 	{
@@ -783,6 +794,10 @@ Measure* Measure::Create(const WCHAR* measure, Skin* skin, const WCHAR* name)
 	else if (_wcsicmp(L"Loop", measure) == 0)
 	{
 		return new MeasureLoop(skin, name);
+	}
+	else if (_wcsicmp(L"WebParser", measure) == 0)
+	{
+		return new MeasureWebParser(skin, name);
 	}
 
 	LogErrorF(skin, L"Measure=%s is not valid in [%s]", measure, name);

@@ -164,7 +164,7 @@ public:
 
 	void ExecuteBang(const WCHAR* bang, std::vector<std::wstring>& args, Skin* skin);
 	void ExecuteCommand(const WCHAR* command, Skin* skin, bool multi = true);
-	void DelayedExecuteCommand(const WCHAR* command);
+	void DelayedExecuteCommand(const WCHAR* command, Skin* skin = nullptr);
 
 	void RefreshAll();
 
