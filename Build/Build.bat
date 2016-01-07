@@ -143,7 +143,7 @@ if "%1" == "BUILDLANGUAGES" (
 :: Sign binaries
 if not "%CERTFILE%" == "" (
 	echo * Signing binaries
-	for %%Z in (Rainmeter.dll Rainmeter.exe SkinInstaller.exe SkinInstaller.dll) do (
+	for %%Z in (Rainmeter.dll Rainmeter.exe SkinInstaller.exe) do (
 		%SIGNTOOL% ..\x32-Release\%%Z > BuildLog.txt
 		if not %ERRORLEVEL% == 0 echo   ERROR %ERRORLEVEL%: Signing x32\%%Z failed & goto END
 		%SIGNTOOL% ..\x64-Release\%%Z > BuildLog.txt
