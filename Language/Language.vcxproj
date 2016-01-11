@@ -5,6 +5,7 @@
     <ProjectGuid>{6BE6F228-B741-4DA9-9FBC-E9F2A7BD483A}</ProjectGuid>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <TargetName>1033</TargetName>
+		<TrackFileAccess>false</TrackFileAccess>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
