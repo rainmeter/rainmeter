@@ -7,6 +7,7 @@
 
 #include "StdAfx.h"
 #include "../Common/PathUtil.h"
+#include "../Common/Platform.h"
 #include "Rainmeter.h"
 #include "TrayIcon.h"
 #include "System.h"
@@ -36,6 +37,13 @@ enum INTERVAL
 */
 int RainmeterMain(LPWSTR cmdLine)
 {
+
+	if (!IsWindows7OrGreater())
+	{
+		MessageBox(nullptr, L"Rainmeter requires Windows 7 or later.\n\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		return 1;
+	}	
+	
 	// Avoid loading a dll from current directory
 	SetDllDirectory(L"");
 
