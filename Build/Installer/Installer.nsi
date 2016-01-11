@@ -95,7 +95,7 @@ Function .onInit
 	${EndIf}
 
 	${IfNot} ${UAC_IsInnerInstance}
-		${IfNot} ${AtLeastWinVista}
+		${IfNot} ${AtLeastWin7}
 			${IfNot} ${Silent}
 				MessageBox MB_OK|MB_ICONSTOP "Rainmeter ${VERSION_SHORT} requires Windows 7 or later.$\n$\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net"
 			${EndIf}
