@@ -1123,9 +1123,8 @@ void DialogPackage::TabOptions::Initialize()
 	c_Dialog->m_MinimumRainmeter = buffer;
 
 	item = GetDlgItem(m_Window, IDC_PACKAGEOPTIONS_WINDOWSVERSION_COMBO);
-	ComboBox_AddString(item, L"XP");
-	ComboBox_AddString(item, L"Vista");
 	ComboBox_AddString(item, L"7");
+	ComboBox_AddString(item, L"10");	
 	ComboBox_SetCurSel(item, 0);
 	c_Dialog->m_MinimumWindows = g_OsNameVersions[0].version;
 }
