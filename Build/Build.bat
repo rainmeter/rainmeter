@@ -23,6 +23,7 @@ call "%VCVARSALL%" x86 > nul
 
 set MSBUILD="msbuild.exe" /nologo^
 	/p:ExcludeTests=true^
+	/p:TrackFileAccess=false^
 	/p:Configuration=Release
 
 if exist "Certificate.bat" call "Certificate.bat" > nul
