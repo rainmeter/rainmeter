@@ -238,7 +238,7 @@
       <Filter>NowPlaying</Filter>
     </ClCompile>
     <ClCompile Include="MeasureNowPlaying.cpp">
-      <Filter>NowPlaying</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DialogPackage.cpp">
       <Filter>Source Files</Filter>
