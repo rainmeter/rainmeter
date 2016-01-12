@@ -371,32 +371,41 @@ const WCHAR* MeasureNowPlaying::GetStringValue()
 	{
 	case MEASURE_ARTIST:
 		str = player->GetArtist();
+		break;
 
 	case MEASURE_TITLE:
 		str = player->GetTitle();
+		break;
 
 	case MEASURE_ALBUM:
 		str = player->GetAlbum();
+		break;
 
 	case MEASURE_LYRICS:
 		str = player->GetLyrics();
+		break;
 
 	case MEASURE_COVER:
 		str = player->GetCoverPath();
+		break;
 
 	case MEASURE_FILE:
 		str = player->GetFilePath();
+		break;
 
 	case MEASURE_DURATION:
 		SecondsToTime(player->GetDuration(), m_Parent->disableLeadingZero, buffer);
 		str = buffer;
+		break;
 
 	case MEASURE_POSITION:
 		SecondsToTime(player->GetPosition(), m_Parent->disableLeadingZero, buffer);
 		str = buffer;
+		break;
 
 	case MEASURE_GENRE:
 		str = player->GetGenre();
+		break;
 	}
 
 	return str ? CheckSubstitute(str) : nullptr;
