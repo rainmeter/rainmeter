@@ -46,13 +46,6 @@ ReserveFile ".\UAC.dll"
 
 !define REQUIREDSPACE 5 ; Minimum required space for install (in MB)
 
-; Error levels (for silent install)
-!define ERROR_UNSUPPORTED	3
-!define ERROR_NOTADMIN		4
-!define ERROR_WRITEFAIL		5
-!define ERROR_NOVCREDIST	6
-!define ERROR_CLOSEFAIL		7
-
 ; Additional Windows definitions
 !define BCM_SETSHIELD 0x0000160c
 !define PF_XMMI_INSTRUCTIONS_AVAILABLE 6
@@ -95,100 +88,39 @@ Function .onInit
 	${EndIf}
 
 	${IfNot} ${UAC_IsInnerInstance}
+		SetSilent normal
+
 		${IfNot} ${AtLeastWin7}
-			${IfNot} ${Silent}
-				MessageBox MB_OK|MB_ICONSTOP "Rainmeter ${VERSION_SHORT} requires Windows 7 or later.$\n$\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net"
-			${EndIf}
-			SetErrorLevel ${ERROR_UNSUPPORTED}
+			MessageBox MB_OK|MB_ICONSTOP "Rainmeter ${VERSION_SHORT} requires Windows 7 or later.$\n$\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net"
 			Quit
 		${EndIf}
 
 		System::Call 'kernel32::IsProcessorFeaturePresent(i${PF_XMMI_INSTRUCTIONS_AVAILABLE})i.r0'
 		${If} $0 = 0
-			${IfNot} ${Silent}
-				MessageBox MB_OK|MB_ICONSTOP "Rainmeter requires a Pentium III or later processor."
-			${EndIf}
-			SetErrorLevel ${ERROR_UNSUPPORTED}
+			MessageBox MB_OK|MB_ICONSTOP "Rainmeter requires a Pentium III or later processor."
 			Quit
 		${EndIf}
 
 		ReadRegStr $0 HKLM "SOFTWARE\Rainmeter" "Language"
 		ReadRegDWORD $NonDefaultLanguage HKLM "SOFTWARE\Rainmeter" "NonDefault"
 
-		${IfNot} ${Silent}
-			${If} $0 == ""
-			${OrIf} $0 <> $LANGUAGE
-			${AndIf} $NonDefaultLanguage != 1
-				; New install or better match
-				LangDLL::LangDialog "$(^SetupCaption)" "Please select the installer language.$\n$(SELECTLANGUAGE)" AC ${LANGDLL_PARAMS} ""
-				Pop $0
-				${If} $0 == "cancel"
-					Abort
-				${EndIf}
-
-				${If} $0 <> $LANGUAGE
-					; User selected non-default language
-					StrCpy $NonDefaultLanguage 1
-				${EndIf}
+		${If} $0 == ""
+		${OrIf} $0 <> $LANGUAGE
+		${AndIf} $NonDefaultLanguage != 1
+			; New install or better match
+			LangDLL::LangDialog "$(^SetupCaption)" "Please select the installer language.$\n$(SELECTLANGUAGE)" AC ${LANGDLL_PARAMS} ""
+			Pop $0
+			${If} $0 == "cancel"
+				Abort
 			${EndIf}
 
-			StrCpy $LANGUAGE $0
-		${Else}
-			${If} $0 != ""
-				StrCpy $LANGUAGE $0
-			${EndIf}
-
-			${GetParameters} $R1
-
-			ClearErrors
-			${GetOptions} $R1 "/LANGUAGE=" $0
-			${IfNot} ${Errors}
-				${If} $LANGUAGE != $0
-					StrCpy $NonDefaultLanguage 1
-				${EndIf}
-
-				StrCpy $LANGUAGE $0
-			${EndIf}
-
-			${GetOptions} $R1 "/STARTUP=" $0
-			${If} $0 = 1
-				StrCpy $AutoStartup 1
-			${EndIf}
-
-			${GetOptions} $R1 "/PORTABLE=" $0
-			${If} $0 = 1
-				StrCpy $InstallPortable 1
-			${Else}
-				${IfNot} ${UAC_IsAdmin}
-					SetErrorLevel ${ERROR_NOTADMIN}
-					Quit
-				${EndIf}
-			${EndIf}
-
-			${GetOptions} $R1 "/VERSION=" $0
-			${If} $0 = 64
-				StrCpy $Install64Bit 1
-
-				${If} $INSTDIR == ""
-					StrCpy $INSTDIR "$PROGRAMFILES64\Rainmeter"
-				${EndIf}
-			${Else}
-				${If} $INSTDIR == ""
-					StrCpy $INSTDIR "$PROGRAMFILES\Rainmeter"
-				${EndIf}
-			${EndIf}
-
-			ClearErrors
-			CreateDirectory "$INSTDIR"
-			WriteINIStr "$INSTDIR\writetest~.rm" "1" "1" "1"
-			Delete "$INSTDIR\writetest~.rm"
-
-			${If} ${Errors}
-				RMDir "$INSTDIR"
-				SetErrorLevel ${ERROR_WRITEFAIL}
-				Quit
+			${If} $0 <> $LANGUAGE
+				; User selected non-default language
+				StrCpy $NonDefaultLanguage 1
 			${EndIf}
 		${EndIf}
+
+		StrCpy $LANGUAGE $0
 
 		; If the language was set to a non-existent language, reset it back to English.
 		${WordFind} ",${LANGUAGE_IDS}" ",$LANGUAGE," "E+1{" $0
@@ -578,21 +510,15 @@ Section
 		SendMessage $1 ${WM_CLOSE} 0 0
 
 		${If} $0 = 0
-			${If} ${Silent}
-				SetErrorLevel ${ERROR_CLOSEFAIL}
-				Quit
-			${Else}
-				MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" IDRETRY +2
-				Quit
-			${EndIf}
+			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" IDRETRY +2
+			Quit
 		${EndIf}
 
 		Sleep 500
 	${Next}
 
 	; Move Rainmeter.ini to %APPDATA% if needed
-	${IfNot} ${Silent}
-	${AndIf} ${FileExists} "$INSTDIR\Rainmeter.ini"
+	${If} ${FileExists} "$INSTDIR\Rainmeter.ini"
 		${If} $InstallPortable <> 1
 			${If} $Install64Bit = 1
 			${AndIf} "$INSTDIR" == "$PROGRAMFILES64\Rainmeter"
@@ -882,13 +808,8 @@ Section Uninstall
 		SendMessage $1 ${WM_CLOSE} 0 0
 
 		${If} $0 = 0
-			${If} ${Silent}
-				SetErrorLevel ${ERROR_CLOSEFAIL}
-				Quit
-			${Else}
-				MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" IDRETRY +2
-				Quit
-			${EndIf}
+			MessageBox MB_RETRYCANCEL|MB_ICONSTOP "$(RAINMETERCLOSEERROR)" IDRETRY +2
+			Quit
 		${EndIf}
 
 		Sleep 500
