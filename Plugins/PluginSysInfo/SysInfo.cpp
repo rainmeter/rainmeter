@@ -1,9 +1,9 @@
 /* Copyright (C) 2004 Rainmeter Project Developers
-*
-* This Source Code Form is subject to the terms of the GNU General Public
-* License; either version 2 of the License, or (at your option) any later
-* version. If a copy of the GPL was not distributed with this file, You can
-* obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
+ *
+ * This Source Code Form is subject to the terms of the GNU General Public
+ * License; either version 2 of the License, or (at your option) any later
+ * version. If a copy of the GPL was not distributed with this file, You can
+ * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include <algorithm>
 #include <windows.h>
@@ -508,20 +508,20 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 		break;
 
 	case MEASURE_TIMEZONE_STANDARD_NAME:
-	{
-		TIME_ZONE_INFORMATION tzi;
-		GetTimeZoneInformation(&tzi);
-		wcscpy(sBuffer, tzi.StandardName);
-		return sBuffer;
-	}
+		{
+			TIME_ZONE_INFORMATION tzi;
+			GetTimeZoneInformation(&tzi);
+			wcscpy(sBuffer, tzi.StandardName);
+			return sBuffer;
+		}
 
 	case MEASURE_TIMEZONE_DAYLIGHT_NAME:
-	{
-		TIME_ZONE_INFORMATION tzi;
-		GetTimeZoneInformation(&tzi);
-		wcscpy(sBuffer, tzi.DaylightName);
-		return sBuffer;
-	}
+		{
+			TIME_ZONE_INFORMATION tzi;
+			GetTimeZoneInformation(&tzi);
+			wcscpy(sBuffer, tzi.DaylightName);
+			return sBuffer;
+		}
 	}
 
 	return nullptr;
@@ -534,66 +534,67 @@ PLUGIN_EXPORT double Update(void* data)
 	switch (measure->type)
 	{
 	case MEASURE_PAGESIZE:
-	{
-		SYSTEM_INFO si = { 0 };
-		GetNativeSystemInfo(&si);
-		return (si.dwPageSize);
-	}
-	case MEASURE_OS_BITS:
-	{
-		SYSTEM_INFO si = { 0 };
-		GetNativeSystemInfo(&si);
-		return (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ||
-			si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_IA64) ? 64.0 : 32.0;
-	}
-
-	case MEASURE_IDLE_TIME:
-	{
-		LASTINPUTINFO idle = { sizeof(LASTINPUTINFO) };
-		GetLastInputInfo(&idle);
-		return (double)((GetTickCount() - idle.dwTime) / 1000);
-	}
-
-	case MEASURE_ADAPTER_TYPE:
-	{
-		BYTE tmpBuffer[7168];
-		ULONG tmpBufferLen = _countof(tmpBuffer);
-
-		if (ERROR_SUCCESS == GetAdaptersInfo((IP_ADAPTER_INFO*)tmpBuffer, &tmpBufferLen))
 		{
-			PIP_ADAPTER_INFO info = (IP_ADAPTER_INFO*)tmpBuffer;
-			int i = 0;
-			while (info)
-			{
-				if (measure->useBestInterface)
-				{
-					if (info->Index == measure->data)
-					{
-						return info->Type;
-					}
-				}
-				else
-				{
-					if (i == measure->data)
-					{
-						return info->Type;
-					}
-				}
-
-				info = info->Next;
-				++i;
-			}
+			SYSTEM_INFO si = { 0 };
+			GetNativeSystemInfo(&si);
+			return (si.dwPageSize);
 		}
 
-		return 0.0;
-	}
+	case MEASURE_OS_BITS:
+		{
+			SYSTEM_INFO si = { 0 };
+			GetNativeSystemInfo(&si);
+			return (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ||
+				si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_IA64) ? 64.0 : 32.0;
+		}
+
+	case MEASURE_IDLE_TIME:
+		{
+			LASTINPUTINFO idle = { sizeof(LASTINPUTINFO) };
+			GetLastInputInfo(&idle);
+			return (double)((GetTickCount() - idle.dwTime) / 1000);
+		}
+
+	case MEASURE_ADAPTER_TYPE:
+		{
+			BYTE tmpBuffer[7168];
+			ULONG tmpBufferLen = _countof(tmpBuffer);
+
+			if (ERROR_SUCCESS == GetAdaptersInfo((IP_ADAPTER_INFO*)tmpBuffer, &tmpBufferLen))
+			{
+				PIP_ADAPTER_INFO info = (IP_ADAPTER_INFO*)tmpBuffer;
+				int i = 0;
+				while (info)
+				{
+					if (measure->useBestInterface)
+					{
+						if (info->Index == measure->data)
+						{
+							return info->Type;
+						}
+					}
+					else
+					{
+						if (i == measure->data)
+						{
+							return info->Type;
+						}
+					}
+
+					info = info->Next;
+					++i;
+				}
+			}
+
+			return 0.0;
+		}
 
 	case MEASURE_INTERNET_CONNECTIVITY:
-	{
-		const auto connectivity = GetNetworkConnectivity();
-		return (connectivity & NLM_CONNECTIVITY_IPV4_INTERNET ||
-			connectivity & NLM_CONNECTIVITY_IPV6_INTERNET) ? 1.0 : -1.0;
-	}
+		{
+			const auto connectivity = GetNetworkConnectivity();
+			return (connectivity & NLM_CONNECTIVITY_IPV4_INTERNET ||
+				connectivity & NLM_CONNECTIVITY_IPV6_INTERNET) ? 1.0 : -1.0;
+		}
 
 	case MEASURE_LAN_CONNECTIVITY:
 		return GetNetworkConnectivity() != NLM_CONNECTIVITY_DISCONNECTED ? 1.0 : -1.0;
@@ -648,29 +649,32 @@ PLUGIN_EXPORT double Update(void* data)
 			: GetSystemMetrics(SM_XVIRTUALSCREEN);
 
 	case MEASURE_TIMEZONE_ISDST:
-	{
-		TIME_ZONE_INFORMATION tzi;
-		DWORD ret = GetTimeZoneInformation(&tzi);
-		return ret == TIME_ZONE_ID_UNKNOWN ? -1.0 : ret - 1.0;
-	}
+		{
+			TIME_ZONE_INFORMATION tzi;
+			DWORD ret = GetTimeZoneInformation(&tzi);
+			return ret == TIME_ZONE_ID_UNKNOWN ? -1.0 : ret - 1.0;
+		}
+
 	case MEASURE_TIMEZONE_BIAS:
-	{
-		TIME_ZONE_INFORMATION tzi;
-		GetTimeZoneInformation(&tzi);
-		return (double)tzi.Bias;
-	}
+		{
+			TIME_ZONE_INFORMATION tzi;
+			GetTimeZoneInformation(&tzi);
+			return (double)tzi.Bias;
+		}
+
 	case MEASURE_TIMEZONE_STANDARD_BIAS:
-	{
-		TIME_ZONE_INFORMATION tzi;
-		GetTimeZoneInformation(&tzi);
-		return (double)tzi.StandardBias;
-	}
+		{
+			TIME_ZONE_INFORMATION tzi;
+			GetTimeZoneInformation(&tzi);
+			return (double)tzi.StandardBias;
+		}
+
 	case MEASURE_TIMEZONE_DAYLIGHT_BIAS:
-	{
-		TIME_ZONE_INFORMATION tzi;
-		GetTimeZoneInformation(&tzi);
-		return (double)tzi.DaylightBias;
-	}
+		{
+			TIME_ZONE_INFORMATION tzi;
+			GetTimeZoneInformation(&tzi);
+			return (double)tzi.DaylightBias;
+		}
 	}
 
 	return 0.0;
