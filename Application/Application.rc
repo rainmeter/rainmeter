@@ -28,8 +28,8 @@ VS_VERSION_INFO VERSIONINFO
         BLOCK "040904E4"
         {
             VALUE "CompanyName", "Open Source Developer, Rainmeter"
-						VALUE "FileDescription", "Rainmeter Desktop customization tool"
-						VALUE "FileVersion", STRFILEVER
+            VALUE "FileDescription", "Rainmeter Desktop customization tool"
+            VALUE "FileVersion", STRFILEVER
             VALUE "LegalCopyright", "© 2009-2016 - Rainmeter Team"
             VALUE "OriginalFilename", "Rainmeter.exe"
             VALUE "ProductName", "Rainmeter"

@@ -27,7 +27,7 @@ VS_VERSION_INFO VERSIONINFO
         BLOCK "040904E4"
         {
             VALUE "CompanyName", "Open Source Developer, Rainmeter"
-						VALUE "FileDescription", "Rainmeter Skin Installer"
+            VALUE "FileDescription", "Rainmeter Skin Installer"
             VALUE "FileVersion", STRFILEVER
             VALUE "LegalCopyright", "© 2009-2016 - Rainmeter Team"
             VALUE "OriginalFilename", "SkinInstaller.exe"
