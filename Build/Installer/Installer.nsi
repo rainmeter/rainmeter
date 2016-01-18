@@ -24,13 +24,13 @@
 !endif
 
 Name "Rainmeter"
+VIAddVersionKey "CompanyName" "Rainmeter"
 VIAddVersionKey "ProductName" "Rainmeter"
-VIAddVersionKey "CompanyName" "Open Source Developer, Rainmeter"
 VIAddVersionKey "FileDescription" "Rainmeter Installer"
 VIAddVersionKey "FileVersion" "${VERSION_FULL}"
 VIAddVersionKey "ProductVersion" "${VERSION_FULL}"
 VIAddVersionKey "OriginalFilename" "${OUTFILE}"
-VIAddVersionKey "LegalCopyright" "Copyright (C) 2009-2016 - Rainmeter Team"
+VIAddVersionKey "LegalCopyright" "Copyright (C) 2016 Rainmeter Team"
 VIProductVersion "${VERSION_FULL}"
 BrandingText " "
 SetCompressor /SOLID lzma
