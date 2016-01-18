@@ -1,9 +1,9 @@
 #pragma once
-#define FILEVER 3,3,0,2386
+#define FILEVER 4,0,0,2519
 #define PRODUCTVER FILEVER
-#define STRFILEVER "3.3.0.2386"
+#define STRFILEVER "4.0.0.2519"
 #define STRPRODUCTVER STRFILEVER
-#define APPVERSION L"3.3.0"
-#define RAINMETER_VERSION ((3 * 1000000) + (3 * 1000) + 0)
-const int revision_number = 2386;
+#define APPVERSION L"4.0.0"
+#define RAINMETER_VERSION ((4 * 1000000) + (0 * 1000) + 0)
+const int revision_number = 2519;
 const bool revision_beta = true;
