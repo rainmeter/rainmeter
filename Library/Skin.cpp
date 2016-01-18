@@ -989,81 +989,78 @@ void Skin::HideBlur()
 */
 void Skin::ResizeBlur(const std::wstring& arg, int mode)
 {
-	if (IsWindowsVistaOrGreater())
-	{
-		WCHAR* parseSz = _wcsdup(arg.c_str());
-		int type, x, y, w = 0, h = 0;
+	WCHAR* parseSz = _wcsdup(arg.c_str());
+	int type, x, y, w = 0, h = 0;
 
-		WCHAR* context = nullptr;
-		WCHAR* token = wcstok(parseSz, L",", &context);
+	WCHAR* context = nullptr;
+	WCHAR* token = wcstok(parseSz, L",", &context);
+	if (token)
+	{
+		while (token[0] == L' ') ++token;
+		type = m_Parser.ParseInt(token, 0);
+
+		token = wcstok(nullptr, L",", &context);
 		if (token)
 		{
 			while (token[0] == L' ') ++token;
-			type = m_Parser.ParseInt(token, 0);
+			x = m_Parser.ParseInt(token, 0);
 
 			token = wcstok(nullptr, L",", &context);
 			if (token)
 			{
 				while (token[0] == L' ') ++token;
-				x = m_Parser.ParseInt(token, 0);
+				y = m_Parser.ParseInt(token, 0);
 
 				token = wcstok(nullptr, L",", &context);
 				if (token)
 				{
 					while (token[0] == L' ') ++token;
-					y = m_Parser.ParseInt(token, 0);
+					w = m_Parser.ParseInt(token, 0);
 
 					token = wcstok(nullptr, L",", &context);
 					if (token)
 					{
 						while (token[0] == L' ') ++token;
-						w = m_Parser.ParseInt(token, 0);
-
-						token = wcstok(nullptr, L",", &context);
-						if (token)
-						{
-							while (token[0] == L' ') ++token;
-							h = m_Parser.ParseInt(token, 0);
-						}
+						h = m_Parser.ParseInt(token, 0);
 					}
 				}
 			}
 		}
-
-		if (w && h)
-		{
-			HRGN tempRegion;
-
-			switch (type)
-			{
-			case 1:
-				tempRegion = CreateRectRgn(x, y, w, h);
-				break;
-
-			case 2:
-				token = wcstok(nullptr, L",", &context);
-				if (token)
-				{
-					while (token[0] == L' ') ++token;
-					int r =  m_Parser.ParseInt(token, 0);
-					tempRegion = CreateRoundRectRgn(x, y, w, h, r, r);
-				}
-				break;
-
-			case 3:
-				tempRegion = CreateEllipticRgn(x, y, w, h);
-				break;
-	
-			default:  // Unknown type
-				free(parseSz);
-				return;
-			}
-
-			CombineRgn(m_BlurRegion, m_BlurRegion, tempRegion, mode);
-			DeleteObject(tempRegion);
-		}
-		free(parseSz);
 	}
+
+	if (w && h)
+	{
+		HRGN tempRegion;
+
+		switch (type)
+		{
+		case 1:
+			tempRegion = CreateRectRgn(x, y, w, h);
+			break;
+
+		case 2:
+			token = wcstok(nullptr, L",", &context);
+			if (token)
+			{
+				while (token[0] == L' ') ++token;
+				int r =  m_Parser.ParseInt(token, 0);
+				tempRegion = CreateRoundRectRgn(x, y, w, h, r, r);
+			}
+			break;
+
+		case 3:
+			tempRegion = CreateEllipticRgn(x, y, w, h);
+			break;
+
+		default:  // Unknown type
+			free(parseSz);
+			return;
+		}
+
+		CombineRgn(m_BlurRegion, m_BlurRegion, tempRegion, mode);
+		DeleteObject(tempRegion);
+	}
+	free(parseSz);
 }
 
 // Helper function that compares the given name to section's name.
@@ -2048,37 +2045,34 @@ bool Skin::ReadSkin()
 	m_DefaultUpdateDivider = m_Parser.ReadInt(L"Rainmeter", L"DefaultUpdateDivider", 1);
 	m_ToolTipHidden = m_Parser.ReadBool(L"Rainmeter", L"ToolTipHidden", false);
 
-	if (IsWindowsVistaOrGreater())
+	if (m_Parser.ReadBool(L"Rainmeter", L"Blur", false))
 	{
-		if (m_Parser.ReadBool(L"Rainmeter", L"Blur", false))
+		const WCHAR* blurRegion = m_Parser.ReadString(L"Rainmeter", L"BlurRegion", L"", false).c_str();
+
+		if (*blurRegion)
 		{
-			const WCHAR* blurRegion = m_Parser.ReadString(L"Rainmeter", L"BlurRegion", L"", false).c_str();
+			m_BlurMode = BLURMODE_REGION;
+			m_BlurRegion = CreateRectRgn(0, 0, 0, 0);	// Create empty region
+			int i = 1;
 
-			if (*blurRegion)
+			do
 			{
-				m_BlurMode = BLURMODE_REGION;
-				m_BlurRegion = CreateRectRgn(0, 0, 0, 0);	// Create empty region
-				int i = 1;
+				ResizeBlur(blurRegion, RGN_OR);
 
-				do
-				{
-					ResizeBlur(blurRegion, RGN_OR);
-
-					// Check for BlurRegion2, BlurRegion3, etc.
-					_snwprintf_s(buffer, _TRUNCATE, L"BlurRegion%i", ++i);
-					blurRegion = m_Parser.ReadString(L"Rainmeter", buffer, L"").c_str();
-				}
-				while (*blurRegion);
+				// Check for BlurRegion2, BlurRegion3, etc.
+				_snwprintf_s(buffer, _TRUNCATE, L"BlurRegion%i", ++i);
+				blurRegion = m_Parser.ReadString(L"Rainmeter", buffer, L"").c_str();
 			}
-			else
-			{
-				m_BlurMode = BLURMODE_FULL;
-			}
+			while (*blurRegion);
 		}
 		else
 		{
-			m_BlurMode = BLURMODE_NONE;
+			m_BlurMode = BLURMODE_FULL;
 		}
+	}
+	else
+	{
+		m_BlurMode = BLURMODE_NONE;
 	}
 
 	// Load fonts in Resources folder
