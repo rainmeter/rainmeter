@@ -21,7 +21,7 @@ After Visual Studio has been installed and updated, open Rainmeter.sln at the ro
 
 ### Building the installer
 
-First, download and install <a href="https://code.google.com/p/unsis/downloads/list">NSIS Unicode</a> (download the Unicode version, not the ANSI version).
+First, download and install [NSIS 3](http://nsis.sourceforge.net) or later.
 
 Now you can simply run the <b>Build.bat</b> batch file in the Build folder of your local repository. If you see any "not found" errors, check that the paths in the `set` commands at the top of the file match your environment. To build the release (non-beta) installer, use `Build.bat RELEASE`.
 
