@@ -424,13 +424,6 @@ private:
 	bool m_Favorite;
 
 	static int c_InstanceCount;
-
-	static HINSTANCE c_DwmInstance;
-
-	static decltype(DwmEnableBlurBehindWindow)* c_DwmEnableBlurBehindWindow;
-	static decltype(DwmGetColorizationColor)* c_DwmGetColorizationColor;
-	static decltype(DwmSetWindowAttribute)* c_DwmSetWindowAttribute;
-	static decltype(DwmIsCompositionEnabled)* c_DwmIsCompositionEnabled;
 };
 
 #endif

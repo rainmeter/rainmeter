@@ -56,12 +56,6 @@ enum INTERVAL
 
 int Skin::c_InstanceCount = 0;
 
-HINSTANCE Skin::c_DwmInstance = nullptr;
-decltype(DwmEnableBlurBehindWindow)* Skin::c_DwmEnableBlurBehindWindow = nullptr;
-decltype(DwmGetColorizationColor)* Skin::c_DwmGetColorizationColor = nullptr;
-decltype(DwmSetWindowAttribute)* Skin::c_DwmSetWindowAttribute = nullptr;
-decltype(DwmIsCompositionEnabled)* Skin::c_DwmIsCompositionEnabled = nullptr;
-
 Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderPath(folderPath), m_FileName(file),
 	m_Canvas(),
 	m_Background(),
@@ -134,19 +128,6 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_ToolTipHidden(false),
 	m_Favorite(false)
 {
-	if (!c_DwmInstance && IsWindowsVistaOrGreater() &&
-		(c_DwmInstance = System::RmLoadLibrary(L"dwmapi.dll")) != nullptr)
-	{
-		c_DwmEnableBlurBehindWindow =
-			(decltype(c_DwmEnableBlurBehindWindow))GetProcAddress(c_DwmInstance, "DwmEnableBlurBehindWindow");
-		c_DwmGetColorizationColor =
-			(decltype(c_DwmGetColorizationColor))GetProcAddress(c_DwmInstance, "DwmGetColorizationColor");
-		c_DwmSetWindowAttribute =
-			(decltype(c_DwmSetWindowAttribute))GetProcAddress(c_DwmInstance, "DwmSetWindowAttribute");
-		c_DwmIsCompositionEnabled =
-			(decltype(c_DwmIsCompositionEnabled))GetProcAddress(c_DwmInstance, "DwmIsCompositionEnabled");
-	}
-
 	if (c_InstanceCount == 0)
 	{
 		WNDCLASSEX wc = {sizeof(WNDCLASSEX)};
@@ -180,17 +161,6 @@ Skin::~Skin()
 	if (c_InstanceCount == 0)
 	{
 		UnregisterClass(METERWINDOW_CLASS_NAME, GetRainmeter().GetModuleInstance());
-
-		if (c_DwmInstance)
-		{
-			FreeLibrary(c_DwmInstance);
-			c_DwmInstance = nullptr;
-
-			c_DwmEnableBlurBehindWindow = nullptr;
-			c_DwmGetColorizationColor = nullptr;
-			c_DwmSetWindowAttribute = nullptr;
-			c_DwmIsCompositionEnabled = nullptr;
-		}
 	}
 }
 
@@ -306,11 +276,8 @@ void Skin::Initialize()
 */
 void Skin::IgnoreAeroPeek()
 {
-	if (c_DwmSetWindowAttribute)
-	{
-		BOOL bValue = TRUE;
-		c_DwmSetWindowAttribute(m_Window, DWMWA_EXCLUDED_FROM_PEEK, &bValue, sizeof(bValue));
-	}
+	BOOL bValue = TRUE;
+	DwmSetWindowAttribute(m_Window, DWMWA_EXCLUDED_FROM_PEEK, &bValue, sizeof(bValue));
 }
 
 /*
@@ -985,41 +952,35 @@ void Skin::DoDelayedCommand(const WCHAR* command, UINT delay)
 
 void Skin::ShowBlur()
 {
-	if (c_DwmGetColorizationColor && c_DwmIsCompositionEnabled && c_DwmEnableBlurBehindWindow)
+	SetBlur(true);
+
+	// Check that Aero and transparency is enabled
+	DWORD color;
+	BOOL opaque, enabled;
+	if (DwmGetColorizationColor(&color, &opaque) != S_OK)
 	{
-		SetBlur(true);
-
-		// Check that Aero and transparency is enabled
-		DWORD color;
-		BOOL opaque, enabled;
-		if (c_DwmGetColorizationColor(&color, &opaque) != S_OK)
-		{
-			opaque = TRUE;
-		}
-		if (c_DwmIsCompositionEnabled(&enabled) != S_OK)
-		{
-			enabled = FALSE;
-		}
-		if (opaque || !enabled) return;
-
-		if (m_BlurMode == BLURMODE_FULL)
-		{
-			if (m_BlurRegion) DeleteObject(m_BlurRegion);
-			m_BlurRegion = CreateRectRgn(0, 0, GetW(), GetH());
-		}
-
-		BlurBehindWindow(TRUE);
+		opaque = TRUE;
 	}
+	if (DwmIsCompositionEnabled(&enabled) != S_OK)
+	{
+		enabled = FALSE;
+	}
+	if (opaque || !enabled) return;
+
+	if (m_BlurMode == BLURMODE_FULL)
+	{
+		if (m_BlurRegion) DeleteObject(m_BlurRegion);
+		m_BlurRegion = CreateRectRgn(0, 0, GetW(), GetH());
+	}
+
+	BlurBehindWindow(TRUE);
 }
 
 void Skin::HideBlur()
 {
-	if (c_DwmEnableBlurBehindWindow)
-	{
-		SetBlur(false);
+	SetBlur(false);
 
-		BlurBehindWindow(FALSE);
-	}
+	BlurBehindWindow(FALSE);
 }
 
 /*
@@ -3859,11 +3820,11 @@ void Skin::SnapToWindow(Skin* skin, LPWINDOWPOS wp)
 */
 LRESULT Skin::OnDwmColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (m_BlurMode != BLURMODE_NONE && IsBlur() && c_DwmGetColorizationColor && c_DwmEnableBlurBehindWindow)
+	if (m_BlurMode != BLURMODE_NONE && IsBlur())
 	{
 		DWORD color;
 		BOOL opaque;
-		if (c_DwmGetColorizationColor(&color, &opaque) != S_OK)
+		if (DwmGetColorizationColor(&color, &opaque) != S_OK)
 		{
 			opaque = TRUE;
 		}
@@ -3880,10 +3841,10 @@ LRESULT Skin::OnDwmColorChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 LRESULT Skin::OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (m_BlurMode != BLURMODE_NONE && IsBlur() && c_DwmIsCompositionEnabled && c_DwmEnableBlurBehindWindow)
+	if (m_BlurMode != BLURMODE_NONE && IsBlur())
 	{
 		BOOL enabled;
-		if (c_DwmIsCompositionEnabled(&enabled) != S_OK)
+		if (DwmIsCompositionEnabled(&enabled) != S_OK)
 		{
 			enabled = FALSE;
 		}
@@ -3900,24 +3861,21 @@ LRESULT Skin::OnDwmCompositionChange(UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 void Skin::BlurBehindWindow(BOOL fEnable)
 {
-	if (c_DwmEnableBlurBehindWindow)
-	{
-		DWM_BLURBEHIND bb = {0};
-		bb.fEnable = fEnable;
+	DWM_BLURBEHIND bb = {0};
+	bb.fEnable = fEnable;
 
-		if (fEnable)
-		{
-			// Restore blur with whatever the region was prior to disabling
-			bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
-			bb.hRgnBlur = m_BlurRegion;
-			c_DwmEnableBlurBehindWindow(m_Window, &bb);
-		}
-		else
-		{
-			// Disable blur
-			bb.dwFlags = DWM_BB_ENABLE;
-			c_DwmEnableBlurBehindWindow(m_Window, &bb);
-		}
+	if (fEnable)
+	{
+		// Restore blur with whatever the region was prior to disabling
+		bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
+		bb.hRgnBlur = m_BlurRegion;
+		DwmEnableBlurBehindWindow(m_Window, &bb);
+	}
+	else
+	{
+		// Disable blur
+		bb.dwFlags = DWM_BB_ENABLE;
+		DwmEnableBlurBehindWindow(m_Window, &bb);
 	}
 }
 
