@@ -17,11 +17,12 @@ GlobalData g_Data;
 
 OsNameVersion g_OsNameVersions[] =
 {
-//	{ L"XP", L"5.1" },
-//	{ L"Vista", L"6.0" },
+	{ L"XP", L"5.1" },
+	{ L"Vista", L"6.0" },
 	{ L"7", L"6.1" },
-	{ L"10", L"10.0" },	
-//	{ L"8", L"6.2" }
+	{ L"8", L"6.2" },	
+	{ L"10", L"10.0" }	
+
 };
 
 /*
