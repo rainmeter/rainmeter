@@ -113,7 +113,6 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_ClickThrough(false),
 	m_KeepOnScreen(true),
 	m_AutoSelectScreen(false),
-	m_UseD2D(true),
 	m_Dragging(false),
 	m_Dragged(false),
 	m_BackgroundMode(BGMODE_IMAGE),
@@ -1872,7 +1871,6 @@ void Skin::ReadOptions()
 	m_KeepOnScreen = parser.ReadBool(section, L"KeepOnScreen", true);
 	addWriteFlag(OPTION_KEEPONSCREEN);
 
-	m_UseD2D = parser.ReadBool(section, L"UseD2D", true);
 	m_SavePosition = parser.ReadBool(section, L"SavePosition", true);
 	m_WindowStartHidden = parser.ReadBool(section, L"StartHidden", false);
 	m_AutoSelectScreen = parser.ReadBool(section, L"AutoSelectScreen", false);
@@ -1979,11 +1977,6 @@ void Skin::WriteOptions(INT setting)
 			_itow_s(m_WindowZPosition, buffer, 10);
 			WritePrivateProfileString(section, L"AlwaysOnTop", buffer, iniFile);
 		}
-
-		if (setting & OPTION_USED2D)
-		{
-			WritePrivateProfileString(section, L"UseD2D", m_UseD2D ? L"1" : L"0", iniFile);
-		}
 	}
 }
 
@@ -2013,8 +2006,7 @@ bool Skin::ReadSkin()
 
 	m_Parser.Initialize(iniFile, this, nullptr, &resourcePath);
 
-	m_Canvas = Gfx::Canvas::Create(
-		m_UseD2D && GetRainmeter().GetUseD2D() ? Gfx::Renderer::PreferD2D : Gfx::Renderer::GDIP);
+	m_Canvas = Gfx::Canvas::Create(Gfx::Renderer::D2D);
 	m_Canvas->SetAccurateText(m_Parser.ReadBool(L"Rainmeter", L"AccurateText", false));
 
 	// Gotta have some kind of buffer during initialization
@@ -3399,10 +3391,6 @@ LRESULT Skin::OnCommand(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetKeepOnScreen(!m_KeepOnScreen);
 		break;
 
-	case IDM_SKIN_USED2D:
-		SetUseD2D(!m_UseD2D);
-		break;
-
 	case IDM_SKIN_FAVORITE:
 		SetFavorite(!m_Favorite);
 		break;
@@ -3593,13 +3581,6 @@ void Skin::SetKeepOnScreen(bool b)
 			MoveWindow(x, y);
 		}
 	}
-}
-
-void Skin::SetUseD2D(bool b)
-{
-	m_UseD2D = b;
-	WriteOptions(OPTION_USED2D);
-	Refresh(false);
 }
 
 void Skin::SetFavorite(bool b)

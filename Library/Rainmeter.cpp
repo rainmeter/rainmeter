@@ -103,7 +103,6 @@ int RainmeterMain(LPWSTR cmdLine)
 */
 Rainmeter::Rainmeter() :
 	m_TrayIcon(),
-	m_UseD2D(true),
 	m_Debug(false),
 	m_DisableVersionCheck(false),
 	m_NewVersion(false),
@@ -1279,8 +1278,6 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 	ConfigParser parser;
 	parser.Initialize(iniFile, nullptr, nullptr);
 
-	m_UseD2D = parser.ReadBool(L"Rainmeter", L"UseD2D", true);
-
 	m_Debug = parser.ReadBool(L"Rainmeter", L"Debug", false);
 	
 	// Read Logging settings
@@ -1503,7 +1500,6 @@ bool Rainmeter::LoadLayout(const std::wstring& name)
 		PreserveSetting(backup, L"TrayExecuteR", false);
 		PreserveSetting(backup, L"TrayExecuteDM", false);
 		PreserveSetting(backup, L"TrayExecuteDR", false);
-		PreserveSetting(backup, L"UseD2D");
 
 		// Set wallpaper if it exists
 		if (_waccess(wallpaper.c_str(), 0) != -1)
@@ -1812,14 +1808,4 @@ void Rainmeter::TestSettingsFile(bool bDefaultIniLocation)
 
 		ShowMessage(nullptr, error.c_str(), MB_OK | MB_ICONERROR);
 	}
-}
-
-void Rainmeter::SetUseD2D(bool enabled)
-{
-	m_UseD2D = enabled;
-
-	// Save to Rainmeter.ini
-	WritePrivateProfileString(L"Rainmeter", L"UseD2D", enabled ? L"1" : L"0", m_IniFile.c_str());
-
-	RefreshAll();
 }

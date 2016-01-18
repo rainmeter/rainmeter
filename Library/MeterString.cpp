@@ -314,10 +314,7 @@ void MeterString::ReadOptions(ConfigParser& parser, const WCHAR* section)
 		LogErrorF(this, L"StringEffect=%s is not valid", effect);
 	}
 
-	if (m_Skin->GetUseD2D())
-	{
-		m_TextFormat->ReadInlineOptions(parser, section);
-	}
+	m_TextFormat->ReadInlineOptions(parser, section);
 
 	if (m_Initialized &&
 		(wcscmp(oldFontFace.c_str(), m_FontFace.c_str()) != 0 ||
@@ -394,10 +391,7 @@ bool MeterString::Update()
 			}
 		}
 
-		if (m_Skin->GetUseD2D())
-		{
-			m_TextFormat->FindInlineRanges(m_String);
-		}
+		m_TextFormat->FindInlineRanges(m_String);
 
 		if (!m_WDefined || !m_HDefined)
 		{

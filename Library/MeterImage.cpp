@@ -57,12 +57,8 @@ void MeterImage::LoadImage(const std::wstring& imageName, bool bLoadAlways)
 	if (m_Image.IsLoaded())
 	{
 		bool useMaskSize = false;
-		if (m_Skin->GetUseD2D())
-		{
-			m_MaskImage.LoadImage(m_MaskImageName, true);
-
-			if (m_MaskImage.IsLoaded()) useMaskSize = true;
-		}
+		m_MaskImage.LoadImage(m_MaskImageName, true);
+		if (m_MaskImage.IsLoaded()) useMaskSize = true;
 
 		// Calculate size of the meter
 		Bitmap* bitmap = useMaskSize ? m_MaskImage.GetImage() : m_Image.GetImage();
@@ -137,10 +133,8 @@ void MeterImage::ReadOptions(ConfigParser& parser, const WCHAR* section)
 
 	// Read tinting options
 	m_Image.ReadOptions(parser, section, path.c_str());
-	if (m_Skin->GetUseD2D())
-	{
-		m_MaskImage.ReadOptions(parser, section, L"");
-	}
+
+	m_MaskImage.ReadOptions(parser, section, L"");
 
 	if (m_Initialized && m_Measures.empty() && !m_DynamicVariables)
 	{
@@ -219,8 +213,7 @@ bool MeterImage::Draw(Gfx::Canvas& canvas)
 		int drawW = meterRect.Width;
 		int drawH = meterRect.Height;
 
-		bool hasMask = (m_Skin->GetUseD2D() && m_MaskImage.IsLoaded());
-		if (hasMask)
+		if (m_MaskImage.IsLoaded())
 		{
 			Bitmap* maskBitmap = m_MaskImage.GetImage();
 

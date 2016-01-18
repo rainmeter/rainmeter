@@ -176,7 +176,6 @@ public:
 
 	bool GetClickThrough() { return m_ClickThrough; }
 	bool GetKeepOnScreen() { return m_KeepOnScreen; }
-	bool GetUseD2D() { return m_UseD2D; }
 	bool GetAutoSelectScreen() { return m_AutoSelectScreen; }
 	bool GetWindowDraggable() { return m_WindowDraggable; }
 	bool GetSavePosition() { return m_SavePosition; }
@@ -269,7 +268,6 @@ private:
 		OPTION_KEEPONSCREEN     = 0x00000100,
 		OPTION_AUTOSELECTSCREEN = 0x00000200,
 		OPTION_ALWAYSONTOP      = 0x00000400,
-		OPTION_USED2D           = 0x00000800,
 
 		OPTION_ALL              = 0xFFFFFFFF
 	};
@@ -294,7 +292,6 @@ private:
 	void HandleButtons(POINT pos, BUTTONPROC proc, bool execute = true);
 	void SetClickThrough(bool b);
 	void SetKeepOnScreen(bool b);
-	void SetUseD2D(bool b);
 	void SetWindowDraggable(bool b);
 	void SetSavePosition(bool b);
 	void SavePositionIfAppropriate();
@@ -386,7 +383,6 @@ private:
 	bool m_DynamicWindowSize;
 	bool m_ClickThrough;
 	bool m_KeepOnScreen;
-	bool m_UseD2D;
 	bool m_AutoSelectScreen;
 	bool m_Dragging;
 	bool m_Dragged;

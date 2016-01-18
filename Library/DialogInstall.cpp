@@ -1041,19 +1041,6 @@ void DialogInstall::CleanLayoutFile(const WCHAR* file)
 {
 	// Clear the [Rainmeter] section.
 	WritePrivateProfileSection(L"Rainmeter", L"", file);
-
-	// Remove the UseD2D key from all sections.
-	WCHAR buffer[4096];
-	if (GetPrivateProfileSectionNames(buffer, _countof(buffer), file) > 0)
-	{
-		const WCHAR* section = buffer;
-		size_t sectionLength = 0;
-		while ((sectionLength = wcslen(section)) > 0)
-		{
-			WritePrivateProfileString(section, L"UseD2D", nullptr, file);
-			section += sectionLength + 1;
-		}
-	}
 }
 
 // Helper for the IsIgnore... functions.

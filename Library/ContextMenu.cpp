@@ -261,7 +261,6 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 			MENU_ITEM(IDM_SKIN_SNAPTOEDGES, ID_STR_SNAPTOEDGES),
 			MENU_ITEM(IDM_SKIN_CLICKTHROUGH, ID_STR_CLICKTHROUGH),
 			MENU_ITEM(IDM_SKIN_KEEPONSCREEN, ID_STR_KEEPONSCREEN),
-			MENU_ITEM(IDM_SKIN_USED2D, ID_STR_USED2D),
 			MENU_ITEM(IDM_SKIN_FAVORITE, ID_STR_FAVORITE)),
 		MENU_SEPARATOR(),
 		MENU_ITEM(IDM_SKIN_MANAGESKIN, ID_STR_MANAGESKIN),
@@ -373,23 +372,6 @@ HMENU ContextMenu::CreateSkinMenu(Skin* skin, int index, HMENU menu)
 		{
 			CheckMenuItem(settingsMenu, IDM_SKIN_KEEPONSCREEN, MF_BYCOMMAND | MF_CHECKED);
 		}
-
-		if (Gfx::CanvasD2D::Initialize())
-		{
-			if (!Rainmeter::GetInstance().GetUseD2D())
-			{
-				EnableMenuItem(settingsMenu, IDM_SKIN_USED2D, MF_BYCOMMAND | MF_GRAYED);
-			}
-			else if (skin->GetUseD2D())
-			{
-				CheckMenuItem(settingsMenu, IDM_SKIN_USED2D, MF_BYCOMMAND | MF_CHECKED);
-			}
-		}
-		else
-		{
-			DeleteMenu(settingsMenu, IDM_SKIN_USED2D, MF_BYCOMMAND);
-		}
-		Gfx::CanvasD2D::Finalize();
 
 		if (skin->GetFavorite())
 		{

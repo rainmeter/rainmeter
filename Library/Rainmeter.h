@@ -117,9 +117,6 @@ public:
 	HINSTANCE GetResourceInstance() { return m_ResourceInstance; }
 	LCID GetResourceLCID() { return m_ResourceLCID; }
 
-	bool GetUseD2D() const { return m_UseD2D; }
-	void SetUseD2D(bool enabled);
-
 	bool GetDebug() { return m_Debug; }
 
 	GlobalOptions& GetGlobalOptions() { return m_GlobalOptions; }
@@ -228,8 +225,6 @@ private:
 	std::wstring m_TrayExecuteM;
 	std::wstring m_TrayExecuteDR;
 	std::wstring m_TrayExecuteDM;
-
-	bool m_UseD2D;
 
 	bool m_Debug;
 
