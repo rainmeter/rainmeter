@@ -1112,7 +1112,6 @@ bool DialogInstall::IsIgnoredPlugin(const WCHAR* name)
 		L"RunCommand.dll",
 		L"SpeedFanPlugin.dll",
 		L"SysInfo.dll",
-		L"VirtualDesktops.dll",
 		L"WebParser.dll",
 		L"WifiStatus.dll",
 		L"Win7AudioPlugin.dll",
