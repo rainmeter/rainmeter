@@ -2222,7 +2222,7 @@ bool Skin::ReadSkin()
 					{
 						L"MediaKey",
 						L"NowPlaying",
-						L"RecycleManager"
+						L"RecycleManager",
 						L"WebParser"
 					};
 					for (const auto* oldDefaultPlugin : kOldDefaultPlugins)
