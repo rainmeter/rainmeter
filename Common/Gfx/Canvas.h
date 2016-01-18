@@ -15,11 +15,7 @@ namespace Gfx {
 
 enum class Renderer
 {
-	GDIP,
-	D2D,
-
-	// Attempts to use D2D. If D2D is not available, fallbacks to use GDI+.
-	PreferD2D
+	D2D
 };
 
 // Provides methods for drawing text, bitmaps, etc.

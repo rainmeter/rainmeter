@@ -8,7 +8,6 @@
 #include "StdAfx.h"
 #include "Canvas.h"
 #include "CanvasD2D.h"
-#include "CanvasGDIP.h"
 
 namespace Gfx {
 
@@ -25,29 +24,12 @@ Canvas::~Canvas()
 
 Canvas* Canvas::Create(Renderer renderer)
 {
-	if (renderer == Renderer::GDIP)
+	if (CanvasD2D::Initialize())
 	{
-		return new CanvasGDIP();
-	}
-	else if (renderer == Renderer::D2D)
-	{
-		if (CanvasD2D::Initialize())
-		{
-			return new CanvasD2D();
-		}
-
-		CanvasD2D::Finalize();
-	}
-	else if (renderer == Renderer::PreferD2D)
-	{
-		if (Canvas* canvas = Create(Renderer::D2D))
-		{
-			return canvas;
-		}
-
-		return Create(Renderer::GDIP);
+		return new CanvasD2D();
 	}
 
+	CanvasD2D::Finalize();
 	return nullptr;
 };
 

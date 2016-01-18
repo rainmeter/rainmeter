@@ -15,25 +15,16 @@
     <ClCompile Include="Gfx\CanvasD2D.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\CanvasGDIP.cpp">
-      <Filter>Gfx</Filter>
-    </ClCompile>
     <ClCompile Include="Gfx\FontCollection.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
     <ClCompile Include="Gfx\FontCollectionD2D.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
-    <ClCompile Include="Gfx\FontCollectionGDIP.cpp">
-      <Filter>Gfx</Filter>
-    </ClCompile>
     <ClCompile Include="Gfx\TextFormat.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
     <ClCompile Include="Gfx\TextFormatD2D.cpp">
-      <Filter>Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\TextFormatGDIP.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
     <ClCompile Include="Gfx\Util\DWriteHelpers.cpp">
@@ -97,7 +88,6 @@
     <ClCompile Include="FileUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CharacterEntityReference.h" />
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="MenuTemplate.h" />
     <ClInclude Include="PathUtil.h" />
@@ -114,25 +104,16 @@
     <ClInclude Include="Gfx\CanvasD2D.h">
       <Filter>Gfx</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\CanvasGDIP.h">
-      <Filter>Gfx</Filter>
-    </ClInclude>
     <ClInclude Include="Gfx\FontCollection.h">
       <Filter>Gfx</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\FontCollectionD2D.h">
       <Filter>Gfx</Filter>
     </ClInclude>
-    <ClInclude Include="Gfx\FontCollectionGDIP.h">
-      <Filter>Gfx</Filter>
-    </ClInclude>
     <ClInclude Include="Gfx\TextFormat.h">
       <Filter>Gfx</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\TextFormatD2D.h">
-      <Filter>Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\TextFormatGDIP.h">
       <Filter>Gfx</Filter>
     </ClInclude>
     <ClInclude Include="Gfx\Util\DWriteHelpers.h">

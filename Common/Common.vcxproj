@@ -31,13 +31,10 @@
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="Gfx\Canvas.cpp" />
     <ClCompile Include="Gfx\CanvasD2D.cpp" />
-    <ClCompile Include="Gfx\CanvasGDIP.cpp" />
     <ClCompile Include="Gfx\FontCollection.cpp" />
     <ClCompile Include="Gfx\FontCollectionD2D.cpp" />
-    <ClCompile Include="Gfx\FontCollectionGDIP.cpp" />
     <ClCompile Include="Gfx\TextFormat.cpp" />
     <ClCompile Include="Gfx\TextFormatD2D.cpp" />
-    <ClCompile Include="Gfx\TextFormatGDIP.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatCharacterSpacing.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatColor.cpp" />
@@ -72,13 +69,10 @@
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="Gfx\Canvas.h" />
     <ClInclude Include="Gfx\CanvasD2D.h" />
-    <ClInclude Include="Gfx\CanvasGDIP.h" />
     <ClInclude Include="Gfx\FontCollection.h" />
     <ClInclude Include="Gfx\FontCollectionD2D.h" />
-    <ClInclude Include="Gfx\FontCollectionGDIP.h" />
     <ClInclude Include="Gfx\TextFormat.h" />
     <ClInclude Include="Gfx\TextFormatD2D.h" />
-    <ClInclude Include="Gfx\TextFormatGDIP.h" />
     <ClInclude Include="Gfx\TextInlineFormat.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatCharacterSpacing.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatColor.h" />
