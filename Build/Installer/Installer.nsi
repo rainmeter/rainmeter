@@ -464,37 +464,6 @@ Section
 		StrCpy $InstArc "x86"
 	${EndIf}
 
-	${If} $InstallPortable <> 1
-	${AndIfNot} ${AtLeastWinVista}
-		; Download and install .NET if required
-		ReadRegDWORD $0 HKLM "SOFTWARE\Microsoft\NET Framework Setup\NDP\v2.0.50727" "Install"
-		${If} $0 <> 1
-			${If} $Install64Bit <> 1
-				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/5/6/7/567758a3-759e-473e-bf8f-52154438565a/dotnetfx.exe" "$PLUGINSDIR\dotnetfx.exe"
-			${Else}
-				NSISdl::download /TIMEOUT=30000 "http://download.microsoft.com/download/a/3/f/a3f1bf98-18f3-4036-9b68-8e6de530ce0a/NetFx64.exe" "$PLUGINSDIR\dotnetfx.exe"
-			${EndIf}
-			Pop $0
-
-			${If} $0 == "success"
-				ExecWait '"$PLUGINSDIR\dotnetfx.exe" /q:a /c:"install /q"' $0
-				Delete "$PLUGINSDIR\dotnetfx.exe"
-
-				${If} $0 = 3010
-					SetRebootFlag true
-				${ElseIf} $0 <> 0
-					MessageBox MB_OK|MB_ICONSTOP "$(DOTNETINSTERROR)"
-					Quit
-				${EndIf}
-			${ElseIf} $0 == "cancel"
-				Quit
-			${Else}
-				MessageBox MB_OK|MB_ICONSTOP "$(DOTNETINSTERROR)"
-				Quit
-			${EndIf}
-		${EndIf}
-	${EndIf}
-
 	SetOutPath "$INSTDIR"
 
 	; Close Rainmeter (and wait up to five seconds)
