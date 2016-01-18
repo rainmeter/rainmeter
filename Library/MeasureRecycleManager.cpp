@@ -32,6 +32,8 @@ DWORD WINAPI QueryRecycleBinThreadProc(void* pParam)
 	g_BinCount = (double)rbi.i64NumItems;
 	g_BinSize = (double)rbi.i64Size;
 
+	g_Thread = false;
+
 	return 0;
 }
 
@@ -110,8 +112,6 @@ bool HasRecycleBinChanged()
 			RegCloseKey(iconKey);
 		}
 	}
-
-	g_Thread = false;
 
 	return changed;
 }
