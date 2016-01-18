@@ -10,13 +10,10 @@
 #include "Rainmeter.h"
 #include "System.h"
 
-BYTE* MeasureNet::c_Table = nullptr;
+MIB_IF_TABLE2* MeasureNet::c_Table = nullptr;
 UINT MeasureNet::c_NumOfTables = 0;
 std::vector<ULONG64> MeasureNet::c_StatValues;
 std::vector<ULONG64> MeasureNet::c_OldStatValues;
-
-decltype(GetIfTable2)* MeasureNet::c_GetIfTable2 = nullptr;
-decltype(FreeMibTable)* MeasureNet::c_FreeMibTable = nullptr;
 
 MeasureNet::MeasureNet(Skin* skin, const WCHAR* name, NET type) : Measure(skin, name),
 	m_Net(type),
@@ -39,140 +36,65 @@ void MeasureNet::UpdateIFTable()
 {
 	bool logging = false;
 
-	if (c_GetIfTable2)
+	if (c_Table)
 	{
-		if (c_Table)
+		FreeMibTable(c_Table);
+		c_Table = nullptr;
+	}
+
+	if (GetIfTable2(&c_Table) == NO_ERROR)
+	{
+		if (c_NumOfTables != c_Table->NumEntries)
 		{
-			c_FreeMibTable(c_Table);
-			c_Table = nullptr;
+			c_NumOfTables = c_Table->NumEntries;
+			logging = true;
 		}
 
-		if (c_GetIfTable2((MIB_IF_TABLE2**)&c_Table) == NO_ERROR)
+		if (GetRainmeter().GetDebug() && logging)
 		{
-			MIB_IF_TABLE2* ifTable = (MIB_IF_TABLE2*)c_Table;
+			LogDebug(L"------------------------------");
+			LogDebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
 
-			if (c_NumOfTables != ifTable->NumEntries)
+			for (size_t i = 0; i < c_NumOfTables; ++i)
 			{
-				c_NumOfTables = ifTable->NumEntries;
-				logging = true;
-			}
-
-			if (GetRainmeter().GetDebug() && logging)
-			{
-				LogDebug(L"------------------------------");
-				LogDebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
-
-				for (size_t i = 0; i < c_NumOfTables; ++i)
+				const WCHAR* type = L"Other";
+				switch (c_Table->Table[i].Type)
 				{
-					const WCHAR* type = L"Other";
-					switch (ifTable->Table[i].Type)
-					{
-					case IF_TYPE_ETHERNET_CSMACD:
-						type = L"Ethernet";
-						break;
-					case IF_TYPE_PPP:
-						type = L"PPP";
-						break;
-					case IF_TYPE_SOFTWARE_LOOPBACK:
-						type = L"Loopback";
-						break;
-					case IF_TYPE_IEEE80211:
-						type = L"IEEE802.11";
-						break;
-					case IF_TYPE_TUNNEL:
-						type = L"Tunnel";
-						break;
-					case IF_TYPE_IEEE1394:
-						type = L"IEEE1394";
-						break;
-					}
-
-					LogDebugF(L"%i: %s", (int)i + 1, ifTable->Table[i].Description);
-					LogDebugF(L"  Alias: %s", ifTable->Table[i].Alias);
-					LogDebugF(L"  Type=%s(%i), Hardware=%s, Filter=%s",
-						type, ifTable->Table[i].Type,
-						(ifTable->Table[i].InterfaceAndOperStatusFlags.HardwareInterface == 1) ? L"Yes" : L"No",
-						(ifTable->Table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) ? L"Yes" : L"No");
+				case IF_TYPE_ETHERNET_CSMACD:
+					type = L"Ethernet";
+					break;
+				case IF_TYPE_PPP:
+					type = L"PPP";
+					break;
+				case IF_TYPE_SOFTWARE_LOOPBACK:
+					type = L"Loopback";
+					break;
+				case IF_TYPE_IEEE80211:
+					type = L"IEEE802.11";
+					break;
+				case IF_TYPE_TUNNEL:
+					type = L"Tunnel";
+					break;
+				case IF_TYPE_IEEE1394:
+					type = L"IEEE1394";
+					break;
 				}
-				LogDebug(L"------------------------------");
+
+				LogDebugF(L"%i: %s", (int)i + 1, c_Table->Table[i].Description);
+				LogDebugF(L"  Alias: %s", c_Table->Table[i].Alias);
+				LogDebugF(L"  Type=%s(%i), Hardware=%s, Filter=%s",
+					type, c_Table->Table[i].Type,
+					(c_Table->Table[i].InterfaceAndOperStatusFlags.HardwareInterface == 1) ? L"Yes" : L"No",
+					(c_Table->Table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) ? L"Yes" : L"No");
 			}
-		}
-		else
-		{
-			// Something's wrong. Unable to get the table.
-			c_Table = nullptr;
-			c_NumOfTables = 0;
+			LogDebug(L"------------------------------");
 		}
 	}
 	else
 	{
-		DWORD ret, size = 0;
-		MIB_IFTABLE* ifTable = (MIB_IFTABLE*)c_Table;
-
-		if ((ret = GetIfTable(ifTable, &size, FALSE)) == ERROR_INSUFFICIENT_BUFFER)
-		{
-			delete [] c_Table;
-			c_Table = new BYTE[size];
-
-			ifTable = (MIB_IFTABLE*)c_Table;
-
-			ret = GetIfTable(ifTable, &size, FALSE);
-		}
-
-		if (ret == NO_ERROR)
-		{
-			if (c_NumOfTables != ifTable->dwNumEntries)
-			{
-				c_NumOfTables = ifTable->dwNumEntries;
-				logging = true;
-			}
-
-			if (GetRainmeter().GetDebug() && logging)
-			{
-				LogDebug(L"------------------------------");
-				LogDebugF(L"* NETWORK-INTERFACE: Count=%i", c_NumOfTables);
-
-				for (size_t i = 0; i < c_NumOfTables; ++i)
-				{
-					const WCHAR* type = L"";
-					switch (ifTable->table[i].dwType)
-					{
-					case IF_TYPE_ETHERNET_CSMACD:
-						type = L"Ethernet";
-						break;
-					case IF_TYPE_PPP:
-						type = L"PPP";
-						break;
-					case IF_TYPE_SOFTWARE_LOOPBACK:
-						type = L"Loopback";
-						break;
-					case IF_TYPE_IEEE80211:
-						type = L"IEEE802.11";
-						break;
-					case IF_TYPE_TUNNEL:
-						type = L"Tunnel";
-						break;
-					case IF_TYPE_IEEE1394:
-						type = L"IEEE1394";
-						break;
-					default:
-						type = L"Other";
-						break;
-					}
-
-					LogDebugF(L"%i: %.*S", (int)i + 1, ifTable->table[i].dwDescrLen, (char*)ifTable->table[i].bDescr);
-					LogDebugF(L"  Type=%s(%i)", type, ifTable->table[i].dwType);
-				}
-				LogDebug(L"------------------------------");
-			}
-		}
-		else
-		{
-			// Something's wrong. Unable to get the table.
-			delete [] c_Table;
-			c_Table = nullptr;
-			c_NumOfTables = 0;
-		}
+		// Something's wrong. Unable to get the table.
+		c_Table = nullptr;
+		c_NumOfTables = 0;
 	}
 }
 
@@ -184,109 +106,52 @@ void MeasureNet::UpdateIFTable()
 ULONG64 MeasureNet::GetNetOctets(NET net)
 {
 	ULONG64 value = 0;
-
-	if (c_GetIfTable2)
+	MIB_IF_ROW2* table = (MIB_IF_ROW2*)c_Table->Table;
+	if (m_Interface == 0)
 	{
-		MIB_IF_ROW2* table = (MIB_IF_ROW2*)((MIB_IF_TABLE2*)c_Table)->Table;
-
-		if (m_Interface == 0)
+		// Get all interfaces
+		for (UINT i = 0; i < c_NumOfTables; ++i)
 		{
-			// Get all interfaces
-			for (UINT i = 0; i < c_NumOfTables; ++i)
+			// Ignore the loopback and filter interfaces
+			if (table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK ||
+				table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) continue;
+
+			switch (net)
 			{
-				// Ignore the loopback and filter interfaces
-				if (table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK ||
-					table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) continue;
+			case NET_IN:
+				value += table[i].InOctets;
+				break;
 
-				switch (net)
-				{
-				case NET_IN:
-					value += table[i].InOctets;
-					break;
+			case NET_OUT:
+				value += table[i].OutOctets;
+				break;
 
-				case NET_OUT:
-					value += table[i].OutOctets;
-					break;
-
-				case NET_TOTAL:
-					value += table[i].InOctets;
-					value += table[i].OutOctets;
-					break;
-				}
-			}
-		}
-		else
-		{
-			// Get the selected interface
-			if (m_Interface <= c_NumOfTables)
-			{
-				switch (net)
-				{
-				case NET_IN:
-					value += table[m_Interface - 1].InOctets;
-					break;
-
-				case NET_OUT:
-					value += table[m_Interface - 1].OutOctets;
-					break;
-
-				case NET_TOTAL:
-					value += table[m_Interface - 1].InOctets;
-					value += table[m_Interface - 1].OutOctets;
-					break;
-				}
+			case NET_TOTAL:
+				value += table[i].InOctets;
+				value += table[i].OutOctets;
+				break;
 			}
 		}
 	}
 	else
 	{
-		MIB_IFROW* table = (MIB_IFROW*)((MIB_IFTABLE*)c_Table)->table;
-
-		if (m_Interface == 0)
+		// Get the selected interface
+		if (m_Interface <= c_NumOfTables)
 		{
-			// Get all interfaces
-			for (UINT i = 0; i < c_NumOfTables; ++i)
+			switch (net)
 			{
-				// Ignore the loopback
-				if (table[i].dwType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
+			case NET_IN:
+				value += table[m_Interface - 1].InOctets;
+				break;
 
-				switch (net)
-				{
-				case NET_IN:
-					value += table[i].dwInOctets;
-					break;
+			case NET_OUT:
+				value += table[m_Interface - 1].OutOctets;
+				break;
 
-				case NET_OUT:
-					value += table[i].dwOutOctets;
-					break;
-
-				case NET_TOTAL:
-					value += table[i].dwInOctets;
-					value += table[i].dwOutOctets;
-					break;
-				}
-			}
-		}
-		else
-		{
-			// Get the selected interface
-			if (m_Interface <= c_NumOfTables)
-			{
-				switch (net)
-				{
-				case NET_IN:
-					value += table[m_Interface - 1].dwInOctets;
-					break;
-
-				case NET_OUT:
-					value += table[m_Interface - 1].dwOutOctets;
-					break;
-
-				case NET_TOTAL:
-					value += table[m_Interface - 1].dwInOctets;
-					value += table[m_Interface - 1].dwOutOctets;
-					break;
-				}
+			case NET_TOTAL:
+				value += table[m_Interface - 1].InOctets;
+				value += table[m_Interface - 1].OutOctets;
+				break;
 			}
 		}
 	}
@@ -311,15 +176,8 @@ ULONG64 MeasureNet::GetNetStatsValue(NET net)
 			// Ignore the loopback and filter interfaces
 			if (c_NumOfTables == statsSize)
 			{
-				if (c_GetIfTable2)
-				{
-					if (((MIB_IF_TABLE2*)c_Table)->Table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK ||
-						((MIB_IF_TABLE2*)c_Table)->Table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) continue;
-				}
-				else
-				{
-					if (((MIB_IFTABLE*)c_Table)->table[i].dwType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
-				}
+				if (c_Table->Table[i].Type == IF_TYPE_SOFTWARE_LOOPBACK ||
+					c_Table->Table[i].InterfaceAndOperStatusFlags.FilterInterface == 1) continue;
 			}
 
 			switch (net)
@@ -479,62 +337,29 @@ UINT MeasureNet::GetBestInterfaceOrByName(const WCHAR* iface)
 		DWORD dwBestIndex;
 		if (NO_ERROR == GetBestInterface(INADDR_ANY, &dwBestIndex))
 		{
-			if (c_GetIfTable2)
+			MIB_IF_ROW2* table = (MIB_IF_ROW2*)c_Table->Table;
+			for (size_t i = 0; i < c_NumOfTables; ++i)
 			{
-				MIB_IF_ROW2* table = (MIB_IF_ROW2*)((MIB_IF_TABLE2*)c_Table)->Table;
-				for (size_t i = 0; i < c_NumOfTables; ++i)
+				if (table[i].InterfaceIndex == (NET_IFINDEX)dwBestIndex)
 				{
-					if (table[i].InterfaceIndex == (NET_IFINDEX)dwBestIndex)
+					if (GetRainmeter().GetDebug())
 					{
-						if (GetRainmeter().GetDebug())
-						{
-							LogDebugF(this, L"Using network interface: Number=(%i), Name=\"%s\"", i + 1, table[i].Description);
-						}
-
-						return (i + 1);
+						LogDebugF(this, L"Using network interface: Number=(%i), Name=\"%s\"", i + 1, table[i].Description);
 					}
-				}
-			}
-			else
-			{
-				MIB_IFROW* table = (MIB_IFROW*)((MIB_IFTABLE*)c_Table)->table;
-				for (size_t i = 0; i < c_NumOfTables; ++i)
-				{
-					if (table[i].dwIndex == (NET_IFINDEX)dwBestIndex)
-					{
-						if (GetRainmeter().GetDebug())
-						{
-							LogDebugF(this, L"Using network interface: Number=(%i), Name=\"%.*S\"", (int)i + 1, table[i].dwDescrLen, (char*)table[i].bDescr);
-						}
 
-						return (i + 1);
-					}
+					return (i + 1);
 				}
 			}
 		}
 	}
 	else
 	{
-		if (c_GetIfTable2)
+		MIB_IF_ROW2* table = (MIB_IF_ROW2*)c_Table->Table;
+		for (size_t i = 0; i < c_NumOfTables; ++i)
 		{
-			MIB_IF_ROW2* table = (MIB_IF_ROW2*)((MIB_IF_TABLE2*)c_Table)->Table;
-			for (size_t i = 0; i < c_NumOfTables; ++i)
+			if (_wcsicmp(iface, table[i].Description) == 0)
 			{
-				if (_wcsicmp(iface, table[i].Description) == 0)
-				{
-					return (i + 1);
-				}
-			}
-		}
-		else
-		{
-			MIB_IFROW* table = (MIB_IFROW*)((MIB_IFTABLE*)c_Table)->table;
-			for (size_t i = 0; i < c_NumOfTables; ++i)
-			{
-				if (_wcsicmp(iface, StringUtil::Widen((char*)table[i].bDescr).c_str()) == 0)
-				{
-					return (i + 1);
-				}
+				return (i + 1);
 			}
 		}
 	}
@@ -562,19 +387,8 @@ void MeasureNet::UpdateStats()
 
 		for (UINT i = 0; i < c_NumOfTables; ++i)
 		{
-			ULONG64 in, out;
-
-			if (c_GetIfTable2)
-			{
-				in = ((MIB_IF_TABLE2*)c_Table)->Table[i].InOctets;
-				out = ((MIB_IF_TABLE2*)c_Table)->Table[i].OutOctets;
-			}
-			else
-			{
-				in = ((MIB_IFTABLE*)c_Table)->table[i].dwInOctets;
-				out = ((MIB_IFTABLE*)c_Table)->table[i].dwOutOctets;
-			}
-
+			ULONG64 in = c_Table->Table[i].InOctets;
+			ULONG64 out = c_Table->Table[i].OutOctets;
 			if (c_OldStatValues[i * 2 + 0] != 0)
 			{
 				if (in > c_OldStatValues[i * 2 + 0])
@@ -702,22 +516,6 @@ void MeasureNet::WriteStats(const WCHAR* iniFile, const std::wstring& statsDate)
 
 void MeasureNet::InitializeStatic()
 {
-	if (IsWindowsVistaOrGreater())
-	{
-		HMODULE IpHlpApiLibrary = GetModuleHandle(L"IpHlpApi.dll");
-		if (IpHlpApiLibrary)
-		{
-			c_GetIfTable2 = (decltype(c_GetIfTable2))GetProcAddress(IpHlpApiLibrary, "GetIfTable2");
-			c_FreeMibTable = (decltype(c_FreeMibTable))GetProcAddress(IpHlpApiLibrary, "FreeMibTable");
-		}
-
-		if (!c_GetIfTable2 || !c_FreeMibTable)
-		{
-			c_GetIfTable2 = nullptr;
-			c_FreeMibTable = nullptr;
-		}
-	}
-
 	if (GetRainmeter().GetDebug())
 	{
 		UpdateIFTable();
@@ -726,19 +524,9 @@ void MeasureNet::InitializeStatic()
 
 void MeasureNet::FinalizeStatic()
 {
-	if (c_GetIfTable2)
+	if (c_Table)
 	{
-		if (c_Table)
-		{
-			c_FreeMibTable(c_Table);
-		}
-
-		c_GetIfTable2 = nullptr;
-		c_FreeMibTable = nullptr;
-	}
-	else
-	{
-		delete [] c_Table;
+		FreeMibTable(c_Table);
 	}
 	c_Table = nullptr;
 	c_NumOfTables = 0;

@@ -59,11 +59,8 @@ private:
 
 	static std::vector<ULONG64> c_OldStatValues;
 	static std::vector<ULONG64> c_StatValues;
-	static BYTE* c_Table;
+	static MIB_IF_TABLE2* c_Table;
 	static UINT c_NumOfTables;
-
-	static decltype(GetIfTable2)* c_GetIfTable2;
-	static decltype(FreeMibTable)* c_FreeMibTable;
 };
 
 #endif
