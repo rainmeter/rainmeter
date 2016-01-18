@@ -70,7 +70,7 @@ PLUGIN_EXPORT void Initialize(void** data, void* rm)
 	{
 		std::wstring dir = RmReplaceVariables(rm, L"%WINDIR%");
 		dir.append(L"\\system32\\control.exe");
-		dir.append(IsWindowsVistaOrGreater() ? L" system" : L" sysdm.cpl");
+		dir.append(L" system");
 
 		g_SysProperties = StringUtil::Narrow(dir);
 	}
@@ -992,8 +992,7 @@ void GetFolderInfo(std::queue<std::wstring>& folderQueue, std::wstring& folder, 
 	folder += (rType == RECURSIVE_NONE) ? parent->wildcardSearch : L"*";
 
 	WIN32_FIND_DATA fd;
-	HANDLE find = FindFirstFileEx(folder.c_str(), FindExInfoStandard, &fd, FindExSearchNameMatch, nullptr, 0);
-
+	HANDLE find = FindFirstFileEx(folder.c_str(), FindExInfoBasic, &fd, FindExSearchNameMatch, nullptr, 0);
 	if (find != INVALID_HANDLE_VALUE)
 	{
 		do

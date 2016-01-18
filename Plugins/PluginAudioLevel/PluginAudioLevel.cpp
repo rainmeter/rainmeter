@@ -247,13 +247,6 @@ std::vector<Measure*> s_parents;
  */
 PLUGIN_EXPORT void Initialize (void** data, void* rm)
 {
-	// Plugin requires at least Windows Vista
-	if (!IsWindowsVistaOrGreater())
-	{
-		RmLog(rm, LOG_ERROR, L"AudioLevel.dll requires Windows Vista or later.");
-		return;
-	}
-
 	Measure* m = new Measure;
 	m->m_skin = RmGetSkin(rm);
 	m->m_rmName = RmGetMeasureName(rm);
@@ -358,9 +351,6 @@ PLUGIN_EXPORT void Initialize (void** data, void* rm)
  */
 PLUGIN_EXPORT void Finalize (void* data)
 {
-	// Plugin requires at least Windows Vista
-	if (!IsWindowsVistaOrGreater()) return;
-
 	Measure* m = (Measure*)data;
 
 	m->DeviceRelease();
@@ -385,9 +375,6 @@ PLUGIN_EXPORT void Finalize (void* data)
  */
 PLUGIN_EXPORT void Reload (void* data, void* rm, double* maxValue)
 {
-	// Plugin requires at least Windows Vista
-	if (!IsWindowsVistaOrGreater()) return;
-
 	static const LPCWSTR s_typeName[Measure::NUM_TYPES] =
 	{
 		L"RMS",								// TYPE_RMS
@@ -541,9 +528,6 @@ PLUGIN_EXPORT void Reload (void* data, void* rm, double* maxValue)
  */
 PLUGIN_EXPORT double Update (void* data)
 {
-	// Plugin requires at least Windows Vista
-	if (!IsWindowsVistaOrGreater()) return 0.0;
-
 	Measure* m = (Measure*)data;
 	Measure* parent = m->m_parent ? m->m_parent : m;
 	LARGE_INTEGER pcCur;
@@ -920,9 +904,6 @@ PLUGIN_EXPORT double Update (void* data)
  */
 PLUGIN_EXPORT LPCWSTR GetString (void* data)
 {
-	// Plugin requires at least Windows Vista
-	if (!IsWindowsVistaOrGreater()) return L"";
-
 	Measure* m = (Measure*)data;
 	Measure* parent	= m->m_parent ? m->m_parent : m;
 

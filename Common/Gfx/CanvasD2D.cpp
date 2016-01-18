@@ -57,8 +57,6 @@ bool CanvasD2D::Initialize()
 	++c_Instances;
 	if (c_Instances == 1)
 	{
-		if (!IsWindows7OrGreater()) return false;
-
 		D2D1_FACTORY_OPTIONS fo = {};
 #ifdef _DEBUG
 		fo.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;

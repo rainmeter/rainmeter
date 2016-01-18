@@ -145,10 +145,7 @@ INT_PTR DialogInstall::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = (HICON)LoadImage(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_SKININSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	if (IsWindowsVistaOrGreater())
-	{
-		SetDialogFont();
-	}
+	SetDialogFont();
 
 	HWND item = GetDlgItem(m_Window, IDC_INSTALL_ADVANCED_BUTTON);
 	OldDialog::SetMenuButton(item);
@@ -1364,14 +1361,12 @@ void DialogInstall::TabInstall::Initialize()
 {
 	HWND item = GetDlgItem(m_Window, IDC_INSTALLTAB_COMPONENTS_LIST);
 
-	DWORD extendedFlags = LVS_EX_CHECKBOXES | LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT;
-
-	if (IsWindowsVistaOrGreater())
-	{
-		extendedFlags |= LVS_EX_DOUBLEBUFFER;
-		SetWindowTheme(item, L"explorer", nullptr);
-	}
-
+	DWORD extendedFlags =
+		LVS_EX_CHECKBOXES |
+		LVS_EX_LABELTIP |
+		LVS_EX_FULLROWSELECT |
+		LVS_EX_DOUBLEBUFFER;
+	SetWindowTheme(item, L"explorer", nullptr);
 	ListView_EnableGroupView(item, TRUE);
 	ListView_SetExtendedListViewStyleEx(item, 0, extendedFlags);
 
@@ -1392,7 +1387,7 @@ void DialogInstall::TabInstall::Initialize()
 	LVGROUP lvg;
 	lvg.cbSize = sizeof(LVGROUP);
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
-	lvg.state = IsWindowsVistaOrGreater() ? LVGS_COLLAPSIBLE : LVGS_NORMAL;
+	lvg.state = LVGS_COLLAPSIBLE;
 
 	LVITEM lvi;
 	lvi.mask = LVIF_TEXT | LVIF_GROUPID | LVIF_PARAM;

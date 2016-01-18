@@ -25,9 +25,7 @@ void CheckVersion(void* dummy)
 		return;
 	}
 
-	const WCHAR* url = IsWindows7SP1OrGreater() ?
-		L"http://rainmeter.github.io/rainmeter/v4" :
-		L"http://rainmeter.github.io/rainmeter/release";
+	const WCHAR* url = L"http://rainmeter.github.io/rainmeter/v4";
 	HINTERNET hUrlDump = InternetOpenUrl(hRootHandle, url, nullptr, 0, INTERNET_FLAG_RESYNCHRONIZE, 0);
 	if (hUrlDump)
 	{

@@ -112,10 +112,7 @@ INT_PTR DialogPackage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	HICON hIcon = (HICON)LoadImage(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_SKININSTALLER), IMAGE_ICON, 16, 16, LR_SHARED);
 	SendMessage(m_Window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
-	if (IsWindowsVistaOrGreater())
-	{
-		SetDialogFont();
-	}
+	SetDialogFont();
 
 	m_TabInfo.Activate();
 
@@ -453,7 +450,7 @@ bool DialogPackage::AddFolderToPackage(const std::wstring& path, std::wstring ba
 	WIN32_FIND_DATA fd;
 	HANDLE hFind = FindFirstFileEx(
 		currentPath.c_str(),
-		FindExInfoStandard,
+		FindExInfoBasic,
 		&fd,
 		FindExSearchNameMatch,
 		nullptr,
@@ -562,7 +559,7 @@ INT_PTR CALLBACK DialogPackage::SelectFolderDlgProc(HWND hWnd, UINT uMsg, WPARAM
 
 			*existingPath += L'*';
 			WIN32_FIND_DATA fd;
-			HANDLE hFind = FindFirstFileEx(existingPath->c_str(), FindExInfoStandard, &fd, FindExSearchNameMatch, nullptr, 0);
+			HANDLE hFind = FindFirstFileEx(existingPath->c_str(), FindExInfoBasic, &fd, FindExSearchNameMatch, nullptr, 0);
 			existingPath->pop_back();
 
 			if (hFind != INVALID_HANDLE_VALUE)
@@ -824,14 +821,9 @@ void DialogPackage::TabInfo::Initialize()
 
 	item = GetDlgItem(m_Window, IDC_PACKAGEINFO_COMPONENTS_LIST);
 
-	DWORD extendedFlags = LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT;
-
-	if (IsWindowsVistaOrGreater())
-	{
-		extendedFlags |= LVS_EX_DOUBLEBUFFER;
-		SetWindowTheme(item, L"explorer", nullptr);
-	}
-
+	DWORD extendedFlags =
+		LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
+	SetWindowTheme(item, L"explorer", nullptr);
 	ListView_EnableGroupView(item, TRUE);
 	ListView_SetExtendedListViewStyleEx(item, 0, extendedFlags);
 
@@ -848,7 +840,7 @@ void DialogPackage::TabInfo::Initialize()
 	LVGROUP lvg;
 	lvg.cbSize = sizeof(LVGROUP);
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID | LVGF_STATE;
-	lvg.state = IsWindowsVistaOrGreater() ? LVGS_COLLAPSIBLE : LVGS_NORMAL;
+	lvg.state = LVGS_COLLAPSIBLE;
 	lvg.iGroupId = 0;
 	lvg.pszHeader = L"Skin";
 	ListView_InsertGroup(item, -1, &lvg);

@@ -295,12 +295,8 @@ void TrayIcon::ShowNotification(TRAY_NOTIFICATION id, const WCHAR* title, const 
 		nid.dwInfoFlags = NIIF_USER;
 		wcsncpy_s(nid.szInfoTitle, title, _TRUNCATE);
 		wcsncpy_s(nid.szInfo, text, _TRUNCATE);
-
-		if (IsWindows7OrGreater())
-		{
-			nid.dwInfoFlags |= NIIF_LARGE_ICON;
-			nid.hBalloonIcon = GetIcon(IDI_RAINMETER, true);
-		}
+		nid.dwInfoFlags |= NIIF_LARGE_ICON;
+		nid.hBalloonIcon = GetIcon(IDI_RAINMETER, true);
 
 		if (Shell_NotifyIcon(NIM_MODIFY, &nid))
 		{

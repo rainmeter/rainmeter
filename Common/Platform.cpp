@@ -22,8 +22,6 @@ LPCWSTR GetPlatformName()
 			IsWindows8Point1OrGreater() ? (isServer ? L"2012 R2" : L"8.1") :
 			IsWindows8OrGreater() ? (isServer ? L"2012" : L"8") :
 			IsWindows7OrGreater() ? (isServer ? L"2008 R2" : L"7") :
-			IsWindowsVistaOrGreater() ? (isServer ? L"2008" : L"Vista") :
-			IsWindowsXPOrGreater() ? (isServer ? L"2003" : L"XP") :
 			nullptr;
 		if (version)
 		{

@@ -248,12 +248,9 @@ INT_PTR DialogManage::OnInitDialog(WPARAM wParam, LPARAM lParam)
 	item = m_TabSkins.GetControl(TabSkins::Id_FileLabel);
 	SendMessage(item, WM_SETFONT, (WPARAM)m_FontBold, 0);
 
-	if (IsWindowsVistaOrGreater())
-	{
-		// Use arrows instead of plus/minus in the tree for Vista+
-		item = m_TabSkins.GetControl(TabSkins::Id_SkinsTreeView);
-		SetWindowTheme(item, L"explorer", nullptr);
-	}
+	// Use arrows instead of plus/minus in the tree for Vista+
+	item = m_TabSkins.GetControl(TabSkins::Id_SkinsTreeView);
+	SetWindowTheme(item, L"explorer", nullptr);
 
 	if (c_WindowPlacement.length == 0)
 	{

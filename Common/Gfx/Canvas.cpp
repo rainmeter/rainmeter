@@ -29,7 +29,7 @@ Canvas* Canvas::Create(Renderer renderer)
 	{
 		return new CanvasGDIP();
 	}
-	else if (renderer == Renderer::D2D && IsWindows7OrGreater())
+	else if (renderer == Renderer::D2D)
 	{
 		if (CanvasD2D::Initialize())
 		{

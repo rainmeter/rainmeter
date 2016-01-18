@@ -1086,11 +1086,7 @@ void System::ResetWorkingDirectory()
 */
 void System::InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-	static auto s_InitializeCriticalSectionEx = IsWindowsVistaOrGreater() ?
-		(decltype(InitializeCriticalSectionEx)*)GetProcAddress(GetModuleHandle(L"kernel32"), "InitializeCriticalSectionEx") : nullptr;
-
-	if (s_InitializeCriticalSectionEx &&
-		s_InitializeCriticalSectionEx(lpCriticalSection, 0, CRITICAL_SECTION_NO_DEBUG_INFO))
+	if (InitializeCriticalSectionEx(lpCriticalSection, 0, CRITICAL_SECTION_NO_DEBUG_INFO))
 	{
 		return;
 	}
@@ -1171,16 +1167,13 @@ void System::SetWallpaper(const std::wstring& wallpaper, const std::wstring& sty
 						{
 							wallStyle = L"2";
 						}
-						else if (IsWindows7OrGreater())
+						if (_wcsicmp(option, L"FIT") == 0)
 						{
-							if (_wcsicmp(option, L"FIT") == 0)
-							{
-								wallStyle = L"6";
-							}
-							else if (_wcsicmp(option, L"FILL") == 0)
-							{
-								wallStyle = L"10";
-							}
+							wallStyle = L"6";
+						}
+						else if (_wcsicmp(option, L"FILL") == 0)
+						{
+							wallStyle = L"10";
 						}
 
 						if (wallStyle)

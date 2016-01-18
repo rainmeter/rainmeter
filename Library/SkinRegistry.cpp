@@ -140,7 +140,7 @@ int SkinRegistry::PopulateRecursive(const std::wstring& path, std::vector<std::w
 
 	hSearch = FindFirstFileEx(
 		filter.c_str(),
-		(IsWindows7OrGreater()) ? FindExInfoBasic : FindExInfoStandard,
+		FindExInfoBasic,
 		&fileData,
 		FindExSearchNameMatch,
 		nullptr,

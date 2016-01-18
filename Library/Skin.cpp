@@ -2083,7 +2083,7 @@ bool Skin::ReadSkin()
 
 		HANDLE find = FindFirstFileEx(
 			resourcePath.c_str(),
-			(IsWindows7OrGreater()) ? FindExInfoBasic : FindExInfoStandard,
+			FindExInfoBasic,
 			&fd,
 			FindExSearchNameMatch,
 			nullptr,
