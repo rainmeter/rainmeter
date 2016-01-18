@@ -1118,6 +1118,7 @@ void DialogPackage::TabOptions::Initialize()
 	ComboBox_AddString(item, L"XP");
 	ComboBox_AddString(item, L"Vista");
 	ComboBox_AddString(item, L"7");
+	ComboBox_AddString(item, L"8");	
 	ComboBox_AddString(item, L"10");	
 	ComboBox_SetCurSel(item, 2);
 	c_Dialog->m_MinimumWindows = g_OsNameVersions[0].version;
