@@ -694,6 +694,7 @@ FunctionEnd
 Function HandlePlugins
 	${If} $R7 == "MediaKey.dll"
 	${OrIf} $R7 == "NowPlaying.dll"
+	${OrIf} $R7 == "RecycleManager.dll"
 	${OrIf} $R7 == "WebParser.dll"
 		Delete "$R9"
 	${ElseIf} $R7 != "ActionTimer.dll"

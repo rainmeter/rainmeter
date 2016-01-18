@@ -61,8 +61,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginProcess", "Plugins\Pl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginQuote", "Plugins\PluginQuote\PluginQuote.vcxproj", "{C029E0CF-F203-41D0-9608-A3EA2CF0ED1F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginRecycleManager", "Plugins\PluginRecycleManager\PluginRecycleManager.vcxproj", "{4F8C4C09-431C-45C4-830B-32006E783C3A}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginResMon", "Plugins\PluginResMon\PluginResMon.vcxproj", "{17D3BD92-6F5D-438C-A89B-88F4CE06DB94}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PluginRunCommand", "Plugins\PluginRunCommand\PluginRunCommand.vcxproj", "{4ABFBA48-C1DF-44B5-992F-3CFAEDE48974}"
@@ -279,14 +277,6 @@ Global
 		{C029E0CF-F203-41D0-9608-A3EA2CF0ED1F}.Release|Win32.Build.0 = Release|Win32
 		{C029E0CF-F203-41D0-9608-A3EA2CF0ED1F}.Release|x64.ActiveCfg = Release|x64
 		{C029E0CF-F203-41D0-9608-A3EA2CF0ED1F}.Release|x64.Build.0 = Release|x64
-		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Debug|Win32.ActiveCfg = Debug|Win32
-		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Debug|Win32.Build.0 = Debug|Win32
-		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Debug|x64.ActiveCfg = Debug|x64
-		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Debug|x64.Build.0 = Debug|x64
-		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Release|Win32.ActiveCfg = Release|Win32
-		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Release|Win32.Build.0 = Release|Win32
-		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Release|x64.ActiveCfg = Release|x64
-		{4F8C4C09-431C-45C4-830B-32006E783C3A}.Release|x64.Build.0 = Release|x64
 		{17D3BD92-6F5D-438C-A89B-88F4CE06DB94}.Debug|Win32.ActiveCfg = Debug|Win32
 		{17D3BD92-6F5D-438C-A89B-88F4CE06DB94}.Debug|Win32.Build.0 = Debug|Win32
 		{17D3BD92-6F5D-438C-A89B-88F4CE06DB94}.Debug|x64.ActiveCfg = Debug|x64

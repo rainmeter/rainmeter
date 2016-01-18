@@ -252,6 +252,9 @@
     <ClCompile Include="SkinInstaller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MeasureRecycleManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConfigParser.h">
@@ -465,6 +468,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SkinInstaller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeasureRecycleManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
