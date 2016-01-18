@@ -42,7 +42,7 @@ public:
 	virtual void FindInlineRanges(const std::wstring& str) override;
 
 private:
-	friend class CanvasD2D;
+	friend class Canvas;
 
 	friend class Common_Gfx_TextFormatD2D_Test;
 

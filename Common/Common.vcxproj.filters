@@ -9,12 +9,6 @@
     <ClCompile Include="StringUtil.cpp" />
     <ClCompile Include="ControlTemplate.cpp" />
     <ClCompile Include="MathParser.cpp" />
-    <ClCompile Include="Gfx\Canvas.cpp">
-      <Filter>Gfx</Filter>
-    </ClCompile>
-    <ClCompile Include="Gfx\CanvasD2D.cpp">
-      <Filter>Gfx</Filter>
-    </ClCompile>
     <ClCompile Include="Gfx\FontCollection.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
@@ -86,6 +80,9 @@
       <Filter>Gfx\TextInlineFormat</Filter>
     </ClCompile>
     <ClCompile Include="FileUtil.cpp" />
+    <ClCompile Include="Gfx\Canvas.cpp">
+      <Filter>Gfx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -98,12 +95,6 @@
     <ClInclude Include="MathParser.h" />
     <ClInclude Include="UnitTest.h" />
     <ClInclude Include="Timer.h" />
-    <ClInclude Include="Gfx\Canvas.h">
-      <Filter>Gfx</Filter>
-    </ClInclude>
-    <ClInclude Include="Gfx\CanvasD2D.h">
-      <Filter>Gfx</Filter>
-    </ClInclude>
     <ClInclude Include="Gfx\FontCollection.h">
       <Filter>Gfx</Filter>
     </ClInclude>
@@ -176,6 +167,9 @@
     </ClInclude>
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="ScopedFunction.h" />
+    <ClInclude Include="Gfx\Canvas.h">
+      <Filter>Gfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Gfx">

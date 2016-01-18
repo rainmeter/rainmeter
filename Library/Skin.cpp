@@ -27,7 +27,6 @@
 #include "MeasureScript.h"
 #include "../Version.h"
 #include "../Common/PathUtil.h"
-#include "../Common/Gfx/Canvas.h"
 
 using namespace Gdiplus;
 
@@ -226,9 +225,6 @@ void Skin::Dispose(bool refresh)
 			m_Window = nullptr;
 		}
 	}
-
-	delete m_Canvas;
-	m_Canvas = nullptr;
 }
 
 /*
@@ -1964,8 +1960,7 @@ bool Skin::ReadSkin()
 
 	m_Parser.Initialize(iniFile, this, nullptr, &resourcePath);
 
-	m_Canvas = Gfx::Canvas::Create(Gfx::Renderer::D2D);
-	m_Canvas->SetAccurateText(m_Parser.ReadBool(L"Rainmeter", L"AccurateText", false));
+	m_Canvas.SetAccurateText(m_Parser.ReadBool(L"Rainmeter", L"AccurateText", false));
 
 	// Gotta have some kind of buffer during initialization
 	CreateDoubleBuffer(1, 1);
@@ -2091,7 +2086,7 @@ bool Skin::ReadSkin()
 
 		if (find != INVALID_HANDLE_VALUE)
 		{
-			m_FontCollection = m_Canvas->CreateFontCollection();
+			m_FontCollection = m_Canvas.CreateFontCollection();
 
 			do
 			{
@@ -2117,7 +2112,7 @@ bool Skin::ReadSkin()
 	{
 		if (!m_FontCollection)
 		{
-			m_FontCollection = m_Canvas->CreateFontCollection();
+			m_FontCollection = m_Canvas.CreateFontCollection();
 		}
 
 		int i = 1;
@@ -2458,7 +2453,7 @@ bool Skin::ResizeWindow(bool reset)
 */
 void Skin::CreateDoubleBuffer(int cx, int cy)
 {
-	m_Canvas->Resize(cx, cy);
+	m_Canvas.Resize(cx, cy);
 }
 
 /*
@@ -2485,18 +2480,18 @@ void Skin::Redraw()
 			cy = 1;
 		}
 
-		if (cx != m_Canvas->GetW() || cy != m_Canvas->GetH())
+		if (cx != m_Canvas.GetW() || cy != m_Canvas.GetH())
 		{
 			CreateDoubleBuffer(cx, cy);
 		}
 	}
 
-	if (!m_Canvas->BeginDraw())
+	if (!m_Canvas.BeginDraw())
 	{
 		return;
 	}
 
-	m_Canvas->Clear();
+	m_Canvas.Clear();
 
 	if (m_WindowW != 0 && m_WindowH != 0)
 	{
@@ -2504,7 +2499,7 @@ void Skin::Redraw()
 		{
 			const Rect dst(0, 0, m_WindowW, m_WindowH);
 			const Rect src(0, 0, m_Background->GetWidth(), m_Background->GetHeight());
-			m_Canvas->DrawBitmap(m_Background, dst, src);
+			m_Canvas.DrawBitmap(m_Background, dst, src);
 		}
 		else if (m_BackgroundMode == BGMODE_SOLID)
 		{
@@ -2515,14 +2510,14 @@ void Skin::Redraw()
 			{
 				if (m_SolidColor.GetValue() == m_SolidColor2.GetValue())
 				{
-					m_Canvas->Clear(m_SolidColor);
+					m_Canvas.Clear(m_SolidColor);
 				}
 				else
 				{
-					Gdiplus::Graphics& graphics = m_Canvas->BeginGdiplusContext();
+					Gdiplus::Graphics& graphics = m_Canvas.BeginGdiplusContext();
 					LinearGradientBrush gradient(r, m_SolidColor, m_SolidColor2, m_SolidAngle, TRUE);
 					graphics.FillRectangle(&gradient, r);
-					m_Canvas->EndGdiplusContext();
+					m_Canvas.EndGdiplusContext();
 				}
 			}
 
@@ -2540,9 +2535,9 @@ void Skin::Redraw()
 				Pen light(lightColor);
 				Pen dark(darkColor);
 
-				Gdiplus::Graphics& graphics = m_Canvas->BeginGdiplusContext();
+				Gdiplus::Graphics& graphics = m_Canvas.BeginGdiplusContext();
 				Meter::DrawBevel(graphics, r, light, dark);
-				m_Canvas->EndGdiplusContext();
+				m_Canvas.EndGdiplusContext();
 			}
 		}
 
@@ -2553,20 +2548,20 @@ void Skin::Redraw()
 			const Matrix* matrix = (*j)->GetTransformationMatrix();
 			if (matrix && !matrix->IsIdentity())
 			{
-				m_Canvas->SetTransform(*matrix);
-				(*j)->Draw(*m_Canvas);
-				m_Canvas->ResetTransform();
+				m_Canvas.SetTransform(*matrix);
+				(*j)->Draw(m_Canvas);
+				m_Canvas.ResetTransform();
 			}
 			else
 			{
-				(*j)->Draw(*m_Canvas);
+				(*j)->Draw(m_Canvas);
 			}
 		}
 	}
 
 	UpdateWindow(m_TransparencyValue, true);
 
-	m_Canvas->EndDraw();
+	m_Canvas.EndDraw();
 }
 
 /*
@@ -2739,11 +2734,11 @@ void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 	BLENDFUNCTION blendPixelFunction = {AC_SRC_OVER, 0, (BYTE)alpha, AC_SRC_ALPHA};
 	POINT ptWindowScreenPosition = {m_ScreenX, m_ScreenY};
 	POINT ptSrc = {0, 0};
-	SIZE szWindow = {m_Canvas->GetW(), m_Canvas->GetH()};
+	SIZE szWindow = {m_Canvas.GetW(), m_Canvas.GetH()};
 
-	if (!canvasBeginDrawCalled) m_Canvas->BeginDraw();
+	if (!canvasBeginDrawCalled) m_Canvas.BeginDraw();
 
-	HDC dcMemory = m_Canvas->GetDC();
+	HDC dcMemory = m_Canvas.GetDC();
 	if (!UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA))
 	{
 		// Retry after resetting WS_EX_LAYERED flag.
@@ -2751,9 +2746,9 @@ void Skin::UpdateWindow(int alpha, bool canvasBeginDrawCalled)
 		AddWindowExStyle(WS_EX_LAYERED);
 		UpdateLayeredWindow(m_Window, nullptr, &ptWindowScreenPosition, &szWindow, dcMemory, &ptSrc, 0, &blendPixelFunction, ULW_ALPHA);
 	}
-	m_Canvas->ReleaseDC(dcMemory);
+	m_Canvas.ReleaseDC(dcMemory);
 
-	if (!canvasBeginDrawCalled) m_Canvas->EndDraw();
+	if (!canvasBeginDrawCalled) m_Canvas.EndDraw();
 
 	m_TransparencyValue = alpha;
 }
@@ -3076,7 +3071,7 @@ HWND Skin::GetWindowFromPoint(POINT pos)
 */
 bool Skin::HitTest(int x, int y)
 {
-	return m_Canvas->IsTransparentPixel(x, y);
+	return m_Canvas.IsTransparentPixel(x, y);
 }
 
 /*

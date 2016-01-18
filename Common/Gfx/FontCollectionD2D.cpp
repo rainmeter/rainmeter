@@ -7,7 +7,7 @@
 
 #include "StdAfx.h"
 #include "FontCollectionD2D.h"
-#include "CanvasD2D.h"
+#include "Canvas.h"
 #include "Util/DWriteFontCollectionLoader.h"
 
 namespace Gfx {
@@ -36,7 +36,7 @@ bool FontCollectionD2D::InitializeCollection()
 	if (!m_Collection)
 	{
 		auto loader = Util::DWriteFontCollectionLoader::GetInstance();
-		CanvasD2D::c_DWFactory->CreateCustomFontCollection(
+		Canvas::c_DWFactory->CreateCustomFontCollection(
 			loader, &m_FileReferences, sizeof(m_FileReferences), &m_Collection);
 	}
 
@@ -55,7 +55,7 @@ bool FontCollectionD2D::AddFile(const WCHAR* file)
 	}
 
 	IDWriteFontFile* fileReference;
-	HRESULT hr = CanvasD2D::c_DWFactory->CreateFontFileReference(file, nullptr, &fileReference);
+	HRESULT hr = Canvas::c_DWFactory->CreateFontFileReference(file, nullptr, &fileReference);
 	if (SUCCEEDED(hr))
 	{
 		m_FileReferences.push_back(fileReference);

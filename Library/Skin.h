@@ -16,6 +16,7 @@
 #include "ConfigParser.h"
 #include "Group.h"
 #include "Mouse.h"
+#include "../Common/Gfx/Canvas.h"
 
 #define BEGIN_MESSAGEPROC switch (uMsg) {
 #define MESSAGE(handler, msg) case msg: return skin->handler(uMsg, wParam, lParam);
@@ -88,7 +89,6 @@ class Measure;
 class Meter;
 
 namespace Gfx {
-class Canvas;
 class FontCollection;
 class TextFormat;
 }
@@ -142,7 +142,7 @@ public:
 
 	void SetResizeWindowMode(RESIZEMODE mode) { if (m_ResizeWindow != RESIZEMODE_RESET || mode != RESIZEMODE_CHECK) m_ResizeWindow = mode; }
 
-	Gfx::Canvas& GetCanvas() { return *m_Canvas; }
+	Gfx::Canvas& GetCanvas() { return m_Canvas; }
 	HWND GetWindow() { return m_Window; }
 
 	ConfigParser& GetParser() { return m_Parser; }
@@ -317,7 +317,7 @@ private:
 	void Dispose(bool refresh);
 	void CreateDoubleBuffer(int cx, int cy);
 
-	Gfx::Canvas* m_Canvas;
+	Gfx::Canvas m_Canvas;
 
 	ConfigParser m_Parser;
 

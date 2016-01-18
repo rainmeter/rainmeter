@@ -7,7 +7,7 @@
 
 #include "StdAfx.h"
 #include "TextInlineFormatTypography.h"
-#include "../CanvasD2D.h"
+#include "../Canvas.h"
 
 namespace Gfx {
 
@@ -32,7 +32,7 @@ void TextInlineFormat_Typography::ApplyInlineFormat(IDWriteTextLayout* layout)
 		if (range.length <= 0) continue;
 
 		Microsoft::WRL::ComPtr<IDWriteTypography> typography;
-		HRESULT hr = CanvasD2D::c_DWFactory->CreateTypography(typography.GetAddressOf());
+		HRESULT hr = Canvas::c_DWFactory->CreateTypography(typography.GetAddressOf());
 		if (FAILED(hr)) continue;
 
 		DWRITE_FONT_FEATURE feature = { m_Tag, m_Parameter };

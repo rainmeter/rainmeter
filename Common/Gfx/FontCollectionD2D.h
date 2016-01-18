@@ -29,7 +29,7 @@ protected:
 	FontCollectionD2D();
 
 private:
-	friend class CanvasD2D;
+	friend class Canvas;
 	friend class TextFormatD2D;
 	friend class TextInlineFormat_Face;
 

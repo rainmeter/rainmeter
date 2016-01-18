@@ -6,6 +6,7 @@
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
 #include "StdAfx.h"
+#include "../Common/Gfx/Canvas.h"
 #include "../Common/PathUtil.h"
 #include "../Common/Platform.h"
 #include "Rainmeter.h"
@@ -37,13 +38,6 @@ enum INTERVAL
 */
 int RainmeterMain(LPWSTR cmdLine)
 {
-
-	if (!IsWindows7OrGreater())
-	{
-		MessageBox(nullptr, L"Rainmeter requires Windows 7 or later.\n\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
-		return 1;
-	}	
-	
 	// Avoid loading a dll from current directory
 	SetDllDirectory(L"");
 
@@ -152,6 +146,12 @@ Rainmeter& Rainmeter::GetInstance()
 */
 int Rainmeter::Initialize(LPCWSTR iniPath, LPCWSTR layout)
 {
+	if (!IsWindows7SP1OrGreater() || !Gfx::Canvas::Initialize())
+	{
+		MessageBox(nullptr, L"Rainmeter requires Windows 7 SP1 (with Platform Update) or later.\n\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net", APPNAME, MB_OK | MB_TOPMOST | MB_ICONERROR);
+		return 1;
+	}
+
 	m_Instance = GetModuleHandle(L"Rainmeter");
 
 	WCHAR* buffer = new WCHAR[MAX_LINE_LENGTH];
@@ -426,6 +426,8 @@ void Rainmeter::Finalize()
 	MeasureNet::FinalizeStatic();
 	MeasureCPU::FinalizeStatic();
 	MeterString::FinalizeStatic();
+
+	Gfx::Canvas::Finalize();
 
 	// Change the work area back
 	if (m_DesktopWorkAreaChanged)

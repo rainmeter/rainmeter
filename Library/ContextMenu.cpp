@@ -7,7 +7,7 @@
 
 #include "StdAfx.h"
 #include "../Common/MenuTemplate.h"
-#include "../Common/Gfx/CanvasD2D.h"
+#include "../Common/Gfx/Canvas.h"
 #include "ContextMenu.h"
 #include "Rainmeter.h"
 #include "Util.h"

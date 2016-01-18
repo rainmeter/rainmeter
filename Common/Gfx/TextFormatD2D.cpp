@@ -7,7 +7,7 @@
 
 #include "StdAfx.h"
 #include "TextFormatD2D.h"
-#include "CanvasD2D.h"
+#include "Canvas.h"
 #include "Util/DWriteHelpers.h"
 #include "TextInlineFormat/TextInlineFormatCharacterSpacing.h"
 #include "TextInlineFormat/TextInlineFormatColor.h"
@@ -93,7 +93,7 @@ bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target,
 		// GDI+ compatibility: If we trimming (i.e. clipping), GDI+ draws text lines even if they
 		// would be clipped. This is arguably a bad 'feature', but some in some cases the height
 		// might be just a pixel or two too small. In order to render those cases correctly (but
-		// still clipped as CanvasD2D::DrawTextW() will clip), we'll increase the max height of
+		// still clipped as Canvas::DrawTextW() will clip), we'll increase the max height of
 		// the layout.
 		maxH += 2.0f;
 	}
@@ -112,7 +112,7 @@ bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target,
 	}
 	else
 	{
-		CanvasD2D::c_DWFactory->CreateTextLayout(
+		Canvas::c_DWFactory->CreateTextLayout(
 			str, strLen, m_TextFormat.Get(), maxW, maxH, m_TextLayout.ReleaseAndGetAddressOf());
 		if (!m_TextLayout) return false;
 
@@ -185,11 +185,11 @@ void TextFormatD2D::SetProperties(
 	// using the GDI family name and then create a text format using the DirectWrite family name
 	// obtained from it.
 	HRESULT hr = Util::GetDWritePropertiesFromGDIProperties(
-		CanvasD2D::c_DWFactory.Get(), fontFamily, bold, italic, dwriteFontWeight, dwriteFontStyle,
+		Canvas::c_DWFactory.Get(), fontFamily, bold, italic, dwriteFontWeight, dwriteFontStyle,
 		dwriteFontStretch, dwriteFamilyName, _countof(dwriteFamilyName));
 	if (SUCCEEDED(hr))
 	{
-		hr = CanvasD2D::c_DWFactory->CreateTextFormat(
+		hr = Canvas::c_DWFactory->CreateTextFormat(
 			dwriteFamilyName,
 			nullptr,
 			dwriteFontWeight,
@@ -206,7 +206,7 @@ void TextFormatD2D::SetProperties(
 
 		// If |fontFamily| is not in the system collection, use the font collection from
 		// |fontCollectionD2D| if possible.
-		if (!Util::IsFamilyInSystemFontCollection(CanvasD2D::c_DWFactory.Get(), fontFamily) &&
+		if (!Util::IsFamilyInSystemFontCollection(Canvas::c_DWFactory.Get(), fontFamily) &&
 			(fontCollectionD2D && fontCollectionD2D->InitializeCollection()))
 		{
 			IDWriteFont* dwriteFont = Util::FindDWriteFontInFontCollectionByGDIFamilyName(
@@ -230,7 +230,7 @@ void TextFormatD2D::SetProperties(
 		}
 
 		// Fallback in case above fails.
-		hr = CanvasD2D::c_DWFactory->CreateTextFormat(
+		hr = Canvas::c_DWFactory->CreateTextFormat(
 			fontFamily,
 			dwriteFontCollection,
 			dwriteFontWeight,
@@ -315,7 +315,7 @@ DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(
 
 	DWRITE_TEXT_METRICS metrics = {0};
 	Microsoft::WRL::ComPtr<IDWriteTextLayout> textLayout;
-	HRESULT hr = CanvasD2D::c_DWFactory->CreateTextLayout(
+	HRESULT hr = Canvas::c_DWFactory->CreateTextLayout(
 		str,
 		strLen,
 		m_TextFormat.Get(),
@@ -383,7 +383,7 @@ void TextFormatD2D::SetTrimming(bool trim)
 	{
 		if (!m_InlineEllipsis)
 		{
-			CanvasD2D::c_DWFactory->CreateEllipsisTrimmingSign(
+			Canvas::c_DWFactory->CreateEllipsisTrimmingSign(
 				m_TextFormat.Get(), m_InlineEllipsis.GetAddressOf());
 		}
 

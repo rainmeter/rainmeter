@@ -30,7 +30,6 @@
     <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="Gfx\Canvas.cpp" />
-    <ClCompile Include="Gfx\CanvasD2D.cpp" />
     <ClCompile Include="Gfx\FontCollection.cpp" />
     <ClCompile Include="Gfx\FontCollectionD2D.cpp" />
     <ClCompile Include="Gfx\TextFormat.cpp" />
@@ -68,7 +67,6 @@
     <ClInclude Include="Dialog.h" />
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="Gfx\Canvas.h" />
-    <ClInclude Include="Gfx\CanvasD2D.h" />
     <ClInclude Include="Gfx\FontCollection.h" />
     <ClInclude Include="Gfx\FontCollectionD2D.h" />
     <ClInclude Include="Gfx\TextFormat.h" />
