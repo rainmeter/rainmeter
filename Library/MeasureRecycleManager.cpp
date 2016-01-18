@@ -111,6 +111,8 @@ bool HasRecycleBinChanged()
 		}
 	}
 
+	g_Thread = false;
+
 	return changed;
 }
 
@@ -130,7 +132,6 @@ MeasureRecycleManager::MeasureRecycleManager(Skin* skin, const WCHAR* name) : Me
 		System::InitializeCriticalSection(&g_CriticalSection);
 		return true;
 	} ();
-
 }
 
 MeasureRecycleManager::~MeasureRecycleManager()
