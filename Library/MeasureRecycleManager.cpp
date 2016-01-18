@@ -132,14 +132,19 @@ MeasureRecycleManager::MeasureRecycleManager(Skin* skin, const WCHAR* name) : Me
 		System::InitializeCriticalSection(&g_CriticalSection);
 		return true;
 	} ();
+
+	++g_InstanceCount;
 }
 
 MeasureRecycleManager::~MeasureRecycleManager()
 {
+	--g_InstanceCount;
 }
 
 void MeasureRecycleManager::ReadOptions(ConfigParser& parser, const WCHAR* section)
 {
+	Measure::ReadOptions(parser, section);
+
 	const WCHAR* type = parser.ReadString(section, L"RecycleType", L"COUNT").c_str();
 	if (_wcsicmp(L"COUNT", type) == 0)
 	{
