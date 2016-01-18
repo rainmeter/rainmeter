@@ -1,14 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{976df8a7-1f37-4f6c-a341-22311ba418a3}</UniqueIdentifier>
-      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{d68c51de-41f6-4d17-8f8b-c03388b8c59d}</UniqueIdentifier>
-      <Extensions>h;hpp;hxx;hm;inl</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{2d6bf39d-48e1-4de3-8924-46c5666cb141}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
@@ -27,126 +19,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ConfigParser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ConfigParser_Test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Group.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Measure.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureCalc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureCPU.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureDiskSpace.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureLoop.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureMediaKey.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureMemory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureNet.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureNetIn.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureNetOut.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureNetTotal.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasurePhysicalMemory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasurePlugin.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureRegistry.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureScript.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureTime.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureUptime.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureVirtualMemory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureWebParser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Meter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeterBar.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeterBitmap.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeterButton.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeterHistogram.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeterImage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeterLine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeterRotator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeterRoundLine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeterString.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Rainmeter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Skin.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="StdAfx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="System.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TintedImage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TrayIcon.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UpdateCheck.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Util.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="lua\LuaManager.cpp">
       <Filter>Lua</Filter>
     </ClCompile>
@@ -164,42 +36,6 @@
     </ClCompile>
     <ClCompile Include="lua\glue\LuaGlobal.cpp">
       <Filter>Lua\glue</Filter>
-    </ClCompile>
-    <ClCompile Include="DialogAbout.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DialogManage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Export.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Mouse.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Section.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Logger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CommandHandler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SkinRegistry.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SkinRegistry_Test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ContextMenu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="IfActions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureString.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NowPlaying\PlayerAIMP.cpp">
       <Filter>NowPlaying</Filter>
@@ -237,190 +73,71 @@
     <ClCompile Include="NowPlaying\SDKs\iTunes\iTunesCOMInterface_i.c">
       <Filter>NowPlaying</Filter>
     </ClCompile>
-    <ClCompile Include="MeasureNowPlaying.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DialogPackage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DialogInstall.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Dialog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SkinInstaller.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MeasureRecycleManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClCompile Include="CommandHandler.cpp" />
+    <ClCompile Include="ConfigParser.cpp" />
+    <ClCompile Include="ConfigParser_Test.cpp" />
+    <ClCompile Include="ContextMenu.cpp" />
+    <ClCompile Include="Dialog.cpp" />
+    <ClCompile Include="DialogAbout.cpp" />
+    <ClCompile Include="DialogInstall.cpp" />
+    <ClCompile Include="DialogManage.cpp" />
+    <ClCompile Include="DialogPackage.cpp" />
+    <ClCompile Include="Export.cpp" />
+    <ClCompile Include="Group.cpp" />
+    <ClCompile Include="IfActions.cpp" />
+    <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="Measure.cpp" />
+    <ClCompile Include="MeasureCalc.cpp" />
+    <ClCompile Include="MeasureCPU.cpp" />
+    <ClCompile Include="MeasureDiskSpace.cpp" />
+    <ClCompile Include="MeasureLoop.cpp" />
+    <ClCompile Include="MeasureMediaKey.cpp" />
+    <ClCompile Include="MeasureMemory.cpp" />
+    <ClCompile Include="MeasureNet.cpp" />
+    <ClCompile Include="MeasureNetIn.cpp" />
+    <ClCompile Include="MeasureNetOut.cpp" />
+    <ClCompile Include="MeasureNetTotal.cpp" />
+    <ClCompile Include="MeasureNowPlaying.cpp" />
+    <ClCompile Include="MeasurePhysicalMemory.cpp" />
+    <ClCompile Include="MeasurePlugin.cpp" />
+    <ClCompile Include="MeasureRecycleManager.cpp" />
+    <ClCompile Include="MeasureRegistry.cpp" />
+    <ClCompile Include="MeasureScript.cpp" />
+    <ClCompile Include="MeasureString.cpp" />
+    <ClCompile Include="MeasureTime.cpp" />
+    <ClCompile Include="MeasureUptime.cpp" />
+    <ClCompile Include="MeasureVirtualMemory.cpp" />
+    <ClCompile Include="MeasureWebParser.cpp" />
+    <ClCompile Include="Meter.cpp" />
+    <ClCompile Include="MeterBar.cpp" />
+    <ClCompile Include="MeterBitmap.cpp" />
+    <ClCompile Include="MeterButton.cpp" />
+    <ClCompile Include="MeterHistogram.cpp" />
+    <ClCompile Include="MeterImage.cpp" />
+    <ClCompile Include="MeterLine.cpp" />
+    <ClCompile Include="MeterRotator.cpp" />
+    <ClCompile Include="MeterRoundLine.cpp" />
+    <ClCompile Include="MeterString.cpp" />
+    <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="Rainmeter.cpp" />
+    <ClCompile Include="Section.cpp" />
+    <ClCompile Include="Skin.cpp" />
+    <ClCompile Include="SkinInstaller.cpp" />
+    <ClCompile Include="SkinRegistry.cpp" />
+    <ClCompile Include="SkinRegistry_Test.cpp" />
+    <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="System.cpp" />
+    <ClCompile Include="TintedImage.cpp" />
+    <ClCompile Include="TrayIcon.cpp" />
+    <ClCompile Include="UpdateCheck.cpp" />
+    <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ConfigParser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Error.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Group.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Measure.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureCalc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureCPU.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureDiskSpace.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureLoop.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureMemory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureNet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureNetIn.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureNetOut.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureNetTotal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasurePhysicalMemory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasurePlugin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureRegistry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureScript.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureTime.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureUptime.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureVirtualMemory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Meter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeterBar.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeterBitmap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeterButton.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeterHistogram.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeterImage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeterLine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeterRotator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeterRoundLine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeterString.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Rainmeter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RainmeterQuery.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="StdAfx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Skin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="System.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TintedImage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TrayIcon.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UpdateCheck.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Util.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="lua\LuaManager.h">
       <Filter>Lua</Filter>
     </ClInclude>
     <ClInclude Include="lua\LuaScript.h">
       <Filter>Lua</Filter>
-    </ClInclude>
-    <ClInclude Include="DialogAbout.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DialogManage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Export.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Mouse.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Section.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Logger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CommandHandler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SkinRegistry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ContextMenu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IfActions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureString.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureMediaKey.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureWebParser.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NowPlaying\Player.h">
       <Filter>NowPlaying</Filter>
@@ -455,24 +172,65 @@
     <ClInclude Include="NowPlaying\Lyrics.h">
       <Filter>NowPlaying</Filter>
     </ClInclude>
-    <ClInclude Include="MeasureNowPlaying.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Dialog.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DialogInstall.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DialogPackage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SkinInstaller.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeasureRecycleManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClInclude Include="CommandHandler.h" />
+    <ClInclude Include="ConfigParser.h" />
+    <ClInclude Include="ContextMenu.h" />
+    <ClInclude Include="Dialog.h" />
+    <ClInclude Include="DialogAbout.h" />
+    <ClInclude Include="DialogInstall.h" />
+    <ClInclude Include="DialogManage.h" />
+    <ClInclude Include="DialogPackage.h" />
+    <ClInclude Include="Error.h" />
+    <ClInclude Include="Export.h" />
+    <ClInclude Include="Group.h" />
+    <ClInclude Include="IfActions.h" />
+    <ClInclude Include="Logger.h" />
+    <ClInclude Include="Measure.h" />
+    <ClInclude Include="MeasureCalc.h" />
+    <ClInclude Include="MeasureCPU.h" />
+    <ClInclude Include="MeasureDiskSpace.h" />
+    <ClInclude Include="MeasureLoop.h" />
+    <ClInclude Include="MeasureMediaKey.h" />
+    <ClInclude Include="MeasureMemory.h" />
+    <ClInclude Include="MeasureNet.h" />
+    <ClInclude Include="MeasureNetIn.h" />
+    <ClInclude Include="MeasureNetOut.h" />
+    <ClInclude Include="MeasureNetTotal.h" />
+    <ClInclude Include="MeasureNowPlaying.h" />
+    <ClInclude Include="MeasurePhysicalMemory.h" />
+    <ClInclude Include="MeasurePlugin.h" />
+    <ClInclude Include="MeasureRecycleManager.h" />
+    <ClInclude Include="MeasureRegistry.h" />
+    <ClInclude Include="MeasureScript.h" />
+    <ClInclude Include="MeasureString.h" />
+    <ClInclude Include="MeasureTime.h" />
+    <ClInclude Include="MeasureUptime.h" />
+    <ClInclude Include="MeasureVirtualMemory.h" />
+    <ClInclude Include="MeasureWebParser.h" />
+    <ClInclude Include="Meter.h" />
+    <ClInclude Include="MeterBar.h" />
+    <ClInclude Include="MeterBitmap.h" />
+    <ClInclude Include="MeterButton.h" />
+    <ClInclude Include="MeterHistogram.h" />
+    <ClInclude Include="MeterImage.h" />
+    <ClInclude Include="MeterLine.h" />
+    <ClInclude Include="MeterRotator.h" />
+    <ClInclude Include="MeterRoundLine.h" />
+    <ClInclude Include="MeterString.h" />
+    <ClInclude Include="Mouse.h" />
+    <ClInclude Include="Rainmeter.h" />
+    <ClInclude Include="RainmeterQuery.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Section.h" />
+    <ClInclude Include="Skin.h" />
+    <ClInclude Include="SkinInstaller.h" />
+    <ClInclude Include="SkinRegistry.h" />
+    <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="System.h" />
+    <ClInclude Include="TintedImage.h" />
+    <ClInclude Include="TrayIcon.h" />
+    <ClInclude Include="UpdateCheck.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Library.rc">
@@ -480,8 +238,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Exports.def">
-      <Filter>Source Files</Filter>
-    </None>
+    <None Include="Exports.def" />
   </ItemGroup>
 </Project>
