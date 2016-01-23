@@ -92,8 +92,28 @@ Function .onInit
 	${IfNot} ${UAC_IsInnerInstance}
 		SetSilent normal
 
-		${IfNot} ${AtLeastWin7}
-			MessageBox MB_OK|MB_ICONSTOP "Rainmeter ${VERSION_SHORT} requires Windows 7 or later.$\n$\nFor Windows XP or Vista, you can download Rainmeter 3.3 from www.rainmeter.net"
+		${If} ${IsWin7}
+			${IfNot} ${AtLeastServicePack} 1
+				MessageBox MB_OK|MB_ICONSTOP "Rainmeter ${VERSION_SHORT} requires at least Windows 7 with Service Pack 1.$\n$\nPlease install Service Pack 1 or download Rainmeter 3.3 from www.rainmeter.net"
+				Quit
+			${EndIf}
+
+			; Try instantiating a ID2D1Factory1 to check for presense of D2D 1.1.
+			!define D2D1_FACTORY_TYPE_SINGLE_THREADED 0
+			!define IID_ID2D1Factory1 {bb12d362-daee-4b9a-aa1d-14ba401cfa1f}
+			System::Call "d2d1::D2D1CreateFactory( \
+				i ${D2D1_FACTORY_TYPE_SINGLE_THREADED}, \
+				g '${IID_ID2D1Factory1}', \
+				p 0, \
+				*p .r0) i.r1"
+			${If} $1 <> 0
+				MessageBox MB_OK|MB_ICONSTOP "Rainmeter ${VERSION_SHORT} requires at least Windows 7 with the Platform Update installed.$\n$\nPlease install the Windows 7 Platform Update or download Rainmeter 3.3 from www.rainmeter.net"
+				Quit
+			${Endif}
+			; Call Release
+			System::Call "$0->2()"
+		${ElseIfNot} ${AtLeastWin8}
+			MessageBox MB_OK|MB_ICONSTOP "Rainmeter ${VERSION_SHORT} requires at least Windows 7 with Service Pack 1.$\n$\nFor XP and Vista, you can download Rainmeter 3.3 from www.rainmeter.net"
 			Quit
 		${EndIf}
 
