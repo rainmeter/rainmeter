@@ -98,16 +98,45 @@ bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target,
 		maxH += 2.0f;
 	}
 
+	// Inline gradients need to be created/recreated not only when the text changes,
+	// but also when the dimensions of the meter changes.
+	auto CreateGradientBrushes = [&]()
+	{
+		// Build gradient brushes (if any)
+		for (const auto& fmt : m_TextInlineFormat)
+		{
+			if (fmt->GetType() == Gfx::InlineType::GradientColor)
+			{
+				auto option = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
+				option->BuildGradientBrushes(target, m_TextLayout.Get());
+			}
+		}
+
+		// Because the text layout can be created without any changes to any
+		// 'color' inline options, we need a way to update any color changes
+		// at drawing time. 
+		m_HasInlineOptionsChanged = true;
+	};
+
 	if (m_TextLayout && !strChanged && !m_HasInlineOptionsChanged)
 	{
+		bool hasChanged = false;
 		if (maxW != m_TextLayout->GetMaxWidth())
 		{
 			m_TextLayout->SetMaxWidth(maxW);
+			hasChanged = true;
 		}
 
 		if (maxH != m_TextLayout->GetMaxHeight())
 		{
 			m_TextLayout->SetMaxHeight(maxH);
+			hasChanged = true;
+		}
+
+		if (hasChanged)
+		{
+			// Meter dimensions have changed, so recreate any inline gradient brushes
+			CreateGradientBrushes();
 		}
 	}
 	else
@@ -146,20 +175,8 @@ bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target,
 			}
 		}
 
-		// Build gradient brushes (if any)
-		for (const auto& fmt : m_TextInlineFormat)
-		{
-			if (fmt->GetType() == Gfx::InlineType::GradientColor)
-			{
-				auto option = dynamic_cast<TextInlineFormat_GradientColor*>(fmt.get());
-				option->BuildGradientBrushes(target, m_TextLayout.Get());
-			}
-		}
-
-		// Because the text layout can be created without any changes to any
-		// 'color' inline options, we need a way to update any color changes
-		// at drawing time. 
-		m_HasInlineOptionsChanged = true;
+		// Create any inline gradients
+		CreateGradientBrushes();
 	}
 
 	return true;
