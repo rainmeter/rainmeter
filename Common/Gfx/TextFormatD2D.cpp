@@ -444,25 +444,26 @@ void TextFormatD2D::ReadInlineOptions(ConfigParser& parser, const WCHAR* section
 	const std::wstring delimiter(1, L'|');
 	std::wstring option = parser.ReadString(section, L"InlineSetting", L"");
 	std::wstring pattern = parser.ReadString(section, L"InlinePattern", L".*");
+	if (pattern.empty()) pattern = L".*";
 
 	size_t i = 1;
-	if (!option.empty() && !pattern.empty())
+	if (!option.empty())
 	{
 		do
 		{
 			std::vector<std::wstring> args = ConfigParser::Tokenize(option, delimiter);
 			if (!CreateInlineOption(i - 1, pattern, args)) break;
 
-			// Check for InlineOption2/InlineValue2 ... etc.
+			// Check for InlineSetting2/InlinePattern2 ... etc.
 			const std::wstring num = std::to_wstring(++i);
 
-			std::wstring key = L"InlineSetting" + num;
-			option = parser.ReadString(section, key.c_str(), L"");
-			if (option.empty()) break;
-
-			key = L"InlinePattern" + num;
+			std::wstring key = L"InlinePattern" + num;
 			pattern = parser.ReadString(section, key.c_str(), L".*");
-		} while (!pattern.empty());
+			if (pattern.empty()) pattern = L".*";
+
+			key = L"InlineSetting" + num;
+			option = parser.ReadString(section, key.c_str(), L"");
+		} while (!option.empty());
 	}
 
 	// Remove any previous options that do not exist anymore
