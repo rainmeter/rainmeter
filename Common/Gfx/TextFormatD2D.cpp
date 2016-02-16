@@ -443,7 +443,7 @@ void TextFormatD2D::ReadInlineOptions(ConfigParser& parser, const WCHAR* section
 {
 	const std::wstring delimiter(1, L'|');
 	std::wstring option = parser.ReadString(section, L"InlineSetting", L"");
-	std::wstring pattern = parser.ReadString(section, L"InlinePattern", L"");
+	std::wstring pattern = parser.ReadString(section, L"InlinePattern", L".*");
 
 	size_t i = 1;
 	if (!option.empty() && !pattern.empty())
@@ -461,7 +461,7 @@ void TextFormatD2D::ReadInlineOptions(ConfigParser& parser, const WCHAR* section
 			if (option.empty()) break;
 
 			key = L"InlinePattern" + num;
-			pattern = parser.ReadString(section, key.c_str(), L"");
+			pattern = parser.ReadString(section, key.c_str(), L".*");
 		} while (!pattern.empty());
 	}
 
