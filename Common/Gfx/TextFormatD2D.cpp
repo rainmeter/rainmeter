@@ -574,8 +574,9 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 			// Special case to delete a specific index while keeping the rest of the options
 			m_TextInlineFormat.erase(m_TextInlineFormat.begin() + index);
 			m_HasInlineOptionsChanged = true;
-			return true;
 		}
+
+		return true;
 	}
 	else if (_wcsicmp(option, L"CHARACTERSPACING") == 0)
 	{
