@@ -292,6 +292,7 @@ private:
 	void HandleButtons(POINT pos, BUTTONPROC proc, bool execute = true);
 	void SetClickThrough(bool b);
 	void SetKeepOnScreen(bool b);
+	void SetAutoSelectScreen(bool b);
 	void SetWindowDraggable(bool b);
 	void SetSavePosition(bool b);
 	void SavePositionIfAppropriate();

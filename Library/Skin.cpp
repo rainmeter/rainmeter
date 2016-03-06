@@ -847,6 +847,13 @@ void Skin::DoBang(Bang bang, const std::vector<std::wstring>& args)
 		}
 		break;
 
+	case Bang::AutoSelectScreen:
+		{
+			int f = m_Parser.ParseInt(args[0].c_str(), 0);
+			SetAutoSelectScreen((f == -1) ? !m_AutoSelectScreen : f != 0);
+		}
+		break;
+
 	case Bang::SetTransparency:
 		{
 			const std::wstring& arg = args[0];
@@ -3532,6 +3539,13 @@ void Skin::SetKeepOnScreen(bool b)
 			MoveWindow(x, y);
 		}
 	}
+}
+
+void Skin::SetAutoSelectScreen(bool b)
+{
+	m_AutoSelectScreen = b;
+	m_Parser.ResetMonitorVariables(this);  // Set present monitor variables
+	WriteOptions(OPTION_POSITION | OPTION_AUTOSELECTSCREEN);
 }
 
 void Skin::SetFavorite(bool b)

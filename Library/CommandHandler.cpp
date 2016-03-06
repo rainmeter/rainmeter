@@ -75,6 +75,7 @@ const BangInfo s_Bangs[] =
 	{ Bang::Draggable, L"Draggable", 1 },
 	{ Bang::SnapEdges, L"SnapEdges", 1 },
 	{ Bang::KeepOnScreen, L"KeepOnScreen", 1 },
+	{ Bang::AutoSelectScreen, L"AutoSelectScreen", 1 },
 	{ Bang::SetTransparency, L"SetTransparency", 1 },
 	{ Bang::SetVariable, L"SetVariable", 2 },
 	{ Bang::SetOption, L"SetOption", 3 },
@@ -111,6 +112,7 @@ const BangInfo s_GroupBangs[] =
 	{ Bang::Draggable, L"DraggableGroup", 1 },
 	{ Bang::SnapEdges, L"SnapEdgesGroup", 1 },
 	{ Bang::KeepOnScreen, L"KeepOnScreenGroup", 1 },
+	{ Bang::AutoSelectScreen, L"AutoSelectScreenGroup", 1 },
 	{ Bang::SetTransparency, L"SetTransparencyGroup", 1 },
 	{ Bang::SetVariable, L"SetVariableGroup", 2 }
 };
