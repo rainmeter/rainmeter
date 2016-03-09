@@ -16,6 +16,7 @@
 #include "../../Library/Export.h"
 #include"../../Common/Platform.h"
 #include "../../Common/StringUtil.h"
+
 #define INADDR_ANY (ULONG)0x00000000
 
 typedef struct
@@ -499,15 +500,15 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 
 	case MEASURE_DOMAINWORKGROUP:
 	{
-		LPWKSTA_INFO_102 info = NULL;
-		if (NERR_Success == NetWkstaGetInfo(nullptr,102, (BYTE**)&info))
+		LPWKSTA_INFO_102 info = nullptr;
+		if (NERR_Success == NetWkstaGetInfo(nullptr, 102, (BYTE**)&info))
 		{
 			wcscpy(sBuffer, info->wki102_langroup);
 			NetApiBufferFree(info);
 			return sBuffer;
 		}
 	}
-		break;
+	break;
 
 	case MEASURE_DNS_SERVER:
 		if (ERROR_SUCCESS == GetNetworkParams((PFIXED_INFO)tmpBuffer, &tmpBufferLen))
