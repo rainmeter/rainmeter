@@ -9,13 +9,13 @@
 #include <windows.h>
 #include <Iphlpapi.h>
 #include <Netlistmgr.h>
+#include <lm.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "../API/RainmeterAPI.h"
 #include "../../Library/Export.h"
 #include"../../Common/Platform.h"
 #include "../../Common/StringUtil.h"
-
 #define INADDR_ANY (ULONG)0x00000000
 
 typedef struct
@@ -46,6 +46,7 @@ enum MeasureType
 	MEASURE_GATEWAY_ADDRESS,
 	MEASURE_HOST_NAME,
 	MEASURE_DOMAIN_NAME,
+	MEASURE_DOMAINWORKGROUP,
 	MEASURE_DNS_SERVER,
 	MEASURE_INTERNET_CONNECTIVITY,
 	MEASURE_LAN_CONNECTIVITY,
@@ -177,6 +178,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	else if (_wcsicmp(L"DOMAIN_NAME", type) == 0)
 	{
 		measure->type = MEASURE_DOMAIN_NAME;
+	}
+	else if (_wcsicmp(L"DOMAINWORKGROUP", type) == 0)
+	{
+		measure->type = MEASURE_DOMAINWORKGROUP;
 	}
 	else if (_wcsicmp(L"DNS_SERVER", type) == 0)
 	{
@@ -490,6 +495,18 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 			PFIXED_INFO info = (PFIXED_INFO)tmpBuffer;
 			return convertToWide(info->DomainName);
 		}
+		break;
+
+	case MEASURE_DOMAINWORKGROUP:
+	{
+		LPWKSTA_INFO_102 info = NULL;
+		if (NERR_Success == NetWkstaGetInfo(nullptr,102, (BYTE**)&info))
+		{
+			wcscpy(sBuffer, info->wki102_langroup);
+			NetApiBufferFree(info);
+			return sBuffer;
+		}
+	}
 		break;
 
 	case MEASURE_DNS_SERVER:
