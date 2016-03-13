@@ -61,11 +61,11 @@ private:
 	int m_StringIndex2;
 	int m_DecodeCharacterReference;
 	int m_Debug;
-	int m_LogSubstringErrors;
 	UINT m_UpdateRate;
 	UINT m_UpdateCounter;
 	bool m_Download;
 	bool m_ForceReload;
+	bool m_LogSubstringErrors;
 };
 
 #endif

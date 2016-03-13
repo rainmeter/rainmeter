@@ -337,7 +337,7 @@ void MeasureWebParser::ReadOptions(ConfigParser& parser, const WCHAR* section)
 	m_OnConnectErrAction = parser.ReadString(section, L"OnConnectErrorAction", L"", false);
 	m_OnDownloadErrAction = parser.ReadString(section, L"OnDownloadErrorAction", L"", false);
 	m_ErrorString = parser.ReadString(section, L"ErrorString", L"");
-	m_LogSubstringErrors = parser.ReadInt(section, L"LogSubstringErrors", 1);
+	m_LogSubstringErrors = parser.ReadBool(section, L"LogSubstringErrors", true);
 	
 	int index = parser.ReadInt(section, L"StringIndex", 0);
 	m_StringIndex = index < 0 ? 0 : index;
@@ -572,8 +572,7 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 				}
 				else
 				{
-					if (m_LogSubstringErrors == 1)
-					LogWarningF(this, L"Not enough substrings");
+					if (m_LogSubstringErrors) LogWarningF(this, L"Not enough substrings");
 
 					// Clear the old result
 					EnterCriticalSection(&g_CriticalSection);
@@ -644,8 +643,7 @@ void MeasureWebParser::ParseData(const BYTE* rawData, DWORD rawSize, bool utf16D
 						}
 						else
 						{
-							if (m_LogSubstringErrors == 1)
-							LogWarningF(*i, L"Not enough substrings");
+							if (m_LogSubstringErrors) LogWarningF(*i, L"Not enough substrings");
 
 							// Clear the old result
 							EnterCriticalSection(&g_CriticalSection);
