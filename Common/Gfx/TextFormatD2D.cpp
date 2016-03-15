@@ -595,6 +595,9 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 			else if (_wcsicmp(strCase, L"PROPER") == 0) type = Gfx::CaseType::Proper;
 			else if (_wcsicmp(strCase, L"SENTENCE") == 0) type = Gfx::CaseType::Sentence;
 
+			// Only allow the above options.
+			if (type == Gfx::CaseType::None) return false;
+
 			UpdateInlineCase(index, pattern, type);
 			return true;
 		}
