@@ -86,7 +86,7 @@ void ToProperCase(std::wstring& str)
 
 		for (size_t i = 0; i < str.length(); ++i)
 		{
-			if (iswpunct(str[i]) != 0 || iswspace(str[i]) != 0) isCapped = false;
+			if (str[i] != '\'' && (iswpunct(str[i]) != 0 || iswspace(str[i]) != 0)) isCapped = false;
 
 			if (!isCapped && iswalpha(str[i]) != 0)
 			{
