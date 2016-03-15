@@ -52,6 +52,40 @@ std::wstring Widen(const char* str, int strLen, int cp)
 	return wideStr;
 }
 
+void ToLowerCase(std::wstring& str)
+{
+	auto to_lower = [](wchar_t ch) { return std::use_facet<std::ctype<wchar_t>>(std::locale()).tolower(ch); };
+	std::transform(str.begin(), str.end(), str.begin(), to_lower);
+}
+
+void ToUpperCase(std::wstring& str)
+{
+	auto to_upper = [](wchar_t ch) { return std::use_facet<std::ctype<wchar_t>>(std::locale()).toupper(ch); };
+	std::transform(str.begin(), str.end(), str.begin(), to_upper);
+}
+
+void ToProperCase(std::wstring& str)
+{
+	auto to_upper = [](wchar_t& ch) { ch = std::use_facet<std::ctype<wchar_t>>(std::locale()).toupper(ch); };
+
+	if (!str.empty())
+	{
+		ToLowerCase(str);
+		bool isCapped = false;
+
+		for (size_t i = 0; i < str.length(); ++i)
+		{
+			if (iswpunct(str[i]) != 0 || iswspace(str[i]) != 0) isCapped = false;
+
+			if (!isCapped && iswalpha(str[i]) != 0)
+			{
+				to_upper(str[i]);
+				isCapped = true;
+			}
+		}
+	}
+}
+
 /*
 ** Escapes reserved PCRE regex metacharacters.
 */

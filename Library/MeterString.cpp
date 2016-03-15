@@ -17,35 +17,6 @@ using namespace Gdiplus;
 #define PI	(3.14159265f)
 #define CONVERT_TO_DEGREES(X)	((X) * (180.0f / PI))
 
-void StringToUpper(std::wstring& str)
-{
-	WCHAR* srcAndDest = &str[0];
-	int strAndDestLen = (int)str.length();
-	LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, srcAndDest, strAndDestLen, srcAndDest, strAndDestLen);
-}
-
-void StringToLower(std::wstring& str)
-{
-	WCHAR* srcAndDest = &str[0];
-	int strAndDestLen = (int)str.length();
-	LCMapString(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, srcAndDest, strAndDestLen, srcAndDest, strAndDestLen);
-}
-
-void StringToProper(std::wstring& str)
-{
-	if (!str.empty())
-	{
-		WCHAR* srcAndDest = &str[0];
-		LCMapString(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, srcAndDest, 1, srcAndDest, 1);
-
-		for (size_t i = 1; i < str.length(); ++i)
-		{
-			srcAndDest = &str[i];
-			LCMapString(LOCALE_USER_DEFAULT, (iswspace(str[i - 1]) > 0) ? LCMAP_UPPERCASE : LCMAP_LOWERCASE, srcAndDest, 1, srcAndDest, 1);
-		}
-	}
-}
-
 MeterString::MeterString(Skin* skin, const WCHAR* name) : Meter(skin, name),
 	m_Color(Color::White),
 	m_EffectColor(Color::Black),
@@ -360,13 +331,13 @@ bool MeterString::Update()
 		switch (m_Case)
 		{
 		case TEXTCASE_UPPER:
-			StringToUpper(m_String);
+			StringUtil::ToUpperCase(m_String);
 			break;
 		case TEXTCASE_LOWER:
-			StringToLower(m_String);
+			StringUtil::ToLowerCase(m_String);
 			break;
 		case TEXTCASE_PROPER:
-			StringToProper(m_String);
+			StringUtil::ToProperCase(m_String);
 			break;
 		}
 
