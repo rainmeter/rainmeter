@@ -20,6 +20,7 @@ namespace Gfx {
 
 enum class InlineType : BYTE
 {
+	Case,
 	CharacterSpacing,
 	Color,
 	Face,

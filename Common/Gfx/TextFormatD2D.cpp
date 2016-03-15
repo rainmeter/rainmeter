@@ -9,6 +9,7 @@
 #include "TextFormatD2D.h"
 #include "Canvas.h"
 #include "Util/DWriteHelpers.h"
+#include "TextInlineFormat/TextInlineFormatCase.h"
 #include "TextInlineFormat/TextInlineFormatCharacterSpacing.h"
 #include "TextInlineFormat/TextInlineFormatColor.h"
 #include "TextInlineFormat/TextInlineFormatFace.h"
@@ -73,9 +74,11 @@ void TextFormatD2D::Dispose()
 	m_LineGap = 0.0f;
 }
 
-bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target,
-	const WCHAR* str, UINT strLen, float maxW, float maxH, bool gdiEmulation)
+bool TextFormatD2D::CreateLayout(ID2D1RenderTarget* target, const std::wstring& srcStr, float maxW, float maxH, bool gdiEmulation)
 {
+	UINT32 strLen = (UINT32)srcStr.length();
+	const WCHAR* str = srcStr.c_str();
+
 	bool strChanged = false;
 	if (strLen != m_LastString.length() ||
 		memcmp(str, m_LastString.c_str(), (strLen + 1) * sizeof(WCHAR)) != 0)
@@ -314,9 +317,11 @@ void TextFormatD2D::SetProperties(
 	}
 }
 
-DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(
-	const WCHAR* str, UINT strLen, bool gdiEmulation, float maxWidth)
+DWRITE_TEXT_METRICS TextFormatD2D::GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth)
 {
+	UINT32 strLen = (UINT32)srcStr.length();
+	const WCHAR* str = srcStr.c_str();
+
 	// GDI+ compatibility: If the last character is a newline, GDI+ measurements seem to ignore it.
 	bool strippedLastNewLine = false;
 	if (strLen > 2 && str[strLen - 1] == L'\n')
@@ -578,6 +583,22 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 
 		return true;
 	}
+	else if (_wcsicmp(option, L"CASE") == 0)
+	{
+		if (optSize > 1)
+		{
+			const WCHAR* strCase = options[1].c_str();
+			CaseType type = CaseType::None;
+
+			if (_wcsicmp(strCase, L"LOWER") == 0) type = Gfx::CaseType::Lower;
+			else if (_wcsicmp(strCase, L"UPPER") == 0) type = Gfx::CaseType::Upper;
+			else if (_wcsicmp(strCase, L"PROPER") == 0) type = Gfx::CaseType::Proper;
+			else if (_wcsicmp(strCase, L"SENTENCE") == 0) type = Gfx::CaseType::Sentence;
+
+			UpdateInlineCase(index, pattern, type);
+			return true;
+		}
+	}
 	else if (_wcsicmp(option, L"CHARACTERSPACING") == 0)
 	{
 		if (optSize > 1)
@@ -700,6 +721,28 @@ bool TextFormatD2D::CreateInlineOption(const size_t index, const std::wstring pa
 	}
 
 	return false;
+}
+
+void TextFormatD2D::UpdateInlineCase(const size_t& index, const std::wstring pattern, const Gfx::CaseType type)
+{
+	if (index >= m_TextInlineFormat.size())
+	{
+		m_TextInlineFormat.emplace_back(new TextInlineFormat_Case(pattern, type));
+		m_HasInlineOptionsChanged = true;
+	}
+	else if (m_TextInlineFormat[index]->GetType() == Gfx::InlineType::Case)
+	{
+		auto option = dynamic_cast<TextInlineFormat_Case*>(m_TextInlineFormat[index].get());
+		if (option->CompareAndUpdateProperties(pattern, type))
+		{
+			m_HasInlineOptionsChanged = true;
+		}
+	}
+	else
+	{
+		m_TextInlineFormat[index].reset(new TextInlineFormat_Case(pattern, type));
+		m_HasInlineOptionsChanged = true;
+	}
 }
 
 void TextFormatD2D::UpdateInlineCharacterSpacing(const size_t& index, const std::wstring pattern,
@@ -1010,7 +1053,9 @@ void TextFormatD2D::ApplyInlineFormatting(IDWriteTextLayout* layout)
 	for (const auto& fmt : m_TextInlineFormat)
 	{
 		Gfx::InlineType type = fmt->GetType();
-		if (type != Gfx::InlineType::Color && type != Gfx::InlineType::GradientColor)
+		if (type != Gfx::InlineType::Color &&
+			type != Gfx::InlineType::GradientColor &&
+			type != Gfx::InlineType::Case)
 		{
 			fmt->ApplyInlineFormat(layout);
 		}
@@ -1038,6 +1083,18 @@ void TextFormatD2D::ApplyInlineColoring(ID2D1RenderTarget* target, const D2D1_PO
 	// to tell the 'format' that the inline options have changed. Here, we reset that
 	// flag to false because the coloring of the text happen just before drawing.
 	m_HasInlineOptionsChanged = false;
+}
+
+void TextFormatD2D::ApplyInlineCase(std::wstring& str)
+{
+	for (const auto& fmt : m_TextInlineFormat)
+	{
+		if (fmt->GetType() == Gfx::InlineType::Case)
+		{
+			auto option = dynamic_cast<TextInlineFormat_Case*>(fmt.get());
+			option->ApplyInlineFormat(str);
+		}
+	}
 }
 
 void TextFormatD2D::ResetGradientPosition(const D2D1_POINT_2F* point)

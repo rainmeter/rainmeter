@@ -8,6 +8,17 @@
 #include "StdAfx.h"
 #include "StringUtil.h"
 
+namespace {
+
+// Is the character a end of sentence punctuation character?
+// English only?
+bool IsEOSPunct(wchar_t ch)
+{
+	return ch == '?' || ch == '!' || ch == '.';
+}
+
+}
+
 namespace StringUtil {
 
 std::string Narrow(const WCHAR* str, int strLen, int cp)
@@ -76,6 +87,28 @@ void ToProperCase(std::wstring& str)
 		for (size_t i = 0; i < str.length(); ++i)
 		{
 			if (iswpunct(str[i]) != 0 || iswspace(str[i]) != 0) isCapped = false;
+
+			if (!isCapped && iswalpha(str[i]) != 0)
+			{
+				to_upper(str[i]);
+				isCapped = true;
+			}
+		}
+	}
+}
+
+void ToSentenceCase(std::wstring& str)
+{
+	auto to_upper = [](wchar_t& ch) { ch = std::use_facet<std::ctype<wchar_t>>(std::locale()).toupper(ch); };
+
+	if (!str.empty())
+	{
+		ToLowerCase(str);
+		bool isCapped = false;
+
+		for (size_t i = 0; i < str.length(); ++i)
+		{
+			if (IsEOSPunct(str[i])) isCapped = false;
 
 			if (!isCapped && iswalpha(str[i]) != 0)
 			{

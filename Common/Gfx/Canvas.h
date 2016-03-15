@@ -65,10 +65,10 @@ public:
 
 	void Clear(const Gdiplus::Color& color = Gdiplus::Color(0, 0, 0, 0));
 
-	void DrawTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect,
+	void DrawTextW(const std::wstring& srcStr, const TextFormat& format, Gdiplus::RectF& rect,
 		const Gdiplus::SolidBrush& brush, bool applyInlineFormatting = false);
-	bool MeasureTextW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect);
-	bool MeasureTextLinesW(const WCHAR* str, UINT strLen, const TextFormat& format, Gdiplus::RectF& rect, UINT& lines);
+	bool MeasureTextW(const std::wstring& srcStr, const TextFormat& format, Gdiplus::RectF& rect);
+	bool MeasureTextLinesW(const std::wstring& srcStr, const TextFormat& format, Gdiplus::RectF& rect, UINT& lines);
 
 	void DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect);
 	void DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,

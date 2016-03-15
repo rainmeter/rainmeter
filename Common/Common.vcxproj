@@ -35,6 +35,7 @@
     <ClCompile Include="Gfx\TextFormat.cpp" />
     <ClCompile Include="Gfx\TextFormatD2D.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat.cpp" />
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatCase.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatCharacterSpacing.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatColor.cpp" />
     <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatFace.cpp" />
@@ -72,6 +73,7 @@
     <ClInclude Include="Gfx\TextFormat.h" />
     <ClInclude Include="Gfx\TextFormatD2D.h" />
     <ClInclude Include="Gfx\TextInlineFormat.h" />
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatCase.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatCharacterSpacing.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatColor.h" />
     <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatFace.h" />

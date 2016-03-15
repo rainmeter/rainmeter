@@ -83,6 +83,9 @@
     <ClCompile Include="Gfx\Canvas.cpp">
       <Filter>Gfx</Filter>
     </ClCompile>
+    <ClCompile Include="Gfx\TextInlineFormat\TextInlineFormatCase.cpp">
+      <Filter>Gfx\TextInlineFormat</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialog.h" />
@@ -169,6 +172,9 @@
     <ClInclude Include="ScopedFunction.h" />
     <ClInclude Include="Gfx\Canvas.h">
       <Filter>Gfx</Filter>
+    </ClInclude>
+    <ClInclude Include="Gfx\TextInlineFormat\TextInlineFormatCase.h">
+      <Filter>Gfx\TextInlineFormat</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

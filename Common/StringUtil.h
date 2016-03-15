@@ -43,6 +43,7 @@ inline std::wstring WidenUTF8(const std::string& str) { return Widen(str.c_str()
 void ToLowerCase(std::wstring& str);
 void ToUpperCase(std::wstring& str);
 void ToProperCase(std::wstring& str);
+void ToSentenceCase(std::wstring& str);
 
 void EscapeRegExp(std::wstring& str);
 

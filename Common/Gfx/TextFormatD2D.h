@@ -17,6 +17,8 @@
 
 namespace Gfx {
 
+enum class CaseType : BYTE;
+
 // Provides a Direct2D/DirectWrite implementation of TextFormat for use with CanvasD2D.
 class TextFormatD2D : public TextFormat
 {
@@ -51,13 +53,13 @@ private:
 	// Creates a new DirectWrite text layout if |str| has changed since last call. Since creating
 	// the layout is costly, it is more efficient to keep reusing the text layout until the text
 	// changes. Returns true if the layout is valid for use.
-	bool CreateLayout(ID2D1RenderTarget* target, const WCHAR* str, UINT strLen, float maxW, float maxH, bool gdiEmulation);
+	bool CreateLayout(ID2D1RenderTarget* target, const std::wstring& srcStr, float maxW, float maxH, bool gdiEmulation);
 
-	DWRITE_TEXT_METRICS GetMetrics(
-		const WCHAR* str, UINT strLen, bool gdiEmulation, float maxWidth = 10000.0f);
+	DWRITE_TEXT_METRICS GetMetrics(const std::wstring& srcStr, bool gdiEmulation, float maxWidth = 10000.0f);
 
 	// These functions create/modify any inline options.
 	bool CreateInlineOption(const size_t index, const std::wstring pattern, std::vector<std::wstring> options);
+	void UpdateInlineCase(const size_t& index, const std::wstring pattern, const Gfx::CaseType type);
 	void UpdateInlineCharacterSpacing(const size_t& index, const std::wstring pattern, const FLOAT leading,
 		const FLOAT trailing, const FLOAT advanceWidth);
 	void UpdateInlineColor(const size_t& index, const std::wstring pattern, const Gdiplus::Color color);
@@ -75,6 +77,7 @@ private:
 	void UpdateInlineWeight(const size_t& index, const std::wstring pattern, const DWRITE_FONT_WEIGHT weight);
 	void ApplyInlineFormatting(IDWriteTextLayout* layout);
 	void ApplyInlineColoring(ID2D1RenderTarget* target, const D2D1_POINT_2F* point);
+	void ApplyInlineCase(std::wstring& str);
 	void ResetGradientPosition(const D2D1_POINT_2F* point);
 	void ResetInlineColoring(ID2D1SolidColorBrush* solidColor, const UINT strLen);
 

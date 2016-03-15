@@ -404,9 +404,6 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 {
 	if (!m_TextFormat->IsInitialized()) return false;
 
-	LPCWSTR string = m_String.c_str();
-	UINT stringLen = (UINT)m_String.length();
-
 	canvas.SetTextAntiAliasing(m_AntiAlias);
 
 	m_TextFormat->SetTrimming(
@@ -419,7 +416,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 	{
 		rect->X = (REAL)meterRect.X;
 		rect->Y = (REAL)meterRect.Y;
-		if (canvas.MeasureTextW(string, stringLen, *m_TextFormat, *rect) &&
+		if (canvas.MeasureTextW(m_String, *m_TextFormat, *rect) &&
 			m_ClipType == CLIP_AUTO)
 		{
 			// Set initial clipping
@@ -496,7 +493,7 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 			{
 				UINT lines = 0;
 				RectF layout((REAL)meterRect.X, (REAL)meterRect.Y, w, h);
-				if (canvas.MeasureTextLinesW(string, stringLen, *m_TextFormat, layout, lines) &&
+				if (canvas.MeasureTextLinesW(m_String, *m_TextFormat, layout, lines) &&
 					lines != 0)
 				{
 					rect->Width = w;
@@ -529,23 +526,23 @@ bool MeterString::DrawString(Gfx::Canvas& canvas, RectF* rect)
 			if (m_Effect == EFFECT_SHADOW)
 			{
 				rcEffect.Offset(1, 1);
-				canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
 			}
 			else  //if (m_Effect == EFFECT_BORDER)
 			{
 				rcEffect.Offset(0, 1);
-				canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
 				rcEffect.Offset(1, -1);
-				canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
 				rcEffect.Offset(-1, -1);
-				canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
 				rcEffect.Offset(-1, 1);
-				canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcEffect, solidBrush);
+				canvas.DrawTextW(m_String, *m_TextFormat, rcEffect, solidBrush);
 			}
 		}
 
 		SolidBrush solidBrush(m_Color);
-		canvas.DrawTextW(string, (UINT)stringLen, *m_TextFormat, rcDest, solidBrush, true);
+		canvas.DrawTextW(m_String, *m_TextFormat, rcDest, solidBrush, true);
 
 		if (m_Angle != 0.0f)
 		{
