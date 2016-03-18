@@ -114,11 +114,15 @@ bool TrayIcon::AddTrayIcon()
 
 bool TrayIcon::IsTrayIconReady()
 {
-	NOTIFYICONDATA tnid = {sizeof(NOTIFYICONDATA)};
-	tnid.hWnd = m_Window;
-	tnid.uID = IDI_TRAY;
+	NOTIFYICONIDENTIFIER nii = { sizeof(NOTIFYICONIDENTIFIER) };
+	nii.hWnd = m_Window;
+	nii.uID = IDI_TRAY;
+	RECT rect;
 
-	return Shell_NotifyIcon(NIM_MODIFY, &tnid) != FALSE;
+	HRESULT hr = Shell_NotifyIconGetRect(&nii, &rect);
+	if (FAILED(hr)) return false;
+	
+	return true;
 }
 
 void TrayIcon::TryAddTrayIcon()
