@@ -320,14 +320,20 @@ void TrayIcon::ShowUpdateNotification(const WCHAR* newVersion)
 	ShowNotification(TRAY_NOTIFICATION_UPDATE, GetString(ID_STR_UPDATEAVAILABLE), text.c_str());
 }
 
-void TrayIcon::SetTrayIcon(bool enabled)
+void TrayIcon::SetTrayIcon(bool enabled, bool setTemporarily)
 {
 	enabled ? TryAddTrayIcon() : RemoveTrayIcon();
-	m_IconEnabled = enabled;
 
-	// Save to Rainmeter.ini.
-	const std::wstring& iniFile = GetRainmeter().GetIniFile();
-	WritePrivateProfileString(L"Rainmeter", L"TrayIcon", enabled ? nullptr : L"0", iniFile.c_str());
+	// The tray icon should only be set if TrayIcon=1 in
+	// Rainmeter.ini, or if there are no skins currently active.
+	if (!setTemporarily)
+	{
+		m_IconEnabled = enabled;
+
+		// Save to Rainmeter.ini.
+		const std::wstring& iniFile = GetRainmeter().GetIniFile();
+		WritePrivateProfileString(L"Rainmeter", L"TrayIcon", enabled ? nullptr : L"0", iniFile.c_str());
+	}
 }
 
 void TrayIcon::ReadOptions(ConfigParser& parser)

@@ -40,7 +40,7 @@ public:
 	void ReadOptions(ConfigParser& parser);
 	HWND GetWindow() { return m_Window; }
 	bool IsTrayIconEnabled() { return m_IconEnabled; }
-	void SetTrayIcon(bool enabled);
+	void SetTrayIcon(bool enabled, bool setTemporarily = false);
 
 	void ShowWelcomeNotification();
 	void ShowUpdateNotification(const WCHAR* newVersion);

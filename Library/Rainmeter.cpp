@@ -883,6 +883,15 @@ void Rainmeter::ActivateSkin(int folderIndex, int fileIndex)
 			WriteActive(folderPath, fileIndex);
 		}
 
+		// The tray icon is shown if no skins are active regardless of
+		// of TrayIcon setting in Rainmeter.ini. Now that a skin is to
+		// be active, we either turn it off or leave it on depending on
+		// the TrayIcon setting in Rainmeter.ini.
+		if (m_Skins.empty())
+		{
+			m_TrayIcon->SetTrayIcon(m_TrayIcon->IsTrayIconEnabled());
+		}
+
 		CreateSkin(folderPath, file);
 	}
 }
@@ -911,6 +920,12 @@ void Rainmeter::DeactivateSkin(Skin* skin, int folderIndex, bool save)
 		}
 
 		skin->Deactivate();
+
+		// Show tray icon if no skins are active
+		if (m_Skins.empty())
+		{
+			m_TrayIcon->SetTrayIcon(true, true);
+		}
 	}
 }
 
@@ -1346,6 +1361,7 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 
 	m_NormalStayDesktop = parser.ReadBool(L"Rainmeter", L"NormalStayDesktop", true);
 
+	bool hasActiveSkins = false;
 	for (auto iter = parser.GetSections().cbegin(); iter != parser.GetSections().end(); ++iter)
 	{
 		const WCHAR* section = (*iter).c_str();
@@ -1368,11 +1384,18 @@ void Rainmeter::ReadGeneralSettings(const std::wstring& iniFile)
 		int active = parser.ReadInt(section, L"Active", 0);
 		if (active > 0 && active <= (int)skinFolder.files.size())
 		{
+			hasActiveSkins = true;
 			skinFolder.active = active;
 		}
 
 		int order = parser.ReadInt(section, L"LoadOrder", 0);
 		SetLoadOrder(index, order);
+	}
+
+	// Show tray icon if no skins are active
+	if (m_TrayIcon && !hasActiveSkins)
+	{
+		m_TrayIcon->SetTrayIcon(true, true);
 	}
 }
 
