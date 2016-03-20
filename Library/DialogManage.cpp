@@ -2101,7 +2101,15 @@ INT_PTR DialogManage::TabSettings::OnCommand(WPARAM wParam, LPARAM lParam)
 		break;	
 
 	case Id_ShowTrayIconCheckBox:
-		GetRainmeter().GetTrayIcon()->SetTrayIcon(!GetRainmeter().GetTrayIcon()->IsTrayIconEnabled());
+		{
+			bool isTrayEnabled = GetRainmeter().GetTrayIcon()->IsTrayIconEnabled();
+			GetRainmeter().GetTrayIcon()->SetTrayIcon(!isTrayEnabled);
+
+			if (isTrayEnabled && GetRainmeter().GetAllSkins().empty())
+			{
+				GetRainmeter().GetTrayIcon()->SetTrayIcon(true, true);
+			}
+		}
 		break;
 
 	default:
