@@ -400,6 +400,8 @@ private:
 	ULONGLONG m_FadeStartTime;
 	int m_FadeStartValue;
 	int m_FadeEndValue;
+	bool m_ActiveFade;
+
 	int m_TransparencyValue;
 
 	STATE m_State;

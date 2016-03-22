@@ -117,6 +117,7 @@ Skin::Skin(const std::wstring& folderPath, const std::wstring& file) : m_FolderP
 	m_FadeStartTime(),
 	m_FadeStartValue(),
 	m_FadeEndValue(),
+	m_ActiveFade(false),
 	m_TransparencyValue(),
 	m_State(STATE_INITIALIZING),
 	m_Hidden(false),
@@ -2853,6 +2854,13 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case TIMER_FADE:
 		{
+			// We kill the timer below after completing the fade, but there might have still been
+			// TIMER_FADE messages queued up. Ignore those messages.
+			if (!m_ActiveFade)
+			{
+				break;
+			}
+
 			ULONGLONG ticks = System::GetTickCount64();
 			if (m_FadeStartTime == 0)
 			{
@@ -2861,6 +2869,7 @@ LRESULT Skin::OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			if (ticks - m_FadeStartTime > (ULONGLONG)m_FadeDuration)
 			{
+				m_ActiveFade = false;
 				KillTimer(m_Window, TIMER_FADE);
 				m_FadeStartTime = 0;
 				if (m_FadeEndValue == 0)
@@ -2945,6 +2954,7 @@ void Skin::FadeWindow(int from, int to)
 			}
 		}
 
+		m_ActiveFade = true;
 		SetTimer(m_Window, TIMER_FADE, INTERVAL_FADE, nullptr);
 	}
 }
