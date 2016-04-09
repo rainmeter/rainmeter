@@ -370,8 +370,10 @@ bool MeterString::Update()
 			RectF rect;
 			if (DrawString(m_Skin->GetCanvas(), &rect))
 			{
-				m_W = (int)rect.Width + GetWidthPadding();
-				m_H = (int)rect.Height + GetHeightPadding();
+				if (!m_WDefined)
+					m_W = (int)rect.Width + GetWidthPadding();
+				if (!m_HDefined)
+					m_H = (int)rect.Height + GetHeightPadding();
 			}
 			else
 			{
