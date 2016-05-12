@@ -8,13 +8,26 @@
 #include <windows.h>
 #include <string>
 #include <wlanapi.h>
+#include <winsock2.h>
+#include <iphlpapi.h>
+#include <stdlib.h>
 #include "../API/RainmeterAPI.h"
+
+ // Link with Iphlpapi.lib
+#pragma comment(lib, "IPHLPAPI.lib")
+
+#define WORKING_BUFFER_SIZE 15000
+#define MAX_TRIES 3
+
+#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
+#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
 
 enum MEASURETYPE
 {
 	UNINITIALIZED,
 	UNKNOWN,
 	SSID,
+	TXRATE,
 	QUALITY,
 	ENCRYPTION,
 	AUTH,
@@ -39,6 +52,48 @@ UINT g_Instances = 0;
 HANDLE g_hClient = nullptr;
 PWLAN_INTERFACE_INFO g_pInterface = nullptr;
 PWLAN_INTERFACE_INFO_LIST g_pIntfList = nullptr;
+PIP_ADAPTER_ADDRESSES g_pAddresses = nullptr;
+
+static DWORD getAdapterAddresses(PIP_ADAPTER_ADDRESSES *p2pAddresses) {
+
+	// Allocate a 15 KB buffer to start with.
+	ULONG outBufLen = WORKING_BUFFER_SIZE;;
+	ULONG Iterations = 0;
+	DWORD dwRetVal = 0;
+
+	// default to unspecified address family (both IPv4 and IPv6)
+	ULONG family = AF_UNSPEC;
+
+	// Set the flags to pass to GetAdaptersAddresses
+	ULONG flags = GAA_FLAG_INCLUDE_PREFIX;
+
+	// Try MAX_TRIES time with new buffer size if buffer is too small 
+	do {
+
+		*p2pAddresses = (IP_ADAPTER_ADDRESSES *)MALLOC(outBufLen);
+		if (*p2pAddresses == NULL) {
+			printf
+			("Memory allocation failed for IP_ADAPTER_ADDRESSES struct\n");
+			exit(1);
+		}
+
+		dwRetVal =
+			GetAdaptersAddresses(family, flags, NULL, *p2pAddresses, &outBufLen);
+
+		if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
+			FREE(*p2pAddresses);
+			*p2pAddresses = NULL;
+		}
+		else {
+			break;
+		}
+
+		Iterations++;
+
+	} while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (Iterations < MAX_TRIES));
+
+	return dwRetVal;
+}
 
 const WCHAR* ToString(DOT11_CIPHER_ALGORITHM value)
 {
@@ -235,6 +290,10 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 	{
 		infoType = SSID;
 	}
+	else if (_wcsicmp(L"TXRATE", type) == 0)
+	{
+		infoType = TXRATE;
+	}
 	else if (_wcsicmp(L"QUALITY", type) == 0)
 	{
 		infoType = QUALITY;
@@ -348,6 +407,36 @@ PLUGIN_EXPORT double Update(void* data)
 				WlanFreeMemory(pwnl);
 			}
 		}
+		else if (measure->type == TXRATE)
+		{
+			DWORD dwErr = getAdapterAddresses(&g_pAddresses);
+			if (NO_ERROR != dwErr) {
+				measure->statusString = L"Error";
+				value = (double)-1;
+			}
+			else
+			{
+				PIP_ADAPTER_ADDRESSES pCurrAddresses = g_pAddresses;
+				value = (double)-1;
+				while(pCurrAddresses)
+				{
+					// Doesn't work - not sure how to compare the 2 GUIDs
+					// if (pCurrAddresses->NetworkGuid != g_pInterface->InterfaceGuid)
+					// Ignores the interface index parameter - whoops.
+					if (IF_TYPE_IEEE80211 != pCurrAddresses->IfType)
+					{
+						pCurrAddresses = pCurrAddresses->Next;
+						continue;
+					}
+					value = (double)pCurrAddresses->TransmitLinkSpeed;
+					break;
+				}
+			}
+			if (g_pAddresses != nullptr)
+			{
+				FREE(g_pAddresses);
+			}
+		}
 		else
 		{
 			ULONG outsize = 0;
@@ -370,6 +459,11 @@ PLUGIN_EXPORT double Update(void* data)
 			{
 				switch (measure->type)
 				{
+// This rate is currently bogus, sadly :-(
+//				case TXRATE:
+//					value = (double)wlan_cattr->wlanAssociationAttributes.ulTxRate;
+//					break;
+
 				case QUALITY:
 					value = (double)wlan_cattr->wlanAssociationAttributes.wlanSignalQuality;
 					break;
