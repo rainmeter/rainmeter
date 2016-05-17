@@ -5,6 +5,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
+#pragma once
 #ifndef RM_GFX_CANVAS_H_
 #define RM_GFX_CANVAS_H_
 
@@ -20,6 +21,10 @@
 #include <dwrite_1.h>
 #include <wincodec.h>
 #include <wrl/client.h>
+#include <vector>
+
+#include <sstream>
+#include "../../Library/Logger.h"
 
 namespace Gfx {
 
@@ -73,6 +78,59 @@ public:
 	void DrawBitmap(Gdiplus::Bitmap* bitmap, const Gdiplus::Rect& dstRect, const Gdiplus::Rect& srcRect);
 	void DrawMaskedBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Bitmap* maskBitmap, const Gdiplus::Rect& dstRect,
 		const Gdiplus::Rect& srcRect, const Gdiplus::Rect& srcRect2);
+	enum GeometryType {
+		Line,
+		Arc,
+		Bezier
+	};
+	struct GeometryPoint {
+		GeometryPoint(float x, float y, float type)
+		{
+			m_point.x = x;
+			m_point.y = y;
+			if (type == 0) m_type = GeometryType::Line;
+			else if (type == 1) m_type = GeometryType::Arc;
+			else if (type == 2) m_type = GeometryType::Bezier;
+			else m_type = GeometryType::Line;
+
+		}
+		GeometryPoint(float x, float y, float type, float ArcWidth, float ArcHeight, float rotation)
+		{
+			//GeometryPoint(x, y, type);
+			m_point.x = x;
+			m_point.y = y;
+			if (type == 0) m_type = GeometryType::Line;
+			else if (type == 1) m_type = GeometryType::Arc;
+			else if (type == 2) m_type = GeometryType::Bezier;
+			else m_type = GeometryType::Line;
+			m_size.width = ArcWidth;
+			m_size.height = ArcHeight;
+			m_rotation = rotation;
+
+		}
+		GeometryPoint(float x, float y, float type, float controlX1, float controlY1, float controlX2, float controlY2)
+		{
+			//GeometryPoint(x, y, type);
+			m_point.x = x;
+			m_point.y = y;
+			if (type == 0) m_type = GeometryType::Line;
+			else if (type == 1) m_type = GeometryType::Arc;
+			else if (type == 2) m_type = GeometryType::Bezier;
+			else m_type = GeometryType::Line;
+			m_controlpoint1.x = controlX1;
+			m_controlpoint1.y = controlY1;
+			m_controlpoint2.x = controlX2;
+			m_controlpoint2.y = controlY2;
+
+		}
+		D2D1_POINT_2F m_point;
+		D2D1_POINT_2F m_controlpoint1;
+		D2D1_POINT_2F m_controlpoint2;
+		GeometryType m_type;
+		float m_rotation;
+		D2D1_SIZE_F m_size;
+	};
+	void DrawPathGeometry(const std::vector<GeometryPoint>& points, const Gdiplus::SolidBrush& fillBrush, const Gdiplus::Color& outlineColor, bool renderBackground, float lineWidth, bool connectEdges);
 
 	void FillRectangle(Gdiplus::Rect& rect, const Gdiplus::SolidBrush& brush);
 
@@ -110,6 +168,7 @@ private:
 	// GDI+ objects that share the pixel data of m_Bitmap.
 	std::unique_ptr<Gdiplus::Graphics> m_GdipGraphics;
 	std::unique_ptr<Gdiplus::Bitmap> m_GdipBitmap;
+
 
 	bool m_TextAntiAliasing;
 
